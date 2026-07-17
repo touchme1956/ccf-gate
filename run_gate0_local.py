@@ -16,7 +16,7 @@ if os.path.exists(ZIPP):
         print('■ companyfacts.zip は%d日前 → 再利用(十分新しい)' % int(age))
 else:
     print('■ companyfacts.zip なし → gate0が最新版を自動DL(約1.4GB)')
-p = os.path.join(BASE, 'gate0_v8_2.py')  # v8.2: 負資本7点合流+のれん椅子(並走検証中)。旧版はgate0_v8_1.py
+p = os.path.join(BASE, 'gate0_v8_3.py')  # v8.3: +成長停止棚。v8.2=負資本合流+のれん椅子。旧版はgate0_v8_1.py
 src = open(p, encoding='utf-8').read()
 hj = os.path.join(BASE, 'holdings.json')
 if os.path.exists(hj):
