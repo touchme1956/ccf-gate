@@ -8,6 +8,12 @@
   - companyfacts.zip(1.4GB)が45日超なら自動で最新に更新（検証母集団=全上場が毎年更新される）
   - holdings.json があれば HOLDINGS/WATCH を自動差し替え（門のⅤ保有タブから書き出したもの）
   - 出力: gate1_queue.json（待ち行列100社）、gate0_all.csv
+- 四半期 保有点検: `python kessan_check.py`
+  - holdings.jsonの保有銘柄について、直近の10-Q/8-Kを確認し、四半期売上YoY・営業利益率の前年同期差・警報(誠/限/集/指針/減損/退任)を機械抽出
+  - 出力: out/kessan/{T}_qcheck.txt と要審査フラグ。要審査は門2再審査(依頼文)へ回す。株価は判定に使わない
+- 四半期 決算カレンダー: `python kessan_calendar.py`
+  - 監視リスト(保有+質80+)の次回決算日を取得(Alpha Vantage、鍵なしはSEC推定)
+  - 出力: kessan_calendar.ics(Googleカレンダー取込=スケジュール連動) と out/next_earnings.json(門のⅤ保有で読込→常時表示)
 - 月1-2回 採取: `python hachimon_fetch.py`
   - 引数なし=gate1_queue.jsonの未処理上位5社を自動採取。個別指定: `python hachimon_fetch.py NVDA MSFT`
   - 出力: out/{T}_gate_input.json（機械値ドラフト・審査待ち）+ out/{T}_hits.txt（原本キーワード抜粋）

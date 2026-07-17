@@ -227,6 +227,27 @@ footer{text-align:center;padding:42px 0 80px;}
 .pg{display:none;}.pg.on{display:block;}
 .pg3-head{max-width:var(--maxw);margin:36px auto 0;padding:0 24px;}
 
+/* ===== 明るいテーマ（既定）: 白基調・濃い文字で最も見やすい ===== */
+html[data-theme="light"]{
+  --bg:#eceef3; --bg2:#e4e7ee; --panel:#ffffff; --panel2:#f4f6f9; --line:#d3d8e2; --codebg:#eef0f4;
+  --ink:#1b2130; --ink-soft:#3a4254; --muted:#6b7488;
+  --gold:#9a7626; --gold-bright:#7e6218; --gold-deep:#5f4a12; --gold-line:rgba(154,118,38,.38);
+  --pass:#2e8a54; --fail:#bd5238; --blue:#3c66ab;
+}
+html[data-theme="light"] body{
+  background:radial-gradient(1100px 600px at 50% -160px,rgba(154,118,38,.10),transparent 60%),linear-gradient(180deg,#f2f4f8,#eceef3 60%,#e7eaf0);
+}
+html[data-theme="light"] .fm{background:linear-gradient(180deg,#ffffff,#f5f6f9);}
+html[data-theme="light"] .statement{background:linear-gradient(180deg,#ffffff,#f4f6f9);}
+html[data-theme="light"] .gatebanner{background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(240,242,246,.7));}
+html[data-theme="light"] .pgnav{background:rgba(240,242,246,.92);}
+html[data-theme="light"] #scorer{
+  --bg:#ffffff; --bg2:#f4f6f9; --panel:#ffffff; --panel2:#f0f3f7;
+  --line:#d3d8e2; --line2:#c4cad6;
+  --ink:#1b2130; --mut:#6b7488; --dim:#8a92a2;
+  --gold:#9a7626; --gold-bright:#7e6218; --gold-d:#5f4a12; --gold-g:rgba(154,118,38,.1);
+}
+html[data-theme="light"] #scorer .duo{background:rgba(244,246,249,.94);}
 /* ===== 淡テーマ（既定）: 純黒を温かい墨グレーへ持ち上げる。文字・金・アクセントは不変＝可読性保持 ===== */
 html[data-theme="soft"]{
   --bg:#181b22; --bg2:#1d212b; --panel:#242a37; --panel2:#1d222d; --line:#3a4660; --codebg:#1b1f28;
@@ -244,39 +265,6 @@ html[data-theme="soft"] #scorer{
   --line:#333d4d; --line2:#3d4859;
 }
 html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
-
-/* ===== 明るいテーマ（既定）: 白基調。薄いグレー背景・濃い文字・深い金の見出し。金/緑/朱は白面で読める濃度へ調整 ===== */
-html[data-theme="light"]{
-  --bg:#f4f3ee; --bg2:#eae8e0; --panel:#ffffff; --panel2:#f7f5ef; --line:#dcd7ca;
-  --ink:#242019; --ink-soft:#4a453b; --muted:#7b756a;
-  --gold:#a8801f; --gold-bright:#8a6414; --gold-deep:#6f5212; --gold-line:rgba(168,128,31,.42);
-  --pass:#2f8f5b; --fail:#c0492b; --blue:#3f5b8a; --codebg:#12151b;
-}
-html[data-theme="light"] body{
-  color:var(--ink);
-  background:radial-gradient(1100px 600px at 50% -160px,rgba(168,128,31,.10),transparent 60%),
-             linear-gradient(180deg,#faf9f5,#f4f3ee 60%,#efede6);
-}
-html[data-theme="light"] h1,
-html[data-theme="light"] h2,
-html[data-theme="light"] h3,
-html[data-theme="light"] h4{color:var(--gold-deep);}
-html[data-theme="light"] ::selection{background:rgba(168,128,31,.22);}
-html[data-theme="light"] .panel{
-  background:linear-gradient(180deg,#ffffff,#faf8f2);
-  box-shadow:0 14px 40px rgba(60,50,20,.10),inset 0 1px 0 rgba(255,255,255,.6);
-}
-html[data-theme="light"] .fm{background:linear-gradient(180deg,#fbf9f2,#f4f1e7);}
-html[data-theme="light"] .statement{background:linear-gradient(180deg,#fbf9f2,#f4f1e7);}
-html[data-theme="light"] .gatebanner{background:linear-gradient(180deg,rgba(250,248,242,.85),rgba(244,241,231,.85));}
-html[data-theme="light"] .pgnav{background:rgba(250,249,245,.92);}
-html[data-theme="light"] #scorer{
-  --bg:#f4f3ee; --bg2:#eae8e0; --panel:#ffffff; --panel2:#f7f5ef;
-  --line:#dcd7ca; --line2:#cfc9ba; --ink:#242019; --mut:#7b756a; --dim:#9a9488;
-  --gold:#a8801f; --gold-bright:#8a6414; --gold-d:#6f5212; --gold-g:rgba(168,128,31,.12);
-}
-html[data-theme="light"] #scorer .duo{background:rgba(250,249,245,.94);}
-html[data-theme="light"] #scorer .btn-g{color:#fff;}
 </style></head><body>
 <nav class="pgnav">
  <button id="tab1" onclick="showPage(1)">Ⅰ 解説</button>
@@ -916,16 +904,16 @@ html[data-theme="light"] #scorer .btn-g{color:#fff;}
 <div id="pg6" class="pg">
  <div class="pg3-head">
   <h1 class="serif">保有ポートフォリオ <span style="font-size:.5em;color:var(--mut)">出口判定・売却規律 v9.6</span></h1>
-  <p style="color:var(--muted);font-size:14px;line-height:1.8">保有中の銘柄だけを集約し、売却規律で自動判定する。<b style="color:var(--rust)">🔴 S1＝売却検討</b>／<b style="color:#d69a3c">🟡 S2＝買い増し停止・縮小</b>／<b style="color:#5d8cc2">🔵 S3＝記録のみ</b>／<b style="color:var(--jade)">🟢 ホールド</b>。危険なものほど上に浮かぶ。<br><span style="font-size:12px;color:var(--dim)">保有への追加は「Ⅳ台帳」で各銘柄カードの「□」を押す。株価変動・空売り・単四半期ミスは売却理由にしない(長期保有バイアス)。</span></p>
+  <p style="color:var(--muted);font-size:14px;line-height:1.8">保有中の銘柄だけを集約し、売却規律で自動判定する。<b style="color:var(--rust)">🔴 売却検討(S1)</b>／<b style="color:#d69a3c">🟡 買い増し停止・縮小(S2)</b>／<b style="color:var(--jade)">🟢 ホールド</b>——危険なものほど上に浮かぶ。<b style="color:#5d8cc2">🔵 買い・追加可</b>＝質80点以上×価格ゲート通過×壊れていない銘柄だけに点灯（S3＝記録のみは各カード内に表示）。<br><span style="font-size:12px;color:var(--dim)">保有への追加は「Ⅳ台帳」で各銘柄カードの「□」を押す。株価変動・空売り・単四半期ミスは売却理由にしない(長期保有バイアス)。</span></p>
  </div>
- <div class="wrap" style="margin-top:14px"><button onclick="ccfExportHoldings(this)" style="padding:9px 16px;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:8px;color:#8fc9a4;font-size:13px;font-weight:600;cursor:pointer">⬇ gate0用に保有リストを書き出し（holdings.json）</button><span style="font-size:11.5px;color:var(--muted);margin-left:10px">Driveのccfフォルダへ入れておくと来年のgate0が自動で読む（ファイル編集不要）</span><button onclick="ccfWipeAll(this)" style="margin-left:10px;padding:9px 14px;background:transparent;border:1px solid rgba(207,95,72,.5);border-radius:8px;color:#cf7f6f;font-size:12.5px;cursor:pointer">🗑 銘柄データを全消去</button></div>
+ <div class="wrap" style="margin-top:14px"><button onclick="ccfExportHoldings(this)" style="padding:9px 16px;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:8px;color:#8fc9a4;font-size:13px;font-weight:600;cursor:pointer">⬇ gate0用に保有リストを書き出し（holdings.json）</button><span style="font-size:11.5px;color:var(--muted);margin-left:10px">gate0（Drive/ccf）と決算カレンダーが読む——質80+のeliteも自動同梱（ファイル編集不要）</span><button onclick="ccfWipeAll(this)" style="margin-left:10px;padding:9px 14px;background:transparent;border:1px solid rgba(207,95,72,.5);border-radius:8px;color:#cf7f6f;font-size:12.5px;cursor:pointer">🗑 銘柄データを全消去</button></div><div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button onclick="ccfBackupAll(this)" style="padding:9px 16px;background:linear-gradient(180deg,rgba(93,140,194,.30),rgba(93,140,194,.10));border:1px solid rgba(93,140,194,.55);border-radius:8px;color:#9bb0d2;font-size:13px;font-weight:600;cursor:pointer">⬇ 完全バックアップ（全データ）</button><label for="bkFile" style="padding:9px 14px;background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--ink-soft);font-size:12.5px;cursor:pointer">⬆ 復元</label><input id="bkFile" type="file" accept=".json,application/json" style="display:none" onchange="ccfRestoreAll(this)"><span id="bkStat" style="font-size:11.5px;color:var(--muted)"></span></div><div style="margin-top:10px;font-size:12px;color:var(--ink-soft);background:rgba(84,184,138,.07);border:1px solid rgba(84,184,138,.3);border-radius:8px;padding:9px 12px;line-height:1.9"><b>運用リズム</b>：年1回＝発掘＋全銘柄の再採取・再審査／<b>四半期＝保有銘柄の決算だけ点検</b>——顧客喪失・material weakness・ガイダンス撤回などの異変があれば「◯◯の最新四半期を点検して」と審査へ。株価の上下は点検理由にしない。台帳が育ったら<b>月1回の完全バックアップ</b>を習慣に（端末が変わっても復元で全て戻る）。<div style="margin-top:8px"><button onclick="ccfCopyQCheck(this)" style="padding:8px 14px;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:7px;color:#8fc9a4;font-size:12.5px;font-weight:600;cursor:pointer">四半期点検の依頼文をコピー（保有全銘柄）</button><span style="font-size:11px;color:var(--muted);margin-left:8px">貼る先はコードでもチャットでも同じ基準で動く</span></div></div><div style="margin-top:12px"><label for="calFile" style="padding:8px 14px;background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--ink-soft);font-size:12.5px;cursor:pointer;display:inline-block">⬆ 決算カレンダー読込（next_earnings.json）</label><input id="calFile" type="file" accept=".json,application/json" style="display:none" onchange="ccfCalLoad(this)"><span style="font-size:11px;color:var(--muted);margin-left:8px">コードで「決算カレンダー作って」→ できたファイルを読むと下に常時表示。icsはGoogleカレンダーへ</span><div id="calBox" style="margin-top:10px"></div></div>
  <div class="wrap" style="margin-top:18px"><div id="holdBox"></div></div>
 
 <div class="wrap">
 <div style="border-top:1px dashed var(--line);margin-top:30px;padding-top:24px"><h2 class="serif" style="font-size:20px;color:var(--gold-bright);margin:0 0 4px">対 S&amp;P500 — 買い・売りの答え合わせ</h2><div style="font-size:11.5px;color:var(--muted);letter-spacing:.06em">Did the Gate Beat the Index? — Per-Name Excess Return</div></div>
 
 <div class="block" style="padding-top:20px">
-<p class="intro">門が選んだ個別銘柄が、<b style="color:var(--gold-bright)">同じ買付日にS&amp;P500(配当込み)を買っていた場合</b>に勝てたかを、銘柄ごとに測る。指数部分(網)は混ぜない——これは<b>門の目利きだけ</b>の答え合わせだ。全てドル建て・配当込みトータルリターンで統一。</p>
+<p class="intro">門が選んだ個別銘柄が、<b style="color:var(--gold-bright)">同じ買付日にS&amp;P500(配当込み)を買っていた場合</b>に勝てたかを、銘柄ごとに測る。指数部分(網)は混ぜない——これは<b>門の目利きだけ</b>の答え合わせだ。全てドル建て・配当込みトータルリターン(^SP500TR)で統一——両者USD建てなので為替は相殺され、選別の検証として為替中立（円での絶対損益は別問題）。<b>この表はUSD銘柄専用</b>——日本株(JPY)は通貨が混ざるため入れない。現在株価が空欄なら台帳のpx（「¥価格だけ更新」）を自動で使う。</p>
 <div style="margin-top:14px;padding:12px 14px;background:rgba(201,166,74,.06);border-left:3px solid var(--gold-bright);border-radius:6px;color:var(--ink-soft);font-size:13px;line-height:1.9">
 <b style="color:var(--gold-bright)">入力の手順:</b> ①各保有銘柄の「買付日・買付株価・株数」を楽天の約定履歴から入力 → ②現在株価とその時点のS&amp;P500(SPX)値、買付日のSPX値を入力(過去SPXはClaudeに聞けば埋まる) → ③「計算」。配当込みで比べるなら受取配当も入れる(任意)。
 </div>
@@ -947,7 +935,7 @@ html[data-theme="light"] #scorer .btn-g{color:#fff;}
 <div class="block" style="padding-top:8px">
 <div class="h2">② 共通の基準値</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
-<div class="row"><div class="rl">現在のS&amp;P500(SPX)値<span class="h">今日のSPX終値。全銘柄共通</span></div><div class="rc"><input id="vsSpxNow" type="number" step="0.01" placeholder="例: 6300"></div></div>
+<div class="row"><div class="rl">現在のS&amp;P500 配当込みTR<span class="h">^SP500TR（配当込み指数）の値を推奨。SPX(価格指数)でも銘柄間の比較は可だが、門の成績が年1%台後半ぶん甘く出る。全銘柄共通</span></div><div class="rc"><input id="vsSpxNow" type="number" step="0.01" placeholder="例: 6300"></div></div>
 <div class="row"><div class="rl">配当を含める<span class="h">個別株の受取配当を各行に入れると精緻</span></div><div class="rc"><select id="vsInclDiv"><option value="yes">はい(トータルリターン)</option><option value="no">いいえ(株価のみ)</option></select></div></div>
 </div>
 <button onclick="calcVsSpx()" style="margin-top:14px;padding:11px 30px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.12));border:1px solid var(--gold-line);border-radius:8px;color:var(--gold-bright);font-size:14px;font-weight:600;cursor:pointer">計算する</button>
@@ -988,9 +976,10 @@ html[data-theme="light"] #scorer .btn-g{color:#fff;}
     <div><span style="font-size:15px;color:var(--ink-bright,#fff);font-weight:600">門を置く</span> <span style="font-size:11px;color:var(--muted);margin-left:6px">1回だけ</span></div>
    </div>
    <div style="padding-left:calc(1.2em + 12px)">
-    <div style="display:flex;gap:8px;padding:6px 0"><span style="color:#8fc9a4;min-width:4.5em;font-size:12px;font-weight:600">何を</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7">netlify.com に無料登録し、このHTMLファイルをドラッグ＆ドロップ。</div></div>
+    <div style="margin:2px 0 8px;padding:8px 12px;background:rgba(93,140,194,.08);border:1px solid rgba(93,140,194,.4);border-radius:8px;font-size:12px;color:var(--ink-soft);line-height:1.9"><b>この門の住所（2026-07 GitHub Pages移行後）</b><br>門の更新を反映する＝最新の index.html 等を下のURLで上げるだけ（同名は自動で置き換わり、1〜2分で公開に反映）<br><button onclick="ccfCopyStr('github.com/touchme1956/ccf-gate/upload/main',this)" style="padding:6px 12px;background:linear-gradient(180deg,rgba(93,140,194,.30),rgba(93,140,194,.10));border:1px solid rgba(93,140,194,.55);border-radius:7px;color:#9bb0d2;font-size:12px;font-weight:600;cursor:pointer;margin:4px 6px 4px 0">⬆ 反映URLをコピー</button><button onclick="ccfCopyStr('https://touchme1956.github.io/ccf-gate/index.html',this)" style="padding:6px 12px;background:transparent;border:1px solid var(--line);border-radius:7px;color:var(--ink-soft);font-size:12px;cursor:pointer;margin:4px 0">🔗 門の公開URLをコピー</button></div>
+    <div style="display:flex;gap:8px;padding:6px 0"><span style="color:#8fc9a4;min-width:4.5em;font-size:12px;font-weight:600">何を</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7">GitHubの <code>ccf-gate</code> リポジトリに index.html を置く（上の「⬆ 反映URL」から上げるだけ）。GitHub Pages が自動で配信する。</div></div>
     
-    <div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.04)"><span style="color:var(--gold-bright);min-width:4.5em;font-size:12px;font-weight:600">出るもの</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7"><code>◯◯.netlify.app</code> のURL。ブックマークすれば、スマホでもPCでもいつでも門が開く。</div></div>
+    <div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.04)"><span style="color:var(--gold-bright);min-width:4.5em;font-size:12px;font-weight:600">出るもの</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7"><code>touchme1956.github.io/ccf-gate/index.html</code> のURL（上の「🔗」でコピー可）。ブックマークすれば、スマホでもPCでもいつでも門が開く。</div></div>
    </div>
   </div>  <div style="padding:14px 16px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px">
    <div style="display:flex;gap:12px;align-items:baseline;margin-bottom:8px">
@@ -1031,7 +1020,7 @@ html[data-theme="light"] #scorer .btn-g{color:#fff;}
    </div>
    <div style="padding-left:calc(1.2em + 12px)">
     <div style="display:flex;gap:8px;padding:6px 0"><span style="color:#8fc9a4;min-width:4.5em;font-size:12px;font-weight:600">何を</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7"><b style="color:var(--gold-bright)">Ⅲ採点機</b>タブの「審査待ち」棚で銘柄の<b>「依頼文」ボタン</b>を押す→手順入りの依頼文がコピーされる→Claudeに渡す。Claudeが原本(hits.txt)を読み、検死＋定性を埋めた完成パックを返す。<b style="color:#e0917a">機械値だけのドラフトは取り込まない</b>（門が自動で拒否）。</div></div>
-    <div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.04)"><span style="color:var(--gold-bright);min-width:4.5em;font-size:12px;font-weight:600">手順</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7">①原本 ②検死 ③定性11要素を原本根拠つき ④市場データ ⑤null検査。<b style="color:var(--gold-bright)">全文↓</b></div><div style="margin-top:8px;display:flex;gap:8px;align-items:center"><button onclick="ccfCopyStr(ccfAskText((document.getElementById('nm')&&document.getElementById('nm').value)||'{TICKER}'),this)" style="padding:8px 14px;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:7px;color:#8fc9a4;font-size:12.5px;font-weight:600;cursor:pointer">審査プロトコル全文をコピー</button><span style="font-size:11px;color:var(--muted)">※各銘柄の「依頼文」ボタンも同じ全文＋銘柄名を出す</span></div><div style="margin-top:8px;padding:12px 14px;background:var(--codebg);border:1px solid var(--line);border-radius:8px;font-size:12px;line-height:1.75;color:var(--ink-soft);max-height:340px;overflow:auto">【門2審査プロトコル v1｜厳守】採取済み銘柄を審査し、門のⅢ採点機フォーマットの完成パックJSONを返す。<br><br>1. 原本を読む<br>   DriveのMyDrive/hachimon_out/{T}_gate_input.json（機械値の下書き）と {T}_hits.txt（限/集/誠/蝕/堀/循の6砲台抜粋）を読む。<br><br>2. 検死（機械値を鵜呑みにしない・必ず検算）<br>   ・dilNet&gt;30%は株式分割の誤読を疑い、注記で分割を確認→真の希薄化に補正。<br>   ・fcf/niがnull＝capexタグ欠落。原本から補うか na明示。<br>   ・通貨がUSD以外なら px/per/evebit を同一通貨で揃える（ADR混線禁止）。<br>   ・opm/roicが業態と乖離→derived営利の販管費欠落を疑う。<br><br>3. 定性を原本根拠つきで判定（憶測禁止・根拠なきは空欄。各値にhits.txtの該当英文を根拠として付す）<br>   〈絶対MOAT4因子〉<br>   dom 支配シェア: 100=独占≥90% / 85=圧倒70-89% / 70=寡占40-69% / 50=競争&lt;40%<br>   irr 代替不能性: 100=唯一供給 / 85=認証・規格ロック / 70=高摩擦移行困難 / 50=代替容易<br>   rep 複製障壁: 100=複製不能(数十年/$10B級) / 80=極困難 / 60=困難 / 35=数年で追随可<br>   dur 堀の型: 100=規制/プロセス知/物理 / 85=ネットワーク / 75=スイッチングコスト / 55=ブランド<br>   〈状態〉<br>   erosion 侵食: none/emerging/active｜disrupt 破壊: settled/unsettled/threat<br>   expiry 期限型独占: no/yes/na｜geopol 地政学集中: 0軽微/1中/2重/3深刻｜moatdecay 市場CAGR: no/yes｜nrr 顧客維持%(既定105)<br>   〈過去門 p1-p4：0-100・裸の主観禁止〉<br>   p1 ROIC安定性=5年ROICのσ: &lt;3pt→90 / &lt;6pt→80 …<br>   p2 不況耐性=直近2回の景気後退時の営業利益DD: 浅い→95 / … nde&lt;1→85 / nde&lt;2.5→70 / 以上→50<br>   p3 財務頑健=ネットデット/EBITDA: 低い→95 … / nde10%→45<br>   p4 会計健全=accr&lt;0かつ監査無限定→90 …（accr悪化は減点）<br>   〈未来門 f1-f5：0-100・固定基準〉<br>   f1 複利エンジン=ROIIC³: ≥WACC+15→90 / +8→80 / +3→70 / 未満→55（再投資率≥30%で+5。roiic=naは還元の質で75/60）<br>   f2 滑走路=TAM浸透率p/成長g: p10→90 / p7→80 / p&lt;60→65 / p≥60→50<br>   f3 堀の軌道=R&amp;D/売上3年とシェア趨勢の2符号: 両+→90 / 片方→75 / 両−→55（主要顧客集中悪化で−10）<br>   f4 二次曲線=隣接事業が売上5%超で成長→80 / 育成中→60 / なし→50<br>   f5 耐陳腐化=disrupt連動: settled→85 / unsettled→65 / threat→45（根拠あれば±10のみ）<br><br>4. 市場データ（per/perF/px/evebit/beta/shy/gr）はSECに無い→空欄（取込時に手入力）か、明示された実測のみ。grはperFから機械算出＝perFの取得最優先。<br><br>5. 納品前スキーマ検査: null項目を一覧化し、なぜ空かを明記。Ⅲ採点機フォーマット（nm/roic/…/f1-5/_meta）に完全準拠したJSONのみ返す。</div></div>
+    <div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.04)"><span style="color:var(--gold-bright);min-width:4.5em;font-size:12px;font-weight:600">手順</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7">①原本 ②検死 ③定性11要素を原本根拠つき ④市場データ ⑤null検査 ⑥監査記録(_meta.auditDate/model)。<b style="color:var(--gold-bright)">全文↓</b></div><div style="margin-top:8px;display:flex;gap:8px;align-items:center"><button onclick="ccfCopyStr(ccfAskText((document.getElementById('nm')&&document.getElementById('nm').value)||'{TICKER}'),this)" style="padding:8px 14px;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:7px;color:#8fc9a4;font-size:12.5px;font-weight:600;cursor:pointer">審査プロトコル全文をコピー</button><span style="font-size:11px;color:var(--muted)">※各銘柄の「依頼文」ボタンも同じ全文＋銘柄名を出す</span></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px"><input id="jpNm" placeholder="日本株: 銘柄名やコード（例: 6861 キーエンス）" style="flex:1;min-width:180px;font-size:12.5px"><button onclick="ccfCopyAskJP(this)" style="padding:8px 14px;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:7px;color:#8fc9a4;font-size:12.5px;font-weight:600;cursor:pointer">日本株の審査依頼文をコピー</button><span style="font-size:11px;color:var(--muted)">機械採取なし＝Claudeが有報・短信をWebで読み、同じ基準・通貨JPYで完成パックを作る</span></div><div style="margin-top:8px;padding:12px 14px;background:var(--codebg);border:1px solid var(--line);border-radius:8px;font-size:12px;line-height:1.75;color:var(--ink-soft);max-height:340px;overflow:auto">【門2審査プロトコル v1｜厳守】採取済み銘柄を審査し、門のⅢ採点機フォーマットの完成パックJSONを返す。<br><br>1. 原本を読む<br>   DriveのMyDrive/hachimon_out/{T}_gate_input.json（機械値の下書き）と {T}_hits.txt（限/集/誠/蝕/堀/循の6砲台抜粋）を読む。<br><br>2. 検死（機械値を鵜呑みにしない・必ず検算）<br>   ・dilNet&gt;30%は株式分割の誤読を疑い、注記で分割を確認→真の希薄化に補正。<br>   ・fcf/niがnull＝capexタグ欠落。原本から補うか na明示。<br>   ・通貨がUSD以外なら px/per/evebit を同一通貨で揃える（ADR混線禁止）。<br>   ・opm/roicが業態と乖離→derived営利の販管費欠落を疑う。<br><br>3. 定性を原本根拠つきで判定（憶測禁止・根拠なきは空欄。各値にhits.txtの該当英文を根拠として付す）<br>   〈絶対MOAT4因子〉<br>   dom 支配シェア: 100=独占≥90% / 85=圧倒70-89% / 70=寡占40-69% / 50=競争&lt;40%<br>   irr 代替不能性: 100=唯一供給 / 85=認証・規格ロック / 70=高摩擦移行困難 / 50=代替容易<br>   rep 複製障壁: 100=複製不能(数十年/$10B級) / 80=極困難 / 60=困難 / 35=数年で追随可<br>   dur 堀の型: 100=規制/プロセス知/物理 / 85=ネットワーク / 75=スイッチングコスト / 55=ブランド<br>   〈状態〉<br>   erosion 侵食: none/emerging/active｜disrupt 破壊: settled/unsettled/threat<br>   expiry 期限型独占: no/yes/na｜geopol 地政学集中: 0軽微/1中/2重/3深刻｜moatdecay 市場CAGR: no/yes｜nrr 顧客維持%(既定105)<br>   〈過去門 p1-p4：0-100・裸の主観禁止〉<br>   p1 ROIC安定性=5年ROICのσ: &lt;3pt→90 / &lt;6pt→80 …<br>   p2 不況耐性=直近2回の景気後退時の営業利益DD: 浅い→95 / … nde&lt;1→85 / nde&lt;2.5→70 / 以上→50<br>   p3 財務頑健=ネットデット/EBITDA: 低い→95 … / nde10%→45<br>   p4 会計健全=accr&lt;0かつ監査無限定→90 …（accr悪化は減点）<br>   〈未来門 f1-f5：0-100・固定基準〉<br>   f1 複利エンジン=ROIIC³: ≥WACC+15→90 / +8→80 / +3→70 / 未満→55（再投資率≥30%で+5。roiic=naは還元の質で75/60）<br>   f2 滑走路=TAM浸透率p/成長g: p10→90 / p7→80 / p&lt;60→65 / p≥60→50<br>   f3 堀の軌道=R&amp;D/売上3年とシェア趨勢の2符号: 両+→90 / 片方→75 / 両−→55（主要顧客集中悪化で−10）<br>   f4 二次曲線=隣接事業が売上5%超で成長→80 / 育成中→60 / なし→50<br>   f5 耐陳腐化=disrupt連動: settled→85 / unsettled→65 / threat→45（根拠あれば±10のみ）<br><br>4. 市場データ（per/perF/px/evebit/beta/shy/gr）はSECに無い→空欄（取込時に手入力）か、明示された実測のみ。grはperFから機械算出＝perFの取得最優先。<br><br>5. 納品前スキーマ検査: null項目を一覧化し、なぜ空かを明記。Ⅲ採点機フォーマット（nm/roic/…/f1-5/_meta）に完全準拠したJSONのみ返す。</div></div>
     <div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.04)"><span style="color:var(--gold-bright);min-width:4.5em;font-size:12px;font-weight:600">出るもの</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7">定性まで埋まった<b>完成パックJSON</b>。これだけが台帳に入る資格を持つ。</div></div>
    </div>
   </div>  <div style="padding:14px 16px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px">
@@ -1828,6 +1817,13 @@ async function ccfSweepDrafts(){
   for(const k of keys){let e;try{e=await store.get(k);}catch(_){continue;}if(!e)continue;let o;try{o=JSON.parse(e.value);}catch(_){continue;}
     if(o&&o.data&&ccfIsDraftObj(o.data)){const sk=k.slice(3);try{await store.set('g7wait:'+sk,JSON.stringify({data:o.data,ts:o.ts||Date.now()}));await store.delete(k);}catch(_){}}}
 }
+function ccfCopyAskJP(btn){
+  var t=($('jpNm')&&$('jpNm').value||'').trim();
+  if(!t){if(btn){var o=btn.textContent;btn.textContent='銘柄名を入力';setTimeout(function(){btn.textContent=o;},1500);}return;}
+  var base=ccfAskText(t); var i=base.indexOf('2. 検死');
+  var head='審査(日本株): '+t+'\n\n【門2審査プロトコル v1・日本株版｜厳守】機械採取パイプラインの対象外のため、原本から自力採取して審査する。\n\n1. 原本を読む（Web検索）\n   EDINETの有価証券報告書・最新の決算短信・決算説明資料を読む。数値（売上/営業利益/純利益/OCF/capex/株数の5年系列/のれん/自己資本/有利子負債）も原本から自ら採る。通貨はJPYで統一（px=円）。株式分割・自社株買いは株数系列で確認。限/集/誠/蝕/堀/循は有報の「事業等のリスク」「経営者による分析」から抜粋し根拠を付す。\n\n';
+  ccfCopyStr(head+base.slice(i), btn);
+}
 function ccfCopyStr(txt,btn){var o=btn?btn.textContent:'';function ok(){if(btn){btn.textContent='コピー済 \u2713';setTimeout(function(){btn.textContent=o;},1600);}}
   try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(ok,function(){});return;}}catch(e){}
   try{var ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);ok();}catch(e){}}
@@ -1891,7 +1887,7 @@ function ccfQRow(r, action){
     +'<span style="flex:1;font-weight:600">'+r.held+r.t+'</span>'
     +'<span style="width:52px;color:var(--muted);font-size:11.5px;text-align:right">'+r.pt+'</span>'+(action||'')+'</div>';
 }
-function ccfAskText(t){return `審査: ${t}\n\n【門2審査プロトコル v1｜厳守】採取済み銘柄を審査し、門のⅢ採点機フォーマットの完成パックJSONを返す。\n\n1. 原本を読む\n   DriveのMyDrive/hachimon_out/${t}_gate_input.json（機械値の下書き）と ${t}_hits.txt（限/集/誠/蝕/堀/循の6砲台抜粋）を読む。\n\n2. 検死（機械値を鵜呑みにしない・必ず検算）\n   ・dilNet>30%は株式分割の誤読を疑い、注記で分割を確認→真の希薄化に補正。\n   ・fcf/niがnull＝capexタグ欠落。原本から補うか na明示。\n   ・通貨がUSD以外なら px/per/evebit を同一通貨で揃える（ADR混線禁止）。\n   ・opm/roicが業態と乖離→derived営利の販管費欠落を疑う。\n\n3. 定性を原本根拠つきで判定（憶測禁止・根拠なきは空欄。各値にhits.txtの該当英文を根拠として付す）\n   〈絶対MOAT4因子〉\n   dom 支配シェア: 100=独占≥90% / 85=圧倒70-89% / 70=寡占40-69% / 50=競争<40%\n   irr 代替不能性: 100=唯一供給 / 85=認証・規格ロック / 70=高摩擦移行困難 / 50=代替容易\n   rep 複製障壁: 100=複製不能(数十年/$10B級) / 80=極困難 / 60=困難 / 35=数年で追随可\n   dur 堀の型: 100=規制/プロセス知/物理 / 85=ネットワーク / 75=スイッチングコスト / 55=ブランド\n   〈状態〉\n   erosion 侵食: none/emerging/active｜disrupt 破壊: settled/unsettled/threat\n   expiry 期限型独占: no/yes/na｜geopol 地政学集中: 0軽微/1中/2重/3深刻｜moatdecay 市場CAGR: no/yes｜nrr 顧客維持%(既定105)\n   〈過去門 p1-p4：0-100・裸の主観禁止〉\n   p1 ROIC安定性=5年ROICのσ: <3pt→90 / <6pt→80 …\n   p2 不況耐性=直近2回の景気後退時の営業利益DD: 浅い→95 / … nde<1→85 / nde<2.5→70 / 以上→50\n   p3 財務頑健=ネットデット/EBITDA: 低い→95 … / nde10%→45\n   p4 会計健全=accr<0かつ監査無限定→90 …（accr悪化は減点）\n   〈未来門 f1-f5：0-100・固定基準〉\n   f1 複利エンジン=ROIIC³: ≥WACC+15→90 / +8→80 / +3→70 / 未満→55（再投資率≥30%で+5。roiic=naは還元の質で75/60）\n   f2 滑走路=TAM浸透率p/成長g: p10→90 / p7→80 / p<60→65 / p≥60→50\n   f3 堀の軌道=R&D/売上3年とシェア趨勢の2符号: 両+→90 / 片方→75 / 両−→55（主要顧客集中悪化で−10）\n   f4 二次曲線=隣接事業が売上5%超で成長→80 / 育成中→60 / なし→50\n   f5 耐陳腐化=disrupt連動: settled→85 / unsettled→65 / threat→45（根拠あれば±10のみ）\n\n4. 市場データ（per/perF/px/evebit/beta/shy/gr）はSECに無い→空欄（取込時に手入力）か、明示された実測のみ。grはperFから機械算出＝perFの取得最優先。\n\n5. 納品前スキーマ検査: null項目を一覧化し、なぜ空かを明記。Ⅲ採点機フォーマット（nm/roic/…/f1-5/_meta）に完全準拠したJSONのみ返す。`;}
+function ccfAskText(t){return `審査: ${t}\n\n【門2審査プロトコル v1｜厳守】採取済み銘柄を審査し、門のⅢ採点機フォーマットの完成パックJSONを返す。\n\n1. 原本を読む\n   MyDrive/hachimon_out/ または repoの out/ にある ${t}_gate_input.json（機械値の下書き）と ${t}_hits.txt（限/集/誠/蝕/堀/循の6砲台抜粋）を読む。\n\n2. 検死（機械値を鵜呑みにしない・必ず検算）\n   ・dilNet>30%は株式分割の誤読を疑い、注記で分割を確認→真の希薄化に補正。\n   ・fcf/niがnull＝capexタグ欠落。原本から補うか na明示。\n   ・通貨がUSD以外なら px/per/evebit を同一通貨で揃える（ADR混線禁止）。\n   ・opm/roicが業態と乖離→derived営利の販管費欠落を疑う。\n\n3. 定性を原本根拠つきで判定（憶測禁止・根拠なきは空欄。各値にhits.txtの該当英文を根拠として付す）\n   〈絶対MOAT4因子〉\n   dom 支配シェア: 100=独占≥90% / 85=圧倒70-89% / 70=寡占40-69% / 50=競争<40%\n   irr 代替不能性: 100=唯一供給 / 85=認証・規格ロック / 70=高摩擦移行困難 / 50=代替容易\n   rep 複製障壁: 100=複製不能(数十年/$10B級) / 80=極困難 / 60=困難 / 35=数年で追随可\n   dur 堀の型: 100=規制/プロセス知/物理 / 85=ネットワーク / 75=スイッチングコスト / 55=ブランド\n   〈状態〉\n   erosion 侵食: none/emerging/active｜disrupt 破壊: settled/unsettled/threat\n   expiry 期限型独占: no/yes/na｜geopol 地政学集中: 0軽微/1中/2重/3深刻｜moatdecay 市場CAGR: no/yes｜nrr 顧客維持%(既定105)\n   〈過去門 p1-p4：0-100・裸の主観禁止〉\n   p1 ROIC安定性=5年ROICのσ: <3pt→90 / <6pt→80 …\n   p2 不況耐性=直近2回の景気後退時の営業利益DD: 浅い→95 / … nde<1→85 / nde<2.5→70 / 以上→50\n   p3 財務頑健=ネットデット/EBITDA: 低い→95 … / nde10%→45\n   p4 会計健全=accr<0かつ監査無限定→90 …（accr悪化は減点）\n   〈未来門 f1-f5：0-100・固定基準〉\n   f1 複利エンジン=ROIIC³: ≥WACC+15→90 / +8→80 / +3→70 / 未満→55（再投資率≥30%で+5。roiic=naは還元の質で75/60）\n   f2 滑走路=TAM浸透率p/成長g: p10→90 / p7→80 / p<60→65 / p≥60→50\n   f3 堀の軌道=R&D/売上3年とシェア趨勢の2符号: 両+→90 / 片方→75 / 両−→55（主要顧客集中悪化で−10）\n   f4 二次曲線=隣接事業が売上5%超で成長→80 / 育成中→60 / なし→50\n   f5 耐陳腐化=disrupt連動: settled→85 / unsettled→65 / threat→45（根拠あれば±10のみ）\n\n4. 市場データ（per/perF/px/evebit/beta/shy/gr）はSECに無い→空欄（取込時に手入力）か、明示された実測のみ。grはperFから機械算出＝perFの取得最優先。\n\n5. 納品前スキーマ検査: null項目を一覧化し、なぜ空かを明記。Ⅲ採点機フォーマット（nm/roic/…/f1-5/_meta）に完全準拠したJSONのみ返す。\n\n6. 監査記録: _meta に auditDate（審査日 YYYY-MM-DD）と model（審査モデル名）を必ず記載——採点の揺れを後から突き合わせるため。`;}
 function ccfCopyAsk(t,btn){ccfCopyStr(ccfAskText(t),btn);}
 function ccfAsk(t){return '<button onclick="ccfCopyAsk(\''+t+'\',this)" style="width:66px;padding:5px 0;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:6px;color:#8fc9a4;font-size:11.5px;cursor:pointer">\u4f9d\u983c\u6587</button>';}
 async function ccfRenderQueueInto(cid, focus){
@@ -2522,13 +2518,13 @@ function drawVsRows(){
     <input type="number" step="0.01" placeholder="平均取得単価$" value="${r.buyPx||''}" onchange="_vsRows[${i}].buyPx=this.value" style="font-size:12px">
     <input type="number" step="0.0001" placeholder="株数" value="${r.shares||''}" onchange="_vsRows[${i}].shares=this.value" style="font-size:12px">
     <input type="number" step="0.01" placeholder="現在株価$" value="${r.nowPx||''}" onchange="_vsRows[${i}].nowPx=this.value" style="font-size:12px">
-    <input type="number" step="0.01" placeholder="初回買付日SPX" value="${r.spxThen||''}" onchange="_vsRows[${i}].spxThen=this.value" style="font-size:12px">
+    <input type="number" step="0.01" placeholder="初回買付日SP500TR" value="${r.spxThen||''}" onchange="_vsRows[${i}].spxThen=this.value" style="font-size:12px">
     <button onclick="_vsRows.splice(${i},1);drawVsRows()" style="padding:4px 8px;background:transparent;border:1px solid var(--line);border-radius:5px;color:var(--dim);cursor:pointer">×</button>
     <div style="grid-column:1/-1;display:grid;grid-template-columns:auto 1.2fr 1fr 1.1fr 1fr;gap:6px;align-items:center;padding-top:4px;border-top:1px dashed rgba(120,110,90,.25)">
      <span style="font-size:11px;color:${(r.sellPx&&r.spxSell)?'#5d8cc2':'var(--dim)'};white-space:nowrap">${(r.sellPx&&r.spxSell)?'🔵 売却済（成績は売却時点で凍結）':'売却したら→'}</span>
      <input placeholder="売却日 YYYY-MM-DD" value="${r.sellDate||''}" onchange="_vsRows[${i}].sellDate=this.value" style="font-size:12px">
      <input type="number" step="0.01" placeholder="売却株価$" value="${r.sellPx||''}" onchange="_vsRows[${i}].sellPx=this.value" style="font-size:12px">
-     <input type="number" step="0.01" placeholder="売却日SPX" value="${r.spxSell||''}" onchange="_vsRows[${i}].spxSell=this.value" style="font-size:12px">
+     <input type="number" step="0.01" placeholder="売却日SP500TR" value="${r.spxSell||''}" onchange="_vsRows[${i}].spxSell=this.value" style="font-size:12px">
      <span></span>
     </div>
    </div>`).join('');
@@ -2556,7 +2552,7 @@ async function calcVsSpx(){
   const spxNow=parseFloat($('vsSpxNow').value);
   const inclDiv=$('vsInclDiv').value==='yes';
   const _needNow=_vsRows.some(r=>r.nm&&!(parseFloat(r.sellPx)&&parseFloat(r.spxSell)));
-  if(!spxNow&&_needNow){alert('現在のS&P500値を入力してください（全行が売却済みなら不要）');return;}
+  if(!spxNow&&_needNow){alert('現在のS&P500(TR)値を入力してください（全行が売却済みなら不要）');return;}
   // 保存(非破壊: 別キー)
   const map={__spxNow:spxNow};
   _vsRows.forEach(r=>{if(r.nm)map[r.nm]={date:r.date,buyPx:r.buyPx,shares:r.shares,nowPx:r.nowPx,spxThen:r.spxThen,div:r.div,sellDate:r.sellDate||'',sellPx:r.sellPx||'',spxSell:r.spxSell||''};});
@@ -2564,9 +2560,11 @@ async function calcVsSpx(){
   // 計算
   let rows=[],sumCost=0,sumNow=0,sumSpxNow=0;
   for(const r of _vsRows){
-    const bp=parseFloat(r.buyPx),sh=parseFloat(r.shares),np=parseFloat(r.nowPx),st=parseFloat(r.spxThen),dv=parseFloat(r.div)||0;
+    const bp=parseFloat(r.buyPx),sh=parseFloat(r.shares),st=parseFloat(r.spxThen),dv=parseFloat(r.div)||0;
+    let np=parseFloat(r.nowPx);
     const sp=parseFloat(r.sellPx),ss=parseFloat(r.spxSell);
     const sold=!!(sp&&ss);          // ★売却済み: 売却株価と売却日SPXが両方あれば、成績をその時点で凍結
+    if(!sold&&!np){ try{const g=await store.get('g7:'+r.nm); if(g&&g.value){const o=JSON.parse(g.value); const lp=(o&&o.data)?parseFloat(o.data.px):NaN; if(lp){np=lp;} }}catch(e){} } // 現在株価が空欄なら台帳のpxを自動流用(二重入力の解消)
     const endPx=sold?sp:np, endSpx=sold?ss:spxNow;
     if(!r.nm||!bp||!sh||!st||!endPx||!endSpx)continue;
     const cost=bp*sh, nowVal=endPx*sh + (inclDiv?dv:0);
@@ -2632,6 +2630,97 @@ function ccfShow(btn){
   pre.style.display=hidden?'block':'none';
   btn.textContent=hidden?'隠す':'表示';
 }
+async function ccfCalLoad(inp){
+  var f=inp&&inp.files&&inp.files[0]; if(!f)return;
+  try{
+    var o=JSON.parse(await f.text());
+    if(!o||!o.items){var b=$('calBox'); if(b)b.innerHTML='<span style="color:var(--fail);font-size:12px">形式が違う(next_earnings.json を選ぶ)</span>'; inp.value=''; return;}
+    await store.set('g7cal:next', JSON.stringify(o));
+    ccfCalRender();
+  }catch(e){var b2=$('calBox'); if(b2)b2.innerHTML='<span style="color:var(--fail);font-size:12px">読込失敗</span>';}
+  inp.value='';
+}
+async function ccfCalRender(){
+  var box=$('calBox'); if(!box)return;
+  var o=null; try{var g=await store.get('g7cal:next'); if(g&&g.value)o=JSON.parse(g.value);}catch(e){}
+  if(!o||!o.items||!o.items.length){box.innerHTML=''; return;}
+  var today=new Date(); today.setHours(0,0,0,0);
+  var rows=o.items.filter(function(x){return x.t&&x.date;}).map(function(x){
+    var d=new Date(x.date+'T00:00:00'); var dd=Math.round((d-today)/864e5);
+    return {t:x.t,date:x.date,dd:dd,elite:!!x.elite,hold:!!x.hold,est:x.src==='est'};
+  }).filter(function(x){return x.dd>=-2;}).sort(function(a,b){return a.dd-b.dd;}).slice(0,24);
+  if(!rows.length){box.innerHTML='<span style="font-size:12px;color:var(--muted)">直近の決算予定なし（カレンダーを更新して）</span>'; return;}
+  var html='<div style="font-size:12.5px;font-weight:700;color:var(--gold-bright);margin-bottom:6px">📅 決算カレンダー <span style="font-weight:400;color:var(--muted);font-size:11px">生成 '+(o.generated||'')+'　◆保有 ★質80+　※推定=昨年からの見込み</span></div>';
+  html+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
+  for(var i=0;i<rows.length;i++){var r=rows[i];
+    var urgent=r.dd<=14;
+    html+='<span style="display:inline-flex;gap:6px;align-items:center;padding:5px 10px;border-radius:7px;font-size:12px;'
+      +'border:1px solid '+(urgent?'rgba(207,95,72,.55)':'var(--line)')+';'
+      +'background:'+(urgent?'rgba(207,95,72,.10)':'var(--panel2,transparent)')+'">'
+      +'<b>'+r.t+'</b>'+(r.hold?'◆':'')+(r.elite?'★':'')
+      +'<span style="color:'+(urgent?'var(--fail)':'var(--muted)')+'">'+r.date.slice(5)+'（D'+(r.dd>=0?'-'+r.dd:'+'+(-r.dd))+'）'+(r.est?'?':'')+'</span></span>';
+  }
+  html+='</div>';
+  box.innerHTML=html;
+}
+async function ccfCopyQCheck(btn){
+  var o=btn?btn.textContent:'';
+  let hold=[];try{const r=await store.get('g7hold:set');if(r&&r.value)hold=JSON.parse(r.value);}catch(e){}
+  if(!hold.length){if(btn){btn.textContent='保有が空';setTimeout(function(){btn.textContent=o;},1600);}return;}
+  var txt='四半期点検: '+hold.join(', ')+'\n\n'
+    +'【保有決算チェック・プロトコル v1｜厳守】各社の直近未点検四半期を点検し、1社ずつ報告する。\n\n'
+    +'1. 原本: SECで最新の10-Q / 8-K(Item2.02決算・ガイダンス関連)を確認。日本株はTDnetの決算短信・適時開示。repoにout/kessan/があればkessan_check.pyの機械抽出も参照。\n'
+    +'2. 数値: 四半期売上YoY／営業利益率の前年同期差／FCFの符号。\n'
+    +'3. 質の警報(該当すれば要審査): 主要顧客の喪失・集中悪化／material weakness／ガイダンス撤回・大幅下方修正／のれん減損／新規の重大訴訟・規制／CEO・CFO退任。\n'
+    +'4. 判定: 各社「異常なし」か「要審査(理由1行)」。要審査は門2の再審査依頼文(依頼文ボタン)へ回す。\n'
+    +'5. 株価の上下・単四半期のEPSミスだけでは要審査にしない(長期保有バイアス)。\n'
+    +'6. _metaに点検日(YYYY-MM-DD)とモデル名を記載。';
+  ccfCopyStr(txt, btn);
+}
+async function ccfBackupAll(btn){
+  var o=btn?btn.textContent:'';
+  const data={}; let n=0;
+  for(const p of ['g7:','g7wait:','g7prev:','g7queue:','hm:']){
+    try{const r=await store.list(p); for(const k of (r?r.keys:[])){try{const g=await store.get(k); if(g&&g.value!=null){data[k]=g.value;n++;}}catch(e){}}}catch(e){}
+  }
+  for(const k of ['g7hold:set','g7buy:map']){try{const g=await store.get(k); if(g&&g.value!=null){data[k]=g.value;n++;}}catch(e){}}
+  try{
+    var payload=JSON.stringify({fmt:'ccf-backup',ver:1,ts:Date.now(),data:data},null,1);
+    var blob=new Blob([payload],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.href=url; a.download='ccf_backup_'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1200);
+    try{await store.set('ccf:lastBackup',String(Date.now()));}catch(e){}
+    ccfBkStat();
+    if(btn){btn.textContent='保存 \u2713 '+n+'件'; setTimeout(function(){btn.textContent=o;},2600);}
+  }catch(e){ if(btn){btn.textContent='保存不可'; setTimeout(function(){btn.textContent=o;},2000);} }
+}
+async function ccfRestoreAll(inp){
+  var f=inp&&inp.files&&inp.files[0]; if(!f)return;
+  var st=$('bkStat');
+  try{
+    var txt=await f.text(); var o=JSON.parse(txt);
+    if(!o||o.fmt!=='ccf-backup'||!o.data){ if(st){st.textContent='復元失敗: 形式が違う'; st.style.color='var(--fail)';} inp.value=''; return; }
+    let n=0; for(const k in o.data){ try{await store.set(k,o.data[k]); n++;}catch(e){} }
+    if(st){st.textContent='復元 '+n+'件 → 再読込'; st.style.color='var(--pass)';}
+    setTimeout(function(){location.reload();},900);
+  }catch(e){ if(st){st.textContent='復元失敗'; st.style.color='var(--fail)';} }
+  inp.value='';
+}
+async function ccfBkStat(){
+  try{
+    var el=$('bkStat'); if(!el)return;
+    var has=0; try{var r=await store.list('g7:'); has=(r&&r.keys&&r.keys.length)||0;}catch(e){}
+    var ts=null; try{var g=await store.get('ccf:lastBackup'); ts=(g&&g.value)?(+g.value):null;}catch(e){}
+    if(!has&&!ts){el.textContent=''; return;}
+    if(!ts){ el.textContent='\u26a0 バックアップ未取得'; el.style.color='var(--fail)'; return; }
+    var d=Math.floor((Date.now()-ts)/864e5);
+    el.textContent=(d>14?'\u26a0 ':'')+'最終バックアップ: '+d+'日前'+(d>14?'（要保存）':'');
+    el.style.color=d>14?'var(--fail)':'var(--muted)';
+  }catch(e){}
+}
+(function(){var t=0;var iv=setInterval(async function(){t++;try{await store.list('g7:');clearInterval(iv);ccfBkStat();try{ccfCalRender();}catch(e){}}catch(e){if(t>40)clearInterval(iv);}},600);})();
 let _wipeArm=0;
 async function ccfWipeAll(btn){
   // 銘柄データ全消去(二度押し確定・ダイアログ不使用)。日誌(hm:journal)・待ち行列・テーマは残す
@@ -2656,7 +2745,16 @@ async function ccfExportHoldings(btn){
   let hold=[];try{const r=await store.get('g7hold:set');if(r&&r.value)hold=JSON.parse(r.value);}catch(e){}
   let all=[];try{const r=await store.list('g7:');all=(r?r.keys:[]).map(k=>k.slice(3));}catch(e){}
   const watch=all.filter(t=>hold.indexOf(t)<0);
-  const txt=JSON.stringify({holdings:hold,watch:watch},null,1);
+  const elite=[];
+  try{const r=await store.list('g7:');
+    for(const k of (r?r.keys:[])){
+      try{const g=await store.get(k); if(!g||!g.value)continue;
+        const o=JSON.parse(g.value); const sc=o&&o.r&&o.r.evalScore;
+        if(sc!=null&&sc>=80)elite.push(k.slice(3));
+      }catch(e){}
+    }
+  }catch(e){}
+  const txt=JSON.stringify({holdings:hold,watch:watch,elite:elite},null,1);
   try{
     var blob=new Blob([txt],{type:'application/json'});
     var url=URL.createObjectURL(blob);
@@ -2681,45 +2779,14 @@ function ccfDownload(btn){
     btn.textContent='\u4fdd\u5b58 \u2713 '+fname; setTimeout(function(){btn.textContent=o;},2400);
   }catch(e){ btn.textContent='\u4fdd\u5b58\u4e0d\u53ef'; setTimeout(function(){btn.textContent=o;},2000); }
 }
-function ccfCopy(btn){
-  // v9.6.1: clipboard先行で全文コピー。長文・モバイルで末尾が切れないことを最優先。
-  var key=btn.getAttribute('data-key');
-  var txt=(window.__CCF_CODE__&&window.__CCF_CODE__[key])||'';
-  var lines=txt?txt.split('\n').length:0;
-  var o=btn.getAttribute('data-label')||btn.textContent;
-  btn.setAttribute('data-label',o);
-  function ok(){btn.textContent='コピー済 \u2713 '+lines+'行'; setTimeout(function(){btn.textContent=o;},1800);}
-  function ng(){btn.textContent='コピー不可(別ブラウザで)'; setTimeout(function(){btn.textContent=o;},2400);}
-  function fallback(){
-    try{
-      var ta=document.createElement('textarea');
-      ta.value=txt; ta.setAttribute('readonly','');
-      ta.style.position='fixed'; ta.style.top='0'; ta.style.left='0'; ta.style.opacity='0';
-      document.body.appendChild(ta);
-      ta.focus(); ta.select(); ta.setSelectionRange(0, txt.length);
-      var done=document.execCommand('copy');
-      document.body.removeChild(ta);
-      done?ok():ng();
-    }catch(e){ng();}
-  }
-  if(!txt){ng();return;}
-  // 方法1：navigator.clipboard（httpsのNetlify・スマホで最も確実。文字列をそのまま全文渡す）
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt).then(ok,fallback);
-    return;
-  }
-  // 方法2：execCommand（file://やclipboard非対応環境のフォールバック）
-  fallback();
-}
+
 </script>
 
 <script>
-/* テーマ切替（明るい=既定 → 淡 → 漆黒 の3段階）。localStorage:ccf_theme。データ層とは独立 */
+/* テーマ切替（淡=既定 / 漆黒=原）。localStorage:ccf_theme。データ層とは独立 */
 (function(){
-  var ORDER=["light","soft","dark"];
-  var LABEL={light:"☀ 明るい",soft:"◐ 淡",dark:"☾ 漆黒"};
-  function cur(){var t=document.documentElement.getAttribute("data-theme");return LABEL[t]?t:"light";}
-  function label(t){return LABEL[t]||LABEL.light;}
+  function cur(){return document.documentElement.getAttribute("data-theme")||"light";}
+  function label(t){return t==="light"?"\u2600 \u660e\u308b\u3044":t==="soft"?"\u25d0 \u6de1":"\u263e \u6f06\u9ed2";}
   var b=document.createElement("button");
   b.id="themeToggle";
   b.style.cssText="position:fixed;right:14px;bottom:14px;z-index:9999;"
@@ -2728,10 +2795,12 @@ function ccfCopy(btn){
     +"color:#ecd494;background:rgba(20,24,32,.82);"
     +"border:1px solid rgba(201,166,74,.5);backdrop-filter:blur(6px);"
     +"box-shadow:0 2px 10px rgba(0,0,0,.35);";
-  function paint(){b.textContent=label(cur());}
+  function paint(){b.textContent=label(cur());
+    if(cur()==="light"){b.style.color="#5f4a12";b.style.background="rgba(255,255,255,.9)";b.style.border="1px solid rgba(154,118,38,.55)";}
+    else{b.style.color="#ecd494";b.style.background="rgba(20,24,32,.82)";b.style.border="1px solid rgba(201,166,74,.5)";}}
   b.title="背景の明暗を切り替え";
   b.onclick=function(){
-    var t=ORDER[(ORDER.indexOf(cur())+1)%ORDER.length];
+    var c=cur(); var t=c==="light"?"soft":c==="soft"?"dark":"light";
     document.documentElement.setAttribute("data-theme",t);
     try{localStorage.setItem("ccf_theme",t);}catch(e){}
     paint();
