@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja"><head><script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("ccf_theme")||"soft");}catch(e){document.documentElement.setAttribute("data-theme","soft");}</script><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<html lang="ja"><head><script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("ccf_theme")||"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}</script><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CCF Ω — 壊れない複利の門 × 未来の門（完全版・詳解）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
@@ -244,6 +244,39 @@ html[data-theme="soft"] #scorer{
   --line:#333d4d; --line2:#3d4859;
 }
 html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
+
+/* ===== 明るいテーマ（既定）: 白基調。薄いグレー背景・濃い文字・深い金の見出し。金/緑/朱は白面で読める濃度へ調整 ===== */
+html[data-theme="light"]{
+  --bg:#f4f3ee; --bg2:#eae8e0; --panel:#ffffff; --panel2:#f7f5ef; --line:#dcd7ca;
+  --ink:#242019; --ink-soft:#4a453b; --muted:#7b756a;
+  --gold:#a8801f; --gold-bright:#8a6414; --gold-deep:#6f5212; --gold-line:rgba(168,128,31,.42);
+  --pass:#2f8f5b; --fail:#c0492b; --blue:#3f5b8a; --codebg:#12151b;
+}
+html[data-theme="light"] body{
+  color:var(--ink);
+  background:radial-gradient(1100px 600px at 50% -160px,rgba(168,128,31,.10),transparent 60%),
+             linear-gradient(180deg,#faf9f5,#f4f3ee 60%,#efede6);
+}
+html[data-theme="light"] h1,
+html[data-theme="light"] h2,
+html[data-theme="light"] h3,
+html[data-theme="light"] h4{color:var(--gold-deep);}
+html[data-theme="light"] ::selection{background:rgba(168,128,31,.22);}
+html[data-theme="light"] .panel{
+  background:linear-gradient(180deg,#ffffff,#faf8f2);
+  box-shadow:0 14px 40px rgba(60,50,20,.10),inset 0 1px 0 rgba(255,255,255,.6);
+}
+html[data-theme="light"] .fm{background:linear-gradient(180deg,#fbf9f2,#f4f1e7);}
+html[data-theme="light"] .statement{background:linear-gradient(180deg,#fbf9f2,#f4f1e7);}
+html[data-theme="light"] .gatebanner{background:linear-gradient(180deg,rgba(250,248,242,.85),rgba(244,241,231,.85));}
+html[data-theme="light"] .pgnav{background:rgba(250,249,245,.92);}
+html[data-theme="light"] #scorer{
+  --bg:#f4f3ee; --bg2:#eae8e0; --panel:#ffffff; --panel2:#f7f5ef;
+  --line:#dcd7ca; --line2:#cfc9ba; --ink:#242019; --mut:#7b756a; --dim:#9a9488;
+  --gold:#a8801f; --gold-bright:#8a6414; --gold-d:#6f5212; --gold-g:rgba(168,128,31,.12);
+}
+html[data-theme="light"] #scorer .duo{background:rgba(250,249,245,.94);}
+html[data-theme="light"] #scorer .btn-g{color:#fff;}
 </style></head><body>
 <nav class="pgnav">
  <button id="tab1" onclick="showPage(1)">Ⅰ 解説</button>
@@ -2681,10 +2714,12 @@ function ccfCopy(btn){
 </script>
 
 <script>
-/* テーマ切替（淡=既定 / 漆黒=原）。localStorage:ccf_theme。データ層とは独立 */
+/* テーマ切替（明るい=既定 → 淡 → 漆黒 の3段階）。localStorage:ccf_theme。データ層とは独立 */
 (function(){
-  function cur(){return document.documentElement.getAttribute("data-theme")||"soft";}
-  function label(t){return t==="soft"?"◐ 淡":"☾ 漆黒";}
+  var ORDER=["light","soft","dark"];
+  var LABEL={light:"☀ 明るい",soft:"◐ 淡",dark:"☾ 漆黒"};
+  function cur(){var t=document.documentElement.getAttribute("data-theme");return LABEL[t]?t:"light";}
+  function label(t){return LABEL[t]||LABEL.light;}
   var b=document.createElement("button");
   b.id="themeToggle";
   b.style.cssText="position:fixed;right:14px;bottom:14px;z-index:9999;"
@@ -2696,7 +2731,7 @@ function ccfCopy(btn){
   function paint(){b.textContent=label(cur());}
   b.title="背景の明暗を切り替え";
   b.onclick=function(){
-    var t=cur()==="soft"?"dark":"soft";
+    var t=ORDER[(ORDER.indexOf(cur())+1)%ORDER.length];
     document.documentElement.setAttribute("data-theme",t);
     try{localStorage.setItem("ccf_theme",t);}catch(e){}
     paint();
