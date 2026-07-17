@@ -291,7 +291,7 @@ def run(ticker):
     print(f"  → {OUT}/{ticker}_gate_input.json / {ticker}_hits.txt")
 
 def load_queue():
-    """門0の待ち行列を読み、未処理の上位BATCH件を返す(pt降順・excluded除外)"""
+    """門0の待ち行列を読み、未処理の上位BATCH件を返す(門0の並び順=審査優先→pt降順・excluded除外)"""
     import glob
     path = next((q for q in QUEUE_PATHS if os.path.exists(q)), None)
     if not path:
@@ -301,7 +301,8 @@ def load_queue():
         print("待ち行列(gate1_queue.json)が見つからない——TICKERSに手動指定して実行"); return []
     rows = json.load(open(path, encoding="utf-8"))
     rows = [r for r in rows if not r.get("excluded")]
-    rows.sort(key=lambda r: r.get("pt", 0), reverse=True)
+    # v3.1(2026-07-17): pt再ソートを廃止。門0 v8.5の並び順そのものが採取順
+    # (先頭=審査優先〔谷/種まき/未成熟〕=数字で裁けない群、以降pt降順)。並び替えると優先設計が壊れる。
     todo = []
     for r in rows:
         t = r["ticker"]
@@ -309,7 +310,7 @@ def load_queue():
             continue  # 審査済み・採取済みはスキップ
         todo.append(t)
         if len(todo) >= BATCH: break
-    print(f"待ち行列: {path}\n今回の被告(pt上位・未処理): {todo}")
+    print(f"待ち行列: {path}\n今回の被告(審査優先→pt順・未処理): {todo}")
     return todo
 
 if __name__ == "__main__":
