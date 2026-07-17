@@ -454,6 +454,11 @@ if not any(r["ticker"]=="VEEV" for r in chairs):
 if not any(r["ticker"]=="FICO" for r in queue):
     gfail += 1
     print("\n⚠ 負資本合流回帰: FICOが待ち行列に居ない — equity_neg合流ロジックを疑うこと")
+# v8.2回帰: のれん椅子(2026-07-17初回観測で固定: ROP=WATCH銘柄, SPGI=現金椅子の要手動から昇格)
+for _t in ("ROP","SPGI"):
+    if not any(r["ticker"]==_t for r in gwchairs):
+        gfail += 1
+        print(f"\n⚠ のれん椅子回帰: {_t}が椅子に居ない — gwタグ取得かのれん控除ロジックを疑うこと")
 
 print("\n■ WATCH照合")
 qs = {r["ticker"] for r in queue}; bs = {r["ticker"] for r in backlog}
