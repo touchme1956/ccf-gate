@@ -296,7 +296,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  <div style="display:grid;gap:10px;margin:16px 0 6px">
   <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px">
    <div style="font-family:var(--mincho,serif);font-size:20px;color:var(--gold-bright);min-width:2.4em">門0</div>
-   <div><b style="color:var(--ink-bright,#fff)">漏斗（年1回）</b> — <code>gate0_v8.py</code>（米国株）/<code>gate0_jp_v2.py</code>（日本株）をColabで実行。全社をROIC・成長・FCF転換で7点採点し、<code>gate1_queue.json</code>（待ち行列100社・pt降順）を吐く。golden set回帰が自動で走り「不採用」と出たら結果を使わない。<span style="color:var(--gold-bright)">SEC companyfacts.zip一括・約10分。</span></div>
+   <div><b style="color:var(--ink-bright,#fff)">漏斗（年1回）</b> — Colabで2行（drive.mount＋<code>%run …/run_gate0_v3.py</code>）。全上場をROIC・成長・FCF転換で7点採点し、<code>gate1_queue.json</code>（待ち行列100社・pt降順）を吐く。golden set回帰が自動で走り「不採用」と出たら結果を使わない。母集団zipは45日で自動更新。<span style="color:var(--gold-bright)">日本株は漏斗を通さず、Ⅱ手順3の「日本株の審査依頼文」で第二の門へ直行。</span></div>
   </div>
   <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px">
    <div style="font-family:var(--mincho,serif);font-size:20px;color:var(--gold-bright);min-width:2.4em">採取</div>
@@ -307,8 +307,8 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
    <div><b style="color:var(--ink-bright,#fff)">Claudeが定性を仕上げる</b> — hits.txtを読み、SECにしか無い定性欄（<code>expiry</code>期限型独占・<code>moatdecay</code>堀減衰・<code>dom/irr/rep/dur</code>堀四性質・<code>geopol</code>集中）を埋める。市場データ（beta・per・px）と主観スコア（p1〜f5）は空欄のまま返る＝<span style="color:var(--gold-bright)">後で手入力。</span></div>
   </div>
   <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px">
-   <div style="font-family:var(--mincho,serif);font-size:20px;color:var(--gold-bright);min-width:2.4em">門1-2</div>
-   <div><b style="color:var(--ink-bright,#fff)">採点機に貼る → 二つの門</b> — 完成JSONを<b>Ⅲ採点機の「貼る」</b>に投入（配列で一括可）。採点・台帳保存・履歴記録まで自動。第一の門〈質〉86点＋三本柱70点 → 第二の門〈軌〉→ 価格ブレーキ。</div>
+   <div style="font-family:var(--mincho,serif);font-size:20px;color:var(--gold-bright);min-width:2.4em">裁き</div>
+   <div><b style="color:var(--ink-bright,#fff)">採点機に貼る → 第二の門（質）と第四の門（価格）</b> — 完成JSONを<b>Ⅲ採点機の「貼る」</b>に投入（配列で一括可）。採点・台帳保存・履歴記録まで自動。第一の門〈質〉86点＋三本柱70点 → 第二の門〈軌〉→ 価格ブレーキ。</div>
   </div>
  </div>
 </div>
@@ -1051,7 +1051,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  <p class="intro" style="margin-top:14px;padding:12px 14px;background:rgba(201,166,74,.08);border-left:3px solid var(--gold-bright);border-radius:6px">
   <b style="color:var(--gold-bright)">思想の統一（v9.6で確定）：</b>門0のFCF転換70%足切りは、採点機v9.6の「ROIIC≥WACC+5なら転換率未満でも通す（Amazon型・種まき型を殺さない）」と衝突する。<b>門0で70%未満に落ちた高ROIC企業は「敗者復活の椅子」で拾い、採点機で最終判定する</b>——入口で機械的に殺さないこと。欠測は0でなく必ず「保留」。価格は格を1点も動かさない。</p>
  <p class="intro" style="margin-top:10px">
-  <b style="color:var(--ink-bright,#fff)">運用リズム：</b>門0＝年1回（1〜2月に前年通期が出揃ってから）。採取器＝月3〜4回、毎回上位5社（月15〜20社）。1バッチは<b>最大8社</b>まで——超えると定性の読みが雑になる。日本株は SEC でなく EDINET（<code>gate0_jp_v2.py</code>、EDINET APIキーが要る）。</p>
+  <b style="color:var(--ink-bright,#fff)">運用リズム：</b>門0＝年1回（1〜2月に前年通期が出揃ってから）。採取器＝月3〜4回、毎回上位5社（月15〜20社）。1バッチは<b>最大8社</b>まで——超えると定性の読みが雑になる。日本株は漏斗を通さず、Ⅱ手順3の「日本株の審査依頼文」で第二の門へ直行（私がEDINET有報・短信をWebで読み、JPY統一で完成パックを作る）。</p>
 </div>
 
 <div class="block" style="padding-top:8px;padding-bottom:20px;">
@@ -1083,7 +1083,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
   </div>
 
   <div style="border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:rgba(255,255,255,.015);opacity:.75">
-   <div style="min-width:0"><b style="color:var(--muted)">③ gate0_jp_v2.py</b> <span style="color:#c0894a;font-size:12px">点検待ち・枠のみ</span><div style="color:var(--muted);font-size:12px;margin-top:2px">日本株版（EDINET）。来年「日本版gate0を点検して門に入れて」と頼めばここに入る。</div></div>
+   <div style="min-width:0"><b style="color:var(--muted)">③ 日本株漏斗（将来枠）</b> <span style="color:#c0894a;font-size:12px">v1校正モード・Drive在中</span><div style="color:var(--muted);font-size:12px;margin-top:2px">gate0_jp_v1.py がDrive/ccfにある（回帰テスト化=v2は未着手）。当面の日本株はⅡ手順3の依頼文で審査へ直行。育てるなら「日本版漏斗を点検して」と頼む。</div></div>
   </div>
 
  </div>
@@ -1848,7 +1848,7 @@ async function ccfRenderWait(){
     +'<div style="font-size:12.5px;color:var(--ink-soft);line-height:1.8;margin-bottom:8px">\u63a1\u53d6\u5668\u306e\u30c9\u30e9\u30d5\u30c8\u306f\u5b9a\u6027\u304c\u7a7a\u306a\u306e\u3067\u53f0\u5e33\u306b\u5165\u308c\u306a\u3044\uff08\u58ca\u308c\u30b9\u30b3\u30a2\u9632\u6b62\uff09\u3002\u5404\u884c\u306e\u300c\u4f9d\u983c\u6587\u30b3\u30d4\u30fc\u300d\u2192Claude\u3078\u2192\u5b8c\u6210\u30d1\u30c3\u30af\u304c\u8fd4\u3063\u305f\u3089\u300c\uff0bClaude\u306e\u8fd4\u7b54\u3092\u53d6\u308a\u8fbc\u3080\u300d\u3067\u53f0\u5e33\u3078\u3002</div>'
     +rows+'</div>';
 }
-/* ===== v9.6.1 待ち行列棚: 門0のgate1_queue.jsonを読み込み、門1通過銘柄をパイプライン状態(未採取/審査待ち/台帳入り)で一望。Driveに触れず自己完結 ===== */
+/* ===== v9.6.1 待ち行列棚: 第一の門(漏斗)のgate1_queue.jsonを読み込み、漏斗通過(第二の門=審査待ち)銘柄をパイプライン状態(未採取/審査待ち/台帳入り)で一望。Driveに触れず自己完結。gate1はファイルの技術IDで門番号ではない ===== */
 function ccfLoadQueueFile(){
   var inp=$('queueFile');
   if(!inp){inp=document.createElement('input');inp.type='file';inp.id='queueFile';inp.accept='application/json,.json';inp.style.display='none';
@@ -1879,7 +1879,7 @@ async function ccfQueueData(){
 }
 function ccfLoaderHTML(){ return '<div style="background:var(--panel2);border:1px dashed var(--gold-line);border-radius:12px;padding:14px 16px;margin-top:14px">'
   +'<div style="font-size:14px;color:var(--gold-bright);margin-bottom:6px"><b>\u25a1 \u5f85\u3061\u884c\u5217\uff08\u9580\uff11\u901a\u904e\uff09\u672a\u8aad\u8fbc</b></div>'
-  +'<div style="font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin-bottom:10px">\u9580\uff10\u304c\u51fa\u3057\u305f <b>gate1_queue.json</b> \u3092\u8aad\u307f\u8fbc\u3080\u3068\u3001\u9580\uff11\u901a\u904e\u9298\u67c4\u306e\u9032\u884c\u304c\u3053\u3053\u306b\u51fa\u308b\u3002</div>'
+  +'<div style="font-size:12.5px;color:var(--ink-soft);line-height:1.7;margin-bottom:10px">\u7b2c\u4e00\u306e\u9580\uff08\u6f0f\u6597\uff09\u304c\u51fa\u3057\u305f <b>gate1_queue.json</b> \u3092\u8aad\u307f\u8fbc\u3080\u3068\u3001\u6f0f\u6597\u901a\u904e\uff08\u7b2c\u4e8c\u306e\u9580\uff1d\u5be9\u67fb\u5f85\u3061\uff09\u9298\u67c4\u306e\u9032\u884c\u304c\u3053\u3053\u306b\u51fa\u308b\u3002</div>'
   +'<button onclick="ccfLoadQueueFile()" style="padding:10px 20px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.12));border:1px solid var(--gold-line);color:var(--gold-bright);border-radius:8px;font-size:13px;cursor:pointer"><b>\u5f85\u3061\u884c\u5217\u3092\u8aad\u307f\u8fbc\u3080</b></button></div>'; }
 function ccfQRow(r, action){
   return '<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(120,110,90,.14);font-size:13px">'
