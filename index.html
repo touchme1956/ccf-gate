@@ -1781,6 +1781,10 @@ function copyPrompt(){
     navigator.clipboard.writeText(txt).then(()=>{ if($('copyBtn'))$('copyBtn').textContent='コピー済み ✓'; },()=>{}); done=true; } }catch(e){} }
   if(done && $('copyBtn')) $('copyBtn').textContent='コピー済み ✓';
 }
+// v9.7取込修正: ページ読込時のドロップダウン既定値を記録——JSONでnullの項目はここへ戻す。
+//   旧挙動は「null=前の銘柄の値を残す」で、一括取込の点数が貼った順に汚染された(CMG 80.1↔71.5等、2026-07-18検証)。
+const __selDefaults={};
+document.querySelectorAll('select').forEach(e=>{if(e.id)__selDefaults[e.id]=e.value;});
 function applyFields(d){
   const map={nm:'nm',rfr:'rfr',erp:'erp',beta:'beta',roic:'roic',roicg:'roicg',roiic:'roiic',nde:'nde',z:'z',gpa:'gpa',accr:'accr',acc:'acc',eq:'eq',fin:'fin',dom:'dom',irr:'irr',rep:'rep',dur:'dur',gm:'gm',gmt:'gmt',sht:'sht',nrr:'nrr',roict:'roict',pen:'pen',cagr:'cagr',moatdecay:'moatdecay',expiry:'expiry',sbc:'sbc',dilNet:'dilNet',erosion:'erosion',disrupt:'disrupt',fcf:'fcf',ni:'ni',p1:'p1',p2:'p2',p3:'p3',p4:'p4',f1:'f1',f2:'f2',f3:'f3',f4:'f4',f5:'f5',per:'per',evebit:'evebit',gr:'gr',shy:'shy',rak:'rak',gcap:'gcap',analysts:'analysts',instOwn:'instOwn',gls:'gls',idx:'idx',indG:'indG',hist:'hist',pos:'pos',roiic5:'roiic5',perF:'perF',px:'px',eps:'eps',ddate:'ddate',erdate:'erdate',acq5:'acq5',geopol:'geopol',founder:'founder'};
   Object.entries(map).forEach(([k,id])=>{
@@ -1798,7 +1802,7 @@ function applyFields(d){
           if(best!==null){el.value=best;matched=true;}
         }
       }
-      if(!matched && el.options.length) el.selectedIndex=el.selectedIndex; // 変更なし
+      if(!matched && __selDefaults[id]!==undefined) el.value=__selDefaults[id]; // v9.7: null・不一致は既定値へリセット(前銘柄の残り香を断つ。取込順に依らず同じJSONは同じ点)
     } else {
       el.value=val;
     }
