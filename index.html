@@ -1660,12 +1660,14 @@ function compute(){
   ts.innerHTML+=`<div class="flag ${ddRes>=2?'f-ok':'f-warn'}"><i>盾</i><div><b>DD耐性構造 ${ddRes}/3</b>（無借金${n('nde')<=0?'○':'×'}・創業者${((($('founder')&&$('founder').value)||'')==='yes')?'○':'×'}・FCF先行${conv>=100?'○':'×'}）— 高複利は80%級暴落を通過する(Bessembinder)。生き延びる構造の有無</div></div>`;
   if(!rakOK)ts.innerHTML+=`<div class="flag f-cut"><i>✕</i><div>楽天証券で取引不可</div></div>`;
   let act,acls;
+  const noPrice=!(per>0)&&!(ev>0); // v9.7: 倍率(PER/EV-EBIT)が皆無なら間は判定不能——「今 買える」を点灯させない(ブレーキは"高い証拠"で作動する設計ゆえ、無データ=素通りになる穴を塞ぐ。pxだけでは判定不能)
   if(kills.length){act='見送り（足切り）';acls='act-no';} // v9.2検証: キル銘柄は価格以前の問題。「今 買える」表示の矛盾を解消
   else if(!rakOK){act='取引不可';acls='act-no';}
+  else if(noPrice){act='価格未入力';acls='act-wait';}
   else if(wait){act='押し目待ち';acls='act-wait';}
   else{act='今 買える';acls='act-buy';}
   $('actV').textContent=act;$('actV').className='duo-v '+acls;
-  $('actS').textContent=kills.length?'足切り抵触——価格以前の問題':wait?`PER${per}/EV-EBIT${ev}${peg!=null?'/PEG'+peg.toFixed(1):''}（高値）`:rakOK?(pegCheap?'成長対比で割安・取引可':'価格・取引とも可'):'取引不可';
+  $('actS').textContent=kills.length?'足切り抵触——価格以前の問題':(!rakOK)?'取引不可':noPrice?'PER・株価が未入力——価格を入れるまで間は判定しない':wait?`PER${per}/EV-EBIT${ev}${peg!=null?'/PEG'+peg.toFixed(1):''}（高値）`:(pegCheap?'成長対比で割安・取引可':'価格・取引とも可');
 
   // ===== v9.1 出口判定(保有者向け・長期保有バイアス) =====
   const posV=($('pos')&&$('pos').value)?parseFloat($('pos').value)||0:0;
