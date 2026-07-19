@@ -596,7 +596,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
 
   <div class="lens" style="border-color:#779">
    <div class="lh"><span class="ln">IPS — ポートフォリオ構築と行動規律（段階1・2026-07-12制定）</span></div>
-   <p class="ld"><b>①ポジションサイジング（スコア階層+クォーターKelly上限）</b>——対象は<b>act=「今 買える」かつ総合80+のみ</b>（「買える」≠「買うべき」: 価格ゲートが開いても質80未満は投下対象外）。目標ウェイト: <b>質85+＝8%</b>（単一銘柄上限・クォーターKelly相当。フルKellyは50-80%DDを生むため1/4に抑制）／<b>83〜85＝5%</b>／<b>80〜83＝3%</b>。合計>100%なら比例縮小、<b>未満なら残余＝現金</b>——点灯が少ない市況ほど自動的に現金が積み上がる（門の慎重さを現金比率に直結）。コア銘柄数の目安20〜30（Cohen-Polk-Silli「Best Ideas」集中プレミアム年+2.8〜4.5%とBessembinder歪度への分散要請の均衡点）。<br>
+   <p class="ld"><b>①ポジションサイジング（スコア階層+クォーターKelly上限）</b>——対象は<b>act=「今 買える」かつ総合75+のみ</b>（「買える」≠「買うべき」: 価格ゲートが開いても質75未満は投下対象外）。目標ウェイト: <b>質80+＝8%</b>（単一銘柄上限・クォーターKelly相当。フルKellyは50-80%DDを生むため1/4に抑制）／<b>77〜80＝5%</b>／<b>75〜77＝3%</b>。合計>100%なら比例縮小、<b>未満なら残余＝現金</b>——点灯が少ない市況ほど自動的に現金が積み上がる（門の慎重さを現金比率に直結）。コア銘柄数の目安20〜30（Cohen-Polk-Silli「Best Ideas」集中プレミアム年+2.8〜4.5%とBessembinder歪度への分散要請の均衡点）。<br>
    <b>②行動コミットメント（Ulysses契約）</b>——新規点灯時: (i)<b>48時間クーリングオフ</b>（点灯は恐怖局面に集中するため衝動と規律を分離）、(ii)初回投下は目標ウェイトの<b>1/2</b>・残りは次回決算で質維持を確認後、(iii)買い前に<b>弱気ケース1行</b>（この投資が間違いと判明する条件）をmemoに必須記録。<br>
    <b>③売却規律（段階2実装済み・非対称設計）</b>——価格起因のドローダウンは売却理由としない（トップ6複利銘柄の平均最大DD80.3%・中央値銘柄-85%、Mauboussin-Callahan 2025。パニック局面の売却は最悪、Daniel-Moskowitz）。出口判定は採点機が自動表示: <b>S1全売却検討</b>＝キル発生・スプレッド陥落・disrupt=threat・三本柱陥落／<b>S2縮小検討</b>＝質スコア3期連続低下(hist欄)・キル前夜帯(nde&gt;3, Z''&lt;1.8, スプレッド&lt;3pt＝Intel型早期警告)・erosion=active・ROIC×(粗利orシェア)同時劣化(手入力再評価の強制起動)・F&lt;86・堀軌道反転・FCF転換&lt;65／<b>S3記録のみ</b>＝2期連続低下警告・g*過熱・保有比率超過。株価変動・空売りレポート・単四半期ミス・act変化は売却理由に<b>ならない</b>。<br>
    <b>④ターンアラウンド救済の判定基準（明文化）</b>——「営業利益率>25%かつROIC≥20%」は<b>GAAP TTM基準</b>。ただし一時的減損（のれん減損・リストラ等の非経常項目）による単年低下は調整後で判定可（例: MSFT FY2015はNokia減損でGAAP営利19.4%・調整後30.1%——救済維持が正）。調整判定の使用時はmemoに根拠を必須記録。</p>
@@ -1555,15 +1555,15 @@ function compute(){
   let gtier,tcls;
   if(misread){gtier='採点不能・要手調整';tcls='dv-c';}
   else if(kills.length){gtier='回避：失格';tcls='dv-c';}
-  else if(evalScore>=85){gtier='最上位ティア';tcls='dv-s';}
-  else if(evalScore>=75){gtier='堅実ティア';tcls='dv-a';}
+  else if(evalScore>=80){gtier='最上位ティア';tcls='dv-s';}
+  else if(evalScore>=72){gtier='堅実ティア';tcls='dv-a';}
   else{gtier='回避ティア';tcls='dv-c';}
   $('gradeV').textContent=gtier;$('gradeV').className='duo-v '+tcls;
   $('gradeS').textContent=misread?'GAAP入力が嘘をつく業態':`内部値 ${evalScore.toFixed(0)}（順位でなく階層で読む）`;
   $('evWhy').innerHTML = misread?`<b>採点不能。</b>${misreadMsg} ゆえGAAP入力が実態を表さない。門は通常スコアを出さない——非GAAP/正規化で別建て採点せよ。`
     : kills.length?`<b>回避：失格。</b>足切り該当（持つな）。`
-    : evalScore>=85?`<b>最上位ティア。</b>質・持続・未来とも高水準。<u>このティア内の小数差に意味はない</u>——選別は「間（価格）」が行う。${pfail.length?`（${pfail.join('・')}柱に弱さ・段階減点済）`:''}`
-    : evalScore>=75?`<b>堅実ティア。</b>優良だが最上位には一段足りない。${pfail.length?`${pfail.join('・')}柱の弱さが効いている。`:''}`
+    : evalScore>=80?`<b>最上位ティア。</b>質・持続・未来とも高水準。<u>このティア内の小数差に意味はない</u>——選別は「間（価格）」が行う。${pfail.length?`（${pfail.join('・')}柱に弱さ・段階減点済）`:''}`
+    : evalScore>=72?`<b>堅実ティア。</b>優良だが最上位には一段足りない。${pfail.length?`${pfail.join('・')}柱の弱さが効いている。`:''}`
     : `<b>回避ティア。</b>${pfail.length?`${pfail.join('・')}柱が基準を下回る。`:'質が基準に届かない。'}`;
 
   // TIMING (price only) — never touches evaluation. v7: PEG_adj = PER ÷ (growth + shareholder yield)
@@ -1709,7 +1709,7 @@ function compute(){
   if(!ex)ex=`<div class="flag f-ok"><i>出</i><div><b>出口判定：ホールド。</b>「何もしない」が能動的判断。株価変動・空売りレポート(クラスC)・単四半期ミスは売却理由にならない。</div></div>`;
   ts.innerHTML+=`<div style="margin-top:8px;border-top:1px dashed rgba(128,128,128,.4);padding-top:6px"><div class="tag-line" style="opacity:.7">出口判定 v9.1（保有者向け——想定保有期間：無期限）</div>${ex}</div>`;
 
-  const tierShort=misread?'手調整':kills.length?'失格':evalScore>=85?'最上位':evalScore>=75?'堅実':'回避';
+  const tierShort=misread?'手調整':kills.length?'失格':evalScore>=80?'最上位':evalScore>=72?'堅実':'回避';
   return {evalScore:evalScore.toFixed(1),grade:eg,tier:gtier,tierShort,tcls,act,acls,kills:kills.length,pfail:pfail.length,misread};
 }
 document.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',compute));
@@ -2085,7 +2085,7 @@ async function renderHoldings(items,holdSet){
   if(!held.length){box.innerHTML='<div style="font-size:13px;color:var(--dim);padding:24px;text-align:center;border:1px dashed var(--line);border-radius:12px">保有中の銘柄はまだ登録されていない。<br>「Ⅳ台帳」で銘柄カードの「□」を押すと保有中に追加され、ここに出口判定が表示される。</div>';return;}
   const rank={s1:0,s2:1,s3:2,hold:3};
   const rows=held.map(it=>({it,ex:exitVerdict(it.d||{},it)})).sort((a,b)=>rank[a.ex.level]-rank[b.ex.level]);
-  const isAdd=(r)=>!!(r.it&&(r.it.evalScore>=80)&&(r.it.act==='今 買える')&&(r.ex.level==='hold'||r.ex.level==='s3'));
+  const isAdd=(r)=>!!(r.it&&(r.it.evalScore>=75)&&(r.it.act==='今 買える')&&(r.ex.level==='hold'||r.ex.level==='s3'));
   const addList=rows.filter(isAdd).map(r=>r.it.nm);
   // 信号色設定: [ラベル, 枠色, アイコン背景, 絵文字, 大見出し]
   const cfg={
@@ -2235,28 +2235,28 @@ async function renderPlan(){
     // 優先度 = 格×0.7 + 余地×0.3(0-100正規化) − 保留5pt
     const roomPt=room==null?50:Math.max(0,Math.min(100,50+room));
     const prio=s*0.7+roomPt*0.3-hold*5;
-    const layer=s>=85?0:s>=80?1:s>=75?2:3;
+    const layer=s>=80?0:s>=77?1:s>=75?2:3;
     return {nm:it.d.nm||it.k.slice(3),s,act,memo,room,hold,prio,layer,tier:it.r.tierShort||it.r.grade};
   });
   const lcol=['var(--gold-bright)','var(--jade)','var(--steel)'];
-  const lname=['85+ 城の中核','80–85 城の正規','75–80 監視枠（保有しない）'];
+  const lname=['80+ 城の中核（8%）','77–80 城の正規（5%）','75–77 城の外郭（3%）'];
   let html='';
-  // 買える(layer 0/1)を統合し優先度順に番号付け
-  const buys=rows.filter(r=>r.layer<=1&&r.act==='今 買える').sort((a,b)=>(b.s-a.s)||((b.room||0)-(a.room||0)));
+  // 買える(layer 0/1/2=8/5/3%の三held層)を統合し優先度順に番号付け
+  const buys=rows.filter(r=>r.layer<=2&&r.act==='今 買える').sort((a,b)=>(b.s-a.s)||((b.room||0)-(a.room||0)));
   if(buys.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px">今買える——優先順位</h2>`;
     html+=buys.map((r,i)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${i+1}位</b></span><span class="ln">${r.nm}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span><span style="font-size:11.5px;color:var(--muted);white-space:nowrap">${r.room!=null?`余地+${r.room.toFixed(0)}%`:'余地不明'}</span></div>`).join('');
-  } else html+=`<div style="color:var(--dim);font-size:13px;margin:10px 0">80点以上で「今買える」銘柄なし——押し目監視と網（ETF）へ。</div>`;
-  // 押し目待ち(80+): 転換時の予約順位
-  const waits=rows.filter(r=>r.layer<=1&&r.act==='押し目待ち').sort((a,b)=>(b.s-a.s)||((b.room||0)-(a.room||0)));
+  } else html+=`<div style="color:var(--dim);font-size:13px;margin:10px 0">75点以上で「今買える」銘柄なし——押し目監視と網（ETF）へ。</div>`;
+  // 押し目待ち(75+): 転換時の予約順位
+  const waits=rows.filter(r=>r.layer<=2&&r.act==='押し目待ち').sort((a,b)=>(b.s-a.s)||((b.room||0)-(a.room||0)));
   if(waits.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px">押し目待ち——転換したら上位に割込む順</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">買い転換の距離はⅢの押し目監視参照。転換した銘柄は再採点で自動的に上の表へ移る。</div>`;
     html+=waits.map((r,i)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]};opacity:.85"><span style="font-size:13px;color:var(--muted);min-width:34px">待${i+1}</span><span class="ln">${r.nm}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span><span style="font-size:11px;color:#5d8cc2">押し目待ち</span></div>`).join('');
   }
-  // 監視枠(75-80)
-  const watch=rows.filter(r=>r.layer===2).sort((a,b)=>b.s-a.s);
+  // 監視枠(72-75 堅実だが投下閾値未満): 保有しない・75超えで昇格
+  const watch=rows.filter(r=>r.s>=72&&r.s<75).sort((a,b)=>b.s-a.s);
   if(watch.length){
-    html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px">監視枠 75–80——<span style="color:var(--rust)">保有しない</span>・80超えで昇格</h2>`;
+    html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px">監視枠 72–75——<span style="color:var(--rust)">保有しない</span>・75超えで昇格</h2>`;
     html+=watch.map(r=>`<div class="led" style="border-left:3px solid ${lcol[2]};opacity:.6"><span class="ln">${r.nm}</span><span class="grade" style="color:var(--steel)">${r.s}</span><span style="font-size:11px;color:var(--muted)">${r.act}</span></div>`).join('');
   }
   html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8">順位＝<b>格の純粋順</b>（同点は間の余地で決着）。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。</div>`;
