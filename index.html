@@ -725,7 +725,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
     <div class="row"><div class="rl">5年窓ROIIC<span class="h">v9.1：3年窓がサイクルピーク跨ぎでキルされた場合のみ必須。5年窓≥WACCならキル保留→アンバー−6に緩和</span></div><div class="rc"><input type="text" id="roiic5" value="" placeholder="na" style="width:90px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px;text-align:right"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">直近5年に大型買収<span class="h">v9.1：「なし」なら、のれん乖離アンバーを免除（Visa Europe型の遺産のれん誤爆防止）。roicg&lt;WACCの−8は免除されない</span></div><div class="rc"><select id="acq5"><option value="yes" selected>あり（乖離チェック有効）</option><option value="no">なし（遺産のれん＝免除）</option></select></div></div>
     <div class="row"><div class="rl">純有利子負債 / EBITDA<span class="h">2.5〜4で段階減点、&gt;4 で論外</span></div><div class="rc"><input type="number" id="nde" step="0.1" value="1.0"><span class="u">x</span></div></div>
-    <div class="row"><div class="rl">Altman Z''<span class="h">非製造業対応版：6.56X1+3.26X2+6.72X3+1.05X4。&lt;1.1論外、1.1〜2.6警戒帯</span></div><div class="rc"><input type="number" id="z" step="0.1" value="8.0"></div></div>
+    <div class="row"><div class="rl">Altman Z''<span class="h">非製造業対応版：6.56X1+3.26X2+6.72X3+1.05X4。&lt;1.1論外、1.1〜2.6警戒帯</span></div><div class="rc"><input type="number" id="z" step="0.1" value=""></div></div>
     <div class="row"><div class="rl">粗利益/総資産 GP/A<span class="h">Novy-Marx品質。&lt;15%で過去門減点</span></div><div class="rc"><input type="number" id="gpa" step="0.1" value="30"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">アクルーアル比率<span class="h">(純利益−営業CF)÷総資産。&gt;+10%で会計警戒（利益に現金裏付けなし）</span></div><div class="rc"><input type="number" id="accr" step="0.1" value="-5"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">会計基準</div><div class="rc"><select id="acc"><option value="usgaap" selected>US-GAAP</option><option value="ifrs">IFRS</option><option value="jgaap">日本基準</option></select></div></div>
@@ -818,7 +818,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
   <!-- ===== TIMING (price) — completely separate ===== -->
   <div class="block">
     <div class="bh"><span class="ix serif">間</span><span class="bt">今買えるか（評価とは別レイヤー）</span><span class="bn">弾くだけ・格を動かさない</span></div>
-    <div class="row"><div class="rl">実績PER<span class="h">&gt;50 で論外（防波堤）</span></div><div class="rc"><input type="number" id="per" step="0.1" value="25"><span class="u">x</span></div></div>
+    <div class="row"><div class="rl">実績PER<span class="h">&gt;50 で論外（防波堤）</span></div><div class="rc"><input type="number" id="per" step="0.1" value=""><span class="u">x</span></div></div>
     <div class="row"><div class="rl">フォワードPER<span class="h">v9.1：入力すると gr＝(実績PER÷フォワードPER−1)×100 を機械算出し手入力grを上書き。算出方法を1本化</span></div><div class="rc"><input type="number" id="perF" step="0.1" value=""><span class="u">x</span></div></div>
     <div class="row"><div class="rl">実力成長 g_cap<span class="h">v9逆DCF用：コンセンサス5年成長%と過去5年実績FCF成長CAGRの低い方。na/空欄ならgrで暫定代用</span></div><div class="rc"><input type="text" id="gcap" value=""><span class="u">%</span></div></div>
     <div class="row"><div class="rl">保有比率<span class="h">v9.1出口判定用：ポートフォリオに占める本銘柄の比率。未保有は空欄</span></div><div class="rc"><input type="number" id="pos" step="0.1" value=""><span class="u">%</span></div></div>
@@ -826,8 +826,8 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
     <div class="row"><div class="rl">TTM EPS<span class="h">v9.1検証層：現値とセットで入力</span></div><div class="rc"><input type="number" id="eps" step="0.01" value=""><span class="u">通貨</span></div></div>
     <div class="row"><div class="rl">データ取得日<span class="h">v9.1検証層：YYYY-MM-DD</span></div><div class="rc"><input type="text" id="ddate" value="" placeholder="2026-07-05" style="width:120px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px;text-align:right"></div></div>
     <div class="row"><div class="rl">直近決算発表日<span class="h">v9.1検証層：取得日がこれより前なら決算未反映の警告</span></div><div class="rc"><input type="text" id="erdate" value="" placeholder="2026-04-29" style="width:120px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px;text-align:right"></div></div>
-    <div class="row"><div class="rl">EV/EBIT<span class="h">ROIC次第で許容変動</span></div><div class="rc"><input type="number" id="evebit" step="0.1" value="22"><span class="u">x</span></div></div>
-    <div class="row"><div class="rl">予想EPS成長率<span class="h">stockanalysis.comのForwardコンセンサス限定。取得不能なら空欄=na（過去CAGR代用禁止）</span></div><div class="rc"><input type="text" id="gr" value="12" style="width:90px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px;text-align:right"><span class="u">%</span></div></div>
+    <div class="row"><div class="rl">EV/EBIT<span class="h">ROIC次第で許容変動</span></div><div class="rc"><input type="number" id="evebit" step="0.1" value=""><span class="u">x</span></div></div>
+    <div class="row"><div class="rl">予想EPS成長率<span class="h">stockanalysis.comのForwardコンセンサス限定。取得不能なら空欄=na（過去CAGR代用禁止）</span></div><div class="rc"><input type="text" id="gr" value="" style="width:90px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px;text-align:right"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">株主還元利回り<span class="h">配当+自社株買い利回り。PEG_adj＝PER÷(成長+還元)——高ROIC低成長企業の過小評価を補正</span></div><div class="rc"><input type="number" id="shy" step="0.1" value="0"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">楽天証券で取引可</div><div class="rc"><select id="rak"><option value="yes">可</option><option value="no">不可</option></select></div></div>
     <div class="flags" id="timeSig"></div>
@@ -1736,7 +1736,8 @@ function genPrompt(){
 
 【ROIIC³】roiic=直近3年の累計ΔNOPAT÷同期間の累計新規投下資本(capex−減価償却+買収額+ΔNWC)。<b>分母が3年NOPAT合計の10%未満（実質無再投資の成熟還元型）なら"na"と返す。単年値は使うな——分母の暴れで数百%の異常値が出る。</b><b>v9.1追加：3年窓の起点がサイクルピーク年（直近ピーク比で当期NOPATが下回る等）に当たる場合はroiic5＝5年窓ROIICも必ず算出して返す。それ以外はroiic5は"na"でよい。</b>
 
-【v9.1検証フィールド（全銘柄必須）】px=現値、eps=TTM実績EPS（pxと同通貨）、perF=フォワードPER（stockanalysis表示値）、ddate=データ取得日(YYYY-MM-DD)、erdate=直近決算発表日(YYYY-MM-DD)、acq5=直近5年に取得価額が総資産5%超の買収があれば"yes"なければ"no"。gcap=アナリストコンセンサス5年EPS/FCF成長率%と過去5年実績FCF成長CAGR%の低い方（v9逆DCF用の実力成長上限。取れなければ"na"）。<b>perは必ず px÷eps と突合してから返せ——株式分割・株価鮮度の事故防止。</b>
+【v9.1検証フィールド（全銘柄必須）】px=現値、eps=TTM実績EPS（pxと同通貨）、perF=フォワードPER（stockanalysis表示値）、ddate=データ取得日(YYYY-MM-DD)、erdate=直近決算発表日(YYYY-MM-DD)、acq5=直近5年に取得価額が総資産5%超の買収があれば"yes"なければ"no"。
+【v9.9発見度（Neglect・全銘柄必須）】analysts=カバーするアナリスト数（レーティング数合計）、instOwn=機関投資家保有%（100超の異常値は空欄）、mcap=時価総額（十億ドル単位）。小型優良の発見度加点に使う——取れなければ空欄（0でなく）。gcap=アナリストコンセンサス5年EPS/FCF成長率%と過去5年実績FCF成長CAGR%の低い方（v9逆DCF用の実力成長上限。取れなければ"na"）。<b>perは必ず px÷eps と突合してから返せ——株式分割・株価鮮度の事故防止。</b>
 
 【Z''】z=Altman Z''（非製造業対応版）: 6.56×(運転資本/総資産)+3.26×(利益剰余金/総資産)+6.72×(EBIT/総資産)+1.05×(自己資本簿価/総負債)。旧Zでなく必ずZ''で計算。
 
@@ -1774,7 +1775,7 @@ erosion=主力事業で過去2年に大口顧客の離反・競合参入(none/em
  "fcf":,"ni":,
  "p1":,"p2":,"p3":,"p4":,
  "f1":,"f2":,"f3":,"f4":,"f5":,
- "per":,"perF":,"px":,"eps":,"ddate":"YYYY-MM-DD","erdate":"YYYY-MM-DD","evebit":,"gr":,"shy":,"rak":"yes/no"
+ "per":,"perF":,"px":,"eps":,"ddate":"YYYY-MM-DD","erdate":"YYYY-MM-DD","evebit":,"gr":,"shy":,"analysts":,"instOwn":,"mcap":,"rak":"yes/no"
 }`;
   $('promptout').value=p;
   $('promptout').style.height='auto';
