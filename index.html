@@ -2249,7 +2249,13 @@ async function renderPlan(){
     const roomPt=room==null?50:Math.max(0,Math.min(100,50+room));
     const prio=s*0.7+roomPt*0.3-hold*5;
     const layer=s>=80?0:s>=77?1:s>=75?2:3;
-    return {nm:it.d.nm||it.k.slice(3),s,act,memo,room,hold,prio,layer,tier:it.r.tierShort||it.r.grade};
+    // 期待CAGR(簡易・表示のみ／門の序列・採点には不介入): min(成長CAGR,12%) + 還元shy + PER25超の10年剥落。
+    //   成長キャップ12%=「高成長の恒久化を信じない」保守。予測でなく「指数(6-7%)を超える算段が立つか」の目安。
+    //   IPSの弾き線は9%(指数+2pt)。データ欠損時は非表示。
+    const cagrV=num(it.d.cagr);
+    let ecagr=null;
+    if(cagrV>0&&per>0){const g=Math.min(cagrV,12);const drag=per>25?(Math.pow(25/per,0.1)-1)*100:0;ecagr=g+shy+drag;}
+    return {nm:it.d.nm||it.k.slice(3),s,act,memo,room,hold,prio,layer,ecagr,tier:it.r.tierShort||it.r.grade};
   });
   const lcol=['var(--gold-bright)','var(--jade)','var(--steel)'];
   const lname=['80+ 城の中核（8%）','77–80 城の正規（5%）','75–77 城の外郭（3%）'];
@@ -2258,13 +2264,13 @@ async function renderPlan(){
   const buys=rows.filter(r=>r.layer<=2&&r.act==='今 買える').sort((a,b)=>(b.s-a.s)||((b.room||0)-(a.room||0)));
   if(buys.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px">今買える——優先順位</h2>`;
-    html+=buys.map((r,i)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${i+1}位</b></span><span class="ln">${r.nm}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span><span style="font-size:11.5px;color:var(--muted);white-space:nowrap">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span></div>`).join('');
+    html+=buys.map((r,i)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${i+1}位</b></span><span class="ln">${r.nm}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span><span style="font-size:11.5px;white-space:nowrap;color:${r.ecagr==null?'var(--dim)':r.ecagr>=9?'var(--jade)':'var(--rust)'}">${r.ecagr!=null?`期待${r.ecagr.toFixed(0)}%${r.ecagr<9?'⚠':''}`:''}</span><span style="font-size:11.5px;color:var(--muted);white-space:nowrap">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span></div>`).join('');
   } else html+=`<div style="color:var(--dim);font-size:13px;margin:10px 0">75点以上で「今買える」銘柄なし——押し目監視と網（ETF）へ。</div>`;
   // 押し目待ち(75+): 転換時の予約順位
   const waits=rows.filter(r=>r.layer<=2&&r.act==='押し目待ち').sort((a,b)=>(b.s-a.s)||((b.room||0)-(a.room||0)));
   if(waits.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px">押し目待ち——転換したら上位に割込む順</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">買い転換の距離はⅢの押し目監視参照。転換した銘柄は再採点で自動的に上の表へ移る。</div>`;
-    html+=waits.map((r,i)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]};opacity:.85"><span style="font-size:13px;color:var(--muted);min-width:34px">待${i+1}</span><span class="ln">${r.nm}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span><span style="font-size:11px;color:#5d8cc2">押し目待ち</span></div>`).join('');
+    html+=waits.map((r,i)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]};opacity:.85"><span style="font-size:13px;color:var(--muted);min-width:34px">待${i+1}</span><span class="ln">${r.nm}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span><span style="font-size:11px;white-space:nowrap;color:${r.ecagr==null?'var(--dim)':r.ecagr>=9?'var(--jade)':'var(--dim)'}">${r.ecagr!=null?`現値なら期待${r.ecagr.toFixed(0)}%`:''}</span><span style="font-size:11px;color:#5d8cc2">押し目待ち</span></div>`).join('');
   }
   // 監視枠(72-75 堅実だが投下閾値未満): 保有しない・75超えで昇格
   const watch=rows.filter(r=>r.s>=72&&r.s<75).sort((a,b)=>b.s-a.s);
@@ -2272,7 +2278,7 @@ async function renderPlan(){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px">監視枠 72–75——<span style="color:var(--rust)">保有しない</span>・75超えで昇格</h2>`;
     html+=watch.map(r=>`<div class="led" style="border-left:3px solid ${lcol[2]};opacity:.6"><span class="ln">${r.nm}</span><span class="grade" style="color:var(--steel)">${r.s}</span><span style="font-size:11px;color:var(--muted)">${r.act}</span></div>`).join('');
   }
-  html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8">順位＝<b>格の純粋順</b>（同点は間の余地で決着）。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。</div>`;
+  html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8">順位＝<b>格の純粋順</b>（同点は間の余地で決着）。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。<br><b>期待%</b>＝簡易期待CAGR（min(成長CAGR,12) + 還元shy − PER25超の10年剥落＝高成長の恒久化を信じない保守式）。<span style="color:var(--rust)">⚠＝9%未満（指数+2ptの弾き線割れ）→投下せず網へ回す候補</span>。予測でなく目安——順位・採点には一切影響しない。データ欠損時は非表示。</div>`;
   pb.innerHTML=html;
 }
 // ========== v9.1: .icsカレンダー書き出し ==========
