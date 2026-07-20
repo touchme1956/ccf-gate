@@ -16,11 +16,15 @@ kaibutsu_scan.py v1 — 怪物の門・点火スキャナー（NVIDIA型の複�
 規模:   直近4四半期売上の合計（年商）で 微<$0.3B / 小<$1.5B / 中<$8B / 大≥$8B に分類。
         同じ判定内では小さい順に並ぶ（怪物は小さいうちに拾うのが本旨）。時価総額でなく
         年商基準なのは、価格APIなしで全自動にするため。非USD決算は現地通貨表記。
-出力:   kaibutsu_queue.json（点火→くすぶり→待機の順・審査待ち）
+出力:   kaibutsu_queue.json（点火→点火B→くすぶり→待機の順・審査待ち）
         out/kaibutsu_report.txt（人間が読む報告）
-判定:   点火     = YoY加速2連続 ∧ 最新YoY ≥ +25% ∧ 営業利益率 前年同期比 ≥ +2pt
-        くすぶり = YoY加速（1回以上） ∧ 最新YoY ≥ +15%
+判定:   点火     = YoY加速2連続 ∧ 最新YoY ≥ +25% ∧ 営業利益率 前年同期比 ≥ +2pt（売上加速型・NVIDIA型）
+        点火B    = 営業利益率 前年同期比+2pt以上が2四半期連続 ∧ 最新YoY ≥ +10%（利益率階段型・
+                   Amazon2015/Microsoft2017/Axon/Celsius2019型。18社遡及テストで実証）
+        くすぶり = YoY加速∧YoY≥+15%、または 営利率+2ptが1四半期（B予鳴り）∧YoY≥+10%
         待機     = それ以外
+集団発火: 同一走査で点火(A+B)が有効データの30%以上を占めたら「マクロ点火の疑い」を報告に明記
+        （2021年コロナ反動型＝ベータの一斉発火をアルファと誤認しないための割引）
 注意:   点火銘柄は「買い」ではない。門Ω（index.html）の審査に回し、サイズは門X
         （chomirai.html）の無知の枠（資本の5〜10%・全損前提・¼ケリー上限）で縛ること。
         SECレート制限(10req/s)遵守。User-Agentメール設定済み。
@@ -153,23 +157,35 @@ def ignition(t, cik):
     for i in range(len(ys)-1, 0, -1):
         if ys[i][1] > ys[i-1][1]: accel += 1
         else: break
-    opm_d = None
-    e = ys[-1][0]
-    d1 = date.fromisoformat(e)
-    prior = None; bestgap = 26
-    for p in sorted(rev):
-        if p >= e: break
-        gap = abs((d1 - date.fromisoformat(p)).days - 365)
-        if gap < bestgap: prior, bestgap = p, gap
-    if prior and op.get(e) is not None and op.get(prior) is not None and rev.get(prior):
-        opm_d = round(op[e]/rev[e]*100 - op[prior]/rev[prior]*100, 1)
+
+    def dopm_at(e):
+        """四半期eの営業利益率の前年同期差(pt)"""
+        d1 = date.fromisoformat(e)
+        prior = None; bestgap = 26
+        for p in sorted(rev):
+            if p >= e: break
+            gap = abs((d1 - date.fromisoformat(p)).days - 365)
+            if gap < bestgap: prior, bestgap = p, gap
+        if prior and op.get(e) is not None and op.get(prior) is not None and rev.get(prior) and rev.get(e):
+            return round(op[e]/rev[e]*100 - op[prior]/rev[prior]*100, 1)
+        return None
+
+    dopms = [dopm_at(e) for e, _ in ys]
+    opm_d = dopms[-1]
+    b_streak = 0                                       # ΔOPM≥+2pt の連続数（直近から遡る）
+    for i in range(len(dopms)-1, -1, -1):
+        if dopms[i] is not None and dopms[i] >= 2: b_streak += 1
+        else: break
+
     if accel >= 2 and yoy >= 25 and (opm_d is not None and opm_d >= 2):
-        v = "点火"
-    elif accel >= 1 and yoy >= 15:
+        v = "点火"                                     # A: 売上加速型（NVIDIA型）
+    elif b_streak >= 2 and yoy >= 10:
+        v = "点火B"                                    # B: 利益率階段型（Amazon/Microsoft型）
+    elif (accel >= 1 and yoy >= 15) or (b_streak == 1 and yoy >= 10):
         v = "くすぶり"
     else:
         v = "待機"
-    return {"verdict": v, "yoy": yoy, "accel": accel, "opm_d": opm_d,
+    return {"verdict": v, "yoy": yoy, "accel": accel, "opm_d": opm_d, "b_streak": b_streak,
             "trail": [f"{e[:7]}:{y:+.0f}%" for e, y in trail], "rev_ttm": ttm, "size": size}
 
 # ---------------- 主処理 ----------------
@@ -192,7 +208,7 @@ def main():
         print(f"=== 怪物の門 {date.today()}: 署名上位{len(cands)}社（母集団 gate0_all.csv） → 点火検知 ===")
 
     cmap = cik_map()
-    order = {"点火": 0, "くすぶり": 1, "待機": 2, "古い開示": 3, "四半期開示なし": 4, "失敗": 5}
+    order = {"点火": 0, "点火B": 1, "くすぶり": 2, "待機": 3, "古い開示": 4, "四半期開示なし": 5, "失敗": 6}
     results = []
     for c in cands:
         t = c["ticker"]
@@ -205,10 +221,18 @@ def main():
                  "trail": [], "rev_ttm": None, "size": None, "err": str(e)[:80]}
         c.update(r)
         results.append(c)
-        mark = {"点火": "🔥", "くすぶり": "…", "待機": "  "}.get(r["verdict"], "×")
+        mark = {"点火": "🔥", "点火B": "🔶", "くすぶり": "…", "待機": "  "}.get(r["verdict"], "×")
         sz = f"{r['size']}(${r['rev_ttm']/1e9:.1f}B{'' if c.get('ccy') in ('USD','') else ' '+c['ccy']})" if r.get("rev_ttm") else "?"
         print(f" {mark} {t:<6} {r['verdict']:<4} 規模{sz:<14} YoY {str(r['yoy'])+'%':>8} 加速{r['accel']}連続 "
-              f"営利差 {str(r['opm_d'])+'pt':>8}  {' '.join(r['trail'])}")
+              f"営利差 {str(r['opm_d'])+'pt':>8} B連続{r.get('b_streak',0)}  {' '.join(r['trail'])}")
+
+    # 集団発火フィルタ: 有効データ中の点火(A+B)比率が高い＝マクロの一斉点火の疑い(2021年型)
+    scanned = [c for c in results if c["verdict"] in ("点火","点火B","くすぶり","待機")]
+    fires   = [c for c in results if c["verdict"] in ("点火","点火B")]
+    macro = len(scanned) >= 10 and len(fires) / len(scanned) >= 0.30
+    macro_note = (f"⚠ 集団発火の疑い: 有効{len(scanned)}社中{len(fires)}社が点火。市場全体の反動(ベータ)の"
+                  f"可能性が高く、個別のアルファとして扱わないこと" if macro else "")
+    if macro: print(f"\n{macro_note}")
 
     if max_rev is not None:
         before = len(results)
@@ -219,23 +243,28 @@ def main():
     results.sort(key=lambda x: (order.get(x["verdict"], 9),
                                 size_ord.get(x.get("size"), 4), -(x["sig"] or 0)))
     json.dump({"asof": str(date.today()), "note": "審査待ち。点火銘柄は門Ω審査→門Xのサイズ規律へ。台帳データではない。",
+               "macro_fire": macro_note or None,
                "queue": results}, open(OUTQ, "w"), ensure_ascii=False, indent=1)
 
     os.makedirs(os.path.dirname(OUTR), exist_ok=True)
     with open(OUTR, "w") as f:
         f.write(f"怪物の門 点火報告 {date.today()}\n")
-        f.write("判定: 点火=YoY加速2連続∧YoY≥25%∧営利率+2pt / くすぶり=加速∧YoY≥15%\n")
+        f.write("判定: 点火=YoY加速2連続∧YoY≥25%∧営利率+2pt(売上加速型) / "
+                "点火B=営利率+2pt×2Q連続∧YoY≥10%(利益率階段型) / くすぶり=どちらかの予鳴り\n")
         f.write("規模: 年商(直近4Q売上) 微<$0.3B/小<$1.5B/中<$8B/大≥$8B。同判定内は小さい順。\n")
-        f.write("点火銘柄は買いではない。門Ω審査→門X(無知の枠5-10%・¼ケリー)で縛る。\n\n")
+        f.write("点火銘柄は買いではない。門Ω審査→門X(無知の枠5-10%・¼ケリー)で縛る。\n")
+        if macro_note: f.write(macro_note + "\n")
+        f.write("\n")
         for c in results:
             sz = f"{c['size']} ${c['rev_ttm']/1e9:.1f}B" if c.get("rev_ttm") else "規模?"
             f.write(f"[{c['verdict']}] {c['ticker']:<6} {sz:<10} 署名{c['sig']}点 "
                     f"CAGR5 {c['cagr5']}% ROIC {c['roic']}% OPM {c['opm']}% | "
-                    f"YoY {c['yoy']}% 加速{c['accel']}連続 営利差 {c['opm_d']}pt | "
+                    f"YoY {c['yoy']}% 加速{c['accel']}連続 営利差 {c['opm_d']}pt B連続{c.get('b_streak',0)} | "
                     f"{' '.join(c['trail'])} {c.get('err','')}\n")
-    fire = [c["ticker"] for c in results if c["verdict"] == "点火"]
+    fireA = [c["ticker"] for c in results if c["verdict"] == "点火"]
+    fireB = [c["ticker"] for c in results if c["verdict"] == "点火B"]
     smo  = [c["ticker"] for c in results if c["verdict"] == "くすぶり"]
-    print(f"\n点火 {len(fire)}社: {fire or 'なし'}\nくすぶり {len(smo)}社: {smo or 'なし'}")
+    print(f"\n点火A {len(fireA)}社: {fireA or 'なし'}\n点火B {len(fireB)}社: {fireB or 'なし'}\nくすぶり {len(smo)}社: {smo or 'なし'}")
     print(f"出力: {os.path.basename(OUTQ)} / out/kaibutsu_report.txt")
     print("点火銘柄は hachimon_fetch.py で採取 → 門Ω審査 → 門Xのサイズ規律へ。")
 

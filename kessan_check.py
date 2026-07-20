@@ -6,6 +6,8 @@ kessan_check.py v1 — 保有銘柄の四半期決算チェッカー（門の四
         python kessan_check.py NVDA MSFT  … 指定銘柄のみ
 出力:   out/kessan/{T}_qcheck.txt（数値+警報スニペット） と 画面のサマリー表
 判定:   売上YoY<-5% / 営業利益率が前年同期比-3pt超の悪化 / 誠・限・ガイダンス系の警報ヒット → 要審査
+吉報:   新セグメント開示・大手流通契約のキーワード(吉S字/吉流通)は警報でなく「☀吉報」として表示。
+        怪物列伝の分析より、最大の上昇は保有銘柄の「第二S字」から始まることが多い(iPhone/AWS/HOKA型)
 注意:   機械判定は一次スクリーニング。最終判断は門2審査（依頼文）で行う。
         v1はClaude Code上での初回実行で動作確認すること（ここでは構文+ロジックのみ検証済）。
 """
@@ -81,6 +83,12 @@ ALERTS = {
  "指針": [r"withdraw.{0,30}guidance", r"suspend.{0,30}guidance", r"lower(?:ed|ing)? .{0,20}guidance", r"revis.{0,20}guidance .{0,20}down"],
  "減損": [r"goodwill impairment", r"impairment (?:charge|loss)"],
  "退任": [r"(?:chief executive|chief financial) officer .{0,40}(?:resign|depart|step(?:ped|s)? down)"],
+ # 吉報（警報でなく好機の兆候。怪物列伝の分析より: 最大の上昇は「第二S字」=新セグメント/
+ # 大手流通契約から始まった。AAPL iPhone・AMZN AWS・DECK HOKA・MNST×コカコーラ・CELH×ペプシ型）
+ "吉S字": [r"new (?:reportable |operating )?segment", r"(?:began|commenced|will begin) report(?:ing)? .{0,40}segment",
+           r"realign.{0,40}segment"],
+ "吉流通": [r"distribution agreement", r"(?:exclusive|strategic|global) distribution",
+            r"(?:co[- ]?marketing|commercialization) agreement"],
 }
 
 def strip_html(h):
@@ -155,7 +163,10 @@ def check(t):
     if opm_d is not None and opm_d < -3: flags.append(f"営利率 前年比{opm_d}pt")
     for c in cats:
         if c in ("誠","限","指針","減損","退任"): flags.append(f"警報:{c}")
+    yoshi = [c for c in cats if c.startswith("吉")]
     verdict = "要審査: " + " / ".join(flags) if flags else "異常なし(機械判定)"
+    if yoshi:
+        verdict += "  ☀吉報:" + "/".join(yoshi) + "（第二S字・流通の兆候→原文スニペット確認）"
     os.makedirs(OUT, exist_ok=True)
     with open(f"{OUT}/{t}_qcheck.txt","w") as f:
         f.write(f"{t} 点検日 {date.today()}  四半期末 {latest}\n"
