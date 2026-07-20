@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCF X — 超未来の門（別枠・期待リターン最大化）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+ --bg:#070a10;--bg2:#0b0f18;--panel:#111826;--panel2:#0d131e;--line:#263349;
+ --ink:#eef0e9;--ink-soft:#cdd2c9;--muted:#93a0b6;
+ --gold:#c9a64a;--gold-bright:#ecd494;--gold-line:rgba(201,166,74,.40);
+ --star:#8fc7e8;--star-bright:#c4e4f7;--star-line:rgba(143,199,232,.38);
+ --pass:#8cc091;--fail:#cf7a60;--warn:#d8b46a;--maxw:1060px;--codebg:#0c0e13;}
+*{box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{margin:0;color:var(--ink);font-size:17px;line-height:1.95;letter-spacing:.02em;
+ background:
+  radial-gradient(900px 520px at 50% -140px,rgba(143,199,232,.10),transparent 62%),
+  radial-gradient(700px 420px at 85% 8%,rgba(201,166,74,.06),transparent 60%),
+  linear-gradient(180deg,#090c12,#070a10 60%,#05070b);
+ font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",sans-serif;font-weight:300;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;}
+::selection{background:rgba(143,199,232,.28);}
+h1,h2,h3,h4{font-family:"Shippori Mincho",serif;color:#f2f4ec;font-weight:600;letter-spacing:.06em;line-height:1.4;}
+strong,b{color:var(--gold-bright);font-weight:500;}
+code{background:var(--codebg);border:1px solid var(--line);border-radius:5px;padding:1px 7px;font-size:.86em;color:var(--star-bright);}
+a{color:var(--star);}
+.hero{position:relative;text-align:center;padding:84px 20px 46px;overflow:hidden;}
+.hero:before{content:"";position:absolute;inset:0;pointer-events:none;background:
+ radial-gradient(1.4px 1.4px at 12% 22%,rgba(255,255,255,.7),transparent 55%),
+ radial-gradient(1.2px 1.2px at 28% 64%,rgba(255,255,255,.5),transparent 55%),
+ radial-gradient(1.6px 1.6px at 44% 18%,rgba(196,228,247,.8),transparent 55%),
+ radial-gradient(1.1px 1.1px at 61% 42%,rgba(255,255,255,.55),transparent 55%),
+ radial-gradient(1.5px 1.5px at 74% 15%,rgba(236,212,148,.8),transparent 55%),
+ radial-gradient(1.1px 1.1px at 83% 58%,rgba(255,255,255,.5),transparent 55%),
+ radial-gradient(1.3px 1.3px at 92% 30%,rgba(196,228,247,.7),transparent 55%),
+ radial-gradient(1.1px 1.1px at 7% 48%,rgba(255,255,255,.45),transparent 55%);}
+.brand{font-family:"Cormorant Garamond",serif;font-size:14px;letter-spacing:.42em;color:var(--star);text-transform:uppercase;margin-bottom:14px;}
+.hero h1{font-size:clamp(30px,5.4vw,46px);margin:0 0 10px;}
+.hero .g{color:var(--star-bright);}
+.latin{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:16px;color:var(--muted);letter-spacing:.12em;}
+.rule{display:flex;align-items:center;gap:14px;justify-content:center;margin:22px 0;}
+.rule span{display:block;width:110px;height:1px;background:linear-gradient(90deg,transparent,var(--star-line));}
+.rule span:last-child{background:linear-gradient(90deg,var(--star-line),transparent);}
+.rule .d{width:auto;height:auto;background:none;color:var(--star);font-size:13px;}
+.sub{max-width:660px;margin:0 auto;color:var(--ink-soft);font-size:15.5px;}
+nav.top{position:sticky;top:0;z-index:50;background:rgba(7,10,16,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;justify-content:center;gap:2px;padding:8px 10px;}
+nav.top a{color:var(--ink-soft);text-decoration:none;font-size:13px;padding:6px 12px;border-radius:7px;letter-spacing:.05em;}
+nav.top a:hover{background:rgba(143,199,232,.10);color:var(--star-bright);}
+.block{padding:44px 0 18px;}
+.tag{display:inline-block;font-size:11.5px;letter-spacing:.28em;color:var(--star);border:1px solid var(--star-line);border-radius:999px;padding:4px 14px;margin-bottom:14px;background:rgba(143,199,232,.06);text-transform:uppercase;}
+.h2{font-family:"Shippori Mincho",serif;font-size:clamp(21px,3vw,27px);color:#f2f4ec;font-weight:600;letter-spacing:.06em;margin:0 0 12px;}
+.intro{color:var(--ink-soft);font-size:15.5px;margin:0 0 14px;}
+.panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:14px 0;}
+.panel-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:14px;}
+.panel-h h3{margin:0;font-size:17.5px;}
+.pass{color:var(--pass);font-size:12.5px;letter-spacing:.08em;}
+.fm{background:var(--codebg);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:14px 0;font-size:14.5px;line-height:2.05;}
+.fm .lbl{display:block;font-size:11px;letter-spacing:.24em;color:var(--star);margin-bottom:6px;text-transform:uppercase;}
+.fm .rd{color:var(--muted);font-size:12.8px;}
+.fm.gold{border-color:var(--gold-line);}.fm.gold .lbl{color:var(--gold);}
+.cut{background:rgba(143,199,232,.06);border:1px solid var(--star-line);border-radius:10px;padding:13px 16px;margin:14px 0;font-size:14px;line-height:1.95;}
+.cut.gold{background:rgba(201,166,74,.07);border-color:var(--gold-line);}
+.gatebanner{text-align:center;padding:52px 20px 44px;margin:36px 0 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+ background:linear-gradient(180deg,rgba(143,199,232,.05),rgba(7,10,16,0) 70%);}
+.gatebanner .gk{font-family:"Cormorant Garamond",serif;letter-spacing:.4em;color:var(--star);font-size:13px;text-transform:uppercase;}
+.gatebanner .gt{font-family:"Shippori Mincho",serif;font-size:clamp(22px,3.6vw,30px);color:#f2f4ec;margin:8px 0 6px;font-weight:600;letter-spacing:.08em;}
+.gatebanner .gs{color:var(--muted);font-size:14px;}
+.badge{display:inline-block;margin-top:12px;font-size:12px;letter-spacing:.12em;color:var(--gold-bright);border:1px solid var(--gold-line);border-radius:999px;padding:4px 16px;background:rgba(201,166,74,.08);}
+table.dt{width:100%;border-collapse:collapse;font-size:13.6px;margin:10px 0;}
+table.dt th{color:var(--star);font-weight:500;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.1em;}
+table.dt td{padding:8px 10px;border-bottom:1px solid rgba(38,51,73,.55);color:var(--ink-soft);vertical-align:top;}
+table.dt td.k{color:var(--gold-bright);white-space:nowrap;}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:12px;letter-spacing:.08em;color:var(--muted);}
+.field input{background:var(--codebg);border:1px solid var(--line);border-radius:8px;color:var(--ink);padding:9px 12px;font-size:15px;font-family:inherit;}
+.field input:focus{outline:none;border-color:var(--star);}
+.field .hint{font-size:11px;color:#6d7a90;}
+.res{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;}
+.res .big{font-family:"Shippori Mincho",serif;font-size:30px;color:var(--star-bright);letter-spacing:.04em;}
+.res .big small{font-size:15px;color:var(--muted);}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:14px;color:var(--ink-soft);}
+.chk .m{min-width:1.6em;text-align:center;font-weight:700;}
+.ok{color:var(--pass);} .ng{color:var(--fail);} .wr{color:var(--warn);}
+.verdict{display:inline-block;font-family:"Shippori Mincho",serif;font-size:19px;letter-spacing:.2em;padding:7px 22px;border-radius:999px;border:1px solid;margin-top:10px;}
+.v-pass{color:var(--pass);border-color:rgba(140,192,145,.5);background:rgba(140,192,145,.08);}
+.v-hold{color:var(--warn);border-color:rgba(216,180,106,.5);background:rgba(216,180,106,.08);}
+.v-fail{color:var(--fail);border-color:rgba(207,122,96,.5);background:rgba(207,122,96,.08);}
+.rows{display:grid;gap:10px;}
+.row{display:flex;gap:12px;align-items:flex-start;padding:11px 13px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px;font-size:14px;color:var(--ink-soft);}
+.row .ic{font-family:"Shippori Mincho",serif;font-size:19px;color:var(--star-bright);min-width:1.6em;text-align:center;}
+footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;border-top:1px solid var(--line);margin-top:50px;line-height:2;}
+@media(max-width:640px){body{font-size:15.5px;} .panel{padding:16px;} }
+</style>
+</head>
+<body>
+
+<header class="hero">
+ <div class="brand">CCF X · Satellite Gate — Parallel Frame</div>
+ <h1>超未来の門 <span class="g">—</span> 期待リターン最大化の門</h1>
+ <div class="latin">Non Prophetia, sed Arithmetica — Not Prophecy, but Arithmetic</div>
+ <div class="rule"><span></span><span class="d">✦</span><span></span></div>
+ <p class="sub">未来を予知する門は、この世に作れない。<br>作れるのは——<b>期待リターンを式にして測り、複利を殺すものを先に消し、<br>当たれば大きく・外れれば小さくする門</b>だ。それがこの門である。</p>
+ <div style="margin-top:18px"><span class="badge">別枠 · 正本（index.html の門Ω）の採点・売却規律は一切上書きしない</span></div>
+</header>
+
+<nav class="top">
+ <a href="#jo">序</a>
+ <a href="#shiki">数学の土台</a>
+ <a href="#x1">裁きⅠ 期待値</a>
+ <a href="#x2">裁きⅡ 非対称</a>
+ <a href="#x3">裁きⅢ 破壊要因</a>
+ <a href="#kake">賭け方</a>
+ <a href="#seihyo">星表</a>
+ <a href="#okite">掟</a>
+ <a href="#omega">門Ωとの関係</a>
+</nav>
+
+<!-- ============ 序 ============ -->
+<div class="wrap" id="jo">
+<div class="block">
+ <div class="tag">Prologue · 正直の宣誓</div>
+ <div class="h2">この門が「しないこと」と「すること」</div>
+ <p class="intro">「リターンを最大化してくれる門」を名乗る装置の九割九分は、未来の株価を当てると偽る。この門は最初にその嘘を捨てる。<b>個別銘柄の未来のリターンを事前に知る方法は存在しない</b>——存在するなら、その発見者は世界の全資産を吸い上げて市場が消滅している。だが「予知できない」と「最大化できない」は別の話だ。長期リターンは運の一発ではなく、<b>期待値の傾き × 破壊要因の除去 × 賭けサイズ × 時間</b>の積で決まる。この四つは全て、事前に・自分の手で・数式で操作できる。</p>
+ <div class="rows">
+  <div class="row"><div class="ic">否</div><div class="tx"><b>しないこと</b> — 株価予測。テーマ株の霊感。チャートの予言。「次のNVIDIA」探しの博打。倍率拡大（PERの膨張）を当てにした皮算用。</div></div>
+  <div class="row"><div class="ic">測</div><div class="tx"><b>すること①</b> — 期待リターンを<b>還元利回り＋内部成長＋倍率の重力</b>の三項に分解し、憶測ではなく事業の数字から見積もる（裁きⅠ）。</div></div>
+  <div class="row"><div class="ic">歪</div><div class="tx"><b>すること②</b> — リターンの分布が冪則（一握りの大勝者が全てを稼ぐ）であることを直視し、<b>右裾を切らない・左裾で破滅しない</b>構えを採点する（裁きⅡ）。</div></div>
+  <div class="row"><div class="ic">消</div><div class="tx"><b>すること③</b> — コスト・税・回転・行動ギャップという「確実にリターンを削る敵」を先に殺す。予知は不確実だが、<b>敵の除去は確実に効く</b>（裁きⅢ）。</div></div>
+  <div class="row"><div class="ic">賭</div><div class="tx"><b>すること④</b> — 賭けサイズを気分でなくケリー基準で決める。長期の富は算術平均でなく<b>幾何平均</b>が支配し、幾何平均は賭けすぎで死ぬ（賭け方）。</div></div>
+ </div>
+ <div class="cut gold"><b>門Ωとの分業：</b>正本の門Ω（壊れない複利の門）は「<b>壊れず優れているか</b>」を裁く守りの門。この門Xは「<b>どれだけ増えるか・どう賭けるか</b>」を裁く攻めの門。順序は必ず <b>Ω → X</b>。Ωを通らぬ銘柄に門Xの通過はない（無知の枠の小口実験のみ例外、後述）。</div>
+</div>
+</div>
+
+<!-- ============ 数学の土台 ============ -->
+<div class="wrap" id="shiki">
+<div class="block">
+ <div class="tag">Foundation · 三つの数式</div>
+ <div class="h2">リターン最大化を支配する数学</div>
+ <p class="intro">門Xの全ての裁きは、次の三つの数学的事実から導かれる。ここが崩れない限り、門は時代が変わっても壊れない。</p>
+
+ <div class="fm">
+  <span class="lbl">事実一 — 長期リターンは幾何平均が支配する</span>
+  長期成長率 g ≈ 算術平均 μ − 分散 σ²/2（ボラティリティ・ドラッグ）<br>
+  <span class="rd">+50%と−50%を繰り返す資産の算術平均は0%だが、資産は毎往復25%ずつ消える（1.5×0.5=0.75）。振れ幅そのものが複利を削る。だから「大勝ちの見込み」より「大負けの回避」が数学的に優先される。</span>
+ </div>
+
+ <div class="fm">
+  <span class="lbl">事実二 — 損失の非対称（戻すのに必要な倍率）</span>
+  −10% → +11%で回復　／　−20% → +25%　／　−33% → +50%　／　−50% → <b>+100%</b>　／　−80% → <b>+400%</b><br>
+  <span class="rd">損失と回復は対称でない。−50%は「半分になった」ではなく「これから倍にしなければならない」。破滅的損失を一度でも踏むと、期待値がどれだけ高くても幾何平均は沈む。</span>
+ </div>
+
+ <div class="fm">
+  <span class="lbl">事実三 — 株式リターンの恒等分解（ボーグルの分解）</span>
+  年率リターン ≈ <b>還元利回り</b>（配当＋純自社株買い） ＋ <b>利益成長率</b> ＋ <b>倍率変化の年率</b>（PER伸縮）<br>
+  <span class="rd">前二項は事業が「稼いで」くれる投資リターン。第三項だけが市場の気分＝投機リターン。20〜30年ではPERの伸縮は年率換算で薄まり、投資リターン二項がほぼ全てを決める。<b>ゆえに門Xは投機項を「当てにする」ことを禁じ、「重力」としてのみ計上する</b>。</span>
+ </div>
+</div>
+</div>
+
+<!-- ============ 裁きⅠ ============ -->
+<div class="gatebanner" id="x1">
+ <div class="gk">Judgment I</div>
+ <div class="gt">裁きⅠ ― 期待リターンの分解機</div>
+ <div class="gs">憶測ではなく、事業の数字からリターンを見積もる。</div>
+ <span class="badge">通過 ＝ 四条件すべて成立</span>
+</div>
+
+<div class="wrap">
+<div class="block">
+ <div class="tag">X-Engine · Expected Return</div>
+ <div class="h2">E[r] ＝ 還元利回り ＋ b×ROIIC ＋ 倍率の重力</div>
+ <p class="intro">門Ωの審査で使う数字（FCF・ROIIC・再投資率）をそのまま流用して、その銘柄の<b>期待年率リターン</b>を三項分解で見積もる。数字は <code>out/{T}_gate_input.json</code> の機械値から取ること。<b>倍率の重力</b>は「終着PERが今より下がる」前提で必ず負担として入れる——楽観の逃げ道を塞ぐためだ。</p>
+
+ <div class="panel">
+  <div class="panel-h"><h3>期待リターン計算機</h3><span class="pass">全項目：年率%・実数で入力</span></div>
+  <div class="grid2">
+   <div class="field"><label>還元利回り（配当＋純自社株買い）%</label><input type="number" id="e_y" value="2.0" step="0.1"><span class="hint">FCF利回り × 還元率でも可。門Ωの機械値から</span></div>
+   <div class="field"><label>ROIIC（増分ROIC）%</label><input type="number" id="e_roiic" value="25" step="1"><span class="hint">営業利益の増分 ÷ 投下資本の増分</span></div>
+   <div class="field"><label>再投資率 b %</label><input type="number" id="e_b" value="40" step="1"><span class="hint">利益のうち事業に再投資する割合</span></div>
+   <div class="field"><label>現在PER</label><input type="number" id="e_per0" value="30" step="1"></div>
+   <div class="field"><label>想定終着PER（n年後）</label><input type="number" id="e_per1" value="22" step="1"><span class="hint">成熟時の妥当倍率。現在より高くしないこと</span></div>
+   <div class="field"><label>年数 n</label><input type="number" id="e_n" value="10" step="1"></div>
+   <div class="field"><label>ハードル（要求年率）%</label><input type="number" id="e_hurdle" value="12" step="0.5"><span class="hint">指数の期待（名目≈7〜10%）を明確に超える水準</span></div>
+  </div>
+  <div class="res" id="e_out"></div>
+ </div>
+
+ <div class="fm gold">
+  <span class="lbl">裁きⅠの通過条件（四つ全て）</span>
+  ① E[r] ≥ ハードル（既定12%）<br>
+  ② 投資リターン（還元＋成長の二項のみ） ≥ 10% ——<b>倍率が動かなくても勝てる</b>こと<br>
+  ③ 倍率項の寄与 ≤ E[r]の30% ——倍率頼みの皮算用を禁止（拡大を見込む入力自体を疑う）<br>
+  ④ ストレス（終着PERをさらに−30%）でも E[r] ≥ 7% ——<b>読み違えても指数並みが残る</b>こと<br>
+  <span class="rd">この四条件の意味：未来を当てなくても、①期待値が傾き ②事業だけで勝て ③気分に依存せず ④間違えても死なない。予知の代わりに「間違え方の安全」を買う。</span>
+ </div>
+</div>
+</div>
+
+<!-- ============ 裁きⅡ ============ -->
+<div class="gatebanner" id="x2">
+ <div class="gk">Judgment II</div>
+ <div class="gt">裁きⅡ ― 非対称の門〈冪則〉</div>
+ <div class="gs">リターンは平等に分布しない。一握りの大勝者が全てを稼ぐ。</div>
+ <span class="badge">通過 ＝ 右裾あり ∧ 左裾に破滅なし</span>
+</div>
+
+<div class="wrap">
+<div class="block">
+ <div class="tag">Power Law · Asymmetry</div>
+ <div class="h2">勝者を切らず、破滅を踏まない</div>
+ <p class="intro">ベッセンバインダーの研究（1926〜2016・米国株）が示した事実：<b>上場株の過半は生涯リターンで短期国債に負け、市場が生んだ富の全ては上位およそ4%の銘柄が稼いだ</b>。株式リターンは釣鐘型ではなく冪則で分布する。この分布の下でリターンを最大化する行動は一意に決まる——<b>右裾（大勝者）を途中で切らないこと、左裾（破滅）を踏まないこと</b>。利食いで勝者を売る行為は、冪則の下では期待値の源泉を自分で捨てる行為だ。門Ωの売却規律（株価では売らない・質が崩れた時だけ売る）は、この数学の実装である。</p>
+
+ <div class="panel">
+  <div class="panel-h"><h3>非対称チェック（銘柄ごとに裁く）</h3><span class="pass">右裾3問 ∧ 左裾3問</span></div>
+  <table class="dt">
+   <thead><tr><th>裾</th><th>問い</th><th>根拠にする数字・原本</th></tr></thead>
+   <tbody>
+    <tr><td class="k">右裾①</td><td>TAMに対する浸透率がまだ低く、伸びしろが10年分あるか</td><td>門Ωの滑走路採点（100−浸透率）</td></tr>
+    <tr><td class="k">右裾②</td><td>隣接市場への拡張実績が既にあるか（一本足でないか）</td><td>10-Kのセグメント推移</td></tr>
+    <tr><td class="k">右裾③</td><td>成功時の姿を書けるか——10年後に利益が3倍になる経路を一段落で説明できるか</td><td>説明できなければ「霊感」であり右裾なし</td></tr>
+    <tr><td class="k">左裾①</td><td>破滅条件がないか——債務超過・希薄化連発・単一顧客/単一規制への依存</td><td>門Ωのキル条件・限/集の抜粋（hits.txt）</td></tr>
+    <tr><td class="k">左裾②</td><td>最悪シナリオでも「ゼロ」でなく「凡庸」で済むか</td><td>裁きⅠの条件④（ストレスでも7%）</td></tr>
+    <tr><td class="k">左裾③</td><td>全損しても人生の複利が壊れないサイズか</td><td>賭け方の章（ケリーの四分の一）</td></tr>
+   </tbody>
+  </table>
+ </div>
+ <div class="cut"><b>実務の帰結：</b>①勝者の含み益は売却理由にならない（門Ωの規律と同一）。②「10倍になるかもしれない」は買う理由にならない——右裾は<b>経路を説明できる</b>ときだけ数える。③左裾3問に一つでも✗があれば、期待値がどれだけ高く見えても賭けサイズで縛る。</div>
+</div>
+</div>
+
+<!-- ============ 裁きⅢ ============ -->
+<div class="gatebanner" id="x3">
+ <div class="gk">Judgment III</div>
+ <div class="gt">裁きⅢ ― 破壊要因の門〈確実に効く唯一の魔法〉</div>
+ <div class="gs">予知は不確実。だがコストと税と回転の除去は、確実にリターンを増やす。</div>
+ <span class="badge">通過 ＝ 漏れの合計 ≤ 年1.0%</span>
+</div>
+
+<div class="wrap">
+<div class="block">
+ <div class="tag">Drag Killer · Compounding Leaks</div>
+ <div class="h2">複利の漏れを数える</div>
+ <p class="intro">リターン最大化の最短経路は、増やすことではなく<b>漏らさないこと</b>だ。手数料・税・売買回転・行動ギャップ（高値で買い安値で狼狽売りする自分）は、市場と無関係に毎年確実にリターンを削る。年1%の漏れは30年で最終資産の約4分の1を消す。以下で自分の漏れを合計せよ。</p>
+
+ <div class="panel">
+  <div class="panel-h"><h3>複利の漏れシミュレーター</h3><span class="pass">年率%で入力</span></div>
+  <div class="grid2">
+   <div class="field"><label>総リターン（漏れる前）%</label><input type="number" id="d_gross" value="12" step="0.5"><span class="hint">裁きⅠの E[r] を入れる</span></div>
+   <div class="field"><label>信託報酬・手数料 %</label><input type="number" id="d_fee" value="0.1" step="0.05"></div>
+   <div class="field"><label>税ドラッグ %</label><input type="number" id="d_tax" value="0.3" step="0.1"><span class="hint">回転による利益確定税。長期保有ならほぼ0</span></div>
+   <div class="field"><label>行動ギャップ %</label><input type="number" id="d_beh" value="0.5" step="0.1"><span class="hint">タイミング売買の自傷。規律遵守なら0</span></div>
+   <div class="field"><label>年数</label><input type="number" id="d_n" value="30" step="5"></div>
+  </div>
+  <div class="res" id="d_out"></div>
+ </div>
+
+ <div class="cut"><b>門の判定：</b>漏れの合計が年1.0%を超える運用は、銘柄選別の巧拙以前に敗けている。特に<b>回転</b>——門Xで期待値を測り直すたびに売買したくなるが、売買のたびに税とスプレッドと行動ギャップが漏れる。<b>測るのは年1回、動くのは質が崩れた時だけ</b>（門Ωの規律に従属）。</div>
+</div>
+</div>
+
+<!-- ============ 賭け方 ============ -->
+<div class="gatebanner" id="kake">
+ <div class="gk">Position Sizing</div>
+ <div class="gt">賭け方 ― ケリー基準と、その手前で止まる知恵</div>
+ <div class="gs">幾何平均の最大化には最適な賭けサイズが存在する。そして満額は死ぬ。</div>
+ <span class="badge">実務 ＝ ケリーの四分の一以下</span>
+</div>
+
+<div class="wrap">
+<div class="block">
+ <div class="tag">Kelly Criterion</div>
+ <div class="h2">f* ＝ p − q/b — 幾何平均を最大化する唯一の式</div>
+ <p class="intro">勝率 p・敗率 q＝1−p・損益比 b（勝ち幅÷負け幅）のとき、長期の幾何平均成長を最大化する賭け比率は <b>f* ＝ p − q/b</b>（ケリー基準）。ただし満額ケリーは推定誤差に極端に脆く、pをわずかに見誤るだけで破滅側に落ちる。<b>推定が甘い実務では半分〜四分の一ケリーが定石</b>であり、この門は四分の一を上限とする。</p>
+
+ <div class="panel">
+  <div class="panel-h"><h3>賭けサイズ計算機</h3><span class="pass">確率は保守的に見積もる</span></div>
+  <div class="grid2">
+   <div class="field"><label>勝率 p %</label><input type="number" id="k_p" value="55" step="1"><span class="hint">10年でハードルを超える主観確率。60%超と書く前に疑え</span></div>
+   <div class="field"><label>損益比 b（勝ち幅÷負け幅）</label><input type="number" id="k_b" value="2.0" step="0.1"><span class="hint">例：勝てば+100%・負ければ−50% → b=2.0</span></div>
+  </div>
+  <div class="res" id="k_out"></div>
+ </div>
+
+ <div class="fm gold">
+  <span class="lbl">配分の規約（門Ωの城と網に従属）</span>
+  網（指数）＝土台。城（Ω通過の個別株）＝上乗せ。<b>門Xはその城の中の「厚みの順位」を決める</b>：裁きⅠのE[r]が高く、裁きⅡの✓が多い銘柄ほど厚く（ただし1銘柄 ≤ 四分の一ケリー）。<br>
+  <b>無知の枠</b>（Ω未通過の実験枠）＝資本の5〜10%・全損前提・門Xの裁きⅠ〜Ⅲを通った場合のみ。これが唯一のΩ例外。<br>
+  <span class="rd">レバレッジは用いない。幾何平均最大化の観点でも、借入は左裾（破滅）を太らせ、事実一のσ²項を膨らませて自滅する。</span>
+ </div>
+</div>
+</div>
+
+<!-- ============ 星表 ============ -->
+<div class="wrap" id="seihyo">
+<div class="block">
+ <div class="tag">Evidence · 星表</div>
+ <div class="h2">この門が拠って立つ研究と、その賞味期限</div>
+ <p class="intro">門Xの各裁きは以下の研究に基づく。ただし<b>因子プレミアムは発見・公表とともに痩せる</b>（混雑効果）。星表は「永遠の真理」ではなく「現時点で最も確からしい傾き」として年1回見直す。</p>
+ <table class="dt">
+  <thead><tr><th>柱</th><th>要旨</th><th>出典（代表）</th><th>門Xでの使い方</th></tr></thead>
+  <tbody>
+   <tr><td class="k">冪則</td><td>1926〜2016の米国株で、富の創出は上位約4%の銘柄に集中。過半の株は生涯で短期国債に劣後</td><td>Bessembinder (2018)</td><td>裁きⅡ：勝者を売らない・分散の下限を守る根拠</td></tr>
+   <tr><td class="k">リターン分解</td><td>株式リターン＝配当利回り＋利益成長±倍率変化。長期では投資リターンが支配</td><td>Bogle の分解</td><td>裁きⅠ：三項分解の骨格</td></tr>
+   <tr><td class="k">質（クオリティ）</td><td>高収益・低負債・利益安定の「質の高い」株は長期で市場を上回ってきた</td><td>Novy-Marx (2013), Asness et al. QMJ (2019)</td><td>門Ωそのものが質因子の実装。門Xは重複採点しない</td></tr>
+   <tr><td class="k">モメンタム</td><td>直近6〜12ヶ月の勝ち組は短期継続する傾向。ただし暴落時に崩壊する（2009年型クラッシュ）</td><td>Jegadeesh &amp; Titman (1993)</td><td><b>採用しない</b>——回転を強いて裁きⅢと矛盾するため</td></tr>
+   <tr><td class="k">幾何平均・賭け方</td><td>長期成長は幾何平均が支配し、最適賭け比率が存在する</td><td>Kelly (1956), Thorp</td><td>賭け方：四分の一ケリー上限</td></tr>
+   <tr><td class="k">コスト</td><td>費用と回転は確実にリターンを削る。指数に勝てない運用の主因は費用</td><td>Bogle, Sharpe "Arithmetic of Active Management" (1991)</td><td>裁きⅢ：漏れ合計 ≤ 1.0%</td></tr>
+  </tbody>
+ </table>
+ <div class="cut"><b>賞味期限の掟：</b>星表の研究が示すのは過去の傾きであり、未来の保証ではない。だから門Xは因子を「銘柄選別のスコア」にせず（それは門Ωの仕事）、<b>行動規範（売らない・漏らさない・賭けすぎない）への翻訳としてのみ使う</b>。行動規範は混雑で消えない——コストの節約と破滅の回避は、他人が何人真似しても効き続ける。</div>
+</div>
+</div>
+
+<!-- ============ 掟 ============ -->
+<div class="wrap" id="okite">
+<div class="block">
+ <div class="tag">The Code · 十の掟</div>
+ <div class="h2">超未来の門・十の掟</div>
+ <div class="rows">
+  <div class="row"><div class="ic">一</div><div class="tx">未来を予知しない。<b>期待値を傾ける</b>。傾け方は式で書けるものだけを信じる。</div></div>
+  <div class="row"><div class="ic">二</div><div class="tx">増やす前に<b>漏れを消す</b>。コスト・税・回転・行動ギャップの合計を年1.0%以下に保つ。</div></div>
+  <div class="row"><div class="ic">三</div><div class="tx"><b>勝者を売らない</b>。冪則の下で利食いは期待値の自壊。売るのは質が崩れた時だけ（門Ωに従う）。</div></div>
+  <div class="row"><div class="ic">四</div><div class="tx"><b>破滅の一手を打たない</b>。−50%は+100%。レバレッジ・一点賭け・期限のある賭けを禁ずる。</div></div>
+  <div class="row"><div class="ic">五</div><div class="tx">賭けサイズは<b>ケリーの四分の一以下</b>。確信が強い日ほど、推定誤差を疑う。</div></div>
+  <div class="row"><div class="ic">六</div><div class="tx"><b>倍率拡大を当てにしない</b>。PERの膨張は貰い物であり、計画に入れた瞬間に皮算用になる。</div></div>
+  <div class="row"><div class="ic">七</div><div class="tx"><b>退屈に耐える</b>。測るのは年1回。動かない年が最も稼ぐ年である。</div></div>
+  <div class="row"><div class="ic">八</div><div class="tx">門Ωを通らぬ銘柄に大枠を賭けない。例外は<b>無知の枠5〜10%・全損前提</b>のみ。</div></div>
+  <div class="row"><div class="ic">九</div><div class="tx"><b>記録し、検証する</b>。裁きⅠの見積もりと実績を年1回突き合わせ、自分の楽観係数を測る。</div></div>
+  <div class="row"><div class="ic">十</div><div class="tx">門は気分で変えない。変えるのは<b>星表の根拠が崩れた時</b>だけ、書面で理由を残して。</div></div>
+ </div>
+</div>
+</div>
+
+<!-- ============ 門Ωとの関係 ============ -->
+<div class="wrap" id="omega">
+<div class="block">
+ <div class="tag">Relation · 二門の接続</div>
+ <div class="h2">門Ω × 門X — 守りが先、攻めが後</div>
+ <table class="dt">
+  <thead><tr><th></th><th>門Ω（正本 index.html）</th><th>門X（本書・別枠）</th></tr></thead>
+  <tbody>
+   <tr><td class="k">問い</td><td>壊れず、優れているか</td><td>どれだけ増えるか・どう賭けるか</td></tr>
+   <tr><td class="k">対象</td><td>会社（質・持続・未来〈軌〉）</td><td>リターンの構造と、投資家自身の行動</td></tr>
+   <tr><td class="k">正本性</td><td><b>正本</b>。台帳・売却規律・審査プロトコルを持つ</td><td>別枠。台帳を持たず、Ωの規律を上書きしない</td></tr>
+   <tr><td class="k">順序</td><td colspan="2">Ω通過 → Xで期待値・非対称・漏れ・サイズを裁く → 城の厚みを決める</td></tr>
+   <tr><td class="k">頻度</td><td>年1発掘・四半期点検</td><td>年1回、Ωの審査数字を流用して測る</td></tr>
+  </tbody>
+ </table>
+ <div class="cut gold"><b>最後に、最も大事な一行：</b>超未来の門が最大化するのは「予測の的中率」ではない。<b>20〜30年を生き延びた資本が持つ、幾何平均の傾き</b>である。未来は見えない。それでも複利は、傾きと生存と時間だけで築ける。</div>
+</div>
+</div>
+
+<footer>
+ CCF X — 超未来の門（並走環境・別枠実験）<br>
+ 正本は index.html（門Ω）。本書は正本の採点ロジック・売却規律を一切変更しない。<br>
+ 星表の研究は過去の観察であり将来の成果を保証しない。投資判断は自己責任で。
+</footer>
+
+<script>
+'use strict';
+function num(id){ const v = parseFloat(document.getElementById(id).value); return isFinite(v) ? v : 0; }
+function pct(x){ return (x>=0?'+':'') + x.toFixed(1) + '%'; }
+
+/* ---------- 裁きⅠ 期待リターン分解機 ---------- */
+function calcEngine(){
+ const y = num('e_y'), roiic = num('e_roiic'), b = num('e_b');
+ const per0 = num('e_per0'), per1 = num('e_per1'), n = Math.max(1, num('e_n'));
+ const hurdle = num('e_hurdle');
+ const g = b * roiic / 100;                                   // 内部成長 % = b% × ROIIC%
+ const mult = per0>0 && per1>0 ? (Math.pow(per1/per0, 1/n) - 1) * 100 : 0;
+ const er = y + g + mult;
+ const earned = y + g;                                        // 投資リターン（倍率抜き）
+ const multStress = per0>0 && per1>0 ? (Math.pow(per1*0.7/per0, 1/n) - 1) * 100 : 0;
+ const erStress = y + g + multStress;
+ const multShare = er > 0 ? Math.max(0, mult) / er * 100 : 0;
+
+ const c1 = er >= hurdle;
+ const c2 = earned >= 10;
+ const c3 = mult <= 0 || multShare <= 30;
+ const c4 = erStress >= 7;
+ const passed = [c1,c2,c3,c4].filter(Boolean).length;
+ let verdict, cls;
+ if (c1 && c2 && c3 && c4) { verdict='通　過'; cls='v-pass'; }
+ else if (c1)              { verdict='保　留'; cls='v-hold'; }
+ else                      { verdict='見送り'; cls='v-fail'; }
+
+ const mk = (ok,txt) => `<div class="chk"><span class="m ${ok?'ok':'ng'}">${ok?'✓':'✗'}</span><span>${txt}</span></div>`;
+ document.getElementById('e_out').innerHTML =
+  `<div class="big">E[r] ＝ ${pct(er)} <small>／年</small></div>
+   <div style="font-size:13.5px;color:var(--muted);margin:6px 0 10px">
+    内訳： 還元 ${pct(y)} ＋ 内部成長 ${pct(g)}（b×ROIIC） ＋ 倍率の重力 ${pct(mult)}　｜　投資リターン（倍率抜き） <b>${pct(earned)}</b>　｜　ストレス時 ${pct(erStress)}
+   </div>` +
+  mk(c1, `① E[r] ${pct(er)} ≥ ハードル ${hurdle.toFixed(1)}%`) +
+  mk(c2, `② 投資リターン ${pct(earned)} ≥ 10%（倍率が動かなくても勝てる）`) +
+  mk(c3, `③ 倍率項の寄与 ${mult<=0?'なし（重力のみ）':multShare.toFixed(0)+'%'} ≤ 30%（倍率頼みでない）`) +
+  mk(c4, `④ 終着PER−30%のストレスでも ${pct(erStress)} ≥ 7%（読み違えても指数並み）`) +
+  `<div class="verdict ${cls}">${verdict}</div>
+   <span style="margin-left:12px;font-size:12.5px;color:var(--muted)">${passed}/4 条件成立</span>`;
+}
+
+/* ---------- 裁きⅢ 複利の漏れシミュレーター ---------- */
+function calcDrag(){
+ const gross = num('d_gross'), fee = num('d_fee'), tax = num('d_tax'), beh = num('d_beh');
+ const n = Math.max(1, num('d_n'));
+ const leak = fee + tax + beh;
+ const net = gross - leak;
+ const wGross = Math.pow(1 + gross/100, n);
+ const wNet   = Math.pow(1 + net/100,  n);
+ const lost = wGross > 0 ? (1 - wNet/wGross) * 100 : 0;
+ const ok = leak <= 1.0;
+ document.getElementById('d_out').innerHTML =
+  `<div class="big">${n}年で ${wNet.toFixed(1)}倍 <small>（漏れゼロなら ${wGross.toFixed(1)}倍）</small></div>
+   <div style="font-size:13.5px;color:var(--muted);margin:6px 0 10px">
+    漏れ合計 <b class="${ok?'ok':'ng'}">${leak.toFixed(2)}%／年</b> → 純リターン ${pct(net)}　｜　最終資産の <b class="${lost>15?'ng':'wr'}">${lost.toFixed(0)}%</b> が漏れで消える
+   </div>
+   <div class="chk"><span class="m ${ok?'ok':'ng'}">${ok?'✓':'✗'}</span><span>裁きⅢ：漏れ合計 ≤ 1.0%／年 ${ok?'— 通過':'— 漏れを塞いでから戻れ'}</span></div>`;
+}
+
+/* ---------- 賭け方 ケリー計算機 ---------- */
+function calcKelly(){
+ const p = num('k_p')/100, b = num('k_b');
+ const q = 1 - p;
+ const f = b > 0 ? p - q/b : -1;
+ const el = document.getElementById('k_out');
+ if (f <= 0){
+  el.innerHTML = `<div class="big ng" style="color:var(--fail)">エッジなし</div>
+   <div style="font-size:13.5px;color:var(--muted);margin-top:6px">f* ＝ ${ (f*100).toFixed(1) }% ≤ 0。この勝率と損益比では、<b>賭けないことが最適</b>。見積もりを盛って再計算しないこと。</div>`;
+  return;
+ }
+ el.innerHTML =
+  `<div class="big">満額ケリー f* ＝ ${(f*100).toFixed(1)}%</div>
+   <div style="font-size:13.5px;color:var(--muted);margin:6px 0 10px">
+    半分ケリー ${(f*50).toFixed(1)}%　｜　<b style="color:var(--star-bright)">四分の一ケリー ${(f*25).toFixed(1)}%（門Xの上限）</b>
+   </div>
+   <div class="chk"><span class="m wr">⚠</span><span>満額は推定誤差で破滅する。勝率pを5pt読み違えただけで最適点は大きく動く。実務は四分の一以下。</span></div>`;
+}
+
+['e_y','e_roiic','e_b','e_per0','e_per1','e_n','e_hurdle'].forEach(id=>document.getElementById(id).addEventListener('input',calcEngine));
+['d_gross','d_fee','d_tax','d_beh','d_n'].forEach(id=>document.getElementById(id).addEventListener('input',calcDrag));
+['k_p','k_b'].forEach(id=>document.getElementById(id).addEventListener('input',calcKelly));
+calcEngine(); calcDrag(); calcKelly();
+</script>
+</body></html>
