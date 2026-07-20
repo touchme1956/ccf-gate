@@ -17,6 +17,13 @@
   期待リターンの三項分解（還元＋b×ROIIC＋倍率の重力）・非対称チェック・複利の漏れ・
   ケリー基準の賭けサイズを裁く。正本 index.html（門Ω）の採点・売却規律は一切変更しない。
   Cloudflare Pages配信後は `/chomirai` で開ける
+- `kaibutsu.html` + `kaibutsu_scan.py` — **怪物の門（CCF IGNIS）**: NVIDIA型の複利怪物を
+  最速（＝法定開示と同速）で待ち伏せる別枠。段1: gate0_all.csv 全母集団を怪物署名
+  （超成長×資本効率×利益体質×FCF転換）でランク → 段2: 上位のSEC四半期データで
+  点火検知（YoY加速2連続 ∧ YoY≥25% ∧ 営利率+2pt）。年1回＋四半期に
+  `python kaibutsu_scan.py` を実行 → `kaibutsu_queue.json` / `out/kaibutsu_report.txt`。
+  点火銘柄は買いではなく門Ω審査へ回す合図。サイズは門Xの無知の枠(5-10%)・¼ケリーで縛る。
+  配信後は `/kaibutsu` で開ける
 
 ## 並走のルール
 - 正本は現行（Drive+Colab+今の門URL）。台帳・保有の記帳は現行のみ
