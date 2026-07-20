@@ -11,7 +11,11 @@ kaibutsu_scan.py v1 — 怪物の門・点火スキャナー（NVIDIA型の複�
 
 使い方: python kaibutsu_scan.py              # gate0_all.csv から署名上位40社 → SEC四半期で点火検知
         python kaibutsu_scan.py --top 60     # 候補数を変える
+        python kaibutsu_scan.py --max-rev 5  # 年商5B USD以下（中型小型）だけを行列に残す
         python kaibutsu_scan.py NVDA CRWD    # 指定銘柄のみ点火検知（署名フィルタを飛ばす）
+規模:   直近4四半期売上の合計（年商）で 微<$0.3B / 小<$1.5B / 中<$8B / 大≥$8B に分類。
+        同じ判定内では小さい順に並ぶ（怪物は小さいうちに拾うのが本旨）。時価総額でなく
+        年商基準なのは、価格APIなしで全自動にするため。非USD決算は現地通貨表記。
 出力:   kaibutsu_queue.json（点火→くすぶり→待機の順・審査待ち）
         out/kaibutsu_report.txt（人間が読む報告）
 判定:   点火     = YoY加速2連続 ∧ 最新YoY ≥ +25% ∧ 営業利益率 前年同期比 ≥ +2pt
@@ -73,7 +77,7 @@ def signature_rank(top_n):
             rows.append({"ticker": r["ticker"], "name": r.get("name",""),
                          "sig": sig, "cagr5": round(cagr*100,1),
                          "roic": round((roic or 0)*100,1), "opm": round(opm*100,1),
-                         "byomei": r.get("byomei","")})
+                         "ccy": r.get("ccy",""), "byomei": r.get("byomei","")})
     rows.sort(key=lambda x: -x["sig"])
     return rows[:top_n]
 
@@ -120,16 +124,29 @@ def yoy_series(q, n=8):
             out.append((e, round((q[e]/q[prior]-1)*100, 1)))
     return out
 
+SIZE_BANDS = [(0.3e9, "微"), (1.5e9, "小"), (8e9, "中"), (float("inf"), "大")]
+
+def size_class(rev):
+    """直近4四半期売上の合計（年商）で規模を分類。価格API不要の全自動プロキシ。"""
+    ends = sorted(rev)
+    if len(ends) < 4: return None, None
+    ttm = sum(rev[e] for e in ends[-4:])
+    for cap, label in SIZE_BANDS:
+        if ttm < cap: return ttm, label
+    return ttm, "大"
+
 def ignition(t, cik):
     facts = json.loads(get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"))
     rev = quarterly_series(facts, TAGS_REV)
     op  = quarterly_series(facts, TAGS_OP)
+    ttm, size = size_class(rev)
     ys  = yoy_series(rev)
     if len(ys) < 3:
-        return {"verdict": "四半期開示なし", "yoy": None, "accel": 0, "opm_d": None, "trail": []}
+        return {"verdict": "四半期開示なし", "yoy": None, "accel": 0, "opm_d": None,
+                "trail": [], "rev_ttm": ttm, "size": size}
     if (date.today() - date.fromisoformat(ys[-1][0])).days > 400:
         return {"verdict": "古い開示", "yoy": None, "accel": 0, "opm_d": None,
-                "trail": [f"{e[:7]}:{y:+.0f}%" for e, y in ys[-4:]]}
+                "trail": [f"{e[:7]}:{y:+.0f}%" for e, y in ys[-4:]], "rev_ttm": ttm, "size": size}
     trail = ys[-4:]                                   # 直近4本のYoY推移
     yoy   = ys[-1][1]
     accel = 0                                          # 加速の連続数（直近から遡る）
@@ -153,19 +170,22 @@ def ignition(t, cik):
     else:
         v = "待機"
     return {"verdict": v, "yoy": yoy, "accel": accel, "opm_d": opm_d,
-            "trail": [f"{e[:7]}:{y:+.0f}%" for e, y in trail]}
+            "trail": [f"{e[:7]}:{y:+.0f}%" for e, y in trail], "rev_ttm": ttm, "size": size}
 
 # ---------------- 主処理 ----------------
 def main():
     args = sys.argv[1:]
     top_n = 40
+    max_rev = None                                   # 年商上限（$B・USD想定）
     if "--top" in args:
         i = args.index("--top"); top_n = int(args[i+1]); del args[i:i+2]
+    if "--max-rev" in args:
+        i = args.index("--max-rev"); max_rev = float(args[i+1]) * 1e9; del args[i:i+2]
     tickers = [a.upper() for a in args if re.fullmatch(r"[A-Za-z][A-Za-z.\-]{0,7}", a)]
 
     if tickers:
         cands = [{"ticker": t, "name": "", "sig": None, "cagr5": None,
-                  "roic": None, "opm": None, "byomei": ""} for t in tickers]
+                  "roic": None, "opm": None, "ccy": "", "byomei": ""} for t in tickers]
         print(f"=== 怪物の門・点火検知 {date.today()}（指定 {len(cands)}社） ===")
     else:
         cands = signature_rank(top_n)
@@ -182,14 +202,22 @@ def main():
             r = ignition(t, cik)
         except Exception as e:
             r = {"verdict": "失敗", "yoy": None, "accel": 0, "opm_d": None,
-                 "trail": [], "err": str(e)[:80]}
+                 "trail": [], "rev_ttm": None, "size": None, "err": str(e)[:80]}
         c.update(r)
         results.append(c)
         mark = {"点火": "🔥", "くすぶり": "…", "待機": "  "}.get(r["verdict"], "×")
-        print(f" {mark} {t:<6} {r['verdict']:<4} YoY {str(r['yoy'])+'%':>8} 加速{r['accel']}連続 "
+        sz = f"{r['size']}(${r['rev_ttm']/1e9:.1f}B{'' if c.get('ccy') in ('USD','') else ' '+c['ccy']})" if r.get("rev_ttm") else "?"
+        print(f" {mark} {t:<6} {r['verdict']:<4} 規模{sz:<14} YoY {str(r['yoy'])+'%':>8} 加速{r['accel']}連続 "
               f"営利差 {str(r['opm_d'])+'pt':>8}  {' '.join(r['trail'])}")
 
-    results.sort(key=lambda x: (order.get(x["verdict"], 9), -(x["sig"] or 0)))
+    if max_rev is not None:
+        before = len(results)
+        results = [c for c in results if c.get("rev_ttm") is None or c["rev_ttm"] <= max_rev]
+        print(f"\n--max-rev {max_rev/1e9:.0f}B: 年商超過 {before-len(results)}社を行列から除外")
+    # 同じ判定内では小さい順（怪物は小さいうちに拾う）→ 同規模なら署名点順
+    size_ord = {"微": 0, "小": 1, "中": 2, "大": 3, None: 4}
+    results.sort(key=lambda x: (order.get(x["verdict"], 9),
+                                size_ord.get(x.get("size"), 4), -(x["sig"] or 0)))
     json.dump({"asof": str(date.today()), "note": "審査待ち。点火銘柄は門Ω審査→門Xのサイズ規律へ。台帳データではない。",
                "queue": results}, open(OUTQ, "w"), ensure_ascii=False, indent=1)
 
@@ -197,9 +225,11 @@ def main():
     with open(OUTR, "w") as f:
         f.write(f"怪物の門 点火報告 {date.today()}\n")
         f.write("判定: 点火=YoY加速2連続∧YoY≥25%∧営利率+2pt / くすぶり=加速∧YoY≥15%\n")
+        f.write("規模: 年商(直近4Q売上) 微<$0.3B/小<$1.5B/中<$8B/大≥$8B。同判定内は小さい順。\n")
         f.write("点火銘柄は買いではない。門Ω審査→門X(無知の枠5-10%・¼ケリー)で縛る。\n\n")
         for c in results:
-            f.write(f"[{c['verdict']}] {c['ticker']:<6} 署名{c['sig']}点 "
+            sz = f"{c['size']} ${c['rev_ttm']/1e9:.1f}B" if c.get("rev_ttm") else "規模?"
+            f.write(f"[{c['verdict']}] {c['ticker']:<6} {sz:<10} 署名{c['sig']}点 "
                     f"CAGR5 {c['cagr5']}% ROIC {c['roic']}% OPM {c['opm']}% | "
                     f"YoY {c['yoy']}% 加速{c['accel']}連続 営利差 {c['opm_d']}pt | "
                     f"{' '.join(c['trail'])} {c.get('err','')}\n")
