@@ -731,8 +731,8 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
     <div class="row"><div class="rl">会計基準</div><div class="rc"><select id="acc"><option value="usgaap" selected>US-GAAP</option><option value="ifrs">IFRS</option><option value="jgaap">日本基準</option></select></div></div>
     <div class="row"><div class="rl">業態<span class="h">門が誤読する3類型は採点せず手調整へ送る／金融は20年検証で最大の負の予測因子</span></div><div class="rc"><select id="fin"><option value="no" selected>事業会社（綺麗なP&L）</option><option value="acq">連続買収（のれん歪み）</option><option value="merger">合併直後（償却・債務歪み）</option><option value="thin">薄利複合（粗利proxy誤読）</option><option value="yes">金融・レバレッジ依存</option></select></div></div>
     <div class="row"><div class="rl">創業者経営<span class="h">Fahlenbrach 2009 JFQA: 創業者CEO企業は年+8.3%超過。創業者/創業家がCEO・会長として現役ならyes → F10資本配分+8</span></div><div class="rc"><select id="founder"><option value="no" selected>no</option><option value="yes">yes（創業者/創業家が現役）</option></select></div></div>
-    <div class="row"><div class="rl">アナリスト数<span class="h">v9.2形質研究(Neglect): カバレッジ≤3社=+2/4-8社=+1/>15社=-1。0=データなし</span></div><div class="rc"><input id="analysts" type="number" step="1" value="0"></div></div>
-    <div class="row"><div class="rl">機関保有%<span class="h">v9.2形質研究(Neglect): <40%=+1/>85%=-1。0=データなし</span></div><div class="rc"><input id="instOwn" type="number" step="1" value="0"></div></div>
+    <div class="row"><div class="rl">アナリスト数<span class="h">v9.9発見度(Neglect・アナリスト数主導): ≤5社=+2/6-10社=+1/11-20社=0/21-35社=-1/>35社=-2。0=データなし</span></div><div class="rc"><input id="analysts" type="number" step="1" value="0"></div></div>
+    <div class="row"><div class="rl">機関保有%<span class="h">v9.9: <40%のみ+1(外国ADR・真の未発見シグナル)。高保有はUS銘柄で普遍のため加減点なし・100超はデータ異常として無視。0=データなし</span></div><div class="rc"><input id="instOwn" type="number" step="1" value="0"></div></div>
     <div class="row"><div class="rl">時価総額（十億$）<span class="h">v9.8 発見度の代理: アナリスト数・機関保有%が未入力のとき、時価総額でカバレッジを推定。&lt;$2B(超小型=ほぼ確実に未発見)→+2 / &gt;$100B(超大型=ほぼ確実に発見済)→−1 / 中間は据え置き(要実データ)。Arbel-Strebel企業規模Neglect効果は指数採用効果(Greenwood-Sammon2025で消滅)より頑健。0=データなし</span></div><div class="rc"><input id="mcap" type="number" step="0.1" value="0"><span class="u">B$</span></div></div>
     <div class="row"><div class="rl">Glassdoor<span class="h">v9.2形質研究→BT修正: ≤3.3=堀-2(文化崩壊の警告のみ、加点なし——Zoom2021偽陽性の教訓)。0=データなし。日本企業は0(中立)推奨</span></div><div class="rc"><input id="gls" type="number" step="0.1" value="0"></div></div>
     <div class="row"><div class="rl">主要指数採用<span class="h">v9.2形質研究(Greenwood-Sammon 2025): 未採用=Neglect+1(採用効果は消滅済み)</span></div><div class="rc"><select id="idx"><option value="" selected>—</option><option value="yes">採用済み</option><option value="no">未採用</option></select></div></div>
@@ -905,7 +905,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
 <div id="pg6" class="pg">
  <div class="pg3-head">
   <h1 class="serif">保有ポートフォリオ <span style="font-size:.5em;color:var(--mut)">出口判定・売却規律 v9.6</span></h1>
-  <p style="color:var(--muted);font-size:14px;line-height:1.8">保有中の銘柄だけを集約し、売却規律で自動判定する。<b style="color:var(--rust)">🔴 売却検討(S1)</b>／<b style="color:#d69a3c">🟡 買い増し停止・縮小(S2)</b>／<b style="color:var(--jade)">🟢 ホールド</b>——危険なものほど上に浮かぶ。<b style="color:#5d8cc2">🔵 買い・追加可</b>＝質80点以上×価格ゲート通過×壊れていない銘柄だけに点灯（S3＝記録のみは各カード内に表示）。<br><span style="font-size:12px;color:var(--dim)">保有への追加は「Ⅳ台帳」で各銘柄カードの「□」を押す。株価変動・空売り・単四半期ミスは売却理由にしない(長期保有バイアス)。</span></p>
+  <p style="color:var(--muted);font-size:14px;line-height:1.8">保有中の銘柄だけを集約し、売却規律で自動判定する。<b style="color:var(--rust)">🔴 売却検討(S1)</b>／<b style="color:#d69a3c">🟡 買い増し停止・縮小(S2)</b>／<b style="color:var(--jade)">🟢 ホールド</b>——危険なものほど上に浮かぶ。<b style="color:#5d8cc2">🔵 買い・追加可</b>＝質75点以上（投下閾値）×価格ゲート通過×壊れていない銘柄だけに点灯（S3＝記録のみは各カード内に表示）。<br><span style="font-size:12px;color:var(--dim)">保有への追加は「Ⅳ台帳」で各銘柄カードの「□」を押す。株価変動・空売り・単四半期ミスは売却理由にしない(長期保有バイアス)。</span></p>
  </div>
  <div class="wrap" style="margin-top:14px"><button onclick="ccfExportHoldings(this)" style="padding:9px 16px;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:8px;color:#8fc9a4;font-size:13px;font-weight:600;cursor:pointer">⬇ gate0用に保有リストを書き出し（holdings.json）</button><span style="font-size:11.5px;color:var(--muted);margin-left:10px">gate0（Drive/ccf）と決算カレンダーが読む——質80+のeliteも自動同梱（ファイル編集不要）</span><button onclick="ccfWipeAll(this)" style="margin-left:10px;padding:9px 14px;background:transparent;border:1px solid rgba(207,95,72,.5);border-radius:8px;color:#cf7f6f;font-size:12.5px;cursor:pointer">🗑 銘柄データを全消去</button></div><div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button onclick="ccfBackupAll(this)" style="padding:9px 16px;background:linear-gradient(180deg,rgba(93,140,194,.30),rgba(93,140,194,.10));border:1px solid rgba(93,140,194,.55);border-radius:8px;color:#9bb0d2;font-size:13px;font-weight:600;cursor:pointer">⬇ 完全バックアップ（全データ）</button><label for="bkFile" style="padding:9px 14px;background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--ink-soft);font-size:12.5px;cursor:pointer">⬆ 復元</label><input id="bkFile" type="file" accept=".json,application/json" style="display:none" onchange="ccfRestoreAll(this)"><span id="bkStat" style="font-size:11.5px;color:var(--muted)"></span></div><div style="margin-top:10px;font-size:12px;color:var(--ink-soft);background:rgba(84,184,138,.07);border:1px solid rgba(84,184,138,.3);border-radius:8px;padding:9px 12px;line-height:1.9"><b>運用リズム</b>：年1回＝発掘＋全銘柄の再採取・再審査／<b>四半期＝保有銘柄の決算だけ点検</b>——顧客喪失・material weakness・ガイダンス撤回などの異変があれば「◯◯の最新四半期を点検して」と審査へ。株価の上下は点検理由にしない。台帳が育ったら<b>月1回の完全バックアップ</b>を習慣に（端末が変わっても復元で全て戻る）。<div style="margin-top:8px"><button onclick="ccfCopyQCheck(this)" style="padding:8px 14px;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:7px;color:#8fc9a4;font-size:12.5px;font-weight:600;cursor:pointer">四半期点検の依頼文をコピー（保有全銘柄）</button><span style="font-size:11px;color:var(--muted);margin-left:8px">貼る先はコードでもチャットでも同じ基準で動く</span></div></div><div style="margin-top:12px"><label for="calFile" style="padding:8px 14px;background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--ink-soft);font-size:12.5px;cursor:pointer;display:inline-block">⬆ 決算カレンダー読込（next_earnings.json）</label><input id="calFile" type="file" accept=".json,application/json" style="display:none" onchange="ccfCalLoad(this)"><span style="font-size:11px;color:var(--muted);margin-left:8px">コードで「決算カレンダー作って」→ できたファイルを読むと下に常時表示。icsはGoogleカレンダーへ</span><div id="calBox" style="margin-top:10px"></div></div>
  <div class="wrap" style="margin-top:18px"><div id="holdBox"></div></div>
@@ -952,7 +952,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
 <div id="pg5" class="pg">
  <div class="pg3-head">
   <h1 class="serif">買付順位 <span style="font-size:.5em;color:var(--mut)">3層ルール自動適用</span></h1>
-  <p style="color:var(--muted);font-size:14px;line-height:1.9">台帳から自動生成。<b style="color:var(--gold-bright)">85+＝城の中核</b>／<b style="color:var(--jade)">80–85＝城の正規</b>／<b style="color:var(--steel)">75–80＝監視枠（保有せず・80超えで昇格）</b>。順位＝格スコア×間の余地×保留リスクの合成。<b>門は「買ってよい」まで——買うかは君の判断。</b></p>
+  <p style="color:var(--muted);font-size:14px;line-height:1.9">台帳から自動生成。<b style="color:var(--gold-bright)">80+＝城の中核（8%）</b>／<b style="color:var(--jade)">77–80＝城の正規（5%）</b>／<b style="color:var(--steel)">75–77＝城の外郭（3%）</b>／<b style="color:var(--dim)">72–75＝監視枠（保有せず・75超えで昇格）</b>。順位＝格スコア×間の余地×保留リスクの合成。<b>門は「買ってよい」まで——買うかは君の判断。</b></p>
  </div>
  <div class="wrap"><div id="planBox"></div></div>
 </div>
@@ -1550,14 +1550,15 @@ function compute(){
   if(amberPen>0)evalScore=Math.max(0,evalScore-amberPen); // v7: graduated kill-switch amber zone
   const sbcPen = sbc>=12 ? (sbc-12)*0.8 : 0;   // SBC化粧落とし：報酬の希薄化を罰する
   if(sbcPen>0)evalScore=Math.max(0,evalScore-sbcPen);
-  // 最上位ティアの門：堀の侵食進行中・破壊優勢は最上位(85)に入れない＝堅実止まり
+  // 最上位ティアの門：堀の侵食進行中・破壊優勢は最上位(80)に入れない＝堅実止まり
   //   v9.2改良: 「破壊リスク未決(unsettled)」は中立状態のため最上位キャップの対象から除外(優良企業の巻き添えを回避)。破壊が明確に「優勢(threat)」な場合のみキャップ。破壊リスクはf5耐陳腐化・未来門Fで別途評価済み
+  //   v9.9.2: ティア再アンカー(最上位85→80)への追随——キャップ84.9のままだと80-84.9帯の侵食銘柄が「最上位」表示になり教義と矛盾するため79.9に整合
   const topBlock=[]; if(erosion==='active')topBlock.push('堀の侵食進行'); if(disrupt==='threat')topBlock.push('破壊優勢');
-  if(topBlock.length)evalScore=Math.min(evalScore,84.9);
+  if(topBlock.length)evalScore=Math.min(evalScore,79.9);
   // v6.2の締めを可視化
   if(sbc>=12)psig.innerHTML+=`<div class="flag f-warn"><i>!</i><div><b>SBC化粧落とし −${sbcPen.toFixed(1)}：</b>株式報酬${sbc.toFixed(0)}%が希薄化として実コスト。利益率・FCFはSBC控除後で読め。</div></div>`;
   if(erosion!=='none')psig.innerHTML+=`<div class="flag ${erosion==='active'?'f-cut':'f-warn'}"><i>${erosion==='active'?'✕':'!'}</i><div><b>堀の侵食${erosion==='active'?'進行 −12':'兆候 −6'}：</b>主力に競合の旗。${erosion==='active'?'最上位ティア不可。':''}</div></div>`;
-  if(disrupt!=='settled')psig.innerHTML+=`<div class="flag f-warn"><i>!</i><div><b>破壊リスク${disrupt==='threat'?'優勢（未来−10）':'未決'}：</b>構造変化の決着前。最上位ティア不可。</div></div>`;
+  if(disrupt!=='settled')psig.innerHTML+=`<div class="flag f-warn"><i>!</i><div><b>破壊リスク${disrupt==='threat'?'優勢（未来−10）':'未決'}：</b>構造変化の決着前。${disrupt==='threat'?'最上位ティア不可。':'（中立——ティアはキャップしない）'}</div></div>`;
   const [eg,ec]=G(evalScore);
   $('evN').textContent=evalScore.toFixed(1);$('evN').style.color=ec;$('evG').textContent=eg;$('evG').style.color=ec;
   $('ssQ').textContent=Q.toFixed(1);$('ssSus').textContent=sustain.toFixed(0);$('ssF').textContent=F.toFixed(1);
@@ -2111,7 +2112,7 @@ async function renderHoldings(items,holdSet){
   const chip=(emo,lbl,n,col)=>`<div style="flex:1;min-width:72px;text-align:center;padding:10px 6px;border:1px solid ${col}55;border-radius:10px;background:${col}0c"><div style="font-size:20px">${emo}</div><div style="font-size:22px;font-weight:700;color:${col};line-height:1.1">${n}</div><div style="font-size:9.5px;color:var(--ink-soft)">${lbl}</div></div>`;
   html+=chip('🔴','売却検討',nS1,'#cf5f48')+chip('🟡','縮小',nS2,'#d69a3c')+chip('🟢','ホールド',nH,'#54b88a')+chip('🔵','買い・追加可',addList.length,'#5d8cc2');
   html+='</div>';
-  if(addList.length)html+='<div style="background:#54b88a1a;border:1px solid #54b88a;border-radius:10px;padding:10px 14px;font-size:13px;color:#8fc9a4;margin-bottom:12px"><b>🟢 押し目・追加買い可</b>（上位ティア×今買える）: '+addList.join('、')+'<div style="font-size:11px;color:var(--ink-soft);margin-top:3px">保有中で質80+かつ現値が買える水準。現在価格を入れると精度が上がる。</div></div>';
+  if(addList.length)html+='<div style="background:#54b88a1a;border:1px solid #54b88a;border-radius:10px;padding:10px 14px;font-size:13px;color:#8fc9a4;margin-bottom:12px"><b>🟢 押し目・追加買い可</b>（投下閾値75+×今買える）: '+addList.join('、')+'<div style="font-size:11px;color:var(--ink-soft);margin-top:3px">保有中で質75+（投下閾値）かつ現値が買える水準。現在価格を入れると精度が上がる。</div></div>';
   if(nS1)html+=`<div style="background:#cf5f4818;border:1px solid var(--rust);border-radius:8px;padding:8px 12px;font-size:12.5px;color:var(--rust);margin-bottom:12px"><b>⚠ 売却検討が${nS1}件あります。</b>質の崩壊シグナル——ただし確定事実(クラスA/B)か確認し、金利起因のスプレッド圧縮なら正規化rfrで再計算して除外せよ。</div>`;
   // ---- 各銘柄カード(信号色・大アイコン) ----
   for(const {it,ex} of rows){
