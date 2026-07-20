@@ -2258,7 +2258,7 @@ async function renderPlan(){
   const buys=rows.filter(r=>r.layer<=2&&r.act==='今 買える').sort((a,b)=>(b.s-a.s)||((b.room||0)-(a.room||0)));
   if(buys.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px">今買える——優先順位</h2>`;
-    html+=buys.map((r,i)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${i+1}位</b></span><span class="ln">${r.nm}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span><span style="font-size:11.5px;color:var(--muted);white-space:nowrap">${r.room!=null?`余地+${r.room.toFixed(0)}%`:'余地不明'}</span></div>`).join('');
+    html+=buys.map((r,i)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${i+1}位</b></span><span class="ln">${r.nm}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span><span style="font-size:11.5px;color:var(--muted);white-space:nowrap">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span></div>`).join('');
   } else html+=`<div style="color:var(--dim);font-size:13px;margin:10px 0">75点以上で「今買える」銘柄なし——押し目監視と網（ETF）へ。</div>`;
   // 押し目待ち(75+): 転換時の予約順位
   const waits=rows.filter(r=>r.layer<=2&&r.act==='押し目待ち').sort((a,b)=>(b.s-a.s)||((b.room||0)-(a.room||0)));
