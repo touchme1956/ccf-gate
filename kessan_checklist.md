@@ -63,6 +63,10 @@
 
 ## D. 器械の保守（四半期1回）
 
+> 2026-07-21よりカレンダー駆動: Googleカレンダーに「【門】四半期保守（毎四半期20日）」
+> 「【門】採取・新規銘柄の審査（毎月10日・25日）」「【門】年次発掘（毎年1/15）」の
+> 定期イベントを登録済み。本章は【門】四半期保守の実施内容。
+
 - [ ] `python kessan_check.py $(python3 -c "import json;print(' '.join(json.load(open('kanshi_list.json'))['tickers']))")`
 - [ ] 決算日再取得→out/next_earnings.json・カレンダー更新（決算日は3か月先までしか取れない）
 - [ ] kanshi_list.json をⅦ買付順位・X監視表の変動に合わせて更新
