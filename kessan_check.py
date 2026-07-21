@@ -37,7 +37,10 @@ TAGS_REV = ["Revenues","RevenueFromContractWithCustomerExcludingAssessedTax","Sa
 TAGS_OP  = ["OperatingIncomeLoss","ProfitLossFromOperatingActivities"]
 
 def quarterly_series(facts, keys):
-    """10-Q/10-K行から四半期(60-120日)の {end_date: val} を作る"""
+    """10-Q/10-K行から四半期(60-120日)の {end_date: val} を作る。
+       タグ乗換(例: Revenues→RevenueFromContractWithCustomer)で古い系列だけが残る銘柄が
+       多数あるため、最初のヒットではなく「最新の四半期末が最も新しい系列」を採用する"""
+    best = {}
     for ns in ("us-gaap","ifrs-full"):
         d = facts.get("facts",{}).get(ns,{})
         for k in keys:
@@ -54,8 +57,9 @@ def quarterly_series(facts, keys):
                         days = (d1-d0).days
                         if not (60 <= days <= 120): continue   # 四半期のみ
                         out[e] = row["val"]
-                    if out: return out
-    return {}
+                    if out and (not best or max(out) > max(best)):
+                        best = out
+    return best
 
 def yoy_pair(q):
     """最新四半期と、その約1年前(±25日)の四半期を返す"""
@@ -93,7 +97,8 @@ def scan(text, width=260, per=2):
             for m in re.finditer(p, text, re.I):
                 if n >= per: break
                 s = max(0, m.start()-width//2)
-                lines.append(f"[{cat}|{p}] …{re.sub(r'\\s+',' ',text[s:s+width])}…")
+                frag = re.sub(r"\s+", " ", text[s:s+width])
+                lines.append(f"[{cat}|{p}] …{frag}…")
                 n += 1
         if n: hitcats.append(cat)
     return lines, hitcats
