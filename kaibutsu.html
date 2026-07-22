@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCF IGNIS — 怪物の門（別枠・NVIDIA型の点火を待ち伏せる）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+ --bg:#0c0806;--panel:#1b120c;--panel2:#160e09;--line:#3d2b1c;
+ --ink:#f2ede4;--ink-soft:#d6ccbd;--muted:#a3937f;
+ --gold:#c9a64a;--gold-bright:#ecd494;--gold-line:rgba(201,166,74,.40);
+ --fire:#e08a4e;--fire-bright:#f4b47e;--fire-deep:#b05c2a;--fire-line:rgba(224,138,78,.38);
+ --pass:#8cc091;--fail:#cf7a60;--warn:#d8b46a;--maxw:1060px;--codebg:#120b07;}
+*{box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{margin:0;color:var(--ink);font-size:17px;line-height:1.95;letter-spacing:.02em;
+ background:
+  radial-gradient(900px 520px at 50% -140px,rgba(224,138,78,.12),transparent 62%),
+  radial-gradient(700px 420px at 12% 10%,rgba(201,166,74,.05),transparent 60%),
+  linear-gradient(180deg,#100a07,#0c0806 60%,#090604);
+ font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",sans-serif;font-weight:300;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;}
+::selection{background:rgba(224,138,78,.28);}
+h1,h2,h3,h4{font-family:"Shippori Mincho",serif;color:#f5f0e6;font-weight:600;letter-spacing:.06em;line-height:1.4;}
+strong,b{color:var(--gold-bright);font-weight:500;}
+code{background:var(--codebg);border:1px solid var(--line);border-radius:5px;padding:1px 7px;font-size:.86em;color:var(--fire-bright);}
+.hero{position:relative;text-align:center;padding:84px 20px 46px;overflow:hidden;}
+.hero:before{content:"";position:absolute;inset:0;pointer-events:none;background:
+ radial-gradient(1.5px 1.5px at 18% 30%,rgba(244,180,126,.8),transparent 55%),
+ radial-gradient(1.2px 1.2px at 33% 66%,rgba(255,255,255,.4),transparent 55%),
+ radial-gradient(1.7px 1.7px at 49% 20%,rgba(224,138,78,.9),transparent 55%),
+ radial-gradient(1.1px 1.1px at 64% 48%,rgba(236,212,148,.6),transparent 55%),
+ radial-gradient(1.5px 1.5px at 78% 18%,rgba(244,180,126,.8),transparent 55%),
+ radial-gradient(1.2px 1.2px at 88% 60%,rgba(255,255,255,.4),transparent 55%);}
+.brand{font-family:"Cormorant Garamond",serif;font-size:14px;letter-spacing:.42em;color:var(--fire);text-transform:uppercase;margin-bottom:14px;}
+.hero h1{font-size:clamp(30px,5.4vw,46px);margin:0 0 10px;}
+.hero .g{color:var(--fire-bright);}
+.latin{font-family:"Cormorant Garamond",serif;font-style:italic;font-size:16px;color:var(--muted);letter-spacing:.12em;}
+.rule{display:flex;align-items:center;gap:14px;justify-content:center;margin:22px 0;}
+.rule span{display:block;width:110px;height:1px;background:linear-gradient(90deg,transparent,var(--fire-line));}
+.rule span:last-child{background:linear-gradient(90deg,var(--fire-line),transparent);}
+.rule .d{width:auto;height:auto;background:none;color:var(--fire);font-size:13px;}
+.sub{max-width:680px;margin:0 auto;color:var(--ink-soft);font-size:15.5px;}
+nav.top{position:sticky;top:0;z-index:50;background:rgba(12,8,6,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;justify-content:center;gap:2px;padding:8px 10px;}
+nav.top a{color:var(--ink-soft);text-decoration:none;font-size:13px;padding:6px 12px;border-radius:7px;letter-spacing:.05em;}
+nav.top a:hover{background:rgba(224,138,78,.12);color:var(--fire-bright);}
+.block{padding:44px 0 18px;}
+.tag{display:inline-block;font-size:11.5px;letter-spacing:.28em;color:var(--fire);border:1px solid var(--fire-line);border-radius:999px;padding:4px 14px;margin-bottom:14px;background:rgba(224,138,78,.07);text-transform:uppercase;}
+.h2{font-family:"Shippori Mincho",serif;font-size:clamp(21px,3vw,27px);color:#f5f0e6;font-weight:600;letter-spacing:.06em;margin:0 0 12px;}
+.intro{color:var(--ink-soft);font-size:15.5px;margin:0 0 14px;}
+.panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;padding:22px 24px;margin:14px 0;}
+.panel-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:14px;}
+.panel-h h3{margin:0;font-size:17.5px;}
+.pass{color:var(--pass);font-size:12.5px;letter-spacing:.08em;}
+.fm{background:var(--codebg);border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:14px 0;font-size:14.5px;line-height:2.05;}
+.fm .lbl{display:block;font-size:11px;letter-spacing:.24em;color:var(--fire);margin-bottom:6px;text-transform:uppercase;}
+.fm .rd{color:var(--muted);font-size:12.8px;}
+.fm.gold{border-color:var(--gold-line);}.fm.gold .lbl{color:var(--gold);}
+.cut{background:rgba(224,138,78,.07);border:1px solid var(--fire-line);border-radius:10px;padding:13px 16px;margin:14px 0;font-size:14px;line-height:1.95;}
+.cut.gold{background:rgba(201,166,74,.07);border-color:var(--gold-line);}
+.gatebanner{text-align:center;padding:52px 20px 44px;margin:36px 0 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+ background:linear-gradient(180deg,rgba(224,138,78,.06),rgba(12,8,6,0) 70%);}
+.gatebanner .gk{font-family:"Cormorant Garamond",serif;letter-spacing:.4em;color:var(--fire);font-size:13px;text-transform:uppercase;}
+.gatebanner .gt{font-family:"Shippori Mincho",serif;font-size:clamp(22px,3.6vw,30px);color:#f5f0e6;margin:8px 0 6px;font-weight:600;letter-spacing:.08em;}
+.gatebanner .gs{color:var(--muted);font-size:14px;}
+.badge{display:inline-block;margin-top:12px;font-size:12px;letter-spacing:.12em;color:var(--gold-bright);border:1px solid var(--gold-line);border-radius:999px;padding:4px 16px;background:rgba(201,166,74,.08);}
+table.dt{width:100%;border-collapse:collapse;font-size:13.6px;margin:10px 0;}
+table.dt th{color:var(--fire);font-weight:500;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12px;letter-spacing:.1em;}
+table.dt td{padding:8px 10px;border-bottom:1px solid rgba(61,43,28,.6);color:var(--ink-soft);vertical-align:top;}
+table.dt td.k{color:var(--gold-bright);white-space:nowrap;}
+.rows{display:grid;gap:10px;}
+.row{display:flex;gap:12px;align-items:flex-start;padding:11px 13px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px;font-size:14px;color:var(--ink-soft);}
+.row .ic{font-family:"Shippori Mincho",serif;font-size:19px;color:var(--fire-bright);min-width:1.6em;text-align:center;}
+.v{display:inline-block;font-family:"Shippori Mincho",serif;font-size:14px;letter-spacing:.14em;padding:2px 12px;border-radius:999px;border:1px solid;margin-right:6px;}
+.v-fire{color:var(--fire-bright);border-color:var(--fire-line);background:rgba(224,138,78,.10);}
+.v-smo{color:var(--warn);border-color:rgba(216,180,106,.5);background:rgba(216,180,106,.08);}
+.v-wait{color:var(--muted);border-color:var(--line);background:rgba(255,255,255,.02);}
+footer{padding:44px 20px 60px;text-align:center;color:#7a6a56;font-size:12.5px;border-top:1px solid var(--line);margin-top:50px;line-height:2;}
+@media(max-width:640px){body{font-size:15.5px;} .panel{padding:16px;} }
+</style>
+</head>
+<body>
+
+<header class="hero">
+ <div class="brand">CCF IGNIS · Monster Gate — Parallel Frame</div>
+ <h1>怪物の門 <span class="g">—</span> 点火を待ち伏せる門</h1>
+ <div class="latin">Ignem Exspecta — Wait for the Ignition, Not the Prophecy</div>
+ <div class="rule"><span></span><span class="d">🔥</span><span></span></div>
+ <p class="sub">次のNVIDIAを事前に名指しする方法は、この世に存在しない。<br>存在するのは——<b>怪物に共通する初期署名で野を絞り、点火の瞬間を<br>法定開示と同じ速度で検知し、篭で飼い、現れた怪物を手放さない</b>ことだけだ。</p>
+ <div style="margin-top:18px"><span class="badge">別枠 · 正本（門Ω）・門X（超未来の門）と接続して使う</span></div>
+</header>
+
+<nav class="top">
+ <a href="#jo">序 · 正直の宣誓</a>
+ <a href="#sig">Ⅰ 怪物の署名</a>
+ <a href="#ign">Ⅱ 点火検知</a>
+ <a href="#kago">Ⅲ 篭の掟</a>
+ <a href="#unyo">運用手順</a>
+ <a href="#genkai">この門の限界</a>
+</nav>
+
+<!-- ============ 序 ============ -->
+<div class="wrap" id="jo">
+<div class="block">
+ <div class="tag">Prologue · 正直の宣誓</div>
+ <div class="h2">「最速」とは何か — 予知の速さではなく、検知の速さ</div>
+ <p class="intro">NVIDIAは1999年の上場から約<b>3000倍</b>になった。だがベッセンバインダーが示した通り、株式市場の富の創出は上位およそ4%の銘柄に集中し、<b>どの銘柄がそうなるかを事前に知る方法はない</b>。「次のNVIDIAはこれだ」と断言する者は、全員が売り手か博打打ちだ。それでも、できることが三つある。</p>
+ <div class="rows">
+  <div class="row"><div class="ic">署</div><div class="tx"><b>①署名で野を絞る</b> — 過去の怪物（NVIDIA・Monster Beverage・Netflix・ASML…）は開花前に共通の数値署名を示した：<b>超成長の持続 × 高い増分マージン × 資本効率 × まだ小さい/見られていない</b>。全上場約2,900社をこの署名でランクし、監視対象を数十社に絞る。</div></div>
+  <div class="row"><div class="ic">火</div><div class="tx"><b>②点火を検知する</b> — 怪物化の瞬間は必ず<b>四半期売上の加速</b>として決算に現れる（NVIDIAなら2016年と2023年の二度）。SECの法定開示より速く知る方法はインサイダー取引しかない。ゆえに<b>「最速」＝全候補の四半期数字を開示当日に機械で走査すること</b>。この門の速度はそこに置く。</div></div>
+  <div class="row"><div class="ic">篭</div><div class="tx"><b>③篭で飼い、手放さない</b> — 点火しても大半は失速する。だから一匹に賭けず<b>篭（5〜15匹・小口・全損前提）</b>で飼う。そして本物の怪物が現れたら<b>売らない</b>——NVIDIAの3000倍は、予測した者ではなく保有し続けた者だけが取った。冪則の下で、リターンの大半は「見つける」ではなく「手放さない」から生まれる。</div></div>
+ </div>
+ <div class="cut gold"><b>三門の分業：</b>怪物の門（本書）＝<b>候補を最速で見つける目</b>。門Ω（正本）＝<b>壊れないかを裁く関所</b>。門X（超未来の門）＝<b>期待値とサイズを裁く算盤</b>。目→関所→算盤の順で流れ、どの門も他の門を上書きしない。</div>
+</div>
+</div>
+
+<!-- ============ Ⅰ 署名 ============ -->
+<div class="gatebanner" id="sig">
+ <div class="gk">Signature</div>
+ <div class="gt">Ⅰ ― 怪物の初期署名</div>
+ <div class="gs">開花前の怪物が、決算数字に残す指紋。</div>
+ <span class="badge">年1回 · gate0_all.csv 全母集団をランク</span>
+</div>
+
+<div class="wrap">
+<div class="block">
+ <div class="tag">The Fingerprint</div>
+ <div class="h2">なぜこの四つか — NVIDIAが開花前に見せていたもの</div>
+ <p class="intro">2015年のNVIDIAは時価総額約1兆円の「ゲーム用半導体屋」だった。だが決算には既に署名があった：売上成長の再加速、粗利率の階段状の上昇（＝増分マージンの高さ）、高いROIC、そして市場の無関心。怪物の門はこの指紋を式にして、毎年の門0出力（全上場約2,900社）に当てる。</p>
+
+ <div class="fm">
+  <span class="lbl">署名点（0〜100） — kaibutsu_scan.py 段1</span>
+  署名 ＝ <b>0.40</b>×超成長（売上5年CAGR、40%で満点） ＋ <b>0.25</b>×資本効率（ROIC、30%で満点） ＋ <b>0.20</b>×利益体質（営業利益率、30%で満点） ＋ <b>0.15</b>×FCF転換<br>
+  <span class="rd">除外：売上CAGR15%未満（超成長が全ての起点）・債務超過・会計異常・営業赤字体質。上位40社（既定）が点火監視リストとなる。</span>
+ </div>
+
+ <table class="dt">
+  <thead><tr><th>署名</th><th>意味</th><th>怪物での現れ方</th></tr></thead>
+  <tbody>
+   <tr><td class="k">超成長の持続</td><td>5年CAGR ≥ 15%、理想は30%超</td><td>需要が構造的（流行でない）なら成長は年単位で持続する</td></tr>
+   <tr><td class="k">増分マージン</td><td>売上が伸びるほど利益率が上がる（営業レバレッジ）</td><td>NVIDIA 2023年：売上2.2倍に対し営業利益は約10倍</td></tr>
+   <tr><td class="k">資本効率</td><td>ROIC高位＝成長が資本を食い潰さない</td><td>設計専業・ソフト型・プラットフォーム型に多い</td></tr>
+   <tr><td class="k">未発見</td><td>アナリスト僅少・機関保有低（発見度は門Ωの negS と共用）</td><td>誰もが知る前が仕込みの季節。発見済みなら価格に織込み済み</td></tr>
+  </tbody>
+ </table>
+ <div class="cut"><b>署名は「予言」ではない：</b>署名を持つ40社のうち怪物になるのは0〜2社、ならないのが38社以上——それで良い。署名の仕事は的中ではなく、<b>2,900社の野から「点火し得る群れ」へ監視を絞る</b>ことだけだ。</div>
+</div>
+</div>
+
+<!-- ============ Ⅱ 点火 ============ -->
+<div class="gatebanner" id="ign">
+ <div class="gk">Ignition</div>
+ <div class="gt">Ⅱ ― 点火検知</div>
+ <div class="gs">怪物化は必ず、四半期売上の加速として最初に現れる。</div>
+ <span class="badge">四半期ごと · 開示当日に機械走査</span>
+</div>
+
+<div class="wrap">
+<div class="block">
+ <div class="tag">Ignition Formula</div>
+ <div class="h2">点火の式 — 三条件の同時成立</div>
+ <div class="fm">
+  <span class="lbl">判定（kaibutsu_scan.py 段2 · SEC四半期データ）</span>
+  <span class="v v-fire">点火A</span> 売上YoYの<b>加速が2四半期連続</b> ∧ 最新YoY ≥ <b>+25%</b> ∧ 営業利益率が前年同期比 <b>+2pt以上</b> ——売上加速型（NVIDIA 2016/2023型）<br>
+  <span class="v v-fire">点火B</span> 営業利益率の前年同期差 <b>+2pt以上が2四半期連続</b> ∧ 最新YoY ≥ <b>+10%</b> ——利益率階段型（Amazon 2015・Microsoft 2017・Axon・Celsius 2019型）<br>
+  <span class="v v-smo">くすぶり</span> どちらかの予鳴り（加速∧YoY≥15%、または営利率+2ptが1四半期）——監視を継続、次の四半期で裁く<br>
+  <span class="v v-wait">待機</span> それ以外。署名があっても火が入るまで動かない<br>
+  <span class="rd">A式の意味：加速2連続＝一過性でない ／ YoY25%＝規模が動いた ／ 営利率改善＝<b>成長が利益に転換している</b>（値引きで買った成長を弾く）。B式は18社の遡及テストから追加：巨体（MSFT）や低利益率業態（AMZN）の怪物化は売上でなく<b>利益率の階段</b>に最初に現れる——MSFTのクラウド転換はB式が2017-09に発火し5四半期鳴り続けた。営業利益の開示がない銘柄は点火判定に上げない（くすぶり止まり）。</span>
+ </div>
+
+ <p class="intro">この式をNVIDIAの過去に当てると、二度の点火を正しく捉える。<b>市場より一四半期遅れることはある——それは博打をしないことの対価</b>であり、怪物の上昇は点火後も年単位で続いたから、遅れは致命傷にならない。</p>
+ <table class="dt">
+  <thead><tr><th>点火</th><th>何が起きたか</th><th>検知時点</th><th>その後</th></tr></thead>
+  <tbody>
+   <tr><td class="k">2016年 秋</td><td>ゲーム＋データセンター初期需要で四半期YoYが +24% → +54% へ跳ねる</td><td>2016年11月の10-Q</td><td>検知後さらに約<b>数十倍</b>（分割調整後）</td></tr>
+   <tr><td class="k">2023年 夏</td><td>生成AIで四半期YoYが −13% → +101% へ反転爆発、営業利益率は歴史的水準へ</td><td>2023年8月の10-Q</td><td>検知後さらに約<b>3〜4倍</b></td></tr>
+  </tbody>
+ </table>
+ <div class="cut"><b>偽点火に注意：</b>コロナ特需（Zoom・Peloton型）や一過性の値上げも点火の形をとる。NVIDIAの遡及テストでも発火7回中、本物は3回（2010年リバウンド・2011年Tegra・2018年暗号資産はダマシ）。だから点火は「買い」ではなく<b>「門Ωの審査に最優先で回す合図」</b>。持続の三本柱（MOAT・ROIC・TAM）を通らない点火は、花火であって怪物ではない。加えて<b>集団発火フィルタ</b>：同一走査で監視対象の30%以上が同時に点火したら、それは市場全体の反動（2021年型のベータ）であり個別のアルファではない——スキャナーが自動で警告する。</div>
+
+ <div class="tag" style="margin-top:26px">Bestiary · 怪物列伝の検証結果</div>
+ <div class="h2">怪物の四類型 — 18社×約900四半期の遡及テストより</div>
+ <p class="intro">歴代の超複利銘柄をSEC全履歴で解剖した結果、怪物は四類型に分かれ、<b>この門が検知するのはA・Bの二型だけ</b>と判明した。C・D型は点火せずに100倍になる——それらは門Ω・門Xの持ち場であり、三門の分業はこの実証に基づく。</p>
+ <table class="dt">
+  <thead><tr><th>類型</th><th>複利の出方</th><th>実例</th><th>捕まえる門</th></tr></thead>
+  <tbody>
+   <tr><td class="k">A 売上点火型</td><td>連結売上のYoY加速＋営業レバレッジ。くすぶり2〜3四半期→爆発</td><td>NVIDIA・Tesla・Booking 2010・Deckers(HOKA)・Celsius 2022</td><td><b>本門・A式</b></td></tr>
+   <tr><td class="k">B 利益率階段型</td><td>成長は10〜20%のまま利益率が階段状に上昇（事業転換・第二S字）</td><td>Amazon 2015(AWS)・Microsoft 2017(クラウド)・Axon(SaaS)・Celsius 2019</td><td><b>本門・B式</b></td></tr>
+   <tr><td class="k">C 還元複利型</td><td>売上・利益率は平凡。自社株買い＋価格決定力で<b>EPSだけ</b>が複利</td><td>Domino's（2010年代S&amp;P最強なのに点火ゼロ）・AutoZone・O'Reilly・FICO</td><td>門Ω＋門Xの還元利回り項（gate0上位に既に出る）</td></tr>
+   <tr><td class="k">D 拍子木型</td><td>年12〜20%×高ROICを20〜30年。点火なし・タイミング不要</td><td>Copart・Old Dominion・Pool・Mastercard・Walmart 1970-90</td><td>門Ωの本丸（質＋持続の三本柱）</td></tr>
+  </tbody>
+ </table>
+ <div class="cut gold"><b>列伝最大の教訓——第二S字：</b>調べた怪物のほぼ全てが「二本目の製品」で最大の上昇を出した。iPod→iPhone、DVD→配信、Windows→クラウド、テーザー→SaaS、UGG→HOKA、小売→AWS、ゲーム→AI。<b>次の怪物は、既に保有・監視している会社のセグメント開示の中から生まれる公算が高い</b>。ゆえに四半期点検（kessan_check）は新セグメント・大手流通契約を「☀吉報」として検知する（Monster×コカコーラ2015・Celsius×ペプシ2022が同型の起爆装置だった）。もう一つ：Supermicroは点火後30倍になったが、点火<b>前</b>から誠キル該当（会計問題での上場廃止歴）であり、門は正しく弾いて−85%を避ける。<b>30倍を逃すことは、門の失敗ではなく門の仕事である。</b></div>
+</div>
+</div>
+
+<!-- ============ Ⅲ 篭 ============ -->
+<div class="gatebanner" id="kago">
+ <div class="gk">The Basket</div>
+ <div class="gt">Ⅲ ― 篭の掟</div>
+ <div class="gs">一匹を当てるのではない。群れを飼い、怪物だけが残る。</div>
+ <span class="badge">冪則の実装 · 門Xのサイズ規律に従属</span>
+</div>
+
+<div class="wrap">
+<div class="block">
+ <div class="tag">Basket Rules</div>
+ <div class="h2">五つの掟</div>
+ <div class="rows">
+  <div class="row"><div class="ic">一</div><div class="tx"><b>篭で飼う</b> — 点火して門Ω審査を通った候補を5〜15匹。1匹あたりのサイズは門Xの<b>¼ケリー上限</b>、篭全体で<b>無知の枠（資本の5〜10%）</b>を超えない。全損前提。</div></div>
+  <div class="row"><div class="ic">二</div><div class="tx"><b>失速したら静かに出す</b> — 点火条件が2四半期連続で崩れたら（YoY減速×2 ∧ 営利率悪化）篭から出す。損切りは株価でなく<b>数字の失速</b>で判定する。</div></div>
+  <div class="row"><div class="ic">三</div><div class="tx"><b>怪物は売らない</b> — 上がったことは売る理由にならない。3000倍は保有し続けた者だけが取った。売るのは門Ωの売却規律（質の崩壊）が言う時だけ。</div></div>
+  <div class="row"><div class="ic">四</div><div class="tx"><b>育った怪物は城へ昇格</b> — 篭の銘柄が門Ω本審査（質86点＋三本柱70点）を通過し続けるなら、それはもう実験ではない。城（本配分）へ昇格させ、通常の規律で持つ。</div></div>
+  <div class="row"><div class="ic">五</div><div class="tx"><b>篭の成績を記録する</b> — 年1回、篭の全銘柄の判定と結果を突き合わせる。点火の式そのものの成績を測り、式を疑う材料を残す。</div></div>
+ </div>
+ <div class="fm gold">
+  <span class="lbl">なぜ篭が数学的に正しいか</span>
+  怪物の基礎確率を1/1000とする。署名で40社に絞れば篭の中の確率は桁で上がるが、それでも1匹狙いは外れる方に賭けるのと同じ。<b>10匹の篭 × 1匹でも100倍 ＝ 篭全体で10倍</b>——9匹が全損でも篭は勝つ。冪則の世界では、的中率を上げるのではなく<b>試行回数を確保して右裾を拾う</b>のが正しい戦略。<br>
+  <span class="rd">これは門X・裁きⅡ（非対称の門）の実戦配備である。左裾は小口と全損前提で塞ぎ、右裾は「売らない」で開けておく。</span>
+ </div>
+</div>
+</div>
+
+<!-- ============ 運用 ============ -->
+<div class="wrap" id="unyo">
+<div class="block">
+ <div class="tag">Operation</div>
+ <div class="h2">運用手順 — 年輪と四半期の二拍子</div>
+ <table class="dt">
+  <thead><tr><th>頻度</th><th>作業</th><th>コマンド／出力</th></tr></thead>
+  <tbody>
+   <tr><td class="k">年1回</td><td>門0の後、全母集団を署名でランクし監視リストを更新</td><td><code>python kaibutsu_scan.py</code> → <code>kaibutsu_queue.json</code></td></tr>
+   <tr><td class="k">四半期</td><td>決算シーズン明けに点火検知を再実行（決算カレンダーと連動）</td><td>同上（数分で完了・SEC制限遵守）</td></tr>
+   <tr><td class="k">点火時</td><td>🔥銘柄を採取器で採取 → 門Ω審査へ最優先で回す</td><td><code>python hachimon_fetch.py 銘柄</code> → 審査 → 門Xでサイズ</td></tr>
+   <tr><td class="k">中型小型に絞る</td><td>年商（直近4Q売上）で 微&lt;$0.3B／小&lt;$1.5B／中&lt;$8B／大 に自動分類。同じ判定内では小さい順に並ぶ。上限指定で大型を行列から外せる</td><td><code>python kaibutsu_scan.py --max-rev 5</code>（年商$5B以下のみ）</td></tr>
+   <tr><td class="k">随時</td><td>気になる銘柄の単発チェック</td><td><code>python kaibutsu_scan.py NVDA CRWD</code></td></tr>
+  </tbody>
+ </table>
+ <div class="cut"><b>報告の読み方：</b><code>out/kaibutsu_report.txt</code> に全候補の判定・YoY推移・営利差が並ぶ。🔥点火 → 審査へ。…くすぶり → 次の四半期まで監視。待機 → 何もしない。<b>「何もしない」が既定動作</b>であることがこの門の安全装置だ。</div>
+</div>
+</div>
+
+<!-- ============ 限界 ============ -->
+<div class="wrap" id="genkai">
+<div class="block">
+ <div class="tag">Limits · この門が拾えないもの</div>
+ <div class="h2">限界の告白 — 知らないことを知っておく</div>
+ <table class="dt">
+  <thead><tr><th>拾えない型</th><th>理由</th><th>対処</th></tr></thead>
+  <tbody>
+   <tr><td class="k">売上ゼロからの怪物</td><td>創薬・上場直後などは署名も点火も数字にならない</td><td>諦める。それは投資でなくベンチャー投機</td></tr>
+   <tr><td class="k">外国私募発行体</td><td>20-F組（四半期開示なし）はYoY加速を検知できない</td><td>報告に「四半期開示なし」と明示。半期で目視</td></tr>
+   <tr><td class="k">市場が先に気づいた分</td><td>検知は開示ベース＝株価は点火前に動き始めることがある</td><td>受け入れる。怪物の上昇は点火後も年単位で続く</td></tr>
+   <tr><td class="k">偽点火（特需・一過性）</td><td>数字だけでは構造需要と特需を区別できない</td><td>門Ωの三本柱審査が防波堤。点火≠買い</td></tr>
+  </tbody>
+ </table>
+ <div class="cut gold"><b>最後に、最も大事な一行：</b>この門の成果は「NVIDIAを当てたか」では測らない。<b>署名→点火→篭→門Ω→門X の規律を、何年も破らずに回せたか</b>で測る。怪物は狙って獲るものではなく、規律の網に、いつか勝手にかかるものだ。</div>
+</div>
+</div>
+
+<footer>
+ CCF IGNIS — 怪物の門(並走環境・別枠実験)<br>
+ 正本は index.html(門Ω)。サイズ規律は chomirai.html(門X)。本書はどちらも上書きしない。<br>
+ 点火判定は機械の一次検知であり買い推奨ではない。投資判断は自己責任で。
+</footer>
+</body></html>
