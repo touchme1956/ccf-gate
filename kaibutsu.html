@@ -94,6 +94,7 @@ footer{padding:44px 20px 60px;text-align:center;color:#7a6a56;font-size:12.5px;b
  <a href="#sig">Ⅰ 怪物の署名</a>
  <a href="#ign">Ⅱ 点火検知</a>
  <a href="#kago">Ⅲ 篭の掟</a>
+ <a href="#kensho">検証</a>
  <a href="#unyo">運用手順</a>
  <a href="#genkai">この門の限界</a>
 </nav>
@@ -216,6 +217,48 @@ footer{padding:44px 20px 60px;text-align:center;color:#7a6a56;font-size:12.5px;b
   <span class="lbl">なぜ篭が数学的に正しいか</span>
   怪物の基礎確率を1/1000とする。署名で40社に絞れば篭の中の確率は桁で上がるが、それでも1匹狙いは外れる方に賭けるのと同じ。<b>10匹の篭 × 1匹でも100倍 ＝ 篭全体で10倍</b>——9匹が全損でも篭は勝つ。冪則の世界では、的中率を上げるのではなく<b>試行回数を確保して右裾を拾う</b>のが正しい戦略。<br>
   <span class="rd">これは門X・裁きⅡ（非対称の門）の実戦配備である。左裾は小口と全損前提で塞ぎ、右裾は「売らない」で開けておく。</span>
+ </div>
+</div>
+</div>
+
+<!-- ============ 検証 ============ -->
+<div class="gatebanner" id="kensho">
+ <div class="gk">Validation</div>
+ <div class="gt">検証 ― 点火ルールは本当に効くのか</div>
+ <div class="gs">勝者を選ぶのをやめ、候補母集団の全点火を対照群と比べる。</div>
+ <span class="badge">414社・点in time・生存者バイアスを明記</span>
+</div>
+
+<div class="wrap">
+<div class="block">
+ <div class="tag">Honest Backtest · kaibutsu_backtest.py</div>
+ <div class="h2">点火 vs 非点火 — 前方3年の売上持続で測る</div>
+ <p class="intro">怪物列伝の18社は「勝った銘柄」を選んだ生存者バイアスの塊だった。本検証は署名を通る<b>候補母集団414社</b>に対し、点火を<b>その四半期までのデータだけで検出（先読み無し）</b>し、点火後3年の売上CAGRで成否を測る。要は<b>非点火の同母集団を対照群に置き、「点火に予測力の上乗せ（lift）があるか」</b>を見る——これで「そもそも成長株が多いだけ」を切り分ける。株価でなく基礎数値ゆえ鍵不要・完全再現可能。</p>
+
+ <div class="panel">
+  <div class="panel-h"><h3>結果（前方3年・売上CAGR）</h3><span class="pass">点火A lift ＋26pt</span></div>
+  <table class="dt">
+   <thead><tr><th>群</th><th>事象数</th><th>CAGR中央値</th><th>成功率（≥15%）</th><th>失速率（&lt;5%）</th></tr></thead>
+   <tbody>
+    <tr><td class="k">点火A（売上加速）</td><td>223</td><td><b>27.2%</b></td><td><b>80%</b></td><td>8%</td></tr>
+    <tr><td class="k">点火B（利益率階段）</td><td>403</td><td>19.6%</td><td>65%</td><td>14%</td></tr>
+    <tr><td class="k">対照（非点火）</td><td>2708</td><td>16.4%</td><td>54%</td><td>24%</td></tr>
+   </tbody>
+  </table>
+  <div style="font-size:13.5px;color:var(--ink-soft);margin-top:8px;line-height:1.9">
+   <b style="color:var(--fire-bright)">読み方：</b>点火Aは成功率を<b>54%→80%（＋26pt）</b>に上げ、失速率を<b>24%→8%（約1/3）</b>に下げる＝<b>本物の予測力がある</b>。対照群がすでに署名通過の優良成長群（成功率54%）である点に注意——<b>その高い土台をさらに26pt上回る</b>のが点火の価値。点火Bは＋11ptと弱い。
+  </div>
+ </div>
+
+ <div class="cut"><b>偽点火の正体（重要な発見）：</b>点火Bの失速例は <b>EQT・HP・PNRG・RNGR・RSRV・HNRG</b> ——ほぼ全て<b>石油・資源のシクリカル</b>だった。利益率階段（B式）は「商品市況で一時的に上がった利益率」を構造変化と誤認する。点火Aの失速例も VXRT（ワクチン）・JOE（不動産）・GBX/INSW（造船・海運）と、<b>シクリカルと二値博打（バイオ）に集中</b>。<b style="color:var(--fire-bright)">これはむしろ二門設計の正しさを裏づける</b>——点火の偽陽性は、まさに門Ωの三本柱（MOAT・ROIC・TAMの持続）が独立に弾く型に固まっている。点火が野を見つけ、門Ωが偽物を落とす。</div>
+
+ <div class="fm">
+  <span class="lbl">検証の限界（誠実に）</span>
+  ① 母集団は<b>現在も上場する</b>署名通過分のみ。上場廃止・破綻で消えた銘柄は不在＝<b>生存者バイアスは完全には消えず、実際の精度は表より低い</b>。<br>
+  ② 測るのは<b>株価リターンでなく売上の持続</b>。点火が「事業の変曲」を当てるかの検証であり、倍率・タイミングは含まない。<br>
+  ③ SEC XBRLは概ね2009年以降・前方3年窓が必要ゆえ、判定対象は<b>2022年頃までの点火</b>。<br>
+  ④ 小標本は誇張する：先頭25社では点火Aのliftは＋46ptに見えたが、414社では<b>＋26pt</b>に収束した。<b>本番の数字は414社版</b>。<br>
+  <span class="rd">次の一歩：シクリカル（石油・資源・海運）を点火Bから除外/減点すれば偽点火はさらに減る見込み。株価ベースの検証は価格データ導入後に。</span>
  </div>
 </div>
 </div>
