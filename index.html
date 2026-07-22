@@ -865,6 +865,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
   <button onclick="revealIO('paste')" style="background:linear-gradient(180deg,rgba(201,166,74,.18),rgba(201,166,74,.08));border:1px solid var(--gold-line);color:var(--gold-bright);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">＋ Claudeの返答を取り込む</button>
   <button onclick="revealIO('price')" style="background:var(--panel);border:1px solid var(--line);color:var(--ink-soft);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">￥ 価格だけ更新</button>
   <button onclick="const t=$('toolsBox');t.style.display=t.style.display==='none'?'block':'none'" style="background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">⚙ データ管理</button>
+  <button onclick="ccfRescoreAll(this)" style="background:linear-gradient(180deg,rgba(93,140,194,.22),rgba(93,140,194,.08));border:1px solid rgba(93,140,194,.55);color:#9bb0d2;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer;font-weight:600">↻ 台帳を全再採点</button><span style="font-size:10.5px;color:var(--dim)">採点ロジック更新(門X・Ω間等)を保存済み全銘柄に再適用。データは不変・スコア/actのみ最新化</span>
  </div>
  <div class="wrap" id="toolsBox" style="display:none">
   <div style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:8px;display:grid;gap:8px;font-size:12px">
@@ -2023,6 +2024,38 @@ const store={
 // ----- v9.1: 自動保存(JSON取込時) -----
 // v9.1: window.storageキー制約対応(空白・引用符・スラッシュ禁止) — キーは安全化、表示名はレコード内nm
 function safeKey(nm){return nm.replace(/[\s\/\\'"]+/g,'_');}
+// v9.9.10: 台帳を全再採点——保存済みdataをそのまま現行compute()に通し、r(スコア/act)だけ最新化。
+//   採点ロジックの更新(門X・Ω間の成長連動等)を台帳全体に反映する。dataは一切変えない(データ修正は取込が必要)。
+async function ccfRescoreAll(btn){
+  const o=btn?btn.textContent:'';
+  if(btn){btn.textContent='再採点中…';btn.disabled=true;}
+  let keys=[]; try{const r=await store.list('g7:');keys=r?r.keys:[];}catch(e){}
+  let n=0,chg=0; const changed=[];
+  for(const k of keys){
+    let e; try{e=await store.get(k);}catch(_){continue;} if(!e)continue;
+    let obj; try{obj=JSON.parse(e.value);}catch(_){continue;} if(!obj||!obj.data)continue;
+    // 保存dataをフォームへ載せ替え(loadItと同じ)→現行ロジックで再計算
+    try{
+      Object.entries(obj.data).forEach(([id,v])=>{if($(id))$(id).value=v;});
+      // v9.7取込修正と同様に、dataに無いドロップダウンは既定値へ(残り香を断つ)
+      if(typeof __selDefaults!=='undefined')Object.keys(__selDefaults).forEach(id=>{if($(id)&&obj.data[id]===undefined)$(id).value=__selDefaults[id];});
+      const r=compute();
+      const beforeAct=obj.r?obj.r.act:null, beforeS=obj.r?obj.r.evalScore:null;
+      // r以外(ts/src/held等)は保持。tsは"データ鮮度"の指標ゆえ据え置き、再採点印はsrcに残す
+      obj.r=r; obj.src=(obj.src||'auto').replace('+再採点','')+'+再採点';
+      await store.set(k, JSON.stringify(obj));
+      n++;
+      if(beforeAct!==r.act||(beforeS!=null&&Math.abs(parseFloat(beforeS)-parseFloat(r.evalScore))>0.05)){
+        chg++; changed.push(`${(obj.data.nm||k.slice(3))}: ${beforeS}(${beforeAct})→${r.evalScore}(${r.act})`);
+      }
+    }catch(_){continue;}
+  }
+  try{renderLedger();}catch(_){}
+  try{if(typeof renderPlan==='function')await renderPlan();}catch(_){}
+  if(btn){btn.disabled=false;btn.textContent=`↻ 再採点 ✓ ${n}件（変化${chg}）`;setTimeout(()=>btn.textContent=o,5000);}
+  // 変化した銘柄をⅢのタイムライン欄に一覧(あれば)
+  try{const ts=$('timeSig'); if(ts&&changed.length)ts.innerHTML=`<div class="flag f-ok"><i>↻</i><div><b>台帳を全再採点：</b>${n}件を現行ロジックで更新。<b>判定/スコアが変化した${chg}件</b>：<br>${changed.slice(0,30).join('<br>')}${changed.length>30?'<br>…他':''}<br><span style="color:var(--dim)">※dataは不変。データ自体の修正(gm/sbc検死等)は修正済みパックの再取込が必要。</span></div></div>`+ts.innerHTML;}catch(_){}
+}
 async function autoSave(src,silent){
   const nm=$('nm').value.trim(); if(!nm)return null;
   const r=compute(); const data={};
