@@ -2,8 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 kessan_check.py v1 — 保有銘柄の四半期決算チェッカー（門の四半期点検・機械抽出係）
-使い方: python kessan_check.py            … holdings.json の保有銘柄を点検
+使い方: python kessan_check.py            … kanshi_list.json の監視28社(米国)を点検
         python kessan_check.py NVDA MSFT  … 指定銘柄のみ
+        （kanshi_list.json が無ければ holdings.json にフォールバック。
+          日本株コード=SEC点検不可ゆえ除外→EDINET経路で別途）
 出力:   out/kessan/{T}_qcheck.txt（数値+警報スニペット） と 画面のサマリー表
 判定:   売上YoY<-5% / 営業利益率が前年同期比-3pt超の悪化 / 誠・限・ガイダンス系の警報ヒット → 要審査
 吉報:   新セグメント開示・大手流通契約のキーワード(吉S字/吉流通)は警報でなく「☀吉報」として表示。
@@ -18,6 +20,8 @@ EMAIL = "fortis5280@gmail.com"
 SINCE_DAYS = 100                       # この日数以内の新規提出だけを「未点検」とみなす
 HOLD_PATHS = ["./holdings.json", "./ccf/holdings.json",
               "/content/drive/MyDrive/ccf/holdings.json"]
+KANSHI_PATHS = ["./kanshi_list.json", "./ccf/kanshi_list.json",
+                "/content/drive/MyDrive/ccf/kanshi_list.json"]
 OUT = "out/kessan"
 HDRS = {"User-Agent": f"hachimon-kessan {EMAIL}"}
 
@@ -128,17 +132,35 @@ def recent_filings(cik, since_days):
                         f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc}/{doc}"))
     return out
 
+def is_jp(t):
+    """日本株コード(4-5桁数字・末尾.Tも許容)。SEC/XBRLでは点検不可＝EDINET経路が要る"""
+    return bool(re.fullmatch(r"\d{4,5}(?:\.T)?", t))
+
 def load_holdings():
+    """点検対象＝決算監視の正本リスト。優先: kanshi_list.json(28社の監視セット)。
+       無ければ holdings.json(保有+質80+)。日本株コードはSEC点検不可ゆえ除外し注記する
+       （日本株の決算監視は Stage2完走後の EDINET 経路で別途対応）"""
+    for p in KANSHI_PATHS:
+        if os.path.exists(p):
+            cfg = json.load(open(p, encoding="utf-8"))
+            tk = [t.strip().upper() for t in (cfg.get("tickers") or []) if t.strip()]
+            us = [t for t in tk if not is_jp(t)]
+            jp = [t for t in tk if is_jp(t)]
+            if us:
+                print(f"監視リスト: {p} → 監視{len(tk)}社（うち米国{len(us)}社を点検）")
+                if jp:
+                    print(f"  ※日本株{len(jp)}社はSEC点検不可のため除外→EDINET経路へ: {jp}")
+                return sorted(set(us))
     for p in HOLD_PATHS:
         if os.path.exists(p):
             cfg = json.load(open(p, encoding="utf-8"))
             H = [t.strip().upper() for t in (cfg.get("holdings") or []) if t.strip()]
             E = [t.strip().upper() for t in (cfg.get("elite") or []) if t.strip()]
-            tg = sorted(set(H) | set(E))
-            if tg:
-                print(f"監視リスト: {p} → 保有{len(H)} + 質80+{len(E)} = {tg}")
-                return tg
-    print("holdings.json が見つからない → 引数で銘柄を指定して実行")
+            us = [t for t in sorted(set(H) | set(E)) if not is_jp(t)]
+            if us:
+                print(f"監視リスト: {p} → 保有{len(H)} + 質80+{len(E)} = {us}")
+                return us
+    print("kanshi_list.json / holdings.json が見つからない → 引数で銘柄を指定して実行")
     return []
 
 def check(t):

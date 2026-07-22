@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 kessan_calendar.py v1 — 監視銘柄の決算日カレンダー生成器
-対象: holdings.json の 保有(holdings) + 質80+(elite)。eliteが無ければwatchで代用。
+対象: kanshi_list.json の監視28社(米国)。無ければ holdings.json(保有+質80+)にフォールバック。
+      日本株コードはAlpha Vantage/SEC推定の対象外ゆえ除外→EDINET/IR経路で別途。
 使い方: python kessan_calendar.py            … 3か月先までの決算日を取得
         python kessan_calendar.py NVDA MSFT  … 指定銘柄のみ
 出力:  ① 画面に日付順の一覧表
@@ -18,6 +19,8 @@ from datetime import date, datetime
 EMAIL = "fortis5280@gmail.com"
 HOLD_PATHS = ["./holdings.json", "./ccf/holdings.json",
               "/content/drive/MyDrive/ccf/holdings.json"]
+KANSHI_PATHS = ["./kanshi_list.json", "./ccf/kanshi_list.json",
+                "/content/drive/MyDrive/ccf/kanshi_list.json"]
 KEY_PATHS  = ["./av_key.txt", "./ccf/av_key.txt",
               "/content/drive/MyDrive/ccf/av_key.txt"]
 OUT_JSON = "out/next_earnings.json"
@@ -31,7 +34,26 @@ def get(url):
     time.sleep(0.15)
     return b.decode("utf-8", "ignore")
 
+def is_jp(t):
+    """日本株コード(4-5桁数字・末尾.Tも許容)。Alpha Vantage/SEC推定は米国のみ"""
+    return bool(re.fullmatch(r"\d{4,5}(?:\.T)?", t))
+
 def load_targets():
+    """決算日カレンダーの対象＝監視の正本リスト。優先: kanshi_list.json(28社)。
+       無ければ holdings.json(保有+質80+)。日本株コードはAlpha Vantage/SEC推定の
+       対象外ゆえ除外し注記（日本株の決算日は EDINET/IR 経路で別途）"""
+    for p in KANSHI_PATHS:
+        if os.path.exists(p):
+            cfg = json.load(open(p, encoding="utf-8"))
+            tk = [t.strip().upper() for t in (cfg.get("tickers") or []) if t.strip()]
+            us = [t for t in tk if not is_jp(t)]
+            jp = [t for t in tk if is_jp(t)]
+            hold = set(t.strip().upper() for t in (cfg.get("holdings") or []) if t.strip())
+            if us:
+                print(f"監視リスト: {p} → 監視{len(tk)}社（うち米国{len(us)}社の決算日を取得）")
+                if jp:
+                    print(f"  ※日本株{len(jp)}社は対象外→EDINET/IR経路へ: {jp}")
+                return sorted(set(us)), hold, set(us)
     for p in HOLD_PATHS:
         if os.path.exists(p):
             cfg = json.load(open(p, encoding="utf-8"))
@@ -39,11 +61,11 @@ def load_targets():
             elite = [t.strip().upper() for t in (cfg.get("elite") or []) if t.strip()]
             if not elite:
                 elite = [t.strip().upper() for t in (cfg.get("watch") or []) if t.strip()]
-            tg = sorted(set(hold) | set(elite))
+            tg = [t for t in sorted(set(hold) | set(elite)) if not is_jp(t)]
             if tg:
                 print(f"監視リスト: {p} → 保有{len(hold)} + 質80+{len(elite)} = {len(tg)}銘柄")
                 return tg, set(hold), set(elite)
-    print("holdings.json なし → 引数で銘柄を指定")
+    print("kanshi_list.json / holdings.json なし → 引数で銘柄を指定")
     return [], set(), set()
 
 def av_key():
