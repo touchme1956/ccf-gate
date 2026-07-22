@@ -17,14 +17,31 @@
 - 月1-2回 採取: `python hachimon_fetch.py`
   - 引数なし=gate1_queue.jsonの未処理上位5社を自動採取。個別指定: `python hachimon_fetch.py NVDA MSFT`
   - 出力: out/{T}_gate_input.json（機械値ドラフト・審査待ち）+ out/{T}_hits.txt（原本キーワード抜粋）
+- 年1回＋四半期 怪物の点火検知: `python kaibutsu_scan.py`
+  - NVIDIA型の複利怪物を法定開示と同速で待ち伏せる別枠（怪物の門）。段1: gate0_all.csv 全母集団を
+    怪物署名(超成長×資本効率×利益体質×FCF転換)でランク → 段2: 上位のSEC四半期データで点火検知
+  - 判定: 点火A=売上加速型(YoY加速2連続∧YoY≥25%∧営利率+2pt) / 点火B=利益率階段型(営利率+2pt×2Q連続∧
+    YoY≥10%) / くすぶり / 待機。集団発火(30%超同時点火=マクロのベータ)は自動警告
+  - 引数: `--top N`(署名候補数) / `--max-rev N`(年商N B USD以下=中型小型のみ) / 個別指定 `kaibutsu_scan.py CRWD`
+  - 出力: kaibutsu_queue.json（点火→点火B→くすぶり順）+ out/kaibutsu_report.txt
+  - **点火は「買い」ではない。** hachimon_fetch.py で採取 → 門Ω審査 → 門Xのサイズ規律(無知の枠5-10%・¼ケリー)へ回す合図
+
+## 別枠の門（正本ではない・思想不変）
+- **門X = chomirai.html（超未来の門）**: 期待リターン最大化。予知せず E[r]=純還元(現金還元−希薄化)+b×ROIIC+
+  倍率の重力 の分解機・非対称チェック・複利の漏れ・ケリー(¼上限)を裁く対話式ページ。配信後 `/chomirai`
+- **怪物の門 = kaibutsu.html + kaibutsu_scan.py**: 上記の点火検知。怪物の四類型(A売上点火/B利益率階段/
+  C還元複利/D拍子木)の思想も収録。配信後 `/kaibutsu`
+- 三門の順序は必ず **怪物(見つける) → 門Ω(壊れないか審査) → 門X(サイズ)**。別枠門は門Ωの採点・売却規律を上書きしない
 
 ## 絶対のルール
 1. index.html の採点ロジック・売却規律(S1/S2/S3)・採点基準は、ユーザーの明示指示なしに変更しない
 2. 採取器の出力は「審査待ち」であり台帳データではない。定性項目(dom/irr/rep/dur/p1-4/f1-5)を勝手に埋めない
 3. 銘柄審査を頼まれたら: out/{T}_gate_input.json と {T}_hits.txt を読み、index.html内の審査プロトコル
    （Ⅱ実行手順「3 審査」に全文）に従う。憶測禁止・全判定に原本根拠を付ける
-4. companyfacts.zip はコミットしない(.gitignore済)。生成物(gate1_queue.json, out/)はコミットする
+4. companyfacts.zip はコミットしない(.gitignore済)。生成物(gate1_queue.json, out/, kaibutsu_queue.json)はコミットする
 5. SEC アクセスの User-Agent メールは設定済み。レート制限(10req/s)を守る
+6. 怪物の門・門Xも別枠であって正本ではない。kaibutsu.html/chomirai.html の採点式・閾値は明示指示なしに変更しない。
+   点火検知は一次スクリーニングであり、買い推奨でも台帳データでもない
 
 ## 並走運用（重要）
 現行の正本系は Google Drive + Colab + Cloudflare。このリポジトリは並走検証中の新環境。
