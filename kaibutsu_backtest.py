@@ -29,7 +29,28 @@ EMAIL = "fortis5280@gmail.com"
 HDRS  = {"User-Agent": f"kaibutsu-backtest {EMAIL}"}
 CSV   = os.path.join(BASE, "gate0_all.csv")
 CACHE = os.path.join(BASE, "out", "_cf_cache")            # companyfacts キャッシュ(gitignore対象)
+SICJS = os.path.join(BASE, "out", "_sic_cache.json")      # SICキャッシュ(gitignore対象)
 OUTR  = os.path.join(BASE, "out", "kaibutsu_backtest.txt")
+
+# シクリカル・ガードの効果測定に、本番スキャナーと同じSIC判定を流用(重複実装を避ける)
+from kaibutsu_scan import is_cyclical_sic
+
+_sic_mem = None
+def sic_cached(cik):
+    """SIC(コード,分類)をキャッシュ付きで取得。B事象を持つ銘柄だけ引くので呼び出しは限定的"""
+    global _sic_mem
+    if _sic_mem is None:
+        _sic_mem = json.load(open(SICJS)) if os.path.exists(SICJS) else {}
+    if cik in _sic_mem:
+        return _sic_mem[cik]
+    try:
+        j = json.loads(get(f"https://data.sec.gov/submissions/CIK{cik}.json"))
+        v = [j.get("sic",""), j.get("sicDescription","")]
+    except Exception:
+        v = ["", ""]
+    _sic_mem[cik] = v
+    json.dump(_sic_mem, open(SICJS, "w"))
+    return v
 
 TAGS_REV = ["Revenues","RevenueFromContractWithCustomerExcludingAssessedTax",
             "RevenueFromContractWithCustomerIncludingAssessedTax","SalesRevenueNet","Revenue"]
@@ -205,6 +226,7 @@ def main():
     cmap = cik_map()
     print(f"=== 怪物の門・点火ルール検証 {date.today()} : 候補{len(cands)}社 ===")
     allA=[]; allB=[]; allBase=[]; fpA=[]; fpB=[]; okA=[]; okB=[]; done=0; skip=0
+    allBclean=[]; allBcyc=[]                              # シクリカル・ガードの効果測定用にB事象を分割
     for t in cands:
         cik = cmap.get(t.upper())
         if not cik: skip+=1; continue
@@ -215,11 +237,17 @@ def main():
             skip+=1; continue
         done+=1
         allBase += base
+        has_b = any(typ=="B" for typ,_,_ in ev)
+        cyc = False
+        if has_b:                                        # B事象を持つ銘柄だけSICを引く(呼び出し限定)
+            sic, _ = sic_cached(cik)
+            cyc = is_cyclical_sic(sic)
         for typ,e,fc in ev:
             if typ=="A":
                 allA.append(fc); (okA if fc>=SUCCESS else fpA).append((t,e,fc))
             else:
                 allB.append(fc); (okB if fc>=SUCCESS else fpB).append((t,e,fc))
+                (allBcyc if cyc else allBclean).append(fc)
         if done % 50 == 0:
             print(f"  …{done}社 処理 (点火A {len(allA)} / B {len(allB)} / 対照 {len(allBase)})")
 
@@ -230,13 +258,22 @@ def main():
     def w(s): lines.append(s); print(s)
     w(f"\n===== 結果 (処理{done}社 / スキップ{skip}社) =====")
     w(f"{'群':<10}{'N':>5}{'前方3年売上CAGR中央値':>22}{'成功率(≥15%)':>14}{'失速率(<5%)':>13}")
+    nBc,medBc,sBc,fBc = pct_stats(allBclean)
+    nBy,medBy,sBy,fBy = pct_stats(allBcyc)
     w(f"{'点火A(売上)':<10}{nA:>5}{medA*100:>20.1f}%{sA*100:>13.0f}%{fA*100:>12.0f}%")
     w(f"{'点火B(利益率)':<10}{nB:>5}{medB*100:>20.1f}%{sB*100:>13.0f}%{fB*100:>12.0f}%")
+    w(f"{'  ├ 非シクリカル':<10}{nBc:>3}{medBc*100:>20.1f}%{sBc*100:>13.0f}%{fBc*100:>12.0f}%")
+    w(f"{'  └ シクリカル':<10}{nBy:>3}{medBy*100:>20.1f}%{sBy*100:>13.0f}%{fBy*100:>12.0f}%")
     w(f"{'対照(非点火)':<10}{nX:>5}{medX*100:>20.1f}%{sX*100:>13.0f}%{fX*100:>12.0f}%")
     if nX:
         w(f"\nlift(点火の上乗せ): A成功率 {sA*100:.0f}% − 対照 {sX*100:.0f}% = {(sA-sX)*100:+.0f}pt / "
           f"B {(sB-sX)*100:+.0f}pt")
         w("→ liftが正=点火は『そもそも成長株』以上の予測力を持つ。ゼロ近辺=点火は無価値。")
+    if nBc and nBy:
+        w(f"\n■シクリカル・ガードの効果: 点火Bの成功率は 非シクリカル {sBc*100:.0f}% vs シクリカル {sBy*100:.0f}% "
+          f"= 差 {(sBc-sBy)*100:+.0f}pt。失速率は 非シ {fBc*100:.0f}% vs シ {fBy*100:.0f}%。")
+        w(f"→ ガード(シクリカルを点火B(市況?)へ降格)で残る非シクリカルBの成功率は {sBc*100:.0f}%"
+          f"(全B {sB*100:.0f}%から {(sBc-sB)*100:+.0f}pt)。ガードは有効。")
     w(f"\n--- 点火したのに失速した例(偽点火=false positive) A ---")
     for t,e,fc in sorted(fpA,key=lambda x:x[2])[:12]:
         w(f"   {t:<6} {e[:7]} 点火 → 前方3年CAGR {fc*100:+.0f}%")
