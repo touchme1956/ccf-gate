@@ -173,12 +173,13 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
 <div class="block">
  <div class="tag">X-Engine · Expected Return</div>
  <div class="h2">E[r] ＝ 還元利回り ＋ b×ROIIC ＋ 倍率の重力</div>
- <p class="intro">門Ωの審査で使う数字（FCF・ROIIC・再投資率）をそのまま流用して、その銘柄の<b>期待年率リターン</b>を三項分解で見積もる。数字は <code>out/{T}_gate_input.json</code> の機械値から取ること。<b>倍率の重力</b>は「終着PERが今より下がる」前提で必ず負担として入れる——楽観の逃げ道を塞ぐためだ。<b>ただし終着PERは成長連動</b>（掟六v2・2026-07-23）：<b>高成長はPERが高くても複利をもたらす</b>ため、成熟株と成長株を一律22で測らない。妥当な終着PER＝成熟g4%≈22／持続成長する高ROIC≈28-30（McKinsey価値ドライバーで検証・上限30）。実証gに連動させ現在PERは超えない＝ハイプと倍率拡大は封じたまま、成長の複利には妥当な倍率を許す。</p>
+ <p class="intro">門Ωの審査で使う数字（FCF・ROIIC・再投資率）をそのまま流用して、その銘柄の<b>期待年率リターン</b>を見積もる。数字は <code>out/{T}_gate_input.json</code> の機械値から取ること。分解は株主利回り式 <code>E[r] ＝ 純還元（現金還元−希薄化） ＋ 総利益成長（b×ROIIC） ＋ 倍率の重力</code>。<b>希薄化（SBC）</b>は小型グロース最大の隠れ漏れゆえ独立に控除する。<b>倍率の重力</b>は下方向のみ計上し、終着PERを現在超に置いても<b>加点しない</b>（楽観の逃げ道を塞ぐ）。<b>ただし終着PERは成長連動</b>（掟六v2・2026-07-23）：<b>高成長はPERが高くても複利をもたらす</b>ため、成熟株と成長株を一律22で測らない。妥当な終着PER＝成熟g4%≈22／持続成長する高ROIC≈28-30（McKinsey価値ドライバーで検証・上限30）。実証gに連動させ現在PERは超えない＝ハイプと倍率拡大は封じたまま、成長の複利には妥当な倍率を許す。</p>
 
  <div class="panel">
   <div class="panel-h"><h3>期待リターン計算機</h3><span class="pass">全項目：年率%・実数で入力</span></div>
   <div class="grid2">
-   <div class="field"><label>還元利回り（配当＋純自社株買い）%</label><input type="number" id="e_y" value="2.0" step="0.1"><span class="hint">FCF利回り × 還元率でも可。門Ωの機械値から</span></div>
+   <div class="field"><label>現金還元利回り（配当＋自社株買い・SBC相殺前）%</label><input type="number" id="e_y" value="2.0" step="0.1"><span class="hint">FCF利回り × 還元率でも可。相殺前の総額</span></div>
+   <div class="field"><label>希薄化（SBC等による株数純増）%</label><input type="number" id="e_dil" value="1.5" step="0.1"><span class="hint">株式報酬の株数CAGR。小型グロース最大の隠れ漏れ。買戻で純減なら負値</span></div>
    <div class="field"><label>ROIIC（増分ROIC）%</label><input type="number" id="e_roiic" value="25" step="1"><span class="hint">営業利益の増分 ÷ 投下資本の増分</span></div>
    <div class="field"><label>再投資率 b %</label><input type="number" id="e_b" value="40" step="1"><span class="hint">利益のうち事業に再投資する割合</span></div>
    <div class="field"><label>現在PER</label><input type="number" id="e_per0" value="30" step="1"></div>
@@ -191,11 +192,11 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
 
  <div class="fm gold">
   <span class="lbl">裁きⅠの通過条件（四つ全て）</span>
-  ① E[r] ≥ ハードル（既定12%）<br>
-  ② 投資リターン（還元＋成長の二項のみ） ≥ 10% ——<b>倍率が動かなくても勝てる</b>こと<br>
-  ③ 倍率項の寄与 ≤ E[r]の30% ——倍率頼みの皮算用を禁止（拡大を見込む入力自体を疑う）<br>
-  ④ ストレス（終着PERをさらに−30%）でも E[r] ≥ 7% ——<b>読み違えても指数並みが残る</b>こと<br>
-  <span class="rd">この四条件の意味：未来を当てなくても、①期待値が傾き ②事業だけで勝て ③気分に依存せず ④間違えても死なない。予知の代わりに「間違え方の安全」を買う。</span>
+  ① E[r]（純還元＋成長＋倍率の重力） ≥ ハードル（既定12%）<br>
+  ② 投資リターン（純還元＋成長の二項のみ） ≥ 10% ——<b>倍率が動かなくても勝てる</b>こと<br>
+  ③ 終着PER ≤ 現在PER ——倍率拡大を当てにしない（現在超を入力しても加点は無効化される）<br>
+  ④ ストレス（成長−25% ∧ 終着PER−30%）でも E[r] ≥ 7% ——<b>読み違えても指数並みが残る</b>こと<br>
+  <span class="rd">この四条件の意味：未来を当てなくても、①期待値が傾き ②事業だけで勝て ③気分に依存せず ④間違えても死なない。予知の代わりに「間違え方の安全」を買う。ストレスは倍率だけでなく<b>成長も25%割り引く</b>（ROIIC逓減・読み違えの非対称を正す）。</span>
  </div>
 </div>
 </div>
@@ -253,6 +254,7 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
    <div class="field"><label>信託報酬・手数料 %</label><input type="number" id="d_fee" value="0.1" step="0.05"></div>
    <div class="field"><label>税ドラッグ %</label><input type="number" id="d_tax" value="0.3" step="0.1"><span class="hint">回転による利益確定税。長期保有ならほぼ0</span></div>
    <div class="field"><label>行動ギャップ %</label><input type="number" id="d_beh" value="0.5" step="0.1"><span class="hint">タイミング売買の自傷。規律遵守なら0</span></div>
+   <div class="field"><label>インフレ %（実質換算用・判定外）</label><input type="number" id="d_infl" value="2.5" step="0.1"><span class="hint">購買力の目減りを見るだけ。指数も食うので漏れ判定には入れない</span></div>
    <div class="field"><label>年数</label><input type="number" id="d_n" value="30" step="5"></div>
   </div>
   <div class="res" id="d_out"></div>
@@ -273,14 +275,15 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
 <div class="wrap">
 <div class="block">
  <div class="tag">Kelly Criterion</div>
- <div class="h2">f* ＝ p − q/b — 幾何平均を最大化する唯一の式</div>
- <p class="intro">勝率 p・敗率 q＝1−p・損益比 b（勝ち幅÷負け幅）のとき、長期の幾何平均成長を最大化する賭け比率は <b>f* ＝ p − q/b</b>（ケリー基準）。ただし満額ケリーは推定誤差に極端に脆く、pをわずかに見誤るだけで破滅側に落ちる。<b>推定が甘い実務では半分〜四分の一ケリーが定石</b>であり、この門は四分の一を上限とする。</p>
+ <div class="h2">f* ＝ p/負け幅 − q/勝ち幅 — 幾何平均を最大化する式</div>
+ <p class="intro">勝率 p・敗率 q＝1−p・勝ち幅 a・負け幅 c のとき、長期の幾何平均成長を最大化する賭け比率は <b>f* ＝ p/c − q/a</b>（部分損失を含む一般形のケリー基準）。負け幅を <b>100%（全損前提）</b> にすると古典式 f*＝p−q/a に一致する。<span class="rd">※旧版は「勝ち幅÷負け幅」を古典式に入れており、部分損失の設定で最適値を約半分に過小評価していた（安全側だが不正確）。本版は厳密解に修正済み。</span>ただし満額ケリーは推定誤差に極端に脆く、pをわずかに見誤るだけで破滅側に落ちる。<b>推定が甘い実務では半分〜四分の一ケリーが定石</b>であり、この門は四分の一を上限とする。</p>
 
  <div class="panel">
   <div class="panel-h"><h3>賭けサイズ計算機</h3><span class="pass">確率は保守的に見積もる</span></div>
   <div class="grid2">
    <div class="field"><label>勝率 p %</label><input type="number" id="k_p" value="55" step="1"><span class="hint">10年でハードルを超える主観確率。60%超と書く前に疑え</span></div>
-   <div class="field"><label>損益比 b（勝ち幅÷負け幅）</label><input type="number" id="k_b" value="2.0" step="0.1"><span class="hint">例：勝てば+100%・負ければ−50% → b=2.0</span></div>
+   <div class="field"><label>勝ち幅 %（勝った時の上昇）</label><input type="number" id="k_a" value="100" step="10"><span class="hint">例：勝てば資産が倍→100</span></div>
+   <div class="field"><label>負け幅 %（負けた時の下落）</label><input type="number" id="k_c" value="100" step="10"><span class="hint">無知の枠は<b>全損前提＝100</b>。部分損失なら実際の下落幅を</span></div>
   </div>
   <div class="res" id="k_out"></div>
  </div>
@@ -381,20 +384,26 @@ function pct(x){ return (x>=0?'+':'') + x.toFixed(1) + '%'; }
 
 /* ---------- 裁きⅠ 期待リターン分解機 ---------- */
 function calcEngine(){
- const y = num('e_y'), roiic = num('e_roiic'), b = num('e_b');
+ const y = num('e_y'), roiic = num('e_roiic'), b = num('e_b'), dil = num('e_dil');
  const per0 = num('e_per0'), per1 = num('e_per1'), n = Math.max(1, num('e_n'));
  const hurdle = num('e_hurdle');
- const g = b * roiic / 100;                                   // 内部成長 % = b% × ROIIC%
- const mult = per0>0 && per1>0 ? (Math.pow(per1/per0, 1/n) - 1) * 100 : 0;
- const er = y + g + mult;
- const earned = y + g;                                        // 投資リターン（倍率抜き）
- const multStress = per0>0 && per1>0 ? (Math.pow(per1*0.7/per0, 1/n) - 1) * 100 : 0;
- const erStress = y + g + multStress;
- const multShare = er > 0 ? Math.max(0, mult) / er * 100 : 0;
+ // 純還元 = 現金還元(配当+自社株買い、SBC相殺前) − 希薄化(SBCによる株数純増%)
+ // 株主利回り分解: 純還元 + 総利益成長 + 倍率変化。二重計上を避けるため還元は「相殺前」入力・希薄化は独立控除。
+ const netY = y - dil;
+ const g = b * roiic / 100;                                   // 総利益成長 % = b% × ROIIC%
+ const rawMult = per0>0 && per1>0 ? (Math.pow(per1/per0, 1/n) - 1) * 100 : 0;
+ const multEff = Math.min(rawMult, 0);                        // 倍率は「重力(≤0)」としてのみ計上。上振れは加点しない
+ const earned = netY + g;                                     // 投資リターン（倍率抜き）
+ const er = earned + multEff;
+ // ストレス: 成長−25%(ROIIC逓減・読み違え) かつ 終着PER−30%。どちらも下方向のみ
+ const gS = g * 0.75;
+ const rawMultS = per0>0 && per1>0 ? (Math.pow(per1*0.7/per0, 1/n) - 1) * 100 : 0;
+ const multEffS = Math.min(rawMultS, 0);
+ const erStress = netY + gS + multEffS;
 
  const c1 = er >= hurdle;
  const c2 = earned >= 10;
- const c3 = mult <= 0 || multShare <= 30;
+ const c3 = rawMult <= 0;                                     // 終着PERを現在超に置いていない＝倍率拡大を当てにしていない
  const c4 = erStress >= 7;
  const passed = [c1,c2,c3,c4].filter(Boolean).length;
  let verdict, cls;
@@ -402,60 +411,76 @@ function calcEngine(){
  else if (c1)              { verdict='保　留'; cls='v-hold'; }
  else                      { verdict='見送り'; cls='v-fail'; }
 
+ const dilNote = dil !== 0 ? `（現金還元 ${pct(y)} − 希薄化 ${pct(dil)}）` : '';
+ const boostNote = rawMult > 0 ? `　⚠終着PER>現在PER＝倍率頼み。生の倍率 ${pct(rawMult)} はE[r]で加点無効化` : '';
  const mk = (ok,txt) => `<div class="chk"><span class="m ${ok?'ok':'ng'}">${ok?'✓':'✗'}</span><span>${txt}</span></div>`;
  document.getElementById('e_out').innerHTML =
   `<div class="big">E[r] ＝ ${pct(er)} <small>／年</small></div>
    <div style="font-size:13.5px;color:var(--muted);margin:6px 0 10px">
-    内訳： 還元 ${pct(y)} ＋ 内部成長 ${pct(g)}（b×ROIIC） ＋ 倍率の重力 ${pct(mult)}　｜　投資リターン（倍率抜き） <b>${pct(earned)}</b>　｜　ストレス時 ${pct(erStress)}
+    内訳： 純還元 ${pct(netY)}${dilNote} ＋ 総利益成長 ${pct(g)}（b×ROIIC） ＋ 倍率の重力 ${pct(multEff)}　｜　投資リターン（倍率抜き） <b>${pct(earned)}</b>　｜　ストレス時（成長−25%∧終着PER−30%） ${pct(erStress)}${boostNote}
    </div>` +
   mk(c1, `① E[r] ${pct(er)} ≥ ハードル ${hurdle.toFixed(1)}%`) +
   mk(c2, `② 投資リターン ${pct(earned)} ≥ 10%（倍率が動かなくても勝てる）`) +
-  mk(c3, `③ 倍率項の寄与 ${mult<=0?'なし（重力のみ）':multShare.toFixed(0)+'%'} ≤ 30%（倍率頼みでない）`) +
-  mk(c4, `④ 終着PER−30%のストレスでも ${pct(erStress)} ≥ 7%（読み違えても指数並み）`) +
+  mk(c3, `③ 倍率頼みでない（終着PER ${rawMult<=0?'≤ 現在PER ✓':'> 現在PER ＝加点無効'}）`) +
+  mk(c4, `④ ストレス（成長−25%∧終着PER−30%）でも ${pct(erStress)} ≥ 7%（読み違えても指数並み）`) +
   `<div class="verdict ${cls}">${verdict}</div>
    <span style="margin-left:12px;font-size:12.5px;color:var(--muted)">${passed}/4 条件成立</span>`;
 }
 
 /* ---------- 裁きⅢ 複利の漏れシミュレーター ---------- */
 function calcDrag(){
- const gross = num('d_gross'), fee = num('d_fee'), tax = num('d_tax'), beh = num('d_beh');
+ const gross = num('d_gross'), fee = num('d_fee'), tax = num('d_tax'), beh = num('d_beh'), infl = num('d_infl');
  const n = Math.max(1, num('d_n'));
- const leak = fee + tax + beh;
+ const leak = fee + tax + beh;                                // 判定対象は制御可能な漏れのみ（インフレは含めない）
  const net = gross - leak;
  const wGross = Math.pow(1 + gross/100, n);
  const wNet   = Math.pow(1 + net/100,  n);
  const lost = wGross > 0 ? (1 - wNet/wGross) * 100 : 0;
+ const wReal = Math.pow((1 + net/100) / (1 + infl/100), n);   // 実質(購買力)。インフレで割り引く
  const ok = leak <= 1.0;
  document.getElementById('d_out').innerHTML =
   `<div class="big">${n}年で ${wNet.toFixed(1)}倍 <small>（漏れゼロなら ${wGross.toFixed(1)}倍）</small></div>
    <div style="font-size:13.5px;color:var(--muted);margin:6px 0 10px">
     漏れ合計 <b class="${ok?'ok':'ng'}">${leak.toFixed(2)}%／年</b> → 純リターン ${pct(net)}　｜　最終資産の <b class="${lost>15?'ng':'wr'}">${lost.toFixed(0)}%</b> が漏れで消える
    </div>
-   <div class="chk"><span class="m ${ok?'ok':'ng'}">${ok?'✓':'✗'}</span><span>裁きⅢ：漏れ合計 ≤ 1.0%／年 ${ok?'— 通過':'— 漏れを塞いでから戻れ'}</span></div>`;
+   <div style="font-size:13.5px;color:var(--muted);margin:0 0 10px">
+    <b style="color:var(--star-bright)">実質（購買力）では ${wReal.toFixed(1)}倍</b>　｜　インフレ ${infl.toFixed(1)}%で名目 ${wNet.toFixed(1)}倍が実質 ${wReal.toFixed(1)}倍に目減り（指数も同じく食われる＝相対中立だが、20-30年の実質目的では直視する）
+   </div>
+   <div class="chk"><span class="m ${ok?'ok':'ng'}">${ok?'✓':'✗'}</span><span>裁きⅢ：制御可能な漏れ合計 ≤ 1.0%／年 ${ok?'— 通過':'— 漏れを塞いでから戻れ'}（インフレは判定外＝制御不能ゆえ）</span></div>`;
 }
 
-/* ---------- 賭け方 ケリー計算機 ---------- */
+/* ---------- 賭け方 ケリー計算機（部分損失一般形） ----------
+   f* ＝ p/損失率 − q/勝ち幅（幾何平均を最大化する厳密解）。
+   損失率=100%（全損前提）のとき f*＝p−q/勝ち幅 の古典ケリーに一致する。
+   旧実装は勝ち幅÷負け幅を古典式に入れており、部分損失で最適値を過小評価していた。 */
 function calcKelly(){
- const p = num('k_p')/100, b = num('k_b');
+ const p = num('k_p')/100, a = num('k_a')/100, c = num('k_c')/100;
  const q = 1 - p;
- const f = b > 0 ? p - q/b : -1;
  const el = document.getElementById('k_out');
- if (f <= 0){
-  el.innerHTML = `<div class="big ng" style="color:var(--fail)">エッジなし</div>
-   <div style="font-size:13.5px;color:var(--muted);margin-top:6px">f* ＝ ${ (f*100).toFixed(1) }% ≤ 0。この勝率と損益比では、<b>賭けないことが最適</b>。見積もりを盛って再計算しないこと。</div>`;
+ if (a <= 0 || c <= 0){
+  el.innerHTML = `<div class="big ng" style="color:var(--fail)">入力不正</div>
+   <div style="font-size:13.5px;color:var(--muted);margin-top:6px">勝ち幅・負け幅は正の%で。無知の枠は<b>全損前提＝負け幅100</b>。</div>`;
   return;
  }
+ const f = p/c - q/a;                                         // 部分損失ケリーの厳密解
+ if (f <= 0){
+  el.innerHTML = `<div class="big" style="color:var(--fail)">エッジなし</div>
+   <div style="font-size:13.5px;color:var(--muted);margin-top:6px">f* ＝ ${(f*100).toFixed(1)}% ≤ 0。この勝率・勝ち幅・負け幅では<b>賭けないことが最適</b>。見積もりを盛って再計算しないこと。</div>`;
+  return;
+ }
+ const lev = f > 1 ? '　（f>100%＝借入領域。門はレバレッジ禁止ゆえ実務は下の¼を上限に）' : '';
  el.innerHTML =
   `<div class="big">満額ケリー f* ＝ ${(f*100).toFixed(1)}%</div>
    <div style="font-size:13.5px;color:var(--muted);margin:6px 0 10px">
-    半分ケリー ${(f*50).toFixed(1)}%　｜　<b style="color:var(--star-bright)">四分の一ケリー ${(f*25).toFixed(1)}%（門Xの上限）</b>
+    式： p/負け幅 − q/勝ち幅 ＝ ${p.toFixed(2)}/${c.toFixed(2)} − ${q.toFixed(2)}/${a.toFixed(2)}　｜　半分 ${(f*50).toFixed(1)}%　｜　<b style="color:var(--star-bright)">四分の一 ${(f*25).toFixed(1)}%（門Xの上限）</b>${lev}
    </div>
-   <div class="chk"><span class="m wr">⚠</span><span>満額は推定誤差で破滅する。勝率pを5pt読み違えただけで最適点は大きく動く。実務は四分の一以下。</span></div>`;
+   <div class="chk"><span class="m wr">⚠</span><span>満額は推定誤差で破滅する。勝率pを5pt読み違えただけで最適点は大きく動く。実務は四分の一以下。</span></div>
+   <div class="chk"><span class="m wr">⚠</span><span>これは<b>単一銘柄</b>の式。篭の銘柄が相関（同テーマ・同コホート）するなら同時破綻するため、相関する塊は「1つの賭け」と数え、篭全体の合計を無知の枠内に収める。</span></div>`;
 }
 
-['e_y','e_roiic','e_b','e_per0','e_per1','e_n','e_hurdle'].forEach(id=>document.getElementById(id).addEventListener('input',calcEngine));
-['d_gross','d_fee','d_tax','d_beh','d_n'].forEach(id=>document.getElementById(id).addEventListener('input',calcDrag));
-['k_p','k_b'].forEach(id=>document.getElementById(id).addEventListener('input',calcKelly));
+['e_y','e_dil','e_roiic','e_b','e_per0','e_per1','e_n','e_hurdle'].forEach(id=>document.getElementById(id).addEventListener('input',calcEngine));
+['d_gross','d_fee','d_tax','d_beh','d_infl','d_n'].forEach(id=>document.getElementById(id).addEventListener('input',calcDrag));
+['k_p','k_a','k_c'].forEach(id=>document.getElementById(id).addEventListener('input',calcKelly));
 calcEngine(); calcDrag(); calcKelly();
 </script>
 </body></html>
