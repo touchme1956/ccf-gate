@@ -227,6 +227,7 @@ def main():
     print(f"=== 怪物の門・点火ルール検証 {date.today()} : 候補{len(cands)}社 ===")
     allA=[]; allB=[]; allBase=[]; fpA=[]; fpB=[]; okA=[]; okB=[]; done=0; skip=0
     allBclean=[]; allBcyc=[]                              # シクリカル・ガードの効果測定用にB事象を分割
+    allAclean=[]; allAcyc=[]                              # 点火Aもシクリカル/非シクリカルに分割(Aガードの実証用)
     for t in cands:
         cik = cmap.get(t.upper())
         if not cik: skip+=1; continue
@@ -237,14 +238,15 @@ def main():
             skip+=1; continue
         done+=1
         allBase += base
-        has_b = any(typ=="B" for typ,_,_ in ev)
+        has_ign = any(typ in ("A","B") for typ,_,_ in ev)
         cyc = False
-        if has_b:                                        # B事象を持つ銘柄だけSICを引く(呼び出し限定)
+        if has_ign:                                      # 点火(A/B)事象を持つ銘柄だけSICを引く(呼び出し限定)
             sic, _ = sic_cached(cik)
             cyc = is_cyclical_sic(sic)
         for typ,e,fc in ev:
             if typ=="A":
                 allA.append(fc); (okA if fc>=SUCCESS else fpA).append((t,e,fc))
+                (allAcyc if cyc else allAclean).append(fc)
             else:
                 allB.append(fc); (okB if fc>=SUCCESS else fpB).append((t,e,fc))
                 (allBcyc if cyc else allBclean).append(fc)
@@ -260,7 +262,11 @@ def main():
     w(f"{'群':<10}{'N':>5}{'前方3年売上CAGR中央値':>22}{'成功率(≥15%)':>14}{'失速率(<5%)':>13}")
     nBc,medBc,sBc,fBc = pct_stats(allBclean)
     nBy,medBy,sBy,fBy = pct_stats(allBcyc)
+    nAc,medAc,sAc,fAc = pct_stats(allAclean)
+    nAy,medAy,sAy,fAy = pct_stats(allAcyc)
     w(f"{'点火A(売上)':<10}{nA:>5}{medA*100:>20.1f}%{sA*100:>13.0f}%{fA*100:>12.0f}%")
+    w(f"{'  ├ 非シクリカル':<10}{nAc:>3}{medAc*100:>20.1f}%{sAc*100:>13.0f}%{fAc*100:>12.0f}%")
+    w(f"{'  └ シクリカル':<10}{nAy:>3}{medAy*100:>20.1f}%{sAy*100:>13.0f}%{fAy*100:>12.0f}%")
     w(f"{'点火B(利益率)':<10}{nB:>5}{medB*100:>20.1f}%{sB*100:>13.0f}%{fB*100:>12.0f}%")
     w(f"{'  ├ 非シクリカル':<10}{nBc:>3}{medBc*100:>20.1f}%{sBc*100:>13.0f}%{fBc*100:>12.0f}%")
     w(f"{'  └ シクリカル':<10}{nBy:>3}{medBy*100:>20.1f}%{sBy*100:>13.0f}%{fBy*100:>12.0f}%")
@@ -269,6 +275,11 @@ def main():
         w(f"\nlift(点火の上乗せ): A成功率 {sA*100:.0f}% − 対照 {sX*100:.0f}% = {(sA-sX)*100:+.0f}pt / "
           f"B {(sB-sX)*100:+.0f}pt")
         w("→ liftが正=点火は『そもそも成長株』以上の予測力を持つ。ゼロ近辺=点火は無価値。")
+    if nAc and nAy:
+        w(f"\n■点火Aシクリカル・ガードの実証(新): 点火Aの成功率は 非シクリカル {sAc*100:.0f}% vs シクリカル {sAy*100:.0f}% "
+          f"= 差 {(sAc-sAy)*100:+.0f}pt。失速率は 非シ {fAc*100:.0f}% vs シ {fAy*100:.0f}%。")
+        _verdict = "有効=点火(市況?)へ降格すべき" if (sAy < sX or sAy < sAc-10) else "限定的=降格せず業種注記に留める"
+        w(f"→ 点火Aシクリカルが対照(非点火 {sX*100:.0f}%)や非シクリカルAを下回るか: 判定={_verdict}。")
     if nBc and nBy:
         w(f"\n■シクリカル・ガードの効果: 点火Bの成功率は 非シクリカル {sBc*100:.0f}% vs シクリカル {sBy*100:.0f}% "
           f"= 差 {(sBc-sBy)*100:+.0f}pt。失速率は 非シ {fBc*100:.0f}% vs シ {fBy*100:.0f}%。")

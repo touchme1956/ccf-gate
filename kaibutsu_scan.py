@@ -23,6 +23,9 @@ kaibutsu_scan.py v1 — 怪物の門・点火スキャナー（NVIDIA型の複�
                    Amazon2015/Microsoft2017/Axon/Celsius2019型。18社遡及テストで実証）
         くすぶり = YoY加速∧YoY≥+15%、または 営利率+2ptが1四半期（B予鳴り）∧YoY≥+10%
         待機     = それ以外
+⚑検死フラグ(v2 精度強化): 見かけの点火を注記(降格でなく人手確認)。市況注意=点火Aシクリカル /
+        base?=YoY>150%(小ベース・M&A) / 段差?=QoQ+40%超(合併/一時) / 微小流動性=年商<$0.3B /
+        営利差過大=ΔOPM>20pt(一時益)。※点火Aシクリカルはバックテスト実証(成功率75%>対照54%)で降格せず注記のみ
 集団発火: 同一走査で点火(A+B)が有効データの30%以上を占めたら「マクロ点火の疑い」を報告に明記
         （2021年コロナ反動型＝ベータの一斉発火をアルファと誤認しないための割引）
 注意:   点火銘柄は「買い」ではない。門Ω（index.html）の審査に回し、サイズは門X
@@ -205,6 +208,10 @@ def ignition(t, cik):
     else:
         v = "待機"
     # シクリカル・ガード: 点火が出た時だけSICを引く。利益率階段型(B)が商品市況由来なら「点火B(市況?)」に降格。
+    #   点火A(売上加速)のシクリカルは降格しない——バックテスト実証(kaibutsu_backtest 412社)で
+    #   点火Aシクリカルの前方3年成功率75% > 対照(非点火)54% ＝ 有効な信号(売上は続く=怪物の仕事)。
+    #   利益率階段(点火B)シクリカルだけが49%<対照=真の偽点火。堀の無さは門Ωの三本柱が裁く分業。
+    #   ゆえに点火Aは降格せず"市況注意"の軟フラグに留める(推測でなくデータに従う)。
     sic, sic_desc, cyc = "", "", False
     if v in ("点火", "点火B"):
         try:
@@ -214,8 +221,23 @@ def ignition(t, cik):
             pass
         if v == "点火B" and cyc:
             v = "点火B(市況?)"                          # 商品市況で利益率が振れる型＝偽点火の常連。要人手確認
+    # ===== 検死フラグ(v2 精度強化): 見かけの点火を注記。降格でなく人手確認の合図。核の点火式は不変 =====
+    flags = []
+    if cyc and v == "点火":
+        flags.append("市況注意")                        # 点火Aシクリカル=売上は続くが堀は門Ωで厳しく(実証:成功率75%)
+    if yoy is not None and yoy > 150:
+        flags.append("base?")                           # 前年比2.5倍超=小ベース/M&Aで%が誇張(ONC 22179%型)
+    ends_r = sorted(rev)
+    if len(ends_r) >= 2 and rev.get(ends_r[-2]):
+        qoq = rev[ends_r[-1]] / rev[ends_r[-2]] - 1
+        if qoq > 0.40:
+            flags.append("段差?")                       # 直近QoQ+40%超=緩やかでない段差=合併/一時の疑い(TKO合併型)
+    if size == "微" and v in ("点火", "点火B", "点火B(市況?)"):
+        flags.append("微小流動性")                      # 年商<$0.3B=流動性・集中の脆さ(FDCTD型)
+    if opm_d is not None and opm_d > 20:
+        flags.append("営利差過大")                      # 単一四半期でΔ営利率>20pt=一時益/構造要確認(INSW +56pt型)
     return {"verdict": v, "yoy": yoy, "accel": accel, "opm_d": opm_d, "b_streak": b_streak,
-            "sic": sic, "sic_desc": sic_desc, "cyc": cyc,
+            "sic": sic, "sic_desc": sic_desc, "cyc": cyc, "flags": flags,
             "trail": [f"{e[:7]}:{y:+.0f}%" for e, y in trail], "rev_ttm": ttm, "size": size}
 
 # ---------------- 主処理 ----------------
@@ -255,8 +277,9 @@ def main():
         mark = {"点火": "🔥", "点火B": "🔶", "点火B(市況?)": "🔸", "くすぶり": "…", "待機": "  "}.get(r["verdict"], "×")
         sz = f"{r['size']}(${r['rev_ttm']/1e9:.1f}B{'' if c.get('ccy') in ('USD','') else ' '+c['ccy']})" if r.get("rev_ttm") else "?"
         cycn = f" [{r.get('sic_desc','')[:20]}]" if r.get("cyc") else ""
+        flagn = f" ⚑{'/'.join(r['flags'])}" if r.get("flags") else ""
         print(f" {mark} {t:<6} {r['verdict']:<10} 規模{sz:<14} YoY {str(r['yoy'])+'%':>8} 加速{r['accel']}連続 "
-              f"営利差 {str(r['opm_d'])+'pt':>8} B連続{r.get('b_streak',0)}{cycn}  {' '.join(r['trail'])}")
+              f"営利差 {str(r['opm_d'])+'pt':>8} B連続{r.get('b_streak',0)}{cycn}{flagn}  {' '.join(r['trail'])}")
 
     # 集団発火フィルタ: 有効データ中の点火(A+B)比率が高い＝マクロの一斉点火の疑い(2021年型)
     scanned = [c for c in results if c["verdict"] in ("点火","点火B","点火B(市況?)","くすぶり","待機")]
@@ -286,15 +309,20 @@ def main():
         f.write("点火B(市況?)=点火BだがSICがシクリカル(石油ガス/鉱業/海運/公益/不動産)。"
                 "検証で偽点火が集中した型ゆえ降格。利益率上昇が構造でなく商品市況由来でないか人手確認\n")
         f.write("規模: 年商(直近4Q売上) 微<$0.3B/小<$1.5B/中<$8B/大≥$8B。同判定内は小さい順。\n")
+        f.write("⚑検死フラグ(v2 精度強化・降格でなく人手確認の合図): 市況注意=点火Aシクリカル(実証:売上は続くが堀は門Ωで厳しく) / "
+                "base?=YoY>150%で小ベース・M&Aによる%誇張の疑い / 段差?=直近QoQ+40%超=合併/一時の疑い / "
+                "微小流動性=年商<$0.3B / 営利差過大=単一四半期でΔ営利率>20pt=一時益/構造要確認\n")
         f.write("点火銘柄は買いではない。門Ω審査→門X(無知の枠5-10%・¼ケリー)で縛る。\n")
         if macro_note: f.write(macro_note + "\n")
         f.write("\n")
         for c in results:
             sz = f"{c['size']} ${c['rev_ttm']/1e9:.1f}B" if c.get("rev_ttm") else "規模?"
             cycn = f" 【{c.get('sic_desc','')}】" if c.get("cyc") else ""
+            flagn = f" ⚑{'/'.join(c['flags'])}" if c.get("flags") else ""
+            cbase = "(base?)" if (isinstance(c.get('cagr5'), (int,float)) and c['cagr5'] > 200) else ""
             f.write(f"[{c['verdict']}] {c['ticker']:<6} {sz:<10} 署名{c['sig']}点 "
-                    f"CAGR5 {c['cagr5']}% ROIC {c['roic']}% OPM {c['opm']}% | "
-                    f"YoY {c['yoy']}% 加速{c['accel']}連続 営利差 {c['opm_d']}pt B連続{c.get('b_streak',0)}{cycn} | "
+                    f"CAGR5 {c['cagr5']}%{cbase} ROIC {c['roic']}% OPM {c['opm']}% | "
+                    f"YoY {c['yoy']}% 加速{c['accel']}連続 営利差 {c['opm_d']}pt B連続{c.get('b_streak',0)}{cycn}{flagn} | "
                     f"{' '.join(c['trail'])} {c.get('err','')}\n")
     fireA = [c["ticker"] for c in results if c["verdict"] == "点火"]
     fireB = [c["ticker"] for c in results if c["verdict"] == "点火B"]
