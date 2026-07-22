@@ -90,6 +90,25 @@ def cik_map():
     j = json.loads(get("https://www.sec.gov/files/company_tickers.json"))
     return {v["ticker"].upper(): str(v["cik_str"]).zfill(10) for v in j.values()}
 
+def sic_of(cik):
+    """SEC submissionsからSICコードと分類名を取得。点火が出た銘柄だけ引く(呼び出し最小)。
+       B降格の信頼性のため一時失敗は1回リトライ"""
+    for attempt in range(2):
+        try:
+            j = json.loads(get(f"https://data.sec.gov/submissions/CIK{cik}.json"))
+            return j.get("sic",""), j.get("sicDescription","")
+        except Exception:
+            if attempt == 0: time.sleep(0.5); continue
+            raise
+
+def is_cyclical_sic(sic):
+    """商品市況・金利で利益率が振れるシクリカル。利益率階段型(点火B)の偽点火が集中する型。
+       検証(kaibutsu_backtest)で点火Bの失速例がこの群に固まった: 石油ガス・鉱業・海運・不動産・公益。
+       採掘1000-1499 / 石油精製2900-2999 / 一次金属3300-3399 / 水運4400-4499 / 公益4900-4999 / 不動産6500-6599"""
+    try: s = int(sic)
+    except (TypeError, ValueError): return False
+    return (1000<=s<=1499) or (2900<=s<=2999) or (3300<=s<=3399) or (4400<=s<=4499) or (4900<=s<=4999) or (6500<=s<=6599)
+
 def quarterly_series(facts, keys):
     """全候補タグから四半期系列を作り、最新の四半期末を持つ系列を採用する。
        （タグを途中変更した会社で、古いタグの停止済み系列を掴む事故を防ぐ）"""
@@ -185,7 +204,18 @@ def ignition(t, cik):
         v = "くすぶり"
     else:
         v = "待機"
+    # シクリカル・ガード: 点火が出た時だけSICを引く。利益率階段型(B)が商品市況由来なら「点火B(市況?)」に降格。
+    sic, sic_desc, cyc = "", "", False
+    if v in ("点火", "点火B"):
+        try:
+            sic, sic_desc = sic_of(cik)
+            cyc = is_cyclical_sic(sic)
+        except Exception:
+            pass
+        if v == "点火B" and cyc:
+            v = "点火B(市況?)"                          # 商品市況で利益率が振れる型＝偽点火の常連。要人手確認
     return {"verdict": v, "yoy": yoy, "accel": accel, "opm_d": opm_d, "b_streak": b_streak,
+            "sic": sic, "sic_desc": sic_desc, "cyc": cyc,
             "trail": [f"{e[:7]}:{y:+.0f}%" for e, y in trail], "rev_ttm": ttm, "size": size}
 
 # ---------------- 主処理 ----------------
@@ -208,7 +238,8 @@ def main():
         print(f"=== 怪物の門 {date.today()}: 署名上位{len(cands)}社（母集団 gate0_all.csv） → 点火検知 ===")
 
     cmap = cik_map()
-    order = {"点火": 0, "点火B": 1, "くすぶり": 2, "待機": 3, "古い開示": 4, "四半期開示なし": 5, "失敗": 6}
+    order = {"点火": 0, "点火B": 1, "点火B(市況?)": 2, "くすぶり": 3, "待機": 4,
+             "古い開示": 5, "四半期開示なし": 6, "失敗": 7}
     results = []
     for c in cands:
         t = c["ticker"]
@@ -221,14 +252,15 @@ def main():
                  "trail": [], "rev_ttm": None, "size": None, "err": str(e)[:80]}
         c.update(r)
         results.append(c)
-        mark = {"点火": "🔥", "点火B": "🔶", "くすぶり": "…", "待機": "  "}.get(r["verdict"], "×")
+        mark = {"点火": "🔥", "点火B": "🔶", "点火B(市況?)": "🔸", "くすぶり": "…", "待機": "  "}.get(r["verdict"], "×")
         sz = f"{r['size']}(${r['rev_ttm']/1e9:.1f}B{'' if c.get('ccy') in ('USD','') else ' '+c['ccy']})" if r.get("rev_ttm") else "?"
-        print(f" {mark} {t:<6} {r['verdict']:<4} 規模{sz:<14} YoY {str(r['yoy'])+'%':>8} 加速{r['accel']}連続 "
-              f"営利差 {str(r['opm_d'])+'pt':>8} B連続{r.get('b_streak',0)}  {' '.join(r['trail'])}")
+        cycn = f" [{r.get('sic_desc','')[:20]}]" if r.get("cyc") else ""
+        print(f" {mark} {t:<6} {r['verdict']:<10} 規模{sz:<14} YoY {str(r['yoy'])+'%':>8} 加速{r['accel']}連続 "
+              f"営利差 {str(r['opm_d'])+'pt':>8} B連続{r.get('b_streak',0)}{cycn}  {' '.join(r['trail'])}")
 
     # 集団発火フィルタ: 有効データ中の点火(A+B)比率が高い＝マクロの一斉点火の疑い(2021年型)
-    scanned = [c for c in results if c["verdict"] in ("点火","点火B","くすぶり","待機")]
-    fires   = [c for c in results if c["verdict"] in ("点火","点火B")]
+    scanned = [c for c in results if c["verdict"] in ("点火","点火B","点火B(市況?)","くすぶり","待機")]
+    fires   = [c for c in results if c["verdict"] in ("点火","点火B")]      # 市況?は本物の点火に数えない
     macro = len(scanned) >= 10 and len(fires) / len(scanned) >= 0.30
     macro_note = (f"⚠ 集団発火の疑い: 有効{len(scanned)}社中{len(fires)}社が点火。市場全体の反動(ベータ)の"
                   f"可能性が高く、個別のアルファとして扱わないこと" if macro else "")
@@ -251,15 +283,18 @@ def main():
         f.write(f"怪物の門 点火報告 {date.today()}\n")
         f.write("判定: 点火=YoY加速2連続∧YoY≥25%∧営利率+2pt(売上加速型) / "
                 "点火B=営利率+2pt×2Q連続∧YoY≥10%(利益率階段型) / くすぶり=どちらかの予鳴り\n")
+        f.write("点火B(市況?)=点火BだがSICがシクリカル(石油ガス/鉱業/海運/公益/不動産)。"
+                "検証で偽点火が集中した型ゆえ降格。利益率上昇が構造でなく商品市況由来でないか人手確認\n")
         f.write("規模: 年商(直近4Q売上) 微<$0.3B/小<$1.5B/中<$8B/大≥$8B。同判定内は小さい順。\n")
         f.write("点火銘柄は買いではない。門Ω審査→門X(無知の枠5-10%・¼ケリー)で縛る。\n")
         if macro_note: f.write(macro_note + "\n")
         f.write("\n")
         for c in results:
             sz = f"{c['size']} ${c['rev_ttm']/1e9:.1f}B" if c.get("rev_ttm") else "規模?"
+            cycn = f" 【{c.get('sic_desc','')}】" if c.get("cyc") else ""
             f.write(f"[{c['verdict']}] {c['ticker']:<6} {sz:<10} 署名{c['sig']}点 "
                     f"CAGR5 {c['cagr5']}% ROIC {c['roic']}% OPM {c['opm']}% | "
-                    f"YoY {c['yoy']}% 加速{c['accel']}連続 営利差 {c['opm_d']}pt B連続{c.get('b_streak',0)} | "
+                    f"YoY {c['yoy']}% 加速{c['accel']}連続 営利差 {c['opm_d']}pt B連続{c.get('b_streak',0)}{cycn} | "
                     f"{' '.join(c['trail'])} {c.get('err','')}\n")
     fireA = [c["ticker"] for c in results if c["verdict"] == "点火"]
     fireB = [c["ticker"] for c in results if c["verdict"] == "点火B"]
