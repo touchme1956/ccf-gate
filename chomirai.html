@@ -173,7 +173,7 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
 <div class="block">
  <div class="tag">X-Engine · Expected Return</div>
  <div class="h2">E[r] ＝ 還元利回り ＋ b×ROIIC ＋ 倍率の重力</div>
- <p class="intro">門Ωの審査で使う数字（FCF・ROIIC・再投資率）をそのまま流用して、その銘柄の<b>期待年率リターン</b>を三項分解で見積もる。数字は <code>out/{T}_gate_input.json</code> の機械値から取ること。<b>倍率の重力</b>は「終着PERが今より下がる」前提で必ず負担として入れる——楽観の逃げ道を塞ぐためだ。</p>
+ <p class="intro">門Ωの審査で使う数字（FCF・ROIIC・再投資率）をそのまま流用して、その銘柄の<b>期待年率リターン</b>を三項分解で見積もる。数字は <code>out/{T}_gate_input.json</code> の機械値から取ること。<b>倍率の重力</b>は「終着PERが今より下がる」前提で必ず負担として入れる——楽観の逃げ道を塞ぐためだ。<b>ただし終着PERは成長連動</b>（掟六v2・2026-07-23）：<b>高成長はPERが高くても複利をもたらす</b>ため、成熟株と成長株を一律22で測らない。妥当な終着PER＝成熟g4%≈22／持続成長する高ROIC≈28-30（McKinsey価値ドライバーで検証・上限30）。実証gに連動させ現在PERは超えない＝ハイプと倍率拡大は封じたまま、成長の複利には妥当な倍率を許す。</p>
 
  <div class="panel">
   <div class="panel-h"><h3>期待リターン計算機</h3><span class="pass">全項目：年率%・実数で入力</span></div>
@@ -182,7 +182,7 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
    <div class="field"><label>ROIIC（増分ROIC）%</label><input type="number" id="e_roiic" value="25" step="1"><span class="hint">営業利益の増分 ÷ 投下資本の増分</span></div>
    <div class="field"><label>再投資率 b %</label><input type="number" id="e_b" value="40" step="1"><span class="hint">利益のうち事業に再投資する割合</span></div>
    <div class="field"><label>現在PER</label><input type="number" id="e_per0" value="30" step="1"></div>
-   <div class="field"><label>想定終着PER（n年後）</label><input type="number" id="e_per1" value="22" step="1"><span class="hint">成熟時の妥当倍率。現在より高くしないこと</span></div>
+   <div class="field"><label>想定終着PER（n年後）</label><input type="number" id="e_per1" value="22" step="1"><span class="hint">成長連動の妥当倍率：成熟g≤4%≈16-22／持続成長g10%≈18-30／高成長g20%≈28-30（McKinsey価値ドライバー(1−g/ROIC)/(WACC−g)）。上限30・現在PERは超えない</span></div>
    <div class="field"><label>年数 n</label><input type="number" id="e_n" value="10" step="1"></div>
    <div class="field"><label>ハードル（要求年率）%</label><input type="number" id="e_hurdle" value="12" step="0.5"><span class="hint">指数の期待（名目≈7〜10%）を明確に超える水準</span></div>
   </div>
