@@ -113,9 +113,11 @@ def is_cyclical_sic(sic):
     return (1000<=s<=1499) or (2900<=s<=2999) or (3300<=s<=3399) or (4400<=s<=4499) or (4900<=s<=4999) or (6500<=s<=6599)
 
 def quarterly_series(facts, keys):
-    """全候補タグから四半期系列を作り、最新の四半期末を持つ系列を採用する。
-       （タグを途中変更した会社で、古いタグの停止済み系列を掴む事故を防ぐ）"""
-    best = {}
+    """全候補タグの四半期系列を結合(stitch)して返す。重複四半期は最新まで伸びるタグを優先し、
+       旧タグは前史を穴埋めする。1本勝ち(最新end最大の系列だけ採用)だと、新タグが短い会社で
+       旧タグの持つ成長史を孤児化する事故が起きる(例: CELH/FAST/ROP/AME)。stitchでそれを防ぐ。
+       点火式は不変——供給する系列を完全化するだけ。"""
+    series = []
     for ns in ("us-gaap","ifrs-full"):
         d = facts.get("facts",{}).get(ns,{})
         for k in keys:
@@ -131,9 +133,13 @@ def quarterly_series(facts, keys):
                     except Exception: continue
                     if not (60 <= (d1-d0).days <= 120): continue
                     out[e] = row["val"]
-                if out and (not best or max(out) > max(best)):
-                    best = out
-    return best
+                if out:
+                    series.append((max(out), out))
+    series.sort(key=lambda x: x[0])          # 最古の系列 → 最新まで伸びる系列
+    merged = {}
+    for _, out in series:
+        merged.update(out)                   # 後勝ち=最新タグが重複端を上書き・旧タグは前史を穴埋め
+    return merged
 
 def yoy_series(q, n=8):
     """直近n四半期の {end: YoY%}。約1年前(±25日)の四半期と比較。"""

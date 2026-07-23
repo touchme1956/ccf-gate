@@ -82,8 +82,9 @@ def companyfacts(cik):
     return j
 
 def quarterly_series(facts, keys):
-    """全候補タグから四半期系列を作り、最新の四半期末を持つ系列を採用(タグ乗換対策)"""
-    best = {}
+    """全候補タグの四半期系列を結合(stitch)して返す(タグ乗換対策)。重複四半期は最新まで伸びる
+       タグを優先、旧タグは前史を穴埋め。1本勝ちだと新タグが短い会社で成長史を孤児化する(CELH型)。"""
+    series = []
     for ns in ("us-gaap","ifrs-full"):
         d = facts.get("facts",{}).get(ns,{})
         for k in keys:
@@ -99,9 +100,13 @@ def quarterly_series(facts, keys):
                     except Exception: continue
                     if not (60 <= (d1-d0).days <= 120): continue
                     out[e] = row["val"]
-                if out and (not best or max(out) > max(best)):
-                    best = out
-    return best
+                if out:
+                    series.append((max(out), out))
+    series.sort(key=lambda x: x[0])          # 最古の系列 → 最新まで伸びる系列
+    merged = {}
+    for _, out in series:
+        merged.update(out)                   # 後勝ち=最新タグが重複端を上書き・旧タグは前史を穴埋め
+    return merged
 
 def prior_q(ends, e):
     d1 = date.fromisoformat(e); best=None; bg=26
