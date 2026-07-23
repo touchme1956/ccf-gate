@@ -42,6 +42,7 @@ CSV   = os.path.join(BASE, "gate0_all.csv")
 OUTQ  = os.path.join(BASE, "kaibutsu_queue.json")
 OUTR  = os.path.join(BASE, "out", "kaibutsu_report.txt")
 KILLJS = os.path.join(BASE, "kaibutsu_killlist.json")     # 確定死足切り: 門Ω審査で構造的キル確認済=◆から除外
+MKCAPJS = os.path.join(BASE, "kaibutsu_mkcap.json")       # 時価総額表(USD): 無知の枠を時価で切る(--max-mcap)。採取/AVで随時更新
 
 TAGS_REV = ["Revenues","RevenueFromContractWithCustomerExcludingAssessedTax",
             "RevenueFromContractWithCustomerIncludingAssessedTax","SalesRevenueNet","Revenue"]
@@ -261,6 +262,13 @@ def main():
         i = args.index("--top"); top_n = int(args[i+1]); del args[i:i+2]
     if "--max-rev" in args:
         i = args.index("--max-rev"); max_rev = float(args[i+1]) * 1e9; del args[i:i+2]
+    max_mcap = None                                  # 時価総額上限（$B・USD）。無知の枠は時価で切る(2026-07-23方針・上限$20B)
+    if "--max-mcap" in args:
+        i = args.index("--max-mcap"); max_mcap = float(args[i+1]) * 1e9; del args[i:i+2]
+    mcap_tbl = {}
+    if os.path.exists(MKCAPJS):
+        try: mcap_tbl = json.load(open(MKCAPJS)).get("mkcap_usd", {})
+        except Exception: mcap_tbl = {}
     tickers = [a.upper() for a in args if re.fullmatch(r"[A-Za-z][A-Za-z.\-]{0,7}", a)]
 
     if tickers:
@@ -293,6 +301,14 @@ def main():
         if t in kills:
             r["sleeve"] = False
             r["kill"] = kills[t].get("reason", "確定死")
+        # 時価総額フィルタ: 無知の枠は「怪物を小さいうちに」ゆえ時価で切る(--max-mcap・既定上限$20B方針)。
+        #   年商中型でも時価は巨大な高PER株(APP/SHOP型)を排除。時価不明はfail-open(残して"時価?"で採取待ち)。
+        r["mcap"] = mcap_tbl.get(t)
+        if max_mcap is not None and r.get("mcap") is not None and r["mcap"] > max_mcap:
+            r["sleeve"] = False
+            r["mcap_over"] = True
+        elif max_mcap is not None and r.get("sleeve") and r.get("mcap") is None:
+            r["mcap_unknown"] = True                 # 時価未取得=fail-open。◆は保つが要時価取得
         c.update(r)
         results.append(c)
         mark = {"点火": "🔥", "点火B": "🔶", "点火B(市況?)": "🔸", "くすぶり": "…", "待機": "  "}.get(r["verdict"], "×")
@@ -300,7 +316,9 @@ def main():
         cycn = f" [{r.get('sic_desc','')[:20]}]" if r.get("cyc") else ""
         flagn = f" ⚑{'/'.join(r['flags'])}" if r.get("flags") else ""
         killn = f" ☠確定死({r['kill']})" if r.get("kill") else ""
-        flagn = flagn + killn
+        mcn = (f" 💰時価${r['mcap']/1e9:.0f}B超" if r.get("mcap_over") else
+               (" 時価?" if r.get("mcap_unknown") else ""))
+        flagn = flagn + killn + mcn
         slvn  = " ◆無知の枠" if r.get("sleeve") else ""
         print(f" {mark} {t:<6} {r['verdict']:<10} 規模{sz:<14} YoY {str(r['yoy'])+'%':>8} 加速{r['accel']}連続 "
               f"営利差 {str(r['opm_d'])+'pt':>8} B連続{r.get('b_streak',0)}{cycn}{flagn}{slvn}  {' '.join(r['trail'])}")
