@@ -242,8 +242,13 @@ def ignition(t, cik):
         flags.append("微小流動性")                      # 年商<$0.3B=流動性・集中の脆さ(FDCTD型)
     if opm_d is not None and opm_d > 20:
         flags.append("営利差過大")                      # 単一四半期でΔ営利率>20pt=一時益/構造要確認(INSW +56pt型)
+    # ===== 無知の枠 一次適格: 綺麗な点火(点火/点火B ∧ 検死フラグ無し=市況/base/段差/微小/営利差過大が無い)。
+    #   買い信号ではない——「採取→門Ω審査に回す価値のある偽点火でない点火」の一次選別。
+    #   S1キル(負債/EBITDA>4・債務超過・Altman Z''<1.1・ROIC≤WACC・堀崩壊)等の耐久床は門Ωでしか出せない=審査で確定。
+    #   通過先は城でなく無知の枠(未実証・資本5-10%・全損前提・別管理)。Ω75+二段関門で城へ卒業。核の点火式は不変。
+    sleeve = (v in ("点火", "点火B")) and not flags
     return {"verdict": v, "yoy": yoy, "accel": accel, "opm_d": opm_d, "b_streak": b_streak,
-            "sic": sic, "sic_desc": sic_desc, "cyc": cyc, "flags": flags,
+            "sic": sic, "sic_desc": sic_desc, "cyc": cyc, "flags": flags, "sleeve": sleeve,
             "trail": [f"{e[:7]}:{y:+.0f}%" for e, y in trail], "rev_ttm": ttm, "size": size}
 
 # ---------------- 主処理 ----------------
@@ -284,8 +289,9 @@ def main():
         sz = f"{r['size']}(${r['rev_ttm']/1e9:.1f}B{'' if c.get('ccy') in ('USD','') else ' '+c['ccy']})" if r.get("rev_ttm") else "?"
         cycn = f" [{r.get('sic_desc','')[:20]}]" if r.get("cyc") else ""
         flagn = f" ⚑{'/'.join(r['flags'])}" if r.get("flags") else ""
+        slvn  = " ◆無知の枠" if r.get("sleeve") else ""
         print(f" {mark} {t:<6} {r['verdict']:<10} 規模{sz:<14} YoY {str(r['yoy'])+'%':>8} 加速{r['accel']}連続 "
-              f"営利差 {str(r['opm_d'])+'pt':>8} B連続{r.get('b_streak',0)}{cycn}{flagn}  {' '.join(r['trail'])}")
+              f"営利差 {str(r['opm_d'])+'pt':>8} B連続{r.get('b_streak',0)}{cycn}{flagn}{slvn}  {' '.join(r['trail'])}")
 
     # 集団発火フィルタ: 有効データ中の点火(A+B)比率が高い＝マクロの一斉点火の疑い(2021年型)
     scanned = [c for c in results if c["verdict"] in ("点火","点火B","点火B(市況?)","くすぶり","待機")]
@@ -318,7 +324,11 @@ def main():
         f.write("⚑検死フラグ(v2 精度強化・降格でなく人手確認の合図): 市況注意=点火Aシクリカル(実証:売上は続くが堀は門Ωで厳しく) / "
                 "base?=YoY>150%で小ベース・M&Aによる%誇張の疑い / 段差?=直近QoQ+40%超=合併/一時の疑い / "
                 "微小流動性=年商<$0.3B / 営利差過大=単一四半期でΔ営利率>20pt=一時益/構造要確認\n")
-        f.write("点火銘柄は買いではない。門Ω審査→門X(無知の枠5-10%・¼ケリー)で縛る。\n")
+        f.write("◆無知の枠 一次適格=点火/点火B ∧ 検死フラグ無し(市況/base/段差/微小/営利差過大が無い綺麗な点火)。"
+                "買い信号でなく『採取→門Ω審査に回す価値のある偽点火でない点火』の一次選別。"
+                "S1キル(負債/EBITDA>4・債務超過・Altman Z''<1.1・ROIC≤WACC・堀崩壊)等の耐久床は門Ωで確定。\n")
+        f.write("点火銘柄は買いではない。門Ω審査→門X(無知の枠5-10%・¼ケリー・全損前提の別管理)で縛る。"
+                "Ω75+二段関門を満たせば城(本張り)へ卒業。\n")
         if macro_note: f.write(macro_note + "\n")
         f.write("\n")
         for c in results:
@@ -326,14 +336,17 @@ def main():
             cycn = f" 【{c.get('sic_desc','')}】" if c.get("cyc") else ""
             flagn = f" ⚑{'/'.join(c['flags'])}" if c.get("flags") else ""
             cbase = "(base?)" if (isinstance(c.get('cagr5'), (int,float)) and c['cagr5'] > 200) else ""
-            f.write(f"[{c['verdict']}] {c['ticker']:<6} {sz:<10} 署名{c['sig']}点 "
+            slvn = " ◆無知の枠" if c.get("sleeve") else ""
+            f.write(f"[{c['verdict']}]{slvn} {c['ticker']:<6} {sz:<10} 署名{c['sig']}点 "
                     f"CAGR5 {c['cagr5']}%{cbase} ROIC {c['roic']}% OPM {c['opm']}% | "
                     f"YoY {c['yoy']}% 加速{c['accel']}連続 営利差 {c['opm_d']}pt B連続{c.get('b_streak',0)}{cycn}{flagn} | "
                     f"{' '.join(c['trail'])} {c.get('err','')}\n")
     fireA = [c["ticker"] for c in results if c["verdict"] == "点火"]
     fireB = [c["ticker"] for c in results if c["verdict"] == "点火B"]
     smo  = [c["ticker"] for c in results if c["verdict"] == "くすぶり"]
+    sleeveL = [c["ticker"] for c in results if c.get("sleeve")]
     print(f"\n点火A {len(fireA)}社: {fireA or 'なし'}\n点火B {len(fireB)}社: {fireB or 'なし'}\nくすぶり {len(smo)}社: {smo or 'なし'}")
+    print(f"◆無知の枠 一次適格 {len(sleeveL)}社: {sleeveL or 'なし'}（偽点火でない綺麗な点火。採取→門Ω審査でS1キル/耐久床を確認→無知の枠5-10%・全損前提）")
     print(f"出力: {os.path.basename(OUTQ)} / out/kaibutsu_report.txt")
     print("点火銘柄は hachimon_fetch.py で採取 → 門Ω審査 → 門Xのサイズ規律へ。")
 
