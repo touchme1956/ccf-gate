@@ -41,6 +41,7 @@ HDRS  = {"User-Agent": f"kaibutsu-gate {EMAIL}"}
 CSV   = os.path.join(BASE, "gate0_all.csv")
 OUTQ  = os.path.join(BASE, "kaibutsu_queue.json")
 OUTR  = os.path.join(BASE, "out", "kaibutsu_report.txt")
+KILLJS = os.path.join(BASE, "kaibutsu_killlist.json")     # 確定死足切り: 門Ω審査で構造的キル確認済=◆から除外
 
 TAGS_REV = ["Revenues","RevenueFromContractWithCustomerExcludingAssessedTax",
             "RevenueFromContractWithCustomerIncludingAssessedTax","SalesRevenueNet","Revenue"]
@@ -271,6 +272,10 @@ def main():
         print(f"=== 怪物の門 {date.today()}: 署名上位{len(cands)}社（母集団 gate0_all.csv） → 点火検知 ===")
 
     cmap = cik_map()
+    kills = {}                                          # 確定死足切り(門Ω審査で構造的キル確認済=◆から除外)
+    if os.path.exists(KILLJS):
+        try: kills = json.load(open(KILLJS)).get("kills", {})
+        except Exception: kills = {}
     order = {"点火": 0, "点火B": 1, "点火B(市況?)": 2, "くすぶり": 3, "待機": 4,
              "古い開示": 5, "四半期開示なし": 6, "失敗": 7}
     results = []
@@ -283,12 +288,19 @@ def main():
         except Exception as e:
             r = {"verdict": "失敗", "yoy": None, "accel": 0, "opm_d": None,
                  "trail": [], "rev_ttm": None, "size": None, "err": str(e)[:80]}
+        # 確定死足切り: 既知の構造的キル(特許cliff等)は無知でなく既知の死ゆえ◆一次適格から外す。
+        #   機械で判る債務超過は署名段階で除外済。ここは門Ω審査で確定した死をリストで記憶し反映する。
+        if t in kills:
+            r["sleeve"] = False
+            r["kill"] = kills[t].get("reason", "確定死")
         c.update(r)
         results.append(c)
         mark = {"点火": "🔥", "点火B": "🔶", "点火B(市況?)": "🔸", "くすぶり": "…", "待機": "  "}.get(r["verdict"], "×")
         sz = f"{r['size']}(${r['rev_ttm']/1e9:.1f}B{'' if c.get('ccy') in ('USD','') else ' '+c['ccy']})" if r.get("rev_ttm") else "?"
         cycn = f" [{r.get('sic_desc','')[:20]}]" if r.get("cyc") else ""
         flagn = f" ⚑{'/'.join(r['flags'])}" if r.get("flags") else ""
+        killn = f" ☠確定死({r['kill']})" if r.get("kill") else ""
+        flagn = flagn + killn
         slvn  = " ◆無知の枠" if r.get("sleeve") else ""
         print(f" {mark} {t:<6} {r['verdict']:<10} 規模{sz:<14} YoY {str(r['yoy'])+'%':>8} 加速{r['accel']}連続 "
               f"営利差 {str(r['opm_d'])+'pt':>8} B連続{r.get('b_streak',0)}{cycn}{flagn}{slvn}  {' '.join(r['trail'])}")
@@ -324,17 +336,21 @@ def main():
         f.write("⚑検死フラグ(v2 精度強化・降格でなく人手確認の合図): 市況注意=点火Aシクリカル(実証:売上は続くが堀は門Ωで厳しく) / "
                 "base?=YoY>150%で小ベース・M&Aによる%誇張の疑い / 段差?=直近QoQ+40%超=合併/一時の疑い / "
                 "微小流動性=年商<$0.3B / 営利差過大=単一四半期でΔ営利率>20pt=一時益/構造要確認\n")
-        f.write("◆無知の枠 一次適格=点火/点火B ∧ 検死フラグ無し(市況/base/段差/微小/営利差過大が無い綺麗な点火)。"
-                "買い信号でなく『採取→門Ω審査に回す価値のある偽点火でない点火』の一次選別。"
-                "S1キル(負債/EBITDA>4・債務超過・Altman Z''<1.1・ROIC≤WACC・堀崩壊)等の耐久床は門Ωで確定。\n")
-        f.write("点火銘柄は買いではない。門Ω審査→門X(無知の枠5-10%・¼ケリー・全損前提の別管理)で縛る。"
-                "Ω75+二段関門を満たせば城(本張り)へ卒業。\n")
+        f.write("◆無知の枠 一次適格=点火/点火B ∧ 検死フラグ無し(偽点火でない綺麗な点火)。"
+                "無知の枠の入口は怪物の門のみ＝これが入館証(門Ω二段関門は城への卒業のみで入口ではない)。"
+                "買い信号ではない——小口・全損前提・別管理でバスケット。\n")
+        f.write("☠確定死=門Ω審査で構造的キル確認済(特許cliff/顧客集中等)=『無知』でなく『既知の死』ゆえ◆から除外"
+                "(kaibutsu_killlist.json)。機械で判る債務超過は署名段階で除外済。質的な不確実性は無知として受け入れる。\n")
+        f.write("点火は買いではない。◆一次適格を無知の枠へ小さく(1匹1.5-2%×10-13匹・上限5-10%・全損前提の別管理)。"
+                "門Ω二段関門(Ω75+ ∧ 門X開通)を満たせば城(本張り)へ卒業。\n")
         if macro_note: f.write(macro_note + "\n")
         f.write("\n")
         for c in results:
             sz = f"{c['size']} ${c['rev_ttm']/1e9:.1f}B" if c.get("rev_ttm") else "規模?"
             cycn = f" 【{c.get('sic_desc','')}】" if c.get("cyc") else ""
             flagn = f" ⚑{'/'.join(c['flags'])}" if c.get("flags") else ""
+            killn = f" ☠確定死({c['kill']})" if c.get("kill") else ""
+            flagn = flagn + killn
             cbase = "(base?)" if (isinstance(c.get('cagr5'), (int,float)) and c['cagr5'] > 200) else ""
             slvn = " ◆無知の枠" if c.get("sleeve") else ""
             f.write(f"[{c['verdict']}]{slvn} {c['ticker']:<6} {sz:<10} 署名{c['sig']}点 "
@@ -345,8 +361,10 @@ def main():
     fireB = [c["ticker"] for c in results if c["verdict"] == "点火B"]
     smo  = [c["ticker"] for c in results if c["verdict"] == "くすぶり"]
     sleeveL = [c["ticker"] for c in results if c.get("sleeve")]
+    killedL = [c["ticker"] for c in results if c.get("kill")]
     print(f"\n点火A {len(fireA)}社: {fireA or 'なし'}\n点火B {len(fireB)}社: {fireB or 'なし'}\nくすぶり {len(smo)}社: {smo or 'なし'}")
-    print(f"◆無知の枠 一次適格 {len(sleeveL)}社: {sleeveL or 'なし'}（偽点火でない綺麗な点火。採取→門Ω審査でS1キル/耐久床を確認→無知の枠5-10%・全損前提）")
+    print(f"◆無知の枠 一次適格 {len(sleeveL)}社: {sleeveL or 'なし'}（入口は怪物の門のみ。無知の枠へ小口・全損前提。門Ω二段関門は城への卒業のみ）")
+    if killedL: print(f"☠確定死足切り {len(killedL)}社: {killedL}（門Ω審査で構造的キル確認済＝既知の死ゆえ◆除外・kaibutsu_killlist.json）")
     print(f"出力: {os.path.basename(OUTQ)} / out/kaibutsu_report.txt")
     print("点火銘柄は hachimon_fetch.py で採取 → 門Ω審査 → 門Xのサイズ規律へ。")
 
