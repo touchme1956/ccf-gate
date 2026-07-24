@@ -375,5 +375,18 @@ function pfBkStat(){
 
 render();
 pfBkStat();
+
+/* ---------- 親フレーム(門Ⅶ資産)へ自分の高さを通知＝iframeを中身にフィットさせ内部スクロールバーを消す（1枚のページ化） ---------- */
+function pfReportHeight(){
+ try{ if(window.parent&&window.parent!==window){
+   const h=Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight);
+   window.parent.postMessage({type:'ccfPfHeight',h:h},'*');
+ } }catch(e){}
+}
+pfReportHeight();
+window.addEventListener('load',pfReportHeight);
+window.addEventListener('resize',pfReportHeight);
+try{ new ResizeObserver(pfReportHeight).observe(document.body); }catch(e){}
+setTimeout(pfReportHeight,300); setTimeout(pfReportHeight,900);
 </script>
 </body></html>
