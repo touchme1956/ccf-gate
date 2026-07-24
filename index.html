@@ -2139,23 +2139,27 @@ async function renderHoldings(items,holdSet){
   const box=$('holdBox');
   const badge=$('holdBadge');
   const held=items.filter(it=>it.held);
+  // 採点済(evalScoreあり)だけ出口判定にかける。採点なし(資産ビューからの保有登録等)は誤ってS1(空データ=スプレッド≤0)にせず「採点待ち」に分離
+  const scored=held.filter(it=>it.evalScore!=null), pending=held.filter(it=>it.evalScore==null);
+  // 出口判定を資産ビュー(portfolio)と共有するためlocalStorageにキャッシュ(採点済のみ・表示専用)
+  try{const vm={};scored.forEach(it=>{const e=exitVerdict(it.d||{},it);vm[it.nm]={level:e.level,spread:e.spread,F:e.F,conv:e.conv};});localStorage.setItem('pf:verdicts',JSON.stringify(vm));}catch(e){}
   // ---- タブバッジ(🔴🟡の件数) ----
   if(badge){
-    if(!held.length){badge.innerHTML='';}
+    if(!scored.length&&!pending.length){badge.innerHTML='';}
     else{
-      const rows0=held.map(it=>exitVerdict(it.d||{},it));
+      const rows0=scored.map(it=>exitVerdict(it.d||{},it));
       const n1=rows0.filter(x=>x.level==='s1').length, n2=rows0.filter(x=>x.level==='s2').length;
       let b='';
       if(n1)b+=`<span style="background:var(--rust);color:#fff;border-radius:8px;padding:0 5px;font-size:10px;margin-left:2px">🔴${n1}</span>`;
       if(n2)b+=`<span style="background:#d69a3c;color:#fff;border-radius:8px;padding:0 5px;font-size:10px;margin-left:2px">🟡${n2}</span>`;
-      if(!n1&&!n2)b=`<span style="background:var(--jade);color:#fff;border-radius:8px;padding:0 5px;font-size:10px;margin-left:2px">${held.length}</span>`;
+      if(!n1&&!n2)b=`<span style="background:var(--jade);color:#fff;border-radius:8px;padding:0 5px;font-size:10px;margin-left:2px">${scored.length+pending.length}</span>`;
       badge.innerHTML=b;
     }
   }
   if(!box)return;
-  if(!held.length){box.innerHTML='<div style="font-size:13px;color:var(--dim);padding:24px;text-align:center;border:1px dashed var(--line);border-radius:12px">保有中の銘柄はまだ登録されていない。<br>「Ⅳ台帳」で銘柄カードの「□」を押すと保有中に追加され、ここに出口判定が表示される。</div>';return;}
+  if(!scored.length&&!pending.length){box.innerHTML='<div style="font-size:13px;color:var(--dim);padding:24px;text-align:center;border:1px dashed var(--line);border-radius:12px">保有中の銘柄はまだ登録されていない。<br>「Ⅳ台帳」で銘柄カードの「□」を押すと保有中に追加され、ここに出口判定が表示される。</div>';return;}
   const rank={s1:0,s2:1,s3:2,hold:3};
-  const rows=held.map(it=>({it,ex:exitVerdict(it.d||{},it)})).sort((a,b)=>rank[a.ex.level]-rank[b.ex.level]);
+  const rows=scored.map(it=>({it,ex:exitVerdict(it.d||{},it)})).sort((a,b)=>rank[a.ex.level]-rank[b.ex.level]);
   const isAdd=(r)=>!!(r.it&&(r.it.evalScore>=75)&&(r.it.act==='今 買える')&&(r.ex.level==='hold'||r.ex.level==='s3'));
   const addList=rows.filter(isAdd).map(r=>r.it.nm);
   // 信号色設定: [ラベル, 枠色, アイコン背景, 絵文字, 大見出し]
@@ -2201,6 +2205,17 @@ async function renderHoldings(items,holdSet){
         </div>
       </div>
     </div>`;
+  }
+  // ---- 採点待ち(保有登録済だが未採点。資産ビューから登録した城など) ----
+  if(pending.length){
+    html+=`<div style="border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;background:rgba(255,255,255,.02)">
+      <div style="font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px">⏳ 採点待ち（${pending.length}）— 保有登録済み・出口判定は採点後</div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:8px">Ⅲ採点機で審査すると S1/S2/S3 の出口判定が出る。<b>未採点は売買判定に使わない</b>（空データを誤ってS1にしない）。</div>`;
+    for(const it of pending){
+      const pos=(it.d&&parseFloat(it.d.pos))?parseFloat(it.d.pos).toFixed(0)+'%':'';
+      html+=`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid rgba(40,52,74,.5)"><span style="font-size:15px">⏳</span><div style="flex:1;font-size:14px">${it.nm}${pos?`<span style="font-size:11px;color:var(--dim);margin-left:6px">保有${pos}</span>`:''}</div><button class="ld" style="font-size:10px;padding:3px 10px" onclick="loadIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">採点機で開く</button><button class="ld" style="font-size:10px;padding:3px 10px" onclick="toggleHold(decodeURIComponent('${encodeURIComponent(it.nm)}'))">保有解除</button></div>`;
+    }
+    html+='</div>';
   }
   html+='<div style="font-size:10px;color:var(--dim);margin-top:6px;line-height:1.7">※出口判定は各銘柄の最新採点データに基づく機械分類。判定を動かすには「採点機で開く」→最新決算データに更新し保存。株価変動・空売りレポート・単四半期ミス・金利起因のスプレッド圧縮は売却理由にしない(v9.1長期保有バイアス)。</div>';
   box.innerHTML=html;
