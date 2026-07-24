@@ -271,7 +271,6 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
 <button id="tab8" onclick="showPage(8)">Ⅱ 実行手順</button>
 <button id="tab2" onclick="showPage(2)">Ⅲ 採点機</button>
 <button id="tab3" onclick="showPage(3)">Ⅳ 台帳（保存記録）</button>
-<button id="tab6" onclick="showPage(6)">Ⅴ 保存・カレンダー</button>
 <button id="tab4" onclick="showPage(4)">Ⅵ 検証履歴</button>
 <button id="tab5" onclick="showPage(5)">Ⅶ 買付順位</button>
 <button id="tab7" onclick="showPage(7)" style="color:var(--gold-bright)">Ⅷ 資産</button>
@@ -913,51 +912,6 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  </div>
  <div class="wrap" style="margin-top:18px"><div id="logBox"></div></div>
 </div>
-<div id="pg6" class="pg">
- <div class="pg3-head">
-  <h1 class="serif">保存・カレンダー <span style="font-size:.5em;color:var(--mut)">バックアップ／保有書き出し／決算 v9.9.26</span></h1>
-  <p style="color:var(--muted);font-size:14px;line-height:1.8">データの保全と決算運用のハブ。<b>完全バックアップ／復元</b>（端末が変わっても全データが戻る）、<b>gate0・カレンダー用の保有リスト書き出し</b>（holdings.json）、<b>決算カレンダーの読込</b>、<b>決算点検の依頼文コピー</b>。<br><span style="font-size:12px;color:var(--dim)">保有銘柄の閲覧・出口判定（🔴S1／🟡S2／🟢ホールド）と入力は「<b style="color:var(--gold-bright)">Ⅷ 資産</b>」に一本化した。保有への追加は「Ⅳ台帳」で各銘柄カードの「□」、または資産タブから。</span></p>
- </div>
- <div class="wrap" style="margin-top:14px"><button onclick="ccfExportHoldings(this)" style="padding:9px 16px;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:8px;color:#8fc9a4;font-size:13px;font-weight:600;cursor:pointer">⬇ gate0用に保有リストを書き出し（holdings.json）</button><span style="font-size:11.5px;color:var(--muted);margin-left:10px">gate0（Drive/ccf）と決算カレンダーが読む——質80+のeliteも自動同梱（ファイル編集不要）</span><button onclick="ccfWipeAll(this)" style="margin-left:10px;padding:9px 14px;background:transparent;border:1px solid rgba(207,95,72,.5);border-radius:8px;color:#cf7f6f;font-size:12.5px;cursor:pointer">🗑 銘柄データを全消去</button></div><div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button onclick="ccfBackupAll(this)" style="padding:9px 16px;background:linear-gradient(180deg,rgba(93,140,194,.30),rgba(93,140,194,.10));border:1px solid rgba(93,140,194,.55);border-radius:8px;color:#9bb0d2;font-size:13px;font-weight:600;cursor:pointer">⬇ 完全バックアップ（全データ）</button><label for="bkFile" style="padding:9px 14px;background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--ink-soft);font-size:12.5px;cursor:pointer">⬆ 復元</label><input id="bkFile" type="file" accept=".json,application/json" style="display:none" onchange="ccfRestoreAll(this)"><span id="bkStat" style="font-size:11.5px;color:var(--muted)"></span></div><div style="margin-top:10px;font-size:12px;color:var(--ink-soft);background:rgba(84,184,138,.07);border:1px solid rgba(84,184,138,.3);border-radius:8px;padding:9px 12px;line-height:1.9"><b>運用リズム（抜けのない運用サイクル・Googleカレンダー連動／2026-07-23）</b>：<b>①週次＝早期警報スイープ（自動Routine・毎週月曜）</b>——保有+監視のSEC 8-K/提出をアラート辞書でスキャンし、大型M&A・CEO交代・ガイダンス撤回・減損・内部統制の不備を<b>四半期を待たず</b>捕捉（教義: 定例だけだと反応が最大3ヶ月遅れる）。ヒットのみ通知。<b>②月2回（10・25日）＝採取・審査＋門を開く日</b>——hachimon_fetchで新規5社採取→門2審査／Ⅶ買付順位で投下可・押し目・X開通接近を確認し現金をサイズ規律（8/5/3%×¼ケリー）で配分／台帳を全再採点／月1完全バックアップ。<b>③決算ごと＝銘柄別点検</b>——kessan_check→要審査なら決算点検の依頼文ボタンで門2再審査。<b>④四半期（20・28日）＝器械保守＋ポートフォリオ点検＋足切り</b>——決算日再取得・kanshi_list・X開通価格の新eps再計算／ウェイト乖離・現金比率・サイズ規律の遵守。<b>⑤年次（1/15発掘・7/1全面再採点＋ロジック改修レビュー）</b>。<b>株価の上下は点検・売却理由にしない</b>（事実ベース）。台帳が育ったら月1完全バックアップを習慣に（端末が変わっても復元で全て戻る）。</div><div style="margin-top:12px"><label for="calFile" style="padding:8px 14px;background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--ink-soft);font-size:12.5px;cursor:pointer;display:inline-block">⬆ 決算カレンダー読込（next_earnings.json）</label><input id="calFile" type="file" accept=".json,application/json" style="display:none" onchange="ccfCalLoad(this)"><span style="font-size:11px;color:var(--muted);margin-left:8px">コードで「決算カレンダー作って」→ できたファイルを読むと下に常時表示。icsはGoogleカレンダーへ</span><div id="calBox" style="margin-top:10px"></div><div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input id="kessanTk" placeholder="銘柄（空欄=直近±7日に決算の銘柄を自動）" style="flex:0 1 300px;min-width:200px;padding:8px 10px;background:var(--panel2,transparent);border:1px solid var(--line);border-radius:7px;color:var(--ink,inherit);font-size:12.5px"><button onclick="ccfCopyKessan(this)" style="padding:8px 14px;background:linear-gradient(180deg,rgba(214,154,60,.30),rgba(214,154,60,.10));border:1px solid rgba(214,154,60,.55);border-radius:7px;color:#d6b06c;font-size:12.5px;font-weight:600;cursor:pointer">📋 決算点検の依頼文をコピー（門仕様）</button><span style="font-size:11px;color:var(--muted)">S1-S3照合・警報6種・門X前提の再計算まで含む決算専用文書。<b>空欄＝直近±7日の決算銘柄／無ければ保有全銘柄</b>。Claudeに貼る</span></div></div>
-<div class="wrap">
-<div style="border-top:1px dashed var(--line);margin-top:30px;padding-top:24px"><h2 class="serif" style="font-size:20px;color:var(--gold-bright);margin:0 0 4px">対 S&amp;P500 — 買い・売りの答え合わせ</h2><div style="font-size:11.5px;color:var(--muted);letter-spacing:.06em">Did the Gate Beat the Index? — Per-Name Excess Return</div></div>
-
-<div class="block" style="padding-top:20px">
-<p class="intro">門が選んだ個別銘柄が、<b style="color:var(--gold-bright)">同じ買付日にS&amp;P500(配当込み)を買っていた場合</b>に勝てたかを、銘柄ごとに測る。指数部分(網)は混ぜない——これは<b>門の目利きだけ</b>の答え合わせだ。全てドル建て・配当込みトータルリターン(^SP500TR)で統一——両者USD建てなので為替は相殺され、選別の検証として為替中立（円での絶対損益は別問題）。<b>この表はUSD銘柄専用</b>——日本株(JPY)は通貨が混ざるため入れない。現在株価が空欄なら台帳のpx（「¥価格だけ更新」）を自動で使う。</p>
-<div style="margin-top:14px;padding:12px 14px;background:rgba(201,166,74,.06);border-left:3px solid var(--gold-bright);border-radius:6px;color:var(--ink-soft);font-size:13px;line-height:1.9">
-<b style="color:var(--gold-bright)">入力の手順:</b> ①各保有銘柄の「買付日・買付株価・株数」を楽天の約定履歴から入力 → ②現在株価とその時点のS&amp;P500(SPX)値、買付日のSPX値を入力(過去SPXはClaudeに聞けば埋まる) → ③「計算」。配当込みで比べるなら受取配当も入れる(任意)。
-</div>
-</div>
-
-<div class="block" style="padding-top:8px">
-<div class="h2">① 銘柄の買付情報を入力</div>
-<div style="display:grid;gap:8px;margin-top:12px" id="vsInputRows"></div>
-<button onclick="addVsRow()" style="margin-top:10px;padding:8px 16px;background:transparent;border:1px dashed var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;cursor:pointer">＋ 行を追加</button>
-</div>
-
-<div class="block" style="padding-top:8px">
-<div class="h2">★ 採取器の株価を貼る（自動入力）</div>
-<p class="intro" style="font-size:13px">採取器(hachimon_fetch.py)を実行すると<code>vs_spx_prices.json</code>が出る。その中身をここに貼れば、<b style="color:var(--gold-bright)">現在株価・現在SPX・配当が全銘柄ぶん自動で埋まる</b>。買付日・買付株価・株数は約定履歴から手入力(それが正)。</p>
-<textarea id="vsPasteBox" placeholder='採取器が出した vs_spx_prices.json を貼る' style="width:100%;min-height:80px;margin-top:10px;background:var(--codebg);border:1px solid var(--line);border-radius:8px;padding:10px;color:#d8d2c4;font-family:ui-monospace,monospace;font-size:12px"></textarea>
-<button onclick="pasteVsPrices()" style="margin-top:8px;padding:9px 20px;background:linear-gradient(180deg,rgba(74,124,89,.25),rgba(74,124,89,.1));border:1px solid rgba(74,124,89,.45);border-radius:7px;color:#8fc9a4;font-size:13px;cursor:pointer">株価を流し込む</button>
-</div>
-
-<div class="block" style="padding-top:8px">
-<div class="h2">② 共通の基準値</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
-<div class="row"><div class="rl">現在のS&amp;P500 配当込みTR<span class="h">^SP500TR（配当込み指数）の値を推奨。SPX(価格指数)でも銘柄間の比較は可だが、門の成績が年1%台後半ぶん甘く出る。全銘柄共通</span></div><div class="rc"><input id="vsSpxNow" type="number" step="0.01" placeholder="例: 6300"></div></div>
-<div class="row"><div class="rl">配当を含める<span class="h">個別株の受取配当を各行に入れると精緻</span></div><div class="rc"><select id="vsInclDiv"><option value="yes">はい(トータルリターン)</option><option value="no">いいえ(株価のみ)</option></select></div></div>
-</div>
-<button onclick="calcVsSpx()" style="margin-top:14px;padding:11px 30px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.12));border:1px solid var(--gold-line);border-radius:8px;color:var(--gold-bright);font-size:14px;font-weight:600;cursor:pointer">計算する</button>
-</div>
-
-<div class="block" style="padding-top:8px;display:none" id="vsResultBlock">
-<div class="h2">③ 結果 — 各銘柄 vs S&amp;P500</div>
-<div id="vsResult" style="margin-top:12px"></div>
-</div>
-
-</div>
-</div>
 <div id="pg5" class="pg">
  <div class="pg3-head">
   <h1 class="serif">買付順位 <span style="font-size:.5em;color:var(--mut)">3層ルール自動適用</span></h1>
@@ -968,7 +922,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
 
 <div id="pg7" class="pg">
 <div class="wrap" style="padding-top:14px">
- <p style="font-size:12.5px;color:var(--muted);margin:0 0 8px">網（ETF）＋城（個別）の全保有を一枚で。金額を入れると割合・城内シェアを自動計算し、この端末に保存（門と同じ保存方式）。門の三層（網60/城40）に照らして表示。「⭳ 門の保有から取込」でⅤ保有登録した個別を城に読み込める。
+ <p style="font-size:12.5px;color:var(--muted);margin:0 0 8px">網（ETF）＋城（個別）の全保有を一枚で。金額を入れると割合・城内シェアを自動計算し、この端末に保存（門と同じ保存方式）。門の三層（網60/城40）に照らして表示。「⭳ 門の保有から取込」でⅣ台帳に保有登録した個別を城に読み込める。<b>完全バックアップ／復元</b>もこのタブに集約（端末が変わっても全データが戻る）。
  <a href="portfolio.html" target="_blank" style="color:var(--gold-bright)">新しいタブで開く ↗</a></p>
  <iframe id="pfFrame" src="portfolio.html" loading="lazy" style="width:100%;height:calc(100vh - 150px);min-height:640px;border:1px solid var(--line);border-radius:10px;background:#080a0e"></iframe>
 </div>
@@ -1048,7 +1002,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
    <div style="padding-left:calc(1.2em + 12px)">
     <div style="display:flex;gap:8px;padding:6px 0"><span style="color:#8fc9a4;min-width:4.5em;font-size:12px;font-weight:600">何を</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7">審査で返ってきた<b style="color:var(--gold-bright)">完成パックJSON</b>を<b style="color:var(--gold-bright)">Ⅲ採点機</b>の「＋取り込む」に貼る。定性まで埋まっているので、そのまま台帳に入る。</div></div>
     
-    <div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.04)"><span style="color:var(--gold-bright);min-width:4.5em;font-size:12px;font-weight:600">出るもの</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7">採点完了→台帳に保存→<b style="color:var(--gold-bright)">Ⅶ買付順位</b>で候補が並ぶ→<b style="color:var(--gold-bright)">Ⅴ保有・下段の対S&amp;P500</b>で目利きを検証。</div></div>
+    <div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.04)"><span style="color:var(--gold-bright);min-width:4.5em;font-size:12px;font-weight:600">出るもの</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7">採点完了→台帳に保存→<b style="color:var(--gold-bright)">Ⅶ買付順位</b>で候補が並ぶ→<b style="color:var(--gold-bright)">Ⅷ資産</b>で保有と出口判定(S1/S2/S3)を確認。</div></div>
    </div>
   </div>
  </div>
@@ -1060,7 +1014,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  <div class="h2">来年動かす前のチェックリスト</div>
  <p class="intro">コードは時とともに腐る。放置すると去年の設定で今年を測ってしまう。<b style="color:#e0917a">門0を走らせる前に、この4点を必ず更新する。</b></p>
  <ol style="margin:14px 0 4px;padding-left:22px;line-height:2;color:var(--ink,#d8d2c4)">
-  <li><b style="color:var(--ink-bright,#fff)">保有リスト（HOLDINGS）</b> — <code>gate0_v8_5.py</code>冒頭の保有20銘柄。売買したら書き換える（Ⅴ保有タブのholdings.json書き出しなら編集不要）。◆印の判定に使う。</li>
+  <li><b style="color:var(--ink-bright,#fff)">保有リスト（HOLDINGS）</b> — <code>gate0_v8_5.py</code>冒頭の保有20銘柄。売買したら書き換える（holdings.jsonを直接編集、または門の台帳＝Ⅳと揃える）。◆印の判定に使う。</li>
   <li><b style="color:var(--ink-bright,#fff)">golden set の期待スコアと構造回帰</b> — 回帰テストの基準。企業の実績が変われば1年でずれる。落ちるべき銘柄（LLY滅・OMAB/PAC滅＝コンセッション満了型）も逆回帰として維持。v8.5の構造回帰（VEEV現金椅子・FICO⚑合流・ROP/SPGIのれん椅子・AAPL棚・MELI/INTU/TDG並び）も銘柄の実績変化で剥がれるため毎年見直す。</li>
   <li><b style="color:var(--ink-bright,#fff)">STALE_DAYS（決算の鮮度窓600日）</b> — 古い決算の企業を除外する窓。据え置きで可だが、取りこぼしが出たら見直す。</li>
   <li><b style="color:var(--ink-bright,#fff)">SEC採取器のSKIP欄</b> — 審査済み銘柄。<code>hachimon_fetch.py</code>の<code>SKIP=[…]</code>に判決の出た銘柄を追記（同じ銘柄を採り直さないため）。</li>
@@ -2619,7 +2573,7 @@ async function renderLog(){
 }
 function toggleLog(ek){const b=document.getElementById('bd_'+ek),a=document.getElementById('ar_'+ek);if(!b)return;const open=b.style.display!=='none';b.style.display=open?'none':'block';if(a)a.textContent=open?'▸':'▾';}
 async function delLog(k){if(!await uiConfirm('この検証記録を削除しますか？'))return;try{await store.delete(k);renderLog();}catch(e){}}
-function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===6&&typeof renderLedger==='function')renderLedger();if(n===6&&typeof renderVsSpx==='function')renderVsSpx();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7){const f=$('pfFrame');if(f){try{f.contentWindow.location.reload();}catch(e){f.src=f.src;}}}window.scrollTo({top:0});}
+function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7){const f=$('pfFrame');if(f){try{f.contentWindow.location.reload();}catch(e){f.src=f.src;}}}window.scrollTo({top:0});}
 store.init().then(()=>{compute();renderLedger();if(typeof ccfRenderAllQueues==='function')ccfRenderAllQueues();});
 
 </script>
