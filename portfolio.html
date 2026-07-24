@@ -177,7 +177,7 @@ function render(){
  document.getElementById('netList').innerHTML = net.length?
    net.slice().sort((a,b)=>b.v-a.v).map(p=>rowHTML(p,'','linear-gradient(90deg,#9bb0d2,#b9c8e0)')).join('')
    : '<div class="mini" style="text-align:left">網（ETF）が未登録。</div>';
- // 城を門の出口判定(S1/S2/S3/ホールド/採点待ち)で分類。判定は門のⅤ保有が書くpf:verdictsから読む
+ // 城を門の出口判定(S1/S2/S3/ホールド/採点待ち)で分類。判定は門（Ⅳ台帳）が書くpf:verdictsから読む
  const vmap=(function(){try{return JSON.parse(localStorage.getItem('pf:verdicts')||'{}');}catch(e){return {};}})();
  const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm].level;
    for(const k in vmap){ if(p.t&&k.toUpperCase().indexOf(p.t.toUpperCase())>=0)return vmap[k].level;
@@ -193,7 +193,7 @@ function render(){
  document.getElementById('castleList').innerHTML = ch || '<div class="mini" style="text-align:left">城（個別）が未登録。</div>';
 
  document.getElementById('opNote').innerHTML=
-  `<b>門の回し方（毎月）：</b>網は無条件で積立（ドルコスト平均）。城は Ⅶ買付順位の「今月％」に従い、`+
+  `<b>門の回し方（毎月）：</b>網は無条件で積立（ドルコスト平均）。城は Ⅵ買付順位の「今月％」に従い、`+
   `門X開通の<b>投下可</b>銘柄へ不足分だけ投下（投下可がなければ網へ回す）。<b>売り</b>は S1/S2/S3（質の崩壊）のみ——株価では動かさない。`;
  document.getElementById('foot').innerHTML=
   `CCF Ω — 保有はこの端末に自動保存（編集で反映）。網城の分類・目標60/40は門の三層に準拠。<br>投資判断は自己責任で。`;
@@ -235,7 +235,7 @@ function resetDefault(){ if(!confirm('初期値（運用開始スナップショ
  P=JSON.parse(JSON.stringify(DEFAULT)); persist(); cancelEdit(); render();
 }
 
-/* ---------- 門(同ドメイン)のⅤ保有から城を取込 ---------- */
+/* ---------- 門(同ドメイン)の台帳から城を取込 ---------- */
 function importFromGate(){
  let held=[]; try{held=JSON.parse(localStorage.getItem('g7hold:set')||'[]');}catch(e){}
  let added=0, found=0;
