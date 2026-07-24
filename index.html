@@ -924,7 +924,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
 <div class="wrap" style="padding-top:14px">
  <p style="font-size:12.5px;color:var(--muted);margin:0 0 8px">網（ETF）＋城（個別）の全保有を一枚で。金額を入れると割合・城内シェアを自動計算し、この端末に保存（門と同じ保存方式）。門の三層（網60/城40）に照らして表示。「⭳ 門の保有から取込」でⅣ台帳に保有登録した個別を城に読み込める。<b>完全バックアップ／復元</b>もこのタブに集約（端末が変わっても全データが戻る）。
  <a href="portfolio.html" target="_blank" style="color:var(--gold-bright)">新しいタブで開く ↗</a></p>
- <iframe id="pfFrame" src="portfolio.html" loading="lazy" style="width:100%;height:calc(100vh - 150px);min-height:640px;border:1px solid var(--line);border-radius:10px;background:#080a0e"></iframe>
+ <iframe id="pfFrame" src="portfolio.html" scrolling="no" style="width:100%;height:1600px;border:0;background:transparent;display:block;overflow:hidden"></iframe>
 </div>
 </div>
 <div id="pg8" class="pg">
@@ -2573,7 +2573,10 @@ async function renderLog(){
 }
 function toggleLog(ek){const b=document.getElementById('bd_'+ek),a=document.getElementById('ar_'+ek);if(!b)return;const open=b.style.display!=='none';b.style.display=open?'none':'block';if(a)a.textContent=open?'▸':'▾';}
 async function delLog(k){if(!await uiConfirm('この検証記録を削除しますか？'))return;try{await store.delete(k);renderLog();}catch(e){}}
-function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7){const f=$('pfFrame');if(f){try{f.contentWindow.location.reload();}catch(e){f.src=f.src;}}}window.scrollTo({top:0});}
+function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();window.scrollTo({top:0});}
+// ===== Ⅶ資産 iframe を「1枚のページ」として表示：中身(portfolio.html)が自分の高さをpostMessageで通知し、iframeをフィットさせて内部スクロールバーを消す =====
+window.addEventListener('message',function(e){ if(e&&e.data&&e.data.type==='ccfPfHeight'){ const f=document.getElementById('pfFrame'); if(f&&e.data.h>0)f.style.height=(e.data.h+8)+'px'; } });
+function pfShow(){ const f=document.getElementById('pfFrame'); if(!f)return; try{f.contentWindow.location.reload();}catch(e){f.src=f.src;} }
 store.init().then(()=>{compute();renderLedger();if(typeof ccfRenderAllQueues==='function')ccfRenderAllQueues();});
 
 </script>
