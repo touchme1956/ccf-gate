@@ -122,6 +122,7 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
  <div class="card">
   <h2>城 — 個別（門Ωを通った上乗せ）</h2>
   <p class="sub">門の出口判定（S1売却検討／S2縮小／S3記録のみ／ホールド）で分類。判定は門（Ⅳ台帳）を開くと更新（未採点は「採点待ち」）。城内％＝城40%の中でのシェア。</p>
+  <div style="margin:0 0 10px"><button class="btn" id="rescoreBtn" onclick="pfRescorePrompt(this)" style="border-color:rgba(84,184,138,.5);color:#8fc9a4;background:linear-gradient(180deg,rgba(84,184,138,.20),rgba(84,184,138,.06))" title="保有の個別銘柄を、今の門が必要とする全項目で採点し直す依頼文をコピー。Claudeに貼ると完成パックJSONが返る→Ⅲ採点機に取込">📋 個別の再採点依頼文をコピー</button> <span class="mini" style="text-align:left;display:inline">最新データで門Ω＋門Xにかけ直す。返ったJSONを門「Ⅲ採点機」の貼付欄へ。</span></div>
   <div id="castleList"></div>
  </div>
 
@@ -327,6 +328,61 @@ function registerToGate(){
  try{localStorage.setItem('g7hold:set', JSON.stringify(holdSet));}catch(e){}
  alert(`門の台帳に登録しました。\n新規の台帳 ${added}件／保有フラグ ${flagged}件`+(kept?`／既存の採点は保持 ${kept}件`:'')+
        `\n\n門の「Ⅳ 台帳」とこの資産タブで確認できます。出口判定(S1/S2/S3)を出すには、Ⅲ採点機で各銘柄を審査してください。`);
+}
+
+/* ---------- 個別保有の「再採点」依頼文（今の門が必要とする全項目を依頼） ---------- */
+function pfCopy(txt,btn){
+ const o=btn?btn.textContent:''; const done=ok=>{ if(btn){btn.textContent=ok?'コピー済 ✓':'選択してコピー'; setTimeout(()=>{btn.textContent=o;},1800);} };
+ try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(()=>done(true),()=>fallback()); return; } }catch(e){}
+ fallback();
+ function fallback(){ try{ const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); const ok=document.execCommand('copy'); document.body.removeChild(ta); done(ok);}catch(e){ alert('コピーできませんでした。手動で選択してください。\n\n'+txt.slice(0,200)+'…'); } }
+}
+// 保有位置に対応する門の台帳レコード(g7:)を探す(ticker/名前のあいまい一致)
+function pfFindRec(p){
+ for(let i=0;i<localStorage.length;i++){
+  const k=localStorage.key(i); if(!k||!k.startsWith('g7:')||k.indexOf(':',3)>-1)continue;
+  let o; try{o=JSON.parse(localStorage.getItem(k));}catch(e){continue;}
+  if(!o||!o.data)continue;
+  const nm=o.data.nm||k.slice(3), tkr=k.slice(3), pt=(p.t||'').toUpperCase(), pn=p.nm||'';
+  if((pt&&(tkr.toUpperCase()===pt||nm.toUpperCase().indexOf(pt)>=0))||(pn&&(nm===pn||nm.indexOf(pn)>=0||pn.indexOf(nm)>=0))) return o;
+ }
+ return null;
+}
+const PROTO_RESCORE=`【門2審査プロトコル v1｜厳守】各銘柄を審査し、門のⅢ採点機フォーマットの完成パックJSON（複数なら配列）で返す。
+
+1. 原本を読む
+   各銘柄の {T}_gate_input.json（機械値の下書き・あれば out/ か MyDrive/hachimon_out/）と {T}_hits.txt（限/集/誠/蝕/堀/循の6砲台抜粋）。無ければ最新の10-K/10-Q/短信(SEC EDGAR / EDINET)をWebで読む。
+2. 検死（機械値を鵜呑みにしない・必ず検算）
+   ・dilNet>30%は株式分割の誤読を疑う。・fcf/niがnull＝capexタグ欠落→原本補完か na。・通貨がUSD以外は px/per/evebit を同一通貨で揃える（ADR混線禁止）。・opm/roicが業態と乖離→販管費欠落を疑う。
+3. 定性を原本根拠つきで判定（憶測禁止・根拠なきは空欄。各値にhits.txtの該当英文を根拠）
+   〈絶対MOAT4因子〉dom 支配シェア:100=独占≥90/85=圧倒70-89/70=寡占40-69/50=競争<40｜irr 代替不能:100=唯一/85=規格ロック/70=移行困難/50=容易｜rep 複製障壁:100=不能($10B級)/80=極困難/60=困難/35=数年で追随｜dur 堀の型:100=規制/プロセス/物理/85=NW/75=スイッチング/55=ブランド
+   〈状態〉erosion:none/emerging/active｜disrupt:settled/unsettled/threat｜expiry:no/yes/na｜geopol:0-3｜moatdecay:no/yes｜nrr 顧客維持%(既定105)
+   〈過去門 p1-4:0-100〉p1 ROIC安定=5年σ｜p2 不況耐性=後退期の営利DD/nde｜p3 財務頑健=ネットデット/EBITDA｜p4 会計健全=accr<0かつ無限定監査
+   〈未来門 f1-5:0-100・固定基準〉f1 複利=ROIIC³(≥WACC+15→90/+8→80/+3→70/未満→55)｜f2 滑走路=TAM浸透p/g｜f3 堀の軌道=R&D/売上とシェアの2符号｜f4 二次曲線=隣接事業｜f5 耐陳腐化=disrupt連動
+4. 市場データ(per/perF/px/evebit/beta/shy/gr)は最新実測。grはperFから機械算出＝perF最優先。
+5. スキーマ検査: null項目を一覧化し理由を明記。Ⅲ採点機フォーマット(nm/roic/…/f1-5/_meta)に完全準拠したJSONのみ返す。
+6. _meta に auditDate(本日 YYYY-MM-DD)・model・genkyo_konkyo(原本根拠)。再採点は前回evalScoreとの差分と理由も記す。
+
+【再採点で特に確認】
+・直近決算(10-Q/短信)で roic・gm・cagr・fcf/ni が動いていれば更新。
+・per/perF/px/beta/shy を最新値に（門XのE[r]・投下可/押し目判定が変わる）。
+・シクリカルは through-cycle 値を採用（AI等のピーク益で採点しない＝g是正の規律）。`;
+function pfRescorePrompt(btn){
+ const castle=P.positions.filter(p=>p.sleeve==='castle'&&(p.t||p.nm));
+ if(!castle.length){ alert('城（個別）が未登録です。編集で個別銘柄を足すか、「⭳ 門の保有から取込」で読み込んでください。'); return; }
+ const names=castle.map(p=>p.t||p.nm);
+ const cap=8, use=castle.slice(0,cap), over=castle.length-cap;
+ const lines=use.map(p=>{
+  const rec=pfFindRec(p); const d=(rec&&rec.data)||{}, r=(rec&&rec.r)||{};
+  const meta=d._meta||{}; const nm=d.nm||p.nm||p.t;
+  const cur=[]; if(r.evalScore!=null)cur.push('前回格'+r.evalScore); if(d.roic!=null)cur.push('roic'+d.roic); if(d.cagr!=null)cur.push('cagr'+d.cagr); if(d.per!=null)cur.push('per'+d.per); const ad=(meta.audit&&meta.audit.auditDate)||meta.auditDate; if(ad)cur.push('審査日'+ad);
+  return `- ${p.t||''}${p.t&&nm&&nm!==p.t?'（'+nm+'）':nm&&!p.t?'（'+nm+'）':''}: ${cur.length?cur.join(' / '):'未採点＝新規審査'}`;
+ }).join('\n');
+ const head=`再採点依頼（保有の個別銘柄・城）: ${use.map(p=>p.t||p.nm).join(', ')}\n\n`+
+  `以下の保有個別を、現時点の最新データで門Ω（＋門X）にかけ直し、門のⅢ採点機フォーマットの完成パックJSON（${use.length>1?'配列で一括':'1件'}）で返してほしい。数字は原本(SEC/EDINET)で検算し、憶測は禁止。\n\n`+
+  `【対象と現在の台帳値（＝前回審査。これを最新に更新する）】\n${lines}\n`+
+  (over>0?`（※保有${castle.length}件中の上位${cap}件。1バッチ8社上限。残り${over}件は再度コピーで）\n`:'')+`\n`;
+ pfCopy(head+PROTO_RESCORE, btn);
 }
 
 /* ---------- 完全バックアップ／復元（門と同origin＝同じlocalStorageを保全） ---------- */
