@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCF — 私のポートフォリオ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600&display=swap" rel="stylesheet">
+<style>
+:root{
+ --bg:#080a0e;--panel:#121826;--panel2:#0e131d;--line:#28344a;
+ --ink:#f0ecdf;--ink-soft:#cfc5ab;--muted:#94a0b4;
+ --gold:#c9a64a;--gold-bright:#ecd494;--gold-line:rgba(201,166,74,.40);
+ --net:#9bb0d2;--castle:#c9a64a;--jade:#8cc091;--rust:#cf7a60;--maxw:760px;}
+*{box-sizing:border-box;}html{scroll-behavior:smooth;}
+body{margin:0;color:var(--ink);font-size:16px;line-height:1.8;letter-spacing:.02em;
+ background:radial-gradient(1000px 560px at 50% -160px,rgba(201,166,74,.10),transparent 60%),linear-gradient(180deg,#0a0c11,#080a0e 60%,#06080b);
+ font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",sans-serif;font-weight:300;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 18px;}
+h1,h2,h3{font-family:"Shippori Mincho",serif;color:#f5efde;font-weight:600;letter-spacing:.05em;}
+strong,b{color:var(--gold-bright);font-weight:500;}
+.hero{text-align:center;padding:44px 18px 22px;}
+.brand{font-family:"Cormorant Garamond",serif;font-size:13px;letter-spacing:.4em;color:var(--gold);text-transform:uppercase;}
+.hero h1{font-size:26px;margin:8px 0 14px;}
+.total{font-family:"Shippori Mincho",serif;font-size:40px;color:var(--gold-bright);letter-spacing:.02em;}
+.total small{display:block;font-size:12.5px;color:var(--muted);letter-spacing:.1em;margin-top:4px;font-family:inherit;}
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;padding:18px 18px;margin:14px 0;}
+.card h2{font-size:16px;margin:0 0 4px;}
+.sub{font-size:12px;color:var(--muted);margin:0 0 14px;}
+.splitbar{display:flex;height:26px;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin:6px 0 4px;}
+.splitbar .seg{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#0a0c11;}
+.seg.net{background:linear-gradient(180deg,#b9c8e0,#9bb0d2);}
+.seg.castle{background:linear-gradient(180deg,var(--gold-bright),var(--gold));}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--ink-soft);margin-top:8px;flex-wrap:wrap;}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle;}
+.tgt{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.7;}
+.row{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(40,52,74,.55);}
+.row:last-child{border-bottom:none;}
+.nm{font-size:14.5px;color:var(--ink);}
+.badge{display:inline-block;font-size:10px;letter-spacing:.06em;padding:1px 7px;border-radius:999px;margin-left:7px;vertical-align:middle;}
+.b-net{color:var(--net);border:1px solid rgba(155,176,210,.5);}
+.b-castle{color:var(--gold-bright);border:1px solid var(--gold-line);}
+.kind{font-size:11px;color:var(--muted);}
+.val{text-align:right;font-size:14px;color:var(--ink-soft);white-space:nowrap;}
+.pct{text-align:right;font-family:"Shippori Mincho",serif;font-size:15px;color:var(--gold-bright);min-width:56px;}
+.wbar{grid-column:1/3;height:6px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;margin-top:2px;}
+.wbar>span{display:block;height:100%;border-radius:4px;}
+.mini{font-size:11.5px;color:var(--muted);text-align:right;grid-column:1/3;}
+.note{font-size:12.5px;color:var(--ink-soft);background:rgba(201,166,74,.06);border:1px solid var(--gold-line);border-radius:10px;padding:12px 14px;line-height:1.85;margin:14px 0;}
+.links{text-align:center;padding:10px 0 40px;font-size:13px;}
+.links a{color:var(--gold-bright);text-decoration:none;margin:0 10px;}
+footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;line-height:1.9;}
+@media(max-width:520px){.total{font-size:34px;}.hero h1{font-size:22px;}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+ <div class="brand">CCF Ω · Portfolio</div>
+ <h1>私のポートフォリオ</h1>
+ <div class="total" id="total">¥—<small id="asof"></small></div>
+</header>
+
+<div class="wrap">
+
+ <div class="card">
+  <h2>網 と 城 の配分</h2>
+  <p class="sub">門の三層：網（指数ETF・20年の土台）＝目標60%／城（個別）＝目標40%。</p>
+  <div class="splitbar" id="splitbar"></div>
+  <div class="legend">
+   <span><i style="background:#9bb0d2"></i>網（ETF）<b id="netPct" style="margin-left:6px"></b></span>
+   <span><i style="background:var(--gold)"></i>城（個別）<b id="castlePct" style="margin-left:6px"></b></span>
+  </div>
+  <div class="tgt" id="tgtNote"></div>
+ </div>
+
+ <div class="card">
+  <h2>網 — 指数ETF（土台）</h2>
+  <p class="sub">毎月の積立はここへ無条件（ドルコスト平均）。</p>
+  <div id="netList"></div>
+ </div>
+
+ <div class="card">
+  <h2>城 — 個別（門Ωを通った上乗せ）</h2>
+  <p class="sub">城内％＝城（40%）の中でのシェア。新規資金は買付順位の「今月％」に従う（門X開通の投下可へ）。</p>
+  <div id="castleList"></div>
+ </div>
+
+ <div class="note" id="opNote"></div>
+
+ <div class="links">
+  <a href="index.html">門Ω（審査・台帳・買付順位）↗</a>
+  <a href="chomirai.html">門X（超未来）↗</a>
+ </div>
+</div>
+
+<footer id="foot"></footer>
+
+<script>
+'use strict';
+// portfolio.json と同内容(運用開始スナップショット)。保有が変わったら両方を更新する。
+const P = {
+ asof:"2026-07-24", total:2203620, target:{net:60, castle:40},
+ positions:[
+  {t:"XLK",  nm:"XLK テクノロジーセレクトSPDR", sleeve:"net",    kind:"米テクノロジーセクター", v:701436, w:31.8},
+  {t:"MSFT", nm:"Microsoft",                     sleeve:"castle", kind:"個別",                 v:499960, w:22.7},
+  {t:"QQQ",  nm:"インベスコ QQQ",                sleeve:"net",    kind:"ナスダック100",        v:301650, w:13.7},
+  {t:"ASML", nm:"ASMLホールディングス",          sleeve:"castle", kind:"個別",                 v:295295, w:13.4},
+  {t:"SMH",  nm:"ヴァンエック半導体ETF",         sleeve:"net",    kind:"半導体セクター",       v:285060, w:12.9},
+  {t:"RMD",  nm:"レスメド（ResMed）",            sleeve:"castle", kind:"個別",                 v:94283,  w:4.3},
+  {t:"FANG+",nm:"FANG+ 指数ETF",                sleeve:"net",    kind:"FANG+指数",            v:25936,  w:1.2}
+ ]
+};
+const yen=n=>'¥'+n.toLocaleString('ja-JP');
+const netPos=P.positions.filter(p=>p.sleeve==='net');
+const castlePos=P.positions.filter(p=>p.sleeve==='castle');
+const sum=a=>a.reduce((s,p)=>s+p.w,0);
+const netW=sum(netPos), castleW=sum(castlePos);
+
+document.getElementById('total').firstChild.textContent=yen(P.total);
+document.getElementById('asof').textContent='運用開始時点 '+P.asof;
+document.getElementById('netPct').textContent=netW.toFixed(1)+'%';
+document.getElementById('castlePct').textContent=castleW.toFixed(1)+'%';
+
+// 網城バー
+document.getElementById('splitbar').innerHTML=
+ `<div class="seg net" style="width:${netW}%">網 ${netW.toFixed(0)}%</div>`+
+ `<div class="seg castle" style="width:${castleW}%">城 ${castleW.toFixed(0)}%</div>`;
+const dNet=(netW-P.target.net), dCastle=(castleW-P.target.castle);
+document.getElementById('tgtNote').innerHTML=
+ `目標60/40との差：網 ${dNet>=0?'+':''}${dNet.toFixed(1)}pt ／ 城 ${dCastle>=0?'+':''}${dCastle.toFixed(1)}pt`+
+ (Math.abs(dNet)<=3?'　<b style="color:var(--jade)">＝ほぼ目標どおり</b>':'');
+
+// 一覧レンダ
+function rowHTML(p, extra, barColor){
+ const badge = p.sleeve==='net'?'<span class="badge b-net">網</span>':'<span class="badge b-castle">城</span>';
+ return `<div class="row">
+   <div class="nm">${p.nm}${badge}<div class="kind">${p.t} · ${p.kind}</div></div>
+   <div><div class="val">${yen(p.v)}</div><div class="pct">${p.w.toFixed(1)}%</div></div>
+   <div class="wbar"><span style="width:${Math.min(100,p.w/35*100)}%;background:${barColor}"></span></div>
+   ${extra||''}
+ </div>`;
+}
+document.getElementById('netList').innerHTML =
+ netPos.sort((a,b)=>b.w-a.w).map(p=>rowHTML(p,'','linear-gradient(90deg,#9bb0d2,#b9c8e0)')).join('');
+document.getElementById('castleList').innerHTML =
+ castlePos.sort((a,b)=>b.w-a.w).map(p=>{
+   const cityShare = castleW>0 ? p.w/castleW*100 : 0;   // 城(40%)内の現在シェア
+   return rowHTML(p, `<div class="mini">城内シェア ${cityShare.toFixed(0)}%（城${castleW.toFixed(0)}%のうち）</div>`,
+     'linear-gradient(90deg,var(--gold),var(--gold-bright))');
+ }).join('');
+
+// 門に忠実な運用メモ(意見でなく門の規則の要約)
+document.getElementById('opNote').innerHTML=
+ `<b>門の回し方（毎月）：</b>網は無条件で積立（ドルコスト平均）。城は Ⅶ買付順位の「今月％」に従い、`+
+ `門X開通の<b>投下可</b>銘柄へ不足分だけ投下（投下可がなければ網へ回す）。`+
+ `<b>売り</b>は S1/S2/S3（質の崩壊）のみ——株価では動かさない。`;
+
+document.getElementById('foot').innerHTML=
+ `CCF Ω — 運用開始スナップショット（${P.asof}）。数値は証券アプリのポートフォリオ画面より。<br>`+
+ `保有の増減があればこのページ（portfolio.html / portfolio.json）を更新する。投資判断は自己責任で。`;
+</script>
+</body></html>
