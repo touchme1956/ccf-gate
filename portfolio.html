@@ -55,6 +55,7 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 .badge{display:inline-block;font-size:10px;letter-spacing:.06em;padding:1px 7px;border-radius:999px;margin-left:7px;vertical-align:middle;}
 .b-net{color:var(--net);border:1px solid rgba(155,176,210,.5);}
 .b-castle{color:var(--gold-bright);border:1px solid var(--gold-line);}
+.ind-dot{font-size:12px;margin-right:7px;vertical-align:middle;filter:drop-shadow(0 0 3px currentColor);}
 .kind{font-size:11px;color:var(--muted);}
 .val{text-align:right;font-size:14px;color:var(--ink-soft);white-space:nowrap;}
 .pct{text-align:right;font-family:"Shippori Mincho",serif;font-size:15px;color:var(--gold-bright);min-width:56px;}
@@ -190,10 +191,11 @@ function render(){
   const fxTxt = (p.ccy!=='JPY'&&(npx>0||bpx>0)&&fxRate()>0)?` ×${fxRate()}円`:'';
   return `<div class="buyinfo">${p.bd?p.bd+' ':''}${sh}株${pxTxt?' @'+pxTxt:''}${fxTxt}</div>`;
  };
- const rowHTML=(p,extra)=>{
+ const rowHTML=(p,extra,dotColor,dotLabel)=>{
   const badge = p.sleeve==='net'?'<span class="badge b-net">網</span>':'<span class="badge b-castle">城</span>';
+  const dot = dotColor?`<span class="ind-dot" style="color:${dotColor}" title="${dotLabel||''}">●</span>`:'';
   const w=wOf(p);
-  return `<div class="row"><div class="nm">${p.nm||p.t}${badge}<div class="kind">${p.t||''}${p.kind?' · '+p.kind:''}</div></div>`+
+  return `<div class="row"><div class="nm">${dot}${p.nm||p.t}${badge}<div class="kind">${p.t||''}${p.kind?' · '+p.kind:''}</div></div>`+
    `<div><div class="val">${yen(p._v)}</div><div class="pct">${w.toFixed(1)}%</div></div>`+
    `${buyInfo(p)}${extra||''}</div>`;
  };
@@ -205,13 +207,13 @@ function render(){
  const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm].level;
    for(const k in vmap){ if(p.t&&k.toUpperCase().indexOf(p.t.toUpperCase())>=0)return vmap[k].level;
      if(p.nm&&(k.indexOf(p.nm)>=0||p.nm.indexOf(k)>=0))return vmap[k].level; } return 'pending'; };
- const VCFG={s1:['🔴','売却検討 (S1)','var(--rust)'],s2:['🟡','買い増し停止・縮小 (S2)','#d69a3c'],s3:['🔵','記録のみ (S3)','#5d8cc2'],hold:['🟢','ホールド','var(--jade)'],pending:['⏳','採点待ち（門Ⅲで審査）','var(--muted)']};
+ const VCFG={s1:['🔴','売却検討 (S1)','#cf5f48'],s2:['🟡','買い増し停止・縮小 (S2)','#d69a3c'],s3:['🟣','記録のみ (S3)','#a888d8'],hold:['🔵','ホールド','#5d8cc2'],pending:['⏳','採点待ち（門Ⅲで審査）','var(--muted)']};
  const grp={}; castle.forEach(p=>{const lv=verdictOf(p);(grp[lv]=grp[lv]||[]).push(p);});
  let ch='';
  ['s1','s2','s3','hold','pending'].forEach(lv=>{ const g=grp[lv]; if(!g||!g.length)return; const c=VCFG[lv];
    ch+=`<div style="margin:12px 0 4px;font-size:12.5px;font-weight:600;color:${c[2]};border-left:3px solid ${c[2]};padding-left:8px">${c[0]} ${c[1]}　<span style="color:var(--muted);font-weight:400">${g.length}件</span></div>`;
    ch+=g.slice().sort((a,b)=>b._v-a._v).map(p=>{ const cs=castleW>0?wOf(p)/castleW*100:0;
-     return rowHTML(p,`<div class="mini">城内シェア ${cs.toFixed(0)}%（城${castleW.toFixed(0)}%のうち）</div>`); }).join('');
+     return rowHTML(p,`<div class="mini">城内シェア ${cs.toFixed(0)}%（城${castleW.toFixed(0)}%のうち）</div>`, c[2], c[1]); }).join('');
  });
  document.getElementById('castleList').innerHTML = ch || '<div class="mini" style="text-align:left">城（個別）が未登録。</div>';
 
