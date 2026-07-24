@@ -71,9 +71,13 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
  <div class="total"><span id="total">¥—</span><small id="asof"></small></div>
  <div class="toolbar">
   <button class="btn" id="editBtn" onclick="toggleEdit()">✎ 編集</button>
-  <button class="btn ghost" id="importBtn" onclick="importFromGate()" title="門(同ドメイン)のⅤ保有で保有登録した個別銘柄を城として取り込む">⭳ 門の保有から取込</button>
-  <button class="btn ghost" id="regBtn" onclick="registerToGate()" title="城の個別を門のⅤ保有に保有登録する(既存の採点は上書きしない)">🏛 門のⅤ保有へ登録</button>
+  <button class="btn ghost" id="importBtn" onclick="importFromGate()" title="門(同ドメイン)の台帳で保有登録した個別銘柄を城として取り込む">⭳ 門の保有から取込</button>
+  <button class="btn ghost" id="regBtn" onclick="registerToGate()" title="城の個別を門の台帳に保有登録する(既存の採点は上書きしない)">🏛 門の台帳へ登録</button>
+  <button class="btn ghost" id="bkBtn" onclick="pfBackupAll(this)" title="門と資産の全データ（台帳・保有・採点・このポートフォリオ）をJSONで保存。端末が変わっても復元で全て戻る">⬇ バックアップ</button>
+  <label class="btn ghost" for="pfBkFile" style="cursor:pointer" title="バックアップJSONから全データを復元">⬆ 復元</label>
+  <input id="pfBkFile" type="file" accept=".json,application/json" style="display:none" onchange="pfRestoreAll(this)">
  </div>
+ <div class="mini" id="bkStat" style="margin-top:8px;text-align:center"></div>
 </header>
 
 <div class="wrap">
@@ -95,7 +99,6 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
  <div class="card">
   <h2>網 と 城 の配分</h2>
   <p class="sub">門の三層：網（指数ETF・20年の土台）＝目標60%／城（個別）＝目標40%。</p>
-  <div class="splitbar" id="splitbar"></div>
   <div class="legend">
    <span><i style="background:#9bb0d2"></i>網（ETF）<b id="netPct" style="margin-left:6px"></b></span>
    <span><i style="background:var(--gold)"></i>城（個別）<b id="castlePct" style="margin-left:6px"></b></span>
@@ -111,7 +114,7 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
 
  <div class="card">
   <h2>城 — 個別（門Ωを通った上乗せ）</h2>
-  <p class="sub">門の出口判定（S1売却検討／S2縮小／S3記録のみ／ホールド）で分類。判定は門のⅤ保有を開くと更新（未採点は「採点待ち」）。城内％＝城40%の中でのシェア。</p>
+  <p class="sub">門の出口判定（S1売却検討／S2縮小／S3記録のみ／ホールド）で分類。判定は門（Ⅳ台帳）を開くと更新（未採点は「採点待ち」）。城内％＝城40%の中でのシェア。</p>
   <div id="castleList"></div>
  </div>
 
@@ -159,9 +162,6 @@ function render(){
  document.getElementById('asof').textContent = P.asof? ('更新 '+P.asof) : '';
  document.getElementById('netPct').textContent=netW.toFixed(1)+'%';
  document.getElementById('castlePct').textContent=castleW.toFixed(1)+'%';
- document.getElementById('splitbar').innerHTML=
-  (netW>0?`<div class="seg net" style="width:${netW}%">網 ${netW.toFixed(0)}%</div>`:'')+
-  (castleW>0?`<div class="seg castle" style="width:${castleW}%">城 ${castleW.toFixed(0)}%</div>`:'');
  const dN=netW-TARGET.net, dC=castleW-TARGET.castle;
  document.getElementById('tgtNote').innerHTML= total<=0? 'まだ保有が空です。「✎ 編集」から入れてください。' :
   `目標60/40との差：網 ${dN>=0?'+':''}${dN.toFixed(1)}pt ／ 城 ${dC>=0?'+':''}${dC.toFixed(1)}pt`+
@@ -250,13 +250,13 @@ function importFromGate(){
   P.positions.push({t:tkr,nm,sleeve:'castle',kind:'個別（門より）',v:0});
   added++;
  }
- if(found===0){ alert('門の保有（Ⅴ保有）で保有登録された個別が見つかりませんでした。\n同じドメインで門を開き、Ⅳ台帳で□にチェックすると取り込めます。'); return; }
+ if(found===0){ alert('門の台帳で保有登録された個別が見つかりませんでした。\n同じドメインで門を開き、Ⅳ台帳で□にチェックすると取り込めます。'); return; }
  persist(); render();
  if(!editing)openEdit();
  alert(`門の保有から城 ${added}件を取り込みました（合計${found}件検出）。金額(円)を編集で入れてください。`);
 }
 
-/* ---------- 城の個別を門のⅤ保有へ登録(非破壊) ---------- */
+/* ---------- 城の個別を門の台帳へ登録(非破壊) ---------- */
 function registerToGate(){
  const castle=P.positions.filter(p=>p.sleeve==='castle'&&(p.t||p.nm));
  if(!castle.length){ alert('城（個別）が未登録です。編集で個別銘柄を足してください。'); return; }
@@ -275,10 +275,57 @@ function registerToGate(){
   if(holdSet.indexOf(nm)<0){ holdSet.push(nm); flagged++; }
  });
  try{localStorage.setItem('g7hold:set', JSON.stringify(holdSet));}catch(e){}
- alert(`門のⅤ保有に登録しました。\n新規の台帳 ${added}件／保有フラグ ${flagged}件`+(kept?`／既存の採点は保持 ${kept}件`:'')+
-       `\n\n門の「Ⅴ 保有」タブで確認できます。出口判定(S1/S2/S3)を出すには、Ⅲ採点機で各銘柄を審査してください。`);
+ alert(`門の台帳に登録しました。\n新規の台帳 ${added}件／保有フラグ ${flagged}件`+(kept?`／既存の採点は保持 ${kept}件`:'')+
+       `\n\n門の「Ⅳ 台帳」とこの資産タブで確認できます。出口判定(S1/S2/S3)を出すには、Ⅲ採点機で各銘柄を審査してください。`);
+}
+
+/* ---------- 完全バックアップ／復元（門と同origin＝同じlocalStorageを保全） ---------- */
+const BK_PREFIX=['g7:','g7wait:','g7prev:','g7queue:','hm:'];
+const BK_EXACT=['g7hold:set','g7buy:map','pf:portfolio','pf:verdicts'];
+function pfBackupAll(btn){
+ const o=btn?btn.textContent:''; const data={}; let n=0;
+ for(let i=0;i<localStorage.length;i++){
+  const k=localStorage.key(i); if(!k)continue;
+  if(BK_PREFIX.some(p=>k.startsWith(p))||BK_EXACT.includes(k)){
+   const v=localStorage.getItem(k); if(v!=null){data[k]=v;n++;}
+  }
+ }
+ try{
+  const payload=JSON.stringify({fmt:'ccf-backup',ver:1,ts:Date.now(),data},null,1);
+  const blob=new Blob([payload],{type:'application/json'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url;
+  const d=new Date(); a.download='ccf_backup_'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1200);
+  try{localStorage.setItem('ccf:lastBackup',String(Date.now()));}catch(e){}
+  pfBkStat();
+  if(btn){btn.textContent='保存 ✓ '+n+'件'; setTimeout(()=>{btn.textContent=o;},2600);}
+ }catch(e){ if(btn){btn.textContent='保存不可'; setTimeout(()=>{btn.textContent=o;},2000);} }
+}
+function pfRestoreAll(inp){
+ const f=inp&&inp.files&&inp.files[0]; if(!f)return;
+ const st=document.getElementById('bkStat');
+ f.text().then(txt=>{
+  let o; try{o=JSON.parse(txt);}catch(e){o=null;}
+  if(!o||o.fmt!=='ccf-backup'||!o.data){ if(st){st.textContent='復元失敗: 形式が違う';st.style.color='var(--rust)';} inp.value=''; return; }
+  let n=0; for(const k in o.data){ try{localStorage.setItem(k,o.data[k]);n++;}catch(e){} }
+  if(st){st.textContent='復元 '+n+'件 → 再読込';st.style.color='var(--jade)';}
+  setTimeout(()=>{ try{(window.top||window).location.reload();}catch(e){location.reload();} },900);
+ });
+ inp.value='';
+}
+function pfBkStat(){
+ const el=document.getElementById('bkStat'); if(!el)return;
+ let has=0; for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i); if(k&&k.startsWith('g7:'))has++;}
+ let ts=null; try{const g=localStorage.getItem('ccf:lastBackup'); ts=g?(+g):null;}catch(e){}
+ if(!has&&!ts){el.textContent='';return;}
+ if(!ts){el.textContent='⚠ バックアップ未取得（⬇ バックアップで保存を）';el.style.color='var(--rust)';return;}
+ const d=Math.floor((Date.now()-ts)/864e5);
+ el.textContent=(d>14?'⚠ ':'')+'最終バックアップ: '+d+'日前'+(d>14?'（要保存）':'');
+ el.style.color=d>14?'var(--rust)':'var(--muted)';
 }
 
 render();
+pfBkStat();
 </script>
 </body></html>
