@@ -72,6 +72,7 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
  <div class="toolbar">
   <button class="btn" id="editBtn" onclick="toggleEdit()">✎ 編集</button>
   <button class="btn ghost" id="importBtn" onclick="importFromGate()" title="門(同ドメイン)のⅤ保有で保有登録した個別銘柄を城として取り込む">⭳ 門の保有から取込</button>
+  <button class="btn ghost" id="regBtn" onclick="registerToGate()" title="城の個別を門のⅤ保有に保有登録する(既存の採点は上書きしない)">🏛 門のⅤ保有へ登録</button>
  </div>
 </header>
 
@@ -110,7 +111,7 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
 
  <div class="card">
   <h2>城 — 個別（門Ωを通った上乗せ）</h2>
-  <p class="sub">城内％＝城（40%）の中でのシェア。新規資金は買付順位の「今月％」に従う（門X開通の投下可へ）。</p>
+  <p class="sub">門の出口判定（S1売却検討／S2縮小／S3記録のみ／ホールド）で分類。判定は門のⅤ保有を開くと更新（未採点は「採点待ち」）。城内％＝城40%の中でのシェア。</p>
   <div id="castleList"></div>
  </div>
 
@@ -176,11 +177,20 @@ function render(){
  document.getElementById('netList').innerHTML = net.length?
    net.slice().sort((a,b)=>b.v-a.v).map(p=>rowHTML(p,'','linear-gradient(90deg,#9bb0d2,#b9c8e0)')).join('')
    : '<div class="mini" style="text-align:left">網（ETF）が未登録。</div>';
- document.getElementById('castleList').innerHTML = castle.length?
-   castle.slice().sort((a,b)=>b.v-a.v).map(p=>{
-     const cs= castleW>0 ? wOf(p)/castleW*100 : 0;
-     return rowHTML(p,`<div class="mini">城内シェア ${cs.toFixed(0)}%（城${castleW.toFixed(0)}%のうち）</div>`,'linear-gradient(90deg,var(--gold),var(--gold-bright))');
-   }).join('') : '<div class="mini" style="text-align:left">城（個別）が未登録。</div>';
+ // 城を門の出口判定(S1/S2/S3/ホールド/採点待ち)で分類。判定は門のⅤ保有が書くpf:verdictsから読む
+ const vmap=(function(){try{return JSON.parse(localStorage.getItem('pf:verdicts')||'{}');}catch(e){return {};}})();
+ const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm].level;
+   for(const k in vmap){ if(p.t&&k.toUpperCase().indexOf(p.t.toUpperCase())>=0)return vmap[k].level;
+     if(p.nm&&(k.indexOf(p.nm)>=0||p.nm.indexOf(k)>=0))return vmap[k].level; } return 'pending'; };
+ const VCFG={s1:['🔴','売却検討 (S1)','var(--rust)'],s2:['🟡','買い増し停止・縮小 (S2)','#d69a3c'],s3:['🔵','記録のみ (S3)','#5d8cc2'],hold:['🟢','ホールド','var(--jade)'],pending:['⏳','採点待ち（門Ⅲで審査）','var(--muted)']};
+ const grp={}; castle.forEach(p=>{const lv=verdictOf(p);(grp[lv]=grp[lv]||[]).push(p);});
+ let ch='';
+ ['s1','s2','s3','hold','pending'].forEach(lv=>{ const g=grp[lv]; if(!g||!g.length)return; const c=VCFG[lv];
+   ch+=`<div style="margin:12px 0 4px;font-size:12.5px;font-weight:600;color:${c[2]};border-left:3px solid ${c[2]};padding-left:8px">${c[0]} ${c[1]}　<span style="color:var(--muted);font-weight:400">${g.length}件</span></div>`;
+   ch+=g.slice().sort((a,b)=>b.v-a.v).map(p=>{ const cs=castleW>0?wOf(p)/castleW*100:0;
+     return rowHTML(p,`<div class="mini">城内シェア ${cs.toFixed(0)}%（城${castleW.toFixed(0)}%のうち）</div>`,'linear-gradient(90deg,var(--gold),var(--gold-bright))'); }).join('');
+ });
+ document.getElementById('castleList').innerHTML = ch || '<div class="mini" style="text-align:left">城（個別）が未登録。</div>';
 
  document.getElementById('opNote').innerHTML=
   `<b>門の回し方（毎月）：</b>網は無条件で積立（ドルコスト平均）。城は Ⅶ買付順位の「今月％」に従い、`+
@@ -244,6 +254,29 @@ function importFromGate(){
  persist(); render();
  if(!editing)openEdit();
  alert(`門の保有から城 ${added}件を取り込みました（合計${found}件検出）。金額(円)を編集で入れてください。`);
+}
+
+/* ---------- 城の個別を門のⅤ保有へ登録(非破壊) ---------- */
+function registerToGate(){
+ const castle=P.positions.filter(p=>p.sleeve==='castle'&&(p.t||p.nm));
+ if(!castle.length){ alert('城（個別）が未登録です。編集で個別銘柄を足してください。'); return; }
+ const total=P.positions.filter(p=>(p.v||0)>0).reduce((s,p)=>s+(+p.v||0),0);
+ let holdSet=[]; try{holdSet=JSON.parse(localStorage.getItem('g7hold:set')||'[]');}catch(e){}
+ let added=0, flagged=0, kept=0;
+ castle.forEach(p=>{
+  const tkr=((p.t||p.nm)+'').toUpperCase().replace(/[^A-Z0-9.\-]/g,'')||(p.nm||'');
+  if(!tkr)return;
+  const key='g7:'+tkr;
+  const posPct = total>0 ? +(p.v/total*100).toFixed(1) : 0;
+  let existing=null; try{const s=localStorage.getItem(key); if(s)existing=JSON.parse(s);}catch(e){}
+  let nm;
+  if(existing&&existing.data){ nm=existing.data.nm||p.nm||tkr; kept++; }   // 既存の採点は上書きしない
+  else { nm=p.nm||tkr; localStorage.setItem(key, JSON.stringify({data:{nm,pos:posPct},r:{},ts:0})); added++; }
+  if(holdSet.indexOf(nm)<0){ holdSet.push(nm); flagged++; }
+ });
+ try{localStorage.setItem('g7hold:set', JSON.stringify(holdSet));}catch(e){}
+ alert(`門のⅤ保有に登録しました。\n新規の台帳 ${added}件／保有フラグ ${flagged}件`+(kept?`／既存の採点は保持 ${kept}件`:'')+
+       `\n\n門の「Ⅴ 保有」タブで確認できます。出口判定(S1/S2/S3)を出すには、Ⅲ採点機で各銘柄を審査してください。`);
 }
 
 render();
