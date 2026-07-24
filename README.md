@@ -12,21 +12,15 @@
 4. **Claude Codeから使う**: スマホのClaudeアプリ → 「コード」 → `ccf-gate` を開く →
    「採取して」「発掘して」と頼むだけ。詳しい約束事は CLAUDE.md に書いてある
 
-## 別枠の門
+## 別枠の門（＝門X 一本）
 - `chomirai.html` — **超未来の門（CCF X）**: 期待リターン最大化の別枠。予知はせず、
-  期待リターンの三項分解（還元＋b×ROIIC＋倍率の重力）・非対称チェック・複利の漏れ・
-  ケリー基準の賭けサイズを裁く。正本 index.html（門Ω）の採点・売却規律は一切変更しない。
-  Cloudflare Pages配信後は `/chomirai` で開ける
-- `kaibutsu.html` + `kaibutsu_scan.py` — **怪物の門（CCF IGNIS）**: NVIDIA型の複利怪物を
-  最速（＝法定開示と同速）で待ち伏せる別枠。段1: gate0_all.csv 全母集団を怪物署名
-  （超成長×資本効率×利益体質×FCF転換）でランク → 段2: 上位のSEC四半期データで
-  点火検知。点火A=売上加速型（YoY加速2連続∧YoY≥25%∧営利率+2pt・NVIDIA型）、
-  点火B=利益率階段型（営利率+2pt×2Q連続∧YoY≥10%・Amazon/Microsoft型）。
-  集団発火（30%超が同時点火=マクロ）は自動警告。kessan_check.py は新セグメント・
-  大手流通契約を「☀吉報」検知（第二S字の見張り）。年1回＋四半期に
-  `python kaibutsu_scan.py` を実行 → `kaibutsu_queue.json` / `out/kaibutsu_report.txt`。
-  点火銘柄は買いではなく門Ω審査へ回す合図。サイズは門Xの無知の枠(5-10%)・¼ケリーで縛る。
-  配信後は `/kaibutsu` で開ける
+  期待リターンの三項分解（純還元＋b×ROIIC＋倍率の重力）・非対称チェック・**点火（右裾の早期検知）**・
+  複利の漏れ・ケリー基準の賭けサイズを裁く。正本 index.html（門Ω）の採点・売却規律は一切変更しない。
+  配信後は `/chomirai` で開ける
+- `kaibutsu_scan.py` — **点火の採取器**（門Xの右裾検知）: 段1で候補母集団を怪物署名でランク → 段2で
+  SEC四半期を走査し点火A（売上加速）/B（利益率階段）を検知。シクリカルの点火Bは対照以下ゆえ降格。
+  `python kaibutsu_scan.py` → `kaibutsu_queue.json` / `out/kaibutsu_report.txt`。点火は買いでなく門Ω審査への合図。
+- `kaibutsu_backtest.py` — 点火ルールの検証器（414社・生存者バイアスを排し前方3年で成否を測定）。
 
 ## 並走のルール
 - 正本は現行（Drive+Colab+今の門URL）。台帳・保有の記帳は現行のみ

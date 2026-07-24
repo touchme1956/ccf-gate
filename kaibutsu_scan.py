@@ -7,7 +7,7 @@ kaibutsu_scan.py v1 — 怪物の門・点火スキャナー（NVIDIA型の複�
         ①過去の怪物に共通する初期署名（超成長の持続×資本効率×営業レバレッジ）で候補を絞り、
         ②点火（四半期売上YoYの加速）を法定開示と同じ速度で機械検知することだけ。
         法定開示より速い検知はインサイダーだけ。ゆえに本器の四半期サイクルが「最速」である。
-        詳細な掟は kaibutsu.html（怪物の門）に全文。
+        詳細な思想は門X（chomirai.html）の「点火」節に収録。
 
 使い方: python kaibutsu_scan.py              # gate0_all.csv から署名上位40社 → SEC四半期で点火検知
         python kaibutsu_scan.py --top 60     # 候補数を変える
