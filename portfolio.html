@@ -30,10 +30,19 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;padding:18px;margin:14px 0;}
 .card h2{font-size:16px;margin:0 0 4px;}
 .sub{font-size:12px;color:var(--muted);margin:0 0 14px;}
-.splitbar{display:flex;height:26px;border-radius:8px;overflow:hidden;border:1px solid var(--line);margin:6px 0 4px;}
-.splitbar .seg{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#0a0c11;min-width:0;}
-.seg.net{background:linear-gradient(180deg,#b9c8e0,#9bb0d2);}
-.seg.castle{background:linear-gradient(180deg,var(--gold-bright),var(--gold));}
+/* 買付入力カード */
+.fxrow{display:flex;gap:8px;align-items:center;margin:2px 0 12px;font-size:12.5px;color:var(--ink-soft);flex-wrap:wrap;}
+.fxrow input{width:96px;background:#0d0d0f;border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 9px;font-size:13px;font-family:inherit;}
+.ecard{border:1px solid var(--line);border-radius:11px;padding:11px;margin:9px 0;background:rgba(255,255,255,.02);}
+.ecard .ehd{display:flex;gap:6px;align-items:center;margin-bottom:9px;}
+.ecard .ehd input{flex:1;min-width:0;background:#0d0d0f;border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 8px;font-size:13px;font-family:inherit;}
+.ecard .ehd select{background:#0d0d0f;border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 6px;font-size:12.5px;font-family:inherit;}
+.ecard .del{cursor:pointer;color:var(--rust);text-align:center;font-size:16px;border:1px solid var(--line);border-radius:7px;padding:5px 9px;}
+.efields{display:flex;gap:8px;flex-wrap:wrap;}
+.efld{display:flex;flex-direction:column;gap:2px;font-size:10px;color:var(--muted);letter-spacing:.03em;}
+.efld input,.efld select{background:#0d0d0f;border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:6px 7px;font-size:13px;font-family:inherit;width:86px;}
+.efld.wdate input{width:120px;}
+.eprev{font-size:11.5px;color:var(--gold-bright);margin-top:8px;text-align:right;}
 .legend{display:flex;gap:16px;font-size:12px;color:var(--ink-soft);margin-top:8px;flex-wrap:wrap;}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle;}
 .tgt{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.7;}
@@ -46,9 +55,8 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 .kind{font-size:11px;color:var(--muted);}
 .val{text-align:right;font-size:14px;color:var(--ink-soft);white-space:nowrap;}
 .pct{text-align:right;font-family:"Shippori Mincho",serif;font-size:15px;color:var(--gold-bright);min-width:56px;}
-.wbar{grid-column:1/3;height:6px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;margin-top:2px;}
-.wbar>span{display:block;height:100%;border-radius:4px;}
 .mini{font-size:11.5px;color:var(--muted);text-align:right;grid-column:1/3;}
+.buyinfo{font-size:11px;color:var(--muted);text-align:right;grid-column:1/3;margin-top:2px;}
 .note{font-size:12.5px;color:var(--ink-soft);background:rgba(201,166,74,.06);border:1px solid var(--gold-line);border-radius:10px;padding:12px 14px;line-height:1.85;margin:14px 0;}
 /* edit */
 .erow{display:grid;grid-template-columns:70px 1fr 62px 96px 30px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(40,52,74,.5);}
@@ -84,9 +92,9 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
 
  <!-- 編集パネル -->
  <div class="card hide" id="editCard">
-  <h2>保有を編集</h2>
-  <p class="sub">金額(円)を入れると割合は自動計算。網＝指数ETF／城＝個別。入力は<b>この端末に自動保存</b>される。</p>
-  <div class="ehead"><span>ティッカー</span><span>銘柄名</span><span>層</span><span>金額(円)</span><span></span></div>
+  <h2>保有を編集（いつ・どれだけ買ったかで更新）</h2>
+  <p class="sub">銘柄ごとに<b>株数・買付単価・現在株価</b>を入れると評価額(円)を自動計算。<b>米国株($)は下の「ドル円」で円換算</b>（JPY建てなら通貨をJPYに）。株数を空にすれば「金額(円)直接」で入れてもよい。入力は<b>この端末に自動保存</b>。</p>
+  <div class="fxrow"><span>ドル円レート</span><input type="number" inputmode="decimal" id="fxInput" placeholder="例:150" oninput="draftFx(this.value)"><span style="font-size:11.5px;color:var(--muted)">米国株の評価額＝株数×現在株価($)×このレート。証券アプリの円評価額に合うよう微調整。</span></div>
   <div id="editRows"></div>
   <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
    <button class="btn ghost" onclick="addRow()">＋ 行を追加</button>
@@ -132,14 +140,15 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
 'use strict';
 const LS_KEY='pf:portfolio';
 // 運用開始スナップショット(初期値)。以後はこの端末の保存を優先。
-const DEFAULT={ asof:"2026-07-24", positions:[
-  {t:"XLK",  nm:"XLK テクノロジーセレクトSPDR", sleeve:"net",    kind:"米テクノロジーセクター", v:701436},
-  {t:"MSFT", nm:"Microsoft",                     sleeve:"castle", kind:"個別",                 v:499960},
-  {t:"QQQ",  nm:"インベスコ QQQ",                sleeve:"net",    kind:"ナスダック100",        v:301650},
-  {t:"ASML", nm:"ASMLホールディングス",          sleeve:"castle", kind:"個別",                 v:295295},
-  {t:"SMH",  nm:"ヴァンエック半導体ETF",         sleeve:"net",    kind:"半導体セクター",       v:285060},
-  {t:"RMD",  nm:"レスメド（ResMed）",            sleeve:"castle", kind:"個別",                 v:94283},
-  {t:"FANG+",nm:"FANG+ 指数ETF",                sleeve:"net",    kind:"FANG+指数",            v:25936}
+// 運用開始スナップショットは円評価額(v)のみ。株数・単価は編集で追記すると株数×現在株価で自動計算に切替わる。
+const DEFAULT={ asof:"2026-07-24", fx:150, positions:[
+  {t:"XLK",  nm:"XLK テクノロジーセレクトSPDR", sleeve:"net",    kind:"米テクノロジーセクター", ccy:"USD", v:701436},
+  {t:"MSFT", nm:"Microsoft",                     sleeve:"castle", kind:"個別",                 ccy:"USD", v:499960},
+  {t:"QQQ",  nm:"インベスコ QQQ",                sleeve:"net",    kind:"ナスダック100",        ccy:"USD", v:301650},
+  {t:"ASML", nm:"ASMLホールディングス",          sleeve:"castle", kind:"個別",                 ccy:"USD", v:295295},
+  {t:"SMH",  nm:"ヴァンエック半導体ETF",         sleeve:"net",    kind:"半導体セクター",       ccy:"USD", v:285060},
+  {t:"RMD",  nm:"レスメド（ResMed）",            sleeve:"castle", kind:"個別",                 ccy:"USD", v:94283},
+  {t:"FANG+",nm:"FANG+ 指数ETF",                sleeve:"net",    kind:"FANG+指数",            ccy:"USD", v:25936}
 ]};
 const TARGET={net:60, castle:40};
 let P = load();
@@ -148,18 +157,26 @@ function load(){
  try{const s=localStorage.getItem(LS_KEY); if(s){const o=JSON.parse(s); if(o&&Array.isArray(o.positions))return o;}}catch(e){}
  return JSON.parse(JSON.stringify(DEFAULT));
 }
-function persist(){ try{localStorage.setItem(LS_KEY, JSON.stringify(P));}catch(e){} }
+function persist(){ try{const clean={...P,positions:P.positions.map(({_v,...r})=>r)}; localStorage.setItem(LS_KEY, JSON.stringify(clean)); }catch(e){} }
 const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+const fxRate=()=> +P.fx||0;
+// 評価額(円): 株数×(現在株価||買付単価) を通貨で円換算。株数が無ければ従来の金額(円)vを使う。
+function posValue(p){
+ const sh=+p.sh||0, npx=+p.npx||0, bpx=+p.bpx||0, px=npx>0?npx:bpx;
+ if(sh>0&&px>0){ const raw=sh*px; return (p.ccy==='JPY')?raw:raw*fxRate(); }
+ return +p.v||0;
+}
 
 function render(){
- const pos=P.positions.filter(p=>p&&(p.v||0)>0);
- const total=pos.reduce((s,p)=>s+(+p.v||0),0);
- const wOf=p=> total>0 ? (+p.v/total*100) : 0;
+ P.positions.forEach(p=>{ p._v=posValue(p); });
+ const pos=P.positions.filter(p=>p&&(p._v||0)>0);
+ const total=pos.reduce((s,p)=>s+(+p._v||0),0);
+ const wOf=p=> total>0 ? (+p._v/total*100) : 0;
  const net=pos.filter(p=>p.sleeve==='net'), castle=pos.filter(p=>p.sleeve==='castle');
  const netW=net.reduce((s,p)=>s+wOf(p),0), castleW=castle.reduce((s,p)=>s+wOf(p),0);
 
  document.getElementById('total').textContent=yen(total);
- document.getElementById('asof').textContent = P.asof? ('更新 '+P.asof) : '';
+ document.getElementById('asof').textContent = (P.asof? ('更新 '+P.asof) : '') + (fxRate()>0?`　$1=¥${fxRate()}`:'');
  document.getElementById('netPct').textContent=netW.toFixed(1)+'%';
  document.getElementById('castlePct').textContent=castleW.toFixed(1)+'%';
  const dN=netW-TARGET.net, dC=castleW-TARGET.castle;
@@ -167,15 +184,23 @@ function render(){
   `目標60/40との差：網 ${dN>=0?'+':''}${dN.toFixed(1)}pt ／ 城 ${dC>=0?'+':''}${dC.toFixed(1)}pt`+
   (Math.abs(dN)<=3?'　<b style="color:var(--jade)">＝ほぼ目標どおり</b>':(dN>3?'　（網が厚い＝新規は城へ寄せる）':'　（城が厚い＝新規は網へ寄せる）'));
 
- const rowHTML=(p,extra,barColor)=>{
+ const buyInfo=p=>{
+  const sh=+p.sh||0, npx=+p.npx||0, bpx=+p.bpx||0;
+  if(sh<=0)return '';
+  const cur=p.ccy==='JPY'?'¥':'$';
+  const pxTxt = npx>0?`現${cur}${npx}`:(bpx>0?`買${cur}${bpx}`:'');
+  const fxTxt = (p.ccy!=='JPY'&&(npx>0||bpx>0)&&fxRate()>0)?` ×${fxRate()}円`:'';
+  return `<div class="buyinfo">${p.bd?p.bd+' ':''}${sh}株${pxTxt?' @'+pxTxt:''}${fxTxt}</div>`;
+ };
+ const rowHTML=(p,extra)=>{
   const badge = p.sleeve==='net'?'<span class="badge b-net">網</span>':'<span class="badge b-castle">城</span>';
   const w=wOf(p);
   return `<div class="row"><div class="nm">${p.nm||p.t}${badge}<div class="kind">${p.t||''}${p.kind?' · '+p.kind:''}</div></div>`+
-   `<div><div class="val">${yen(p.v)}</div><div class="pct">${w.toFixed(1)}%</div></div>`+
-   `<div class="wbar"><span style="width:${Math.min(100,w/35*100)}%;background:${barColor}"></span></div>${extra||''}</div>`;
+   `<div><div class="val">${yen(p._v)}</div><div class="pct">${w.toFixed(1)}%</div></div>`+
+   `${buyInfo(p)}${extra||''}</div>`;
  };
  document.getElementById('netList').innerHTML = net.length?
-   net.slice().sort((a,b)=>b.v-a.v).map(p=>rowHTML(p,'','linear-gradient(90deg,#9bb0d2,#b9c8e0)')).join('')
+   net.slice().sort((a,b)=>b._v-a._v).map(p=>rowHTML(p,'')).join('')
    : '<div class="mini" style="text-align:left">網（ETF）が未登録。</div>';
  // 城を門の出口判定(S1/S2/S3/ホールド/採点待ち)で分類。判定は門（Ⅳ台帳）が書くpf:verdictsから読む
  const vmap=(function(){try{return JSON.parse(localStorage.getItem('pf:verdicts')||'{}');}catch(e){return {};}})();
@@ -187,8 +212,8 @@ function render(){
  let ch='';
  ['s1','s2','s3','hold','pending'].forEach(lv=>{ const g=grp[lv]; if(!g||!g.length)return; const c=VCFG[lv];
    ch+=`<div style="margin:12px 0 4px;font-size:12.5px;font-weight:600;color:${c[2]};border-left:3px solid ${c[2]};padding-left:8px">${c[0]} ${c[1]}　<span style="color:var(--muted);font-weight:400">${g.length}件</span></div>`;
-   ch+=g.slice().sort((a,b)=>b.v-a.v).map(p=>{ const cs=castleW>0?wOf(p)/castleW*100:0;
-     return rowHTML(p,`<div class="mini">城内シェア ${cs.toFixed(0)}%（城${castleW.toFixed(0)}%のうち）</div>`,'linear-gradient(90deg,var(--gold),var(--gold-bright))'); }).join('');
+   ch+=g.slice().sort((a,b)=>b._v-a._v).map(p=>{ const cs=castleW>0?wOf(p)/castleW*100:0;
+     return rowHTML(p,`<div class="mini">城内シェア ${cs.toFixed(0)}%（城${castleW.toFixed(0)}%のうち）</div>`); }).join('');
  });
  document.getElementById('castleList').innerHTML = ch || '<div class="mini" style="text-align:left">城（個別）が未登録。</div>';
 
@@ -199,11 +224,12 @@ function render(){
   `CCF Ω — 保有はこの端末に自動保存（編集で反映）。網城の分類・目標60/40は門の三層に準拠。<br>投資判断は自己責任で。`;
 }
 
-/* ---------- 編集 ---------- */
-let editing=false, draft=null;
+/* ---------- 編集（いつ・どれだけ買ったか） ---------- */
+let editing=false, draft=null, draftFxVal=null;
 function toggleEdit(){ editing?cancelEdit():openEdit(); }
 function openEdit(){
- editing=true; draft=JSON.parse(JSON.stringify(P.positions));
+ editing=true; draft=JSON.parse(JSON.stringify(P.positions)).map(({_v,...r})=>r);
+ draftFxVal=(P.fx!=null?P.fx:150);
  document.getElementById('editCard').classList.remove('hide');
  document.getElementById('editBtn').textContent='✕ 閉じる';
  renderEdit();
@@ -213,20 +239,44 @@ function cancelEdit(){ editing=false; draft=null;
  document.getElementById('editCard').classList.add('hide');
  document.getElementById('editBtn').textContent='✎ 編集';
 }
+const esc=s=>(s==null?'':s).toString().replace(/"/g,'&quot;');
+const opt=(val,cur,label)=>`<option value="${val}"${cur===val?' selected':''}>${label}</option>`;
+const numv=v=>(v!=null&&v!==0?v:'');
+// 編集中の評価額プレビュー（draftのドル円を使う）
+function liveVal(p){
+ const fx=+draftFxVal||0, sh=+p.sh||0, npx=+p.npx||0, bpx=+p.bpx||0, px=npx>0?npx:bpx;
+ if(sh>0&&px>0){ const cur=p.ccy==='JPY'?'¥':'$'; const raw=sh*px; const v=(p.ccy==='JPY')?raw:raw*fx;
+   return `評価額 ≈ <b>${yen(v)}</b>（${sh}株 × ${cur}${px}${p.ccy!=='JPY'?' × '+fx+'円':''}）`; }
+ const v=+p.v||0; return v>0?`金額(円)直接 = <b>${yen(v)}</b>`:'株数＋単価、または金額(円)を入力';
+}
+function refreshPrev(i){ const el=document.getElementById('prev'+i); if(el)el.innerHTML=liveVal(draft[i]); }
+function draftFx(v){ draftFxVal=parseFloat(v)||0; draft.forEach((p,i)=>refreshPrev(i)); }
 function renderEdit(){
+ const fi=document.getElementById('fxInput'); if(fi)fi.value=(draftFxVal!=null?draftFxVal:'');
  document.getElementById('editRows').innerHTML = draft.map((p,i)=>
-  `<div class="erow">
-    <input value="${(p.t||'').replace(/"/g,'&quot;')}" oninput="draft[${i}].t=this.value" placeholder="TICKER">
-    <input value="${(p.nm||'').replace(/"/g,'&quot;')}" oninput="draft[${i}].nm=this.value" placeholder="銘柄名">
-    <select onchange="draft[${i}].sleeve=this.value"><option value="net"${p.sleeve==='net'?' selected':''}>網</option><option value="castle"${p.sleeve==='castle'?' selected':''}>城</option></select>
-    <input type="number" inputmode="numeric" value="${p.v||0}" oninput="draft[${i}].v=parseFloat(this.value)||0" placeholder="円">
-    <div class="del" onclick="delRow(${i})">✕</div>
+  `<div class="ecard">
+    <div class="ehd">
+      <input value="${esc(p.t)}" oninput="draft[${i}].t=this.value" placeholder="TICKER" style="max-width:96px">
+      <input value="${esc(p.nm)}" oninput="draft[${i}].nm=this.value" placeholder="銘柄名">
+      <select onchange="draft[${i}].sleeve=this.value">${opt('net',p.sleeve,'網')}${opt('castle',p.sleeve,'城')}</select>
+      <div class="del" onclick="delRow(${i})">✕</div>
+    </div>
+    <div class="efields">
+      <label class="efld wdate">買付日<input type="date" value="${esc(p.bd)}" oninput="draft[${i}].bd=this.value"></label>
+      <label class="efld">株数<input type="number" inputmode="decimal" value="${numv(p.sh)}" oninput="draft[${i}].sh=parseFloat(this.value)||0;refreshPrev(${i})" placeholder="株"></label>
+      <label class="efld">買付単価<input type="number" inputmode="decimal" value="${numv(p.bpx)}" oninput="draft[${i}].bpx=parseFloat(this.value)||0;refreshPrev(${i})" placeholder="取得"></label>
+      <label class="efld">現在株価<input type="number" inputmode="decimal" value="${numv(p.npx)}" oninput="draft[${i}].npx=parseFloat(this.value)||0;refreshPrev(${i})" placeholder="現在"></label>
+      <label class="efld">通貨<select onchange="draft[${i}].ccy=this.value;refreshPrev(${i})">${opt('USD',p.ccy||'USD','$USD')}${opt('JPY',p.ccy||'USD','¥JPY')}</select></label>
+      <label class="efld">金額(円)直接<input type="number" inputmode="numeric" value="${numv(p.v)}" oninput="draft[${i}].v=parseFloat(this.value)||0;refreshPrev(${i})" placeholder="株数無い時"></label>
+    </div>
+    <div class="eprev" id="prev${i}">${liveVal(p)}</div>
   </div>`).join('');
 }
-function addRow(){ draft.push({t:'',nm:'',sleeve:'castle',kind:'個別',v:0}); renderEdit(); }
+function addRow(){ draft.push({t:'',nm:'',sleeve:'castle',kind:'個別',ccy:'USD',bd:'',sh:0,bpx:0,npx:0,v:0}); renderEdit(); }
 function delRow(i){ draft.splice(i,1); renderEdit(); }
 function saveEdit(){
  P.positions = draft.filter(p=>(p.t||p.nm));
+ P.fx = +draftFxVal||0;
  const d=new Date(); // 保存日は端末時刻から(表示用のみ)
  P.asof = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
  persist(); cancelEdit(); render();
@@ -247,27 +297,27 @@ function importFromGate(){
   if(!(held.includes(nm)||held.includes(tkr)))continue;   // 保有フラグの立った個別のみ
   found++;
   if(P.positions.some(p=>(p.t&&p.t===tkr)||(p.nm&&p.nm===nm)))continue; // 既にあればスキップ
-  P.positions.push({t:tkr,nm,sleeve:'castle',kind:'個別（門より）',v:0});
+  P.positions.push({t:tkr,nm,sleeve:'castle',kind:'個別（門より）',ccy:'USD',bd:'',sh:0,bpx:0,npx:0,v:0});
   added++;
  }
  if(found===0){ alert('門の台帳で保有登録された個別が見つかりませんでした。\n同じドメインで門を開き、Ⅳ台帳で□にチェックすると取り込めます。'); return; }
  persist(); render();
  if(!editing)openEdit();
- alert(`門の保有から城 ${added}件を取り込みました（合計${found}件検出）。金額(円)を編集で入れてください。`);
+ alert(`門の保有から城 ${added}件を取り込みました（合計${found}件検出）。株数・現在株価を編集で入れてください。`);
 }
 
 /* ---------- 城の個別を門の台帳へ登録(非破壊) ---------- */
 function registerToGate(){
  const castle=P.positions.filter(p=>p.sleeve==='castle'&&(p.t||p.nm));
  if(!castle.length){ alert('城（個別）が未登録です。編集で個別銘柄を足してください。'); return; }
- const total=P.positions.filter(p=>(p.v||0)>0).reduce((s,p)=>s+(+p.v||0),0);
+ const total=P.positions.reduce((s,p)=>s+posValue(p),0);
  let holdSet=[]; try{holdSet=JSON.parse(localStorage.getItem('g7hold:set')||'[]');}catch(e){}
  let added=0, flagged=0, kept=0;
  castle.forEach(p=>{
   const tkr=((p.t||p.nm)+'').toUpperCase().replace(/[^A-Z0-9.\-]/g,'')||(p.nm||'');
   if(!tkr)return;
   const key='g7:'+tkr;
-  const posPct = total>0 ? +(p.v/total*100).toFixed(1) : 0;
+  const posPct = total>0 ? +(posValue(p)/total*100).toFixed(1) : 0;
   let existing=null; try{const s=localStorage.getItem(key); if(s)existing=JSON.parse(s);}catch(e){}
   let nm;
   if(existing&&existing.data){ nm=existing.data.nm||p.nm||tkr; kept++; }   // 既存の採点は上書きしない
