@@ -174,6 +174,8 @@ function render(){
  const wOf=p=> total>0 ? (+p._v/total*100) : 0;
  const net=pos.filter(p=>p.sleeve==='net'), castle=pos.filter(p=>p.sleeve==='castle');
  const netW=net.reduce((s,p)=>s+wOf(p),0), castleW=castle.reduce((s,p)=>s+wOf(p),0);
+ // 現在の網/城ウェイトを門(Ⅵ買付順位の今月プラン)と共有(同origin・localStorage)
+ try{localStorage.setItem('pf:weights',JSON.stringify({net:netW,city:castleW,total:total}));}catch(e){}
 
  document.getElementById('total').textContent=yen(total);
  document.getElementById('asof').textContent = (P.asof? ('更新 '+P.asof) : '') + (fxRate()>0?`　$1=¥${fxRate()}`:'');
