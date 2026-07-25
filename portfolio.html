@@ -205,9 +205,11 @@ function render(){
    : '<div class="mini" style="text-align:left">網（ETF）が未登録。</div>';
  // 城を門の出口判定(S1/S2/S3/ホールド/採点待ち)で分類。判定は門（Ⅳ台帳）が書くpf:verdictsから読む
  const vmap=(function(){try{return JSON.parse(localStorage.getItem('pf:verdicts')||'{}');}catch(e){return {};}})();
- const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm].level;
-   for(const k in vmap){ if(p.t&&k.toUpperCase().indexOf(p.t.toUpperCase())>=0)return vmap[k].level;
-     if(p.nm&&(k.indexOf(p.nm)>=0||p.nm.indexOf(k)>=0))return vmap[k].level; } return 'pending'; };
+ const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm].level;               // 名の完全一致
+   const pt=(p.t||'').toUpperCase();
+   for(const k in vmap){ if(pt&&k.toUpperCase()===pt)return vmap[k].level; }       // ティッカー完全一致(IRMD≠RMD)
+   for(const k in vmap){ if(p.nm&&(k.indexOf(p.nm)>=0||p.nm.indexOf(k)>=0))return vmap[k].level; } // 名の部分一致のみ
+   return 'pending'; };
  const VCFG={s1:['🔴','売却検討 (S1)','#cf5f48'],s2:['🟡','買い増し停止・縮小 (S2)','#d69a3c'],s3:['🟣','記録のみ (S3)','#a888d8'],hold:['🔵','ホールド','#5d8cc2'],pending:['⏳','採点待ち（門Ⅲで審査）','var(--muted)']};
  const grp={}; castle.forEach(p=>{const lv=verdictOf(p);(grp[lv]=grp[lv]||[]).push(p);});
  let ch='';
@@ -339,14 +341,18 @@ function pfCopy(txt,btn){
 }
 // 保有位置に対応する門の台帳レコード(g7:)を探す(ticker/名前のあいまい一致)
 function pfFindRec(p){
+ const pt=(p.t||'').toUpperCase().trim(), pn=(p.nm||'').trim();
+ let exact=null, byName=null, fuzzy=null;
  for(let i=0;i<localStorage.length;i++){
   const k=localStorage.key(i); if(!k||!k.startsWith('g7:')||k.indexOf(':',3)>-1)continue;
   let o; try{o=JSON.parse(localStorage.getItem(k));}catch(e){continue;}
   if(!o||!o.data)continue;
-  const nm=o.data.nm||k.slice(3), tkr=k.slice(3), pt=(p.t||'').toUpperCase(), pn=p.nm||'';
-  if((pt&&(tkr.toUpperCase()===pt||nm.toUpperCase().indexOf(pt)>=0))||(pn&&(nm===pn||nm.indexOf(pn)>=0||pn.indexOf(nm)>=0))) return o;
+  const tkr=k.slice(3).toUpperCase(), nm=(o.data.nm||k.slice(3));
+  if(pt&&tkr===pt){ exact=o; break; }                                   // ティッカー完全一致=最優先(IRMD≠RMD)
+  if(!byName&&pn&&nm===pn) byName=o;                                     // 名の完全一致
+  if(!fuzzy&&pn&&nm&&(nm.indexOf(pn)>=0||pn.indexOf(nm)>=0)) fuzzy=o;    // 名の部分一致のみ(ティッカー部分一致は誤爆ゆえ不使用)
  }
- return null;
+ return exact||byName||fuzzy||null;
 }
 const PROTO_RESCORE=`【門2審査プロトコル v1｜厳守】各銘柄を審査し、門のⅢ採点機フォーマットの完成パックJSON（複数なら配列）で返す。
 
