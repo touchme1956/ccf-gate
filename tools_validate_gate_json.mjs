@@ -9,7 +9,8 @@ if(!Array.isArray(arr)) arr=[arr];
 let bad=false;
 for(const o of arr){
   const miss=REQ13.filter(k=>o[k]===undefined||o[k]===null||o[k]==='');
-  if(miss.length){ console.log(`✗ ${o.nm}: 定性欠落 ${miss.join(',')} → 審査待ちへ隔離される`); bad=true; }
+  if(miss.length===REQ13.length){ console.log(`NG ${o.nm}: 定性が全て空 → 審査待ちへ隔離される`); bad=true; }
+  else if(miss.length){ console.log(`  ! ${o.nm}: 未記入(原本根拠なし) ${miss.join(',')} — 門は受理するがスコアに影響`); }
   if(!o.nm){ console.log('✗ nm がない'); bad=true; }
 }
 if(/[\u201c\u201d\u2018\u2019\uff02\uff07]/.test(raw)){ console.log('NG: smart-quotes found'); bad=true; }
