@@ -296,7 +296,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  <div style="display:grid;gap:10px;margin:16px 0 6px">
   <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px">
    <div style="font-family:var(--mincho,serif);font-size:20px;color:var(--gold-bright);min-width:2.4em">門0</div>
-   <div><b style="color:var(--ink-bright,#fff)">漏斗（年1回）</b> — Colabで2行（drive.mount＋<code>%run …/run_gate0_v4.py</code>）。全上場をROIC・成長・FCF転換で7点採点し、6点には<b>病名</b>（谷/種まき/未成熟/低マージン業態/成長停止）を付けて<code>gate1_queue.json</code>（待ち行列・<b>審査優先〔谷/種まき/未成熟〕=数字で裁けない群が先頭</b>、以降pt降順・約155社）を吐く。負資本の複利機械は⚑で合流、ロールアップは「のれんの椅子」、成長停止は「棚」（毎年再計算・復帰あり）。golden set＋構造回帰8本が自動で走り「不採用」と出たら結果を使わない。母集団zipは45日で自動更新。<span style="color:var(--gold-bright)">日本株は漏斗を通さず、Ⅱ手順3の「日本株の審査依頼文」で第二の門へ直行。</span></div>
+   <div><b style="color:var(--ink-bright,#fff)">漏斗（年1回）</b> — Colabで2行（drive.mount＋<code>%run …/run_gate0_v4.py</code>）。全上場をROIC・成長・FCF転換で7点採点し、6点には<b>病名</b>（谷/種まき/未成熟/低マージン業態/成長停止）を付けて<code>gate1_queue.json</code>（待ち行列・<b>審査優先〔谷/種まき/未成熟〕=数字で裁けない群が先頭</b>、以降pt降順・約155社）を吐く。負資本の複利機械は⚑で合流、ロールアップは「のれんの椅子」、成長停止は「棚」（毎年再計算・復帰あり）。golden set＋構造回帰8本が自動で走り「不採用」と出たら結果を使わない。母集団zipは45日で自動更新。<span style="color:var(--gold-bright)">日本株は日本株門0（EDINETの定量ふるい・2026-07新設＝<code>gate0_jp_queue.json</code> 上位50社）でショートリスト化し、Ⅱ手順3の「日本株の審査依頼文」で第二の門へ。</span></div>
   </div>
   <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px">
    <div style="font-family:var(--mincho,serif);font-size:20px;color:var(--gold-bright);min-width:2.4em">採取</div>
@@ -319,7 +319,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  <p class="intro">本書は二つの門と、その中核をなす <b style="color:var(--gold-bright)">持続の三本柱</b> からなる。第一の門〈質〉のスコアで<b style="color:var(--gold-bright)">ティア</b>を定める——<b style="color:var(--gold-bright)">最上位80以上／堅実72以上</b>（v9.9.2で最上位を85→80に再アンカー）。三本柱（MOAT・ROIC・TAMの持続）は各 <b style="color:var(--gold-bright)">70点以上</b> を要する。<b>実際の新規投下は二段関門</b>——質スコア <b style="color:var(--gold-bright)">75以上（投下閾値）</b> かつ 門X（✦超未来の門・裁きⅠ）の <b style="color:var(--gold-bright)">4条件成立</b>（E[r]≥12／投資R≥10／倍率寄与≤30%／ストレス≥7）。価格ゲートは<b style="color:var(--gold-bright)">成長連動</b>で、実証成長×資本効率×堀無傷（grower）は一律の論外線（PER50・EV/EBIT35）を緩め、成熟株と同じ基準では測らない。<u>ティア内の小数差に意味はなく、選別は「間（価格）」が行う</u>。スプレッドは <b style="color:var(--gold-bright)">報告ROICで判定し、のれん調整での救済はしない</b>。この厳しさゆえ、世界で数銘柄しか通らない。判定の全体像は下段 IPS① を正とする。共通の記号は以下。</p>
  <div class="fm small">
   <span class="lbl">共通記号と前提</span>
-  ROIC＝税引後営業利益 ÷ 投下資本　／　WACC（資本コスト）＝ <b>4.5% ＋ β × 5%</b><br>
+  ROIC＝税引後営業利益 ÷ 投下資本　／　WACC（資本コスト）＝ <b>RFR ＋ clamp(β, 0.8〜1.6) × ERP</b>（v7.0で可変化・既定 4.5%＋β×5%）<br>
   ROIIC（増分ROIC）＝ 営業利益の増加分 ÷ 投下資本の増加分　／　g（内部成長率）＝ <b>再投資率 b × ROIIC</b><br>
   加重幾何平均：S ＝ exp( Σ wᵢ・ln xᵢ ) ＝ x₁<sup>w₁</sup>・x₂<sup>w₂</sup>…（各 xᵢ は 0〜100 点、Σwᵢ＝1）<br>
   <span class="rd">幾何平均を使う理由：一つの観点が致命的に低いと全体を強く押し下げる＝「弱点を隠せない」採点。算術平均なら高得点で穴を埋められてしまう。</span>
@@ -390,7 +390,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  <div class="gk">Gate I</div>
  <div class="gt">第一の門 ― 壊れない複利の門〈質〉</div>
  <div class="gs">壊れず、優れているか。質の総合点で裁く。</div>
- <span class="badge">通過 ＝ 86点以上（厳格版）</span>
+ <span class="badge">ティア ＝ 最上位80＋／堅実72＋（投下閾値75）</span>
 </div>
 
 <div class="wrap">
@@ -400,7 +400,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  <p class="intro">同じ会社を、過去（壊れない実績）・現在（今の価値創造）・未来（伸びる力）の三つの時制で独立採点する。確実性は過去→未来へ下がるため、各時制の重みも変える。三時制の加重幾何平均が質の総合点。</p>
 
  <div class="panel">
-  <div class="panel-h"><h3>質の三門と数式</h3><span class="pass">総合 A+ 以上で通過</span></div>
+  <div class="panel-h"><h3>質の三門と数式</h3><span class="pass">最上位80＋／堅実72＋（投下閾値75）</span></div>
 
   <div class="lens">
    <div class="lh"><span class="ln">① 過去門〈壊れない実績〉</span><span class="lw">40%</span></div>
@@ -420,7 +420,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
   </div>
   <div class="fm">
    <span class="lbl">現在門の核心式 — 価値創造スプレッド</span>
-   価値創造スプレッド ＝ <b>ROIC − WACC</b>　（WACC ＝ 4.5% ＋ β×5%）<br>
+   価値創造スプレッド ＝ <b>ROIC − WACC</b>　（WACC ＝ RFR＋β×ERP・既定 4.5%＋β×5%）<br>
    FCF転換率 ＝ フリーCF ÷ 純利益<br>
    <span class="rd">合格条件（厳格版）：スプレッド ≥ <b>+10pt</b> ／ FCF転換率 ≥ 65%。スプレッド ≤ 0 は即不合格（資本を破壊している）</span>
   </div>
@@ -446,14 +446,14 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  <div class="panel">
   <div class="rows">
    <div class="row"><div class="ic">検</div><div class="tx"><b>検証（バックテスト）</b>20年前に当てて、勝者を捉え罠を避けられたかを確認。過剰最適化を避ける。例：Cisco/Intelを未来門で弾き、Mastercardを捉えられたか。</div></div>
-   <div class="row"><div class="ic">規</div><div class="tx"><b>売却の規律</b>株価下落では売らない。売るのは質が崩れた時だけ（次式）。</div></div>
+   <div class="row"><div class="ic">規</div><div class="tx"><b>売却の規律</b>株価下落では売らない。売るのは質が崩れた時だけ（下のS1/S2/S3）。</div></div>
    <div class="row"><div class="ic">城</div><div class="tx"><b>城と網</b>確信は個別株（城）で厚く、可能性は指数（網）で広く拾う。網は自動入替で20年に耐える。</div></div>
-   <div class="row"><div class="ic">枠</div><div class="tx"><b>無知の枠</b>未実証の候補は資本の5〜10%で小さく、全損前提で別管理。</div></div>
+   <div class="row"><div class="ic">枠</div><div class="tx"><b>無知の枠（2026-07撤去・運用しない）</b>未実証候補の小口枠は撤去した。門Ωが証明前の若い急成長を構造的に弾くのは思想通り——城に入るのは門を通った銘柄だけ。</div></div>
   </div>
   <div class="fm small" style="margin-top:16px;">
-   <span class="lbl">売却条件（いずれか成立で売る）</span>
-   未来スコア が 85 → <b>75未満</b> に低下　∨　堀の軌道が <b>2年連続</b>で減衰　∨　ROIC−WACC が <b>+10pt 割れ</b>　∨　ROIIC ＜ WACC　∨　三本柱のいずれかが 70割れ<br>
-   <span class="rd">株価の下落・含み損は売却条件に含めない。売るのは「会社の質」が崩れた時だけ。</span>
+   <span class="lbl">売却規律（正本＝S1/S2/S3・採点機が出口判定を自動表示）</span>
+   <b>S1 全売却検討</b>＝キル発生・スプレッド陥落・disrupt=threat・三本柱陥落　／　<b>S2 縮小検討</b>＝質スコア3期連続低下・キル前夜帯(nde&gt;3, Z''&lt;1.8, スプレッド&lt;3pt)・erosion=active・堀軌道反転・FCF転換&lt;65　／　<b>S3 記録のみ</b>＝2期連続低下警告・g*過熱・保有比率超過<br>
+   <span class="rd">株価の下落・含み損は売却条件に含めない。売るのは「会社の質」が崩れた時だけ（全文は下段IPS③）。</span>
   </div>
  </div>
 </div>
@@ -466,16 +466,15 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
   <table class="dt">
    <thead><tr><th>層</th><th>中身</th><th>比率</th><th>役割</th></tr></thead>
    <tbody>
-    <tr><td class="k">網（土台）</td><td>XLK 35 / QQQ 25</td><td>60%</td><td>自動入替で20年に耐える複利の土台。最も広い2本に純化</td></tr>
-    <tr><td class="k">城（上乗せ）</td><td>厳格版を通った個別株（MSFT・Alphabet＋押し目で加わる銘柄）</td><td>40%</td><td>監視体制を整えたぶん厚く。年次で再採点し劣化したら入替</td></tr>
+    <tr><td class="k">網（土台）</td><td>指数ETF（現行：XLK・QQQ・SMH・FANG+）</td><td>60%</td><td>自動入替で20年に耐える複利の土台。毎月の積立は無条件で即買い</td></tr>
+    <tr><td class="k">城（上乗せ）</td><td>二段関門（Ω75+ ∧ 門X4条件）を通った個別（現行：MSFT・ASML・RMD）</td><td>40%</td><td>監視体制を整えたぶん厚く。年次で再採点し、出口はS1/S2/S3の規律で</td></tr>
    </tbody>
   </table>
   <div class="fm small" style="margin-top:14px;text-align:left;">
-   <span class="lbl">移行の順序（重要）— SMHはASMLの城入りと同時に抜く</span>
-   今：城30%（MSFT・Alphabet）／網70%（XLK35・QQQ25・<b>SMH10</b>）<br>
-   ↓ ASMLが押し目（目安 PER40・約$1,300）で城入りしたら<br>
-   その時：城40%（＋ASML・ISRG・HOYA等）／網60%（XLK35・QQQ25）<br>
-   <span class="rd">SMHを抜く理由：城のASMLと重複／3本で最も循環的で土台向きでない／優先順位はXLK&gt;QQQ&gt;SMH。半導体露出は薄いETFではなく確信のASMLに集約。露出が途切れぬよう「SMHを抜く＝ASMLが入る」を同時に行う。城を厚くする前に、まず押し目で銘柄数を4〜5に増やすのが先。上限は40%、網は最低60%を土台として残す。</span>
+   <span class="lbl">現状と残る移行（2026-07 運用開始スナップショット）</span>
+   今：城40.4%（MSFT 22.7・ASML 13.4・RMD 4.3）／網59.6%（XLK・QQQ・SMH・FANG+）＝目標60/40にほぼ一致<br>
+   残る論点：ASMLは城入り済みだが、網にSMHが残っている（当初方針は「SMHを抜く＝ASMLが入る」の同時実行）<br>
+   <span class="rd">SMHを整理する理由（方針は不変）：城のASMLと重複／最も循環的で土台向きでない／優先順位はXLK&gt;QQQ&gt;SMH。半導体露出は薄いETFではなく確信のASMLに集約する。リバランスは売却でなく<b>新規資金の配分</b>で行う（DCAの原則＝売却・課税なし・不足側に厚く）。網・城とも半導体/テック集中（全体の約9割）ゆえ、新規資金はテック外の質へ分散するのが運用の主眼。上限は城40%、網は最低60%を土台として残す。</span>
   </div>
  </div>
 </div>
@@ -495,8 +494,8 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
    </tbody>
   </table>
   <div class="fm small" style="margin-top:14px;text-align:left;">
-   <span class="lbl">売却の基準（点検で以下が出たら売る・株価では売らない）</span>
-   未来スコアが 85→<b>75未満</b>に低下　∨　堀の軌道が<b>2年連続</b>で減衰　∨　ROIC−WACC が<b>+10pt割れ</b>　∨　ROIIC ＜ 資本コスト　∨　三本柱のいずれかが 70割れ<br>
+   <span class="lbl">売却の基準（点検はS1/S2/S3の出口判定を確認・株価では売らない）</span>
+   <b>S1 全売却検討</b>＝キル発生・スプレッド陥落・disrupt=threat・三本柱陥落　／　<b>S2 縮小検討</b>＝質スコア3期連続低下・キル前夜帯・erosion=active・堀軌道反転・FCF転換&lt;65　／　<b>S3 記録のみ</b>＝警告レベル（詳細はIPS③）<br>
    <span class="rd">含み損・株価下落は売却理由にしない（むしろ押し目で買い増す）。売るのは会社の質が崩れた時だけ。買付（毎月積立）はこのカレンダーと別に、証券会社の自動設定で機械的に。</span>
   </div>
  </div>
@@ -508,7 +507,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  <div class="gk">Gate II</div>
  <div class="gt">第二の門 ― 未来 × 価</div>
  <div class="gs">これから上げる力があるか。そして、払って見合うか。</div>
- <span class="badge">第一の門（A+）通過銘柄のみ</span>
+ <span class="badge">第一の門のティア（堅実72＋）に入った銘柄のみ・投下は75＋</span>
 </div>
 
 <div class="wrap">
@@ -518,7 +517,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  <p class="intro">価格は見ない。「これから株価を上げる力が残っているか」を、手入力5観点＋財務データからの自動算出6要素＝計11要素で点数化（各0〜100）し、加重幾何平均で合成する。ここが判定の中心。</p>
 
  <div class="panel">
-  <div class="panel-h"><h3>11の要素（手入力5 ＋ 自動算出6）</h3><span class="pass">通過 ＝ 86点以上（厳格版／85台は要再検証）</span></div>
+  <div class="panel-h"><h3>11の要素（手入力5 ＋ 自動算出6）</h3><span class="pass">Fは総合の一項（重み0.25）——合否は総合ティア80/72・投下75で裁く</span></div>
 
   <div class="lens acc">
    <div class="lh"><span class="ln">① 複利エンジン（再投資 × ROIIC）</span><span class="lw">14%</span></div>
@@ -603,30 +602,30 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
   </div>
 
   <div class="grades">
-   <div class="gr on"><div class="lt">S</div><div class="rg">90+</div></div>
-   <div class="gr on"><div class="lt">A+</div><div class="rg">85-89</div></div>
-   <div class="gr"><div class="lt">A−</div><div class="rg">75-84</div></div>
-   <div class="gr"><div class="lt">B</div><div class="rg">65-74</div></div>
-   <div class="gr"><div class="lt">C</div><div class="rg">〜64</div></div>
+   <div class="gr on"><div class="lt">中核8%</div><div class="rg">80+</div></div>
+   <div class="gr on"><div class="lt">正規5%</div><div class="rg">77-80</div></div>
+   <div class="gr on"><div class="lt">外郭3%</div><div class="rg">75-77</div></div>
+   <div class="gr"><div class="lt">監視</div><div class="rg">72-75</div></div>
+   <div class="gr"><div class="lt">回避</div><div class="rg">〜72</div></div>
   </div>
-  <div class="cut"><b>厳格版の通過＝F ≥ 85（A+以上）。</b> ハード足切り：ROIIC&lt;WACC／堀の明確な減衰／実存的ディスラプション。価格はここでは一切見ない。</div>
+  <div class="cut"><b>現行の裁き＝総合ティア（最上位80／堅実72）＋投下の二段関門（Ω75+ ∧ 門X4条件）。</b> ハード足切り：ROIIC&lt;WACC／堀の明確な減衰（F64上限）／実存的ディスラプション。価格はここ（格）では一切見ない。</div>
  </div>
 </div>
 
 <div class="block" style="padding-top:10px;">
  <div class="tag">Gate II-b · The Brake</div>
  <div class="h2">価格ブレーキ — 高値づかみ防止だけ（選別には使わない）</div>
- <p class="intro">20年検証の結論：個別株では「低PERで選ぶ」は効かず（Cisco/Intelの罠）、「高値づかみ」は複利を削った（Microsoftの死に金7年）。だから価格は"選択基準"にせず（PERで選んでも当たらない）、上限を超えたら見送る一本のブレーキだけに使う。ここを厳しくしても意味が薄いので、ブレーキはPER50/EV-EBIT35に据える。</p>
+ <p class="intro">20年検証の結論：個別株では「低PERで選ぶ」は効かず（Cisco/Intelの罠）、「高値づかみ」は複利を削った（Microsoftの死に金7年）。だから価格は"選択基準"にせず（PERで選んでも当たらない）、上限を超えたら見送る一本のブレーキだけに使う。基準線はPER50/EV-EBIT35。ただし<b>成長連動（v9.9.9）</b>——実証成長×資本効率×堀無傷（grower＝cagr≥15・ROIC≥20・erosion none・disrupt≠threat）は論外線をPER62へ緩める。なお<b>買付判定の価格関門はv9.9.25で門Xに一本化</b>済み——この論外線は「極端な高値を弾く」表示層の番人として残る。</p>
  <div class="brake">
-  <div class="brake-h"><span class="ic">!</span><h3>絶対上限 — 例外なし</h3></div>
+  <div class="brake-h"><span class="ic">!</span><h3>論外線 — 高値づかみ防止（growerのみ成長連動で緩和）</h3></div>
   <div class="brake-b">
-   <div class="line">PER &gt; 50倍　または　EV/EBIT &gt; 35倍　⟹　<b>見送り（押し目待ち）</b></div>
+   <div class="line">PER &gt; 50倍（grower は 62倍）　または　EV/EBIT &gt; 35倍　⟹　<b>見送り（押し目待ち）</b></div>
    <p class="why">これは「選択基準」ではなく「高値づかみ防止」。PERを締めて銘柄を選ぶのは無意味（20年検証＝低PERのCisco/Intelは罠だった）。だから上限は選別ではなく、極端な高値（ASMLのPER54型）だけを弾く水準に据える。未来門を満点で抜けても、この線を超えたら買わない。ネットキャッシュが潤沢でも、EV/EBITは既に現金控除後の数字であり、上限超過の免除理由にはならない。</p>
   </div>
  </div>
  <div class="fm small" style="margin-top:16px;">
   <span class="lbl">補助 — 上限超過時だけ使う「目標株価」</span>
-  妥当価格 ≈ <b>来期FCF ÷ ( WACC − g )</b>　（g ＝ b × ROIIC、WACC ＝ 4.5% ＋ β×5%）<br>
+  妥当価格 ≈ <b>来期FCF ÷ ( WACC − g )</b>　（g ＝ b × ROIIC、WACC ＝ RFR＋β×ERP）<br>
   割安度 D ＝ ( 妥当価格 − 株価 ) ÷ 妥当価格<br>
   買値 ＝ 予想EPS × 目標PER　（目標PER ＝ min( 自己10年中央値, 50, g×1.5 )）<br>
   <span class="rd">常設の門ではなく、欲しい銘柄が上限超えで見送りになった時だけ指値・監視に使う。</span>
@@ -637,13 +636,13 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  <div class="tag">Synthesis</div>
  <div class="h2">最終判定 — 四象限</div>
  <div class="quad">
-  <div class="q win"><div class="cond">F ≥ 85 × 上限内(PER50)</div><div class="v">買い</div><div class="d">上げる力も複利もあり、高値づかみでもない。執行する。</div></div>
-  <div class="q"><div class="cond">F ≥ 85 × 上限超え</div><div class="v">押し目待ち</div><div class="d">勝者だが極端に高い。目標株価で指値・監視（例：ASML PER54）。</div></div>
-  <div class="q"><div class="cond">F &lt; 85 × 上限内</div><div class="v">見送り</div><div class="d">安くても上げる力が乏しい。Cisco/Intel型の罠。網へ。</div></div>
-  <div class="q"><div class="cond">F &lt; 85 × 上限超え</div><div class="v">論外</div><div class="d">伸びず、かつ高い。問答無用で見送り。</div></div>
+  <div class="q win"><div class="cond">Ω 75+ × 門X 4条件成立</div><div class="v">投下可</div><div class="d">質も値段も揃った。サイズはΩ枠（8/5/3%）と¼ケリーの小さい方。</div></div>
+  <div class="q"><div class="cond">Ω 75+ × 門X 未達</div><div class="v">押し目待ち</div><div class="d">良い会社を高値で掴まない。指値は門XのX開通ライン（例：ASML PER54型）。</div></div>
+  <div class="q"><div class="cond">Ω 72–75（堅実）</div><div class="v">監視枠</div><div class="d">保有しない。75超えで昇格。安くても投下しない＝Cisco/Intel型の罠を避ける。</div></div>
+  <div class="q"><div class="cond">Ω 72未満 ∨ キル</div><div class="v">回避</div><div class="d">伸びる力が乏しい・壊れうる。問答無用で見送り。網へ。</div></div>
  </div>
- <div class="statement"><span class="lbl">最終判定の式</span>
-  <div class="big">買い ＝ 質Q ≥ A+　かつ　未来F ≥ 85　かつ　ROIC−WACC ≥ +10pt　かつ　PER ≤ 50 ∧ EV/EBIT ≤ 35（高値づかみ防止のみ）</div>
+ <div class="statement"><span class="lbl">最終判定の式（新規投下の二段関門・2026-07）</span>
+  <div class="big">投下可 ＝ 質Ω ≥ 75　かつ　門X4条件（E[r]≥12 ∧ 投資R≥10 ∧ 倍率寄与≤30% ∧ ストレス≥7）　／　売却はS1/S2/S3のみ（株価では売らない）</div>
  </div>
 </div>
 </div>
@@ -663,7 +662,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
 <div class="gatebanner" style="margin-top:0">
   <div class="gk">Live Instrument</div>
   <div class="gt">ここから、門を実際にかける</div>
-  <div class="gs">上で説いた格と間の二判定を、下の採点機that実行する。失格を弾き、買えるかを分ける。</div>
+  <div class="gs">上で説いた格と間の二判定を、下の採点機で実行する。失格を弾き、買えるかを分ける。</div>
   <div class="badge">格 と 間 を 分 か つ</div>
 </div>
 </div>
@@ -853,7 +852,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
     ASMLは評価では最高クラス（堀は絶対的）。でも今は高い。この2つを混ぜると、ASMLがMastercardより劣るように見えてしまう。<b>格は価格を1点も含まない</b>——会社がどれだけ優れているか。<b>間は価格と取引可否だけ</b>——今その株を動かせるか。だから「格：S級／間：押し目待ち」と並ぶ。格が高く間が待ちなら、それは「優れた会社を、安くなるまで待つ」というだけのこと。<br><br>
     <span class="ld2">即時再採点トリガー（カレンダー待ち禁止）</span><br>
     四半期・年次の定例とは別に、次のいずれかが起きたら<b>即時再採点</b>：①大型M&A発表（対価が時価総額の10%超）②通期ガイダンスの撤回・大幅下方修正 ③CEO交代 ④主要顧客の離反・競合参入の報道（erosion再判定）⑤Intel警報（粗利低下×シェア縮小の同時点灯）。定例レビューだけだと反応が最大3ヶ月遅れる——堀の崩壊は四半期を待ってくれない。<br><br>
-    <span style="color:var(--dim)"><b>v9.6＝欠測は保留（fail-closed・2026-07-14の実戦事故を恒久封鎖）：fcf/ni・Z・ndeの空欄を0に化けさせず「判定保留」と明示。期限型独占の入力欄を新設（LLY・OMAB/PACの条文化）。純希薄化率欄を新設（表示のみ）。SEC採取器が客観項目の下書きを自動生成。／v9.1＝43社実戦運用で発見された誤り8件への対策。①ROIIC³サイクル跨ぎ条項</b>（3年窓キル時に5年窓≥WACCならキル保留→アンバー−6。TEL/信越/SMC/ナカニシで計4回の誤作動疑いに対応）<b>②gr算出の1本化</b>（フォワードPER入力で機械算出・手入力は警告付きフォールバック）<b>③入力データ検証層</b>（現値÷TTM EPSと入力PERの整合チェック＝KLA分割事故対策／データ取得日vs直近決算日の突合＝GOOGL鮮度事故対策。採点不介入・警告のみ）<b>④遺産のれん例外</b>（直近5年大型買収なしなら乖離アンバー免除＝Visa/Adobe誤爆対策。roicg&lt;WACCの−8は維持）。ルーブリック判断は自動化対象外——校正は君の仕事のまま。／v7.0＝v6.5の全面改修。<b>①WACC可変化</b>（RFR/ERP入力・β下限0.8クリップ——低β優良株のスプレッド過大評価を防止）<b>②ROIIC³</b>（3年累計比に変更・実質無再投資は"na"——単年値の数百%暴走を根絶、還元型はFCF転換で代替判定）<b>③キルスイッチ段階化</b>（レッド＝キル数で段階上限：1個60／2個52／3個44…＋アンバー警戒帯の減点——境界1つで失格⇄最上位が反転するクリフ挙動を排除）<b>④Altman Z''切替</b>（非製造業対応）<b>⑤二重ROIC天秤統合</b>（連続買収=acqは採点不能送りを廃止、のれん込みROICで買収規律を測って続行）<b>⑥Novy-Marx GP/A＋アクルーアル機械チェック</b>（利益の現金裏付けをp4に自動反映）<b>⑦f/p採点基準の固定</b>（依頼文に数値基準を埋め込み——Claude採点の再現性確保）<b>⑧grソース統一</b>（コンセンサス限定・取得不能はna・過去CAGR代用禁止）<b>⑨PEG_adj</b>（総還元利回り込み——高ROIC低成長企業の過小評価補正）<b>⑩Intel警報</b>（粗利×シェア同時悪化の先行検知・表示のみ）<b>⑪会計基準フラグ</b>（IFRS/日本基準の構造差を注記）<b>⑫記録v7分離</b>（旧v6.5記録は読み取り専用・スコア比較不可）。v6.5＝v6.4（FCF番犬・SBC・堀侵食・破壊未決）に<b>価格ブレーキの多面化</b>を追加。「PER50のみ」は論外を弾くには使えるが妥当性の判定には粗い——そこで<b>間（価格）を4層</b>に：①<b>論外フィルター</b>（PER&gt;50は防波堤として維持）②<b>ROIC文脈</b>（高ROIC≥30%はEV/EBIT40まで許容・低ROIC&lt;15%は20で警戒——質に応じてブレーキの強さを変える）③<b>PEG</b>（PER÷予想EPS成長、&gt;3で割高・&lt;1.5で割安シグナル——成長を価格に結ぶ）④<b>利益の質</b>（連続買収・合併・薄利複合はPERの分母that歪むので価格判定を保留・要手調整）。<b>格（質）は一切触らない</b>——v6.5の変更は全て間（価格）レイヤー内。守りのスクリーン（ROIC≤WACC・ROIIC&lt;WACC・レバレッジ・Z・金融）が主柱で、これが20年検証で唯一頑健に効いた。誤読3業態は採点せず手調整へ。配点（ROIC0.42＞MOAT0.38＞TAM0.20）はn=13＋後知恵の事前分布であり検証された事実ではない。<b>門は失格を弾く番人であって、買いを保証する神託ではない。価格ブレーキも論外を弾く番人であって、ここが買い時という神託ではない——最後の妥当性判断は君が下す。判断の代替でなく補助輪。</b>投資助言ではない。</span>
+    <span style="color:var(--dim)"><b>v9.6＝欠測は保留（fail-closed・2026-07-14の実戦事故を恒久封鎖）：fcf/ni・Z・ndeの空欄を0に化けさせず「判定保留」と明示。期限型独占の入力欄を新設（LLY・OMAB/PACの条文化）。純希薄化率欄を新設（表示のみ）。SEC採取器が客観項目の下書きを自動生成。／v9.1＝43社実戦運用で発見された誤り8件への対策。①ROIIC³サイクル跨ぎ条項</b>（3年窓キル時に5年窓≥WACCならキル保留→アンバー−6。TEL/信越/SMC/ナカニシで計4回の誤作動疑いに対応）<b>②gr算出の1本化</b>（フォワードPER入力で機械算出・手入力は警告付きフォールバック）<b>③入力データ検証層</b>（現値÷TTM EPSと入力PERの整合チェック＝KLA分割事故対策／データ取得日vs直近決算日の突合＝GOOGL鮮度事故対策。採点不介入・警告のみ）<b>④遺産のれん例外</b>（直近5年大型買収なしなら乖離アンバー免除＝Visa/Adobe誤爆対策。roicg&lt;WACCの−8は維持）。ルーブリック判断は自動化対象外——校正は君の仕事のまま。／v7.0＝v6.5の全面改修。<b>①WACC可変化</b>（RFR/ERP入力・β下限0.8クリップ——低β優良株のスプレッド過大評価を防止）<b>②ROIIC³</b>（3年累計比に変更・実質無再投資は"na"——単年値の数百%暴走を根絶、還元型はFCF転換で代替判定）<b>③キルスイッチ段階化</b>（レッド＝キル数で段階上限：1個60／2個52／3個44…＋アンバー警戒帯の減点——境界1つで失格⇄最上位が反転するクリフ挙動を排除）<b>④Altman Z''切替</b>（非製造業対応）<b>⑤二重ROIC天秤統合</b>（連続買収=acqは採点不能送りを廃止、のれん込みROICで買収規律を測って続行）<b>⑥Novy-Marx GP/A＋アクルーアル機械チェック</b>（利益の現金裏付けをp4に自動反映）<b>⑦f/p採点基準の固定</b>（依頼文に数値基準を埋め込み——Claude採点の再現性確保）<b>⑧grソース統一</b>（コンセンサス限定・取得不能はna・過去CAGR代用禁止）<b>⑨PEG_adj</b>（総還元利回り込み——高ROIC低成長企業の過小評価補正）<b>⑩Intel警報</b>（粗利×シェア同時悪化の先行検知・表示のみ）<b>⑪会計基準フラグ</b>（IFRS/日本基準の構造差を注記）<b>⑫記録v7分離</b>（旧v6.5記録は読み取り専用・スコア比較不可）。v6.5＝v6.4（FCF番犬・SBC・堀侵食・破壊未決）に<b>価格ブレーキの多面化</b>を追加。「PER50のみ」は論外を弾くには使えるが妥当性の判定には粗い——そこで<b>間（価格）を4層</b>に：①<b>論外フィルター</b>（PER&gt;50は防波堤として維持）②<b>ROIC文脈</b>（高ROIC≥30%はEV/EBIT40まで許容・低ROIC&lt;15%は20で警戒——質に応じてブレーキの強さを変える）③<b>PEG</b>（PER÷予想EPS成長、&gt;3で割高・&lt;1.5で割安シグナル——成長を価格に結ぶ）④<b>利益の質</b>（連続買収・合併・薄利複合はPERの分母が歪むので価格判定を保留・要手調整）。<b>格（質）は一切触らない</b>——v6.5の変更は全て間（価格）レイヤー内。守りのスクリーン（ROIC≤WACC・ROIIC&lt;WACC・レバレッジ・Z・金融）が主柱で、これが20年検証で唯一頑健に効いた。誤読3業態は採点せず手調整へ。配点（ROIC0.42＞MOAT0.38＞TAM0.20）はn=13＋後知恵の事前分布であり検証された事実ではない。<b>門は失格を弾く番人であって、買いを保証する神託ではない。価格ブレーキも論外を弾く番人であって、ここが買い時という神託ではない——最後の妥当性判断は君が下す。判断の代替でなく補助輪。</b>投資助言ではない。</span>
   </div>
 </div>
 
@@ -1022,7 +1021,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  <p class="intro" style="margin-top:14px;padding:12px 14px;background:rgba(201,166,74,.08);border-left:3px solid var(--gold-bright);border-radius:6px">
   <b style="color:var(--gold-bright)">思想の統一（v9.6で確定）：</b>門0のFCF転換70%足切りは、採点機v9.6の「ROIIC≥WACC+5なら転換率未満でも通す（Amazon型・種まき型を殺さない）」と衝突する。<b>門0で70%未満に落ちた高ROIC企業は「敗者復活の椅子」で拾い、採点機で最終判定する</b>——入口で機械的に殺さないこと。欠測は0でなく必ず「保留」。価格は格を1点も動かさない。</p>
  <p class="intro" style="margin-top:10px">
-  <b style="color:var(--ink-bright,#fff)">運用リズム：</b>門0＝年1回（1〜2月に前年通期が出揃ってから）。採取器＝月3〜4回、毎回上位5社（月15〜20社）。1バッチは<b>最大8社</b>まで——超えると定性の読みが雑になる。日本株は漏斗を通さず、Ⅱ手順3の「日本株の審査依頼文」で第二の門へ直行（私がEDINET有報・短信をWebで読み、JPY統一で完成パックを作る）。</p>
+  <b style="color:var(--ink-bright,#fff)">運用リズム：</b>門0＝年1回（1〜2月に前年通期が出揃ってから）。採取器＝月3〜4回、毎回上位5社（月15〜20社）。1バッチは<b>最大8社</b>まで——超えると定性の読みが雑になる。日本株は日本株門0（EDINET定量ふるい・2026-07新設）でショートリスト化し、Ⅱ手順3の「日本株の審査依頼文」で第二の門へ（私がEDINET有報・短信をWebで読み、JPY統一で完成パックを作る）。</p>
 </div>
 
 <div class="block" style="padding-top:8px;padding-bottom:20px;">
@@ -1054,7 +1053,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
   </div>
 
   <div style="border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:rgba(255,255,255,.015);opacity:.75">
-   <div style="min-width:0"><b style="color:var(--muted)">③ 日本株漏斗（将来枠）</b> <span style="color:#c0894a;font-size:12px">v1校正モード・Drive在中</span><div style="color:var(--muted);font-size:12px;margin-top:2px">gate0_jp_v1.py がDrive/ccfにある（回帰テスト化=v2は未着手）。当面の日本株はⅡ手順3の依頼文で審査へ直行。育てるなら「日本版漏斗を点検して」と頼む。</div></div>
+   <div style="min-width:0"><b style="color:var(--muted)">③ 日本株門0（定量ふるい）</b> <span style="color:#8fc9a4;font-size:12px">2026-07-25稼働・リポジトリ在中</span><div style="color:var(--muted);font-size:12px;margin-top:2px">run_gate0_jp_local.py（EDINET_DB）が roic≥15・営利≥15・売上CAGR3年≥5・自己資本比率≥50 で259社を抽出し、pt順に gate0_jp_queue.json（上位50社）へ。roicはnet-cash/資産軽量で過大になりうるため門式現金控除ROICで審査時に再計算。定性・through-cycleは未評価＝Ⅱ手順3の依頼文で門2審査へ。</div></div>
   </div>
 
  </div>
@@ -1064,7 +1063,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
 
 <footer><div class="wrap">
  <div class="fb">CCF Ω Final Gate · Complete Edition</div>
- <p class="disc">第一の門〈質Q〉＝過去P(40%)・現在(35%)・未来要約(25%)の加重幾何平均、A+(85)以上で通過。WACC=4.5%+β×5%。現在門の核心はROIC−WACCスプレッド(厳格版+10pt以上)。第二の門＝未来門F(複利26/滑走路24/堀22/二次曲線15/耐陳腐化13、加重幾何平均、厳格版86点以上)＋価格ブレーキ(PER50/EV-EBIT35・高値づかみ防止のみ／PERは選別に使わない)。g=再投資率b×ROIIC、妥当価格≈来期FCF/(WACC−g)。再評価は四半期(足切り)・年次(全面再採点)・2年(新規発掘)・5年(門の改修)の四層。売却は質の崩れのみ(株価では売らない)。配分は網(指数)60%(XLK35/QQQ25)＋城(個別)40%(MSFT・Alphabet＋押し目銘柄)。SMHはASMLの城入りと同時に網から移行。本書は個人の投資基準の整理であり投資助言ではない。スコア・数式は枠組みであり将来を保証しない。</p>
+ <p class="disc">第一の門〈質Q〉＝過去P(40%)・現在(35%)・未来要約(25%)の加重幾何平均。ティア＝最上位80／堅実72、投下閾値75。WACC=RFR+clamp(β,0.8〜1.6)×ERP（既定4.5%+β×5%）。現在門の核心はROIC−WACCスプレッド(+10pt以上)。第二の門＝未来門F(11要素v9.2の加重幾何平均・総合の一項)。新規投下は二段関門＝Ω75+かつ門X4条件(E[r]≥12/投資R≥10/倍率寄与≤30%/ストレス≥7)。価格の論外線はPER50・EV/EBIT35（growerはPER62・成長連動v9.9.9・高値づかみ防止のみ／PERは選別に使わない）。g=再投資率b×ROIIC、妥当価格≈来期FCF/(WACC−g)。再評価は四半期(足切り)・年次(全面再採点)・2年(新規発掘)・5年(門の改修)の四層。売却はS1/S2/S3＝質の崩れのみ(株価では売らない)。配分は網(指数)60%＋城(個別・二段関門通過のみ)40%。本書は個人の投資基準の整理であり投資助言ではない。スコア・数式は枠組みであり将来を保証しない。</p>
 </div></footer>
 
 <script>

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 kessan_check.py v1 — 保有銘柄の四半期決算チェッカー（門の四半期点検・機械抽出係）
-使い方: python kessan_check.py            … kanshi_list.json の監視28社(米国)を点検
+使い方: python kessan_check.py            … kanshi_list.json の監視28社(US上場・ADR含む)を点検
         python kessan_check.py NVDA MSFT  … 指定銘柄のみ
         （kanshi_list.json が無ければ holdings.json にフォールバック。
           日本株コード=SEC点検不可ゆえ除外→EDINET経路で別途）
@@ -184,7 +184,7 @@ def check(t):
     if yoy is not None and yoy < -5: flags.append(f"売上YoY {yoy}%")
     if opm_d is not None and opm_d < -3: flags.append(f"営利率 前年比{opm_d}pt")
     for c in cats:
-        if c in ("誠","限","指針","減損","退任"): flags.append(f"警報:{c}")
+        if c in ("誠","限","集","指針","減損","退任"): flags.append(f"警報:{c}")
     yoshi = [c for c in cats if c.startswith("吉")]
     verdict = "要審査: " + " / ".join(flags) if flags else "異常なし(機械判定)"
     if yoshi:

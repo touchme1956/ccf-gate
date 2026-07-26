@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-gate_fetch v3.0 — SEC一撃採取器（壊れない複利の門 v9.6・Ⅱ採点機JSON下書き生成）
+gate_fetch v3.0 — SEC一撃採取器（壊れない複利の門 v9.6・Ⅲ採点機JSON下書き生成）
 使い方:  python hachimon_fetch.py MSFT ASML ANET
-出力:    ./hachimon_out/{TICKER}_gate_input.json … 門のⅡ採点機に貼れるJSON下書き(SEC客観値を充填)
-         ./out/{TICKER}_hits.txt             … 定性4問(限集誠蝕)+facts用のキーワードヒット報告(2-3KB)
+出力:    ./out/{TICKER}_gate_input.json … 門のⅢ採点機に貼れるJSON下書き(SEC客観値を充填。Colab/Drive時はhachimon_out/)
+         ./out/{TICKER}_hits.txt        … 定性6砲台(限/集/誠/蝕/堀/循)+facts用のキーワードヒット報告(2-3KB)
 注意:    EMAIL を自分のものに書き換えること(SECはUser-Agent必須・10req/s制限)。
          px(株価)とbetaはSECに無いので空欄のまま——取込時に手入力かツール側で補完。
 """
@@ -15,7 +15,7 @@ EMAIL   = "fortis5280@gmail.com"        # ★1. 自分のメールに書き換�
 TICKERS = []                              # ★2. 空のまま=門0の待ち行列(gate1_queue.json)から自動で未処理上位を採取
                                           #     手動指定したい時だけ ["MSFT","ANET"] のように書く
 BATCH   = 5                               # 自動モードで1回に処理する銘柄数
-SKIP    = ["LLY","MSFT","ASML"]           # 審査済み・採取不要の銘柄(判決が出たら追記)
+SKIP    = ["LLY","MSFT","ASML","RMD"]     # 審査済み・採取不要の銘柄(判決が出たら追記)
 QUEUE_PATHS = ["./gate1_queue.json", "./ccf/gate1_queue.json",
                "/content/drive/MyDrive/ccf/gate1_queue.json",
                "/content/drive/MyDrive/gate1_queue.json"]

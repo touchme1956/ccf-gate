@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 kessan_calendar.py v1 — 監視銘柄の決算日カレンダー生成器
-対象: kanshi_list.json の監視28社(米国)。無ければ holdings.json(保有+質80+)にフォールバック。
+対象: kanshi_list.json の監視28社(US上場。ASML/TSM/NVMI等ADR含む)。無ければ holdings.json(保有+質80+)にフォールバック。
       日本株コードはAlpha Vantage/SEC推定の対象外ゆえ除外→EDINET/IR経路で別途。
 使い方: python kessan_calendar.py            … 3か月先までの決算日を取得
         python kessan_calendar.py NVDA MSFT  … 指定銘柄のみ
 出力:  ① 画面に日付順の一覧表
        ② kessan_calendar.ics …… Googleカレンダーに取込→スケジュール連動(全日イベント)
-       ③ out/next_earnings.json …… 門のⅤ保有「決算カレンダー読込」で常時表示
+       ③ out/next_earnings.json …… 決算日データ（門内の常時表示は撤去済み→Googleカレンダーで確認）
 データ源: Alpha Vantage EARNINGS_CALENDAR(1リクエストで全社分・無料枠で十分)。
           鍵(av_key.txt / ccf/av_key.txt / 環境変数AV_KEY)が無ければ
           SEC提出履歴から「昨年同期＋365日」で推定(src=est、?付き表示)。
@@ -180,4 +180,4 @@ if __name__ == "__main__":
     json.dump({"generated": str(today), "items": items},
               open(OUT_JSON, "w"), ensure_ascii=False, indent=1)
     write_ics(items)
-    print(f"\n→ {OUT_ICS}（Googleカレンダーに取込=スケジュール連動） / {OUT_JSON}（門のⅤ保有で読込）")
+    print(f"\n→ {OUT_ICS}（Googleカレンダーに取込=スケジュール連動） / {OUT_JSON}（決算日データ）")
