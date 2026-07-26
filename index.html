@@ -964,7 +964,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
   <h1 class="serif">買付順位 <span style="font-size:.5em;color:var(--mut)">3層ルール自動適用</span></h1>
   <p style="color:var(--muted);font-size:14px;line-height:1.9">台帳から自動生成。<b style="color:var(--gold-bright)">80+＝城の中核（8%）</b>／<b style="color:var(--jade)">77–80＝城の正規（5%）</b>／<b style="color:var(--steel)">75–77＝城の外郭（3%）</b>／<b style="color:var(--dim)">72–75＝監視枠（保有せず・75超えで昇格）</b>。順位＝格スコア×間の余地×保留リスクの合成。<b>門は「買ってよい」まで——買うかは君の判断。</b></p>
  </div>
- <div class="wrap"><div id="planBox"></div></div>
+ <div class="wrap"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px"><label for="monthlyAmt" style="font-size:13px;color:var(--ink-soft);font-weight:600">今月の投資額</label><input id="monthlyAmt" type="number" min="0" step="1000" placeholder="例: 100000" oninput="ccfMonthlyChanged()" style="width:150px;padding:8px 10px;background:var(--panel2,transparent);border:1px solid var(--line);border-radius:7px;color:var(--ink,inherit);font-size:13px"><span style="font-size:11.5px;color:var(--muted)">個別株はこの50%（残り50%はインデックス=網）。毎月定額＝ドルコスト平均法。下に今月の投下額が出る</span></div><div id="planBox"></div></div>
 </div>
 
 <div id="pg8" class="pg">
@@ -2374,8 +2374,23 @@ async function renderPlan(){
     html+=watch.map(r=>`<div class="led" style="border-left:3px solid ${lcol[2]};opacity:.6"><span class="ln">${r.nm}</span><span class="grade" style="color:var(--steel)">${r.s}</span>${xtag(r)}<span style="font-size:11px;color:var(--muted)"><span style="color:var(--dim)">間</span> ${r.act}</span>${reqbtns(r)}</div>`).join('');
   }
   html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8"><b>2つの判定に統合（v9.9.25）</b>：価格の関門は<b>門X 1本</b>に一本化した——旧「間（今買える）」の粗いPERブレーキは買付判定から外し（「今買える」なのに「監視」の矛盾を解消）、<b>🟢投下可＝格75+ かつ 門X4条件</b>／<b>🟡押し目待ち＝格75+だが門X未達</b>（旧「門X未達＝監視」と旧「押し目待ち」を統合）。各群内の順位＝<b>合成順（格×0.6 ＋ E[r]%×0.4）</b>——壊れにくさ（格）を主柱にしつつ期待リターン（門X E[r]）を効かせる（同点は格で決着）。<b>群の境界（投下可の合否）は不変</b>。E[r]%は門X合格線12%＝50点として点数化（±10ptで0-100）、欠損は中立50。🟡の<b>開通＝PER○○（あと−○%）</b>はE[r]が12%に届く入口PERと現値からの必要下落。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。<br><b>E[r]（門X期待リターン）</b>＝門X裁きⅠの現値期待リターン：還元shy + 成長g（<b>高ROIC(≥15%)×堀無傷は実証CAGRを信じる</b>／それ以外は再投資式b×ROIICを実証CAGRで頭打ち・20%上限＝証拠の上限。v9.9.25：資本を返しながら伸びる資本軽量コンパウンダーを再投資式が過小評価する欠陥を是正・価格規律は不変） − 倍率の重力（<b>終着PER=min(現PER, clamp(8+g,16,30))＝成長連動</b>・10年。McKinsey価値ドライバーで検証：成熟g4%≈22倍／持続成長高ROIC≈28-30倍が正当。成長産業と成熟産業を同じ終着PERで測らない。掟六の精神＝現PERを超えない＝拡大は見込まない、は維持）。<span style="color:var(--jade)">✓＝4条件成立（E[r]≥12／投資R≥10／倍率寄与≤30%／ストレス≥7）＝🟢投下可</span>／<span style="color:var(--rust)">✗＝未達→🟡押し目待ち（指値は✦門Xの監視表）</span>。順位・採点には一切影響しない。PER/ROIC欠損時はE[r]判定不能と表示。<br>各行の <span style="color:#8fc9a4">審査</span>＝門2審査プロトコル全文（この銘柄を門にかけ直す）／<span style="color:#d6b06c">決算</span>＝決算点検依頼文（S1-S3照合・6警報・門X前提の再計算）を、その銘柄名つきでコピー→Claudeに貼る。台帳のティア（Ⅲ）に依る。</div>`;
+  // v9.9.26: 月次DCA投下額(個別株=月額50%)——表示のみ・格/採点/売却規律には無影響(CLAUDE.md①)
+  const mAmtEl=$('monthlyAmt');
+  if(mAmtEl&&mAmtEl.value===''){try{const mv=await store.get('ccf_monthly');if(mv&&mv.value)mAmtEl.value=mv.value;}catch(_){}}
+  const mAmt=mAmtEl?(parseFloat(mAmtEl.value)||0):0;
+  if(mAmt>0){
+    const indiv=Math.round(mAmt*0.5), idx=mAmt-indiv, fmt=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+    let deploy;
+    if(pass.length){const top=pass[0];
+      deploy=`<div style="margin-top:6px;font-size:12.5px;color:var(--ink)">→ 今月の個別株枠 <b style="color:var(--jade)">${fmt(indiv)}</b> は🟢投下可の最上位 <b>${top.nm}</b>（格${top.s}）へ。<span style="color:var(--muted)">複数に分けるなら¼ケリー・各層の単一上限(8/5/3%)の範囲で。</span></div>`;
+    } else {
+      deploy=`<div style="margin-top:6px;font-size:12.5px;color:var(--muted)">→ 🟢投下可なし＝今月の個別株枠 <b>${fmt(indiv)}</b> は<b style="color:#5d8cc2">現金として積む</b>（無理に埋めない＝門の慎重さ。翌月以降に厚く入れる）。</div>`;
+    }
+    html=`<div style="background:rgba(214,154,60,.08);border:1px solid rgba(214,154,60,.35);border-radius:9px;padding:11px 13px;margin-bottom:14px"><div style="font-size:13px;font-weight:600;color:var(--gold-bright)">今月の投下額（DCA・毎月定額）</div><div style="margin-top:5px;font-size:13px;color:var(--ink)">月額 <b>${fmt(mAmt)}</b> → 個別株 50% = <b style="color:var(--jade)">${fmt(indiv)}</b> ／ インデックス(網) 50% = <b>${fmt(idx)}</b></div>${deploy}<div style="margin-top:5px;font-size:11px;color:var(--dim)">決定日(22日)に確定→実行日(25日)にこの額を発注。株価では動かない・表示のみで採点には無影響。</div></div>`+html;
+  }
   pb.innerHTML=html;
 }
+async function ccfMonthlyChanged(){const el=$('monthlyAmt');if(el){try{await store.set('ccf_monthly',el.value||'');}catch(_){}}if(typeof renderPlan==='function')renderPlan();}
 // ========== v9.1: .icsカレンダー書き出し ==========
 let _qrows=[];
 function _icsEsc(s){return String(s).replace(/\\/g,'\\\\').replace(/,/g,'\\,').replace(/;/g,'\\;').replace(/\n/g,'\\n');}
