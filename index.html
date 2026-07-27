@@ -2031,7 +2031,18 @@ async function autoSave(src,silent){
   const sk=safeKey(nm);
   try{
     const prev=await store.get('g7:'+sk);
-    if(prev){ await store.set('g7prev:'+sk,prev.value); try{const po=JSON.parse(prev.value); if(po.r){prevScore=po.r.evalScore;prevAct=po.r.act;}}catch(e){} }
+    if(prev){ await store.set('g7prev:'+sk,prev.value); try{const po=JSON.parse(prev.value); if(po.r){prevScore=po.r.evalScore;prevAct=po.r.act;}
+      // v9.9.27: histの自動追記——新しい四半期のデータ(erdateが変わった保存)なら前回スコアを履歴に積む。
+      //   S2「3期連続低下」/S3「2期連続低下」はhist欄に依存するが手入力頼みで実質機能していなかった。
+      //   erdate不変(同四半期の再保存・検死修正)では積まない=同一期の重複でトレンド検知を汚さない。直近12期まで保持
+      const prevEr=(po.data&&po.data.erdate)||'', curEr=data.erdate||'';
+      if(prevScore!=null&&prevEr&&curEr&&prevEr!==curEr){
+        const hv=(data.hist||'').split(',').map(x=>x.trim()).filter(Boolean);
+        if(!hv.length||Math.abs(parseFloat(hv[hv.length-1])-parseFloat(prevScore))>0.049)hv.push(String(prevScore));
+        data.hist=hv.slice(-12).join(',');
+        if($('hist'))$('hist').value=data.hist;
+      }
+    }catch(e){} }
     await store.set('g7:'+sk,JSON.stringify({data,r,ts:Date.now(),src:src||'auto'}));
     if(!silent)renderLedger();
     const dv=prevScore!=null?(parseFloat(r.evalScore)-parseFloat(prevScore)):null;
@@ -2286,6 +2297,25 @@ async function renderPlan(){
   const q75=rows.filter(r=>r.layer<=2).sort((a,b)=>(b.pc-a.pc)||(b.s-a.s));
   const pass=q75.filter(r=>r.xPass===true);
   const waitP=q75.filter(r=>r.xPass!==true);
+  // v9.9.27: IPS②(Ulysses契約)の仕組み化——投下可の初回点灯を記録し48hクーリングオフの残り時間を表示。
+  //   点灯時のE[r]/格/PERをスナップショット(掟九:年1回の予実突合の材料。消えた点灯もoff印で保存)。
+  //   判定・順位・採点には一切不介入=表示と記録のみ。再点灯(off→復帰)は新しい点灯として冷却をやり直す
+  let ign={}; try{const g=await store.get('g7ignite:map'); if(g&&g.value)ign=JSON.parse(g.value)||{};}catch(e){}
+  const nowTs=Date.now(); let ignChanged=false;
+  const passSet=new Set(pass.map(r=>r.nm));
+  for(const r of pass){
+    const e=ign[r.nm];
+    if(!e||e.off){ign[r.nm]={ts:nowTs,date:new Date(nowTs).toISOString().slice(0,10),xEr:r.xEr,s:r.s,per:r.per};ignChanged=true;}
+  }
+  for(const k of Object.keys(ign)){ if(!passSet.has(k)&&!ign[k].off){ign[k].off=new Date(nowTs).toISOString().slice(0,10);ignChanged=true;} }
+  if(ignChanged){try{await store.set('g7ignite:map',JSON.stringify(ign));}catch(e){}}
+  const ulys=r=>{
+    const e=ign[r.nm]; let out='';
+    if(e&&!e.off){const hLeft=48-(nowTs-e.ts)/3.6e6;
+      if(hLeft>0)out+=`<span style="font-size:11px;color:#d69a3c;white-space:nowrap;margin-left:8px" title="IPS②Ulysses契約: 点灯${e.date}。48時間は衝動と規律を分離。解禁後も初回投下は目標ウェイトの1/2">⏳冷却あと${Math.ceil(hLeft)}h・初回は1/2</span>`;}
+    if(!/弱気|bear/i.test(r.memo||''))out+=`<span style="font-size:11px;color:var(--dim);white-space:nowrap;margin-left:8px" title="IPS②: 買う前に「この投資が間違いと判明する条件」を1行、memoに必須記録">⚠弱気ケース未記録</span>`;
+    return out;
+  };
   // 開通ライン: E[r]=12%になる入口PER p*と現値からの必要下落%。門X: mult=((min(p,fairPER)/p)^0.1−1)*100 を p*について解く(g・shy・per既知時のみ)
   const openLine=r=>{ if(r.xEr==null||r.g==null||!(r.per>0)||r.xPass===true)return '';
     const fairPER=Math.max(16,Math.min(30,8+r.g)), need=12-r.shy-r.g, ratio=Math.pow(1+need/100,10);
@@ -2306,7 +2336,7 @@ async function renderPlan(){
   if(pass.length){
     const cityFill=pass.reduce((a,r)=>a+tw(r)/CITY*100,0), allFilled=passGap<=0;
     html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px;color:var(--gold-bright)">🟢 投下可（Ω75+ × 門X4条件）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">質が投下閾値75+、かつ門Xが現値で成立＝買える組。サイズは格層(8/5/3%)×¼ケリーの小さい方。<b style="color:var(--gold-bright)">城内%</b>＝城(総資産40%)内の目標シェア／<b style="color:var(--gold-bright)">今月%</b>＝今月の個別枠を「目標−現在保有%」の不足分で按分(B案②・合計100%／保有比率posは採点機の「保有比率」欄で入力)。投下可の城内合計 ${cityFill.toFixed(0)}%${cityFill<100?'（残りは押し目待ちの開通 or 網へ回す）':cityFill>100?'（>100%＝目標比で按分）':''}。${allFilled?'<b style="color:var(--jade)">投下可は全て目標充足＝今月の個別枠は網へ回す。</b>':''}</div>`;
-    html+=pass.map((r,i)=>brow(r,i,'',`${allocTag(r)}<span style="font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:8px">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span>`)).join('');
+    html+=pass.map((r,i)=>brow(r,i,'',`${allocTag(r)}<span style="font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:8px">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span>${ulys(r)}`)).join('');
   } else html+=`<div style="color:var(--dim);font-size:13px;margin:10px 0">🟢 投下可なし——質75+かつ門X成立の銘柄が現時点でゼロ。網と指値待機へ。</div>`;
   if(waitP.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:#5d8cc2">🟡 押し目待ち（質は合格・値段待ち）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">格75+だが門Xが現値で未達＝「良い会社を高値で掴まない」組。開通ライン（E[r]12%に届く入口PER）まで下げたら🟢へ自動昇格。指値は✦門Xの監視表へ。</div>`;
@@ -2356,16 +2386,30 @@ function icsAll(){
   dlICS('CCF_検証キュー_'+new Date().toISOString().slice(0,10)+'.ics',makeICS(evs));
 }
 // ========== v9.1: 検証キュー——次回検証期日の自動推定(直近決算日+92日) ==========
+// v9.9.27: kessan_calendar.py の実データ(out/next_earnings.json)があれば期日を実決算日で上書き——
+//   「+92日推定」と「AV実データ」の二重推定が乖離する穴を塞ぐ。取得不能(file://等)なら従来の推定にフォールバック
+let _nextEarnMap=null, _qitems=null;
+(function(){try{fetch('out/next_earnings.json',{cache:'no-store'}).then(r=>r&&r.ok?r.json():null).then(o=>{
+  if(!o||!o.items)return; const today=new Date().toISOString().slice(0,10); const m={};
+  o.items.forEach(x=>{if(x.t&&x.date&&x.date>=today)m[String(x.t).toUpperCase()]=x;});
+  if(Object.keys(m).length){_nextEarnMap=m; if(_qitems)try{renderQueue(_qitems);}catch(e){}}
+}).catch(()=>{});}catch(e){}})();
 function renderQueue(items){
   const qb=$('queueBox'); if(!qb)return;
+  _qitems=items;
   const DAY=86400000, now=Date.now();
   const rows=[];
   for(const it of items){
-    const er=it.d&&it.d.erdate?new Date(it.d.erdate):null;
-    if(!er||isNaN(er))continue;
-    const due=er.getTime()+92*DAY;
+    const ne=_nextEarnMap&&_nextEarnMap[String(it.nm||'').toUpperCase()];
+    let due=null,src='';
+    if(ne){due=new Date(ne.date+'T00:00:00').getTime();src=ne.src==='est'?'・SEC推定':'・実データ';}
+    else{
+      const er=it.d&&it.d.erdate?new Date(it.d.erdate):null;
+      if(!er||isNaN(er))continue;
+      due=er.getTime()+92*DAY;
+    }
     const days=Math.ceil((due-now)/DAY);
-    rows.push({nm:it.nm,days,due:new Date(due).toISOString().slice(0,10)});
+    rows.push({nm:it.nm,days,due:new Date(due).toISOString().slice(0,10),src});
   }
   if(!rows.length){qb.innerHTML='<div style="color:var(--dim);font-size:13px">直近決算日（erdate）が入力された銘柄がここに並ぶ。</div>';return;}
   rows.sort((a,b)=>a.days-b.days);
@@ -2373,7 +2417,7 @@ function renderQueue(items){
   qb.innerHTML=`<div style="margin-bottom:8px"><button onclick="icsAll()" style="background:var(--panel);border:1px solid var(--gold-line);color:var(--gold-bright);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer">📅 キュー全件をカレンダー書き出し（.ics）</button></div>`+
    rows.slice(0,15).map((r,i)=>{
     const c=r.days<0?'var(--rust)':r.days<=14?'#d69a3c':'var(--dim)';
-    const lbl=r.days<0?`<b>期限超過 ${-r.days}日</b>——次回決算が出ているはず、再採点せよ`:r.days<=14?`<b>あと${r.days}日</b>（${r.due}頃 次回決算見込み）`:`${r.due}頃（あと${r.days}日）`;
+    const lbl=r.days<0?`<b>期限超過 ${-r.days}日</b>——次回決算が出ているはず、再採点せよ`:r.days<=14?`<b>あと${r.days}日</b>（${r.due}頃 次回決算見込み${r.src}）`:`${r.due}頃（あと${r.days}日${r.src}）`;
     return `<div class="led"><span class="ln">${r.nm}</span><span style="font-size:12.5px;color:${c}">${lbl}</span><button onclick="icsOne(${i})" title="この銘柄の期日をカレンダーへ" style="background:none;border:1px solid var(--line);color:var(--ink-soft);border-radius:6px;padding:3px 8px;font-size:12px;cursor:pointer">📅</button></div>`;}).join('');
 }
 // ========== v9.1: ワンタップ再採点依頼 ==========

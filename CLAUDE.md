@@ -17,6 +17,9 @@
   - 監視リスト(保有+質80+)の次回決算日を取得(Alpha Vantage、鍵なしはSEC推定)
   - 出力: kessan_calendar.ics(Googleカレンダー取込=スケジュール連動) と out/next_earnings.json(決算日データ。門内の常時表示は撤去→Googleカレンダーで確認)
 - 四半期の手順書は kessan_checklist.md、監視リストの正本は kanshi_list.json、Ⅶ資産の中身は portfolio.html
+- 夜間バッチ審査は night/（chunkNN.txt=銘柄リスト、agent_prompt_template.txt=審査官指示〔正本はⅡ手順3・改定時は同期〕、
+  progress.json=進行表。出力は out/{T}_gate_pack.json）。詳細は night/README.md
+- 市場データ採取（発見度negS用のanalysts/instOwn充填）: `python market_fetch.py` → market_data.json
 - 月1-2回 採取: `python hachimon_fetch.py`
   - 引数なし=gate1_queue.jsonの未処理上位5社を自動採取。個別指定: `python hachimon_fetch.py NVDA MSFT`
   - 出力: out/{T}_gate_input.json（機械値ドラフト・審査待ち）+ out/{T}_hits.txt（原本キーワード抜粋）
