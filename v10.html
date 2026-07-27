@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCF — v10 系列の門（影スコア）</title>
+<style>
+:root{--bg:#080a0e;--panel:#121826;--panel2:#0e131d;--line:#28344a;--ink:#f0ecdf;--ink-soft:#cfc5ab;
+ --muted:#94a0b4;--gold:#c9a64a;--gold-bright:#ecd494;--gold-line:rgba(201,166,74,.40);
+ --jade:#8cc091;--rust:#cf7a60;--steel:#5d8cc2;--maxw:880px;}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font-size:15px;line-height:1.8;
+ background:radial-gradient(1000px 560px at 50% -160px,rgba(201,166,74,.10),transparent 60%),linear-gradient(180deg,#0a0c11,#080a0e 60%,#06080b);
+ font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 16px}
+.hero{text-align:center;padding:36px 16px 10px}
+.brand{font-size:12px;letter-spacing:.4em;color:var(--gold);text-transform:uppercase}
+h1{font-family:"Shippori Mincho",serif;font-size:24px;margin:8px 0 6px;color:#f5efde}
+.sub{font-size:12.5px;color:var(--muted)}
+.banner{background:rgba(201,166,74,.08);border:1px solid var(--gold-line);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--ink-soft);margin:14px 0;line-height:1.85}
+.card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:10.5px;color:var(--muted);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);letter-spacing:.04em;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+td{padding:7px 8px;border-bottom:1px solid rgba(40,52,74,.5);text-align:right;white-space:nowrap}
+tr:hover td{background:rgba(255,255,255,.02)}
+.tk{font-weight:700;color:var(--ink)}
+.v10{font-family:"Shippori Mincho",serif;font-size:16px;color:var(--gold-bright)}
+.hi{color:var(--jade)}.lo{color:var(--rust)}.mid{color:var(--muted)}
+.fbox{display:inline-block;min-width:26px;text-align:center;border-radius:4px;padding:0 3px;font-size:11px}
+.note{font-size:11px;color:var(--muted);max-width:280px;white-space:normal;text-align:left}
+.scroll{overflow-x:auto}
+.legend{font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.9}
+footer{text-align:center;color:#5d6a80;font-size:11px;padding:16px 16px 40px;line-height:1.9}
+a{color:var(--gold-bright)}
+@media(max-width:560px){body{font-size:14px}h1{font-size:20px}}
+</style></head>
+<body>
+<header class="hero">
+ <div class="brand">CCF Ω · v10 Shadow</div>
+ <h1>v10「系列の門」— 影スコア</h1>
+ <div class="sub" id="gen">out/v10_shadow.json を読込中…</div>
+</header>
+<div class="wrap">
+ <div class="banner"><b style="color:var(--gold-bright)">これは影（シャドー）であり、正本ではない。</b>
+  採点・合否・売却・買付順位には一切使わない。機械実測5系列（ROIIC系列20% / 増分マージン15% /
+  through-cycle実測15% / 1株FCF成長15% / 粗利安定5%）＋定性（堀18% / 資本配分7% / geopol5%）の幾何平均。
+  v9（現行Ω）と1年並走し、<b>2027-07の較正で予実を答え合わせて勝った方を正本にする</b>。
+  仕様の正本は <code>V10_SPEC.md</code>。更新は年次保守で <code>python v10_series.py</code>。</div>
+ <div class="card">
+  <div class="scroll">
+  <table id="tbl">
+   <thead><tr>
+    <th>銘柄</th><th>v10影</th><th>現Ω</th><th>乖離</th>
+    <th title="ROIIC系列(3年ローリングの水準×傾き)">ROIIC</th>
+    <th title="増分マージン系列 ΔOP/ΔRev">増分M</th>
+    <th title="through-cycle実測(2008/2020/2022の営利DD)">耐不況</th>
+    <th title="希薄化調整1株FCF成長5年">FCF/株</th>
+    <th title="粗利安定×転嫁力">粗利</th>
+    <th title="堀1因子(dom/irr/rep/dur+方向)">堀</th>
+    <th title="資本配分">資配</th>
+    <th title="地政学">geo</th>
+    <th>メモ（naの理由・警報）</th>
+   </tr></thead>
+   <tbody id="body"><tr><td colspan="13" style="text-align:left;color:var(--muted)">読込中…（表示されない場合: このページはGitHub Pages配信時にout/v10_shadow.jsonを自動読込します。file://直開きでは読めません）</td></tr></tbody>
+  </table>
+  </div>
+  <div class="legend">
+   色: <span class="hi">緑=80+</span> / <span class="mid">灰=65–80</span> / <span class="lo">赤=65未満</span>。
+   乖離（v10影 − 現Ω）が大きい銘柄ほど、2027年較正の答え合わせ材料として重要——
+   <b>どちらが正しかったかを1年後の実績が裁く</b>。現Ωが無い行はX監視表・台帳未収載（kanshi群からの自動追加分など）。
+   合否（キル・三本柱・投下閾値75・門X4条件）は今までどおり正本v9が裁く：この表は序列の実験である。
+  </div>
+ </div>
+</div>
+<footer>CCF Ω v10 shadow — 点でなく系列で測る。検証なき基準改定はしない。<br>
+<a href="index.html">← 門へ戻る</a>　<a href="V10_SPEC.md">仕様書</a></footer>
+<script>
+function cls(v){return v>=80?'hi':v>=65?'mid':'lo';}
+function fb(v){return '<span class="fbox '+cls(v)+'">'+(v!=null?v.toFixed(0):'—')+'</span>';}
+Promise.all([
+ fetch('out/v10_shadow.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}),
+ fetch('gate1_x_watch.json',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;})
+]).then(function(res){
+ var d=res[0], xw=res[1];
+ if(!d||!d.scores){document.getElementById('gen').textContent='out/v10_shadow.json を読めません（GitHub Pages配信のURLで開いてください）';return;}
+ var om={};
+ if(xw&&xw.lines)xw.lines.forEach(function(l){if(l.omega!=null)om[l.ticker]=l.omega;});
+ document.getElementById('gen').textContent='生成 '+(d.generated||'')+'　'+Object.keys(d.scores).length+'銘柄　（'+(d.spec||'')+'）';
+ var rows=Object.keys(d.scores).map(function(t){
+  var r=d.scores[t]; var o=om[t];
+  return {t:t,v:r.v10,f:r.factors||{},n:(r.notes||[]).join(' ／ '),o:(o!=null?o:null),dv:(o!=null?r.v10-o:null)};
+ }).sort(function(a,b){return b.v-a.v;});
+ document.getElementById('body').innerHTML=rows.map(function(r){
+  var dvTxt=r.dv==null?'<span class="mid">—</span>':'<span class="'+(r.dv>=8?'hi':r.dv<=-8?'lo':'mid')+'">'+(r.dv>=0?'+':'')+r.dv.toFixed(1)+'</span>';
+  var warn=/⚠/.test(r.n)?' style="border-left:3px solid var(--rust)"':'';
+  return '<tr'+warn+'><td class="tk">'+r.t+'</td><td class="v10">'+r.v.toFixed(1)+'</td>'+
+   '<td>'+(r.o!=null?('Ω'+r.o.toFixed(1)):'<span class="mid">—</span>')+'</td><td>'+dvTxt+'</td>'+
+   '<td>'+fb(r.f.roiic)+'</td><td>'+fb(r.f.incm)+'</td><td>'+fb(r.f.cycle)+'</td><td>'+fb(r.f.fcfps)+'</td><td>'+fb(r.f.gross)+'</td>'+
+   '<td>'+fb(r.f.moat)+'</td><td>'+fb(r.f.cap)+'</td><td>'+fb(r.f.geo)+'</td>'+
+   '<td class="note">'+(r.n||'')+'</td></tr>';
+ }).join('');
+}).catch(function(e){document.getElementById('gen').textContent='読込失敗: '+e;});
+</script>
+</body></html>

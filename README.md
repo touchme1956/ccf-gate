@@ -17,6 +17,7 @@
 - `kanshi_list.json` — 決算監視の正本リスト（kessan_check / kessan_calendar の入力）
 - `kessan_checklist.md` — 決算点検の手順書（運用サイクルの全体像）
 - `night/` — 夜間バッチ審査の作業場（チャンク・審査官テンプレ・進行表。night/README.md 参照）
+- `v10.html` — v10「系列の門」影スコアの閲覧ページ（/ccf-gate/v10.html。正本の合否には不使用・V10_SPEC.md参照）
 
 ## 別枠の門（＝門X 一本）
 - `chomirai.html` — **超未来の門（CCF X）**: 期待リターン最大化の別枠。予知はせず、

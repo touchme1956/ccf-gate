@@ -27,7 +27,8 @@
   → `python market_merge.py` でパックのnull市場欄へ機械充填（定性は触らない）→ 門で再取込するとⅥのE[r]判定が生きる
 - X監視表の再計算（門X4条件同時成立の開通線+階段指値のfair線）: `python x_watch_recalc.py`（四半期保守で新eps反映後に実行）
 - v10影スコア（系列の門・並走検証中）: `python v10_series.py` → out/v10_shadow.json（機械実測5系列70%+定性30%。
-  正本の採点・合否には不使用。仕様と切替条件は V10_SPEC.md——2027-07の較正で新旧の予実を答え合わせて勝った方を正本に）
+  正本の採点・合否には不使用。仕様と切替条件は V10_SPEC.md——2027-07の較正で新旧の予実を答え合わせて勝った方を正本に。
+  閲覧ページ: v10.html〔Ⅵ買付順位の「✦v10影スコア↗」または /ccf-gate/v10.html〕）
 - 年1回（7月）較正: `python calibration_check.py` → out/calibration.json（門2定性判定の答え合わせ台帳+v9/v10予実。
   erosion/disrupt遷移行列・f1予実。ルーブリック刻みの変更はこの結果を見てユーザー明示指示時のみ）
 - 夜間チャンク生成: `python3 night/make_chunks.py`（queue/椅子/棚/backlogの未審査分を10社/枚で追加）
