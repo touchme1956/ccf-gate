@@ -2006,6 +2006,11 @@ async function ccfRescoreAll(btn){
       Object.entries(obj.data).forEach(([id,v])=>{if($(id))$(id).value=v;});
       // v9.7取込修正と同様に、dataに無いドロップダウンは既定値へ(残り香を断つ)
       if(typeof __selDefaults!=='undefined')Object.keys(__selDefaults).forEach(id=>{if($(id)&&obj.data[id]===undefined)$(id).value=__selDefaults[id];});
+      // v9.9.28: 旧UI既定(rfr4.5/erp5.0)の写しで保存された記録はWACCが現行既定(4.48/4.45)より約0.6pt高く、
+      //   保有銘柄の出口判定(スプレッド系S1/S2)だけ売り側に厳しい非対称が残るため、既定値ちょうどの記録のみ現行既定へ正規化。
+      //   実測値として保存された記録(パック取込の4.48/4.45系・明示入力)は数値が一致しない限り触らない
+      if(String(obj.data.erp)==='5'||String(obj.data.erp)==='5.0'){obj.data.erp='4.45';if($('erp'))$('erp').value='4.45';}
+      if(String(obj.data.rfr)==='4.5'){obj.data.rfr='4.48';if($('rfr'))$('rfr').value='4.48';}
       const r=compute();
       const beforeAct=obj.r?obj.r.act:null, beforeS=obj.r?obj.r.evalScore:null;
       // r以外(ts/src/held等)は保持。tsは"データ鮮度"の指標ゆえ据え置き、再採点印はsrcに残す
@@ -2289,7 +2294,7 @@ async function renderPlan(){
       const mult=(Math.pow(per1/per,0.1)-1)*100;
       xEr=shy+g+mult;
       const earned=shy+g;
-      const erS=shy+g+(Math.pow(per1*0.7/per,0.1)-1)*100;
+      const erS=shy+g*0.75+(Math.pow(per1*0.7/per,0.1)-1)*100; // v9.9.28: ④ストレスを設計文(chomirai・解説)どおり「成長−25%∧終着PER−30%」に統一——旧実装はPER−30%のみで文書より緩く、chomiraiと判定が割れていた。ROIIC逓減・読み違えの非対称を正す保守側への統一
       const mshare=xEr>0?Math.max(0,mult)/xEr*100:0;
       xPass=(xEr>=12)&&(earned>=10)&&(mult<=0||mshare<=30)&&(erS>=7);
     }
@@ -2368,7 +2373,7 @@ async function renderPlan(){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px">⚪ 監視枠 72–75——<span style="color:var(--rust)">保有しない</span>・75超えで昇格</h2>`;
     html+=watch.map(r=>`<div class="led" style="border-left:3px solid ${lcol[2]};opacity:.6"><span class="ln">${r.nm}</span><span class="grade" style="color:var(--steel)">${r.s}</span>${xtag(r)}<span style="font-size:11px;color:var(--muted)"><span style="color:var(--dim)">間</span> ${r.act}</span>${reqbtns(r)}</div>`).join('');
   }
-  html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8"><b>2つの判定に統合（v9.9.25）</b>：価格の関門は<b>門X 1本</b>に一本化した——旧「間（今買える）」の粗いPERブレーキは買付判定から外し（「今買える」なのに「監視」の矛盾を解消）、<b>🟢投下可＝格75+ かつ 門X4条件</b>／<b>🟡押し目待ち＝格75+だが門X未達</b>（旧「門X未達＝監視」と旧「押し目待ち」を統合）。各群内の順位＝<b>合成順（格×0.6 ＋ E[r]%×0.4）</b>——壊れにくさ（格）を主柱にしつつ期待リターン（門X E[r]）を効かせる（同点は格で決着）。<b>群の境界（投下可の合否）は不変</b>。E[r]%は門X合格線12%＝50点として点数化（±10ptで0-100）、欠損は中立50。🟡の<b>開通＝PER○○（あと−○%）</b>はE[r]が12%に届く入口PERと現値からの必要下落。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。<br><b>E[r]（門X期待リターン）</b>＝門X裁きⅠの現値期待リターン：還元shy + 成長g（<b>高ROIC(≥15%)×堀無傷は実証CAGRを信じる</b>／それ以外は再投資式b×ROIICを実証CAGRで頭打ち・20%上限＝証拠の上限。v9.9.25：資本を返しながら伸びる資本軽量コンパウンダーを再投資式が過小評価する欠陥を是正・価格規律は不変） − 倍率の重力（<b>終着PER=min(現PER, clamp(8+g,16,30))＝成長連動</b>・10年。McKinsey価値ドライバーの理論フェアは成熟g4%≈22倍／持続成長高ROIC≈28-30倍だが、門は保守側に8+g〔下限16〕で頭を抑える＝理論値より安全余白を取る設計。成長産業と成熟産業を同じ終着PERで測らない。掟六の精神＝現PERを超えない＝拡大は見込まない、は維持）。<span style="color:var(--jade)">✓＝4条件成立（E[r]≥12／投資R≥10／倍率寄与≤30%／ストレス≥7）＝🟢投下可</span>／<span style="color:var(--rust)">✗＝未達→🟡押し目待ち（指値は✦門Xの監視表）</span>。順位・採点には一切影響しない。PER/ROIC欠損時はE[r]判定不能と表示。<br>各行の <span style="color:#8fc9a4">審査</span>＝門2審査プロトコル全文（この銘柄を門にかけ直す）／<span style="color:#d6b06c">決算</span>＝決算点検依頼文（S1-S3照合・6警報・門X前提の再計算）を、その銘柄名つきでコピー→Claudeに貼る。台帳のティア（Ⅳ）に依る。</div>`;
+  html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8"><b>2つの判定に統合（v9.9.25）</b>：価格の関門は<b>門X 1本</b>に一本化した——旧「間（今買える）」の粗いPERブレーキは買付判定から外し（「今買える」なのに「監視」の矛盾を解消）、<b>🟢投下可＝格75+ かつ 門X4条件</b>／<b>🟡押し目待ち＝格75+だが門X未達</b>（旧「門X未達＝監視」と旧「押し目待ち」を統合）。各群内の順位＝<b>合成順（格×0.6 ＋ E[r]%×0.4）</b>——壊れにくさ（格）を主柱にしつつ期待リターン（門X E[r]）を効かせる（同点は格で決着）。<b>群の境界（投下可の合否）は不変</b>。E[r]%は門X合格線12%＝50点として点数化（±10ptで0-100）、欠損は中立50。🟡の<b>開通＝PER○○（あと−○%）</b>はE[r]が12%に届く入口PERと現値からの必要下落。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。<br><b>E[r]（門X期待リターン）</b>＝門X裁きⅠの現値期待リターン：還元shy + 成長g（<b>高ROIC(≥15%)×堀無傷は実証CAGRを信じる</b>／それ以外は再投資式b×ROIICを実証CAGRで頭打ち・20%上限＝証拠の上限。v9.9.25：資本を返しながら伸びる資本軽量コンパウンダーを再投資式が過小評価する欠陥を是正・価格規律は不変） − 倍率の重力（<b>終着PER=min(現PER, clamp(8+g,16,30))＝成長連動</b>・10年。McKinsey価値ドライバーの理論フェアは成熟g4%≈22倍／持続成長高ROIC≈28-30倍だが、門は保守側に8+g〔下限16〕で頭を抑える＝理論値より安全余白を取る設計。成長産業と成熟産業を同じ終着PERで測らない。掟六の精神＝現PERを超えない＝拡大は見込まない、は維持）。<span style="color:var(--jade)">✓＝4条件成立（E[r]≥12／投資R≥10／倍率寄与≤30%／ストレス≥7〔成長−25%∧終着PER−30%・2026-07にⅥへも統一適用〕）＝🟢投下可</span>／<span style="color:var(--rust)">✗＝未達→🟡押し目待ち（指値は✦門Xの監視表）</span>。順位・採点には一切影響しない。PER/ROIC欠損時はE[r]判定不能と表示。<br>各行の <span style="color:#8fc9a4">審査</span>＝門2審査プロトコル全文（この銘柄を門にかけ直す）／<span style="color:#d6b06c">決算</span>＝決算点検依頼文（S1-S3照合・6警報・門X前提の再計算）を、その銘柄名つきでコピー→Claudeに貼る。台帳のティア（Ⅳ）に依る。</div>`;
   pb.innerHTML=planBox+html;
 }
 // ========== v9.1: .icsカレンダー書き出し ==========
