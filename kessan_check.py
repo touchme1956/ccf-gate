@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 kessan_check.py v1 — 保有銘柄の四半期決算チェッカー（門の四半期点検・機械抽出係）
-使い方: python kessan_check.py            … kanshi_list.json の監視28社(米国)を点検
+使い方: python kessan_check.py            … kanshi_list.json の監視28社のうちADR3社(ASML/TSM/NVMI)を除く25社を自動点検(ADRは§C手動確認)
         python kessan_check.py NVDA MSFT  … 指定銘柄のみ
         （kanshi_list.json が無ければ holdings.json にフォールバック。
           日本株コード=SEC点検不可ゆえ除外→EDINET経路で別途）
@@ -164,6 +164,16 @@ def load_holdings():
     return []
 
 def check(t):
+    if t in ADR_MANUAL:
+        # 20-F/6-K発行体は10-Q機械抽出が構造的に不可能。試行すると全項目None・スキャン0件で
+        # 「異常なし(機械判定)」という偽の健全宣言がファイルに残るため、明示的に手動確認へ回す
+        verdict = "機械抽出不可(ADR=20-F/6-K)→kessan_checklist §Cの手動確認へ"
+        os.makedirs(OUT, exist_ok=True)
+        with open(f"{OUT}/{t}_qcheck.txt", "w") as f:
+            f.write(f"{t} 点検日 {date.today()}\n判定: {verdict}\n"
+                    "(10-Q/10-Kを提出しないため売上YoY・営利率・警報スキャンの機械値は算出できない)\n")
+        print(f"  {t:<6} → {verdict}")
+        return verdict
     cik = cik_of(t)
     facts = json.loads(get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"))
     rev = quarterly_series(facts, TAGS_REV)
@@ -183,8 +193,18 @@ def check(t):
     flags = []
     if yoy is not None and yoy < -5: flags.append(f"売上YoY {yoy}%")
     if opm_d is not None and opm_d < -3: flags.append(f"営利率 前年比{opm_d}pt")
+    # 集(顧客集中)は毎四半期再掲される定型注記に当たるため、前回点検に無かった「新規出現」だけを警報化する。
+    # (常時フラグ化すると監視銘柄の約半数が恒久的に要審査となり、本物の集中悪化が埋もれる。スニペット表示は従来どおり維持)
+    prev_cats = set()
+    try:
+        with open(f"{OUT}/{t}_qcheck.txt", encoding="utf-8") as pf:
+            prev_cats = set(re.findall(r"^\[(誠|限|集|指針|減損|退任|吉S字|吉流通)\|", pf.read(), re.M))
+    except OSError:
+        pass
     for c in cats:
-        if c in ("誠","限","指針","減損","退任"): flags.append(f"警報:{c}")
+        if c == "集":
+            if "集" not in prev_cats: flags.append("警報:集(新規出現)")
+        elif c in ("誠","限","指針","減損","退任"): flags.append(f"警報:{c}")
     yoshi = [c for c in cats if c.startswith("吉")]
     verdict = "要審査: " + " / ".join(flags) if flags else "異常なし(機械判定)"
     if yoshi:
@@ -198,11 +218,20 @@ def check(t):
     print(f"  {t:<6} YoY {str(yoy)+'%':>7}  営利差 {str(opm_d)+'pt':>7}  → {verdict}")
     return verdict
 
+# ADR(外国私募発行体): 10-Q/10-Kを出さず20-F/6-Kのため、本スクリプトの機械抽出が効かない。
+# kessan_checklist.md §C のとおり手動確認へ回す。引数指定でもcheck()冒頭で明示スキップ(偽の「異常なし」を残さない)。
+ADR_MANUAL = {"ASML", "TSM", "NVMI"}
+
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if re.fullmatch(r"[A-Za-z][A-Za-z.\-]{0,7}", a)]
     targets = args or load_holdings()
+    if not args:
+        adr = [t for t in targets if t in ADR_MANUAL]
+        if adr:
+            print(f"※ADR {len(adr)}社は10-Q機械抽出不可のため除外→§Cの手動確認へ: {adr}")
+            targets = [t for t in targets if t not in ADR_MANUAL]
     print(f"=== 四半期点検 {date.today()} ===")
     for t in targets:
         try: check(t)
         except Exception as e: print(f"  {t:<6} 失敗 → {e}")
-    print("要審査が出た銘柄は、門の依頼文ボタンで門2再審査へ。")
+    print("要審査が出た銘柄は、門の依頼文ボタンで門2再審査へ。ADR(ASML/TSM/NVMI)は決算リリース/6-Kを手動確認。")

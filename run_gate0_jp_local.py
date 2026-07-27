@@ -9,8 +9,12 @@
 #   ・Stage2: 生き残りのみ過去の有報を追加取得し、5年フルで7項目採点
 #   ・税率は日本の実効税率 ×0.70(SEC版は×0.79)
 #   ・椅子: ROIC系のみで落ちた5点企業を現金控除ROICで再評価(キーエンス型)
-# 【v1は校正モード】golden銘柄の抽出値を印字して目視確認する。
-#   期待値の固定(回帰テスト化)はv2で行う。
+# 【v2は校正モード】golden銘柄の抽出値を印字して目視確認する。
+#   期待値の固定(回帰テスト化)は次版v3で行う(未着手)。
+# 【注意・別系統】コミット済みの gate0_jp_queue.json は 2026-07-25 の
+#   EDINET_DB screen_companies 版(門0-JP定量ふるい・スキーマが異なる)。
+#   本スクリプトを実行するとEDINET API直採取のスキーマで上書きするため、
+#   既存が別ソースの場合は .prev.json に自動退避する。
 #
 # 【移植版の変更点(Drive/ccf/gate0_jp_v2.py → このリポジトリ)】
 #   ・Colabマウント除去。SAVE_DIR=リポジトリ直下、キャッシュ=./edinet_csv
@@ -397,7 +401,16 @@ RESULTS.sort(key=lambda r: (-r["score"], -r["roic_worst5"]))
 cols = ["ticker","name","gyoshu","ccy","fy_latest","score","fails","roic_latest","roic_worst5",
         "opm","sales_cagr5","fcf_conv_5y","op_all_pos","fcf_all_pos","equity_neg","warn_anomaly",
         "op_src","roic_ex_latest","roic_ex_worst","ic_ex_neg","cash_pct"]
-with open(f"{SAVE_DIR}/gate0_jp_all.csv","w",newline="",encoding="utf-8-sig") as fp:
+csv_path = f"{SAVE_DIR}/gate0_jp_all.csv"
+if os.path.exists(csv_path):
+    try:
+        head = open(csv_path, encoding="utf-8-sig").readline()
+        if head.startswith("sec,"):   # EDINET_DB screen_companies版のスキーマ(sec,edinet,nm,...)
+            os.replace(csv_path, csv_path.replace(".csv", ".prev.csv"))
+            print("▲ 既存の gate0_jp_all.csv は別ソース(EDINET_DB)のため gate0_jp_all.prev.csv に退避した")
+    except Exception as e:
+        print(f"▲ 既存CSVを読めなかったが上書きする: {e}")
+with open(csv_path,"w",newline="",encoding="utf-8-sig") as fp:
     w = csv.DictWriter(fp, fieldnames=cols, extrasaction="ignore"); w.writeheader(); w.writerows(RESULTS)
 sc = collections.Counter(r["score"] for r in RESULTS)
 print(f"\n判定 {len(RESULTS)} 社 / 7点 {sc[7]} / 6点 {sc[6]} / 5点 {sc[5]}")
@@ -416,7 +429,18 @@ resc = [r for r in RESULTS if r["score"]==5
 chairs = [r for r in resc if not r["ic_ex_neg"] and r["roic_ex_latest"] is not None
           and r["roic_ex_latest"]>=MIN_ROIC_LATEST and r["roic_ex_worst"]>=MIN_ROIC_WORST]
 for path, data in [("gate0_jp_queue.json",queue),("gate0_jp_rescue.json",chairs)]:
-    json.dump(data, open(f"{SAVE_DIR}/{path}","w",encoding="utf-8"), ensure_ascii=False, indent=1)
+    full = f"{SAVE_DIR}/{path}"
+    # 既存ファイルが別ソース(EDINET_DB版=dict形式)なら .prev.json に退避してから書く(無警告上書きの防止)
+    if os.path.exists(full):
+        try:
+            prev = json.load(open(full, encoding="utf-8"))
+            if isinstance(prev, dict) and prev.get("source"):
+                bak = full.replace(".json", ".prev.json")
+                os.replace(full, bak)
+                print(f"▲ 既存の {path} は別ソース({prev.get('source')})のため {os.path.basename(bak)} に退避した")
+        except Exception as e:
+            print(f"▲ 既存の {path} を読めなかったが上書きする(退避なし): {e}")
+    json.dump(data, open(full, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
 print("\n" + "="*74 + f"\n■ 日本株 待ち行列: {len(queue)} 社\n" + "="*74)
 for i, r in enumerate(queue, 1):
@@ -438,5 +462,5 @@ for sec, nm in GOLDEN_JP.items():
           f"最低{r['roic_worst5']*100:.1f}% 営利{r['opm']*100:.1f}% CAGR{r['sales_cagr5']*100:.1f}% "
           f"転換{r['fcf_conv_5y']:.2f} 現金{r['cash_pct']}%")
 print("\n【校正の見方】キーエンスはROIC落ち→椅子入りが期待形(現金の山)。数字が有報と")
-print("合わない銘柄はタグ取り違え——銘柄名と正しい値をClaudeへ。v2で期待値を固定する。")
+print("合わない銘柄はタグ取り違え——銘柄名と正しい値をClaudeへ。v3で期待値を固定する。")
 print("\n→ 出力: gate0_jp_all.csv / gate0_jp_queue.json / gate0_jp_rescue.json")

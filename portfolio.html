@@ -172,8 +172,8 @@ function render(){
  const pos=P.positions.filter(p=>p&&(p._v||0)>0);
  const total=pos.reduce((s,p)=>s+(+p._v||0),0);
  const wOf=p=> total>0 ? (+p._v/total*100) : 0;
- const net=pos.filter(p=>p.sleeve==='net'), castle=pos.filter(p=>p.sleeve==='castle');
- const netW=net.reduce((s,p)=>s+wOf(p),0), castleW=castle.reduce((s,p)=>s+wOf(p),0);
+ const net=pos.filter(p=>p.sleeve==='net'), castle=pos.filter(p=>p.sleeve==='castle'), cash=pos.filter(p=>p.sleeve==='cash');
+ const netW=net.reduce((s,p)=>s+wOf(p),0), castleW=castle.reduce((s,p)=>s+wOf(p),0), cashW=cash.reduce((s,p)=>s+wOf(p),0); // 2026-07: 現金枠(IPS①「点灯不足の残余=現金」の現在値を可視化。網/城の%は総資産比のまま)
  // 現在の網/城ウェイトを門(Ⅵ買付順位の今月プラン)と共有(同origin・localStorage)
  try{localStorage.setItem('pf:weights',JSON.stringify({net:netW,city:castleW,total:total}));}catch(e){}
 
@@ -184,7 +184,14 @@ function render(){
  const dN=netW-TARGET.net, dC=castleW-TARGET.castle;
  document.getElementById('tgtNote').innerHTML= total<=0? 'まだ保有が空です。「✎ 編集」から入れてください。' :
   `目標60/40との差：網 ${dN>=0?'+':''}${dN.toFixed(1)}pt ／ 城 ${dC>=0?'+':''}${dC.toFixed(1)}pt`+
-  (Math.abs(dN)<=3?'　<b style="color:var(--jade)">＝ほぼ目標どおり</b>':(dN>3?'　（網が厚い＝新規は城へ寄せる）':'　（城が厚い＝新規は網へ寄せる）'));
+  (cashW>0
+    ? ((Math.abs(dN)<=3&&Math.abs(dC)<=3)?'　<b style="color:var(--jade)">＝ほぼ目標どおり</b>'
+      :(dN<0&&dC<0)?`　（網・城とも不足＝現金・新規は不足の大きい${dN<dC?'網':'城'}へ）`
+      :dN<0?'　（網が不足＝現金・新規は網へ）'
+      :dC<0?'　（城が不足＝現金・新規は城へ）'
+      :'　（網も城も目標超過＝現金のまま次の点灯を待つ）')
+    : (Math.abs(dN)<=3?'　<b style="color:var(--jade)">＝ほぼ目標どおり</b>':(dN>3?'　（網が厚い＝新規は城へ寄せる）':'　（城が厚い＝新規は網へ寄せる）')))+
+  (cashW>0?`<br>現金 ${cashW.toFixed(1)}%（IPS①の残余——点灯が少ない市況ほど自動で積み上がる。遊ばせるのは1〜2ヶ月まで、開かなければ網へ）`:'');
 
  const buyInfo=p=>{
   const sh=+p.sh||0, npx=+p.npx||0, bpx=+p.bpx||0;
@@ -195,16 +202,17 @@ function render(){
   return `<div class="buyinfo">${p.bd?p.bd+' ':''}${sh}株${pxTxt?' @'+pxTxt:''}${fxTxt}</div>`;
  };
  const rowHTML=(p,extra,dotColor,dotLabel)=>{
-  const badge = p.sleeve==='net'?'<span class="badge b-net">網</span>':'<span class="badge b-castle">城</span>';
+  const badge = p.sleeve==='net'?'<span class="badge b-net">網</span>':p.sleeve==='cash'?'<span class="badge b-net" style="opacity:.7">現金</span>':'<span class="badge b-castle">城</span>';
   const dot = dotColor?`<span class="ind-dot" style="color:${dotColor}" title="${dotLabel||''}">●</span>`:'';
   const w=wOf(p);
   return `<div class="row"><div class="nm">${dot}${p.nm||p.t}${badge}<div class="kind">${p.t||''}${p.kind?' · '+p.kind:''}</div></div>`+
    `<div><div class="val">${yen(p._v)}</div><div class="pct">${w.toFixed(1)}%</div></div>`+
    `${buyInfo(p)}${extra||''}</div>`;
  };
- document.getElementById('netList').innerHTML = net.length?
+ document.getElementById('netList').innerHTML = (net.length?
    net.slice().sort((a,b)=>b._v-a._v).map(p=>rowHTML(p,'')).join('')
-   : '<div class="mini" style="text-align:left">網（ETF）が未登録。</div>';
+   : '<div class="mini" style="text-align:left">網（ETF）が未登録。</div>')
+   + cash.slice().sort((a,b)=>b._v-a._v).map(p=>rowHTML(p,'')).join('');
  // 城を門の出口判定(S1/S2/S3/ホールド/採点待ち)で分類。判定は門（Ⅳ台帳）が書くpf:verdictsから読む
  const vmap=(function(){try{return JSON.parse(localStorage.getItem('pf:verdicts')||'{}');}catch(e){return {};}})();
  const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm].level;               // 名の完全一致
@@ -263,7 +271,7 @@ function renderEdit(){
     <div class="ehd">
       <input value="${esc(p.t)}" oninput="draft[${i}].t=this.value" placeholder="TICKER" style="max-width:96px">
       <input value="${esc(p.nm)}" oninput="draft[${i}].nm=this.value" placeholder="銘柄名">
-      <select onchange="draft[${i}].sleeve=this.value">${opt('net',p.sleeve,'網')}${opt('castle',p.sleeve,'城')}</select>
+      <select onchange="draft[${i}].sleeve=this.value">${opt('net',p.sleeve,'網')}${opt('castle',p.sleeve,'城')}${opt('cash',p.sleeve,'現金')}</select>
       <div class="del" onclick="delRow(${i})">✕</div>
     </div>
     <div class="efields">
@@ -325,7 +333,11 @@ function registerToGate(){
   const posPct = total>0 ? +(posValue(p)/total*100).toFixed(1) : 0;
   let existing=null; try{const s=localStorage.getItem(key); if(s)existing=JSON.parse(s);}catch(e){}
   let nm;
-  if(existing&&existing.data){ nm=existing.data.nm||p.nm||tkr; kept++; }   // 既存の採点は上書きしない
+  if(existing&&existing.data){ nm=existing.data.nm||p.nm||tkr; kept++;
+   // 2026-07: 採点(r)は上書きしないが pos だけは最新実額%で更新——posが記帳時点で凍結され
+   // 買付後も同銘柄へ不足按分が続く欠陥の是正(門側は実額算出を優先するためこれはフォールバック用)
+   try{ existing.data.pos=posPct; localStorage.setItem(key, JSON.stringify(existing)); }catch(e){}
+  }
   else { nm=p.nm||tkr; localStorage.setItem(key, JSON.stringify({data:{nm,pos:posPct},r:{},ts:0})); added++; }
   if(holdSet.indexOf(nm)<0){ holdSet.push(nm); flagged++; }
  });

@@ -1,6 +1,6 @@
 # market_fetch.py — 市場データ採取器（門の間・発見度を全自動で埋める）
 #   出力: market_data.json  {TICKER: {px, mcap, beta, per, perF, analysts, instOwn, z, shy, evebit}}
-#   これを門の「Ⅲ採点機→市場データ」または vs_spx 流し込みに使う。審査パック(out/*_gate_pack.json)へのマージも可。
+#   これを門の「Ⅲ採点機→市場データ」に使う。審査パック(out/*_gate_pack.json)へのマージも可。(vs_spx流し込みは機能撤去済み・2026-07)
 #
 # 【思想】発見度(Neglect)を中型でも効かせる。<$2Bはmcapプロキシで門が自動加点するが、
 #   $2-100Bの中型は「アナリスト数・機関保有%」の実データが無いと未発見か発見済みか判別できない。

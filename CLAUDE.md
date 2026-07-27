@@ -1,26 +1,44 @@
 # CCF Ω 壊れない複利の門 — パイプライン作業場
 
 個人投資家たっちみーさんの銘柄審査パイプライン。20-30年の長期複利が目的。
-**index.html が門（UI・台帳・売却規律・審査プロトコルの正本）**。Cloudflare Pagesで自動配信される。
+**index.html が門（UI・台帳・売却規律・審査プロトコルの正本）**。GitHub Pagesで自動配信される（2026-07移行。公開URL: touchme1956.github.io/ccf-gate/index.html）。
 
 ## コマンド
 - 年1回（1-2月）発掘: `python run_gate0_local.py`
   - companyfacts.zip(1.4GB)が45日超なら自動で最新に更新（検証母集団=全上場が毎年更新される）
   - holdings.json があれば HOLDINGS/WATCH を自動差し替え（門の「Ⅳ台帳」の保有と揃えて用意）
-  - 出力: gate1_queue.json（待ち行列100社）、gate0_all.csv
+  - 出力: gate1_queue.json（待ち行列＝TOP_N100＋審査優先〔谷/種まき/未成熟〕の合流で約155社）、gate0_all.csv
+- 年1回 日本株発掘（日本株門0・2026-07新設）——二系統あり:
+  - 現行キュー gate0_jp_queue.json（pt順上位50社・2026-07-25）と gate0_jp_all.csv は **EDINET_DB screen_companies版**
+    （roic≥15 & opm≥15 & cagr3y≥5 & equity≥50 → 259社。ptフィールド付きdict形式）
+  - `python run_gate0_jp_local.py` は**別系統**＝EDINET API直採取の二段漏斗（5年7項目採点。出力: 合成スコア順50社の
+    list形式＋gate0_jp_rescue.json＋gate0_jp_all.csv。既存が別ソースなら .prev へ自動退避）。ptは生成しない
+  - どちらも定性・through-cycleは未評価=門2審査（依頼文）へ
 - 四半期 保有点検: `python kessan_check.py`
   - holdings.jsonの保有銘柄について、直近の10-Q/8-Kを確認し、四半期売上YoY・営業利益率の前年同期差・警報(誠/限/集/指針/減損/退任)を機械抽出
   - 出力: out/kessan/{T}_qcheck.txt と要審査フラグ。要審査は門2再審査(依頼文)へ回す。株価は判定に使わない
 - 四半期 決算カレンダー: `python kessan_calendar.py`
   - 監視リスト(保有+質80+)の次回決算日を取得(Alpha Vantage、鍵なしはSEC推定)
   - 出力: kessan_calendar.ics(Googleカレンダー取込=スケジュール連動) と out/next_earnings.json(決算日データ。門内の常時表示は撤去→Googleカレンダーで確認)
+- 四半期の手順書は kessan_checklist.md、監視リストの正本は kanshi_list.json、Ⅶ資産の中身は portfolio.html
+- 夜間バッチ審査は night/（chunkNN.txt=銘柄リスト、agent_prompt_template.txt=審査官指示〔正本はⅡ手順3・改定時は同期〕、
+  progress.json=進行表。出力は out/{T}_gate_pack.json）。詳細は night/README.md
+- 市場データ採取: `python market_fetch.py` → market_data.json（px/per/perF/beta/shy/evebit/analysts/instOwn）
+  → `python market_merge.py` でパックのnull市場欄へ機械充填（定性は触らない）→ 門で再取込するとⅥのE[r]判定が生きる
+- X監視表の再計算（門X4条件同時成立の開通線+階段指値のfair線）: `python x_watch_recalc.py`（四半期保守で新eps反映後に実行）
+- v10影スコア（系列の門・並走検証中）: `python v10_series.py` → out/v10_shadow.json（機械実測5系列70%+定性30%。
+  正本の採点・合否には不使用。仕様と切替条件は V10_SPEC.md——2027-07の較正で新旧の予実を答え合わせて勝った方を正本に。
+  閲覧ページ: v10.html〔Ⅵ買付順位の「✦v10影スコア↗」または /ccf-gate/v10.html〕）
+- 年1回（7月）較正: `python calibration_check.py` → out/calibration.json（門2定性判定の答え合わせ台帳+v9/v10予実。
+  erosion/disrupt遷移行列・f1予実。ルーブリック刻みの変更はこの結果を見てユーザー明示指示時のみ）
+- 夜間チャンク生成: `python3 night/make_chunks.py`（queue/椅子/棚/backlogの未審査分を10社/枚で追加）
 - 月1-2回 採取: `python hachimon_fetch.py`
   - 引数なし=gate1_queue.jsonの未処理上位5社を自動採取。個別指定: `python hachimon_fetch.py NVDA MSFT`
   - 出力: out/{T}_gate_input.json（機械値ドラフト・審査待ち）+ out/{T}_hits.txt（原本キーワード抜粋）
 
 ## 別枠の門（正本ではない・思想不変）
 - **門X = chomirai.html（超未来の門）**: 期待リターン最大化。予知せず E[r]=純還元(現金還元−希薄化)+b×ROIIC+
-  倍率の重力 の分解機・非対称チェック・複利の漏れ・ケリー(¼上限)を裁く対話式ページ。配信後 `/chomirai`
+  倍率の重力 の分解機・非対称チェック・複利の漏れ・ケリー(¼上限)を裁く対話式ページ。配信後 `/ccf-gate/chomirai.html`
 - 順序は **門Ω(壊れないか審査) → 門X(期待値・サイズ)** の二門。門Xは門Ωの採点・売却規律を上書きしない
   ※怪物の門（点火検知・無知の枠）は「証明前の若い急成長を10%枠で取りに行く」ための別枠だったが、
     無知の枠を運用しない方針のため2026-07に撤去（門Ωが構造的に若い怪物を弾くのは思想通り）。履歴に保存
@@ -41,8 +59,8 @@
   リバランス(売却・課税なし)。
 - **網(ETF)＝無条件で即買い**: DCAの土台。下落月ほど口数を多く拾い高値づかみを自動で薄める。門にはかけない
   (指数は常に買ってよい対象)。証券会社の自動積立で機械的に。
-- **城(個別)＝門を通った銘柄にだけ**: Ⅵ買付順位の「投下可」(Ω75+ ∧ 門X4条件成立)のうち目標に最も不足する
-  上位1〜3銘柄へ。指値は門XのX開通ライン。1銘柄は目標ウェイト(質80+=8/77-80=5/75-77=3%×¼ケリー)を超えない。
+- **城(個別)＝門を通った銘柄にだけ**: Ⅵ買付順位の「投下可」(Ω75+ ∧ 門X4条件成立)へ、目標との不足分で按分
+  (B案②＝実装どおり。実質は不足上位に厚い。pc順位=買う順・gap按分=金額の二序列)。指値は階段（1/2をX開通ライン・1/2をfair線=倍率の重力ゼロ線。2026-07改定＝約定期待値12%錨付けの是正）。1銘柄は目標ウェイト(質80+=8/77-80=5/75-77=3%×¼ケリー)を超えない。
 - **投下可がゼロの月**: 個別枠は建てず**網に回す**(1〜2ヶ月開かなければ網へ。開いたら新規資金を城へ戻す)＝現金を
   遊ばせない。個別が割安な時は城が育ち、割高な時は網が育つ自己修正的な呼吸。
 - **売りは不変**(S1/S2/S3・株価では売らない)。DCAは下落でも買い続けるので規律と整合。
