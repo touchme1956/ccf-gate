@@ -185,6 +185,7 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
    <div class="field"><label>現在PER</label><input type="number" id="e_per0" value="30" step="1"></div>
    <div class="field"><label>想定終着PER（n年後）</label><input type="number" id="e_per1" value="18" step="1"><span class="hint">掟六v2＝min(現PER, clamp(8+g,16,30))：g4%→16／g10%→18／g20%→28。上限30・現在PERは超えない（既定18＝既定入力のg10%相当）</span></div>
    <div class="field"><label>年数 n</label><input type="number" id="e_n" value="10" step="1"></div>
+   <div class="field"><label>grower緩和（実証成長≥15×ROIC≥20×堀無傷×質72+）</label><select id="e_gw"><option value="no" selected>非該当（ヘアカット25%）</option><option value="yes">grower（ヘアカット15%）</option></select><span class="hint">2026-07・ユーザー支持の成長連動。閾値7とPER−30%は不変=安全弁は残す</span></div>
    <div class="field"><label>ハードル（要求年率）%</label><input type="number" id="e_hurdle" value="12" step="0.5"><span class="hint">指数の期待（名目≈7〜10%）を明確に超える水準</span></div>
   </div>
   <div class="res" id="e_out"></div>
@@ -195,7 +196,7 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
   ① E[r]（純還元＋成長＋倍率の重力） ≥ ハードル（既定12%）<br>
   ② 投資リターン（純還元＋成長の二項のみ） ≥ 10% ——<b>倍率が動かなくても勝てる</b>こと<br>
   ③ 倍率寄与 ≤ 30% ——E[r]が倍率頼みでない（正本Ⅵと同式・倍率拡大の加点自体は常に無効化＝掟六。終着PER≤現PERなら寄与0で自動成立。寄与率の年率化はn年入力に従う——正本Ⅵは10年固定＝n=10で完全一致）<br>
-  ④ ストレス（成長−25% ∧ 終着PER−30%）でも E[r] ≥ 7% ——<b>読み違えても指数並みが残る</b>こと<br>
+  ④ ストレス（成長−25%〔grower＝実証成長≥15×ROIC≥20×堀無傷×質72+は−15%〕 ∧ 終着PER−30%）でも E[r] ≥ 7% ——<b>読み違えても指数並みが残る</b>こと<br>
   <span class="rd">この四条件の意味：未来を当てなくても、①期待値が傾き ②事業だけで勝て ③気分に依存せず ④間違えても死なない。予知の代わりに「間違え方の安全」を買う。ストレスは倍率だけでなく<b>成長も25%割り引く</b>（ROIIC逓減・読み違えの非対称を正す）。</span>
  </div>
 </div>
@@ -324,9 +325,9 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
 <div class="block">
  <div class="tag">Watch Lines · 自動生成 2026-07-23（掟六v2成長連動）</div>
  <div class="h2">X開通ライン — 裁きⅠが開く値段</div>
- <p class="intro">門Ωの審査280社のうち、<b>還元＋実証成長が12%以上ある銘柄</b>について、裁きⅠの4条件が<b>同時に</b>成立する最大PER（＝X開通PER・2026-07修正: 旧版は①のみ解いておりストレス④不成立の線を出していた）と対応株価を逆算した監視表。<b>指値は階段で置く</b>——下段1/2＝X開通ライン(約定時E[r]=12)・上段1/2＝fair線(倍率の重力ゼロ・約定時E[r]=earned)。開通線一本だとエントリー期待値が12%に錨付けされるための是正。<b>表示のみ・正本の採点には不干渉</b>。eps一定仮定のため決算ごとに更新が必要。ASMLはADRのため参考価格。</p>
+ <p class="intro">門Ωの審査280社のうち、<b>還元＋実証成長が12%以上ある銘柄</b>について、裁きⅠの4条件が<b>同時に</b>成立する最大PER（＝X開通PER・2026-07修正: 旧版は①のみ解いておりストレス④不成立の線を出していた）と対応株価を逆算した監視表。<b>指値は階段で置く</b>——先段1/2＝X開通ライン(浅い・先に約定・E[r]=12)・深段1/2＝fair線(深い・後に約定・E[r]=earned)。開通線一本だとエントリー期待値が12%に錨付けされるための是正。<b>表示のみ・正本の採点には不干渉</b>。eps一定仮定のため決算ごとに更新が必要。ASMLはADRのため参考価格。</p>
  <table class="dt">
-  <thead><tr><th>銘柄</th><th>門Ω</th><th>投資R(還元+成長)</th><th>現PER</th><th>X開通PER</th><th>開通株価(下段)</th><th>fair線(上段)</th><th>必要変化</th></tr></thead>
+  <thead><tr><th>銘柄</th><th>門Ω</th><th>投資R(還元+成長)</th><th>現PER</th><th>X開通PER</th><th>開通株価(先)</th><th>fair線(深)</th><th>必要変化</th></tr></thead>
   <tbody id="kanshiBody"><tr><td colspan="8" style="color:var(--muted)">gate1_x_watch.json から自動読込中…（表示されない場合は同ファイルを直接参照。旧直書き値は①のみ解の不整合があったため撤去）</td></tr></tbody>
  </table>
 <script>
@@ -412,7 +413,8 @@ function calcEngine(){
  const earned = netY + g;                                     // 投資リターン（倍率抜き）
  const er = earned + multEff;
  // ストレス: 成長−25%(ROIIC逓減・読み違え) かつ 終着PER−30%。どちらも下方向のみ
- const gS = g * 0.75;
+ const hc=(document.getElementById('e_gw')&&document.getElementById('e_gw').value==='yes')?0.85:0.75; // grower緩和(正本Ⅵと同期)
+ const gS = g * hc;
  const rawMultS = per0>0 && per1>0 ? (Math.pow(per1*0.7/per0, 1/n) - 1) * 100 : 0;
  const multEffS = Math.min(rawMultS, 0);
  const erStress = netY + gS + multEffS;
@@ -442,7 +444,7 @@ function calcEngine(){
   mk(c1, `① E[r] ${pct(er)} ≥ ハードル ${hurdle.toFixed(1)}%`) +
   mk(c2, `② 投資リターン ${pct(earned)} ≥ 10%（倍率が動かなくても勝てる）`) +
   mk(c3, `③ 倍率寄与 ${rawMult<=0?'0%（終着PER≤現在PER）':(mshare.toFixed(0)+'%')} ≤ 30%（倍率頼みでない・加点は常に無効）`) +
-  mk(c4, `④ ストレス（成長−25%∧終着PER−30%）でも ${pct(erStress)} ≥ 7%（読み違えても指数並み）`) +
+  mk(c4, `④ ストレス（成長−${((1-hc)*100).toFixed(0)}%∧終着PER−30%）でも ${pct(erStress)} ≥ 7%（読み違えても指数並み）`) +
   `<div class="verdict ${cls}">${verdict}</div>
    <span style="margin-left:12px;font-size:12.5px;color:var(--muted)">${passed}/4 条件成立</span>`;
 }
@@ -498,7 +500,7 @@ function calcKelly(){
    <div class="chk"><span class="m wr">⚠</span><span>これは<b>単一銘柄</b>の式。篭の銘柄が相関（同テーマ・同コホート）するなら同時破綻するため、相関する塊は「1つの賭け」と数え、塊の合計にも四分の一ケリーの上限を適用する。</span></div>`;
 }
 
-['e_y','e_dil','e_roiic','e_b','e_per0','e_per1','e_n','e_hurdle'].forEach(id=>document.getElementById(id).addEventListener('input',calcEngine));
+['e_y','e_dil','e_roiic','e_b','e_per0','e_per1','e_n','e_hurdle','e_gw'].forEach(id=>document.getElementById(id).addEventListener('input',calcEngine));
 ['d_gross','d_fee','d_tax','d_beh','d_infl','d_n'].forEach(id=>document.getElementById(id).addEventListener('input',calcDrag));
 ['k_p','k_a','k_c'].forEach(id=>document.getElementById(id).addEventListener('input',calcKelly));
 calcEngine(); calcDrag(); calcKelly();
