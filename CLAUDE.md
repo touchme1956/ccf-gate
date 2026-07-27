@@ -24,6 +24,10 @@
 - 夜間バッチ審査は night/（chunkNN.txt=銘柄リスト、agent_prompt_template.txt=審査官指示〔正本はⅡ手順3・改定時は同期〕、
   progress.json=進行表。出力は out/{T}_gate_pack.json）。詳細は night/README.md
 - 市場データ採取（発見度negS用のanalysts/instOwn充填）: `python market_fetch.py` → market_data.json
+- X監視表の再計算（門X4条件同時成立の開通線+階段指値のfair線）: `python x_watch_recalc.py`（四半期保守で新eps反映後に実行）
+- 年1回（7月）較正: `python calibration_check.py` → out/calibration.json（門2定性判定の答え合わせ台帳。
+  erosion/disrupt遷移行列・f1予実。ルーブリック刻みの変更はこの結果を見てユーザー明示指示時のみ）
+- 夜間チャンク生成: `python3 night/make_chunks.py`（queue/椅子/棚/backlogの未審査分を10社/枚で追加）
 - 月1-2回 採取: `python hachimon_fetch.py`
   - 引数なし=gate1_queue.jsonの未処理上位5社を自動採取。個別指定: `python hachimon_fetch.py NVDA MSFT`
   - 出力: out/{T}_gate_input.json（機械値ドラフト・審査待ち）+ out/{T}_hits.txt（原本キーワード抜粋）
@@ -52,7 +56,7 @@
 - **網(ETF)＝無条件で即買い**: DCAの土台。下落月ほど口数を多く拾い高値づかみを自動で薄める。門にはかけない
   (指数は常に買ってよい対象)。証券会社の自動積立で機械的に。
 - **城(個別)＝門を通った銘柄にだけ**: Ⅵ買付順位の「投下可」(Ω75+ ∧ 門X4条件成立)のうち目標に最も不足する
-  上位1〜3銘柄へ。指値は門XのX開通ライン。1銘柄は目標ウェイト(質80+=8/77-80=5/75-77=3%×¼ケリー)を超えない。
+  上位1〜3銘柄へ。指値は階段（1/2をX開通ライン・1/2をfair線=倍率の重力ゼロ線。2026-07改定＝約定期待値12%錨付けの是正）。1銘柄は目標ウェイト(質80+=8/77-80=5/75-77=3%×¼ケリー)を超えない。
 - **投下可がゼロの月**: 個別枠は建てず**網に回す**(1〜2ヶ月開かなければ網へ。開いたら新規資金を城へ戻す)＝現金を
   遊ばせない。個別が割安な時は城が育ち、割高な時は網が育つ自己修正的な呼吸。
 - **売りは不変**(S1/S2/S3・株価では売らない)。DCAは下落でも買い続けるので規律と整合。

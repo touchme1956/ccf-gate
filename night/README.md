@@ -7,6 +7,7 @@ gate1_queue の未審査銘柄を約10社ずつのチャンクに割り、夜間
 - `progress.json` — 進行表。`fetched`（採取済）→ `pending_review`（審査待ち）→ `reviewed`（審査済）
 - `kenshi_helper.py` — 検死用: companyfacts.zip から年次系列（売上/営利/OCF/capex/株数…）を機械表示
 - `make_copypage.py` — 完成パックのコピー用ページ生成
+- `make_chunks.py` — 未審査分のチャンク自動生成（queue/椅子/棚/backlog−審査済−SKIP。10社/枚・連番継続）
 
 出力は `out/{T}_gate_pack.json`（完成パック）。パックは門のⅢ採点機「＋取り込む」へ。
 機械値だけのドラフト（`{T}_gate_input.json`）は台帳データではない（CLAUDE.md 絶対のルール2）。
