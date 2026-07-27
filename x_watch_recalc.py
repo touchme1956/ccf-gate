@@ -41,6 +41,9 @@ try:
         per, px = o.get("per"), o.get("px")
         if not per or not px:
             print(f"…{t}: per/px未充填のため追加不可(market_fetch→market_mergeで充填してから再実行)"); continue
+        import re as _re
+        if _re.match(r"^\d{4,5}$", str(t)) and float(o.get("roic") or 0) > 40 and not float(o.get("roicEx") or 0) > 0:
+            print(f"▲{t}: 日本株roic>40%かつroicEx無し=検死未了のため追加不可(門式現金控除ROICで再審査)"); continue
         shy = o.get("shy") or 0.0
         cagr = float(o.get("cagr") or 0)
         roicg = float(o.get("roicg") or o.get("roic") or 0)
@@ -75,6 +78,9 @@ for l in d["lines"]:
         if os.path.exists(fp2):
             pk = json.load(open(fp2, encoding="utf-8"))
             qok = (l.get("omega") or 0) >= 72 or (l.get("omega") is None and l.get("otier") == "kanshi")
+            import re as _re2
+            if _re2.match(r"^\d{4,5}$", str(l.get("ticker"))) and float(pk.get("roic") or 0) > 40 and not float(pk.get("roicEx") or 0) > 0:
+                qok = False  # JP検死未了はgrower不適格(掟一=怪しい実測は使わない)
             if qok and float(pk.get("cagr") or 0) >= 15 and float(pk.get("roic") or 0) >= 20 \
                and (pk.get("erosion") or "none") == "none" and (pk.get("disrupt") or "settled") != "threat":
                 hc = 0.85

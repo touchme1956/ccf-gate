@@ -1534,6 +1534,7 @@ function compute(){
   const topBlock=[]; if(erosion==='active')topBlock.push('堀の侵食進行'); if(disrupt==='threat')topBlock.push('破壊優勢');
   if(topBlock.length)evalScore=Math.min(evalScore,79.9);
   // v6.2の締めを可視化
+  if(roic>40&&!(nn('roicEx')!=null&&n('roicEx')>0))psig.innerHTML+=`<div class="flag f-warn"><i>!</i><div><b>ROIC ${roic.toFixed(0)}%は現金控除前の過大の疑い：</b>net-cash/資産軽量だと投下資本が極小化しROICが無意味に膨張する（EDINET生値で顕著）。門式現金控除ROICで再計算しroicExへ。<b>日本株はroicEx無しだと取込・門X判定から外れる</b>（採点は不変・表示のみ）。</div></div>`;
   if(sbc>=12)psig.innerHTML+=`<div class="flag f-warn"><i>!</i><div><b>SBC化粧落とし −${sbcPen.toFixed(1)}：</b>株式報酬${sbc.toFixed(0)}%が希薄化として実コスト。利益率・FCFはSBC控除後で読め。</div></div>`;
   if(erosion!=='none')psig.innerHTML+=`<div class="flag ${erosion==='active'?'f-cut':'f-warn'}"><i>${erosion==='active'?'✕':'!'}</i><div><b>堀の侵食${erosion==='active'?'進行 −12':'兆候 −6'}：</b>主力に競合の旗。${erosion==='active'?'最上位ティア不可。':''}</div></div>`;
   if(disrupt!=='settled')psig.innerHTML+=`<div class="flag f-warn"><i>!</i><div><b>破壊リスク${disrupt==='threat'?'優勢（未来−10）':'未決'}：</b>構造変化の決着前。${disrupt==='threat'?'最上位ティア不可。':'（中立——ティアはキャップしない）'}</div></div>`;
@@ -1813,19 +1814,28 @@ function applyFields(d){
 var CCF_DRAFTKEYS=['dom','irr','rep','dur','f1','f2','f3','f4','f5','p1','p2','p3','p4'];
 function ccfEmpty(v){return v===undefined||v===null||v===''||v==='null';}
 function ccfIsDraftObj(o){if(!o||typeof o!=='object')return false;return CCF_DRAFTKEYS.every(function(k){return ccfEmpty(o[k]);});}
+/* v9.9.33 JP-ROIC検問: 日本株(4-5桁コード)でroic>40%かつ門式現金控除ROIC(roicEx)が無い納品は検死未了として審査待ちへ隔離。
+   EDINET生ROICはnet-cash/資産軽量で異常膨張する既知アーティファクト(門0-JP実測: キュー50社全てroic>40%・33社>100%・最大4275%)。
+   これがΩ・門X・growerを連鎖的に甘くし「買えるのが日本株ばかり」を生んでいた——検死を通った日本株だけが台帳に入れる */
+function ccfJpRoicSuspect(o){if(!o||typeof o!=='object')return false;
+  var nm=String(o.nm||'').trim();
+  if(!/^\d{4,5}(\s|$|\.)/.test(nm))return false;
+  var r=parseFloat(o.roic), rx=parseFloat(o.roicEx);
+  return isFinite(r)&&r>40&&!(isFinite(rx)&&rx>0);}
 async function ccfShelveDrafts(list){for(const o of list){const nm=((o&&o.nm)||'').toString().trim();if(!nm)continue;try{await store.set('g7wait:'+safeKey(nm),JSON.stringify({data:o,ts:Date.now()}));}catch(e){}}}
 async function ccfSweepDrafts(){
   if(window._ccfSwept)return; window._ccfSwept=true;
   let keys=[];try{const r=await store.list('g7:');keys=r?r.keys:[];}catch(e){return;}
   for(const k of keys){let e;try{e=await store.get(k);}catch(_){continue;}if(!e)continue;let o;try{o=JSON.parse(e.value);}catch(_){continue;}
-    if(o&&o.data&&ccfIsDraftObj(o.data)){const sk=k.slice(3);try{await store.set('g7wait:'+sk,JSON.stringify({data:o.data,ts:o.ts||Date.now()}));await store.delete(k);}catch(_){}}}
+    if(o&&o.data&&(ccfIsDraftObj(o.data)||ccfJpRoicSuspect(o.data))){const sk=k.slice(3);try{await store.set('g7wait:'+sk,JSON.stringify({data:o.data,ts:o.ts||Date.now()}));await store.delete(k);}catch(_){}}}
 }
 function ccfCopyAskJP(btn){
   var t=($('jpNm')&&$('jpNm').value||'').trim();
   if(!t){if(btn){var o=btn.textContent;btn.textContent='銘柄名を入力';setTimeout(function(){btn.textContent=o;},1500);}return;}
   var base=ccfAskText(t); var i=base.indexOf('2. 検死');
   var head='審査(日本株): '+t+'\n\n【門2審査プロトコル v1・日本株版｜厳守】機械採取パイプラインの対象外のため、原本から自力採取して審査する。\n\n1. 原本を読む（Web検索）\n   EDINETの有価証券報告書・最新の決算短信・決算説明資料を読む。数値（売上/営業利益/純利益/OCF/capex/株数の5年系列/のれん/自己資本/有利子負債）も原本から自ら採る。通貨はJPYで統一（px=円）。株式分割・自社株買いは株数系列で確認。限/集/誠/蝕/堀/循は有報の「事業等のリスク」「経営者による分析」から抜粋し根拠を付す。\n\n';
-  ccfCopyStr(head+base.slice(i), btn);
+  var jprules='【日本株の必須規約(2026-07)】\n・PERはTTM実績EPSで算出(会社予想EPSは禁止——予想はperFへ分離。日本のPER慣行=会予ベースは米国TTMと土俵が揃わない)\n・roicはEDINET/有報の生値を使わない。門式=NOPAT÷(投下資本−過剰現金)で必ず再計算し、roicとroicExの両方に記す。roicEx空欄のroic>40%納品は門が自動で審査待ちへ差し戻す(net-cash/資産軽量アーティファクト対策)\n\n';
+  ccfCopyStr(head+jprules+base.slice(i), btn);
 }
 function ccfCopyStr(txt,btn){var o=btn?btn.textContent:'';function ok(){if(btn){btn.textContent='コピー済 \u2713';setTimeout(function(){btn.textContent=o;},1600);}}
   try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(ok,function(){});return;}}catch(e){}
@@ -1936,8 +1946,10 @@ async function processBatch(t){
   try{d=JSON.parse(am?am[0]:(t.match(/\{[\s\S]*\}/)||[t])[0]);}catch(e){uiNotice('JSONの形式が読めません。Claudeの返答からJSON部分だけ貼ってください。');return;}
   const arr0=Array.isArray(d)?d:[d];
   const drafts=arr0.filter(ccfIsDraftObj);
-  const arr=arr0.filter(function(o){return !ccfIsDraftObj(o);});
+  const jpsus=arr0.filter(function(o){return !ccfIsDraftObj(o)&&ccfJpRoicSuspect(o);});
+  const arr=arr0.filter(function(o){return !ccfIsDraftObj(o)&&!ccfJpRoicSuspect(o);});
   if(drafts.length){ await ccfShelveDrafts(drafts); }
+  if(jpsus.length){ await ccfShelveDrafts(jpsus); uiNotice('日本株'+jpsus.length+'件を審査待ちへ隔離: roic>40%なのに門式現金控除ROIC(roicEx)が無い=EDINET生値の疑い。検死(roicEx)を埋めて再納品',8000); }
   if(!arr.length){ await renderLedger(); const bb=$('batchBox'); if(bb)bb.innerHTML='<div style="background:var(--panel2);border:1px solid rgba(84,184,138,.5);border-radius:10px;padding:12px 14px;margin-top:12px;color:#8fc9a4;font-size:13px">全'+drafts.length+'件は<b>審査待ち</b>（機械値のみ）だったので台帳に入れず隣離した。下の「審査待ち」棚から依頼文をClaudeへ。</div>'; return; }
   const results=[],errors=[];
   for(const one of arr){ applyFields(one); compute(); const info=await autoSave('JSON取込',arr.length>1); if(info){info.error?errors.push(info):results.push(info);} if(arr.length>5)await _sleep(130); }
@@ -2269,7 +2281,8 @@ async function renderPlan(){
     const per=num(it.d.per),ev=num(it.d.evebit),shy=num(it.d.shy),roicV=num(it.d.roic),perF=num(it.d.perF);
     const grV=perF>0&&per>0?(per/perF-1)*100:(it.d.gr&&it.d.gr!=='na'?num(it.d.gr):NaN);
     // v9.9.26: 余地計算に採点機と同じgrower緩和(v9.9.9)を適用——grower銘柄の余地が旧50/35基準で過小表示される乖離を解消
-    const growerR=(s>=72&&num(it.d.cagr)>=15&&roicV>=20&&(it.d.erosion||'none')==='none'&&(it.d.disrupt||'settled')!=='threat');
+    const jpSus=(typeof ccfJpRoicSuspect==='function')&&ccfJpRoicSuspect(it.d); // v9.9.33: 検死未了のJP高ROICは実証値と認めない(掟一)
+    const growerR=(!jpSus&&s>=72&&num(it.d.cagr)>=15&&roicV>=20&&(it.d.erosion||'none')==='none'&&(it.d.disrupt||'settled')!=='threat');
     const perL=growerR?62:50;
     const evL=(roicV>=30?40:roicV<15?20:35)*(growerR?1.3:1);
     let room=null;
@@ -2284,7 +2297,7 @@ async function renderPlan(){
     const cagrV=num(it.d.cagr);  // v9.9.15: niV/mcapV は単位ロバスト化でbRから不要になり削除(ni=mcap/per恒等)
     const roicgV=num(it.d.roicg)||num(it.d.roic);
     let xEr=null, xPass=null, gOut=null;
-    if(per>0&&roicgV>0){
+    if(per>0&&roicgV>0&&!jpSus){
       // v9.9.15 単位ロバスト化: 自社株買い率bR=1−(還元額/純利益)。恒等 ni=mcap/per より niが消え
       //   bR=1−shy%×per となる(ni・mcapの単位不整合バグを原理的に排除。旧式は ni$M×mcap$B のズレでbR≈1に張付き偽・門X通過を生んでいた)。shy欠損時は従来0.4フォールバック維持
       const bR=(it.d.shy!=null)?Math.max(0,Math.min(1,1-(shy/100)*per)):0.4;
