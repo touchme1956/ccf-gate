@@ -81,24 +81,35 @@ for l in d["lines"]:
                 nl["grower"] = True
     except Exception:
         pass
-    stress_floor = shy + hc * g - 3.5   # p≤fair帯のストレス値(定数)
-    if earned < 12:
-        nl.update(x_open_per=None, x_open_px=None, drop_pct=None,
-                  fair_per=None, fair_px=None,
-                  status="値段では開かない(還元+実証成長<12)")
-    elif stress_floor < 7:
-        nl.update(x_open_per=None, x_open_px=None, drop_pct=None,
-                  fair_per=None, fair_px=None,
-                  status="値段では開かない(ストレス④が価格で解けない=成長×還元が薄い)")
+# 2026-07(ユーザー指示): shyを価格連動で解く——同じ還元ドル額なら安値ほど利回りが上がる(shy(p)=shy0×p0/p)。
+    # 旧実装はshyを現値固定で解いており、高還元の成熟優良で「値段では開かない」が過剰に絶対的だった。
+    # 倍率拡大は相変わらず不計上(掟六)。①(E[r]≥12)と④(ストレス≥7)を同時に満たす最大価格を二分法で求める。
+    C7 = (0.7 ** 0.1 - 1) * 100  # p≤fair帯のストレス倍率項(定数≈-3.5)
+    def cond(pp):
+        sy = shy * (per / pp)  # shy0×(p0/p)——PER比=価格比(eps一定仮定)
+        m1 = ((min(pp, fair) / pp) ** 0.1 - 1) * 100
+        m4 = ((min(pp, fair) * 0.7 / pp) ** 0.1 - 1) * 100 if pp > fair else C7
+        return (sy + g + m1 >= 12) and (sy + hc * g + m4 >= 7)
+    if cond(per):
+        popen = per
+        nl.update(x_open_per=round(per, 1), x_open_px=px, drop_pct=0.0, status="既に開通圏——再採点で確認")
+    elif not cond(per * 0.02):
+        popen = None
+        nl.update(x_open_per=None, x_open_px=None, drop_pct=None, fair_per=None, fair_px=None,
+                  status="値段では開かない(還元ほぼゼロ×エンジン不足——価格が利回りを生まない)")
     else:
-        p1 = fair / (1 + (12 - earned) / 100) ** 10
-        p4 = 0.7 * fair / (1 + (7 - shy - hc * g) / 100) ** 10
-        popen = min(p1, p4)
+        lo, hi = per * 0.02, per
+        for _ in range(80):
+            mid = (lo + hi) / 2
+            if cond(mid): lo = mid
+            else: hi = mid
+        popen = lo
         nl["x_open_per"] = round(popen, 1)
         nl["x_open_px"] = round(px * popen / per, 2)
         nl["drop_pct"] = round((popen / per - 1) * 100, 1)
-        # 階段上段: fair線(倍率の重力ゼロ・約定時E[r]=earned)。現PERがfair以下なら既にfair圏。
-        # ④拘束銘柄では開通線がfair線を下回りうる——上段も開通線にクリップ(どの段の約定も4条件成立圏内)
+        nl["status"] = "監視" if nl["drop_pct"] >= -70 else f"監視(開通{nl['drop_pct']}%＝事実上遠い・還元が細い)"
+    if popen is not None:
+        # 階段深段: fair線。④拘束で開通線がfairを下回る場合は開通線にクリップ(全段が4条件成立圏内)
         fair_eff = min(fair, popen)
         if fair_eff < per:
             nl["fair_per"] = round(fair_eff, 1)
@@ -106,7 +117,6 @@ for l in d["lines"]:
         else:
             nl["fair_per"] = round(per, 1)
             nl["fair_px"] = px
-        nl["status"] = "既に開通圏——再採点で確認" if popen >= per else "監視"
     out.append(nl)
 
 d["lines"] = out
@@ -114,7 +124,7 @@ d["generated"] = str(date.today())
 d["method"] = ("門X裁きⅠの4条件を同時に満たす最大PERから逆算(2026-07修正: 旧版は①E[r]≥12のみを解いており"
                "④ストレス〔成長−25%∧終着PER−30%≥7〕不成立の開通線を出していた)。掟六v2成長連動: "
                "終着PER=min(現PER,clamp(8+g,16,30))。階段指値=先段1/2をx_open(浅い・先に約定)・深段1/2を"
-               "fair線(深い・E[r]=earned)に置く。grower(実証成長×資本効率×堀無傷×質72+)は④ヘアカット15%——約定期待値を12%固定から12〜15%帯へ。"
+               "fair線(深い)に置く。shyは価格連動(shy(p)=shy0×p0/p・2026-07)＝同じ還元ドル額を安い時価で割り直す。grower(実証成長×資本効率×堀無傷×質72+)は④ヘアカット15%——約定期待値を12%固定から12〜15%帯へ。"
                "eps一定仮定で株価換算。earned<12またはストレス下限(shy+0.75g−3.5)<7は値段では開かない")
 json.dump(d, open(P, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 for l in out:
