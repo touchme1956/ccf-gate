@@ -12,6 +12,11 @@
 4. **Claude Codeから使う**: スマホのClaudeアプリ → 「コード」 → `ccf-gate` を開く →
    「採取して」「発掘して」と頼むだけ。詳しい約束事は CLAUDE.md に書いてある
 
+## 同梱ページ・データ
+- `portfolio.html` — Ⅶ資産タブの中身（iframe）。網/城の全保有・出口判定の色丸・完全バックアップ/復元
+- `kanshi_list.json` — 決算監視の正本リスト（kessan_check / kessan_calendar の入力）
+- `kessan_checklist.md` — 決算点検の手順書（運用サイクルの全体像）
+
 ## 別枠の門（＝門X 一本）
 - `chomirai.html` — **超未来の門（CCF X）**: 期待リターン最大化の別枠。予知はせず、
   期待リターンの三項分解（純還元＋b×ROIIC＋倍率の重力）・非対称チェック・複利の漏れ・

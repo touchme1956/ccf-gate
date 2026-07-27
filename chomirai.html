@@ -130,7 +130,7 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
   <div class="row"><div class="ic">消</div><div class="tx"><b>すること③</b> — コスト・税・回転・行動ギャップという「確実にリターンを削る敵」を先に殺す。予知は不確実だが、<b>敵の除去は確実に効く</b>（裁きⅢ）。</div></div>
   <div class="row"><div class="ic">賭</div><div class="tx"><b>すること④</b> — 賭けサイズを気分でなくケリー基準で決める。長期の富は算術平均でなく<b>幾何平均</b>が支配し、幾何平均は賭けすぎで死ぬ（賭け方）。</div></div>
  </div>
- <div class="cut gold"><b>門Ωとの分業：</b>正本の門Ω（壊れない複利の門）は「<b>壊れず優れているか</b>」を裁く守りの門。この門Xは「<b>どれだけ増えるか・どう賭けるか</b>」を裁く攻めの門。順序は必ず <b>Ω → X</b>。Ωを通らぬ銘柄に門Xの通過はない（無知の枠の小口実験のみ例外、後述）。</div>
+ <div class="cut gold"><b>門Ωとの分業：</b>正本の門Ω（壊れない複利の門）は「<b>壊れず優れているか</b>」を裁く守りの門。この門Xは「<b>どれだけ増えるか・どう賭けるか</b>」を裁く攻めの門。順序は必ず <b>Ω → X</b>。Ωを通らぬ銘柄に門Xの通過はない（例外なし——旧・無知の枠は2026-07に撤去）。</div>
 </div>
 </div>
 
@@ -173,7 +173,7 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
 <div class="block">
  <div class="tag">X-Engine · Expected Return</div>
  <div class="h2">E[r] ＝ 還元利回り ＋ b×ROIIC ＋ 倍率の重力</div>
- <p class="intro">門Ωの審査で使う数字（FCF・ROIIC・再投資率）をそのまま流用して、その銘柄の<b>期待年率リターン</b>を見積もる。数字は <code>out/{T}_gate_input.json</code> の機械値から取ること。分解は株主利回り式 <code>E[r] ＝ 純還元（現金還元−希薄化） ＋ 総利益成長（b×ROIIC） ＋ 倍率の重力</code>。<b>希薄化（SBC）</b>は小型グロース最大の隠れ漏れゆえ独立に控除する。<b>倍率の重力</b>は下方向のみ計上し、終着PERを現在超に置いても<b>加点しない</b>（楽観の逃げ道を塞ぐ）。<b>ただし終着PERは成長連動</b>（掟六v2・2026-07-23）：<b>高成長はPERが高くても複利をもたらす</b>ため、成熟株と成長株を一律22で測らない。妥当な終着PER＝成熟g4%≈22／持続成長する高ROIC≈28-30（McKinsey価値ドライバーで検証・上限30）。実証gに連動させ現在PERは超えない＝ハイプと倍率拡大は封じたまま、成長の複利には妥当な倍率を許す。</p>
+ <p class="intro">門Ωの審査で使う数字（FCF・ROIIC・再投資率）をそのまま流用して、その銘柄の<b>期待年率リターン</b>を見積もる。数字は <code>out/{T}_gate_input.json</code> の機械値から取ること。分解は株主利回り式 <code>E[r] ＝ 純還元（現金還元−希薄化） ＋ 総利益成長（b×ROIIC） ＋ 倍率の重力</code>。<b>希薄化（SBC）</b>は小型グロース最大の隠れ漏れゆえ独立に控除する。<b>倍率の重力</b>は下方向のみ計上し、終着PERを現在超に置いても<b>加点しない</b>（楽観の逃げ道を塞ぐ）。<b>ただし終着PERは成長連動</b>（掟六v2・2026-07-23）：<b>高成長はPERが高くても複利をもたらす</b>ため、成熟株と成長株を一律22で測らない。終着PER＝min(現PER, clamp(8+g,16,30))：g4%→16／g10%→18／g20%→28（McKinseyの理論フェアは成熟g4%≈22だが、門は保守側の8+g〔下限16〕で頭を抑える・上限30）。実証gに連動させ現在PERは超えない＝ハイプと倍率拡大は封じたまま、成長の複利には妥当な倍率を許す。</p>
 
  <div class="panel">
   <div class="panel-h"><h3>期待リターン計算機</h3><span class="pass">全項目：年率%・実数で入力</span></div>
@@ -183,7 +183,7 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
    <div class="field"><label>ROIIC（増分ROIC）%</label><input type="number" id="e_roiic" value="25" step="1"><span class="hint">営業利益の増分 ÷ 投下資本の増分</span></div>
    <div class="field"><label>再投資率 b %</label><input type="number" id="e_b" value="40" step="1"><span class="hint">利益のうち事業に再投資する割合</span></div>
    <div class="field"><label>現在PER</label><input type="number" id="e_per0" value="30" step="1"></div>
-   <div class="field"><label>想定終着PER（n年後）</label><input type="number" id="e_per1" value="22" step="1"><span class="hint">成長連動の妥当倍率：成熟g≤4%≈16-22／持続成長g10%≈18-30／高成長g20%≈28-30（McKinsey価値ドライバー(1−g/ROIC)/(WACC−g)）。上限30・現在PERは超えない</span></div>
+   <div class="field"><label>想定終着PER（n年後）</label><input type="number" id="e_per1" value="18" step="1"><span class="hint">掟六v2＝min(現PER, clamp(8+g,16,30))：g4%→16／g10%→18／g20%→28。上限30・現在PERは超えない（既定18＝既定入力のg10%相当）</span></div>
    <div class="field"><label>年数 n</label><input type="number" id="e_n" value="10" step="1"></div>
    <div class="field"><label>ハードル（要求年率）%</label><input type="number" id="e_hurdle" value="12" step="0.5"><span class="hint">指数の期待（名目≈7〜10%）を明確に超える水準</span></div>
   </div>
@@ -194,7 +194,7 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
   <span class="lbl">裁きⅠの通過条件（四つ全て）</span>
   ① E[r]（純還元＋成長＋倍率の重力） ≥ ハードル（既定12%）<br>
   ② 投資リターン（純還元＋成長の二項のみ） ≥ 10% ——<b>倍率が動かなくても勝てる</b>こと<br>
-  ③ 終着PER ≤ 現在PER ——倍率拡大を当てにしない（現在超を入力しても加点は無効化される）<br>
+  ③ 倍率寄与 ≤ 30% ——E[r]が倍率頼みでない（正本Ⅵと同式。倍率拡大の加点自体は常に無効化＝掟六。終着PER≤現PERなら寄与0で自動成立）<br>
   ④ ストレス（成長−25% ∧ 終着PER−30%）でも E[r] ≥ 7% ——<b>読み違えても指数並みが残る</b>こと<br>
   <span class="rd">この四条件の意味：未来を当てなくても、①期待値が傾き ②事業だけで勝て ③気分に依存せず ④間違えても死なない。予知の代わりに「間違え方の安全」を買う。ストレスは倍率だけでなく<b>成長も25%割り引く</b>（ROIIC逓減・読み違えの非対称を正す）。</span>
  </div>
@@ -283,7 +283,7 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
   <div class="grid2">
    <div class="field"><label>勝率 p %</label><input type="number" id="k_p" value="55" step="1"><span class="hint">10年でハードルを超える主観確率。60%超と書く前に疑え</span></div>
    <div class="field"><label>勝ち幅 %（勝った時の上昇）</label><input type="number" id="k_a" value="100" step="10"><span class="hint">例：勝てば資産が倍→100</span></div>
-   <div class="field"><label>負け幅 %（負けた時の下落）</label><input type="number" id="k_c" value="100" step="10"><span class="hint">無知の枠は<b>全損前提＝100</b>。部分損失なら実際の下落幅を</span></div>
+   <div class="field"><label>負け幅 %（負けた時の下落）</label><input type="number" id="k_c" value="100" step="10"><span class="hint">全損前提なら<b>100</b>（保守既定）。部分損失なら実際の下落幅を</span></div>
   </div>
   <div class="res" id="k_out"></div>
  </div>
@@ -291,7 +291,7 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
  <div class="fm gold">
   <span class="lbl">配分の規約（門Ωの城と網に従属）</span>
   網（指数）＝土台。城（Ω通過の個別株）＝上乗せ。<b>門Xはその城の中の「厚みの順位」を決める</b>：裁きⅠのE[r]が高く、裁きⅡの✓が多い銘柄ほど厚く（ただし1銘柄 ≤ 四分の一ケリー）。<br>
-  <b>無知の枠</b>（Ω未通過の実験枠）＝資本の5〜10%・全損前提・門Xの裁きⅠ〜Ⅲを通った場合のみ。これが唯一のΩ例外。<br>
+  <b>無知の枠は運用しない（2026-07撤去）</b>——Ω未通過の実験枠は設けない。門Ωが証明前の若い急成長を構造的に弾くのは思想通りで、例外は作らない。<br>
   <span class="rd">レバレッジは用いない。幾何平均最大化の観点でも、借入は左裾（破滅）を太らせ、事実一のσ²項を膨らませて自滅する。</span>
  </div>
 </div>
@@ -361,7 +361,7 @@ footer{padding:44px 20px 60px;text-align:center;color:#5d6a80;font-size:12.5px;b
   <div class="row"><div class="ic">五</div><div class="tx">賭けサイズは<b>ケリーの四分の一以下</b>。確信が強い日ほど、推定誤差を疑う。</div></div>
   <div class="row"><div class="ic">六</div><div class="tx"><b>倍率拡大を当てにしない</b>。PERの膨張は貰い物であり、計画に入れた瞬間に皮算用になる。</div></div>
   <div class="row"><div class="ic">七</div><div class="tx"><b>退屈に耐える</b>。測るのは年1回。動かない年が最も稼ぐ年である。</div></div>
-  <div class="row"><div class="ic">八</div><div class="tx">門Ωを通らぬ銘柄に大枠を賭けない。例外は<b>無知の枠5〜10%・全損前提</b>のみ。</div></div>
+  <div class="row"><div class="ic">八</div><div class="tx">門Ωを通らぬ銘柄に賭けない。<b>例外なし</b>（旧・無知の枠5〜10%は2026-07に撤去）。</div></div>
   <div class="row"><div class="ic">九</div><div class="tx"><b>記録し、検証する</b>。裁きⅠの見積もりと実績を年1回突き合わせ、自分の楽観係数を測る。</div></div>
   <div class="row"><div class="ic">十</div><div class="tx">門は気分で変えない。変えるのは<b>星表の根拠が崩れた時</b>だけ、書面で理由を残して。</div></div>
  </div>
@@ -419,7 +419,11 @@ function calcEngine(){
 
  const c1 = er >= hurdle;
  const c2 = earned >= 10;
- const c3 = rawMult <= 0;                                     // 終着PERを現在超に置いていない＝倍率拡大を当てにしていない
+ // 2026-07: ③を正本(Ⅵ買付順位)と同式に統一——倍率寄与≤30%。erRaw=生の倍率込みE[r]で寄与率を測る。
+ //   E[r]本体は従来どおり正の倍率を加点しない(掟六=倍率拡大を見込まない)ため、終着PER≤現PERなら寄与0で自動成立。
+ const erRaw = netY + g + rawMult;
+ const mshare = (rawMult>0 && erRaw>0) ? rawMult/erRaw*100 : 0;
+ const c3 = rawMult <= 0 || mshare <= 30;                     // 倍率寄与≤30%(正本Ⅵと同式)
  const c4 = erStress >= 7;
  const passed = [c1,c2,c3,c4].filter(Boolean).length;
  let verdict, cls;
@@ -437,7 +441,7 @@ function calcEngine(){
    </div>` +
   mk(c1, `① E[r] ${pct(er)} ≥ ハードル ${hurdle.toFixed(1)}%`) +
   mk(c2, `② 投資リターン ${pct(earned)} ≥ 10%（倍率が動かなくても勝てる）`) +
-  mk(c3, `③ 倍率頼みでない（終着PER ${rawMult<=0?'≤ 現在PER ✓':'> 現在PER ＝加点無効'}）`) +
+  mk(c3, `③ 倍率寄与 ${rawMult<=0?'0%（終着PER≤現在PER）':(mshare.toFixed(0)+'%')} ≤ 30%（倍率頼みでない・加点は常に無効）`) +
   mk(c4, `④ ストレス（成長−25%∧終着PER−30%）でも ${pct(erStress)} ≥ 7%（読み違えても指数並み）`) +
   `<div class="verdict ${cls}">${verdict}</div>
    <span style="margin-left:12px;font-size:12.5px;color:var(--muted)">${passed}/4 条件成立</span>`;
@@ -475,7 +479,7 @@ function calcKelly(){
  const el = document.getElementById('k_out');
  if (a <= 0 || c <= 0){
   el.innerHTML = `<div class="big ng" style="color:var(--fail)">入力不正</div>
-   <div style="font-size:13.5px;color:var(--muted);margin-top:6px">勝ち幅・負け幅は正の%で。無知の枠は<b>全損前提＝負け幅100</b>。</div>`;
+   <div style="font-size:13.5px;color:var(--muted);margin-top:6px">勝ち幅・負け幅は正の%で。全損前提なら<b>負け幅100</b>。</div>`;
   return;
  }
  const f = p/c - q/a;                                         // 部分損失ケリーの厳密解
@@ -491,7 +495,7 @@ function calcKelly(){
     式： p/負け幅 − q/勝ち幅 ＝ ${p.toFixed(2)}/${c.toFixed(2)} − ${q.toFixed(2)}/${a.toFixed(2)}　｜　半分 ${(f*50).toFixed(1)}%　｜　<b style="color:var(--star-bright)">四分の一 ${(f*25).toFixed(1)}%（門Xの上限）</b>${lev}
    </div>
    <div class="chk"><span class="m wr">⚠</span><span>満額は推定誤差で破滅する。勝率pを5pt読み違えただけで最適点は大きく動く。実務は四分の一以下。</span></div>
-   <div class="chk"><span class="m wr">⚠</span><span>これは<b>単一銘柄</b>の式。篭の銘柄が相関（同テーマ・同コホート）するなら同時破綻するため、相関する塊は「1つの賭け」と数え、篭全体の合計を無知の枠内に収める。</span></div>`;
+   <div class="chk"><span class="m wr">⚠</span><span>これは<b>単一銘柄</b>の式。篭の銘柄が相関（同テーマ・同コホート）するなら同時破綻するため、相関する塊は「1つの賭け」と数え、塊の合計にも四分の一ケリーの上限を適用する。</span></div>`;
 }
 
 ['e_y','e_dil','e_roiic','e_b','e_per0','e_per1','e_n','e_hurdle'].forEach(id=>document.getElementById(id).addEventListener('input',calcEngine));

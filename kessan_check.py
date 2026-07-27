@@ -198,11 +198,20 @@ def check(t):
     print(f"  {t:<6} YoY {str(yoy)+'%':>7}  営利差 {str(opm_d)+'pt':>7}  → {verdict}")
     return verdict
 
+# ADR(外国私募発行体): 10-Q/10-Kを出さず20-F/6-Kのため、本スクリプトの機械抽出が効かない。
+# kessan_checklist.md §C のとおり手動確認へ回す(自動リストから除外し明示する)。引数で直接指定した場合は試行する。
+ADR_MANUAL = {"ASML", "TSM", "NVMI"}
+
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if re.fullmatch(r"[A-Za-z][A-Za-z.\-]{0,7}", a)]
     targets = args or load_holdings()
+    if not args:
+        adr = [t for t in targets if t in ADR_MANUAL]
+        if adr:
+            print(f"※ADR {len(adr)}社は10-Q機械抽出不可のため除外→§Cの手動確認へ: {adr}")
+            targets = [t for t in targets if t not in ADR_MANUAL]
     print(f"=== 四半期点検 {date.today()} ===")
     for t in targets:
         try: check(t)
         except Exception as e: print(f"  {t:<6} 失敗 → {e}")
-    print("要審査が出た銘柄は、門の依頼文ボタンで門2再審査へ。")
+    print("要審査が出た銘柄は、門の依頼文ボタンで門2再審査へ。ADR(ASML/TSM/NVMI)は決算リリース/6-Kを手動確認。")

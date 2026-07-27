@@ -319,7 +319,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
  <p class="intro">本書は二つの門と、その中核をなす <b style="color:var(--gold-bright)">持続の三本柱</b> からなる。第一の門〈質〉のスコアで<b style="color:var(--gold-bright)">ティア</b>を定める——<b style="color:var(--gold-bright)">最上位80以上／堅実72以上</b>（v9.9.2で最上位を85→80に再アンカー）。三本柱（MOAT・ROIC・TAMの持続）は各 <b style="color:var(--gold-bright)">70点以上</b> を要する。<b>実際の新規投下は二段関門</b>——質スコア <b style="color:var(--gold-bright)">75以上（投下閾値）</b> かつ 門X（✦超未来の門・裁きⅠ）の <b style="color:var(--gold-bright)">4条件成立</b>（E[r]≥12／投資R≥10／倍率寄与≤30%／ストレス≥7）。価格ゲートは<b style="color:var(--gold-bright)">成長連動</b>で、実証成長×資本効率×堀無傷（grower）は一律の論外線（PER50・EV/EBIT35）を緩め、成熟株と同じ基準では測らない。<u>ティア内の小数差に意味はなく、選別は「間（価格）」が行う</u>。スプレッドは <b style="color:var(--gold-bright)">報告ROICで判定し、のれん調整での救済はしない</b>。この厳しさゆえ、世界で数銘柄しか通らない。判定の全体像は下段 IPS① を正とする。共通の記号は以下。</p>
  <div class="fm small">
   <span class="lbl">共通記号と前提</span>
-  ROIC＝税引後営業利益 ÷ 投下資本　／　WACC（資本コスト）＝ <b>RFR ＋ clamp(β, 0.8〜1.8) × ERP</b>（v7.0で可変化・既定 4.5%＋β×5%）<br>
+  ROIC＝税引後営業利益 ÷ 投下資本　／　WACC（資本コスト）＝ <b>RFR ＋ clamp(β, 0.8〜1.8) × ERP</b>（v7.0で可変化・既定 4.48%＋β×4.45%〔2026-07〕）<br>
   ROIIC（増分ROIC）＝ 営業利益の増加分 ÷ 投下資本の増加分　／　g（内部成長率）＝ <b>再投資率 b × ROIIC</b><br>
   加重幾何平均：S ＝ exp( Σ wᵢ・ln xᵢ ) ＝ x₁<sup>w₁</sup>・x₂<sup>w₂</sup>…（各 xᵢ は 0〜100 点、Σwᵢ＝1）<br>
   <span class="rd">幾何平均を使う理由：一つの観点が致命的に低いと全体を強く押し下げる＝「弱点を隠せない」採点。算術平均なら高得点で穴を埋められてしまう。</span>
@@ -420,7 +420,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
   </div>
   <div class="fm">
    <span class="lbl">現在門の核心式 — 価値創造スプレッド</span>
-   価値創造スプレッド ＝ <b>ROIC − WACC</b>　（WACC ＝ RFR＋β×ERP・既定 4.5%＋β×5%）<br>
+   価値創造スプレッド ＝ <b>ROIC − WACC</b>　（WACC ＝ RFR＋β×ERP・既定 4.48%＋β×4.45%〔2026-07〕）<br>
    FCF転換率 ＝ フリーCF ÷ 純利益<br>
    <span class="rd">合格条件（厳格版）：スプレッド ≥ <b>+10pt</b> ／ FCF転換率 ≥ 65%。スプレッド ≤ 0 は即不合格（資本を破壊している）</span>
   </div>
@@ -723,8 +723,8 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
   <!-- ===== EVALUATION INPUTS (price-free) ===== -->
   <div class="block">
     <div class="bh"><span class="ix serif">断</span><span class="bt">足切り</span><span class="bn">罠を機械が弾く・最優先</span></div>
-    <div class="row"><div class="rl">リスクフリー金利<span class="h">米10年債。日本株も米ドル建て機会費用で統一（網がXLK/QQQMのため）</span></div><div class="rc"><input type="number" id="rfr" step="0.1" value="4.5"><span class="u">%</span></div></div>
-    <div class="row"><div class="rl">株式リスクプレミアム<span class="h">Damodaran implied ERP目安。既定5.0</span></div><div class="rc"><input type="number" id="erp" step="0.1" value="5.0"><span class="u">%</span></div></div>
+    <div class="row"><div class="rl">リスクフリー金利<span class="h">米10年債。日本株も米ドル建て機会費用で統一（網がXLK/QQQMのため）</span></div><div class="rc"><input type="number" id="rfr" step="0.1" value="4.48"><span class="u">%</span></div></div>
+    <div class="row"><div class="rl">株式リスクプレミアム<span class="h">Damodaran implied ERPの最新月次値。既定4.45（2026-07）——依頼文の指示値と同一（手入力とJSON取込でWACCが割れないよう統一）</span></div><div class="rc"><input type="number" id="erp" step="0.1" value="4.45"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">β（5年）<span class="h">WACC = RFR + clamp(β, 0.8〜1.8) × ERP。低β優良株のWACC過小推定を防ぐ下限クリップ（上限1.8は監査⑫）</span></div><div class="rc"><input type="number" id="beta" step="0.01" value="1.00"></div></div>
     <div class="row"><div class="rl">営業ROIC（のれん除外）<span class="h">過剰現金を除く投下資本ベース。事業の質を測る</span></div><div class="rc"><input type="number" id="roic" step="0.1" value="25"><span class="u">%</span></div></div>
     <input type="hidden" id="roicEx"><!-- v9.9.25: 現在門スプレッドのキル/薄氷/主柱を裁く任意の事業(現金控除)ROIC。ネットキャッシュ高ROIC企業で、現金込み報告ROICをroicに入れた場合のスプレッド誤爆キルを防ぐ(ユーザー明示指示2026-07-23)。空=roicで従来通り。手入力UIでは常に空 -->
@@ -1063,7 +1063,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
 
 <footer><div class="wrap">
  <div class="fb">CCF Ω Final Gate · Complete Edition</div>
- <p class="disc">第一の門〈質Q〉＝過去P(40%)・現在(35%)・未来要約(25%)の加重幾何平均。ティア＝最上位80／堅実72、投下閾値75。WACC=RFR+clamp(β,0.8〜1.8)×ERP（既定4.5%+β×5%）。現在門の核心はROIC−WACCスプレッド(+10pt以上)。第二の門＝未来門F(11要素v9.2の加重幾何平均・総合の一項)。新規投下は二段関門＝Ω75+かつ門X4条件(E[r]≥12/投資R≥10/倍率寄与≤30%/ストレス≥7)。価格の論外線はPER50・EV/EBIT35（growerはPER62・成長連動v9.9.9・高値づかみ防止のみ／PERは選別に使わない）。g=再投資率b×ROIIC、妥当価格≈来期FCF/(WACC−g)。再評価は四半期(足切り)・年次(全面再採点)・2年(新規発掘)・5年(門の改修)の四層。売却はS1/S2/S3＝質の崩れのみ(株価では売らない)。配分は網(指数)60%＋城(個別・二段関門通過のみ)40%。本書は個人の投資基準の整理であり投資助言ではない。スコア・数式は枠組みであり将来を保証しない。</p>
+ <p class="disc">第一の門〈質Q〉＝過去P(40%)・現在(35%)・未来要約(25%)の加重幾何平均。ティア＝最上位80／堅実72、投下閾値75。WACC=RFR+clamp(β,0.8〜1.8)×ERP（既定4.48%+β×4.45%〔2026-07〕）。現在門の核心はROIC−WACCスプレッド(+10pt以上)。第二の門＝未来門F(11要素v9.2の加重幾何平均・総合の一項)。新規投下は二段関門＝Ω75+かつ門X4条件(E[r]≥12/投資R≥10/倍率寄与≤30%/ストレス≥7)。価格の論外線はPER50・EV/EBIT35（growerはPER62・成長連動v9.9.9・高値づかみ防止のみ／PERは選別に使わない）。g=再投資率b×ROIIC、妥当価格≈来期FCF/(WACC−g)。再評価は四半期(足切り)・年次(全面再採点)・2年(新規発掘)・5年(門の改修)の四層。売却はS1/S2/S3＝質の崩れのみ(株価では売らない)。配分は網(指数)60%＋城(個別・二段関門通過のみ)40%。本書は個人の投資基準の整理であり投資助言ではない。スコア・数式は枠組みであり将来を保証しない。</p>
 </div></footer>
 
 <script>
@@ -1071,7 +1071,7 @@ const $=id=>document.getElementById(id);
 const n=id=>parseFloat($(id).value)||0;
 const nn=id=>{const el=$(id);if(!el)return null;const v=(el.value==null?'':String(el.value)).trim();return v===''?null:(parseFloat(v)||0)};
 const gm=(v,w)=>Math.exp(v.reduce((a,x,i)=>a+w[i]*Math.log(Math.max(x,1)),0));
-const G=s=>s>=90?['S','var(--gold-bright)','dv-s']:s>=85?['A+','var(--jade)','dv-a']:s>=75?['A−','var(--amber)','dv-b']:s>=65?['B','var(--amber)','dv-b']:['C','var(--rust)','dv-c'];
+const G=s=>s>=90?['S','var(--gold-bright)','dv-s']:s>=80?['A+','var(--jade)','dv-s']:s>=75?['A−','var(--jade)','dv-a']:s>=72?['B','var(--amber)','dv-a']:['C','var(--rust)','dv-c']; // v9.9.26: ティア再アンカー(80/72)・投下閾値75に文字グレードを整合(旧90/85/75/65は「最上位」表示とA−が併存する矛盾を生んでいた)
 
 function spreadPt(s,b){let p;if(s<=0)return[0,true];if(s<5)p=40+s/5*10;else if(s<10)p=50+(s-5)/5*12;else if(s<15)p=62+(s-10)/5*13;else if(s<20)p=75+(s-15)/5*10;else if(s<25)p=85+(s-20)/5*6;else p=Math.min(96,91+(s-25)*.4);if(b<0.8)p-=8;return[Math.max(0,p),false];}
 /* v6.3でfcfPtは廃止：FCF転換は固定点数でなくROIIC連動の番犬に作り替えた（今ゲート参照）*/
@@ -1345,11 +1345,14 @@ function compute(){
   })();
   // F8 バランスシート安全性 (AQR QMJ-Safety / Buffett BAB): ネットデット・Altman・自己資本
   const F8=(()=>{
-    const nd=n('nde'), zv=n('z'), eqv=$('eq').value;
-    let ndS; ndS=ramp(nd,[[-1,100],[0,100],[1,85],[2,70],[3,55],[4,40],[6,20]]);
-    let zS=ramp(zv,[[0.5,25],[1.1,60],[1.8,80],[2.6,100]]);
-    const eqS=(eqv==='pos')?100:40;
-    return Math.max(0,Math.min(100,ndS*0.45+zS*0.35+eqS*0.20));
+    // v9.9.26: 欠測は保留(v9.6思想の徹底)——nde/Z未入力を0扱いにしない。旧実装はZ空欄→25点(倒産圏=最悪)・nde空欄→100点(最良)と欠測の扱いが真逆だった。未入力の項目は除外し、残りの重みで再正規化(キル層の「Z未入力=保留」と整合)
+    const nd=nn('nde'), zv=nn('z'), eqv=$('eq').value;
+    const parts=[];
+    if(nd!=null)parts.push([ramp(nd,[[-1,100],[0,100],[1,85],[2,70],[3,55],[4,40],[6,20]]),0.45]);
+    if(zv!=null)parts.push([ramp(zv,[[0.5,25],[1.1,60],[1.8,80],[2.6,100]]),0.35]);
+    parts.push([(eqv==='pos')?100:40,0.20]);
+    const w=parts.reduce((a,p)=>a+p[1],0);
+    return Math.max(0,Math.min(100,parts.reduce((a,p)=>a+p[0]*p[1],0)/w));
   })();
   // F9 顧客経済性/NRR (Mauboussin CBCV): nrr入力があれば直接採点、なければ堀の質から顧客定着性を推定
   //   v9.2改良: 一律70固定をやめ、NRR非開示企業もスイッチングコスト・粗利トレンド・堀の強さから定着性を評価
@@ -1451,7 +1454,7 @@ function compute(){
     return f;
   })();
   // v7: accrual red flag mechanically caps p4 (accounting health)
-  const p4eff=accrBad?Math.min(n('p4'),n('p4')-15):n('p4');
+  const p4eff=accrBad?n('p4')-15:n('p4');
   // ===== v9.2最終(バックテスト提言): MSFT2014型ターンアラウンド救済 =====
   //   現収益性が本物(営業利益率>25%かつROIC≥20%)なのにp1実績安定が低い場合、減点の半分を免除(p1と75の中間へ)。
   //   「過去は荒れたが収益力は確立済み」の巨人転換(MSFT2014: 営利32%)を捕捉。Apple1997型(営業赤字)は発動せず=正しい除外を維持。
@@ -1512,11 +1515,7 @@ function compute(){
   const evCeil=Math.max(40,Math.min(52,qPreV0*0.56));
   globalThis.__PERCEIL=perCeil; globalThis.__EVCEIL=evCeil; // wait判定側で共用
   // ===== v9.5(裁定2026-07-14): 門の分離 — 「価格は格を1点も動かさない」の教義にコードを一致させる =====
-  let v0Pen=0;
-  if(perV0>perCeil || evV0>evCeil){
-    const perOver=perV0>perCeil?(perV0-perCeil)/perCeil:0;
-    const evOver=evV0>evCeil?(evV0-evCeil)/evCeil:0;
-    v0Pen=Math.min(20, 5+Math.max(perOver,evOver)*30); // 表示・間(買付判定)専用。格には触れない
+  if(perV0>perCeil || evV0>evCeil){ // v9.9.26: 死んだv0Pen変数を撤去(v9.5の門の分離以降どこからも参照されない)。警告表示は維持
     psig.innerHTML+=`<div class="flag f-warn"><i>¥</i><div><b>V0絶対上限超過（格は非減点・間で遮断）：</b>PER ${perV0>0?perV0.toFixed(0):'—'}/上限${perCeil.toFixed(0)}・EV/EBIT ${evV0>0?evV0.toFixed(0):'—'}/上限${evCeil.toFixed(0)}。質と無関係に<u>この値段では買うな</u>。</div></div>`;
   }
   if(pillarPen>0)evalScore=Math.max(0,evalScore-pillarPen);   // 段階ペナルティ（崖を撤廃）
@@ -1619,12 +1618,12 @@ function compute(){
     if(perBad)ts.innerHTML+=`<div class="flag f-warn"><i>!</i><div><b>PER ${per}&gt;${perLim}</b>（論外ライン${grower?'・成長連動で緩和後':''}）→ 押し目待ち</div></div>`;
     if(evBad)ts.innerHTML+=`<div class="flag f-warn"><i>!</i><div><b>EV/EBIT ${ev}&gt;${evLimit}</b>（ROIC${roicV}%なら上限${evLimit}）→ 質対比で高い・押し目待ち</div></div>`;
     if(pegNeg)ts.innerHTML+=`<div class="flag f-warn"><i>!</i><div><b>成長${grV.toFixed(0)}%+還元${shy}%≤0</b>——総リターンが非正。PEG計算不能＝最悪のPEG扱い → 押し目待ち（EPS縮小局面でPERだけ見て買うのはv9.1で禁止）</div></div>`;
-    else if(pegBad)ts.innerHTML+=`<div class="flag f-warn"><i>!</i><div><b>PEG_adj ${peg.toFixed(1)}&gt;3</b>（PER${per}÷[成長${grV}%+還元${shy}%]）→ 総リターン対比で割高・押し目待ち</div></div>`;
+    else if(pegBad)ts.innerHTML+=`<div class="flag f-warn"><i>!</i><div><b>PEG_adj ${peg.toFixed(1)}&gt;3</b>（PER${per}÷[成長${grV.toFixed(1)}%+還元${shy}%]）→ 総リターン対比で割高・押し目待ち</div></div>`;
   }
   if(grNA)ts.innerHTML+=`<div class="flag f-warn"><i>?</i><div><b>成長予想なし（gr=na）：</b>コンセンサス取得不能。PEG判定スキップ——過去CAGRでの代用は禁止（判定の意味が回ごとに変わるため）。</div></div>`;
   if(pegCheap&&!wait)ts.innerHTML+=`<div class="flag f-ok"><i>✓</i><div><b>PEG_adj ${peg.toFixed(1)}&lt;1.5</b> → 総リターン対比で割安シグナル</div></div>`;
   // v7: expected return reference (display only — never touches verdict)
-  if(per>0&&!grNA)ts.innerHTML+=`<div class="flag" style="background:rgba(93,140,194,.08);border-color:rgba(93,140,194,.3);color:var(--steel)"><i>≈</i><div>参考：期待リターン一次近似 ≈ 益回り${(100/per).toFixed(1)}% + 成長${grV}% ＝ <b>${(100/per+grV).toFixed(1)}%/年</b>（判定には不使用）</div></div>`;
+  if(per>0&&!grNA)ts.innerHTML+=`<div class="flag" style="background:rgba(93,140,194,.08);border-color:rgba(93,140,194,.3);color:var(--steel)"><i>≈</i><div>参考：期待リターン一次近似 ≈ 益回り${(100/per).toFixed(1)}% + 成長${grV.toFixed(1)}% ＝ <b>${(100/per+grV).toFixed(1)}%/年</b>（判定には不使用）</div></div>`;
   if(qualWarn)ts.innerHTML+=`<div class="flag f-warn"><i>⚠</i><div><b>利益の質に注意</b>（${finV==='acq'?'連続買収——二重ROIC天秤で採点済':finV==='merger'?'合併直後':finV==='thin'?'薄利複合':'金融'}）→ PERの分母が歪む。価格判定は参考値。</div></div>`;
   // v9.1: 感応度(反転点)の自動表示
   if(per>0&&ev>0&&!grNA){
@@ -1700,7 +1699,9 @@ function compute(){
   ts.innerHTML+=`<div style="margin-top:8px;border-top:1px dashed rgba(128,128,128,.4);padding-top:6px"><div class="tag-line" style="opacity:.7">出口判定 v9.1（保有者向け——想定保有期間：無期限）</div>${ex}</div>`;
 
   const tierShort=misread?'手調整':kills.length?'失格':evalScore>=80?'最上位':evalScore>=72?'堅実':'回避';
-  return {evalScore:evalScore.toFixed(1),grade:eg,tier:gtier,tierShort,tcls,act,acls,kills:kills.length,pfail:pfail.length,misread};
+  // v9.9.26: 出口判定(S1/S2/S3)を採点結果に同梱——台帳・Ⅶ資産の色丸はこの正本判定を最優先で使い、簡易版exitVerdict(旧記録のフォールバック)との二重実装の乖離を解消
+  const exitLevel=s1.length?'s1':s2.length?'s2':s3.length?'s3':'hold';
+  return {evalScore:evalScore.toFixed(1),grade:eg,tier:gtier,tierShort,tcls,act,acls,kills:kills.length,pfail:pfail.length,misread,exit:{level:exitLevel,S1:s1.length,S2:s2.length,S3:s3.length}};
 }
 document.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',compute));
 
@@ -1982,8 +1983,9 @@ const store={
   // 実仕様: 存在しないキーのget()は例外を投げる → 例外はnullに正規化
   async get(k){try{if(this.mode==='claude')return await window.storage.get(k);if(this.mode==='local'){const v=localStorage.getItem(k);return v==null?null:{key:k,value:v};}return _mem[k]!==undefined?{key:k,value:_mem[k]}:null;}catch(e){return null;}},
   // レート制限対策: 失敗時は待って2回まで再試行。最終失敗のみ例外を上げる
-  async set(k,v){for(let i=0;i<3;i++){try{if(this.mode==='claude')return await window.storage.set(k,v);if(this.mode==='local'){localStorage.setItem(k,v);return{key:k};}_mem[k]=v;return{key:k};}catch(e){if(i===2)throw e;await _sleep(450*(i+1));}}},
-  async delete(k){try{if(this.mode==='claude')return await window.storage.delete(k);if(this.mode==='local'){localStorage.removeItem(k);return{key:k};}delete _mem[k];return{key:k};}catch(e){return null;}},
+  async set(k,v){for(let i=0;i<3;i++){try{if(this.mode==='claude'){const r=await window.storage.set(k,v);try{localStorage.setItem(k,v);}catch(_){} return r;} // v9.9.26: claudeモードでもlocalStorageへミラー——Ⅶ資産iframe(portfolio.html)はlocalStorage直読みのため、g7hold:set等の保有連携が環境で壊れる非対称を解消
+if(this.mode==='local'){localStorage.setItem(k,v);return{key:k};}_mem[k]=v;return{key:k};}catch(e){if(i===2)throw e;await _sleep(450*(i+1));}}},
+  async delete(k){try{if(this.mode==='claude'){const r=await window.storage.delete(k);try{localStorage.removeItem(k);}catch(_){} return r;}if(this.mode==='local'){localStorage.removeItem(k);return{key:k};}delete _mem[k];return{key:k};}catch(e){return null;}},
   async list(p){try{if(this.mode==='claude')return await window.storage.list(p);if(this.mode==='local'){const ks=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith(p))ks.push(k);}return{keys:ks};}return{keys:Object.keys(_mem).filter(k=>k.startsWith(p))};}catch(e){return{keys:[]};}}
 };
 // ----- v9.1: 自動保存(JSON取込時) -----
@@ -2024,7 +2026,7 @@ async function ccfRescoreAll(btn){
 async function autoSave(src,silent){
   const nm=$('nm').value.trim(); if(!nm)return null;
   const r=compute(); const data={};
-  document.querySelectorAll('input,select').forEach(e=>data[e.id]=e.value);
+  document.querySelectorAll('#scorer input,#scorer select').forEach(e=>{if(e.id)data[e.id]=e.value;}); // v9.9.26: 採点機フォームに限定(logBody/ioBox等の他タブ入力とid無し欄の混入=記録肥大を解消。読込側は既存マップで無害)
   let prevScore=null,prevAct=null;
   const sk=safeKey(nm);
   try{
@@ -2060,7 +2062,7 @@ function exitVerdict(d,r){
   const roic=num('roic'), spread=roic-wacc;
   const conv=num('ni')?num('fcf')/num('ni')*100:NaN;
   const roiicRaw=txt('roiic'), roiicNA=(roiicRaw===''||roiicRaw==='na'), roiicV=roiicNA?NaN:(parseFloat(roiicRaw)||0);
-  const F=(num('f1')&&num('f2'))?Math.exp(0.26*Math.log(num('f1'))+0.24*Math.log(num('f2'))+0.22*Math.log(num('f3'))+0.15*Math.log(num('f4'))+0.13*Math.log(num('f5'))):0;
+  const F=(num('f1')&&num('f2'))?Math.exp(0.26*Math.log(Math.max(num('f1'),1))+0.24*Math.log(Math.max(num('f2'),1))+0.22*Math.log(Math.max(num('f3'),1))+0.15*Math.log(Math.max(num('f4'),1))+0.13*Math.log(Math.max(num('f5'),1))):0; // v9.9.26: gm()と同じ下限クランプ——f3/f4/f5が0や空欄でもF=0に崩壊しない(log(0)=-∞対策)
   const disrupt=txt('disrupt'), gmt=txt('gmt'), sht=txt('sht'), md=txt('moatdecay')==='yes';
   const nde=num('nde'), z=num('z'), eq=txt('eq');
   const per=num('per');
@@ -2073,6 +2075,19 @@ function exitVerdict(d,r){
   if(disrupt==='threat')S1.push('f5=threat(\u78ba\u5b9a\u4e8b\u5b9f\u30d9\u30fc\u30b9\u6642\u306e\u307f)');
   if(md)S1.push('\u5800\u306e\u660e\u78ba\u306a\u5d29\u58ca');
   if(gmt==='down'&&sht==='down')S2.push('\u5800\u306e\u8ecc\u9053\u53cd\u8ee2(\u7c97\u5229\u00d7\u30b7\u30a7\u30a2\u540c\u6642\u4f4e\u4e0b)');
+  // v9.9.26: \u63a1\u70b9\u6a5f\u30d1\u30cd\u30eb(compute)\u5074\u306eS2/S3\u30c8\u30ea\u30ac\u30fc\u3068\u540c\u671f\u2014\u2014\u65e7\u5b9f\u88c5\u306f\u30ad\u30eb\u524d\u591c\u5e2f\u30fberosion=active\u30fbROIC\u00d7\u7c97\u5229/\u30b7\u30a7\u30a2\u540c\u6642\u52a3\u5316\u30fbhist\u9023\u7d9a\u4f4e\u4e0b\u3092\u898b\u3066\u304a\u3089\u305a\u3001\u753b\u9762\u3067\u5224\u5b9a\u304c\u5272\u308c\u3066\u3044\u305f(\u65e7\u8a18\u9332\u30d5\u30a9\u30fc\u30eb\u30d0\u30c3\u30af\u7528\u3002\u65b0\u898f\u4fdd\u5b58\u306fcompute()\u306eexit.level\u304c\u6b63\u672c)
+  if(nde>3&&nde<=4)S2.push('\u30ad\u30eb\u524d\u591c\u5e2f: nde>3(\u30ad\u30eb\u5e2f4\u63a5\u8fd1)');
+  if(z>=1.1&&z<1.8)S2.push("\u30ad\u30eb\u524d\u591c\u5e2f: Z''<1.8(\u7070\u8272\u5e2f)");
+  if(spread>0&&spread<3)S2.push('\u30ad\u30eb\u524d\u591c\u5e2f: \u30b9\u30d7\u30ec\u30c3\u30c9<3pt(\u9665\u843d\u63a5\u8fd1)');
+  if(txt('erosion')==='active')S2.push('erosion=active(\u6d78\u98df\u9032\u884c\u4e2d)');
+  if(txt('roict')==='down'&&(gmt==='down'||sht==='down'))S2.push('ROIC\u00d7(\u7c97\u5229or\u30b7\u30a7\u30a2)\u540c\u6642\u52a3\u5316\u2014\u2014\u624b\u5165\u529b\u518d\u8a55\u4fa1\u3092\u5f37\u5236\u8d77\u52d5');
+  const histRaw=(d.hist||'').trim();
+  if(histRaw){
+    const hv=histRaw.split(',').map(x=>parseFloat(x)).filter(x=>!isNaN(x));
+    let dn=0; for(let i=hv.length-1;i>0;i--){ if(hv[i]<hv[i-1]-0.05)dn++; else break; }
+    if(dn>=3)S2.push('\u8cea\u30b9\u30b3\u30a2'+dn+'\u671f\u9023\u7d9a\u4f4e\u4e0b');
+    else if(dn===2)S3.push('\u8cea\u30b9\u30b3\u30a22\u671f\u9023\u7d9a\u4f4e\u4e0b\u2014\u2014\u8b66\u544a\u30fb\u76e3\u8996\u5f37\u5316');
+  }
   const reinvesting=!roiicNA&&roiicV>=wacc+3;
   if(conv<65&&!reinvesting&&!roiicNA)S2.push('FCF\u8ee2\u63db'+conv.toFixed(0)+'%<65(\u6210\u9577capex\u3067\u8aac\u660e\u4e0d\u80fd\u306a\u3089)');
   const gcapRaw=txt('gcap'), gcapNA=(gcapRaw===''||gcapRaw==='na'); let gcap=gcapNA?NaN:(parseFloat(gcapRaw)||0);
@@ -2087,94 +2102,22 @@ function exitVerdict(d,r){
   return {level,msg,S1,S2,S3,wacc,spread,conv,F,gstar,gcap:gcapNA?null:gcap};
 }
 async function renderHoldings(items,holdSet){
+  // v9.9.26: 保有一覧の表示はⅦ資産(portfolio.html)へ一本化済み(#19-25)——この関数は出口判定キャッシュ(pf:verdicts)の更新のみを担う。
+  //   旧実装が参照していた holdBox/holdBadge はタブ統合で撤去済みのDOMで、パネル描画コード(約60行)は到達不能の死骸だったため削除。
   const box=$('holdBox');
   const badge=$('holdBadge');
   const held=items.filter(it=>it.held);
-  // 採点済(evalScoreあり)だけ出口判定にかける。採点なし(資産ビューからの保有登録等)は誤ってS1(空データ=スプレッド≤0)にせず「採点待ち」に分離
+  // 採点済(evalScoreあり)だけ出口判定にかける。採点なし(資産ビューからの保有登録等)は誤ってS1(空データ=スプレッド≤0)にせず除外
   const scored=held.filter(it=>it.evalScore!=null), pending=held.filter(it=>it.evalScore==null);
-  // 出口判定を資産ビュー(portfolio)と共有するためlocalStorageにキャッシュ(採点済のみ・表示専用)
-  try{const vm={};scored.forEach(it=>{const e=exitVerdict(it.d||{},it);vm[it.nm]={level:e.level,spread:e.spread,F:e.F,conv:e.conv};});localStorage.setItem('pf:verdicts',JSON.stringify(vm));}catch(e){}
-  // ---- タブバッジ(🔴🟡の件数) ----
-  if(badge){
-    if(!scored.length&&!pending.length){badge.innerHTML='';}
-    else{
-      const rows0=scored.map(it=>exitVerdict(it.d||{},it));
-      const n1=rows0.filter(x=>x.level==='s1').length, n2=rows0.filter(x=>x.level==='s2').length;
-      let b='';
-      if(n1)b+=`<span style="background:var(--rust);color:#fff;border-radius:8px;padding:0 5px;font-size:10px;margin-left:2px">🔴${n1}</span>`;
-      if(n2)b+=`<span style="background:#d69a3c;color:#fff;border-radius:8px;padding:0 5px;font-size:10px;margin-left:2px">🟡${n2}</span>`;
-      if(!n1&&!n2)b=`<span style="background:var(--jade);color:#fff;border-radius:8px;padding:0 5px;font-size:10px;margin-left:2px">${scored.length+pending.length}</span>`;
-      badge.innerHTML=b;
-    }
-  }
+  // 出口判定を資産ビュー(portfolio)と共有するためlocalStorageにキャッシュ(採点済のみ・表示専用)。
+  // levelは採点機compute()同梱の正本判定(it.exit)を最優先し、無い旧記録のみ簡易版exitVerdictで補う(S1/S2/S3一本化)
+  try{const vm={};scored.forEach(it=>{const e=exitVerdict(it.d||{},it);const lvl=(it.exit&&it.exit.level)||e.level;vm[it.nm]={level:lvl,spread:e.spread,F:e.F,conv:e.conv};});localStorage.setItem('pf:verdicts',JSON.stringify(vm));}catch(e){}
   if(!box)return;
-  if(!scored.length&&!pending.length){box.innerHTML='<div style="font-size:13px;color:var(--dim);padding:24px;text-align:center;border:1px dashed var(--line);border-radius:12px">保有中の銘柄はまだ登録されていない。<br>「Ⅳ台帳」で銘柄カードの「□」を押すと保有中に追加され、ここに出口判定が表示される。</div>';return;}
-  const rank={s1:0,s2:1,s3:2,hold:3};
-  const rows=scored.map(it=>({it,ex:exitVerdict(it.d||{},it)})).sort((a,b)=>rank[a.ex.level]-rank[b.ex.level]);
-  const isAdd=(r)=>!!(r.it&&(r.it.evalScore>=75)&&(r.it.act==='今 買える')&&(r.ex.level==='hold'||r.ex.level==='s3'));
-  const addList=rows.filter(isAdd).map(r=>r.it.nm);
-  // 信号色設定: [ラベル, 枠色, アイコン背景, 絵文字, 大見出し]
-  const cfg={
-    s1:['売却検討','var(--rust)','#cf5f48','🔴','SELL'],
-    s2:['買い増し停止 → 最大1/3縮小','#d69a3c','#d69a3c','🟡','TRIM'],
-    s3:['記録のみ（売却義務なし）','#5d8cc2','#5d8cc2','🔵','WATCH'],
-    hold:['ホールド継続','var(--jade)','#54b88a','🟢','HOLD']};
-  const nS1=rows.filter(r=>r.ex.level==='s1').length, nS2=rows.filter(r=>r.ex.level==='s2').length, nS3=rows.filter(r=>r.ex.level==='s3').length, nH=rows.filter(r=>r.ex.level==='hold').length;
-  // ---- サマリーバー ----
-  let html='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">';
-  const chip=(emo,lbl,n,col)=>`<div style="flex:1;min-width:72px;text-align:center;padding:10px 6px;border:1px solid ${col}55;border-radius:10px;background:${col}0c"><div style="font-size:20px">${emo}</div><div style="font-size:22px;font-weight:700;color:${col};line-height:1.1">${n}</div><div style="font-size:9.5px;color:var(--ink-soft)">${lbl}</div></div>`;
-  html+=chip('🔴','売却検討',nS1,'#cf5f48')+chip('🟡','縮小',nS2,'#d69a3c')+chip('🟢','ホールド',nH,'#54b88a')+chip('🔵','買い・追加可',addList.length,'#5d8cc2');
-  html+='</div>';
-  if(addList.length)html+='<div style="background:#54b88a1a;border:1px solid #54b88a;border-radius:10px;padding:10px 14px;font-size:13px;color:#8fc9a4;margin-bottom:12px"><b>🟢 押し目・追加買い可</b>（投下閾値75+×今買える）: '+addList.join('、')+'<div style="font-size:11px;color:var(--ink-soft);margin-top:3px">保有中で質75+（投下閾値）かつ現値が買える水準。現在価格を入れると精度が上がる。</div></div>';
-  if(nS1)html+=`<div style="background:#cf5f4818;border:1px solid var(--rust);border-radius:8px;padding:8px 12px;font-size:12.5px;color:var(--rust);margin-bottom:12px"><b>⚠ 売却検討が${nS1}件あります。</b>質の崩壊シグナル——ただし確定事実(クラスA/B)か確認し、金利起因のスプレッド圧縮なら正規化rfrで再計算して除外せよ。</div>`;
-  // ---- 各銘柄カード(信号色・大アイコン) ----
-  for(const {it,ex} of rows){
-    const c=cfg[ex.level];
-    const addOk=isAdd({it,ex});
-    const dd=(it.d&&it.d.ddate)?it.d.ddate:'—';
-    const pos=(it.d&&parseFloat(it.d.pos))?parseFloat(it.d.pos).toFixed(0)+'%':'';
-    html+=`<div style="border:1.5px solid ${c[1]};border-left:6px solid ${c[1]};border-radius:12px;padding:0;margin-bottom:12px;overflow:hidden;background:${c[2]}0a">
-      <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:${c[2]}14">
-        <div style="font-size:32px;line-height:1">${c[3]}</div>
-        <div style="flex:1">
-          <div style="font-size:16px;font-weight:700">${it.nm}${pos?`<span style="font-size:11px;color:var(--dim);font-weight:400;margin-left:6px">保有${pos}</span>`:''}${addOk?'<span style="background:#54b88a;color:#0d0d0f;border-radius:6px;padding:1px 7px;font-size:10.5px;font-weight:700;margin-left:8px">➕ 押し目・追加可</span>':''}</div>
-          <div style="font-size:12px;font-weight:700;color:${c[1]};letter-spacing:.05em">${c[4]} · ${c[0]}</div>
-        </div>
-      </div>
-      <div style="padding:10px 14px">
-        <div style="font-size:12px;color:var(--ink-soft);line-height:1.75">${ex.msg}</div>
-        <div style="font-size:10px;color:var(--dim);margin-top:8px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-          <span>スプレッド <b style="color:${ex.spread>=10?'var(--jade)':ex.spread>0?'#d69a3c':'var(--rust)'}">${ex.spread>=0?'+':''}${ex.spread.toFixed(1)}pt</b></span>
-          <span>FCF転換 <b style="color:${ex.conv>=65?'var(--jade)':'#d69a3c'}">${isNaN(ex.conv)?'—':ex.conv.toFixed(0)}%</b></span>
-          <span>未来門F <b style="color:${ex.F>=86?'var(--jade)':'#d69a3c'}">${ex.F.toFixed(0)}</b></span>
-          ${ex.gstar!=null?`<span>g* <b>${ex.gstar.toFixed(0)}%</b>${ex.gcap!=null?` / 実力 ${ex.gcap.toFixed(0)}%`:''}</span>`:''}
-          <span style="color:var(--dim)">データ ${dd}</span>
-        </div>
-        <div style="margin-top:8px;display:flex;gap:6px">
-          <button class="ld" style="font-size:10px;padding:3px 10px" onclick="loadIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">採点機で開く</button>
-          <button class="ld" style="font-size:10px;padding:3px 10px" onclick="toggleHold(decodeURIComponent('${encodeURIComponent(it.nm)}'))">保有解除</button>
-        </div>
-      </div>
-    </div>`;
-  }
-  // ---- 採点待ち(保有登録済だが未採点。資産ビューから登録した城など) ----
-  if(pending.length){
-    html+=`<div style="border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;background:rgba(255,255,255,.02)">
-      <div style="font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:6px">⏳ 採点待ち（${pending.length}）— 保有登録済み・出口判定は採点後</div>
-      <div style="font-size:11px;color:var(--dim);margin-bottom:8px">Ⅲ採点機で審査すると S1/S2/S3 の出口判定が出る。<b>未採点は売買判定に使わない</b>（空データを誤ってS1にしない）。</div>`;
-    for(const it of pending){
-      const pos=(it.d&&parseFloat(it.d.pos))?parseFloat(it.d.pos).toFixed(0)+'%':'';
-      html+=`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid rgba(40,52,74,.5)"><span style="font-size:15px">⏳</span><div style="flex:1;font-size:14px">${it.nm}${pos?`<span style="font-size:11px;color:var(--dim);margin-left:6px">保有${pos}</span>`:''}</div><button class="ld" style="font-size:10px;padding:3px 10px" onclick="loadIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">採点機で開く</button><button class="ld" style="font-size:10px;padding:3px 10px" onclick="toggleHold(decodeURIComponent('${encodeURIComponent(it.nm)}'))">保有解除</button></div>`;
-    }
-    html+='</div>';
-  }
-  html+='<div style="font-size:10px;color:var(--dim);margin-top:6px;line-height:1.7">※出口判定は各銘柄の最新採点データに基づく機械分類。判定を動かすには「採点機で開く」→最新決算データに更新し保存。株価変動・空売りレポート・単四半期ミス・金利起因のスプレッド圧縮は売却理由にしない(v9.1長期保有バイアス)。</div>';
-  box.innerHTML=html;
 }
 async function save(){
   const nm=$('nm').value.trim(); if(!nm){uiNotice('銘柄名を入力してください');return;}
   const r=compute(); const data={};
-  document.querySelectorAll('input,select').forEach(e=>data[e.id]=e.value);
+  document.querySelectorAll('#scorer input,#scorer select').forEach(e=>{if(e.id)data[e.id]=e.value;}); // v9.9.26: 採点機フォームに限定(logBody/ioBox等の他タブ入力とid無し欄の混入=記録肥大を解消。読込側は既存マップで無害)
   try{await store.set('g7:'+safeKey(nm),JSON.stringify({data,r,ts:Date.now(),src:'manual'}));renderLedger();uiNotice('記録した：'+nm);}catch(e){uiNotice('記録に失敗：'+String(e&&e.message||e));}
 }
 async function renderLedger(){
@@ -2287,14 +2230,14 @@ async function renderPlan(){
     // 間の余地: 全ブレーキ通過後、最初のブレーキまでの上昇余地%(大きいほど安全)
     const per=num(it.d.per),ev=num(it.d.evebit),shy=num(it.d.shy),roicV=num(it.d.roic),perF=num(it.d.perF);
     const grV=perF>0&&per>0?(per/perF-1)*100:(it.d.gr&&it.d.gr!=='na'?num(it.d.gr):NaN);
-    const evL=roicV>=30?40:roicV<15?20:35;
+    // v9.9.26: 余地計算に採点機と同じgrower緩和(v9.9.9)を適用——grower銘柄の余地が旧50/35基準で過小表示される乖離を解消
+    const growerR=(s>=72&&num(it.d.cagr)>=15&&roicV>=20&&(it.d.erosion||'none')==='none'&&(it.d.disrupt||'settled')!=='threat');
+    const perL=growerR?62:50;
+    const evL=(roicV>=30?40:roicV<15?20:35)*(growerR?1.3:1);
     let room=null;
-    if(per>0&&ev>0&&!isNaN(grV)){const tg=grV+shy;const fs=[50/per,evL/ev];if(tg>0)fs.push(3*tg/per);room=(Math.min(...fs)-1)*100;}
-    // 保留リスク減点: メモに保留/仮免/監視/要確認があれば序列を下げる
+    if(per>0&&ev>0&&!isNaN(grV)){const tg=grV+shy;const fs=[perL/per,evL/ev];if(tg>0)fs.push(3*tg/per);room=(Math.min(...fs)-1)*100;}
+    // 保留リスク: メモに保留/仮免/監視/要確認があれば印を付ける(順位には不介入——下段注記どおり表示のみ)
     const hold=/保留|仮免|要確認|監視/.test(memo)?1:0;
-    // 優先度 = 格×0.7 + 余地×0.3(0-100正規化) − 保留5pt
-    const roomPt=room==null?50:Math.max(0,Math.min(100,50+room));
-    const prio=s*0.7+roomPt*0.3-hold*5;
     const layer=s>=80?0:s>=77?1:s>=75?2:3;
     // 門X裁きⅠ(IPS二段関門・2026-07-21 / 掟六v2成長連動:2026-07-23): E[r]=還元shy + 成長g + 倍率の重力。表示・グルーピングのみで採点には不介入。
     //   g=min(再投資率b×ROIIC代理(roicg優先・60%キャップ), 実証CAGR, 20%)——掟一:実証値だけ信じる。
@@ -2333,7 +2276,7 @@ async function renderPlan(){
     // 買付順位の合成優先度: 格0.6 + 期待CAGR(X期待%を点数化)0.4。門X合格線12%=50点・±10ptで0-100。E[r]欠損は中立50。保留は順位に不介入(表示のみ)。格evalScore・採点・合否には無影響=表示順のみ
     const erPt=(xEr!=null)?Math.max(0,Math.min(100,50+(xEr-12)*5)):50;
     const pc=s*0.6+erPt*0.4;
-    return {nm:it.d.nm||it.k.slice(3),t:it.k.slice(3),s,act,memo,room,hold,prio,pc,layer,xEr,xPass,per,shy,g:gOut,pos:num(it.d.pos),tier:it.r.tierShort||it.r.grade};
+    return {nm:it.d.nm||it.k.slice(3),t:it.k.slice(3),s,act,memo,room,hold,pc,layer,xEr,xPass,per,shy,g:gOut,pos:num(it.d.pos),tier:it.r.tierShort||it.r.grade};
   });
   const lcol=['var(--gold-bright)','var(--jade)','var(--steel)'];
   const lname=['80+ 城の中核（8%）','77–80 城の正規（5%）','75–77 城の外郭（3%）'];
@@ -2344,7 +2287,7 @@ async function renderPlan(){
   const pass=q75.filter(r=>r.xPass===true);
   const waitP=q75.filter(r=>r.xPass!==true);
   // 開通ライン: E[r]=12%になる入口PER p*と現値からの必要下落%。門X: mult=((min(p,fairPER)/p)^0.1−1)*100 を p*について解く(g・shy・per既知時のみ)
-  const openLine=r=>{ if(r.xEr==null||r.g==null||r.shy==null||!(r.per>0)||r.xPass===true)return '';
+  const openLine=r=>{ if(r.xEr==null||r.g==null||!(r.per>0)||r.xPass===true)return '';
     const fairPER=Math.max(16,Math.min(30,8+r.g)), need=12-r.shy-r.g, ratio=Math.pow(1+need/100,10);
     if(!(ratio>0))return ''; const pStar=fairPER/ratio;
     if(!(pStar>0)||pStar>=r.per)return '<span style="font-size:11px;color:var(--dim);white-space:nowrap">押し目でも開通しにくい</span>';
@@ -2375,7 +2318,7 @@ async function renderPlan(){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px">⚪ 監視枠 72–75——<span style="color:var(--rust)">保有しない</span>・75超えで昇格</h2>`;
     html+=watch.map(r=>`<div class="led" style="border-left:3px solid ${lcol[2]};opacity:.6"><span class="ln">${r.nm}</span><span class="grade" style="color:var(--steel)">${r.s}</span>${xtag(r)}<span style="font-size:11px;color:var(--muted)"><span style="color:var(--dim)">間</span> ${r.act}</span>${reqbtns(r)}</div>`).join('');
   }
-  html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8"><b>2つの判定に統合（v9.9.25）</b>：価格の関門は<b>門X 1本</b>に一本化した——旧「間（今買える）」の粗いPERブレーキは買付判定から外し（「今買える」なのに「監視」の矛盾を解消）、<b>🟢投下可＝格75+ かつ 門X4条件</b>／<b>🟡押し目待ち＝格75+だが門X未達</b>（旧「門X未達＝監視」と旧「押し目待ち」を統合）。各群内の順位＝<b>合成順（格×0.6 ＋ E[r]%×0.4）</b>——壊れにくさ（格）を主柱にしつつ期待リターン（門X E[r]）を効かせる（同点は格で決着）。<b>群の境界（投下可の合否）は不変</b>。E[r]%は門X合格線12%＝50点として点数化（±10ptで0-100）、欠損は中立50。🟡の<b>開通＝PER○○（あと−○%）</b>はE[r]が12%に届く入口PERと現値からの必要下落。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。<br><b>E[r]（門X期待リターン）</b>＝門X裁きⅠの現値期待リターン：還元shy + 成長g（<b>高ROIC(≥15%)×堀無傷は実証CAGRを信じる</b>／それ以外は再投資式b×ROIICを実証CAGRで頭打ち・20%上限＝証拠の上限。v9.9.25：資本を返しながら伸びる資本軽量コンパウンダーを再投資式が過小評価する欠陥を是正・価格規律は不変） − 倍率の重力（<b>終着PER=min(現PER, clamp(8+g,16,30))＝成長連動</b>・10年。McKinsey価値ドライバーで検証：成熟g4%≈22倍／持続成長高ROIC≈28-30倍が正当。成長産業と成熟産業を同じ終着PERで測らない。掟六の精神＝現PERを超えない＝拡大は見込まない、は維持）。<span style="color:var(--jade)">✓＝4条件成立（E[r]≥12／投資R≥10／倍率寄与≤30%／ストレス≥7）＝🟢投下可</span>／<span style="color:var(--rust)">✗＝未達→🟡押し目待ち（指値は✦門Xの監視表）</span>。順位・採点には一切影響しない。PER/ROIC欠損時はE[r]判定不能と表示。<br>各行の <span style="color:#8fc9a4">審査</span>＝門2審査プロトコル全文（この銘柄を門にかけ直す）／<span style="color:#d6b06c">決算</span>＝決算点検依頼文（S1-S3照合・6警報・門X前提の再計算）を、その銘柄名つきでコピー→Claudeに貼る。台帳のティア（Ⅳ）に依る。</div>`;
+  html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8"><b>2つの判定に統合（v9.9.25）</b>：価格の関門は<b>門X 1本</b>に一本化した——旧「間（今買える）」の粗いPERブレーキは買付判定から外し（「今買える」なのに「監視」の矛盾を解消）、<b>🟢投下可＝格75+ かつ 門X4条件</b>／<b>🟡押し目待ち＝格75+だが門X未達</b>（旧「門X未達＝監視」と旧「押し目待ち」を統合）。各群内の順位＝<b>合成順（格×0.6 ＋ E[r]%×0.4）</b>——壊れにくさ（格）を主柱にしつつ期待リターン（門X E[r]）を効かせる（同点は格で決着）。<b>群の境界（投下可の合否）は不変</b>。E[r]%は門X合格線12%＝50点として点数化（±10ptで0-100）、欠損は中立50。🟡の<b>開通＝PER○○（あと−○%）</b>はE[r]が12%に届く入口PERと現値からの必要下落。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。<br><b>E[r]（門X期待リターン）</b>＝門X裁きⅠの現値期待リターン：還元shy + 成長g（<b>高ROIC(≥15%)×堀無傷は実証CAGRを信じる</b>／それ以外は再投資式b×ROIICを実証CAGRで頭打ち・20%上限＝証拠の上限。v9.9.25：資本を返しながら伸びる資本軽量コンパウンダーを再投資式が過小評価する欠陥を是正・価格規律は不変） − 倍率の重力（<b>終着PER=min(現PER, clamp(8+g,16,30))＝成長連動</b>・10年。McKinsey価値ドライバーの理論フェアは成熟g4%≈22倍／持続成長高ROIC≈28-30倍だが、門は保守側に8+g〔下限16〕で頭を抑える＝理論値より安全余白を取る設計。成長産業と成熟産業を同じ終着PERで測らない。掟六の精神＝現PERを超えない＝拡大は見込まない、は維持）。<span style="color:var(--jade)">✓＝4条件成立（E[r]≥12／投資R≥10／倍率寄与≤30%／ストレス≥7）＝🟢投下可</span>／<span style="color:var(--rust)">✗＝未達→🟡押し目待ち（指値は✦門Xの監視表）</span>。順位・採点には一切影響しない。PER/ROIC欠損時はE[r]判定不能と表示。<br>各行の <span style="color:#8fc9a4">審査</span>＝門2審査プロトコル全文（この銘柄を門にかけ直す）／<span style="color:#d6b06c">決算</span>＝決算点検依頼文（S1-S3照合・6警報・門X前提の再計算）を、その銘柄名つきでコピー→Claudeに貼る。台帳のティア（Ⅳ）に依る。</div>`;
   pb.innerHTML=planBox+html;
 }
 // ========== v9.1: .icsカレンダー書き出し ==========
@@ -2451,10 +2394,14 @@ function renderWatch(items){
     const perF=parseFloat(d.perF)||0;
     const grV=perF>0&&per>0?(per/perF-1)*100:(d.gr&&d.gr!=='na'?parseFloat(d.gr):NaN);
     if(!(per>0&&ev>0)){rows.push({nm:it.nm,drop:999,msg:'価格データ不足——per/evebitを更新せよ'});continue;}
-    const evLimit=roicV>=30?40:roicV<15?20:35;
+    // v9.9.26: 目標株価の計算に採点機と同じgrower緩和(v9.9.9)を適用——grower銘柄のアラート指値が旧50/35基準で低すぎる乖離を解消
+    const cagrW=parseFloat(d.cagr)||0, sW=parseFloat(it.evalScore)||0;
+    const growerW=(sW>=72&&cagrW>=15&&roicV>=20&&(d.erosion||'none')==='none'&&(d.disrupt||'settled')!=='threat');
+    const perLimW=growerW?62:50;
+    const evLimit=(roicV>=30?40:roicV<15?20:35)*(growerW?1.3:1);
     const totalG=isNaN(grV)?null:grV+shy;
     const failF=[];const names=[];
-    if(per>50){failF.push(50/per);names.push('PER');}
+    if(per>perLimW){failF.push(perLimW/per);names.push('PER');}
     if(ev>evLimit){failF.push(evLimit/ev);names.push('EV/EBIT');}
     if(totalG!=null){ if(totalG<=0){failF.push(0);names.push('成長非正');} else if(per/totalG>3){failF.push(3*totalG/per);names.push('PEG_adj');} }
     if(!failF.length){rows.push({nm:it.nm,drop:0,msg:'<b style="color:var(--jade)">既に全ブレーキ通過圏——現値で再採点せよ</b>'});continue;}
@@ -2603,134 +2550,7 @@ function pfShow(){ const f=document.getElementById('pfFrame'); if(!f)return; try
 store.init().then(()=>{compute();renderLedger();if(typeof ccfRenderAllQueues==='function')ccfRenderAllQueues();});
 
 </script>
-<script>
-// ===== Ⅴ 対S&P500 検証タブ (v9.6) =====
-let _vsRows=[];
-async function renderVsSpx(){
-  // 保有銘柄を台帳から拾い、保存済み買付情報があれば復元
-  let held=[];
-  try{const hr=await store.get('g7hold:set');if(hr&&hr.value)held=JSON.parse(hr.value);}catch(e){}
-  let saved={};
-  try{const sr=await store.get('g7buy:map');if(sr&&sr.value)saved=JSON.parse(sr.value);}catch(e){}
-  if(!_vsRows.length){
-    const names=[...held];
-    for(const k of Object.keys(saved)){ if(k!=='__spxNow'&&!names.includes(k))names.push(k); } // 売却済み(保有解除)も記録として残す
-    if(names.length){ _vsRows=names.map(nm=>Object.assign({nm,date:'',buyPx:'',shares:'',nowPx:'',spxThen:'',div:'',sellDate:'',sellPx:'',spxSell:''}, saved[nm]||{})); }
-    else { _vsRows=[{nm:'',date:'',buyPx:'',shares:'',nowPx:'',spxThen:'',div:'',sellDate:'',sellPx:'',spxSell:''}]; }
-  }
-  if($('vsSpxNow')&&saved.__spxNow&&!$('vsSpxNow').value)$('vsSpxNow').value=saved.__spxNow;
-  drawVsRows();
-}
-function drawVsRows(){
-  const box=$('vsInputRows'); if(!box)return;
-  box.innerHTML=_vsRows.map((r,i)=>`
-   <div style="display:grid;grid-template-columns:1.1fr 1.2fr 1fr .8fr 1fr 1.1fr auto;gap:6px;align-items:center;padding:8px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:8px">
-    <input placeholder="銘柄" value="${r.nm||''}" onchange="_vsRows[${i}].nm=this.value" style="font-size:12px">
-    <input placeholder="初回買付日 YYYY-MM-DD" value="${r.date||''}" onchange="_vsRows[${i}].date=this.value" style="font-size:12px">
-    <input type="number" step="0.01" placeholder="平均取得単価$" value="${r.buyPx||''}" onchange="_vsRows[${i}].buyPx=this.value" style="font-size:12px">
-    <input type="number" step="0.0001" placeholder="株数" value="${r.shares||''}" onchange="_vsRows[${i}].shares=this.value" style="font-size:12px">
-    <input type="number" step="0.01" placeholder="現在株価$" value="${r.nowPx||''}" onchange="_vsRows[${i}].nowPx=this.value" style="font-size:12px">
-    <input type="number" step="0.01" placeholder="初回買付日SP500TR" value="${r.spxThen||''}" onchange="_vsRows[${i}].spxThen=this.value" style="font-size:12px">
-    <button onclick="_vsRows.splice(${i},1);drawVsRows()" style="padding:4px 8px;background:transparent;border:1px solid var(--line);border-radius:5px;color:var(--dim);cursor:pointer">×</button>
-    <div style="grid-column:1/-1;display:grid;grid-template-columns:auto 1.2fr 1fr 1.1fr 1fr;gap:6px;align-items:center;padding-top:4px;border-top:1px dashed rgba(120,110,90,.25)">
-     <span style="font-size:11px;color:${(r.sellPx&&r.spxSell)?'#5d8cc2':'var(--dim)'};white-space:nowrap">${(r.sellPx&&r.spxSell)?'🔵 売却済（成績は売却時点で凍結）':'売却したら→'}</span>
-     <input placeholder="売却日 YYYY-MM-DD" value="${r.sellDate||''}" onchange="_vsRows[${i}].sellDate=this.value" style="font-size:12px">
-     <input type="number" step="0.01" placeholder="売却株価$" value="${r.sellPx||''}" onchange="_vsRows[${i}].sellPx=this.value" style="font-size:12px">
-     <input type="number" step="0.01" placeholder="売却日SP500TR" value="${r.spxSell||''}" onchange="_vsRows[${i}].spxSell=this.value" style="font-size:12px">
-     <span></span>
-    </div>
-   </div>`).join('');
-}
-function pasteVsPrices(){
-  const raw=($('vsPasteBox')&&$('vsPasteBox').value||'').trim();
-  if(!raw){alert('採取器のvs_spx_prices.jsonを貼ってください');return;}
-  let j; try{j=JSON.parse(raw);}catch(e){alert('JSONの形式が不正です');return;}
-  // SPX現値
-  if(j.__spxNow&&$('vsSpxNow'))$('vsSpxNow').value=j.__spxNow;
-  // 各銘柄の現在株価・配当を該当行に流し込む(無ければ行を作る)
-  let filled=0;
-  Object.keys(j).forEach(k=>{
-    if(k.startsWith('__'))return;
-    let row=_vsRows.find(r=>r.nm&&r.nm.toUpperCase()===k.toUpperCase());
-    if(!row){row={nm:k,date:'',buyPx:'',shares:'',nowPx:'',spxThen:'',div:''};_vsRows.push(row);}
-    if(j[k].nowPx!=null){row.nowPx=j[k].nowPx;filled++;}
-    if(j[k].div!=null)row.div=j[k].div;
-  });
-  drawVsRows();
-  alert(filled+'銘柄の現在株価を流し込みました。買付日・買付株価・株数を各行に手入力して「計算」してください。');
-}
-function addVsRow(){_vsRows.push({nm:'',date:'',buyPx:'',shares:'',nowPx:'',spxThen:'',div:''});drawVsRows();}
-async function calcVsSpx(){
-  const spxNow=parseFloat($('vsSpxNow').value);
-  const inclDiv=$('vsInclDiv').value==='yes';
-  const _needNow=_vsRows.some(r=>r.nm&&!(parseFloat(r.sellPx)&&parseFloat(r.spxSell)));
-  if(!spxNow&&_needNow){alert('現在のS&P500(TR)値を入力してください（全行が売却済みなら不要）');return;}
-  // 保存(非破壊: 別キー)
-  const map={__spxNow:spxNow};
-  _vsRows.forEach(r=>{if(r.nm)map[r.nm]={date:r.date,buyPx:r.buyPx,shares:r.shares,nowPx:r.nowPx,spxThen:r.spxThen,div:r.div,sellDate:r.sellDate||'',sellPx:r.sellPx||'',spxSell:r.spxSell||''};});
-  try{await store.set('g7buy:map',JSON.stringify(map));}catch(e){}
-  // 計算
-  let rows=[],sumCost=0,sumNow=0,sumSpxNow=0;
-  for(const r of _vsRows){
-    const bp=parseFloat(r.buyPx),sh=parseFloat(r.shares),st=parseFloat(r.spxThen),dv=parseFloat(r.div)||0;
-    let np=parseFloat(r.nowPx);
-    const sp=parseFloat(r.sellPx),ss=parseFloat(r.spxSell);
-    const sold=!!(sp&&ss);          // ★売却済み: 売却株価と売却日SPXが両方あれば、成績をその時点で凍結
-    if(!sold&&!np){ try{const g=await store.get('g7:'+r.nm); if(g&&g.value){const o=JSON.parse(g.value); const lp=(o&&o.data)?parseFloat(o.data.px):NaN; if(lp){np=lp;} }}catch(e){} } // 現在株価が空欄なら台帳のpxを自動流用(二重入力の解消)
-    const endPx=sold?sp:np, endSpx=sold?ss:spxNow;
-    if(!r.nm||!bp||!sh||!st||!endPx||!endSpx)continue;
-    const cost=bp*sh, nowVal=endPx*sh + (inclDiv?dv:0);
-    const spxVal=cost*(endSpx/st);    // 同じ投下額を同じ日にSPXへ入れた場合の(売却時/現在)価値
-    const stockRet=(nowVal/cost-1)*100;
-    const spxRet=(endSpx/st-1)*100;   // S&P500トータルリターンはSPX単純比では配当分過小。注記で補正を促す
-    const excess=stockRet-spxRet;
-    const dollarDiff=nowVal-spxVal;   // ★同じ購入金額での裁定: この銘柄で$いくら勝った/負けた
-    // ★保有年数とCAGR(年率): 買付日から今日まで。日付が無ければCAGRはnull
-    let yrsHeld=null, cagrStock=null, cagrSpx=null, cagrExcess=null;
-    if(r.date){ const endMs=(sold&&r.sellDate)?new Date(r.sellDate).getTime():Date.now(); const dms=endMs-new Date(r.date).getTime(); yrsHeld=dms/(365.25*864e5);
-      if(yrsHeld>0.08){ cagrStock=(Math.pow(nowVal/cost,1/yrsHeld)-1)*100; cagrSpx=(Math.pow(endSpx/st,1/yrsHeld)-1)*100; cagrExcess=cagrStock-cagrSpx; } }
-    sumCost+=cost; sumNow+=nowVal; sumSpxNow+=spxVal;
-    rows.push({nm:r.nm+(sold?'〔売却済〕':''),stockRet,spxRet,excess,cost,nowVal,spxVal,dollarDiff,yrsHeld,cagrStock,cagrSpx,cagrExcess});
-  }
-  if(!rows.length){
-    $('vsResult').innerHTML='<div style="padding:14px;background:rgba(192,74,51,.1);border:1px solid rgba(192,74,51,.4);border-radius:8px;color:#e0917a;font-size:13px">計算に必要な入力が揃った行がありません。各行に<b>銘柄・買付株価・株数・現在株価・買付日SPX</b>の5つが必要です。上の「現在のSPX値」も確認してください。</div>';
-    $('vsResultBlock').style.display='block'; return; }
-  rows.sort((a,b)=>b.dollarDiff-a.dollarDiff);
-  const portRet=(sumNow/sumCost-1)*100, portSpx=(sumSpxNow/sumCost-1)*100, portExc=portRet-portSpx;
-  const totalDiff=sumNow-sumSpxNow;   // ★金額加重の総ドル差(城全体で$いくら勝った/負けた)
-  // ★ポート加重の年率: 投下額加重平均の保有年数でトータルリターンを年率化
-  let wYrs=0,wSum=0; rows.forEach(r=>{if(r.yrsHeld){wYrs+=r.yrsHeld*r.cost;wSum+=r.cost;}});
-  const avgYrs=wSum?wYrs/wSum:null;
-  let portCagr=null,portCagrSpx=null;
-  if(avgYrs&&avgYrs>0.08){ portCagr=(Math.pow(sumNow/sumCost,1/avgYrs)-1)*100; portCagrSpx=(Math.pow(sumSpxNow/sumCost,1/avgYrs)-1)*100; }
-  const portCagrTxt = portCagr!=null
-    ? `<b style="color:#8fc9a4">門 ${portCagr>=0?'+':''}${portCagr.toFixed(1)}%/年</b> <span style="color:var(--dim)">vs</span> <b style="color:var(--ink-soft)">SPX ${portCagrSpx>=0?'+':''}${portCagrSpx.toFixed(1)}%/年</b>`
-    : `<span style="color:var(--dim)">買付日を入れると年率が出る</span>`;
-  const wins=rows.filter(r=>r.dollarDiff>0).length;
-  const fmt$=v=>(v<0?'−$':'+$')+Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0});
-  let html=`<div style="padding:16px;background:${totalDiff>=0?'rgba(74,124,89,.12)':'rgba(192,74,51,.12)'};border:1px solid ${totalDiff>=0?'rgba(74,124,89,.4)':'rgba(192,74,51,.4)'};border-radius:10px;margin-bottom:14px">
-   <div style="font-size:13px;color:var(--ink-soft);margin-bottom:4px">門の目利き(城の部分)総合 — 同じ投下額での裁定</div>
-   <div style="font-size:26px;font-weight:700;color:${totalDiff>=0?'#8fc9a4':'#e0917a'}">${fmt$(totalDiff)} <span style="font-size:18px">／ ${portExc>=0?'+':''}${portExc.toFixed(1)}pt</span> <span style="font-size:15px">${totalDiff>=0?'S&P500に勝利':'S&P500に敗北'}</span></div>
-   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
-     <div style="padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px"><div style="font-size:11px;color:var(--dim)">トータルリターン</div><div style="font-size:15px"><b style="color:#8fc9a4">門 ${portRet>=0?'+':''}${portRet.toFixed(1)}%</b> <span style="color:var(--dim)">vs</span> <b style="color:var(--ink-soft)">SPX ${portSpx>=0?'+':''}${portSpx.toFixed(1)}%</b></div></div>
-     <div style="padding:8px 10px;background:rgba(255,255,255,.03);border-radius:6px"><div style="font-size:11px;color:var(--dim)">年率(加重CAGR)</div><div style="font-size:15px">${portCagrTxt}</div></div>
-   </div>
-   <div style="font-size:12px;color:var(--dim);margin-top:8px">投下$${sumCost.toLocaleString('en-US',{maximumFractionDigits:0})} → 城 $${sumNow.toLocaleString('en-US',{maximumFractionDigits:0})} vs 同額SPX $${sumSpxNow.toLocaleString('en-US',{maximumFractionDigits:0})} ／ 勝ち越し ${wins}/${rows.length}銘柄</div></div>`;
-  html+='<div style="display:grid;grid-template-columns:1fr .9fr .9fr .75fr .9fr 1.05fr;gap:6px;padding:4px 12px;font-size:11px;color:var(--dim)"><div>銘柄</div><div>トータル</div><div>SPX</div><div>超過</div><div>年率超過</div><div style="text-align:right">ドル差</div></div>';
-  html+='<div style="display:grid;gap:6px">'+rows.map(r=>`
-   <div style="display:grid;grid-template-columns:1fr .9fr .9fr .75fr .9fr 1.05fr;gap:6px;padding:10px 12px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:8px;font-size:13px;align-items:center">
-    <div style="font-weight:600;color:var(--ink-bright,#fff)">${r.nm}${r.yrsHeld?`<span style="font-size:10px;color:var(--dim)"> ${r.yrsHeld.toFixed(1)}年</span>`:''}</div>
-    <div><b style="color:${r.stockRet>=0?'#8fc9a4':'#e0917a'}">${r.stockRet>=0?'+':''}${r.stockRet.toFixed(0)}%</b></div>
-    <div style="color:var(--ink-soft)">${r.spxRet>=0?'+':''}${r.spxRet.toFixed(0)}%</div>
-    <div style="color:${r.excess>=0?'#8fc9a4':'#e0917a'}">${r.excess>=0?'+':''}${r.excess.toFixed(0)}pt</div>
-    <div>${r.cagrExcess!=null?`<b style="color:${r.cagrExcess>=0?'#8fc9a4':'#e0917a'}">${r.cagrExcess>=0?'+':''}${r.cagrExcess.toFixed(1)}%/年</b>`:'<span style="color:var(--dim)">—</span>'}</div>
-    <div style="text-align:right"><b style="color:${r.dollarDiff>=0?'#8fc9a4':'#e0917a'};font-size:14px">${fmt$(r.dollarDiff)}</b></div>
-   </div>`).join('')+'</div>';
-  html+=`<div style="margin-top:12px;font-size:11.5px;color:var(--dim);line-height:1.8">※ S&P500リターンはSPX指数の値動きのみ。厳密なトータルリターン(配当込み)は年約1.3-2%上乗せになるため、この超過リターンは<b>門にわずかに有利</b >に出る。勝敗が僅差(±3%)なら引き分けとみなすのが安全。個別株側は「配当を含める=はい」+各行の受取配当入力で配当込みになる。</div>`;
-  $('vsResult').innerHTML=html;
-  $('vsResultBlock').style.display='block';
-}
-</script>
+<!-- 対S&P500検証タブ(v9.6)のスクリプトはタブ撤去に伴い削除(2026-07)。UIのid(vsInputRows等)が存在せず全関数が到達不能だった。必要になればgit履歴から復元 -->
 <script>
 window.__CCF_CODE__ = {gate0: "# =====================================================================\n# CCF Ω Final Gate — 第0の門 統合版 v8.5（1セル・1実行で全工程）\n#\n#   漏斗(2,887社判定) → golden set回帰 → 業態除外 → 待ち行列100\n#   → 敗者復活の椅子(現金控除ROIC内蔵) → WATCH照合\n#\n# 【v7.1からの統合】gate1_rank / gate1_autopsy を本体に吸収。\n#   解剖(現金・短期投資・のれん)は漏斗の1パス内で同時取得 — 追加コストほぼゼロ。\n# 【焼き込んだ教訓】\n#   ・短期投資タグ9種(VEEV/LMATを誤殺したタグ漏れの修正) + 年別最大値方式\n#   ・IC-現金が負になる年がある企業(SPGI型)は椅子にせず「要手動」へ隔離\n#   ・中国VIEの既知すり抜け(NTES等)を明示ブラックリストで補強\n#   ・椅子の回帰テスト: VEEVが椅子に居なければこの実行は不採用\n#\n# 【v8.1 (2026-07-14) の変更 — 壊れない複利の門 v9.6思想との統一】\n#   ・RESCUE_FAILSに\"FCF転換\"を追加: FCF転換70%未満でも現金控除ROICが閾値超なら椅子で救済。\n#     採点機v9.6の「ROIIC≥WACC+5なら転換率未満でも通す(Amazon型)」と整合。入口で種まき型を殺さない。\n#   ・次工程をhachimon_fetch.py(採取器v3.0)に更新: 待ち行列→SEC自動採取→採点機JSONの一気通貫。\n#   ・来年動かす前に必ず更新: HOLDINGS / GOLDENの期待スコア / STALE_DAYS / (採取器側)SKIP。\n#     詳細は門のⅠ解説タブ冒頭「運用手順書」「来年動かす前のチェックリスト」を参照。\n#\n# 【v8.2 (2026-07-17) の変更 — 並走環境(ccf-gate)での門0改修。検証後にColab正本へ移植】\n#   ・負資本の墓場はずし: equity_neg でも score==7 かつ IC>0 でROIC正常計算なら、⚑負資本フラグ付きで\n#     待ち行列プールに合流(FICO/ORLY/AZO/FTNT型=自社株買いで簿価資本を消した複利機械)。\n#     レバレッジの当否は第二の門の財務安全(f系)が裁く——門0が入口で殺さない。負資本6点のみnegeqに残す。\n#   ・のれんの椅子: 現金椅子と対称に、のれん控除ROIC(IC-のれん)が閾値超の敗者復活候補を「要審査」枠で\n#     可視化(ROP型ロールアップ)。救済ではなく番人の審査対象。のれん控除は買収の高値掴みを化粧できるため、\n#     買収の巧拙はf系資本配分で必ず裁くこと。IC-のれんが負の年がある企業は要手動へ隔離(SPGI型と同じ扱い)。\n#   ・回帰追加: FICOが待ち行列に居ること(負資本合流の固定)。のれん椅子の回帰は初回観測後に固定する。\n#\n# 【v8.3 (2026-07-17) の変更 — 病名「成長停止」の隔離】\n#   ・6点で唯一の失敗が売上CAGR(<5%)の企業は待ち行列に入れず「成長停止棚」(gate1_stalled.json)へ。\n#     根拠: 品質7項目のうち門2の定性審査で挽回しうるのはROIC系(現金/のれんの化粧)やFCF転換(種まき型)だが、\n#     成長の欠如だけは20-30年複利で直せない唯一の病。数字が正しく絶望している会社に審査枠を使わない。\n#   ・永久追放ではない: CAGRは毎年の門0で再計算されるため、成長が戻れば翌年自動で待ち行列に復帰する。\n#   ・空いた枠はpt次点が自動で繰り上がる。回帰追加: AAPL(3%成長・golden set銘柄)が棚に居て待ち行列に居ないこと。\n#\n# 【v8.4 (2026-07-17) の変更 — 病名分類の全面実装。「数字が裁けない順に通す」を機械に焼き込む】\n#   ・6点(単一fail)全社に病名を付与し、待ち行列の並びを変える:\n#       谷(✗ROIC最低値/ROIC)      = 投資期の谷か衰えか、数字では区別不能 → 審査優先\n#       種まき(✗FCF転換/FCFマイナス) = 重capexか超成長の種まきか、数字では区別不能 → 審査優先\n#       未成熟(✗営業利益率, opm≥10%) = 成長期でマージン未成熟(射程内)       → 審査優先\n#       低マージン業態(✗営業利益率, opm<10%) = 流通・卸など構造的低マージン → 優先しない(pt順のまま)\n#       成長停止(✗売上CAGR)        = 門2で直せない唯一の病               → 棚(v8.3)\n#   ・待ち行列の並び: 審査優先(谷/種まき/未成熟)を先頭に、以降は従来どおりpt降順。\n#     採取器のデフォルト(上位5社)が「数字で裁けない群」から食べ始める。メンバー選定(TOP_N)はpt基準のまま不変。\n#     哲学: 数字がすでに8割語っている7点は後回しでも判定が変わらない。第二の門の労力は判定不能な所に使う。\n#   ・回帰追加: MELIの病名が「谷」で、待ち行列でLLY(pt首位の7点)より前に居ること(優先並びの固定)。\n#\n# 【v8.5 (2026-07-17) の変更 — 「通す銘柄は絞らない」の徹底。線は6のまま、線の内側の漏れを塞ぐ】\n#   ・審査優先病名(谷/種まき/未成熟)はptに関係なく待ち行列メンバーにする。\n#     旧: 優先並びはTOP_N=100の中でしか効かず、INTU/CPRT〔谷・WATCH銘柄〕やABNB/MPWRがbacklogで\n#     永遠に採取されなかった。膜(メンバー)は開き、順序(優先ブロック内もpt降順)が選別する。\n#   ・負資本6点の審査優先病名も⚑合流(TDG型=負債自社株買いのロールアップ複利を圏外にしない)。\n#   ・棚の一貫化: 負資本6点の成長停止も棚へ。negeqに残るのは低マージン業態など非優先の負資本6点のみ。\n#   ・非優先のpt足切り(TOP_N=100)は据え置き。5点は開けない——最新と最低が同時に沈むのは谷ではなく地形。\n#     5点の例外は現金椅子・のれん椅子が既に引き受けている。\n#   ・回帰追加: INTU〔谷〕とTDG〔谷・⚑〕が待ち行列に居ること。\n#\n# 前提: Drive/ccf に companyfacts.zip（無ければ自動DL 10-20分）\n# 実行: zipあり約10-12分 / 初回 25-35分\n# =====================================================================\nEMAIL = \"fortis5280@gmail.com\"\n\nYEARS, MIN_SALES_CAGR = 5, 0.05\nMIN_ROIC_LATEST, MIN_ROIC_WORST = 0.15, 0.10\nMIN_OPM, MIN_FCF_CONV = 0.15, 0.70\nSEND_TO_GATE1, TOP_N = 6, 100\nSEAM_TOL, STALE_DAYS = 0.02, 600\nRESCUE_MIN_OPM, RESCUE_MIN_CAGR = 0.15, 0.08\nRESCUE_FAILS = {\"ROIC\", \"ROIC最低値\", \"FCF転換\"}  # v9.6: FCF転換未達でも高ROIC(現金控除ROIC)なら椅子で救済——種まき型を入口で殺さない\nKNOWN_CN = {\"PDD\",\"NTES\",\"BABA\",\"JD\",\"BIDU\",\"TCOM\",\"YUMC\",\"LI\",\"NIO\",\"XPEV\",\"QFIN\",\"XYF\",\"ATAT\"}\n\nHOLDINGS = {\"NVDA\",\"MSFT\",\"V\",\"TSM\",\"ASML\",\"RACE\",\"ADBE\",\"IDXX\",\"FTNT\",\"RMD\",\n            \"COST\",\"CPRT\",\"KLAC\",\"SNPS\",\"INTU\",\"LIN\",\"ROP\",\"MA\",\"GOOGL\",\"META\"}\nWATCH = HOLDINGS | {\"VEEV\",\"LMAT\",\"CTAS\",\"ADP\",\"MANH\",\"MEDP\",\"HEI\",\"ANET\",\"KARO\",\"LLY\"}\n\nimport json, time, csv, urllib.request, collections, datetime, os, zipfile\n\nSAVE_DIR = \"/content/drive/MyDrive/ccf\"\ntry:\n    from google.colab import drive\n    drive.mount('/content/drive', force_remount=False)\n    os.makedirs(SAVE_DIR, exist_ok=True)\nexcept Exception as e:\n    SAVE_DIR = \".\"\nprint(f\"■ 保存先: {SAVE_DIR}\\n\")\n\nHDR = {\"User-Agent\": f\"CCF-Omega-Screener {EMAIL}\"}\nZIP_PATH = f\"{SAVE_DIR}/companyfacts.zip\"\nif os.path.exists(ZIP_PATH) and os.path.getsize(ZIP_PATH) > 1e9:\n    print(f\"■ companyfacts.zip 再利用 ({os.path.getsize(ZIP_PATH)/1e9:.2f} GB)\")\nelse:\n    print(\"■ companyfacts.zip をダウンロード中（約1.4GB）...\")\n    req = urllib.request.Request(\n        \"https://www.sec.gov/Archives/edgar/daily-index/xbrl/companyfacts.zip\", headers=HDR)\n    with urllib.request.urlopen(req, timeout=120) as r, open(ZIP_PATH, \"wb\") as f:\n        done = 0\n        while True:\n            c = r.read(1 << 22)\n            if not c: break\n            f.write(c); done += len(c)\n    print(f\"    完了 {done/1e9:.2f} GB\")\n\ndef get(u):\n    for _ in range(3):\n        try:\n            with urllib.request.urlopen(urllib.request.Request(u, headers=HDR), timeout=45) as r:\n                return json.loads(r.read())\n        except Exception: time.sleep(0.4)\n    return None\n\ntk = get(\"https://www.sec.gov/files/company_tickers.json\") or {}\nCIK2TK, TK2CIK = {}, {}\nfor row in tk.values():\n    CIK2TK.setdefault(int(row[\"cik_str\"]), row[\"ticker\"])\n    TK2CIK.setdefault(row[\"ticker\"], int(row[\"cik_str\"]))\n\nTAGS = {\n \"revenue\": [\"RevenueFromContractWithCustomerExcludingAssessedTax\",\"Revenues\",\n             \"RevenueFromContractWithCustomerIncludingAssessedTax\",\"SalesRevenueNet\",\n             \"SalesRevenueGoodsNet\",\"SalesRevenueServicesNet\",\"Revenue\",\n             \"RevenueFromContractsWithCustomers\"],\n \"opinc\":   [\"OperatingIncomeLoss\",\"ProfitLossFromOperatingActivities\",\"OperatingProfitLoss\"],\n \"gross\":   [\"GrossProfit\"], \"rnd\": [\"ResearchAndDevelopmentExpense\"],\n \"sga\":     [\"SellingGeneralAndAdministrativeExpense\",\"GeneralAndAdministrativeExpense\"],\n \"sell\":    [\"SellingAndMarketingExpense\",\"SellingExpense\"],\n \"cogs\":    [\"CostOfRevenue\",\"CostOfGoodsAndServicesSold\",\"CostOfGoodsSold\"],\n \"ni\":      [\"NetIncomeLoss\",\"ProfitLossAttributableToOwnersOfParent\",\"ProfitLoss\",\n             \"NetIncomeLossAvailableToCommonStockholdersBasic\"],\n \"ocf\":     [\"NetCashProvidedByUsedInOperatingActivities\",\n             \"NetCashProvidedByUsedInOperatingActivitiesContinuingOperations\",\n             \"CashFlowsFromUsedInOperatingActivities\",\"NetCashFlowsFromUsedInOperatingActivities\"],\n \"capex\":   [\"PaymentsToAcquirePropertyPlantAndEquipment\",\"PaymentsToAcquireProductiveAssets\",\n             \"PaymentsToAcquirePropertyPlantAndEquipmentAndIntangibleAssets\",\n             \"PaymentsForCapitalImprovements\",\n             \"PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities\",\n             \"PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsAndOtherLongtermAssets\"],\n \"equity\":  [\"StockholdersEquity\",\"StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest\",\n             \"EquityAttributableToOwnersOfParent\",\"Equity\"],\n \"debt_lt\": [\"LongTermDebtNoncurrent\",\"LongTermDebt\",\"BorrowingsNoncurrent\",\"LongtermBorrowings\"],\n \"debt_st\": [\"LongTermDebtCurrent\",\"DebtCurrent\",\"ShortTermBorrowings\",\"BorrowingsCurrent\",\n             \"CurrentPortionOfNoncurrentBorrowings\",\"ShorttermBorrowings\"],\n \"cash\":    [\"CashAndShortTermInvestments\",\"CashAndCashEquivalentsAtCarryingValue\",\"CashAndCashEquivalents\"],\n \"sti\":     [\"ShortTermInvestments\",\"MarketableSecuritiesCurrent\",\"CurrentInvestments\",\n             \"AvailableForSaleSecuritiesDebtSecuritiesCurrent\",\"AvailableForSaleSecuritiesCurrent\",\n             \"DebtSecuritiesAvailableForSaleCurrent\",\"HeldToMaturitySecuritiesCurrent\",\n             \"TradingSecuritiesCurrent\",\"ShortTermInvestmentsAndMarketableSecurities\"],\n \"gw\":      [\"Goodwill\"],\n}\nFLOW = {\"revenue\",\"opinc\",\"gross\",\"rnd\",\"sga\",\"sell\",\"cogs\",\"ni\",\"ocf\",\"capex\"}\ndef d2(s): return datetime.date(int(s[:4]), int(s[5:7]), int(s[8:10]))\ndef near(a, b, days=7): return abs((d2(a)-d2(b)).days) <= days\nTODAY = datetime.date.today()\n\ndef collect(facts, key):\n    out = []\n    flow = key in FLOW\n    for taxo in (\"us-gaap\",\"ifrs-full\"):\n        ns = facts.get(taxo)\n        if not ns: continue\n        for tag in TAGS[key]:\n            node = ns.get(tag)\n            if not node: continue\n            for unit, ents in node.get(\"units\", {}).items():\n                if \"/\" in unit: continue\n                d = {}\n                for e in ents:\n                    en = e.get(\"end\"); fl = e.get(\"filed\",\"\")\n                    if not en: continue\n                    if flow:\n                        st = e.get(\"start\")\n                        if not st or not (330 <= (d2(en)-d2(st)).days <= 400): continue\n                        y = int(en[:4])\n                        if y not in d or fl > d[y][2]: d[y] = (en, float(e[\"val\"]), fl)\n                    else:\n                        if e.get(\"start\"): continue\n                        if en not in d or fl > d[en][1]: d[en] = (float(e[\"val\"]), fl)\n                if d: out.append((tag, unit, d))\n    return out\n\ndef pick_series(cands, yrs, unit_lock=None, fye=None, stock=False):\n    if unit_lock: cands = [(t,u,d) for (t,u,d) in cands if u == unit_lock]\n    if stock and fye:\n        f2 = []\n        for t,u,d in cands:\n            dd = {}\n            for y, fy_end in fye.items():\n                hits = [(en,v) for en,(v,fl) in d.items() if near(en, fy_end)]\n                if hits: dd[y] = (sorted(hits)[-1][0], sorted(hits)[-1][1], \"\")\n            if dd: f2.append((t,u,dd))\n        cands = f2\n    elif fye:\n        cands = [(t,u,{y:v for y,v in d.items() if y in fye and near(v[0], fye[y])}) for (t,u,d) in cands]\n        cands = [(t,u,d) for (t,u,d) in cands if d]\n    if not cands: return None, None, None\n    cands.sort(key=lambda c: -sum(1 for y in yrs if y in c[2]))\n    tag0, unit0, d0 = cands[0]\n    merged = {y: d0[y][1] for y in yrs if y in d0}\n    lineage = tag0\n    for t,u,d in cands[1:]:\n        if u != unit0: continue\n        missing = [y for y in yrs if y not in merged]\n        if not missing: break\n        overlap = [y for y in yrs if y in merged and y in d]\n        if not all(merged[y]==0 or abs(d[y][1]-merged[y])/abs(merged[y])<=SEAM_TOL for y in overlap):\n            continue\n        filled = False\n        for y in missing:\n            if y in d: merged[y] = d[y][1]; filled = True\n        if filled: lineage += f\"+{t}\"\n    if all(y in merged for y in yrs):\n        return [merged[y] for y in yrs], unit0, lineage\n    return None, None, None\n\ndef sti_series(facts, yrs, unit, fye):\n    \"\"\"短期投資: タグごとに取り年別最大値(別名重複は二重計上しない/取り漏らし防止)\"\"\"\n    si = [0.0]*len(yrs)\n    for tag,u,d in collect(facts,\"sti\"):\n        if u != unit: continue\n        for k,y in enumerate(yrs):\n            hits = [v for en,(v,fl) in d.items() if near(en, fye[y])]\n            if hits: si[k] = max(si[k], max(hits))\n    return si\n\ndef derive_opinc(facts, yrs, unit, fye):\n    def grab(key):\n        v,_,_ = pick_series(collect(facts,key), yrs, unit_lock=unit, fye=fye)\n        return v\n    g = grab(\"gross\")\n    if g is None:\n        rv, cg = grab(\"revenue\"), grab(\"cogs\")\n        if rv is None or cg is None: return None\n        g = [rv[i]-cg[i] for i in range(len(yrs))]\n    rnd = grab(\"rnd\") or [0.0]*len(yrs)\n    sga = grab(\"sga\")\n    if sga is None:\n        cands = collect(facts,\"sga\")\n        ga,_,_ = pick_series([(t,u,d) for (t,u,d) in cands if t==\"GeneralAndAdministrativeExpense\"],\n                             yrs, unit_lock=unit, fye=fye)\n        se = grab(\"sell\")\n        if ga is None or se is None: return None\n        sga = [ga[i]+se[i] for i in range(len(yrs))]\n    return [g[i]-rnd[i]-sga[i] for i in range(len(yrs))]\n\ndef evaluate(rev, op, ni, ocf, cap, eq, lt, st):\n    n = len(rev)\n    if any(x <= 0 for x in rev): return None, \"revenue_zero\"\n    fcf = [ocf[i]-cap[i] for i in range(n)]\n    roic = []\n    for i in range(n):\n        ic = eq[i]+lt[i]+st[i]\n        if ic <= 0: return None, \"invested_capital_broken\"\n        roic.append(op[i]*0.79/ic)\n    opm  = op[-1]/rev[-1]\n    cagr = (rev[-1]/rev[0])**(1/(n-1)) - 1\n    s_ni = sum(ni)\n    conv = sum(fcf)/s_ni if s_ni > 0 else None\n    m = {\"sales_cagr5\":round(cagr,4),\"opm\":round(opm,4),\n         \"roic_latest\":round(roic[-1],4),\"roic_worst5\":round(min(roic),4),\n         \"fcf_conv_5y\":round(conv,4) if conv is not None else None,\n         \"op_all_pos\":all(x>0 for x in op),\"fcf_all_pos\":all(x>0 for x in fcf),\n         \"equity_neg\":any(x<=0 for x in eq),\n         \"warn_anomaly\":(opm>1.0 or max(roic)>1.5)}\n    f = []\n    if not m[\"op_all_pos\"]: f.append(\"営業赤字\")\n    if not m[\"fcf_all_pos\"]: f.append(\"FCFマイナス\")\n    if m[\"sales_cagr5\"] < MIN_SALES_CAGR: f.append(\"売上CAGR\")\n    if m[\"roic_latest\"] < MIN_ROIC_LATEST: f.append(\"ROIC\")\n    if m[\"roic_worst5\"] < MIN_ROIC_WORST: f.append(\"ROIC最低値\")\n    if m[\"opm\"] < MIN_OPM: f.append(\"営業利益率\")\n    if conv is None or conv < MIN_FCF_CONV: f.append(\"FCF転換\")\n    m[\"score\"] = 7-len(f); m[\"fails\"] = \"; \".join(f)\n    return m, None\n\n# ============================ PART A: 漏斗 ============================\nprint(\"\\n■ PART A — 漏斗（全社1パス・解剖同時取得）\")\nz = zipfile.ZipFile(ZIP_PATH)\nnames = [n for n in z.namelist() if n.startswith(\"CIK\") and n.endswith(\".json\")]\nprint(f\"    {len(names)} ファイル\")\nRESULTS, QUAR = [], collections.Counter()\nt0 = time.time()\nfor i, name in enumerate(names, 1):\n    if i % 3000 == 0:\n        el = time.time()-t0\n        print(f\"    {i}/{len(names)}  判定:{len(RESULTS)}  残り約{el/i*(len(names)-i)/60:.0f}分\")\n    cik = int(name[3:13]); tkr = CIK2TK.get(cik)\n    if not tkr: continue\n    try:\n        j = json.loads(z.read(name)); facts = j.get(\"facts\", {})\n    except Exception: continue\n    if not facts: continue\n    rev_c = collect(facts, \"revenue\")\n    if not rev_c: QUAR[\"no_revenue_tag\"] += 1; continue\n    best = None\n    for unit in dict.fromkeys(u for (_,u,_) in rev_c):\n        ys = sorted({y for (_,uu,d) in rev_c if uu==unit for y in d})\n        if len(ys) < YEARS: continue\n        yrs = ys[-YEARS:]\n        v, u0, lin = pick_series(rev_c, yrs, unit_lock=unit)\n        if v is not None and (best is None or yrs[-1] > best[1][-1]):\n            fye = {y: max(d[y][0] for (_,uu,d) in rev_c if uu==unit and y in d) for y in yrs}\n            best = (v, yrs, unit, lin, fye)\n    if best is None: QUAR[\"revenue_5y_incomplete\"] += 1; continue\n    rev, yrs, unit, rev_lin, fye = best\n    if (TODAY - d2(fye[yrs[-1]])).days > STALE_DAYS:\n        QUAR[\"stale_filer\"] += 1; continue\n    STOCK = {\"equity\",\"debt_lt\",\"debt_st\",\"cash\",\"gw\"}\n    def grab(key, zero=False):\n        v,_,_ = pick_series(collect(facts,key), yrs, unit_lock=unit, fye=fye, stock=(key in STOCK))\n        if v is None and zero: return [0.0]*YEARS\n        return v\n    ni, ocf, eq = grab(\"ni\"), grab(\"ocf\"), grab(\"equity\")\n    cap = grab(\"capex\", zero=True); lt = grab(\"debt_lt\", zero=True); st = grab(\"debt_st\", zero=True)\n    op, op_src = grab(\"opinc\"), \"reported\"\n    if op is None:\n        op = derive_opinc(facts, yrs, unit, fye); op_src = \"derived\"\n    miss = [k for k,v in [(\"ni\",ni),(\"ocf\",ocf),(\"equity\",eq),(\"opinc\",op)] if v is None]\n    if miss: QUAR[\"欠損:\"+miss[0]] += 1; continue\n    m, err = evaluate(rev, op, ni, ocf, cap, eq, lt, st)\n    if err: QUAR[err] += 1; continue\n    if m[\"warn_anomaly\"] and op_src == \"derived\":\n        QUAR[\"derived_suspect\"] += 1; continue\n    # --- 解剖列（同一パスで現金・短期投資・のれんを取得）---\n    ca = grab(\"cash\", zero=True); si = sti_series(facts, yrs, unit, fye); gw = grab(\"gw\", zero=True)\n    roic_ex, ic_ex_neg = [], False\n    for k in range(YEARS):\n        icx = eq[k]+lt[k]+st[k]-ca[k]-si[k]\n        if icx <= 0: ic_ex_neg = True; break\n        roic_ex.append(op[k]*0.79/icx)\n    roic_gw, ic_gw_neg = [], False  # v8.2: のれん控除ROIC(ロールアップの実体収益力)\n    for k in range(YEARS):\n        icg = eq[k]+lt[k]+st[k]-gw[k]\n        if icg <= 0: ic_gw_neg = True; break\n        roic_gw.append(op[k]*0.79/icg)\n    ic = eq[-1]+lt[-1]+st[-1]\n    m.update({\"ticker\":tkr,\"name\":j.get(\"entityName\",\"\")[:40],\"ccy\":unit,\n              \"fy_latest\":yrs[-1],\"op_src\":op_src,\"rev_tag\":rev_lin[:60],\n              \"roic_ex_latest\": round(roic_ex[-1],4) if not ic_ex_neg else None,\n              \"roic_ex_worst\":  round(min(roic_ex),4) if not ic_ex_neg else None,\n              \"ic_ex_neg\": ic_ex_neg,\n              \"roic_gw_latest\": round(roic_gw[-1],4) if not ic_gw_neg else None,\n              \"roic_gw_worst\":  round(min(roic_gw),4) if not ic_gw_neg else None,\n              \"ic_gw_neg\": ic_gw_neg,\n              \"cash_pct\": round((ca[-1]+si[-1])/ic*100,1) if ic>0 else None,\n              \"gw_pct\":   round(gw[-1]/ic*100,1) if ic>0 else None})\n    RESULTS.append(m)\nprint(f\"    処理完了: {len(RESULTS)} 社  ({(time.time()-t0)/60:.0f}分)\")\n\nRESULTS.sort(key=lambda r: (-r[\"score\"], -r[\"roic_worst5\"]))\n\n# v8.4: 病名分類——6点(単一fail)の失敗理由を「数字で裁けるか」で分類する(CSV書き出し前に付与)\nBYOMEI_PRI = {\"谷\",\"種まき\",\"未成熟\"}  # 審査優先=数字では判定不能、門2の定性審査が要る群\ndef byomei_of(r):\n    if r[\"score\"] != 6: return None\n    f = r[\"fails\"]\n    if f == \"売上CAGR\": return \"成長停止\"\n    if f in (\"ROIC最低値\",\"ROIC\"): return \"谷\"\n    if f in (\"FCF転換\",\"FCFマイナス\"): return \"種まき\"\n    if f == \"営業利益率\": return \"未成熟\" if r[\"opm\"] >= 0.10 else \"低マージン業態\"\n    return None\nfor r in RESULTS:\n    b = byomei_of(r)\n    if b: r[\"byomei\"] = b\n\ncols = [\"ticker\",\"name\",\"ccy\",\"fy_latest\",\"score\",\"fails\",\"roic_latest\",\"roic_worst5\",\n        \"opm\",\"sales_cagr5\",\"fcf_conv_5y\",\"op_all_pos\",\"fcf_all_pos\",\"equity_neg\",\n        \"warn_anomaly\",\"op_src\",\"rev_tag\",\"roic_ex_latest\",\"roic_ex_worst\",\"ic_ex_neg\",\n        \"roic_gw_latest\",\"roic_gw_worst\",\"ic_gw_neg\",\"cash_pct\",\"gw_pct\",\"byomei\"]\nwith open(f\"{SAVE_DIR}/gate0_all.csv\",\"w\",newline=\"\",encoding=\"utf-8-sig\") as fp:\n    w = csv.DictWriter(fp, fieldnames=cols, extrasaction=\"ignore\")\n    w.writeheader(); w.writerows(RESULTS)\nsc = collections.Counter(r[\"score\"] for r in RESULTS)\nprint(f\"\\n判定 {len(RESULTS)} 社 / 7点 {sc[7]} / 6点 {sc[6]} / 隔離上位: \"\n      + \", \".join(f\"{k}:{v}\" for k,v in QUAR.most_common(4)))\n\n# ============================ PART B: golden set ============================\nBYT = {r[\"ticker\"]: r for r in RESULTS}\nGOLDEN = {\"MA\":(7,{\"rev_tag_contains\":\"Revenues\"}),\"GOOGL\":(7,{}),\"MSFT\":(7,{}),\n          \"NVDA\":(7,{}),\"V\":(7,{}),\"META\":(7,{}),\"ADBE\":(7,{}),\"IDXX\":(7,{}),\n          \"RACE\":(7,{}),\"NVO\":(7,{}),\"ASML\":(7,{}),\"FTNT\":(7,{\"op_src\":\"reported\"}),\n          \"TSM\":(6,{\"ccy\":\"TWD\"}),\"AAPL\":(6,{}),\"CPRT\":(6,{}),\n          \"KLAC\":(None,{\"op_src\":\"derived\"}),\"VEEV\":(5,{}),\"LMAT\":(5,{})}\nprint(\"\\n■ PART B — golden set 回帰テスト\")\ngfail = 0\nfor t,(exp,extra) in sorted(GOLDEN.items()):\n    r = BYT.get(t)\n    if r is None: print(f\"  ✗ {t} 消失\"); gfail += 1; continue\n    ok, why = True, []\n    if exp is not None and r[\"score\"] != exp: ok=False; why.append(f\"スコア{r['score']}≠{exp}\")\n    for k,v in extra.items():\n        if k==\"rev_tag_contains\":\n            if v not in r[\"rev_tag\"]: ok=False; why.append(\"rev_tag\")\n        elif r.get(k)!=v: ok=False; why.append(k)\n    if not ok: gfail += 1\n    print(f\"  {'○' if ok else '✗'} {t:<6} {r['score']}/7 {r['op_src']:<8} {'; '.join(why)}\")\n\n# ============================ PART C: 待ち行列・椅子・WATCH ============================\nprint(\"\\n■ PART C — 業態除外・待ち行列・敗者復活\")\nrows = [r for r in RESULTS if r[\"score\"] >= SEND_TO_GATE1]\nresc = [r for r in RESULTS if r[\"score\"]==5\n        and set(f.strip() for f in r[\"fails\"].split(\";\") if f.strip()).issubset(RESCUE_FAILS)\n        and r[\"op_all_pos\"] and r[\"fcf_all_pos\"]\n        and r[\"opm\"]>=RESCUE_MIN_OPM and r[\"sales_cagr5\"]>=RESCUE_MIN_CAGR]\nneed_sic = rows + resc\nprint(f\"    SIC判定対象: {len(need_sic)} 社\")\ndef excluded_sic(s):\n    if not s: return None\n    s = int(s)\n    if 6000 <= s <= 6799: return \"金融/保険/REIT\"\n    if 1000 <= s <= 1499: return \"資源採掘\"\n    if s == 2911: return \"石油精製\"\n    if 4400 <= s <= 4499: return \"海運\"\n    return None\nfor i, r in enumerate(need_sic, 1):\n    if i % 80 == 0: print(f\"    {i}/{len(need_sic)}\")\n    cik = TK2CIK.get(r[\"ticker\"]); sic, country = None, \"\"\n    if cik:\n        jj = get(f\"https://data.sec.gov/submissions/CIK{cik:010d}.json\"); time.sleep(0.1)\n        if jj:\n            sic = jj.get(\"sic\")\n            country = ((jj.get(\"addresses\") or {}).get(\"business\") or {}).get(\"stateOrCountry\",\"\")\n            r[\"sic_desc\"] = jj.get(\"sicDescription\",\"\")\n    why = excluded_sic(sic)\n    if not why and (country in (\"F4\",\"K3\",\"CN\",\"HK\") or r[\"ticker\"] in KNOWN_CN):\n        why = \"中国/香港/VIE\"\n    if not why and r[\"opm\"] > 1.0: why = \"anomaly\"\n    r[\"excluded\"] = why\n    r[\"rx\"] = bool(sic) and (2833 <= int(sic) <= 2836 or int(sic)==8731)\n\nkeep = [r for r in rows if not r.get(\"excluded\")]\ndef clamp(x, lo, hi): return max(0.0, min(1.0, (x-lo)/(hi-lo)))\nfor r in keep:\n    conv = min(r[\"fcf_conv_5y\"] or 0, 1.5)\n    r[\"pt\"] = round(0.30*clamp(r[\"roic_worst5\"],0.10,0.45)+0.30*clamp(r[\"sales_cagr5\"],0.05,0.30)\n                  + 0.20*clamp(r[\"opm\"],0.15,0.50)+0.10*clamp(conv,0.70,1.20)\n                  + 0.10*(1.0 if r[\"score\"]==7 else 0.0), 4)\n# v8.2: 負資本7点は墓場に置かない——⚑フラグ付きで待ち行列プールへ合流\nneg7 = [r for r in keep if r[\"equity_neg\"] and r[\"score\"]==7]\nfor r in neg7: r[\"neg_flag\"] = True\n# v8.5: 負資本6点でも審査優先病名(谷/種まき/未成熟)なら⚑合流(TDG型を圏外にしない)\nnegpri = [r for r in keep if r[\"equity_neg\"] and r[\"score\"]==6 and r.get(\"byomei\") in BYOMEI_PRI]\nfor r in negpri: r[\"neg_flag\"] = True\n# v8.3: 病名=成長停止(6点・唯一の失敗が売上CAGR)は棚へ。門2で直せない唯一の病に審査枠を使わない。\n#       CAGRは毎年再計算——成長が戻れば翌年自動復帰する棚であって、追放ではない。\n#       v8.5: 負資本の成長停止も棚へ(一貫化)。\nstalled = sorted([r for r in keep if r[\"score\"]==6 and r[\"fails\"]==\"売上CAGR\"],\n                 key=lambda r: -r[\"pt\"])\nstset = {r[\"ticker\"] for r in stalled}\npool  = sorted([r for r in keep if not r[\"equity_neg\"] and r[\"ticker\"] not in stset] + neg7 + negpri,\n               key=lambda r: -r[\"pt\"])\nnegeq = sorted([r for r in keep if r[\"equity_neg\"] and r[\"score\"]!=7\n                and r.get(\"byomei\") not in BYOMEI_PRI and r[\"fails\"]!=\"売上CAGR\"],\n               key=lambda r: -r[\"pt\"])\n# v8.5: 膜は開き、順序が選別する——審査優先病名はptに関係なく待ち行列メンバー。\n#       非優先はpt足切り(TOP_N)据え置き。backlogに残るのは非優先の低pt組のみ。\nqueue   = pool[:TOP_N] + [r for r in pool[TOP_N:] if r.get(\"byomei\") in BYOMEI_PRI]\nbacklog = [r for r in pool[TOP_N:] if r.get(\"byomei\") not in BYOMEI_PRI]\n# v8.4: 並びは審査優先(数字で裁けない群)を先頭に、ブロック内はpt降順。\nqueue.sort(key=lambda r: (0 if r.get(\"byomei\") in BYOMEI_PRI else 1, -r[\"pt\"]))\n\nchairs  = [r for r in resc if not r.get(\"excluded\") and not r[\"ic_ex_neg\"]\n           and r[\"roic_ex_latest\"] is not None\n           and r[\"roic_ex_latest\"]>=MIN_ROIC_LATEST and r[\"roic_ex_worst\"]>=MIN_ROIC_WORST]\nmanualq = [r for r in resc if not r.get(\"excluded\") and r[\"ic_ex_neg\"]]\n# v8.2: のれんの椅子——現金椅子と対称。のれんを引けば閾値超のロールアップを「要審査」で可視化\nin_chair = {r[\"ticker\"] for r in chairs}\ngwchairs = [r for r in resc if not r.get(\"excluded\") and r[\"ticker\"] not in in_chair\n            and not r[\"ic_gw_neg\"] and r[\"roic_gw_latest\"] is not None\n            and r[\"roic_gw_latest\"]>=MIN_ROIC_LATEST and r[\"roic_gw_worst\"]>=MIN_ROIC_WORST]\ngwmanual = [r for r in resc if not r.get(\"excluded\") and r[\"ticker\"] not in in_chair and r[\"ic_gw_neg\"]]\nfor r in RESULTS: r[\"held\"] = \"◆\" if r[\"ticker\"] in HOLDINGS else \" \"\n\nfor path, data in [(\"gate1_queue.json\",queue),(\"gate1_backlog.json\",backlog),\n                   (\"gate1_negeq.json\",negeq),(\"gate1_rescue_final.json\",chairs),\n                   (\"gate1_rescue_gw.json\",gwchairs),(\"gate1_stalled.json\",stalled)]:\n    with open(f\"{SAVE_DIR}/{path}\",\"w\",encoding=\"utf-8\") as f:\n        json.dump(data, f, ensure_ascii=False, indent=1)\n\ndef line(i, r):\n    fl = \"⚑ \" if r.get(\"neg_flag\") else \"Rx\" if r.get(\"rx\") else \"  \"  # ⚑=負資本合流(v8.2)\n    bm = f\" 〔{r['byomei']}〕\" if r.get(\"byomei\") else \"\"              # 病名(v8.4)\n    return (f\"{i:>3}.{r['held']}{fl} {r['ticker']:<6} pt{r.get('pt',0):.3f} {r['score']}/7 \"\n            f\"ROIC最低{r['roic_worst5']*100:5.1f}% 営利{r['opm']*100:5.1f}% \"\n            f\"CAGR{r['sales_cagr5']*100:5.1f}%  {r['name'][:24]}{bm}\")\nnpri = sum(1 for r in queue if r.get(\"byomei\") in BYOMEI_PRI)\nprint(\"\\n\" + \"=\"*78)\nprint(f\"■ 待ち行列: {len(queue)} 社（先頭{npri}社=審査優先〔谷/種まき/未成熟〕=数字で裁けない群。以降pt降順）\")\nprint(\"=\"*78)\nfor i, r in enumerate(queue, 1):\n    if i == npri+1: print(\"  \" + \"─\"*74 + \" ここからpt順\")\n    print(line(i, r))\nprint(\"\\n\" + \"=\"*78)\nprint(f\"★ 敗者復活の椅子（現金型・{len(chairs)}社）— 現金を引けば門の閾値超え。番人の審査対象\")\nprint(\"=\"*78)\nfor r in sorted(chairs, key=lambda r: -r[\"roic_ex_latest\"]):\n    print(f\"  {r['ticker']:<6} 現金込み{r['roic_latest']*100:5.1f}% → 控除{r['roic_ex_latest']*100:6.1f}%\"\n          f\"(最低{r['roic_ex_worst']*100:5.1f}%) 現金{r['cash_pct']}%/のれん{r['gw_pct']}%  {r['name'][:24]}\")\nif manualq:\n    print(f\"\\n■ IC-現金が負の年あり（SPGI型・要手動・椅子にしない）: \"\n          + \", \".join(r[\"ticker\"] for r in manualq))\nprint(\"\\n\" + \"=\"*78)\nprint(f\"★ のれんの椅子（ロールアップ型・{len(gwchairs)}社）— のれんを引けば門の閾値超え。番人の審査対象\")\nprint(\"   ※のれん控除は買収の高値掴みを化粧できる。買収の巧拙はf系資本配分で必ず裁くこと\")\nprint(\"=\"*78)\nfor r in sorted(gwchairs, key=lambda r: -r[\"roic_gw_latest\"]):\n    print(f\"  {r['ticker']:<6} 込み{r['roic_latest']*100:5.1f}% → のれん控除{r['roic_gw_latest']*100:6.1f}%\"\n          f\"(最低{r['roic_gw_worst']*100:5.1f}%) のれん{r['gw_pct']}%/IC  {r['name'][:24]}\")\nif gwmanual:\n    print(f\"■ IC-のれんが負の年あり（要手動・椅子にしない）: \"\n          + \", \".join(r[\"ticker\"] for r in gwmanual))\nprint(\"\\n\" + \"=\"*78)\nprint(f\"▤ 成長停止棚（{len(stalled)}社）— 質は無傷・唯一の失敗が売上CAGR<5%。門2で直せない病。成長復帰で翌年自動復活\")\nprint(\"=\"*78)\nfor r in stalled:\n    print(f\"  {r['held']} {r['ticker']:<6} pt{r['pt']:.3f} CAGR{r['sales_cagr5']*100:5.1f}% \"\n          f\"営利{r['opm']*100:5.1f}% ROIC最低{r['roic_worst5']*100:5.1f}%  {r['name'][:24]}\")\nprint(f\"\\n■ 自己資本マイナス枠(⚑合流: 7点{len(neg7)}社+優先病名{len(negpri)}社, 棚行き除く残): {len(negeq)} 社 / \"\n      f\"backlog: {len(backlog)} 社 / 成長停止棚: {len(stalled)} 社\")\n\n# 椅子の回帰テスト（今日の教訓の恒久化）\nif not any(r[\"ticker\"]==\"VEEV\" for r in chairs):\n    gfail += 1\n    print(\"\\n⚠ 椅子回帰: VEEVが椅子に居ない — stiタグ取得を疑うこと\")\n# v8.2回帰: 負資本7点の合流(FICO=pt上位の負資本複利機械が待ち行列に居ること)\nif not any(r[\"ticker\"]==\"FICO\" for r in queue):\n    gfail += 1\n    print(\"\\n⚠ 負資本合流回帰: FICOが待ち行列に居ない — equity_neg合流ロジックを疑うこと\")\n# v8.2回帰: のれん椅子(2026-07-17初回観測で固定: ROP=WATCH銘柄, SPGI=現金椅子の要手動から昇格)\nfor _t in (\"ROP\",\"SPGI\"):\n    if not any(r[\"ticker\"]==_t for r in gwchairs):\n        gfail += 1\n        print(f\"\\n⚠ のれん椅子回帰: {_t}が椅子に居ない — gwタグ取得かのれん控除ロジックを疑うこと\")\n# v8.3回帰: 成長停止棚(AAPL=golden set銘柄・CAGR3%が棚に居て待ち行列に居ないこと)\nif not any(r[\"ticker\"]==\"AAPL\" for r in stalled) or any(r[\"ticker\"]==\"AAPL\" for r in queue):\n    gfail += 1\n    print(\"\\n⚠ 成長停止棚回帰: AAPLが棚に居ない(または待ち行列に混入) — stalledロジックを疑うこと\")\n# v8.4回帰: 病名優先並び(MELI=谷型がpt首位LLYより前に居ること)\n_qi = {r[\"ticker\"]: i for i, r in enumerate(queue)}\nif (BYT.get(\"MELI\", {}).get(\"byomei\") != \"谷\"\n        or \"MELI\" not in _qi or \"LLY\" not in _qi or _qi[\"MELI\"] > _qi[\"LLY\"]):\n    gfail += 1\n    print(\"\\n⚠ 病名優先回帰: MELI〔谷〕がLLYより前に居ない — byomei分類か優先並びを疑うこと\")\n# v8.5回帰: 膜の開放(INTU=pt圏外の谷型WATCH銘柄、TDG=負資本6点の谷型が待ち行列に居ること)\nif \"INTU\" not in _qi:\n    gfail += 1\n    print(\"\\n⚠ 膜開放回帰: INTU〔谷〕が待ち行列に居ない — 優先病名のTOP_N外合流を疑うこと\")\nif \"TDG\" not in _qi or not BYT.get(\"TDG\", {}).get(\"neg_flag\"):\n    gfail += 1\n    print(\"\\n⚠ 膜開放回帰: TDG〔谷・⚑〕が待ち行列に居ない — 負資本6点の優先合流を疑うこと\")\n\nprint(\"\\n■ WATCH照合\")\nqs = {r[\"ticker\"] for r in queue}; bs = {r[\"ticker\"] for r in backlog}\nns = {r[\"ticker\"] for r in negeq}; cs = {r[\"ticker\"] for r in chairs}\ngs = {r[\"ticker\"] for r in gwchairs}\nfor t in sorted(WATCH):\n    r = BYT.get(t)\n    st = (\"待ち行列⚑負資本\" if t in qs and r and r.get(\"neg_flag\")\n          else f\"待ち行列〔{r['byomei']}〕\" if t in qs and r and r.get(\"byomei\")\n          else \"待ち行列\" if t in qs else \"★椅子\" if t in cs\n          else \"★のれん椅子\" if t in gs else \"▤成長停止棚\" if t in stset\n          else \"自己資本マイナス枠\" if t in ns\n          else \"backlog\" if t in bs\n          else f\"業態除外({r.get('excluded')})\" if r and r.get(\"excluded\")\n          else f\"⚠落選 {r['score']}/7 ✗{r['fails']}\" if r else \"⚠⚠判定不能\")\n    print(f\"  {t:<6} {st}\")\n\nprint(\"\\n\" + (\"★★★ golden set + 椅子回帰 全通過。この実行は採用可。 ★★★\" if gfail==0\n      else f\"⚠⚠⚠ 回帰テスト {gfail} 件失敗。この実行は不採用。 ⚠⚠⚠\"))\nprint(\"\\n→ 次: hachimon_fetch.py（採取器v3.0）。TICKERS空で実行=この待ち行列の上位5社を自動採取し、門のⅡ採点機JSONを生成。\")\ntry:\n    from google.colab import files\n    files.download(f\"{SAVE_DIR}/gate0_all.csv\")\nexcept Exception: pass\n", fetch: "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n\"\"\"\ngate_fetch v3.0 — SEC一撃採取器（壊れない複利の門 v9.6・Ⅱ採点機JSON下書き生成）\n使い方:  python hachimon_fetch.py MSFT ASML ANET\n出力:    ./hachimon_out/{TICKER}_gate_input.json … 門のⅡ採点機に貼れるJSON下書き(SEC客観値を充填)\n         ./out/{TICKER}_hits.txt             … 定性4問(限集誠蝕)+facts用のキーワードヒット報告(2-3KB)\n注意:    EMAIL を自分のものに書き換えること(SECはUser-Agent必須・10req/s制限)。\n         px(株価)とbetaはSECに無いので空欄のまま——取込時に手入力かツール側で補完。\n\"\"\"\nimport json, re, sys, time, urllib.request, os\nfrom statistics import median\n\nEMAIL   = \"fortis5280@gmail.com\"        # ★1. 自分のメールに書き換える(SECの必須マナー)\nTICKERS = []                              # ★2. 空のまま=門0の待ち行列(gate1_queue.json)から自動で未処理上位を採取\n                                          #     手動指定したい時だけ [\"MSFT\",\"ANET\"] のように書く\nBATCH   = 5                               # 自動モードで1回に処理する銘柄数\nSKIP    = [\"LLY\",\"MSFT\",\"ASML\"]           # 審査済み・採取不要の銘柄(判決が出たら追記)\nQUEUE_PATHS = [\"./gate1_queue.json\", \"./ccf/gate1_queue.json\",\n               \"/content/drive/MyDrive/ccf/gate1_queue.json\",\n               \"/content/drive/MyDrive/gate1_queue.json\"]\nHDRS  = {\"User-Agent\": f\"hachimon-gate {EMAIL}\"}\n# Colab上ならGoogle Driveをマウントして MyDrive/hachimon_out に保存(Claudeが直接読める)\ntry:\n    from google.colab import drive as _gdrive\n    _gdrive.mount(\"/content/drive\", force_remount=False)\n    OUT = \"/content/drive/MyDrive/hachimon_out\"\nexcept Exception:\n    OUT = \"out\"\n\ndef get(url, binary=False):\n    req = urllib.request.Request(url, headers=HDRS)\n    with urllib.request.urlopen(req, timeout=60) as r:\n        b = r.read()\n    time.sleep(0.15)                       # 礼儀(10req/s未満)\n    return b if binary else b.decode(\"utf-8\", \"ignore\")\n\n# ---------- ティッカー→CIK ----------\ndef cik_of(ticker):\n    j = json.loads(get(\"https://www.sec.gov/files/company_tickers.json\"))\n    for v in j.values():\n        if v[\"ticker\"].upper() == ticker.upper():\n            return str(v[\"cik_str\"]).zfill(10)\n    raise SystemExit(f\"CIK不明: {ticker}\")\n\n# ---------- XBRL: 年次系列の取り出し ----------\ndef facts_of(cik):\n    return json.loads(get(f\"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json\"))\n\nTAGS = {  # us-gaap優先、ifrs-fullへフォールバック\n \"rev\":   [\"Revenues\",\"RevenueFromContractWithCustomerExcludingAssessedTax\",\"SalesRevenueNet\",\"Revenue\"],\n \"gp\":    [\"GrossProfit\"],\n \"op\":    [\"OperatingIncomeLoss\",\"ProfitLossFromOperatingActivities\"],\n \"ni\":    [\"NetIncomeLoss\",\"ProfitLoss\"],\n \"tax\":   [\"IncomeTaxExpenseBenefit\",\"IncomeTaxExpenseContinuingOperations\"],\n \"ocf\":   [\"NetCashProvidedByUsedInOperatingActivities\",\"CashFlowsFromUsedInOperatingActivities\"],\n \"capex\": [\"PaymentsToAcquirePropertyPlantAndEquipment\",\"PurchaseOfPropertyPlantAndEquipment\"],\n \"dep\":   [\"DepreciationDepletionAndAmortization\",\"DepreciationAndAmortization\",\"DepreciationAmortisationAndImpairmentLoss\"],\n \"assets\":[\"Assets\"],\n \"eq\":    [\"StockholdersEquity\",\"StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest\",\"Equity\"],\n \"gw\":    [\"Goodwill\"],\n \"intan\": [\"FiniteLivedIntangibleAssetsNet\",\"IntangibleAssetsNetExcludingGoodwill\"],\n \"cash\":  [\"CashAndCashEquivalentsAtCarryingValue\",\"CashAndCashEquivalents\"],\n \"sti\":   [\"ShortTermInvestments\",\"MarketableSecuritiesCurrent\"],\n \"debtL\": [\"LongTermDebtNoncurrent\",\"LongTermDebt\",\"NoncurrentBorrowings\",\"Borrowings\"],\n \"debtS\": [\"LongTermDebtCurrent\",\"DebtCurrent\",\"CurrentBorrowings\",\"ShortTermBorrowings\"],\n \"sh\":    [\"CommonStockSharesOutstanding\",\"EntityCommonStockSharesOutstanding\",\"NumberOfSharesOutstanding\"],\n \"impair\":[\"GoodwillImpairmentLoss\",\"ImpairmentOfIntangibleAssetsIndefinitelivedExcludingGoodwill\"],\n}\ndef series(facts, keys, unit_pref=(\"USD\",\"EUR\",\"JPY\")):\n    for ns in (\"us-gaap\",\"ifrs-full\",\"dei\"):\n        d = facts.get(\"facts\",{}).get(ns,{})\n        for k in keys:\n            if k in d:\n                units = d[k][\"units\"]\n                ordered = sorted(units.keys(), key=lambda u: -len(units[u]))  # 最多データの単位を優先\n                for u in ordered:\n                    if True:\n                        # FY(年次)のみ、frame重複は末尾優先で年次dict化\n                        out = {}\n                        for row in units[u]:\n                            if not row.get(\"form\",\"\").startswith((\"10-K\",\"20-F\")): continue\n                            fy = row.get(\"fy\")\n                            if fy is None: continue\n                            s, e = row.get(\"start\"), row.get(\"end\")\n                            if s and e:  # 損益・CF系は期間300日超のみ(四半期を排除)\n                                try:\n                                    from datetime import date\n                                    d0 = date.fromisoformat(s); d1 = date.fromisoformat(e)\n                                    if (d1 - d0).days < 300: continue\n                                except Exception: pass\n                            out[fy] = row[\"val\"]\n                        if out: return out, u\n    return {}, None\n\ndef last_n(d, n=6):\n    ys = sorted(d)[-n:]\n    return ys, [d[y] for y in ys]\n\ndef _safe(ev, note, key, fn):\n    try:\n        v = fn()\n        if v is not None: ev[key] = v\n    except Exception as e:\n        note.append(f\"{key}: 計算失敗({type(e).__name__})\")\n\ndef build_numbers(facts):\n    S, diag = {}, {}\n    for k, v in TAGS.items():\n        S[k] = series(facts, v)[0]\n        diag[k] = f\"{len(S[k])}年分\" if S[k] else \"タグ不発見\"\n    ev, note = {}, []\n    ys_rev, rev = last_n(S[\"rev\"])\n    if len(rev) >= 2:\n        _safe(ev, note, \"cagr5\", lambda: (lambda yrs: round(((rev[-1]/rev[-1-yrs])**(1/yrs)-1)*100,1) if rev[-1-yrs] else None)(min(5,len(rev)-1)))\n    # 粗利トレンド\n    if S[\"gp\"]:\n        ys,gp = last_n(S[\"gp\"])\n        gm = {y: S[\"gp\"][y]/S[\"rev\"][y]*100 for y in ys if S[\"rev\"].get(y)}\n        yy = sorted(gm)[-2:]\n        if len(yy)==2:\n            _safe(ev, note, \"gmDelta\", lambda: round(gm[yy[1]]-gm[yy[0]],1))\n    # accr / conv (直近年)\n    y0 = max(S[\"ni\"]) if S[\"ni\"] else None\n    if y0 and y0 in S[\"ocf\"] and S[\"assets\"].get(y0):\n        _safe(ev, note, \"accr\", lambda: round((S[\"ni\"][y0]-S[\"ocf\"][y0])/S[\"assets\"][y0]*100, 1))\n    if y0 and y0 in S[\"ocf\"] and y0 in S[\"capex\"] and S[\"ni\"].get(y0):\n        fcf = S[\"ocf\"][y0]-abs(S[\"capex\"][y0])\n        _safe(ev, note, \"conv\", lambda: round(fcf/S[\"ni\"][y0]*100,1))\n        sh,_ = series(facts, TAGS[\"sh\"], (\"shares\",))\n        if sh:\n            shl = sh.get(y0) or list(sh.values())[-1]\n            _safe(ev, note, \"fcfps\", lambda: round(fcf/shl,2) if shl else None)\n    # nde\n    if y0:\n        debt = (S[\"debtL\"].get(y0,0) or 0)+(S[\"debtS\"].get(y0,0) or 0)\n        cash = (S[\"cash\"].get(y0,0) or 0)+(S[\"sti\"].get(y0,0) or 0)\n        ebitda = (S[\"op\"].get(y0,0) or 0)+(S[\"dep\"].get(y0,0) or 0)\n        if ebitda: ev[\"nde\"] = round((debt-cash)/ebitda, 2)\n    # のれん除外ROIC 5年系列 → worst/median\n    roics = []\n    for y in sorted(S[\"op\"])[-5:]:\n        if all(y in S[k] for k in (\"ni\",\"eq\")) and y in S[\"op\"]:\n            tax_rate = 1 - S[\"ni\"][y]/max(S[\"ni\"][y]+S[\"tax\"].get(y,0), 1)\n            nopat = S[\"op\"][y]*(1-max(0,min(0.5,tax_rate)))\n            debt = (S[\"debtL\"].get(y,0) or 0)+(S[\"debtS\"].get(y,0) or 0)\n            ic = S[\"eq\"][y]+debt-(S[\"gw\"].get(y,0) or 0)-(S[\"intan\"].get(y,0) or 0)\n            if ic>0: roics.append(nopat/ic*100)\n    if roics:\n        ev[\"roicExW5\"]  = round(min(roics),1)\n        ev[\"roicExMed5\"]= round(median(roics),1)\n    # 純希薄化率(株数の年率変化)\n    sh,_ = series(facts, TAGS[\"sh\"], (\"shares\",))\n    if len(sh)>=3:\n        ys = sorted(sh)[-4:]\n        d0,d1 = sh[ys[0]], sh[ys[-1]]\n        _safe(ev, note, \"dilNet\", lambda: round(((d1/d0)**(1/(len(ys)-1))-1)*100,2) if d0 else None)\n    # 減損履歴(配)\n    if S[\"impair\"] and any(v>0 for v in list(S[\"impair\"].values())[-5:]):\n        ev[\"acqImpair\"] = \"yes\"; note.append(\"のれん/無形減損の計上履歴あり(配=保S候補、原本で規模確認)\")\n    # 循環性の機械プロキシ: 売上の前年比が5年内にマイナス2回以上 or 振れ幅>25pt\n    if len(rev)>=4 and all(rev[i] for i in range(len(rev)-1)):\n        g = [(rev[i+1]/rev[i]-1)*100 for i in range(len(rev)-1)]\n        ev[\"cyclical\"] = \"yes\" if (sum(1 for x in g if x<0)>=2 or (max(g)-min(g))>25) else \"no\"\n    # ===== 門(v9.6)フォーマット用の追加算出 =====\n    # 営業利益率 gm(%) 直近年\n    if y0 and y0 in S[\"op\"] and S[\"rev\"].get(y0):\n        _safe(ev, note, \"gm\", lambda: round(S[\"op\"][y0]/S[\"rev\"][y0]*100,1))\n    # 営業利益率トレンド gmt (3年: up/flat/down)\n    if S[\"op\"] and S[\"rev\"]:\n        oy = sorted(set(S[\"op\"])&set(S[\"rev\"]))[-3:]\n        if len(oy)>=2 and S[\"rev\"].get(oy[0]) and S[\"rev\"].get(oy[-1]):\n            m0=S[\"op\"][oy[0]]/S[\"rev\"][oy[0]]*100; m1=S[\"op\"][oy[-1]]/S[\"rev\"][oy[-1]]*100\n            ev[\"gmt\"]=\"up\" if m1-m0>1 else \"down\" if m1-m0<-1 else \"flat\"\n    # のれん込みROIC roicg (直近年・のれん除外しない版)\n    if y0 and all(y0 in S[k] for k in (\"op\",\"ni\",\"eq\")):\n        _safe(ev,note,\"roicg\",lambda:(lambda tax:round(S[\"op\"][y0]*(1-max(0,min(0.5,tax)))/max(S[\"eq\"][y0]+((S[\"debtL\"].get(y0,0)or 0)+(S[\"debtS\"].get(y0,0)or 0)),1)*100,1))(1-S[\"ni\"][y0]/max(S[\"ni\"][y0]+S[\"tax\"].get(y0,0),1)))\n    # のれん除外ROIC 直近年 roic (門のroic欄=単年・除外)\n    if roics: ev[\"roic\"]=round(roics[-1],1)\n    # ROICトレンド roict (5年 up/flat/down): worst年 vs 直近\n    if len(roics)>=2:\n        ev[\"roict\"]=\"up\" if roics[-1]-roics[0]>2 else \"down\" if roics[-1]-roics[0]<-2 else \"flat\"\n    # GP/A(gpa) 直近年\n    if y0 and y0 in S[\"gp\"] and S[\"assets\"].get(y0):\n        _safe(ev,note,\"gpa\",lambda:round(S[\"gp\"][y0]/S[\"assets\"][y0]*100,1))\n    # fcf/ni の生値(門はfcf・niを直接欄に持つ。単位は_unit/1e9でB表示)\n    if y0 and y0 in S[\"ocf\"] and y0 in S[\"capex\"]:\n        u=1e9\n        ev[\"fcf_abs\"]=round((S[\"ocf\"][y0]-abs(S[\"capex\"][y0]))/u,2)\n        if S[\"ni\"].get(y0) is not None: ev[\"ni_abs\"]=round(S[\"ni\"][y0]/u,2)\n    # eps(TTM近似=直近NI/株数)\n    sh2,_=series(facts,TAGS[\"sh\"],(\"shares\",))\n    if y0 and sh2 and (sh2.get(y0) or 0):\n        _safe(ev,note,\"eps\",lambda:round(S[\"ni\"][y0]/sh2[y0],2))\n    # 業態fin: 金融判定(粗い) — 純利が金利収入主体かは判定不能なのでnull据置\n    ev[\"_unit\"] = series(facts, TAGS[\"rev\"])[1]\n    ev[\"_note\"] = note\n    ev[\"_diag\"] = diag   # 自己申告: 取れたタグ/取れなかったタグ\n    return ev\n\n# ---------- 原本: キーワード砲台 ----------\nBATTERY = {\n \"限\": [r\"patent[s]? (?:expir|protection)\", r\"loss of exclusivity\", r\"exclusivity\", r\"license[s]? .{0,40}expir\",\n        r\"concession[s]? .{0,60}(?:expir|term|until 20\\d\\d)\", r\"expiration of (?:our|the) concession\"],\n \"集\": [r\"largest customer\", r\"customers? accounted\", r\"\\d{1,2}(?:\\.\\d)?% of (?:our )?(?:total )?(?:net )?(?:sales|revenue)\",\n        r\"sole suppli\", r\"single[- ]source\", r\"single suppli\", r\"concentration of\"],\n \"誠\": [r\"material weakness\", r\"was not effective\", r\"unresolved staff comments\",\n        r\"notice of proposed adjustment\", r\"accrued .{0,30}litigation\", r\"IRS\"],\n \"蝕\": [r\"market share\", r\"pricing pressure\", r\"competit.{0,20}intensif\"],\n \"堀\": [r\"barriers to entry\", r\"network effect\", r\"switching cost\", r\"economies of scale\", r\"installed base\"],\n \"循\": [r\"cyclical\", r\"cyclicality\"],\n}\ndef latest_annual_url(cik):\n    j = json.loads(get(f\"https://data.sec.gov/submissions/CIK{cik}.json\"))\n    r = j[\"filings\"][\"recent\"]\n    for i,f in enumerate(r[\"form\"]):\n        if f in (\"10-K\",\"20-F\"):\n            acc = r[\"accessionNumber\"][i].replace(\"-\",\"\")\n            doc = r[\"primaryDocument\"][i]\n            return f\"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc}/{doc}\", r[\"reportDate\"][i], f\n    raise SystemExit(\"年次報告が見つからない\")\n\ndef strip_html(h):\n    h = re.sub(r\"<(script|style)[^>]*>.*?</\\1>\", \" \", h, flags=re.S|re.I)\n    h = re.sub(r\"<[^>]+>\", \" \", h)\n    h = re.sub(r\"&nbsp;?\", \" \", h); h = re.sub(r\"&amp;\", \"&\", h)\n    return re.sub(r\"[ \\t]{2,}\", \" \", h)\n\ndef hit_report(text, width=300, per_kw=3):\n    lines = []\n    for cat, pats in BATTERY.items():\n        lines.append(f\"\\n===== {cat} =====\")\n        n = 0\n        for p in pats:\n            for m in re.finditer(p, text, re.I):\n                if n >= per_kw*len(pats): break\n                s = max(0, m.start()-width//2)\n                snippet = re.sub(r\"\\s+\",\" \", text[s:s+width])\n                lines.append(f\"[{p}] …{snippet}…\")\n                n += 1\n        if n == 0: lines.append(\"(ヒットなし)\")\n    return \"\\n\".join(lines)\n\n# ---------- main ----------\ndef run(ticker):\n    cik = cik_of(ticker)\n    print(f\"{ticker}: CIK {cik}\")\n    ev = build_numbers(facts_of(cik))\n    url, rdate, form = latest_annual_url(cik)\n    txt = strip_html(get(url))\n    rep = hit_report(txt)\n# ===== 門(壊れない複利の門 v9.6)フォーマットで出力 =====\n    # SEC由来の客観値のみ充填。市場データ(px/beta/per/perF/evebit/shy/gr)と主観(p1-4/f1-5/dom/irr/rep/dur/erosion/disrupt/geopol)はnull=空欄\n    draft = {\n        \"nm\": ticker.upper(),\n        # --- 第一の門: 生存・複利(SEC充填) ---\n        \"roic\": ev.get(\"roic\"), \"roicg\": ev.get(\"roicg\"),\n        \"nde\": ev.get(\"nde\"), \"z\": None,               # z=Altman: 要別計算(運転資本等)→当面手当て、空欄=保留\n        \"gpa\": ev.get(\"gpa\"), \"accr\": ev.get(\"accr\"),\n        \"gm\": ev.get(\"gm\"), \"gmt\": ev.get(\"gmt\"), \"roict\": ev.get(\"roict\"),\n        \"cagr\": ev.get(\"cagr5\"),\n        \"fcf\": ev.get(\"fcf_abs\"), \"ni\": ev.get(\"ni_abs\"),\n        \"sbc\": None, \"dilNet\": ev.get(\"dilNet\"),\n        \"acc\": {\"USD\":\"usgaap\",\"EUR\":\"ifrs\",\"JPY\":\"jgaap\"}.get(ev.get(\"_unit\"),\"usgaap\"),\n        \"eq\": \"neg\" if (ev.get(\"roicg\") is not None and False) else \"pos\",  # 債務超過は稀・原本確認、既定pos\n        \"acq5\": \"yes\" if ev.get(\"acqImpair\")==\"yes\" else None,\n        \"eps\": ev.get(\"eps\"),\n        # --- 定性(原本読み・空欄=保留) ---\n        \"expiry\": None,       # ★限: hits.txtの限セクションを読んで no/yes/na\n        \"moatdecay\": None,    # ★堀減衰: 蝕セクション\n        \"erosion\": None, \"disrupt\": None,\n        \"dom\": None, \"irr\": None, \"rep\": None, \"dur\": None,\n        \"geopol\": None,       # 集中・地政学: 集セクション\n        \"nrr\": None,\n        # --- 市場データ(AV/手入力・空欄) ---\n        \"beta\": None, \"per\": None, \"perF\": None, \"evebit\": None,\n        \"px\": None, \"shy\": None, \"gr\": None, \"gcap\": None,\n        # --- 外部・書記(空欄) ---\n        \"analysts\": None, \"instOwn\": None, \"gls\": None, \"idx\": None,\n        \"indG\": None, \"founder\": None, \"fin\": None,\n        \"p1\": None, \"p2\": None, \"p3\": None, \"p4\": None,\n        \"f1\": None, \"f2\": None, \"f3\": None, \"f4\": None, \"f5\": None,\n        \"_meta\": {\"form\": form, \"reportDate\": rdate, \"unit\": ev.get(\"_unit\"),\n                  \"source\": url, \"notes\": ev.get(\"_note\",[]), \"diag\": ev.get(\"_diag\",{}),\n                  \"todo_原本\": [\"expiry(限)\",\"moatdecay/erosion/disrupt(蝕)\",\"dom/irr/rep/dur(堀四性質)\",\"geopol(集)\",\"nrr\"],\n                  \"todo_市場\": [\"beta\",\"per\",\"perF\",\"evebit\",\"px\",\"shy\"],\n                  \"todo_書記\": [\"p1-p4\",\"f1-f5\",\"fin業態\",\"analysts/instOwn/gls/idx/indG/founder\"]}}\n    os.makedirs(OUT, exist_ok=True)\n    with open(f\"{OUT}/{ticker}_gate_input.json\",\"w\") as f: json.dump(draft, f, ensure_ascii=False, indent=1)\n    with open(f\"{OUT}/{ticker}_hits.txt\",\"w\") as f: f.write(f\"{ticker} {form} {rdate}\\n{url}\\n\"+rep)\n    print(f\"  → {OUT}/{ticker}_gate_input.json / {ticker}_hits.txt\")\n\ndef load_queue():\n    \"\"\"門0の待ち行列を読み、未処理の上位BATCH件を返す(門0の並び順=審査優先→pt降順・excluded除外)\"\"\"\n    import glob\n    path = next((q for q in QUEUE_PATHS if os.path.exists(q)), None)\n    if not path:\n        g = glob.glob(\"/content/drive/MyDrive/**/gate1_queue.json\", recursive=True)\n        path = g[0] if g else None\n    if not path:\n        print(\"待ち行列(gate1_queue.json)が見つからない——TICKERSに手動指定して実行\"); return []\n    rows = json.load(open(path, encoding=\"utf-8\"))\n    rows = [r for r in rows if not r.get(\"excluded\")]\n    # v3.1(2026-07-17): pt再ソートを廃止。門0 v8.5の並び順そのものが採取順\n    # (先頭=審査優先〔谷/種まき/未成熟〕=数字で裁けない群、以降pt降順)。並び替えると優先設計が壊れる。\n    todo = []\n    for r in rows:\n        t = r[\"ticker\"]\n        if t in SKIP or os.path.exists(f\"{OUT}/{t}_gate_input.json\"):\n            continue  # 審査済み・採取済みはスキップ\n        todo.append(t)\n        if len(todo) >= BATCH: break\n    print(f\"待ち行列: {path}\\n今回の被告(審査優先→pt順・未処理): {todo}\")\n    return todo\n\nif __name__ == \"__main__\":\n    if EMAIL.startswith(\"your-\"):\n        print(\"★ファイル冒頭のEMAILを書き換えてから実行\"); sys.exit(0)\n    # コマンドライン引数があれば使う(Colabの -f 等の疑似引数は無視)、無ければTICKERSを使う\n    args = [a for a in sys.argv[1:] if re.fullmatch(r\"[A-Za-z][A-Za-z.\\-]{0,7}\", a)]\n    targets = args or TICKERS or load_queue()\n    for t in targets:\n        try:\n            run(t)\n        except Exception as e:\n            print(f\"{t}: 失敗 → {e}\")\n"};
 function ccfShow(btn){
@@ -2742,59 +2562,7 @@ function ccfShow(btn){
   pre.style.display=hidden?'block':'none';
   btn.textContent=hidden?'隠す':'表示';
 }
-async function ccfCalLoad(inp){
-  var f=inp&&inp.files&&inp.files[0]; if(!f)return;
-  try{
-    var o=JSON.parse(await f.text());
-    if(!o||!o.items){var b=$('calBox'); if(b)b.innerHTML='<span style="color:var(--fail);font-size:12px">形式が違う(next_earnings.json を選ぶ)</span>'; inp.value=''; return;}
-    await store.set('g7cal:next', JSON.stringify(o));
-    ccfCalRender();
-  }catch(e){var b2=$('calBox'); if(b2)b2.innerHTML='<span style="color:var(--fail);font-size:12px">読込失敗</span>';}
-  inp.value='';
-}
-async function ccfCalRender(){
-  var box=$('calBox'); if(!box)return;
-  var o=null; try{var g=await store.get('g7cal:next'); if(g&&g.value)o=JSON.parse(g.value);}catch(e){}
-  if(!o||!o.items||!o.items.length){box.innerHTML=''; return;}
-  var today=new Date(); today.setHours(0,0,0,0);
-  var rows=o.items.filter(function(x){return x.t&&x.date;}).map(function(x){
-    var d=new Date(x.date+'T00:00:00'); var dd=Math.round((d-today)/864e5);
-    return {t:x.t,date:x.date,dd:dd,elite:!!x.elite,hold:!!x.hold,est:x.src==='est'};
-  }).filter(function(x){return x.dd>=-2;}).sort(function(a,b){return a.dd-b.dd;}).slice(0,24);
-  if(!rows.length){box.innerHTML='<span style="font-size:12px;color:var(--muted)">直近の決算予定なし（カレンダーを更新して）</span>'; return;}
-  var html='<div style="font-size:12.5px;font-weight:700;color:var(--gold-bright);margin-bottom:6px">📅 決算カレンダー <span style="font-weight:400;color:var(--muted);font-size:11px">生成 '+(o.generated||'')+'　◆保有 ★質80+　※推定=昨年からの見込み</span></div>';
-  html+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
-  for(var i=0;i<rows.length;i++){var r=rows[i];
-    var urgent=r.dd<=14;
-    html+='<span style="display:inline-flex;gap:6px;align-items:center;padding:5px 10px;border-radius:7px;font-size:12px;'
-      +'border:1px solid '+(urgent?'rgba(207,95,72,.55)':'var(--line)')+';'
-      +'background:'+(urgent?'rgba(207,95,72,.10)':'var(--panel2,transparent)')+'">'
-      +'<b>'+r.t+'</b>'+(r.hold?'◆':'')+(r.elite?'★':'')
-      +'<span style="color:'+(urgent?'var(--fail)':'var(--muted)')+'">'+r.date.slice(5)+'（D'+(r.dd>=0?'-'+r.dd:'+'+(-r.dd))+'）'+(r.est?'?':'')+'</span></span>';
-  }
-  html+='</div>';
-  box.innerHTML=html;
-}
-async function ccfCopyKessan(btn){
-  // 決算専用の依頼文(門仕様)。銘柄は入力欄→空欄なら決算カレンダー(g7cal:next)の±7日から自動抽出
-  var o=btn?btn.textContent:'';
-  var raw=($('kessanTk')&&$('kessanTk').value||'').trim();
-  var tks=raw?raw.toUpperCase().split(/[\s,、]+/).filter(Boolean):[];
-  if(!tks.length){
-    try{var g=await store.get('g7cal:next'); if(g&&g.value){var cal=JSON.parse(g.value);
-      var today=new Date(); today.setHours(0,0,0,0);
-      tks=(cal.items||[]).filter(function(x){if(!x.t||!x.date)return false;
-        var dd=Math.round((new Date(x.date+'T00:00:00')-today)/864e5); return dd>=-7&&dd<=7;
-      }).map(function(x){return x.t;});
-    }}catch(e){}
-  }
-  if(!tks.length){ // カレンダーも空なら保有全銘柄(旧・四半期点検ボタンの役割を統合)
-    try{var h=await store.get('g7hold:set'); if(h&&h.value)tks=JSON.parse(h.value)||[];}catch(e){}
-  }
-  if(!tks.length){if(btn){btn.textContent='銘柄を入れて（空欄=直近決算/保有）';setTimeout(function(){btn.textContent=o;},2000);}return;}
-  ccfCopyStr(ccfKessanText(tks), btn);
-}
-// 決算点検の依頼文テキスト(門仕様v2)——ccfCopyKessan(複数)とccfCopyKessanOne(単一・買付順位の行ボタン)で共有
+// 決算点検の依頼文テキスト(門仕様v2)——ccfCopyKessanOne(買付順位の行ボタン)が使用。旧カレンダー・旧バックアップ系の死骸関数(ccfCal*/ccfCopyKessan/ccfBackupAll等)は2026-07に削除(Ⅶ資産のバックアップ/復元に集約済み。git履歴に保存)
 function ccfKessanText(tks){
   return '決算点検: '+tks.join(', ')+'\n\n'
     +'【決算点検プロトコル（門仕様）v2｜厳守】1社ずつ以下の順で点検し報告する。判定に株価は使わない。\n\n'
@@ -2809,93 +2577,6 @@ function ccfKessanText(tks){
 }
 // 買付順位の行ボタン用: 単一銘柄の決算点検依頼文をコピー
 function ccfCopyKessanOne(t,btn){ ccfCopyStr(ccfKessanText([String(t||'').toUpperCase()]), btn); }
-async function ccfBackupAll(btn){
-  var o=btn?btn.textContent:'';
-  const data={}; let n=0;
-  for(const p of ['g7:','g7wait:','g7prev:','g7queue:','hm:']){
-    try{const r=await store.list(p); for(const k of (r?r.keys:[])){try{const g=await store.get(k); if(g&&g.value!=null){data[k]=g.value;n++;}}catch(e){}}}catch(e){}
-  }
-  for(const k of ['g7hold:set','g7buy:map']){try{const g=await store.get(k); if(g&&g.value!=null){data[k]=g.value;n++;}}catch(e){}}
-  try{
-    var payload=JSON.stringify({fmt:'ccf-backup',ver:1,ts:Date.now(),data:data},null,1);
-    var blob=new Blob([payload],{type:'application/json'});
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement('a'); a.href=url; a.download='ccf_backup_'+new Date().toISOString().slice(0,10)+'.json';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1200);
-    try{await store.set('ccf:lastBackup',String(Date.now()));}catch(e){}
-    ccfBkStat();
-    if(btn){btn.textContent='保存 \u2713 '+n+'件'; setTimeout(function(){btn.textContent=o;},2600);}
-  }catch(e){ if(btn){btn.textContent='保存不可'; setTimeout(function(){btn.textContent=o;},2000);} }
-}
-async function ccfRestoreAll(inp){
-  var f=inp&&inp.files&&inp.files[0]; if(!f)return;
-  var st=$('bkStat');
-  try{
-    var txt=await f.text(); var o=JSON.parse(txt);
-    if(!o||o.fmt!=='ccf-backup'||!o.data){ if(st){st.textContent='復元失敗: 形式が違う'; st.style.color='var(--fail)';} inp.value=''; return; }
-    let n=0; for(const k in o.data){ try{await store.set(k,o.data[k]); n++;}catch(e){} }
-    if(st){st.textContent='復元 '+n+'件 → 再読込'; st.style.color='var(--pass)';}
-    setTimeout(function(){location.reload();},900);
-  }catch(e){ if(st){st.textContent='復元失敗'; st.style.color='var(--fail)';} }
-  inp.value='';
-}
-async function ccfBkStat(){
-  try{
-    var el=$('bkStat'); if(!el)return;
-    var has=0; try{var r=await store.list('g7:'); has=(r&&r.keys&&r.keys.length)||0;}catch(e){}
-    var ts=null; try{var g=await store.get('ccf:lastBackup'); ts=(g&&g.value)?(+g.value):null;}catch(e){}
-    if(!has&&!ts){el.textContent=''; return;}
-    if(!ts){ el.textContent='\u26a0 バックアップ未取得'; el.style.color='var(--fail)'; return; }
-    var d=Math.floor((Date.now()-ts)/864e5);
-    el.textContent=(d>14?'\u26a0 ':'')+'最終バックアップ: '+d+'日前'+(d>14?'（要保存）':'');
-    el.style.color=d>14?'var(--fail)':'var(--muted)';
-  }catch(e){}
-}
-(function(){var t=0;var iv=setInterval(async function(){t++;try{await store.list('g7:');clearInterval(iv);ccfBkStat();try{ccfCalRender();}catch(e){}}catch(e){if(t>40)clearInterval(iv);}},600);})();
-let _wipeArm=0;
-async function ccfWipeAll(btn){
-  // 銘柄データ全消去(二度押し確定・ダイアログ不使用)。日誌(hm:journal)・待ち行列・テーマは残す
-  const now=Date.now();
-  if(now-_wipeArm>4000){
-    _wipeArm=now; const o=btn.textContent;
-    btn.textContent='もう一度押すと全消去（取り消し不可）'; btn.style.background='#cf5f48'; btn.style.color='#0d0d0f';
-    setTimeout(function(){ if(Date.now()-_wipeArm>=3900){btn.textContent=o;btn.style.background='';btn.style.color='';} },4200);
-    return;
-  }
-  _wipeArm=0; btn.textContent='消去中…';
-  for(const p of ['g7:','g7prev:','g7wait:']){
-    try{const r=await store.list(p); for(const k of (r?r.keys:[])) await store.delete(k);}catch(e){}
-  }
-  for(const k of ['g7hold:set','g7buy:map']){ try{await store.delete(k);}catch(e){} }
-  btn.textContent='消去完了 → 再読込';
-  setTimeout(function(){location.reload();},900);
-}
-async function ccfExportHoldings(btn){
-  // gate0用 holdings.json 書き出し(保有フラグ+台帳から生成)。現在UIボタンは未接続——保有は台帳/資産で管理
-  var o=btn?btn.textContent:'';
-  let hold=[];try{const r=await store.get('g7hold:set');if(r&&r.value)hold=JSON.parse(r.value);}catch(e){}
-  let all=[];try{const r=await store.list('g7:');all=(r?r.keys:[]).map(k=>k.slice(3));}catch(e){}
-  const watch=all.filter(t=>hold.indexOf(t)<0);
-  const elite=[];
-  try{const r=await store.list('g7:');
-    for(const k of (r?r.keys:[])){
-      try{const g=await store.get(k); if(!g||!g.value)continue;
-        const o=JSON.parse(g.value); const sc=o&&o.r&&o.r.evalScore;
-        if(sc!=null&&sc>=80)elite.push(k.slice(3));
-      }catch(e){}
-    }
-  }catch(e){}
-  const txt=JSON.stringify({holdings:hold,watch:watch,elite:elite},null,1);
-  try{
-    var blob=new Blob([txt],{type:'application/json'});
-    var url=URL.createObjectURL(blob);
-    var a=document.createElement('a'); a.href=url; a.download='holdings.json';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1200);
-    if(btn){btn.textContent='保存 \u2713 保有'+hold.length+'/監視'+watch.length; setTimeout(function(){btn.textContent=o;},2600);}
-  }catch(e){ if(btn){btn.textContent='保存不可'; setTimeout(function(){btn.textContent=o;},2000);} }
-}
 function ccfDownload(btn){
   // 門から.pyを直接保存。クリップボード不使用=切れない。file://でもモバイルでも可。
   var key=btn.getAttribute('data-key');

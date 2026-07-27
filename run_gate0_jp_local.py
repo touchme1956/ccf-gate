@@ -9,8 +9,12 @@
 #   ・Stage2: 生き残りのみ過去の有報を追加取得し、5年フルで7項目採点
 #   ・税率は日本の実効税率 ×0.70(SEC版は×0.79)
 #   ・椅子: ROIC系のみで落ちた5点企業を現金控除ROICで再評価(キーエンス型)
-# 【v1は校正モード】golden銘柄の抽出値を印字して目視確認する。
-#   期待値の固定(回帰テスト化)はv2で行う。
+# 【v2は校正モード】golden銘柄の抽出値を印字して目視確認する。
+#   期待値の固定(回帰テスト化)は次版v3で行う(未着手)。
+# 【注意・別系統】コミット済みの gate0_jp_queue.json は 2026-07-25 の
+#   EDINET_DB screen_companies 版(門0-JP定量ふるい・スキーマが異なる)。
+#   本スクリプトを実行するとEDINET API直採取のスキーマで上書きするため、
+#   既存が別ソースの場合は .prev.json に自動退避する。
 #
 # 【移植版の変更点(Drive/ccf/gate0_jp_v2.py → このリポジトリ)】
 #   ・Colabマウント除去。SAVE_DIR=リポジトリ直下、キャッシュ=./edinet_csv
@@ -416,7 +420,18 @@ resc = [r for r in RESULTS if r["score"]==5
 chairs = [r for r in resc if not r["ic_ex_neg"] and r["roic_ex_latest"] is not None
           and r["roic_ex_latest"]>=MIN_ROIC_LATEST and r["roic_ex_worst"]>=MIN_ROIC_WORST]
 for path, data in [("gate0_jp_queue.json",queue),("gate0_jp_rescue.json",chairs)]:
-    json.dump(data, open(f"{SAVE_DIR}/{path}","w",encoding="utf-8"), ensure_ascii=False, indent=1)
+    full = f"{SAVE_DIR}/{path}"
+    # 既存ファイルが別ソース(EDINET_DB版=dict形式)なら .prev.json に退避してから書く(無警告上書きの防止)
+    if os.path.exists(full):
+        try:
+            prev = json.load(open(full, encoding="utf-8"))
+            if isinstance(prev, dict) and prev.get("source"):
+                bak = full.replace(".json", ".prev.json")
+                os.replace(full, bak)
+                print(f"▲ 既存の {path} は別ソース({prev.get('source')})のため {os.path.basename(bak)} に退避した")
+        except Exception:
+            pass
+    json.dump(data, open(full, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
 print("\n" + "="*74 + f"\n■ 日本株 待ち行列: {len(queue)} 社\n" + "="*74)
 for i, r in enumerate(queue, 1):
