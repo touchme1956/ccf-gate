@@ -184,7 +184,13 @@ function render(){
  const dN=netW-TARGET.net, dC=castleW-TARGET.castle;
  document.getElementById('tgtNote').innerHTML= total<=0? 'まだ保有が空です。「✎ 編集」から入れてください。' :
   `目標60/40との差：網 ${dN>=0?'+':''}${dN.toFixed(1)}pt ／ 城 ${dC>=0?'+':''}${dC.toFixed(1)}pt`+
-  (Math.abs(dN)<=3?'　<b style="color:var(--jade)">＝ほぼ目標どおり</b>':(dN>3?'　（網が厚い＝新規は城へ寄せる）':'　（城が厚い＝新規は網へ寄せる）'))+
+  (cashW>0
+    ? ((Math.abs(dN)<=3&&Math.abs(dC)<=3)?'　<b style="color:var(--jade)">＝ほぼ目標どおり</b>'
+      :(dN<0&&dC<0)?`　（網・城とも不足＝現金・新規は不足の大きい${dN<dC?'網':'城'}へ）`
+      :dN<0?'　（網が不足＝現金・新規は網へ）'
+      :dC<0?'　（城が不足＝現金・新規は城へ）'
+      :'　（網も城も目標超過＝現金のまま次の点灯を待つ）')
+    : (Math.abs(dN)<=3?'　<b style="color:var(--jade)">＝ほぼ目標どおり</b>':(dN>3?'　（網が厚い＝新規は城へ寄せる）':'　（城が厚い＝新規は網へ寄せる）')))+
   (cashW>0?`<br>現金 ${cashW.toFixed(1)}%（IPS①の残余——点灯が少ない市況ほど自動で積み上がる。遊ばせるのは1〜2ヶ月まで、開かなければ網へ）`:'');
 
  const buyInfo=p=>{

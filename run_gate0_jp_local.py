@@ -401,7 +401,16 @@ RESULTS.sort(key=lambda r: (-r["score"], -r["roic_worst5"]))
 cols = ["ticker","name","gyoshu","ccy","fy_latest","score","fails","roic_latest","roic_worst5",
         "opm","sales_cagr5","fcf_conv_5y","op_all_pos","fcf_all_pos","equity_neg","warn_anomaly",
         "op_src","roic_ex_latest","roic_ex_worst","ic_ex_neg","cash_pct"]
-with open(f"{SAVE_DIR}/gate0_jp_all.csv","w",newline="",encoding="utf-8-sig") as fp:
+csv_path = f"{SAVE_DIR}/gate0_jp_all.csv"
+if os.path.exists(csv_path):
+    try:
+        head = open(csv_path, encoding="utf-8-sig").readline()
+        if head.startswith("sec,"):   # EDINET_DB screen_companies版のスキーマ(sec,edinet,nm,...)
+            os.replace(csv_path, csv_path.replace(".csv", ".prev.csv"))
+            print("▲ 既存の gate0_jp_all.csv は別ソース(EDINET_DB)のため gate0_jp_all.prev.csv に退避した")
+    except Exception as e:
+        print(f"▲ 既存CSVを読めなかったが上書きする: {e}")
+with open(csv_path,"w",newline="",encoding="utf-8-sig") as fp:
     w = csv.DictWriter(fp, fieldnames=cols, extrasaction="ignore"); w.writeheader(); w.writerows(RESULTS)
 sc = collections.Counter(r["score"] for r in RESULTS)
 print(f"\n判定 {len(RESULTS)} 社 / 7点 {sc[7]} / 6点 {sc[6]} / 5点 {sc[5]}")
@@ -429,8 +438,8 @@ for path, data in [("gate0_jp_queue.json",queue),("gate0_jp_rescue.json",chairs)
                 bak = full.replace(".json", ".prev.json")
                 os.replace(full, bak)
                 print(f"▲ 既存の {path} は別ソース({prev.get('source')})のため {os.path.basename(bak)} に退避した")
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"▲ 既存の {path} を読めなかったが上書きする(退避なし): {e}")
     json.dump(data, open(full, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
 print("\n" + "="*74 + f"\n■ 日本株 待ち行列: {len(queue)} 社\n" + "="*74)
@@ -453,5 +462,5 @@ for sec, nm in GOLDEN_JP.items():
           f"最低{r['roic_worst5']*100:.1f}% 営利{r['opm']*100:.1f}% CAGR{r['sales_cagr5']*100:.1f}% "
           f"転換{r['fcf_conv_5y']:.2f} 現金{r['cash_pct']}%")
 print("\n【校正の見方】キーエンスはROIC落ち→椅子入りが期待形(現金の山)。数字が有報と")
-print("合わない銘柄はタグ取り違え——銘柄名と正しい値をClaudeへ。v2で期待値を固定する。")
+print("合わない銘柄はタグ取り違え——銘柄名と正しい値をClaudeへ。v3で期待値を固定する。")
 print("\n→ 出力: gate0_jp_all.csv / gate0_jp_queue.json / gate0_jp_rescue.json")

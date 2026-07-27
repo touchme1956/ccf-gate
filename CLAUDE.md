@@ -8,8 +8,12 @@
   - companyfacts.zip(1.4GB)が45日超なら自動で最新に更新（検証母集団=全上場が毎年更新される）
   - holdings.json があれば HOLDINGS/WATCH を自動差し替え（門の「Ⅳ台帳」の保有と揃えて用意）
   - 出力: gate1_queue.json（待ち行列＝TOP_N100＋審査優先〔谷/種まき/未成熟〕の合流で約155社）、gate0_all.csv
-- 年1回 日本株発掘（日本株門0・2026-07新設）: `python run_gate0_jp_local.py`（EDINET_DB定量ふるい）
-  - 出力: gate0_jp_queue.json（pt順上位50社）、gate0_jp_all.csv。定性・through-cycleは未評価=門2審査（依頼文）へ
+- 年1回 日本株発掘（日本株門0・2026-07新設）——二系統あり:
+  - 現行キュー gate0_jp_queue.json（pt順上位50社・2026-07-25）と gate0_jp_all.csv は **EDINET_DB screen_companies版**
+    （roic≥15 & opm≥15 & cagr3y≥5 & equity≥50 → 259社。ptフィールド付きdict形式）
+  - `python run_gate0_jp_local.py` は**別系統**＝EDINET API直採取の二段漏斗（5年7項目採点。出力: 合成スコア順50社の
+    list形式＋gate0_jp_rescue.json＋gate0_jp_all.csv。既存が別ソースなら .prev へ自動退避）。ptは生成しない
+  - どちらも定性・through-cycleは未評価=門2審査（依頼文）へ
 - 四半期 保有点検: `python kessan_check.py`
   - holdings.jsonの保有銘柄について、直近の10-Q/8-Kを確認し、四半期売上YoY・営業利益率の前年同期差・警報(誠/限/集/指針/減損/退任)を機械抽出
   - 出力: out/kessan/{T}_qcheck.txt と要審査フラグ。要審査は門2再審査(依頼文)へ回す。株価は判定に使わない

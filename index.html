@@ -1053,7 +1053,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
   </div>
 
   <div style="border:1px solid var(--line);border-radius:9px;padding:12px 14px;background:rgba(255,255,255,.015);opacity:.75">
-   <div style="min-width:0"><b style="color:var(--muted)">③ 日本株門0（定量ふるい）</b> <span style="color:#8fc9a4;font-size:12px">2026-07-25稼働・リポジトリ在中</span><div style="color:var(--muted);font-size:12px;margin-top:2px">run_gate0_jp_local.py（EDINET_DB）が roic≥15・営利≥15・売上CAGR3年≥5・自己資本比率≥50 で259社を抽出し、pt順に gate0_jp_queue.json（上位50社）へ。roicはnet-cash/資産軽量で過大になりうるため門式現金控除ROICで審査時に再計算。定性・through-cycleは未評価＝Ⅱ手順3の依頼文で門2審査へ。</div></div>
+   <div style="min-width:0"><b style="color:var(--muted)">③ 日本株門0（定量ふるい）</b> <span style="color:#8fc9a4;font-size:12px">2026-07-25稼働・リポジトリ在中</span><div style="color:var(--muted);font-size:12px;margin-top:2px">現行キュー gate0_jp_queue.json（pt順上位50社）は EDINET_DB screen_companies の定量ふるい（roic≥15・営利≥15・売上CAGR3年≥5・自己資本比率≥50 → 259社・2026-07-25）。run_gate0_jp_local.py は<b>別系統</b>＝EDINET API直採取の二段漏斗（5年7項目採点・合成スコア順50社＋敗者復活の椅子。実行時、別ソースの既存キュー/CSVは .prev へ自動退避）。roicはnet-cash/資産軽量で過大になりうるため門式現金控除ROICで審査時に再計算。どちらも定性・through-cycleは未評価＝Ⅱ手順3の依頼文で門2審査へ。</div></div>
   </div>
 
  </div>
@@ -2025,22 +2025,31 @@ async function ccfRescoreAll(btn){
 }
 async function autoSave(src,silent){
   const nm=$('nm').value.trim(); if(!nm)return null;
-  const r=compute(); const data={};
+  let r=compute(); const data={};
   document.querySelectorAll('#scorer input,#scorer select').forEach(e=>{if(e.id)data[e.id]=e.value;}); // v9.9.26: 採点機フォームに限定(logBody/ioBox等の他タブ入力とid無し欄の混入=記録肥大を解消。読込側は既存マップで無害)
   let prevScore=null,prevAct=null;
   const sk=safeKey(nm);
   try{
     const prev=await store.get('g7:'+sk);
     if(prev){ await store.set('g7prev:'+sk,prev.value); try{const po=JSON.parse(prev.value); if(po.r){prevScore=po.r.evalScore;prevAct=po.r.act;}
-      // v9.9.27: histの自動追記——新しい四半期のデータ(erdateが変わった保存)なら前回スコアを履歴に積む。
-      //   S2「3期連続低下」/S3「2期連続低下」はhist欄に依存するが手入力頼みで実質機能していなかった。
-      //   erdate不変(同四半期の再保存・検死修正)では積まない=同一期の重複でトレンド検知を汚さない。直近12期まで保持
+      // v9.9.28: histの自動追記(v9.9.27の再設計)——新しい四半期のデータ(erdateが前回より新しい保存)なら前回スコアを履歴に積む。
+      //   種は「フォーム値が空なら前回レコードのhist」から取る: パックJSONにはhistキーが無く、applyFieldsが取込のたびに
+      //   hist欄を''にクリアするため、フォーム値だけを種にすると履歴が常に1件に潰れ、S2「3期連続低下」/S3「2期連続低下」が
+      //   主経路(JSON取込)で一度も発火しない欠陥があった。比較は curEr>prevEr の方向付き——バックアップ復元(古いパックの
+      //   書き戻し)で破棄したはずのスコアが履歴に混入する誤発火を防ぐ。直近12期まで保持
       const prevEr=(po.data&&po.data.erdate)||'', curEr=data.erdate||'';
-      if(prevScore!=null&&prevEr&&curEr&&prevEr!==curEr){
-        const hv=(data.hist||'').split(',').map(x=>x.trim()).filter(Boolean);
+      const seed=(data.hist&&data.hist.trim())?data.hist:((po.data&&po.data.hist)||'');
+      if(prevScore!=null&&prevEr&&curEr&&curEr>prevEr){
+        const hv=seed.split(',').map(x=>x.trim()).filter(Boolean);
         if(!hv.length||Math.abs(parseFloat(hv[hv.length-1])-parseFloat(prevScore))>0.049)hv.push(String(prevScore));
         data.hist=hv.slice(-12).join(',');
         if($('hist'))$('hist').value=data.hist;
+        r=compute(); // hist反映後に再採点して保存——r.exit(pf:verdictsが最優先する正本出口判定)のトレンド検知が1期遅れる順序バグの解消
+      }else if(!(data.hist&&data.hist.trim())&&seed){
+        // 同一四半期の再保存でも、取込でクリアされたhistは前回レコードから復元する(蓄積の消失防止)
+        data.hist=seed;
+        if($('hist'))$('hist').value=seed;
+        r=compute();
       }
     }catch(e){} }
     await store.set('g7:'+sk,JSON.stringify({data,r,ts:Date.now(),src:src||'auto'}));
@@ -2300,12 +2309,23 @@ async function renderPlan(){
   // v9.9.27: IPS②(Ulysses契約)の仕組み化——投下可の初回点灯を記録し48hクーリングオフの残り時間を表示。
   //   点灯時のE[r]/格/PERをスナップショット(掟九:年1回の予実突合の材料。消えた点灯もoff印で保存)。
   //   判定・順位・採点には一切不介入=表示と記録のみ。再点灯(off→復帰)は新しい点灯として冷却をやり直す
-  let ign={}; try{const g=await store.get('g7ignite:map'); if(g&&g.value)ign=JSON.parse(g.value)||{};}catch(e){}
+  // v9.9.28: 読取失敗への耐性——store.getは失敗もキー不存在もnullを返すため、nullならlocalStorageミラーから救済する。
+  //   救済もできない時に空で上書きすると冷却時計と予実スナップショットが1回の読取失敗で全消失するため、書込はraw取得成功時のみ行う
+  let ign={}, ignRaw=null;
+  try{const g=await store.get('g7ignite:map'); ignRaw=g&&g.value||null;}catch(e){}
+  if(!ignRaw){try{ignRaw=localStorage.getItem('g7ignite:map');}catch(e){}}
+  if(ignRaw){try{ign=JSON.parse(ignRaw)||{};}catch(e){}}
+  // 初回(本当に無い)と読取失敗はどちらもnullで区別不能だが、正・ミラーの両方が同時に読めない事態はまれ——ミラー救済が消失を実質封じる
   const nowTs=Date.now(); let ignChanged=false;
   const passSet=new Set(pass.map(r=>r.nm));
   for(const r of pass){
     const e=ign[r.nm];
-    if(!e||e.off){ign[r.nm]={ts:nowTs,date:new Date(nowTs).toISOString().slice(0,10),xEr:r.xEr,s:r.s,per:r.per};ignChanged=true;}
+    if(!e){ign[r.nm]={ts:nowTs,date:new Date(nowTs).toISOString().slice(0,10),xEr:r.xEr,s:r.s,per:r.per};ignChanged=true;}
+    else if(e.off){
+      // 再点灯: 前サイクル(点灯〜消灯)をpastへ退避してから新規点灯——「消えた点灯もoff印で保存」(掟九の予実材料)を上書きで失わない
+      const past=(e.past||[]).concat([(({past,...rest})=>rest)(e)]).slice(-8);
+      ign[r.nm]={ts:nowTs,date:new Date(nowTs).toISOString().slice(0,10),xEr:r.xEr,s:r.s,per:r.per,past};ignChanged=true;
+    }
   }
   for(const k of Object.keys(ign)){ if(!passSet.has(k)&&!ign[k].off){ign[k].off=new Date(nowTs).toISOString().slice(0,10);ignChanged=true;} }
   if(ignChanged){try{await store.set('g7ignite:map',JSON.stringify(ign));}catch(e){}}
@@ -2591,7 +2611,27 @@ function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+
 // ===== Ⅶ資産 iframe を「1枚のページ」として表示：中身(portfolio.html)が自分の高さをpostMessageで通知し、iframeをフィットさせて内部スクロールバーを消す =====
 window.addEventListener('message',function(e){ if(e&&e.data&&e.data.type==='ccfPfHeight'){ const f=document.getElementById('pfFrame'); if(f&&e.data.h>0)f.style.height=(e.data.h+8)+'px'; } });
 function pfShow(){ const f=document.getElementById('pfFrame'); if(!f)return; try{f.contentWindow.location.reload();}catch(e){f.src=f.src;} }
-store.init().then(()=>{compute();renderLedger();if(typeof ccfRenderAllQueues==='function')ccfRenderAllQueues();});
+// v9.9.28: claudeモードの逆流補完——Ⅶ資産(portfolio.html)の「門の台帳へ登録」はlocalStorage直書きのため、
+//   window.storageを正とするclaudeモードでは門に届かず、次の門側保存でミラーが黙って上書き消去していた。
+//   起動時にlocalStorage側のg7:*新規レコード(正に無いものだけ・上書きしない)とg7hold:setの和集合を正へ取り込む。
+//   localモード(GitHub Pages/通常ブラウザ)は両者が同一領域のため何もしない。
+async function ccfSyncFromLocal(){
+  if(store.mode!=='claude')return;
+  try{
+    let ls=[]; try{ls=JSON.parse(localStorage.getItem('g7hold:set')||'[]')||[];}catch(e){}
+    if(Array.isArray(ls)&&ls.length){
+      let cur=[]; try{const g=await store.get('g7hold:set'); if(g&&g.value)cur=JSON.parse(g.value)||[];}catch(e){}
+      const merged=[...new Set([...cur,...ls])];
+      if(merged.length!==cur.length)await store.set('g7hold:set',JSON.stringify(merged));
+    }
+    for(let i=0;i<localStorage.length;i++){
+      const k=localStorage.key(i);
+      if(!k||!k.startsWith('g7:'))continue;
+      try{ const ex=await store.get(k); if(!ex){const v=localStorage.getItem(k); if(v)await store.set(k,v);} }catch(e){}
+    }
+  }catch(e){}
+}
+store.init().then(async()=>{await ccfSyncFromLocal();compute();renderLedger();if(typeof ccfRenderAllQueues==='function')ccfRenderAllQueues();});
 
 </script>
 <!-- 対S&P500検証タブ(v9.6)のスクリプトはタブ撤去に伴い削除(2026-07)。UIのid(vsInputRows等)が存在せず全関数が到達不能だった。必要になればgit履歴から復元 -->
