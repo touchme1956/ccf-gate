@@ -1239,7 +1239,8 @@ function compute(){
   //   離散値100の並び→moatIdx100→pm95保証→sustain95張り付きが上位の識別力を奪っていた。
   const cap96=v=>Math.min(96,v);
   const cultAdj=(n('gls')>0&&n('gls')<=3.3&&$('disrupt').value!=='threat'&&$('erosion').value!=='active')?-2:0; // 段階1修正(b): threat/active時は文化-2を停止(同一劣化の二重罰防止——衰退はdisrupt/erosion側の-10/84.9capが既に処理) // v9.2形質研究→バックテスト修正(2026-07-11): 加点(≥4.0で+2)は廃止——Zoom2021がGlassdoor4.4/BestPlaces第22位で誤発動する偽陽性を史実確認(その後-80%)。生スコアは操作可能(WSJ2019:400社超でスパイク検出)でEdmans効果[Fortuneリスト掲載]の正しい代理でない。減点のみ維持=文化崩壊の警告(Super Micro 3.2を会計問題前に正しく警告した実績)。日本企業はgls=0(中立)運用——激務容認文化でスコアが構造的に下振れしKeyence型を誤罰するため
-  const moatIdx=Math.max(0,Math.min(96,gm([cap96(dom),cap96(irr),cap96(rep),cap96(dur)],[.30,.30,.25,.15])+cultAdj));
+  const _mm=(typeof ccfMoatMulti==='function')?ccfMoatMulti(CCF_MOATS):null; // v9.10 複数の堀
+  const moatIdx=Math.max(0,Math.min(96,(_mm?_mm.idx:gm([cap96(dom),cap96(irr),cap96(rep),cap96(dur)],[.30,.30,.25,.15]))+cultAdj));
   const priceConfirm=Math.max(0,Math.min(100,gmPt(gmm,gmt))); // 粗利は確認材料に降格
   let pm=0.70*moatIdx+0.30*priceConfirm;
   pm+=({up:3,flat:0,down:-10}[sht]); if(nrr&&nrr<100)pm-=6;
@@ -1780,6 +1781,11 @@ function copyPrompt(){
 const __selDefaults={};
 document.querySelectorAll('select').forEach(e=>{if(e.id)__selDefaults[e.id]=e.value;});
 function applyFields(d){
+  /* v9.10: 複数の堀。moats(または保存済み__moats)があれば取り込み、最強の堀をtop-levelへ写す */
+  if(!d.moats && d.__moats) d.moats=d.__moats;
+  CCF_MOATS=(Array.isArray(d.moats)&&d.moats.length>=2)?d.moats:null;
+  if(CCF_MOATS){ var _b=CCF_MOATS.slice().sort(function(a,b){return ccfMoatOne(b)-ccfMoatOne(a);})[0];
+    ['dom','irr','rep','dur'].forEach(function(k){ if(d[k]===undefined||d[k]===null) d[k]=_b[k]; }); }
   const map={nm:'nm',rfr:'rfr',erp:'erp',beta:'beta',roic:'roic',roicEx:'roicEx',roicg:'roicg',roiic:'roiic',nde:'nde',z:'z',gpa:'gpa',accr:'accr',acc:'acc',eq:'eq',fin:'fin',dom:'dom',irr:'irr',rep:'rep',dur:'dur',gm:'gm',gmt:'gmt',sht:'sht',nrr:'nrr',roict:'roict',pen:'pen',cagr:'cagr',moatdecay:'moatdecay',expiry:'expiry',sbc:'sbc',dilNet:'dilNet',erosion:'erosion',disrupt:'disrupt',fcf:'fcf',ni:'ni',p1:'p1',p2:'p2',p3:'p3',p4:'p4',f1:'f1',f2:'f2',f3:'f3',f4:'f4',f5:'f5',per:'per',evebit:'evebit',gr:'gr',shy:'shy',rak:'rak',gcap:'gcap',analysts:'analysts',instOwn:'instOwn',mcap:'mcap',gls:'gls',idx:'idx',indG:'indG',hist:'hist',pos:'pos',roiic5:'roiic5',perF:'perF',px:'px',eps:'eps',ddate:'ddate',erdate:'erdate',acq5:'acq5',geopol:'geopol',founder:'founder'};
   Object.entries(map).forEach(([k,id])=>{
     const el=$(id); if(!el)return;
@@ -1805,6 +1811,38 @@ function applyFields(d){
   if(d.memo!==undefined&&$('memo'))$('memo').value=d.memo;
 }
 /* ===== v9.6.1 ドラフト検問: 定性が全空の採取器ドラフトを台帳(g7:)に入れず「審査待ち」(g7wait:)へ隔離。壊れスコアの保存を構造的に禁止する関所 ===== */
+/* ===== v9.10 複数の堀(multi-moat): 会社が独立した堀を複数持つ場合の合成 =====
+   従来は会社ごとに堀を1組(dom/irr/rep/dur)しか持てず、複数事業の会社は審査者が1つに潰すか
+   平均するしかなかった。平均は「弱い堀が強い堀を薄める」ため誤り(事業を増やすほど不利になり、
+   門の思想=一点突破が最強 と逆行する)。
+   採る形: 最強の堀を軸にし、独立した第2・第3の堀へ逓減ボーナスを足す。上限+8。
+     ・単一事業(ASML/eWeLL等)はボーナス0＝集中を罰しない
+     ・上限8は、多堀が一点突破(ASML moatIdx 89.2)を超えないための蓋
+     ・独立と認めるのは indep===true かつ indep_reason が書かれ、売上比15%以上のものだけ
+       (同一顧客・同一サイクルの事業は独立ではない。自己申告のセグメント数では加点しない)
+   ボーナス係数[20,10]は検証された値ではなく初版の事前分布。 */
+var CCF_MOATS=null;
+function ccfMoatOne(m){
+  var c=function(v){return Math.min(96,Math.max(1,parseFloat(v)||1));};
+  var w=[.30,.30,.25,.15], v=[c(m.dom),c(m.irr),c(m.rep),c(m.dur)], s=0;
+  for(var i=0;i<4;i++) s+=w[i]*Math.log(v[i]);
+  return Math.exp(s);
+}
+function ccfMoatMulti(list){
+  if(!Array.isArray(list)||list.length<2) return null;
+  var tot=list.reduce(function(a,m){return a+(parseFloat(m.rev)||0);},0);
+  if(!(tot>0)) return null;
+  var xs=list.map(function(m){return {idx:ccfMoatOne(m), w:(parseFloat(m.rev)||0)/tot,
+    indep:m.indep===true && !!(m.indep_reason&&String(m.indep_reason).trim()), seg:m.seg||''};});
+  xs.sort(function(a,b){return b.idx-a.idx;});
+  var best=xs[0].idx, C=[20,10], bonus=0, k=0, det=[];
+  for(var i=1;i<xs.length && k<2;i++){
+    if(!xs[i].indep || xs[i].w<0.15) continue;
+    var add=(xs[i].idx/best)*xs[i].w*C[k]; bonus+=add; det.push(xs[i].seg+' +'+add.toFixed(1)); k++;
+  }
+  bonus=Math.min(8,bonus);
+  return {idx:Math.min(96,best+bonus), best:best, bonus:bonus, n:xs.length, det:det};
+}
 var CCF_DRAFTKEYS=['dom','irr','rep','dur','f1','f2','f3','f4','f5','p1','p2','p3','p4'];
 function ccfEmpty(v){return v===undefined||v===null||v===''||v==='null';}
 function ccfIsDraftObj(o){if(!o||typeof o!=='object')return false;return CCF_DRAFTKEYS.every(function(k){return ccfEmpty(o[k]);});}
@@ -2169,6 +2207,7 @@ async function autoSave(src,silent){
   const nm=$('nm').value.trim(); if(!nm)return null;
   const r=compute(); const data={};
   document.querySelectorAll('input,select').forEach(e=>data[e.id]=e.value);
+  if(CCF_MOATS)data.__moats=CCF_MOATS; // v9.10 複数の堀を保存
   let prevScore=null,prevAct=null;
   const sk=safeKey(nm);
   try{
@@ -2319,6 +2358,7 @@ async function save(){
   const nm=$('nm').value.trim(); if(!nm){uiNotice('銘柄名を入力してください');return;}
   const r=compute(); const data={};
   document.querySelectorAll('input,select').forEach(e=>data[e.id]=e.value);
+  if(CCF_MOATS)data.__moats=CCF_MOATS; // v9.10 複数の堀を保存
   try{await store.set('g7:'+safeKey(nm),JSON.stringify({data,r,ts:Date.now(),src:'manual'}));renderLedger();uiNotice('記録した：'+nm);}catch(e){uiNotice('記録に失敗：'+String(e&&e.message||e));}
 }
 async function renderLedger(){
