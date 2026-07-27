@@ -45,6 +45,13 @@ def snapshot(cal, year):
                 row[k] = o[k]
         row["auditDate"] = (o.get("_meta") or {}).get("auditDate")
         snap[t] = row
+    # v10影スコア(系列の門・V10_SPEC.md)も保存——2027-07に v9予実 vs v10予実 の勝敗を裁く材料
+    try:
+        v10 = json.load(open("out/v10_shadow.json", encoding="utf-8")).get("scores", {})
+        for t, r in v10.items():
+            snap.setdefault(t, {})["v10"] = r.get("v10")
+    except Exception:
+        pass
     cal["snapshots"][year] = snap
     print(f"snapshot {year}: {len(snap)}銘柄を保存")
     return cal
