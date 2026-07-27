@@ -762,7 +762,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
 
     <!-- absolute MOAT index — quantitative ladder, no subjective sliders -->
     <div style="font-size:11px;color:var(--gold);font-weight:600;margin:16px 0 4px;letter-spacing:.05em">絶対MOAT指数（4因子・幾何平均／粗利ではなく堀そのものを測る）</div>
-    <div class="row"><div class="rl">支配シェア<span class="h">チョークポイントの占有率</span></div><div class="rc"><select id="dom"><option value="100">唯一・絶対独占（≥90%）</option><option value="85">圧倒的（70–89%）</option><option value="70" selected>寡占支配（40–69%）</option><option value="50">競争的（&lt;40%）</option></select></div></div>
+    <div class="row"><div class="rl">支配シェア<span class="h">チョークポイントの占有率。v9.11: <b>証拠でシェア%を示せない時は「不明」を選ぶ＝競争扱い50</b>。空欄が寡占70と同点になる欠陥を是正（示せない支配力に加点しない）</span></div><div class="rc"><select id="dom"><option value="100">唯一・絶対独占（≥90%）</option><option value="85">圧倒的（70–89%）</option><option value="70" selected>寡占支配（40–69%）</option><option value="50">競争的（&lt;40%）</option><option value="">不明（証拠なし）＝競争扱い50</option></select></div></div>
     <div class="row"><div class="rl">代替不能性<span class="h">迂回・置換のしにくさ</span></div><div class="rc"><select id="irr"><option value="100">唯一供給・代替なし</option><option value="85">認証/規格でロック</option><option value="70" selected>高摩擦・移行困難</option><option value="50">代替容易</option></select></div></div>
     <div class="row"><div class="rl">複製障壁<span class="h">時間×資本で追随できるか</span></div><div class="rc"><select id="rep"><option value="100">複製不能（数十年・$10B級）</option><option value="80">極困難</option><option value="60" selected>困難</option><option value="35">数年で追随可</option></select></div></div>
     <div class="row"><div class="rl">堀の型の耐久性<span class="h">侵食されにくい型か</span></div><div class="rc"><select id="dur"><option value="100">規制/プロセス知/物理（耐久）</option><option value="85" selected>ネットワーク（両面市場）</option><option value="75">スイッチングコスト</option><option value="55">ブランド/機能（侵食され得る）</option></select></div></div>
@@ -1234,7 +1234,13 @@ function compute(){
 
   // pillars
   // --- absolute MOAT index: quantitative, geometric (punishes any weak leg) ---
-  const dom=n('dom'),irr=n('irr'),rep=n('rep'),dur=n('dur');
+  /* v9.11: domの「不明」を競争扱い(50)にする。旧実装はnull→selectの既定値70に落ち、
+     『証拠がない』と『40-69%のシェアを開示している』が同点だった（不透明さが報われる欠陥）。
+     加えて一括取込では前の銘柄のdomが残る事故もあり得た。 */
+  const _domRaw=$('dom')?$('dom').value:'';
+  const domUnknown=(_domRaw===''||_domRaw==null||isNaN(parseFloat(_domRaw)));
+  const dom=domUnknown?50:parseFloat(_domRaw);
+  const irr=n('irr'),rep=n('rep'),dur=n('dur');
   // v9.2最終選別(監査⑮): MOAT満点廃止 — 完全独占(100)でも堀の永続は保証されないため96にマップ。
   //   離散値100の並び→moatIdx100→pm95保証→sustain95張り付きが上位の識別力を奪っていた。
   const cap96=v=>Math.min(96,v);
@@ -1266,7 +1272,8 @@ function compute(){
   if(pt<60){pfail.push('TAM');pillarPen+=(60-pt)*0.8;}
   const psig=$('pillarSig');psig.innerHTML='';
   if(!pfail.length)psig.innerHTML=`<div class="flag f-ok"><i>✓</i><div>三本柱すべて通過（MOAT・ROIC≥70／TAM≥60）。</div></div>`;
-  else psig.innerHTML=`<div class="flag f-warn"><i>!</i><div><b>柱の弱さ −${pillarPen.toFixed(0)}：</b>${pfail.join('・')}が基準未満（崖でなく段階減点）</div></div>`;
+  else psig.innerHTML=`<div class="flag f-warn"><i>!</i><div><b>柱の弱さ −${pillarPen.toFixed(0)}：</b>${pfail.join('・')}が基準未満（段階減点）<br><b style="color:var(--rust)">v9.11 足切り: 柱を割ったため総合は74.9で頭打ち＝投下閾値75に到達しない</b></div></div>`;
+  if(domUnknown)psig.innerHTML+=`<div class="flag f-warn"><i>?</i><div><b>支配シェアが不明：</b>証拠でシェア%を示せないため<b>競争扱い50</b>で採点した（v9.11。旧実装では寡占70と同点だった）</div></div>`;
 
   // v7 Intel-pattern early warning: gross margin down + share down simultaneously = leading moat-collapse signature (display only)
   if(gmt==='down'&&sht==='down')psig.innerHTML+=`<div class="flag f-cut"><i>⚠</i><div><b>Intel警報：粗利低下×シェア縮小の同時進行。</b>堀崩壊の先行パターン。erosion=activeへの引き上げとmoat decay再検討を——スコアは自動で触らない、判断は君が下す。</div></div>`;
@@ -1531,6 +1538,13 @@ function compute(){
   //   v9.9.2: ティア再アンカー(最上位85→80)への追随——キャップ84.9のままだと80-84.9帯の侵食銘柄が「最上位」表示になり教義と矛盾するため79.9に整合
   const topBlock=[]; if(erosion==='active')topBlock.push('堀の侵食進行'); if(disrupt==='threat')topBlock.push('破壊優勢');
   if(topBlock.length)evalScore=Math.min(evalScore,79.9);
+  /* v9.11 三本柱の足切り: Ⅰ解説は「通過＝三本柱すべて≥70。一つでも70未満なら、今どれだけ
+     高ROICでも見送り」と宣言しているのに、実装は段階減点だけで投下閾値75を素通りできた
+     （実測: Vは堀の柱が70未満のまま総合79.5で3位につけていた）。
+     崖は決定の境界にだけ置く: 順位付けの情報は段階減点で残し、柱を割った銘柄は投下閾値75へ
+     到達させない。**必ず全ての減点が終わった後に置くこと** — 途中に置くと後続の減点と二重に
+     効き、柱を割った銘柄が余計に沈む（実測: MA 70.6→68.9 の誤作動を検出して是正した）。 */
+  if(pfail.length)evalScore=Math.min(evalScore,74.9);
   // v6.2の締めを可視化
   if(sbc>=12)psig.innerHTML+=`<div class="flag f-warn"><i>!</i><div><b>SBC化粧落とし −${sbcPen.toFixed(1)}：</b>株式報酬${sbc.toFixed(0)}%が希薄化として実コスト。利益率・FCFはSBC控除後で読め。</div></div>`;
   if(erosion!=='none')psig.innerHTML+=`<div class="flag ${erosion==='active'?'f-cut':'f-warn'}"><i>${erosion==='active'?'✕':'!'}</i><div><b>堀の侵食${erosion==='active'?'進行 −12':'兆候 −6'}：</b>主力に競合の旗。${erosion==='active'?'最上位ティア不可。':''}</div></div>`;
@@ -1824,7 +1838,8 @@ function applyFields(d){
 var CCF_MOATS=null;
 function ccfMoatOne(m){
   var c=function(v){return Math.min(96,Math.max(1,parseFloat(v)||1));};
-  var w=[.30,.30,.25,.15], v=[c(m.dom),c(m.irr),c(m.rep),c(m.dur)], s=0;
+  var d=(m.dom===''||m.dom==null||isNaN(parseFloat(m.dom)))?50:parseFloat(m.dom); // v9.11 不明=競争扱い50
+  var w=[.30,.30,.25,.15], v=[c(d),c(m.irr),c(m.rep),c(m.dur)], s=0;
   for(var i=0;i<4;i++) s+=w[i]*Math.log(v[i]);
   return Math.exp(s);
 }
