@@ -85,4 +85,6 @@
 - [ ] `python kessan_check.py`（引数なしで kanshi_list.json の監視28社を自動点検。日本株は除外→EDINET経路。ADR3社(ASML/TSM/NVMI)は10-Q機械抽出が効かない→§Cの手動確認）
 - [ ] 決算日再取得→out/next_earnings.json・カレンダー更新（決算日は3か月先までしか取れない）
 - [ ] kanshi_list.json をⅥ買付順位・X監視表の変動に合わせて更新
-- [ ] gate1_x_watch.json の開通株価を新epsで再計算（`python x_watch_recalc.py`＝4条件同時成立の開通線+fair線。per_now/px_nowを更新してから実行）
+- [ ] 市場値の更新: `python market_fetch.py`（監視28社）→ `python market_merge.py`（パックのnull市場欄へ充填）→ 門で再取込
+- [ ] gate1_x_watch.json の開通株価を新epsで再計算（`python x_watch_recalc.py`＝4条件同時成立の開通線+fair線+kanshi Ω75+の自動追加。per_now/px_nowを更新してから実行）
+- [ ] Ⅵ買付順位で「⏳eps古」印（原本決算期300日超）が出た銘柄のeps/perを更新

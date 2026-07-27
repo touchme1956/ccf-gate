@@ -24,6 +24,42 @@ from datetime import date
 
 P = "gate1_x_watch.json"
 d = json.load(open(P, encoding="utf-8"))
+
+# --- Ω75+(kanshi_list)のうち監視表に未収載で、packに市場値(per/px)が揃った銘柄を自動追加 ---
+#     g導出はⅥ買付順位と同式: roicQ>=15かつ堀無傷かつcagr>0→min(cagr,20) / それ以外はbR×min(roicg,60)をcagrで頭打ち
+try:
+    kn = json.load(open("kanshi_list.json", encoding="utf-8"))
+    have = {l["ticker"] for l in d["lines"]}
+    cand = []
+    for grp in ("toka", "omega_watch", "oshime"):
+        cand += kn.get("groups", {}).get(grp, [])
+    for t in cand:
+        if t in have: continue
+        fp = f"out/{t}_gate_pack.json"
+        if not __import__("os").path.exists(fp): continue
+        o = json.load(open(fp, encoding="utf-8"))
+        per, px = o.get("per"), o.get("px")
+        if not per or not px:
+            print(f"…{t}: per/px未充填のため追加不可(market_fetch→market_mergeで充填してから再実行)"); continue
+        shy = o.get("shy") or 0.0
+        cagr = float(o.get("cagr") or 0)
+        roicg = float(o.get("roicg") or o.get("roic") or 0)
+        roicq = float(o.get("roicEx") or 0) if (o.get("roicEx") and float(o.get("roicEx")) > roicg) else roicg
+        moat = (o.get("erosion") != "active") and (o.get("disrupt") != "threat") and (o.get("moatdecay") != "yes")
+        if roicq >= 15 and moat and cagr > 0:
+            g = min(cagr, 20.0)
+        else:
+            bR = max(0.0, min(1.0, 1 - (shy / 100.0) * float(per)))
+            g = bR * min(roicg, 60.0)
+            g = min(g, cagr) if cagr > 0 else min(g, 8.0)
+            g = min(g, 20.0)
+        d["lines"].append({"ticker": t, "omega": None, "otier": "kanshi",
+                           "earned": round(shy + g, 1), "g": round(g, 1),
+                           "per_now": float(per), "px_now": float(px), "status": "自動追加"})
+        print(f"＋{t}: kanshi Ω75+群から自動追加(g={g:.1f} earned={shy+g:.1f})")
+except Exception as e:
+    print(f"▲ 自動追加スキップ: {e}")
+
 out = []
 for l in d["lines"]:
     earned, g, per, px = l["earned"], l["g"], l["per_now"], l["px_now"]
@@ -48,10 +84,12 @@ for l in d["lines"]:
         nl["x_open_per"] = round(popen, 1)
         nl["x_open_px"] = round(px * popen / per, 2)
         nl["drop_pct"] = round((popen / per - 1) * 100, 1)
-        # 階段上段: fair線(倍率の重力ゼロ・約定時E[r]=earned)。現PERがfair以下なら既にfair圏
-        if fair < per:
-            nl["fair_per"] = round(fair, 1)
-            nl["fair_px"] = round(px * fair / per, 2)
+        # 階段上段: fair線(倍率の重力ゼロ・約定時E[r]=earned)。現PERがfair以下なら既にfair圏。
+        # ④拘束銘柄では開通線がfair線を下回りうる——上段も開通線にクリップ(どの段の約定も4条件成立圏内)
+        fair_eff = min(fair, popen)
+        if fair_eff < per:
+            nl["fair_per"] = round(fair_eff, 1)
+            nl["fair_px"] = round(px * fair_eff / per, 2)
         else:
             nl["fair_per"] = round(per, 1)
             nl["fair_px"] = px

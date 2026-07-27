@@ -333,7 +333,11 @@ function registerToGate(){
   const posPct = total>0 ? +(posValue(p)/total*100).toFixed(1) : 0;
   let existing=null; try{const s=localStorage.getItem(key); if(s)existing=JSON.parse(s);}catch(e){}
   let nm;
-  if(existing&&existing.data){ nm=existing.data.nm||p.nm||tkr; kept++; }   // 既存の採点は上書きしない
+  if(existing&&existing.data){ nm=existing.data.nm||p.nm||tkr; kept++;
+   // 2026-07: 採点(r)は上書きしないが pos だけは最新実額%で更新——posが記帳時点で凍結され
+   // 買付後も同銘柄へ不足按分が続く欠陥の是正(門側は実額算出を優先するためこれはフォールバック用)
+   try{ existing.data.pos=posPct; localStorage.setItem(key, JSON.stringify(existing)); }catch(e){}
+  }
   else { nm=p.nm||tkr; localStorage.setItem(key, JSON.stringify({data:{nm,pos:posPct},r:{},ts:0})); added++; }
   if(holdSet.indexOf(nm)<0){ holdSet.push(nm); flagged++; }
  });
