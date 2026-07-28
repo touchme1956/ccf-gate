@@ -968,7 +968,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
   <div style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-top:8px;display:grid;gap:8px;font-size:12px">
    <div style="display:flex;gap:10px;align-items:center"><button onclick="exportAll()" style="background:var(--panel);border:1px solid var(--gold-line);color:var(--gold-bright);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap">全件書き出し</button><span style="color:var(--muted)">バックアップ。台帳全件をJSONで出力——コピーして保管、復元は「取り込む」に貼る</span></div>
    <div style="display:flex;gap:10px;align-items:center"><button onclick="exportCSV()" style="background:var(--panel);border:1px solid var(--line);color:var(--ink-soft);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap">CSV書き出し</button><span style="color:var(--muted)">Excel用。全銘柄×全指標の一覧表</span></div>
-   <div style="display:flex;gap:10px;align-items:center"><button onclick="storageDiag()" style="background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap">診断</button><span style="color:var(--muted)">保存に失敗する時だけ。環境を検査して原因を表示</span></div>
+   <div style="display:flex;gap:10px;align-items:center"><button onclick="ccfDedupeLedger(this)" style="background:var(--panel);border:1px solid var(--line);color:var(--ink-soft);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap">重複を統合</button><span style="color:var(--muted)">同じ会社が違う表記で二重に入った時（Ⅵ買付順位に同じ銘柄が2行）。銘柄コード／ティッカーで同一性を判定し、新しい記録を残す。古い方はg7prev:へ退避＝消えない</span></div>
+    <div style="display:flex;gap:10px;align-items:center"><button onclick="storageDiag()" style="background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap">診断</button><span style="color:var(--muted)">保存に失敗する時だけ。環境を検査して原因を表示</span></div>
   </div>
  </div>
  <div class="wrap" id="ioWrap" style="display:none">
@@ -2711,6 +2712,80 @@ async function importAll(){
 async function loadIt(k){try{const res=await store.get(k);if(!res)return;const {data}=JSON.parse(res.value);Object.entries(data).forEach(([id,v])=>{if($(id))$(id).value=v;});compute();if(typeof showPage==='function')showPage(2);window.scrollTo({top:0,behavior:'smooth'});}catch(e){}}
 async function delIt(k){if(!await uiConfirm('「'+k.slice(k.indexOf(':')+1)+'」を台帳から削除しますか？（直前版はg7prev:に退避されます）'))return;try{const cur=await store.get(k);if(cur&&k.startsWith('g7:'))await store.set('g7prev:'+k.slice(3),cur.value);await store.delete(k);renderLedger();}catch(e){}}
 
+// v9.9.35: 台帳の重複統合——保存キーは safeKey(nm)=nm文字列そのものから作られるため、
+//   同じ会社が違う表記(例「レーザーテック」と「6920 レーザーテック」)で保存されると別エントリになり、
+//   Ⅵ買付順位に同じ銘柄が2行並ぶ。銘柄コード(日本株4-5桁)/ティッカー(先頭トークン)で同一性を判定して統合する。
+//   採点・売却規律・採点基準には一切触れない(データ管理のみ)。古い方は g7prev: へ退避＝消えない。
+function ccfIdentity(nm){
+  const t=String(nm||'').trim();
+  // 先頭のコード（「6920 レーザーテック」）
+  const m=t.match(/^(\d{4,5})(?:[\s.]|$)/);
+  if(m)return 'JP:'+m[1];
+  // 括弧内のコード（「Lasertec(6920)」「RAKUS（3923）」）——既存台帳の英名表記に多い
+  const p=t.match(/[(（](\d{4,5})[)）]/);
+  if(p)return 'JP:'+p[1];
+  const head=t.split(/[\s\/(（・]/)[0].toUpperCase().replace(/[^A-Z0-9.\-]/g,'');
+  return head?('US:'+head):('RAW:'+t.toUpperCase());
+}
+// 社名側の照合鍵——先頭のコード/ティッカーを外し、全角半角をNFKCで揃え、空白を除いて比較する。
+//   「6920 レーザーテック」と「レーザーテック」、「3922 ＰＲ ＴＩＭＥＳ」と「PR TIMES」を同一と見なすため。
+function ccfNameKey(nm){
+  let t=String(nm||'').trim();
+  t=t.replace(/^\d{4,5}[\s.]+/,'');  // 日本株コードのみ外す。ASCII先頭語は外さない
+                                      // (「PR TIMES」のPRを剥がすと社名が壊れる。米国株は上のティッカーIDで一致する)
+  try{t=t.normalize('NFKC');}catch(e){}
+  t=t.replace(/[\s　]+/g,'').toUpperCase();
+  return t.length>=2?t:'';
+}
+async function ccfDedupeLedger(btn){
+  const o=btn?btn.textContent:'';
+  try{
+    if(btn)btn.textContent='走査中…';
+    let keys=[];try{const r=await store.list('g7:');keys=r?r.keys:[];}catch(e){}
+    const recs=[];
+    for(const k of keys){
+      try{const res=await store.get(k);if(!res)continue;
+        const p=JSON.parse(res.value);
+        const nm=(p.data&&p.data.nm)||k.slice(k.indexOf(':')+1);
+        recs.push({k,nm,ts:p.ts||0,id:ccfIdentity(nm),nk:ccfNameKey(nm)});
+      }catch(e){}
+    }
+    // union-find: 同一性ID か 社名鍵 のどちらかが一致すれば同じ会社とみなす
+    const par=recs.map((_,i)=>i);
+    const find=x=>{while(par[x]!==x){par[x]=par[par[x]];x=par[x];}return x;};
+    const uni=(a,b)=>{a=find(a);b=find(b);if(a!==b)par[b]=a;};
+    const byId={},byNk={};
+    recs.forEach((r,i)=>{
+      if(byId[r.id]!==undefined)uni(byId[r.id],i);else byId[r.id]=i;
+      if(r.nk){if(byNk[r.nk]!==undefined)uni(byNk[r.nk],i);else byNk[r.nk]=i;}
+    });
+    const buckets={};
+    recs.forEach((r,i)=>{const g=find(i);(buckets[g]=buckets[g]||[]).push(r);});
+    const plan=Object.values(buckets).filter(v=>v.length>1)
+      .map(v=>{v.sort((a,b)=>b.ts-a.ts);return{keep:v[0],drop:v.slice(1)};});
+    if(btn)btn.textContent=o;
+    if(!plan.length){uiNotice('重複なし——台帳は1銘柄1エントリになっている');return;}
+    const msg=plan.map(p=>'・'+p.keep.nm+'  ← 統合: '+p.drop.map(d=>d.nm).join(' / ')).join('\n');
+    if(!await uiConfirm('重複 '+plan.length+'銘柄を統合する。新しい記録を残し、古い方は g7prev: へ退避（消えない）。保有印も残る方へ引き継ぐ。\n\n'+msg+'\n\n実行しますか？'))return;
+    let hold=new Set();
+    try{const h=await store.get('g7hold:set');if(h&&h.value)hold=new Set(JSON.parse(h.value));}catch(e){}
+    let n=0;
+    for(const p of plan){
+      for(const d of p.drop){
+        try{
+          const cur=await store.get(d.k);
+          if(cur)await store.set('g7prev:'+d.k.slice(d.k.indexOf(':')+1),cur.value);
+          await store.delete(d.k); n++;
+          if(hold.has(d.nm)){hold.delete(d.nm);hold.add(p.keep.nm);}
+        }catch(e){}
+      }
+    }
+    try{await store.set('g7hold:set',JSON.stringify([...hold]));}catch(e){}
+    await renderLedger();
+    if(typeof renderPlan==='function'){try{await renderPlan();}catch(e){}}
+    uiNotice('重複 '+n+'件を統合した（退避先 g7prev:）。Ⅵ買付順位も更新済み',7000);
+  }catch(e){uiNotice('重複統合に失敗: '+(e&&e.message||e),6000);if(btn)btn.textContent=o;}
+}
 async function saveLog(auto){
   const date=auto?auto.date:($('logDate').value.trim()||new Date().toISOString().slice(0,10));
   const title=auto?auto.title:$('logTitle').value.trim();
