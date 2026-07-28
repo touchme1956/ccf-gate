@@ -113,6 +113,20 @@ def check(path):
     elif roic is not None:
         warns.append("roicg が空欄（のれん込みROIC＝買収規律の指標。のれん無しならroicと同値を記す）")
 
+    # --- gm粗利混入の番犬(2026-07-28: 日本株36社中12社で再発。過去にも32社で検出) ---
+    # 門のgm欄は営業利益率であって粗利率ではない。粗利を入れると F7収益性・F9粘着性・
+    # 無形調整ROIC が一斉に甘くなり、実測でΩ中央値が5.2pt浮いた。
+    # 機械では粗利率を持たないので「営業利益率として異常に高い」帯を警告する。
+    g = d.get("gm")
+    if isinstance(g, (int, float)):
+        ev = str((d.get("_meta") or {}).get("evidence", {}).get("gm", ""))
+        if g >= 50 and "営業利益" not in ev:
+            warns.append(
+                f"gm={g}% は営業利益率として異常に高い（50%超は稀）。粗利混入の疑い＝"
+                "原本で 営業利益÷売上 を確認し、_meta.evidence.gm に営業利益と売上の実額を書くこと")
+        elif g >= 50:
+            warns.append(f"gm={g}% は高いが evidence に営業利益の記載あり（確認済みとして通す）")
+
     # --- PERはTTM実績 ---
     per = d.get("per")
     if isinstance(per, (int, float)):
