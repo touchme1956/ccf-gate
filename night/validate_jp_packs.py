@@ -92,17 +92,24 @@ def check(path):
             f"roic={rx}% が上限{CAP}%を超えている。2026-07-28規約は現金非控除かつ"
             f"min(…,{CAP})でクリップする（旧・門式の現金控除は分母縮退で発散したため廃止）")
 
-    # roicg はのれん込み＝分母がroicより大きいので roicg ≤ roic が定義上の帰結
+    # roicg はのれん込み＝分母がroicより大きい。NOPAT>0なら roicg ≤ roic が定義上の帰結。
+    # NOPAT<0（本業赤字）では分母が大きいほど負が浅くなるので不等号は反転する
     if isinstance(rg, (int, float)):
-        if rg > CAP + 0.05:
+        if abs(rg) > CAP + 0.05:
             fails.append(f"roicg={rg}% が上限{CAP}%を超えている（roicgも同じくクリップする）")
-        if isinstance(roic, (int, float)) and rg > float(roic) + 0.05:
-            fails.append(
-                f"roicg={rg}% > roic={roic}%。roicgはのれん込み＝分母が大きいので roicg ≤ roic のはず。"
-                "roicgに「現金非控除ROIC」等の別物を入れていないか確認")
-        if isinstance(roic, (int, float)) and float(roic) - rg > 15:
-            warns.append(f"roicGap={round(float(roic)-rg,1)}pt>15 → 門が買収依存として減点する。"
-                         "のれんが実在するなら正当な検出、そうでなければroicgの定義違い")
+        if isinstance(roic, (int, float)):
+            gap = float(roic) - rg
+            if float(roic) > 0 and gap < -0.05:
+                fails.append(
+                    f"roicg={rg}% > roic={roic}%。roicgはのれん込み＝分母が大きいので roicg ≤ roic のはず。"
+                    "roicgに「現金非控除ROIC」等の別物を入れていないか確認")
+            elif float(roic) < 0 and gap > 0.05:
+                fails.append(
+                    f"roic={roic}% > roicg={rg}%（本業赤字）。NOPAT<0では分母が大きいroicgの方が"
+                    "負が浅くなるので roicg ≥ roic のはず。のれんの符号処理を確認")
+            elif float(roic) > 0 and gap > 15:
+                warns.append(f"roicGap={round(gap,1)}pt>15 → 門が買収依存として減点する。"
+                             "のれんが実在するなら正当な検出、そうでなければroicgの定義違い")
     elif roic is not None:
         warns.append("roicg が空欄（のれん込みROIC＝買収規律の指標。のれん無しならroicと同値を記す）")
 
