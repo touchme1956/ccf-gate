@@ -9,6 +9,7 @@ gate1_queue の未審査銘柄を約10社ずつのチャンクに割り、夜間
 - `kenshi_helper.py` — 検死用: companyfacts.zip から年次系列（売上/営利/OCF/capex/株数…）を機械表示
 - `make_copypage.py` — 完成パックのコピー用ページ生成
 - `make_chunks.py` — 未審査分のチャンク自動生成（queue/椅子/棚/backlog−審査済−SKIP。10社/枚・連番継続）＋日本株の `jp_chunkNN.txt` と `out/packs_index.json`（門の一括取込ボタン用の目録）を更新
+- `score_all.js` — **門の compute() をそのまま走らせて out/ の全パックを採点する検証器**（`node night/score_all.js`）。採点ロジックには触れずDOMだけ差し替えるので、門が画面で出す点と同じものが出る＝二重実装を作らない。`--jp` / `--us` / `--only MSFT,6920` / `--set dom=100`（感度分析。ただし全パックを上書きする粗い道具）。出力は `out/score_all.json`。「基準を変えたら実際に誰がどう動くか」を推測でなく実測で出すための道具。妥当性の確認は、素の実行で米国のΩ75+に V/ASML/KLAC/NVDA/MSFT/MA/TSM/ADBE/RMD/IDXX 等が並ぶこと
 - `validate_jp_packs.py` — 日本株パックの納品検査。`python3 night/validate_jp_packs.py`（コード指定も可）。nmがコード始まりか（＝門のJP検問が発火するか）・ROIC三点（roic/roicEx同値・60%上限・roicg≤roicののれん整合）・TTM PERの符号・様式キー一致（受理キーは門のapplyFieldsから読む）・列挙値/点数域・_meta必須を落とす。**致命があれば審査官へ差し戻す**（そのまま置くと門が取込拒否して審査待ちに溜まる）
 
 出力は `out/{T}_gate_pack.json`（完成パック）。パックは門のⅢ採点機「＋取り込む」へ。
