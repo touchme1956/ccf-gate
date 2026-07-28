@@ -23,7 +23,8 @@
   - 出力: kessan_calendar.ics(Googleカレンダー取込=スケジュール連動) と out/next_earnings.json(決算日データ。門内の常時表示は撤去→Googleカレンダーで確認)
 - 四半期の手順書は kessan_checklist.md、監視リストの正本は kanshi_list.json、Ⅶ資産の中身は portfolio.html
 - 夜間バッチ審査は night/（chunkNN.txt=銘柄リスト、agent_prompt_template.txt=審査官指示〔正本はⅡ手順3・改定時は同期〕、
-  progress.json=進行表。出力は out/{T}_gate_pack.json）。詳細は night/README.md
+  progress.json=進行表。出力は out/{T}_gate_pack.json。日本株の一括再審査は agent_prompt_template_jp.txt〔EDINET_DB
+  で自力採取・JP必須規約強制〕にコード列を渡す）。詳細は night/README.md
 - 市場データ採取: `python market_fetch.py` → market_data.json（px/per/perF/beta/shy/evebit/analysts/instOwn）
   → `python market_merge.py` でパックのnull市場欄へ機械充填（定性は触らない）→ 門で再取込するとⅥのE[r]判定が生きる
 - X監視表の再計算（門X4条件同時成立の開通線+階段指値のfair線）: `python x_watch_recalc.py`（四半期保守で新eps反映後に実行）
