@@ -13,7 +13,7 @@ market_fetch_free.py — 市場データを「鍵なし・上限なし」で採�
   ・それ以外全部 : SEC companyfacts API（EPS/株数/配当/自社株買い/BS）
   per  = px ÷ EPS(TTM・希薄化後)      ← 実績ベース。会予は使わない（門のTTM統一規約）
   mcap = px × 発行済株式数(dei)
-  shy  = (配当支払 + 自社株買い) ÷ mcap × 100
+  shy  = (配当支払 + 自社株買い − 新株発行/自己株処分) ÷ mcap × 100  ←門の定義どおり純額
   evebit, z(Altman Z'') = market_fetch.py と同一定義
   beta = 5年月次で対S&P500の回帰（Yahooの履歴から自前計算）
 
@@ -197,6 +197,13 @@ def fetch(t, mkt):
     sti = S(facts, [("us-gaap", "ShortTermInvestments"), ("us-gaap", "MarketableSecuritiesCurrent")], False)
     div = S(facts, [("us-gaap", "PaymentsOfDividends"), ("us-gaap", "PaymentsOfDividendsCommonStock")], True)
     bb = S(facts, [("us-gaap", "PaymentsForRepurchaseOfCommonStock")], True)
+    # 門の定義は「純還元（現金還元−希薄化）」。dilNetはE[r]の計算に一度も使われていない
+    # （renderPlanで0回）ので、希薄化はshy自身が織り込まないと定義を満たさない。
+    # 自社株買いと同額の新株発行・自己株処分があれば還元は実質ゼロ。実例4071は買付の98%が
+    # 同期の処分で戻り、グロス3.75%に対しネットは0.74%だった。
+    iss = S(facts, [("us-gaap", "ProceedsFromIssuanceOfCommonStock"),
+                    ("us-gaap", "ProceedsFromStockOptionsExercised"),
+                    ("us-gaap", "ProceedsFromIssuanceOfSharesUnderIncentiveAndShareBasedCompensationPlans")], True)
 
     ys = [y for y in ta if y in tl and y in eq and y >= 2024]
     if ys:
@@ -213,7 +220,10 @@ def fetch(t, mkt):
         fy = max([y for y in op if y >= 2024], default=None)
         if fy:
             if fy in div or fy in bb:
-                cand = round((div.get(fy, 0) + bb.get(fy, 0)) / mc * 100, 2)
+                gross = div.get(fy, 0) + bb.get(fy, 0)
+                cand = round(max(0.0, gross - iss.get(fy, 0)) / mc * 100, 2)
+                if iss.get(fy, 0):
+                    note.append(f"shyはネット(還元{gross/1e6:.0f}M−発行{iss[fy]/1e6:.0f}M)")
                 # 純還元が二桁%は稀。まず時価総額(=株数)の取り違えを疑う——誤値より空欄
                 if cand <= SHY_MAX:
                     r["shy"] = cand
