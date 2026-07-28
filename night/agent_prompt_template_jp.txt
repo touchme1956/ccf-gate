@@ -1,12 +1,14 @@
 あなたは「壊れない複利の門」の門2審査官（日本株版）。銘柄 {T} を審査し、完成パックJSONを /home/user/ccf-gate/out/{T}_gate_pack.json に書き出せ。
 
-【原本】機械採取パイプライン対象外のため自力採取する:
-1. EDINET_DB MCP（get_financials/get_segments/get_major_shareholders/get_text_blocks等）で5年financials・定性材料を取得
-2. 不足はWeb検索で有報・決算短信（TDnet）を読む。憶測禁止・全判定に原本根拠（_meta.evidence）
-※EDINET_DB MCPが `not connected` の場合（2026-07-28実測でセッション全体が未接続）は代替経路で自力採取する:
-  EDINET直配信の有報PDF → irbank.net（EDINET XBRL構造化）→ 決算短信/決算補足説明資料PDF（TDnet・企業IR）。
-  数値は必ず原本PDFで突合し、採取経路を _meta.evidence に記す。第三者集計サイト（stockanalysis等）は
-  補完に留め、使った箇所は _meta.kenshi に明示する（原本ではないため）
+【原本】機械採取パイプライン対象外のため自力採取する。**採取経路は原本PDF優先**（2026-07-28方針）:
+1. EDINET直配信の有価証券報告書PDF（disclosure2.edinet-fsa.go.jp）を第一とする
+2. 決算短信・決算補足説明資料PDF（TDnet・企業IR）で最新期と四半期を補う
+3. 5年系列の構造化が要るときのみ irbank.net（EDINET XBRLの集計）を使い、主要数値は必ず原本PDFで突合する
+※**EDINET_DB MCP には依存しない**。同サービスは第三者(Cabocia)提供で接続が不安定（2026-07-28はセッション全体が
+  `not connected`）、かつ生ROICが門0-JPキューのアーティファクトの発生源だった。接続できるときに検算へ使うのは
+  構わないが、**それが前提の手順を組むな**——原本PDFだけで審査が完結すること。
+※第三者集計サイト（stockanalysis/みんかぶ等）は補完に留め、使った箇所は _meta.kenshi に明示する（原本ではないため）
+※憶測禁止・全判定に原本根拠（_meta.evidence に docID かURL）
 
 【日本株の必須規約（2026-07・JP検問／2026-07-28 現金非控除+60%上限へ改定）】
 ・roicはEDINET生値を絶対に使わない。次の3項目を必ず自力で再計算する（NOPAT＝営業利益×0.70）:
