@@ -3,11 +3,23 @@
 【原本】機械採取パイプライン対象外のため自力採取する:
 1. EDINET_DB MCP（get_financials/get_segments/get_major_shareholders/get_text_blocks等）で5年financials・定性材料を取得
 2. 不足はWeb検索で有報・決算短信（TDnet）を読む。憶測禁止・全判定に原本根拠（_meta.evidence）
+※EDINET_DB MCPが `not connected` の場合（2026-07-28実測でセッション全体が未接続）は代替経路で自力採取する:
+  EDINET直配信の有報PDF → irbank.net（EDINET XBRL構造化）→ 決算短信/決算補足説明資料PDF（TDnet・企業IR）。
+  数値は必ず原本PDFで突合し、採取経路を _meta.evidence に記す。第三者集計サイト（stockanalysis等）は
+  補完に留め、使った箇所は _meta.kenshi に明示する（原本ではないため）
 
-【日本株の必須規約（2026-07・JP検問）】
-・roicはEDINET生値を絶対に使わない。門式＝NOPAT(営業利益×0.70)÷(投下資本−過剰現金)で必ず再計算し、
-  roicとroicExの両方に同値を記す。roicEx空欄のroic>40%納品は門が自動で審査待ちへ差し戻す
-  （net-cash/資産軽量アーティファクト——キュー実測で50社全てroic>40%・33社>100%・最大4275%）
+【日本株の必須規約（2026-07・JP検問／2026-07-28 現金非控除+60%上限へ改定）】
+・roicはEDINET生値を絶対に使わない。次の3項目を必ず自力で再計算する（NOPAT＝営業利益×0.70）:
+    roic   = min( NOPAT ÷ (有利子負債 + 自己資本 − のれん), 60 )   ←のれん除外版
+    roicg  = min( NOPAT ÷ (有利子負債 + 自己資本), 60 )            ←のれん込み版＝経営の買収規律
+    roicEx = roic と同値（roicEx空欄のroic>40%納品は門が自動で審査待ちへ差し戻す）
+  **過剰現金は控除しない**。旧・門式(投下資本−過剰現金)は 2026-07-28 に廃止した——ネットキャッシュの
+  資産軽量企業で分母が0へ縮退してROICが発散し（実測 957.7%/502.6%/256.0%）、EDINET生値と同型の
+  アーティファクトを再生産したうえ、現金を貯め込むほど点が上がる逆向きの誘因を持っていたため。
+  60%上限は門X の「roicg優先・60%キャップ」と同じ思想（60%超の差は資本軽量の言い換えで識別力が無い）。
+  roicg に「現金非控除ROIC」を入れてはならない——門は roicGap = roic − roicg > 15 を買収依存として
+  減点するため、別物を入れると全社で誤発火する。のれんが無い会社は roic = roicg で正当。
+  分母が負または極小で算出不能な年は当年をnull化し、理由を_meta.kenshiに書く（虚偽の高ROICを出さない）
 ・PERはTTM実績EPSで算出（会社予想EPSは禁止——予想はperFへ分離）。px/perはJPY統一
 ・rfr=米10年債（米ドル建て機会費用で統一）・erp=Damodaran最新月次値
 ・through-cycle: 2008-09/2020/2022の営利DDを有報系列から実測してp2の根拠にする（COVID一本足禁止）
@@ -22,4 +34,4 @@ _meta: auditDate=実行当日, model=実際のモデル名, kenshi[]/evidence{}/
 
 【禁止】git操作。他銘柄ファイルへの書込み。定性の憶測。EDINET生ROICの転記。
 
-【返答は最小限に】{T} | 門式roic/roicEx=… | 堀=…/…/…/… | p=… f=… | 検死1-2行 | null一覧1行
+【返答は最小限に】{T} | roic/roicg=…/… | 堀=…/…/…/… | p=… f=… | 検死1-2行 | null一覧1行

@@ -6,7 +6,12 @@ night/validate_jp_packs.py — 日本株パックの納品検査（2026-07 JP検
 夜間審査で書き出した out/{コード}_gate_pack.json が門に取り込める形かを機械検査する。
 門の ccfJpRoicSuspect()（index.html）は nm が /^\\d{4,5}(\\s|$|\\.)/ の銘柄について
 roic>40 かつ roicEx無しを取込拒否する。ここではそれに加え、審査官が守るべき
-JP必須規約（門式ROICの両記・TTM PER・スキーマ一致・列挙値・_meta必須）を落とす。
+JP必須規約（ROIC三点の定義・TTM PER・スキーマ一致・列挙値・_meta必須）を落とす。
+
+ROIC規約(2026-07-28改定): NOPAT=営業利益×0.70、過剰現金は控除しない。
+  roic = min(NOPAT÷(有利子負債+自己資本−のれん), 60)  roicg = min(NOPAT÷(有利子負債+自己資本), 60)
+  roicEx = roic 同値。旧・門式(投下資本−過剰現金)は資産軽量企業で分母が縮退して
+  発散したため廃止（実測 957.7%/502.6%/256.0%）。roicg≤roic が定義上の帰結。
 
 使い方: python3 night/validate_jp_packs.py            (out/ の日本株パック全部)
         python3 night/validate_jp_packs.py 7034 6920  (指定コードのみ)
@@ -19,6 +24,7 @@ os.chdir(ROOT)
 
 SCHEMA = "out/ASR_gate_pack.json"          # 様式見本(最低限これは埋まっていること)
 GATE = "index.html"                         # 受理キーの正＝門の applyFields マップ
+CAP = 60                                    # ROIC上限(2026-07-28規約・門Xの60%キャップと同思想)
 ENUMS = {
     "erosion": {"none", "emerging", "active"},
     "disrupt": {"settled", "unsettled", "threat"},
@@ -66,31 +72,39 @@ def check(path):
     elif not nm.startswith(code):
         fails.append(f'nm="{nm}" がファイル名のコード {code} と不一致')
 
-    # --- 門式ROICの両記（JP検問の本体） ---
-    roic, rx = d.get("roic"), d.get("roicEx")
+    # --- ROIC三点（2026-07-28規約: 現金非控除・60%上限・roicgはのれん込み） ---
+    roic, rx, rg = d.get("roic"), d.get("roicEx"), d.get("roicg")
     if roic is None and rx is None:
-        warns.append("roic/roicEx とも空欄（ネットキャッシュ超過で分母負なら正当・kenshi要確認）")
+        warns.append("roic/roicEx とも空欄（算出不能なら正当・kenshi要確認）")
     elif rx is None:
-        fails.append(f"roicEx が無い（roic={roic}）。門式ROICを両方に記すこと")
+        fails.append(f"roicEx が無い（roic={roic}）。roicと同値で両記すること")
     elif not isinstance(rx, (int, float)):
         fails.append(f"roicEx={rx} が数値でない")
     elif roic is None:
         fails.append("roic が空でroicExだけある（両記していない）")
     elif abs(float(roic) - float(rx)) > 0.05:
-        fails.append(f"roic={roic} と roicEx={rx} が不一致（門式を両方に同値で記す規約）")
+        fails.append(f"roic={roic} と roicEx={rx} が不一致（同値で記す規約）")
     elif float(rx) <= 0:
         # 本業赤字＝NOPAT負は正当な審査結果。門のJP検問(roic>40)も発火しない
-        warns.append(f"門式ROIC={rx}% が非正（本業赤字ならこれが実像。分母負によるものでないか要確認）")
-    elif float(rx) > 150:
-        # 門式は「投下資本−過剰現金」なので、自己資本の大半が現金の資産軽量企業では
-        # 分母が0へ縮退してROICが発散する。生EDINET値と同じく採点を壊すので取込前に止める
-        rg = d.get("roicg")
+        warns.append(f"roic={rx}% が非正（本業赤字ならこれが実像。分母の符号を要確認）")
+    elif float(rx) > CAP + 0.05:
         fails.append(
-            f"門式ROIC={rx}% は分母縮退による発散（現金控除で投下資本がほぼ0）。"
-            + (f"現金非控除のroicg={rg}%が実像に近い。" if isinstance(rg, (int, float)) else "")
-            + "この値のまま取り込むと偽の怪物として採点される→規約判断待ち")
-    elif float(rx) > 40:
-        warns.append(f"門式ROIC={rx}% がなお40%超。過剰現金控除の分母縮退でないか検死で確認")
+            f"roic={rx}% が上限{CAP}%を超えている。2026-07-28規約は現金非控除かつ"
+            f"min(…,{CAP})でクリップする（旧・門式の現金控除は分母縮退で発散したため廃止）")
+
+    # roicg はのれん込み＝分母がroicより大きいので roicg ≤ roic が定義上の帰結
+    if isinstance(rg, (int, float)):
+        if rg > CAP + 0.05:
+            fails.append(f"roicg={rg}% が上限{CAP}%を超えている（roicgも同じくクリップする）")
+        if isinstance(roic, (int, float)) and rg > float(roic) + 0.05:
+            fails.append(
+                f"roicg={rg}% > roic={roic}%。roicgはのれん込み＝分母が大きいので roicg ≤ roic のはず。"
+                "roicgに「現金非控除ROIC」等の別物を入れていないか確認")
+        if isinstance(roic, (int, float)) and float(roic) - rg > 15:
+            warns.append(f"roicGap={round(float(roic)-rg,1)}pt>15 → 門が買収依存として減点する。"
+                         "のれんが実在するなら正当な検出、そうでなければroicgの定義違い")
+    elif roic is not None:
+        warns.append("roicg が空欄（のれん込みROIC＝買収規律の指標。のれん無しならroicと同値を記す）")
 
     # --- PERはTTM実績 ---
     per = d.get("per")
