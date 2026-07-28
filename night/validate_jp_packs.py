@@ -17,8 +17,8 @@ import json, glob, os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
 
-SCHEMA = "out/ASR_gate_pack.json"          # 様式の正
-EXTRA_OK = {"roicEx"}                       # 日本株のみ追加を許すキー
+SCHEMA = "out/ASR_gate_pack.json"          # 様式見本(最低限これは埋まっていること)
+GATE = "index.html"                         # 受理キーの正＝門の applyFields マップ
 ENUMS = {
     "erosion": {"none", "emerging", "active"},
     "disrupt": {"settled", "unsettled", "threat"},
@@ -32,6 +32,22 @@ ENUMS = {
 SCORE100 = ["dom", "irr", "rep", "dur", "p1", "p2", "p3", "p4",
             "f1", "f2", "f3", "f4", "f5"]
 META_REQ = ["auditDate", "model", "kenshi", "evidence", "nulls"]
+
+
+_GK = None
+
+
+def gate_keys():
+    """門(index.html)の applyFields マップから受理キー集合を読む＝二重正本を作らない。"""
+    global _GK
+    if _GK is None:
+        s = open(GATE, encoding="utf-8").read()
+        i = s.find("function applyFields(d)")
+        j = s.find("const map={", i)
+        if i < 0 or j < 0:
+            raise RuntimeError("index.html に applyFields のマップが見つからない")
+        _GK = set(re.findall(r"(\w+):'", s[j + 10:s.find("};", j)]))
+    return _GK
 
 
 def check(path):
@@ -84,17 +100,19 @@ def check(path):
         elif per > 150:
             warns.append(f"per={per} が異常に高い。TTM実績EPSか確認（会予はperFへ）")
 
-    # --- スキーマ一致 ---
+    # --- スキーマ一致（受理キーの正は門の applyFields。ASR見本はその部分集合） ---
     try:
-        ref = set(json.load(open(SCHEMA, encoding="utf-8")).keys())
-        got = set(d.keys())
-        miss, extra = ref - got, got - ref - EXTRA_OK
-        if miss:
-            fails.append(f"キー欠落: {sorted(miss)}")
+        accepted = gate_keys()
+        got = set(d.keys()) - {"_meta"}
+        extra = got - accepted
         if extra:
-            fails.append(f"余分なキー: {sorted(extra)}")
+            fails.append(f"門が受け取らないキー: {sorted(extra)}")
+        need = set(json.load(open(SCHEMA, encoding="utf-8")).keys()) - {"_meta"}
+        miss = need - got
+        if miss:
+            fails.append(f"様式見本のキー欠落: {sorted(miss)}")
     except Exception as e:
-        warns.append(f"様式見本を読めない({e})のでキー照合を省略")
+        warns.append(f"キー照合を省略({e})")
 
     # --- 列挙値・点数域 ---
     for k, allowed in ENUMS.items():
