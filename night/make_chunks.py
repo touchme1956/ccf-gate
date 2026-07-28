@@ -53,5 +53,32 @@ for i in range(0, len(todo), 10):
     with open(f"night/chunk{start + i // 10:02d}.txt", "w") as fp:
         fp.write(" ".join(todo[i:i + 10]) + "\n")
     made += 1
-print(f"未審査 {len(todo)}社 → chunk{start:02d}〜{start + made - 1:02d}({made}枚)を生成")
+print(f"未審査 {len(todo)}社 → chunk{start:02d}〜{start + made - 1:02d}({made}枚)を生成" if made else "米国: 新規チャンクなし")
+
+# --- 日本株チャンク(2026-07): gate0_jp_queueから未審査分を jp_chunkNN.txt へ。コード貼り不要の一括再審査用 ---
+jp_todo = []
+try:
+    dq = json.load(open("gate0_jp_queue.json", encoding="utf-8"))
+    rows = dq.get("queue") if isinstance(dq, dict) else dq
+    for r in rows or []:
+        c = str(r.get("sec") or r.get("ticker") or "").strip()
+        if c and re.fullmatch(r"\d{4,5}", c) and c not in done:
+            jp_todo.append(c)
+except Exception as e:
+    print(f"▲ JPキュー読込不可: {e}")
+for f in glob.glob("night/jp_chunk*.txt"):
+    jp_todo = [t for t in jp_todo if t not in open(f).read().split()]
+jn = [int(m.group(1)) for f in glob.glob("night/jp_chunk*.txt") if (m := re.search(r"jp_chunk(\d+)", f))]
+js0 = max(jn) + 1 if jn else 1
+jm = 0
+for i in range(0, len(jp_todo), 10):
+    with open(f"night/jp_chunk{js0 + i // 10:02d}.txt", "w") as fp:
+        fp.write(" ".join(jp_todo[i:i + 10]) + "\n")
+    jm += 1
+print(f"日本株: 未審査{len(jp_todo)}社 → jp_chunk{js0:02d}〜{js0 + jm - 1:02d}({jm}枚)。審査はagent_prompt_template_jp.txtで" if jm else "日本株: 新規チャンクなし")
+
+# --- パック索引(門の一括取込ボタン用): 門がGitHub Pages経由でfetchできる目録 ---
+idx = sorted(os.path.basename(f) for f in glob.glob("out/*_gate_pack.json"))
+json.dump({"packs": idx}, open("out/packs_index.json", "w"), ensure_ascii=False, indent=0)
+print(f"→ out/packs_index.json 更新({len(idx)}パック)")
 print("進行はnight/progress.jsonへ。審査はagent_prompt_template.txt(正本はⅡ手順3と同期)で。")

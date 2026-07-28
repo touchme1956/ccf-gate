@@ -871,6 +871,7 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
   <select id="ledFilter" onchange="renderLedger()" style="background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:7px 8px;font-size:12px"><option value="all">すべて</option><option value="dv-s">最上位</option><option value="dv-a">堅実</option><option value="avoid">回避/失格</option><option value="act-buy">今 買える</option><option value="act-wait">押し目待ち</option></select>
   <button onclick="revealIO('paste')" style="background:linear-gradient(180deg,rgba(201,166,74,.18),rgba(201,166,74,.08));border:1px solid var(--gold-line);color:var(--gold-bright);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">＋ Claudeの返答を取り込む</button>
   <button onclick="revealIO('price')" style="background:var(--panel);border:1px solid var(--line);color:var(--ink-soft);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">￥ 価格だけ更新</button>
+  <button onclick="ccfImportJpPacks(this)" title="リポジトリのout/から日本株パック(4-5桁コード)を直接fetchして一括取込——コード貼り不要。JP検問(roicEx必須)は取込時に自動適用" style="background:var(--panel);border:1px solid var(--line);color:var(--ink-soft);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">⭳ 日本株パック一括取込</button>
   <button onclick="const t=$('toolsBox');t.style.display=t.style.display==='none'?'block':'none'" style="background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">⚙ データ管理</button>
   <button onclick="ccfRescoreAll(this)" style="background:linear-gradient(180deg,rgba(93,140,194,.22),rgba(93,140,194,.08));border:1px solid rgba(93,140,194,.55);color:#9bb0d2;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer;font-weight:600">↻ 台帳を全再採点</button><span style="font-size:10.5px;color:var(--dim)">採点ロジック更新(門X・Ω間等)を保存済み全銘柄に再適用。データは不変・スコア/actのみ最新化</span>
  </div>
@@ -2663,6 +2664,27 @@ function pfShow(){ const f=document.getElementById('pfFrame'); if(!f)return; try
 //   window.storageを正とするclaudeモードでは門に届かず、次の門側保存でミラーが黙って上書き消去していた。
 //   起動時にlocalStorage側のg7:*新規レコード(正に無いものだけ・上書きしない)とg7hold:setの和集合を正へ取り込む。
 //   localモード(GitHub Pages/通常ブラウザ)は両者が同一領域のため何もしない。
+// v9.9.34: 日本株パックの一括取込——out/packs_index.json(make_chunksが生成)を読み、4-5桁コードのパックを
+//   リポジトリから直接fetchして既存の取込経路(processBatch=JP検問・ドラフト検問込み)へ流す。コード貼り不要
+async function ccfImportJpPacks(btn){
+  var o=btn?btn.textContent:'';
+  try{
+    if(btn)btn.textContent='索引を取得中…';
+    var r=await fetch('out/packs_index.json',{cache:'no-store'});
+    if(!r.ok)throw new Error('packs_index.jsonが無い(night/make_chunks.pyで生成→コミット)');
+    var idx=(await r.json()).packs||[];
+    var jp=idx.filter(function(f){return /^\d{4,5}_/.test(f);});
+    if(!jp.length){uiNotice('リポジトリに日本株パックが無い——先に夜間審査(jp_chunk)を回してコミット');if(btn)btn.textContent=o;return;}
+    var arr=[];
+    for(var i=0;i<jp.length;i++){
+      if(btn)btn.textContent='取得 '+(i+1)+'/'+jp.length;
+      try{var pr=await fetch('out/'+jp[i],{cache:'no-store'}); if(pr.ok)arr.push(await pr.json());}catch(e){}
+    }
+    if(!arr.length)throw new Error('パックを読めなかった');
+    await processBatch(JSON.stringify(arr));
+    if(btn){btn.textContent='取込 ✓ '+arr.length+'件';setTimeout(function(){btn.textContent=o;},3000);}
+  }catch(e){uiNotice('一括取込失敗: '+(e&&e.message||e),6000);if(btn)btn.textContent=o;}
+}
 async function ccfSyncFromLocal(){
   if(store.mode!=='claude')return;
   try{
