@@ -8,7 +8,8 @@ gate1_queue の未審査銘柄を約10社ずつのチャンクに割り、夜間
 - `progress.json` — 進行表。`fetched`（採取済）→ `pending_review`（審査待ち）→ `reviewed`（審査済）
 - `kenshi_helper.py` — 検死用: companyfacts.zip から年次系列（売上/営利/OCF/capex/株数…）を機械表示
 - `make_copypage.py` — 完成パックのコピー用ページ生成
-- `make_chunks.py` — 未審査分のチャンク自動生成（queue/椅子/棚/backlog−審査済−SKIP。10社/枚・連番継続）
+- `make_chunks.py` — 未審査分のチャンク自動生成（queue/椅子/棚/backlog−審査済−SKIP。10社/枚・連番継続）＋日本株の `jp_chunkNN.txt` と `out/packs_index.json`（門の一括取込ボタン用の目録）を更新
+- `validate_jp_packs.py` — 日本株パックの納品検査。`python3 night/validate_jp_packs.py`（コード指定も可）。nmがコード始まりか（＝門のJP検問が発火するか）・門式ROICのroic/roicEx両記・TTM PERの符号・様式キー一致・列挙値/点数域・_meta必須を落とす。**致命があれば審査官へ差し戻す**（そのまま置くと門が取込拒否して審査待ちに溜まる）
 
 出力は `out/{T}_gate_pack.json`（完成パック）。パックは門のⅢ採点機「＋取り込む」へ。
 機械値だけのドラフト（`{T}_gate_input.json`）は台帳データではない（CLAUDE.md 絶対のルール2）。
