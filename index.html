@@ -220,10 +220,12 @@ footer{text-align:center;padding:42px 0 80px;}
 #scorer .eval-top{flex-direction:column;text-align:center}
 #scorer .subscore{width:100%}}
 
-/* v9.1: 3ページナビ */
-.pgnav{position:sticky;top:0;z-index:99;display:flex;gap:6px;justify-content:flex-start;padding:10px 10px;background:rgba(8,10,14,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch;}
-.pgnav button{background:var(--panel);border:1px solid var(--line);color:var(--ink-soft);border-radius:8px;padding:8px 12px;font-size:12.5px;font-family:inherit;cursor:pointer;letter-spacing:.02em;white-space:nowrap;flex:0 0 auto;}
-.pgnav button.on{background:linear-gradient(180deg,rgba(201,166,74,.22),rgba(201,166,74,.10));border-color:var(--gold-line);color:var(--gold-bright);}
+/* v9.1: 3ページナビ（2026-07 UI磨き: ピル型・タップ44px・金の下光・スクロールバー非表示） */
+.pgnav{position:sticky;top:0;z-index:99;display:flex;gap:7px;justify-content:flex-start;align-items:center;min-height:var(--navh,58px);padding:9px 12px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));background:rgba(8,10,14,.86);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);border-bottom:1px solid var(--gold-line);box-shadow:0 6px 24px rgba(0,0,0,.30);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.pgnav::-webkit-scrollbar{display:none;}
+.pgnav button{background:transparent;border:1px solid transparent;color:var(--muted);border-radius:999px;padding:10px 15px;min-height:40px;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.03em;white-space:nowrap;flex:0 0 auto;transition:color .18s ease,background .18s ease,border-color .18s ease;}
+.pgnav button:hover{color:var(--gold-bright);border-color:var(--gold-line);background:rgba(201,166,74,.07);}
+.pgnav button.on{background:linear-gradient(180deg,rgba(201,166,74,.26),rgba(201,166,74,.10));border-color:var(--gold-line);color:var(--gold-bright);font-weight:600;box-shadow:inset 0 1px 0 rgba(236,212,148,.22),0 2px 12px rgba(201,166,74,.16);}
 .pg{display:none;}.pg.on{display:block;}
 .pg3-head{max-width:var(--maxw);margin:36px auto 0;padding:0 24px;}
 
@@ -265,6 +267,93 @@ html[data-theme="soft"] #scorer{
   --line:#333d4d; --line2:#3d4859;
 }
 html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
+
+/* ============================================================
+   UI磨きレイヤー（2026-07）— 見た目のみ。採点ロジック・売却規律・JSは不変。
+   ①背景の深み ②ボタンの押し心地 ③スマホ最適化 ④細部（スクロールバー等）
+   ============================================================ */
+:root{--navh:58px;}
+
+/* ── ① 背景：金の光暈＋青の差し色＋和紙のような粒子（テーマ別） ── */
+body{background:
+  radial-gradient(1100px 600px at 50% -160px,rgba(201,166,74,.13),transparent 60%),
+  radial-gradient(900px 560px at 88% 12%,rgba(93,140,194,.055),transparent 55%),
+  radial-gradient(760px 520px at 6% 78%,rgba(201,166,74,.045),transparent 60%),
+  linear-gradient(180deg,#0a0c11,#080a0e 60%,#06080b);}
+html[data-theme="light"] body{background:
+  radial-gradient(1100px 600px at 50% -160px,rgba(154,118,38,.12),transparent 60%),
+  radial-gradient(900px 560px at 88% 12%,rgba(60,102,171,.06),transparent 55%),
+  radial-gradient(760px 520px at 6% 78%,rgba(154,118,38,.05),transparent 60%),
+  linear-gradient(180deg,#f4f5f9,#eceef3 60%,#e6e9f0);}
+html[data-theme="soft"] body{background:
+  radial-gradient(1100px 600px at 50% -160px,rgba(201,166,74,.11),transparent 60%),
+  radial-gradient(900px 560px at 88% 12%,rgba(93,140,194,.05),transparent 55%),
+  radial-gradient(760px 520px at 6% 78%,rgba(201,166,74,.04),transparent 60%),
+  linear-gradient(180deg,#1c2028,#181b22 60%,#15181e);}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+html[data-theme="light"] body::before{opacity:.035;}
+
+/* ── ④ スクロールバー（金の細身・帯内は非表示にせず控えめ） ── */
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(201,166,74,.24);border-radius:8px;border:2px solid transparent;background-clip:padding-box;}
+::-webkit-scrollbar-thumb:hover{background-color:rgba(201,166,74,.45);}
+html[data-theme="light"] ::-webkit-scrollbar-thumb{background:rgba(154,118,38,.30);background-clip:padding-box;}
+
+/* ── ② ボタン共通：インラインstyleが持たない属性だけを上乗せ＝配色・役割は不変 ──
+   ・タップ遅延/ハイライト除去 ・浮き上がるhover ・沈むactive ・金のfocusリング */
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  transition:transform .13s ease,box-shadow .2s ease,filter .2s ease,border-color .2s ease,color .2s ease,background .2s ease;}
+button:not([style*="background:none"]):not([style*="border:none"]):hover{
+  filter:brightness(1.09);transform:translateY(-1px);
+  box-shadow:0 3px 14px rgba(0,0,0,.30),0 0 0 1px rgba(201,166,74,.10);}
+html[data-theme="light"] button:not([style*="background:none"]):not([style*="border:none"]):hover{
+  filter:brightness(1.02);box-shadow:0 3px 12px rgba(27,33,48,.16),0 0 0 1px rgba(154,118,38,.14);}
+button:active{transform:translateY(0) scale(.965);filter:brightness(.97);}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
+
+/* 採点機のボタン：金ボタンに厚みと光沢 */
+#scorer .btn{border-radius:10px;}
+#scorer .btn-g{box-shadow:0 2px 12px rgba(201,166,74,.32),inset 0 1px 0 rgba(255,255,255,.30);text-shadow:0 1px 0 rgba(255,255,255,.22);}
+#scorer .btn-g:active{box-shadow:0 1px 5px rgba(201,166,74,.28);}
+
+/* 採点機の二段判定帯：ナビの下に正しく貼り付く（従来はナビの裏に隠れた） */
+#scorer .duo{top:calc(var(--navh) - 1px);}
+
+/* テーマ切替ボタン：浮遊感 */
+#themeToggle:hover{transform:translateY(-2px) scale(1.04);}
+#themeToggle:active{transform:scale(.96);}
+
+/* ── ③ スマホ最適化 ── */
+@media(max-width:640px){
+  .wrap{padding:0 16px;}
+  .block{padding:40px 0;}
+  .panel{padding:22px 16px;border-radius:12px;}
+  .gatebanner{padding:48px 0;}
+  .pg3-head{padding:0 16px;}
+  .hero-inner{padding:0 18px;}
+  .grades{gap:8px;}
+  .gr{min-width:70px;padding:11px 4px;}
+  /* 表は枠内で横スクロール（画面がはみ出さない） */
+  table.dt{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  /* タップ標的を40px以上へ（アイコン型・リンク型の小ボタンは除外） */
+  button:not([style*="background:none"]):not([style*="border:none"]){min-height:40px;}
+  .pgnav button{min-height:42px;padding:10px 14px;}
+  /* iOSのフォーカス時自動ズームを防ぐ＝入力は16px */
+  #scorer input#nm,#scorer input[type=number],#scorer select,#scorer .auto textarea{font-size:16px;}
+  #scorer input[type=number]{width:96px;}
+  #scorer .wrap{padding:0 14px;}
+  /* テーマ切替をホームバーと被らない位置へ */
+  #themeToggle{right:12px !important;bottom:calc(12px + env(safe-area-inset-bottom)) !important;}
+}
+
+/* 動きを減らす設定の尊重 */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none !important;animation:none !important;}
+  html{scroll-behavior:auto;}
+}
 </style></head><body>
 <nav class="pgnav">
  <button id="tab1" onclick="showPage(1)">Ⅰ 解説</button>
