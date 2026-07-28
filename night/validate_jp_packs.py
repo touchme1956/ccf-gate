@@ -54,17 +54,27 @@ def check(path):
     roic, rx = d.get("roic"), d.get("roicEx")
     if roic is None and rx is None:
         warns.append("roic/roicEx とも空欄（ネットキャッシュ超過で分母負なら正当・kenshi要確認）")
-    else:
-        if rx is None:
-            fails.append(f"roicEx が無い（roic={roic}）。門式ROICを両方に記すこと")
-        elif not isinstance(rx, (int, float)) or rx <= 0:
-            fails.append(f"roicEx={rx} が正の数でない")
-        elif roic is None:
-            fails.append("roic が空でroicExだけある（両記していない）")
-        elif abs(float(roic) - float(rx)) > 0.05:
-            fails.append(f"roic={roic} と roicEx={rx} が不一致（門式を両方に同値で記す規約）")
-        elif float(rx) > 40:
-            warns.append(f"門式ROIC={rx}% がなお40%超。過剰現金控除の分母を検死で再確認")
+    elif rx is None:
+        fails.append(f"roicEx が無い（roic={roic}）。門式ROICを両方に記すこと")
+    elif not isinstance(rx, (int, float)):
+        fails.append(f"roicEx={rx} が数値でない")
+    elif roic is None:
+        fails.append("roic が空でroicExだけある（両記していない）")
+    elif abs(float(roic) - float(rx)) > 0.05:
+        fails.append(f"roic={roic} と roicEx={rx} が不一致（門式を両方に同値で記す規約）")
+    elif float(rx) <= 0:
+        # 本業赤字＝NOPAT負は正当な審査結果。門のJP検問(roic>40)も発火しない
+        warns.append(f"門式ROIC={rx}% が非正（本業赤字ならこれが実像。分母負によるものでないか要確認）")
+    elif float(rx) > 150:
+        # 門式は「投下資本−過剰現金」なので、自己資本の大半が現金の資産軽量企業では
+        # 分母が0へ縮退してROICが発散する。生EDINET値と同じく採点を壊すので取込前に止める
+        rg = d.get("roicg")
+        fails.append(
+            f"門式ROIC={rx}% は分母縮退による発散（現金控除で投下資本がほぼ0）。"
+            + (f"現金非控除のroicg={rg}%が実像に近い。" if isinstance(rg, (int, float)) else "")
+            + "この値のまま取り込むと偽の怪物として採点される→規約判断待ち")
+    elif float(rx) > 40:
+        warns.append(f"門式ROIC={rx}% がなお40%超。過剰現金控除の分母縮退でないか検死で確認")
 
     # --- PERはTTM実績 ---
     per = d.get("per")
