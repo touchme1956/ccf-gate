@@ -44,7 +44,9 @@ try:
         import re as _re
         if _re.match(r"^\d{4,5}$", str(t)) and float(o.get("roic") or 0) > 40 and not float(o.get("roicEx") or 0) > 0:
             print(f"▲{t}: 日本株roic>40%かつroicEx無し=検死未了のため追加不可(門式現金控除ROICで再審査)"); continue
-        shy = o.get("shy") or 0.0
+        if o.get("shy") is None:
+            print(f"…{t}: shy(純還元)未測定のため追加不可——0と断定するとE[r]を過小評価し開通線が実際より遠くなる"); continue
+        shy = float(o.get("shy"))
         cagr = float(o.get("cagr") or 0)
         roicg = float(o.get("roicg") or o.get("roic") or 0)
         roicq = float(o.get("roicEx") or 0) if (o.get("roicEx") and float(o.get("roicEx")) > roicg) else roicg
@@ -90,6 +92,22 @@ for l in d["lines"]:
 # 2026-07(ユーザー指示): shyを価格連動で解く——同じ還元ドル額なら安値ほど利回りが上がる(shy(p)=shy0×p0/p)。
     # 旧実装はshyを現値固定で解いており、高還元の成熟優良で「値段では開かない」が過剰に絶対的だった。
     # 倍率拡大は相変わらず不計上(掟六)。①(E[r]≥12)と④(ストレス≥7)を同時に満たす最大価格を二分法で求める。
+    # 2026-07-28: shy未測定を0と断定しない。旧実装は pack.shy=null を 0.0 に化けさせており、
+    #   ASML(配当利回りだけで0.52%＋自社株買い)まで「還元ゼロ」として開通線を遠くに描いていた。
+    #   MPTIの「値段では開かない(還元ほぼゼロ)」もこの既定値の産物の疑いがある。
+    shy_unknown = False
+    try:
+        if os.path.exists(fp2):
+            if json.load(open(fp2, encoding="utf-8")).get("shy") is None and abs(shy) < 1e-9:
+                shy_unknown = True
+    except Exception:
+        pass
+    if shy_unknown:
+        nl.update(x_open_per=None, x_open_px=None, drop_pct=None, fair_per=None, fair_px=None,
+                  status="判定不能(還元shy未測定——market_fetch→market_mergeで充填してから再実行)")
+        out.append(nl)
+        continue
+
     C7 = (0.7 ** 0.1 - 1) * 100  # p≤fair帯のストレス倍率項(定数≈-3.5)
     def cond(pp):
         sy = shy * (per / pp)  # shy0×(p0/p)——PER比=価格比(eps一定仮定)
