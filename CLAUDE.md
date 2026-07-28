@@ -13,8 +13,13 @@
     （roic≥15 & opm≥15 & cagr3y≥5 & equity≥50 → 259社。ptフィールド付きdict形式）
   - `python run_gate0_jp_local.py` は**別系統**＝EDINET API直採取の二段漏斗（5年7項目採点。出力: 合成スコア順50社の
     list形式＋gate0_jp_rescue.json＋gate0_jp_all.csv。既存が別ソースなら .prev へ自動退避）。ptは生成しない
-  - どちらも定性・through-cycleは未評価=門2審査（依頼文）へ。**JP検問(2026-07)**: roic>40%かつroicEx(門式現金控除ROIC)
-    無しの日本株パックは門が取込拒否＝審査待ちへ差し戻す（EDINET生ROICアーティファクト対策。PERはTTM実績で統一）
+  - どちらも定性・through-cycleは未評価=門2審査（依頼文）へ。**JP検問(2026-07)**: roic>40%かつroicEx無しの
+    日本株パックは門が取込拒否＝審査待ちへ差し戻す（EDINET生ROICアーティファクト対策。PERはTTM実績で統一）
+  - **JP ROIC規約(2026-07-28改定・ユーザー明示指示)**: NOPAT=営業利益×0.70、**過剰現金は控除しない**。
+    roic=min(NOPAT÷(有利子負債+自己資本−のれん),60) / roicg=min(NOPAT÷(有利子負債+自己資本),60) / roicEx=roic同値。
+    旧・門式(投下資本−過剰現金)は資産軽量ネットキャッシュ企業で分母が0へ縮退して発散し(実測957.7%/502.6%/256.0%)、
+    EDINET生値と同型のアーティファクトを再生産したうえ現金を貯めるほど点が上がる逆向きだったため廃止。
+    60%上限は門Xの「roicg優先・60%キャップ」と同思想。納品検査は `python3 night/validate_jp_packs.py`
 - 四半期 保有点検: `python kessan_check.py`
   - holdings.jsonの保有銘柄について、直近の10-Q/8-Kを確認し、四半期売上YoY・営業利益率の前年同期差・警報(誠/限/集/指針/減損/退任)を機械抽出
   - 出力: out/kessan/{T}_qcheck.txt と要審査フラグ。要審査は門2再審査(依頼文)へ回す。株価は判定に使わない
