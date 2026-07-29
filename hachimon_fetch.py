@@ -88,31 +88,61 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  "sh":    ["CommonStockSharesOutstanding","EntityCommonStockSharesOutstanding","NumberOfSharesOutstanding"],
  "impair":["GoodwillImpairmentLoss","ImpairmentOfIntangibleAssetsIndefinitelivedExcludingGoodwill"],
 }
+def _annual(units):
+    """単位ごとのXBRL行から年次dictを組む。最多データの単位を優先。"""
+    for u in sorted(units.keys(), key=lambda x: -len(units[x])):
+        out = {}
+        for row in units[u]:
+            if not row.get("form","").startswith(("10-K","20-F")): continue
+            fy = row.get("fy")
+            if fy is None: continue
+            s, e = row.get("start"), row.get("end")
+            if s and e:  # 損益・CF系は期間300日超のみ(四半期を排除)
+                try:
+                    from datetime import date
+                    d0 = date.fromisoformat(s); d1 = date.fromisoformat(e)
+                    if (d1 - d0).days < 300: continue
+                except Exception: pass
+            out[fy] = row["val"]
+        if out: return out, u
+    return None, None
+
+
 def series(facts, keys, unit_pref=("USD","EUR","JPY")):
+    """候補タグの中から**最新年まで届いている系列**を主系列に選ぶ。
+
+    2026-07-29修正: 従来は「keys の中で最初に見つかったタグ」を無条件で採用し、
+      他のタグを一切見なかった。米国企業はASC606適用(2018年前後)で売上タグを
+      Revenues → RevenueFromContractWithCustomerExcludingAssessedTax へ改称しており、
+      旧タグが先頭にあるため**2017年で止まった系列で成長率・利益率を測っていた**。
+      実測 BR: 売上系列が 2012→2017 で終わっており、8年前の数字でcagrを出していた。
+      「最初に見つかったタグが正しい」もまた、確かめていない前提＝絶対のルール7と同型。
+
+    重なる年で値が一致するタグだけを接ぐ（一致しなければ別の指標＝接がない）。
+    重なりが無い場合も接がない——同一指標だと確かめる手段が無いため。主系列だけで足りる。
+    """
+    cands = []
     for ns in ("us-gaap","ifrs-full","dei"):
         d = facts.get("facts",{}).get(ns,{})
-        for k in keys:
-            if k in d:
-                units = d[k]["units"]
-                ordered = sorted(units.keys(), key=lambda u: -len(units[u]))  # 最多データの単位を優先
-                for u in ordered:
-                    if True:
-                        # FY(年次)のみ、frame重複は末尾優先で年次dict化
-                        out = {}
-                        for row in units[u]:
-                            if not row.get("form","").startswith(("10-K","20-F")): continue
-                            fy = row.get("fy")
-                            if fy is None: continue
-                            s, e = row.get("start"), row.get("end")
-                            if s and e:  # 損益・CF系は期間300日超のみ(四半期を排除)
-                                try:
-                                    from datetime import date
-                                    d0 = date.fromisoformat(s); d1 = date.fromisoformat(e)
-                                    if (d1 - d0).days < 300: continue
-                                except Exception: pass
-                            out[fy] = row["val"]
-                        if out: return out, u
-    return {}, None
+        for i, k in enumerate(keys):
+            if k not in d: continue
+            out, u = _annual(d[k]["units"])
+            if out: cands.append((i, k, out, u))
+        if cands: break            # 名前空間はまたがない(us-gaapとifrsを混ぜない)
+    if not cands: return {}, None
+
+    # 主系列: 最新年が新しい順 → 年数が多い順 → keys の優先順
+    i, k0, merged, unit = max(cands, key=lambda c: (max(c[2]), len(c[2]), -c[0]))
+    merged = dict(merged)
+    for _, k, out, u in cands:
+        if k == k0 or u != unit: continue
+        ov = set(out) & set(merged)
+        if not ov: continue                        # 重なり無し＝同一指標と確かめられない
+        if any(merged[y] and abs(out[y]-merged[y])/abs(merged[y]) > 0.02 for y in ov):
+            continue                               # 重なる年で食い違う＝別の指標
+        for y, v in out.items():
+            merged.setdefault(y, v)
+    return merged, unit
 
 def last_n(d, n=6):
     ys = sorted(d)[-n:]
@@ -125,15 +155,45 @@ def _safe(ev, note, key, fn):
     except Exception as e:
         note.append(f"{key}: 計算失敗({type(e).__name__})")
 
+def _u(x):
+    """実額を読める形に。桁を落とさず、単位を書かずに済ませない。"""
+    try:
+        return f"{float(x):,.0f}"
+    except Exception:
+        return str(x)
+
+
 def build_numbers(facts):
     S, diag = {}, {}
     for k, v in TAGS.items():
         S[k] = series(facts, v)[0]
         diag[k] = f"{len(S[k])}年分" if S[k] else "タグ不発見"
     ev, note = {}, []
+    # 2026-07-29新設: 機械項目にも根拠を刻む。
+    #   実測(night/audit_evidence.py)で、機械項目の _meta.evidence 被覆率は 9.8%
+    #   (ni 0.3% / cagr 1.0% / gm 4.8% / roic 16.2%)だった。「機械の出力だから正しい」
+    #   という前提が置かれていたためで、絶対のルール7で潰したバグ(欠測をゼロと読む)は
+    #   まさにその前提が外れる場所にあった。**式と実額を残せば、同じ事故は次から目で見える。**
+    evd = {}
+    ev["_evid"] = evd
     ys_rev, rev = last_n(S["rev"])
     if len(rev) >= 2:
-        _safe(ev, note, "cagr5", lambda: (lambda yrs: round(((rev[-1]/rev[-1-yrs])**(1/yrs)-1)*100,1) if rev[-1-yrs] else None)(min(5,len(rev)-1)))
+        # 2026-07-29修正: 従来は「系列の要素数」を年数として使っていた。XBRLの年次系列は
+        #   タグの改称・様式変更で**年が飛ぶ**（実測 NVDA: 2018→2022 が隣り合っており、
+        #   8年の伸びを5年で年率化して cagr=85.9%（真値47.4%）になっていた）。
+        #   cagrは門XのE[r]のgに直結するので、過大なcagrはそのまま買付判断を歪める。
+        #   **年数は年ラベルの差で数える**（要素数＝年数、は欠測をゼロと読むのと同型の思い込み）。
+        n = min(5, len(rev)-1)
+        span = ys_rev[-1] - ys_rev[-1-n]
+        if span <= 0:
+            note.append(f"cagr算出不能: 年ラベルが単調でない({ys_rev[-1-n]}→{ys_rev[-1]})")
+        else:
+            _safe(ev, note, "cagr5",
+                  lambda: round(((rev[-1]/rev[-1-n])**(1/span)-1)*100,1) if rev[-1-n] else None)
+            if ev.get("cagr5") is not None:
+                gap = "" if span == n else f"（系列に欠年あり: 要素{n}個だが実年数{span}年——年数は年ラベルで数える）"
+                evd["cagr"] = (f"機械算出: 売上 {ys_rev[-1-n]}年 {_u(rev[-1-n])} → {ys_rev[-1]}年 {_u(rev[-1])}"
+                               f"＝{span}年の年率{gap}")
     # 粗利トレンド
     if S["gp"]:
         ys,gp = last_n(S["gp"])
@@ -145,6 +205,9 @@ def build_numbers(facts):
     y0 = max(S["ni"]) if S["ni"] else None
     if y0 and y0 in S["ocf"] and S["assets"].get(y0):
         _safe(ev, note, "accr", lambda: round((S["ni"][y0]-S["ocf"][y0])/S["assets"][y0]*100, 1))
+        if ev.get("accr") is not None:
+            evd["accr"] = (f"機械算出 {y0}年: (純利益 {_u(S['ni'][y0])} − 営業CF {_u(S['ocf'][y0])})"
+                           f" ÷ 総資産 {_u(S['assets'][y0])}")
     if y0 and y0 in S["ocf"] and y0 in S["capex"] and S["ni"].get(y0):
         fcf = S["ocf"][y0]-abs(S["capex"][y0])
         _safe(ev, note, "conv", lambda: round(fcf/S["ni"][y0]*100,1))
@@ -154,10 +217,23 @@ def build_numbers(facts):
             _safe(ev, note, "fcfps", lambda: round(fcf/shl,2) if shl else None)
     # nde
     if y0:
-        debt = (S["debtL"].get(y0,0) or 0)+(S["debtS"].get(y0,0) or 0)
+        # 2026-07-29修正: ここにも roic と同型の「欠測をゼロと読む」が残っていた。
+        #   有利子負債タグが無い年を debt=0 と読むと nde = −現金/EBITDA となり、
+        #   **借入のある会社が純現金の優良企業に見える**（roicは発散という派手な形で出たが、
+        #   ndeは"健全に見える"という静かな形で出るぶん質が悪い）。
+        #   無借金企業もタグを出さないので機械では区別できない＝絶対のルール7(a)そのもの。
+        #   **タグが無い年は算出不能として null にし、理由を残す**（誤値より空欄）。
+        has_debt = (y0 in S["debtL"]) or (y0 in S["debtS"])
         cash = (S["cash"].get(y0,0) or 0)+(S["sti"].get(y0,0) or 0)
         ebitda = (S["op"].get(y0,0) or 0)+(S["dep"].get(y0,0) or 0)
-        if ebitda: ev["nde"] = round((debt-cash)/ebitda, 2)
+        if not has_debt:
+            note.append(f"nde算出不能: {y0}年に有利子負債タグが無い。無借金なら nde=−{_u(cash)}/EBITDA "
+                        f"だが、タグ不在と無借金は機械で区別できない。原本のBSで確認して手入力せよ")
+        elif ebitda:
+            debt = (S["debtL"].get(y0,0) or 0)+(S["debtS"].get(y0,0) or 0)
+            ev["nde"] = round((debt-cash)/ebitda, 2)
+            evd["nde"] = (f"機械算出 {y0}年: (有利子負債 {_u(debt)} − 現金同等物 {_u(cash)})"
+                          f" ÷ (営業利益 {_u(S['op'].get(y0,0) or 0)} + 減価償却 {_u(S['dep'].get(y0,0) or 0)})")
     # のれん除外ROIC 5年系列 → worst/median
     roics = []
     roic_skip = []
@@ -176,13 +252,22 @@ def build_numbers(facts):
                 roic_skip.append(f"{y}:有利子負債タグ不在でIC算出不能")
                 continue
             debt = (S["debtL"].get(y,0) or 0)+(S["debtS"].get(y,0) or 0)
-            ic = S["eq"][y]+debt-(S["gw"].get(y,0) or 0)-(S["intan"].get(y,0) or 0)
+            gw, intan = (S["gw"].get(y,0) or 0), (S["intan"].get(y,0) or 0)
+            ic = S["eq"][y]+debt-gw-intan
             # 分母が自己資本の2割を切ったら、のれん・無形の控除でICが縮退している＝発散の前兆。
             #   この帯のROICは「資本が軽い」の言い換えで識別力が無く、桁違いの偽陽性だけを生む。
             if ic <= 0 or ic < 0.20*max(S["eq"][y], 1):
                 roic_skip.append(f"{y}:IC={ic:.0f}が自己資本{S['eq'][y]:.0f}の2割未満＝のれん控除で分母縮退")
                 continue
             roics.append(nopat/ic*100)
+            # 実額を残す。**IC/自己資本が本当の判別子**（2026-07-29の19社検算で確立——
+            # 「roic>60だから怪しい」はほぼ外れ、MAは74.9→131.0の上方修正だった）。
+            # 比率だけでは後から検算できないので、NOPAT・自己資本・負債・のれん・無形の各実額を書く。
+            evd["roic"] = (f"機械算出 {y}年: NOPAT {_u(nopat)}（営業利益 {_u(S['op'][y])}×(1−実効税率"
+                           f"{max(0,min(0.5,tax_rate)):.1%})） ÷ IC {_u(ic)}"
+                           f"＝自己資本 {_u(S['eq'][y])} + 有利子負債 {_u(debt)} − のれん {_u(gw)}"
+                           f" − 無形 {_u(intan)}。**IC/自己資本={ic/max(S['eq'][y],1)*100:.1f}%**"
+                           f"（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）")
     if roic_skip:
         note.append("roic系列の一部を算出不能として除外: " + " / ".join(roic_skip))
     if roics:
@@ -191,9 +276,36 @@ def build_numbers(facts):
     # 純希薄化率(株数の年率変化)
     sh,_ = series(facts, TAGS["sh"], ("shares",))
     if len(sh)>=3:
+        # 2026-07-29修正: 従来は生の株数をそのまま比べていたので、**株式分割をまたぐと
+        #   希薄化として計上された**。実測 NVDA: 2,466百万株(2023) → 24,304百万株(2026) は
+        #   2024年6月の10:1分割によるもので、dilNet=+114.4%/年（＝毎年株数が倍増）と出ていた。
+        #   分割調整後の実態は −0.5%/年（自社株買いで減少）＝**符号が逆**。
+        #   門は dilNet を純還元(現金還元−希薄化)に使うので、これはE[r]を直接壊す。
+        #   SECのcompanyfactsに分割情報は無く、機械では「分割」と「大型増資」を区別できない。
+        #   → **不連続の手前は捨て、直近の連続区間だけで測る**（絶対のルール7と同じ思想＝
+        #     区別できないものを片方に決め打ちしない）。区間が取れなければ空欄＋理由。
         ys = sorted(sh)[-4:]
-        d0,d1 = sh[ys[0]], sh[ys[-1]]
-        _safe(ev, note, "dilNet", lambda: round(((d1/d0)**(1/(len(ys)-1))-1)*100,2) if d0 else None)
+        cut = 0
+        for i in range(1, len(ys)):
+            r = (sh[ys[i]] / sh[ys[i-1]]) if sh[ys[i-1]] else 0
+            if r and (r > 1.4 or r < 0.6):
+                cut = i                      # ここで不連続。以降だけを使う
+        ys = ys[cut:]
+        if cut:
+            note.append(f"dilNet: {sorted(sh)[-4:][cut-1]}→{ys[0]}年に株数が"
+                        f"{sh[ys[0]]/max(sh[sorted(sh)[-4:][cut-1]],1):.1f}倍に不連続変化（株式分割の疑い）。"
+                        f"手前を捨てて{ys[0]}年以降で算出")
+        span = (ys[-1] - ys[0]) if len(ys) >= 2 else 0
+        if span <= 0:
+            note.append("dilNet算出不能: 不連続を除くと連続区間が1年未満。"
+                        "原本の株主資本等変動計算書で分割調整後の株数を確認して手入力せよ")
+        else:
+            d0,d1 = sh[ys[0]], sh[ys[-1]]
+            _safe(ev, note, "dilNet", lambda: round(((d1/d0)**(1/span)-1)*100,2) if d0 else None)
+            if ev.get("dilNet") is not None:
+                evd["dilNet"] = (f"機械算出: 株数 {ys[0]}年 {_u(d0)} → {ys[-1]}年 {_u(d1)}"
+                                 f"＝{span}年の年率（自社株買い後の純希薄化）"
+                                 + (f"。**{ys[0]}年より前は株数の不連続（分割の疑い）があるため除外**" if cut else ""))
     # 減損履歴(配)
     if S["impair"] and any(v>0 for v in list(S["impair"].values())[-5:]):
         ev["acqImpair"] = "yes"; note.append("のれん/無形減損の計上履歴あり(配=保S候補、原本で規模確認)")
@@ -205,32 +317,58 @@ def build_numbers(facts):
     # 営業利益率 gm(%) 直近年
     if y0 and y0 in S["op"] and S["rev"].get(y0):
         _safe(ev, note, "gm", lambda: round(S["op"][y0]/S["rev"][y0]*100,1))
+        if ev.get("gm") is not None:
+            # 門のgm欄は**営業利益率**であって粗利率ではない（日本株で粗利混入が36社中12社で再発）。
+            # 実額を残せば取り違えは目で見える。
+            evd["gm"] = f"機械算出 {y0}年: 営業利益 {_u(S['op'][y0])} ÷ 売上 {_u(S['rev'][y0])}（粗利ではない）"
     # 営業利益率トレンド gmt (3年: up/flat/down)
     if S["op"] and S["rev"]:
         oy = sorted(set(S["op"])&set(S["rev"]))[-3:]
         if len(oy)>=2 and S["rev"].get(oy[0]) and S["rev"].get(oy[-1]):
             m0=S["op"][oy[0]]/S["rev"][oy[0]]*100; m1=S["op"][oy[-1]]/S["rev"][oy[-1]]*100
             ev["gmt"]="up" if m1-m0>1 else "down" if m1-m0<-1 else "flat"
+            evd["gmt"] = f"機械算出: 営業利益率 {oy[0]}年 {m0:.1f}% → {oy[-1]}年 {m1:.1f}%（±1ptでup/down）"
     # のれん込みROIC roicg (直近年・のれん除外しない版)
     if y0 and all(y0 in S[k] for k in ("op","ni","eq")):
         _safe(ev,note,"roicg",lambda:(lambda tax:round(S["op"][y0]*(1-max(0,min(0.5,tax)))/max(S["eq"][y0]+((S["debtL"].get(y0,0)or 0)+(S["debtS"].get(y0,0)or 0)),1)*100,1))(1-S["ni"][y0]/max(S["ni"][y0]+S["tax"].get(y0,0),1)))
+        if ev.get("roicg") is not None:
+            _d = (S["debtL"].get(y0,0) or 0)+(S["debtS"].get(y0,0) or 0)
+            evd["roicg"] = (f"機械算出 {y0}年: NOPAT ÷ (自己資本 {_u(S['eq'][y0])} + 有利子負債 {_u(_d)})"
+                            f"＝のれん込み。roic(除外)との差が買収規律の指標"
+                            + ("" if ((y0 in S['debtL']) or (y0 in S['debtS']))
+                               else "。**有利子負債タグ不在＝0扱いのため過大の可能性あり（要原本確認）**"))
     # のれん除外ROIC 直近年 roic (門のroic欄=単年・除外)
     if roics: ev["roic"]=round(roics[-1],1)
     # ROICトレンド roict (5年 up/flat/down): worst年 vs 直近
     if len(roics)>=2:
         ev["roict"]="up" if roics[-1]-roics[0]>2 else "down" if roics[-1]-roics[0]<-2 else "flat"
+        evd["roict"] = (f"機械算出: のれん除外ROIC 5年系列 "
+                        f"{' / '.join(f'{x:.1f}%' for x in roics)}（最古→直近の差で判定）")
     # GP/A(gpa) 直近年
     if y0 and y0 in S["gp"] and S["assets"].get(y0):
         _safe(ev,note,"gpa",lambda:round(S["gp"][y0]/S["assets"][y0]*100,1))
+        if ev.get("gpa") is not None:
+            evd["gpa"] = f"機械算出 {y0}年: 売上総利益 {_u(S['gp'][y0])} ÷ 総資産 {_u(S['assets'][y0])}"
     # fcf/ni の生値(門はfcf・niを直接欄に持つ。単位は_unit/1e9でB表示)
     if y0 and y0 in S["ocf"] and y0 in S["capex"]:
+        # 2026-07-29修正: 従来は小数2桁（＝十億$の百分の一＝千万$刻み）で丸めていた。
+        #   門は fcf/ni を**比**でしか使わない（conv＝FCF転換率、reinvest＝1−conv）ので
+        #   単位が揃っていれば単位自体は無害だが、**小型株では丸めが比を壊す**。
+        #   実例 IRMD: FCF $24百万 / NI $16百万 は 0.02/0.02 となり conv=100%（真値150%）。
+        #   有効数字を残す桁数で丸める。
         u=1e9
-        ev["fcf_abs"]=round((S["ocf"][y0]-abs(S["capex"][y0]))/u,2)
-        if S["ni"].get(y0) is not None: ev["ni_abs"]=round(S["ni"][y0]/u,2)
+        ev["fcf_abs"]=round((S["ocf"][y0]-abs(S["capex"][y0]))/u,4)
+        evd["fcf"] = (f"機械算出 {y0}年: 営業CF {_u(S['ocf'][y0])} − 設備投資 {_u(abs(S['capex'][y0]))}"
+                      f"（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）")
+        if S["ni"].get(y0) is not None:
+            ev["ni_abs"]=round(S["ni"][y0]/u,4)
+            evd["ni"] = f"機械算出 {y0}年: 純利益 {_u(S['ni'][y0])}（÷1e9で十億単位表示）"
     # eps(TTM近似=直近NI/株数)
     sh2,_=series(facts,TAGS["sh"],("shares",))
     if y0 and sh2 and (sh2.get(y0) or 0):
         _safe(ev,note,"eps",lambda:round(S["ni"][y0]/sh2[y0],2))
+        if ev.get("eps") is not None:
+            evd["eps"] = f"機械算出 {y0}年: 純利益 {_u(S['ni'][y0])} ÷ 株数 {_u(sh2[y0])}（TTMではなく通期実績）"
     # 業態fin: 金融判定(粗い) — 純利が金利収入主体かは判定不能なのでnull据置
     ev["_unit"] = series(facts, TAGS["rev"])[1]
     ev["_note"] = note
@@ -321,6 +459,14 @@ def run(ticker):
         "f1": None, "f2": None, "f3": None, "f4": None, "f5": None,
         "_meta": {"form": form, "reportDate": rdate, "unit": ev.get("_unit"),
                   "source": url, "notes": ev.get("_note",[]), "diag": ev.get("_diag",{}),
+                  # 2026-07-29新設。**根拠と出所を値と同時に刻む**——これが無かったために、
+                  #   原本から測った値とそれらしく置いた値が台帳上まったく同じ見た目になり、
+                  #   誤りは人が1件ずつ読むまで見つからなかった（機械項目の根拠被覆率9.8%）。
+                  # provenance は「誰が置いたか」。審査官は machine の欄を上書きしてはならない
+                  #   （検算して直すのは可。その場合は _meta.kenshi に旧→新と原本根拠を書く）。
+                  "evidence": {k: v for k, v in (ev.get("_evid") or {}).items() if v},
+                  "provenance": {k: "machine" for k, v in (ev.get("_evid") or {}).items() if v},
+                  "nulls": {},
                   "todo_原本": ["expiry(限)","moatdecay/erosion/disrupt(蝕)","dom/irr/rep/dur(堀四性質)","geopol(集)","nrr"],
                   "todo_市場": ["beta","per","perF","evebit","px","shy"],
                   "todo_書記": ["p1-p4","f1-f5","fin業態","analysts/instOwn/gls/idx/indG/founder"]}}
