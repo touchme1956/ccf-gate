@@ -23,6 +23,7 @@ night/audit_moat.py — 堀5本(dom/irr/rep/dur/moatW)の「根拠の質」を�
   python3 night/audit_moat.py            全パック
   python3 night/audit_moat.py --q75      Ω75+ だけ（out/score_all.json が要る）
   python3 night/audit_moat.py --list     再監査の作業リスト（コード列）だけを出す
+  python3 night/audit_moat.py --all      合格分（根拠つきの空欄を含む）も表示する
 """
 import json
 import os
@@ -101,12 +102,14 @@ def main():
         meta = d.get("_meta") or {}
         ev = (meta.get("evidence") or {}).get("dom")
         dom, moatw = d.get("dom"), d.get("moatW")
-        flags = []
+        flags, notes = [], []
         if dom in (None, ""):
             documented, why = dom_null_ok(meta)
             if documented:
+                # 根拠つきの空欄は「合格」——再監査待ちに数えない（v9.9.39の再正規化が許す状態）。
+                # ここを need に入れると、正しく空欄にした銘柄が永久に作業リストへ残り続ける
                 mark = "◎"
-                flags.append("dom空欄・理由あり＝再正規化を許す（%s…）" % why[:70])
+                notes.append("dom空欄・理由あり＝再正規化を許す（%s…）" % why[:70])
             else:
                 mark = "✗"
                 flags.append("dom空欄だが理由が_metaに無い——単に未調査の可能性。再正規化を許さず差し戻し")
@@ -119,7 +122,7 @@ def main():
             flags.append("moatW空欄——堀の本数が未測定（旧4本式で採点中）")
             if mark == "◎":
                 mark = "△"
-        rows.append((t, str(d.get("nm") or t), mark, dom, moatw, flags))
+        rows.append((t, str(d.get("nm") or t), mark, dom, moatw, flags, notes))
         if flags:
             need.append(t)
         else:
@@ -129,14 +132,19 @@ def main():
         print(" ".join(need))
         return 0
 
-    for t, nm, mark, dom, moatw, flags in rows:
-        if not flags:
+    verbose = "--all" in argv
+    for t, nm, mark, dom, moatw, flags, notes in rows:
+        if not flags and not verbose:
             continue
         print("%s %-7s %-26s dom=%-5s moatW=%-5s" % (mark, t, nm[:26], dom, moatw))
         for x in flags:
             print("      · %s" % x)
+        for x in notes:
+            print("      ○ %s" % x)
     n = len(rows)
-    print("\n%d社中 %d社は堀5本すべてが現行の刻みで測れている。%d社が再監査待ち。" % (n, ok, len(need)))
+    nnull = sum(1 for r in rows if r[6])
+    print("\n%d社中 %d社は合格（うち %d社は dom を根拠つきで空欄にした＝再正規化で採点）。%d社が再監査待ち。"
+          % (n, ok, nnull, len(need)))
     print("  ◎=根拠十分 / △=刻みが1段ずれ得る / ✗=根拠と値が食い違う・根拠が無い")
     print("  再監査は night/agent_prompt_template.txt（日本株は _jp）で原本から dom / moatW を取り直す。")
     print("  作業リストのコード列は `python3 night/audit_moat.py --list` で取れる。")
