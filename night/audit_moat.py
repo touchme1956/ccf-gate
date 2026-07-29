@@ -63,12 +63,16 @@ def grade_dom(dom, ev):
         return None  # 空欄側は別で見る
     if not ev:
         return ("✗", "dom根拠が空——数字の出どころが無い", True)
-    if NO_DISCLOSURE.search(ev):
-        return ("✗", "「原本にシェア開示なし」と自認しながら数字が入っている（根拠と値が矛盾）", True)
     if float(dom) == 50 and FRAGMENTED.search(ev):
         # v9.9.41(3): 「市場はfragmented」「同等品を多数が製造可能」「実質すべての供給は他社」等の
-        #   構造記述があれば、自社が40%以上いることは定義上ありえない＝残余の刻み50が数値なしで立つ
+        #   構造記述があれば、自社が40%以上いることは定義上ありえない＝残余の刻み50が数値なしで立つ。
+        # 【この判定は NO_DISCLOSURE より必ず前に置くこと】規約3に従う根拠は、ほぼ必ず
+        #   「原本にシェアの数値開示は無い。ただし構造は fragmented と明記されている」という形になる。
+        #   順序を逆にすると前半だけが引っかかって ✗「根拠と値が矛盾」に落ち、
+        #   **正直に開示状況を書くほど再監査リストに残る**という逆向きの誘因になる（実測: PH/NDSN/TT/ALLE）。
         return ("◎", "50は残余の刻み——原本の構造記述（fragmented/多数が製造可能/供給は他社）で確定している", False)
+    if NO_DISCLOSURE.search(ev):
+        return ("✗", "「原本にシェア開示なし」と自認しながら数字が入っている（根拠と値が矛盾）", True)
     if not has_pct:
         return ("✗", "定性表現のみ（leading/leader等）でシェア数値が無い", True)
     if not STRUCTURE.search(ev):

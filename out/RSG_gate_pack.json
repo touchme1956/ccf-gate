@@ -22,7 +22,7 @@
  "moatdecay": "no",
  "erosion": "none",
  "disrupt": "settled",
- "dom": 70,
+ "dom": 50,
  "irr": 85,
  "rep": 80,
  "dur": 100,
@@ -100,16 +100,17 @@
    "fin業態",
    "analysts/instOwn/gls/idx/indG/founder"
   ],
-  "auditDate": "2026-07-20",
-  "model": "Claude Fable 5",
-  "kenshi": "5点キュー第2陣の門2審査(β=1.0中立仮定・境界銘柄は実βで再検証)。廃棄物。埋立許認可の制度的堀=WCN/WM同型。連続買収 実β0.405で確定(境界銘柄の精査)。",
+  "auditDate": "2026-07-29",
+  "model": "claude-opus-5",
+  "kenshi": "5点キュー第2陣の門2審査(β=1.0中立仮定・境界銘柄は実βで再検証)。廃棄物。埋立許認可の制度的堀=WCN/WM同型。連続買収 実β0.405で確定(境界銘柄の精査)。 2026-07-29 堀再監査(v9.9.41): 旧dom=70→新dom=50、旧moatW=70→新moatW=70。domは原本にシェア%開示が無く、提出書類自身の構造記述(市場がfragmented／同じ商材を多数の業態・数千の中小企業が供給)に基づき v9.9.41規約3で50を確定(空欄にしない)。旧70は上位N社合計シェアの原本根拠を欠いた値だったため撤回。moatWはセグメント/サービスライン別売上の実数を原本で再突合のうえ、v9.9.41追加規約『共通の中核に全サービスが乗るなら1本』を適用して70を維持。根拠は _meta.evidence.dom / .moatW に原文引用＋出典付きで記載。**dom/moatW/_meta 以外のフィールドは一切変更していない**。 【別途要修正(道具側・本監査では直さない)】night/audit_moat.py の grade_dom() は NO_DISCLOSURE 判定を「dom==50 かつ FRAGMENTED」判定より先に評価するため、v9.9.41規約3どおりに『原本にシェア%開示なし＋構造記述で50』と書いたパックが『根拠と値が矛盾(✗)』と誤検出される。判定順を入れ替える(50+構造記述を先に◎で確定させる)か、NO_DISCLOSURE を dom>=70 のときだけ適用するのが筋。値そのものは正しいので本再監査では変更しない。",
   "evidence": {
-   "moatW": "セグメント別売上: FY2025 10-K『Revenue - Schedule of Disaggregation of Revenue』(会社開示の構成比つき) Collection $11,233M=67.7% / Landfill $1,920M=11.6% / Environmental solutions $1,766M=10.6% / Transfer $848M=5.1% / Recycling processing and commodity sales $433M=2.6% / Other $824M=5.0% / Other non-core $391M=2.4%（合計 $16,591M）。報告セグメントは Group1 $7,509M / Group2 $7,316M / Group3(Environmental Solutions) $1,766M で、Group1,2は同一の収集・中継・埋立資産を地理で割ったもの（10-K注記(1)『The Recycling & Waste Subtotal represents the combined results of our Group 1 and Group 2 reportable segments』）＝堀は『埋立許認可＋ルート密度』1本。独立した第2の堀候補である危険廃棄物(Environmental Solutions・許認可が別体系)は10.6%で15%に届かない。顧客は10-K『Concentrations of credit risk with respect to trade accounts receivable are limited due to the wide variety of customers and markets in which we provide services, as well as the dispersion of our operations across many geographic areas』＝住宅・小型/大型コンテナ・自治体に分散、単一顧客10%以上の開示なし。単一製品ライン(Collection)67.7%<70%。→ 単一事業だが用途・顧客・地域が分散 = 70。出典: SEC 10-K CIK0001060391 acc 0001060391-26-000094 (2026-02-18), R44.htm/R106.htm"
+   "moatW": "セグメント別売上: FY2025 10-K『Revenue - Schedule of Disaggregation of Revenue』(会社開示の構成比つき) Collection $11,233M=67.7% / Landfill $1,920M=11.6% / Environmental solutions $1,766M=10.6% / Transfer $848M=5.1% / Recycling processing and commodity sales $433M=2.6% / Other $824M=5.0% / Other non-core $391M=2.4%（合計 $16,591M）。報告セグメントは Group1 $7,509M / Group2 $7,316M / Group3(Environmental Solutions) $1,766M で、Group1,2は同一の収集・中継・埋立資産を地理で割ったもの（10-K注記(1)『The Recycling & Waste Subtotal represents the combined results of our Group 1 and Group 2 reportable segments』）＝堀は『埋立許認可＋ルート密度』1本。独立した第2の堀候補である危険廃棄物(Environmental Solutions・許認可が別体系)は10.6%で15%に届かない。顧客は10-K『Concentrations of credit risk with respect to trade accounts receivable are limited due to the wide variety of customers and markets in which we provide services, as well as the dispersion of our operations across many geographic areas』＝住宅・小型/大型コンテナ・自治体に分散、単一顧客10%以上の開示なし。単一製品ライン(Collection)67.7%<70%。→ 単一事業だが用途・顧客・地域が分散 = 70。出典: SEC 10-K CIK0001060391 acc 0001060391-26-000094 (2026-02-18), R44.htm/R106.htm 【2026-07-29 再検証(v9.9.41)】FY2025 10-K『revenue by service line』(会社開示の構成比つき)の実数を原本で再突合し一致を確認(Total collection 11,233=67.7%〔Residential 3,010=18.1 / Small-container 5,055=30.5 / Large-container 3,098=18.7 / Other 70=0.4〕/ Landfill, net 1,920=11.6% / Environmental solutions, net 1,766=10.6% / Transfer, net 848=5.1% / Recycling processing and commodity sales 433=2.6% / Other non-core 391=2.4%、Total revenue 16,591百万$)。収集・中継・埋立は同一の埋立許認可＋ルート密度という**共通の中核資産**に乗るため1本(v9.9.41 moatW追加規約。報告セグメント Group1/Group2 も『The Recycling & Waste Subtotal represents the combined results of our Group 1 and Group 2 reportable segments』の通り同一事業を地理で割ったもの)。2本目候補の Environmental Solutions(Group 3・危険廃棄物/産業サービス、許認可体系が別)は10.6%で15%閾値に届かず不算入。50の条件(1製品ライン≥80% or 最大顧客≥20%)にも当たらない(最大ライン67.7%、単一顧客10%以上の開示なし、『Concentrations of credit risk ... are limited due to the wide variety of customers and markets ... as well as the dispersion of our operations across many geographic areas』)。→ moatW=70を維持。",
+   "dom": "支配シェア=50(競争<40%)。**原本にシェア%開示なし**。市場構造の記述で確定: 10-K Item 1『Competition』——『We operate in a competitive industry. Competition in the environmental services industry comes from a few other large, national publicly-owned companies, several regional publicly- and privately-owned companies and thousands of small privately-owned companies. In any given market, competitors may have larger operations and greater resources. In addition, we compete with municipalities that maintain material collection or disposal operations.』Item 1A——『We principally compete with large national waste management companies, numerous municipalities and numerous regional and local companies.』→ 供給者が大手数社＋地域数社＋**thousands of small privately-owned companies**＋自治体へ分散する構造を会社自身が述べている以上、自社シェア≥40%は定義上ありえない → v9.9.41規約3により空欄にせず50。※『Republic Services, Inc., a Delaware corporation, ... is one of the largest providers of environmental services in the United States, as measured by revenue』(Note 1)は**順位の自称でシェアの証拠にならない**(規約4)。**上位3社(WM/RSG/WCN)合計シェアの数値は原本に一切存在しない**ため寡占70(上位3社≥80%)の根拠にできない——旧dom=70はこの数値なしで置かれていたため撤回。【同業突合】同一の北米固形廃棄物市場を扱う WCN の10-K Item 1『COMPETITION』も『three publicly-held solid waste companies—Waste Management, Inc., Republic Services, Inc. and GFL Environmental, Inc.; several regional, publicly held and privately owned companies; and several thousand small, local, privately owned companies』と**同型の構造記述**であり、RSGとWCNの刻みは共に50で一致する(同じ市場を別の会社が別の刻みで書いていないことを確認済)。出典: SEC 10-K FY2025(2025-12-31期) CIK0001060391 acc 0001060391-26-000094, Item 1 Business - Competition / Item 1A / Note 1. https://www.sec.gov/Archives/edgar/data/1060391/000106039126000094/rsg-20251231.htm 【v9.9.41規約3の結論】原本は『thousands of small privately-owned companies』『numerous municipalities and numerous regional and local companies』と述べ、同一の役務を多数の事業者が供給する断片化した(fragmented)構造であることを自ら記している＝実質すべての供給は他社にも開かれている。よって自社が40%以上を占めることは定義上ありえず、残余の刻み50で確定する。"
   },
   "moatW_audit": {
-   "date": "2026-07-28",
+   "date": "2026-07-29",
    "model": "claude-opus-5",
-   "scope": "v9.9.36 moatW（＋欠測社のdom）のみ追記。他のキーは一切変更していない"
+   "scope": "v9.9.41 堀2項目(dom/moatW)のみ再監査。他のキーは一切変更していない"
   }
  },
  "mcap": 67.85
