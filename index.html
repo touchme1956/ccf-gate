@@ -1431,17 +1431,37 @@ function compute(){
     : `<div class="flag" style="background:${tier[2]};border-color:${tier[1]}55;color:${tier[1]}"><i>◆</i><div>絶対MOAT指数 <b style="color:${tier[1]}">${moatIdx.toFixed(0)}</b> ・ <b style="color:${tier[1]}">${tier[0]}</b>${moatIdx>=95?'（最上位の重みで評価）':moatIdx<65?'（堀で複利は保証されない）':''}${moatR.miss.length?`　<span style="color:var(--dim)">※${moatR.miss.join('・')}は測定不能→重みを残り${moatR.legs}本へ再正規化</span>`:''}${moatIdx<75?'　<span style="color:var(--rust)">◇堀のふるい(75)不通過＝新規投下の対象外</span>':''}</div></div>`;
   let pr=roicPt(roic)*0.6+Math.min(100,50+spread*2)*0.4+({up:4,flat:0,down:-12}[roict]); pr=Math.max(0,Math.min(100,pr));
   let pt=Math.max(0,Math.min(100,58+(60-pen)*0.45+cagr*1.8));
+  // v9.9.44（2026-07-29・ユーザー明示指示）: pen（TAM浸透率）の欠測を「浸透率0%」と読まない。
+  //   門は欠測の扱いを何度も直してきた——p3は「Z空欄→25点(倒産圏=最悪)・nde空欄→100点(最良)と
+  //   欠測の扱いが真逆だった」を落として再正規化で解決し、dom/moatWはv9.9.39で空欄選択肢＋再正規化にした。
+  //   **penだけが取り残されていた。** n('pen')=parseFloat('')||0 で 0 と読むため、
+  //   pt = 58 + (60−pen)×0.45 + cagr×1.8 の pen 項が **+27点の満額ボーナス**になっていた。
+  //   実測(2026-07-29・全316パック): **penは316社すべてが空欄**。cagr≥8.3%でpt=100に張り付き、
+  //   **202社(64%)がpt=100**＝sustainの20%を占める柱がほぼ全社で同じ値＝情報を持たない定数だった
+  //   （v9.9.43で是正したgmPtとまったく同じ病。今回は「測っていない」が最良評価に化ける向き）。
+  //   0/316という空欄率は怠慢ではなく、**憶測禁止(絶対のルール2)を守る限りTAMは原本から測れない**ため。
+  //   TAMは売り手側の数字で、10-Kに監査済みの事実として載らない——dom規約v9.9.41(4)が
+  //   「順位の自称はどの刻みの証拠にもならない」と決めたのと同じ性質のもの。
+  //   → **落として再正規化**（p3・dom・moatWと同じ作法。新しい規則を増やさない）。
+  //   滑走路の情報は失われない: f2(滑走路)が判断点として316/316社すべて埋まっており、Fに入っている。
+  //   実測の影響: Ω中央値 −1.2pt / Ω75+ 35→31社 / 最大の下げ −2.7pt / **投下可は不変**。
+  //   計測器: night/shadow_missing.py（A現行 / B中立値30% / C採用＝落として再正規化 を実測）
+  const penNA=(nn('pen')==null);
   const aiSel=$('f5'); // AI handled via f5 lens; sustain AI adj from f5 relative
-  let sustain=gm([pm,pr,pt],[0.38,0.42,0.20]);
+  let sustain=penNA?gm([pm,pr],[0.475,0.525]):gm([pm,pr,pt],[0.38,0.42,0.20]);
   sustain=Math.max(0,Math.min(100,sustain));
   const setp=(id,v,th)=>{$(id+'V').textContent=v.toFixed(0);$(id+'V').style.color=v>=th?'var(--ink)':'var(--rust)';$(id+'S').textContent=v>=th?'通過':'不足';$(id+'S').className='pil-st '+(v>=th?'pil-ok':'pil-ng');};
-  setp('pm',pm,70);setp('pr',pr,70);setp('pt',pt,60);
+  setp('pm',pm,70);setp('pr',pr,70);
+  // v9.9.44: penが空欄ならTAM柱は**保留**（採点から外した値で合否を出さない）。
+  //   キル層の「Altman Z 未入力——倒産圏キルは保留」と同じ扱い。
+  if(penNA){$('ptV').textContent='—';$('ptV').style.color='var(--dim)';$('ptS').textContent='保留';$('ptS').className='pil-st';}
+  else setp('pt',pt,60);
   const pfail=[]; let pillarPen=0;
   if(pm<70){pfail.push('MOAT');pillarPen+=(70-pm)*0.8;}
   if(pr<70){pfail.push('ROIC');pillarPen+=(70-pr)*0.8;}
-  if(pt<60){pfail.push('TAM');pillarPen+=(60-pt)*0.8;}
+  if(!penNA&&pt<60){pfail.push('TAM');pillarPen+=(60-pt)*0.8;}
   const psig=$('pillarSig');psig.innerHTML='';
-  if(!pfail.length)psig.innerHTML=`<div class="flag f-ok"><i>✓</i><div>三本柱すべて通過（MOAT・ROIC≥70／TAM≥60）。</div></div>`;
+  if(!pfail.length)psig.innerHTML=`<div class="flag f-ok"><i>✓</i><div>${penNA?'MOAT・ROICの二本柱を通過（≥70）。<b>TAM柱は保留</b>——浸透率(pen)未入力のため滑走路ptを採点から外し、重みをMOAT/ROICへ再正規化した（滑走路の評価はf2が担う）。':'三本柱すべて通過（MOAT・ROIC≥70／TAM≥60）。'}</div></div>`;
   else psig.innerHTML=`<div class="flag f-warn"><i>!</i><div><b>柱の弱さ −${pillarPen.toFixed(0)}：</b>${pfail.join('・')}が基準未満（崖でなく段階減点）</div></div>`;
 
   // v7 Intel-pattern early warning: gross margin down + share down simultaneously = leading moat-collapse signature (display only)
