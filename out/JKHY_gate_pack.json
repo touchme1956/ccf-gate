@@ -22,8 +22,8 @@
  "moatdecay": "no",
  "erosion": "none",
  "disrupt": "settled",
- "dom": 70,
- "moatW": 70,
+ "dom": 50,
+ "moatW": 100,
  "irr": 70,
  "rep": 60,
  "dur": 75,
@@ -58,8 +58,8 @@
   "reportDate": "2025-06-30",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/779152/000077915225000055/jkhy-20250630.htm",
-  "auditDate": "2026-07-18",
-  "model": "Claude Fable 5",
+  "auditDate": "2026-07-29",
+  "model": "claude-opus-5",
   "kenshi": [
    "2026-07-28 市場データ更新(market_fetch_free・鍵なし経路): px 158.15→157.93 / per 22.85→22.82 / mcap None→11.536 / shy 1.73→1.63。shyは門の定義「純還元(現金還元−希薄化)」に合わせ新株発行・自己株処分を控除したネットへ変更",
    "helperの参考機械計算は2014-2018窓(Revenues[USD]タグがFY2018で打切り→以降RevenueFromContractWithCustomerExcludingAssessedTaxに移行)。ROIC/opm/σは最新系列で再計算した",
@@ -70,7 +70,8 @@
    "acq5充填: PaymentsToAcquireBusinessesNetOfCashAcquired FY21-25累計=2.3+0+229.6+0+0=231.9M=0.23十億(FY2023 Payrailz中心・以外は無買収)",
    "nde: FY2025期末は有利子負債0・現金102M=純現金(nde≈-0.15)。ドラフト0.0は最新10-Q(FY2026Q1: 負債90M/現金20.6M=純負債69M)基準の丸め。いずれも純現金〜<1でp3=95",
    "cagr=6.4は売上CAGR(FY2018→25で年率約7%圏)。ドラフト値を維持",
-   "gm/gpa: GrossProfitタグがFY2017で打切り(diag gp=7年分)最新総利益率が取得不能→null化(誤値より空欄)"
+   "gm/gpa: GrossProfitタグがFY2017で打切り(diag gp=7年分)最新総利益率が取得不能→null化(誤値より空欄)",
+   "2026-07-29 堀再監査(v9.9.41): 旧dom=70→新dom=50、旧moatW=70→新moatW=100。domは原本にシェア数値がゼロ（旧evidenceも「定量シェア%はhits非開示のため保守的に寡占=70」と自認していた）。Competition節の「競合の一部は自社より顧客基盤が大きい」「non-coreはan array of disparate vendors」「smaller start-upsが常時新規参入」の構造記述により規約3で50。moatWはNote14のセグメント実数(Core 31.1%/Payments 36.8%/Complementary 28.4%、利益もほぼ三等分)と「core-agnostic」「used independently」「非コア顧客5,710社 vs コア顧客1,670社」から独立3本=100。"
   ],
   "evidence": {
    "expiry": "限セクション ヒットなし。コアバンキングSaaS業態でコンセッション/特許束の満了型独占に該当しない→no",
@@ -78,7 +79,7 @@
    "erosion": "『have enabled us to capture substantial market share』『Growing our market share of services to small and medium-sized businesses』→蝕・循ともシェア浸食の証拠なし→none",
    "disrupt": "循(disruption)セクション ヒットなし。金融機関の基幹処理需要に技術代替の兆候なし→settled",
    "moatdecay": "『Growing our market share... continuous engagement and commitment』→堀の縮小兆候なし→no",
-   "dom": "『have enabled us to capture substantial market share』(コミュニティ/地銀コア処理の寡占)。定量シェア%はhits非開示のため保守的に寡占=70",
+   "dom": "v9.9.41再監査。**シェアの数値は原本に一切開示なし**（旧dom=70も自認どおり定量根拠なしだった）。10-K Item1 Competition 全文: 「The market for companies providing technology solutions to financial services organizations is competitive, and we expect that competition from both existing competitors and companies entering our existing or future markets will remain strong. **Some of our current competitors have longer operating histories, larger client bases, and greater financial resources**... Our core solutions compete with large vendors ... including Fidelity National Information Services, Inc.; Fiserv, Inc.; Corelation, Inc.; and Finastra. **Our non-core specialized solutions compete with an array of disparate vendors that provide niche solutions**」。Item 1A: 「**New competitors, including smaller start-ups, regularly appear** with new products, services, and technology for financial institutions」。→ 自社シェア%: 開示なし / 上位N社合計%: 開示なし。コア(売上31.1%)は名指し競合4社＋自社=5社以上で、しかも「競合の一部は自社より顧客基盤が大きい」＝自社は首位ではない。上位3社合計≥80%を示す数値がないため70(3社寡占)は置けない。非コア(Payments 36.8%+Complementary 28.4%=65.2%)は「an array of disparate vendors」＝明示的にfragmented。加えて全社で「smaller start-upsが常時新規参入」。→ **全事業が同じ残余刻み50へ落ちる**（規約3。構造記述があるので空欄にしない）。なお「have enabled us to capture substantial market share」「a leading provider」「Symitar ... is the system implemented by more credit unions with assets exceeding $25 million than any other credit union core system (NCUA data)」は、いずれも順位・程度の自称であり規約4によりどの刻みの証拠にもならない。出典: SEC EDGAR 10-K FY2025(2025-06-30) CIK0000779152 acc 0000779152-25-000055 https://www.sec.gov/Archives/edgar/data/779152/000077915225000055/jkhy-20250630.htm",
    "irr": "『The Jack Henry Platform... single public cloud-native, API-first platform... a modern alternative for existing core functions』+『typically foster long-term client relationships』→基幹コア移行は高摩擦=70",
    "rep": "『which we are developing into a fully functional modern alternative for existing core functions』→確立コア基盤だが自社も刷新途上=複製困難60(数十年不動とまでは言えない)",
    "dur": "『our... products typically foster long-term client relationships, attract prospective clients』→基幹システムのスイッチングコスト=75",
@@ -89,7 +90,7 @@
    "f3": "R&D別掲なし業態(ソフト開発は資産計上)。シェア趨勢は明確に+(『capture/growing substantial market share』)→片符号+=75",
    "f4": "『Private and Public Cloud $756,879 / 682,146 / 618,850』(クラウド収入が売上5%超で連続成長)+Payrailz『cloud-native, API-first, AI-enabled... digital payment solutions』(決済隣接)→隣接事業が成長=80",
    "f5": "disrupt=settled連動→85",
-   "moatW": "セグメント別売上(FY2025 10-K, 総額2,375,288千$): Payments 873,498=36.8% / Core 739,277=31.1% / Complementary 675,209=28.4% / Corporate and Other 87,304=3.7%(出典: 10-K 2025-06-30 Reportable Segment Information R67)。3セグメントとも顧客は同一の米国コミュニティ銀行・信用組合(『we serve approximately 1,670 bank and credit union core clients and over 5,710 non-core clients』)で、Complementaryは『can be integrated with the Company's Core solutions』と原本が明記=基幹系への相乗り。堀の源泉(基幹系の乗換コストと同一顧客基盤)が共通のため独立した堀は1本と判定。ただし顧客約7,380先で10%以上の顧客開示なし(最大顧客<10%)、最大セグメント36.8%<70%、用途も基幹系/決済/デジタルバンキング/不正検知へ分散(地域は米国内、国際売上<1%) → 70"
+   "moatW": "v9.9.41再監査で 70→100 に引上げ。10-K Note14 Reportable Segment Information(FY2025・総売上 $2,375,288千): **Core $739,277千=31.1%（セグメント利益 $441,905千）/ Payments $873,498千=36.8%（同 $413,347千）/ Complementary $675,209千=28.4%（同 $410,386千）/ Corporate and Other $87,304千=3.7%**。≥売上15%の柱が3本あり、利益も 441.9/413.3/410.4 とほぼ三等分＝どれも従属的な付随収入ではない。独立性の原本根拠: ①10-K Item1「**Non-core highly specialized core-agnostic products and services** are also provided to banks and credit unions」②Note14「(Complementary) ... can be integrated with the Company's Core solutions, and **many can be used independently**」③顧客基盤が実際に分かれている——「In total, we serve approximately **1,670 bank and credit union core clients and over 5,710 non-core clients**」（非コア顧客数がコア顧客の3.4倍＝コア設置基盤に乗っているだけの事業ではない）④競合集合も別（コア=FIS/Fiserv/Corelation/Finastra、非コア=「an array of disparate vendors that provide niche solutions」）。**追加規約「共通の中核技術に全サービスが乗る場合は1本」は非該当**——原本自身が非コアを「core-agnostic」「used independently」と明記しており、6920(装置＋その保守=同一設置基盤で1本)の型とは異なる。カード/ACH処理(Payments)、コア元帳(Core)、デジタルバンキング/AML(Complementary)は障壁の種類が別で、1本折れても他が生き残る。→ 独立した堀3本(各≥15%) = 100。留意: 3本とも販路は同一（コミュニティ銀行・信用組合というひとつの顧客層へのクロスセル）であり、業界そのものが縮小する局面では3本が同時に効かない。この一点は100の弱点として記録する。出典: SEC EDGAR 10-K FY2025(2025-06-30) CIK0000779152 acc 0000779152-25-000055 https://www.sec.gov/Archives/edgar/data/779152/000077915225000055/jkhy-20250630.htm"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -111,6 +112,20 @@
     "evebit"
    ],
    "src": "market_fetch/market_data.json"
+  },
+  "moat_reaudit": {
+   "date": "2026-07-29",
+   "model": "claude-opus-5",
+   "rule": "v9.9.41",
+   "scope": "dom / moatW / _meta のみ変更。他フィールドは一切触れていない",
+   "dom": {
+    "old": 70,
+    "new": 50
+   },
+   "moatW": {
+    "old": 70,
+    "new": 100
+   }
   }
  },
  "mcap": 11.536
