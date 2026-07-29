@@ -470,7 +470,6 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
  </div>
 </div>
 </div>
-</div>
 
 <!-- ============ GATE I ============ -->
 <div class="gatebanner img1">
@@ -2350,15 +2349,14 @@ function exitVerdict(d,r){
 async function renderHoldings(items,holdSet){
   // v9.9.26: 保有一覧の表示はⅦ資産(portfolio.html)へ一本化済み(#19-25)——この関数は出口判定キャッシュ(pf:verdicts)の更新のみを担う。
   //   旧実装が参照していた holdBox/holdBadge はタブ統合で撤去済みのDOMで、パネル描画コード(約60行)は到達不能の死骸だったため削除。
-  const box=$('holdBox');
-  const badge=$('holdBadge');
+  // v9.9.47: 撤去済みDOM(holdBox/holdBadge)への参照を削除。ブラウザでは null が返るだけの死んだ行で、
+  //   night/check_html.py の「参照するのにHTMLに無いID」検査に引っかかるので掃除した。
   const held=items.filter(it=>it.held);
   // 採点済(evalScoreあり)だけ出口判定にかける。採点なし(資産ビューからの保有登録等)は誤ってS1(空データ=スプレッド≤0)にせず除外
   const scored=held.filter(it=>it.evalScore!=null), pending=held.filter(it=>it.evalScore==null);
   // 出口判定を資産ビュー(portfolio)と共有するためlocalStorageにキャッシュ(採点済のみ・表示専用)。
   // levelは採点機compute()同梱の正本判定(it.exit)を最優先し、無い旧記録のみ簡易版exitVerdictで補う(S1/S2/S3一本化)
   try{const vm={};scored.forEach(it=>{const e=exitVerdict(it.d||{},it);const lvl=(it.exit&&it.exit.level)||e.level;vm[it.nm]={level:lvl,spread:e.spread,F:e.F,conv:e.conv};});localStorage.setItem('pf:verdicts',JSON.stringify(vm));}catch(e){}
-  if(!box)return;
 }
 async function save(){
   const nm=$('nm').value.trim(); if(!nm){uiNotice('銘柄名を入力してください');return;}
