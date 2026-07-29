@@ -127,7 +127,7 @@ footer{text-align:center;padding:42px 0 80px;}
 #scorer .sub{color:var(--mut);font-size:13px;max-width:34em;margin:7px auto 0}
 #scorer .sub b{color:var(--ink)}
 #scorer /* ===== the signature: two separated verdicts ===== */
-.duo{position:sticky;top:0;z-index:30;margin:18px -18px 0;background:rgba(8,10,14,.94);backdrop-filter:blur(12px);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.duo{position:sticky;top:0;z-index:30;margin:18px 0 0;background:rgba(8,10,14,.94);backdrop-filter:blur(12px);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 #scorer .duo-in{max-width:740px;margin:0 auto;display:grid;grid-template-columns:1fr 1px 1fr;gap:0;padding:0}
 #scorer .duo-col{padding:13px 16px;text-align:center}
 #scorer .duo-div{background:var(--line)}
@@ -328,6 +328,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
 
 /* ── ③ スマホ最適化 ── */
 @media(max-width:640px){
+  :root{--navh:0px;} /* ナビは下段固定になるため、上端の貼り付き高さはゼロ */
   .wrap{padding:0 16px;}
   .block{padding:40px 0;}
   .panel{padding:22px 16px;border-radius:12px;}
@@ -336,8 +337,20 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
   .hero-inner{padding:0 18px;}
   .grades{gap:8px;}
   .gr{min-width:70px;padding:11px 4px;}
+  /* タブナビを親指の届く画面下部へ固定（アプリのタブバー式） */
+  .pgnav{position:fixed;top:auto;bottom:0;left:0;right:0;border-bottom:none;border-top:1px solid var(--gold-line);box-shadow:0 -6px 24px rgba(0,0,0,.35);padding-bottom:max(9px,env(safe-area-inset-bottom));}
+  body{padding-bottom:calc(76px + env(safe-area-inset-bottom));}
   /* 表は枠内で横スクロール（画面がはみ出さない） */
   table.dt{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  /* 長いURL・コード・英語は枠内で折り返す＝ページ全体の横パンを根絶 */
+  code{overflow-wrap:anywhere;word-break:break-all;}
+  .pg div,.pg p,.pg td,.pg li,.pg span{overflow-wrap:anywhere;}
+  .pg [style*="display:flex"]>*,.pg [style*="display:grid"]>*{min-width:0;}
+  .panel-h .pass{white-space:normal;line-height:1.6;}
+  /* 採点機：行を縦積み＝長い選択肢も画面幅に収まる */
+  #scorer .row{grid-template-columns:1fr;gap:6px;}
+  #scorer .rc{justify-self:stretch;flex-wrap:wrap;}
+  #scorer .rc select{flex:1;width:100%;min-width:0;}
   /* タップ標的を40px以上へ（アイコン型・リンク型の小ボタンは除外） */
   button:not([style*="background:none"]):not([style*="border:none"]){min-height:40px;}
   .pgnav button{min-height:42px;padding:10px 14px;}
@@ -345,8 +358,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
   #scorer input#nm,#scorer input[type=number],#scorer select,#scorer .auto textarea{font-size:16px;}
   #scorer input[type=number]{width:96px;}
   #scorer .wrap{padding:0 14px;}
-  /* テーマ切替をホームバーと被らない位置へ */
-  #themeToggle{right:12px !important;bottom:calc(12px + env(safe-area-inset-bottom)) !important;}
+  /* テーマ切替は下段ナビの上へ＝ホームバー・ナビと被らない */
+  #themeToggle{right:12px !important;bottom:calc(74px + env(safe-area-inset-bottom)) !important;}
 }
 
 /* 動きを減らす設定の尊重 */
