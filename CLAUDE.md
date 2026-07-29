@@ -63,6 +63,15 @@
 - 夜間バッチ審査は night/（chunkNN.txt=銘柄リスト、agent_prompt_template.txt=審査官指示〔正本はⅡ手順3・改定時は同期〕、
   progress.json=進行表。出力は out/{T}_gate_pack.json。日本株の一括再審査は agent_prompt_template_jp.txt〔EDINET_DB
   で自力採取・JP必須規約強制〕にコード列を渡す）。詳細は night/README.md
+- **門へ反映する手順（2026-07-29に踏んだ落とし穴）**: main へマージして GitHub Pages が更新されても、
+  **門の台帳はブラウザの localStorage(`g7:`) にあり out/*.json とは別物**なので、それだけでは何も変わらない。
+  必要なのは3手: (1)ハード再読み込み (2)**Ⅳ台帳の「↻全再採点」**＝保存済みdataに現行 compute() を通す
+  ——採点ロジック・閾値の変更（堀の関門・p1の刻み等）はここで効く (3)**Ⅵの「⭳ 全パック一括取込」**
+  ＝リポジトリの out/ から全パックを直接fetchして取り込む——**パックのデータ自体の是正**（市場データ・
+  機械値・定性の書き直し）はここでしか届かない（全再採点はパックを読み直さない）。
+  一括取込は `out/packs_index.json` を目録に使うので、**パックを新規追加したら索引の再生成が要る**
+  （`python3 night/make_chunks.py` が末尾で更新する。実害: 6146を追加した日に索引が316件のままで、
+  一括取込しても6146だけ台帳に入らなかった）。JSONを手で貼る運用は索引が正になった今は不要
 - 全パック検証: `node night/score_all.js` → 門の compute()／ccfXJudge／ccfMoatGate をそのまま走らせて
   Ωと**三段関門の合否（🟢投下可が何社か）**を実測。`--jp/--us/--only/--set`。出力 out/score_all.json。
   「基準を変えたら誰がどう動くか」は推測でなくこれで出す
