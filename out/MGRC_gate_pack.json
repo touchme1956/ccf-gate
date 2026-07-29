@@ -1,8 +1,8 @@
 {
  "nm": "MGRC",
- "roic": 20.8,
- "roicg": 14.4,
- "nde": null,
+ "roic": 13.0,
+ "roicg": 10.2,
+ "nde": 1.47,
  "z": null,
  "gpa": 19.3,
  "accr": -4.2,
@@ -57,7 +57,7 @@
   "reportDate": "2025-12-31",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/752714/000119312526071463/mgrc-20251231.htm",
-  "auditDate": "2026-07-18",
+  "auditDate": "2026-07-29",
   "model": "Claude Fable 5",
   "kenshi": [
    "nde棄却→null: LongTermDebt/ShortTermDebtタグが捕捉できず(diag debtL=1年分・debtS/sti不発見)、採取器nde=-0.0(純現金)は資本集約レンタル業で実装不能な誤値。実際はレボルバー+買収負債保有(cash 2025=$0.295Mのみ、2021買収$283M/2023$458Mは負債調達)。誤値より空欄(protocol)。EBITDA≈op243.6+D&A107.1=350.7M、推定純負債~$0.6-0.8B→~2.0x見込み→p3=70(<2.5)は保守推定。原本B/Sで負債要確認",
@@ -65,7 +65,8 @@
    "ROIC検算: 参考計算 のれん込み=2021:13.4→2025:16.9%(σ1.5pt・最低13.4)、のれん除き=2025:23.9%(2023-25で24.5/24.1/23.9)。採取器roic=20.8/roicg=14.4は両参考値の中間で数点低いがIC定義差、方向整合(roic>roicg・共に二桁)のためASR同様に採取器値維持。中核事業ROIC~24%は優秀、買収のれんで込み17%に希薄化(のれん込み>>WACC~8%で乖離警報は不発)",
    "gm=25.8は営業利益率(index.html『注:gmは営業』仕様通り)。真の粗利率はGrossProfit455.0/rev944.2=48.2%。gpa=GP/A=455.0/2357.1=19.3%(検証一致)。accr=(NI156.3-OCF255.7)/資産2357.1=-4.2%(一致)",
    "fcf=0.21(十億USD)=OCF255.7-capex44.4=211M(一致)。ni=0.16(十億)=156.3M。sbc充填=0.01(十億)=ShareBasedCompensation11.2M。eps6.35=NI156.3/加重株24.6M(一致)。cagr10.5=Revenues 2020:572.6→2025:944.2の5年CAGR(一致)",
-   "acq5=yes: PaymentsToAcquireBusinesses 2021:283.1/2023:458.3/2025:23.8(5年で~$765M)。連続買収でのれん332.6M計上、のれん込み/除きROIC乖離の監視対象。売上成長10.5%はM&A寄与大(有機成長比率はhits未開示)"
+   "acq5=yes: PaymentsToAcquireBusinesses 2021:283.1/2023:458.3/2025:23.8(5年で~$765M)。連続買収でのれん332.6M計上、のれん込み/除きROIC乖離の監視対象。売上成長10.5%はM&A寄与大(有機成長比率はhits未開示)",
+   "2026-07-29 投下資本の算定バグ検算: roic 20.8→13.0、roicg 14.4→10.2、nde null→1.47、roict up(据置・系列は再計算)。**有利子負債 514,924千$(連結貸借対照表 Notes payable)が丸ごと欠落していた**——採取器が探すLongTermDebt/DebtCurrent系のタグをMGRCは使っておらず NotesPayable 1行で開示しているため debt=0 と読んでいた。旧kenshiの『中核事業ROIC~24%』は負債を除外した過大値で、負債込みの実力は13%圏。原本(10-K accession 0001193125-26-071463)の連結貸借対照表から実額を採取して再計算。roic/roicg/roicEx/nde/roict/_meta 以外は一切変更していない。"
   ],
   "evidence": {
    "dom": "『Although no single competitor holds a dominant market share, we face intense competition from these established entities and new entrants in the market.』→自社も支配的シェアなし・断片市場での激しい競争=競争(<40%)=50",
@@ -78,10 +79,13 @@
    "disrupt": "蝕セクションに技術代替のヒットなし。循セクション『these industries have been cyclical and have experienced periodic downturns』は循環性であり破壊的技術ではない。モジュラー建物レンタルに技術代替なし=settled",
    "geopol": "『No single customer accounted for more than 10% of total revenues during 2025, 2024 and 2023. Revenue from foreign country customers accounted for 2 %, 2 % and 3 %』→顧客集中低位・ほぼ全米国内=軽微=0",
    "p2": "COVID時 op 2019:141.4→2020:140.8(-0.4%・浅い)だが、hits『The most recent economic recession caused state and local budget [cuts]』が教育予算依存の景気後退脆弱性を明示。観測は財政支援厚いCOVID一回のみで2008-09の実額は窓外。浅い実測と構造的脆弱性の緊張→中(75)に保守化",
-   "p4": "accr=-4.2%(<0・保守的)。『material weakness』ヒットは監査報告の定型文(『assessing the risk that a material weakness exists, testing and evaluating...』)で実指摘ではない。『ITEM 1B. UNRESOLVED STAFF COMMENTS None』→無限定・実指摘なし=90"
+   "p4": "accr=-4.2%(<0・保守的)。『material weakness』ヒットは監査報告の定型文(『assessing the risk that a material weakness exists, testing and evaluating...』)で実指摘ではない。『ITEM 1B. UNRESOLVED STAFF COMMENTS None』→無限定・実指摘なし=90",
+   "roic": "roic = NOPAT 178,712千$ ÷ (自己資本 1,237,023 + 有利子負債 514,924 − のれん 332,584 − 無形資産 46,605) = 178,712 ÷ IC 1,372,758 = 13.0%。NOPAT = 営業利益 243,623 ×(1−実効税率 26.6%[法人税等 56,773 ÷ 税引前利益 213,081])。有利子負債＝連結貸借対照表 負債の部 Notes payable 514,924(マクグラス・レントコープは借入金をこの1行に集約して開示しており、他に有利子負債・ファイナンスリース債務の計上はない)。旧20.8%は有利子負債が欠落しICが過小だったための過大表示。出典: 10-K accession 0001193125-26-071463 連結貸借対照表・連結損益計算書",
+   "roicg": "roicg = NOPAT 178,712千$ ÷ (自己資本 1,237,023 + 有利子負債 514,924) = 178,712 ÷ 1,751,947 = 10.2%。旧14.4%は同じ負債欠落による。出典: 10-K accession 0001193125-26-071463 連結貸借対照表",
+   "nde": "nde = (有利子負債 514,924 − 現金 295) ÷ (営業利益 243,623 + 減価償却費 107,069) = 514,629 ÷ 350,692 = 1.47倍。旧nullの『-0.0＝純現金』はNotesPayableタグ未捕捉による誤値。推定していた『~2.0x』より軽い。出典: 10-K accession 0001193125-26-071463 連結貸借対照表・連結CF計算書",
+   "roict": "roict = up(据置)。負債込みで組み直したのれん除外ROIC 2021:9.3% / 2022:10.5% / 2023:10.8% / 2024:13.5% / 2025:13.0%。直近13.0 − 最古9.3 = +3.7pt(>+2pt)＝up。水準は旧kenshiの参考値(23.9%)ではなく13%圏——資本集約レンタル業として妥当。出典: 10-K accession 0001193125-26-071463 ほか各年10-K"
   },
   "nulls": {
-   "nde": "LongTermDebt/ShortTermDebtタグ捕捉失敗(debtL=1年分のみ・debtS不発見)。採取器値-0.0は誤り(純現金は業態上ありえず)。誤値より空欄。原本B/Sの負債で要再計算",
    "z": "Altman Zは時価総額必要(市場データ手入力後に算出)",
    "sbc": "充填済(0.01=$11.2M、ShareBasedCompensationタグあり)",
    "founder": "創業者(1979 Robert McGrath)の現経営関与はhitsに証拠なし→空欄",
