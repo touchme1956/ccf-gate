@@ -43,7 +43,7 @@
  "indG": null,
  "founder": null,
  "fin": "yes",
- "p1": 80,
+ "p1": 65,
  "p2": 70,
  "p3": 70,
  "p4": 75,
@@ -74,7 +74,8 @@
    "cagr=171.8はNI/FCFのゼロ近傍基点(2020 NI≈-1M/2020 op128M)による基点効果の幻影。持続的成長率ではない=成長の幻影フラグ",
    "gmt=down確認: opm 21.0(2023)→17.4(2024)→15.7(2025)の圧縮(フィンテック構成で金融費用が原価計上+競争的価格)。roict=flatはドラフト維持だが直近2年は低下傾向",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=17.0 / 5年窓=16.0。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。"
+   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
+   "2026-07-29 p1 80→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均13.2%・σ5.0pt・CV37.4%）。"
   ],
   "evidence": {
    "dom": "『we have seen competition intensify not only as local players grow their e-commerce businesses, but also as international players expand, mainly in Brazil and Mexico』。地域首位だがhitsに独占シェア%なく競争激化→寡占70",
@@ -87,7 +88,7 @@
    "moatdecay": "revenue+28%成長継続でFICO型の明確崩壊ではない(erosion=activeが監視信号)→no",
    "geopol": "『Brazil, Argentina and Mexico, which together accounted for 95.6%...of our net revenues...have experienced volatility and significant devaluations』+『52.6% of our net revenues...denominated in Brazilian Real, 22.4% in Mexican Pesos and 20.6% in Argentine Pesos』→EM集中+ARS超インフレ=2(重)",
    "fin": "『no single customer accounted for more than 5.0% of our net revenues and financial income』『boosted by the growth of credit origination』『Fintech revenue Our Fintech business is comprised of three primary revenue』『Concentration of credit risk...loans...the Company generally does not require collateral』→与信・financial incomeを持つ金融事業=yes",
-   "p1": "ROIC5年σ=5.8pt(<6pt=80)。最低6.9%(2021)は与信ブック構築・投資期で2025に17.8%へ回復",
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 6.2% / 2022 9.8% / 2023 15.6% / 2024 20.6% / 2025 14.1% → 平均 13.2% / σ 5.0pt / **CV 37.4%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **65**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "p2": "系列内に需要後退の不況実績なし(COVID2020は営利がプラス転換128M・EC受益)→70上限。EM通貨危機は別種リスク",
    "p3": "nde0.72(STI算入)〜1.37(STI除外)。フィンテック顧客資金の算入曖昧+短期債務タグ欠損→保守70",
    "p4": "accr=-23.7%(<0)だがフロート由来で保守性信号として不確実。material weaknessヒットは監査手続の定型文(『assessing the risk that a material weakness exists』)で実指摘ではない。『ITEM 1B. UNRESOLVED STAFF COMMENTS Not applicable』→90でなく75",
@@ -129,7 +130,8 @@
    "eps": "machine",
    "roiic": "machine",
    "roiic5": "machine",
-   "sht": "machine"
+   "sht": "machine",
+   "p1": "machine"
   }
  },
  "roiic": 17.0,

@@ -43,7 +43,7 @@
  "indG": null,
  "founder": null,
  "fin": null,
- "p1": 90,
+ "p1": 80,
  "p2": 95,
  "p3": 95,
  "p4": 90,
@@ -71,7 +71,8 @@
    "gmt訂正: ドラフト'flat'→'up'。営業利益率 13.9%(2021)→13.6→14.6→14.3→15.0%(2025)と緩やかに拡大(長期では2018年5.6%から構造的上昇)。gm=15.0は営業利益率(粗利率は38.4%)",
    "acq5: 事業買収支払 2021:76.8/2022:3.9/2023:0/2024:24.3/2025:0=累計105M。定義・単位の一意性が薄く誤充填回避のためnull維持(生値は本注記に記録)。成長はほぼオーガニック",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=51.0 / 5年窓=67.2。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。"
+   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
+   "2026-07-29 p1 90→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均26.4%・σ5.4pt・CV20.3%）。"
   ],
   "evidence": {
    "dom": "『The market for our services is highly competitive, and we expect competition to intensify and increase in the future as more companies enter the market』→断片化した競争市場・単独支配なし→競争<40%=50",
@@ -84,7 +85,7 @@
    "expiry": "コンセッション/特許束依存の期限型独占なし(BPO業態)→no",
    "geopol": "『No single customer accounted for more than 10% of...revenues』『top three, five and ten clients generated 17.8%, 23.9% and 34.0%』=顧客分散。収入は『U.S. dollar representing 84.7%...U.K. pound sterling representing 10.6%』(米英)だが原価/デリバリは『India, the Philippines, South Africa, Colombia, Bulgaria, Romania, UK, Czech, Mexico, Ireland』・費用はINR/PHP/ZAR/COP=インド中心オフショア。分散オフショアの為替・地政リスクは中程度=1",
    "nrr": "hits非開示→既定105",
-   "p1": "ROIC5年σ=2.5pt(<3pt)→90",
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 16.8% / 2022 26.8% / 2023 29.2% / 2024 26.6% / 2025 32.9% → 平均 26.4% / σ 5.4pt / **CV 20.3%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "p2": "COVID時 営業利益 76.5(2019)→110.0(2020)+44%で下落なし=浅い(実質DDなし)→95。ただし8年窓で観測可能な不況はCOVID一巡のみ(2008-09は窓外)、かつコスト裁定BPOにCOVIDは追い風の可能性=単一・特殊局面と認識",
    "p3": "FY2025/12/31は純現金(nde−0.05〜−0.08)→95。付記: Q1'26で純負債≒0.45xへレバレッジ化(自社株買い財源)",
    "p4": "accr=−5.9%(<0・高い現金化)。materialweaknessヒットは全て定型文(『While we do not anticipate any material weaknesses』=リスク要因の将来言及、『assessing the risk that a material weakness exists』=監査報告の標準文言)で実指摘ではない。『Unresolved Staff Comments None』→無限定相当=90",
@@ -131,7 +132,8 @@
    "eps": "machine",
    "roiic": "machine",
    "roiic5": "machine",
-   "sht": "machine"
+   "sht": "machine",
+   "p1": "machine"
   }
  },
  "roiic": 51.0,

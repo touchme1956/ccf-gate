@@ -44,7 +44,7 @@
  "indG": null,
  "founder": null,
  "fin": null,
- "p1": 50,
+ "p1": 65,
  "p2": 50,
  "p3": 95,
  "p4": 70,
@@ -76,7 +76,8 @@
    "2026-07-29 ROIC分母縮退の検算: roic 78.1→78.1(完全一致・据置)、roicg 66.8(不変)、IC/自己資本=90.0%、6年系列 26.3/31.9/16.3/61.5/86.4/78.1(最大÷最小5.3倍)。理由=系列の振れは大きいが**分母は全年 IC/自己資本90-122%で健全**、のれん+無形は自己資本の15.4%しかなく構造的に縮退しえない。振れは100%分子(営業利益31倍化)由来＝HEI型のアーティファクトではないため採用。_meta以外のフィールドは一切変更していない(roic/roicgは実測と一致したため値の変更なし)。",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=80.4 / 5年窓=74.9。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 cagr 85.9 → **66.9** に是正。旧値は採取器の二つのバグの積——(1)年数を系列の要素数で数えていた（年が飛ぶと span>要素数 で必ず過大）、(2)ASC606のタグ改称で候補タグの先頭を無条件採用し古い系列を掴んでいた。採取器は修正ずみだが**パックが更新されていなかった**。cagrは門XのE[r]のgに直結する（gはmin(cagr, gcap, 20%)で20%上限なのでE[r]自体は動かないが、台帳の値が19pt誤っていた）。",
-   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。"
+   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
+   "2026-07-29 p1 50→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均54.2%・σ27.0pt・CV49.9%）。"
   ],
   "evidence": {
    "irr": "同installed base/developer ecosystem引用=CUDAが事実上の規格・移行に高摩擦→規格ロック85",
@@ -89,7 +90,7 @@
    "geopol_concentration": "集『For fiscal year 2026, sales to one direct customer represented 22% of total revenue and sales to another direct customer represented 14% of total revenue』(FY2025は12%/11%/11%、FY2024は13%)→顧客集中が悪化",
    "moatdecay": "誠『revenue for fiscal year 2026 was up 41% from a year ago, driven by strong Blackwell demand』＋installed base拡大→堀は現状拡大中=no",
    "nrr": "開示なし→既定105",
-   "p1": "kenshi ROIC5年σ=24.0pt(二桁)→50",
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2022 31.9% / 2023 14.9% / 2024 60.0% / 2025 86.4% / 2026 77.6% → 平均 54.2% / σ 27.0pt / **CV 49.9%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **65**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "p2": "営利 FY2022 10.0→FY2023 4.2十億=-58%(直近下降局面)。半導体の深循環→深いDD=50",
    "p3": "純現金(nde-0.01〜-0.02)→95",
    "p4": "accr=8.4%(正で小さくない・急成長の運転資本)＋誠『Identification of material weaknesses...may cause investors to lose confidence』は監査手続/リスク要因の定型文で実指摘ではない＋『Item 1B. Unresolved Staff Comments None』→無限定・実欠陥なしだが正のaccr大でクリーン90からは減じ70",
@@ -156,7 +157,8 @@
    "eps": "machine",
    "roiic": "machine",
    "roiic5": "machine",
-   "sht": "machine"
+   "sht": "machine",
+   "p1": "machine"
   }
  },
  "mcap": 4857.4491,

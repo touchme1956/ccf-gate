@@ -43,7 +43,7 @@
  "indG": null,
  "founder": null,
  "fin": null,
- "p1": 80,
+ "p1": 50,
  "p2": 95,
  "p3": 95,
  "p4": 90,
@@ -69,7 +69,8 @@
    "2026-07-18 roic検証済: 再計算83.3/73.7と一致。自己資本薄/のれん控除による高値は実態(タグ誤りなし)",
    "2026-07-29 ROIC機械検算: roic 89.7→89.6 / roicg 75.4→75.4 / nde -0.67→-0.67。IC=1,879百万$＝自己資本の152%。のれん257+無形97を控除しても健全",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=49.1 / 5年窓=None。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。"
+   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
+   "2026-07-29 p1 80→50（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均136.2%・σ94.0pt・CV69.0%）。"
   ],
   "evidence": {
    "dom": "『The market for network security products is intensely competitive and dynamic, and we expect competition to continue to intensify. We face many competitors across the different cybersecurity markets. Our competitors include companies such as C...』(蝕)→独占でなく競争的。堀セクションはヒットなし・市場シェア数値も原本になし→競争<40%相当=50(FTNTはFW出荷台数の有力企業だが原本証拠なく保守化)",
@@ -82,7 +83,7 @@
    "moatdecay": "『continued growth and market share gains』+『Product revenue grew 16% in 2025』→市場成長下でシェア拡大継続=no",
    "geopol": "『We rely on a small number of manufacturing partners, with the majority...』(集)=アジア製造委託への集中で供給網の地政学リスク。売上は地域分散(Americas40%/EMEA42%/APAC18%)→中=1。※販社集中(Distributor A28%/B15%/C12%)は別軸のチャネル集中リスクとして併記(geopolには算入せず)",
    "nrr": "純収益維持率の開示ヒットなし→既定105",
-   "p1": "ROIC5年σ=53.9pt(機械値)は2022-23の負/微小自己資本が分母を圧縮した自社株買いアーティファクトで判定に不適。opmは2018-25単調上昇(5年σ約4.5pt<6pt)=事業収益力は極めて安定→opm基準で80。生ROIC σは採用せず(検死参照)",
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 40.2% / 2022 178.3% / 2023 300.4% / 2024 72.6% / 2025 89.7% → 平均 136.2% / σ 94.0pt / **CV 69.0%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **50**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "p2": "営業利益は2018-25で単調増加、2020年COVID不況でも+51%(351→532百万$)成長=不況耐性実証→浅いDD(-20%以内)相当95。サイバー防御は非裁量需要",
    "p3": "純現金(nde=-0.67・純負債-1,499百万$、現金2,495+短期投資 対 有利子負債996百万$)→95",
    "p4": "accr=-7.1%(<0=利益に現金裏付け)。material weaknessヒットは監査手続の定型文(『assessing the risk that a material weakness exists, testing and evaluating...』)で実指摘ではない。『Unresolved Staff Comments: Not applicable』→無限定相当→90",
@@ -124,7 +125,8 @@
    "dilNet": "machine",
    "eps": "machine",
    "roiic": "machine",
-   "sht": "machine"
+   "sht": "machine",
+   "p1": "machine"
   }
  },
  "roiic": 49.1,

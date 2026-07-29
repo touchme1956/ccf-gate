@@ -43,7 +43,7 @@
  "indG": null,
  "founder": null,
  "fin": null,
- "p1": 55,
+ "p1": 80,
  "p2": 95,
  "p3": 85,
  "p4": 90,
@@ -70,7 +70,8 @@
    "ROIIC二窓検算: ΔNOPAT/ΔIC 2023→25≒10%(2025の資本急拡大で圧縮)、2022→24≒30%。実態は中間、直近の製造能力拡張は前収益投資→再投資率≥30%も加味しf1=65",
    "acc=\"usgaap\"はNVOのIFRS開示(ifrs-full名前空間)と不整合だが、ASR様式(同じくIFRS外国発行体でusgaap維持)踏襲・フィールド定義曖昧のためdraft維持",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=18.6 / 5年窓=None。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 acq5 107.6 → None。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
+   "2026-07-29 acq5 107.6 → None。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-07-29 p1 55→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均48.4%・σ9.7pt・CV20.1%）。"
   ],
   "evidence": {
    "expiry": "『Compound patent expiry in the US for the semaglutide branded products - Ozempic, Rybelsus, and Wegovy - is 2032』+『The compound patent for Victoza has expired...The drug compound patent for Saxenda (liraglutide) has expired in all countries』→主力semaglutideは2032年特許崖・旧世代はバイオシミラー既出=期限型独占→yes",
@@ -82,7 +83,7 @@
    "dur": "特許(規制)+ペプチド大量製造のプロセス知(『there have been periodic supply constraints for certain products』が製造障壁の傍証)→規制/プロセス型の高堀。ただしLillyが同機序を実装済で絶対的スイッチングロックではない→85",
    "geopol": "『pricing pressure is expected to continue in the future, driven by: increasing rebates in the commercial segment, the effect of payer consolidation』+『recognise revenue of USD 4.2 billion comprising the entire amount of provisions for 340B statutory discounts』=米薬価政策(IRA/340B/関税圧力)が中核フランチャイズに集中。ただし地理は米/EUCAN/EM/APAC/中国に分散→中=1",
    "nrr": "開示なし→既定105",
-   "p1": "ROIC5年σ=10.3pt(二桁)だが低下はIC急拡大(Catalent+設備投資)主因でopm41-44%安定→55",
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 48.7% / 2022 55.0% / 2023 61.4% / 2024 44.1% / 2025 32.8% → 平均 48.4% / σ 9.7pt / **CV 20.1%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "p2": "『revenue for the GLP-1 product Wegovy grew 36%』糖尿/肥満は非景気循環需要。2020 COVID期も営利52.5→54.1十億で増加=不況で営利低下せず→95",
    "p3": "nde=0.82(<1)→85",
    "p4": "accr=-3.1%(<0・OCF>NI=保守的)。『material weakness』ヒットは監査手続の定型記述で実指摘ではない。『ITEM 4A UNRESOLVED STAFF COMMENTS None』→90",
@@ -123,7 +124,8 @@
    "nde": "machine",
    "accr": "machine",
    "eps": "machine",
-   "roiic": "machine"
+   "roiic": "machine",
+   "p1": "machine"
   }
  },
  "roiic": 18.6

@@ -44,7 +44,7 @@
  "indG": null,
  "founder": null,
  "fin": null,
- "p1": 80,
+ "p1": 90,
  "p2": 95,
  "p3": 95,
  "p4": 90,
@@ -77,7 +77,8 @@
    "2026-07-29 p2再監査(p2と_metaのみ・他フィールド不変): 旧p2=95 → 新p2=95(据置。ただし旧値は evidence 空＝『測っていない値が入っている』状態だった)。SEC XBRL(us-gaap:OperatingIncomeLoss・全て10-K由来)の営業利益年次系列と FY2009 10-K原本(d10k.htm)で GFC/COVID/2022 の3局面を実測し、GFC(FY2008 143.0→FY2009 190.3, +33.1%)・COVID(FY2019 579.3→FY2020 809.7, +39.8%)・2022(FY2022 1,000.3→FY2023 1,131.9, +13.2%)のいずれもドローダウン0%を確認。最深DD=0%→浅(-20%以内)=95。COVID一本足ではなく3局面すべてを年次原本で測っている。FY2007の谷(90.2)は製品リコール費用59.7百万ドルによる一過性で景気要因でないことも原本で確認した。値は不変だが根拠が空欄だった状態を解消した。",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=23.8 / 5年窓=24.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 原本検算(SEC XBRL FY2025 10-K): roic 57.3→45.0 / roicg 23.6→21.2 / roict down→up / nde −0.64→−0.29 / cagr 12.0→11.7。旧値はいずれも_meta.evidenceが無く再現不能だった",
-   "2026-07-29 acq5 1.37 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
+   "2026-07-29 acq5 1.37 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均43.4%・σ2.8pt・CV6.4%）。"
   ],
   "evidence": {
    "dom": "【2026-07-29 堀再監査・原本(10-K)から取り直し→空欄】SEC 10-K FY2025(rmd-20250630.htm, 2025-08-08提出) Item 1 Business の Competition 節の全文は『Global competition for sales of our products and services is intense. We believe that the principal competitive factors are product features, value-added solutions, quality, reliability and price... Our primary Sleep and Breathing Health competitors include Philips BV; Fisher & Paykel Healthcare Corporation Limited; DeVilbiss Healthcare; Apex Medical Corporation; BMC Medical Co. Ltd.; React Health Corporation; Jiangsu Yuyue Medical Equipment & Supply Co., Ltd, and Lowenstein Medical SE & Co. KG plus regional and new-entrant manufacturers』であり、自社シェア%も上位N社合計シェアも一切開示が無い。Item 1 冒頭の自己記述も『We are a global leader in digital health and cloud-connected medical devices』『we are a leading provider of cloud-based health applications』という定性表現のみで、v9.9.38の刻み(市場構造)を導く材料にならない。Item 1A Risk Factors にもシェアの数値は無い。旧evidenceが依拠した『CPAP複占(Philips)』は原本の外の通念であり、原本はむしろ名指し8社＋地域/新規参入業者を列挙していて複占(上位2社合計≥80%)の裏が取れない。→ 刻みを導けないため dom=null(理由は _meta.nulls.dom)。出典: https://www.sec.gov/Archives/edgar/data/943819/000094381925000035/rmd-20250630.htm",
@@ -115,7 +116,8 @@
    "roict": "5年系列 39.8→45.0（最古比+5.2pt）＝up。旧値downは根拠なし",
    "nde": "原本検算 2025年: (有利子負債668,292 − 現金1,209,450) ÷ (営業利益1,685,363+減価償却198,473) = −0.29",
    "cagr": "原本検算: 売上 2020年2,957,013千$ → 2025年5,146,327千$ ＝5年の年率11.7%",
-   "acq5": "【2026-07-29 機械判定】のれん残高(十億$) 2020 1.89 → 2021 1.93 → 2022 1.94 → 2023 2.77 → 2024 2.84 → 2025 3.05。**新しさ =(直近 3.05 − 2020年 1.89)÷直近 = +38.0%**（今あるのれんのうち直近5年に増えた割合） → **大型買収あり=yes**（3分の1以上が直近5年＝現経営陣の買収）（出典: SEC XBRL companyfacts の Goodwill 系列）"
+   "acq5": "【2026-07-29 機械判定】のれん残高(十億$) 2020 1.89 → 2021 1.93 → 2022 1.94 → 2023 2.77 → 2024 2.84 → 2025 3.05。**新しさ =(直近 3.05 − 2020年 1.89)÷直近 = +38.0%**（今あるのれんのうち直近5年に増えた割合） → **大型買収あり=yes**（3分の1以上が直近5年＝現経営陣の買収）（出典: SEC XBRL companyfacts の Goodwill 系列）",
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 39.8% / 2022 43.8% / 2023 41.0% / 2024 47.5% / 2025 45.0% → 平均 43.4% / σ 2.8pt / **CV 6.4%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **90**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -158,7 +160,8 @@
    "roict": "kenshi",
    "nde": "kenshi",
    "cagr": "kenshi",
-   "acq5": "machine"
+   "acq5": "machine",
+   "p1": "machine"
   }
  },
  "mcap": 30.6018,

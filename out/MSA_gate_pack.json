@@ -43,7 +43,7 @@
  "indG": null,
  "founder": null,
  "fin": null,
- "p1": 50,
+ "p1": 65,
  "p2": 95,
  "p3": 85,
  "p4": 90,
@@ -69,7 +69,8 @@
    "充填: sbc=$0.015B(ShareBasedCompensation15.2M・売上0.81%=希薄化圧力小)、acq5=$0.58B(PaymentsToAcquireBusinesses 2021 Bacharach 392.4+2025 189.3M。中小/資産取得は別途の可能性あり)。roict='up'(2021訴訟谷→2025回復)充填",
    "gmt='up'は採取器methodの3年営利率基準(2023:12.9→2025:19.8%)。ただし単年では2024→2025が21.5→19.8%と低下(注記)",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=22.8 / 5年窓=19.5。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 acq5 0.58 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
+   "2026-07-29 acq5 0.58 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-07-29 p1 50→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均23.6%・σ11.6pt・CV49.4%）。"
   ],
   "evidence": {
    "expiry": "『no [patent] is of such value to us that our business would be materially affected by the expiration or termination thereof, other than the \"MSA\" trademark. Our patents expire at various times... not exceeding 20 years』→特許束依存の期限型独占ではない(商標のみ本質的)=no",
@@ -82,7 +83,7 @@
    "moatdecay": "規制認証+MSA商標の堀は安定。減損履歴の顕著な蓄積なし=no",
    "geopol": "『approximately 50% of our net sales were made by operations located outside the United States』『business operations in more than 40 international locations』『Americas 67% / International 33%』=国際分散でどの一国にも危機的集中なし=1(中)",
    "nrr": "ハードウェア業態でNRR非開示→既定105",
-   "p1": "ROIC(のれん・無形除き)5年系列=[4.3, 30.3, 9.7, 37.7, 30.9]%、σ=13.1pt(二桁)→50。σの主因は2021製品賠償引当(営利188→22.8M)と2023一過性税(実効71.7%)の2一過性。中核営業ROIC(除き)は約30%で安定だが、訴訟ショックは再発性のテールリスクのため保守=50",
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 4.3% / 2022 29.9% / 2023 16.5% / 2024 36.5% / 2025 30.6% → 平均 23.6% / σ 11.6pt / **CV 49.4%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **65**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "p2": "観測窓(FY2018-2025)の不況はCOVID(2020)のみ: 営業利益188.2(2019)→171.9(2020)=-8.7%(浅い、-20%以内)→95。2021の急落は訴訟引当でありマクロ不況ではない。安全機器需要は法規/更新駆動で非循環的。ただし観測は単一不況のため注記",
    "p3": "nde=0.94(<1)→85。純負債(573+8-165)/EBITDA443",
    "p4": "accr=-3.3%(<0=利益の質高)+『Item 1B. Unresolved Staff Comments None』+hitsの'material weakness'は監査ICFR意見の定型記述(『assessing the risk that a material weakness exists』=PCAOB標準文言、実指摘ではない)→無限定・accr負→90",
@@ -130,7 +131,8 @@
    "eps": "machine",
    "roiic": "machine",
    "roiic5": "machine",
-   "acq5": "machine"
+   "acq5": "machine",
+   "p1": "machine"
   }
  },
  "roiic": 22.8,
