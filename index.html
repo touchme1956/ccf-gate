@@ -1246,7 +1246,24 @@ function ramp(x,pts){
   return ys[n-1];
 }
 function roicPt(r){const P=[[0,40],[8,50],[12,62],[16,72],[22,82],[30,90],[40,96],[200,96]];for(let i=0;i<P.length-1;i++){const[x0,y0]=P[i],[x1,y1]=P[i+1];if(r<=x1)return y0+(y1-y0)*(r-x0)/(x1-x0);}return 96;}
-const gmPt=(g,t)=>Math.max(0,Math.min(100,(g>=80?95:g>=65?88:g>=50?78:g>=35?66:g>=22?52:40)+({up:4,flat:0,down:-12}[t])));
+// v9.9.43（2026-07-29・ユーザー明示指示）: gmPt の目盛りを**営業利益率**へ較正し直した。
+//   gm 欄は 2026-07-20 の全数監査で営業利益率へ統一された（粗利混入32社を検出した再発防止）のに、
+//   ここの刻みだけが**粗利率の目盛り（≥80/65/50/35/22）のまま**取り残されていた。
+//   同じファイルの他の場所は営業利益率で較正済み: F7=opm/35*100（35%で満点）／F9=30%+で+5・10%未満で−5／
+//   roicAdj=25%+が「抑制されていない」側。gmPtだけが65-80%を要求していた。
+//   実測（台帳314社・営業利益率の中央値22.8%・上位10%でも42.2%）:
+//     旧 95点0社 / 88点1社 / 78点9社 / 66点42社 / 52点110社 / 40点152社
+//        → **83%が下2段に潰れ、最上段は誰も使っていない**。priceConfirm は pm の30%を占める
+//          「価格支配力の確認材料」なのに、ほぼ全社で同じ値を返す＝情報を持たない一律のおもりだった。
+//        → 柱不足ペナルティが **316社中295社(93%)** で発火。例外であるべき警告が常態化していた
+//          （「鳴りすぎる警報は鳴らないのと同じ」）。
+//   新（F7の35%満点に合わせる）: 95点52社 / 88点50社 / 78点60社 / 66点91社 / 52点40社 / 40点21社。
+//     6段すべてが使われ、下2段は19%へ。柱不足は234社(74%)。Ω中央値 +6.2pt、Ω75+ 18→35社。
+//   **投下可は変わらない（IRMD/MSFT/RMD/TSM の4社）**——実効的な関門は門X4条件と堀75+のため。
+//   Ω75は「安全下限」（v9.9.30: E[r]が主・格は安全下限）なので**投下閾値75は据え置き**。
+//   較正ミスで意図より厳しく効いていたものを、意図どおりに戻しただけ。
+//   計測器: night/shadow_gmpt.py（gmPtの1行だけ差し替えて score_all を回し必ず元へ戻す）
+const gmPt=(g,t)=>Math.max(0,Math.min(100,(g>=35?95:g>=28?88:g>=22?78:g>=15?66:g>=8?52:40)+({up:4,flat:0,down:-12}[t])));
 
 function compute(){
   // v9.2 Phase3: variable WACC with beta clamp [0.8, 1.8](監査⑫: 1.6上限は高ボラ銘柄のWACC過小評価→スプレッド過大。Damodaranボトムアップbetaで半導体1.3-1.5、pre-profit高成長は1.8まで許容)
@@ -1395,7 +1412,10 @@ function compute(){
   const moatR=ccfMoat({dom:$('dom').value,irr:$('irr').value,rep:$('rep').value,dur:$('dur').value,
                        moatW:$('moatW').value,gls:$('gls').value,disrupt:$('disrupt').value,erosion:$('erosion').value});
   const moatNA=moatR.na, moatIdx=moatR.na?0:moatR.idx;
-  const priceConfirm=Math.max(0,Math.min(100,gmPt(gmm,gmt))); // 粗利は確認材料に降格
+  const priceConfirm=Math.max(0,Math.min(100,gmPt(gmm,gmt))); // 営業利益率は確認材料に降格（重み0.30）。
+  // ※v9.9.43で「粗利は確認材料に降格」というコメントを訂正。gm欄は2026-07-20から営業利益率であり、
+  //   このコメントが粗利のまま残っていたことが、gmPtの目盛りだけ較正し忘れていた痕跡だった。
+  //   信号を降格するなら**重みを下げる**のが筋（実際0.30へ下げてある）。目盛りを使えなくするのは降格ではない。
   let pm=0.70*moatIdx+0.30*priceConfirm;
   pm+=({up:3,flat:0,down:-10}[sht]); if(nrr&&nrr<100)pm-=6;
   if(erosion==='emerging')pm-=6; else if(erosion==='active')pm-=12;   // 堀に旗が立ったか（高さでなく侵食）

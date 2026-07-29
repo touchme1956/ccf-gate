@@ -66,6 +66,10 @@
   鳴りすぎる警報は鳴らないのと同じになる）
 - 「根拠なき値をnull扱いにしたら誰がどう動くか」の実測: `python3 night/shadow_no_evidence.py`
   → 影の計測。パックを退避→根拠なき欄をnull化→score_all→**必ず元へ戻す**。正本の採点は変えない
+- 採点式の較正の影の計測: `python3 night/shadow_gmpt.py` → index.htmlの1行だけ差し替えて score_all を回し
+  **必ず元へ戻す**。基準を変える前に「誰がどう動くか」を出すための型。他の項の較正を疑うときも同じ型で作る
+  （**v9.9.43でgmPtの是正に実際に使った**——欄は営業利益率なのに目盛りが粗利率のまま残り、83%が下2段に
+  潰れて priceConfirm が情報を持たず、柱不足ペナルティが93%で発火＝警告として死んでいた）
 - 市場データ採取: `python market_fetch.py` → market_data.json（px/per/perF/beta/shy/evebit/analysts/instOwn）
   → `python market_merge.py` でパックのnull市場欄へ機械充填（定性は触らない）→ 門で再取込するとⅥのE[r]判定が生きる
 - X監視表の再計算（門X4条件同時成立の開通線+階段指値のfair線）: `python x_watch_recalc.py`（四半期保守で新eps反映後に実行）
