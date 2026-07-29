@@ -62,8 +62,19 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  "intan": ["FiniteLivedIntangibleAssetsNet","IntangibleAssetsNetExcludingGoodwill"],
  "cash":  ["CashAndCashEquivalentsAtCarryingValue","CashAndCashEquivalents"],
  "sti":   ["ShortTermInvestments","MarketableSecuritiesCurrent"],
- "debtL": ["LongTermDebtNoncurrent","LongTermDebt","NoncurrentBorrowings","Borrowings"],
- "debtS": ["LongTermDebtCurrent","DebtCurrent","CurrentBorrowings","ShortTermBorrowings"],
+ # 2026-07-29: 実測で取りこぼしが3件出たのでタグを拡張した（絶対のルール7「欠測をゼロと読むな」）。
+ #   IDXX: リボルビング枠 LinesOfCreditCurrent 398,000千$ を数え落とし → roic 71.1→56.4
+ #   CHKP: 転換社債 ConvertibleNotesPayable 1,972.1百万$ を丸ごと取りこぼし → IC 892→2,736百万$
+ #   DXC : FY2026で LongTermDebtNoncurrent が消え LongTermDebtAndCapitalLeaseObligations へ移行
+ #         → 負債3,552百万$が丸ごと欠落。**タグ名は年次で移行する**ので同義タグを並べて拾う
+ #   なお「タグが1つも当たらない年は算出不能として飛ばす」ガードは下のROIC算出側にある。
+ #   タグを増やすのは、飛ばす前にまず拾えるようにするため（飛ばすのは最後の手段）。
+ "debtL": ["LongTermDebtNoncurrent","LongTermDebt","LongTermDebtAndCapitalLeaseObligations",
+           "DebtAndCapitalLeaseObligations","LongTermNotesPayable","ConvertibleLongTermNotesPayable",
+           "NoncurrentBorrowings","Borrowings"],
+ "debtS": ["LongTermDebtCurrent","DebtCurrent","LinesOfCreditCurrent","CommercialPaper",
+           "ConvertibleNotesPayableCurrent","ConvertibleNotesPayable","NotesPayableCurrent",
+           "CurrentBorrowings","ShortTermBorrowings"],
  "sh":    ["CommonStockSharesOutstanding","EntityCommonStockSharesOutstanding","NumberOfSharesOutstanding"],
  "impair":["GoodwillImpairmentLoss","ImpairmentOfIntangibleAssetsIndefinitelivedExcludingGoodwill"],
 }
