@@ -70,7 +70,8 @@
    "p3=70(保守): 純負債はプラスと判断も規模がXBRL未捕捉で確定不能。FCF327.6M・流動性251.6Mから純負債/EBITDAは1x未満の可能性が高いが確認できず、<2.5x圏として70。純現金前提の95は不採用",
    "2026-07-19 偽失格修正: roict→up。根拠[op180M eq234M debt0M gw146M]。null roic→門で誤失格していた値を原本XBRLから復元",
    "2026-07-19 発見度実データ: analysts=6 instOwn=棄却(>100異常)(AV)",
-   "2026-07-29 投下資本の算定バグ検算: roic 160.3→41.3、roicg 60.5→11.0、nde null→1.42、roict up(据置・系列は再計算)。**有利子負債 809,325千$(1年内term notes 29,000 + 長期term notes 542,112 + 転換社債 238,213)が丸ごと欠落していた**——LongTermDebtタグが2019年の11.5百万$止まりで、以降の LoansPayableCurrent / LongTermLoansPayable / ConvertibleLongTermNotesPayable を捕捉できていなかった。原本(10-K accession 0001628280-26-011992)の連結貸借対照表から実額を採取して再計算。roic/roicg/roicEx/nde/roict/_meta 以外は一切変更していない。"
+   "2026-07-29 投下資本の算定バグ検算: roic 160.3→41.3、roicg 60.5→11.0、nde null→1.42、roict up(据置・系列は再計算)。**有利子負債 809,325千$(1年内term notes 29,000 + 長期term notes 542,112 + 転換社債 238,213)が丸ごと欠落していた**——LongTermDebtタグが2019年の11.5百万$止まりで、以降の LoansPayableCurrent / LongTermLoansPayable / ConvertibleLongTermNotesPayable を捕捉できていなかった。原本(10-K accession 0001628280-26-011992)の連結貸借対照表から実額を採取して再計算。roic/roicg/roicEx/nde/roict/_meta 以外は一切変更していない。",
+   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=51.6 / 5年窓=26.5。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった"
   ],
   "evidence": {
    "expiry": "『One of our issued U.S. patents expired in 2025 and the remaining are projected to expire in 2030 and 2036』『This grant extended the period of U.S. exclusivity for Nucynta IR from June 27, 2025 to July 3, 2026』→特許・独占の期限型=yes",
@@ -101,7 +102,9 @@
    "accr": "機械算出 2025年: (純利益 62,870,000 − 営業CF 329,323,000) ÷ 総資産 1,656,834,000",
    "gpa": "機械算出 2025年: 売上総利益 463,257,000 ÷ 総資産 1,656,834,000",
    "dilNet": "機械算出: 株数 2022年 33,848,936 → 2025年 31,707,608＝3年の年率（自社株買い後の純希薄化）",
-   "eps": "機械算出 2025年: 純利益 62,870,000 ÷ 株数 31,707,608（TTMではなく通期実績）"
+   "eps": "機械算出 2025年: 純利益 62,870,000 ÷ 株数 31,707,608（TTMではなく通期実績）",
+   "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 105,277,849 ÷ Δ投下資本 204,173,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 335,715,000→539,888,000（+60.8%）",
+   "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 67,397,487 ÷ Δ投下資本 254,282,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 285,606,000→539,888,000（+89.0%）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -125,7 +128,11 @@
    "accr": "machine",
    "gpa": "machine",
    "dilNet": "machine",
-   "eps": "machine"
+   "eps": "machine",
+   "roiic": "machine",
+   "roiic5": "machine"
   }
- }
+ },
+ "roiic": 51.6,
+ "roiic5": 26.5
 }

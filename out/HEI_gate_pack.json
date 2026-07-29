@@ -71,7 +71,8 @@
    "財務系列XBRL最新=FY2025(10-K 2025-10-31)でhits原本と同版・FY版ズレなし",
    "2026-07-29 堀再監査(dom/moatWのみ): 旧dom=70→新dom=null(空欄)、旧moatW=85→新moatW=85(据置・実数で再確認)。dom空欄の理由=10-Kにシェア%の数値が皆無で、順位表現は『largest ... other than the OEMs』『largest independent supplier of non-OEM』のみ。むしろ原本は『the three principal jet engine OEMs (GE/CFM International, Pratt & Whitney, Rolls Royce) have been the sole source of substantially all jet engine replacement parts』と述べ、HEICOは上位3社の外側の独立系最大手＝旧70(3社寡占の一角)は構造と不整合(数値が出れば50側)。ETG側は『fragmented marketplace』でFSGと構造が異なる点でも単一の刻みに帰着しない。旧evidence.domの『明示シェア%開示なし』の自認と値70の矛盾(audit_moat.pyの✗判定)はこれで解消。moatW=85は FSG $3,117,277千=69.5% / ETG $1,413,120千=31.5%(いずれも≥15%、報告セグメントは2本のみで100不成立)で確認。dom/moatW/_meta以外のフィールドは一切変更していない。",
    "2026-07-29 堀の申し送り決着: dom 空欄→50。v9.9.41「50は残余の刻みゆえ、原本が市場を fragmented/同等品を多数が製造可能/実質すべての供給は他社 と構造的に述べていれば数値なしで確定できる」を適用。100/85/70(集中の主張)には従来どおり数値を要する。",
-   "2026-07-29 投下資本の算定バグ検算: roic 93.0→null(実測63.4%だが>60%＝縮退帯につき算出不能)、roicg 19.5→13.1、nde null→1.60、roict up→null。**有利子負債 2,167,945千$(1年内 3,358 + 長期 2,164,587)が丸ごと欠落していた**——採取器がLongTermDebtNoncurrent/LongTermDebtCurrentタグでしか負債を探しておらず、HEICOがWencor買収以降LongTermDebtAndCapitalLeaseObligations系タグで開示していたため debt=0 と読み、IC＝自己資本−のれん−無形へ縮退していた。原本(10-K accession 0000046619-25-000082)の連結貸借対照表から実額を採取して再計算。roic/roicg/roicEx/nde/roict/_meta 以外のフィールドは一切変更していない。"
+   "2026-07-29 投下資本の算定バグ検算: roic 93.0→null(実測63.4%だが>60%＝縮退帯につき算出不能)、roicg 19.5→13.1、nde null→1.60、roict up→null。**有利子負債 2,167,945千$(1年内 3,358 + 長期 2,164,587)が丸ごと欠落していた**——採取器がLongTermDebtNoncurrent/LongTermDebtCurrentタグでしか負債を探しておらず、HEICOがWencor買収以降LongTermDebtAndCapitalLeaseObligations系タグで開示していたため debt=0 と読み、IC＝自己資本−のれん−無形へ縮退していた。原本(10-K accession 0000046619-25-000082)の連結貸借対照表から実額を採取して再計算。roic/roicg/roicEx/nde/roict/_meta 以外のフィールドは一切変更していない。",
+   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=8.3 / 5年窓=8.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった"
   ],
   "evidence": {
    "irr": "『These parts are approved by the FAA and are the functional equivalent of parts sold by OEMs』『proprietary repairs approved by an FAA-qualified designated engineering representative (DER)』=FAA認証・規格ロック=85",
@@ -103,7 +104,9 @@
    "cagr": "機械算出: 売上 2020年 1,787,009,000 → 2025年 4,485,044,000＝5年の年率",
    "fcf": "機械算出 2025年: 営業CF 934,266,000 − 設備投資 72,886,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
    "ni": "機械算出 2025年: 純利益 690,385,000（÷1e9で十億単位表示）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
-   "accr": "機械算出 2025年: (純利益 690,385,000 − 営業CF 934,266,000) ÷ 総資産 8,500,434,000"
+   "accr": "機械算出 2025年: (純利益 690,385,000 − 営業CF 934,266,000) ÷ 総資産 8,500,434,000",
+   "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 452,613,024 ÷ Δ投下資本 5,456,179,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 3,185,030,000→8,641,209,000（+171.3%）",
+   "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 494,312,770 ÷ Δ投下資本 5,922,246,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 2,718,963,000→8,641,209,000（+217.8%）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -141,8 +144,12 @@
    "cagr": "machine",
    "fcf": "machine",
    "ni": "machine",
-   "accr": "machine"
+   "accr": "machine",
+   "roiic": "machine",
+   "roiic5": "machine"
   }
  },
- "mcap": 50.8768
+ "mcap": 50.8768,
+ "roiic": 8.3,
+ "roiic5": 8.3
 }
