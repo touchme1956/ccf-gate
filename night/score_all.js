@@ -136,9 +136,20 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
   if (argv.includes('--jp') && !jp) continue;
   if (argv.includes('--us') && jp) continue;
   if (only.length && !only.includes(t.toUpperCase())) continue;
-  let r; try { r = scorePack({ ...d, ...over }); } catch (e) { continue; }
-  rows.push({ t, nm, jp, s: parseFloat(r.evalScore), tier: r.tierShort,
-              kills: r.kills, pfail: r.pfail, exit: r.exit && r.exit.level });
+  const dd = { ...d, ...over };
+  let r; try { r = scorePack(dd); } catch (e) { continue; }
+  // 門Ωの点だけでは「買えるか」は決まらない。三段関門(Ω75+ ∧ 門X4条件 ∧ 堀75+)を
+  // 門と同じ関数(ccfXJudge / ccfMoatGate)で判定する＝二重実装を作らない
+  let x = {}, mg = {};
+  try { x = ccfXJudge(dd, parseFloat(r.evalScore)) || {}; } catch (e) {}
+  try { mg = ccfMoatGate(r, dd) || {}; } catch (e) {}
+  const s = parseFloat(r.evalScore);
+  rows.push({ t, nm, jp, s, tier: r.tierShort,
+              kills: r.kills, pfail: r.pfail, exit: r.exit && r.exit.level,
+              moat: mg.idx == null ? null : +mg.idx.toFixed(1), moatNA: !!mg.na, moatOK: !!mg.pass,
+              moatMiss: (r.moatMiss && r.moatMiss.length) ? r.moatMiss : undefined,
+              xEr: x.xEr == null ? null : +x.xEr.toFixed(1), xPass: x.xPass,
+              buy: s >= 75 && x.xPass === true && mg.pass === true });
 }
 rows.sort((a, b) => b.s - a.s);
 fs.writeFileSync(path.join(ROOT, 'out', 'score_all.json'), JSON.stringify(rows, null, 1));
@@ -156,8 +167,17 @@ if (Object.keys(over).length) console.log('上書き:', over, '\n');
 brief('全体', rows);
 brief('日本株', rows.filter(x => x.jp));
 brief('米国等', rows.filter(x => !x.jp));
-console.log('\nΩ75+:');
-for (const r of rows.filter(x => x.s >= 75)) {
-  console.log(`  ${r.nm.slice(0, 24).padEnd(26)} Ω${r.s.toFixed(1).padStart(5)}  ${r.tier}  出口=${r.exit}`);
+const q75 = rows.filter(x => x.s >= 75);
+console.log('\nΩ75+（堀＝絶対MOAT指数／X＝門X4条件／買＝三段関門すべて成立）:');
+for (const r of q75) {
+  const moat = r.moatNA ? ' NA ' : (r.moat == null ? '  — ' : r.moat.toFixed(0).padStart(3) + ' ');
+  console.log(`  ${r.nm.slice(0, 24).padEnd(26)} Ω${r.s.toFixed(1).padStart(5)}  堀${moat}${r.moatOK ? '✓' : '✗'}`
+    + `  E[r]${r.xEr == null ? '  na' : r.xEr.toFixed(0).padStart(4) + '%'}${r.xPass ? '✓' : '✗'}`
+    + `  ${r.buy ? '🟢投下可' : r.moatOK ? '🟡押し目待ち' : '⛔堀不足'}  出口=${r.exit}`);
 }
+const buy = rows.filter(x => x.buy);
+console.log(`\n三段関門を通過(🟢投下可) ${buy.length}社`
+  + `　日本株${buy.filter(x => x.jp).length}／米国等${buy.filter(x => !x.jp).length}`
+  + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
+console.log(`⛔堀不足で見送り(Ω75+だが堀<75) ${q75.filter(x => !x.moatOK).length}社`);
 console.log(`\n→ out/score_all.json（全${rows.length}件・降順）`);
