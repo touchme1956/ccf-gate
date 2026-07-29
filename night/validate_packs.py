@@ -165,6 +165,17 @@ def check(path):
             if k not in meta or meta[k] in (None, "", [], {}):
                 (fails if k in ("auditDate", "model") else warns).append(f"_meta.{k} が空")
 
+        # --- _meta の型（2026-07-29新設）--------------------------------------
+        # 実害: **91パックで _meta.kenshi が配列でなく文字列**だった。ASR様式は配列が正で、
+        #   道具はどれも `meta.setdefault("kenshi", []).append(...)` で追記する。文字列だと
+        #   そこで落ちる＝**その社だけ監査の記録が伸びなくなる**（本日 fix_acq5 で実際に落ちた）。
+        #   値が壊れるのではなく「記録が静かに止まる」ので、採点を見ていても一生気づかない。
+        for k, want in (("kenshi", list), ("evidence", dict), ("nulls", dict), ("provenance", dict)):
+            v = meta.get(k)
+            if v is not None and not isinstance(v, want):
+                fails.append(f"_meta.{k} の型が {type(v).__name__}（正は {want.__name__}）"
+                             f"——検死の追記がここで落ちるので記録が伸びなくなる")
+
         # --- 原本の鮮度（2026-07-29新設）------------------------------------
         # 実害を踏んだ: **DSGX は 2005年1月期の20-F で審査されていた**（21年前の書類）。
         #   採取器は「系列の最新年から2年遅れたら算出不能」という年検問を持つが、それは
