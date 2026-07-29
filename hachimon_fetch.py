@@ -305,7 +305,16 @@ def build_numbers(facts):
         #   **タグが無い年は算出不能として null にし、理由を残す**（誤値より空欄）。
         has_debt = (y0 in S["debtL"]) or (y0 in S["debtS"])
         cash = (S["cash"].get(y0,0) or 0)+(S["sti"].get(y0,0) or 0)
-        ebitda = (S["op"].get(y0,0) or 0)+(S["dep"].get(y0,0) or 0)
+        # 2026-07-29追加修正: EBITDAの営業利益も「タグが無い年を0」と読んでいた。
+        #   実測 KLAC: OperatingIncomeLoss が2014年で途切れており（同社は売上−原価−R&D−販管費で
+        #   開示）、EBITDA が減価償却394百万$だけになって **nde=9.66**（原本からの検算では約0.2-0.5）。
+        #   roic側は既に年検問で落としていたが、ndeだけ素通りしていた＝同じ穴の取り残し。
+        if y0 not in S["op"]:
+            note.append(f"nde算出不能: {y0}年に営業利益タグが無い（EBITDAが減価償却だけになり過大に出る）。"
+                        f"原本の損益計算書から営業利益を確認して手入力せよ")
+            ebitda = 0
+        else:
+            ebitda = S["op"][y0] + (S["dep"].get(y0,0) or 0)
         if not has_debt:
             note.append(f"nde算出不能: {y0}年に有利子負債タグが無い。無借金なら nde=−{_u(cash)}/EBITDA "
                         f"だが、タグ不在と無借金は機械で区別できない。原本のBSで確認して手入力せよ")
