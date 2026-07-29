@@ -22,7 +22,7 @@
  "moatdecay": "no",
  "erosion": "emerging",
  "disrupt": "threat",
- "dom": 70,
+ "dom": 50,
  "irr": 70,
  "rep": 80,
  "dur": 75,
@@ -58,8 +58,8 @@
   "reportDate": "2025-07-31",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/896878/000089687825000035/intu-20250731.htm",
-  "auditDate": "2026-07-19",
-  "model": "Claude Opus 4.8",
+  "auditDate": "2026-07-29",
+  "model": "Claude Opus 5 (claude-opus-5)",
   "kenshi": [
    "roic棄却: 採取器61.6は再現不能。XBRL直近5年ROIC(のれん込み)=16.6/8.5/10.6/11.5/16.3%(σ3.2pt)、(のれん除き)=31.4/20.1/25.8/25.8/39.1%。最大でも39.1で61.6と乖離→誤値より空欄でnull化。roicg=15.3は込み16.3と整合するため維持",
    "gm=26.1はGrossProfitタグ不発見(diag gp=タグ不発見)のため実質は営業利益率。opm 2025=26.1%と一致し、gmt=up(opm 22.3→26.1)も整合",
@@ -72,7 +72,8 @@
    "roict=down: のれん込み5年16.6→16.3で微減だが直近2年11.5→16.3は上昇と両義的。採取器flagを維持",
    "gpa/z算出不能: GrossProfit・STI・depタグ不発見および時価総額(z)未取得のためnull",
    "2026-07-19 roic欠損是正: 審査官検算のFY2025のれん除きROIC=39.1をroicフィールドへ反映(nullのままだと門でROIC柱0点→過小失点していた)。roicg=15.3(込み)維持",
-   "2026-07-28 絶対MOAT欠測補充: irr/rep/dur を FY2025 10-K の Item 1 BUSINESS(Overview/Global Business Solutions/COMPETITION/RESEARCH AND DEVELOPMENT)および Item 1A・Item 7 原文で充填 → irr=70 / rep=80 / dur=75。dom(70)・moatW(85)ほか既判定は不変"
+   "2026-07-28 絶対MOAT欠測補充: irr/rep/dur を FY2025 10-K の Item 1 BUSINESS(Overview/Global Business Solutions/COMPETITION/RESEARCH AND DEVELOPMENT)および Item 1A・Item 7 原文で充填 → irr=70 / rep=80 / dur=75。dom(70)・moatW(85)ほか既判定は不変",
+   "2026-07-29 堀再監査(v9.9.41): 旧dom=70→新dom=50、旧moatW=85→新moatW=85(不変)。旧70の根拠はElectroIQ/6senseという**SEC提出書類の外**の第三者推計(QuickBooks約62%/TurboTax約62%)で、v9.9.41規約5(第三者実数はSEC/EDINET提出書類の中に市場全体の表として載る場合のみ原本扱い)を満たさないため撤回。会社原本のCOMPETITION節は自ら『Competition is rapidly evolving, fragmented』『competitors … have larger installed bases of customers』と構造を述べており、規約3の残余適用で50を置いた(空欄にすると測っていないほうが再正規化で有利になる抜け道になるため)。※実勢としてQuickBooks/TurboTaxが米国で6割前後を持つ可能性は否定しないが、原本で示す提出書類が無い限り70には上げない。H&R Block等の提出書類にIntuitを名指しした市場全体の表が確認できれば規約5により70への再改定は可。moatWは2本(GBS 58.8%・Consumer 25.9%)を再確認し85を維持。dom/moatW/_meta 以外は不変。"
   ],
   "evidence": {
    "expiry": "限セクション『(ヒットなし)』+ソフトウェア業態でコンセッション/特許束依存の期限型独占なし→no",
@@ -90,8 +91,8 @@
    "f3": "R&D/売上の数値およびシェア趨勢の定量がhitsになし→両符号確認不能、保守側65。顧客集中はNo customer≥10%で良好(-10不適用)",
    "f4": "『Credit Karma leverages Lightbox, a first-of-its-kind enterprise platform』『we launched a transformative set of AI agents』『Big Bets that focus on the largest customer problems and growth opportunities』=隣接事業(Credit Karma/AI)が成長→80",
    "f5": "disrupt=threat連動→45",
-   "moatW": "セグメント別売上(FY2025・10-K 2025-07-31期『Segment Information - Results by segment』): Global Business Solutions 58.8%(11,077百万$・セグメント営業利益8,467) / Consumer 25.9%(4,870百万$・同3,786) / Credit Karma 12.0%(2,263百万$・同835) / ProTax 3.3%(621百万$・同533)、合計18,831百万$。≥15%は Global Business Solutions と Consumer の2つ。両者は顧客(中小企業・自営業者 vs 個人納税者)、競合(Xero/Sage/ADP vs H&R Block/TaxAct/FreeTaxUSA)、季節性(通年 vs 1-4月)、規制環境がいずれも別で、片方が折れてももう片方の参入障壁は残る=独立。Credit Karma 12.0%とProTax 3.3%は<15%で3本目・4本目に届かない。参考としてGBS内訳: Online Ecosystem 8,302(全社の44.1%) / Desktop Ecosystem 2,775(14.7%)。→ 独立した堀は2本(主力GBS＋育った隣接Consumer) → moatW=85。出典: https://www.sec.gov/Archives/edgar/data/896878/000089687825000035/intu-20250731.htm (R85)",
-   "dom": "支配シェア: 会社原本(10-K FY2025)はシェア%を開示せず(『drive growth and market share』等の定性記述のみ)。第三者推計を主力2事業それぞれで確認: (1)Global Business Solutions(全社の58.8%)の中核QuickBooksは米国中小企業会計ソフトで約62%(ElectroIQ 2025集計: QuickBooks 62.23% / ADP 14.30% / Sage 50 10.30% / Xero 8.90%)。(2)Consumer(同25.9%)の中核TurboTaxは米国DIY税務ソフトで約62%(H&R Block 約18%、TaxAct/FreeTaxUSA/TaxSlayer等が残り約20%)。→ 主力2事業とも約62%で収束し、寡占40-69%の帯に入る → dom=70。※別集計ではQuickBooks 81%(Sage 50 10%/Xero 9%)との推計もあり乖離するが、計測母集団が異なるため保守側(70)を採った。85(圧倒70-89%)に上げるには母集団定義の揃った出典が要る。出典: 10-K https://www.sec.gov/Archives/edgar/data/896878/000089687825000035/intu-20250731.htm / https://electroiq.com/stats/quickbooks-statistics/ / https://6sense.com/tech/small-business-accounting/quickbooks-market-share",
+   "moatW": "セグメント別売上(FY2025・百万USD、10-K MD&A セグメント別 Total segment revenue): Global Business Solutions 11,077=58.8% / Consumer 4,870=25.9% / Credit Karma 2,263=12.0% / ProTax 621=3.3%、合計18,831。≥15%は Global Business Solutions(QuickBooks+Mailchimp) と Consumer(TurboTax) の**2本**。両者は顧客(中小・中堅企業 vs 個人納税者)、競合(会計/給与/決済ベンダー vs 税務申告事業者・IRS Direct File)、季節性(通年 vs 1-4月)、規制(税制改正・公的無償化の直撃を受けるのはConsumer側)が別で、片方が折れても他方が残る＝独立。同一の設置基盤・同一の中核エンジンに乗る関係ではない(v9.9.41の1本化条件に非該当)。Credit Karma 12.0%・ProTax 3.3%は15%閾値未満で本数に算入しない。顧客集中は10-K『No customer accounted for 10% or more of total net revenue for the twelve months ended July 31, 2025, 2024 or 2023』。→ moatW=85(据置)。出典: https://www.sec.gov/Archives/edgar/data/896878/000089687825000035/intu-20250731.htm",
+   "dom": "自社シェア%: **原本(FY2025 10-K)に開示なし**／上位N社合計%: 同じく開示なし。ただし提出書類自身が市場構造をfragmentedと明言 → 残余の刻み50で確定(v9.9.41規約3)。原文: 『We face intense competition in all aspects of our businesses across all of our offerings. Competition is rapidly evolving, **fragmented**, and involves complex interdependencies with many businesses.』『Our competitors may … have greater technical, marketing, and other resources, have greater brand recognition, **have larger installed bases of customers**』(Item 1 COMPETITION)。競合の列挙も業種横断で9カテゴリに散る(business software providers / 私営・公的な税務申告事業者 / 会計・税務事務所 / 決済・銀行 / 個人財務管理 / 金融商品マーケットプレイス / 金融機関 / 信用情報機関 / プラットフォーム企業)。→ 自社が40%以上を占める市場構造とは提出書類自身が述べていない = dom 50。出典: https://www.sec.gov/Archives/edgar/data/896878/000089687825000035/intu-20250731.htm",
    "irr": "70=高摩擦移行困難。『because we have created an ecosystem where customers can have one identity across multiple Intuit products』『Through seamless onboarding and automated transaction reconciliation, our payment processing solutions are deeply integrated into our QuickBooks Online, Desktop, and Intuit Enterprise Suite offerings』=会計・決済・給与が同一IDで結合し移行摩擦が高い。加えて『developing consumer and professional tax software and services presents unique challenges because of the demanding development cycle required to accurately incorporate federal and state tax law and tax form changes within a rigid timetable』=税法追随の工程負荷が新規代替の障壁。ただし規格認証による排他ロックは無く、『increased competition from providers of free and low cost offerings, particularly in our tax, accounting, payments and consumer finance platform businesses』と自認するため85は不可→70。出典: FY2025 Form 10-K Item 1/Item 1A https://www.sec.gov/Archives/edgar/data/896878/000089687825000035/intu-20250731.htm",
    "rep": "80=極困難。『Intuit Inc. was incorporated in California in March 1984』から40年超の蓄積で『Serving approximately 100 million consumers, small and mid-market businesses, and accountants worldwide』。『We have a significant competitive advantage with our scale of data, data services, AI capabilities, ecosystem of applications, and our large network of AI-enabled human experts』。研究開発費は Research and development 2,928/2,754/2,539百万USD(FY2025/24/23、3年で$8.2B)、加えて買収 acq5=$9.1十億。他方『our competitors ... have larger installed bases of customers, have well-established relationships with our current and potential customers』と同型競合の実在を自認するため100(複製不能)は不可→80。出典: https://www.sec.gov/Archives/edgar/data/896878/000089687825000035/intu-20250731.htm",
    "dur": "75=スイッチングコスト。堀の機構は会計・決済・給与データの固着。『we have created an ecosystem where customers can have one identity across multiple Intuit products』『our payment processing solutions are deeply integrated into our QuickBooks Online, Desktop, and Intuit Enterprise Suite offerings』。『Online ecosystem average revenue per customer ... increased 14%』に対し『Online ecosystem paying customers ... increased 5%』=既存顧客への積み増しが成長の主源=固着の実測。会計士チャネル(『serves ... the accounting professionals who assist and advise them』)は補助機構でありネットワーク(85)を主機構と断ずる原本根拠が無いため75。規制/物理(100)・ブランド(55)は該当せず。出典: https://www.sec.gov/Archives/edgar/data/896878/000089687825000035/intu-20250731.htm"
@@ -99,7 +100,6 @@
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
    "gpa": "GrossProfitタグ不発見(diag gp=タグ不発見)のため総資産粗利率算出不能",
-   "dom": "TurboTax/QuickBooksの市場シェア%がhitsに明示なし。『larger installed bases』は競合の一般的優位を列挙するリスク要因文で自社独占の根拠にならず→憶測回避で空欄",
    "founder": "hitsのMr. Goodarziは元Honeywellの非創業者CEO。創業者(Scott Cook)の支配的持分等の根拠がhitsになし→空欄",
    "fin": "業態フラグの定義不明(金融業ではない)→空欄",
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indGは取込時に手入力"
