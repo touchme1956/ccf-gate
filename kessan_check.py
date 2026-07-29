@@ -101,8 +101,48 @@ def strip_html(h):
     h = re.sub(r"&nbsp;?", " ", h); h = re.sub(r"&amp;", "&", h)
     return re.sub(r"[ \t]{2,}", " ", h)
 
+# 2026-07-29: 「言葉の出現」でなく「事象の発生」を見るための門番。
+#   実測(2026-07-29の28社点検)では 減損 が12社で発火し、中身は全て定型文だった:
+#     MSFT  "Application of the goodwill impairment test **requires judgment**…" ＝会計方針の定型
+#     GOOGL "**No** impairment loss was recognized upon initial classification…" ＝減損が無かった文
+#     IDXX  キャッシュフロー調整表の行項目名（通常はゼロ計上）
+#     IDXX(限) "…and patent expiration. **Critical Accounting Estimates**…" ＝リスク列挙
+#   28社中12社が鳴る警報は、鳴らないのと同じ（読む側が無視を学習する）。
+#   そこで (1)否定文 (2)会計方針・リスク列挙の定型 を近傍で見て落とし、
+#   (3)金額を伴う警報カテゴリは近傍に数字が無ければ落とす。
+NEGATION = re.compile(
+    r"\bno\b[^.]{0,40}$|\bnot\b[^.]{0,40}$|did not recogni[sz]e[^.]{0,40}$"
+    r"|\bno\s+(?:goodwill\s+)?impairment|were no impairment|was no impairment"
+    r"|did not (?:record|recogni[sz]e|incur)", re.I)
+BOILERPLATE = re.compile(
+    r"critical accounting|significant accounting polic|requires? (?:judgment|management)"
+    r"|application of the .{0,30}test|if the carrying (?:value|amount)"
+    r"|we (?:test|assess|evaluate) .{0,30}(?:annually|for impairment)"
+    r"|risk factors|reconcile net income"
+    # 仮定法＝リスク要因の記述。「起きた」ではなく「起きうる」なので警報にしない。
+    #   実測: ANET『…may impact financial results and result in restatements of, or irregularities in,
+    #   financial statements』が「誠(restatement)」として発火していた。
+    r"|\b(?:may|might|could|would)\s+(?:\w+\s+){0,3}"
+    r"(?:impact|result|lead|cause|require|be|adversely|negatively|materially)"
+    , re.I)
+NEEDS_AMOUNT = {"減損", "指針"}   # 実際に起きたなら金額または率が近傍にあるはず
+AMOUNT = re.compile(r"\$\s?[\d,]+(?:\.\d+)?|[\d,]+(?:\.\d+)?\s*(?:million|billion|%)", re.I)
+
+
+def _is_real(cat, ctx_before, ctx_after):
+    """定型文・否定文を落とす。戻り: (採用するか, 落とした理由)"""
+    near = ctx_before[-200:] + " " + ctx_after[:200]
+    if NEGATION.search(ctx_before[-120:]) or NEGATION.search(ctx_after[:80]):
+        return False, "否定文（減損が無かった旨の記述）"
+    if BOILERPLATE.search(near):
+        return False, "会計方針・リスク列挙の定型文"
+    if cat in NEEDS_AMOUNT and not AMOUNT.search(near):
+        return False, "金額・率の記載が近傍に無い（実際の計上ではない）"
+    return True, ""
+
+
 def scan(text, width=260, per=2):
-    lines, hitcats = [], []
+    lines, hitcats, dropped = [], [], []
     for cat, pats in ALERTS.items():
         n = 0
         for p in pats:
@@ -110,9 +150,18 @@ def scan(text, width=260, per=2):
                 if n >= per: break
                 s = max(0, m.start()-width//2)
                 frag = re.sub(r"\s+", " ", text[s:s+width])
+                ok, why = _is_real(cat, text[max(0, m.start()-300):m.start()],
+                                   text[m.end():m.end()+300])
+                if not ok:
+                    dropped.append(f"[却下:{cat}|{why}] …{frag[:120]}…")
+                    continue
                 lines.append(f"[{cat}|{p}] …{frag}…")
                 n += 1
         if n: hitcats.append(cat)
+    if dropped:
+        lines.append("")
+        lines.append("=== 定型文として却下したヒット（判定には使わない・目視用） ===")
+        lines.extend(dropped[:12])
     return lines, hitcats
 
 def recent_filings(cik, since_days):
