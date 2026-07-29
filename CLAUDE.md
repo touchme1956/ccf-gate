@@ -160,6 +160,17 @@
   潰れて priceConfirm が情報を持たず、柱不足ペナルティが93%で発火＝警告として死んでいた）
 - 市場データ採取: `python market_fetch.py` → market_data.json（px/per/perF/beta/shy/evebit/analysts/instOwn）
   → `python market_merge.py` でパックのnull市場欄へ機械充填（定性は触らない）→ 門で再取込するとⅥのE[r]判定が生きる
+- 門X未評価の解消（2026-07-29の実務メモ）: 門Xは `per>0` が**唯一の必須条件**で、これが無いと E[r] を
+  一切算出しない（xPass=null＝三段関門の第二が未評価のまま）。`market_fetch.py` は鍵（av_key.txt/fmp_key.txt）
+  が要るが、**鍵なしでも Alpha Vantage MCP の GLOBAL_QUOTE は使える**（1req/s・**1日25回**なので
+  Ω75+に絞って使う）。PER = 市場株価 ÷ **原本EPS**（純利益÷期末株数・XBRL）で出し、
+  **shy を第二の検算に使う**——shy = (配当+自社株買い−株式発行) ÷ 時価総額 を XBRL のCF計算書から出す
+  （タグ: PaymentsOfDividendsCommonStock / PaymentsForRepurchaseOfCommonStock / ProceedsFromIssuanceOfCommonStock、
+  株数は TAGS["sh"]）。**per と shy が同時に常識帯を外れたら株価側が誤っている**——実測 KLAC は
+  per 5.60（帯8-200外）と shy 12.92%（帯−5〜12外）が同時に外れ、**株価を4〜7倍すると両方が同時に帯へ入った**
+  （×6で per33.6/shy2.15%）＝株価が桁で誤っている。EPSは原本で検算済みなので誤りは株価側。
+  market_merge.BANDS の頭注も『KLAC per=5.53 / shy=12.28』を過去の誤値と名指ししており、同じ値が再来していた。
+  **二つの独立指標を突き合わせるのが単独の帯検問より強い**（帯だけなら「例外かもしれない」で通してしまう）
 - X監視表の再計算（門X4条件同時成立の開通線+階段指値のfair線）: `python x_watch_recalc.py`（四半期保守で新eps反映後に実行）
 - v10影スコア（系列の門・並走検証中）: `python v10_series.py` → out/v10_shadow.json（機械実測5系列70%+定性30%。
   正本の採点・合否には不使用。仕様と切替条件は V10_SPEC.md——2027-07の較正で新旧の予実を答え合わせて勝った方を正本に。

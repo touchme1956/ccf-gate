@@ -29,11 +29,11 @@
  "geopol": 1,
  "nrr": 105,
  "beta": null,
- "per": null,
+ "per": 81.56,
  "perF": null,
  "evebit": null,
- "px": null,
- "shy": null,
+ "px": 332.76,
+ "shy": 0.86,
  "gr": null,
  "gcap": null,
  "analysts": null,
@@ -69,7 +69,8 @@
    "acq5=yes確認: 毎年買収継続(2022:613.8M/2023:198.4M/2024:737.6M/2025:429.5M)+2026Q1クロージング予定の買収契約(hits『Closing is expected to occur in the first quarter of 2026』)。のれん2022:1374→2025:2749M増",
    "p1: ROIC(のれん込み)σ5年=3.9pt→<6pt→80(のれん除き系列はσ大だが事業安定性はのれん込みで評価)",
    "f1=80: ROIIC(全投下資本ベース)は2024年の負債調達によるcash積上げ+大型買収の計上タイミングでnaive計算7-13%に低下するが、のれん除きROIC~50%=組織的増分資本の超高収益。M&A投下も~25%ROIC。両者WACC超過で80(計算歪みを注記)。f3/f2はR&D/売上・TAM浸透の原本数値がhitsに無く保守側",
-   "2026-07-28 絶対MOAT欠測補充(irr/rep): 原本10-K Item1 Business(PDK/サインオフ/Virtuoso=industry standardの記述)とR&D実額から irr=85(認証・規格ロック)/rep=80(極困難)を判定。evidence.irr/rep に原文引用と出典を記載。dom=50・dur=75など既判定項目は不変"
+   "2026-07-28 絶対MOAT欠測補充(irr/rep): 原本10-K Item1 Business(PDK/サインオフ/Virtuoso=industry standardの記述)とR&D実額から irr=85(認証・規格ロック)/rep=80(極困難)を判定。evidence.irr/rep に原文引用と出典を記載。dom=50・dur=75など既判定項目は不変",
+   "2026-07-29 門X未評価を解消: px/per/shy を充填。門Xは `per>0` が唯一の必須条件で、これが無いと E[r] を一切算出しない（xPass=null＝三段関門の第二が未評価）。PERは市場株価 ÷ **原本EPS** で算出し、shy でも独立に検算した。"
   ],
   "evidence": {
    "expiry": "限セクション・ヒットなし。EDA(設計ツール)はコンセッション/特許束期限型の独占ではないため expiry=no",
@@ -95,7 +96,10 @@
    "ni": "機械算出 2025年: 純利益 1,108,888,000（÷1e9で十億単位表示）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
    "accr": "機械算出 2025年: (純利益 1,108,888,000 − 営業CF 1,728,781,000) ÷ 総資産 10,153,148,000",
    "dilNet": "機械算出: 株数 2022年 272,675,000 → 2025年 271,799,000＝3年の年率（自社株買い後の純希薄化）",
-   "eps": "機械算出 2025年: 純利益 1,108,888,000 ÷ 株数 271,799,000（TTMではなく通期実績）"
+   "eps": "機械算出 2025年: 純利益 1,108,888,000 ÷ 株数 271,799,000（TTMではなく通期実績）",
+   "px": "【2026-07-29 市場データ】株価 $332.76。出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）",
+   "per": "【2026-07-29 機械算出】PER = 株価 $332.76 ÷ **原本EPS 4.08** = **81.56**。EPSは通期実績（純利益÷期末株数・SEC XBRL）で、TTMコンセンサスではない。株価の出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯8-200を通過（market_merge.BANDS）。**shyとの二重検算も通っている**（shy=0.86%・帯−5〜12内）。",
+   "shy": "【2026-07-29 機械算出】純還元利回り shy = (配当 + 自社株買い − 株式発行) ÷ 時価総額。2025年: 配当 0.00 + 自社株買い 0.93 − 株式発行 0.15 = 純還元 0.78十億$ ÷ 時価総額 90.44十億$（272百万株×$332.76） = **0.86%**。還元額は SEC XBRL のキャッシュフロー計算書（PaymentsOfDividendsCommonStock / PaymentsForRepurchaseOfCommonStock / ProceedsFromIssuanceOfCommonStock）、株数は dei/us-gaap の期末株数、株価は Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯−5〜12%を通過。"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -118,7 +122,10 @@
    "ni": "machine",
    "accr": "machine",
    "dilNet": "machine",
-   "eps": "machine"
+   "eps": "machine",
+   "px": "market",
+   "per": "market",
+   "shy": "machine"
   }
  },
  "moatW": 85
