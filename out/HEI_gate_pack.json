@@ -1,14 +1,14 @@
 {
  "nm": "HEI",
- "roic": 93.0,
- "roicg": 19.5,
- "nde": null,
+ "roic": null,
+ "roicg": 13.1,
+ "nde": 1.6,
  "z": 4.46,
  "gpa": null,
  "accr": -2.9,
  "gm": 22.7,
  "gmt": "up",
- "roict": "up",
+ "roict": null,
  "cagr": 20.2,
  "fcf": 0.86,
  "ni": 0.69,
@@ -70,7 +70,8 @@
    "二重株式クラス: Mendelson経営陣がCommon(高議決権)保有で『able to substantially influence the election of the Board...and control our business, policies and affairs』。dilNet=17.07はClass A発行を含む買収対価希薄化。加重平均株数132.5(2018)→139.0(2025)百万",
    "財務系列XBRL最新=FY2025(10-K 2025-10-31)でhits原本と同版・FY版ズレなし",
    "2026-07-29 堀再監査(dom/moatWのみ): 旧dom=70→新dom=null(空欄)、旧moatW=85→新moatW=85(据置・実数で再確認)。dom空欄の理由=10-Kにシェア%の数値が皆無で、順位表現は『largest ... other than the OEMs』『largest independent supplier of non-OEM』のみ。むしろ原本は『the three principal jet engine OEMs (GE/CFM International, Pratt & Whitney, Rolls Royce) have been the sole source of substantially all jet engine replacement parts』と述べ、HEICOは上位3社の外側の独立系最大手＝旧70(3社寡占の一角)は構造と不整合(数値が出れば50側)。ETG側は『fragmented marketplace』でFSGと構造が異なる点でも単一の刻みに帰着しない。旧evidence.domの『明示シェア%開示なし』の自認と値70の矛盾(audit_moat.pyの✗判定)はこれで解消。moatW=85は FSG $3,117,277千=69.5% / ETG $1,413,120千=31.5%(いずれも≥15%、報告セグメントは2本のみで100不成立)で確認。dom/moatW/_meta以外のフィールドは一切変更していない。",
-   "2026-07-29 堀の申し送り決着: dom 空欄→50。v9.9.41「50は残余の刻みゆえ、原本が市場を fragmented/同等品を多数が製造可能/実質すべての供給は他社 と構造的に述べていれば数値なしで確定できる」を適用。100/85/70(集中の主張)には従来どおり数値を要する。"
+   "2026-07-29 堀の申し送り決着: dom 空欄→50。v9.9.41「50は残余の刻みゆえ、原本が市場を fragmented/同等品を多数が製造可能/実質すべての供給は他社 と構造的に述べていれば数値なしで確定できる」を適用。100/85/70(集中の主張)には従来どおり数値を要する。",
+   "2026-07-29 投下資本の算定バグ検算: roic 93.0→null(実測63.4%だが>60%＝縮退帯につき算出不能)、roicg 19.5→13.1、nde null→1.60、roict up→null。**有利子負債 2,167,945千$(1年内 3,358 + 長期 2,164,587)が丸ごと欠落していた**——採取器がLongTermDebtNoncurrent/LongTermDebtCurrentタグでしか負債を探しておらず、HEICOがWencor買収以降LongTermDebtAndCapitalLeaseObligations系タグで開示していたため debt=0 と読み、IC＝自己資本−のれん−無形へ縮退していた。原本(10-K accession 0000046619-25-000082)の連結貸借対照表から実額を採取して再計算。roic/roicg/roicEx/nde/roict/_meta 以外のフィールドは一切変更していない。"
   ],
   "evidence": {
    "irr": "『These parts are approved by the FAA and are the functional equivalent of parts sold by OEMs』『proprietary repairs approved by an FAA-qualified designated engineering representative (DER)』=FAA認証・規格ロック=85",
@@ -92,18 +93,23 @@
    "f4": "ETG『accounted for 30%...of our net sales』=隣接の電子/防衛技術事業が売上5%超で成長=80",
    "f5": "disrupt=settled連動=85",
    "moatW": "FY2025(10月期)10-K セグメント情報注記/収益の分解注記(全社 net sales $4,485,044千): Flight Support Group $3,117,277千=69.5% / Electronic Technologies Group $1,413,120千=31.5% / 内部取引消去 △$45,353千。会社自身も Item1 で『Our Flight Support Group (FSG) ... accounted for 70%, 68% and 60% of our net sales in fiscal 2025, 2024 and 2023, respectively』と開示。→ ≥売上15%は2本＝85(『3つ以上』の100は報告セグメントが2本しかなく不成立)。独立性の裏取り: FSGはFAAのPMA/DER承認に立脚した航空アフター部品・修理(顧客=国内外の商用/貨物航空会社・MRO・米国防総省)、ETGは『a leading manufacturer of various types of electronic equipment for the aviation, defense, space, medical, telecommunications and electronics industries』(顧客=防衛プライム・衛星/宇宙機メーカー・医療/通信)で、承認制度・技術基盤・顧客がいずれも別系統＝片方が壊れても他方が生き残る。内訳(収益の分解注記): FSG=Aftermarket replacement parts $1,922,323千(全社42.9%)＋Repair and overhaul parts and services $748,849千(16.7%)＋Specialty products $446,105千(9.9%)。修理・オーバーホール16.7%は≥15%だが同一のFAA承認・同一顧客基盤に乗るためFSGと合わせて1本と数える(v9.9.36『同じ設置基盤・同じ顧客・同じ技術に乗るものは1本』)。ETG=defense, space and aerospace equipment $1,142,207千(25.5%)＋other industries $270,913千(6.0%)。顧客集中: Item1『No one customer accounted for sales of 10% or more of total consolidated sales from continuing operations during any of the last three fiscal years. Net sales to our five largest customers accounted for approximately 20%, 19% and 18% of total net sales in fiscal 2025, 2024 and 2023』＝最大顧客<10%(50の発動条件≥20%は不成立)。出典: SEC 10-K CIK0000046619 acc 0000046619-25-000082 (FY2025-10-31) セグメント情報注記・収益の分解注記・Item1 Business/Customers",
-   "dom": "【2026-07-29 決着・v9.9.41の残余刻み規約により50を確定】原本が両セグメントとも構造を fragmented / 自社は寡占の外側と明言。(a) FSG(売上69.5%): Item1『Historically, the three principal jet engine OEMs, General Electric (including CFM International), Pratt & Whitney and Rolls Royce, **have been the sole source of substantially all** jet engine replacement parts』＝上位3社(OEM)が実質すべてを供給する市場で、**HEICOはその外側の独立系挑戦者**。自社記述も『the largest ... **other than the** OEMs and their subcontractors』『the largest independent supplier of **non-OEM** parts』＝OEMを除いた土俵での首位であり、市場全体でのシェアではない。(b) ETG(31.5%): 『we compete in a **fragmented marketplace** with a number of companies, some of which are well capitalized』。(c) Item1A『**Many of the industries serviced by our operating segments are highly fragmented**, have several highly visible leading companies, and are characterized by intense competition』＝全セグメントを覆う構造記述。→ 事業別に見ても両方とも刻み50に落ち、散らない＝空欄にする理由がない。旧dom=70(3社寡占の一角)は原本と正面から矛盾していた——HEICOは寡占3社の一角ではなくその外側。堀の深さ(irr/rep=PMA約20,000部品・FAA承認の積み上げ)は他の柱が測っており、domでシェア支配を偽装しない。出典: SEC 10-K FY2025(10月期) Item1 Competition / Item1A。"
+   "dom": "【2026-07-29 決着・v9.9.41の残余刻み規約により50を確定】原本が両セグメントとも構造を fragmented / 自社は寡占の外側と明言。(a) FSG(売上69.5%): Item1『Historically, the three principal jet engine OEMs, General Electric (including CFM International), Pratt & Whitney and Rolls Royce, **have been the sole source of substantially all** jet engine replacement parts』＝上位3社(OEM)が実質すべてを供給する市場で、**HEICOはその外側の独立系挑戦者**。自社記述も『the largest ... **other than the** OEMs and their subcontractors』『the largest independent supplier of **non-OEM** parts』＝OEMを除いた土俵での首位であり、市場全体でのシェアではない。(b) ETG(31.5%): 『we compete in a **fragmented marketplace** with a number of companies, some of which are well capitalized』。(c) Item1A『**Many of the industries serviced by our operating segments are highly fragmented**, have several highly visible leading companies, and are characterized by intense competition』＝全セグメントを覆う構造記述。→ 事業別に見ても両方とも刻み50に落ち、散らない＝空欄にする理由がない。旧dom=70(3社寡占の一角)は原本と正面から矛盾していた——HEICOは寡占3社の一角ではなくその外側。堀の深さ(irr/rep=PMA約20,000部品・FAA承認の積み上げ)は他の柱が測っており、domでシェア支配を偽装しない。出典: SEC 10-K FY2025(10月期) Item1 Competition / Item1A。",
+   "roic": "roic = NOPAT 850,221千$ ÷ (自己資本 4,305,319 + 有利子負債 2,167,945 − のれん 3,661,624 − 無形資産 1,471,440) = 850,221 ÷ IC 1,340,200 = 63.4% → **null(算出不能)**。NOPAT = 営業利益 1,018,998 ×(1−実効税率 16.6%[法人税等 148,000 ÷ 税引前利益 893,554])。有利子負債の内訳＝1年内返済長期借入 3,358 + 長期借入金(1年内控除後) 2,164,587。63.4%>60%＝のれん・無形の控除で投下資本が自己資本の31%まで縮退した帯で、同一定義の5年系列も 2021:71.7 / 2022:80.6 / 2023:51.1 / 2024:59.1 / 2025:63.4% と桁が振れ識別力がない。誤値より空欄とし、経済実態は roicg=13.1%(のれん込み)で評価すること。出典: 10-K accession 0000046619-25-000082 連結貸借対照表・連結損益計算書",
+   "roicg": "roicg = NOPAT 850,221千$ ÷ (自己資本 4,305,319 + 有利子負債 2,167,945) = 850,221 ÷ 6,473,264 = 13.1%。旧19.5%は有利子負債 2,167,945千$ が丸ごと欠落し分母＝自己資本のみだったための過大表示。出典: 10-K accession 0000046619-25-000082 連結貸借対照表",
+   "nde": "nde = (有利子負債 2,167,945 − 現金及び現金同等物 217,781) ÷ (営業利益 1,018,998 + 減価償却費 196,076) = 1,950,164 ÷ 1,215,074 = 1.60倍。旧nullの理由(LongTermDebtNoncurrentタグが2009-2011止まり)は原本B/Sの実額採取で解消。旧kenshiの推定1.5-1.8xとも整合。出典: 10-K accession 0000046619-25-000082 連結貸借対照表・連結CF計算書",
+   "roict": "roict = null。のれん除外ROICの5年系列 2021:71.7% / 2022:80.6% / 2023:51.1% / 2024:59.1% / 2025:63.4% のうち 2021(>60%)・2022(IC 490.7百万$＜自己資本 2,606.1百万$の2割)・2025(>60%)の3年が縮退帯で算出不能。残る2年では直近年が欠けるため趨勢を判定できない。参考: のれん込みROIC 2021:13.4 / 2022:13.6 / 2023:8.9 / 2024:11.6 / 2025:13.1% でほぼ横ばい。出典: 10-K accession 0000046619-25-000082 ほか各年10-K"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
    "gpa": "GrossProfitタグ不存在(gm欄は実質opm)",
-   "nde": "LongTermDebtNoncurrentタグがWencor期(2023-)以降を捕捉せず算定不能・ドラフト0.0を棄却(kenshi参照)",
    "sbc": "SBC関連タグ不発見。ただしstock option行使の割引税効果$27.2M(FY2025)開示ありオプション存在は確実・値は不明",
    "eps": "二重株式クラス+二区分法のためXBRL単純割りは不正確で保留(参考: NI690.4/加重139.0M≈4.97ドル・二クラス未調整)",
    "founder": "Mendelson経営陣が1990年より経営・支配(『the current executive management team assumed leadership...October 31, 1990』)。創業者フラグの定義次第でユーザー判定",
    "fin": "業態フラグの定義不明で空欄(航空アフター部品製造・金融業ではない)",
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(13項目)",
-   "dom_2026-07-29_解消": "(空欄化していたが v9.9.41 の残余刻み規約により 50 で確定。旧記述: 2026-07-29 堀再監査で空欄化(旧dom=70)。FY2025(10月期)10-K Item1『Competition』は『Our jet engine and aircraft component replacement parts business competes primarily with aircraft engine and aircraft component OEMs. The competition is principally based on price and service to the extent that our parts are interchangeable. With respect to other aerospace products and services sold by the Flight Support Group, we c…)"
+   "dom_2026-07-29_解消": "(空欄化していたが v9.9.41 の残余刻み規約により 50 で確定。旧記述: 2026-07-29 堀再監査で空欄化(旧dom=70)。FY2025(10月期)10-K Item1『Competition』は『Our jet engine and aircraft component replacement parts business competes primarily with aircraft engine and aircraft component OEMs. The competition is principally based on price and service to the extent that our parts are interchangeable. With respect to other aerospace products and services sold by the Flight Support Group, we c…)",
+   "roic": "2026-07-29 検算: 有利子負債 2,167,945千$ を正しく入れて再計算しても 63.4%(=NOPAT 850,221千$ ÷ IC 1,340,200千$)と60%を超える。のれん 3,661,624 と無形 1,471,440 の控除で投下資本が自己資本 4,305,319 の31%まで縮退した帯で、同一定義の5年系列も 2021:71.7 / 2022:80.6 / 2023:51.1 / 2024:59.1 / 2025:63.4% と桁が振れ識別力がない。誤値より空欄。経済実態は roicg=13.1%(のれん込み)で評価すること",
+   "roict": "2026-07-29 検算: のれん除外ROIC5年系列のうち3年(2021 >60% / 2022 IC縮退 / 2025 >60%)が算出不能となり、直近年が欠けるため up/flat/down を判定できない。参考: のれん込みROIC 2021:13.4→2025:13.1%でほぼ横ばい"
   },
   "kenshi_dil": "2026-07-20 検死: dilNet 17.07は誤値(XBRL希薄化後株式数140.5M→141.1M=+0.4%/年で実証)。0.4に補正",
   "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=4.46",

@@ -139,13 +139,31 @@ def build_numbers(facts):
         if ebitda: ev["nde"] = round((debt-cash)/ebitda, 2)
     # のれん除外ROIC 5年系列 → worst/median
     roics = []
+    roic_skip = []
     for y in sorted(S["op"])[-5:]:
         if all(y in S[k] for k in ("ni","eq")) and y in S["op"]:
             tax_rate = 1 - S["ni"][y]/max(S["ni"][y]+S["tax"].get(y,0), 1)
             nopat = S["op"][y]*(1-max(0,min(0.5,tax_rate)))
+            # 2026-07-29修正: 有利子負債タグが「その年に存在しない」場合、従来は debt=0 と見なして
+            #   IC = 自己資本 − のれん − 無形 になっていた。買収で伸びた会社は自己資本の大半が
+            #   のれん＋無形なので**分母が0へ縮退してROICが発散する**。実測: NJR roic=16.5(真値6.6・
+            #   負債3.6十億$が丸ごと欠落) / HEI 93.0 / APH 163.4。日本株で廃止した旧・門式
+            #   (投下資本−過剰現金)と同型のアーティファクトで、原因は「欠測をゼロと読む」こと。
+            #   **タグが無い年は算出不能として飛ばす**（誤値より空欄）。
+            has_debt = (y in S["debtL"]) or (y in S["debtS"])
+            if not has_debt:
+                roic_skip.append(f"{y}:有利子負債タグ不在でIC算出不能")
+                continue
             debt = (S["debtL"].get(y,0) or 0)+(S["debtS"].get(y,0) or 0)
             ic = S["eq"][y]+debt-(S["gw"].get(y,0) or 0)-(S["intan"].get(y,0) or 0)
-            if ic>0: roics.append(nopat/ic*100)
+            # 分母が自己資本の2割を切ったら、のれん・無形の控除でICが縮退している＝発散の前兆。
+            #   この帯のROICは「資本が軽い」の言い換えで識別力が無く、桁違いの偽陽性だけを生む。
+            if ic <= 0 or ic < 0.20*max(S["eq"][y], 1):
+                roic_skip.append(f"{y}:IC={ic:.0f}が自己資本{S['eq'][y]:.0f}の2割未満＝のれん控除で分母縮退")
+                continue
+            roics.append(nopat/ic*100)
+    if roic_skip:
+        note.append("roic系列の一部を算出不能として除外: " + " / ".join(roic_skip))
     if roics:
         ev["roicExW5"]  = round(min(roics),1)
         ev["roicExMed5"]= round(median(roics),1)

@@ -1,14 +1,14 @@
 {
  "nm": "WM",
- "roic": 17.9,
- "roicg": 10.3,
- "nde": null,
+ "roic": 22.3,
+ "roicg": 10.4,
+ "nde": 3.17,
  "z": 2.13,
  "gpa": null,
  "accr": -7.3,
  "gm": 17.1,
  "gmt": "flat",
- "roict": null,
+ "roict": "flat",
  "cagr": null,
  "fcf": null,
  "ni": 2.7,
@@ -57,7 +57,7 @@
   "reportDate": "2025-12-31",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/823768/000110465926012049/wm-20251231x10k.htm",
-  "auditDate": "2026-07-18",
+  "auditDate": "2026-07-29",
   "model": "Claude Fable 5",
   "kenshi": [
    "debtL(長期有利子負債)タグ不発見。採取器 nde=0.07 は長期債務が欠落した誤値(debtS711M-cash216M=約495M / EBITDA約7十億=0.07)。WMは資本集約・投資適格の債務型で純現金ではない → nde棄却してnull化。正確な純負債/EBITDAは原本B/Sの長期債務要確認",
@@ -68,7 +68,8 @@
    "ni=2.7十億($B, FY2025 NetIncomeLoss 2708M)を充填。fcf=null: capex FY2023-2025のPP&E取得タグが欠落しFY2025 FCF算出不能(推定せず)。参考: FY2022 FCF=OCF4.5-capex2.809=1.69十億 / NI2.238 → 転換率75%(3年前・Stericycle前の値)",
    "sbc=0.7%(SBC169M/売上25200M, FY2025)を充填=極低。dilNet=-0.41%(5年で株数429→403の減少・自社株買い)維持。eps=6.72(NI2708/加重平均株402.7M)確認",
    "Stericycle買収(2024, 事業取得現金7.5十億・のれん9.3→13.4十億)がf1(ROIIC)とp1(ROIC σ)を歪める。統合途上で増分NOPAT未実現のためf1を保守化",
-   "2026-07-19 偽失格修正: roic:null→17.9; roicg:null→10.3。根拠[op4308M eq9990M debt22907M gw13880M]。null roic→門で誤失格していた値を原本XBRLから復元"
+   "2026-07-19 偽失格修正: roic:null→17.9; roicg:null→10.3。根拠[op4308M eq9990M debt22907M gw13880M]。null roic→門で誤失格していた値を原本XBRLから復元",
+   "2026-07-29 投下資本の算定バグ検算: roic 17.9→22.3、roicg 10.3→10.4、nde null→3.17、roict null→flat。有利子負債 22,907百万$(1年内 711 + 長期 22,196)は2026-07-19の復元で既に入っていたが、**無形資産 3,767百万$ の控除が漏れていた**ためroicが過小だった。ndeは長期債務欠落のままnullで残っていたのを実額で復元。原本(10-K accession 0001104659-26-012049)の連結貸借対照表から実額を採取して再計算。roic/roicg/roicEx/nde/roict/_meta 以外は一切変更していない。"
   ],
   "evidence": {
    "dom": "『we are a leading recycler in the U.S. and Canada』+『We own or operate 257 landfill sites, which is the largest network of landfills throughout [N.America]』+『our largest customer represented less than 5% of annual revenues』→ 北米最大手の寡占リーダー(WM/Republic/Waste Connectionsの3社寡占、全国シェア40-69%圏)=70",
@@ -89,15 +90,17 @@
    "f2": "成熟した北米廃棄物市場でTAM浸透高・成長余地は限定的。hitsにTAM/浸透率の定量開示なし → 保守側=60",
    "f3": "R&D非該当業態。『technology-led focus』『automate certain aspects of our business』の技術投資+シェア趨勢は正(最大埋立網・Stericycleで範囲拡大)。顧客集中は『largest customer <5%』で悪化なし(-10不適用)→ 片側+=75",
    "f4": "隣接事業が売上5%超で成長: リサイクル(『leading recycler in the U.S. and Canada』)+医療廃棄物(Stericycle 2024買収)+『emerging diversion technologies that may generate additional value』(再生エネ/資源回収)=80",
-   "f5": "disrupt=settled連動=85"
+   "f5": "disrupt=settled連動=85",
+   "roic": "roic = NOPAT 3,406.4百万$ ÷ (自己資本 9,990 + 有利子負債 22,907 − のれん 13,880 − 無形資産 3,767) = 3,406.4 ÷ IC 15,250 = 22.3%。NOPAT = 営業利益 4,308 ×(1−実効税率 20.9%[法人税等 717 ÷ 税引前利益 3,426])。有利子負債の内訳＝長期債務の1年内返済分 711 + 長期債務(1年内控除後) 22,196。旧17.9%は2026-07-19の暫定復元値で無形資産 3,767百万$ の控除が漏れていた(負債22,907は正しかった)。出典: 10-K accession 0001104659-26-012049 連結貸借対照表・連結損益計算書",
+   "roicg": "roicg = NOPAT 3,406.4百万$ ÷ (自己資本 9,990 + 有利子負債 22,907) = 3,406.4 ÷ 32,897 = 10.4%(旧10.3は丸め差)。出典: 10-K accession 0001104659-26-012049 連結貸借対照表",
+   "nde": "nde = (有利子負債 22,907 − 現金及び現金同等物 201) ÷ (営業利益 4,308 + 減価償却費 2,863) = 22,706 ÷ 7,171 = 3.17倍。旧nullの『0.07＝純現金』は長期債務 22,196百万$ を欠落した誤値。負債キル線(nde>4)には掛からないが、evidence.p3が置いていた『⚠原本B/Sで確認し≥2.5xなら50へ下方』の条件には該当する水準。p3は本作業の対象外(定性欄)のため値は変更していない——ユーザー判断で要再評価。出典: 10-K accession 0001104659-26-012049 連結貸借対照表・連結CF計算書",
+   "roict": "roict = flat。負債込みで組み直したのれん除外ROIC 2021:21.6% / 2022:22.1% / 2023:20.5% / 2024:22.2% / 2025:22.3%。直近22.3 − 最古21.6 = +0.7pt(±2pt以内)＝flat。Stericycle買収(2024)でのれん・無形が段差を作ったがROIC水準は5年通じて20-22%で安定。出典: 10-K accession 0001104659-26-012049 ほか各年10-K"
   },
   "nulls": {
-   "nde": "純負債/EBITDA: debtL欠落で採取器0.07は誤値(純現金と誤認) → null。原本の長期債務要",
    "z": "Altman Z: 時価総額が必要(市場データ手入力後に算出)",
    "gpa": "GP/A: GrossProfitタグ不存在(WMは営業利益率で代替、gmに充填済)",
    "fcf": "capex FY2023-2025のPP&E取得タグ欠落でFY2025 FCF算出不能(推定せず)。参考FY2022転換率75%",
    "cagr": "市場CAGR: hitsに市場/TAM成長率の開示なし・採取器値は陳腐化タグ由来 → null(取込時手入力)",
-   "roict": "ROIC趨勢: ROIC系列がdebtL欠落で信頼不能・Stericycleのれん段差で撹乱 → null",
    "founder": "創業者/創業家の現役経営を示すhits根拠なし(WMは非創業者経営)→ null",
    "fin": "金融業ではない・業態フラグの定義該当なし → null",
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力"

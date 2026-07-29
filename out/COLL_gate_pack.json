@@ -1,8 +1,8 @@
 {
  "nm": "COLL",
- "roic": 160.3,
- "roicg": 60.5,
- "nde": null,
+ "roic": 41.3,
+ "roicg": 11.0,
+ "nde": 1.42,
  "z": 2.04,
  "gpa": 28.0,
  "accr": -16.1,
@@ -57,7 +57,7 @@
   "reportDate": "2025-12-31",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/1267565/000162828026011992/coll-20251231.htm",
-  "auditDate": "2026-07-18",
+  "auditDate": "2026-07-29",
   "model": "Claude Fable 5",
   "kenshi": [
    "nde棄却→null: ドラフトnde=-2.15はdilNet=-2.15と同値の採取器コピーバグ。XBRLで有利子負債タグ未捕捉(LongTermDebtは2016-19の旧11.5Mのみ、DebtCurrentは2015のみ)。実態はBDSI(2022)・Ironshore(2024)買収の転換社債/借入で純負債はプラス(現金96.2M+短期投資155.4M=251.6M<総有利子負債)。純現金ではない。誤値より空欄でnull化",
@@ -69,7 +69,8 @@
    "cagr=20.3=5年売上CAGR(2020 310M→2025 780.6M)確認。ただし成長の大半はBDSI(2022買収572M)・Ironshore(2024買収267.5M)由来でオーガニックではない(acq5=yes)",
    "p3=70(保守): 純負債はプラスと判断も規模がXBRL未捕捉で確定不能。FCF327.6M・流動性251.6Mから純負債/EBITDAは1x未満の可能性が高いが確認できず、<2.5x圏として70。純現金前提の95は不採用",
    "2026-07-19 偽失格修正: roict→up。根拠[op180M eq234M debt0M gw146M]。null roic→門で誤失格していた値を原本XBRLから復元",
-   "2026-07-19 発見度実データ: analysts=6 instOwn=棄却(>100異常)(AV)"
+   "2026-07-19 発見度実データ: analysts=6 instOwn=棄却(>100異常)(AV)",
+   "2026-07-29 投下資本の算定バグ検算: roic 160.3→41.3、roicg 60.5→11.0、nde null→1.42、roict up(据置・系列は再計算)。**有利子負債 809,325千$(1年内term notes 29,000 + 長期term notes 542,112 + 転換社債 238,213)が丸ごと欠落していた**——LongTermDebtタグが2019年の11.5百万$止まりで、以降の LoansPayableCurrent / LongTermLoansPayable / ConvertibleLongTermNotesPayable を捕捉できていなかった。原本(10-K accession 0001628280-26-011992)の連結貸借対照表から実額を採取して再計算。roic/roicg/roicEx/nde/roict/_meta 以外は一切変更していない。"
   ],
   "evidence": {
    "expiry": "『One of our issued U.S. patents expired in 2025 and the remaining are projected to expire in 2030 and 2036』『This grant extended the period of U.S. exclusivity for Nucynta IR from June 27, 2025 to July 3, 2026』→特許・独占の期限型=yes",
@@ -89,12 +90,14 @@
    "f2": "疼痛/ADHD市場でのTAM浸透は一桁%だがオピオイド市場は構造的縮小。低浸透を成長機会と見なせず保守=65",
    "f3": "商業特化でオーガニックR&D低位・横ばい。シェア趨勢はNucynta後発失速×Jornay(ADHD)成長の混在=片方+。卸集中(『distributors control a significant share of the market』)で-10→55",
    "f4": "Ironshore買収でADHD(Jornay PM)へ隣接拡大、売上5%超で成長=80",
-   "f5": "disrupt=unsettled連動→65"
+   "f5": "disrupt=unsettled連動→65",
+   "roic": "roic = NOPAT 121,937千$ ÷ (自己資本 301,675 + 有利子負債 809,325 − のれん 145,925 − 無形資産 669,510) = 121,937 ÷ IC 295,565 = 41.3%。NOPAT = 営業利益 179,636 ×(1−実効税率 32.1%[法人税等 29,749 ÷ 税引前利益 92,619])。有利子負債の内訳＝Current portion of term notes payable 29,000 + Term notes payable, net of current portion 542,112 + Convertible senior notes 238,213(Deferred royalty obligation 121,563 は借入ではないため不算入)。旧160.3%は有利子負債 809,325千$ が欠落しICがゼロ近傍へ縮退した結果。出典: 10-K accession 0001628280-26-011992 連結貸借対照表・連結損益計算書",
+   "roicg": "roicg = NOPAT 121,937千$ ÷ (自己資本 301,675 + 有利子負債 809,325) = 121,937 ÷ 1,111,000 = 11.0%。旧60.5%は同じ負債欠落による。取得無形(669,510千$の製品権)を分母に含めた経済的ROICは11%圏で、旧kenshiが警告していた『10-15%圏』の下限に一致。出典: 10-K accession 0001628280-26-011992 連結貸借対照表",
+   "nde": "nde = (有利子負債 809,325 − 現金及び現金同等物 231,252) ÷ (営業利益 179,636 + 無形資産償却 221,892 + 減価償却 4,182) = 578,073 ÷ 405,710 = 1.42倍。市場性証券 155,427千$ は控除せず現金のみで算定。旧nullの『-2.15』はdilNetのコピーバグ。出典: 10-K accession 0001628280-26-011992 連結貸借対照表・連結CF計算書",
+   "roict": "roict = up(据置)。負債込みで組み直したのれん除外ROIC 2021:4.8% / 2022:14.8% / 2023:34.6% / 2024:432.2%(IC 27.6百万$＝自己資本 228.8百万$の2割未満＝縮退帯につき除外) / 2025:41.3%。算出可能な直近41.3 − 最古4.8 = +36.5pt(>+2pt)＝up。BDSI(2022)・Ironshore(2024)買収で取得無形が自己資本を上回る年がありICが縮退しやすい構造。出典: 10-K accession 0001628280-26-011992 ほか各年10-K"
   },
   "nulls": {
-   "nde": "採取器コピーバグ+有利子負債タグ未捕捉で棄却(kenshi参照)",
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
-   "roict": "ROIC系列断絶で趨勢判定不能",
    "founder": "創業者経営の明確な根拠がhitsになし(専門経営陣)",
    "fin": "業態フラグ定義不明・金融業ではない",
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力"
