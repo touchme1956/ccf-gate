@@ -1191,6 +1191,27 @@ function ccfMoat(d){
   const idx=Math.max(0,Math.min(96,gm(legs.map(l=>cap96(l[1])),legs.map(l=>W[l[0]]/sw))+cultAdj));
   return {idx:idx,na:false,miss:miss,legs:legs.length};
 }
+// ── 現在門スプレッドを裁くROICの選び方（単一実装・v9.9.42 ユーザー明示指示 2026-07-29）──────
+// 優先順: roicEx（事業ROIC・現金控除／v9.9.25の既存規約） → roic（のれん除外） → roicg（のれん込み）
+// 【なぜ roicg へのフォールバックが要るか】
+//   `n('roic')` は空欄を 0 として読むため、**「のれん除外ROICが算出不能」が「ROIC=0％＝価値破壊」に
+//   化けて** キル「ROIC≤WACC」とS1が自動で立っていた。2026-07-29のROIC検算で、のれん+無形が
+//   自己資本を上回る会社（投下資本が負またはごく小）の roic を根拠つきで空欄にした結果、
+//   ROL(roicg 27.5%・5年σ0.8pt)・CHE(25.7%)・STRL(22.0%)・RELX(23.7%)・GDDY(24.2%)・CSCO(14.4%)
+//   ・TTEK(10.5%)・SPGI(11.3%)が Ω0〜12 で失格になった——**事実と真逆の判定**。
+//   roicg は買収価格を分母に含むぶん **roic より必ず保守的**なので、これで偽の合格は作れない。
+//   門には既に「roicExがあればそれで裁く」(v9.9.25)という同思想の規約があり、その延長にあたる。
+// 【空欄と0を区別する】roic が実測で0や負なら、それは「測って低い」なのでフォールバックしない。
+//   絶対のルール7「欠測をゼロと読むな」の実装でもある。
+function ccfRoicJudge(roicRaw, roicgRaw, roicExRaw){
+  const num=v=>{if(v==null)return null;const t=String(v).trim();if(t==='')return null;
+                const x=parseFloat(t);return isNaN(x)?null:x;};
+  const ex=num(roicExRaw), r=num(roicRaw), g=num(roicgRaw);
+  if(ex!=null)return {v:ex, src:'roicEx（事業ROIC・現金控除）'};
+  if(r!=null) return {v:r,  src:'roic（のれん除外）'};
+  if(g!=null) return {v:g,  src:'roicg（のれん込み）へフォールバック＝roicが算出不能'};
+  return {v:0, src:'いずれも未取得（0として裁く＝判定材料なし）'};
+}
 const G=s=>s>=90?['S','var(--gold-bright)','dv-s']:s>=80?['A+','var(--jade)','dv-s']:s>=75?['A−','var(--jade)','dv-a']:s>=72?['B','var(--amber)','dv-a']:['C','var(--rust)','dv-c']; // v9.9.26: ティア再アンカー(80/72)・投下閾値75に文字グレードを整合(旧90/85/75/65は「最上位」表示とA−が併存する矛盾を生んでいた)
 
 function spreadPt(s,b){let p;if(s<=0)return[0,true];if(s<5)p=40+s/5*10;else if(s<10)p=50+(s-5)/5*12;else if(s<15)p=62+(s-10)/5*13;else if(s<20)p=75+(s-15)/5*10;else if(s<25)p=85+(s-20)/5*6;else p=Math.min(96,91+(s-25)*.4);if(b<0.8)p-=8;return[Math.max(0,p),false];}
@@ -1232,12 +1253,15 @@ function compute(){
   const rfr=n('rfr')||4.48, erp=n('erp')||4.45; // v9/MP-1: 動的WACC既定(2026-07: UST10y 4.48%, Damodaran implied ERP 4.45%)——月次更新義務
   const betaRaw=n('beta'), beta=Math.max(0.8,Math.min(1.8,betaRaw));
   const wacc=rfr+beta*erp;
-  const roic=n('roic'), roicg=n('roicg'), spread=roic-wacc;
+  const roicg=n('roicg');
+  // v9.9.42: 空欄を0と読まない。roic が算出不能なら roicg で裁く（詳細は ccfRoicJudge の頭注）
+  const _rj=ccfRoicJudge($('roic')&&$('roic').value, $('roicg')&&$('roicg').value, $('roicEx')&&$('roicEx').value);
+  const roic=_rj.v, spread=roic-wacc;
   // v9.9.25: 現在門スプレッドのキル/薄氷/主柱は、任意入力の事業(現金控除)ROIC=roicEx があればそれで裁く(ユーザー明示指示2026-07-23)。
   //   ネットキャッシュ高ROIC企業(SMC/村田型)で roic に現金込み報告ROICを入れた場合、遊休現金でROICが希薄化し ROIC≤WACC の誤爆キル(=価値破壊認定)になる。
   //   事業の実力(過剰現金を除く営業ROIC)がWACCを超えていれば、それは価値破壊ではない。roicEx未入力=roicで従来通り(既存台帳280社はdiff0)。
   const roicExV=(function(){const el=$('roicEx');if(!el||el.value==='')return null;const v=parseFloat(el.value);return isNaN(v)?null:v;})();
-  const roicNow=(roicExV!=null)?roicExV:roic, spreadNow=roicNow-wacc;
+  const roicNow=_rj.v, spreadNow=roicNow-wacc;   // v9.9.42: 選定は ccfRoicJudge に一本化
   // ===== 提言1: 無形資産調整ROIC (Damodaran/Mauboussin: R&D・S&M費用計上によるROIC過小評価を補正) =====
   //   R&Dや顧客獲得費(S&M)を全額即時費用計上する高成長ソフト/プラットフォーム企業は、会計ROICが実態より低く出る。
   //   これらの無形投資は伝統企業の設備投資に相当するため、資本化すればROICは上昇する。
@@ -2249,7 +2273,8 @@ function exitVerdict(d,r){
   const rfr=num('rfr')||4.48, erp=num('erp')||4.45;
   const beta=Math.max(0.8,Math.min(1.8,num('beta')));
   const wacc=rfr+beta*erp;
-  const roic=num('roic'), spread=roic-wacc;
+  // v9.9.42: 出口判定も同じ規約で裁く。従来は roic 空欄→0→S1「スプレッド陥落」が自動で立っていた
+  const roic=ccfRoicJudge(d.roic, d.roicg, d.roicEx).v, spread=roic-wacc;
   const conv=num('ni')?num('fcf')/num('ni')*100:NaN;
   const roiicRaw=txt('roiic'), roiicNA=(roiicRaw===''||roiicRaw==='na'), roiicV=roiicNA?NaN:(parseFloat(roiicRaw)||0);
   const F=(num('f1')&&num('f2'))?Math.exp(0.26*Math.log(Math.max(num('f1'),1))+0.24*Math.log(Math.max(num('f2'),1))+0.22*Math.log(Math.max(num('f3'),1))+0.15*Math.log(Math.max(num('f4'),1))+0.13*Math.log(Math.max(num('f5'),1))):0; // v9.9.26: gm()と同じ下限クランプ——f3/f4/f5が0や空欄でもF=0に崩壊しない(log(0)=-∞対策)
