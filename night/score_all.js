@@ -14,6 +14,9 @@
  *     ※--set は欠測分だけでなく**全パック**を上書きする粗い道具。「欠測を埋めたらどうなるか」を
  *       知りたいときは、この結果を答えにしないこと（本来の値が高い社も低い社も一律に化ける）。
  *   node night/score_all.js --only MSFT,6920,NVDA   銘柄を絞る
+ *   ※--only / --set の部分実行は out/score_all.partial.json へ書く。**正本 score_all.json は上書きしない**
+ *     （部分結果で正本を潰すと、それを読む検査器〔audit_moat / audit_moat_gap / audit_kill_roiic〕が
+ *      その数社を全台帳と誤認して静かに嘘をつく。2026-07-29に実際に踏んだ）
  *
  * 妥当性の確認方法: 素の実行で米国のΩ75+に V/ASML/KLAC/NVDA/MSFT/MA/TSM/ADBE/RMD/IDXX 等
  *   保有・監視銘柄が並べば、門の再現ができている。
@@ -152,7 +155,13 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               buy: s >= 75 && x.xPass === true && mg.pass === true });
 }
 rows.sort((a, b) => b.s - a.s);
-fs.writeFileSync(path.join(ROOT, 'out', 'score_all.json'), JSON.stringify(rows, null, 1));
+// 部分実行(--only / --set)の結果で正本 out/score_all.json を潰さない（2026-07-29）。
+// 実害があった: `--only MA,V,...` を打った直後、score_all.json が5件に縮み、
+// audit_moat.py / audit_moat_gap.py / audit_kill_roiic.py が**その5件だけを全台帳として**読んだ。
+// 採点は正しいのに、それを読む検査器が全員静かに嘘をつく——絶対のルール7(c)「保管された値も毎回検問する」の同型。
+const partial = only.length || Object.keys(over).length;
+const outFile = partial ? 'score_all.partial.json' : 'score_all.json';
+fs.writeFileSync(path.join(ROOT, 'out', outFile), JSON.stringify(rows, null, 1));
 
 const med = a => { const v = a.slice().sort((x, y) => x - y); return v.length ? v[Math.floor(v.length / 2)] : NaN; };
 const brief = (lab, g) => {
@@ -180,4 +189,4 @@ console.log(`\n三段関門を通過(🟢投下可) ${buy.length}社`
   + `　日本株${buy.filter(x => x.jp).length}／米国等${buy.filter(x => !x.jp).length}`
   + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
 console.log(`⛔堀不足で見送り(Ω75+だが堀<75) ${q75.filter(x => !x.moatOK).length}社`);
-console.log(`\n→ out/score_all.json（全${rows.length}件・降順）`);
+console.log(`\n→ out/${outFile}（全${rows.length}件・降順）`+ (partial ? '　※部分実行なので正本 score_all.json は書き換えていない' : ''));
