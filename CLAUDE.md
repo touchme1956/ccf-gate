@@ -39,6 +39,9 @@
   「基準を変えたら誰がどう動くか」は推測でなくこれで出す
 - 堀の根拠検査: `python3 night/audit_moat.py`（`--q75` / `--list`）→ dom/moatWの根拠の質を仕分けて
   再監査の作業リストを出す。**堀のふるいは入力の質を超えられない**ので、審査の納品後に必ず回す
+- ROICの分母縮退検査: `python3 night/audit_roic.py`（`--q70` / `--list`）→ のれん除外ROICで投下資本が
+  自己資本のごく一部まで縮退し発散している疑いのある社を仕分ける（絶対のルール7の検査器）。
+  **高ROIC自体は異常でない**（roic=事業の質/roicg=買収規律の乖離は設計どおり）ので作業リストであって有罪判決ではない
 - 市場データ採取: `python market_fetch.py` → market_data.json（px/per/perF/beta/shy/evebit/analysts/instOwn）
   → `python market_merge.py` でパックのnull市場欄へ機械充填（定性は触らない）→ 門で再取込するとⅥのE[r]判定が生きる
 - X監視表の再計算（門X4条件同時成立の開通線+階段指値のfair線）: `python x_watch_recalc.py`（四半期保守で新eps反映後に実行）
