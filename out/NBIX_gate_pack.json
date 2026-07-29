@@ -69,7 +69,8 @@
    "eps: NI478.6M/99.5M株(basic)=4.81、希薄化後でドラフト4.78に整合→維持",
    "p2根拠: COVID(2020)営利は減少せず72.3→163.0Mへ増加=製薬の景気耐性を示すが、INGREZZA発売2017以降に本格不況の実績なし→不況実績なし扱いで70上限",
    "単剤依存の核心: INGREZZAが総製品売上の『significant portion』(実質約87%)。CRENESSITY(2024/12発売)はFY2025 $301.2M=売上の約10.5%で多様化進行中だが依存度は依然高い",
-   "2026-07-29 acq5 0.04 → 'no'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
+   "2026-07-29 acq5 0.04 → 'no'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。"
   ],
   "evidence": {
    "expiry": "『pending patent applications, which, if issued, could expire at least as late as 2046』+『CRENESSITY has been granted seven years of orphan drug exclusivity by the FDA』+『we face the risk that our licensors could...lose patent protection...thereby impairing or extinguishing our rights under our licenses』→特許束・オーファン独占の期限型独占=yes",
@@ -98,7 +99,8 @@
    "accr": "機械算出 2025年: (純利益 478,600,000 − 営業CF 782,700,000) ÷ 総資産 4,631,500,000",
    "dilNet": "機械算出: 株数 2022年 96,500,000 → 2025年 100,100,000＝3年の年率（自社株買い後の純希薄化）",
    "eps": "機械算出 2025年: 純利益 478,600,000 ÷ 株数 100,100,000（TTMではなく通期実績）",
-   "acq5": "【2026-07-29 機械判定】のれん残高(十億$) 2022 0.01 → 2023 0.01 → 2024 0.01。**新しさ =(直近 0.01 − 2022年 0.01)÷直近 = +5.3%**（今あるのれんのうち直近5年に増えた割合） → **大型買収なし=no**（ほぼ全部が遺産のれん）（出典: SEC XBRL companyfacts の Goodwill 系列）"
+   "acq5": "【2026-07-29 機械判定】のれん残高(十億$) 2022 0.01 → 2023 0.01 → 2024 0.01。**新しさ =(直近 0.01 − 2022年 0.01)÷直近 = +5.3%**（今あるのれんのうち直近5年に増えた割合） → **大型買収なし=no**（ほぼ全部が遺産のれん）（出典: SEC XBRL companyfacts の Goodwill 系列）",
+   "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **26.0%** / 同業（SIC2836「Biological Products, (No Diagnostic Substances)」・43社）の中央値 **6.5%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+26.0%)÷(1+6.5%))^5 − 1 = **+132.4%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -118,7 +120,9 @@
    "accr": "machine",
    "dilNet": "machine",
    "eps": "machine",
-   "acq5": "machine"
+   "acq5": "machine",
+   "sht": "machine"
   }
- }
+ },
+ "sht": "up"
 }

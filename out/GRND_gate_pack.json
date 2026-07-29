@@ -108,7 +108,8 @@
    "5点キュー第2陣の門2審査(β=1.0中立仮定・境界銘柄は実βで再検証)。Grindr=ニッチSNSの事実上独占。SPAC上場歴・小型 roicタグ欠損→gate0実測補充(28.0/22.5)。 実β0.221で確定(境界銘柄の精査)。",
    "2026-07-29 堀再監査(v9.9.41): 旧dom=85→新dom=50、旧moatW=50→新moatW=50。domは_meta.evidence.domがnullのまま85が入っていた典型的な『測っていない数字』。10-K原本を全文検索したが市場シェアの数値は一切存在せず、会社の自称は『few global platforms that focus solely on the GBTQ community』『first mover advantage』という順位の自称のみ(v9.9.41規約4により証拠にならない)。一方 Item 1A は『industries are highly competitive, with a consistent stream of new products and services and entrants』『AI tools have significantly lowered the cost of and barriers』と明言し、Scruff/Sniffies/Feeld/PlanetRomeo(LGBTQ特化)、Tinder/Hinge、Facebook/Instagram/LinkedIn を競合として名指しする。数値が無い以上85(複占の首位)は成立せず、構造記述がある以上空欄でもなく、規約3により50を置いた。これによりGRNDは絶対MOAT指数の柱が下がる可能性があるが、『測っていない値で通す』方が事故という規約に従う。moatWは原本の実数(Direct 83.3% ≥80%)で再確認し据置。dom/moatW/_meta以外は一指も触れていない。",
    "2026-07-29 市場値の常識帯検問で排除: shy=15.49。market_merge.pyのガード不在で market_data.json の旧不正値が再注入されていた（採取側だけの検問では防げない＝保管された値も毎回検問する）",
-   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=115.5 / 5年窓=None。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった"
+   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=115.5 / 5年窓=None。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
+   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。"
   ],
   "evidence": {
    "moatW": "【2026-07-29 v9.9.41再監査 → 50を維持】売上の内訳(10-K FY2025): Direct revenue(有料サブスクリプション Grindr XTRA/Unlimited＋アドオン) 366,297千USD = 83.3% / Indirect revenue(広告) 73,601千USD = 16.7%、総額 439,898千USD。10-K本文でも「we also generate indirect revenue, representing 16.7%, 15.6%, and 13.2% of total revenue for the years ended December 31, 2025, 2024, and 2023」と一致。報告セグメントは1つ(Schedule of Segment Information)。地域別 Domestic 254,300 = 57.8% / International 185,598 = 42.2%だが、v9.9.41追加規約により地域別は独立した堀に数えない。→ 広告(Indirect)は同一アプリの同一ユーザー網を再現金化したもので、10-K自身が「both of which are driven by the Grindr platform」と述べるとおり同一プラットフォームに乗る＝v9.9.41追加規約により1本。その1本の中で Direct が83.3%(≥80%)の単一製品ライン → 50。出典: SEC 10-K FY2025 grnd-20251231.htm (Disaggregation of Revenues / Item 1 Business)",
@@ -121,7 +122,8 @@
    "accr": "機械算出 2025年: (純利益 94,751,000 − 営業CF 141,518,000) ÷ 総資産 531,031,000",
    "dilNet": "機械算出: 株数 2022年 173,524,360 → 2025年 185,034,502＝3年の年率（自社株買い後の純希薄化）",
    "eps": "機械算出 2025年: 純利益 94,751,000 ÷ 株数 185,034,502（TTMではなく通期実績）",
-   "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 87,846,980 ÷ Δ投下資本 76,033,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 386,832,000→462,865,000（+19.7%）"
+   "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 87,846,980 ÷ Δ投下資本 76,033,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 386,832,000→462,865,000（+19.7%）",
+   "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **31.8%** / 同業（SIC7370「Services-Computer Programming, Data Processing, Etc.」・43社）の中央値 **7.6%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+31.8%)÷(1+7.6%))^5 − 1 = **+175.6%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**"
   },
   "nulls": {
    "市場データ_保留": "2026-07-28 汚染除去: 安全弁が保留した値が、弁を付ける前の実行で既にパックへ書き込まれていたため空欄化した (shy=15.49, mcap=3.1931, evebit=24.8)。shy=14.05%は12%超でmcap過小の疑い。誤値のまま残すと門Xが偽の投下可を点灯させる",
@@ -145,9 +147,11 @@
    "accr": "machine",
    "dilNet": "machine",
    "eps": "machine",
-   "roiic": "machine"
+   "roiic": "machine",
+   "sht": "machine"
   }
  },
  "mcap": null,
- "roiic": 115.5
+ "roiic": 115.5,
+ "sht": "up"
 }
