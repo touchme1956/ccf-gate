@@ -169,12 +169,65 @@ def _u(x):
         return str(x)
 
 
+def series_sum(facts, keys, total_key=None):
+    """**足し合わせるべきタグ**を合計する。series() は候補から1本を選ぶので有利子負債には使えない。
+
+    2026-07-29修正: debtS は LongTermDebtCurrent / LinesOfCreditCurrent / CommercialPaper …
+      と**同時に存在しうる別の科目**なのに、series() が優先順で1本だけ選んでいた。
+      実測 IDXX: LongTermDebtCurrent が選ばれ、リボルビング枠 LinesOfCreditCurrent 398,000千$ が
+      丸ごと落ちて roic 71.1（真値56.4）。**タグを候補リストに足しても、選ぶ実装のままでは拾えない**
+      ——2026-07-29 に debtS のタグを9個へ拡張したのに IDXX が直らなかったのはこれが理由で、
+      審査官が手で直していた。「候補＝代替」と「候補＝構成要素」を取り違えていた。
+
+    total_key があり、その年に総額タグが存在するなら**合計せず総額を採る**（二重計上を避ける）。
+    """
+    per = {}
+    for k in keys:
+        for ns in ("us-gaap", "ifrs-full"):
+            d = facts.get("facts", {}).get(ns, {})
+            if k not in d:
+                continue
+            out, _u = _annual(d[k]["units"])
+            if out:
+                per[k] = out
+            break
+    years = set().union(*[set(v) for v in per.values()]) if per else set()
+    out, used = {}, {}
+    for y in years:
+        if total_key and total_key in per and y in per[total_key]:
+            out[y] = per[total_key][y]
+            used[y] = [f"{total_key}(総額)"]
+            continue
+        parts = [(k, per[k][y]) for k in keys if k != total_key and k in per and y in per[k]]
+        if not parts:
+            continue
+        out[y] = sum(v for _, v in parts)
+        used[y] = [f"{k}={v:,.0f}" for k, v in parts]
+    return out, used
+
+
 def build_numbers(facts):
     S, diag = {}, {}
     for k, v in TAGS.items():
         S[k] = series(facts, v)[0]
         diag[k] = f"{len(S[k])}年分" if S[k] else "タグ不発見"
+    # 有利子負債だけは「代替」でなく「構成要素」なので合計する（上の series は上書き）
+    S["debtS"], _usedS = series_sum(facts, TAGS["debtS"], total_key="DebtCurrent")
+    S["debtL"], _usedL = series_sum(facts, TAGS["debtL"], total_key="LongTermDebt")
+    for k in ("debtS", "debtL"):
+        diag[k] = f"{len(S[k])}年分(合計)" if S[k] else "タグ不発見"
     ev, note = {}, []
+    ev["_debtUsed"] = {"debtS": _usedS, "debtL": _usedL}
+    # us-gaap の LongTermDebt は「1年内返済分を含む総額」で報告する会社と「非流動分のみ」の
+    # 会社が混在する。前者に LongTermDebtCurrent を足すと**二重計上**になる。機械では区別できない
+    # ので、両方を使った年は警告だけ出す（黙って足しも引きもしない＝ルール7の作法）。
+    _dbl = sorted(y for y in _usedL
+                  if any("LongTermDebt(総額)" in x for x in _usedL[y])
+                  and any("LongTermDebtCurrent" in x for x in _usedS.get(y, [])))
+    if _dbl:
+        note.append(f"有利子負債の二重計上の疑い（{_dbl[-1]}年ほか{len(_dbl)}年）: LongTermDebt を"
+                    f"1年内返済分込みで報告する会社では LongTermDebtCurrent を足すと重複する。"
+                    f"原本のBSで総額を確認せよ。重複していれば IC が過大＝ROICは**過小**に出ている")
     # 2026-07-29新設: 機械項目にも根拠を刻む。
     #   実測(night/audit_evidence.py)で、機械項目の _meta.evidence 被覆率は 9.8%
     #   (ni 0.3% / cagr 1.0% / gm 4.8% / roic 16.2%)だった。「機械の出力だから正しい」
@@ -294,7 +347,9 @@ def build_numbers(facts):
                            f"{max(0,min(0.5,tax_rate)):.1%})） ÷ IC {_u(ic)}"
                            f"＝自己資本 {_u(S['eq'][y])} + 有利子負債 {_u(debt)} − のれん {_u(gw)}"
                            f" − 無形 {_u(intan)}。**IC/自己資本={ic/max(S['eq'][y],1)*100:.1f}%**"
-                           f"（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）")
+                           f"（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）"
+                           f"｜有利子負債の内訳: "
+                           f"{' + '.join((ev['_debtUsed']['debtL'].get(y) or []) + (ev['_debtUsed']['debtS'].get(y) or [])) or '—'}")
     if roic_skip:
         note.append("roic系列の一部を算出不能として除外: " + " / ".join(roic_skip))
     if roics:
