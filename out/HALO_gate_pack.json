@@ -43,7 +43,7 @@
  "indG": null,
  "founder": null,
  "fin": null,
- "p1": 80,
+ "p1": 50,
  "p2": 70,
  "p3": 50,
  "p4": 90,
@@ -75,7 +75,8 @@
    "gm/gpa: GrossProfitタグ不発見(ロイヤルティ業態)→null。ロイヤルティ主体ゆえ実質粗利率はほぼ100%だが機械抽出不能",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=10.6。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 acq5 1.73 → None。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
-   "2026-07-29 acq5 None → 'yes'。のれんの行が2022年に初めて現れ(0.409十億$)、2020/2021年は自己資本を報告しているのにのれんの行が無い＝当時のれんが無かった。のれんは金額があれば独立行の表示が要るため、この一件だけは『タグ不在=0』と読んでよい（絶対のルール7の明示的な例外・根拠に明記した）。＝今あるのれんは全額が直近5年に発生＝yes。門はもともと空欄を'yes'で裁くので採点は動かない。"
+   "2026-07-29 acq5 None → 'yes'。のれんの行が2022年に初めて現れ(0.409十億$)、2020/2021年は自己資本を報告しているのにのれんの行が無い＝当時のれんが無かった。のれんは金額があれば独立行の表示が要るため、この一件だけは『タグ不在=0』と読んでよい（絶対のルール7の明示的な例外・根拠に明記した）。＝今あるのれんは全額が直近5年に発生＝yes。門はもともと空欄を'yes'で裁くので採点は動かない。",
+   "2026-07-29 p1 80→50（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均31.1%・σ16.2pt・CV51.9%）。"
   ],
   "evidence": {
    "expiry": "『certain proprietary drugs co-formulated with ENHANZE have been granted additional exclusivity, extending the patent life of the product beyond the patent expiry of the proprietary IV drug』+『Any such loss of patent protection or proprietary rights could lead to a reduction or loss of revenues, incentivize one or more of our key ENHANZE partners to terminate』+『biosimilars to the active drug ingredient in our ENHANZE technology』→ロイヤルティはパートナー製品特許＋ENHANZE特許束に依存=期限型→yes",
@@ -88,7 +89,7 @@
    "dur": "堀機構は規制承認＋プロセス知(生物製剤酵素製造)＋スイッチングコスト。ただし製品毎の特許/exclusivity期限に依存(expiry=yes)し永続的規制独占(コンセッション型100)ではない→85",
    "geopol": "『some of which are currently our single source for the materials necessary for certain of our products』(単一供給者リスク)+RYBREVANT中国承認等の国際規制依存。パートナーは欧米日に分散した優良製薬でチョークポイント軽微→mild=1",
    "nrr": "非開示のため既定105",
-   "p1": "黒字化はFY2020以降で系列短くM&Aで投下資本が段差(2022 Antares・2025買収)。roicg推移2021:25%/2022:15%/2023:18%/2024:25%/2025:13%でσ約4.5pt→<6pt=80(黒字系列<5年相当につき保守化・明記)",
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 14.1% / 2022 9.8% / 2023 39.4% / 2024 41.8% / 2025 50.6% → 平均 31.1% / σ 16.2pt / **CV 51.9%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **50**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "p2": "profitableな景気後退実績なし(COVID2020はむしろ黒字転換op144.3、ロイヤルティ契約収入は不況耐性高)。不況実績なし上限70=70",
    "p3": "nde4.18(≥2.5)。convertible債務+買収+自社株買いで純負債約2B。sti含めても≥2.5→50",
    "p4": "accr-13.3(<0・現金裏付け)+『Item 1B. Unresolved Staff Comments None』。hitsのmaterial weaknessは監査手続の定型文(『assessing the risk that a material weakness exists』)で実指摘ではない→90(無限定意見は監査報告本文で最終確認推奨)",
@@ -134,7 +135,8 @@
    "eps": "machine",
    "roiic": "machine",
    "roiic5": "machine",
-   "acq5": "machine"
+   "acq5": "machine",
+   "p1": "machine"
   }
  },
  "roiic": "na",

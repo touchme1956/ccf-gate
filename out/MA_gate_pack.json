@@ -43,7 +43,7 @@
  "indG": null,
  "founder": null,
  "fin": null,
- "p1": 80,
+ "p1": 90,
  "p2": 95,
  "p3": 85,
  "p4": 90,
@@ -76,7 +76,8 @@
    "2026-07-29 堀再監査(irr): 旧根拠は特許列挙とトークン化率のみで、刻み70/85を分ける論拠を持っていなかった。10-K原本のFranchise節(標準設定・参加者審査)を精読し、**85の『認証・規格ロック』は顧客側の再認定を要する型を指すのであってネットワーク運営規約は当たらない**と判定。値は70で不変、根拠を原本引用へ差し替え。この判定は同型のV(Visa)にも同じ理由で適用される(V irr=70 も維持)。※本件は堀のふるいの直前(MA堀73.6)にあり、85にすれば75を超えて投下可になる位置だった——**合否が動く方向へ刻みを寄せない**ため、原本が支える範囲を厳密に取った。",
    "2026-07-29 gm 54.0 → **57.6** に是正。旧値は根拠が無く、FY2023-2025のどの年の実額とも一致しなかった。gmPtの刻み(v9.9.43)は35%以上が同じ段なので採点は動かないが、priceConfirm の入力として台帳を正しくした。",
    "2026-07-29 roic 131.0 → **74.9** に是正。このパックの kenshi には当初から『roic=のれん除きROIC5年平均≈74.9%(FY21-25=58.8/75.7/74.0/79.3/86.9%)を充填』と書いてあるのに、**値の欄には131.0が入っていた**——検死の記録と値が食い違ったまま気づかれずにいた。本日SEC XBRLで独立再現(5年平均78.8/直近88.6)し、kenshiの系列が妥当と確認したうえで戻した。スプレッドは上限(96)に張り付く帯なので採点は動かない。",
-   "2026-07-29【本日の自分の是正を取り消し】roic/roicg/roict を採取器の門式へ戻した（{'roic': 74.9, 'roicg': 56.9, 'roict': 'up'} → {'roic': 131.0, 'roicg': 56.9, 'roict': 'up'}）。本日いったん『のれんのみ控除・5年平均』へ書き換えたが、これは**規約違反だった**——門式は hachimon_fetch に明文で 投下資本 = 自己資本 + 有利子負債 − のれん − **無形**、**直近年**、IC が自己資本の2割未満なら算出不能（絶対のルール7(b)）と定まっている。MAについては採取器の頭注が『MAは74.9→131.0の上方修正だった』と、**19社検算で一度決着した件**として名指しで記録していた。自分は同じパックの**古いほうのkenshi(74.9)**だけを読んで『値がkenshiと矛盾している』と誤読し、決着ずみの結論を巻き戻した。**台帳の値が食い違って見えたら、まず後から書かれた記録と規約を探すこと。**"
+   "2026-07-29【本日の自分の是正を取り消し】roic/roicg/roict を採取器の門式へ戻した（{'roic': 74.9, 'roicg': 56.9, 'roict': 'up'} → {'roic': 131.0, 'roicg': 56.9, 'roict': 'up'}）。本日いったん『のれんのみ控除・5年平均』へ書き換えたが、これは**規約違反だった**——門式は hachimon_fetch に明文で 投下資本 = 自己資本 + 有利子負債 − のれん − **無形**、**直近年**、IC が自己資本の2割未満なら算出不能（絶対のルール7(b)）と定まっている。MAについては採取器の頭注が『MAは74.9→131.0の上方修正だった』と、**19社検算で一度決着した件**として名指しで記録していた。自分は同じパックの**古いほうのkenshi(74.9)**だけを読んで『値がkenshiと矛盾している』と誤読し、決着ずみの結論を巻き戻した。**台帳の値が食い違って見えたら、まず後から書かれた記録と規約を探すこと。**",
+   "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均113.9%・σ16.9pt・CV14.8%）。"
   ],
   "evidence": {
    "dom": "MA自身の10-K(FY2025) Item1 Competition には**シェアの数値開示が無い**——『We compete worldwide with payments networks such as Visa, American Express, JCB, China UnionPay and Discover, among others. ... Some competitors have more market share than we do in certain jurisdictions.』(定性のみ)。そこで、提出書類の中に引用された第三者調査を原本扱いとする規約に従い、同一のNilson系実数表を採用する: Visa Inc. 10-K FY2025 Item1 COMPETITION の暦年2024比較表(出典表記『Mastercard data sourced from The Nilson Report issue 1288 (June 2025)』、Mastercard欄は Maestro/Cirrus を除く)。Payments Volume($B): Visa 13,433 / **Mastercard 8,014** / American Express 1,750 / JCB 319 / Diners Club-Discover 253 → 5網合計 23,769。**自社(MA)シェア 33.7%**(Total Transactions では 204/538=37.9%、Cards では 3,146/8,337=37.7%)。**上位2社(Visa+Mastercard)合計 21,447 = 90.2%**(Transactions 95.7% / Cards 95.4%)。→ 自社単独は40%未満だが**上位2社合計≥80%の複占の一角**(首位はVisa)＝v9.9.38の刻み70に該当。刻み85『複占の首位』は自社が首位でないため不可、刻み50『競争<40%』はCadence事例と同型の誤適用になるため不可。(出典: Mastercard 10-K FY2025 Item1 Competition https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm ／ 実数はVisa Inc. 10-K FY2025 Item1 COMPETITION 表 https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm )。【2026-07-29 堀再監査で再確認・70を維持】85『複占の首位』は上位2社で≥80%かつ**自社が首位**を要するが、採用したNilson系実数表でMAは首位ではない(Visaが上位)。よって刻みは70『複占の一角』が上限。",
@@ -88,7 +89,7 @@
    "disrupt": "『they could disrupt our existing cross-border P2M and P2P market share』『account-based global schemes, which could lead to a disruption』→破壊的脅威は現存だが未決着=unsettled",
    "moatdecay": "純収益成長継続(Revenues FY2023:25.1→FY2024:28.2→FY2025:32.8十億、5年CAGR16.5%)+『40% tokenized』でネットワーク深化→堀は縮小せず=no",
    "expiry": "『These patents expire at varying times depending on the jurisdiction』とあるが、MAの堀は特許束ではなくネットワーク効果。コンセッション/特許依存の期限型独占ではない=no",
-   "p1": "のれん込みROIC 5年σ=5.9pt(FY21-25=37.5/47.7/48.9/49.8/55.8%)→<6pt=80",
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 86.0% / 2022 116.1% / 2023 105.8% / 2024 130.7% / 2025 131.0% → 平均 113.9% / σ 16.9pt / **CV 14.8%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **90**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "p2": "COVID時 営業利益2019:9.7→2020:8.1十億=-16.5%(浅い)・売上16.9→15.3(-9.5%)→浅いDD=95",
    "p3": "純負債0.42x EBITDA(<1)→85(純現金ではない点をkenshiで補正)",
    "p4": "『assessing the risk that a material weakness exists』は監査手続の定型文で実指摘ではない+『Item 1B. Unresolved staff comments Not applicable』→無限定・クリーン。accr=-4.9%(<0・保守的)→90",
@@ -143,7 +144,8 @@
    "accr": "machine",
    "roiic": "machine",
    "roiic5": "machine",
-   "roic": "machine"
+   "roic": "machine",
+   "p1": "machine"
   }
  },
  "moatW": 70,

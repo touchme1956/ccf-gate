@@ -44,7 +44,7 @@
  "indG": null,
  "founder": null,
  "fin": null,
- "p1": 70,
+ "p1": 65,
  "p2": 90,
  "p3": 90,
  "p4": 90,
@@ -70,7 +70,8 @@
    "株数断絶: 2020年に4:1分割(shW 2019 91.1→2020 377.5M)。分割前後の株数比較は不可。dilNet/epsは分割後系列で評価。",
    "acq/dep等ユニット混在なし(全USD単一通貨)。IAS29・SPAC断絶・税率符号バグは該当なし。",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=81.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 acq5 0.03 → None。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
+   "2026-07-29 acq5 0.03 → None。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-07-29 p1 70→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均10.9%・σ4.0pt・CV36.6%）。"
   ],
   "evidence": {
    "gmt": "『we have experienced, and anticipate that we will continue to experience, decreasing prices for our products due to... pricing pressure from managed care organizations and other third-party payors』(蝕)+GP系列4年連続低下→down",
@@ -83,7 +84,7 @@
    "dur": "『present barriers to entry』(規制)+FDA de novo/510k認可レジーム+『custom nature of various parts we design』(プロセス知)=規制/プロセス知型の耐久性→100(強度ではなく型の分類。競合デュオポリで排他性はない点は注記)",
    "geopol": "『operations in countries outside the United States, which accounted for approximately 28% of our revenue』『no individual country outside the United States generated revenue that represented more than 10%』(地理分散・米国中心72%)+『single-source suppliers』供給リスク+DOJ/FCPA文脈→1(中)",
    "nrr": "開示なし→既定105(センサ消耗品のリカーリング型=剃刀/替刃モデル)",
-   "p1": "ROICσ(5年)=7.4pt(6-8pt帯)。ただし10.3→14.5→22.8→22.5→31.8%の単調上昇(ボラではなく再評価)=σは上振れ要因→65ではなく70",
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 6.0% / 2022 8.8% / 2023 10.5% / 2024 11.0% / 2025 18.0% → 平均 10.9% / σ 4.0pt / **CV 36.6%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **65**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "p2": "2020 COVID期 営業利益 2019 142.3→2020 299.5M(+110%)=不況で増益、医療必需の防御性。ただし実質的な不況サンプルは2020のみ(2008期は売上$30M級で無意味)→単一観測で保守化し90",
    "p3": "方向は純現金(nde-0.79)だが有利子負債(転換社債)・短期投資タグ未捕捉。誠hitsに『Amended Credit Agreement』『financial leverage』=負債実在→データ完全性の留保付きで90(原本の負債/有価証券で要検算)",
    "p4": "accr=-9.5%(<0・保守的会計)。誠の『material weakness』は監査手続の定型文(assessing the risk that a material weakness exists)で実指摘ではない。『ITEM 1B - UNRESOLVED STAFF COMMENTS None』→無限定+負のaccr=90",
@@ -125,7 +126,8 @@
    "dilNet": "machine",
    "eps": "machine",
    "roiic": "machine",
-   "roiic5": "machine"
+   "roiic5": "machine",
+   "p1": "machine"
   }
  },
  "roiic": "na",

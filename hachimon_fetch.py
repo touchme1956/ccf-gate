@@ -48,7 +48,7 @@ def facts_of(cik):
     return json.loads(get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"))
 
 TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
- "rev":   ["Revenues","RevenueFromContractWithCustomerExcludingAssessedTax","SalesRevenueNet","Revenue"],
+ "rev":   ["Revenues","RevenueFromContractWithCustomerExcludingAssessedTax","RevenueFromContractWithCustomerIncludingAssessedTax","SalesRevenueNet","Revenue"],
  "gp":    ["GrossProfit"],
  "op":    ["OperatingIncomeLoss","ProfitLossFromOperatingActivities"],
  "ni":    ["NetIncomeLoss","ProfitLoss"],
@@ -93,7 +93,12 @@ def _annual(units):
     for u in sorted(units.keys(), key=lambda x: -len(units[x])):
         out = {}
         for row in units[u]:
-            if not row.get("form","").startswith(("10-K","20-F")): continue
+            # 2026-07-29: **40-F を足した**。カナダのMJDS登録企業は年次報告が40-Fで、
+            #   ここに無いと全タグが「不発見」になり build_numbers が丸ごと None を返す。
+            #   実害: DSGX(Descartes) は機械値が一つも取れず、しかも latest_annual_url が
+            #   同じ理由で40-Fを飛ばして**2005年の20-F**（同社が最後に出した20-F）を原本として掴んでいた。
+            #   「審査日は今日なのに読んだ紙が21年前」の正体はこの2行だった。
+            if not row.get("form","").startswith(("10-K","20-F","40-F")): continue
             fy = row.get("fy")
             if fy is None: continue
             s, e = row.get("start"), row.get("end")
@@ -561,7 +566,7 @@ def latest_annual_url(cik):
     j = json.loads(get(f"https://data.sec.gov/submissions/CIK{cik}.json"))
     r = j["filings"]["recent"]
     for i,f in enumerate(r["form"]):
-        if f in ("10-K","20-F"):
+        if f in ("10-K","20-F","40-F"):   # 40-F=カナダMJDSの年次報告（2026-07-29追加。詳細は _annual の頭注）
             acc = r["accessionNumber"][i].replace("-","")
             doc = r["primaryDocument"][i]
             return f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc}/{doc}", r["reportDate"][i], f

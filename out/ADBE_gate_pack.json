@@ -78,7 +78,8 @@
    "2026-07-29 堀再監査(irr/rep): 堀71.2で、irr70→85 か rep60→80 のどちらか一段で75を超えて投下可になる位置だったため10-K原本を全文走査。**両方とも原本が逆を述べていた**(規格は受け手・参入障壁は限定的)ので据置。値は不変、根拠のみ追記。",
    "2026-07-29 roic 35.6→92.2 / roicg 27.9→29.2 / roict down→up に是正。旧値はいずれも根拠が無く、SEC XBRLの5年系列から再現できなかった（旧roic 35.6 はのれん除外ROICとしてはどの年とも一致しない）。5年平均を採ったのはMAほか既存パックの作法に合わせたため。※この行で『台帳のroic欄に直近年と5年平均の二つの定義が同居している』と書いたが、**それは自分の誤りだった**——門式は hachimon_fetch に一つだけ明文で定まっている（投下資本 = 自己資本 + 有利子負債 − のれん − 無形・直近年）。自分がのれんのみ控除の5年平均で照合したため『どちらとも一致しない社が9社』と出ただけで、定義の分裂は存在しない。night/audit_roic_def.py は作らない。",
    "2026-07-29 acq5 2.8 → 'no' に是正。**この欄はyes/noの列挙なのに数値 2.8 が入っていた**。門は `acq5==='no'` でのみ『のれん込みROIC乖離 −6』を免除するので、数値は文字列比較に一致せず**罰が黙って効いていた**（実測でΩ 80.7→75.2 の差）。門のソース自身が『遺産のれん——減点免除（Visa/**Adobe**型の誤爆防止・v9.1）』と名指ししている、まさにその誤爆だった。同型の不正値は全317パック中38社にあり、うち乖離>15ptで実害が出ているのは9社（RMD/ADBE/MSA/INTU/PAYX/EME/HALO/AMBI/CLMB）。",
-   "2026-07-29【本日の自分の是正を取り消し】roic/roicg/roict を採取器の門式へ戻した（{'roic': 92.2, 'roicg': 29.2, 'roict': 'up'} → {'roic': 158.6, 'roicg': 39.9, 'roict': 'up'}）。本日いったん『のれんのみ控除・5年平均』へ書き換えたが、これは**規約違反だった**——門式は hachimon_fetch に明文で 投下資本 = 自己資本 + 有利子負債 − のれん − **無形**、**直近年**、IC が自己資本の2割未満なら算出不能（絶対のルール7(b)）と定まっている。ADBEの旧値35.6は依然として門式のどの年とも一致せず根拠も無かったので、置き換えたこと自体は正しいが、置いた値の定義が誤っていた。**台帳の値が食い違って見えたら、まず後から書かれた記録と規約を探すこと。**"
+   "2026-07-29【本日の自分の是正を取り消し】roic/roicg/roict を採取器の門式へ戻した（{'roic': 92.2, 'roicg': 29.2, 'roict': 'up'} → {'roic': 158.6, 'roicg': 39.9, 'roict': 'up'}）。本日いったん『のれんのみ控除・5年平均』へ書き換えたが、これは**規約違反だった**——門式は hachimon_fetch に明文で 投下資本 = 自己資本 + 有利子負債 − のれん − **無形**、**直近年**、IC が自己資本の2割未満なら算出不能（絶対のルール7(b)）と定まっている。ADBEの旧値35.6は依然として門式のどの年とも一致せず根拠も無かったので、置き換えたこと自体は正しいが、置いた値の定義が誤っていた。**台帳の値が食い違って見えたら、まず後から書かれた記録と規約を探すこと。**",
+   "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均112.8%・σ26.9pt・CV23.8%）。"
   ],
   "evidence": {
    "dom": "**原本にシェアの数値開示なし＝刻みを導けないため空欄**。10-K FY2025(2025-11-28) Item1 COMPETITION 全文を確認したが、自社シェアも上位N社構造も一切数値が無く、むしろ逆方向の記述が並ぶ: 『We participate in a highly competitive and rapidly evolving environment where our competitors include companies of various sizes ... new entrants, and AI or cloud-native companies』『The markets for our solutions are characterized by rapid technological innovation, new industry standards, evolving distribution and sales models, **limited barriers to entry**, short product lifecycles, customer price sensitivity ... and the frequent entry of new solutions or competitors』。分野別も競合の列挙のみで数値なし(creative professionals向け: 『face broad competition from both established and emerging players』／marketing professionals向け: 『face broad competition from large, established enterprise software and cloud companies, point solutions from smaller, specialized companies』)。Item1A にも『Our competitors include companies with significant sales and research and development resources』『we face increasing competition from companies offering generative and agentic AI solutions』とあるのみ。旧dom=85の根拠は『Adobe PostScript/PDF standards』(実体は Publishing and Advertising＝売上の1.1%のレガシー区分の説明文)と『flagship creative applications』であり、**いずれもシェアの証拠ではない**。しかも旧evidence自身が『明示的シェア数値はhitsになし』と自認しながら85を入れていた。(出典: 10-K FY2025 Item 1 COMPETITION / Item 1A / https://www.sec.gov/Archives/edgar/data/796343/000079634326000003/adbe-20251128.htm)",
@@ -89,7 +90,7 @@
    "disrupt": "『AI-first creativity and productivity tools』『AI-first creative tools』が競合として明記=生成AIの代替脅威が進行中。一方Adobeは『commercially safe first-party ... Firefly models』で応戦=決着未了=unsettled",
    "moatdecay": "蝕/循セクションに崩壊ヒットなし。rev 21.5→23.8十億(+11%)・opm 31.3→36.6%上昇=中核堀の劣化兆候なし=no",
    "geopol": "『there were no customers that represented at least 10% of net revenue or that were responsible for over 10% of our trade receivables』=顧客集中なし・グローバル分散=0(軽微)",
-   "p1": "検死 ROIC込み5年σ=4.0pt → <6pt=80",
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 110.6% / 2022 122.4% / 2023 84.8% / 2024 87.7% / 2025 158.6% → 平均 112.8% / σ 26.9pt / **CV 23.8%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "p2": "COVID(2020)時 op 3.3→4.2十億と増益・SaaS需要増で浅い/正のDD。ただしサブスク化(2013-)後に真の需要破壊型不況は未経験、旧永久ライセンス期のGFC(2009 rev-18%)は別モデル→95ではなく保守化85",
    "p3": "純現金(現金+短期投資6.6十億>負債6.2十億, nde-0.04)→95。ただし限界的で近年の負債調達に留意",
    "p4": "accr=-9.8%(<0)。誠ヒットの『material weakness』は監査手続の定型文(『assessing the risk that a material weakness exists, and testing and evaluating ...』)で実指摘ではない。『ITEM 1B. UNRESOLVED STAFF COMMENTS None』=無限定相当→90",
@@ -153,7 +154,8 @@
    "roiic5": "machine",
    "roic": "machine",
    "roicg": "machine",
-   "roict": "machine"
+   "roict": "machine",
+   "p1": "machine"
   }
  },
  "mcap": 108.2018,
