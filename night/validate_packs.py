@@ -165,6 +165,24 @@ def check(path):
             if k not in meta or meta[k] in (None, "", [], {}):
                 (fails if k in ("auditDate", "model") else warns).append(f"_meta.{k} が空")
 
+        # --- 原本の鮮度（2026-07-29新設）------------------------------------
+        # 実害を踏んだ: **DSGX は 2005年1月期の20-F で審査されていた**（21年前の書類）。
+        #   採取器は「系列の最新年から2年遅れたら算出不能」という年検問を持つが、それは
+        #   *機械値*にしか効かない。定性の判断（dom/irr/rep/dur/p/f）が**どの年の書類から
+        #   読まれたか**は誰も見ていなかった——審査日(auditDate)は今日でも、読んだ紙が
+        #   20年前ということが起こりうる。絶対のルール7(c)「保管された値も毎回検問する」の同型。
+        rdate = str(meta.get("reportDate") or "")[:4]
+        adate = str(meta.get("auditDate") or "")[:4]
+        if rdate.isdigit() and adate.isdigit():
+            lag = int(adate) - int(rdate)
+            if lag >= 3:
+                fails.append(f"原本が古すぎる: _meta.reportDate={meta.get('reportDate')} は "
+                             f"審査日({meta.get('auditDate')})から{lag}年前の書類。"
+                             f"定性判定を古い開示から読んでいる疑い＝原本を取り直して再審査せよ")
+            elif lag == 2:
+                warns.append(f"原本が2年前: _meta.reportDate={meta.get('reportDate')}。"
+                             f"直近の年次報告が出ていないか確認せよ")
+
     # --- 日本株はJP規約（ROIC三点・TTM PER・gm粗利混入）も併せて ---
     if re.match(r"^\d{4,5}$", code):
         jf, jw = VJ.check(path)
