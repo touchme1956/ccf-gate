@@ -9,7 +9,8 @@ gate1_queue の未審査銘柄を約10社ずつのチャンクに割り、夜間
 - `kenshi_helper.py` — 検死用: companyfacts.zip から年次系列（売上/営利/OCF/capex/株数…）を機械表示
 - `make_copypage.py` — 完成パックのコピー用ページ生成
 - `make_chunks.py` — 未審査分のチャンク自動生成（queue/椅子/棚/backlog−審査済−SKIP。10社/枚・連番継続）＋日本株の `jp_chunkNN.txt` と `out/packs_index.json`（門の一括取込ボタン用の目録）を更新
-- `score_all.js` — **門の compute() をそのまま走らせて out/ の全パックを採点する検証器**（`node night/score_all.js`）。採点ロジックには触れずDOMだけ差し替えるので、門が画面で出す点と同じものが出る＝二重実装を作らない。`--jp` / `--us` / `--only MSFT,6920` / `--set dom=100`（感度分析。ただし全パックを上書きする粗い道具）。出力は `out/score_all.json`。「基準を変えたら実際に誰がどう動くか」を推測でなく実測で出すための道具。妥当性の確認は、素の実行で米国のΩ75+に V/ASML/KLAC/NVDA/MSFT/MA/TSM/ADBE/RMD/IDXX 等が並ぶこと
+- `score_all.js` — **門の compute() をそのまま走らせて out/ の全パックを採点する検証器**（`node night/score_all.js`）。採点ロジックには触れずDOMだけ差し替えるので、門が画面で出す点と同じものが出る＝二重実装を作らない。`--jp` / `--us` / `--only MSFT,6920` / `--set dom=100`（感度分析。ただし全パックを上書きする粗い道具）。出力は `out/score_all.json`。「基準を変えたら実際に誰がどう動くか」を推測でなく実測で出すための道具。**Ωの点だけでなく三段関門（Ω75+ ∧ 門X4条件 ∧ 絶対MOAT指数75+）の合否まで門と同じ関数（`ccfXJudge` / `ccfMoatGate`）で判定する**ので、🟢投下可が何社になるかがそのまま出る。妥当性の確認は、素の実行で米国のΩ75+に V/ASML/KLAC/NVDA/MSFT/MA/TSM/ADBE/RMD/IDXX 等が並ぶこと
+- `audit_moat.py` — **堀5本(dom/irr/rep/dur/moatW)の「根拠の質」を全パックで点検する**（`python3 night/audit_moat.py` / `--q75` / `--list`）。v9.9.39で堀のふるい（絶対MOAT指数≥75を新規投下の第三の関門）を入れたが、**ふるいは入力の質を超えられない**——測っていない値で優良企業を切ったら堀ではなく審査の手抜きを罰していることになる。dom が入っているのに根拠が空／定性表現のみ（"a leader"）／「原本にシェア開示なし」と自認しながら数字が入っている、dom 空欄なのに理由が_metaに無い、moatW 空欄、上位N社の構造が未確認（v9.9.38の刻みは構造で決まる）——を仕分けて再監査の作業リストを出す。初回実測（2026-07-29）はΩ75+の25社中◎が1社（MCO）のみ
 - `validate_jp_packs.py` — 日本株パックの納品検査。`python3 night/validate_jp_packs.py`（コード指定も可）。nmがコード始まりか（＝門のJP検問が発火するか）・ROIC三点（roic/roicEx同値・60%上限・roicg≤roicののれん整合）・TTM PERの符号・様式キー一致（受理キーは門のapplyFieldsから読む）・列挙値/点数域・_meta必須を落とす。**致命があれば審査官へ差し戻す**（そのまま置くと門が取込拒否して審査待ちに溜まる）
 
 出力は `out/{T}_gate_pack.json`（完成パック）。パックは門のⅢ採点機「＋取り込む」へ。
