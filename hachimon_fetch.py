@@ -59,7 +59,17 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  "assets":["Assets"],
  "eq":    ["StockholdersEquity","StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest","Equity"],
  "gw":    ["Goodwill"],
- "intan": ["FiniteLivedIntangibleAssetsNet","IntangibleAssetsNetExcludingGoodwill"],
+ # 2026-07-29修正: series() は**最初に一致したタグ**を採るため、FiniteLivedIntangibleAssetsNet
+ #   (耐用年数が確定した分だけ)が常に総額タグに勝ち、**無形の控除が過少になっていた**。
+ #   投下資本 IC = 自己資本 + 有利子負債 − のれん − 無形 なので、控除が過少だと IC が過大に出て
+ #   ROICが歪む（負であるべきICが正の小さい値になり、有限だが桁違いのROICを生む）。実測:
+ #     CHE  BS計上額 82,764千$ に対し確定分 12,760千$ だけを控除 → roic 84.2（是正後はICが自己資本の
+ #          23.4%・5年系列3.53倍振れでnull化）
+ #     GDDY BS計上額 986.3百万$ に対し確定分 31.2百万$ だけを控除 → roic 292.2（是正後 IC=−624.2で負）
+ #   総額タグを先頭に置き、無い場合のみ確定分へフォールバックする。
+ #   ※フォールバック時は無期限無形(商標・ブランド等)が控除されず依然として過少になるため、
+ #     ROIC算出側の「ICが自己資本の2割未満なら飛ばす」ガードで受ける。
+ "intan": ["IntangibleAssetsNetExcludingGoodwill","FiniteLivedIntangibleAssetsNet"],
  "cash":  ["CashAndCashEquivalentsAtCarryingValue","CashAndCashEquivalents"],
  "sti":   ["ShortTermInvestments","MarketableSecuritiesCurrent"],
  # 2026-07-29: 実測で取りこぼしが3件出たのでタグを拡張した（絶対のルール7「欠測をゼロと読むな」）。
