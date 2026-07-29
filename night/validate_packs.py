@@ -110,10 +110,28 @@ def check(path):
             fails.append(f"{k}={v} は0-100の数値")
 
     # --- ここが本丸: 値があるのに根拠が無い ---------------------------------
-    nj = [k for k in JUDGE if has_val(d.get(k)) and not ev_of(meta, k)]
+    # ただし**規約が「開示が無ければこの値を書け」と定めた既定値**は別扱い（2026-07-29）。
+    #   審査プロトコル『nrr: 開示値、なければ既定105』——105は測定値ではなく規約の代替値なので、
+    #   原本根拠を要求するのは審査官に「規約どおり書いたら差し戻し」を強いることになる。
+    #   実測(全317パック)で nrr の根拠なしは **187社=59.0%** と全項目で最多だった。
+    #   **鳴りすぎる警報は鳴らないのと同じ**なので、既定値だと判るものは warn へ落とし、
+    #   それ以外の判断項目は従来どおり FAIL のまま残す（検査の強さは下げない）。
+    #   なお105が**実測のNRR**なら evidence を、非開示なら _meta.nulls.nrr に一行を書くのが正しい姿。
+    PROTOCOL_DEFAULT = {"nrr": 105}
+    nj, nd = [], []
+    for k in JUDGE:
+        if not has_val(d.get(k)) or ev_of(meta, k):
+            continue
+        if k in PROTOCOL_DEFAULT and d.get(k) == PROTOCOL_DEFAULT[k] and not (meta.get("nulls") or {}).get(k):
+            nd.append(k)
+        elif k not in PROTOCOL_DEFAULT or d.get(k) != PROTOCOL_DEFAULT[k]:
+            nj.append(k)
     if nj:
         fails.append(f"判断項目に根拠が無い: {' '.join(f'{k}={d[k]}' for k in nj)}"
                      f"（原本根拠が必須。憶測なら空欄にせよ＝絶対のルール2）")
+    for k in nd:
+        warns.append(f"{k}={d[k]} は規約の既定値（開示なし想定）。実測なら evidence を、"
+                     f"非開示なら _meta.nulls.{k} に一行を書くこと")
     nm = [k for k in MACHINE
           if has_val(d.get(k)) and not ev_of(meta, k) and prov.get(k) != "machine"]
     if nm:
@@ -146,6 +164,35 @@ def check(path):
         for k in VJ.META_REQ:
             if k not in meta or meta[k] in (None, "", [], {}):
                 (fails if k in ("auditDate", "model") else warns).append(f"_meta.{k} が空")
+
+        # --- _meta の型（2026-07-29新設）--------------------------------------
+        # 実害: **91パックで _meta.kenshi が配列でなく文字列**だった。ASR様式は配列が正で、
+        #   道具はどれも `meta.setdefault("kenshi", []).append(...)` で追記する。文字列だと
+        #   そこで落ちる＝**その社だけ監査の記録が伸びなくなる**（本日 fix_acq5 で実際に落ちた）。
+        #   値が壊れるのではなく「記録が静かに止まる」ので、採点を見ていても一生気づかない。
+        for k, want in (("kenshi", list), ("evidence", dict), ("nulls", dict), ("provenance", dict)):
+            v = meta.get(k)
+            if v is not None and not isinstance(v, want):
+                fails.append(f"_meta.{k} の型が {type(v).__name__}（正は {want.__name__}）"
+                             f"——検死の追記がここで落ちるので記録が伸びなくなる")
+
+        # --- 原本の鮮度（2026-07-29新設）------------------------------------
+        # 実害を踏んだ: **DSGX は 2005年1月期の20-F で審査されていた**（21年前の書類）。
+        #   採取器は「系列の最新年から2年遅れたら算出不能」という年検問を持つが、それは
+        #   *機械値*にしか効かない。定性の判断（dom/irr/rep/dur/p/f）が**どの年の書類から
+        #   読まれたか**は誰も見ていなかった——審査日(auditDate)は今日でも、読んだ紙が
+        #   20年前ということが起こりうる。絶対のルール7(c)「保管された値も毎回検問する」の同型。
+        rdate = str(meta.get("reportDate") or "")[:4]
+        adate = str(meta.get("auditDate") or "")[:4]
+        if rdate.isdigit() and adate.isdigit():
+            lag = int(adate) - int(rdate)
+            if lag >= 3:
+                fails.append(f"原本が古すぎる: _meta.reportDate={meta.get('reportDate')} は "
+                             f"審査日({meta.get('auditDate')})から{lag}年前の書類。"
+                             f"定性判定を古い開示から読んでいる疑い＝原本を取り直して再審査せよ")
+            elif lag == 2:
+                warns.append(f"原本が2年前: _meta.reportDate={meta.get('reportDate')}。"
+                             f"直近の年次報告が出ていないか確認せよ")
 
     # --- 日本株はJP規約（ROIC三点・TTM PER・gm粗利混入）も併せて ---
     if re.match(r"^\d{4,5}$", code):

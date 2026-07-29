@@ -16,7 +16,7 @@
  "dilNet": -0.13,
  "acc": "usgaap",
  "eq": "pos",
- "acq5": 0.03,
+ "acq5": null,
  "eps": 2.17,
  "expiry": "no",
  "moatdecay": "no",
@@ -69,7 +69,8 @@
    "cagr注意: 採取器cagr44.8は再現窓不明。XBRL実測ではrev 7年(2018 1,031.6→2025 4,662)CAGR≈24%、16年(2009 29.7→2025)≈37%。44.8は初期高成長窓の可能性。値は維持したが要窓明示。",
    "株数断絶: 2020年に4:1分割(shW 2019 91.1→2020 377.5M)。分割前後の株数比較は不可。dilNet/epsは分割後系列で評価。",
    "acq/dep等ユニット混在なし(全USD単一通貨)。IAS29・SPAC断絶・税率符号バグは該当なし。",
-   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=81.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった"
+   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=81.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
+   "2026-07-29 acq5 0.03 → None。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
   ],
   "evidence": {
    "gmt": "『we have experienced, and anticipate that we will continue to experience, decreasing prices for our products due to... pricing pressure from managed care organizations and other third-party payors』(蝕)+GP系列4年連続低下→down",
@@ -108,7 +109,8 @@
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
    "founder": "創業者(2006年以前)は退任済・現CEO Kevin Sayerは非創業者。創業者支配の根拠がhitsになくnull",
    "fin": "業態フラグの定義不明(金融業ではない)→空欄",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(推定禁止)"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(推定禁止)",
+   "acq5": "【2026-07-29】旧値 0.03 は yes/no 以外の不正値で棄却。のれん残高(十億$) 2020 0.02 → 2021 0.03 → 2022 0.03 → 2023 0.03 → 2024 0.02 → 2025 0.02。**新しさ =(直近 0.02 − 2020年 0.02)÷直近 = +20.2%**（今あるのれんのうち直近5年に増えた割合） → 判定不能（10〜30%の中間帯）。原本の Business Combination 注記で確認せよ"
   },
   "kenshi_moat": "2026-07-28 MOAT欠測補充: 10-K FY2025原本(Item1 Products/Competition・Item1A 価格償還リスク)を直接精読し irr=70 を充填(既定値70と同値だが、以後は既定値ではなく実測値として扱える)。dom/rep/dur/moatWは既判定のため不変",
   "kenshi_gm": "2026-07-20 gm/sbc監査: gm欄を仕様(営業利益率・GAAP)にXBRL機械計算で補正。sbc単位ずれ補正。 gm 60.1→19.6; gmt down→up",
