@@ -22,7 +22,7 @@
  "moatdecay": "no",
  "erosion": "none",
  "disrupt": "settled",
- "dom": 70,
+ "dom": null,
  "irr": 85,
  "rep": 80,
  "dur": 100,
@@ -58,8 +58,8 @@
   "reportDate": "2025-12-31",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/26324/000162828026007587/cw-20251231.htm",
-  "auditDate": "2026-07-18",
-  "model": "Claude Fable 5",
+  "auditDate": "2026-07-29",
+  "model": "Claude Opus 5",
   "kenshi": [
    "cagr修正: 採取器cagr=-0.4はRevenues[USD](2016-20)とRevenueFromContractWithCustomerExcludingAssessedTax[USD](2021-25)のタグ断絶(FY版ズレ)由来の誤値。経済的には連続(2020 2,391.3→2021 2,500.8百万)。5年(2020→2025)売上CAGR=7.9%に修正(3年2022→2025では11.0%)。門の集計期間が異なる場合は再計算",
    "ROIC二層構造(本銘柄の核心): roic=39.1は有形IC(のれん・無形控除)ベースの頭金。のれん込みROIC(roicg)は2021-25で10.5/10.1/12.5/12.8/14.9%、谷≈10.1%(≒10.3%)でWACC近傍。のれん1,166.7→1,692.5百万・2019/20/22/24に買収連発の資本ロールアップが資本収益率を希薄化",
@@ -72,10 +72,12 @@
    "p2: 観測可能な景気後退は2020のみ(OperatingIncomeLoss系列は2018-)。営利2019 404.0→2020 288.8=-28.5%(浅い-20%と中-40%の中間)。商用航空(Boeing/Airbus)の循環性あり、GFC(2008-09)はop系列外で検証不能→保守化し80",
    "f1 ROIIC(2023→2025)=ΔNOPAT124.0/ΔIC(のれん込み)348.3=35.6%≧WACC+15→90。資本節約(債務返済でICほぼ横ばい)により増分収益率は極めて高い",
    "f2 TAM浸透の定量開示なし(防衛/海軍原子力/商用航空の据付市場)→保守側65+注記。f5はdisrupt=settled連動で85",
-   "eps=13.14はNI484.2百万/希薄化後株数≈36.9百万で整合。のれん減損の計上履歴+ROIC谷は配S(保S候補)として要監視"
+   "eps=13.14はNI484.2百万/希薄化後株数≈36.9百万で整合。のれん減損の計上履歴+ROIC谷は配S(保S候補)として要監視",
+   "2026-07-29 堀再監査(dom/moatWのみ・reaudit_moat_prompt.txt＋v9.9.41準拠): 旧dom=70→新dom=null(空欄)、旧moatW=100→新moatW=100(据置・実数で追認)。dom空欄の理由=10-K全文にシェア%が皆無で、Item1Aの50側構造記述(highly competitive markets／competitors ... larger customer bases than we have／customers could develop the capability to manufacture products similar to ours)と、Item7『unique, sole-source positions』＋Naval & Power 43.0%($1,503,494千)/Naval Defense 26.9%($941,654千)という非50側が同居し、しかもsole-sourceは%が一切定量化されていない(v9.9.41②で100/85/70に上げられず、③で全社50にも落とせない)＝v9.9.41①「違う刻みに散る」に該当。moatW=100はNote17の3セグメント実数(27.9/29.2/43.0%、各≥15%)で追認、共通中核技術の有無も点検済み。dom/moatW/_meta以外のフィールドは一切変更していない。",
+   "2026-07-29 堀の申し送り決着(v9.9.41): domは全社ベース。100/85/70は「集中している」という主張ゆえ数値(自社シェア%＋上位N社合計%)を要する。50は残余の刻みゆえ、原本が市場を fragmented／多数競合／同等品を多数が製造可能／実質すべての供給は他社 と構造的に述べていれば数値なしで確定できる(ここを空欄にすると「測っていない」ほうが再正規化で有利になる抜け道になる)。順位の自称(a leader/largest/well positioned)はどの刻みの証拠にもならない。事業ごとに違う刻みに散るときだけ空欄。moatWは「共通の中核に全事業が乗る場合は顧客・競合・損益が別でも1本」を適用。"
   ],
   "evidence": {
-   "dom": "『No customer accounted for more than 10% of our total net sales during 2025, 2024, or 2023』『Our sales to the U.S. Government and foreign government end use represented 58%...of total net sales during 2025』+海軍原子力『presence on the first nuclear naval vessel』。明示的市場シェア開示は無し。防衛・海軍原子力の据付ニッチ寡占として保守的に70(≥70%シェアの原本根拠なし)",
+   "dom": "【2026-07-29 再監査・v9.9.38/v9.9.41で測り直し → 空欄(事業で刻みが散る)】FY2025 10-K 全文にシェア%(自社・上位N社とも)の開示は皆無。Item1にCompetition節そのものが無く、競争の記述はItem1Aのリスク要因のみ。(a) 50側の構造記述 Item1A『We operate in highly competitive markets.』: 『Many of our products and services are sold in highly competitive markets, and are affected by varying degrees of competition』『We compete against companies that often have higher sales volumes and greater financial, technological, research and development, human, and marketing resources, and larger customer bases than we have. These companies may also price their products and services below our selling prices, which could exert downward pressure on our product pricing and margins』『some of our largest customers could develop the capability to manufacture products or provide services similar to products that we manufacture』『we are facing increased international competition and cross-border consolidation of competition』。Item1『We compete globally, primarily based on technology and pricing』。→ この構造記述が覆う範囲では自社が40%以上いることはありえず刻み50。(b) ところがItem7は『the Company is well-insulated from specific program funding decisions due to the breadth of our portfolio, which consists of unique, sole-source positions and larger, multi-year opportunities that provide continued stability』と述べ、Naval & Power(主冷却材ポンプ・制御棒駆動機構をVirginia級/Columbia級潜水艦・Ford級空母へ供給。Item1『presence on the first nuclear naval vessel』)は単独供給に近い構造で、50とは正反対を指す。その規模の実数(総売上$3,498,372千・Note17/Note2): Naval & Power セグメント$1,503,494千=43.0% / エンドマーケット Naval Defense $941,654千=26.9%。(c) 原本はsole-sourceの対象範囲も%も一切定量化していないため、v9.9.41②(100/85/70は集中の主張ゆえ数値必須)により43.0%側に100/85/70は置けない。他方v9.9.41③(50は構造記述で数値なしでも確定)を全社に適用すると「CWは全市場で<40%」と断じることになり、原本のsole-source記述と正面から矛盾する。→ 妥当な取り方が Aerospace & Industrial $977,188千=27.9% ＋ Defense Electronics $1,021,820千=29.2%(計57.1%)の50側と、Naval & Power 43.0%の非50側に割れる＝v9.9.41①「違う刻みに散るときだけ空欄」に該当し空欄が正解。原本自身が『varying degrees of competition』と、一点では答えられないことを述べている。旧dom=70(据付ニッチ寡占)は旧evidenceが『≥70%シェアの原本根拠なし』と自認しており無根拠だった。出典: SEC 10-K CIK0000026324 acc 0001628280-26-007587 (FY2025-12-31) Item1 / Item1A / Item7 / Note2 REVENUE / Note17 SEGMENT INFORMATION https://www.sec.gov/Archives/edgar/data/26324/000162828026007587/cw-20251231.htm",
    "irr": "『we benefit from decades of engineering expertise and knowledge transfer』+海軍原子力/防衛エレクトロニクスの資格認証ポジション→認証・規格ロック=85",
    "rep": "『since the origin of many of our markets, including...naval nuclear power...commercial power...and defense electronics』+『decades of engineering expertise』→複製極困難=80",
    "dur": "規制(原子力)+プロセス知(数十年の技術蓄積)+資格認証の三重→100",
@@ -93,16 +95,23 @@
    "f3": "『operating margin was negatively impacted...by...higher investment in research and development』→R&D増(+)。シェア趨勢は原本で非定量→片方+=75。顧客集中(No customer>10%)悪化なし→-10非適用",
    "f4": "『first year purchase accounting costs associated with our acquisition of I&C Solutions』(原子力計装制御I&Cへの隣接拡張、育成中)+acq5=yes→60",
    "f5": "disrupt=settled連動→85",
-   "moatW": "セグメント別売上: 10-K FY2025(2025-12-31) SEGMENT INFORMATION(千$) 総売上 3,498,372 = Naval & Power 1,503,494(43.0%) / Defense Electronics 1,021,820(29.2%) / Aerospace & Industrial 977,188(27.9%) (内部売上 -4,130)。エンドマーケット別(REVENUE Table): Naval Defense 941,654(26.9%) / Aerospace Defense 672,526(19.2%) / Power & Process 635,140(18.2%) / Commercial Aerospace 430,109(12.3%) / General Industrial 412,140(11.8%) / Ground Defense 406,803(11.6%)。『No customer accounted for more than 10% of our total net sales during 2025, 2024, or 2023』。3セグメントは技術・認定・顧客が別立て(海軍/商用原子力の主冷却材ポンプ・制御棒駆動機構＝海軍原子力認定 / COTS組込計算機・戦術通信＝防衛エレキ / センサ・ショットピーニング等の表面処理＝商用航空・一般産業)で各≥15%。(出典: 10-K FY2025 Note 17 SEGMENT INFORMATION / Note 2 REVENUE, R26・R36) → 独立した堀は3本と判定＝100"
+   "moatW": "セグメント別売上: 10-K FY2025(2025-12-31) SEGMENT INFORMATION(千$) 総売上 3,498,372 = Naval & Power 1,503,494(43.0%) / Defense Electronics 1,021,820(29.2%) / Aerospace & Industrial 977,188(27.9%) (内部売上 -4,130)。エンドマーケット別(REVENUE Table): Naval Defense 941,654(26.9%) / Aerospace Defense 672,526(19.2%) / Power & Process 635,140(18.2%) / Commercial Aerospace 430,109(12.3%) / General Industrial 412,140(11.8%) / Ground Defense 406,803(11.6%)。『No customer accounted for more than 10% of our total net sales during 2025, 2024, or 2023』。3セグメントは技術・認定・顧客が別立て(海軍/商用原子力の主冷却材ポンプ・制御棒駆動機構＝海軍原子力認定 / COTS組込計算機・戦術通信＝防衛エレキ / センサ・ショットピーニング等の表面処理＝商用航空・一般産業)で各≥15%。(出典: 10-K FY2025 Note 17 SEGMENT INFORMATION / Note 2 REVENUE, R26・R36) → 独立した堀は3本と判定＝100 【2026-07-29 再監査で据置=100を追認】報告セグメント3本の売上(Note17, 千$): Aerospace & Industrial 977,188=27.9% / Defense Electronics 1,021,820=29.2% / Naval & Power 1,503,494=43.0%(内部売上-4,130、総額3,498,372)＝3本とも≥売上15%。v9.9.41のmoatW追加規約(共通の中核技術に全事業が乗るなら1本)の適用可否も点検したが、A&I=センサ/EM作動・表面処理(ショットピーニング/レーザーピーニング。顧客=商用航空OEM・一般産業)、DE=COTS組込計算機・戦術通信(MOSA準拠、400超のプラットフォーム/3,000超のプログラム。顧客=防衛プライム)、N&P=海軍推進/原子力機器(主冷却材ポンプ・CRDM。顧客=米海軍・原子力事業者)で、中核技術も資格認定制度も顧客も別系統＝共通の中核に乗る関係ではなく、片方が壊れても他方は生き残る。顧客集中も『No customer accounted for more than 10% of our total net sales during 2025, 2024, or 2023』。→ 独立した堀3本＝100を維持。"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(推定禁止)",
    "founder": "創業者経営に該当せず(職業経営・1929年創業の老舗)。フラグ定義次第のためユーザー判定→空欄",
    "fin": "業態フラグの定義不明(金融業ではない)→空欄",
-   "nrr": "非開示のため既定105"
+   "nrr": "非開示のため既定105",
+   "dom": "【2026-07-29 空欄化・v9.9.41①】事業別に妥当な刻みが割れるため。Aerospace & Industrial 27.9%＋Defense Electronics 29.2%(計57.1%)はItem1Aの構造記述(highly competitive／競合の方が売上規模も顧客基盤も大きい／顧客が内製化しうる)から50。Naval & Power 43.0%(うちエンドマーケットNaval Defense 26.9%)はItem7『unique, sole-source positions』により50とは逆向きだが、原本が対象範囲も%も定量化していないためv9.9.41②の数値要件を満たさず100/85/70にも置けない。一点の刻みで答えると偽の精度になる。旧dom=70も原本無根拠(旧evidenceが自認)。※再充填の条件＝海軍原子力推進機器の供給者数、またはsole-source売上比率が提出書類の中で定量化されること。空欄により絶対MOAT指数は irr(85)/rep(80)/dur(100)/moatW(100) の4本で再正規化される。"
   },
   "kenshi_gm": "2026-07-20 gm/sbc監査: gm欄を仕様(営業利益率・GAAP)にXBRL機械計算で補正。sbc単位ずれ補正。 gm 37.2→18.1; gmt down→flat",
-  "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=5.48"
+  "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=5.48",
+  "moatW_audit": {
+   "date": "2026-07-29",
+   "model": "claude-opus-5",
+   "scope": "堀2項目(dom/moatW)の再監査のみ。SEC EDGAR 10-K原本(acc 0001628280-26-007587)を直接取得して検証。他のキーは一切変更していない",
+   "source": "https://www.sec.gov/Archives/edgar/data/26324/000162828026007587/cw-20251231.htm"
+  }
  }
 }

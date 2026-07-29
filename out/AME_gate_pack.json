@@ -22,7 +22,7 @@
  "moatdecay": "no",
  "erosion": "none",
  "disrupt": "settled",
- "dom": 70,
+ "dom": 50,
  "moatW": 100,
  "irr": 70,
  "rep": 60,
@@ -58,8 +58,8 @@
   "reportDate": "2025-12-31",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/1037868/000103786826000016/ame-20251231.htm",
-  "auditDate": "2026-07-18",
-  "model": "Claude Fable 5",
+  "auditDate": "2026-07-29",
+  "model": "Claude Opus 5 (claude-opus-5)",
   "kenshi": [
    "roic/roicg定義(ASR整合): roic=のれん除きROIC、roicg=のれん込みROIC。ASRでroicg16.1<roic16.7(のれん算入で低下)より確認。AMEはのれん巨大のため両者が29.7%対12.3%と大きく乖離",
    "検死: 採取器draft roic=104.3を棄却。有形資本ベース(のれん+無形を控除)で過大表示。kenshi機械計算のFY2025値に置換: ex-goodwill ROIC=29.7%(4年レンジ24.1-29.7%)、のれん込みROIC=12.3%。roicg draft13.4→12.3に修正",
@@ -71,10 +71,11 @@
    "fcf/ni/eps検算一致: FCF=OCF1801.8-capex130.2=1671.6M(1.67B)✓、NI=1480.1M(1.48B)✓、eps6.46≒1480.1/229M✓。5年FCF転換~112%",
    "p1: のれん込みROIC σ=0.4pt/ex-gw σ~2.3pt(共に<3pt→90相当)。ただしrev共通系列が4年(<5年)のため保守化して85",
    "p2: COVID営利DD 2019→2020 = 1177.4→1027.9M = -12.7%(浅い)。GFC(2008-09)はXBRL系列外(2018〜)。景気後退実績1回+循環業態明示(hits循)のため95→90に保守化",
-   "moatW充填(v9.9.36・2026-07-28): 絶対MOAT5本目「堀の広さ」をセグメント/製品ライン別売上の実数と顧客集中開示から判定。上記 evidence.moatW に出典付きで記載。他項目は不変。"
+   "moatW充填(v9.9.36・2026-07-28): 絶対MOAT5本目「堀の広さ」をセグメント/製品ライン別売上の実数と顧客集中開示から判定。上記 evidence.moatW に出典付きで記載。他項目は不変。",
+   "2026-07-29 堀再監査(v9.9.41): 旧dom=70→新dom=50、旧moatW=100→新moatW=100(不変)。旧70の根拠は『strong market share in a number of targeted niche markets』という数値なしの自称で、規約4により証拠不採用。Competition節が『numerous companies compete in each market』『a number of companies in each of its markets』『competition from alternative materials and processes』と構造を述べるため規約3の残余適用で50。個別ニッチで40-69%を持つ可能性は否定しないが、それを示す数値(自社シェア%＋上位N社合計%)が原本に一切ないため70には置けない。moatWは製品ライン3本(46.8/29.6/23.6%)と顧客集中(単一顧客EIG<2%・EMG<5%)を再確認して100を維持。dom/moatW/_meta 以外は不変。"
   ],
   "evidence": {
-   "dom": "『AMETEK maintains strong market share in a number of targeted niche markets through its ability to produce and deliver high-quality, differentiated products at competitive prices』→ニッチ市場でのシェア優位だが数値開示なし・寡占レベル→70",
+   "dom": "自社シェア%: **原本(FY2025 10-K)に開示なし**／上位N社合計%: 同じく開示なし。提出書類自身が各市場に多数の競合がいると述べているため残余の刻み50で確定(v9.9.41規約3)。原文: 『In general, AMETEK's markets are **highly competitive** with competition based on technology, performance, quality, service and price.』『In process and analytical instruments, **numerous companies compete in each market** on the basis of product quality, performance and innovation. In power and industrial and in aerospace, AMETEK competes with **a number of companies** depending on the specific market segment.』『EMG's businesses compete with **a number of companies in each of its markets**. … There also is **competition from alternative materials and processes**.』(Item 1 Competition)。※旧根拠の『AMETEK maintains strong market share in a number of targeted niche markets』および『AMETEK believes it ranks as a leader in certain analytical measurement and control instruments』は数値のない順位の自称で、v9.9.41規約4によりどの刻みの証拠にもならない。最大の製品ライン(Process and analytical instrumentation 46.8%)が『numerous companies compete』と名指しされている以上、全社ベースで40%以上の集中を主張する根拠はない＝規約1により全社50で確定。出典: https://www.sec.gov/Archives/edgar/data/1037868/000103786826000016/ame-20251231.htm",
    "irr": "『highly engineered medical components and devices』+航空『spare part sales, repairs and overhaul services to commercial aerospace』+『numerous unexpired patents』→技術/認証による移行摩擦→70",
    "rep": "差別化製品(differentiated products)+特許だが個別ニッチは小規模で数年での追随余地→困難だが複製不能とは言えず60",
    "dur": "『highly engineered』設計組込製品+『AMETEK owns numerous unexpired U.S. and foreign patents』→スイッチングコスト主体→75",
@@ -89,7 +90,7 @@
    "f3": "『spending $382.8 million in 2025』(R&D/売上5.2%)+『Approximately 27% of sales in 2025 were from products introduced in the past three years』+『strong market share』→R&D絶対増・シェア安定=片方+→75。顧客集中低(『No single customer comprises more than 2%』EIG/『greater than 5%』EMG)で-10適用せず",
    "f4": "EMG『operating margins were 23.3%...operating income was a record $578.9 million...increase of 26.8%』+医療/自動化隣接+27%新製品売上→隣接事業が売上5%超で成長→75",
    "f5": "disrupt=settled連動→85",
-   "moatW": "セグメント別売上(FY2025・総売上7,401.1百万USD): 製品ライン別に Process and analytical instrumentation 3,464.3百万USD=46.8% / Aerospace and power 2,187.2百万USD=29.6% / Automation and engineered solutions 1,749.7百万USD=23.6%（3本とも≥15%）。報告セグメントは EIG 4,919.1百万USD=66.5% / EMG 2,482.0百万USD=33.5%。顧客集中は原本に 『Approximately 4% of EIG's 2025 net sales were made to its five largest customers. No single customer comprises more than 2% of net sales』『Approximately 15% of EMG's 2025 net sales ... No single customer comprises greater than 5% of net sales』（出典: 10-K FY2025 (ame-20251231.htm) Revenues-Major Products and Services in Reportable Segments (R50) / Reportable Segment Financial Information (R95)）→ 分析計測・航空宇宙/電源・オートメーションは顧客基盤も認証/参入障壁も別系統で、各≥15%の独立した堀を3本以上持つ＝1本折れても死なない → moatW=100"
+   "moatW": "製品ライン別売上(FY2025・注記『Major Products and Services』・千USD): Process and analytical instrumentation 3,464,289=46.8%(全額EIG) / Aerospace and power 2,187,172=29.6%(EIG 1,454,811＋EMG 732,361) / Automation and engineered solutions 1,749,655=23.6%(全額EMG)、合計7,401,116。**3本とも≥15%**。報告セグメントは EIG 4,919,100=66.5% / EMG 2,482,016=33.5%。三者は顧客・用途・競合が別(プロセス分析計測=石化/半導体/研究機関、航空電源計装=民間機/防衛/発電、自動化・エンジニアド=精密モーション/ブラシレスモータ/熱交換器)で、共通の中核技術や共通の設置基盤に乗る関係ではない(v9.9.41の1本化条件に非該当。地域別・課金形態別の分割でもない)。片方の需要が消えても他が残る＝独立。顧客集中は10-K『Approximately 4% of EIG's 2025 net sales were made to its five largest customers. **No single customer comprises more than 2% of net sales**』『Approximately 15% of EMG's 2025 net sales were made to its five largest customers. **No single customer comprises greater than 5% of net sales**』。→ 独立した堀3本以上 = moatW 100(据置)。出典: https://www.sec.gov/Archives/edgar/data/1037868/000103786826000016/ame-20251231.htm"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
