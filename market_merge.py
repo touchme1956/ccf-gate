@@ -15,6 +15,36 @@ import json, glob, os, sys
 from datetime import date
 
 FIELDS = ["px", "per", "perF", "beta", "shy", "evebit", "analysts", "instOwn"]
+
+# --- 常識帯の関門（2026-07-29新設）------------------------------------------------
+# なぜ充填側にも要るか: ガードを採取側(market_fetch_free.py)にしか置いていなかったため、
+#   **過去に書き込まれた不正値が market_data.json に残り、ここから何度でもパックへ再注入された**。
+#   実測(2026-07-29): KLAC per=5.53/shy=12.28、V shy=13.27、TDG shy=13.83、GRND shy=15.49、
+#   NVMI mcap=0.0133(＝$13.3M。px$405の会社であり得ない)→evebit=-2.1。いずれもセッション中に
+#   パックからは一度排除したのに、market_data.json 側を消していなかったので復活した。
+#   「採取器を直せば安全」は誤り——**保管された値も毎回検問する**。
+# shy の上限12%: 純還元が時価総額の12%を超えるのは、時価総額の過小算定(複数クラス株・ADRで
+#   dei表紙の株数を使った場合)を疑うべき水準。定義上ありえなくはないが、実測ではすべて誤りだった。
+# per の帯 8-200: 外れたら株価源の取り違え(現地通貨とADR、分割未調整)を疑う。
+#   ただし**株価とEPSが独立2系統で一致するなら誤りではない**ので、その場合は
+#   パック側に手入力するか、根拠を _meta に残して個別に入れること(機械充填はしない)。
+BANDS = {"per": (8.0, 200.0), "shy": (-5.0, 12.0), "evebit": (0.0, 300.0), "beta": (0.0, 4.0),
+         "px": (0.0, 1e7), "perF": (1.0, 500.0)}
+
+
+def sane(k, v):
+    """常識帯に入っているか。外れた値は充填しない(空欄のほうが誤値よりましという門の原則)"""
+    lo_hi = BANDS.get(k)
+    if lo_hi is None or v is None:
+        return True, ""
+    try:
+        x = float(v)
+    except Exception:
+        return False, "数値でない"
+    lo, hi = lo_hi
+    if x < lo or x > hi:
+        return False, f"常識帯[{lo},{hi}]外={x}"
+    return True, ""
 md = {}
 if os.path.exists("market_data.json"):
     md = {k.upper(): v for k, v in json.load(open("market_data.json", encoding="utf-8")).items()}
@@ -34,12 +64,19 @@ for f in sorted(glob.glob("out/*_gate_pack.json")):
     except Exception as e:
         print(f"▲ {f} 読込不能: {e}")
         continue
-    filled = []
+    filled, rejected = [], []
     for k in FIELDS:
         v = md[t].get(k)
-        if v is not None and o.get(k) is None:
-            o[k] = v
-            filled.append(k)
+        if v is None or o.get(k) is not None:
+            continue
+        ok, why = sane(k, v)
+        if not ok:
+            rejected.append(f"{k}={v}({why})")
+            continue
+        o[k] = v
+        filled.append(k)
+    if rejected:
+        print(f"{t:<6} ✗ 充填拒否: {' / '.join(rejected)}  ← market_data.json 側の値が疑わしい。採り直せ")
     if filled:
         o.setdefault("_meta", {})["market"] = {"date": str(date.today()), "filled": filled,
                                                "src": "market_fetch/market_data.json"}
