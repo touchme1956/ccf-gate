@@ -49,35 +49,50 @@ STRUCTURE = re.compile(r"上位\s*[23]\s*社|複占|寡占構造|合計シェア
 #   100/85/70(集中の主張)には数値を要するが、50は否定的に立証できる——だから数値が無くても◎にする。
 #   ここを見落とすと、正しく50を置いた銘柄が「定性表現のみ」と誤検出され作業リストに残り続ける。
 FRAGMENTED = re.compile(
+    # 英語（10-K/20-F）
     r"fragmented|can be produced by competitors|sole source|many other compan"
-    r"|numerous competitor|captive .*furnace|increase in the number of"
-    r"|断片化|多数(の)?(企業|事業者|競合|他社)|同等品を多数|新規参入が増|実質すべての供給は他社"
+    r"|numerous competitor|numerous companies|numerous firms|captive .*furnace"
+    r"|increase in the number of|greater (financial )?resources than (we|us|ours?)"
+    r"|larger (installed (customer )?base|customer bases)|larger than we are"
+    r"|barriers to entry are low|lowered the .*barriers|stream of .*entrants"
+    r"|new (market )?entrants|thousands of|several thousand|a large number of"
+    r"|cannot specify with precision|vary by product line|all areas of our business"
+    r"|dominated by|replicate certain features|alternative (materials|forms of manufacturing)"
+    # 日本語（有報）
+    r"|断片化|参入障壁が低|参入しやすい|競合(他社|企業)?が(複数|多数|数多く)"
+    r"|数多くの競合|多数(の)?(企業|事業者|競合|他社)|同等品を多数|新規参入が増"
+    r"|実質すべての供給は他社|激しい競争|競争が激しい|異業種からの参入|競合先の一部は当社より"
 )
 
 
 def grade_dom(dom, ev):
-    """dom の根拠を4段階に仕分ける。戻り: (記号, 説明, 再監査が要るか)"""
+    """dom の根拠を4段階に仕分ける。戻り: (記号, 説明, 再監査が要るか)
+
+    判定順が肝。**積極的な根拠（数値＋構造／残余刻みの構造記述）を先に見て、
+    NO_DISCLOSURE（「開示なし」の自認）は最後に置く。**
+    丁寧に書かれた根拠ほど「A市場のシェア開示は無いが、B市場では24%と開示されている」の
+    ように両方の語を含むため、順序を逆にすると**正直に書くほど✗に落ちる**。
+    実測でこの誤検出を2度起こしている（PH/NDSN/TT/ALLE、次いで8136/5254/GRND/RACE/FSS）。
+    """
     ev = str(ev or "").strip()
     has_pct = bool(re.search(r"\d+(?:\.\d+)?\s*[%％]", ev))
     if dom in (None, ""):
         return None  # 空欄側は別で見る
     if not ev:
         return ("✗", "dom根拠が空——数字の出どころが無い", True)
+    # --- 積極的な根拠 ---
+    if has_pct and STRUCTURE.search(ev):
+        return ("◎", "シェア%＋市場構造（上位N社／複占）で刻みが導けている", False)
     if float(dom) == 50 and FRAGMENTED.search(ev):
-        # v9.9.41(3): 「市場はfragmented」「同等品を多数が製造可能」「実質すべての供給は他社」等の
-        #   構造記述があれば、自社が40%以上いることは定義上ありえない＝残余の刻み50が数値なしで立つ。
-        # 【この判定は NO_DISCLOSURE より必ず前に置くこと】規約3に従う根拠は、ほぼ必ず
-        #   「原本にシェアの数値開示は無い。ただし構造は fragmented と明記されている」という形になる。
-        #   順序を逆にすると前半だけが引っかかって ✗「根拠と値が矛盾」に落ち、
-        #   **正直に開示状況を書くほど再監査リストに残る**という逆向きの誘因になる（実測: PH/NDSN/TT/ALLE）。
+        # v9.9.41(3): 50は残余の刻みなので、提出書類自身の「集中していない」という構造記述で確定できる。
+        #   100/85/70（集中の主張）には数値を要するが、50は否定的に立証できる。
         return ("◎", "50は残余の刻み——原本の構造記述（fragmented/多数が製造可能/供給は他社）で確定している", False)
+    if has_pct:
+        return ("△", "シェア%はあるが上位N社の構造が未確認——v9.9.38の刻みは構造で決まる", True)
+    # --- ここまで来たら積極的な根拠が無い ---
     if NO_DISCLOSURE.search(ev):
         return ("✗", "「原本にシェア開示なし」と自認しながら数字が入っている（根拠と値が矛盾）", True)
-    if not has_pct:
-        return ("✗", "定性表現のみ（leading/leader等）でシェア数値が無い", True)
-    if not STRUCTURE.search(ev):
-        return ("△", "シェア%はあるが上位N社の構造が未確認——v9.9.38の刻みは構造で決まる", True)
-    return ("◎", "シェア%＋市場構造（上位N社／複占）で刻みが導けている", False)
+    return ("✗", "定性表現のみ（leading/leader等）でシェア数値も構造記述も無い", True)
 
 
 def dom_null_ok(meta):
