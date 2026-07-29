@@ -60,22 +60,35 @@ OUT = os.path.join(BASE, "out")
 VALID = {"yes", "no", "na"}
 
 
-def judge(gw):
+def judge(gw, eq=None):
     """のれん系列 {year: value} → ('yes'/'no'/None, 理由の文)
 
     測るのは「増えたか」ではなく「**今あるのれんの何割が直近5年に入ってきたか**」。
     門が acq5 を使うのは roic−roicg の乖離を作るのれんの**出どころ**を分けるためだから。
     """
     ys = sorted(gw)[-6:]
+    if not ys:
+        return None, "のれん系列が取れない（タグ不在）"
+    a, b = gw[ys[0]], gw[ys[-1]]
     if len(ys) < 2:
         return None, "のれん系列が2年ぶんも取れない（タグ不在）"
-    a, b = gw[ys[0]], gw[ys[-1]]
     ser = " → ".join(f"{y} {gw[y]/1e9:.2f}" for y in ys)
     if b <= 0:
         return "no", f"のれん残高(十億$) {ser}。直近ののれんが0＝乖離を作るのれんが無い → **no**"
-    fresh = (b - a) / b * 100
-    base = (f"のれん残高(十億$) {ser}。**新しさ =(直近 {b/1e9:.2f} − {ys[0]}年 {a/1e9:.2f})÷直近 "
-            f"= {fresh:+.1f}%**（今あるのれんのうち直近5年に増えた割合）")
+    # 起点の補正（2026-07-29）: 5年窓の古い側で**のれんタグだけ無く自己資本タグはある**年は、
+    #   のれん=0 と読む。米国会計基準ではのれんは金額があれば独立行で表示が要るので、
+    #   「自己資本は報告しているのにのれん行が無い」は**当時のれんが無かった**ことを意味する。
+    #   絶対のルール7「欠測をゼロと読むな」の例外にあたるので、根拠の文に必ず明示する。
+    y0, a0, note0 = ys[0], a, ""
+    if eq:
+        older = [y for y in sorted(eq) if y < ys[0] and y >= ys[-1] - 5]
+        if older:
+            y0, a0 = older[0], 0.0
+            note0 = (f"（起点は{y0}年＝当時**のれんの行が無く自己資本は報告されている**ので0と読む。"
+                     f"のれんは金額があれば独立行の表示が要るため、行が無い＝当時のれんが無かった）")
+    fresh = (b - a0) / b * 100
+    base = (f"のれん残高(十億$) {ser}。**新しさ =(直近 {b/1e9:.2f} − {y0}年 {a0/1e9:.2f})÷直近 "
+            f"= {fresh:+.1f}%**（今あるのれんのうち直近5年に増えた割合）{note0}")
     if fresh >= 30:
         return "yes", base + " → **大型買収あり=yes**（3分の1以上が直近5年＝現経営陣の買収）"
     if fresh < 10:
@@ -110,11 +123,13 @@ def main():
     n_fix = n_blank = n_same = 0
     for t, d, v, bad in targets:
         try:
-            gw = H.series(H.facts_of(H.cik_of(t)), H.TAGS["gw"])[0]
+            _f = H.facts_of(H.cik_of(t))
+            gw = H.series(_f, H.TAGS["gw"])[0]
+            eq = H.series(_f, H.TAGS["eq"])[0]
         except (Exception, SystemExit):
-            print(f"{t:7s} {str(v):>9s} {'—':>5s} {'':>6s}  のれん取得失敗")
+            print(f"{t:7s} {str(v):>9s} {'—':>5s} {'':>6s}  のれん取得失敗（SECにCIKまたはタグが無い＝手作業へ）")
             continue
-        new, why = judge(gw)
+        new, why = judge(gw, eq)
         s = scores.get(t, {}).get("s")
         print(f"{t:7s} {str(v):>9s} {str(new or '空欄'):>5s} {(s or 0):6.1f}  {why}")
         if not (write and bad):

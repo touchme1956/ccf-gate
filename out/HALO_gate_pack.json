@@ -16,7 +16,7 @@
  "dilNet": -4.48,
  "acc": "usgaap",
  "eq": "pos",
- "acq5": null,
+ "acq5": "yes",
  "eps": 2.69,
  "expiry": "yes",
  "moatdecay": "no",
@@ -74,7 +74,8 @@
    "cagr22.6は採取器の窓依存値。実測売上CAGRはFY18-25で約37%と極めて高い。ロイヤルティ拡大は堅調のため採取器値を維持",
    "gm/gpa: GrossProfitタグ不発見(ロイヤルティ業態)→null。ロイヤルティ主体ゆえ実質粗利率はほぼ100%だが機械抽出不能",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=10.6。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 acq5 1.73 → None。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
+   "2026-07-29 acq5 1.73 → None。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-07-29 acq5 None → 'yes'。のれんの行が2022年に初めて現れ(0.409十億$)、2020/2021年は自己資本を報告しているのにのれんの行が無い＝当時のれんが無かった。のれんは金額があれば独立行の表示が要るため、この一件だけは『タグ不在=0』と読んでよい（絶対のルール7の明示的な例外・根拠に明記した）。＝今あるのれんは全額が直近5年に発生＝yes。門はもともと空欄を'yes'で裁くので採点は動かない。"
   ],
   "evidence": {
    "expiry": "『certain proprietary drugs co-formulated with ENHANZE have been granted additional exclusivity, extending the patent life of the product beyond the patent expiry of the proprietary IV drug』+『Any such loss of patent protection or proprietary rights could lead to a reduction or loss of revenues, incentivize one or more of our key ENHANZE partners to terminate』+『biosimilars to the active drug ingredient in our ENHANZE technology』→ロイヤルティはパートナー製品特許＋ENHANZE特許束に依存=期限型→yes",
@@ -107,7 +108,8 @@
    "dilNet": "機械算出: 株数 2022年 135,154,000 → 2025年 117,782,000＝3年の年率（自社株買い後の純希薄化）",
    "eps": "機械算出 2025年: 純利益 316,889,000 ÷ 株数 117,782,000（TTMではなく通期実績）",
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 101,092,082 ÷ Δ投下資本 -990,554,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 3,181,998,000→2,191,444,000（-31.1%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない",
-   "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 174,322,500 ÷ Δ投下資本 1,643,169,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 548,275,000→2,191,444,000（+299.7%）"
+   "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 174,322,500 ÷ Δ投下資本 1,643,169,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 548,275,000→2,191,444,000（+299.7%）",
+   "acq5": "【2026-07-29 機械判定】のれん残高(十億$) 2022 0.41 → 2023 0.42 → 2024 0.42 → 2025 0.58。**新しさ =(直近 0.58 − 2020年 0.00)÷直近 = +100.0%**（今あるのれんのうち直近5年に増えた割合）（起点は2020年＝当時**のれんの行が無く自己資本は報告されている**ので0と読む。のれんは金額があれば独立行の表示が要るため、行が無い＝当時のれんが無かった） → **大型買収あり=yes**（3分の1以上が直近5年＝現経営陣の買収）（出典: SEC XBRL companyfacts の Goodwill / StockholdersEquity 系列）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -115,8 +117,7 @@
    "gm": "GrossProfitタグ不発見。ロイヤルティ主体で実質粗利率ほぼ100%だが機械抽出不能",
    "founder": "創業者(Gregory Frost等)は既に経営を離れ現CEOはHelen Torley。創業者経営フラグ定義次第でユーザー判定",
    "fin": "業態フラグの定義不明(金融業ではない・ドラッグデリバリー技術ロイヤルティ)→空欄",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(NASDAQ:HALO・USD建)",
-   "acq5": "【2026-07-29】旧値 1.73 は yes/no 以外の不正値で棄却。のれん残高(十億$) 2022 0.41 → 2023 0.42 → 2024 0.42 → 2025 0.58。**新しさ =(直近 0.58 − 2022年 0.41)÷直近 = +29.5%**（今あるのれんのうち直近5年に増えた割合） → 判定不能（10〜30%の中間帯）。原本の Business Combination 注記で確認せよ"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(NASDAQ:HALO・USD建)"
   },
   "kenshi_gm": "2026-07-20 gm/sbc監査: gm欄を仕様(営業利益率・GAAP)にXBRL機械計算で補正。sbc単位ずれ補正。 gm None→33.6; gmt up→down",
   "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=3.09",
@@ -132,7 +133,8 @@
    "dilNet": "machine",
    "eps": "machine",
    "roiic": "machine",
-   "roiic5": "machine"
+   "roiic5": "machine",
+   "acq5": "machine"
   }
  },
  "roiic": "na",
