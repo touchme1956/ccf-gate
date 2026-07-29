@@ -30,7 +30,17 @@
 - 四半期 決算カレンダー: `python kessan_calendar.py`
   - 監視リスト(保有+質80+)の次回決算日を取得(Alpha Vantage、鍵なしはSEC推定)
   - 出力: kessan_calendar.ics(Googleカレンダー取込=スケジュール連動) と out/next_earnings.json(決算日データ。門内の常時表示は撤去→Googleカレンダーで確認)
-- 四半期の手順書は kessan_checklist.md、監視リストの正本は kanshi_list.json、Ⅶ資産の中身は portfolio.html
+- 四半期 日本株点検: `python3 kessan_check_jp.py`（2026-07-29新設）
+  - kessan_check.py / kessan_calendar.py は**SEC経由なので日本株を一切点検できず穴になっていた**。
+    EDINET直配信の有報PDFから警報語（誠/限/集/指針/減損/退任の日本語版）を走査する。
+    **数値抽出(売上YoY・営業利益率差)はPDFの桁分断でほぼ機能しない**ため、パックのgmを錨に自己検算し
+    乖離が大きければ数値を破棄する（もっともらしい誤値より空欄）。判定は警報のみで行う
+- 監視リスト生成: `python3 make_kanshi.py`（`--dry`で差分だけ）
+  - 定義は **保有 ∪ 投下可 ∪ Ω75+ ∪ 直近点検で要審査 ∪ pin**（2026-07-29改定）。
+    旧定義「保有+質80+」は採点の是正でΩ80+が4社へ収縮したとき監視が7社になり、
+    KLACの$230.4百万のれん減損（当時Ω79.8）を見逃す状態だった。
+    **要審査の社を必ず残す**のが肝——Ω75+だけで引くと、異常を拾った社が翌四半期に監視から消える
+- 四半期の手順書は kessan_checklist.md、監視リストの正本は kanshi_list.json（make_kanshi.pyで生成）、Ⅶ資産の中身は portfolio.html
 - 夜間バッチ審査は night/（chunkNN.txt=銘柄リスト、agent_prompt_template.txt=審査官指示〔正本はⅡ手順3・改定時は同期〕、
   progress.json=進行表。出力は out/{T}_gate_pack.json。日本株の一括再審査は agent_prompt_template_jp.txt〔EDINET_DB
   で自力採取・JP必須規約強制〕にコード列を渡す）。詳細は night/README.md
