@@ -18,6 +18,9 @@ night/audit_moat.py — 堀5本(dom/irr/rep/dur/moatW)の「根拠の質」を�
        同じ得をすると、埋めないほど有利という逆向きの誘因になる
   3) moatW が空欄（旧4本式へフォールバック＝堀の本数を測っていない）
   4) dom は入っているが上位N社の構造が未確認（△。刻みが1段ずれ得る）
+  ※v9.9.41(3): dom=50 だけは数値が無くても、提出書類自身の「集中していない」という構造記述
+    （fragmented／同等品を多数が製造可能／実質すべての供給は他社）があれば合格とする。
+    50は権力の"不在"なので否定的に立証できる。100/85/70（集中の主張）には従来どおり数値を要する。
 
 使い方:
   python3 night/audit_moat.py            全パック
@@ -42,6 +45,14 @@ NO_DISCLOSURE = re.compile(
 )
 # 市場構造（v9.9.38の刻みが要求するもの）
 STRUCTURE = re.compile(r"上位\s*[23]\s*社|複占|寡占構造|合計シェア|CR\s*[23]")
+# v9.9.41(3): 50は残余の刻みなので、提出書類自身の「集中していない」という構造記述で確定できる。
+#   100/85/70(集中の主張)には数値を要するが、50は否定的に立証できる——だから数値が無くても◎にする。
+#   ここを見落とすと、正しく50を置いた銘柄が「定性表現のみ」と誤検出され作業リストに残り続ける。
+FRAGMENTED = re.compile(
+    r"fragmented|can be produced by competitors|sole source|many other compan"
+    r"|numerous competitor|captive .*furnace|increase in the number of"
+    r"|断片化|多数(の)?(企業|事業者|競合|他社)|同等品を多数|新規参入が増|実質すべての供給は他社"
+)
 
 
 def grade_dom(dom, ev):
@@ -54,6 +65,10 @@ def grade_dom(dom, ev):
         return ("✗", "dom根拠が空——数字の出どころが無い", True)
     if NO_DISCLOSURE.search(ev):
         return ("✗", "「原本にシェア開示なし」と自認しながら数字が入っている（根拠と値が矛盾）", True)
+    if float(dom) == 50 and FRAGMENTED.search(ev):
+        # v9.9.41(3): 「市場はfragmented」「同等品を多数が製造可能」「実質すべての供給は他社」等の
+        #   構造記述があれば、自社が40%以上いることは定義上ありえない＝残余の刻み50が数値なしで立つ
+        return ("◎", "50は残余の刻み——原本の構造記述（fragmented/多数が製造可能/供給は他社）で確定している", False)
     if not has_pct:
         return ("✗", "定性表現のみ（leading/leader等）でシェア数値が無い", True)
     if not STRUCTURE.search(ev):
