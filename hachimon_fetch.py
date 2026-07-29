@@ -131,8 +131,14 @@ def series(facts, keys, unit_pref=("USD","EUR","JPY")):
         if cands: break            # 名前空間はまたがない(us-gaapとifrsを混ぜない)
     if not cands: return {}, None
 
-    # 主系列: 最新年が新しい順 → 年数が多い順 → keys の優先順
-    i, k0, merged, unit = max(cands, key=lambda c: (max(c[2]), len(c[2]), -c[0]))
+    # 主系列の選び方: **keys の並び（＝意味の優先順）を守る**。ただし著しく古い系列は退ける。
+    #   単純に「最新年が新しいタグ」を採ると、意味の違うタグへ黙って乗り換える事故が起きる
+    #   （実測 BKNG: eq が StockholdersEquity → …IncludingPortionAttributableToNoncontrollingInterest
+    #   へ乗り換わり roicg 53.1→17.8 と桁近く動いた）。**古い値も危険だが、意味の違う値はもっと危険。**
+    #   → 最新年から1年以内に届いている候補の中で、keys の優先順が最も高いものを主系列にする。
+    newest = max(max(c[2]) for c in cands)
+    elig = [c for c in cands if max(c[2]) >= newest - 1]
+    i, k0, merged, unit = min(elig, key=lambda c: (c[0], -max(c[2])))
     merged = dict(merged)
     for _, k, out, u in cands:
         if k == k0 or u != unit: continue
@@ -176,6 +182,13 @@ def build_numbers(facts):
     #   まさにその前提が外れる場所にあった。**式と実額を残せば、同じ事故は次から目で見える。**
     evd = {}
     ev["_evid"] = evd
+    # 全系列の最新年。以降の各算出は「使った年がここから2年以上遅れていないか」で検問する
+    _all_years = [y for k in ("rev","op","ni","assets","eq","ocf") for y in S[k]]
+    LATEST = max(_all_years) if _all_years else None
+
+    def stale(y):
+        return LATEST is not None and y is not None and y < LATEST - 1
+
     ys_rev, rev = last_n(S["rev"])
     if len(rev) >= 2:
         # 2026-07-29修正: 従来は「系列の要素数」を年数として使っていた。XBRLの年次系列は
@@ -185,7 +198,10 @@ def build_numbers(facts):
         #   **年数は年ラベルの差で数える**（要素数＝年数、は欠測をゼロと読むのと同型の思い込み）。
         n = min(5, len(rev)-1)
         span = ys_rev[-1] - ys_rev[-1-n]
-        if span <= 0:
+        if stale(ys_rev[-1]):
+            note.append(f"cagr算出不能: 売上系列が{ys_rev[-1]}年で途切れており最新{LATEST}年から遅れている"
+                        f"（売上タグがTAGSに無いものへ改称された疑い）")
+        elif span <= 0:
             note.append(f"cagr算出不能: 年ラベルが単調でない({ys_rev[-1-n]}→{ys_rev[-1]})")
         else:
             _safe(ev, note, "cagr5",
@@ -202,7 +218,18 @@ def build_numbers(facts):
         if len(yy)==2:
             _safe(ev, note, "gmDelta", lambda: round(gm[yy[1]]-gm[yy[0]],1))
     # accr / conv (直近年)
+    # 2026-07-29新設の安全網: **使っている年が古すぎないかを必ず見る。**
+    #   TAGS に載っていないタグを使う会社では、機械は「取れた中でいちばん新しい年」を
+    #   黙って直近年として扱う。実測 BKNG は NetIncomeLoss が2015年で途切れており、
+    #   roicg/gpa/eps/nde が**11年前の決算**で計算されていた（eps 51.42 ← 実際は166）。
+    #   タグを個別に足しても次の会社で同じことが起きるので、**年で検問する**。
+    #   これも絶対のルール7の一族——「取れた値＝最新の値」という確かめていない前提。
     y0 = max(S["ni"]) if S["ni"] else None
+    if y0 is not None and LATEST is not None and y0 < LATEST - 1:
+        note.append(f"損益系の直近年が{y0}年で、他の系列の最新{LATEST}年から{LATEST-y0}年遅れている"
+                    f"（純利益タグが途中で途切れている＝TAGSに無いタグを使っている疑い）。"
+                    f"accr/nde/gm/roicg/gpa/fcf/ni/eps を算出不能とした。原本で確認して手入力せよ")
+        y0 = None
     if y0 and y0 in S["ocf"] and S["assets"].get(y0):
         _safe(ev, note, "accr", lambda: round((S["ni"][y0]-S["ocf"][y0])/S["assets"][y0]*100, 1))
         if ev.get("accr") is not None:
@@ -324,7 +351,7 @@ def build_numbers(facts):
     # 営業利益率トレンド gmt (3年: up/flat/down)
     if S["op"] and S["rev"]:
         oy = sorted(set(S["op"])&set(S["rev"]))[-3:]
-        if len(oy)>=2 and S["rev"].get(oy[0]) and S["rev"].get(oy[-1]):
+        if len(oy)>=2 and not stale(oy[-1]) and S["rev"].get(oy[0]) and S["rev"].get(oy[-1]):
             m0=S["op"][oy[0]]/S["rev"][oy[0]]*100; m1=S["op"][oy[-1]]/S["rev"][oy[-1]]*100
             ev["gmt"]="up" if m1-m0>1 else "down" if m1-m0<-1 else "flat"
             evd["gmt"] = f"機械算出: 営業利益率 {oy[0]}年 {m0:.1f}% → {oy[-1]}年 {m1:.1f}%（±1ptでup/down）"
@@ -338,7 +365,13 @@ def build_numbers(facts):
                             + ("" if ((y0 in S['debtL']) or (y0 in S['debtS']))
                                else "。**有利子負債タグ不在＝0扱いのため過大の可能性あり（要原本確認）**"))
     # のれん除外ROIC 直近年 roic (門のroic欄=単年・除外)
-    if roics: ev["roic"]=round(roics[-1],1)
+    # 5年系列そのものは古い年を含んでよい（それが系列の意味）。検問するのは**直近値の年**だけ——
+    # 古い年の値を"直近ROIC"として台帳に載せないため。
+    if roics and not stale(max(S["op"]) if S["op"] else None):
+        ev["roic"]=round(roics[-1],1)
+    elif roics:
+        note.append(f"roic算出不能: 営業利益系列が{max(S['op'])}年で途切れ最新{LATEST}年から遅れている"
+                    f"（タグ改称の疑い）。原本で確認して手入力せよ")
     # ROICトレンド roict (5年 up/flat/down): worst年 vs 直近
     if len(roics)>=2:
         ev["roict"]="up" if roics[-1]-roics[0]>2 else "down" if roics[-1]-roics[0]<-2 else "flat"
