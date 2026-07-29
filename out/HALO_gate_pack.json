@@ -16,7 +16,7 @@
  "dilNet": -4.48,
  "acc": "usgaap",
  "eq": "pos",
- "acq5": 1.73,
+ "acq5": null,
  "eps": 2.69,
  "expiry": "yes",
  "moatdecay": "no",
@@ -73,7 +73,8 @@
    "警報級検死: FY2025は増収(+38%)にもかかわらず営業利益469.0<2024:551.5(-15%)、opm54.3%→33.6%へ圧縮、roicg25%→13%へ低下。R&D/SG&A増・買収費用・マイルストン収入端境が主因と推定。roict/gmt『up』は多年トレンドとしては可だがFY2025単年は増収減益(成長の幻影に留意)",
    "cagr22.6は採取器の窓依存値。実測売上CAGRはFY18-25で約37%と極めて高い。ロイヤルティ拡大は堅調のため採取器値を維持",
    "gm/gpa: GrossProfitタグ不発見(ロイヤルティ業態)→null。ロイヤルティ主体ゆえ実質粗利率はほぼ100%だが機械抽出不能",
-   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=10.6。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった"
+   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=10.6。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
+   "2026-07-29 acq5 1.73 → None。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
   ],
   "evidence": {
    "expiry": "『certain proprietary drugs co-formulated with ENHANZE have been granted additional exclusivity, extending the patent life of the product beyond the patent expiry of the proprietary IV drug』+『Any such loss of patent protection or proprietary rights could lead to a reduction or loss of revenues, incentivize one or more of our key ENHANZE partners to terminate』+『biosimilars to the active drug ingredient in our ENHANZE technology』→ロイヤルティはパートナー製品特許＋ENHANZE特許束に依存=期限型→yes",
@@ -114,7 +115,8 @@
    "gm": "GrossProfitタグ不発見。ロイヤルティ主体で実質粗利率ほぼ100%だが機械抽出不能",
    "founder": "創業者(Gregory Frost等)は既に経営を離れ現CEOはHelen Torley。創業者経営フラグ定義次第でユーザー判定",
    "fin": "業態フラグの定義不明(金融業ではない・ドラッグデリバリー技術ロイヤルティ)→空欄",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(NASDAQ:HALO・USD建)"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(NASDAQ:HALO・USD建)",
+   "acq5": "【2026-07-29】旧値 1.73 は yes/no 以外の不正値で棄却。のれん残高(十億$) 2022 0.41 → 2023 0.42 → 2024 0.42 → 2025 0.58。**新しさ =(直近 0.58 − 2022年 0.41)÷直近 = +29.5%**（今あるのれんのうち直近5年に増えた割合） → 判定不能（10〜30%の中間帯）。原本の Business Combination 注記で確認せよ"
   },
   "kenshi_gm": "2026-07-20 gm/sbc監査: gm欄を仕様(営業利益率・GAAP)にXBRL機械計算で補正。sbc単位ずれ補正。 gm None→33.6; gmt up→down",
   "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=3.09",

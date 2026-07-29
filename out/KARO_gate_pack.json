@@ -16,7 +16,7 @@
  "dilNet": -0.3,
  "acc": "usgaap",
  "eq": "pos",
- "acq5": 0.07,
+ "acq5": null,
  "eps": 29.8,
  "expiry": "no",
  "moatdecay": "no",
@@ -70,7 +70,8 @@
    "acc欄=usgaapは採取器既定値。実際の報告基準はIFRS(ifrs-full名前空間)。ASR様式に倣い値は据置き、基準相違のみ記録",
    "p1根拠: ROICσ(5年)=6.9ptだが2021年(上場時・低資本ベースでROIC込み43.8%)の外れ値が主因。2022-2025のROIC込みは25.2-29.1%でσ≈1.6pt(極安定)→80",
    "p4根拠: material weaknessは実指摘(FY2025に特権ユーザーアクセス・変更管理・仕訳統制で認識)、FY2026に是正完了(hits原文)。定型文ではない実MWのため上限50。是正済+IT全般統制(財務虚偽記載ではない)+accr-19.6%の高利益質でこれ以上は減点せず50",
-   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=36.3 / 5年窓=None。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった"
+   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=36.3 / 5年窓=None。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
+   "2026-07-29 acq5 0.07 → None。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
   ],
   "evidence": {
    "dom": "『fragmented nature of the global market, substantial upfront capita[l]』(barriers to entry)+『compete with a number of companies... some of which have established sizable market shares』。明示シェア数値なし。Cartrackは南ア中核でスケール優位だが世界は断片化→寡占70(保守)",
@@ -107,7 +108,8 @@
    "sbc": "SBC関連タグ不発見(希薄化なしの傍証だが値は不明)",
    "founder": "『they may be able to cause or prevent a change of control of our company』『The concentration of ownership could deprive other shareholders』で支配株主(創業者Zak Calisto系)存在は明示。ただしfounderフラグ定義はユーザー判定(ASR踏襲)",
    "fin": "業態フラグの定義不明。金融業ではない(SaaSテレマティクス)",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力。ADR混線注意(財務ZAR・Nasdaq:KAROはUSD)"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力。ADR混線注意(財務ZAR・Nasdaq:KAROはUSD)",
+   "acq5": "【2026-07-29】旧値 0.07 は yes/no 以外の不正値で棄却。のれん残高(十億$) 2021 0.12 → 2022 0.19 → 2023 0.21 → 2024 0.23 → 2025 0.17。**新しさ =(直近 0.17 − 2021年 0.12)÷直近 = +29.0%**（今あるのれんのうち直近5年に増えた割合） → 判定不能（10〜30%の中間帯）。原本の Business Combination 注記で確認せよ"
   },
   "kenshi_gm": "2026-07-20 gm/sbc監査: gm欄を仕様(営業利益率・GAAP)にXBRL機械計算で補正。sbc単位ずれ補正。 gm 70.1→28.7",
   "provenance": {

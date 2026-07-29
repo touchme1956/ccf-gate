@@ -1,14 +1,14 @@
 {
  "nm": "ADBE",
- "roic": 35.6,
- "roicg": 27.9,
+ "roic": 158.6,
+ "roicg": 39.9,
  "nde": -0.04,
  "z": 7.26,
  "gpa": 71.9,
  "accr": -9.8,
  "gm": 36.6,
  "gmt": "up",
- "roict": "down",
+ "roict": "up",
  "cagr": 13.1,
  "fcf": 9.85,
  "ni": 7.13,
@@ -16,7 +16,7 @@
  "dilNet": -3.67,
  "acc": "usgaap",
  "eq": "pos",
- "acq5": 2.8,
+ "acq5": "no",
  "eps": 17.26,
  "expiry": "no",
  "moatdecay": "no",
@@ -75,7 +75,10 @@
    "2026-07-19 発見度実データ: analysts=39 instOwn=89.025(AV)",
    "2026-07-29 堀再監査(dom/moatWのみ): 旧dom=85→新dom=null(空欄化)、旧moatW=85→新moatW=85(据置)。dom: 10-K Item1 COMPETITION を全文確認、自社シェア・上位N社構造ともに数値開示ゼロ。原本はむしろ『limited barriers to entry』『rapidly evolving and intensely competitive』と逆方向を書いている。旧85は PostScript/PDF の標準性という定性表現に依っており、しかも旧evidence自身が『シェア数値なし』を自認していた＝測っていない値。憶測を残すより空欄(門は欠測本を落として重みを再正規化する)。moatW: DM 74.3%/DX 24.7% を原本実数で再確認、最大顧客<10%も原本で確認、独立2本=85を維持。FY2026からの単一セグメント化により次回はセグメント実数で裏取り不能になる点を要監視として記載。他フィールドは一切変更なし。",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=na。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 堀再監査(irr/rep): 堀71.2で、irr70→85 か rep60→80 のどちらか一段で75を超えて投下可になる位置だったため10-K原本を全文走査。**両方とも原本が逆を述べていた**(規格は受け手・参入障壁は限定的)ので据置。値は不変、根拠のみ追記。"
+   "2026-07-29 堀再監査(irr/rep): 堀71.2で、irr70→85 か rep60→80 のどちらか一段で75を超えて投下可になる位置だったため10-K原本を全文走査。**両方とも原本が逆を述べていた**(規格は受け手・参入障壁は限定的)ので据置。値は不変、根拠のみ追記。",
+   "2026-07-29 roic 35.6→92.2 / roicg 27.9→29.2 / roict down→up に是正。旧値はいずれも根拠が無く、SEC XBRLの5年系列から再現できなかった（旧roic 35.6 はのれん除外ROICとしてはどの年とも一致しない）。5年平均を採ったのはMAほか既存パックの作法に合わせたため。※この行で『台帳のroic欄に直近年と5年平均の二つの定義が同居している』と書いたが、**それは自分の誤りだった**——門式は hachimon_fetch に一つだけ明文で定まっている（投下資本 = 自己資本 + 有利子負債 − のれん − 無形・直近年）。自分がのれんのみ控除の5年平均で照合したため『どちらとも一致しない社が9社』と出ただけで、定義の分裂は存在しない。night/audit_roic_def.py は作らない。",
+   "2026-07-29 acq5 2.8 → 'no' に是正。**この欄はyes/noの列挙なのに数値 2.8 が入っていた**。門は `acq5==='no'` でのみ『のれん込みROIC乖離 −6』を免除するので、数値は文字列比較に一致せず**罰が黙って効いていた**（実測でΩ 80.7→75.2 の差）。門のソース自身が『遺産のれん——減点免除（Visa/**Adobe**型の誤爆防止・v9.1）』と名指ししている、まさにその誤爆だった。同型の不正値は全317パック中38社にあり、うち乖離>15ptで実害が出ているのは9社（RMD/ADBE/MSA/INTU/PAYX/EME/HALO/AMBI/CLMB）。",
+   "2026-07-29【本日の自分の是正を取り消し】roic/roicg/roict を採取器の門式へ戻した（{'roic': 92.2, 'roicg': 29.2, 'roict': 'up'} → {'roic': 158.6, 'roicg': 39.9, 'roict': 'up'}）。本日いったん『のれんのみ控除・5年平均』へ書き換えたが、これは**規約違反だった**——門式は hachimon_fetch に明文で 投下資本 = 自己資本 + 有利子負債 − のれん − **無形**、**直近年**、IC が自己資本の2割未満なら算出不能（絶対のルール7(b)）と定まっている。ADBEの旧値35.6は依然として門式のどの年とも一致せず根拠も無かったので、置き換えたこと自体は正しいが、置いた値の定義が誤っていた。**台帳の値が食い違って見えたら、まず後から書かれた記録と規約を探すこと。**"
   ],
   "evidence": {
    "dom": "**原本にシェアの数値開示なし＝刻みを導けないため空欄**。10-K FY2025(2025-11-28) Item1 COMPETITION 全文を確認したが、自社シェアも上位N社構造も一切数値が無く、むしろ逆方向の記述が並ぶ: 『We participate in a highly competitive and rapidly evolving environment where our competitors include companies of various sizes ... new entrants, and AI or cloud-native companies』『The markets for our solutions are characterized by rapid technological innovation, new industry standards, evolving distribution and sales models, **limited barriers to entry**, short product lifecycles, customer price sensitivity ... and the frequent entry of new solutions or competitors』。分野別も競合の列挙のみで数値なし(creative professionals向け: 『face broad competition from both established and emerging players』／marketing professionals向け: 『face broad competition from large, established enterprise software and cloud companies, point solutions from smaller, specialized companies』)。Item1A にも『Our competitors include companies with significant sales and research and development resources』『we face increasing competition from companies offering generative and agentic AI solutions』とあるのみ。旧dom=85の根拠は『Adobe PostScript/PDF standards』(実体は Publishing and Advertising＝売上の1.1%のレガシー区分の説明文)と『flagship creative applications』であり、**いずれもシェアの証拠ではない**。しかも旧evidence自身が『明示的シェア数値はhitsになし』と自認しながら85を入れていた。(出典: 10-K FY2025 Item 1 COMPETITION / Item 1A / https://www.sec.gov/Archives/edgar/data/796343/000079634326000003/adbe-20251128.htm)",
@@ -107,7 +110,11 @@
    "dilNet": "機械算出: 株数 2022年 462,000,000 → 2025年 413,000,000＝3年の年率（自社株買い後の純希薄化）",
    "eps": "機械算出 2025年: 純利益 7,130,000,000 ÷ 株数 413,000,000（TTMではなく通期実績）",
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 2,279,897,196 ÷ Δ投下資本 -347,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 18,180,000,000→17,833,000,000（-1.9%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない",
-   "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 2,870,142,203 ÷ Δ投下資本 452,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 17,381,000,000→17,833,000,000（+2.6%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない"
+   "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 2,870,142,203 ÷ Δ投下資本 452,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 17,381,000,000→17,833,000,000（+2.6%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない",
+   "roic": "機械算出 2025年: NOPAT 7,107,142,203（営業利益 8,706,000,000×(1−実効税率18.4%)） ÷ IC 4,481,000,000＝自己資本 11,623,000,000 + 有利子負債 6,210,000,000 − のれん 12,857,000,000 − 無形 495,000,000。**IC/自己資本=38.6%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）｜有利子負債の内訳: LongTermDebt(総額) + DebtCurrent(総額)",
+   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 11,623,000,000 + 有利子負債 6,210,000,000)＝のれん込み。roic(除外)との差が買収規律の指標",
+   "roict": "機械算出: のれん除外ROIC 5年系列 110.6% / 122.4% / 84.8% / 87.7% / 158.6%（最古→直近の差で判定）",
+   "acq5": "【2026-07-29 是正・原本で確定】直近5年に大型買収なし＝**no**。根拠(1) のれん残高がほぼ動いていない: FY2021 12.67 → FY2022 12.79 → FY2023 12.80 → FY2024 12.79 → **FY2025 12.86十億$**（10-K FY2025 連結貸借対照表 Goodwill 12,857 / 前年 12,788、単位百万$）。5年で+1.5%＝買収による投下資本の増加は無い。根拠(2) FY2025 10-K に Business Combination の注記が存在しない。根拠(3) 唯一の大型案件 Semrush Holdings（約19億$）は『On November 18, 2025, we **entered into a definitive agreement** to acquire… The transaction is subject to regulatory approvals and customary closing conditions and is **expected to close in the first half of fiscal 2026**』＝**当期は未完了**。（Figma は2023年に破談。のれん除外ROICの高さは買収ではなく自社株買いによる自己資本の縮小に由来する）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -143,7 +150,10 @@
    "dilNet": "machine",
    "eps": "machine",
    "roiic": "machine",
-   "roiic5": "machine"
+   "roiic5": "machine",
+   "roic": "machine",
+   "roicg": "machine",
+   "roict": "machine"
   }
  },
  "mcap": 108.2018,

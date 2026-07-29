@@ -16,7 +16,7 @@
  "dilNet": -0.18,
  "acc": "usgaap",
  "eq": "pos",
- "acq5": 0.01,
+ "acq5": "no",
  "eps": 6.73,
  "expiry": "no",
  "moatdecay": "no",
@@ -72,7 +72,8 @@
    "ROICσ=3.0pt(2017-21窓・のれん込みROIC20.4-28.7%)→3.0は<3に非該当のため<6ptバケット=p1:80。FY2025税歪みもあり保守側",
    "2026-07-19 発見度実データ: analysts=4 instOwn=92.4(AV)",
    "2026-07-29 堀再監査(v9.9.41): 旧dom=85→新dom=50、旧moatW=50→新moatW=50(据置)。dom旧根拠の「3-IN-ONE is the market share leader among drip oils」は順位の自称(規約4)かつ対象が売上5.0%のOther maintenance productsで全社を代表しないため撤回。Competition節「We are aware of many competing products, some of which sell for lower prices...」の構造記述により規約3で50。moatWは製品ライン別実数(WD-40 MUP 77.1%/Specialist 13.2%/Other 5.0%/HCCP 4.7%)で再確認し、≥15%の柱が1本のみ・最大製品77.1%≥70%のため50を維持。最大顧客は<10%(原本明記)。",
-   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=38.1。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった"
+   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=38.1。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
+   "2026-07-29 acq5 0.01 → 'no'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
   ],
   "evidence": {
    "dom": "v9.9.41再監査で 85→50 に引下げ。**シェアの数値は原本に一切開示なし**。旧根拠「3-IN-ONE Oil is the market share leader among drip oils in many countries」は(i)順位の自称であり規約4により刻みの証拠にならない、(ii)そもそも3-IN-ONEが属する Other maintenance products はFY2025売上 $31,043千＝全社の5.0%にすぎず全社のdomを代表しない、の二重の理由で撤回。10-K Item1 Competition 全文: 「The markets for our products are highly competitive and influenced by large retailers with significant negotiating power... Our products compete both within their own product classes as well as within product distribution channels, **competing with many other products** for store placement and shelf space. ... **We are aware of many competing products, some of which sell for lower prices or are produced and marketed by companies with greater financial resources than those of our Company**」。Item 1A: 「To protect our existing market share or capture additional market share from our competitors, we may need to increase our expenditure related to promotions and advertising」。→ 自社シェア%: 開示なし / 上位N社合計%: 開示なし。**規約2により85(圧倒70-89%)は数値がないので置けない**。提出書類自身が「多数の競合品を認識しており、その一部はより安価か、より潤沢な資源を持つ企業が製造販売している」と**同等品を多数が製造可能**な構造を述べているので、規約3の残余刻み=50が確定（メンテナンス製品95.3%・ホームケア4.7%とも同じCompetition節が一括適用＝規約1の「全社が同じ刻みに落ちる」ケースで空欄にしない）。出典: SEC EDGAR 10-K FY2025(2025-08-31) CIK0000105132 acc 0000105132-25-000067 https://www.sec.gov/Archives/edgar/data/105132/000010513225000067/wdfc-20250831.htm",
@@ -101,7 +102,8 @@
    "dilNet": "機械算出: 株数 2022年 13,602,346 → 2025年 13,527,614＝3年の年率（自社株買い後の純希薄化）",
    "eps": "機械算出 2025年: 純利益 90,994,000 ÷ 株数 13,527,614（TTMではなく通期実績）",
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 23,026,059 ÷ Δ投下資本 20,211,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 334,936,000→355,147,000（+6.0%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない",
-   "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 30,853,563 ÷ Δ投下資本 80,936,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 274,211,000→355,147,000（+29.5%）"
+   "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 30,853,563 ÷ Δ投下資本 80,936,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 274,211,000→355,147,000（+29.5%）",
+   "acq5": "【2026-07-29 機械判定】のれん残高(十億$) 2020 0.10 → 2021 0.10 → 2022 0.10 → 2023 0.10 → 2024 0.10 → 2025 0.10。**新しさ =(直近 0.10 − 2020年 0.10)÷直近 = +1.5%**（今あるのれんのうち直近5年に増えた割合） → **大型買収なし=no**（ほぼ全部が遺産のれん）（出典: SEC XBRL companyfacts の Goodwill 系列）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -151,7 +153,8 @@
    "dilNet": "machine",
    "eps": "machine",
    "roiic": "machine",
-   "roiic5": "machine"
+   "roiic5": "machine",
+   "acq5": "machine"
   }
  },
  "mcap": 3.1749,
