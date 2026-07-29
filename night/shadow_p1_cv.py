@@ -31,13 +31,20 @@ os.chdir(BASE)
 OUT = os.path.join(BASE, "out")
 CACHE = os.path.join(OUT, "_roic_series_cache.json")
 
-from fill_derived_judgment import roic_series, p1_of   # noqa: E402  現行の絶対σ刻みはここが正本
+from fill_derived_judgment import roic_series, p1_of   # noqa: E402  **p1の刻みの正本はここだけ**
 
 
-def p1_cv(cv):
-    """変動係数(σ÷平均・%)の刻み。絶対σの 3/6/10pt を ROIC平均20%の会社で等価になるよう置いた
-       （3/20=15% / 6/20=30% / 10/20=50%）——現行の目盛りが想定していた帯で連続にするため。"""
-    return 90 if cv < 15 else 80 if cv < 30 else 65 if cv < 50 else 50
+# 刻みの正本は fill_derived_judgment.p1_of（v9.9.50で変動係数版へ）。ここで再定義しない——
+# 同じ刻みの実装を二つ持つと、片方だけ直したときに静かに食い違う（本セッションで roic が
+# 「直近年」と「5年平均」に分裂していた事故と同型）。
+p1_cv = p1_of
+
+
+def _p1_abs_retired(sigma):
+    """**廃止済み**の旧刻み（絶対の百分点）。v9.9.50 で変動係数へ置き換えた。
+       ここに残すのは「新旧でどれだけ判定が変わるか」を表示するためだけで、**採点には使わない**。
+       正本は fill_derived_judgment.p1_of（変動係数版）。"""
+    return 90 if sigma < 3 else 80 if sigma < 6 else 65 if sigma < 10 else 50
 
 
 def series_all():
@@ -82,19 +89,19 @@ def main():
         d = json.load(open(f"{OUT}/{t}_gate_pack.json", encoding="utf-8"))
         cur = d.get("p1") if isinstance(d.get("p1"), (int, float)) else None
         rows.append(dict(t=t, cur=cur, sd=sd, mean=mean, cv=cv,
-                         abs_g=p1_of(sd), cv_g=p1_cv(cv), ser=o["ser"]))
+                         abs_g=_p1_abs_retired(sd), cv_g=p1_cv(cv), ser=o["ser"]))
 
     print(f"\n■ ROIC5年系列が取れた米国株 {len(rows)}社\n")
     ok_abs = sum(1 for r in rows if r["cur"] is not None and abs(r["cur"] - r["abs_g"]) < 0.5)
     ok_cv = sum(1 for r in rows if r["cur"] is not None and abs(r["cur"] - r["cv_g"]) < 0.5)
     has = sum(1 for r in rows if r["cur"] is not None)
-    print(f"  台帳p1との一致率: 現行の絶対σ刻み {ok_abs}/{has} ({ok_abs/max(has,1)*100:.0f}%)"
+    print(f"  台帳p1との一致率: 旧(廃止)の絶対σ刻み {ok_abs}/{has} ({ok_abs/max(has,1)*100:.0f}%)"
           f" / **変動係数刻み {ok_cv}/{has} ({ok_cv/max(has,1)*100:.0f}%)**")
     hi = [r for r in rows if r["mean"] >= 40]
-    print(f"  ROIC平均40%以上の社: {len(hi)}社——うち絶対σ刻みが50を返すのは "
+    print(f"  ROIC平均40%以上の社: {len(hi)}社——うち旧(廃止)絶対σ刻みが50を返すのは "
           f"{sum(1 for r in hi if r['abs_g']==50)}社 / 変動係数刻みでは {sum(1 for r in hi if r['cv_g']==50)}社")
     import collections
-    print(f"  刻みの分布: 絶対σ {dict(sorted(collections.Counter(r['abs_g'] for r in rows).items()))}")
+    print(f"  刻みの分布: 旧(廃止)絶対σ {dict(sorted(collections.Counter(r['abs_g'] for r in rows).items()))}")
     print(f"              変動係数 {dict(sorted(collections.Counter(r['cv_g'] for r in rows).items()))}")
 
     # --- 門そのものでΩ・投下可の変化を実測 ---
