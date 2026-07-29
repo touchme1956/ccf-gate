@@ -46,9 +46,6 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 .legend{display:flex;gap:16px;font-size:12px;color:var(--ink-soft);margin-top:8px;flex-wrap:wrap;}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle;}
 .tgt{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.7;}
-.allocline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--ink-soft);margin:12px 2px 2px;}
-.allocline .sep{color:var(--muted);}
-.allocline .tgt{margin-top:0;width:100%;}
 .row{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(40,52,74,.55);}
 .row:last-child{border-bottom:none;}
 .nm{font-size:14.5px;color:var(--ink);}
@@ -108,25 +105,18 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
   </div>
  </div>
 
- <div class="allocline">
-  <span>網（ETF）<b id="netPct"></b></span><span class="sep">／</span><span>城（個別）<b id="castlePct"></b></span>
-  <span class="tgt" id="tgtNote"></span>
- </div>
+ <!-- 2026-07-29 ユーザー指示: 網/城の内訳ビューを撤去し「保有一覧」の1枚に集約した。
+      **網/城のウェイト計算そのものは残している**——sleeve は保有データ(各行)の属性で、
+      render() が pf:weights を書き出し、門(Ⅵ買付順位の今月プラン)が60/40リバランスの入力に使う。
+      表示を消しても計算を消してはいけない（消すと門が netNow=60/cityNow=40 の既定値で
+      「常に目標に充足」と判定し、リバランスが黙って死ぬ）。 -->
 
  <div class="card">
-  <h2>網 — 指数ETF（土台）</h2>
-  <p class="sub">毎月の積立はここへ無条件（ドルコスト平均）。</p>
-  <div id="netList"></div>
- </div>
-
- <div class="card">
-  <h2>城 — 個別（門Ωを通った上乗せ）</h2>
-  <p class="sub">門の出口判定（S1売却検討／S2縮小／S3記録のみ／ホールド）で分類。判定は門（Ⅳ台帳）を開くと更新（未採点は「採点待ち」）。城内％＝城40%の中でのシェア。</p>
+  <h2>保有一覧</h2>
+  <p class="sub">全保有を評価額の大きい順に1枚で。行頭の色丸は門の出口判定（🔴S1売却検討／🟡S2縮小／🟣S3記録のみ／🔵ホールド／⏳採点待ち）——判定は門（Ⅳ台帳）を開くと更新される。網／城／現金の別は各行のバッジで示す。</p>
   <div style="margin:0 0 10px"><button class="btn" id="rescoreBtn" onclick="pfRescorePrompt(this)" style="border-color:rgba(84,184,138,.5);color:#8fc9a4;background:linear-gradient(180deg,rgba(84,184,138,.20),rgba(84,184,138,.06))" title="保有の個別銘柄を、今の門が必要とする全項目で採点し直す依頼文をコピー。Claudeに貼ると完成パックJSONが返る→Ⅲ採点機に取込">📋 個別の再採点依頼文をコピー</button> <span class="mini" style="text-align:left;display:inline">最新データで門Ω＋門Xにかけ直す。返ったJSONを門「Ⅲ採点機」の貼付欄へ。</span></div>
-  <div id="castleList"></div>
+  <div id="holdList"></div>
  </div>
-
- <div class="note" id="opNote"></div>
 
  <div class="links">
   <a href="index.html">門Ω（審査・台帳・買付順位）↗</a>
@@ -150,7 +140,9 @@ const DEFAULT={ asof:"2026-07-24", fx:150, positions:[
   {t:"RMD",  nm:"レスメド（ResMed）",            sleeve:"castle", kind:"個別",                 ccy:"USD", v:94283},
   {t:"FANG+",nm:"FANG+ 指数ETF",                sleeve:"net",    kind:"FANG+指数",            ccy:"USD", v:25936}
 ]};
-const TARGET={net:60, castle:40};
+// 目標60/40の**正本は門側**（index.html の ccfMonthPlanBox が pf:weights を読んで判定する）。
+// 2026-07-29に当ページの内訳表示を撤去したので、ここでは参照していない。数値の記録として残す。
+const TARGET={net:60, castle:40};   // eslint-disable-line no-unused-vars
 let P = load();
 
 function load(){
@@ -179,19 +171,8 @@ function render(){
 
  document.getElementById('total').textContent=yen(total);
  document.getElementById('asof').textContent = (P.asof? ('更新 '+P.asof) : '') + (fxRate()>0?`　$1=¥${fxRate()}`:'');
- document.getElementById('netPct').textContent=netW.toFixed(1)+'%';
- document.getElementById('castlePct').textContent=castleW.toFixed(1)+'%';
- const dN=netW-TARGET.net, dC=castleW-TARGET.castle;
- document.getElementById('tgtNote').innerHTML= total<=0? 'まだ保有が空です。「✎ 編集」から入れてください。' :
-  `目標60/40との差：網 ${dN>=0?'+':''}${dN.toFixed(1)}pt ／ 城 ${dC>=0?'+':''}${dC.toFixed(1)}pt`+
-  (cashW>0
-    ? ((Math.abs(dN)<=3&&Math.abs(dC)<=3)?'　<b style="color:var(--jade)">＝ほぼ目標どおり</b>'
-      :(dN<0&&dC<0)?`　（網・城とも不足＝現金・新規は不足の大きい${dN<dC?'網':'城'}へ）`
-      :dN<0?'　（網が不足＝現金・新規は網へ）'
-      :dC<0?'　（城が不足＝現金・新規は城へ）'
-      :'　（網も城も目標超過＝現金のまま次の点灯を待つ）')
-    : (Math.abs(dN)<=3?'　<b style="color:var(--jade)">＝ほぼ目標どおり</b>':(dN>3?'　（網が厚い＝新規は城へ寄せる）':'　（城が厚い＝新規は網へ寄せる）')))+
-  (cashW>0?`<br>現金 ${cashW.toFixed(1)}%（IPS①の残余——点灯が少ない市況ほど自動で積み上がる。遊ばせるのは1〜2ヶ月まで、開かなければ網へ）`:'');
+ // 目標60/40との差の表示は撤去（2026-07-29）。差の判定は門のⅥ買付順位「今月の買付プラン」が
+ // pf:weights を読んで行う＝正本は門側にある（ここで二重に見せる意味が無くなった）。
 
  const buyInfo=p=>{
   const sh=+p.sh||0, npx=+p.npx||0, bpx=+p.bpx||0;
@@ -209,11 +190,9 @@ function render(){
    `<div><div class="val">${yen(p._v)}</div><div class="pct">${w.toFixed(1)}%</div></div>`+
    `${buyInfo(p)}${extra||''}</div>`;
  };
- document.getElementById('netList').innerHTML = (net.length?
-   net.slice().sort((a,b)=>b._v-a._v).map(p=>rowHTML(p,'')).join('')
-   : '<div class="mini" style="text-align:left">網（ETF）が未登録。</div>')
-   + cash.slice().sort((a,b)=>b._v-a._v).map(p=>rowHTML(p,'')).join('');
- // 城を門の出口判定(S1/S2/S3/ホールド/採点待ち)で分類。判定は門（Ⅳ台帳）が書くpf:verdictsから読む
+ // ---- 保有一覧（2026-07-29: 網/城/現金を1枚に集約）----------------------------
+ // 出口判定の色丸は残す——保有ビューから S1/S2/S3 が見えなくなるのは機能の後退で、
+ // 「網/城の内訳を消す」という指示の範囲を超えるため。判定は門（Ⅳ台帳）が pf:verdicts へ書く。
  const vmap=(function(){try{return JSON.parse(localStorage.getItem('pf:verdicts')||'{}');}catch(e){return {};}})();
  const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm].level;               // 名の完全一致
    const pt=(p.t||'').toUpperCase();
@@ -221,20 +200,15 @@ function render(){
    for(const k in vmap){ if(p.nm&&(k.indexOf(p.nm)>=0||p.nm.indexOf(k)>=0))return vmap[k].level; } // 名の部分一致のみ
    return 'pending'; };
  const VCFG={s1:['🔴','売却検討 (S1)','#cf5f48'],s2:['🟡','買い増し停止・縮小 (S2)','#d69a3c'],s3:['🟣','記録のみ (S3)','#a888d8'],hold:['🔵','ホールド','#5d8cc2'],pending:['⏳','採点待ち（門Ⅲで審査）','var(--muted)']};
- const grp={}; castle.forEach(p=>{const lv=verdictOf(p);(grp[lv]=grp[lv]||[]).push(p);});
- let ch='';
- ['s1','s2','s3','hold','pending'].forEach(lv=>{ const g=grp[lv]; if(!g||!g.length)return; const c=VCFG[lv];
-   ch+=`<div style="margin:12px 0 4px;font-size:12.5px;font-weight:600;color:${c[2]};border-left:3px solid ${c[2]};padding-left:8px">${c[0]} ${c[1]}　<span style="color:var(--muted);font-weight:400">${g.length}件</span></div>`;
-   ch+=g.slice().sort((a,b)=>b._v-a._v).map(p=>{ const cs=castleW>0?wOf(p)/castleW*100:0;
-     return rowHTML(p,`<div class="mini">城内シェア ${cs.toFixed(0)}%（城${castleW.toFixed(0)}%のうち）</div>`, c[2], c[1]); }).join('');
- });
- document.getElementById('castleList').innerHTML = ch || '<div class="mini" style="text-align:left">城（個別）が未登録。</div>';
-
- document.getElementById('opNote').innerHTML=
-  `<b>門の回し方（毎月）：</b>網は無条件で積立（ドルコスト平均）。城は Ⅵ買付順位の「今月％」に従い、`+
-  `門X開通の<b>投下可</b>銘柄へ不足分だけ投下（投下可がなければ網へ回す）。<b>売り</b>は S1/S2/S3（質の崩壊）のみ——株価では動かさない。`;
+ document.getElementById('holdList').innerHTML = pos.length
+   ? pos.slice().sort((a,b)=>b._v-a._v).map(p=>{
+       // 出口判定は個別(城)にしか意味が無い。ETF・現金には色丸を付けない
+       const c = (p.sleeve==='castle') ? VCFG[verdictOf(p)] : null;
+       return rowHTML(p, '', c?c[2]:'', c?c[1]:'');
+     }).join('')
+   : '<div class="mini" style="text-align:left">保有が未登録。「✎ 編集」から入れてください。</div>';
  document.getElementById('foot').innerHTML=
-  `CCF Ω — 保有はこの端末に自動保存（編集で反映）。網城の分類・目標60/40は門の三層に準拠。<br>投資判断は自己責任で。`;
+  `CCF Ω — 保有はこの端末に自動保存（編集で反映）。網／城の別は各行のバッジで、目標60/40のリバランスは門のⅥ買付順位「今月の買付プラン」で見る。<br>投資判断は自己責任で。`;
 }
 
 /* ---------- 編集（いつ・どれだけ買ったか） ---------- */

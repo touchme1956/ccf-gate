@@ -30,11 +30,11 @@
  "geopol": 1,
  "nrr": 105,
  "beta": null,
- "per": null,
+ "per": 43.92,
  "perF": null,
  "evebit": null,
- "px": null,
- "shy": null,
+ "px": 353.1,
+ "shy": 1.55,
  "gr": null,
  "gcap": null,
  "analysts": null,
@@ -71,7 +71,9 @@
    "roict=flat維持: 谷2023(10.5%)から2024→2025で13.1%へ回復基調だが5年通算では横ばい圏",
    "2026-07-29 堀再監査(v9.9.41): 旧dom=85→新dom=null、旧moatW=70→新moatW=70(不変)。旧85は『installed base 11,106台』からの推定で、原本にシェア%が無いことを審査官自身がevidence内で自認していた＝規約2違反のため撤回。10-K全文を再走査してもロボット手術市場のシェア%・上位N社合計は皆無。市場の取り方(全術式 vs ロボット支援)で刻みが50側と85-100側に散るため空欄。moatWは器具/システム/保守が同一設置基盤の三面＝1本、その内部で最大製品59.8%・単一顧客10%以上なし・複数術式＋Ion分散を確認し70を維持。dom/moatW/_meta 以外は一切変更していない。",
    "2026-07-29 ISRGのdom判断を決着: 空欄を維持（規約(3)の非発火＝規模の記述は構造の記述ではない）。詳細は_meta.nulls",
-   "2026-07-29 acq5 0.06 → 'no'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
+   "2026-07-29 acq5 0.06 → 'no'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
+   "2026-07-29 門X未評価を解消: px/per/shy を充填。門Xは `per>0` が唯一の必須条件で、これが無いと E[r] を一切算出しない（xPass=null＝三段関門の第二が未評価）。PERは市場株価 ÷ **原本EPS** で算出し、shy でも独立に検算した。"
   ],
   "evidence": {
    "dom": "自社シェア%: **原本に開示なし**（FY2025 10-K 全文にロボット支援手術の市場シェア数値は一箇所も無い）／上位N社合計%: 同じく開示なし → **刻みを導けないため空欄**（v9.9.41規約2: 100/85/70は集中の主張ゆえ必ず数値を要する）。原本にあるのは台数のみ——『we had a da Vinci surgical system installed base of approximately 11,106 systems, an increase of 12% compared to the installed base of approximately 9,902 systems』『an Ion system installed base of approximately 995 systems』(Item 7)。設置台数はシェアではない。Competition節は競合を13社実名列挙するが順位・シェアは無い——『Companies that have introduced products in the field of robotic-assisted medical procedures, or have made explicit statements about their efforts to enter the field, include, but are not limited to: Beijing Surgerii; CMR Surgical; Distalmotion; Harbin Sizhe Rui; Johnson & Johnson; Karl Storz; Medicaroid; Medtronic plc; meerecompany; Noah Medical; Shandong Weigao; Shanghai Microport Medbot; Shenzhen Edge Medical; SS Innovations』(Item 1 Competition)。出典: https://www.sec.gov/Archives/edgar/data/1035267/000103526726000010/isrg-20251231.htm",
@@ -101,7 +103,11 @@
    "gpa": "機械算出 2025年: 売上総利益 6,642,300,000 ÷ 総資産 20,458,700,000",
    "dilNet": "機械算出: 株数 2022年 350,000,000 → 2025年 355,100,000＝3年の年率（自社株買い後の純希薄化）",
    "eps": "機械算出 2025年: 純利益 2,856,000,000 ÷ 株数 355,100,000（TTMではなく通期実績）",
-   "acq5": "【2026-07-29 機械判定】のれん残高(十億$) 2020 0.34 → 2021 0.34 → 2022 0.35 → 2023 0.35 → 2024 0.35 → 2025 0.37。**新しさ =(直近 0.37 − 2020年 0.34)÷直近 = +9.1%**（今あるのれんのうち直近5年に増えた割合） → **大型買収なし=no**（ほぼ全部が遺産のれん）（出典: SEC XBRL companyfacts の Goodwill 系列）"
+   "acq5": "【2026-07-29 機械判定】のれん残高(十億$) 2020 0.34 → 2021 0.34 → 2022 0.35 → 2023 0.35 → 2024 0.35 → 2025 0.37。**新しさ =(直近 0.37 − 2020年 0.34)÷直近 = +9.1%**（今あるのれんのうち直近5年に増えた割合） → **大型買収なし=no**（ほぼ全部が遺産のれん）（出典: SEC XBRL companyfacts の Goodwill 系列）",
+   "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **15.2%** / 同業（SIC3842「Orthopedic, Prosthetic & Surgical Appliances & Supplies」・22社）の中央値 **8.2%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+15.2%)÷(1+8.2%))^5 − 1 = **+36.8%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
+   "px": "【2026-07-29 市場データ】株価 $353.1。出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）",
+   "per": "【2026-07-29 機械算出】PER = 株価 $353.1 ÷ **原本EPS 8.04** = **43.92**。EPSは通期実績（純利益÷期末株数・SEC XBRL）で、TTMコンセンサスではない。株価の出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯8-200を通過（market_merge.BANDS）。**shyとの二重検算も通っている**（shy=1.55%・帯−5〜12内）。",
+   "shy": "【2026-07-29 機械算出】純還元利回り shy = (配当 + 自社株買い − 株式発行) ÷ 時価総額。2025年: 配当 0.00 + 自社株買い 2.30 − 株式発行 0.35 = 純還元 1.95十億$ ÷ 時価総額 125.39十億$（355百万株×$353.10） = **1.55%**。還元額は SEC XBRL のキャッシュフロー計算書（PaymentsOfDividendsCommonStock / PaymentsForRepurchaseOfCommonStock / ProceedsFromIssuanceOfCommonStock）、株数は dei/us-gaap の期末株数、株価は Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯−5〜12%を通過。"
   },
   "nulls": {
    "fcf": "capexタグがcompanyfacts未収載(タグ不発見)。OCFのみのFCFは過大となるため誤値回避でnull(kenshi参照)",
@@ -122,7 +128,12 @@
    "gpa": "machine",
    "dilNet": "machine",
    "eps": "machine",
-   "acq5": "machine"
+   "acq5": "machine",
+   "sht": "machine",
+   "px": "market",
+   "per": "market",
+   "shy": "machine"
   }
- }
+ },
+ "sht": "up"
 }

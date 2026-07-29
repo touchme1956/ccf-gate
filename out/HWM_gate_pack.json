@@ -29,11 +29,11 @@
  "geopol": 1,
  "nrr": 105,
  "beta": null,
- "per": null,
+ "per": 72.77,
  "perF": null,
  "evebit": null,
- "px": null,
- "shy": null,
+ "px": 272.895,
+ "shy": 0.64,
  "gr": null,
  "gcap": null,
  "analysts": null,
@@ -70,7 +70,8 @@
    "ROICσ(5年)=4.7pt→p1=80。ただし上昇ドリフトでありσは循環トラフ(2021=7.6%)リスクを過小評価している",
    "2026-07-29 堀再監査(dom/moatWのみ): 旧dom=70→新dom=null(空欄)、旧moatW=85→新moatW=85(据置・実数で追認)。dom空欄の理由=10-K『Competitive Conditions』にシェア%が皆無で『market leader in most of its principal markets』の自称のみ。実名競合を10社以上列挙し『substantial and intense competition』『Many other companies around the world also produce superalloy investment castings』『an increase in the number of aluminum wheel suppliers ... from China, Taiwan, India, South Korea, and Turkey』と述べており、旧70(寡占)の裏取りは原本に無い(旧evidenceも『明示シェアなしのため70』と自認＝audit_moat.pyの✗判定)。4セグメントで市場・競合群が別である点でも単一の刻みに帰着しない。moatW=85は第三者売上実数(Engine Products 4,320=52.4% / Fastening Systems 1,745=21.1% / Engineered Structures 1,148=13.9% / Forged Wheels 1,039=12.6%、計8,252百万$)で追認。≥15%は2本のみで100(3本以上)は不成立——Engineered Structures と Forged Wheels は各13.9%/12.6%で閾値未達。dom/moatW/_meta以外のフィールドは一切変更していない。",
    "2026-07-29 堀の申し送り決着: dom 空欄→50。v9.9.41「50は残余の刻みゆえ、原本が市場を fragmented/同等品を多数が製造可能/実質すべての供給は他社 と構造的に述べていれば数値なしで確定できる」を適用。100/85/70(集中の主張)には従来どおり数値を要する。",
-   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=116.2 / 5年窓=na。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった"
+   "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=116.2 / 5年窓=na。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
+   "2026-07-29 門X未評価を解消: px/per/shy を充填。門Xは `per>0` が唯一の必須条件で、これが無いと E[r] を一切算出しない（xPass=null＝三段関門の第二が未評価）。PERは市場株価 ÷ **原本EPS** で算出し、shy でも独立に検算した。"
   ],
   "evidence": {
    "expiry": "『We are not materially dependent on any single patent, trade secret, or trademark』(限)→単一特許/期限依存なし=no。特許ポートフォリオは継続更新",
@@ -106,7 +107,10 @@
    "dilNet": "機械算出: 株数 2022年 412,155,057 → 2025年 401,620,565＝3年の年率（自社株買い後の純希薄化）",
    "eps": "機械算出 2025年: 純利益 1,508,000,000 ÷ 株数 401,620,565（TTMではなく通期実績）",
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 965,591,161 ÷ Δ投下資本 831,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 7,763,000,000→8,594,000,000（+10.7%）",
-   "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 1,050,830,435 ÷ Δ投下資本 -810,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 9,404,000,000→8,594,000,000（-8.6%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない"
+   "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 1,050,830,435 ÷ Δ投下資本 -810,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 9,404,000,000→8,594,000,000（-8.6%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない",
+   "px": "【2026-07-29 市場データ】株価 $272.895。出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）",
+   "per": "【2026-07-29 機械算出】PER = 株価 $272.895 ÷ **原本EPS 3.75** = **72.77**。EPSは通期実績（純利益÷期末株数・SEC XBRL）で、TTMコンセンサスではない。株価の出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯8-200を通過（market_merge.BANDS）。**shyとの二重検算も通っている**（shy=0.64%・帯−5〜12内）。",
+   "shy": "【2026-07-29 機械算出】純還元利回り shy = (配当 + 自社株買い − 株式発行) ÷ 時価総額。2025年: 配当 0.00 + 自社株買い 0.70 − 株式発行 0.00 = 純還元 0.70十億$ ÷ 時価総額 109.60十億$（402百万株×$272.90） = **0.64%**。還元額は SEC XBRL のキャッシュフロー計算書（PaymentsOfDividendsCommonStock / PaymentsForRepurchaseOfCommonStock / ProceedsFromIssuanceOfCommonStock）、株数は dei/us-gaap の期末株数、株価は Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯−5〜12%を通過。"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -137,7 +141,10 @@
    "dilNet": "machine",
    "eps": "machine",
    "roiic": "machine",
-   "roiic5": "machine"
+   "roiic5": "machine",
+   "px": "market",
+   "per": "market",
+   "shy": "machine"
   }
  },
  "moatW": 85,

@@ -72,7 +72,8 @@
    "p2=95: 営業利益がCOVID(FY2020 816.1>FY2019 716.5, +14%)を含め2018-2025連続増。景気後退耐性を実績で確認(hits根拠でなくXBRL系列由来)。",
    "市場13項目(beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG)は取込時手入力=null。",
    "2026-07-19 発見度実データ: analysts=13 instOwn=88.286(AV)",
-   "moatW充填(v9.9.36・2026-07-28): 絶対MOAT5本目「堀の広さ」をセグメント/製品ライン別売上の実数と顧客集中開示から判定。上記 evidence.moatW に出典付きで記載。他項目は不変。"
+   "moatW充填(v9.9.36・2026-07-28): 絶対MOAT5本目「堀の広さ」をセグメント/製品ライン別売上の実数と顧客集中開示から判定。上記 evidence.moatW に出典付きで記載。他項目は不変。",
+   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。"
   ],
   "evidence": {
    "dom": "『our business has grown as a result of (i) acquisitions, (ii) increases in overall volume in the salvage car market, (iii) growth in market share』+『there can be no assurance that our competitors will not gain market share at our expense』+『existing or new competitors may be significantly larger』→中古車サルベージ・オークションの寡占(Copart+IAA)でCopartは二強の一角=寡占40-69%→70",
@@ -92,7 +93,8 @@
    "ni": "機械算出 2025年: 純利益 1,552,449,000（÷1e9で十億単位表示）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
    "accr": "機械算出 2025年: (純利益 1,552,449,000 − 営業CF 1,799,750,000) ÷ 総資産 10,090,902,000",
    "eps": "機械算出 2025年: 純利益 1,552,449,000 ÷ 株数 967,478,690（TTMではなく通期実績）",
-   "p1": "【2026-07-29 機械算出】ROIC安定性＝のれん・無形除外ROIC4年系列の標準偏差。系列: 2021 26.5% / 2022 26.5% / 2023 21.4% / 2024 18.0% → **σ=3.6pt** → 刻み(σ<3→90 / <6→80 / <10→65 / 二桁→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。 除外年: 2025:有利子負債タグ不在。出典: SEC XBRL companyfacts。"
+   "p1": "【2026-07-29 機械算出】ROIC安定性＝のれん・無形除外ROIC4年系列の標準偏差。系列: 2021 26.5% / 2022 26.5% / 2023 21.4% / 2024 18.0% → **σ=3.6pt** → 刻み(σ<3→90 / <6→80 / <10→65 / 二桁→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。 除外年: 2025:有利子負債タグ不在。出典: SEC XBRL companyfacts。",
+   "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **14.6%** / 同業（SIC5500「Retail-Auto Dealers & Gasoline Stations」・15社）の中央値 **5.1%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+14.6%)÷(1+5.1%))^5 − 1 = **+53.9%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**"
   },
   "nulls": {
    "roicg": "資産ベース/のれん込みROICは谷≈14.6%(FY2024で14.9%概算)だが、直近(FY2024-26)の自己資本/現金/負債タグがXBRL系列から欠落し精密再現不能。誤値回避でnull(谷の解釈はkenshi参照)",
@@ -114,7 +116,9 @@
    "ni": "machine",
    "accr": "machine",
    "eps": "machine",
-   "p1": "machine"
+   "p1": "machine",
+   "sht": "machine"
   }
- }
+ },
+ "sht": "up"
 }
