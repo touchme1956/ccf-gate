@@ -427,6 +427,79 @@ def build_numbers(facts):
     elif roics:
         note.append(f"roic算出不能: 営業利益系列が{max(S['op'])}年で途切れ最新{LATEST}年から遅れている"
                     f"（タグ改称の疑い）。原本で確認して手入力せよ")
+    # ===== ROIIC（増分投下資本利益率・v9.9.46 / 2026-07-29新設） =====
+    #   なぜ機械で出すか: roiic は門の未来門 F6「内部複利」の入力だが、**全316パックで空欄**だった。
+    #   空欄だと roiicNA=true で F6 は中身に入らず **58 の定数**を返し、
+    #   「再投資率＝1−FCF転換率」の計算は一度も実行されず、キル「ROIIC³<WACC（複利停止）」も
+    #   一度も発火していなかった。滑走路（あとどれだけ複利できるか）の本体は
+    #   g = 再投資率 × ROIIC なので、ここが死んでいると門は複利余地を測れない。
+    #
+    #   **のれん込みの投下資本(自己資本+有利子負債)を使う。** ROIICは「次の1ドルが何を稼いだか」。
+    #   買収に使った金も投じた資本なので、のれんを除外すると連続買収企業のROIICが過大に出る
+    #   （$10Bの買収で$1BのNOPATが増えたなら、それは10%であって、有形分だけで測った数字ではない）。
+    #   門のroicは「のれん除外＝事業の質」で別目的。コード上の比較先はどちらもWACC。
+    #
+    #   欠測・縮退の扱い（絶対のルール7）:
+    #     ΔIC ≤ 0 または ΔIC/IC(古) < 10% → **'na'**。これは失敗ではなく
+    #       「成熟還元型＝再投資が限定的」という意味のある答えで、門はroiicNAをその型として扱う
+    #       （F6=58）。**判らないときに低い数字を置くと、複利停止キルを誤爆させる。**
+    #     |ROIIC| > 150% → 'na'。分母が小さすぎて識別力が無い帯（roicの2割ガードと同じ思想）
+    def _nopat_ic(y):
+        """のれん込みIC と NOPAT。取れなければ None"""
+        if not all(y in S[k] for k in ("op","ni","eq")):
+            return None
+        if not ((y in S["debtL"]) or (y in S["debtS"])):
+            return None                      # タグ不在を0と読まない
+        tr = 1 - S["ni"][y]/max(S["ni"][y]+S["tax"].get(y,0), 1)
+        np_ = S["op"][y]*(1-max(0,min(0.5,tr)))
+        icg = S["eq"][y] + (S["debtL"].get(y,0) or 0) + (S["debtS"].get(y,0) or 0)
+        return (np_, icg) if icg > 0 else None
+
+    def _roiic(win):
+        """win年窓のROIIC。戻り: (値 or 'na', 根拠文)"""
+        ys = sorted(S["op"])
+        if not ys or stale(ys[-1]):
+            return None, None
+        y1 = ys[-1]
+        cand = [y for y in ys if y <= y1 - win]
+        if not cand:
+            return None, None
+        y0 = cand[-1]
+        a, b = _nopat_ic(y0), _nopat_ic(y1)
+        if not a or not b:
+            return None, None
+        dn, dic = b[0]-a[0], b[1]-a[1]
+        base = (f"機械算出 {y0}→{y1}年({y1-y0}年窓): ΔNOPAT {_u(dn)} ÷ Δ投下資本 {_u(dic)}"
+                f"（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）"
+                f"｜IC {_u(a[1])}→{_u(b[1])}（{dic/max(a[1],1)*100:+.1f}%）")
+        if dic <= 0 or dic < 0.10*a[1]:
+            return "na", base + " → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない"
+        v = round(dn/dic*100, 1)
+        if abs(v) > 150:
+            return "na", base + f" → 算出値{v}%は分母が小さく識別力なし＝na（絶対のルール7(b)と同じ思想）"
+        return v, base
+
+    _r3, _e3 = _roiic(3)
+    _r5, _e5 = _roiic(5)
+    # **低い3年窓は、5年窓の裏付けが取れないなら書かない。**
+    #   門は roiic<WACC を「複利停止」キル（Ωを60で頭打ち）に使い、その誤爆を防ぐために
+    #   5年窓レスキュー（3年窓がサイクルピークを跨ぐ場合）を持っている。5年窓が取れない会社では
+    #   **そのレスキューが構造的に働けない**ので、投資サイクルの谷（新工場・大型買収の直後で
+    #   まだ利益が出ていない）と構造的な複利停止を、門が区別する手段が無くなる。
+    #   実測(2026-07-29): 新たにキルが立った30社のうち7社が5年窓なしだった（ADI/SSD/IT/BBY/CHH/HCKT等。
+    #   ADIはMaxim買収、TXNは300mm新工場の建設期＝門0の病名でいう「谷」に当たる）。
+    #   この道具の原則どおり**迷ったら'na'に倒す**——判らないときに低い数字を置くと誤爆させる。
+    if isinstance(_r3, (int, float)) and _r3 < 15 and not isinstance(_r5, (int, float)):
+        _e3 = (_e3 or "") + f" → 3年窓{_r3}%は低いが**5年窓が取れず門の5年窓レスキューが働けない**" \
+              "＝投資サイクルの谷と構造的な複利停止を区別できないため na（誤値より空欄）"
+        _r3 = "na"
+    if _r3 is not None:
+        ev["roiic"] = _r3
+        evd["roiic"] = _e3
+    if _r5 is not None:
+        ev["roiic5"] = _r5
+        evd["roiic5"] = _e5
+
     # ROICトレンド roict (5年 up/flat/down): worst年 vs 直近
     if len(roics)>=2:
         ev["roict"]="up" if roics[-1]-roics[0]>2 else "down" if roics[-1]-roics[0]<-2 else "flat"
@@ -520,6 +593,9 @@ def run(ticker):
         "nm": ticker.upper(),
         # --- 第一の門: 生存・複利(SEC充填) ---
         "roic": ev.get("roic"), "roicg": ev.get("roicg"),
+        # v9.9.46: ROIIC³（増分投下資本利益率）。門の未来門F6「内部複利」の入力。
+        #   'na' は失敗ではなく「成熟還元型＝再投資が限定的」という意味のある答え（門はF6=58で扱う）
+        "roiic": ev.get("roiic"), "roiic5": ev.get("roiic5"),
         "nde": ev.get("nde"), "z": None,               # z=Altman: 要別計算(運転資本等)→当面手当て、空欄=保留
         "gpa": ev.get("gpa"), "accr": ev.get("accr"),
         "gm": ev.get("gm"), "gmt": ev.get("gmt"), "roict": ev.get("roict"),

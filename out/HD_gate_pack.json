@@ -102,7 +102,7 @@
   ],
   "auditDate": "2026-07-29",
   "model": "Claude Opus 5",
-  "kenshi": "5点キュー第2陣の門2審査(β=1.0中立仮定・境界銘柄は実βで再検証)。ホームセンター複占。住宅市況の谷でROIC最低値が沈み5点=サイクル現象 roicタグ欠損→gate0実測補充(41.4/124.1)。 実β0.951で確定(境界銘柄の精査)。 2026-07-29 堀再監査(v9.9.41): 旧dom=70→新dom=50、旧moatW=70→新moatW=70。domは原本にシェア%開示が無く、提出書類自身の構造記述(市場がfragmented／同じ商材を多数の業態・数千の中小企業が供給)に基づき v9.9.41規約3で50を確定(空欄にしない)。旧70は上位N社合計シェアの原本根拠を欠いた値だったため撤回。moatWはセグメント/サービスライン別売上の実数を原本で再突合のうえ、v9.9.41追加規約『共通の中核に全サービスが乗るなら1本』を適用して70を維持。根拠は _meta.evidence.dom / .moatW に原文引用＋出典付きで記載。**dom/moatW/_meta 以外のフィールドは一切変更していない**。 【別途要修正(道具側・本監査では直さない)】night/audit_moat.py の grade_dom() は NO_DISCLOSURE 判定を「dom==50 かつ FRAGMENTED」判定より先に評価するため、v9.9.41規約3どおりに『原本にシェア%開示なし＋構造記述で50』と書いたパックが『根拠と値が矛盾(✗)』と誤検出される。判定順を入れ替える(50+構造記述を先に◎で確定させる)か、NO_DISCLOSURE を dom>=70 のときだけ適用するのが筋。値そのものは正しいので本再監査では変更しない。",
+  "kenshi": "5点キュー第2陣の門2審査(β=1.0中立仮定・境界銘柄は実βで再検証)。ホームセンター複占。住宅市況の谷でROIC最低値が沈み5点=サイクル現象 roicタグ欠損→gate0実測補充(41.4/124.1)。 実β0.951で確定(境界銘柄の精査)。 2026-07-29 堀再監査(v9.9.41): 旧dom=70→新dom=50、旧moatW=70→新moatW=70。domは原本にシェア%開示が無く、提出書類自身の構造記述(市場がfragmented／同じ商材を多数の業態・数千の中小企業が供給)に基づき v9.9.41規約3で50を確定(空欄にしない)。旧70は上位N社合計シェアの原本根拠を欠いた値だったため撤回。moatWはセグメント/サービスライン別売上の実数を原本で再突合のうえ、v9.9.41追加規約『共通の中核に全サービスが乗るなら1本』を適用して70を維持。根拠は _meta.evidence.dom / .moatW に原文引用＋出典付きで記載。**dom/moatW/_meta 以外のフィールドは一切変更していない**。 【別途要修正(道具側・本監査では直さない)】night/audit_moat.py の grade_dom() は NO_DISCLOSURE 判定を「dom==50 かつ FRAGMENTED」判定より先に評価するため、v9.9.41規約3どおりに『原本にシェア%開示なし＋構造記述で50』と書いたパックが『根拠と値が矛盾(✗)』と誤検出される。判定順を入れ替える(50+構造記述を先に◎で確定させる)か、NO_DISCLOSURE を dom>=70 のときだけ適用するのが筋。値そのものは正しいので本再監査では変更しない。\n2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=-10.0 / 5年窓=7.1。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
   "evidence": {
    "moatW": "セグメント別売上(FY2025・10-K 2026-02-01期): Primary Segment 92.3%(151,966百万$) / Other(SRS Distribution等)7.7%(12,717)、合計164,683百万$。Primary Segmentの商品ライン別は Building Materials 31.8%(52,439) / Décor 31.4%(51,679) / Hardlines 29.1%(47,848)。製品/サービス別は products 96.6%(159,029) / services 3.4%(5,654)。報告セグメントは1(operating segmentは3)。最大の商品ラインでも31.8%で『単一製品<70%』を満たす。顧客集中は同10-K『No sales to an individual customer accounted for more than 10% of revenue during any of the last three fiscal years』で最大顧客<10%。2本目候補のOther(SRS・うち屋根材が53%)は7.7%で<15%に届かない。→ 単一事業(住宅リフォーム小売)だが用途・顧客・地域が分散した1本の堀 → moatW=70。出典: https://www.sec.gov/Archives/edgar/data/354950/000162828026019436/hd-20260201.htm (R42/R46・Note2) 【2026-07-29 再検証(v9.9.41)】上記の実数を FY2025 10-K原本で再突合し一致を確認(Primary segment net sales 151,966 / Other net sales 12,717 / Net sales 164,683 百万$、商品部門別 Building Materials 52,439・Decor 51,679・Hardlines 47,848、顧客集中『No sales to an individual customer accounted for more than 10% of revenue during any of the last three fiscal years』)。Other(SRSは2025-09-04にGMSを買収し roofing and building products / interior and construction products / landscape / pool の4 operating segment 構成、うち roofing and related products が Other net sales の約53%)は独立した堀の候補だが 12,717/164,683=7.7% で15%閾値に届かず2本目に数えない。Pro/DIYの顧客区分・商品部門は同一店舗網・同一サプライチェーンに乗る＝共通の中核基盤ゆえ1本(v9.9.41 moatW追加規約)。→ moatW=70を維持。",
    "dom": "支配シェア=50(競争<40%)。**原本にシェア%開示は一切なし**。市場構造の記述で確定: 10-K Item 1『COMPETITION AND SEASONALITY』——『Our industry is highly competitive, highly fragmented, and evolving. As a result, we face competition for customers for our products and services from a variety of retailers (including those operating reseller marketplaces), suppliers, service providers, distributors and manufacturers that sell products directly to their respective customer bases. These competitors range from traditional brick-and-mortar, to multichannel, to exclusively online, and they include a number of other home improvement retailers; local, regional and national hardware stores; electrical, plumbing and building materials supply houses; and lumber yards. With respect to some products and services, we also compete with specialty design stores, showrooms, discount stores, paint stores, specialty and mass digital retailers, warehouse clubs, MRO distributors, national and local wholesale supply distributors, home decor retailers, and other retailers...』。同一文言は Item 1A Risk Factors『Strong competition could adversely affect prices and demand for our products and services and could decrease our market share.』にも再掲。加えて Item 1 OUR STRATEGY『...to take advantage of the significant growth opportunities in the highly fragmented markets in which we operate』。→ 会社自身が『highly fragmented』と二度明言し、同じ商材の供給者がホームセンター・地場金物店・電材/管材/建材問屋・材木店・ディスカウント・倉庫型クラブ・EC・メーカー直販へ広く分散していると構造的に述べている以上、自社シェア≥40%は定義上ありえない。v9.9.41規約3により**空欄にせず50を置く**(測っていないほうが再正規化で有利になる抜け道を塞ぐ)。※『The Home Depot, Inc. is the world's largest home improvement retailer based on net sales for fiscal 2025』は**順位の自称でありシェアの証拠にならない**(規約4)。上位N社合計シェアの数値も原本になし。出典: SEC 10-K FY2025(2026-02-01期) CIK0000354950 acc 0001628280-26-019436, Item 1 Business / Item 1A Risk Factors. https://www.sec.gov/Archives/edgar/data/354950/000162828026019436/hd-20260201.htm 【v9.9.41規約3の結論】原本は市場を highly fragmented と明示し、同一の商材を多数の事業者(ホームセンター・地場金物店・電材/管材/建材問屋・材木店・ディスカウント・倉庫型クラブ・EC・メーカー直販)が供給する構造＝実質すべての供給は他社にも開かれている。よって自社が40%以上を占めることは定義上ありえず、残余の刻み50で確定する。",
@@ -110,7 +110,9 @@
    "accr": "機械算出 2025年: (純利益 14,156,000,000 − 営業CF 16,325,000,000) ÷ 総資産 105,095,000,000",
    "gpa": "機械算出 2025年: 売上総利益 54,865,000,000 ÷ 総資産 105,095,000,000",
    "dilNet": "機械算出: 株数 2022年 1,016,000,000 → 2025年 996,000,000＝3年の年率（自社株買い後の純希薄化）",
-   "eps": "機械算出 2025年: 純利益 14,156,000,000 ÷ 株数 996,000,000（TTMではなく通期実績）"
+   "eps": "機械算出 2025年: 純利益 14,156,000,000 ÷ 株数 996,000,000（TTMではなく通期実績）",
+   "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT -2,396,529,214 ÷ Δ投下資本 23,962,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 42,712,000,000→66,674,000,000（+56.1%）",
+   "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 2,046,007,512 ÷ Δ投下資本 28,625,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 38,049,000,000→66,674,000,000（+75.2%）"
   },
   "moatW_audit": {
    "date": "2026-07-29",
@@ -122,8 +124,12 @@
    "accr": "machine",
    "gpa": "machine",
    "dilNet": "machine",
-   "eps": "machine"
+   "eps": "machine",
+   "roiic": "machine",
+   "roiic5": "machine"
   }
  },
- "mcap": 332.08
+ "mcap": 332.08,
+ "roiic": -10.0,
+ "roiic5": 7.1
 }
