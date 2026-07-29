@@ -9,8 +9,18 @@
   - holdings.json があれば HOLDINGS/WATCH を自動差し替え（門の「Ⅳ台帳」の保有と揃えて用意）
   - 出力: gate1_queue.json（待ち行列＝TOP_N100＋審査優先〔谷/種まき/未成熟〕の合流で約155社）、gate0_all.csv
 - 年1回 日本株発掘（日本株門0・2026-07新設）——二系統あり:
-  - 現行キュー gate0_jp_queue.json（pt順上位50社・2026-07-25）と gate0_jp_all.csv は **EDINET_DB screen_companies版**
-    （roic≥15 & opm≥15 & cagr3y≥5 & equity≥50 → 259社。ptフィールド付きdict形式）
+  - 現行キュー gate0_jp_queue.json（**pt再計算版・2026-07-29**）と gate0_jp_all.csv は EDINET_DB screen_companies版
+    （roic≥15 & opm≥15 & cagr3y≥5 & equity≥50 → 259社。CSVはpt上位200社のみ＝59社は切られている）
+  - **ptからroicを外した（2026-07-29・ユーザー明示指示）**: 新 pt=0.4615*min(cagr,30)+0.3846*min(opm,40)+0.1538*min(eq,80)
+    （旧 pt=0.35*min(roic,60)+0.30*min(cagr,30)+0.25*min(opm,40)+0.10*min(eq,80)）。再計算は `python3 night/rerank_gate0_jp.py --write`
+    **理由**: 審査済み36社で生値と審査後を突き合わせると opm=1.00倍(35/36社で完全一致)・cagr=1.00倍に対し
+    **roicは中央値5.01倍・最大204倍**、7034は生72.5%→審査後−10.2%と**符号まで逆**なのに旧ptで1位だった。
+    キューの66%が roic_artifact=True（門2が取込拒否と規約で決めている種類）で埋まり、ディスコ(6146)は
+    roic45.8%・営業利益率42.3%が**本物だから**生297%・5551%の社に負けて74位＝キュー圏外だった（新24位）。
+    **測れない項は落として残りを再正規化**＝ccfMoatのdom/moatW・v9.9.44のpenと同じ作法。roicは審査時に門式で算出する
+  - **母集団の取りこぼしに注意**: HOYA(7741)は原本(EDINET有報FY2026・docID S100Y90T)で
+    opm33.4% / cagr3y9.4% / 自己資本比率78.4% / roic22.8% と**4条件すべて通過**するのに母集団200社にいない。
+    落選ではなく**採取の穴**。新ptでも29.2でキュー下限31.8には届かないが、母集団の網羅性は別途要確認
   - `python run_gate0_jp_local.py` は**別系統**＝EDINET API直採取の二段漏斗（5年7項目採点。出力: 合成スコア順50社の
     list形式＋gate0_jp_rescue.json＋gate0_jp_all.csv。既存が別ソースなら .prev へ自動退避）。ptは生成しない
   - どちらも定性・through-cycleは未評価=門2審査（依頼文）へ。**JP検問(2026-07)**: roic>40%かつroicEx無しの
