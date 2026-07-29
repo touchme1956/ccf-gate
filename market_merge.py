@@ -78,8 +78,18 @@ for f in sorted(glob.glob("out/*_gate_pack.json")):
     if rejected:
         print(f"{t:<6} ✗ 充填拒否: {' / '.join(rejected)}  ← market_data.json 側の値が疑わしい。採り直せ")
     if filled:
-        o.setdefault("_meta", {})["market"] = {"date": str(date.today()), "filled": filled,
-                                               "src": "market_fetch/market_data.json"}
+        m = o.setdefault("_meta", {})
+        m["market"] = {"date": str(date.today()), "filled": filled,
+                       "src": "market_fetch/market_data.json"}
+        # 2026-07-29新設: 充填した欄そのものに「いつ・どこから」を刻む。
+        #   市場項目の根拠被覆率は実測6.0%（night/audit_evidence.py）で、
+        #   **どの値がいつの採取か台帳から判らなかった**——だから market_data.json に残った
+        #   旧不正値が11社へ再注入されても気づけなかった。日付が入っていれば陳腐化も見える。
+        ev = m.setdefault("evidence", {})
+        pv = m.setdefault("provenance", {})
+        for k in filled:
+            ev[k] = f"市場データ機械充填 {date.today()}: market_fetch/market_data.json（常識帯{BANDS.get(k,'—')}を通過）"
+            pv[k] = "market"
         json.dump(o, open(f, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         n_p += 1
         n_f += len(filled)
