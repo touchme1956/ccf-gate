@@ -188,5 +188,5 @@ const buy = rows.filter(x => x.buy);
 console.log(`\n三段関門を通過(🟢投下可) ${buy.length}社`
   + `　日本株${buy.filter(x => x.jp).length}／米国等${buy.filter(x => !x.jp).length}`
   + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
-console.log(`⛔堀不足で見送り(Ω75+だが堀<75) ${q75.filter(x => !x.moatOK).length}社`);
+console.log(`⛔堀不足で見送り(Ω75+だが堀が関門に届かない) ${q75.filter(x => !x.moatOK).length}社`);
 console.log(`\n→ out/${outFile}（全${rows.length}件・降順）`+ (partial ? '　※部分実行なので正本 score_all.json は書き換えていない' : ''));
