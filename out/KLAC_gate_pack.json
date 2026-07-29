@@ -22,7 +22,7 @@
  "moatdecay": "no",
  "erosion": "none",
  "disrupt": "settled",
- "dom": 70,
+ "dom": null,
  "irr": 70,
  "rep": 80,
  "dur": 100,
@@ -58,8 +58,8 @@
   "reportDate": "2025-06-30",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/319201/000031920125000024/klac-20250630.htm",
-  "auditDate": "2026-07-18",
-  "model": "Claude Fable 5",
+  "auditDate": "2026-07-29",
+  "model": "Claude Opus 5",
   "kenshi": [
    "2026-07-28 汚染除去: 安全弁が保留した値が、弁を付ける前の実行で既にパックへ書き込まれていたため空欄化した (per=5.53, mcap=25.8231, evebit=5.8)。per=5.61は常識帯外。誤値のまま残すと門Xが偽の投下可を点灯させる",
    "2026-07-28 市場データ更新(market_fetch_free・鍵なし経路): px 190.465→193.07 / mcap None→25.8231 / z None→6.12。shyは門の定義「純還元(現金還元−希薄化)」に合わせ新株発行・自己株処分を控除したネットへ変更",
@@ -72,10 +72,10 @@
    "sbc充填: 門のSBC比率欄=株式報酬/売上=265.0M/12,156M=2.2%",
    "eps修正: ドラフト30.76(NI/加重基本株の概算)→報告値の希薄化後EPS FY2025=30.37(基本30.53)",
    "検算一致(採取器値維持): accr=-0.1((NI4,061.6-OCF4,081.9)/資産16,068=-0.13%)、fcf=3.75(OCF4,081.9-capex335.3-無形0.05=3.74十億)、ni=4.06、cagr=15.9(売上5.81→12.16十億)、dilNet=-2.35(純減=自社株買いが希薄化超過)、acq5=yes(FY2022 $479M買収等)",
-   "op/gpはDERIVED値(OperatingIncomeLoss・GrossProfitタグがpost-2014で欠落)。ni/ocf/capex/税/株数はXBRL直接値で15年系列健全。ユニット単一USD・通貨混在なし"
+   "op/gpはDERIVED値(OperatingIncomeLoss・GrossProfitタグがpost-2014で欠落)。ni/ocf/capex/税/株数はXBRL直接値で15年系列健全。ユニット単一USD・通貨混在なし",
+   "2026-07-29 堀再監査(dom/moatWのみ・reaudit_moat_prompt.txt準拠): 旧dom=70→新dom=null(空欄)、旧moatW=50→新moatW=50(据置・原本実数で再検証)。dom: FY2025 10-K Competition節に自社シェア%も上位N社合計シェアも無く、あるのは競合5社の列挙と『well positioned…industry-leading portfolio』の定性文のみ。旧70は自認済みの推定(約55%)＝憶測のため空欄化(理由は_meta.nulls.dom)。moatW: Semiconductor Process Control 10,947,359千$/総額12,156,187千$=90.06%(1製品ライン≥80%)、PCB 5.11%・Specialty 4.83%はいずれも<15%で2本目にならず、最大顧客19%(FY2025は10%超が1社のみ)で刻み70の要件も未達→50を追認。【訂正】旧moatW evidenceの『最大顧客19%・第2位15%』は誤記——FY2025で10%超の顧客は1社(19%)のみ、15%はFY2023の第2位の値。evidenceを原本どおりに書き換えた。dom/moatW/_meta 以外のフィールドは未変更。"
   ],
   "evidence": {
-   "dom": "『Our suite of advanced products, coupled with our unique process control software and services, allow us to deliver the solutions our customers』『comprehensive portfolio of inspection, metrology and data analytics products』=プロセス制御の主導的地位。ただしhitsに明示的シェア%記載なし→全社プロセス制御シェア約55%(寡占40-69%)として保守的に70。中核の光学検査は>70%だが全体基準で判定",
    "irr": "『due to increases in the installed base of KLA systems. Our services revenue, which is generated largely from recurring 「subscription-like」 contracts, increases the value』+『service revenues by 15%...primarily attributable to the growth of our installed base』=装置のfab認定+据付ベース連動の高摩擦。明示的な規格認証ロック文言はhitsになく70(高摩擦移行困難)",
    "rep": "『these customers may reduce the need for our products and make it easier for our China-based competitors to develop and sell their own products and take market share from us』(複製が試行段階)+『unique process control software』=複製は極困難だが中国勢が挑戦中→80",
    "dur": "『unique process control software and services』『comprehensive portfolio of inspection, metrology and data analytics products, and related services, helps IC manufacturers achieve target』=数十年蓄積の検査・計測プロセス知/技術=100(プロセス知/物理)。据付ベースのスイッチングコスト(75)も併存する複合堀",
@@ -94,7 +94,7 @@
    "f3": "R&D/売上3年=12.4→13.0→11.2%(高位維持・絶対額1,297→1,360M増)+シェア趨勢は主導維持だが中国国産化圧=片方+→75。ただし『one customer accounted for approximately 19% of total revenues(FY2025) vs 13%(FY2024)』=主要顧客集中悪化で-10→65",
    "f4": "『Specialty Semiconductor Process segment, which comprises etching and deposition solutions for advanced packaging』+『services business, which accounted for approximately 22% of our revenue in fiscal 2025...grown consistently each quarter』=隣接事業(エッチ/デポ・EPC・サービス)が売上5%超で成長=80",
    "f5": "disrupt=settled連動→85",
-   "moatW": "セグメント別売上(FY2025・千USD): Semiconductor Process Control 10,947,359=90.1% / PCB and Component Inspection 621,721=5.1%(営業損失-281,157) / Specialty Semiconductor Process 587,107=4.8%、総額12,156,162(出典:10-K FY2025 SEGMENT REPORTING AND GEOGRAPHIC INFORMATION)。製品別は Wafer Inspection 51% / Services 22% / Patterning 18% / Specialty 4% / PCB 3%(同注記 Revenue from External Customers by Products and Services)。→ 90%超が半導体プロセス制御という単一用途に集中し、他2セグメントは各15%未満(かつPCBは赤字)＝独立した堀は1本と判定。最大顧客19%・第2位15%(同注記 Additional Information)＝顧客<10%を満たさず70の要件を欠く → moatW=50"
+   "moatW": "【2026-07-29 再監査 → 50を維持（原本実数で再検証）】FY2025 10-K Note18「Segment Reporting and Geographic Information」のセグメント別売上(千$): Semiconductor Process Control 10,947,359=90.06% / PCB and Component Inspection 621,721=5.11% / Specialty Semiconductor Process 587,107=4.83%、総額12,156,187。製品別(同注記 Revenue from External Customers by Products and Services): Wafer Inspection 51% / Services 22% / Patterning 18% / Specialty 4% / PCB 3%。顧客集中(同注記): 『In the fiscal year ended June 30, 2025, one customer accounted for approximately 19% of total revenues.』(FY2024は1社13%、FY2023は2社で18%と15%)。10%超の顧客はTSMCとSamsungが年により該当(Item1)。堀の本数: (1)半導体プロセス制御 90.06%＝ウェハ検査・計測・パターニング・その保守サービスは同一の据付基盤・同一顧客(先端fab)・同一の歩留り解析技術に乗るため合わせて1本。(2)PCB and Component Inspection 5.11%は<15%で本数に数えられず、しかもFY2024/FY2025にのれん減損(230,400千$/263,074千$)を出した縮小事業。(3)Specialty Semiconductor Process 4.83%も<15%。→ 独立した堀は1本。1製品ライン≥80%(90.06%)で刻み50の条件に該当し、かつ最大顧客19%≥10%のため刻み70の要件(最大顧客<10%かつ最大製品<70%)も満たさない ⇒ moatW=50。出典: https://www.sec.gov/Archives/edgar/data/319201/000031920125000024/klac-20250630.htm Item 1 Business / Note 18 Segment Reporting and Geographic Information"
   },
   "nulls": {
    "z": "Altman Zは時価総額(運転資本・簿価負債比)が必要→市場データ手入力後に算出可",
@@ -102,7 +102,8 @@
    "founder": "KLACは専門経営体制・創業者経営者なし(Rick Wallace会長→CEO Ahmad Khan体制)。創業者フラグ定義次第でユーザー判定→null",
    "fin": "金融業態ではない(半導体プロセス制御装置)→業態フラグ定義不明のため空欄",
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG の13項目は取込時に門で手入力(市場推定禁止)",
-   "市場データ_保留": "2026-07-28 汚染除去: 安全弁が保留した値が、弁を付ける前の実行で既にパックへ書き込まれていたため空欄化した (per=5.53, mcap=25.8231, evebit=5.8)。per=5.61は常識帯外。誤値のまま残すと門Xが偽の投下可を点灯させる"
+   "市場データ_保留": "2026-07-28 汚染除去: 安全弁が保留した値が、弁を付ける前の実行で既にパックへ書き込まれていたため空欄化した (per=5.53, mcap=25.8231, evebit=5.8)。per=5.61は常識帯外。誤値のまま残すと門Xが偽の投下可を点灯させる",
+   "dom": "【2026-07-29 空欄化】FY2025 10-K の Item 1 Business「Competition」節を全文精査したが、自社シェア%も上位N社合計シェアも一切開示されていない。同節にあるのは競合社名の列挙(Applied Materials, ASML Holding N.V., Hitachi High-Technologies, Onto Innovation, Lasertec)と、『Management believes that we are well positioned in the market with our industry-leading portfolio of products and services.』という定性文のみ。v9.9.38の定めどおり \"industry-leading / well positioned\" はシェアの証拠に当たらない。10-K本文の \"market share\" 出現は全てリスク要因の定型文(『take market share from us』『could result in loss of market share』『declines in our market share』)で水準の開示ではない。提出書類内に第三者調査(Gartner/VLSI Research/TechInsights等)の実数表の引用も無い＝原本扱いできる数字が存在しない。旧値70は evidence 自身が『hitsに明示的シェア%記載なし』と自認しながら『全社プロセス制御シェア約55%』と置いた推定値であり、憶測に当たるため撤回。第三者推計も補完に用いない——プロセス制御の市場定義(光学ウェハ検査のみ／計測・レチクル検査を含む／PCB検査を含む)で自社シェアが刻み70(寡占40-69%)と85(圧倒70-89%)の間を大きく動き、原本外の一点値を置けば偽の精度になるため。空欄により絶対MOAT指数は irr(70)/rep(80)/dur(100)/moatW(50) の4本で再正規化される。再充填の条件: 10-K/投資家資料に自社シェア%と上位N社構造が実数で現れた時点。"
   },
   "kenshi_gm": "2026-07-20 gm/sbc監査: gm欄を仕様(営業利益率・GAAP)にXBRL機械計算で補正。sbc単位ずれ補正。 gm 60.9→41.3(gate0)",
   "kenshi_erosion": "2026-07-20 erosion横断再判定(一次証拠基準): emerging→none。プロセス制御シェア首位不変・営利up。10-KのChina-based competitors言及は輸出規制起因の域内代替=geopol=2で計上済み。先端ノード検査への侵食実績なし",
@@ -116,6 +117,12 @@
     "evebit"
    ],
    "src": "market_fetch/market_data.json"
+  },
+  "moatW_audit": {
+   "date": "2026-07-29",
+   "model": "claude-opus-5",
+   "scope": "堀2項目(dom/moatW)の再監査のみ。SEC EDGAR 10-K原本(FY2025・2025-06-30期、acc 0000319201-25-000024)を直接取得し、Item1 Competition / Note18 Segment Reporting・Revenue by Products and Services・顧客集中の実数で検証。他のキーは一切変更していない",
+   "source": "https://www.sec.gov/Archives/edgar/data/319201/000031920125000024/klac-20250630.htm"
   }
  },
  "mcap": null

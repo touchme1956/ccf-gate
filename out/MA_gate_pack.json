@@ -57,8 +57,8 @@
   "reportDate": "2025-12-31",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm",
-  "auditDate": "2026-07-18",
-  "model": "Claude Fable 5",
+  "auditDate": "2026-07-29",
+  "model": "Claude Opus 5",
   "kenshi": [
    "2026-07-28 市場データ更新(market_fetch_free・鍵なし経路): px 561.8→561.77 / mcap None→508.9636 / shy 2.85→2.81。shyは門の定義「純還元(現金還元−希薄化)」に合わせ新株発行・自己株処分を控除したネットへ変更",
    "nde: ドラフト-0.76(純現金)を棄却。XBRL FY2025で純負債=(長期債務18.3+短期債務0.749-現金10.6十億)=8.4十億/EBITDA(op18.9+dep1.14=)20.0十億 = +0.42(純DEBT・純現金ではない)。投資有価証券(sti)タグ不発見のため現金のみの保守計算(STI込みでも~0.35で純負債)。タスク前提の『純現金』は現時点のMAには当てはまらない(近年は債務発行で純負債側)。p3=85(<1)",
@@ -69,10 +69,11 @@
    "p1: のれん込みROIC5年σ=5.9pt(<6)→80。p2: COVID時営業利益2019:9.7→2020:8.1十億=-16.5%(浅い・-20%以内)→95。売上も-9.5%と浅い",
    "gm=54.0はGrossProfitタグ不発見のため営業利益率プロキシ(空港会計同様、MAは売上原価非区分)。実opm系列53.4→57.6%上昇でgmt=up確認、roict=up充填。gm欄は旧年版opm水準を維持",
    "eq=pos(株主資本7.7十億)だが大型自社株買いで資本薄化(FY2019:5.9→変動、買収のれん9.6十億)。将来負資本化リスクあり(要監視・タスク前提と整合)。acq5=yes(FY2021:4.4/FY2022:0.3/FY2024:2.5十億買収)",
-   "2026-07-19 発見度実データ: analysts=40 instOwn=91.392(AV)"
+   "2026-07-19 発見度実データ: analysts=40 instOwn=91.392(AV)",
+   "2026-07-29 堀再監査(dom/moatWのみ): 旧dom=70→新dom=70(値は据置・根拠を全面差し替え)、旧moatW=70→新moatW=70(据置)。dom: 旧evidenceは『Some competitors have more market share than we do』の定性表現のみで刻みを導けていなかった。**MA自身の10-Kにはシェアの数値開示が存在しない**ことを原本で確認したうえで、規約『第三者調査は提出書類の中に引用されている場合は原本扱いにしてよい』に従い、Visa Inc. 10-K FY2025 に載る Nilson Report issue 1288 の実数表(Mastercardの実数を含む)を採用。MA 33.7%(Payments Volume)・上位2社90.2% → 複占の一角=70。※出典が**他社の提出書類**である点は要注意(MA単体の提出書類では裏が取れない)。厳格運用でこれを不可とするなら dom=null が代替解。書記の判断で切替可。moatW: 原本実数(Payment network 59.4%/VAS 40.6%・上位5社21%・単独10%顧客なし)で刻み70の二条件成立を再確認。Note22の相互依存明言によりVASは独立堀に数えず85は採らない。他フィールドは一切変更なし。"
   ],
   "evidence": {
-   "dom": "『Some competitors have more market share than we do in certain jurisdictions』(競合Visa/JCB/China UnionPay/Discover列挙)→カード網はVisaとの複占だがMA単独は圧倒的独占ではなく寡占=70",
+   "dom": "MA自身の10-K(FY2025) Item1 Competition には**シェアの数値開示が無い**——『We compete worldwide with payments networks such as Visa, American Express, JCB, China UnionPay and Discover, among others. ... Some competitors have more market share than we do in certain jurisdictions.』(定性のみ)。そこで、提出書類の中に引用された第三者調査を原本扱いとする規約に従い、同一のNilson系実数表を採用する: Visa Inc. 10-K FY2025 Item1 COMPETITION の暦年2024比較表(出典表記『Mastercard data sourced from The Nilson Report issue 1288 (June 2025)』、Mastercard欄は Maestro/Cirrus を除く)。Payments Volume($B): Visa 13,433 / **Mastercard 8,014** / American Express 1,750 / JCB 319 / Diners Club-Discover 253 → 5網合計 23,769。**自社(MA)シェア 33.7%**(Total Transactions では 204/538=37.9%、Cards では 3,146/8,337=37.7%)。**上位2社(Visa+Mastercard)合計 21,447 = 90.2%**(Transactions 95.7% / Cards 95.4%)。→ 自社単独は40%未満だが**上位2社合計≥80%の複占の一角**(首位はVisa)＝v9.9.38の刻み70に該当。刻み85『複占の首位』は自社が首位でないため不可、刻み50『競争<40%』はCadence事例と同型の誤適用になるため不可。(出典: Mastercard 10-K FY2025 Item1 Competition https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm ／ 実数はVisa Inc. 10-K FY2025 Item1 COMPETITION 表 https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm )",
    "irr": "『cards, contactless, mobile, biometrics, AI, security systems, blockchain』特許群+『approximately 40% of all Mastercard transactions are now tokenized』→規格・トークン化ロックで移行高摩擦=70",
    "rep": "『(litigation) represent over 90% of Mastercard's U.S. interchange volume』が示すアクセプタンス網規模+複製した競合が僅少→グローバル決済網は極困難=80(直接的規模開示はhits限定的)",
    "dur": "決済ネットワーク業態そのもの(発行体×加盟店の双方向ネットワーク効果)。『real-time account-based payment schemes』が競合として枠組化されている=ネットワーク堀=85",
@@ -90,7 +91,7 @@
    "f3": "R&D売上比の区分開示なし(技術投資は『Advanced analytics and AI solutions』『40% tokenized』で高水準)。シェア趨勢は地域混在(一部で劣後)=片方+→75。5大顧客集中は21%で横ばい(悪化なし・-10不適用)",
    "f4": "付加価値サービス(『value propositions』『Advanced analytics and AI solutions』『Mastercard Digital First』=データ/サイバー/コンサル)が売上の相当部分で高成長=隣接事業>5%成長→80",
    "f5": "disrupt=unsettled連動→65(A2A/口座間網の未決脅威)",
-   "moatW": "純収益の内訳(FY2025 10-K Note3 Revenue): Payment network 19,476百万$=59.4% / Value-added services and solutions 13,315百万$=40.6%、計32,791百万$。地域別はAmericas 14,044(42.8%)/Asia Pacific・Europe・Middle East and Africa 18,747(57.2%)。報告セグメントは『Mastercard has concluded it has one reportable operating segment, Payment Solutions.』かつ『All of the segment's activities are interrelated, and each activity is dependent upon and supportive of the other』(Note22)=VASも決済網の顧客・データ基盤に乗る同一の堀。顧客集中は『In 2025, the net revenue from these [five largest] customers was approximately $6.9 billion, or 21%, of total net revenue』で、10%以上を占める単一顧客の開示はなし(=最大顧客<10%)。→ 独立した堀は1本だが、用途(決済網/付加価値サービス)・顧客・地域が分散し単一製品59.4%<70% → moatW=70"
+   "moatW": "純収益の実数(10-K FY2025 Note3 Revenue / MD&A): **Payment network 19,476百万$=59.4% / Value-added services and solutions 13,315百万$=40.6%**、計 32,791百万$(前年 17,335/10,832=28,167)。VASは前年比+23%。報告セグメントは Note22『Mastercard has concluded it has one reportable operating segment, 「Payment Solutions.」 ... Revenue is generated from providing customers continuous access to Mastercard's global payments network, as well as by providing value-added services and solutions, whether integrated and sold with the payment network or on a stand-alone basis. All of the segment's activities are interrelated, and each activity is dependent upon and supportive of the other.』＝**原本が全活動の相互依存を明言**しているため、VASは決済網と別立ての独立堀とは数えない(＝独立した堀は1本。刻み85は不可)。刻み70の二条件は原本実数で成立: **最大製品=Payment network 59.4% < 70%**。**最大顧客<10%**——Note3『A significant portion of our net revenue is concentrated among our five largest customers. In 2025, the net revenue from these customers was approximately $6.9 billion, or 21%, of total net revenue』で上位5社合計21%(平均4.2%)、米国会計基準で開示義務のある単独10%以上の顧客の記載は無し。地域も『No individual country, other than the United States, generated more than 10% of net revenue』かつ Americas 14,044(42.8%)/その他 18,747(57.2%)で分散。→ 単一事業だが用途(決済網/付加価値サービス)・顧客・地域が分散＝moatW=70(据置)。(出典: 10-K FY2025 Note 3—Revenue / Note 22—Segment Reporting)"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",

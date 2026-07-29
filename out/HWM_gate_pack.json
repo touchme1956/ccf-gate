@@ -22,7 +22,7 @@
  "moatdecay": "no",
  "erosion": "none",
  "disrupt": "settled",
- "dom": 70,
+ "dom": null,
  "irr": 70,
  "rep": 80,
  "dur": 100,
@@ -57,8 +57,8 @@
   "reportDate": "2025-12-31",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/4281/000000428126000012/hwm-20251231.htm",
-  "auditDate": "2026-07-18",
-  "model": "Claude Fable 5",
+  "auditDate": "2026-07-29",
+  "model": "Claude Opus 5",
   "kenshi": [
    "roic=42.5はのれん除きROIC(検算42.3%)、roicg=20.0はのれん込みROIC(検算20.6%)。のれん4.0B(Arconic/Alcoa分社由来)が総資産11.2Bの36%を占め両者の乖離が大きい。のれん込みROICは2021年に7.6%(<WACC)まで低下した実績あり",
    "gm=24.8はGrossProfitタグ不発見のため実質は営業利益率opm(FY2025)。opmは2021:15.0→2025:24.8%と上昇=gmt/roict:up整合",
@@ -67,11 +67,11 @@
    "sbc充填=0.07十億(ShareBasedCompensation FY2025=73M)。dilNet-0.86は自社株買いで加重株432.9M(2019)→402.1M(2025)減=負の希薄化と整合",
    "cagr=9.4は2020 COVID底(rev5.3B)→2025(8.3B)の5年値。2018(6.8B)基準の8年CAGRは約2.9%。回復基準である点に留意",
    "acq5=yes: 過去5年(2021-25)のPaymentsToAcquireBusinessesはほぼ0。yesは2026年発表のCAM買収($1.8B・H1 2026完了予定)+Brunner(2026/2)を反映した将来型で、5年実績ベースでは無買収",
-   "ROICσ(5年)=4.7pt→p1=80。ただし上昇ドリフトでありσは循環トラフ(2021=7.6%)リスクを過小評価している"
+   "ROICσ(5年)=4.7pt→p1=80。ただし上昇ドリフトでありσは循環トラフ(2021=7.6%)リスクを過小評価している",
+   "2026-07-29 堀再監査(dom/moatWのみ): 旧dom=70→新dom=null(空欄)、旧moatW=85→新moatW=85(据置・実数で追認)。dom空欄の理由=10-K『Competitive Conditions』にシェア%が皆無で『market leader in most of its principal markets』の自称のみ。実名競合を10社以上列挙し『substantial and intense competition』『Many other companies around the world also produce superalloy investment castings』『an increase in the number of aluminum wheel suppliers ... from China, Taiwan, India, South Korea, and Turkey』と述べており、旧70(寡占)の裏取りは原本に無い(旧evidenceも『明示シェアなしのため70』と自認＝audit_moat.pyの✗判定)。4セグメントで市場・競合群が別である点でも単一の刻みに帰着しない。moatW=85は第三者売上実数(Engine Products 4,320=52.4% / Fastening Systems 1,745=21.1% / Engineered Structures 1,148=13.9% / Forged Wheels 1,039=12.6%、計8,252百万$)で追認。≥15%は2本のみで100(3本以上)は不成立——Engineered Structures と Forged Wheels は各13.9%/12.6%で閾値未達。dom/moatW/_meta以外のフィールドは一切変更していない。"
   ],
   "evidence": {
    "expiry": "『We are not materially dependent on any single patent, trade secret, or trademark』(限)→単一特許/期限依存なし=no。特許ポートフォリオは継続更新",
-   "dom": "『Several of Howmet's largest customers have captive superalloy furnaces for producing airfoil investment castings for their own use』+『manufacturers from China, Taiwan, India, South Korea, and Turkey attempting to penetrate the global commercial transportation market』(集)→競争が存在する寡占。明示シェアなしのため70",
    "irr": "『The willingness of customers to accept alternative solutions for the products sold by Howmet, pricing pressure from competitors, and technological advancements』(蝕)+顧客が自家superalloy炉を保有(集)→高摩擦だが認証絶対ロックとは言い切れず70",
    "rep": "航空エンジン翼のsuperalloy投資鋳造は数十年のプロセス知だが、大口顧客が自家炉で一部内製可(集『captive superalloy furnaces』)→極困難80(複製不能100とはしない)",
    "dur": "『worldwide patent portfolio』(限)+航空/政府契約の規制・認証依存(誠『government contracting』)=規制/プロセス知の堀→100",
@@ -89,17 +89,23 @@
    "f3": "『capacity expansions for aerospace and gas turbines』『Total capital expenditures... approximately 5% of sales in 2026』で投資積極だがR&D/売上の定量値・シェア趨勢が原本に無いため片側+の75。大口顧客集中悪化の定量根拠なく-10不適用",
    "f4": "航空隣接のgas turbine(IGT)容量拡張+Forged Wheels(商用輸送)セグメント=売上5%超の成長隣接→80",
    "f5": "disrupt=settled連動→85",
-   "moatW": "セグメント別第三者売上(FY2025 10-K Note C Segment Information): Engine Products 4,320百万$=52.4% / Fastening Systems 1,745=21.1% / Engineered Structures 1,148=13.9% / Forged Wheels 1,039=12.6%、計8,252百万$。Engine Products(ニッケル超合金の精密鋳造翼・タービン部品。顧客はGE Aerospace/RTX等のエンジンOEM)とFastening Systems(航空機構造用ファスナー1,378+商用輸送209+その他158。別工場・別の型式認定)は各≥15%で独立した参入障壁を持つ。Forged Wheels(商用輸送1,039=当セグメント売上の100%、航空機とは全く別の顧客・市場)は独立した堀だが12.6%で15%閾値に届かない。顧客は『RTX Corporation and GE Aerospace each represented approximately 11% of the Company's third-party sales』、航空宇宙(民間+防衛)が売上の約70%。→ ≥15%の独立した堀は2本 → moatW=85"
+   "moatW": "FY2025 10-K セグメント情報注記の第三者売上(全社 $8,252百万): Engine Products $4,320百万=52.4% / Fastening Systems $1,745百万=21.1% / Engineered Structures $1,148百万=13.9% / Forged Wheels $1,039百万=12.6%。→ ≥売上15%は Engine Products と Fastening Systems の2本のみ。Engineered Structures 13.9%・Forged Wheels 12.6%はいずれも15%閾値に届かず、『独立した堀3つ以上(各≥15%)』の100は不成立＝85が該当(旧85を実数で追認)。独立性の裏取り(セグメント×主要市場別の分解表 FY2025): Engine Products=Aerospace Commercial $2,355百万＋Aerospace Defense $900百万＋Gas Turbines $944百万＋Other $121百万。ニッケル超合金の精密鋳造翼・タービン部品で顧客はエンジンOEM。Fastening Systems=Aerospace Commercial $1,202百万＋Aerospace Defense $176百万＋Commercial Transportation $209百万＋Other $158百万。機体構造用ファスナーで別工場・別の型式認定・顧客は機体メーカー/流通(競合もLisi Aerospace等 別系統)。Forged Wheels=Commercial Transportation $1,039百万(当セグメントの100%)で航空とは完全に別市場・別競合(Accuride/Ronal/Nippon Steel/Dicastal等)＝性質としては独立堀だが12.6%で本数に数えられない。顧客集中: 10-K『In 2025, RTX Corporation and GE Aerospace each represented approximately 11% of the Company's third-party sales. ... These sales were primarily from the Engine Products segment.』＝最大顧客11%。50の発動条件(最大顧客≥20% または 1製品≥80%)はいずれも不成立(最大セグメント52.4%)。なお70の目安『最大顧客<10%』は超えるが、≥15%の独立堀が2本ある以上85の判定が優先する。出典: SEC 10-K CIK0000004281 acc 0000004281-26-000012 (FY2025-12-31) セグメント情報注記(第三者売上・主要市場別の分解表)、Item1"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
    "gpa": "GrossProfitタグがXBRL不発見(gm欄は実質opm)",
    "founder": "創業者支配なし(Arconic分社起源)。founderフラグ定義次第のためユーザー判定→空欄",
    "fin": "業態フラグの定義不明(金融業ではない)→空欄",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力",
+   "dom": "2026-07-29 堀再監査で空欄化(旧dom=70)。FY2025 10-K Item1『Competitive Conditions』にシェア%は皆無——『The Company's segments - Engine Products, Fastening Systems, Engineered Structures, and Forged Wheels - are subject to substantial and intense competition in the markets they serve. Although Howmet believes its advanced technology, manufacturing processes, and experience provide advantages ... many of the products Howmet makes can be produced by competitors using similar types of manufacturing processes as well as alternative forms of manufacturing. Despite intense competition, Howmet continues as a market leader in most of its principal markets.』＝『market leader』の自称のみで、v9.9.38但し書き(『leader はシェアの証拠ではない』)に該当。競合は実名で網羅列挙されている(Berkshire Hathaway傘下 Precision Castparts、VSMPO(露)、ATI Inc. High-Performance Materials & Components、Lisi Aerospace(仏)、Aubert & Duval(Airbus/Safran/Tikehau)、Doncasters(英)、Consolidated Precision Products、Weber Metals(Otto Fuchs)、Forgital、Frisa(墨)。Forged Wheels は Accuride、Speedline(Ronal Group)、Nippon Steel、Dicastal North America、Alux、Wheels India)が、各社シェアも上位N社合計も一切非開示。むしろ分散・参入増を示す記述がある: 『Several of Howmet's largest customers have captive superalloy furnaces for producing airfoil investment castings for their own use. Many other companies around the world also produce superalloy investment castings, and some of these companies currently compete with Howmet』『In recent years, Forged Wheels has seen an increase in the number of aluminum wheel suppliers (both forged and cast aluminum wheels) from China, Taiwan, India, South Korea, and Turkey attempting to penetrate the global commercial transportation market』。→ 上位N社構造を導ける数値が原本に無いため空欄。旧dom=70(寡占40-69%)は原本無根拠——原本が述べているのは『intense competition＋多数の実名競合＋顧客の内製炉』であって寡占の裏取りではない。4セグメントで競合群も市場も別(超合金精密鋳造/航空ファスナー/機体構造部材/商用車鍛造ホイール)＝単一の刻みに帰着しない点でも空欄が正解。出典: SEC 10-K CIK0000004281 acc 0000004281-26-000012 (FY2025-12-31) Item1 Competitive Conditions, Item1A Risk Factors"
   },
   "kenshi_erosion": "2026-07-20 erosion横断再判定(一次証拠基準): emerging→none。航空エンジン部品の単独供給ポジション・営利up・roict up。hitsのpricing文言は顧客交渉力の定型",
-  "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=4.65"
+  "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=4.65",
+  "moatW_audit": {
+   "date": "2026-07-29",
+   "model": "claude-opus-5",
+   "scope": "v9.9.38 dom / v9.9.36 moatW の再監査のみ。dom・moatW・_meta 以外のキーは一切変更していない"
+  }
  },
  "moatW": 85
 }

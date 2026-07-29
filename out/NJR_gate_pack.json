@@ -22,7 +22,7 @@
  "moatdecay": null,
  "erosion": null,
  "disrupt": null,
- "dom": 100,
+ "dom": null,
  "irr": 100,
  "rep": 100,
  "dur": 100,
@@ -58,8 +58,8 @@
   "reportDate": "2025-09-30",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/356309/000035630925000093/njr-20250930.htm",
-  "auditDate": "2026-07-18",
-  "model": "Claude Fable 5",
+  "auditDate": "2026-07-29",
+  "model": "Claude Opus 5",
   "kenshi": [
    "FCF null化: capexタグ(PaymentsToAcquirePropertyPlantAndEquipment)が2019年で途絶。採取器FCF=OCF466-capex0=466百万は誤り。規制ガス公益はrate-base capexで実capex>>OCF、実FCFは構造的にマイナス(高capexだが種まきでなく公益構造)。再現不能につきnull",
    "nde null化: 負債タグ(LongTermDebtNoncurrent/LongTermDebt/LongTermDebtCurrent)が2011年で途絶(diag debtL/debtS=1年分)。採取器nde=-0.0(純現金)は誤アーティファクト。総資産7.9十億 vs 自己資本2.6十億→負債約5.3十億、規制公益の構造的レバレッジ大。実nde正で大・金利感応。p3は保守化50",
@@ -68,7 +68,8 @@
    "ni充填: FY2025 NetIncomeLoss=335.6百万USD=0.34十億USD。fcf null のため転換率conv(fcf/ni)算出不可・番犬/逆DCF系は無効化",
    "accr=-1.7確認: kenshi (NI336-OCF466)/資産7,579=-1.7%。eps=3.34確認: 335.6百万/100.2百万株=3.35",
    "roic=16.5維持。kenshi ROIC(込み)2021-25=14.0/17.7/16.2/16.4/16.2、σ=1.2pt。のれんタグ不発見(diag gw='タグ不発見')ゆえroic込み=除き=同値",
-   "dilNet=1.44維持。shOut 2019:90.2→2025:100.7百万(ATM等で希薄化継続=rate-base資金調達)。自社株買いなし・還元は配当主体"
+   "dilNet=1.44維持。shOut 2019:90.2→2025:100.7百万(ATM等で希薄化継続=rate-base資金調達)。自社株買いなし・還元は配当主体",
+   "2026-07-29 堀再監査(dom/moatWのみ・reaudit_moat_prompt.txt準拠): 旧dom=100→新dom=null(空欄)、旧moatW=70→新moatW=70(据置・原本実数で再検証)。dom空欄の理由: NJRは持株会社で、規制公益NJNG(売上63.9%・純益63.6%＝実質唯一供給で刻み100相当)と、原本が明示的に競争市場と書くES(売上22.3%・純益12.2%＝刻み50相当)・CEV(売上5.5%・純益18.2%＝『a large number of firms competing』で刻み50相当)・S&T(5.2%)が同居し、妥当な取り方が50〜100に散る(加重約83＝どの刻みにも乗らない)。旧100は一部門の構造を全社に当てはめた過大評価で、非規制36%に価格支配力が無いという原本記述と両立しない。moatW: 売上≥15%の独立した堀はNJNGの1本のみ(ESは22.3%あるが原本が競争市場と明記＝堀でない。CEV/S&Tは15%未満)。最大顧客<10%(『no single customer represented more than 10% of consolidated operating revenues』)・最大事業63.9%<70%で分散テスト通過→70。【別途要修正の申し送り】gm=37.7 は総収入ベースでは約19%(kenshi既述)、nde/fcf は負債・capexタグ途絶で空欄のまま＝本再監査の範囲外につき未修正。dom/moatW/_meta 以外のフィールドは未変更。"
   ],
   "evidence": {
    "qualitative_moat": "hitsの堀/限/蝕/集/循セクション全てヒットなし(採取器が定性プロファイルを捕捉できず)。dom/irr/rep/dur/erosion/disrupt/expiry/geopol/moatdecayは原本証拠が無く、憶測回避のため全てnull。NJRの規制フランチャイズ独占(NJNG/BPU規制)は周知だがhits未収載のため記入せず",
@@ -81,8 +82,8 @@
    "f3": "R&D非該当業態。規制テリトリー内シェアは安定だが拡大ベクトル乏しく実質両−→55。hits定性証拠なし",
    "f4": "隣接事業はhitsに存在示唆(『Home Services and Other』『Environment』=Clean Energy、njr:SteckmanRidgeMember=中流貯蔵JV)だが規模/成長はhits未定量→育成中扱い60",
    "f5": "disrupt=null(蝕ヒットなし)。ガス配給は20-30年視野で電化・脱炭素の構造的問いを抱えるがhits証拠なく分類不能→保守55",
-   "moatW": "セグメント別売上: FY2025(9月期)10-K『REPORTABLE SEGMENT DATA』NJNG(規制ガス配給) $1,301,496千=63.9% / ES(Energy Services・卸ガストレーディング) $453,457千=22.3% / CEV(Clean Energy Ventures・太陽光) $112,501千=5.5% / S&T(Storage & Transportation) $106,372千=5.2% / Corporate and other $61,424千=3.0%（総営業収益 $2,036,412千）。セグメント純利益では NJNG $213,541千=63.6% / CEV $61,156千=18.2% / ES $40,878千=12.2% / S&T $18,541千=5.5%。構造的な参入障壁を持つのはNJNG（BPU規制下の配給網＝dom根拠参照）とS&T(FERC規制のLeaf River/Adelphia Gateway)の2つだが、S&Tは5.2%で15%に届かない。ESは卸ガスの物理・金融トレーディングで参入障壁なし、CEVは補助金依存の太陽光開発で障壁なし＝堀とは数えない。→ 独立した堀は1本。ただし需要家は約589,000件の住宅・商業に分散し単一顧客10%以上の開示なし、単一事業(NJNG)は63.9%で70%未満。→ 単一事業だが用途・顧客が分散 = 70。出典: SEC 10-K CIK0000356309 acc 0000356309-25-000093 (2025-11-20), R45.htm",
-   "dom": "チョークポイント＝NJNGのガス配給網。FY2025 10-K Item1 Competition『Although its franchises are nonexclusive, NJNG is not currently subject to competition from other natural gas distribution utilities with regard to the transportation of natural gas in its service territory』＝自社サービステリトリー(Burlington/Middlesex/Monmouth/Morris/Ocean/Sussexの6郡)内のガス配給シェアは実質100%。配給(託送)はBPU規制下の独占で、需要家は供給元(コモディティ)は選べても配給網は選べない。→ 独占≥90% = 100。【但し書き】この100%はNJNGセグメント(売上の63.9%・純利益の63.6%)に対する値。ES(22.3%)は卸トレーディングでシェア支配なし、CEV(5.5%)も競争的。またNJNGの需要家約589,000件はニュージャージー州全体のガス需要家約290万件の約2割であり、州全体を市場と定義すれば約20%になる。門の定義『チョークポイントの占有率』に従い自社フランチャイズ領域を市場と取った。出典: SEC 10-K CIK0000356309 acc 0000356309-25-000093 (2025-11-20) Item 1. BUSINESS - Competition",
+   "moatW": "【2026-07-29 再監査 → 70を維持（原本実数で再検証）】FY2025 10-K Note15「REPORTABLE SEGMENT DATA」の総営業収益 2,036,412千$ に対するセグメント別実額: NJNG 1,301,496千$=63.9% / ES 453,457千$=22.3% / CEV 112,501千$=5.5% / S&T 106,372千$=5.2% / Corporate and other(HSO) 61,424千$=3.0%。純利益 335,627千$ に対して NJNG 213,541千$=63.6% / CEV 61,156千$=18.2% / ES 40,878千$=12.2% / S&T 18,541千$=5.5%。「≥売上15%かつ独立した堀」を数えると1本しかない: (1)NJNG 63.9% ＝BPU規制フランチャイズ＋公道下の埋設資産(配給本管7,486マイル/供給本管7,917マイル/送管245マイル・メーター610,000超、Utility plant at cost 4,434,220千$)による唯一供給＝堀。○(2)ES 22.3% ＝売上規模は15%を超えるが堀ではない。会社自身が『Its competitors include wholesale marketing and trading companies, utilities, natural gas producers and financial institutions』と競争市場であることを明記し、収益実態も卸ガスの価格差取り(FY2025のES総営業収益453,457千$のうち顧客との契約収益は47,653千$のみで、残る405,804千$はderivative instruments＝時価評価)。参入障壁なし。×(3)CEV 5.5% ＝補助金(SREC/TREC/CSI)依存の太陽光開発で『a large number of firms competing』かつ15%未満。×(4)S&T 5.2% ＝Leaf River/Adelphia Gateway/Steckman RidgeのFERC規制資産で障壁は本物だが5.2%＜15%で本数に数えられない。×→ 独立した堀は1本＝『単一事業』側の刻み(70または50)に落ちる。そのうえで分散テスト: 最大顧客は同10-K『In fiscal 2025, no single customer represented more than 10% of consolidated operating revenues』で<10%を満たす(需要家588,975件の住宅・商業に分散)。最大製品はNJNG 63.9%で<70%を満たす(1製品≥80%の50該当でもない)。地域はNJ6郡に集中するが用途(住宅暖房/商業/産業/輸送サービス)と顧客が分散。⇒ 70。100(堀3本以上)は非該当、85(堀2本)も非該当＝ES/CEVは売上があっても堀ではない。出典: https://www.sec.gov/Archives/edgar/data/356309/000035630925000093/njr-20250930.htm Note 15. REPORTABLE SEGMENT DATA / Revenue from Contracts with Customers(Disaggregated revenues by product line and reportable segment) / Item 1 BUSINESS / Item 2 PROPERTIES (SEC CIK 0000356309, acc 0000356309-25-000093, 2025-11-20)",
+   "dom": "【2026-07-29 再監査 → 空欄】NJRは持株会社で、事業ごとに市場構造が根本的に異なり単一の刻みに帰着しない(v9.9.38のMSFT型＝一点で答えるのは偽の精度)。FY2025(2025-09期)10-K Note15「REPORTABLE SEGMENT DATA」の実額: 総営業収益 2,036,412千$ の内訳 NJNG 1,301,496千$(63.9%) / ES 453,457千$(22.3%) / CEV 112,501千$(5.5%) / S&T 106,372千$(5.2%) / Corporate and other 61,424千$(3.0%)。純利益 335,627千$ の内訳 NJNG 213,541千$(63.6%) / CEV 61,156千$(18.2%) / ES 40,878千$(12.2%) / S&T 18,541千$(5.5%) / Corporate and other 1,511千$(0.5%)。事業別の市場構造: (a)NJNG＝実質唯一供給で刻み100相当。Item1 Competition『Although its franchises are nonexclusive, NJNG is not currently subject to competition from other natural gas distribution utilities with regard to the transportation of natural gas in its service territory』『NJNG currently does not believe it has significant exposure to the risk that its distribution system will be bypassed』。サービステリトリーはBurlington/Middlesex/Monmouth/Morris/Ocean/Sussexの6郡・1,538平方マイル・109自治体・人口170万人、総需要家588,975件(FY2025)。配給網の代替供給者は上位2社も3社も存在しない(上位N社合計=NJNG単独で≈100%)。(b)ES(卸・小売エネルギー取引)＝刻み50相当。Item1『Its competitors include wholesale marketing and trading companies, utilities, natural gas producers and financial institutions』でシェア開示なし・参入障壁なしの競争市場。(c)CEV(商業用太陽光)＝刻み50相当。Item1『New Jersey has one of the 15 largest solar markets in the U.S., according to the Solar Energy Industries Association, with a large number of firms competing in all facets of the market including development, financing and construction』＝多数競争を会社自身が明記。(d)S&T(Leaf River貯蔵/Adelphia Gateway/Steckman Ridge JV)＝FERC規制資産で局所的な障壁はあるがシェア開示なし。⇒ 妥当な取り方が50〜100に散り、売上加重も純利益加重も約83で既存刻み(50/70/85/100)のどれにも乗らない。特に旧値100(独占≥90%)は、売上の36.1%・純利益の36.4%を占める非規制事業(ES/CEV/S&T)に価格支配力が全く無いという原本の記述と両立しない＝全社の姿を表さない。よって空欄。出典: https://www.sec.gov/Archives/edgar/data/356309/000035630925000093/njr-20250930.htm Item 1 BUSINESS(REPORTABLE SEGMENTS / Natural Gas Distribution - Competition / Clean Energy Ventures / Energy Services), Note 15. REPORTABLE SEGMENT DATA (SEC CIK 0000356309, acc 0000356309-25-000093, 2025-11-20)",
    "irr": "irr=100(唯一供給)。10-K Item1 Competition:『Although its franchises are nonexclusive, NJNG is not currently subject to competition from other natural gas distribution utilities with regard to the transportation of natural gas in its service territory. Due to significant distances between NJNG's current large industrial customers and the nearest interstate natural gas pipelines, as well as the availability of its transportation tariff, NJNG currently does not believe it has significant exposure to the risk that its distribution system will be bypassed.』さらにEDECAで小売の商品供給は自由化済だが『NJNG earns Utility Gross Margin through the delivery of natural gas to its customers, regardless of whether it or a third-party supplier provides the wholesale natural gas commodity.』＝顧客が供給業者を替えても配送の対価はNJNGに帰属＝配送の代替供給者が存在しない。反証も記録:『franchises are nonexclusive』かつ『Competition does exist from suppliers of oil, electricity and propane.』(＝同一サービスの代替供給者ではなく燃料間の需要代替)。出典 https://www.sec.gov/Archives/edgar/data/356309/000035630925000093/njr-20250930.htm",
    "rep": "rep=100(複製不能・数十年級)。10-K Item2 Properties:『As of September 30, 2025, NJNG owns approximately 7,486 miles of distribution main, 7,917 miles of service main and 245 miles of transmission main, and operates more than 610,000 meters. Mains are primarily located under public roads. Where mains are located under private property, NJNG has obtained easements from the owners of record.』計15,648マイルの埋設管網＋公道下占用と私有地地役権。貸借対照表『Utility plant, at cost $4,434,220』(千ドル=44.3億ドル・簿価は数十年の累積取得原価)＋『NJNG's total capital expenditures spent or accrued during fiscal 2025 were approximately $450.1M』。BPU認可の料金基盤(『an overall rate of return on rate base of 7.08%, return on common equity of 9.6%』)下でしか回収できず、並行網の敷設は経済的に不成立(前掲bypass記述)。出典 https://www.sec.gov/Archives/edgar/data/356309/000035630925000093/njr-20250930.htm",
    "dur": "dur=100(規制/物理型)。10-K:『New Jersey Natural Gas Company (“NJNG”), a subsidiary of the Company, is a regulated gas distribution company and is subject to regulation by the New Jersey Board of Public Utilities (the “BPU”).』堀の源泉はブランドでもネットワーク効果でもスイッチングコストでもなく、BPU規制フランチャイズ＋公道下の物理埋設資産(15,648マイルの本管・610,000超のメーター)。2024-11-21 BPU命令で$157.0Mの基本料金引上げ承認＝料金決定が規制で担保。出典 https://www.sec.gov/Archives/edgar/data/356309/000035630925000093/njr-20250930.htm"
@@ -93,15 +94,18 @@
    "z": "Altman Zは時価総額必要(市場データ手入力後に算出可)",
    "gpa": "GrossProfitタグ不存在(公益会計)",
    "sbc": "SBC関連タグ不存在",
-   "定性(dom/irr/rep/dur/erosion/disrupt/expiry/geopol/moatdecay)": "【2026-07-28更新】irr/rep/dur は原本10-K(Item1 Competition・Item2 Properties・BPU規制記述)から充填済(_meta.evidence参照)。dom は既存判定を維持。erosion/disrupt/expiry/geopol/moatdecay は依然hitsセクションにヒットなく原本根拠不足のため空欄のまま。",
+   "定性(dom/irr/rep/dur/erosion/disrupt/expiry/geopol/moatdecay)": "【2026-07-29更新】irr/rep/dur は原本10-K(Item1 Competition・Item2 Properties・BPU規制記述)から充填済(_meta.evidence参照)。dom は2026-07-29の堀再監査で空欄化(_meta.nulls.dom 参照＝持株会社の事業別構造が50〜100に散り単一の刻みに帰着しない)。moatW は原本セグメント実額で再検証のうえ70で据置。erosion/disrupt/expiry/geopol/moatdecay は依然hitsセクションにヒットなく原本根拠不足のため空欄のまま。",
    "founder": "創業者経営フラグ非該当(NJRは広く分散保有の規制公益持株会社)",
    "fin": "業態フラグ空欄(金融業ではない=規制ガス公益持株会社)",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時手入力"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時手入力",
+   "dom": "【2026-07-29 空欄化】NJRは4セグメントの持株会社で、市場構造が事業ごとに正反対のため単一の刻みに帰着しない。内訳(FY2025 10-K Note15、売上=総営業収益2,036,412千$／純利益=335,627千$): NJNG 売上63.9%・純益63.6% → 規制フランチャイズ配給網で実質唯一供給＝刻み100相当。ES 売上22.3%・純益12.2% → 卸/小売ガス取引。10-Kが競合を『wholesale marketing and trading companies, utilities, natural gas producers and financial institutions』と明記しシェア開示なし＝刻み50相当。CEV 売上5.5%・純益18.2% → 商業用太陽光。10-Kが『a large number of firms competing in all facets of the market』と明記＝刻み50相当。S&T 売上5.2%・純益5.5% → FERC規制の貯蔵/パイプライン。局所障壁はあるがシェア開示なし＝刻み不定。Corporate and other 売上3.0%。妥当な取り方が50〜100に散る(売上加重・純利益加重とも約83で、既存刻み50/70/85/100のどれにも一致しない)。旧値100は『NJNGのフランチャイズ区域内独占』という一部門の構造を全社に当てはめたもので、売上の36.1%・純利益の36.4%を占める非規制事業が価格支配力を全く持たないという原本の記述と両立しない。MSFT(Server/cloud 50・M365 85で加重68.1→空欄)と同型の事案として空欄が正解。なお市場定義の感応度も大きい: NJNGのサービステリトリー(6郡・人口170万人・需要家588,975件)を市場と取れば≈100%だが、ニュージャージー州全体を市場と取れば大きく下がる(州全体の需要家数は10-Kに開示なし＝原本外)。門X/門Ωへの影響: 空欄により絶対MOAT指数は irr(100)/rep(100)/dur(100)/moatW(70) の4本で再正規化される。再充填の条件＝(a)NJNGがNJ州内ガス配給に占める比率の原本開示、または(b)非規制事業を切り離した持株会社構成の変更。"
   },
   "moatW_audit": {
-   "date": "2026-07-28",
+   "date": "2026-07-29",
    "model": "claude-opus-5",
-   "scope": "v9.9.36 moatW（＋欠測社のdom）のみ追記。他のキーは一切変更していない"
+   "scope": "堀2項目(dom/moatW)の再監査。SEC EDGAR 10-K原本(CIK 0000356309, acc 0000356309-25-000093, 2025-11-20提出)を直接取得しNote15セグメント実額・Item1 Competition・Item2 Propertiesで検証。他のキーは一切変更していない",
+   "source": "https://www.sec.gov/Archives/edgar/data/356309/000035630925000093/njr-20250930.htm",
+   "prev": "2026-07-28 moatW=70(同値)。今回は原本のセグメント実額で再確認のうえ据置"
   },
   "moat4_fill": {
    "date": "2026-07-28",
