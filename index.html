@@ -2215,7 +2215,9 @@ function copyPrompt(){
 //   旧挙動は「null=前の銘柄の値を残す」で、一括取込の点数が貼った順に汚染された(CMG 80.1↔71.5等、2026-07-18検証)。
 const __selDefaults={};
 document.querySelectorAll('select').forEach(e=>{if(e.id)__selDefaults[e.id]=e.value;});
+let __coerce=[];   // v9.9.54: 直近の applyFields で「黙って化けた」欄の記録（ccfAudit が読む）
 function applyFields(d){
+  __coerce=[];
   const map={nm:'nm',rfr:'rfr',erp:'erp',beta:'beta',roic:'roic',roicEx:'roicEx',roicg:'roicg',roiic:'roiic',nde:'nde',z:'z',gpa:'gpa',accr:'accr',acc:'acc',eq:'eq',fin:'fin',dom:'dom',irr:'irr',rep:'rep',dur:'dur',moatW:'moatW',gm:'gm',gmt:'gmt',sht:'sht',nrr:'nrr',roict:'roict',cagr:'cagr',moatdecay:'moatdecay',expiry:'expiry',sbc:'sbc',dilNet:'dilNet',erosion:'erosion',disrupt:'disrupt',fcf:'fcf',ni:'ni',p1:'p1',p2:'p2',p3:'p3',p4:'p4',f1:'f1',f2:'f2',f3:'f3',f4:'f4',f5:'f5',per:'per',evebit:'evebit',gr:'gr',shy:'shy',rak:'rak',gcap:'gcap',analysts:'analysts',instOwn:'instOwn',mcap:'mcap',gls:'gls',idx:'idx',indG:'indG',hist:'hist',pos:'pos',roiic5:'roiic5',perF:'perF',px:'px',eps:'eps',ddate:'ddate',erdate:'erdate',acq5:'acq5',geopol:'geopol',founder:'founder'};
   Object.entries(map).forEach(([k,id])=>{
     const el=$(id); if(!el)return;
@@ -2229,10 +2231,18 @@ function applyFields(d){
         if(!isNaN(num)){
           let best=null,bestDiff=Infinity;
           for(const opt of el.options){ const ov=parseFloat(opt.value); if(!isNaN(ov)){const df=Math.abs(ov-num); if(df<bestDiff){bestDiff=df;best=opt.value;}} }
-          if(best!==null){el.value=best;matched=true;}
+          if(best!==null){el.value=best;matched=true;__coerce.push({k,from:val,to:best,how:'近い選択肢へ寄せた'});}
         }
       }
-      if(!matched && __selDefaults[id]!==undefined) el.value=__selDefaults[id]; // v9.7: null・不一致は既定値へリセット(前銘柄の残り香を断つ。取込順に依らず同じJSONは同じ点)
+      if(!matched && __selDefaults[id]!==undefined){
+        // v9.9.54(2026-07-30): **ここが「一番静かな壊れ方」の発生点**。選択肢に無い値は既定値へ落ちるが、
+        //   従来それは何の痕跡も残さなかった。実害: パックの acq5 に数値 2.8 が入っていた33社で
+        //   parseFloat('yes')=NaN ゆえ近い値も選べず既定 'yes' へ化け、門は acq5==='no' でしか
+        //   「のれん込みROIC乖離 −6」を免除しないため**罰が黙って効いた**（Adobeで実測 Ω81.2→75.2 の差）。
+        //   値は在るのに読まれず、採点にも表示にも警告が出ない。→ 化けたことを記録して門に出す。
+        if(val!=='')__coerce.push({k,from:val,to:__selDefaults[id],how:'選択肢に無い→既定値へ化けた'});
+        el.value=__selDefaults[id];
+      }
     } else {
       el.value=val;
     }
@@ -2504,7 +2514,9 @@ async function autoSave(src,silent){
         r=compute();
       }
     }catch(e){} }
-    await store.set('g7:'+sk,JSON.stringify({data,r,ts:Date.now(),src:src||'auto'}));
+    // v9.9.54: 取込で黙って化けた欄を台帳に同梱する。採点には使わない＝ccfAudit が読んで ⚠ を出すだけ。
+    //   ここで残さないと「化けた事実」は再読込で消え、後からΩが動いた理由を追えなくなる。
+    await store.set('g7:'+sk,JSON.stringify({data,r,ts:Date.now(),src:src||'auto',coerce:(__coerce||[]).slice()}));
     if(!silent)renderLedger();
     const dv=prevScore!=null?(parseFloat(r.evalScore)-parseFloat(prevScore)):null;
     const diff=dv==null?'':dv>0?`<span style="color:var(--jade)">（▲${dv.toFixed(1)}）</span>`:dv<0?`<span style="color:var(--rust)">（▼${Math.abs(dv).toFixed(1)}）</span>`:'（±0）';
@@ -2607,7 +2619,7 @@ async function renderLedger(){
     return;}
   if(eg)eg.innerHTML='';
   const items=[];
-  for(const k of keys){try{const res=await store.get(k);if(res){const o=JSON.parse(res.value);items.push({k,nm:(o.data&&o.data.nm)||k.slice(k.indexOf(':')+1),ts:o.ts||0,d:o.data||{},...o.r});}}catch(e){}}
+  for(const k of keys){try{const res=await store.get(k);if(res){const o=JSON.parse(res.value);items.push({k,nm:(o.data&&o.data.nm)||k.slice(k.indexOf(':')+1),ts:o.ts||0,d:o.data||{},coerce:o.coerce||[],r:o.r||{},...o.r});}}catch(e){}}
   // v9.1: 保有フラグ付与(別キーg7hold:・レコード非破壊)
   let holdSet=new Set();
   try{const hr=await store.get('g7hold:set');if(hr&&hr.value)holdSet=new Set(JSON.parse(hr.value));}catch(e){}
@@ -2636,7 +2648,7 @@ async function renderLedger(){
      if(items.length){if(!be)bkChip=`<span style="border-left:1px solid var(--line);padding-left:14px;color:#d69a3c">バックアップ未実施——全件書き出し推奨</span>`;
        else{const bd=Math.floor((Date.now()-parseInt(be.value))/DAY);if(bd>7)bkChip=`<span style="border-left:1px solid var(--line);padding-left:14px;color:#d69a3c">最終バックアップ${bd}日前</span>`;}}}catch(e){}
    const bar=document.createElement('div');
-   bar.innerHTML=warn+`<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);padding:8px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:10px"><span>全<b>${items.length}</b>件</span><span style="color:var(--gold-bright)">最上位 <b>${s}</b></span><span style="color:var(--jade)">堅実 <b>${a}</b></span><span style="color:var(--rust)">回避/失格 <b>${c}</b></span><span style="border-left:1px solid var(--line);padding-left:14px;color:#54b88a">今買える <b>${buy}</b></span><span style="color:#5d8cc2">押し目待ち <b>${wt}</b></span>${stale?`<span style="border-left:1px solid var(--line);padding-left:14px;color:#d69a3c">要データ更新 <b>${stale}</b></span>`:''}${bkChip}</div>`;
+   bar.innerHTML=warn+ccfAuditSummary(items)+`<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);padding:8px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:10px"><span>全<b>${items.length}</b>件</span><span style="color:var(--gold-bright)">最上位 <b>${s}</b></span><span style="color:var(--jade)">堅実 <b>${a}</b></span><span style="color:var(--rust)">回避/失格 <b>${c}</b></span><span style="border-left:1px solid var(--line);padding-left:14px;color:#54b88a">今買える <b>${buy}</b></span><span style="color:#5d8cc2">押し目待ち <b>${wt}</b></span>${stale?`<span style="border-left:1px solid var(--line);padding-left:14px;color:#d69a3c">要データ更新 <b>${stale}</b></span>`:''}${bkChip}</div>`;
    box.appendChild(bar);}
   view.forEach(it=>{
     const gc=it.misread?'var(--steel)':it.kills?'var(--rust)':it.tcls==='dv-s'?'var(--gold-bright)':it.tcls==='dv-a'?'var(--jade)':'var(--rust)';
@@ -2647,7 +2659,8 @@ async function renderLedger(){
     if(it.d&&it.d.ddate){const dd=new Date(it.d.ddate);if(!isNaN(dd)){const dAge=Math.floor((Date.now()-dd.getTime())/DAY);if(dAge>90)ageBadge+=`<span style="font-size:9px;color:#d69a3c;border:1px solid #d69a3c;border-radius:4px;padding:1px 4px;margin-left:4px">データ${dAge}日前——要更新</span>`;}}
     const div=document.createElement('div');div.className='led';
     const memo=(it.d&&it.d.memo)?`<div style="font-size:10.5px;color:var(--dim);margin-top:2px">✎ ${it.d.memo}</div>`:'';
-    div.innerHTML=`<span class="ln">${it.nm}${ageBadge}${memo}</span><span class="grade" style="color:${gc}">${it.evalScore}・${it.tierShort||it.grade}</span><span class="act" style="background:${ac}22;color:${ac}">${it.act}</span><button class="ld" title="読込" onclick="loadIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">↺</button><button class="ld" title="再採点依頼文を生成" onclick="quickPrompt(decodeURIComponent('${encodeURIComponent(it.k)}'))">依</button><button class="ld" title="保有トグル" onclick="toggleHold(decodeURIComponent('${encodeURIComponent(it.nm)}'))" style="${it.held?'color:var(--gold-bright);border-color:var(--gold-line)':''}">${it.held?'保有':'□'}</button><button title="削除" onclick="delIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">✕</button>`;
+    const audW=ccfAudit(it.d,it.r,it.coerce), audB=ccfAuditBadge(audW,it.k);
+    div.innerHTML=`<span class="ln">${it.nm}${audB}${ageBadge}${memo}</span><span class="grade" style="color:${gc}">${it.evalScore}・${it.tierShort||it.grade}</span><span class="act" style="background:${ac}22;color:${ac}">${it.act}</span><button class="ld" title="読込" onclick="loadIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">↺</button><button class="ld" title="再採点依頼文を生成" onclick="quickPrompt(decodeURIComponent('${encodeURIComponent(it.k)}'))">依</button><button class="ld" title="保有トグル" onclick="toggleHold(decodeURIComponent('${encodeURIComponent(it.nm)}'))" style="${it.held?'color:var(--gold-bright);border-color:var(--gold-line)':''}">${it.held?'保有':'□'}</button><button title="削除" onclick="delIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">✕</button>`;
     box.appendChild(div);
   });
   renderWatch(items);
@@ -2735,6 +2748,138 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY){
     ${body}
     <div style="font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.7">指値は階段で置く——1/2を現値近傍〜開通ライン・1/2をfair線（PER clamp(8+g,16,30)）。投下可は現値で門X成立済みゆえ開通線は現値以上にある。${AMT>0?'100円単位で丸め、<b>端数は買付順位1位へ寄せて合計を個別枠に一致させる</b>。':''}1銘柄は目標ウェイト（質80+=8/77-80=5/75-77=3%×¼ケリー）を超えない。<b>売りは株価では動かさない（S1/S2/S3のみ）。</b><br>※<b>指数（ETF）の積立は門の外</b>——門は「どれを・買うか否か」を裁く場で、指数は常に買ってよい対象ゆえ門にかけない。毎月いくら指数へ回すかはDCA側で決める（正本はCLAUDE.md 月次運用）。</div>
   </div>`;
+}
+// ── 台帳の健全性検査（v9.9.54・2026-07-30 ユーザー要望）───────────────────────
+// 問い: **なぜ毎回、後からΩが動く事故を人力で見つけているのか。**
+//   今セッションで踏んだ4件はすべて同型だった——acq5に数値が入って既定へ化けた／kanshi_list.json の
+//   キー違いで点検が33社中3社に縮んだ／epsが原本と食い違って見えた／acq5が買収で陳腐化した。
+//   いずれも「値は在るのに読まれず、採点にも表示にも警告が出ない」。**発見が人の注意力に依存していた。**
+// 対策: 銘柄ごとに規約違反・陳腐化・測定漏れを数え、Ⅳ台帳とⅥ買付順位の行に ⚠N として出す。
+//   **採点は一切変えない**（ccfAudit は純関数で d と r を読むだけ・戻すのは警告の配列）。
+// 注意: ブラウザの台帳には _meta（根拠・空欄理由）が無い（applyFields が採点欄だけをフォームへ流し、
+//   data はフォームから再構築されるため）。**根拠の被覆率は端末側の night/validate_packs.py が見る**。
+//   ここは「門が持っている情報だけで判る事故」に絞る。二層で守る。
+const CCF_ENUM={acq5:['yes','no'],acc:['usgaap','ifrs','jgaap'],fin:['no','acq','merger','thin','yes'],
+  founder:['no','yes'],idx:['','yes','no'],indG:['','below','avg','above'],eq:['pos','neg'],
+  gmt:['up','flat','down'],sht:['up','flat','down'],roict:['up','flat','down'],
+  moatdecay:['no','yes'],expiry:['no','yes','na'],erosion:['none','emerging','active'],
+  disrupt:['settled','unsettled','threat'],rak:['yes','no'],geopol:['0','1','2','3']};
+const CCF_BANDS={per:[8,200],shy:[-5,12],evebit:[0,300],beta:[0,4],perF:[1,500]};
+function ccfAudit(d,r,coerced){
+  d=d||{}; r=r||{}; const W=[];
+  const num=k=>{const v=parseFloat(d[k]);return isFinite(v)?v:null;};
+  const has=k=>d[k]!=null&&d[k]!=='';
+  const add=(lv,k,msg,fix)=>W.push({lv,k,msg,fix});
+  const isJP=/^\d{4,5}$/.test(String(d.nm||'').trim().split(/\s/)[0]);
+
+  // ① 取込で黙って化けた欄——今セッションの acq5 事故の発生点そのもの
+  (coerced||[]).forEach(c=>add('err',c.k,
+    `取込時に <b>${c.k}=${c.from}</b> が <b>${c.to}</b> へ化けた（${c.how}）`,
+    'パックの値が規約の列挙値でない。out/ のパックを直して再取込せよ'));
+  // ② 列挙値そのものの違反（取込を経ずに入った値も拾う）
+  Object.keys(CCF_ENUM).forEach(k=>{
+    if(d[k]==null||d[k]==='')return;
+    if(!CCF_ENUM[k].includes(String(d[k])))
+      add('err',k,`<b>${k}=${d[k]}</b> は列挙値でない（許容: ${CCF_ENUM[k].map(x=>x===''?'空欄':x).join('/')}）`,
+        '門は文字列比較で判定するので、外れた値は既定値として扱われ罰や免除が意図と逆に効く');
+  });
+  // ③ 株数スケール誤り——per が帯の下・shy が帯の上へ**逆方向に同時に**外れたら株数が桁で違う
+  //    実害: KLACが10:1分割後の株価と分割前の株数を割っていた（eps30.37→3.08 / per5.60→55.32）
+  const per=num('per'), shy=num('shy');
+  if(per!=null&&shy!=null&&per<CCF_BANDS.per[0]&&shy>CCF_BANDS.shy[1])
+    add('err','eps',`<b>per=${per} が下限8未満、同時に shy=${shy}% が上限12超</b>＝逆方向の同時逸脱`,
+      '疑うのは株価でも純利益でもなく**株数のスケール**（株式分割の跨ぎ）。同じ株数誤りが per を下げ shy を上げる');
+  // ④ JP検問——EDINET生ROICのアーティファクトを門に入れない規約
+  if(isJP&&(num('roic')||0)>40&&!has('roicEx'))
+    add('err','roicEx','日本株で <b>roic&gt;40% かつ roicEx が空</b>＝JP検問に該当（取込拒否・審査待ちへ差し戻し）',
+      'EDINET生ROICは資産軽量／ネットキャッシュで膨張する。門式で再計算して roicEx を埋めよ');
+  // ⑤ ROICの分母縮退の疑い（絶対のルール7）
+  const roic=num('roic'), roicg=num('roicg');
+  if(roic!=null&&roicg!=null&&roicg>0&&roic/roicg>=3)
+    add('warn','roic',`roic ${roic}% が roicg ${roicg}% の <b>${(roic/roicg).toFixed(1)}倍</b>`,
+      'のれん控除で投下資本が縮退している可能性。IC/自己資本が2割未満なら算出不能（ルール7(b)）。night/audit_roic.py で確認');
+  // ⑥ acq5 の陳腐化検査——乖離が大きいのに「直近5年の買収なし」なら根拠を疑う
+  if(roic!=null&&roicg!=null&&roicg>0&&roic/roicg>=2&&d.acq5==='no')
+    add('warn','acq5','ROIC乖離が2倍超で <b>acq5=no</b>（＝のれん乖離 −6 を免除中）',
+      '直近の10-Q/有報で買収が無いか確認せよ。実害: ADBEはSemrush買収$18.7億で acq5 が陳腐化しΩ81.2→75.2だった');
+  // ⑦ 堀の脚不足——三段関門の第三を通れない
+  if(r.moatNA===true) add('warn','moatW','絶対MOAT指数が<b>算出不能</b>（5本のうち4本未満しか測っていない）',
+    '堀のふるい（70+）を構造的に通れない＝買付の土俵に乗らない。dom/irr/rep/dur/moatW を原本で埋めよ');
+  // ⑧ 市場データの常識帯
+  Object.keys(CCF_BANDS).forEach(k=>{const v=num(k);if(v==null)return;
+    const[lo,hi]=CCF_BANDS[k];
+    if(v<lo||v>hi)add('warn',k,`<b>${k}=${v}</b> が常識帯 ${lo}〜${hi} の外`,'単位・通貨・分割の取り違えを疑う（保管された値も毎回検問する＝ルール7(c)）');});
+  // ⑨ 門Xが測れない——per が唯一の必須条件
+  //   ※Ω72未満には出さない——門Xは買付判定の関門なので、監視枠(72)にも届かない社で
+  //     「市場データが無い」と鳴らすのは作業を増やすだけで判断を動かさない（実測135社→絞ると激減）。
+  if(!(per>0)&&(parseFloat(r.evalScore)||0)>=72) add('warn','per','<b>per が無い</b>＝門X（三段関門の第二）が未評価のまま',
+    'E[r]を一切算出できない。market_fetch.py か Alpha Vantage の GLOBAL_QUOTE で株価を入れ、原本EPSで per を出す');
+  // ⑩ 原本の鮮度
+  const age=t=>{if(!d[t])return null;const x=new Date(d[t]);return isNaN(x)?null:Math.floor((Date.now()-x.getTime())/864e5);};
+  const ea=age('erdate'), da=age('ddate');
+  if(ea!=null&&ea>300) add('warn','erdate',`直近決算が <b>${ea}日前</b>（300日超）`,'per/E[r]の前提が古い。決算後に eps/per を更新せよ');
+  if(da!=null&&da>90) add('warn','ddate',`市場データが <b>${da}日前</b>（90日超）`,'market_fetch.py → market_merge.py で更新');
+  // ⑪ 導出で決まる欄に、導出値と違う値が焼き付いていないか（陳腐化の芽）
+  const nde=num('nde'), p3=num('p3');
+  if(p3!=null&&nde!=null){const dv=nde<0?95:nde<1?85:nde<2.5?70:50;
+    if(p3!==dv)add('warn','p3',`p3=${p3} は nde=${nde} の導出値 ${dv} と違う（逸脱評価）`,'根拠が無ければ空欄へ戻す（門が機械導出する＝ndeを直せば追随する）');}
+  const f5=num('f5'), dis=d.disrupt||'settled';
+  if(f5!=null){const dv=dis==='threat'?45:dis==='unsettled'?65:85;
+    if(f5!==dv)add('warn','f5',`f5=${f5} は disrupt=${dis} の導出値 ${dv} と違う（逸脱評価）`,'根拠が無ければ空欄へ戻す');}
+  // ⑫ キル・二本柱は**入れない**（v9.9.54の初回実測で設計を是正）。
+  //   全317社で回すと kill 101件 / pillar 231件 が鳴り、**287/317社にバッジが点いた**。
+  //   どちらも「データが壊れている」ではなく**採点の正当な結果**で、Ω・ティア・色・出口判定として
+  //   既に画面に出ている。これを混ぜると『鳴りすぎる警報は鳴らないのと同じ』
+  //   （audit_deadweight の教え）になり、本当の事故が埋もれる。**この検査はデータの健全性だけを見る。**
+  const rank={err:0,warn:1};
+  return W.sort((a,b)=>rank[a.lv]-rank[b.lv]);
+}
+// 行に出すバッジ。件数だけ見せ、詳細は title と展開で読む（採点・順位には一切不介入）
+function ccfAuditBadge(W,key){
+  if(!W||!W.length)return '';
+  const e=W.filter(x=>x.lv==='err').length, w=W.length-e;
+  const col=e?'#c9534f':'#d69a3c', lbl=e?`⚠${e}${w?'+'+w:''}`:`⚠${w}`;
+  const tip=W.map(x=>(x.lv==='err'?'【要修正】':'【警告】')+x.msg.replace(/<[^>]+>/g,'')).join('\n');
+  return `<span class="ccfaud" onclick="event.stopPropagation();ccfAuditOpen(decodeURIComponent('${encodeURIComponent(key||'')}'))" title="${tip.replace(/"/g,'&quot;')}" style="font-size:10px;color:${col};border:1px solid ${col}77;background:${col}18;border-radius:4px;padding:1px 5px;margin-left:6px;cursor:pointer;white-space:nowrap">${lbl}</span>`;
+}
+// 警告の詳細を開く。**その場で直せる**ように「読込」への導線を必ず付ける
+async function ccfAuditOpen(key){
+  let o=null; try{const res=await store.get(key); o=res?JSON.parse(res.value):null;}catch(e){}
+  if(!o||!o.data){alert('台帳の記録が読めませんでした');return;}
+  const W=ccfAudit(o.data,o.r||{},o.coerce||[]);
+  const nm=o.data.nm||key.slice(key.indexOf(':')+1);
+  const rows=W.map(x=>`<div style="padding:9px 11px;border-radius:8px;margin-top:7px;background:${x.lv==='err'?'#c9534f14':'#d69a3c12'};border:1px solid ${x.lv==='err'?'#c9534f55':'#d69a3c44'}">
+      <div style="font-size:12.5px;color:var(--ink)"><b style="color:${x.lv==='err'?'#e08a86':'#d6b06c'}">${x.lv==='err'?'要修正':'警告'}</b>
+        <code style="font-size:11px;color:var(--gold-bright);margin:0 6px">${x.k}</code>${x.msg}</div>
+      <div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.7">→ ${x.fix}</div></div>`).join('');
+  const box=document.getElementById('ccfAuditModal')||(()=>{const el=document.createElement('div');el.id='ccfAuditModal';
+    el.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:16px';
+    el.onclick=e=>{if(e.target===el)el.remove();};document.body.appendChild(el);return el;})();
+  box.innerHTML=`<div style="background:var(--panel,#15161a);border:1px solid var(--gold-line);border-radius:14px;max-width:660px;width:100%;max-height:82vh;overflow:auto;padding:18px 20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <h2 class="serif" style="margin:0;font-size:1.15em;color:var(--gold-bright)">${nm} の健全性検査</h2>
+      <button onclick="document.getElementById('ccfAuditModal').remove()" style="background:transparent;border:1px solid var(--dim);color:var(--dim);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">閉じる</button></div>
+    <div style="font-size:11.5px;color:var(--muted);margin:6px 0 2px">要修正 ${W.filter(x=>x.lv==='err').length}件／警告 ${W.filter(x=>x.lv==='warn').length}件。<b>採点には一切影響しない</b>——事故を人の注意力に頼らず出すための検査。</div>
+    ${rows||'<div style="font-size:13px;color:var(--jade);margin-top:10px">警告なし。</div>'}
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button onclick="document.getElementById('ccfAuditModal').remove();loadIt(decodeURIComponent('${encodeURIComponent(key)}'))" style="padding:8px 14px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:12.5px;font-weight:600;cursor:pointer">Ⅲ採点機で開いて直す ↗</button>
+      <button onclick="ccfCopyAsk('${(nm+'').split(/\s/)[0]}',this)" style="padding:8px 14px;background:linear-gradient(180deg,rgba(84,184,138,.24),rgba(84,184,138,.08));border:1px solid rgba(84,184,138,.45);border-radius:7px;color:#8fc9a4;font-size:12.5px;cursor:pointer">再審査の依頼文をコピー</button></div>
+    <div style="font-size:10.5px;color:var(--dim);margin-top:10px;line-height:1.7">※ブラウザの台帳には <code>_meta</code>（根拠・空欄理由）が入らないので、<b>根拠の被覆率は端末側の <code>night/validate_packs.py</code></b> が見る。ここは門が持つ情報だけで判る事故に絞っている（二層で守る）。</div>
+  </div>`;
+}
+// Ⅳ台帳の先頭に出すサマリ。**何件あるかを常に見えるところに置く**のが要点
+function ccfAuditSummary(items){
+  let err=0,warn=0,bad=0; const top=[];
+  (items||[]).forEach(it=>{const W=ccfAudit(it.d,it.r||{},it.coerce);
+    if(!W.length)return; bad++; const e=W.filter(x=>x.lv==='err').length;
+    err+=e; warn+=W.length-e; if(e)top.push({nm:it.nm,e,k:it.k});});
+  if(!bad)return `<div style="font-size:11.5px;color:var(--jade);margin:4px 0 8px">✓ 健全性検査：警告ゼロ（${(items||[]).length}社）</div>`;
+  top.sort((a,b)=>b.e-a.e);
+  const lst=top.slice(0,6).map(x=>`<span onclick="ccfAuditOpen(decodeURIComponent('${encodeURIComponent(x.k)}'))" style="cursor:pointer;color:#e08a86;border-bottom:1px dotted #e08a86;margin-right:9px">${x.nm}(${x.e})</span>`).join('');
+  return `<div style="font-size:11.5px;margin:4px 0 8px;padding:8px 11px;border-radius:8px;background:rgba(201,166,74,.07);border:1px dashed rgba(201,166,74,.35);line-height:1.8">
+    <b style="color:var(--gold-bright)">健全性検査</b>　<b style="color:#e08a86">要修正 ${err}件</b>／警告 ${warn}件　<span style="color:var(--dim)">（${(items||[]).length}社のうち ${bad}社に何かある）</span>
+    ${top.length?`<br><span style="color:var(--dim)">要修正の多い社：</span>${lst}`:''}
+    <br><span style="color:var(--dim)">行の ⚠ を押すと中身と直し方が出る。<b>採点には一切影響しない</b>——後からΩが動く事故を、人の注意力に頼らず先に出すための検査。</span></div>`;
 }
 // ── 門X裁きⅠ（単一実装・v9.9.39 切り出し）───────────────────────────────────
 // Ⅵ買付順位の🟢投下可判定と、検証器 night/score_all.js が同じ式を使うための切り出し。
@@ -2833,7 +2978,7 @@ async function renderPlan(){
   const pb=$('planBox'); if(!pb)return;
   let keys=[]; try{const res=await store.list('g7:');keys=res?res.keys:[];}catch(e){}
   const items=[];
-  for(const k of keys){try{const res=await store.get(k);if(res){const o=JSON.parse(res.value);if(o.data&&o.r)items.push({k,d:o.data,r:o.r});}}catch(e){}}
+  for(const k of keys){try{const res=await store.get(k);if(res){const o=JSON.parse(res.value);if(o.data&&o.r)items.push({k,d:o.data,r:o.r,coerce:o.coerce||[]});}}catch(e){}}
   if(!items.length){pb.innerHTML=ccfMonthPlanBox([])+'<div style="color:var(--dim);font-size:13px;margin-top:6px">個別の買付順位は、Ⅲ採点機で銘柄を投入すると自動生成される（投下可が出れば上の城枠に配分される）。</div>';return;}
   const num=x=>parseFloat(x)||0;
   // v9.9.30: 現在保有pos%はⅦ資産の実額(pf:portfolio)から都度算出——手入力d.posは記帳凍結で陳腐化し、
@@ -2867,7 +3012,7 @@ async function renderPlan(){
     // 買付順位の合成優先度: 格0.6 + 期待CAGR(X期待%を点数化)0.4。門X合格線12%=50点・±10ptで0-100。E[r]欠損はerPt=0=群内末尾(v9.9.30)。保留は順位に不介入(表示のみ)。格evalScore・採点・合否には無影響=表示順のみ
     const erPt=(xEr!=null)?Math.max(0,Math.min(100,50+(xEr-12)*5)):0; // v9.9.30: E[r]欠損は中立50でなく0=群内末尾へ(欠損を「合格線ちょうど」と擬制すると実測E[r]8%の銘柄より上位に来る逆転が生じ、掟一〔実証値のみ〕と逆向きの誘因だった。データを埋めるほど順位が上がる方向に統一)
     const pc=s*0.6+erPt*0.4;
-    return {nm:it.d.nm||it.k.slice(3),t:it.k.slice(3),s,act,memo,room,hold,pc,layer,xEr,xPass,per,shy,g:gOut,gcap:xj.gcap,gcapSrc:xj.gcapSrc,grower:growerR,moat:mg.idx,moatOK:mg.pass,moatNA:mg.na,pos:(livePos&&livePos[it.k.slice(3).toUpperCase()]!=null)?livePos[it.k.slice(3).toUpperCase()]:num(it.d.pos),tier:it.r.tierShort||it.r.grade,epsOld:(it.d.erdate&&(Date.now()-new Date(it.d.erdate).getTime())>300*864e5)};
+    return {nm:it.d.nm||it.k.slice(3),t:it.k.slice(3),s,act,memo,room,hold,pc,layer,xEr,xPass,per,shy,g:gOut,gcap:xj.gcap,gcapSrc:xj.gcapSrc,grower:growerR,moat:mg.idx,moatOK:mg.pass,moatNA:mg.na,pos:(livePos&&livePos[it.k.slice(3).toUpperCase()]!=null)?livePos[it.k.slice(3).toUpperCase()]:num(it.d.pos),tier:it.r.tierShort||it.r.grade,audW:ccfAudit(it.d,it.r,it.coerce),audB:ccfAuditBadge(ccfAudit(it.d,it.r,it.coerce),it.k),epsOld:(it.d.erdate&&(Date.now()-new Date(it.d.erdate).getTime())>300*864e5)};
   });
   const lcol=['var(--gold-bright)','var(--jade)','var(--steel)'];
   const lname=['80+ 城の中核（8%）','77–80 城の正規（5%）','75–77 城の外郭（3%）'];
@@ -2937,7 +3082,7 @@ async function renderPlan(){
   const xtag=r=>r.xEr!=null?`<span style="font-size:11.5px;white-space:nowrap;color:${r.xPass?'var(--jade)':'var(--rust)'}" title="g=${r.g!=null?r.g.toFixed(1):'—'}%${r.gcapSrc?'（実力g_cap='+(r.gcap!=null?r.gcap.toFixed(1):'—')+'%・'+r.gcapSrc+'）':''}">E[r]${r.xEr.toFixed(0)}%${r.xPass?'✓':'✗'}${(r.gcap!=null&&r.g!=null&&r.gcap<=r.g+0.05)?'<span style="color:#d69a3c" title="成長gが実力g_capで抑えられている（実績cagrではなく実力側が効いた）">⌄</span>':''}</span>`:'<span style="font-size:11px;color:var(--dim)">E[r]判定不能</span>';
   // 各行の依頼文コピー(門2審査／決算点検)——銘柄はtで一意。表示・コピーのみで採点に不介入
   const reqbtns=r=>`<span style="white-space:nowrap;margin-left:8px"><button onclick="ccfCopyAsk('${r.t}',this)" title="門2審査プロトコル全文＋${r.t}をコピー" style="padding:4px 9px;background:linear-gradient(180deg,rgba(84,184,138,.24),rgba(84,184,138,.08));border:1px solid rgba(84,184,138,.45);border-radius:6px;color:#8fc9a4;font-size:11px;cursor:pointer">審査</button><button onclick="ccfCopyKessanOne('${r.t}',this)" title="決算点検依頼文＋${r.t}をコピー" style="margin-left:4px;padding:4px 9px;background:linear-gradient(180deg,rgba(214,154,60,.24),rgba(214,154,60,.08));border:1px solid rgba(214,154,60,.5);border-radius:6px;color:#d6b06c;font-size:11px;cursor:pointer">決算</button></span>`;
-  const brow=(r,i,tag,extra)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${tag}${i+1}</b></span><span class="ln">${r.nm}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}${r.epsOld?'<span style="font-size:10px;color:#c0894a;margin-left:6px" title="原本決算期が300日超——E[r]/PERの前提が古い。決算後にeps/perを更新せよ">⏳eps古</span>':''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span>${xtag(r)}${extra||''}${reqbtns(r)}</div>`;
+  const brow=(r,i,tag,extra)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${tag}${i+1}</b></span><span class="ln">${r.nm}${r.audB||''}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}${r.epsOld?'<span style="font-size:10px;color:#c0894a;margin-left:6px" title="原本決算期が300日超——E[r]/PERの前提が古い。決算後にeps/perを更新せよ">⏳eps古</span>':''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span>${xtag(r)}${extra||''}${reqbtns(r)}</div>`;
   // 城(総資産の40%)内の配分を自動表示(表示のみ・採点/サイズ規律に不介入)。城内=格層目標8/5/3%(対総資産)÷40%。
   //   今月=各投下可の「目標−現在保有%(pos)」の不足分で按分(B案②:不足銘柄へ厚く・合計100%)。posは保有比率入力。
   const CITY=40, tw=r=>[8,5,3][r.layer]||0, gap=r=>Math.max(0,tw(r)-(r.pos||0)), passGap=pass.reduce((a,r)=>a+gap(r),0);
