@@ -186,13 +186,22 @@ def is_jp(t):
     return bool(re.fullmatch(r"\d{4,5}(?:\.T)?", t))
 
 def load_holdings():
-    """点検対象＝決算監視の正本リスト。優先: kanshi_list.json(28社の監視セット)。
+    """点検対象＝決算監視の正本リスト。優先: kanshi_list.json(監視セット・キーは list)。
        無ければ holdings.json(保有+質80+)。日本株コードはSEC点検不可ゆえ除外し注記する
        （日本株の決算監視は Stage2完走後の EDINET 経路で別途対応）"""
     for p in KANSHI_PATHS:
         if os.path.exists(p):
             cfg = json.load(open(p, encoding="utf-8"))
-            tk = [t.strip().upper() for t in (cfg.get("tickers") or []) if t.strip()]
+            # 2026-07-30 是正: make_kanshi.py が書くキーは **"list"**。ここは "tickers" しか
+            #   読んでおらず、ファイルが在ってパースも通るのに中身がゼロ件になり、**黙って
+            #   holdings.json へフォールバック**していた（画面には正常な行に見える
+            #   「監視リスト: ./holdings.json → 保有3…」だけが出る）。実害: 監視33社のうち
+            #   3社しか点検されず、ADBE/NVDA/MA/APH/IRMD/TSM 等が一度も見られていなかった。
+            #   pin(手で足した銘柄)も対象に含める。旧キー "tickers" は後方互換で残す。
+            tk = [t.strip().upper() for t in
+                  ((cfg.get("list") or cfg.get("tickers") or []) + (cfg.get("pin") or []))
+                  if t.strip()]
+            tk = sorted(set(tk))
             us = [t for t in tk if not is_jp(t)]
             jp = [t for t in tk if is_jp(t)]
             if us:
@@ -200,6 +209,8 @@ def load_holdings():
                 if jp:
                     print(f"  ※日本株{len(jp)}社はSEC点検不可のため除外→EDINET経路へ: {jp}")
                 return sorted(set(us))
+            # フォールバックは**黙って**行わない——上の事故は「静かな縮退」が原因だった
+            print(f"⚠ {p} は在るが点検可能な銘柄が0件（キー list/tickers/pin を確認）→ holdings.json へ退避")
     for p in HOLD_PATHS:
         if os.path.exists(p):
             cfg = json.load(open(p, encoding="utf-8"))

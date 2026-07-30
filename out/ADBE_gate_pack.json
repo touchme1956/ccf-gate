@@ -16,7 +16,7 @@
  "dilNet": -3.67,
  "acc": "usgaap",
  "eq": "pos",
- "acq5": "no",
+ "acq5": "yes",
  "eps": 17.26,
  "expiry": "no",
  "moatdecay": "no",
@@ -58,7 +58,7 @@
   "reportDate": "2025-11-28",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/796343/000079634326000003/adbe-20251128.htm",
-  "auditDate": "2026-07-29",
+  "auditDate": "2026-07-30",
   "model": "Claude Opus 5",
   "kenshi": [
    "2026-07-28 市場データ更新(market_fetch_free・鍵なし経路): px 253.135→253.4 / per 14.92→14.93 / mcap None→108.2018 / shy 10.44→10.43 / beta 1.384→1.381。shyは門の定義「純還元(現金還元−希薄化)」に合わせ新株発行・自己株処分を控除したネットへ変更",
@@ -79,7 +79,8 @@
    "2026-07-29 roic 35.6→92.2 / roicg 27.9→29.2 / roict down→up に是正。旧値はいずれも根拠が無く、SEC XBRLの5年系列から再現できなかった（旧roic 35.6 はのれん除外ROICとしてはどの年とも一致しない）。5年平均を採ったのはMAほか既存パックの作法に合わせたため。※この行で『台帳のroic欄に直近年と5年平均の二つの定義が同居している』と書いたが、**それは自分の誤りだった**——門式は hachimon_fetch に一つだけ明文で定まっている（投下資本 = 自己資本 + 有利子負債 − のれん − 無形・直近年）。自分がのれんのみ控除の5年平均で照合したため『どちらとも一致しない社が9社』と出ただけで、定義の分裂は存在しない。night/audit_roic_def.py は作らない。",
    "2026-07-29 acq5 2.8 → 'no' に是正。**この欄はyes/noの列挙なのに数値 2.8 が入っていた**。門は `acq5==='no'` でのみ『のれん込みROIC乖離 −6』を免除するので、数値は文字列比較に一致せず**罰が黙って効いていた**（実測でΩ 80.7→75.2 の差）。門のソース自身が『遺産のれん——減点免除（Visa/**Adobe**型の誤爆防止・v9.1）』と名指ししている、まさにその誤爆だった。同型の不正値は全317パック中38社にあり、うち乖離>15ptで実害が出ているのは9社（RMD/ADBE/MSA/INTU/PAYX/EME/HALO/AMBI/CLMB）。",
    "2026-07-29【本日の自分の是正を取り消し】roic/roicg/roict を採取器の門式へ戻した（{'roic': 92.2, 'roicg': 29.2, 'roict': 'up'} → {'roic': 158.6, 'roicg': 39.9, 'roict': 'up'}）。本日いったん『のれんのみ控除・5年平均』へ書き換えたが、これは**規約違反だった**——門式は hachimon_fetch に明文で 投下資本 = 自己資本 + 有利子負債 − のれん − **無形**、**直近年**、IC が自己資本の2割未満なら算出不能（絶対のルール7(b)）と定まっている。ADBEの旧値35.6は依然として門式のどの年とも一致せず根拠も無かったので、置き換えたこと自体は正しいが、置いた値の定義が誤っていた。**台帳の値が食い違って見えたら、まず後から書かれた記録と規約を探すこと。**",
-   "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均112.8%・σ26.9pt・CV23.8%）。"
+   "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均112.8%・σ26.9pt・CV23.8%）。",
+   "2026-07-30 acq5 'no' → **'yes'**（四半期点検 kessan_check.py の要審査を受けた是正）。事実: 原本 10-Q FY2026 Q2（四半期末 2026-05-29・2026-06-15提出・adbe-20260529.htm）NOTE 3 ACQUISITIONS で **Semrush Holdings を $1,874百万で買収完了(2026-04-28)**、のれん +$1,251百万。総資産$29,933百万に対し取得価額は**6.26%**。**二つの規約が食い違ったので定義側を採った**——(a) index.html の acq5 定義は「取得価額が総資産5%超」＝6.26%で **yes**。(b) night/fix_acq5.py の機械規則は「今あるのれんの何割が直近5年に入ってきたか(yes≥30%/no<10%)」＝1,251÷14,108=**8.9%で no**。(b)を採らない理由: この規則は CLAUDE.md によれば「DXCMの2千万$の揺れやTRNの減損からの戻りを買収と誤判定しない」ための**小額ノイズ除け**であって、$18.7億の実買収を見逃す想定ではない。Adobeは2018年Marketo/Magento由来の**遺産のれん$12,857百万という巨大な土台**があるため、実額で大型の買収でも比率が機械的に希薄化される＝**分母が大きい会社で(b)は機能しない**。acq5が答えるべき問い「ROIC乖離が直近の資本配分に由来するか」に対し、総資産比で測る(a)のほうが正しく応答する。**影響: Ω 81.2 → 75.2**（ティア 最上位→城の外郭、目標ウェイト 8%→3%）。門が acq5!=no のとき「のれん込みROIC乖離 −6」を課すため（roic158.6 vs roicg39.9 の4倍乖離）。**⚠ 再発注意: `python3 night/fix_acq5.py --write` を回すと(b)の規則で'no'へ戻る。戻す前にこのkenshiを読むこと**（絶対のルール7-b「食い違って見えたら、まず後から書かれた記録と規約を探す」）。なお同10-Qでは (i) Publishing & Advertising 部門で**のれん減損 $70百万**、(ii) 営業利益率が前年同期比 **−2.1pt**（売上YoYは+12.7%）も確認した。erosion=emerging / disrupt=unsettled は**据置**——一段進めると門Xで落選する（実測 Ω78.8/E[r]10.4%）ほど効く欄なので、四半期1回の利益率低下だけでは動かさない。**次の四半期で利益率低下が続くかを見る**。"
   ],
   "evidence": {
    "dom": "**原本にシェアの数値開示なし＝刻みを導けないため空欄**。10-K FY2025(2025-11-28) Item1 COMPETITION 全文を確認したが、自社シェアも上位N社構造も一切数値が無く、むしろ逆方向の記述が並ぶ: 『We participate in a highly competitive and rapidly evolving environment where our competitors include companies of various sizes ... new entrants, and AI or cloud-native companies』『The markets for our solutions are characterized by rapid technological innovation, new industry standards, evolving distribution and sales models, **limited barriers to entry**, short product lifecycles, customer price sensitivity ... and the frequent entry of new solutions or competitors』。分野別も競合の列挙のみで数値なし(creative professionals向け: 『face broad competition from both established and emerging players』／marketing professionals向け: 『face broad competition from large, established enterprise software and cloud companies, point solutions from smaller, specialized companies』)。Item1A にも『Our competitors include companies with significant sales and research and development resources』『we face increasing competition from companies offering generative and agentic AI solutions』とあるのみ。旧dom=85の根拠は『Adobe PostScript/PDF standards』(実体は Publishing and Advertising＝売上の1.1%のレガシー区分の説明文)と『flagship creative applications』であり、**いずれもシェアの証拠ではない**。しかも旧evidence自身が『明示的シェア数値はhitsになし』と自認しながら85を入れていた。(出典: 10-K FY2025 Item 1 COMPETITION / Item 1A / https://www.sec.gov/Archives/edgar/data/796343/000079634326000003/adbe-20251128.htm)",
@@ -115,7 +116,7 @@
    "roic": "機械算出 2025年: NOPAT 7,107,142,203（営業利益 8,706,000,000×(1−実効税率18.4%)） ÷ IC 4,481,000,000＝自己資本 11,623,000,000 + 有利子負債 6,210,000,000 − のれん 12,857,000,000 − 無形 495,000,000。**IC/自己資本=38.6%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）｜有利子負債の内訳: LongTermDebt(総額) + DebtCurrent(総額)",
    "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 11,623,000,000 + 有利子負債 6,210,000,000)＝のれん込み。roic(除外)との差が買収規律の指標",
    "roict": "機械算出: のれん除外ROIC 5年系列 110.6% / 122.4% / 84.8% / 87.7% / 158.6%（最古→直近の差で判定）",
-   "acq5": "【2026-07-29 是正・原本で確定】直近5年に大型買収なし＝**no**。根拠(1) のれん残高がほぼ動いていない: FY2021 12.67 → FY2022 12.79 → FY2023 12.80 → FY2024 12.79 → **FY2025 12.86十億$**（10-K FY2025 連結貸借対照表 Goodwill 12,857 / 前年 12,788、単位百万$）。5年で+1.5%＝買収による投下資本の増加は無い。根拠(2) FY2025 10-K に Business Combination の注記が存在しない。根拠(3) 唯一の大型案件 Semrush Holdings（約19億$）は『On November 18, 2025, we **entered into a definitive agreement** to acquire… The transaction is subject to regulatory approvals and customary closing conditions and is **expected to close in the first half of fiscal 2026**』＝**当期は未完了**。（Figma は2023年に破談。のれん除外ROICの高さは買収ではなく自社株買いによる自己資本の縮小に由来する）"
+   "acq5": "【2026-07-30 四半期点検で是正 'no' → 'yes'】原本 10-Q FY2026 Q2（四半期末 2026-05-29・2026-06-15提出・adbe-20260529.htm）NOTE 3 ACQUISITIONS: 「On April 28, 2026, we completed the acquisition of Semrush Holdings, Inc., a publicly held brand visibility platform company, for **$1.87 billion**, primarily in cash consideration」。Purchase Price Allocation: Total purchase price **$1,874百万**（Purchased technology 415 / Customer contracts and relationships 107 / Trademarks 60 / Cash 262 / Other net liabilities (221) / **Goodwill 1,251**）。連結貸借対照表 Total assets **$29,933百万**。**取得価額 1,874 ÷ 総資産 29,933 = 6.26% > 5%** ＝ 門の acq5 定義（index.html「直近5年に取得価額が総資産5%超の買収があれば yes」）を満たす。"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
