@@ -2691,60 +2691,49 @@ function ccfSetMonthAmt(el){
   if(typeof renderPlan==='function')renderPlan();
 }
 const ccfYen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
-// 今月の買付プラン（何を何%買うか・一目で明記）。網:城＝現在ウェイト(資産タブ pf:weights)を目標60/40へ寄せる(不足側に厚く)。城は投下可がある時だけ今月%(gap按分)で内訳。投下可ゼロ or 城充足なら網へ。
+// ── 今月の買付プラン（v9.9.53・2026-07-30 ユーザー明示指示で網を撤去）─────────────
+// **門は個別銘柄のための門**。指数(網)を何円積むかは門の裁きではないので、この箱からは外した。
+// 入力欄の意味は「今月の入金総額」から **「今月の個別枠」** へ変更——入れた金額は
+// **全額が投下可の各社へ配られる**（網へ回る分を差し引かない）。網へいくら回すかはDCA側で決める。
+// 配分の規約は不変: 各社の「目標ウェイト − 現在保有%」の不足分で按分（B案②・不足上位に厚い）。
+// 端数の行き先だけ変わった——網が無くなったので**買付順位1位へ寄せる**（pc順＝買う順の先頭）。
 function ccfMonthPlanBox(pass,gap,passGap,tw,CITY){
-  pass=pass||[]; gap=gap||(()=>0); passGap=passGap||0; tw=tw||(()=>0); CITY=CITY||40;
-  let wt=null; try{wt=JSON.parse(localStorage.getItem('pf:weights')||'null');}catch(e){}
-  const haveW=wt&&isFinite(+wt.net)&&isFinite(+wt.city), netNow=haveW?+wt.net:60, cityNow=haveW?+wt.city:40;
-  const netShort=Math.max(0,60-netNow), cityShort=Math.max(0,40-cityNow);
-  let cityPct;
-  if(!pass.length){ cityPct=0; }
-  else if(netShort+cityShort<=0){ cityPct=40; }
-  else { cityPct=Math.round(cityShort/(netShort+cityShort)*100); }
-  const nm=[]; if(cityPct>0&&passGap>0){ pass.forEach(r=>{ const abs=cityPct*(gap(r)/passGap); if(abs>=0.5)nm.push({n:r.nm,p:abs,tw:tw(r)}); }); }
-  const cityAbs=nm.reduce((a,x)=>a+x.p,0), netFinal=Math.round(100-cityAbs);
-  // v9.9.51: 入金額があれば円へ落とす。城は100円単位で切り捨て、**端数は必ず網へ**——
-  //   網は口数を選ばず買えるので端数を吸える。合計は入金額とぴったり一致する（現金を遊ばせない）。
+  pass=pass||[]; gap=gap||(()=>0); passGap=passGap||0; tw=tw||(()=>0);
   const AMT=ccfMonthAmt();
-  let cityYen=0;
-  if(AMT>0)nm.forEach(x=>{ x.yen=Math.floor(AMT*x.p/100/100)*100; cityYen+=x.yen; });
-  const netYen=AMT-cityYen;
-  const chip=(lbl,pct,col,sub,yen)=>`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 12px;border-radius:8px;background:${col}14;border:1px solid ${col}44;margin-top:6px"><span style="font-size:13.5px;color:var(--ink)">${lbl}${sub?`<span style="font-size:10.5px;color:var(--dim);margin-left:6px">${sub}</span>`:''}</span><span style="white-space:nowrap">${yen!=null?`<span style="font-size:11.5px;color:var(--dim);margin-right:8px">${pct}%</span><span style="font-size:18px;font-weight:700;color:${col}">${ccfYen(yen)}</span>`:`<span style="font-size:18px;font-weight:700;color:${col}">${pct}%</span>`}</span></div>`;
-  let body=chip('網（ETF・自動積立）',netFinal,'#9bb0d2', pass.length? '土台・無条件で積立':'投下可ゼロ→今月は全額ここ', AMT>0?netYen:null);
-  if(nm.length){ nm.forEach(x=>{ const half=x.yen!=null?Math.floor(x.yen/2/100)*100:null;
-    body+=chip('城 '+x.n, Math.round(x.p),'#c9a64a','個別・投下可（'+x.tw+'%枠）'+(half!=null?`・階段 ${ccfYen(half)}＋${ccfYen(x.yen-half)}`:''), x.yen!=null?x.yen:null); }); }
-  else if(pass.length){
-    // v9.9.52(2026-07-30): 城の行が消える理由は**二つあり、原因が違えば打ち手も違う**のに、
-    //   従来はどちらの場合も「城40%＝目標40%に充足」の一文しか出さなかった＝**別の原因の説明文を出していた**。
-    //   実害: 入金額を入れても城の行が出ず、画面の説明（網/城の比率）を見ても理由が判らない状態になった。
-    //   (A) cityPct=0 … 網/城の比率で城が目標に充足＝城枠そのものが今月ゼロ
-    //   (B) passGap=0 … 城枠はあるが、投下可が**全て目標ウェイトに到達済み**（不足按分の分母がゼロ）
-    //   (C) それ以外 … 按分後の各行が0.5%未満で表示から落ちた
+  const nm=[]; if(passGap>0){ pass.forEach(r=>{ const p=100*(gap(r)/passGap); if(p>=0.5)nm.push({n:r.nm,p,tw:tw(r)}); }); }
+  if(AMT>0&&nm.length){
+    let s=0; nm.forEach(x=>{ x.yen=Math.floor(AMT*x.p/100/100)*100; s+=x.yen; });
+    nm[0].yen+=AMT-s;                      // 端数は買付順位1位へ（合計を個別枠にぴったり一致させる）
+  }
+  const chip=(lbl,pct,sub,yen)=>`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 12px;border-radius:8px;background:#c9a64a14;border:1px solid #c9a64a44;margin-top:6px"><span style="font-size:13.5px;color:var(--ink)">${lbl}${sub?`<span style="font-size:10.5px;color:var(--dim);margin-left:6px">${sub}</span>`:''}</span><span style="white-space:nowrap">${yen!=null?`<span style="font-size:11.5px;color:var(--dim);margin-right:8px">${pct}%</span><span style="font-size:18px;font-weight:700;color:#c9a64a">${ccfYen(yen)}</span>`:`<span style="font-size:18px;font-weight:700;color:#c9a64a">${pct}%</span>`}</span></div>`;
+  let body='';
+  if(nm.length){
+    nm.forEach((x,i)=>{ const half=x.yen!=null?Math.floor(x.yen/2/100)*100:null;
+      body+=chip(`<b>${i+1}</b>　${x.n}`, Math.round(x.p), `目標${x.tw}%枠`+(half!=null?`・階段 ${ccfYen(half)}＋${ccfYen(x.yen-half)}`:''), x.yen!=null?x.yen:null); });
+  }else if(!pass.length){
+    body=`<div style="font-size:12px;color:var(--dim);margin-top:8px;padding:8px 10px;border:1px dashed rgba(201,166,74,.35);border-radius:8px;line-height:1.75"><b>🟢投下可がゼロ＝今月は個別を建てない。</b>三段関門（Ω75+ ∧ 門X4条件 ∧ 絶対MOAT指数70+）を同時に満たす銘柄が現時点で無い。押し目待ちが開通したらここに出る。</div>`;
+  }else{
+    // 投下可はいるのに配れない＝不足按分の分母がゼロ。原因を名指しで出す（v9.9.52の診断を維持）
     const rowsTxt=pass.map(r=>`${r.nm} 保有${(r.pos||0).toFixed(1)}%${(r.pos||0)>=tw(r)?'≧':'&lt;'}目標${tw(r)}%`).join('／');
-    let why;
-    if(cityPct<=0){
-      why=`<b>城枠が今月ゼロ</b>——網/城の現在ウェイトが 網${netNow.toFixed(0)}%／城${cityNow.toFixed(0)}% で、城が目標40%に充足しているため新規資金は網へ寄せる。押し目待ちが開通するか、網が増えて城が薄まれば城枠が開く。`;
-    }else if(!(passGap>0)){
-      why=`<b>投下可${pass.length}社が全て目標ウェイトに到達済み</b>——今月の城枠${cityPct}%は「目標−現在保有」の不足分で按分する規約（B案②）なので、不足がゼロなら按分先が無く網へ回る。<br><span style="color:var(--muted)">${rowsTxt}</span><br>現在保有%は<b>Ⅶ保有の実額</b>から自動算出（無い銘柄のみⅢ採点機の手入力pos）。<b>保有していないのに到達済みと出るならpos欄が実態と違う</b>——Ⅶ保有を実額で入れ直すか、採点機のposを直せば城の行が出る。`;
-    }else{
-      why=`按分後の各行が0.5%未満のため表示から落ちた（城枠${cityPct}%・不足合計${passGap.toFixed(1)}%）。`;
-    }
-    body+=`<div style="font-size:11.5px;color:var(--dim);margin-top:8px;padding:8px 10px;border:1px dashed rgba(201,166,74,.35);border-radius:8px;line-height:1.75">城（個別）が今月は出ない理由：${why}</div>`;
+    const why=(passGap>0)
+      ?`按分後の各行が0.5%未満のため表示から落ちた（不足合計${passGap.toFixed(1)}%）。`
+      :`<b>投下可${pass.length}社が全て目標ウェイトに到達済み</b>——個別枠は「目標−現在保有」の不足分で按分する規約（B案②）なので、不足がゼロなら配る先が無い。<br><span style="color:var(--muted)">${rowsTxt}</span><br>現在保有%は<b>Ⅶ保有の実額</b>から自動算出（無い銘柄のみⅢ採点機の手入力pos）。<b>保有していないのに到達済みと出るならpos欄が実態と違う</b>——Ⅶ保有を実額で入れ直すか採点機のposを直せば行が出る。`;
+    body=`<div style="font-size:11.5px;color:var(--dim);margin-top:8px;padding:8px 10px;border:1px dashed rgba(201,166,74,.35);border-radius:8px;line-height:1.75">今月は配分先が無い理由：${why}</div>`;
   }
   const amtRow=`<div style="display:flex;align-items:center;gap:7px;margin:9px 0 3px;flex-wrap:wrap">
-    <span style="font-size:12px;color:var(--muted)">今月の入金額</span>
+    <span style="font-size:12px;color:var(--muted)">今月の個別枠</span>
     <input id="ccfMonthAmtIn" type="text" inputmode="numeric" autocomplete="off" value="${AMT>0?AMT.toLocaleString('ja-JP'):''}" placeholder="例 17万 / 170000"
       onchange="ccfSetMonthAmt(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
       style="width:140px;padding:5px 9px;background:rgba(0,0,0,.28);border:1px solid var(--gold-line);border-radius:6px;color:var(--gold-bright);font-size:14.5px;font-weight:600;text-align:right;font-family:inherit">
     <span style="font-size:12px;color:var(--muted)">円</span>
-    ${AMT>0?`<button onclick="ccfSetMonthAmt({value:''})" title="入金額を消して%表示に戻す" style="padding:3px 9px;background:transparent;border:1px solid var(--dim);border-radius:6px;color:var(--dim);font-size:11px;cursor:pointer">消去</button>`:`<span style="font-size:11px;color:var(--dim)">——入れると下が%ではなく円で出る</span>`}
+    ${AMT>0?`<button onclick="ccfSetMonthAmt({value:''})" title="金額を消して%表示に戻す" style="padding:3px 9px;background:transparent;border:1px solid var(--dim);border-radius:6px;color:var(--dim);font-size:11px;cursor:pointer">消去</button>`:`<span style="font-size:11px;color:var(--dim)">——入れると各銘柄が%ではなく円で出る</span>`}
   </div>`;
   return `<div style="background:linear-gradient(180deg,rgba(201,166,74,.10),rgba(201,166,74,.03));border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin:4px 0 20px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><h2 class="serif" style="font-size:1.2em;color:var(--gold-bright);margin:0">今月の買付プラン</h2><span style="font-size:11px;color:var(--dim)">${AMT>0?`合計 ${ccfYen(AMT)} を按分`:'合計100%・毎月の入金を按分'}</span></div>
-    <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">現在 網${netNow.toFixed(0)}%／城${cityNow.toFixed(0)}% → 目標60/40へ<b>不足側に厚く</b>寄せる（新規資金だけでリバランス＝売却・課税なし）。${!haveW?'<b style="color:#d69a3c">※Ⅶ保有タブで金額を入れると精度が上がる（今は目標60/40で仮表示）</b>':''}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><h2 class="serif" style="font-size:1.2em;color:var(--gold-bright);margin:0">今月の買付プラン</h2><span style="font-size:11px;color:var(--dim)">${AMT>0?`${ccfYen(AMT)} を全額 投下可へ按分`:'投下可へ按分・合計100%'}</span></div>
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">🟢投下可の各社へ、<b>目標ウェイト−現在保有%</b>の不足分で按分（不足の大きい銘柄に厚い）。番号は<b>買う順</b>（pc順位）。</div>
     ${amtRow}
     ${body}
-    <div style="font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.7">網＝証券会社の自動積立で機械的に。城＝門X「投下可」の銘柄へ、上の${AMT>0?'金額':'%'}を階段指値で（1/2を現値近傍〜開通ライン・1/2をfair線=PER clamp(8+g,16,30)。投下可は現値で門X成立済みゆえ開通線は現値以上にある）。${AMT>0?'城は100円単位で丸め、<b>端数は網へ寄せて合計を入金額に一致させる</b>（網は口数を選ばず買えるので端数を吸える）。金額は配分の比率に一切触れない——<b>DCAは「いつ・いくら」、門は「どれを・買うか否か」</b>。':''}<b>売りは株価では動かさない（S1/S2/S3のみ）。</b></div>
+    <div style="font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.7">指値は階段で置く——1/2を現値近傍〜開通ライン・1/2をfair線（PER clamp(8+g,16,30)）。投下可は現値で門X成立済みゆえ開通線は現値以上にある。${AMT>0?'100円単位で丸め、<b>端数は買付順位1位へ寄せて合計を個別枠に一致させる</b>。':''}1銘柄は目標ウェイト（質80+=8/77-80=5/75-77=3%×¼ケリー）を超えない。<b>売りは株価では動かさない（S1/S2/S3のみ）。</b><br>※<b>指数（ETF）の積立は門の外</b>——門は「どれを・買うか否か」を裁く場で、指数は常に買ってよい対象ゆえ門にかけない。毎月いくら指数へ回すかはDCA側で決める（正本はCLAUDE.md 月次運用）。</div>
   </div>`;
 }
 // ── 門X裁きⅠ（単一実装・v9.9.39 切り出し）───────────────────────────────────

@@ -107,7 +107,9 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
 
  <!-- 2026-07-29 ユーザー指示: 網/城の内訳ビューを撤去し「保有一覧」の1枚に集約した。
       **網/城のウェイト計算そのものは残している**——sleeve は保有データ(各行)の属性で、
-      render() が pf:weights を書き出し、門(Ⅵ買付順位の今月プラン)が60/40リバランスの入力に使う。
+      render() が pf:weights を書き出す。※2026-07-30(v9.9.53)に門から網(ETF)を撤去したため
+      **現在この値の読み手は無い**——門の今月プランは個別枠を直接入力する方式になった。
+      網/城の60/40リバランスをDCA側で判断するときの材料として書き出しだけ残している。
       表示を消しても計算を消してはいけない（消すと門が netNow=60/cityNow=40 の既定値で
       「常に目標に充足」と判定し、リバランスが黙って死ぬ）。 -->
 
@@ -140,7 +142,7 @@ const DEFAULT={ asof:"2026-07-24", fx:150, positions:[
   {t:"RMD",  nm:"レスメド（ResMed）",            sleeve:"castle", kind:"個別",                 ccy:"USD", v:94283},
   {t:"FANG+",nm:"FANG+ 指数ETF",                sleeve:"net",    kind:"FANG+指数",            ccy:"USD", v:25936}
 ]};
-// 目標60/40の**正本は門側**（index.html の ccfMonthPlanBox が pf:weights を読んで判定する）。
+// 目標60/40の判断はDCA側（門の外）。門は個別銘柄だけを裁く＝v9.9.53で網を撤去した。
 // 2026-07-29に当ページの内訳表示を撤去したので、ここでは参照していない。数値の記録として残す。
 const TARGET={net:60, castle:40};   // eslint-disable-line no-unused-vars
 let P = load();
@@ -166,13 +168,13 @@ function render(){
  const wOf=p=> total>0 ? (+p._v/total*100) : 0;
  const net=pos.filter(p=>p.sleeve==='net'), castle=pos.filter(p=>p.sleeve==='castle'), cash=pos.filter(p=>p.sleeve==='cash');
  const netW=net.reduce((s,p)=>s+wOf(p),0), castleW=castle.reduce((s,p)=>s+wOf(p),0), cashW=cash.reduce((s,p)=>s+wOf(p),0); // 2026-07: 現金枠(IPS①「点灯不足の残余=現金」の現在値を可視化。網/城の%は総資産比のまま)
- // 現在の網/城ウェイトを門(Ⅵ買付順位の今月プラン)と共有(同origin・localStorage)
+ // 現在の網/城ウェイトを書き出す（v9.9.53で門は読まなくなった。DCA側の判断材料として保持）
  try{localStorage.setItem('pf:weights',JSON.stringify({net:netW,city:castleW,total:total}));}catch(e){}
 
  document.getElementById('total').textContent=yen(total);
  document.getElementById('asof').textContent = (P.asof? ('更新 '+P.asof) : '') + (fxRate()>0?`　$1=¥${fxRate()}`:'');
- // 目標60/40との差の表示は撤去（2026-07-29）。差の判定は門のⅥ買付順位「今月の買付プラン」が
- // pf:weights を読んで行う＝正本は門側にある（ここで二重に見せる意味が無くなった）。
+ // 目標60/40との差の表示は撤去（2026-07-29）。網/城の配分判断は門の外（DCA側）へ移した
+ // ——v9.9.53で門の今月プランから網を撤去し、門は個別銘柄だけを裁く場になった。
 
  const buyInfo=p=>{
   const sh=+p.sh||0, npx=+p.npx||0, bpx=+p.bpx||0;
