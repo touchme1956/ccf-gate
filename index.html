@@ -2,7 +2,7 @@
 <html lang="ja"><head><script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("ccf_theme")||"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}</script><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CCF Ω — 壊れない複利の門 × 未来の門（完全版・詳解）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Yuji+Syuku&display=swap" rel="stylesheet">
 <style>
 :root{
  --bg:#080a0e;--bg2:#0c0f16;--panel:#121826;--panel2:#0e131d;--line:#28344a;
@@ -241,7 +241,7 @@ html[data-theme="light"] body{
 }
 html[data-theme="light"] .fm{background:linear-gradient(180deg,#ffffff,#f5f6f9);}
 html[data-theme="light"] .statement{background:linear-gradient(180deg,#ffffff,#f4f6f9);}
-html[data-theme="light"] .gatebanner{background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(240,242,246,.7));}
+html[data-theme="light"] .gatebanner:not(.img1){background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(240,242,246,.7));}
 html[data-theme="light"] .pgnav{background:rgba(240,242,246,.92);}
 html[data-theme="light"] #scorer{
   --bg:#ffffff; --bg2:#f4f6f9; --panel:#ffffff; --panel2:#f0f3f7;
@@ -272,7 +272,13 @@ html[data-theme="soft"] #scorer .duo{background:rgba(24,27,34,.94);}
    UI磨きレイヤー（2026-07）— 見た目のみ。採点ロジック・売却規律・JSは不変。
    ①背景の深み ②ボタンの押し心地 ③スマホ最適化 ④細部（スクロールバー等）
    ============================================================ */
-:root{--navh:58px;}
+:root{--navh:58px;
+  /* 未定義のまま14箇所で使われていた2変数を定義する。--ink-bright は fallback の #fff が
+     そのまま出ていたため、明テーマでは白文字が紙に載って不可視だった（門を置く／全米から
+     新しい銘柄を探す／保有リスト 等）。--mincho は fallback の総称 serif が出ていた */
+  --ink-bright:#ffffff;
+  --mincho:"Shippori Mincho",serif;}
+html[data-theme="light"]{--ink-bright:#1b1610;}
 
 /* ── ① 背景：金の光暈＋青の差し色＋和紙のような粒子（テーマ別） ── */
 body{background:
@@ -362,12 +368,174 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
   #themeToggle{right:12px !important;bottom:calc(74px + env(safe-area-inset-bottom)) !important;}
 }
 
+/* ============================================================
+   意匠レイヤー「金継ぎ」（2026-07）— 見た目のみ。採点ロジック・売却規律・JSは不変。
+   壊れない複利＝金継ぎ（割れ目に金を流す。壊れないものはより美しくなる）を意匠の芯に:
+   ①金継ぎの金脈背景 ②朱印 ③縦書きの銘 ④panelの隅金具 ⑤和紙の明テーマ ⑥金の読了線
+   ============================================================ */
+
+/* ── ① 金継ぎの金脈（固定層・ごく淡く。noise層(body::before)とは独立） ── */
+html::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.07;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900' viewBox='0 0 900 900'%3E%3Cg fill='none' stroke='%23c9a64a' stroke-width='1.1'%3E%3Cpath stroke-opacity='.55' d='M-20 140C120 180 200 90 320 150 400 190 470 320 610 300 700 287 760 380 920 360'/%3E%3Cpath stroke-opacity='.4' d='M420 -30C400 80 480 170 450 260 420 350 520 420 500 520 480 620 560 700 540 820 530 880 560 920 555 940'/%3E%3Cpath stroke-opacity='.35' d='M-30 620C80 600 170 680 260 650 330 627 380 700 470 690'/%3E%3Cpath stroke-opacity='.3' d='M610 300C640 360 600 420 640 470'/%3E%3Cpath stroke-opacity='.3' d='M320 150C340 100 320 60 350 20'/%3E%3C/g%3E%3Cg fill='%23c9a64a'%3E%3Ccircle cx='320' cy='150' r='1.6' fill-opacity='.5'/%3E%3Ccircle cx='610' cy='300' r='1.8' fill-opacity='.5'/%3E%3Ccircle cx='450' cy='260' r='1.4' fill-opacity='.45'/%3E%3Ccircle cx='260' cy='650' r='1.5' fill-opacity='.45'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:900px 900px;}
+html[data-theme="light"]::before{opacity:.09;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900' viewBox='0 0 900 900'%3E%3Cg fill='none' stroke='%2396731f' stroke-width='1.1'%3E%3Cpath stroke-opacity='.55' d='M-20 140C120 180 200 90 320 150 400 190 470 320 610 300 700 287 760 380 920 360'/%3E%3Cpath stroke-opacity='.4' d='M420 -30C400 80 480 170 450 260 420 350 520 420 500 520 480 620 560 700 540 820 530 880 560 920 555 940'/%3E%3Cpath stroke-opacity='.35' d='M-30 620C80 600 170 680 260 650 330 627 380 700 470 690'/%3E%3Cpath stroke-opacity='.3' d='M610 300C640 360 600 420 640 470'/%3E%3Cpath stroke-opacity='.3' d='M320 150C340 100 320 60 350 20'/%3E%3C/g%3E%3Cg fill='%2396731f'%3E%3Ccircle cx='320' cy='150' r='1.6' fill-opacity='.5'/%3E%3Ccircle cx='610' cy='300' r='1.8' fill-opacity='.5'/%3E%3Ccircle cx='450' cy='260' r='1.4' fill-opacity='.45'/%3E%3Ccircle cx='260' cy='650' r='1.5' fill-opacity='.45'/%3E%3C/g%3E%3C/svg%3E");}
+
+/* ── ⑥ 金の読了線（ページをどこまで読んだかが上端の金線で満ちていく。対応ブラウザのみ） ── */
+@supports (animation-timeline: scroll()){
+  body::after{content:"";position:fixed;top:0;left:0;height:2px;width:100%;z-index:1000;pointer-events:none;
+    background:linear-gradient(90deg,var(--gold-deep),var(--gold-bright));
+    transform-origin:0 50%;transform:scaleX(0);
+    animation:ccfProgress linear forwards;animation-timeline:scroll(root);}
+  @keyframes ccfProgress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+}
+
+/* ── ② 朱印（heroの銘の下。落款＝この門の署名） ── */
+.shuin{width:54px;height:54px;margin:20px auto 0;display:grid;place-items:center;
+  font-family:"Yuji Syuku","Shippori Mincho",serif;font-size:31px;line-height:1;color:#fff;
+  background:radial-gradient(circle at 35% 30%,#d8604a,#b5432f 70%,#9c3826);
+  border-radius:12px 9px 11px 8px;transform:rotate(-4deg);
+  box-shadow:0 4px 18px rgba(181,67,47,.45),inset 0 0 0 2px rgba(255,255,255,.30),inset 0 0 0 5px rgba(156,56,38,.9);
+  opacity:.94;user-select:none;}
+
+/* ── ③ 縦書きの銘（広い画面の左右余白。1280px未満は消える） ── */
+.tategaki{position:fixed;top:50%;left:26px;transform:translateY(-50%);z-index:4;
+  writing-mode:vertical-rl;text-orientation:upright;white-space:nowrap;
+  font-family:"Shippori Mincho",serif;font-size:13px;letter-spacing:.42em;
+  color:var(--gold);opacity:.55;pointer-events:none;user-select:none;
+  text-shadow:0 1px 8px rgba(0,0,0,.35);}
+.tategaki::after{content:"❖";margin-top:16px;font-size:9px;opacity:.8;}
+.tategaki.tr{left:auto;right:26px;font-family:"Cormorant Garamond",serif;font-style:italic;
+  text-orientation:mixed;letter-spacing:.30em;font-size:12.5px;}
+html[data-theme="light"] .tategaki{text-shadow:0 1px 8px rgba(255,255,255,.6);}
+/* 狭い画面・低い画面では本文と競合するので消す＝装飾は本文に勝たない */
+@media(max-width:1279px),(max-height:620px){.tategaki{display:none;}}
+
+/* ── ④ panelの隅金具（重箱・簞笥の金具。対角二隅のみ＝非対称の品） ── */
+.panel{position:relative;}
+.panel::before,.panel::after{content:"";position:absolute;width:26px;height:26px;pointer-events:none;opacity:.6;}
+.panel::before{top:-1px;left:-1px;border-top:2px solid var(--gold);border-left:2px solid var(--gold);border-top-left-radius:14px;}
+.panel::after{bottom:-1px;right:-1px;border-bottom:2px solid var(--gold);border-right:2px solid var(--gold);border-bottom-right-radius:14px;}
+.panel-h h3::before{content:"◆";color:var(--gold);opacity:.55;font-size:.55em;margin-right:10px;vertical-align:3px;}
+
+/* heroの銘板と金の題字（brandがゆっくり照る）
+   影は text-shadow ではなく drop-shadow で付ける——background-clip:text は文字が透明なので
+   text-shadow が文字の前面に出て潰れる。drop-shadow は描画結果に掛かるので金の艶が残る */
+.brand{background:linear-gradient(100deg,#e3c579 0%,#f6e6b8 32%,#fffaf0 50%,#f6e6b8 68%,#e3c579 100%);
+  background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.9)) drop-shadow(0 0 16px rgba(0,0,0,.75));
+  animation:ccfShimmer 7s ease-in-out infinite;}
+@keyframes ccfShimmer{0%,100%{background-position:100% 0}50%{background-position:0 0}}
+/* heroの内側は明暗どちらのテーマでも「暗い画像の上」＝配色はテーマに追随させない */
+.hero .latin{color:#ecdfc0;text-shadow:0 2px 14px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.7);}
+
+/* 金ボタンの光沢（一度だけ流れる艶） */
+#scorer .btn-g{position:relative;overflow:hidden;}
+#scorer .btn-g::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.5),transparent);
+  transform:skewX(-20deg);transition:left .55s ease;}
+#scorer .btn-g:hover::after{left:130%;}
+
+/* ── ⑤ 明テーマを「和紙」へ（青白い灰 → 生成りの紙・墨の文字。金・朱と同じ世界に住む色） ── */
+html[data-theme="light"]{
+  --bg:#f4f0e5; --bg2:#ece7d8; --panel:#fdfaf2; --panel2:#f4f0e3; --line:#ddd4bf; --codebg:#f1ecdd;
+  --ink:#28231a; --ink-soft:#4c4535; --muted:#7c7360;
+  --gold:#83641a; --gold-bright:#6f5411; --gold-deep:#5d470e; --gold-line:rgba(150,115,31,.42);
+  --pass:#26694a; --fail:#9c3b22; --blue:#33528a;
+}
+html[data-theme="light"] body{background:
+  radial-gradient(1100px 600px at 50% -160px,rgba(150,115,31,.13),transparent 60%),
+  radial-gradient(900px 560px at 88% 12%,rgba(60,95,158,.05),transparent 55%),
+  radial-gradient(760px 520px at 6% 78%,rgba(150,115,31,.06),transparent 60%),
+  linear-gradient(180deg,#f8f4ea,#f4f0e5 60%,#ede8da);}
+html[data-theme="light"] .fm{background:linear-gradient(180deg,#fdfaf2,#f5f1e4);}
+html[data-theme="light"] .statement{background:linear-gradient(180deg,#fdfaf2,#f4f0e3);}
+html[data-theme="light"] .gatebanner:not(.img1){background:linear-gradient(180deg,rgba(253,250,242,.72),rgba(244,240,229,.72));}
+/* 写真付きバナー(.img1)は写真を残す＝文字はクリームのまま。写真なしは紙の上＝墨字へ */
+html[data-theme="light"] .gatebanner:not(.img1) .gt{color:#241f16;}
+html[data-theme="light"] .gatebanner.img1 .gt{color:#f6efda;}
+html[data-theme="light"] .gatebanner.img1 .gs{color:#ded4bb;}
+html[data-theme="light"] .gatebanner.img1 .gk,html[data-theme="light"] .gatebanner.img1 .badge{color:#ecd494;}
+html[data-theme="light"] .gatebanner.img1 .badge{border-color:rgba(236,212,148,.45);}
+html[data-theme="light"] .pgnav{background:rgba(247,243,233,.92);}
+html[data-theme="light"] #scorer{
+  --bg:#fdfaf2; --bg2:#f4f0e3; --panel:#fdfaf2; --panel2:#f1ecdd;
+  --line:#ddd4bf; --line2:#cec4ab;
+  --ink:#28231a; --mut:#6b6454; --dim:#6f6857;
+  --gold:#83641a; --gold-bright:#6f5411; --gold-d:#5d470e; --gold-g:rgba(150,115,31,.1);
+  /* 判定色は暗背景前提の淡さだった。意味（緑=可・青=待ち・橙=注意・赤=不可）は保ち明度だけ落とす。
+     面の淡色(--jade-g等)は別変数なので背景は不変 */
+  --jade:#17663d; --steel:#2d5490; --rust:#a5341a; --amber:#8a5a10;
+}
+html[data-theme="light"] #scorer .duo{background:rgba(247,243,233,.94);}
+html[data-theme="light"] .tategaki{color:#6f5411;opacity:.6;}
+html[data-theme="light"] .q .cond{color:#6f5411;}
+html[data-theme="light"] .q.win .d{color:#5d5646;}
+
+/* ============================================================
+   明テーマの可読性の是正（2026-07）— 色だけ。文言・数値・判定は不変。
+   既定テーマなのに **479箇所がコントラスト基準未満**、うちページ見出し
+   （台帳／検証履歴／買付順位／検証キュー／押し目監視）は比率 1.0＝紙に白文字で
+   完全に不可視だった。原因は暗色前提のクリーム(#f5efde等)と暗いpanelが
+   ハードコードで、明テーマの上書きが .fm/.statement/.gatebanner/.pgnav の
+   4つしか無かったこと。ここで面・文字・淡色アクセントの3層をまとめて是正する。
+   ============================================================ */
+/* ① 面（panelと入れ物）を和紙へ。暗テーマ・淡テーマは一切触らない */
+html[data-theme="light"] .panel{background:linear-gradient(180deg,#fdfaf2,#f6f1e3);
+  box-shadow:0 14px 40px rgba(62,50,22,.10),inset 0 1px 0 rgba(255,255,255,.9);}
+html[data-theme="light"] .lens,html[data-theme="light"] .row,html[data-theme="light"] .q{background:rgba(40,35,26,.035);}
+html[data-theme="light"] .lens.acc{background:rgba(150,115,31,.10);}
+html[data-theme="light"] .q.win{background:linear-gradient(135deg,rgba(150,115,31,.17),transparent 75%);}
+html[data-theme="light"] .brake{background:linear-gradient(180deg,rgba(180,79,54,.10),rgba(253,250,242,.94));}
+html[data-theme="light"] .brake-h{background:rgba(180,79,54,.13);}
+html[data-theme="light"] .brake .line{background:rgba(180,79,54,.06);}
+
+/* ② 文字：暗色前提のクリームを墨へ。ただし画像の上に載るheroの題字はクリームのまま */
+html[data-theme="light"] h1,html[data-theme="light"] h2,
+html[data-theme="light"] h3,html[data-theme="light"] h4,
+html[data-theme="light"] .h2,html[data-theme="light"] .lens .ln,
+html[data-theme="light"] table.dt td.k,html[data-theme="light"] .q .v,
+html[data-theme="light"] .brake .line{color:#241f16;}
+html[data-theme="light"] .hero h1{color:#f8f0db;} /* heroは常に暗い画像の上＝再指定 */
+html[data-theme="light"] .fb{color:#6d5310;}
+html[data-theme="light"]{--muted:#6a6252;} /* 13-14pxの本文が4.5を通る濃さへ */
+
+/* ③ 淡色アクセント：インラインstyleは属性一致でしか上書きできないので値で狙う。
+   意味（緑=可・青=待ち・橙=注意・赤=不可）は保ち、明度だけ紙用に落とす */
+html[data-theme="light"] [style*="color:#8fc9a4"]{color:#155c37 !important;}
+html[data-theme="light"] [style*="color:#a3d6bd"]{color:#155c37 !important;}
+html[data-theme="light"] [style*="color:#54b88a"]{color:#155c37 !important;}
+html[data-theme="light"] [style*="color:#9bb0d2"]{color:#2d5490 !important;}
+html[data-theme="light"] [style*="color:#5d8cc2"]{color:#2d5490 !important;}
+html[data-theme="light"] [style*="color:#d69a3c"]{color:#8a5a10 !important;}
+html[data-theme="light"] [style*="color:#d6b06c"]{color:#8a5a10 !important;}
+html[data-theme="light"] [style*="color:#c0894a"]{color:#8a5a10 !important;}
+html[data-theme="light"] [style*="color:#e0c88e"]{color:#8a5a10 !important;}
+html[data-theme="light"] [style*="color:#e0917a"]{color:#a5341a !important;}
+html[data-theme="light"] [style*="color:#e3a899"]{color:#a5341a !important;}
+html[data-theme="light"] [style*="color:#ecd494"]{color:#6d5310 !important;}
+html[data-theme="light"] [style*="color:#d8d2c4"]{color:#3f3a2e !important;}
+html[data-theme="light"] [style*="color:#cfc5ab"]{color:#454033 !important;}
+html[data-theme="light"] [style*="color:#f0ecdf"]{color:#241f16 !important;}
+html[data-theme="light"] [style*="color:#f5efde"]{color:#241f16 !important;}
+html[data-theme="light"] [style*="color:#f3ecda"]{color:#241f16 !important;}
+html[data-theme="light"] [style*="color:#f6efda"]{color:#241f16 !important;}
+/* 採点機の警報帯：淡い面に淡い字だったのを濃い字へ */
+html[data-theme="light"] #scorer .f-ok{color:#155c37;}
+/* 明テーマの金ボタンは面が暗い金＝文字は白が正。暗テーマ(明るい金)の黒文字とは逆になる */
+html[data-theme="light"] #scorer .btn-g{color:#fff9ea;text-shadow:none;}
+html[data-theme="light"] #scorer .f-cut{color:#a5341a;}
+html[data-theme="light"] #scorer .f-warn{color:#7a5d13;}
+html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{color:#1b1610;}
+
 /* 動きを減らす設定の尊重 */
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{transition:none !important;animation:none !important;}
   html{scroll-behavior:auto;}
 }
 </style></head><body>
+<div class="tategaki" aria-hidden="true">壊れない複利の門</div>
+<div class="tategaki tr" aria-hidden="true">Compounding, Unbroken — CCF Ω</div>
 <nav class="pgnav">
  <button id="tab1" onclick="showPage(1)">Ⅰ 解説</button>
 <button id="tab8" onclick="showPage(8)">Ⅱ 実行手順</button>
@@ -385,6 +553,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
   <div class="brand">CCF Ω Final Gate · Complete Edition</div>
   <h1>壊れない複利の門 <span class="g">×</span> 未来の門 — 詳解</h1>
   <div class="latin">Quality, then Future &amp; Price — The Full Method with Formulas</div>
+  <div class="shuin" aria-hidden="true">門</div>
   <div class="rule"><span></span><span class="d">❖</span><span></span></div>
   <p class="sub">二つの門の全構造を、考え方から数式まで余さず記す。<br>第一の門で「壊れず優れているか」を、第二の門で「これから上げるか・払って見合うか」を裁く。</p>
  </div>
