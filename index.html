@@ -2713,7 +2713,24 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY){
   let body=chip('網（ETF・自動積立）',netFinal,'#9bb0d2', pass.length? '土台・無条件で積立':'投下可ゼロ→今月は全額ここ', AMT>0?netYen:null);
   if(nm.length){ nm.forEach(x=>{ const half=x.yen!=null?Math.floor(x.yen/2/100)*100:null;
     body+=chip('城 '+x.n, Math.round(x.p),'#c9a64a','個別・投下可（'+x.tw+'%枠）'+(half!=null?`・階段 ${ccfYen(half)}＋${ccfYen(x.yen-half)}`:''), x.yen!=null?x.yen:null); }); }
-  else if(pass.length){ body+=`<div style="font-size:11.5px;color:var(--dim);margin-top:6px;padding-left:2px">城（個別）：現在 城${cityNow.toFixed(0)}%＝目標40%に充足→今月は網へ。押し目待ちが開通したら城へ。</div>`; }
+  else if(pass.length){
+    // v9.9.52(2026-07-30): 城の行が消える理由は**二つあり、原因が違えば打ち手も違う**のに、
+    //   従来はどちらの場合も「城40%＝目標40%に充足」の一文しか出さなかった＝**別の原因の説明文を出していた**。
+    //   実害: 入金額を入れても城の行が出ず、画面の説明（網/城の比率）を見ても理由が判らない状態になった。
+    //   (A) cityPct=0 … 網/城の比率で城が目標に充足＝城枠そのものが今月ゼロ
+    //   (B) passGap=0 … 城枠はあるが、投下可が**全て目標ウェイトに到達済み**（不足按分の分母がゼロ）
+    //   (C) それ以外 … 按分後の各行が0.5%未満で表示から落ちた
+    const rowsTxt=pass.map(r=>`${r.nm} 保有${(r.pos||0).toFixed(1)}%${(r.pos||0)>=tw(r)?'≧':'&lt;'}目標${tw(r)}%`).join('／');
+    let why;
+    if(cityPct<=0){
+      why=`<b>城枠が今月ゼロ</b>——網/城の現在ウェイトが 網${netNow.toFixed(0)}%／城${cityNow.toFixed(0)}% で、城が目標40%に充足しているため新規資金は網へ寄せる。押し目待ちが開通するか、網が増えて城が薄まれば城枠が開く。`;
+    }else if(!(passGap>0)){
+      why=`<b>投下可${pass.length}社が全て目標ウェイトに到達済み</b>——今月の城枠${cityPct}%は「目標−現在保有」の不足分で按分する規約（B案②）なので、不足がゼロなら按分先が無く網へ回る。<br><span style="color:var(--muted)">${rowsTxt}</span><br>現在保有%は<b>Ⅶ保有の実額</b>から自動算出（無い銘柄のみⅢ採点機の手入力pos）。<b>保有していないのに到達済みと出るならpos欄が実態と違う</b>——Ⅶ保有を実額で入れ直すか、採点機のposを直せば城の行が出る。`;
+    }else{
+      why=`按分後の各行が0.5%未満のため表示から落ちた（城枠${cityPct}%・不足合計${passGap.toFixed(1)}%）。`;
+    }
+    body+=`<div style="font-size:11.5px;color:var(--dim);margin-top:8px;padding:8px 10px;border:1px dashed rgba(201,166,74,.35);border-radius:8px;line-height:1.75">城（個別）が今月は出ない理由：${why}</div>`;
+  }
   const amtRow=`<div style="display:flex;align-items:center;gap:7px;margin:9px 0 3px;flex-wrap:wrap">
     <span style="font-size:12px;color:var(--muted)">今月の入金額</span>
     <input id="ccfMonthAmtIn" type="text" inputmode="numeric" autocomplete="off" value="${AMT>0?AMT.toLocaleString('ja-JP'):''}" placeholder="例 17万 / 170000"
