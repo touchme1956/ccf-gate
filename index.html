@@ -2811,10 +2811,17 @@ function ccfAudit(d,r,coerced){
         '門は文字列比較で判定するので、外れた値は既定値扱いになり罰や免除が意図と逆に効く'); });
   /* ══ ③ 内部矛盾——独立に入った値どうしが定義上必ず合うはず。**単独の帯検問より強い** ══ */
   const px=num('px'), eps=num('eps'), per=num('per'), perF=num('perF');
+  // v9.9.56(2026-07-30 是正): この規則は初版で**err（要修正）**にしていたが、TSM/SAP を誤検出した。
+  //   両社は per の基準が原本根拠つきで確定済み——TSMは「px 392.795 USD(ADR) ÷ TTM希薄化後EPS 13.86 USD/ADR
+  //   （ADR 1単位=普通株5株）」、SAPは「px 179.17 USD(ADS) ÷ TTM EPS 7.62 USD」。eps欄はどちらも
+  //   **通期実績・現地通貨**（機械算出）で、per とは期間基準も通貨も違う。つまり **per=px÷eps は
+  //   この台帳では恒等式ではない**——eps欄の定義が TTM と通期実績の二つに割れているのが真の欠陥。
+  //   ブラウザは _meta.evidence.per（基準の記録）を見られないので**errに上げる資格がない**。warn へ降格し、
+  //   **_metaを見られる端末側の night/validate_packs.py に厳格版を置く**（二層で守る設計どおり）。
   if(px>0&&eps&&per>0){ const c=px/eps, dev=Math.abs(c-per)/per*100;
-    if(dev>10) add('err','per',`<b>per=${per} だが px÷eps=${c.toFixed(2)}（${dev.toFixed(0)}%差）</b>`,
-      'perはpx÷epsで定義される。ズレるのは(a)perがTTM実績・epsが年次実績で基準が違う (b)通貨混線（ADRのpxがUSD・epsが現地通貨）(c)株式分割の跨ぎ。実測: TSMはpx=USD・eps=TWDで69%差、DXCは373%差');
-    else if(dev>3) add('warn','per',`per=${per} と px÷eps=${c.toFixed(2)} が ${dev.toFixed(0)}% ずれている`,'四捨五入では説明できない差。基準(TTM/年次)と通貨を確認せよ'); }
+    if(dev>10) add('warn','per',`<b>per=${per} と px÷eps=${c.toFixed(2)} が ${dev.toFixed(0)}% ずれている</b>`,
+      '正常な差の可能性もある——(a)perがTTM実績・epsが通期実績で**期間基準が違う** (b)ADRで**通貨・株数比が違う**（TSM/SAPは原本根拠つきで確定済＝誤検出）。異常な例: DXCは373%差、GOOGL/ETNは通期epsから説明できずnull化した。**_meta.evidence.per に基準（TTM/通期・通貨・ADR比）が書いてあるか**を確認し、無ければ書くか直すこと');
+    else if(dev>3) add('info','per',`per=${per} と px÷eps=${c.toFixed(2)} が ${dev.toFixed(0)}% ずれている`,'TTMと通期実績の差として説明できる範囲'); }
   const roic=num('roic'), roicg=num('roicg'), roicEx=num('roicEx');
   if(roic!=null&&roicg!=null&&roic>0&&roicg>0&&roic<roicg*0.98)
     add('err','roic',`<b>roic=${roic}% が roicg=${roicg}% を下回る（比 ${(roic/roicg).toFixed(2)}）</b>——NOPAT&gt;0では数学的に不可能`,

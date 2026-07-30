@@ -184,6 +184,25 @@ def check(path):
                 fails.append(f"per={per_v} が帯上・shy={shy_v}% が帯下へ逆方向に外れている"
                              f"＝株数を過大に取っている疑い（複数クラス株の二重計上など）")
 
+        # --- per ≠ px/eps の恒等式検査（2026-07-30新設・門の全件点検の端末側の相方）-------------
+        # 門(ブラウザ)側の ccfAudit は _meta を持てないので warn 止まり。ここは _meta が見えるので
+        #   **基準の記録がある社を免除したうえで FAIL にできる**＝二層で守る設計の下半分。
+        # 実測の教訓（2026-07-30・全317パック）:
+        #   ・per=px÷eps は**この台帳では恒等式ではない**——eps欄の定義が TTM実績 と 通期実績 に割れている。
+        #     ADBEはTTM(93.90)を格納し、MSFT/NVDA/DXC/TSM/SAPは「機械算出…（TTMではなく通期実績）」を格納。
+        #   ・TSM/SAP は per の基準が原本根拠つきで確定済（ADRの通貨・株数比まで明記）＝**誤検出**だった。
+        #     evidence.per に基準が書いてあれば免除する。
+        #   ・書いていないのにズレる社は本物——GOOGL/ETN は通期epsから説明できずnull化、DXCは373%差。
+        px_v, eps_v = d.get("px"), d.get("eps")
+        if all(isinstance(x, (int, float)) for x in (px_v, eps_v, per_v)) and px_v > 0 and per_v > 0 and eps_v:
+            dev = abs(px_v / eps_v - per_v) / per_v * 100
+            if dev > 10:
+                basis = str(((meta or {}).get("evidence") or {}).get("per") or "")
+                if not any(w in basis for w in ("TTM", "ADR", "ADS", "通貨", "通期")):
+                    fails.append(f"per={per_v} と px/eps={px_v/eps_v:.2f} が {dev:.0f}% ずれ、"
+                                 f"_meta.evidence.per に基準の記録も無い"
+                                 f"（perがTTM・epsが通期なら evidence.per にそう書く。ADRなら通貨と株数比も）")
+
         # --- _meta の型（2026-07-29新設）--------------------------------------
         # 実害: **91パックで _meta.kenshi が配列でなく文字列**だった。ASR様式は配列が正で、
         #   道具はどれも `meta.setdefault("kenshi", []).append(...)` で追記する。文字列だと
@@ -219,6 +238,8 @@ def check(path):
         fails += [f"[JP] {x}" for x in jf]
         warns += [f"[JP] {x}" for x in jw]
     return fails, warns
+
+
 
 
 def main():

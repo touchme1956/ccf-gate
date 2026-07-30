@@ -30,7 +30,7 @@
  "geopol": 1,
  "nrr": 105,
  "beta": 1.249,
- "per": 17.24,
+ "per": null,
  "perF": null,
  "evebit": 30.6,
  "px": 334.39,
@@ -58,7 +58,7 @@
   "reportDate": "2025-12-31",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
-  "auditDate": "2026-07-18",
+  "auditDate": "2026-07-30",
   "model": "Claude Fable 5",
   "kenshi": [
    "2026-07-28 市場データ更新(market_fetch_free・鍵なし経路): px 333.188→334.39 / per 17.17→17.24 / mcap None→4089.5897 / shy 1.37→1.36 / evebit 30.5→30.6 / z 6.2→6.02。shyは門の定義「純還元(現金還元−希薄化)」に合わせ新株発行・自己株処分を控除したネットへ変更",
@@ -73,7 +73,8 @@
    "dilNet-2.01: WeightedAvgShares 2024 12.3→2025 12.1十億株(自社株買いで純減)。eps10.93=NI132.17/12.1株で整合=採取器値確認",
    "2026-07-28 絶対MOAT欠測補充: hits再採取を待たず FY2025 10-K 原文(Item 1 Competition/Intellectual Property、Item 7 Research and Development・Capital Expenditures)で irr/rep/dur を充填 → irr=70 / rep=100 / dur=85。dom(85)・moatW(85)ほか既判定は不変",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=22.8 / 5年窓=32.0。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均27.1%・σ1.9pt・CV6.9%）。"
+   "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均27.1%・σ1.9pt・CV6.9%）。",
+   "2026-07-30 **全件点検(v9.9.55)の要修正**「per ≠ px÷eps」を受け per 17.24 → null。px÷通期eps=30.59 と per=17.24 が 77% 乖離し、TTM/通期の差では説明できない。基準の記録も無いため憶測で直さず空欄にした。Ω・ティアは不変。"
   ],
   "evidence": {
    "expiry": "『obtaining copyright and patent protections for our important innovations, including AI innovations, may not be sufficient or effective』→堀は特許束/コンセッション等の期限型に依存せず(むしろ特許の有効性を自認で限定)=expiry no",
@@ -116,7 +117,8 @@
    "acq5": "5年買収累計は原本要。のれん2019 20.6→2025 33.4十億(+12.8)、hitsに『Intersect...for $4.8 billion in cash...expected to close in the first half of 2026』(FY2026・保留)。正確な5年累計は別途",
    "founder": "『Our Class B stock has 10 votes per share』『concentration of our stock ownership limits our stockholders' ability to influence corporate matters』で創業者/内部支配は原本裏付けあり。ただし創業者経営フラグの定義次第のためユーザー判定",
    "fin": "業態フラグの定義不明のため空欄(金融業ではない)",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(推定禁止)"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(推定禁止)",
+   "per": "【2026-07-30 全件点検の要修正 → 憶測で置かずnull化】旧 per=17.24 は px=334.39 から逆算すると EPS 19.40 を含意するが、原本の通期実績EPSは 10.93（機械算出・SEC XBRL）。TTMと通期の差では説明できない乖離（77%）で、per の基準（TTM/通期・通貨）も_meta に記録が無い。**もっともらしい誤値より空欄**（kessan_check_jp で確立した作法）。market_fetch.py で株価を取り直し、TTM実績EPSを明示して per を再算出せよ。この社はΩ75未満で買付対象外なので、null化による判断の変化はない（門Xが未評価になるだけ）。"
   },
   "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=6.2",
   "moatW_audit": {

@@ -9,7 +9,7 @@
  "gm": 11.1,
  "gmt": "down",
  "roict": "flat",
- "cagr": 171.8,
+ "cagr": null,
  "fcf": null,
  "ni": 2.0,
  "sbc": null,
@@ -57,7 +57,7 @@
   "reportDate": "2025-12-31",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/1099590/000109959026000006/meli-20251231.htm",
-  "auditDate": "2026-07-18",
+  "auditDate": "2026-07-30",
   "model": "Claude Fable 5",
   "kenshi": [
    "収益タグ混在: Revenues[USD]2025=28.9十億(=net revenues and financial income=総収入) と RevenueFromContractWithCustomerExcludingAssessedTax[USD]2025=20.3十億 の二系列。gm=11.1は総収入基準の営業利益率(op3,201M/総収入28,900M=11.1%)、helper opm15.7%は契約収入基準。基準差を明記し両ドラフト値を維持",
@@ -75,7 +75,8 @@
    "gmt=down確認: opm 21.0(2023)→17.4(2024)→15.7(2025)の圧縮(フィンテック構成で金融費用が原価計上+競争的価格)。roict=flatはドラフト維持だが直近2年は低下傾向",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=17.0 / 5年窓=16.0。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
-   "2026-07-29 p1 80→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均13.2%・σ5.0pt・CV37.4%）。"
+   "2026-07-29 p1 80→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均13.2%・σ5.0pt・CV37.4%）。",
+   "2026-07-30 **全件点検(v9.9.55)の要修正**「cagr=171.8% は不可能値」を受け null 化。採取器でも算出不能で、憶測で置かない（門XのE[r]の g に直結する欄なので誤値は特に危険）。"
   ],
   "evidence": {
    "dom": "『we have seen competition intensify not only as local players grow their e-commerce businesses, but also as international players expand, mainly in Brazil and Mexico』。地域首位だがhitsに独占シェア%なく競争激化→寡占70",
@@ -115,7 +116,8 @@
    "fcf": "OCFの顧客資金フロート歪み+capexタグFY2023断絶で清算不能→null(誤値より空欄)",
    "sbc": "ShareBasedCompensationタグがFY2018(27.5M)で途切れ最近値欠損。dilNet0.29が希薄化軽微の傍証",
    "founder": "Marcos Galperin(創業者)が現CEOで現役だがhits原本に証拠記載なし→定義上yes相当だがユーザー判定に保留",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(NYSE:MELI・USD建て)"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(NYSE:MELI・USD建て)",
+   "cagr": "【2026-07-30 全件点検の要修正 → null化】旧 cagr=171.8% は不可能値（帯 −60〜160%）。採取器で再計算しても**算出不能**（売上系列が門の年検問を通らない）。絶対のルール7の同族——ASC606の売上タグ改称や年の飛びで系列が壊れると成長率が発散する。**もっともらしい誤値より空欄**。原本の売上5年系列から手で算出して埋めよ。"
   },
   "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=1.8",
   "provenance": {
