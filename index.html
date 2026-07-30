@@ -2450,6 +2450,30 @@ async function renderLedger(){
   }
 }
 // ========== v9.1: Ⅵ買付順位——3層ルール自動適用 ==========
+// ── 今月の入金額（v9.9.51・2026-07-30 ユーザー要望）────────────────────────────
+// 「今月17万」と入れたら、%ではなく**円で**買付プランが出る。DCAの原則そのままの実装——
+//   **DCAは「いつ・いくら」を決め、門は「どれを・買うか否か」を決める**（役割が別）。
+//   だから金額は配分の比率に一切触れない。既存の cityPct / gap按分 に掛けるだけ。
+//   採点式・Ω・売却規律S1/S2/S3・門Xの閾値・堀の関門はいずれも不変（表示層のみ）。
+// 保存先は localStorage 'pf:monthly'（台帳 g7: とも資産 pf:portfolio とも別。入れ直しの手間を省くだけ）。
+function ccfParseYen(s){                                    // 「17万」「17.5万」「17万5000」「170,000」「170000円」を受ける
+  s=String(s==null?'':s).trim()
+    .replace(/[０-９．]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))  // 全角→半角
+    .replace(/[，,、\s円¥￥]/g,'');
+  if(!s)return 0;
+  let m=s.match(/^(\d+(?:\.\d+)?)万(\d*)$/);                // 万は日本語の入力そのまま通す（要望の文面が「17万」だった）
+  if(m)return Math.round(parseFloat(m[1])*10000+(m[2]?parseFloat(m[2]):0));
+  m=s.match(/^(\d+(?:\.\d+)?)$/);
+  if(m)return Math.round(parseFloat(m[1]));
+  return 0;                                                  // 読めない入力は「未入力」と同じ＝%表示へ戻す（勝手に推測しない）
+}
+function ccfMonthAmt(){let v=0;try{v=ccfParseYen(localStorage.getItem('pf:monthly')||'');}catch(e){}return v>0?v:0;}
+function ccfSetMonthAmt(el){
+  const v=ccfParseYen(el&&el.value);
+  try{ if(v>0)localStorage.setItem('pf:monthly',String(v)); else localStorage.removeItem('pf:monthly'); }catch(e){}
+  if(typeof renderPlan==='function')renderPlan();
+}
+const ccfYen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
 // 今月の買付プラン（何を何%買うか・一目で明記）。網:城＝現在ウェイト(資産タブ pf:weights)を目標60/40へ寄せる(不足側に厚く)。城は投下可がある時だけ今月%(gap按分)で内訳。投下可ゼロ or 城充足なら網へ。
 function ccfMonthPlanBox(pass,gap,passGap,tw,CITY){
   pass=pass||[]; gap=gap||(()=>0); passGap=passGap||0; tw=tw||(()=>0); CITY=CITY||40;
@@ -2462,15 +2486,31 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY){
   else { cityPct=Math.round(cityShort/(netShort+cityShort)*100); }
   const nm=[]; if(cityPct>0&&passGap>0){ pass.forEach(r=>{ const abs=cityPct*(gap(r)/passGap); if(abs>=0.5)nm.push({n:r.nm,p:abs,tw:tw(r)}); }); }
   const cityAbs=nm.reduce((a,x)=>a+x.p,0), netFinal=Math.round(100-cityAbs);
-  const chip=(lbl,pct,col,sub)=>`<div style="display:flex;justify-content:space-between;align-items:baseline;padding:7px 12px;border-radius:8px;background:${col}14;border:1px solid ${col}44;margin-top:6px"><span style="font-size:13.5px;color:var(--ink)">${lbl}${sub?`<span style="font-size:10.5px;color:var(--dim);margin-left:6px">${sub}</span>`:''}</span><span style="font-size:18px;font-weight:700;color:${col}">${pct}%</span></div>`;
-  let body=chip('網（ETF・自動積立）',netFinal,'#9bb0d2', pass.length? '土台・無条件で積立':'投下可ゼロ→今月は全額ここ');
-  if(nm.length){ nm.forEach(x=>{ body+=chip('城 '+x.n, Math.round(x.p),'#c9a64a','個別・投下可（'+x.tw+'%枠）'); }); }
+  // v9.9.51: 入金額があれば円へ落とす。城は100円単位で切り捨て、**端数は必ず網へ**——
+  //   網は口数を選ばず買えるので端数を吸える。合計は入金額とぴったり一致する（現金を遊ばせない）。
+  const AMT=ccfMonthAmt();
+  let cityYen=0;
+  if(AMT>0)nm.forEach(x=>{ x.yen=Math.floor(AMT*x.p/100/100)*100; cityYen+=x.yen; });
+  const netYen=AMT-cityYen;
+  const chip=(lbl,pct,col,sub,yen)=>`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 12px;border-radius:8px;background:${col}14;border:1px solid ${col}44;margin-top:6px"><span style="font-size:13.5px;color:var(--ink)">${lbl}${sub?`<span style="font-size:10.5px;color:var(--dim);margin-left:6px">${sub}</span>`:''}</span><span style="white-space:nowrap">${yen!=null?`<span style="font-size:11.5px;color:var(--dim);margin-right:8px">${pct}%</span><span style="font-size:18px;font-weight:700;color:${col}">${ccfYen(yen)}</span>`:`<span style="font-size:18px;font-weight:700;color:${col}">${pct}%</span>`}</span></div>`;
+  let body=chip('網（ETF・自動積立）',netFinal,'#9bb0d2', pass.length? '土台・無条件で積立':'投下可ゼロ→今月は全額ここ', AMT>0?netYen:null);
+  if(nm.length){ nm.forEach(x=>{ const half=x.yen!=null?Math.floor(x.yen/2/100)*100:null;
+    body+=chip('城 '+x.n, Math.round(x.p),'#c9a64a','個別・投下可（'+x.tw+'%枠）'+(half!=null?`・階段 ${ccfYen(half)}＋${ccfYen(x.yen-half)}`:''), x.yen!=null?x.yen:null); }); }
   else if(pass.length){ body+=`<div style="font-size:11.5px;color:var(--dim);margin-top:6px;padding-left:2px">城（個別）：現在 城${cityNow.toFixed(0)}%＝目標40%に充足→今月は網へ。押し目待ちが開通したら城へ。</div>`; }
+  const amtRow=`<div style="display:flex;align-items:center;gap:7px;margin:9px 0 3px;flex-wrap:wrap">
+    <span style="font-size:12px;color:var(--muted)">今月の入金額</span>
+    <input id="ccfMonthAmtIn" type="text" inputmode="numeric" autocomplete="off" value="${AMT>0?AMT.toLocaleString('ja-JP'):''}" placeholder="例 17万 / 170000"
+      onchange="ccfSetMonthAmt(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+      style="width:140px;padding:5px 9px;background:rgba(0,0,0,.28);border:1px solid var(--gold-line);border-radius:6px;color:var(--gold-bright);font-size:14.5px;font-weight:600;text-align:right;font-family:inherit">
+    <span style="font-size:12px;color:var(--muted)">円</span>
+    ${AMT>0?`<button onclick="ccfSetMonthAmt({value:''})" title="入金額を消して%表示に戻す" style="padding:3px 9px;background:transparent;border:1px solid var(--dim);border-radius:6px;color:var(--dim);font-size:11px;cursor:pointer">消去</button>`:`<span style="font-size:11px;color:var(--dim)">——入れると下が%ではなく円で出る</span>`}
+  </div>`;
   return `<div style="background:linear-gradient(180deg,rgba(201,166,74,.10),rgba(201,166,74,.03));border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin:4px 0 20px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><h2 class="serif" style="font-size:1.2em;color:var(--gold-bright);margin:0">今月の買付プラン</h2><span style="font-size:11px;color:var(--dim)">合計100%・毎月の入金を按分</span></div>
-    <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">現在 網${netNow.toFixed(0)}%／城${cityNow.toFixed(0)}% → 目標60/40へ<b>不足側に厚く</b>寄せる（新規資金だけでリバランス＝売却・課税なし）。${!haveW?'<b style="color:#d69a3c">※資産タブで金額を入れると精度が上がる（今は目標60/40で仮表示）</b>':''}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><h2 class="serif" style="font-size:1.2em;color:var(--gold-bright);margin:0">今月の買付プラン</h2><span style="font-size:11px;color:var(--dim)">${AMT>0?`合計 ${ccfYen(AMT)} を按分`:'合計100%・毎月の入金を按分'}</span></div>
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">現在 網${netNow.toFixed(0)}%／城${cityNow.toFixed(0)}% → 目標60/40へ<b>不足側に厚く</b>寄せる（新規資金だけでリバランス＝売却・課税なし）。${!haveW?'<b style="color:#d69a3c">※Ⅶ保有タブで金額を入れると精度が上がる（今は目標60/40で仮表示）</b>':''}</div>
+    ${amtRow}
     ${body}
-    <div style="font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.7">網＝証券会社の自動積立で機械的に。城＝門X「投下可」の銘柄へ、上の%を階段指値で（1/2を現値近傍〜開通ライン・1/2をfair線=PER clamp(8+g,16,30)。投下可は現値で門X成立済みゆえ開通線は現値以上にある）。<b>売りは株価では動かさない（S1/S2/S3のみ）。</b></div>
+    <div style="font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.7">網＝証券会社の自動積立で機械的に。城＝門X「投下可」の銘柄へ、上の${AMT>0?'金額':'%'}を階段指値で（1/2を現値近傍〜開通ライン・1/2をfair線=PER clamp(8+g,16,30)。投下可は現値で門X成立済みゆえ開通線は現値以上にある）。${AMT>0?'城は100円単位で丸め、<b>端数は網へ寄せて合計を入金額に一致させる</b>（網は口数を選ばず買えるので端数を吸える）。金額は配分の比率に一切触れない——<b>DCAは「いつ・いくら」、門は「どれを・買うか否か」</b>。':''}<b>売りは株価では動かさない（S1/S2/S3のみ）。</b></div>
   </div>`;
 }
 // ── 門X裁きⅠ（単一実装・v9.9.39 切り出し）───────────────────────────────────
@@ -2692,8 +2732,8 @@ async function renderPlan(){
   }
   // ⛔ 堀のふるいで落ちた組(v9.9.39・ユーザー明示指示)。価格の問題ではないので押し目待ちには入れない
   if(moatOut.length){
-    html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:var(--rust)">⛔ 堀不足で見送り（Ω75+だが絶対MOAT指数 &lt; 75）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">質・値段がどれだけ揃っても<b>買わない</b>組。20-30年の複利は堀が持つかどうかで決まり、下がっても堀は広がらないので「押し目待ち」ではなく見送り。堀は<b>深さ(支配シェア・代替不能性・複製障壁・型の耐久性)と本数(広さ)の幾何平均</b>ゆえ、1本でも薄いと75を割る＝「深いが1本足」と「広いが浅い」の両方が落ちる。<b>売却の理由にはならない</b>——保有中の銘柄はS1/S2/S3のみで裁く（堀の劣化は erosion / 堀軌道 / disrupt が既に見張っている）。堀の数字が上がる道は一つだけ、<b>原本でシェア・セグメントを取り直して審査し直す</b>こと。</div>`;
-    html+=moatOut.map((r,i)=>brow(r,i,'堀',`<span style="font-size:11.5px;white-space:nowrap;color:var(--rust);margin-left:8px">堀 ${r.moatNA?'算出不能（5本中4本未満）':r.moat!=null?r.moat.toFixed(0)+'／75':'—'}</span>`)).join('');
+    html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:var(--rust)">⛔ 堀不足で見送り（Ω75+だが絶対MOAT指数 &lt; 70）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">質・値段がどれだけ揃っても<b>買わない</b>組。20-30年の複利は堀が持つかどうかで決まり、下がっても堀は広がらないので「押し目待ち」ではなく見送り。堀は<b>深さ(支配シェア・代替不能性・複製障壁・型の耐久性)と本数(広さ)の幾何平均</b>ゆえ、1本でも薄いと70を割る＝「深いが1本足」と「広いが浅い」の両方が落ちる。<b>売却の理由にはならない</b>——保有中の銘柄はS1/S2/S3のみで裁く（堀の劣化は erosion / 堀軌道 / disrupt が既に見張っている）。堀の数字が上がる道は一つだけ、<b>原本でシェア・セグメントを取り直して審査し直す</b>こと。</div>`;
+    html+=moatOut.map((r,i)=>brow(r,i,'堀',`<span style="font-size:11.5px;white-space:nowrap;color:var(--rust);margin-left:8px">堀 ${r.moatNA?'算出不能（5本中4本未満）':r.moat!=null?r.moat.toFixed(0)+'／70':'—'}</span>`)).join('');
   }
   // 監視枠(72-75 堅実だが投下閾値未満): 保有しない・75超えで昇格
   const watch=rows.filter(r=>r.s>=72&&r.s<75).sort((a,b)=>(b.pc-a.pc)||(b.s-a.s));
@@ -2701,7 +2741,7 @@ async function renderPlan(){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px">⚪ 監視枠 72–75——<span style="color:var(--rust)">保有しない</span>・75超えで昇格</h2>`;
     html+=watch.map(r=>`<div class="led" style="border-left:3px solid ${lcol[2]};opacity:.6"><span class="ln">${r.nm}</span><span class="grade" style="color:var(--steel)">${r.s}</span>${xtag(r)}<span style="font-size:11px;color:var(--muted)"><span style="color:var(--dim)">間</span> ${r.act}</span>${reqbtns(r)}</div>`).join('');
   }
-  html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8"><b>三段関門（v9.9.39）</b>：<b>🟢投下可＝格75+ ∧ 門X4条件 ∧ 絶対MOAT指数70+</b>／<b>🟡押し目待ち＝格75+・堀70+だが門X未達</b>／<b>⛔堀不足＝格75+だが堀&lt;75</b>。堀を第三の関門にしたのは<u>採点で罰すると三重罰になる</u>ため——moatIdxは既にΩへ pm→sustain と直接項(.13)の二経路で入っているので、ここでさらに減点せず「買う対象から外す」だけにした（採点式・Ω・売却規律S1/S2/S3はいずれも不変）。<br><b>価格の関門は門X 1本（v9.9.25）</b>：旧「間（今買える）」の粗いPERブレーキは買付判定から外した（「今買える」なのに「監視」の矛盾を解消）。各群内の順位＝<b>合成順（格×0.6 ＋ E[r]%×0.4）</b>。実効レンジではE[r]+1%≈格+3.3点で<b>E[r]が主・格は安全下限（75+の合否）とタイブレーク</b>（v9.9.30で宣言を数学に一致——15%目標に整合するのはE[r]主の序列）。<b>群の境界（投下可の合否）は不変</b>。E[r]%は門X合格線12%＝50点として点数化（±10ptで0-100）、欠損は中立50。🟡の<b>開通＝PER○○（あと−○%）</b>は門X4条件が同時成立する入口PERと現値からの必要下落（v9.9.29でストレス④込みに修正）。fair線＝階段指値の上段（倍率の重力ゼロ・約定時E[r]=earned）。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。<br><b>E[r]（門X期待リターン）</b>＝門X裁きⅠの現値期待リターン：還元shy + 成長g（<b>高ROIC(≥15%)×堀無傷は実証CAGRを信じる</b>／それ以外は再投資式b×ROIICを実証CAGRで頭打ち・20%上限＝証拠の上限。v9.9.25：資本を返しながら伸びる資本軽量コンパウンダーを再投資式が過小評価する欠陥を是正・価格規律は不変） − 倍率の重力（<b>終着PER=min(現PER, clamp(8+g,16,30))＝成長連動</b>・10年。McKinsey価値ドライバーの理論フェアは成熟g4%≈22倍／持続成長高ROIC≈28-30倍だが、門は保守側に8+g〔下限16〕で頭を抑える＝理論値より安全余白を取る設計。成長産業と成熟産業を同じ終着PERで測らない。掟六の精神＝現PERを超えない＝拡大は見込まない、は維持）。<b>成長gの上限（v9.9.40・2026-07-29 ユーザー明示指示）</b>：gは<b>min(実績cagr, 実力g_cap, 20%)</b>。g_capが空欄のときはΩ側と同じ暫定規約<b>「gr（=per/perF−1・1年フォワード）で代用」</b>を門Xにも通す。従来は門Xだけがこの代用を持たず、<u>実力の推定が無いまま過去のcagrで10年先を描いていた</u>（実測：全316パックのg_capが空欄＝v9.9.31の安全弁 min(実績,実力) は一度も作動していなかった。6920レーザーテックは会社予想が前年比−18.8%の減益なのに実績cagr42.7%由来のg=20%でE[r]16.2%✓と表示されていた）。併せて<code>gcap&gt;0</code>のガードを外した——0や負値の実力成長が「上限なし」として素通りし、減速局面を抑えるための機構がまさに減速している銘柄で無効だった。E[r]の横の<span style="color:#d69a3c">⌄</span>印は「gが実績ではなく実力側で抑えられた」の意。<br><span style="color:var(--jade)">✓＝4条件成立（E[r]≥12／投資R≥10／倍率寄与≤30%／ストレス≥7〔成長−25%・grower(実証成長×資本効率×堀無傷×質72+)は−15%・∧終着PER−30%〕）＝🟢投下可</span>／<span style="color:var(--rust)">✗＝未達→🟡押し目待ち（指値は✦門Xの監視表）</span>。順位・採点には一切影響しない。PER/ROIC欠損時はE[r]判定不能と表示。<br>各行の <span style="color:#8fc9a4">審査</span>＝門2審査プロトコル全文（この銘柄を門にかけ直す）／<span style="color:#d6b06c">決算</span>＝決算点検依頼文（S1-S3照合・6警報・門X前提の再計算）を、その銘柄名つきでコピー→Claudeに貼る。台帳のティア（Ⅳ）に依る。</div>`;
+  html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8"><b>三段関門（v9.9.39）</b>：<b>🟢投下可＝格75+ ∧ 門X4条件 ∧ 絶対MOAT指数70+</b>／<b>🟡押し目待ち＝格75+・堀70+だが門X未達</b>／<b>⛔堀不足＝格75+だが堀&lt;70</b>。堀を第三の関門にしたのは<u>採点で罰すると三重罰になる</u>ため——moatIdxは既にΩへ pm→sustain と直接項(.13)の二経路で入っているので、ここでさらに減点せず「買う対象から外す」だけにした（採点式・Ω・売却規律S1/S2/S3はいずれも不変）。<br><b>価格の関門は門X 1本（v9.9.25）</b>：旧「間（今買える）」の粗いPERブレーキは買付判定から外した（「今買える」なのに「監視」の矛盾を解消）。各群内の順位＝<b>合成順（格×0.6 ＋ E[r]%×0.4）</b>。実効レンジではE[r]+1%≈格+3.3点で<b>E[r]が主・格は安全下限（75+の合否）とタイブレーク</b>（v9.9.30で宣言を数学に一致——15%目標に整合するのはE[r]主の序列）。<b>群の境界（投下可の合否）は不変</b>。E[r]%は門X合格線12%＝50点として点数化（±10ptで0-100）、欠損は中立50。🟡の<b>開通＝PER○○（あと−○%）</b>は門X4条件が同時成立する入口PERと現値からの必要下落（v9.9.29でストレス④込みに修正）。fair線＝階段指値の上段（倍率の重力ゼロ・約定時E[r]=earned）。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。<br><b>E[r]（門X期待リターン）</b>＝門X裁きⅠの現値期待リターン：還元shy + 成長g（<b>高ROIC(≥15%)×堀無傷は実証CAGRを信じる</b>／それ以外は再投資式b×ROIICを実証CAGRで頭打ち・20%上限＝証拠の上限。v9.9.25：資本を返しながら伸びる資本軽量コンパウンダーを再投資式が過小評価する欠陥を是正・価格規律は不変） − 倍率の重力（<b>終着PER=min(現PER, clamp(8+g,16,30))＝成長連動</b>・10年。McKinsey価値ドライバーの理論フェアは成熟g4%≈22倍／持続成長高ROIC≈28-30倍だが、門は保守側に8+g〔下限16〕で頭を抑える＝理論値より安全余白を取る設計。成長産業と成熟産業を同じ終着PERで測らない。掟六の精神＝現PERを超えない＝拡大は見込まない、は維持）。<b>成長gの上限（v9.9.40・2026-07-29 ユーザー明示指示）</b>：gは<b>min(実績cagr, 実力g_cap, 20%)</b>。g_capが空欄のときはΩ側と同じ暫定規約<b>「gr（=per/perF−1・1年フォワード）で代用」</b>を門Xにも通す。従来は門Xだけがこの代用を持たず、<u>実力の推定が無いまま過去のcagrで10年先を描いていた</u>（実測：全316パックのg_capが空欄＝v9.9.31の安全弁 min(実績,実力) は一度も作動していなかった。6920レーザーテックは会社予想が前年比−18.8%の減益なのに実績cagr42.7%由来のg=20%でE[r]16.2%✓と表示されていた）。併せて<code>gcap&gt;0</code>のガードを外した——0や負値の実力成長が「上限なし」として素通りし、減速局面を抑えるための機構がまさに減速している銘柄で無効だった。E[r]の横の<span style="color:#d69a3c">⌄</span>印は「gが実績ではなく実力側で抑えられた」の意。<br><span style="color:var(--jade)">✓＝4条件成立（E[r]≥12／投資R≥10／倍率寄与≤30%／ストレス≥7〔成長−25%・grower(実証成長×資本効率×堀無傷×質72+)は−15%・∧終着PER−30%〕）＝🟢投下可</span>／<span style="color:var(--rust)">✗＝未達→🟡押し目待ち（指値は✦門Xの監視表）</span>。順位・採点には一切影響しない。PER/ROIC欠損時はE[r]判定不能と表示。<br>各行の <span style="color:#8fc9a4">審査</span>＝門2審査プロトコル全文（この銘柄を門にかけ直す）／<span style="color:#d6b06c">決算</span>＝決算点検依頼文（S1-S3照合・6警報・門X前提の再計算）を、その銘柄名つきでコピー→Claudeに貼る。台帳のティア（Ⅳ）に依る。</div>`;
   pb.innerHTML=planBox+html;
 }
 // ========== v9.1: .icsカレンダー書き出し ==========
