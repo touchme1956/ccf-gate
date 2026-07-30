@@ -1185,6 +1185,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
  <div class="wrap" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
   <select id="ledSort" onchange="renderLedger()" style="background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:7px 8px;font-size:12px"><option value="score">スコア順</option><option value="ts">更新順</option><option value="name">名前順</option></select>
   <select id="ledFilter" onchange="renderLedger()" style="background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:7px 8px;font-size:12px"><option value="all">すべて</option><option value="dv-s">最上位</option><option value="dv-a">堅実</option><option value="avoid">回避/失格</option><option value="act-buy">今 買える</option><option value="act-wait">押し目待ち</option></select>
+  <button onclick="ccfInspectAll(this)" title="台帳の全銘柄に健全性検査をかけ、要修正・警告・測定漏れを一覧で出す（採点には一切影響しない）" style="padding:7px 13px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:12.5px;font-weight:600;cursor:pointer">🔍 全件点検</button>
   <button onclick="revealIO('paste')" style="background:linear-gradient(180deg,rgba(201,166,74,.18),rgba(201,166,74,.08));border:1px solid var(--gold-line);color:var(--gold-bright);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">＋ Claudeの返答を取り込む</button>
   <button onclick="revealIO('price')" style="background:var(--panel);border:1px solid var(--line);color:var(--ink-soft);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">￥ 価格だけ更新</button>
   <button onclick="ccfImportAllPacks(this)" title="リポジトリのout/から全パック(米国+日本)を直接fetchして一括取込——採取器で市場データを更新したらこれを押す。「↻全再採点」はパックを読み直さないので市場データは反映されない" style="background:linear-gradient(180deg,rgba(84,184,138,.22),rgba(84,184,138,.08));border:1px solid rgba(84,184,138,.55);color:#8fc9a4;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer;font-weight:600">⭳ 全パック一括取込</button><button onclick="ccfImportJpPacks(this)" title="リポジトリのout/から日本株パック(4-5桁コード)を直接fetchして一括取込——コード貼り不要。JP検問(roicEx必須)は取込時に自動適用" style="background:var(--panel);border:1px solid var(--line);color:var(--ink-soft);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">⭳ 日本株パック一括取込</button>
@@ -2764,80 +2765,123 @@ const CCF_ENUM={acq5:['yes','no'],acc:['usgaap','ifrs','jgaap'],fin:['no','acq',
   gmt:['up','flat','down'],sht:['up','flat','down'],roict:['up','flat','down'],
   moatdecay:['no','yes'],expiry:['no','yes','na'],erosion:['none','emerging','active'],
   disrupt:['settled','unsettled','threat'],rak:['yes','no'],geopol:['0','1','2','3']};
+// 不可能値の帯。**「珍しい」ではなく「ありえない」線**に引く（狭くすると優良企業を誤爆する）。
+//   実測で発火するのは317社中7件だけ＝この帯は保守的で、鳴ったら本物。
+const CCF_IMPOSS={gm:[-50,90],roic:[-60,220],roicg:[-60,220],cagr:[-60,160],nde:[-15,20],z:[-5,40],
+  gpa:[0,260],accr:[-60,60],sbc:[0,60],dilNet:[-30,30],shy:[-25,35],per:[1,600],perF:[1,600],
+  nrr:[40,220],px:[0.005,200000],evebit:[-50,500],beta:[0,6],
+  p1:[0,100],p2:[0,100],p3:[0,100],p4:[0,100],f1:[0,100],f2:[0,100],f3:[0,100],f4:[0,100],f5:[0,100]};
+// 常識帯（帯の外は「ありえない」ではなく「疑わしい」）
 const CCF_BANDS={per:[8,200],shy:[-5,12],evebit:[0,300],beta:[0,4],perF:[1,500]};
+// 空欄のときに門が**代わりに使う値**と、その危険度。
+//   `best`=未測定が最良ケースとして採点される（測らないほうが得＝一番危険）
+//   `pena`=未測定が罰として採点される（測らないほうが損）
+//   `skew`=中立でない既定へ寄る／`stop`=機能が止まる（見えるので害は小さい）／`ok`=空欄が正しく処理される
+const CCF_BLANK={
+  erosion:['best',"既定'none'＝侵食なしとして採点される"], disrupt:['best',"既定'settled'＝決着済みとして採点される（f5も85へ）"],
+  eq:['best',"既定'pos'＝債務超過キルの検問を素通りする"],   rak:['ok',"既定'yes'＝取引可。上場株では空欄が正常（CLAUDE.md『保険としては正常』・全317社空欄）"],
+  geopol:['best',"既定'0'＝地政学の減点がゼロになる"],       moatdecay:['best',"既定'no'＝市場縮小なしとして採点される"],
+  expiry:['best',"既定'no'＝期限型独占キルの検問を素通りする"],
+  acq5:['pena',"既定'yes'＝のれん込みROIC乖離 −6 が黙って効く"],
+  sht:['skew',"既定'flat'——中立ではない（up なら pm+3、Intel警報も鳴らない）"],
+  gmt:['skew',"既定'flat'"], roict:['skew',"既定'flat'"], nrr:['skew','既定105'],
+  per:['stop','門X（三段関門の第二）が評価不能になる'], px:['stop','per の検算ができない'], eps:['stop','per の検算ができない'],
+  shy:['skew','門Xが bR=0.4 のフォールバックに落ちる'],
+  dom:['ok','空欄は重みを残り4本へ再正規化（既定値に化けない）'], irr:['ok','同左'], rep:['ok','同左'], dur:['ok','同左'],
+  moatW:['ok','空欄は旧4本式で採点（既定値に化けない）'], p3:['ok','ndeから機械導出'], f5:['ok','disruptから機械導出'],
+  roic:['stop','資本効率が測れない'], roicg:['stop','買収規律が測れない'], gm:['stop','利益率が測れない'],
+  cagr:['stop','成長が測れない'], nde:['stop','p3の導出元'], z:['skew','破綻距離が測れない'],
+  gpa:['skew','資産効率が測れない'], accr:['skew','p4の材料'], fcf:['skew','転換率(conv)が測れない'], ni:['skew','転換率(conv)が測れない'],
+  roiic:['skew',"空欄は'na'扱いにならず複利エンジンの評価が甘くなる"]};
 function ccfAudit(d,r,coerced){
   d=d||{}; r=r||{}; const W=[];
   const num=k=>{const v=parseFloat(d[k]);return isFinite(v)?v:null;};
   const has=k=>d[k]!=null&&d[k]!=='';
   const add=(lv,k,msg,fix)=>W.push({lv,k,msg,fix});
   const isJP=/^\d{4,5}$/.test(String(d.nm||'').trim().split(/\s/)[0]);
+  const S=parseFloat(r.evalScore)||0;
 
-  // ① 取込で黙って化けた欄——今セッションの acq5 事故の発生点そのもの
-  (coerced||[]).forEach(c=>add('err',c.k,
-    `取込時に <b>${c.k}=${c.from}</b> が <b>${c.to}</b> へ化けた（${c.how}）`,
+  /* ══ ① 取込で黙って化けた欄（acq5=2.8 → 'yes' の発生点） ══ */
+  (coerced||[]).forEach(c=>add('err',c.k,`取込時に <b>${c.k}=${c.from}</b> が <b>${c.to}</b> へ化けた（${c.how}）`,
     'パックの値が規約の列挙値でない。out/ のパックを直して再取込せよ'));
-  // ② 列挙値そのものの違反（取込を経ずに入った値も拾う）
-  Object.keys(CCF_ENUM).forEach(k=>{
-    if(d[k]==null||d[k]==='')return;
+  /* ══ ② 列挙値違反 ══ */
+  Object.keys(CCF_ENUM).forEach(k=>{ if(!has(k))return;
     if(!CCF_ENUM[k].includes(String(d[k])))
       add('err',k,`<b>${k}=${d[k]}</b> は列挙値でない（許容: ${CCF_ENUM[k].map(x=>x===''?'空欄':x).join('/')}）`,
-        '門は文字列比較で判定するので、外れた値は既定値として扱われ罰や免除が意図と逆に効く');
-  });
-  // ③ 株数スケール誤り——per が帯の下・shy が帯の上へ**逆方向に同時に**外れたら株数が桁で違う
-  //    実害: KLACが10:1分割後の株価と分割前の株数を割っていた（eps30.37→3.08 / per5.60→55.32）
-  const per=num('per'), shy=num('shy');
-  if(per!=null&&shy!=null&&per<CCF_BANDS.per[0]&&shy>CCF_BANDS.shy[1])
-    add('err','eps',`<b>per=${per} が下限8未満、同時に shy=${shy}% が上限12超</b>＝逆方向の同時逸脱`,
-      '疑うのは株価でも純利益でもなく**株数のスケール**（株式分割の跨ぎ）。同じ株数誤りが per を下げ shy を上げる');
-  // ④ JP検問——EDINET生ROICのアーティファクトを門に入れない規約
-  if(isJP&&(num('roic')||0)>40&&!has('roicEx'))
+        '門は文字列比較で判定するので、外れた値は既定値扱いになり罰や免除が意図と逆に効く'); });
+  /* ══ ③ 内部矛盾——独立に入った値どうしが定義上必ず合うはず。**単独の帯検問より強い** ══ */
+  const px=num('px'), eps=num('eps'), per=num('per'), perF=num('perF');
+  if(px>0&&eps&&per>0){ const c=px/eps, dev=Math.abs(c-per)/per*100;
+    if(dev>10) add('err','per',`<b>per=${per} だが px÷eps=${c.toFixed(2)}（${dev.toFixed(0)}%差）</b>`,
+      'perはpx÷epsで定義される。ズレるのは(a)perがTTM実績・epsが年次実績で基準が違う (b)通貨混線（ADRのpxがUSD・epsが現地通貨）(c)株式分割の跨ぎ。実測: TSMはpx=USD・eps=TWDで69%差、DXCは373%差');
+    else if(dev>3) add('warn','per',`per=${per} と px÷eps=${c.toFixed(2)} が ${dev.toFixed(0)}% ずれている`,'四捨五入では説明できない差。基準(TTM/年次)と通貨を確認せよ'); }
+  const roic=num('roic'), roicg=num('roicg'), roicEx=num('roicEx');
+  if(roic!=null&&roicg!=null&&roic>0&&roicg>0&&roic<roicg*0.98)
+    add('err','roic',`<b>roic=${roic}% が roicg=${roicg}% を下回る（比 ${(roic/roicg).toFixed(2)}）</b>——NOPAT&gt;0では数学的に不可能`,
+      '投下資本は のれん・無形を引いたほうが必ず小さいので roic ≥ roicg。逆転は二つが別の式で計算された証拠。門式（自己資本+有利子負債−のれん−無形／直近年）で両方を再計算せよ');
+  if(roicEx!=null&&roic!=null&&roic>0&&roicEx<roic*0.98)
+    add('err','roicEx',`<b>roicEx=${roicEx}% が roic=${roic}% を下回る</b>`,'roicExは除外後ROIC＝roic以上のはず。JP規約ではroicと同値');
+  if(per!=null&&num('shy')!=null&&per<CCF_BANDS.per[0]&&num('shy')>CCF_BANDS.shy[1])
+    add('err','eps',`<b>per=${per} が下限8未満、同時に shy=${num('shy')}% が上限12超</b>＝逆方向の同時逸脱`,
+      '疑うのは株価でも純利益でもなく**株数のスケール**（株式分割の跨ぎ）。同じ株数誤りが per を下げ shy を上げる。実測: KLACの10:1分割');
+  if(per>0&&perF>0){const gr=(per/perF-1)*100;
+    if(Math.abs(gr)>60) add('warn','perF',`per/perF から導かれる1年成長 gr=${gr.toFixed(0)}% が±60%を超える`,'門Xはgcap空欄時にgrを実力成長の代用に使う。perかperFの基準違いを疑え');}
+  if(isJP&&(roic||0)>40&&!has('roicEx'))
     add('err','roicEx','日本株で <b>roic&gt;40% かつ roicEx が空</b>＝JP検問に該当（取込拒否・審査待ちへ差し戻し）',
       'EDINET生ROICは資産軽量／ネットキャッシュで膨張する。門式で再計算して roicEx を埋めよ');
-  // ⑤ ROICの分母縮退の疑い（絶対のルール7）
-  const roic=num('roic'), roicg=num('roicg');
+  /* ══ ④ 不可能値 ══ */
+  Object.keys(CCF_IMPOSS).forEach(k=>{const v=num(k); if(v==null)return; const[lo,hi]=CCF_IMPOSS[k];
+    if(v<lo||v>hi) add('err',k,`<b>${k}=${v}</b> はありえない範囲（${lo}〜${hi}）`,'単位・通貨・分割・タグ選択の誤りを疑う。原本で検算して直すこと');});
+  /* ══ ⑤ 常識帯（ありえなくはないが疑わしい） ══ */
+  Object.keys(CCF_BANDS).forEach(k=>{const v=num(k); if(v==null)return; const[lo,hi]=CCF_BANDS[k];
+    const imp=CCF_IMPOSS[k]; if(imp&&(v<imp[0]||v>imp[1]))return;      // 不可能で既に出したものは二重に出さない
+    if(v<lo||v>hi) add('warn',k,`<b>${k}=${v}</b> が常識帯 ${lo}〜${hi} の外`,'保管された値も毎回検問する（ルール7(c)）——採取器を直せば安全、は誤り');});
+  /* ══ ⑥ 未入力——**門が代わりに何を使うか**まで書く。これが「素通り」の正体 ══ */
+  //   **未入力の警告は「判断が起きうる社」でだけ警告に上げる**（Ω72＝監視枠が線）。
+  //   Ω40の社で未測定のerosionを警告しても行動につながらず、全317社が鳴って本当の事故が埋もれる
+  //   （v9.9.54で kill/pillar を入れて287社が鳴った失敗と同じ型）。**矛盾・不可能値は無条件**——
+  //   あれは「判断に効くか」ではなく「値が壊れているか」の話で、いつでも本物だから。
+  const decide = S>=72;
+  Object.keys(CCF_BLANK).forEach(k=>{ if(has(k))return;
+    const [kind,what]=CCF_BLANK[k];
+    const lv = decide ? 'warn' : 'info';
+    if(kind==='best') add(lv,k,`<b>${k} が未入力</b>——${what}`,'**測らないほうが点が高くなる欄**。原本で確認して埋めるか、埋められない理由を残せ');
+    else if(kind==='pena') add(lv,k,`<b>${k} が未入力</b>——${what}`,'**測らないほうが点が低くなる欄**。原本で確認して埋めよ');
+    else if(kind==='stop') add(lv,k,`<b>${k} が未入力</b>——${what}`,'この欄が無いと判定の一部が動かない');
+    else if(kind==='skew') add('info',k,`${k} が未入力——${what}`,'埋めると精度が上がる（既定値は中立とは限らない）');
+    else add('info',k,`${k} が未入力——${what}`,'空欄が正しく処理される欄。根拠が無ければ空欄が正解');});
+  /* ══ ⑦ 陳腐化・整合の追加検査 ══ */
   if(roic!=null&&roicg!=null&&roicg>0&&roic/roicg>=3)
     add('warn','roic',`roic ${roic}% が roicg ${roicg}% の <b>${(roic/roicg).toFixed(1)}倍</b>`,
       'のれん控除で投下資本が縮退している可能性。IC/自己資本が2割未満なら算出不能（ルール7(b)）。night/audit_roic.py で確認');
-  // ⑥ acq5 の陳腐化検査——乖離が大きいのに「直近5年の買収なし」なら根拠を疑う
   if(roic!=null&&roicg!=null&&roicg>0&&roic/roicg>=2&&d.acq5==='no')
     add('warn','acq5','ROIC乖離が2倍超で <b>acq5=no</b>（＝のれん乖離 −6 を免除中）',
-      '直近の10-Q/有報で買収が無いか確認せよ。実害: ADBEはSemrush買収$18.7億で acq5 が陳腐化しΩ81.2→75.2だった');
-  // ⑦ 堀の脚不足——三段関門の第三を通れない
+      '直近の10-Q/有報で買収が無いか確認せよ。実害: ADBEはSemrush買収$18.7億で陳腐化しΩ81.2→75.2だった');
   if(r.moatNA===true) add('warn','moatW','絶対MOAT指数が<b>算出不能</b>（5本のうち4本未満しか測っていない）',
-    '堀のふるい（70+）を構造的に通れない＝買付の土俵に乗らない。dom/irr/rep/dur/moatW を原本で埋めよ');
-  // ⑧ 市場データの常識帯
-  Object.keys(CCF_BANDS).forEach(k=>{const v=num(k);if(v==null)return;
-    const[lo,hi]=CCF_BANDS[k];
-    if(v<lo||v>hi)add('warn',k,`<b>${k}=${v}</b> が常識帯 ${lo}〜${hi} の外`,'単位・通貨・分割の取り違えを疑う（保管された値も毎回検問する＝ルール7(c)）');});
-  // ⑨ 門Xが測れない——per が唯一の必須条件
-  //   ※Ω72未満には出さない——門Xは買付判定の関門なので、監視枠(72)にも届かない社で
-  //     「市場データが無い」と鳴らすのは作業を増やすだけで判断を動かさない（実測135社→絞ると激減）。
-  if(!(per>0)&&(parseFloat(r.evalScore)||0)>=72) add('warn','per','<b>per が無い</b>＝門X（三段関門の第二）が未評価のまま',
-    'E[r]を一切算出できない。market_fetch.py か Alpha Vantage の GLOBAL_QUOTE で株価を入れ、原本EPSで per を出す');
-  // ⑩ 原本の鮮度
+    '堀のふるい（70+）を構造的に通れない＝買付の土俵に乗らない');
   const age=t=>{if(!d[t])return null;const x=new Date(d[t]);return isNaN(x)?null:Math.floor((Date.now()-x.getTime())/864e5);};
   const ea=age('erdate'), da=age('ddate');
   if(ea!=null&&ea>300) add('warn','erdate',`直近決算が <b>${ea}日前</b>（300日超）`,'per/E[r]の前提が古い。決算後に eps/per を更新せよ');
   if(da!=null&&da>90) add('warn','ddate',`市場データが <b>${da}日前</b>（90日超）`,'market_fetch.py → market_merge.py で更新');
-  // ⑪ 導出で決まる欄に、導出値と違う値が焼き付いていないか（陳腐化の芽）
+  if(!has('erdate')) add('info','erdate','erdate（直近決算発表日）が未入力——鮮度の検査が効かない','決算後の更新漏れを検出できなくなる');
+  if(!has('ddate')) add('info','ddate','ddate（データ取得日）が未入力——鮮度の検査が効かない','同左');
   const nde=num('nde'), p3=num('p3');
   if(p3!=null&&nde!=null){const dv=nde<0?95:nde<1?85:nde<2.5?70:50;
     if(p3!==dv)add('warn','p3',`p3=${p3} は nde=${nde} の導出値 ${dv} と違う（逸脱評価）`,'根拠が無ければ空欄へ戻す（門が機械導出する＝ndeを直せば追随する）');}
   const f5=num('f5'), dis=d.disrupt||'settled';
   if(f5!=null){const dv=dis==='threat'?45:dis==='unsettled'?65:85;
     if(f5!==dv)add('warn','f5',`f5=${f5} は disrupt=${dis} の導出値 ${dv} と違う（逸脱評価）`,'根拠が無ければ空欄へ戻す');}
-  // ⑫ キル・二本柱は**入れない**（v9.9.54の初回実測で設計を是正）。
-  //   全317社で回すと kill 101件 / pillar 231件 が鳴り、**287/317社にバッジが点いた**。
-  //   どちらも「データが壊れている」ではなく**採点の正当な結果**で、Ω・ティア・色・出口判定として
-  //   既に画面に出ている。これを混ぜると『鳴りすぎる警報は鳴らないのと同じ』
-  //   （audit_deadweight の教え）になり、本当の事故が埋もれる。**この検査はデータの健全性だけを見る。**
-  const rank={err:0,warn:1};
+  // キル・二本柱は入れない（v9.9.54の実測で287/317社が鳴り、本当の事故が埋もれた）。
+  //   どちらもデータ破損ではなく採点の正当な結果で、Ω・ティア・色・出口判定として既に画面に出ている。
+  const rank={err:0,warn:1,info:2};
   return W.sort((a,b)=>rank[a.lv]-rank[b.lv]);
 }
 // 行に出すバッジ。件数だけ見せ、詳細は title と展開で読む（採点・順位には一切不介入）
 function ccfAuditBadge(W,key){
   if(!W||!W.length)return '';
-  const e=W.filter(x=>x.lv==='err').length, w=W.length-e;
+  // info（空欄が正しく処理される欄など）はバッジに数えない——数えると全社が鳴って本当の事故が埋もれる
+  const e=W.filter(x=>x.lv==='err').length, w=W.filter(x=>x.lv==='warn').length;
+  if(!e&&!w)return '';
   const col=e?'#c9534f':'#d69a3c', lbl=e?`⚠${e}${w?'+'+w:''}`:`⚠${w}`;
   const tip=W.map(x=>(x.lv==='err'?'【要修正】':'【警告】')+x.msg.replace(/<[^>]+>/g,'')).join('\n');
   return `<span class="ccfaud" onclick="event.stopPropagation();ccfAuditOpen(decodeURIComponent('${encodeURIComponent(key||'')}'))" title="${tip.replace(/"/g,'&quot;')}" style="font-size:10px;color:${col};border:1px solid ${col}77;background:${col}18;border-radius:4px;padding:1px 5px;margin-left:6px;cursor:pointer;white-space:nowrap">${lbl}</span>`;
@@ -2871,15 +2915,72 @@ async function ccfAuditOpen(key){
 function ccfAuditSummary(items){
   let err=0,warn=0,bad=0; const top=[];
   (items||[]).forEach(it=>{const W=ccfAudit(it.d,it.r||{},it.coerce);
-    if(!W.length)return; bad++; const e=W.filter(x=>x.lv==='err').length;
-    err+=e; warn+=W.length-e; if(e)top.push({nm:it.nm,e,k:it.k});});
+    // info（空欄が正しく処理される欄）は数えない——バッジと同じ基準にする
+    const e=W.filter(x=>x.lv==='err').length, w=W.filter(x=>x.lv==='warn').length;
+    if(!e&&!w)return; bad++; err+=e; warn+=w; if(e)top.push({nm:it.nm,e,k:it.k});});
   if(!bad)return `<div style="font-size:11.5px;color:var(--jade);margin:4px 0 8px">✓ 健全性検査：警告ゼロ（${(items||[]).length}社）</div>`;
   top.sort((a,b)=>b.e-a.e);
   const lst=top.slice(0,6).map(x=>`<span onclick="ccfAuditOpen(decodeURIComponent('${encodeURIComponent(x.k)}'))" style="cursor:pointer;color:#e08a86;border-bottom:1px dotted #e08a86;margin-right:9px">${x.nm}(${x.e})</span>`).join('');
   return `<div style="font-size:11.5px;margin:4px 0 8px;padding:8px 11px;border-radius:8px;background:rgba(201,166,74,.07);border:1px dashed rgba(201,166,74,.35);line-height:1.8">
     <b style="color:var(--gold-bright)">健全性検査</b>　<b style="color:#e08a86">要修正 ${err}件</b>／警告 ${warn}件　<span style="color:var(--dim)">（${(items||[]).length}社のうち ${bad}社に何かある）</span>
     ${top.length?`<br><span style="color:var(--dim)">要修正の多い社：</span>${lst}`:''}
-    <br><span style="color:var(--dim)">行の ⚠ を押すと中身と直し方が出る。<b>採点には一切影響しない</b>——後からΩが動く事故を、人の注意力に頼らず先に出すための検査。</span></div>`;
+    <br><span style="color:var(--dim)">行の ⚠ を押すと中身と直し方が出る。<b>採点には一切影響しない</b>——後からΩが動く事故を、人の注意力に頼らず先に出すための検査。</span>
+    <button onclick="ccfInspectAll(this)" style="margin-top:7px;padding:6px 12px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:12px;font-weight:600;cursor:pointer">🔍 全件点検を開く</button></div>`;
+}
+// ── 全件点検（v9.9.55・2026-07-30 ユーザー要望「点検ボタンがほしい。しかも高精度の」）──
+// 要望の核心は二つ:「**入力されていない項目が素通りするのがやばい**」「**明らかに間違っている入力の
+//   素通りもやばい**」。前者は ccfAudit の⑥（空欄のとき門が代わりに何を使うかまで書く）、
+//   後者は③内部矛盾＋④不可能値が受ける。**内部矛盾が高精度の本体**——独立に入った値どうしが
+//   定義上必ず合うはずという検査は、単独の帯検問と違って「もっともらしい範囲内の誤り」を捕まえる
+//   （実測: per≠px÷eps で23社、roic<roicg で3社。どちらも帯検問では一生見つからない）。
+async function ccfInspectAll(btn){
+  const lab=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='点検中…';}
+  let keys=[]; try{const res=await store.list('g7:');keys=res?res.keys:[];}catch(e){}
+  const rows=[];
+  for(const k of keys){ try{const res=await store.get(k); if(!res)continue; const o=JSON.parse(res.value);
+    if(!o.data||!o.r)continue;
+    const W=ccfAudit(o.data,o.r,o.coerce||[]);
+    rows.push({k,nm:o.data.nm||k.slice(k.indexOf(':')+1),s:parseFloat(o.r.evalScore)||0,W,
+      err:W.filter(x=>x.lv==='err').length, warn:W.filter(x=>x.lv==='warn').length, info:W.filter(x=>x.lv==='info').length});
+  }catch(e){} }
+  if(btn){btn.disabled=false;btn.textContent=lab;}
+  const tot={err:0,warn:0,info:0}; const byRule={};
+  rows.forEach(r=>{tot.err+=r.err;tot.warn+=r.warn;tot.info+=r.info;
+    r.W.forEach(x=>{const key=x.lv+'|'+x.k; (byRule[key]=byRule[key]||{lv:x.lv,k:x.k,n:0,who:[]}); byRule[key].n++; byRule[key].who.push(r.nm);});});
+  // 並び: 要修正の多い社 → 警告の多い社 → スコア降順
+  const bad=rows.filter(r=>r.err||r.warn).sort((a,b)=>(b.err-a.err)||(b.warn-a.warn)||(b.s-a.s));
+  const lvName={err:'要修正',warn:'警告',info:'測定漏れ'};
+  const lvCol={err:'#c9534f',warn:'#d69a3c',info:'#7f8794'};
+  const ruleRows=Object.values(byRule).sort((a,b)=>({err:0,warn:1,info:2}[a.lv]-{err:0,warn:1,info:2}[b.lv])||b.n-a.n)
+    .map(x=>`<div style="display:flex;gap:8px;align-items:baseline;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <span style="font-size:10px;color:${lvCol[x.lv]};border:1px solid ${lvCol[x.lv]}66;border-radius:3px;padding:0 4px;flex:0 0 auto">${lvName[x.lv]}</span>
+      <code style="font-size:11.5px;color:var(--gold-bright);flex:0 0 66px">${x.k}</code>
+      <b style="font-size:12px;color:var(--ink);flex:0 0 44px">${x.n}社</b>
+      <span style="font-size:10.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.who.slice(0,8).join(' / ')}${x.who.length>8?' …他'+(x.who.length-8)+'社':''}</span></div>`).join('');
+  const coRows=bad.slice(0,40).map(r=>`<div onclick="ccfAuditOpen(decodeURIComponent('${encodeURIComponent(r.k)}'))" style="cursor:pointer;display:flex;gap:9px;align-items:baseline;padding:4px 6px;border-radius:6px;border-bottom:1px solid rgba(255,255,255,.04)" onmouseover="this.style.background='rgba(201,166,74,.07)'" onmouseout="this.style.background='transparent'">
+      <span style="font-size:12.5px;color:var(--ink);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.nm}</span>
+      <span style="font-size:11px;color:var(--dim);flex:0 0 46px">Ω${r.s.toFixed(1)}</span>
+      ${r.err?`<span style="font-size:11px;color:#e08a86;flex:0 0 62px">要修正${r.err}</span>`:'<span style="flex:0 0 62px"></span>'}
+      ${r.warn?`<span style="font-size:11px;color:#d6b06c;flex:0 0 52px">警告${r.warn}</span>`:'<span style="flex:0 0 52px"></span>'}
+      <span style="font-size:10.5px;color:var(--dim);flex:0 0 auto">▸</span></div>`).join('');
+  const box=document.getElementById('ccfAuditModal')||(()=>{const el=document.createElement('div');el.id='ccfAuditModal';
+    el.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.66);display:flex;align-items:center;justify-content:center;padding:14px';
+    el.onclick=e=>{if(e.target===el)el.remove();};document.body.appendChild(el);return el;})();
+  box.innerHTML=`<div style="background:var(--panel,#15161a);border:1px solid var(--gold-line);border-radius:14px;max-width:780px;width:100%;max-height:88vh;overflow:auto;padding:18px 20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <h2 class="serif" style="margin:0;font-size:1.2em;color:var(--gold-bright)">🔍 全件点検（${rows.length}社）</h2>
+      <button onclick="document.getElementById('ccfAuditModal').remove()" style="background:transparent;border:1px solid var(--dim);color:var(--dim);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">閉じる</button></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin:10px 0 4px;font-size:13px">
+      <span style="padding:6px 12px;border-radius:8px;background:#c9534f18;border:1px solid #c9534f55;color:#e08a86"><b>要修正 ${tot.err}</b></span>
+      <span style="padding:6px 12px;border-radius:8px;background:#d69a3c14;border:1px solid #d69a3c44;color:#d6b06c"><b>警告 ${tot.warn}</b></span>
+      <span style="padding:6px 12px;border-radius:8px;background:rgba(127,135,148,.12);border:1px solid rgba(127,135,148,.4);color:#9aa1ad"><b>測定漏れ ${tot.info}</b></span>
+      <span style="padding:6px 12px;font-size:11.5px;color:var(--dim)">何かある社 ${bad.length}／${rows.length}</span></div>
+    <div style="font-size:11px;color:var(--dim);line-height:1.75;margin-bottom:10px"><b>要修正</b>＝規約違反・内部矛盾・ありえない値（<u>放置するとΩが後から動く</u>）／<b>警告</b>＝未測定が最良ケースや罰として採点されている・陳腐化・帯の外／<b>測定漏れ</b>＝空欄が正しく処理される欄（根拠が無ければ空欄が正解）。<b>採点には一切影響しない。</b>根拠(_meta)の被覆率は端末側の <code>night/validate_packs.py</code> が見る＝二層で守る。</div>
+    <h3 style="font-size:1em;color:var(--ink);margin:14px 0 4px">項目別</h3>
+    <div style="max-height:260px;overflow:auto">${ruleRows||'<div style="color:var(--jade);font-size:13px">検出なし</div>'}</div>
+    <h3 style="font-size:1em;color:var(--ink);margin:16px 0 4px">銘柄別（要修正の多い順・押すと詳細）${bad.length>40?'<span style="font-size:11px;color:var(--dim)">　上位40社</span>':''}</h3>
+    <div>${coRows||'<div style="color:var(--jade);font-size:13px">要修正・警告のある銘柄はありません</div>'}</div>
+  </div>`;
 }
 // ── 門X裁きⅠ（単一実装・v9.9.39 切り出し）───────────────────────────────────
 // Ⅵ買付順位の🟢投下可判定と、検証器 night/score_all.js が同じ式を使うための切り出し。
