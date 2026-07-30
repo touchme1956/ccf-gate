@@ -2,7 +2,7 @@
 <html lang="ja"><head><script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("ccf_theme")||"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}</script><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CCF Ω — 壊れない複利の門 × 未来の門（完全版・詳解）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Yuji+Syuku&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Yuji+Syuku&family=Marcellus&display=swap" rel="stylesheet">
 <style>
 :root{
  --bg:#080a0e;--bg2:#0c0f16;--panel:#121826;--panel2:#0e131d;--line:#28344a;
@@ -512,6 +512,9 @@ html[data-theme="light"] [style*="color:#d6b06c"]{color:#8a5a10 !important;}
 html[data-theme="light"] [style*="color:#c0894a"]{color:#8a5a10 !important;}
 html[data-theme="light"] [style*="color:#e0c88e"]{color:#8a5a10 !important;}
 html[data-theme="light"] [style*="color:#e0917a"]{color:#a5341a !important;}
+/* JSが動的に組む判定色（回避=朱／金）も紙用に。値はJS側のリテラルと同じ */
+html[data-theme="light"] [style*="color:#cf5f48"]{color:#a5341a !important;}
+html[data-theme="light"] [style*="color:#c9a64a"]{color:#6f5411 !important;}
 html[data-theme="light"] [style*="color:#e3a899"]{color:#a5341a !important;}
 html[data-theme="light"] [style*="color:#ecd494"]{color:#6d5310 !important;}
 html[data-theme="light"] [style*="color:#d8d2c4"]{color:#3f3a2e !important;}
@@ -527,6 +530,51 @@ html[data-theme="light"] #scorer .btn-g{color:#fff9ea;text-shadow:none;}
 html[data-theme="light"] #scorer .f-cut{color:#a5341a;}
 html[data-theme="light"] #scorer .f-warn{color:#7a5d13;}
 html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{color:#1b1610;}
+
+/* ============================================================
+   銘柄名の意匠（2026-07）— 見た目のみ。採点・保存データ・判定は不変。
+   台帳／買付順位／監視の行は .led だが、CSSが全て #scorer 配下に限定されていて
+   ページⅣ/Ⅵ/Ⅴでは一切効いていなかった。実測: 443行が display:block・余白0・
+   銘柄名は太さ300 で、名前・日数・点数・ティア・判定・ボタンが全部くっついて
+   「3923 ラクス0日前83.2・最上位今 買える ↻ 依 □ ×」と一行に溶けていた。
+   行の骨格を与え、**銘柄名を行の主役**に据える。
+   書体はラテン=Marcellus（碑文体のローマン。門の額に刻む字）／日本語=明朝 に
+   字ごとに落ちる和洋対。読み込めなければ明朝→serif へ素直に落ちる並びにしてある。
+   ============================================================ */
+.led{display:flex;align-items:center;gap:12px;padding:11px 14px;margin-bottom:6px;
+  background:var(--panel);border:1px solid var(--line);border-radius:9px;
+  transition:border-color .18s ease,background .18s ease;}
+.led:hover{border-color:var(--gold-line);background:var(--panel2);}
+/* 銘柄名：行の主役。数字は等幅数字で日本株コードの桁を揃える */
+.led .ln{flex:1;min-width:0;font-family:"Marcellus","Shippori Mincho",serif;
+  font-weight:500;font-size:18px;letter-spacing:.045em;line-height:1.35;
+  color:var(--ink);font-variant-numeric:tabular-nums;}
+/* 名前に添うバッジ・メモは本文書体へ戻す＝碑文体は銘柄名だけの特権 */
+.led .ln span,.led .ln div{font-family:"Zen Kaku Gothic New",sans-serif;font-weight:400;letter-spacing:0;}
+/* 点数・ティアは右揃え＋等幅数字＝列が縦に揃って上から下へ読める */
+.led .grade{font-family:"Shippori Mincho",serif;font-weight:700;font-size:15px;
+  min-width:5.6em;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.led .act{font-size:11px;font-weight:600;padding:3px 9px;border-radius:5px;white-space:nowrap;}
+.led button{background:none;border:1px solid transparent;color:var(--muted);cursor:pointer;
+  font-size:13px;border-radius:6px;padding:4px 7px;min-width:30px;flex:0 0 auto;}
+.led button:hover{color:var(--gold-bright);border-color:var(--gold-line);background:rgba(201,166,74,.08);}
+/* 採点機の投入欄も同じ書体＝打った字と台帳の字が揃う */
+#scorer input#nm{font-family:"Marcellus","Shippori Mincho",serif;font-size:17px;
+  font-weight:500;letter-spacing:.04em;}
+/* 行内の長い注記は nowrap がインラインで指定されていて縮まず、画面外へ出ていた
+   （データを入れて初めて出る＝空の台帳では見えなかった）。行の中だけ折り返しを許す */
+.led [style*="white-space:nowrap"]{white-space:normal !important;}
+/* スマホ: 行が窮屈になるので名前を上段・数値を下段へ折る */
+@media(max-width:640px){
+  /* 1行目=銘柄名、2行目=点数・判定・操作 の2段に固定する。
+     判定バッジの文字数で3段目へ折れないよう、2段目の合計幅が実効幅(約332px)に収まる寸法にした */
+  .led{flex-wrap:wrap;gap:8px;padding:12px;}
+  .led .ln{flex:1 0 100%;font-size:17px;}
+  .led .grade{min-width:0;text-align:left;font-size:14px;}
+  .led .act{font-size:10.5px;padding:3px 7px;}
+  .led button{min-width:26px;padding:4px 5px;font-size:12.5px;}
+  .led button:first-of-type{margin-left:auto;}
+}
 
 /* 動きを減らす設定の尊重 */
 @media(prefers-reduced-motion:reduce){
