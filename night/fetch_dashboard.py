@@ -65,6 +65,17 @@ def main():
     if not KEY:
         print("FINNHUB_KEY が無い → 何も書かずに終了（既存ファイルは壊さない）")
         print("  設定: GitHub → Settings → Secrets and variables → Actions → FINNHUB_KEY")
+        # 2026-08-02是正: **CIでは異常終了する**。
+        #   初回実行で env に FINNHUB_KEY が空のまま渡り、スクリプトは正しく「何も書かず終了」したが
+        #   return 0 だったため**ワークフローは緑（成功）**になった。12秒で終わり何もコミットされて
+        #   いないのに、画面上は成功。**鳴らない警報**そのもので、このリポジトリが何度も踏んできた
+        #   「静かな壊れ方」と同型（acq5が既定へ化けた／kanshiのキー違いで点検が3社に縮んだ／
+        #   古い株価がMSFTを投下可に残した）。
+        #   手元で鍵無しに走らせるのは正常な使い方なので0のまま。**CIだけ赤くする。**
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            print("::error::FINNHUB_KEY が空。Secretの名前が FINNHUB_KEY ちょうどか、"
+                  "Repository secret として登録されているか（Environment secret ではないか）を確認せよ")
+            return 1
         return 0
     ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
     out = {"asof": ts, "quotes": {}, "news": {}, "fx": {}}
