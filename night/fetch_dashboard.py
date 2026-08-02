@@ -106,16 +106,32 @@ def jp_quotes(codes):
     for c in codes:
         got = False
         for host in hosts:
-            for path in (f"/v8/finance/chart/{c}.T?interval=1d&range=5d",
+            for path in (f"/v8/finance/chart/{c}.T?interval=1d&range=10d",
                          f"/v7/finance/quote?symbols={c}.T" + (f"&crumb={crumb}" if crumb else "")):
                 try:
                     with op.open(f"https://{host}{path}", timeout=20) as r:
                         j = json.loads(r.read().decode("utf-8", "ignore"))
                     if "chart" in j:
-                        m = j["chart"]["result"][0]["meta"]
+                        res = j["chart"]["result"][0]
+                        m = res["meta"]
                         px = m.get("regularMarketPrice")
-                        prev = m.get("chartPreviousClose") or m.get("previousClose")
                         ccy = m.get("currency") or "JPY"
+                        # 2026-08-02 是正: **chartPreviousClose を前日終値に使ってはいけない**。
+                        #   これは「指定レンジの**直前**の終値」で、range=5d なら**5営業日前**の値。
+                        #   初回はこれを使ったため 6146 が −6.66% / 6857 が +14.52% と、
+                        #   前日比ではなく**5日間の変化率**を表示していた（ユーザーが違和感で発見）。
+                        #   日足の終値系列から「最後から2番目」を取るのが正しい前日終値。
+                        prev = m.get("previousClose")
+                        try:
+                            cl = [c for c in res["indicators"]["quote"][0]["close"] if c is not None]
+                            if len(cl) >= 2:
+                                prev = cl[-2]          # 最後=当日 / その前=前営業日
+                                if px is None:
+                                    px = cl[-1]
+                        except Exception:
+                            pass
+                        if prev is None:
+                            prev = m.get("chartPreviousClose")   # 最後の手段（レンジ直前の終値）
                     else:
                         q = (j.get("quoteResponse") or {}).get("result") or []
                         if not q:
