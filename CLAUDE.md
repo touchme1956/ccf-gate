@@ -119,6 +119,23 @@
     触れない。px÷eps は旧pxが無いときだけのフォールバックにし、その場合はmemoに警告を残す。
     **これで eps の定義が割れていても per は壊れない**——欄の統一（全社のTTM EPS再取得）という
     大工事をせずに、事故の経路そのものを塞いだ。eps は以後「参考値・evidenceに基準を明記」で運用する
+- **📊 盤（ダッシュボード・v9.9.58・2026-07-30ユーザー要望）**: 門の先頭タブ。8項目を一枚で出す——
+  現在価格／前日比／保有評価額／含み損益／Ωスコア／最新ニュース／次回決算日／円換算資産。
+  **判定には一切使わない**（売りはS1/S2/S3・買いは三段関門のみ。株価が判断に触れる唯一の経路は
+  門Xの開通判定）。データ源: 台帳`g7:` ／ 保有`pf:portfolio` ／ `out/dashboard.json` ／ `out/next_earnings.json`。
+  - **配管は GitHub Actions（Firebaseではない）**: `.github/workflows/market.yml` が平日21:30UTCに
+    `night/fetch_dashboard.py` を回し、`out/dashboard.json` と `market_data.json` をコミットする。
+    **鍵は GitHub Secrets の `FINNHUB_KEY`＝ブラウザに一度も出ない**。門は同一オリジンの静的JSONを
+    読むだけなのでCORSも認証もサーバーも不要。
+    **Firebaseを採らない理由**: 無料枠(Spark)の Cloud Functions は**Google以外への外部HTTP通信ができない**ので
+    Finnhubを呼ぶには従量課金が要る。GitHub Actionsなら新サービスも費用もゼロ
+  - **Finnhubを選ぶ理由**: Alpha Vantage無料枠は**1日25回**で、2026-07-30はこれに縛られて投下可9社しか
+    取れなかった。Finnhubは分あたり制限なので監視銘柄を全部回せる。設定は
+    Settings → Secrets and variables → Actions → `FINNHUB_KEY`（無料鍵は finnhub.io/register）
+  - **日本株コードはFinnhub無料枠外**——盤は「価格未取得」と明示し、手入力の現値で計算する
+    （前回値やゼロで埋めない＝絶対のルール7）
+  - **鍵が無ければ何も壊さず終了**する（既存ファイルを空で上書きしない）。
+    初期データとして2026-07-31終値の7社を `out/dashboard.json` に入れてある
 - 全パック検証: `node night/score_all.js` → 門の compute()／ccfXJudge／ccfMoatGate をそのまま走らせて
   Ωと**三段関門の合否（🟢投下可が何社か）**を実測。`--jp/--us/--only/--set`。出力 out/score_all.json。
   「基準を変えたら誰がどう動くか」は推測でなくこれで出す

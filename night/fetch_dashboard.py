@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""night/fetch_dashboard.py — ダッシュボード用の市場データを一括取得（2026-07-30新設）
+
+なぜ作ったか:
+  「自動で価格がでてない」の正体は **API鍵が無く market_fetch.py が動かない** ことだった
+  （av_key.txt / fmp_key.txt が不在。px が入っているのは 185/317 パックだけ）。
+  そして実害は「価格が見えない」ではなく **「価格が古い」** の側に出た——2026-07-30の実測で
+  MSFT の台帳価格が 398.66 と 16.6% 古く、**それだけで MSFT が投下可に残り続けていた**。
+  門Xの「良い会社を高値で掴まない」という役目が、価格が古いという理由で空回りしていた。
+
+設計:
+  ・鍵は環境変数 FINNHUB_KEY（GitHub Secrets 経由）。**ブラウザには一度も出さない**
+  ・出力は out/dashboard.json（門が同一オリジンでfetchする静的JSON）と market_data.json
+  ・鍵が無ければ**何も壊さず終了**（既存ファイルを空で上書きしない）
+  ・取得できなかった銘柄は**書かない**——欠測をゼロや前回値で埋めない（絶対のルール7）
+"""
+import json, os, sys, time, urllib.request, urllib.error
+from datetime import datetime, timezone
+
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.chdir(BASE)
+KEY = os.environ.get("FINNHUB_KEY") or ""
+for p in ("./finnhub_key.txt", "./ccf/finnhub_key.txt"):
+    if not KEY and os.path.exists(p):
+        KEY = open(p).read().strip()
+API = "https://finnhub.io/api/v1"
+UA = {"User-Agent": "ccf-gate dashboard"}
+
+
+def _get(url, tries=3):
+    for i in range(tries):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=25) as r:
+                return json.loads(r.read().decode("utf-8", "ignore"))
+        except Exception:
+            if i == tries - 1:
+                return None
+            time.sleep(1.5 * (i + 1))
+    return None
+
+
+def tickers():
+    """監視リスト ∪ 保有 ∪ Ω72+。全317社を毎日叩く必要はない（分あたり制限を無駄に食う）"""
+    s = set()
+    for p, k in (("kanshi_list.json", ("list", "tickers", "pin")), ("holdings.json", ("holdings", "elite"))):
+        if os.path.exists(p):
+            try:
+                cfg = json.load(open(p, encoding="utf-8"))
+                for key in k:
+                    s |= {t.strip().upper() for t in (cfg.get(key) or []) if str(t).strip()}
+            except Exception:
+                pass
+    try:
+        for r in json.load(open("out/score_all.json", encoding="utf-8")):
+            if (r.get("s") or 0) >= 72:
+                s.add(str(r.get("t", "")).upper())
+    except Exception:
+        pass
+    # 日本株コード(4-5桁)は Finnhub の無料枠では引けない → 除外し、門側で「未取得」と出す
+    return sorted(t for t in s if t and not t.isdigit())
+
+
+def main():
+    if not KEY:
+        print("FINNHUB_KEY が無い → 何も書かずに終了（既存ファイルは壊さない）")
+        print("  設定: GitHub → Settings → Secrets and variables → Actions → FINNHUB_KEY")
+        return 0
+    ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    out = {"asof": ts, "quotes": {}, "news": {}, "fx": {}}
+
+    fx = _get(f"{API}/forex/rates?base=USD&token={KEY}")
+    if fx and isinstance(fx.get("quote"), dict) and fx["quote"].get("JPY"):
+        out["fx"]["USDJPY"] = round(float(fx["quote"]["JPY"]), 3)
+
+    T = tickers()
+    print(f"対象 {len(T)}社（監視 ∪ 保有 ∪ Ω72+・日本株コードは無料枠外のため除外）")
+    for i, t in enumerate(T, 1):
+        q = _get(f"{API}/quote?symbol={t}&token={KEY}")
+        # c=現在値 pc=前日終値 d=前日比 dp=前日比% —— 0埋めされた応答は「取得失敗」として捨てる
+        if q and q.get("c"):
+            out["quotes"][t] = {"px": q.get("c"), "prev": q.get("pc"),
+                                "chg": q.get("d"), "chgPct": q.get("dp"),
+                                "high": q.get("h"), "low": q.get("l")}
+        n = _get(f"{API}/company-news?symbol={t}&from={ts[:8]}01&to={ts[:10]}&token={KEY}")
+        if isinstance(n, list) and n:
+            out["news"][t] = [{"h": x.get("headline"), "u": x.get("url"),
+                               "d": x.get("datetime"), "s": x.get("source")} for x in n[:3]]
+        if i % 30 == 0:
+            print(f"  {i}/{len(T)}")
+        time.sleep(1.1)          # 無料枠の分あたり制限に対する保険
+
+    os.makedirs("out", exist_ok=True)
+    json.dump(out, open("out/dashboard.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+
+    # market_merge.py が読む形へも書き出す（px だけ。定性・機械値には触れない）
+    md = {}
+    if os.path.exists("market_data.json"):
+        try:
+            md = json.load(open("market_data.json", encoding="utf-8"))
+        except Exception:
+            md = {}
+    for t, q in out["quotes"].items():
+        md.setdefault(t, {})["px"] = q["px"]
+    json.dump(md, open("market_data.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print(f"→ out/dashboard.json（株価{len(out['quotes'])}社 / ニュース{len(out['news'])}社 / "
+          f"USDJPY={out['fx'].get('USDJPY')}）")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
