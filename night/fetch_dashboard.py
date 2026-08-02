@@ -69,9 +69,13 @@ def main():
     ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
     out = {"asof": ts, "quotes": {}, "news": {}, "fx": {}}
 
-    fx = _get(f"{API}/forex/rates?base=USD&token={KEY}")
-    if fx and isinstance(fx.get("quote"), dict) and fx["quote"].get("JPY"):
-        out["fx"]["USDJPY"] = round(float(fx["quote"]["JPY"]), 3)
+    # 為替: Finnhub の /forex/rates は**無料枠では引けない**（2026-07-30の実測で quote が返らず
+    #   USDJPY=None になった）。鍵不要で使える open.er-api.com へ切り替える。
+    #   取れなければ書かない——盤は「為替未取得」と出し、Ⅶ保有の手入力値へ落ちる（ゼロで埋めない）。
+    fx = _get("https://open.er-api.com/v6/latest/USD")
+    if fx and isinstance(fx.get("rates"), dict) and fx["rates"].get("JPY"):
+        out["fx"]["USDJPY"] = round(float(fx["rates"]["JPY"]), 3)
+        out["fx"]["src"] = "open.er-api.com（鍵不要）"
 
     T = tickers()
     print(f"対象 {len(T)}社（監視 ∪ 保有 ∪ Ω72+・日本株コードは無料枠外のため除外）")
