@@ -1,0 +1,39 @@
+# 市場データの自動更新（2026-07-30新設）
+#
+# なぜ Firebase ではなく GitHub Actions か:
+#   ブラウザから株価APIを直接叩くと**APIキーが公開ページに露出する**。それを避けるために
+#   バックエンドを置く発想になりがちだが、Firebase の無料枠(Spark)は Cloud Functions からの
+#   **Google以外への外部HTTP通信を許さない**ので、Finnhub を呼ぶには従量課金プランが要る。
+#   一方このリポジトリは既に GitHub Pages で配信されている——**鍵を Secrets に置き、CIが
+#   market_data.json をコミットし、門は同一オリジンの静的JSONを読むだけ**でよい。
+#   新しいサービスも費用も認証もCORSも不要。鍵はブラウザに一度も出ない。
+#
+# 設定: リポジトリの Settings → Secrets and variables → Actions で FINNHUB_KEY を登録する
+#   （無料鍵は https://finnhub.io/register。Alpha Vantage の1日25回と違い分あたり制限なので全社回せる）
+name: market data
+on:
+  schedule:
+    - cron: '30 21 * * 1-5'   # 平日 21:30 UTC ＝ 米国市場クローズ後
+  workflow_dispatch:          # 手動実行も可
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: 株価・為替・ニュースを取得
+        env:
+          FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+        run: python3 night/fetch_dashboard.py
+      - name: 常識帯の検問を通してパックへ反映
+        run: python3 market_merge.py || true
+      - name: コミット
+        run: |
+          git config user.name  "ccf-gate bot"
+          git config user.email "noreply@github.com"
+          git add -A market_data.json out/dashboard.json out/*_gate_pack.json || true
+          git diff --staged --quiet || git commit -m "market data $(date -u +%Y-%m-%d)"
+          git push

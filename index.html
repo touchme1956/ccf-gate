@@ -585,7 +585,8 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <div class="tategaki" aria-hidden="true">壊れない複利の門</div>
 <div class="tategaki tr" aria-hidden="true">Compounding, Unbroken — CCF Ω</div>
 <nav class="pgnav">
- <button id="tab1" onclick="showPage(1)">Ⅰ 解説</button>
+ <button id="tab6" onclick="showPage(6)" style="color:var(--gold-bright)">📊 盤</button>
+<button id="tab1" onclick="showPage(1)">Ⅰ 解説</button>
 <button id="tab8" onclick="showPage(8)">Ⅱ 実行手順</button>
 <button id="tab2" onclick="showPage(2)">Ⅲ 採点機</button>
 <button id="tab3" onclick="showPage(3)">Ⅳ 台帳（保存記録）</button>
@@ -593,6 +594,15 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <button id="tab5" onclick="showPage(5)">Ⅵ 買付順位</button>
 <button id="tab7" onclick="showPage(7)" style="color:var(--gold-bright)">Ⅶ 保有</button>
 </nav>
+<div id="pg6" class="pg">
+ <h1 class="serif">📊 盤</h1>
+ <p class="intro">保有と投下可の現在地を一枚で。<b>価格・前日比・含み損益は情報であって判定ではない</b>——売りは <b>S1/S2/S3</b> のみ、買いは <b>三段関門（Ω75+ ∧ 門X4条件 ∧ 堀70+）</b>のみで動く。IPS②Ulysses契約の48時間冷却も従来どおり効く。株価は<b>門Xの開通判定</b>にだけ使われる。</p>
+ <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+   <button onclick="ccfDash(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
+   <span id="dashAsof" style="font-size:11.5px;color:var(--dim)"></span>
+ </div>
+ <div id="dashBox"><div style="color:var(--dim);font-size:13px">「↻ 更新」で読み込む。</div></div>
+</div>
 <div id="pg1" class="pg">
 
 <header class="hero">
@@ -2989,6 +2999,108 @@ async function ccfInspectAll(btn){
     <div>${coRows||'<div style="color:var(--jade);font-size:13px">要修正・警告のある銘柄はありません</div>'}</div>
   </div>`;
 }
+// ── 📊 盤（v9.9.58・2026-07-30 ユーザー要望「8項目そのまま」）─────────────────────
+// 出すもの: 現在価格／前日比／保有評価額／含み損益／Ωスコア／最新ニュース／次回決算日／円換算資産。
+// **判定には一切使わない**——売りは S1/S2/S3、買いは三段関門のみ。株価が判断に触れる唯一の経路は
+//   門Xの開通判定（Ⅵ買付順位）で、ここは表示層。設計上そこを混ぜない。
+// データ源: 台帳 store('g7:') ／ 保有 localStorage('pf:portfolio') ／
+//   out/dashboard.json（GitHub ActionsがFinnhubから毎営業日コミット・鍵はSecretsでブラウザに出ない）／
+//   out/next_earnings.json。**取れなかったものは「未取得」と書く**（前回値やゼロで埋めない＝ルール7）。
+let __dashCache=null;
+async function ccfDash(btn){
+  const box=$('dashBox'); if(!box)return;
+  const lab=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='読込中…';}
+  const j=async u=>{try{const r=await fetch(u+'?t='+Date.now());return r.ok?await r.json():null;}catch(e){return null;}};
+  const [mkt,ern]=await Promise.all([j('out/dashboard.json'),j('out/next_earnings.json')]);
+  __dashCache={mkt,ern};
+  // 台帳
+  let keys=[]; try{const r=await store.list('g7:');keys=r?r.keys:[];}catch(e){}
+  const led={};
+  for(const k of keys){ try{const r=await store.get(k); if(!r)continue; const o=JSON.parse(r.value);
+    if(o.data&&o.r){const t=(o.data.nm||k.slice(k.indexOf(':')+1)).trim().split(/\s/)[0].toUpperCase();
+      led[t]={nm:o.data.nm||t,d:o.data,r:o.r,k};}}catch(e){} }
+  // 保有
+  let pf=null; try{pf=JSON.parse(localStorage.getItem('pf:portfolio')||'null');}catch(e){}
+  const fxAuto=mkt&&mkt.fx&&mkt.fx.USDJPY, fxMan=pf&&+pf.fx, FX=fxAuto||fxMan||0;
+  const Q=(mkt&&mkt.quotes)||{}, NW=(mkt&&mkt.news)||{};
+  const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+  const sign=n=>(n>0?'+':'')+n.toFixed(2);
+  const col=n=>n>0?'#54b88a':n<0?'#cf5f48':'var(--dim)';
+  if(btn){btn.disabled=false;btn.textContent=lab;}
+  const asof=$('dashAsof');
+  if(asof)asof.innerHTML = mkt&&mkt.asof
+    ? `市場データ ${mkt.asof.slice(0,16).replace('T',' ')} UTC　${fxAuto?`$1=¥${fxAuto}（自動）`:(fxMan?`$1=¥${fxMan}（Ⅶ保有の手入力）`:'<b style="color:#d69a3c">為替未取得</b>')}`
+    : '<b style="color:#d69a3c">out/dashboard.json が未生成</b>——GitHub Actions（.github/workflows/market.yml）に FINNHUB_KEY を設定すると毎営業日入る。それまで価格・前日比・ニュースは空欄';
+
+  // ── 保有（評価額・含み損益・円換算）
+  let rows='', totJ=0, totCost=0, miss=[];
+  const pos=(pf&&Array.isArray(pf.positions))?pf.positions:[];
+  pos.forEach(p=>{
+    const t=String(p.t||'').toUpperCase(); if(!t)return;
+    const sh=+p.sh||0, bpx=+p.bpx||0, q=Q[t];
+    const cur=q?q.px:(+p.npx||0);                 // 実測が無ければ手入力の現値
+    const src=q?'':'<span style="font-size:9.5px;color:#d69a3c;margin-left:4px">手入力</span>';
+    const jpy=p.ccy==='JPY'?1:(FX||0);
+    const val=(sh>0&&cur>0)?(p.ccy==='JPY'?sh*cur:sh*cur*jpy):(+p.v||0);
+    const cost=(sh>0&&bpx>0)?(p.ccy==='JPY'?sh*bpx:sh*bpx*jpy):0;
+    totJ+=val; totCost+=cost;
+    const pl=cost>0?val-cost:null, plP=cost>0?(val/cost-1)*100:null;
+    const L=led[t]||{}, R=L.r||{};
+    const ex={s1:'🔴S1',s2:'🟠S2',s3:'🟡S3',hold:'—'}[(R.exit&&R.exit.level)||'hold']||'—';
+    if(!q&&sh>0)miss.push(t);
+    rows+=`<div class="led"><span class="ln">${t}${src}</span>`
+      +`<span style="font-size:12px;min-width:78px;text-align:right">${cur?((p.ccy==='JPY'?'¥':'$')+cur.toFixed(2)):'—'}</span>`
+      +`<span style="font-size:12px;min-width:82px;text-align:right;color:${q?col(q.chgPct||0):'var(--dim)'}">${q&&q.chgPct!=null?sign(q.chgPct)+'%':'—'}</span>`
+      +`<span style="font-size:12.5px;min-width:96px;text-align:right;color:var(--ink)">${val?yen(val):'—'}</span>`
+      +`<span style="font-size:12px;min-width:110px;text-align:right;color:${pl!=null?col(pl):'var(--dim)'}">${pl!=null?`${pl>0?'+':''}${yen(pl)}（${sign(plP)}%）`:'—'}</span>`
+      +`<span style="font-size:12px;min-width:56px;text-align:right;color:var(--gold-bright)">${R.evalScore||'—'}</span>`
+      +`<span style="font-size:11.5px;min-width:44px;text-align:right">${ex}</span></div>`;
+  });
+  const plAll=totCost>0?totJ-totCost:null;
+  const head=`<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);padding:10px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:10px">
+    <span>総資産 <b style="font-size:16px;color:var(--gold-bright)">${totJ?yen(totJ):'—'}</b></span>
+    ${plAll!=null?`<span style="border-left:1px solid var(--line);padding-left:14px">含み損益 <b style="color:${col(plAll)}">${plAll>0?'+':''}${yen(plAll)}（${sign((totJ/totCost-1)*100)}%）</b></span>`:''}
+    ${FX?`<span style="border-left:1px solid var(--line);padding-left:14px">$1=¥${FX}</span>`:''}
+    <span style="border-left:1px solid var(--line);padding-left:14px;color:var(--dim)">保有${pos.length}件</span></div>`;
+  const hdr=`<div class="led" style="opacity:.65;font-size:10.5px"><span class="ln">銘柄</span><span style="min-width:78px;text-align:right">現在値</span><span style="min-width:82px;text-align:right">前日比</span><span style="min-width:96px;text-align:right">評価額</span><span style="min-width:110px;text-align:right">含み損益</span><span style="min-width:56px;text-align:right">Ω</span><span style="min-width:44px;text-align:right">出口</span></div>`;
+
+  // ── 決算が近い
+  const items=(ern&&ern.items)||[]; const today=new Date();
+  const soon=items.map(x=>({...x,dd:Math.round((new Date(x.date)-today)/864e5)}))
+    .filter(x=>isFinite(x.dd)&&x.dd>=-3&&x.dd<=21).sort((a,b)=>a.dd-b.dd).slice(0,10);
+  const ernHtml=soon.length?soon.map(x=>{const L=led[x.t]||{};
+    return `<span style="display:inline-block;margin:3px 6px 3px 0;padding:4px 9px;border-radius:6px;background:${x.dd<=7?'rgba(214,154,60,.14)':'rgba(255,255,255,.04)'};border:1px solid ${x.dd<=7?'rgba(214,154,60,.45)':'var(--line)'};font-size:11.5px"><b>${x.t}</b> ${x.date}${x.dd<=0?'（済/当日）':`（あと${x.dd}日）`}${x.src==='est'?'<span style="color:var(--dim)">推定</span>':''}${(L.r&&L.r.evalScore)?` <span style="color:var(--gold-bright)">Ω${L.r.evalScore}</span>`:''}</span>`;}).join('')
+    :'<span style="font-size:12px;color:var(--dim)">21日以内の決算予定なし（out/next_earnings.json は kessan_calendar.py が生成）</span>';
+
+  // ── 投下可
+  const buy=Object.values(led).map(L=>{const r=L.r,d=L.d,sc=parseFloat(r.evalScore)||0;
+      const mg=ccfMoatGate(r,d), x=ccfXJudge(d,sc)||{};
+      return {nm:L.nm,t:(L.nm||'').trim().split(/\s/)[0].toUpperCase(),s:sc,moat:mg.idx,ok:sc>=75&&x.xPass===true&&mg.pass===true,xEr:x.xEr};})
+    .filter(v=>v.ok).sort((a,b)=>b.s-a.s);
+  const buyHtml=buy.length?buy.map((v,i)=>{const q=Q[v.t];
+    return `<div class="led"><span style="font-size:15px;color:var(--gold-bright);min-width:28px"><b>${i+1}</b></span><span class="ln">${v.nm}</span>`
+      +`<span style="font-size:12px;min-width:70px;text-align:right">${q?('$'+q.px.toFixed(2)):'—'}</span>`
+      +`<span style="font-size:12px;min-width:70px;text-align:right;color:${q?col(q.chgPct||0):'var(--dim)'}">${q&&q.chgPct!=null?sign(q.chgPct)+'%':'—'}</span>`
+      +`<span style="font-size:12px;min-width:58px;text-align:right;color:var(--gold-bright)">Ω${v.s.toFixed(1)}</span>`
+      +`<span style="font-size:12px;min-width:52px;text-align:right;color:var(--jade)">堀${v.moat!=null?v.moat.toFixed(0):'—'}</span>`
+      +`<span style="font-size:12px;min-width:66px;text-align:right;color:var(--jade)">E[r]${v.xEr!=null?v.xEr.toFixed(0):'—'}%</span></div>`;}).join('')
+    :'<div style="font-size:12.5px;color:var(--dim)">投下可なし。Ⅵ買付順位で理由を確認。</div>';
+
+  // ── ニュース
+  const nk=Object.keys(NW).filter(t=>led[t]).slice(0,8);
+  const newsHtml=nk.length?nk.map(t=>`<div style="margin-top:7px"><b style="font-size:12px;color:var(--gold-bright)">${t}</b>`
+      +NW[t].slice(0,2).map(n=>`<div style="font-size:11.5px;color:var(--ink-soft);margin-left:8px;line-height:1.65">・<a href="${n.u}" target="_blank" rel="noopener" style="color:var(--ink-soft)">${(n.h||'').slice(0,110)}</a> <span style="color:var(--dim)">${n.s||''}</span></div>`).join('')+'</div>').join('')
+    :'<div style="font-size:12px;color:var(--dim)">ニュース未取得（FINNHUB_KEY 未設定）</div>';
+
+  const sec=(t,b,note)=>`<h2 class="serif" style="font-size:1.1em;margin:20px 0 6px;color:var(--gold-bright)">${t}</h2>${note?`<div style="font-size:11px;color:var(--dim);margin-bottom:5px">${note}</div>`:''}${b}`;
+  box.innerHTML = head
+    + sec('💰 保有', (pos.length?hdr+rows:'<div style="font-size:12.5px;color:var(--dim)">Ⅶ保有に株数・買値を入れると評価額と含み損益が出る。</div>')
+        + (miss.length?`<div style="font-size:11px;color:#d69a3c;margin-top:6px">価格未取得: ${miss.join(' / ')}——日本株コードはFinnhub無料枠外。手入力の現値で計算している</div>`:''),
+        '評価額・含み損益は<b>記帳のための情報</b>。出口判定はS1/S2/S3のみで、含み損益では動かさない')
+    + sec('🟢 投下可（三段関門を通過）', buyHtml, '買うのはここだけ。金額はⅥ買付順位の「今月の個別枠」で按分される')
+    + sec('📅 次回決算（21日以内）', ernHtml, '決算が来たら <code>python kessan_check.py</code>（日本株は <code>kessan_check_jp.py</code>）を回す')
+    + sec('📰 最新ニュース', newsHtml, '判定には使わない——原本（10-Q/有報）に書かれるまで門は動かない');
+}
 // ── 門X裁きⅠ（単一実装・v9.9.39 切り出し）───────────────────────────────────
 // Ⅵ買付順位の🟢投下可判定と、検証器 night/score_all.js が同じ式を使うための切り出し。
 // 中身は renderPlan 内にあった計算をそのまま移しただけ——式・閾値・順序はすべて不変。
@@ -3541,7 +3653,7 @@ async function renderLog(){
 }
 function toggleLog(ek){const b=document.getElementById('bd_'+ek),a=document.getElementById('ar_'+ek);if(!b)return;const open=b.style.display!=='none';b.style.display=open?'none':'block';if(a)a.textContent=open?'▸':'▾';}
 async function delLog(k){if(!await uiConfirm('この検証記録を削除しますか？'))return;try{await store.delete(k);renderLog();}catch(e){}}
-function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();window.scrollTo({top:0});}
+function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();window.scrollTo({top:0});}
 // ===== Ⅶ資産 iframe を「1枚のページ」として表示：中身(portfolio.html)が自分の高さをpostMessageで通知し、iframeをフィットさせて内部スクロールバーを消す =====
 window.addEventListener('message',function(e){ if(e&&e.data&&e.data.type==='ccfPfHeight'){ const f=document.getElementById('pfFrame'); if(f&&e.data.h>0)f.style.height=(e.data.h+8)+'px'; } });
 function pfShow(){ const f=document.getElementById('pfFrame'); if(!f)return; try{f.contentWindow.location.reload();}catch(e){f.src=f.src;} }
