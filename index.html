@@ -3102,7 +3102,10 @@ async function ccfDash(btn){
   const sec=(t,b,note)=>`<h2 class="serif" style="font-size:1.1em;margin:20px 0 6px;color:var(--gold-bright)">${t}</h2>${note?`<div style="font-size:11px;color:var(--dim);margin-bottom:5px">${note}</div>`:''}${b}`;
   box.innerHTML = head
     + sec('💰 保有', (pos.length?hdr+rows:'<div style="font-size:12.5px;color:var(--dim)">Ⅶ保有に株数・買値を入れると評価額と含み損益が出る。</div>')
-        + (miss.length?`<div style="font-size:11px;color:#d69a3c;margin-top:6px">価格未取得: ${miss.join(' / ')}——日本株コードはFinnhub無料枠外。手入力の現値で計算している</div>`:''),
+        + (miss.length?`<div style="font-size:11px;color:#d69a3c;margin-top:6px;line-height:1.8">価格未取得: <b>${miss.join(' / ')}</b><br>
+            <span style="color:var(--dim)">日本株は<b>無料で自動取得できる経路が無い</b>（2026-08-02実測: Finnhub 401／Alpha Vantage 空／stooq 404／Yahoo はCIのIPから弾かれる／J-Quants無料は12週遅延）。
+            <b>Ⅳ台帳の「￥ 価格だけ更新」</b>に <code>6146 38000</code> のように「コード 現値」を行区切りで貼れば更新できる（月1回・DCAの買付時でよい）。
+            per は<b>価格の変化率だけ</b>を反映する式で再計算されるので、利益の期間基準は壊れない。</span></div>`:''),
         '評価額・含み損益は<b>記帳のための情報</b>。出口判定はS1/S2/S3のみで、含み損益では動かさない')
     + sec('🟢 投下可（三段関門を通過）', buyHtml, '買うのはここだけ。金額はⅥ買付順位の「今月の個別枠」で按分される')
     + sec('📅 次回決算（21日以内）', ernHtml, '決算が来たら <code>python kessan_check.py</code>（日本株は <code>kessan_check_jp.py</code>）を回す')
