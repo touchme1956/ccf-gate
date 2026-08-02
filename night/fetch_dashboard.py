@@ -57,8 +57,39 @@ def tickers():
                 s.add(str(r.get("t", "")).upper())
     except Exception:
         pass
-    # 日本株コード(4-5桁)は Finnhub の無料枠では引けない → 除外し、門側で「未取得」と出す
-    return sorted(t for t in s if t and not t.isdigit())
+    return sorted(t for t in s if t)
+
+
+def jp_quotes(codes):
+    """日本株はYahoo Financeから取る（2026-08-02新設）。
+
+    なぜ別経路か: **Finnhubの無料枠は東証を返さない**（実測で 6146.T / 6857.T / TSE:6146 とも
+    HTTP 401）。Alpha Vantage の GLOBAL_QUOTE も 6146.T で空を返す。無料・鍵不要で
+    東証の現在値が取れるのは Yahoo Finance の chart エンドポイントだけだった。
+
+    非公式APIなので**落ちても何も壊さない**——取れなければその銘柄を書かないだけ。
+    門は「価格未取得」と出して台帳/手入力の値へ落ちる（前回値やゼロで埋めない＝絶対のルール7）。
+    """
+    out = {}
+    ua = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36"}
+    for c in codes:
+        try:
+            u = f"https://query1.finance.yahoo.com/v8/finance/chart/{c}.T?interval=1d&range=5d"
+            with urllib.request.urlopen(urllib.request.Request(u, headers=ua), timeout=25) as r:
+                m = json.loads(r.read().decode("utf-8", "ignore"))["chart"]["result"][0]["meta"]
+            px = m.get("regularMarketPrice")
+            prev = m.get("chartPreviousClose") or m.get("previousClose")
+            if not px:
+                continue
+            q = {"px": px, "prev": prev, "ccy": m.get("currency") or "JPY"}
+            if prev:
+                q["chg"] = round(px - prev, 2)
+                q["chgPct"] = round((px / prev - 1) * 100, 4)
+            out[c] = q
+        except Exception as e:
+            print(f"  {c}: 取得できず（{type(e).__name__}）→ 書かない")
+        time.sleep(1.2)
+    return out
 
 
 def main():
@@ -88,8 +119,14 @@ def main():
         out["fx"]["USDJPY"] = round(float(fx["rates"]["JPY"]), 3)
         out["fx"]["src"] = "open.er-api.com（鍵不要）"
 
-    T = tickers()
-    print(f"対象 {len(T)}社（監視 ∪ 保有 ∪ Ω72+・日本株コードは無料枠外のため除外）")
+    ALL = tickers()
+    JP = [t for t in ALL if t.isdigit()]
+    T = [t for t in ALL if not t.isdigit()]
+    print(f"対象 {len(ALL)}社（米国等 {len(T)}=Finnhub / 日本株 {len(JP)}=Yahoo Finance）")
+    if JP:
+        jq = jp_quotes(JP)
+        out["quotes"].update(jq)
+        print(f"  日本株 {len(jq)}/{len(JP)}社 取得")
     for i, t in enumerate(T, 1):
         q = _get(f"{API}/quote?symbol={t}&token={KEY}")
         # c=現在値 pc=前日終値 d=前日比 dp=前日比% —— 0埋めされた応答は「取得失敗」として捨てる
