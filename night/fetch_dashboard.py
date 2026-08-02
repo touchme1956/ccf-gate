@@ -100,6 +100,7 @@ def jp_quotes(codes):
     「なぜ動かないか」を残すため（このリポジトリが繰り返し踏んできた"静かな失敗"を作らない）。
     """
     out, diag = {}, []
+    pxday = None
     op, crumb = _yahoo_ctx()
     print(f"  Yahoo: crumb={'取得' if crumb else '無し'}")
     hosts = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"]
@@ -132,6 +133,14 @@ def jp_quotes(codes):
                             pass
                         if prev is None:
                             prev = m.get("chartPreviousClose")   # 最後の手段（レンジ直前の終値）
+                        # どの営業日の終値かを持たせる（休場日に開くと「いつの値か」が分からなくなるため）
+                        try:
+                            import datetime as _dt
+                            _ts = res.get("timestamp") or []
+                            if _ts:
+                                pxday = _dt.datetime.utcfromtimestamp(_ts[-1]).strftime("%Y-%m-%d")
+                        except Exception:
+                            pxday = None
                     else:
                         q = (j.get("quoteResponse") or {}).get("result") or []
                         if not q:
@@ -140,6 +149,8 @@ def jp_quotes(codes):
                     if not px:
                         continue
                     d = {"px": px, "prev": prev, "ccy": ccy}
+                    if locals().get("pxday"):
+                        d["day"] = pxday
                     if prev:
                         d["chg"] = round(px - prev, 2)
                         d["chgPct"] = round((px / prev - 1) * 100, 4)
