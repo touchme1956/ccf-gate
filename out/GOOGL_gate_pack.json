@@ -74,7 +74,8 @@
    "2026-07-28 絶対MOAT欠測補充: hits再採取を待たず FY2025 10-K 原文(Item 1 Competition/Intellectual Property、Item 7 Research and Development・Capital Expenditures)で irr/rep/dur を充填 → irr=70 / rep=100 / dur=85。dom(85)・moatW(85)ほか既判定は不変",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=22.8 / 5年窓=32.0。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均27.1%・σ1.9pt・CV6.9%）。",
-   "2026-07-30 **全件点検(v9.9.55)の要修正**「per ≠ px÷eps」を受け per 17.24 → null。px÷通期eps=30.59 と per=17.24 が 77% 乖離し、TTM/通期の差では説明できない。基準の記録も無いため憶測で直さず空欄にした。Ω・ティアは不変。"
+   "2026-07-30 **全件点検(v9.9.55)の要修正**「per ≠ px÷eps」を受け per 17.24 → null。px÷通期eps=30.59 と per=17.24 が 77% 乖離し、TTM/通期の差では説明できない。基準の記録も無いため憶測で直さず空欄にした。Ω・ティアは不変。",
+   "2026-07-30 **再発**: market_merge が market_data.json の古い per=17.24 を再注入し、本日理由つきでnull化した判断を上書きしていた。差し戻すとともに、market_merge に「_meta.nulls に理由がある欄は充填しない」関門を新設した（絶対のルール7(c)の構造的な塞ぎ）。併せて market_data.json 側の古い per も削除。"
   ],
   "evidence": {
    "expiry": "『obtaining copyright and patent protections for our important innovations, including AI innovations, may not be sufficient or effective』→堀は特許束/コンセッション等の期限型に依存せず(むしろ特許の有効性を自認で限定)=expiry no",
@@ -108,7 +109,8 @@
    "eps": "機械算出 2025年: 純利益 132,170,000,000 ÷ 株数 12,088,000,000（TTMではなく通期実績）",
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 44,455,653,291 ÷ Δ投下資本 194,890,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 271,456,000,000→466,346,000,000（+71.8%）",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 72,856,817,154 ÷ Δ投下資本 227,484,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 238,862,000,000→466,346,000,000（+95.2%）",
-   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 27.2% / 2022 26.2% / 2023 26.9% / 2024 30.4% / 2025 24.8% → 平均 27.1% / σ 1.9pt / **CV 6.9%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **90**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。"
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 27.2% / 2022 26.2% / 2023 26.9% / 2024 30.4% / 2025 24.8% → 平均 27.1% / σ 1.9pt / **CV 6.9%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **90**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
+   "per": "市場データ機械充填 2026-08-02: market_fetch/market_data.json（常識帯(8.0, 200.0)を通過）"
   },
   "nulls": {
    "dom": "堀セクション『ヒットなし』。原本hitsに検索/広告の市場占有率を示す直接証拠なし。むしろ『highly competitive and rapidly evolving』『increasing competition, including from...providers of AI』と競争を強調→独占/圧倒スコアの付与は憶測になるためnull。moatキーワードでのhachimon_fetch再採取を推奨",
@@ -127,13 +129,9 @@
    "scope": "v9.9.36 moatW（＋欠測社のdom）のみ追記。他のキーは一切変更していない"
   },
   "market": {
-   "date": "2026-07-28",
+   "date": "2026-08-02",
    "filled": [
-    "px",
-    "per",
-    "beta",
-    "shy",
-    "evebit"
+    "per"
    ],
    "src": "market_fetch/market_data.json"
   },
@@ -151,7 +149,8 @@
    "eps": "machine",
    "roiic": "machine",
    "roiic5": "machine",
-   "p1": "machine"
+   "p1": "machine",
+   "per": "market"
   }
  },
  "mcap": 4089.5897,

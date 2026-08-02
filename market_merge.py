@@ -64,10 +64,23 @@ for f in sorted(glob.glob("out/*_gate_pack.json")):
     except Exception as e:
         print(f"▲ {f} 読込不能: {e}")
         continue
-    filled, rejected = [], []
+    filled, rejected, protected = [], [], []
+    # 2026-07-30新設: **_meta.nulls に理由が書かれている欄は充填しない。**
+    #   nullには二種類ある——「まだ測っていない」と「**測ったうえで空欄にすると決めた**」。
+    #   後者を機械が埋め戻すと、人が原本を読んで下した判断が黙って消える。
+    #   実害（2026-07-30・本日）: GOOGL の per を「px=334.39 から逆算すると EPS 19.4 を含意するが
+    #   原本の通期実績は 10.93 で、TTMと通期の差では説明できない」として理由つきでnull化した直後、
+    #   market_data.json に残っていた**古い per=17.24**（常識帯8-200の内側なので帯検問を素通り）が
+    #   再注入され、判断が上書きされた。CLAUDE.mdが絶対のルール7(c)として名指しで記録している
+    #   「保管された値も毎回検問する——採取器を直せば安全、は誤り」の再演。
+    #   帯検問だけでは足りない。**「決めた空欄」を尊重する**という別の関門が要る。
+    decided = set((o.get("_meta") or {}).get("nulls") or {})
     for k in FIELDS:
         v = md[t].get(k)
         if v is None or o.get(k) is not None:
+            continue
+        if k in decided:
+            protected.append(f"{k}={v}")
             continue
         ok, why = sane(k, v)
         if not ok:
@@ -77,6 +90,8 @@ for f in sorted(glob.glob("out/*_gate_pack.json")):
         filled.append(k)
     if rejected:
         print(f"{t:<6} ✗ 充填拒否: {' / '.join(rejected)}  ← market_data.json 側の値が疑わしい。採り直せ")
+    if protected:
+        print(f"{t:<6} 🛡 充填せず: {' / '.join(protected)}  ← _meta.nulls に「空欄と決めた理由」がある欄")
     if filled:
         m = o.setdefault("_meta", {})
         m["market"] = {"date": str(date.today()), "filled": filled,
