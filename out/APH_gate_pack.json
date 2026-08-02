@@ -30,11 +30,11 @@
  "geopol": 1,
  "nrr": 105,
  "beta": null,
- "per": 43.21,
+ "per": 46.18,
  "perF": null,
  "evebit": null,
- "px": 150.37,
- "shy": 0.5,
+ "px": 160.7,
+ "shy": 0.47,
  "gr": null,
  "gcap": null,
  "analysts": null,
@@ -58,7 +58,7 @@
   "reportDate": "2025-12-31",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/820313/000110465926013549/aph-20251231x10k.htm",
-  "auditDate": "2026-07-29",
+  "auditDate": "2026-07-30",
   "model": "Claude Opus 5",
   "kenshi": [
    "roic=520.3(採取器・のれん除きROIC)は再現不能→棄却。検死のROIC(のれん除き)は2022:358.7/2023:161.2/2024:160.3/2025:163.4%(タグ選択で振れる)。分母=IC-のれん-無形がゼロ近傍のため爆発する無意味値。FY2025の再現値163.4に置換。roicg=33.6(採取器・のれん込み)は検死ROIC(込み)5年=26.4/29.1/24.2/25.5/34.6%(2025=34.6, σ=3.7pt)と整合し維持。roicGap=163.4-33.6=130→『成長の幻影』フラグが正しく点灯するのは意図通り(連続買収ロールアップの本質開示)",
@@ -78,7 +78,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=15.2 / 5年窓=16.9。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 acq5 9.46 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "2026-07-29 門X未評価を解消: px/per/shy を充填。門Xは `per>0` が唯一の必須条件で、これが無いと E[r] を一切算出しない（xPass=null＝三段関門の第二が未評価）。PERは市場株価 ÷ **原本EPS** で算出し、shy でも独立に検算した。",
-   "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均40.2%・σ6.0pt・CV15.1%）。"
+   "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均40.2%・σ6.0pt・CV15.1%）。",
+   "2026-07-30 市場価格を実測で更新（Alpha Vantage GLOBAL_QUOTE 2026-07-31）: px 150.37 → 160.7。per 43.21→46.18　shy 0.5→0.47。**基準を保つ比率式**で換算＝perの期間基準(TTM)を維持。鍵ファイル(av_key.txt/fmp_key.txt)が無く market_fetch.py が動かないため、MCPのGLOBAL_QUOTE(1日25回)を投下可9社に絞って使った。"
   ],
   "evidence": {
    "dom": "【2026-07-29 v9.9.41再監査 → 50据置。ただし根拠を原本内の構造記述へ差し替え】FY2025 10-K(2025-12-31期)Item 1『Competition』: 『The Company encounters competition in all areas of its business. ... Primary competitors include Aptiv, Belden, Corning, Foxconn Interconnect Technology, Glenair, HUBER+SUHNER, ICT Luxshare, Jonhon, Molex, Rosenberger, Sensata, TE Connectivity and Yazaki, among others. In addition, the Company competes with a large number of smaller companies who compete in specific geographies, markets or products.』——主要競合13社を名指しした上でさらに『a large number of smaller companies』＝規約3の「同等品を多数が製造可能／市場は分散的」に該当する構造記述。Item 1A も『Competitors include large, diversified companies, some of which have comparable assets and financial resources, as well as medium- to small-sized companies』＝自社と同等規模の大手が複数存在。顧客側も『The Company's products are sold to thousands of original equipment manufacturers (or OEMs) in numerous countries』。→ 自社が40%以上を占める構造ではありえず、残余の刻み50を原本内根拠のみで確定(規約3)。【補完・原本外】第三者実数でも整合: Bishop & Associates 2024年世界コネクタメーカー売上ランキングで Amphenol $11.51B ÷ 世界コネクタ市場 $86.48B = 13.3%(第2位)、上位3社 TE $12.88B(14.9%)+APH 13.3%+Molex $4.87B(5.6%) = 33.8%(≥80%に遠く及ばず)、上位10社でも53.2%。この数字はSEC提出書類の外にあるため補完扱い(規約5の原本扱いには当たらない)。出典: 10-K FY2025 Item 1 Competition / Item 1A / Note 13, https://www.sec.gov/Archives/edgar/data/820313/000110465926013549/aph-20251231x10k.htm",
@@ -117,7 +118,8 @@
    "px": "【2026-07-29 市場データ】株価 $150.37。出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）",
    "per": "【2026-07-29 機械算出】PER = 株価 $150.37 ÷ **原本EPS 3.48** = **43.21**。EPSは通期実績（純利益÷期末株数・SEC XBRL）で、TTMコンセンサスではない。株価の出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯8-200を通過（market_merge.BANDS）。**shyとの二重検算も通っている**（shy=0.5%・帯−5〜12内）。",
    "shy": "【2026-07-29 機械算出】純還元利回り shy = (配当 + 自社株買い − 株式発行) ÷ 時価総額。2025年: 配当 0.80 + 自社株買い 0.67 − 株式発行 0.55 = 純還元 0.91十億$ ÷ 時価総額 184.44十億$（1,227百万株×$150.37） = **0.5%**。還元額は SEC XBRL のキャッシュフロー計算書（PaymentsOfDividendsCommonStock / PaymentsForRepurchaseOfCommonStock / ProceedsFromIssuanceOfCommonStock）、株数は dei/us-gaap の期末株数、株価は Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯−5〜12%を通過。",
-   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 42.2% / 2022 45.5% / 2023 46.0% / 2024 37.5% / 2025 29.7% → 平均 40.2% / σ 6.0pt / **CV 15.1%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。"
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 42.2% / 2022 45.5% / 2023 46.0% / 2024 37.5% / 2025 29.7% → 平均 40.2% / σ 6.0pt / **CV 15.1%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
+   "px_market": "Alpha Vantage GLOBAL_QUOTE 実測 2026-07-31 終値 160.7（前回 150.37・+6.9%）。per/perF/evebit は**基準を保つ比率式**で換算した（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと、eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -147,5 +149,6 @@
   }
  },
  "roiic": 15.2,
- "roiic5": 16.9
+ "roiic5": 16.9,
+ "ddate": "2026-07-31"
 }

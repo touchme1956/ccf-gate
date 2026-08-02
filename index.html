@@ -3373,8 +3373,19 @@ async function priceUpdate(){
     const d={...r};
     const oldPx=parseFloat(d.px)||0, eps=parseFloat(d.eps)||0, oldPer=parseFloat(d.per)||0;
     let factor=0;
-    if(eps>0&&oldPer>0){const newPer=p.px/eps;factor=newPer/oldPer;d.per=+(newPer.toFixed(2));}
-    else if(oldPx>0&&oldPer>0){factor=p.px/oldPx;d.per=+((oldPer*factor).toFixed(2));}
+    // ── v9.9.57(2026-07-30): 順序を入れ替えた。**比率式を第一に、px÷eps はフォールバックへ。**
+    //   理由: eps欄の定義が台帳内で**TTM実績と通期実績に割れている**（ADBEはTTM 93.90、
+    //   MSFT/NVDA/DXC/TSM/SAPは「機械算出…（TTMではなく通期実績）」）。一方 per の規約は
+    //   px ÷ **TTM実績**EPS。旧実装は px÷eps を第一に置いていたので、通期epsを持つ社では
+    //   **価格を更新した瞬間に per が TTM基準から通期基準へ黙って切り替わっていた**
+    //   ——成長企業では per を過大に、減益企業では過小に振る。値も表示も警告を出さない、
+    //   このセッションで何度も踏んだ「静かな壊れ方」と同型。
+    //   比率式 per_new = per_old × (px_new / px_old) は**基準を保つ**（価格の変化だけを反映し、
+    //   利益の期間基準に触れない）。これが価格更新のあるべき挙動。
+    //   px÷eps は px_old が無く比率が作れない時だけ使う（そのとき基準が変わる旨をメモに残す）。
+    if(oldPx>0&&oldPer>0){factor=p.px/oldPx;d.per=+((oldPer*factor).toFixed(2));}
+    else if(eps>0&&oldPer>0){const newPer=p.px/eps;factor=newPer/oldPer;d.per=+(newPer.toFixed(2));
+      d.memo=((d.memo||'')+' ⚠per を px÷eps で再計算（旧pxが無く比率式が使えず）——epsがTTMか通期かで基準が変わる。要確認').trim();}
     else{unmatched.push(p.q+'（px/eps未保存で換算不能）');continue;}
     if(d.evebit)d.evebit=+((parseFloat(d.evebit)*factor).toFixed(1));
     if(d.perF)d.perF=+((parseFloat(d.perF)*factor).toFixed(2));
