@@ -60,35 +60,92 @@ def tickers():
     return sorted(t for t in s if t)
 
 
+def _yahoo_ctx():
+    """Yahoo は endpoint によって **Cookie + crumb** を要求する（2023年以降）。
+    fc.yahoo.com で Cookie を得て、/v1/test/getcrumb で crumb を取る。取れなくても続行する
+    （v8/chart は本来 crumb 不要で、要るのは v7/quote 系。両方試すための下ごしらえ）。"""
+    import http.cookiejar
+    cj = http.cookiejar.CookieJar()
+    op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+    hdr = [("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                          "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"),
+           ("Accept", "application/json,text/plain,*/*"),
+           ("Accept-Language", "en-US,en;q=0.9"),
+           ("Connection", "keep-alive")]
+    op.addheaders = hdr
+    crumb = None
+    try:
+        op.open("https://fc.yahoo.com/", timeout=15).read()
+    except Exception:
+        pass          # Cookie さえ取れれば十分なことが多い。403でもCookieは載る
+    try:
+        crumb = op.open("https://query1.finance.yahoo.com/v1/test/getcrumb", timeout=15).read().decode().strip()
+        if len(crumb) > 40 or not crumb:
+            crumb = None
+    except Exception:
+        crumb = None
+    return op, crumb
+
+
 def jp_quotes(codes):
-    """日本株はYahoo Financeから取る（2026-08-02新設）。
+    """日本株はYahoo Financeから取る。
 
-    なぜ別経路か: **Finnhubの無料枠は東証を返さない**（実測で 6146.T / 6857.T / TSE:6146 とも
-    HTTP 401）。Alpha Vantage の GLOBAL_QUOTE も 6146.T で空を返す。無料・鍵不要で
-    東証の現在値が取れるのは Yahoo Finance の chart エンドポイントだけだった。
+    なぜ別経路か（2026-08-02実測）: **Finnhubの無料枠は東証を返さない**（6146.T/6857.T/TSE:6146 とも
+    HTTP 401）。Alpha Vantage の GLOBAL_QUOTE も空。stooq は404。FMPはPremium必須。
+    J-Quants の無料プランは12週間遅延で、門Xの判定には古すぎる。
+    残るのは Yahoo Finance だけ。
 
-    非公式APIなので**落ちても何も壊さない**——取れなければその銘柄を書かないだけ。
-    門は「価格未取得」と出して台帳/手入力の値へ落ちる（前回値やゼロで埋めない＝絶対のルール7）。
+    2026-08-02の初回実装は**全10社が失敗**したが、例外型しかログしておらず原因不明だった。
+    ここでは **実際のHTTPステータスと本文の頭**を必ず出す——「動かない」で終わらせず
+    「なぜ動かないか」を残すため（このリポジトリが繰り返し踏んできた"静かな失敗"を作らない）。
     """
-    out = {}
-    ua = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36"}
+    out, diag = {}, []
+    op, crumb = _yahoo_ctx()
+    print(f"  Yahoo: crumb={'取得' if crumb else '無し'}")
+    hosts = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"]
     for c in codes:
-        try:
-            u = f"https://query1.finance.yahoo.com/v8/finance/chart/{c}.T?interval=1d&range=5d"
-            with urllib.request.urlopen(urllib.request.Request(u, headers=ua), timeout=25) as r:
-                m = json.loads(r.read().decode("utf-8", "ignore"))["chart"]["result"][0]["meta"]
-            px = m.get("regularMarketPrice")
-            prev = m.get("chartPreviousClose") or m.get("previousClose")
-            if not px:
-                continue
-            q = {"px": px, "prev": prev, "ccy": m.get("currency") or "JPY"}
-            if prev:
-                q["chg"] = round(px - prev, 2)
-                q["chgPct"] = round((px / prev - 1) * 100, 4)
-            out[c] = q
-        except Exception as e:
-            print(f"  {c}: 取得できず（{type(e).__name__}）→ 書かない")
-        time.sleep(1.2)
+        got = False
+        for host in hosts:
+            for path in (f"/v8/finance/chart/{c}.T?interval=1d&range=5d",
+                         f"/v7/finance/quote?symbols={c}.T" + (f"&crumb={crumb}" if crumb else "")):
+                try:
+                    with op.open(f"https://{host}{path}", timeout=20) as r:
+                        j = json.loads(r.read().decode("utf-8", "ignore"))
+                    if "chart" in j:
+                        m = j["chart"]["result"][0]["meta"]
+                        px = m.get("regularMarketPrice")
+                        prev = m.get("chartPreviousClose") or m.get("previousClose")
+                        ccy = m.get("currency") or "JPY"
+                    else:
+                        q = (j.get("quoteResponse") or {}).get("result") or []
+                        if not q:
+                            continue
+                        px, prev, ccy = q[0].get("regularMarketPrice"), q[0].get("regularMarketPreviousClose"), q[0].get("currency") or "JPY"
+                    if not px:
+                        continue
+                    d = {"px": px, "prev": prev, "ccy": ccy}
+                    if prev:
+                        d["chg"] = round(px - prev, 2)
+                        d["chgPct"] = round((px / prev - 1) * 100, 4)
+                    out[c] = d
+                    got = True
+                    break
+                except urllib.error.HTTPError as e:
+                    body = ""
+                    try:
+                        body = e.read().decode("utf-8", "ignore")[:120].replace("\n", " ")
+                    except Exception:
+                        pass
+                    diag.append(f"{c} {host[:6]}{path[:14]} → HTTP {e.code} {body}")
+                except Exception as e:
+                    diag.append(f"{c} {host[:6]} → {type(e).__name__} {str(e)[:60]}")
+            if got:
+                break
+        time.sleep(1.0)
+    if diag:
+        print("  ── 失敗の実際（先頭6件）")
+        for d in diag[:6]:
+            print("    " + d)
     return out
 
 
