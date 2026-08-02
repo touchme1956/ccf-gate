@@ -2630,6 +2630,9 @@ async function renderLedger(){
     return;}
   if(eg)eg.innerHTML='';
   const items=[];
+  // v9.9.60: 台帳の行にも現在価格・前日比を出す（out/dashboard.json＝CIがFinnhubから毎営業日コミット）
+  let __lMkt=null; try{const rr=await fetch('out/dashboard.json?t='+Date.now()); if(rr.ok)__lMkt=await rr.json();}catch(e){}
+  const __lQ=(__lMkt&&__lMkt.quotes)||{}, __lAsof=(__lMkt&&__lMkt.asof)||'';
   for(const k of keys){try{const res=await store.get(k);if(res){const o=JSON.parse(res.value);items.push({k,nm:(o.data&&o.data.nm)||k.slice(k.indexOf(':')+1),ts:o.ts||0,d:o.data||{},coerce:o.coerce||[],r:o.r||{},...o.r});}}catch(e){}}
   // v9.1: 保有フラグ付与(別キーg7hold:・レコード非破壊)
   let holdSet=new Set();
@@ -2671,7 +2674,11 @@ async function renderLedger(){
     const div=document.createElement('div');div.className='led';
     const memo=(it.d&&it.d.memo)?`<div style="font-size:10.5px;color:var(--dim);margin-top:2px">✎ ${it.d.memo}</div>`:'';
     const audW=ccfAudit(it.d,it.r,it.coerce), audB=ccfAuditBadge(audW,it.k);
-    div.innerHTML=`<span class="ln">${it.nm}${audB}${ageBadge}${memo}</span><span class="grade" style="color:${gc}">${it.evalScore}・${it.tierShort||it.grade}</span><span class="act" style="background:${ac}22;color:${ac}">${it.act}</span><button class="ld" title="読込" onclick="loadIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">↺</button><button class="ld" title="再採点依頼文を生成" onclick="quickPrompt(decodeURIComponent('${encodeURIComponent(it.k)}'))">依</button><button class="ld" title="保有トグル" onclick="toggleHold(decodeURIComponent('${encodeURIComponent(it.nm)}'))" style="${it.held?'color:var(--gold-bright);border-color:var(--gold-line)':''}">${it.held?'保有':'□'}</button><button title="削除" onclick="delIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">✕</button>`;
+    const __t=String(it.nm||'').trim().split(/\s/)[0].toUpperCase(), __q=__lQ[__t];
+    const pxB=__q&&__q.px
+      ? `<span style="font-size:11px;white-space:nowrap;margin-left:7px" title="Finnhub実測 ${__lAsof.slice(0,16).replace('T',' ')} UTC"><b style="color:var(--ink-soft)">$${__q.px.toFixed(2)}</b>${__q.chgPct!=null?` <span style="color:${__q.chgPct>0?'#54b88a':__q.chgPct<0?'#cf5f48':'var(--dim)'}">${__q.chgPct>0?'+':''}${__q.chgPct.toFixed(1)}%</span>`:''}</span>`
+      : '';
+    div.innerHTML=`<span class="ln">${it.nm}${audB}${pxB}${ageBadge}${memo}</span><span class="grade" style="color:${gc}">${it.evalScore}・${it.tierShort||it.grade}</span><span class="act" style="background:${ac}22;color:${ac}">${it.act}</span><button class="ld" title="読込" onclick="loadIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">↺</button><button class="ld" title="再採点依頼文を生成" onclick="quickPrompt(decodeURIComponent('${encodeURIComponent(it.k)}'))">依</button><button class="ld" title="保有トグル" onclick="toggleHold(decodeURIComponent('${encodeURIComponent(it.nm)}'))" style="${it.held?'color:var(--gold-bright);border-color:var(--gold-line)':''}">${it.held?'保有':'□'}</button><button title="削除" onclick="delIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">✕</button>`;
     box.appendChild(div);
   });
   renderWatch(items);
@@ -3196,6 +3203,12 @@ function ccfMoatGate(r,d){                          // r=採点結果(台帳) / 
 }
 async function renderPlan(){
   const pb=$('planBox'); if(!pb)return;
+  // v9.9.60(2026-08-02): 買付順位の各行に**現在価格と前日比**を出す。
+  //   GitHub Actions が毎営業日コミットする out/dashboard.json（Finnhub実測）を同一オリジンで読むだけ。
+  //   ここに価格を出すのは規約と整合する——**門Xの開通判定は元から価格で動いており**、
+  //   🟢投下可／🟡押し目待ちの分かれ目そのものが価格の関数だから。売却規律S1/S2/S3には一切触れない。
+  let __mkt=null; try{const r=await fetch('out/dashboard.json?t='+Date.now()); if(r.ok)__mkt=await r.json();}catch(e){}
+  const __Q=(__mkt&&__mkt.quotes)||{}, __mkAsof=(__mkt&&__mkt.asof)||'';
   let keys=[]; try{const res=await store.list('g7:');keys=res?res.keys:[];}catch(e){}
   const items=[];
   for(const k of keys){try{const res=await store.get(k);if(res){const o=JSON.parse(res.value);if(o.data&&o.r)items.push({k,d:o.data,r:o.r,coerce:o.coerce||[]});}}catch(e){}}
@@ -3232,7 +3245,7 @@ async function renderPlan(){
     // 買付順位の合成優先度: 格0.6 + 期待CAGR(X期待%を点数化)0.4。門X合格線12%=50点・±10ptで0-100。E[r]欠損はerPt=0=群内末尾(v9.9.30)。保留は順位に不介入(表示のみ)。格evalScore・採点・合否には無影響=表示順のみ
     const erPt=(xEr!=null)?Math.max(0,Math.min(100,50+(xEr-12)*5)):0; // v9.9.30: E[r]欠損は中立50でなく0=群内末尾へ(欠損を「合格線ちょうど」と擬制すると実測E[r]8%の銘柄より上位に来る逆転が生じ、掟一〔実証値のみ〕と逆向きの誘因だった。データを埋めるほど順位が上がる方向に統一)
     const pc=s*0.6+erPt*0.4;
-    return {nm:it.d.nm||it.k.slice(3),t:it.k.slice(3),s,act,memo,room,hold,pc,layer,xEr,xPass,per,shy,g:gOut,gcap:xj.gcap,gcapSrc:xj.gcapSrc,grower:growerR,moat:mg.idx,moatOK:mg.pass,moatNA:mg.na,pos:(livePos&&livePos[it.k.slice(3).toUpperCase()]!=null)?livePos[it.k.slice(3).toUpperCase()]:num(it.d.pos),tier:it.r.tierShort||it.r.grade,audW:ccfAudit(it.d,it.r,it.coerce),audB:ccfAuditBadge(ccfAudit(it.d,it.r,it.coerce),it.k),epsOld:(it.d.erdate&&(Date.now()-new Date(it.d.erdate).getTime())>300*864e5)};
+    return {nm:it.d.nm||it.k.slice(3),t:it.k.slice(3),s,act,memo,room,hold,pc,layer,xEr,xPass,per,shy,g:gOut,gcap:xj.gcap,gcapSrc:xj.gcapSrc,grower:growerR,moat:mg.idx,moatOK:mg.pass,moatNA:mg.na,pos:(livePos&&livePos[it.k.slice(3).toUpperCase()]!=null)?livePos[it.k.slice(3).toUpperCase()]:num(it.d.pos),tier:it.r.tierShort||it.r.grade,audW:ccfAudit(it.d,it.r,it.coerce),audB:ccfAuditBadge(ccfAudit(it.d,it.r,it.coerce),it.k),px0:it.d.px,epsOld:(it.d.erdate&&(Date.now()-new Date(it.d.erdate).getTime())>300*864e5)};
   });
   const lcol=['var(--gold-bright)','var(--jade)','var(--steel)'];
   const lname=['80+ 城の中核（8%）','77–80 城の正規（5%）','75–77 城の外郭（3%）'];
@@ -3302,7 +3315,15 @@ async function renderPlan(){
   const xtag=r=>r.xEr!=null?`<span style="font-size:11.5px;white-space:nowrap;color:${r.xPass?'var(--jade)':'var(--rust)'}" title="g=${r.g!=null?r.g.toFixed(1):'—'}%${r.gcapSrc?'（実力g_cap='+(r.gcap!=null?r.gcap.toFixed(1):'—')+'%・'+r.gcapSrc+'）':''}">E[r]${r.xEr.toFixed(0)}%${r.xPass?'✓':'✗'}${(r.gcap!=null&&r.g!=null&&r.gcap<=r.g+0.05)?'<span style="color:#d69a3c" title="成長gが実力g_capで抑えられている（実績cagrではなく実力側が効いた）">⌄</span>':''}</span>`:'<span style="font-size:11px;color:var(--dim)">E[r]判定不能</span>';
   // 各行の依頼文コピー(門2審査／決算点検)——銘柄はtで一意。表示・コピーのみで採点に不介入
   const reqbtns=r=>`<span style="white-space:nowrap;margin-left:8px"><button onclick="ccfCopyAsk('${r.t}',this)" title="門2審査プロトコル全文＋${r.t}をコピー" style="padding:4px 9px;background:linear-gradient(180deg,rgba(84,184,138,.24),rgba(84,184,138,.08));border:1px solid rgba(84,184,138,.45);border-radius:6px;color:#8fc9a4;font-size:11px;cursor:pointer">審査</button><button onclick="ccfCopyKessanOne('${r.t}',this)" title="決算点検依頼文＋${r.t}をコピー" style="margin-left:4px;padding:4px 9px;background:linear-gradient(180deg,rgba(214,154,60,.24),rgba(214,154,60,.08));border:1px solid rgba(214,154,60,.5);border-radius:6px;color:#d6b06c;font-size:11px;cursor:pointer">決算</button></span>`;
-  const brow=(r,i,tag,extra)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${tag}${i+1}</b></span><span class="ln">${r.nm}${r.audB||''}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}${r.epsOld?'<span style="font-size:10px;color:#c0894a;margin-left:6px" title="原本決算期が300日超——E[r]/PERの前提が古い。決算後にeps/perを更新せよ">⏳eps古</span>':''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span>${xtag(r)}${extra||''}${reqbtns(r)}</div>`;
+  // 現在価格・前日比のチップ（実測が無ければパックの px を「台帳」印つきで出す。ゼロや前回値で埋めない）
+  const pxchip=r=>{const q=__Q[r.t]; const led=parseFloat(r.px0);
+    if(q&&q.px){const c=q.chgPct; const col=c>0?'#54b88a':c<0?'#cf5f48':'var(--dim)';
+      return `<span style="font-size:11.5px;white-space:nowrap;margin-left:8px" title="Finnhub実測 ${__mkAsof.slice(0,16).replace('T',' ')} UTC／前日終値 ${q.prev}">`
+        +`<b style="color:var(--ink)">$${q.px.toFixed(2)}</b>`
+        +(c!=null?` <span style="color:${col}">${c>0?'+':''}${c.toFixed(2)}%</span>`:'')+`</span>`;}
+    if(isFinite(led)&&led>0)return `<span style="font-size:11.5px;color:var(--dim);white-space:nowrap;margin-left:8px" title="市場データ未取得——台帳に保存された値。日本株はFinnhub無料枠外">${led.toFixed(2)}<span style="font-size:9.5px;margin-left:3px">台帳</span></span>`;
+    return '';};
+  const brow=(r,i,tag,extra)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${tag}${i+1}</b></span><span class="ln">${r.nm}${r.audB||''}${pxchip(r)}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}${r.epsOld?'<span style="font-size:10px;color:#c0894a;margin-left:6px" title="原本決算期が300日超——E[r]/PERの前提が古い。決算後にeps/perを更新せよ">⏳eps古</span>':''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span>${xtag(r)}${extra||''}${reqbtns(r)}</div>`;
   // 城(総資産の40%)内の配分を自動表示(表示のみ・採点/サイズ規律に不介入)。城内=格層目標8/5/3%(対総資産)÷40%。
   //   今月=各投下可の「目標−現在保有%(pos)」の不足分で按分(B案②:不足銘柄へ厚く・合計100%)。posは保有比率入力。
   const CITY=40, tw=r=>[8,5,3][r.layer]||0, gap=r=>Math.max(0,tw(r)-(r.pos||0)), passGap=pass.reduce((a,r)=>a+gap(r),0);
