@@ -2746,11 +2746,11 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY){
   }
   const amtRow=`<div style="display:flex;align-items:center;gap:7px;margin:9px 0 3px;flex-wrap:wrap">
     <span style="font-size:12px;color:var(--muted)">今月の個別枠</span>
-    <input id="ccfMonthAmtIn" type="text" inputmode="numeric" autocomplete="off" value="${AMT>0?AMT.toLocaleString('ja-JP'):''}" placeholder="例 17万 / 170000"
+    <input id="ccfMonthAmtIn" type="text" inputmode="numeric" autocomplete="off" value="${AMT>0?AMT.toLocaleString('ja-JP'):''}" placeholder="タップして入力"
       onchange="ccfSetMonthAmt(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
-      style="width:140px;padding:5px 9px;background:rgba(0,0,0,.28);border:1px solid var(--gold-line);border-radius:6px;color:var(--gold-bright);font-size:14.5px;font-weight:600;text-align:right;font-family:inherit">
+      style="width:150px;padding:6px 9px;background:${AMT>0?'rgba(0,0,0,.28)':'rgba(214,154,60,.10)'};border:${AMT>0?'1px solid var(--gold-line)':'1px dashed #d69a3c'};border-radius:6px;color:var(--gold-bright);font-size:14.5px;font-weight:${AMT>0?'600':'400'};text-align:${AMT>0?'right':'center'};font-family:inherit">
     <span style="font-size:12px;color:var(--muted)">円</span>
-    ${AMT>0?`<button onclick="ccfSetMonthAmt({value:''})" title="金額を消して%表示に戻す" style="padding:3px 9px;background:transparent;border:1px solid var(--dim);border-radius:6px;color:var(--dim);font-size:11px;cursor:pointer">消去</button>`:`<span style="font-size:11px;color:var(--dim)">——入れると各銘柄が%ではなく円で出る</span>`}
+    ${AMT>0?`<button onclick="ccfSetMonthAmt({value:''})" title="金額を消して%表示に戻す" style="padding:3px 9px;background:transparent;border:1px solid var(--dim);border-radius:6px;color:var(--dim);font-size:11px;cursor:pointer">消去</button>`:`<span style="font-size:11.5px;color:#d69a3c">← <b>未入力</b>。ここに <b>17万</b> と打つと下が円になる</span>`}
   </div>`;
   return `<div style="background:linear-gradient(180deg,rgba(201,166,74,.10),rgba(201,166,74,.03));border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin:4px 0 20px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><h2 class="serif" style="font-size:1.2em;color:var(--gold-bright);margin:0">今月の買付プラン</h2><span style="font-size:11px;color:var(--dim)">${AMT>0?`${ccfYen(AMT)} を全額 投下可へ按分`:'投下可へ按分・合計100%'}</span></div>
