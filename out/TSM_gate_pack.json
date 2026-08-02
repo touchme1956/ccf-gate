@@ -30,11 +30,11 @@
  "geopol": 3,
  "nrr": 105,
  "beta": 1.41,
- "per": 28.34,
+ "per": 29.17,
  "perF": null,
- "evebit": 24.6,
- "px": 392.795,
- "shy": 0.73,
+ "evebit": 25.3,
+ "px": 404.25,
+ "shy": 0.71,
  "gr": null,
  "gcap": null,
  "analysts": null,
@@ -58,7 +58,7 @@
   "reportDate": "2025-12-31",
   "unit": "TWD",
   "source": "https://www.sec.gov/Archives/edgar/data/1046179/000162828026025362/tsm-20251231.htm",
-  "auditDate": "2026-07-29",
+  "auditDate": "2026-07-30",
   "model": "Claude Opus 5",
   "kenshi": [
    "2026-07-28 市場データ更新(market_fetch_free・鍵なし経路): px 390.94→392.795 / mcap None→10186.166。shyは門の定義「純還元(現金還元−希薄化)」に合わせ新株発行・自己株処分を控除したネットへ変更",
@@ -71,7 +71,9 @@
    "roic=25.4は検算レンジ21.0-30.3%(5年平均24.3%)の幅内につき維持。ROICσ(5年)=3.2pt、株数25.9十億で完全横ばい(dilNet=0.0整合)",
    "2026-07-29 堀再監査(dom/moatWのみ・reaudit_moat_prompt.txt準拠): 旧dom=85→新dom=85(据置)、旧moatW=50→新moatW=50(据置)。根拠を数値付きへ張り替えた。dom: 20-Fの Item3 Risk Factors / Item4 Business Overview を全文確認したが市場シェア%の開示は無く(『As a leader of the foundry segment』止まり)、旧evidenceは数値ゼロで刻みを導けていなかった。**原本外・第三者(TrendForce)**の専業ファウンドリシェア(2025通年 TSMC 69.9%/Samsung 7.2%/SMIC 5.32%/UMC 4.35%/GF 3.87%、上位3社82.4%、4Q25は70.4%)を補完として明示採用し、原本が開示する先端ノード比率(≤7nmが総ウェハ売上の74%)と突き合わせて刻み85を確定(先端74%は実質独占側・成熟26%は競争側で加重すると85前後)。moatW: ウェハ85.9%/その他14.1%・単一営業セグメント・最大顧客19%・上位10社78%を原本で再確認し50を追認。dom/moatW/_meta 以外のフィールドは未変更。",
    "2026-07-29 市場値採取(20-F/IFRS経路・手動): per=28.34、shy=0.73、evebit=24.6を充填。機械採取(market_fetch_free)が落ちた原因はus-gaap:EarningsPerShareDilutedの不在——TSMは20-F提出の外国民間発行体でIFRS開示のためEPSはifrs-full:DilutedEarningsLossPerShareにある。加えてSEC companyfactsはFY2024までしか収載しておらず(FY2025 20-FのXBRLが未反映)、TTMは6-K添付プレスリリース4本から直接組んだ。換算根拠: ADR 1単位=普通株5株(20-F損益計算書がADS別掲・NT$327.34/NT$65.47=5.0で確認)、USD値は各四半期の会社開示『US$x.xx per ADR unit』をそのまま合算(含意レート31.12 NT$/US$は20-F便宜換算31.3714と同水準)。時価総額は普通株25,932,524,521株÷5=ADS 5,186,504,904単位×px 392.795＝US$2.037兆で算定(ADR株数での過小算定を回避)。常識帯検問: per 28.34は[8,200]内、shy 0.73%は12%上限のはるか下＝どちらも書き込み可。変更したのは per/shy/evebit/_meta のみ——dom/moatW/p1-4/f1-5/roic/gm等の定性・財務欄は一切触っていない。",
-   "2026-07-29 原本検算(TSM FY2025 20-F（2026-04-16提出・accession 0001628280-26-025362）R4.htm/R3.htm): FY2025がSEC XBRLに未収載のため機械も台帳も1年古かった。gm 45.7→50.8 / gmt flat→up / cagr 22.0→23.3。roic 25.4は原本と一致し据置"
+   "2026-07-29 原本検算(TSM FY2025 20-F（2026-04-16提出・accession 0001628280-26-025362）R4.htm/R3.htm): FY2025がSEC XBRLに未収載のため機械も台帳も1年古かった。gm 45.7→50.8 / gmt flat→up / cagr 22.0→23.3。roic 25.4は原本と一致し据置",
+   "2026-07-30 全件点検(v9.9.55)が「per ≠ px÷eps」で要修正を出したが、**誤検出**と確認。per=28.34 は px 392.795 USD(ADR) ÷ TTM希薄化後EPS 13.86 USD/ADR で確定済（ADR 1単位=普通株5株）。eps=44.64 は**TWD建て・普通株1株・通期実績**（機械算出）で、per とは通貨も株数基準も違う。**値は一切変更しない**。教訓: この検査は eps 欄が TTM か通期実績か、ADR の通貨・株数比を見分けられないので、_meta.evidence.per に基準が書かれている社では免除すべき（検査側を是正した）。",
+   "2026-07-30 市場価格を実測で更新（Alpha Vantage GLOBAL_QUOTE 2026-07-31）: px 392.795 → 404.25。per 28.34→29.17　evebit 24.6→25.3　shy 0.73→0.71。**基準を保つ比率式**で換算＝perの期間基準(TTM)を維持。鍵ファイル(av_key.txt/fmp_key.txt)が無く market_fetch.py が動かないため、MCPのGLOBAL_QUOTE(1日25回)を投下可9社に絞って使った。"
   ],
   "evidence": {
    "dom": "【2026-07-29 再監査 → 85を維持（実数の裏付けを付与）】◆原本(20-F FY2025)にシェア%の開示は無い。あるのは『As a leader of the foundry segment』(Item4 Overview)、『With our success in the foundry business and the increasing criticism on the concentration of the semiconductor industry and sometimes directly on us, we are subject to heightened risks of antitrust investigations』(Item3)、『to remain technologically ahead of our competitors and maintain our market position in the foundry segment』(同)。ただし原本は自社の収益構造として『Advanced technologies (7-nanometer and below) accounted for 74% of total wafer revenue』(2025。2024は69%、2023は58%。内訳 3nm 24%/5nm 36%/7nm 14%)を開示しており、収益の大宗が先端ノードにある。◆自社シェア(**原本外**・第三者): 専業ファウンドリ市場でTSMC=2025通年69.9%、四半期では2Q25 70.2%・4Q25 70.4%(TrendForce)。◆上位N社合計(**原本外**・同): 2位Samsung 7.2%、3位SMIC 5.32%、4位UMC 4.35%、5位GlobalFoundries 3.87% → 上位3社合計=82.4%、上位5社=90.6%。首位と2位の差は62.7ポイント。◆構造の読み: 自社69.9〜70.4%は『圧倒70-89%』の下端。上位3社82.4%(≥80%)だが、2位が7.2%で3社が拮抗する寡占ではなく首位1社＋周辺の構造。さらに自社売上の74%を占める先端ノード(≤7nm)ではSamsungが一桁%台に留まり実質的な独占に近い(逆に成熟ノードはUMC/SMIC/GF/PSMC/Vanguard等と競合)。売上加重すると先端74%≒独占側・成熟26%≒競争側で85前後に収束。⇒ 刻み85(圧倒70-89%)。100(独占≥90%)は専業ファウンドリ全体では成り立たず、70(寡占40-69%)は2位に62.7pt差の実態を映さない。出典: 原本 https://www.sec.gov/Archives/edgar/data/1046179/000162828026025362/tsm-20251231.htm (Item3 Risk Factors / Item4 Business Overview・Technology Development) ／ **原本外** TrendForce https://www.trendforce.com/presscenter/news/20250901-12691.html ・Taipei Times(TrendForce 2025通年集計) https://www.taipeitimes.com/News/biz/archives/2026/03/14/2003853777",
@@ -106,7 +108,8 @@
    "dilNet": "機械算出: 株数 2022年 25,930,380,458 → 2025年 25,932,524,521＝3年の年率（自社株買い後の純希薄化）",
    "eps": "機械算出 2024年: 純利益 1,157,523,900,000 ÷ 株数 25,932,733,242（TTMではなく通期実績）",
    "gmt": "原本検算: 営業利益率 2023年42.63% → 2024年45.68% → 2025年50.83%（+8.20pt）＝up。出典 TSM FY2025 20-F（2026-04-16提出・accession 0001628280-26-025362）R4.htm/R3.htm",
-   "roic": "原本検算 FY2025: 営業利益1,936,091.7×(1−実効税率≒16%)=NOPAT≒1,626,317 ÷ IC 6,404,254（自己資本5,396,219.2+有利子負債1,032,987.7〔社債856,227.5+長期借入39,834.5+1年内136,925.7〕−無形24,952.6、のれんは僅少）= 25.4%。**既存値25.4と一致＝検算済み**。出典 TSM FY2025 20-F（2026-04-16提出・accession 0001628280-26-025362）R4.htm/R3.htm"
+   "roic": "原本検算 FY2025: 営業利益1,936,091.7×(1−実効税率≒16%)=NOPAT≒1,626,317 ÷ IC 6,404,254（自己資本5,396,219.2+有利子負債1,032,987.7〔社債856,227.5+長期借入39,834.5+1年内136,925.7〕−無形24,952.6、のれんは僅少）= 25.4%。**既存値25.4と一致＝検算済み**。出典 TSM FY2025 20-F（2026-04-16提出・accession 0001628280-26-025362）R4.htm/R3.htm",
+   "px_market": "Alpha Vantage GLOBAL_QUOTE 実測 2026-07-31 終値 404.25（前回 392.795・+2.9%）。per/perF/evebit は**基準を保つ比率式**で換算した（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと、eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -146,5 +149,6 @@
    "roic": "kenshi"
   }
  },
- "mcap": 10186.166
+ "mcap": 10186.166,
+ "ddate": "2026-07-31"
 }
