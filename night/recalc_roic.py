@@ -65,7 +65,14 @@ TAGS = {
     # IFRS勢(20-F)は us-gaap のタグを持たない。RELXで実測: 無形が取れず **0として扱われ**、
     #   IC が過大→roic 132.4 が「縮退なし」に見えていた。**自分で「欠測をゼロと読む」をやっていた**。
     #   IFRS名を並べたうえで、それでも取れない年は下で算出不能として扱う。
+    # 2026-08-03: **無期限無形(取得ブランド)が候補に一つも無かった。** hachimon_fetch と同じ穴で、
+    #   同じ理由で危険——series() は候補から1本を選ぶので、総額タグが古い年で終わっていると
+    #   新しい年が欠測になり、そこを 0 と読むと IC が過大＝ROICが過小に出る。
+    #   実測 CELH(2025年): 総額タグは2024年で終了し、2025年は FiniteLived 111,910千$ と
+    #     **IndefiniteLived 1,280,005千$（Alani Nuのブランド）** の二本に割れていた。
+    #   検査器が採取器と違うタグ集合を持っていると、同じ台帳を見て違うことを言う（v9.9.65の教訓）。
     "intan": ["IntangibleAssetsNetExcludingGoodwill", "FiniteLivedIntangibleAssetsNet",
+              "IndefiniteLivedIntangibleAssetsExcludingGoodwill",
               "IntangibleAssetsOtherThanGoodwill", "OtherIntangibleAssetsNet"],
     "cash":  ["CashAndCashEquivalentsAtCarryingValue", "CashAndCashEquivalents"],
     "dep":   ["DepreciationDepletionAndAmortization", "DepreciationAndAmortization",

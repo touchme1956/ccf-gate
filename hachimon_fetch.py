@@ -67,9 +67,20 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  #          23.4%・5年系列3.53倍振れでnull化）
  #     GDDY BS計上額 986.3百万$ に対し確定分 31.2百万$ だけを控除 → roic 292.2（是正後 IC=−624.2で負）
  #   総額タグを先頭に置き、無い場合のみ確定分へフォールバックする。
- #   ※フォールバック時は無期限無形(商標・ブランド等)が控除されず依然として過少になるため、
- #     ROIC算出側の「ICが自己資本の2割未満なら飛ばす」ガードで受ける。
- "intan": ["IntangibleAssetsNetExcludingGoodwill","FiniteLivedIntangibleAssetsNet"],
+ # 2026-08-03修正: **上の但し書き（無期限無形が控除されず過少になる）が現実に事故を起こした。**
+ #   series() は候補から**1本を選ぶ**ので、総額タグが古い年で止まっていると新しい年が丸ごと欠測になり、
+ #   さらに ROIC算出側が `.get(y,0)` で**欠測をゼロと読んで**いた（絶対のルール7(a)そのもの）。
+ #   実測 CELH(2025年): IntangibleAssetsNetExcludingGoodwill は**2024年で終了**しており、
+ #     2025年は FiniteLived 111,910千$ ＋ **IndefiniteLived 1,280,005千$（Alani Nuのブランド）** の
+ #     二本に分かれていた。IndefiniteLived は候補リストに**一つも入っていなかった**ため、
+ #     無形 1,391,915千$ が丸ごと 0 として扱われ IC 947,833千$（自己資本の80.2%）＝roic 12.9 と出た。
+ #     正しくは IC = 1,181,467 + 676,926 − 917,560 − 1,391,915 = **−451,082＝負** で算出不能。
+ #   → 無形は有利子負債と同じく「代替」ではなく**構成要素**なので intan_series() で合成する:
+ #     その年に総額タグがあれば総額、無ければ FiniteLived + IndefiniteLived を足す。
+ #     2022-2024のCELHで総額=両者の和が**円単位まで一致**する（12,254 / 12,139 / 12,213）ことを確認済み。
+ #   ※このリストは series() 用ではなく intan_series() の材料。並びは [総額, 確定分, 無期限分]。
+ "intan": ["IntangibleAssetsNetExcludingGoodwill",
+           "FiniteLivedIntangibleAssetsNet","IndefiniteLivedIntangibleAssetsExcludingGoodwill"],
  "cash":  ["CashAndCashEquivalentsAtCarryingValue","CashAndCashEquivalents"],
  "sti":   ["ShortTermInvestments","MarketableSecuritiesCurrent"],
  # 2026-07-29: 実測で取りこぼしが3件出たのでタグを拡張した（絶対のルール7「欠測をゼロと読むな」）。
@@ -219,7 +230,12 @@ def build_numbers(facts):
     # 有利子負債だけは「代替」でなく「構成要素」なので合計する（上の series は上書き）
     S["debtS"], _usedS = series_sum(facts, TAGS["debtS"], total_key="DebtCurrent")
     S["debtL"], _usedL = series_sum(facts, TAGS["debtL"], total_key="LongTermDebt")
-    for k in ("debtS", "debtL"):
+    # 2026-08-03: 無形も同じく「構成要素」だった（TAGS["intan"]の頭注を見よ）。総額タグがその年に
+    #   あれば総額、無ければ 確定分＋無期限分 を足す＝series_sum の total_key がそのまま使える。
+    #   実測 CELH: 総額タグが2024年で終わり、2025年は二本に割れていたので series() では欠測になった。
+    S["intan"], _usedI = series_sum(facts, TAGS["intan"],
+                                    total_key="IntangibleAssetsNetExcludingGoodwill")
+    for k in ("debtS", "debtL", "intan"):
         diag[k] = f"{len(S[k])}年分(合計)" if S[k] else "タグ不発見"
     ev, note = {}, []
     ev["_debtUsed"] = {"debtS": _usedS, "debtL": _usedL}
@@ -346,6 +362,14 @@ def build_numbers(facts):
                 roic_skip.append(f"{y}:有利子負債タグ不在でIC算出不能")
                 continue
             debt = (S["debtL"].get(y,0) or 0)+(S["debtS"].get(y,0) or 0)
+            # 2026-08-03修正: 無形も有利子負債と同じ「欠測をゼロと読む」事故を起こしていた。
+            #   `S["intan"].get(y,0)` は「無形が無い会社」と「その年だけタグが出ていない会社」を
+            #   区別できない。**他の年に無形を報告している会社**でその年だけ欠測なら、それは
+            #   「無形ゼロ」ではなく「採れなかった」＝算出不能として飛ばす（誤値より空欄）。
+            #   一度も無形を報告していない会社だけ 0 と読んでよい（不等式として上限が0だから）。
+            if S["intan"] and y not in S["intan"]:
+                roic_skip.append(f"{y}:無形タグ不在でIC算出不能（他年は報告あり＝欠測）")
+                continue
             gw, intan = (S["gw"].get(y,0) or 0), (S["intan"].get(y,0) or 0)
             ic = S["eq"][y]+debt-gw-intan
             # 分母が自己資本の2割を切ったら、のれん・無形の控除でICが縮退している＝発散の前兆。
