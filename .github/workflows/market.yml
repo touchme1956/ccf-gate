@@ -32,6 +32,17 @@ jobs:
         run: python3 market_merge.py || true
       - name: 実測価格をパックへ反映（基準保存式・投下可の出入りを検出）
         run: python3 night/apply_prices.py --write
+      # E[r]の予実台帳（2026-08-03新設）。**月初の営業日だけ**観測を封じる。
+      #   毎日だと20年で5000件に膨らむが、年率リターンの検証に日次の分解能は要らない。
+      #   月1回なら20年で240件——これで「E[r]が何%と言った銘柄が実際どうだったか」が測れる。
+      #   **記録は残さなければ存在しない**。手作業に頼ると20年は続かないのでCIに入れる。
+      - name: E[r]の予実台帳へ観測を封じる（月初のみ）
+        run: |
+          if [ "$(date -u +%d)" -le 07 ]; then
+            python3 night/audit_er_realized.py --snap
+          else
+            echo "月初以外なのでスキップ（台帳は月1回で足りる）"
+          fi
       - name: コミット
         run: |
           git config user.name  "ccf-gate bot"
@@ -41,6 +52,6 @@ jobs:
           #   **投下可の出入りはコミット件名に出す**——毎日のノイズに埋もれさせないため。
           [ -s out/_price_commit_msg.txt ] && MSG="$(cat out/_price_commit_msg.txt)"
           rm -f out/_price_commit_msg.txt
-          git add -A market_data.json out/dashboard.json out/*_gate_pack.json out/score_all.json || true
+          git add -A market_data.json out/dashboard.json out/*_gate_pack.json out/score_all.json out/er_ledger.json || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push
