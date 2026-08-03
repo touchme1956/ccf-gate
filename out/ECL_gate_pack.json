@@ -46,7 +46,7 @@
  "fin": "no",
  "p1": 80,
  "p2": 90,
- "p3": 80,
+ "p3": null,
  "p4": 90,
  "f1": 75,
  "f2": 70,
@@ -108,7 +108,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=23.4。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 85→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均13.7%・σ3.3pt・CV24.3%）。",
    "2026-08-02 市場価格を自動更新: px 268.72 → 277.63（+3.3%）。per 36.4→37.61　evebit 31.0→32.0　shy 2.03→1.96。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
-   "2026-08-03 acq5 None → 'yes'。空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**——門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
+   "2026-08-03 acq5 None → 'yes'。空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**——門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-08-03 p3 80 → 空欄。nde=-0.24 の導出値は 95 で、逸脱評価なのに根拠が無かった。門は空欄なら nde から機械導出するので、ndeを直せば自動で追随する。"
   ],
   "evidence": {
    "moatW": "FY2025 10-K Note 18『OPERATING SEGMENTS AND GEOGRAPHIC INFORMATION』の報告セグメント別 net sales(全社 $16,081.2百万): Global Water $7,982.4百万=49.6% / Global Institutional & Specialty $6,104.6百万=38.0% / Global Pest Elimination $1,246.3百万=7.8% / Global Life Sciences $747.9百万=4.7%。→ ≥売上15%は Global Water と Global Institutional & Specialty の2本。Pest(7.8%)と Life Sciences(4.7%)は15%未達で独立堀に数えない＝『3つ以上』の100は不成立、85が該当。2本の独立性は原本で裏取り: Water は『water treatment and process applications, and cleaning and sanitizing solutions, primarily to large industrial customers within the manufacturing, food and beverage processing, transportation, chemical, primary metals and mining, power generation, global refining, petrochemical, pulp and paper industries』、Institutional & Specialty は『specialized cleaning and sanitizing products to the foodservice, healthcare, hospitality, lodging, government, education and retail industries』＝顧客業種・販路が別系統で、Competition節でも競争構造の記述が別々(前者『led by a few large companies』/後者『two significant classes of competitors』)。片方(産業用水処理)が壊れても他方(外食・宿泊・医療の衛生)は生き残る関係。製品集中も低位: Item1『We sold one class of products within the Global Institutional & Specialty reportable segment which comprised 10% or more of consolidated net sales in the last three years. Sales of warewashing products were approximately 13% of consolidated net sales in 2025』＝最大製品クラス13%。留意: 2025-01-01付でセグメント再編(旧 Global Industrial→Global Water へ改称、旧healthcare営業セグメントは Institutional へ移管、Global Life Sciences が単独報告セグメントへ昇格)。旧名(Global Industrial / Global Healthcare & Life Sciences)は現行10-Kには無い。出典: SEC 10-K CIK0000031462 acc 0001104659-26-018357 (FY2025-12-31) Note 18 セグメント別純売上表・Item1 Business/Competition",
@@ -128,7 +129,8 @@
   },
   "nulls": {
    "dom": "2026-07-29 堀再監査で空欄化(旧dom=85)。FY2025 10-K Item1『Competition』にシェア%は皆無——Global Water『In general, the markets in which the businesses in our Global Water reportable segment compete are led by a few large companies, with the rest of the market served by smaller entities focusing on more limited geographic regions or a smaller subset of products and services.』/ Global Institutional & Specialty・Global Pest Elimination『have two significant classes of competitors. First, we compete with a small number of large companies selling directly or through distributors on a national or international scale. Second, we have numerous smaller regional or local competitors...』/ Global Life Sciences『competes in the European market versus several mid-size and regional competitors and competes against two large and other mid-size or regional competitors in North America.』——いずれも競合の『数』の定性描写で、自社シェア%も上位N社合計シェア%も示していない。Item1の順位言及は全て 『We believe we are one of the leading global suppliers of ...』形式(industrial water treatment & petroleum refining / dairy・食品飲料 / pulp and paper / warewashing・laundry・infection prevention / QSR・food retail)で、v9.9.38但し書きの『leading はシェアの証拠ではない』に該当。しかも『one of the leading』は複数社併存を自認する表現。さらに4報告セグメントで競争構造の記述が別々(Water=少数大手主導 / Institutional&Specialty=大手少数＋多数の地場 / Life Sciences=欧州は中堅分散・北米は大手2社)＝単一の刻みに帰着しない(v9.9.38『複数事業で構造が違う会社は空欄が正解』)。→ 空欄。旧85(複占の首位)を支持する記述は原本に無い。出典: SEC 10-K CIK0000031462 acc 0001104659-26-018357 (FY2025-12-31) Item1 Business/Competition",
-   "f5": "【2026-07-29】規約どおり空欄へ戻した。f5 は門が disrupt='settled' から同表で導出する（settled→85 / unsettled→65 / threat→45）。台帳にあった 85 は導出値と一致していたので、値を置いておく意味が無い——むしろ値が残っていると門はそれを『逸脱評価』として尊重し、disrupt を直しても f5 が追随しなくなる（陳腐化する）。審査プロトコル『disruptを埋めれば空欄可＝門が機械導出』。"
+   "f5": "【2026-07-29】規約どおり空欄へ戻した。f5 は門が disrupt='settled' から同表で導出する（settled→85 / unsettled→65 / threat→45）。台帳にあった 85 は導出値と一致していたので、値を置いておく意味が無い——むしろ値が残っていると門はそれを『逸脱評価』として尊重し、disrupt を直しても f5 が追随しなくなる（陳腐化する）。審査プロトコル『disruptを埋めれば空欄可＝門が機械導出』。",
+   "p3": "【2026-08-03】p3=80 は nde=-0.24 からの門の導出値 95 と食い違う『逸脱評価』だったが_meta.evidence.p3 に根拠が無かった。導出項目に根拠なき値を残すと門がそれを尊重し、**ndeを直しても p3 が追随しない＝陳腐化する**（night/fill_derived_judgment.py の設計思想）。空欄へ戻して門の導出に委ねる。逸脱させるなら原本根拠を付けて入れ直すこと"
   },
   "moatW_audit": {
    "date": "2026-07-29",

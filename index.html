@@ -2875,9 +2875,20 @@ function ccfAudit(d,r,coerced){
     else if(kind==='skew') add('info',k,`${k} が未入力——${what}`,'埋めると精度が上がる（既定値は中立とは限らない）');
     else add('info',k,`${k} が未入力——${what}`,'空欄が正しく処理される欄。根拠が無ければ空欄が正解');});
   /* ══ ⑦ 陳腐化・整合の追加検査 ══ */
-  if(roic!=null&&roicg!=null&&roicg>0&&roic/roicg>=3)
-    add('warn','roic',`roic ${roic}% が roicg ${roicg}% の <b>${(roic/roicg).toFixed(1)}倍</b>`,
-      'のれん控除で投下資本が縮退している可能性。IC/自己資本が2割未満なら算出不能（ルール7(b)）。night/audit_roic.py で確認');
+  /* roic乖離は**端末側 night/audit_roic.py の3階層に揃える**（v9.9.65・2026-08-03 較正）。
+     初版は「乖離3倍以上」で一律 warn にしていたが、audit_roic.py は同じ社を3つに分けている——
+     【要検算】roic>60 かつ 乖離3倍以上（分母縮退の疑いが濃い）／【注意】roic>60（本当に資本が軽い可能性）／
+     【参考】乖離のみ（**買収体として設計どおり。roicGapの減点で既に処理されている**）。
+     実測: HUBB は roic 56.1 で3.6倍＝audit_roic.py では【参考】なのに門では warn として鳴っていた＝
+     **同じ台帳を見る二つの検査器が違うことを言っていた**。設計どおりの乖離を warn で鳴らすと、
+     本当の縮退（ADBE/MCOのような要検算）がその中に埋もれる。 */
+  if(roic!=null&&roicg!=null&&roicg>0&&roic/roicg>=3){
+    const gx=(roic/roicg).toFixed(1);
+    if(roic>60) add('warn','roic',`roic ${roic}% が roicg ${roicg}% の <b>${gx}倍</b>（要検算）`,
+      'のれん控除で投下資本が縮退している可能性。IC/自己資本が2割未満なら算出不能（ルール7(b)）。`python3 night/recalc_roic.py {T}` で原本から実額を出せ');
+    else add('info','roic',`roic ${roic}% が roicg ${roicg}% の ${gx}倍——買収体として設計どおり`,
+      'roicGapの減点で既に処理されている。roic≤60なので分母縮退ではない（audit_roic.py の【参考】区分）');
+  }
   if(roic!=null&&roicg!=null&&roicg>0&&roic/roicg>=2&&d.acq5==='no')
     add('warn','acq5','ROIC乖離が2倍超で <b>acq5=no</b>（＝のれん乖離 −6 を免除中）',
       '直近の10-Q/有報で買収が無いか確認せよ。実害: ADBEはSemrush買収$18.7億で陳腐化しΩ81.2→75.2だった');

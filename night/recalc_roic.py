@@ -92,9 +92,19 @@ def cik_map():
 def series(facts, keys):
     """年次(10-K/20-F)の値を {fy: value} で返す。**最初に当たったタグを採る**——
     タグの優先順は TAGS の並び順が意味を持つ（無形は総額タグを先頭に置いてある）。"""
+    # 【2026-08-03 是正】初版は「候補の先頭でデータがあるもの」を無条件に採っていた。
+    #   実害: ADBE の debtL で **LongTermDebtNoncurrent が2009年で途切れている**のに先頭なので選ばれ、
+    #   FY2025 が系列に無い → `.get(y) or 0` で **debt=0** → IC が自己資本−のれん−無形へ縮退し
+    #   IC=−1,729百万$（自己資本の−15%）＝「算出不能」と出た。実際の負債は LongTermDebt に
+    #   **6,210百万$** があり、正しい IC は 4,481百万$（自己資本の38.6%）で健全＝パックの roic 158.6 が正しく、
+    #   **検査器のほうが壊れていた**。CLAUDE.md が BR（売上タグがASC606改称で2017年止まり）で
+    #   記録している「候補タグの先頭を無条件採用」とまったく同じ事故を、その検査器自身がやっていた。
+    # 規約どおりに直す: **最新年に届く候補の中で、keysの並び＝意味の優先順が最も高いもの**を主系列にする。
+    #   （単純に「最新年がいちばん新しいタグ」を採ると意味の違うタグへ黙って乗り換える＝BKNGのeq事故）
+    cands = []
     for ns in ("us-gaap", "ifrs-full"):
         d = facts.get("facts", {}).get(ns, {})
-        for k in keys:
+        for pri, k in enumerate(keys):
             if k not in d:
                 continue
             units = d[k]["units"]
@@ -117,8 +127,13 @@ def series(facts, keys):
                         continue
                 out[fy] = row["val"]
             if out:
-                return out, f"{ns}:{k}"
-    return {}, None
+                cands.append((pri, max(out), out, f"{ns}:{k}"))
+    if not cands:
+        return {}, None
+    newest = max(c[1] for c in cands)
+    live = [c for c in cands if c[1] >= newest - 1] or cands
+    live.sort(key=lambda c: (c[0], -c[1]))
+    return live[0][2], live[0][3]
 
 
 def one(t, cm):
