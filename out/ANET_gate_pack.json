@@ -71,7 +71,8 @@
    "顧客集中(集): 2社で42%(26%+16%, 2025)、単一最大26%。推移は一社21→15→16%低下・他社18→20→26%上昇の混在。geopol=2。dilNet=59.98は分割断絶で独立再現困難のため採取器値を維持",
    "2026-07-18 dilNet訂正: 59.98→0.07%/年。株式分割(検出 係数4)を調整した希薄化率。生株数 2020:318M→2025:1,276M",
    "2026-07-29 堀再監査(v9.9.41): 旧dom=70→新dom=50、旧moatW=50→新moatW=50(据置)。dom: 旧70は旧evidence自身が『hitsに明示シェア%なし→寡占参加者として保守的に70』と自認する無根拠値。規約2で70以上は不可。原本は逆に『markets have historically been dominated by Cisco』と他社支配を明記し、『Larger competitors』『patent portfolios of most of our competitors are larger than ours』も併記するため規約3の残余50を確定。moatW: 単一reportable segment＋単一EOS/NetDL/CloudVisionに全製品が乗る＝1本、最大顧客26%(上位2社42%)で50のトリガーに該当することを実数で確認し据置。",
-   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。"
+   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
+   "**v9.9.72 roic を through-cycle 化**: roic 27.3→27.3 / roicg 25.8→25.8。**5年の中央値**（系列[2023, 2024, 2025]・中央27.3% / 最悪25.9%）。比は**パックが審査した年(2025)**の採取器値 roic27.31 / roicg25.76 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
   ],
   "evidence": {
    "expiry": "『trademark laws and confidentiality agreements... offer only limited protection』『we may choose not to seek patent protection for certain innovations』→堀は特許/コンセッションの期限依存ではない=no",
@@ -94,14 +95,15 @@
    "f4": "『In the NDR market, our Arista...』+『data center and campus networking』=NDR/campus等の隣接を育成中(売上5%超の明示開示はhitsになし)=60",
    "f5": "disrupt=unsettled連動→65",
    "moatW": "【2026-07-29 再監査 → 50据置(原本実数で裏取り)】(a)本数=1本: 『We operate as one reportable segment』(Note 9)、かつ全製品が単一プラットフォームに乗る——『our networking-as-a-service platform ... relying on a single operating system (EOS), a single data lake (NetDL), and a single management solution (CloudVision). This strategy allows us to address a broad set of needs from client to cloud while maintaining feature consistency across our entire product portfolio』(Item 1)。規約「共通の中核技術・共通のプラットフォームに全製品が乗る場合は1本」に真正面から該当。売上分解も Product $7,576.9百万(84.1%) と Service $1,428.8百万(15.9%)の課金形態別だけで、Serviceは同一据付基盤の保守・更新契約＝規約により独立の堀と数えない。(b)刻み: 最大顧客が20%以上——『Two of our customers accounted for more than 10% of our total revenue in each of the last three years. Sales to one end customer represented 16%, 15%, and 21% ... and sales to the other end customer represented 26%, 20%, and 18% of our total revenue for the years ended December 31, 2025, 2024, and 2023』(FY2025は26%と16%＝上位2社で42%)。50の明示トリガー『最大顧客≥20%』に該当。→ 50。出典: 10-K FY2025 Item 1 / Item 1A / Consolidated Statements of Income / Note 9 Segment and Geographical Information",
-   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 12,370,500,000 + 有利子負債 0)＝のれん込み。roic(除外)との差が買収規律の指標。**有利子負債タグ不在＝0扱いのため過大の可能性あり（要原本確認）**",
+   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 12,370,500,000 + 有利子負債 0)＝のれん込み。roic(除外)との差が買収規律の指標。**有利子負債タグ不在＝0扱いのため過大の可能性あり（要原本確認）**｜**v9.9.72 through-cycle**: 系列[2023, 2024, 2025]の中央値（中央27.3% / 最悪25.9%・比は審査年2025）",
    "gm": "機械算出 2025年: 営業利益 3,856,100,000 ÷ 売上 9,005,700,000（粗利ではない）",
    "gmt": "機械算出: 営業利益率 2023年 38.5% → 2025年 42.8%（±1ptでup/down）",
    "cagr": "機械算出: 売上 2020年 2,317,512,000 → 2025年 9,005,700,000＝5年の年率",
    "accr": "機械算出 2025年: (純利益 3,511,400,000 − 営業CF 4,371,900,000) ÷ 総資産 19,448,600,000",
    "gpa": "機械算出 2025年: 売上総利益 5,768,700,000 ÷ 総資産 19,448,600,000",
    "eps": "機械算出 2025年: 純利益 3,511,400,000 ÷ 株数 1,256,500,000（TTMではなく通期実績）",
-   "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **32.2%** / 同業（SIC3576「Computer Communications Equipment」・12社）の中央値 **4.1%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+32.2%)÷(1+4.1%))^5 − 1 = **+230.4%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**"
+   "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **32.2%** / 同業（SIC3576「Computer Communications Equipment」・12社）の中央値 **4.1%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+32.2%)÷(1+4.1%))^5 − 1 = **+230.4%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
+   "roic": "｜**v9.9.72 through-cycle**: 系列[2023, 2024, 2025]の中央値（中央27.3% / 最悪25.9%・比は審査年2025）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",

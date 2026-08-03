@@ -80,7 +80,7 @@
    "2026-07-29 acq5 1.37 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均43.4%・σ2.8pt・CV6.4%）。",
    "2026-08-02 市場価格を自動更新: px 207.69 → 210.98（+1.6%）。per 20.22→20.54　perF 16.75→17.01　evebit 17.4→17.7　shy 1.75→1.72。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
-   "**v9.9.72（2026-08-03・ユーザー明示指示）roic を through-cycle 化**: roic 45.0→43.8 / roicg 21.2→19.1。**5年の中央値**（系列 [2021, 2022, 2023, 2024, 2025]・中央 43.8% / 最悪 39.8%）。比は**パックが審査した年(2025)**の採取器値 roic 45.04 / roicg 21.21 を土台に取った——採取器とパックが別の会計年度を見ている社があるため（実測 MSFT: 採取器FY2026/パックFY2025）、`中央値÷最新年`だと年をまたいだ無意味な比になる。roicgも同じ年の系列の中央値にしてroic≥roicg の恒等式を保つ。出典: SEC"
+   "**v9.9.72 roic を through-cycle 化**: roic 45.0→43.8 / roicg 21.2→19.1。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央43.8% / 最悪39.8%）。比は**パックが審査した年(2025)**の採取器値 roic45.04 / roicg21.21 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
   ],
   "evidence": {
    "dom": "【2026-07-29 堀再監査・原本(10-K)から取り直し→空欄】SEC 10-K FY2025(rmd-20250630.htm, 2025-08-08提出) Item 1 Business の Competition 節の全文は『Global competition for sales of our products and services is intense. We believe that the principal competitive factors are product features, value-added solutions, quality, reliability and price... Our primary Sleep and Breathing Health competitors include Philips BV; Fisher & Paykel Healthcare Corporation Limited; DeVilbiss Healthcare; Apex Medical Corporation; BMC Medical Co. Ltd.; React Health Corporation; Jiangsu Yuyue Medical Equipment & Supply Co., Ltd, and Lowenstein Medical SE & Co. KG plus regional and new-entrant manufacturers』であり、自社シェア%も上位N社合計シェアも一切開示が無い。Item 1 冒頭の自己記述も『We are a global leader in digital health and cloud-connected medical devices』『we are a leading provider of cloud-based health applications』という定性表現のみで、v9.9.38の刻み(市場構造)を導く材料にならない。Item 1A Risk Factors にもシェアの数値は無い。旧evidenceが依拠した『CPAP複占(Philips)』は原本の外の通念であり、原本はむしろ名指し8社＋地域/新規参入業者を列挙していて複占(上位2社合計≥80%)の裏が取れない。→ 刻みを導けないため dom=null(理由は _meta.nulls.dom)。出典: https://www.sec.gov/Archives/edgar/data/943819/000094381925000035/rmd-20250630.htm",
@@ -113,8 +113,8 @@
    "eps": "機械算出 2025年: 純利益 1,400,723,000 ÷ 株数 146,385,350（TTMではなく通期実績）",
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 595,495,944 ÷ Δ投下資本 2,500,159,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 4,135,992,000→6,636,151,000（+60.4%）",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 720,625,474 ÷ Δ投下資本 2,963,004,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 3,673,147,000→6,636,151,000（+80.7%）",
-   "roic": "原本検算 2025年(10-K FY2025/06): 営業利益1,685,363千$×(1−実効税率16.5%)=NOPAT1,407,233 ÷ IC 3,124,610（自己資本5,967,859+有利子負債668,292−のれん3,046,680−無形464,861）= 45.0%。IC/自己資本52.4%＝縮退なし。5年系列 39.8/43.8/41.0/47.5/45.0｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央43.8% / 最悪39.8%・比は審査年2025で取得）",
-   "roicg": "原本検算 2025年: NOPAT1,407,233 ÷ (自己資本5,967,859+有利子負債668,292=6,636,151) = 21.2%｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央43.8% / 最悪39.8%・比は審査年2025で取得）",
+   "roic": "原本検算 2025年(10-K FY2025/06): 営業利益1,685,363千$×(1−実効税率16.5%)=NOPAT1,407,233 ÷ IC 3,124,610（自己資本5,967,859+有利子負債668,292−のれん3,046,680−無形464,861）= 45.0%。IC/自己資本52.4%＝縮退なし。5年系列 39.8/43.8/41.0/47.5/45.0｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央43.8% / 最悪39.8%・比は審査年2025）",
+   "roicg": "原本検算 2025年: NOPAT1,407,233 ÷ (自己資本5,967,859+有利子負債668,292=6,636,151) = 21.2%｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央43.8% / 最悪39.8%・比は審査年2025）",
    "roict": "5年系列 39.8→45.0（最古比+5.2pt）＝up。旧値downは根拠なし",
    "nde": "原本検算 2025年: (有利子負債668,292 − 現金1,209,450) ÷ (営業利益1,685,363+減価償却198,473) = −0.29",
    "cagr": "原本検算: 売上 2020年2,957,013千$ → 2025年5,146,327千$ ＝5年の年率11.7%",
