@@ -54,10 +54,8 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 .b-castle{color:var(--gold-bright);border:1px solid var(--gold-line);}
 .ind-dot{font-size:12px;margin-right:7px;vertical-align:middle;filter:drop-shadow(0 0 3px currentColor);}
 .kind{font-size:11px;color:var(--muted);}
-.val{text-align:right;font-size:14px;color:var(--ink-soft);white-space:nowrap;}
-.pct{text-align:right;font-family:"Shippori Mincho",serif;font-size:15px;color:var(--gold-bright);min-width:56px;}
+.vlabel{text-align:right;font-size:12.5px;white-space:nowrap;letter-spacing:.02em;}
 .mini{font-size:11.5px;color:var(--muted);text-align:right;grid-column:1/3;}
-.buyinfo{font-size:11px;color:var(--muted);text-align:right;grid-column:1/3;margin-top:2px;}
 .note{font-size:12.5px;color:var(--ink-soft);background:rgba(201,166,74,.06);border:1px solid var(--gold-line);border-radius:10px;padding:12px 14px;line-height:1.85;margin:14px 0;}
 /* edit */
 .erow{display:grid;grid-template-columns:70px 1fr 62px 96px 30px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(40,52,74,.5);}
@@ -74,10 +72,15 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
 </head>
 <body>
 
+<!-- 2026-08-03 ユーザー指示「ポートフォリオを単純に保有だけにして金額をなくしたい。保有と売却かなどが見れるカタチに戻したい」:
+     表示から金額(合計¥・評価額・%・株数@単価)を撤去し、各行の右側に出口判定(保有/売却)を文字で出す形へ。
+     **評価額の計算そのものは消していない**——pf:weights の書き出しと「門の台帳へ登録」の pos% は
+     posValue() に依存する(消すと門のリバランス・不足按分が黙って死ぬ。上の2026-07-29注記と同じ理由)。
+     編集パネルの株数・単価入力もそのまま(計算の入力源)。変えたのは表示層のみ。 -->
 <header class="hero">
  <div class="brand">CCF Ω · Portfolio</div>
  <h1>私のポートフォリオ</h1>
- <div class="total"><span id="total">¥—</span><small id="asof"></small></div>
+ <div class="total"><span id="total">—</span><small id="asof"></small></div>
  <div class="toolbar">
   <button class="btn" id="editBtn" onclick="toggleEdit()">✎ 編集</button>
   <button class="btn ghost" id="importBtn" onclick="importFromGate()" title="門(同ドメイン)の台帳で保有登録した個別銘柄を城として取り込む">⭳ 門の保有から取込</button>
@@ -115,7 +118,7 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
 
  <div class="card">
   <h2>保有一覧</h2>
-  <p class="sub">全保有を評価額の大きい順に1枚で。行頭の色丸は門の出口判定（🔴S1売却検討／🟡S2縮小／🟣S3記録のみ／🔵ホールド／⏳採点待ち）——判定は門（Ⅳ台帳）を開くと更新される。網／城／現金の別は各行のバッジで示す。</p>
+  <p class="sub">保有銘柄と門の出口判定だけを出す（金額は表示しない）。個別（城）の右側が判定——🔴S1売却検討／🟡S2縮小／🟣S3記録のみ／🔵ホールド／⏳採点待ち。判定は門（Ⅳ台帳）を開くと更新される。網／城／現金の別は各行のバッジで示す。</p>
   <div style="margin:0 0 10px"><button class="btn" id="rescoreBtn" onclick="pfRescorePrompt(this)" style="border-color:rgba(84,184,138,.5);color:#8fc9a4;background:linear-gradient(180deg,rgba(84,184,138,.20),rgba(84,184,138,.06))" title="保有の個別銘柄を、今の門が必要とする全項目で採点し直す依頼文をコピー。Claudeに貼ると完成パックJSONが返る→Ⅲ採点機に取込">📋 個別の再採点依頼文をコピー</button> <span class="mini" style="text-align:left;display:inline">最新データで門Ω＋門Xにかけ直す。返ったJSONを門「Ⅲ採点機」の貼付欄へ。</span></div>
   <div id="holdList"></div>
  </div>
@@ -171,30 +174,21 @@ function render(){
  // 現在の網/城ウェイトを書き出す（v9.9.53で門は読まなくなった。DCA側の判断材料として保持）
  try{localStorage.setItem('pf:weights',JSON.stringify({net:netW,city:castleW,total:total}));}catch(e){}
 
- document.getElementById('total').textContent=yen(total);
- document.getElementById('asof').textContent = (P.asof? ('更新 '+P.asof) : '') + (fxRate()>0?`　$1=¥${fxRate()}`:'');
- // 目標60/40との差の表示は撤去（2026-07-29）。網/城の配分判断は門の外（DCA側）へ移した
- // ——v9.9.53で門の今月プランから網を撤去し、門は個別銘柄だけを裁く場になった。
+ // 2026-08-03 ユーザー指示: 金額の表示を撤去（合計¥・評価額・%・株数@単価）。合計欄は保有数に。
+ // 表示は金額の有無を問わない——金額を出さない以上、金額未入力の保有（門から取込直後など）が
+ // 見えないのは矛盾する（pos=金額あり はウェイト計算・登録用に従来どおり残す）
+ const shown=P.positions.filter(p=>p&&(p.t||p.nm));
+ document.getElementById('total').textContent = shown.length ? (shown.length+'銘柄') : '—';
+ document.getElementById('asof').textContent = P.asof? ('更新 '+P.asof) : '';
 
- const buyInfo=p=>{
-  const sh=+p.sh||0, npx=+p.npx||0, bpx=+p.bpx||0;
-  if(sh<=0)return '';
-  const cur=p.ccy==='JPY'?'¥':'$';
-  const pxTxt = npx>0?`現${cur}${npx}`:(bpx>0?`買${cur}${bpx}`:'');
-  const fxTxt = (p.ccy!=='JPY'&&(npx>0||bpx>0)&&fxRate()>0)?` ×${fxRate()}円`:'';
-  return `<div class="buyinfo">${p.bd?p.bd+' ':''}${sh}株${pxTxt?' @'+pxTxt:''}${fxTxt}</div>`;
- };
- const rowHTML=(p,extra,dotColor,dotLabel)=>{
+ const rowHTML=(p,dotColor,vLabel)=>{
   const badge = p.sleeve==='net'?'<span class="badge b-net">網</span>':p.sleeve==='cash'?'<span class="badge b-net" style="opacity:.7">現金</span>':'<span class="badge b-castle">城</span>';
-  const dot = dotColor?`<span class="ind-dot" style="color:${dotColor}" title="${dotLabel||''}">●</span>`:'';
-  const w=wOf(p);
-  return `<div class="row"><div class="nm">${dot}${p.nm||p.t}${badge}<div class="kind">${p.t||''}${p.kind?' · '+p.kind:''}</div></div>`+
-   `<div><div class="val">${yen(p._v)}</div><div class="pct">${w.toFixed(1)}%</div></div>`+
-   `${buyInfo(p)}${extra||''}</div>`;
+  const dot = dotColor?`<span class="ind-dot" style="color:${dotColor}">●</span>`:'';
+  const lab = vLabel?`<div class="vlabel" style="color:${dotColor||'var(--muted)'}">${vLabel}</div>`:'<div class="vlabel" style="color:var(--muted)">—</div>';
+  return `<div class="row"><div class="nm">${dot}${p.nm||p.t}${badge}<div class="kind">${p.t||''}${p.kind?' · '+p.kind:''}</div></div>${lab}</div>`;
  };
- // ---- 保有一覧（2026-07-29: 網/城/現金を1枚に集約）----------------------------
- // 出口判定の色丸は残す——保有ビューから S1/S2/S3 が見えなくなるのは機能の後退で、
- // 「網/城の内訳を消す」という指示の範囲を超えるため。判定は門（Ⅳ台帳）が pf:verdicts へ書く。
+ // ---- 保有一覧（2026-08-03: 保有と出口判定〔保有/売却〕だけの表示へ）------------------
+ // 出口判定は門（Ⅳ台帳）が pf:verdicts へ書く。色丸＋判定の文字を右側に出す。
  const vmap=(function(){try{return JSON.parse(localStorage.getItem('pf:verdicts')||'{}');}catch(e){return {};}})();
  const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm].level;               // 名の完全一致
    const pt=(p.t||'').toUpperCase();
@@ -202,15 +196,17 @@ function render(){
    for(const k in vmap){ if(p.nm&&(k.indexOf(p.nm)>=0||p.nm.indexOf(k)>=0))return vmap[k].level; } // 名の部分一致のみ
    return 'pending'; };
  const VCFG={s1:['🔴','売却検討 (S1)','#cf5f48'],s2:['🟡','買い増し停止・縮小 (S2)','#d69a3c'],s3:['🟣','記録のみ (S3)','#a888d8'],hold:['🔵','ホールド','#5d8cc2'],pending:['⏳','採点待ち（門Ⅲで審査）','var(--muted)']};
- document.getElementById('holdList').innerHTML = pos.length
-   ? pos.slice().sort((a,b)=>b._v-a._v).map(p=>{
-       // 出口判定は個別(城)にしか意味が無い。ETF・現金には色丸を付けない
+ // 並び: 判定を持つ城を先頭に、次に網、現金。同じ枠内は評価額順（金額は出さないが順序の錨には使う）
+ const ord={castle:0,net:1,cash:2};
+ document.getElementById('holdList').innerHTML = shown.length
+   ? shown.slice().sort((a,b)=>(ord[a.sleeve]??1)-(ord[b.sleeve]??1)||(b._v||0)-(a._v||0)).map(p=>{
+       // 出口判定は個別(城)にしか意味が無い。ETF・現金には付けない
        const c = (p.sleeve==='castle') ? VCFG[verdictOf(p)] : null;
-       return rowHTML(p, '', c?c[2]:'', c?c[1]:'');
+       return rowHTML(p, c?c[2]:'', c?c[0]+' '+c[1]:'');
      }).join('')
    : '<div class="mini" style="text-align:left">保有が未登録。「✎ 編集」から入れてください。</div>';
  document.getElementById('foot').innerHTML=
-  `CCF Ω — 保有はこの端末に自動保存（編集で反映）。網／城の別は各行のバッジで、目標60/40のリバランスは門のⅥ買付順位「今月の買付プラン」で見る。<br>投資判断は自己責任で。`;
+  `CCF Ω — 保有はこの端末に自動保存（編集で反映）。金額は表示しない（株数・単価の入力は門の配分計算にだけ使う）。売り買いの判定は門＝売りはS1/S2/S3・買いはⅥ買付順位。<br>投資判断は自己責任で。`;
 }
 
 /* ---------- 編集（いつ・どれだけ買ったか） ---------- */
