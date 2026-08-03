@@ -1188,13 +1188,13 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <div id="pg3" class="pg">
  <div class="pg3-head">
   <h1 class="serif">台帳 <span style="font-size:.5em;color:var(--mut)">g7: 保存記録</span></h1>
-  <p style="color:var(--muted);font-size:14px;line-height:1.9">JSON取込時の自動保存と手動記録がここに並ぶ。行をタップで採点機に読込・再計算。旧v6.5記録（g64:）は読み取り専用で下段に表示。直前版は g7prev: に退避済み——誤取込時はClaudeに「g7prevから戻して」と依頼。</p>
+  <p style="color:var(--muted);font-size:14px;line-height:1.9">JSON取込時の自動保存と手動記録がここに並ぶ。行をタップで採点機に読込・再計算。旧v6.5記録（g64:）は読み取り専用で下段に表示。直前版は g7prev: に退避済み——誤取込時はClaudeに「g7prevから戻して」と依頼。<br><span style="font-size:12.5px;color:var(--dim)"><b>台帳は「格（質）」だけを並べる（v9.9.74）。</b>「今 買える／押し目待ち」と押し目監視の表は撤去した——どちらも v9.9.25 で買付判定から外した<u>旧・粗いPERブレーキ</u>が母集団で、Ⅵ買付順位の四段関門（Ω75+ ∧ 門X4条件 ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件）と食い違っていたため（Ⅳが「今 買える」と出す銘柄をⅥが⛔堀不足で見送る／「押し目待ち」が旧PER線とⅥの門X未達で<b>同じ言葉が別の意味</b>だった）。<b>買付の可否と押し目の距離はⅥ買付順位だけが裁く。</b>残しているバッジは価格判定でないもの——見送り（足切り）＝キル／取引不可／価格未入力。採点式・Ω・売却規律S1/S2/S3・門X閾値・堀の関門はいずれも不変。</span></p>
  </div>
  <div class="wrap"><div id="emptyGuide"></div></div>
  <div class="wrap"><div id="batchBox"></div></div>
  <div class="wrap" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px">
   <select id="ledSort" onchange="renderLedger()" style="background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:7px 8px;font-size:12px"><option value="score">スコア順</option><option value="ts">更新順</option><option value="name">名前順</option></select>
-  <select id="ledFilter" onchange="renderLedger()" style="background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:7px 8px;font-size:12px"><option value="all">すべて</option><option value="dv-s">最上位</option><option value="dv-a">堅実</option><option value="avoid">回避/失格</option><option value="act-buy">今 買える</option><option value="act-wait">押し目待ち</option></select>
+  <select id="ledFilter" onchange="renderLedger()" style="background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:7px 8px;font-size:12px"><option value="all">すべて</option><option value="dv-s">最上位</option><option value="dv-a">堅実</option><option value="avoid">回避/失格</option></select>
   <button onclick="ccfInspectAll(this)" title="台帳の全銘柄に健全性検査をかけ、要修正・警告・測定漏れを一覧で出す（採点には一切影響しない）" style="padding:7px 13px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:12.5px;font-weight:600;cursor:pointer">🔍 全件点検</button>
   <button onclick="revealIO('paste')" style="background:linear-gradient(180deg,rgba(201,166,74,.18),rgba(201,166,74,.08));border:1px solid var(--gold-line);color:var(--gold-bright);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">＋ Claudeの返答を取り込む</button>
   <button onclick="revealIO('price')" style="background:var(--panel);border:1px solid var(--line);color:var(--ink-soft);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">￥ 価格だけ更新</button>
@@ -1220,10 +1220,12 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
   <h2 class="serif" style="font-size:1.25em">検証キュー <span style="font-size:.6em;color:var(--mut)">次回決算＝再採点期日（直近決算+92日で推定）</span></h2>
  </div>
  <div class="wrap"><div id="queueBox"></div></div>
- <div class="pg3-head" style="margin-top:30px">
-  <h2 class="serif" style="font-size:1.25em">押し目監視 <span style="font-size:.6em;color:var(--mut)">買い転換までの距離（保存時の株価基準・概算）</span></h2>
- </div>
- <div class="wrap"><div id="watchBox"></div></div>
+ <!-- v9.9.74（ユーザー指示「台帳の今買える押し目待ちを消して」）: 「押し目監視」表を撤去した。
+      母集団が act-wait（＝v9.9.25で買付判定から外した旧・粗いPERブレーキ）で、「▼N%で買い転換」は
+      旧PER/EV/PEG線を通るだけの距離＝**買えるようになる距離ではない**。価格の関門は門X 1本なので、
+      押し目の距離は Ⅵ買付順位の「🟡押し目待ち → 開通＝PER○○（あと−○%）」と ✦門Xの監視表が正。
+      同じ台帳を見る二つの検査器が違うことを言う状態を解消する（盤の四段関門統一と同型）。
+      renderWatch() は watchBox が無ければ即returnするので呼び出しは無害のまま残す。 -->
 </div>
 <div id="pg4" class="pg">
  <div class="pg3-head">
@@ -2438,13 +2440,13 @@ async function processBatch(t){
   if(errors.length)uiNotice(`保存失敗 ${errors.length}件——Ⅲの結果パネルに理由を表示`,6000);
   if(arr.length>1){
     const bb=$('batchBox');
-    const rows=results.map(x=>`<div style="display:flex;gap:8px;font-size:12.5px;padding:3px 0;border-bottom:1px solid rgba(40,52,74,.4)"><span style="flex:1">${x.nm}</span><span>${x.prevScore?x.prevScore+'→':''}<b>${x.score}</b>${x.diff}</span><span style="color:var(--muted)">${x.prevAct&&x.prevAct!==x.act?x.prevAct+'→':''}${x.act}</span></div>`).join('');
+    const rows=results.map(x=>`<div style="display:flex;gap:8px;font-size:12.5px;padding:3px 0;border-bottom:1px solid rgba(40,52,74,.4)"><span style="flex:1">${x.nm}</span><span>${x.prevScore?x.prevScore+'→':''}<b>${x.score}</b>${x.diff}</span><span style="color:var(--muted)">${x.prevTier&&x.prevTier!==x.tier?x.prevTier+'→':''}${x.tier}</span></div>`).join('');
     const erows=errors.map(x=>`<div style="font-size:12px;color:var(--rust);padding:2px 0">✕ ${x.nm}：${x.error}</div>`).join('');
     if(bb)bb.innerHTML=`<div style="background:var(--panel2);border:1px solid ${errors.length?'var(--rust)':'var(--gold-line)'};border-radius:10px;padding:12px 14px;margin-top:12px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="color:${errors.length?'var(--rust)':'var(--gold-bright)'}">一括取込：成功 ${results.length}件・失敗 ${errors.length}件（${new Date().toLocaleString('ja-JP')}）</b><button onclick="$('batchBox').innerHTML=''" style="background:none;border:none;color:var(--dim);cursor:pointer;font-size:13px">✕</button></div>${erows}${rows}</div>`;
     uiNotice(`一括取込完了：${results.length}件——詳細はⅤ検証履歴に記録済み`);
     if(typeof showPage==='function')showPage(3);
     // v9.1: 検証履歴への自動記録（クリックで開く詳細一覧）
-    const lg=results.map(x=>`${x.nm}　評価 ${x.prevScore?x.prevScore+'→':''}${x.score}（${x.tier}・${x.act}）${x.prevAct&&x.prevAct!==x.act?' ★判定変更':''}　ROIC ${x.roic}%　PER ${x.per}`).join('\n');
+    const lg=results.map(x=>`${x.nm}　評価 ${x.prevScore?x.prevScore+'→':''}${x.score}（${x.tier}）${x.prevTier&&x.prevTier!==x.tier?' ★ティア変更':''}　ROIC ${x.roic}%　PER ${x.per}`).join('\n');
     saveLog({date:new Date().toISOString().slice(0,10),title:`一括再採点 ${results.length}銘柄`,body:lg});
   }
 }
@@ -2510,13 +2512,14 @@ async function ccfRescoreAll(btn){
       if(String(obj.data.erp)==='5'||String(obj.data.erp)==='5.0'){obj.data.erp='4.45';if($('erp'))$('erp').value='4.45';}
       if(String(obj.data.rfr)==='4.5'){obj.data.rfr='4.48';if($('rfr'))$('rfr').value='4.48';}
       const r=compute();
-      const beforeAct=obj.r?obj.r.act:null, beforeS=obj.r?obj.r.evalScore:null;
+      const beforeT=obj.r?(obj.r.tierShort||obj.r.grade||null):null, beforeS=obj.r?obj.r.evalScore:null;
       // r以外(ts/src/held等)は保持。tsは"データ鮮度"の指標ゆえ据え置き、再採点印はsrcに残す
       obj.r=r; obj.src=(obj.src||'auto').replace('+再採点','')+'+再採点';
       await store.set(k, JSON.stringify(obj));
       n++;
-      if(beforeAct!==r.act||(beforeS!=null&&Math.abs(parseFloat(beforeS)-parseFloat(r.evalScore))>0.05)){
-        chg++; changed.push(`${(obj.data.nm||k.slice(3))}: ${beforeS}(${beforeAct})→${r.evalScore}(${r.act})`);
+      const afterT=r.tierShort||r.grade;
+      if(beforeT!==afterT||(beforeS!=null&&Math.abs(parseFloat(beforeS)-parseFloat(r.evalScore))>0.05)){
+        chg++; changed.push(`${(obj.data.nm||k.slice(3))}: ${beforeS}(${beforeT||'—'})→${r.evalScore}(${afterT})`);
       }
     }catch(_){continue;}
   }
@@ -2530,11 +2533,11 @@ async function autoSave(src,silent){
   const nm=$('nm').value.trim(); if(!nm)return null;
   let r=compute(); const data={};
   document.querySelectorAll('#scorer input,#scorer select').forEach(e=>{if(e.id)data[e.id]=e.value;}); // v9.9.26: 採点機フォームに限定(logBody/ioBox等の他タブ入力とid無し欄の混入=記録肥大を解消。読込側は既存マップで無害)
-  let prevScore=null,prevAct=null;
+  let prevScore=null,prevAct=null,prevTier=null;   // v9.9.74: 判定変更は act(旧PERブレーキ)ではなく層で見る
   const sk=safeKey(nm);
   try{
     const prev=await store.get('g7:'+sk);
-    if(prev){ await store.set('g7prev:'+sk,prev.value); try{const po=JSON.parse(prev.value); if(po.r){prevScore=po.r.evalScore;prevAct=po.r.act;}
+    if(prev){ await store.set('g7prev:'+sk,prev.value); try{const po=JSON.parse(prev.value); if(po.r){prevScore=po.r.evalScore;prevAct=po.r.act;prevTier=po.r.tierShort||po.r.grade||null;}
       // v9.9.28: histの自動追記(v9.9.27の再設計)——新しい四半期のデータ(erdateが前回より新しい保存)なら前回スコアを履歴に積む。
       //   種は「フォーム値が空なら前回レコードのhist」から取る: パックJSONにはhistキーが無く、applyFieldsが取込のたびに
       //   hist欄を''にクリアするため、フォーム値だけを種にすると履歴が常に1件に潰れ、S2「3期連続低下」/S3「2期連続低下」が
@@ -2563,10 +2566,12 @@ async function autoSave(src,silent){
     const diff=dv==null?'':dv>0?`<span style="color:var(--jade)">（▲${dv.toFixed(1)}）</span>`:dv<0?`<span style="color:var(--rust)">（▼${Math.abs(dv).toFixed(1)}）</span>`:'（±0）';
     if(!silent){
       const ts=$('timeSig');
-      const diffline=prevScore!=null?`前回 ${prevScore}（${prevAct}）→ 今回 <b>${r.evalScore}</b>${diff}（${r.act}）${prevAct!==r.act?'——<b>判定変更</b>':''}／`:'';
+      const __tierNow=r.tierShort||r.grade;
+      // v9.9.74: 「今 買える／押し目待ち」は表示しない。買付の可否はⅥ買付順位の四段関門だけが裁く
+      const diffline=prevScore!=null?`前回 ${prevScore}（${prevTier||'—'}）→ 今回 <b>${r.evalScore}</b>${diff}（${__tierNow}）${(prevTier&&prevTier!==__tierNow)?'——<b>ティア変更</b>':''}／`:'';
       if(ts)ts.innerHTML=`<div class="flag f-ok"><i>✓</i><div><b>自動保存済み：</b>${nm}。${diffline}保存先=${store.mode==='claude'?'Claude永続ストレージ':store.mode==='local'?'ブラウザlocalStorage':'メモリのみ——タブを閉じると消える'}・旧版は g7prev: に退避。</div></div>`+ts.innerHTML;
     }
-    return {nm,score:r.evalScore,act:r.act,prevScore,prevAct,diff,tier:r.tierShort||r.grade,roic:data.roic||'',per:data.per||''};
+    return {nm,score:r.evalScore,act:r.act,prevScore,prevAct,prevTier,diff,tier:r.tierShort||r.grade,roic:data.roic||'',per:data.per||''};
   }catch(e){return {nm,error:String(e&&e.message||e)};}
 }
 // ===== v9.1 保有ポートフォリオ & 出口判定 =====
@@ -2677,7 +2682,7 @@ async function renderLedger(){
     if(filtV==='all')return true;
     if(filtV==='dv-s'||filtV==='dv-a')return it.tcls===filtV;
     if(filtV==='avoid')return it.tcls!=='dv-s'&&it.tcls!=='dv-a';
-    if(filtV==='act-buy'||filtV==='act-wait')return it.acls===filtV;
+    // v9.9.74: act(今買える/押し目待ち)での絞り込みは撤去。買付の可否はⅥ買付順位の四段関門だけが裁く
     return true;});
   if(sortV==='name')view.sort((a,b)=>a.nm.localeCompare(b.nm,'ja'));
   else if(sortV==='ts')view.sort((a,b)=>(b.ts||0)-(a.ts||0));
@@ -2686,7 +2691,7 @@ async function renderLedger(){
   const DAY=86400000;
   // v9.1: サマリーバー+メモリモード警告
   {const s=items.filter(i=>i.tcls==='dv-s').length,a=items.filter(i=>i.tcls==='dv-a').length,c=items.length-s-a;
-   const buy=items.filter(i=>i.acls==='act-buy').length,wt=items.filter(i=>i.acls==='act-wait').length;
+   // v9.9.74: 「今買える／押し目待ち」の集計は撤去（下の bar からも外した）。理由は ACT_HIDE の注記を見よ
    const stale=items.filter(i=>{if(!i.d||!i.d.ddate)return false;const dd=new Date(i.d.ddate);return !isNaN(dd)&&(Date.now()-dd.getTime())/DAY>90;}).length;
    const warn=store.mode==='mem'?`<div style="background:#cf5f4822;border:1px solid var(--rust);border-radius:6px;padding:6px 10px;font-size:12px;color:var(--rust);margin-bottom:8px"><b>⚠ 保存先がメモリのみ</b>——この画面を閉じると全記録が消える。${store.degraded?'この閲覧環境（ファイルプレビュー等）ではClaude永続ストレージが機能していない。<b>このHTMLをダウンロードしてChrome等のブラウザで開けば端末に永続保存される。</b>':''}「全件書き出し」でバックアップせよ。</div>`:(store.degraded&&store.mode==='local')?`<div style="background:#d69a3c22;border:1px solid #d69a3c;border-radius:6px;padding:6px 10px;font-size:12px;color:#d69a3c;margin-bottom:8px"><b>ℹ Claude永続ストレージが不通のためlocalStorageで動作中</b>——この端末のこの環境内でのみ保持される。</div>`:'';
    let bkChip='';
@@ -2694,10 +2699,18 @@ async function renderLedger(){
      if(items.length){if(!be)bkChip=`<span style="border-left:1px solid var(--line);padding-left:14px;color:#d69a3c">バックアップ未実施——全件書き出し推奨</span>`;
        else{const bd=Math.floor((Date.now()-parseInt(be.value))/DAY);if(bd>7)bkChip=`<span style="border-left:1px solid var(--line);padding-left:14px;color:#d69a3c">最終バックアップ${bd}日前</span>`;}}}catch(e){}
    const bar=document.createElement('div');
-   bar.innerHTML=warn+ccfAuditSummary(items)+`<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);padding:8px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:10px"><span>全<b>${items.length}</b>件</span><span style="color:var(--gold-bright)">最上位 <b>${s}</b></span><span style="color:var(--jade)">堅実 <b>${a}</b></span><span style="color:var(--rust)">回避/失格 <b>${c}</b></span><span style="border-left:1px solid var(--line);padding-left:14px;color:#54b88a">今買える <b>${buy}</b></span><span style="color:#5d8cc2">押し目待ち <b>${wt}</b></span>${stale?`<span style="border-left:1px solid var(--line);padding-left:14px;color:#d69a3c">要データ更新 <b>${stale}</b></span>`:''}${bkChip}</div>`;
+   bar.innerHTML=warn+ccfAuditSummary(items)+`<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);padding:8px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:10px"><span>全<b>${items.length}</b>件</span><span style="color:var(--gold-bright)">最上位 <b>${s}</b></span><span style="color:var(--jade)">堅実 <b>${a}</b></span><span style="color:var(--rust)">回避/失格 <b>${c}</b></span>${stale?`<span style="border-left:1px solid var(--line);padding-left:14px;color:#d69a3c">要データ更新 <b>${stale}</b></span>`:''}${bkChip}</div>`;
    box.appendChild(bar);}
   view.forEach(it=>{
     const gc=it.misread?'var(--steel)':it.kills?'var(--rust)':it.tcls==='dv-s'?'var(--gold-bright)':it.tcls==='dv-a'?'var(--jade)':'var(--rust)';
+    // v9.9.74（ユーザー指示「台帳の今買える押し目待ちを消して」）: 台帳から act の**価格判定だけ**を消す。
+    //   act は v9.9.25 で買付判定から外した旧・粗いPERブレーキで、価格の関門は門X 1本になっている。
+    //   にもかかわらず台帳だけがこれを表示し続けていたので、**同じ台帳を見る二つの検査器が違うことを言う**
+    //   状態だった（Ⅳが「今 買える」と出す銘柄をⅥが⛔堀不足で見送る、Ⅳの「押し目待ち」は旧PER線・
+    //   Ⅵの🟡押し目待ちは門X未達で**同じ言葉が別の意味**）。盤(ccfDash)を四段関門へ統一したのと同型の是正。
+    //   残すのは価格判定でないもの——見送り（足切り）＝キル / 取引不可＝rak / 価格未入力＝データ欠落。
+    //   採点式・Ω・売却規律S1/S2/S3・門X閾値・堀の関門・四段関門はいずれも不変（表示層のみ）。
+    const ACT_HIDE=(it.act==='今 買える'||it.act==='押し目待ち');
     const ac=it.acls==='act-buy'?'#54b88a':it.acls==='act-wait'?'#5d8cc2':'#cf5f48';
     const age=it.ts?Math.floor((Date.now()-it.ts)/DAY):null;
     let ageBadge=age==null?'':age>365?`<span style="font-size:9px;color:var(--rust);border:1px solid var(--rust);border-radius:4px;padding:1px 4px;margin-left:4px">要年次再採点 ${age}日</span>`:`<span style="font-size:9px;color:var(--dim);margin-left:4px">${age}日前</span>`;
@@ -2710,7 +2723,7 @@ async function renderLedger(){
     const pxB=__q&&__q.px
       ? `<span style="font-size:11px;white-space:nowrap;margin-left:7px" title="実測 ${__lAsof.slice(0,16).replace('T',' ')} UTC${__q.ccy==='JPY'?'（Yahoo Finance・東証）':'（Finnhub）'}"><b style="color:var(--ink-soft)">${__q.ccy==='JPY'?'¥':'$'}${__q.px.toLocaleString('ja-JP',{maximumFractionDigits:2})}</b>${__q.chgPct!=null?` <span style="color:${__q.chgPct>0?'#54b88a':__q.chgPct<0?'#cf5f48':'var(--dim)'}">${__q.chgPct>0?'+':''}${__q.chgPct.toFixed(1)}%</span>`:''}</span>`
       : '';
-    div.innerHTML=`<span class="ln">${it.nm}${audB}${pxB}${ageBadge}${memo}</span><span class="grade" style="color:${gc}">${it.evalScore}・${it.tierShort||it.grade}</span><span class="act" style="background:${ac}22;color:${ac}">${it.act}</span><button class="ld" title="読込" onclick="loadIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">↺</button><button class="ld" title="再採点依頼文を生成" onclick="quickPrompt(decodeURIComponent('${encodeURIComponent(it.k)}'))">依</button><button class="ld" title="保有トグル" onclick="toggleHold(decodeURIComponent('${encodeURIComponent(it.nm)}'))" style="${it.held?'color:var(--gold-bright);border-color:var(--gold-line)':''}">${it.held?'保有':'□'}</button><button title="削除" onclick="delIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">✕</button>`;
+    div.innerHTML=`<span class="ln">${it.nm}${audB}${pxB}${ageBadge}${memo}</span><span class="grade" style="color:${gc}">${it.evalScore}・${it.tierShort||it.grade}</span>${ACT_HIDE?'':`<span class="act" style="background:${ac}22;color:${ac}">${it.act}</span>`}<button class="ld" title="読込" onclick="loadIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">↺</button><button class="ld" title="再採点依頼文を生成" onclick="quickPrompt(decodeURIComponent('${encodeURIComponent(it.k)}'))">依</button><button class="ld" title="保有トグル" onclick="toggleHold(decodeURIComponent('${encodeURIComponent(it.nm)}'))" style="${it.held?'color:var(--gold-bright);border-color:var(--gold-line)':''}">${it.held?'保有':'□'}</button><button title="削除" onclick="delIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">✕</button>`;
     box.appendChild(div);
   });
   renderWatch(items);
@@ -2723,7 +2736,7 @@ async function renderLedger(){
     for(const k of oldKeys){
       try{const res=await store.get(k);if(!res)continue;const o=JSON.parse(res.value);const it={k,nm:k.slice(k.indexOf(':')+1),...o.r};
         const div=document.createElement('div');div.className='led';div.style.opacity='0.55';
-        div.innerHTML=`<span class="ln">${it.nm}</span><span class="grade" style="color:var(--steel)">${it.tierShort||it.grade}（旧）</span><span class="act" style="background:#5d8cc222;color:#5d8cc2">${it.act}</span><button title="削除" onclick="delIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">✕</button>`;
+        div.innerHTML=`<span class="ln">${it.nm}</span><span class="grade" style="color:var(--steel)">${it.tierShort||it.grade}（旧）</span><button title="削除" onclick="delIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">✕</button>`;
         box.appendChild(div);
       }catch(e){}
     }
@@ -3552,6 +3565,9 @@ async function quickPrompt(k){
   if(po){if(po.scrollIntoView)po.scrollIntoView({behavior:'smooth',block:'center'});po.focus();po.select();}
 }
 // ========== E: 押し目監視——買い転換までの距離 ==========
+// v9.9.74で「押し目監視」表はⅣ台帳から撤去済み（watchBox が無いので即return）。
+//   関数は残すが、母集団の act-wait は買付判定に使わない旧ブレーキであることに注意。
+//   押し目の距離を見るのは Ⅵ買付順位の開通ライン（門X）と ✦門Xの監視表。
 function renderWatch(items){
   const wb=$('watchBox'); if(!wb)return;
   const rows=[];
