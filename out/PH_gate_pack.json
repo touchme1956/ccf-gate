@@ -46,7 +46,7 @@
  "fin": "acq",
  "p1": 65,
  "p2": 90,
- "p3": 70,
+ "p3": null,
  "p4": 90,
  "f1": 75,
  "f2": 75,
@@ -109,7 +109,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=66.3 / 5年窓=29.9。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 _meta.kenshi が文字列で保存されていたため配列へ正規化した（ASR様式は配列が正）。内容は改行区切りの要素へ分解しただけで一文字も捨てていない。文字列のままだと検死の追記が list.append で落ちる＝**この社だけ監査の記録が伸びなくなる**。",
    "2026-07-29 p1 80→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均73.1%・σ31.3pt・CV42.8%）。",
-   "2026-07-30 **全件点検(v9.9.55)の要修正**「per ≠ px÷eps」を受けた点検で、eps が前年度の通期実績のまま陳腐化していると判明。eps 22.12 → 27.88（FY2026通期実績・SEC XBRL）。**per は据置**——per は TTM実績EPS基準で算出されており、eps欄（通期実績）とは期間基準が違う。この不統一そのものが台帳全体の課題（下記の所見）。Ω・門X・投下可はいずれも不変。"
+   "2026-07-30 **全件点検(v9.9.55)の要修正**「per ≠ px÷eps」を受けた点検で、eps が前年度の通期実績のまま陳腐化していると判明。eps 22.12 → 27.88（FY2026通期実績・SEC XBRL）。**per は据置**——per は TTM実績EPS基準で算出されており、eps欄（通期実績）とは期間基準が違う。この不統一そのものが台帳全体の課題（下記の所見）。Ω・門X・投下可はいずれも不変。",
+   "2026-08-03 p3 70 → 空欄。nde=-0.1 の導出値は 95。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ"
   ],
   "evidence": {
    "dom": "10-K FY2025(ph-20250630.htm) Item1 Competition: 『Parker operates in highly competitive markets and industries. We offer our products over numerous, varied markets through our divisions operating in 43 countries. Our global scope means that we have hundreds of competitors across our various markets and product offerings. ... Although each of our segments has numerous competitors, given our market and product breadth, no single competitor competes with the Company with respect to all the products we manufacture and sell.』／DI主要競合として13社を実名列挙(Bosch Rexroth AG, Danaher, Danfoss A/S, Donaldson, Emerson Climate Technologies, Emerson/ASCO, Festo, Freudenberg-NOK, Gates, IMI/Norgren, SMC, Swagelok, Trelleborg)、Aerospace主要競合として9社(Crane Co., Eaton, Honeywell, Moog, RTX, Safran, Senior plc, Triumph, Woodward)。Item1A『Our operations are subject to competition from a wide variety of global, regional and local competitors』。**自社シェア%の開示なし／上位N社合計シェアの開示なし**——原本に数値が存在しないため70/85/100は主張不能。一方で提出書類自身が「hundreds of competitors」「no single competitor competes with all products」と**構造的に分散**を述べ、名指し競合だけで9-13社ある以上、上位2社≥80%(複占)も上位3社≥80%(3社寡占)も成立せず、自社シェア40%以上も定義上ありえない → 市場構造=競争(<40%・寡占構造非該当)＝刻み50。Diversified Industrial・Aerospace Systemsの双方が同じ記述・同じ刻みに落ちるため全社ベースで50を確定(v9.9.41規約1・3)",
@@ -137,7 +138,8 @@
    "p1": "machine"
   },
   "nulls": {
-   "f5": "【2026-07-29】規約どおり空欄へ戻した。f5 は門が disrupt='settled' から同表で導出する（settled→85 / unsettled→65 / threat→45）。台帳にあった 85 は導出値と一致していたので、値を置いておく意味が無い——むしろ値が残っていると門はそれを『逸脱評価』として尊重し、disrupt を直しても f5 が追随しなくなる（陳腐化する）。審査プロトコル『disruptを埋めれば空欄可＝門が機械導出』。"
+   "f5": "【2026-07-29】規約どおり空欄へ戻した。f5 は門が disrupt='settled' から同表で導出する（settled→85 / unsettled→65 / threat→45）。台帳にあった 85 は導出値と一致していたので、値を置いておく意味が無い——むしろ値が残っていると門はそれを『逸脱評価』として尊重し、disrupt を直しても f5 が追随しなくなる（陳腐化する）。審査プロトコル『disruptを埋めれば空欄可＝門が機械導出』。",
+   "p3": "【2026-08-03】p3=70 は nde=-0.1 からの門の導出値 95 と食い違う『逸脱評価』だったが _meta.evidence.p3 に根拠が無かった。導出項目に根拠なき値を残すと門がそれを尊重し、**ndeを直しても p3 が追随しない＝陳腐化する**（night/fill_derived_judgment.py の設計思想）。空欄へ戻して門の導出に委ねる。逸脱させるなら原本根拠を付けて入れ直すこと"
   }
  },
  "mcap": 119.88,
