@@ -3,6 +3,12 @@
 """
 night/audit_basis.py — 台帳の roic が**どの基準で作られているか**を数える（2026-08-03新設）
 
+  二つの軸を数える:
+    basis.roic           through-cycle(5年中央値) / single-year / na
+    basis.roicConvention us-unified(v9.9.73) / jp-legacy(2026-07-28)
+  後者は v9.9.73（ユーザー明示指示「日本株の採点基準を米国株といっしょにして」）で
+  日本株を米国規約へ揃えたときに新設した。旧JP規約は NOPAT=営利×0.70固定・控除はのれんのみ・60%上限。
+
 なぜ要るか:
   v9.9.72 で roic/roicg を through-cycle（5年中央値）へ移行したが、
   (a) 採取器とパックが15%以上食い違う社（審査官が原本で直した＝系列も信用できない）
@@ -26,9 +32,12 @@ rows = []
 for p in sorted(glob.glob("out/*_gate_pack.json")):
     t = os.path.basename(p).replace("_gate_pack.json","")
     d = json.load(open(p, encoding="utf-8"))
-    b = ((d.get("_meta") or {}).get("basis") or {}).get("roic") or "**印なし**"
+    _b = (d.get("_meta") or {}).get("basis") or {}
+    b = _b.get("roic") or "**印なし**"
+    jp = t[:1].isdigit()
+    conv = _b.get("roicConvention") or ("jp-legacy(2026-07-28)" if jp else "us-unified(v9.9.73)")
     r = S.get(t, {})
-    rows.append((t, b, r.get("s"), bool(r.get("buy")), (r.get("s") or 0) >= 72))
+    rows.append((t, b, r.get("s"), bool(r.get("buy")), (r.get("s") or 0) >= 72, conv, jp))
 from collections import Counter
 def kind(b): return "through-cycle" if str(b).startswith("through-cycle") else b
 for lab, sel in (("全318社", lambda x: True),
@@ -39,6 +48,16 @@ for lab, sel in (("全318社", lambda x: True),
     tot = len(g)
     parts = " / ".join(f"{k} {v}社({v/tot*100:.0f}%)" for k, v in c.most_common())
     print(f"{lab:14s} n={tot:3d}  {parts}")
+print()
+for lab, sel in (("日本株37社", lambda x: x[6]), ("判定圏の日本株", lambda x: x[6] and x[4])):
+    g = [x for x in rows if sel(x)]
+    c = Counter(x[5] for x in g); tot = max(len(g), 1)
+    print(f"{lab:14s} n={len(g):3d}  " + " / ".join(f"{k} {v}社" for k, v in c.most_common()))
+old = [x[0] for x in rows if x[6] and x[5].startswith("jp-legacy")]
+if old:
+    print(f"  旧JP規約のまま {len(old)}社: {' '.join(sorted(old))}"
+          "（無形または実効税率が原本で確定できず、当てないのが正しい社）")
+print()
 mix = [x for x in rows if x[4] and kind(x[1]) == "single-year"]
 print(f"\n判定圏で単年のまま残る {len(mix)}社"
       + ("——ここが混在の実体。原本から5年系列を作れば解消する" if mix else ""))
