@@ -1,6 +1,6 @@
 {
  "nm": "APH",
- "roic": 28.0,
+ "roic": 39.8,
  "roicg": 15.6,
  "nde": 0.64,
  "z": 3.26,
@@ -46,7 +46,7 @@
  "fin": "acq",
  "p1": 80,
  "p2": 90,
- "p3": 70,
+ "p3": null,
  "p4": 90,
  "f1": 85,
  "f2": 75,
@@ -79,7 +79,9 @@
    "2026-07-29 acq5 9.46 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "2026-07-29 門X未評価を解消: px/per/shy を充填。門Xは `per>0` が唯一の必須条件で、これが無いと E[r] を一切算出しない（xPass=null＝三段関門の第二が未評価）。PERは市場株価 ÷ **原本EPS** で算出し、shy でも独立に検算した。",
    "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均40.2%・σ6.0pt・CV15.1%）。",
-   "2026-07-30 市場価格を実測で更新（Alpha Vantage GLOBAL_QUOTE 2026-07-31）: px 150.37 → 160.7。per 43.21→46.18　shy 0.5→0.47。**基準を保つ比率式**で換算＝perの期間基準(TTM)を維持。鍵ファイル(av_key.txt/fmp_key.txt)が無く market_fetch.py が動かないため、MCPのGLOBAL_QUOTE(1日25回)を投下可9社に絞って使った。"
+   "2026-07-30 市場価格を実測で更新（Alpha Vantage GLOBAL_QUOTE 2026-07-31）: px 150.37 → 160.7。per 43.21→46.18　shy 0.5→0.47。**基準を保つ比率式**で換算＝perの期間基準(TTM)を維持。鍵ファイル(av_key.txt/fmp_key.txt)が無く market_fetch.py が動かないため、MCPのGLOBAL_QUOTE(1日25回)を投下可9社に絞って使った。",
+   "2026-08-03 p3 70 → 空欄。nde=0.64 の導出値は 85 で、逸脱評価なのに根拠が無かった。門は空欄なら nde から機械導出するので、ndeを直せば自動で追随する。",
+   "**v9.9.72 roic を through-cycle 化**: roic 28.0→39.8 / roicg 15.6→15.6。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央42.2% / 最悪29.7%）。比は**パックが審査した年(2025)**の採取器値 roic29.7 / roicg16.09 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
   ],
   "evidence": {
    "dom": "【2026-07-29 v9.9.41再監査 → 50据置。ただし根拠を原本内の構造記述へ差し替え】FY2025 10-K(2025-12-31期)Item 1『Competition』: 『The Company encounters competition in all areas of its business. ... Primary competitors include Aptiv, Belden, Corning, Foxconn Interconnect Technology, Glenair, HUBER+SUHNER, ICT Luxshare, Jonhon, Molex, Rosenberger, Sensata, TE Connectivity and Yazaki, among others. In addition, the Company competes with a large number of smaller companies who compete in specific geographies, markets or products.』——主要競合13社を名指しした上でさらに『a large number of smaller companies』＝規約3の「同等品を多数が製造可能／市場は分散的」に該当する構造記述。Item 1A も『Competitors include large, diversified companies, some of which have comparable assets and financial resources, as well as medium- to small-sized companies』＝自社と同等規模の大手が複数存在。顧客側も『The Company's products are sold to thousands of original equipment manufacturers (or OEMs) in numerous countries』。→ 自社が40%以上を占める構造ではありえず、残余の刻み50を原本内根拠のみで確定(規約3)。【補完・原本外】第三者実数でも整合: Bishop & Associates 2024年世界コネクタメーカー売上ランキングで Amphenol $11.51B ÷ 世界コネクタ市場 $86.48B = 13.3%(第2位)、上位3社 TE $12.88B(14.9%)+APH 13.3%+Molex $4.87B(5.6%) = 33.8%(≥80%に遠く及ばず)、上位10社でも53.2%。この数字はSEC提出書類の外にあるため補完扱い(規約5の原本扱いには当たらない)。出典: 10-K FY2025 Item 1 Competition / Item 1A / Note 13, https://www.sec.gov/Archives/edgar/data/820313/000110465926013549/aph-20251231x10k.htm",
@@ -100,8 +102,8 @@
    "f3": "有機成長=シェア獲得の趨勢は明確に+(2025 comms有機+71%等)。R&D/売上の3年趨勢はhitsに無く1符号不明→片方+で75。単一顧客<10%で集中は悪化せず(-10非適用)",
    "f4": "『Interconnect and Sensor Systems segment (approximately 22% of net sales) increased 15%』=センサー隣接事業が売上5%超で成長→f4=80",
    "moatW": "【2026-07-29 再監査 → null(未評価)から100へ】FY2025 net sales(外部売上)実数: Communications Solutions $12,056.0百万(52%) / Harsh Environment Solutions $5,881.7百万(26%) / Interconnect and Sensor Systems $5,157.0百万(22%)、計$23,094.7百万。3本とも売上15%を大きく超える。独立性の吟味(規約: 共通の中核技術・共通プラットフォームなら1本と数える): (a)製品基盤が別——Communications=高速/RF/光コネクタ・アンテナ・同軸/光ケーブル、Harsh Environment=耐環境コネクタ・プリント基板(PCB)・ケーブルアセンブリ、Interconnect and Sensor Systems=バスバー/電力配電系とセンサ(force/gas/moisture/level/position/pressure/temperature/vibration)。センサは電気接続とは別技術。(b)共通プラットフォームが存在しない——10-K自身が『As the Company is not organized by product or group of products, it is impracticable to disclose net sales by product or group of products』(Note 13)、経営も『business unit general managers』に分権化。単一のEOS/単一設計基盤に相当するものが無い。(c)競合集合が別(耐環境=Glenair/TE、通信=Luxshare/Foxconn/Rosenberger、センサ=Sensata)。(d)片方が壊れても他方が残る——AIデータコム需要(2025年Communications+91%)が消えても防衛/商用航空の耐環境系は残る。顧客も分散: 『No single customer accounted for 10% or more of the Company's net sales during the years ended December 31, 2025, 2024 and 2023』『sold to thousands of original equipment manufacturers』。→ 独立した堀が3本以上・各≥売上15% = 100。出典: 10-K FY2025 Item 1(% of 2025 Net Sales 52/26/22) / MD&A Segment net sales / Note 13",
-   "roic": "roic = NOPAT 4,511.2百万$ ÷ (自己資本 13,413.1 + 有利子負債 15,502.0 − のれん 10,575.4 − 無形資産 2,241.4) = 4,511.2 ÷ IC 16,098.3 = 28.0%。NOPAT = 営業利益 5,868.6 ×(1−実効税率 23.1%[法人税等 1,295.4 ÷ 税引前利益 5,600.7])。有利子負債の内訳＝長期債務の1年内返済分 937.2 + 長期債務(1年内控除後) 14,564.8。旧163.4%は有利子負債 15,502.0百万$ が欠落しICが自己資本−のれん−無形＝596.3百万$へ縮退した結果。※FY2025末は2026年1月クローズの大型買収向け調達現金 11,130.6百万$ がB/Sに滞留してICを膨らませており28.0%は過小側。買収前の2023年42.6%・2024年35.5%が事業の実力に近い。出典: 10-K accession 0001104659-26-013549 連結貸借対照表・連結損益計算書",
-   "roicg": "roicg = NOPAT 4,511.2百万$ ÷ (自己資本 13,413.1 + 有利子負債 15,502.0) = 4,511.2 ÷ 28,915.1 = 15.6%。旧33.6%は有利子負債欠落で分母＝自己資本のみだったための過大表示。出典: 10-K accession 0001104659-26-013549 連結貸借対照表",
+   "roic": "roic = NOPAT 4,511.2百万$ ÷ (自己資本 13,413.1 + 有利子負債 15,502.0 − のれん 10,575.4 − 無形資産 2,241.4) = 4,511.2 ÷ IC 16,098.3 = 28.0%。NOPAT = 営業利益 5,868.6 ×(1−実効税率 23.1%[法人税等 1,295.4 ÷ 税引前利益 5,600.7])。有利子負債の内訳＝長期債務の1年内返済分 937.2 + 長期債務(1年内控除後) 14,564.8。旧163.4%は有利子負債 15,502.0百万$ が欠落しICが自己資本−のれん−無形＝596.3百万$へ縮退した結果。※FY2025末は2026年1月クローズの大型買収向け調達現金 11,130.6百万$ がB/Sに滞留してICを膨らませており28.0%は過小側。買収前の2023年42.6%・2024年35.5%が事業の実力に近い。出典: 10-K accession 0001104659-26-013549 連結貸借対照表・連結損益計算書｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央42.2% / 最悪29.7%・比は審査年2025）",
+   "roicg": "roicg = NOPAT 4,511.2百万$ ÷ (自己資本 13,413.1 + 有利子負債 15,502.0) = 4,511.2 ÷ 28,915.1 = 15.6%。旧33.6%は有利子負債欠落で分母＝自己資本のみだったための過大表示。出典: 10-K accession 0001104659-26-013549 連結貸借対照表｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央42.2% / 最悪29.7%・比は審査年2025）",
    "nde": "nde = (有利子負債 15,502.0 − 現金及び現金同等物 11,130.6) ÷ (営業利益 5,868.6 + 減価償却費 922.4) = 4,371.4 ÷ 6,791.0 = 0.64倍。⚠現金11,130.6百万$は2026年1月クローズの大型買収向け調達分を含むスナップショットで、買収実行後のプロフォーマ純負債/EBITDAは約2倍圏。原本B/Sの実額としては0.64が正。出典: 10-K accession 0001104659-26-013549 連結貸借対照表・連結CF計算書",
    "roict": "roict = down(据置)。負債込みで組み直したのれん除外ROIC 2021:42.1% / 2022:45.5% / 2023:42.6% / 2024:35.5% / 2025:28.0%。直近28.0 − 最古42.1 = −14.1pt(<−2pt)＝down。ただし2024-25の低下は買収調達現金と取得のれん・無形の積み上げによるもので、のれん込みROIC(15.1/17.3/16.0/15.3/15.6%)はほぼ不変。出典: 10-K accession 0001104659-26-013549 ほか各年10-K",
    "gm": "機械算出 2025年: 営業利益 5,868,600,000 ÷ 売上 23,094,700,000（粗利ではない）",
@@ -126,7 +128,8 @@
    "founder": "創業者支配の証拠がhitsに無し",
    "sbc_note": "sbc=0.14充填済(値は判明)。dilNetは分割断絶で解釈保留",
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(採取器の市場推定は禁止)",
-   "f5": "【2026-07-29】規約どおり空欄へ戻した。f5 は門が disrupt='settled' から同表で導出する（settled→85 / unsettled→65 / threat→45）。台帳にあった 85 は導出値と一致していたので、値を置いておく意味が無い——むしろ値が残っていると門はそれを『逸脱評価』として尊重し、disrupt を直しても f5 が追随しなくなる（陳腐化する）。審査プロトコル『disruptを埋めれば空欄可＝門が機械導出』。"
+   "f5": "【2026-07-29】規約どおり空欄へ戻した。f5 は門が disrupt='settled' から同表で導出する（settled→85 / unsettled→65 / threat→45）。台帳にあった 85 は導出値と一致していたので、値を置いておく意味が無い——むしろ値が残っていると門はそれを『逸脱評価』として尊重し、disrupt を直しても f5 が追随しなくなる（陳腐化する）。審査プロトコル『disruptを埋めれば空欄可＝門が機械導出』。",
+   "p3": "【2026-08-03】p3=70 は nde=0.64 からの門の導出値 85 と食い違う『逸脱評価』だったが_meta.evidence.p3 に根拠が無かった。導出項目に根拠なき値を残すと門がそれを尊重し、**ndeを直しても p3 が追随しない＝陳腐化する**（night/fill_derived_judgment.py の設計思想）。空欄へ戻して門の導出に委ねる。逸脱させるなら原本根拠を付けて入れ直すこと"
   },
   "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=3.26",
   "dom_rescale": "2026-07-28 dom刻み改定(市場構造織込み: 85=圧倒70-89%または複占の首位 / 70=寡占40-69%または複占の一角・3社寡占〔上位3社≥80%〕/ 50=競争<40%)に伴う再判定。本更新で触れたのは dom と _meta のみ。旧dom=50 → 新dom=50。",

@@ -48,15 +48,24 @@ def _alerted():
     if not os.path.isdir(d):
         return set()
     out = set()
+    # 【2026-08-03 是正】`_qcheck.txt`(米国) しか見ておらず、**日本株の `_qcheck_jp.txt` を読み落としていた**。
+    #   kessan_check.py がSEC経路で日本株を点検できないので kessan_check_jp.py を別に作ったのに、
+    #   その出力を監視リストの入力に戻す側が追随していなかった＝**採取は直したが利用側が取り残された**型。
+    #   実害の条件: Ω75未満の日本株が警報を出しても監視に残らない（今回の4071/6857はΩ75+なので偶然無害だった）。
+    #   規約「要審査の社を必ず残す」は国を問わないので、両方を読む。
     for f in os.listdir(d):
-        if not f.endswith("_qcheck.txt"):
+        if f.endswith("_qcheck.txt"):
+            key = f.split("_qcheck")[0]
+        elif f.endswith("_qcheck_jp.txt"):
+            key = f.split("_qcheck_jp")[0]
+        else:
             continue
         try:
             head = open(os.path.join(d, f), encoding="utf-8").read().split("=== 警報スニペット")[0]
         except Exception:
             continue
         if "要審査" in head:
-            out.add(f.split("_qcheck")[0])
+            out.add(key)
     return out
 
 

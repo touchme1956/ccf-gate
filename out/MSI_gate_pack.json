@@ -6,7 +6,7 @@
  "z": null,
  "gpa": 31.1,
  "accr": -3.5,
- "gm": 25.6,
+ "gm": 23.3,
  "gmt": "up",
  "roict": "up",
  "cagr": 9.6,
@@ -16,8 +16,8 @@
  "dilNet": -0.36,
  "acc": "usgaap",
  "eq": "pos",
- "acq5": null,
- "eps": 13.0,
+ "acq5": "yes",
+ "eps": 11.08,
  "expiry": "no",
  "moatdecay": "no",
  "erosion": "none",
@@ -76,7 +76,11 @@
    "2026-07-29 堀再監査(dom/moatWのみ・reaudit_moat_prompt.txt準拠): 旧dom=85→新dom=null(空欄)、旧moatW=85→新moatW=85(据置・原本実数で再検証)。dom: FY2025 10-K Item1 Competition節に自社シェア%も上位N社合計シェアも無く、あるのは競合社名の列挙(MCN15社/Video18社/CC15社)と『a global leader in the two-way radio category』の定性文のみ。第三者調査の引用0件。刻みを導けないため空欄化(v9.9.38『a leaderはシェアの証拠でない』)。moatW: Disaggregation of Revenue の実額で MCN 8,647百万$(74.0%)/Video 2,120(18.1%)/Command Center 915(7.8%)、計11,682を確認。独立堀はMCNとVideoの2本(競合名簿が完全非重複・設置基盤が別)、Command Centerは7.8%で15%閾値未達＝3本目にならず→85。最大顧客<10%(『no single customer accounted for more than 10% of the Company's net sales』)。dom/moatW/_meta 以外のフィールドは未変更。",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=14.6 / 5年窓=16.9。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均93.6%・σ24.9pt・CV26.6%）。",
-   "2026-08-02 市場価格を自動更新: px 440.31 → 435.75（-1.0%）。per 39.74→39.33　evebit 27.4→27.1　shy 2.47→2.5。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。"
+   "2026-08-02 市場価格を自動更新: px 440.31 → 435.75（-1.0%）。per 39.74→39.33　evebit 27.4→27.1　shy 2.47→2.5。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
+   "2026-08-03 acq5 None → 'yes'。空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**——門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-08-03 eps 13.0（通期実績）→ 11.08（TTM実績）。台帳内で eps の定義が TTM と通期に割れており、per は規約上 px÷TTM実績EPS なので px÷eps が恒等式にならず全件点検が警告を出していた。**eps は compute() で一切使われない**（採点に影響しない）ので Ω は動かない。唯一の役割である価格更新時のフォールバック px÷eps も、これで per と同じ基準になる。",
+   "2026-08-03 四半期点検で要審査 → 門2再審査。gm 25.6% → 23.3%（TTM実測）。四半期の前年同期差は−3.7pt、TTMでも−2.3pt＝4社の中で最も実体のある低下。影の計測: Ωの動きは最大−0.3pt・出口判定と投下可はいずれも不変（gmの実効ウェイトは5.5%＝priceConfirm経由のみ）",
+   "2026-08-03 四半期点検で要審査 → 門2再審査の結論: 【実数の是正】警報スニペットは無く、営業利益率のみ。四半期−3.7pt に対し TTM でも **−2.3pt**（25.6%→23.3%）＝今回の4社で最も実体のある低下。次四半期も継続するなら堀・価格決定力の論点へ"
   ],
   "evidence": {
    "dom": "【2026-07-29 再監査 → 空欄】FY2025 10-K(2026-02-12提出)の Item 1 Business「Competition」節を全文精査したが、自社シェア%も上位N社合計シェアも一切開示されていない。同節が示すのは競合社名の列挙のみ: MCN=Airbus, BK Technologies, DTC, Doodle Labs, Hytera, iCOM, JVCKenwood, L3Harris Technologies, Persistent Systems, RCA, Samsung, Sepura, Tait, TrellisWare, Zebra(15社) / Video=Axis, Axon, Bosch, Brivo, Dahua, Eagle Eye Networks, ECAM, Flock, Genetec, Hanwha, Hikvision, Honeywell, Johnson Controls, Milestone, NetWatch, Pro-Vigil, Rhombus, Verkada(18社) / Command Center=AlertMedia, AT&T, Axon, Carbyne, CentralSquare, Comtech, Everbridge, Hexagon, Intrado, Mark43, Crisis24, Oracle Public Safety, RapidSOS, Tyler Technologies, Versaterm(15社)。会社の自己記述は『Motorola Solutions is a global leader in mission-critical safety and security technologies』『We are a global leader in the two-way radio category, including Project 25 (P25), Terrestrial Trunked Radio (TETRA) and Digital Mobile Radio (DMR)』にとどまり、v9.9.38の定めどおり \"a leader/leading provider\" はシェアの証拠ではない。10-K本文の \"market share\" 出現は2箇所ともリスク要因の定型文（『could harm our reputation, market share, results of operations』）で数値なし。第三者調査(Gartner/IDC/Frost & Sullivan/Omdia/IHS Markit)の引用は本文中に0件（機械検索で全て0ヒット）＝提出書類内に原本扱いできる実数表も無い。自社シェア=開示なし／上位N社合計=開示なし ⇒ 刻みを導けないため空欄。(参考・シェアではない実数として開示されているのは技術別売上のみ: MCN 8,647百万$/74.0%、Video 2,120/18.1%、Command Center 915/7.8%、計11,682。これは自社売上構成であって市場シェアではない)。出典: https://www.sec.gov/Archives/edgar/data/68505/000006850526000010/msi-20251231.htm Item 1 Business - Competition / Item 1A Risk Factors",
@@ -100,24 +104,24 @@
    "f5": "disrupt=unsettled連動→65",
    "moatW": "【2026-07-29 再監査 → 85を維持（原本実数で再検証）】FY2025 10-K Note「Disaggregation of Revenue」(Major Products and Services)の実額(百万$): Mission Critical Networks(MCN) = P&SI 6,066 + S&S 2,581 = 8,647 → 74.0% / Video = P&SI 1,187 + S&S 933 = 2,120 → 18.1% / Command Center = P&SI 0 + S&S 915 = 915 → 7.8%。合計 11,682（= 報告セグメント P&SI 7,253 + S&S 4,429 と一致）。Item 1 の記述とも整合: 『The MCN technology within the Products and Systems Integration segment represented 84% of the net sales of the total segment in 2025』『The Video technology within the Products and Systems Integration segment represented 16%』『The MCN technology within the Software and Services segment represented 58%』『Video ... 21%』『Command Center ... 21%』。堀の本数: (1)MCN=P25/TETRA/DMRのミッションクリティカル無線網。規格・スペクトラム免許・自治体の設置基盤に依存。(2)Video=Avigilon系の映像セキュリティ／アクセス制御。Competition節の競合名簿がMCNと完全に非重複(Axis/Hikvision/Dahua/Genetec/Verkada/Milestone等)、技術・設置基盤・調達経路が別で、企業/重要インフラ顧客も含む＝MCNが壊れても生き残る独立の堀。18.1%で≥15%を満たす。(3)Command Center は 7.8% で<15%＝3本目に届かない(ソフト単体で、かつMCN指令網の上に載る比率が高い)。→ 独立した堀は2本(MCN 74.0% + Video 18.1%) ⇒ moatW=85。顧客集中は同10-K『For the years ended December 31, 2025, 2024 and 2023, no single customer accounted for more than 10% of the Company's net sales』で該当なし(最大顧客<10%)。地域: North America 8,362 / International 3,320(28.4%)。出典: https://www.sec.gov/Archives/edgar/data/68505/000006850526000010/msi-20251231.htm Item 1 Business / Note - Revenue from Contracts with Customers (Disaggregation of Revenue)",
    "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 2,410,000,000 + 有利子負債 8,413,000,000)＝のれん込み。roic(除外)との差が買収規律の指標",
-   "roict": "機械算出: のれん除外ROIC 5年系列 67.7% / 101.5% / 87.8% / 73.7% / 249.6%（最古→直近の差で判定）",
-   "gm": "機械算出 2025年: 営業利益 2,988,000,000 ÷ 売上 11,682,000,000（粗利ではない）",
+   "roict": "機械算出: のれん除外ROIC 5年系列 67.7% / 101.5% / 87.8% / 73.7% / 137.5%（最古→直近の差で判定）",
+   "gm": "【2026-08-03 四半期点検の再審査・機械算出】営業利益率 = 直近4四半期の営業利益 2.57十億$ ÷ 売上 11.02十億$ = **23.3%**（出典: SEC XBRL companyfacts の OperatingIncomeLoss / RevenueFromContractWithCustomerExcludingAssessedTax、四半期(80-100日)の実績を4期合計）。旧値 25.6% から -2.3pt。四半期の前年同期差は−3.7pt、TTMでも−2.3pt＝4社の中で最も実体のある低下",
    "gmt": "機械算出: 営業利益率 2023年 23.0% → 2025年 25.6%（±1ptでup/down）",
    "cagr": "機械算出: 売上 2020年 7,414,000,000 → 2025年 11,682,000,000＝5年の年率",
    "nde": "機械算出 2025年: (有利子負債 8,413,000,000 − 現金同等物 1,165,000,000) ÷ (営業利益 2,988,000,000 + 減価償却 425,000,000)",
    "accr": "機械算出 2025年: (純利益 2,154,000,000 − 営業CF 2,837,000,000) ÷ 総資産 19,389,000,000",
    "gpa": "機械算出 2025年: 売上総利益 6,035,000,000 ÷ 総資産 19,389,000,000",
    "dilNet": "機械算出: 株数 2022年 167,500,000 → 2025年 165,700,000＝3年の年率（自社株買い後の純希薄化）",
-   "eps": "機械算出 2025年: 純利益 2,154,000,000 ÷ 株数 165,700,000（TTMではなく通期実績）",
+   "eps": "【2026-08-03 機械算出】**TTM希薄化後EPS = 11.08 USD**（直近4四半期の EarningsPerShareDiluted: 2.53+3.04+3.33+2.18。出典: SEC XBRL companyfacts 10-Q/10-K）。px 435.75 ÷ 11.08 = 39.33 で **per 39.33 と一致**＝perがTTM基準であることの独立の裏取り。旧値 13.0 は**通期実績**EPSで期間基準が違い、px÷eps が per と 15% ずれて全件点検の警告になっていた",
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 795,402,877 ÷ Δ投下資本 5,442,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 6,130,000,000→11,572,000,000（+88.8%）",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 1,171,943,953 ÷ Δ投下資本 6,955,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 4,617,000,000→11,572,000,000（+150.6%）",
-   "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 435.75 USD（前回 440.31・-1.0%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。"
+   "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 435.75 USD（前回 440.31・-1.0%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
+   "acq5": "【2026-08-03 機械判定】のれん残高(十億$) 2020 2.22 → 2021 2.56 → 2022 3.31 → 2023 3.40 → 2024 3.53 → 2025 6.80。**新しさ =(直近 6.80 − 2020年 2.22)÷直近 = +67.4%**（今あるのれんのうち直近5年に増えた割合） → **大型買収あり=yes**（3分の1以上が直近5年＝現経営陣の買収）（出典: SEC XBRL companyfacts の Goodwill 系列）"
   },
   "nulls": {
    "roic": "負資本/薄資本で『のれん除きIC』ゼロ近傍→ROIC発散(ドラフト249.6)。非再現値として棄却。有意な資本効率はroicg=21.2(のれん込み、実測≒23.6%)",
    "fcf": "PaymentsToAcquirePropertyPlantAndEquipment等capexタグ検死器で不発見。推定回避のためnull(参考: OCF2,837百万$、資産軽ゆえFCFはOCFに近似)",
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
-   "acq5": "2020-25にのれん+4.6十億$の連続買収ありだが、買収購入額(現金対価)の原本が採取範囲外=null",
    "founder": "創業者経営に該当せず(専門経営陣)。hitsに根拠なし",
    "fin": "金融業ではない。業態フラグの定義不明のため空欄",
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(13項目null)",
@@ -155,7 +159,8 @@
    "eps": "machine",
    "roiic": "machine",
    "roiic5": "machine",
-   "p1": "machine"
+   "p1": "machine",
+   "acq5": "machine"
   }
  },
  "roiic": 14.6,

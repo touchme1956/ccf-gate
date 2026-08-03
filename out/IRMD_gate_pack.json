@@ -1,7 +1,7 @@
 {
  "nm": "IRMD",
- "roic": 22.7,
- "roicg": 21.9,
+ "roic": 20.8,
+ "roicg": 20.1,
  "nde": -1.87,
  "z": 14.24,
  "gpa": 59.1,
@@ -16,7 +16,7 @@
  "dilNet": 0.63,
  "acc": "usgaap",
  "eq": "pos",
- "acq5": null,
+ "acq5": "no",
  "eps": 1.76,
  "expiry": "no",
  "moatdecay": "no",
@@ -71,7 +71,10 @@
    "COVID検死: FY2020 営業利益8.6M→-0.8M(赤字転落)・売上38.5→31.7(-17.6%)。IPO2014以降で唯一の景気後退実績→p2深いDD=50",
    "通貨単一USD・IAS29ハイパーインフレ/SPAC/分割による株数断絶なし。depタグは生値表記(百万換算前)だが判定に不使用",
    "2026-07-29 堀再監査(dom/moatWのみ・他フィールド不変): 旧dom=85→新dom=null、旧moatW=70→新moatW=70。dom: 10-K原本はポンプ(売上37.7%)を『the only true MRI compatible IV infusion pumps available today』＝実質唯一供給と明記する一方、モニタ(同31.5%)は『the dominant competitor with a market-leading position... is Invivo Research(現Philips傘下)』と自社が首位でないことを明記。構造が正反対に割れ、どちらにもシェア%・上位N社合計%が無いため単一の刻みに帰着せず空欄化(事業別内訳はnulls.domに整理)。旧85は原本に根拠が無い。moatW: Revenue by type実数を再確認し1本(同一技術・同一顧客)・最大製品37.7%<70%で70を維持。併せて内訳の帰属を訂正: Disposables 21.0%はポンプ用/モニタ用の内訳が原本で非開示、地域は米国84%集中(『80か国分散』は販売網の広さ)、最大顧客<10%は開示義務からの推定であり原本の明文ではない。dom/moatW/_meta 以外は一切変更していない。",
-   "2026-07-30 市場価格を実測で更新（Alpha Vantage GLOBAL_QUOTE 2026-07-31）: px 96.01 → 90.86。per 56.48→53.45　evebit 45.0→42.6　shy 1.22→1.29。**基準を保つ比率式**で換算＝perの期間基準(TTM)を維持。鍵ファイル(av_key.txt/fmp_key.txt)が無く market_fetch.py が動かないため、MCPのGLOBAL_QUOTE(1日25回)を投下可9社に絞って使った。"
+   "2026-07-30 市場価格を実測で更新（Alpha Vantage GLOBAL_QUOTE 2026-07-31）: px 96.01 → 90.86。per 56.48→53.45　evebit 45.0→42.6　shy 1.22→1.29。**基準を保つ比率式**で換算＝perの期間基準(TTM)を維持。鍵ファイル(av_key.txt/fmp_key.txt)が無く market_fetch.py が動かないため、MCPのGLOBAL_QUOTE(1日25回)を投下可9社に絞って使った。",
+   "2026-08-03 acq5 None → None。空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**——門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-08-03 acq5 None → 'no'。空欄は門が SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**＝のれん込みROIC乖離 −6 が黙って効いていた。fix_acq5.py の残高『新しさ』では中間帯／タグ不在で判定不能だったため、買収で増えたのれん・取得対価・無形の絶対水準という**別の系列**で確定した。SEC XBRL companyfacts に **Goodwill タグが存在せず**、かつ AcquireBusiness／BusinessCombination 系のタグも**一つも無い**＝設立以来の企業結合ゼロ（無形は FiniteLivedIntangibleAssets のみ＝自社開発・特許）。のれんが無いので roic と roicg の乖離を作る対象がそもそも無い（実測 roic 22.7 / roicg 21.9 の差は無形分）→ no。※タグ不在を0と読むのは絶対のルール7に触れるため、買収系タグの全面不在という**独立の第二証拠**で裏を取った",
+   "**v9.9.72 roic を through-cycle 化**: roic 22.7→20.8 / roicg 21.9→20.1。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央20.8% / 最悪13.1%）。比は**パックが審査した年(2025)**の採取器値 roic22.72 / roicg21.9 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
   ],
   "evidence": {
    "dom": "【2026-07-29 堀再監査・dom=100(実質唯一供給)の当否を原本で厳密確認→全社では刻みが立たず空欄】SEC 10-K FY2025(irmd-20251231x10k.htm, 2026-03-06提出)の Competition 節を製品ライン別に読むと構造が正反対に割れる。(1)MRI対応IV輸液ポンプ＝実質唯一供給: 『We do not believe there is currently any direct competition for our MRI compatible IV infusion pump systems. As a result, we believe that our MRidium 3870 and 3860+ MRI compatible IV infusion pumps are the only true MRI compatible IV infusion pumps available today』(Item 1 冒頭も『We are the only known provider of a non-magnetic intravenous (IV) infusion pump system that is specifically designed to be safe for use during MRI procedures』)。ただしこれが当たるのは Revenue by Type の『MRI Compatible IV Infusion Pump Systems $31,636千』=総売上$83,814千の37.7%に限られる。しかも同節は『We also compete with manufacturers of \"shielded box\" solutions that are intended as \"workarounds\"... The providers of shielded boxes include B. Braun, Fresenius Kabi and MIPM Mammendorfer Institut für Physik und Medizin』『Many of our potential customers opt not to purchase our MRI compatible IV infusion pump systems and instead use makeshift workarounds... To this extent, we are in competition with conventional IV infusion pump manufacturers and distributors』『We believe that the market for MRI compatible IV infusion pump products is underpenetrated』と述べており、『MRI検査中の輸液』という用途市場で見れば代替手段が併存し、その中での自社シェア%は原本に無い。(2)MRI対応患者バイタルモニタ＝自社は首位ですらない: 『We believe the dominant competitor with a market-leading position in MRI compatible vital signs monitoring is Invivo Research, which was founded by Roger Susi, our founder, President, and Chief Executive Officer, and Chairman of the Board. Invivo Research is now owned by Koninklijke Philips NV』『Other large and well-known companies such as GE Healthcare Technologies and Schiller AG, also have competing products as do other smaller privately held companies』。これは $26,427千=31.5% を占める。→ 売上の37.7%は唯一供給(刻み100)、31.5%は自社が首位でない競争市場(刻み50側)で、単一の刻みに帰着しない。しかも原本にはどちらの市場についてもシェア%も上位N社合計%も一切無い(あるのは設置基盤の実数=13,098ポンプチャネル/3,397モニタのみ)。v9.9.38の但し書き『複数事業で構造が違い単一の刻みに帰着しない会社は空欄が正解』(実例MSFT)と同型 ⇒ dom=null(事業別内訳は _meta.nulls.dom)。出典: https://www.sec.gov/Archives/edgar/data/1325618/000110465926024691/irmd-20251231x10k.htm",
@@ -103,14 +106,17 @@
    "accr": "機械算出 2025年: (純利益 22,480,000 − 営業CF 24,947,000) ÷ 総資産 108,776,000",
    "gpa": "機械算出 2025年: 売上総利益 64,324,000 ÷ 総資産 108,776,000",
    "eps": "機械算出 2025年: 純利益 22,480,000 ÷ 株数 12,781,774（TTMではなく通期実績）",
-   "px_market": "Alpha Vantage GLOBAL_QUOTE 実測 2026-07-31 終値 90.86（前回 96.01・-5.4%）。per/perF/evebit は**基準を保つ比率式**で換算した（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと、eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。"
+   "px_market": "Alpha Vantage GLOBAL_QUOTE 実測 2026-07-31 終値 90.86（前回 96.01・-5.4%）。per/perF/evebit は**基準を保つ比率式**で換算した（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと、eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
+   "acq5": "【2026-08-03 原本】SEC XBRL companyfacts に **Goodwill タグが存在せず**、かつ AcquireBusiness／BusinessCombination 系のタグも**一つも無い**＝設立以来の企業結合ゼロ（無形は FiniteLivedIntangibleAssets のみ＝自社開発・特許）。のれんが無いので roic と roicg の乖離を作る対象がそもそも無い（実測 roic 22.7 / roicg 21.9 の差は無形分）→ no。※タグ不在を0と読むのは絶対のルール7に触れるため、買収系タグの全面不在という**独立の第二証拠**で裏を取った（出典: SEC XBRL companyfacts）",
+   "roic": "｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央20.8% / 最悪13.1%・比は審査年2025）",
+   "roict": "機械算出: のれん除外ROIC 5年系列 13.1% / 17.3% / 23.0% / 20.8% / 22.7%（最古→直近の差で判定）",
+   "nde": "機械算出 2025年: (有利子負債 0 − 現金同等物 51,159,000) ÷ (営業利益 26,147,000 + 減価償却 1,166,000)。**有利子負債は候補タグ・独立走査とも痕跡ゼロ＝実質無借金**（欠測を0と読んだのではない）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
    "market": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(市場データ推定は禁止)",
    "founder": "Roger Susiが創業者兼会長(hits根拠『Mr. Susi founded Invivo Research Inc. in 1979』・pioneer)だがfounderフラグの定義次第。ASR踏襲でユーザー判定に保留",
    "fin": "業態フラグの定義不明・金融業ではないため空欄",
-   "acq5": "のれんタグ不発見=無機的買収なし・organic成長を示唆。買収累計の正確値は原本要につきnull",
    "nrr": "非開示のため既定105を値欄に記載",
    "dom": "【2026-07-29 堀再監査・dom=100(実質唯一供給)の当否を厳密確認した結果、全社としては刻みが立たないため空欄】事業別の内訳(FY2025 10-K Note 2 Revenue by type、総額$83,814千): (1)MRI対応IV輸液ポンプ $31,636千=37.7% → 原本明文で実質唯一供給(『the only true MRI compatible IV infusion pumps available today』『We do not believe there is currently any direct competition』)＝この製品ライン単体なら刻み100。ただし同じ節が『shielded box』代替(B. Braun / Fresenius Kabi / MIPM)および従来型ポンプの室外設置ワークアラウンドとの競合と、『the market for MRI compatible IV infusion pump products is underpenetrated』を認めており、用途市場ベースの自社シェア%は原本に無い。 (2)MRI対応患者バイタルモニタ $26,427千=31.5% → 原本明文で自社は首位でない(『the dominant competitor with a market-leading position in MRI compatible vital signs monitoring is Invivo Research... now owned by Koninklijke Philips NV』、他に GE Healthcare Technologies、Schiller AG、非上場の中小)。上位N社合計%も自社%も開示なし＝刻み50側。 (3)強磁性体検知(FMD) $1,916千=2.3% → 新カテゴリ。競合構造の記載なし。 (4)ディスポーザブル $17,564千=21.0%／延長保守 $2,380千=2.8%／サービス他 $3,891千=4.6% → ポンプ側とモニタ側の内訳が原本で分離できず、唯一供給側/競争側のどちらにも按分できない。 → 売上の37.7%が刻み100、31.5%が刻み50側、28%超が帰属不能で、単一の『支配シェア』に帰着しない(v9.9.38の但し書き『複数事業で構造が違い単一の刻みに帰着しない会社は空欄が正解』に該当。MSFTと同型)。また原本にはどちらの市場についてもシェア%も上位N社合計%も一切無く、提出書類に引用された第三者調査も無い。旧値dom=85(圧倒70-89%)はどの原本記述からも導けない推定だった。※もしユーザーがdomを『主力製品ラインの市場構造』として定義するなら、ポンプ単体は原本明文の実質唯一供給＝100に当たる。全社ベースで一点に丸める現行の運用ではその主張が売上の4割弱にしか効かないため空欄とした——刻みの定義側の判断はユーザーに委ねる。"
   },
@@ -136,7 +142,10 @@
    "ni": "machine",
    "accr": "machine",
    "gpa": "machine",
-   "eps": "machine"
+   "eps": "machine",
+   "acq5": "machine",
+   "roict": "machine",
+   "nde": "machine"
   }
  },
  "mcap": 1.2341,

@@ -1,0 +1,358 @@
+<title>CCF Ω — 採点のしくみ</title>
+<style>
+:root{
+  --bg:#0b0e14; --bg2:#11151f; --panel:#151b28; --line:#26303f;
+  --ink:#efeadd; --soft:#c3bba6; --dim:#8792a3;
+  --gold:#c9a64a; --gold-hi:#ecd494; --gold-dim:rgba(201,166,74,.32);
+  --jade:#8cc091; --rust:#cf7a60; --steel:#9bb0d2;
+  --mincho:"Hiragino Mincho ProN","Yu Mincho",YuMincho,"Noto Serif JP","Songti SC",serif;
+  --gothic:"Hiragino Kaku Gothic ProN","Yu Gothic",YuGothic,"Noto Sans JP","Hiragino Sans",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,"DejaVu Sans Mono",monospace;
+}
+@media (prefers-color-scheme: light){
+  :root{
+    --bg:#f4f2ec; --bg2:#ebe8df; --panel:#fffdf8; --line:#d8d2c4;
+    --ink:#1e1b16; --soft:#4a443a; --dim:#7d7566;
+    --gold:#8a6d1c; --gold-hi:#6b5312; --gold-dim:rgba(138,109,28,.30);
+    --jade:#2f7a45; --rust:#a8452a; --steel:#3d5c8a;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#f4f2ec; --bg2:#ebe8df; --panel:#fffdf8; --line:#d8d2c4;
+  --ink:#1e1b16; --soft:#4a443a; --dim:#7d7566;
+  --gold:#8a6d1c; --gold-hi:#6b5312; --gold-dim:rgba(138,109,28,.30);
+  --jade:#2f7a45; --rust:#a8452a; --steel:#3d5c8a;
+}
+:root[data-theme="dark"]{
+  --bg:#0b0e14; --bg2:#11151f; --panel:#151b28; --line:#26303f;
+  --ink:#efeadd; --soft:#c3bba6; --dim:#8792a3;
+  --gold:#c9a64a; --gold-hi:#ecd494; --gold-dim:rgba(201,166,74,.32);
+  --jade:#8cc091; --rust:#cf7a60; --steel:#9bb0d2;
+}
+
+body{background:var(--bg);color:var(--ink);font-family:var(--gothic);
+  font-size:16px;line-height:1.9;letter-spacing:.015em;margin:0;
+  -webkit-font-smoothing:antialiased;}
+.wrap{max-width:860px;margin:0 auto;padding:0 22px 96px;}
+h1,h2,h3{font-family:var(--mincho);font-weight:600;text-wrap:balance;line-height:1.45;margin:0;}
+p{margin:0;}
+b,strong{color:var(--gold-hi);font-weight:600;}
+code{font-family:var(--mono);font-size:.9em;background:var(--bg2);
+  border:1px solid var(--line);border-radius:4px;padding:.1em .4em;color:var(--soft);}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+
+/* ── 冒頭 ── */
+header{padding:76px 0 54px;border-bottom:1px solid var(--line);
+  display:flex;flex-direction:column;gap:20px;}
+.eyebrow{font-size:11.5px;letter-spacing:.24em;color:var(--gold);text-transform:uppercase;}
+header h1{font-size:clamp(30px,5.6vw,46px);}
+header h1 .om{color:var(--gold-hi);}
+.lede{color:var(--soft);font-size:17px;max-width:60ch;}
+
+section{padding:54px 0;border-bottom:1px solid var(--line);
+  display:flex;flex-direction:column;gap:22px;}
+section:last-of-type{border-bottom:none;}
+.shead{display:flex;flex-direction:column;gap:8px;}
+.shead h2{font-size:clamp(21px,3.2vw,27px);}
+.snote{color:var(--dim);font-size:14px;max-width:62ch;}
+.body{color:var(--soft);max-width:64ch;display:flex;flex-direction:column;gap:16px;}
+
+/* ── 式 ── */
+.eq{background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--gold);
+  border-radius:3px;padding:18px 20px;font-family:var(--mono);font-size:14px;
+  line-height:2.1;color:var(--soft);overflow-x:auto;}
+.eq .t{color:var(--gold-hi);}
+.eq .c{color:var(--dim);}
+
+/* ── 重みバー ── */
+.bar{display:flex;height:52px;border:1px solid var(--line);border-radius:3px;overflow:hidden;}
+.bar > div{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;font-size:12px;border-right:1px solid var(--bg);min-width:0;padding:0 4px;}
+.bar > div:last-child{border-right:none;}
+.bar .w{font-family:var(--mono);font-size:11px;opacity:.75;}
+.bar .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+
+/* ── 分解の階層 ── */
+.tree{display:flex;flex-direction:column;gap:12px;}
+.node{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:16px 18px;
+  display:flex;flex-direction:column;gap:9px;}
+.node.sub{margin-left:20px;border-left:2px solid var(--gold-dim);}
+.node .nh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+.node .nn{font-family:var(--mincho);font-size:16px;color:var(--gold-hi);}
+.node .nw{font-family:var(--mono);font-size:12px;color:var(--gold);
+  border:1px solid var(--gold-dim);border-radius:2px;padding:0 6px;}
+.node .nd{color:var(--dim);font-size:13.5px;line-height:1.8;}
+.node .parts{color:var(--soft);font-size:13px;font-family:var(--mono);line-height:1.9;}
+
+/* ── 表 ── */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:3px;}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:440px;}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--line);}
+th{background:var(--bg2);color:var(--gold);font-weight:600;font-size:12px;
+  letter-spacing:.09em;white-space:nowrap;}
+tr:last-child td{border-bottom:none;}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;}
+td.nm{color:var(--ink);}
+
+/* ── 実例カード ── */
+.cases{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;}
+.case{background:var(--panel);border:1px solid var(--line);border-radius:3px;
+  padding:16px 18px;display:flex;flex-direction:column;gap:11px;}
+.case .ct{font-family:var(--mincho);font-size:17px;color:var(--gold-hi);
+  display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.case .cs{font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums;}
+.legs{display:flex;flex-direction:column;gap:5px;font-size:12.5px;}
+.leg{display:grid;grid-template-columns:56px 1fr 38px;align-items:center;gap:9px;}
+.leg .lk{color:var(--dim);font-size:11.5px;}
+.leg .lt{height:5px;background:var(--bg2);border-radius:3px;overflow:hidden;}
+.leg .lf{height:100%;background:var(--gold);border-radius:3px;}
+.leg .lf.weak{background:var(--rust);}
+.leg .lv{font-family:var(--mono);font-size:11.5px;text-align:right;color:var(--soft);}
+.leg .lv.miss{color:var(--dim);}
+.case .cr{border-top:1px solid var(--line);padding-top:10px;font-size:12.5px;color:var(--dim);line-height:1.75;}
+
+/* ── 関門 ── */
+.gates{display:flex;flex-direction:column;gap:10px;}
+.gate{display:grid;grid-template-columns:34px 1fr;gap:16px;align-items:start;
+  background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:16px 18px;}
+.gate .gi{font-family:var(--mincho);font-size:22px;color:var(--gold);text-align:center;
+  line-height:1.3;border-right:1px solid var(--line);padding-right:14px;}
+.gate .gt{font-family:var(--mincho);font-size:15.5px;color:var(--gold-hi);margin-bottom:5px;}
+.gate .gd{color:var(--soft);font-size:13.5px;line-height:1.85;}
+
+/* ── キル ── */
+.kills{display:flex;flex-wrap:wrap;gap:8px;}
+.kill{border:1px solid rgba(207,122,96,.4);background:rgba(207,122,96,.07);
+  color:var(--rust);border-radius:2px;padding:5px 11px;font-size:12.5px;}
+
+.pull{border-left:2px solid var(--gold);padding:4px 0 4px 20px;
+  font-family:var(--mincho);font-size:17.5px;color:var(--ink);line-height:1.85;max-width:56ch;}
+.foot{padding:38px 0 0;color:var(--dim);font-size:12.5px;line-height:1.9;}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">CCF Ω ／ 壊れない複利の門</div>
+  <h1><span class="om">Ω</span> は、どう採点されているか</h1>
+  <p class="lede">Ωは「この会社は20〜30年 壊れないか」の一点だけを測る。値段は見ない。
+  四本の柱を<b>幾何平均</b>で束ね、致命傷があれば頭を押さえる。
+  買うかどうかは、そのあとの四段関門が決める。</p>
+</header>
+
+<section>
+  <div class="shead">
+    <h2>一枚の式</h2>
+    <p class="snote">門（index.html）の <code>compute()</code> が実際に走らせている式。ここが全ての起点。</p>
+  </div>
+  <div class="eq">
+<span class="t">Ω</span> = 幾何平均( [ Q , sustain , F , moatIdx ] , [ .35 , .30 , .22 , .13 ] )
+<span class="c">　　→ キルがあれば min(Ω, max(30, 60 − 8×(キル数−1)))　＝ 1個で60・2個で52・3個で44</span>
+<span class="c">　　→ 地政学リスクで −1.5 / −3.5 / −6</span></div>
+  <div class="bar">
+    <div style="background:rgba(201,166,74,.22);flex:35"><span class="lbl">Q 質</span><span class="w">35%</span></div>
+    <div style="background:rgba(140,192,145,.20);flex:30"><span class="lbl">sustain 持続</span><span class="w">30%</span></div>
+    <div style="background:rgba(155,176,210,.20);flex:22"><span class="lbl">F 未来</span><span class="w">22%</span></div>
+    <div style="background:rgba(236,212,148,.26);flex:13"><span class="lbl">堀</span><span class="w">13%</span></div>
+  </div>
+  <div class="body">
+    <p>四本は測っているものが違う。<b>Q</b>は今の質、<b>sustain</b>はそれが持つか、<b>F</b>はこれから伸びるか、<b>堀</b>は守れるか。</p>
+    <p><b>v9.9.67（2026-08-03）で F の二重計上を解きました。</b>以前は F が Ω の直接項と Q の中の両方に居たため、
+    表記が22%なのに<b>実効30.75%</b>で四本のうち最大でした。堀の二経路は意図して設計されたものですが、
+    F の二経路はどこにも記述がなく、門の作法「同じ信号を二度数えない」に反していました。
+    いまは <b>四本が一対一に対応</b>します——Q＝今の質、sustain＝持つか、F＝これから、堀＝守れるか。</p>
+    <p>堀の見かけの重みは13%だが、<b>実効は約22%</b>。sustain の中の MOAT 柱にも入っているので、堀は<b>二経路</b>で効く——
+    直接 <span class="num">13%</span> ＋ pm 経由 <span class="num">0.70×0.475×0.30 ≒ 10%</span>。
+    堀を採点でさらに罰すると同じ信号の三重罰になるため、堀のふるいは減点ではなく「買う対象から外す」だけにしてある。</p>
+  </div>
+</section>
+
+<section>
+  <div class="shead">
+    <h2>四本を開くと</h2>
+    <p class="snote">それぞれがさらに幾何平均。どこまで開いても、掛け算であることは変わらない。</p>
+  </div>
+  <div class="tree">
+
+    <div class="node">
+      <div class="nh"><span class="nn">Q ── 質</span><span class="nw">35%</span></div>
+      <div class="parts">幾何平均( [ P 持続の質 , now 現在の収益力 ] , [ .5333 , .4667 ] )</div>
+      <div class="nd">キルがあれば <span class="num">min(Q, max(40, 74 − 6×(キル数−1)))</span>。<br>
+      <b>P</b> = 幾何平均( [ p1 ROIC安定性 <span class="num">.30</span> , p2 <span class="num">.25</span> ,
+      p3 財務頑健 <span class="num">.25</span> , p4 会計健全 <span class="num">.20</span> ) —— p3 は純負債/EBITDAから門が機械導出（&lt;0→95 / &lt;1→85 / &lt;2.5→70 / 以上→50）。<br>
+      <b>now</b> = 幾何平均( [ ROIC−WACCスプレッド <span class="num">.82</span> , FCF転換 <span class="num">.18</span> ] )</div>
+    </div>
+
+    <div class="node">
+      <div class="nh"><span class="nn">sustain ── 持続の二本柱</span><span class="nw">30%</span></div>
+      <div class="parts">幾何平均( [ pm MOAT柱 , pr ROIC柱 ] , [ .475 , .525 ] )　<span style="color:var(--dim)">※各柱 70点以上が要件</span></div>
+      <div class="nd">
+      <b>pm</b> = <span class="num">0.70×堀 + 0.30×営業利益率</span>　→ シェア趨勢（up +3 / down −10）、解約率100%未満 −6、堀の侵食（兆候 −6 / 進行 −12）<br>
+      <b>pr</b> = <span class="num">0.60×ROIC点 + 0.40×スプレッド点</span>　→ ROIC軌道（up +4 / down −12）</div>
+    </div>
+
+    <div class="node">
+      <div class="nh"><span class="nn">F ── 未来門・11要素</span><span class="nw">22%</span></div>
+      <div class="parts">f1複利 .14 ／ F7収益性 .13 ／ F6内部複利 .12 ／ F10資本配分 .12 ／ F11成長率 .09 ／ F9顧客 .09 ／ f3堀軌道 .09 ／ F8安全 .08 ／ f2滑走路 .06 ／ f4二次 .04 ／ f5耐陳腐 .04</div>
+      <div class="nd">複利エンジン（f1+F6＝26%）と 収益性・資本配分（F7+F10＝25%）が二大柱。
+      <b>成長は補助に降格</b>（F11+f2＝15%）——高成長は3〜5年で収束し、長期成長に偶然を超える持続性が無いという実証に合わせた。<br>
+      ROIIC&lt;WACC または 堀の減衰で <span class="num">F ≤ 64</span>。破壊リスクが破壊優勢なら −10、未決なら −3。</div>
+    </div>
+
+    <div class="node">
+      <div class="nh"><span class="nn">moatIdx ── 絶対MOAT指数</span><span class="nw">13%（実効22%）</span></div>
+      <div class="parts">幾何平均( dom 支配シェア .25 ／ irr 代替不能性 .25 ／ rep 複製障壁 .20 ／ moatW 堀の広さ .18 ／ dur 型の耐久性 .12 )</div>
+      <div class="nd"><b>深さ4本と広さ1本</b>の幾何平均。だから「深いが1本足」も「広いが浅い」も自動的に落ちる。
+      <b>各本を96で頭打ち</b>にしてから束ねる（指数自体も96上限）——満点インフレを止めるため、100点の本も96として効く。
+      空欄の本は<b>落として重みを残りへ再正規化</b>する——測っていない項が既定値に化けないため。
+      5本中4本を切ったら算出不能＝買付の土俵に載せない。</div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <div class="shead">
+    <h2>なぜ平均ではなく、掛け算なのか</h2>
+    <p class="snote">この設計が門の思想そのもの。相加平均なら、弱い一本は強い一本で埋められる。幾何平均は埋まらない。</p>
+  </div>
+  <div class="body" style="margin-bottom:-4px">
+    <p><b>ROIC は三経路で入る、単独で最大の入力</b>——now のスプレッド・pr（ROIC柱）・F の中の収益性と内部複利。
+    判定帯で ROIC を 10%→40% に振ると <b class="num">Ω が 31.8pt</b> 動きます（実効36.5%）。
+    思想どおり（「守りのスクリーンが20年検証で唯一頑健に効いた」）ですが、<b>一つの数字に36.5%が乗っている</b>ので、
+    ROIC欄の事故はそのまま Ω の事故になります。逆に <b>成長 cagr は 1.3%、純負債 nde は −0.4%</b>——
+    財務は「点」ではなく<b>キル</b>（負債/EBITDA&gt;4）で見る設計だからです。</p>
+  </div>
+  <div class="pull">壊れない会社を探しているのだから、良いところの多さではなく、<b>いちばん弱いところ</b>が答えになる。</div>
+  <div class="body">
+    <p>実例。NVIDIA の堀5本のうち<b>広さ（moatW）だけが 50</b>で、他は 80〜85 ある。
+    相加平均なら <span class="num">(85+80+85+50)/4 = 75.0</span>。だが幾何平均に重みを掛けると <b class="num">73.6</b> まで落ちる。
+    <b>1本の弱さが全体を引きずる</b>のが、この式の唯一の仕事。</p>
+    <p>Mastercard は5本とも <span class="num">70〜85</span> に収まり、最弱でも 70 ある。それでも指数は NVIDIA と同じ <span class="num">73.6</span>。
+    しかも相加平均はどちらも <span class="num">75.0</span> でぴたり一致する——<b>尖りは報われない</b>。
+    上げたければ最大値ではなく<b>最小値</b>を上げるしかない、というのがこの式の言っていること。</p>
+  </div>
+  <div class="cases">
+
+    <div class="case">
+      <div class="ct"><span>NVDA</span><span class="cs" style="color:var(--gold-hi)">73.6</span></div>
+      <div class="legs">
+        <div class="leg"><span class="lk">dom</span><span class="lt"></span><span class="lv miss">空欄</span></div>
+        <div class="leg"><span class="lk">irr</span><span class="lt"><span class="lf" style="width:85%"></span></span><span class="lv">85</span></div>
+        <div class="leg"><span class="lk">rep</span><span class="lt"><span class="lf" style="width:80%"></span></span><span class="lv">80</span></div>
+        <div class="leg"><span class="lk">moatW</span><span class="lt"><span class="lf weak" style="width:50%"></span></span><span class="lv" style="color:var(--rust)">50</span></div>
+        <div class="leg"><span class="lk">dur</span><span class="lt"><span class="lf" style="width:85%"></span></span><span class="lv">85</span></div>
+      </div>
+      <div class="cr">広さ1本の 50 が、80台の3本を <b>73.6</b> まで引き下げている。dom は原本にシェア開示が無く空欄＝重みは残り4本へ再正規化。</div>
+    </div>
+
+    <div class="case">
+      <div class="ct"><span>MA</span><span class="cs" style="color:var(--gold-hi)">73.6</span></div>
+      <div class="legs">
+        <div class="leg"><span class="lk">dom</span><span class="lt"><span class="lf" style="width:70%"></span></span><span class="lv">70</span></div>
+        <div class="leg"><span class="lk">irr</span><span class="lt"><span class="lf" style="width:70%"></span></span><span class="lv">70</span></div>
+        <div class="leg"><span class="lk">rep</span><span class="lt"><span class="lf" style="width:80%"></span></span><span class="lv">80</span></div>
+        <div class="leg"><span class="lk">moatW</span><span class="lt"><span class="lf" style="width:70%"></span></span><span class="lv">70</span></div>
+        <div class="leg"><span class="lk">dur</span><span class="lt"><span class="lf" style="width:85%"></span></span><span class="lv">85</span></div>
+      </div>
+      <div class="cr">5本すべて 70 以上で揃う。最大値は NVDA より低いのに、同じ <b>73.6</b> に着地する。</div>
+    </div>
+
+    <div class="case">
+      <div class="ct"><span>IRMD</span><span class="cs" style="color:var(--jade)">81.4</span></div>
+      <div class="legs">
+        <div class="leg"><span class="lk">dom</span><span class="lt"></span><span class="lv miss">空欄</span></div>
+        <div class="leg"><span class="lk">irr</span><span class="lt"><span class="lf" style="width:85%"></span></span><span class="lv">85</span></div>
+        <div class="leg"><span class="lk">rep</span><span class="lt"><span class="lf" style="width:80%"></span></span><span class="lv">80</span></div>
+        <div class="leg"><span class="lk">moatW</span><span class="lt"><span class="lf" style="width:70%"></span></span><span class="lv">70</span></div>
+        <div class="leg"><span class="lk">dur</span><span class="lt"><span class="lf" style="width:100%"></span></span><span class="lv" style="color:var(--jade)">100</span></div>
+      </div>
+      <div class="cr">最弱が 70 まで上がると <b>81.4</b>。上げるのは最大値ではなく<b>最小値</b>——ここが効く。
+      dur の 100 は <span class="num">96</span> で頭打ちにされて計算に入る。</div>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <div class="shead">
+    <h2>キル ── 程度問題ではないもの</h2>
+    <p class="snote">門の思想は「白黒にできる死因だけキル、程度問題はすべて坂」。だから坂は滑らかな曲線で、キルは崖。</p>
+  </div>
+  <div class="kills">
+    <span class="kill">純負債 / EBITDA &gt; 4</span>
+    <span class="kill">債務超過</span>
+    <span class="kill">Altman Z'' &lt; 1.1（倒産圏）</span>
+    <span class="kill">ROIC ≤ WACC（価値破壊）</span>
+    <span class="kill">ROIIC³ &lt; WACC（複利停止）</span>
+    <span class="kill">堀の明確な減衰</span>
+    <span class="kill">期限型独占</span>
+  </div>
+  <div class="body">
+    <p>キルは点を引かない。<b>頭を押さえる</b>——1個で Ω は 60 止まり、2個で 52、3個で 44。
+    「1個の綻び」と「複数の致命傷」を区別するため、一律キャップではなく段階にしてある。</p>
+    <p>入力が空でキルを判定できない項目は、キルせず<b>保留</b>と表示する。
+    測っていないことを「問題なし」とは読まない。</p>
+  </div>
+</section>
+
+<section>
+  <div class="shead">
+    <h2>Ω が決めるのは「持ってよいか」まで</h2>
+    <p class="snote">買うかどうかは、Ω を含む四段関門が同時に成立したときだけ。</p>
+  </div>
+  <div class="tw">
+    <table>
+      <tr><th>帯</th><th>呼び名</th><th>意味</th></tr>
+      <tr><td class="n">80 以上</td><td class="nm">最上位</td><td>ティアの上限帯</td></tr>
+      <tr><td class="n">75 以上</td><td class="nm">投下閾値</td><td>新規投下の資格（第一の関門）</td></tr>
+      <tr><td class="n">72 以上</td><td class="nm">堅実・監視枠</td><td>保有しない。75超えで昇格</td></tr>
+      <tr><td class="n">70 未満</td><td class="nm">—</td><td>二本柱のいずれかが不足していれば警告が立つ</td></tr>
+    </table>
+  </div>
+  <div class="gates">
+    <div class="gate"><div class="gi">一</div><div><div class="gt">Ω 75 以上</div>
+      <div class="gd">壊れないか。ここまでが上の式の話。</div></div></div>
+    <div class="gate"><div class="gi">二</div><div><div class="gt">門X の4条件が同時成立</div>
+      <div class="gd">期待リターン E[r] ≥ 12% ／ 投資リターン ≥ 10% ／ 倍率寄与 ≤ 30% ／ ストレス ≥ 7。
+      <b>値段を見るのはここだけ</b>。E[r] ＝ 純還元 ＋ 成長 − 倍率の重力。
+      <b>保有年数は20年</b>（v9.9.69で10年→20年）——純還元と成長は年率なので年数に依らず、
+      年数が効くのは「現PER→終着PERという一度きりの変化」を年率へ均す項だけ。
+      20年持つなら倍率の圧縮は20年で均されるので、年あたりの重力は約半分になる。</div></div></div>
+    <div class="gate"><div class="gi">三</div><div><div class="gt">絶対MOAT指数 70 以上</div>
+      <div class="gd">堀が浅い会社は、質と値段が揃っても買わない。
+      70 は規約の刻みで「5本すべてが3段目」の <span class="num">68.4</span> のすぐ上＝<b>全部が3段目ではない</b>という意味。</div></div></div>
+    <div class="gate"><div class="gi">四</div><div><div class="gt">全件点検の要修正が 0 件</div>
+      <div class="gd">台帳の値そのものが壊れている会社は買わない。取込で化けた欄・列挙値違反・内部矛盾・不可能値——
+      いずれも<b>原本で検算しても消えない種類</b>の破損。壊れた入力から出た Ω は、たまたま合っていても信頼できない。</div></div></div>
+  </div>
+  <div class="body">
+    <p>四段はどれも<b>買わない理由であって、売る理由ではない</b>。
+    保有中の銘柄は売却規律 S1／S2／S3 だけで裁き、<b>株価では売らない</b>。</p>
+  </div>
+</section>
+
+<section>
+  <div class="shead">
+    <h2>この式が守っている三つの約束</h2>
+  </div>
+  <div class="tree">
+    <div class="node"><div class="nh"><span class="nn">測っていないことを、測って良かったことにしない</span></div>
+      <div class="nd">空欄が既定値に化けると「未測定」が「測って合格」になる。堀の欠測は重みを再正規化して落とし、
+      導出項目（p3・f5）は根拠なき値を残さず空欄へ戻して門の導出に委ねる——値を残すと元を直しても追随せず陳腐化するため。</div></div>
+    <div class="node"><div class="nh"><span class="nn">同じ信号を二度罰さない</span></div>
+      <div class="nd">堀は既に Ω へ二経路で入っているので、堀のふるいでは減点せず「買う対象から外す」だけ。
+      TAM柱を廃したのも、同じ問いに F11 と f2 が既に答えていたから。</div></div>
+    <div class="node"><div class="nh"><span class="nn">基準を変えるときは、誰がどう動くかを先に実測する</span></div>
+      <div class="nd">影の計測（パックを退避 → 変更 → 全社採点 → 必ず戻す）で「投下可が何社増減するか」を出してから決める。
+      規約が正しくなって判断が動かないのが、較正の理想形。</div></div>
+  </div>
+</section>
+
+<div class="foot">
+  数値は 2026-08-03 時点の台帳317社の実測（<code>node night/score_all.js</code> ／ <code>night/explain_score.js</code>）。
+  式・重み・刻みは <code>index.html</code> の <code>compute()</code> が正本で、このページは説明のための写し。<br>
+  個人の投資基準の整理であり、投資助言ではない。
+</div>
+
+</div>

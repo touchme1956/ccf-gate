@@ -67,9 +67,21 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  #          23.4%・5年系列3.53倍振れでnull化）
  #     GDDY BS計上額 986.3百万$ に対し確定分 31.2百万$ だけを控除 → roic 292.2（是正後 IC=−624.2で負）
  #   総額タグを先頭に置き、無い場合のみ確定分へフォールバックする。
- #   ※フォールバック時は無期限無形(商標・ブランド等)が控除されず依然として過少になるため、
- #     ROIC算出側の「ICが自己資本の2割未満なら飛ばす」ガードで受ける。
- "intan": ["IntangibleAssetsNetExcludingGoodwill","FiniteLivedIntangibleAssetsNet"],
+ # 2026-08-03修正: **上の但し書き（無期限無形が控除されず過少になる）が現実に事故を起こした。**
+ #   series() は候補から**1本を選ぶ**ので、総額タグが古い年で止まっていると新しい年が丸ごと欠測になり、
+ #   さらに ROIC算出側が `.get(y,0)` で**欠測をゼロと読んで**いた（絶対のルール7(a)そのもの）。
+ #   実測 CELH(2025年): IntangibleAssetsNetExcludingGoodwill は**2024年で終了**しており、
+ #     2025年は FiniteLived 111,910千$ ＋ **IndefiniteLived 1,280,005千$（Alani Nuのブランド）** の
+ #     二本に分かれていた。IndefiniteLived は候補リストに**一つも入っていなかった**ため、
+ #     無形 1,391,915千$ が丸ごと 0 として扱われ IC 947,833千$（自己資本の80.2%）＝roic 12.9 と出た。
+ #     正しくは IC = 1,181,467 + 676,926 − 917,560 − 1,391,915 = **−451,082＝負** で算出不能。
+ #   → 無形は有利子負債と同じく「代替」ではなく**構成要素**なので intan_series() で合成する:
+ #     その年に総額タグがあれば総額、無ければ FiniteLived + IndefiniteLived を足す。
+ #     2022-2024のCELHで総額=両者の和が**円単位まで一致**する（12,254 / 12,139 / 12,213）ことを確認済み。
+ #   ※このリストは series() 用ではなく intan_series() の材料。並びは [総額, 確定分, 無期限分]。
+ "intan": ["IntangibleAssetsNetExcludingGoodwill",
+           "FiniteLivedIntangibleAssetsNet","IndefiniteLivedIntangibleAssetsExcludingGoodwill",
+           "IntangibleAssetsOtherThanGoodwill"],
  "cash":  ["CashAndCashEquivalentsAtCarryingValue","CashAndCashEquivalents"],
  "sti":   ["ShortTermInvestments","MarketableSecuritiesCurrent"],
  # 2026-07-29: 実測で取りこぼしが3件出たのでタグを拡張した（絶対のルール7「欠測をゼロと読むな」）。
@@ -79,12 +91,30 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  #         → 負債3,552百万$が丸ごと欠落。**タグ名は年次で移行する**ので同義タグを並べて拾う
  #   なお「タグが1つも当たらない年は算出不能として飛ばす」ガードは下のROIC算出側にある。
  #   タグを増やすのは、飛ばす前にまず拾えるようにするため（飛ばすのは最後の手段）。
+ # 2026-08-03: **IFRS(20-F)勢と、us-gaapの取りこぼしを追加した。** debt_evidence() が
+ #   「痕跡はあるが候補タグに無い」と検出した13社を1社ずつ原本タグで確認した結果。
+ #   実測 TSM(投下可): 有利子負債が ifrs-full の NoncurrentPortionOfNoncurrentBondsIssued /
+ #     LongtermBorrowings / CurrentBondsIssuedAndCurrentPortionOfNoncurrentBondsIssued /
+ #     CurrentPortionOfLongtermBorrowings に入っており、us-gaap名しか並んでいなかったため
+ #     **1つも当たらず debt=0 で IC が縮退**していた（NJR/HEI/APH型のADR版）。
+ #   ほかに EXPD=ShortTermBankLoansAndNotesPayable / MPWR・QLYS=CommercialPaperAtCarryingValue /
+ #     NBIX=ConvertibleDebtCurrent を追加。
+ #   ※**リース負債は入れない**——門式の有利子負債は借入・社債であり、IFRS16のリース負債を混ぜると
+ #     us-gaap勢と基準が割れる。
+ #   ※**枠・利率・額面は残高ではない**ので入れない（LineOfCreditFacility*Capacity は与信枠、
+ #     DebtInstrumentFaceAmount は注記の額面、*InterestRate* は利率）。下の DEBT_NOT で除外する。
  "debtL": ["LongTermDebtNoncurrent","LongTermDebt","LongTermDebtAndCapitalLeaseObligations",
            "DebtAndCapitalLeaseObligations","LongTermNotesPayable","ConvertibleLongTermNotesPayable",
-           "NoncurrentBorrowings","Borrowings"],
+           "NoncurrentBorrowings","Borrowings",
+           "NoncurrentPortionOfNoncurrentBondsIssued","LongtermBorrowings","BondsIssued",
+           "UnsecuredLongTermDebt","OtherLongTermDebtNoncurrent"],
  "debtS": ["LongTermDebtCurrent","DebtCurrent","LinesOfCreditCurrent","CommercialPaper",
            "ConvertibleNotesPayableCurrent","ConvertibleNotesPayable","NotesPayableCurrent",
-           "CurrentBorrowings","ShortTermBorrowings"],
+           "CurrentBorrowings","ShortTermBorrowings",
+           "CurrentBondsIssuedAndCurrentPortionOfNoncurrentBondsIssued",
+           "CurrentPortionOfLongtermBorrowings","ShorttermBorrowings",
+           "ShortTermBankLoansAndNotesPayable","CommercialPaperAtCarryingValue",
+           "ConvertibleDebtCurrent"],
  "sh":    ["CommonStockSharesOutstanding","EntityCommonStockSharesOutstanding","NumberOfSharesOutstanding"],
  "impair":["GoodwillImpairmentLoss","ImpairmentOfIntangibleAssetsIndefinitelivedExcludingGoodwill"],
 }
@@ -174,6 +204,56 @@ def _u(x):
         return str(x)
 
 
+# 2026-08-03: **InterestExpense を外した。** 痕跡として探すべきは債務の**残高**であって費用ではない。
+#   実測の偽陽性: MANH は `UnrecognizedTaxBenefitsIncomeTaxPenaltiesAndInterestExpense`（税の延滞利息）、
+#   TTD は `InterestExpenseNonoperating` 1,656千$（リース等）しか無いのに「債務あり」と判定され、
+#   **本当に無借金の会社のROICが永久に算出不能**になっていた。
+DEBT_EVI = re.compile(r"LongTermDebt|NotesPayable|Borrowing|LinesOfCredit|CommercialPaper"
+                      r"|ConvertibleNotes|DebtCurrent|DebtInstrument")
+# 投資有価証券側の「債券」は債務ではない。ここを除かないと現金の厚い会社が全部「債務あり」になる
+DEBT_NOT = re.compile(r"AvailableForSale|DebtSecurit|TradingSecurit|HeldToMaturity"
+                      r"|Maturities|Repayments|Proceeds|WeightedAverage|FairValue|Unamortized"
+                      # 2026-08-03: 以下は**債務残高ではない**ので痕跡に数えない。数えると
+                      #   本当に無借金の会社（実測 GRVY/MANH/TTD/VEEV）が永久に算出不能になる。
+                      #   InstrumentsHeld は**保有している債券＝投資**（実測 TSM の
+                      #   CorporateDebtInstrumentsHeld 190,568百万TWD は資産であって債務ではない）。
+                      r"|InstrumentsHeld|Capacity|FaceAmount|InterestRate|StatedPercentage"
+                      r"|Covenant|Guarantee|Undrawn|Available")
+
+
+def debt_evidence(facts, year, span=2):
+    """有利子負債の**痕跡**を候補タグの外まで独立に走査する（2026-08-03新設）。
+
+    なぜ要るか: 「候補タグに当たらない」だけでは
+      (a) 本当に無借金  と  (b) 我々が知らないタグで報告している  を区別できない。
+    (b)を(a)と誤れば NJR/HEI/APH の事故（debt=0でICが縮退しROICが発散）を再発させ、
+    (a)を(b)と誤れば IRMD のように**無借金の優良企業のROICが永久に算出不能**になる。
+    どちらも「確かめていない前提」なので、上限の不等式で決着させる——
+    対象年から span 年以内に債務らしき残高が**一つも無い**なら、債務ゼロは事実。
+
+    返り値: 生きた痕跡の "タグ名(年)=値" のリスト（空なら痕跡ゼロ＝無借金と断定してよい）
+    """
+    out = []
+    for ns in ("us-gaap", "ifrs-full"):
+        d = facts.get("facts", {}).get(ns, {})
+        for k in d:
+            if not DEBT_EVI.search(k) or DEBT_NOT.search(k):
+                continue
+            for arr in d[k]["units"].values():
+                for x in arr:
+                    try:
+                        y = int(x["end"][:4]); v = float(x["val"])
+                    except Exception:
+                        continue
+                    if abs(y - year) <= span and v > 0:
+                        out.append(f"{k}({y})={v:,.0f}")
+                        break
+                else:
+                    continue
+                break
+    return sorted(set(out))
+
+
 def series_sum(facts, keys, total_key=None):
     """**足し合わせるべきタグ**を合計する。series() は候補から1本を選ぶので有利子負債には使えない。
 
@@ -219,9 +299,95 @@ def build_numbers(facts):
     # 有利子負債だけは「代替」でなく「構成要素」なので合計する（上の series は上書き）
     S["debtS"], _usedS = series_sum(facts, TAGS["debtS"], total_key="DebtCurrent")
     S["debtL"], _usedL = series_sum(facts, TAGS["debtL"], total_key="LongTermDebt")
-    for k in ("debtS", "debtL"):
+    # 2026-08-03: 無形も同じく「構成要素」だった（TAGS["intan"]の頭注を見よ）。総額タグがその年に
+    #   あれば総額、無ければ 確定分＋無期限分 を足す＝series_sum の total_key がそのまま使える。
+    #   実測 CELH: 総額タグが2024年で終わり、2025年は二本に割れていたので series() では欠測になった。
+    S["intan"], _usedI = series_sum(facts, TAGS["intan"],
+                                    total_key="IntangibleAssetsNetExcludingGoodwill")
+    # IFRS勢は のれん を単独で出さず `IntangibleAssetsAndGoodwill`(のれん**込み**の合算)だけを
+    #   出す社がある（実測TSM: Goodwillタグ自体が存在しない）。sum候補に入れると `Goodwill` や
+    #   `IntangibleAssetsOtherThanGoodwill` を併せ持つ社で**二重に引く**ので、
+    #   **他の無形も のれん も取れない年に限って**合算値を無形として使う（gw=0 なので過不足なし）。
+    _iag = series(facts, ["IntangibleAssetsAndGoodwill"])[0]
+    if _iag:
+        for _y, _v in _iag.items():
+            if _y not in S["intan"] and _y not in S["gw"]:
+                S["intan"][_y] = _v
+    for k in ("debtS", "debtL", "intan"):
         diag[k] = f"{len(S[k])}年分(合計)" if S[k] else "タグ不発見"
     ev, note = {}, []
+    # 2026-08-03: **営業利益タグが途中で消える会社がある。** 実測 KLAC(投下可の社):
+    #   `OperatingIncomeLoss` が **2015年で終了**し、TAGS["op"]の候補2つとも最新年に届かない。
+    #   series() は「最新年から1年以内に届く候補」の中から選ぶが、**どの候補も届かない場合は
+    #   一番マシな古い系列を返す**ので、KLACの営業利益率・NOPATは**11年前(FY2015)**で計算されていた
+    #   ——BKNG事故（ルール7「取れた値＝最新の値」）と同型。
+    #   → 直接タグが最新年に届かないときだけ **売上−原価−R&D−販管費** で導出する。
+    #   **較正**: KLAC FY2025 の導出値は営業利益率 **41.2%** で、原本で審査済みのパックの
+    #   手入力値 **41.3** と一致した。償却(220.4百万$)や減損(239.1百万$)を追加で引くと 39.4/39.3% と
+    #   **逆に一致が壊れる**＝これらは既に原価/販管費の中にある。だから4行ちょうどで止める。
+    #   導出したことは note と evidence に必ず残す（審査官が原本で検算できるように）。
+    _opDeriv = None
+    _refY = [y for k in ("rev", "ni", "assets", "eq") for y in S[k]]
+    if _refY:
+        _newest = max(_refY)
+        if not S["op"] or max(S["op"]) < _newest - 1:
+            _cost, _ = series_sum(facts, ["CostOfRevenue", "CostOfGoodsAndServicesSold"],
+                                  total_key="CostOfRevenue")
+            _rd = series(facts, ["ResearchAndDevelopmentExpense"])[0]
+            # 販管費も**構成要素**（無形・有利子負債と同じ型を、同じセッションで3度目に踏んだ）。
+            #   ADSK/ABNB/MELI/PCTY は SG&A を SellingAndMarketing + GeneralAndAdministrative に
+            #   **分けて**報告する。1本だけ選ぶと片方が丸ごと落ち、営業利益が**過大**に出る。
+            #   実測(初版): ADSK 導出4,913百万$ に対し報告1,578百万$＝売上比 +46.3pt の過大。
+            _sga, _ = series_sum(facts,
+                                 ["SellingGeneralAndAdministrativeExpense",
+                                  "SellingAndMarketingExpense", "GeneralAndAdministrativeExpense",
+                                  "MarketingExpense", "SellingExpense",
+                                  "MarketingAndAdvertisingExpense"],
+                                 total_key="SellingGeneralAndAdministrativeExpense")
+            # 自己検証には**売上の全候補タグの和集合**を使う。導出が要る会社は直接タグが古い年で
+            #   終わっており、売上タグもASC606で同じ頃に改称しているため、S["rev"](主系列)だけだと
+            #   **重なる年が1年も無く検証が空振りする**（実測KLAC: op 2009-2015 / 主系列rev 2017-2026）。
+            #   検証は「その会社自身の報告値と合うか」を見るのが目的なので、古い売上タグも使ってよい。
+            _revAll = {}
+            for _k in TAGS["rev"]:
+                for _y, _v in (series(facts, [_k])[0] or {}).items():
+                    _revAll.setdefault(_y, _v)
+            _revAll.update(S["rev"])
+            _der = {}
+            for y in _revAll:
+                if y in _cost and (y in _rd or y in _sga):
+                    _der[y] = _revAll[y] - _cost[y] - _rd.get(y, 0) - _sga.get(y, 0)
+            # **自己検証**: その会社自身が報告している年で導出値が一致するときだけ採用する。
+            #   series() の「重なる年で値が一致するタグだけを接ぐ」と同じ作法を導出にも掛ける。
+            #   一致しない＝その会社の費用構造をこの式が捉えていない証拠なので、
+            #   **黙って使わず算出不能のままにする**（誤値より空欄）。
+            _ov = sorted(set(_der) & set(S["op"]))[-3:]
+            _fit = [abs(_der[y] - S["op"][y]) / max(abs(_revAll.get(y, 0)), 1) for y in _ov]
+            _okfit = bool(_ov) and max(_fit) <= 0.01          # 売上比1pt以内
+            if _der and max(_der) >= _newest - 1 and _okfit:
+                _old = f"{max(S['op'])}年で終了" if S["op"] else "タグ不発見"
+                S["op"], _opDeriv = _der, sorted(_der)
+                diag["op"] = f"{len(_der)}年分(導出)"
+                note.append(
+                    f"営業利益を**導出**した（直接タグは{_old}）: 売上 − 原価 − 研究開発費 − 販管費。"
+                    f"直接タグが最新年に届かないため（実測KLAC: OperatingIncomeLossが2015年で終了し、"
+                    f"営業利益率とNOPATが11年前の決算で計算されていた）。"
+                    f"**償却・減損は引いていない**——KLACでの較正では追加で引くと原本の値と一致が壊れる"
+                    f"（既に原価/販管費の中にある）。"
+                    f"**自己検証済**: 同社が直接タグを報告している {len(_ov)}年（{_ov}）で"
+                    f"導出値が売上比 最大{max(_fit)*100:.2f}pt の差で一致した。営業利益率が業態と乖離する場合は原本で検算せよ")
+            elif _der and max(_der) >= _newest - 1:
+                # 2026-08-03: **検証できなかった場合と、検証して落ちた場合を書き分ける。**
+                #   直接タグを一度も報告しない会社（実測 LLY/MRK/ADP/ZTS 等。損益計算書に
+                #   営業利益の小計を置かない様式）では重なる年が無く自己検証が**走らない**のに、
+                #   「差 最大0.0pt で落ちた」と出て誤解を招いていた。
+                _why = (f"同社が報告している年との差が売上比 最大{max(_fit)*100:.1f}pt" if _fit
+                        else "同社は営業利益の直接タグを一度も報告しておらず**照合できる年が無い**")
+                note.append(
+                    f"営業利益の直接タグが最新年に届かず（{max(S['op']) if S['op'] else '不発見'}年で終了）、"
+                    f"導出（売上−原価−R&D−販管費）も**採用しなかった**（{_why}）。"
+                    f"式が費用構造を捉えている確証が無いので**算出不能のままにした**（誤値より空欄）。"
+                    f"営業利益率・NOPAT・ROICは原本の損益計算書から手入力せよ")
     ev["_debtUsed"] = {"debtS": _usedS, "debtL": _usedL}
     # us-gaap の LongTermDebt は「1年内返済分を含む総額」で報告する会社と「非流動分のみ」の
     # 会社が混在する。前者に LongTermDebtCurrent を足すと**二重計上**になる。機械では区別できない
@@ -320,9 +486,17 @@ def build_numbers(facts):
             ebitda = 0
         else:
             ebitda = S["op"][y0] + (S["dep"].get(y0,0) or 0)
-        if not has_debt:
+        # 2026-08-03: 「タグ不在と無借金は機械で区別できない」——**区別できるようになった**ので
+        #   debt_evidence() で裁く（ROIC側と同じ判定を使う＝同じ台帳に二つの基準を作らない）。
+        #   痕跡ゼロなら債務ゼロは事実で、ネットキャッシュの会社の nde が空欄のままになるのを止める。
+        if not has_debt and not (S["debtL"] or S["debtS"]) and not debt_evidence(facts, y0) and ebitda:
+            ev["nde"] = round((0-cash)/ebitda, 2)
+            evd["nde"] = (f"機械算出 {y0}年: (有利子負債 0 − 現金同等物 {_u(cash)})"
+                          f" ÷ (営業利益 {_u(S['op'].get(y0,0) or 0)} + 減価償却 {_u(S['dep'].get(y0,0) or 0)})。"
+                          f"**有利子負債は候補タグ・独立走査とも痕跡ゼロ＝実質無借金**（欠測を0と読んだのではない）")
+        elif not has_debt:
             note.append(f"nde算出不能: {y0}年に有利子負債タグが無い。無借金なら nde=−{_u(cash)}/EBITDA "
-                        f"だが、タグ不在と無借金は機械で区別できない。原本のBSで確認して手入力せよ")
+                        f"だが、他年に報告があるか未知のタグに痕跡があるため断定できない。原本のBSで確認して手入力せよ")
         elif ebitda:
             debt = (S["debtL"].get(y0,0) or 0)+(S["debtS"].get(y0,0) or 0)
             ev["nde"] = round((debt-cash)/ebitda, 2)
@@ -341,11 +515,62 @@ def build_numbers(facts):
             #   負債3.6十億$が丸ごと欠落) / HEI 93.0 / APH 163.4。日本株で廃止した旧・門式
             #   (投下資本−過剰現金)と同型のアーティファクトで、原因は「欠測をゼロと読む」こと。
             #   **タグが無い年は算出不能として飛ばす**（誤値より空欄）。
+            # 2026-08-03: **このガードは無借金の会社で偽陽性を出していた。**
+            #   実測 IRMD(投下可の社): 有利子負債タグが一つも当たらないため**5年すべてが算出不能**になり
+            #   through-cycle ROIC が1年も作れなかった。だがIRMDは本当に無借金で、負債系タグは
+            #   2013年の関係者向け手形 $6,333 とその2014年の返済しか存在しない。
+            #   **「タグが無い＝債務あり(採れず)」も「タグが無い＝債務ゼロ」も、確かめていない前提。**
+            #   → 今日 無形で入れたのと同じ**不等式の作法**で裁く: 候補タグの外まで独立に走査し、
+            #     生きた（対象年から2年以内の）債務残高の痕跡が**一つも無い**ときだけ debt=0 を事実とする。
+            #     痕跡があるのに候補タグで拾えていないなら、それは**未知のタグ**なので従来どおり飛ばし、
+            #     どのタグかを警告に出す（NJR/HEI/APHの事故を再発させないため。あの3社は債務が実在した）。
             has_debt = (y in S["debtL"]) or (y in S["debtS"])
             if not has_debt:
-                roic_skip.append(f"{y}:有利子負債タグ不在でIC算出不能")
-                continue
+                if S["debtL"] or S["debtS"]:
+                    # 2026-08-03: 他年に報告があっても、**その額が自己資本比で無視できるなら**
+                    #   欠測年を0と読んでよい（上限の不等式）。実測 EXPD は短期銀行借入を
+                    #   有る年だけ報告し最大でも自己資本の約1.5%＝ROICを動かせない。
+                    #   従来はこの型で5年系列が1年も作れなかった。
+                    _mx = max([(S["debtL"].get(_y,0) or 0)+(S["debtS"].get(_y,0) or 0)
+                               for _y in set(S["debtL"])|set(S["debtS"])] or [0])
+                    if _mx >= 0.02*max(S["eq"][y], 1):
+                        roic_skip.append(f"{y}:有利子負債タグ不在でIC算出不能（他年は報告あり＝欠測）")
+                        continue
+                    _m2 = (f"有利子負債タグが一部の年に無いが、報告のある年の最大でも自己資本の"
+                           f"{_mx/max(S['eq'][y],1)*100:.1f}%＝ROICを動かせない水準なので"
+                           f"**欠測年は0として算出**した（上限の不等式）")
+                    if _m2 not in note: note.append(_m2)
+                else:
+                    _eviD = debt_evidence(facts, y)
+                    if _eviD:
+                        roic_skip.append(f"{y}:有利子負債タグ不在でIC算出不能"
+                                         f"（未知のタグに痕跡あり: {', '.join(_eviD[:3])}）")
+                        note.append(f"有利子負債の候補タグに当たらないが、{y}年前後に債務の痕跡がある: "
+                                    f"{', '.join(_eviD[:5])}。TAGSの拡張が要る（絶対のルール7）")
+                        continue
+                    # 痕跡ゼロ＝実質無借金。debt=0 は欠測ではなく事実（注記は年ごとに1回だけ）
+                    _m = ("有利子負債タグが全年で不発見、かつ独立走査でも債務の痕跡ゼロ＝"
+                          "**実質無借金として debt=0 で算出**した（欠測をゼロと読んだのではない）")
+                    if _m not in note: note.append(_m)
             debt = (S["debtL"].get(y,0) or 0)+(S["debtS"].get(y,0) or 0)
+            # 2026-08-03修正: 無形も有利子負債と同じ「欠測をゼロと読む」事故を起こしていた。
+            #   `S["intan"].get(y,0)` は「無形が無い会社」と「その年だけタグが出ていない会社」を
+            #   区別できない。**他の年に無形を報告している会社**でその年だけ欠測なら、それは
+            #   「無形ゼロ」ではなく「採れなかった」＝算出不能として飛ばす（誤値より空欄）。
+            #   一度も無形を報告していない会社だけ 0 と読んでよい（不等式として上限が0だから）。
+            if S["intan"] and y not in S["intan"]:
+                # 2026-08-03: 負債と同じ**上限の不等式**を無形にも当てる。他年に報告があっても、
+                #   その最大額が自己資本比で無視できるなら欠測年を0と読んでよい。
+                #   実測 MANH（無形は2011年に0のみ）/ EXPD（2009-2011に3-5百万$＝自己資本の0.2%）は
+                #   この検問だけで5年系列が1年も作れなかった。負債側を直したら無形側が同じ形で残っていた。
+                _mxI = max(S["intan"].values() or [0])
+                if _mxI >= 0.02*max(S["eq"][y], 1):
+                    roic_skip.append(f"{y}:無形タグ不在でIC算出不能（他年は報告あり＝欠測）")
+                    continue
+                _m3 = (f"無形タグが一部の年に無いが、報告のある年の最大でも自己資本の"
+                       f"{_mxI/max(S['eq'][y],1)*100:.1f}%＝ROICを動かせない水準なので"
+                       f"**欠測年は0として算出**した（上限の不等式）")
+                if _m3 not in note: note.append(_m3)
             gw, intan = (S["gw"].get(y,0) or 0), (S["intan"].get(y,0) or 0)
             ic = S["eq"][y]+debt-gw-intan
             # 分母が自己資本の2割を切ったら、のれん・無形の控除でICが縮退している＝発散の前兆。
@@ -353,7 +578,7 @@ def build_numbers(facts):
             if ic <= 0 or ic < 0.20*max(S["eq"][y], 1):
                 roic_skip.append(f"{y}:IC={ic:.0f}が自己資本{S['eq'][y]:.0f}の2割未満＝のれん控除で分母縮退")
                 continue
-            roics.append(nopat/ic*100)
+            roics.append((nopat/ic*100, nopat/max(S["eq"][y]+debt, 1)*100, y))
             # 実額を残す。**IC/自己資本が本当の判別子**（2026-07-29の19社検算で確立——
             # 「roic>60だから怪しい」はほぼ外れ、MAは74.9→131.0の上方修正だった）。
             # 比率だけでは後から検算できないので、NOPAT・自己資本・負債・のれん・無形の各実額を書く。
@@ -366,9 +591,24 @@ def build_numbers(facts):
                            f"{' + '.join((ev['_debtUsed']['debtL'].get(y) or []) + (ev['_debtUsed']['debtS'].get(y) or [])) or '—'}")
     if roic_skip:
         note.append("roic系列の一部を算出不能として除外: " + " / ".join(roic_skip))
-    if roics:
-        ev["roicExW5"]  = round(min(roics),1)
-        ev["roicExMed5"]= round(median(roics),1)
+    # 2026-08-03: **roicg の5年系列も同じ年・同じNOPATから対で作る。** roicだけ through-cycle 化すると
+    #   roic<roicg（NOPAT>0では数学的に不可能）ができる＝「基準の違う二つを割る」型。
+    _rSeq = [x[0] for x in roics]
+    _gSeq = [x[1] for x in roics]
+    # 2026-08-03: **年つきの系列も出す。** through-cycle をパックへ当てるとき、比は
+    #   「パックが審査した年」で取らないと意味を持たない——採取器とパックが別の会計年度を
+    #   見ている社があるため（実測 MSFT: 採取器FY2026 / パックFY2025）。
+    #   検査器側で系列を組み直すと採取器と違う判定になるので（v9.9.65の教訓）ここで出す。
+    if roics: ev["_tcSeries"] = {str(x[2]): [round(x[0],2), round(x[1],2)] for x in roics}
+    # 2026-08-03: **3年未満の「中央値」は through-cycle ではない。** 従来は `if roics:` で
+    #   1-2年でも med5/w5 を出していたため、在庫を数えると220社に見えたが実体は179社だった
+    #   （1点の中央値はその点そのもの）。3年以上のときだけ出す。
+    if len(roics) >= 3:
+        ev["roicExW5"]  = round(min(_rSeq),1)
+        ev["roicExMed5"]= round(median(_rSeq),1)
+        ev["roicgW5"]   = round(min(_gSeq),1)
+        ev["roicgMed5"] = round(median(_gSeq),1)
+        ev["_tcYears"]  = len(_rSeq)
     # 純希薄化率(株数の年率変化)
     sh,_ = series(facts, TAGS["sh"], ("shares",))
     if len(sh)>=3:
@@ -436,8 +676,30 @@ def build_numbers(facts):
     # のれん除外ROIC 直近年 roic (門のroic欄=単年・除外)
     # 5年系列そのものは古い年を含んでよい（それが系列の意味）。検問するのは**直近値の年**だけ——
     # 古い年の値を"直近ROIC"として台帳に載せないため。
+    # v9.9.72（2026-08-03・ユーザー明示指示「今の12社に忖度するのではなく本当に必要なものを」）:
+    #   **roic / roicg は単年でなく through-cycle＝5年の中央値**。
+    #   【なぜ重みでなくここを直したか】audit_weights --q75 の実測で 単年roic の実効ウェイトは **38.2%**
+    #   ＝単独最大なのに、時間を通して見る欄は合計12.7%、`sustain`(.30・名前は「持つか」)の中身も
+    #   堀とROICの**現在値だけ**だった。ところが重みを上げる案は7案すべて**投下可が増えるだけ**
+    #   （night/shadow_time_axis.py）——判定帯の変動係数が p4 7.9% / f1 6.4% / p1 13.5% / p2 19.1% に対し
+    #   **roic 64.0%**＝時間軸の欄はほぼ定数で、定数の重みを上げても順位は動かない
+    #   （v9.9.43のgmPt・v9.9.45のTAM柱と同じ「情報を持たない定数」の病）。
+    #   **roicが支配的なのは重みが大きいからではなく、判定帯で唯一ばらついている数字だから。**
+    #   【なぜ中央値か】roic欄が答えるべきは「この事業が通常いくら稼ぐか」で、中央値がその推定量。
+    #   周期性は **p1（同じ5年系列の変動係数）が既に別枠で測っている**ので、水準へ折り込むと二重計上。
+    #   5年最悪値は「一年が決める」問題を悲観側へ置き換えるだけ（実測で投下可12→7。IRMD/NVDA/6857等が
+    #   谷の1年で脱落、いずれもWACC超なのに）。min(直近,中央)は投下可12社を保つが、
+    #   **保つこと自体を選定理由にしたのは忖度**であり、技術的根拠（roicGapの誤発火）も
+    #   **実装の副作用**だった——単一係数が roicGap の信号を潰していた。実測 APH の本当の
+    #   through-cycle 乖離は 中央roic42.2 − 中央roicg16.1 = **26.1pt**（罰の線15pt）で、
+    #   単年だと12.4ptと線のすぐ下に隠れる＝**単年測定が買収依存を隠していた**。
+    #   【roicgも同時に】中央値どうしなら系列が点ごとに roic_y≥roicg_y なので恒等式が保たれる。
     if roics and not stale(max(S["op"]) if S["op"] else None):
-        ev["roic"]=round(roics[-1],1)
+        ev["roic"]=round(median(_rSeq),1)
+        if _gSeq: ev["roicg"]=round(median(_gSeq),1)
+        evd["roic"]=(evd.get("roic","")+f"｜**v9.9.72: through-cycle 化**。5年系列 {len(_rSeq)}年の"
+                     f"**中央値 {median(_rSeq):.1f}%** を採用（直近年 {_rSeq[-1]:.1f}% / 最悪 {min(_rSeq):.1f}%）。"
+                     f"roicg も同じ年の系列の中央値 {median(_gSeq):.1f}% にして roic≥roicg を保つ")
     elif roics:
         note.append(f"roic算出不能: 営業利益系列が{max(S['op'])}年で途切れ最新{LATEST}年から遅れている"
                     f"（タグ改称の疑い）。原本で確認して手入力せよ")
@@ -515,10 +777,10 @@ def build_numbers(facts):
         evd["roiic5"] = _e5
 
     # ROICトレンド roict (5年 up/flat/down): worst年 vs 直近
-    if len(roics)>=2:
-        ev["roict"]="up" if roics[-1]-roics[0]>2 else "down" if roics[-1]-roics[0]<-2 else "flat"
+    if len(_rSeq)>=2:
+        ev["roict"]="up" if _rSeq[-1]-_rSeq[0]>2 else "down" if _rSeq[-1]-_rSeq[0]<-2 else "flat"
         evd["roict"] = (f"機械算出: のれん除外ROIC 5年系列 "
-                        f"{' / '.join(f'{x:.1f}%' for x in roics)}（最古→直近の差で判定）")
+                        f"{' / '.join(f'{x:.1f}%' for x in _rSeq)}（最古→直近の差で判定）")
     # GP/A(gpa) 直近年
     if y0 and y0 in S["gp"] and S["assets"].get(y0):
         _safe(ev,note,"gpa",lambda:round(S["gp"][y0]/S["assets"][y0]*100,1))

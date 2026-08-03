@@ -1,7 +1,7 @@
 {
  "nm": "TTD",
- "roic": 16.0,
- "roicg": 16.0,
+ "roic": 8.2,
+ "roicg": 8.2,
  "nde": -1.85,
  "z": 3.32,
  "gpa": null,
@@ -70,7 +70,8 @@
    "eps充填: NI443.3/加重平均Basic488.3=$0.91(希薄化後はオプションで僅かに低下)。pxは市場データ手入力ゆえper系は算出せず",
    "acq5=no/fin=no: PaymentsToAcquireBusinessesは2023:0/2024:0/2025:4.35百万(総資産6.2十億の0.07%)=総資産5%超の買収なし。成長は完全オーガニック",
    "2026-07-19 発見度実データ: analysts=36 instOwn=89.155(AV)",
-   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。"
+   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
+   "**v9.9.72 roic を through-cycle 化**: roic 16.0→8.2 / roicg 16.0→8.2。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央8.2% / 最悪2.7%）。比は**パックが審査した年(2025)**の採取器値 roic15.96 / roicg15.96 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
   ],
   "evidence": {
    "dom": "『competitors...may also have more extensive advertiser bases and broader publisher relationships than we have, rich first party data sets, may be better positioned to execute...over certain channels, such as social media, mobile, and video』=Google/Amazon/Meta等の壁庭が上位に存在→独占ではない。一方『we utilize gross spend as a metric to assess our market share and scale』でgross spend+18%と独立系DSP首位・シェア拡大=寡占70",
@@ -98,7 +99,10 @@
    "fcf": "機械算出 2025年: 営業CF 992,721,000 − 設備投資 197,011,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
    "ni": "機械算出 2025年: 純利益 443,304,000（÷1e9で十億単位表示）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
    "accr": "機械算出 2025年: (純利益 443,304,000 − 営業CF 992,721,000) ÷ 総資産 6,153,220,000",
-   "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **24.7%** / 同業（SIC7370「Services-Computer Programming, Data Processing, Etc.」・43社）の中央値 **7.6%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+24.7%)÷(1+7.6%))^5 − 1 = **+109.3%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**"
+   "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **24.7%** / 同業（SIC7370「Services-Computer Programming, Data Processing, Etc.」・43社）の中央値 **7.6%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+24.7%)÷(1+7.6%))^5 − 1 = **+109.3%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
+   "roic": "｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央8.2% / 最悪2.7%・比は審査年2025）",
+   "roict": "機械算出: のれん除外ROIC 5年系列 8.2% / 2.7% / 6.2% / 11.2% / 16.0%（最古→直近の差で判定）",
+   "nde": "機械算出 2025年: (有利子負債 0 − 現金同等物 1,303,057,000) ÷ (営業利益 589,321,000 + 減価償却 115,784,000)。**有利子負債は候補タグ・独立走査とも痕跡ゼロ＝実質無借金**（欠測を0と読んだのではない）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -118,7 +122,9 @@
    "fcf": "machine",
    "ni": "machine",
    "accr": "machine",
-   "sht": "machine"
+   "sht": "machine",
+   "roict": "machine",
+   "nde": "machine"
   }
  },
  "sht": "up"
