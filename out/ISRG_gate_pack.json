@@ -1,7 +1,7 @@
 {
  "nm": "ISRG",
- "roic": 17.1,
- "roicg": 16.5,
+ "roic": 19.6,
+ "roicg": 19.0,
  "nde": -2.01,
  "z": 11.57,
  "gpa": 32.5,
@@ -74,8 +74,7 @@
    "2026-07-29 acq5 0.06 → 'no'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
    "2026-07-29 門X未評価を解消: px/per/shy を充填。門Xは `per>0` が唯一の必須条件で、これが無いと E[r] を一切算出しない（xPass=null＝三段関門の第二が未評価）。PERは市場株価 ÷ **原本EPS** で算出し、shy でも独立に検算した。",
-   "2026-08-02 市場価格を自動更新: px 353.10 → 353.33（+0.1%）。per 43.92→43.95　shy 1.55→1.55。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
-   "**v9.9.71（2026-08-03・ユーザー明示指示）roic を through-cycle 化**: roic 19.6→17.1 / roicg 19.0→16.5。`roic = min(直近年, 5年中央値)`＝直近 14.7% と中央値 12.8%（5年・最悪 12.4%）の小さいほうを採り、係数 0.871 を **roic/roicg/roicEx に同じだけ**掛けた（別々の比を掛けると roic<roicg という数学的に不可能な組み合わせができる）。出典: SEC companyfacts（採取器 build_numbers）"
+   "2026-08-02 市場価格を自動更新: px 353.10 → 353.33（+0.1%）。per 43.92→43.95　shy 1.55→1.55。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。"
   ],
   "evidence": {
    "dom": "自社シェア%: **原本に開示なし**（FY2025 10-K 全文にロボット支援手術の市場シェア数値は一箇所も無い）／上位N社合計%: 同じく開示なし → **刻みを導けないため空欄**（v9.9.41規約2: 100/85/70は集中の主張ゆえ必ず数値を要する）。原本にあるのは台数のみ——『we had a da Vinci surgical system installed base of approximately 11,106 systems, an increase of 12% compared to the installed base of approximately 9,902 systems』『an Ion system installed base of approximately 995 systems』(Item 7)。設置台数はシェアではない。Competition節は競合を13社実名列挙するが順位・シェアは無い——『Companies that have introduced products in the field of robotic-assisted medical procedures, or have made explicit statements about their efforts to enter the field, include, but are not limited to: Beijing Surgerii; CMR Surgical; Distalmotion; Harbin Sizhe Rui; Johnson & Johnson; Karl Storz; Medicaroid; Medtronic plc; meerecompany; Noah Medical; Shandong Weigao; Shanghai Microport Medbot; Shenzhen Edge Medical; SS Innovations』(Item 1 Competition)。出典: https://www.sec.gov/Archives/edgar/data/1035267/000103526726000010/isrg-20251231.htm",
@@ -110,9 +109,7 @@
    "px": "【2026-07-29 市場データ】株価 $353.1。出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）",
    "per": "【2026-07-29 機械算出】PER = 株価 $353.1 ÷ **原本EPS 8.04** = **43.92**。EPSは通期実績（純利益÷期末株数・SEC XBRL）で、TTMコンセンサスではない。株価の出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯8-200を通過（market_merge.BANDS）。**shyとの二重検算も通っている**（shy=1.55%・帯−5〜12内）。",
    "shy": "【2026-07-29 機械算出】純還元利回り shy = (配当 + 自社株買い − 株式発行) ÷ 時価総額。2025年: 配当 0.00 + 自社株買い 2.30 − 株式発行 0.35 = 純還元 1.95十億$ ÷ 時価総額 125.39十億$（355百万株×$353.10） = **1.55%**。還元額は SEC XBRL のキャッシュフロー計算書（PaymentsOfDividendsCommonStock / PaymentsForRepurchaseOfCommonStock / ProceedsFromIssuanceOfCommonStock）、株数は dei/us-gaap の期末株数、株価は Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯−5〜12%を通過。",
-   "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 353.33 USD（前回 353.10・+0.1%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
-   "roic": "｜**v9.9.71 through-cycle**: 直近14.7%/中央12.8%/最悪12.4%（5年）の min(直近,中央) を採用（係数0.871）",
-   "roicg": "｜**v9.9.71 through-cycle**: 直近14.7%/中央12.8%/最悪12.4%（5年）の min(直近,中央) を採用（係数0.871）"
+   "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 353.33 USD（前回 353.10・+0.1%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。"
   },
   "nulls": {
    "fcf": "capexタグがcompanyfacts未収載(タグ不発見)。OCFのみのFCFは過大となるため誤値回避でnull(kenshi参照)",

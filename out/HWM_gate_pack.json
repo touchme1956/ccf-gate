@@ -1,7 +1,7 @@
 {
  "nm": "HWM",
- "roic": 28.9,
- "roicg": 13.6,
+ "roic": 42.5,
+ "roicg": 20.0,
  "nde": 0.99,
  "z": 4.65,
  "gpa": null,
@@ -73,8 +73,7 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=116.2 / 5年窓=na。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 門X未評価を解消: px/per/shy を充填。門Xは `per>0` が唯一の必須条件で、これが無いと E[r] を一切算出しない（xPass=null＝三段関門の第二が未評価）。PERは市場株価 ÷ **原本EPS** で算出し、shy でも独立に検算した。",
    "2026-07-29 p1 80→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均29.9%・σ9.1pt・CV30.2%）。",
-   "2026-08-02 市場価格を自動更新: px 272.89 → 282.26（+3.4%）。per 72.77→75.27　shy 0.64→0.62。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
-   "**v9.9.71（2026-08-03・ユーザー明示指示）roic を through-cycle 化**: roic 42.5→28.9 / roicg 20.0→13.6。`roic = min(直近年, 5年中央値)`＝直近 40.7% と中央値 27.7%（5年・最悪 19.0%）の小さいほうを採り、係数 0.681 を **roic/roicg/roicEx に同じだけ**掛けた（別々の比を掛けると roic<roicg という数学的に不可能な組み合わせができる）。出典: SEC companyfacts（採取器 build_numbers）"
+   "2026-08-02 市場価格を自動更新: px 272.89 → 282.26（+3.4%）。per 72.77→75.27　shy 0.64→0.62。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。"
   ],
   "evidence": {
    "expiry": "『We are not materially dependent on any single patent, trade secret, or trademark』(限)→単一特許/期限依存なし=no。特許ポートフォリオは継続更新",
@@ -97,8 +96,8 @@
    "f5": "disrupt=settled連動→85",
    "moatW": "FY2025 10-K セグメント情報注記の第三者売上(全社 $8,252百万): Engine Products $4,320百万=52.4% / Fastening Systems $1,745百万=21.1% / Engineered Structures $1,148百万=13.9% / Forged Wheels $1,039百万=12.6%。→ ≥売上15%は Engine Products と Fastening Systems の2本のみ。Engineered Structures 13.9%・Forged Wheels 12.6%はいずれも15%閾値に届かず、『独立した堀3つ以上(各≥15%)』の100は不成立＝85が該当(旧85を実数で追認)。独立性の裏取り(セグメント×主要市場別の分解表 FY2025): Engine Products=Aerospace Commercial $2,355百万＋Aerospace Defense $900百万＋Gas Turbines $944百万＋Other $121百万。ニッケル超合金の精密鋳造翼・タービン部品で顧客はエンジンOEM。Fastening Systems=Aerospace Commercial $1,202百万＋Aerospace Defense $176百万＋Commercial Transportation $209百万＋Other $158百万。機体構造用ファスナーで別工場・別の型式認定・顧客は機体メーカー/流通(競合もLisi Aerospace等 別系統)。Forged Wheels=Commercial Transportation $1,039百万(当セグメントの100%)で航空とは完全に別市場・別競合(Accuride/Ronal/Nippon Steel/Dicastal等)＝性質としては独立堀だが12.6%で本数に数えられない。顧客集中: 10-K『In 2025, RTX Corporation and GE Aerospace each represented approximately 11% of the Company's third-party sales. ... These sales were primarily from the Engine Products segment.』＝最大顧客11%。50の発動条件(最大顧客≥20% または 1製品≥80%)はいずれも不成立(最大セグメント52.4%)。なお70の目安『最大顧客<10%』は超えるが、≥15%の独立堀が2本ある以上85の判定が優先する。出典: SEC 10-K CIK0000004281 acc 0000004281-26-000012 (FY2025-12-31) セグメント情報注記(第三者売上・主要市場別の分解表)、Item1",
    "dom": "【2026-07-29 決着・v9.9.41の残余刻み規約により50を確定】FY2025 10-K Item1『Competitive Conditions』が4セグメント全てについて『The Company's segments - Engine Products, Fastening Systems, Engineered Structures, and Forged Wheels - are subject to **substantial and intense competition** in the markets they serve』とし、さらに構造そのものを述べている: 『**many** of the products Howmet makes **can be produced by competitors** using similar types of manufacturing processes as well as alternative forms of manufacturing』『Several of Howmet's largest customers **have captive superalloy furnaces**』『**Many other companies around the world also produce** superalloy investment castings』『Forged Wheels has seen an **increase in the number of** aluminum wheel suppliers from China, Taiwan, India, South Korea, and Turkey』。＝同等品を多数が製造でき、顧客が内製し、新規参入が増えている＝寡占構造の否定。実名競合も16社が網羅列挙されている(Precision Castparts/VSMPO/ATI/Lisi Aerospace/Aubert & Duval/Doncasters/CPP/Weber Metals/Forgital/Frisa、Forged Wheelsは Accuride/Speedline/Nippon Steel/Dicastal/Alux/Wheels India)。4セグメントとも同じ刻み50に落ち、散らない＝空欄にする理由がない。旧dom=70は原本無根拠だった。自称『market leader in most of its principal markets』は v9.9.38但し書きにより刻みの証拠に当たらない。出典: SEC 10-K CIK0000004281 acc 0000004281-26-000012 (FY2025-12-31) Item1 Competitive Conditions。",
-   "roic": "機械算出 2025年: NOPAT 1,676,830,435（営業利益 2,046,000,000×(1−実効税率18.0%)） ÷ IC 3,924,000,000＝自己資本 5,353,000,000 + 有利子負債 3,050,000,000 − のれん 4,022,000,000 − 無形 457,000,000。**IC/自己資本=73.3%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）｜**v9.9.71 through-cycle**: 直近40.7%/中央27.7%/最悪19.0%（5年）の min(直近,中央) を採用（係数0.681）",
-   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 5,353,000,000 + 有利子負債 3,050,000,000)＝のれん込み。roic(除外)との差が買収規律の指標｜**v9.9.71 through-cycle**: 直近40.7%/中央27.7%/最悪19.0%（5年）の min(直近,中央) を採用（係数0.681）",
+   "roic": "機械算出 2025年: NOPAT 1,676,830,435（営業利益 2,046,000,000×(1−実効税率18.0%)） ÷ IC 3,924,000,000＝自己資本 5,353,000,000 + 有利子負債 3,050,000,000 − のれん 4,022,000,000 − 無形 457,000,000。**IC/自己資本=73.3%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）",
+   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 5,353,000,000 + 有利子負債 3,050,000,000)＝のれん込み。roic(除外)との差が買収規律の指標",
    "roict": "機械算出: のれん除外ROIC 5年系列 19.1% / 22.0% / 29.5% / 40.3% / 42.7%（最古→直近の差で判定）",
    "gm": "機械算出 2025年: 営業利益 2,046,000,000 ÷ 売上 8,252,000,000（粗利ではない）",
    "gmt": "機械算出: 営業利益率 2023年 18.1% → 2025年 24.8%（±1ptでup/down）",

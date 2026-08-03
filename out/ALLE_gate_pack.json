@@ -1,7 +1,7 @@
 {
  "nm": "ALLE",
- "roic": 36.1,
- "roicg": 14.8,
+ "roic": 43.6,
+ "roicg": 17.8,
  "nde": 1.64,
  "z": null,
  "gpa": null,
@@ -112,8 +112,7 @@
    "2026-08-03 f5 75 → 空欄。disrupt=unsettled の導出値は 65 で、逸脱評価なのに根拠が無かった。**disrupt は測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない（未測定なのは全317社中3社＝ADP/META/NJRのみで、そちらは値を残す）。影の計測: Ωの動きは最大+0.4/最小−0.2pt・Ω72/75の線を跨ぐ社0・投下可7社不変（f5の実効ウェイトは約4%）",
    "2026-08-03 p3 80 → 空欄。nde=1.64 の導出値は 70。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ",
    "2026-08-03 cagr None → 7.5。v9.9.67（QからFを外す）でΩが72を超え監視枠へ入り、未取得だったことが全件点検で露出した。原本から機械算出して充填。売上 $3.27bn(FY2022) → $4.07bn(FY2025) の3年CAGR = **7.5%**（出典: SEC XBRL companyfacts の売上系列）",
-   "2026-08-03 roicg None → 17.8。v9.9.67（QからFを外す）でΩが72を超え監視枠へ入り、未取得だったことが全件点検で露出した。原本から機械算出して充填。NOPAT ÷ (自己資本 + 有利子負債) = **17.8%**（night/recalc_roic.py の実測。IC/自己資本 63% で縮退なし。参考: のれん除外 roic は実測55.0%で現行値43.6%と乖離するが、**審査官が原本で置いた値のほうが機械より強い**ため roic は据置）",
-   "**v9.9.71（2026-08-03・ユーザー明示指示）roic を through-cycle 化**: roic 43.6→36.1 / roicg 17.8→14.8。`roic = min(直近年, 5年中央値)`＝直近 55.0% と中央値 45.6%（5年・最悪 20.4%）の小さいほうを採り、係数 0.829 を **roic/roicg/roicEx に同じだけ**掛けた（別々の比を掛けると roic<roicg という数学的に不可能な組み合わせができる）。出典: SEC companyfacts（採取器 build_numbers）"
+   "2026-08-03 roicg None → 17.8。v9.9.67（QからFを外す）でΩが72を超え監視枠へ入り、未取得だったことが全件点検で露出した。原本から機械算出して充填。NOPAT ÷ (自己資本 + 有利子負債) = **17.8%**（night/recalc_roic.py の実測。IC/自己資本 63% で縮退なし。参考: のれん除外 roic は実測55.0%で現行値43.6%と乖離するが、**審査官が原本で置いた値のほうが機械より強い**ため roic は据置）"
   ],
   "evidence": {
    "dom": "10-K FY2025(alle-20251231.htm) Item1 Industry and Competition: 『The security products markets are highly competitive and fragmented throughout the world, with a number of large multi-national companies and thousands of smaller regional and local companies. This high degree of fragmentation primarily reflects local regulatory requirements and highly variable end-user needs. We believe our principal global competitors are Assa Abloy AB and dormakaba Group. We also face competition in various markets and product categories throughout the world, including Fortune Brands Innovations, Inc. in the North American residential market and from private label brands. As we move into more technologically advanced product categories, we may also compete against new, more specialized competitors.』 Item1A『The markets in which we operate include a large number of participants, including multi-national, regional and small, local companies. ... we compete with our retail customers and technology partners who use their own private labels.』。**自社シェア%の開示なし／上位N社合計シェアの開示なし**——原本に数値が無いため70/85/100は主張不能。しかも提出書類自身が『**fragmented** throughout the world』『**thousands of** smaller regional and local companies』『private label brands(同等品を多数が製造可能)』と**構造的に分散**を明言しており、自社シェア40%以上・上位2社≥80%・上位3社≥80%はいずれも定義上ありえない → 市場構造=競争(<40%)＝刻み50。Assa Abloy/dormakabaは『principal global competitors』の実名列挙であって上位3社合計シェアの開示ではない点に注意(旧dom=70はこれを寡占と読み違えていた)。Allegion Americas/Allegion Internationalとも同一記述で全社が同じ刻みに落ちるため50を確定(v9.9.41規約1・3)",
@@ -127,8 +126,7 @@
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 372,865,757 ÷ Δ投下資本 356,100,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 3,691,800,000→4,047,900,000（+9.6%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない",
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 20.4% / 2022 50.7% / 2023 35.9% / 2024 45.6% / 2025 55.0% → 平均 41.5% / σ 12.3pt / **CV 29.7%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "cagr": "【2026-08-03 機械算出】売上 $3.27bn(FY2022) → $4.07bn(FY2025) の3年CAGR = **7.5%**（出典: SEC XBRL companyfacts の売上系列）",
-   "roicg": "【2026-08-03 機械算出】NOPAT ÷ (自己資本 + 有利子負債) = **17.8%**（night/recalc_roic.py の実測。IC/自己資本 63% で縮退なし。参考: のれん除外 roic は実測55.0%で現行値43.6%と乖離するが、**審査官が原本で置いた値のほうが機械より強い**ため roic は据置）｜**v9.9.71 through-cycle**: 直近55.0%/中央45.6%/最悪20.4%（5年）の min(直近,中央) を採用（係数0.829）",
-   "roic": "｜**v9.9.71 through-cycle**: 直近55.0%/中央45.6%/最悪20.4%（5年）の min(直近,中央) を採用（係数0.829）"
+   "roicg": "【2026-08-03 機械算出】NOPAT ÷ (自己資本 + 有利子負債) = **17.8%**（night/recalc_roic.py の実測。IC/自己資本 63% で縮退なし。参考: のれん除外 roic は実測55.0%で現行値43.6%と乖離するが、**審査官が原本で置いた値のほうが機械より強い**ため roic は据置）"
   },
   "provenance": {
    "gm": "machine",
