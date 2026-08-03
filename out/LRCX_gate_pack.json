@@ -80,7 +80,7 @@
    "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均40.6%・σ6.1pt・CV15.1%）。",
    "2026-08-02 市場価格を自動更新: px 270.52 → 293.02（+8.3%）。per 54.32→58.84　evebit 58.3→63.1　shy 1.31→1.21。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
    "2026-08-03 eps 4.22（通期）→ 5.29（TTM実測）。Ωは不変（epsはcompute()未使用・perの変化もこの帯では判定を動かさない）",
-   "**v9.9.72（2026-08-03・ユーザー明示指示「今の12社に忖度するのではなく本当に必要なものを」）roic を through-cycle 化**: roic 35.5→35.7 / roicg 31.6→31.6。**5年の中央値**（直近 39.9% / 中央 40.1% / 最悪 30.6%・5年）。roicg も同じ年の系列の中央値（35.2→35.2）にして roic≥roicg の恒等式を保つ。パックの審査済み値を土台に**欄ごとの比**で当てた（絶対値だと through-cycle の効果と『採取器 vs 審査官』の差が混ざる）。出典: SEC companyfacts（採取器 build_numbers）"
+   "**v9.9.72（2026-08-03・ユーザー明示指示）roic を through-cycle 化**: roic 35.5→35.7 / roicg 31.6→31.6。**5年の中央値**（系列 [2021, 2022, 2023, 2024, 2025]・中央 40.1% / 最悪 30.6%）。比は**パックが審査した年(2025)**の採取器値 roic 39.91 / roicg 35.19 を土台に取った——採取器とパックが別の会計年度を見ている社があるため（実測 MSFT: 採取器FY2026/パックFY2025）、`中央値÷最新年`だと年をまたいだ無意味な比になる。roicgも同じ年の系列の中央値にしてroic≥roicg の恒等式を保つ。出典: SEC"
   ],
   "evidence": {
    "dom": "【2026-07-29 v9.9.41再監査 → 空欄】FY2025 10-K(2025-06-29期)Item 1 Business『Competition』節および Item 1A を全文精査したが、自社シェア%・上位N社合計%のいずれも一切開示されていない(『market share』の語は 将来見通し前置きと『our ability to defend our market share and to gain new market share』等の定性言及のみ、『served available market』も規模言及のみで数値なし)。市場構造の記述は競合の名指しに留まる——『Our primary competitor in the dielectric and metals deposition market is Applied Materials, Inc. For ALD and PECVD, we also compete against ASM International and Wonik IPS. In the etch market, our primary competitors are Applied Materials, Inc.; Hitachi, Ltd.; and Tokyo Electron, Ltd., and our primary competitors in the wet clean market are Screen Holding Co., Ltd.; Semes Co., Ltd.; and Tokyo Electron, Ltd.』。→ 100/85/70は数値を要する(v9.9.41規約2)ため置けない。50も置けない(規約3の残余50は提出書類自身の「fragmented/多数が同等品を製造可能/実質すべての供給は他社」等の構造記述を条件とするが、本10-Kは逆に各市場3-4社の名指し寡占構造を述べており、fragmentedの語も他社支配の記述も無い)。よって空欄。出典: 10-K FY2025 Item 1 Competition, https://www.sec.gov/Archives/edgar/data/707549/000070754925000075/lrcx-20250629.htm",
@@ -115,8 +115,8 @@
    "acq5": "【2026-07-29 機械判定】のれん残高(十億$) 2020 1.48 → 2021 1.49 → 2022 1.52 → 2023 1.62 → 2024 1.63 → 2025 1.60。**新しさ =(直近 1.60 − 2020年 1.48)÷直近 = +7.2%**（今あるのれんのうち直近5年に増えた割合） → **大型買収なし=no**（ほぼ全部が遺産のれん）（出典: SEC XBRL companyfacts の Goodwill 系列）",
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 42.8% / 2022 49.6% / 2023 40.1% / 2024 30.6% / 2025 39.9% → 平均 40.6% / σ 6.1pt / **CV 15.1%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 293.02 USD（前回 270.52・+8.3%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
-   "roic": "｜**v9.9.72 through-cycle**: 5年5年の中央値を採用（直近39.9% / 中央40.1% / 最悪30.6%）",
-   "roicg": "｜**v9.9.72 through-cycle**: 5年5年の中央値を採用（直近39.9% / 中央40.1% / 最悪30.6%）"
+   "roic": "｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央40.1% / 最悪30.6%・比は審査年2025で取得）",
+   "roicg": "｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央40.1% / 最悪30.6%・比は審査年2025で取得）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",

@@ -44,38 +44,45 @@ def run():
     return {r["t"]: r for r in (d["rows"] if isinstance(d, dict) else d)}
 
 
-def apply(t, v, mode, d):
-    """through-cycle を当てる。三つの約束——
+def pack_year(d):
+    """パックが**どの会計年度を審査したか**。_meta.reportDate（決算期末日）の年を採る。"""
+    try: return int(str(d.get("_meta", {}).get("reportDate"))[:4])
+    except Exception: return None
 
-    (1) **roic/roicg/roicEx を同時に替える**。片方だけ替えると roic<roicg（NOPAT>0では
-        数学的に不可能）ができる。KLACの分割・ADRのper・JP門0のptと同じ「基準の違う二つを割る」型。
-    (2) **絶対値でなく比で適用する**。パックの値は審査官が原本で検算した値で、採取器の直近値と
-        ずれる社がある（実測 ASML パック49.5 / 採取器43.2）。絶対値で置き換えると
-        through-cycleの効果と「採取器 vs 審査官」の差が混ざる。
-        **比は欄ごとに取る**——単一係数だと roicGap=roic−roicg の信号そのものを潰す
-        （実測APH: 本当のthrough-cycle gapは 中央roic42.2−中央roicg16.1=**26.1pt**で罰の線15ptを
-        大きく超えるのに、単一係数だと17.6ptにしか見えない）。
-    (3) **採取器とパックが食い違う社には当てない**。審査官が採取器の値を棄却して書き直した社
-        （実測 GEN: 採取器107.9→パック15.5 ／ CHH 51.9→19.9 ／ RBA 56.5→10.6）では、
-        **採取器の5年系列も同じ縮退を含む**ので比が意味を持たない。触らず作業リストへ出す
-        （誤値より空欄）。線は直近値どうしが15%以内。
+
+def apply(t, v, mode, d):
+    """through-cycle を当てる。四つの約束——
+
+    (1) **roic/roicg/roicEx を同時に替える**。片方だけだと roic<roicg（NOPAT>0では数学的に不可能）。
+    (2) **絶対値でなく比で適用する**。パックの値は審査官が原本で検算した値なので土台に残す。
+        比は**欄ごと**に取る（単一係数だと roicGap=roic−roicg の信号を潰す。実測APHの本当の
+        through-cycle 乖離は 中央roic42.2−中央roicg16.1=26.1pt で罰の線15ptを大きく超える）。
+    (3) **比は「パックが審査した年」で取る**（2026-08-03是正）。従来は `中央値 ÷ 系列の最新年` で
+        比を作っていたが、採取器とパックが**別の会計年度**を見ている社がある——
+        実測 MSFT: 採取器はFY2026まで進んでいるのにパックはFY2025で審査。
+        `中央値 ÷ 系列[2026]` は年をまたいだ無意味な比で、しかも18%食い違うので
+        下の(4)で弾かれ**判定帯31/49社が単年のまま残っていた**（＝混成基準）。
+        `中央値 ÷ 系列[パックの審査年]` なら MSFT は 42.8÷42.77 でほぼ1.0＝正しく「変化なし」と出る。
+    (4) **その年でパックと採取器が食い違う社には当てない**。審査官が採取器の値を棄却して
+        書き直した社（実測 GEN 107.9→15.5 / CHH 51.9→19.9）は**5年系列も同じ縮退を含む**ので
+        比が意味を持たない。線は同じ年どうしで15%以内。
     """
-    if not v.get("last") or not v.get("g_last"): return 0, "採取器の直近値が無い"
+    ser = v.get("series") or {}
+    py = pack_year(d)
+    if py is None: return 0, "パックに reportDate が無い"
+    row = ser.get(str(py))
+    if not row: return 0, f"採取器の5年系列に審査年{py}が無い（系列={v.get('years')}）"
     if d.get("roic") is None or d.get("roicg") in (None, ""): return 0, "パックのroic/roicgが空"
-    dr = abs(d["roic"] - v["last"]) / max(abs(v["last"]), 1e-9)
-    dg = abs(float(d["roicg"]) - v["g_last"]) / max(abs(v["g_last"]), 1e-9)
+    base_r, base_g = row
+    if base_r <= 0 or base_g <= 0: return 0, f"{py}年の採取器値が非正"
+    dr = abs(d["roic"] - base_r)/abs(base_r); dg = abs(float(d["roicg"]) - base_g)/abs(base_g)
     if max(dr, dg) > 0.15:
-        return 0, f"採取器とパックが{max(dr,dg)*100:.0f}%食い違う（審査官が棄却した値＝系列も信用できない）"
-    k  = {"med5": v["med5"], "w5": v["w5"], "min": min(v["last"], v["med5"])}[mode] / v["last"]
-    kg = {"med5": v["g_med5"], "w5": v["g_w5"], "min": min(v["g_last"], v["g_med5"])}[mode] / v["g_last"]
+        return 0, f"審査年{py}で採取器とパックが{max(dr,dg)*100:.0f}%食い違う（審査官が棄却した値＝系列も信用できない）"
+    k  = {"med5": v["med5"], "w5": v["w5"], "min": min(base_r, v["med5"])}[mode] / base_r
+    kg = {"med5": v["g_med5"], "w5": v["g_w5"], "min": min(base_g, v["g_med5"])}[mode] / base_g
     jp = t[:1].isdigit()
     cap = (lambda x: round(min(x, CAP) if jp else x, 1))
-    nr, ng = cap(d["roic"] * k), cap(float(d["roicg"]) * kg)
-    # (4) **恒等式が壊れる社は変換しない。** NOPAT>0 では roic≥roicg が恒等式（投下資本はのれん・
-    #     無形を引いたほうが必ず小さい）。採取器の中央値どうしは順序統計量として必ずこれを満たすが、
-    #     パック側で審査官が roic と roicg の関係を書き換えている社（実測 MPTI: 採取器 13.9/12.6 に対し
-    #     パックは 12.6/12.6 と**等値に直してある**）では、欄ごとの比を掛けると逆転する。
-    #     clampで黙って直すと審査官の判断を機械が上書きすることになるので、**触らず作業リストへ出す**。
+    nr, ng = cap(d["roic"]*k), cap(float(d["roicg"])*kg)
     if nr > 0 and ng > 0 and nr < ng:
         return 0, f"変換すると roic{nr}<roicg{ng} で恒等式が壊れる（パックの両欄の関係が採取器と違う）"
     n = 0

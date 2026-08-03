@@ -513,7 +513,7 @@ def build_numbers(facts):
             if ic <= 0 or ic < 0.20*max(S["eq"][y], 1):
                 roic_skip.append(f"{y}:IC={ic:.0f}が自己資本{S['eq'][y]:.0f}の2割未満＝のれん控除で分母縮退")
                 continue
-            roics.append((nopat/ic*100, nopat/max(S["eq"][y]+debt, 1)*100))
+            roics.append((nopat/ic*100, nopat/max(S["eq"][y]+debt, 1)*100, y))
             # 実額を残す。**IC/自己資本が本当の判別子**（2026-07-29の19社検算で確立——
             # 「roic>60だから怪しい」はほぼ外れ、MAは74.9→131.0の上方修正だった）。
             # 比率だけでは後から検算できないので、NOPAT・自己資本・負債・のれん・無形の各実額を書く。
@@ -530,7 +530,15 @@ def build_numbers(facts):
     #   roic<roicg（NOPAT>0では数学的に不可能）ができる＝「基準の違う二つを割る」型。
     _rSeq = [x[0] for x in roics]
     _gSeq = [x[1] for x in roics]
-    if roics:
+    # 2026-08-03: **年つきの系列も出す。** through-cycle をパックへ当てるとき、比は
+    #   「パックが審査した年」で取らないと意味を持たない——採取器とパックが別の会計年度を
+    #   見ている社があるため（実測 MSFT: 採取器FY2026 / パックFY2025）。
+    #   検査器側で系列を組み直すと採取器と違う判定になるので（v9.9.65の教訓）ここで出す。
+    if roics: ev["_tcSeries"] = {str(x[2]): [round(x[0],2), round(x[1],2)] for x in roics}
+    # 2026-08-03: **3年未満の「中央値」は through-cycle ではない。** 従来は `if roics:` で
+    #   1-2年でも med5/w5 を出していたため、在庫を数えると220社に見えたが実体は179社だった
+    #   （1点の中央値はその点そのもの）。3年以上のときだけ出す。
+    if len(roics) >= 3:
         ev["roicExW5"]  = round(min(_rSeq),1)
         ev["roicExMed5"]= round(median(_rSeq),1)
         ev["roicgW5"]   = round(min(_gSeq),1)
