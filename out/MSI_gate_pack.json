@@ -17,7 +17,7 @@
  "acc": "usgaap",
  "eq": "pos",
  "acq5": "yes",
- "eps": 13.0,
+ "eps": 11.08,
  "expiry": "no",
  "moatdecay": "no",
  "erosion": "none",
@@ -77,7 +77,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=14.6 / 5年窓=16.9。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均93.6%・σ24.9pt・CV26.6%）。",
    "2026-08-02 市場価格を自動更新: px 440.31 → 435.75（-1.0%）。per 39.74→39.33　evebit 27.4→27.1　shy 2.47→2.5。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
-   "2026-08-03 acq5 None → 'yes'。空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**——門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
+   "2026-08-03 acq5 None → 'yes'。空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**——門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-08-03 eps 13.0（通期実績）→ 11.08（TTM実績）。台帳内で eps の定義が TTM と通期に割れており、per は規約上 px÷TTM実績EPS なので px÷eps が恒等式にならず全件点検が警告を出していた。**eps は compute() で一切使われない**（採点に影響しない）ので Ω は動かない。唯一の役割である価格更新時のフォールバック px÷eps も、これで per と同じ基準になる。"
   ],
   "evidence": {
    "dom": "【2026-07-29 再監査 → 空欄】FY2025 10-K(2026-02-12提出)の Item 1 Business「Competition」節を全文精査したが、自社シェア%も上位N社合計シェアも一切開示されていない。同節が示すのは競合社名の列挙のみ: MCN=Airbus, BK Technologies, DTC, Doodle Labs, Hytera, iCOM, JVCKenwood, L3Harris Technologies, Persistent Systems, RCA, Samsung, Sepura, Tait, TrellisWare, Zebra(15社) / Video=Axis, Axon, Bosch, Brivo, Dahua, Eagle Eye Networks, ECAM, Flock, Genetec, Hanwha, Hikvision, Honeywell, Johnson Controls, Milestone, NetWatch, Pro-Vigil, Rhombus, Verkada(18社) / Command Center=AlertMedia, AT&T, Axon, Carbyne, CentralSquare, Comtech, Everbridge, Hexagon, Intrado, Mark43, Crisis24, Oracle Public Safety, RapidSOS, Tyler Technologies, Versaterm(15社)。会社の自己記述は『Motorola Solutions is a global leader in mission-critical safety and security technologies』『We are a global leader in the two-way radio category, including Project 25 (P25), Terrestrial Trunked Radio (TETRA) and Digital Mobile Radio (DMR)』にとどまり、v9.9.38の定めどおり \"a leader/leading provider\" はシェアの証拠ではない。10-K本文の \"market share\" 出現は2箇所ともリスク要因の定型文（『could harm our reputation, market share, results of operations』）で数値なし。第三者調査(Gartner/IDC/Frost & Sullivan/Omdia/IHS Markit)の引用は本文中に0件（機械検索で全て0ヒット）＝提出書類内に原本扱いできる実数表も無い。自社シェア=開示なし／上位N社合計=開示なし ⇒ 刻みを導けないため空欄。(参考・シェアではない実数として開示されているのは技術別売上のみ: MCN 8,647百万$/74.0%、Video 2,120/18.1%、Command Center 915/7.8%、計11,682。これは自社売上構成であって市場シェアではない)。出典: https://www.sec.gov/Archives/edgar/data/68505/000006850526000010/msi-20251231.htm Item 1 Business - Competition / Item 1A Risk Factors",
@@ -109,7 +110,7 @@
    "accr": "機械算出 2025年: (純利益 2,154,000,000 − 営業CF 2,837,000,000) ÷ 総資産 19,389,000,000",
    "gpa": "機械算出 2025年: 売上総利益 6,035,000,000 ÷ 総資産 19,389,000,000",
    "dilNet": "機械算出: 株数 2022年 167,500,000 → 2025年 165,700,000＝3年の年率（自社株買い後の純希薄化）",
-   "eps": "機械算出 2025年: 純利益 2,154,000,000 ÷ 株数 165,700,000（TTMではなく通期実績）",
+   "eps": "【2026-08-03 機械算出】**TTM希薄化後EPS = 11.08 USD**（直近4四半期の EarningsPerShareDiluted: 2.53+3.04+3.33+2.18。出典: SEC XBRL companyfacts 10-Q/10-K）。px 435.75 ÷ 11.08 = 39.33 で **per 39.33 と一致**＝perがTTM基準であることの独立の裏取り。旧値 13.0 は**通期実績**EPSで期間基準が違い、px÷eps が per と 15% ずれて全件点検の警告になっていた",
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 795,402,877 ÷ Δ投下資本 5,442,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 6,130,000,000→11,572,000,000（+88.8%）",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 1,171,943,953 ÷ Δ投下資本 6,955,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 4,617,000,000→11,572,000,000（+150.6%）",
    "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 435.75 USD（前回 440.31・-1.0%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",

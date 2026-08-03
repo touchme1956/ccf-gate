@@ -18,16 +18,16 @@
  "eq": "pos",
  "acq5": "no",
  "eps": 1.14,
- "expiry": null,
- "moatdecay": null,
- "erosion": null,
- "disrupt": null,
+ "expiry": "no",
+ "moatdecay": "no",
+ "erosion": "none",
+ "disrupt": "unsettled",
  "dom": 50,
  "irr": 70,
  "rep": 80,
  "dur": 85,
  "moatW": 100,
- "geopol": null,
+ "geopol": 0,
  "nrr": 105,
  "beta": null,
  "per": 31.07,
@@ -52,7 +52,7 @@
  "f2": 65,
  "f3": 55,
  "f4": 60,
- "f5": 65,
+ "f5": null,
  "_meta": {
   "form": "20-F",
   "reportDate": "2025-12-31",
@@ -82,7 +82,8 @@
    "2026-07-29 acq5 1.2 → 'no'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "2026-07-29 門X未評価を解消: px/per を充填。門Xは `per>0` が唯一の必須条件で、これが無いと E[r] を一切算出しない（xPass=null＝三段関門の第二が未評価）。PERは市場株価 ÷ **原本EPS** で算出し、shy でも独立に検算した。",
    "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均104.4%・σ20.8pt・CV19.9%）。",
-   "2026-08-02 市場価格を自動更新: px 38.22 → 35.42（-7.3%）。per 33.53→31.07。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。"
+   "2026-08-02 市場価格を自動更新: px 38.22 → 35.42（-7.3%）。per 33.53→31.07。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
+   "2026-08-03 門2再審査（定性5項目＋f5）。旧パックは erosion/disrupt/moatdecay/expiry/geopol の5欄すべてが空欄で、理由は「hitsセクション『ヒットなし』」＝**キーワード抽出が拾えなかったこと**だった。だがこの5欄は門が空欄を**最良ケース**で裁く欄（erosion→none / disrupt→settled / moatdecay→no / expiry→no / geopol→0）なので、『測っていない』が『測って最良』として採点されていた。20-F本文を読んで5欄とも確定。実測: **Ω 75.8 → 74.8**（disrupt が settled→unsettled になり f=−3 と f5 85→65 が効く）。監視の線(Ω75+)を割るが、これは点が下がったのではなく**上がっていた分が戻った**。堀71.6・門X落選(E[r]1.1%)・出口hold は不変。"
   ],
   "evidence": {
    "p4": "『assessing the risk that a material weakness exists, testing and evaluating the design and operating effectiveness of internal control』=監査手続の定型説明文であり実指摘ではない。『ITEM 4A: UNRESOLVED STAFF COMMENTS N/A』。accr=-5.1%(<0)と併せ p4=90(無限定意見は監査報告本文で最終確認推奨)",
@@ -94,7 +95,6 @@
    "f2": "TAM浸透の数値が hits に無し。学術/法務/リスク分析のデータ市場は大規模だが浸透率不明→保守側65+注記",
    "f3": "R&D/売上比・シェア趨勢とも hits に証拠無し(RELXは開発費を無形資産計上、R&Dタグ不発見)→両符号不明・保守側55。原本での技術投資/シェア確認が必要",
    "f4": "隣接事業(4セグメント: Risk/STM/Legal/Exhibitions)は一般に売上5%超だが hits にセグメント内訳証拠が無いため保守既定60。原本要確認",
-   "f5": "disrupt が hits 証拠不在で null のため連動判定不能→保守中位65。学術ジャーナル/分析への技術代替リスクは原本で要評価",
    "moatW": "セグメント別売上: 2025 Annual Report on Form 20-F(2026-02-12提出)の各Market segment冒頭 Business overview。Risk(LexisNexis Risk Solutions) £3,485m=36.3% / Scientific,Technical & Medical(Elsevier) £2,714m=28.3% / Legal(LexisNexis Legal & Professional) £1,806m=18.8% / Exhibitions(RX) £1,186m=12.4% / print and print-related(2025から別管理・別報告) 約£399m=4.2%（グループ売上 £9,590m）。上位3本は障壁の源泉・顧客・競合が完全に別: Risk=保険/金融/政府向けの独自ID・与信データ資産(競合は大手信用情報会社とVerisk)、STM=Elsevierのジャーナル/ScienceDirect/Scopusという学術コンテンツ資産(競合はSpringer Nature/Clarivate/Wolters Kluwer)、Legal=判例コーパスとShepard's引用サービス(競合はWestlaw/CCH/Bloomberg)。顧客は保険会社・研究機関/大学・法律事務所と重ならず、1本折れても他が無傷。→ 独立した堀3本(各≥15%) = 100。出典: https://www.sec.gov/Archives/edgar/data/929869/000092986926000019/relx-20260212xex99d1.pdf (RELX 2025 Annual Report / Form 20-F) pp.10,16,22,28",
    "dom": "【2026-07-28 dom刻み改定(市場構造織込み)による再判定 → 据置】セグメント別(2025年売上構成: Risk 36% / STM 28% / Legal 19% / Exhibitions 13% / print 4%)に自社シェアと上位N社合計を確認したが、いずれの事業も『上位2社≥80%』『上位3社≥80%』の構造に該当しない。(1)Risk(36%): 競合は大手信用情報会社(Experian/Equifax/TransUnion)・Verisk等に分散し、上位N社合計の公表値なし。(2)STM(28%): Elsevier は世界最大の学術誌出版社だが論文数シェアは約13-18%、商業大手5社(Elsevier/Springer Nature/Wiley/Taylor & Francis/SAGE)合計でも約50-56%で ≥80% に届かない。(3)Legal(19%): Westlaw と LexisNexis の歴史的二強だが、実測では Clio 調査で Westlaw 20.6% / Fastcase 20.4% / LexisNexis 20.2%、6sense では Westlaw 30.9% / Lexis Advance 6.8% と、上位2社合計が80%に達する実数の裏付けはない。(4)Exhibitions(13%): 20-F が『RX is one of the largest event organisers globally in a fragmented industry, holding a global market share of less than 10%』と自ら開示。→ 売上の大半を占める事業のいずれでも寡占構造(上位N社≥80%)が実数で確認できず、刻み50を据置。堀の強さ自体は irr/rep/dur/moatW 側で評価する項目であり、dom は占有率構造で裁く。出典: RELX 2025 Annual Report / Form 20-F セグメント別売上構成と各セグメント『Business model, distribution channels and competition』(pp.14,20,26,32) / Chemistry World『75% of European spending on scientific journals goes to big five publishers』/ Clio Legal Trends 調査 / 6sense legal research market share → 自社: Exhibitions<10%・STM約13-18%・Legal約20%(いずれも<40%) / 上位N社: 最大でも STM 大手5社56%・Legal 上位3社約61% → 刻み50(据置)",
    "irr": "70=高摩擦移行困難。三事業とも代替製品は実在するが乗換は業務工程内で高摩擦。Legal:『LexisNexis Legal & Professional products and services are generally sold directly to law firms and to corporate, government and academic customers on a paid subscription basis, with subscriptions often under multi-year contracts』『Answers are grounded in LexisNexis proprietary legal content and enhanced by Shepard’s Knowledge Graph』。Risk:『LexisNexis Comprehensive Loss Underwriting Exchange (C.L.U.E.), is a claims history database that collects and reports up to seven years of US personal automobile, property claims and small business information to inform insurance pricing and underwriting decisions』『delivers ... directly into insurer workflows』=業務工程に埋込。ただし各segmentに指名可能な代替が存在(『Principal competitors for LexisNexis in US legal markets are Westlaw (Thomson Reuters), CCH (Wolters Kluwer), and Bloomberg』『data and analytics competitors such as Verisk』)ため唯一供給(100)/規格ロック(85)は不成立→70。出典: RELX 2025 Annual Report(Form 20-F Item 4に参照組込のExhibit 15.2) https://www.sec.gov/Archives/edgar/data/929869/000110465926017277/relx-20251231xex15d2.htm",
@@ -112,19 +112,23 @@
    "acq5": "【2026-07-29 機械判定】のれん残高(十億$) 2020 7.22 → 2021 7.37 → 2022 8.39 → 2023 8.02 → 2024 8.22 → 2025 7.93。**新しさ =(直近 7.93 − 2020年 7.22)÷直近 = +8.9%**（今あるのれんのうち直近5年に増えた割合） → **大型買収なし=no**（ほぼ全部が遺産のれん）（出典: SEC XBRL companyfacts の Goodwill 系列）",
    "px": "【2026-07-29 市場データ】株価 $38.22。出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）",
    "per": "【2026-07-29 機械算出】PER = 株価 $38.22 ÷ **原本EPS 1.14** = **33.53**。EPSは通期実績（純利益÷期末株数・SEC XBRL）で、TTMコンセンサスではない。株価の出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯8-200を通過（market_merge.BANDS）。**shyとの二重検算も通っている**（shyは還元タグ不在で算出不能）。",
-   "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 35.42 USD（前回 38.22・-7.3%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。"
+   "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 35.42 USD（前回 38.22・-7.3%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
+   "disrupt": "【2026-08-03 原本】20-F『STRATEGIC RISKS』が自社の主要リスクとして「We operate in highly competitive and dynamic markets, and the means of delivery, customer demand for, and the products and services themselves, continue to change in response to technological innovations, **such as the use of AI**, ... the entrance of new competitors」と明記。同時に『OPERATIONAL RISKS』では「suppliers including ... **large language model providers**」への依存を挙げ、AIを自社の供給網としても使っている（Lexis+ AI / Scopus AI）。**強化と破壊の両方の経路が同時に開いており未決＝両刃**。既定値の 'settled'（決着済/影響軽微）は、会社自身が現在進行のリスクとして書いているものと矛盾する（出典: RELX PLC Form 20-F・FY2025〔2025-12-31期〕・2026-02-19提出。accession 0001104659-26-017277）",
+   "erosion": "【2026-08-03 原本】『過去2年に主力で大口離反・競合参入があったか』に該当する開示が20-F全文に無い。STMの記述は「payment models ... 'pay-to-publish'(Open Access) becoming a larger share relative to 'pay-to-read'」＝**収益モデルの構成比の移行**であって、大口顧客の離反でも競合の参入でもない（この論点は f2/cagr 側で評価される）。『the entrance of new competitors』は将来形の一般的競争リスクの列挙で、過去2年に起きた事実の開示ではない（出典: RELX PLC Form 20-F・FY2025〔2025-12-31期〕・2026-02-19提出。accession 0001104659-26-017277）",
+   "moatdecay": "【2026-08-03 原本】終末市場の縮小を示す開示が無い。売上は £9,434百万(2024・Restated) → £9,590百万(2025) と増加し、3セグメント（Risk / STM / Legal / Exhibitions）のいずれについても市場縮小の記述が無い（出典: RELX PLC Form 20-F・FY2025〔2025-12-31期〕・2026-02-19提出。accession 0001104659-26-017277）",
+   "expiry": "【2026-08-03 原本】20-F『INTELLECTUAL PROPERTY』は「We rely on **trademark, copyright, patent, trade secret and other intellectual property laws**, as well as in some cases licensing arrangements with third parties」＝**期限の異なる権利の束**で、特定の特許失効や免許・フランチャイズの満了で独占が消える型ではない。堀の本体は蓄積データと引用ネットワークで、権利満了日を持たない（出典: RELX PLC Form 20-F・FY2025〔2025-12-31期〕・2026-02-19提出。accession 0001104659-26-017277）",
+   "geopol": "【2026-08-03 原本】門の定義は『**物理的・構造的毀損のみ対象**（対中規制等の市場制限は除外）』。地域別売上は 北米58% / 欧州21% / その他21%（FY2025）で分散。物件は世界156件、最大でも Alpharetta(ジョージア州)の406,000平方フィートのオフィス兼データセンター＝**製造拠点も単一生産地への依存も無い**。20-Fが挙げる地理リスクは為替（GBP建て報告 対 最重要市場である米国）に限られ、これはf3/為替の論点であって物理的毀損ではない → 0 軽微（出典: RELX PLC Form 20-F・FY2025〔2025-12-31期〕・2026-02-19提出。accession 0001104659-26-017277）"
   },
   "nulls": {
    "z": "Altman Z は時価総額が必要(市場データ手入力後に算出)",
-   "expiry_moatdecay_erosion_disrupt": "蝕/限セクション『ヒットなし』=状態系の原本証拠皆無。null",
-   "geopol": "集セクション『ヒットなし』。GBP建て・英/米/世界展開だが地政学集中の原本証拠が無いため null(タスク指摘のGBP建て要確認は原本再読事項)",
    "beta_per_perF_evebit_px_shy_gr_gcap_analysts_instOwn_gls_idx_indG": "市場データは取込時に手入力(GBP建て財務 対 NYSE:RELX(USD ADR)の通貨混線注意)",
    "founder": "創業者経営者不在(RELX plc は広く分散保有)。null",
    "fin": "金融業ではない(学術出版/データ分析/展示会)。業態フラグ定義不明のため null",
    "dom": "堀セクション『ヒットなし』。全社の市場占有率を示す直接証拠が無く dom は既存判定(50)を維持。irr/rep/dur は2026-07-28に原本(20-F参照組込のExhibit 15.2 = RELX 2025 Annual Report)で充填済",
    "roic": "のれん除外ROICは投下資本(自己資本+有利子負債-のれん-無形)が**負**のため定義上算出不能。経済実態は roicg=23.7% (のれん込みROIC) で評価すること。詳細は _meta.evidence.roic。",
    "roict": "roic が null のため、のれん除外ROICのトレンドを置く根拠が無い。",
-   "shy": "【2026-07-29】還元額のタグが取れない（20-F・IFRSで配当/自社株買いのus-gaapタグが存在しない）。門は shy 欠損時 bR=0.4 の代用で裁く。原本の連結CF計算書から手入力が要る。"
+   "shy": "【2026-07-29】還元額のタグが取れない（20-F・IFRSで配当/自社株買いのus-gaapタグが存在しない）。門は shy 欠損時 bR=0.4 の代用で裁く。原本の連結CF計算書から手入力が要る。",
+   "f5": "【2026-08-03】旧 f5=65 は「disruptがnullで連動判定不能→保守中位」として置かれた値だったが、disrupt を原本で unsettled と確定した結果、門の導出値が **ちょうど 65** で一致した。導出値と同値なら空欄が正解（値を残すと門が『逸脱評価』として尊重し、disruptを直しても f5 が追随しない＝陳腐化する）"
   },
   "kenshi_gm": "2026-07-20 gm/sbc監査: gm欄を仕様(営業利益率・GAAP)にXBRL機械計算で補正。sbc単位ずれ補正。 gm 66.7→31.6; gmt flat→up",
   "moatW_audit": {
@@ -145,7 +149,12 @@
    "acq5": "machine",
    "px": "market",
    "per": "market",
-   "p1": "machine"
+   "p1": "machine",
+   "disrupt": "audit",
+   "erosion": "audit",
+   "moatdecay": "audit",
+   "expiry": "audit",
+   "geopol": "audit"
   }
  },
  "roiic": "na",

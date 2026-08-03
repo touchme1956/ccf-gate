@@ -84,7 +84,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=na。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 堀再監査(irr): MAの再監査と刻みの読みを統一(V/MAとも70)。値は不変。審査官ごとに『特許・トークン化を見て85寄り』『ルーティング規制を見て70』と割れていたのを、**同じ事実を両社が持っている**ことを確認したうえで一つの読みに揃えた。",
    "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均111.6%・σ21.5pt・CV19.3%）。",
-   "2026-08-02 市場価格を自動更新: px 368.81 → 366.13（-0.7%）。per 31.07→30.84　perF 23.75→23.58。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。"
+   "2026-08-02 市場価格を自動更新: px 368.81 → 366.13（-0.7%）。per 31.07→30.84　perF 23.75→23.58。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
+   "2026-08-03 eps 空欄の理由を記録。全件点検の warn は残るが、これは『測っていない』が正しく出ている状態"
   ],
   "evidence": {
    "dur": "『using both Visa's global network and connectivity to other networks around the world』+『more than 200 countries and territories where Visa operates』→グローバル二面ネットワーク=ネットワーク効果→85",
@@ -116,7 +117,7 @@
   "nulls": {
    "z": "Altman Z=時価総額が必要(市場データ手入力後に算出可)",
    "gpa": "GrossProfitタグ不存在(ネットワーク会計・client incentives控除後のnet revenue開示)。営利率60%は別掲済",
-   "eps": "複数株式クラス(A/B/C)+dei株数系列が2009-10のみで帰属EPS算定不能",
+   "eps": "【2026-08-03】機械算出できない。Visaは EPS も希薄化後株数も **株式クラス別（Class A/B/C）の次元付きタグ**で報告しており、SEC companyfacts は次元なしの事実しか収めないため EarningsPerShareDiluted も WeightedAverageNumberOfDilutedSharesOutstanding も**存在しない**（実測: EPS系タグはAntidilutiveSecurities…とProForma…の2つだけ）。dei:EntityCommonStockSharesOutstanding は**Class A のみ**なので分母に使うと as-converted 総株数より約2割少なく、px÷eps が per と18%ずれる**新しい偽の警報**を作る＝欠測をゼロと読むのと同型の誤り。埋めるなら 10-Q の EPS 注記（as-converted Class A equivalent の希薄化後株数）を人が読むこと。なお eps は compute() で一切使われず、v9.9.57 以降は価格更新も per×(px比) が主経路なので空欄でも採点・価格更新は壊れない（失われるのは per の独立検算だけ）",
    "dilNet": "株数系列不足(sh:1年分)。自社株買いで純株数年-2〜3%減の傍証のみで定量化不可",
    "founder": "創業者経営ではない(プロ経営・支配株主なし)がhits根拠なし・フラグ定義依存のため保留",
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG の13項目は取込時に手入力",

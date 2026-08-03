@@ -43,6 +43,11 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
   if (!showAll && !onlyT.length && s < 72) continue;
   let W = []; try { W = ccfAudit(d, r, []) || []; } catch (e) { continue; }
   W = W.filter(w => !onlyK.length || onlyK.includes(w.k));
+  // 門(ブラウザ)は _meta を持てないので「原本で検算して確定した欄」も鳴り続ける（TSM/SAPのper・
+  // ADBE/MCOのroic乖離・CTAS/SAPのacq5='no' 等）。端末側は _meta を読めるので、
+  // **未解決**と**検算済で仕様どおり鳴っているだけ**を分けて出す＝作業リストが本物だけになる。
+  const M = d._meta || {};
+  for (const w of W) w.ok = !!((M.evidence || {})[w.k] || (M.nulls || {})[w.k]);
   if (W.length) rows.push({ t, s, W });
 }
 rows.sort((a, b) => b.s - a.s);
@@ -50,25 +55,26 @@ rows.sort((a, b) => b.s - a.s);
 if (onlyT.length) {                                  // 1社の中身を全部出す
   for (const r of rows) {
     console.log(`\n===== ${r.t}  Ω${r.s.toFixed(1)}`);
-    for (const w of r.W) console.log(`  [${w.lv}] ${w.k}: ${w.msg.replace(/<[^>]+>/g, '')}\n        直し方: ${w.fix}`);
+    for (const w of r.W) console.log(`  [${w.lv}]${w.ok ? '✓検算済' : '     '} ${w.k}: ${w.msg.replace(/<[^>]+>/g, '')}\n        直し方: ${w.fix}`);
   }
   process.exit(0);
 }
 
 const byK = {};
-for (const r of rows) for (const w of r.W) (byK[w.k] || (byK[w.k] = { err: [], warn: [], info: [] }))[w.lv].push(r.t);
+for (const r of rows) for (const w of r.W) (byK[w.k] || (byK[w.k] = { err: [], warn: [], info: [] }))[w.lv].push({ t: r.t, ok: w.ok });
 const ks = Object.keys(byK).sort((a, b) =>
   (byK[b].err.length * 1000 + byK[b].warn.length) - (byK[a].err.length * 1000 + byK[a].warn.length));
 
-const n = lv => rows.reduce((a, r) => a + r.W.filter(w => w.lv === lv).length, 0);
+const n = (lv, ok) => rows.reduce((a, r) => a + r.W.filter(w => w.lv === lv && (ok === undefined || !!w.ok === ok)).length, 0);
 console.log(`対象 ${rows.length}社${showAll ? '（全件）' : '（Ω72+のみ＝門が未入力警告を出す範囲）'}`
-  + `　要修正 ${n('err')}件 / 警告 ${n('warn')}件 / 測定漏れ ${n('info')}件\n`);
-console.log(`${'項目'.padEnd(10)} ${'要修正'.padStart(5)} ${'警告'.padStart(5)}  社`);
+  + `　要修正 ${n('err')}件 / 警告 ${n('warn')}件（うち ✓検算済 ${n('warn', true)}件・**未解決 ${n('warn', false)}件**）`
+  + ` / 測定漏れ ${n('info')}件\n`);
+console.log(`${'項目'.padEnd(10)} ${'要修正'.padStart(5)} ${'警告'.padStart(5)}  社（✓＝_metaに根拠あり＝門が_metaを読めないため仕様どおり鳴っているだけ）`);
 for (const k of ks) {
   const g = byK[k];
   console.log(`${k.padEnd(12)} ${String(g.err.length).padStart(5)} ${String(g.warn.length).padStart(5)}  `
-    + [...g.err.map(t => t + '!'), ...g.warn].join(' '));
+    + [...g.err.map(x => x.t + '!'), ...g.warn.map(x => x.t + (x.ok ? '✓' : ''))].join(' '));
 }
 console.log(`\n銘柄別（多い順）:`);
 for (const r of rows.slice().sort((a, b) => b.W.length - a.W.length))
-  console.log(`  ${r.t.padEnd(7)} Ω${r.s.toFixed(1).padStart(5)}  ⚠${String(r.W.length).padStart(2)}  ${r.W.map(w => w.k).join(' ')}`);
+  console.log(`  ${r.t.padEnd(7)} Ω${r.s.toFixed(1).padStart(5)}  ⚠${String(r.W.length).padStart(2)}  ${r.W.map(w => w.k + (w.ok ? '✓' : '')).join(' ')}`);
