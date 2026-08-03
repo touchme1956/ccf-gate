@@ -16,7 +16,7 @@
  "dilNet": -1.0,
  "acc": "usgaap",
  "eq": "pos",
- "acq5": null,
+ "acq5": "no",
  "eps": 4.5,
  "expiry": "no",
  "moatdecay": "no",
@@ -110,7 +110,9 @@
    "2026-07-29 ROIC分母縮退の検算: roic 62.6→62.6(完全一致・据置)、roicg 26.6(不変)、IC/自己資本=64.4%、5年系列 46.0/55.9/55.3/57.0/62.6(最大÷最小1.36倍＝7社中最安定)。理由=IC 3,014,846千$が自己資本の64.4%で縮退線(2割)を大きく上回り、系列も安定。60%超だが分母健全＝実測として採用。_meta以外のフィールドは一切変更していない(roic/roicgは実測と一致)。",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=57.7 / 5年窓=69.4。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 90→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均55.4%・σ5.4pt・CV9.7%）。",
-   "2026-08-02 市場価格を自動更新: px 216.66 → 204.63（-5.6%）。per 45.33→42.81　perF 37.74→35.64　evebit 38.7→36.6　shy 1.74→1.84。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。"
+   "2026-08-02 市場価格を自動更新: px 216.66 → 204.63（-5.6%）。per 45.33→42.81　perF 37.74→35.64　evebit 38.7→36.6　shy 1.74→1.84。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
+   "2026-08-03 acq5 None → None。空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**——門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-08-03 acq5 None → 'no'。空欄は門が SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**＝のれん込みROIC乖離 −6 が黙って効いていた。fix_acq5.py の残高『新しさ』では中間帯／タグ不在で判定不能だったため、買収で増えたのれん・取得対価・無形の絶対水準という**別の系列**で確定した。のれん残高 3.40十億$(FY2025)のうち、直近5年に**買収で増えたのれん**は GoodwillAcquiredDuringPeriod 2021 0.01+2022 0.14+2023 0.03+2024 0.16+2025 0.19 = **0.53十億$＝15.6%**。取得対価も PaymentsToAcquireBusinessesNetOfCashAcquired 5年計0.64十億$、最大の単年でも0.233十億$＝売上10.34十億$の2.3%＝**制服レンタルのルート買収（tuck-in）の積み重ねであって大型買収ではない**。残り84%は遺産のれん → no"
   ],
   "evidence": {
    "moatW": "FY2025(5月期)10-K 収益認識注記『total revenue disaggregated by operating segment』(全社 $10,340,181千): Uniform Rental and Facility Services $7,976,073千=77.1% / First Aid and Safety Services $1,218,090千=11.8% / Fire Protection Services $817,463千=7.9% / Uniform Direct Sales $328,555千=3.2%（%は会社自身が同表に開示した実数）。→ ≥売上15%の事業は Uniform Rental の1本のみ（第2位 First Aid 11.8% は15%未達）＝『2本』の85は不成立。50の発動条件も両方とも不成立: (a)1製品≥80% → 最大の Uniform Rental 77.1%は80%未満、かつ同区分は単一製品ではなく 10-K Item1の定義どおり『the rental and servicing of uniforms and other garments, including flame resistant clothing, mats, mops and shop towels and other ancillary items ... restroom cleaning services and supplies and the sale of items from our catalogs』の複合で、製品レベルの売上は原本非開示（≥70%の単一製品を示す開示が無い）。(b)最大顧客≥20% → Item1『We provide our products and services to over one million businesses of all types ... no individual customer accounting for greater than one percent of Cintas' total revenue』＝最大顧客<1%。→ 堀は『ルート密度』1本（約12,100本の配送ルート・478稼働拠点・12配送センターの同一網に4区分すべてが乗る）だが、用途(制服/難燃衣料/マット/モップ/洗面所/救急安全/防火)と顧客(100万社超・最大<1%)が高度に分散＝70。留意1: セグメント単位の77.1%は70の目安『最大製品<70%』を上回るが、これは製品ではなく複数製品の束であり、製品レベルで≥70%を示す開示は原本に無い。留意2: 地域はItem1『our U.S. operations, which generated over 90% of its consolidated revenue in all periods presented』＝米国集中で、分散しているのは用途と顧客の二軸。出典: SEC 10-K CIK0000723254 acc 0000723254-25-000017 (FY2025-05-31) 収益の分解表・Item1 Customers/Operations and Distribution/Government Laws and Regulations",
@@ -129,7 +131,8 @@
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 579,928,292 ÷ Δ投下資本 1,005,778,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 6,103,702,000→7,109,480,000（+16.5%）",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 925,983,295 ÷ Δ投下資本 1,334,573,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 5,774,907,000→7,109,480,000（+23.1%）",
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 46.0% / 2022 55.9% / 2023 55.3% / 2024 57.0% / 2025 62.6% → 平均 55.4% / σ 5.4pt / **CV 9.7%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **90**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
-   "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 204.63 USD（前回 216.66・-5.6%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。"
+   "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 204.63 USD（前回 216.66・-5.6%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
+   "acq5": "【2026-08-03 原本】のれん残高 3.40十億$(FY2025)のうち、直近5年に**買収で増えたのれん**は GoodwillAcquiredDuringPeriod 2021 0.01+2022 0.14+2023 0.03+2024 0.16+2025 0.19 = **0.53十億$＝15.6%**。取得対価も PaymentsToAcquireBusinessesNetOfCashAcquired 5年計0.64十億$、最大の単年でも0.233十億$＝売上10.34十億$の2.3%＝**制服レンタルのルート買収（tuck-in）の積み重ねであって大型買収ではない**。残り84%は遺産のれん → no（出典: SEC XBRL companyfacts）"
   },
   "moatW_audit": {
    "date": "2026-07-29",
@@ -163,7 +166,8 @@
    "eps": "machine",
    "roiic": "machine",
    "roiic5": "machine",
-   "p1": "machine"
+   "p1": "machine",
+   "acq5": "machine"
   }
  },
  "mcap": 88.8926,

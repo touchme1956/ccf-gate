@@ -16,7 +16,7 @@
  "dilNet": 0.0,
  "acc": "usgaap",
  "eq": "pos",
- "acq5": null,
+ "acq5": "no",
  "eps": 44.64,
  "expiry": "no",
  "moatdecay": "no",
@@ -73,7 +73,9 @@
    "2026-07-29 市場値採取(20-F/IFRS経路・手動): per=28.34、shy=0.73、evebit=24.6を充填。機械採取(market_fetch_free)が落ちた原因はus-gaap:EarningsPerShareDilutedの不在——TSMは20-F提出の外国民間発行体でIFRS開示のためEPSはifrs-full:DilutedEarningsLossPerShareにある。加えてSEC companyfactsはFY2024までしか収載しておらず(FY2025 20-FのXBRLが未反映)、TTMは6-K添付プレスリリース4本から直接組んだ。換算根拠: ADR 1単位=普通株5株(20-F損益計算書がADS別掲・NT$327.34/NT$65.47=5.0で確認)、USD値は各四半期の会社開示『US$x.xx per ADR unit』をそのまま合算(含意レート31.12 NT$/US$は20-F便宜換算31.3714と同水準)。時価総額は普通株25,932,524,521株÷5=ADS 5,186,504,904単位×px 392.795＝US$2.037兆で算定(ADR株数での過小算定を回避)。常識帯検問: per 28.34は[8,200]内、shy 0.73%は12%上限のはるか下＝どちらも書き込み可。変更したのは per/shy/evebit/_meta のみ——dom/moatW/p1-4/f1-5/roic/gm等の定性・財務欄は一切触っていない。",
    "2026-07-29 原本検算(TSM FY2025 20-F（2026-04-16提出・accession 0001628280-26-025362）R4.htm/R3.htm): FY2025がSEC XBRLに未収載のため機械も台帳も1年古かった。gm 45.7→50.8 / gmt flat→up / cagr 22.0→23.3。roic 25.4は原本と一致し据置",
    "2026-07-30 全件点検(v9.9.55)が「per ≠ px÷eps」で要修正を出したが、**誤検出**と確認。per=28.34 は px 392.795 USD(ADR) ÷ TTM希薄化後EPS 13.86 USD/ADR で確定済（ADR 1単位=普通株5株）。eps=44.64 は**TWD建て・普通株1株・通期実績**（機械算出）で、per とは通貨も株数基準も違う。**値は一切変更しない**。教訓: この検査は eps 欄が TTM か通期実績か、ADR の通貨・株数比を見分けられないので、_meta.evidence.per に基準が書かれている社では免除すべき（検査側を是正した）。",
-   "2026-07-30 市場価格を実測で更新（Alpha Vantage GLOBAL_QUOTE 2026-07-31）: px 392.795 → 404.25。per 28.34→29.17　evebit 24.6→25.3　shy 0.73→0.71。**基準を保つ比率式**で換算＝perの期間基準(TTM)を維持。鍵ファイル(av_key.txt/fmp_key.txt)が無く market_fetch.py が動かないため、MCPのGLOBAL_QUOTE(1日25回)を投下可9社に絞って使った。"
+   "2026-07-30 市場価格を実測で更新（Alpha Vantage GLOBAL_QUOTE 2026-07-31）: px 392.795 → 404.25。per 28.34→29.17　evebit 24.6→25.3　shy 0.73→0.71。**基準を保つ比率式**で換算＝perの期間基準(TTM)を維持。鍵ファイル(av_key.txt/fmp_key.txt)が無く market_fetch.py が動かないため、MCPのGLOBAL_QUOTE(1日25回)を投下可9社に絞って使った。",
+   "2026-08-03 acq5 None → None。空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**——門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-08-03 acq5 None → 'no'。空欄は門が SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**＝のれん込みROIC乖離 −6 が黙って効いていた。fix_acq5.py の残高『新しさ』では中間帯／タグ不在で判定不能だったため、買収で増えたのれん・取得対価・無形の絶対水準という**別の系列**で確定した。IFRS報告のため us-gaap の Goodwill タグは無い。ifrs-full の **IntangibleAssetsAndGoodwill = 26.28十億TWD**（FY2024）に対し Equity = 4,279.27十億TWD ＝ **自己資本の0.61%**。のれんはこの内数なので、仮に全額が直近5年の買収由来だとしても roic と roicg を動かせない（実測 roic 25.4 = roicg 25.4）→ no"
   ],
   "evidence": {
    "dom": "【2026-07-29 再監査 → 85を維持（実数の裏付けを付与）】◆原本(20-F FY2025)にシェア%の開示は無い。あるのは『As a leader of the foundry segment』(Item4 Overview)、『With our success in the foundry business and the increasing criticism on the concentration of the semiconductor industry and sometimes directly on us, we are subject to heightened risks of antitrust investigations』(Item3)、『to remain technologically ahead of our competitors and maintain our market position in the foundry segment』(同)。ただし原本は自社の収益構造として『Advanced technologies (7-nanometer and below) accounted for 74% of total wafer revenue』(2025。2024は69%、2023は58%。内訳 3nm 24%/5nm 36%/7nm 14%)を開示しており、収益の大宗が先端ノードにある。◆自社シェア(**原本外**・第三者): 専業ファウンドリ市場でTSMC=2025通年69.9%、四半期では2Q25 70.2%・4Q25 70.4%(TrendForce)。◆上位N社合計(**原本外**・同): 2位Samsung 7.2%、3位SMIC 5.32%、4位UMC 4.35%、5位GlobalFoundries 3.87% → 上位3社合計=82.4%、上位5社=90.6%。首位と2位の差は62.7ポイント。◆構造の読み: 自社69.9〜70.4%は『圧倒70-89%』の下端。上位3社82.4%(≥80%)だが、2位が7.2%で3社が拮抗する寡占ではなく首位1社＋周辺の構造。さらに自社売上の74%を占める先端ノード(≤7nm)ではSamsungが一桁%台に留まり実質的な独占に近い(逆に成熟ノードはUMC/SMIC/GF/PSMC/Vanguard等と競合)。売上加重すると先端74%≒独占側・成熟26%≒競争側で85前後に収束。⇒ 刻み85(圧倒70-89%)。100(独占≥90%)は専業ファウンドリ全体では成り立たず、70(寡占40-69%)は2位に62.7pt差の実態を映さない。出典: 原本 https://www.sec.gov/Archives/edgar/data/1046179/000162828026025362/tsm-20251231.htm (Item3 Risk Factors / Item4 Business Overview・Technology Development) ／ **原本外** TrendForce https://www.trendforce.com/presscenter/news/20250901-12691.html ・Taipei Times(TrendForce 2025通年集計) https://www.taipeitimes.com/News/biz/archives/2026/03/14/2003853777",
@@ -109,12 +111,12 @@
    "eps": "機械算出 2024年: 純利益 1,157,523,900,000 ÷ 株数 25,932,733,242（TTMではなく通期実績）",
    "gmt": "原本検算: 営業利益率 2023年42.63% → 2024年45.68% → 2025年50.83%（+8.20pt）＝up。出典 TSM FY2025 20-F（2026-04-16提出・accession 0001628280-26-025362）R4.htm/R3.htm",
    "roic": "原本検算 FY2025: 営業利益1,936,091.7×(1−実効税率≒16%)=NOPAT≒1,626,317 ÷ IC 6,404,254（自己資本5,396,219.2+有利子負債1,032,987.7〔社債856,227.5+長期借入39,834.5+1年内136,925.7〕−無形24,952.6、のれんは僅少）= 25.4%。**既存値25.4と一致＝検算済み**。出典 TSM FY2025 20-F（2026-04-16提出・accession 0001628280-26-025362）R4.htm/R3.htm",
-   "px_market": "Alpha Vantage GLOBAL_QUOTE 実測 2026-07-31 終値 404.25（前回 392.795・+2.9%）。per/perF/evebit は**基準を保つ比率式**で換算した（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと、eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。"
+   "px_market": "Alpha Vantage GLOBAL_QUOTE 実測 2026-07-31 終値 404.25（前回 392.795・+2.9%）。per/perF/evebit は**基準を保つ比率式**で換算した（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと、eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
+   "acq5": "【2026-08-03 原本】IFRS報告のため us-gaap の Goodwill タグは無い。ifrs-full の **IntangibleAssetsAndGoodwill = 26.28十億TWD**（FY2024）に対し Equity = 4,279.27十億TWD ＝ **自己資本の0.61%**。のれんはこの内数なので、仮に全額が直近5年の買収由来だとしても roic と roicg を動かせない（実測 roic 25.4 = roicg 25.4）→ no（出典: SEC XBRL companyfacts）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
    "sbc": "RSA制度(2022/2023/2024 Rules)の存在はXBRLタグで確認できるが金額タグ不発見→空欄(誤値より空欄)",
-   "acq5": "買収CFタグは2015年51.6百万TWDのみ=系列上大型買収なし。正確な5年累計は原本要",
    "founder": "創業者Morris Chang氏は2018年引退、現経営は専門経営者(C.C. Wei)。創業者経営フラグの定義次第のためユーザー判定",
    "fin": "金融業ではない。業態フラグの定義不明のため空欄",
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG=取込時手入力。財務はTWD・NYSE:TSMはUSD ADR(普通株5株分)の混線注意"
@@ -146,7 +148,8 @@
    "dilNet": "machine",
    "eps": "machine",
    "gmt": "kenshi",
-   "roic": "kenshi"
+   "roic": "kenshi",
+   "acq5": "machine"
   }
  },
  "mcap": 10186.166,

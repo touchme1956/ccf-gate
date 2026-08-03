@@ -44,6 +44,16 @@ night/fix_acq5.py — acq5（直近5年に大型買収があったか）の不�
   python3 night/fix_acq5.py              判定だけ表示（書き換えない）
   python3 night/fix_acq5.py --write      不正値の社だけ書き換える（yes/no が既に入っている社は触らない）
   python3 night/fix_acq5.py --all        既に yes/no が入っている社も判定を突き合わせて表示（検算用・書き換えない）
+  python3 night/fix_acq5.py --blank      **空欄の社も対象に含める**（--write と併用で充填。単独なら表示のみ）
+  python3 night/fix_acq5.py --only A,B   銘柄を絞る
+
+**--blank を後から足した理由（2026-08-03）**: 初版の対象は `bad = 値があって列挙外` だけで、
+**空欄は一度も触っていなかった**。ところが門は空欄を SELECT 既定の 'yes' に化かすので、
+空欄は「未測定」ではなく**『大型買収あり』と断定されたのと同じ扱い**——のれん込みROIC乖離 −6 が
+黙って効く。不正値（数値が入っている）と空欄は、門から見れば**まったく同じ壊れ方**をしている。
+実測: Ω72+ の警告39件のうち16件がこの空欄で、投下可の IRMD/NVDA/TSM を含んでいた。
+判定不能（10〜30%の中間帯）の社は空欄のまま残し、理由を _meta.nulls.acq5 に書く＝保守側に倒す。
+
 日本株（コード始まり）は EDINET 経路なので対象外。
 """
 import json
@@ -99,6 +109,10 @@ def judge(gw, eq=None):
 def main():
     write = "--write" in sys.argv
     show_all = "--all" in sys.argv
+    do_blank = "--blank" in sys.argv
+    only = set()
+    if "--only" in sys.argv:
+        only = {x.strip().upper() for x in sys.argv[sys.argv.index("--only") + 1].split(",") if x.strip()}
     scores = {}
     try:
         scores = {r["t"]: r for r in json.load(open(os.path.join(OUT, "score_all.json"), encoding="utf-8"))}
@@ -112,13 +126,17 @@ def main():
         t = f.split("_gate_pack")[0]
         if t[0].isdigit():                      # 日本株はEDINET経路
             continue
+        if only and t.upper() not in only:
+            continue
         d = json.load(open(os.path.join(OUT, f), encoding="utf-8"))
         v = d.get("acq5")
-        bad = v is not None and str(v) not in VALID
-        if bad or show_all:
-            targets.append((t, d, v, bad))
+        blank = v is None or str(v).strip() == ""
+        # 門は空欄を SELECT 既定 'yes' に化かす＝不正値と同じく「罰が黙って効く」壊れ方
+        bad = (not blank) and str(v) not in VALID
+        if bad or (do_blank and blank) or show_all or only:
+            targets.append((t, d, v, bad or (do_blank and blank)))
 
-    print(f"対象 {len(targets)}社（不正値 {sum(1 for x in targets if x[3])}社）\n")
+    print(f"対象 {len(targets)}社（書換対象 {sum(1 for x in targets if x[3])}社）\n")
     print(f"{'':7s} {'現値':>9s} {'判定':>5s} {'Ω':>6s}  根拠")
     n_fix = n_blank = n_same = 0
     for t, d, v, bad in targets:
@@ -135,19 +153,26 @@ def main():
         if not (write and bad):
             continue
         m = d.setdefault("_meta", {})
+        was_blank = v is None or str(v).strip() == ""
+        stamp = "2026-08-03" if was_blank else "2026-07-29"
         if new:
             d["acq5"] = new
-            m.setdefault("evidence", {})["acq5"] = f"【2026-07-29 機械判定】{why}（出典: SEC XBRL companyfacts の Goodwill 系列）"
+            m.setdefault("evidence", {})["acq5"] = f"【{stamp} 機械判定】{why}（出典: SEC XBRL companyfacts の Goodwill 系列）"
             m.setdefault("provenance", {})["acq5"] = "machine"
             m.get("nulls", {}).pop("acq5", None)
             n_fix += 1
         else:
             d["acq5"] = None
-            m.setdefault("nulls", {})["acq5"] = f"【2026-07-29】旧値 {v!r} は yes/no 以外の不正値で棄却。{why}"
+            m.setdefault("nulls", {})["acq5"] = (
+                f"【{stamp}】{why}" if was_blank else
+                f"【{stamp}】旧値 {v!r} は yes/no 以外の不正値で棄却。{why}")
             m.setdefault("evidence", {}).pop("acq5", None)
             n_blank += 1
+        cause = ("空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**"
+                 if was_blank else
+                 "列挙(yes/no)の欄に数値が入っており、門は文字列比較でしか読まない")
         m.setdefault("kenshi", []).append(
-            f"2026-07-29 acq5 {v!r} → {d['acq5']!r}。列挙(yes/no)の欄に数値が入っており、"
+            f"{stamp} acq5 {v!r} → {d['acq5']!r}。{cause}——"
             f"門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。"
             f"のれん系列から機械判定した（判定規則は night/fix_acq5.py）。")
         json.dump(d, open(os.path.join(OUT, f"{t}_gate_pack.json"), "w", encoding="utf-8"),
@@ -158,7 +183,7 @@ def main():
         print("  空欄は門が既定の 'yes'（＝罰あり）で裁く＝保守側。原本で埋め直す作業リストとして残る。")
         print("  書き換え後は `node night/score_all.js` で誰がどう動いたかを実測すること。")
     else:
-        print("\n※--write で不正値の社だけ書き換える（yes/no が既に入っている社は触らない）")
+        print("\n※--write で書き換える（yes/no が既に入っている社は触らない）。空欄も直すなら --blank を併用")
     return 0
 
 
