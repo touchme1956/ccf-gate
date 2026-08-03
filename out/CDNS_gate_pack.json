@@ -71,7 +71,8 @@
    "f1=80: ROIIC(全投下資本ベース)は2024年の負債調達によるcash積上げ+大型買収の計上タイミングでnaive計算7-13%に低下するが、のれん除きROIC~50%=組織的増分資本の超高収益。M&A投下も~25%ROIC。両者WACC超過で80(計算歪みを注記)。f3/f2はR&D/売上・TAM浸透の原本数値がhitsに無く保守側",
    "2026-07-28 絶対MOAT欠測補充(irr/rep): 原本10-K Item1 Business(PDK/サインオフ/Virtuoso=industry standardの記述)とR&D実額から irr=85(認証・規格ロック)/rep=80(極困難)を判定。evidence.irr/rep に原文引用と出典を記載。dom=50・dur=75など既判定項目は不変",
    "2026-07-29 門X未評価を解消: px/per/shy を充填。門Xは `per>0` が唯一の必須条件で、これが無いと E[r] を一切算出しない（xPass=null＝三段関門の第二が未評価）。PERは市場株価 ÷ **原本EPS** で算出し、shy でも独立に検算した。",
-   "2026-08-02 市場価格を自動更新: px 332.76 → 340.02（+2.2%）。per 81.56→83.34　shy 0.86→0.84。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。"
+   "2026-08-02 市場価格を自動更新: px 332.76 → 340.02（+2.2%）。per 81.56→83.34　shy 0.86→0.84。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
+   "acq5 の根拠を機械判定で記録（値はyesのまま据置）: のれんの新しさ +71.6%。この欄は roicGap>15 と組んで**一律−6**が効く最大級の段差なのに、判定圏16社中9社が根拠なしだった（実測でKLAC/VRSK/HWMは誤りだった）ため裏取りした"
   ],
   "evidence": {
    "expiry": "限セクション・ヒットなし。EDA(設計ツール)はコンセッション/特許束期限型の独占ではないため expiry=no",
@@ -101,7 +102,8 @@
    "px": "【2026-07-29 市場データ】株価 $332.76。出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）",
    "per": "【2026-07-29 機械算出】PER = 株価 $332.76 ÷ **原本EPS 4.08** = **81.56**。EPSは通期実績（純利益÷期末株数・SEC XBRL）で、TTMコンセンサスではない。株価の出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯8-200を通過（market_merge.BANDS）。**shyとの二重検算も通っている**（shy=0.86%・帯−5〜12内）。",
    "shy": "【2026-07-29 機械算出】純還元利回り shy = (配当 + 自社株買い − 株式発行) ÷ 時価総額。2025年: 配当 0.00 + 自社株買い 0.93 − 株式発行 0.15 = 純還元 0.78十億$ ÷ 時価総額 90.44十億$（272百万株×$332.76） = **0.86%**。還元額は SEC XBRL のキャッシュフロー計算書（PaymentsOfDividendsCommonStock / PaymentsForRepurchaseOfCommonStock / ProceedsFromIssuanceOfCommonStock）、株数は dei/us-gaap の期末株数、株価は Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯−5〜12%を通過。",
-   "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 340.02 USD（前回 332.76・+2.2%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。"
+   "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 340.02 USD（前回 332.76・+2.2%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
+   "acq5": "【2026-08-03 機械判定】のれん残高 2020年 782,087,000 → 2025年 2,749,143,000。**新しさ =(直近−5年前)÷直近= +71.6%**（今あるのれんのうち直近5年に増えた割合）→ **大型買収あり=yes**（判定線30%）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
