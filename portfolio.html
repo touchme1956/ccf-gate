@@ -55,6 +55,11 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 .ind-dot{font-size:12px;margin-right:7px;vertical-align:middle;filter:drop-shadow(0 0 3px currentColor);}
 .kind{font-size:11px;color:var(--muted);}
 .vlabel{text-align:right;font-size:12.5px;white-space:nowrap;letter-spacing:.02em;}
+.vage{text-align:right;font-size:10.5px;color:var(--muted);white-space:nowrap;margin-top:2px;}
+.srow{display:grid;grid-template-columns:1fr auto 28px;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(40,52,74,.55);}
+.srow:last-child{border-bottom:none;}
+.srow .sdel{cursor:pointer;color:var(--rust);text-align:center;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:3px 0;}
+.smemo{font-size:11.5px;color:var(--muted);grid-column:1/4;line-height:1.6;}
 .mini{font-size:11.5px;color:var(--muted);text-align:right;grid-column:1/3;}
 .note{font-size:12.5px;color:var(--ink-soft);background:rgba(201,166,74,.06);border:1px solid var(--gold-line);border-radius:10px;padding:12px 14px;line-height:1.85;margin:14px 0;}
 /* edit */
@@ -85,6 +90,7 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
   <button class="btn" id="editBtn" onclick="toggleEdit()">✎ 編集</button>
   <button class="btn ghost" id="importBtn" onclick="importFromGate()" title="門(同ドメイン)の台帳で保有登録した個別銘柄を城として取り込む">⭳ 門の保有から取込</button>
   <button class="btn ghost" id="regBtn" onclick="registerToGate()" title="城の個別を門の台帳に保有登録する(既存の採点は上書きしない)">🏛 門の台帳へ登録</button>
+  <button class="btn ghost" id="hjBtn" onclick="pfExportHoldings(this)" title="城(個別保有)を holdings.json 形式で書き出す。run_gate0_local.py / kessan_check.py が読む＝売買したらこれで更新（watch/eliteは既存ファイルを引き継ぎ）">⬇ holdings.json</button>
   <button class="btn ghost" id="bkBtn" onclick="pfBackupAll(this)" title="門と資産の全データ（台帳・保有・採点・このポートフォリオ）をJSONで保存。端末が変わっても復元で全て戻る">⬇ バックアップ</button>
   <label class="btn ghost" for="pfBkFile" style="cursor:pointer" title="バックアップJSONから全データを復元">⬆ 復元</label>
   <input id="pfBkFile" type="file" accept=".json,application/json" style="display:none" onchange="pfRestoreAll(this)">
@@ -121,6 +127,15 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
   <p class="sub">保有銘柄と門の出口判定だけを出す（金額は表示しない）。個別（城）の右側が判定——🔴S1売却検討／🟡S2縮小／🟣S3記録のみ／🔵ホールド／⏳採点待ち。判定は門（Ⅳ台帳）を開くと更新される。網／城／現金の別は各行のバッジで示す。</p>
   <div style="margin:0 0 10px"><button class="btn" id="rescoreBtn" onclick="pfRescorePrompt(this)" style="border-color:rgba(84,184,138,.5);color:#8fc9a4;background:linear-gradient(180deg,rgba(84,184,138,.20),rgba(84,184,138,.06))" title="保有の個別銘柄を、今の門が必要とする全項目で採点し直す依頼文をコピー。Claudeに貼ると完成パックJSONが返る→Ⅲ採点機に取込">📋 個別の再採点依頼文をコピー</button> <span class="mini" style="text-align:left;display:inline">最新データで門Ω＋門Xにかけ直す。返ったJSONを門「Ⅲ採点機」の貼付欄へ。</span></div>
   <div id="holdList"></div>
+ </div>
+
+ <!-- 2026-08-03 新設: 売却の記録。編集で行を削除するとき「売却として記録」を選ぶとここに残る。
+      S3が「記録のみ」という判定であり年1回較正が過去判定の答え合わせである以上、
+      売却judgmentだけが痕跡なく消える(旧: ✕削除で完全消滅)のは思想と矛盾していた。保存先 pf:sold(バックアップ対象)。 -->
+ <div class="card hide" id="soldCard">
+  <h2>売却済み</h2>
+  <p class="sub">売却の記録（金額は持たない）。年1回較正（7月）で「その売却判断は正しかったか」の答え合わせに使う。</p>
+  <div id="soldList"></div>
  </div>
 
  <div class="links">
@@ -181,36 +196,70 @@ function render(){
  document.getElementById('total').textContent = shown.length ? (shown.length+'銘柄') : '—';
  document.getElementById('asof').textContent = P.asof? ('更新 '+P.asof) : '';
 
- const rowHTML=(p,dotColor,vLabel)=>{
+ const rowHTML=(p,dotColor,vLabel,vAge)=>{
   const badge = p.sleeve==='net'?'<span class="badge b-net">網</span>':p.sleeve==='cash'?'<span class="badge b-net" style="opacity:.7">現金</span>':'<span class="badge b-castle">城</span>';
   const dot = dotColor?`<span class="ind-dot" style="color:${dotColor}">●</span>`:'';
   const lab = vLabel?`<div class="vlabel" style="color:${dotColor||'var(--muted)'}">${vLabel}</div>`:'<div class="vlabel" style="color:var(--muted)">—</div>';
-  return `<div class="row"><div class="nm">${dot}${p.nm||p.t}${badge}<div class="kind">${p.t||''}${p.kind?' · '+p.kind:''}</div></div>${lab}</div>`;
+  return `<div class="row"><div class="nm">${dot}${p.nm||p.t}${badge}<div class="kind">${p.t||''}${p.kind?' · '+p.kind:''}</div></div><div>${lab}${vAge||''}</div></div>`;
  };
  // ---- 保有一覧（2026-08-03: 保有と出口判定〔保有/売却〕だけの表示へ）------------------
  // 出口判定は門（Ⅳ台帳）が pf:verdicts へ書く。色丸＋判定の文字を右側に出す。
  const vmap=(function(){try{return JSON.parse(localStorage.getItem('pf:verdicts')||'{}');}catch(e){return {};}})();
- const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm].level;               // 名の完全一致
+ const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm];                     // 名の完全一致
    const pt=(p.t||'').toUpperCase();
-   for(const k in vmap){ if(pt&&k.toUpperCase()===pt)return vmap[k].level; }       // ティッカー完全一致(IRMD≠RMD)
-   for(const k in vmap){ if(p.nm&&(k.indexOf(p.nm)>=0||p.nm.indexOf(k)>=0))return vmap[k].level; } // 名の部分一致のみ
-   return 'pending'; };
+   for(const k in vmap){ if(pt&&k.toUpperCase()===pt)return vmap[k]; }             // ティッカー完全一致(IRMD≠RMD)
+   for(const k in vmap){ if(p.nm&&(k.indexOf(p.nm)>=0||p.nm.indexOf(k)>=0))return vmap[k]; } // 名の部分一致のみ
+   return null; };
  const VCFG={s1:['🔴','売却検討 (S1)','#cf5f48'],s2:['🟡','買い増し停止・縮小 (S2)','#d69a3c'],s3:['🟣','記録のみ (S3)','#a888d8'],hold:['🔵','ホールド','#5d8cc2'],pending:['⏳','採点待ち（門Ⅲで審査）','var(--muted)']};
+ // 判定の鮮度(2026-08-03): 判定は門Ⅳ台帳を開いた時のキャッシュ＝いつのものかを添える。
+ // 90日超(四半期またぎ)は⚠——古い判定が今の顔をして並ぶのを防ぐ(原本鮮度検問と同じ思想)。ts無し=旧キャッシュ。
+ const ageHTML=v=>{ if(!v)return '';
+  if(!v.ts)return '<div class="vage">判定日不明——門(Ⅳ台帳)を開くと更新</div>';
+  const d=Math.floor((Date.now()-v.ts)/864e5);
+  return d>90?`<div class="vage" style="color:var(--rust)">⚠ 判定 ${d}日前——門(Ⅳ台帳)を開いて更新を</div>`:`<div class="vage">判定 ${d===0?'今日':d+'日前'}</div>`; };
  // 並び: 判定を持つ城を先頭に、次に網、現金。同じ枠内は評価額順（金額は出さないが順序の錨には使う）
  const ord={castle:0,net:1,cash:2};
  document.getElementById('holdList').innerHTML = shown.length
    ? shown.slice().sort((a,b)=>(ord[a.sleeve]??1)-(ord[b.sleeve]??1)||(b._v||0)-(a._v||0)).map(p=>{
        // 出口判定は個別(城)にしか意味が無い。ETF・現金には付けない
-       const c = (p.sleeve==='castle') ? VCFG[verdictOf(p)] : null;
-       return rowHTML(p, c?c[2]:'', c?c[0]+' '+c[1]:'');
+       const v = (p.sleeve==='castle') ? verdictOf(p) : null;
+       const c = (p.sleeve==='castle') ? VCFG[(v&&v.level)||'pending'] : null;
+       return rowHTML(p, c?c[2]:'', c?c[0]+' '+c[1]:'', p.sleeve==='castle'?ageHTML(v):'');
      }).join('')
    : '<div class="mini" style="text-align:left">保有が未登録。「✎ 編集」から入れてください。</div>';
+ renderSold();
  document.getElementById('foot').innerHTML=
   `CCF Ω — 保有はこの端末に自動保存（編集で反映）。金額は表示しない（株数・単価の入力は門の配分計算にだけ使う）。売り買いの判定は門＝売りはS1/S2/S3・買いはⅥ買付順位。<br>投資判断は自己責任で。`;
 }
 
+/* ---------- 売却の記録（2026-08-03新設・保存先 pf:sold） ---------- */
+const SOLD_KEY='pf:sold';
+function loadSold(){ try{const s=localStorage.getItem(SOLD_KEY); if(s){const a=JSON.parse(s); if(Array.isArray(a))return a;}}catch(e){} return []; }
+function persistSold(a){ try{localStorage.setItem(SOLD_KEY, JSON.stringify(a));}catch(e){} }
+const SREASON={s1:['S1 売却','#cf5f48'],s2:['S2 縮小','#d69a3c'],s3:['S3 記録','#a888d8'],other:['その他','var(--muted)']};
+function renderSold(){
+ const card=document.getElementById('soldCard'), list=document.getElementById('soldList');
+ if(!card||!list)return;
+ const sold=loadSold();
+ if(!sold.length){ card.classList.add('hide'); return; }
+ card.classList.remove('hide');
+ list.innerHTML = sold.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map((s,i)=>{
+  const rc=SREASON[s.reason]||SREASON.other;
+  return `<div class="srow"><div class="nm">${s.nm||s.t}<div class="kind">${s.t||''}${s.date?' · 売却 '+s.date:''}</div></div>`+
+   `<div class="vlabel" style="color:${rc[1]}">${rc[0]}</div>`+
+   `<div class="sdel" title="この記録を消す" onclick="delSold(${i})">✕</div>`+
+   (s.memo?`<div class="smemo">${s.memo}</div>`:'')+`</div>`;
+ }).join('');
+}
+function delSold(i){
+ const sold=loadSold().slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+ const s=sold[i]; if(!s)return;
+ if(!confirm(`売却記録「${s.nm||s.t}」を消す？（較正の答え合わせに使えなくなる）`))return;
+ sold.splice(i,1); persistSold(sold); renderSold();
+}
+
 /* ---------- 編集（いつ・どれだけ買ったか） ---------- */
-let editing=false, draft=null, draftFxVal=null;
+let editing=false, draft=null, draftFxVal=null, pendingSold=[];
 function toggleEdit(){ editing?cancelEdit():openEdit(); }
 function openEdit(){
  editing=true; draft=JSON.parse(JSON.stringify(P.positions)).map(({_v,...r})=>r);
@@ -220,7 +269,7 @@ function openEdit(){
  renderEdit();
  document.getElementById('editCard').scrollIntoView({behavior:'smooth',block:'start'});
 }
-function cancelEdit(){ editing=false; draft=null;
+function cancelEdit(){ editing=false; draft=null; pendingSold=[];  // 取消なら売却記録の下書きも破棄
  document.getElementById('editCard').classList.add('hide');
  document.getElementById('editBtn').textContent='✎ 編集';
 }
@@ -258,12 +307,41 @@ function renderEdit(){
   </div>`).join('');
 }
 function addRow(){ draft.push({t:'',nm:'',sleeve:'castle',kind:'個別',ccy:'USD',bd:'',sh:0,bpx:0,npx:0,v:0}); renderEdit(); }
-function delRow(i){ draft.splice(i,1); renderEdit(); }
+// 2026-08-03: 削除時に「売却として記録」を選べる。旧実装は✕で痕跡なく消え、
+// 売却判断だけが年1回較正の答え合わせから漏れていた。記録の確定は「保存して反映」時（取消なら破棄）。
+function delRow(i){
+ const p=draft[i];
+ if(p&&(p.t||p.nm)){
+  const label=p.nm||p.t;
+  if(confirm(`「${label}」を売却として記録する？\nOK＝売却記録を残して保有から外す ／ キャンセル＝記録せず外すだけ\n（確定は「保存して反映」。取消なら戻る）`)){
+   let reason=(prompt('売却理由: s1(売却規律) / s2(縮小) / s3(記録のみ) / other(その他)','s1')||'').trim().toLowerCase();
+   if(!SREASON[reason])reason='other';
+   const d=new Date(), today=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+   const date=(prompt('売却日 (YYYY-MM-DD)',today)||today).trim();
+   const memo=(prompt('メモ（任意・なぜ売ったか。較正で読み返す）','')||'').trim();
+   pendingSold.push({t:p.t||'',nm:p.nm||'',sleeve:p.sleeve||'',date,reason,memo});
+  }
+ }
+ draft.splice(i,1); renderEdit();
+}
 function saveEdit(){
  P.positions = draft.filter(p=>(p.t||p.nm));
  P.fx = +draftFxVal||0;
  const d=new Date(); // 保存日は端末時刻から(表示用のみ)
  P.asof = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ if(pendingSold.length){
+  const sold=loadSold(); sold.push(...pendingSold); persistSold(sold);
+  // 門の保有フラグ(g7hold:set)からも外す——Ⅳ台帳の保有チェック・監視リストの「保有」母集合と揃える。
+  // ただし同じ銘柄がまだ保有に残っているなら外さない（一部売却の記録だけ残すケース）
+  try{
+   let hs=JSON.parse(localStorage.getItem('g7hold:set')||'[]');
+   const drop=new Set(); pendingSold.forEach(s=>{ if(s.nm)drop.add(s.nm); if(s.t)drop.add(s.t.toUpperCase()); });
+   const still=new Set(); P.positions.forEach(p=>{ if(p.nm)still.add(p.nm); if(p.t)still.add((p.t||'').toUpperCase()); });
+   hs=hs.filter(n=>{ const up=(n||'').toUpperCase(); return !((drop.has(n)||drop.has(up))&&!(still.has(n)||still.has(up))); });
+   localStorage.setItem('g7hold:set',JSON.stringify(hs));
+  }catch(e){}
+  pendingSold=[];
+ }
  persist(); cancelEdit(); render();
 }
 function resetDefault(){ if(!confirm('初期値（運用開始スナップショット）に戻す？ 現在の編集内容は消えます。'))return;
@@ -377,9 +455,36 @@ function pfRescorePrompt(btn){
  pfCopy(head+PROTO_RESCORE, btn);
 }
 
+/* ---------- holdings.json の書き出し（2026-08-03新設） ----------
+   run_gate0_local.py(HOLDINGS/WATCH自動差し替え)と kessan_check.py(四半期点検の走査対象)は
+   リポジトリの holdings.json を読むが、更新は手動編集だった＝Ⅶで売買してもここを直し忘れると
+   四半期点検が旧保有を走査し続ける（売った銘柄を点検し、買った銘柄を見ない）。
+   城の現在保有から {holdings,watch,elite} 形式で書き出す。watch/elite はこのページの管轄外なので
+   既存ファイル(同一オリジン)を fetch して引き継ぐ——勝手に空にしない。 */
+async function pfExportHoldings(btn){
+ const o=btn?btn.textContent:'';
+ const castle=P.positions.filter(p=>p.sleeve==='castle'&&(p.t||p.nm));
+ if(!castle.length){ alert('城（個別）が未登録です。書き出す保有がありません。'); return; }
+ const holdings=castle.map(p=>((p.t||p.nm)+'').toUpperCase().trim()).filter(Boolean);
+ let watch=[], elite=[], carried='取得失敗→空';
+ try{ const r=await fetch('holdings.json',{cache:'no-store'});
+  if(r.ok){ const j=await r.json(); if(j){ watch=Array.isArray(j.watch)?j.watch:[]; elite=Array.isArray(j.elite)?j.elite:[]; carried='既存ファイルから引き継ぎ'; } }
+ }catch(e){}
+ const d=new Date(), ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ const payload={holdings,watch,elite,
+  note:`${ds} Ⅶ保有（城）から書き出し。watch/eliteは${carried}。リポジトリ直下の holdings.json と差し替える（run_gate0_local.py / kessan_check.py が読む）。ETF(網)は個別審査の対象外ゆえ含めない。`};
+ try{
+  const blob=new Blob([JSON.stringify(payload,null,1)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download='holdings.json'; document.body.appendChild(a); a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1200);
+  if(btn){btn.textContent='書き出し ✓ '+holdings.length+'銘柄'; setTimeout(()=>{btn.textContent=o;},2600);}
+ }catch(e){ if(btn){btn.textContent='書き出し不可'; setTimeout(()=>{btn.textContent=o;},2000);} }
+}
+
 /* ---------- 完全バックアップ／復元（門と同origin＝同じlocalStorageを保全） ---------- */
 const BK_PREFIX=['g7:','g7wait:','g7prev:','g7queue:','hm:'];
-const BK_EXACT=['g7hold:set','g7buy:map','pf:portfolio','pf:verdicts'];
+const BK_EXACT=['g7hold:set','g7buy:map','pf:portfolio','pf:verdicts','pf:sold'];
 function pfBackupAll(btn){
  const o=btn?btn.textContent:''; const data={}; let n=0;
  for(let i=0;i<localStorage.length;i++){

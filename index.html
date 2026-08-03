@@ -2637,7 +2637,9 @@ async function renderHoldings(items,holdSet){
   const scored=held.filter(it=>it.evalScore!=null), pending=held.filter(it=>it.evalScore==null);
   // 出口判定を資産ビュー(portfolio)と共有するためlocalStorageにキャッシュ(採点済のみ・表示専用)。
   // levelは採点機compute()同梱の正本判定(it.exit)を最優先し、無い旧記録のみ簡易版exitVerdictで補う(S1/S2/S3一本化)
-  try{const vm={};scored.forEach(it=>{const e=exitVerdict(it.d||{},it);const lvl=(it.exit&&it.exit.level)||e.level;vm[it.nm]={level:lvl,spread:e.spread,F:e.F,conv:e.conv};});localStorage.setItem('pf:verdicts',JSON.stringify(vm));}catch(e){}
+  // 2026-08-03: ts(書込時刻)を同梱——Ⅶ保有が「いつの判定か」を表示し、90日超(四半期またぎ)は⚠を出す。
+  // キャッシュに時刻が無いと、門を開かない期間の古い判定が今の顔をして表示され続ける(原本鮮度検問と同じ思想)
+  try{const vm={};const now=Date.now();scored.forEach(it=>{const e=exitVerdict(it.d||{},it);const lvl=(it.exit&&it.exit.level)||e.level;vm[it.nm]={level:lvl,spread:e.spread,F:e.F,conv:e.conv,ts:now};});localStorage.setItem('pf:verdicts',JSON.stringify(vm));}catch(e){}
 }
 async function save(){
   const nm=$('nm').value.trim(); if(!nm){uiNotice('銘柄名を入力してください');return;}
