@@ -1,7 +1,7 @@
 {
  "nm": "ALLE",
  "roic": 43.6,
- "roicg": null,
+ "roicg": 17.8,
  "nde": 1.64,
  "z": null,
  "gpa": null,
@@ -9,7 +9,7 @@
  "gm": 21.1,
  "gmt": "flat",
  "roict": "down",
- "cagr": null,
+ "cagr": 7.5,
  "fcf": 0.78,
  "ni": 0.64,
  "sbc": 0.73,
@@ -110,7 +110,9 @@
    "2026-07-29 _meta.kenshi が文字列で保存されていたため配列へ正規化した（ASR様式は配列が正）。内容は改行区切りの要素へ分解しただけで一文字も捨てていない。文字列のままだと検死の追記が list.append で落ちる＝**この社だけ監査の記録が伸びなくなる**。",
    "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均41.5%・σ12.3pt・CV29.7%）。",
    "2026-08-03 f5 75 → 空欄。disrupt=unsettled の導出値は 65 で、逸脱評価なのに根拠が無かった。**disrupt は測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない（未測定なのは全317社中3社＝ADP/META/NJRのみで、そちらは値を残す）。影の計測: Ωの動きは最大+0.4/最小−0.2pt・Ω72/75の線を跨ぐ社0・投下可7社不変（f5の実効ウェイトは約4%）",
-   "2026-08-03 p3 80 → 空欄。nde=1.64 の導出値は 70。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ"
+   "2026-08-03 p3 80 → 空欄。nde=1.64 の導出値は 70。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ",
+   "2026-08-03 cagr None → 7.5。v9.9.67（QからFを外す）でΩが72を超え監視枠へ入り、未取得だったことが全件点検で露出した。原本から機械算出して充填。売上 $3.27bn(FY2022) → $4.07bn(FY2025) の3年CAGR = **7.5%**（出典: SEC XBRL companyfacts の売上系列）",
+   "2026-08-03 roicg None → 17.8。v9.9.67（QからFを外す）でΩが72を超え監視枠へ入り、未取得だったことが全件点検で露出した。原本から機械算出して充填。NOPAT ÷ (自己資本 + 有利子負債) = **17.8%**（night/recalc_roic.py の実測。IC/自己資本 63% で縮退なし。参考: のれん除外 roic は実測55.0%で現行値43.6%と乖離するが、**審査官が原本で置いた値のほうが機械より強い**ため roic は据置）"
   ],
   "evidence": {
    "dom": "10-K FY2025(alle-20251231.htm) Item1 Industry and Competition: 『The security products markets are highly competitive and fragmented throughout the world, with a number of large multi-national companies and thousands of smaller regional and local companies. This high degree of fragmentation primarily reflects local regulatory requirements and highly variable end-user needs. We believe our principal global competitors are Assa Abloy AB and dormakaba Group. We also face competition in various markets and product categories throughout the world, including Fortune Brands Innovations, Inc. in the North American residential market and from private label brands. As we move into more technologically advanced product categories, we may also compete against new, more specialized competitors.』 Item1A『The markets in which we operate include a large number of participants, including multi-national, regional and small, local companies. ... we compete with our retail customers and technology partners who use their own private labels.』。**自社シェア%の開示なし／上位N社合計シェアの開示なし**——原本に数値が無いため70/85/100は主張不能。しかも提出書類自身が『**fragmented** throughout the world』『**thousands of** smaller regional and local companies』『private label brands(同等品を多数が製造可能)』と**構造的に分散**を明言しており、自社シェア40%以上・上位2社≥80%・上位3社≥80%はいずれも定義上ありえない → 市場構造=競争(<40%)＝刻み50。Assa Abloy/dormakabaは『principal global competitors』の実名列挙であって上位3社合計シェアの開示ではない点に注意(旧dom=70はこれを寡占と読み違えていた)。Allegion Americas/Allegion Internationalとも同一記述で全社が同じ刻みに落ちるため50を確定(v9.9.41規約1・3)",
@@ -122,7 +124,9 @@
    "eps": "機械算出 2025年: 純利益 643,800,000 ÷ 株数 86,066,997（TTMではなく通期実績）",
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 197,818,839 ÷ Δ投下資本 996,300,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 3,051,600,000→4,047,900,000（+32.6%）",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 372,865,757 ÷ Δ投下資本 356,100,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 3,691,800,000→4,047,900,000（+9.6%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない",
-   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 20.4% / 2022 50.7% / 2023 35.9% / 2024 45.6% / 2025 55.0% → 平均 41.5% / σ 12.3pt / **CV 29.7%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。"
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 20.4% / 2022 50.7% / 2023 35.9% / 2024 45.6% / 2025 55.0% → 平均 41.5% / σ 12.3pt / **CV 29.7%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
+   "cagr": "【2026-08-03 機械算出】売上 $3.27bn(FY2022) → $4.07bn(FY2025) の3年CAGR = **7.5%**（出典: SEC XBRL companyfacts の売上系列）",
+   "roicg": "【2026-08-03 機械算出】NOPAT ÷ (自己資本 + 有利子負債) = **17.8%**（night/recalc_roic.py の実測。IC/自己資本 63% で縮退なし。参考: のれん除外 roic は実測55.0%で現行値43.6%と乖離するが、**審査官が原本で置いた値のほうが機械より強い**ため roic は据置）"
   },
   "provenance": {
    "gm": "machine",
@@ -132,7 +136,9 @@
    "eps": "machine",
    "roiic": "machine",
    "roiic5": "machine",
-   "p1": "machine"
+   "p1": "machine",
+   "cagr": "machine",
+   "roicg": "machine"
   },
   "nulls": {
    "f5": "【2026-08-03】f5=75 は disrupt=unsettled（未決・両刃） からの門の導出値 65 と食い違う『逸脱評価』だったが _meta.evidence.f5 に根拠が無かった。導出項目に根拠なき値を残すと門がそれを尊重し、**disruptを直しても f5 が追随しない＝陳腐化する**（night/fill_derived_judgment.py の設計思想）。空欄へ戻して門の導出に委ねる。逸脱させるなら原本根拠を付けて入れ直すこと",

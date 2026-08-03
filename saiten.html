@@ -157,6 +157,10 @@ td.nm{color:var(--ink);}
   </div>
   <div class="body">
     <p>四本は測っているものが違う。<b>Q</b>は今の質、<b>sustain</b>はそれが持つか、<b>F</b>はこれから伸びるか、<b>堀</b>は守れるか。</p>
+    <p><b>v9.9.67（2026-08-03）で F の二重計上を解きました。</b>以前は F が Ω の直接項と Q の中の両方に居たため、
+    表記が22%なのに<b>実効30.75%</b>で四本のうち最大でした。堀の二経路は意図して設計されたものですが、
+    F の二経路はどこにも記述がなく、門の作法「同じ信号を二度数えない」に反していました。
+    いまは <b>四本が一対一に対応</b>します——Q＝今の質、sustain＝持つか、F＝これから、堀＝守れるか。</p>
     <p>堀の見かけの重みは13%だが、<b>実効は約22%</b>。sustain の中の MOAT 柱にも入っているので、堀は<b>二経路</b>で効く——
     直接 <span class="num">13%</span> ＋ pm 経由 <span class="num">0.70×0.475×0.30 ≒ 10%</span>。
     堀を採点でさらに罰すると同じ信号の三重罰になるため、堀のふるいは減点ではなく「買う対象から外す」だけにしてある。</p>
@@ -172,7 +176,7 @@ td.nm{color:var(--ink);}
 
     <div class="node">
       <div class="nh"><span class="nn">Q ── 質</span><span class="nw">35%</span></div>
-      <div class="parts">幾何平均( [ P 持続の質 , now 現在の収益力 , F 未来 ] , [ .40 , .35 , .25 ] )</div>
+      <div class="parts">幾何平均( [ P 持続の質 , now 現在の収益力 ] , [ .5333 , .4667 ] )</div>
       <div class="nd">キルがあれば <span class="num">min(Q, max(40, 74 − 6×(キル数−1)))</span>。<br>
       <b>P</b> = 幾何平均( [ p1 ROIC安定性 <span class="num">.30</span> , p2 <span class="num">.25</span> ,
       p3 財務頑健 <span class="num">.25</span> , p4 会計健全 <span class="num">.20</span> ) —— p3 は純負債/EBITDAから門が機械導出（&lt;0→95 / &lt;1→85 / &lt;2.5→70 / 以上→50）。<br>
@@ -211,6 +215,13 @@ td.nm{color:var(--ink);}
   <div class="shead">
     <h2>なぜ平均ではなく、掛け算なのか</h2>
     <p class="snote">この設計が門の思想そのもの。相加平均なら、弱い一本は強い一本で埋められる。幾何平均は埋まらない。</p>
+  </div>
+  <div class="body" style="margin-bottom:-4px">
+    <p><b>ROIC は三経路で入る、単独で最大の入力</b>——now のスプレッド・pr（ROIC柱）・F の中の収益性と内部複利。
+    判定帯で ROIC を 10%→40% に振ると <b class="num">Ω が 31.8pt</b> 動きます（実効36.5%）。
+    思想どおり（「守りのスクリーンが20年検証で唯一頑健に効いた」）ですが、<b>一つの数字に36.5%が乗っている</b>ので、
+    ROIC欄の事故はそのまま Ω の事故になります。逆に <b>成長 cagr は 1.3%、純負債 nde は −0.4%</b>——
+    財務は「点」ではなく<b>キル</b>（負債/EBITDA&gt;4）で見る設計だからです。</p>
   </div>
   <div class="pull">壊れない会社を探しているのだから、良いところの多さではなく、<b>いちばん弱いところ</b>が答えになる。</div>
   <div class="body">
