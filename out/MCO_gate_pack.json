@@ -1,7 +1,7 @@
 {
  "nm": "MCO",
- "roic": 93.7,
- "roicg": 23.9,
+ "roic": 79.2,
+ "roicg": 20.2,
  "nde": 1.36,
  "z": 6.11,
  "gpa": null,
@@ -77,7 +77,8 @@
    "2026-08-03 roic 据置（値は変えない）。ccfAudit の乖離警告に対する検算: roic=93.7% / roicg=23.9%、**IC/自己資本 = 69%** で縮退なし（night/recalc_roic.py の実測がパック現行値と完全一致）。乖離3.9倍は Bureau van Dijk・RMS 買収由来ののれんが実体で、roicGapの減点で処理済み。過去にICが負の年があるが当期は健全＝算出可（audit_roic.py 頭注に既記）",
    "2026-08-03 eps 13.87（通期実績）→ 15.57（TTM実績）。台帳内で eps の定義が TTM と通期に割れており、per は規約上 px÷TTM実績EPS なので px÷eps が恒等式にならず全件点検が警告を出していた。**eps は compute() で一切使われない**（採点に影響しない）ので Ω は動かない。唯一の役割である価格更新時のフォールバック px÷eps も、これで per と同じ基準になる。",
    "2026-08-03 geopol 空欄 → '0'。空欄は門が既定'0'で裁くので採点は動かないが、**『測っていない』と『測って軽微』が台帳上まったく同じ見た目**になっていた（絶対のルール8が指す構造の問題）。geopol は未測定が最良ケースになる欄なので、原本で確かめて明示した。Ωは不変。",
-   "2026-08-03 四半期点検で要審査 → 門2再審査の結論: 【誤検出】のれん推移表の**列名**（Gross goodwill / Accumulated impairment charge / Net goodwill）を拾っただけで、当期の減損計上ではない"
+   "2026-08-03 四半期点検で要審査 → 門2再審査の結論: 【誤検出】のれん推移表の**列名**（Gross goodwill / Accumulated impairment charge / Net goodwill）を拾っただけで、当期の減損計上ではない",
+   "**v9.9.71（2026-08-03・ユーザー明示指示）roic を through-cycle 化**: roic 93.7→79.2 / roicg 23.9→20.2。`roic = min(直近年, 5年中央値)`＝直近 93.6% と中央値 79.1%（5年・最悪 57.6%）の小さいほうを採り、係数 0.845 を **roic/roicg/roicEx に同じだけ**掛けた（別々の比を掛けると roic<roicg という数学的に不可能な組み合わせができる）。出典: SEC companyfacts（採取器 build_numbers）"
   ],
   "evidence": {
    "expiry": "限セクション ヒットなし。格付・分析業はコンセッション/特許満了型の期限独占ではない→no",
@@ -98,8 +99,8 @@
    "irr": "irr=85(認証・規格ロック)。10-K Item1 Regulation:『In the U.S., CRAs are subject to extensive regulation primarily pursuant to Section 15E of the Exchange Act and rules thereunder. MIS is registered with the SEC as an NRSRO and is subject to the SEC's oversight and examination authority.』『In the EU ... MIS's EU CRA subsidiaries are registered with ESMA and are subject to its ongoing supervision.』NRSRO登録が規制上の地位＝Item1Aも『increased competition from non-NRSROs that evaluate debt risk』と非NRSROを別枠で扱い、登録の有無が識別子であることを示す。100(唯一供給)にしない理由も原本にあり:『the Reform Act was designed to encourage competition among rating agencies. The formation of additional NRSROs may increase pricing and competitive pressures.』＝登録は認証ロックであって独占供給ではない。出典 https://www.sec.gov/Archives/edgar/data/1059556/000162828026009136/mco-20251231.htm",
    "rep": "rep=80(極困難)。10-K Item1A:『Moody's reputation and the strength of its brand are key competitive strengths. To the extent that the credit rating business as a whole or Moody's, relative to its competitors, suffers a loss in credibility, Moody's business will be significantly impacted.』複製には(1)米SEC NRSRO登録(2)EU ESMA登録(3)英FCA(『ratings endorsed into the U.K. are similarly subject to oversight of the FCA』)等の多法域の登録と、格付実績に基づく信認の積み上げが要る。100(複製不能)にしない理由:同10-Kが『The formation of additional NRSROs may increase pricing and competitive pressures』と新規参入の制度的経路を明記し、参入は困難だが不能ではない。出典 https://www.sec.gov/Archives/edgar/data/1059556/000162828026009136/mco-20251231.htm",
    "dur": "dur=100(規制型)。10-K Item1 Regulation:『MIS, certain of the Company's credit rating affiliates, and many of the issuers and/or securities that MIS and the affiliates rate, are subject to extensive regulation in the U.S. (including by state and local authorities), EU, U.K. and in other countries.』Item1A:『The current U.S. laws and regulations relating to MIS, including the Reform Act and the Dodd-Frank Act: ... provide the SEC with direct jurisdiction over CRAs that seek NRSRO status, and grant authority to the SEC to inspect the operations of CRAs』。堀の型はネットワーク(85)でもスイッチングコスト(75)でもブランド単独(55)でもなく、NRSRO/ESMA/FCAという規制枠に埋め込まれた事業免許型。出典 https://www.sec.gov/Archives/edgar/data/1059556/000162828026009136/mco-20251231.htm",
-   "roic": "【2026-08-03 原本検算】roic=93.7% / roicg=23.9%、**IC/自己資本 = 69%** で縮退なし（night/recalc_roic.py の実測がパック現行値と完全一致）。乖離3.9倍は Bureau van Dijk・RMS 買収由来ののれんが実体で、roicGapの減点で処理済み。過去にICが負の年があるが当期は健全＝算出可（audit_roic.py 頭注に既記）（出典: SEC XBRL companyfacts / night/recalc_roic.py）",
-   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 4,054,000,000 + 有利子負債 6,994,000,000)＝のれん込み。roic(除外)との差が買収規律の指標",
+   "roic": "【2026-08-03 原本検算】roic=93.7% / roicg=23.9%、**IC/自己資本 = 69%** で縮退なし（night/recalc_roic.py の実測がパック現行値と完全一致）。乖離3.9倍は Bureau van Dijk・RMS 買収由来ののれんが実体で、roicGapの減点で処理済み。過去にICが負の年があるが当期は健全＝算出可（audit_roic.py 頭注に既記）（出典: SEC XBRL companyfacts / night/recalc_roic.py）｜**v9.9.71 through-cycle**: 直近93.6%/中央79.1%/最悪57.6%（5年）の min(直近,中央) を採用（係数0.845）",
+   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 4,054,000,000 + 有利子負債 6,994,000,000)＝のれん込み。roic(除外)との差が買収規律の指標｜**v9.9.71 through-cycle**: 直近93.6%/中央79.1%/最悪57.6%（5年）の min(直近,中央) を採用（係数0.845）",
    "roict": "機械算出: のれん除外ROIC 5年系列 79.1% / 76.7% / 70.5% / 93.6%（最古→直近の差で判定）",
    "gmt": "機械算出: 営業利益率 2023年 36.1% → 2025年 43.4%（±1ptでup/down）",
    "fcf": "機械算出 2025年: 営業CF 2,901,000,000 − 設備投資 326,000,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",

@@ -59,6 +59,8 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  "assets":["Assets"],
  "eq":    ["StockholdersEquity","StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest","Equity"],
  "gw":    ["Goodwill"],
+ # IFRS勢は のれん を単独で出さず IntangibleAssetsAndGoodwill に合算する社がある（実測TSM）。
+ #   その場合 gw は取れず intan 側で合算値を引くので、二重に引かないよう gw には足さない。
  # 2026-07-29修正: series() は**最初に一致したタグ**を採るため、FiniteLivedIntangibleAssetsNet
  #   (耐用年数が確定した分だけ)が常に総額タグに勝ち、**無形の控除が過少になっていた**。
  #   投下資本 IC = 自己資本 + 有利子負債 − のれん − 無形 なので、控除が過少だと IC が過大に出て
@@ -80,7 +82,8 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  #     2022-2024のCELHで総額=両者の和が**円単位まで一致**する（12,254 / 12,139 / 12,213）ことを確認済み。
  #   ※このリストは series() 用ではなく intan_series() の材料。並びは [総額, 確定分, 無期限分]。
  "intan": ["IntangibleAssetsNetExcludingGoodwill",
-           "FiniteLivedIntangibleAssetsNet","IndefiniteLivedIntangibleAssetsExcludingGoodwill"],
+           "FiniteLivedIntangibleAssetsNet","IndefiniteLivedIntangibleAssetsExcludingGoodwill",
+           "IntangibleAssetsOtherThanGoodwill"],
  "cash":  ["CashAndCashEquivalentsAtCarryingValue","CashAndCashEquivalents"],
  "sti":   ["ShortTermInvestments","MarketableSecuritiesCurrent"],
  # 2026-07-29: 実測で取りこぼしが3件出たのでタグを拡張した（絶対のルール7「欠測をゼロと読むな」）。
@@ -90,12 +93,23 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  #         → 負債3,552百万$が丸ごと欠落。**タグ名は年次で移行する**ので同義タグを並べて拾う
  #   なお「タグが1つも当たらない年は算出不能として飛ばす」ガードは下のROIC算出側にある。
  #   タグを増やすのは、飛ばす前にまず拾えるようにするため（飛ばすのは最後の手段）。
+ # 2026-08-03: **IFRS(20-F)勢の負債タグを追加した。** 実測 TSM(投下可の社): 有利子負債が
+ #   ifrs-full の `NoncurrentPortionOfNoncurrentBondsIssued` / `LongtermBorrowings` /
+ #   `CurrentBondsIssuedAndCurrentPortionOfNoncurrentBondsIssued` /
+ #   `CurrentPortionOfLongtermBorrowings` / `ShorttermBorrowings` に入っており、
+ #   us-gaap名しか並んでいなかったため**1つも当たらず5年系列が作れなかった**。
+ #   RELXで無形を取りこぼしたのと同じ「IFRS名を並べていない」型（recalc_roic.pyの頭注を見よ）。
+ #   ※リース負債は入れない——門式の有利子負債は借入・社債であり、IFRS16のリース負債を混ぜると
+ #     us-gaap勢(オペレーティングリースを負債に含めない年がある)と基準が割れるため。
  "debtL": ["LongTermDebtNoncurrent","LongTermDebt","LongTermDebtAndCapitalLeaseObligations",
            "DebtAndCapitalLeaseObligations","LongTermNotesPayable","ConvertibleLongTermNotesPayable",
-           "NoncurrentBorrowings","Borrowings"],
+           "NoncurrentBorrowings","Borrowings",
+           "NoncurrentPortionOfNoncurrentBondsIssued","LongtermBorrowings","BondsIssued"],
  "debtS": ["LongTermDebtCurrent","DebtCurrent","LinesOfCreditCurrent","CommercialPaper",
            "ConvertibleNotesPayableCurrent","ConvertibleNotesPayable","NotesPayableCurrent",
-           "CurrentBorrowings","ShortTermBorrowings"],
+           "CurrentBorrowings","ShortTermBorrowings",
+           "CurrentBondsIssuedAndCurrentPortionOfNoncurrentBondsIssued",
+           "CurrentPortionOfLongtermBorrowings","ShorttermBorrowings"],
  "sh":    ["CommonStockSharesOutstanding","EntityCommonStockSharesOutstanding","NumberOfSharesOutstanding"],
  "impair":["GoodwillImpairmentLoss","ImpairmentOfIntangibleAssetsIndefinitelivedExcludingGoodwill"],
 }
@@ -275,6 +289,16 @@ def build_numbers(facts):
     #   実測 CELH: 総額タグが2024年で終わり、2025年は二本に割れていたので series() では欠測になった。
     S["intan"], _usedI = series_sum(facts, TAGS["intan"],
                                     total_key="IntangibleAssetsNetExcludingGoodwill")
+    # IFRS勢は のれん を単独で出さず `IntangibleAssetsAndGoodwill`(のれん**込み**の合算) だけを
+    #   出す社がある（実測TSM: Goodwillタグ自体が存在しない）。これを上のsum候補に入れると
+    #   `Goodwill` や `IntangibleAssetsOtherThanGoodwill` を併せ持つ社で**のれん/無形を二重に引く**。
+    #   → **他の無形が取れず、かつ のれん も取れない年に限って**合算値を無形として使う
+    #     （gw=0 なので合算をそのまま引けば過不足なく一致する）。
+    _iag = series(facts, ["IntangibleAssetsAndGoodwill"])[0]
+    if _iag:
+        for _y, _v in _iag.items():
+            if _y not in S["intan"] and _y not in S["gw"]:
+                S["intan"][_y] = _v
     for k in ("debtS", "debtL", "intan"):
         diag[k] = f"{len(S[k])}年分(合計)" if S[k] else "タグ不発見"
     ev, note = {}, []
@@ -460,6 +484,11 @@ def build_numbers(facts):
             evd["nde"] = (f"機械算出 {y0}年: (有利子負債 {_u(debt)} − 現金同等物 {_u(cash)})"
                           f" ÷ (営業利益 {_u(S['op'].get(y0,0) or 0)} + 減価償却 {_u(S['dep'].get(y0,0) or 0)})")
     # のれん除外ROIC 5年系列 → worst/median
+    # 2026-08-03: **roicg の5年系列も同時に作る。** roic だけ through-cycle 化すると
+    #   roic < roicg という**数学的に不可能な組み合わせ**ができる（投下資本はのれん・無形を
+    #   引いたほうが必ず小さいので roic ≥ roicg は恒等式）。影の計測で実際に 22-46% の社で
+    #   これを作り、門の全件点検が err で捕まえた。KLACの分割・ADRのper・JP門0のptと同じ
+    #   「基準の違う二つを割る」型なので、**同じ年・同じNOPATから対で作る**。
     roics = []
     roic_skip = []
     for y in sorted(S["op"])[-5:]:
@@ -513,7 +542,7 @@ def build_numbers(facts):
             if ic <= 0 or ic < 0.20*max(S["eq"][y], 1):
                 roic_skip.append(f"{y}:IC={ic:.0f}が自己資本{S['eq'][y]:.0f}の2割未満＝のれん控除で分母縮退")
                 continue
-            roics.append(nopat/ic*100)
+            roics.append((nopat/ic*100, nopat/max(S["eq"][y]+debt, 1)*100))
             # 実額を残す。**IC/自己資本が本当の判別子**（2026-07-29の19社検算で確立——
             # 「roic>60だから怪しい」はほぼ外れ、MAは74.9→131.0の上方修正だった）。
             # 比率だけでは後から検算できないので、NOPAT・自己資本・負債・のれん・無形の各実額を書く。
@@ -526,9 +555,15 @@ def build_numbers(facts):
                            f"{' + '.join((ev['_debtUsed']['debtL'].get(y) or []) + (ev['_debtUsed']['debtS'].get(y) or [])) or '—'}")
     if roic_skip:
         note.append("roic系列の一部を算出不能として除外: " + " / ".join(roic_skip))
+    _rSeq = [x[0] for x in roics]          # roic(のれん除外)の5年系列。後段の roic/roict で使う
     if roics:
-        ev["roicExW5"]  = round(min(roics),1)
-        ev["roicExMed5"]= round(median(roics),1)
+        _r, _g = _rSeq, [x[1] for x in roics]
+        ev["roicExW5"]  = round(min(_r),1)
+        ev["roicExMed5"]= round(median(_r),1)
+        # roicg 側も同じ年・同じNOPATから対で作る（上のコメント参照）
+        ev["roicgW5"]   = round(min(_g),1)
+        ev["roicgMed5"] = round(median(_g),1)
+        ev["_tcYears"]  = len(_r)
     # 純希薄化率(株数の年率変化)
     sh,_ = series(facts, TAGS["sh"], ("shares",))
     if len(sh)>=3:
@@ -596,8 +631,32 @@ def build_numbers(facts):
     # のれん除外ROIC 直近年 roic (門のroic欄=単年・除外)
     # 5年系列そのものは古い年を含んでよい（それが系列の意味）。検問するのは**直近値の年**だけ——
     # 古い年の値を"直近ROIC"として台帳に載せないため。
+    # v9.9.71（2026-08-03・ユーザー明示指示）: **roic は単年でなく through-cycle にした。**
+    #   `roic = min(直近年, 5年中央値)` ／ roicg・roicEx も**同じ係数**で揃える。
+    #   理由（night/audit_weights.js --q75 の実測）: 単年roicの実効ウェイトは **38.2%** で単独最大、
+    #   一方で時間を通して見る欄は合計12.7%しかなく、`sustain`(.30・名前は「持つか」)の中身も
+    #   堀とROICの**現在値だけ**だった。20-30年の複利を測る門が、いちばん重い入力で
+    #   「今年いくら儲かったか」を見ていた。
+    #   なぜ重みでなくここを直したか: 判定帯の変動係数は p4 7.9% / f1 6.4% / p1 13.5% / p2 19.1% に対し
+    #   **roic 64.0%**＝時間軸の欄はほぼ定数で、定数の重みを上げても順位は動かない（実測7案すべてで
+    #   投下可が増えるだけだった）。**roicが支配的なのは、判定帯で唯一ばらついている数字だから。**
+    #   なぜ min(直近, 中央値) か（3案を影で実測して選んだ）:
+    #     med5(中央値)  → roicが**上がる**社が出る。roicGap=roic−roicg は**絶対pt**で>15に罰があるため、
+    #                    比例拡大で線を越え罰が誤発火する（実測APH: 12.4pt→17.6ptでΩ 77.0→73.4）
+    #     w5(最悪値)    → 「一年が決める」問題を悲観側に置き換えるだけで、through-cycleになっていない。
+    #                    実測で投下可12→8（IRMD/NVDA/6857/TSMが谷の1年で脱落。いずれもWACC超なのに）
+    #     min(直近,中央) → **係数が必ず1以下**なのでroicGapは縮むだけ＝罰の誤発火が構造的に起きない。
+    #                    悪化は即座に拾い、良化は中央値に乗るまで認めない非対称。実測で投下可12社不変・
+    #                    要修正0件、うち6社のroicが下がる（6857 −34% / ADBE −30% / NVDA −23% …）
+    #                    ＝**規約が正しくなって判断が動かない**（v9.9.50のp1と同じ較正の理想形）
     if roics and not stale(max(S["op"]) if S["op"] else None):
-        ev["roic"]=round(roics[-1],1)
+        _tcK = min(1.0, median(_rSeq)/_rSeq[-1]) if _rSeq[-1] > 0 else 1.0
+        ev["roic"]=round(_rSeq[-1]*_tcK,1)
+        if ev.get("roicg") is not None:
+            ev["roicg"]=round(ev["roicg"]*_tcK,1)   # 同じ係数＝roic≥roicg の恒等式を構造的に保つ
+        evd["roic"]=(evd.get("roic","")+f"｜**v9.9.71: through-cycle 化**。直近年 {_rSeq[-1]:.1f}% と"
+                     f"5年中央値 {median(_rSeq):.1f}%（{len(_rSeq)}年）の**小さいほう**を採用（係数 {_tcK:.3f}）。"
+                     f"roicg にも同じ係数を掛けて roic≥roicg を保つ。5年の最悪は {min(_rSeq):.1f}%")
     elif roics:
         note.append(f"roic算出不能: 営業利益系列が{max(S['op'])}年で途切れ最新{LATEST}年から遅れている"
                     f"（タグ改称の疑い）。原本で確認して手入力せよ")
@@ -675,10 +734,10 @@ def build_numbers(facts):
         evd["roiic5"] = _e5
 
     # ROICトレンド roict (5年 up/flat/down): worst年 vs 直近
-    if len(roics)>=2:
-        ev["roict"]="up" if roics[-1]-roics[0]>2 else "down" if roics[-1]-roics[0]<-2 else "flat"
+    if len(_rSeq)>=2:
+        ev["roict"]="up" if _rSeq[-1]-_rSeq[0]>2 else "down" if _rSeq[-1]-_rSeq[0]<-2 else "flat"
         evd["roict"] = (f"機械算出: のれん除外ROIC 5年系列 "
-                        f"{' / '.join(f'{x:.1f}%' for x in roics)}（最古→直近の差で判定）")
+                        f"{' / '.join(f'{x:.1f}%' for x in _rSeq)}（最古→直近の差で判定）")
     # GP/A(gpa) 直近年
     if y0 and y0 in S["gp"] and S["assets"].get(y0):
         _safe(ev,note,"gpa",lambda:round(S["gp"][y0]/S["assets"][y0]*100,1))

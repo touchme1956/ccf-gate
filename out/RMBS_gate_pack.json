@@ -1,7 +1,7 @@
 {
  "nm": "RMBS",
- "roic": 19.9,
- "roicg": 15.6,
+ "roic": 8.0,
+ "roicg": 6.3,
  "nde": -0.67,
  "z": null,
  "gpa": 36.8,
@@ -73,7 +73,8 @@
    "moatW充填(v9.9.36・2026-07-28): 絶対MOAT5本目「堀の広さ」をセグメント/製品ライン別売上の実数と顧客集中開示から判定。上記 evidence.moatW に出典付きで記載。他項目は不変。",
    "2026-07-28 絶対MOAT欠測補充(dom/irr): dom=70は新刻み(市場構造)に基づく判定。自社約21%(10-K製品売上$246.8百万÷2024年MIC市場約$1.17十億)・上位3社93%超(Frost & Sullivan)の3社寡占。irr=70は10-Kの数ヶ月に及ぶ顧客認定工程(高摩擦)とJEDEC標準準拠ゆえの代替可能性の両睨み。rep=60/dur=100/moatW=50など既判定項目は不変",
    "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
-   "2026-07-29 p1 75→50（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均10.9%・σ7.7pt・CV70.9%）。"
+   "2026-07-29 p1 75→50（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均10.9%・σ7.7pt・CV70.9%）。",
+   "**v9.9.71（2026-08-03・ユーザー明示指示）roic を through-cycle 化**: roic 19.9→8.0 / roicg 15.6→6.3。`roic = min(直近年, 5年中央値)`＝直近 21.3% と中央値 8.6%（3年・最悪 2.8%）の小さいほうを採り、係数 0.404 を **roic/roicg/roicEx に同じだけ**掛けた（別々の比を掛けると roic<roicg という数学的に不可能な組み合わせができる）。出典: SEC companyfacts（採取器 build_numbers）"
   ],
   "evidence": {
    "expiry": "『Some of our license agreements may convert from royalty generating to fully paid-up licenses at the expiration of their terms or upon certain milestones, and we may not receive royalties after that time』→特許/ライセンス期限型=yes",
@@ -89,7 +90,7 @@
    "moatW": "セグメント/収益源別(FY2025・総売上707.6百万USD): 報告セグメント数=1・オペレーティングセグメント数=1（原本 R57）。収益源は Product revenue(メモリインターフェースチップ)347.8百万USD=49% / Royalties+contract and other=51%（原本MD&A『We delivered record product revenue of $347.8 million in 2025』『Product revenue accounted for 49%, 44% and 49% of our consolidated revenue』）。顧客集中は Customer A 23% / Customer B 18% / Customer C 12%（対総売上）、『Our top five customers ... represented approximately 66% of our consolidated revenue for the year ended December 31, 2025』。地域別 South Korea 329.3百万USD=46.5% / Singapore 163.8百万USD=23.2% / United States 124.1百万USD=17.5% / Other 90.5百万USD=12.8%（出典: 10-K FY2025 (rmbs-20251231.htm) Segments and Major Customers (R57/R60/R61/R62) / MD&A Revenue Sources）→ チップ販売もロイヤリティも売り先は同じDRAM3社(Micron/Samsung/SK hynix)寡占＝同一顧客基盤・同一技術領域で堀は1本。かつ最大顧客23%≥20% → moatW=50",
    "dom": "70=3社寡占(上位3社≥80%)。【上位N社シェア】メモリインタフェースチップ(MIC)はFrost & Sullivanの2024年売上ベースで Montage Technology 36.8%(首位)/Renesas(2位)/Rambus(3位)の3社が市場の93%超を占め、DDR4/DDR5のMICを量産できるのはこの3社のみ(2026-07の韓国当局による価格カルテル捜査報道が引用する同社データ https://finance.biggo.com/news/9dbf85c7-c887-4f5c-94ab-a86d984b880b )。【自社シェア】Rambusは3位。10-Kの製品売上(実質MIC)2024年$246.8百万を同年MIC市場規模約$1.17十億で割ると約21%(製品売上には他製品も含むため上限値)。自社21%は40%未満だが上位3社93%超の寡占構造に該当→85(圧倒/複占首位)ではなく70。10-K自身は『In the memory interface chip market, we compete with international semiconductor companies, including but not limited to Monolithic Power Systems, Montage Technology, Renesas and Texas Instruments』とのみ記載しシェアは非開示(構造の裏取りは上記第三者統計)。なお売上の39.5%はパテントライセンス(シェア概念が定義できない市場)で、本判定は売上49.1%のMIC事業に基づく。出典 https://www.sec.gov/Archives/edgar/data/917273/000119312526057101/rmbs-20251231.htm",
    "irr": "70=高摩擦移行困難。10-K Item1A『Prior to purchasing our products, our customers often require that our products undergo extensive qualification processes, which involve testing of our products in the customers' systems, as well as testing for reliability. This qualification process may continue for several months』+『a subsequent revision in third-party manufacturing processes or in customer requirements may require a new qualification process with our customers』=採用に数ヶ月の認定工程を要する高摩擦。ただし製品は『industry-standard DDR5 and LPDDR5 memory modules』『supports all JEDEC-standard DDR5 and LPDDR5 modules across server and client systems』の標準準拠品で、同10-Kが『However, qualification of a product by a customer does not assure any sales of the product to that customer』と述べるとおり認定済の代替供給者(Montage/Renesas)が併存し設計上は差替可能→認証・規格ロック(85)ではなく70。出典 https://www.sec.gov/Archives/edgar/data/917273/000119312526057101/rmbs-20251231.htm",
-   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 1,364,425,000 + 有利子負債 0)＝のれん込み。roic(除外)との差が買収規律の指標。**有利子負債タグ不在＝0扱いのため過大の可能性あり（要原本確認）**",
+   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 1,364,425,000 + 有利子負債 0)＝のれん込み。roic(除外)との差が買収規律の指標。**有利子負債タグ不在＝0扱いのため過大の可能性あり（要原本確認）**｜**v9.9.71 through-cycle**: 直近21.3%/中央8.6%/最悪2.8%（3年）の min(直近,中央) を採用（係数0.404）",
    "roict": "機械算出: のれん除外ROIC 5年系列 2.8% / 8.6% / 21.3%（最古→直近の差で判定）",
    "fcf": "機械算出 2025年: 営業CF 360,019,000 − 設備投資 26,842,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
    "ni": "機械算出 2025年: 純利益 230,455,000（÷1e9で十億単位表示）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
@@ -98,7 +99,8 @@
    "dilNet": "機械算出: 株数 2022年 107,610,356 → 2025年 107,781,863＝3年の年率（自社株買い後の純希薄化）",
    "eps": "機械算出 2025年: 純利益 230,455,000 ÷ 株数 107,781,863（TTMではなく通期実績）",
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **21.2%** / 同業（SIC3674「Semiconductors & Related Devices」・72社）の中央値 **1.5%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+21.2%)÷(1+1.5%))^5 − 1 = **+142.0%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
-   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC3年系列の**変動係数(σ÷平均)**。系列: 2021 2.8% / 2022 8.6% / 2023 21.3% → 平均 10.9% / σ 7.7pt / **CV 70.9%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **50**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。"
+   "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC3年系列の**変動係数(σ÷平均)**。系列: 2021 2.8% / 2022 8.6% / 2023 21.3% → 平均 10.9% / σ 7.7pt / **CV 70.9%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **50**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
+   "roic": "｜**v9.9.71 through-cycle**: 直近21.3%/中央8.6%/最悪2.8%（3年）の min(直近,中央) を採用（係数0.404）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",

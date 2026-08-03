@@ -1,7 +1,7 @@
 {
  "nm": "AWI",
- "roic": 50.0,
- "roicg": 25.4,
+ "roic": 41.1,
+ "roicg": 20.9,
  "nde": 0.53,
  "z": null,
  "gpa": 34.2,
@@ -73,7 +73,8 @@
    "2020年NI=-99.1(減損計上)だが営利は254.8で黒字堅持。景気後退耐性は営利ベースで評価(p2)",
    "2026-07-19 検死確定: 単位検証済: ni=308.7は百万$でfcfと同単位・conv/perは自己整合のため無影響。表記だけ他パック(十億)と異なる",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=95.1 / 5年窓=145.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均41.5%・σ5.8pt・CV13.9%）。"
+   "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均41.5%・σ5.8pt・CV13.9%）。",
+   "**v9.9.71（2026-08-03・ユーザー明示指示）roic を through-cycle 化**: roic 50.0→41.1 / roicg 25.4→20.9。`roic = min(直近年, 5年中央値)`＝直近 50.0% と中央値 41.1%（5年・最悪 35.2%）の小さいほうを採り、係数 0.822 を **roic/roicg/roicEx に同じだけ**掛けた（別々の比を掛けると roic<roicg という数学的に不可能な組み合わせができる）。出典: SEC companyfacts（採取器 build_numbers）"
   ],
   "evidence": {
    "expiry": "『Patent protection extends for varying periods according to the date of patent filing or grant and the legal term of a patent in the various countries where patent protection is obtained』=通常特許で満了型独占(コンセッション・特許束依存)ではない→no",
@@ -96,8 +97,8 @@
    "irr": "代替不能性=50(代替容易)。原本Item 1『Competition』: “The markets in which our products are sold are highly competitive. Principal factors of competition include product performance and attributes, product styling, service and price. Competition comes from both domestic and international manufacturers. Additionally, some of our ceiling products compete with alternative products or finishing solutions, namely, drywall and exposed structure (also known as open plenum). Excess industry capacity exists for certain products, which tends to increase price competition.” 直接競合として “CertainTeed Corporation (a subsidiary of Saint-Gobain), Chicago Metallic Corporation (owned by Rockwool International A/S), Rockfon A/S (owned by Rockwool International A/S), USG Corporation (owned by Gebr. Knauf KG), Ceilings Plus (owned by USG Corporation), Rulon International, SAS International, and 9Wood” を列挙。10-K全文に switching cost / barrier to entry の記述はなく、“Our design services and sales teams also work directly with architects, design firms and general contractors to ensure our products are included in project specifications” は自社の営業活動であって顧客側の切替コストの証拠ではない。→ 高摩擦(70)に上げる原本根拠がないため50。出典: 10-K 2025-12-31 Item 1 Business - Competition / Customers / 出典URL: https://www.sec.gov/Archives/edgar/data/7431/000119312526065183/awi-20251231.htm",
    "rep": "複製障壁=60(困難)。原本Item 1: “Armstrong World Industries, Inc. (‘AWI’ or the ‘Company’) is a Pennsylvania corporation incorporated in 1891”(135年) / “We have developed long-standing relationships with our customers based on our product quality, broad product portfolio, design capabilities, service, innovation and brand recognition” / 知財は “Although we consider that, in the aggregate, our patents, trademarks, designs, copyrights, trade secrets and licenses constitute a valuable asset of material importance to our business, we do not believe we are materially dependent upon any single one of these intellectual property rights” と単独知財への依存を自ら否定。加えて “Excess industry capacity exists for certain products” の通りSaint-Gobain/Rockwool/Knaufという世界大手が既に同等品を供給済み＝複製は現に成立している。135年の商標蓄積・全米製造網・WAVE(1992年設立の50/50JV)は数年では作れないが、『極困難(80)』『複製不能(100)』の水準ではない → 60。出典: 10-K 2025-12-31 Item 1 Business - Competition / Customers / Patent and Intellectual Property Rights / 出典URL: https://www.sec.gov/Archives/edgar/data/7431/000119312526065183/awi-20251231.htm",
    "dur": "堀の型=55(ブランド)。原本Item 1『Overview』: “Our business has been built on providing high-quality, innovative products through a highly effective service model as well as by maintaining strong brand awareness and trust”、同『Patent and Intellectual Property Rights』: “Certain of our trademarks, including without limitation, Armstrong®, 3form®, ACOUSTIBuilt®, ... WoodWorks® and Zahner®, are important to our business because of their significant brand name recognition”。自社が堀の源泉をブランド認知と信頼だと明記。規制/プロセス知/物理(100)を示す記述はなく(特許は非依存を自認)、ネットワーク効果(85)・スイッチングコスト(75)の記述も10-K全文に無い → ブランド型55。出典: 10-K 2025-12-31 Item 1 Business - Overview / Patent and Intellectual Property Rights / 出典URL: https://www.sec.gov/Archives/edgar/data/7431/000119312526065183/awi-20251231.htm",
-   "roic": "機械算出 2025年: NOPAT 332,297,852（営業利益 430,900,000×(1−実効税率22.9%)） ÷ IC 664,400,000＝自己資本 900,700,000 + 有利子負債 406,700,000 − のれん 217,800,000 − 無形 425,200,000。**IC/自己資本=73.8%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）",
-   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 900,700,000 + 有利子負債 406,700,000)＝のれん込み。roic(除外)との差が買収規律の指標",
+   "roic": "機械算出 2025年: NOPAT 332,297,852（営業利益 430,900,000×(1−実効税率22.9%)） ÷ IC 664,400,000＝自己資本 900,700,000 + 有利子負債 406,700,000 − のれん 217,800,000 − 無形 425,200,000。**IC/自己資本=73.8%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）｜**v9.9.71 through-cycle**: 直近50.0%/中央41.1%/最悪35.2%（5年）の min(直近,中央) を採用（係数0.822）",
+   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 900,700,000 + 有利子負債 406,700,000)＝のれん込み。roic(除外)との差が買収規律の指標｜**v9.9.71 through-cycle**: 直近50.0%/中央41.1%/最悪35.2%（5年）の min(直近,中央) を採用（係数0.822）",
    "roict": "機械算出: のれん除外ROIC 5年系列 35.2% / 35.5% / 41.1% / 45.8% / 50.0%（最古→直近の差で判定）",
    "gm": "機械算出 2025年: 営業利益 430,900,000 ÷ 売上 1,620,800,000（粗利ではない）",
    "gmt": "機械算出: 営業利益率 2023年 25.0% → 2025年 26.6%（±1ptでup/down）",
