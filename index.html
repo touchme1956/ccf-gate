@@ -3272,8 +3272,21 @@ async function renderPlan(){
   // v9.9.49(2026-07-29 ユーザー明示指示): 線を **75→70** へ。CCF_MOAT_GATE の頭注に根拠の実測を置いた。
   const q75=q75all.filter(r=>r.moatOK===true);
   const moatOut=q75all.filter(r=>r.moatOK!==true);
-  const pass=q75.filter(r=>r.xPass===true);
-  const waitP=q75.filter(r=>r.xPass!==true);
+  // v9.9.66(2026-08-03 ユーザー明示指示「なっているものはそもそも候補から排除したほうがいいのでは？」):
+  //   **点検の要修正(err)が1件でもあれば買付の土俵から降ろす**＝第四の関門。
+  //   堀不足と同じ扱い——**買わない理由であって売る理由ではない**（Ω・S1/S2/S3・門X閾値・堀の線はいずれも不変）。
+  //   **なぜ err だけで、warn では切らないか**——ここが肝で、較正で二度失敗した論点と同じ形をしている。
+  //   err は「取込で化けた／列挙値違反／内部矛盾／不可能値」＝**検算しても消えない種類**なので、
+  //   門の中で切っても誤爆しない。一方 warn には**原本で検算して確定済みなのに鳴り続けるもの**が混じる
+  //   （ブラウザは _meta を持てないため。実測: TSMのper=ADR通貨基準／ADBEのroic乖離=IC/自己資本38.6%で
+  //   縮退なし。どちらも根拠を _meta.evidence に持つ）。warn で切ると、この2社を
+  //   **欠陥ではなく「データ経路の欠落」を理由に投下可から外す**ことになる。
+  //   → warn は _meta を読める端末側（night/score_all.js / night/audit_gate.js）で
+  //     「未解決warn（_meta.evidence も _meta.nulls も無い）」として切る＝二層で守る既存の設計と同じ形。
+  const audOut=q75.filter(r=>(r.audW||[]).some(w=>w.lv==='err'));
+  const q75c=q75.filter(r=>!(r.audW||[]).some(w=>w.lv==='err'));
+  const pass=q75c.filter(r=>r.xPass===true);
+  const waitP=q75c.filter(r=>r.xPass!==true);
   // v9.9.27: IPS②(Ulysses契約)の仕組み化——投下可の初回点灯を記録し48hクーリングオフの残り時間を表示。
   //   点灯時のE[r]/格/PERをスナップショット(掟九:年1回の予実突合の材料。消えた点灯もoff印で保存)。
   //   判定・順位・採点には一切不介入=表示と記録のみ。再点灯(off→復帰)は新しい点灯として冷却をやり直す
@@ -3359,6 +3372,13 @@ async function renderPlan(){
   if(moatOut.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:var(--rust)">⛔ 堀不足で見送り（Ω75+だが絶対MOAT指数 &lt; 70）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">質・値段がどれだけ揃っても<b>買わない</b>組。20-30年の複利は堀が持つかどうかで決まり、下がっても堀は広がらないので「押し目待ち」ではなく見送り。堀は<b>深さ(支配シェア・代替不能性・複製障壁・型の耐久性)と本数(広さ)の幾何平均</b>ゆえ、1本でも薄いと70を割る＝「深いが1本足」と「広いが浅い」の両方が落ちる。<b>売却の理由にはならない</b>——保有中の銘柄はS1/S2/S3のみで裁く（堀の劣化は erosion / 堀軌道 / disrupt が既に見張っている）。堀の数字が上がる道は一つだけ、<b>原本でシェア・セグメントを取り直して審査し直す</b>こと。</div>`;
     html+=moatOut.map((r,i)=>brow(r,i,'堀',`<span style="font-size:11.5px;white-space:nowrap;color:var(--rust);margin-left:8px">堀 ${r.moatNA?'算出不能（5本中4本未満）':r.moat!=null?r.moat.toFixed(0)+'／70':'—'}</span>`)).join('');
+  }
+  // ⛔ 点検の要修正で落ちた組(v9.9.66・ユーザー明示指示)。**黙って消さない**——
+  //   落ちた社を名指しで出さないと「なぜ買付順位から消えたか」が判らず、v9.9.52で踏んだ
+  //   「城の行が理由不明で出ない」と同じ事故になる。行の ⚠ バッジからそのまま直しに行ける。
+  if(audOut.length){
+    html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:var(--rust)">⛔ 点検の要修正で見送り（Ω75+・堀70+だが台帳の値が壊れている）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px"><b>値が壊れている銘柄は買わない</b>組。要修正＝取込で黙って化けた欄／列挙値違反／内部矛盾（per≠px÷eps・roic&lt;roicg 等）／不可能値で、いずれも<b>原本で検算しても消えない種類</b>＝データの破損そのもの。破損した入力で出たΩ・E[r]・堀は、たまたま合っていても信頼できない。<b>売却の理由にはならない</b>——保有中の銘柄はS1/S2/S3のみで裁く（堀不足と同じ扱い＝買わない理由であって売る理由ではない）。各行の <b>⚠</b> バッジを押すと中身と直し方が出る。直して再取込すれば自動で🟢／🟡へ戻る。<br>※<b>警告(warn)では落とさない</b>——warnには原本で検算して確定済みなのに鳴り続けるものが混じる（門はパックの <code>_meta</code> を持てないため）。未解決warnの除外は <code>node night/audit_gate.js</code> で端末側が担う＝二層で守る。</div>`;
+    html+=audOut.map((r,i)=>brow(r,i,'検',`<span style="font-size:11.5px;white-space:nowrap;color:var(--rust);margin-left:8px">要修正 ${(r.audW||[]).filter(w=>w.lv==='err').length}件</span>`)).join('');
   }
   // 監視枠(72-75 堅実だが投下閾値未満): 保有しない・75超えで昇格
   const watch=rows.filter(r=>r.s>=72&&r.s<75).sort((a,b)=>(b.pc-a.pc)||(b.s-a.s));

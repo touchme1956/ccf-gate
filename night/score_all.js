@@ -146,13 +146,27 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
   let x = {}, mg = {};
   try { x = ccfXJudge(dd, parseFloat(r.evalScore)) || {}; } catch (e) {}
   try { mg = ccfMoatGate(r, dd) || {}; } catch (e) {}
+  // 第四の関門(v9.9.66・2026-08-03 ユーザー明示指示): 点検が鳴っている社は買付の土俵から降ろす。
+  //   門(ブラウザ)は `_meta` を持てないので **要修正(err)** でしか切れないが、
+  //   ここは _meta を読めるので **未解決warn**（evidence も nulls も無い warn）まで切る。
+  //   実測(2026-08-03): errは全317社で0件、未解決warnは187件。Ω75+では未解決0件＝投下可7社は不変だが、
+  //   この日の是正**前**なら IRMD/NVDA/TSM/ADBE/APH の5社が落ちていた（acq5空欄・根拠なきp3・roic乖離）。
+  let audE = 0, audU = 0;
+  try {
+    const M = d._meta || {};
+    for (const w of (ccfAudit(dd, r, []) || [])) {
+      if (w.lv === 'err') audE++;
+      else if (w.lv === 'warn' && !((M.evidence || {})[w.k] || (M.nulls || {})[w.k])) audU++;
+    }
+  } catch (e) {}
   const s = parseFloat(r.evalScore);
   rows.push({ t, nm, jp, s, tier: r.tierShort,
               kills: r.kills, pfail: r.pfail, exit: r.exit && r.exit.level,
               moat: mg.idx == null ? null : +mg.idx.toFixed(1), moatNA: !!mg.na, moatOK: !!mg.pass,
               moatMiss: (r.moatMiss && r.moatMiss.length) ? r.moatMiss : undefined,
               xEr: x.xEr == null ? null : +x.xEr.toFixed(1), xPass: x.xPass,
-              buy: s >= 75 && x.xPass === true && mg.pass === true });
+              audE, audU, audOK: audE === 0 && audU === 0,
+              buy: s >= 75 && x.xPass === true && mg.pass === true && audE === 0 && audU === 0 });
 }
 rows.sort((a, b) => b.s - a.s);
 // 部分実行(--only / --set)の結果で正本 out/score_all.json を潰さない（2026-07-29）。
@@ -177,16 +191,20 @@ brief('全体', rows);
 brief('日本株', rows.filter(x => x.jp));
 brief('米国等', rows.filter(x => !x.jp));
 const q75 = rows.filter(x => x.s >= 75);
-console.log('\nΩ75+（堀＝絶対MOAT指数／X＝門X4条件／買＝三段関門すべて成立）:');
+console.log('\nΩ75+（堀＝絶対MOAT指数／X＝門X4条件／点＝全件点検／買＝四段関門すべて成立）:');
 for (const r of q75) {
   const moat = r.moatNA ? ' NA ' : (r.moat == null ? '  — ' : r.moat.toFixed(0).padStart(3) + ' ');
+  const aud = r.audOK ? '  ✓' : `${r.audE ? '要' + r.audE : ''}${r.audU ? '未' + r.audU : ''}`.padStart(3) + '✗';
   console.log(`  ${r.nm.slice(0, 24).padEnd(26)} Ω${r.s.toFixed(1).padStart(5)}  堀${moat}${r.moatOK ? '✓' : '✗'}`
     + `  E[r]${r.xEr == null ? '  na' : r.xEr.toFixed(0).padStart(4) + '%'}${r.xPass ? '✓' : '✗'}`
-    + `  ${r.buy ? '🟢投下可' : r.moatOK ? '🟡押し目待ち' : '⛔堀不足'}  出口=${r.exit}`);
+    + `  点${aud}`
+    + `  ${r.buy ? '🟢投下可' : !r.moatOK ? '⛔堀不足' : !r.audOK ? '⛔点検要修正' : '🟡押し目待ち'}  出口=${r.exit}`);
 }
 const buy = rows.filter(x => x.buy);
-console.log(`\n三段関門を通過(🟢投下可) ${buy.length}社`
+console.log(`\n四段関門を通過(🟢投下可) ${buy.length}社`
   + `　日本株${buy.filter(x => x.jp).length}／米国等${buy.filter(x => !x.jp).length}`
   + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
 console.log(`⛔堀不足で見送り(Ω75+だが堀が関門に届かない) ${q75.filter(x => !x.moatOK).length}社`);
+console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告あり) ${q75.filter(x => x.moatOK && !x.audOK).length}社`);
+console.log(`   ※全317社: 要修正 ${rows.reduce((a,x)=>a+x.audE,0)}件 / 未解決警告 ${rows.reduce((a,x)=>a+x.audU,0)}件`);
 console.log(`\n→ out/${outFile}（全${rows.length}件・降順）`+ (partial ? '　※部分実行なので正本 score_all.json は書き換えていない' : ''));
