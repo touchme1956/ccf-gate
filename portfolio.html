@@ -49,11 +49,10 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 .row{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(40,52,74,.55);}
 .row:last-child{border-bottom:none;}
 .nm{font-size:14.5px;color:var(--ink);}
-.badge{display:inline-block;font-size:10px;letter-spacing:.06em;padding:1px 7px;border-radius:999px;margin-left:7px;vertical-align:middle;}
-.b-net{color:var(--net);border:1px solid rgba(155,176,210,.5);}
-.b-castle{color:var(--gold-bright);border:1px solid var(--gold-line);}
-.ind-dot{font-size:12px;margin-right:7px;vertical-align:middle;filter:drop-shadow(0 0 3px currentColor);}
 .kind{font-size:11px;color:var(--muted);}
+/* □保有/売却スイッチ(2026-08-03)。配色は全行共通＝金主体の統一 */
+.hswitch{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;user-select:none;}
+.hswitch input{width:16px;height:16px;accent-color:var(--gold);cursor:pointer;margin:0;}
 .vlabel{text-align:right;font-size:12.5px;white-space:nowrap;letter-spacing:.02em;}
 .vage{text-align:right;font-size:10.5px;color:var(--muted);white-space:nowrap;margin-top:2px;}
 .srow{display:grid;grid-template-columns:1fr auto 28px;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(40,52,74,.55);}
@@ -124,7 +123,7 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
 
  <div class="card">
   <h2>保有一覧</h2>
-  <p class="sub">保有銘柄と門の出口判定だけを出す（金額は表示しない）。個別（城）の右側が判定——🔴S1売却検討／🟡S2縮小／🟣S3記録のみ／🔵ホールド／⏳採点待ち。判定は門（Ⅳ台帳）を開くと更新される。網／城／現金の別は各行のバッジで示す。</p>
+  <p class="sub">個別銘柄の保有だけを出す（金額なし・ETFは扱わない）。右の<b>□スイッチ</b>がチェック＝保有中。外すと売却として記録し「売却済み」へ移る。門の出口判定（S1売却検討／S2縮小／S3記録のみ／ホールド）は各行の下の行に文字で出る——判定は門（Ⅳ台帳）を開くと更新される。</p>
   <div style="margin:0 0 10px"><button class="btn" id="rescoreBtn" onclick="pfRescorePrompt(this)" style="border-color:rgba(84,184,138,.5);color:#8fc9a4;background:linear-gradient(180deg,rgba(84,184,138,.20),rgba(84,184,138,.06))" title="保有の個別銘柄を、今の門が必要とする全項目で採点し直す依頼文をコピー。Claudeに貼ると完成パックJSONが返る→Ⅲ採点機に取込">📋 個別の再採点依頼文をコピー</button> <span class="mini" style="text-align:left;display:inline">最新データで門Ω＋門Xにかけ直す。返ったJSONを門「Ⅲ採点機」の貼付欄へ。</span></div>
   <div id="holdList"></div>
  </div>
@@ -134,7 +133,7 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
       売却judgmentだけが痕跡なく消える(旧: ✕削除で完全消滅)のは思想と矛盾していた。保存先 pf:sold(バックアップ対象)。 -->
  <div class="card hide" id="soldCard">
   <h2>売却済み</h2>
-  <p class="sub">売却の記録（金額は持たない）。年1回較正（7月）で「その売却判断は正しかったか」の答え合わせに使う。</p>
+  <p class="sub">売却の記録（金額は持たない）。年1回較正（7月）で「その売却判断は正しかったか」の答え合わせに使う。□をチェックすると保有へ戻す（記録は消える）。✕は記録だけを消す。</p>
   <div id="soldList"></div>
  </div>
 
@@ -149,24 +148,28 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
 <script>
 'use strict';
 const LS_KEY='pf:portfolio';
-// 運用開始スナップショット(初期値)。以後はこの端末の保存を優先。
+// 2026-08-03 ユーザー指示「ETFはすべてを削除して欲しい」: このページは個別銘柄（城）＋現金のみを扱う。
+// ETF(網)は証券会社の自動積立で機械的に買う対象＝門にかけない(v9.9.53で門からも撤去済み)ので、ここに並べる意味が無くなった。
+// 初期値からETF行を外し、load()が保存済みデータの網行も一度だけ落とす（下の移行）。
 // 運用開始スナップショットは円評価額(v)のみ。株数・単価は編集で追記すると株数×現在株価で自動計算に切替わる。
 const DEFAULT={ asof:"2026-07-24", fx:150, positions:[
-  {t:"XLK",  nm:"XLK テクノロジーセレクトSPDR", sleeve:"net",    kind:"米テクノロジーセクター", ccy:"USD", v:701436},
   {t:"MSFT", nm:"Microsoft",                     sleeve:"castle", kind:"個別",                 ccy:"USD", v:499960},
-  {t:"QQQ",  nm:"インベスコ QQQ",                sleeve:"net",    kind:"ナスダック100",        ccy:"USD", v:301650},
   {t:"ASML", nm:"ASMLホールディングス",          sleeve:"castle", kind:"個別",                 ccy:"USD", v:295295},
-  {t:"SMH",  nm:"ヴァンエック半導体ETF",         sleeve:"net",    kind:"半導体セクター",       ccy:"USD", v:285060},
-  {t:"RMD",  nm:"レスメド（ResMed）",            sleeve:"castle", kind:"個別",                 ccy:"USD", v:94283},
-  {t:"FANG+",nm:"FANG+ 指数ETF",                sleeve:"net",    kind:"FANG+指数",            ccy:"USD", v:25936}
+  {t:"RMD",  nm:"レスメド（ResMed）",            sleeve:"castle", kind:"個別",                 ccy:"USD", v:94283}
 ]};
-// 目標60/40の判断はDCA側（門の外）。門は個別銘柄だけを裁く＝v9.9.53で網を撤去した。
-// 2026-07-29に当ページの内訳表示を撤去したので、ここでは参照していない。数値の記録として残す。
+// 目標60/40の判断はDCA側（門の外）。門は個別銘柄だけを裁く＝v9.9.53で網を撤去した。数値の記録として残す。
 const TARGET={net:60, castle:40};   // eslint-disable-line no-unused-vars
 let P = load();
 
 function load(){
- try{const s=localStorage.getItem(LS_KEY); if(s){const o=JSON.parse(s); if(o&&Array.isArray(o.positions))return o;}}catch(e){}
+ try{const s=localStorage.getItem(LS_KEY); if(s){const o=JSON.parse(s);
+  if(o&&Array.isArray(o.positions)){
+   // 移行(2026-08-03): 保存済みの網(ETF)行を削除する。ユーザー明示指示——ページを個別銘柄だけに。
+   const n=o.positions.length;
+   o.positions=o.positions.filter(p=>p&&p.sleeve!=='net');
+   if(o.positions.length!==n){ try{localStorage.setItem(LS_KEY, JSON.stringify(o));}catch(e){} }
+   return o;
+  }}}catch(e){}
  return JSON.parse(JSON.stringify(DEFAULT));
 }
 function persist(){ try{const clean={...P,positions:P.positions.map(({_v,...r})=>r)}; localStorage.setItem(LS_KEY, JSON.stringify(clean)); }catch(e){} }
@@ -196,35 +199,36 @@ function render(){
  document.getElementById('total').textContent = shown.length ? (shown.length+'銘柄') : '—';
  document.getElementById('asof').textContent = P.asof? ('更新 '+P.asof) : '';
 
- const rowHTML=(p,dotColor,vLabel,vAge)=>{
-  const badge = p.sleeve==='net'?'<span class="badge b-net">網</span>':p.sleeve==='cash'?'<span class="badge b-net" style="opacity:.7">現金</span>':'<span class="badge b-castle">城</span>';
-  const dot = dotColor?`<span class="ind-dot" style="color:${dotColor}">●</span>`:'';
-  const lab = vLabel?`<div class="vlabel" style="color:${dotColor||'var(--muted)'}">${vLabel}</div>`:'<div class="vlabel" style="color:var(--muted)">—</div>';
-  return `<div class="row"><div class="nm">${dot}${p.nm||p.t}${badge}<div class="kind">${p.t||''}${p.kind?' · '+p.kind:''}</div></div><div>${lab}${vAge||''}</div></div>`;
- };
- // ---- 保有一覧（2026-08-03: 保有と出口判定〔保有/売却〕だけの表示へ）------------------
- // 出口判定は門（Ⅳ台帳）が pf:verdicts へ書く。色丸＋判定の文字を右側に出す。
+ // ---- 保有一覧（2026-08-03: 色を統一・右側は□保有/売却スイッチ）------------------
+ // ユーザー指示「保有の色を統一してほしい」: 判定ごとの色分け(赤/黄/紫/青)と色丸・バッジを廃し、
+ // 全行を同じ配色に。門の出口判定は名前下の灰色の行に文字で残す（情報は消さない・色だけ消す）。
  const vmap=(function(){try{return JSON.parse(localStorage.getItem('pf:verdicts')||'{}');}catch(e){return {};}})();
  const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm];                     // 名の完全一致
    const pt=(p.t||'').toUpperCase();
    for(const k in vmap){ if(pt&&k.toUpperCase()===pt)return vmap[k]; }             // ティッカー完全一致(IRMD≠RMD)
    for(const k in vmap){ if(p.nm&&(k.indexOf(p.nm)>=0||p.nm.indexOf(k)>=0))return vmap[k]; } // 名の部分一致のみ
    return null; };
- const VCFG={s1:['🔴','売却検討 (S1)','#cf5f48'],s2:['🟡','買い増し停止・縮小 (S2)','#d69a3c'],s3:['🟣','記録のみ (S3)','#a888d8'],hold:['🔵','ホールド','#5d8cc2'],pending:['⏳','採点待ち（門Ⅲで審査）','var(--muted)']};
- // 判定の鮮度(2026-08-03): 判定は門Ⅳ台帳を開いた時のキャッシュ＝いつのものかを添える。
- // 90日超(四半期またぎ)は⚠——古い判定が今の顔をして並ぶのを防ぐ(原本鮮度検問と同じ思想)。ts無し=旧キャッシュ。
- const ageHTML=v=>{ if(!v)return '';
-  if(!v.ts)return '<div class="vage">判定日不明——門(Ⅳ台帳)を開くと更新</div>';
+ const VLABEL={s1:'売却検討 (S1)',s2:'買い増し停止・縮小 (S2)',s3:'記録のみ (S3)',hold:'ホールド',pending:'採点待ち（門Ⅲで審査）'};
+ // 判定の鮮度: 門Ⅳ台帳を開いた時のキャッシュ＝いつのものかを添える。90日超(四半期またぎ)は⚠(色は統一のまま)。
+ const ageTxt=v=>{ if(!v)return '';
+  if(!v.ts)return ' · 判定日不明（門Ⅳで更新）';
   const d=Math.floor((Date.now()-v.ts)/864e5);
-  return d>90?`<div class="vage" style="color:var(--rust)">⚠ 判定 ${d}日前——門(Ⅳ台帳)を開いて更新を</div>`:`<div class="vage">判定 ${d===0?'今日':d+'日前'}</div>`; };
- // 並び: 判定を持つ城を先頭に、次に網、現金。同じ枠内は評価額順（金額は出さないが順序の錨には使う）
- const ord={castle:0,net:1,cash:2};
- document.getElementById('holdList').innerHTML = shown.length
-   ? shown.slice().sort((a,b)=>(ord[a.sleeve]??1)-(ord[b.sleeve]??1)||(b._v||0)-(a._v||0)).map(p=>{
-       // 出口判定は個別(城)にしか意味が無い。ETF・現金には付けない
+  return d>90?` · ⚠判定${d}日前（門Ⅳで更新を）`:` · 判定${d===0?'今日':d+'日前'}`; };
+ // 並び: 個別(城)→現金。枠内は評価額順（金額は出さないが順序の錨には使う）
+ const ord={castle:0,cash:1};
+ const sorted=shown.slice().sort((a,b)=>(ord[a.sleeve]??0)-(ord[b.sleeve]??0)||(b._v||0)-(a._v||0));
+ document.getElementById('holdList').innerHTML = sorted.length
+   ? sorted.map(p=>{
+       const idx=P.positions.indexOf(p);
+       // 出口判定は個別(城)にしか意味が無い。現金には付けない
        const v = (p.sleeve==='castle') ? verdictOf(p) : null;
-       const c = (p.sleeve==='castle') ? VCFG[(v&&v.level)||'pending'] : null;
-       return rowHTML(p, c?c[2]:'', c?c[0]+' '+c[1]:'', p.sleeve==='castle'?ageHTML(v):'');
+       const vTxt = (p.sleeve==='castle') ? ('判定: '+VLABEL[(v&&v.level)||'pending']+ageTxt(v)) : '';
+       const info=[p.t||'', p.sleeve==='cash'?'現金':'', vTxt].filter(Boolean).join(' · ');
+       // □スイッチ(2026-08-03 ユーザー指示): チェック=保有中。外すと売却として記録し「売却済み」へ移す
+       const sw = (p.sleeve==='castle')
+         ? `<label class="hswitch"><input type="checkbox" checked onchange="pfSell(${idx},this)">保有</label>`
+         : '<div class="vlabel" style="color:var(--muted)">—</div>';
+       return `<div class="row"><div class="nm">${p.nm||p.t}<div class="kind">${info}</div></div>${sw}</div>`;
      }).join('')
    : '<div class="mini" style="text-align:left">保有が未登録。「✎ 編集」から入れてください。</div>';
  renderSold();
@@ -232,30 +236,80 @@ function render(){
   `CCF Ω — 保有はこの端末に自動保存（編集で反映）。金額は表示しない（株数・単価の入力は門の配分計算にだけ使う）。売り買いの判定は門＝売りはS1/S2/S3・買いはⅥ買付順位。<br>投資判断は自己責任で。`;
 }
 
+/* ---------- □保有/売却スイッチ（2026-08-03新設） ----------
+   チェックを外す＝売却として記録して保有から外す（編集を開かずに済む早道）。
+   記録の中に元の行(pos)を丸ごと残すので「☐→戻す」で株数・単価ごと保有へ復元できる。 */
+function pfSell(idx,inp){
+ const p=P.positions[idx];
+ if(!p){ if(inp)inp.checked=true; return; }
+ const label=p.nm||p.t;
+ if(!confirm(`「${label}」を売却として記録して保有から外す？`)){ if(inp)inp.checked=true; return; }
+ // 門の判定がS1/S2/S3ならそれを理由の既定値に（手入力の手間を減らすだけ。判定の強制ではない）
+ let def='other';
+ try{const vm=JSON.parse(localStorage.getItem('pf:verdicts')||'{}');
+  const v=vm[p.nm]||vm[(p.t||'').toUpperCase()]; if(v&&/^s[123]$/.test(v.level))def=v.level;}catch(e){}
+ let reason=(prompt('売却理由: s1(売却規律) / s2(縮小) / s3(記録のみ) / other(その他)',def)||'').trim().toLowerCase();
+ if(!SREASON[reason])reason='other';
+ const d=new Date(), today=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ const memo=(prompt('メモ（任意・なぜ売ったか。較正で読み返す）','')||'').trim();
+ const {_v,...raw}=p;
+ const sold=loadSold();
+ sold.push({t:p.t||'',nm:p.nm||'',sleeve:p.sleeve||'',date:today,reason,memo,pos:raw});
+ persistSold(sold);
+ P.positions.splice(idx,1);
+ dropHoldFlags([{t:p.t,nm:p.nm}]);
+ persist(); render();
+}
+// 門の保有フラグ(g7hold:set)から外す——同銘柄がまだ保有に残るなら外さない（一部売却）
+function dropHoldFlags(soldArr){
+ try{
+  let hs=JSON.parse(localStorage.getItem('g7hold:set')||'[]');
+  const drop=new Set(); soldArr.forEach(s=>{ if(s.nm)drop.add(s.nm); if(s.t)drop.add((s.t||'').toUpperCase()); });
+  const still=new Set(); P.positions.forEach(p=>{ if(p.nm)still.add(p.nm); if(p.t)still.add((p.t||'').toUpperCase()); });
+  hs=hs.filter(n=>{ const up=(n||'').toUpperCase(); return !((drop.has(n)||drop.has(up))&&!(still.has(n)||still.has(up))); });
+  localStorage.setItem('g7hold:set',JSON.stringify(hs));
+ }catch(e){}
+}
+
 /* ---------- 売却の記録（2026-08-03新設・保存先 pf:sold） ---------- */
 const SOLD_KEY='pf:sold';
 function loadSold(){ try{const s=localStorage.getItem(SOLD_KEY); if(s){const a=JSON.parse(s); if(Array.isArray(a))return a;}}catch(e){} return []; }
 function persistSold(a){ try{localStorage.setItem(SOLD_KEY, JSON.stringify(a));}catch(e){} }
-const SREASON={s1:['S1 売却','#cf5f48'],s2:['S2 縮小','#d69a3c'],s3:['S3 記録','#a888d8'],other:['その他','var(--muted)']};
+const SREASON={s1:'S1 売却',s2:'S2 縮小',s3:'S3 記録',other:'その他'};  // 2026-08-03: 色分け廃止＝保有一覧と同じ統一配色
+// 表示順(売却日降順)を一度作って添字をその順に振る——delSold/pfRestoreと同じ並びで対応させる
+function soldSorted(){ return loadSold().slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')); }
 function renderSold(){
  const card=document.getElementById('soldCard'), list=document.getElementById('soldList');
  if(!card||!list)return;
- const sold=loadSold();
+ const sold=soldSorted();
  if(!sold.length){ card.classList.add('hide'); return; }
  card.classList.remove('hide');
- list.innerHTML = sold.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map((s,i)=>{
+ list.innerHTML = sold.map((s,i)=>{
   const rc=SREASON[s.reason]||SREASON.other;
-  return `<div class="srow"><div class="nm">${s.nm||s.t}<div class="kind">${s.t||''}${s.date?' · 売却 '+s.date:''}</div></div>`+
-   `<div class="vlabel" style="color:${rc[1]}">${rc[0]}</div>`+
-   `<div class="sdel" title="この記録を消す" onclick="delSold(${i})">✕</div>`+
+  return `<div class="srow"><div class="nm">${s.nm||s.t}<div class="kind">${[s.t||'',s.date?'売却 '+s.date:'',rc].filter(Boolean).join(' · ')}</div></div>`+
+   `<label class="hswitch" title="チェックすると保有へ戻す（記録は消える）"><input type="checkbox" onchange="pfRestore(${i},this)">保有</label>`+
+   `<div class="sdel" title="この記録を消す（保有には戻さない）" onclick="delSold(${i})">✕</div>`+
    (s.memo?`<div class="smemo">${s.memo}</div>`:'')+`</div>`;
  }).join('');
 }
 function delSold(i){
- const sold=loadSold().slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+ const sold=soldSorted();
  const s=sold[i]; if(!s)return;
  if(!confirm(`売却記録「${s.nm||s.t}」を消す？（較正の答え合わせに使えなくなる）`))return;
  sold.splice(i,1); persistSold(sold); renderSold();
+}
+// ☐→チェック＝保有へ戻す。記録に残した元の行(pos)ごと復元し、売却記録を消す
+function pfRestore(i,inp){
+ const sold=soldSorted();
+ const s=sold[i]; if(!s){ if(inp)inp.checked=false; return; }
+ if(!confirm(`「${s.nm||s.t}」を保有へ戻す？（売却記録は消える）`)){ if(inp)inp.checked=false; return; }
+ const row=(s.pos&&typeof s.pos==='object')?s.pos:{t:s.t||'',nm:s.nm||'',sleeve:'castle',kind:'個別',ccy:'USD',bd:'',sh:0,bpx:0,npx:0,v:0};
+ if(!P.positions.some(p=>(row.t&&p.t===row.t)||(row.nm&&p.nm===row.nm))) P.positions.push(row);
+ sold.splice(i,1); persistSold(sold);
+ // 門の保有フラグも戻す（registerToGateと同じ集合）
+ try{const hs=JSON.parse(localStorage.getItem('g7hold:set')||'[]'); const nm=row.nm||row.t;
+  if(nm&&hs.indexOf(nm)<0){hs.push(nm);localStorage.setItem('g7hold:set',JSON.stringify(hs));}}catch(e){}
+ persist(); render();
 }
 
 /* ---------- 編集（いつ・どれだけ買ったか） ---------- */
@@ -292,7 +346,7 @@ function renderEdit(){
     <div class="ehd">
       <input value="${esc(p.t)}" oninput="draft[${i}].t=this.value" placeholder="TICKER" style="max-width:96px">
       <input value="${esc(p.nm)}" oninput="draft[${i}].nm=this.value" placeholder="銘柄名">
-      <select onchange="draft[${i}].sleeve=this.value">${opt('net',p.sleeve,'網')}${opt('castle',p.sleeve,'城')}${opt('cash',p.sleeve,'現金')}</select>
+      <select onchange="draft[${i}].sleeve=this.value">${opt('castle',p.sleeve,'個別')}${opt('cash',p.sleeve,'現金')}</select>
       <div class="del" onclick="delRow(${i})">✕</div>
     </div>
     <div class="efields">
@@ -319,7 +373,8 @@ function delRow(i){
    const d=new Date(), today=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
    const date=(prompt('売却日 (YYYY-MM-DD)',today)||today).trim();
    const memo=(prompt('メモ（任意・なぜ売ったか。較正で読み返す）','')||'').trim();
-   pendingSold.push({t:p.t||'',nm:p.nm||'',sleeve:p.sleeve||'',date,reason,memo});
+   const {_v,...raw}=p;  // 元の行を記録に残す＝☐→戻す で株数・単価ごと復元できる
+   pendingSold.push({t:p.t||'',nm:p.nm||'',sleeve:p.sleeve||'',date,reason,memo,pos:raw});
   }
  }
  draft.splice(i,1); renderEdit();
@@ -331,15 +386,7 @@ function saveEdit(){
  P.asof = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
  if(pendingSold.length){
   const sold=loadSold(); sold.push(...pendingSold); persistSold(sold);
-  // 門の保有フラグ(g7hold:set)からも外す——Ⅳ台帳の保有チェック・監視リストの「保有」母集合と揃える。
-  // ただし同じ銘柄がまだ保有に残っているなら外さない（一部売却の記録だけ残すケース）
-  try{
-   let hs=JSON.parse(localStorage.getItem('g7hold:set')||'[]');
-   const drop=new Set(); pendingSold.forEach(s=>{ if(s.nm)drop.add(s.nm); if(s.t)drop.add(s.t.toUpperCase()); });
-   const still=new Set(); P.positions.forEach(p=>{ if(p.nm)still.add(p.nm); if(p.t)still.add((p.t||'').toUpperCase()); });
-   hs=hs.filter(n=>{ const up=(n||'').toUpperCase(); return !((drop.has(n)||drop.has(up))&&!(still.has(n)||still.has(up))); });
-   localStorage.setItem('g7hold:set',JSON.stringify(hs));
-  }catch(e){}
+  dropHoldFlags(pendingSold);
   pendingSold=[];
  }
  persist(); cancelEdit(); render();
