@@ -8,10 +8,14 @@ night/validate_jp_packs.py — 日本株パックの納品検査（2026-07 JP検
 roic>40 かつ roicEx無しを取込拒否する。ここではそれに加え、審査官が守るべき
 JP必須規約（ROIC三点の定義・TTM PER・スキーマ一致・列挙値・_meta必須）を落とす。
 
-ROIC規約(2026-07-28改定): NOPAT=営業利益×0.70、過剰現金は控除しない。
-  roic = min(NOPAT÷(有利子負債+自己資本−のれん), 60)  roicg = min(NOPAT÷(有利子負債+自己資本), 60)
-  roicEx = roic 同値。旧・門式(投下資本−過剰現金)は資産軽量企業で分母が縮退して
-  発散したため廃止（実測 957.7%/502.6%/256.0%）。roicg≤roic が定義上の帰結。
+ROIC規約(v9.9.73・2026-08-03 ユーザー明示指示で米国規約へ統一): NOPAT=営業利益×(1−実効税率)、
+  過剰現金は控除しない（米国規約も控除しないので統一前から一致）。
+  roic = NOPAT÷(自己資本+有利子負債−のれん−無形)   roicg = NOPAT÷(自己資本+有利子負債)
+  roicEx = roic 同値。**60%上限は撤廃**し、米国側と同じIC縮退ガード（投下資本が基準の20%未満なら
+  算出不能。基準は自己資本、正でなければ総資産）に置き換えた——上限は壊れた数字を60という
+  もっともらしい値に化かすだけで、空欄のほうが正しい（実測でも日本株の最高は52.5%＝一度も働いていない）。
+  roicg≤roic が定義上の帰結。旧・門式(投下資本−過剰現金)は資産軽量企業で分母が縮退して
+  発散したため2026-07-28に廃止（実測 957.7%/502.6%/256.0%）。
 
 使い方: python3 night/validate_jp_packs.py            (out/ の日本株パック全部)
         python3 night/validate_jp_packs.py 7034 6920  (指定コードのみ)
@@ -24,7 +28,7 @@ os.chdir(ROOT)
 
 SCHEMA = "out/ASR_gate_pack.json"          # 様式見本(最低限これは埋まっていること)
 GATE = "index.html"                         # 受理キーの正＝門の applyFields マップ
-CAP = 60                                    # ROIC上限(2026-07-28規約・門Xの60%キャップと同思想)
+SUSPECT = 60   # v9.9.73で上限は撤廃。60超は分母縮退の作業リスト行き（night/audit_roic.py と同じ扱い）
 ENUMS = {
     "erosion": {"none", "emerging", "active"},
     "disrupt": {"settled", "unsettled", "threat"},
@@ -100,16 +104,20 @@ def check(path):
     elif float(rx) <= 0:
         # 本業赤字＝NOPAT負は正当な審査結果。門のJP検問(roic>40)も発火しない
         warns.append(f"roic={rx}% が非正（本業赤字ならこれが実像。分母の符号を要確認）")
-    elif float(rx) > CAP + 0.05:
-        fails.append(
-            f"roic={rx}% が上限{CAP}%を超えている。2026-07-28規約は現金非控除かつ"
-            f"min(…,{CAP})でクリップする（旧・門式の現金控除は分母縮退で発散したため廃止）")
+    elif float(rx) > SUSPECT:
+        # v9.9.73: 上限クリップを廃止した。高ROIC自体は異常ではない（実測で米国株は債務超過の
+        # 自社株買い企業など18社が本物）ので有罪判決にはせず、分母縮退の作業リストへ回す。
+        warns.append(
+            f"roic={rx}% が{SUSPECT}%超。上限クリップは v9.9.73 で撤廃したので値としては正当だが、"
+            "投下資本が縮退していないか night/audit_roic.py で確認すること"
+            "（IC<基準の20%なら算出不能としてnull化し理由を_meta.kenshiへ）")
 
     # roicg はのれん込み＝分母がroicより大きい。NOPAT>0なら roicg ≤ roic が定義上の帰結。
     # NOPAT<0（本業赤字）では分母が大きいほど負が浅くなるので不等号は反転する
     if isinstance(rg, (int, float)):
-        if abs(rg) > CAP + 0.05:
-            fails.append(f"roicg={rg}% が上限{CAP}%を超えている（roicgも同じくクリップする）")
+        if abs(rg) > SUSPECT:
+            warns.append(f"roicg={rg}% が{SUSPECT}%超（v9.9.73で上限撤廃）。roicgは のれん込み＝分母が"
+                         "最大なのでここが縮退していたら本物の異常。night/audit_roic.py で確認")
         if isinstance(roic, (int, float)):
             gap = float(roic) - rg
             if float(roic) > 0 and gap < -0.05:
