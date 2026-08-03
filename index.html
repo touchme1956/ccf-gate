@@ -9,8 +9,16 @@
  --ink:#f0ecdf;--ink-soft:#cfc5ab;--muted:#94a0b4;
  --gold:#c9a64a;--gold-bright:#ecd494;--gold-deep:#9c7a2c;--gold-line:rgba(201,166,74,.40);
  --pass:#8cc091;--fail:#cf7a60;--blue:#9bb0d2;--maxw:1080px;--codebg:#0d0d0f;}
-*{box-sizing:border-box;}html{scroll-behavior:smooth;}
-body{margin:0;color:var(--ink);font-size:17px;line-height:1.95;letter-spacing:.02em;
+*{box-sizing:border-box;}
+/* 2026-08-04: 本文が短いページで画面下半分が黒帯になるのを防ぐ。body だけに gradient を置くと
+   背景箱＝本文の高さで終わり、その下に地が出て境目が見える（実測: Ⅶ保有が3行のとき本文629pxで切れていた）。
+   html に gradient の終端色を地として敷き、body に min-height:100vh を与えて画面を満たす。 */
+/*   門はテーマが3種あるので、地も gradient の終端色に合わせてテーマ別に敷く
+     （1色に決め打つと light テーマで下半分が黒帯になる＝直したはずの事故を別テーマで再生産する）。 */
+html{scroll-behavior:smooth;background:#06080b;}
+html[data-theme="light"]{background:#e6e9f0;}
+html[data-theme="soft"]{background:#15181e;}
+body{margin:0;min-height:100vh;color:var(--ink);font-size:17px;line-height:1.95;letter-spacing:.02em;
  background:radial-gradient(1100px 600px at 50% -160px,rgba(201,166,74,.10),transparent 60%),linear-gradient(180deg,#0a0c11,#080a0e 60%,#06080b);
  font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",sans-serif;font-weight:300;-webkit-font-smoothing:antialiased;}
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;}

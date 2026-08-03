@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="ja"><head>
+<html lang="ja"><head><script>/* 2026-08-04: 門(index.html)と同じテーマを読む。既定は門と同じ light。
+  これが無いと**明るい門から飛んだときこのページだけ真っ黒**になっていた（ccf_theme を読むのは門だけだった）。 */
+try{document.documentElement.setAttribute("data-theme",localStorage.getItem("ccf_theme")||"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}</script>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CCF — 私のポートフォリオ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -9,9 +11,42 @@
  --bg:#080a0e;--panel:#121826;--panel2:#0e131d;--line:#28344a;
  --ink:#f0ecdf;--ink-soft:#cfc5ab;--muted:#94a0b4;
  --gold:#c9a64a;--gold-bright:#ecd494;--gold-line:rgba(201,166,74,.40);
- --net:#9bb0d2;--jade:#8cc091;--rust:#cf7a60;--maxw:760px;}
-*{box-sizing:border-box;}html{scroll-behavior:smooth;}
-body{margin:0;color:var(--ink);font-size:16px;line-height:1.8;letter-spacing:.02em;
+ --net:#9bb0d2;--jade:#8cc091;--rust:#cf7a60;--maxw:760px;
+ /* 直に書かれていた色を変数へ。テーマを持つ以上、地の色は1箇所で決まらないといけない */
+ --field:#0d0d0f;          /* 入力欄の地（明テーマで黒箱になるのを防ぐ） */
+ --hair:rgba(40,52,74,.55); /* 行の罫 */
+ --surf:rgba(255,255,255,.02);
+ /* 出口判定の色（門の配色と揃える）。S1/S2/S3/ホールド */
+ --v1:#cf5f48;--v2:#d69a3c;--v3:#a888d8;--v4:#5d8cc2;}
+/* ===== 明るいテーマ（門の既定と同じ）===== */
+html[data-theme="light"]{
+ --bg:#eceef3;--panel:#ffffff;--panel2:#f4f6f9;--line:#d3d8e2;
+ --ink:#1b2130;--ink-soft:#3a4254;--muted:#6b7488;
+ --gold:#9a7626;--gold-bright:#7e6218;--gold-line:rgba(154,118,38,.38);
+ --net:#3c66ab;--jade:#2e8a54;--rust:#bd5238;
+ --field:#ffffff;--hair:rgba(120,132,155,.30);--surf:rgba(27,33,48,.02);
+ --v1:#bd5238;--v2:#8a6114;--v3:#6f4bab;--v4:#3c66ab;}
+html[data-theme="light"] body{background:
+ radial-gradient(1000px 560px at 50% -160px,rgba(154,118,38,.10),transparent 60%),
+ linear-gradient(180deg,#f2f4f8,#eceef3 60%,#e7eaf0);}
+html[data-theme="light"] h1,html[data-theme="light"] h2,html[data-theme="light"] h3{color:#1b2130;}
+/* ===== 淡テーマ ===== */
+html[data-theme="soft"]{
+ --bg:#181b22;--panel:#242a37;--panel2:#1d222d;--line:#3a4660;
+ --field:#1b1f28;--hair:rgba(58,70,96,.55);}
+html[data-theme="soft"] body{background:
+ radial-gradient(1000px 560px at 50% -160px,rgba(201,166,74,.10),transparent 60%),
+ linear-gradient(180deg,#1c2028,#181b22 60%,#15181e);}
+*{box-sizing:border-box;}
+/* 2026-08-04: 本文が短いページで**画面下半分が黒帯になる**のを直す。
+   body だけに gradient を置くと背景箱＝本文の高さで終わり、その下は地の色が出て境目が見えていた
+   （実測: 保有3行のとき本文は約629pxで、そこから下がフラットな黒に切り替わっていた）。
+   html に gradient の終端色を地として敷き、body に min-height:100vh を与えて画面を満たす。
+   これで「gradientが終わる線」と「地の色」が同色になり、境目が原理的に出ない。 */
+html{scroll-behavior:smooth;background:#06080b;}
+html[data-theme="light"]{background:#e7eaf0;}
+html[data-theme="soft"]{background:#15181e;}
+body{margin:0;min-height:100vh;color:var(--ink);font-size:16px;line-height:1.8;letter-spacing:.02em;
  background:radial-gradient(1000px 560px at 50% -160px,rgba(201,166,74,.10),transparent 60%),linear-gradient(180deg,#0a0c11,#080a0e 60%,#06080b);
  font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",sans-serif;font-weight:300;-webkit-font-smoothing:antialiased;}
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 18px;}
@@ -32,38 +67,44 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 .sub{font-size:12px;color:var(--muted);margin:0 0 14px;}
 /* 買付入力カード */
 .fxrow{display:flex;gap:8px;align-items:center;margin:2px 0 12px;font-size:12.5px;color:var(--ink-soft);flex-wrap:wrap;}
-.fxrow input{width:96px;background:#0d0d0f;border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 9px;font-size:13px;font-family:inherit;}
-.ecard{border:1px solid var(--line);border-radius:11px;padding:11px;margin:9px 0;background:rgba(255,255,255,.02);}
+.fxrow input{width:96px;background:var(--field);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 9px;font-size:13px;font-family:inherit;}
+.ecard{border:1px solid var(--line);border-radius:11px;padding:11px;margin:9px 0;background:var(--surf);}
 .ecard .ehd{display:flex;gap:6px;align-items:center;margin-bottom:9px;}
-.ecard .ehd input{flex:1;min-width:0;background:#0d0d0f;border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 8px;font-size:13px;font-family:inherit;}
-.ecard .ehd select{background:#0d0d0f;border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 6px;font-size:12.5px;font-family:inherit;}
+.ecard .ehd input{flex:1;min-width:0;background:var(--field);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 8px;font-size:13px;font-family:inherit;}
+.ecard .ehd select{background:var(--field);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 6px;font-size:12.5px;font-family:inherit;}
 .ecard .del{cursor:pointer;color:var(--rust);text-align:center;font-size:16px;border:1px solid var(--line);border-radius:7px;padding:5px 9px;}
 .efields{display:flex;gap:8px;flex-wrap:wrap;}
 .efld{display:flex;flex-direction:column;gap:2px;font-size:10px;color:var(--muted);letter-spacing:.03em;}
-.efld input,.efld select{background:#0d0d0f;border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:6px 7px;font-size:13px;font-family:inherit;width:86px;}
+.efld input,.efld select{background:var(--field);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:6px 7px;font-size:13px;font-family:inherit;width:86px;}
 .efld.wdate input{width:120px;}
 .eprev{font-size:11.5px;color:var(--gold-bright);margin-top:8px;text-align:right;}
 .legend{display:flex;gap:16px;font-size:12px;color:var(--ink-soft);margin-top:8px;flex-wrap:wrap;}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle;}
 .tgt{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.7;}
-.row{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(40,52,74,.55);}
+.row{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--hair);}
 .row:last-child{border-bottom:none;}
 .nm{font-size:14.5px;color:var(--ink);}
 .kind{font-size:11px;color:var(--muted);}
 /* □保有/売却スイッチ(2026-08-03)。配色は全行共通＝金主体の統一 */
+/* 2026-08-04 ユーザー指示「保有の色分けは消さないでほしい」: 出口判定の色を戻す。
+   2026-08-03に「色を統一」で判定ごとの色分け(赤/黄/紫/青)と色丸を消したが、**一覧を一瞥して
+   S1/S2が居るか分かる**のが保有一覧の役目だった。統一のうち残すのは 網/城バッジの廃止
+   （ETFを扱わなくなり全行が城なので情報量が無い）と□スイッチ。色は判定にだけ戻す。 */
+.ind-dot{font-size:11px;margin-right:7px;vertical-align:middle;filter:drop-shadow(0 0 3px currentColor);}
+.vd{font-weight:500;}
 .hswitch{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;user-select:none;}
 .hswitch input{width:16px;height:16px;accent-color:var(--gold);cursor:pointer;margin:0;}
 .vlabel{text-align:right;font-size:12.5px;white-space:nowrap;letter-spacing:.02em;}
 .vage{text-align:right;font-size:10.5px;color:var(--muted);white-space:nowrap;margin-top:2px;}
-.srow{display:grid;grid-template-columns:1fr auto 28px;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(40,52,74,.55);}
+.srow{display:grid;grid-template-columns:1fr auto 28px;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--hair);}
 .srow:last-child{border-bottom:none;}
 .srow .sdel{cursor:pointer;color:var(--rust);text-align:center;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:3px 0;}
 .smemo{font-size:11.5px;color:var(--muted);grid-column:1/4;line-height:1.6;}
 .mini{font-size:11.5px;color:var(--muted);text-align:right;grid-column:1/3;}
 .note{font-size:12.5px;color:var(--ink-soft);background:rgba(201,166,74,.06);border:1px solid var(--gold-line);border-radius:10px;padding:12px 14px;line-height:1.85;margin:14px 0;}
 /* edit */
-.erow{display:grid;grid-template-columns:70px 1fr 62px 96px 30px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(40,52,74,.5);}
-.erow input,.erow select{background:#0d0d0f;border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 8px;font-size:13px;font-family:inherit;width:100%;}
+.erow{display:grid;grid-template-columns:70px 1fr 62px 96px 30px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--hair);}
+.erow input,.erow select{background:var(--field);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 8px;font-size:13px;font-family:inherit;width:100%;}
 .erow input:focus,.erow select:focus{outline:none;border-color:var(--gold);}
 .erow .del{cursor:pointer;color:var(--rust);text-align:center;font-size:16px;border:1px solid var(--line);border-radius:7px;padding:5px 0;}
 .ehead{display:grid;grid-template-columns:70px 1fr 62px 96px 30px;gap:6px;font-size:10.5px;color:var(--muted);padding-bottom:4px;letter-spacing:.05em;}
@@ -123,7 +164,7 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
 
  <div class="card">
   <h2>保有一覧</h2>
-  <p class="sub">個別銘柄の保有だけを出す（金額なし・ETFは扱わない）。右の<b>□スイッチ</b>がチェック＝保有中。外すと売却として記録し「売却済み」へ移る。門の出口判定（S1売却検討／S2縮小／S3記録のみ／ホールド）は各行の下の行に文字で出る——判定は門（Ⅳ台帳）を開くと更新される。</p>
+  <p class="sub">個別銘柄の保有だけを出す（金額なし・ETFは扱わない）。右の<b>□スイッチ</b>がチェック＝保有中。外すと売却として記録し「売却済み」へ移る。門の出口判定（<b style="color:var(--v1)">S1売却検討</b>／<b style="color:var(--v2)">S2縮小</b>／<b style="color:var(--v3)">S3記録のみ</b>／<b style="color:var(--v4)">ホールド</b>）は各行の下に色つきで出る——判定は門（Ⅳ台帳）を開くと更新される。</p>
   <div style="margin:0 0 10px"><button class="btn" id="rescoreBtn" onclick="pfRescorePrompt(this)" style="border-color:rgba(84,184,138,.5);color:#8fc9a4;background:linear-gradient(180deg,rgba(84,184,138,.20),rgba(84,184,138,.06))" title="保有の個別銘柄を、今の門が必要とする全項目で採点し直す依頼文をコピー。Claudeに貼ると完成パックJSONが返る→Ⅲ採点機に取込">📋 個別の再採点依頼文をコピー</button> <span class="mini" style="text-align:left;display:inline">最新データで門Ω＋門Xにかけ直す。返ったJSONを門「Ⅲ採点機」の貼付欄へ。</span></div>
   <div id="holdList"></div>
  </div>
@@ -199,16 +240,20 @@ function render(){
  document.getElementById('total').textContent = shown.length ? (shown.length+'銘柄') : '—';
  document.getElementById('asof').textContent = P.asof? ('更新 '+P.asof) : '';
 
- // ---- 保有一覧（2026-08-03: 色を統一・右側は□保有/売却スイッチ）------------------
- // ユーザー指示「保有の色を統一してほしい」: 判定ごとの色分け(赤/黄/紫/青)と色丸・バッジを廃し、
- // 全行を同じ配色に。門の出口判定は名前下の灰色の行に文字で残す（情報は消さない・色だけ消す）。
+ // ---- 保有一覧（右側は□保有/売却スイッチ）------------------------------------------
+ // 2026-08-03「保有の色を統一してほしい」で判定色・色丸・網/城バッジを全廃 →
+ // 2026-08-04「保有の色分けは消さないでほしい」で**判定の色だけ戻した**。
+ // 網/城バッジは戻さない（ETFを扱わなくなり全行が城＝情報量ゼロ）。□スイッチもそのまま。
  const vmap=(function(){try{return JSON.parse(localStorage.getItem('pf:verdicts')||'{}');}catch(e){return {};}})();
  const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm];                     // 名の完全一致
    const pt=(p.t||'').toUpperCase();
    for(const k in vmap){ if(pt&&k.toUpperCase()===pt)return vmap[k]; }             // ティッカー完全一致(IRMD≠RMD)
    for(const k in vmap){ if(p.nm&&(k.indexOf(p.nm)>=0||p.nm.indexOf(k)>=0))return vmap[k]; } // 名の部分一致のみ
    return null; };
- const VLABEL={s1:'売却検討 (S1)',s2:'買い増し停止・縮小 (S2)',s3:'記録のみ (S3)',hold:'ホールド',pending:'採点待ち（門Ⅲで審査）'};
+ // 出口判定の表示: [文言, 色, 丸]。色は門(index.html)の出口判定の配色と揃える
+ const VCFG={s1:['売却検討 (S1)','var(--v1)','●'],s2:['買い増し停止・縮小 (S2)','var(--v2)','●'],
+             s3:['記録のみ (S3)','var(--v3)','●'],hold:['ホールド','var(--v4)','●'],
+             pending:['採点待ち（門Ⅲで審査）','var(--muted)','○']};
  // 判定の鮮度: 門Ⅳ台帳を開いた時のキャッシュ＝いつのものかを添える。90日超(四半期またぎ)は⚠(色は統一のまま)。
  const ageTxt=v=>{ if(!v)return '';
   if(!v.ts)return ' · 判定日不明（門Ⅳで更新）';
@@ -222,13 +267,16 @@ function render(){
        const idx=P.positions.indexOf(p);
        // 出口判定は個別(城)にしか意味が無い。現金には付けない
        const v = (p.sleeve==='castle') ? verdictOf(p) : null;
-       const vTxt = (p.sleeve==='castle') ? ('判定: '+VLABEL[(v&&v.level)||'pending']+ageTxt(v)) : '';
+       const vc = (p.sleeve==='castle') ? (VCFG[(v&&v.level)||'pending']||VCFG.pending) : null;
+       // 判定だけ色を持たせる（銘柄名・ティッカー・鮮度は統一配色のまま＝色は「判定」の意味に限定）
+       const vTxt = vc ? `判定: <span class="vd" style="color:${vc[1]}">${vc[0]}</span>${ageTxt(v)}` : '';
+       const dot = vc ? `<span class="ind-dot" style="color:${vc[1]}">${vc[2]}</span>` : '';
        const info=[p.t||'', p.sleeve==='cash'?'現金':'', vTxt].filter(Boolean).join(' · ');
        // □スイッチ(2026-08-03 ユーザー指示): チェック=保有中。外すと売却として記録し「売却済み」へ移す
        const sw = (p.sleeve==='castle')
          ? `<label class="hswitch"><input type="checkbox" checked onchange="pfSell(${idx},this)">保有</label>`
          : '<div class="vlabel" style="color:var(--muted)">—</div>';
-       return `<div class="row"><div class="nm">${p.nm||p.t}<div class="kind">${info}</div></div>${sw}</div>`;
+       return `<div class="row"><div class="nm">${dot}${p.nm||p.t}<div class="kind">${info}</div></div>${sw}</div>`;
      }).join('')
    : '<div class="mini" style="text-align:left">保有が未登録。「✎ 編集」から入れてください。</div>';
  renderSold();
@@ -275,7 +323,8 @@ function dropHoldFlags(soldArr){
 const SOLD_KEY='pf:sold';
 function loadSold(){ try{const s=localStorage.getItem(SOLD_KEY); if(s){const a=JSON.parse(s); if(Array.isArray(a))return a;}}catch(e){} return []; }
 function persistSold(a){ try{localStorage.setItem(SOLD_KEY, JSON.stringify(a));}catch(e){} }
-const SREASON={s1:'S1 売却',s2:'S2 縮小',s3:'S3 記録',other:'その他'};  // 2026-08-03: 色分け廃止＝保有一覧と同じ統一配色
+// 2026-08-04: 保有一覧に判定色を戻したので、売却理由も同じ配色に揃える（別々だと同じ語が別の色になる）
+const SREASON={s1:['S1 売却','var(--v1)'],s2:['S2 縮小','var(--v2)'],s3:['S3 記録','var(--v3)'],other:['その他','var(--muted)']};
 // 表示順(売却日降順)を一度作って添字をその順に振る——delSold/pfRestoreと同じ並びで対応させる
 function soldSorted(){ return loadSold().slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')); }
 function renderSold(){
@@ -286,7 +335,8 @@ function renderSold(){
  card.classList.remove('hide');
  list.innerHTML = sold.map((s,i)=>{
   const rc=SREASON[s.reason]||SREASON.other;
-  return `<div class="srow"><div class="nm">${s.nm||s.t}<div class="kind">${[s.t||'',s.date?'売却 '+s.date:'',rc].filter(Boolean).join(' · ')}</div></div>`+
+  const rTxt=`<span class="vd" style="color:${rc[1]}">${rc[0]}</span>`;
+  return `<div class="srow"><div class="nm"><span class="ind-dot" style="color:${rc[1]}">●</span>${s.nm||s.t}<div class="kind">${[s.t||'',s.date?'売却 '+s.date:'',rTxt].filter(Boolean).join(' · ')}</div></div>`+
    `<label class="hswitch" title="チェックすると保有へ戻す（記録は消える）"><input type="checkbox" onchange="pfRestore(${i},this)">保有</label>`+
    `<div class="sdel" title="この記録を消す（保有には戻さない）" onclick="delSold(${i})">✕</div>`+
    (s.memo?`<div class="smemo">${s.memo}</div>`:'')+`</div>`;

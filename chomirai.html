@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="ja"><head>
+<html lang="ja"><head><script>/* 2026-08-04: 門(index.html)と同じテーマを読む（キー ccf_theme・既定 light）。
+  これが無いと明るい門から飛んだときこのページだけ真っ黒になる。 */
+try{document.documentElement.setAttribute("data-theme",localStorage.getItem("ccf_theme")||"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}</script>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CCF X — 超未来の門（別枠・期待リターン最大化）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,8 +13,31 @@
  --gold:#c9a64a;--gold-bright:#ecd494;--gold-line:rgba(201,166,74,.40);
  --star:#8fc7e8;--star-bright:#c4e4f7;--star-line:rgba(143,199,232,.38);
  --pass:#8cc091;--fail:#cf7a60;--warn:#d8b46a;--maxw:1060px;--codebg:#0c0e13;}
-*{box-sizing:border-box;}html{scroll-behavior:smooth;}
-body{margin:0;color:var(--ink);font-size:17px;line-height:1.95;letter-spacing:.02em;
+/* ===== 明るいテーマ（門の既定と同じ）===== */
+html[data-theme="light"]{
+ --bg:#eceef3;--bg2:#e4e7ee;--panel:#ffffff;--panel2:#f4f6f9;--line:#d3d8e2;
+ --ink:#1b2130;--ink-soft:#3a4254;--muted:#6b7488;
+ --gold:#9a7626;--gold-bright:#7e6218;--gold-line:rgba(154,118,38,.38);
+ --star:#2f6f96;--star-bright:#1f5578;--star-line:rgba(47,111,150,.38);
+ --pass:#2e8a54;--fail:#bd5238;--warn:#8a6114;--codebg:#eef0f4;}
+html[data-theme="light"] body{background:
+ radial-gradient(900px 520px at 50% -140px,rgba(47,111,150,.10),transparent 62%),
+ radial-gradient(700px 420px at 85% 8%,rgba(154,118,38,.06),transparent 60%),
+ linear-gradient(180deg,#f2f4f8,#eceef3 60%,#e7eaf0);}
+/* ===== 淡テーマ ===== */
+html[data-theme="soft"]{--bg:#181b22;--bg2:#1d212b;--panel:#242a37;--panel2:#1d222d;--line:#3a4660;--codebg:#1b1f28;}
+html[data-theme="soft"] body{background:
+ radial-gradient(900px 520px at 50% -140px,rgba(143,199,232,.10),transparent 62%),
+ radial-gradient(700px 420px at 85% 8%,rgba(201,166,74,.06),transparent 60%),
+ linear-gradient(180deg,#1c2028,#181b22 60%,#15181e);}
+*{box-sizing:border-box;}
+/* 2026-08-04: 本文が短いページで画面下半分が黒帯になるのを防ぐ。body だけに gradient を置くと
+   背景箱＝本文の高さで終わり、その下に地が出て境目が見える（実測: Ⅶ保有が3行のとき本文629pxで切れていた）。
+   html に gradient の終端色を地として敷き、body に min-height:100vh を与えて画面を満たす。 */
+html{scroll-behavior:smooth;background:#05070b;}
+html[data-theme="light"]{background:#e7eaf0;}
+html[data-theme="soft"]{background:#15181e;}
+body{margin:0;min-height:100vh;color:var(--ink);font-size:17px;line-height:1.95;letter-spacing:.02em;
  background:
   radial-gradient(900px 520px at 50% -140px,rgba(143,199,232,.10),transparent 62%),
   radial-gradient(700px 420px at 85% 8%,rgba(201,166,74,.06),transparent 60%),
