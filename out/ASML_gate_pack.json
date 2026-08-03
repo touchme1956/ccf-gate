@@ -1,7 +1,7 @@
 {
  "nm": "ASML",
- "roic": 49.5,
- "roicg": 38.9,
+ "roic": 49.6,
+ "roicg": 37.1,
  "nde": -0.69,
  "z": 4.13,
  "gpa": 34.1,
@@ -75,7 +75,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=37.5 / 5年窓=na。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均42.8%・σ5.0pt・CV11.6%）。",
    "2026-08-02 市場価格を自動更新: px 1,588.75 → 1,629.00（+2.5%）。per 64.3→65.93　evebit 53.9→55.3　shy 0.96→0.94。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
-   "2026-08-03 acq5 None → 'no'。空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**——門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
+   "2026-08-03 acq5 None → 'no'。空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**——門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "**v9.9.72（2026-08-03・ユーザー明示指示「今の12社に忖度するのではなく本当に必要なものを」）roic を through-cycle 化**: roic 49.5→49.6 / roicg 38.9→37.1。**5年の中央値**（直近 43.2% / 中央 43.3% / 最悪 34.1%・5年）。roicg も同じ年の系列の中央値（35.0→33.4）にして roic≥roicg の恒等式を保つ。パックの審査済み値を土台に**欄ごとの比**で当てた（絶対値だと through-cycle の効果と『採取器 vs 審査官』の差が混ざる）。出典: SEC companyfacts（採取器 build_numbers）"
   ],
   "evidence": {
    "rep": "『the first ever 1,000-watt light source for EUV lithography...built on 25 years of engineering advancements』『after almost 10 years of tremendous work...we have released our first TWINSCAN EXE:5200B in full specification』→数十年規模の技術蓄積=複製不能→100",
@@ -97,8 +98,8 @@
    "f5": "disrupt=settled連動→85",
    "moatW": "【2026-07-29 再監査 → 50を維持（原本実数で再検証）】売上構成(FY2025・20-F/Annual Report 2025 Note2 Disaggregation of revenue・百万€): Net system sales 24,474.3=総売上32,667.3の74.9% / Net service and field option sales 8,193.0=25.1%。システム内訳: EXE 1,156.9 + NXE 10,445.8 = EUV 11,602.7(システム売上の47.4%)、ArF液浸10,311.4(42.1%)、ArFドライ427.0(1.7%)、KrF 1,001.3(4.1%)、i線307.3(1.3%)、計測・検査824.6(3.4%)。用途別 Logic 16,054.1(65.6%)/Memory 8,420.2(34.4%)。報告セグメントは1つ(『ASML has one reportable segment, since we are a holistic lithography solution provider』Note3)。堀の本数: サービス25.1%は自社据付機の保守・アップグレード・NXEフィールドアップグレード(『The increase in net service and field option sales was primarily due to the growing installed base』)で、装置が売れなくなれば同時に細る＝同一の堀に乗るため2本目に数えない。計測・検査824.6は売上2.5%で≥15%に遠く2本目にならない。EUVとDUVも同じTWINSCANプラットフォーム・同じ顧客(先端fab)・同じ光学サプライヤ(Carl Zeiss SMT)に乗る1本。顧客集中: 『Total net sales to our largest customer amounted to €7,796.7 million, or 23.9% of total net sales in 2025』『In 2025, 38.0% of total net sales were made to our two largest customers』。⇒ 独立した堀は1本(リソグラフィ)、かつ最大顧客23.9%≥20% → moatW=50(刻み70の『最大顧客<10%』も未達)。出典: https://www.sec.gov/Archives/edgar/data/937966/000162828026011378/asml-20251231.htm Note 2 Revenue / Note 3 Segment disclosure / Risk factors",
    "dom": "【2026-07-29 再監査 → 100を維持（原本の唯一供給明文＋自社売上での重み付けで再確定）】◆自社シェア: EUV=100%。原本の明文『ASML is currently the world's only manufacturer of EUV lithography systems.』(20-F/Annual Report 2025・EUV節)＝実質唯一供給。DUVについてのみ競合を名指し『We compete primarily with Canon and Nikon in respect of DUV systems. Both have substantial financial resources and broad patent portfolios.』(同 Risk factors)＝EUVには競合が存在しないことの裏書き。◆上位N社合計: リソグラフィ装置の供給者は世界にASML・Nikon・Canonの3社しかなく上位3社合計=100%。その中の配分はASML 約83〜90%／Nikon 約5%／Canon 約5%(2025年・**原本外**の第三者推計。Mordor Intelligence https://www.mordorintelligence.com/industry-reports/semiconductor-lithography-equipment-market 他)。EUV帯は100%。◆自社売上での重み付け(原本 Note2 Disaggregation of revenue・FY2025・百万€): EUV(EXE 1,156.9+NXE 10,445.8)=11,602.7=総売上32,667.3の35.5%【唯一供給=100】/ ArF液浸10,311.4=31.6%【先端DUVでASMLが≥90%】/ サービス・フィールドオプション8,193.0=25.1%【自社据付機に紐づく＝競争市場ではない】→ この3者で92.2%。Nikon/Canonが実際に競っているのはArFドライ427.0+KrF1,001.3+i線307.3=1,735.6=5.3%と、KLA/Onto等と競う計測・検査824.6=2.5%のみ。⇒ 売上加重で≥90% → 刻み100(独占≥90%・実質唯一供給)。※保守側の読み(全リソグラフィ83%を採用し85とする)も成り立つが、その場合でも唯一供給のEUVと自社据付ベースのサービスで加重し直すと92以上に戻るため100を採る。刻みが50側へ落ちる読み筋は存在しない(＝MSFT型の散らばりではない)。出典: https://www.sec.gov/Archives/edgar/data/937966/000162828026011378/asml-20251231.htm (Strategic report EUV節 / Risk factors / Note 2 Revenue - Net system sales per technology)",
-   "roic": "機械算出 2025年: NOPAT 9,343,675,634（営業利益 11,301,400,000×(1−実効税率17.3%)） ÷ IC 18,928,700,000＝自己資本 19,612,200,000 + 有利子負債 4,390,900,000 − のれん 4,588,600,000 − 無形 485,800,000。**IC/自己資本=96.5%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）",
-   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 19,612,200,000 + 有利子負債 4,390,900,000)＝のれん込み。roic(除外)との差が買収規律の指標",
+   "roic": "機械算出 2025年: NOPAT 9,343,675,634（営業利益 11,301,400,000×(1−実効税率17.3%)） ÷ IC 18,928,700,000＝自己資本 19,612,200,000 + 有利子負債 4,390,900,000 − のれん 4,588,600,000 − 無形 485,800,000。**IC/自己資本=96.5%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）｜**v9.9.72 through-cycle**: 5年5年の中央値を採用（直近43.2% / 中央43.3% / 最悪34.1%）",
+   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 19,612,200,000 + 有利子負債 4,390,900,000)＝のれん込み。roic(除外)との差が買収規律の指標｜**v9.9.72 through-cycle**: 5年5年の中央値を採用（直近43.2% / 中央43.3% / 最悪34.1%）",
    "roict": "機械算出: のれん除外ROIC 5年系列 62.4% / 72.3% / 59.9% / 41.1% / 49.4%（最古→直近の差で判定）",
    "gm": "機械算出 2025年: 営業利益 11,301,400,000 ÷ 売上 32,667,300,000（粗利ではない）",
    "gmt": "機械算出: 営業利益率 2023年 32.8% → 2025年 34.6%（±1ptでup/down）",

@@ -1,7 +1,7 @@
 {
  "nm": "VRSK",
- "roic": 22.5,
- "roicg": 16.1,
+ "roic": 46.1,
+ "roicg": 16.9,
  "nde": 2.56,
  "z": 7.44,
  "gpa": null,
@@ -16,7 +16,7 @@
  "dilNet": -3.64,
  "acc": "usgaap",
  "eq": "pos",
- "acq5": "yes",
+ "acq5": "no",
  "eps": 6.56,
  "expiry": "no",
  "moatdecay": "no",
@@ -72,7 +72,9 @@
    "2026-07-29 堀再監査(v9.9.41): 旧dom=85→新dom=空欄、旧moatW=85→新moatW=85(据置)。旧dom85の根拠自体が『明示シェア%はhitsになく圧倒帯85』と自認する憶測値のため棄却。原本FY2025 10-Kにシェア%・上位N社合計%は皆無で、Underwriting(70.9%)は『most P&C insurers ... essential input』＋全50州statistical agentで50を否定、Claims等(29.1%)は『a number of companies』で50、と刻みが散るため空欄(規約1)。100は同10-Kが『other statistical agents』を競合に挙げるため否定。moatWはNote6実数(Underwriting$2,179.9M/Claims$892.8M)で独立2本を再確認。dom/moatW/_meta以外は一切変更していない",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=na。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 75→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均48.0%・σ22.1pt・CV46.1%）。",
-   "2026-07-30 per を新規算出（29.7 = px 194.85 ÷ 通期実績eps 6.56）。Finnhubの株価が入り px が埋まったため、Ω72+で門X未評価だった状態を解消。**基準は通期実績**（TTMの取得元が無い）で、保守側（E[r]過小）に倒れる。evidenceに基準を明記した。"
+   "2026-07-30 per を新規算出（29.7 = px 194.85 ÷ 通期実績eps 6.56）。Finnhubの株価が入り px が埋まったため、Ω72+で門X未評価だった状態を解消。**基準は通期実績**（TTMの取得元が無い）で、保守側（E[r]過小）に倒れる。evidenceに基準を明記した。",
+   "**v9.9.72（2026-08-03・ユーザー明示指示「今の12社に忖度するのではなく本当に必要なものを」）roic を through-cycle 化**: roic 22.5→46.1 / roicg 16.1→16.9。**5年の中央値**（直近 23.9% / 中央 49.0% / 最悪 23.9%・5年）。roicg も同じ年の系列の中央値（15.8→16.6）にして roic≥roicg の恒等式を保つ。パックの審査済み値を土台に**欄ごとの比**で当てた（絶対値だと through-cycle の効果と『採取器 vs 審査官』の差が混ざる）。出典: SEC companyfacts（採取器 build_numbers）",
+   "acq5 yes→no（2026-08-03・機械判定）: **今あるのれんの新しさ = (直近2025年 1,878,200,000 − 2020年 4,108,100,000) ÷ 直近 = -118.7%**（判定線 yes≥30% / no<10%）。のれんは**増えていない**ので直近5年の大型買収は無い。従来の'yes'は根拠が記録されておらず、v9.9.72のthrough-cycle化で roicGap が15ptを越えた際に**のれん込みROIC乖離−6が誤って発火**して発覚した（線が動くと既存の穴が見える）"
   ],
   "evidence": {
    "dom": "【dom=空欄】FY2025 10-K(CIK 0001442145, acc 0001437749-26-004452, vrsk20251231_10k.htm)の Item1『Our Competitors』および Item1A を全文精査したが、自社シェア%・上位N社合計%はどこにもない。■50側の構造記述: 『The breadth of markets we serve exposes us to a broad range of competitors ... We have numerous competitors in specific lines or services』『Competitors also include other statistical agents and other advisory organizations, that provide underwriting rules, prospective loss costs, and coverage language』『a customer may use its own internal resources rather than engage an outside firm』『In the P&C insurance claims and catastrophe modeling markets, products are offered by a number of companies』→ Claims(売上29.1%)およびcat modeling等は「同等品を複数社が供給」＝50側。■50を否定する構造記述: 中核のUnderwriting(売上70.9%)について同10-Kは『as a licensed or appointed statistical agent in all 50 states,Puerto Rico, and the District of Columbia, we report those statistics to insurance regulators』『We are able to capture significant economies of scale given the level of utilization of this service within the U.S. P&C insurance industry』『For most P&C insurers in most lines of business, we believe that our estimates of future costs are an essential input to rating decisions』と、業界の大半(most)が依存していると述べており、これは「自社<40%」を前提とする刻み50と両立しない。他方で同じ10-Kが『other statistical agents』の存在を明記するため『実質唯一供給』=100も成立しない。数値がないので70/85も置けない(v9.9.41 規約2)。→ 中核70.9%が測定不能(≥70側)、残余29.1%が50、と刻みが散るため規約1により空欄。出典: SEC 10-K FY2025 vrsk20251231_10k.htm Item1(Our Competitors / statistical agent節), Item1A",
@@ -95,7 +97,7 @@
    "f4": "隣接は過去に売却(Financial Services/Energy/Environmental)し保険特化へ収斂。新規ラインは『as we enter into new lines of business, due to acquisition or otherwise』で育成中・売上5%超成長の定量なし=60",
    "f5": "disrupt=settled連動=85(『emerging technologies』の定型言及は弱根拠のため±調整せず)",
    "moatW": "【moatW=85 据置(原本で再確認)】Note 6 Revenues の Disaggregated revenues by type of service(FY2025, 総額$3,072.7M): Underwriting $2,179.9M=70.9% / Claims $892.8M=29.1%。地域は米国$2,522.3M=82.1%/英国$250.1M=8.1%/その他$300.3M=9.8%。報告セグメントはInsurance1本(Note19『we have determined that we have one operating segment and one reportable segment, Insurance』)だが、これはCODMの業績評価単位の話で、堀の本数はデータ資産の別で数える。独立した堀は2本: (1)Underwriting=全50州＋PR＋DCの保険規制当局への統計代理(licensed or appointed statistical agent)＋ISO約款・prospective loss costs(保険会社が拠出する保険料/損害データのプール、FY2025に約36億件の取引レコードを受領、累計388億件の統計レコード)、(2)Claims=修理費用見積(建物・修理費データを見積システム経由で施工業者が利用)と請求データベース(『Our claims database serves thousands of customers ... including self-insurers, third party administrators, several state fraud bureaus, and many law enforcement agencies』)。両者はデータの拠出者(保険会社の保険料/損害統計 vs 施工業者・査定人の修理費用/請求)が別で、共通の中核技術に相乗りしていない(v9.9.41 moatW追加規約)。片方(規制の統計代理役)が制度変更で折れても他方(修理費用DB・請求DBの両面ネットワーク)は立つ。各≥売上15%も充足(29.1%)。ただし最終顧客は双方とも米P&C保険会社で重なり、堀3本には届かない→85。単一顧客集中もなし(Note5『No individual customer comprised more than 6% and 4% of accounts receivable』)。出典: SEC 10-K FY2025 acc 0001437749-26-004452 vrsk20251231_10k.htm Note6/Note19/Item1",
-   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 309,000,000 + 有利子負債 6,282,400,000)＝のれん込み。roic(除外)との差が買収規律の指標",
+   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 309,000,000 + 有利子負債 6,282,400,000)＝のれん込み。roic(除外)との差が買収規律の指標｜**v9.9.72 through-cycle**: 5年5年の中央値を採用（直近23.9% / 中央49.0% / 最悪23.9%）",
    "roict": "機械算出: のれん除外ROIC 5年系列 49.0% / 24.3% / 81.6% / 61.3% / 23.9%（最古→直近の差で判定）",
    "gm": "機械算出 2025年: 営業利益 1,343,900,000 ÷ 売上 3,072,700,000（粗利ではない）",
    "gmt": "機械算出: 営業利益率 2023年 42.2% → 2025年 43.7%（±1ptでup/down）",
@@ -109,7 +111,9 @@
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT -100,471,606 ÷ Δ投下資本 -295,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 6,886,400,000→6,591,400,000（-4.3%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 217,795,226 ÷ Δ投下資本 154,200,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 6,437,200,000→6,591,400,000（+2.4%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない",
    "px": "市場データ機械充填 2026-08-02: market_fetch/market_data.json（常識帯(0.0, 10000000.0)を通過）",
-   "per": "【2026-07-30 算出】per = px 194.85 ÷ eps 6.56 = **29.7**。**基準は通期実績EPS**（epsは機械算出のSEC XBRL通期値）で、門の規約が定める TTM実績 ではない。TTM実績EPSの取得元が無いため通期で代用した——成長企業では通期eps<TTM epsゆえ per は過大に出る＝**E[r]を過小に見積もる保守側**に倒れる。TTM実績が取れたら差し替えること。px は Finnhub 実測（2026-07-31）。"
+   "per": "【2026-07-30 算出】per = px 194.85 ÷ eps 6.56 = **29.7**。**基準は通期実績EPS**（epsは機械算出のSEC XBRL通期値）で、門の規約が定める TTM実績 ではない。TTM実績EPSの取得元が無いため通期で代用した——成長企業では通期eps<TTM epsゆえ per は過大に出る＝**E[r]を過小に見積もる保守側**に倒れる。TTM実績が取れたら差し替えること。px は Finnhub 実測（2026-07-31）。",
+   "roic": "｜**v9.9.72 through-cycle**: 5年5年の中央値を採用（直近23.9% / 中央49.0% / 最悪23.9%）",
+   "acq5": "【2026-08-03 機械判定】のれん残高 2020年 4,108,100,000 → 2025年 1,878,200,000。**新しさ = -118.7%**（今あるのれんのうち直近5年に増えた割合）→ **大型買収なし=no**"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",

@@ -513,7 +513,7 @@ def build_numbers(facts):
             if ic <= 0 or ic < 0.20*max(S["eq"][y], 1):
                 roic_skip.append(f"{y}:IC={ic:.0f}が自己資本{S['eq'][y]:.0f}の2割未満＝のれん控除で分母縮退")
                 continue
-            roics.append(nopat/ic*100)
+            roics.append((nopat/ic*100, nopat/max(S["eq"][y]+debt, 1)*100))
             # 実額を残す。**IC/自己資本が本当の判別子**（2026-07-29の19社検算で確立——
             # 「roic>60だから怪しい」はほぼ外れ、MAは74.9→131.0の上方修正だった）。
             # 比率だけでは後から検算できないので、NOPAT・自己資本・負債・のれん・無形の各実額を書く。
@@ -526,9 +526,16 @@ def build_numbers(facts):
                            f"{' + '.join((ev['_debtUsed']['debtL'].get(y) or []) + (ev['_debtUsed']['debtS'].get(y) or [])) or '—'}")
     if roic_skip:
         note.append("roic系列の一部を算出不能として除外: " + " / ".join(roic_skip))
+    # 2026-08-03: **roicg の5年系列も同じ年・同じNOPATから対で作る。** roicだけ through-cycle 化すると
+    #   roic<roicg（NOPAT>0では数学的に不可能）ができる＝「基準の違う二つを割る」型。
+    _rSeq = [x[0] for x in roics]
+    _gSeq = [x[1] for x in roics]
     if roics:
-        ev["roicExW5"]  = round(min(roics),1)
-        ev["roicExMed5"]= round(median(roics),1)
+        ev["roicExW5"]  = round(min(_rSeq),1)
+        ev["roicExMed5"]= round(median(_rSeq),1)
+        ev["roicgW5"]   = round(min(_gSeq),1)
+        ev["roicgMed5"] = round(median(_gSeq),1)
+        ev["_tcYears"]  = len(_rSeq)
     # 純希薄化率(株数の年率変化)
     sh,_ = series(facts, TAGS["sh"], ("shares",))
     if len(sh)>=3:
@@ -596,8 +603,30 @@ def build_numbers(facts):
     # のれん除外ROIC 直近年 roic (門のroic欄=単年・除外)
     # 5年系列そのものは古い年を含んでよい（それが系列の意味）。検問するのは**直近値の年**だけ——
     # 古い年の値を"直近ROIC"として台帳に載せないため。
+    # v9.9.72（2026-08-03・ユーザー明示指示「今の12社に忖度するのではなく本当に必要なものを」）:
+    #   **roic / roicg は単年でなく through-cycle＝5年の中央値**。
+    #   【なぜ重みでなくここを直したか】audit_weights --q75 の実測で 単年roic の実効ウェイトは **38.2%**
+    #   ＝単独最大なのに、時間を通して見る欄は合計12.7%、`sustain`(.30・名前は「持つか」)の中身も
+    #   堀とROICの**現在値だけ**だった。ところが重みを上げる案は7案すべて**投下可が増えるだけ**
+    #   （night/shadow_time_axis.py）——判定帯の変動係数が p4 7.9% / f1 6.4% / p1 13.5% / p2 19.1% に対し
+    #   **roic 64.0%**＝時間軸の欄はほぼ定数で、定数の重みを上げても順位は動かない
+    #   （v9.9.43のgmPt・v9.9.45のTAM柱と同じ「情報を持たない定数」の病）。
+    #   **roicが支配的なのは重みが大きいからではなく、判定帯で唯一ばらついている数字だから。**
+    #   【なぜ中央値か】roic欄が答えるべきは「この事業が通常いくら稼ぐか」で、中央値がその推定量。
+    #   周期性は **p1（同じ5年系列の変動係数）が既に別枠で測っている**ので、水準へ折り込むと二重計上。
+    #   5年最悪値は「一年が決める」問題を悲観側へ置き換えるだけ（実測で投下可12→7。IRMD/NVDA/6857等が
+    #   谷の1年で脱落、いずれもWACC超なのに）。min(直近,中央)は投下可12社を保つが、
+    #   **保つこと自体を選定理由にしたのは忖度**であり、技術的根拠（roicGapの誤発火）も
+    #   **実装の副作用**だった——単一係数が roicGap の信号を潰していた。実測 APH の本当の
+    #   through-cycle 乖離は 中央roic42.2 − 中央roicg16.1 = **26.1pt**（罰の線15pt）で、
+    #   単年だと12.4ptと線のすぐ下に隠れる＝**単年測定が買収依存を隠していた**。
+    #   【roicgも同時に】中央値どうしなら系列が点ごとに roic_y≥roicg_y なので恒等式が保たれる。
     if roics and not stale(max(S["op"]) if S["op"] else None):
-        ev["roic"]=round(roics[-1],1)
+        ev["roic"]=round(median(_rSeq),1)
+        if _gSeq: ev["roicg"]=round(median(_gSeq),1)
+        evd["roic"]=(evd.get("roic","")+f"｜**v9.9.72: through-cycle 化**。5年系列 {len(_rSeq)}年の"
+                     f"**中央値 {median(_rSeq):.1f}%** を採用（直近年 {_rSeq[-1]:.1f}% / 最悪 {min(_rSeq):.1f}%）。"
+                     f"roicg も同じ年の系列の中央値 {median(_gSeq):.1f}% にして roic≥roicg を保つ")
     elif roics:
         note.append(f"roic算出不能: 営業利益系列が{max(S['op'])}年で途切れ最新{LATEST}年から遅れている"
                     f"（タグ改称の疑い）。原本で確認して手入力せよ")
@@ -675,10 +704,10 @@ def build_numbers(facts):
         evd["roiic5"] = _e5
 
     # ROICトレンド roict (5年 up/flat/down): worst年 vs 直近
-    if len(roics)>=2:
-        ev["roict"]="up" if roics[-1]-roics[0]>2 else "down" if roics[-1]-roics[0]<-2 else "flat"
+    if len(_rSeq)>=2:
+        ev["roict"]="up" if _rSeq[-1]-_rSeq[0]>2 else "down" if _rSeq[-1]-_rSeq[0]<-2 else "flat"
         evd["roict"] = (f"機械算出: のれん除外ROIC 5年系列 "
-                        f"{' / '.join(f'{x:.1f}%' for x in roics)}（最古→直近の差で判定）")
+                        f"{' / '.join(f'{x:.1f}%' for x in _rSeq)}（最古→直近の差で判定）")
     # GP/A(gpa) 直近年
     if y0 and y0 in S["gp"] and S["assets"].get(y0):
         _safe(ev,note,"gpa",lambda:round(S["gp"][y0]/S["assets"][y0]*100,1))
