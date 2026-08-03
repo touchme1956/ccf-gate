@@ -17,7 +17,7 @@
  "acc": "usgaap",
  "eq": "pos",
  "acq5": "no",
- "eps": 4.22,
+ "eps": 5.29,
  "expiry": "no",
  "moatdecay": "no",
  "erosion": "emerging",
@@ -78,7 +78,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=13.9 / 5年窓=90.7。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 acq5 0.12 → 'no'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均40.6%・σ6.1pt・CV15.1%）。",
-   "2026-08-02 市場価格を自動更新: px 270.52 → 293.02（+8.3%）。per 54.32→58.84　evebit 58.3→63.1　shy 1.31→1.21。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。"
+   "2026-08-02 市場価格を自動更新: px 270.52 → 293.02（+8.3%）。per 54.32→58.84　evebit 58.3→63.1　shy 1.31→1.21。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
+   "2026-08-03 eps 4.22（通期）→ 5.29（TTM実測）。Ωは不変（epsはcompute()未使用・perの変化もこの帯では判定を動かさない）"
   ],
   "evidence": {
    "dom": "【2026-07-29 v9.9.41再監査 → 空欄】FY2025 10-K(2025-06-29期)Item 1 Business『Competition』節および Item 1A を全文精査したが、自社シェア%・上位N社合計%のいずれも一切開示されていない(『market share』の語は 将来見通し前置きと『our ability to defend our market share and to gain new market share』等の定性言及のみ、『served available market』も規模言及のみで数値なし)。市場構造の記述は競合の名指しに留まる——『Our primary competitor in the dielectric and metals deposition market is Applied Materials, Inc. For ALD and PECVD, we also compete against ASM International and Wonik IPS. In the etch market, our primary competitors are Applied Materials, Inc.; Hitachi, Ltd.; and Tokyo Electron, Ltd., and our primary competitors in the wet clean market are Screen Holding Co., Ltd.; Semes Co., Ltd.; and Tokyo Electron, Ltd.』。→ 100/85/70は数値を要する(v9.9.41規約2)ため置けない。50も置けない(規約3の残余50は提出書類自身の「fragmented/多数が同等品を製造可能/実質すべての供給は他社」等の構造記述を条件とするが、本10-Kは逆に各市場3-4社の名指し寡占構造を述べており、fragmentedの語も他社支配の記述も無い)。よって空欄。出典: 10-K FY2025 Item 1 Competition, https://www.sec.gov/Archives/edgar/data/707549/000070754925000075/lrcx-20250629.htm",
@@ -107,7 +108,7 @@
    "nde": "機械算出 2025年: (有利子負債 4,469,364,000 − 現金同等物 6,390,659,000) ÷ (営業利益 5,900,968,000 + 減価償却 386,277,000)",
    "accr": "機械算出 2025年: (純利益 5,358,217,000 − 営業CF 6,173,264,000) ÷ 総資産 21,345,260,000",
    "gpa": "機械算出 2025年: 売上総利益 8,979,059,000 ÷ 総資産 21,345,260,000",
-   "eps": "機械算出 2025年: 純利益 5,358,217,000 ÷ 株数 1,268,740,000（TTMではなく通期実績）",
+   "eps": "【2026-08-03 機械算出】**TTM希薄化後EPS = 5.29 USD**（FY2025(6月期)4.15 + 期末後3Q(1.24+1.26+1.45) − 前年同3Q(0.86+0.92+1.03)。出典: SEC XBRL companyfacts の EarningsPerShareDiluted。10-Kは第4四半期を離散四半期として持たないため、通期＋期末後スタブ−前年同スタブで構成）。px 293.02 ÷ 5.29 = 55.39（per 58.84 との整合）。旧値 4.22 は通期実績で期間基準が違い、全件点検の per 検算警告の原因だった",
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 534,177,990 ÷ Δ投下資本 3,839,828,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 11,240,825,000→15,080,653,000（+34.2%）",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 2,968,639,343 ÷ Δ投下資本 3,272,804,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 11,807,849,000→15,080,653,000（+27.7%）",
    "acq5": "【2026-07-29 機械判定】のれん残高(十億$) 2020 1.48 → 2021 1.49 → 2022 1.52 → 2023 1.62 → 2024 1.63 → 2025 1.60。**新しさ =(直近 1.60 − 2020年 1.48)÷直近 = +7.2%**（今あるのれんのうち直近5年に増えた割合） → **大型買収なし=no**（ほぼ全部が遺産のれん）（出典: SEC XBRL companyfacts の Goodwill 系列）",
