@@ -7,10 +7,16 @@
 #   EPSは「FY末が asof年3月1日 以前」の最後の会計年度だけ使う（12月決算社は前年FY）。
 #   FY末から asof年7月の株価まで最大16ヶ月あるが、その間に公表済みなのは確実。
 #
-# 既知の限界（正直に書く・KLAC分割事故の型への防御）:
-#   株価は asof年7月の生値・株数はFY末の希薄化後加重平均なので、その間に分割が
-#   あるとPERが分割倍率ぶん壊れる。帯検問（per<2 or >200 は捨てる）で桁事故だけ防ぐ。
-#   バケット分割（中央値二分）に使うぶんには1-2社のノイズは結論を動かさない。
+# 分割の補正（2026-08-04是正・初版はKLAC事故の型を自分で踏んだ）:
+#   Yahooの close は「今日までの分割」で調整済み＝当時の板の値ではない。初版はこれを
+#   当時の申告株数で割ったため、**後に分割した社（＝勝者に多い）ほどPERが安く出る**
+#   汚染が起きた（実測: AAPL 2.32 / ISRG 3.49 / BKNG 3.27——実際は 9.3 / 29 / 30）。
+#   帯検問(2-200)はこの「もっともらしい誤値」を素通りさせた。
+#   → 是正: (1) Yahooの splits イベントから asof→今日の累積分割倍率を掛けて当時の
+#   板の値へ復元 (2) 株数・純利益は **filedが最も古い値**（as-reported）を採る
+#   ——後年の10-Kの比較年度は分割で遡及修正されるため、filed最新を採ると
+#   「どこまで比較年度が続いたか」次第で倍率が中途半端に混ざる（実測: AAPLは
+#   FY2014 10-Kの7:1修正だけ拾い2020年の4:1は拾わない＝28倍中7倍だけ補正の中途半端）。
 #
 # 実行: python3 night/retro_per_asof.py --asof 2013 --sample .../retro_sample.json
 # 出力: out/retro_per_{asof}.json
@@ -60,7 +66,8 @@ def annual_entries(facts, tags, unit_names):
                     except Exception:
                         continue
                     k = (tag, en)
-                    if k not in out or fl > out[k][1]:
+                    # filedが最も古い値＝as-reported（後年の分割遡及修正を拾わない）
+                    if k not in out or fl < out[k][1]:
                         out[k] = (float(e["val"]), fl)
             if any(t == tag for (t, _) in out):
                 break  # タグは代替。最初に見つかった系列で足りる（PERの分母用）
@@ -76,10 +83,12 @@ def latest_before(entries, cutoff):
 
 
 def fetch_raw_close(sym, y):
+    """asof年7月頭の**当時の板の値**を返す。Yahooのcloseは今日までの分割で調整済み
+    なので、asof以降のsplitsイベントの累積倍率を掛けて復元する。"""
     t0 = int(datetime.datetime(y, 7, 1).timestamp())
-    t1 = int(datetime.datetime(y, 7, 10).timestamp())
+    t1 = int(time.time())
     url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}"
-           f"?period1={t0}&period2={t1}&interval=1d")
+           f"?period1={t0}&period2={t1}&interval=1mo&events=splits")
     for attempt in range(3):
         try:
             with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
@@ -88,8 +97,15 @@ def fetch_raw_close(sym, y):
             if not res:
                 return None
             closes = ((res.get("indicators", {}).get("quote") or [{}])[0].get("close")) or []
-            closes = [c for c in closes if c is not None]
-            return closes[0] if closes else None
+            first = next((c for c in closes if c is not None), None)
+            if first is None:
+                return None
+            factor = 1.0
+            for sp in (res.get("events", {}).get("splits") or {}).values():
+                num, den = float(sp.get("numerator", 1)), float(sp.get("denominator", 1))
+                if num > 0 and den > 0:
+                    factor *= num / den
+            return first * factor  # 逆分割(den>num)はfactor<1で正しく縮む
         except Exception:
             time.sleep(2 * (attempt + 1))
     return None
