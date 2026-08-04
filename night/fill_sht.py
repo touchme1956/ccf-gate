@@ -237,11 +237,20 @@ def main():
         d["sht"] = v
         m.setdefault("evidence", {})["sht"] = f"【2026-07-29 機械算出】{why}"
         m.setdefault("provenance", {})["sht"] = "machine"
-        m.setdefault("kenshi", []).append(
+        line = (
             f"2026-07-29 sht 空欄 → '{v}'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、"
             "shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった"
             "（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。"
             "同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。")
+        # B20(2026-08-04): kenshi が文字列のパック（記録済みの91パック事故）で setdefault().append が
+        #   落ちると、その社だけ監査記録が静かに止まる。fill_roiic / backfill と同じ型ガードで追記する。
+        k = m.get("kenshi")
+        if isinstance(k, list):
+            k.append(line)
+        elif isinstance(k, str) and k:
+            m["kenshi"] = k + "\n" + line
+        else:
+            m["kenshi"] = [line]
         json.dump(d, open(os.path.join(OUT, f"{t}_gate_pack.json"), "w", encoding="utf-8"),
                   ensure_ascii=False, indent=1)
         n += 1

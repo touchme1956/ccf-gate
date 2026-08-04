@@ -96,6 +96,29 @@ def cik_map():
     return {v["ticker"].upper(): str(v["cik_str"]).zfill(10) for v in d.values()}
 
 
+def _annual(units):
+    """units → 年次(10-K/20-F)の {fy: value}。期間ものは300日超（年次）だけを通す。"""
+    u = max(units, key=lambda x: len(units[x]))
+    out = {}
+    for row in units[u]:
+        if not str(row.get("form", "")).startswith(("10-K", "20-F")):
+            continue
+        fy = row.get("fy")
+        if fy is None:
+            continue
+        s, e = row.get("start"), row.get("end")
+        if s and e:                      # 期間もの＝年次(300日超)のみ
+            from datetime import date
+            try:
+                y0 = date.fromisoformat(s); y1 = date.fromisoformat(e)
+                if (y1 - y0).days < 300:
+                    continue
+            except Exception:
+                continue
+        out[fy] = row["val"]
+    return out
+
+
 def series(facts, keys):
     """年次(10-K/20-F)の値を {fy: value} で返す。**最初に当たったタグを採る**——
     タグの優先順は TAGS の並び順が意味を持つ（無形は総額タグを先頭に置いてある）。"""
@@ -114,25 +137,7 @@ def series(facts, keys):
         for pri, k in enumerate(keys):
             if k not in d:
                 continue
-            units = d[k]["units"]
-            u = max(units, key=lambda x: len(units[x]))
-            out = {}
-            for row in units[u]:
-                if not str(row.get("form", "")).startswith(("10-K", "20-F")):
-                    continue
-                fy = row.get("fy")
-                if fy is None:
-                    continue
-                s, e = row.get("start"), row.get("end")
-                if s and e:                      # 期間もの＝年次(300日超)のみ
-                    from datetime import date
-                    try:
-                        y0 = date.fromisoformat(s); y1 = date.fromisoformat(e)
-                        if (y1 - y0).days < 300:
-                            continue
-                    except Exception:
-                        continue
-                out[fy] = row["val"]
+            out = _annual(d[k]["units"])
             if out:
                 cands.append((pri, max(out), out, f"{ns}:{k}"))
     if not cands:
@@ -141,6 +146,41 @@ def series(facts, keys):
     live = [c for c in cands if c[1] >= newest - 1] or cands
     live.sort(key=lambda c: (c[0], -c[1]))
     return live[0][2], live[0][3]
+
+
+def series_sum(facts, keys, total_key=None):
+    """**足し合わせるべきタグ**を合計する（hachimon_fetch.series_sum と同じ規則・B21で移植）。
+
+    2026-08-04(B21): 無形は「代替」ではなく**構成要素**。採取器(hachimon_fetch)は 2026-08-03 の
+    CELH事故（総額タグが2024年で終わり、2025年は FiniteLived + IndefiniteLived の二本に割れて
+    series() では欠測→0と読まれ IC過大）で series_sum 合成へ直したのに、この検査器だけ
+    単一候補 series() のまま残っていた——検査器が採取器と違うタグ集合・違う合成規則を持つと、
+    同じ台帳を見て違うことを言う（v9.9.65の教訓）。
+    total_key があり、その年に総額タグが存在するなら**合計せず総額を採る**（二重計上を避ける）。
+    """
+    per = {}
+    for k in keys:
+        for ns in ("us-gaap", "ifrs-full"):
+            d = facts.get("facts", {}).get(ns, {})
+            if k not in d:
+                continue
+            out = _annual(d[k]["units"])
+            if out:
+                per[k] = out
+            break
+    years = set().union(*[set(v) for v in per.values()]) if per else set()
+    out, used = {}, {}
+    for y in years:
+        if total_key and total_key in per and y in per[total_key]:
+            out[y] = per[total_key][y]
+            used[y] = [f"{total_key}(総額)"]
+            continue
+        parts = [(k, per[k][y]) for k in keys if k != total_key and k in per and y in per[k]]
+        if not parts:
+            continue
+        out[y] = sum(v for _, v in parts)
+        used[y] = [f"{k}={v:,.0f}" for k, v in parts]
+    return out, used
 
 
 def one(t, cm):
@@ -156,6 +196,22 @@ def one(t, cm):
         S[k], used[k] = series(facts, keys)
         if not S[k]:
             miss.append(k)
+    # B21(2026-08-04): 無形は series() の1本選択でなく **series_sum で合成**する（採取器と同じ規則）。
+    #   その年に総額タグがあれば総額、無ければ FiniteLived + IndefiniteLived を足す（CELH型対策）。
+    S["intan"], _usedI = series_sum(facts, TAGS["intan"],
+                                    total_key="IntangibleAssetsNetExcludingGoodwill")
+    used["intan"] = "sum:" + ",".join(sorted({p for v in _usedI.values() for p in v})) if _usedI else None
+    # IFRS勢は のれん を単独で出さず IntangibleAssetsAndGoodwill(のれん込み合算)だけの社がある。
+    #   他の無形も のれん も取れない年に限って合算値を無形として使う（gw=0 なので過不足なし）＝採取器と同じ。
+    _iag = series(facts, ["IntangibleAssetsAndGoodwill"])[0]
+    if _iag:
+        for _y, _v in _iag.items():
+            if _y not in S["intan"] and _y not in S["gw"]:
+                S["intan"][_y] = _v
+    if S["intan"] and "intan" in miss:
+        miss.remove("intan")
+    if not S["intan"] and "intan" not in miss:
+        miss.append("intan")
     yrs = sorted(set(S["op"]) & set(S["eq"]))[-5:]
     rows = []
     for y in yrs:
@@ -173,14 +229,23 @@ def one(t, cm):
         # 「タグが無い」と「値が0」を区別する（絶対のルール7）。無形タグが1つも当たらない会社で
         #   intan=0 と置くと IC が過大になり、縮退している会社が「健全」に見える
         has_gw, has_intan = (y in S["gw"]), (y in S["intan"])
+        # B21(2026-08-04): **他の年は無形を報告しているのにその年だけ欠測**なら、0と読まず
+        #   その年の roic を算出不能にする（採取器の CELH型ガードの移植）。上限の不等式:
+        #   報告のある年の最大でも自己資本の2%未満なら、ROICを動かせない水準として0と読んでよい。
+        intan_gap = False
+        if S["intan"] and not has_intan:
+            _mx = max(S["intan"].values() or [0])
+            if eq and eq > 0 and _mx >= 0.02 * eq:
+                intan_gap = True
         ic = eq + debt - gw - intan
         icg = eq + debt
         rows.append({"fy": y, "op": op, "nopat": round(nopat), "eq": eq, "debt": debt,
                      "has_debt": has_debt, "has_gw": has_gw, "has_intan": has_intan,
+                     "intan_gap": intan_gap,
                      "gw": gw, "intan": intan, "ic": ic,
-                     "roic": (nopat / ic * 100) if ic > 0 else None,
+                     "roic": (nopat / ic * 100) if (ic > 0 and not intan_gap) else None,
                      "roicg": (nopat / icg * 100) if icg > 0 else None,
-                     "ic_eq": (ic / eq * 100) if eq else None})
+                     "ic_eq": (ic / eq * 100) if (eq and not intan_gap) else None})
     r = {"t": t, "cik": cik, "years": rows, "missing_tags": miss, "tags_used": used}
     # **振れは分母で見る。** roic の振れは分子（利益）の変化でも起きるので判定に使えない。
     #   実測NVDA: roic 15.6→86.4(5.5倍)だが IC/自己資本は90-122%で完全に安定＝縮退ではなく
@@ -189,7 +254,7 @@ def one(t, cm):
     # **振れは IC そのもので見る。** IC/自己資本 の比は自己資本が小さい年に分母側で暴れるだけで、
     #   分母の不安定さを表さない（実測UI: IC/自己資本が131倍に振れたが IC自体は396-956百万$の
     #   2.4倍で安定。自己資本が2.7百万→−383百万→668百万と動いただけだった）。
-    live = [x for x in rows if x["ic"] > 0]
+    live = [x for x in rows if x["ic"] > 0 and not x.get("intan_gap")]   # 欠測年のICは合成不能なので振れの判定から外す(B21)
     if live:
         v = [x["ic"] for x in live]
         r["ic_swing"] = max(v) / min(v)
@@ -198,7 +263,7 @@ def one(t, cm):
     # **IC系列の符号反転**——年によってICが正負を行き来する会社は、分母が「資本」ではなく
     #   「自己資本の負値を負債が埋めた残差」になっている。人の検算がDELL/OTISをnull化した理由がこれ
     #   （DELL: −1,962/+322/−1,634/−1,023/+4,953 ／ OTIS: +1,562/−38/+51/+1,617/+570）。
-    ics = [x["ic"] for x in rows]
+    ics = [x["ic"] for x in rows if not x.get("intan_gap")]
     r["ic_sign_flip"] = bool(ics) and any(v > 0 for v in ics) and any(v <= 0 for v in ics)
     if rows:
         last = rows[-1]
@@ -247,7 +312,11 @@ def main():
         if not L["has_debt"]:
             note.append("⚠有利子負債タグ不在")
         if not L["has_intan"]:
-            note.append("⚠**無形タグ不在→0として計算している**（ICが過大の恐れ・要10-K確認）")
+            if L.get("intan_gap"):
+                # B21: 他の年に無形の報告があるのに当年だけ欠測＝0と読まず算出不能（CELH型）
+                note.append("⚠**当年だけ無形タグ欠測（他年は報告あり）→0と読まずroic算出不能**（CELH型・絶対のルール7）")
+            else:
+                note.append("⚠**無形タグ不在→0として計算している**（一度も報告が無い会社だけ許される上限の不等式・要10-K確認）")
         if not L["has_gw"]:
             note.append("⚠のれんタグ不在（のれん0の会社なら正常）")
         if L["ic"] <= 0:

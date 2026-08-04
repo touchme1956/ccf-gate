@@ -193,7 +193,7 @@ def main():
         print("   " + " ".join(sorted(nx)))
     hp = [t for t, r, d, cur, s, h, fr in rows if h]
     if hp:
-        print(f"\n刻みを最大にしても75に届かない（堀の再監査は無駄）: {len(hp)}社")
+        print(f"\n刻みを最大にしても{PASS:.0f}に届かない（堀の再監査は無駄）: {len(hp)}社")
         print("   " + " ".join(sorted(hp)))
     print("\n※これは作業リストであって有罪判決ではない。刻みを上げる根拠は原本にしか無い（絶対のルール2）。")
     return 0

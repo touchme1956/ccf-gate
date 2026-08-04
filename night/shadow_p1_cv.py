@@ -106,17 +106,24 @@ def main():
 
     # --- 門そのものでΩ・投下可の変化を実測 ---
     newp1 = {r["t"]: r["cv_g"] for r in rows}
-    js = ("const {scorePack}=require('%s/night/score_all.js');const fs=require('fs');"
+    # B5(2026-08-04): buy は score_all.js と同じ**四段関門**（Ω75+ ∧ 門X ∧ 堀 ∧ 点検=要修正0かつ未解決warn0）。
+    #   従来ここだけ三段関門のままで、score_all と逆のことを言えた（v9.9.65「同じ台帳を見る二つの
+    #   検査器が違うことを言ってはいけない」違反）。coerce も門と同じく ccfAudit へ渡す（B4）。
+    js = ("const {scorePack,lastCoerce}=require('%s/night/score_all.js');const fs=require('fs');"
           "const NP=%s;const out=[];"
+          "const audOK=(dd,rr,cc)=>{let e=0,u=0;try{const M=dd._meta||{};"
+          "for(const w of(ccfAudit(dd,rr,cc)||[])){if(w.lv==='err')e++;"
+          "else if(w.lv==='warn'&&!((M.evidence||{})[w.k]||(M.nulls||{})[w.k]))u++;}}catch(x){}"
+          "return e===0&&u===0;};"
           "for(const f of fs.readdirSync('out')){if(!f.endsWith('_gate_pack.json'))continue;"
           "const t=f.split('_gate_pack')[0];let d;try{d=JSON.parse(fs.readFileSync('out/'+f,'utf8'));}catch(e){continue;}"
-          "let a,b,xa,xb,ma,mb;try{"
-          "a=scorePack(d);xa=ccfXJudge(d,+a.evalScore)||{};ma=ccfMoatGate(a,d)||{};"
+          "let a,b,xa,xb,ma,mb,qa,qb;try{"
+          "a=scorePack(d);const ca=lastCoerce();xa=ccfXJudge(d,+a.evalScore)||{};ma=ccfMoatGate(a,d)||{};qa=audOK(d,a,ca);"
           "const d2={...d};if(NP[t]!=null)d2.p1=NP[t];"
-          "b=scorePack(d2);xb=ccfXJudge(d2,+b.evalScore)||{};mb=ccfMoatGate(b,d2)||{};"
+          "b=scorePack(d2);const cb=lastCoerce();xb=ccfXJudge(d2,+b.evalScore)||{};mb=ccfMoatGate(b,d2)||{};qb=audOK(d2,b,cb);"
           "}catch(e){continue;}"
           "const sa=+a.evalScore,sb=+b.evalScore;if(!isFinite(sa)||!isFinite(sb))continue;"
-          "out.push([t,sa,sb,(sa>=75&&xa.xPass===true&&ma.pass===true),(sb>=75&&xb.xPass===true&&mb.pass===true),"
+          "out.push([t,sa,sb,(sa>=75&&xa.xPass===true&&ma.pass===true&&qa),(sb>=75&&xb.xPass===true&&mb.pass===true&&qb),"
           "a.tierShort,b.tierShort]);}console.log(JSON.stringify(out));" % (BASE, json.dumps(newp1)))
     r = subprocess.run(["node", "-e", js], capture_output=True, text=True, cwd=BASE)
     try:

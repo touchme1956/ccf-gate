@@ -103,21 +103,60 @@ def _flow_pershare(facts, tag):
     return out
 
 
+def _ttm_via_stub(rows):
+    """TTM = 通期 + 期末後スタブ − 前年同スタブ（CLAUDE.md記録の構成法。per検算6社で確立）。
+    10-Kが第4四半期を離散タグで持たない会社は、四半期行の寄せ集めではTTMを構成できない——
+    通期とYTDスタブの差し引きでだけ正しく作れる。返り値: (値, 説明) / 構成不能なら (None, None)"""
+    ann = sorted([r for r in rows if 330 <= r[2] <= 400], key=lambda r: r[1])
+    if not ann:
+        return None, None
+    st, en, d, v, fl = ann[-1]
+    As, Ae = datetime.date.fromisoformat(st), datetime.date.fromisoformat(en)
+    # 期末後スタブ: 期首が通期末の直後(±14日)に始まる期間のうち最も長いもの(Q1でもYTDでもよい)
+    stubs = [r for r in rows if r[2] < 330
+             and abs((datetime.date.fromisoformat(r[0]) - Ae).days) <= 14
+             and datetime.date.fromisoformat(r[1]) > Ae]
+    if not stubs:
+        return None, None
+    cur = max(stubs, key=lambda r: r[2])
+    # 前年同スタブ: 前期首から始まり、スタブと同じ長さ(±14日)の期間
+    prior = [r for r in rows if abs((datetime.date.fromisoformat(r[0]) - As).days) <= 14
+             and abs(r[2] - cur[2]) <= 14]
+    if not prior:
+        return None, None
+    pr = max(prior, key=lambda r: r[1])
+    return round(v + cur[3] - pr[3], 4), f"通期({en})+スタブ(〜{cur[1]})−前年同スタブ(〜{pr[1]})"
+
+
 def eps_ttm(facts):
-    """直近4四半期(80-100日)を重複なく足してTTM EPSを作る。四半期が揃わない時は年次で代替。"""
+    """直近4四半期(80-100日)を重複なく足してTTM EPSを作る。四半期が揃わない時は年次で代替。
+
+    2026-08-04是正(B14): 4本の**連続性検査**を追加した。従来は重複排除(期の重なり)しか見ておらず、
+    第4四半期を離散タグで持たない会社では Q3+Q2+Q1+**前年Q3** のような**隙間のある4本**を黙って
+    合算していた（同季の二重計上＝TTMではない別の何か）。各期の期首が直前(古い側)の期末から
+    14日以内に続いているときだけTTMと認め、続かないなら「通期+期末後スタブ−前年同スタブ」で
+    構成し直す。それも組めなければ None（誤値より空欄）。"""
     rows = _flow_pershare(facts, "EarningsPerShareDiluted") or _flow_pershare(facts, "EarningsPerShareBasic")
     if not rows:
         return None, "EPSタグ無し"
     q = sorted([r for r in rows if 80 <= r[2] <= 100], key=lambda r: r[1], reverse=True)
-    picked, cursor = [], None
+    picked, cursor = [], None            # picked: (st, en, v) 新しい順
     for st, en, d, v, fl in q:
         if cursor is None or en <= cursor:
-            picked.append(v)
-            cursor = st                      # 直前の期首より前に終わる四半期だけ拾う＝重複排除
+            picked.append((st, en, v))
+            cursor = st                  # 直前の期首より前に終わる四半期だけ拾う＝重複排除
         if len(picked) == 4:
             break
     if len(picked) == 4:
-        return round(sum(picked), 4), "四半期4本の合計"
+        gaps = [abs((datetime.date.fromisoformat(picked[i][0])
+                     - datetime.date.fromisoformat(picked[i + 1][1])).days)
+                for i in range(3)]       # 新しい期の期首 と 一つ古い期の期末 の隔たり
+        if max(gaps) <= 14:
+            return round(sum(v for _, _, v in picked), 4), "四半期4本の合計(連続性検査済)"
+        v2, how2 = _ttm_via_stub(rows)
+        if v2 is not None:
+            return v2, how2 + f"（四半期4本が非連続・最大{max(gaps)}日の隙間のため構成し直し）"
+        return None, f"TTM構成不能: 四半期4本が非連続(最大{max(gaps)}日の隙間)でスタブ構成も組めない＝誤値より空欄"
     ann = sorted([r for r in rows if 330 <= r[2] <= 400], key=lambda r: r[1], reverse=True)
     if ann:
         return round(ann[0][3], 4), f"年次で代替({ann[0][1]})"

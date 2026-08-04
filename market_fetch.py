@@ -147,6 +147,12 @@ def local_health(t, zf, mcap_b):
     cash=_series(facts,U("CashAndCashEquivalentsAtCarryingValue"),False); sti=_series(facts,[("us-gaap","ShortTermInvestments"),("us-gaap","MarketableSecuritiesCurrent")],False)
     div=_series(facts,[("us-gaap","PaymentsOfDividends"),("us-gaap","PaymentsOfDividendsCommonStock")],True)
     bb =_series(facts,[("us-gaap","PaymentsForRepurchaseOfCommonStock")],True)
+    # 2026-08-04是正(B13): 門の定義は shy=(配当+自社株買い−株式発行)÷時価総額＝**純額**。
+    #   ここだけグロス(発行控除なし)で、market_fetch_free.py と定義が割れていた——発行の大きい
+    #   会社でE[r]過大→門X誤開通の方向。発行タグ群は free 版と同一。
+    iss=_series(facts,[("us-gaap","ProceedsFromIssuanceOfCommonStock"),
+                       ("us-gaap","ProceedsFromStockOptionsExercised"),
+                       ("us-gaap","ProceedsFromIssuanceOfSharesUnderIncentiveAndShareBasedCompensationPlans")],True)
     mc = (mcap_b or 0)*1e9
     r = {}
     ys=[y for y in ta if y in tl and y in eq and y>=2024]
@@ -159,26 +165,23 @@ def local_health(t, zf, mcap_b):
         fy=max([y for y in op if y>=2024], default=None)
         if fy:
             d=div.get(fy,0)+bb.get(fy,0)
-            if d>0: r["shy"]=round(d/mc*100, 2)
+            if d>0: r["shy"]=round(max(0.0, d-iss.get(fy,0))/mc*100, 2)   # 純額(B13・free版と同式)
             by=max([y for y in eq if y>=2024], default=None)
             if by and op[fy]>0: r["evebit"]=round((mc+dL.get(by,0)+dS.get(by,0)-cash.get(by,0)-sti.get(by,0))/op[fy], 1)
     return r
 
 def merge_into_packs(data):
-    n=0
-    for t, m in data.items():
-        p=os.path.join(BASE, "out", f"{t}_gate_pack.json")
-        if not os.path.exists(p): continue
-        d=json.load(open(p)); ch=False
-        for k in ("beta","per","perF","analysts","instOwn","z","shy","evebit","mcap"):
-            v=m.get(k)
-            if v is not None: d[k]=v; ch=True
-        # px は ADR以外
-        if m.get("px") is not None and (d.get("_meta",{}) or {}).get("unit","USD")=="USD":
-            d["px"]=m["px"]; ch=True
-        if ch:
-            json.dump(d, open(p,"w"), ensure_ascii=False, indent=1); n+=1
-    print(f"マージ: {n} パック更新")
+    """--merge は market_merge.py へ委譲する（2026-08-04是正・A6）。
+    旧実装はここに**第二のマージ経路**を持っており、market_merge.py の関門をすべて素通りしていた:
+      (1) null以外も上書き＝**審査官の手入力値を消せる** (2) BANDS常識帯の検問なし＝KLAC型の
+      旧不正値が再注入される (3) _meta.nulls（「測ったうえで空欄と決めた」欄）の保護なし
+      (4) 充填履歴(_meta.market / evidence / provenance)を残さない。
+    「同じ台帳を見る二つの道具が違うことを言ってはいけない」(v9.9.65) ——マージの正本は
+    market_merge.py 一本にし、こちらは呼び出すだけにする。"""
+    import subprocess
+    r = subprocess.run([sys.executable, os.path.join(BASE, "market_merge.py")], cwd=BASE)
+    if r.returncode != 0:
+        print("▲ market_merge.py が失敗 — market_data.json を先に更新したか確認")
 
 def main():
     data = json.load(open(OUT)) if os.path.exists(OUT) else {}
@@ -186,7 +189,10 @@ def main():
         merge_into_packs(data); return
     ts = targets()
     zf = zipfile.ZipFile(os.path.join(BASE, "companyfacts.zip")) if os.path.exists(os.path.join(BASE,"companyfacts.zip")) else None
-    av_done = 0
+    # 2026-08-04是正(R10): av_done は従来**失敗(None)しか数えていなかった**ため、成功が続く日は
+    #   発行リクエスト数が無検問のまま無料鍵の25/日を突き抜けた。予算は**発行した全リクエスト**で
+    #   数える（成否は無関係——上限側は成功も失敗も同じ1回）。
+    av_done, av_capped = 0, False
     for t in ts:
         cur = data.get(t, {})
         # 既に analysts/instOwn まで揃っていればスキップ(resume)
@@ -196,15 +202,16 @@ def main():
         # FMP: px/mcap/beta
         for k, v in fmp_profile(t).items():
             if v is not None: rec[k] = v
-        # AV: per/perF/analysts/instOwn(+フォールバック)。無料鍵は25/日 → None(上限)なら以降スキップ
-        ov = av_overview(t)
-        if ov is None and AV_KEY:
+        # AV: per/perF/analysts/instOwn(+フォールバック)。無料鍵は25/日 → 予算を使い切ったら
+        #   AVだけ止めて FMP/ローカル計算は続行(resume——未取得分は次回)
+        ov = None
+        if AV_KEY and av_done < 24:
+            ov = av_overview(t)
             av_done += 1
-            if av_done >= 24:  # 無料鍵の日次上限手前で打ち切り(resume)
-                print(f"AV日次上限に接近 — {t} 以降は次回。ここまでを保存。")
-                data[t] = rec
-                break
-        elif ov:
+        elif AV_KEY and not av_capped:
+            print(f"AV日次予算(24req)を使い切り — {t} 以降のAV項目は次回(resume)。")
+            av_capped = True
+        if ov:
             for k, v in ov.items():
                 if v is not None and rec.get(k) is None: rec[k] = v
         # ローカル health

@@ -14,9 +14,10 @@
  *     ※--set は欠測分だけでなく**全パック**を上書きする粗い道具。「欠測を埋めたらどうなるか」を
  *       知りたいときは、この結果を答えにしないこと（本来の値が高い社も低い社も一律に化ける）。
  *   node night/score_all.js --only MSFT,6920,NVDA   銘柄を絞る
- *   ※--only / --set の部分実行は out/score_all.partial.json へ書く。**正本 score_all.json は上書きしない**
+ *   ※--only / --set / --jp / --us の部分実行は out/score_all.partial.json へ書く。**正本 score_all.json は上書きしない**
  *     （部分結果で正本を潰すと、それを読む検査器〔audit_moat / audit_moat_gap / audit_kill_roiic〕が
- *      その数社を全台帳と誤認して静かに嘘をつく。2026-07-29に実際に踏んだ）
+ *      その数社を全台帳と誤認して静かに嘘をつく。2026-07-29に--onlyで実際に踏み、
+ *      2026-08-04の監査(A5)で --jp/--us も同じ穴だと判った——shadow_jp_us_roic.py が毎回踏んでいた）
  *
  * 妥当性の確認方法: 素の実行で米国のΩ75+に V/ASML/KLAC/NVDA/MSFT/MA/TSM/ADBE/RMD/IDXX 等
  *   保有・監視銘柄が並べば、門の再現ができている。
@@ -86,13 +87,39 @@ if (typeof compute !== 'function') {
   console.error('compute() を読み込めなかった。index.html の構造が変わった可能性がある');
   process.exit(1);
 }
+// B23(2026-08-04): compute だけでなく関門3関数も存在検問する。従来は呼び出し側の try/catch が
+//   関数消失を黙って飲み、**ccfAudit が消えると audE=0＝audOK=true＝第四の関門が静かに無効化**する
+//   方向に壊れた（「鳴らない警報は鳴りすぎる警報と同じ」）。抽出に失敗したら大声で止まる。
+for (const fn of ['ccfXJudge', 'ccfMoatGate', 'ccfAudit']) {
+  if (typeof global[fn] !== 'function' && typeof globalThis[fn] !== 'function') {
+    console.error(`${fn}() を読み込めなかった。index.html の構造が変わった可能性がある——`
+      + '関門の関数が無いまま続けると「点検が通った」という偽の結果を作るので中断する');
+    process.exit(1);
+  }
+}
 
 // ---- 門が受け取るキー集合（applyFields のマップが正） ----
 const mi = HTML.indexOf('const map={', HTML.indexOf('function applyFields(d)'));
-const KEYS = [...HTML.slice(mi + 10, HTML.indexOf('};', mi)).matchAll(/(\w+):'/g)].map(m => m[1]);
+const KEYS = mi < 0 ? [] : [...HTML.slice(mi + 10, HTML.indexOf('};', mi)).matchAll(/(\w+):'/g)].map(m => m[1]);
+if (!KEYS.length) {
+  // B23(2026-08-04): 抽出が空のまま続けると**全パックが既定値で採点される**（値は出るのに全部誤り
+  //   ＝一番静かな壊れ方）。validate_jp_packs.py の gate_keys() と同じく、抽出失敗は大声で止まる。
+  console.error('applyFields のマップ(const map={...})を index.html から抽出できなかった。'
+    + '門の構造が変わっている——このまま続けると全パックが既定値で採点されるので中断する');
+  process.exit(1);
+}
+
+// B4(2026-08-04): 門の applyFields は「黙って化けた」欄を __coerce に記録して ccfAudit へ渡す
+//   （v9.9.54＝acq5=2.8 が 'yes' に化けて罰が黙って効いた発生点の痕跡）。端末側の再実装は
+//   これを記録せず常に [] を渡していたため、**err①「取込で化けた」が端末で構造的に0件**＝
+//   四段関門の第四が端末側で半分無効だった。門と同じ規則で記録し、同じ台帳を見る二つの検査器が
+//   違うことを言わないようにする（v9.9.65の教訓）。
+let __coerce = [];
+const lastCoerce = () => __coerce.slice();
 
 /** 門の applyFields と同じ規則でパックを流し込んで採点する */
 function scorePack(d) {
+  __coerce = [];
   for (const k of KEYS) {
     const e = global.$(k);
     const val = (d[k] !== undefined && d[k] !== null) ? String(d[k]) : '';
@@ -108,14 +135,17 @@ function scorePack(d) {
           const o = parseFloat(ov);
           if (!isNaN(o) && Math.abs(o - num) < bd) { bd = Math.abs(o - num); best = ov; }
         }
-        if (best !== null) { e.value = best; matched = true; }
+        if (best !== null) { e.value = best; matched = true; __coerce.push({ k, from: val, to: best, how: '近い選択肢へ寄せた' }); }
       }
     }
-    if (!matched) e.value = S ? S.def : '';          // null・不一致は既定値へ
+    if (!matched) {                                  // null・不一致は既定値へ（門の v9.9.54 と同じく痕跡を残す）
+      if (val !== '' && S) __coerce.push({ k, from: val, to: S.def, how: '選択肢に無い→既定値へ化けた' });
+      e.value = S ? S.def : '';
+    }
   }
   return compute();
 }
-module.exports = { scorePack, KEYS, SELECTS };
+module.exports = { scorePack, lastCoerce, KEYS, SELECTS };
 
 if (require.main !== module) return;
 
@@ -141,6 +171,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
   if (only.length && !only.includes(t.toUpperCase())) continue;
   const dd = { ...d, ...over };
   let r; try { r = scorePack(dd); } catch (e) { continue; }
+  const coerce = lastCoerce();   // B4: 門の applyFields が記録する「黙って化けた」欄（ccfAudit の err① の材料）
   // 門Ωの点だけでは「買えるか」は決まらない。三段関門(Ω75+ ∧ 門X4条件 ∧ 堀75+)を
   // 門と同じ関数(ccfXJudge / ccfMoatGate)で判定する＝二重実装を作らない
   let x = {}, mg = {};
@@ -154,7 +185,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
   let audE = 0, audU = 0;
   try {
     const M = d._meta || {};
-    for (const w of (ccfAudit(dd, r, []) || [])) {
+    for (const w of (ccfAudit(dd, r, coerce) || [])) {
       if (w.lv === 'err') audE++;
       else if (w.lv === 'warn' && !((M.evidence || {})[w.k] || (M.nulls || {})[w.k])) audU++;
     }
@@ -169,11 +200,13 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               buy: s >= 75 && x.xPass === true && mg.pass === true && audE === 0 && audU === 0 });
 }
 rows.sort((a, b) => b.s - a.s);
-// 部分実行(--only / --set)の結果で正本 out/score_all.json を潰さない（2026-07-29）。
+// 部分実行(--only / --set / --jp / --us)の結果で正本 out/score_all.json を潰さない（2026-07-29）。
 // 実害があった: `--only MA,V,...` を打った直後、score_all.json が5件に縮み、
 // audit_moat.py / audit_moat_gap.py / audit_kill_roiic.py が**その5件だけを全台帳として**読んだ。
 // 採点は正しいのに、それを読む検査器が全員静かに嘘をつく——絶対のルール7(c)「保管された値も毎回検問する」の同型。
-const partial = only.length || Object.keys(over).length;
+// 2026-08-04(A5): 当初のガードは --only/--set しか見ておらず、**--jp/--us が同じ穴のまま**だった
+//   （shadow_jp_us_roic.py が --jp を毎回踏み、正本が約40行に縮んだまま残った）。行を絞る旗は全部 partial。
+const partial = only.length || Object.keys(over).length || argv.includes('--jp') || argv.includes('--us');
 const outFile = partial ? 'score_all.partial.json' : 'score_all.json';
 fs.writeFileSync(path.join(ROOT, 'out', outFile), JSON.stringify(rows, null, 1));
 
@@ -206,5 +239,5 @@ console.log(`\n四段関門を通過(🟢投下可) ${buy.length}社`
   + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
 console.log(`⛔堀不足で見送り(Ω75+だが堀が関門に届かない) ${q75.filter(x => !x.moatOK).length}社`);
 console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告あり) ${q75.filter(x => x.moatOK && !x.audOK).length}社`);
-console.log(`   ※全317社: 要修正 ${rows.reduce((a,x)=>a+x.audE,0)}件 / 未解決警告 ${rows.reduce((a,x)=>a+x.audU,0)}件`);
+console.log(`   ※全${rows.length}社: 要修正 ${rows.reduce((a,x)=>a+x.audE,0)}件 / 未解決警告 ${rows.reduce((a,x)=>a+x.audU,0)}件`);
 console.log(`\n→ out/${outFile}（全${rows.length}件・降順）`+ (partial ? '　※部分実行なので正本 score_all.json は書き換えていない' : ''));

@@ -29,7 +29,11 @@ import json, os, subprocess, sys
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(BASE)
-SCALE = ("per", "perF", "evebit")      # 価格に比例する欄
+# B24(2026-08-04): evebit を SCALE から外した。EV = 時価総額 + 純負債 のうち**価格に比例するのは
+#   時価総額だけ**なので、EV/EBIT 全体を価格比で掛けるのは純負債≠0の社で誤り。しかも毎営業日
+#   適用されるので誤差が複利的に蓄積する（per/perF/shy は分子または分母が時価そのもの＝比例で正しい）。
+#   パックの evebit は**触らず据え置く**——正しく更新するには純負債の実額が要り、それは審査の仕事。
+SCALE = ("per", "perF")                # 価格に比例する欄（時価そのものが分子/分母の欄だけ）
 INVERSE = ("shy",)                     # 還元額が不変で時価だけ動く＝1/比率
 
 
@@ -90,7 +94,7 @@ def main():
             v = d.get(k)
             if v in (None, ""):
                 continue
-            nv = round(float(v) * (1 / r if k in INVERSE else r), 1 if k == "evebit" else 2)
+            nv = round(float(v) * (1 / r if k in INVERSE else r), 2)
             chg.append((k, v, nv))
         rows.append((t, old, new, r, chg))
         if write:

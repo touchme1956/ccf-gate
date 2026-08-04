@@ -28,11 +28,24 @@ d = json.load(open(P, encoding="utf-8"))
 # --- Ω75+(kanshi_list)のうち監視表に未収載で、packに市場値(per/px)が揃った銘柄を自動追加 ---
 #     g導出はⅥ買付順位と同式: roicQ>=15かつ堀無傷かつcagr>0→min(cagr,20) / それ以外はbR×min(roicg,60)をcagrで頭打ち
 try:
-    kn = json.load(open("kanshi_list.json", encoding="utf-8"))
+    # 2026-08-04是正(B16): 旧実装は kanshi_list.json の存在しないキー `groups` を読んでおり
+    #   （実キーは list/pin/note）、候補が常に空＝**自動追加が一度も発火していなかった**（例外も
+    #   出ない静かな死）。群の定義は out/score_all.json（門のcompute()の実測）から導く:
+    #     toka=投下可(buy=true) / omega_watch=Ω75+(s>=75) / oshime=押し目待ち(Ω75+∧堀OK∧X未開通)。
+    #   score_all.json が無ければ kanshi_list の list∪pin へフォールバック（監視の合併集合）。
     have = {l["ticker"] for l in d["lines"]}
     cand = []
-    for grp in ("toka", "omega_watch", "oshime"):
-        cand += kn.get("groups", {}).get(grp, [])
+    try:
+        sa = json.load(open("out/score_all.json", encoding="utf-8"))
+        cand += [r["t"] for r in sa if r.get("buy")]                                   # toka
+        cand += [r["t"] for r in sa if (r.get("s") or 0) >= 75]                        # omega_watch
+        cand += [r["t"] for r in sa if (r.get("s") or 0) >= 75
+                 and r.get("moatOK") and not r.get("xPass")]                           # oshime
+    except Exception:
+        kn = json.load(open("kanshi_list.json", encoding="utf-8"))
+        cand += (kn.get("list") or []) + (kn.get("pin") or [])
+    seen = set()
+    cand = [t for t in cand if not (t in seen or seen.add(t))]
     for t in cand:
         if t in have: continue
         fp = f"out/{t}_gate_pack.json"
