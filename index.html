@@ -3334,6 +3334,33 @@ async function ccfEvents(btn){
   }else{
     html+=sec('⚙ 運用サイクル','<b style="color:#d69a3c">out/ops_status.json が未生成</b>——CI初回実行後に入る。手動なら python3 night/ops_status.py');
   }
+  // 📌 やるべきこと（v9.9.83・ユーザーの問い「スケジュールに乗せたやるべきこともこれにのってる？」への答え）
+  //   回転盤＝機械の周期作業／こちら＝人の宿題・決断待ち・機械で測れない定期ルーチン。正本は todo_list.json
+  {
+    const td=(ops&&ops.todos&&Array.isArray(ops.todos.items))?ops.todos.items.filter(x=>!x.done):null;
+    if(td){
+      const KIND=[['決断待ち','#d6b06c','あなたの判断の領分——材料は揃っている（audit_2026-08-04_zenten.md）'],
+                  ['宿題','#8fb4dd','単発の作業。終わったらClaudeに「doneにして」と言えば消える'],
+                  ['定期(手動)','#c9c2b2','機械で最終実行を測れない定期ルーチン——忘れたことを盤は検出できない種類'],
+                  ['予約','#8a8578','先の日付の予約議題']];
+      let inner='';
+      for(const [k,color,klabel] of KIND){
+        const g=td.filter(x=>x.kind===k); if(!g.length)continue;
+        inner+=`<div style="font-size:11px;font-weight:600;color:${color};margin:12px 0 2px;letter-spacing:.1em">${k}<span style="font-weight:400;color:var(--dim);letter-spacing:0;margin-left:8px">${klabel}</span></div>`;
+        inner+=g.map(x=>`<div style="border:1px solid var(--line);border-left:3px solid ${color};border-radius:8px;padding:8px 12px;margin:6px 0;background:rgba(255,255,255,.015)">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:13px;color:var(--ink)">${x.title}</b>${x.due?`<span style="font-size:10px;padding:1px 8px;border-radius:9px;background:rgba(255,255,255,.08);color:var(--ink-soft);white-space:nowrap">${x.due}</span>`:''}</div>
+          <div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.7">${x.note||''}</div>
+        </div>`).join('');
+      }
+      const done=(ops.todos.items||[]).filter(x=>x.done);
+      if(done.length)inner+=`<details style="margin-top:8px"><summary style="cursor:pointer;font-size:11px;color:var(--dim)">完了済み ${done.length}件（消さない——やった記録も資産）</summary><div style="font-size:11px;color:var(--dim);padding:6px 0">${done.map(x=>'✓ '+x.title).join('<br>')}</div></details>`;
+      html+=sec(`📌 やるべきこと（残り${td.length}件）`,
+        inner||'<span style="font-size:12px;color:var(--jade)">残なし</span>',
+        '正本は todo_list.json（追加・完了はClaudeに頼む）。回転盤＝機械が回す周期作業／ここ＝人の作業と判断。どちらも判定には不使用');
+    }else{
+      html+=sec('📌 やるべきこと','<b style="color:#d69a3c">todo_list.json が読めない</b>——ops_status.json への同梱は night/ops_status.py の次回実行で入る');
+    }
+  }
   if(!ev){
     html+=sec('⚠ 8-K警報','<b style="color:#d69a3c">out/events_watch.json が未生成</b>——.github/workflows/events.yml（平日22:10UTC）の初回実行後に入る。手動なら python3 night/watch_events.py');
   }else{

@@ -124,7 +124,14 @@ def build():
         state = "unknown" if days is None else ("due" if days > due else "ok")
         rows.append({"id": id_, "name": name, "cadence": cad, "due_days": due,
                      "last": last, "days": days, "state": state, "how": how, "auto": auto})
-    return {"asof": today.isoformat(), "items": rows,
+    # 人のやるべきこと（宿題・決断待ち・機械で測れない定期ルーチン）は todo_list.json が正本。
+    # 盤と同じJSONに同梱して門が1回のfetchで両方読めるようにする（v9.9.83）
+    todos = None
+    try:
+        todos = json.load(open(os.path.join(BASE, "todo_list.json"), encoding="utf-8"))
+    except Exception:
+        pass
+    return {"asof": today.isoformat(), "items": rows, "todos": todos,
             "note": "state=due は「期限日数を超えて止まっている」の機械判定。unknown は日付が取れない＝健全と読まないこと"}
 
 
