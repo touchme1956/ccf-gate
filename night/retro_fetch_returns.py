@@ -28,7 +28,8 @@ for i, a in enumerate(sys.argv):
     if a == "--sample" and i + 1 < len(sys.argv):
         SAMPLE = sys.argv[i + 1]
 
-OUT = os.path.join(BASE, "out", f"retro_returns_{ASOF}.json")
+ALL = "--all" in sys.argv  # サンプルでなくコホートのticker有り全社を対象にする
+OUT = os.path.join(BASE, "out", f"retro_returns_{ASOF}{'_all' if ALL else ''}.json")
 UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
 T0 = int(datetime.datetime(ASOF, 7, 1).timestamp())
 T1 = int(time.time())
@@ -78,10 +79,15 @@ def analyze(pts):
 
 
 def main():
-    samp = json.load(open(SAMPLE)) if SAMPLE else None
-    if not samp:
-        sys.exit("--sample が要る（retro_sample.json: {'pass':[...], 'ctrl':[...]}）")
-    tickers = [("pass", t) for t in samp["pass"]] + [("ctrl", t) for t in samp["ctrl"]]
+    if ALL:
+        cohort = json.load(open(os.path.join(BASE, "out", f"retro_cohort_{ASOF}.json")))
+        tickers = [("all", r["ticker"]) for r in cohort["rows"] if r.get("has_ticker")]
+        samp = {"pass": [], "ctrl": []}
+    else:
+        samp = json.load(open(SAMPLE)) if SAMPLE else None
+        if not samp:
+            sys.exit("--sample が要る（retro_sample.json: {'pass':[...], 'ctrl':[...]}）")
+        tickers = [("pass", t) for t in samp["pass"]] + [("ctrl", t) for t in samp["ctrl"]]
     rows, unmeasured = [], []
     for i, (grp, t) in enumerate(tickers, 1):
         pts = fetch(t)

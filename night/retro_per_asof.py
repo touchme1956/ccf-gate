@@ -30,7 +30,8 @@ for i, a in enumerate(sys.argv):
         ASOF = int(sys.argv[i + 1])
     if a == "--sample" and i + 1 < len(sys.argv):
         SAMPLE = sys.argv[i + 1]
-OUT = os.path.join(BASE, "out", f"retro_per_{ASOF}.json")
+ALL = "--all" in sys.argv  # サンプルでなくコホートのticker有り全社を対象にする
+OUT = os.path.join(BASE, "out", f"retro_per_{ASOF}{'_all' if ALL else ''}.json")
 UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
 CUTOFF = f"{ASOF}-03-01"  # これ以前にFYが締まっていること（公表済み保証）
 
@@ -112,11 +113,14 @@ def fetch_raw_close(sym, y):
 
 
 def main():
-    samp = json.load(open(SAMPLE))
-    tickers = sorted(set(samp["pass"] + samp["ctrl"]))
     # ticker→CIK は cohort ファイルから引く（SECの現行表と同じ出所）
     cohort = json.load(open(os.path.join(BASE, "out", f"retro_cohort_{ASOF}.json")))
     t2cik = {r["ticker"]: r["cik"] for r in cohort["rows"] if r.get("ticker")}
+    if ALL:
+        tickers = sorted(t2cik)
+    else:
+        samp = json.load(open(SAMPLE))
+        tickers = sorted(set(samp["pass"] + samp["ctrl"]))
     z = zipfile.ZipFile(os.path.join(BASE, "companyfacts.zip"))
     rows, miss = [], []
     for i, t in enumerate(tickers, 1):
