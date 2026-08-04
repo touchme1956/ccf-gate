@@ -640,7 +640,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 </nav>
 <div id="pg9" class="pg">
  <h1 class="serif">🔔 イベント</h1>
- <p class="intro">監視リストの <b>8-K警報</b>（減損2.06・退任5.02・非依拠4.02・破産1.03・上場廃止通知3.01）と<b>決算</b>（発表イベント・次回予定）を一枚で。<b>すべて情報であって判定ではない</b>——警報は各行の「審査」で門2再審査の依頼文を作って回すための気づき。売りは S1/S2/S3・買いは四段関門のみで動く。データ源: out/events_watch.json（.github/workflows/events.yml が平日22:10UTCに毎日更新）／out/next_earnings.json（kessan_calendar.py）。</p>
+ <p class="intro"><b>運用サイクル14本の回転状態</b>・監視リストの <b>8-K警報</b>（減損2.06・退任5.02・非依拠4.02・破産1.03・上場廃止通知3.01）・<b>決算</b>（発表イベント・次回予定）を一枚で。<b>すべて情報であって判定ではない</b>——警報は各行の「審査」で門2再審査の依頼文を作って回すための気づき。売りは S1/S2/S3・買いは四段関門のみで動く。データ源: out/ops_status.json／out/events_watch.json（events.yml が平日22:10UTCに毎日更新）／out/next_earnings.json（ops.yml が毎月2日に再生成）。</p>
  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
    <button onclick="ccfEvents(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
    <span id="evAsof" style="font-size:11.5px;color:var(--dim)"></span>
@@ -3293,7 +3293,7 @@ async function ccfEvents(btn){
   const box=$('evBox'); if(!box)return;
   const lab=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='読込中…';}
   const j=async u=>{try{const r=await fetch(u+'?t='+Date.now());return r.ok?await r.json():null;}catch(e){return null;}};
-  const [ev,ern]=await Promise.all([j('out/events_watch.json'),j('out/next_earnings.json')]);
+  const [ev,ern,ops]=await Promise.all([j('out/events_watch.json'),j('out/next_earnings.json'),j('out/ops_status.json')]);
   if(btn){btn.disabled=false;btn.textContent=lab;}
   const asof=$('evAsof');
   if(asof)asof.textContent=ev?`8-K走査 ${ev.asof}（窓${ev.window_days}日・米国${ev.checked_us}社）／決算予定 生成 ${ern?ern.generated:'—'}`:'';
@@ -3301,6 +3301,20 @@ async function ccfEvents(btn){
   const askBtn=t=>`<button onclick="ccfCopyAsk('${t}',this)" title="門2審査プロトコル全文＋${t}をコピー" style="margin-left:8px;padding:3px 8px;background:linear-gradient(180deg,rgba(84,184,138,.24),rgba(84,184,138,.08));border:1px solid rgba(84,184,138,.45);border-radius:6px;color:#8fc9a4;font-size:11px;cursor:pointer">審査</button>`;
   const row=(x,color)=>`<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:5px 0;border-top:1px solid rgba(255,255,255,.04);font-size:12.5px"><b style="min-width:4.5em;color:${color}">${x.t}</b><span style="color:var(--dim);min-width:6.5em">${x.date}</span><span style="flex:1;color:var(--ink-soft)">${(x.flags&&x.flags.length?x.flags.join('；'):'Item '+x.items.join(', '))}</span>${x.url?`<a href="${x.url}" target="_blank" style="font-size:11px;color:#5d8cc2">原文書↗</a>`:''}${x.flags&&x.flags.length?askBtn(x.t):''}</div>`;
   let html='';
+  // ⚙ 運用サイクル（v9.9.80「すべて回るように」）: 周期作業14本の回転状態。止まった作業を黙らせない
+  if(ops&&Array.isArray(ops.items)){
+    const due=ops.items.filter(x=>x.state==='due'), unk=ops.items.filter(x=>x.state==='unknown');
+    const oRow=x=>{const c=x.state==='due'?'#cf5f48':x.state==='unknown'?'#d69a3c':'var(--jade)';
+      const mark=x.state==='due'?'⚠ 停止疑い':x.state==='unknown'?'？不明':'🟢';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-top:1px solid rgba(255,255,255,.04);font-size:12px"><span style="min-width:5.5em;color:${c};white-space:nowrap">${mark}</span><b style="min-width:11em;color:var(--ink)">${x.name}</b><span style="color:var(--dim);min-width:6.5em">${x.cadence}</span><span style="color:${x.state==='due'?'#cf5f48':'var(--dim)'}">最終 ${x.last||'不明'}${x.days!=null?`・${x.days}日前`:''}</span><span style="flex:1;text-align:right;font-size:10.5px;color:var(--dim)">${x.how}</span></div>`;};
+    const head=(due.length||unk.length)
+      ?`<div style="font-size:12px;color:#cf5f48;margin-bottom:6px"><b>${due.length?`停止疑い ${due.length}本: ${due.map(x=>x.name).join('・')}`:''}${unk.length?`${due.length?'／':''}日付不明 ${unk.length}本`:''}</b>——回っていない作業は「無い」のと同じ。右の回し方で復旧させること</div>`
+      :`<div style="font-size:12px;color:var(--jade);margin-bottom:6px">全${ops.items.length}本が期限内で回っている（実測 ${ops.asof}）</div>`;
+    html+=sec('⚙ 運用サイクル（すべて回っているか）',head+ops.items.map(oRow).join(''),
+      '毎営業日=market.yml/events.yml・月次=ops.yml(毎月2日)が自動で回す。「手動」の行だけ人の作業（日本株点検=EDINET鍵・門0発掘=companyfacts 1.4GB・年次較正の答え合わせ）。判定には不使用');
+  }else{
+    html+=sec('⚙ 運用サイクル','<b style="color:#d69a3c">out/ops_status.json が未生成</b>——CI初回実行後に入る。手動なら python3 night/ops_status.py');
+  }
   if(!ev){
     html+=sec('⚠ 8-K警報','<b style="color:#d69a3c">out/events_watch.json が未生成</b>——.github/workflows/events.yml（平日22:10UTC）の初回実行後に入る。手動なら python3 night/watch_events.py');
   }else{

@@ -17,17 +17,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: {fetch-depth: 0}   # ops_status が git の最終コミット日で各サイクルの回転を測るため全履歴が要る
       - uses: actions/setup-python@v5
         with: {python-version: '3.11'}
       - name: 監視リストの8-Kを走査
         run: python3 night/watch_events.py
+      - name: 運用サイクルの回転状態を実測（毎日——止まった作業を翌日には⚠にする）
+        run: python3 night/ops_status.py
       - name: コミット（警報があれば件名に出す——毎日のノイズに埋もれさせない）
         run: |
           git config user.name  "ccf-gate bot"
           git config user.email "noreply@github.com"
           N=$(python3 -c "import json;print(len(json.load(open('out/events_watch.json'))['alerts']))" 2>/dev/null || echo 0)
+          D=$(python3 -c "import json;print(sum(1 for r in json.load(open('out/ops_status.json'))['items'] if r['state']=='due'))" 2>/dev/null || echo 0)
           MSG="events watch $(date -u +%Y-%m-%d)"
-          [ "$N" -gt 0 ] && MSG="⚠ 8-K警報 ${N}件｜events watch $(date -u +%Y-%m-%d)"
-          git add out/events_watch.json
+          [ "$N" -gt 0 ] && MSG="⚠ 8-K警報 ${N}件｜$MSG"
+          [ "$D" -gt 0 ] && MSG="⚠ サイクル停止疑い ${D}本｜$MSG"
+          git add out/events_watch.json out/ops_status.json
           git diff --staged --quiet || git commit -m "$MSG"
           git push

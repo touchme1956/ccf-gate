@@ -1,0 +1,146 @@
+{
+ "asof": "2026-08-04",
+ "items": [
+  {
+   "id": "market",
+   "name": "株価・盤データ",
+   "cadence": "毎営業日",
+   "due_days": 4,
+   "last": "2026-08-04",
+   "days": 0,
+   "state": "ok",
+   "how": "CI: market.yml 21:30UTC（FINNHUB_KEY要）"
+  },
+  {
+   "id": "events",
+   "name": "8-K監視",
+   "cadence": "毎営業日",
+   "due_days": 4,
+   "last": "2026-08-04",
+   "days": 0,
+   "state": "ok",
+   "how": "CI: events.yml 22:10UTC（鍵不要）"
+  },
+  {
+   "id": "er",
+   "name": "E[r]予実の観測封印",
+   "cadence": "月1",
+   "due_days": 40,
+   "last": "2026-08-03",
+   "days": 1,
+   "state": "ok",
+   "how": "CI: market.yml（月初・snapは月次idempotent）"
+  },
+  {
+   "id": "divy",
+   "name": "配当分離(divY)",
+   "cadence": "月1",
+   "due_days": 40,
+   "last": "2026-08-04",
+   "days": 0,
+   "state": "ok",
+   "how": "CI: ops.yml（毎月2日）／手動 python3 night/fill_divy.py"
+  },
+  {
+   "id": "kanshi",
+   "name": "監視リスト生成",
+   "cadence": "月1",
+   "due_days": 40,
+   "last": "2026-08-04",
+   "days": 0,
+   "state": "ok",
+   "how": "CI: ops.yml／手動 python3 make_kanshi.py"
+  },
+  {
+   "id": "cal",
+   "name": "決算カレンダー",
+   "cadence": "月1",
+   "due_days": 40,
+   "last": "2026-07-29",
+   "days": 6,
+   "state": "ok",
+   "how": "CI: ops.yml／手動 python kessan_calendar.py"
+  },
+  {
+   "id": "xwatch",
+   "name": "X監視表(開通ライン)",
+   "cadence": "月1",
+   "due_days": 40,
+   "last": "2026-07-30",
+   "days": 5,
+   "state": "ok",
+   "how": "CI: ops.yml／手動 python x_watch_recalc.py"
+  },
+  {
+   "id": "kessanUS",
+   "name": "保有・監視の決算点検(米)",
+   "cadence": "四半期",
+   "due_days": 100,
+   "last": "2026-08-05",
+   "days": 0,
+   "state": "ok",
+   "how": "CI: ops.yml（月次で先回り）／手動 python kessan_check.py"
+  },
+  {
+   "id": "kessanJP",
+   "name": "日本株の決算点検",
+   "cadence": "四半期",
+   "due_days": 100,
+   "last": "2026-08-03",
+   "days": 1,
+   "state": "ok",
+   "how": "手動 python3 kessan_check_jp.py（EDINET鍵なしは点検不能＝既知の穴）"
+  },
+  {
+   "id": "v10",
+   "name": "v10影スコア更新",
+   "cadence": "年1(7月)",
+   "due_days": 430,
+   "last": "2026-08-04",
+   "days": 0,
+   "state": "ok",
+   "how": "CI: ops.yml（7月）／手動 python3 v10_series.py"
+  },
+  {
+   "id": "calib",
+   "name": "年次較正(答え合わせ)",
+   "cadence": "年1(7月)",
+   "due_days": 430,
+   "last": "2026-08-05",
+   "days": 0,
+   "state": "ok",
+   "how": "手動 python calibration_check.py——v9/v10の勝敗判定はユーザーと（V10_SPEC）"
+  },
+  {
+   "id": "gate0",
+   "name": "米国門0発掘",
+   "cadence": "年1(1-2月)",
+   "due_days": 430,
+   "last": "2026-07-30",
+   "days": 5,
+   "state": "ok",
+   "how": "手動 python run_gate0_local.py（companyfacts.zip 1.4GB＝CI外）"
+  },
+  {
+   "id": "gate0jp",
+   "name": "日本株門0",
+   "cadence": "年1",
+   "due_days": 430,
+   "last": "2026-08-03",
+   "days": 1,
+   "state": "ok",
+   "how": "手動 python3 night/rebuild_gate0_jp.py --write（rerankは旧世代＝封鎖済み）"
+  },
+  {
+   "id": "backtest",
+   "name": "疑似バックテスト",
+   "cadence": "年1",
+   "due_days": 430,
+   "last": "2026-08-05",
+   "days": 0,
+   "state": "ok",
+   "how": "手動 python3 night/backtest_core.py"
+  }
+ ],
+ "note": "state=due は「期限日数を超えて止まっている」の機械判定。unknown は日付が取れない＝健全と読まないこと"
+}
