@@ -79,7 +79,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=76.3 / 5年窓=50.9。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 78→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均49.4%・σ7.8pt・CV15.8%）。",
    "2026-08-02 市場価格を自動更新: px 569.05 → 559.07（-1.8%）。per 42.28→41.54　evebit 34.1→33.5　shy 2.64→2.69。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
-   "**v9.9.72 roic を through-cycle 化**: roic 56.4→46.9 / roicg 44.4→36.0。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央45.1% / 最悪42.5%）。比は**パックが審査した年(2025)**の採取器値 roic54.28 / roicg43.04 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
+   "**v9.9.72 roic を through-cycle 化**: roic 56.4→46.9 / roicg 44.4→36.0。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央45.1% / 最悪42.5%）。比は**パックが審査した年(2025)**の採取器値 roic54.28 / roicg43.04 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
+   "2026-08-04 dom横断探索(自社8-K添付・Heska/Zoetis他社提出書類・EDGAR全文検索)を実施→空欄据置。詳細は_meta.nulls.dom"
   ],
   "evidence": {
    "expiry": "『Although certain of these patents and licenses are expected to expire in future years, the expiration of these patents and licenses, individually or in the aggregate, is not expected to have a material adverse effect』→堀は特許依存でなく設置基盤依存→no",
@@ -117,7 +118,7 @@
    "beta_per_perF_evebit_px_shy_gr_gcap_analysts_instOwn_gls_idx_indG": "市場データ13項目は取込時に手入力",
    "founder": "創業者支配の証拠hitsになし。専業経営体制→フラグ定義次第でユーザー判定のため空欄",
    "fin": "業態フラグの定義不明(金融業ではない)→空欄",
-   "dom": "【2026-07-29 堀再監査】10-K FY2025 の COMPETITION 節・Item 1・Item 1A のいずれにも自社シェア%も上位N社合計シェアも開示が無く、v9.9.38の刻み(市場構造)を原本から導けない。原本が与えるのは(a)事業別の競合の名指し(伴侶動物診断: Mars傘下 Antech Diagnostics / Heska、Zoetis(Abaxis)、国際で Fujifilm / Arkray / Mindray / BioNote。水質・家畜: Neogen / Charm Sciences / BioChek / Innovative Diagnostics / Thermo Fisher。獣医ソフト・画像: 『largest competitor』Covetrus)、(b)設置基盤と継続率の記述(『12% growth in our installed base of premium instruments』『continued high customer retention rates』)のみ。(b)は基盤の伸びであってシェアではない。旧値dom=85は evidence 自身が『hitsに明示的市場シェア%なし』と認めたうえでの推定＝憶測(絶対のルール2違反)だったので空欄化。なお伴侶動物POC診断が Mars(Antech/Heska)・Zoetis(Abaxis)との実質3社構造である可能性は原本の競合列挙と整合するが、上位3社合計≥80%を裏づける実数が原本にも提出書類引用の第三者調査にも無いため、寡占の刻み(70)にも到達させない。",
+   "dom": "【空欄確定・2026-08-04 横断探索で格上げ(『測っていない』→『掘り尽くして確定できないと確定』)】(1)10-K FY2025 Competition節=競合の名指しのみでシェア%なし・伴侶動物POCの実質3社構造(IDEXX/Mars傘下Antech＋Heska/Zoetis)の可能性は競合列挙と整合するが上位3社合計≥80%の実数が無い(2026-07-29記録どおり)。(2)自社8-K 2022〜2026全件点検: 投資家説明会資料の添付なし——IDEXX Investor Dayは毎年開催だがSECにfurnishしない。Item 7.01は2022-06-14(ロシア事業縮小)と2026-01-13(カンファレンス案内)のみで実質開示なし。EDGAR全文検索『\"market position\"』ciks=0000874716は0件、『\"market share\"』自社70件は役員報酬計画の指標名(exhibit10.xx)と10-Q定型文のみ。(3)他社提出書類: Heska(CIK 1038133・2023年Mars買収で提出終了)の8-K 2020-04-01(scil買収リリース)は自社シェア『the United States (≈12.5%)』等**Heska側の数字のみ**でIDEXXを数値化していない。Zoetis(CIK 1555280)のIDEXX言及21件は報酬比較peer群のみ。全文検索『\"veterinary diagnostics\" \"market share\"』408件の上位はSynbiotics 2004/Chembio 2008/VCA Antech 2014等いずれも10年超前で不採用(DSGX 2005年20-F事故と同型)。→ IDEXXのシェア実数＋上位N社合計%はEDGARに存在せず、v9.9.41の刻みを導けない。MSFT/NVDA/RMD/6146と同格の掘り尽くし空欄",
    "p3": "【2026-07-29】規約どおり空欄へ戻した。p3 は門が nde=0.18 から同表で導出する（純現金→95 / <1→85 / <2.5→70 / 以上→50）。台帳にあった 85 は導出値と一致していたので、値を置いておく意味が無い——むしろ値が残っていると門はそれを『逸脱評価』として尊重し、nde を直しても p3 が追随しなくなる（陳腐化する）。審査プロトコル『ndeを埋めれば空欄可＝門が機械導出』。",
    "f5": "【2026-07-29】規約どおり空欄へ戻した。f5 は門が disrupt='unsettled' から同表で導出する（settled→85 / unsettled→65 / threat→45）。台帳にあった 65 は導出値と一致していたので、値を置いておく意味が無い——むしろ値が残っていると門はそれを『逸脱評価』として尊重し、disrupt を直しても f5 が追随しなくなる（陳腐化する）。審査プロトコル『disruptを埋めれば空欄可＝門が機械導出』。"
   },
