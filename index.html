@@ -354,8 +354,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
   /* タブナビを親指の届く画面下部へ固定（アプリのタブバー式） */
   .pgnav{position:fixed;top:auto;bottom:0;left:0;right:0;border-bottom:none;border-top:1px solid var(--gold-line);box-shadow:0 -6px 24px rgba(0,0,0,.35);padding-bottom:max(9px,env(safe-area-inset-bottom));}
   body{padding-bottom:calc(76px + env(safe-area-inset-bottom));}
-  /* 表は枠内で横スクロール（画面がはみ出さない） */
+  /* 表は枠内で横スクロール（画面がはみ出さない）。
+     欄に最小幅が無いと4欄が390pxへ潰され、「時期」欄が42px＝文字が縦一列に流れていた
+     （実測: 幅42px・高さ526px）。最小幅を与えて表の中だけを横スクロールさせる */
   table.dt{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table.dt th,table.dt td{min-width:6.5em;}
+  table.dt th:nth-child(3),table.dt td:nth-child(3){min-width:17em;}
   /* 長いURL・コード・英語は枠内で折り返す＝ページ全体の横パンを根絶 */
   code{overflow-wrap:anywhere;word-break:break-all;}
   .pg div,.pg p,.pg td,.pg li,.pg span{overflow-wrap:anywhere;}
@@ -522,6 +526,9 @@ html[data-theme="light"] [style*="color:#e0c88e"]{color:#8a5a10 !important;}
 html[data-theme="light"] [style*="color:#e0917a"]{color:#a5341a !important;}
 /* JSが動的に組む判定色（回避=朱／金）も紙用に。値はJS側のリテラルと同じ */
 html[data-theme="light"] [style*="color:#cf5f48"]{color:#a5341a !important;}
+/* 点検パネルの淡い赤（要修正の件数・銘柄名）。紙の上で比率1.78＝読めなかった */
+html[data-theme="light"] [style*="color:#e08a86"]{color:#a5341a !important;border-bottom-color:#a5341a !important;}
+html[data-theme="light"] [style*="color:#c9534f"]{color:#a5341a !important;}
 html[data-theme="light"] [style*="color:#c9a64a"]{color:#6f5411 !important;}
 html[data-theme="light"] [style*="color:#e3a899"]{color:#a5341a !important;}
 html[data-theme="light"] [style*="color:#ecd494"]{color:#6d5310 !important;}
@@ -582,6 +589,34 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
   .led .act{font-size:10.5px;padding:3px 7px;}
   .led button{min-width:26px;padding:4px 5px;font-size:12.5px;}
   .led button:first-of-type{margin-left:auto;}
+}
+
+/* ============================================================
+   Ⅱ実行手順の行組み（2026-08）— 見た目のみ。手順の文言・コード・JSは不変。
+   「何を／手順／出るもの／コード」の行は [ラベル | 中身] の2欄のつもりで書かれているが
+   実体は display:flex で、中身の塊が複数ぶら下がっている行があった。flexは横に並べるので
+   塊の数だけ横に分割される。実測(390px): 全13行のうち「手順」行だけ子が5つあり、
+   幅が [54, 14, 10, 30, 152] ——**本文が14px＝1文字幅**まで潰れ、ボタンの文字が
+   縦一列に流れていた。gridにして2欄目へ縦に積む＝元々の意図どおりの形に戻す。
+   ============================================================ */
+#pg8 div[style*="display:flex"][style*="padding:6px 0"]{
+  display:grid !important;grid-template-columns:4.5em 1fr;
+  align-items:start;column-gap:10px;row-gap:9px;}
+#pg8 div[style*="display:flex"][style*="padding:6px 0"]>*{grid-column:2;min-width:0;}
+#pg8 div[style*="display:flex"][style*="padding:6px 0"]>:first-child{grid-column:1;grid-row:1;}
+/* 行内の入れ子flex（ボタン＋注記）は折り返す＝狭い幅でボタンが縦書きにならない */
+#pg8 div[style*="display:flex"][style*="padding:6px 0"] div[style*="display:flex"]{flex-wrap:wrap;}
+
+@media(max-width:640px){
+  /* スマホはラベルを上段の見出しにして中身へ全幅を渡す（54pxのラベル欄を畳む） */
+  #pg8 div[style*="display:flex"][style*="padding:6px 0"]{grid-template-columns:1fr;row-gap:7px;}
+  #pg8 div[style*="display:flex"][style*="padding:6px 0"]>*{grid-column:1;}
+  #pg8 div[style*="display:flex"][style*="padding:6px 0"]>:first-child{grid-column:1;grid-row:auto;}
+  /* 手順のコピーボタンは全幅＝親指で押しやすく */
+  #pg8 div[style*="padding:6px 0"] button{width:100%;}
+  #pg8 div[style*="padding:6px 0"] div[style*="display:flex"]{width:100%;}
+  /* 見出しの補足（採取のたび・1社ずつ 等）は改行して題と重ならないように */
+  #pg8 div[style*="align-items:baseline"] span[style*="margin-left:6px"]{display:block;margin-left:0;margin-top:3px;}
 }
 
 /* 動きを減らす設定の尊重 */
