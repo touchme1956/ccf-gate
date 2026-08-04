@@ -2552,6 +2552,21 @@ async function autoSave(src,silent){
   document.querySelectorAll('#scorer input,#scorer select').forEach(e=>{if(e.id)data[e.id]=e.value;}); // v9.9.26: 採点機フォームに限定(logBody/ioBox等の他タブ入力とid無し欄の混入=記録肥大を解消。読込側は既存マップで無害)
   let prevScore=null,prevAct=null,prevTier=null;   // v9.9.74: 判定変更は act(旧PERブレーキ)ではなく層で見る
   const sk=safeKey(nm);
+  // v9.9.77(2026-08-04): 同一証券コードの旧キーを置き換える——台帳は nm でキーするため、同じ銘柄が
+  //   「キーエンス(6861)」(手動審査)と「6861 キーエンス」(パック)のように**別キーで並存**し、
+  //   一括取込しても旧行が残って旧⚠バッジが出続けた。キー文字列は safeKey(nm) 由来なので
+  //   コードはキー自身に含まれる＝レコードを開かずキー名だけで判定できる(319件の一括取込でも軽い)。
+  //   旧版は g7prev: へ退避し通知を出す(黙って消すと v9.9.52 の「行が理由不明で消える」型の事故になる)。
+  //   4-5桁コードは日本株の一意な識別子なので誤爆しない。米国株(コード無し)はこの経路を通らない。
+  const __jpc=(nm.match(/(?:^|\D)(\d{4,5})(?:\D|$)/)||[])[1];
+  if(__jpc){ try{ const __L=await store.list('g7:'); const __ks=__L?__L.keys:[];
+    for(const __k of __ks){ const __osk=__k.slice(3); if(__osk===sk)continue;
+      const __oc=(__osk.match(/(?:^|\D)(\d{4,5})(?:\D|$)/)||[])[1];
+      if(__oc!==__jpc)continue;
+      try{const __g=await store.get(__k); if(__g)await store.set('g7prev:'+__osk,__g.value);}catch(e){}
+      try{await store.delete(__k);}catch(e){}
+      uiNotice(`同一コード${__jpc}の旧記録（g7:${__osk}）をこの取込で置き換えました。旧版はg7prev:に退避`,6000);
+    } }catch(e){} }
   try{
     const prev=await store.get('g7:'+sk);
     if(prev){ await store.set('g7prev:'+sk,prev.value); try{const po=JSON.parse(prev.value); if(po.r){prevScore=po.r.evalScore;prevAct=po.r.act;prevTier=po.r.tierShort||po.r.grade||null;}
