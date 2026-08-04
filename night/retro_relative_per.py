@@ -53,9 +53,11 @@ def stats(tk, label):
           f" | DD中央値 {mdd*100:.0f}%")
 
 
+spy = (rets.get("benchmark") or {}).get("tr_cagr")
 print(f"=== asof={ASOF}  S&P500実績PER錨 = {ANCHOR}  "
       f"(線: ×1.2={ANCHOR*1.2:.1f} / ×1.4={ANCHOR*1.4:.1f})  "
-      f"SPY実測14.2%/RSP11.6%（2013→2026・配当込み） ===")
+      f"SPY同期間実測 {spy*100:.1f}%（配当込み） ===" if spy else
+      f"=== asof={ASOF}  S&P500実績PER錨 = {ANCHOR} ===")
 
 q = [t for t, r in C.items() if r["score"] == 7 and t in PER]
 print(f"\n--- 質(score7・PER測定済み n={len(q)}) を相対線で割る")
