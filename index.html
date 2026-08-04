@@ -3312,9 +3312,11 @@ async function ccfEvents(btn){
     const stChip=x=>x.state==='due'?chip('⚠ 停止疑い','#ff9d8a','rgba(207,95,72,.20)')
       :x.state==='unknown'?chip('？ 不明','#d6b06c','rgba(214,154,60,.16)')
       :chip('🟢 回転中','#8fc9a4','rgba(84,184,138,.10)');
+    // v9.9.82: 手動/鍵で自動の作業は、タブ下部の「📖 手動作業の説明」該当項へ飛べるリンクを付ける
+    const helpBtn=x=>(x.auto===true)?'':`<button onclick="const e=document.getElementById('evhelp-${x.id}');if(e){e.open=true;e.scrollIntoView({behavior:'smooth',block:'start'});}" style="padding:2px 9px;background:linear-gradient(180deg,rgba(93,140,194,.22),rgba(93,140,194,.08));border:1px solid rgba(93,140,194,.45);border-radius:6px;color:#8fb4dd;font-size:10.5px;cursor:pointer;white-space:nowrap">説明↓</button>`;
     const card=x=>`<div style="border:1px solid var(--line);border-left:3px solid ${x.state==='due'?'#cf5f48':x.state==='unknown'?'#d69a3c':'rgba(84,184,138,.55)'};border-radius:8px;padding:8px 12px;margin:6px 0;background:rgba(255,255,255,.015)">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <b style="font-size:13px;color:var(--ink)">${x.name}</b>${autoChip(x)}${stChip(x)}
+          <b style="font-size:13px;color:var(--ink)">${x.name}</b>${autoChip(x)}${stChip(x)}${helpBtn(x)}
           <span style="margin-left:auto;font-size:11.5px;color:${x.state==='due'?'#ff9d8a':'var(--dim)'};white-space:nowrap">最終 ${x.last||'不明'}${x.days!=null?`（${x.days}日前）`:''}</span>
         </div>
         <div style="font-size:10.5px;color:var(--dim);margin-top:4px">${x.how}</div>
@@ -3362,6 +3364,32 @@ async function ccfEvents(btn){
   }else{
     html+=sec('📅 次回決算カレンダー','<b style="color:#d69a3c">out/next_earnings.json が未生成</b>——python kessan_calendar.py で生成');
   }
+  // 📖 手動作業の説明（v9.9.82・ユーザー要望「手動でやるべきことは説明欄に飛べるように」）
+  //   回転盤の「説明↓」ボタンがここへ飛ぶ。何のための作業か・いつ・どうやるか・終わるとどうなるか、を1項ずつ
+  const hd=(id,title,body)=>`<details id="evhelp-${id}" style="border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:6px 0;background:rgba(255,255,255,.015)"><summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--ink)">${title}</summary><div style="font-size:12px;color:var(--ink-soft);line-height:1.85;margin-top:8px">${body}</div></details>`;
+  html+=sec('📖 手動作業の説明（回転盤の「説明↓」がここへ飛ぶ）',
+    hd('kessanJP','決算点検（日本株）——鍵を置けば自動になる',
+      `<b>何のため</b>: 日本株の保有・監視銘柄について有報・短信から警報語（誠実性・減損・退任・指針撤回など）を走査する。米国のkessan_checkはSEC経由なので日本株を一切点検できず、ここが監視の穴だった。<br>`+
+      `<b>自動化の手順（推奨・一度だけ）</b>: ① <a href="https://api.edinet-fsa.go.jp/" target="_blank" style="color:#8fb4dd">api.edinet-fsa.go.jp↗</a> でAPIキーを無料登録 → ② GitHubリポジトリの <b>Settings → Secrets and variables → Actions → New repository secret</b> → Name欄に <b>EDINET_API_KEY</b>・Secret欄にキーを貼って保存。<br>`+
+      `<b>置くとどうなる</b>: 翌営業日から臨時報告書(8-K相当)・訂正・有報/四半期の提出監視が毎日、決算点検が毎月2日に自動で回る。置くまでは「対象外の穴」と表示され続ける（偽の被覆を作らない）。<br>`+
+      `<b>手動で回すなら</b>: <code>python3 kessan_check_jp.py</code>（鍵なしは「点検不能・要審査」と正直に出る＝古い書類から異常なしとは言わない）`)+
+    hd('calib','年次較正（答え合わせ）——毎年7月・あなたの判断の領分',
+      `<b>何のため</b>: 門の予測が当たったかの答え合わせ。①定性判定の遷移（erosion/disruptが実際にどう動いたか）②f1予実 ③<b>v9とv10影スコアの勝敗判定</b>。検証なき基準改定をしない、がこの門の最大の強み——その「検証」がこの作業。<br>`+
+      `<b>いつ</b>: 毎年7月（次回2027-07）。<br>`+
+      `<b>手順</b>: <code>python calibration_check.py</code> を回し、out/calibration.json を見ながらClaudeに「年次較正の答え合わせをしたい」と依頼する。v9/v10の勝敗判定式は <b>V10_SPEC.md に明文化済み</b>（劣化群の事前検知rank-AUC・引き分けは現行v9維持）。材料は凍結済み——v9_scores_2026（2026-07-30のΩ）× v10影（2026-07-27・40社）。<br>`+
+      `<b>なぜ自動化しない</b>: 勝った方を正本にする判断・ルーブリック改定は絶対のルール1（ユーザー明示指示）の領分だから。機械が勝手に基準を変える門にはしない`)+
+    hd('gate0','米国門0発掘——毎年1-2月',
+      `<b>何のため</b>: 全上場（検証母集団）をROIC・成長・FCF転換の7点で採点し、審査待ち行列 gate1_queue.json（約155社＝TOP100＋審査優先の谷/種まき/未成熟）を作り直す年次の入口。<br>`+
+      `<b>手順</b>: 手元の環境で <code>python run_gate0_local.py</code>。companyfacts.zip(1.4GB)が45日超なら自動で最新に更新される。holdings.json があれば保有/WATCHも自動差し替え。終わったら <code>python3 night/make_chunks.py</code> で夜間審査のチャンクと索引を再生成。<br>`+
+      `<b>なぜ自動化しない</b>: 1.4GBの母集団zipのダウンロードと展開がCIの器に載らないため（年1回なら手元で十分）`)+
+    hd('gate0jp','日本株門0——毎年',
+      `<b>何のため</b>: 日本株の審査待ちキュー gate0_jp_queue.json を作り直す（<b>pt上位50 ∪ 質の椅子14</b>＝成熟高収益企業を成長率支配のptから別枠で救う二枠構造。キーエンス・ディスコを拾う線で較正済み）。<br>`+
+      `<b>手順</b>: <code>python3 night/rebuild_gate0_jp.py --write</code>。<b>rerank_gate0_jp.py は旧世代＝--writeは封鎖済み</b>（回すと質の椅子14社が黙って消えるため）。キューは審査待ちであって合格ではない——門2が裁く`)+
+    hd('backtest','疑似バックテスト——年1回・成長減衰の較正材料',
+      `<b>何のため</b>: companyfactsの提出日で「当時読めた数字」だけからthrough-cycle ROIC等を再構成し、その後の配当込みリターン・実現成長と突合する。<b>E[r]のg=20%上限・成長減衰（結論を4pt動かす最大の未較正項）の実測分布</b>を予実台帳より4年早く得る。<br>`+
+      `<b>初回実測(2018→2026)</b>: 機械ROIC最上段(43.7%超)だけがリターン劣後10.4%／当時cagr≥20%の22社のその後の実現成長は中央値18.2%・20%維持は9/22社。<br>`+
+      `<b>手順</b>: <code>python3 night/backtest_core.py</code>（<code>--cutoff 2015-07-01</code> で別年代）。<b>生存バイアスあり＝相対比較と分布にだけ使う</b>。結果を採点へ入れるかは明示指示の領分`),
+    '「自動」の10本はCI（market.yml／events.yml／ops.yml）が回すので説明不要——止まれば回転盤が⚠にする。ここに載るのは人の手か判断が要る作業だけ');
   box.innerHTML=html;
 }
 // ── 門X裁きⅠ（単一実装・v9.9.39 切り出し）───────────────────────────────────
