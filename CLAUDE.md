@@ -704,6 +704,18 @@
   もっともらしく、根拠を書く段になって初めて出所の無さが露出した。
   残作業: ECLの判断項目11欄（p2/p4/f1-f4/erosion系）の根拠なしは残存（Ω74.9=監視帯へ降りたので
   優先度は下がった。audit_evidence の作業リストへ）
+- **第二弾（同日「続けて」）——崖っぷち帯の残り・moatW整合・domハント。結論: 全て据置＋記録**:
+  (1) **ADBE/6857/RELXの5本柱は既に原本根拠つき**（2026-07-29の再監査の資産——ADBE irr70はPDFオープン標準化の
+  検討まで、6857は有報193頁走査、RELXはC.L.U.E.の寄託DB・投稿査読ネットワークの実記述）。検算のみで据置
+  (2) **MA moatW=70 vs V=50 の差は不整合ではない**——Vの10-Kは『one reportable segment…each activity is
+  dependent upon and supportive of the other』と単一相互依存を自認（→50）、MAはVAS 40.6%を開示し最大製品
+  59.4%<70（→70）。規約どおりの帰結で、差の正体は開示の行の作り方
+  (3) **dom空欄社の第三者シェア表ハント（EDGAR全文検索）——3件とも「見つかったが使えない」で空欄維持**:
+  MSI=BK Technologies 10-Kが『well in excess of half the market for LMR』と明記するがMSIは映像等を併営し
+  構造が割れる（全社ベース規則・IRMD前例）／RMD=RemSleepの表(45/30/12)は3年同文のボイラープレートで
+  Philipsの市場撤退を反映せず信頼性不足／NVDA=AMD 10-Kの『discrete GPU market share leader』は
+  呼称のみ数値なし（規約(4)）。**否定的結果も_meta.nulls.domへ記録した**——次の審査官が同じ場所を掘らないため。
+  探索の道具は EDGAR full-text search（efts.sec.gov・2001年〜）が有効と確認
 
 ## CELH（セルシウス）の審査（2026-08-03・監視にいながら未審査だった社の解消）
 **結果: Ω 0.0 ／ 絶対MOAT指数 47.1（関門70）／ ティア回避。四段関門は第一で落ちる。**
