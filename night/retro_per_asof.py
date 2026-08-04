@@ -1,0 +1,140 @@
+# night/retro_per_asof.py — 歴史検証・案C 追補「asof時点のPER」(2026-08-04新設)
+#
+# 目的: 門の二門構造（質は門Ω・買値は門X）の歴史検証。機械screen通過群を
+#   「asof時点の倍率」で二分し、実現リターンが分かれるかを見る。
+#
+# look-ahead の防ぎ方:
+#   EPSは「FY末が asof年3月1日 以前」の最後の会計年度だけ使う（12月決算社は前年FY）。
+#   FY末から asof年7月の株価まで最大16ヶ月あるが、その間に公表済みなのは確実。
+#
+# 既知の限界（正直に書く・KLAC分割事故の型への防御）:
+#   株価は asof年7月の生値・株数はFY末の希薄化後加重平均なので、その間に分割が
+#   あるとPERが分割倍率ぶん壊れる。帯検問（per<2 or >200 は捨てる）で桁事故だけ防ぐ。
+#   バケット分割（中央値二分）に使うぶんには1-2社のノイズは結論を動かさない。
+#
+# 実行: python3 night/retro_per_asof.py --asof 2013 --sample .../retro_sample.json
+# 出力: out/retro_per_{asof}.json
+import json, os, sys, time, datetime, urllib.request, zipfile
+
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ASOF = 2013
+SAMPLE = None
+for i, a in enumerate(sys.argv):
+    if a == "--asof" and i + 1 < len(sys.argv):
+        ASOF = int(sys.argv[i + 1])
+    if a == "--sample" and i + 1 < len(sys.argv):
+        SAMPLE = sys.argv[i + 1]
+OUT = os.path.join(BASE, "out", f"retro_per_{ASOF}.json")
+UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
+CUTOFF = f"{ASOF}-03-01"  # これ以前にFYが締まっていること（公表済み保証）
+
+NI_TAGS = ["NetIncomeLoss", "ProfitLossAttributableToOwnersOfParent", "ProfitLoss",
+           "NetIncomeLossAvailableToCommonStockholdersBasic"]
+SH_TAGS = ["WeightedAverageNumberOfDilutedSharesOutstanding",
+           "WeightedAverageNumberOfSharesOutstandingBasic"]
+
+
+def d2(s):
+    return datetime.date(int(s[:4]), int(s[5:7]), int(s[8:10]))
+
+
+def annual_entries(facts, tags, unit_names):
+    """年次(330-400日)のフロー値を (end, val) で列挙。filed最新を採る。"""
+    out = {}
+    for taxo in ("us-gaap", "ifrs-full"):
+        ns = facts.get(taxo) or {}
+        for tag in tags:
+            node = ns.get(tag)
+            if not node:
+                continue
+            for unit, ents in node.get("units", {}).items():
+                if unit not in unit_names:
+                    continue
+                for e in ents:
+                    en, st, fl = e.get("end"), e.get("start"), e.get("filed", "")
+                    if not en or not st:
+                        continue
+                    try:
+                        if not (330 <= (d2(en) - d2(st)).days <= 400):
+                            continue
+                    except Exception:
+                        continue
+                    k = (tag, en)
+                    if k not in out or fl > out[k][1]:
+                        out[k] = (float(e["val"]), fl)
+            if any(t == tag for (t, _) in out):
+                break  # タグは代替。最初に見つかった系列で足りる（PERの分母用）
+    return out
+
+
+def latest_before(entries, cutoff):
+    best = None
+    for (tag, en), (v, _) in entries.items():
+        if en <= cutoff and (best is None or en > best[0]):
+            best = (en, v)
+    return best
+
+
+def fetch_raw_close(sym, y):
+    t0 = int(datetime.datetime(y, 7, 1).timestamp())
+    t1 = int(datetime.datetime(y, 7, 10).timestamp())
+    url = (f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}"
+           f"?period1={t0}&period2={t1}&interval=1d")
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
+                j = json.loads(r.read())
+            res = (j.get("chart", {}).get("result") or [None])[0]
+            if not res:
+                return None
+            closes = ((res.get("indicators", {}).get("quote") or [{}])[0].get("close")) or []
+            closes = [c for c in closes if c is not None]
+            return closes[0] if closes else None
+        except Exception:
+            time.sleep(2 * (attempt + 1))
+    return None
+
+
+def main():
+    samp = json.load(open(SAMPLE))
+    tickers = sorted(set(samp["pass"] + samp["ctrl"]))
+    # ticker→CIK は cohort ファイルから引く（SECの現行表と同じ出所）
+    cohort = json.load(open(os.path.join(BASE, "out", f"retro_cohort_{ASOF}.json")))
+    t2cik = {r["ticker"]: r["cik"] for r in cohort["rows"] if r.get("ticker")}
+    z = zipfile.ZipFile(os.path.join(BASE, "companyfacts.zip"))
+    rows, miss = [], []
+    for i, t in enumerate(tickers, 1):
+        cik = t2cik.get(t)
+        if not cik:
+            miss.append({"ticker": t, "why": "no_cik"})
+            continue
+        try:
+            facts = json.loads(z.read(f"CIK{cik:010d}.json")).get("facts", {})
+        except Exception:
+            miss.append({"ticker": t, "why": "no_facts"})
+            continue
+        ni = latest_before(annual_entries(facts, NI_TAGS, ("USD",)), CUTOFF)
+        sh = latest_before(annual_entries(facts, SH_TAGS, ("shares",)), CUTOFF)
+        px = fetch_raw_close(t, ASOF)
+        time.sleep(0.5)
+        if not ni or not sh or px is None or ni[1] <= 0 or sh[1] <= 0:
+            miss.append({"ticker": t, "why": "eps_or_px",
+                         "ni": ni and ni[0], "sh": sh and sh[0], "px": px})
+            continue
+        eps = ni[1] / sh[1]
+        per = px / eps
+        if not (2 <= per <= 200):  # 桁事故の帯検問（分割・単位混線）
+            miss.append({"ticker": t, "why": f"per_band {per:.1f}"})
+            continue
+        rows.append({"ticker": t, "px": round(px, 2), "eps_fy": round(eps, 3),
+                     "fy_end": ni[0], "per": round(per, 2)})
+        if i % 20 == 0:
+            print(f"  {i}/{len(tickers)}  per算出:{len(rows)}")
+    result = {"generated": datetime.date.today().isoformat(), "asof": ASOF,
+              "cutoff_fy_end": CUTOFF, "rows": rows, "unmeasured": miss}
+    json.dump(result, open(OUT, "w"), ensure_ascii=False, indent=1)
+    print(f"■ 書き出し: {OUT}  算出 {len(rows)} / 不能 {len(miss)}")
+
+
+if __name__ == "__main__":
+    main()
