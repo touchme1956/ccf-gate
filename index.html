@@ -629,6 +629,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <div class="tategaki tr" aria-hidden="true">Compounding, Unbroken — CCF Ω</div>
 <nav class="pgnav">
  <button id="tab6" onclick="showPage(6)" style="color:var(--gold-bright)">📊 盤</button>
+<button id="tab9" onclick="showPage(9)">🔔 イベント</button>
 <button id="tab1" onclick="showPage(1)">Ⅰ 解説</button>
 <button id="tab8" onclick="showPage(8)">Ⅱ 実行手順</button>
 <button id="tab2" onclick="showPage(2)">Ⅲ 採点機</button>
@@ -637,6 +638,15 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <button id="tab5" onclick="showPage(5)">Ⅵ 買付順位</button>
 <button id="tab7" onclick="showPage(7)" style="color:var(--gold-bright)">Ⅶ 保有</button>
 </nav>
+<div id="pg9" class="pg">
+ <h1 class="serif">🔔 イベント</h1>
+ <p class="intro"><b>運用サイクル14本の回転状態</b>・監視リストの <b>8-K警報</b>（減損2.06・退任5.02・非依拠4.02・破産1.03・上場廃止通知3.01）・<b>決算</b>（発表イベント・次回予定）を一枚で。<b>すべて情報であって判定ではない</b>——警報は各行の「審査」で門2再審査の依頼文を作って回すための気づき。売りは S1/S2/S3・買いは四段関門のみで動く。データ源: out/ops_status.json／out/events_watch.json（events.yml が平日22:10UTCに毎日更新）／out/next_earnings.json（ops.yml が毎月2日に再生成）。</p>
+ <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+   <button onclick="ccfEvents(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
+   <span id="evAsof" style="font-size:11.5px;color:var(--dim)"></span>
+ </div>
+ <div id="evBox"></div>
+</div>
 <div id="pg6" class="pg">
  <h1 class="serif">📊 盤</h1>
  <p class="intro">保有と投下可の現在地を一枚で。<b>価格・前日比・含み損益は情報であって判定ではない</b>——売りは <b>S1/S2/S3</b> のみ、買いは <b>四段関門（Ω75+ ∧ 門X遮断器(E[r]≥0) ∧ 堀70+ ∧ 点検の要修正0件）</b>のみで動く。IPS②Ulysses契約の48時間冷却も従来どおり効く。株価は<b>門Xの開通判定</b>にだけ使われる。</p>
@@ -688,7 +698,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <div class="block" style="padding-top:16px;padding-bottom:20px;">
  <div class="tag">Overview</div>
  <div class="h2">全体の流れと記号</div>
- <p class="intro">本書は二つの門と、その中核をなす <b style="color:var(--gold-bright)">持続の二本柱</b> からなる。第一の門〈質〉のスコアで<b style="color:var(--gold-bright)">ティア</b>を定める——<b style="color:var(--gold-bright)">最上位80以上／堅実72以上</b>（v9.9.2で最上位を85→80に再アンカー）。二本柱（MOAT・ROICの持続）は各 <b style="color:var(--gold-bright)">70点以上</b> を要する（TAM柱はv9.9.45で廃止——浸透率が原本から測れず全316パックで空欄だったため。滑走路の評価は未来門のf2・F11が担う）。<b>実際の新規投下は四段関門</b>——質スコア <b style="color:var(--gold-bright)">75以上（投下閾値）</b> かつ 門X（✦超未来の門・裁きⅠ）の <b style="color:var(--gold-bright)">遮断器成立（E[r]≥0）</b>（v9.9.78・2026-08-04 ユーザー明示指示「遮断器のみ実装しよう」。歴史検証の実測で価格・期待値の線は堀の中で選別力を持たず〔2013年703社: 安い側8.0%/年 vs 高い側8.5%・勝者13社中10社が線の外〕、旧4条件は勝者を弾く側に働いていた。残すのは「期待値がマイナス＝会社自身が減益を予想している型の極端」だけを弾く回路遮断器。E[r]の計算・表示・予実台帳は不変）かつ <b style="color:var(--gold-bright)">絶対MOAT指数70以上</b>（v9.9.39・ユーザー明示指示。堀は深さ4本と広さ1本の幾何平均ゆえ「深いが1本足」も「広いが浅い」も自動的に落ちる。<u>採点式・売却規律は不変</u>——moatIdxは既にΩへ二経路で入っており、ここで減点すると同じ信号の三重罰になるため「買う対象から外す」だけにした）、さらに<b style="color:var(--gold-bright)">全件点検の要修正が0件</b>であること（v9.9.66・2026-08-03 ユーザー明示指示——取込で化けた欄・列挙値違反・内部矛盾・不可能値＝検算しても消えない種類の破損を持つ銘柄は、Ωがどれだけ高くても買わない。堀不足と同じく<u>買わない理由であって売る理由ではない</u>）。価格ゲートは<b style="color:var(--gold-bright)">成長連動</b>で、実証成長×資本効率×堀無傷（grower）は一律の論外線（PER50・EV/EBIT35）を緩め、成熟株と同じ基準では測らない。<u>ティア内の小数差に意味はなく、選別は「間（価格）」が行う</u>。スプレッドは <b style="color:var(--gold-bright)">報告ROICで判定し、のれん調整での救済はしない</b>。この厳しさゆえ、世界で数銘柄しか通らない。判定の全体像は下段 IPS① を正とする。共通の記号は以下。</p>
+ <p class="intro">本書は二つの門と、その中核をなす <b style="color:var(--gold-bright)">持続の二本柱</b> からなる。第一の門〈質〉のスコアで<b style="color:var(--gold-bright)">ティア</b>を定める——<b style="color:var(--gold-bright)">最上位80以上／堅実72以上</b>（v9.9.2で最上位を85→80に再アンカー）。二本柱（MOAT・ROICの持続）は各 <b style="color:var(--gold-bright)">70点以上</b> を要する（TAM柱はv9.9.45で廃止——浸透率が原本から測れず全316パックで空欄だったため。滑走路の評価は未来門のf2・F11が担う）。<b>実際の新規投下は四段関門</b>——質スコア <b style="color:var(--gold-bright)">75以上（投下閾値）</b> かつ 門X（✦超未来の門・裁きⅠ）の <b style="color:var(--gold-bright)">遮断器成立（E[r]≥0）</b>（v9.9.84・2026-08-04 ユーザー明示指示「遮断器のみ実装しよう」。歴史検証の実測で価格・期待値の線は堀の中で選別力を持たず〔2013年703社: 安い側8.0%/年 vs 高い側8.5%・勝者13社中10社が線の外〕、旧4条件は勝者を弾く側に働いていた。残すのは「期待値がマイナス＝会社自身が減益を予想している型の極端」だけを弾く回路遮断器。E[r]の計算・表示・予実台帳は不変）かつ <b style="color:var(--gold-bright)">絶対MOAT指数70以上</b>（v9.9.39・ユーザー明示指示。堀は深さ4本と広さ1本の幾何平均ゆえ「深いが1本足」も「広いが浅い」も自動的に落ちる。<u>採点式・売却規律は不変</u>——moatIdxは既にΩへ二経路で入っており、ここで減点すると同じ信号の三重罰になるため「買う対象から外す」だけにした）、さらに<b style="color:var(--gold-bright)">全件点検の要修正が0件</b>であること（v9.9.66・2026-08-03 ユーザー明示指示——取込で化けた欄・列挙値違反・内部矛盾・不可能値＝検算しても消えない種類の破損を持つ銘柄は、Ωがどれだけ高くても買わない。堀不足と同じく<u>買わない理由であって売る理由ではない</u>）。価格ゲートは<b style="color:var(--gold-bright)">成長連動</b>で、実証成長×資本効率×堀無傷（grower）は一律の論外線（PER50・EV/EBIT35）を緩め、成熟株と同じ基準では測らない。<u>ティア内の小数差に意味はなく、選別は「間（価格）」が行う</u>。スプレッドは <b style="color:var(--gold-bright)">報告ROICで判定し、のれん調整での救済はしない</b>。この厳しさゆえ、世界で数銘柄しか通らない。判定の全体像は下段 IPS① を正とする。共通の記号は以下。</p>
  <div class="fm small">
   <span class="lbl">共通記号と前提</span>
   ROIC＝税引後営業利益 ÷ 投下資本　／　WACC（資本コスト）＝ <b>RFR ＋ clamp(β, 0.8〜1.8) × ERP</b>（v7.0で可変化・既定 4.48%＋β×4.45%〔2026-07〕）<br>
@@ -1011,7 +1021,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
   <div class="q"><div class="cond">Ω 72未満 ∨ キル</div><div class="v">回避</div><div class="d">伸びる力が乏しい・壊れうる。問答無用で見送り。網へ。</div></div>
  </div>
  <div class="statement"><span class="lbl">最終判定の式（新規投下の四段関門・2026-08）</span>
-  <div class="big">投下可 ＝ 質Ω ≥ 75　かつ　門X遮断器（E[r] ≥ 0・v9.9.78）　かつ　絶対MOAT指数 ≥ 70　かつ　点検の要修正 0件　／　売却はS1/S2/S3のみ（株価では売らない・堀不足は買わない理由であって売る理由ではない）</div>
+  <div class="big">投下可 ＝ 質Ω ≥ 75　かつ　門X遮断器（E[r] ≥ 0・v9.9.84）　かつ　絶対MOAT指数 ≥ 70　かつ　点検の要修正 0件　／　売却はS1/S2/S3のみ（株価では売らない・堀不足は買わない理由であって売る理由ではない）</div>
  </div>
 </div>
 </div>
@@ -1023,7 +1033,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <div class="block" style="padding-top:16px;padding-bottom:20px;">
  <div class="tag" style="background:linear-gradient(180deg,rgba(201,166,74,.22),rgba(201,166,74,.08));border-color:rgba(201,166,74,.4);color:var(--gold-bright)">別枠 · CCF X（超未来の門）</div>
  <div class="h2">✦ 門X 超未来 — 期待リターンの三項分解</div>
- <p class="intro">正本（門Ω）が「壊れないか」を裁くのに対し、門Xは「これから上げるか・払って見合うか」を <b style="color:var(--gold-bright)">期待リターン E[r] ＝ 純還元（現金還元−希薄化）＋ b×ROIIC ＋ 倍率の重力</b> に分解して裁く別枠だ。予知はせず、非対称チェック・複利の漏れ・ケリー（¼上限）まで一枚で見る。<b>正本の採点・売却規律には一切干渉しない</b>——門Xは表示・グルーピングのみ。<u>新規投下の四段関門（質スコア75+ ∧ 門X遮断器：E[r]≥0〔v9.9.78〕 ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件）のうち門X条件はここで裁く</u>（堀のふるいは正本Ω側の判定）。解説の最後に常設で埋め込む。別タブでも開ける。
+ <p class="intro">正本（門Ω）が「壊れないか」を裁くのに対し、門Xは「これから上げるか・払って見合うか」を <b style="color:var(--gold-bright)">期待リターン E[r] ＝ 純還元（現金還元−希薄化）＋ b×ROIIC ＋ 倍率の重力</b> に分解して裁く別枠だ。予知はせず、非対称チェック・複利の漏れ・ケリー（¼上限）まで一枚で見る。<b>正本の採点・売却規律には一切干渉しない</b>——門Xは表示・グルーピングのみ。<u>新規投下の四段関門（質スコア75+ ∧ 門X遮断器：E[r]≥0〔v9.9.84〕 ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件）のうち門X条件はここで裁く</u>（堀のふるいは正本Ω側の判定）。解説の最後に常設で埋め込む。別タブでも開ける。
  <a href="chomirai.html" target="_blank" style="color:var(--gold-bright)">新しいタブで開く ↗</a></p>
  <iframe src="chomirai.html" loading="lazy" style="width:100%;height:calc(100vh - 150px);min-height:600px;border:1px solid var(--line);border-radius:10px;background:#070a10"></iframe>
 </div>
@@ -1041,7 +1051,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.25</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.78</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に、MOATは陳腐化保険へ格下げ。</p>
   </div>
 </header>
@@ -1288,7 +1298,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <div id="pg5" class="pg">
  <div class="pg3-head">
   <h1 class="serif">買付順位 <span style="font-size:.5em;color:var(--mut)">3層ルール自動適用</span></h1>
-  <p style="color:var(--muted);font-size:14px;line-height:1.9"><a href="v10.html" target="_blank" style="float:right;font-size:12px;color:var(--gold-bright);border:1px solid var(--gold-line);border-radius:7px;padding:4px 10px;text-decoration:none" title="v10「系列の門」影スコア——正本の合否には不使用。2027-07の較正で新旧を答え合わせ">✦ v10影スコア ↗</a>台帳から自動生成。<b style="color:var(--gold-bright)">80+＝城の中核（8%）</b>／<b style="color:var(--jade)">77–80＝城の正規（5%）</b>／<b style="color:var(--steel)">75–77＝城の外郭（3%）</b>／<b style="color:var(--dim)">72–75＝監視枠（保有せず・75超えで昇格）</b>。順位＝格スコア×間の余地×保留リスクの合成。<b>門は「買ってよい」まで——買うかは君の判断。</b></p>
+  <p style="color:var(--muted);font-size:14px;line-height:1.9"><a href="v10.html" target="_blank" style="float:right;font-size:12px;color:var(--gold-bright);border:1px solid var(--gold-line);border-radius:7px;padding:4px 10px;text-decoration:none" title="v10「系列の門」影スコア——正本の合否には不使用。2027-07の較正で新旧を答え合わせ">✦ v10影スコア ↗</a>台帳から自動生成。目標ウェイトは<b style="color:var(--gold-bright)">連続式 城60%×(Ω−70)÷Σ(Ω−70)・上限8%（¼ケリー相当）</b>（v9.9.70——旧・段差8/5/3はΩ1.0ptの差が配分1.6倍を生み「ティア内の小数差に意味はない」と矛盾していたため連続へ）／<b style="color:var(--dim)">72–75＝監視枠（保有せず・75超えで昇格）</b>。順位＝格×0.6＋E[r]点×0.4の合成。<b>門は「買ってよい」まで——買うかは君の判断。</b></p>
  </div>
  <div class="wrap"><div id="planBox"></div></div>
 </div>
@@ -1362,9 +1372,9 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
    </div>
    <div style="padding-left:calc(1.2em + 12px)">
     <div style="display:flex;gap:8px;padding:6px 0"><span style="color:#8fc9a4;min-width:4.5em;font-size:12px;font-weight:600">何を</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7"><b style="color:var(--gold-bright)">Ⅲ採点機</b>タブの「審査待ち」棚で銘柄の<b>「依頼文」ボタン</b>を押す→手順入りの依頼文がコピーされる→Claudeに渡す。Claudeが原本(hits.txt)を読み、検死＋定性を埋めた完成パックを返す。<b style="color:#e0917a">機械値だけのドラフトは取り込まない</b>（門が自動で拒否）。</div></div>
-    <div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.04)"><span style="color:var(--gold-bright);min-width:4.5em;font-size:12px;font-weight:600">手順</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7">①原本 ②検死 ③定性11要素を原本根拠つき ④市場データ ⑤null検査 ⑥監査記録(_meta.auditDate/model)。<b style="color:var(--gold-bright)">全文↓</b></div><div style="margin-top:8px;display:flex;gap:8px;align-items:center"><button onclick="ccfCopyStr(ccfAskText((document.getElementById('nm')&&document.getElementById('nm').value)||'{TICKER}'),this)" style="padding:8px 14px;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:7px;color:#8fc9a4;font-size:12.5px;font-weight:600;cursor:pointer">審査プロトコル全文をコピー</button><span style="font-size:11px;color:var(--muted)">※各銘柄の「依頼文」ボタンも同じ全文＋銘柄名を出す</span></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px"><input id="jpNm" placeholder="日本株: 銘柄名やコード（例: 6861 キーエンス）" style="flex:1;min-width:180px;font-size:12.5px"><button onclick="ccfCopyAskJP(this)" style="padding:8px 14px;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:7px;color:#8fc9a4;font-size:12.5px;font-weight:600;cursor:pointer">日本株の審査依頼文をコピー</button><span style="font-size:11px;color:var(--muted)">機械採取なし＝Claudeが有報・短信をWebで読み、同じ基準・通貨JPYで完成パックを作る（必須規約: PER=TTM実績・roic/roicg/roicExは現金非控除かつ60%上限で再計算——roicEx無しの高ROICは検問で差し戻し）</span></div><div style="margin-top:8px;padding:12px 14px;background:var(--codebg);border:1px solid var(--line);border-radius:8px;font-size:12px;line-height:1.75;color:var(--ink-soft);max-height:340px;overflow:auto">【門2審査プロトコル v1｜厳守】採取済み銘柄を審査し、門のⅢ採点機フォーマットの完成パックJSONを返す。<br><br>1. 原本を読む<br>   DriveのMyDrive/hachimon_out/{T}_gate_input.json（機械値の下書き）と {T}_hits.txt（限/集/誠/蝕/堀/循の6砲台抜粋）を読む。<br><br>2. 検死（機械値を鵜呑みにしない・必ず検算）<br>   ・dilNet&gt;30%は株式分割の誤読を疑い、注記で分割を確認→真の希薄化に補正。<br>   ・fcf/niがnull＝capexタグ欠落。原本から補うか na明示。<br>   ・通貨がUSD以外なら px/per/evebit を同一通貨で揃える（ADR混線禁止）。<br>   ・opm/roicが業態と乖離→derived営利の販管費欠落を疑う。<br><br>3. 定性を原本根拠つきで判定（憶測禁止・根拠なきは空欄。各値にhits.txtの該当英文を根拠として付す）<br>   〈絶対MOAT5因子〉<br>   dom 支配シェア: 100=独占≥90%(または実質唯一供給) / 85=圧倒70-89%<b>または複占の首位</b>(上位2社で≥80%かつ自社が首位) / 70=寡占40-69%<b>または複占の一角・3社寡占</b>(上位3社で≥80%) / 50=競争&lt;40%(かつ上記の寡占構造に該当しない)<br>     ※<b>シェアの数字だけでは価格支配力を測れない</b>(v9.9.38・ユーザー明示指示 2026-07-28)。10社が分け合う市場の35%と、2社で分け合う市場の35%は別物。実測でCadence(EDA・Synopsys等と実質複占)が「シェア約30%＝40%未満」の文字適用でdom=50となりMOAT柱を陥落していた。<b>上位N社の合計シェアで市場構造を必ず確認する</b><br>　※<b>刻みの決め方（v9.9.41・2026-07-29 決着）</b>: ①<b>domは全社ベース</b>——事業ごとに構造が違っても、<u>すべてが同じ刻みに落ちるならその刻みで確定</u>。<b>違う刻みに散るときだけ空欄</b>（実例: IRMDはポンプ=実質唯一供給100／モニタ=自社が首位でない、と刻みが割れるので空欄／HEIはFSGもETGも50に落ちるので50）。②<b>100/85/70は「集中している」という主張なので必ず数値（自社シェア%＋上位N社合計%）を要する。</b>③<b>50は残余の刻みなので数値なしでも確定できる</b>——提出書類自身が『市場はfragmented』『同等品を多数が製造可能』『実質すべての供給は他社』と<u>構造的に</u>述べていれば、40%以上いることは定義上ありえない。④『a leader』『largest』『well positioned』等の<b>順位の自称はどの刻みの証拠にもならない</b>（②の数値にも③の構造記述にも当たらない）。⑤第三者調査の実数は、<b>対象会社自身の提出書類でなくても</b>、SEC/EDINETに提出された書類の中に市場全体の表として載り対象会社が名指しで含まれていれば原本扱いとしてよい（実例: MAのシェアはVisaの10-K内のNilson Report表で確定）。ただし<b>どの会社のどの提出書類か</b>を_metaに明示する。<br>   irr 代替不能性: 100=唯一供給 / 85=認証・規格ロック / 70=高摩擦移行困難 / 50=代替容易<br>   rep 複製障壁: 100=複製不能(数十年/$10B級) / 80=極困難 / 60=困難 / 35=数年で追随可<br>   dur 堀の型: 100=規制/プロセス知/物理 / 85=ネットワーク / 75=スイッチングコスト / 55=ブランド<br>
+    <div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.04)"><span style="color:var(--gold-bright);min-width:4.5em;font-size:12px;font-weight:600">手順</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7">①原本 ②検死 ③定性11要素を原本根拠つき ④市場データ ⑤null検査 ⑥監査記録(_meta.auditDate/model)。<b style="color:var(--gold-bright)">全文↓</b></div><div style="margin-top:8px;display:flex;gap:8px;align-items:center"><button onclick="ccfCopyStr(ccfAskText((document.getElementById('nm')&&document.getElementById('nm').value)||'{TICKER}'),this)" style="padding:8px 14px;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:7px;color:#8fc9a4;font-size:12.5px;font-weight:600;cursor:pointer">審査プロトコル全文をコピー</button><span style="font-size:11px;color:var(--muted)">※各銘柄の「依頼文」ボタンも同じ全文＋銘柄名を出す</span></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px"><input id="jpNm" placeholder="日本株: 銘柄名やコード（例: 6861 キーエンス）" style="flex:1;min-width:180px;font-size:12.5px"><button onclick="ccfCopyAskJP(this)" style="padding:8px 14px;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:7px;color:#8fc9a4;font-size:12.5px;font-weight:600;cursor:pointer">日本株の審査依頼文をコピー</button><span style="font-size:11px;color:var(--muted)">機械採取なし＝Claudeが有報・短信をWebで読み、同じ基準・通貨JPYで完成パックを作る（必須規約: PER=TTM実績・ROICは米国統一規約〔実効税率・のれん＋無形控除・上限なし・IC縮退ガード〕v9.9.73——roicEx無しの高ROICは検問で差し戻し）</span></div><div style="margin-top:8px;padding:12px 14px;background:var(--codebg);border:1px solid var(--line);border-radius:8px;font-size:12px;line-height:1.75;color:var(--ink-soft);max-height:340px;overflow:auto">【門2審査プロトコル v1｜厳守】採取済み銘柄を審査し、門のⅢ採点機フォーマットの完成パックJSONを返す。<br><br>1. 原本を読む<br>   DriveのMyDrive/hachimon_out/{T}_gate_input.json（機械値の下書き）と {T}_hits.txt（限/集/誠/蝕/堀/循の6砲台抜粋）を読む。<br><br>2. 検死（機械値を鵜呑みにしない・必ず検算）<br>   ・dilNet&gt;30%は株式分割の誤読を疑い、注記で分割を確認→真の希薄化に補正。<br>   ・fcf/niがnull＝capexタグ欠落。原本から補うか na明示。<br>   ・通貨がUSD以外なら px/per/evebit を同一通貨で揃える（ADR混線禁止）。<br>   ・opm/roicが業態と乖離→derived営利の販管費欠落を疑う。<br><br>3. 定性を原本根拠つきで判定（憶測禁止・根拠なきは空欄。各値にhits.txtの該当英文を根拠として付す）<br>   〈絶対MOAT5因子〉<br>   dom 支配シェア: 100=独占≥90%(または実質唯一供給) / 85=圧倒70-89%<b>または複占の首位</b>(上位2社で≥80%かつ自社が首位) / 70=寡占40-69%<b>または複占の一角・3社寡占</b>(上位3社で≥80%) / 50=競争&lt;40%(かつ上記の寡占構造に該当しない)<br>     ※<b>シェアの数字だけでは価格支配力を測れない</b>(v9.9.38・ユーザー明示指示 2026-07-28)。10社が分け合う市場の35%と、2社で分け合う市場の35%は別物。実測でCadence(EDA・Synopsys等と実質複占)が「シェア約30%＝40%未満」の文字適用でdom=50となりMOAT柱を陥落していた。<b>上位N社の合計シェアで市場構造を必ず確認する</b><br>　※<b>刻みの決め方（v9.9.41・2026-07-29 決着）</b>: ①<b>domは全社ベース</b>——事業ごとに構造が違っても、<u>すべてが同じ刻みに落ちるならその刻みで確定</u>。<b>違う刻みに散るときだけ空欄</b>（実例: IRMDはポンプ=実質唯一供給100／モニタ=自社が首位でない、と刻みが割れるので空欄／HEIはFSGもETGも50に落ちるので50）。②<b>100/85/70は「集中している」という主張なので必ず数値（自社シェア%＋上位N社合計%）を要する。</b>③<b>50は残余の刻みなので数値なしでも確定できる</b>——提出書類自身が『市場はfragmented』『同等品を多数が製造可能』『実質すべての供給は他社』と<u>構造的に</u>述べていれば、40%以上いることは定義上ありえない。④『a leader』『largest』『well positioned』等の<b>順位の自称はどの刻みの証拠にもならない</b>（②の数値にも③の構造記述にも当たらない）。⑤第三者調査の実数は、<b>対象会社自身の提出書類でなくても</b>、SEC/EDINETに提出された書類の中に市場全体の表として載り対象会社が名指しで含まれていれば原本扱いとしてよい（実例: MAのシェアはVisaの10-K内のNilson Report表で確定）。ただし<b>どの会社のどの提出書類か</b>を_metaに明示する。<br>   irr 代替不能性: 100=唯一供給 / 85=認証・規格ロック / 70=高摩擦移行困難 / 50=代替容易<br>   rep 複製障壁: 100=複製不能(数十年/$10B級) / 80=極困難 / 60=困難 / 35=数年で追随可<br>   dur 堀の型: 100=規制/プロセス知/物理 / 85=ネットワーク / 75=スイッチングコスト / 55=ブランド<br>
    moatW <b>堀の広さ</b>(v9.9.36新設・深さではなく<b>本数</b>): 100=独立した堀が3つ以上(各≥売上15%) / 85=2つ(主力＋育った隣接が≥15%) / 70=単一事業だが用途・顧客・地域が分散 / 50=単一製品・単一用途(1製品≥80% or 最大顧客≥20%)<br>
-     ※セグメント別売上(10-K/有報)で必ず裏を取る。狭い独占は(a)再投資の余地が尽きる(b)単一障害点になる、の二重の理由で長期複利に効く。<b>根拠が取れないなら空欄</b>——空欄は旧4本式で採点され、既定値に化けない<br>   〈状態〉<br>   erosion 侵食: none/emerging/active｜disrupt 破壊: settled/unsettled/threat<br>   expiry 期限型独占: no/yes/na｜geopol 地政学集中: 0軽微/1中/2重/3深刻｜moatdecay 市場CAGR: no/yes｜nrr 顧客維持%(既定105)<br>   〈過去門 p1-p4：0-100・裸の主観禁止〉<br>   p1 ROIC安定性=5年ROICの<b>変動係数(σ÷平均)</b>: &lt;15%→90 / &lt;30%→80 / &lt;50%→65 / 以上→50（v9.9.50）<br>   p2 不況耐性=直近2回の景気後退時の営業利益DD: 浅い→95 / … nde&lt;1→85 / nde&lt;2.5→70 / 以上→50<br>   p3 財務頑健=ネットデット/EBITDA: 純現金→95 / &lt;1→85 / &lt;2.5→70 / 以上→50（ndeを埋めれば空欄可=門が機械導出）<br>   p4 会計健全=accr&lt;0かつ監査無限定→90 …（accr悪化は減点）<br>   〈未来門 f1-f5：0-100・固定基準〉<br>   f1 複利エンジン=ROIIC³: ≥WACC+15→90 / +8→80 / +3→70 / 未満→55（再投資率≥30%で+5。roiic=naは還元の質で75/60）<br>   f2 滑走路=TAM浸透率p/成長g: p10→90 / p7→80 / p&lt;60→65 / p≥60→50<br>   f3 堀の軌道=R&amp;D/売上3年とシェア趨勢の2符号: 両+→90 / 片方→75 / 両−→55（主要顧客集中悪化で−10）<br>   f4 二次曲線=隣接事業が売上5%超で成長→80 / 育成中→60 / なし→50<br>   f5 耐陳腐化=disrupt連動: settled→85 / unsettled→65 / threat→45（disruptを埋めれば空欄可=門が機械導出。±10の逸脱評価時のみ）<br><br>4. 市場データ（per/perF/px/evebit/beta/shy/gr）はSECに無い→空欄（取込時に手入力）か、明示された実測のみ。grはperFから機械算出＝perFの取得最優先。<br><br>5. 納品前スキーマ検査: null項目を一覧化し、なぜ空かを明記。Ⅲ採点機フォーマット（nm/roic/…/f1-5/_meta）に完全準拠したJSONのみ返す。<br><br>6. <b>根拠必須と機械/判断の分離（2026-07-29新設・納品検査で落とす）</b><br>   ・<b>値を書くなら根拠も書く。</b>値のある採点項目は _meta.evidence に対応する記述が要る。実測（night/audit_evidence.py・全316パック）で<b>根拠被覆率は33.0%、機械項目は9.8%</b>しかなく、<u>原本から測った値とそれらしく置いた値が台帳上まったく同じ見た目</u>になっていた。これが「絶対のルール7（欠測をゼロと読むな）」の事故が長く見えなかった理由。<br>   ・ドラフトの _meta.provenance が "machine" の欄は<b>採取器が式と実額つきで置いた値</b>。そのまま残してよい（evidenceも一緒に残す）。検算して直すのは可だが、その場合は _meta.kenshi に「旧→新・原本の実額・出典」を書き、evidence も自分の実測へ書き換える。<b>黙って上書きしない</b>——どちらが置いた値か判らなくなるのが是正ラッシュの原因そのもの。<br>   ・空欄にした判断項目は _meta.nulls に理由を書く。理由の無い空欄は差し戻し。<br>   ・納品前に「python3 night/validate_packs.py {T}」を実行し FAIL をゼロにしてから終える。<br><br>7. 監査記録: _meta に auditDate（審査日 YYYY-MM-DD）と model（審査モデル名）を必ず記載。</div></div>
+     ※セグメント別売上(10-K/有報)で必ず裏を取る。狭い独占は(a)再投資の余地が尽きる(b)単一障害点になる、の二重の理由で長期複利に効く。<b>根拠が取れないなら空欄</b>——空欄は旧4本式で採点され、既定値に化けない<br>   〈状態〉<br>   erosion 侵食: none/emerging/active｜disrupt 破壊: settled/unsettled/threat<br>   expiry 期限型独占: no/yes/na｜geopol 地政学集中: 0軽微/1中/2重/3深刻｜moatdecay 市場CAGR: no/yes｜nrr 顧客維持%(既定105)<br>   〈過去門 p1-p4：0-100・裸の主観禁止〉<br>   p1 ROIC安定性=5年ROICの<b>変動係数(σ÷平均)</b>: &lt;15%→90 / &lt;30%→80 / &lt;50%→65 / 以上→50（v9.9.50）<br>   p2 不況耐性=直近2回の景気後退時の営利DD: 浅い(−20%以内)→95 / 中(−40%)→75 / 深い(−60%超)→50（不況実績なしは70上限・COVID一本足禁止=2サイクル実測）<br>   p3 財務頑健=ネットデット/EBITDA: 純現金かつインタレストカバレッジ&gt;20→95 / &lt;1→85 / &lt;2.5→70 / 以上→50（ndeを埋めれば空欄可=門が機械導出）<br>   p4 会計健全=accr&lt;0かつ監査意見無限定→90 / accr 0〜5%→80 / 5〜10%→65 / &gt;10%→45<br>   〈未来門 f1-f5：0-100・固定基準〉<br>   f1 複利エンジン=ROIIC³: ≥WACC+15→90 / +8→80 / +3→70 / 未満→55（再投資率≥30%で+5。roiic=naは還元の質で75/60）<br>   f2 滑走路=TAM浸透率p%とTAM成長g%: p&lt;20かつg&gt;10→90 / p&lt;40かつg&gt;7→80 / p&lt;60→65 / p≥60→50<br>   f3 堀の軌道=R&amp;D/売上3年とシェア趨勢の2符号: 両+→90 / 片方→75 / 両−→55（主要顧客集中悪化で−10）<br>   f4 二次曲線=隣接事業が売上5%超で成長→80 / 育成中→60 / なし→50<br>   f5 耐陳腐化=disrupt連動: settled→85 / unsettled→65 / threat→45（disruptを埋めれば空欄可=門が機械導出。±10の逸脱評価時のみ）<br><br>4. 市場データ（per/perF/px/evebit/beta/shy/gr）はSECに無い→空欄（取込時に手入力）か、明示された実測のみ。grはperFから機械算出＝perFの取得最優先。<br><br>5. 納品前スキーマ検査: null項目を一覧化し、なぜ空かを明記。Ⅲ採点機フォーマット（nm/roic/…/f1-5/_meta）に完全準拠したJSONのみ返す。<br><br>6. <b>根拠必須と機械/判断の分離（2026-07-29新設・納品検査で落とす）</b><br>   ・<b>値を書くなら根拠も書く。</b>値のある採点項目は _meta.evidence に対応する記述が要る。実測（night/audit_evidence.py・全316パック）で<b>根拠被覆率は33.0%、機械項目は9.8%</b>しかなく、<u>原本から測った値とそれらしく置いた値が台帳上まったく同じ見た目</u>になっていた。これが「絶対のルール7（欠測をゼロと読むな）」の事故が長く見えなかった理由。<br>   ・ドラフトの _meta.provenance が "machine" の欄は<b>採取器が式と実額つきで置いた値</b>。そのまま残してよい（evidenceも一緒に残す）。検算して直すのは可だが、その場合は _meta.kenshi に「旧→新・原本の実額・出典」を書き、evidence も自分の実測へ書き換える。<b>黙って上書きしない</b>——どちらが置いた値か判らなくなるのが是正ラッシュの原因そのもの。<br>   ・空欄にした判断項目は _meta.nulls に理由を書く。理由の無い空欄は差し戻し。<br>   ・納品前に「python3 night/validate_packs.py {T}」を実行し FAIL をゼロにしてから終える。<br><br>7. 監査記録: _meta に auditDate（審査日 YYYY-MM-DD）と model（審査モデル名）を必ず記載。</div></div>
     <div style="display:flex;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.04)"><span style="color:var(--gold-bright);min-width:4.5em;font-size:12px;font-weight:600">出るもの</span><div style="font-size:13px;color:var(--ink,#d8d2c4);line-height:1.7">定性まで埋まった<b>完成パックJSON</b>。これだけが台帳に入る資格を持つ。</div></div>
    </div>
   </div>  <div style="padding:14px 16px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px">
@@ -1437,7 +1447,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 
 <footer><div class="wrap">
  <div class="fb">CCF Ω Final Gate · Complete Edition</div>
- <p class="disc">第一の門〈質Q〉＝過去P(40%)・現在(35%)・未来要約(25%)の加重幾何平均。ティア＝最上位80／堅実72、投下閾値75。WACC=RFR+clamp(β,0.8〜1.8)×ERP（既定4.48%+β×4.45%〔2026-07〕）。現在門の核心はROIC−WACCスプレッド(+10pt以上)。第二の門＝未来門F(11要素v9.2の加重幾何平均・総合の一項)。新規投下は四段関門＝Ω75+ ∧ 門X遮断器(E[r]≥0・v9.9.78) ∧ 絶対MOAT指数70+ ∧ 全件点検の要修正0件(納品前に validate_packs.py でFAILゼロ)。価格の論外線はPER50・EV/EBIT35（growerはPER62・成長連動v9.9.9・高値づかみ防止のみ／PERは選別に使わない）。g=再投資率b×ROIIC、妥当価格≈来期FCF/(WACC−g)。再評価は四半期(足切り)・年次(全面再採点)・2年(新規発掘)・5年(門の改修)の四層。売却はS1/S2/S3＝質の崩れのみ(株価では売らない)。配分は網(指数)40%＋城(個別・四段関門通過のみ)<b>60%</b>（v9.9.68・実効の天井はウェイト規約で45%）。本書は個人の投資基準の整理であり投資助言ではない。スコア・数式は枠組みであり将来を保証しない。</p>
+ <p class="disc">第一の門〈質Q〉＝過去P(40%)・現在(35%)・未来要約(25%)の加重幾何平均。ティア＝最上位80／堅実72、投下閾値75。WACC=RFR+clamp(β,0.8〜1.8)×ERP（既定4.48%+β×4.45%〔2026-07〕）。現在門の核心はROIC−WACCスプレッド(+10pt以上)。第二の門＝未来門F(11要素v9.2の加重幾何平均・総合の一項)。新規投下は四段関門＝Ω75+ ∧ 門X遮断器(E[r]≥0・v9.9.84) ∧ 絶対MOAT指数70+ ∧ 全件点検の要修正0件(納品前に validate_packs.py でFAILゼロ)。価格の論外線はPER50・EV/EBIT35（growerはPER62・成長連動v9.9.9・高値づかみ防止のみ／PERは選別に使わない）。g=再投資率b×ROIIC、妥当価格≈来期FCF/(WACC−g)。再評価は四半期(足切り)・年次(全面再採点)・2年(新規発掘)・5年(門の改修)の四層。売却はS1/S2/S3＝質の崩れのみ(株価では売らない)。配分は網(指数)40%＋城(個別・四段関門通過のみ)<b>60%</b>（v9.9.68・実効の天井はウェイト規約で45%）。本書は個人の投資基準の整理であり投資助言ではない。スコア・数式は枠組みであり将来を保証しない。</p>
 </div></footer>
 
 <script>
@@ -1644,6 +1654,10 @@ function compute(){
   if(dilV!==null&&dilV>3)ambers.push(`純希薄化 ${dilV.toFixed(1)}%/年 ${dilV>5?'＞5——殺相当。F10資本配分を手動で再評価':'＞3——警戒帯'}（表示のみ・v9.6）`);
   if(betaRaw<0.8)ambers.push(`β${betaRaw.toFixed(2)}→0.8にクリップ（WACC過小推定防止）`);
   // dual-ROIC acquisition discipline check
+  // 【既知の定義差・2026-08-04記録】ここの roic は ccfRoicJudge 後の値＝roicEx があれば roicEx（v9.9.25の帰結）。
+  //   規約の字義は roicGap=roic−roicg で、端末検査器(audit_roic等)は生の roic を使う。JP は roicEx=roic 同値、
+  //   US パックは roicEx をほぼ持たないため今日は実害ゼロだが、roicEx≠roic の社が来ると罰の発火条件が
+  //   検査器と割れる。挙動の変更は採点式に触れる＝絶対のルール1の領分なので注記のみ（変えるなら明示指示で）
   const roicGap=roicg?roic-roicg:0;
   const acq5=($('acq5')&&$('acq5').value)?$('acq5').value:'yes';
   if(roicg&&roicGap>15){
@@ -2226,7 +2240,7 @@ document.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',
 // ----- semi-auto -----
 function genPrompt(){
   const nm=$('nm').value.trim()||'（銘柄名）';
-  const p=`${nm} を CCF Ω Final Gate v9.9.25 の採点機にかけたい。最新の決算（FY最新通期＋直近四半期）を一次情報で取り、下記JSONの数値を全部埋めて返して。
+  const p=`${nm} を CCF Ω Final Gate v9.9.78 の採点機にかけたい。最新の決算（FY最新通期＋直近四半期）を一次情報で取り、下記JSONの数値を全部埋めて返して。
 
 【資本コスト】rfr=米10年債利回り%（日本株も米ドル建て機会費用で統一）、erp=株式リスクプレミアム%（Damodaran implied ERPの最新月次値。2026-07時点は4.45）、beta=5年β実測値（クリップはツール側で行うので生の値）。
 
@@ -2256,7 +2270,7 @@ erosion=主力事業で過去2年に大口顧客の離反・競合参入(none/em
 
 【過去門p1-p4：採点基準固定。裸の主観禁止】
  p1 ROIC安定性＝5年ROICの**変動係数(σ÷平均)**: &lt;15%→90 / &lt;30%→80 / &lt;50%→65 / それ以上→50　※v9.9.50(2026-07-29)で**絶対の百分点(σ&lt;3/6/10pt)から変更**。旧刻みはROICが10-25%の帯を想定した目盛りで、ROICが50-130%ある会社は機械的にσが二桁になり**不安定さではなくROICの絶対水準を測っていた**（実測: ROIC平均40%超の65社のうち44社が最低の50判定→変動係数では8社。V は ROIC 76-138%でσ21.5pt→50）。投下資本は門式(自己資本+有利子負債−のれん−無形)。系列が3年未満なら空欄
- p2 不況耐性＝直近2回の景気後退時の営業利益ドローダウン: <10%→90 / <25%→75 / <50%→60 / それ以上→40
+ p2 不況耐性＝直近2回の景気後退時の営利DD: 浅い(−20%以内)→95 / 中(−40%)→75 / 深い(−60%超)→50（不況実績なしは70上限・COVID一本足禁止=2サイクル実測。旧<10%→90系はv9.9.78で95系へ同期——nightテンプレ・実パックは95系で運用済みだった）
  p3 財務頑健＝ネットデット/EBITDA<0かつインタレストカバレッジ>20→95 / nde<1→85 / nde<2.5→70 / それ以上→50（ndeを埋めれば空欄可=門が同表で機械導出。逸脱評価時のみ値+根拠）
  p4 会計健全＝accr<0かつ監査意見無限定→90 / accr 0〜5%→80 / 5〜10%→65 / >10%→45
 
@@ -2369,7 +2383,10 @@ function ccfCopyAskJP(btn){
   if(!t){if(btn){var o=btn.textContent;btn.textContent='銘柄名を入力';setTimeout(function(){btn.textContent=o;},1500);}return;}
   var base=ccfAskText(t); var i=base.indexOf('2. 検死');
   var head='審査(日本株): '+t+'\n\n【門2審査プロトコル v1・日本株版｜厳守】機械採取パイプラインの対象外のため、原本から自力採取して審査する。\n\n1. 原本を読む（Web検索）\n   EDINETの有価証券報告書・最新の決算短信・決算説明資料を読む。数値（売上/営業利益/純利益/OCF/capex/株数の5年系列/のれん/自己資本/有利子負債）も原本から自ら採る。通貨はJPYで統一（px=円）。株式分割・自社株買いは株数系列で確認。限/集/誠/蝕/堀/循は有報の「事業等のリスク」「経営者による分析」から抜粋し根拠を付す。\n\n';
-  var jprules='【日本株の必須規約(2026-07 / ROIC規約は2026-07-28改定)】\n・採取は原本PDF優先: EDINET直配信の有価証券報告書PDF→決算短信/決算補足資料(TDnet・企業IR)→5年系列の構造化が要るときのみirbank.net(主要数値は原本PDFで突合)。EDINET_DB等の第三者APIには依存しない(接続が不安定・生ROICがアーティファクトの発生源)。第三者集計サイトは補完に留め使った箇所を_meta.kenshiに明示\n・PERはTTM実績EPSで算出(会社予想EPSは禁止——予想はperFへ分離。日本のPER慣行=会予ベースは米国TTMと土俵が揃わない)\n・roicはEDINET/有報の生値を使わない。NOPAT=営業利益×0.70として次の3項目を再計算する(過剰現金は控除しない):\n    roic  = min(NOPAT÷(有利子負債+自己資本−のれん), 60)   ←のれん除外版\n    roicg = min(NOPAT÷(有利子負債+自己資本), 60)          ←のれん込み版=経営の買収規律\n    roicEx = roicと同値(roicEx空欄のroic>40%納品は門が自動で審査待ちへ差し戻す)\n  ※旧・門式(投下資本−過剰現金)は廃止。net-cash/資産軽量企業で分母が0へ縮退してROICが発散し(実測957.7%/502.6%/256.0%)、生値と同型のアーティファクトを再生産したうえ、現金を貯め込むほど点が上がる逆向きの誘因を持っていたため\n  ※roicgに「現金非控除ROIC」を入れてはならない。門はroicGap=roic−roicg>15を買収依存として減点するので別物を入れると誤発火する。のれんが無い会社はroic=roicgで正当\n\n';
+  // v9.9.78: 依頼文の規約を v9.9.73（米国規約へ統一）・v9.9.72（through-cycle）へ同期。
+  //   旧文は廃止済みの jp-legacy 規約（NOPAT=営業利益×0.70固定・60%上限・控除はのれんのみ）を配り続けており、
+  //   このボタンで頼んだ審査が旧規約で納品される経路だった（「規則を変えたら人に教える文も全部grep」の取りこぼし）
+  var jprules='【日本株の必須規約(v9.9.73・2026-08-03 米国規約へ統一 / through-cycleはv9.9.72)】\n・採取は原本PDF優先: EDINET直配信の有価証券報告書PDF→決算短信/決算補足資料(TDnet・企業IR)→5年系列の構造化が要るときのみirbank.net(主要数値は原本PDFで突合)。EDINET_DB等の第三者APIには依存しない(接続が不安定・生ROICがアーティファクトの発生源)。第三者集計サイトは補完に留め使った箇所を_meta.kenshiに明示\n・PERはTTM実績EPSで算出(会社予想EPSは禁止——予想はperFへ分離。日本のPER慣行=会予ベースは米国TTMと土俵が揃わない)\n・roicはEDINET/有報の生値を使わない。NOPAT=営業利益×(1−実効税率)として次の3項目を再計算する(過剰現金は控除しない・60%上限なし):\n    roic  = NOPAT÷(自己資本+有利子負債−のれん−無形)   ←のれん・無形除外版\n    roicg = NOPAT÷(自己資本+有利子負債)               ←のれん込み版=経営の買収規律\n    roicEx = roicと同値(roicEx空欄のroic>40%納品は門が自動で審査待ちへ差し戻す)\n  ※IC縮退ガード: 投下資本が自己資本の20%未満(自己資本が正でなければ総資産の20%未満)なら算出不能として空欄＋_meta.nullsへ理由(60で頭打ちにするのは壊れた数字をもっともらしい値に化かすだけ)\n  ※自己資本 = equityRatioOfficial×総資産(株主資本ではない——累計OCIを含まない株主資本を分母にするとroicが過大に出る。実測: EDINET_DBのshareholdersEquityで3班が独立に踏んだ)\n  ※無形にのれんを含むかは会計基準では決まらない——開示の行の作り方で決まる(JGAAPは無形合計がのれんを含む/IFRSは社による。6857は合算1行)。原本の注記で確定し二重控除しない\n  ※roic/roicgは5年系列が3年以上作れるなら中央値(through-cycle med5)を対で採る——片方だけ単年にすると roic<roicg という不可能値を作る\n  ※roicgに「現金非控除ROIC」を入れてはならない。門はroicGap=roic−roicg>15を買収依存として減点するので別物を入れると誤発火する。のれんが無い会社はroic=roicgで正当\n\n';
   ccfCopyStr(head+jprules+base.slice(i), btn);
 }
 function ccfCopyStr(txt,btn){var o=btn?btn.textContent:'';function ok(){if(btn){btn.textContent='コピー済 \u2713';setTimeout(function(){btn.textContent=o;},1600);}}
@@ -2436,7 +2453,7 @@ function ccfQRow(r, action){
     +(r.bm?' <span style="font-size:10.5px;color:'+(r.bm==='谷'||r.bm==='種まき'||r.bm==='未成熟'?'#8fc9a4':'var(--muted)')+';font-weight:400">〔'+r.bm+'〕</span>':'')+'</span>'
     +'<span style="width:52px;color:var(--muted);font-size:11.5px;text-align:right">'+r.pt+'</span>'+(action||'')+'</div>';
 }
-function ccfAskText(t){return `審査: ${t}\n\n【門2審査プロトコル v1｜厳守】採取済み銘柄を審査し、門のⅢ採点機フォーマットの完成パックJSONを返す。\n\n1. 原本を読む\n   MyDrive/hachimon_out/ または repoの out/ にある ${t}_gate_input.json（機械値の下書き）と ${t}_hits.txt（限/集/誠/蝕/堀/循の6砲台抜粋）を読む。\n\n2. 検死（機械値を鵜呑みにしない・必ず検算）\n   ・dilNet>30%は株式分割の誤読を疑い、注記で分割を確認→真の希薄化に補正。\n   ・fcf/niがnull＝capexタグ欠落。原本から補うか na明示。\n   ・通貨がUSD以外なら px/per/evebit を同一通貨で揃える（ADR混線禁止）。\n   ・opm/roicが業態と乖離→derived営利の販管費欠落を疑う。\n\n3. 定性を原本根拠つきで判定（憶測禁止・根拠なきは空欄。各値にhits.txtの該当英文を根拠として付す）\n   〈絶対MOAT5因子＝深さ4本(dom/irr/rep/dur)＋広さ1本(moatW)〉\n   dom 支配シェア: 100=独占≥90%(または実質唯一供給) / 85=圧倒70-89%または複占の首位(上位2社で≥80%かつ自社が首位) / 70=寡占40-69%または複占の一角・3社寡占(上位3社で≥80%) / 50=競争<40%(かつ上記の寡占構造に該当しない)\n     ※シェアの数字だけでは価格支配力を測れない(v9.9.38)——10社が分け合う35%と2社で分け合う35%は別物。上位N社の合計シェアで市場構造を必ず確認する(実測でCadenceがシェア約30%の文字適用でdom=50となりMOAT柱を陥落していた)。\n     ※刻みの決め方(v9.9.41): (1)domは全社ベース——事業ごとに構造が違っても全てが同じ刻みに落ちるならその刻みで確定し、違う刻みに散るときだけ空欄(IRMD=ポンプ100/モニタ非首位で割れる→空欄、HEI=FSGもETGも50→50)。(2)100/85/70は集中の主張ゆえ必ず数値(自社シェア%＋上位N社合計%)を要する。(3)50は残余の刻みゆえ数値なしでも確定できる——提出書類自身が『市場はfragmented』『同等品を多数が製造可能』『実質すべての供給は他社』と構造的に述べていれば、自社が40%以上いることは定義上ありえない(ここを空欄にすると測っていないほうが再正規化で有利になる抜け道になる)。(4)『a leader』『largest』等の順位の自称はどの刻みの証拠にもならない。(5)第三者調査の実数は対象会社自身の提出書類でなくてもSEC/EDINET提出書類の中に市場全体の表として載り対象会社が名指しで含まれていれば原本扱いにしてよい(MAのシェアはVisaの10-K内Nilson表で確定)。ただしどの会社のどの提出書類かを_metaに明示する。\n     ※原本にシェアの開示が無ければ空欄にせよ(v9.9.39)。空欄は重みを残り4本へ再正規化するので既定値70に化けない。「leading/leader」等の定性表現だけで数字を置くのは憶測=違反。空欄にした理由は必ず _meta.nulls.dom に書く(理由の無い空欄は差し戻し)。\n   irr 代替不能性: 100=唯一供給 / 85=認証・規格ロック / 70=高摩擦移行困難 / 50=代替容易\n     ※irr/rep/dur も原本に記述が無ければ空欄にせよ(v9.9.48)。dom/moatWと同じく空欄は重みを残りの本数へ再正規化するので既定値(70/60/85)に化けない。空欄の理由は_meta.nullsに書く。5本のうち4本未満しか無ければ絶対MOAT指数は算出不能(NA)＝堀のふるいを通れない\n   rep 複製障壁: 100=複製不能(数十年/$10B級) / 80=極困難 / 60=困難 / 35=数年で追随可\n   dur 堀の型: 100=規制/プロセス知/物理 / 85=ネットワーク / 75=スイッチングコスト / 55=ブランド\n   moatW 堀の広さ(v9.9.36・深さでなく本数): 100=独立した堀3つ以上(各≥売上15%) / 85=2つ / 70=単一事業だが用途・顧客・地域が分散(最大顧客<10%かつ最大製品<70%) / 50=単一製品・単一用途(1製品≥80% or 最大顧客≥20%)\n     ※セグメント別売上の実数(10-K/有報)で必ず裏を取る。**共通の中核技術に全サービスが乗る場合は、顧客・競合・損益が別でも1本**と数える(v9.9.41決着。実例4071: 有報が『自然言語処理エンジンWatersを全てのサービスに組み込む』と明記→HR 77.5%/マーケ22.5%で規模上は2本だが70)。根拠が無ければ空欄(空欄は旧4本式で採点され既定値に化けない)。\n   ※絶対MOAT指数(5本の加重幾何平均)<70は新規投下の対象外(v9.9.39新設、線はv9.9.49で75→70へ・四段関門の第三)。採点は動かさないが買付の土俵から降りるので、dom/moatWの根拠の質がそのまま買付判断になる。\n   〈状態〉\n   erosion 侵食: none/emerging/active｜disrupt 破壊: settled/unsettled/threat\n   expiry 期限型独占: no/yes/na｜geopol 地政学集中: 0軽微/1中/2重/3深刻｜moatdecay 市場CAGR: no/yes｜nrr 顧客維持%(既定105)\n   〈過去門 p1-p4：0-100・裸の主観禁止〉\n   p1 ROIC安定性=5年ROICの**変動係数(σ÷平均)**: <15%→90 / <30%→80 / <50%→65 / 以上→50（v9.9.50。絶対の百分点は高ROIC企業でROICの絶対水準を測ってしまうため変更）\n   p2 不況耐性=直近2回の景気後退時の営業利益DD: 浅い→95 / … nde<1→85 / nde<2.5→70 / 以上→50\n   p3 財務頑健=ネットデット/EBITDA: 低い→95 … / nde10%→45\n   p4 会計健全=accr<0かつ監査無限定→90 …（accr悪化は減点）\n   〈未来門 f1-f5：0-100・固定基準〉\n   f1 複利エンジン=ROIIC³: ≥WACC+15→90 / +8→80 / +3→70 / 未満→55（再投資率≥30%で+5。roiic=naは還元の質で75/60）\n   f2 滑走路=TAM浸透率p/成長g: p10→90 / p7→80 / p<60→65 / p≥60→50\n   f3 堀の軌道=R&D/売上3年とシェア趨勢の2符号: 両+→90 / 片方→75 / 両−→55（主要顧客集中悪化で−10）\n   f4 二次曲線=隣接事業が売上5%超で成長→80 / 育成中→60 / なし→50\n   f5 耐陳腐化=disrupt連動: settled→85 / unsettled→65 / threat→45（disruptを埋めれば空欄可=門が機械導出。±10の逸脱評価時のみ）\n\n4. 市場データ（per/perF/px/evebit/beta/shy/gr）はSECに無い→空欄（取込時に手入力）か、明示された実測のみ。grはperFから機械算出＝perFの取得最優先。\n\n5. 納品前スキーマ検査: null項目を一覧化し、なぜ空かを明記。Ⅲ採点機フォーマット（nm/roic/…/f1-5/_meta）に完全準拠したJSONのみ返す。\n\n6. 根拠必須と機械/判断の分離（2026-07-29新設・納品検査で落とす）\n   ・値を書くなら根拠も書く。値のある採点項目は _meta.evidence に対応する記述が要る。実測(night/audit_evidence.py・全316パック)で根拠被覆率は33.0%、機械項目は9.8%しかなく、原本から測った値とそれらしく置いた値が台帳上まったく同じ見た目になっていた。これが「絶対のルール7（欠測をゼロと読むな）」の事故が長く見えなかった理由。\n   ・ドラフトの _meta.provenance が "machine" の欄は採取器が式と実額つきで置いた値。そのまま残してよい（evidenceも一緒に残す）。検算して直すのは可だが、その場合は _meta.kenshi に「旧→新・原本の実額・出典」を書き、evidence も自分の実測へ書き換える。黙って上書きしない——どちらが置いた値か判らなくなるのが是正ラッシュの原因そのもの。\n   ・空欄にした判断項目は _meta.nulls に理由を書く。理由の無い空欄は差し戻し。\n   ・納品前に「python3 night/validate_packs.py ${t}」を実行し FAIL をゼロにしてから終える。\n\n7. 監査記録: _meta に auditDate（審査日 YYYY-MM-DD）と model（審査モデル名）を必ず記載——採点の揺れを後から突き合わせるため。`;}
+function ccfAskText(t){return `審査: ${t}\n\n【門2審査プロトコル v1｜厳守】採取済み銘柄を審査し、門のⅢ採点機フォーマットの完成パックJSONを返す。\n\n1. 原本を読む\n   MyDrive/hachimon_out/ または repoの out/ にある ${t}_gate_input.json（機械値の下書き）と ${t}_hits.txt（限/集/誠/蝕/堀/循の6砲台抜粋）を読む。\n\n2. 検死（機械値を鵜呑みにしない・必ず検算）\n   ・dilNet>30%は株式分割の誤読を疑い、注記で分割を確認→真の希薄化に補正。\n   ・fcf/niがnull＝capexタグ欠落。原本から補うか na明示。\n   ・通貨がUSD以外なら px/per/evebit を同一通貨で揃える（ADR混線禁止）。\n   ・opm/roicが業態と乖離→derived営利の販管費欠落を疑う。\n\n3. 定性を原本根拠つきで判定（憶測禁止・根拠なきは空欄。各値にhits.txtの該当英文を根拠として付す）\n   〈絶対MOAT5因子＝深さ4本(dom/irr/rep/dur)＋広さ1本(moatW)〉\n   dom 支配シェア: 100=独占≥90%(または実質唯一供給) / 85=圧倒70-89%または複占の首位(上位2社で≥80%かつ自社が首位) / 70=寡占40-69%または複占の一角・3社寡占(上位3社で≥80%) / 50=競争<40%(かつ上記の寡占構造に該当しない)\n     ※シェアの数字だけでは価格支配力を測れない(v9.9.38)——10社が分け合う35%と2社で分け合う35%は別物。上位N社の合計シェアで市場構造を必ず確認する(実測でCadenceがシェア約30%の文字適用でdom=50となりMOAT柱を陥落していた)。\n     ※刻みの決め方(v9.9.41): (1)domは全社ベース——事業ごとに構造が違っても全てが同じ刻みに落ちるならその刻みで確定し、違う刻みに散るときだけ空欄(IRMD=ポンプ100/モニタ非首位で割れる→空欄、HEI=FSGもETGも50→50)。(2)100/85/70は集中の主張ゆえ必ず数値(自社シェア%＋上位N社合計%)を要する。(3)50は残余の刻みゆえ数値なしでも確定できる——提出書類自身が『市場はfragmented』『同等品を多数が製造可能』『実質すべての供給は他社』と構造的に述べていれば、自社が40%以上いることは定義上ありえない(ここを空欄にすると測っていないほうが再正規化で有利になる抜け道になる)。(4)『a leader』『largest』等の順位の自称はどの刻みの証拠にもならない。(5)第三者調査の実数は対象会社自身の提出書類でなくてもSEC/EDINET提出書類の中に市場全体の表として載り対象会社が名指しで含まれていれば原本扱いにしてよい(MAのシェアはVisaの10-K内Nilson表で確定)。ただしどの会社のどの提出書類かを_metaに明示する。\n     ※原本にシェアの開示が無ければ空欄にせよ(v9.9.39)。空欄は重みを残り4本へ再正規化するので既定値70に化けない。「leading/leader」等の定性表現だけで数字を置くのは憶測=違反。空欄にした理由は必ず _meta.nulls.dom に書く(理由の無い空欄は差し戻し)。\n   irr 代替不能性: 100=唯一供給 / 85=認証・規格ロック / 70=高摩擦移行困難 / 50=代替容易\n     ※irr/rep/dur も原本に記述が無ければ空欄にせよ(v9.9.48)。dom/moatWと同じく空欄は重みを残りの本数へ再正規化するので既定値(70/60/85)に化けない。空欄の理由は_meta.nullsに書く。5本のうち4本未満しか無ければ絶対MOAT指数は算出不能(NA)＝堀のふるいを通れない\n   rep 複製障壁: 100=複製不能(数十年/$10B級) / 80=極困難 / 60=困難 / 35=数年で追随可\n   dur 堀の型: 100=規制/プロセス知/物理 / 85=ネットワーク / 75=スイッチングコスト / 55=ブランド\n   moatW 堀の広さ(v9.9.36・深さでなく本数): 100=独立した堀3つ以上(各≥売上15%) / 85=2つ / 70=単一事業だが用途・顧客・地域が分散(最大顧客<10%かつ最大製品<70%) / 50=単一製品・単一用途(1製品≥80% or 最大顧客≥20%)\n     ※セグメント別売上の実数(10-K/有報)で必ず裏を取る。**共通の中核技術に全サービスが乗る場合は、顧客・競合・損益が別でも1本**と数える(v9.9.41決着。実例4071: 有報が『自然言語処理エンジンWatersを全てのサービスに組み込む』と明記→HR 77.5%/マーケ22.5%で規模上は2本だが70)。根拠が無ければ空欄(空欄は旧4本式で採点され既定値に化けない)。\n   ※絶対MOAT指数(5本の加重幾何平均)<70は新規投下の対象外(v9.9.39新設、線はv9.9.49で75→70へ・四段関門の第三)。採点は動かさないが買付の土俵から降りるので、dom/moatWの根拠の質がそのまま買付判断になる。\n   〈状態〉\n   erosion 侵食: none/emerging/active｜disrupt 破壊: settled/unsettled/threat\n   expiry 期限型独占: no/yes/na｜geopol 地政学集中: 0軽微/1中/2重/3深刻｜moatdecay 市場CAGR: no/yes｜nrr 顧客維持%(既定105)\n   〈過去門 p1-p4：0-100・裸の主観禁止〉\n   p1 ROIC安定性=5年ROICの**変動係数(σ÷平均)**: <15%→90 / <30%→80 / <50%→65 / 以上→50（v9.9.50。絶対の百分点は高ROIC企業でROICの絶対水準を測ってしまうため変更）\n   p2 不況耐性=直近2回の景気後退時の営利DD: 浅い(−20%以内)→95 / 中(−40%)→75 / 深い(−60%超)→50（不況実績なしは70上限・COVID一本足禁止=2サイクル実測）\n   p3 財務頑健=ネットデット/EBITDA: 純現金かつインタレストカバレッジ>20→95 / nde<1→85 / nde<2.5→70 / 以上→50（ndeを埋めれば空欄可=門が機械導出。逸脱評価時のみ値+根拠）\n   p4 会計健全=accr<0かつ監査意見無限定→90 / accr 0〜5%→80 / 5〜10%→65 / >10%→45\n   〈未来門 f1-f5：0-100・固定基準〉\n   f1 複利エンジン=ROIIC³: ≥WACC+15→90 / +8→80 / +3→70 / 未満→55（再投資率≥30%で+5。roiic=naは還元の質で75/60）\n   f2 滑走路=TAM浸透率p%とTAM成長g%: p<20かつg>10→90 / p<40かつg>7→80 / p<60→65 / p≥60→50\n   f3 堀の軌道=R&D/売上3年とシェア趨勢の2符号: 両+→90 / 片方→75 / 両−→55（主要顧客集中悪化で−10）\n   f4 二次曲線=隣接事業が売上5%超で成長→80 / 育成中→60 / なし→50\n   f5 耐陳腐化=disrupt連動: settled→85 / unsettled→65 / threat→45（disruptを埋めれば空欄可=門が機械導出。±10の逸脱評価時のみ）\n\n4. 市場データ（per/perF/px/evebit/beta/shy/gr）はSECに無い→空欄（取込時に手入力）か、明示された実測のみ。grはperFから機械算出＝perFの取得最優先。\n\n5. 納品前スキーマ検査: null項目を一覧化し、なぜ空かを明記。Ⅲ採点機フォーマット（nm/roic/…/f1-5/_meta）に完全準拠したJSONのみ返す。\n\n6. 根拠必須と機械/判断の分離（2026-07-29新設・納品検査で落とす）\n   ・値を書くなら根拠も書く。値のある採点項目は _meta.evidence に対応する記述が要る。実測(night/audit_evidence.py・全316パック)で根拠被覆率は33.0%、機械項目は9.8%しかなく、原本から測った値とそれらしく置いた値が台帳上まったく同じ見た目になっていた。これが「絶対のルール7（欠測をゼロと読むな）」の事故が長く見えなかった理由。\n   ・ドラフトの _meta.provenance が "machine" の欄は採取器が式と実額つきで置いた値。そのまま残してよい（evidenceも一緒に残す）。検算して直すのは可だが、その場合は _meta.kenshi に「旧→新・原本の実額・出典」を書き、evidence も自分の実測へ書き換える。黙って上書きしない——どちらが置いた値か判らなくなるのが是正ラッシュの原因そのもの。\n   ・空欄にした判断項目は _meta.nulls に理由を書く。理由の無い空欄は差し戻し。\n   ・納品前に「python3 night/validate_packs.py ${t}」を実行し FAIL をゼロにしてから終える。\n\n7. 監査記録: _meta に auditDate（審査日 YYYY-MM-DD）と model（審査モデル名）を必ず記載——採点の揺れを後から突き合わせるため。`;}
 function ccfCopyAsk(t,btn){ccfCopyStr(ccfAskText(t),btn);}
 function ccfAsk(t){return '<button onclick="ccfCopyAsk(\''+t+'\',this)" style="width:66px;padding:5px 0;background:linear-gradient(180deg,rgba(84,184,138,.28),rgba(84,184,138,.10));border:1px solid rgba(84,184,138,.5);border-radius:6px;color:#8fc9a4;font-size:11.5px;cursor:pointer">\u4f9d\u983c\u6587</button>';}
 async function ccfRenderQueueInto(cid, focus){
@@ -2598,8 +2615,13 @@ async function autoSave(src,silent){
     for(const __k of __ks){ const __osk=__k.slice(3); if(__osk===sk)continue;
       const __oc=(__osk.match(/(?:^|\D)(\d{4,5})(?:\D|$)/)||[])[1];
       if(__oc!==__jpc)continue;
-      try{const __g=await store.get(__k); if(__g)await store.set('g7prev:'+__osk,__g.value);}catch(e){}
+      let __gv=null; try{const __g=await store.get(__k); if(__g){__gv=__g.value; await store.set('g7prev:'+__osk,__gv);}}catch(e){}
       try{await store.delete(__k);}catch(e){}
+      // v9.9.78: 保有印(g7hold:set)は nm で持つため、旧キー削除時に付け替えないと旧表記で付けた保有印が孤児化する
+      //   （ccfDedupeLedger は付け替えており、同じ統合が二実装で違うことを言っていた——v9.9.65の同型）
+      try{const __hv=await store.get('g7hold:set'); if(__hv&&__hv.value){const __hs=new Set(JSON.parse(__hv.value)||[]);
+        let __onm=__osk; try{const __go=JSON.parse(__gv); if(__go&&__go.data&&__go.data.nm)__onm=__go.data.nm;}catch(_){}
+        if(__hs.has(__onm)){__hs.delete(__onm);__hs.add(nm);await store.set('g7hold:set',JSON.stringify([...__hs]));}}}catch(e){}
       uiNotice(`同一コード${__jpc}の旧記録（g7:${__osk}）をこの取込で置き換えました。旧版はg7prev:に退避`,6000);
     } }catch(e){} }
   try{
@@ -2717,7 +2739,12 @@ async function save(){
   const nm=$('nm').value.trim(); if(!nm){uiNotice('銘柄名を入力してください');return;}
   const r=compute(); const data={};
   document.querySelectorAll('#scorer input,#scorer select').forEach(e=>{if(e.id)data[e.id]=e.value;}); // v9.9.26: 採点機フォームに限定(logBody/ioBox等の他タブ入力とid無し欄の混入=記録肥大を解消。読込側は既存マップで無害)
-  try{await store.set('g7:'+safeKey(nm),JSON.stringify({data,r,ts:Date.now(),src:'manual'}));renderLedger();uiNotice('記録した：'+nm);}catch(e){uiNotice('記録に失敗：'+String(e&&e.message||e));}
+  // v9.9.78: 手動saveを取込(applyFields)と同じ作法に——(1)直前版をg7prev:へ退避（delIt/取込は退避するのにsaveだけ無かった）
+  //   (2)既存レコードの coerce/ok を引き継ぐ。落とすと手動記録した瞬間に✓検算済の印が消えて旧⚠バッジが復活する
+  try{const sk=safeKey(nm); const rec={data,r,ts:Date.now(),src:'manual'};
+    try{const prev=await store.get('g7:'+sk); if(prev){await store.set('g7prev:'+sk,prev.value);
+      try{const po=JSON.parse(prev.value); if(po&&po.coerce)rec.coerce=po.coerce; if(po&&po.ok)rec.ok=po.ok;}catch(_){}}}catch(_){}
+    await store.set('g7:'+sk,JSON.stringify(rec));renderLedger();uiNotice('記録した：'+nm);}catch(e){uiNotice('記録に失敗：'+String(e&&e.message||e));}
 }
 async function renderLedger(){
   const box=$('ledger'); if(!box)return;
@@ -3258,10 +3285,144 @@ async function ccfDash(btn){
     + sec('📅 次回決算（21日以内）', ernHtml, '決算が来たら <code>python kessan_check.py</code>（日本株は <code>kessan_check_jp.py</code>）を回す')
     + sec('📰 最新ニュース', newsHtml, '判定には使わない——原本（10-Q/有報）に書かれるまで門は動かない');
 }
+// ── 🔔 イベント（v9.9.79・2026-08-04 ユーザー要望「決算も含めて別のタブで欲しい」）────────
+// 8-K警報(watch_events.py)と決算(発表イベント・次回予定)の表示専用タブ。判定には一切使わない——
+// 警報は門2再審査の依頼文へ回す気づき。データは同一オリジンの静的JSONを読むだけ(盤と同じ配管・鍵不要)。
+// 取れなかったものは「未生成」と書く。前回値やゼロで埋めない(ルール7)。
+async function ccfEvents(btn){
+  const box=$('evBox'); if(!box)return;
+  const lab=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='読込中…';}
+  const j=async u=>{try{const r=await fetch(u+'?t='+Date.now());return r.ok?await r.json():null;}catch(e){return null;}};
+  const [ev,ern,ops]=await Promise.all([j('out/events_watch.json'),j('out/next_earnings.json'),j('out/ops_status.json')]);
+  if(btn){btn.disabled=false;btn.textContent=lab;}
+  const asof=$('evAsof');
+  if(asof)asof.textContent=ev?`8-K走査 ${ev.asof}（窓${ev.window_days}日・米国${ev.checked_us}社）／決算予定 生成 ${ern?ern.generated:'—'}`:'';
+  const sec=(title,inner,note)=>`<div style="margin-bottom:16px;padding:13px 15px;background:var(--panel);border:1px solid var(--line);border-radius:9px"><div style="font-size:13.5px;font-weight:600;color:var(--gold-bright);margin-bottom:8px">${title}</div>${inner}${note?`<div style="font-size:10.5px;color:var(--dim);margin-top:7px">${note}</div>`:''}</div>`;
+  const askBtn=t=>`<button onclick="ccfCopyAsk('${t}',this)" title="門2審査プロトコル全文＋${t}をコピー" style="margin-left:8px;padding:3px 8px;background:linear-gradient(180deg,rgba(84,184,138,.24),rgba(84,184,138,.08));border:1px solid rgba(84,184,138,.45);border-radius:6px;color:#8fc9a4;font-size:11px;cursor:pointer">審査</button>`;
+  const row=(x,color)=>`<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:5px 0;border-top:1px solid rgba(255,255,255,.04);font-size:12.5px"><b style="min-width:4.5em;color:${color}">${x.t}</b><span style="color:var(--dim);min-width:6.5em">${x.date}</span><span style="flex:1;color:var(--ink-soft)">${(x.flags&&x.flags.length?x.flags.join('；'):(x.items&&x.items.length?'Item '+x.items.join(', '):(x.form||'')))}</span>${x.url?`<a href="${x.url}" target="_blank" style="font-size:11px;color:#5d8cc2">原文書↗</a>`:''}${x.docID?`<span style="font-size:10px;color:var(--dim)" title="EDINETの書類検索でdocIDを引くと原本PDFに届く">docID ${x.docID}</span>`:''}${x.flags&&x.flags.length?askBtn(x.t):''}</div>`;
+  let html='';
+  // ⚙ 運用サイクル（v9.9.80「すべて回るように」・v9.9.81でカード型へ再設計）: 周期作業14本の回転状態。
+  //   止まった作業を黙らせない。周期でグループ化し、1本=1カード2行（狭い画面でも折り返しで読める）
+  if(ops&&Array.isArray(ops.items)){
+    const due=ops.items.filter(x=>x.state==='due'), unk=ops.items.filter(x=>x.state==='unknown');
+    const chip=(txt,fg,bg)=>`<span style="font-size:10px;padding:1px 8px;border-radius:9px;background:${bg};color:${fg};white-space:nowrap">${txt}</span>`;
+    const autoChip=x=>x.auto===true?chip('自動','#8fc9a4','rgba(84,184,138,.14)')
+      :x.auto==='key'?chip('鍵で自動','#d6b06c','rgba(214,154,60,.16)')
+      :chip('手動','#c9c2b2','rgba(255,255,255,.08)');
+    const stChip=x=>x.state==='due'?chip('⚠ 停止疑い','#ff9d8a','rgba(207,95,72,.20)')
+      :x.state==='unknown'?chip('？ 不明','#d6b06c','rgba(214,154,60,.16)')
+      :chip('🟢 回転中','#8fc9a4','rgba(84,184,138,.10)');
+    // v9.9.82: 手動/鍵で自動の作業は、タブ下部の「📖 手動作業の説明」該当項へ飛べるリンクを付ける
+    const helpBtn=x=>(x.auto===true)?'':`<button onclick="const e=document.getElementById('evhelp-${x.id}');if(e){e.open=true;e.scrollIntoView({behavior:'smooth',block:'start'});}" style="padding:2px 9px;background:linear-gradient(180deg,rgba(93,140,194,.22),rgba(93,140,194,.08));border:1px solid rgba(93,140,194,.45);border-radius:6px;color:#8fb4dd;font-size:10.5px;cursor:pointer;white-space:nowrap">説明↓</button>`;
+    const card=x=>`<div style="border:1px solid var(--line);border-left:3px solid ${x.state==='due'?'#cf5f48':x.state==='unknown'?'#d69a3c':'rgba(84,184,138,.55)'};border-radius:8px;padding:8px 12px;margin:6px 0;background:rgba(255,255,255,.015)">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <b style="font-size:13px;color:var(--ink)">${x.name}</b>${autoChip(x)}${stChip(x)}${helpBtn(x)}
+          <span style="margin-left:auto;font-size:11.5px;color:${x.state==='due'?'#ff9d8a':'var(--dim)'};white-space:nowrap">最終 ${x.last||'不明'}${x.days!=null?`（${x.days}日前）`:''}</span>
+        </div>
+        <div style="font-size:10.5px;color:var(--dim);margin-top:4px">${x.how}</div>
+      </div>`;
+    let inner=(due.length||unk.length)
+      ?`<div style="font-size:12.5px;color:#ff9d8a;margin-bottom:4px"><b>${due.length?`⚠ 停止疑い ${due.length}本: ${due.map(x=>x.name).join('・')}`:''}${unk.length?`${due.length?'／':''}？日付不明 ${unk.length}本`:''}</b>——回っていない作業は「無い」のと同じ。カードの回し方で復旧させること</div>`
+      :`<div style="font-size:12.5px;color:var(--jade);margin-bottom:4px">✓ 全${ops.items.length}本が期限内で回っている（実測 ${ops.asof}）</div>`;
+    for(const [label,pre] of [['毎営業日','毎営業日'],['月次','月1'],['四半期','四半期'],['年次','年1']]){
+      const g=ops.items.filter(x=>String(x.cadence).startsWith(pre));
+      if(!g.length)continue;
+      inner+=`<div style="font-size:11px;font-weight:600;color:var(--gold-bright);margin:12px 0 2px;letter-spacing:.1em">${label}</div>`+g.map(card).join('');
+    }
+    html+=sec('⚙ 運用サイクル（すべて回っているか）',inner,
+      '「自動」＝CIが回す（market.yml=毎営業日／events.yml=毎営業日／ops.yml=毎月2日）。「鍵で自動」＝GitHub Secrets に EDINET_API_KEY（無料・api.edinet-fsa.go.jp）を置けば自動になる。「手動」＝人の作業（年次較正の答え合わせ・門0発掘=companyfacts 1.4GB）。判定には不使用');
+  }else{
+    html+=sec('⚙ 運用サイクル','<b style="color:#d69a3c">out/ops_status.json が未生成</b>——CI初回実行後に入る。手動なら python3 night/ops_status.py');
+  }
+  // 📌 やるべきこと（v9.9.83・ユーザーの問い「スケジュールに乗せたやるべきこともこれにのってる？」への答え）
+  //   回転盤＝機械の周期作業／こちら＝人の宿題・決断待ち・機械で測れない定期ルーチン。正本は todo_list.json
+  {
+    const td=(ops&&ops.todos&&Array.isArray(ops.todos.items))?ops.todos.items.filter(x=>!x.done):null;
+    if(td){
+      const KIND=[['決断待ち','#d6b06c','あなたの判断の領分——材料は揃っている（audit_2026-08-04_zenten.md）'],
+                  ['宿題','#8fb4dd','単発の作業。終わったらClaudeに「doneにして」と言えば消える'],
+                  ['定期(手動)','#c9c2b2','機械で最終実行を測れない定期ルーチン——忘れたことを盤は検出できない種類'],
+                  ['予約','#8a8578','先の日付の予約議題']];
+      let inner='';
+      for(const [k,color,klabel] of KIND){
+        const g=td.filter(x=>x.kind===k); if(!g.length)continue;
+        inner+=`<div style="font-size:11px;font-weight:600;color:${color};margin:12px 0 2px;letter-spacing:.1em">${k}<span style="font-weight:400;color:var(--dim);letter-spacing:0;margin-left:8px">${klabel}</span></div>`;
+        inner+=g.map(x=>`<div style="border:1px solid var(--line);border-left:3px solid ${color};border-radius:8px;padding:8px 12px;margin:6px 0;background:rgba(255,255,255,.015)">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><b style="font-size:13px;color:var(--ink)">${x.title}</b>${x.due?`<span style="font-size:10px;padding:1px 8px;border-radius:9px;background:rgba(255,255,255,.08);color:var(--ink-soft);white-space:nowrap">${x.due}</span>`:''}</div>
+          <div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.7">${x.note||''}</div>
+        </div>`).join('');
+      }
+      const done=(ops.todos.items||[]).filter(x=>x.done);
+      if(done.length)inner+=`<details style="margin-top:8px"><summary style="cursor:pointer;font-size:11px;color:var(--dim)">完了済み ${done.length}件（消さない——やった記録も資産）</summary><div style="font-size:11px;color:var(--dim);padding:6px 0">${done.map(x=>'✓ '+x.title).join('<br>')}</div></details>`;
+      html+=sec(`📌 やるべきこと（残り${td.length}件）`,
+        inner||'<span style="font-size:12px;color:var(--jade)">残なし</span>',
+        '正本は todo_list.json（追加・完了はClaudeに頼む）。回転盤＝機械が回す周期作業／ここ＝人の作業と判断。どちらも判定には不使用');
+    }else{
+      html+=sec('📌 やるべきこと','<b style="color:#d69a3c">todo_list.json が読めない</b>——ops_status.json への同梱は night/ops_status.py の次回実行で入る');
+    }
+  }
+  if(!ev){
+    html+=sec('⚠ 8-K警報','<b style="color:#d69a3c">out/events_watch.json が未生成</b>——.github/workflows/events.yml（平日22:10UTC）の初回実行後に入る。手動なら python3 night/watch_events.py');
+  }else{
+    html+=sec(`⚠ 8-K警報（${(ev.alerts||[]).length}件）`,
+      (ev.alerts||[]).length?ev.alerts.map(x=>row(x,'#cf5f48')).join(''):'<span style="font-size:12px;color:var(--dim)">窓内に警報なし（走査は成功——取得失敗欄も確認のこと）</span>',
+      '減損2.06／退任5.02／非依拠4.02／破産1.03／上場廃止通知3.01。警報＝門2再審査の気づきであり売買判定ではない。「審査」で依頼文をコピー');
+    html+=sec(`📄 決算・報告イベント（米: 8-K 2.02／日: 有報・四半期提出——${(ev.earnings||[]).length}件）`,
+      (ev.earnings||[]).length?ev.earnings.map(x=>row(x,'var(--ink)')).join(''):'<span style="font-size:12px;color:var(--dim)">窓内に決算発表なし</span>',
+      '発表が出た銘柄は決算点検（米: kessan_check.py／日: kessan_check_jp.py→要審査なら門2再審査）へ。数字はここでは読まない');
+    if((ev.others||[]).length)
+      html+=`<details style="margin-bottom:16px"><summary style="cursor:pointer;font-size:12px;color:var(--dim)">その他の8-K ${ev.others.length}件（契約1.01・RegFD 7.01・その他8.01等——警報ではない）</summary><div style="padding:8px 15px;background:var(--panel);border:1px solid var(--line);border-radius:9px;margin-top:6px">${ev.others.map(x=>row(x,'var(--dim)')).join('')}</div></details>`;
+    const gaps=[];
+    if((ev.errors||[]).length)gaps.push(`<b style="color:#d69a3c">取得失敗 ${ev.errors.length}社</b>: ${ev.errors.map(e=>e.t).join(' ')}——この社は「見ていない」のであって「異常なし」ではない`);
+    if((ev.cik_unresolved||[]).length)gaps.push(`CIK不明 ${ev.cik_unresolved.join(' ')}`);
+    if(ev.jp&&ev.jp.covered)gaps.push(`<span style="color:var(--jade)">日本株 ${(ev.jp.tickers||[]).length}社はEDINETで走査済み（臨時報告書・訂正・有報/四半期の提出を監視）</span>`);
+    if(ev.not_covered_jp&&(ev.not_covered_jp.tickers||[]).length)gaps.push(`<b style="color:#d69a3c">日本株 ${ev.not_covered_jp.tickers.length}社は対象外の穴</b>: ${ev.not_covered_jp.tickers.join(' ')}<br><span style="font-size:11px">→ EDINET APIの無料鍵（api.edinet-fsa.go.jp で登録）を GitHub Secrets の <b>EDINET_API_KEY</b> に置くと、臨時報告書(8-K相当)・訂正・有報/四半期の提出監視と決算点検が自動で回り出す</span>`);
+    if(gaps.length)html+=sec('🕳 監視の被覆（黙って対象外にしない）',`<div style="font-size:12px;color:var(--ink-soft);line-height:1.8">${gaps.join('<br>')}</div>`);
+  }
+  if(ern&&Array.isArray(ern.items)){
+    const today=new Date().toISOString().slice(0,10);
+    const items=ern.items.filter(x=>x.date>=today);
+    const genAge=ern.generated?Math.floor((Date.now()-new Date(ern.generated).getTime())/864e5):null;
+    const eRow=x=>{const d=Math.round((new Date(x.date)-new Date(today))/864e5);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.04);font-size:12.5px"><b style="min-width:4.5em;color:${d<=7?'var(--gold-bright)':'var(--ink)'}">${x.t}</b><span style="color:var(--dim);min-width:6.5em">${x.date}</span><span style="color:${d<=7?'#d69a3c':'var(--dim)'}">あと${d}日</span>${x.hold?'<span style="font-size:10px;color:var(--jade)">◆保有</span>':''}${x.src==='est'?'<span style="font-size:10px;color:var(--dim)" title="Alpha Vantage鍵なし＝SEC提出履歴からの推定日。確定日ではない">推定</span>':''}</div>`;};
+    html+=sec(`📅 次回決算カレンダー（${items.length}件）`,
+      items.length?items.map(eRow).join(''):'<span style="font-size:12px;color:var(--dim)">今後の予定なし</span>',
+      `kessan_calendar.py 生成${genAge!=null?`・${genAge}日前`:''}${genAge!=null&&genAge>35?'——<b style="color:#d69a3c">古い。四半期ごとに python kessan_calendar.py で再生成のこと</b>':''}。「推定」はSEC提出履歴からの推定日＝前後にずれる。確定日はGoogleカレンダー(kessan_calendar.ics)が正`);
+  }else{
+    html+=sec('📅 次回決算カレンダー','<b style="color:#d69a3c">out/next_earnings.json が未生成</b>——python kessan_calendar.py で生成');
+  }
+  // 📖 手動作業の説明（v9.9.82・ユーザー要望「手動でやるべきことは説明欄に飛べるように」）
+  //   回転盤の「説明↓」ボタンがここへ飛ぶ。何のための作業か・いつ・どうやるか・終わるとどうなるか、を1項ずつ
+  const hd=(id,title,body)=>`<details id="evhelp-${id}" style="border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:6px 0;background:rgba(255,255,255,.015)"><summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--ink)">${title}</summary><div style="font-size:12px;color:var(--ink-soft);line-height:1.85;margin-top:8px">${body}</div></details>`;
+  html+=sec('📖 手動作業の説明（回転盤の「説明↓」がここへ飛ぶ）',
+    hd('kessanJP','決算点検（日本株）——鍵を置けば自動になる',
+      `<b>何のため</b>: 日本株の保有・監視銘柄について有報・短信から警報語（誠実性・減損・退任・指針撤回など）を走査する。米国のkessan_checkはSEC経由なので日本株を一切点検できず、ここが監視の穴だった。<br>`+
+      `<b>自動化の手順（推奨・一度だけ）</b>: ① <a href="https://api.edinet-fsa.go.jp/" target="_blank" style="color:#8fb4dd">api.edinet-fsa.go.jp↗</a> でAPIキーを無料登録 → ② GitHubリポジトリの <b>Settings → Secrets and variables → Actions → New repository secret</b> → Name欄に <b>EDINET_API_KEY</b>・Secret欄にキーを貼って保存。<br>`+
+      `<b>置くとどうなる</b>: 翌営業日から臨時報告書(8-K相当)・訂正・有報/四半期の提出監視が毎日、決算点検が毎月2日に自動で回る。置くまでは「対象外の穴」と表示され続ける（偽の被覆を作らない）。<br>`+
+      `<b>手動で回すなら</b>: <code>python3 kessan_check_jp.py</code>（鍵なしは「点検不能・要審査」と正直に出る＝古い書類から異常なしとは言わない）`)+
+    hd('calib','年次較正（答え合わせ）——毎年7月・あなたの判断の領分',
+      `<b>何のため</b>: 門の予測が当たったかの答え合わせ。①定性判定の遷移（erosion/disruptが実際にどう動いたか）②f1予実 ③<b>v9とv10影スコアの勝敗判定</b>。検証なき基準改定をしない、がこの門の最大の強み——その「検証」がこの作業。<br>`+
+      `<b>いつ</b>: 毎年7月（次回2027-07）。<br>`+
+      `<b>手順</b>: <code>python calibration_check.py</code> を回し、out/calibration.json を見ながらClaudeに「年次較正の答え合わせをしたい」と依頼する。v9/v10の勝敗判定式は <b>V10_SPEC.md に明文化済み</b>（劣化群の事前検知rank-AUC・引き分けは現行v9維持）。材料は凍結済み——v9_scores_2026（2026-07-30のΩ）× v10影（2026-07-27・40社）。<br>`+
+      `<b>なぜ自動化しない</b>: 勝った方を正本にする判断・ルーブリック改定は絶対のルール1（ユーザー明示指示）の領分だから。機械が勝手に基準を変える門にはしない`)+
+    hd('gate0','米国門0発掘——毎年1-2月',
+      `<b>何のため</b>: 全上場（検証母集団）をROIC・成長・FCF転換の7点で採点し、審査待ち行列 gate1_queue.json（約155社＝TOP100＋審査優先の谷/種まき/未成熟）を作り直す年次の入口。<br>`+
+      `<b>手順</b>: 手元の環境で <code>python run_gate0_local.py</code>。companyfacts.zip(1.4GB)が45日超なら自動で最新に更新される。holdings.json があれば保有/WATCHも自動差し替え。終わったら <code>python3 night/make_chunks.py</code> で夜間審査のチャンクと索引を再生成。<br>`+
+      `<b>なぜ自動化しない</b>: 1.4GBの母集団zipのダウンロードと展開がCIの器に載らないため（年1回なら手元で十分）`)+
+    hd('gate0jp','日本株門0——毎年',
+      `<b>何のため</b>: 日本株の審査待ちキュー gate0_jp_queue.json を作り直す（<b>pt上位50 ∪ 質の椅子14</b>＝成熟高収益企業を成長率支配のptから別枠で救う二枠構造。キーエンス・ディスコを拾う線で較正済み）。<br>`+
+      `<b>手順</b>: <code>python3 night/rebuild_gate0_jp.py --write</code>。<b>rerank_gate0_jp.py は旧世代＝--writeは封鎖済み</b>（回すと質の椅子14社が黙って消えるため）。キューは審査待ちであって合格ではない——門2が裁く`)+
+    hd('backtest','疑似バックテスト——年1回・成長減衰の較正材料',
+      `<b>何のため</b>: companyfactsの提出日で「当時読めた数字」だけからthrough-cycle ROIC等を再構成し、その後の配当込みリターン・実現成長と突合する。<b>E[r]のg=20%上限・成長減衰（結論を4pt動かす最大の未較正項）の実測分布</b>を予実台帳より4年早く得る。<br>`+
+      `<b>初回実測(2018→2026)</b>: 機械ROIC最上段(43.7%超)だけがリターン劣後10.4%／当時cagr≥20%の22社のその後の実現成長は中央値18.2%・20%維持は9/22社。<br>`+
+      `<b>手順</b>: <code>python3 night/backtest_core.py</code>（<code>--cutoff 2015-07-01</code> で別年代）。<b>生存バイアスあり＝相対比較と分布にだけ使う</b>。結果を採点へ入れるかは明示指示の領分`),
+    '「自動」の10本はCI（market.yml／events.yml／ops.yml）が回すので説明不要——止まれば回転盤が⚠にする。ここに載るのは人の手か判断が要る作業だけ');
+  box.innerHTML=html;
+}
 // ── 門X裁きⅠ（単一実装・v9.9.39 切り出し）───────────────────────────────────
 // Ⅵ買付順位の🟢投下可判定と、検証器 night/score_all.js が同じ式を使うための切り出し。
 // 中身は renderPlan 内にあった計算をそのまま移しただけ——式・閾値・順序はすべて不変。
-// (E[r]=還元shy+成長g+倍率の重力／合否は遮断器 E[r]≥0＝v9.9.78)
+// (E[r]=還元shy+成長g+倍率の重力／合否は遮断器 E[r]≥0＝v9.9.84)
 function ccfXJudge(d,s){
   const num=x=>parseFloat(x)||0;
   const per=num(d.per),shy=num(d.shy),roicV=num(d.roic),cagrV=num(d.cagr);
@@ -3273,7 +3434,10 @@ function ccfXJudge(d,s){
   if(!(per>0&&roicgV>0&&!jpSus))return out;
   // v9.9.15 単位ロバスト化: 自社株買い率bR=1−(還元額/純利益)。恒等 ni=mcap/per より niが消え
   //   bR=1−shy%×per となる(ni・mcapの単位不整合バグを原理的に排除。旧式は ni$M×mcap$B のズレでbR≈1に張付き偽・門X通過を生んでいた)。shy欠損時は従来0.4フォールバック維持
-  const bR=(d.shy!=null)?Math.max(0,Math.min(1,1-(shy/100)*per)):0.4;
+  // v9.9.78: 空欄('')もnull扱いに。台帳レコードはフォーム由来で空欄を''で保存する(autoSave)ため、
+  //   旧判定 d.shy!=null は''で真になり、shy未入力の門XがbR=1で走っていた（パックnullを読む端末はbR=0.4）
+  //   ＝同じ台帳を見る二つの検査器が違うことを言う(v9.9.65)違反。d.cagrも同型を是正
+  const bR=(d.shy!=null&&d.shy!=='')?Math.max(0,Math.min(1,1-(shy/100)*per)):0.4;
   // v9.9.25(ユーザー明示指示・掟⑥): 高ROIC×堀無傷の資本軽量企業は、成長を再投資式(bR×ROIC)で潰さず実証CAGRで信じる。
   const roicQ=(d.roicEx!=null&&num(d.roicEx)>roicgV)?num(d.roicEx):roicgV;
   const moatIntact=(d.erosion!=='active')&&(d.disrupt!=='threat')&&(d.moatdecay!=='yes');
@@ -3299,7 +3463,7 @@ function ccfXJudge(d,s){
     if(gcapX!=null)g=Math.min(g,gcapX);           // v9.9.31: 実力gcapがあればΩと同じくmin(実績,実力)
   }else{
     g=bR*Math.min(roicgV,60);
-    if(d.cagr!=null){g=(cagrV>0)?Math.min(g,cagrV):0;}else{g=Math.min(g,8);}
+    if(d.cagr!=null&&d.cagr!==''){g=(cagrV>0)?Math.min(g,cagrV):0;}else{g=Math.min(g,8);}
     g=Math.min(g,20);
   }
   const fairPER=Math.max(16,Math.min(30,8+g));      // 成長連動の終着PER(実証g頭打ちゆえハイプは入らない)
@@ -3330,7 +3494,7 @@ function ccfXJudge(d,s){
   const erS=shy+g*hcX+(Math.pow(per1*0.7/per,1/HOLD_YEARS)-1)*100; // v9.9.28: ④ストレス=成長ヘアカット∧終着PER−30%
   const mshare=xEr>0?Math.max(0,mult)/xEr*100:0;
   out.g=g; out.xEr=xEr;
-  // v9.9.78（2026-08-04・ユーザー明示指示「遮断器のみ実装しよう」）: 門Xの合否を**遮断器方式**へ——
+  // v9.9.84（2026-08-04・ユーザー明示指示「遮断器のみ実装しよう」）: 門Xの合否を**遮断器方式**へ——
   //   旧4条件(E[r]≥12∧earned≥10∧倍率寄与≤30%∧ストレス≥7)を廃し、**E[r]≥0 だけ**で裁く。
   // 【なぜ】歴史検証(2026-08-04・PR#105)の実測: (a)価格・期待値の線は——絶対PERでも相対PERでも
   //   E[r]水準でも——質(堀)の中で**選別力を持たない**（2013年全コホート703社: 安い側8.0%/年 vs 高い側8.5%。
@@ -3401,10 +3565,14 @@ async function renderPlan(){
   //   買付後も同銘柄へ不足按分が続く欠陥があった。実額が無い銘柄のみd.posへフォールバック
   const livePos=(()=>{try{const o=JSON.parse(localStorage.getItem('pf:portfolio')||'null');
     if(!o||!Array.isArray(o.positions))return null;
-    const fx=+o.fx||0, val=p=>{const sh=+p.sh||0,pxv=(+p.npx||0)>0?+p.npx:(+p.bpx||0);
-      if(sh>0&&pxv>0)return (p.ccy==='JPY')?sh*pxv:sh*pxv*(fx||1); return +p.v||0;};
+    // v9.9.78: fx欠測時の (fx||1) はUSD建てを1ドル=1円で円建てと混ぜていた＝pos%が桁で歪む
+    //   （盤は FX||0＝同じ台帳を見る二箇所が違う値を出していた）。換算不能な建玉が混ざるなら
+    //   マップ全体を諦めて null＝手入力d.posへフォールバック（ルール7: 埋められないものを埋めない）
+    const fx=+o.fx||0, bad={v:false}, val=p=>{const sh=+p.sh||0,pxv=(+p.npx||0)>0?+p.npx:(+p.bpx||0);
+      if(sh>0&&pxv>0){if(p.ccy==='JPY')return sh*pxv; if(fx>0)return sh*pxv*fx;}
+      const mv=+p.v||0; if(!(mv>0)&&sh>0&&pxv>0)bad.v=true; return mv;};
     let tot=0; const m={}; o.positions.forEach(p=>{const v=val(p); tot+=v; if(p.t)m[String(p.t).toUpperCase()]=(m[String(p.t).toUpperCase()]||0)+v;});
-    if(!(tot>0))return null; Object.keys(m).forEach(k=>m[k]=m[k]/tot*100); return m;}catch(e){return null;}})();
+    if(bad.v||!(tot>0))return null; Object.keys(m).forEach(k=>m[k]=m[k]/tot*100); return m;}catch(e){return null;}})();
   const rows=items.map(it=>{
     const s=num(it.r.evalScore), act=it.r.act||'', memo=it.d.memo||'';
     // 間の余地: 全ブレーキ通過後、最初のブレーキまでの上昇余地%(大きいほど安全)
@@ -3425,13 +3593,17 @@ async function renderPlan(){
     const xEr=xj.xEr, xPass=xj.xPass, gOut=xj.g;
     // 堀のふるい(v9.9.39・ユーザー明示指示): 絶対MOAT指数≥70。採点は動かさず買付の対象から外すだけ
     const mg=ccfMoatGate(it.r,it.d);
-    // 買付順位の合成優先度: 格0.6 + 期待CAGR(X期待%を点数化)0.4。E[r]12%=50点・±10ptで0-100(順位付けのみ・合否はv9.9.78で遮断器E[r]≥0)。E[r]欠損はerPt=0=群内末尾(v9.9.30)。保留は順位に不介入(表示のみ)。格evalScore・採点・合否には無影響=表示順のみ
+    // 買付順位の合成優先度: 格0.6 + 期待CAGR(X期待%を点数化)0.4。E[r]12%=50点・±10ptで0-100(順位付けのみ・合否はv9.9.84で遮断器E[r]≥0)。E[r]欠損はerPt=0=群内末尾(v9.9.30)。保留は順位に不介入(表示のみ)。格evalScore・採点・合否には無影響=表示順のみ
     const erPt=(xEr!=null)?Math.max(0,Math.min(100,50+(xEr-12)*5)):0; // v9.9.30: E[r]欠損は中立50でなく0=群内末尾へ(欠損を「合格線ちょうど」と擬制すると実測E[r]8%の銘柄より上位に来る逆転が生じ、掟一〔実証値のみ〕と逆向きの誘因だった。データを埋めるほど順位が上がる方向に統一)
     const pc=s*0.6+erPt*0.4;
-    return {nm:it.d.nm||it.k.slice(3),t:it.k.slice(3),s,act,memo,room,hold,pc,layer,xEr,xPass,per,shy,g:gOut,gcap:xj.gcap,gcapSrc:xj.gcapSrc,grower:growerR,moat:mg.idx,moatOK:mg.pass,moatNA:mg.na,pos:(livePos&&livePos[it.k.slice(3).toUpperCase()]!=null)?livePos[it.k.slice(3).toUpperCase()]:num(it.d.pos),tier:it.r.tierShort||it.r.grade,audW:ccfAudit(it.d,it.r,it.coerce,it.ok),audB:ccfAuditBadge(ccfAudit(it.d,it.r,it.coerce,it.ok),it.k),px0:it.d.px,epsOld:(it.d.erdate&&(Date.now()-new Date(it.d.erdate).getTime())>300*864e5)};
+    // v9.9.78: 銘柄キー t は先頭トークンで統一（renderLedger:2789・盤:3167/3228 と同じ規則）。
+    //   旧実装の it.k.slice(3) は safeKey の残り全体（例:「6146_ディスコ」）で、日本株だけ
+    //   (a)価格チップ __Q が引けず「台帳」印に落ちる (b)Ⅶ実額の livePos が引けず手入力posへ黙って後退
+    //   (c)審査/決算ボタンの依頼文銘柄名が壊れる——Ⅵだけ他と違う規則だった（v9.9.65違反の同型）
+    const tSym=String(it.d.nm||it.k.slice(3)).trim().split(/[\s_]/)[0].toUpperCase();
+    return {nm:it.d.nm||it.k.slice(3),t:tSym,s,act,memo,room,hold,pc,layer,xEr,xPass,per,shy,g:gOut,gcap:xj.gcap,gcapSrc:xj.gcapSrc,grower:growerR,moat:mg.idx,moatOK:mg.pass,moatNA:mg.na,pos:(livePos&&livePos[tSym]!=null)?livePos[tSym]:num(it.d.pos),tier:it.r.tierShort||it.r.grade,audW:ccfAudit(it.d,it.r,it.coerce,it.ok),audB:ccfAuditBadge(ccfAudit(it.d,it.r,it.coerce,it.ok),it.k),px0:it.d.px,epsOld:(it.d.erdate&&(Date.now()-new Date(it.d.erdate).getTime())>300*864e5)};
   });
-  const lcol=['var(--gold-bright)','var(--jade)','var(--steel)'];
-  const lname=['80+ 城の中核（8%）','77–80 城の正規（5%）','75–77 城の外郭（3%）'];
+  const lcol=['var(--gold-bright)','var(--jade)','var(--steel)']; // layerは色分け専用（旧段差8/5/3のlnameはv9.9.78で撤去——v9.9.70の連続ウェイト移行後は未使用の死骸だった）
   let html='';
   // 買える(layer 0/1/2)を統合し優先度順に番号付け。※layerは色分けと表示にのみ使う——
   //   v9.9.70でサイズは連続式(Ω−70)へ移ったので、layerはもう配分を決めない
@@ -3487,16 +3659,18 @@ async function renderPlan(){
     if(!/弱気|bear/i.test(r.memo||''))out+=`<span style="font-size:11px;color:var(--dim);white-space:nowrap;margin-left:8px" title="IPS②: 買う前に「この投資が間違いと判明する条件」を1行、memoに必須記録">⚠弱気ケース未記録</span>`;
     return out;
   };
-  // 開通ライン(v9.9.29→v9.9.78で遮断器方式へ同期): 門X遮断器(E[r]≥0)が成立する最大PERと必要下落%。
-  //   旧4条件の同時求解(①E[r]≥12∧④ストレス≥7)は合否線の廃止に伴い撤去——合否と開通線が別の式だと
+  // 開通ライン(v9.9.29→v9.9.84で20年式へ是正→v9.9.84で遮断器方式へ同期): 門X遮断器(E[r]≥0)が成立する最大PERと必要下落%。
+  //   旧4条件の同時求解(①E[r]≥12∧④ストレス≥7)は合否線の廃止(v9.9.84)に伴い撤去——合否と開通線が別の式だと
   //   「同じ台帳を見る二つの検査器が違うことを言う」(v9.9.65)になるため、必ず xPass と同じ式で解く。
+  //   指数は門X本体の HOLD_YEARS=20 と同じ 1/20（v9.9.78の是正を維持——10年式のままだと開通PERが低く出て
+  //   必要下落%が過大になり階段指値の置き場を誤らせる）。
   //   併せて階段指値の上段「fair線」(倍率の重力ゼロ・約定時E[r]=earned)は従来どおり表示
   const openLine=r=>{ if(r.xEr==null||r.g==null||!(r.per>0)||r.xPass===true)return '';
     // v9.9.32(ユーザー指示): shyを価格連動で解く——shy(p)=shy0×p0/p(同じ還元ドル額を安い時価で割り直す)。
     // 倍率拡大は不計上のまま(掟六)。E[r]≥0 を満たす最大PERを二分法で求解(x_watch_recalcと同式)
-    const shyV=r.shy||0, fairPER=Math.max(16,Math.min(30,8+r.g));
+    const shyV=r.shy||0, fairPER=Math.max(16,Math.min(30,8+r.g)), iN=1/20; // iN=1/HOLD_YEARS（門X本体と同じ20年）
     const cond=pp=>{const sy=shyV*(r.per/pp);
-      const m1=(Math.pow(Math.min(pp,fairPER)/pp,0.1)-1)*100;
+      const m1=(Math.pow(Math.min(pp,fairPER)/pp,iN)-1)*100;
       return sy+r.g+m1>=0;};
     if(cond(r.per))return '';
     if(!cond(r.per*0.02))return '<span style="font-size:11px;color:var(--dim);white-space:nowrap">値段では開かない（還元ほぼゼロ×エンジン不足——価格が利回りを生まない）</span>';
@@ -3555,7 +3729,7 @@ async function renderPlan(){
   const planBox=ccfMonthPlanBox(pass,gap,passGap,tw,CITY);
   if(pass.length){
     const cityFill=pass.reduce((a,r)=>a+tw(r)/CITY*100,0), allFilled=passGap<=0;
-    html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px;color:var(--gold-bright)">🟢 投下可（Ω75+ × 門X遮断器(E[r]≥0) × 堀70+）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">質が投下閾値75+、かつ門Xが現値で成立＝買える組。サイズは<b>連続式 城60%×(Ω−70)÷Σ(Ω−70)・上限8%</b>（v9.9.70。旧・段差8/5/3は Ω80/77/75 の線で1.0ptの差が1.6倍の配分差を生んでいた——本文Ⅰの「ティア内の小数差に意味はない」と矛盾していたため連続へ。銘柄別の厳密¼ケリーは✦門Xの計算機で検算し、下回るならその値を上限にmemoへ根拠を記録。自動連携はしない=主観勝率を機械に入れない）。<b style="color:var(--gold-bright)">目標%</b>＝総資産に対する目標ウェイト／<b style="color:var(--gold-bright)">今月%</b>＝今月の個別枠を「目標−現在保有%」の不足分で按分(B案②・合計100%。posはⅦ資産の実額から自動算出・無い銘柄のみ採点機の手入力)。<b>二序列の役割</b>: pc順位＝買う順（複数点灯時の優先）／gap按分＝金額。投下可の城内合計 ${cityFill.toFixed(0)}%${cityFill<100?'（残りは押し目待ちの開通 or 網へ回す）':cityFill>100?'（>100%＝目標比で按分）':''}。${allFilled?'<b style="color:var(--jade)">投下可は全て目標充足＝今月の個別枠は網へ回す。</b>':''}</div>`;
+    html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px;color:var(--gold-bright)">🟢 投下可（Ω75+ × 門X遮断器(E[r]≥0) × 堀70+ × 点検0件）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">質が投下閾値75+、かつ門Xが現値で成立＝買える組。サイズは<b>連続式 城60%×(Ω−70)÷Σ(Ω−70)・上限8%</b>（v9.9.70。旧・段差8/5/3は Ω80/77/75 の線で1.0ptの差が1.6倍の配分差を生んでいた——本文Ⅰの「ティア内の小数差に意味はない」と矛盾していたため連続へ。銘柄別の厳密¼ケリーは✦門Xの計算機で検算し、下回るならその値を上限にmemoへ根拠を記録。自動連携はしない=主観勝率を機械に入れない）。<b style="color:var(--gold-bright)">目標%</b>＝総資産に対する目標ウェイト／<b style="color:var(--gold-bright)">今月%</b>＝今月の個別枠を「目標−現在保有%」の不足分で按分(B案②・合計100%。posはⅦ資産の実額から自動算出・無い銘柄のみ採点機の手入力)。<b>二序列の役割</b>: pc順位＝買う順（複数点灯時の優先）／gap按分＝金額。投下可の城内合計 ${cityFill.toFixed(0)}%${cityFill<100?'（残りは押し目待ちの開通 or 網へ回す）':cityFill>100?'（>100%＝目標比で按分）':''}。${allFilled?'<b style="color:var(--jade)">投下可は全て目標充足＝今月の個別枠は網へ回す。</b>':''}</div>`;
     html+=pass.map((r,i)=>brow(r,i,'',`${allocTag(r)}<span style="font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:8px">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span>${ulys(r)}`)).join('');
   } else html+=`<div style="color:var(--dim);font-size:13px;margin:10px 0">🟢 投下可なし——質75+・門X成立・堀70+を同時に満たす銘柄が現時点でゼロ。網と指値待機へ。</div>`;
   if(waitP.length){
@@ -3578,16 +3752,18 @@ async function renderPlan(){
   const watch=rows.filter(r=>r.s>=72&&r.s<75).sort((a,b)=>(b.pc-a.pc)||(b.s-a.s));
   if(watch.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px">⚪ 監視枠 72–75——<span style="color:var(--rust)">保有しない</span>・75超えで昇格</h2>`;
-    html+=watch.map(r=>`<div class="led" style="border-left:3px solid ${lcol[2]};opacity:.6"><span class="ln">${r.nm}</span><span class="grade" style="color:var(--steel)">${r.s}</span>${xtag(r)}<span style="font-size:11px;color:var(--muted)"><span style="color:var(--dim)">間</span> ${r.act}</span>${reqbtns(r)}</div>`).join('');
+    // v9.9.78: 旧act（「今買える/押し目待ち」＝v9.9.25で買付判定から外した粗いPERブレーキ）の表示を撤去。
+    //   Ⅳからはv9.9.74で撤去済みなのに監視枠の行だけ残り、Ⅵの四段関門と同じ言葉が別の意味で並んでいた
+    html+=watch.map(r=>`<div class="led" style="border-left:3px solid ${lcol[2]};opacity:.6"><span class="ln">${r.nm}</span><span class="grade" style="color:var(--steel)">${r.s}</span>${xtag(r)}${reqbtns(r)}</div>`).join('');
   }
-  html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8"><b>四段関門（v9.9.39で堀・v9.9.66で点検を追加）</b>：<b>🟢投下可＝格75+ ∧ 門X遮断器(E[r]≥0・v9.9.78) ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件</b>／<b>🟡押し目待ち＝格75+・堀70+だがE[r]&lt;0</b>／<b>⛔堀不足＝格75+だが堀&lt;70</b>／<b>⛔点検要修正＝台帳の値が壊れている（買わない理由であって売る理由ではない）</b>。堀を第三の関門にしたのは<u>採点で罰すると三重罰になる</u>ため——moatIdxは既にΩへ pm→sustain と直接項(.13)の二経路で入っているので、ここでさらに減点せず「買う対象から外す」だけにした（採点式・Ω・売却規律S1/S2/S3はいずれも不変）。<br><b>価格の関門は門X 1本（v9.9.25）</b>：旧「間（今買える）」の粗いPERブレーキは買付判定から外した（「今買える」なのに「監視」の矛盾を解消）。各群内の順位＝<b>合成順（格×0.6 ＋ E[r]%×0.4）</b>。実効レンジではE[r]+1%≈格+3.3点で<b>E[r]が主・格は安全下限（75+の合否）とタイブレーク</b>（v9.9.30で宣言を数学に一致——15%目標に整合するのはE[r]主の序列）。<b>群の境界（投下可の合否）は不変</b>。E[r]%は12%＝50点として点数化（±10ptで0-100・<b>順位付けのみ＝合否には使わない</b>・v9.9.78）、欠損は中立50。🟡の<b>開通＝PER○○（あと−○%）</b>は門X遮断器(E[r]≥0)が成立する入口PERと現値からの必要下落（v9.9.78で遮断器方式に同期）。fair線＝階段指値の上段（倍率の重力ゼロ・約定時E[r]=earned）。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。<br><b>E[r]（門X期待リターン）</b>＝門X裁きⅠの現値期待リターン：還元shy + 成長g（<b>高ROIC(≥15%)×堀無傷は実証CAGRを信じる</b>／それ以外は再投資式b×ROIICを実証CAGRで頭打ち・20%上限＝証拠の上限。v9.9.25：資本を返しながら伸びる資本軽量コンパウンダーを再投資式が過小評価する欠陥を是正・価格規律は不変） − 倍率の重力（<b>終着PER=min(現PER, clamp(8+g,16,30))＝成長連動</b>・<b>20年</b>（v9.9.69で10年→20年）。McKinsey価値ドライバーの理論フェアは成熟g4%≈22倍／持続成長高ROIC≈28-30倍だが、門は保守側に8+g〔下限16〕で頭を抑える＝理論値より安全余白を取る設計。成長産業と成熟産業を同じ終着PERで測らない。掟六の精神＝現PERを超えない＝拡大は見込まない、は維持）。<b>成長gの上限（v9.9.40・2026-07-29 ユーザー明示指示）</b>：gは<b>min(実績cagr, 実力g_cap, 20%)</b>。g_capが空欄のときはΩ側と同じ暫定規約<b>「gr（=per/perF−1・1年フォワード）で代用」</b>を門Xにも通す。従来は門Xだけがこの代用を持たず、<u>実力の推定が無いまま過去のcagrで10年先を描いていた</u>（実測：全316パックのg_capが空欄＝v9.9.31の安全弁 min(実績,実力) は一度も作動していなかった。6920レーザーテックは会社予想が前年比−18.8%の減益なのに実績cagr42.7%由来のg=20%でE[r]16.2%✓と表示されていた）。併せて<code>gcap&gt;0</code>のガードを外した——0や負値の実力成長が「上限なし」として素通りし、減速局面を抑えるための機構がまさに減速している銘柄で無効だった。E[r]の横の<span style="color:#d69a3c">⌄</span>印は「gが実績ではなく実力側で抑えられた」の意。<br><span style="color:var(--jade)">✓＝遮断器成立（E[r]≥0・v9.9.78——旧4条件〔E[r]≥12／投資R≥10／倍率寄与≤30%／ストレス≥7〕は歴史検証で選別力が無いと実測され廃止。歴史の勝者13社中10社を旧線が弾いていた）＝🟢投下可</span>／<span style="color:var(--rust)">✗＝E[r]マイナス→🟡押し目待ち（指値は✦門Xの監視表）</span>。順位・採点には一切影響しない。PER/ROIC欠損時はE[r]判定不能と表示。<br>各行の <span style="color:#8fc9a4">審査</span>＝門2審査プロトコル全文（この銘柄を門にかけ直す）／<span style="color:#d6b06c">決算</span>＝決算点検依頼文（S1-S3照合・6警報・門X前提の再計算）を、その銘柄名つきでコピー→Claudeに貼る。台帳のティア（Ⅳ）に依る。</div>`;
+  html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8"><b>四段関門（v9.9.39で堀・v9.9.66で点検を追加）</b>：<b>🟢投下可＝格75+ ∧ 門X遮断器(E[r]≥0・v9.9.84) ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件</b>／<b>🟡押し目待ち＝格75+・堀70+だがE[r]&lt;0</b>／<b>⛔堀不足＝格75+だが堀&lt;70</b>／<b>⛔点検要修正＝台帳の値が壊れている（買わない理由であって売る理由ではない）</b>。堀を第三の関門にしたのは<u>採点で罰すると三重罰になる</u>ため——moatIdxは既にΩへ pm→sustain と直接項(.13)の二経路で入っているので、ここでさらに減点せず「買う対象から外す」だけにした（採点式・Ω・売却規律S1/S2/S3はいずれも不変）。<br><b>価格の関門は門X 1本（v9.9.25）</b>：旧「間（今買える）」の粗いPERブレーキは買付判定から外した（「今買える」なのに「監視」の矛盾を解消）。各群内の順位＝<b>合成順（格×0.6 ＋ E[r]%×0.4）</b>。実効レンジではE[r]+1%≈格+3.3点で<b>E[r]が主・格は安全下限（75+の合否）とタイブレーク</b>（v9.9.30で宣言を数学に一致——15%目標に整合するのはE[r]主の序列）。<b>群の境界（投下可の合否）は不変</b>。E[r]%は12%＝50点として点数化（±10ptで0-100・<b>順位付けのみ＝合否には使わない</b>・v9.9.84）、欠損はerPt=0＝群内末尾（v9.9.30——中立50に擬制すると実測E[r]8%の銘柄より上位に来る逆転が生じるため）。🟡の<b>開通＝PER○○（あと−○%）</b>は門X遮断器(E[r]≥0)が成立する入口PERと現値からの必要下落（v9.9.84で遮断器方式に同期）。fair線＝階段指値の上段（倍率の重力ゼロ・約定時E[r]=earned）。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。<br><b>E[r]（門X期待リターン）</b>＝門X裁きⅠの現値期待リターン：還元shy + 成長g（<b>高ROIC(≥15%)×堀無傷は実証CAGRを信じる</b>／それ以外は再投資式b×ROIICを実証CAGRで頭打ち・20%上限＝証拠の上限。v9.9.25：資本を返しながら伸びる資本軽量コンパウンダーを再投資式が過小評価する欠陥を是正・価格規律は不変） − 倍率の重力（<b>終着PER=min(現PER, clamp(8+g,16,30))＝成長連動</b>・<b>20年</b>（v9.9.69で10年→20年）。McKinsey価値ドライバーの理論フェアは成熟g4%≈22倍／持続成長高ROIC≈28-30倍だが、門は保守側に8+g〔下限16〕で頭を抑える＝理論値より安全余白を取る設計。成長産業と成熟産業を同じ終着PERで測らない。掟六の精神＝現PERを超えない＝拡大は見込まない、は維持）。<b>成長gの上限（v9.9.40・2026-07-29 ユーザー明示指示）</b>：gは<b>min(実績cagr, 実力g_cap, 20%)</b>。g_capが空欄のときはΩ側と同じ暫定規約<b>「gr（=per/perF−1・1年フォワード）で代用」</b>を門Xにも通す。従来は門Xだけがこの代用を持たず、<u>実力の推定が無いまま過去のcagrで10年先を描いていた</u>（実測：全316パックのg_capが空欄＝v9.9.31の安全弁 min(実績,実力) は一度も作動していなかった。6920レーザーテックは会社予想が前年比−18.8%の減益なのに実績cagr42.7%由来のg=20%でE[r]16.2%✓と表示されていた）。併せて<code>gcap&gt;0</code>のガードを外した——0や負値の実力成長が「上限なし」として素通りし、減速局面を抑えるための機構がまさに減速している銘柄で無効だった。E[r]の横の<span style="color:#d69a3c">⌄</span>印は「gが実績ではなく実力側で抑えられた」の意。<br><span style="color:var(--jade)">✓＝遮断器成立（E[r]≥0・v9.9.84——旧4条件〔E[r]≥12／投資R≥10／倍率寄与≤30%／ストレス≥7〕は歴史検証で選別力が無いと実測され廃止。歴史の勝者13社中10社を旧線が弾いていた）＝🟢投下可</span>／<span style="color:var(--rust)">✗＝E[r]マイナス→🟡押し目待ち（指値は✦門Xの監視表）</span>。順位・採点には一切影響しない。PER/ROIC欠損時はE[r]判定不能と表示。<br>各行の <span style="color:#8fc9a4">審査</span>＝門2審査プロトコル全文（この銘柄を門にかけ直す）／<span style="color:#d6b06c">決算</span>＝決算点検依頼文（S1-S3照合・6警報・門X前提の再計算）を、その銘柄名つきでコピー→Claudeに貼る。台帳のティア（Ⅳ）に依る。</div>`;
   pb.innerHTML=planBox+html;
 }
 // ========== v9.1: .icsカレンダー書き出し ==========
 let _qrows=[];
 function _icsEsc(s){return String(s).replace(/\\/g,'\\\\').replace(/,/g,'\\,').replace(/;/g,'\\;').replace(/\n/g,'\\n');}
 function makeICS(evts){
-  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//CCF Omega Final Gate//v9.9.25//JA'];
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//CCF Omega Final Gate//v9.9.78//JA'];
   const now=new Date().toISOString().replace(/[-:]/g,'').slice(0,15)+'Z';
   evts.forEach((e,i)=>{
     const d=e.date.replace(/-/g,'');
@@ -3708,7 +3884,11 @@ async function priceUpdate(){
   for(const k of keys){try{const res=await store.get(k);if(res){const o=JSON.parse(res.value);if(o.data)recs.push(o.data);}}catch(e){}}
   const updated=[],unmatched=[];
   for(const p of pairs){
-    const r=recs.find(d=>{const nm=(d.nm||'').toUpperCase();return nm.includes(p.q)||p.q.includes(nm);});
+    // v9.9.78: 照合を「先頭トークン一致→全名一致→一意な部分一致」の順に。旧実装の双方向includesは
+    //   first-match勝ちで「V 350」がNVDA等のVを含む先行レコードへ誤適用し得た（MA↔MANHも同型）
+    //   ——per/px/perFを誤銘柄で書き換える経路。曖昧な部分一致は書かずにunmatchedへ出す（誤値より空欄）
+    let r=recs.find(d=>{const nm=(d.nm||'').trim().toUpperCase();return nm===p.q||nm.split(/[\s_]/)[0]===p.q;});
+    if(!r){const cand=recs.filter(d=>(d.nm||'').trim().toUpperCase().includes(p.q));if(cand.length===1)r=cand[0];}
     if(!r){unmatched.push(p.q);continue;}
     const d={...r};
     const oldPx=parseFloat(d.px)||0, eps=parseFloat(d.eps)||0, oldPer=parseFloat(d.per)||0;
@@ -3727,7 +3907,9 @@ async function priceUpdate(){
     else if(eps>0&&oldPer>0){const newPer=p.px/eps;factor=newPer/oldPer;d.per=+(newPer.toFixed(2));
       d.memo=((d.memo||'')+' ⚠per を px÷eps で再計算（旧pxが無く比率式が使えず）——epsがTTMか通期かで基準が変わる。要確認').trim();}
     else{unmatched.push(p.q+'（px/eps未保存で換算不能）');continue;}
-    if(d.evebit)d.evebit=+((parseFloat(d.evebit)*factor).toFixed(1));
+    // v9.9.78: evebitの価格比例スケールを撤去——EV=時価総額+純負債のうち価格に比例するのは時価総額だけで、
+    //   負債の重い会社では変化を過大計上し、更新のたびに誤差が累積していた。evebitは審査時の値のまま残す
+    //   （論外線EV/EBIT35の判定が古い値になる点は memo の px更新記録で追える。誤った更新より据置——ルール7の親戚）
     if(d.perF)d.perF=+((parseFloat(d.perF)*factor).toFixed(2));
     d.px=p.px; d.ddate=new Date().toISOString().slice(0,10);
     updated.push(d);
@@ -3770,7 +3952,10 @@ async function importAll(){
   const t=$('ioBox')?$('ioBox').value.trim():''; if(!t){uiNotice('下の入出力欄にJSON配列を貼ってから押してください');return;}
   await processBatch(t); if(typeof showPage==='function')showPage(2); window.scrollTo({top:0});
 }
-async function loadIt(k){try{const res=await store.get(k);if(!res)return;const {data}=JSON.parse(res.value);Object.entries(data).forEach(([id,v])=>{if($(id))$(id).value=v;});compute();if(typeof showPage==='function')showPage(2);window.scrollTo({top:0,behavior:'smooth'});}catch(e){}}
+// v9.9.78: dataに無いSELECTを既定値へ戻す「残り香を断つ」処理を読込にも入れた。
+//   取込(applyFields)・全再採点(2562)には v9.7 で入ったのに loadIt だけ無く、moatW等の新設欄を
+//   持たない旧レコードを開くと直前に表示していた銘柄の選択値のまま compute されていた（CMG型汚染の残存経路）
+async function loadIt(k){try{const res=await store.get(k);if(!res)return;const {data}=JSON.parse(res.value);Object.entries(data).forEach(([id,v])=>{if($(id))$(id).value=v;});if(typeof __selDefaults!=='undefined')Object.keys(__selDefaults).forEach(id=>{if($(id)&&data[id]===undefined)$(id).value=__selDefaults[id];});compute();if(typeof showPage==='function')showPage(2);window.scrollTo({top:0,behavior:'smooth'});}catch(e){}}
 async function delIt(k){if(!await uiConfirm('「'+k.slice(k.indexOf(':')+1)+'」を台帳から削除しますか？（直前版はg7prev:に退避されます）'))return;try{const cur=await store.get(k);if(cur&&k.startsWith('g7:'))await store.set('g7prev:'+k.slice(3),cur.value);await store.delete(k);renderLedger();}catch(e){}}
 
 // v9.9.35: 台帳の重複統合——保存キーは safeKey(nm)=nm文字列そのものから作られるため、
@@ -3881,7 +4066,7 @@ async function renderLog(){
 }
 function toggleLog(ek){const b=document.getElementById('bd_'+ek),a=document.getElementById('ar_'+ek);if(!b)return;const open=b.style.display!=='none';b.style.display=open?'none':'block';if(a)a.textContent=open?'▸':'▾';}
 async function delLog(k){if(!await uiConfirm('この検証記録を削除しますか？'))return;try{await store.delete(k);renderLog();}catch(e){}}
-function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();window.scrollTo({top:0});}
+function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();if(n===9&&typeof ccfEvents==='function')ccfEvents();window.scrollTo({top:0});}
 // ===== Ⅶ資産 iframe を「1枚のページ」として表示：中身(portfolio.html)が自分の高さをpostMessageで通知し、iframeをフィットさせて内部スクロールバーを消す =====
 window.addEventListener('message',function(e){ if(e&&e.data&&e.data.type==='ccfPfHeight'){ const f=document.getElementById('pfFrame'); if(f&&e.data.h>0)f.style.height=(e.data.h+8)+'px'; } });
 function pfShow(){ const f=document.getElementById('pfFrame'); if(!f)return; try{f.contentWindow.location.reload();}catch(e){f.src=f.src;} }
@@ -3961,7 +4146,7 @@ function ccfKessanText(tks){
     +'2. 警報6種は必ず原文を読み「定型文か実質か」を仕分ける: 誠(material weakness/restatement)／限(特許・独占期限)／集(顧客集中・単一調達)／指針(ガイダンス撤回・下方)／減損(金額と対象を特定・acq5の評価材料)／退任(CEO/CFO)。実質のみ要審査。\n'
     +'3. S1キル照合（唯一の全売却・確定事実クラスA/Bのみ）: 負債/EBITDA>4転落／債務超過転落／Z′′<1.1（前受金型モデルの構造的偽陽性に注意）／スプレッド陥落 ROIC≤WACC（金利起因なら正規化rfrで再計算して除外）／f5=threat／堀の明確な崩壊。\n'
     +'4. S2照合（買い増し停止→最大1/3縮小）: 堀の軌道反転（粗利×シェア同時低下）／FCF転換<65%（成長capexで説明不能なら）。S3（記録のみ）: g*がg_cap+15pt超／保有比率>35%。\n'
-    +'5. 門X前提の再計算（投下可・X監視表の銘柄）: 新epsでPER・X開通株価を更新し、遮断器（E[r]≥0・v9.9.78）を再判定。掟六=倍率拡大を見込まない。四段関門の昇降格はⅥの再採点に任せる。\n'
+    +'5. 門X前提の再計算（投下可・X監視表の銘柄）: 新epsでPER・X開通株価を更新し、遮断器（E[r]≥0・v9.9.84）を再判定。掟六=倍率拡大を見込まない。四段関門の昇降格はⅥの再採点に任せる。\n'
     +'6. 判定: 各社「異常なし」or「要審査（理由1行）」。要審査は門2再審査の依頼文へ。台帳の機械値が動いたら更新JSONを返す（定性項目dom/irr/rep/dur/p1-4/f1-5は原本根拠なしに変えない）。\n'
     +'7. 株価の上下・単四半期のEPSミスだけでは要審査にしない（長期保有バイアス）。_metaに点検日(YYYY-MM-DD)とモデル名を記載。';
 }

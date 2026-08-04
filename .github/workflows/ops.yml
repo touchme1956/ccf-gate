@@ -1,0 +1,67 @@
+# 月次運用サイクルの自動実行（2026-08-04新設・ユーザー要望「すべて回るように」）
+#
+# 何を回すか: 鍵なしで機械的に回せる月次〜四半期の作業を毎月2日にまとめて回す——
+#   決算カレンダー(SEC推定・鍵なし可)／監視リスト生成(保有∪投下可∪Ω75+∪要審査∪pin)／
+#   X監視表の開通ライン再計算／保有・監視の決算点検(米・SEC)／配当分離(divY)。
+#   7月だけ v10影スコアも更新する（年次較正の材料。答え合わせ自体はユーザーと＝自動化しない）。
+# 回せないもの（ops_status.json が「手動」として見張る）: 日本株の決算点検(EDINET鍵)・
+#   門0発掘(companyfacts.zip 1.4GB)・年次較正の判定・審査そのもの。
+# 各ステップは continue-on-error——1本の失敗で他を止めない。失敗は隠れない:
+#   ops_status.py が最終実行日を実測するので、止まった作業は門の🔔イベントタブで⚠になる。
+name: monthly ops
+on:
+  schedule:
+    - cron: '0 23 2 * *'   # 毎月2日 23:00 UTC（market.yml/events.ymlと時間をずらす）
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  ops:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}   # ops_status が git の最終コミット日で回転を測るため全履歴が要る
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: 決算カレンダー（SEC推定・鍵なし）
+        continue-on-error: true
+        run: python kessan_calendar.py
+      - name: 監視リスト生成
+        continue-on-error: true
+        run: python3 make_kanshi.py
+      - name: X監視表の開通ライン再計算
+        continue-on-error: true
+        run: python x_watch_recalc.py
+      - name: 保有・監視の決算点検（米・四半期作業の月次先回り）
+        continue-on-error: true
+        run: python kessan_check.py
+      - name: 決算点検（日本株・EDINET鍵があるときだけ自動）
+        continue-on-error: true
+        env:
+          EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
+        run: |
+          if [ -n "$EDINET_API_KEY" ]; then
+            pip -q install pypdf
+            python3 kessan_check_jp.py
+          else
+            echo "EDINET_API_KEY未設定＝スキップ（既知の穴。無料鍵: api.edinet-fsa.go.jp → Secretsへ）"
+          fi
+      - name: 配当分離(divY)——予実台帳の補正項
+        continue-on-error: true
+        run: python3 night/fill_divy.py
+      - name: v10影スコア更新（7月のみ＝年次較正の材料）
+        continue-on-error: true
+        run: |
+          if [ "$(date -u +%m)" = "07" ]; then python3 v10_series.py; else echo "7月以外はスキップ"; fi
+      - name: 運用サイクルの回転状態を実測
+        run: python3 night/ops_status.py
+      - name: コミット
+        run: |
+          git config user.name  "ccf-gate bot"
+          git config user.email "noreply@github.com"
+          N=$(python3 -c "import json;print(sum(1 for r in json.load(open('out/ops_status.json'))['items'] if r['state']=='due'))" 2>/dev/null || echo "?")
+          MSG="monthly ops $(date -u +%Y-%m-%d)"
+          [ "$N" != "0" ] && MSG="⚠ 停止疑い ${N}本｜monthly ops $(date -u +%Y-%m-%d)"
+          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "$MSG"
+          git push

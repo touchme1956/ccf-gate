@@ -96,16 +96,48 @@ def convert(write=False):
 
 
 def score():
+    # A5是正後(2026-08-04)の前提: `--jp` は**部分実行**なので out/score_all.partial.json へ書く。
+    #   正本 out/score_all.json には触れない（従来は --jp が正本を約40行の部分集合で潰していた）。
     r = subprocess.run(["node", os.path.join(ROOT, "night", "score_all.js"), "--jp"],
                        cwd=ROOT, capture_output=True, text=True)
     if r.returncode:
         sys.stderr.write(r.stdout + r.stderr)
         raise SystemExit("score_all.js 失敗")
-    return {x["t"]: x for x in json.load(open(os.path.join(OUT, "score_all.json"), encoding="utf-8"))}
+    return {x["t"]: x for x in json.load(open(os.path.join(OUT, "score_all.partial.json"), encoding="utf-8"))}
+
+
+def score_full():
+    """復元後の正本を全件で書き直す（旗なし＝正本 out/score_all.json を更新する唯一の経路）"""
+    r = subprocess.run(["node", os.path.join(ROOT, "night", "score_all.js")],
+                       cwd=ROOT, capture_output=True, text=True)
+    if r.returncode:
+        sys.stderr.write(r.stdout + r.stderr)
+        raise SystemExit("score_all.js（全件）失敗")
 
 
 def main():
     write = "--write" in sys.argv
+    force = "--force" in sys.argv
+    # B18(2026-08-04): **適用済みガード**。この移行(v9.9.73)は一度きりなのに再実行可能なままで、
+    #   再実行すると (a)roic/roicg が 2026-08-03 時点のハードコード値へ巻き戻る（以後の是正を消す）
+    #   (b)kenshi に同じ移行記録が重複追記される。_meta.basis.roicConvention="us-unified" が
+    #   既に付いている社が対象に居たら拒否する。意図的にやり直すなら --force。
+    if write and not force:
+        applied = []
+        for t in list(SINGLE) + list(TC):
+            p = os.path.join(OUT, "%s_gate_pack.json" % t)
+            try:
+                b = ((json.load(open(p, encoding="utf-8")).get("_meta") or {}).get("basis") or {})
+            except Exception:
+                continue
+            if str(b.get("roicConvention", "")).startswith("us-unified"):
+                applied.append(t)
+        if applied:
+            print("✗ --write を拒否: v9.9.73 の統一は**適用済み**（roicConvention=us-unified が "
+                  "%d社: %s …）。\n  再実行すると roic が 2026-08-03 のハードコード値へ巻き戻り、"
+                  "kenshi が重複追記される。\n  それでも意図的にやり直すなら --force を付けること。"
+                  % (len(applied), " ".join(applied[:8])))
+            return 1
     if write:
         convert(True)
         print("パックへ反映しました（%d社）。night/score_all.js で確認してください。" % (len(SINGLE) + len(TC)))
@@ -125,7 +157,9 @@ def main():
         shutil.rmtree(OUT)
         shutil.copytree(bak, OUT)
         shutil.rmtree(bak)
-        score()   # 正本の out/score_all.json を戻す
+        # 復元後は**全件（旗なし）**で正本 out/score_all.json を書き直す（2026-08-04・B18a）。
+        #   従来ここも --jp で回しており、正本が日本株だけの部分集合に潰れたまま残っていた（A5）。
+        score_full()
 
     print("%-6s %-16s %6s %6s %7s  %-8s %-8s" % ("T", "銘柄", "Ω前", "Ω後", "差", "四段前", "四段後"))
     mv = 0
@@ -148,4 +182,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())   # B18: 適用済みガードの拒否(return 1)を終了コードに乗せる（黙って0を返さない）

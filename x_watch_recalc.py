@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-x_watch_recalc.py — X監視表(gate1_x_watch.json)の開通ラインを門X遮断器(E[r]≥0・v9.9.78)で再計算する。
+x_watch_recalc.py — X監視表(gate1_x_watch.json)の開通ラインを門X遮断器(E[r]≥0・v9.9.84)で再計算する。
 背景(2026-07精査): 旧監視表は条件①(E[r]≥12)だけを解いており、記載の開通PERで約定しても
 ④ストレス(成長−25%∧終着PER−30%でE[r]≥7)が不成立=門X自身の判定を通らない不整合があった
 (例: ASML 旧開通PER33.8ではストレス4.79<7)。本器は①と④を同時に満たす最大PERを解く。
@@ -10,7 +10,7 @@ x_watch_recalc.py — X監視表(gate1_x_watch.json)の開通ラインを門X遮
   X開通ライン一本の指値は約定期待値を12%に錨付けする——階段化でエントリー期待値を12〜15%帯へ。
   倍率拡大は相変わらず計上しない(掟六)ため教義と両立。
 式(正本Ⅵ・chomiraiと同一):
-  fairPER = clamp(8+g, 16, 30)   mult(p) = ((min(p,fair)/p)^0.1 − 1)×100
+  fairPER = clamp(8+g, 16, 30)   mult(p) = ((min(p,fair)/p)^(1/20) − 1)×100  (20年・本体HOLD_YEARSと同じ)
   ① E[r]=shy+g+mult(p) ≥ 12 → p ≤ fair / (1+(12−earned)/100)^10   (earned=shy+g)
   ④ erS(p)=shy+hc·g+((min(p,fair)×0.7/p)^0.1−1)×100 ≥ 7  (hc=grower0.85/通常0.75・2026-07成長連動)
      p≤fairでは erS=shy+hc·g−3.5(定数)。これが7未満なら④は価格で解けない=値段では開かない。
@@ -28,11 +28,24 @@ d = json.load(open(P, encoding="utf-8"))
 # --- Ω75+(kanshi_list)のうち監視表に未収載で、packに市場値(per/px)が揃った銘柄を自動追加 ---
 #     g導出はⅥ買付順位と同式: roicQ>=15かつ堀無傷かつcagr>0→min(cagr,20) / それ以外はbR×min(roicg,60)をcagrで頭打ち
 try:
-    kn = json.load(open("kanshi_list.json", encoding="utf-8"))
+    # 2026-08-04是正(B16): 旧実装は kanshi_list.json の存在しないキー `groups` を読んでおり
+    #   （実キーは list/pin/note）、候補が常に空＝**自動追加が一度も発火していなかった**（例外も
+    #   出ない静かな死）。群の定義は out/score_all.json（門のcompute()の実測）から導く:
+    #     toka=投下可(buy=true) / omega_watch=Ω75+(s>=75) / oshime=押し目待ち(Ω75+∧堀OK∧X未開通)。
+    #   score_all.json が無ければ kanshi_list の list∪pin へフォールバック（監視の合併集合）。
     have = {l["ticker"] for l in d["lines"]}
     cand = []
-    for grp in ("toka", "omega_watch", "oshime"):
-        cand += kn.get("groups", {}).get(grp, [])
+    try:
+        sa = json.load(open("out/score_all.json", encoding="utf-8"))
+        cand += [r["t"] for r in sa if r.get("buy")]                                   # toka
+        cand += [r["t"] for r in sa if (r.get("s") or 0) >= 75]                        # omega_watch
+        cand += [r["t"] for r in sa if (r.get("s") or 0) >= 75
+                 and r.get("moatOK") and not r.get("xPass")]                           # oshime
+    except Exception:
+        kn = json.load(open("kanshi_list.json", encoding="utf-8"))
+        cand += (kn.get("list") or []) + (kn.get("pin") or [])
+    seen = set()
+    cand = [t for t in cand if not (t in seen or seen.add(t))]
     for t in cand:
         if t in have: continue
         fp = f"out/{t}_gate_pack.json"
@@ -91,7 +104,7 @@ for l in d["lines"]:
         pass
 # 2026-07(ユーザー指示): shyを価格連動で解く——同じ還元ドル額なら安値ほど利回りが上がる(shy(p)=shy0×p0/p)。
     # 旧実装はshyを現値固定で解いており、高還元の成熟優良で「値段では開かない」が過剰に絶対的だった。
-    # 倍率拡大は相変わらず不計上(掟六)。v9.9.78(2026-08-04 ユーザー明示指示「遮断器のみ実装しよう」):
+    # 倍率拡大は相変わらず不計上(掟六)。v9.9.84(2026-08-04 ユーザー明示指示「遮断器のみ実装しよう」):
     # 合否線は遮断器 E[r]≥0 のみ——開通線も同じ式で解く(合否と別の式で解くと v9.9.65 の
     # 「同じ台帳を見る二つの検査器が違うことを言う」になる)。旧①≥12∧④ストレス≥7は廃止。
     # 2026-07-28: shy未測定を0と断定しない。旧実装は pack.shy=null を 0.0 に化けさせており、
@@ -112,8 +125,8 @@ for l in d["lines"]:
 
     def cond(pp):
         sy = shy * (per / pp)  # shy0×(p0/p)——PER比=価格比(eps一定仮定)
-        m1 = ((min(pp, fair) / pp) ** 0.1 - 1) * 100
-        return sy + g + m1 >= 0  # v9.9.78: 遮断器E[r]≥0（index.html ccfXJudge と同式）
+        m1 = ((min(pp, fair) / pp) ** (1 / 20) - 1) * 100  # 指数=1/HOLD_YEARS(20年・本体と同じ)
+        return sy + g + m1 >= 0  # v9.9.84: 遮断器E[r]≥0（index.html ccfXJudge と同式）
     if cond(per):
         popen = per
         nl.update(x_open_per=round(per, 1), x_open_px=px, drop_pct=0.0, status="既に開通圏——再採点で確認")
@@ -145,7 +158,7 @@ for l in d["lines"]:
 
 d["lines"] = out
 d["generated"] = str(date.today())
-d["method"] = ("門X遮断器(E[r]≥0・v9.9.78)が成立する最大PERから逆算(旧4条件は2026-08-04に廃止——歴史検証で"
+d["method"] = ("門X遮断器(E[r]≥0・v9.9.84)が成立する最大PERから逆算(旧4条件は2026-08-04に廃止——歴史検証で"
                "④ストレス〔成長−25%∧終着PER−30%≥7〕不成立の開通線を出していた)。掟六v2成長連動: "
                "終着PER=min(現PER,clamp(8+g,16,30))。階段指値=先段1/2をx_open(浅い・先に約定)・深段1/2を"
                "fair線(深い)に置く。shyは価格連動(shy(p)=shy0×p0/p・2026-07)＝同じ還元ドル額を安い時価で割り直す。grower(実証成長×資本効率×堀無傷×質72+)は④ヘアカット15%——約定期待値を12%固定から12〜15%帯へ。"

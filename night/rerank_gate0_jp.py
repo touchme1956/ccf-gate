@@ -33,8 +33,15 @@ night/rerank_gate0_jp.py — 門0-JPの待ち行列を「測れる指標だけ�
   62社を捨てずに済み、審査時に門式ROICで再計算するという既存の流れも変わらない。
 
 ■ 使い方
-  python3 night/rerank_gate0_jp.py           新旧を比較して表示（書き換えない）
-  python3 night/rerank_gate0_jp.py --write   gate0_jp_queue.json を更新（旧は .prev へ退避）
+  python3 night/rerank_gate0_jp.py           新旧を比較して表示（書き換えない・これだけが現役）
+  python3 night/rerank_gate0_jp.py --write   **拒否される（2026-08-04・B17）**
+
+■ --write を封じた理由（2026-08-04）
+  この道具は 2026-08-03 の rebuild_gate0_jp.py（キュー二枠化＝pt上位50 ∪ 質の椅子14社）に
+  **上書きされた旧世代**なのに、同じ gate0_jp_queue.json を書けるままだった。
+  ここで --write すると**質の椅子14社（キーエンス等）が黙って消える**——「黙って消すと
+  v9.9.52 の『城の行が理由不明で出ない』と同じ事故になる」の同型。表示（新旧pt比較）は
+  歴史記録・検算として残すが、書き込みは rebuild へ一本化する。
 """
 import csv
 import json
@@ -56,7 +63,19 @@ def clamp(x, hi):
     return max(0.0, min(float(x), hi))
 
 
+def fnum(v):
+    """2026-08-04(B17): rebuild_gate0_jp(2026-08-03)が roic≥15 のふるいを撤廃したため、
+    現行CSVには roic が**空欄**の救済行が65行ある。float('') で落ちると表示専用の
+    プレビューまで死ぬので、空欄は None として読む（欠測をゼロと読まない＝ルール7）。"""
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
 def old_pt(r):
+    if r["roic"] is None:            # 旧式は roic を含む＝roic無しの行は旧キューの母集団に居なかった
+        return None
     return (0.35 * clamp(r["roic"], 60) + 0.30 * clamp(r["cagr"], 30)
             + 0.25 * clamp(r["opm"], 40) + 0.10 * clamp(r["eq"], 80))
 
@@ -68,11 +87,11 @@ def new_pt(r):
 
 def main():
     write = "--write" in sys.argv
-    rows = [{k: (float(v) if k in ("roic", "opm", "cagr", "eq", "pt") else v)
+    rows = [{k: (fnum(v) if k in ("roic", "opm", "cagr", "eq", "pt") else v)
              for k, v in r.items()} for r in csv.DictReader(open(CSV, encoding="utf-8"))]
     for r in rows:
         r["pt_old"], r["pt_new"] = old_pt(r), new_pt(r)
-    o = sorted(rows, key=lambda r: -r["pt_old"])
+    o = sorted([r for r in rows if r["pt_old"] is not None], key=lambda r: -r["pt_old"])
     n = sorted(rows, key=lambda r: -r["pt_new"])
     ro = {r["sec"]: i + 1 for i, r in enumerate(o)}
     rn = {r["sec"]: i + 1 for i, r in enumerate(n)}
@@ -85,8 +104,10 @@ def main():
     print(f"■ 新キューに入る {len(added)}社")
     for c in sorted(added, key=lambda c: rn[c]):
         r = next(x for x in rows if x["sec"] == c)
-        print(f"   {rn[c]:3d}位(旧{ro[c]:3d}位) {c:5s} {nm[c][:20]:22s} "
-              f"opm{r['opm']:5.1f} cagr{r['cagr']:5.1f} eq{r['eq']:5.1f} 生roic{r['roic']:8.1f} art={r['roic_artifact']}")
+        old_rank = f"{ro[c]:3d}位" if c in ro else "  — "   # roic空欄の救済行は旧式の母集団に居ない
+        raw = f"{r['roic']:8.1f}" if r["roic"] is not None else "      — "
+        print(f"   {rn[c]:3d}位(旧{old_rank}) {c:5s} {nm[c][:20]:22s} "
+              f"opm{r['opm']:5.1f} cagr{r['cagr']:5.1f} eq{r['eq']:5.1f} 生roic{raw} art={r['roic_artifact']}")
     print(f"\n■ 新キューから外れる {len(dropped)}社（生ROICの高さだけで上位に来ていた社が中心）")
     for c in sorted(dropped, key=lambda c: ro[c]):
         r = next(x for x in rows if x["sec"] == c)
@@ -100,8 +121,16 @@ def main():
             print(f"   {c} {nm[c][:16]:18s} {ro[c]:3d}位 → **{rn[c]:3d}位**")
 
     if not write:
-        print("\n※--write で gate0_jp_queue.json を更新（旧は .prev へ退避）")
+        print("\n※このスクリプトは表示専用（旧世代）。キューの再生成は"
+              " `python3 night/rebuild_gate0_jp.py --write` を使うこと")
         return 0
+
+    # B17(2026-08-04): 書き込みは拒否する。rebuild_gate0_jp.py（2026-08-03・二枠キュー＝
+    #   pt上位50 ∪ 質の椅子14社）が正であり、ここで書くと質の椅子14社が黙って消える。
+    print("\n✗ --write は拒否: このスクリプトは rebuild_gate0_jp.py（二枠キュー）に上書きされた旧世代。"
+          "\n  ここで gate0_jp_queue.json を書くと**質の椅子14社（キーエンス等）が黙って消える**。"
+          "\n  → `python3 night/rebuild_gate0_jp.py --write` を使うこと")
+    return 1
 
     if os.path.exists(QUEUE):
         shutil.copy2(QUEUE, QUEUE + ".prev")
@@ -116,7 +145,8 @@ def main():
                  "中央値5.01倍・最大204倍ずれ、7034は符号まで逆(生72.5%→審査後−10.2%)で旧ptの1位だった。"
                  "opmは生/審査後が1.00倍(35/36社で完全一致)、cagrも1.00倍で信頼できるため、"
                  "旧の0.30/0.25/0.10を合計0.65で再正規化して残した(測れない項は落として再正規化＝門の作法)。"
-                 "roicは審査時に門式(NOPAT÷(有利子負債+自己資本−のれん)・現金非控除・60%上限)で算出する。"
+                 "roicは審査時に門式(v9.9.73米国統一規約=NOPAT=営業利益×(1−実効税率)÷"
+                 "(自己資本+有利子負債−のれん−無形)・現金非控除・上限なし・IC縮退ガード)で算出する。"
                  "定性(p/f・堀)は門2審査で評価。旧キューは gate0_jp_queue.json.prev"),
         "queue": [{"sec": r["sec"], "edinet": r["edinet"], "nm": r["nm"], "ind": r["ind"],
                    "opm": r["opm"], "cagr": r["cagr"], "eq": r["eq"],

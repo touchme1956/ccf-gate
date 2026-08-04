@@ -40,8 +40,11 @@ kessan_check_jp.py — 日本株の四半期点検（2026-07-29新設）
 
 原本の取り方:
   https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/{docID}.pdf  … 鍵なしで取れる（実証済み）
-  ※EDINET API v2 は購読キーが要り本環境では401。docIDはパックの _meta から拾う。
-    _meta に無い銘柄は「原本未取得」として明示し、憶測で埋めない。
+  ※docIDの選び方（2026-08-04是正・B15）: 環境変数 EDINET_API_KEY があれば EDINET API v2 の
+    日付別一覧を過去100日走査し**最新の有報/四半期/半期報告書**を読む。鍵が無ければパックの
+    _meta のdocID（＝審査時に読んだ古い書類）しか読めないため、**四半期点検として不成立**を
+    明示して全社を要審査に倒す——古い書類の再走査から「異常なし」を出すのは偽の健全宣言。
+    _meta にも無い銘柄は「原本未取得」として明示し、憶測で埋めない。
 
 使い方:
   python3 kessan_check_jp.py            監視リストの日本株すべて
@@ -99,6 +102,42 @@ AMOUNT = re.compile(r"[0-9０-９][0-9０-９,，]*\s*(?:百万円|千円|億円
 
 def http(url, timeout=90):
     return urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=timeout).read()
+
+
+# ── 新規提出の取得（2026-08-04是正・B15）──────────────────────────────────────
+# 従来は docID を**パックの_meta（審査時に読んだ有報）から拾うだけ**だったため、四半期点検の
+# たびに**同じ古いPDFを再走査して「異常なし」と印字**していた＝日本株の四半期点検が実質年1回。
+# EDINET API v2（要購読キー・環境変数 EDINET_API_KEY）の日付別一覧を過去N日ぶん走査し、
+# secCode→最新の 有報(120)/四半期報告書(140)/半期報告書(160) のdocIDを組む。
+# 鍵が無ければ**取得不能を大声で言い、要審査に倒す**——古い書類からの「異常なし」は偽の健全宣言。
+EDINET_LIST = "https://api.edinet-fsa.go.jp/api/v2/documents.json?date={}&type=2&Subscription-Key={}"
+
+
+def edinet_recent_docs(days=100):
+    """過去days日の提出一覧から {証券コード4桁: (docID, 提出日時, 書類名)} を返す。鍵なしはNone。"""
+    key = os.environ.get("EDINET_API_KEY", "").strip()
+    if not key:
+        return None
+    import time as _time
+    from datetime import date as _d, timedelta as _td
+    out = {}
+    today = _d.today()
+    for i in range(days):
+        day = today - _td(days=i)
+        try:
+            j = json.loads(http(EDINET_LIST.format(day.isoformat(), key), timeout=30))
+        except Exception:
+            continue                      # 休日・一時失敗は飛ばす（他の日で拾える）
+        for r in j.get("results", []) or []:
+            if r.get("docTypeCode") not in ("120", "140", "160"):
+                continue
+            sec = (r.get("secCode") or "")[:4]   # EDINETのsecCodeは5桁(末尾0)
+            doc = r.get("docID")
+            sub = r.get("submitDateTime") or ""
+            if sec and doc and (sec not in out or sub > out[sec][1]):
+                out[sec] = (doc, sub, r.get("docDescription") or "")
+        _time.sleep(0.1)                  # 礼儀
+    return out
 
 
 def pdf_text(doc_id):
@@ -186,17 +225,32 @@ def main():
         return 0
     os.makedirs(OUTDIR, exist_ok=True)
     print(f"=== 日本株 四半期点検 ({len(codes)}社) ===")
+    # 2026-08-04是正(B15): まず新規提出を探す。鍵なしなら**点検不成立を明示**（下のstale_reason）
+    recent = edinet_recent_docs()
+    stale_reason = None
+    if recent is None:
+        stale_reason = ("新規提出の取得不能（EDINET鍵なし）＝この点検はパック採取時点の書類の"
+                        "再走査であり四半期点検として不成立")
+        print(f"⚠⚠ {stale_reason}")
+        print("   （環境変数 EDINET_API_KEY を設定すれば直近提出の四半期/半期/有報を自動取得する。"
+              "以下の走査結果は参考情報であり、全社を要審査として扱う）")
     for c in codes:
         pk = os.path.join("out", f"{c}_gate_pack.json")
-        doc = None
-        if os.path.exists(pk):
+        doc, doc_src = None, ""
+        if recent and c in recent:
+            doc, _sub, _desc = recent[c]
+            doc_src = f"EDINET新規提出({_sub} {_desc})"
+        if not doc and os.path.exists(pk):
             blob = open(pk, encoding="utf-8").read()
             # docIDは S + 7桁英数(例 S100WQ7F)の計8文字。**最新のものを採る**——_metaには
             # 過去期のdocIDも並ぶので、辞書順で最大＝最も新しい発行のものを選ぶ
             m = sorted(set(re.findall(r"S1[0-9A-Z]{6}\b", blob)))
             doc = m[-1] if m else None
+            if doc:
+                doc_src = ("パック採取時のdocID（鍵はあるが直近100日にこの社の新規提出なし）"
+                           if recent is not None else "パック採取時のdocID（新規提出は未探索）")
         if not doc:
-            print(f"  {c:<6} 原本未取得——パックの_metaにEDINET docIDが無い。手動で四半期報告書を確認")
+            print(f"  {c:<6} 原本未取得——EDINET新規提出にもパックの_metaにもdocIDが無い。手動で確認")
             continue
         try:
             t = pdf_text(doc)
@@ -256,12 +310,16 @@ def main():
                     flags.append("警報:集(新規出現)")
             else:
                 flags.append(f"警報:{c2}")
+        # 2026-08-04是正(B15): 鍵なし＝古い書類の再走査からは**決して「異常なし」を出さない**。
+        #   走査は参考として残すが、判定は要審査（点検不成立）へ倒す
+        if stale_reason:
+            flags.insert(0, f"点検不成立——{stale_reason}")
         verdict = "要審査: " + " / ".join(flags) if flags else "異常なし(機械判定)"
         if bad:
             verdict += "  ※数値は自己検算で破棄（警報のみで判定）"
         print(f"  {c:<6} YoY {('%.1f%%' % yoy) if yoy is not None else '  na':>7}"
               f"  営利差 {('%.1fpt' % opd) if opd is not None else ' na':>7}  → {verdict}")
-        body = (f"{c}  docID={doc}  原本=EDINET直配信 {PDF.format(doc)}\n"
+        body = (f"{c}  docID={doc}（{doc_src}）  原本=EDINET直配信 {PDF.format(doc)}\n"
                 + (f"【自己検算で数値を破棄】{bad}\n" if bad else "")
                 + f"売上高(当期/前年同期)={rev}  営業利益={op}\n"
                 f"売上YoY: {yoy}  営業利益率差: {opd}\n判定: {verdict}\n\n"

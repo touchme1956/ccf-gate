@@ -38,6 +38,28 @@ def is_jp(t):
     """日本株コード(4-5桁数字・末尾.Tも許容)。Alpha Vantage/SEC推定は米国のみ"""
     return bool(re.fullmatch(r"\d{4,5}(?:\.T)?", t))
 
+def _load_hold_elite():
+    """◆保有 と ★質80+ の実体を読む（2026-08-04是正・R10）。
+    旧実装は kanshi_list.json 経路で hold=cfg['holdings']（存在しないキー＝常に空）・
+    elite=監視全員 としており、**◆が一度も付かず★が全員に付く**＝マークが無意味化していた。
+    ◆は holdings.json（kessan_check.py と同じ正本）、★は out/score_all.json の実測Ω(s>=80) から採る。
+    score_all が無ければ★は付けない——判定不能を「全員★」と偽らない。"""
+    hold, elite = set(), set()
+    for p in HOLD_PATHS:
+        if os.path.exists(p):
+            try:
+                cfg = json.load(open(p, encoding="utf-8"))
+                hold = {t.strip().upper() for t in (cfg.get("holdings") or []) if t.strip()}
+            except Exception:
+                pass
+            break
+    try:
+        sa = json.load(open("out/score_all.json", encoding="utf-8"))
+        elite = {str(r.get("t", "")).upper() for r in sa if (r.get("s") or 0) >= 80}
+    except Exception:
+        pass
+    return hold, elite
+
 def load_targets():
     """決算日カレンダーの対象＝監視の正本リスト。優先: kanshi_list.json(監視セット・キーは list)。
        無ければ holdings.json(保有+質80+)。日本株コードはAlpha Vantage/SEC推定の
@@ -57,12 +79,14 @@ def load_targets():
             tk = sorted(set(tk))
             us = [t for t in tk if not is_jp(t)]
             jp = [t for t in tk if is_jp(t)]
-            hold = set(t.strip().upper() for t in (cfg.get("holdings") or []) if t.strip())
+            # 2026-08-04是正(R10): ◆★は監視リストからは決まらない（監視は合併集合で保有/質の
+            #   区別を持たない）。holdings.json と score_all.json から実体を引く
+            hold, elite = _load_hold_elite()
             if us:
                 print(f"監視リスト: {p} → 監視{len(tk)}社（うち米国{len(us)}社の決算日を取得）")
                 if jp:
                     print(f"  ※日本株{len(jp)}社は対象外→EDINET/IR経路へ: {jp}")
-                return sorted(set(us)), hold, set(us)
+                return sorted(set(us)), hold, elite
             # フォールバックは**黙って**行わない——上の事故は「静かな縮退」が原因だった
             print(f"⚠ {p} は在るが点検可能な銘柄が0件（キー list/tickers/pin を確認）→ holdings.json へ退避")
     for p in HOLD_PATHS:
@@ -170,7 +194,7 @@ def write_ics(items):
               "DESCRIPTION:壊れない複利の門・四半期点検の対象。決算後は「四半期点検の依頼文」で点検。株価では動かない。",
               "END:VEVENT"]
     L.append("END:VCALENDAR")
-    open(OUT_ICS, "w", newline="").write("\r\n".join(L) + "\r\n")
+    open(OUT_ICS, "w", newline="", encoding="utf-8").write("\r\n".join(L) + "\r\n")
 
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if re.fullmatch(r"[A-Za-z][A-Za-z.\-]{0,7}", a)]
@@ -189,6 +213,6 @@ if __name__ == "__main__":
         print(f"  {it['t']:<6}{mark} {it['date']} (D-{dd}){est}")
     os.makedirs("out", exist_ok=True)
     json.dump({"generated": str(today), "items": items},
-              open(OUT_JSON, "w"), ensure_ascii=False, indent=1)
+              open(OUT_JSON, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     write_ics(items)
     print(f"\n→ {OUT_ICS}（Googleカレンダーに取込=スケジュール連動） / {OUT_JSON}（決算日データ）")

@@ -225,11 +225,11 @@ def load_holdings():
 
 def check(t):
     if t in ADR_MANUAL:
-        # 20-F/6-K発行体は10-Q機械抽出が構造的に不可能。試行すると全項目None・スキャン0件で
-        # 「異常なし(機械判定)」という偽の健全宣言がファイルに残るため、明示的に手動確認へ回す
-        verdict = "機械抽出不可(ADR=20-F/6-K)→kessan_checklist §Cの手動確認へ"
+        # 既知の20-F/6-K発行体は採取(companyfacts)を試みる前に手動確認へ回す＝通信の節約。
+        # 列挙外の20-F社は下の構造的検問（10-Q/10-K系列が空なら健全と書かない）が捕まえる。
+        verdict = "要審査: 機械抽出不可(ADR=20-F/6-K)→kessan_checklist §Cの手動確認へ"
         os.makedirs(OUT, exist_ok=True)
-        with open(f"{OUT}/{t}_qcheck.txt", "w") as f:
+        with open(f"{OUT}/{t}_qcheck.txt", "w", encoding="utf-8") as f:
             f.write(f"{t} 点検日 {date.today()}\n判定: {verdict}\n"
                     "(10-Q/10-Kを提出しないため売上YoY・営利率・警報スキャンの機械値は算出できない)\n")
         print(f"  {t:<6} → {verdict}")
@@ -250,6 +250,22 @@ def check(t):
     if q10:
         s, c = scan(strip_html(get(q10)))
         snip, cats = s, c
+    # 2026-08-04是正(A1): **10-Q/10-K系列が空なら健全と書かない。** 従来はADR_MANUALの
+    #   ハードコード3社(ASML/TSM/NVMI)しか止めておらず、列挙外の20-F発行体(実測 SAP/RACE/RELX)は
+    #   全項目None・スキャン0件のまま素通りして「異常なし(機械判定)」という**偽の健全宣言**が
+    #   ファイルに残っていた。列挙は必ず漏れるので、**測れなかったこと自体を構造で検出する**——
+    #   四半期系列が1本も取れず10-Qも走査できなかったら、それは「異常なし」ではなく「点検不能」。
+    if not rev and not op and q10 is None:
+        verdict = ("要審査: 点検不能（10-Q/10-K系列なし＝20-F/40-F発行体の可能性。手動確認要）")
+        os.makedirs(OUT, exist_ok=True)
+        with open(f"{OUT}/{t}_qcheck.txt", "w", encoding="utf-8") as f:
+            f.write(f"{t} 点検日 {date.today()}\n"
+                    f"新規提出({SINCE_DAYS}日以内): " + "; ".join(f"{a} {b}" for a, b, _ in fils) + "\n"
+                    f"判定: {verdict}\n"
+                    "(10-Q/10-Kの四半期系列が1本も取れず警報スキャンも実行できていない。\n"
+                    " 20-F/6-K発行体なら kessan_checklist §C の手動確認へ——健全と判定したのではない)\n")
+        print(f"  {t:<6} → {verdict}")
+        return verdict
     flags = []
     if yoy is not None and yoy < -5: flags.append(f"売上YoY {yoy}%")
     if opm_d is not None and opm_d < -3: flags.append(f"営利率 前年比{opm_d}pt")
@@ -270,7 +286,7 @@ def check(t):
     if yoshi:
         verdict += "  ☀吉報:" + "/".join(yoshi) + "（第二S字・流通の兆候→原文スニペット確認）"
     os.makedirs(OUT, exist_ok=True)
-    with open(f"{OUT}/{t}_qcheck.txt","w") as f:
+    with open(f"{OUT}/{t}_qcheck.txt", "w", encoding="utf-8") as f:
         f.write(f"{t} 点検日 {date.today()}  四半期末 {latest}\n"
                 f"売上YoY: {yoy}%  営業利益率の前年同期差: {opm_d}pt\n"
                 f"新規提出({SINCE_DAYS}日以内): " + "; ".join(f"{a} {b}" for a,b,_ in fils) + "\n"
@@ -278,8 +294,9 @@ def check(t):
     print(f"  {t:<6} YoY {str(yoy)+'%':>7}  営利差 {str(opm_d)+'pt':>7}  → {verdict}")
     return verdict
 
-# ADR(外国私募発行体): 10-Q/10-Kを出さず20-F/6-Kのため、本スクリプトの機械抽出が効かない。
-# kessan_checklist.md §C のとおり手動確認へ回す。引数指定でもcheck()冒頭で明示スキップ(偽の「異常なし」を残さない)。
+# ADR(外国私募発行体)の**既知例のヒント**: 10-Q/10-Kを出さず20-F/6-Kのため機械抽出が効かない。
+# 2026-08-04是正(A1): このハードコードは通信節約の早期スキップに格下げした。列挙外の20-F社は
+# check() 内の構造的検問（10-Q/10-K系列が空なら「点検不能・要審査」）が捕まえる——列挙は必ず漏れる。
 ADR_MANUAL = {"ASML", "TSM", "NVMI"}
 
 if __name__ == "__main__":

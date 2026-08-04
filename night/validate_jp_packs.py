@@ -138,9 +138,20 @@ def check(path):
     # 門のgm欄は営業利益率であって粗利率ではない。粗利を入れると F7収益性・F9粘着性・
     # 無形調整ROIC が一斉に甘くなり、実測でΩ中央値が5.2pt浮いた。
     # 機械では粗利率を持たないので「営業利益率として異常に高い」帯を警告する。
+    # B22(2026-08-04): `_meta.evidence: null` のパックが1つあると .get("evidence", {}) は
+    #   **None を返し**（キーは在るので既定値が効かない）、.get("gm") で AttributeError→
+    #   検査全体が止まっていた。1パックの不正で全パックの検査を殺さない——or {} で吸収して続行し、
+    #   evidence/nulls が「キーは在るのに辞書でない」こと自体はそのパックの FAIL として数える。
+    _m0 = d.get("_meta") or {}
+    for _mk in ("evidence", "nulls"):
+        _mv = _m0.get(_mk)
+        if _mk in _m0 and not isinstance(_mv, dict):
+            fails.append(f"_meta.{_mk} が辞書でない（{type(_mv).__name__}）——検査は続行するが納品不可")
+    _ev_all = _m0.get("evidence")
+    _ev_all = _ev_all if isinstance(_ev_all, dict) else {}
     g = d.get("gm")
     if isinstance(g, (int, float)):
-        ev = str((d.get("_meta") or {}).get("evidence", {}).get("gm", ""))
+        ev = str(_ev_all.get("gm", ""))
         if g >= 50 and "営業利益" not in ev:
             warns.append(
                 f"gm={g}% は営業利益率として異常に高い（50%超は稀）。粗利混入の疑い＝"
