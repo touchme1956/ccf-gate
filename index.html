@@ -629,6 +629,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <div class="tategaki tr" aria-hidden="true">Compounding, Unbroken — CCF Ω</div>
 <nav class="pgnav">
  <button id="tab6" onclick="showPage(6)" style="color:var(--gold-bright)">📊 盤</button>
+<button id="tab9" onclick="showPage(9)">🔔 イベント</button>
 <button id="tab1" onclick="showPage(1)">Ⅰ 解説</button>
 <button id="tab8" onclick="showPage(8)">Ⅱ 実行手順</button>
 <button id="tab2" onclick="showPage(2)">Ⅲ 採点機</button>
@@ -637,6 +638,15 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <button id="tab5" onclick="showPage(5)">Ⅵ 買付順位</button>
 <button id="tab7" onclick="showPage(7)" style="color:var(--gold-bright)">Ⅶ 保有</button>
 </nav>
+<div id="pg9" class="pg">
+ <h1 class="serif">🔔 イベント</h1>
+ <p class="intro">監視リストの <b>8-K警報</b>（減損2.06・退任5.02・非依拠4.02・破産1.03・上場廃止通知3.01）と<b>決算</b>（発表イベント・次回予定）を一枚で。<b>すべて情報であって判定ではない</b>——警報は各行の「審査」で門2再審査の依頼文を作って回すための気づき。売りは S1/S2/S3・買いは四段関門のみで動く。データ源: out/events_watch.json（.github/workflows/events.yml が平日22:10UTCに毎日更新）／out/next_earnings.json（kessan_calendar.py）。</p>
+ <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+   <button onclick="ccfEvents(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
+   <span id="evAsof" style="font-size:11.5px;color:var(--dim)"></span>
+ </div>
+ <div id="evBox"></div>
+</div>
 <div id="pg6" class="pg">
  <h1 class="serif">📊 盤</h1>
  <p class="intro">保有と投下可の現在地を一枚で。<b>価格・前日比・含み損益は情報であって判定ではない</b>——売りは <b>S1/S2/S3</b> のみ、買いは <b>四段関門（Ω75+ ∧ 門X4条件 ∧ 堀70+ ∧ 点検の要修正0件）</b>のみで動く。IPS②Ulysses契約の48時間冷却も従来どおり効く。株価は<b>門Xの開通判定</b>にだけ使われる。</p>
@@ -3275,6 +3285,53 @@ async function ccfDash(btn){
     + sec('📅 次回決算（21日以内）', ernHtml, '決算が来たら <code>python kessan_check.py</code>（日本株は <code>kessan_check_jp.py</code>）を回す')
     + sec('📰 最新ニュース', newsHtml, '判定には使わない——原本（10-Q/有報）に書かれるまで門は動かない');
 }
+// ── 🔔 イベント（v9.9.79・2026-08-04 ユーザー要望「決算も含めて別のタブで欲しい」）────────
+// 8-K警報(watch_events.py)と決算(発表イベント・次回予定)の表示専用タブ。判定には一切使わない——
+// 警報は門2再審査の依頼文へ回す気づき。データは同一オリジンの静的JSONを読むだけ(盤と同じ配管・鍵不要)。
+// 取れなかったものは「未生成」と書く。前回値やゼロで埋めない(ルール7)。
+async function ccfEvents(btn){
+  const box=$('evBox'); if(!box)return;
+  const lab=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='読込中…';}
+  const j=async u=>{try{const r=await fetch(u+'?t='+Date.now());return r.ok?await r.json():null;}catch(e){return null;}};
+  const [ev,ern]=await Promise.all([j('out/events_watch.json'),j('out/next_earnings.json')]);
+  if(btn){btn.disabled=false;btn.textContent=lab;}
+  const asof=$('evAsof');
+  if(asof)asof.textContent=ev?`8-K走査 ${ev.asof}（窓${ev.window_days}日・米国${ev.checked_us}社）／決算予定 生成 ${ern?ern.generated:'—'}`:'';
+  const sec=(title,inner,note)=>`<div style="margin-bottom:16px;padding:13px 15px;background:var(--panel);border:1px solid var(--line);border-radius:9px"><div style="font-size:13.5px;font-weight:600;color:var(--gold-bright);margin-bottom:8px">${title}</div>${inner}${note?`<div style="font-size:10.5px;color:var(--dim);margin-top:7px">${note}</div>`:''}</div>`;
+  const askBtn=t=>`<button onclick="ccfCopyAsk('${t}',this)" title="門2審査プロトコル全文＋${t}をコピー" style="margin-left:8px;padding:3px 8px;background:linear-gradient(180deg,rgba(84,184,138,.24),rgba(84,184,138,.08));border:1px solid rgba(84,184,138,.45);border-radius:6px;color:#8fc9a4;font-size:11px;cursor:pointer">審査</button>`;
+  const row=(x,color)=>`<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:5px 0;border-top:1px solid rgba(255,255,255,.04);font-size:12.5px"><b style="min-width:4.5em;color:${color}">${x.t}</b><span style="color:var(--dim);min-width:6.5em">${x.date}</span><span style="flex:1;color:var(--ink-soft)">${(x.flags&&x.flags.length?x.flags.join('；'):'Item '+x.items.join(', '))}</span>${x.url?`<a href="${x.url}" target="_blank" style="font-size:11px;color:#5d8cc2">原文書↗</a>`:''}${x.flags&&x.flags.length?askBtn(x.t):''}</div>`;
+  let html='';
+  if(!ev){
+    html+=sec('⚠ 8-K警報','<b style="color:#d69a3c">out/events_watch.json が未生成</b>——.github/workflows/events.yml（平日22:10UTC）の初回実行後に入る。手動なら python3 night/watch_events.py');
+  }else{
+    html+=sec(`⚠ 8-K警報（${(ev.alerts||[]).length}件）`,
+      (ev.alerts||[]).length?ev.alerts.map(x=>row(x,'#cf5f48')).join(''):'<span style="font-size:12px;color:var(--dim)">窓内に警報なし（走査は成功——取得失敗欄も確認のこと）</span>',
+      '減損2.06／退任5.02／非依拠4.02／破産1.03／上場廃止通知3.01。警報＝門2再審査の気づきであり売買判定ではない。「審査」で依頼文をコピー');
+    html+=sec(`📄 決算発表イベント（8-K Item 2.02・${(ev.earnings||[]).length}件）`,
+      (ev.earnings||[]).length?ev.earnings.map(x=>row(x,'var(--ink)')).join(''):'<span style="font-size:12px;color:var(--dim)">窓内に決算発表なし</span>',
+      '発表が出た銘柄は四半期点検（kessan_check.py→要審査なら門2再審査）へ。数字はここでは読まない');
+    if((ev.others||[]).length)
+      html+=`<details style="margin-bottom:16px"><summary style="cursor:pointer;font-size:12px;color:var(--dim)">その他の8-K ${ev.others.length}件（契約1.01・RegFD 7.01・その他8.01等——警報ではない）</summary><div style="padding:8px 15px;background:var(--panel);border:1px solid var(--line);border-radius:9px;margin-top:6px">${ev.others.map(x=>row(x,'var(--dim)')).join('')}</div></details>`;
+    const gaps=[];
+    if((ev.errors||[]).length)gaps.push(`<b style="color:#d69a3c">取得失敗 ${ev.errors.length}社</b>: ${ev.errors.map(e=>e.t).join(' ')}——この社は「見ていない」のであって「異常なし」ではない`);
+    if((ev.cik_unresolved||[]).length)gaps.push(`CIK不明 ${ev.cik_unresolved.join(' ')}`);
+    if(ev.not_covered_jp&&(ev.not_covered_jp.tickers||[]).length)gaps.push(`日本株 ${ev.not_covered_jp.tickers.length}社は対象外の穴（EDINET鍵なし）: ${ev.not_covered_jp.tickers.join(' ')}`);
+    if(gaps.length)html+=sec('🕳 監視の穴（黙って対象外にしない）',`<div style="font-size:12px;color:var(--ink-soft);line-height:1.8">${gaps.join('<br>')}</div>`);
+  }
+  if(ern&&Array.isArray(ern.items)){
+    const today=new Date().toISOString().slice(0,10);
+    const items=ern.items.filter(x=>x.date>=today);
+    const genAge=ern.generated?Math.floor((Date.now()-new Date(ern.generated).getTime())/864e5):null;
+    const eRow=x=>{const d=Math.round((new Date(x.date)-new Date(today))/864e5);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid rgba(255,255,255,.04);font-size:12.5px"><b style="min-width:4.5em;color:${d<=7?'var(--gold-bright)':'var(--ink)'}">${x.t}</b><span style="color:var(--dim);min-width:6.5em">${x.date}</span><span style="color:${d<=7?'#d69a3c':'var(--dim)'}">あと${d}日</span>${x.hold?'<span style="font-size:10px;color:var(--jade)">◆保有</span>':''}${x.src==='est'?'<span style="font-size:10px;color:var(--dim)" title="Alpha Vantage鍵なし＝SEC提出履歴からの推定日。確定日ではない">推定</span>':''}</div>`;};
+    html+=sec(`📅 次回決算カレンダー（${items.length}件）`,
+      items.length?items.map(eRow).join(''):'<span style="font-size:12px;color:var(--dim)">今後の予定なし</span>',
+      `kessan_calendar.py 生成${genAge!=null?`・${genAge}日前`:''}${genAge!=null&&genAge>35?'——<b style="color:#d69a3c">古い。四半期ごとに python kessan_calendar.py で再生成のこと</b>':''}。「推定」はSEC提出履歴からの推定日＝前後にずれる。確定日はGoogleカレンダー(kessan_calendar.ics)が正`);
+  }else{
+    html+=sec('📅 次回決算カレンダー','<b style="color:#d69a3c">out/next_earnings.json が未生成</b>——python kessan_calendar.py で生成');
+  }
+  box.innerHTML=html;
+}
 // ── 門X裁きⅠ（単一実装・v9.9.39 切り出し）───────────────────────────────────
 // Ⅵ買付順位の🟢投下可判定と、検証器 night/score_all.js が同じ式を使うための切り出し。
 // 中身は renderPlan 内にあった計算をそのまま移しただけ——式・閾値・順序はすべて不変。
@@ -3911,7 +3968,7 @@ async function renderLog(){
 }
 function toggleLog(ek){const b=document.getElementById('bd_'+ek),a=document.getElementById('ar_'+ek);if(!b)return;const open=b.style.display!=='none';b.style.display=open?'none':'block';if(a)a.textContent=open?'▸':'▾';}
 async function delLog(k){if(!await uiConfirm('この検証記録を削除しますか？'))return;try{await store.delete(k);renderLog();}catch(e){}}
-function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();window.scrollTo({top:0});}
+function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();if(n===9&&typeof ccfEvents==='function')ccfEvents();window.scrollTo({top:0});}
 // ===== Ⅶ資産 iframe を「1枚のページ」として表示：中身(portfolio.html)が自分の高さをpostMessageで通知し、iframeをフィットさせて内部スクロールバーを消す =====
 window.addEventListener('message',function(e){ if(e&&e.data&&e.data.type==='ccfPfHeight'){ const f=document.getElementById('pfFrame'); if(f&&e.data.h>0)f.style.height=(e.data.h+8)+'px'; } });
 function pfShow(){ const f=document.getElementById('pfFrame'); if(!f)return; try{f.contentWindow.location.reload();}catch(e){f.src=f.src;} }

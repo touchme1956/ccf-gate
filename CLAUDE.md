@@ -417,7 +417,11 @@
   - 引数なし=gate1_queue.jsonの未処理上位5社を自動採取。個別指定: `python hachimon_fetch.py NVDA MSFT`
   - 出力: out/{T}_gate_input.json（機械値ドラフト・審査待ち）+ out/{T}_hits.txt（原本キーワード抜粋）
 - 8-K日次監視: `python3 night/watch_events.py`（`--days 30`で窓拡大）→ out/events_watch.json。
-  `.github/workflows/events.yml` が平日22:10UTCに自動実行（2026-08-04新設）
+  `.github/workflows/events.yml` が平日22:10UTCに自動実行（2026-08-04新設）。
+  門の **🔔 イベントタブ**（v9.9.79・ユーザー要望「決算も含めて別のタブで欲しい」）が
+  8-K警報＋決算発表(2.02)＋次回決算カレンダー(out/next_earnings.json)を一枚で表示——
+  表示専用・判定に不使用。警報行の「審査」で門2再審査の依頼文が出る。取得失敗・日本株対象外は
+  「監視の穴」として明示（黙って対象外にしない）
 - 配当分離の採取: `python3 night/fill_divy.py`（`--all`）→ out/divy.json。予実台帳のsnapが観測へ同梱する
 - 機械コアの疑似バックテスト: `python3 night/backtest_core.py`（`--cutoff 2015-07-01` / `--limit N`）
   → out/backtest_<year>.json。生存バイアスあり＝相対比較と成長減衰の分布にだけ使う
