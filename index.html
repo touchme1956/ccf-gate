@@ -2267,8 +2267,17 @@ function copyPrompt(){
 const __selDefaults={};
 document.querySelectorAll('select').forEach(e=>{if(e.id)__selDefaults[e.id]=e.value;});
 let __coerce=[];   // v9.9.54: 直近の applyFields で「黙って化けた」欄の記録（ccfAudit が読む）
+let __kenshiOk=[]; // v9.9.76: 直近の applyFields で読んだパックの「検算済みキー」（_meta.evidence/_meta.nulls に根拠がある欄）。
+                   //   台帳レコードへ ok:[] として同梱し、ccfAudit が端末(audit_gate.js)と同じ規則で
+                   //   「✓検算済」を判定する＝同じ台帳を見る二つの検査器が違うことを言わない(v9.9.65の教訓)。
+                   //   採点には一切使わない。**要修正(err)はこの印では絶対に消さない**（第四の関門の土台）
 function applyFields(d){
   __coerce=[];
+  __kenshiOk=[];
+  try{const M=d._meta||{};const ks=new Set();
+    [M.evidence||{},M.nulls||{}].forEach(o=>Object.keys(o).forEach(k=>{const v=o[k];if(v!=null&&v!=='')ks.add(k);}));
+    __kenshiOk=[...ks];
+  }catch(e){}
   const map={nm:'nm',rfr:'rfr',erp:'erp',beta:'beta',roic:'roic',roicEx:'roicEx',roicg:'roicg',roiic:'roiic',nde:'nde',z:'z',gpa:'gpa',accr:'accr',acc:'acc',eq:'eq',fin:'fin',dom:'dom',irr:'irr',rep:'rep',dur:'dur',moatW:'moatW',gm:'gm',gmt:'gmt',sht:'sht',nrr:'nrr',roict:'roict',cagr:'cagr',moatdecay:'moatdecay',expiry:'expiry',sbc:'sbc',dilNet:'dilNet',erosion:'erosion',disrupt:'disrupt',fcf:'fcf',ni:'ni',p1:'p1',p2:'p2',p3:'p3',p4:'p4',f1:'f1',f2:'f2',f3:'f3',f4:'f4',f5:'f5',per:'per',evebit:'evebit',gr:'gr',shy:'shy',rak:'rak',gcap:'gcap',analysts:'analysts',instOwn:'instOwn',mcap:'mcap',gls:'gls',idx:'idx',indG:'indG',hist:'hist',pos:'pos',roiic5:'roiic5',perF:'perF',px:'px',eps:'eps',ddate:'ddate',erdate:'erdate',acq5:'acq5',geopol:'geopol',founder:'founder'};
   Object.entries(map).forEach(([k,id])=>{
     const el=$(id); if(!el)return;
@@ -2568,7 +2577,7 @@ async function autoSave(src,silent){
     }catch(e){} }
     // v9.9.54: 取込で黙って化けた欄を台帳に同梱する。採点には使わない＝ccfAudit が読んで ⚠ を出すだけ。
     //   ここで残さないと「化けた事実」は再読込で消え、後からΩが動いた理由を追えなくなる。
-    await store.set('g7:'+sk,JSON.stringify({data,r,ts:Date.now(),src:src||'auto',coerce:(__coerce||[]).slice()}));
+    await store.set('g7:'+sk,JSON.stringify({data,r,ts:Date.now(),src:src||'auto',coerce:(__coerce||[]).slice(),ok:(__kenshiOk||[]).slice()}));
     if(!silent)renderLedger();
     const dv=prevScore!=null?(parseFloat(r.evalScore)-parseFloat(prevScore)):null;
     const diff=dv==null?'':dv>0?`<span style="color:var(--jade)">（▲${dv.toFixed(1)}）</span>`:dv<0?`<span style="color:var(--rust)">（▼${Math.abs(dv).toFixed(1)}）</span>`:'（±0）';
@@ -2668,7 +2677,7 @@ async function renderLedger(){
   try{const res=await store.list('g64:');oldKeys=res?res.keys:[];}catch(e){}
   const eg=$('emptyGuide');
   if(!keys.length&&!oldKeys.length){
-    box.innerHTML='';if($('watchBox'))$('watchBox').innerHTML='';if($('queueBox'))$('queueBox').innerHTML='';
+    box.innerHTML='';if($('queueBox'))$('queueBox').innerHTML='';
     if(eg)eg.innerHTML=`<div style="background:var(--panel2);border:1px solid var(--gold-line);border-radius:12px;padding:20px;margin-top:14px;text-align:center">
       <div style="font-size:15px;color:var(--gold-bright);margin-bottom:8px"><b>台帳はまだ空だ</b></div>
       <div style="font-size:13px;color:var(--ink-soft);line-height:1.9;margin-bottom:14px">自分で調べた銘柄はⅢ採点機で「依頼文生成」→Claudeへ→返答JSONを「＋取り込む」。</div></div>`;
@@ -2678,7 +2687,7 @@ async function renderLedger(){
   // v9.9.60: 台帳の行にも現在価格・前日比を出す（out/dashboard.json＝CIがFinnhubから毎営業日コミット）
   let __lMkt=null; try{const rr=await fetch('out/dashboard.json?t='+Date.now()); if(rr.ok)__lMkt=await rr.json();}catch(e){}
   const __lQ=(__lMkt&&__lMkt.quotes)||{}, __lAsof=(__lMkt&&__lMkt.asof)||'';
-  for(const k of keys){try{const res=await store.get(k);if(res){const o=JSON.parse(res.value);items.push({k,nm:(o.data&&o.data.nm)||k.slice(k.indexOf(':')+1),ts:o.ts||0,d:o.data||{},coerce:o.coerce||[],r:o.r||{},...o.r});}}catch(e){}}
+  for(const k of keys){try{const res=await store.get(k);if(res){const o=JSON.parse(res.value);items.push({k,nm:(o.data&&o.data.nm)||k.slice(k.indexOf(':')+1),ts:o.ts||0,d:o.data||{},coerce:o.coerce||[],ok:o.ok||[],r:o.r||{},...o.r});}}catch(e){}}
   // v9.1: 保有フラグ付与(別キーg7hold:・レコード非破壊)
   let holdSet=new Set();
   try{const hr=await store.get('g7hold:set');if(hr&&hr.value)holdSet=new Set(JSON.parse(hr.value));}catch(e){}
@@ -2726,7 +2735,7 @@ async function renderLedger(){
     if(it.d&&it.d.ddate){const dd=new Date(it.d.ddate);if(!isNaN(dd)){const dAge=Math.floor((Date.now()-dd.getTime())/DAY);if(dAge>90)ageBadge+=`<span style="font-size:9px;color:#d69a3c;border:1px solid #d69a3c;border-radius:4px;padding:1px 4px;margin-left:4px">データ${dAge}日前——要更新</span>`;}}
     const div=document.createElement('div');div.className='led';
     const memo=(it.d&&it.d.memo)?`<div style="font-size:10.5px;color:var(--dim);margin-top:2px">✎ ${it.d.memo}</div>`:'';
-    const audW=ccfAudit(it.d,it.r,it.coerce), audB=ccfAuditBadge(audW,it.k);
+    const audW=ccfAudit(it.d,it.r,it.coerce,it.ok), audB=ccfAuditBadge(audW,it.k);
     const __t=String(it.nm||'').trim().split(/\s/)[0].toUpperCase(), __q=__lQ[__t];
     const pxB=__q&&__q.px
       ? `<span style="font-size:11px;white-space:nowrap;margin-left:7px" title="実測 ${__lAsof.slice(0,16).replace('T',' ')} UTC${__q.ccy==='JPY'?'（Yahoo Finance・東証）':'（Finnhub）'}"><b style="color:var(--ink-soft)">${__q.ccy==='JPY'?'¥':'$'}${__q.px.toLocaleString('ja-JP',{maximumFractionDigits:2})}</b>${__q.chgPct!=null?` <span style="color:${__q.chgPct>0?'#54b88a':__q.chgPct<0?'#cf5f48':'var(--dim)'}">${__q.chgPct>0?'+':''}${__q.chgPct.toFixed(1)}%</span>`:''}</span>`
@@ -2863,7 +2872,11 @@ const CCF_BLANK={
   cagr:['stop','成長が測れない'], nde:['stop','p3の導出元'], z:['skew','破綻距離が測れない'],
   gpa:['skew','資産効率が測れない'], accr:['skew','p4の材料'], fcf:['skew','転換率(conv)が測れない'], ni:['skew','転換率(conv)が測れない'],
   roiic:['skew',"空欄は'na'扱いにならず複利エンジンの評価が甘くなる"]};
-function ccfAudit(d,r,coerced){
+function ccfAudit(d,r,coerced,okKeys){
+  // okKeys(v9.9.76): 取込時にパックの _meta.evidence/_meta.nulls に根拠があった欄のキー一覧（レコードの ok:[]）。
+  //   端末の audit_gate.js と**同一の判定規則**（キーに根拠があるか）で warn に ok=true を印す。
+  //   バッジ・サマリは「要修正＋未解決warn」だけを数え、✓検算済は中身で見せる＝端末の表示と一致。
+  //   err には印を付けても数から除かない——errは「検算しても消えない種類」（取込で化けた/列挙違反/内部矛盾/不可能値）。
   d=d||{}; r=r||{}; const W=[];
   const num=k=>{const v=parseFloat(d[k]);return isFinite(v)?v:null;};
   const has=k=>d[k]!=null&&d[k]!=='';
@@ -2961,6 +2974,8 @@ function ccfAudit(d,r,coerced){
     if(f5!==dv)add('warn','f5',`f5=${f5} は disrupt=${dis} の導出値 ${dv} と違う（逸脱評価）`,'根拠が無ければ空欄へ戻す');}
   // キル・二本柱は入れない（v9.9.54の実測で287/317社が鳴り、本当の事故が埋もれた）。
   //   どちらもデータ破損ではなく採点の正当な結果で、Ω・ティア・色・出口判定として既に画面に出ている。
+  // v9.9.76: 検算済みの印（audit_gate.js と同じ規則＝そのキーに _meta の根拠があるか）
+  try{const okSet=new Set(okKeys||[]); W.forEach(w=>{ if(okSet.has(w.k)) w.ok=true; });}catch(e){}
   const rank={err:0,warn:1,info:2};
   return W.sort((a,b)=>rank[a.lv]-rank[b.lv]);
 }
@@ -2968,22 +2983,30 @@ function ccfAudit(d,r,coerced){
 function ccfAuditBadge(W,key){
   if(!W||!W.length)return '';
   // info（空欄が正しく処理される欄など）はバッジに数えない——数えると全社が鳴って本当の事故が埋もれる
-  const e=W.filter(x=>x.lv==='err').length, w=W.filter(x=>x.lv==='warn').length;
+  // v9.9.76: ✓検算済のwarn（_metaに根拠があり端末が仕様どおりと判定済み）もバッジに数えない——
+  //   端末(audit_gate.js)は前から「✓検算済」と「未解決」を分けていた。門が数え続けると
+  //   同じ台帳を見る二つの検査器が違うことを言う(v9.9.65)。errは検算済みでも必ず数える。
+  const e=W.filter(x=>x.lv==='err').length, w=W.filter(x=>x.lv==='warn'&&!x.ok).length;
   if(!e&&!w)return '';
   const col=e?'#c9534f':'#d69a3c', lbl=e?`⚠${e}${w?'+'+w:''}`:`⚠${w}`;
-  const tip=W.map(x=>(x.lv==='err'?'【要修正】':'【警告】')+x.msg.replace(/<[^>]+>/g,'')).join('\n');
+  const tip=W.filter(x=>x.lv!=='info').map(x=>(x.lv==='err'?'【要修正】':x.ok?'【✓検算済】':'【警告】')+x.msg.replace(/<[^>]+>/g,'')).join('\n');
   return `<span class="ccfaud" onclick="event.stopPropagation();ccfAuditOpen(decodeURIComponent('${encodeURIComponent(key||'')}'))" title="${tip.replace(/"/g,'&quot;')}" style="font-size:10px;color:${col};border:1px solid ${col}77;background:${col}18;border-radius:4px;padding:1px 5px;margin-left:6px;cursor:pointer;white-space:nowrap">${lbl}</span>`;
 }
 // 警告の詳細を開く。**その場で直せる**ように「読込」への導線を必ず付ける
 async function ccfAuditOpen(key){
   let o=null; try{const res=await store.get(key); o=res?JSON.parse(res.value):null;}catch(e){}
   if(!o||!o.data){alert('台帳の記録が読めませんでした');return;}
-  const W=ccfAudit(o.data,o.r||{},o.coerce||[]);
+  const W=ccfAudit(o.data,o.r||{},o.coerce||[],o.ok||[]);
   const nm=o.data.nm||key.slice(key.indexOf(':')+1);
-  const rows=W.map(x=>`<div style="padding:9px 11px;border-radius:8px;margin-top:7px;background:${x.lv==='err'?'#c9534f14':'#d69a3c12'};border:1px solid ${x.lv==='err'?'#c9534f55':'#d69a3c44'}">
-      <div style="font-size:12.5px;color:var(--ink)"><b style="color:${x.lv==='err'?'#e08a86':'#d6b06c'}">${x.lv==='err'?'要修正':'警告'}</b>
+  const rows=W.map(x=>{const ok=x.lv!=='err'&&x.ok;   // v9.9.76: errは検算済み印があっても要修正のまま
+      const bg=x.lv==='err'?'#c9534f14':ok?'rgba(140,192,145,.08)':x.lv==='warn'?'#d69a3c12':'rgba(127,135,148,.08)';
+      const bd=x.lv==='err'?'#c9534f55':ok?'rgba(140,192,145,.4)':x.lv==='warn'?'#d69a3c44':'rgba(127,135,148,.3)';
+      const lc=x.lv==='err'?'#e08a86':ok?'var(--jade,#8cc091)':x.lv==='warn'?'#d6b06c':'#9aa1ad';
+      const lb=x.lv==='err'?'要修正':x.lv==='warn'?(ok?'✓検算済':'警告'):(ok?'✓検算済':'測定漏れ');
+      return `<div style="padding:9px 11px;border-radius:8px;margin-top:7px;background:${bg};border:1px solid ${bd}">
+      <div style="font-size:12.5px;color:var(--ink)"><b style="color:${lc}">${lb}</b>
         <code style="font-size:11px;color:var(--gold-bright);margin:0 6px">${x.k}</code>${x.msg}</div>
-      <div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.7">→ ${x.fix}</div></div>`).join('');
+      <div style="font-size:11px;color:var(--dim);margin-top:4px;line-height:1.7">→ ${ok?'端末の検算で確定済み（_metaに根拠あり）——門は_metaを読めないため取込時の印で判定。対処不要。／':''}${x.fix}</div></div>`;}).join('');
   const box=document.getElementById('ccfAuditModal')||(()=>{const el=document.createElement('div');el.id='ccfAuditModal';
     el.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:16px';
     el.onclick=e=>{if(e.target===el)el.remove();};document.body.appendChild(el);return el;})();
@@ -2991,7 +3014,7 @@ async function ccfAuditOpen(key){
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
       <h2 class="serif" style="margin:0;font-size:1.15em;color:var(--gold-bright)">${nm} の健全性検査</h2>
       <button onclick="document.getElementById('ccfAuditModal').remove()" style="background:transparent;border:1px solid var(--dim);color:var(--dim);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">閉じる</button></div>
-    <div style="font-size:11.5px;color:var(--muted);margin:6px 0 2px">要修正 ${W.filter(x=>x.lv==='err').length}件／警告 ${W.filter(x=>x.lv==='warn').length}件。<b>採点には一切影響しない</b>——事故を人の注意力に頼らず出すための検査。</div>
+    <div style="font-size:11.5px;color:var(--muted);margin:6px 0 2px">要修正 ${W.filter(x=>x.lv==='err').length}件／警告 ${W.filter(x=>x.lv==='warn'&&!x.ok).length}件（✓検算済 ${W.filter(x=>x.lv==='warn'&&x.ok).length}）。<b>採点には一切影響しない</b>——事故を人の注意力に頼らず出すための検査。</div>
     ${rows||'<div style="font-size:13px;color:var(--jade);margin-top:10px">警告なし。</div>'}
     <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
       <button onclick="document.getElementById('ccfAuditModal').remove();loadIt(decodeURIComponent('${encodeURIComponent(key)}'))" style="padding:8px 14px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:12.5px;font-weight:600;cursor:pointer">Ⅲ採点機で開いて直す ↗</button>
@@ -3002,9 +3025,9 @@ async function ccfAuditOpen(key){
 // Ⅳ台帳の先頭に出すサマリ。**何件あるかを常に見えるところに置く**のが要点
 function ccfAuditSummary(items){
   let err=0,warn=0,bad=0; const top=[];
-  (items||[]).forEach(it=>{const W=ccfAudit(it.d,it.r||{},it.coerce);
-    // info（空欄が正しく処理される欄）は数えない——バッジと同じ基準にする
-    const e=W.filter(x=>x.lv==='err').length, w=W.filter(x=>x.lv==='warn').length;
+  (items||[]).forEach(it=>{const W=ccfAudit(it.d,it.r||{},it.coerce,it.ok);
+    // info（空欄が正しく処理される欄）と ✓検算済のwarn は数えない——バッジと同じ基準にする(v9.9.76)
+    const e=W.filter(x=>x.lv==='err').length, w=W.filter(x=>x.lv==='warn'&&!x.ok).length;
     if(!e&&!w)return; bad++; err+=e; warn+=w; if(e)top.push({nm:it.nm,e,k:it.k});});
   if(!bad)return `<div style="font-size:11.5px;color:var(--jade);margin:4px 0 8px">✓ 健全性検査：警告ゼロ（${(items||[]).length}社）</div>`;
   top.sort((a,b)=>b.e-a.e);
@@ -3027,19 +3050,21 @@ async function ccfInspectAll(btn){
   const rows=[];
   for(const k of keys){ try{const res=await store.get(k); if(!res)continue; const o=JSON.parse(res.value);
     if(!o.data||!o.r)continue;
-    const W=ccfAudit(o.data,o.r,o.coerce||[]);
+    const W=ccfAudit(o.data,o.r,o.coerce||[],o.ok||[]);
     rows.push({k,nm:o.data.nm||k.slice(k.indexOf(':')+1),s:parseFloat(o.r.evalScore)||0,W,
-      err:W.filter(x=>x.lv==='err').length, warn:W.filter(x=>x.lv==='warn').length, info:W.filter(x=>x.lv==='info').length});
+      err:W.filter(x=>x.lv==='err').length, warn:W.filter(x=>x.lv==='warn'&&!x.ok).length,
+      wok:W.filter(x=>x.lv==='warn'&&x.ok).length, info:W.filter(x=>x.lv==='info').length});
   }catch(e){} }
   if(btn){btn.disabled=false;btn.textContent=lab;}
-  const tot={err:0,warn:0,info:0}; const byRule={};
-  rows.forEach(r=>{tot.err+=r.err;tot.warn+=r.warn;tot.info+=r.info;
-    r.W.forEach(x=>{const key=x.lv+'|'+x.k; (byRule[key]=byRule[key]||{lv:x.lv,k:x.k,n:0,who:[]}); byRule[key].n++; byRule[key].who.push(r.nm);});});
+  const tot={err:0,warn:0,wok:0,info:0}; const byRule={};
+  rows.forEach(r=>{tot.err+=r.err;tot.warn+=r.warn;tot.wok+=r.wok;tot.info+=r.info;
+    r.W.forEach(x=>{const lv=(x.lv==='warn'&&x.ok)?'wok':x.lv; const key=lv+'|'+x.k;
+      (byRule[key]=byRule[key]||{lv,k:x.k,n:0,who:[]}); byRule[key].n++; byRule[key].who.push(r.nm+(x.ok?'✓':''));});});
   // 並び: 要修正の多い社 → 警告の多い社 → スコア降順
   const bad=rows.filter(r=>r.err||r.warn).sort((a,b)=>(b.err-a.err)||(b.warn-a.warn)||(b.s-a.s));
-  const lvName={err:'要修正',warn:'警告',info:'測定漏れ'};
-  const lvCol={err:'#c9534f',warn:'#d69a3c',info:'#7f8794'};
-  const ruleRows=Object.values(byRule).sort((a,b)=>({err:0,warn:1,info:2}[a.lv]-{err:0,warn:1,info:2}[b.lv])||b.n-a.n)
+  const lvName={err:'要修正',warn:'警告',wok:'✓検算済',info:'測定漏れ'};
+  const lvCol={err:'#c9534f',warn:'#d69a3c',wok:'#8cc091',info:'#7f8794'};
+  const ruleRows=Object.values(byRule).sort((a,b)=>({err:0,warn:1,wok:2,info:3}[a.lv]-{err:0,warn:1,wok:2,info:3}[b.lv])||b.n-a.n)
     .map(x=>`<div style="display:flex;gap:8px;align-items:baseline;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)">
       <span style="font-size:10px;color:${lvCol[x.lv]};border:1px solid ${lvCol[x.lv]}66;border-radius:3px;padding:0 4px;flex:0 0 auto">${lvName[x.lv]}</span>
       <code style="font-size:11.5px;color:var(--gold-bright);flex:0 0 66px">${x.k}</code>
@@ -3061,6 +3086,7 @@ async function ccfInspectAll(btn){
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin:10px 0 4px;font-size:13px">
       <span style="padding:6px 12px;border-radius:8px;background:#c9534f18;border:1px solid #c9534f55;color:#e08a86"><b>要修正 ${tot.err}</b></span>
       <span style="padding:6px 12px;border-radius:8px;background:#d69a3c14;border:1px solid #d69a3c44;color:#d6b06c"><b>警告 ${tot.warn}</b></span>
+      <span style="padding:6px 12px;border-radius:8px;background:rgba(140,192,145,.1);border:1px solid rgba(140,192,145,.4);color:var(--jade,#8cc091)"><b>✓検算済 ${tot.wok}</b></span>
       <span style="padding:6px 12px;border-radius:8px;background:rgba(127,135,148,.12);border:1px solid rgba(127,135,148,.4);color:#9aa1ad"><b>測定漏れ ${tot.info}</b></span>
       <span style="padding:6px 12px;font-size:11.5px;color:var(--dim)">何かある社 ${bad.length}／${rows.length}</span></div>
     <div style="font-size:11px;color:var(--dim);line-height:1.75;margin-bottom:10px"><b>要修正</b>＝規約違反・内部矛盾・ありえない値（<u>放置するとΩが後から動く</u>）／<b>警告</b>＝未測定が最良ケースや罰として採点されている・陳腐化・帯の外／<b>測定漏れ</b>＝空欄が正しく処理される欄（根拠が無ければ空欄が正解）。<b>採点には一切影響しない。</b>根拠(_meta)の被覆率は端末側の <code>night/validate_packs.py</code> が見る＝二層で守る。</div>
@@ -3089,7 +3115,7 @@ async function ccfDash(btn){
   const led={};
   for(const k of keys){ try{const r=await store.get(k); if(!r)continue; const o=JSON.parse(r.value);
     if(o.data&&o.r){const t=(o.data.nm||k.slice(k.indexOf(':')+1)).trim().split(/\s/)[0].toUpperCase();
-      led[t]={nm:o.data.nm||t,d:o.data,r:o.r,k,coerce:o.coerce||[]};}}catch(e){} }
+      led[t]={nm:o.data.nm||t,d:o.data,r:o.r,k,coerce:o.coerce||[],ok:o.ok||[]};}}catch(e){} }
   // 保有
   let pf=null; try{pf=JSON.parse(localStorage.getItem('pf:portfolio')||'null');}catch(e){}
   const fxAuto=mkt&&mkt.fx&&mkt.fx.USDJPY, fxMan=pf&&+pf.fx, FX=fxAuto||fxMan||0;
@@ -3147,7 +3173,7 @@ async function ccfDash(btn){
   //    「同じ台帳を見る二つの検査器が違うことを言う」事故になるため、点検(err)の関門も揃えた）
   const judged=Object.values(led).map(L=>{const r=L.r,d=L.d,sc=parseFloat(r.evalScore)||0;
       const mg=ccfMoatGate(r,d), x=ccfXJudge(d,sc)||{};
-      const audE=(ccfAudit(d,r,L.coerce||[])||[]).filter(w=>w.lv==='err').length;
+      const audE=(ccfAudit(d,r,L.coerce||[],L.ok||[])||[]).filter(w=>w.lv==='err').length;
       const three=sc>=75&&x.xPass===true&&mg.pass===true;
       return {nm:L.nm,t:(L.nm||'').trim().split(/\s/)[0].toUpperCase(),s:sc,moat:mg.idx,audE,
               ok:three&&audE===0,blocked:three&&audE>0,xEr:x.xEr};});
@@ -3305,7 +3331,7 @@ async function renderPlan(){
   const __Q=(__mkt&&__mkt.quotes)||{}, __mkAsof=(__mkt&&__mkt.asof)||'';
   let keys=[]; try{const res=await store.list('g7:');keys=res?res.keys:[];}catch(e){}
   const items=[];
-  for(const k of keys){try{const res=await store.get(k);if(res){const o=JSON.parse(res.value);if(o.data&&o.r)items.push({k,d:o.data,r:o.r,coerce:o.coerce||[]});}}catch(e){}}
+  for(const k of keys){try{const res=await store.get(k);if(res){const o=JSON.parse(res.value);if(o.data&&o.r)items.push({k,d:o.data,r:o.r,coerce:o.coerce||[],ok:o.ok||[]});}}catch(e){}}
   if(!items.length){pb.innerHTML=ccfMonthPlanBox([])+'<div style="color:var(--dim);font-size:13px;margin-top:6px">個別の買付順位は、Ⅲ採点機で銘柄を投入すると自動生成される（投下可が出れば上の城枠に配分される）。</div>';return;}
   const num=x=>parseFloat(x)||0;
   // v9.9.30: 現在保有pos%はⅦ資産の実額(pf:portfolio)から都度算出——手入力d.posは記帳凍結で陳腐化し、
@@ -3339,7 +3365,7 @@ async function renderPlan(){
     // 買付順位の合成優先度: 格0.6 + 期待CAGR(X期待%を点数化)0.4。門X合格線12%=50点・±10ptで0-100。E[r]欠損はerPt=0=群内末尾(v9.9.30)。保留は順位に不介入(表示のみ)。格evalScore・採点・合否には無影響=表示順のみ
     const erPt=(xEr!=null)?Math.max(0,Math.min(100,50+(xEr-12)*5)):0; // v9.9.30: E[r]欠損は中立50でなく0=群内末尾へ(欠損を「合格線ちょうど」と擬制すると実測E[r]8%の銘柄より上位に来る逆転が生じ、掟一〔実証値のみ〕と逆向きの誘因だった。データを埋めるほど順位が上がる方向に統一)
     const pc=s*0.6+erPt*0.4;
-    return {nm:it.d.nm||it.k.slice(3),t:it.k.slice(3),s,act,memo,room,hold,pc,layer,xEr,xPass,per,shy,g:gOut,gcap:xj.gcap,gcapSrc:xj.gcapSrc,grower:growerR,moat:mg.idx,moatOK:mg.pass,moatNA:mg.na,pos:(livePos&&livePos[it.k.slice(3).toUpperCase()]!=null)?livePos[it.k.slice(3).toUpperCase()]:num(it.d.pos),tier:it.r.tierShort||it.r.grade,audW:ccfAudit(it.d,it.r,it.coerce),audB:ccfAuditBadge(ccfAudit(it.d,it.r,it.coerce),it.k),px0:it.d.px,epsOld:(it.d.erdate&&(Date.now()-new Date(it.d.erdate).getTime())>300*864e5)};
+    return {nm:it.d.nm||it.k.slice(3),t:it.k.slice(3),s,act,memo,room,hold,pc,layer,xEr,xPass,per,shy,g:gOut,gcap:xj.gcap,gcapSrc:xj.gcapSrc,grower:growerR,moat:mg.idx,moatOK:mg.pass,moatNA:mg.na,pos:(livePos&&livePos[it.k.slice(3).toUpperCase()]!=null)?livePos[it.k.slice(3).toUpperCase()]:num(it.d.pos),tier:it.r.tierShort||it.r.grade,audW:ccfAudit(it.d,it.r,it.coerce,it.ok),audB:ccfAuditBadge(ccfAudit(it.d,it.r,it.coerce,it.ok),it.k),px0:it.d.px,epsOld:(it.d.erdate&&(Date.now()-new Date(it.d.erdate).getTime())>300*864e5)};
   });
   const lcol=['var(--gold-bright)','var(--jade)','var(--steel)'];
   const lname=['80+ 城の中核（8%）','77–80 城の正規（5%）','75–77 城の外郭（3%）'];
@@ -3577,36 +3603,10 @@ async function quickPrompt(k){
 //   関数は残すが、母集団の act-wait は買付判定に使わない旧ブレーキであることに注意。
 //   押し目の距離を見るのは Ⅵ買付順位の開通ライン（門X）と ✦門Xの監視表。
 function renderWatch(items){
-  const wb=$('watchBox'); if(!wb)return;
-  const rows=[];
-  for(const it of items){
-    if(it.acls!=='act-wait')continue;
-    const d=it.d||{};
-    const per=parseFloat(d.per)||0, ev=parseFloat(d.evebit)||0, shy=parseFloat(d.shy)||0, roicV=parseFloat(d.roic)||0;
-    const perF=parseFloat(d.perF)||0;
-    const grV=perF>0&&per>0?(per/perF-1)*100:(d.gr&&d.gr!=='na'?parseFloat(d.gr):NaN);
-    if(!(per>0&&ev>0)){rows.push({nm:it.nm,drop:999,msg:'価格データ不足——per/evebitを更新せよ'});continue;}
-    // v9.9.26: 目標株価の計算に採点機と同じgrower緩和(v9.9.9)を適用——grower銘柄のアラート指値が旧50/35基準で低すぎる乖離を解消
-    const cagrW=parseFloat(d.cagr)||0, sW=parseFloat(it.evalScore)||0;
-    const growerW=(sW>=72&&cagrW>=15&&roicV>=20&&(d.erosion||'none')==='none'&&(d.disrupt||'settled')!=='threat');
-    const perLimW=growerW?62:50;
-    const evLimit=(roicV>=30?40:roicV<15?20:35)*(growerW?1.3:1);
-    const totalG=isNaN(grV)?null:grV+shy;
-    const failF=[];const names=[];
-    if(per>perLimW){failF.push(perLimW/per);names.push('PER');}
-    if(ev>evLimit){failF.push(evLimit/ev);names.push('EV/EBIT');}
-    if(totalG!=null){ if(totalG<=0){failF.push(0);names.push('成長非正');} else if(per/totalG>3){failF.push(3*totalG/per);names.push('PEG_adj');} }
-    if(!failF.length){rows.push({nm:it.nm,drop:0,msg:'<b style="color:var(--jade)">既に全ブレーキ通過圏——現値で再採点せよ</b>'});continue;}
-    const mf=Math.min(...failF);
-    const px0=parseFloat(d.px)||0;
-    if(mf<=0)rows.push({nm:it.nm,drop:998,msg:'成長+還元が非正——価格では解けない（gr回復待ち）'});
-    else{const dp=(1-mf)*100;
-      const tgt=px0>0?`　<b style="color:var(--gold-bright)">目標 ${(px0*mf).toLocaleString(undefined,{maximumFractionDigits:0})} 以下</b>（証券アプリの株価アラートに設定せよ）`:'';
-      rows.push({nm:it.nm,drop:dp,due:null,msg:`<b>▼${dp.toFixed(0)}%</b>で買い転換（律速：${names[failF.indexOf(mf)]}）${tgt}`});}
-  }
-  if(!rows.length){wb.innerHTML='<div style="color:var(--dim);font-size:13px">押し目待ち銘柄なし。</div>';return;}
-  rows.sort((a,b)=>a.drop-b.drop);
-  wb.innerHTML=rows.map(r=>`<div class="led"><span class="ln">${r.nm}</span><span style="font-size:13px">${r.msg}</span></div>`).join('');
+  // v9.9.76: 本体を撤去した。v9.9.74で watchBox(押し目監視表)がⅣ台帳から消えた後も
+  //   この関数だけが watchBox 要素を参照し続け、check_html の「参照するのにHTMLに無いID」検査が
+  //   鳴り続けていた（ガード付きで実害はないが、鳴る検査は残さない）。呼び出し互換のため空関数を残す。
+  //   押し目の距離は Ⅵ買付順位の開通ライン（門X）と ✦門Xの監視表で見る。
 }
 // ========== D: 全件エクスポート/一括インポート ==========
 async function storageDiag(){
