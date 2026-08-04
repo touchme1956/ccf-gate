@@ -95,6 +95,12 @@ def f_roiic(s, notes):
     yrs = align(s, ["op", "eq", "cash"])
     if len(yrs) < 5: notes.append("roiic: 系列5年未満→na(60)"); return 60.0
     nop = {y: s["op"][y] * 0.79 for y in yrs}
+    # ルール7の限界注記(2026-08-04): debt は align 対象外で、タグが無い年を 0 と読んでいる
+    #   （cashはalign済みで常にある）。他年に報告があるのにその年だけ欠測なら ΔIC が歪み
+    #   ROIICが過大/過小に出うる。影スコア（序列のみ・正本不使用）ゆえ挙動は据え置くが、
+    #   欠測年を検出したら note に残して黙らせない（欠測と無借金を区別できないため値は触らない）。
+    if s["debt"] and any(y not in s["debt"] for y in yrs):
+        notes.append("roiic: 有利子負債タグの欠測年を0と読んでいる(影の限界——ΔICが歪みうる)")
     ic = {y: s["eq"][y] + s["debt"].get(y, 0) - s["cash"].get(y, 0) for y in yrs}
     rr = []
     for i in range(3, len(yrs)):
@@ -157,14 +163,18 @@ def f_fcfps(s, notes):
 def f_gross(s, notes):
     """F5 粗利安定×転嫁力5%: 水準・σ・21→23の転嫁実績"""
     yrs = align(s, ["gp", "rev"])
-    if len(yrs) < 4: notes.append("gross: GrossProfit未開示→na(65)"); return 65.0
-    gm = [s["gp"][y] / s["rev"][y] * 100 for y in yrs if s["rev"][y]]
+    # 2026-08-04是正(B1): 年と粗利率は**対で**組む。旧実装は gm を rev>0 で間引いたのに
+    #   yrs は間引かず zip(yrs, gm) していたため、rev=0の年が1つでもあると以降の年ラベルが
+    #   1つずつずれた（「基準の違う二つを割る」型のzip版）。
+    pairs = [(y, s["gp"][y] / s["rev"][y] * 100) for y in yrs if s["rev"][y]]
+    if len(pairs) < 4: notes.append("gross: GrossProfit未開示→na(65)"); return 65.0
+    gm = [v for _, v in pairs]
     lvl = gm[-1]; n = min(5, len(gm))
     mu = sum(gm[-n:]) / n
     sd = (sum((x - mu) ** 2 for x in gm[-n:]) / n) ** 0.5
     sc = 80 if lvl >= 50 else 70 if lvl >= 35 else 60 if lvl >= 20 else 50
     sc += 10 if sd < 1.5 else (-10 if sd > 4 else 0)
-    g21 = {y[:4]: v for y, v in zip(yrs, gm)}
+    g21 = {y[:4]: v for y, v in pairs}
     if "2021" in g21 and "2023" in g21:
         sc += 5 if g21["2023"] >= g21["2021"] else -5
     return clamp(sc)
@@ -206,7 +216,14 @@ if __name__ == "__main__":
     args = [a.upper() for a in sys.argv[1:] if re.fullmatch(r"[A-Za-z][A-Za-z.\-]{0,7}", a)]
     if not args:
         kn = json.load(open("kanshi_list.json", encoding="utf-8"))
-        args = [t for t in kn.get("tickers", []) if not re.fullmatch(r"\d{4,5}(?:\.T)?", t)]
+        # 2026-08-04是正(B1): make_kanshi.py が書くキーは **"list"**（＋pin）。旧キー "tickers" しか
+        #   読んでおらず**引数なし実行は黙って0銘柄**＝v10影スコア(2027-07較正の材料)が2026-07-27の
+        #   28社のまま更新されていなかった。kessan_check/calendar は同事故を是正済みでここだけ
+        #   取り残し。旧キーは後方互換で残す。日本株(数字コード)はSEC対象外ゆえ従来どおり除外
+        tk = (kn.get("list") or kn.get("tickers") or []) + (kn.get("pin") or [])
+        seen = set()
+        args = [t for t in tk
+                if not re.fullmatch(r"\d{4,5}(?:\.T)?", t) and not (t in seen or seen.add(t))]
     out = {}
     if os.path.exists(OUTP):
         try: out = json.load(open(OUTP, encoding="utf-8")).get("scores", {})

@@ -6,7 +6,8 @@ market_fetch_sec.py — z / shy / evebit を SEC の companyfacts API から算�
 背景: market_fetch.py はこの3項目をローカルの companyfacts.zip(1.4GB) から計算するが、
       zipはgitignoreで環境によっては存在しない。SECは銘柄単位のJSON APIも公開しており、
       そちらなら鍵もzipも要らない。定義は market_fetch.py と完全に同じものを再利用する
-      （shy=(配当支払+自社株買い)÷時価総額×100 / z=Altman Z'' / evebit=EV÷営業利益）。
+      （shy=(配当支払+自社株買い−株式発行)÷時価総額×100＝門の定義どおり**純額**(2026-08-04是正・B13。
+        従来はグロスで market_fetch_free.py と定義が割れていた) / z=Altman Z'' / evebit=EV÷営業利益）。
 
 なぜ要るか: shy が欠測すると x_watch_recalc が「還元ゼロ」と誤認して開通線を実際より
       遠くに描く（2026-07-28に判定不能へ倒す修正済み）。つまり shy が無いと門Xが動かない。
@@ -66,6 +67,10 @@ def health(t, mcap_b):
     sti = S(facts, [("us-gaap", "ShortTermInvestments"), ("us-gaap", "MarketableSecuritiesCurrent")], False)
     div = S(facts, [("us-gaap", "PaymentsOfDividends"), ("us-gaap", "PaymentsOfDividendsCommonStock")], True)
     bb = S(facts, [("us-gaap", "PaymentsForRepurchaseOfCommonStock")], True)
+    # 2026-08-04是正(B13): 門の定義は純額(発行控除後)。タグ群は market_fetch_free.py と同一
+    iss = S(facts, [("us-gaap", "ProceedsFromIssuanceOfCommonStock"),
+                    ("us-gaap", "ProceedsFromStockOptionsExercised"),
+                    ("us-gaap", "ProceedsFromIssuanceOfSharesUnderIncentiveAndShareBasedCompensationPlans")], True)
 
     r, notes = {}, []
     ys = [y for y in ta if y in tl and y in eq and y >= 2024]
@@ -84,7 +89,8 @@ def health(t, mcap_b):
             d = div.get(fy, 0) + bb.get(fy, 0)
             # 還元が0でも「実測して0」と「タグが無い」は別物。タグが両方無ければ空欄のまま
             if fy in div or fy in bb:
-                r["shy"] = round(d / mc * 100, 2)
+                # 純額＝グロス還元−株式発行（2026-08-04是正・B13。free版と同式で下限0）
+                r["shy"] = round(max(0.0, d - iss.get(fy, 0)) / mc * 100, 2)
             else:
                 notes.append("配当・自社株買いのタグが無くshyは空欄(0と断定しない)")
             by = max([y for y in eq if y >= 2024], default=None)

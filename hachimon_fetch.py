@@ -7,6 +7,10 @@ gate_fetch v3.0 — SEC一撃採取器（壊れない複利の門 v9.6・Ⅲ採�
          ./out/{TICKER}_hits.txt        … 定性6砲台(限/集/誠/蝕/堀/循)+facts用のキーワードヒット報告(2-3KB)
 注意:    EMAIL を自分のものに書き換えること(SECはUser-Agent必須・10req/s制限)。
          px(株価)とbetaはSECに無いので空欄のまま——取込時に手入力かツール側で補完。
+既知の要再採取(2026-08-04・A7): **WIT** のパックは有利子負債が Borrowings(総額) と
+         LongtermBorrowings(その内数) の**二重計上**（約64B INR過大）で採られている。
+         series_sum の総額タグ複数対応で採取器側は是正済みだが、パック自体はここでは直さない
+         （審査官の検算経路を通すこと）。
 """
 import json, re, sys, time, urllib.request, os
 from statistics import median
@@ -171,6 +175,15 @@ def series(facts, keys, unit_pref=("USD","EUR","JPY")):
     #   （実測 BKNG: eq が StockholdersEquity → …IncludingPortionAttributableToNoncontrollingInterest
     #   へ乗り換わり roicg 53.1→17.8 と桁近く動いた）。**古い値も危険だが、意味の違う値はもっと危険。**
     #   → 最新年から1年以内に届いている候補の中で、keys の優先順が最も高いものを主系列にする。
+    # 2026-08-04是正(B12f): unit_pref は宣言だけで**一度も使われていなかった**（呼び手は
+    #   ("shares",) を渡して単位フィルタを期待していた）。**優先フィルタ**として実装する——
+    #   候補に希望単位の系列があればそれだけに絞る（株数の候補にUSD等の別単位系列が混ざって
+    #   主系列に選ばれる型の事故を防ぐ）。希望単位が一つも無ければ全候補を残す
+    #   （TWD/INR等の現地通貨報告を弾かないため＝厳格フィルタにすると20-F勢が全滅する）。
+    if unit_pref:
+        _pref = [c for c in cands if c[3] in unit_pref]
+        if _pref:
+            cands = _pref
     newest = max(max(c[2]) for c in cands)
     elig = [c for c in cands if max(c[2]) >= newest - 1]
     i, k0, merged, unit = min(elig, key=lambda c: (c[0], -max(c[2])))
@@ -264,26 +277,54 @@ def series_sum(facts, keys, total_key=None):
       ——2026-07-29 に debtS のタグを9個へ拡張したのに IDXX が直らなかったのはこれが理由で、
       審査官が手で直していた。「候補＝代替」と「候補＝構成要素」を取り違えていた。
 
-    total_key があり、その年に総額タグが存在するなら**合計せず総額を採る**（二重計上を避ける）。
+    total_key: 総額系タグ。**str または 優先順の列挙(複数可)**（2026-08-04是正・A7）。
+      その年にいずれかの総額タグが存在するなら**合計せず最優先の総額を採る**（二重計上を避ける）。
+      なぜ複数か: IFRS勢の `Borrowings` は流動込みの総額として報告されることが多く、その内数
+      `LongtermBorrowings` と**同時に報告される**。旧実装は総額を1本しか知らなかったため両方を
+      構成要素として合算した——実測 WIT: Borrowings 161,817百万INR ＋ LongtermBorrowings
+      63,954百万INR を足して約64B INRを二重計上（**既納品の WIT パックは要再採取**。パックは
+      ここでは直さない＝審査官の検算経路を通す）。
+    2026-08-04是正(A7): series() と同じ**名前空間・単位の一致検問**を追加した。旧実装はタグごとに
+      us-gaap/ifrs-full を独立に探し、単位も見ずに合算していた＝別名前空間・別単位の値を
+      足し合わせうる（「基準の違う二つを割る」型の合算版）。名前空間はまたがず、
+      主単位（最多）と違う単位のタグは合算から外す。
     """
-    per = {}
-    for k in keys:
-        for ns in ("us-gaap", "ifrs-full"):
-            d = facts.get("facts", {}).get(ns, {})
+    if isinstance(total_key, str):
+        total_keys = [total_key]
+    else:
+        total_keys = list(total_key or [])
+    per, unit_of = {}, {}
+    for ns in ("us-gaap", "ifrs-full"):
+        d = facts.get("facts", {}).get(ns, {})
+        found = False
+        for k in keys:
             if k not in d:
                 continue
-            out, _u = _annual(d[k]["units"])
+            out, u = _annual(d[k]["units"])
             if out:
                 per[k] = out
-            break
+                unit_of[k] = u
+                found = True
+        if found:
+            break                        # 名前空間はまたがない（series()と同じ）
+    if not per:
+        return {}, {}
+    # 単位の一致検問: 最多の単位を主単位とし、違う単位のタグは合算しない（足すと桁が壊れる）
+    _cnt = {}
+    for u in unit_of.values():
+        _cnt[u] = _cnt.get(u, 0) + 1
+    main_u = max(_cnt, key=lambda u: _cnt[u])
+    for k in [k for k in per if unit_of[k] != main_u]:
+        del per[k]
     years = set().union(*[set(v) for v in per.values()]) if per else set()
     out, used = {}, {}
     for y in years:
-        if total_key and total_key in per and y in per[total_key]:
-            out[y] = per[total_key][y]
-            used[y] = [f"{total_key}(総額)"]
+        tk = next((k for k in total_keys if k in per and y in per[k]), None)
+        if tk is not None:
+            out[y] = per[tk][y]
+            used[y] = [f"{tk}(総額)"]
             continue
-        parts = [(k, per[k][y]) for k in keys if k != total_key and k in per and y in per[k]]
+        parts = [(k, per[k][y]) for k in keys if k not in total_keys and k in per and y in per[k]]
         if not parts:
             continue
         out[y] = sum(v for _, v in parts)
@@ -297,8 +338,11 @@ def build_numbers(facts):
         S[k] = series(facts, v)[0]
         diag[k] = f"{len(S[k])}年分" if S[k] else "タグ不発見"
     # 有利子負債だけは「代替」でなく「構成要素」なので合計する（上の series は上書き）
+    # 2026-08-04是正(A7): debtL の総額は LongTermDebt(us-gaap) と Borrowings(IFRS・流動込み総額の
+    #   ことが多い) の2本。Borrowings を構成要素扱いすると内数 LongtermBorrowings と二重計上する
+    #   （実測 WIT で約64B INR。詳細は series_sum の頭注）
     S["debtS"], _usedS = series_sum(facts, TAGS["debtS"], total_key="DebtCurrent")
-    S["debtL"], _usedL = series_sum(facts, TAGS["debtL"], total_key="LongTermDebt")
+    S["debtL"], _usedL = series_sum(facts, TAGS["debtL"], total_key=("LongTermDebt", "Borrowings"))
     # 2026-08-03: 無形も同じく「構成要素」だった（TAGS["intan"]の頭注を見よ）。総額タグがその年に
     #   あれば総額、無ければ 確定分＋無期限分 を足す＝series_sum の total_key がそのまま使える。
     #   実測 CELH: 総額タグが2024年で終わり、2025年は二本に割れていたので series() では欠測になった。
@@ -464,7 +508,9 @@ def build_numbers(facts):
         _safe(ev, note, "conv", lambda: round(fcf/S["ni"][y0]*100,1))
         sh,_ = series(facts, TAGS["sh"], ("shares",))
         if sh:
-            shl = sh.get(y0) or list(sh.values())[-1]
+            # 2026-08-04是正(B12e): フォールバックは**最新の年ラベル**の株数。旧 `list(sh.values())[-1]`
+            #   は辞書の挿入順の末尾＝最新年とは限らない（「取れた値＝最新の値」の思い込みと同型）
+            shl = sh.get(y0) or sh[max(sh)]
             _safe(ev, note, "fcfps", lambda: round(fcf/shl,2) if shl else None)
     # nde
     if y0:
@@ -507,7 +553,18 @@ def build_numbers(facts):
     roic_skip = []
     for y in sorted(S["op"])[-5:]:
         if all(y in S[k] for k in ("ni","eq")) and y in S["op"]:
-            tax_rate = 1 - S["ni"][y]/max(S["ni"][y]+S["tax"].get(y,0), 1)
+            # 2026-08-04是正(B12a): **税タグの欠測を税率0%と読まない。** 従来の
+            #   `S["tax"].get(y,0)` は、その年に税タグが無いと 実効税率0% → NOPAT=EBIT となり
+            #   roic が約1.3倍過大に出ていた（欠測をゼロと読む・絶対のルール7の取り残し）。
+            #   他年に報告があるのにその年だけ無い→欠測＝算出不能で飛ばす。
+            #   会社全体で一度も税タグが無い→実効税率が測れない＝NOPAT系は全年算出不能
+            #   （税0%と断定しない。誤値より空欄）。
+            if y not in S["tax"]:
+                roic_skip.append(f"{y}:税タグ不在で実効税率が測れずNOPAT算出不能"
+                                 + ("（他年は報告あり＝欠測）" if S["tax"]
+                                    else "（全年で不発見＝税0%と断定しない）"))
+                continue
+            tax_rate = 1 - S["ni"][y]/max(S["ni"][y]+S["tax"][y], 1)
             nopat = S["op"][y]*(1-max(0,min(0.5,tax_rate)))
             # 2026-07-29修正: 有利子負債タグが「その年に存在しない」場合、従来は debt=0 と見なして
             #   IC = 自己資本 − のれん − 無形 になっていた。買収で伸びた会社は自己資本の大半が
@@ -579,6 +636,19 @@ def build_numbers(facts):
                        f"{_mxI/max(_base,1)*100:.1f}%＝ROICを動かせない水準なので"
                        f"**欠測年は0として算出**した（上限の不等式）")
                 if _m3 not in note: note.append(_m3)
+            # 2026-08-04是正(B12b): **のれんにも無形と同じ欠測ガードを当てる**（CELH型の取り残し）。
+            #   他年に Goodwill を報告しているのにその年だけ無い→欠測をゼロと読むと控除が過少＝
+            #   IC過大でROICが歪む。上限の不等式で裁き、無視できない額なら算出不能で飛ばす。
+            #   一度も報告していない会社だけ 0 と読んでよい（のれんの上限＝0が文書化された例外）。
+            if S["gw"] and y not in S["gw"]:
+                _mxG = max(S["gw"].values() or [0])
+                if _base > 0 and _mxG >= 0.02*_base:
+                    roic_skip.append(f"{y}:のれんタグ不在でIC算出不能（他年は報告あり＝欠測）")
+                    continue
+                _m4 = (f"のれんタグが一部の年に無いが、報告のある年の最大でも{_what}の"
+                       f"{_mxG/max(_base,1)*100:.1f}%＝ROICを動かせない水準なので"
+                       f"**欠測年は0として算出**した（上限の不等式）")
+                if _m4 not in note: note.append(_m4)
             gw, intan = (S["gw"].get(y,0) or 0), (S["intan"].get(y,0) or 0)
             ic = S["eq"][y]+debt-gw-intan
             # 分母が自己資本の2割を切ったら、のれん・無形の控除でICが縮退している＝発散の前兆。
@@ -595,7 +665,17 @@ def build_numbers(facts):
                 roic_skip.append(f"{y}:IC={ic:.0f}が{_what}{_base:.0f}の2割未満＝のれん控除で分母縮退"
                                  if ic > 0 else f"{y}:IC={ic:.0f}が負＝算出不能")
                 continue
-            roics.append((nopat/ic*100, nopat/max(S["eq"][y]+debt, 1)*100, y))
+            # 2026-08-04是正(B12c): roicg 側の分母にも縮退ガードを当てる。従来の `max(eq+debt,1)` は
+            #   債務超過＋低負債で分母が1へ潰れ、roicg が発散した（「比率で裁く検問は分母の符号を
+            #   確かめよ」の取り残し——roic側だけ2026-08-03に塞いでいた）。eq>0 なら eq+debt≥eq で
+            #   このガードは決して誤爆しない＝効くのは債務超過の会社だけ。
+            icg = S["eq"][y] + debt
+            if icg <= 0 or (_base > 0 and icg < 0.20*_base):
+                roic_skip.append(f"{y}:のれん込みIC={icg:.0f}が"
+                                 + (f"{_what}{_base:.0f}の2割未満（債務超過で有利子負債も薄い）＝算出不能"
+                                    if icg > 0 else "負または0＝算出不能"))
+                continue
+            roics.append((nopat/ic*100, nopat/icg*100, y))
             # 実額を残す。**IC/自己資本が本当の判別子**（2026-07-29の19社検算で確立——
             # 「roic>60だから怪しい」はほぼ外れ、MAは74.9→131.0の上方修正だった）。
             # 比率だけでは後から検算できないので、NOPAT・自己資本・負債・のれん・無形の各実額を書く。
@@ -660,7 +740,9 @@ def build_numbers(facts):
                                  f"＝{span}年の年率（自社株買い後の純希薄化）"
                                  + (f"。**{ys[0]}年より前は株数の不連続（分割の疑い）があるため除外**" if cut else ""))
     # 減損履歴(配)
-    if S["impair"] and any(v>0 for v in list(S["impair"].values())[-5:]):
+    # 2026-08-04是正(B12e): 「直近5年」は**年ラベルで**選ぶ。旧 `list(...values())[-5:]` は挿入順の
+    #   末尾5件＝最新5年とは限らない（fcfpsのフォールバックと同じ思い込み）
+    if S["impair"] and any(S["impair"][y] > 0 for y in sorted(S["impair"])[-5:]):
         ev["acqImpair"] = "yes"; note.append("のれん/無形減損の計上履歴あり(配=保S候補、原本で規模確認)")
     # 循環性の機械プロキシ: 売上の前年比が5年内にマイナス2回以上 or 振れ幅>25pt
     if len(rev)>=4 and all(rev[i] for i in range(len(rev)-1)):
@@ -682,8 +764,23 @@ def build_numbers(facts):
             ev["gmt"]="up" if m1-m0>1 else "down" if m1-m0<-1 else "flat"
             evd["gmt"] = f"機械算出: 営業利益率 {oy[0]}年 {m0:.1f}% → {oy[-1]}年 {m1:.1f}%（±1ptでup/down）"
     # のれん込みROIC roicg (直近年・のれん除外しない版)
+    # 2026-08-04是正(B12a/c): (a)税タグ欠測年を税率0%と読まない——従来は `S["tax"].get(y0,0)` で
+    #   NOPAT=EBITになっていた（5年系列側と同じ穴の直近年版）。(b)分母の `max(eq+debt,1)` は
+    #   債務超過＋低負債で1へ潰れて発散するので、roic側と同じ縮退ガード（eq>0なら誤爆しない）。
     if y0 and all(y0 in S[k] for k in ("op","ni","eq")):
-        _safe(ev,note,"roicg",lambda:(lambda tax:round(S["op"][y0]*(1-max(0,min(0.5,tax)))/max(S["eq"][y0]+((S["debtL"].get(y0,0)or 0)+(S["debtS"].get(y0,0)or 0)),1)*100,1))(1-S["ni"][y0]/max(S["ni"][y0]+S["tax"].get(y0,0),1)))
+        if y0 not in S["tax"]:
+            note.append(f"roicg算出不能: {y0}年に税タグが無く実効税率が測れない（税0%と断定しない）")
+        else:
+            _d0 = (S["debtL"].get(y0,0) or 0)+(S["debtS"].get(y0,0) or 0)
+            _icg0 = S["eq"][y0] + _d0
+            _b0 = S["eq"][y0] if S["eq"][y0] > 0 else (S["assets"].get(y0) or 0)
+            if _icg0 <= 0 or (_b0 > 0 and _icg0 < 0.20*_b0):
+                note.append(f"roicg算出不能: {y0}年ののれん込みIC={_icg0:.0f}が縮退"
+                            f"（債務超過で有利子負債も薄い＝分母に実体が無い）")
+            else:
+                _tax0 = 1 - S["ni"][y0]/max(S["ni"][y0]+S["tax"][y0], 1)
+                _safe(ev, note, "roicg",
+                      lambda: round(S["op"][y0]*(1-max(0,min(0.5,_tax0)))/_icg0*100, 1))
         if ev.get("roicg") is not None:
             _d = (S["debtL"].get(y0,0) or 0)+(S["debtS"].get(y0,0) or 0)
             evd["roicg"] = (f"機械算出 {y0}年: NOPAT ÷ (自己資本 {_u(S['eq'][y0])} + 有利子負債 {_u(_d)})"
@@ -743,10 +840,16 @@ def build_numbers(facts):
             return None
         if not ((y in S["debtL"]) or (y in S["debtS"])):
             return None                      # タグ不在を0と読まない
-        tr = 1 - S["ni"][y]/max(S["ni"][y]+S["tax"].get(y,0), 1)
+        if y not in S["tax"]:
+            return None                      # 2026-08-04是正(B12a): 税タグ欠測を税率0%と読まない
+        tr = 1 - S["ni"][y]/max(S["ni"][y]+S["tax"][y], 1)
         np_ = S["op"][y]*(1-max(0,min(0.5,tr)))
         icg = S["eq"][y] + (S["debtL"].get(y,0) or 0) + (S["debtS"].get(y,0) or 0)
-        return (np_, icg) if icg > 0 else None
+        # 2026-08-04是正(B12c): 債務超過＋低負債の縮退分母を弾く（roic側と同じ物差し）
+        _b = S["eq"][y] if S["eq"][y] > 0 else (S["assets"].get(y) or 0)
+        if icg <= 0 or (_b > 0 and icg < 0.20*_b):
+            return None
+        return (np_, icg)
 
     def _roiic(win):
         """win年窓のROIIC。戻り: (値 or 'na', 根拠文)"""
@@ -823,6 +926,21 @@ def build_numbers(facts):
         _safe(ev,note,"eps",lambda:round(S["ni"][y0]/sh2[y0],2))
         if ev.get("eps") is not None:
             evd["eps"] = f"機械算出 {y0}年: 純利益 {_u(S['ni'][y0])} ÷ 株数 {_u(sh2[y0])}（TTMではなく通期実績）"
+    # 債務超過判定 eq (pos/neg)
+    # 2026-08-04是正(B12d): 従来は出力側で `"neg" if (…and False) else "pos"` ＝**恒久的にposと断定**
+    #   していた（未測定を最良ケースで採点させる型・RELXのdisruptと同族）。自己資本の最新年の符号で
+    #   実測する。系列が無い/古すぎるなら**空欄**（posと断定しない。理由は_meta.nullsへ）。
+    if S["eq"]:
+        _ye = max(S["eq"])
+        if not stale(_ye):
+            ev["eqSign"] = "neg" if S["eq"][_ye] < 0 else "pos"
+            evd["eq"] = (f"機械算出 {_ye}年: 自己資本 {_u(S['eq'][_ye])} → "
+                         + ("**債務超過(neg)**" if S["eq"][_ye] < 0 else "正(pos)"))
+        else:
+            note.append(f"eq(債務超過判定)算出不能: 自己資本系列が{_ye}年で途切れ最新{LATEST}年から"
+                        f"遅れている——posと断定しない（原本のBSで確認して手入力せよ）")
+    else:
+        note.append("eq(債務超過判定)算出不能: 自己資本タグ不発見——posと断定しない")
     # 業態fin: 金融判定(粗い) — 純利が金利収入主体かは判定不能なのでnull据置
     ev["_unit"] = series(facts, TAGS["rev"])[1]
     ev["_note"] = note
@@ -896,7 +1014,9 @@ def run(ticker):
         "fcf": ev.get("fcf_abs"), "ni": ev.get("ni_abs"),
         "sbc": None, "dilNet": ev.get("dilNet"),
         "acc": {"USD":"usgaap","EUR":"ifrs","JPY":"jgaap"}.get(ev.get("_unit"),"usgaap"),
-        "eq": "neg" if (ev.get("roicg") is not None and False) else "pos",  # 債務超過は稀・原本確認、既定pos
+        # 2026-08-04是正(B12d): 自己資本の実測符号（build_numbersのeqSign）。測れなければnull＝
+        #   posと断定しない（旧実装は `…and False` で恒久pos断定だった）。理由は_meta.nullsに残す
+        "eq": ev.get("eqSign"),
         "acq5": "yes" if ev.get("acqImpair")=="yes" else None,
         "eps": ev.get("eps"),
         # --- 定性(原本読み・空欄=保留) ---
@@ -923,13 +1043,15 @@ def run(ticker):
                   #   （検算して直すのは可。その場合は _meta.kenshi に旧→新と原本根拠を書く）。
                   "evidence": {k: v for k, v in (ev.get("_evid") or {}).items() if v},
                   "provenance": {k: "machine" for k, v in (ev.get("_evid") or {}).items() if v},
-                  "nulls": {},
+                  # eq(債務超過判定)が測れなかったときは空欄の理由を残す（ルール8。詳細は notes）
+                  "nulls": ({} if ev.get("eqSign") is not None
+                            else {"eq": "自己資本の符号を機械で確定できず空欄——posと断定しない（notes参照）"}),
                   "todo_原本": ["expiry(限)","moatdecay/erosion/disrupt(蝕)","dom/irr/rep/dur(堀四性質)","geopol(集)","nrr"],
                   "todo_市場": ["beta","per","perF","evebit","px","shy"],
                   "todo_書記": ["p1-p4","f1-f5","fin業態","analysts/instOwn/gls/idx/indG/founder"]}}
     os.makedirs(OUT, exist_ok=True)
-    with open(f"{OUT}/{ticker}_gate_input.json","w") as f: json.dump(draft, f, ensure_ascii=False, indent=1)
-    with open(f"{OUT}/{ticker}_hits.txt","w") as f: f.write(f"{ticker} {form} {rdate}\n{url}\n"+rep)
+    with open(f"{OUT}/{ticker}_gate_input.json", "w", encoding="utf-8") as f: json.dump(draft, f, ensure_ascii=False, indent=1)
+    with open(f"{OUT}/{ticker}_hits.txt", "w", encoding="utf-8") as f: f.write(f"{ticker} {form} {rdate}\n{url}\n"+rep)
     print(f"  → {OUT}/{ticker}_gate_input.json / {ticker}_hits.txt")
 
 def load_queue():
