@@ -40,7 +40,7 @@ for p in sorted(glob.glob("out/*_gate_pack.json")):
     rows.append((t, b, r.get("s"), bool(r.get("buy")), (r.get("s") or 0) >= 72, conv, jp))
 from collections import Counter
 def kind(b): return "through-cycle" if str(b).startswith("through-cycle") else b
-for lab, sel in (("全318社", lambda x: True),
+for lab, sel in ((f"全{len(rows)}社", lambda x: True),
                  ("判定圏(Ω72+)", lambda x: x[4]),
                  ("投下可", lambda x: x[3])):
     g = [x for x in rows if sel(x)]
@@ -49,7 +49,8 @@ for lab, sel in (("全318社", lambda x: True),
     parts = " / ".join(f"{k} {v}社({v/tot*100:.0f}%)" for k, v in c.most_common())
     print(f"{lab:14s} n={tot:3d}  {parts}")
 print()
-for lab, sel in (("日本株37社", lambda x: x[6]), ("判定圏の日本株", lambda x: x[6] and x[4])):
+for lab, sel in ((f"日本株{sum(1 for x in rows if x[6])}社", lambda x: x[6]),
+                 ("判定圏の日本株", lambda x: x[6] and x[4])):
     g = [x for x in rows if sel(x)]
     c = Counter(x[5] for x in g); tot = max(len(g), 1)
     print(f"{lab:14s} n={len(g):3d}  " + " / ".join(f"{k} {v}社" for k, v in c.most_common()))
@@ -62,5 +63,7 @@ mix = [x for x in rows if x[4] and kind(x[1]) == "single-year"]
 print(f"\n判定圏で単年のまま残る {len(mix)}社"
       + ("——ここが混在の実体。原本から5年系列を作れば解消する" if mix else ""))
 if LIST:
-    for t, b, s, buy, _ in sorted(mix, key=lambda x: -(x[2] or 0)):
+    # 2026-08-04(B7): 行タプルは7要素(t,b,s,buy,q72,conv,jp)なのに5変数で展開して必ず ValueError
+    #   になっていた（--list が一度も動かない＝CLAUDE.mdが案内する一覧が出ない）。*_ で吸収する。
+    for t, b, s, buy, *_ in sorted(mix, key=lambda x: -(x[2] or 0)):
         print(f"   {t:8s} Ω{(s or 0):5.1f} {'🟢投下可' if buy else ''}")

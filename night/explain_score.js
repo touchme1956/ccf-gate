@@ -12,7 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.dirname(__dirname);
-const { scorePack } = require('./score_all.js');
+const { scorePack, lastCoerce } = require('./score_all.js');
 
 const argv = process.argv.slice(2);
 let tickers = argv.filter(a => !a.startsWith('--'));
@@ -34,9 +34,20 @@ for (const t of tickers) {
   if (!fs.existsSync(p)) { console.error(`${t}: パック無し`); continue; }
   const d = JSON.parse(fs.readFileSync(p, 'utf8'));
   const r = scorePack(d);
+  const coerce = lastCoerce();
   const mg = ccfMoatGate(r, d) || {};
   const x = ccfXJudge(d, parseFloat(r.evalScore)) || {};
   const m = ccfMoat(d) || {};
+  // B5(2026-08-04): buy は score_all.js と同じ**四段関門**で出す。第四＝全件点検（要修正0かつ
+  //   未解決warn0）。従来この道具だけ三段関門のままで、score_all と逆のことを言えた（v9.9.65違反）。
+  let audE = 0, audU = 0;
+  try {
+    const M = d._meta || {};
+    for (const w of (ccfAudit(d, r, coerce) || [])) {
+      if (w.lv === 'err') audE++;
+      else if (w.lv === 'warn' && !((M.evidence || {})[w.k] || (M.nulls || {})[w.k])) audU++;
+    }
+  } catch (e) {}
   out.push({
     t, nm: d.nm || t, omega: +parseFloat(r.evalScore).toFixed(1), tier: r.tierShort,
     // compute() が返すのは Ω・堀・キル・柱の数だけ。Q/F は内部変数なので観測しない
@@ -53,7 +64,8 @@ for (const t of tickers) {
     moatMiss: m.miss, moatNA: m.na,
     // 関門
     xEr: x.xEr != null ? +x.xEr.toFixed(1) : null, xPass: x.xPass,
-    moatOK: !!mg.pass, buy: parseFloat(r.evalScore) >= 75 && x.xPass === true && mg.pass === true,
+    moatOK: !!mg.pass, audE, audU, audOK: audE === 0 && audU === 0,
+    buy: parseFloat(r.evalScore) >= 75 && x.xPass === true && mg.pass === true && audE === 0 && audU === 0,
     exit: r.exit && r.exit.level,
   });
 }

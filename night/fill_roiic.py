@@ -41,7 +41,9 @@ os.chdir(BASE)
 
 import hachimon_fetch as H       # noqa: E402  採取器をそのまま呼ぶ＝二重正本を作らない
 
-TODAY = "2026-07-29"
+# 2026-08-04(P2): "2026-07-29" のハードコードだった——後日実行しても過去日で kenshi に刻まれる。実行日を使う
+import datetime  # noqa: E402
+TODAY = datetime.date.today().isoformat()
 
 
 def main():

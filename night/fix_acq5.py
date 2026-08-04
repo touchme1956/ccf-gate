@@ -67,7 +67,10 @@ os.chdir(BASE)
 import hachimon_fetch as H       # noqa: E402
 
 OUT = os.path.join(BASE, "out")
-VALID = {"yes", "no", "na"}
+# B19(2026-08-04): 'na' を外した。門のSELECTと validate_jp_packs.ENUMS は yes/no だけで、
+#   'na' は取込時に既定 'yes' へ化けて罰が黙って効く＝この道具が直すべき不正値そのもの。
+#   VALID に入れたままだと「validatorはFAIL・門は罰・fix_acq5は素通し」の三者バラバラになる。
+VALID = {"yes", "no"}
 
 
 def judge(gw, eq=None):
@@ -171,10 +174,19 @@ def main():
         cause = ("空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**"
                  if was_blank else
                  "列挙(yes/no)の欄に数値が入っており、門は文字列比較でしか読まない")
-        m.setdefault("kenshi", []).append(
+        line = (
             f"{stamp} acq5 {v!r} → {d['acq5']!r}。{cause}——"
             f"門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。"
             f"のれん系列から機械判定した（判定規則は night/fix_acq5.py）。")
+        # B20(2026-08-04): kenshi が文字列のパック（記録済みの91パック事故）で setdefault().append が
+        #   落ちると、その社だけ監査記録が静かに止まる。fill_roiic / backfill と同じ型ガードで追記する。
+        k = m.get("kenshi")
+        if isinstance(k, list):
+            k.append(line)
+        elif isinstance(k, str) and k:
+            m["kenshi"] = k + "\n" + line
+        else:
+            m["kenshi"] = [line]
         json.dump(d, open(os.path.join(OUT, f"{t}_gate_pack.json"), "w", encoding="utf-8"),
                   ensure_ascii=False, indent=1)
 

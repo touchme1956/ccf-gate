@@ -28,7 +28,9 @@ night/audit_er_realized.py — 門X の E[r]（期待リターン）の**予実�
 
 使い方:
   python3 night/audit_er_realized.py --snap        今日の観測を out/er_ledger.json へ追記
-  python3 night/audit_er_realized.py --snap --all  Ω75+ だけでなく全317社を封じる
+                                                   （**月次idempotent**——同じ月に観測済みならスキップ。
+                                                     やり直すときだけ --force＝同日分を置き換える）
+  python3 night/audit_er_realized.py --snap --all  Ω75+ だけでなく全パックを封じる
   python3 night/audit_er_realized.py               過去の観測 × 現在値で予実を出す
 """
 import json
@@ -63,8 +65,23 @@ def current_px():
     return q, d.get("asof")
 
 
-def snap(all_names=False):
-    """門の ccfXJudge/compute をそのまま走らせて今日の観測を作る（二重実装を作らない）"""
+def snap(all_names=False, force=False):
+    """門の ccfXJudge/compute をそのまま走らせて今日の観測を作る（二重実装を作らない）
+
+    A9(2026-08-04): **月次idempotent**にした。market.yml の月初判定は `date +%d ≤ 7`＝
+    毎月1〜7日の平日**すべて**（月5回）発火し、snap は同日しか重複排除しないので、
+    実害として 2026-08-03 と 08-04 の観測が31社×2重に積まれた（g上限の集計が二重カウント）。
+    CI側の窓は残したまま、**封じる側で同月の観測があればスキップ**する——手作業に頼らない防波堤。
+    やり直し（--force）のときだけ従来どおり同日分を置き換える。
+    """
+    today = date.today().isoformat()
+    led = load_ledger()
+    month_have = sorted({o["date"] for o in led["observations"]
+                         if str(o.get("date", "")).startswith(today[:7])})
+    if month_have and not force:
+        print(f"今月({today[:7]})の観測は封印済み（{' '.join(month_have)}）→ スキップ。"
+              "年率の検証に月2回目は要らない（月次idempotent・A9）。やり直すなら --force")
+        return 0
     js = r"""
 const fs=require('fs'),path=require('path');
 const ROOT=process.argv[2], ALL=process.argv[3]==='1';
@@ -102,8 +119,27 @@ console.log(JSON.stringify(out));
     finally:
         os.remove(p)
 
-    today = date.today().isoformat()
-    led = load_ledger()
+    # A9(d): 配当利回り divY の分離保存。E[r] の shy は配当＋自社株買いの合算で、価格リターンには
+    #   配当が入らないため、**配当分離は突合時の補正に必須**（分離せずに観測を積み始めると、
+    #   後からでは補正不能な偏りが確定する＝B3）。out/divy.json（{TICKER: 配当利回り%}）があれば読む。
+    #   ファイルが無い・銘柄が無いときは null——**0では埋めない**（0は「無配と測った」の意味。
+    #   欠測をゼロと読むな＝絶対のルール7）。
+    divy = {}
+    p_divy = os.path.join(BASE, "out", "divy.json")
+    if os.path.exists(p_divy):
+        try:
+            _dj = json.load(open(p_divy, encoding="utf-8"))
+            # 形式は2通りを受ける: {"asof":…, "divY":{T:pct}}（night/fill_divy.py）または素の {T:pct}
+            _map = _dj.get("divY") if isinstance(_dj.get("divY"), dict) else _dj
+            divy = {str(k).upper(): v for k, v in _map.items()}
+        except Exception:
+            print("⚠ out/divy.json が読めない——divY は全社 null で封じる（誤値より空欄）")
+            divy = {}
+    for x in recs:
+        _dv = divy.get(str(x.get("t", "")).upper())
+        x["divY"] = float(_dv) if isinstance(_dv, (int, float)) else None
+
+    # --force の再実行では同日分だけを置き換える（同月の別日はガードが上で止めている）
     led["observations"] = [o for o in led["observations"] if o.get("date") != today]
     n_px = 0
     for x in recs:
@@ -195,7 +231,7 @@ def review():
 
 def main():
     if "--snap" in sys.argv:
-        return snap(all_names="--all" in sys.argv)
+        return snap(all_names="--all" in sys.argv, force="--force" in sys.argv)
     return review()
 
 

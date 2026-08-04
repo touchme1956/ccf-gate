@@ -57,7 +57,18 @@ def run():
 
 
 def main():
+    # 2026-08-04(P2): **対象の式は撤去済み**。この道具の前提だった pen（TAM浸透率）と TAM柱
+    #   (sustain の第3項 pt) は v9.9.45（2026-07-29・ユーザー明示指示）で**廃止された**
+    #   ——pen は全316パックで一度も埋まらず（憶測禁止を守る限り原本から測れない）、
+    #   sustain は二本柱 gm([pm,pr],[0.475,0.525]) になった。滑走路の評価は f2/F11 が担う。
+    #   従来は錨切れの「index.html に想定の式が無い」で落ちて**壊れているように見えた**が、
+    #   壊れたのではなく前提が消えた。歴史記録（実測値と判断の経緯は docstring）として残す。
     src = open(HTML, encoding="utf-8").read()
+    if PT not in src or SUS not in src:
+        print("対象の式は撤去済み: pen（TAM浸透率）と sustain の TAM柱は v9.9.45 で廃止され、"
+              "sustain は gm([pm,pr],[0.475,0.525]) の二本柱になった。この計測はもう対象を持たない。\n"
+              "（このファイルは「欠測の扱いを変えたら誰がどう動くか」を測った歴史記録として残している）")
+        return 0
     for pairs in PATCH.values():
         for old, _ in pairs:
             if old not in src:

@@ -19,7 +19,7 @@
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.dirname(__dirname);
-const { scorePack } = require('./score_all.js');
+const { scorePack, lastCoerce } = require('./score_all.js');
 
 if (typeof ccfAudit !== 'function') {
   console.error('ccfAudit() を読み込めなかった。index.html の構造が変わった可能性がある');
@@ -39,9 +39,12 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
   const t = f.split('_gate_pack')[0];
   if (onlyT.length && !onlyT.includes(t.toUpperCase())) continue;
   let r; try { r = scorePack(d); } catch (e) { continue; }
+  // B4(2026-08-04): 門と同じく「取込で化けた」記録(coerce)を ccfAudit へ渡す。従来は常に [] で、
+  //   err①「取込で化けた」が端末側で構造的に0件＝ブラウザと違うことを言っていた（v9.9.65違反）。
+  const coerce = lastCoerce();
   const s = parseFloat(r.evalScore) || 0;
   if (!showAll && !onlyT.length && s < 72) continue;
-  let W = []; try { W = ccfAudit(d, r, []) || []; } catch (e) { continue; }
+  let W = []; try { W = ccfAudit(d, r, coerce) || []; } catch (e) { continue; }
   W = W.filter(w => !onlyK.length || onlyK.includes(w.k));
   // 門(ブラウザ)は _meta を持てないので「原本で検算して確定した欄」も鳴り続ける（TSM/SAPのper・
   // ADBE/MCOのroic乖離・CTAS/SAPのacq5='no' 等）。端末側は _meta を読めるので、

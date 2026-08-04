@@ -37,7 +37,8 @@ night/audit_kill_roiic.py — 複利停止キル（ROIIC³<WACC）が立った�
     複利しない」という正しい読み。20-30年複利を目的とする門の趣旨と整合する。
 使い方:
   python3 night/audit_kill_roiic.py            データの健全性で仕分ける
-  python3 night/audit_kill_roiic.py --impact   **キルを外したら誰がどう動くかを実測**（原本を読む前にこれ）
+  ※「キルを外したら誰がどう動くか」の実測は `python3 night/kill_impact.py`（--impact はこの道具には無い。
+    2026-08-04(B25): 文書だけが --impact を宣伝して実装が黙って既定動作をしていたのを、明示エラーに直した）
 """
 import json
 import os
@@ -52,6 +53,12 @@ import hachimon_fetch as H       # noqa: E402
 
 
 def main():
+    # B25(2026-08-04): --impact はこの道具に実装されていない（実装は night/kill_impact.py）。
+    #   黙って重い既定動作に落ちると「実測した」という誤解を生むので、大声で断って止まる。
+    if "--impact" in sys.argv:
+        print("✗ --impact はこの道具には無い。キルを外した影響の実測は"
+              " `python3 night/kill_impact.py`（--all で全キル）を使うこと")
+        return 1
     rows = json.load(open("out/score_all.json", encoding="utf-8"))
     sc = {r["t"]: r for r in rows}
     targets = []
