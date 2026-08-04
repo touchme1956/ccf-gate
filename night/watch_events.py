@@ -89,7 +89,7 @@ def main():
     m = cik_map(us)
     missing = [t for t in us if t.upper() not in m]
 
-    hits, errors, checked = [], [], 0
+    hits, earnings, others, errors, checked = [], [], [], [], 0
     for t in us:
         cik = m.get(t.upper())
         if not cik:
@@ -114,6 +114,10 @@ def main():
                 row = {"t": t, "form": f, "date": dates[i], "items": its, "flags": flags, "url": url}
                 if flags:
                     hits.append(row)
+                elif "2.02" in its:
+                    earnings.append(row)   # 決算発表(2.02)は警報でなく「決算イベント」として別置き（門のイベントタブが表示）
+                else:
+                    others.append(row)     # 1.01契約/7.01RegFD/8.01その他等——警報ではないが記録は残す
         except Exception as e:
             # 取得失敗は失敗として書く。黙って飛ばすと「監視した」顔をする（ルール7の親戚: 欠測を健全と読むな）
             errors.append({"t": t, "err": str(e)[:200]})
@@ -123,6 +127,8 @@ def main():
         "window_days": days,
         "checked_us": checked,
         "alerts": sorted(hits, key=lambda x: (x["date"], x["t"]), reverse=True),
+        "earnings": sorted(earnings, key=lambda x: (x["date"], x["t"]), reverse=True),
+        "others": sorted(others, key=lambda x: (x["date"], x["t"]), reverse=True),
         "errors": errors,
         "cik_unresolved": missing,
         "not_covered_jp": {"tickers": jp,
@@ -131,7 +137,7 @@ def main():
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    print(f"8-K監視: {checked}社を走査（窓{days}日）→ 警報 {len(hits)}件 / 取得失敗 {len(errors)}件 / CIK不明 {len(missing)}件 / 日本株{len(jp)}社は対象外（明示）")
+    print(f"8-K監視: {checked}社を走査（窓{days}日）→ 警報 {len(hits)}件 / 決算発表 {len(earnings)}件 / その他8-K {len(others)}件 / 取得失敗 {len(errors)}件 / CIK不明 {len(missing)}件 / 日本株{len(jp)}社は対象外（明示）")
     for h in hits:
         print(f"  ⚠ {h['t']} {h['date']} {'; '.join(h['flags'])}")
     if errors:
