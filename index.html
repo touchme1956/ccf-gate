@@ -3299,19 +3299,36 @@ async function ccfEvents(btn){
   if(asof)asof.textContent=ev?`8-K走査 ${ev.asof}（窓${ev.window_days}日・米国${ev.checked_us}社）／決算予定 生成 ${ern?ern.generated:'—'}`:'';
   const sec=(title,inner,note)=>`<div style="margin-bottom:16px;padding:13px 15px;background:var(--panel);border:1px solid var(--line);border-radius:9px"><div style="font-size:13.5px;font-weight:600;color:var(--gold-bright);margin-bottom:8px">${title}</div>${inner}${note?`<div style="font-size:10.5px;color:var(--dim);margin-top:7px">${note}</div>`:''}</div>`;
   const askBtn=t=>`<button onclick="ccfCopyAsk('${t}',this)" title="門2審査プロトコル全文＋${t}をコピー" style="margin-left:8px;padding:3px 8px;background:linear-gradient(180deg,rgba(84,184,138,.24),rgba(84,184,138,.08));border:1px solid rgba(84,184,138,.45);border-radius:6px;color:#8fc9a4;font-size:11px;cursor:pointer">審査</button>`;
-  const row=(x,color)=>`<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:5px 0;border-top:1px solid rgba(255,255,255,.04);font-size:12.5px"><b style="min-width:4.5em;color:${color}">${x.t}</b><span style="color:var(--dim);min-width:6.5em">${x.date}</span><span style="flex:1;color:var(--ink-soft)">${(x.flags&&x.flags.length?x.flags.join('；'):'Item '+x.items.join(', '))}</span>${x.url?`<a href="${x.url}" target="_blank" style="font-size:11px;color:#5d8cc2">原文書↗</a>`:''}${x.flags&&x.flags.length?askBtn(x.t):''}</div>`;
+  const row=(x,color)=>`<div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:5px 0;border-top:1px solid rgba(255,255,255,.04);font-size:12.5px"><b style="min-width:4.5em;color:${color}">${x.t}</b><span style="color:var(--dim);min-width:6.5em">${x.date}</span><span style="flex:1;color:var(--ink-soft)">${(x.flags&&x.flags.length?x.flags.join('；'):(x.items&&x.items.length?'Item '+x.items.join(', '):(x.form||'')))}</span>${x.url?`<a href="${x.url}" target="_blank" style="font-size:11px;color:#5d8cc2">原文書↗</a>`:''}${x.docID?`<span style="font-size:10px;color:var(--dim)" title="EDINETの書類検索でdocIDを引くと原本PDFに届く">docID ${x.docID}</span>`:''}${x.flags&&x.flags.length?askBtn(x.t):''}</div>`;
   let html='';
-  // ⚙ 運用サイクル（v9.9.80「すべて回るように」）: 周期作業14本の回転状態。止まった作業を黙らせない
+  // ⚙ 運用サイクル（v9.9.80「すべて回るように」・v9.9.81でカード型へ再設計）: 周期作業14本の回転状態。
+  //   止まった作業を黙らせない。周期でグループ化し、1本=1カード2行（狭い画面でも折り返しで読める）
   if(ops&&Array.isArray(ops.items)){
     const due=ops.items.filter(x=>x.state==='due'), unk=ops.items.filter(x=>x.state==='unknown');
-    const oRow=x=>{const c=x.state==='due'?'#cf5f48':x.state==='unknown'?'#d69a3c':'var(--jade)';
-      const mark=x.state==='due'?'⚠ 停止疑い':x.state==='unknown'?'？不明':'🟢';
-      return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-top:1px solid rgba(255,255,255,.04);font-size:12px"><span style="min-width:5.5em;color:${c};white-space:nowrap">${mark}</span><b style="min-width:11em;color:var(--ink)">${x.name}</b><span style="color:var(--dim);min-width:6.5em">${x.cadence}</span><span style="color:${x.state==='due'?'#cf5f48':'var(--dim)'}">最終 ${x.last||'不明'}${x.days!=null?`・${x.days}日前`:''}</span><span style="flex:1;text-align:right;font-size:10.5px;color:var(--dim)">${x.how}</span></div>`;};
-    const head=(due.length||unk.length)
-      ?`<div style="font-size:12px;color:#cf5f48;margin-bottom:6px"><b>${due.length?`停止疑い ${due.length}本: ${due.map(x=>x.name).join('・')}`:''}${unk.length?`${due.length?'／':''}日付不明 ${unk.length}本`:''}</b>——回っていない作業は「無い」のと同じ。右の回し方で復旧させること</div>`
-      :`<div style="font-size:12px;color:var(--jade);margin-bottom:6px">全${ops.items.length}本が期限内で回っている（実測 ${ops.asof}）</div>`;
-    html+=sec('⚙ 運用サイクル（すべて回っているか）',head+ops.items.map(oRow).join(''),
-      '毎営業日=market.yml/events.yml・月次=ops.yml(毎月2日)が自動で回す。「手動」の行だけ人の作業（日本株点検=EDINET鍵・門0発掘=companyfacts 1.4GB・年次較正の答え合わせ）。判定には不使用');
+    const chip=(txt,fg,bg)=>`<span style="font-size:10px;padding:1px 8px;border-radius:9px;background:${bg};color:${fg};white-space:nowrap">${txt}</span>`;
+    const autoChip=x=>x.auto===true?chip('自動','#8fc9a4','rgba(84,184,138,.14)')
+      :x.auto==='key'?chip('鍵で自動','#d6b06c','rgba(214,154,60,.16)')
+      :chip('手動','#c9c2b2','rgba(255,255,255,.08)');
+    const stChip=x=>x.state==='due'?chip('⚠ 停止疑い','#ff9d8a','rgba(207,95,72,.20)')
+      :x.state==='unknown'?chip('？ 不明','#d6b06c','rgba(214,154,60,.16)')
+      :chip('🟢 回転中','#8fc9a4','rgba(84,184,138,.10)');
+    const card=x=>`<div style="border:1px solid var(--line);border-left:3px solid ${x.state==='due'?'#cf5f48':x.state==='unknown'?'#d69a3c':'rgba(84,184,138,.55)'};border-radius:8px;padding:8px 12px;margin:6px 0;background:rgba(255,255,255,.015)">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <b style="font-size:13px;color:var(--ink)">${x.name}</b>${autoChip(x)}${stChip(x)}
+          <span style="margin-left:auto;font-size:11.5px;color:${x.state==='due'?'#ff9d8a':'var(--dim)'};white-space:nowrap">最終 ${x.last||'不明'}${x.days!=null?`（${x.days}日前）`:''}</span>
+        </div>
+        <div style="font-size:10.5px;color:var(--dim);margin-top:4px">${x.how}</div>
+      </div>`;
+    let inner=(due.length||unk.length)
+      ?`<div style="font-size:12.5px;color:#ff9d8a;margin-bottom:4px"><b>${due.length?`⚠ 停止疑い ${due.length}本: ${due.map(x=>x.name).join('・')}`:''}${unk.length?`${due.length?'／':''}？日付不明 ${unk.length}本`:''}</b>——回っていない作業は「無い」のと同じ。カードの回し方で復旧させること</div>`
+      :`<div style="font-size:12.5px;color:var(--jade);margin-bottom:4px">✓ 全${ops.items.length}本が期限内で回っている（実測 ${ops.asof}）</div>`;
+    for(const [label,pre] of [['毎営業日','毎営業日'],['月次','月1'],['四半期','四半期'],['年次','年1']]){
+      const g=ops.items.filter(x=>String(x.cadence).startsWith(pre));
+      if(!g.length)continue;
+      inner+=`<div style="font-size:11px;font-weight:600;color:var(--gold-bright);margin:12px 0 2px;letter-spacing:.1em">${label}</div>`+g.map(card).join('');
+    }
+    html+=sec('⚙ 運用サイクル（すべて回っているか）',inner,
+      '「自動」＝CIが回す（market.yml=毎営業日／events.yml=毎営業日／ops.yml=毎月2日）。「鍵で自動」＝GitHub Secrets に EDINET_API_KEY（無料・api.edinet-fsa.go.jp）を置けば自動になる。「手動」＝人の作業（年次較正の答え合わせ・門0発掘=companyfacts 1.4GB）。判定には不使用');
   }else{
     html+=sec('⚙ 運用サイクル','<b style="color:#d69a3c">out/ops_status.json が未生成</b>——CI初回実行後に入る。手動なら python3 night/ops_status.py');
   }
@@ -3321,16 +3338,17 @@ async function ccfEvents(btn){
     html+=sec(`⚠ 8-K警報（${(ev.alerts||[]).length}件）`,
       (ev.alerts||[]).length?ev.alerts.map(x=>row(x,'#cf5f48')).join(''):'<span style="font-size:12px;color:var(--dim)">窓内に警報なし（走査は成功——取得失敗欄も確認のこと）</span>',
       '減損2.06／退任5.02／非依拠4.02／破産1.03／上場廃止通知3.01。警報＝門2再審査の気づきであり売買判定ではない。「審査」で依頼文をコピー');
-    html+=sec(`📄 決算発表イベント（8-K Item 2.02・${(ev.earnings||[]).length}件）`,
+    html+=sec(`📄 決算・報告イベント（米: 8-K 2.02／日: 有報・四半期提出——${(ev.earnings||[]).length}件）`,
       (ev.earnings||[]).length?ev.earnings.map(x=>row(x,'var(--ink)')).join(''):'<span style="font-size:12px;color:var(--dim)">窓内に決算発表なし</span>',
-      '発表が出た銘柄は四半期点検（kessan_check.py→要審査なら門2再審査）へ。数字はここでは読まない');
+      '発表が出た銘柄は決算点検（米: kessan_check.py／日: kessan_check_jp.py→要審査なら門2再審査）へ。数字はここでは読まない');
     if((ev.others||[]).length)
       html+=`<details style="margin-bottom:16px"><summary style="cursor:pointer;font-size:12px;color:var(--dim)">その他の8-K ${ev.others.length}件（契約1.01・RegFD 7.01・その他8.01等——警報ではない）</summary><div style="padding:8px 15px;background:var(--panel);border:1px solid var(--line);border-radius:9px;margin-top:6px">${ev.others.map(x=>row(x,'var(--dim)')).join('')}</div></details>`;
     const gaps=[];
     if((ev.errors||[]).length)gaps.push(`<b style="color:#d69a3c">取得失敗 ${ev.errors.length}社</b>: ${ev.errors.map(e=>e.t).join(' ')}——この社は「見ていない」のであって「異常なし」ではない`);
     if((ev.cik_unresolved||[]).length)gaps.push(`CIK不明 ${ev.cik_unresolved.join(' ')}`);
-    if(ev.not_covered_jp&&(ev.not_covered_jp.tickers||[]).length)gaps.push(`日本株 ${ev.not_covered_jp.tickers.length}社は対象外の穴（EDINET鍵なし）: ${ev.not_covered_jp.tickers.join(' ')}`);
-    if(gaps.length)html+=sec('🕳 監視の穴（黙って対象外にしない）',`<div style="font-size:12px;color:var(--ink-soft);line-height:1.8">${gaps.join('<br>')}</div>`);
+    if(ev.jp&&ev.jp.covered)gaps.push(`<span style="color:var(--jade)">日本株 ${(ev.jp.tickers||[]).length}社はEDINETで走査済み（臨時報告書・訂正・有報/四半期の提出を監視）</span>`);
+    if(ev.not_covered_jp&&(ev.not_covered_jp.tickers||[]).length)gaps.push(`<b style="color:#d69a3c">日本株 ${ev.not_covered_jp.tickers.length}社は対象外の穴</b>: ${ev.not_covered_jp.tickers.join(' ')}<br><span style="font-size:11px">→ EDINET APIの無料鍵（api.edinet-fsa.go.jp で登録）を GitHub Secrets の <b>EDINET_API_KEY</b> に置くと、臨時報告書(8-K相当)・訂正・有報/四半期の提出監視と決算点検が自動で回り出す</span>`);
+    if(gaps.length)html+=sec('🕳 監視の被覆（黙って対象外にしない）',`<div style="font-size:12px;color:var(--ink-soft);line-height:1.8">${gaps.join('<br>')}</div>`);
   }
   if(ern&&Array.isArray(ern.items)){
     const today=new Date().toISOString().slice(0,10);

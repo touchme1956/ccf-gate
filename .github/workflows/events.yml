@@ -20,7 +20,9 @@ jobs:
         with: {fetch-depth: 0}   # ops_status が git の最終コミット日で各サイクルの回転を測るため全履歴が要る
       - uses: actions/setup-python@v5
         with: {python-version: '3.11'}
-      - name: 監視リストの8-Kを走査
+      - name: 監視リストのイベント走査（米国=8-K・日本株=EDINET臨報/訂正/報告書）
+        env:
+          EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}   # 未設定なら日本株は「対象外の穴」と明示される（無料鍵: api.edinet-fsa.go.jp）
         run: python3 night/watch_events.py
       - name: 運用サイクルの回転状態を実測（毎日——止まった作業を翌日には⚠にする）
         run: python3 night/ops_status.py

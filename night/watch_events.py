@@ -22,8 +22,12 @@ watch_events.py — 監視リストの 8-K を日次で見張るイベント駆�
   5.02 役員・取締役の退任  → 退任
   ※ 2.02(決算発表)は四半期点検の領分なので警報にしない（毎四半期鳴る警報は鳴らないのと同じ）
 
-日本株は対象外＝穴のまま（EDINET APIは鍵が要る）。出力にその旨を明示する——
-黙って対象外にすると「監視されている」顔をする（kessan_check の偽健全と同型の事故になる）。
+日本株（2026-08-04追加）: 環境変数 EDINET_API_KEY があれば EDINET API v2 の日付別提出一覧を走査し、
+  **臨時報告書**（8-Kの相当物＝役員異動・重要事象）と**訂正報告書**を警報に、
+  有報・四半期・半期報告書の新規提出を「決算・報告イベント」に立てる。
+  鍵が無ければ対象外＝穴のまま。出力にその旨を明示する——
+  黙って対象外にすると「監視されている」顔をする（kessan_check の偽健全と同型の事故になる）。
+  鍵は https://api.edinet-fsa.go.jp/ で無料登録し、GitHub Secrets の EDINET_API_KEY に置く。
 
 使い方:
   python3 night/watch_events.py            直近7日窓（日次CI用。休日またぎを吸収）
@@ -79,6 +83,42 @@ def cik_map(tickers):
     return m
 
 
+def edinet_scan(jp, days, hits, earnings, others, errors):
+    """EDINET日付別一覧から監視中の日本株の新規提出を拾う。鍵が無ければ None（=対象外の穴）"""
+    key = os.environ.get("EDINET_API_KEY", "").strip()
+    if not key or not jp:
+        return None
+    want = {t[:4] for t in jp}          # documents.json の secCode は5桁（末尾0）
+    n_days_ok = 0
+    for i in range(days):
+        d = (date.today() - timedelta(days=i)).isoformat()
+        try:
+            j = json.loads(get(f"https://api.edinet-fsa.go.jp/api/v2/documents.json?date={d}&type=2&Subscription-Key={key}"))
+            n_days_ok += 1
+        except Exception as e:
+            errors.append({"t": f"EDINET:{d}", "err": str(e)[:120]})
+            continue
+        for doc in (j.get("results") or []):
+            sec = str(doc.get("secCode") or "")
+            if sec[:4] not in want:
+                continue
+            desc = str(doc.get("docDescription") or "")
+            row = {"t": sec[:4], "form": desc[:60], "date": doc.get("submitDateTime", d)[:10],
+                   "items": [], "flags": [], "url": "",
+                   "docID": doc.get("docID")}
+            if "臨時報告書" in desc:
+                row["flags"] = ["臨時報告書＝重要事象（役員異動・訂正等）の可能性——原本を読む(EDINETでdocID検索)"]
+                hits.append(row)
+            elif "訂正" in desc:
+                row["flags"] = ["訂正報告書＝過年度の記載訂正の可能性——原本を読む"]
+                hits.append(row)
+            elif any(x in desc for x in ("有価証券報告書", "四半期報告書", "半期報告書")):
+                earnings.append(row)     # 決算・報告イベント（警報ではない）
+            else:
+                others.append(row)       # 大量保有等——記録のみ
+    return {"covered": True, "days_scanned": n_days_ok, "tickers": sorted(want)}
+
+
 def main():
     days = 7
     if "--days" in sys.argv:
@@ -122,6 +162,7 @@ def main():
             # 取得失敗は失敗として書く。黙って飛ばすと「監視した」顔をする（ルール7の親戚: 欠測を健全と読むな）
             errors.append({"t": t, "err": str(e)[:200]})
 
+    jp_cov = edinet_scan(jp, days, hits, earnings, others, errors)
     out = {
         "asof": date.today().isoformat(),
         "window_days": days,
@@ -131,13 +172,19 @@ def main():
         "others": sorted(others, key=lambda x: (x["date"], x["t"]), reverse=True),
         "errors": errors,
         "cik_unresolved": missing,
-        "not_covered_jp": {"tickers": jp,
-                           "why": "EDINET APIは鍵(EDINET_API_KEY)が必要で本経路では読めない。日本株のイベント監視は未整備の穴＝kessan_check_jp.pyの制約と同根。鍵が用意でき次第ここに統合する"},
+        "jp": jp_cov if jp_cov else None,
+        "not_covered_jp": None if jp_cov else {
+            "tickers": jp,
+            "why": ("EDINET_API_KEY 未設定＝日本株のイベント監視は穴のまま。"
+                    "鍵は https://api.edinet-fsa.go.jp/ で無料登録し、GitHub Secrets の EDINET_API_KEY に置くと"
+                    "臨時報告書(8-K相当)・訂正・有報/四半期の提出が自動で入る")},
         "note": "判定には使わない。alertsが立った銘柄は門2再審査（依頼文）へ回す。四半期点検の隙間を埋める気づきの層であり、株価は見ない",
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    print(f"8-K監視: {checked}社を走査（窓{days}日）→ 警報 {len(hits)}件 / 決算発表 {len(earnings)}件 / その他8-K {len(others)}件 / 取得失敗 {len(errors)}件 / CIK不明 {len(missing)}件 / 日本株{len(jp)}社は対象外（明示）")
+    jp_msg = (f"日本株{len(jp_cov['tickers'])}社をEDINETで走査" if jp_cov
+              else f"日本株{len(jp)}社は対象外（EDINET_API_KEY未設定＝明示）")
+    print(f"イベント監視: 米国{checked}社の8-K（窓{days}日）＋{jp_msg} → 警報 {len(hits)}件 / 決算・報告 {len(earnings)}件 / その他 {len(others)}件 / 取得失敗 {len(errors)}件 / CIK不明 {len(missing)}件")
     for h in hits:
         print(f"  ⚠ {h['t']} {h['date']} {'; '.join(h['flags'])}")
     if errors:

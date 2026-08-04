@@ -66,53 +66,54 @@ def kessan_last(suffix):
 # 期限日数は「これを超えたら止まっているとみなす」線——毎営業日=4日(連休吸収)/月次=40日/四半期=100日/年次=430日
 def build():
     today = date.today()
+    # auto: True=CIが全自動 / "key"=鍵をSecretsに置けば自動(無ければ手動) / False=人の作業
     items = [
         ("market",  "株価・盤データ",          "毎営業日", 4,
          json_field("out/dashboard.json", "asof") or git_date("out/dashboard.json"),
-         "CI: market.yml 21:30UTC（FINNHUB_KEY要）"),
-        ("events",  "8-K監視",                "毎営業日", 4,
+         "market.yml 21:30UTC（FINNHUB_KEY）", True),
+        ("events",  "8-K・臨報監視",           "毎営業日", 4,
          json_field("out/events_watch.json", "asof"),
-         "CI: events.yml 22:10UTC（鍵不要）"),
+         "events.yml 22:10UTC（米国は鍵不要・日本株はEDINET_API_KEY）", True),
         ("er",      "E[r]予実の観測封印",      "月1",     40,
          er_last_obs(),
-         "CI: market.yml（月初・snapは月次idempotent）"),
+         "market.yml（月初・snapは月次idempotent）", True),
         ("divy",    "配当分離(divY)",          "月1",     40,
          json_field("out/divy.json", "asof"),
-         "CI: ops.yml（毎月2日）／手動 python3 night/fill_divy.py"),
+         "ops.yml 毎月2日／手動 python3 night/fill_divy.py", True),
         ("kanshi",  "監視リスト生成",          "月1",     40,
          git_date("kanshi_list.json"),
-         "CI: ops.yml／手動 python3 make_kanshi.py"),
+         "ops.yml／手動 python3 make_kanshi.py", True),
         ("cal",     "決算カレンダー",          "月1",     40,
          json_field("out/next_earnings.json", "generated"),
-         "CI: ops.yml／手動 python kessan_calendar.py"),
+         "ops.yml／手動 python kessan_calendar.py", True),
         ("xwatch",  "X監視表(開通ライン)",     "月1",     40,
          git_date("gate1_x_watch.json"),
-         "CI: ops.yml／手動 python x_watch_recalc.py"),
-        ("kessanUS","保有・監視の決算点検(米)", "四半期",  100,
+         "ops.yml／手動 python x_watch_recalc.py", True),
+        ("kessanUS","決算点検（米国）",        "四半期",  100,
          kessan_last("_qcheck.txt"),
-         "CI: ops.yml（月次で先回り）／手動 python kessan_check.py"),
-        ("kessanJP","日本株の決算点検",        "四半期",  100,
+         "ops.yml（月次で先回り）／手動 python kessan_check.py", True),
+        ("kessanJP","決算点検（日本株）",      "四半期",  100,
          kessan_last("_qcheck_jp.txt"),
-         "手動 python3 kessan_check_jp.py（EDINET鍵なしは点検不能＝既知の穴）"),
+         "ops.yml（EDINET_API_KEYをSecretsに置けば自動）／手動 python3 kessan_check_jp.py", "key"),
         ("v10",     "v10影スコア更新",         "年1(7月)", 430,
          json_field("out/v10_shadow.json", "generated") or git_date("out/v10_shadow.json"),
-         "CI: ops.yml（7月）／手動 python3 v10_series.py"),
+         "ops.yml（7月）／手動 python3 v10_series.py", True),
         ("calib",   "年次較正(答え合わせ)",     "年1(7月)", 430,
          git_date("out/calibration.json"),
-         "手動 python calibration_check.py——v9/v10の勝敗判定はユーザーと（V10_SPEC）"),
+         "python calibration_check.py——v9/v10の勝敗判定はユーザーの判断（V10_SPEC）", False),
         ("gate0",   "米国門0発掘",             "年1(1-2月)", 430,
          git_date("gate1_queue.json"),
-         "手動 python run_gate0_local.py（companyfacts.zip 1.4GB＝CI外）"),
+         "python run_gate0_local.py（companyfacts.zip 1.4GB＝CI外）", False),
         ("gate0jp", "日本株門0",               "年1",     430,
          git_date("gate0_jp_queue.json"),
-         "手動 python3 night/rebuild_gate0_jp.py --write（rerankは旧世代＝封鎖済み）"),
+         "python3 night/rebuild_gate0_jp.py --write（rerankは旧世代＝封鎖済み）", False),
         ("backtest","疑似バックテスト",        "年1",     430,
          max((git_date(os.path.relpath(f, BASE)) or "" for f in
               glob.glob(os.path.join(BASE, "out", "backtest_*.json"))), default=None) or None,
-         "手動 python3 night/backtest_core.py"),
+         "python3 night/backtest_core.py", False),
     ]
     rows = []
-    for id_, name, cad, due, last, how in items:
+    for id_, name, cad, due, last, how, auto in items:
         days = None
         if last:
             try:
@@ -122,7 +123,7 @@ def build():
                 days = None
         state = "unknown" if days is None else ("due" if days > due else "ok")
         rows.append({"id": id_, "name": name, "cadence": cad, "due_days": due,
-                     "last": last, "days": days, "state": state, "how": how})
+                     "last": last, "days": days, "state": state, "how": how, "auto": auto})
     return {"asof": today.isoformat(), "items": rows,
             "note": "state=due は「期限日数を超えて止まっている」の機械判定。unknown は日付が取れない＝健全と読まないこと"}
 
