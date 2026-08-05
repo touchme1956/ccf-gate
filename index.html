@@ -3728,7 +3728,11 @@ async function renderPlan(){
         +(c!=null?` <span style="color:${col}">${c>0?'+':''}${c.toFixed(2)}%</span>`:'')+`</span>`;}
     if(isFinite(led)&&led>0)return `<span style="font-size:11.5px;color:var(--dim);white-space:nowrap;margin-left:8px" title="市場データ未取得——台帳に保存された値。日本株はFinnhub無料枠外">${led.toFixed(2)}<span style="font-size:9.5px;margin-left:3px">台帳</span></span>`;
     return '';};
-  const brow=(r,i,tag,extra)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${tag}${i+1}</b></span><span class="ln">${r.nm}${r.audB||''}${pxchip(r)}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}${r.epsOld?'<span style="font-size:10px;color:#c0894a;margin-left:6px" title="原本決算期が300日超——E[r]/PERの前提が古い。決算後にeps/perを更新せよ">⏳eps古</span>':''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span>${xtag(r)}${extra||''}${reqbtns(r)}</div>`;
+  // v9.9.89: ◆保有チップ。保有銘柄が買付順位に載るのは仕様（DCAは目標ウェイトまで積み増す）だが、
+  //   posはallocTagのtooltipの中にしか出ておらず「門が保有を認識しているか」が画面から見えなかった
+  //   （実例: IRMD保有なのに順位に出る→ユーザーが連携切れを疑った。連携は生きていて表示が無いだけだった）
+  const posChip=r=>(r.pos>0)?`<span style="font-size:10px;color:var(--jade);margin-left:6px" title="現在保有ウェイト（${(livePos&&livePos[r.t]!=null)?'Ⅶ資産の実額から自動算出':'Ⅲ採点機の手入力pos——Ⅶ資産に株数を入れれば自動連携に切替わる'}）。保有中でも目標ウェイトに届くまでは買付順位に残る＝DCAの積み増し対象。目標に達すると「充足」＝今月0円">◆保有${r.pos.toFixed(0)}%</span>`:'';
+  const brow=(r,i,tag,extra)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${tag}${i+1}</b></span><span class="ln">${r.nm}${r.audB||''}${pxchip(r)}${posChip(r)}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}${r.epsOld?'<span style="font-size:10px;color:#c0894a;margin-left:6px" title="原本決算期が300日超——E[r]/PERの前提が古い。決算後にeps/perを更新せよ">⏳eps古</span>':''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span>${xtag(r)}${extra||''}${reqbtns(r)}</div>`;
   // 城(総資産の60%)内の配分を自動表示(表示のみ・採点に不介入)。v9.9.70で目標は連続式 城60%×(Ω−70)÷Σ(Ω−70)。
   //   今月=各投下可の「目標−現在保有%(pos)」の不足分で按分(B案②:不足銘柄へ厚く・合計100%)。posは保有比率入力。
   // v9.9.68で城の目標比率を40%→60%へ改定したのに、この定数だけ40のまま取り残されていた（2026-08-03に発見）。
