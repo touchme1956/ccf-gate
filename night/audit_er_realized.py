@@ -104,6 +104,10 @@ for(const f of fs.readdirSync(ROOT+'/out')){
     per:d.per==null?null:+d.per, px:d.px==null?null:+d.px,
     moat:mg.idx==null?null:+mg.idx.toFixed(1), moatOK:!!mg.pass,
     buy:s>=75&&x.xPass===true&&mg.pass===true,
+    // 2026-08-04: 売却規律S1/S2/S3の予実も封じる——買いの検証(E[r])は始まったのに売りの検証はゼロだった。
+    //   歴史検証の答え(掟三=勝者を売らないが右裾の源泉)に照らすと、S1/S2の誤発火は20年で最も高くつく誤り型。
+    //   月次でexitを記録しておけば「s1が立った銘柄のその後」を将来突合できる(divYと同じ発想=後から取れない記録)
+    exit:(r.exit&&r.exit.level)||r.exit||'hold',
     ccy:/^\d{4,5}$/.test(String(d.nm||t).trim().split(/\s/)[0])?'JPY':'USD'});
 }
 console.log(JSON.stringify(out));
