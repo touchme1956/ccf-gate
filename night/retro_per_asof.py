@@ -113,8 +113,12 @@ def fetch_raw_close(sym, y):
 
 
 def main():
-    # ticker→CIK は cohort ファイルから引く（SECの現行表と同じ出所）
-    cohort = json.load(open(os.path.join(BASE, "out", f"retro_cohort_{ASOF}.json")))
+    # ticker→CIK は cohort ファイルから引く（SECの現行表と同じ出所）。
+    # 中間時点(2018等)のPERを採るときは cohort が無いので 2013 のCIK対応表へフォールバック
+    cf = os.path.join(BASE, "out", f"retro_cohort_{ASOF}.json")
+    if not os.path.exists(cf):
+        cf = os.path.join(BASE, "out", "retro_cohort_2013.json")
+    cohort = json.load(open(cf))
     t2cik = {r["ticker"]: r["cik"] for r in cohort["rows"] if r.get("ticker")}
     if ALL:
         tickers = sorted(t2cik)
