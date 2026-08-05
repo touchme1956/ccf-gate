@@ -1210,6 +1210,54 @@ portfolio.html の評価額（株数×現在株価×ドル円＝posValue()）は
   NRR・値上げ耐性は dur=75(スイッチングコスト型) を支持し得る——欄の書き換えは審査官判断の領分。
 - moatNA 14社→**12社**。判定圏のdom空欄はこれで**全社が「探索済み」**——「測っていない」は判定圏から消えた
 
+## irr85の21社のうち門2未審査だった12社を全数パック化（2026-08-05・ユーザー指示「1」＝名指しで審査に回す）
+**歴史検証(2026-08-05)で irr=85 が付いた21社のうち、9社しか台帳にパックが無く12社は門2審査をゼロ回しか
+受けていなかった**（パック0件・索引0件・夜間チャンク0件・監視0件。機械採取ドラフトがあったのはNXPI 1件のみ）。
+12社を hachimon_fetch → 門2審査でパック化した。**結果: 12社とも四段関門の第一(Ω75)に届かない。最高はNXPI 68.6。**
+索引 350→**362パック**、全社 validate FAIL 0・要修正0・未解決警告0、**投下可10社は不変**。
+- **なぜ門0に乗っていなかったか**: `gate0_v8_5.py:353` の審査優先レーン（谷/種まき/未成熟）は**「6点＝単一fail」の社にしか
+  病名を付けない**。12社は fails が2〜6個あるので優先レーンに乗れず、pt上位100にも入らずbacklogへ落ちていた。
+  **RBC(RBCベアリングス)は母集団2,902社に一行も無い＝採取の穴**（HOYA型）。hachimon_fetch では CIK 1324948 で
+  正常に解決するので穴は門0側の母集団構築にある（**宿題**）
+- **審査結果**（Ω/堀/キル）: NXPI 68.6/87.8/0 ／ RBC 63.9/74.6/0 ／ BWXT 45.4/75.1/1 ／ MKSI 44.5/87.8/1 ／
+  ENTG 43.6/81.4/1 ／ OLED 41.8/70.4/1 ／ NOVT 35.4/75.9/1 ／ ROG 1.5/71.2/0 ／
+  AEIS・COHR・IPGP・WST 0.0。**堀は8社が関門70を超えている**——落ちているのはΩ側（ROIIC複利停止キルと
+  through-cycle ROICの低さ）で、堀の弱さではない
+- **2018年の irr=85 が2026年にどうなっていたかの実測**（この審査の副産物であり、歴史検証の独立な追試）:
+  **顧客側の再認定の機構文が2025-26年の10-Kにそのまま残っていたのは ENTG／MKSI／RBC／WST／NOVT／NXPI／BWXT の7社**
+  （ENTG『requalification by our customers』／MKSI『requalify products with customers, particularly those with
+  "copy exact" requirements』／RBC『qualified for the application by the OEM, the DOD, the FAA』＝2018年と一字同文／
+  WST『the large amount of data and information that **customers must generate**』＝同じく一字同文）。
+  一方 **AEIS／COHR／OLED／ROG／IPGP は今日の規約で読むと 70(高摩擦移行困難) にしかならない**
+  ——引用がいずれも**願望形**（AEIS『our success and future growth **depend on** our products being designed into』／
+  COHR『**assist customers in** designing, testing, and qualifying』／OLED『we **work closely with** customers
+  evaluating and qualifying』／ROG『we **strive to** ... design in our materials』）で、顧客側の再認定の断定が無い。
+  **歴史検証の「完了形0.81 vs 願望形0.40」の言語仮説と、8年後の事業の姿が一致した**——願望形5社のうち
+  ROGは2025年に**営業赤字−45.0百万$**、IPGPは売上−31.3%・営業利益率1.3%で**erosion=active**、
+  AEIS/COHRは through-cycle ROIC 7.1%/7.8%。完了形側で赤字に落ちた社は無い
+- **dep(存続級依存)のベトが初めて実際に発火した**: **BWXT dep=68**（10-K『the U.S. Government represented
+  approximately 68% ... of our total consolidated revenues』）で堀75.1でも moatOK=False。
+  **要判断として記録**——ASPS/Ocwen型（相手が消えれば当社も消える）と違い、海軍原子力は**相手も当社に依存する
+  相互依存**（NFSは『the sole provider of nuclear fuel for the U.S. Navy』）。規約は数値だけで裁くので今日は
+  ベトが立つが、これが偽陽性かどうかはユーザーの判断の領分（値も規約も触っていない）
+- **規約の刻みに落ちない実例を1件見つけた（WST・要判断）**: moatW の 70は『最大顧客<10%かつ最大製品<70%』、
+  50は『1製品≥80% or 最大顧客≥20%』。WSTは**最大顧客15.8%**でどちらの条件も満たさない。
+  憶測で置かずに**空欄**にしたが、dom も空欄なので5本中3本＝**堀が算出不能(NA)→Ω0.0**になった
+  （キーエンス型）。**Ω0.0は「事業が悪い」ではなく「規約で測れない」**。堀75の空白(v9.9.49)と同型の
+  刻みの穴で、埋めるなら明示指示の領分
+- **踏んだ間違い（記録）**: irr に **75 を書いた**（AEIS/COHR/OLED）。irr の刻みは **100/85/70/50 で75は存在しない**
+  （dur の刻みと混同）。門の取込は最も近い70へ丸めるので採点は同じだが、`node night/audit_gate.js --t {T}` が
+  **err『取込時に irr=75 が 70 へ化けた』で検出**した＝**v9.9.66の第四の関門とcoerce記録が設計どおり働いた**。
+  70へ是正済み
+- **残した空欄（作業リスト）**: disrupt を12社中10社で**空欄**にした——10-Kの技術変化リスクは一般形で、
+  名指しの破壊要因(RELXのAI型)を今回の走査で確認できなかったため。**門は空欄を最良ケース(settled)で裁くので
+  この空欄は有利側に働く**（RELXの教訓の再来を避けるため _meta.nulls に明記した）。
+  OLED の dep も同型——BOE/LG Display/SDC の**3社それぞれが10%超**と開示されるが個別実数が無く、
+  実態は高い可能性があるのに数値を置けない＝**次に確定させるべき筆頭の欄**
+- **OLED は expiry='yes' がこの12社で唯一**: 10-K『Our competitive position derives primarily from the essential
+  nature of **our fundamental patents** ... **Certain of our existing fundamental phosphorescent OLED patents
+  expired in the United States in 2017 and 2019**』＝堀の根拠が特許束で中核の一部が既に失効
+
 ## 堀1本差3社の原本読解（2026-08-04・ユーザー「2の原本読みなおすやつやって」）——3社とも据置・投下可18社不変
 audit_moat_gapが名指しした「単独昇格1本で通る未読3社」（CTAS/JKHY/MANH）を深掘りした。**全経路が据置**＝
 3社の堀不足は測定の穴ではなく実力どおりと確定（v9.9.49初回実測「読んだ結果6社とも据置」の再現）。
