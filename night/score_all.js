@@ -90,7 +90,7 @@ if (typeof compute !== 'function') {
 // B23(2026-08-04): compute だけでなく関門3関数も存在検問する。従来は呼び出し側の try/catch が
 //   関数消失を黙って飲み、**ccfAudit が消えると audE=0＝audOK=true＝第四の関門が静かに無効化**する
 //   方向に壊れた（「鳴らない警報は鳴りすぎる警報と同じ」）。抽出に失敗したら大声で止まる。
-for (const fn of ['ccfXJudge', 'ccfMoatGate', 'ccfAudit']) {
+for (const fn of ['ccfXJudge', 'ccfMoatGate', 'ccfAudit', 'ccfAllocTop']) {
   if (typeof global[fn] !== 'function' && typeof globalThis[fn] !== 'function') {
     console.error(`${fn}() を読み込めなかった。index.html の構造が変わった可能性がある——`
       + '関門の関数が無いまま続けると「点検が通った」という偽の結果を作るので中断する');
@@ -200,6 +200,14 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               buy: s >= 75 && x.xPass === true && mg.pass === true && audE === 0 && audU === 0 });
 }
 rows.sort((a, b) => b.s - a.s);
+// v9.9.88(2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」): 第五の枠。
+//   投下可＝四段関門∧合成点上位10社。判定は門の ccfAllocTop（単一実装＝Ⅵ・盤・snapと同一・v9.9.65の掟）。
+//   四段通過だが11位以下は quali=true / buy=false ＝🔵次点（買わないが資格は保持）。
+{
+  const four = rows.filter(r => r.buy);
+  const sel = ccfAllocTop(four, 10);
+  for (const r of rows) { r.quali = r.buy; if (r.buy) r.buy = sel.has(r.t); }
+}
 // 部分実行(--only / --set / --jp / --us)の結果で正本 out/score_all.json を潰さない（2026-07-29）。
 // 実害があった: `--only MA,V,...` を打った直後、score_all.json が5件に縮み、
 // audit_moat.py / audit_moat_gap.py / audit_kill_roiic.py が**その5件だけを全台帳として**読んだ。
@@ -231,12 +239,14 @@ for (const r of q75) {
   console.log(`  ${r.nm.slice(0, 24).padEnd(26)} Ω${r.s.toFixed(1).padStart(5)}  堀${moat}${r.moatOK ? '✓' : '✗'}`
     + `  E[r]${r.xEr == null ? '  na' : r.xEr.toFixed(0).padStart(4) + '%'}${r.xPass ? '✓' : '✗'}`
     + `  点${aud}`
-    + `  ${r.buy ? '🟢投下可' : !r.moatOK ? '⛔堀不足' : !r.audOK ? '⛔点検要修正' : '🟡押し目待ち'}  出口=${r.exit}`);
+    + `  ${r.buy ? '🟢投下可' : r.quali ? '🔵次点(11位以下)' : !r.moatOK ? '⛔堀不足' : !r.audOK ? '⛔点検要修正' : '🟡押し目待ち'}  出口=${r.exit}`);
 }
 const buy = rows.filter(x => x.buy);
-console.log(`\n四段関門を通過(🟢投下可) ${buy.length}社`
+const nextUp = rows.filter(x => x.quali && !x.buy);
+console.log(`\n🟢投下可(四段関門∧合成点上位10社・v9.9.88) ${buy.length}社`
   + `　日本株${buy.filter(x => x.jp).length}／米国等${buy.filter(x => !x.jp).length}`
   + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
+if (nextUp.length) console.log(`🔵次点(四段通過・合成点11位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
 console.log(`⛔堀不足で見送り(Ω75+だが堀が関門に届かない) ${q75.filter(x => !x.moatOK).length}社`);
 console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告あり) ${q75.filter(x => x.moatOK && !x.audOK).length}社`);
 console.log(`   ※全${rows.length}社: 要修正 ${rows.reduce((a,x)=>a+x.audE,0)}件 / 未解決警告 ${rows.reduce((a,x)=>a+x.audU,0)}件`);

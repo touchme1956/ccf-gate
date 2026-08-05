@@ -110,6 +110,13 @@ for(const f of fs.readdirSync(ROOT+'/out')){
     exit:(r.exit&&r.exit.level)||r.exit||'hold',
     ccy:/^\d{4,5}$/.test(String(d.nm||t).trim().split(/\s/)[0])?'JPY':'USD'});
 }
+// v9.9.88: 第五の枠（合成点上位10社）——門の ccfAllocTop をそのまま使う（単一実装・v9.9.65の掟）。
+// quali=四段側の資格 / buy=枠内。観測の意味変化は er_ledger の basis_changes に記録済み
+if(typeof ccfAllocTop==='function'){
+  const four=out.filter(o=>o.buy);
+  const sel=ccfAllocTop(four.map(o=>({t:o.t,s:o.omega,xEr:o.er})),10);
+  out.forEach(o=>{o.quali=o.buy; if(o.buy)o.buy=sel.has(o.t);});
+}
 console.log(JSON.stringify(out));
 """
     p = os.path.join(BASE, "night", "_snap_tmp.js")
