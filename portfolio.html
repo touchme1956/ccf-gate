@@ -121,13 +121,17 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
      表示から金額(合計¥・評価額・%・株数@単価)を撤去し、各行の右側に出口判定(保有/売却)を文字で出す形へ。
      **評価額の計算そのものは消していない**——pf:weights の書き出しと「門の台帳へ登録」の pos% は
      posValue() に依存する(消すと門のリバランス・不足按分が黙って死ぬ。上の2026-07-29注記と同じ理由)。
-     編集パネルの株数・単価入力もそのまま(計算の入力源)。変えたのは表示層のみ。 -->
+     編集パネルの株数・単価入力もそのまま(計算の入力源)。変えたのは表示層のみ。
+     v9.9.86(2026-08-05 ユーザー指示「何株持っているか入れることにより持っている金額を表示できるようにしたい」):
+     金額表示を💴ボタンの切替式で復活。既定=表示(今日の指示)・非表示にすれば2026-08-03の形に戻る＝
+     指示が往復した項目はトグルにして両方の形を残す。計算は従来どおり posValue()(株数×現在株価×ドル円) -->
 <header class="hero">
  <div class="brand">CCF Ω · Portfolio</div>
  <h1>私のポートフォリオ</h1>
  <div class="total"><span id="total">—</span><small id="asof"></small></div>
  <div class="toolbar">
   <button class="btn" id="editBtn" onclick="toggleEdit()">✎ 編集</button>
+  <button class="btn ghost" id="moneyBtn" onclick="toggleMoney()" title="評価額(株数×現在株価×ドル円)の表示/非表示。非表示にすると2026-08-03の「保有と判定だけ」の形">💴 金額</button>
   <button class="btn ghost" id="importBtn" onclick="importFromGate()" title="門(同ドメイン)の台帳で保有登録した個別銘柄を城として取り込む">⭳ 門の保有から取込</button>
   <button class="btn ghost" id="regBtn" onclick="registerToGate()" title="城の個別を門の台帳に保有登録する(既存の採点は上書きしない)">🏛 門の台帳へ登録</button>
   <button class="btn ghost" id="hjBtn" onclick="pfExportHoldings(this)" title="城(個別保有)を holdings.json 形式で書き出す。run_gate0_local.py / kessan_check.py が読む＝売買したらこれで更新（watch/eliteは既存ファイルを引き継ぎ）">⬇ holdings.json</button>
@@ -233,12 +237,15 @@ function render(){
  // 現在の網/城ウェイトを書き出す（v9.9.53で門は読まなくなった。DCA側の判断材料として保持）
  try{localStorage.setItem('pf:weights',JSON.stringify({net:netW,city:castleW,total:total}));}catch(e){}
 
- // 2026-08-03 ユーザー指示: 金額の表示を撤去（合計¥・評価額・%・株数@単価）。合計欄は保有数に。
- // 表示は金額の有無を問わない——金額を出さない以上、金額未入力の保有（門から取込直後など）が
- // 見えないのは矛盾する（pos=金額あり はウェイト計算・登録用に従来どおり残す）
+ // 2026-08-03「金額の表示を撤去」→ v9.9.86(2026-08-05 ユーザー指示)で💴切替式に復活（既定=表示）。
+ // 表示は金額の有無を問わない——金額未入力の保有（門から取込直後など）も行は出す
+ const showMoney=(localStorage.getItem('pf:showMoney')??'1')!=='0';
+ const mb=document.getElementById('moneyBtn'); if(mb)mb.textContent=showMoney?'💴 金額: 表示中':'💴 金額: 非表示';
  const shown=P.positions.filter(p=>p&&(p.t||p.nm));
- document.getElementById('total').textContent = shown.length ? (shown.length+'銘柄') : '—';
- document.getElementById('asof').textContent = P.asof? ('更新 '+P.asof) : '';
+ document.getElementById('total').textContent = showMoney
+   ? (total>0 ? '¥'+Math.round(total).toLocaleString() : (shown.length?shown.length+'銘柄':'—'))
+   : (shown.length ? (shown.length+'銘柄') : '—');
+ document.getElementById('asof').textContent = (P.asof? ('更新 '+P.asof) : '') + (showMoney&&shown.length?(' · '+shown.length+'銘柄'):'');
 
  // ---- 保有一覧（右側は□保有/売却スイッチ）------------------------------------------
  // 2026-08-03「保有の色を統一してほしい」で判定色・色丸・網/城バッジを全廃 →
@@ -271,7 +278,16 @@ function render(){
        // 判定だけ色を持たせる（銘柄名・ティッカー・鮮度は統一配色のまま＝色は「判定」の意味に限定）
        const vTxt = vc ? `判定: <span class="vd" style="color:${vc[1]}">${vc[0]}</span>${ageTxt(v)}` : '';
        const dot = vc ? `<span class="ind-dot" style="color:${vc[1]}">${vc[2]}</span>` : '';
-       const info=[p.t||'', p.sleeve==='cash'?'現金':'', vTxt].filter(Boolean).join(' · ');
+       // v9.9.86: 💴表示中は 評価額(株数×現在株価×ドル円)・構成%・株数@単価 を行に出す
+       let amtTxt='';
+       if(showMoney){
+         if(p._v>0){
+           const sh=+p.sh||0, px=(+p.npx||0)>0?+p.npx:(+p.bpx||0);
+           const det=(sh>0&&px>0)?`${sh}株@${px}${p.ccy==='JPY'?'円':'$'} `:'';
+           amtTxt=`${det}<b style="color:var(--ink,#dfe6f2)">¥${Math.round(p._v).toLocaleString()}</b>${total>0?`（${(p._v/total*100).toFixed(1)}%）`:''}`;
+         } else if(p.sleeve!=='cash'){ amtTxt='<span style="color:var(--muted)">金額未入力（✎編集で株数と単価を）</span>'; }
+       }
+       const info=[p.t||'', p.sleeve==='cash'?'現金':'', amtTxt, vTxt].filter(Boolean).join(' · ');
        // □スイッチ(2026-08-03 ユーザー指示): チェック=保有中。外すと売却として記録し「売却済み」へ移す
        const sw = (p.sleeve==='castle')
          ? `<label class="hswitch"><input type="checkbox" checked onchange="pfSell(${idx},this)">保有</label>`
@@ -281,8 +297,11 @@ function render(){
    : '<div class="mini" style="text-align:left">保有が未登録。「✎ 編集」から入れてください。</div>';
  renderSold();
  document.getElementById('foot').innerHTML=
-  `CCF Ω — 保有はこの端末に自動保存（編集で反映）。金額は表示しない（株数・単価の入力は門の配分計算にだけ使う）。売り買いの判定は門＝売りはS1/S2/S3・買いはⅥ買付順位。<br>投資判断は自己責任で。`;
+  `CCF Ω — 保有はこの端末に自動保存（編集で反映）。評価額＝株数×現在株価×ドル円（💴ボタンで表示/非表示・現在株価は✎編集で更新）。売り買いの判定は門＝売りはS1/S2/S3・買いはⅥ買付順位。<br>投資判断は自己責任で。`;
 }
+
+/* v9.9.86: 金額表示の切替。localStorage pf:showMoney（'0'=非表示）。既定は表示 */
+function toggleMoney(){const cur=(localStorage.getItem('pf:showMoney')??'1')!=='0';localStorage.setItem('pf:showMoney',cur?'0':'1');render();}
 
 /* ---------- □保有/売却スイッチ（2026-08-03新設） ----------
    チェックを外す＝売却として記録して保有から外す（編集を開かずに済む早道）。
