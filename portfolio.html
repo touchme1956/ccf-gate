@@ -147,8 +147,8 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
  <!-- 編集パネル -->
  <div class="card hide" id="editCard">
   <h2>保有を編集（いつ・どれだけ買ったかで更新）</h2>
-  <p class="sub">銘柄ごとに<b>株数・買付単価・現在株価</b>を入れると評価額(円)を自動計算。<b>米国株($)は下の「ドル円」で円換算</b>（JPY建てなら通貨をJPYに）。株数を空にすれば「金額(円)直接」で入れてもよい。入力は<b>この端末に自動保存</b>。</p>
-  <div class="fxrow"><span>ドル円レート</span><input type="number" inputmode="decimal" id="fxInput" placeholder="例:150" oninput="draftFx(this.value)"><span style="font-size:11.5px;color:var(--muted)">米国株の評価額＝株数×現在株価($)×このレート。証券アプリの円評価額に合うよう微調整。</span></div>
+  <p class="sub"><b>株数を入れるだけ</b>で評価額(円)を自動計算——現在株価とドル円は盤（out/dashboard.json・監視銘柄・毎営業日更新）から<b>自動取得</b>します（v9.9.87）。盤に無い銘柄だけ現在株価を手入力。買付単価は任意（含み損益用）。株数を空にすれば「金額(円)直接」でもよい。入力は<b>この端末に自動保存</b>。</p>
+  <div class="fxrow"><span>ドル円レート</span><input type="number" inputmode="decimal" id="fxInput" placeholder="例:150" oninput="draftFx(this.value)"><span style="font-size:11.5px;color:var(--muted)">盤から自動取得（毎営業日更新）。手動で微調整しても次の読み込みで自動値に戻る。</span></div>
   <div id="editRows"></div>
   <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
    <button class="btn ghost" onclick="addRow()">＋ 行を追加</button>
@@ -220,6 +220,30 @@ function load(){
 function persist(){ try{const clean={...P,positions:P.positions.map(({_v,...r})=>r)}; localStorage.setItem(LS_KEY, JSON.stringify(clean)); }catch(e){} }
 const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
 const fxRate=()=> +P.fx||0;
+/* v9.9.87(2026-08-05 ユーザー指示「何株持っているかさえ入力すれば現在の資産がわかるのでそれだけでいい」):
+   現在株価とドル円を盤(out/dashboard.json・GitHub Actionsが毎営業日コミット)から自動取得する。
+   自動値は npx / fx に**書き戻して保存**する——表示だけ別の価格を見ると、門(index.html livePos)の
+   配分計算と食い違う「同じ台帳を見る二つの検査器」(v9.9.65)になるため。
+   取得失敗(オフライン・file://)や盤に無い銘柄(監視外・現金)は従来どおり手入力値のまま＝静かに劣化しない。 */
+async function applyDash(){
+ try{
+  const r=await fetch('out/dashboard.json?t='+Date.now()); if(!r.ok)return;
+  const d=await r.json(); const q=d.quotes||{}; let touched=false;
+  const qmap={}; for(const k in q){ qmap[String(k).toUpperCase()]=q[k]; }
+  P.positions.forEach(p=>{
+   const t=(p.t||'').toUpperCase(); const z=t&&qmap[t];
+   if(z&&+z.px>0){
+    if(+p.npx!==+z.px){ p.npx=+z.px; touched=true; }
+    p.npxAuto=String(z.day||d.asof||'').slice(0,10);
+    if(!p.ccy&&z.ccy){ p.ccy=z.ccy; touched=true; }
+   }
+  });
+  const fxv=d.fx&&+d.fx.USDJPY;
+  if(fxv>0&&Math.abs((+P.fx||0)-fxv)>0.005){ P.fx=Math.round(fxv*100)/100; touched=true; }
+  if(touched)persist();
+  render();
+ }catch(e){}
+}
 // 評価額(円): 株数×(現在株価||買付単価) を通貨で円換算。株数が無ければ従来の金額(円)vを使う。
 function posValue(p){
  const sh=+p.sh||0, npx=+p.npx||0, bpx=+p.bpx||0, px=npx>0?npx:bpx;
@@ -283,7 +307,7 @@ function render(){
        if(showMoney){
          if(p._v>0){
            const sh=+p.sh||0, px=(+p.npx||0)>0?+p.npx:(+p.bpx||0);
-           const det=(sh>0&&px>0)?`${sh}株@${px}${p.ccy==='JPY'?'円':'$'} `:'';
+           const det=(sh>0&&px>0)?`${sh}株@${px}${p.ccy==='JPY'?'円':'$'}${p.npxAuto?`〔自動${String(p.npxAuto).slice(5)}〕`:''} `:'';
            amtTxt=`${det}<b style="color:var(--ink,#dfe6f2)">¥${Math.round(p._v).toLocaleString()}</b>${total>0?`（${(p._v/total*100).toFixed(1)}%）`:''}`;
          } else if(p.sleeve!=='cash'){ amtTxt='<span style="color:var(--muted)">金額未入力（✎編集で株数と単価を）</span>'; }
        }
@@ -645,6 +669,7 @@ function pfBkStat(){
 }
 
 render();
+applyDash();  // v9.9.87: 盤から現在株価・ドル円を自動取得して再描画
 pfBkStat();
 
 /* ---------- 親フレーム(門Ⅶ資産)へ自分の高さを通知＝iframeを中身にフィットさせ内部スクロールバーを消す（1枚のページ化） ---------- */
