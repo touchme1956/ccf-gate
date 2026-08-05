@@ -3256,7 +3256,11 @@ async function ccfDash(btn){
       const three=sc>=75&&x.xPass===true&&mg.pass===true;
       return {nm:L.nm,t:(L.nm||'').trim().split(/\s/)[0].toUpperCase(),s:sc,moat:mg.idx,audE,
               ok:three&&audE===0,blocked:three&&audE>0,xEr:x.xEr};});
-  const buy=judged.filter(v=>v.ok).sort((a,b)=>b.s-a.s);
+  // v9.9.88: 第五の枠（合成点上位10社）を盤にも適用——Ⅵと同じ ccfAllocTop（単一実装・v9.9.65の掟）
+  const four=judged.filter(v=>v.ok);
+  const allocT=ccfAllocTop(four,10);
+  const buy=four.filter(v=>allocT.has(v.t)).sort((a,b)=>b.s-a.s);
+  const nextUp=four.filter(v=>!allocT.has(v.t)).sort((a,b)=>b.s-a.s);
   const audBlocked=judged.filter(v=>v.blocked);
   const buyHtml=buy.length?buy.map((v,i)=>{const q=Q[v.t];
     return `<div class="led"><span style="font-size:15px;color:var(--gold-bright);min-width:28px"><b>${i+1}</b></span><span class="ln">${v.nm}</span>`
@@ -3281,7 +3285,8 @@ async function ccfDash(btn){
             <b>Ⅳ台帳の「￥ 価格だけ更新」</b>に <code>6146 38000</code> のように「コード 現値」を行区切りで貼れば更新できる（月1回・DCAの買付時でよい）。
             per は<b>価格の変化率だけ</b>を反映する式で再計算されるので、利益の期間基準は壊れない。</span></div>`:''),
         '評価額・含み損益は<b>記帳のための情報</b>。出口判定はS1/S2/S3のみで、含み損益では動かさない')
-    + sec('🟢 投下可（四段関門を通過）', buyHtml
+    + sec('🟢 投下可（四段関門 × 合成点上位10社・v9.9.88）', buyHtml
+        + (nextUp.length?`<div style="font-size:11px;color:#5d8cc2;margin-top:6px">🔵 次点（四段通過・合成点11位以下＝買わない）: ${nextUp.map(v=>v.nm).join(' / ')} — 合成点が上がれば自動で昇格（詳細はⅥ）</div>`:'')
         + (audBlocked.length?`<div style="font-size:11px;color:var(--rust);margin-top:6px">⛔ 点検の要修正で除外: ${audBlocked.map(v=>`${v.nm}（要修正${v.audE}件）`).join(' / ')} — Ⅳ台帳の⚠バッジから直せる（黙って消さない）</div>`:''),
         '買うのはここだけ。金額はⅥ買付順位の「今月の個別枠」で按分される')
     + sec('📅 次回決算（21日以内）', ernHtml, '決算が来たら <code>python kessan_check.py</code>（日本株は <code>kessan_check_jp.py</code>）を回す')
@@ -3512,6 +3517,19 @@ function ccfXJudge(d,s){
   out.xPass=(xEr>=0);
   return out;
 }
+// ── 第五の枠（v9.9.88・2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」）─────────
+// 投下可 ＝ 四段関門(Ω75+ ∧ 遮断器E[r]≥0 ∧ 堀70+ ∧ 点検0件) ∧ **合成点上位10社**。
+// 合成点 = (Ω−70) × E[r]点÷50（E[r]点は合成順の錨12%=50点・±10ptで0-100・v9.9.30＝新しい定数なし）。
+// 11位以下は「🔵次点」＝買わないが投下可の資格は保持し、合成点が上がれば自動で枠入り（黙って消さない・v9.9.52）。
+// 実測(2026-08-05): 上位10社は遮断器化以前の旧・門X4条件の投下可10社と完全同一＝二つの道が同じ集合へ収束。
+// 単一実装: Ⅵ買付順位・盤(ccfDash)・night/score_all.js・予実snapは必ずこの関数を使う（v9.9.65の掟）。
+// cands: [{t,s,xEr}] の配列。E[r]欠損は erPt0＝枠に入らない（E[r]不明のまま買わない）。
+function ccfAllocTop(cands,maxN){
+  maxN=maxN||10;
+  const erP=x=>Math.max(0,Math.min(100,50+((x==null?2:x)-12)*5));
+  const sc=c=>Math.max(0,(c.s||0)-70)*erP(c.xEr)/50;
+  return new Set((cands||[]).filter(c=>sc(c)>0).sort((a,b)=>sc(b)-sc(a)).slice(0,maxN).map(c=>c.t));
+}
 // ── 堀のふるい（v9.9.39・ユーザー明示指示 2026-07-28）──────────────────────────
 // 新規投下は「四段関門」＝ Ω75+ ∧ 門X遮断器(E[r]≥0) ∧ 絶対MOAT指数 ≥ 70 ∧ 点検の要修正0件（v9.9.66）。
 // なぜ第三の関門か: moatIdx は既にΩへ二経路（pm→sustain と直接項.13）で入っているので、
@@ -3640,6 +3658,10 @@ async function renderPlan(){
   const audOut=q75.filter(r=>(r.audW||[]).some(w=>w.lv==='err'));
   const q75c=q75.filter(r=>!(r.audW||[]).some(w=>w.lv==='err'));
   const pass=q75c.filter(r=>r.xPass===true);
+  // v9.9.88: 第五の枠——投下可＝四段関門∧合成点上位10社（判定は単一実装 ccfAllocTop）。
+  //   点灯(Ulysses)・配分・表示のすべてが「枠内=passIn」を投下可として扱う。11位以下=passOutは🔵次点
+  const allocSet=ccfAllocTop(pass,10);
+  const passIn=pass.filter(r=>allocSet.has(r.t)), passOut=pass.filter(r=>!allocSet.has(r.t));
   const waitP=q75c.filter(r=>r.xPass!==true);
   // v9.9.27: IPS②(Ulysses契約)の仕組み化——投下可の初回点灯を記録し48hクーリングオフの残り時間を表示。
   //   点灯時のE[r]/格/PERをスナップショット(掟九:年1回の予実突合の材料。消えた点灯もoff印で保存)。
@@ -3652,8 +3674,8 @@ async function renderPlan(){
   if(ignRaw){try{ign=JSON.parse(ignRaw)||{};}catch(e){}}
   // 初回(本当に無い)と読取失敗はどちらもnullで区別不能だが、正・ミラーの両方が同時に読めない事態はまれ——ミラー救済が消失を実質封じる
   const nowTs=Date.now(); let ignChanged=false;
-  const passSet=new Set(pass.map(r=>r.nm));
-  for(const r of pass){
+  const passSet=new Set(passIn.map(r=>r.nm)); // v9.9.88: 点灯=枠内の投下可のみ（次点で冷却時計を回さない）
+  for(const r of passIn){
     const e=ign[r.nm];
     if(!e){ign[r.nm]={ts:nowTs,date:new Date(nowTs).toISOString().slice(0,10),xEr:r.xEr,s:r.s,per:r.per};ignChanged=true;}
     else if(e.off){
@@ -3741,22 +3763,27 @@ async function renderPlan(){
   //   加重E[r] 12.67→16.71%・総合 11.20→13.63%。旧ハードル未満7社(V/IDXX/SAP/MCO/CDNS/MSI/RELX)は
   //   投下可のまま「配分枠外」＝黙って消さず名指し表示（v9.9.52の教訓）。
   //   遮断器・Ω・堀の関門・売却規律S1/S2/S3は不変——これは配分（DCA側）の規約。
-  const CITY=60, CAP=8, MAXN=10;
+  const CITY=60, CAP=8, MAXN=10; // allocSet/passIn/passOut は pass 直後で定義済み（点灯にも使うため）
   const erPtW=r=>Math.max(0,Math.min(100,50+((r.xEr!=null?r.xEr:2)-12)*5)); // xEr欠損はerPt0＝配分しない(E[r]不明で買わない)
   const aScore=r=>Math.max(0,(r.s||0)-70)*erPtW(r)/50;
-  const allocSet=new Set(pass.slice().filter(r=>aScore(r)>0).sort((a,b)=>aScore(b)-aScore(a)).slice(0,MAXN).map(r=>r.t));
   const twRaw=(()=>{const sw=pass.reduce((a,r)=>a+(allocSet.has(r.t)?aScore(r):0),0);
     return r=>(sw>0&&allocSet.has(r.t))?Math.min(CAP,aScore(r)/sw*CITY):0;})();
   const tw=r=>Math.round(twRaw(r)*10)/10;
-  const gap=r=>Math.max(0,tw(r)-(r.pos||0)), passGap=pass.reduce((a,r)=>a+gap(r),0);
+  const gap=r=>Math.max(0,tw(r)-(r.pos||0)), passGap=passIn.reduce((a,r)=>a+gap(r),0);
   const allocTag=r=>{if(!allocSet.has(r.t))return `<span style="font-size:11px;color:var(--dim);white-space:nowrap" title="四段関門は通過（投下可）だが、合成点(Ω−70)×E[r]点÷50が上位${MAXN}社に入らないため配分対象外。順位が上がれば自動で枠入り">配分枠外（合成点${MAXN+1}位以下）</span>`;
     const filled=tw(r)>0&&gap(r)<=0, m=passGap>0?gap(r)/passGap*100:0;
     return `<span style="font-size:11px;color:${filled?'var(--dim)':'var(--gold-bright)'};white-space:nowrap" title="目標${tw(r)}% = 城${CITY}% × 合成点÷Σ合成点(上位${MAXN}社)。合成点=(Ω${(r.s||0).toFixed(1)}−70)×E[r]点${erPtW(r).toFixed(0)}÷50。1銘柄${CAP}%で頭打ち(¼ケリー)。今月=目標−現在${(r.pos||0).toFixed(0)}%の不足分で按分(B案②)">目標${tw(r)}%｜今月${filled?'充足':m.toFixed(0)+'%'}</span>`;};
-  const planBox=ccfMonthPlanBox(pass,gap,passGap,tw,CITY);
-  if(pass.length){
-    const cityFill=pass.reduce((a,r)=>a+tw(r)/CITY*100,0), allFilled=passGap<=0;
-    html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px;color:var(--gold-bright)">🟢 投下可（Ω75+ × 門X遮断器(E[r]≥0) × 堀70+ × 点検0件）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">質が投下閾値75+、かつ門X遮断器が現値で成立＝買える組。サイズは<b>合成式 城60%×合成点÷Σ合成点・配分対象は合成点上位10社・上限8%</b>（v9.9.87・2026-08-05ユーザー明示指示「質とE[r]のバランスで得点」「ポートフォリオは10社まで」。合成点=(Ω−70)×E[r]点÷50、E[r]点は合成順と同じ錨12%=50点＝新しい定数なし。実測: 上位10社は遮断器化以前の旧4条件の投下可10社と完全同一＝二つの道が同じ集合へ収束。11位以下の投下可は「配分枠外」と名指し表示——投下可の資格は保つので順位が上がれば自動で枠入り。旧v9.9.70の(Ω−70)按分・旧段差8/5/3の経緯はCLAUDE.md。銘柄別の厳密¼ケリーは✦門Xの計算機で検算し、下回るならその値を上限にmemoへ根拠を記録。自動連携はしない=主観勝率を機械に入れない）。<b style="color:var(--gold-bright)">目標%</b>＝総資産に対する目標ウェイト／<b style="color:var(--gold-bright)">今月%</b>＝今月の個別枠を「目標−現在保有%」の不足分で按分(B案②・合計100%。posはⅦ資産の実額から自動算出・無い銘柄のみ採点機の手入力)。<b>二序列の役割</b>: pc順位＝買う順（複数点灯時の優先）／gap按分＝金額。投下可の城内合計 ${cityFill.toFixed(0)}%${cityFill<100?'（残りは押し目待ちの開通 or 網へ回す）':cityFill>100?'（>100%＝目標比で按分）':''}。${allFilled?'<b style="color:var(--jade)">投下可は全て目標充足＝今月の個別枠は網へ回す。</b>':''}</div>`;
-    html+=pass.map((r,i)=>brow(r,i,'',`${allocTag(r)}<span style="font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:8px">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span>${ulys(r)}`)).join('');
+  const planBox=ccfMonthPlanBox(passIn,gap,passGap,tw,CITY);
+  if(passIn.length){
+    const cityFill=passIn.reduce((a,r)=>a+tw(r)/CITY*100,0), allFilled=passGap<=0;
+    html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px;color:var(--gold-bright)">🟢 投下可（Ω75+ × 門X遮断器(E[r]≥0) × 堀70+ × 点検0件 × <b>合成点上位10社</b>）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">四段関門を通過し、かつ<b>合成点上位10社＝ポートフォリオの枠内</b>（v9.9.88・2026-08-05ユーザー明示指示「上位10社を買い付け可にして」。第五の枠——四段は資格・第五は席数）。サイズは<b>城60%×合成点÷Σ合成点・上限8%</b>（v9.9.87「質とE[r]のバランスで得点」「ポートフォリオは10社まで」。合成点=(Ω−70)×E[r]点÷50、E[r]点は合成順と同じ錨12%=50点＝新しい定数なし。実測: 上位10社は遮断器化以前の旧4条件の投下可10社と完全同一＝二つの道が同じ集合へ収束。11位以下は🔵次点として名指し表示——資格は保つので合成点が上がれば自動で昇格。旧v9.9.70の(Ω−70)按分・旧段差8/5/3の経緯はCLAUDE.md。銘柄別の厳密¼ケリーは✦門Xの計算機で検算し、下回るならその値を上限にmemoへ根拠を記録。自動連携はしない=主観勝率を機械に入れない）。<b style="color:var(--gold-bright)">目標%</b>＝総資産に対する目標ウェイト／<b style="color:var(--gold-bright)">今月%</b>＝今月の個別枠を「目標−現在保有%」の不足分で按分(B案②・合計100%。posはⅦ資産の実額から自動算出・無い銘柄のみ採点機の手入力)。<b>二序列の役割</b>: pc順位＝買う順（複数点灯時の優先）／gap按分＝金額。投下可の城内合計 ${cityFill.toFixed(0)}%${cityFill<100?'（残りは押し目待ちの開通 or 網へ回す）':cityFill>100?'（>100%＝目標比で按分）':''}。${allFilled?'<b style="color:var(--jade)">投下可は全て目標充足＝今月の個別枠は網へ回す。</b>':''}</div>`;
+    html+=passIn.map((r,i)=>brow(r,i,'',`${allocTag(r)}<span style="font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:8px">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span>${ulys(r)}`)).join('');
+  }
+  // 🔵 次点（v9.9.88）: 四段関門は通過したが合成点11位以下＝買わない。黙って消さない（v9.9.52の教訓）
+  if(passOut.length){
+    const ranked=passOut.slice().sort((a,b)=>aScore(b)-aScore(a));
+    html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:#5d8cc2">🔵 次点（四段関門は通過・合成点${MAXN+1}位以下＝買わない）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">投下可の資格（Ω75+ ∧ 遮断器 ∧ 堀70+ ∧ 点検0件）は満たすが、<b>ポートフォリオは合成点上位${MAXN}社まで</b>（v9.9.88・合成点=(Ω−70)×E[r]点÷50）。合成点が上位に入れば自動で🟢へ昇格する。<b>売却の理由にはならない</b>——保有中の銘柄はS1/S2/S3のみで裁く。</div>`;
+    html+=ranked.map((r,i)=>brow(r,i,'次',`<span style="font-size:11px;color:#5d8cc2;white-space:nowrap;margin-left:8px" title="合成点${aScore(r).toFixed(1)}＝(Ω${(r.s||0).toFixed(1)}−70)×E[r]点${erPtW(r).toFixed(0)}÷50">合成点${MAXN+1+i}位</span>`)).join('');
   } else html+=`<div style="color:var(--dim);font-size:13px;margin:10px 0">🟢 投下可なし——質75+・門X成立・堀70+を同時に満たす銘柄が現時点でゼロ。網と指値待機へ。</div>`;
   if(waitP.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:#5d8cc2">🟡 押し目待ち（質は合格・値段待ち）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">格75+だが門Xが現値で未達＝「良い会社を高値で掴まない」組。開通ライン（4条件が同時成立する入口PER）まで下げたら🟢へ自動昇格。指値は階段で置く＝1/2を開通ライン・1/2をfair線（✦門Xの監視表参照）。</div>`;
