@@ -1,5 +1,5 @@
 {
- "asof": "2026-08-04",
+ "asof": "2026-08-05",
  "items": [
   {
    "id": "market",
@@ -7,7 +7,7 @@
    "cadence": "毎営業日",
    "due_days": 4,
    "last": "2026-08-04",
-   "days": 0,
+   "days": 1,
    "state": "ok",
    "how": "market.yml 21:30UTC（FINNHUB_KEY）",
    "auto": true
@@ -18,7 +18,7 @@
    "cadence": "毎営業日",
    "due_days": 4,
    "last": "2026-08-04",
-   "days": 0,
+   "days": 1,
    "state": "ok",
    "how": "events.yml 22:10UTC（米国は鍵不要・日本株はEDINET_API_KEY）",
    "auto": true
@@ -29,7 +29,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-03",
-   "days": 1,
+   "days": 2,
    "state": "ok",
    "how": "market.yml（月初・snapは月次idempotent）",
    "auto": true
@@ -40,7 +40,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-04",
-   "days": 0,
+   "days": 1,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/fill_divy.py",
    "auto": true
@@ -51,7 +51,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-04",
-   "days": 0,
+   "days": 1,
    "state": "ok",
    "how": "ops.yml／手動 python3 make_kanshi.py",
    "auto": true
@@ -62,7 +62,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-07-29",
-   "days": 6,
+   "days": 7,
    "state": "ok",
    "how": "ops.yml／手動 python kessan_calendar.py",
    "auto": true
@@ -95,7 +95,7 @@
    "cadence": "四半期",
    "due_days": 100,
    "last": "2026-08-03",
-   "days": 1,
+   "days": 2,
    "state": "ok",
    "how": "ops.yml（EDINET_API_KEYをSecretsに置けば自動）／手動 python3 kessan_check_jp.py",
    "auto": "key"
@@ -106,7 +106,7 @@
    "cadence": "年1(7月)",
    "due_days": 430,
    "last": "2026-08-04",
-   "days": 0,
+   "days": 1,
    "state": "ok",
    "how": "ops.yml（7月）／手動 python3 v10_series.py",
    "auto": true
@@ -128,7 +128,7 @@
    "cadence": "年1(1-2月)",
    "due_days": 430,
    "last": "2026-07-30",
-   "days": 5,
+   "days": 6,
    "state": "ok",
    "how": "python run_gate0_local.py（companyfacts.zip 1.4GB＝CI外）",
    "auto": false
@@ -139,7 +139,7 @@
    "cadence": "年1",
    "due_days": 430,
    "last": "2026-08-03",
-   "days": 1,
+   "days": 2,
    "state": "ok",
    "how": "python3 night/rebuild_gate0_jp.py --write（rerankは旧世代＝封鎖済み）",
    "auto": false
@@ -255,6 +255,34 @@
     "due": null,
     "note": "irr探索で実測したNRR全製品100%超・値上げ後も解約1%未満は dur=75(スイッチングコスト型)を支持し得る。現行55の根拠『有報にスイッチング記述なし』より強い実測が説明会資料にある。欄の書き換えは審査官判断＝門2再審査で決着させる",
     "done": false
+   },
+   {
+    "id": "shadanki_haibun",
+    "kind": "決断待ち",
+    "title": "門X遮断器化後の配分とE[r]の接続——総合11.30%へ低下(実測)",
+    "due": null,
+    "note": "遮断器(E[r]≥0)で投下可10→18社になったが、配分式は(Ω−70)按分のままなので旧ハードル12%未満の7社(V/IDXX/SAP/MCO/CDNS/MSI/RELX)が城の約23ptを受け取り、加重E[r]16.3→12.8%・総合13.34→11.30%(目標15%と3.7pt差)。選択肢: (a)歴史検証の立場を貫く(質の中で価格は選べない=現状容認・E[r]は予測として検証) (b)配分だけE[r]≥12に絞る (c)配分ウェイトにE[r]を乗せる。#105の遮断器化とDCA規約の整合はユーザーの決断の領分"
+   },
+   {
+    "id": "sixk_watch",
+    "kind": "宿題",
+    "title": "6-K提出体の監視拡張(watch_eventsの死角)",
+    "due": null,
+    "note": "投下可のASML/SAP/RELXと監視のTSM/RACEは8-Kでなく6-K提出＝現行の8-K監視に映らない。6-KにはItem番号が無いため提出一覧+警報語スキャン(kessan_check_jp型)の実装が要る。保有ASMLが死角なのが最も痛い"
+   },
+   {
+    "id": "reg_dependence",
+    "kind": "決断待ち",
+    "title": "規制・制度依存の検問を設けるか(歴史の死因マップの残る穴)",
+    "due": null,
+    "note": "恒久毀損の死因のうち取引相手依存→dep(v9.9.85)・破壊→disruptで検問化済みだが、規制型(FICO=規制一手/NUS・HLF=MLM規制)はdep/expiry/geopolのどれにも完全に写らない。dur=100『規制』はプラス評価のみでリスク側の欄が無い。投下可にMCO/V/MA(規制で守られ規制で殺されうる型)が居る。欄の新設は絶対のルール1の領分"
+   },
+   {
+    "id": "moat_kpi",
+    "kind": "宿題",
+    "title": "年次較正に『堀の毀損予実KPI』を追記",
+    "due": "2027-07",
+    "note": "v9/v10勝敗(rank-AUC)は定義済みだが、堀指数そのものが恒久毀損を事前に分けるかのKPIが未定義。歴史の基礎率6%に対し『堀70+群vs70未満群の毀損率(DD>60%・上場廃止)』を予実台帳の価格追跡で測る——snapがomega/moat/px/exitを保存済みなので材料は自動で貯まる。定義をV10_SPEC/較正手順へ書くだけ"
    }
   ]
  },
