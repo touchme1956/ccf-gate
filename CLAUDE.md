@@ -810,10 +810,28 @@
     qualifications**』＝台帳で最も強い機構の証拠。NVDA は『Failure to obtain a design win may prevent us from
     obtaining **future design wins in subsequent generations**』＝歴史で85を取り+20.6%/年だったADIの引用と
     ほぼ同一構文。いずれも据置・根拠を刻んだ。
-    **記録のみ6社**（ASML/TSM/VRSK/MCO/MSI/CDNS）: 走査で機構語が出なかったが**全文精読ではない**ため値は据置し
-    kenshiへ記録。うち **MSIは次の再監査で最優先**——旧根拠の引用『reduce barriers to entry for new competitors』は
-    **周波数規制が参入障壁を下げる**文脈で85を支持せず、走査で出たのも自社が満たす側の認証と政府調達からの失格＝方向が逆。
     副産物として既存FAIL2件を解消（IRMD dilNet・CW cagr の根拠を原本から刻んだ）＝**投下可10社はvalidate FAILゼロ**
+  - **(g3) 残る6社を全文精読して決着（2026-08-05 ユーザー指示「1」）——是正3社・確認3社。判定圏の irr=85 は全社が原本根拠つきになった**:
+    代替可能性・移行障壁の語群22系統で各社の10-K/20-Fを網羅走査した。
+    **是正3社**（いずれも旧根拠が原本と食い違う）: **TSM 85→70**（20-F 667,615字に顧客側再認定の記述ゼロ。
+    'qualif'の該当は人材採用・税額控除の失格・自社が仕入先を認定する側。旧根拠『上位10社が売上78%』は
+    **顧客集中の推移**であって移行障壁ではない。摩擦は設計エコシステム由来だが 3Dblox は IEEE へ寄贈＝規格を私有していない）／
+    **MCO 85→70**（規制記述は**Moody's自身が受ける規制**＝v9.9.49の除外型。顧客側の再認定の記述なし）／
+    **MSI 85→70**（旧根拠の引用は『Government regulation of radio frequencies may limit the growth…or
+    **reduce barriers to entry for new competitors**』＝**規制が参入障壁を下げる**という逆向きの文脈。
+    P25/TETRA/DMRは**業界公開標準**でMotorolaの私有規格ではない）。
+    **確認3社**: **ASML**＝『**ASML is currently the world's only manufacturer of EUV lithography systems**』＋
+    顧客ファブでのSAT再試験・次世代ノードの初期認定＋Zeiss排他契約（100へ上げないのはDUVにNikon/Canonが実在＝
+    全社ベースでは唯一供給と言えないため）／**VRSK**＝『industry-standard insurance programs』＋
+    『approximately **2,000 regulatory filings and interface with state regulators in all 50 states**』＋
+    『When insurers choose to develop their own alternative programs, our industry-standard insurance programs
+    also help regulators ensure…』＝**ISOフォームが規制当局側のベンチマーク**で、乗り換える保険会社は50超の法域で
+    自前の届出と承認を取り直す／**CDNS**＝『PDKs to ensure our core EDA products…**meet manufacturing sign-off
+    requirements**』＋『Virtuoso…**industry standard**』＋『signoff flows…**ensure manufacturing compliance**』＝
+    文体は願望形だが述べている事実はサインオフ認証そのもの。
+    **実測: Ω TSM 72.1→71.2 / MCO 77.3→76.3(堀81→77) / MSI 76.3→75.0(堀84→78)。投下可10社の顔ぶれは不変**、
+    次点8社も資格を保つ（順位のみ変動）。**この作業で判定圏の irr=85 は「監査で0/10が空証明」から
+    「全社が原本の実文で裏付けまたは是正済み」へ変わった**
   - **(h) 副産物・KLACの疑いは私の誤りだった**: 「同じ半導体なのに irr=70 では」と疑って FY2018 10-K を
     当たったが、KLAの "qualification" は全て**「KLAの装置が顧客の工程を*検査・認定する*」側**で、
     組み込まれる側ではない。既存の70が正しく、**規約は同じ業種の中でも識別できていた**

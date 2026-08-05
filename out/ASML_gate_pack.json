@@ -77,12 +77,13 @@
    "2026-08-02 市場価格を自動更新: px 1,588.75 → 1,629.00（+2.5%）。per 64.3→65.93　evebit 53.9→55.3　shy 0.96→0.94。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
    "2026-08-03 acq5 None → 'no'。空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**——門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "**v9.9.72 roic を through-cycle 化**: roic 49.5→49.6 / roicg 38.9→37.1。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央43.3% / 最悪34.1%）。比は**パックが審査した年(2025)**の採取器値 roic43.18 / roicg34.98 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
-   "2026-08-05 irr=85 の全数監査（night/audit_irr85.py）: 20-F(1,374,961字)を機構語で走査。顧客側の再認定を述べる箇所は検出できず。ASMLの障壁は独占(dom=100)＋設置基盤のサービス/アップグレードで、irr=85(認証/規格でロック)を直接支持する記述は未発見。**ただし全文精読ではないため値は据置**＝要精読の作業リスト"
+   "2026-08-05 irr=85 の全数監査（night/audit_irr85.py）: 20-F(1,374,961字)を機構語で走査。顧客側の再認定を述べる箇所は検出できず。ASMLの障壁は独占(dom=100)＋設置基盤のサービス/アップグレードで、irr=85(認証/規格でロック)を直接支持する記述は未発見。**ただし全文精読ではないため値は据置**＝要精読の作業リスト",
+   "2026-08-05 irr=85 を原本全文の網羅走査で確認・据置（判定圏 irr=85 の全数精読）。機構の実文を evidence へ刻んだ"
   ],
   "evidence": {
    "rep": "『the first ever 1,000-watt light source for EUV lithography...built on 25 years of engineering advancements』『after almost 10 years of tremendous work...we have released our first TWINSCAN EXE:5200B in full specification』→数十年規模の技術蓄積=複製不能→100",
    "dur": "『25 years of engineering』(EUV物理)+単一供給光学(Carl Zeiss SMT, our sole supplier of lenses, mirrors, illuminators)+『growing installed base...we upgrade and refurbish』『10,000 customer support employees』→プロセス知/物理型=100",
-   "irr": "『TWINSCAN NXE platform was first introduced in 2013 and is now widely adopted in high-volume manufacturing by our major customers』+『single-source key components』→規格ロック/移行困難=85",
+   "irr": "85=認証/規格でロック。**2026-08-05に原本全文の網羅走査で確認・据置**。FY2025 20-F(filed 2026-02-25) が『**ASML is currently the world's only manufacturer of EUV lithography systems**』と明記＝先端ノードのパターニングに代替手段が存在しない（EUVは1層1露光で、DUVのマルチパターニングは工程数・マスク数・歩留まりで代替たりえないと同20-Fが説明）。加えて装置は顧客ファブでの受入試験を経て量産認定される構造——『Each system's performance is **re-tested through a site acceptance test (SAT) after installation at the customer site**』『Early-access packages have been delivered to customers for **initial qualification on next-generation nodes**』。供給側も『Carl Zeiss SMT, our **sole supplier** of lenses, mirrors, illuminators, collectors』と排他契約で固定。**100(唯一供給・代替なし)へ上げなかった理由**: EUVは唯一だがDUVではNikon/Canonが実在するため全社では唯一供給と言えない（v9.9.41(1)の全社ベース原則）。→ 85 据置",
    "geopol": "『geopolitical announcements related to export control restrictions and tariffs』+顧客集中(最大顧客23.9%/上位2社38.0%/上位4社61.2%)+『Chinese semiconductor manufacturers...could increase the risk of cyclicality』『Our DUV business in China turned out to be stronger than anticipated』→輸出規制+顧客集中=2(重)",
    "erosion": "『We face intense competition』(risk factor)+輸出規制によるChina向けTAM縮小・国内代替誘発の可能性→emerging",
    "disrupt": "蝕セクションの技術代替ヒットなし(market shareヒットは気候リスクの枠組み)。ASML自身がEUV/High-NA(EXE)で破壊技術を主導→settled",
