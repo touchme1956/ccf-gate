@@ -795,7 +795,25 @@
     ⚠願望形のみ1社（CDNS『We work closely with...』＝歴史でP=0.40の型）／
     △根拠が短く判定不能7社（ASML/VRSK/CW/NVDA/MCO/MSI/TSM）。
     **△は誤りの証明ではない**（CWは歴史の勝者BWXT/RBCと同じ原子力・防衛の認証型で実体はある公算が高く、
-    引用が薄いだけ）。**値は一つも動かしていない**——irr の改訂は堀指数と投下可を動かす＝絶対のルール1/2の領分
+    引用が薄いだけ）。
+  - **(g2) 監査を受けて原本で確定させた（2026-08-05 ユーザー指示「やって」）**——**是正2社・確認2社・記録6社**:
+    **RMD irr 85→70**（旧根拠は『our ability to obtain and maintain U.S. and foreign patent protection』＝
+    自社が取得する側の特許＋自社のFDA承認＝v9.9.49が明示除外する型。FY2025 10-K 484,803字を機構語10種＋
+    広域14語で走査して**顧客側再認定の記述ゼロ**、逆に Residential Care Software について
+    『**low barriers to entry**』と自認。実在する障壁は設置基盤〔AirView 3,000万人〕＝70）／
+    **IRMD irr 85→70**（自社の510(k)・自社ISO13485の更新監査が根拠。'qualified suppliers'は
+    **自社が仕入先を認定する側**で方向が逆）。実測 **RMD Ω78.9→77.6・堀80→75 ／ IRMD Ω78.8→77.7・堀81→76、
+    投下可10社の顔ぶれは不変**（順位のみ変動）。
+    **確認2社**: CW は FY2025 10-K に三つの独立記述——『we as well as the products that we manufacture
+    **must also be certified by our individual OEM customers**』『continued certification under customer quality
+    requirements and assurance programs』『alternatives often **require customer approval**…**additional customer
+    qualifications**』＝台帳で最も強い機構の証拠。NVDA は『Failure to obtain a design win may prevent us from
+    obtaining **future design wins in subsequent generations**』＝歴史で85を取り+20.6%/年だったADIの引用と
+    ほぼ同一構文。いずれも据置・根拠を刻んだ。
+    **記録のみ6社**（ASML/TSM/VRSK/MCO/MSI/CDNS）: 走査で機構語が出なかったが**全文精読ではない**ため値は据置し
+    kenshiへ記録。うち **MSIは次の再監査で最優先**——旧根拠の引用『reduce barriers to entry for new competitors』は
+    **周波数規制が参入障壁を下げる**文脈で85を支持せず、走査で出たのも自社が満たす側の認証と政府調達からの失格＝方向が逆。
+    副産物として既存FAIL2件を解消（IRMD dilNet・CW cagr の根拠を原本から刻んだ）＝**投下可10社はvalidate FAILゼロ**
   - **(h) 副産物・KLACの疑いは私の誤りだった**: 「同じ半導体なのに irr=70 では」と疑って FY2018 10-K を
     当たったが、KLAの "qualification" は全て**「KLAの装置が顧客の工程を*検査・認定する*」側**で、
     組み込まれる側ではない。既存の70が正しく、**規約は同じ業種の中でも識別できていた**
