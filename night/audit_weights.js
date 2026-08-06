@@ -111,6 +111,51 @@ for (const k of Object.keys(RATIO)) {
   if (!isFinite(m)) continue;
   console.log(`${k.padEnd(7)} ${String(lo).padStart(4)} → ${String(hi).padEnd(4)} ΔΩ ${pt.toFixed(2).padStart(7)}  実効 ${(m * 100).toFixed(1).padStart(5)}%   n=${n}`);
 }
+
+// ── 局所の実効ウェイト（2026-08-06新設）─────────────────────────────────────
+// 【なぜ要るか——上の固定幅の測定は判定圏では嘘をつく】
+//   上の表は roic を **10→40 の固定幅**で振っている。ところが roicPt は **roic=40 で96点に飽和**し、
+//   F7のROIC項は **roic=25 で100点に飽和**する。判定圏(Ω75+)の roic の**中央値は 43.5**＝
+//   測定レンジの外側で、しかも飽和帯。つまり「roicの実効36.5%」は
+//   **判定圏の外を測った数字**だった。
+//   実測(2026-08-06・判定圏29社): 各社の実値を±25%動かす局所弾力性は **平均0.8%**。
+//   16/28社は roicPt が飽和して ΔΩ=0.00、さらに NVDA/IDXX/RMD/MSFT は
+//   roicGap>15 の −6 の崖を跨いで **符号が逆（−10〜−15%）**になる。
+//   判定圏での Ω と roic の相関は **r=−0.19**＝roicは順位を作るのでなく高ROIC社を引き戻している。
+//   → 「一つの数字に36.5%が乗っている」という自己認識は、**買付判断が起きる帯では成り立たない**。
+//   両方を並べて出すのが正しい（どちらか一方では判断を誤る）。
+console.log('\n■ 機械項目の**局所**実効ウェイト（各社の実値を ±25% 動かす＝判定圏が実際に居る所で測る）');
+console.log('   固定幅の測定は飽和帯の外を測るので、判定圏の効き方は下の方が正しい');
+console.log(`${'欄'.padEnd(7)} ${'局所実効%'.padStart(9)} ${'絶対値平均'.padStart(10)} ${'逆向き社数'.padStart(10)} ${'n'.padStart(4)}`);
+for (const k of Object.keys(RATIO)) {
+  const els = []; let neg = 0;
+  for (const i of idx) {                       // ← swing と同じ母集団（--q75 を効かせる）
+    const d = packs[i];
+    const v = d[k];
+    if (typeof v !== 'number' || v === 0) continue;
+    const lo = v * 0.75, hi = v * 1.25;
+    let a, b;
+    try { a = parseFloat(scorePack({ ...d, [k]: lo }).evalScore); b = parseFloat(scorePack({ ...d, [k]: hi }).evalScore); }
+    catch { continue; }
+    if (!isFinite(a) || !isFinite(b) || a <= 0 || b <= 0) continue;
+    const el = (Math.log(b) - Math.log(a)) / (Math.log(Math.abs(hi)) - Math.log(Math.abs(lo))) * 100;
+    if (!isFinite(el)) continue;
+    els.push(el); if (el < -0.5) neg++;
+  }
+  if (!els.length) continue;
+  const m = med(els);                           // swing と同じく中央値で比べる
+  const absAvg = els.reduce((a, x) => a + Math.abs(x), 0) / els.length;
+  console.log(`${k.padEnd(7)} ${m.toFixed(2).padStart(8)}% ${absAvg.toFixed(2).padStart(10)} ${String(neg).padStart(10)} ${String(els.length).padStart(4)}`);
+}
+// 飽和の点呼——「なぜ局所だと効かないのか」を数字で見せる
+{
+  let s40 = 0, s25 = 0, tot = 0;
+  for (const i of idx) {
+    const v = packs[i].roic; if (typeof v !== 'number') continue;
+    tot++; if (v >= 40) s40++; if (v >= 25) s25++;
+  }
+  console.log(`   飽和: roicPt(≥40で96点頭打ち) ${s40}/${tot}社 ／ F7のROIC項(≥25で100点頭打ち) ${s25}/${tot}社`);
+}
 const sumEff = seen.reduce((a, x) => a + Math.max(0, x[1]), 0);
 const sumNom = seen.reduce((a, x) => a + x[2], 0);
 console.log(`\n※ ルーブリック9欄＋堀5本の合計: 実効 ${(sumEff * 100).toFixed(0)}% / 名目 ${(sumNom * 100).toFixed(0)}%`);
