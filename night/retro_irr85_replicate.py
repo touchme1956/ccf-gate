@@ -60,7 +60,7 @@ def rate(rows, key=lambda r: True, h=HURDLE):
 
 def main():
     tag = sys.argv[sys.argv.index("--asof") + 1] if "--asof" in sys.argv else "2013"
-    asof = int("".join(c for c in tag if c.isdigit()))
+    asof = int("".join(c for c in tag.split("+")[0] if c.isdigit()))
     tags = [tag] if "+" not in tag else tag.split("+")   # 例: --asof 2013+2013q で広域と質実証プールを合算
     mrows, srcs = [], []
     for tg in tags:

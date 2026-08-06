@@ -35,7 +35,7 @@ def harvest(d):
 
 def main():
     a = sys.argv
-    asof = int(a[a.index("--asof") + 1]) if "--asof" in a else 2013
+    asof = (a[a.index("--asof") + 1] if "--asof" in a else "2013")
     d = a[a.index("--dir") + 1] if "--dir" in a else None
     if not d:
         sys.exit("--dir にワークフローの transcript dir を渡す")
