@@ -100,9 +100,11 @@ def main():
     tag = f"{asof}q" if quality else str(asof)
 
     # 全社版があればそれを使う（2013は最初から _all、2015は2026-08-05に新規採取）
-    rf = f"retro_returns_{asof}_all.json"
-    if not os.path.exists(os.path.join(OUT, rf)):
-        rf = f"retro_returns_{asof}.json"
+    rf = None
+    for cand in (f"retro_returns_{asof}_all.json", f"retro_returns_{asof}_q.json", f"retro_returns_{asof}.json"):
+        if os.path.exists(os.path.join(OUT, cand)):
+            rf = cand
+            break
     rows = json.load(open(os.path.join(OUT, rf), encoding="utf-8"))["rows"]
     print(f"（リターンの出所: {rf}）")
     have = {r["ticker"] for r in rows if r.get("tr_cagr") is not None}
