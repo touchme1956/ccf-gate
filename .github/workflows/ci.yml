@@ -29,6 +29,8 @@ on:
     paths:
       - 'index.html'
       - 'chomirai.html'
+      - 'ami.html'
+      - 'portfolio.json'
       - 'night/**'
       - 'out/**'
       - '.github/workflows/ci.yml'
@@ -54,6 +56,31 @@ jobs:
       # ── 1. 構造検査（タブのdiv収支・参照IDの実在・スクリプト構文）────────────
       - name: 構造検査 check_html
         run: python3 night/check_html.py
+
+      # 別枠の門（chomirai/ami/v10/portfolio）も最低限の健全性を見る。
+      #   本体だけ検査して別枠が壊れたまま配信される、を防ぐ。
+      - name: 別枠ページの健全性（JSON構文・参照ファイルの実在）
+        run: |
+          python3 - <<'PY'
+          import json, os, re, sys
+          bad = []
+          for f in ['portfolio.json', 'holdings.json', 'kanshi_list.json',
+                    'todo_list.json', 'out/etf_profiles.json']:
+              if not os.path.exists(f):
+                  bad.append(f'{f}: 無い'); continue
+              try: json.load(open(f, encoding='utf-8'))
+              except Exception as e: bad.append(f'{f}: {e}')
+          # 別枠HTMLが fetch している同一オリジンのファイルが実在するか
+          for page in ['ami.html', 'index.html']:
+              if not os.path.exists(page): continue
+              h = open(page, encoding='utf-8').read()
+              for m in re.findall(r"fetch\('([^']+?)(?:\?[^']*)?'", h):
+                  if m.startswith(('http', '//')): continue
+                  if not os.path.exists(m): bad.append(f'{page} が読む {m} が無い')
+          if bad:
+              print('\n'.join('✗ ' + b for b in bad)); sys.exit(1)
+          print('✓ 別枠ページの参照先はすべて実在')
+          PY
 
       # ── 2. 説明文とコードの整合（この repo の再発する失敗の型）────────────────
       - name: 説明とコードの齟齬 audit_docs
