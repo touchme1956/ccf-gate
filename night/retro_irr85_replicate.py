@@ -59,17 +59,32 @@ def rate(rows, key=lambda r: True, h=HURDLE):
 
 
 def main():
-    asof = int(sys.argv[sys.argv.index("--asof") + 1]) if "--asof" in sys.argv else 2013
-    moat = load(f"retro_moat_{asof}.json")
-    if not moat:
-        sys.exit(f"out/retro_moat_{asof}.json が無い（読解が未完）")
+    tag = sys.argv[sys.argv.index("--asof") + 1] if "--asof" in sys.argv else "2013"
+    asof = int("".join(c for c in tag if c.isdigit()))
+    tags = [tag] if "+" not in tag else tag.split("+")   # 例: --asof 2013+2013q で広域と質実証プールを合算
+    mrows, srcs = [], []
+    for tg in tags:
+        m = load(f"retro_moat_{tg}.json")
+        if not m:
+            sys.exit(f"out/retro_moat_{tg}.json が無い（読解が未完）")
+        mrows += m["rows"]; srcs.append(tg)
+    seen = set(); ded = []
+    for r in mrows:
+        if r["ticker"] in seen:
+            continue
+        seen.add(r["ticker"]); ded.append(r)
+    moat = {"rows": ded}
+    print(f"（読解の出所: {'+'.join(srcs)} ／ 重複除去後 {len(ded)}社）")
     rf = "retro_returns_2013_all.json" if asof == 2013 else f"retro_returns_{asof}.json"
     R = load(rf)
     ret = {r["ticker"]: r for r in R["rows"]}
     spy = R["benchmark"]["tr_cagr"]
     years = R["benchmark"]["years"]
     coh = {r["ticker"]: r for r in load(f"retro_cohort_{asof}.json")["rows"] if r.get("ticker")}
-    rl = {r["ticker"]: r for r in load(f"retro_readlist_{asof}.json")["rows"]}
+    rl = {}
+    for tg in tags:
+        for r in (load(f"retro_readlist_{tg}.json") or {"rows": []})["rows"]:
+            rl.setdefault(r["ticker"], r)
 
     def sic_of(t):
         c = rl.get(t, {}).get("cik")
@@ -92,7 +107,7 @@ def main():
                      "semi": (s in SEMI_SIC) or (t in SEMI_T)})
 
     base = rate(rows)
-    out = {"generated": "2026-08-05", "asof": asof, "years": years, "spy": spy,
+    out = {"generated": "2026-08-05", "asof": asof, "tag": tag, "sources": srcs, "years": years, "spy": spy,
            "hurdle": HURDLE, "n_read": len(rows), "base": base}
 
     print(f"\n{'='*74}\nirr=85 の追試 — asof={asof}（{years}年・SPY {spy:.1%}・継続の線 {HURDLE:.0%}）\n{'='*74}")
@@ -197,7 +212,7 @@ def main():
         print(f"  {r['ticker']:6} {('%+.1f%%' % (r['tr']*100)) if r['tr'] is not None else '  na  ':>8}/年"
               f"  {r['tense']:3} {r['mech']:12} moat5={r['moat5']}  {str(r['quote'])[:90]}")
 
-    p = os.path.join(OUT, f"retro_irr85_replication_{asof}.json")
+    p = os.path.join(OUT, f"retro_irr85_replication_{tag.replace(chr(43),chr(95))}.json")
     json.dump(out, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"\n→ {p}")
 
