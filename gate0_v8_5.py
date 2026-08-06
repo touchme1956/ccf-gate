@@ -299,7 +299,19 @@ for i, name in enumerate(names, 1):
         yrs = ys[-YEARS:]
         v, u0, lin = pick_series(rev_c, yrs, unit_lock=unit)
         if v is not None and (best is None or yrs[-1] > best[1][-1]):
-            fye = {y: max(d[y][0] for (_,uu,d) in rev_c if uu==unit and y in d) for y in yrs}
+            # 錨は**採用した売上系列のタグ**の決算日から作る（2026-08-06是正）。
+            # 旧: 全売上候補タグの max を取っていたため、実際には使わないタグが
+            #     別の期末日を持つ会社で錨がずれ、ni/ocf/equity/opinc が一斉に
+            #     一致せず「欠損:ni」で母集団から丸ごと落ちていた。
+            #     実害: **RBC Bearings** — Revenues は 2022-04-02 なのに
+            #     RevenueFromContractWithCustomerIncludingAssessedTax が 2022-04-30 で、
+            #     max がその28日ずれを拾い全系列が脱落（門0の母集団2,902社に一行も無かった）。
+            #     修正後は score=5/7（fails: ROIC; ROIC最低値）で正しく判定される。
+            #     **ふるいの条件（roic/opm/cagr等の閾値）は一切変えていない**——
+            #     どのタグの決算日を錨にするか、というデータ整合の修正のみ。
+            _used = set((lin or "").split("+"))
+            fye = {y: max(d[y][0] for (t,uu,d) in rev_c
+                          if uu==unit and y in d and (not _used or t in _used)) for y in yrs}
             best = (v, yrs, unit, lin, fye)
     if best is None: QUAR["revenue_5y_incomplete"] += 1; continue
     rev, yrs, unit, rev_lin, fye = best
