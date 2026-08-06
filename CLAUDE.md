@@ -1267,8 +1267,9 @@ audit_moat_gapが名指しした「単独昇格1本で通る未読3社」（CTAS
 
 ## CDNSの精査（2026-08-06・ユーザー「cdnsだけ精査したら？」）——歴史検証を初めて今日の台帳へ当てた。ついでにルール7の9例目を掘り当てた
 **irr 85→70／roic 39.9→24.2／roicg 19.9→13.7／nde −1.83→−0.39。買付上位10社の顔ぶれは不変、CDNSは🔵次点→🟡押し目待ち。**
-- **なぜCDNSだったか**: 追補(3.9)で二度立った唯一の規則が『**会社が「これから認定してもらう」と書いているうちは堀ではない**』
-  （2018年 P=0.79 vs 0.40 ／ 2013年 P=0.42 vs 0.25）。2026-08-05のirr=85全数監査で
+- **なぜCDNSだったか**: 追補(3.8)(e)が**ホールドアウトを見る前に封印した言語の型**
+  『**会社が「これから認定してもらう」と書いているうちは堀ではない**』（2018年ビンテージ実測: 完了形 P=0.79 vs 願望形 P=0.40。
+  封印は out/retro_irr85_language_hypothesis.json）。2026-08-05のirr=85全数監査で
   **判定圏で「願望形のみ」と名指しされていたのはCDNS 1社だけ**だった（当時は「文体は願望形だが述べている事実は
   サインオフ認証そのもの」として据置）。歴史が支持したのは*事実の中身*ではなく*会社がどう書いているか*のほうだったので、
   同じ規約でもう一度当てた
@@ -1280,8 +1281,8 @@ audit_moat_gapが名指しした「単独昇格1本で通る未読3社」（CTAS
   (2)語の実測 **switch 0回 / installed base 0回 / barrier to entry 0回 / re-qualif 0回**
   (3)逆に代替可能性の自認が複数——『design IP available from **alternative suppliers**』／『our customers
   **may choose to purchase a competitor's** hardware or IP product』／『stronger competition has emerged from
-  companies **better able to compete as sole source vendors**』（この最後の構文は2013年ビンテージで
-  CSCO/ALLT/NTAP/SNPS を50と判定した文型と同一）。
+  companies **better able to compete as sole source vendors**』（この最後の構文は
+  2018年の読解で CSCO/ALLT/NTAP/SNPS 型を50と判定した文型と同一）。
   **摩擦自体は実在する**（設計フローへの組込・継続ライセンス・Virtuosoの industry standard）ので70＝
   MA/V/6857/ADBE と同じ位置づけ。堀 79→75（関門70は通過）
 - **ルール7の9例目——根拠を刻もうとしたら誤値が出た（ECLに続く2例目の「刻む途中で見つかる」）**:
