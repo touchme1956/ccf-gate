@@ -54,7 +54,7 @@ def main():
     if not a:
         sys.exit(__doc__ or "usage: retro_read_helper.py TICKER [--asof 2013] [--p 'pat;;pat'] [--w 260]")
     t = a[0].upper()
-    asof = int(a[a.index("--asof") + 1]) if "--asof" in a else 2013
+    asof = (a[a.index("--asof") + 1] if "--asof" in a else "2013")
     w = int(a[a.index("--w") + 1]) if "--w" in a else 260
     s = doc(t, asof)
     if "--sec" in a:

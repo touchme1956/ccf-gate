@@ -92,6 +92,12 @@ def main():
     asof = int(sys.argv[sys.argv.index("--asof") + 1]) if "--asof" in sys.argv else 2013
     want = int(sys.argv[sys.argv.index("--n") + 1]) if "--n" in sys.argv else 120
     cutoff = f"{asof}-07-01"
+    # --quality: 2018年の母集団(価格実証×質実証)に近い**質実証プール**へ絞る。
+    #   広い母集団だとREIT・公益・外食・人材が大半を占め、irr=85が原理的に出ない業種で
+    #   標本が埋まる（実測: 2013年の広域119社で85は2社＝事前登録のn>=5に届かない）。
+    #   検出力を得るための母集団の追加であって、合否の基準は一切変えない。
+    quality = "--quality" in sys.argv
+    tag = f"{asof}q" if quality else str(asof)
 
     rf = "retro_returns_2013_all.json" if asof == 2013 else f"retro_returns_{asof}.json"
     rows = json.load(open(os.path.join(OUT, rf), encoding="utf-8"))["rows"]
@@ -102,7 +108,16 @@ def main():
         if r.get("ticker") and r.get("cik"):
             cik.setdefault(r["ticker"], r["cik"])
     uni = sorted(t for t in have if t in cik)
-    print(f"asof={asof} リターンあり {len(have)} / CIK解決 {len(uni)}")
+    excl = set()
+    if quality:
+        q = {r["ticker"] for r in coh if r.get("ticker") and (r.get("opm") or -9) >= 0.10
+             and r.get("fcf_all_pos") and r.get("op_all_pos")}
+        prev = os.path.join(OUT, f"retro_moat_{asof}.json")
+        if os.path.exists(prev):
+            excl = {r["ticker"] for r in json.load(open(prev, encoding="utf-8"))["rows"]}
+        uni = sorted(t for t in uni if t in q and t not in excl)
+    print(f"asof={asof}{'(質実証プール)' if quality else ''} リターンあり {len(have)} / 対象 {len(uni)}"
+          + (f" / 既読を除外 {len(excl)}社" if excl else ""))
 
     # 事前登録: ティッカー昇順の等間隔抽出（A〜Zに散る・私の選択が入らない）
     N = len(uni)
@@ -125,10 +140,11 @@ def main():
         out.append({"ticker": t, "cik": cik[t], **f})
         if i % 20 == 0:
             print(f"  … {i}/{len(cand)}")
-    o = {"generated": "2026-08-05", "asof": asof, "cutoff": cutoff,
+    o = {"generated": "2026-08-05", "asof": asof, "tag": tag, "cutoff": cutoff,
+         "pool": ("質実証(opm>=10% ∧ 5年FCF全年黒字 ∧ 営業利益全年黒字)・既読を除外" if quality else "広域(リターンのある全社)"),
          "universe": len(uni), "sampling": "ティッカー昇順・両端を含む等間隔抽出（A〜Zの全域に散る）",
          "n": len(out), "missing": miss, "rows": out}
-    p = os.path.join(OUT, f"retro_readlist_{asof}.json")
+    p = os.path.join(OUT, f"retro_readlist_{tag}.json")
     json.dump(o, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"→ {p}（{len(out)}社・原本なし {len(miss)}社）")
 
