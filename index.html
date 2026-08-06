@@ -3289,8 +3289,9 @@ async function ccfDash(btn){
   // v9.9.88: 第五の枠（合成点上位10社）を盤にも適用——Ⅵと同じ ccfAllocTop（単一実装・v9.9.65の掟）
   const four=judged.filter(v=>v.ok);
   const allocT=ccfAllocTop(four,10);
-  const buy=four.filter(v=>allocT.has(v.t)).sort((a,b)=>b.s-a.s);
-  const nextUp=four.filter(v=>!allocT.has(v.t)).sort((a,b)=>b.s-a.s);
+  // v9.9.91: 並びは**配分と同じ合成点順**（旧Ω順は「買う順」を名乗りながら配分と食い違っていた）
+  const buy=four.filter(v=>allocT.has(v.t)).sort((a,b)=>ccfAllocScore(b)-ccfAllocScore(a)||b.s-a.s);
+  const nextUp=four.filter(v=>!allocT.has(v.t)).sort((a,b)=>ccfAllocScore(b)-ccfAllocScore(a)||b.s-a.s);
   const audBlocked=judged.filter(v=>v.blocked);
   const buyHtml=buy.length?buy.map((v,i)=>{const q=Q[v.t];
     return `<div class="led"><span style="font-size:15px;color:var(--gold-bright);min-width:28px"><b>${i+1}</b></span><span class="ln">${v.nm}</span>`
@@ -3554,11 +3555,27 @@ function ccfXJudge(d,s){
 // 実測(2026-08-05): 上位10社は遮断器化以前の旧・門X4条件の投下可10社と完全同一＝二つの道が同じ集合へ収束。
 // 単一実装: Ⅵ買付順位・盤(ccfDash)・night/score_all.js・予実snapは必ずこの関数を使う（v9.9.65の掟）。
 // cands: [{t,s,xEr}] の配列。E[r]欠損は erPt0＝枠に入らない（E[r]不明のまま買わない）。
+// v9.9.91(2026-08-06 ユーザー指摘「買付順位おかしくない？」): **合成点を単一実装として切り出した**。
+//   それまで門の中に**買う順を名乗る序列が三つ**同居していた——
+//     ① Ⅵ買付順位の行の順 = pc = 0.6*Ω + 0.4*E[r]点（v9.1の「合成優先度」）
+//     ② 席の選定(v9.9.88)と目標ウェイト(v9.9.87) = 合成点 = (Ω−70) × E[r]点 ÷ 50
+//     ③ 盤(ccfDash)と night/score_all.js のロスター = Ω降順
+//   ①は**加重和**・②は**積**なので順位が食い違う。実測(2026-08-06の投下可10社):
+//     ASML は**表示6位なのに配分1位**（最大ウェイト）／MA は表示3位で配分7位／KLAC 表示8位で配分5位。
+//   しかも `ccfMonthPlanBox` は**端数を「買付順位1位」へ寄せる**ので、端数が最大ウェイトの社に行かない。
+//   次点の表示順(③Ω降順)も繰り上がりの順ではなかった（表示はV先頭だが実際に一番近いのはIDXX）。
+//   ＝v9.9.65「同じ台帳を見る二つの検査器が違うことを言ってはいけない」を**一つの画面の中で**破っていた。
+//   → **「買う順」は配分と同じ②に統一する。**採点式・Ω・閾値・関門・売却規律・配分式はいずれも不変
+//     （動かしたのは並べ替えのキーだけ）。pc は 押し目待ち/堀不足/点検 の群の並びに残す
+//     ——その群では合成点が 0 に潰れて順序を作れないため（Ω≤70 か E[r]≤2% で 0）。
+function ccfAllocScore(c){
+  const erP=x=>Math.max(0,Math.min(100,50+((x==null?2:x)-12)*5));
+  return Math.max(0,((c&&c.s)||0)-70)*erP(c&&c.xEr)/50;
+}
 function ccfAllocTop(cands,maxN){
   maxN=maxN||10;
-  const erP=x=>Math.max(0,Math.min(100,50+((x==null?2:x)-12)*5));
-  const sc=c=>Math.max(0,(c.s||0)-70)*erP(c.xEr)/50;
-  return new Set((cands||[]).filter(c=>sc(c)>0).sort((a,b)=>sc(b)-sc(a)).slice(0,maxN).map(c=>c.t));
+  return new Set((cands||[]).filter(c=>ccfAllocScore(c)>0)
+    .sort((a,b)=>ccfAllocScore(b)-ccfAllocScore(a)).slice(0,maxN).map(c=>c.t));
 }
 // ── 堀のふるい（v9.9.39・ユーザー明示指示 2026-07-28）──────────────────────────
 // 新規投下は「四段関門」＝ Ω75+ ∧ 門X遮断器(E[r]≥0) ∧ 絶対MOAT指数 ≥ 70 ∧ 点検の要修正0件（v9.9.66）。
@@ -3691,7 +3708,10 @@ async function renderPlan(){
   // v9.9.88: 第五の枠——投下可＝四段関門∧合成点上位10社（判定は単一実装 ccfAllocTop）。
   //   点灯(Ulysses)・配分・表示のすべてが「枠内=passIn」を投下可として扱う。11位以下=passOutは🔵次点
   const allocSet=ccfAllocTop(pass,10);
-  const passIn=pass.filter(r=>allocSet.has(r.t)), passOut=pass.filter(r=>!allocSet.has(r.t));
+  // v9.9.91: **行の順を配分と同じ合成点順にした**（旧 pc=0.6Ω+0.4E点 は加重和で、積の合成点と順位が違った。
+  //   実測でASMLが表示6位・配分1位／MAが表示3位・配分7位。端数の行き先「買付順位1位」も最大ウェイトと不一致だった）
+  const passIn=pass.filter(r=>allocSet.has(r.t)).sort((a,b)=>ccfAllocScore(b)-ccfAllocScore(a)||b.s-a.s);
+  const passOut=pass.filter(r=>!allocSet.has(r.t)).sort((a,b)=>ccfAllocScore(b)-ccfAllocScore(a)||b.s-a.s);
   const waitP=q75c.filter(r=>r.xPass!==true);
   // v9.9.27: IPS②(Ulysses契約)の仕組み化——投下可の初回点灯を記録し48hクーリングオフの残り時間を表示。
   //   点灯時のE[r]/格/PERをスナップショット(掟九:年1回の予実突合の材料。消えた点灯もoff印で保存)。

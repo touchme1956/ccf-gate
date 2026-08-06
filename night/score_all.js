@@ -241,8 +241,10 @@ for (const r of q75) {
     + `  点${aud}`
     + `  ${r.buy ? '🟢投下可' : r.quali ? '🔵次点(11位以下)' : !r.moatOK ? '⛔堀不足' : !r.audOK ? '⛔点検要修正' : '🟡押し目待ち'}  出口=${r.exit}`);
 }
-const buy = rows.filter(x => x.buy);
-const nextUp = rows.filter(x => x.quali && !x.buy);
+// v9.9.91: ロスターの並びは**配分と同じ合成点順**（旧Ω順は「合成点上位10社」と名乗りながらΩで並べていた）
+const _ascore = x => { const e = (x.xEr == null ? 2 : x.xEr); return Math.max(0, (x.s || 0) - 70) * Math.max(0, Math.min(100, 50 + (e - 12) * 5)) / 50; };
+const buy = rows.filter(x => x.buy).sort((a, b) => _ascore(b) - _ascore(a) || b.s - a.s);
+const nextUp = rows.filter(x => x.quali && !x.buy).sort((a, b) => _ascore(b) - _ascore(a) || b.s - a.s);
 console.log(`\n🟢投下可(四段関門∧合成点上位10社・v9.9.88) ${buy.length}社`
   + `　日本株${buy.filter(x => x.jp).length}／米国等${buy.filter(x => !x.jp).length}`
   + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
