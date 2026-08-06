@@ -24,7 +24,7 @@
  "disrupt": "unsettled",
  "dom": null,
  "moatW": 70,
- "irr": 85,
+ "irr": 70,
  "rep": 80,
  "dur": 85,
  "geopol": 1,
@@ -80,11 +80,12 @@
    "2026-07-29 acq5 1.37 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均43.4%・σ2.8pt・CV6.4%）。",
    "2026-08-02 市場価格を自動更新: px 207.69 → 210.98（+1.6%）。per 20.22→20.54　perF 16.75→17.01　evebit 17.4→17.7　shy 1.75→1.72。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
-   "**v9.9.72 roic を through-cycle 化**: roic 45.0→43.8 / roicg 21.2→19.1。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央43.8% / 最悪39.8%）。比は**パックが審査した年(2025)**の採取器値 roic45.04 / roicg21.21 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
+   "**v9.9.72 roic を through-cycle 化**: roic 45.0→43.8 / roicg 21.2→19.1。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央43.8% / 最悪39.8%）。比は**パックが審査した年(2025)**の採取器値 roic45.04 / roicg21.21 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
+   "2026-08-05 irr 85→70 是正。歴史検証(統合177社・irr=85→P(継続)0.71/等加重+24.6%年 vs SPY15.0%)でirr欄の測定精度＝門の精度と判明したため判定圏の irr=85 を全数監査(night/audit_irr85.py)。RMDは根拠が自社取得の特許・FDA承認＝規約(v9.9.49)が明示除外する型で、原本の全文走査でも顧客側再認定の記述ゼロ。堀 79.8→(再計算) / Ω 78.9→77.6 の見込み。投下可は不変(影の計測で確認済み)。値のみ是正・採点式は不変"
   ],
   "evidence": {
    "dom": "【2026-07-29 堀再監査・原本(10-K)から取り直し→空欄】SEC 10-K FY2025(rmd-20250630.htm, 2025-08-08提出) Item 1 Business の Competition 節の全文は『Global competition for sales of our products and services is intense. We believe that the principal competitive factors are product features, value-added solutions, quality, reliability and price... Our primary Sleep and Breathing Health competitors include Philips BV; Fisher & Paykel Healthcare Corporation Limited; DeVilbiss Healthcare; Apex Medical Corporation; BMC Medical Co. Ltd.; React Health Corporation; Jiangsu Yuyue Medical Equipment & Supply Co., Ltd, and Lowenstein Medical SE & Co. KG plus regional and new-entrant manufacturers』であり、自社シェア%も上位N社合計シェアも一切開示が無い。Item 1 冒頭の自己記述も『We are a global leader in digital health and cloud-connected medical devices』『we are a leading provider of cloud-based health applications』という定性表現のみで、v9.9.38の刻み(市場構造)を導く材料にならない。Item 1A Risk Factors にもシェアの数値は無い。旧evidenceが依拠した『CPAP複占(Philips)』は原本の外の通念であり、原本はむしろ名指し8社＋地域/新規参入業者を列挙していて複占(上位2社合計≥80%)の裏が取れない。→ 刻みを導けないため dom=null(理由は _meta.nulls.dom)。出典: https://www.sec.gov/Archives/edgar/data/943819/000094381925000035/rmd-20250630.htm",
-   "irr": "『Our success depends, in part, on our ability to obtain and maintain U.S. and foreign patent protection for our products, their uses and our processes』。クラスII医療機器の規制承認+保険償還コード+接続型エコシステム(AirView/myAir)の規格・認証ロック→85",
+   "irr": "70=高摩擦・移行困難。**85(認証/規格でロック)の根拠が規約の除外型だったため是正**（2026-08-05・歴史検証で irr=85 が継続組を分ける唯一の変数と判明したのを受けた全数監査）。旧根拠は『our ability to obtain and maintain U.S. and foreign patent protection』＝**自社が取得する側の特許**、および自社のクラスII機器のFDA承認で、CLAUDE.md v9.9.49 が『自社が取得する側の認証は当たらない』と明示除外している型。FY2025 10-K(filed 2025-08-08・484,803字)を機構語10種＋広域14語で走査した結果、**顧客側の再認定・再試験を要する記述は一件も無い**。実在する障壁は設置基盤——『leverage our installed base of more than 30 million patients using cloud-connected devices on AirView and over 10 million patients registered to our myAir platform』＝在宅医療のワークフローに組み込まれたデータ基盤の移行摩擦。加えて同10-Kは Residential Care Software について『competition is also intense, rapidly evolving, and subject to changing technology, **low barriers to entry**』と一部事業の参入障壁の低さを自認しており、85を支持しない。→ 70",
    "rep": "『since our formation in 1989, we commercialized a continuous positive airway pressure, or CPAP』+3千万台の接続基盤・マスク適合IP。数十年の臨床/プロセス知で極困難だが、複占(Philips)という現存ピアが複製可能性を示すため複製不能(100)ではなく80",
    "dur": "接続型ケア網(AirView 3千万台/myAir 1千万人)のネットワーク・データ堀+消耗品リサプライのスイッチングコスト+医療機器規制。ピア現存ゆえ規制100断定は避け85",
    "erosion": "『For our Residential Care Software business, competition is also intense, rapidly evolving, and subject to changing technology, low barriers to entry, shifting customer needs』。ソフト事業(売上12%)は参入障壁低く競争激化=emerging(中核デバイス/マスクの蝕ヒットは無し)",
