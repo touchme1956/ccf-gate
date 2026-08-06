@@ -2934,7 +2934,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
     <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">🟢投下可の各社へ、<b>目標ウェイト−現在保有%</b>の不足分で按分（不足の大きい銘柄に厚い）。番号は<b>買う順</b>（pc順位）。</div>
     ${amtRow}
     ${body}
-    <div style="font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.7">指値は階段で置く——1/2を現値近傍〜開通ライン・1/2をfair線（PER clamp(8+g,16,30)）。投下可は現値で門X成立済みゆえ開通線は現値以上にある。${AMT>0?'100円単位で丸め、<b>端数は買付順位1位へ寄せて合計を個別枠に一致させる</b>。<b>株数は盤の現値＋ドル円で換算した目安</b>（正本は円の按分。指値が現値より下に約定すれば同じ円で1株多く買えることがある）。日本株は<b>単元未満株（S株・かぶミニ等）で1株から</b>買う。0株の月は無理に買わない——翌月に合算するか網へ。':''}1銘柄の目標ウェイトは<b>城60% × 合成点÷Σ合成点(上位10社)</b>（合成点=(Ω−70)×E[r]点÷50・v9.9.87）。上限8%＝¼ケリー相当。<b>売りは株価では動かさない（S1/S2/S3のみ）。</b><br>※<b>指数（ETF）の積立は門の外</b>——門は「どれを・買うか否か」を裁く場で、指数は常に買ってよい対象ゆえ門にかけない。毎月いくら指数へ回すかはDCA側で決める（正本はCLAUDE.md 月次運用）。</div>
+    <div style="font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.7">指値は階段で置く——1/2を現値近傍〜開通ライン・1/2をfair線（PER clamp(8+g,16,30)）。投下可は現値で門X成立済みゆえ開通線は現値以上にある。${AMT>0?'100円単位で丸め、<b>端数は買付順位1位へ寄せて合計を個別枠に一致させる</b>。<b>株数は盤の現値＋ドル円で換算した目安</b>（正本は円の按分。指値が現値より下に約定すれば同じ円で1株多く買えることがある）。日本株は<b>単元未満株（S株・かぶミニ等）で1株から</b>買う。0株の月は無理に買わない——翌月に合算するか網へ。':''}1銘柄の目標ウェイトは<b>城60% × 合成点÷Σ合成点(配分枠)</b>（合成点=(Ω−70)×E[r]点÷50・v9.9.87）。上限8%＝¼ケリー相当。<b>v9.9.91: 半導体連鎖(ASML/KLAC/NVDA/6857/6146)は城の30%を上限とし、空いた分はE[r]≥10%の次点から繰り上げて城を埋める</b>（減らすのではなく入れ替える。実測: 集中53.5%→30.0%・総合13.61%→13.76%）。<b>売りは株価では動かさない（S1/S2/S3のみ）。</b><br>※<b>指数（ETF）の積立は門の外</b>——門は「どれを・買うか否か」を裁く場で、指数は常に買ってよい対象ゆえ門にかけない。毎月いくら指数へ回すかはDCA側で決める（正本はCLAUDE.md 月次運用）。</div>
   </div>`;
 }
 // ── 台帳の健全性検査（v9.9.54・2026-07-30 ユーザー要望）───────────────────────
@@ -3554,12 +3554,69 @@ function ccfXJudge(d,s){
 // 実測(2026-08-05): 上位10社は遮断器化以前の旧・門X4条件の投下可10社と完全同一＝二つの道が同じ集合へ収束。
 // 単一実装: Ⅵ買付順位・盤(ccfDash)・night/score_all.js・予実snapは必ずこの関数を使う（v9.9.65の掟）。
 // cands: [{t,s,xEr}] の配列。E[r]欠損は erPt0＝枠に入らない（E[r]不明のまま買わない）。
-function ccfAllocTop(cands,maxN){
-  maxN=maxN||10;
+// ── 配分の単一実装（Ⅵ・盤・score_all・予実snap が共有・v9.9.65の掟）────────────────
+// v9.9.91（2026-08-06 ユーザー明示指示「E[r]≥10% ＋ 半導体≤30%（11社・13.76%）を採ります」）:
+//   **相関上限＋入れ替え**を配分規約に入れた。門の採点・四段関門・売却規律はいずれも不変——
+//   動かしたのは「枠に何社入れ、いくら配るか」だけ（DCA側の規約）。
+// 【なぜ】投下可10社の目標ウェイトのうち半導体連鎖(ASML/KLAC/NVDA/6857/6146)が32.1pt＝**城の53.5%**で、
+//   ¼ケリーの上限8%は1銘柄ごとの制約しか持たず**相関を一切見ていなかった**（CLAUDE.mdが
+//   「相関上限の決断待ち」として残していた項目）。
+// 【なぜ「減らす」でなく「入れ替え」か】実測（2026-08-06・現行の資格者18社）——
+//   現行(上限なし)10社: 半導体53.5% 総合13.61% ／ ≤35%で減らすだけ10社: 35.0% 13.68% ／
+//   **≤30%＋入れ替え11社: 30.0% 総合13.76%（最良）** ／ ≤25%入替: 25.0% 13.74% ／ ≤20%入替: 20.0% 13.72%。
+//   集中を53.5%→30%へ半減させて総合は**上がる**。繰り上がる11位が ISRG（堀76＝現行10社中6社より高い・
+//   E[r]16.8%・dom85・ダヴィンチ手術ロボット＝半導体サイクルと無関係）だから、削った枠を
+//   **堀もE[r]も遜色ない別業種**へ付け替えられる。
+// 【E[r]≥10%の意味】今日は空回りする（採用11社の最低はKLAC 12.3%）。将来、上限が厳しく噛んで
+//   非半導体6社では城が埋まらなくなったとき、次に繰り上がるのは CDNS 9.2% / MCO 8.6% / IDXX 7.9%…と
+//   期待値の低い社になる。そこで止めて残りは網（年9%想定）へ回す保険。
+//   ——ただし歴史検証(v9.9.84)は「価格・期待値の線は堀の中で選別力を持たない」と出ており、
+//   ここは**資格(門X遮断器E[r]≥0)には触れず配分の枠に入れる条件としてのみ**使う（緊張点は承知の上）。
+// 【E[r]≥15%を採らなかった理由（実測）】上限と併用すると資格者が7社に減り城が50%までしか埋まらず、
+//   半導体比率は30%を守れず**36%へ上がって**総合13.68%と悪化する（外れるMSFT/RMDが非半導体の重しだから）。
+//   上限を外して E[r]≥15%単独なら7社・城56%・総合14.18%で最高だが、全員が8%上限に張り付いて
+//   **合成点の序列が消え**、集中は42.9%へ戻り、しかも残る7社は成長率の高い側＝
+//   「g=20%が20年続く」という**最も未検証な前提への依存が最大化**する。+0.42ptはE[r]の推定誤差より小さい。
+const CCF_CHAIN=['ASML','KLAC','NVDA','6857','6146'];  // 半導体連鎖（装置・材料・チップ）。CDNS(EDA)はE[r]9.2%で自動的に外れるため定義には含めない
+const CCF_CHAIN_CAP=0.30;      // 連鎖の合計は城の30%まで
+const CCF_ALLOC_MIN_ER=10;     // 枠を繰り上げる社は E[r]≥10%
+const CCF_CITY=60, CCF_CAP=8;  // 城60% / 1銘柄8%（¼ケリー）
+function ccfAlloc(cands,maxN,opt){
+  maxN=maxN||10; opt=opt||{};
+  const CITY=opt.city||CCF_CITY, CAP=opt.cap||CCF_CAP, chain=new Set(opt.chain||CCF_CHAIN);
+  const chainCap=(opt.chainCap!=null?opt.chainCap:CCF_CHAIN_CAP)*CITY;
+  const minEr=(opt.minEr!=null?opt.minEr:CCF_ALLOC_MIN_ER);
   const erP=x=>Math.max(0,Math.min(100,50+((x==null?2:x)-12)*5));
   const sc=c=>Math.max(0,(c.s||0)-70)*erP(c.xEr)/50;
-  return new Set((cands||[]).filter(c=>sc(c)>0).sort((a,b)=>sc(b)-sc(a)).slice(0,maxN).map(c=>c.t));
+  const all=(cands||[]).filter(c=>sc(c)>0).sort((a,b)=>sc(b)-sc(a));
+  let sel=all.slice(0,maxN);
+  const fill=list=>{                                     // 合成点按分→8%上限→連鎖上限→非連鎖へ再配分
+    const sum=list.reduce((a,c)=>a+sc(c),0); if(!(sum>0))return {};
+    const w={}; list.forEach(c=>{w[c.t]=Math.min(CAP,sc(c)/sum*CITY);});
+    const spread=only=>{ for(let i=0;i<60;i++){
+      const used=Object.values(w).reduce((a,b)=>a+b,0), free=CITY-used;
+      const room=list.filter(c=>(!only||!chain.has(c.t))&&w[c.t]<CAP-1e-9);
+      if(free<=1e-9||!room.length)break;
+      const rs=room.reduce((a,c)=>a+sc(c),0); if(!(rs>0))break;
+      room.forEach(c=>{w[c.t]=Math.min(CAP,w[c.t]+free*sc(c)/rs);}); } };
+    spread(false);
+    const cs=list.reduce((a,c)=>a+(chain.has(c.t)?w[c.t]:0),0);
+    if(cs>chainCap+1e-9){ const k=chainCap/cs; list.forEach(c=>{if(chain.has(c.t))w[c.t]*=k;}); spread(true); }
+    return w;
+  };
+  let w=fill(sel);
+  for(let i=0;i<12;i++){                                  // 連鎖上限で空いた分は次点から繰り上げて城を埋める
+    const used=Object.values(w).reduce((a,b)=>a+b,0);
+    if(CITY-used<=0.05)break;
+    const nxt=all.find(c=>!sel.includes(c)&&!chain.has(c.t)&&(c.xEr!=null&&c.xEr>=minEr));
+    if(!nxt)break;                                        // 該当が尽きたら城は埋めきらない＝残りは網へ
+    sel=sel.concat([nxt]); w=fill(sel);
+  }
+  return {set:new Set(sel.map(c=>c.t)),w,n:sel.length,
+          chainW:sel.reduce((a,c)=>a+(chain.has(c.t)?(w[c.t]||0):0),0),
+          cityW:Object.values(w).reduce((a,b)=>a+b,0)};
 }
+function ccfAllocTop(cands,maxN){ return ccfAlloc(cands,maxN).set; }  // 後方互換（membershipだけ要る呼び手）
 // ── 堀のふるい（v9.9.39・ユーザー明示指示 2026-07-28）──────────────────────────
 // 新規投下は「四段関門」＝ Ω75+ ∧ 門X遮断器(E[r]≥0) ∧ 絶対MOAT指数 ≥ 70 ∧ 点検の要修正0件（v9.9.66）。
 // なぜ第三の関門か: moatIdx は既にΩへ二経路（pm→sustain と直接項.13）で入っているので、
@@ -3690,7 +3747,7 @@ async function renderPlan(){
   const pass=q75c.filter(r=>r.xPass===true);
   // v9.9.88: 第五の枠——投下可＝四段関門∧合成点上位10社（判定は単一実装 ccfAllocTop）。
   //   点灯(Ulysses)・配分・表示のすべてが「枠内=passIn」を投下可として扱う。11位以下=passOutは🔵次点
-  const allocSet=ccfAllocTop(pass,10);
+  const allocR=ccfAlloc(pass,10), allocSet=allocR.set;
   const passIn=pass.filter(r=>allocSet.has(r.t)), passOut=pass.filter(r=>!allocSet.has(r.t));
   const waitP=q75c.filter(r=>r.xPass!==true);
   // v9.9.27: IPS②(Ulysses契約)の仕組み化——投下可の初回点灯を記録し48hクーリングオフの残り時間を表示。
@@ -3797,14 +3854,14 @@ async function renderPlan(){
   //   加重E[r] 12.67→16.71%・総合 11.20→13.63%。旧ハードル未満7社(V/IDXX/SAP/MCO/CDNS/MSI/RELX)は
   //   投下可のまま「配分枠外」＝黙って消さず名指し表示（v9.9.52の教訓）。
   //   遮断器・Ω・堀の関門・売却規律S1/S2/S3は不変——これは配分（DCA側）の規約。
-  const CITY=60, CAP=8, MAXN=10; // allocSet/passIn/passOut は pass 直後で定義済み（点灯にも使うため）
+  const CITY=CCF_CITY, CAP=CCF_CAP, MAXN=allocR.n; // v9.9.91: 枠数は連鎖上限の噛み具合で10→11…と伸びる
   const erPtW=r=>Math.max(0,Math.min(100,50+((r.xEr!=null?r.xEr:2)-12)*5)); // xEr欠損はerPt0＝配分しない(E[r]不明で買わない)
   const aScore=r=>Math.max(0,(r.s||0)-70)*erPtW(r)/50;
-  const twRaw=(()=>{const sw=pass.reduce((a,r)=>a+(allocSet.has(r.t)?aScore(r):0),0);
-    return r=>(sw>0&&allocSet.has(r.t))?Math.min(CAP,aScore(r)/sw*CITY):0;})();
+  // v9.9.91: 目標ウェイトは ccfAlloc が返す w をそのまま使う（連鎖上限・繰り上げ・8%上限を含む単一実装）
+  const twRaw=r=>(allocR.w[r.t]||0);
   const tw=r=>Math.round(twRaw(r)*10)/10;
   const gap=r=>Math.max(0,tw(r)-(r.pos||0)), passGap=passIn.reduce((a,r)=>a+gap(r),0);
-  const allocTag=r=>{if(!allocSet.has(r.t))return `<span style="font-size:11px;color:var(--dim);white-space:nowrap" title="四段関門は通過（投下可）だが、合成点(Ω−70)×E[r]点÷50が上位${MAXN}社に入らないため配分対象外。順位が上がれば自動で枠入り">配分枠外（合成点${MAXN+1}位以下）</span>`;
+  const allocTag=r=>{if(!allocSet.has(r.t))return `<span style="font-size:11px;color:var(--dim);white-space:nowrap" title="四段関門は通過（投下可）だが配分枠に入らないため対象外。枠=合成点上位10社＋半導体連鎖の上限(城の30%)で空いた分をE[r]≥10%の次点から繰り上げ(v9.9.91)。順位が上がれば自動で枠入り">配分枠外</span>`;
     const filled=tw(r)>0&&gap(r)<=0, m=passGap>0?gap(r)/passGap*100:0;
     return `<span style="font-size:11px;color:${filled?'var(--dim)':'var(--gold-bright)'};white-space:nowrap" title="目標${tw(r)}% = 城${CITY}% × 合成点÷Σ合成点(上位${MAXN}社)。合成点=(Ω${(r.s||0).toFixed(1)}−70)×E[r]点${erPtW(r).toFixed(0)}÷50。1銘柄${CAP}%で頭打ち(¼ケリー)。今月=目標−現在${(r.pos||0).toFixed(0)}%の不足分で按分(B案②)">目標${tw(r)}%｜今月${filled?'充足':m.toFixed(0)+'%'}</span>`;};
   // v9.9.90: 買付プランの株数換算。盤の現値（日本株=JPY直・米国株=USD×ドル円）で円→株数。
@@ -3817,7 +3874,7 @@ async function renderPlan(){
   const planBox=ccfMonthPlanBox(passIn,gap,passGap,tw,CITY,pxInfo);
   if(passIn.length){
     const cityFill=passIn.reduce((a,r)=>a+tw(r)/CITY*100,0), allFilled=passGap<=0;
-    html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px;color:var(--gold-bright)">🟢 投下可（Ω75+ × 門X遮断器(E[r]≥0) × 堀70+ × 点検0件 × <b>合成点上位10社</b>）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">四段関門を通過し、かつ<b>合成点上位10社＝ポートフォリオの枠内</b>（v9.9.88・2026-08-05ユーザー明示指示「上位10社を買い付け可にして」。第五の枠——四段は資格・第五は席数）。サイズは<b>城60%×合成点÷Σ合成点・上限8%</b>（v9.9.87「質とE[r]のバランスで得点」「ポートフォリオは10社まで」。合成点=(Ω−70)×E[r]点÷50、E[r]点は合成順と同じ錨12%=50点＝新しい定数なし。実測: 上位10社は遮断器化以前の旧4条件の投下可10社と完全同一＝二つの道が同じ集合へ収束。11位以下は🔵次点として名指し表示——資格は保つので合成点が上がれば自動で昇格。旧v9.9.70の(Ω−70)按分・旧段差8/5/3の経緯はCLAUDE.md。銘柄別の厳密¼ケリーは✦門Xの計算機で検算し、下回るならその値を上限にmemoへ根拠を記録。自動連携はしない=主観勝率を機械に入れない）。<b style="color:var(--gold-bright)">目標%</b>＝総資産に対する目標ウェイト／<b style="color:var(--gold-bright)">今月%</b>＝今月の個別枠を「目標−現在保有%」の不足分で按分(B案②・合計100%。posはⅦ資産の実額から自動算出・無い銘柄のみ採点機の手入力)。<b>二序列の役割</b>: pc順位＝買う順（複数点灯時の優先）／gap按分＝金額。投下可の城内合計 ${cityFill.toFixed(0)}%${cityFill<100?'（残りは押し目待ちの開通 or 網へ回す）':cityFill>100?'（>100%＝目標比で按分）':''}。${allFilled?'<b style="color:var(--jade)">投下可は全て目標充足＝今月の個別枠は網へ回す。</b>':''}</div>`;
+    html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px;color:var(--gold-bright)">🟢 投下可（Ω75+ × 門X遮断器(E[r]≥0) × 堀70+ × 点検0件 × <b>配分枠</b>）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">四段関門を通過し、かつ<b>合成点上位10社＝ポートフォリオの枠内</b>（v9.9.88・2026-08-05ユーザー明示指示「上位10社を買い付け可にして」。第五の枠——四段は資格・第五は席数）。サイズは<b>城60%×合成点÷Σ合成点・上限8%</b>（v9.9.87「質とE[r]のバランスで得点」「ポートフォリオは10社まで」。合成点=(Ω−70)×E[r]点÷50、E[r]点は合成順と同じ錨12%=50点＝新しい定数なし。実測: 上位10社は遮断器化以前の旧4条件の投下可10社と完全同一＝二つの道が同じ集合へ収束。11位以下は🔵次点として名指し表示——資格は保つので合成点が上がれば自動で昇格。旧v9.9.70の(Ω−70)按分・旧段差8/5/3の経緯はCLAUDE.md。銘柄別の厳密¼ケリーは✦門Xの計算機で検算し、下回るならその値を上限にmemoへ根拠を記録。自動連携はしない=主観勝率を機械に入れない）。<b style="color:var(--gold-bright)">目標%</b>＝総資産に対する目標ウェイト／<b style="color:var(--gold-bright)">今月%</b>＝今月の個別枠を「目標−現在保有%」の不足分で按分(B案②・合計100%。posはⅦ資産の実額から自動算出・無い銘柄のみ採点機の手入力)。<b>二序列の役割</b>: pc順位＝買う順（複数点灯時の優先）／gap按分＝金額。投下可の城内合計 ${cityFill.toFixed(0)}%${cityFill<100?'（残りは押し目待ちの開通 or 網へ回す）':cityFill>100?'（>100%＝目標比で按分）':''}。${allFilled?'<b style="color:var(--jade)">投下可は全て目標充足＝今月の個別枠は網へ回す。</b>':''}</div>`;
     html+=passIn.map((r,i)=>brow(r,i,'',`${allocTag(r)}<span style="font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:8px">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span>${ulys(r)}`)).join('');
   }
   // 🔵 次点（v9.9.88）: 四段関門は通過したが合成点11位以下＝買わない。黙って消さない（v9.9.52の教訓）
