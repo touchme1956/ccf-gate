@@ -75,7 +75,11 @@ def main():
         seen.add(r["ticker"]); ded.append(r)
     moat = {"rows": ded}
     print(f"（読解の出所: {'+'.join(srcs)} ／ 重複除去後 {len(ded)}社）")
-    rf = "retro_returns_2013_all.json" if asof == 2013 else f"retro_returns_{asof}.json"
+    rf = None
+    for cand in (f"retro_returns_{asof}_all.json", f"retro_returns_{asof}_q.json", f"retro_returns_{asof}.json"):
+        if os.path.exists(os.path.join(OUT, cand)):
+            rf = cand
+            break
     R = load(rf)
     ret = {r["ticker"]: r for r in R["rows"]}
     spy = R["benchmark"]["tr_cagr"]
