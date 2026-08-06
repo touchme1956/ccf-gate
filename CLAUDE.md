@@ -795,7 +795,43 @@
     ⚠願望形のみ1社（CDNS『We work closely with...』＝歴史でP=0.40の型）／
     △根拠が短く判定不能7社（ASML/VRSK/CW/NVDA/MCO/MSI/TSM）。
     **△は誤りの証明ではない**（CWは歴史の勝者BWXT/RBCと同じ原子力・防衛の認証型で実体はある公算が高く、
-    引用が薄いだけ）。**値は一つも動かしていない**——irr の改訂は堀指数と投下可を動かす＝絶対のルール1/2の領分
+    引用が薄いだけ）。
+  - **(g2) 監査を受けて原本で確定させた（2026-08-05 ユーザー指示「やって」）**——**是正2社・確認2社・記録6社**:
+    **RMD irr 85→70**（旧根拠は『our ability to obtain and maintain U.S. and foreign patent protection』＝
+    自社が取得する側の特許＋自社のFDA承認＝v9.9.49が明示除外する型。FY2025 10-K 484,803字を機構語10種＋
+    広域14語で走査して**顧客側再認定の記述ゼロ**、逆に Residential Care Software について
+    『**low barriers to entry**』と自認。実在する障壁は設置基盤〔AirView 3,000万人〕＝70）／
+    **IRMD irr 85→70**（自社の510(k)・自社ISO13485の更新監査が根拠。'qualified suppliers'は
+    **自社が仕入先を認定する側**で方向が逆）。実測 **RMD Ω78.9→77.6・堀80→75 ／ IRMD Ω78.8→77.7・堀81→76、
+    投下可10社の顔ぶれは不変**（順位のみ変動）。
+    **確認2社**: CW は FY2025 10-K に三つの独立記述——『we as well as the products that we manufacture
+    **must also be certified by our individual OEM customers**』『continued certification under customer quality
+    requirements and assurance programs』『alternatives often **require customer approval**…**additional customer
+    qualifications**』＝台帳で最も強い機構の証拠。NVDA は『Failure to obtain a design win may prevent us from
+    obtaining **future design wins in subsequent generations**』＝歴史で85を取り+20.6%/年だったADIの引用と
+    ほぼ同一構文。いずれも据置・根拠を刻んだ。
+    副産物として既存FAIL2件を解消（IRMD dilNet・CW cagr の根拠を原本から刻んだ）＝**投下可10社はvalidate FAILゼロ**
+  - **(g3) 残る6社を全文精読して決着（2026-08-05 ユーザー指示「1」）——是正3社・確認3社。判定圏の irr=85 は全社が原本根拠つきになった**:
+    代替可能性・移行障壁の語群22系統で各社の10-K/20-Fを網羅走査した。
+    **是正3社**（いずれも旧根拠が原本と食い違う）: **TSM 85→70**（20-F 667,615字に顧客側再認定の記述ゼロ。
+    'qualif'の該当は人材採用・税額控除の失格・自社が仕入先を認定する側。旧根拠『上位10社が売上78%』は
+    **顧客集中の推移**であって移行障壁ではない。摩擦は設計エコシステム由来だが 3Dblox は IEEE へ寄贈＝規格を私有していない）／
+    **MCO 85→70**（規制記述は**Moody's自身が受ける規制**＝v9.9.49の除外型。顧客側の再認定の記述なし）／
+    **MSI 85→70**（旧根拠の引用は『Government regulation of radio frequencies may limit the growth…or
+    **reduce barriers to entry for new competitors**』＝**規制が参入障壁を下げる**という逆向きの文脈。
+    P25/TETRA/DMRは**業界公開標準**でMotorolaの私有規格ではない）。
+    **確認3社**: **ASML**＝『**ASML is currently the world's only manufacturer of EUV lithography systems**』＋
+    顧客ファブでのSAT再試験・次世代ノードの初期認定＋Zeiss排他契約（100へ上げないのはDUVにNikon/Canonが実在＝
+    全社ベースでは唯一供給と言えないため）／**VRSK**＝『industry-standard insurance programs』＋
+    『approximately **2,000 regulatory filings and interface with state regulators in all 50 states**』＋
+    『When insurers choose to develop their own alternative programs, our industry-standard insurance programs
+    also help regulators ensure…』＝**ISOフォームが規制当局側のベンチマーク**で、乗り換える保険会社は50超の法域で
+    自前の届出と承認を取り直す／**CDNS**＝『PDKs to ensure our core EDA products…**meet manufacturing sign-off
+    requirements**』＋『Virtuoso…**industry standard**』＋『signoff flows…**ensure manufacturing compliance**』＝
+    文体は願望形だが述べている事実はサインオフ認証そのもの。
+    **実測: Ω TSM 72.1→71.2 / MCO 77.3→76.3(堀81→77) / MSI 76.3→75.0(堀84→78)。投下可10社の顔ぶれは不変**、
+    次点8社も資格を保つ（順位のみ変動）。**この作業で判定圏の irr=85 は「監査で0/10が空証明」から
+    「全社が原本の実文で裏付けまたは是正済み」へ変わった**
   - **(h) 副産物・KLACの疑いは私の誤りだった**: 「同じ半導体なのに irr=70 では」と疑って FY2018 10-K を
     当たったが、KLAの "qualification" は全て**「KLAの装置が顧客の工程を*検査・認定する*」側**で、
     組み込まれる側ではない。既存の70が正しく、**規約は同じ業種の中でも識別できていた**
@@ -1540,6 +1576,72 @@ audit_moat_gapが名指しした「単独昇格1本で通る未読3社」（CTAS
   今日の46社は irr==85 だけを対象にしたので範囲外。(b)FICOの信用スコア要件（FHFA・GSE）は10-K外の
   一次資料に当たれば C型の証拠になりうる。(c)MTNは**50(代替容易)のほうが正確かもしれない**が、
   『代替が容易』を積極的に示す記述も無いので憶測で下げず70に置いた
+
+- **マージ時に二系統の突合せが起きた（2026-08-06・PR#130 と本ブランチが判定圏10社を独立に監査していた）**:
+  **8社は完全一致**（CDNS/CW/IRMD/MCO/MSI/RMD/TSM/VRSK）——別々の読み手が同じ試験を当てて同じ答えに着いた＝
+  この欄が読み手依存の主観ではないことの、追試(147社の一致率90.5%)に続く独立な裏付け。
+  **食い違ったのは ASML と NVDA の2社だけ**で、どちらも原本に戻して決着させた:
+  - **ASML は 100→85（main側を採用）**。当方は『the world's only manufacturer of EUV lithography systems』から
+    100を主張したが、main側は**顧客ファブでの受入試験(SAT)と次世代ノードの initial qualification** という
+    **顧客側の認定の実文**を見つけており機構として85が正確、かつ DUV では Nikon/Canon が競合するので
+    **v9.9.41(1)の全社ベース原則により100は取れない**。当方の読みが「EUVの事実を全社へ広げすぎ」だった
+  - **NVDA は 85→70（当方を採用）**。main側の根拠『Qualification time for new products ... can reduce, or
+    create volatility in, **our revenue**』は**当社の売上のタイミング**の文脈で、顧客の乗り換え費用ではない。
+    10-K全文の 'qualif' は他に**当社が自社のファウンドリ・下請を認定する話**しかなく向きが逆。
+    design win の文は当社自身の競争リスク＝機構B(設計組込)で、**同じ機構の NXPI・TSM を同日70へ下げている**——
+    ここで NVDA だけ85に残すと、SPGI/MCO で解消したのと同じ**『同じ機構の双子が違う刻み』**が再発する。
+  **この結果 NVDA は堀 73.6→69.0 で投下可から外れた**。空いた枠に入ったのは IDXX ではなく **CDNS**——
+  main側が同じ日に CDNS の負債欠測（ルール7の9例目）を是正して Ω79.9・E[r]9% へ戻していたため。
+  マージ後の投下可10社は **ASML KLAC CDNS MSFT 6857 IRMD RMD 6146 MA ADBE**（IDXXは🔵次点）。
+  ⚠**投下可の顔ぶれを動かす判定なので、NVDAの irr を85に戻すかはユーザーの決断の領分**——値は原本の読みで置いた
+
+## CDNSの精査（2026-08-06・ユーザー「cdnsだけ精査したら？」）——歴史検証を初めて今日の台帳へ当てた。ついでにルール7の9例目を掘り当てた
+**irr 85→70／roic 39.9→24.2／roicg 19.9→13.7／nde −1.83→−0.39。買付上位10社の顔ぶれは不変、CDNSは🔵次点→🟡押し目待ち。**
+- **なぜCDNSだったか**: 追補(3.8)(e)が**ホールドアウトを見る前に封印した言語の型**
+  『**会社が「これから認定してもらう」と書いているうちは堀ではない**』（2018年ビンテージ実測: 完了形 P=0.79 vs 願望形 P=0.40。
+  封印は out/retro_irr85_language_hypothesis.json）。2026-08-05のirr=85全数監査で
+  **判定圏で「願望形のみ」と名指しされていたのはCDNS 1社だけ**だった（当時は「文体は願望形だが述べている事実は
+  サインオフ認証そのもの」として据置）。歴史が支持したのは*事実の中身*ではなく*会社がどう書いているか*のほうだったので、
+  同じ規約でもう一度当てた
+- **irr 85→70（FY2025 10-K 482,068字を機械で網羅走査）**: (1)機構語＋顧客語が同居する文は**全文で8本**しかなく、
+  機構を述べるのは『**We work closely with** leading semiconductor ecosystem partners to develop foundry PDKs to
+  **ensure our core EDA products and solutions meet manufacturing sign-off requirements**』の1本だけ
+  ＝**当社が要件に適合しに行く**構文で、顧客や第三者が当社製品を認定するとは述べていない。しかも
+  『We work closely with』は2018年にホールドアウト前へ封印した**願望形語彙リストそのもの**
+  (2)語の実測 **switch 0回 / installed base 0回 / barrier to entry 0回 / re-qualif 0回**
+  (3)逆に代替可能性の自認が複数——『design IP available from **alternative suppliers**』／『our customers
+  **may choose to purchase a competitor's** hardware or IP product』／『stronger competition has emerged from
+  companies **better able to compete as sole source vendors**』（この最後の構文は
+  2018年の読解で CSCO/ALLT/NTAP/SNPS 型を50と判定した文型と同一）。
+  **摩擦自体は実在する**（設計フローへの組込・継続ライセンス・Virtuosoの industry standard）ので70＝
+  MA/V/6857/ADBE と同じ位置づけ。堀 79→75（関門70は通過）
+- **ルール7の9例目——根拠を刻もうとしたら誤値が出た（ECLに続く2例目の「刻む途中で見つかる」）**:
+  validate_packs のFAIL（roic/ndeに根拠なし）を潰しに行って発見。**CDNSのXBRLには `LongTermDebt`/
+  `LongTermDebtNoncurrent` タグが一つも存在しない**（companyfacts全期間で確認）ため、BS本文の
+  『Long-term debt **2,480,150千$**』を採取器が拾えず**負債0と読んでいた**。旧値3件は負債0を仮定すると**実額で完全に再現**する:
+  - roicg 19.9 = NOPAT 1,087,031 ÷ **自己資本のみ** 5,474,181（正: ÷(自己資本+負債)7,954,331 = **13.7%**）
+  - roic 39.9 = NOPAT ÷ (自己資本−のれん) 2,725,038 ＝ **負債を足さず取得無形718,223も控除していない二重の誤り**
+    （正: ÷(自己資本+負債−のれん−無形)4,486,965 = **24.2%**）
+  - nde −1.83 = −(現金3,001,300+短期投資154,213) ÷ EBITDA 1,719,870（正: (2,480,150−3,155,513)÷EBITDA = **−0.39**）
+  **実額で再現できたら推測ではなく証明**——ECLの nde=−0.24（−現金÷EBITDAの痕跡）と同型
+- **是正の効き方が非直感的だった**: roicが下がるのにΩは **75.5→77.1 と上がる**。
+  roicGap が 20.0pt→**10.5pt** となり15ptの線を割るので、acq5='yes' の**買収規律の罰−6が外れる**分が
+  roic低下を上回るため。**誤値が罰を眠らせていたECLとは逆に、CDNSでは誤値が罰を誤発火させていた**
+- **判定への影響**: E[r] 9%→**−3%** で門X遮断器(E[r]≥0)に落ち、🔵次点→**🟡押し目待ち**。
+  買付上位10社(ASML/KLAC/MSFT/6857/NVDA/IRMD/RMD/6146/MA/ADBE)は**不変**。全350社の要修正1件・未解決警告0件も不変
+- **【同日・第二段】「E[r]が−3%？」というユーザーの疑問から、自分の是正が一段行き過ぎていたと判明**——
+  単年FY2025の roicg 13.7% は門Xの分岐 `roicg>=15` を**1.3ptだけ**割る。この分岐は
+  「実証CAGRを信じる枝(g=min(cagr,20)=14.6%)」と「再投資式の枝(g=bR×roicg=0.30×13.7=4.1%)」を切り替えるので、
+  **1.3ptの差がE[r]を12pt動かす崖**になっていた（E[r]=shy0.84+g+倍率の重力。fairPERも22.6→16へ落ちて重力が−6.3→−7.9%）。
+  → 規約どおり through-cycle(5年中央値・v9.9.72)へ揃えるため、**5年分の有利子負債を各年度の10-K本文から採取**
+  （2021:347.6 / 2022:648.1 / 2023:299.8 / 2024:2,476.2 / 2025:2,480.2百万$）。
+  結果 **roic 24.2→32.6 / roicg 13.7→21.2 / p1 80→65（同じ系列の変動係数39.8%から機械算出＝根拠なしを解消）**。
+  **単年が低かったのは2024年9月のシニアノート2,480百万$が分母に丸ごと乗った年だから**で、
+  その資金で買った事業の利益はまだ入っていない（実効税率も6.6%→27.1%と上昇＝二重に不利な年）。
+  5年中央値では線の上に戻り **E[r] 9%・Ω 79.9・🔵次点（買付上位10社は不変）**。
+  **教訓: 誤値を直したら、その欄の基準(単年/through-cycle)も規約に合っているか続けて確かめること。**
+  片方だけ直すと「基準の違う二つを割る」型の逆を踏む——正しい数字を、間違った基準で使うことになる
+- **宿題**: 判断項目 f1/f2/f3 の根拠なしは既知の615件の一部として残置（p1は上で解消）
 
 ## 堀の関門は70のまま据え置く（2026-08-04・ユーザー「堀の基準を厳しくしようか」→「あなたの判断に任せる」→判断: 変えない）
 **線も、空欄の扱いも変えない。** 実測4件がいずれも据え置きを支持した。

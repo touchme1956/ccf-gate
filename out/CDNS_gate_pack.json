@@ -1,8 +1,8 @@
 {
  "nm": "CDNS",
- "roic": 39.9,
- "roicg": 19.9,
- "nde": -1.83,
+ "roic": 32.6,
+ "roicg": 21.2,
+ "nde": -0.39,
  "z": null,
  "gpa": null,
  "accr": -6.1,
@@ -43,7 +43,7 @@
  "indG": null,
  "founder": null,
  "fin": null,
- "p1": 80,
+ "p1": 65,
  "p2": 95,
  "p3": null,
  "p4": 90,
@@ -73,7 +73,11 @@
    "2026-07-29 門X未評価を解消: px/per/shy を充填。門Xは `per>0` が唯一の必須条件で、これが無いと E[r] を一切算出しない（xPass=null＝三段関門の第二が未評価）。PERは市場株価 ÷ **原本EPS** で算出し、shy でも独立に検算した。",
    "2026-08-02 市場価格を自動更新: px 332.76 → 340.02（+2.2%）。per 81.56→83.34　shy 0.86→0.84。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
    "acq5 の根拠を機械判定で記録（値はyesのまま据置）: のれんの新しさ +71.6%。この欄は roicGap>15 と組んで**一律−6**が効く最大級の段差なのに、判定圏16社中9社が根拠なしだった（実測でKLAC/VRSK/HWMは誤りだった）ため裏取りした",
-   "2026-08-05 **irr欄の確定（ユーザー明示指示「確定させて」）**。判定圏(Ω72+)の irr=85 は audit_irr85.py で10社中0社しか機構を実証できていなかったため、10社の原本を全文取得して『顧客側の再認定を要するか』で読み直した。CDNS: irr 85→70。根拠は evidence.irr に機構つきで記載"
+   "2026-08-05 irr=85 の全数監査（night/audit_irr85.py）: 10-K(479,204字)走査。ファウンドリPDKへのサインオフ認証は機構たりうるが、旧根拠の文体が『We work closely with…』＝歴史検証で P=0.40 だった願望形。値は据置＝要精読",
+   "2026-08-05 irr=85 を原本全文の網羅走査で確認・据置（判定圏 irr=85 の全数精読）。機構の実文を evidence へ刻んだ",
+   "2026-08-06 irr 85→70 に是正。歴史検証(2013年ビンテージ・追補3.9)で二度立った『願望形は堀と数えない』規則を今日の台帳へ当てた結果、FY2025 10-K全文に顧客側の再認定の記述が無く(switch/installed base/barrier to entry/re-qualif はいずれも0回)、機構を述べる唯一の文が封印済み願望形語彙『We work closely with』であること、さらに代替可能性の自認が複数あることを確認した。実測 Ω76.4→75.5・堀79→75（関門70は通過・四段関門と合成点上位10社の顔ぶれは不変）",
+   "2026-08-06 roic 39.9→24.2 / roicg 19.9→13.7 / nde −1.83→−0.39 に是正。**絶対のルール7の9例目**——CDNSのXBRLに LongTermDebt 系タグが一つも無く、BS本文の Long-term debt 2,480,150千$ を採取器が拾えず負債0と読んでいた。旧値3件はいずれも『負債0』を仮定すると実額で完全に再現できる（roicgは自己資本のみ・roicはさらに取得無形も未控除）。irr の精査(同日)で validate FAIL を潰しに行って発見した。実測 Ω75.5→77.1（roicGapが15ptを割り買収規律の罰−6が外れる分がroic低下を上回る）だが E[r] 9%→−3% で門X遮断器に落ち 🔵次点→🟡押し目待ち。買付上位10社の顔ぶれは不変",
+   "2026-08-06(2) roic 24.2→32.6 / roicg 13.7→21.2 / p1 80→65。同日の単年是正のあと規約どおり through-cycle(5年中央値・v9.9.72)へ揃えた。5年分の有利子負債を各年度の10-K本文から採取（347.6/648.1/299.8/2,476.2/2,480.2百万$）。**単年FY2025が低かったのは2024年9月のシニアノート2,480百万$が分母に丸ごと乗った年だから**で、門Xの分岐(roicg>=15)を1.3ptだけ割って E[r] を9%→−3%へ落としていた＝是正が一段行き過ぎていた。5年中央値ではroicg 21.2%で線の上に戻り E[r] 9%・🟢投下可（合成点は枠内）。p1は同じ系列の変動係数39.8%から機械算出＝旧80の根拠なしを解消。実測 Ω 77.0→79.9"
   ],
   "evidence": {
    "expiry": "限セクション・ヒットなし。EDA(設計ツール)はコンセッション/特許束期限型の独占ではないため expiry=no",
@@ -88,9 +92,9 @@
    "f5": "disrupt=settled連動→f5=85",
    "moatW": "製品カテゴリ別の売上構成(FY2025 10-K Note3 Revenue。Cadenceは構成比のみ開示): Core EDA 70% / Semiconductor IP 14% / System Design and Analysis 16%。FY2025総売上5,296.8百万$を按分すると Core EDA 約3,708 / IP 約742 / SD&A 約848百万$。SD&AはAllegro X・OrCAD X(PCB/パッケージ設計。OrCADは『primarily marketed worldwide through a network of resellers』と別チャネル)、Fidelity CFD(『aerodynamics, hydrodynamics, propulsion, turbomachinery, heat transfer, and combustion』=機械系解析)、Clarity/Celsius/Sigrity/AWR等の多物理解析で構成され、チップ設計EDAとは顧客・チャネル・競合(Ansys/Siemens/Altium/Zuken系)が異なる独立した堀。IPは14%で15%閾値未満。顧客は『No single customer accounted for 10% or more of total revenue during fiscal 2025』。→ ≥15%の独立した堀はCore EDAとSD&Aの2本 → moatW=85",
    "dom": "【2026-07-28 dom刻み改定(市場構造織込み)による再判定】自社シェア: Cadence 約30%(TrendForce 2024年: Synopsys 31% / Cadence 30% / Siemens EDA 13%)。売上ベースでも FY2025 Cadence $5.30B ÷ EDA+IP市場 $18B = 29.4%。上位3社合計: SemiAnalysis『EDA Market Primer』(2025年)が『The Big-3 hold over 85% combined market share (Ansys now part of Synopsys)』と明記 = 85%超 ≥80% → 『3社寡占』。TrendForceの2024年『3社計74%』との差は Ansys(2024年売上$2.55B)が当時Big-3の外に数えられていたためで、2025年7月のSynopsysによるAnsys買収完了により Big-3 内へ取り込まれた。実額でも Synopsys $8B + Cadence $5.30B + Siemens EDA $2.2-2.5B ≒ $15.5-15.8B ÷ 市場$18B = 86-88% で85%超と整合する。首位はSynopsysで自社は第2位のため『複占の首位』(85)ではなく『3社寡占の一角』= 刻み70。工程別でも論理シミュレーションが Synopsys VCS 45-50% 対 Cadence Xcelium 40-45%、ハードウェアエミュレーションが Cadence Palladium 55-60% 対 Synopsys ZeBu 35-40% と実質複占で、独立系ベンダーはどのコア工程でも5%を超えない。旧判定は自社約30%<40%という数字だけの文字適用で50としMOAT柱を陥落させていたが、これが本改定の是正対象。出典: https://newsletter.semianalysis.com/p/eda-market-primer / TrendForce 2024年EDAシェア / 10-K Item1 Competition → 自社29.4-30% / 上位3社85%超(実額86-88%、自社は第2位) → 刻み70",
-   "irr": "**irr=85→70(高摩擦移行困難)へ是正**。旧根拠『We **work closely with** leading semiconductor ecosystem partners to develop foundry PDKs to ensure our core EDA products and solutions meet manufacturing sign-off requirements』は**願望形・協業形**で、ファウンドリが当社ツールを認定するとも、顧客が替える際に再認定を要するとも書いていない。歴史検証ではこの型(AEIS/COHR/OLED/ROG/IPGPと同じ願望形)のP(継続)=0.40だった。『signoff ... necessary to ensure correct circuit functionality』は製品の必要性であって認証ロックではない。テープアウト流の固着は実在するので70｜出典 https://www.sec.gov/Archives/edgar/data/813672/000081367226000016/cdns-20251231.htm",
+   "irr": "70=スイッチングコスト・深い統合（顧客側の再認定は要さない）。**2026-08-06に irr=85 を撤回**——歴史検証で二度（2018年ビンテージ P=0.79 vs 0.40／2013年ビンテージ P=0.42 vs 0.25）立った唯一の規則『会社がこれから認定してもらうと書いているうちは堀ではない』を当てて FY2025 10-K(filed 2026-02-19・482,068字)を機械で網羅走査した結果: (1)機構語＋顧客語が同居する文は**全文で8本しかなく**、そのうち機構を述べるのは『**We work closely with** leading semiconductor ecosystem partners to develop foundry process design kits to **ensure our core EDA products and solutions meet manufacturing sign-off requirements**』の1本だけ。これは**当社が要件に適合しに行く**構文であって、顧客または第三者が当社製品を認定するとは述べていない。しかも『We work closely with』は2018年にホールドアウト前へ封印した**願望形語彙リストそのもの**（out/retro_irr85_language_hypothesis.json）。 (2)語の実測: **switch 0回 / installed base 0回 / barrier to entry 0回 / re-qualif 0回**。sign-off は1回・signoff 5回だがいずれも製品機能の説明（DRC/LVSが manufacturing compliance を確保する）で移行障壁の記述ではない。 (3)逆に**代替可能性の自認が複数ある**——『many customers use design tools that are provided by other companies, as well as **design IP available from alternative suppliers**』／『our customers **may choose to purchase a competitor's** hardware or IP product based on cost, performance or other factors』／『as the EDA industry has matured, **stronger competition has emerged from companies better able to compete as sole source vendors**』（この最後の構文は2013年ビンテージで CSCO/ALLT/NTAP/SNPS を50と判定した文型と同一）／競合に『electronics device manufacturers with **in-house EDA capabilities**』を列挙。→ 85の三条件(a)顧客側認定の明記 (b)完了・既成事実 (c)代替可能の自認が無いこと の**すべてを満たさない**。ただし摩擦は実在する: 設計フローへの組込・継続ライセンス(dur=75の根拠)・Virtuosoの『**considered the industry standard** for custom and analog IC design』・『Cadence's updates provide continued access to evolving technology as customers' designs migrate to more advanced nodes』＝**移行摩擦はあるが顧客側の再認定は要さない**＝規約の刻み70（MA/V/6857/ADBE と同じ位置づけ・v9.9.49）。出典 https://www.sec.gov/Archives/edgar/data/813672/000081367226000016/cdns-20251231.htm",
    "rep": "80=極困難。10-K損益計算書の Research and development は FY2025 1,768.8/FY2024 1,549.1/FY2023 1,441.8百万=直近3年だけでR&D累計$4.76十億(売上比33%)。これを1988年創業以来数十年積み上げた技術資産とファウンドリ認証済フローが複製対象。10-K『Our success depends, in part, upon our proprietary technology. We generally rely on patents, copyrights, trademarks and trade secret laws, licenses and restrictive agreements to establish and protect our proprietary rights in technology and products』。一方で同10-Kが『emerging players in China such as Huada Empyrean, Xpeedic Technology, X-EPIC, Primarius Technologies, Univista, and Giga Design Automation』と新規参入者を現に列挙しており『複製不能(100)』とは言えない→80。出典 https://www.sec.gov/Archives/edgar/data/813672/000081367226000016/cdns-20251231.htm",
-   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 5,474,181,000 + 有利子負債 0)＝のれん込み。roic(除外)との差が買収規律の指標。**有利子負債タグ不在＝0扱いのため過大の可能性あり（要原本確認）**",
+   "roicg": "**through-cycle（5年中央値）= 21.2%**。原本5年系列（各年 NOPAT=営業利益×(1−実効税率)、IC=自己資本+有利子負債−のれん−取得無形、ICg=自己資本+有利子負債。有利子負債は各年度の10-K貸借対照表『Long-term debt』行の実額＝2021:347.6 / 2022:648.1 / 2023:299.8 / 2024:2,476.2 / 2025:2,480.2百万$）: roic 2021 32.6 / 2022 52.2 / 2023 55.3 / 2024 24.5 / 2025 24.2 ／ roicg 21.2 / 25.7 / 27.4 / 14.3 / 13.7。【2026-08-06是正・旧19.9】旧値は NOPAT÷自己資本のみ＝負債0の読みで実額再現。単年FY2025は13.7%で門Xの分岐線15%を割るが、これは新規調達年の一過性——**5年中央値では21.2%で線の上**。roicGap = 32.6−21.2 = 11.4pt で罰の線15ptを下回る（acq5='yes' のれん込みROIC乖離−6は不発火）。出典 cdns-20251231.htm(FY2025 10-K)",
    "roict": "機械算出: のれん除外ROIC 5年系列 36.6% / 49.4% / 55.5% / 24.5% / 24.2%（最古→直近の差で判定）",
    "gm": "機械算出 2025年: 営業利益 1,492,042,000 ÷ 売上 5,296,759,000（粗利ではない）",
    "gmt": "機械算出: 営業利益率 2023年 30.6% → 2025年 28.2%（±1ptでup/down）",
@@ -104,7 +108,10 @@
    "per": "【2026-07-29 機械算出】PER = 株価 $332.76 ÷ **原本EPS 4.08** = **81.56**。EPSは通期実績（純利益÷期末株数・SEC XBRL）で、TTMコンセンサスではない。株価の出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯8-200を通過（market_merge.BANDS）。**shyとの二重検算も通っている**（shy=0.86%・帯−5〜12内）。",
    "shy": "【2026-07-29 機械算出】純還元利回り shy = (配当 + 自社株買い − 株式発行) ÷ 時価総額。2025年: 配当 0.00 + 自社株買い 0.93 − 株式発行 0.15 = 純還元 0.78十億$ ÷ 時価総額 90.44十億$（272百万株×$332.76） = **0.86%**。還元額は SEC XBRL のキャッシュフロー計算書（PaymentsOfDividendsCommonStock / PaymentsForRepurchaseOfCommonStock / ProceedsFromIssuanceOfCommonStock）、株数は dei/us-gaap の期末株数、株価は Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯−5〜12%を通過。",
    "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 340.02 USD（前回 332.76・+2.2%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
-   "acq5": "【2026-08-03 機械判定】のれん残高 2020年 782,087,000 → 2025年 2,749,143,000。**新しさ =(直近−5年前)÷直近= +71.6%**（今あるのれんのうち直近5年に増えた割合）→ **大型買収あり=yes**（判定線30%）"
+   "acq5": "【2026-08-03 機械判定】のれん残高 2020年 782,087,000 → 2025年 2,749,143,000。**新しさ =(直近−5年前)÷直近= +71.6%**（今あるのれんのうち直近5年に増えた割合）→ **大型買収あり=yes**（判定線30%）",
+   "roic": "**through-cycle（5年中央値・v9.9.72）= 32.6%**。原本5年系列（各年 NOPAT=営業利益×(1−実効税率)、IC=自己資本+有利子負債−のれん−取得無形、ICg=自己資本+有利子負債。有利子負債は各年度の10-K貸借対照表『Long-term debt』行の実額＝2021:347.6 / 2022:648.1 / 2023:299.8 / 2024:2,476.2 / 2025:2,480.2百万$）: roic 2021 32.6 / 2022 52.2 / 2023 55.3 / 2024 24.5 / 2025 24.2 ／ roicg 21.2 / 25.7 / 27.4 / 14.3 / 13.7。【2026-08-06・二段階の是正】(1)まず単年の誤りを直した（旧39.9はNOPAT÷(自己資本−のれん)と実額で完全に再現＝**有利子負債を足さず取得無形も控除しない二重の誤り**。根因はCDNSのXBRLに `LongTermDebt` 系タグが一つも無くBS本文の『Long-term debt 2,480,150千$』を採取器が拾えず負債0と読んだこと＝**絶対のルール7の9例目**）→ 単年24.2%。(2)次に規約どおり through-cycle へ揃えた。**単年FY2025が低いのは2024年9月発行のシニアノート2,480百万$が分母に丸ごと乗った年だから**——その資金で買った事業(BETA CAE等)の利益はまだ入っていない。実効税率も6.6%(2021)→27.1%(2025)と上昇しており、単年は二重に不利な年。roic/roicg/p1 を**同時に**5年基準へ替えた（片方だけ替えると数学的に不可能な組合せを作る・v9.9.72）。出典 cdns-20251231.htm(FY2025 10-K)",
+   "nde": "(有利子負債2,480,150 − 現金3,001,300 − 短期投資154,213) ÷ EBITDA(営業利益1,492,042 + 減価償却227,828 = 1,719,870) = **−0.39**（正味現金）。【2026-08-06是正・旧−1.83】旧値は −(現金+短期投資)÷EBITDA = −1.83 と**小数第2位まで完全に再現**＝負債0の読み。符号は変わらない（Cadenceは実際に正味現金）が倍率が4.7倍ずれていた。出典 https://www.sec.gov/Archives/edgar/data/813672/000081367226000016/cdns-20251231.htm",
+   "p1": "ROIC5年系列の**変動係数** σ15.02 ÷ 平均37.76 = **39.8%** → 規約の刻み（<15%→90 / <30%→80 / <50%→65 / 以上→50・v9.9.50）で **65**。原本5年系列（各年 NOPAT=営業利益×(1−実効税率)、IC=自己資本+有利子負債−のれん−取得無形、ICg=自己資本+有利子負債。有利子負債は各年度の10-K貸借対照表『Long-term debt』行の実額＝2021:347.6 / 2022:648.1 / 2023:299.8 / 2024:2,476.2 / 2025:2,480.2百万$）: roic 2021 32.6 / 2022 52.2 / 2023 55.3 / 2024 24.5 / 2025 24.2 ／ roicg 21.2 / 25.7 / 27.4 / 14.3 / 13.7。【2026-08-06是正・旧80は根拠なし(validate FAIL)】買収で投下資本が2021→2025に2.4倍へ膨らむ過程でroicが55.3%→24.2%と半減しており、変動は実在する。出典 cdns-20251231.htm(FY2025 10-K)"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -133,7 +140,7 @@
    "shy": "machine"
   },
   "basis": {
-   "roic": "single-year",
+   "roic": "through-cycle-med5(5年)",
    "_note": "roic/roicg がどの基準で作られているか。v9.9.72 で through-cycle(5年中央値)へ移行したが、採取器とパックが食い違う社・系列が3年未満の社には当てていないため**台帳に二つの基準が混在する**。文字列一致で見分けるのは脆いので機械可読にした"
   },
   "px": {
