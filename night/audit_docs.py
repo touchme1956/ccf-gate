@@ -80,6 +80,14 @@ def read_code_facts(h):
     m = re.search(r'function ccfAllocScore\(c\)\{(.*?)\n\}', h, re.S)
     f['alloc_src'] = m.group(1) if m else ''
     f['alloc_uses_er'] = bool(m and 'erP' in m.group(1))
+    # 配分の錨（合成点が Ω から何を引くか）。v9.9.93 で 70 → 0（＝引かない）。
+    #   ここを実際のコードから読むのが肝——「式の形」は grep で追えないので、
+    #   本文が古い錨を語っていても値の grep では捕まらない（2026-08-06に実際に踏んだ）。
+    if m:
+        mm = re.search(r'\(\(c&&c\.s\)\|\|0\)\s*-\s*(\d+)', m.group(1))
+        f['alloc_anchor'] = int(mm.group(1)) if mm else 0
+    else:
+        f['alloc_anchor'] = None
 
     m = re.search(r'const CCF_MOAT_GATE\s*=\s*(\d+)', h)
     f['moat_gate'] = int(m.group(1)) if m else None
@@ -152,6 +160,23 @@ def check(h, f):
                         '配分式の説明に**E[r]の項が無い**。コードは 合成点=(Ω−70)×E[r]点÷50 で、'
                         'E[r]≤2%は自動でウェイト0になる。"(Ω−70)÷Σ(Ω−70)" は v9.9.70 時点の旧式',
                         hits))
+
+    # ③-b 配分の錨が本文とコードで食い違う（v9.9.93で 70→0）
+    if f.get('alloc_anchor') is not None:
+        hist = re.compile(r'当時|旧|v9\.9\.(70|87)|——|従来')
+        hits = [x for x in prose_hits(r'合成点\s*[=＝]\s*\(Ω−(\d+)\)')
+                if not hist.search(x[1])]
+        if f['alloc_anchor'] == 0 and hits:
+            out.append(('FAIL', 'alloc_anchor',
+                        '配分の合成点を「(Ω−70)×E[r]点」と説明しているが、コードは錨を外して '
+                        'Ω×E[r]点÷50（v9.9.93）。錨は相対差を12.5倍に増幅していたので、'
+                        'どちらで読むかで配分の理解が変わる', hits))
+        elif f['alloc_anchor'] != 0:
+            bad = [x for x in prose_hits(r'合成点\s*[=＝]\s*Ω\s*×\s*E\[r\]点') if not hist.search(x[1])]
+            if bad:
+                out.append(('FAIL', 'alloc_anchor',
+                            'コードは錨 %d を引いているのに、本文は錨なし(Ω×E[r]点)と説明している'
+                            % f['alloc_anchor'], bad))
 
     # ④ 「門X4条件」が**操作指示として**残っている（v9.9.84で遮断器E[r]≥0の1条件へ）
     #    歴史記述（「vX.Y.Zで…した」の形で経緯を語る文）は残すのが正しい——CLAUDE.md が明示。
