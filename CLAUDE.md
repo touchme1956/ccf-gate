@@ -1481,6 +1481,66 @@ audit_moat_gapが名指しした「単独昇格1本で通る未読3社」（CTAS
   **堀経路での投下可追加は当面尽きた**。次に動くのは①群（Ω僅差: HUBB0.3pt/VEEV0.8pt…）の決算実測と
   ③群（E[r]遮断器前: HWM−0.4%等）の価格
 
+## 台帳の irr=85 を全数検算した（2026-08-06・ユーザー明示指示「1やって」）——**53社→11社。42社は機構を持っていなかった**
+2026-08-05に判定圏(Ω72+)の10社へ当てた試験（**顧客の側が再認定・再試験をやり直すか**）を、
+**残る46社（判定圏外）に一社も残さず当てた**。46社とも原本を全文取得（`_meta.source` のURL）し、
+'qualif/certif/design-in/sole source' を含む文だけを機械で抜いてから精読する二段構え。
+道具は使い捨てではなく `night/audit_irr85.py`（既存）の作業リストをそのまま消化した形。
+**結果: 85維持 4社 ／ 100へ引き上げ 5社 ／ 70へ引き下げ 37社。** 台帳全体の irr=85 は **53社 → 11社**
+（今日の4社＋2026-08-05に確定済のCW/VRSK/ENTG/MKSI/NOVT/RBC/WST）で、**全11社が機構の引用つき**になった。
+- **85を維持した4社（引用が顧客側の費用を名指しする）**:
+  **LRCX**(機構A工程認定)『Semiconductor manufacturers **must make a substantial investment to qualify and
+  integrate** wafer processing equipment into a semiconductor production line』『once a semiconductor
+  manufacturer has selected a particular supplier's equipment and **qualified it for production, the
+  manufacturer generally maintains that selection**』＝2018年ビンテージの引用が一字同文で現存 ／
+  **TDG**(C)『**reduced incentive to certify another supplier because of the cost and time** of the technical
+  design and testing certification process』＋『must be certified by the FAA, the DOD ... **and by individual
+  manufacturers**』 ／ **LOAR**(C+E)『it is **not typically economical for OEMs to repeat the process of
+  qualification** after an existing supplier has been qualified already onto a given aircraft platform』
+  『Certification processes **necessitate significant time and monetary investments from both suppliers and
+  customers**』 ／ **BWXT**(D/E)『**NFS is the sole provider of nuclear fuel for the U.S. Navy**』＋
+  『Because of the technical and regulatory standards required to meet U.S. Government contracting
+  requirements ... competition is limited』（dep=68のベトは既に立っている）
+- **100へ上げた5社は「認証ロック」ではなく「排他的フランチャイズ」だった**（YORW/MSEX/WTRG/NEE/D）。
+  規制公益の堀は顧客側の再認定ではなく**顧客に代替供給者が存在しないこと**——
+  YORW『operates within an **exclusive franchised territory that is substantially free from direct
+  competition**』／NEE『the municipality or county **agrees not to form its own utility**』＋競争帯は売上の
+  約5%のみ／D『**Virginia Power has an exclusive franchise**』（ただし同じ10-Kが『**may erode**』と明記）。
+  **この判断は台帳の中に先例があった**——**NJR が既に irr=100 をまったく同じ論拠で持っていた**
+  （『NJNG is not currently subject to competition from other natural gas distribution utilities』）。
+  独立に同じ結論へ来たので、規約の刻みの当て方として整合している
+- **37社の引き下げ。誤りの型は3つで、いずれも2026-08-05に見つけたものの再来**:
+  (1)**向きが逆**（製薬11社: AMGN/LLY/MRK/GILD/GSK/INCY/GMAB/HALO/NBIX/CPRX/AZN）——
+  原本の 'qualif' は**すべて当社が受けるFDA承認**か**当社が自社サプライヤを認定する話**
+  （GILD『delays can occur if the **qualification of a new supplier** is required』／INCY『we have three
+  **qualified third-party contract manufacturers**』）。**この事業の代替不能性は特許の独占期間に由来し、
+  門はそれを `expiry` 欄で別に測っている**＝irr でもう一度数えると二重計上になる。
+  (2)**自社が取得する側の認証**（HEI/MSA/SSD/3692）——HEIのFAA PMAとDER承認は v9.9.49 が明示除外する型で
+  **RMD(自社特許)・IRMD(自社510(k))とまったく同じ誤り**。しかもHEIの事業モデルは**OEM純正品からの
+  乗り換えを起こさせる側**で、堀の向きが逆。3692も政府調達の選好＋自社が採択される側。
+  (3)**認定の記述が一つも無い**（LMT/WHD/CHDN/TKO/RSVR/MTN/TYL/FICO/IRDM＋中流5社＋空港4社＋廃棄物2社）。
+  同業は同じ論拠で刻みを揃えた——**SPGIは2026-08-05のMCOと一字一句同じ理由で70**（NRSRO登録は自社取得側・
+  発行体が乗り換えても顧客に再認定費用は出ない）＝**同じ機構の双子が違う刻みだった不整合を解消**。
+  RSG/WCNの排他契約は**競争入札で定期的に取り直す**もの。空港のコンセッションは運営権であって認証ではない
+- **NXPI は今日いちばん微妙で、それでも下げた**（Ω68.6・台帳で最高の堀87.8→82.3）。原本は
+  『the automotive semiconductor market is characterized by **stringent qualification processes** ...
+  extensive **design-in** timeframes』と書くが**誰が認定するのかを書いていない**（市場の性質＝新規参入障壁の記述）。
+  TSMを顧客集中で85としていたのを是正したのと同型。機構分類はB(設計組込)で、
+  **追試の実測ではB型は 0/2・恒久毀損100%（CMTL）＝最も弱い機構**だったことも整合する。
+  2026-08-05のパック化はこの厳格な試験の**前**に置いた値なので、同じ試験を当て直した
+- **実測（値を動かした結果）**: Ωが動いたのは42社・**最大 −3.6pt（MSA）**、堀は最大 −5.5pt（NXPI/SPGI）。
+  **Ω72/75 を跨いだ社はゼロ・投下可10社は顔ぶれも不変**（ASML IDXX KLAC MSFT 6857 IRMD RMD 6146 MA ADBE）。
+  全362社で要修正1件（既知のAMBIQ）・**未解決警告0件**を維持。上げ側も小さい（YORW/WTRG/MSEX +0.2〜0.3pt）
+- **なぜ判定に効かないのに全数やるのか**: 歴史検証（2026-08-05）は「リターンと生死を分けた唯一の変数は
+  irr の測定精度」と出した。**今日は買付が動かなくても、社がΩ72を越えた瞬間にこの欄が効く**——
+  AFYA・ECL・ISRG・IDXXで繰り返し起きた「線が動くと既存の穴が見える」を、先回りして塞いだ形。
+  逆に言えば**42社は「堀が強い」と台帳に書かれたまま8ヶ月そこに居た**（うち11社は堀80超）
+- **残った宿題**: (a)**6920レーザーテックの irr=100 は原本引用が無い**（『EUVマスクブランクスの位相欠陥は
+  アクティニックでしか検出できず代替供給者が存在しない』＝主張であって有報の引用ではない）——
+  今日の46社は irr==85 だけを対象にしたので範囲外。(b)FICOの信用スコア要件（FHFA・GSE）は10-K外の
+  一次資料に当たれば C型の証拠になりうる。(c)MTNは**50(代替容易)のほうが正確かもしれない**が、
+  『代替が容易』を積極的に示す記述も無いので憶測で下げず70に置いた
+
 ## 堀の関門は70のまま据え置く（2026-08-04・ユーザー「堀の基準を厳しくしようか」→「あなたの判断に任せる」→判断: 変えない）
 **線も、空欄の扱いも変えない。** 実測4件がいずれも据え置きを支持した。
 - **① 線の位置に問題がない**: 5本そろいの堀の理論値は 96.0/84.0/**68.4**/47.1 で、**68.4と84.0の間に刻みが無い**。
