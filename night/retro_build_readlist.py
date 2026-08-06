@@ -99,8 +99,12 @@ def main():
     quality = "--quality" in sys.argv
     tag = f"{asof}q" if quality else str(asof)
 
-    rf = "retro_returns_2013_all.json" if asof == 2013 else f"retro_returns_{asof}.json"
+    # 全社版があればそれを使う（2013は最初から _all、2015は2026-08-05に新規採取）
+    rf = f"retro_returns_{asof}_all.json"
+    if not os.path.exists(os.path.join(OUT, rf)):
+        rf = f"retro_returns_{asof}.json"
     rows = json.load(open(os.path.join(OUT, rf), encoding="utf-8"))["rows"]
+    print(f"（リターンの出所: {rf}）")
     have = {r["ticker"] for r in rows if r.get("tr_cagr") is not None}
     coh = json.load(open(os.path.join(OUT, f"retro_cohort_{asof}.json"), encoding="utf-8"))["rows"]
     cik = {}
