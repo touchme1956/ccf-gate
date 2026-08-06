@@ -76,7 +76,8 @@
    "2026-08-03 acq5 None → 'no'。空欄は門が SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**＝のれん込みROIC乖離 −6 が黙って効いていた。fix_acq5.py の残高『新しさ』では中間帯／タグ不在で判定不能だったため、買収で増えたのれん・取得対価・無形の絶対水準という**別の系列**で確定した。SEC XBRL companyfacts に **Goodwill タグが存在せず**、かつ AcquireBusiness／BusinessCombination 系のタグも**一つも無い**＝設立以来の企業結合ゼロ（無形は FiniteLivedIntangibleAssets のみ＝自社開発・特許）。のれんが無いので roic と roicg の乖離を作る対象がそもそも無い（実測 roic 22.7 / roicg 21.9 の差は無形分）→ no。※タグ不在を0と読むのは絶対のルール7に触れるため、買収系タグの全面不在という**独立の第二証拠**で裏を取った",
    "**v9.9.72 roic を through-cycle 化**: roic 22.7→20.8 / roicg 21.9→20.1。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央20.8% / 最悪13.1%）。比は**パックが審査した年(2025)**の採取器値 roic22.72 / roicg21.9 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
    "2026-08-05 irr 85→70 是正。根拠が自社の510(k)クリアランス・自社ISO13485＝規約が明示除外する型。原本走査で顧客側再認定の記述なし。'qualified suppliers'は方向が逆(自社→仕入先)。Ω 78.8→77.7 の見込み・投下可は不変(影の計測で確認済み)",
-   "2026-08-05 dilNet の根拠を刻んだ（validate_packs の FAIL 解消・値は 0.63 のまま据置）。希薄化後株数系列を13年分検算し分割の不連続が無いことを確認"
+   "2026-08-05 dilNet の根拠を刻んだ（validate_packs の FAIL 解消・値は 0.63 のまま据置）。希薄化後株数系列を13年分検算し分割の不連続が無いことを確認",
+   "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）"
   ],
   "evidence": {
    "dom": "【2026-07-29 堀再監査・dom=100(実質唯一供給)の当否を原本で厳密確認→全社では刻みが立たず空欄】SEC 10-K FY2025(irmd-20251231x10k.htm, 2026-03-06提出)の Competition 節を製品ライン別に読むと構造が正反対に割れる。(1)MRI対応IV輸液ポンプ＝実質唯一供給: 『We do not believe there is currently any direct competition for our MRI compatible IV infusion pump systems. As a result, we believe that our MRidium 3870 and 3860+ MRI compatible IV infusion pumps are the only true MRI compatible IV infusion pumps available today』(Item 1 冒頭も『We are the only known provider of a non-magnetic intravenous (IV) infusion pump system that is specifically designed to be safe for use during MRI procedures』)。ただしこれが当たるのは Revenue by Type の『MRI Compatible IV Infusion Pump Systems $31,636千』=総売上$83,814千の37.7%に限られる。しかも同節は『We also compete with manufacturers of \"shielded box\" solutions that are intended as \"workarounds\"... The providers of shielded boxes include B. Braun, Fresenius Kabi and MIPM Mammendorfer Institut für Physik und Medizin』『Many of our potential customers opt not to purchase our MRI compatible IV infusion pump systems and instead use makeshift workarounds... To this extent, we are in competition with conventional IV infusion pump manufacturers and distributors』『We believe that the market for MRI compatible IV infusion pump products is underpenetrated』と述べており、『MRI検査中の輸液』という用途市場で見れば代替手段が併存し、その中での自社シェア%は原本に無い。(2)MRI対応患者バイタルモニタ＝自社は首位ですらない: 『We believe the dominant competitor with a market-leading position in MRI compatible vital signs monitoring is Invivo Research, which was founded by Roger Susi, our founder, President, and Chief Executive Officer, and Chairman of the Board. Invivo Research is now owned by Koninklijke Philips NV』『Other large and well-known companies such as GE Healthcare Technologies and Schiller AG, also have competing products as do other smaller privately held companies』。これは $26,427千=31.5% を占める。→ 売上の37.7%は唯一供給(刻み100)、31.5%は自社が首位でない競争市場(刻み50側)で、単一の刻みに帰着しない。しかも原本にはどちらの市場についてもシェア%も上位N社合計%も一切無い(あるのは設置基盤の実数=13,098ポンプチャネル/3,397モニタのみ)。v9.9.38の但し書き『複数事業で構造が違い単一の刻みに帰着しない会社は空欄が正解』(実例MSFT)と同型 ⇒ dom=null(事業別内訳は _meta.nulls.dom)。出典: https://www.sec.gov/Archives/edgar/data/1325618/000110465926024691/irmd-20251231x10k.htm",
@@ -113,7 +114,8 @@
    "roic": "｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央20.8% / 最悪13.1%・比は審査年2025）",
    "roict": "機械算出: のれん除外ROIC 5年系列 13.1% / 17.3% / 23.0% / 20.8% / 22.7%（最古→直近の差で判定）",
    "nde": "機械算出 2025年: (有利子負債 0 − 現金同等物 51,159,000) ÷ (営業利益 26,147,000 + 減価償却 1,166,000)。**有利子負債は候補タグ・独立走査とも痕跡ゼロ＝実質無借金**（欠測を0と読んだのではない）",
-   "dilNet": "純希薄化 = 希薄化後加重平均株数の年率変化（5年窓）。XBRL WeightedAverageNumberOfDilutedSharesOutstanding: 2020年 12,440,086株 → 2025年 12,854,000株 ＝ (12,854,000/12,440,086)^(1/5)−1 = **+0.66%/年**（4年窓 2021→2025 なら +0.52%/年）でパック値 0.63 と整合。**株式分割の不連続は無い**——2013年 8,624,314株から2025年まで13年間、年次の変化率が最大でも +23%（2014-2015年の公募増資期）で、NVDA型の桁跳び（2,466→24,304百万株）は存在しない。したがって分割またぎの誤計上（CLAUDE.md ルール7の同族事故）には該当しない。自社株買いは無く、純希薄化はストックオプション等の通常発行のみ。出典: SEC companyfacts CIK0001325618"
+   "dilNet": "純希薄化 = 希薄化後加重平均株数の年率変化（5年窓）。XBRL WeightedAverageNumberOfDilutedSharesOutstanding: 2020年 12,440,086株 → 2025年 12,854,000株 ＝ (12,854,000/12,440,086)^(1/5)−1 = **+0.66%/年**（4年窓 2021→2025 なら +0.52%/年）でパック値 0.63 と整合。**株式分割の不連続は無い**——2013年 8,624,314株から2025年まで13年間、年次の変化率が最大でも +23%（2014-2015年の公募増資期）で、NVDA型の桁跳び（2,466→24,304百万株）は存在しない。したがって分割またぎの誤計上（CLAUDE.md ルール7の同族事故）には該当しない。自社株買いは無く、純希薄化はストックオプション等の通常発行のみ。出典: SEC companyfacts CIK0001325618",
+   "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2025 に10%超の顧客開示なし（米国は直販＋約80カ国は独立ディストリビュータ）。(c)『several of which are **single-source suppliers**』は部品の供給リスクで売上依存ではない → **上限10**（10%開示閾値が上限を証明する『上限の不等式』。ベトは dep≥40 の一方向なので上限で裁ける）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -170,5 +172,6 @@
   }
  },
  "mcap": 1.2341,
- "ddate": "2026-08-05"
+ "ddate": "2026-08-05",
+ "dep": 10
 }

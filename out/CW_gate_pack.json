@@ -80,7 +80,8 @@
    "2026-08-02 市場価格を自動更新: px 728.80 → 724.00（-0.7%）。per 57.66→57.28　evebit 44.3→44.0　shy 1.82→1.83。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
    "acq5 の根拠を機械判定で記録（値はyesのまま据置）: のれんの新しさ +14.0%。この欄は roicGap>15 と組んで**一律−6**が効く最大級の段差なのに、判定圏16社中9社が根拠なしだった（実測でKLAC/VRSK/HWMは誤りだった）ため裏取りした",
    "2026-08-05 irr=85 を原本で再確認・据置（全数監査 night/audit_irr85.py）。機構の引用を evidence へ刻んだ",
-   "2026-08-05 cagr の根拠を刻んだ（validate_packs の FAIL 解消・値は 7.9 のまま据置）。ASC606のタグ改称をまたぐ合成で5年CAGR +7.91% を再現し一致を確認"
+   "2026-08-05 cagr の根拠を刻んだ（validate_packs の FAIL 解消・値は 7.9 のまま据置）。ASC606のタグ改称をまたぐ合成で5年CAGR +7.91% を再現し一致を確認",
+   "2026-08-06 dep=47 を充填＝ベト該当。ただし門X遮断器(E[r]−4.6%)で既に落ちているので今日の判定は不変"
   ],
   "evidence": {
    "dom": "【2026-07-29 再監査・v9.9.38/v9.9.41で測り直し → 空欄(事業で刻みが散る)】FY2025 10-K 全文にシェア%(自社・上位N社とも)の開示は皆無。Item1にCompetition節そのものが無く、競争の記述はItem1Aのリスク要因のみ。(a) 50側の構造記述 Item1A『We operate in highly competitive markets.』: 『Many of our products and services are sold in highly competitive markets, and are affected by varying degrees of competition』『We compete against companies that often have higher sales volumes and greater financial, technological, research and development, human, and marketing resources, and larger customer bases than we have. These companies may also price their products and services below our selling prices, which could exert downward pressure on our product pricing and margins』『some of our largest customers could develop the capability to manufacture products or provide services similar to products that we manufacture』『we are facing increased international competition and cross-border consolidation of competition』。Item1『We compete globally, primarily based on technology and pricing』。→ この構造記述が覆う範囲では自社が40%以上いることはありえず刻み50。(b) ところがItem7は『the Company is well-insulated from specific program funding decisions due to the breadth of our portfolio, which consists of unique, sole-source positions and larger, multi-year opportunities that provide continued stability』と述べ、Naval & Power(主冷却材ポンプ・制御棒駆動機構をVirginia級/Columbia級潜水艦・Ford級空母へ供給。Item1『presence on the first nuclear naval vessel』)は単独供給に近い構造で、50とは正反対を指す。その規模の実数(総売上$3,498,372千・Note17/Note2): Naval & Power セグメント$1,503,494千=43.0% / エンドマーケット Naval Defense $941,654千=26.9%。(c) 原本はsole-sourceの対象範囲も%も一切定量化していないため、v9.9.41②(100/85/70は集中の主張ゆえ数値必須)により43.0%側に100/85/70は置けない。他方v9.9.41③(50は構造記述で数値なしでも確定)を全社に適用すると「CWは全市場で<40%」と断じることになり、原本のsole-source記述と正面から矛盾する。→ 妥当な取り方が Aerospace & Industrial $977,188千=27.9% ＋ Defense Electronics $1,021,820千=29.2%(計57.1%)の50側と、Naval & Power 43.0%の非50側に割れる＝v9.9.41①「違う刻みに散るときだけ空欄」に該当し空欄が正解。原本自身が『varying degrees of competition』と、一点では答えられないことを述べている。旧dom=70(据付ニッチ寡占)は旧evidenceが『≥70%シェアの原本根拠なし』と自認しており無根拠だった。出典: SEC 10-K CIK0000026324 acc 0001628280-26-007587 (FY2025-12-31) Item1 / Item1A / Item7 / Note2 REVENUE / Note17 SEGMENT INFORMATION https://www.sec.gov/Archives/edgar/data/26324/000162828026007587/cw-20251231.htm",
@@ -117,7 +118,8 @@
    "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 724.00 USD（前回 728.80・-0.7%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
    "nde": "機械算出 2025年: (有利子負債 1,157,884,000 − 現金同等物 0) ÷ (営業利益 633,521,000 + 減価償却 124,817,000)",
    "acq5": "【2026-08-03 機械判定】のれん残高 2020年 1,455,137,000 → 2025年 1,692,490,000。**新しさ =(直近−5年前)÷直近= +14.0%**（今あるのれんのうち直近5年に増えた割合）→ **中間帯(10-30%)＝規約では空欄**。ただし門は空欄をSELECT既定の'yes'に化かすため、値は'yes'のまま据え置く（'no'に倒すと規約が支持しない主張になる）",
-   "cagr": "売上5年CAGR = (3,498/2,391)^(1/5)−1 = **+7.91%/年**（パック値 7.9 と一致）。XBRL売上系列（百万$）: 2020年 2,391 / 2021年 2,501 / 2022年 2,557 / 2023年 2,845 / 2024年 3,121 / 2025年 3,498。**タグ合成の注記**: 2018-2020年は Revenues、2021年以降は RevenueFromContractWithCustomerExcludingAssessedTax で、ASC606適用に伴う改称をまたぐため両タグを年ごとに合成した（CLAUDE.md ルール7『候補タグの先頭を無条件採用』の事故対策）。参考: 3年CAGR +11.01% / 4年CAGR +8.75%＝直近ほど加速。出典: SEC companyfacts CIK0000026324"
+   "cagr": "売上5年CAGR = (3,498/2,391)^(1/5)−1 = **+7.91%/年**（パック値 7.9 と一致）。XBRL売上系列（百万$）: 2020年 2,391 / 2021年 2,501 / 2022年 2,557 / 2023年 2,845 / 2024年 3,121 / 2025年 3,498。**タグ合成の注記**: 2018-2020年は Revenues、2021年以降は RevenueFromContractWithCustomerExcludingAssessedTax で、ASC606適用に伴う改称をまたぐため両タグを年ごとに合成した（CLAUDE.md ルール7『候補タグの先頭を無条件採用』の事故対策）。参考: 3年CAGR +11.01% / 4年CAGR +8.75%＝直近ほど加速。出典: SEC companyfacts CIK0000026324",
+   "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2025『**Approximately 47% of our total net sales for 2025**, 48% for 2024, and 46% for 2023 were derived from **contracts with agencies of, and prime contractors to, the U.S. Government**』（同じ10-Kは『No customer accounted for more than 10% of our total net sales』とも書くが、これは**個々の契約単位**の話で、取引相手を米国政府として束ねると47%。政府＋外国政府まで含めると58%）。→ **dep=47 でベト該当**。**BWXT(dep=68・『the U.S. Government represented approximately 68% of our total consolidated revenues』)とまったく同じ型**。【要判断】歴史検証の恒久毀損の型(ASPS=Ocwen一社／TRIP=Google流入)は『相手が消えれば当社も消える』だが、米国政府は消えない——ただし予算優先順位の変更と再入札はある。規約は数値だけで裁くので今日はベトが立つ。偽陽性かどうかはユーザーの判断の領分（値も規約も触っていない・BWXTと同じ扱い）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -183,5 +185,6 @@
  },
  "roiic": "na",
  "roiic5": 36.7,
- "ddate": "2026-08-05"
+ "ddate": "2026-08-05",
+ "dep": 47
 }

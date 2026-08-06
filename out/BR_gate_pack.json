@@ -80,7 +80,8 @@
    "2026-07-29 p1 90→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均71.8%・σ26.4pt・CV36.8%）。",
    "2026-07-30 per を新規算出（21.47 = px 153.95 ÷ 通期実績eps 7.17）。Finnhubの株価が入り px が埋まったため、Ω72+で門X未評価だった状態を解消。**基準は通期実績**（TTMの取得元が無い）で、保守側（E[r]過小）に倒れる。evidenceに基準を明記した。",
    "acq5 の根拠を機械判定で記録（値はyesのまま据置）: のれんの新しさ +53.6%。この欄は roicGap>15 と組んで**一律−6**が効く最大級の段差なのに、判定圏16社中9社が根拠なしだった（実測でKLAC/VRSK/HWMは誤りだった）ため裏取りした",
-   "dom 空欄維持を横断探索で確定 2026-08-04（FY2020/21 10-Kの『processed approximately 80% of the outstanding shares in the U.S.』を発見も、FY2022以降撤去済み・proxy業務は売上の約19%＝全社ベースで散る(IRMD前例)。掘り尽くし記録をnulls.domへ）"
+   "dom 空欄維持を横断探索で確定 2026-08-04（FY2020/21 10-Kの『processed approximately 80% of the outstanding shares in the U.S.』を発見も、FY2022以降撤去済み・proxy業務は売上の約19%＝全社ベースで散る(IRMD前例)。掘り尽くし記録をnulls.domへ）",
+   "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）"
   ],
   "evidence": {
    "dom": "【dom=空欄】FY2025(2025年6月期)10-K(CIK 0001383312, acc 0001628280-25-037656, br-20250630.htm)の Item1『Competition』節を含め全文精査したが、自社シェア%も上位N社合計%も開示されていない。■50側の構造記述: 『We operate in a highly competitive industry. Our Investor Communication Solutions business competes with companies that provide investor communication and corporate governance solutions, as well as our clients’ in-house operations. This includes independent proxy distribution service providers, transfer agents, proxy advisory firms, proxy solicitation firms, firms that process proxy votes, and financial printers. We also face competition from numerous firms in the compiling, printing and electronic distribution of statements, bills and other customer communications』『Within our Global Technology and Operations business, our capital markets solutions compete with in-house operations as well as vendors that provide trade processing, back-office record keeping, and sell-side order and execution management systems』→ 同等サービスの供給者が複数存在する記述。■50を否定する構造記述: 中核のICS(売上74.2%)の受益者proxyについて同10-Kは『Given the large number of Nominees involved in the beneficial proxy process ... we play a unique, central, and integral role in ensuring that the beneficial proxy process occurs without issue』『A large number of Nominees have contracted out the processes of distributing proxy materials and tabulating voting instructions to us』と自社の役割を unique / central と記し、GTO側も『provided fixed income trade processing services to 21 of the 25 primary dealers of fixed income securities in the U.S.』『provided services to the 15 largest U.S. wealth providers』と大手顧客のほぼ全数に浸透していると記す。これらは「自社<40%」を前提とする刻み50と両立しない。他方これらは顧客浸透率であってシェアではなく、上位N社構造も不明のため70/85も置けない(v9.9.41 規約2)。『We continue to be a leading provider of investor communications』『As a leader in global trade lifecycle management』は順位の自称で証拠にならない(規約4)。→ 刻みが散るため規約1により空欄。出典: SEC 10-K FY2025(6月期) br-20250630.htm Item1 Business/Competition, Item1A",
@@ -118,7 +119,8 @@
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 443,770,853 ÷ Δ投下資本 2,872,800,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 3,533,900,000→6,406,700,000（+81.3%）",
    "px": "市場データ機械充填 2026-08-02: market_fetch/market_data.json（常識帯(0.0, 10000000.0)を通過）",
    "per": "【2026-07-30 算出】per = px 153.95 ÷ eps 7.17 = **21.47**。**基準は通期実績EPS**（epsは機械算出のSEC XBRL通期値）で、門の規約が定める TTM実績 ではない。TTM実績EPSの取得元が無いため通期で代用した——成長企業では通期eps<TTM epsゆえ per は過大に出る＝**E[r]を過小に見積もる保守側**に倒れる。TTM実績が取れたら差し替えること。px は Finnhub 実測（2026-07-31）。",
-   "acq5": "【2026-08-03 機械判定】のれん残高 2020年 1,674,500,000 → 2025年 3,609,600,000。**新しさ =(直近−5年前)÷直近= +53.6%**（今あるのれんのうち直近5年に増えた割合）→ **大型買収あり=yes**（判定線30%）"
+   "acq5": "【2026-08-03 機械判定】のれん残高 2020年 1,674,500,000 → 2025年 3,609,600,000。**新しさ =(直近−5年前)÷直近= +53.6%**（今あるのれんのうち直近5年に増えた割合）→ **大型買収あり=yes**（判定線30%）",
+   "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2025『Our largest single client in each of our fiscal years 2025, 2024 and 2023 accounted for **approximately 7%, 8%, and 7% of our consolidated revenues**』。(b)(c)は該当記述なし"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -175,5 +177,6 @@
  "moatW": 85,
  "roiic": 48.0,
  "roiic5": 15.4,
- "ddate": "2026-08-05"
+ "ddate": "2026-08-05",
+ "dep": 7
 }
