@@ -23,7 +23,7 @@
  "erosion": "none",
  "disrupt": "settled",
  "dom": 85,
- "irr": 85,
+ "irr": 70,
  "rep": 80,
  "dur": 100,
  "moatW": 50,
@@ -76,11 +76,12 @@
    "2026-07-30 市場価格を実測で更新（Alpha Vantage GLOBAL_QUOTE 2026-07-31）: px 392.795 → 404.25。per 28.34→29.17　evebit 24.6→25.3　shy 0.73→0.71。**基準を保つ比率式**で換算＝perの期間基準(TTM)を維持。鍵ファイル(av_key.txt/fmp_key.txt)が無く market_fetch.py が動かないため、MCPのGLOBAL_QUOTE(1日25回)を投下可9社に絞って使った。",
    "2026-08-03 acq5 None → None。空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**——門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "2026-08-03 acq5 None → 'no'。空欄は門が SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**＝のれん込みROIC乖離 −6 が黙って効いていた。fix_acq5.py の残高『新しさ』では中間帯／タグ不在で判定不能だったため、買収で増えたのれん・取得対価・無形の絶対水準という**別の系列**で確定した。IFRS報告のため us-gaap の Goodwill タグは無い。ifrs-full の **IntangibleAssetsAndGoodwill = 26.28十億TWD**（FY2024）に対し Equity = 4,279.27十億TWD ＝ **自己資本の0.61%**。のれんはこの内数なので、仮に全額が直近5年の買収由来だとしても roic と roicg を動かせない（実測 roic 25.4 = roicg 25.4）→ no",
-   "**v9.9.72 roic を through-cycle 化**: roic 25.4→20.3 / roicg 25.4→20.3。5年系列 2021-2025 = [20.1, 24.9, 18.2, 20.3, 25.4]（中央 20.3% / 最悪 18.2%）。**FY2025は採取器ではなくパックの原本検算値25.4を使った**——SECのcompanyfactsがFY2025に未到達で、20-F(2026-04-16提出)の値は審査官が既に検算済みだったため。2021-2024はcompanyfacts(TWD建て・年ラベルを検算済み)。TSMはのれん・無形が自己資本の0.6%以下なので roic≒roicg。**FY2025は6年で最高の年**で、through-cycleの平常水準は20.3%"
+   "**v9.9.72 roic を through-cycle 化**: roic 25.4→20.3 / roicg 25.4→20.3。5年系列 2021-2025 = [20.1, 24.9, 18.2, 20.3, 25.4]（中央 20.3% / 最悪 18.2%）。**FY2025は採取器ではなくパックの原本検算値25.4を使った**——SECのcompanyfactsがFY2025に未到達で、20-F(2026-04-16提出)の値は審査官が既に検算済みだったため。2021-2024はcompanyfacts(TWD建て・年ラベルを検算済み)。TSMはのれん・無形が自己資本の0.6%以下なので roic≒roicg。**FY2025は6年で最高の年**で、through-cycleの平常水準は20.3%",
+   "2026-08-05 **irr欄の確定（ユーザー明示指示「確定させて」）**。判定圏(Ω72+)の irr=85 は audit_irr85.py で10社中0社しか機構を実証できていなかったため、10社の原本を全文取得して『顧客側の再認定を要するか』で読み直した。TSM: irr 85→70。根拠は evidence.irr に機構つきで記載"
   ],
   "evidence": {
    "dom": "【2026-07-29 再監査 → 85を維持（実数の裏付けを付与）】◆原本(20-F FY2025)にシェア%の開示は無い。あるのは『As a leader of the foundry segment』(Item4 Overview)、『With our success in the foundry business and the increasing criticism on the concentration of the semiconductor industry and sometimes directly on us, we are subject to heightened risks of antitrust investigations』(Item3)、『to remain technologically ahead of our competitors and maintain our market position in the foundry segment』(同)。ただし原本は自社の収益構造として『Advanced technologies (7-nanometer and below) accounted for 74% of total wafer revenue』(2025。2024は69%、2023は58%。内訳 3nm 24%/5nm 36%/7nm 14%)を開示しており、収益の大宗が先端ノードにある。◆自社シェア(**原本外**・第三者): 専業ファウンドリ市場でTSMC=2025通年69.9%、四半期では2Q25 70.2%・4Q25 70.4%(TrendForce)。◆上位N社合計(**原本外**・同): 2位Samsung 7.2%、3位SMIC 5.32%、4位UMC 4.35%、5位GlobalFoundries 3.87% → 上位3社合計=82.4%、上位5社=90.6%。首位と2位の差は62.7ポイント。◆構造の読み: 自社69.9〜70.4%は『圧倒70-89%』の下端。上位3社82.4%(≥80%)だが、2位が7.2%で3社が拮抗する寡占ではなく首位1社＋周辺の構造。さらに自社売上の74%を占める先端ノード(≤7nm)ではSamsungが一桁%台に留まり実質的な独占に近い(逆に成熟ノードはUMC/SMIC/GF/PSMC/Vanguard等と競合)。売上加重すると先端74%≒独占側・成熟26%≒競争側で85前後に収束。⇒ 刻み85(圧倒70-89%)。100(独占≥90%)は専業ファウンドリ全体では成り立たず、70(寡占40-69%)は2位に62.7pt差の実態を映さない。出典: 原本 https://www.sec.gov/Archives/edgar/data/1046179/000162828026025362/tsm-20251231.htm (Item3 Risk Factors / Item4 Business Overview・Technology Development) ／ **原本外** TrendForce https://www.trendforce.com/presscenter/news/20250901-12691.html ・Taipei Times(TrendForce 2025通年集計) https://www.taipeitimes.com/News/biz/archives/2026/03/14/2003853777",
-   "irr": "上位10社が売上78%(2025)を委託し続け、第2位顧客が11→12→17%へ急拡大=先端プロセスへの設計最適化・認証ロックの深化→85(唯一供給100を裏付ける数値はhitsに無し)",
+   "irr": "**irr=85→70(高摩擦移行困難)へ是正**。旧根拠は上位10社の売上集中と第2位顧客の伸びで、**顧客集中は依存の指標であって認証ロックの証拠ではない**（規約(4)の順位・集中の自称と同型）。20-F走査で顧客側の再認定を示す記述は無く、あるのは当社が提供する『design flow for EDA, silicon proven building blocks such as libraries and intellectual properties, simulation and verification design kits such as PDK』＝設計資産の提供と、『We compete primarily on **process technologies, manufacturing excellence, customer trust and service quality**』＝競争要因の列挙。設計が特定プロセスに最適化されるため移行は高摩擦だが、原本に再認定の記述が無い以上85は置けない→70｜出典 https://www.sec.gov/Archives/edgar/data/1046179/000162828026025362/tsm-20251231.htm",
    "rep": "R&D 8.5%/7.1%/6.5%=2025年NT$246,427M(US$7,855M)+capex年約1兆TWD級の複製障壁→極困難=80(国家支援の複製試行が現存するため100とせず)",
    "dur": "プロセス知+物理(fab網)。『We plan to continue significant investment in research and development in 2026 to maintain our leadership in advanced process technologies』→100",
    "erosion": "蝕ヒットは一般リスク文言(『pricing pressure on components produced by us』)のみ。粗利率は56.1→59.9%へ上昇→none",

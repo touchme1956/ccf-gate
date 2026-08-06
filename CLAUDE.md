@@ -1258,6 +1258,46 @@ portfolio.html の評価額（株数×現在株価×ドル円＝posValue()）は
   nature of **our fundamental patents** ... **Certain of our existing fundamental phosphorescent OLED patents
   expired in the United States in 2017 and 2019**』＝堀の根拠が特許束で中核の一部が既に失効
 
+## 判定圏の irr=85 を原本で確定させた（2026-08-05・ユーザー明示指示「確定させて」）——**NVDAが堀不足で投下可から外れ、IDXXが繰り上がった**
+`audit_irr85.py` が「判定圏(Ω72+)の irr=85 は10社中0社しか機構を実証していない」と出していたので、10社の
+原本を全文取得し **『顧客の側が再認定の費用を負うか』** の一点で読み直した。**6社を70へ引き下げ・1社を100へ引き上げ・2社は根拠を機構つきで置き換えて据置。**
+- **85と70の分かれ目を明文化した**: 歴史検証が分けたのは「移行の摩擦が高いか」ではなく
+  **「顧客の側が再認定・再試験をやり直すか」**。最も分かりやすい対比が **MCO vs VRSK** ——
+  MCOのNRSRO登録は当社が取得する側の地位で、**発行体がMoody'sからS&Pへ替えても顧客に再認定費用は発生しない**（相手も同じNRSRO）→70。
+  VRSKは『**officially designated statistical agent of state insurance regulators**』（規制当局が当社を用途に指定＝認定業者名簿型）に加え、
+  保険会社が当社を外せば**各州で自前約款の規制適合を取り直す**（『Insurance companies need to ensure that their
+  policy language, rules, and rates comply with all applicable legal and regulatory requirements』＋250人の専門家が
+  年17,600の立法・22,000の規制・2,000の判例を追う体制）→**費用が顧客側に落ちるので85**
+- **是正の内訳**（堀／Ω／買付の変化）:
+  | 銘柄 | irr | 堀 | Ω | 根拠の要旨 |
+  | **NVDA** | 85→**70** | 73.6→**69.0** | 77.8→76.7 | **🟢投下可から脱落**。旧根拠のinstalled base/developer ecosystemは**CUDAの移行摩擦＝スイッチングコスト**。10-K全文走査で顧客側の再認定の記述ゼロ。唯一の'certified'は『suppliers that are certified by ISO』＝**当社のサプライヤ側で向きが逆** |
+  | **ASML** | 85→**100** | 82.8→**85.4** | 82.8→83.4 | 20-F『**ASML is currently the world's only manufacturer of EUV lithography systems**』＝唯一供給の事実記述。旧根拠の『single-source key components』は**Zeiss依存＝当社の供給リスクで向きが逆**だった。留保: DUVはNikon/Canonが競合 |
+  | RMD | 85→**70** | 79.8→74.8 | 78.9→77.6 | 旧根拠が**自社の特許と自社の510(k)**＝v9.9.49が明示除外する型。実体はAirView/DME流通の摩擦 |
+  | IRMD | 85→**70** | 81.4→76.3 | 78.8→77.7 | 同じく**自社取得の510(k)**。原本にあるのは病院側が自分の薬剤プロトコルを組む話で再認定ではない |
+  | MCO | 85→**70** | 81.2→77.3 | 77.3→76.3 | 上記のとおり |
+  | CDNS | 85→**70** | 78.8→75.1 | 76.4→75.5 | 『We **work closely with**…to develop foundry PDKs』＝**願望形**（歴史でP=0.40の型）。ファウンドリが当社ツールを認定するとも顧客が再認定を要するとも書いていない |
+  | MSI | 85→**70** | 83.6→78.4 | 76.3→75.0 | 旧根拠の引用が『**reduce barriers to entry**』＝**障壁が下がる**逆向きの文だった。原本にあるのは『standards-based licenses…on FRAND terms』＝むしろロックを弱める側 |
+  | TSM | 85→**70** | 77.4→73.8 | 72.1→71.2 | 旧根拠は顧客集中(上位10社78%)で、**集中は依存の指標であって認証ロックの証拠ではない**（規約(4)と同型） |
+  | **CW** | 85据置 | 87.8 | 77.9 | **今回で最強の機構文**: 『**In order to sell our products, we as well as the products that we manufacture must also be certified by our individual OEM customers.**』＋『continued certification under customer quality requirements and assurance programs』(2018年の引用が残存)＋FAA/EASAの qualification requirements |
+  | **VRSK** | 85据置 | 85.3 | 80.7 | 上記のとおり（根拠を機構つきで置き換え） |
+- **繰り上がりの連鎖が2社の誤値を掘り当てた（ECLの教訓が2度そのまま再現した）**——NVDAが抜けた枠に
+  まずISRGが入り、**投下可へ入った社は validate_packs の厳格版を通す**という規約どおり検査したところ:
+  - **ISRG roic 19.6 → 12.8 へ是正**（roicg 19.0→12.5）。19.6は**どこから来た値でもなかった**——同じパックの
+    2026-08-02の kenshi 自身が『込みROIC 5年=12.1/11.3/10.5/11.3/13.1%、のれん除き最新13.3%、採取器roic=14.7』と
+    記録しており、19.6は審査官の実測でも採取器の値でもない旧ビンテージの残骸。今日の採取器を門式で回すと
+    through-cycle 中央値**12.8%**（系列14.5/12.4/12.7/12.8/14.7）で審査官の系列と水準も形も整合。
+    **Ω 75.3→63.4 で投下可から脱落**（roicの実効ウェイトは36.5%＝単独最大なので当然）
+  - 次に繰り上がった **IDXX の判断項目5欄に根拠が無くFAIL** → 原本とXBRLで測り直し:
+    **p2 90→95**（実測DDは2020年0%・2022年−3.6%＝ともに浅い。旧90は規約の刻み95/75/50に無い値）／
+    **f2 65→50**（TAM・浸透率の数値開示が10-Kに無い＝規約の保守側。'penetration'の語は第三者のペネトレーションテストの文脈でしか出ない）／
+    **f4 80→60**（セグメント実額 CAG 91.9%／**Water 4.7%／LPD 3.1%**＝隣接はいずれも5%未満で、旧80は実額と矛盾）／
+    f1 90・f3 75は実測で追認。**Ω 81.7→81.4 で投下可のまま**
+- **結果**: 投下可10社は **ASML IDXX KLAC MSFT 6857 IRMD RMD 6146 MA ADBE**（NVDA→IDXXの入替）。
+  堀不足で見送り 9→**10社**。全362社で要修正1件(既知のAMBIQ)・**未解決警告0件**
+- **教訓**: (1)**根拠の文言は向きを確かめる**——NVDA・MSI・ASMLの旧根拠は3件とも「堀の証拠」として引かれた文が
+  実際には**逆向き**（自社のサプライヤ認証／障壁が下がる／自社の供給リスク）だった。値ではなく引用そのものが誤り。
+  (2)**繰り上がりは検査の引き金**——線が動いて新しく判定圏に入った社の穴が見える（AFYA・ECLと同型が今回2件）
+
 ## 堀1本差3社の原本読解（2026-08-04・ユーザー「2の原本読みなおすやつやって」）——3社とも据置・投下可18社不変
 audit_moat_gapが名指しした「単独昇格1本で通る未読3社」（CTAS/JKHY/MANH）を深掘りした。**全経路が据置**＝
 3社の堀不足は測定の穴ではなく実力どおりと確定（v9.9.49初回実測「読んだ結果6社とも据置」の再現）。

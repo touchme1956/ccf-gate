@@ -23,7 +23,7 @@
  "erosion": "none",
  "disrupt": "settled",
  "dom": 100,
- "irr": 85,
+ "irr": 100,
  "rep": 100,
  "dur": 100,
  "geopol": 2,
@@ -76,12 +76,13 @@
    "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均42.8%・σ5.0pt・CV11.6%）。",
    "2026-08-02 市場価格を自動更新: px 1,588.75 → 1,629.00（+2.5%）。per 64.3→65.93　evebit 53.9→55.3　shy 0.96→0.94。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
    "2026-08-03 acq5 None → 'no'。空欄だったが、門は SELECT 既定の 'yes' に化かすので**『大型買収あり』と断定されたのと同じ**——門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
-   "**v9.9.72 roic を through-cycle 化**: roic 49.5→49.6 / roicg 38.9→37.1。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央43.3% / 最悪34.1%）。比は**パックが審査した年(2025)**の採取器値 roic43.18 / roicg34.98 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
+   "**v9.9.72 roic を through-cycle 化**: roic 49.5→49.6 / roicg 38.9→37.1。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央43.3% / 最悪34.1%）。比は**パックが審査した年(2025)**の採取器値 roic43.18 / roicg34.98 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
+   "2026-08-05 **irr欄の確定（ユーザー明示指示「確定させて」）**。判定圏(Ω72+)の irr=85 は audit_irr85.py で10社中0社しか機構を実証できていなかったため、10社の原本を全文取得して『顧客側の再認定を要するか』で読み直した。ASML: irr 85→100。根拠は evidence.irr に機構つきで記載"
   ],
   "evidence": {
    "rep": "『the first ever 1,000-watt light source for EUV lithography...built on 25 years of engineering advancements』『after almost 10 years of tremendous work...we have released our first TWINSCAN EXE:5200B in full specification』→数十年規模の技術蓄積=複製不能→100",
    "dur": "『25 years of engineering』(EUV物理)+単一供給光学(Carl Zeiss SMT, our sole supplier of lenses, mirrors, illuminators)+『growing installed base...we upgrade and refurbish』『10,000 customer support employees』→プロセス知/物理型=100",
-   "irr": "『TWINSCAN NXE platform was first introduced in 2013 and is now widely adopted in high-volume manufacturing by our major customers』+『single-source key components』→規格ロック/移行困難=85",
+   "irr": "**irr=100(唯一供給)へ是正**。20-F本文『**ASML is currently the world's only manufacturer of EUV lithography systems.**』＝EUV/High-NAでは代替供給者が存在しない（会社の自称ではなく事実の記述）。**留保**: DUVではNikon/Canonが競合するので全社が唯一供給ではない。それでも顧客が価格に関わらず替えられないのはEUV側で、そこが戦略の中核なので100を採る。旧根拠(85)は『TWINSCAN NXE ... widely adopted』＋『single-source key components』だったが、**後者はZeiss依存＝当社自身の供給リスクで向きが逆**。顧客側の再認定を示す記述は20-Fに無いので85(認証・規格ロック)の根拠にはならない｜出典 https://www.sec.gov/Archives/edgar/data/937966/000162828026011378/asml-20251231.htm",
    "geopol": "『geopolitical announcements related to export control restrictions and tariffs』+顧客集中(最大顧客23.9%/上位2社38.0%/上位4社61.2%)+『Chinese semiconductor manufacturers...could increase the risk of cyclicality』『Our DUV business in China turned out to be stronger than anticipated』→輸出規制+顧客集中=2(重)",
    "erosion": "『We face intense competition』(risk factor)+輸出規制によるChina向けTAM縮小・国内代替誘発の可能性→emerging",
    "disrupt": "蝕セクションの技術代替ヒットなし(market shareヒットは気候リスクの枠組み)。ASML自身がEUV/High-NA(EXE)で破壊技術を主導→settled",
