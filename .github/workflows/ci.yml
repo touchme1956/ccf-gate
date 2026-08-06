@@ -110,12 +110,30 @@ jobs:
       #      黙って変わるのが一番怖い（v9.9.52「城の行が理由不明で出ない」の教訓）。
       - name: 投下可の差分
         run: |
+          # base(通常main)側の score_all.json を取り出して**本当に差分を取る**。
+          #   名前が「差分」なのに現在値を出すだけ、では v9.9.65 の
+          #   「同じ台帳を見る二つの検査器が違うことを言ってはいけない」の同型になる。
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+          git show "$BASE:out/score_all.json" > /tmp/base_score.json 2>/dev/null || echo '[]' > /tmp/base_score.json
           node -e "
-            const rows=require('./out/score_all.json');
-            const buy=rows.filter(r=>r.buy).map(r=>r.t);
-            console.log('🟢投下可 '+buy.length+'社: '+buy.join(' '));
-            const q=rows.filter(r=>(r.s||0)>=75).length;
-            console.log('Ω75+ '+q+'社 / 全'+rows.length+'社');
+            const fs=require('fs');
+            const cur=require('./out/score_all.json');
+            let base=[]; try{base=JSON.parse(fs.readFileSync('/tmp/base_score.json','utf8'))}catch{}
+            const B=Object.fromEntries(base.map(r=>[r.t,r]));
+            const cb=cur.filter(r=>r.buy).map(r=>r.t), bb=base.filter(r=>r.buy).map(r=>r.t);
+            console.log('🟢投下可 '+cb.length+'社: '+cb.join(' '));
+            console.log('Ω75+ '+cur.filter(r=>(r.s||0)>=75).length+'社 / 全'+cur.length+'社');
+            if(!base.length){ console.log('（base側の score_all.json が無いので差分は取れない）'); process.exit(0); }
+            const out=bb.filter(t=>!cb.includes(t)), inn=cb.filter(t=>!bb.includes(t));
+            if(out.length||inn.length){
+              console.log('::warning::投下可が変わった —— 出: '+(out.join(' ')||'—')+' ／ 入: '+(inn.join(' ')||'—'));
+            } else console.log('投下可の顔ぶれは不変');
+            // Ωが1pt以上動いた社（黙って動くのが一番怖い・v9.9.52の教訓）
+            const moved=cur.map(r=>[r.t,(B[r.t]||{}).s,r.s])
+              .filter(x=>typeof x[1]==='number'&&Math.abs(x[2]-x[1])>=1)
+              .sort((a,b)=>Math.abs(b[2]-b[1])-Math.abs(a[2]-a[1]));
+            console.log('Ωが1pt以上動いた社: '+moved.length+'件');
+            moved.slice(0,15).forEach(([t,b,c])=>console.log('   '+t+' '+b.toFixed(1)+' → '+c.toFixed(1)+' ('+(c-b>=0?'+':'')+(c-b).toFixed(1)+')'));
           "
 
       # ── 6. 単調性・崖（落とさない・変化を見るための台帳）──────────────────────
