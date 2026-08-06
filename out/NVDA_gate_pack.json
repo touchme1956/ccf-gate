@@ -84,7 +84,8 @@
    "**v9.9.72 roic を through-cycle 化**: roic 78.1→60.4 / roicg 66.8→54.1。**5年の中央値**（系列[2022, 2023, 2024, 2025, 2026]・中央60.0% / 最悪14.9%）。比は**パックが審査した年(2026)**の採取器値 roic77.6 / roicg66.37 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
    "【2026-08-04 dom 他社提出書類の横断探索】v9.9.41(5)の経路でSEC EDGAR全文検索を掃引したが、当社を名指しした市場全体のシェア表(自社シェア%＋上位N社合計%)は存在しないことを確認。AMD 10-Kの『discrete GPU market share leader』・Cerebras S-1の『a dominant market leader / a dominant incumbent』はいずれも数値なしの定性表現でv9.9.41(4)により証拠にならない。**dom は null のまま据え置き（値は一切作らない）**。探索経路は _meta.nulls.dom に記録。dom以外の欄は不変。",
    "2026-08-05 irr=85 を原本で再確認・据置（全数監査 night/audit_irr85.py）。機構の引用を evidence へ刻んだ",
-   "2026-08-06 **マージ時の突合せで irr を 70 へ確定**。判定圏10社の監査を二つの系統が独立に実施し、8社は一致・ASMLとNVDAだけ食い違った（ASMLは main側の85を採用——顧客ファブでのSAT・次世代ノードの initial qualification という顧客側の認定の実文があり、かつDUVはNikon/Canonが競合するのでv9.9.41(1)の全社ベース原則により100は取れない）。NVDAは原本を読み直して70とした: main側の根拠『Qualification time for new products』は**当社の売上のタイミング**の文脈で顧客の再認定費用ではなく、design win の文は当社自身の競争リスク。同じ機構(B設計組込)で NXPI・TSM を70へ下げた今日の判定と揃えないと、SPGI/MCO で解消したのと同じ『同じ機構の双子が違う刻み』が再発する。**この是正で NVDA は堀 73.6→69.0 で投下可から外れ、IDXX が繰り上がる**"
+   "2026-08-06 **マージ時の突合せで irr を 70 へ確定**。判定圏10社の監査を二つの系統が独立に実施し、8社は一致・ASMLとNVDAだけ食い違った（ASMLは main側の85を採用——顧客ファブでのSAT・次世代ノードの initial qualification という顧客側の認定の実文があり、かつDUVはNikon/Canonが競合するのでv9.9.41(1)の全社ベース原則により100は取れない）。NVDAは原本を読み直して70とした: main側の根拠『Qualification time for new products』は**当社の売上のタイミング**の文脈で顧客の再認定費用ではなく、design win の文は当社自身の競争リスク。同じ機構(B設計組込)で NXPI・TSM を70へ下げた今日の判定と揃えないと、SPGI/MCO で解消したのと同じ『同じ機構の双子が違う刻み』が再発する。**この是正で NVDA は堀 73.6→69.0 で投下可から外れ、IDXX が繰り上がる**",
+   "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）"
   ],
   "evidence": {
    "irr": "**irr=85→70(高摩擦移行困難)へ是正**。FY2026 10-K(filed 2026-02-25)を全文走査したが、**顧客の側が再認定・再試験をやり直す**という記述が無い——'qualif' の全ヒットは (a)当社が自社のファウンドリ・下請を認定する話（『additional expense and/or production delays as a result of **qualifying a new foundry or subcontractor**』『suppliers ... making changes to their products **without our qualification**』）＝**向きが逆**、(b)当社の応用技術者が顧客の設計を支援する話（『our application engineers ... provide pre-sales assistance ... in designing, testing, and **qualifying system designs that incorporate our platforms**』）＝当社側、(c)『**Qualification time for new products**, customers anticipating product transitions, and channel partners reducing channel inventory ... can reduce, or create volatility in, **our revenue**』＝**当社の売上のタイミングの話**で顧客の乗り換え費用ではない、(d)従業員・税制・引当金。唯一の 'certified' は『suppliers that are **certified by** the International Organization for Standardization』＝**当社のサプライヤ側**で向きが逆。『Failure to obtain a design win may prevent us from obtaining future design wins in subsequent generations』は**当社自身の競争リスク**の記述で、機構分類はB(設計組込)——追試の実測でB型は 0/2・恒久毀損100%（CMTL）。CUDA/installed base の移植コストは実在するが、それは**スイッチングコスト**であって規約の85（顧客側の再認定）には当たらない→70。｜出典 https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm",
@@ -122,7 +123,8 @@
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **68.3%** / 同業（SIC3674「Semiconductors & Related Devices」・72社）の中央値 **1.5%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+68.3%)÷(1+1.5%))^5 − 1 = **+1150.9%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
    "px_market": "Alpha Vantage GLOBAL_QUOTE 実測 2026-07-31 終値 200.75（前回 198.15・+1.3%）。per/perF/evebit は**基準を保つ比率式**で換算した（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと、eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
    "acq5": "【2026-08-03 機械判定】のれん残高(十億$) 2021 4.19 → 2022 4.35 → 2023 4.37 → 2024 4.43 → 2025 5.19 → 2026 20.83。**新しさ =(直近 20.83 − 2021年 4.19)÷直近 = +79.9%**（今あるのれんのうち直近5年に増えた割合） → **大型買収あり=yes**（3分の1以上が直近5年＝現経営陣の買収）（出典: SEC XBRL companyfacts の Goodwill 系列）",
-   "ni": "120.1 = NetIncomeLoss FY2026（会計期間 2025-01-27→2026-01-25）120.1十億$（10-K filed 2026-02-25・XBRL。後続filing 2026-05-12でも同値）。1月末締めの会計年度のため機械の年ラベル検問が再現できないだけで、値は原本一致"
+   "ni": "120.1 = NetIncomeLoss FY2026（会計期間 2025-01-27→2026-01-25）120.1十億$（10-K filed 2026-02-25・XBRL。後続filing 2026-05-12でも同値）。1月末締めの会計年度のため機械の年ラベル検問が再現できないだけで、値は原本一致",
+   "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2026『sales to **one direct customer represented 22% of total revenue** and sales to another direct customer represented 14% of total revenue, all of which were primarily attributable to the Compute & Networking segment』＋『We receive a significant amount of our revenue from a limited number of customers, and this trend may continue』。(b)(c)は該当記述なし"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -194,5 +196,6 @@
  "roiic": 80.4,
  "roiic5": 74.9,
  "sht": "up",
- "ddate": "2026-08-05"
+ "ddate": "2026-08-05",
+ "dep": 22
 }

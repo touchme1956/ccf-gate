@@ -81,7 +81,8 @@
    "2026-07-30 市場価格を実測で更新（Alpha Vantage GLOBAL_QUOTE 2026-07-31）: px 561.77 → 573.1。per 34.36→35.05　evebit 27.5→28.1　shy 2.81→2.75。**基準を保つ比率式**で換算＝perの期間基準(TTM)を維持。鍵ファイル(av_key.txt/fmp_key.txt)が無く market_fetch.py が動かないため、MCPのGLOBAL_QUOTE(1日25回)を投下可9社に絞って使った。",
    "**v9.9.72 roic を through-cycle 化**: roic 131.0→116.1 / roicg 56.9→51.1。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央116.1% / 最悪86.0%）。比は**パックが審査した年(2025)**の採取器値 roic130.99 / roicg56.94 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
    "acq5 の根拠を機械判定で記録（値はyesのまま据置）: のれんの新しさ +48.1%。この欄は roicGap>15 と組んで**一律−6**が効く最大級の段差なのに、判定圏16社中9社が根拠なしだった（実測でKLAC/VRSK/HWMは誤りだった）ため裏取りした",
-   "2026-08-06 eps=16.5 / dilNet=−2.2 の根拠を刻んだ（値は不変・XBRLで再現確認）。採取器が『機械で再現不能』としていたのは MA が CommonStockSharesOutstanding 系タグを持たないためで、EarningsPerShareDiluted と WeightedAverageNumberOfSharesOutstandingBasic から確定した。あわせて backfill_machine_evidence で機械項目9欄に式と実額を充填。validate FAIL 解消"
+   "2026-08-06 eps=16.5 / dilNet=−2.2 の根拠を刻んだ（値は不変・XBRLで再現確認）。採取器が『機械で再現不能』としていたのは MA が CommonStockSharesOutstanding 系タグを持たないためで、EarningsPerShareDiluted と WeightedAverageNumberOfSharesOutstandingBasic から確定した。あわせて backfill_machine_evidence で機械項目9欄に式と実額を充填。validate FAIL 解消",
+   "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）"
   ],
   "evidence": {
    "dom": "MA自身の10-K(FY2025) Item1 Competition には**シェアの数値開示が無い**——『We compete worldwide with payments networks such as Visa, American Express, JCB, China UnionPay and Discover, among others. ... Some competitors have more market share than we do in certain jurisdictions.』(定性のみ)。そこで、提出書類の中に引用された第三者調査を原本扱いとする規約に従い、同一のNilson系実数表を採用する: Visa Inc. 10-K FY2025 Item1 COMPETITION の暦年2024比較表(出典表記『Mastercard data sourced from The Nilson Report issue 1288 (June 2025)』、Mastercard欄は Maestro/Cirrus を除く)。Payments Volume($B): Visa 13,433 / **Mastercard 8,014** / American Express 1,750 / JCB 319 / Diners Club-Discover 253 → 5網合計 23,769。**自社(MA)シェア 33.7%**(Total Transactions では 204/538=37.9%、Cards では 3,146/8,337=37.7%)。**上位2社(Visa+Mastercard)合計 21,447 = 90.2%**(Transactions 95.7% / Cards 95.4%)。→ 自社単独は40%未満だが**上位2社合計≥80%の複占の一角**(首位はVisa)＝v9.9.38の刻み70に該当。刻み85『複占の首位』は自社が首位でないため不可、刻み50『競争<40%』はCadence事例と同型の誤適用になるため不可。(出典: Mastercard 10-K FY2025 Item1 Competition https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm ／ 実数はVisa Inc. 10-K FY2025 Item1 COMPETITION 表 https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm )。【2026-07-29 堀再監査で再確認・70を維持】85『複占の首位』は上位2社で≥80%かつ**自社が首位**を要するが、採用したNilson系実数表でMAは首位ではない(Visaが上位)。よって刻みは70『複占の一角』が上限。",
@@ -118,7 +119,8 @@
    "px_market": "Alpha Vantage GLOBAL_QUOTE 実測 2026-07-31 終値 573.1（前回 561.77・+2.0%）。per/perF/evebit は**基準を保つ比率式**で換算した（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと、eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
    "acq5": "【2026-08-03 機械判定】のれん残高 2020年 4,960,000,000 → 2025年 9,560,000,000。**新しさ =(直近−5年前)÷直近= +48.1%**（今あるのれんのうち直近5年に増えた割合）→ **大型買収あり=yes**（判定線30%）",
    "eps": "`EarningsPerShareDiluted` FY2025 = **16.52**（FY2024 13.89 / FY2023 11.83）。【2026-08-06に根拠を刻んだ】採取器は `TAGS[\"sh\"]`（CommonStockSharesOutstanding系）で株数を取る設計だが、**Mastercardはこのタグをus-gaapに持たない**（Class A/B の次元付きで現れる。CLAUDE.mdが V について記録した型と同じ）ため『機械で再現不能』となり根拠が空だった。EPSは EarningsPerShareDiluted に直接あるので原本値で確定。出典 SEC XBRL companyfacts CIK0001141391 (10-K FY2025, filed 2026)",
-   "dilNet": "**−2.22%/年**（純減＝自社株買いが希薄化を上回る）。`WeightedAverageNumberOfSharesOutstandingBasic` の直近4年 2022:971 → 2023:946 → 2024:927 → 2025:905百万株、3年CAGR = (905/971)^(1/3)−1 = −2.22%。希薄化後株数でも 971→906百万株で −2.28%/年とほぼ同じ（符号・桁とも一致）。裏付け: `PaymentsForRepurchaseOfCommonStock` FY2025 11,727百万$（FY2024 10,954 / FY2023 9,032）＝継続的な自社株買い。【2026-08-06に根拠を刻んだ】理由は eps と同じくタグ不在。株式分割は当期間に無し（株数の不連続なし）。出典 SEC XBRL companyfacts CIK0001141391 (10-K FY2025, filed 2026)"
+   "dilNet": "**−2.22%/年**（純減＝自社株買いが希薄化を上回る）。`WeightedAverageNumberOfSharesOutstandingBasic` の直近4年 2022:971 → 2023:946 → 2024:927 → 2025:905百万株、3年CAGR = (905/971)^(1/3)−1 = −2.22%。希薄化後株数でも 971→906百万株で −2.28%/年とほぼ同じ（符号・桁とも一致）。裏付け: `PaymentsForRepurchaseOfCommonStock` FY2025 11,727百万$（FY2024 10,954 / FY2023 9,032）＝継続的な自社株買い。【2026-08-06に根拠を刻んだ】理由は eps と同じくタグ不在。株式分割は当期間に無し（株数の不連続なし）。出典 SEC XBRL companyfacts CIK0001141391 (10-K FY2025, filed 2026)",
+   "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2025『no customer generated more than 10% of net revenue in any such period. A significant portion of our net revenue is concentrated among our **five largest customers**. In 2025, the net revenue from these customers was approximately **$6.9 billion, or 21%, of total net revenue**』＝**5社合計で21%**、単一最大は10%未満 → **上限10**（ASC280/有報の10%開示閾値が上限を証明する。のれんの上限＝無形総額 と同じ『上限の不等式』の作法。ベトは dep≥40 の一方向なので上限で裁ける）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -178,5 +180,6 @@
  "mcap": 508.9636,
  "roiic": 75.5,
  "roiic5": 111.4,
- "ddate": "2026-08-05"
+ "ddate": "2026-08-05",
+ "dep": 10
 }
