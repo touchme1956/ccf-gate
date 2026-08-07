@@ -131,7 +131,7 @@ def main():
         return 1
     if ready:
         print(f"::warning::根拠さえ埋めれば資格を得る: {' '.join(r['t'] for r in ready)} ——"
-              f" 合成点順＝繰り上がる順。上から潰すと不意打ちが消える")
+              f" 席順＝繰り上がる順。上から潰すと不意打ちが消える")
     print("✓ 投下可・次点ともに根拠の穴ゼロ")
     return 0
 

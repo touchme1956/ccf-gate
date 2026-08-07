@@ -248,6 +248,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               // 四関門＝Ω75+ ∧ 堀70+ ∧ データ健全（点検err・未解決warn・期末後・納品検査）。
               // 門(index.html)の pass=q75c と同一規則（v9.9.65の掟）
               shrink: shrink.hit ? shrink.why : undefined,
+              irr: dd.irr,   // v9.9.100: 席の選定で irr=85 を優先するため（門の ccfAllocTop が読む）
               // v9.9.99(2026-08-07 ユーザー明示指示): **事業の収縮の遮断器**を第四の関門に。
               //   売上縮小 ∧ 営業利益率低下（門の単一実装 ccfShrinkGate を呼ぶ＝再実装しない）
               buy: s >= 75 && mg.pass === true && audE === 0 && audU === 0
@@ -255,7 +256,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
 }
 rows.sort((a, b) => b.s - a.s);
 // v9.9.88(2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」): 第五の枠。
-//   投下可＝四関門∧Ω上位10社（v9.9.98でE[r]項を外した）。判定は門の ccfAllocTop（単一実装＝Ⅵ・盤・snapと同一・v9.9.65の掟）。
+//   投下可＝四関門∧席順上位10社（v9.9.98でE[r]項を外し・v9.9.100でirr=85を先頭へ）。判定は門の ccfAllocTop（単一実装＝Ⅵ・盤・snapと同一・v9.9.65の掟）。
 //   四段通過だが11位以下は quali=true / buy=false ＝🔵次点（買わないが資格は保持）。
 {
   const four = rows.filter(r => r.buy);
@@ -322,12 +323,14 @@ for (const r of q75) {
 //   **この写しだけが錨70のまま取り残された**——席の選定(ccfAllocTop)と表示の並びが違う式で動いていた。
 //   v9.9.65「同じ台帳を見る二つの検査器が違うことを言ってはいけない」を、写しを作ったせいで自分で破っていた。
 const _ascore = x => ccfAllocScore(x);
-const buy = rows.filter(x => x.buy).sort((a, b) => _ascore(b) - _ascore(a) || b.s - a.s);
-const nextUp = rows.filter(x => x.quali && !x.buy).sort((a, b) => _ascore(b) - _ascore(a) || b.s - a.s);
-console.log(`\n🟢投下可(四関門∧Ω上位10社・v9.9.98) ${buy.length}社`
+// v9.9.100: 表示の並びも席の順と同じ規則（irr=85 を先に）＝門と端末が同じことを言う（v9.9.65）
+const _mech = x => (+x.irr === 85) ? 0 : 1;
+const buy = rows.filter(x => x.buy).sort((a, b) => _mech(a) - _mech(b) || _ascore(b) - _ascore(a) || b.s - a.s);
+const nextUp = rows.filter(x => x.quali && !x.buy).sort((a, b) => _mech(a) - _mech(b) || _ascore(b) - _ascore(a) || b.s - a.s);
+console.log(`\n🟢投下可(四関門∧irr=85優先→Ω順の上位10社・v9.9.100) ${buy.length}社`
   + `　日本株${buy.filter(x => x.jp).length}／米国等${buy.filter(x => !x.jp).length}`
   + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
-if (nextUp.length) console.log(`🔵次点(四関門通過・Ω11位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
+if (nextUp.length) console.log(`🔵次点(四関門通過・席順11位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
 console.log(`⛔堀不足で見送り(Ω75+だが堀が関門に届かない) ${q75.filter(x => !x.moatOK).length}社`);
 console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告あり) ${q75.filter(x => x.moatOK && !x.audOK).length}社`);
 // 期末後の重大事象で落ちた社は**必ず名指しで出す**。黙って消えると v9.9.52
