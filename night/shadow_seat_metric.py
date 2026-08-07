@@ -59,7 +59,7 @@ def main():
         irr[t] = (d.get("data") or d).get("irr")
 
     def clean(r):
-        """遮断器**以外**の三関門（Ω75+ ∧ 堀70+ ∧ 点検 ∧ 期末後 ∧ 納品検査）"""
+        """遮断器**以外**の四関門（Ω75+ ∧ 堀70+ ∧ 点検 ∧ 期末後 ∧ 納品検査 ∧ 事業の収縮なし）"""
         t = r["t"]
         return ((r.get("s") or 0) >= 75 and r.get("moatOK") and (r.get("audE") or 0) == 0
                 and (r.get("audU") or 0) == 0 and t not in stale and t not in vf)
@@ -97,7 +97,7 @@ def main():
               f"{str(irr.get(r['t']) or '—'):<5} {br:^6} {'🟢' if r.get('buy') else ''}")
 
     print("\n■ 読み方")
-    print("  ・**席の選定から E[r] を外すと動くのは1社だけ**（MCO ⇄ IDXX）——三関門が既に11社まで絞っているから")
+    print("  ・**席の選定から E[r] を外すと動くのは1社だけ**（MCO ⇄ IDXX）——四関門が既に11社まで絞っているから")
     print("  ・**遮断器も外すと3社動く**（出 ADBE/MA/MCO・入 HWM/IDXX/VRSK）。"
           "VRSKは堀85.3＝台帳最高・irr=85が3ビンテージで確認された社")
     print("  ・(4)予実台帳の E[r] は**残すべき**——決定に使わなくても、"

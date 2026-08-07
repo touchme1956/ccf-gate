@@ -191,7 +191,7 @@ try {
 //   第四の関門（点検・期末後の重大事象）とまったく同じ種類。**当時は「四段関門」の呼称を変えなかった**
 //   ——名前を増やすと本文16箇所の書き換えが要り、この repo が繰り返している
 //   「規則を変えたら文も全部grepで洗う」の取りこぼしを自分で作ることになる、と判断したため。
-//   ※**v9.9.98（2026-08-07）で門X遮断器を関門から外したので呼称は「三関門」になった**
+//   ※**v9.9.98（2026-08-07）で門X遮断器を関門から外したので呼称は「四関門」になった**
 //     （Ω75+ ∧ 堀70+ ∧ データ健全）。そのときは本文41箇所を実際にgrepで洗った。
 //   **買わない理由であって売る理由ではない**（Ω・堀・売却規律S1/S2/S3はいずれも不変）。
 let VFAIL = {};
@@ -234,6 +234,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
       else if (w.lv === 'warn' && !((M.evidence || {})[w.k] || (M.nulls || {})[w.k])) audU++;
     }
   } catch (e) {}
+  const shrink = ccfShrinkGate(dd);   // v9.9.99: 門の単一実装（再実装しない・v9.9.65の掟）
   const s = parseFloat(r.evalScore);
   rows.push({ t, nm, jp, s, tier: r.tierShort,
               kills: r.kills, pfail: r.pfail, exit: r.exit && r.exit.level,
@@ -244,14 +245,17 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               staleBS: STALE[t] ? STALE[t].newPct : undefined,
               vFail: VFAIL[t] ? VFAIL[t].n : undefined,
               // v9.9.98(2026-08-07 ユーザー明示指示): **門X遮断器 E[r]≥0 を関門から外した**。
-              // 三関門＝Ω75+ ∧ 堀70+ ∧ データ健全（点検err・未解決warn・期末後・納品検査）。
+              // 四関門＝Ω75+ ∧ 堀70+ ∧ データ健全（点検err・未解決warn・期末後・納品検査）。
               // 門(index.html)の pass=q75c と同一規則（v9.9.65の掟）
+              shrink: shrink.hit ? shrink.why : undefined,
+              // v9.9.99(2026-08-07 ユーザー明示指示): **事業の収縮の遮断器**を第四の関門に。
+              //   売上縮小 ∧ 営業利益率低下（門の単一実装 ccfShrinkGate を呼ぶ＝再実装しない）
               buy: s >= 75 && mg.pass === true && audE === 0 && audU === 0
-                   && !STALE[t] && !VFAIL[t] });
+                   && !STALE[t] && !VFAIL[t] && !shrink.hit });
 }
 rows.sort((a, b) => b.s - a.s);
 // v9.9.88(2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」): 第五の枠。
-//   投下可＝三関門∧Ω上位10社（v9.9.98でE[r]項を外した）。判定は門の ccfAllocTop（単一実装＝Ⅵ・盤・snapと同一・v9.9.65の掟）。
+//   投下可＝四関門∧Ω上位10社（v9.9.98でE[r]項を外した）。判定は門の ccfAllocTop（単一実装＝Ⅵ・盤・snapと同一・v9.9.65の掟）。
 //   四段通過だが11位以下は quali=true / buy=false ＝🔵次点（買わないが資格は保持）。
 {
   const four = rows.filter(r => r.buy);
@@ -297,12 +301,13 @@ const blockers = r => {
   // v9.9.98: E[r]は合否に効かなくなったので blockers から外した。
   //   E[r]の値そのものは一行表示に出ており、負なら数字で判る（情報として残す・v9.9.52）
   if (!r.audOK) b.push('⛔点検要修正');
+  if (r.shrink) b.push('⛔事業の収縮');
   if (r.staleBS != null) b.push('⛔期末後の重大事象');
   if (r.vFail) b.push(`⛔納品検査FAIL${r.vFail}`);
   return b.length ? b : ['—'];
 };
 const q75 = rows.filter(x => x.s >= 75);
-console.log('\nΩ75+（堀＝絶対MOAT指数／E[r]＝参考値・合否に不使用／点＝全件点検／買＝三関門すべて成立・v9.9.98）:');
+console.log('\nΩ75+（堀＝絶対MOAT指数／E[r]＝参考値・合否に不使用／点＝全件点検／買＝四関門すべて成立・v9.9.98）:');
 for (const r of q75) {
   const moat = r.moatNA ? ' NA ' : (r.moat == null ? '  — ' : r.moat.toFixed(0).padStart(3) + ' ');
   const aud = r.audOK ? '  ✓' : `${r.audE ? '要' + r.audE : ''}${r.audU ? '未' + r.audU : ''}`.padStart(3) + '✗';
@@ -319,20 +324,27 @@ for (const r of q75) {
 const _ascore = x => ccfAllocScore(x);
 const buy = rows.filter(x => x.buy).sort((a, b) => _ascore(b) - _ascore(a) || b.s - a.s);
 const nextUp = rows.filter(x => x.quali && !x.buy).sort((a, b) => _ascore(b) - _ascore(a) || b.s - a.s);
-console.log(`\n🟢投下可(三関門∧Ω上位10社・v9.9.98) ${buy.length}社`
+console.log(`\n🟢投下可(四関門∧Ω上位10社・v9.9.98) ${buy.length}社`
   + `　日本株${buy.filter(x => x.jp).length}／米国等${buy.filter(x => !x.jp).length}`
   + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
-if (nextUp.length) console.log(`🔵次点(三関門通過・Ω11位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
+if (nextUp.length) console.log(`🔵次点(四関門通過・Ω11位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
 console.log(`⛔堀不足で見送り(Ω75+だが堀が関門に届かない) ${q75.filter(x => !x.moatOK).length}社`);
 console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告あり) ${q75.filter(x => x.moatOK && !x.audOK).length}社`);
 // 期末後の重大事象で落ちた社は**必ず名指しで出す**。黙って消えると v9.9.52
-// 「城の行が理由不明で出ない」と同じ事故になる（三関門を通っているのに枠から消えるので、
+// 「城の行が理由不明で出ない」と同じ事故になる（四関門を通っているのに枠から消えるので、
 //  理由を書かないと「なぜ居ないのか」が誰にも分からない）。
 {
   const st = rows.filter(x => x.staleBS != null && x.s >= 75);
   console.log(`⛔期末後の重大事象で見送り(貸借対照表がパックのreportDate以降に大きく変わった) ${st.length}社`);
   for (const r of st) console.log(`     ${r.nm.split(/\s/)[0]}  Ω${r.s.toFixed(1)}  のれんの${r.staleBS}%がreportDate以降に流入`
     + `　→ night/audit_stale_bs.py の作業リスト。最新四半期で再審査すれば復帰しうる`);
+}
+{
+  // v9.9.99: 事業の収縮で落ちた社は**名指しで出す**（黙って消さない・v9.9.52）
+  const sh = rows.filter(r => r.s >= 75 && r.moatOK && r.shrink);
+  console.log(`⛔事業の収縮で見送り(Ω75+・堀70+だが売上縮小 ∧ 営業利益率低下) ${sh.length}社`);
+  for (const r of sh) console.log(`     ${r.nm.split(/\s/)[0]}  Ω${r.s.toFixed(1)}  ${r.shrink}`
+    + `　→ 数字が戻れば自動で復帰。買わない理由であって売る理由ではない`);
 }
 console.log(`   ※全${rows.length}社: 要修正 ${rows.reduce((a,x)=>a+x.audE,0)}件 / 未解決警告 ${rows.reduce((a,x)=>a+x.audU,0)}件`);
 console.log(`\n→ out/${outFile}（全${rows.length}件・降順）`+ (partial ? '　※部分実行なので正本 score_all.json は書き換えていない' : ''));
