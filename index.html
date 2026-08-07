@@ -1104,7 +1104,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.101</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.102</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——v9.9.36で絶対MOAT指数をΩの直接項に加え(実効≒22%)、v9.9.39で<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3298,8 +3298,12 @@ async function ccfDash(btn){
   // v9.9.95: 盤も**Ⅵとまったく同じ四関門**を読む。stale_bs は v9.9.94 でⅥにだけ入れて
   //   盤を洗い忘れており、**APH が盤では🟢投下可・Ⅵでは⛔** になっていた（v9.9.65の掟を
   //   自分で破っていた＝「規則を変えたら、規則を使う場所も全部grepで洗う」の表示版の再発）。
-  const [mkt,ern,stl,vfl]=await Promise.all([j('out/dashboard.json'),j('out/next_earnings.json'),
-                                             j('out/stale_bs.json'),j('out/validate_fail.json')]);
+  // v9.9.102: 盤もⅥと同じ**孤児判定**（パックの無い台帳レコードは買付の土俵に乗せない）を読む。
+  //   ここを洗い忘れると v9.9.95 のAPHと同じ「盤では🟢・Ⅵでは⛔」が再発する（v9.9.65の掟）。
+  const [mkt,ern,stl,vfl,pidx]=await Promise.all([j('out/dashboard.json'),j('out/next_earnings.json'),
+                                             j('out/stale_bs.json'),j('out/validate_fail.json'),
+                                             j('out/packs_index.json')]);
+  const dPackT=pidx?new Set((pidx.packs||[]).map(f=>String(f).replace(/_gate_pack\.json$/,'').toUpperCase())):null;
   const dStale={},dVf={};
   for(const [k,v] of Object.entries((stl&&stl.items)||{})) if(v&&v.verdict==='要審査') dStale[k]=v;
   for(const [k,v] of Object.entries((vfl&&vfl.items)||{})) if(v&&(v.n||0)>0) dVf[k]=v;
@@ -3374,7 +3378,8 @@ async function ccfDash(btn){
       const t=(L.nm||'').trim().split(/\s/)[0].toUpperCase();
       // v9.9.99: 事業の収縮の遮断器もⅥと同じ判定にする（同じ台帳を見る二つの検査器が違うことを言わない）
       const sh=ccfShrinkGate(d);
-      const dq=!dStale[t]&&!dVf[t]&&!sh.hit;   // 期末後の重大事象・納品検査FAIL・事業の収縮（Ⅵと同じ判定）
+      const orph=!!(dPackT&&!dPackT.has(String(t).toUpperCase()));   // v9.9.102: パック無しの旧レコード
+      const dq=!dStale[t]&&!dVf[t]&&!sh.hit&&!orph;   // 期末後・納品検査FAIL・事業の収縮・孤児（Ⅵと同じ判定）
       return {nm:L.nm,t,s:sc,moat:mg.idx,audE,stale:dStale[t]?dStale[t].newPct:null,shrink:sh,irr:d.irr,
               vf:dVf[t]?dVf[t].n:null,
               ok:three&&audE===0&&dq,blocked:three&&(audE>0||!dq),xEr:x.xEr};});
@@ -3898,6 +3903,22 @@ async function renderPlan(){
   //   【発端】APH: パックの reportDate は 2025-12-31 だが、CommScope買収(約105億$・同社史上最大)の
   //   完了は**その9日後**。のれん 10,575→17,555百万$(+66%)・のれん＋無形は自己資本の96%→147%。
   //   既存の鮮度検査は reportDate と auditDate の「年」しか見ないので同じ年のこれは素通りしていた。
+  // ── 孤児レコードの検出（v9.9.102・2026-08-07 ユーザー報告「HOYAが買付1位に出る」）────────
+  //   【何が起きたか】台帳(localStorage `g7:`)のキーは safeKey(nm)。日本株パックの nm は
+  //   `7741 ＨＯＹＡ` のように**コード＋全角名**なので、キーは `g7:7741_ＨＯＹＡ` になる。
+  //   ところが 2026-08-04 以前の**旧・手動審査**は `HOYA` のような別名で保存されており、
+  //   **⭳一括取込はそのレコードに一度も触れない**——同じ会社が台帳に二重に残り、
+  //   **旧レコードの古い高スコア（HOYA Ω81.4／パックは Ω0.0）が買付の席を奪う**。
+  //   実害: ユーザーの画面で HOYA が買付1位に出て、**IRMD が押し出されていた**。
+  //   【なぜ関門にするか】パックの無いレコードは **validate_packs も stale_bs も点検も届かない**
+  //   ——vfMap/staleMap は銘柄コードで引くので、孤児は「該当なし」で全部素通りする＝
+  //   v9.9.95で塞いだ「未測定が最良ケース」の穴が、キーの側から開いていた。
+  //   **黙って消さず名指しで出す**（v9.9.52）。直し方は Ⅳ台帳で旧レコードを削除するだけ。
+  let packT=null;
+  try{ const _i=await (await fetch('out/packs_index.json?t='+Date.now())).json();
+       packT=new Set((_i.packs||[]).map(f=>String(f).replace(/_gate_pack\.json$/,'').toUpperCase()));
+  }catch(e){}   // 取れなければ null＝検査は眠るだけ（無いことを「異常なし」と偽らない・ルール7）
+  const orphan=r=>!!(packT&&!packT.has(String(r.t).toUpperCase()));
   let staleMap={};
   try{ const _s=await (await fetch('out/stale_bs.json?t='+Date.now())).json();
        for(const [k,v] of Object.entries(_s.items||{})) if(v&&v.verdict==='要審査') staleMap[k]=v;
@@ -3920,8 +3941,10 @@ async function renderPlan(){
   const vfOut=q75.filter(r=>!staleMap[skey(r)]&&vfMap[skey(r)]);
   // v9.9.99: 事業の収縮の遮断器を第四の関門に。**価格ではなく事業の状態**で切る
   //   （歴史で測って最良: 止めた群の恒久毀損5倍・かつ止めた群の中央値も低い＝両方向とも正しい）
-  const shrinkOut=q75.filter(r=>!(r.audW||[]).some(w=>w.lv==='err')&&!staleMap[skey(r)]&&!vfMap[skey(r)]&&r.shrink.hit);
-  const q75c=q75.filter(r=>!(r.audW||[]).some(w=>w.lv==='err')&&!staleMap[skey(r)]&&!vfMap[skey(r)]&&!r.shrink.hit);
+  const orphanOut=q75.filter(r=>orphan(r));
+  const _ok=r=>!orphan(r)&&!(r.audW||[]).some(w=>w.lv==='err')&&!staleMap[skey(r)]&&!vfMap[skey(r)];
+  const shrinkOut=q75.filter(r=>_ok(r)&&r.shrink.hit);
+  const q75c=q75.filter(r=>_ok(r)&&!r.shrink.hit);
   // v9.9.98（2026-08-07 ユーザー明示指示）: **門X遮断器 E[r]≥0 を買付の関門から外した**。
   //   関門は Ω75+ ∧ 堀70+ ∧ データ健全（点検・期末後の重大事象・納品検査）∧ 事業の収縮なし の**四関門**になり、
   //   **門は価格を合否に一切使わない**。歴史検証の結論（2013年703社・2015年で符号反転＝
@@ -4142,6 +4165,11 @@ async function renderPlan(){
       +erNeg.sort((a,b)=>(a.xEr||0)-(b.xEr||0)).map(r=>`　<b>${r.t}</b> ${r.xEr.toFixed(1)}% ${openLine(r)||''}`).join('<br>'));
     if(erNA.length)li.push(`<b>E[r]算出不能（per未取得）${erNA.length}社</b>：`+erNA.map(r=>r.t).join('・')+`　→ <code>python market_fetch.py</code> → <code>market_merge.py</code> → ⭳一括取込`);
     html+=`<div style="margin:16px 0 4px;padding:10px 12px;border:1px solid rgba(93,140,194,.35);border-radius:8px;background:rgba(93,140,194,.06);font-size:11.5px;color:var(--muted);line-height:1.85"><b style="color:var(--steel)">◇ 参考：期待リターンの内訳（合否には使わない・v9.9.98）</b><br>${li.join('<br>')}<br><span style="color:var(--dim)">門は価格を合否に使わない——歴史検証で<b>価格の線は堀の中で選別力を持たない</b>（2013年703社で安い側8.0% vs 高い側8.5%、2015年は符号ごと反転／勝者13社中10社を旧線が弾いていた）と実測されたため。E[r]は<b>答え合わせできる予測</b>として計算・記録は続ける（予実台帳 night/audit_er_realized.py）。指値の階段は従来どおり——先段＝E[r]が0に転じるPER・深段＝fair線。</span></div>`;
+  }
+  // ⛔ パックの無い台帳レコード（v9.9.102）。**黙って消さない**——旧キーの孤児が席を奪っていた実例がある
+  if(orphanOut.length){
+    html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:var(--rust)">⛔ 台帳の旧レコード（リポジトリにパックが無い＝機械の検査が一切届かない）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px"><b>この行は古い手動審査の残骸です。</b>台帳のキーは銘柄名から作るので、<u>パックの名前（例 <code>7741 ＨＯＹＡ</code>）と旧レコードの名前（例 <code>HOYA</code>）が違うと、⭳一括取込は旧レコードに一度も触れません</u>——同じ会社が台帳に二重に残り、<b>古い高スコアのほうが買付の席を奪います</b>（実例: HOYA が旧Ω81.4 で買付1位に出て IRMD を押し出していた。パックの現行値は <b>Ω0.0</b>）。<br>パックが無いレコードは <b>納品検査・期末後の重大事象・パックの鮮度のどれも届かない</b>ので、買付の土俵から降ろします。<b>売却の理由にはならない</b>。<br><b>直し方</b>：Ⅳ台帳でこの行を開いて<b>削除</b>してください（正しい行はコード付きの名前で別に存在します）。削除後は⭳全パック一括取込をやり直すと確実です。</div>`;
+    html+=orphanOut.map((r,i)=>brow(r,i,'旧',`<span style="font-size:11.5px;white-space:nowrap;color:var(--rust);margin-left:8px">パック無し（out/${r.t}_gate_pack.json が存在しない）</span>`)).join('');
   }
   // ⛔ 事業の収縮で落ちた組（v9.9.99・ユーザー明示指示）。**黙って消さない**——落ちた社を名指しで出さないと
   //   「なぜ買付順位から消えたか」が判らず、v9.9.52で踏んだ「城の行が理由不明で出ない」と同じ事故になる。
