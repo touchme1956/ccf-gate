@@ -162,6 +162,16 @@ jobs:
         continue-on-error: true
         run: timeout 900 python3 night/audit_stale_bs.py | tail -25
 
+      # ── 5-c. パックより新しい年次報告が出ていないか（2026-08-07新設）─────────────
+      #   audit_stale_bs は**のれんの入替**しか見ないので、買収をしない優良企業が
+      #   静かに1会計年度ぶん古くなるのは今日どの検査器にも掛からなかった。
+      #   実測(初回): MSFT・KLAC（ともに投下可）を含む5社が1年遅れ。
+      #   **関門にはしない**——新しい10-Kが出ているのは欠陥ではなく再審査の合図で、
+      #   今日これで切ると投下可が落ちる＝「落ちるなら是正が先」の順序に反する（v9.9.95で守った順序）。
+      - name: パックの会計年度の遅れ audit_pack_stale（表示のみ・SEC問い合わせ）
+        continue-on-error: true
+        run: timeout 900 python3 night/audit_pack_stale.py --write | tail -22
+
       # ── 6. 単調性・崖（落とさない・変化を見るための台帳）──────────────────────
       - name: 単調性と崖の実測（表示のみ）
         continue-on-error: true

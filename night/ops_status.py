@@ -88,6 +88,13 @@ def build():
          "ci.yml（push/PR毎）／手動 python3 night/audit_stale_bs.py --write", True),
         # v9.9.95(2026-08-07): 納品検査のFAIL。**関門がこのJSONを読む以上、
         #   JSONの鮮度が関門の鮮度そのもの**——止まると古いFAIL表で買付を裁くことになる。
+        # 2026-08-07新設: パックより新しい年次報告が出ていないか。**既存の検査が全部すり抜ける穴**——
+        #   validate_packs の鮮度は「年」の差(3年でFAIL)、audit_stale_bs は のれんの入替のみ
+        #   ＝買収しない優良企業が静かに1会計年度ぶん古くなるのは誰も見ていなかった。
+        #   実測(初回): MSFT・KLAC（ともに投下可）を含む5社が1年遅れ。
+        ("packstale", "パックの会計年度の遅れ",  "毎営業日", 4,
+         json_field("out/pack_stale.json", "asof"),
+         "ci.yml（push/PR毎）／手動 python3 night/audit_pack_stale.py --write", True),
         ("vfail",   "納品検査FAIL表",          "毎営業日", 4,
          json_field("out/validate_fail.json", "asof"),
          "ci.yml（push/PR毎）／手動 python3 night/validate_packs.py --json", True),
