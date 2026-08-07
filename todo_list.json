@@ -522,9 +522,9 @@
   {
    "id": "irr85_unpacked7",
    "kind": "宿題",
-   "done": false,
+   "done": true,
    "title": "歴史で irr=85 と読まれたのに門2審査を一度も受けていない7社のパック化",
-   "note": "CMTL/DLB/HXL/KALU/MWA/ST/STX。7社とも門0の一次ふるいをROICで落ちており（MWA 4/7が最も近い）Ω75の見込みは低い。完全性のための作業"
+   "note": "CMTL/DLB/HXL/KALU/MWA/ST/STX。7社とも門0の一次ふるいをROICで落ちており（MWA 4/7が最も近い）Ω75の見込みは低い。完全性のための作業 ／ 2026-08-07 7社とも門2審査でパック化完了。全社が四関門の第一に届かない（最高 MWA 66.5）。irr は5社を70へ降格・HXL/STは85維持"
   },
   {
    "id": "irr85_mechanism_screen",
@@ -539,6 +539,41 @@
    "done": false,
    "title": "LRCX の sht（シェア趨勢）を測って f3 を確定させる",
    "note": "2026-08-07の再審査で f3 を 75→55 にしたのは『R&D/売上は3年で低下（12.76→10.23%）＋シェア趨勢は未測定で10-Kの market share 言及はすべて失う側』という読み。sht を fill_sht.py で測れば f3 が確定する。ただし f3=75 に戻してもΩは79.0で投下可は不変（感度測定済み）"
+  },
+  {
+   "id": "sic_cache_rebuild",
+   "kind": "宿題",
+   "done": false,
+   "title": "out/_sic_cache.json を再構築して sht（シェア趨勢）を測れるようにする",
+   "note": "2026-08-07の再審査で CTAS・ADP・MWA・新規7社のすべてで sht が測れず f3 が片肺になった。fill_sht.py は gate0_all.csv + SEC submissions の SIC を要る。既定'flat'は中立ではない（up なら pm+3・Intel警報も鳴らない）"
+  },
+  {
+   "id": "fetcher_cash_stale_mwa",
+   "kind": "宿題",
+   "done": false,
+   "title": "採取器の現金タグが古い年で終わる社を検出する（MWAで現金431.5百万$を0と読んでいた）",
+   "note": "CashAndCashEquivalentsAtCarryingValue が2021年で終了しており nde が 1.47（正しくは0.065）と出た＝絶対のルール7。CashCashEquivalentsRestrictedCash… への乗り換えを候補に足すか、年検問を掛ける"
+  },
+  {
+   "id": "fetcher_stale_year_stx",
+   "kind": "宿題",
+   "done": false,
+   "title": "採取器が古い年の値を最新として返す経路（STXで roic=FY2022・gm/ni=FY2025）",
+   "note": "BKNG型の『取れた値＝最新の値』。roicは_tcSeriesが1年しか作れないとき、gm/niは系列が最新年に届かないときに発生。年検問はあるが roic の through-cycle 経路には掛かっていない"
+  },
+  {
+   "id": "br_roic_degenerate",
+   "kind": "決断待ち",
+   "done": false,
+   "title": "BR/ADP/MSI 型——ICが総資産のごく一部まで縮退する社の縮退ガード",
+   "note": "規約のガードは『ICが自己資本の20%未満』だが、BR(IC/総資産12.4%・IC/自己資本39%)・ADP(9.6%/100%)・MSI は素通りする。対総資産の実体判定にするかは物差しの変更＝ルール1の領分"
+  },
+  {
+   "id": "ctas_unifirst",
+   "kind": "宿題",
+   "done": false,
+   "title": "CTAS の UniFirst 買収（約$5.5B）完了後に acq5 と のれんを再測定",
+   "note": "2026-03-10合併契約・FY2026期末時点で未完了。完了すれば acq5 no→yes 転換確実でのれんも大きく跳ねる＝audit_stale_bs の監視対象"
   }
  ]
 }
