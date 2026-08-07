@@ -86,8 +86,6 @@ def build():
         ("stalebs", "期末後の重大事象の検査",  "毎営業日", 4,
          json_field("out/stale_bs.json", "asof"),
          "ci.yml（push/PR毎）／手動 python3 night/audit_stale_bs.py --write", True),
-        # v9.9.95(2026-08-07): 納品検査のFAIL。**関門がこのJSONを読む以上、
-        #   JSONの鮮度が関門の鮮度そのもの**——止まると古いFAIL表で買付を裁くことになる。
         # 2026-08-07新設: パックより新しい年次報告が出ていないか。**既存の検査が全部すり抜ける穴**——
         #   validate_packs の鮮度は「年」の差(3年でFAIL)、audit_stale_bs は のれんの入替のみ
         #   ＝買収しない優良企業が静かに1会計年度ぶん古くなるのは誰も見ていなかった。
@@ -95,6 +93,15 @@ def build():
         ("packstale", "パックの会計年度の遅れ",  "毎営業日", 4,
          json_field("out/pack_stale.json", "asof"),
          "ci.yml（push/PR毎）／手動 python3 night/audit_pack_stale.py --write", True),
+        # 2026-08-07新設: WACCの既定値(無リスク金利)のズレ。**これは検出器であって適用器ではない**
+        #   ——rfrの更新はユーザーの月次ルーチン（買うリズムと選ぶリズムを分ける設計）に属する。
+        #   自動化するのは適用ではなく検出。todo_listが自ら「忘れても盤が検出できない種類」と
+        #   書いていた項目に、初めて検出器が付いた。
+        ("waccdrift", "WACC既定のズレ検出",     "月1",     40,
+         json_field("out/wacc_drift.json", "asof"),
+         "ops.yml 毎月2日／手動 python3 night/audit_wacc_stale.py --write", True),
+        # v9.9.95(2026-08-07): 納品検査のFAIL。**関門がこのJSONを読む以上、
+        #   JSONの鮮度が関門の鮮度そのもの**——止まると古いFAIL表で買付を裁くことになる。
         ("vfail",   "納品検査FAIL表",          "毎営業日", 4,
          json_field("out/validate_fail.json", "asof"),
          "ci.yml（push/PR毎）／手動 python3 night/validate_packs.py --json", True),

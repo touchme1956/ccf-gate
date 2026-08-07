@@ -55,6 +55,12 @@ jobs:
           if [ "$(date -u +%m)" = "07" ]; then python3 v10_series.py; else echo "7月以外はスキップ"; fi
       - name: 運用サイクルの回転状態を実測
         run: python3 night/ops_status.py
+      # WACCの既定値(無リスク金利)のズレ検出（2026-08-07新設・鍵不要）
+      #   値は書き換えない——rfrの更新はユーザーの月次ルーチン。自動化するのは**検出**だけ。
+      - name: WACC既定のズレ検出 audit_wacc_stale
+        continue-on-error: true
+        run: timeout 300 python3 night/audit_wacc_stale.py --write
+
       - name: コミット
         run: |
           git config user.name  "ccf-gate bot"
