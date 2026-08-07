@@ -1,12 +1,12 @@
 {
- "asof": "2026-08-05",
+ "asof": "2026-08-07",
  "items": [
   {
    "id": "market",
    "name": "株価・盤データ",
    "cadence": "毎営業日",
    "due_days": 4,
-   "last": "2026-08-05",
+   "last": "2026-08-07",
    "days": 0,
    "state": "ok",
    "how": "market.yml 21:30UTC（FINNHUB_KEY）",
@@ -17,7 +17,7 @@
    "name": "8-K・臨報監視",
    "cadence": "毎営業日",
    "due_days": 4,
-   "last": "2026-08-05",
+   "last": "2026-08-07",
    "days": 0,
    "state": "ok",
    "how": "events.yml 22:10UTC（米国は鍵不要・日本株はEDINET_API_KEY）",
@@ -29,7 +29,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-03",
-   "days": 2,
+   "days": 4,
    "state": "ok",
    "how": "market.yml（月初・snapは月次idempotent）",
    "auto": true
@@ -40,7 +40,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-04",
-   "days": 1,
+   "days": 3,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/fill_divy.py",
    "auto": true
@@ -50,8 +50,8 @@
    "name": "監視リスト生成",
    "cadence": "月1",
    "due_days": 40,
-   "last": "2026-08-05",
-   "days": 0,
+   "last": "2026-08-06",
+   "days": 1,
    "state": "ok",
    "how": "ops.yml／手動 python3 make_kanshi.py",
    "auto": true
@@ -62,7 +62,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-07-29",
-   "days": 7,
+   "days": 9,
    "state": "ok",
    "how": "ops.yml／手動 python kessan_calendar.py",
    "auto": true
@@ -73,7 +73,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-05",
-   "days": 0,
+   "days": 2,
    "state": "ok",
    "how": "ops.yml／手動 python x_watch_recalc.py",
    "auto": true
@@ -84,7 +84,7 @@
    "cadence": "四半期",
    "due_days": 100,
    "last": "2026-08-05",
-   "days": 0,
+   "days": 2,
    "state": "ok",
    "how": "ops.yml（月次で先回り）／手動 python kessan_check.py",
    "auto": true
@@ -95,7 +95,7 @@
    "cadence": "四半期",
    "due_days": 100,
    "last": "2026-08-03",
-   "days": 2,
+   "days": 4,
    "state": "ok",
    "how": "ops.yml（EDINET_API_KEYをSecretsに置けば自動）／手動 python3 kessan_check_jp.py",
    "auto": "key"
@@ -106,7 +106,7 @@
    "cadence": "年1(7月)",
    "due_days": 430,
    "last": "2026-08-04",
-   "days": 1,
+   "days": 3,
    "state": "ok",
    "how": "ops.yml（7月）／手動 python3 v10_series.py",
    "auto": true
@@ -117,7 +117,7 @@
    "cadence": "年1(7月)",
    "due_days": 430,
    "last": "2026-08-05",
-   "days": 0,
+   "days": 2,
    "state": "ok",
    "how": "python calibration_check.py——v9/v10の勝敗判定はユーザーの判断（V10_SPEC）",
    "auto": false
@@ -128,7 +128,7 @@
    "cadence": "年1(1-2月)",
    "due_days": 430,
    "last": "2026-07-29",
-   "days": 7,
+   "days": 9,
    "state": "ok",
    "how": "python run_gate0_local.py（companyfacts.zip 1.4GB＝CI外）",
    "auto": false
@@ -139,7 +139,7 @@
    "cadence": "年1",
    "due_days": 430,
    "last": "2026-08-03",
-   "days": 2,
+   "days": 4,
    "state": "ok",
    "how": "python3 night/rebuild_gate0_jp.py --write（rerankは旧世代＝封鎖済み）",
    "auto": false
@@ -150,7 +150,7 @@
    "cadence": "年1",
    "due_days": 430,
    "last": "2026-08-05",
-   "days": 0,
+   "days": 2,
    "state": "ok",
    "how": "python3 night/backtest_core.py",
    "auto": false
@@ -158,7 +158,7 @@
  ],
  "todos": {
   "note": "スケジュールに乗せた『人のやるべきこと』の正本（2026-08-04新設）。回転盤(ops_status)が測るのは機械の周期作業だけで、宿題・決断待ち・機械で測れない定期ルーチンはここに載る。🔔イベントタブが表示する。完了したら done:true にする（消さない——やった記録も資産）。追加・完了はClaudeに頼めばよい",
-  "updated": "2026-08-05",
+  "updated": "2026-08-06",
   "items": [
    {
     "id": "edinet_key",
@@ -284,6 +284,110 @@
     "title": "年次較正に『堀の毀損予実KPI』を追記",
     "due": "2027-07",
     "note": "v9/v10勝敗(rank-AUC)は定義済みだが、堀指数そのものが恒久毀損を事前に分けるかのKPIが未定義。歴史の基礎率6%に対し『堀70+群vs70未満群の毀損率(DD>60%・上場廃止)』を予実台帳の価格追跡で測る——snapがomega/moat/px/exitを保存済みなので材料は自動で貯まる。定義をV10_SPEC/較正手順へ書くだけ"
+   },
+   {
+    "id": "gate0_fye_rerun",
+    "kind": "宿題",
+    "title": "門0を修正版で再実行し、母集団に復活する社を取り込む",
+    "due": null,
+    "note": "gate0_v8_5.py の決算日の錨のバグを2026-08-06に是正した（採用した売上系列のタグから作る）。RBC Bearingsが母集団2,902社に一行も無かったのが発端。影響範囲は night/audit_gate0_fye.py が全社スキャンで数える。次の年次発掘（1-2月）で `python run_gate0_local.py` を回せば自然に反映されるが、復活社が多ければ前倒しで回す価値がある",
+    "done": false
+   },
+   {
+    "id": "disrupt_blank_12",
+    "kind": "宿題",
+    "title": "irr85由来12社の disrupt 空欄10社を原本で埋める",
+    "due": null,
+    "note": "2026-08-05にパック化した12社（AEIS/BWXT/COHR/ENTG/IPGP/MKSI/NOVT/NXPI/OLED/RBC/ROG/WST）のうち10社で disrupt を空欄にした。10-Kの技術変化リスクが一般形で名指しの破壊要因を確認できなかったため。**門は空欄を最良ケース(settled)で裁くのでこの空欄は有利側に働く**（RELXの教訓）。12社ともΩ75未満なので買付への実害は無いが、作業リストとして残す",
+    "done": false
+   },
+   {
+    "id": "oled_dep",
+    "kind": "宿題",
+    "title": "OLED(Universal Display)の dep を確定させる",
+    "due": null,
+    "note": "10-Kは BOE・LG Display・SDC の3社それぞれが売上10%超・合計で過半と開示するが**個別の実数が無い**ため数値を置けず空欄。実態は40%(ベト線)を超える可能性があるので、次に確定させるべき筆頭の欄。説明会資料・第三者の市場表を当たる",
+    "done": false
+   },
+   {
+    "id": "irr_mech_next_vintage",
+    "kind": "決断待ち",
+    "title": "堀に『認定するのが誰か(mech)』を記録するか",
+    "due": null,
+    "note": "2013+2015の実測で、恒久毀損した唯一の社(CMTL・元本0.08倍)を止めたのは『認定するのが第三者か(mech≠B設計組込)』だけだった（質実証は素通り）。この群は元本割れ0・恒久毀損0だがn=9で、95%上端は約30%＝真のゼロではない。**規約に入れるなら別ビンテージでの確認が先**。採点式・刻み・関門はいずれも触っていない（絶対のルール1）",
+    "done": false
+   },
+   {
+    "id": "irr85_power",
+    "kind": "決断待ち",
+    "title": "irr=85 の追試を検出力の足りる規模でやり直すか",
+    "due": null,
+    "note": "2013は合格(n=6・P=0.667)、2015はPとliftが基準を満たすのに n=4 で『5社以上』に1社届かず検出力不足＝部分再現。**irr=85は母集団の1〜3%しか出ない稀なラベル**なので、検出力を得るには質実証プールを厚くするしかない（1ビンテージあたり300-400社の読解が必要）。やる価値があるかはユーザーの判断",
+    "done": false
+   },
+   {
+    "id": "irr85_ledger_done",
+    "kind": "宿題",
+    "title": "台帳のirr=85を全数検算（53社→11社）",
+    "due": null,
+    "note": "2026-08-06完了。判定圏外46社に『顧客の側が再認定をやり直すか』の試験を当て、85維持4(LRCX/TDG/LOAR/BWXT)・100へ5(YORW/MSEX/WTRG/NEE/D)・70へ37。Ω最大−3.6・線跨ぎ0社・投下可10社不変。詳細はCLAUDE.mdの専用節",
+    "done": true
+   },
+   {
+    "id": "irr100_6920",
+    "kind": "宿題",
+    "title": "6920レーザーテックの irr=100 に原本引用を刻む",
+    "due": null,
+    "note": "**2026-08-06完了**: irr 100→70。有報FY2025を実読したが【事業の内容】に唯一供給の記述ゼロ、【事業等のリスク】は逆に競合の先行リスクを明記。旧根拠は業界知識の主張であって有報の引用ではなかった。堀78.2→70.4（関門は通過のまま・門X遮断器で既に落ちており判定不変）。説明会資料に唯一供給の明示があれば再判定の扉は開いている",
+    "done": true
+   },
+   {
+    "id": "fico_irr_fhfa",
+    "kind": "宿題",
+    "title": "FICOのirrをFHFA/GSE一次資料で再判定できるか",
+    "due": null,
+    "note": "2026-08-06に10-K全文で機構文が無く85→70。ただしFICOスコアはGSE要件に組み込まれており、貸し手がVantageScoreへ移るにはモデルの再検証が要る＝C型の証拠になりうる。10-K外の一次資料（FHFAの信用スコア要件・移行スケジュール）に当たる価値がある",
+    "done": false
+   },
+   {
+    "id": "moat_rep_dur_audit",
+    "kind": "宿題",
+    "title": "rep(.20)とdur(.12)を判定圏で原本検算する",
+    "due": null,
+    "note": "**2026-08-06完了**: 判定圏46社の根拠の穴は11社→0社。dur=85(ネットワーク効果)の誤用5社(CTAS/ETN/HUBB/PH/TT)→75、rep=80が自社10-Kと矛盾2社(HUBB/8136)→60、dom空欄化2社(ETN/AFYA)、ETNのmoatW空欄→85を充填。HUBB・PHが関門70を割った。投下可10社は不変。判定圏外(全362社の被覆 rep 66.6%/dur 67.2%)は未着手＝社がΩ72を越えたときに効く",
+    "done": true
+   },
+   {
+    "id": "moat_dep_judgment",
+    "kind": "宿題",
+    "title": "判定圏46社のdep(存続級依存)を埋める",
+    "due": null,
+    "note": "**2026-08-06完了**: 判定圏 0社→45/46社。CW=47で**ベトが初めて実際に該当**（米国政府47%・BWXT68と同型＝要判断は据置）。6920=33.3（FY2020はTSMC単独42.0%＝年によって40を跨ぐ）。投下可の最大はASML24%。GRNDだけ空欄——Apple/Google2社合計で『substantially all』の決済依存だが単一相手の売上%が開示されず、**depの定義(単一の取引相手への売上依存%)がこの型を構造的に捕まえられない**＝規約の穴として_meta.nullsへ記録",
+    "done": true
+   },
+   {
+    "id": "irr100_double_count",
+    "kind": "決断待ち",
+    "title": "領域独占が irr と dom の両方で数えられる（重み.50が一つの事実から）",
+    "due": null,
+    "note": "2026-08-06の堀精査で検出。D/NEE/WTRG/YORW/MSEXはirr=100(唯一供給)なのにdom=70(根拠空)で、同じ排他的フランチャイズが二つの欄で違うことを言っている。domを整合させると5社とも堀75.1で関門通過。追試でirr=100が最下位(P=0.056・公益が大半)だったのは、刻みの順序ではなく二重計上が原因の可能性。規約の改定はルール1の領分＝値は触っていない",
+    "done": false
+   },
+   {
+    "id": "moat_dom_blank_dep",
+    "kind": "決断待ち",
+    "title": "投下可の4社(IRMD/RMD/6146/ADBE)がdom空欄の下駄で関門を通っている",
+    "due": null,
+    "note": "2026-08-06計測。空欄の再正規化は『domは他4本の加重平均』と仮定するのと同一で下駄は平均+7.2pt。関門通過が空欄依存の社は10社（2026-08-04は投下可3社→今日のirr是正で4社へ増加）。4社とも『掘り尽くして確定できないと確定した』二重確認つき空欄だが、構造としては測らないほうが有利。node night/audit_dom_blank.js で再計測できる",
+    "done": false
+   },
+   {
+    "id": "dep_platform_gap",
+    "kind": "決断待ち",
+    "title": "depの定義が『二つのプラットフォーム合計』型の依存を捕まえられない",
+    "due": null,
+    "note": "2026-08-06のdep全数充填で発見。GRNDは10-Kが『Apple App Store and Google Play Store … as the channels for processing substantially all direct consumer payments』と書き、3ベンダーが売上原価の59.3/15.3/15.0%を占めるが、(i)ベンダー名非開示 (ii)分母が売上でなく売上原価 (iii)単独の売上%が無い。depは『単一の取引相手への売上依存%』なのでベトが構造的に発火しない——歴史検証でTRIPを殺したGoogle流入依存と同じ型。規約の改定はルール1の領分",
+    "done": false
    }
   ]
  },
