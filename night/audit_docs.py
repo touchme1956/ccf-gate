@@ -77,6 +77,12 @@ def read_code_facts(h):
     m = re.search(r'const P\s*=\s*gm\(\[[^\]]+\],\[([\d.,\s]+)\]\)', h)
     f['p_weights'] = [float(x) for x in m.group(1).split(',')] if m else None
 
+    # 持続の二本柱の重み。**本文が「MOAT > ROIC」と語れるのはここが pm>pr のときだけ**。
+    #   2026-08-07の精査で、見出し2箇所が「MOAT > ROIC」なのに実装は 47.5 : 52.5（ROICの方が重い）
+    #   という矛盾が見つかった。数値は grep で追えるが、**大小関係の主張**は追えなかったので検査に足す。
+    m2 = re.search(r'sustain\s*=\s*gm\(\[pm,pr\],\[([\d.]+),\s*([\d.]+)\]\)', h)
+    f['pillar_weights'] = (float(m2.group(1)), float(m2.group(2))) if m2 else None
+
     m = re.search(r'function ccfAllocScore\(c\)\{(.*?)\n\}', h, re.S)
     f['alloc_src'] = m.group(1) if m else ''
     f['alloc_uses_er'] = bool(m and 'erP' in m.group(1))
@@ -249,6 +255,34 @@ def check(h, f):
         if bad:
             out.append(('FAIL', 'alloc_seats',
                         '投下可の枠数が本文とコードで食い違う（コード maxN=%d）' % f['alloc_n'], bad))
+
+    # ⑧ 二本柱の大小関係の主張が、実装の重みと食い違う（2026-08-07新設）
+    #    実害: 見出し「★ 持続の二本柱 ― MOAT > ROIC」が2箇所あったが、実装は pm .475 / pr .525
+    #    ＝ROICのほうが重い。数値の grep では捕まらない「大小関係」の型。
+    if f.get('pillar_weights'):
+        pm, pr = f['pillar_weights']
+        if pm <= pr:
+            hits = prose_hits(r'MOAT\s*(?:&gt;|＞|>)\s*ROIC')
+            if hits:
+                out.append(('FAIL', 'pillar_order',
+                            'MOAT>ROIC と書いてあるが実装の重みは MOAT %.3f ≤ ROIC %.3f' % (pm, pr), hits))
+        if pr <= pm:
+            hits = prose_hits(r'ROIC\s*(?:&gt;|＞|>)\s*MOAT')
+            if hits:
+                out.append(('FAIL', 'pillar_order',
+                            'ROIC>MOAT と書いてあるが実装の重みは ROIC %.3f ≤ MOAT %.3f' % (pr, pm), hits))
+
+    # ⑨ 堀が「格下げ・保険」と説明されているのに、実装では四段関門の一つ（2026-08-07新設）
+    #    実害: 冒頭の一文と柱の副題が「MOATは陳腐化保険へ格下げ」のまま残っていた。
+    #    v9.9.36で堀はΩの直接項(.13)になり、v9.9.39で絶対MOAT指数70+が関門になっている。
+    #    **概念の主張はどの数値 grep にも掛からない**ので、語そのものを見張る。
+    if f.get('moat_gate') and f.get('omega_weights') and len(f['omega_weights']) == 4:
+        hits = prose_hits(r'MOATは陳腐化保険|MOAT.{0,12}保険へ格下げ|陳腐化保険へ格下げ')
+        if hits:
+            out.append(('FAIL', 'moat_demoted',
+                        '堀を「陳腐化保険へ格下げ」と説明しているが、実装では Ω の直接項(%.2f)かつ'
+                        '関門(絶対MOAT指数%d+)＝格下げされていない'
+                        % (f['omega_weights'][3], f['moat_gate']), hits))
 
     return out
 
