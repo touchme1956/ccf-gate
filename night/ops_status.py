@@ -80,6 +80,12 @@ def build():
         ("divy",    "配当分離(divY)",          "月1",     40,
          json_field("out/divy.json", "asof"),
          "ops.yml 毎月2日／手動 python3 night/fill_divy.py", True),
+        # v9.9.94(2026-08-06): 期末後の重大事象の検査。**回っているかを盤で見張る**——
+        #   この検査が黙って止まると「パックが会社の現在を描いていない」銘柄が
+        #   何食わぬ顔で投下可に戻る（APHがまさにその状態で資産の6.3%を受けていた）。
+        ("stalebs", "期末後の重大事象の検査",  "毎営業日", 4,
+         json_field("out/stale_bs.json", "asof"),
+         "ci.yml（push/PR毎）／手動 python3 night/audit_stale_bs.py --write", True),
         ("kanshi",  "監視リスト生成",          "月1",     40,
          git_date("kanshi_list.json"),
          "ops.yml／手動 python3 make_kanshi.py", True),

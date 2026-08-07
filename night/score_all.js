@@ -159,6 +159,26 @@ for (const kv of (arg('--set') || '').split(',').filter(Boolean)) {
   if (k) over[k.trim()] = v === '' || v === undefined ? null : (isNaN(+v) ? v : +v);
 }
 
+// ── 期末後の重大事象で貸借対照表が古いパック（v9.9.94・2026-08-06新設）─────────
+//   night/audit_stale_bs.py が出す作業リストを読み、**第四の関門(点検)の一部として買付を止める**。
+//   なぜ点検の側に置くか: これは「Ωが低い」でも「堀が薄い」でもなく、
+//   **台帳の値が会社の現在を描いていない**というデータ健全性の問題だから——
+//   v9.9.66 が「取込で化けた/内部矛盾/不可能値を持つ銘柄は Ω がどれだけ高くても買わない」と
+//   決めたのとまったく同じ理由。**買わない理由であって売る理由ではない**（Ω・売却規律は不変）。
+//   【発端】2026-08-06、roicGapの崖を段階減点にした帰結でAPHが投下可へ入り資産の6.3%を受けたが、
+//   パックのreportDateは2025-12-31で、CommScope買収(約105億$・同社史上最大)の完了は**その9日後**。
+//   のれんは10,575→17,555百万$(+66%)、のれん＋無形は自己資本の96%→147%へ。
+//   既存の鮮度検査は reportDate と auditDate の「年」しか見ないので**同じ年のこれは素通り**だった。
+//   ファイルが無ければ空＝検査は眠るだけ（無いことを「異常なし」と偽らない・絶対のルール7）。
+let STALE = {};
+try {
+  const sp = path.join(ROOT, 'out', 'stale_bs.json');
+  if (fs.existsSync(sp)) {
+    const j = JSON.parse(fs.readFileSync(sp, 'utf8'));
+    for (const [k, v] of Object.entries(j.items || {})) if (v && v.verdict === '要審査') STALE[k] = v;
+  }
+} catch (e) {}
+
 const rows = [];
 for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
   if (!f.endsWith('_gate_pack.json')) continue;
@@ -197,7 +217,9 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               moatMiss: (r.moatMiss && r.moatMiss.length) ? r.moatMiss : undefined,
               xEr: x.xEr == null ? null : +x.xEr.toFixed(1), xPass: x.xPass,
               audE, audU, audOK: audE === 0 && audU === 0,
-              buy: s >= 75 && x.xPass === true && mg.pass === true && audE === 0 && audU === 0 });
+              staleBS: STALE[t] ? STALE[t].newPct : undefined,
+              buy: s >= 75 && x.xPass === true && mg.pass === true && audE === 0 && audU === 0
+                   && !STALE[t] });
 }
 rows.sort((a, b) => b.s - a.s);
 // v9.9.88(2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」): 第五の枠。
@@ -242,7 +264,11 @@ for (const r of q75) {
     + `  ${r.buy ? '🟢投下可' : r.quali ? '🔵次点(11位以下)' : !r.moatOK ? '⛔堀不足' : !r.audOK ? '⛔点検要修正' : '🟡押し目待ち'}  出口=${r.exit}`);
 }
 // v9.9.91: ロスターの並びは**配分と同じ合成点順**（旧Ω順は「合成点上位10社」と名乗りながらΩで並べていた）
-const _ascore = x => { const e = (x.xEr == null ? 2 : x.xEr); return Math.max(0, (x.s || 0) - 70) * Math.max(0, Math.min(100, 50 + (e - 12) * 5)) / 50; };
+// v9.9.94(2026-08-06): ここに合成点を**書き写していた**のをやめ、門の単一実装 ccfAllocScore を呼ぶ。
+//   実害: v9.9.93 で配分の錨を (Ω−70)→Ω へ変えたとき、ccfAllocScore は直したのに
+//   **この写しだけが錨70のまま取り残された**——席の選定(ccfAllocTop)と表示の並びが違う式で動いていた。
+//   v9.9.65「同じ台帳を見る二つの検査器が違うことを言ってはいけない」を、写しを作ったせいで自分で破っていた。
+const _ascore = x => ccfAllocScore(x);
 const buy = rows.filter(x => x.buy).sort((a, b) => _ascore(b) - _ascore(a) || b.s - a.s);
 const nextUp = rows.filter(x => x.quali && !x.buy).sort((a, b) => _ascore(b) - _ascore(a) || b.s - a.s);
 console.log(`\n🟢投下可(四段関門∧合成点上位10社・v9.9.88) ${buy.length}社`
@@ -251,5 +277,14 @@ console.log(`\n🟢投下可(四段関門∧合成点上位10社・v9.9.88) ${bu
 if (nextUp.length) console.log(`🔵次点(四段通過・合成点11位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
 console.log(`⛔堀不足で見送り(Ω75+だが堀が関門に届かない) ${q75.filter(x => !x.moatOK).length}社`);
 console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告あり) ${q75.filter(x => x.moatOK && !x.audOK).length}社`);
+// 期末後の重大事象で落ちた社は**必ず名指しで出す**。黙って消えると v9.9.52
+// 「城の行が理由不明で出ない」と同じ事故になる（四段関門を通っているのに枠から消えるので、
+//  理由を書かないと「なぜ居ないのか」が誰にも分からない）。
+{
+  const st = rows.filter(x => x.staleBS != null && x.s >= 75);
+  console.log(`⛔期末後の重大事象で見送り(貸借対照表がパックのreportDate以降に大きく変わった) ${st.length}社`);
+  for (const r of st) console.log(`     ${r.nm.split(/\s/)[0]}  Ω${r.s.toFixed(1)}  のれんの${r.staleBS}%がreportDate以降に流入`
+    + `　→ night/audit_stale_bs.py の作業リスト。最新四半期で再審査すれば復帰しうる`);
+}
 console.log(`   ※全${rows.length}社: 要修正 ${rows.reduce((a,x)=>a+x.audE,0)}件 / 未解決警告 ${rows.reduce((a,x)=>a+x.audU,0)}件`);
 console.log(`\n→ out/${outFile}（全${rows.length}件・降順）`+ (partial ? '　※部分実行なので正本 score_all.json は書き換えていない' : ''));
