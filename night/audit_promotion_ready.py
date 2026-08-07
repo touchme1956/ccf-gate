@@ -84,12 +84,28 @@ def main():
               f"{'  ' + ' / '.join(f) if f else ''}")
 
     fn = validate([r["t"] for r in nxt])
-    print(f"\n── 🔵次点 {len(nxt)}社 ── 落とさない。**次に席が空いたら上から入る**")
+    print(f"\n── 🔵次点 {len(nxt)}社 ── **次に席が空いたら上から入る**")
     for i, r in enumerate(nxt, 1):
         f = fn.get(r["t"], [])
-        head = f"   {'⚠' if f else '✓'} {i}位 {r['t']:<7}Ω{r['s']:>5.1f}  合成{r.get('a', 0):>7.2f}"
-        print(head)
+        print(f"   {'⚠' if f else '✓'} {i}位 {r['t']:<7}Ω{r['s']:>5.1f}  合成{r.get('a', 0):>7.2f}")
         for line in f:
+            print(f"        {line}")
+
+    # ── v9.9.95 以降、納品検査FAILは第四の関門そのものなので、FAILを持つ社は quali を失う。
+    #   すると**作業リストが「落ちている社」の山に埋もれて見えなくなる**ので、
+    #   「根拠さえ埋めれば資格を得る社」だけを合成点順に切り出す＝ここが本当の作業リスト。
+    ready = [r for r in rows
+             if (r.get("s") or 0) >= 75 and r.get("xPass") is True and r.get("moatOK") is True
+             and (r.get("audE") or 0) == 0 and (r.get("audU") or 0) == 0
+             and r.get("staleBS") is None and (r.get("vFail") or 0) > 0]
+    ready.sort(key=lambda r: -(r.get("a") or 0))
+    fr = validate([r["t"] for r in ready])
+    print(f"\n── 🔧 根拠さえ埋めれば資格を得る {len(ready)}社 ── "
+          f"**ここが作業リスト。上から潰すと繰り上がりの不意打ちが消える**")
+    for i, r in enumerate(ready, 1):
+        print(f"   {i}. {r['t']:<7}Ω{r['s']:>5.1f}  合成{r.get('a', 0):>7.2f}"
+              f"（埋めれば次点 {len(nxt) + i} 位相当）")
+        for line in fr.get(r["t"], []):
             print(f"        {line}")
 
     if BAND:
@@ -106,16 +122,17 @@ def main():
                   f"{'FAIL ' + str(len(f)) + '件' if f else ''}")
 
     nb, nn = len(fb), len(fn)
-    print(f"\n■ 結果: 投下可 FAIL {nb}社 ／ 次点 FAIL {nn}社")
-    if nb:
-        print("✗ **投下可に根拠なき値がある**。買付の直前に必ず潰すこと"
-              "（門はパックの _meta を読めないので、この関門は端末にしか無い）")
+    print(f"\n■ 結果: 投下可 FAIL {nb}社 ／ 次点 FAIL {nn}社 ／ 根拠待ち {len(ready)}社")
+    if nb or nn:
+        # v9.9.95 で関門にしたので、ここが鳴るのは **out/validate_fail.json が古い** ときだけ。
+        # 関門が JSON を読む以上、JSON の鮮度が関門の鮮度そのものになる。
+        print("✗ 関門を通っている社に FAIL がある＝ out/validate_fail.json が古い。"
+              "`python3 night/validate_packs.py --json` を回してから score_all を回すこと")
         return 1
-    if nn:
-        names = " ".join(t for t in (r["t"] for r in nxt) if t in fn)
-        print(f"::warning::次点に FAIL: {names} ——"
-              f" 席が空くとこの順で入るので、上から先に潰すと7回目の不意打ちが無くなる")
-    print("✓ 投下可は根拠の穴ゼロ")
+    if ready:
+        print(f"::warning::根拠さえ埋めれば資格を得る: {' '.join(r['t'] for r in ready)} ——"
+              f" 合成点順＝繰り上がる順。上から潰すと不意打ちが消える")
+    print("✓ 投下可・次点ともに根拠の穴ゼロ")
     return 0
 
 

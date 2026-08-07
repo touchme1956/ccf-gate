@@ -243,9 +243,21 @@ def check(path):
 
 
 def main():
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
     summary = "--summary" in sys.argv
     new_only = "--new" in sys.argv
+    # --json [path]: FAIL を機械可読で吐く（第四の関門が読む・v9.9.95）。
+    #   判定の正本はこの check() のまま＝門も score_all も再実装せずここの結論を読む（v9.9.65の掟）。
+    #   出力先は**パスに見えるときだけ**次の語を採る。「--で始まらなければパス」と素朴に書くと
+    #   `--json MSI` の MSI をパスと読む（実際に自分で踏んだ）。採ったパスは位置引数から外す。
+    emit, emit_path_arg = None, None
+    if "--json" in sys.argv:
+        i = sys.argv.index("--json")
+        nxt = sys.argv[i + 1] if len(sys.argv) > i + 1 else ""
+        if nxt.endswith(".json") or "/" in nxt:
+            emit = emit_path_arg = nxt
+        else:
+            emit = os.path.join("out", "validate_fail.json")
+    args = [a for a in sys.argv[1:] if not a.startswith("--") and a != emit_path_arg]
 
     paths = []
     for f in sorted(os.listdir("out")):
@@ -268,6 +280,7 @@ def main():
         return 0
 
     nf = nw = bad = 0
+    items = {}
     for p in paths:
         fails, warns = check(p)
         code = os.path.basename(p).split("_gate_pack")[0]
@@ -275,6 +288,7 @@ def main():
         nw += len(warns)
         if fails:
             bad += 1
+            items[code] = {"n": len(fails), "fails": fails}
         if summary:
             continue
         if fails:
@@ -287,6 +301,26 @@ def main():
             print(f"✓ {code}")
         for x in warns:
             print(f"    warn {x}")
+
+    if emit:
+        # 全パックを検査したときだけ正本を書く。**部分実行で正本を潰さない**
+        #   ——score_all.js が `--jp/--us` で out/score_all.json を約40行に縮めた事故
+        #   （2026-08-04の全コード監査 A-系）と同型を、ここで先回りして塞ぐ。
+        if args or new_only:
+            print(f"（部分実行なので {emit} は書かない。全件で回すこと）")
+        else:
+            json.dump({"asof": str(date.today()),
+                       "rule": "納品検査(validate_packs)のFAIL。第四の関門が読む",
+                       "items": items},
+                      open(emit, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+            print(f"→ {emit} を更新（FAILを持つ {len(items)}社）")
+            # **出力器として回したときは FAIL を終了コードにしない。**
+            #   納品検査としての exit 1 は「この納品を差し戻す」という意味だが、
+            #   全台帳の FAIL は既知の積み残し（283社）なので、そこで落とすと CI が常時赤
+            #   ＝鳴りすぎる警報は鳴らないのと同じ。**落とす仕事は第四の関門が引き受けた**
+            #   （投下可・次点に FAIL があれば audit_promotion_ready が落とす）。
+            print(f"検査 {len(paths)}件 / 致命を持つパック {bad}件（FAIL {nf}件 / warn {nw}件）")
+            return 0
 
     print(f"\n検査 {len(paths)}件 / 致命を持つパック {bad}件（FAIL {nf}件 / warn {nw}件）")
     if bad:

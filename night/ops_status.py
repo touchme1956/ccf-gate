@@ -86,6 +86,11 @@ def build():
         ("stalebs", "期末後の重大事象の検査",  "毎営業日", 4,
          json_field("out/stale_bs.json", "asof"),
          "ci.yml（push/PR毎）／手動 python3 night/audit_stale_bs.py --write", True),
+        # v9.9.95(2026-08-07): 納品検査のFAIL。**関門がこのJSONを読む以上、
+        #   JSONの鮮度が関門の鮮度そのもの**——止まると古いFAIL表で買付を裁くことになる。
+        ("vfail",   "納品検査FAIL表",          "毎営業日", 4,
+         json_field("out/validate_fail.json", "asof"),
+         "ci.yml（push/PR毎）／手動 python3 night/validate_packs.py --json", True),
         ("kanshi",  "監視リスト生成",          "月1",     40,
          git_date("kanshi_list.json"),
          "ops.yml／手動 python3 make_kanshi.py", True),

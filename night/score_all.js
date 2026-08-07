@@ -179,6 +179,28 @@ try {
   }
 } catch (e) {}
 
+// ── 納品検査(validate_packs)のFAILも第四の関門に入れる（v9.9.95・2026-08-07 ユーザー指示「いるとおもうなら入れて」）
+//   【なぜ入れるか】FAILの運用単位が「投下可10社」だったので、10番目の席が動くたびに
+//   **投下可の厳しさで監査されたことのないパックが席に着いてから初めて検査される**という
+//   順序になっていた。2026-08-06 だけで6回連続（ECL→ISRG→IDXX→APH→CDNS→MCO）、
+//   うち2社は誤値そのものが出て脱落した（ISRG roic 19.6→12.8 ／ CDNS f1=80 が根拠ゼロ→55）。
+//   関門にすれば**根拠に穴のあるパックは構造的に席に着けない**＝不意打ちが原理的に消える。
+//   【なぜ今日入れてよいか】投下可10社のFAILは**ゼロ**なので今日は誰も落ちない＝純粋なラチェット。
+//   落ちるなら規則の追加ではなく現状の是正が先、という順序を守れている。
+//   【第五の関門と呼ばない】これは「値が壊れている／根拠が無い」というデータ健全性の検査で、
+//   第四の関門（点検・期末後の重大事象）とまったく同じ種類。**四段関門の呼称は不変**
+//   ——名前を増やすと本文16箇所の書き換えが要り、この repo が繰り返している
+//   「規則を変えたら文も全部grepで洗う」の取りこぼしを自分で作ることになる。
+//   **買わない理由であって売る理由ではない**（Ω・堀・売却規律S1/S2/S3はいずれも不変）。
+let VFAIL = {};
+try {
+  const vp = path.join(ROOT, 'out', 'validate_fail.json');
+  if (fs.existsSync(vp)) {
+    const j = JSON.parse(fs.readFileSync(vp, 'utf8'));
+    for (const [k, v] of Object.entries(j.items || {})) if (v && (v.n || 0) > 0) VFAIL[k] = v;
+  }
+} catch (e) {}
+
 const rows = [];
 for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
   if (!f.endsWith('_gate_pack.json')) continue;
@@ -218,8 +240,9 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               xEr: x.xEr == null ? null : +x.xEr.toFixed(1), xPass: x.xPass,
               audE, audU, audOK: audE === 0 && audU === 0,
               staleBS: STALE[t] ? STALE[t].newPct : undefined,
+              vFail: VFAIL[t] ? VFAIL[t].n : undefined,
               buy: s >= 75 && x.xPass === true && mg.pass === true && audE === 0 && audU === 0
-                   && !STALE[t] });
+                   && !STALE[t] && !VFAIL[t] });
 }
 rows.sort((a, b) => b.s - a.s);
 // v9.9.88(2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」): 第五の枠。
@@ -257,6 +280,19 @@ if (Object.keys(over).length) console.log('上書き:', over, '\n');
 brief('全体', rows);
 brief('日本株', rows.filter(x => x.jp));
 brief('米国等', rows.filter(x => !x.jp));
+// 落ちた理由は**全部**出す（v9.9.52「城の行が理由不明で出ない」の教訓）。
+//   一つだけ出すと、二つ以上の関門に落ちている社で**残りが見えなくなる**——
+//   実測 6920 は E[r]−22% と納品検査FAIL の両方だが、単一表示では後者しか出ず
+//   「根拠さえ埋めれば買える」と読めてしまう（実際は遮断器で止まっている）。
+const blockers = r => {
+  const b = [];
+  if (!r.moatOK) b.push('⛔堀不足');
+  if (r.xPass !== true) b.push('🟡押し目待ち');
+  if (!r.audOK) b.push('⛔点検要修正');
+  if (r.staleBS != null) b.push('⛔期末後の重大事象');
+  if (r.vFail) b.push(`⛔納品検査FAIL${r.vFail}`);
+  return b.length ? b : ['—'];
+};
 const q75 = rows.filter(x => x.s >= 75);
 console.log('\nΩ75+（堀＝絶対MOAT指数／X＝門X4条件／点＝全件点検／買＝四段関門すべて成立）:');
 for (const r of q75) {
@@ -265,7 +301,7 @@ for (const r of q75) {
   console.log(`  ${r.nm.slice(0, 24).padEnd(26)} Ω${r.s.toFixed(1).padStart(5)}  堀${moat}${r.moatOK ? '✓' : '✗'}`
     + `  E[r]${r.xEr == null ? '  na' : r.xEr.toFixed(0).padStart(4) + '%'}${r.xPass ? '✓' : '✗'}`
     + `  点${aud}`
-    + `  ${r.buy ? '🟢投下可' : r.quali ? '🔵次点(11位以下)' : !r.moatOK ? '⛔堀不足' : !r.audOK ? '⛔点検要修正' : '🟡押し目待ち'}  出口=${r.exit}`);
+    + `  ${r.buy ? '🟢投下可' : r.quali ? '🔵次点(11位以下)' : blockers(r).join('＋')}  出口=${r.exit}`);
 }
 // v9.9.91: ロスターの並びは**配分と同じ合成点順**（旧Ω順は「合成点上位10社」と名乗りながらΩで並べていた）
 // v9.9.94(2026-08-06): ここに合成点を**書き写していた**のをやめ、門の単一実装 ccfAllocScore を呼ぶ。

@@ -86,6 +86,13 @@ jobs:
       - name: 説明とコードの齟齬 audit_docs
         run: python3 night/audit_docs.py
 
+      # ── 2-b. 納品検査のFAIL表を作り直す（v9.9.95）────────────────────────────
+      #   **score_all より先**でなければならない——第四の関門がこのJSONを読むので、
+      #   古い表のまま採点すると「関門は通っているのに根拠が無い」社が投下可に出る。
+      #   ネットワーク不要・全362件で0.4秒。
+      - name: 納品検査FAIL表の再生成 validate_packs --json
+        run: python3 night/validate_packs.py --json --summary | tail -4
+
       # ── 3. 門を実際に走らせる（compute() をDOMシムで実行＝再実装ではない）──────
       - name: 全パック採点 score_all
         run: node night/score_all.js
