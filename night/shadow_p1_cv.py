@@ -106,7 +106,7 @@ def main():
 
     # --- 門そのものでΩ・投下可の変化を実測 ---
     newp1 = {r["t"]: r["cv_g"] for r in rows}
-    # B5(2026-08-04): buy は score_all.js と同じ**四段関門**（Ω75+ ∧ 門X ∧ 堀 ∧ 点検=要修正0かつ未解決warn0）。
+    # B5(2026-08-04): buy は score_all.js と同じ**三関門**（Ω75+ ∧ 堀 ∧ 点検=要修正0かつ未解決warn0）。
     #   従来ここだけ三段関門のままで、score_all と逆のことを言えた（v9.9.65「同じ台帳を見る二つの
     #   検査器が違うことを言ってはいけない」違反）。coerce も門と同じく ccfAudit へ渡す（B4）。
     js = ("const {scorePack,lastCoerce}=require('%s/night/score_all.js');const fs=require('fs');"

@@ -12,7 +12,7 @@ night/audit_promotion_ready.py — **繰り上がる前に、繰り上がる社�
   **未監査の社が買付の席に着いてから初めて検査される**という順序の問題だった。
 
   一方「判定圏(Ω72+)49社を全部同じ厳しさで」は単位が大きすぎる。実測すると——
-  四段関門を通っているのは **17社だけ**で、残り32社は堀不足・E[r]<0・点検要修正で
+  三関門を通っているのは **17社だけ**で、残り32社は堀不足・E[r]<0・点検要修正で
   落ちており、根拠を全部埋めても投下可には来ない。**危ないのは次点だけ。**
 
 何をするか（二層。第四の関門と同じ作法）:
@@ -72,7 +72,7 @@ def main():
     band = [r for r in rows if (r.get("s") or 0) >= 72]
 
     print("■ 繰り上がる前の検査（validate_packs の FAIL を、繰り上がる順に）")
-    print(f"  判定圏(Ω72+) {len(band)}社 のうち 四段関門を通っているのは {len(buy)+len(nxt)}社"
+    print(f"  判定圏(Ω72+) {len(band)}社 のうち 三関門を通っているのは {len(buy)+len(nxt)}社"
           f"（🟢投下可 {len(buy)} ／ 🔵次点 {len(nxt)}）")
     print("  残りは堀不足・E[r]<0・点検要修正で落ちており、根拠を埋めても投下可には来ない\n")
 
@@ -111,7 +111,7 @@ def main():
     if BAND:
         rest = [r for r in band if not r.get("quali")]
         fr = validate([r["t"] for r in rest])
-        print(f"\n── 判定圏だが四段関門に落ちている {len(rest)}社 ── 作業リスト（急がない）")
+        print(f"\n── 判定圏だが三関門に落ちている {len(rest)}社 ── 作業リスト（急がない）")
         for r in sorted(rest, key=lambda r: -(r.get("s") or 0)):
             why = ("堀不足" if not r.get("moatOK") else
                    "点検要修正" if not r.get("audOK") else

@@ -112,7 +112,7 @@ if (!KEYS.length) {
 // B4(2026-08-04): 門の applyFields は「黙って化けた」欄を __coerce に記録して ccfAudit へ渡す
 //   （v9.9.54＝acq5=2.8 が 'yes' に化けて罰が黙って効いた発生点の痕跡）。端末側の再実装は
 //   これを記録せず常に [] を渡していたため、**err①「取込で化けた」が端末で構造的に0件**＝
-//   四段関門の第四が端末側で半分無効だった。門と同じ規則で記録し、同じ台帳を見る二つの検査器が
+//   （当時の呼称で）四段関門の第四が端末側で半分無効だった。門と同じ規則で記録し、同じ台帳を見る二つの検査器が
 //   違うことを言わないようにする（v9.9.65の教訓）。
 let __coerce = [];
 const lastCoerce = () => __coerce.slice();
@@ -188,9 +188,11 @@ try {
 //   【なぜ今日入れてよいか】投下可10社のFAILは**ゼロ**なので今日は誰も落ちない＝純粋なラチェット。
 //   落ちるなら規則の追加ではなく現状の是正が先、という順序を守れている。
 //   【第五の関門と呼ばない】これは「値が壊れている／根拠が無い」というデータ健全性の検査で、
-//   第四の関門（点検・期末後の重大事象）とまったく同じ種類。**四段関門の呼称は不変**
+//   第四の関門（点検・期末後の重大事象）とまったく同じ種類。**当時は「四段関門」の呼称を変えなかった**
 //   ——名前を増やすと本文16箇所の書き換えが要り、この repo が繰り返している
-//   「規則を変えたら文も全部grepで洗う」の取りこぼしを自分で作ることになる。
+//   「規則を変えたら文も全部grepで洗う」の取りこぼしを自分で作ることになる、と判断したため。
+//   ※**v9.9.98（2026-08-07）で門X遮断器を関門から外したので呼称は「三関門」になった**
+//     （Ω75+ ∧ 堀70+ ∧ データ健全）。そのときは本文41箇所を実際にgrepで洗った。
 //   **買わない理由であって売る理由ではない**（Ω・堀・売却規律S1/S2/S3はいずれも不変）。
 let VFAIL = {};
 try {
@@ -241,12 +243,15 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               audE, audU, audOK: audE === 0 && audU === 0,
               staleBS: STALE[t] ? STALE[t].newPct : undefined,
               vFail: VFAIL[t] ? VFAIL[t].n : undefined,
-              buy: s >= 75 && x.xPass === true && mg.pass === true && audE === 0 && audU === 0
+              // v9.9.98(2026-08-07 ユーザー明示指示): **門X遮断器 E[r]≥0 を関門から外した**。
+              // 三関門＝Ω75+ ∧ 堀70+ ∧ データ健全（点検err・未解決warn・期末後・納品検査）。
+              // 門(index.html)の pass=q75c と同一規則（v9.9.65の掟）
+              buy: s >= 75 && mg.pass === true && audE === 0 && audU === 0
                    && !STALE[t] && !VFAIL[t] });
 }
 rows.sort((a, b) => b.s - a.s);
 // v9.9.88(2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」): 第五の枠。
-//   投下可＝四段関門∧合成点上位10社。判定は門の ccfAllocTop（単一実装＝Ⅵ・盤・snapと同一・v9.9.65の掟）。
+//   投下可＝三関門∧Ω上位10社（v9.9.98でE[r]項を外した）。判定は門の ccfAllocTop（単一実装＝Ⅵ・盤・snapと同一・v9.9.65の掟）。
 //   四段通過だが11位以下は quali=true / buy=false ＝🔵次点（買わないが資格は保持）。
 {
   const four = rows.filter(r => r.buy);
@@ -289,15 +294,15 @@ const blockers = r => {
   if (!r.moatOK) b.push('⛔堀不足');
   // v9.9.97: xPass===null（per未取得でE[r]を算出していない）を『押し目待ち』と呼ばない。
   //   価格が高いのではなく価格が入っていない＝直し方が原本読解でなく market_fetch。門のⅥと同じ分け方。
-  if (r.xPass === false) b.push('🟡押し目待ち');
-  else if (r.xPass !== true) b.push('⛔門X未評価(per未取得)');
+  // v9.9.98: E[r]は合否に効かなくなったので blockers から外した。
+  //   E[r]の値そのものは一行表示に出ており、負なら数字で判る（情報として残す・v9.9.52）
   if (!r.audOK) b.push('⛔点検要修正');
   if (r.staleBS != null) b.push('⛔期末後の重大事象');
   if (r.vFail) b.push(`⛔納品検査FAIL${r.vFail}`);
   return b.length ? b : ['—'];
 };
 const q75 = rows.filter(x => x.s >= 75);
-console.log('\nΩ75+（堀＝絶対MOAT指数／X＝門X4条件／点＝全件点検／買＝四段関門すべて成立）:');
+console.log('\nΩ75+（堀＝絶対MOAT指数／E[r]＝参考値・合否に不使用／点＝全件点検／買＝三関門すべて成立・v9.9.98）:');
 for (const r of q75) {
   const moat = r.moatNA ? ' NA ' : (r.moat == null ? '  — ' : r.moat.toFixed(0).padStart(3) + ' ');
   const aud = r.audOK ? '  ✓' : `${r.audE ? '要' + r.audE : ''}${r.audU ? '未' + r.audU : ''}`.padStart(3) + '✗';
@@ -314,14 +319,14 @@ for (const r of q75) {
 const _ascore = x => ccfAllocScore(x);
 const buy = rows.filter(x => x.buy).sort((a, b) => _ascore(b) - _ascore(a) || b.s - a.s);
 const nextUp = rows.filter(x => x.quali && !x.buy).sort((a, b) => _ascore(b) - _ascore(a) || b.s - a.s);
-console.log(`\n🟢投下可(四段関門∧合成点上位10社・v9.9.88) ${buy.length}社`
+console.log(`\n🟢投下可(三関門∧Ω上位10社・v9.9.98) ${buy.length}社`
   + `　日本株${buy.filter(x => x.jp).length}／米国等${buy.filter(x => !x.jp).length}`
   + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
-if (nextUp.length) console.log(`🔵次点(四段通過・合成点11位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
+if (nextUp.length) console.log(`🔵次点(三関門通過・Ω11位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
 console.log(`⛔堀不足で見送り(Ω75+だが堀が関門に届かない) ${q75.filter(x => !x.moatOK).length}社`);
 console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告あり) ${q75.filter(x => x.moatOK && !x.audOK).length}社`);
 // 期末後の重大事象で落ちた社は**必ず名指しで出す**。黙って消えると v9.9.52
-// 「城の行が理由不明で出ない」と同じ事故になる（四段関門を通っているのに枠から消えるので、
+// 「城の行が理由不明で出ない」と同じ事故になる（三関門を通っているのに枠から消えるので、
 //  理由を書かないと「なぜ居ないのか」が誰にも分からない）。
 {
   const st = rows.filter(x => x.staleBS != null && x.s >= 75);

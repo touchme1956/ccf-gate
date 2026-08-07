@@ -38,7 +38,7 @@ for (const t of tickers) {
   const mg = ccfMoatGate(r, d) || {};
   const x = ccfXJudge(d, parseFloat(r.evalScore)) || {};
   const m = ccfMoat(d) || {};
-  // B5(2026-08-04): buy は score_all.js と同じ**四段関門**で出す。第四＝全件点検（要修正0かつ
+  // B5(2026-08-04): buy は score_all.js と同じ**三関門**（v9.9.98でE[r]を外した）で出す。第四＝全件点検（要修正0かつ
   //   未解決warn0）。従来この道具だけ三段関門のままで、score_all と逆のことを言えた（v9.9.65違反）。
   let audE = 0, audU = 0;
   try {

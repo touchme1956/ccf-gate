@@ -20,6 +20,9 @@ night/shadow_cliffs.py — **崖3件を外したら誰がどう動くか**の影
 使い方:
   python3 night/shadow_cliffs.py            A/B/C を単独と全部入りで測る
   python3 night/shadow_cliffs.py --only B   1案だけ
+
+⚠ **錨は現行の門に存在しない**——v9.9.93→v9.9.98（配分の錨と E[r]項の撤去） で該当行が変わったため、この道具は当時の設計を測る
+  記録用であって今日の門には当たらない（実行すると錨が見つからない旨で止まる）。
 """
 import json
 import os
