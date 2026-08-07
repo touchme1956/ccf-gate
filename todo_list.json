@@ -476,8 +476,8 @@
    "kind": "宿題",
    "title": "採取器の有利子負債が総額タグと構成要素を両方足す（IDXXで三重計上を実証）",
    "due": null,
-   "note": "2026-08-07 実測: IDXX は `LongTermDebt` 450,000千$（総額）と `LongTermDebtNoncurrent` 374,842 + `LongTermDebtCurrent` 74,995（構成要素）の両方を持ち、採取器が3つとも足して nde 0.18→0.49 と出す。CLAUDE.md が WIT で記録した『series_sum が総額と構成要素を合算する』型が現存していた。パック側は正しいので今日の判定に実害はないが、**新規審査でこのドラフトを鵜呑みにすると誤る**。hachimon_fetch の series_sum に『総額タグがある年は構成要素を足さない』ガードを入れる",
-   "done": false
+   "note": "2026-08-07 実測: IDXX は `LongTermDebt` 450,000千$（総額）と `LongTermDebtNoncurrent` 374,842 + `LongTermDebtCurrent` 74,995（構成要素）の両方を持ち、採取器が3つとも足して nde 0.18→0.49 と出す。CLAUDE.md が WIT で記録した『series_sum が総額と構成要素を合算する』型が現存していた。パック側は正しいので今日の判定に実害はないが、**新規審査でこのドラフトを鵜呑みにすると誤る**。hachimon_fetch の series_sum に『総額タグがある年は構成要素を足さない』ガードを入れる ／ 2026-08-07 恒等式（LongTermDebt＝Noncurrent+Current）で確定して是正。LRCXで実証（roic 40.1→42.3）",
+   "done": true
   },
   {
    "id": "fetcher_intan_zero_rmd",
@@ -518,6 +518,27 @@
    "due": null,
    "note": "2026-08-07 ユーザーの画面で HOYA（旧・手動審査Ω81.4）が買付1位に出ていた。パックは `7741 ＨＯＹＡ` で Ω0.0。台帳キーが safeKey(nm) なので**改名を伴うパック化で旧レコードが孤児になり、一括取込が触れない**。v9.9.102 で門が検出して買付から外し名指し表示するようにしたが、**レコード自体は台帳に残る**ので Ⅳ台帳で削除が要る。候補は 2026-08-04 にパック化した31社（旧・手動審査があった社）。削除後に⭳全パック一括取込をやり直すと確実",
    "done": false
+  },
+  {
+   "id": "irr85_unpacked7",
+   "kind": "宿題",
+   "done": false,
+   "title": "歴史で irr=85 と読まれたのに門2審査を一度も受けていない7社のパック化",
+   "note": "CMTL/DLB/HXL/KALU/MWA/ST/STX。7社とも門0の一次ふるいをROICで落ちており（MWA 4/7が最も近い）Ω75の見込みは低い。完全性のための作業"
+  },
+  {
+   "id": "irr85_mechanism_screen",
+   "kind": "宿題",
+   "done": false,
+   "title": "機構語スクリーンを今日の母集団へ向け直して未審査の小型 irr=85 を掘る",
+   "note": "night/retro_fulltext.py が ft_qual='qualified by our customers' の EDGAR全文検索を既に持つ（2018年窓・956社の在庫つき）。irr は原本を読まないと決まらず門0は読まないので、母集団2,900社のうち irr が測られているのは362社=12.5%。ただし歴史の実測どおり irr=85 は1〜3%しか出ない稀なラベルで空振り前提"
+  },
+  {
+   "id": "lrcx_f3_sht",
+   "kind": "宿題",
+   "done": false,
+   "title": "LRCX の sht（シェア趨勢）を測って f3 を確定させる",
+   "note": "2026-08-07の再審査で f3 を 75→55 にしたのは『R&D/売上は3年で低下（12.76→10.23%）＋シェア趨勢は未測定で10-Kの market share 言及はすべて失う側』という読み。sht を fill_sht.py で測れば f3 が確定する。ただし f3=75 に戻してもΩは79.0で投下可は不変（感度測定済み）"
   }
  ]
 }
