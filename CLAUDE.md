@@ -2373,6 +2373,55 @@ Approximately 47% … were derived from contracts with **agencies of, and prime 
 `python3 night/shadow_irr85.py` — irr=85 を全部70に落とす／判定圏の70を85に上げる、の両方向を
 score_all で実測して**必ず元へ戻す**。「この欄は今の門で何をしているのか」を毎回測り直せる。
 
+## 「irr の他の銘柄はどう評価する？」——**検査が非対称だった。効かない刻みを削り、効く刻みを見ていなかった**（2026-08-07・ユーザーの問い）
+道具 `python3 night/audit_irr70.py`（`--all` / `--buy`）。**値も規約も変えていない**（HWM/KLACは根拠の追記のみ）。
+
+### 発見: 労力を注いだ刻みと、決定を支えている刻みが違った
+2026-08-06 の全数検算は **`irr==85` だけ**を対象にし 53社→11社へ削った。
+**70（209社）と 50（123社）は一度も同じ厳格さで検査されていない。** ところが実測すると:
+| 影の計測 | 結果 |
+| irr=85 を全部 70 に落とす | **投下可は0社しか動かない**（Ω −0.8〜−2.7） |
+| **判定圏の irr=70 を 50 に落とす** | **45社中19社が堀の関門70を割り、投下可10社中6社が落ちる** |
+落ちるのは **6857 / HWM / IDXX / IRMD / KLAC / RMD**。
+歴史側でも 70↔50 のほうが母集団が桁違いに大きい——プール754件の P(継続) は
+50:**0.162** < 70:**0.366**（**2.3倍**）< 85:0.579（70の1.6倍）で、社数は 70:209 / 50:123 に対し 85:12。
+**「85かどうか」より「70か50か」のほうが、この台帳の買付を実際に決めている。**
+
+### 根拠の被覆は良かった（問題は被覆ではなく試験の中身）
+判定圏(Ω72+)の被覆率は **85: 3/3・70: 44/45・50: 1/1**（投下可は10/10）。全体では 70が77% / 50が63%だが、
+未記載はすべて Ω<72。**空欄12社は全部Ω0の日本株**（キーエンス型・堀測定不能）で全社が理由つき。
+**irr=100 の6社（D/MSEX/NEE/NJR/WTRG/YORW＝規制公益）は全員Ω0〜60で判定圏外**
+——歴史では100が最下位（P=0.056/0.091）だが、今日の門ではその刻みは判定に一切効いていない。
+
+### triage を作った（原本の判定ではなく「読む順」を決める道具）
+`audit_irr70.py` が `_meta.evidence.irr` を **A 摩擦の機構を名指し／B 認定・認証の語だけ／
+C 一般的な競争記述だけ／D 根拠なし** に仕分ける。判定圏45社の内訳は **A 40 / B 4 / D 1**（LECO・堀不足）。
+**投下可でA以外は KLAC と HWM の2社**だけ＝読む先が2社に絞れた。
+
+### その2社を原本で確定させた——**どちらも70で確定**（値は不変・根拠だけ厚くした）
+- **HWM**: 同じ10-Kが**両方向に語っている**。70を支える側は『Because of **approval, license, and
+  qualification requirements** … sources of alternatives … **may not be readily available to Howmet
+  or its customers**』。**85にしない理由**は (i)これは**供給途絶時の緊急代替**の文脈で、CW/LOAR/TDG が持つ
+  『顧客が再認定の費用を負う』**断定**が無い (ii)同じ10-Kが逆を明言する——『Howmet's customers may also …
+  **switch to alternative suppliers**, or **enter into the markets themselves to compete with Howmet**』
+  (iii)蝕に『The willingness of customers to accept **alternative solutions**』＋顧客が自家superalloy炉を保有。
+  **50にもしない**——認定要件による摩擦は原本に明記。→ 70（高摩擦移行困難）が刻みに正確に一致
+- **KLAC**: 従来の根拠は「85ではない」の説明が中心で**「50ではない」側の実証が薄かった**（triageがBと分類）。
+  10-Kから摩擦の実額を刻んだ——サービスが**総売上の約23%**で『recurring "subscription-like" contracts』／
+  『service revenues is typically a function of **the number of systems installed at our customers' sites**
+  … our **rate of service contract renewals**』／FY2026は『increased 16% due to **growth in our installed
+  base of tools**』／XBRLに `LongTermContractWithCustomerTwelveToTwentyFourMonths` 等の複数年契約タグ。
+  85にしない読み（KLAの'qualification'は**当社が顧客の工程を検査・認定する側**）は今回で**三度目の確認**
+  ——走査した 'qualif' 35件・'certif' 25件はヘッジ会計のXBRLタグ／従業員研修／自社の再生機認定が大半
+
+### 残る作業（記録のみ・値は触っていない）
+- **判定圏の irr=70 のうち分類Aの40社は、evidence の文言でAなだけで原本の再検算は経ていない**。
+  投下可の残り5社（MSFT/IDXX/RMD/6857/IRMD）は根拠が厚い（238〜741字・installed base / multi-year /
+  ワークフロー等の実体語）が、**HWM/KLACと同じ厳格さで原本を当て直してはいない**
+- **LECO は判定圏で唯一 irr=70 の根拠が空**（Ω74.3・堀67.7で今日は堀不足）
+- **irr=50 の123社（うち被覆63%）は「本当は70では」を一度も問われていない**——
+  こちらは上振れ方向なので今日の買付を緩めないが、**堀不足で落ちている社の復帰経路**として効きうる
+
 ## パックが1会計年度ぶん古くなるのを誰も見ていなかった（2026-08-07・ユーザー「他に効果のあるやつがないか分析して」）
 **既存の検査が全部すり抜ける穴を見つけた。実測で判定圏の5社——うち投下可2社——が1会計年度ぶん古い。**
 道具は `python3 night/audit_pack_stale.py`（`--write` で out/pack_stale.json）。**関門にはしていない。**
