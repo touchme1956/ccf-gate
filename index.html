@@ -1104,7 +1104,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.96</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.97</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——v9.9.36で絶対MOAT指数をΩの直接項に加え(実効≒22%)、v9.9.39で<b>四段関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3848,7 +3848,15 @@ async function renderPlan(){
   //   実測でASMLが表示6位・配分1位／MAが表示3位・配分7位。端数の行き先「買付順位1位」も最大ウェイトと不一致だった）
   const passIn=pass.filter(r=>allocSet.has(r.t)).sort((a,b)=>ccfAllocScore(b)-ccfAllocScore(a)||b.s-a.s);
   const passOut=pass.filter(r=>!allocSet.has(r.t)).sort((a,b)=>ccfAllocScore(b)-ccfAllocScore(a)||b.s-a.s);
-  const waitP=q75c.filter(r=>r.xPass!==true);
+  // v9.9.97(2026-08-07): 🟡押し目待ちを **xPass===false に限定**し、xPass===null は別群にした。
+  //   ccfXJudge は per(または roicg) が無いと **早期returnで xPass=null** を返す＝E[r]をそもそも算出していない。
+  //   旧 `xPass!==true` は false と null を同じ袋に入れており、**価格の判断が一度も行われていない社が
+  //   「良い会社を高値で掴まない」組として表示されていた**——落ちた理由を名指しする規律(v9.9.52)の破れ。
+  //   実測(2026-08-07・判定圏49社): ETN Ω79.0・BCPC Ω73.2 が該当。どちらも堀70+を通っており、
+  //   止めているのは価格ではなく **market_fetch の未取得**。開通ライン(あと−○%)も出せない。
+  //   **買付の合否は不変**（pass は従来どおり xPass===true のみ）＝表示と理由の是正だけ。
+  const waitP=q75c.filter(r=>r.xPass===false);
+  const xNA=q75c.filter(r=>r.xPass==null);
   // v9.9.27: IPS②(Ulysses契約)の仕組み化——投下可の初回点灯を記録し48hクーリングオフの残り時間を表示。
   //   点灯時のE[r]/格/PERをスナップショット(掟九:年1回の予実突合の材料。消えた点灯もoff印で保存)。
   //   判定・順位・採点には一切不介入=表示と記録のみ。再点灯(off→復帰)は新しい点灯として冷却をやり直す
@@ -4005,6 +4013,12 @@ async function renderPlan(){
   if(waitP.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:#5d8cc2">🟡 押し目待ち（質は合格・値段待ち）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">格75+だが門Xが現値で未達＝「良い会社を高値で掴まない」組。開通ライン（4条件が同時成立する入口PER）まで下げたら🟢へ自動昇格。指値は階段で置く＝1/2を開通ライン・1/2をfair線（✦門Xの監視表参照）。</div>`;
     html+=waitP.map((r,i)=>brow(r,i,'待',openLine(r))).join('');
+  }
+  // ⛔ 門X未評価（v9.9.97）: per未取得でE[r]を一度も算出していない組。**押し目待ちではない**——
+  //   価格が高いのではなく、価格が入っていない。直し方は原本読解ではなく `python market_fetch.py`。
+  if(xNA.length){
+    html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:var(--rust)">⛔ 門X未評価で見送り（Ω75+・堀70+だが市場データが無い）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px"><b>価格が高いのではなく、価格が入っていない</b>組。門Xは <code>per&gt;0</code>（と roicg）が無いと E[r] を一切算出しないので、この群は<b>価格の判断が一度も行われていない</b>。旧版はこれを🟡押し目待ちに混ぜており、<u>「良い会社を高値で掴まない」という判断が下されたかのように見えていた</u>——落ちた理由を名指しする規律(v9.9.52)の破れ。開通ライン（あと−○%）も原理的に出せない。<b>直し方は原本読解ではなく採取</b>：<code>python market_fetch.py</code> → <code>python market_merge.py</code> → Ⅵの⭳一括取込。<b>売却の理由にはならない</b>。</div>`;
+    html+=xNA.map((r,i)=>brow(r,i,'X',`<span style="font-size:11.5px;white-space:nowrap;color:var(--rust);margin-left:8px">per未取得＝E[r]算出不能</span>`)).join('');
   }
   // ⛔ 堀のふるいで落ちた組(v9.9.39・ユーザー明示指示)。価格の問題ではないので押し目待ちには入れない
   if(moatOut.length){

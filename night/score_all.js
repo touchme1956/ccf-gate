@@ -287,7 +287,10 @@ brief('米国等', rows.filter(x => !x.jp));
 const blockers = r => {
   const b = [];
   if (!r.moatOK) b.push('⛔堀不足');
-  if (r.xPass !== true) b.push('🟡押し目待ち');
+  // v9.9.97: xPass===null（per未取得でE[r]を算出していない）を『押し目待ち』と呼ばない。
+  //   価格が高いのではなく価格が入っていない＝直し方が原本読解でなく market_fetch。門のⅥと同じ分け方。
+  if (r.xPass === false) b.push('🟡押し目待ち');
+  else if (r.xPass !== true) b.push('⛔門X未評価(per未取得)');
   if (!r.audOK) b.push('⛔点検要修正');
   if (r.staleBS != null) b.push('⛔期末後の重大事象');
   if (r.vFail) b.push(`⛔納品検査FAIL${r.vFail}`);
