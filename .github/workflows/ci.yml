@@ -177,6 +177,14 @@ jobs:
         continue-on-error: true
         run: timeout 900 node night/audit_monotonic.js | tail -35
 
+      # ── 6-b. irr=70 の根拠の triage（2026-08-07新設・表示のみ）─────────────────
+      #   2026-08-06の全数検算は irr==85 だけが対象で、70(209社)と50(123社)は未検査だった。
+      #   ところが実測では **判定圏の70を50に落とすと投下可10社中6社が落ちる**（85→70では0社）。
+      #   顔ぶれが変わるたびに読む先が変わるので、CIで毎回出す。
+      - name: irr=70 の根拠 triage audit_irr70（表示のみ）
+        continue-on-error: true
+        run: python3 night/audit_irr70.py | tail -20
+
       # ── 7. 根拠の被覆（既知の積み残し。落とさない）────────────────────────────
       - name: 納品検査 validate_packs（表示のみ）
         continue-on-error: true

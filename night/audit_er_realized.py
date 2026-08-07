@@ -110,7 +110,7 @@ for(const f of fs.readdirSync(ROOT+'/out')){
     exit:(r.exit&&r.exit.level)||r.exit||'hold',
     ccy:/^\d{4,5}$/.test(String(d.nm||t).trim().split(/\s/)[0])?'JPY':'USD'});
 }
-// v9.9.88: 第五の枠（合成点上位10社）——門の ccfAllocTop をそのまま使う（単一実装・v9.9.65の掟）。
+// v9.9.88: 第五の枠（席順上位10社＝irr=85優先→Ω順・v9.9.100）——門の ccfAllocTop をそのまま使う（単一実装・v9.9.65の掟）。
 // quali=四段側の資格 / buy=枠内。観測の意味変化は er_ledger の basis_changes に記録済み
 if(typeof ccfAllocTop==='function'){
   const four=out.filter(o=>o.buy);

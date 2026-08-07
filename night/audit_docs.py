@@ -248,7 +248,7 @@ def check(h, f):
     # ⑩ 投下可の枠数が文中と一致するか
     if f['alloc_n']:
         bad = []
-        for m in re.finditer(r'合成点上位(\d+)社', h):
+        for m in re.finditer(r'(?:合成点上位|Ω上位|irr=85優先→Ω順の上位)(\d+)社', h):
             if int(m.group(1)) != f['alloc_n']:
                 bad.append((line_of(h, m.start()),
                             strip_tags(h[max(0, m.start() - 80):m.start() + 90])))

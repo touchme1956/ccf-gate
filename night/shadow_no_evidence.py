@@ -12,7 +12,7 @@ night/shadow_no_evidence.py — 「根拠の無い値を門が null 扱いにし
 やること:
   1. 全パックを退避
   2. 判断項目・機械項目のうち **_meta.evidence にも provenance にも裏付けが無い欄を null 化**
-  3. `node night/score_all.js` を回して Ω と三段関門を実測
+  3. `node night/score_all.js` を回して Ω と四関門を実測
   4. 必ずパックを元へ戻す（finally）
   ※これは影の計測であって、正本の採点・台帳は一切変えない。
 

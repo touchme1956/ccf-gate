@@ -216,7 +216,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
   const dd = { ...d, ...over };
   let r; try { r = scorePack(dd); } catch (e) { continue; }
   const coerce = lastCoerce();   // B4: 門の applyFields が記録する「黙って化けた」欄（ccfAudit の err① の材料）
-  // 門Ωの点だけでは「買えるか」は決まらない。三段関門(Ω75+ ∧ 門X4条件 ∧ 堀75+)を
+  // 門Ωの点だけでは「買えるか」は決まらない。四関門(Ω75+ ∧ 堀70+ ∧ データ健全 ∧ 事業の収縮なし)＝v9.9.100時点を
   // 門と同じ関数(ccfXJudge / ccfMoatGate)で判定する＝二重実装を作らない
   let x = {}, mg = {};
   try { x = ccfXJudge(dd, parseFloat(r.evalScore)) || {}; } catch (e) {}
@@ -313,11 +313,13 @@ for (const r of q75) {
   const moat = r.moatNA ? ' NA ' : (r.moat == null ? '  — ' : r.moat.toFixed(0).padStart(3) + ' ');
   const aud = r.audOK ? '  ✓' : `${r.audE ? '要' + r.audE : ''}${r.audU ? '未' + r.audU : ''}`.padStart(3) + '✗';
   console.log(`  ${r.nm.slice(0, 24).padEnd(26)} Ω${r.s.toFixed(1).padStart(5)}  堀${moat}${r.moatOK ? '✓' : '✗'}`
-    + `  E[r]${r.xEr == null ? '  na' : r.xEr.toFixed(0).padStart(4) + '%'}${r.xPass ? '✓' : '✗'}`
+    // v9.9.100: E[r] の ✓/✗ を外した——v9.9.98 で E[r] は合否に効かなくなったのに、
+    //   ✓/✗ が残っていると『これで落ちている』と読めてしまう（落ちた理由は blockers が名指しする）。
+    + `  E[r]${r.xEr == null ? '  na' : r.xEr.toFixed(0).padStart(4) + '%'} `
     + `  点${aud}`
     + `  ${r.buy ? '🟢投下可' : r.quali ? '🔵次点(11位以下)' : blockers(r).join('＋')}  出口=${r.exit}`);
 }
-// v9.9.91: ロスターの並びは**配分と同じ合成点順**（旧Ω順は「合成点上位10社」と名乗りながらΩで並べていた）
+// v9.9.91→v9.9.100: ロスターの並びは**席の順**（irr=85優先→Ω順）。当時の呼称は「合成点上位10社」と名乗りながらΩで並べていた）
 // v9.9.94(2026-08-06): ここに合成点を**書き写していた**のをやめ、門の単一実装 ccfAllocScore を呼ぶ。
 //   実害: v9.9.93 で配分の錨を (Ω−70)→Ω へ変えたとき、ccfAllocScore は直したのに
 //   **この写しだけが錨70のまま取り残された**——席の選定(ccfAllocTop)と表示の並びが違う式で動いていた。

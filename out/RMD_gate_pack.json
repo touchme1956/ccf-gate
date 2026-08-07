@@ -82,7 +82,8 @@
    "2026-08-02 市場価格を自動更新: px 207.69 → 210.98（+1.6%）。per 20.22→20.54　perF 16.75→17.01　evebit 17.4→17.7　shy 1.75→1.72。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
    "**v9.9.72 roic を through-cycle 化**: roic 45.0→43.8 / roicg 21.2→19.1。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央43.8% / 最悪39.8%）。比は**パックが審査した年(2025)**の採取器値 roic45.04 / roicg21.21 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
    "2026-08-05 irr 85→70 是正。歴史検証(統合177社・irr=85→P(継続)0.71/等加重+24.6%年 vs SPY15.0%)でirr欄の測定精度＝門の精度と判明したため判定圏の irr=85 を全数監査(night/audit_irr85.py)。RMDは根拠が自社取得の特許・FDA承認＝規約(v9.9.49)が明示除外する型で、原本の全文走査でも顧客側再認定の記述ゼロ。堀 79.8→(再計算) / Ω 78.9→77.6 の見込み。投下可は不変(影の計測で確認済み)。値のみ是正・採点式は不変",
-   "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）"
+   "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）",
+   "2026-08-07 新規投下可の実検査。**値は動かしていない**——through-cycle med5(5年系列 39.8/43.8/41.0/47.5/45.0)は審査官が原本から作ったもので正しい。basis の年数不明ラベル `(?年)` を `(5年)` へ是正。採取器の 57.3% は無形タグ不在をゼロと読んだ膨張値で、**採取器のほうが壊れている**ことを確認した"
   ],
   "evidence": {
    "dom": "【2026-07-29 堀再監査・原本(10-K)から取り直し→空欄】SEC 10-K FY2025(rmd-20250630.htm, 2025-08-08提出) Item 1 Business の Competition 節の全文は『Global competition for sales of our products and services is intense. We believe that the principal competitive factors are product features, value-added solutions, quality, reliability and price... Our primary Sleep and Breathing Health competitors include Philips BV; Fisher & Paykel Healthcare Corporation Limited; DeVilbiss Healthcare; Apex Medical Corporation; BMC Medical Co. Ltd.; React Health Corporation; Jiangsu Yuyue Medical Equipment & Supply Co., Ltd, and Lowenstein Medical SE & Co. KG plus regional and new-entrant manufacturers』であり、自社シェア%も上位N社合計シェアも一切開示が無い。Item 1 冒頭の自己記述も『We are a global leader in digital health and cloud-connected medical devices』『we are a leading provider of cloud-based health applications』という定性表現のみで、v9.9.38の刻み(市場構造)を導く材料にならない。Item 1A Risk Factors にもシェアの数値は無い。旧evidenceが依拠した『CPAP複占(Philips)』は原本の外の通念であり、原本はむしろ名指し8社＋地域/新規参入業者を列挙していて複占(上位2社合計≥80%)の裏が取れない。→ 刻みを導けないため dom=null(理由は _meta.nulls.dom)。出典: https://www.sec.gov/Archives/edgar/data/943819/000094381925000035/rmd-20250630.htm",
@@ -115,7 +116,7 @@
    "eps": "機械算出 2025年: 純利益 1,400,723,000 ÷ 株数 146,385,350（TTMではなく通期実績）",
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 595,495,944 ÷ Δ投下資本 2,500,159,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 4,135,992,000→6,636,151,000（+60.4%）",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 720,625,474 ÷ Δ投下資本 2,963,004,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 3,673,147,000→6,636,151,000（+80.7%）",
-   "roic": "原本検算 2025年(10-K FY2025/06): 営業利益1,685,363千$×(1−実効税率16.5%)=NOPAT1,407,233 ÷ IC 3,124,610（自己資本5,967,859+有利子負債668,292−のれん3,046,680−無形464,861）= 45.0%。IC/自己資本52.4%＝縮退なし。5年系列 39.8/43.8/41.0/47.5/45.0｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央43.8% / 最悪39.8%・比は審査年2025）",
+   "roic": "原本検算 2025年(10-K FY2025/06): 営業利益1,685,363千$×(1−実効税率16.5%)=NOPAT1,407,233 ÷ IC 3,124,610（自己資本5,967,859+有利子負債668,292−のれん3,046,680−無形464,861）= 45.0%。IC/自己資本52.4%＝縮退なし。5年系列 39.8/43.8/41.0/47.5/45.0｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央43.8% / 最悪39.8%・比は審査年2025）\n《採取器との差の正体（2026-08-07）》採取器を再実行すると roic=**57.3%** と出るが、**RMDは `IntangibleAssetsNetExcludingGoodwill` タグを FY2025 に持たない**（SEC companyfacts で確認）ため採取器が **無形=0 と読み IC が過小→roic が膨張**している（CELHで記録した『無形タグの欠測をゼロと読む』型）。審査官は原本から無形 464,861千$ を取って IC 3,124,610千$ を構成しており、**パックのほうが正しい**。\n《XBRLで一致を確認（2026-08-07）》自己資本 5,967,859,000 / のれん 3,046,680,000 / 営業利益 1,685,363,000 （end=2025-06-30）＝いずれもパックの evidence と一致。有利子負債はパック 668,292千$ vs XBRL `LongTermDebt` 658,392千$ で、差 9,900千$（1.5%）はリース等の構成差＝roic を 0.1pt も動かさない",
    "roicg": "原本検算 2025年: NOPAT1,407,233 ÷ (自己資本5,967,859+有利子負債668,292=6,636,151) = 21.2%｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央43.8% / 最悪39.8%・比は審査年2025）",
    "roict": "5年系列 39.8→45.0（最古比+5.2pt）＝up。旧値downは根拠なし",
    "nde": "原本検算 2025年: (有利子負債668,292 − 現金1,209,450) ÷ (営業利益1,685,363+減価償却198,473) = −0.29",
@@ -172,7 +173,7 @@
    "p1": "machine"
   },
   "basis": {
-   "roic": "through-cycle-med5(?年)",
+   "roic": "through-cycle-med5(5年)",
    "_note": "roic/roicg がどの基準で作られているか。v9.9.72 で through-cycle(5年中央値)へ移行したが、採取器とパックが食い違う社・系列が3年未満の社には当てていないため**台帳に二つの基準が混在する**。文字列一致で見分けるのは脆いので機械可読にした"
   },
   "px": {
