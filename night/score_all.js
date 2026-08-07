@@ -229,6 +229,10 @@ rows.sort((a, b) => b.s - a.s);
   const four = rows.filter(r => r.buy);
   const sel = ccfAllocTop(four, 10);
   for (const r of rows) { r.quali = r.buy; if (r.buy) r.buy = sel.has(r.t); }
+  // 合成点を**出力にも載せる**（2026-08-07）。下流の道具（audit_promotion_ready 等）が
+  // 式を書き写すと v9.9.65 の「同じ台帳を見る二つの検査器が違うことを言う」になる。
+  // 門の単一実装 ccfAllocScore の値をそのまま配る。
+  for (const r of rows) r.a = +ccfAllocScore(r).toFixed(2);
 }
 // 部分実行(--only / --set / --jp / --us)の結果で正本 out/score_all.json を潰さない（2026-07-29）。
 // 実害があった: `--only MA,V,...` を打った直後、score_all.json が5件に縮み、
