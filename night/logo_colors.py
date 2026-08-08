@@ -79,7 +79,10 @@ def lum_svg(p):
     return 235.0 if (w and w >= d) else None
 
 
-def from_png(p):
+def from_png(p, n=3):
+    """代表色を**最大n色**返す（面積の多い色相ビン順）。
+    v9.9.106: 1色だと単調なので、ロゴが実際に持っている色を複数拾って多段グラデーションにする。
+    **色は必ずロゴ自身から採る**——見栄えのために存在しない色を足さない（ルール7の精神）。"""
     from PIL import Image
     im = Image.open(p).convert("RGBA")
     im.thumbnail((96, 96))
@@ -92,16 +95,20 @@ def from_png(p):
             continue
         bins[int(h * 24) % 24].append((h, s, v))
     if not bins:
-        return None
-    px = max(bins.values(), key=len)
-    if len(px) < 4:            # 色画素がこれ未満＝ロゴが実質モノクロ。無理に色を作らない（ルール7）
-        return None
-    return hexc(statistics.median(x[0] for x in px),
-                min(0.95, max(0.45, statistics.median(x[1] for x in px))),
-                min(0.92, max(0.45, statistics.median(x[2] for x in px))))
+        return []
+    out, top = [], sorted(bins.values(), key=len, reverse=True)
+    if len(top[0]) < 4:        # 色画素がこれ未満＝ロゴが実質モノクロ。無理に色を作らない（ルール7）
+        return []
+    for px in top[:n]:
+        if len(px) < max(3, len(top[0]) * 0.08):   # 面積が主色の8%未満は「点」なので採らない
+            break
+        out.append(hexc(statistics.median(x[0] for x in px),
+                        min(0.95, max(0.50, statistics.median(x[1] for x in px))),
+                        min(0.95, max(0.55, statistics.median(x[2] for x in px)))))
+    return out
 
 
-def from_svg(p):
+def from_svg(p, n=3):
     s = open(p, encoding="utf-8", errors="ignore").read()
     c = collections.Counter()
     for m in re.finditer(r'(?:fill|stop-color|stroke)\s*[:=]\s*"?#([0-9a-fA-F]{3,6})', s):
@@ -115,7 +122,7 @@ def from_svg(p):
         if ss < 0.18 or vv < 0.12 or vv > 0.97:
             continue
         c["#" + h.lower()] += 1
-    return c.most_common(1)[0][0] if c else None
+    return [x for x, _ in c.most_common(n)]
 
 
 def main():
@@ -130,9 +137,11 @@ def main():
             out[t] = {"ext": ext, "c": col}; n_keep += 1; continue
         p = os.path.join(DIR, f"{t}.{ext}")
         try:
-            col = from_png(p) if ext == "png" else from_svg(p)
+            cols = from_png(p) if ext == "png" else from_svg(p)
         except Exception:
-            col = None
+            cols = []
+        cols = cols or []
+        col = cols[0] if cols else None
         try:
             lu = lum_png(p) if ext == "png" else lum_svg(p)
         except Exception:
@@ -145,6 +154,7 @@ def main():
             bad = False
         # x=1: 画像が実質白紙＝門は img を描かずモノグラムを見せる（ファイルは残すので再取得はしない）
         out[t] = {"ext": ext, **({"c": col} if col else {}),
+                  **({"cs": cols} if len(cols) > 1 else {}),
                   **({"d": 1} if dark else {}), **({"x": 1} if bad else {})}
         n_new += 1
         if not col:
@@ -159,10 +169,14 @@ def main():
     print(f"色あり **{len(ok)}/{len(out)}銘柄**")
     nd = sum(1 for v in out.values() if v.get("d"))
     nx = [t for t, v in out.items() if v.get("x")]
+    n2 = sum(1 for v in out.values() if len(v.get("cs") or []) >= 2)
+    n3 = sum(1 for v in out.values() if len(v.get("cs") or []) >= 3)
+    print(f"複数色が取れた: 2色以上 **{n2}銘柄** / 3色 **{n3}銘柄**")
     print(f"明るいロゴ（暗い地を敷く） **{nd}銘柄** ／ 実質白紙で不採用（モノグラムへ） **{len(nx)}銘柄** {' '.join(nx)}")
     for t in ("ASML", "MSFT", "NVDA", "CTAS", "RACE", "6920", "MA", "ADBE", "KLAC", "CDNS"):
         if t in out:
-            print(f"   {t:6} {out[t].get('c') or '（色なし）':10} {'暗い地' if out[t].get('d') else '淡い地'}")
+            print(f"   {t:6} {' '.join(out[t].get('cs') or ([out[t]['c']] if out[t].get('c') else ['（色なし）'])):32}"
+                  f" {'暗い地' if out[t].get('d') else '淡い地'}")
 
 
 if __name__ == "__main__":
