@@ -592,8 +592,16 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 .tico{position:relative;display:inline-flex;align-items:center;justify-content:center;
   width:22px;height:22px;min-width:22px;border-radius:5px;overflow:hidden;margin-right:8px;
   vertical-align:middle;font-size:9px;font-weight:700;letter-spacing:.02em;line-height:1;
-  font-family:ui-sans-serif,system-ui,sans-serif;user-select:none}
-.tico img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
+  font-family:ui-sans-serif,system-ui,sans-serif;user-select:none;
+  /* v9.9.104: **そのロゴ自身の代表色**で淡く発光させる（--g は ccfIcon が JS で入れる）。
+     box-shadow は overflow:hidden に切られないので、余分な要素を足さずに滲みが作れる。
+     色は night/logo_colors.py がCIで算出済み＝ブラウザは画素を読まない。 */
+  box-shadow:0 0 0 1px #ffffff12, 0 1px 7px -2px var(--g,transparent), 0 0 15px -5px var(--g,transparent);
+  transition:box-shadow .18s ease}
+.led:hover .tico{box-shadow:0 0 0 1px #ffffff1f, 0 1px 9px -1px var(--g,transparent), 0 0 22px -4px var(--g,transparent)}
+/* タイルの地は白ベタではなく**代表色を1割だけ混ぜた淡色**——暗いテーマの中で浮きすぎず、
+   かつ黒一色のワードマークも読める明るさを保つ（真っ暗にすると黒ロゴが消える） */
+.tico img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:var(--tile,#fff)}
 /* 銘柄名：行の主役。数字は等幅数字で日本株コードの桁を揃える */
 .led .ln{flex:1;min-width:0;font-family:"Marcellus","Shippori Mincho",serif;
   font-weight:500;font-size:18px;letter-spacing:.045em;line-height:1.35;
@@ -3722,12 +3730,22 @@ function ccfIcon(nm){
   let h=0; for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;   // 同じ銘柄はいつも同じ色
   const hue=h%360, mono=(t.replace(/[^A-Z0-9]/g,'').slice(0,2)||'?');
   const esc=t.replace(/[^A-Z0-9.\-]/g,'');
-  const ext=CCF_LOGO?CCF_LOGO[esc]:null;
-  const img=CCF_LOGO&&!ext?'':(ext
-    ?`<img loading="lazy" decoding="async" alt="" src="out/logos/${esc}.${ext}" onerror="this.remove()">`
-    :`<img loading="lazy" decoding="async" alt="" src="out/logos/${esc}.svg" onerror="if(this.dataset.p){this.remove()}else{this.dataset.p=1;this.src='out/logos/${esc}.png'}">`);
-  return `<span class="tico" title="${esc}" style="background:hsl(${hue} 34% 24%);color:hsl(${hue} 68% 80%)">${mono}${img}</span>`;
+  const m=CCF_LOGO?CCF_LOGO[esc]:null;
+  const ext=m&&!m.x&&(m.ext||m), c=(m&&m.c)||null;   // x=1 は実質白紙の画像＝描かずモノグラムへ
+  // v9.9.104: 発光は**そのロゴ自身の代表色**で描く。段階的に落とす——
+  //   (1)代表色がある → その色 (2)ロゴはあるが実質モノクロ → 控えめな中立の滲み
+  //   (3)ロゴが無い/不採用 → モノグラムと同じハッシュ色（見えている色と発光を一致させる）
+  const glow=c?c:(ext?'rgba(200,190,170,.5)':`hsl(${hue} 62% 52%)`);
+  // タイルの地色: 既定は「代表色を1割だけ白に混ぜた淡色」。
+  //   ただし **d=1（白い線画で透過あり）は白い地に置くと消える**ので、代表色を暗い地へ1.8割混ぜる。
+  let tile='#fff', dark=!!(m&&m.d);
+  const rgb=(c&&/^#[0-9a-f]{6}$/i.test(c))?[1,3,5].map(i=>parseInt(c.substr(i,2),16)):null;
+  if(dark) tile=rgb?`rgb(${rgb.map(v=>Math.round(26+(v-26)*.18)).join(',')})`:'#20242c';
+  else if(rgb) tile=`rgb(${rgb.map(v=>Math.round(255-(255-v)*.10)).join(',')})`;
+  const img=!ext?'':`<img loading="lazy" decoding="async" alt="" src="out/logos/${esc}.${ext}" onerror="this.remove()">`;
+  return `<span class="tico" title="${esc}" style="--g:${glow};--tile:${tile};background:hsl(${hue} 34% 24%);color:hsl(${hue} 68% 80%)">${mono}${img}</span>`;
 }
+
 function ccfAllocScore(c){
   return Math.max(0,((c&&c.s)||0));
 }
