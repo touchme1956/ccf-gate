@@ -2988,13 +2988,23 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
     let s=0; nm.forEach(x=>{ x.yen=Math.floor(AMT*x.p/100/100)*100; s+=x.yen; });
     nm[0].yen+=AMT-s;                      // 端数は買付順位1位へ（合計を個別枠にぴったり一致させる）
   }
-  const chip=(lbl,pct,sub,yen)=>`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 12px;border-radius:8px;background:#c9a64a14;border:1px solid #c9a64a44;margin-top:6px"><span style="font-size:13.5px;color:var(--ink)">${lbl}${sub?`<span style="font-size:10.5px;color:var(--dim);margin-left:6px">${sub}</span>`:''}</span><span style="white-space:nowrap">${yen!=null?`<span style="font-size:11.5px;color:var(--dim);margin-right:8px">${pct}%</span><span style="font-size:18px;font-weight:700;color:#c9a64a">${ccfYen(yen)}</span>`:`<span style="font-size:18px;font-weight:700;color:#c9a64a">${pct}%</span>`}</span></div>`;
+  // v9.9.112（2026-08-08 ユーザーの画面写真「これ治らないの？」）: 明細を**銘柄行の下の別行**へ出す。
+  //   旧実装は銘柄名と明細を同じ<span>に入れて右の金額とflexで並べていたので、携帯の幅では
+  //   明細が折り返し、**「階段 ¥12,400＋」で行が終わり、続きの「¥12,400」が金額の下に落ちる**
+  //   ＝足し算が金額に分断されて読めなかった。数字の対（階段の2本・1株価格）は nowrap で割らせない。
+  //   v9.9.109「装飾の寸法を px で書いた時点で幅は変わらないと仮定している」の同型——
+  //   **一行に収まる前提で書いた行は、いつか折り返す。**
+  const chip=(lbl,pct,sub,yen)=>`<div style="padding:7px 12px;border-radius:8px;background:#c9a64a14;border:1px solid #c9a64a44;margin-top:6px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:13.5px;color:var(--ink)">${lbl}</span><span style="white-space:nowrap">${yen!=null?`<span style="font-size:11.5px;color:var(--dim);margin-right:8px">${pct}%</span><span style="font-size:18px;font-weight:700;color:#c9a64a">${ccfYen(yen)}</span>`:`<span style="font-size:18px;font-weight:700;color:#c9a64a">${pct}%</span>`}</span></div>${sub?`<div style="font-size:10.5px;color:var(--dim);margin-top:3px;line-height:1.6">${sub}</div>`:''}</div>`;
   let body='';
   if(nm.length){
     nm.forEach((x,i)=>{ const half=x.yen!=null?Math.floor(x.yen/2/100)*100:null;
       const pi=(x.yen!=null&&pxInfo)?pxInfo(x.r):null;
-      const pxTxt=(pi&&pi.jpy>0)?`・1株${pi.label}`:'';
-      body+=chip(`<b>${i+1}</b>　${x.n}`, Math.round(x.p), `目標${x.tw}%枠`+(half!=null?`・階段 ${ccfYen(half)}＋${ccfYen(x.yen-half)}`:'')+pxTxt, x.yen!=null?x.yen:null); });
+      const pxTxt=(pi&&pi.jpy>0)?`　<span style="white-space:nowrap">1株 ${pi.label}</span>`
+        :(x.yen!=null?`　<span style="white-space:nowrap;color:#d69a3c">1株の価格が未取得</span>`:'');
+      body+=chip(`<b>${i+1}</b>　${x.n}`, Math.round(x.p),
+        `<span style="white-space:nowrap">目標${x.tw}%枠</span>`
+        +(half!=null?`　<span style="white-space:nowrap">階段 ${ccfYen(half)}＋${ccfYen(x.yen-half)}</span>`:'')
+        +pxTxt, x.yen!=null?x.yen:null); });
     // v9.9.90 注文書: 円按分を丸株制約の下で最もよく近似する執行案。個別枠が小さいと按分どおりでは
     //   全銘柄が1株未満に散る（実測: 17万÷7社=各2〜3万円 vs 1株¥1.5万〜9万）ので、
     //   **不足(円)の大きい銘柄から1株ずつ積む**（largest-need greedy）。円の按分が正本・株数は執行案。
@@ -3007,11 +3017,21 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
         known.forEach(b=>{ if(b.need>0&&b.pi.jpy<=bud&&(!pick||b.need>pick.need))pick=b; });
         if(!pick)break; pick.sh++; pick.need-=pick.pi.jpy; bud-=pick.pi.jpy; }
       const buyL=bs.filter(b=>b.sh>0), skipL=known.filter(b=>b.sh===0);
+      // v9.9.112: 注文書の各行も**銘柄名の行＋説明の行**に分ける。旧実装は長い説明に nowrap を
+      //   掛けて flex で横に並べていたので、携帯の幅では説明が右へはみ出し、
+      //   押し出された銘柄名が「6857 ア／ド／バ／ン…」と1文字ずつ縦に潰れていた。
+      //   説明の nowrap を外し、割ってはいけない数字の対だけを nowrap で守る。
+      const orow=(name,right,sub,c)=>`<div style="padding:4px 0;border-bottom:1px dashed rgba(201,166,74,.18)">`
+        +`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:12.5px;color:${c}">${name}</span>${right?`<span style="white-space:nowrap;font-size:12.5px">${right}</span>`:''}</div>`
+        +(sub?`<div style="font-size:11px;margin-top:1px;line-height:1.55">${sub}</div>`:'')+`</div>`;
       let ob='';
       buyL.forEach(b=>{ const s1=Math.floor(b.sh/2), s2=b.sh-s1, cost=Math.round(b.sh*b.pi.jpy);
-        ob+=`<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed rgba(201,166,74,.18)"><span style="font-size:12.5px;color:var(--ink)">${b.x.n}</span><span style="white-space:nowrap;font-size:12.5px"><b style="color:var(--jade)">${b.sh}株</b><span style="color:var(--dim);font-size:11px">（約${ccfYen(cost)}・${b.sh===1?'指値1本＝深い側(fair線寄り)':`階段 ${s1}株＋${s2}株`}）</span></span></div>`; });
-      skipL.forEach(b=>{ ob+=`<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed rgba(201,166,74,.18)"><span style="font-size:12.5px;color:var(--muted)">${b.x.n}</span><span style="white-space:nowrap;font-size:11px;color:#d69a3c">今月見送り——1株${b.pi.label}が残枠に届かない→翌月の枠と合算</span></div>`; });
-      unknown.forEach(b=>{ ob+=`<div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed rgba(201,166,74,.18)"><span style="font-size:12.5px;color:var(--muted)">${b.x.n}</span><span style="white-space:nowrap;font-size:11px;color:var(--dim)">価格未取得——${ccfYen(b.need)}を証券会社の現値で手計算（円÷株価）</span></div>`; });
+        ob+=orow(b.x.n,`<b style="color:var(--jade)">${b.sh}株</b>`,
+          `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(cost)}</span>　<span style="white-space:nowrap">${b.sh===1?'指値1本＝深い側(fair線寄り)':`階段 ${s1}株＋${s2}株`}</span></span>`,'var(--ink)'); });
+      skipL.forEach(b=>{ ob+=orow(b.x.n,`<span style="color:#d69a3c;font-size:11.5px">今月見送り</span>`,
+        `<span style="color:#d69a3c"><span style="white-space:nowrap">1株 ${b.pi.label}</span>が残枠に届かない→翌月の枠と合算</span>`,'var(--muted)'); });
+      unknown.forEach(b=>{ ob+=orow(b.x.n,`<span style="color:var(--dim);font-size:11.5px">価格未取得</span>`,
+        `<span style="color:var(--dim)"><span style="white-space:nowrap">${ccfYen(b.need)}</span>を証券会社の現値で手計算（円÷株価）</span>`,'var(--muted)'); });
       const spent=AMT-bud-unknown.reduce((a,b)=>a+b.need,0);
       body+=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
         <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書（株数・現値換算）</b><span style="font-size:10.5px;color:var(--dim);margin-left:8px">円の按分が正本——丸株で最も近づける執行案。不足の大きい銘柄から1株ずつ積む</span></div>
