@@ -106,11 +106,16 @@ jobs:
             const rows=require('./out/score_all.json');
             const e=rows.filter(r=>r.audE>0);
             if(e.length){console.error('要修正のあるパック: '+e.map(r=>r.t+'('+r.audE+')').join(' '));}
-            // 既知の1件(AMBIQ: 赤字IPO社で営業利益率が不可能帯の外)だけは許容する。
+            // 既知の2件だけは許容する。**どちらも値が誤っているのではなく帯の外にいる**——
+            //   AMBIQ 営業利益率 −54.5%（帯[−50,90]・赤字IPO社）
+            //   CMTL  roicg −64.1（帯[−60,220]・営業損失に対しICが小さい。2026-08-07の全数審査で確定）
+            // 帯は較正済みなのでこちらを触らず実額を残す、というCLAUDE.mdの判断をそのまま写している。
+            // 両社ともΩ0で四関門の第一に落ちるため買付判断への実害はない。
             // 増えたら落とす＝「今より悪くしない」ラチェット。
-            const unknown=e.filter(r=>r.t!=='AMBIQ');
+            const KNOWN=['AMBIQ','CMTL'];
+            const unknown=e.filter(r=>!KNOWN.includes(r.t));
             if(unknown.length){console.error('✗ 新しい要修正が入った'); process.exit(1);}
-            console.log('✓ 要修正は既知の1件のみ');
+            console.log('✓ 要修正は既知の'+e.length+'件のみ');
           "
 
       # ── 4-b. 繰り上がる前に、繰り上がる社を検査する ───────────────────────────
