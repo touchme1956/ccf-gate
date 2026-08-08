@@ -343,6 +343,31 @@ def build_numbers(facts):
     #   （実測 WIT で約64B INR。詳細は series_sum の頭注）
     S["debtS"], _usedS = series_sum(facts, TAGS["debtS"], total_key="DebtCurrent")
     S["debtL"], _usedL = series_sum(facts, TAGS["debtL"], total_key=("LongTermDebt", "Borrowings"))
+    # 2026-08-07是正: **`LongTermDebt` が総額か非流動のみかは、恒等式で機械的に判る。**
+    #   旧実装は「機械では区別できない」として警告だけ出していた（下の _dbl）が、その年に
+    #   `LongTermDebt ≒ LongTermDebtNoncurrent + LongTermDebtCurrent` が成り立てば
+    #   **LongTermDebt は総額であることが証明される**（のれんの上限＝無形総額 と同じ「不等式・恒等式で
+    #   結論を出す」作法。ルール7に触れない）。成り立つ年だけ 1年内返済分を debtS から差し引く。
+    #   実害の実測（WIT・IDXX に続く3例目）: **LRCX** は全年でこの恒等式が成立し、
+    #   FY2024 +501 / FY2025 +750百万$ の負債過大 → through-cycle roic が 42.4% と出るべきところ 40.1%。
+    #   IC が過大＝ROIC は**過小**に出るので、この事故は「保守的な誤り」に見えて実は
+    #   Ω の実効36.5%を占める単一最大の入力を静かに削っていた。
+    _ltc = series(facts, ["LongTermDebtCurrent"])[0]
+    _ltn = series(facts, ["LongTermDebtNoncurrent"])[0]
+    _ltd = series(facts, ["LongTermDebt"])[0]
+    _fixed = []
+    for _y in sorted(set(_ltc) & set(_ltn) & set(_ltd)):
+        if not any("LongTermDebt(総額)" in x for x in (_usedL.get(_y) or [])):
+            continue
+        if not any(x.startswith("LongTermDebtCurrent=") for x in (_usedS.get(_y) or [])):
+            continue
+        _sum = _ltn[_y] + _ltc[_y]
+        if _ltd[_y] <= 0 or abs(_ltd[_y] - _sum) / abs(_ltd[_y]) > 0.005:
+            continue                      # 恒等式が成り立たない＝LongTermDebt は非流動のみ。触らない
+        S["debtS"][_y] = (S["debtS"].get(_y, 0) or 0) - _ltc[_y]
+        _usedS[_y] = [x for x in _usedS[_y] if not x.startswith("LongTermDebtCurrent=")] + \
+                     [f"LongTermDebtCurrent={_ltc[_y]:,.0f}は総額に含まれるため控除"]
+        _fixed.append(_y)
     # 2026-08-03: 無形も同じく「構成要素」だった（TAGS["intan"]の頭注を見よ）。総額タグがその年に
     #   あれば総額、無ければ 確定分＋無期限分 を足す＝series_sum の total_key がそのまま使える。
     #   実測 CELH: 総額タグが2024年で終わり、2025年は二本に割れていたので series() では欠測になった。
@@ -439,10 +464,16 @@ def build_numbers(facts):
     _dbl = sorted(y for y in _usedL
                   if any("LongTermDebt(総額)" in x for x in _usedL[y])
                   and any("LongTermDebtCurrent" in x for x in _usedS.get(y, [])))
+    if _fixed:
+        note.append(f"有利子負債の二重計上を**恒等式で確定して是正した**（{len(_fixed)}年: {_fixed[0]}〜{_fixed[-1]}）: "
+                    f"LongTermDebt = LongTermDebtNoncurrent + LongTermDebtCurrent が成立＝"
+                    f"LongTermDebt は1年内返済分**込みの総額**なので、1年内返済分を控除した。"
+                    f"控除しないと IC が過大＝ROICは**過小**に出る")
     if _dbl:
         note.append(f"有利子負債の二重計上の疑い（{_dbl[-1]}年ほか{len(_dbl)}年）: LongTermDebt を"
                     f"1年内返済分込みで報告する会社では LongTermDebtCurrent を足すと重複する。"
-                    f"原本のBSで総額を確認せよ。重複していれば IC が過大＝ROICは**過小**に出ている")
+                    f"恒等式（総額＝非流動＋流動）が成立しないか、非流動タグが無い年なので"
+                    f"**機械では確定できなかった**。原本のBSで総額を確認せよ")
     # 2026-07-29新設: 機械項目にも根拠を刻む。
     #   実測(night/audit_evidence.py)で、機械項目の _meta.evidence 被覆率は 9.8%
     #   (ni 0.3% / cagr 1.0% / gm 4.8% / roic 16.2%)だった。「機械の出力だから正しい」

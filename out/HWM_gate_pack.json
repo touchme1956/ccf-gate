@@ -29,11 +29,11 @@
  "geopol": 1,
  "nrr": 105,
  "beta": null,
- "per": 77.72,
+ "per": 75.18,
  "perF": null,
  "evebit": null,
- "px": 291.42,
- "shy": 0.6,
+ "px": 281.88,
+ "shy": 0.62,
  "gr": null,
  "gcap": null,
  "analysts": null,
@@ -76,11 +76,12 @@
    "2026-08-02 市場価格を自動更新: px 272.89 → 282.26（+3.4%）。per 72.77→75.27　shy 0.64→0.62。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
    "acq5 yes→no（2026-08-03・機械判定）: のれんの新しさ = (直近2025年 4,022,000,000 − 2020年 4,102,000,000) ÷ 直近 = **-2.0%**（判定線 yes≥30% / no<10%）。のれんは増えていない＝直近5年の大型買収は無い。従来の'yes'は根拠が記録されておらず、through-cycle化で roicGap が15ptを越えた際にのれん込みROIC乖離−6が誤発火して発覚した",
    "**v9.9.72 roic を through-cycle 化**: roic 42.5→28.9 / roicg 20.0→12.2。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央27.7% / 最悪19.0%）。比は**パックが審査した年(2025)**の採取器値 roic40.75 / roicg19.51 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
-   "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）"
+   "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）",
+   "2026-08-07 irr=70 を50/70の線で再検算し据置（値は不変・根拠を209字→本文引用つきへ）。2026-08-06の全数検算は irr==85 だけを対象にしており、70は一度も同じ厳格さで検査されていなかった。実測でこの非対称は重い——**判定圏の70を50に落とすと45社中19社が堀の関門を割り投下可6社が落ちる**のに対し、85→70では投下可は0社しか動かない。triage(night/audit_irr70.py)で投下可のうち分類がA以外だった2社の一つ。10-K全文走査の結果、認定要件による摩擦は実在する（70）が、顧客側の再認定を断定する文は無く逆に『switch to alternative suppliers / enter into the markets themselves』と明言している（85にしない）"
   ],
   "evidence": {
    "expiry": "『We are not materially dependent on any single patent, trade secret, or trademark』(限)→単一特許/期限依存なし=no。特許ポートフォリオは継続更新",
-   "irr": "『The willingness of customers to accept alternative solutions for the products sold by Howmet, pricing pressure from competitors, and technological advancements』(蝕)+顧客が自家superalloy炉を保有(集)→高摩擦だが認証絶対ロックとは言い切れず70",
+   "irr": "**irr=70 で確定（2026-08-07・50/70の線で再検算）**。FY2025 10-K を全文走査した結果、**同じ10-Kが両方向に語っている**——\n《70を支える側》『Because of **approval, license, and qualification requirements** applicable to manufacturers and/or their suppliers, sources of alternatives to mitigate manufacturing disruptions **may not be readily available to Howmet or its customers**』＝認定要件のせいで顧客も容易には代替を見つけられない＝実在する移行摩擦。\n《85にはしない理由》(i)上の文は**供給途絶時の緊急代替**の文脈で、『顧客が再認定の費用を負う』という**断定**ではない（CW『we as well as the products that we manufacture **must also be certified by our individual OEM customers**』／LOAR『**not typically economical for OEMs to repeat the process of qualification**』／TDG『**reduced incentive to certify another supplier because of the cost and time**』のような declarative が無い） (ii)同じ10-Kが逆を明言する——『Howmet's customers may also change their business strategies or modify their business relationships with Howmet, including **to switch to alternative suppliers**, or **to enter into the markets themselves to compete with Howmet**』＝顧客は乗り換えも内製化もできると会社自身が書く (iii)蝕セクションの『The willingness of customers to accept **alternative solutions** for the products sold by Howmet』＋顧客が自家superalloy炉を保有。\n《50にもしない理由》認定要件による摩擦は原本に明記されており『代替容易』ではない。\n→ **70（高摩擦移行困難）が規約の刻みに正確に一致する**。'qualif' の他8件はすべて **Howmet自身のサプライヤ**を認定する側（向きが逆）。",
    "rep": "航空エンジン翼のsuperalloy投資鋳造は数十年のプロセス知だが、大口顧客が自家炉で一部内製可(集『captive superalloy furnaces』)→極困難80(複製不能100とはしない)",
    "dur": "『worldwide patent portfolio』(限)+航空/政府契約の規制・認証依存(誠『government contracting』)=規制/プロセス知の堀→100",
    "erosion": "『attempting to penetrate the global commercial transportation market』(集)+『competitive pricing pressure』『the use of AI, by or affecting Howmet's compe[titors]』(蝕)→新興の競争圧=emerging",
@@ -160,23 +161,23 @@
    "_note": "roic/roicg がどの基準で作られているか。v9.9.72 で through-cycle(5年中央値)へ移行したが、採取器とパックが食い違う社・系列が3年未満の社には当てていないため**台帳に二つの基準が混在する**。文字列一致で見分けるのは脆いので機械可読にした"
   },
   "px": {
-   "date": "2026-08-05",
+   "date": "2026-08-07",
    "day": null,
    "ccy": "USD",
    "src": "Finnhub",
-   "px_old": 288.2,
-   "px_new": 291.42,
-   "pct": 1.12,
+   "px_old": 289.72,
+   "px_new": 281.88,
+   "pct": -2.71,
    "conv": "基準保存式 per_new = per_old × (px_new÷px_old)／shy は 1/比率",
    "fields": {
-    "per": 77.72,
-    "shy": 0.6
+    "per": 75.18,
+    "shy": 0.62
    }
   }
  },
  "moatW": 85,
  "roiic": 116.2,
  "roiic5": "na",
- "ddate": "2026-08-05",
+ "ddate": "2026-08-07",
  "dep": 10
 }

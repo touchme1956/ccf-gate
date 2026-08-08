@@ -112,7 +112,7 @@ if (!KEYS.length) {
 // B4(2026-08-04): 門の applyFields は「黙って化けた」欄を __coerce に記録して ccfAudit へ渡す
 //   （v9.9.54＝acq5=2.8 が 'yes' に化けて罰が黙って効いた発生点の痕跡）。端末側の再実装は
 //   これを記録せず常に [] を渡していたため、**err①「取込で化けた」が端末で構造的に0件**＝
-//   四段関門の第四が端末側で半分無効だった。門と同じ規則で記録し、同じ台帳を見る二つの検査器が
+//   （当時の呼称で）四段関門の第四が端末側で半分無効だった。門と同じ規則で記録し、同じ台帳を見る二つの検査器が
 //   違うことを言わないようにする（v9.9.65の教訓）。
 let __coerce = [];
 const lastCoerce = () => __coerce.slice();
@@ -159,6 +159,50 @@ for (const kv of (arg('--set') || '').split(',').filter(Boolean)) {
   if (k) over[k.trim()] = v === '' || v === undefined ? null : (isNaN(+v) ? v : +v);
 }
 
+// ── 期末後の重大事象で貸借対照表が古いパック（v9.9.94・2026-08-06新設）─────────
+//   night/audit_stale_bs.py が出す作業リストを読み、**第四の関門(点検)の一部として買付を止める**。
+//   なぜ点検の側に置くか: これは「Ωが低い」でも「堀が薄い」でもなく、
+//   **台帳の値が会社の現在を描いていない**というデータ健全性の問題だから——
+//   v9.9.66 が「取込で化けた/内部矛盾/不可能値を持つ銘柄は Ω がどれだけ高くても買わない」と
+//   決めたのとまったく同じ理由。**買わない理由であって売る理由ではない**（Ω・売却規律は不変）。
+//   【発端】2026-08-06、roicGapの崖を段階減点にした帰結でAPHが投下可へ入り資産の6.3%を受けたが、
+//   パックのreportDateは2025-12-31で、CommScope買収(約105億$・同社史上最大)の完了は**その9日後**。
+//   のれんは10,575→17,555百万$(+66%)、のれん＋無形は自己資本の96%→147%へ。
+//   既存の鮮度検査は reportDate と auditDate の「年」しか見ないので**同じ年のこれは素通り**だった。
+//   ファイルが無ければ空＝検査は眠るだけ（無いことを「異常なし」と偽らない・絶対のルール7）。
+let STALE = {};
+try {
+  const sp = path.join(ROOT, 'out', 'stale_bs.json');
+  if (fs.existsSync(sp)) {
+    const j = JSON.parse(fs.readFileSync(sp, 'utf8'));
+    for (const [k, v] of Object.entries(j.items || {})) if (v && v.verdict === '要審査') STALE[k] = v;
+  }
+} catch (e) {}
+
+// ── 納品検査(validate_packs)のFAILも第四の関門に入れる（v9.9.95・2026-08-07 ユーザー指示「いるとおもうなら入れて」）
+//   【なぜ入れるか】FAILの運用単位が「投下可10社」だったので、10番目の席が動くたびに
+//   **投下可の厳しさで監査されたことのないパックが席に着いてから初めて検査される**という
+//   順序になっていた。2026-08-06 だけで6回連続（ECL→ISRG→IDXX→APH→CDNS→MCO）、
+//   うち2社は誤値そのものが出て脱落した（ISRG roic 19.6→12.8 ／ CDNS f1=80 が根拠ゼロ→55）。
+//   関門にすれば**根拠に穴のあるパックは構造的に席に着けない**＝不意打ちが原理的に消える。
+//   【なぜ今日入れてよいか】投下可10社のFAILは**ゼロ**なので今日は誰も落ちない＝純粋なラチェット。
+//   落ちるなら規則の追加ではなく現状の是正が先、という順序を守れている。
+//   【第五の関門と呼ばない】これは「値が壊れている／根拠が無い」というデータ健全性の検査で、
+//   第四の関門（点検・期末後の重大事象）とまったく同じ種類。**当時は「四段関門」の呼称を変えなかった**
+//   ——名前を増やすと本文16箇所の書き換えが要り、この repo が繰り返している
+//   「規則を変えたら文も全部grepで洗う」の取りこぼしを自分で作ることになる、と判断したため。
+//   ※**v9.9.98（2026-08-07）で門X遮断器を関門から外したので呼称は「四関門」になった**
+//     （Ω75+ ∧ 堀70+ ∧ データ健全）。そのときは本文41箇所を実際にgrepで洗った。
+//   **買わない理由であって売る理由ではない**（Ω・堀・売却規律S1/S2/S3はいずれも不変）。
+let VFAIL = {};
+try {
+  const vp = path.join(ROOT, 'out', 'validate_fail.json');
+  if (fs.existsSync(vp)) {
+    const j = JSON.parse(fs.readFileSync(vp, 'utf8'));
+    for (const [k, v] of Object.entries(j.items || {})) if (v && (v.n || 0) > 0) VFAIL[k] = v;
+  }
+} catch (e) {}
+
 const rows = [];
 for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
   if (!f.endsWith('_gate_pack.json')) continue;
@@ -172,7 +216,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
   const dd = { ...d, ...over };
   let r; try { r = scorePack(dd); } catch (e) { continue; }
   const coerce = lastCoerce();   // B4: 門の applyFields が記録する「黙って化けた」欄（ccfAudit の err① の材料）
-  // 門Ωの点だけでは「買えるか」は決まらない。三段関門(Ω75+ ∧ 門X4条件 ∧ 堀75+)を
+  // 門Ωの点だけでは「買えるか」は決まらない。四関門(Ω75+ ∧ 堀70+ ∧ データ健全 ∧ 事業の収縮なし)＝v9.9.100時点を
   // 門と同じ関数(ccfXJudge / ccfMoatGate)で判定する＝二重実装を作らない
   let x = {}, mg = {};
   try { x = ccfXJudge(dd, parseFloat(r.evalScore)) || {}; } catch (e) {}
@@ -190,6 +234,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
       else if (w.lv === 'warn' && !((M.evidence || {})[w.k] || (M.nulls || {})[w.k])) audU++;
     }
   } catch (e) {}
+  const shrink = ccfShrinkGate(dd);   // v9.9.99: 門の単一実装（再実装しない・v9.9.65の掟）
   const s = parseFloat(r.evalScore);
   rows.push({ t, nm, jp, s, tier: r.tierShort,
               kills: r.kills, pfail: r.pfail, exit: r.exit && r.exit.level,
@@ -197,16 +242,30 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               moatMiss: (r.moatMiss && r.moatMiss.length) ? r.moatMiss : undefined,
               xEr: x.xEr == null ? null : +x.xEr.toFixed(1), xPass: x.xPass,
               audE, audU, audOK: audE === 0 && audU === 0,
-              buy: s >= 75 && x.xPass === true && mg.pass === true && audE === 0 && audU === 0 });
+              staleBS: STALE[t] ? STALE[t].newPct : undefined,
+              vFail: VFAIL[t] ? VFAIL[t].n : undefined,
+              // v9.9.98(2026-08-07 ユーザー明示指示): **門X遮断器 E[r]≥0 を関門から外した**。
+              // 四関門＝Ω75+ ∧ 堀70+ ∧ データ健全（点検err・未解決warn・期末後・納品検査）。
+              // 門(index.html)の pass=q75c と同一規則（v9.9.65の掟）
+              shrink: shrink.hit ? shrink.why : undefined,
+              irr: dd.irr,   // v9.9.100: 席の選定で irr=85 を優先するため（門の ccfAllocTop が読む）
+              // v9.9.99(2026-08-07 ユーザー明示指示): **事業の収縮の遮断器**を第四の関門に。
+              //   売上縮小 ∧ 営業利益率低下（門の単一実装 ccfShrinkGate を呼ぶ＝再実装しない）
+              buy: s >= 75 && mg.pass === true && audE === 0 && audU === 0
+                   && !STALE[t] && !VFAIL[t] && !shrink.hit });
 }
 rows.sort((a, b) => b.s - a.s);
 // v9.9.88(2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」): 第五の枠。
-//   投下可＝四段関門∧合成点上位10社。判定は門の ccfAllocTop（単一実装＝Ⅵ・盤・snapと同一・v9.9.65の掟）。
+//   投下可＝四関門∧席順上位10社（v9.9.98でE[r]項を外し・v9.9.100でirr=85を先頭へ）。判定は門の ccfAllocTop（単一実装＝Ⅵ・盤・snapと同一・v9.9.65の掟）。
 //   四段通過だが11位以下は quali=true / buy=false ＝🔵次点（買わないが資格は保持）。
 {
   const four = rows.filter(r => r.buy);
   const sel = ccfAllocTop(four, 10);
   for (const r of rows) { r.quali = r.buy; if (r.buy) r.buy = sel.has(r.t); }
+  // 合成点を**出力にも載せる**（2026-08-07）。下流の道具（audit_promotion_ready 等）が
+  // 式を書き写すと v9.9.65 の「同じ台帳を見る二つの検査器が違うことを言う」になる。
+  // 門の単一実装 ccfAllocScore の値をそのまま配る。
+  for (const r of rows) r.a = +ccfAllocScore(r).toFixed(2);
 }
 // 部分実行(--only / --set / --jp / --us)の結果で正本 out/score_all.json を潰さない（2026-07-29）。
 // 実害があった: `--only MA,V,...` を打った直後、score_all.json が5件に縮み、
@@ -231,25 +290,66 @@ if (Object.keys(over).length) console.log('上書き:', over, '\n');
 brief('全体', rows);
 brief('日本株', rows.filter(x => x.jp));
 brief('米国等', rows.filter(x => !x.jp));
+// 落ちた理由は**全部**出す（v9.9.52「城の行が理由不明で出ない」の教訓）。
+//   一つだけ出すと、二つ以上の関門に落ちている社で**残りが見えなくなる**——
+//   実測 6920 は E[r]−22% と納品検査FAIL の両方だが、単一表示では後者しか出ず
+//   「根拠さえ埋めれば買える」と読めてしまう（実際は遮断器で止まっている）。
+const blockers = r => {
+  const b = [];
+  if (!r.moatOK) b.push('⛔堀不足');
+  // v9.9.97: xPass===null（per未取得でE[r]を算出していない）を『押し目待ち』と呼ばない。
+  //   価格が高いのではなく価格が入っていない＝直し方が原本読解でなく market_fetch。門のⅥと同じ分け方。
+  // v9.9.98: E[r]は合否に効かなくなったので blockers から外した。
+  //   E[r]の値そのものは一行表示に出ており、負なら数字で判る（情報として残す・v9.9.52）
+  if (!r.audOK) b.push('⛔点検要修正');
+  if (r.shrink) b.push('⛔事業の収縮');
+  if (r.staleBS != null) b.push('⛔期末後の重大事象');
+  if (r.vFail) b.push(`⛔納品検査FAIL${r.vFail}`);
+  return b.length ? b : ['—'];
+};
 const q75 = rows.filter(x => x.s >= 75);
-console.log('\nΩ75+（堀＝絶対MOAT指数／X＝門X4条件／点＝全件点検／買＝四段関門すべて成立）:');
+console.log('\nΩ75+（堀＝絶対MOAT指数／E[r]＝参考値・合否に不使用／点＝全件点検／買＝四関門すべて成立・v9.9.98）:');
 for (const r of q75) {
   const moat = r.moatNA ? ' NA ' : (r.moat == null ? '  — ' : r.moat.toFixed(0).padStart(3) + ' ');
   const aud = r.audOK ? '  ✓' : `${r.audE ? '要' + r.audE : ''}${r.audU ? '未' + r.audU : ''}`.padStart(3) + '✗';
   console.log(`  ${r.nm.slice(0, 24).padEnd(26)} Ω${r.s.toFixed(1).padStart(5)}  堀${moat}${r.moatOK ? '✓' : '✗'}`
-    + `  E[r]${r.xEr == null ? '  na' : r.xEr.toFixed(0).padStart(4) + '%'}${r.xPass ? '✓' : '✗'}`
+    // v9.9.100: E[r] の ✓/✗ を外した——v9.9.98 で E[r] は合否に効かなくなったのに、
+    //   ✓/✗ が残っていると『これで落ちている』と読めてしまう（落ちた理由は blockers が名指しする）。
+    + `  E[r]${r.xEr == null ? '  na' : r.xEr.toFixed(0).padStart(4) + '%'} `
     + `  点${aud}`
-    + `  ${r.buy ? '🟢投下可' : r.quali ? '🔵次点(11位以下)' : !r.moatOK ? '⛔堀不足' : !r.audOK ? '⛔点検要修正' : '🟡押し目待ち'}  出口=${r.exit}`);
+    + `  ${r.buy ? '🟢投下可' : r.quali ? '🔵次点(11位以下)' : blockers(r).join('＋')}  出口=${r.exit}`);
 }
-// v9.9.91: ロスターの並びは**配分と同じ合成点順**（旧Ω順は「合成点上位10社」と名乗りながらΩで並べていた）
-const _ascore = x => { const e = (x.xEr == null ? 2 : x.xEr); return Math.max(0, (x.s || 0) - 70) * Math.max(0, Math.min(100, 50 + (e - 12) * 5)) / 50; };
-const buy = rows.filter(x => x.buy).sort((a, b) => _ascore(b) - _ascore(a) || b.s - a.s);
-const nextUp = rows.filter(x => x.quali && !x.buy).sort((a, b) => _ascore(b) - _ascore(a) || b.s - a.s);
-console.log(`\n🟢投下可(四段関門∧合成点上位10社・v9.9.88) ${buy.length}社`
+// v9.9.91→v9.9.100: ロスターの並びは**席の順**（irr=85優先→Ω順）。当時の呼称は「合成点上位10社」と名乗りながらΩで並べていた）
+// v9.9.94(2026-08-06): ここに合成点を**書き写していた**のをやめ、門の単一実装 ccfAllocScore を呼ぶ。
+//   実害: v9.9.93 で配分の錨を (Ω−70)→Ω へ変えたとき、ccfAllocScore は直したのに
+//   **この写しだけが錨70のまま取り残された**——席の選定(ccfAllocTop)と表示の並びが違う式で動いていた。
+//   v9.9.65「同じ台帳を見る二つの検査器が違うことを言ってはいけない」を、写しを作ったせいで自分で破っていた。
+const _ascore = x => ccfAllocScore(x);
+// v9.9.100: 表示の並びも席の順と同じ規則（irr=85 を先に）＝門と端末が同じことを言う（v9.9.65）
+const _mech = x => (+x.irr === 85) ? 0 : 1;
+const buy = rows.filter(x => x.buy).sort((a, b) => _mech(a) - _mech(b) || _ascore(b) - _ascore(a) || b.s - a.s);
+const nextUp = rows.filter(x => x.quali && !x.buy).sort((a, b) => _mech(a) - _mech(b) || _ascore(b) - _ascore(a) || b.s - a.s);
+console.log(`\n🟢投下可(四関門∧irr=85優先→Ω順の上位10社・v9.9.100) ${buy.length}社`
   + `　日本株${buy.filter(x => x.jp).length}／米国等${buy.filter(x => !x.jp).length}`
   + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
-if (nextUp.length) console.log(`🔵次点(四段通過・合成点11位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
+if (nextUp.length) console.log(`🔵次点(四関門通過・席順11位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
 console.log(`⛔堀不足で見送り(Ω75+だが堀が関門に届かない) ${q75.filter(x => !x.moatOK).length}社`);
 console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告あり) ${q75.filter(x => x.moatOK && !x.audOK).length}社`);
+// 期末後の重大事象で落ちた社は**必ず名指しで出す**。黙って消えると v9.9.52
+// 「城の行が理由不明で出ない」と同じ事故になる（四関門を通っているのに枠から消えるので、
+//  理由を書かないと「なぜ居ないのか」が誰にも分からない）。
+{
+  const st = rows.filter(x => x.staleBS != null && x.s >= 75);
+  console.log(`⛔期末後の重大事象で見送り(貸借対照表がパックのreportDate以降に大きく変わった) ${st.length}社`);
+  for (const r of st) console.log(`     ${r.nm.split(/\s/)[0]}  Ω${r.s.toFixed(1)}  のれんの${r.staleBS}%がreportDate以降に流入`
+    + `　→ night/audit_stale_bs.py の作業リスト。最新四半期で再審査すれば復帰しうる`);
+}
+{
+  // v9.9.99: 事業の収縮で落ちた社は**名指しで出す**（黙って消さない・v9.9.52）
+  const sh = rows.filter(r => r.s >= 75 && r.moatOK && r.shrink);
+  console.log(`⛔事業の収縮で見送り(Ω75+・堀70+だが売上縮小 ∧ 営業利益率低下) ${sh.length}社`);
+  for (const r of sh) console.log(`     ${r.nm.split(/\s/)[0]}  Ω${r.s.toFixed(1)}  ${r.shrink}`
+    + `　→ 数字が戻れば自動で復帰。買わない理由であって売る理由ではない`);
+}
 console.log(`   ※全${rows.length}社: 要修正 ${rows.reduce((a,x)=>a+x.audE,0)}件 / 未解決警告 ${rows.reduce((a,x)=>a+x.audU,0)}件`);
 console.log(`\n→ out/${outFile}（全${rows.length}件・降順）`+ (partial ? '　※部分実行なので正本 score_all.json は書き換えていない' : ''));

@@ -1,0 +1,209 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 門の検査（push / PR）
+#
+# なぜ要るか（2026-08-06新設）
+#   この repo は優れた検査器を**すでに持っている**（check_html / validate_packs /
+#   score_all / audit_gate / audit_docs）。ところが既存のワークフロー3本は
+#   すべて schedule + workflow_dispatch で、**編集した瞬間に走るものが一つも無かった**。
+#   CLAUDE.md の歴史は「編集で入った欠陥を数日〜数週間後に手作業の監査で発見した」記録の連続で、
+#   実際に踏んだものだけでも:
+#     ・日本株審査依頼文が廃止済みの旧JP規約を配り続けていた
+#     ・審査プロトコル正本の p2 ルーブリックに p3 の刻みが混入していた
+#     ・堀の線を 75→70 にしたのに依頼文テンプレ3箇所に 75 が残っていた
+#     ・Ωの合成式の説明が3本柱のまま（コードは v9.9.36 以降 4本柱）
+#   いずれも**採点は動かないので誰も気づかない**型。CIがあれば混入した日に落ちていた。
+#
+# 思想
+#   このCIは**読むだけ**で、採点にも台帳にも一切書き込まない（絶対のルール1）。
+#   落とすのは「壊れている」ことが機械で確定できるものだけ:
+#     構造検査・説明とコードの齟齬・投下可の顔ぶれの差分。
+#   根拠の被覆（validate_packs のFAIL）は既知の積み残しなので**表示のみ・落とさない**
+#   ——鳴りすぎる警報は鳴らないのと同じ。
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: gate-ci
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'index.html'
+      - 'chomirai.html'
+      - 'ami.html'
+      - 'portfolio.json'
+      - 'night/**'
+      - 'out/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # 投下可の差分を出すのに base 側の index.html が要る
+
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+
+      # ── 1. 構造検査（タブのdiv収支・参照IDの実在・スクリプト構文）────────────
+      - name: 構造検査 check_html
+        run: python3 night/check_html.py
+
+      # 別枠の門（chomirai/ami/v10/portfolio）も最低限の健全性を見る。
+      #   本体だけ検査して別枠が壊れたまま配信される、を防ぐ。
+      - name: 別枠ページの健全性（JSON構文・参照ファイルの実在）
+        run: |
+          python3 - <<'PY'
+          import json, os, re, sys
+          bad = []
+          for f in ['portfolio.json', 'holdings.json', 'kanshi_list.json',
+                    'todo_list.json', 'out/etf_profiles.json']:
+              if not os.path.exists(f):
+                  bad.append(f'{f}: 無い'); continue
+              try: json.load(open(f, encoding='utf-8'))
+              except Exception as e: bad.append(f'{f}: {e}')
+          # 別枠HTMLが fetch している同一オリジンのファイルが実在するか
+          for page in ['ami.html', 'index.html']:
+              if not os.path.exists(page): continue
+              h = open(page, encoding='utf-8').read()
+              for m in re.findall(r"fetch\('([^']+?)(?:\?[^']*)?'", h):
+                  if m.startswith(('http', '//')): continue
+                  if not os.path.exists(m): bad.append(f'{page} が読む {m} が無い')
+          if bad:
+              print('\n'.join('✗ ' + b for b in bad)); sys.exit(1)
+          print('✓ 別枠ページの参照先はすべて実在')
+          PY
+
+      # ── 2. 説明文とコードの整合（この repo の再発する失敗の型）────────────────
+      - name: 説明とコードの齟齬 audit_docs
+        run: python3 night/audit_docs.py
+
+      # ── 2-b. 納品検査のFAIL表を作り直す（v9.9.95）────────────────────────────
+      #   **score_all より先**でなければならない——第四の関門がこのJSONを読むので、
+      #   古い表のまま採点すると「関門は通っているのに根拠が無い」社が投下可に出る。
+      #   ネットワーク不要・全362件で0.4秒。
+      - name: 納品検査FAIL表の再生成 validate_packs --json
+        run: python3 night/validate_packs.py --json --summary | tail -4
+
+      # ── 3. 門を実際に走らせる（compute() をDOMシムで実行＝再実装ではない）──────
+      - name: 全パック採点 score_all
+        run: node night/score_all.js
+
+      # ── 4. 台帳の破損（要修正＝取込で化けた/列挙違反/内部矛盾/不可能値）────────
+      #      第四の関門の土台。errが出たら落とす。
+      - name: 全件点検 audit_gate
+        run: |
+          node night/audit_gate.js --all | tail -40
+          node -e "
+            const rows=require('./out/score_all.json');
+            const e=rows.filter(r=>r.audE>0);
+            if(e.length){console.error('要修正のあるパック: '+e.map(r=>r.t+'('+r.audE+')').join(' '));}
+            // 既知の1件(AMBIQ: 赤字IPO社で営業利益率が不可能帯の外)だけは許容する。
+            // 増えたら落とす＝「今より悪くしない」ラチェット。
+            const unknown=e.filter(r=>r.t!=='AMBIQ');
+            if(unknown.length){console.error('✗ 新しい要修正が入った'); process.exit(1);}
+            console.log('✓ 要修正は既知の1件のみ');
+          "
+
+      # ── 4-b. 繰り上がる前に、繰り上がる社を検査する ───────────────────────────
+      #   2026-08-06 に「10番目の席が動くたびに未監査のパックが露出する」を6回連続で踏んだ
+      #   （ECL→ISRG→IDXX→APH→CDNS→MCO。うち2社は誤値そのものが出て投下可から脱落）。
+      #   validate_packs の FAIL を**投下可だけ**で運用していたのが原因で、これは
+      #   事務作業の遅れではなく**未監査の社が席に着いてから初めて検査される**という順序の問題。
+      #   二層で守る（第四の関門と同じ作法）:
+      #     ・投下可に FAIL → 落とす（今日はゼロ＝ラチェット）
+      #     ・次点に FAIL   → 名指しで警告（今日は5社。hard fail にすると常時赤＝警報が死ぬ）
+      - name: 繰り上がり前の検査 audit_promotion_ready
+        run: python3 night/audit_promotion_ready.py
+
+      # ── 5. 投下可の顔ぶれが変わったら**必ず目に見える形で**出す ────────────────
+      #      黙って変わるのが一番怖い（v9.9.52「城の行が理由不明で出ない」の教訓）。
+      - name: 投下可の差分
+        run: |
+          # base(通常main)側の score_all.json を取り出して**本当に差分を取る**。
+          #   名前が「差分」なのに現在値を出すだけ、では v9.9.65 の
+          #   「同じ台帳を見る二つの検査器が違うことを言ってはいけない」の同型になる。
+          BASE="${{ github.event.pull_request.base.sha || github.event.before }}"
+          git show "$BASE:out/score_all.json" > /tmp/base_score.json 2>/dev/null || echo '[]' > /tmp/base_score.json
+          node -e "
+            const fs=require('fs');
+            const cur=require('./out/score_all.json');
+            let base=[]; try{base=JSON.parse(fs.readFileSync('/tmp/base_score.json','utf8'))}catch{}
+            const B=Object.fromEntries(base.map(r=>[r.t,r]));
+            const cb=cur.filter(r=>r.buy).map(r=>r.t), bb=base.filter(r=>r.buy).map(r=>r.t);
+            console.log('🟢投下可 '+cb.length+'社: '+cb.join(' '));
+            console.log('Ω75+ '+cur.filter(r=>(r.s||0)>=75).length+'社 / 全'+cur.length+'社');
+            if(!base.length){ console.log('（base側の score_all.json が無いので差分は取れない）'); process.exit(0); }
+            const out=bb.filter(t=>!cb.includes(t)), inn=cb.filter(t=>!bb.includes(t));
+            if(out.length||inn.length){
+              console.log('::warning::投下可が変わった —— 出: '+(out.join(' ')||'—')+' ／ 入: '+(inn.join(' ')||'—'));
+            } else console.log('投下可の顔ぶれは不変');
+            // Ωが1pt以上動いた社（黙って動くのが一番怖い・v9.9.52の教訓）
+            const moved=cur.map(r=>[r.t,(B[r.t]||{}).s,r.s])
+              .filter(x=>typeof x[1]==='number'&&Math.abs(x[2]-x[1])>=1)
+              .sort((a,b)=>Math.abs(b[2]-b[1])-Math.abs(a[2]-a[1]));
+            console.log('Ωが1pt以上動いた社: '+moved.length+'件');
+            moved.slice(0,15).forEach(([t,b,c])=>console.log('   '+t+' '+b.toFixed(1)+' → '+c.toFixed(1)+' ('+(c-b>=0?'+':'')+(c-b).toFixed(1)+')'));
+          "
+
+      # ── 5-b. 期末後の重大事象で貸借対照表が古いパック ──────────────────────────
+      #   SECへ問い合わせるので**判定圏(Ω72+)だけ**。ネットワークが不調でも落とさない
+      #   （検査できないことを「異常なし」と偽らないため、失敗はログに残す）。
+      #   out/stale_bs.json は score_all.js と門の Ⅵ が第四の関門として読む。
+      - name: 期末後の重大事象 audit_stale_bs（表示のみ・SEC問い合わせ）
+        continue-on-error: true
+        run: timeout 900 python3 night/audit_stale_bs.py | tail -25
+
+      # ── 5-c. パックより新しい年次報告が出ていないか（2026-08-07新設）─────────────
+      #   audit_stale_bs は**のれんの入替**しか見ないので、買収をしない優良企業が
+      #   静かに1会計年度ぶん古くなるのは今日どの検査器にも掛からなかった。
+      #   実測(初回): MSFT・KLAC（ともに投下可）を含む5社が1年遅れ。
+      #   **関門にはしない**——新しい10-Kが出ているのは欠陥ではなく再審査の合図で、
+      #   今日これで切ると投下可が落ちる＝「落ちるなら是正が先」の順序に反する（v9.9.95で守った順序）。
+      - name: パックの会計年度の遅れ audit_pack_stale（表示のみ・SEC問い合わせ）
+        continue-on-error: true
+        run: timeout 900 python3 night/audit_pack_stale.py --write | tail -22
+
+      # ── 6. 単調性・崖（落とさない・変化を見るための台帳）──────────────────────
+      - name: 単調性と崖の実測（表示のみ）
+        continue-on-error: true
+        run: timeout 900 node night/audit_monotonic.js | tail -35
+
+      # ── 6-b. irr=70 の根拠の triage（2026-08-07新設・表示のみ）─────────────────
+      #   2026-08-06の全数検算は irr==85 だけが対象で、70(209社)と50(123社)は未検査だった。
+      #   ところが実測では **判定圏の70を50に落とすと投下可10社中6社が落ちる**（85→70では0社）。
+      #   顔ぶれが変わるたびに読む先が変わるので、CIで毎回出す。
+      - name: irr=70 の根拠 triage audit_irr70（表示のみ）
+        continue-on-error: true
+        run: python3 night/audit_irr70.py | tail -20
+
+      # ── 7. 根拠の被覆（既知の積み残し。落とさない）────────────────────────────
+      - name: 納品検査 validate_packs（表示のみ）
+        continue-on-error: true
+        run: python3 night/validate_packs.py --summary | tail -10
+
+      # ── 8. ページの重さの予算（1.7MBまで肥大した実績があるので歯止め）──────────
+      - name: ページサイズの予算
+        run: |
+          python3 - <<'EOF'
+          import os, re, sys
+          p = 'index.html'
+          n = os.path.getsize(p)
+          h = open(p, encoding='utf-8').read()
+          b64 = sum(len(m) for m in re.findall(r'data:image/\w+;base64,([A-Za-z0-9+/=]+)', h))
+          print(f'index.html {n/1024/1024:.2f}MB  うち埋め込み画像 {b64/1024/1024:.2f}MB '
+                f'({b64/max(n,1)*100:.0f}%)')
+          BUDGET = 2.0 * 1024 * 1024
+          if n > BUDGET:
+              print(f'✗ 予算 {BUDGET/1024/1024:.1f}MB 超過')
+              sys.exit(1)
+          print('✓ 予算内')
+          EOF
