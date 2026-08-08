@@ -597,7 +597,15 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
   /* v9.9.108: ロゴから採った色はブランド色そのままだと web の地に対して沈むので彩度を1.35倍する。
      **色相は動かさない**（saturate は彩度だけを上げる）＝別の色に化けない。 */
   filter:saturate(1.35);transition:filter .18s ease}
-.led:hover .tgrad{filter:saturate(1.55) brightness(1.25)}
+/* v9.9.113(2026-08-08 ユーザー「買付プランだけ色もロゴもないのを直して欲しい」):
+   Ⅵ「今月の買付プラン」の行は .led ではなく独自の箱なので、ccfIcon を呼んでも
+   **積み重ね文脈が無く .tgrad の置き場所が決まらなかった**（inset:0 が親でなくページ基準になる）。
+   .led とまったく同じ作法（position:relative + isolation:isolate）を与えるだけで、
+   ccfIcon の単一実装がそのまま効く＝呼び出し側にロゴ描画のコードを書かない（v9.9.65の掟）。
+   .led と違って overflow:hidden を足すのは、この箱には角丸があり中に食み出す要素が無いから
+   （.tgrad の border-radius:inherit は親のspan経由で0になるため、角を丸く切るのはこちらの役目）。 */
+.planrow{position:relative;isolation:isolate;overflow:hidden}
+.led:hover .tgrad,.planrow:hover .tgrad{filter:saturate(1.55) brightness(1.25)}
 /* v9.9.92(2026-08-06 ユーザー要望「各銘柄にその企業のアイコンを入れてほしい」): 銘柄アイコン。
    **同一オリジンの out/logos/ だけを読む**——価格と同じ作法で、閲覧のたびに第三者へ銘柄リストを
    漏らさない・外部が落ちても崩れない。ロゴが無い銘柄は下地のモノグラム（先頭2文字・
@@ -611,7 +619,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
      色は night/logo_colors.py がCIで算出済み＝ブラウザは画素を読まない。 */
   box-shadow:0 0 0 1px #ffffff12, 0 1px 7px -2px var(--g,transparent), 0 0 15px -5px var(--g,transparent);
   transition:box-shadow .18s ease}
-.led:hover .tico{box-shadow:0 0 0 1px #ffffff1f, 0 1px 9px -1px var(--g,transparent), 0 0 22px -4px var(--g,transparent)}
+.led:hover .tico,.planrow:hover .tico{box-shadow:0 0 0 1px #ffffff1f, 0 1px 9px -1px var(--g,transparent), 0 0 22px -4px var(--g,transparent)}
 /* タイルの地は白ベタではなく**代表色を1割だけ混ぜた淡色**——暗いテーマの中で浮きすぎず、
    かつ黒一色のワードマークも読める明るさを保つ（真っ暗にすると黒ロゴが消える） */
 .tico img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:var(--tile,#fff)}
@@ -2994,14 +3002,14 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
   //   ＝足し算が金額に分断されて読めなかった。数字の対（階段の2本・1株価格）は nowrap で割らせない。
   //   v9.9.109「装飾の寸法を px で書いた時点で幅は変わらないと仮定している」の同型——
   //   **一行に収まる前提で書いた行は、いつか折り返す。**
-  const chip=(lbl,pct,sub,yen)=>`<div style="padding:7px 12px;border-radius:8px;background:#c9a64a14;border:1px solid #c9a64a44;margin-top:6px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:13.5px;color:var(--ink)">${lbl}</span><span style="white-space:nowrap">${yen!=null?`<span style="font-size:11.5px;color:var(--dim);margin-right:8px">${pct}%</span><span style="font-size:18px;font-weight:700;color:#c9a64a">${ccfYen(yen)}</span>`:`<span style="font-size:18px;font-weight:700;color:#c9a64a">${pct}%</span>`}</span></div>${sub?`<div style="font-size:10.5px;color:var(--dim);margin-top:3px;line-height:1.6">${sub}</div>`:''}</div>`;
+  const chip=(lbl,pct,sub,yen)=>`<div class="planrow" style="padding:7px 12px;border-radius:8px;background:#c9a64a14;border:1px solid #c9a64a44;margin-top:6px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:13.5px;color:var(--ink)">${lbl}</span><span style="white-space:nowrap">${yen!=null?`<span style="font-size:11.5px;color:var(--dim);margin-right:8px">${pct}%</span><span style="font-size:18px;font-weight:700;color:#c9a64a">${ccfYen(yen)}</span>`:`<span style="font-size:18px;font-weight:700;color:#c9a64a">${pct}%</span>`}</span></div>${sub?`<div style="font-size:10.5px;color:var(--dim);margin-top:3px;line-height:1.6">${sub}</div>`:''}</div>`;
   let body='';
   if(nm.length){
     nm.forEach((x,i)=>{ const half=x.yen!=null?Math.floor(x.yen/2/100)*100:null;
       const pi=(x.yen!=null&&pxInfo)?pxInfo(x.r):null;
       const pxTxt=(pi&&pi.jpy>0)?`　<span style="white-space:nowrap">1株 ${pi.label}</span>`
         :(x.yen!=null?`　<span style="white-space:nowrap;color:#d69a3c">1株の価格が未取得</span>`:'');
-      body+=chip(`<b>${i+1}</b>　${x.n}`, Math.round(x.p),
+      body+=chip(`<b style="color:var(--dim);font-size:11.5px">${i+1}</b>　${ccfIcon(x.n)}${x.n}`, Math.round(x.p),
         `<span style="white-space:nowrap">目標${x.tw}%枠</span>`
         +(half!=null?`　<span style="white-space:nowrap">階段 ${ccfYen(half)}＋${ccfYen(x.yen-half)}</span>`:'')
         +pxTxt, x.yen!=null?x.yen:null); });
@@ -3021,8 +3029,8 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
       //   掛けて flex で横に並べていたので、携帯の幅では説明が右へはみ出し、
       //   押し出された銘柄名が「6857 ア／ド／バ／ン…」と1文字ずつ縦に潰れていた。
       //   説明の nowrap を外し、割ってはいけない数字の対だけを nowrap で守る。
-      const orow=(name,right,sub,c)=>`<div style="padding:4px 0;border-bottom:1px dashed rgba(201,166,74,.18)">`
-        +`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font-size:12.5px;color:${c}">${name}</span>${right?`<span style="white-space:nowrap;font-size:12.5px">${right}</span>`:''}</div>`
+      const orow=(name,right,sub,c)=>`<div class="planrow" style="padding:5px 7px;border-radius:7px;border-bottom:1px dashed rgba(201,166,74,.18)">`
+        +`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:12.5px;color:${c}">${ccfIcon(name)}${name}</span>${right?`<span style="white-space:nowrap;font-size:12.5px">${right}</span>`:''}</div>`
         +(sub?`<div style="font-size:11px;margin-top:1px;line-height:1.55">${sub}</div>`:'')+`</div>`;
       let ob='';
       buyL.forEach(b=>{ const s1=Math.floor(b.sh/2), s2=b.sh-s1, cost=Math.round(b.sh*b.pi.jpy);
