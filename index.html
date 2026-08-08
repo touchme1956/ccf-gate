@@ -1142,7 +1142,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.102</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.114</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——v9.9.36で絶対MOAT指数をΩの直接項に加え(実効≒22%)、v9.9.39で<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3014,16 +3014,33 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
         +(half!=null?`　<span style="white-space:nowrap">階段 ${ccfYen(half)}＋${ccfYen(x.yen-half)}</span>`:'')
         +pxTxt, x.yen!=null?x.yen:null); });
     // v9.9.90 注文書: 円按分を丸株制約の下で最もよく近似する執行案。個別枠が小さいと按分どおりでは
-    //   全銘柄が1株未満に散る（実測: 17万÷7社=各2〜3万円 vs 1株¥1.5万〜9万）ので、
-    //   **不足(円)の大きい銘柄から1株ずつ積む**（largest-need greedy）。円の按分が正本・株数は執行案。
-    //   価格の取れない銘柄はその円を取り置いて手計算へ（ルール7: 推測の価格で株数を作らない）
+    //   全銘柄が1株未満に散る（実測: 17万÷7社=各2〜3万円 vs 1株¥1.5万〜9万）ので、丸株へ寄せる。
+    //   円の按分が正本・株数は執行案。価格の取れない銘柄はその円を取り置いて手計算へ
+    //   （ルール7: 推測の価格で株数を作らない）
+    // v9.9.114（2026-08-08 ユーザー「購入金額をできるだけ残さないようにしたい」→「1社に偏らせず行き渡らせる」）:
+    //   旧実装は **不足(円)の大きい銘柄から1株ずつ**（largest-need greedy）。按分がほぼ等しいので
+    //   実質は**並び順の先頭から**買い、**1株の高い社が枠を食い尽くしていた**——実測(¥170,000・7社):
+    //   VRSK ¥30,347 → **CW ¥109,402＝枠の64%** で予算が尽き、**買えたのは2社・残り5社は見送り**。
+    //   按分は全社ほぼ同額(¥24,200)なのに、執行では1社に4.5倍が寄っていた＝**按分から最も遠い解**。
+    //   → 二段にした。**①まだ1株も無い社へ、1株の安い順に配る**（＝行き渡る社数を最大化。
+    //   予算制約下で「1個ずつ配れる相手の数」を最大にするのは安い順が最適）／
+    //   **②残った枠は「按分の残りに対していちばん無理のない1株」から**（price÷need の小さい順
+    //   ＝除数方式の比例配分そのもの。買うほど need が減って比が悪化するので自然に持ち回りになる）。
+    //   **新しい定数を一つも導入していない**——使うのは1株の価格と按分の残りだけ。
+    //   実測(同条件): 買えたのは **2社→4社**（VRSK/KLAC/HWM/6857・CWとIDXXは1株が残枠に届かず見送り）。
+    //   **残りは ¥6,000→¥7,300 と¥1,300だけ増える**——行き渡らせることの代金で、ユーザーの選択どおり。
+    //   枠が大きいほど新方式が両取りになる（¥50万: 6社/残¥26,200で同じ ／
+    //   **¥100万: 社数6で同じだが残り ¥22,500→¥7,200**）。①が無いと¥50万で6社→5社に落ちるので、
+    //   ②だけでは足りない（比例配分は「行き渡る」を目的関数に持っていないため）
     if(AMT>0&&pxInfo){
       const bs=nm.map(x=>({x,pi:pxInfo(x.r),need:x.yen||0,sh:0}));
       const known=bs.filter(b=>b.pi&&b.pi.jpy>0), unknown=bs.filter(b=>!(b.pi&&b.pi.jpy>0));
       let bud=AMT-unknown.reduce((a,b)=>a+b.need,0); if(bud<0)bud=0;
-      for(;;){ let pick=null;
-        known.forEach(b=>{ if(b.need>0&&b.pi.jpy<=bud&&(!pick||b.need>pick.need))pick=b; });
-        if(!pick)break; pick.sh++; pick.need-=pick.pi.jpy; bud-=pick.pi.jpy; }
+      const fill=key=>{ for(;;){ let pick=null,best=Infinity;
+        known.forEach(b=>{ if(b.need>0&&b.pi.jpy<=bud){ const k=key(b); if(k!=null&&k<best){best=k;pick=b;} } });
+        if(!pick)return; pick.sh++; pick.need-=pick.pi.jpy; bud-=pick.pi.jpy; } };
+      fill(b=>b.sh===0?b.pi.jpy:null);   // ① まだ1株も無い社へ、安い順に1株ずつ＝行き渡らせる
+      fill(b=>b.pi.jpy/b.need);          // ② 残った枠は按分の残りに対していちばん無理のない1株から
       const buyL=bs.filter(b=>b.sh>0), skipL=known.filter(b=>b.sh===0);
       // v9.9.112: 注文書の各行も**銘柄名の行＋説明の行**に分ける。旧実装は長い説明に nowrap を
       //   掛けて flex で横に並べていたので、携帯の幅では説明が右へはみ出し、
@@ -3042,7 +3059,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
         `<span style="color:var(--dim)"><span style="white-space:nowrap">${ccfYen(b.need)}</span>を証券会社の現値で手計算（円÷株価）</span>`,'var(--muted)'); });
       const spent=AMT-bud-unknown.reduce((a,b)=>a+b.need,0);
       body+=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
-        <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書（株数・現値換算）</b><span style="font-size:10.5px;color:var(--dim);margin-left:8px">円の按分が正本——丸株で最も近づける執行案。不足の大きい銘柄から1株ずつ積む</span></div>
+        <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書（株数・現値換算）</b><span style="font-size:10.5px;color:var(--dim);margin-left:8px">円の按分が正本——丸株で最も近づける執行案。<b>①まだ1株も無い社へ安い順に1株ずつ（行き渡らせる）→②残枠は按分の残りに対していちばん無理のない1株から</b>（v9.9.114）</span></div>
         ${ob}
         <div style="font-size:11px;color:var(--dim);margin-top:5px">合計 約${ccfYen(Math.round(spent))}${bud>=100?`／残り${ccfYen(Math.floor(bud/100)*100)}は<b>網へ</b>（または翌月へ繰越して見送り銘柄に充てる）`:''}</div>
       </div>`;
