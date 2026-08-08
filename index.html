@@ -396,7 +396,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
   #scorer .rc select{flex:1;width:100%;min-width:0;}
   /* タップ標的を40px以上へ（アイコン型・リンク型の小ボタンは除外） */
   button:not([style*="background:none"]):not([style*="border:none"]){min-height:40px;}
-  .pgnav button{min-height:42px;padding:10px 14px;}
+  /* v9.9.114: **横padding は上書きしない**。この規則の目的はタップ標的の高さ（42px）で、
+     横幅ではない。ところが同じ @media の中で先に置いた `.pgnav button{padding:9px 9px}`
+     （「タブを詰めて1画面に入る本数を増やす」）を、後から来るこの一行が
+     `padding:10px 14px` で**丸ごと打ち消していた**——実測 nav 幅 757px（意図は約700px）。
+     縦だけを指定して、横の詰めを生かす。 */
+  .pgnav button{min-height:42px;padding-top:10px;padding-bottom:10px;}
   /* iOSのフォーカス時自動ズームを防ぐ＝入力は16px */
   #scorer input#nm,#scorer input[type=number],#scorer select,#scorer .auto textarea{font-size:16px;}
   #scorer input[type=number]{width:96px;}
