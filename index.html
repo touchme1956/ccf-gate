@@ -593,8 +593,11 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 /* v9.9.105(2026-08-07 ユーザー要望「各銘柄の枠のなかでグラデーション」):
    アイコン側の代表色を行そのものへ流す。ccfIcon が <i class="tgrad" style="--g:色"> を1つ吐くだけで、
    6箇所の呼び出し側は一行も変えていない（単一実装の掟）。色が無い銘柄は --g が無いので何も描かれない。 */
-.tgrad{position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;transition:filter .18s ease}
-.led:hover .tgrad{filter:brightness(1.35) saturate(1.15)}
+.tgrad{position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;
+  /* v9.9.108: ロゴから採った色はブランド色そのままだと web の地に対して沈むので彩度を1.35倍する。
+     **色相は動かさない**（saturate は彩度だけを上げる）＝別の色に化けない。 */
+  filter:saturate(1.35);transition:filter .18s ease}
+.led:hover .tgrad{filter:saturate(1.55) brightness(1.25)}
 /* v9.9.92(2026-08-06 ユーザー要望「各銘柄にその企業のアイコンを入れてほしい」): 銘柄アイコン。
    **同一オリジンの out/logos/ だけを読む**——価格と同じ作法で、閲覧のたびに第三者へ銘柄リストを
    漏らさない・外部が落ちても崩れない。ロゴが無い銘柄は下地のモノグラム（先頭2文字・
@@ -3756,14 +3759,20 @@ function ccfIcon(nm){
   //   v9.9.106 は複数色を1本のリニアで繋いだが、**橙→緑→青の補間は途中で必ず茶色を通る**ので
   //   行が濁って見えた（実機で撮って確認）。さらに各色を白へ35%寄せていたため彩度も落ちていた。
   //   → 各色を**別々の楕円の光**として重ねる。重なりは加算的に見えるだけで補間しないので濁らない。
-  //   左端の 3px の色バーが輪郭を作り、「滲み」ではなく「意図した意匠」に見せる。
+  //   左端の色バーが輪郭を作り、「滲み」ではなく「意図した意匠」に見せる。
   //   不透明度は色ごとに焼き込む（要素の opacity で一律に薄めるとバーまで沈む）。
+  //   v9.9.108（ユーザー「もっと色をはっきりさせて」）: 5案を実機で並べて比べ、最も強い案を採った。
+  //   はっきりさせる手は3つあり、**濃さを上げるだけでは足りない**——
+  //   (1)不透明度を約2.2倍 (2)**中間停止で芯を作る**（0%→40%まで濃さを保ってから落とす。
+  //   単純な放射は中心から即座に薄まるので「色があるのにぼんやり」になる）(3)彩度1.35倍。
+  //   バーも 3px→5px・完全不透明にして輪郭を強めた。地の色が残る右側は変えていないので
+  //   金色のΩは沈まない（この確認のために毎回実機で撮る）。
   let grad='';
   if(cs.length){
-    const L=[`linear-gradient(90deg,${A(cs[0],.85)} 0 3px,rgba(0,0,0,0) 3px)`];
-    const SZ=[[128,54,16,.30],[168,64,74,.26],[210,74,150,.22]];
+    const L=[`linear-gradient(90deg,${A(cs[0],1)} 0 5px,rgba(0,0,0,0) 5px)`];
+    const SZ=[[140,58,18,.66],[180,68,80,.58],[225,78,158,.48]];
     cs.slice(0,3).forEach((x,i)=>{const [w,hh,px,al]=SZ[i];
-      L.push(`radial-gradient(${w}px ${hh}px at ${px}px 50%,${A(x,al)} 0%,${A(x,0)} 72%)`);});
+      L.push(`radial-gradient(${w}px ${hh}px at ${px}px 50%,${A(x,al)} 0%,${A(x,al*.42)} 40%,${A(x,0)} 80%)`);});
     grad=`<i class="tgrad" style="background:${L.join(',')}"></i>`;
   }
   const img=!ext?'':`<img loading="lazy" decoding="async" alt="" src="out/logos/${esc}.${ext}" onerror="this.remove()">`;
