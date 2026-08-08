@@ -583,8 +583,22 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
    ============================================================ */
 .led{display:flex;align-items:center;gap:12px;padding:11px 14px;margin-bottom:6px;
   background:var(--panel);border:1px solid var(--line);border-radius:9px;
-  transition:border-color .18s ease,background .18s ease;}
+  transition:border-color .18s ease,background .18s ease;
+  /* v9.9.105: 行の中に**その銘柄自身の色**のグラデーションを敷くため。
+     isolation:isolate で .led を積み重ね文脈にすると、z-index:-1 の子は
+     「親の背景の上・本文の下」に正確に入る（overflow:hidden で行を切らずに済む＝
+     バッジや吹き出しを巻き込まない）。 */
+  position:relative;isolation:isolate;}
 .led:hover{border-color:var(--gold-line);background:var(--panel2);}
+/* v9.9.105(2026-08-07 ユーザー要望「各銘柄の枠のなかでグラデーション」):
+   アイコン側の代表色を行そのものへ流す。ccfIcon が <i class="tgrad" style="--g:色"> を1つ吐くだけで、
+   6箇所の呼び出し側は一行も変えていない（単一実装の掟）。色が無い銘柄は --g が無いので何も描かれない。 */
+.tgrad{position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;
+  /* falloff は 62% まで伸ばす——46%で切ると行の途中に**境目の線**が見える（4案を実機で撮って比較した）。
+     もっと色を出したいなら transparent の位置を 88% へ（C案）、控えめにするなら 46%（A案）。 */
+  background:linear-gradient(100deg,var(--g) -20%,transparent 62%);
+  opacity:.16;transition:opacity .18s ease}
+.led:hover .tgrad{opacity:.25}
 /* v9.9.92(2026-08-06 ユーザー要望「各銘柄にその企業のアイコンを入れてほしい」): 銘柄アイコン。
    **同一オリジンの out/logos/ だけを読む**——価格と同じ作法で、閲覧のたびに第三者へ銘柄リストを
    漏らさない・外部が落ちても崩れない。ロゴが無い銘柄は下地のモノグラム（先頭2文字・
@@ -3743,7 +3757,10 @@ function ccfIcon(nm){
   if(dark) tile=rgb?`rgb(${rgb.map(v=>Math.round(26+(v-26)*.18)).join(',')})`:'#20242c';
   else if(rgb) tile=`rgb(${rgb.map(v=>Math.round(255-(255-v)*.10)).join(',')})`;
   const img=!ext?'':`<img loading="lazy" decoding="async" alt="" src="out/logos/${esc}.${ext}" onerror="this.remove()">`;
-  return `<span class="tico" title="${esc}" style="--g:${glow};--tile:${tile};background:hsl(${hue} 34% 24%);color:hsl(${hue} 68% 80%)">${mono}${img}</span>`;
+  // v9.9.105: 行全体へ流すグラデーション。**代表色が確定した銘柄だけ**描く——
+  //   ハッシュ色（実在しない色）で行を染めると「その会社の色」という約束が嘘になる。
+  const grad=c?`<i class="tgrad" style="--g:${c}"></i>`:'';
+  return grad+`<span class="tico" title="${esc}" style="--g:${glow};--tile:${tile};background:hsl(${hue} 34% 24%);color:hsl(${hue} 68% 80%)">${mono}${img}</span>`;
 }
 
 function ccfAllocScore(c){
