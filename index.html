@@ -4166,13 +4166,19 @@ async function renderPlan(){
       const m1=(Math.pow(Math.min(pp,fairPER)/pp,iN)-1)*100;
       return sy+r.g+m1>=0;};
     if(cond(r.per))return '';
-    if(!cond(r.per*0.02))return '<span style="font-size:11px;color:var(--dim);white-space:nowrap">値段では開かない（還元ほぼゼロ×エンジン不足——価格が利回りを生まない）</span>';
+    // v9.9.115: **長い注記に nowrap を掛けない**。掛けると行が縮まず、#planBox は .led の
+    //   折り返し救済（`.led [style*=nowrap]{white-space:normal}`）の外なので、
+    //   **文書幅がそのまま 605px へ広がり、ブラウザがページ全体を59%へ縮めて表示していた**。
+    //   割ってはいけないのは数字の対だけ＝そこだけを nowrap で守る（v9.9.112 と同じ作法）。
+    if(!cond(r.per*0.02))return '<span style="font-size:11px;color:var(--dim)">値段では開かない（還元ほぼゼロ×エンジン不足——価格が利回りを生まない）</span>';
     let lo=r.per*0.02,hi=r.per; for(let i=0;i<80;i++){const m=(lo+hi)/2; if(cond(m))lo=m; else hi=m;}
     const pStar=lo, drop=(pStar/r.per-1)*100;
     const far=drop<-70?'・事実上遠い(還元が細い)':'';
     const fairShow=Math.min(fairPER,pStar);
     const fairTxt=fairShow<r.per?`／fair線=PER${fairShow.toFixed(0)}(深段・後に約定)`:'';
-    return `<span style="font-size:11px;color:#5d8cc2;white-space:nowrap">開通=PER${pStar.toFixed(0)}（あと${drop.toFixed(0)}%・E[r]=0線・合否ではなく指値の目安・shy価格連動${far}）${fairTxt}</span>`; };
+    return `<span style="font-size:11px;color:#5d8cc2">`
+      +`<span style="white-space:nowrap">開通=PER${pStar.toFixed(0)}</span>`
+      +`（<span style="white-space:nowrap">あと${drop.toFixed(0)}%</span>・E[r]=0線・合否ではなく指値の目安・shy価格連動${far}）${fairTxt}</span>`; };
   // v9.9.40: gが「実力gcap」で抑えられた銘柄はその旨を出す。実績cagrで10年先を描いていないことを画面で見えるように
   const xtag=r=>r.xEr!=null?`<span style="font-size:11.5px;white-space:nowrap;color:${r.xPass?'var(--jade)':'var(--rust)'}" title="g=${r.g!=null?r.g.toFixed(1):'—'}%${r.gcapSrc?'（実力g_cap='+(r.gcap!=null?r.gcap.toFixed(1):'—')+'%・'+r.gcapSrc+'）':''}">E[r]${r.xEr.toFixed(0)}%${r.xPass?'✓':'✗'}${(r.gcap!=null&&r.g!=null&&r.gcap<=r.g+0.05)?'<span style="color:#d69a3c" title="成長gが実力g_capで抑えられている（実績cagrではなく実力側が効いた）">⌄</span>':''}</span>`:'<span style="font-size:11px;color:var(--dim)">E[r]判定不能</span>';
   // 各行の依頼文コピー(門2審査／決算点検)——銘柄はtで一意。表示・コピーのみで採点に不介入
