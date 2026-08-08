@@ -2255,6 +2255,87 @@ CMTL 0.0 / HXL 10.5 / KALU 31.8 / STX 60.0 / ST 0.0 / DLB 67.5 / **MWA 79.5**。
 - **sht が全社で測れなかった**（`out/_sic_cache.json` が無く fill_sht.py を回せない）。
   f3 が片肺になる原因で、CTAS・ADP・MWA でも同じ。**SICキャッシュの再構築が作業リストの筆頭**
 
+## 「全銘柄でirr85探してみて」——EDGAR全文検索で母集団を刈り取り、450社を原本で読んだ（2026-08-08）
+**結論: 新しい irr=85 はゼロ。22社が候補に上がり、反証で全22社が落ちた。**
+そして落ち方に**一つの型**が見えた——**機構文はたいていリスク要因の中にあり、その見出しが逆を言っている。**
+
+### なぜやったか＝構造的に空いていた穴
+irr は原本を読まないと決まらず、**門0は原本を読まない**。母集団 約2,900社のうち irr が測られているのは
+パックのある369社＝**12.5%**だけだった。歴史検証が「リターンと生死を分けた唯一の変数」と出した欄が、
+母集団の 7/8 で未測定のまま置かれていた。
+
+### 道具（再現可能）
+- `night/irr85_extract.py` — 最新の年次報告(10-K/20-F/40-F)を解決し、機構語を含む**文**を前後つきで抜き、
+  向きの手がかりを印付けする（C=顧客側の主語 / S=当社側 / W=願望形）。**判定はしない**——
+  読み手ごとに実装が割れると v9.9.65 の掟を読解の側で破る。較正: LRCXの機構文が [C--] で立ち、85を取り消したNVDAでは立たない
+- `night/irr85_triage.py` — 見つかった候補を「読む価値があるか」（門0スコアからΩ75の見込み）で仕分ける
+- 在庫: `out/irr85_hunt_{candidates,precise,tierA,ranked,readlist,batches,20f,20f_readlist,result,triage}.json`
+
+### 刈り取り——**設計が較正できている証拠が先に出た**
+確定済みの irr=85 が実際に使っている構文を種に、10-Kで39フレーズ＋**向きを内包した34フレーズ**。
+向き内包の網は**確定済みの irr=85 を12社そのまま再発見した**（CW/ENTG/LRCX/HXL/KALU/KLAC/LOAR/RBC/ST/TDG/WST/WCN）
+＝**既知の正解を漏らさない網**だと確認してから未知に当てた。
+結果: 10-K **441社**（既存パック38・未審査**403社**）／20-F 81社（未審査79社）。
+
+### 読解（403社・27班＋反証専門の審査官22人・取得失敗0）
+| 刻み | 社数 |
+| 50 代替容易 | **263** |
+| 70 高摩擦移行困難 | **118** |
+| 85 顧客側が再認定 | 20 → **反証で全滅** |
+| 100 実質唯一供給 | 2 → **反証で全滅** |
+
+**誤りの型の内訳**: 新規参入障壁であって切替コストでない **15社** ／ 向きが逆 **6社** ／ 自社取得の認証 1社。
+
+### 今回いちばんの発見——**機構文はリスク要因の中にあり、見出しが逆を言っている**
+同じ一文が、**据わっている側には堀の証明**、**外側にいる側には自分が入れない証明**になる。
+どちら側かは**見出し**が教える。実例（すべて原本の見出し）:
+- **ONTO**『**Because of the high cost of switching equipment vendors in our markets, it is sometimes difficult
+  for us to win new customers from our competitors**』——切替コストは競合(KLA)の堀。ONTOの全文で自社の
+  installed base は**0回**。LRCXと主客が入れ替わっている
+- **ACMR**『Accordingly, **we may experience difficulty in selling to a given manufacturer if that manufacturer
+  has qualified a competitor's equipment**』——さらに会社は**ロックが破れること**を自社の事業命題として主張する。
+  決定打は**認定費用を負っているのがACM自身**であること: FY2025の出荷$854Mのうち**無償評価中のfirst toolが$388M＝45.4%**
+- **LITE**『**If our customers do not qualify our manufacturing lines** ... **our operating results could suffer**』
+- **EMKR**『we face lengthy sales and qualification cycles and, in many cases, **must invest a substantial amount
+  of time and money before we receive orders**』
+- **ALAB/ALGM**『**If we fail to achieve design wins** ...』＝NVDAを85→70にしたのと同型
+- **SPR**（航空宇宙）『It is very difficult for **new aerostructures suppliers** to compete against incumbent
+  suppliers』で始まり『**materially adversely affect our ability to obtain new work**』で終わる。
+  FAA認証も『失えば**販売が法律で禁止される**』＝自社ライセンス
+- **TGI**『We must be certified by the FAA』の直後が『If material authorizations or approvals were revoked or
+  suspended, **our operations** would be adversely affected』。機械走査で `re-qualif` 0回 / `switch` 0回 /
+  `qualified by` 0回＝**冒頭句が似ているだけで機構を成立させる後半が欠けている**
+
+### 副次的に確認できたこと
+- **航空宇宙でも自動的には85にならない**。SPR・TGI は業種としては RBC/LOAR/TDG/HXL と同じだが、
+  **どちら側に立っているか**が違えば刻みも違う。**業種で85を配っていない**ことの三度目の裏付け
+  （2013/2015ビンテージの追試・2026-08-06の全数検算に続く）
+- **半導体の双子も揃った**。ONTO(計測)は KLA と同じ70、ACMR は LRCX と同じ文を使うが挑戦者側で70。
+  SPGI/MCO・NVDA/NXPI/TSM で解消した「同じ機構の双子が違う刻み」を再発させずに済んだ
+- **20-F側も同じ**（未審査79社のうち**製造業SIC の38社を全数読了**。残り41社は海運・銀行・ホテル・中国系サービス等で
+  個別には読んでいない＝**被覆の限界として明示する**）。UMC/TSEM/SSYS/SQNS/QGEN/STVN/HIHO/MAXN は
+  機構語が人材採用や定型文、ARM/POET は**当社が不利を負う側**（ARM『high switching costs **to change to our
+  products**』／POET『**If our customers do not qualify our products** for use on a timely basis, **our results
+  of operations may suffer**』）、ELTK の AVL は**供給者が定期的に再評価される入場券**、
+  IMOS の顧客認定は**8週間**で深いロックではない、SELX/AUDC は自社取得の認証（型1）、
+  GAUZ『OEMs ... undertake extensive testing or qualification processes **prior to placing orders**』は参入障壁（型4）、
+  HIMX は『A panel manufacturer **may be reluctant** to change its source』＝CMTLと同じ*ためらい*で断定ではない
+
+### 何が変わって、何が変わらないか
+**値・規約・採点・刻み・関門・売却規律はいずれも触っていない。投下可10社も不変**
+（ASML VRSK CW LRCX MSFT IDXX RMD KLAC 6857 HWM）。増えたのは道具2つと在庫、そして
+**「母集団に新しい85は無い」という測定結果**である。
+歴史実測どおり **irr=85 は母集団の1〜3%しか出ない稀なラベル**で、空振りが基本——
+だが**空振りを確かめたこと自体が結果**で、次に同じ問いが出たら `night/irr85_extract.py` と在庫から再開できる。
+
+### 限界（正直に）
+- 窓は**2025-01-01〜2026-08-08 提出の年次報告**。それ以前にしか機構文が無い社は網に入らない
+- フレーズは**確定済み85の実文から作った**ので、**まだ見たことのない言い回しの機構は原理的に拾えない**
+- 40-F（カナダ）は未実施。日本株はEDINETで別経路＝**穴として明示**する
+- 読解はLLMで、反証側には「迷ったら refuted」と保守側の既定を置いた。ただし反証はいずれも
+  **確定済み85（LRCX/CW/RBC/LOAR/TDG）を基準に据えて「後半が欠けている」と論証する形**で、
+  既定に流れた形跡は無い（ACMR・ONTO・TGI の反証は原本の実額・出現回数まで当たっている）
+
 ## 【2026-08-07 の総括】価格を合否から外し、歴史が支持した機構を席に置いた——投下可10社中5社が入れ替わった
 一日で v9.9.95→v9.9.100 の6版を重ね、**投下可の顔ぶれが半分変わった**。個々の経緯は下の各節にあるが、
 後から読む人のために**何が起き、なぜそうしたか**を一つにまとめる。
