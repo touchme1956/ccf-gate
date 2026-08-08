@@ -83,6 +83,13 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 .tgt{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.7;}
 .row{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--hair);}
 .row:last-child{border-bottom:none;}
+/* v9.9.92: 銘柄アイコン（門の ccfIcon と同じ規則・同一オリジンの out/logos/ だけを読む）。
+   ロゴが無い銘柄は下地のモノグラムがそのまま見える＝欠測を別物で埋めない（ルール7）。 */
+.tico{position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:20px;height:20px;min-width:20px;border-radius:5px;overflow:hidden;margin-right:7px;
+  vertical-align:middle;font-size:8.5px;font-weight:700;line-height:1;
+  font-family:ui-sans-serif,system-ui,sans-serif;user-select:none}
+.tico img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
 .nm{font-size:14.5px;color:var(--ink);}
 .kind{font-size:11px;color:var(--muted);}
 /* □保有/売却スイッチ(2026-08-03)。配色は全行共通＝金主体の統一 */
@@ -191,6 +198,24 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
 <footer id="foot"></footer>
 
 <script>
+// v9.9.92(2026-08-06): 銘柄アイコン。**門(index.html)の ccfIcon と同じ規則**——
+//   色はティッカーのハッシュ、下地はモノグラム、画像は同一オリジンの out/logos/ のみ。
+//   portfolio.html は iframe で読まれるので相対パスは門と同じ位置になる。
+let CCF_LOGO=null;
+(async()=>{try{const r=await fetch('out/logos/index.json');if(r.ok)CCF_LOGO=(await r.json()).have||{};}catch(e){CCF_LOGO={};}})();
+function ccfIcon(nm){
+  const t=String(nm||'').trim().split(/[\s_]/)[0].toUpperCase();
+  if(!t)return '';
+  let h=0; for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;
+  const hue=h%360, mono=(t.replace(/[^A-Z0-9]/g,'').slice(0,2)||'?');
+  const esc=t.replace(/[^A-Z0-9.\-]/g,'');
+  const ext=CCF_LOGO?CCF_LOGO[esc]:null;
+  const img=CCF_LOGO&&!ext?'':(ext
+    ?`<img loading="lazy" decoding="async" alt="" src="out/logos/${esc}.${ext}" onerror="this.remove()">`
+    :`<img loading="lazy" decoding="async" alt="" src="out/logos/${esc}.svg" onerror="if(this.dataset.p){this.remove()}else{this.dataset.p=1;this.src='out/logos/${esc}.png'}">`);
+  return `<span class="tico" title="${esc}" style="background:hsl(${hue} 34% 24%);color:hsl(${hue} 68% 80%)">${mono}${img}</span>`;
+}
+
 'use strict';
 const LS_KEY='pf:portfolio';
 // 2026-08-03 ユーザー指示「ETFはすべてを削除して欲しい」: このページは個別銘柄（城）＋現金のみを扱う。
@@ -316,7 +341,7 @@ function render(){
        const sw = (p.sleeve==='castle')
          ? `<label class="hswitch"><input type="checkbox" checked onchange="pfSell(${idx},this)">保有</label>`
          : '<div class="vlabel" style="color:var(--muted)">—</div>';
-       return `<div class="row"><div class="nm">${dot}${p.nm||p.t}<div class="kind">${info}</div></div>${sw}</div>`;
+       return `<div class="row"><div class="nm">${dot}${ccfIcon(p.t||p.nm)}${p.nm||p.t}<div class="kind">${info}</div></div>${sw}</div>`;
      }).join('')
    : '<div class="mini" style="text-align:left">保有が未登録。「✎ 編集」から入れてください。</div>';
  renderSold();
@@ -379,7 +404,7 @@ function renderSold(){
  list.innerHTML = sold.map((s,i)=>{
   const rc=SREASON[s.reason]||SREASON.other;
   const rTxt=`<span class="vd" style="color:${rc[1]}">${rc[0]}</span>`;
-  return `<div class="srow"><div class="nm"><span class="ind-dot" style="color:${rc[1]}">●</span>${s.nm||s.t}<div class="kind">${[s.t||'',s.date?'売却 '+s.date:'',rTxt].filter(Boolean).join(' · ')}</div></div>`+
+  return `<div class="srow"><div class="nm"><span class="ind-dot" style="color:${rc[1]}">●</span>${ccfIcon(s.t||s.nm)}${s.nm||s.t}<div class="kind">${[s.t||'',s.date?'売却 '+s.date:'',rTxt].filter(Boolean).join(' · ')}</div></div>`+
    `<label class="hswitch" title="チェックすると保有へ戻す（記録は消える）"><input type="checkbox" onchange="pfRestore(${i},this)">保有</label>`+
    `<div class="sdel" title="この記録を消す（保有には戻さない）" onclick="delSold(${i})">✕</div>`+
    (s.memo?`<div class="smemo">${s.memo}</div>`:'')+`</div>`;
