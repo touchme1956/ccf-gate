@@ -59,7 +59,15 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  "tax":   ["IncomeTaxExpenseBenefit","IncomeTaxExpenseContinuingOperations"],
  "ocf":   ["NetCashProvidedByUsedInOperatingActivities","CashFlowsFromUsedInOperatingActivities"],
  "capex": ["PaymentsToAcquirePropertyPlantAndEquipment","PurchaseOfPropertyPlantAndEquipment"],
+ # 2026-08-08是正: **これも「候補＝代替か構成要素か」の取り違えだった**（無形・有利子負債・販管費に続く4例目）。
+ #   合計タグを一つも報告せず **減価償却と無形償却を別行で出す社**がある。series() は候補から1本しか選ばないので、
+ #   そういう社では D&A が丸ごと欠測 → EBITDA が営業利益だけになり **nde が過大**に出る＝財務キル(>4)の誤爆。
+ #   実測 **LOAR**: 合計タグ不在で D&A=0 と読み nde 5.94（原本は Depreciation 11.9 + AmortizationOfIntangibleAssets 38.5
+ #   + FinanceLeaseRightOfUseAssetAmortization 0.3 = 50.7百万$ で **nde 4.01**）。10-Kの実額 50,999千$ と整合。
+ #   ※ AmortizationOfFinancingCosts は**財務費用**なので構成要素に入れない（EBITDAの D&A ではない）。
  "dep":   ["DepreciationDepletionAndAmortization","DepreciationAndAmortization","DepreciationAmortisationAndImpairmentLoss"],
+ "depParts": ["Depreciation","AmortizationOfIntangibleAssets","FinanceLeaseRightOfUseAssetAmortization",
+              "DepreciationNonproduction","AmortizationOfDeferredCharges"],
  "assets":["Assets"],
  "eq":    ["StockholdersEquity","StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest","Equity"],
  "gw":    ["Goodwill"],
@@ -373,6 +381,14 @@ def build_numbers(facts):
     #   実測 CELH: 総額タグが2024年で終わり、2025年は二本に割れていたので series() では欠測になった。
     S["intan"], _usedI = series_sum(facts, TAGS["intan"],
                                     total_key="IntangibleAssetsNetExcludingGoodwill")
+    # 2026-08-08: 減価償却も同じ「構成要素」型（TAGS["depParts"] の頭注を見よ）。
+    #   合計タグがその年に無い年だけ、構成要素の合計で補う（合計があるならそれを使う＝二重計上しない）。
+    _depS, _usedD = series_sum(facts, TAGS["depParts"])
+    _depFilled = []
+    for _y, _v in (_depS or {}).items():
+        if _y not in S["dep"] and _v:
+            S["dep"][_y] = _v
+            _depFilled.append(_y)
     # IFRS勢は のれん を単独で出さず `IntangibleAssetsAndGoodwill`(のれん**込み**の合算)だけを
     #   出す社がある（実測TSM: Goodwillタグ自体が存在しない）。sum候補に入れると `Goodwill` や
     #   `IntangibleAssetsOtherThanGoodwill` を併せ持つ社で**二重に引く**ので、
@@ -563,6 +579,13 @@ def build_numbers(facts):
             ebitda = 0
         else:
             ebitda = S["op"][y0] + (S["dep"].get(y0,0) or 0)
+            if y0 in _depFilled:
+                note.append(f"減価償却は合計タグが無く**構成要素の合計**で補った（{y0}年 {_u(S['dep'][y0])}: "
+                            f"{' + '.join(_usedD.get(y0) or [])}）。合計タグしか見ないと D&A が丸ごと欠測し "
+                            f"EBITDA が営業利益だけになって nde が過大＝財務キル(>4)を誤爆させる")
+            if y0 not in S["dep"]:
+                note.append(f"nde注意: {y0}年に減価償却が合計タグでも構成要素でも取れず EBITDA=営業利益 とした＝"
+                            f"**nde は過大に出ている**。原本のCF計算書から D&A を確認して手入力せよ")
         # 2026-08-03: 「タグ不在と無借金は機械で区別できない」——**区別できるようになった**ので
         #   debt_evidence() で裁く（ROIC側と同じ判定を使う＝同じ台帳に二つの基準を作らない）。
         #   痕跡ゼロなら債務ゼロは事実で、ネットキャッシュの会社の nde が空欄のままになるのを止める。
