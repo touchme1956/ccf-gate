@@ -83,6 +83,15 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 .tgt{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.7;}
 .row{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--hair);}
 .row:last-child{border-bottom:none;}
+/* v9.9.108: 行のグラデーション。**ここのCSSが抜けていた**——ccfIcon は v9.9.105 から
+   <i class="tgrad"> を吐いていたのに portfolio.html 側に規則が無く、インライン要素の小さな箱として
+   描かれていた（門では正しく敷かれるので、二つの画面が違うものを見せていた＝v9.9.65の掟の破れ）。
+   isolation:isolate + z-index:-1 で、行の地の上・文字の下へ潜り込ませる（overflow:hidden が要らない）。
+   **左に11pxの余白を足す**——門の .led は padding:11px 14px を持つので色バーが余白に収まるが、
+   こちらの .row は左パディングが0で、5pxのバーが銘柄コードの上に乗ってしまう（実機で確認）。 */
+.row,.srow{position:relative;isolation:isolate;padding-left:11px}
+.tgrad{position:absolute;inset:-1px 0 0 0;z-index:-1;pointer-events:none;border-radius:6px;
+  filter:saturate(1.35)}
 /* v9.9.92: 銘柄アイコン（門の ccfIcon と同じ規則・同一オリジンの out/logos/ だけを読む）。
    ロゴが無い銘柄は下地のモノグラムがそのまま見える＝欠測を別物で埋めない（ルール7）。 */
 .tico{position:relative;display:inline-flex;align-items:center;justify-content:center;
@@ -212,25 +221,48 @@ function ccfIcon(nm){
   const esc=t.replace(/[^A-Z0-9.\-]/g,'');
   const m=CCF_LOGO?CCF_LOGO[esc]:null;
   const ext=m&&!m.x&&(m.ext||m), c=(m&&m.c)||null;
-  // v9.9.106: 行のグラデーションは**ロゴが実際に持っている色を最大3色**使う（cs）。
-  //   色は必ずロゴ自身から採る——見栄えのために存在しない色を足さない（ルール7の精神）。
   const cs=(m&&m.cs)||(c?[c]:[]);
+  const PX=x=>[1,3,5].map(i=>parseInt(x.substr(i,2),16));
+  const A=(x,a)=>`rgba(${PX(x).join(',')},${a})`;
   const glow=c?c:(ext?'rgba(200,190,170,.5)':`hsl(${hue} 62% 52%)`);
   // タイルの地色: 既定は「代表色を1割だけ白に混ぜた淡色」。
   //   ただし **d=1（白い線画で透過あり）は白い地に置くと消える**ので、代表色を暗い地へ1.8割混ぜる。
-  const px=x=>[1,3,5].map(i=>parseInt(x.substr(i,2),16));
   let tile='#fff';
-  const rgb=(c&&/^#[0-9a-f]{6}$/i.test(c))?px(c):null;
+  const rgb=(c&&/^#[0-9a-f]{6}$/i.test(c))?PX(c):null;
   if(m&&m.d) tile=rgb?`rgb(${rgb.map(v=>Math.round(26+(v-26)*.18)).join(',')})`:'#20242c';
   else if(rgb) tile=`rgb(${rgb.map(v=>Math.round(255-(255-v)*.10)).join(',')})`;
-  // 明るくするために各色を白へ35%寄せる（暗い地に低不透明度で載せるので、素の色だと沈む）
-  const L=x=>`rgb(${px(x).map(v=>Math.round(v+(255-v)*.35)).join(',')})`;
+  // ── v9.9.107: 行の彩色は「**色を補間しない**」のが肝 ──────────────────────
+  //   v9.9.106 は複数色を1本のリニアで繋いだが、**橙→緑→青の補間は途中で必ず茶色を通る**ので
+  //   行が濁って見えた（実機で撮って確認）。さらに各色を白へ35%寄せていたため彩度も落ちていた。
+  //   → 各色を**別々の楕円の光**として重ねる。重なりは加算的に見えるだけで補間しないので濁らない。
+  //   左端の色バーが輪郭を作り、「滲み」ではなく「意図した意匠」に見せる。
+  //   不透明度は色ごとに焼き込む（要素の opacity で一律に薄めるとバーまで沈む）。
+  //   v9.9.108（ユーザー「もっと色をはっきりさせて」）: 5案を実機で並べて比べ、最も強い案を採った。
+  //   はっきりさせる手は3つあり、**濃さを上げるだけでは足りない**——
+  //   (1)不透明度を約2倍 (2)**中間停止で芯を作る**（0%→42%まで濃さを保ってから落とす。
+  //   単純な放射は中心から即座に薄まるので「色があるのにぼんやり」になる）(3)彩度1.35倍（CSS側）。
+  //   v9.9.109（ユーザー「最後まで色が届くようにしてほしい」）: **光の大きさと位置を px から % へ**。
+  //   px固定だと**行幅・行高に追従しない**ので、幅の広い行では右2/3が地の色のまま残り、
+  //   携帯で折り返して背の高くなった行では上下の隅が染まらなかった（実機の画面写真で発覚）。
+  //   → 幅80%・高さ150%の光を、色数に応じて等間隔（1色=中央 / 2色=20:75 / 3色=12:50:86）に置く。
+  //   端の光は行の外まではみ出すので、**どんな幅でも左端から右端まで色が届く**。
+  //   **補間しない**という v9.9.107 の肝は不変（色どうしを繋がないので濁らない）。
   let grad='';
-  if(cs.length){const k=cs.map(L);
-    grad='<i class="tgrad" style="background:'+(k.length>=3
-      ?`linear-gradient(100deg,${k[0]} -18%,${k[1]} 26%,${k[2]} 52%,transparent 100%)`
-      :k.length===2?`linear-gradient(100deg,${k[0]} -18%,${k[1]} 34%,transparent 100%)`
-      :`linear-gradient(100deg,${k[0]} -20%,transparent 80%)`)+'"></i>';}
+  if(cs.length){
+    //   濃さは二段階で下げた（ユーザー「もう少しうすく」→「もう少し薄く」）。v9.9.108比で
+    //   **v9.9.110 が ×0.60**、**v9.9.111 が ×0.34**（.62/.54/.48 → .21/.18/.16）。
+    //   毎回 4案を実機で並べて選んでいる（×0.60/×0.45/×0.34/×0.25。×0.25は暗いテーマで消える）。
+    //   **薄くするのは光だけ**——(a)届く範囲（80%×150%・%配置）は不変＝v9.9.109で直したことを
+    //   打ち消さない (b)彩度1.35も不変＝色相の純度の話で濃さとは別の軸 (c)**左端バーは .75 のまま**
+    //   ＝バーまで薄めると「意匠」ではなく「滲み」に戻る（v9.9.107の教訓）。
+    //   **一つの要望に一つの軸だけ動かす**——まとめて触ると次の注文で何を戻せばよいか判らなくなる。
+    const L=[`linear-gradient(90deg,${A(cs[0],.75)} 0 5px,rgba(0,0,0,0) 5px)`];
+    const POS={1:['50%'],2:['20%','75%'],3:['12%','50%','86%']}[Math.min(3,cs.length)];
+    const AL=[.21,.18,.16];
+    cs.slice(0,3).forEach((x,i)=>{const al=AL[i];
+      L.push(`radial-gradient(80% 150% at ${POS[i]} 50%,${A(x,al)} 0%,${A(x,al*.45)} 42%,${A(x,0)} 100%)`);});
+    grad=`<i class="tgrad" style="background:${L.join(',')}"></i>`;
+  }
   const img=!ext?'':`<img loading="lazy" decoding="async" alt="" src="out/logos/${esc}.${ext}" onerror="this.remove()">`;
   return grad+`<span class="tico" title="${esc}" style="--g:${glow};--tile:${tile};background:hsl(${hue} 34% 24%);color:hsl(${hue} 68% 80%)">${mono}${img}</span>`;
 }
