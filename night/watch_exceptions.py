@@ -50,7 +50,14 @@ DEBT_C = ["LongTermDebtCurrent", "DebtCurrent", "ShortTermBorrowings",
 CASH = ["CashAndCashEquivalentsAtCarryingValue"]
 DEP = ["DepreciationDepletionAndAmortization", "Depreciation"]
 AMO = ["AmortizationOfIntangibleAssets"]
-INT = ["InterestExpense", "InterestExpenseDebt", "InterestAndDebtExpense"]
+# ⚠TDGで実測: 上の3本はどれも無く、同社は `InterestExpenseNonoperating` と
+#   `InterestIncomeExpenseNet` で報告していた（初版はここを取りこぼして「未取得」を出した）。
+#   ⚠さらに **同じ四半期で符号が割れる**——2025-12-27 は Nonoperating が +475 なのに
+#   IncomeExpenseNet は **−475**。素朴に合計すると TTM が 1,870 → 920 と**2倍ずれ**、
+#   intcov が 2.40 → 4.88 という**もっともらしい誤値**になる。
+#   → 費用として扱う系列に**負の四半期が混じったら、その候補は使わず次へ**倒す（下の ttm の sign="expense"）。
+INT = ["InterestExpense", "InterestExpenseDebt", "InterestAndDebtExpense",
+       "InterestExpenseNonoperating", "InterestIncomeExpenseNet"]
 EQ = ["StockholdersEquity"]
 
 
@@ -119,8 +126,10 @@ def _d(s):
     return (int(s[:4]) * 372 + int(s[5:7]) * 31 + int(s[8:10])) if s else None
 
 
-def ttm(F, tags):
-    """直近4四半期の合計（フロー）。四半期が揃わなければ None"""
+def ttm(F, tags, sign=None):
+    """直近4四半期の合計（フロー）。四半期が揃わなければ None。
+    sign='expense' のとき、直近4本に**負の値が混じる候補は採らず次の候補へ倒す**
+    （TDGで実測した符号割れ対策——素朴に合計すると intcov が2倍ずれる）。"""
     q = []
     for tg in tags:
         js = (F.get('us-gaap') or {}).get(tg)
@@ -140,8 +149,13 @@ def ttm(F, tags):
                 if e not in seen or fd > seen[e][0]:
                     seen[e] = (fd, x['val'])
         if seen:
-            q = sorted(seen.items())
-            break
+            cand = sorted(seen.items())
+            if len(cand) >= 4:
+                l4 = cand[-4:]
+                if sign == 'expense' and any(v < 0 for _, (_, v) in l4):
+                    continue          # 符号が割れている候補は使わない
+                q = cand
+                break
     if len(q) < 4:
         return None, None
     last4 = q[-4:]
@@ -194,7 +208,7 @@ def main():
         op, opq = ttm(F, OP)
         dep, _ = ttm(F, DEP)
         amo, _ = ttm(F, AMO)
-        ie, _ = ttm(F, INT)
+        ie, _ = ttm(F, INT, sign='expense')
         if tot:
             ends = sorted(tot)
             e0 = ends[-1]
