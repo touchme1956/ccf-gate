@@ -10,15 +10,28 @@ make_kanshi.py — 監視リスト kanshi_list.json を台帳から生成する�
   当時Ω79.8）を見逃していた。ティアの絶対値は採点の是正で動くので、
   **「監視に値するか」を Ω80 という一点に紐づけるのは脆い。**
 
-新しい定義（2026-07-29・ユーザー明示指示）:
+新しい定義（2026-07-29・ユーザー明示指示／2026-08-09に irr=85 を追加）:
   監視 = 保有(holdings.json) ∪ 🟢投下可 ∪ Ω75+（投下閾値の帯）
-         ∪ **直近の四半期点検で要審査が出た社** ∪ 明示的な pin
+         ∪ **直近の四半期点検で要審査が出た社** ∪ **irr=85（特別監視枠）** ∪ 明示的な pin
   ・投下閾値75は「買ってよい資格」の線なので、四半期で壊れていないかを見る単位として自然
   ・保有は当然。投下可はいつでも買う可能性がある
   ・**要審査の社を必ず残す**のが肝。Ω75+ だけで引くと、点検が異常を拾った直後に
     Ωが75を割った社が**警報を出した次の四半期に監視から消える**という最悪の抜けが起きる。
     実測: ADBE（のれん減損$70百万を計上・Ω74.4）と HEI（Ω64.2）が Ω75+ の線だけでは落ちていた
   ・pin は機械の外で見たい銘柄（例: 一度キルが出たが復活を待っている社）を手で足す枠
+  ・**irr=85 は特別監視枠**（2026-08-09・ユーザー明示指示「irr85の銘柄は特別監視枠に付けるべき」）。
+    歴史検証がこの台帳で**唯一「効く」と出した変数がこれひとつ**（プール754件で P(継続) は
+    50:0.162 < 70:0.366 < **85:0.579**、2018年ビンテージは等加重 +24.6%/年 vs SPY 15.0%。
+    E[r]を固定してもirr=85の効果は残るが、irrを固定するとE[r]の効果は消える）。
+    ところが**Ωの線で引くとこの群のほとんどが監視から落ちる**——実測(2026-08-09): irr=85 は14社だが
+    **10社が監視の外**（RBC/MKSI/BWXT/ENTG/TDG/NOVT/LOAR/HXL/ST/WST）。落ちている理由は堀ではなく
+    Ω側（財務キル nde>4 と複利停止キル）で、**堀は14社中13社が関門70を超えている**。
+    つまり「事業の型は最良だが今は財務が重い」群であり、**財務が軽くなった瞬間に投下可へ来る**のに、
+    監視外だと価格も決算日も8-Kも取らない＝**その瞬間を誰も見ていない**。
+    要審査を残す規約（上）とまったく同じ論法——**線を割ったからこそ見続ける**。
+    **買付判定には一切効かない**（監視は「見る対象」であって「買ってよい」ではない）。
+    irrが原本の再検算で70へ下がれば**次の生成で自動的に枠から外れる**（2026-08-06に53社→11社へ
+    削った実績があるので、固定リストにはしない）
 
 使い方:
   python3 make_kanshi.py            生成して kanshi_list.json を書き換え（差分を表示）
@@ -86,6 +99,9 @@ def main():
     q75 = {r["t"] for r in rows if (r.get("s") or 0) >= BUY_GATE}
     buy = {r["t"] for r in rows if r.get("buy")}
     alert = _alerted()          # 直近の四半期点検で要審査が出た社（Ωが線を割っても落とさない）
+    # 特別監視枠: irr=85（顧客側が再認定の費用を負う型）。score_all.json の irr をそのまま読む
+    #   ＝門・端末と同じ一つの出所（v9.9.65の掟。パックを別に読み直して二重実装を作らない）
+    irr85 = {r["t"] for r in rows if str(r.get("irr")) == "85"}
 
     cur_raw = load("kanshi_list.json", [])
     if isinstance(cur_raw, dict):
@@ -94,14 +110,17 @@ def main():
     else:
         cur, pins = set(cur_raw or []), set()
 
-    new = sorted(hold | q75 | buy | alert | pins)
+    new = sorted(hold | q75 | buy | alert | irr85 | pins)
     added, removed = sorted(set(new) - cur), sorted(cur - set(new))
 
     print(f"保有 {len(hold)} ∪ 投下可 {len(buy)} ∪ Ω{BUY_GATE:.0f}+ {len(q75)}"
-          f" ∪ 要審査 {len(alert)} ∪ pin {len(pins)} → 監視 {len(new)}社")
+          f" ∪ 要審査 {len(alert)} ∪ irr=85 {len(irr85)} ∪ pin {len(pins)} → 監視 {len(new)}社")
     keep = sorted(alert - q75 - hold - buy)
     if keep:
         print(f"  ※Ω{BUY_GATE:.0f}未満だが要審査のため残す: {' '.join(keep)}")
+    only85 = sorted(irr85 - q75 - hold - buy - alert)
+    if only85:
+        print(f"  ※特別監視枠(irr=85)——Ω{BUY_GATE:.0f}未満だが型が最良なので残す: {' '.join(only85)}")
     print(f"  追加 {len(added)}: {' '.join(added) or '(なし)'}")
     print(f"  除外 {len(removed)}: {' '.join(removed) or '(なし)'}")
     if removed:
@@ -114,9 +133,11 @@ def main():
     if "--dry" in sys.argv:
         print("\n--dry のため書き換えていない")
         return 0
-    out = {"list": new, PIN_KEY: sorted(pins),
-           "note": f"自動生成 (make_kanshi.py)。定義=保有 ∪ 投下可 ∪ Ω{BUY_GATE:.0f}+ ∪ 要審査 ∪ pin。"
-                   f"手で足したい銘柄は '{PIN_KEY}' に入れると次回生成でも残る。"}
+    out = {"list": new, PIN_KEY: sorted(pins), "irr85": sorted(irr85),
+           "note": f"自動生成 (make_kanshi.py)。定義=保有 ∪ 投下可 ∪ Ω{BUY_GATE:.0f}+ ∪ 要審査"
+                   f" ∪ irr=85(特別監視枠) ∪ pin。手で足したい銘柄は '{PIN_KEY}' に入れると次回生成でも残る。"
+                   f" 'irr85' は score_all.json から毎回引き直す記録用の枠——**買付判定には効かない**し、"
+                   f"irrが原本の再検算で70へ下がれば次の生成で自動的に外れる。"}
     json.dump(out, open("kanshi_list.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print("\n→ kanshi_list.json を更新。次: python kessan_check.py / python kessan_calendar.py")
     return 0
