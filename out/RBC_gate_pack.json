@@ -118,7 +118,8 @@
    "fcf": "原本のCF計算書(FY2026): 営業CF **415.7** − 設備投資 **73.1** = **342.6百万$**。採取器は capex の XBRL タグ(PaymentsToAcquirePropertyPlantAndEquipment)がFY2023で途切れていたため null を返していた（**ルール7: 欠測を0と読まない**が正しく働いた）ので、原本から充填した",
    "ni": "原本のCF計算書/損益(FY2026): 純利益 **287.6百万$**（XBRL NetIncomeLoss FY2026 と一致）。fcf/ni=1.19",
    "fin": "金融業態ではない（精密ベアリング・エンジニアード部品の製造）→no",
-   "mcap": "発行済株式数 31,659,245株（SEC dei:EntityCommonStockSharesOutstanding・filed 2026-07-31） × 株価 $567.25（Alpha Vantage GLOBAL_QUOTE・2026-08-07終値）= **17.96十億$**。2026-08-08に新規充填（それまで空欄で時価総額の比較ができなかった）。⚠**px はパックの市場欄には入れていない**——market_fetch/market_merge の帯検問を通していないため、mcap の算出根拠としてのみ記録する（per/E[r]には未反映＝門X未評価のまま）"
+   "mcap": "発行済株式数 31,659,245株（SEC dei:EntityCommonStockSharesOutstanding・filed 2026-07-31） × 株価 $567.25（Alpha Vantage GLOBAL_QUOTE・2026-08-07終値）= **17.96十億$**。2026-08-08に新規充填（それまで空欄で時価総額の比較ができなかった）。⚠**px はパックの市場欄には入れていない**——market_fetch/market_merge の帯検問を通していないため、mcap の算出根拠としてのみ記録する（per/E[r]には未反映＝門X未評価のまま）",
+   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2021年 609,000,000 → 2024年 1,560,300,000 → 2026年 1,870,900,000。直近2年CAGR 9.50% − その前3年CAGR 36.83% = **-27.33pt**。定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。"
   },
   "provenance": {
    "cagr": "machine",
@@ -134,7 +135,8 @@
    "roict": "machine",
    "gpa": "machine",
    "eps": "machine",
-   "eq": "machine"
+   "eq": "machine",
+   "cagrT": "machine"
   },
   "nulls": {
    "dep": "**ASC280の10%超顧客の開示が無い**＝最大顧客<10%と構造的に確定できるが、実数の開示が無いので数値を置かない（上位10社で35%、米国政府向けは直接1%＋間接7%）。<10%が確定しているのでベト(≥40%)は発火しない",
@@ -165,5 +167,6 @@
  "dep": null,
  "ddate": "2026-08-05",
  "moatW": 85,
- "mcap": 17.96
+ "mcap": 17.96,
+ "cagrT": -27.33
 }
