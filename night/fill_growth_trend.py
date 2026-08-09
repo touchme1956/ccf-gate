@@ -196,9 +196,30 @@ def main():
         if c1 is None or c2 is None:
             skip.append((t, '売上が負またはゼロの年があり CAGR を作れない'))
             continue
-        acc = (c2 - c1) * 100
+        acc_e = (c2 - c1) * 100                       # A案: 端点どうしのCAGRの差（= 歴史検証の accel）
+        # ── B案（中央値）と交差させる（2026-08-09・COVID窓のartifact対策）─────────────────
+        # 【なぜ】端点どうしのCAGRは**1年の暴落・反動に脆い**。実測で錨の年ごとに中央値がずれた
+        #   （錨2024 −8.4pt / 錨2025 −5.3pt / 錨2026 −2.0pt）——錨2025は c1=CAGR(2020→2023) で
+        #   2020のコロナ底が起点＝反動が c1 を膨らませる。罰を受けた82社を調べると**20社(24%)がこれ**
+        #   （TJX +51/+3/+9/+4/+7＝実際は横ばいなのに端点では−13.5pt）。
+        # 【直し方】night/validate_growth_trend.py の実測——質実証プール425社で
+        #   **A(端点)は悪い尾をよく捕まえ(Q1 5.4%)・B(中央値)は良い側をよく分ける(Q4 9.6%/P15 0.30)**
+        #   ＝どちらも valid で一長一短。**両方が同意したときだけ罰する**（保守的な交差）。
+        #   `cagrT = max(A, B)`（＝**負の側で絶対値の小さいほう**）を採ると、
+        #   片方が「大して減速していない」と言う限り罰は小さくなる。**新しい定数は導入していない**。
+        yoy = {y: (ser[y] / ser[y - 1] - 1) * 100 for y in range(a - 4, a + 1)
+               if (a - 5) in ser and ser[y - 1] > 0}
+        acc_m = None
+        if len(yoy) == 5:
+            import statistics as _st
+            acc_m = (_st.median([yoy[a - 1], yoy[a]])
+                     - _st.median([yoy[a - 4], yoy[a - 3], yoy[a - 2]]))
+        acc = acc_e if acc_m is None else max(acc_e, acc_m)
         rows.append(dict(t=t, a=a, rev5=ser[a - 5], rev2=ser[a - 2], rev0=ser[a],
                          c1=round(c1 * 100, 2), c2=round(c2 * 100, 2), accel=round(acc, 2),
+                         accel_end=round(acc_e, 2),
+                         accel_med=round(acc_m, 2) if acc_m is not None else None,
+                         yoy={str(y): round(v, 1) for y, v in sorted(yoy.items())},
                          old=d.get('cagrT')))
         if i % 40 == 0:
             print(f'  … {i}/{len(packs)}  算出{len(rows)} / 見送り{len(skip)}', file=sys.stderr)
@@ -225,8 +246,12 @@ def main():
             m.setdefault('evidence', {})['cagrT'] = (
                 f"機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: "
                 f"売上 {r['a']-5}年 {r['rev5']:,.0f} → {r['a']-2}年 {r['rev2']:,.0f} → {r['a']}年 {r['rev0']:,.0f}。"
-                f"直近2年CAGR {r['c2']:.2f}% − その前3年CAGR {r['c1']:.2f}% = **{r['accel']:+.2f}pt**。"
-                f"定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。"
+                f"A案(端点) 直近2年CAGR {r['c2']:.2f}% − その前3年CAGR {r['c1']:.2f}% = {r['accel_end']:+.2f}pt ／ "
+                f"B案(中央値) 新2年の中央値 − 前3年の中央値 = "
+                f"{('%+.2f' % r['accel_med']) if r['accel_med'] is not None else '算出不能'}pt ／ "
+                f"年次YoY {r['yoy']} → **採用 {r['accel']:+.2f}pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。"
+                f"A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。"
+                f"B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。"
                 f"候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。")
             m.setdefault('provenance', {})['cagrT'] = 'machine'
             json.dump(x, open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
