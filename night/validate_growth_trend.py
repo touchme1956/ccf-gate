@@ -149,10 +149,21 @@ def main():
         c2 = cagr(ser[a - 2], ser[a], 2)
         if c1 is None or c2 is None:
             continue
+        # ── 長い窓（C案 fade8）: 8年の売上＝7つのYoY。**古い3年の中央値 → 新しい3年の中央値**。
+        #   5年窓では ADBE(実際に20%台→10%へ固着)と V(11%で横ばい)が**ほぼ同値**になり区別できない。
+        #   中央の1年は空けて両半分を分離する。中央値なので1年の暴落・反動に強い。
+        fade8, old3, new3 = None, None, None
+        if all(y in ser and ser[y] > 0 for y in range(a - 7, a + 1)):
+            yy = {y: (ser[y] / ser[y - 1] - 1) * 100 for y in range(a - 6, a + 1)}
+            old3 = st.median([yy[a - 6], yy[a - 5], yy[a - 4]])
+            new3 = st.median([yy[a - 2], yy[a - 1], yy[a]])
+            fade8 = round(new3 - old3, 2)
         rows.append(dict(t=t, a=a,
                          accel=round((c2 - c1) * 100, 2),
                          accelM=round(st.median([yoy[a - 1], yoy[a]])
                                       - st.median([yoy[a - 4], yoy[a - 3], yoy[a - 2]]), 2),
+                         fade8=fade8, old3=round(old3, 2) if old3 is not None else None,
+                         new3=round(new3, 2) if new3 is not None else None,
                          ret=R[t], opm=F.get(t, {}).get('opm')))
         if i % 100 == 0:
             print(f'  … {i}/{len(ts)}  採用{len(rows)}', file=sys.stderr)
@@ -175,6 +186,30 @@ def main():
     for key in ('accel', 'accelM'):
         table(rows, key, '全体')
         table(q, key, '質実証プール')
+    f8 = [r for r in rows if r.get('fade8') is not None]
+    q8 = [r for r in f8 if r['opm'] is not None and r['opm'] >= 0.10]
+    print(f'\n■ C案 fade8（8年窓・古い3年→新しい3年の中央値）  n={len(f8)}（質実証 {len(q8)}）')
+    table(f8, 'fade8', '全体')
+    table(q8, 'fade8', '質実証プール')
+    print('\n■ 線の候補（質実証プール・fade8）')
+    for th in (0, -3, -5, -8, -10, -15):
+        g = [r for r in q8 if r['fade8'] < th]
+        o_ = [r for r in q8 if r['fade8'] >= th]
+        if len(g) < 8:
+            continue
+        gv = [x['ret'] for x in g]
+        ov = [x['ret'] for x in o_]
+        print(f"  fade8<{th:>4}pt: 止めた{len(g):>4}社 中央値{st.median(gv)*100:>6.1f}% 15%+{sum(1 for x in gv if x>=H)/len(gv):>5.2f} 毀損{sum(1 for x in gv if x<=-0.15)/len(gv):>5.2f}"
+              f"  ／ 通過{len(ov):>4}社 中央値{st.median(ov)*100:>6.1f}% 15%+{sum(1 for x in ov if x>=H)/len(ov):>5.2f}")
+    print('\n■ 周期の谷との切り分け——fade8が深い群で「新しい3年の水準」別に見る')
+    deep = [r for r in q8 if r['fade8'] < -8]
+    for lab, fn in (('新3年 <5%', lambda r: r['new3'] < 5), ('5〜12%', lambda r: 5 <= r['new3'] < 12),
+                    ('12%+', lambda r: r['new3'] >= 12)):
+        g = [r for r in deep if fn(r)]
+        if len(g) < 5:
+            continue
+        v = [x['ret'] for x in g]
+        print(f"    {lab:<10}n={len(v):>4}  中央値{st.median(v)*100:>6.1f}%  15%+{sum(1 for x in v if x>=H)/len(v):>5.2f}  毀損{sum(1 for x in v if x<=-0.15)/len(v):>5.2f}")
 
     print('\n■ どちらが「錨の年のずれ（COVIDの窓）」に強いか——錨の年ごとの中央値')
     from collections import defaultdict
