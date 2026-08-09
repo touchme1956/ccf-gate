@@ -80,6 +80,14 @@ def build():
         ("divy",    "配当分離(divY)",          "月1",     40,
          json_field("out/divy.json", "asof"),
          "ops.yml 毎月2日／手動 python3 night/fill_divy.py", True),
+        # v9.9.118(2026-08-09): 自己相対バリュエーション（Ⅵ買付順位の表示専用・合否には不使用）。
+        #   **表示だけの作業でも盤に載せる**——止まると門は「未取得」ではなく
+        #   **古い分位を今日の分位として出し続ける**（JSONが残るので画面は何も言わない）。
+        #   黙って劣化する種類なので、回転の側で見張る。
+        ("histval", "自己相対バリュエーション",  "月1",     40,
+         json_field("out/hist_val_now.json", "asof"),
+         "ops.yml 毎月2日／手動 python3 night/hist_valuation.py --asof 〈今日の日付〉 "
+         "--tickers kanshi_list.json --out out/hist_val_now.json", True),
         # v9.9.94(2026-08-06): 期末後の重大事象の検査。**回っているかを盤で見張る**——
         #   この検査が黙って止まると「パックが会社の現在を描いていない」銘柄が
         #   何食わぬ顔で投下可に戻る（APHがまさにその状態で資産の6.3%を受けていた）。
