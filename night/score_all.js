@@ -145,7 +145,37 @@ function scorePack(d) {
   }
   return compute();
 }
-module.exports = { scorePack, lastCoerce, KEYS, SELECTS };
+// 四関門の単一実装（2026-08-09新設）。**判定式を書き写さない**——explain_score.js がこの行を
+//   書き写していたせいで v9.9.98/99/119 の改定に3版ぶん取り残され、同じ台帳を見て score_all と
+//   逆のことを言っていた（実測 WST: score_all=buy / explain_score=not buy）＝v9.9.65 の掟の破れ。
+//   門(index.html)側の pass=q75c と同一規則。
+// STALE/VFAIL は `if (require.main !== module) return;` より後で宣言されるので、
+//   **module として読まれたときはTDZに入る**。両方の文脈で同じ答えを出すために遅延ロードする。
+let _gates = null;
+function gates() {
+  if (_gates) return _gates;
+  const rd = (f, ok) => {
+    const o = {};
+    try {
+      const pp = path.join(ROOT, 'out', f);
+      if (fs.existsSync(pp))
+        for (const [k, v] of Object.entries(JSON.parse(fs.readFileSync(pp, 'utf8')).items || {}))
+          if (ok(v)) o[k] = v;
+    } catch (e) {}          // 無ければ空＝検査は眠るだけ（無いことを「異常なし」と偽らない・ルール7）
+    return o;
+  };
+  return (_gates = { stale: rd('stale_bs.json', v => v && v.verdict === '要審査'),
+                     vfail: rd('validate_fail.json', v => v && (v.n || 0) > 0) });
+}
+function buyGate(t, dd, s, mg, audE, audU) {
+  const g = gates();
+  const f85 = ccfIrr85Frame(dd);        // v9.9.119: irr=85 の別枠（Ωの線だけ免除）
+  const shrink = ccfShrinkGate(dd);     // v9.9.99: 事業の収縮
+  return (s >= 75 || f85.pass) && mg.pass === true && audE === 0 && audU === 0
+         && !g.stale[t] && !g.vfail[t] && !shrink.hit;
+}
+
+module.exports = { scorePack, lastCoerce, buyGate, KEYS, SELECTS };
 
 if (require.main !== module) return;
 
@@ -170,14 +200,7 @@ for (const kv of (arg('--set') || '').split(',').filter(Boolean)) {
 //   のれんは10,575→17,555百万$(+66%)、のれん＋無形は自己資本の96%→147%へ。
 //   既存の鮮度検査は reportDate と auditDate の「年」しか見ないので**同じ年のこれは素通り**だった。
 //   ファイルが無ければ空＝検査は眠るだけ（無いことを「異常なし」と偽らない・絶対のルール7）。
-let STALE = {};
-try {
-  const sp = path.join(ROOT, 'out', 'stale_bs.json');
-  if (fs.existsSync(sp)) {
-    const j = JSON.parse(fs.readFileSync(sp, 'utf8'));
-    for (const [k, v] of Object.entries(j.items || {})) if (v && v.verdict === '要審査') STALE[k] = v;
-  }
-} catch (e) {}
+const STALE = gates().stale;
 
 // ── 納品検査(validate_packs)のFAILも第四の関門に入れる（v9.9.95・2026-08-07 ユーザー指示「いるとおもうなら入れて」）
 //   【なぜ入れるか】FAILの運用単位が「投下可10社」だったので、10番目の席が動くたびに
@@ -194,14 +217,7 @@ try {
 //   ※**v9.9.98（2026-08-07）で門X遮断器を関門から外したので呼称は「四関門」になった**
 //     （Ω75+ ∧ 堀70+ ∧ データ健全）。そのときは本文41箇所を実際にgrepで洗った。
 //   **買わない理由であって売る理由ではない**（Ω・堀・売却規律S1/S2/S3はいずれも不変）。
-let VFAIL = {};
-try {
-  const vp = path.join(ROOT, 'out', 'validate_fail.json');
-  if (fs.existsSync(vp)) {
-    const j = JSON.parse(fs.readFileSync(vp, 'utf8'));
-    for (const [k, v] of Object.entries(j.items || {})) if (v && (v.n || 0) > 0) VFAIL[k] = v;
-  }
-} catch (e) {}
+const VFAIL = gates().vfail;
 
 const rows = [];
 for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
@@ -257,8 +273,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               //   Ω75+ を免除する。免除するのはΩの線だけで、堀・データ健全・収縮はそのまま。
               //   根拠の全文は index.html の ccfIrr85Frame 頭注（門と同一実装＝v9.9.65の掟）
               frame85: f85.pass ? (f85.why || true) : undefined,
-              buy: (s >= 75 || f85.pass) && mg.pass === true && audE === 0 && audU === 0
-                   && !STALE[t] && !VFAIL[t] && !shrink.hit });
+              buy: buyGate(t, dd, s, mg, audE, audU) });
 }
 rows.sort((a, b) => b.s - a.s);
 // v9.9.88(2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」): 第五の枠。
