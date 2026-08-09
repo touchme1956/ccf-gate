@@ -258,9 +258,11 @@ rows.sort((a, b) => b.s - a.s);
 // v9.9.88(2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」): 第五の枠。
 //   投下可＝四関門∧席順上位10社（v9.9.98でE[r]項を外し・v9.9.100でirr=85を先頭へ）。判定は門の ccfAllocTop（単一実装＝Ⅵ・盤・snapと同一・v9.9.65の掟）。
 //   四段通過だが11位以下は quali=true / buy=false ＝🔵次点（買わないが資格は保持）。
+let ALLOC_CAPPED = [], ALLOC_CAPN = 0;
 {
   const four = rows.filter(r => r.buy);
   const sel = ccfAllocTop(four, 10);
+  ALLOC_CAPPED = sel.capped || []; ALLOC_CAPN = sel.capN || 0;
   for (const r of rows) { r.quali = r.buy; if (r.buy) r.buy = sel.has(r.t); }
   // 合成点を**出力にも載せる**（2026-08-07）。下流の道具（audit_promotion_ready 等）が
   // 式を書き写すと v9.9.65 の「同じ台帳を見る二つの検査器が違うことを言う」になる。
@@ -329,10 +331,14 @@ const _ascore = x => ccfAllocScore(x);
 const _mech = x => (+x.irr === 85) ? 0 : 1;
 const buy = rows.filter(x => x.buy).sort((a, b) => _mech(a) - _mech(b) || _ascore(b) - _ascore(a) || b.s - a.s);
 const nextUp = rows.filter(x => x.quali && !x.buy).sort((a, b) => _mech(a) - _mech(b) || _ascore(b) - _ascore(a) || b.s - a.s);
-console.log(`\n🟢投下可(四関門∧irr=85優先→Ω順の上位10社・v9.9.100) ${buy.length}社`
+console.log(`\n🟢投下可(四関門∧irr=85優先→Ω順の上位10社／半導体連鎖は城の30%まで・v9.9.117) ${buy.length}社`
   + `　日本株${buy.filter(x => x.jp).length}／米国等${buy.filter(x => !x.jp).length}`
   + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
 if (nextUp.length) console.log(`🔵次点(四関門通過・席順11位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
+// v9.9.117: 半導体連鎖の相関上限（城の30%）で席から外れた社は**名指しで出す**（黙って消さない・v9.9.52）。
+//   門(Ⅵ・盤)と端末が同じことを言う（v9.9.65の掟）
+if (ALLOC_CAPPED.length)
+  console.log(`◇半導体連鎖の相関上限で枠外(城の30%＝${ALLOC_CAPN}席・資格は保持) ${ALLOC_CAPPED.length}社\n  ${ALLOC_CAPPED.join(' ')}`);
 console.log(`⛔堀不足で見送り(Ω75+だが堀が関門に届かない) ${q75.filter(x => !x.moatOK).length}社`);
 console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告あり) ${q75.filter(x => x.moatOK && !x.audOK).length}社`);
 // 期末後の重大事象で落ちた社は**必ず名指しで出す**。黙って消えると v9.9.52

@@ -1,0 +1,101 @@
+#!/usr/bin/env node
+/**
+ * night/check_mobile_fit.js — **携帯の幅で門が画面に収まるかを実測する**（2026-08-08新設）
+ *
+ * なぜ要るか（ユーザーの画面写真「画面を常に合わせない」）:
+ *   Ⅵ買付順位の注記に `white-space:nowrap` が掛かっていて、**幅576pxの一行**ができていた。
+ *   文書幅が 605px へ広がり、**ブラウザがページ全体を 59% に縮めて表示**していた
+ *   （＝内容が画面の左6割に寄り、右4割にブラウザの地色が出る）。
+ *
+ *   **この事故は「台帳が空のままでは絶対に見えない」。** 実際、私は先に9タブ全部を
+ *   走査して「はみ出しゼロ」と報告したが、それは**データを入れていなかったから**だった。
+ *   注記は投下可の行にしか出ないので、369銘柄を取り込んで初めて現れる。
+ *   CLAUDE.md が既に同じ型を記録している——「行内の長い注記は nowrap がインラインで
+ *   指定されていて縮まず、画面外へ出ていた（**データを入れて初めて出る**）」。
+ *   同じ轍を三度踏まないための道具。
+ *
+ * 何をするか:
+ *   1. ローカルに静的サーバを立て、実ブラウザ（Chromium）を **360px 幅**で開く
+ *   2. **⭳全パック一括取込を実行**して台帳を実データで満たす
+ *   3. 各タブで `documentElement.scrollWidth === clientWidth` を検査
+ *   4. 破れたら**はみ出している要素を名指しで出す**（タグ・class・幅・本文の先頭）
+ *
+ * 前提: playwright と Chromium。この repo の CI には入れていない（ブラウザ依存が重いため）。
+ *   手元で回すときは `npm i playwright`（Chromium は /opt/pw-browsers に同梱）。
+ *
+ * 使い方: node night/check_mobile_fit.js [--width 360] [--keep]
+ *   終了コード 1 = はみ出しあり（＝ブラウザがページを縮めて表示する状態）
+ */
+const { spawn } = require('child_process');
+const path = require('path');
+
+const ROOT = path.dirname(__dirname);
+const argv = process.argv.slice(2);
+const W = argv.includes('--width') ? Number(argv[argv.indexOf('--width') + 1]) : 360;
+const PORT = 8971;
+const TABS = [['tab6', '📊 盤'], ['tab9', '🔔 イベント'], ['tab1', 'Ⅰ 解説'], ['tab8', 'Ⅱ 実行手順'],
+               ['tab2', 'Ⅲ 採点機'], ['tab3', 'Ⅳ 台帳'], ['tab4', 'Ⅴ 検証履歴'],
+               ['tab5', 'Ⅵ 買付順位'], ['tab7', 'Ⅶ 保有']];
+
+(async () => {
+  let chromium;
+  try { ({ chromium } = require('playwright')); }
+  catch (e) { console.error('playwright が無い。`npm i playwright` を実行すること（Chromium は /opt/pw-browsers）'); process.exit(2); }
+
+  const srv = spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: ROOT, stdio: 'ignore' });
+  await new Promise(r => setTimeout(r, 1500));
+  let bad = 0;
+  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  try {
+    const p = await browser.newPage({ viewport: { width: W, height: 760 }, deviceScaleFactor: 2 });
+    p.on('pageerror', e => { console.log('  PAGEERROR', e.message); bad++; });
+    await p.goto(`http://localhost:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
+    await p.waitForTimeout(2500);
+
+    // 台帳を実データで満たす——**これをやらないと注記の行が存在せず、検査が素通りする**
+    await p.evaluate(() => document.getElementById('tab3').click());
+    await p.waitForTimeout(600);
+    await p.evaluate(() => ccfImportAllPacks({ textContent: '', disabled: false }));
+    let n = 0;
+    for (let i = 0; i < 40; i++) {
+      await p.waitForTimeout(5000);
+      n = await p.evaluate(() => Object.keys(localStorage).filter(k => k.startsWith('g7:')).length);
+      if (n >= 300) break;
+    }
+    console.log(`■ 携帯幅 ${W}px で門が収まるか（台帳 ${n} 件を取り込んで実測）\n`);
+    if (n < 100) { console.log('  ⚠ 取込が少ない——out/packs_index.json を確認すること'); }
+
+    for (const [id, label] of TABS) {
+      await p.evaluate(i => { const e = document.getElementById(i); e && e.click(); }, id);
+      await p.waitForTimeout(2200);
+      const r = await p.evaluate(() => {
+        const de = document.documentElement, out = [];
+        document.querySelectorAll('*').forEach(el => {
+          const s = getComputedStyle(el);
+          if (s.display === 'none' || s.visibility === 'hidden' || s.position === 'fixed') return;
+          if (el.closest('.pgnav')) return;          // タブバーは overflow-x:auto で意図的に横スクロール
+          const b = el.getBoundingClientRect();
+          if (b.width > 0 && b.right > de.clientWidth + 2)
+            out.push({ tag: el.tagName, cls: String(el.className || '').slice(0, 24),
+                       w: Math.round(b.width), right: Math.round(b.right),
+                       ws: s.whiteSpace, txt: (el.textContent || '').trim().slice(0, 44) });
+        });
+        out.sort((a, c) => c.right - a.right);
+        return { sw: de.scrollWidth, cw: de.clientWidth, n: out.length, top: out.slice(0, 5) };
+      });
+      const ok = r.sw <= r.cw + 1;
+      if (!ok) bad++;
+      console.log(`  ${ok ? '✓' : '✗'} ${label.padEnd(12)} scrollW=${r.sw} / 画面=${r.cw}`
+        + (ok ? '' : `　→ **ブラウザは全体を ${(r.cw / r.sw * 100).toFixed(0)}% へ縮めて表示する**`));
+      // 収まっている場合は要素を出さない——`table.dt{overflow-x:auto}` の中の行など、
+      // **枠内で横スクロールする意図的なはみ出し**まで並べると、本物の事故が埋もれる
+      if (!ok) r.top.forEach(x => console.log(`       ${x.tag}.${x.cls} 幅${x.w} 右端${x.right} white-space:${x.ws}\n         「${x.txt}」`));
+    }
+    console.log(bad ? `\n✗ ${bad}件。長い注記の white-space:nowrap を外し、割ってはいけない数字の対だけを守ること`
+                    : '\n✓ 全タブで文書幅が画面幅に収まっている（ブラウザの縮小表示は起きない）');
+  } finally {
+    await browser.close();
+    srv.kill();
+  }
+  process.exit(bad ? 1 : 0);
+})();
