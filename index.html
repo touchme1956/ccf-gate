@@ -1147,7 +1147,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.124</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.125</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——v9.9.36で絶対MOAT指数をΩの直接項に加え(実効≒22%)、v9.9.39で<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -2902,6 +2902,7 @@ async function save(){
 async function renderLedger(){
   const box=$('ledger'); if(!box)return;
   await ccfSweepDrafts(); await ccfRenderQueue(); await ccfRenderWait();
+  await ccfLoadProfiles();   // v9.9.125: 企業説明（🏢チップ・表示専用）
   let keys=[],oldKeys=[];
   try{const res=await store.list('g7:');keys=res?res.keys:[];}catch(e){}
   try{const res=await store.list('g64:');oldKeys=res?res.keys:[];}catch(e){}
@@ -2970,7 +2971,7 @@ async function renderLedger(){
     const pxB=__q&&__q.px
       ? `<span style="font-size:11px;white-space:nowrap;margin-left:7px" title="実測 ${__lAsof.slice(0,16).replace('T',' ')} UTC${__q.ccy==='JPY'?'（Yahoo Finance・東証）':'（Finnhub）'}"><b style="color:var(--ink-soft)">${__q.ccy==='JPY'?'¥':'$'}${__q.px.toLocaleString('ja-JP',{maximumFractionDigits:2})}</b>${__q.chgPct!=null?` <span style="color:${__q.chgPct>0?'#54b88a':__q.chgPct<0?'#cf5f48':'var(--dim)'}">${__q.chgPct>0?'+':''}${__q.chgPct.toFixed(1)}%</span>`:''}</span>`
       : '';
-    div.innerHTML=`<span class="ln">${ccfIcon(it.nm)}${it.nm}${audB}${pxB}${ageBadge}${memo}</span><span class="grade" style="color:${gc}">${it.evalScore}・${it.tierShort||it.grade}</span>${ACT_HIDE?'':`<span class="act" style="background:${ac}22;color:${ac}">${it.act}</span>`}<button class="ld" title="読込" onclick="loadIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">↺</button><button class="ld" title="再採点依頼文を生成" onclick="quickPrompt(decodeURIComponent('${encodeURIComponent(it.k)}'))">依</button><button class="ld" title="保有トグル" onclick="toggleHold(decodeURIComponent('${encodeURIComponent(it.nm)}'))" style="${it.held?'color:var(--gold-bright);border-color:var(--gold-line)':''}">${it.held?'保有':'□'}</button><button title="削除" onclick="delIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">✕</button>`;
+    div.innerHTML=`<span class="ln">${ccfIcon(it.nm)}${it.nm}${ccfBizChip(it.nm)}${audB}${pxB}${ageBadge}${memo}</span><span class="grade" style="color:${gc}">${it.evalScore}・${it.tierShort||it.grade}</span>${ACT_HIDE?'':`<span class="act" style="background:${ac}22;color:${ac}">${it.act}</span>`}<button class="ld" title="読込" onclick="loadIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">↺</button><button class="ld" title="再採点依頼文を生成" onclick="quickPrompt(decodeURIComponent('${encodeURIComponent(it.k)}'))">依</button><button class="ld" title="保有トグル" onclick="toggleHold(decodeURIComponent('${encodeURIComponent(it.nm)}'))" style="${it.held?'color:var(--gold-bright);border-color:var(--gold-line)':''}">${it.held?'保有':'□'}</button><button title="削除" onclick="delIt(decodeURIComponent('${encodeURIComponent(it.k)}'))">✕</button>`;
     box.appendChild(div);
   });
   renderWatch(items);
@@ -3279,6 +3280,59 @@ function ccfAudit(d,r,coerced,okKeys){
   const rank={err:0,warn:1,info:2};
   return W.sort((a,b)=>rank[a.lv]-rank[b.lv]);
 }
+// ── 企業説明（v9.9.125・2026-08-09 ユーザー要望「銘柄ごとに企業説明が見れるようにしたい」）──
+//   門はΩ・堀・E[r]という**評価**を全部出すのに、「この会社は何をしている会社か」を一言も
+//   出していなかった。データは out/profiles.json（night/fetch_profiles.py が配る）＝
+//   **原本(10-K/20-F)のItem1冒頭**と、**台帳の _meta.evidence（審査官が原本から日本語で書いた
+//   事業の事実＝セグメント構成・競争上の位置・依存先）**の二本立て。
+//   ★後者が要点——**ブラウザは _meta を読めない**ので、この情報は台帳へ取り込んだ瞬間に
+//   見えなくなっていた。新しい情報を作るのではなく、**既に払ったコストを見えるようにする**。
+//   **表示専用・判定には一切使わない**（ロゴ・盤・自己相対と同じ扱い）。
+var CCF_PROFILE={};
+async function ccfLoadProfiles(){
+  if(CCF_PROFILE.__loaded)return CCF_PROFILE;
+  try{ const j=await (await fetch('out/profiles.json?t='+Date.now())).json();
+       CCF_PROFILE=Object.assign({},j.items||{}); }catch(e){ CCF_PROFILE={}; }
+  // 取れなければ空＝チップが出ないだけ（無いことを「異常なし」と偽らない・絶対のルール7）
+  try{Object.defineProperty(CCF_PROFILE,'__loaded',{value:true,enumerable:false});}catch(e){}
+  return CCF_PROFILE;
+}
+function ccfBizKey(x){return String(x||'').trim().split(/[\s_]/)[0].toUpperCase();}
+function ccfBizChip(nm){
+  const k=ccfBizKey(nm), p=CCF_PROFILE&&CCF_PROFILE[k];
+  if(!p)return '';
+  const tip=(p.sic?p.sic+'｜':'')+String(p.biz||p.seg||'').replace(/<[^>]+>/g,'').slice(0,180);
+  return `<span onclick="event.stopPropagation();ccfBizOpen('${k}')" title="${tip.replace(/"/g,'&quot;')}"`
+    +` style="font-size:10px;color:#7f9bb5;border:1px solid #7f9bb555;background:#7f9bb514;border-radius:4px;`
+    +`padding:1px 5px;margin-left:6px;cursor:pointer;white-space:nowrap">🏢 事業</span>`;
+}
+function ccfBizOpen(k){
+  const p=(CCF_PROFILE||{})[ccfBizKey(k)];
+  if(!p){alert('企業説明の在庫がありません（night/fetch_profiles.py で作れます）');return;}
+  const esc=t=>String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const sec=(ttl,body,note)=>body?`<div style="margin-top:12px"><div style="font-size:11px;color:var(--gold-bright);letter-spacing:.05em">${ttl}</div>`
+    +`<div style="font-size:12.5px;color:var(--ink);line-height:1.85;margin-top:3px">${esc(body)}</div>`
+    +(note?`<div style="font-size:10.5px;color:var(--dim);margin-top:3px">${note}</div>`:'')+`</div>`:'';
+  const nulls=Object.entries(p.nulls||{}).map(([kk,v])=>
+    `<div style="font-size:11px;color:var(--dim);line-height:1.75">・<code style="color:#d6b06c">${kk}</code> 未取得：${esc(v)}</div>`).join('');
+  const box=document.getElementById('ccfBizModal')||(()=>{const el=document.createElement('div');el.id='ccfBizModal';
+    el.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:16px';
+    el.onclick=e=>{if(e.target===el)el.remove();};document.body.appendChild(el);return el;})();
+  const src=p.src_used||p.src;
+  box.innerHTML=`<div style="background:var(--panel,#15161a);border:1px solid var(--gold-line);border-radius:14px;max-width:720px;width:100%;max-height:84vh;overflow:auto;padding:18px 20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <h2 class="serif" style="margin:0;font-size:1.15em;color:var(--gold-bright)">${esc(p.nm||k)}${p.sic?`<span style="font-size:.62em;color:var(--muted);margin-left:8px">${esc(p.sic)}</span>`:''}</h2>
+      <button onclick="document.getElementById('ccfBizModal').remove()" style="background:transparent;border:1px solid var(--dim);color:var(--dim);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">閉じる</button></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px"><b>表示専用</b>——Ω・堀・買付の判定には一切使わない。</div>
+    ${sec('事業（原本 '+esc(p.form||'年次報告')+' の冒頭）',p.biz,'※原本の英文をそのまま抜いている（第三者の要約を使わないのは、原本と食い違っても気づけないため）')}
+    ${sec('売上の構成（台帳の審査根拠）',p.seg)}
+    ${sec('競争上の位置（台帳の審査根拠）',p.pos)}
+    ${sec('依存先（台帳の審査根拠）',p.dep)}
+    ${nulls?`<div style="margin-top:12px"><div style="font-size:11px;color:var(--gold-bright);letter-spacing:.05em">未取得</div>${nulls}</div>`:''}
+    ${src?`<div style="margin-top:14px"><a href="${esc(src)}" target="_blank" rel="noopener" style="font-size:12px;color:#7f9bb5">原本を開く ↗</a>`
+      +`<span style="font-size:10.5px;color:var(--dim);margin-left:8px">${esc(p.rdate||'')}</span></div>`:''}
+  </div>`;
+}
 // 行に出すバッジ。件数だけ見せ、詳細は title と展開で読む（採点・順位には一切不介入）
 function ccfAuditBadge(W,key){
   if(!W||!W.length)return '';
@@ -3416,7 +3470,7 @@ async function ccfDash(btn){
   // v9.9.124: 盤も irr=85 の実績台帳を読む（席の優先の判定に要る）。Ⅵと同じものを同じ関数で読む（v9.9.65）
   const [mkt,ern,stl,vfl,pidx]=await Promise.all([j('out/dashboard.json'),j('out/next_earnings.json'),
                                              j('out/stale_bs.json'),j('out/validate_fail.json'),
-                                             j('out/packs_index.json'),ccfLoadIrr85Hist()]);
+                                             j('out/packs_index.json'),ccfLoadIrr85Hist(),ccfLoadProfiles()]);
   const dPackT=pidx?new Set((pidx.packs||[]).map(f=>String(f).replace(/_gate_pack\.json$/,'').toUpperCase())):null;
   const dStale={},dVf={};
   for(const [k,v] of Object.entries((stl&&stl.items)||{})) if(v&&v.verdict==='要審査') dStale[k]=v;
@@ -4266,6 +4320,7 @@ async function renderPlan(){
   //   v9.9.95で塞いだ「未測定が最良ケース」の穴が、キーの側から開いていた。
   //   **黙って消さず名指しで出す**（v9.9.52）。直し方は Ⅳ台帳で旧レコードを削除するだけ。
   await ccfLoadIrr85Hist();   // v9.9.124: irr=85 の実績台帳（別枠85・席の優先の判定に要る）
+  await ccfLoadProfiles();    // v9.9.125: 企業説明（表示専用・判定に不使用）
   let packT=null;
   try{ const _i=await (await fetch('out/packs_index.json?t='+Date.now())).json();
        packT=new Set((_i.packs||[]).map(f=>String(f).replace(/_gate_pack\.json$/,'').toUpperCase()));
@@ -4471,7 +4526,7 @@ async function renderPlan(){
   //   posはallocTagのtooltipの中にしか出ておらず「門が保有を認識しているか」が画面から見えなかった
   //   （実例: IRMD保有なのに順位に出る→ユーザーが連携切れを疑った。連携は生きていて表示が無いだけだった）
   const posChip=r=>(r.pos>0)?`<span style="font-size:10px;color:var(--jade);margin-left:6px" title="現在保有ウェイト（${(livePos&&livePos[r.t]!=null)?'Ⅶ資産の実額から自動算出':'Ⅲ採点機の手入力pos——Ⅶ資産に株数を入れれば自動連携に切替わる'}）。保有中でも目標ウェイトに届くまでは買付順位に残る＝DCAの積み増し対象。目標に達すると「充足」＝今月0円">◆保有${r.pos.toFixed(0)}%</span>`:'';
-  const brow=(r,i,tag,extra)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${tag}${i+1}</b></span><span class="ln">${ccfIcon(r.nm)}${r.nm}${r.audB||''}${pxchip(r)}${posChip(r)}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}${r.epsOld?'<span style="font-size:10px;color:#c0894a;margin-left:6px" title="原本決算期が300日超——E[r]/PERの前提が古い。決算後にeps/perを更新せよ">⏳eps古</span>':''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span>${xtag(r)}${extra||''}${reqbtns(r)}</div>`;
+  const brow=(r,i,tag,extra)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${tag}${i+1}</b></span><span class="ln">${ccfIcon(r.nm)}${r.nm}${ccfBizChip(r.nm)}${r.audB||''}${pxchip(r)}${posChip(r)}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}${r.epsOld?'<span style="font-size:10px;color:#c0894a;margin-left:6px" title="原本決算期が300日超——E[r]/PERの前提が古い。決算後にeps/perを更新せよ">⏳eps古</span>':''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span>${xtag(r)}${extra||''}${reqbtns(r)}</div>`;
   // 城(総資産の60%)内の配分を自動表示(表示のみ・採点に不介入)。v9.9.70で目標は連続式 城60%×(Ω−70)÷Σ(Ω−70)。
   //   今月=各投下可の「目標−現在保有%(pos)」の不足分で按分(B案②:不足銘柄へ厚く・合計100%)。posは保有比率入力。
   // v9.9.68で城の目標比率を40%→60%へ改定したのに、この定数だけ40のまま取り残されていた（2026-08-03に発見）。

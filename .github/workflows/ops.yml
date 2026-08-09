@@ -59,6 +59,12 @@ jobs:
       - name: 自己相対バリュエーション（表示専用・合否に不使用）
         continue-on-error: true
         run: timeout 900 python3 night/hist_valuation.py --asof "$(date -u +%F)" --tickers kanshi_list.json --out out/hist_val_now.json
+      # 銘柄ごとの企業説明（v9.9.125・2026-08-09新設・鍵不要）
+      #   原本(10-K/20-F)の Item1 冒頭と、台帳の _meta.evidence（事業の事実）を同一オリジンで配る。
+      #   **表示専用**——Ω・堀・買付の判定には一切使わない。日本株のPDF経路は穴として明示している。
+      - name: 企業説明の採取（表示専用・合否に不使用）
+        continue-on-error: true
+        run: timeout 2400 python3 night/fetch_profiles.py
       # irr=85 の実績台帳（v9.9.124・2026-08-09新設・鍵不要・ネットワーク不要）
       #   別枠85と席の優先を「本人の実現複利がハードル15%以上の社」に限るためのデータ。
       #   **止まると甘い側へ壊れる**——新しく irr=85 になった社は載らず「中立」で特権を受けるため。
@@ -84,6 +90,6 @@ jobs:
           N=$(python3 -c "import json;print(sum(1 for r in json.load(open('out/ops_status.json'))['items'] if r['state']=='due'))" 2>/dev/null || echo "?")
           MSG="monthly ops $(date -u +%Y-%m-%d)"
           [ "$N" != "0" ] && MSG="⚠ 停止疑い ${N}本｜monthly ops $(date -u +%Y-%m-%d)"
-          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json 2>/dev/null || true
+          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push

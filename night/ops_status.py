@@ -88,6 +88,11 @@ def build():
          json_field("out/hist_val_now.json", "asof"),
          "ops.yml 毎月2日／手動 python3 night/hist_valuation.py --asof 〈今日の日付〉 "
          "--tickers kanshi_list.json --out out/hist_val_now.json", True),
+        # v9.9.125(2026-08-09): 銘柄ごとの企業説明（Ⅳ台帳・Ⅵ買付順位の🏢チップ／表示専用）。
+        #   止まっても判定は動かないが、**新しく審査した社の説明が出ないまま気づかれない**ので盤に載せる。
+        ("profiles", "企業説明(原本Item1)",   "月1",     40,
+         json_field("out/profiles.json", "generated"),
+         "ops.yml 毎月2日／手動 python3 night/fetch_profiles.py", True),
         # v9.9.124(2026-08-09): irr=85 の実績台帳（別枠85・席の優先の特権をどの社に与えるかを決める）。
         #   **止まると穴が開く向きが危ない**——新しく irr=85 になった社は台帳に載らず「中立」扱いで
         #   特権を受ける。実績が悪い社でもそうなるので、載せ直しが止まると**甘い側へ静かに壊れる**。
