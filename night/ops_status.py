@@ -88,6 +88,12 @@ def build():
          json_field("out/hist_val_now.json", "asof"),
          "ops.yml 毎月2日／手動 python3 night/hist_valuation.py --asof 〈今日の日付〉 "
          "--tickers kanshi_list.json --out out/hist_val_now.json", True),
+        # v9.9.124(2026-08-09): irr=85 の実績台帳（別枠85・席の優先の特権をどの社に与えるかを決める）。
+        #   **止まると穴が開く向きが危ない**——新しく irr=85 になった社は台帳に載らず「中立」扱いで
+        #   特権を受ける。実績が悪い社でもそうなるので、載せ直しが止まると**甘い側へ静かに壊れる**。
+        ("irr85hist", "irr=85の実績台帳",      "月1",     40,
+         json_field("out/irr85_history.json", "generated"),
+         "ops.yml 毎月2日／手動 python3 night/irr85_mech_test.py --json", True),
         # v9.9.94(2026-08-06): 期末後の重大事象の検査。**回っているかを盤で見張る**——
         #   この検査が黙って止まると「パックが会社の現在を描いていない」銘柄が
         #   何食わぬ顔で投下可に戻る（APHがまさにその状態で資産の6.3%を受けていた）。

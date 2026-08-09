@@ -90,7 +90,8 @@ if (typeof compute !== 'function') {
 // B23(2026-08-04): compute だけでなく関門3関数も存在検問する。従来は呼び出し側の try/catch が
 //   関数消失を黙って飲み、**ccfAudit が消えると audE=0＝audOK=true＝第四の関門が静かに無効化**する
 //   方向に壊れた（「鳴らない警報は鳴りすぎる警報と同じ」）。抽出に失敗したら大声で止まる。
-for (const fn of ['ccfXJudge', 'ccfMoatGate', 'ccfAudit', 'ccfAllocTop', 'ccfShrinkGate', 'ccfIrr85Frame']) {
+for (const fn of ['ccfXJudge', 'ccfMoatGate', 'ccfAudit', 'ccfAllocTop', 'ccfShrinkGate', 'ccfIrr85Frame',
+  'ccfIrr85Below']) {
   if (typeof global[fn] !== 'function' && typeof globalThis[fn] !== 'function') {
     console.error(`${fn}() を読み込めなかった。index.html の構造が変わった可能性がある——`
       + '関門の関数が無いまま続けると「点検が通った」という偽の結果を作るので中断する');
@@ -108,6 +109,15 @@ if (!KEYS.length) {
     + '門の構造が変わっている——このまま続けると全パックが既定値で採点されるので中断する');
   process.exit(1);
 }
+
+// v9.9.124: 門はこの台帳を fetch で読むが、端末には fetch が無いのでファイルから同じものを入れる。
+//   **同じ台帳を見る二つの検査器が違うことを言ってはいけない**(v9.9.65)——判定は門の ccfIrr85Below が
+//   単一実装で、ここは中身を渡すだけ。無ければ空＝検査は眠るだけ（ルール7）。
+try {
+  const hp = path.join(ROOT, 'out', 'irr85_history.json');
+  if (fs.existsSync(hp))
+    Object.assign(global.CCF_IRR85_HIST, JSON.parse(fs.readFileSync(hp, 'utf8')).items || {});
+} catch (e) {}
 
 // B4(2026-08-04): 門の applyFields は「黙って化けた」欄を __coerce に記録して ccfAudit へ渡す
 //   （v9.9.54＝acq5=2.8 が 'yes' に化けて罰が黙って効いた発生点の痕跡）。端末側の再実装は
