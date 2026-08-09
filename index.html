@@ -1147,7 +1147,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.125</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.126</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——v9.9.36で絶対MOAT指数をΩの直接項に加え(実効≒22%)、v9.9.39で<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -1207,7 +1207,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
     <div class="row"><div class="rl">ROIIC³（3年増分ROIC）<span class="h">3年累計ΔNOPAT÷3年累計新規投下資本。単年の暴れを排除。実質無再投資なら空欄=na</span></div><div class="rc"><input type="text" id="roiic" value="25" style="width:90px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px;text-align:right"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">5年窓ROIIC<span class="h">v9.1：3年窓がサイクルピーク跨ぎでキルされた場合のみ必須。5年窓≥WACCならキル保留→アンバー−6に緩和</span></div><div class="rc"><input type="text" id="roiic5" value="" placeholder="na" style="width:90px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px;text-align:right"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">直近5年に大型買収<span class="h">v9.1：「なし」なら、のれん乖離アンバーを免除（Visa Europe型の遺産のれん誤爆防止）。roicg&lt;WACCの−8は免除されない</span></div><div class="rc"><select id="acq5"><option value="yes" selected>あり（乖離チェック有効）</option><option value="no">なし（遺産のれん＝免除）</option></select></div></div>
-    <div class="row"><div class="rl">純有利子負債 / EBITDA<span class="h">2.5〜4で段階減点、&gt;4 で論外</span></div><div class="rc"><input type="number" id="nde" step="0.1" value="1.0"><span class="u">x</span></div></div>
+    <div class="row"><div class="rl">純有利子負債 / EBITDA<span class="h">2.5超から段階減点（(nde−2.5)×6・<b>上限なし</b>＝v9.9.126で坂の上限 4 を撤廃）、&gt;4 で論外。<b>旧実装は 2.5〜4 でしか坂が効かず、4.00 を跨ぐとΩが+8.7pt<u>上がった</u></b>（キルは上限を掛けるだけで坂の罰から抜けるため。実測 OKE: nde3.99→Ω16.3 / 4.01→25.0 / 20→25.0）</span></div><div class="rc"><input type="number" id="nde" step="0.1" value="1.0"><span class="u">x</span></div></div>
     <div class="row"><div class="rl">Altman Z''<span class="h">非製造業対応版：6.56X1+3.26X2+6.72X3+1.05X4。&lt;1.1論外、1.1〜2.6警戒帯</span></div><div class="rc"><input type="number" id="z" step="0.1" value=""></div></div>
     <div class="row"><div class="rl">粗利益/総資産 GP/A<span class="h">Novy-Marx品質。&lt;15%で過去門減点</span></div><div class="rc"><input type="number" id="gpa" step="0.1" value="30"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">アクルーアル比率<span class="h">(純利益−営業CF)÷総資産。&gt;+10%で会計警戒（利益に現金裏付けなし）</span></div><div class="rc"><input type="number" id="accr" step="0.1" value="-5"><span class="u">%</span></div></div>
@@ -1817,7 +1817,19 @@ function compute(){
   const misreadMsg={merger:'合併直後（償却・債務でGAAP崩落）',thin:'薄利複合（粗利proxyがMOAT柱を誤読）'}[finV]||'';
   const ndeV=n('nde');
   let levPen=0, levMsg=[];
-  if(ndeV>2.5&&ndeV<=4){levPen+=(ndeV-2.5)*6; levMsg.push(`レバレッジ高め(${ndeV.toFixed(1)}x) −${((ndeV-2.5)*6).toFixed(0)}`);}
+  // v9.9.126(2026-08-09 ユーザー明示指示「1 やって」): **坂の上限 `&&ndeV<=4` を外した**。
+  //   【何が壊れていたか】キルは `evalScore=min(evalScore,60)` と**上限を掛けるだけ**なのに、
+  //   この坂は `2.5 < nde ≤ 4` でしか効かなかった。⇒ **キル帯へ入った社は坂の罰から抜ける**ので、
+  //   真のスコアが60未満の社では **借金が4.00を跨いで増えるとΩが上がる**。
+  //   実測(OKE・他の欄は不変): nde 3.9→Ω16.9 / **3.99→16.3** / **4.01→25.0** / 5.0→25.0 / 20→25.0
+  //   ＝**+8.7pt の崖があり、その上はいくら借りても平ら**。門の思想「程度問題はすべて坂」と正面から矛盾する。
+  //   【なぜ上限を外すだけか】新しい定数を一つも導入しないから。線(4)も傾き(×6)も動かしていない——
+  //   **止めていた坂を止めないようにしただけ**。evalScore は 0 で床が効くので発散しない。
+  //   【歴史的な文脈】同日の検定(night/retro_nde_kill85.py)で、nde は**門自身の線で非単調**
+  //   （同じ555社・2018→2026 の恒久毀損: 3-4〔通す〕0.06 vs 4-5〔殺す〕0.03）と判った。
+  //   線をどこへ置くかは別の議論だが、**線の上で罰が消えること**は歴史と無関係に誤りなので先に直す。
+  //   実測: Ωが動くのは17社・最大 TDG −20.3pt。**投下可10社・Ω75+ 32社・四関門18社はいずれも不変**
+  if(ndeV>2.5){levPen+=(ndeV-2.5)*6; levMsg.push(`レバレッジ高め(${ndeV.toFixed(1)}x) −${((ndeV-2.5)*6).toFixed(0)}`);}
   if(isFin){levPen+=12; levMsg.push('金融・レバレッジ依存 −12（モデル外）');}
   const ks=$('killSig');ks.innerHTML='';
   if(!kills.length)ks.innerHTML=`<div class="flag f-ok"><i>✓</i><div>足切りなし。WACC ${wacc.toFixed(1)}%（RFR${rfr}+β${beta.toFixed(2)}×ERP${erp}）・スプレッド ${spread>=0?'+':''}${spread.toFixed(1)}pt。${roiicNA?'ROIIC³=na（成熟還元型——複利停止判定はFCF転換で代替）':''}</div></div>`;
