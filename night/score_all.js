@@ -90,7 +90,7 @@ if (typeof compute !== 'function') {
 // B23(2026-08-04): compute だけでなく関門3関数も存在検問する。従来は呼び出し側の try/catch が
 //   関数消失を黙って飲み、**ccfAudit が消えると audE=0＝audOK=true＝第四の関門が静かに無効化**する
 //   方向に壊れた（「鳴らない警報は鳴りすぎる警報と同じ」）。抽出に失敗したら大声で止まる。
-for (const fn of ['ccfXJudge', 'ccfMoatGate', 'ccfAudit', 'ccfAllocTop']) {
+for (const fn of ['ccfXJudge', 'ccfMoatGate', 'ccfAudit', 'ccfAllocTop', 'ccfShrinkGate', 'ccfIrr85Frame']) {
   if (typeof global[fn] !== 'function' && typeof globalThis[fn] !== 'function') {
     console.error(`${fn}() を読み込めなかった。index.html の構造が変わった可能性がある——`
       + '関門の関数が無いまま続けると「点検が通った」という偽の結果を作るので中断する');
@@ -235,6 +235,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
     }
   } catch (e) {}
   const shrink = ccfShrinkGate(dd);   // v9.9.99: 門の単一実装（再実装しない・v9.9.65の掟）
+  const f85 = ccfIrr85Frame(dd);      // v9.9.118: irr=85 の別枠（同上・門と同一実装）
   const s = parseFloat(r.evalScore);
   rows.push({ t, nm, jp, s, tier: r.tierShort,
               kills: r.kills, pfail: r.pfail, exit: r.exit && r.exit.level,
@@ -251,7 +252,12 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               irr: dd.irr,   // v9.9.100: 席の選定で irr=85 を優先するため（門の ccfAllocTop が読む）
               // v9.9.99(2026-08-07 ユーザー明示指示): **事業の収縮の遮断器**を第四の関門に。
               //   売上縮小 ∧ 営業利益率低下（門の単一実装 ccfShrinkGate を呼ぶ＝再実装しない）
-              buy: s >= 75 && mg.pass === true && audE === 0 && audU === 0
+              // v9.9.118(2026-08-09 ユーザー明示指示「2いれて」): **irr=85 の別枠**。
+              //   irr=85 ∧ 歴史の継続組の下限（営利率11.9 / FCF転換0.64 / cagr1.8）∧ nde≤4 なら
+              //   Ω75+ を免除する。免除するのはΩの線だけで、堀・データ健全・収縮はそのまま。
+              //   根拠の全文は index.html の ccfIrr85Frame 頭注（門と同一実装＝v9.9.65の掟）
+              frame85: f85.pass ? (f85.why || true) : undefined,
+              buy: (s >= 75 || f85.pass) && mg.pass === true && audE === 0 && audU === 0
                    && !STALE[t] && !VFAIL[t] && !shrink.hit });
 }
 rows.sort((a, b) => b.s - a.s);
@@ -309,12 +315,15 @@ const blockers = r => {
   if (r.vFail) b.push(`⛔納品検査FAIL${r.vFail}`);
   return b.length ? b : ['—'];
 };
-const q75 = rows.filter(x => x.s >= 75);
-console.log('\nΩ75+（堀＝絶対MOAT指数／E[r]＝参考値・合否に不使用／点＝全件点検／買＝四関門すべて成立・v9.9.98）:');
+// v9.9.118: irr=85 の別枠で土俵に上がった社（Ω75未満）も**この表に出す**——
+//   出さないと「なぜΩ63.9の社が🟢に居るのか」が端末から追えず、門と端末が違うことを言う（v9.9.65）
+const q75 = rows.filter(x => x.s >= 75 || x.frame85).sort((a, b) => b.s - a.s);
+console.log('\nΩ75+（堀＝絶対MOAT指数／E[r]＝参考値・合否に不使用／点＝全件点検／買＝四関門すべて成立・v9.9.98）'
+  + '\n  ※【別枠85】＝irr=85 の別枠でΩ75+を免除して土俵に上がった社（v9.9.118）:');
 for (const r of q75) {
   const moat = r.moatNA ? ' NA ' : (r.moat == null ? '  — ' : r.moat.toFixed(0).padStart(3) + ' ');
   const aud = r.audOK ? '  ✓' : `${r.audE ? '要' + r.audE : ''}${r.audU ? '未' + r.audU : ''}`.padStart(3) + '✗';
-  console.log(`  ${r.nm.slice(0, 24).padEnd(26)} Ω${r.s.toFixed(1).padStart(5)}  堀${moat}${r.moatOK ? '✓' : '✗'}`
+  console.log(`  ${(r.nm.slice(0, 24) + (r.frame85 && r.s < 75 ? '【別枠85】' : '')).padEnd(26)} Ω${r.s.toFixed(1).padStart(5)}  堀${moat}${r.moatOK ? '✓' : '✗'}`
     // v9.9.100: E[r] の ✓/✗ を外した——v9.9.98 で E[r] は合否に効かなくなったのに、
     //   ✓/✗ が残っていると『これで落ちている』と読めてしまう（落ちた理由は blockers が名指しする）。
     + `  E[r]${r.xEr == null ? '  na' : r.xEr.toFixed(0).padStart(4) + '%'} `
