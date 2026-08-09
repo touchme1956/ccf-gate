@@ -52,7 +52,15 @@ def facts_of(cik):
     return json.loads(get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"))
 
 TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
- "rev":   ["Revenues","RevenueFromContractWithCustomerExcludingAssessedTax","RevenueFromContractWithCustomerIncludingAssessedTax","SalesRevenueNet","Revenue"],
+ # 並び＝**意味の優先順**（series() は「代替」として1本選ぶので、総額を先・subsetを後に置く）。
+ # RegulatedAndUnregulatedOperatingRevenue は規制公益の損益計算書の**最上段 OPERATING REVENUES**（総額）。
+ #   これが候補に無かったため、この行を最上段に使う会社では **ASC606 の契約収益（総額の subset）** が
+ #   選ばれ、営業利益率と売上CAGRが分母違いで出ていた。実害2件——
+ #   **NJR**（2026-07-29に是正: gm 37.7→25.0 / cagr 10.1→0.8）と、同じ型が残っていた
+ #   **NEE**（2026-08-09に是正: gm 32.1→30.2 / cagr −3.0→8.8。しかも cagr の符号が違ったので
+ #   v9.9.99「事業の収縮」の関門が誤発火していた）。**同じ会社の同じ年を指しているつもりの二つの数字が、
+ #   実は総額と構成要素だった**＝CLAUDE.md が無形・有利子負債・販管費で繰り返し記録している型。
+ "rev":   ["Revenues","RegulatedAndUnregulatedOperatingRevenue","RevenueFromContractWithCustomerExcludingAssessedTax","RevenueFromContractWithCustomerIncludingAssessedTax","SalesRevenueNet","Revenue"],
  "gp":    ["GrossProfit"],
  "op":    ["OperatingIncomeLoss","ProfitLossFromOperatingActivities"],
  "ni":    ["NetIncomeLoss","ProfitLoss"],

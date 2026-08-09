@@ -6,10 +6,10 @@
  "z": 0.81,
  "gpa": null,
  "accr": -2.7,
- "gm": 32.1,
+ "gm": 30.2,
  "gmt": "down",
  "roict": "up",
- "cagr": -3.0,
+ "cagr": 8.8,
  "fcf": 12.48,
  "ni": 6.83,
  "sbc": 0.0,
@@ -110,7 +110,8 @@
    "2026-08-03 p3 70 → 空欄。nde=6.07 の導出値は 50。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ",
    "roic 5.9→5.9（2026-08-03・採取器の是正の反映）: 無形の控除が過少だった。2025年の無形を 1,630,000,000 → **1,767,000,000** へ是正し、IC 143,140,000,000 → 143,003,000,000（自己資本 54,608,000,000 + 有利子負債 95,011,000,000 − のれん 4,849,000,000 − 無形）。原因は hachimon_fetch の TAGS['intan'] に **IndefiniteLivedIntangibleAssetsExcludingGoodwill が無かった**こと、および series() が候補から1本しか選ばないため総額タグが古い年で止まると新しい年が欠測になり `.get(y,0)` で 0 と読まれていたこと（絶対のルール7(a)）。CELHの審査中に発見し、無形を series_sum で合成する形へ変更した。全317パックへの影響を実測: 差が出たのは GLXZ/NEE/ULTA の3社のみ、いずれもΩ30前後のキル済みで**判定圏外＝買付判断は1件も動かない**",
    "**v9.9.72 roic を through-cycle 化**: roic 5.9→5.8 / roicg 5.6→5.5。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央5.7% / 最悪3.1%）。比は**パックが審査した年(2025)**の採取器値 roic5.79 / roicg5.53 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
-   "2026-08-06 irr 85→100。認証ロックではなくフランチャイズ独占。競争帯が売上5%と実数で限定されるので全社ベースで確定"
+   "2026-08-06 irr 85→100。認証ロックではなくフランチャイズ独占。競争帯が売上5%と実数で限定されるので全社ベースで確定",
+   "2026-08-09 機械値の再監査（ユーザーの問い「irr100の6社の直近の成長率は？」を調べる過程で発見）: cagr −3.0→8.8 / gm 32.1→30.2 / gmt の系列を総営業収益ベースへ。**原因は分母に ASC606 契約収益（総営業収益の subset）を使っていたこと**で、2026-07-29 に NJR で是正済みの型が NEE に残っていた（同じ規制公益・同じタグ構成）。**cagr の符号が変わるので v9.9.99 の事業の収縮の関門（cagr<0 ∧ gmt=down）が誤発火していた**——NEEはΩ0.0で判定圏外のため買付への実害はゼロだが、関門が誤った数字で鳴っていた。Ω・堀・キル・売却規律はいずれも不変"
   ],
   "evidence": {
    "roic": "機械算出 2025年: NOPAT 8,280,000,000（営業利益 8,280,000,000×(1−実効税率0.0%)） ÷ IC 143,003,000,000＝自己資本 54,608,000,000 + 有利子負債 95,011,000,000 − のれん 4,849,000,000 − 無形 1,767,000,000。**IC/自己資本=261.9%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）｜有利子負債の内訳: LongTermDebtNoncurrent=89,556,000,000 + LongTermDebtCurrent=3,500,000,000 + CommercialPaper=1,955,000,000｜**v9.9.72: through-cycle 化**。5年系列 5年の**中央値 5.7%** を採用（直近年 5.8% / 最悪 3.1%）。roicg も同じ年の系列の中央値 5.4% にして roic≥roicg を保つ",
@@ -123,9 +124,10 @@
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 4,704,274,879 ÷ Δ投下資本 46,792,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 102,827,000,000→149,619,000,000（+45.5%）",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 3,239,971,650 ÷ Δ投下資本 65,473,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 84,146,000,000→149,619,000,000（+77.8%）",
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 3.1% / 2022 3.7% / 2023 7.9% / 2024 5.7% / 2025 5.8% → 平均 5.2% / σ 1.7pt / **CV 32.8%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **65**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
-   "gm": "機械算出 2025年: 営業利益 8,280,000,000 ÷ 売上 25,800,000,000（粗利ではない）",
-   "gmt": "機械算出: 営業利益率 2023年 41.3% → 2025年 32.1%（±1ptでup/down）",
-   "irr": "10-K FY2025 COMPETITION『FPL's service to its electric retail customers is provided primarily under **franchise agreements** negotiated with municipalities or counties. During the term of a franchise agreement, which is typically 30 years, **the municipality or county agrees not to form its own utility**』＋『annual operating revenues from wholesale and industrial electric customers combined represented **approximately 5%** of FPL's total operating revenues』＝競争にさらされるのは売上の約5%のみ＝全社ベースで100(実質唯一供給)。"
+   "gm": "【2026-08-09 是正 32.1→30.2】門の定義=営業利益率=営業利益÷**売上高(総営業収益)**。FY2025実額: 営業利益 8,280百万$ ÷ OPERATING REVENUES 27,412百万$ = 30.21%。旧値32.1は分母に**ASC606の契約収益 25,800百万$（総営業収益の subset）**を使っていた——2026-07-29に NJR で是正したのとまったく同じ型で、NEEだけ取り残されていた",
+   "gmt": "【2026-08-09 再計算・判定はdown据置】総営業収益ベースの営業利益率3年: FY2023 10,237÷28,114=36.4% → FY2024 7,479÷24,753=30.2% → FY2025 8,280÷27,412=30.2%。直近−3年前=−6.2pt<−1pt → down。旧evidenceの「2023 41.3%→2025 32.1%」は分母がASC606 subsetだった",
+   "irr": "10-K FY2025 COMPETITION『FPL's service to its electric retail customers is provided primarily under **franchise agreements** negotiated with municipalities or counties. During the term of a franchise agreement, which is typically 30 years, **the municipality or county agrees not to form its own utility**』＋『annual operating revenues from wholesale and industrial electric customers combined represented **approximately 5%** of FPL's total operating revenues』＝競争にさらされるのは売上の約5%のみ＝全社ベースで100(実質唯一供給)。",
+   "cagr": "【2026-08-09 是正 −3.0→8.8】門の定義=5年売上CAGR。損益計算書の最上段 OPERATING REVENUES (us-gaap:RegulatedAndUnregulatedOperatingRevenue) の実額: FY2020 17,997百万$ → FY2025 27,412百万$ → (27412/17997)^(1/5)−1 = 8.79% → 8.8%。ASC606の契約収益 (RevenueFromContractWithCustomerIncludingAssessedTax・FY2020 17,000 → FY2025 25,800) で取っても +8.7% で同じ帯。**旧値 −3.0 はどちらの系列からも再現できない**（根拠も無かった）。出典: https://www.sec.gov/Archives/edgar/data/753308/000075330826000015/nee-20251231.htm"
   },
   "provenance": {
    "roic": "machine",
