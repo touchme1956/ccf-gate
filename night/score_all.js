@@ -235,7 +235,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
     }
   } catch (e) {}
   const shrink = ccfShrinkGate(dd);   // v9.9.99: 門の単一実装（再実装しない・v9.9.65の掟）
-  const f85 = ccfIrr85Frame(dd);      // v9.9.118: irr=85 の別枠（同上・門と同一実装）
+  const f85 = ccfIrr85Frame(dd);      // v9.9.119: irr=85 の別枠（同上・門と同一実装）
   const s = parseFloat(r.evalScore);
   rows.push({ t, nm, jp, s, tier: r.tierShort,
               kills: r.kills, pfail: r.pfail, exit: r.exit && r.exit.level,
@@ -252,7 +252,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               irr: dd.irr,   // v9.9.100: 席の選定で irr=85 を優先するため（門の ccfAllocTop が読む）
               // v9.9.99(2026-08-07 ユーザー明示指示): **事業の収縮の遮断器**を第四の関門に。
               //   売上縮小 ∧ 営業利益率低下（門の単一実装 ccfShrinkGate を呼ぶ＝再実装しない）
-              // v9.9.118(2026-08-09 ユーザー明示指示「2いれて」): **irr=85 の別枠**。
+              // v9.9.119(2026-08-09 ユーザー明示指示「2いれて」): **irr=85 の別枠**。
               //   irr=85 ∧ 歴史の継続組の下限（営利率11.9 / FCF転換0.64 / cagr1.8）∧ nde≤4 なら
               //   Ω75+ を免除する。免除するのはΩの線だけで、堀・データ健全・収縮はそのまま。
               //   根拠の全文は index.html の ccfIrr85Frame 頭注（門と同一実装＝v9.9.65の掟）
@@ -315,11 +315,11 @@ const blockers = r => {
   if (r.vFail) b.push(`⛔納品検査FAIL${r.vFail}`);
   return b.length ? b : ['—'];
 };
-// v9.9.118: irr=85 の別枠で土俵に上がった社（Ω75未満）も**この表に出す**——
+// v9.9.119: irr=85 の別枠で土俵に上がった社（Ω75未満）も**この表に出す**——
 //   出さないと「なぜΩ63.9の社が🟢に居るのか」が端末から追えず、門と端末が違うことを言う（v9.9.65）
 const q75 = rows.filter(x => x.s >= 75 || x.frame85).sort((a, b) => b.s - a.s);
 console.log('\nΩ75+（堀＝絶対MOAT指数／E[r]＝参考値・合否に不使用／点＝全件点検／買＝四関門すべて成立・v9.9.98）'
-  + '\n  ※【別枠85】＝irr=85 の別枠でΩ75+を免除して土俵に上がった社（v9.9.118）:');
+  + '\n  ※【別枠85】＝irr=85 の別枠でΩ75+を免除して土俵に上がった社（v9.9.119）:');
 for (const r of q75) {
   const moat = r.moatNA ? ' NA ' : (r.moat == null ? '  — ' : r.moat.toFixed(0).padStart(3) + ' ');
   const aud = r.audOK ? '  ✓' : `${r.audE ? '要' + r.audE : ''}${r.audU ? '未' + r.audU : ''}`.padStart(3) + '✗';

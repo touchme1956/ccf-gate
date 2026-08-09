@@ -49,6 +49,16 @@ jobs:
       - name: 配当分離(divY)——予実台帳の補正項
         continue-on-error: true
         run: python3 night/fill_divy.py
+      # 自己相対バリュエーション（v9.9.118・2026-08-09新設・鍵不要）
+      #   門のⅥ買付順位が「現PERはこの銘柄自身の過去の何%タイルか」を出すためのデータ。
+      #   **表示専用**——遮断器としては事前登録(out/hist_valuation_prereg.json)の6基準に
+      #   一つも合格しなかったので合否には使わない。out/dashboard.json と同じ作法で、
+      #   **CIで計算してJSONで配る**（ブラウザから外部APIを叩かない）。
+      #   監視リスト生成の**後**に置く——kanshi_list.json が入力なので、順序が逆だと
+      #   前月の名簿で採ることになる（v9.9.112 で踏んだ「線が動いたら監視リストも再生成する」の同型）。
+      - name: 自己相対バリュエーション（表示専用・合否に不使用）
+        continue-on-error: true
+        run: timeout 900 python3 night/hist_valuation.py --asof "$(date -u +%F)" --tickers kanshi_list.json --out out/hist_val_now.json
       - name: v10影スコア更新（7月のみ＝年次較正の材料）
         continue-on-error: true
         run: |
@@ -68,6 +78,6 @@ jobs:
           N=$(python3 -c "import json;print(sum(1 for r in json.load(open('out/ops_status.json'))['items'] if r['state']=='due'))" 2>/dev/null || echo "?")
           MSG="monthly ops $(date -u +%Y-%m-%d)"
           [ "$N" != "0" ] && MSG="⚠ 停止疑い ${N}本｜monthly ops $(date -u +%Y-%m-%d)"
-          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json 2>/dev/null || true
+          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push
