@@ -207,8 +207,10 @@ def main():
         #   ＝どちらも valid で一長一短。**両方が同意したときだけ罰する**（保守的な交差）。
         #   `cagrT = max(A, B)`（＝**負の側で絶対値の小さいほう**）を採ると、
         #   片方が「大して減速していない」と言う限り罰は小さくなる。**新しい定数は導入していない**。
-        yoy = {y: (ser[y] / ser[y - 1] - 1) * 100 for y in range(a - 4, a + 1)
-               if (a - 5) in ser and ser[y - 1] > 0}
+        # ⚠窓の検問は need=[a, a-2, a-5] の3年しか見ていない。**中間の年が欠けていることがある**
+        #   （実測でKeyError 2020）。B案は全年のYoYが要るので、ここで改めて全年を確かめる。
+        _ok = all(y in ser and ser[y] > 0 for y in range(a - 5, a + 1))
+        yoy = ({y: (ser[y] / ser[y - 1] - 1) * 100 for y in range(a - 4, a + 1)} if _ok else {})
         acc_m = None
         if len(yoy) == 5:
             import statistics as _st

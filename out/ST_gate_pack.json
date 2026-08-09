@@ -108,7 +108,7 @@
    "acq5": "**no**。10-Kは買収を成長手段として挙げるが（『we look to accelerate this by integrating new technologies and capabilities that have been acquired』）直近5年の大型買収の実額の記述は無い。⚠のれん系列での機械判定は未実施。出典: SEC EDGAR 10-K FY2025（決算期末 2025-12-31・accession 0001477294-26-000007）",
    "p1": "【機械算出・変動係数刻み】門式ROIC5年系列 FY2021-2025: 19.2/19.4/4.6/6.7/5.8 → **CV 60.1%** → 刻み(50%以上→50)で **50**。2023年に水準が1/4へ落ちており（減損・再編）不安定。出典: SEC XBRL companyfacts",
    "mcap": "発行済株式数 145,535,862株（SEC dei:EntityCommonStockSharesOutstanding・filed 2026-07-29） × 株価 $46.67（Alpha Vantage GLOBAL_QUOTE・2026-08-07終値）= **6.79十億$**。2026-08-08に新規充填（それまで空欄で時価総額の比較ができなかった）。⚠**px はパックの市場欄には入れていない**——market_fetch/market_merge の帯検問を通していないため、mcap の算出根拠としてのみ記録する（per/E[r]には未反映＝門X未評価のまま）",
-   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 3,045,578,000 → 2023年 4,054,100,000 → 2025年 3,704,500,000。直近2年CAGR -4.41% − その前3年CAGR 10.00% = **-14.41pt**。定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。"
+   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 3,045,578,000 → 2023年 4,054,100,000 → 2025年 3,704,500,000。A案(端点) 直近2年CAGR -4.41% − その前3年CAGR 10.00% = -14.41pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -9.85pt ／ 年次YoY {'2021': 25.5, '2022': 5.5, '2023': 0.6, '2024': -3.0, '2025': -5.8} → **採用 -9.85pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。"
   },
   "provenance": {
    "cagr": "machine",
@@ -175,5 +175,5 @@
  "moatW": 85,
  "dep": 10,
  "mcap": 6.79,
- "cagrT": -14.41
+ "cagrT": -9.85
 }

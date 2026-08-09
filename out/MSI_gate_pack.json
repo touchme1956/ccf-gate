@@ -125,7 +125,7 @@
    "ni": "2.2 = NetIncomeLoss FY2025 2,150百万$（XBRL・10-K filed 2026-02-12）。十億$単位の丸め",
    "fcf": "2.6 = OCF 2,840 − capex 265 = 2,575百万$（XBRL: NetCashProvidedByUsedInOperatingActivities − PaymentsToAcquireProductiveAssets。MSIのcapexタグは PaymentsToAcquirePropertyPlantAndEquipment ではなく ProductiveAssets＝機械が候補先頭で見つけられなかっただけで値は一致）",
    "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2025『**Our largest customer is the U.S. government** (through multiple contracts with its various branches and agencies, including the armed services), representing **approximately 8% of our consolidated net sales**』＋『no single customer accounted for more than 10%』。(c)『certain materials and components, inclusive of memory, from single-source vendors』は部品の供給リスクで売上依存ではない",
-   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 7,414,000,000 → 2023年 9,978,000,000 → 2025年 11,682,000,000。直近2年CAGR 8.20% − その前3年CAGR 10.41% = **-2.20pt**。定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。"
+   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 7,414,000,000 → 2023年 9,978,000,000 → 2025年 11,682,000,000。A案(端点) 直近2年CAGR 8.20% − その前3年CAGR 10.41% = -2.20pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -2.01pt ／ 年次YoY {'2021': 10.2, '2022': 11.5, '2023': 9.5, '2024': 8.4, '2025': 8.0} → **採用 -2.01pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。"
   },
   "nulls": {
    "roic": "負資本/薄資本で『のれん除きIC』ゼロ近傍→ROIC発散(ドラフト249.6)。非再現値として棄却。有意な資本効率はroicg=21.2(のれん込み、実測≒23.6%)",
@@ -194,5 +194,5 @@
  "roiic5": 16.9,
  "ddate": "2026-08-07",
  "dep": 8,
- "cagrT": -2.2
+ "cagrT": -2.01
 }
