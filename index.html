@@ -1147,7 +1147,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.121</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.122</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——v9.9.36で絶対MOAT指数をΩの直接項に加え(実効≒22%)、v9.9.39で<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3459,7 +3459,7 @@ async function ccfDash(btn){
       //   同じ台帳を見る二つの検査器が違うことを言ってはいけない（v9.9.65）
       // v9.9.119: irr=85 の別枠——Ω75+ を通らなくても歴史の継続組の下限を満たせば土俵に上がる
       //   （ccfIrr85Frame の頭注に根拠。Ⅵ・score_all と同じ単一実装＝v9.9.65の掟）
-      const f85=ccfIrr85Frame(d);
+      const f85=ccfIrr85Frame(d,r);
       const three=(sc>=75||f85.pass)&&mg.pass===true;
       const t=(L.nm||'').trim().split(/\s/)[0].toUpperCase();
       // v9.9.99: 事業の収縮の遮断器もⅥと同じ判定にする（同じ台帳を見る二つの検査器が違うことを言わない）
@@ -3478,7 +3478,7 @@ async function ccfDash(btn){
   const nextUp=four.filter(v=>!allocT.has(v.t)).sort((a,b)=>mechD(a)-mechD(b)||ccfAllocScore(b)-ccfAllocScore(a)||b.s-a.s);
   const audBlocked=judged.filter(v=>v.blocked);
   const buyHtml=buy.length?buy.map((v,i)=>{const q=Q[v.t];
-    return `<div class="led"><span style="font-size:15px;color:var(--gold-bright);min-width:28px"><b>${i+1}</b></span><span class="ln">${ccfIcon(v.nm)}${v.nm}${(v.frame85&&v.s<75)?'<span style="font-size:10px;color:#9b7fd4;margin-left:6px" title="irr=85 の別枠で土俵に上がった社（Ω75+は免除・財務キルnde>4は残す・v9.9.119）">別枠85</span>':''}</span>`
+    return `<div class="led"><span style="font-size:15px;color:var(--gold-bright);min-width:28px"><b>${i+1}</b></span><span class="ln">${ccfIcon(v.nm)}${v.nm}${(v.frame85&&v.s<75)?'<span style="font-size:10px;color:#9b7fd4;margin-left:6px" title="irr=85 の別枠で土俵に上がった社（Ω75+は免除。二本柱の陥落・財務キルnde&gt;4・堀・データ健全・収縮・depのベトはそのまま適用・v9.9.122）">別枠85</span>':''}</span>`
       +`<span style="font-size:12px;min-width:70px;text-align:right">${q?('$'+q.px.toFixed(2)):'—'}</span>`
       +`<span style="font-size:12px;min-width:70px;text-align:right;color:${q?col(q.chgPct||0):'var(--dim)'}">${q&&q.chgPct!=null?sign(q.chgPct)+'%':'—'}</span>`
       +`<span style="font-size:12px;min-width:58px;text-align:right;color:var(--gold-bright)">Ω${v.s.toFixed(1)}</span>`
@@ -3916,10 +3916,12 @@ function ccfAllocTop(cands,maxN){
 }
 // ── 堀のふるい（v9.9.39・ユーザー明示指示 2026-07-28）──────────────────────────
 // 新規投下は「四関門」＝ Ω75+〔irr=85は別枠〕 ∧ 絶対MOAT指数 ≥ 70 ∧ 点検の要修正0件 ∧ 事業の収縮なし（売上縮小∧営業利益率低下でない）（v9.9.66）。
-// 〔irr=85は別枠〕＝v9.9.119。**第一関門(Ω75+)にだけ脇道がある**——irr=85 ∧ 歴史の継続組の下限
-//   （営業利益率11.9% / FCF転換0.64 / 売上5年CAGR1.8%）∧ nde≤4 なら、Ω75未満でも土俵に上がる。
-//   免除するのはΩの線だけで、堀70+ ／ データ健全 ／ 事業の収縮 ／ dep のベト ／ **財務キル nde>4** は
-//   そのまま適用する。根拠の全文は ccfIrr85Frame の頭注（門・盤・score_all が同じ実装を読む＝v9.9.65）。
+// 〔irr=85は別枠〕＝v9.9.119／**v9.9.122で二本柱の陥落を免除しない形へ**。
+//   **第一関門(Ω75+)にだけ脇道がある**——irr=85 ∧ **二本柱すべて通過(pm≥70 ∧ pr≥70)** ∧
+//   歴史の継続組の下限（営業利益率11.9% / FCF転換0.64 / 売上5年CAGR1.8%）∧ nde≤4 なら、Ω75未満でも土俵に上がる。
+//   免除するのはΩの**線**だけで、**Ωの中身のうち持続の二本柱は免除しない**。
+//   堀70+ ／ データ健全 ／ 事業の収縮 ／ dep のベト ／ **財務キル nde>4** もそのまま適用する。
+//   根拠の全文は ccfIrr85Frame の頭注（門・盤・score_all が同じ実装を読む＝v9.9.65）。
 // なぜ第三の関門か: moatIdx は既にΩへ二経路（pm→sustain と直接項.13）で入っているので、
 //   ここでさらに減点すると同じ信号の三重罰になる。だから採点は動かさず「買う対象から外す」
 //   だけにした。堀は深さ(dom/irr/rep/dur)と本数(moatW)の幾何平均なので、1本でも薄いと
@@ -3999,19 +4001,31 @@ const CCF_MOAT_GATE=70;
 //   OLED(43.6%) は入口の財務が最良だった。**下限が落とすのは「歴史の勝者の範囲にすら入らない社」だけ**。
 // 【実測】通るのは **ASML VRSK CW LRCX RBC** の5社。投下可は HWM が抜けて RBC が入る。
 //   歴史基礎率で城 14.81%→15.18%・総合 12.09%→12.31%。**nde>4 の社は1社も入らない**。
-function ccfIrr85Frame(d){
+function ccfIrr85Frame(d,r){
   const n=v=>{const x=parseFloat(v);return isFinite(x)?x:null;};
   const irr=n(d&&d.irr), gm=n(d&&d.gm), cagr=n(d&&d.cagr), nde=n(d&&d.nde);
   const fcf=n(d&&d.fcf), ni=n(d&&d.ni);
   if(irr!==85)return {pass:false,why:null};
   const conv=(fcf!=null&&ni!=null&&ni!==0)?(fcf/ni):null;
   const ng=[];
+  // v9.9.122(2026-08-09 ユーザー明示指示「入れて」): **二本柱の陥落は免除しない**。
+  // 【なぜ】別枠が免除するのは「Ωの線」だけ、と v9.9.119 は明記していたが、Ωの中で
+  //   **持続の二本柱(MOAT柱 pm≥70 ∧ ROIC柱 pr≥70)が折れている社**まで通してしまっていた。
+  //   実測でそれが表に出た——WST(pr61・出口s1) と BWXT(pm65/pr61・キル1・ティア「失格」・出口s1)が
+  //   買付の席に入り、**柱fail0・キル0・出口holdの RMD(Ω79.9・保有銘柄)を押し出した**。
+  //   別枠の根拠は n=21・単一ビンテージ・8.1年の一窓で、**そこまでの強度は無い**。
+  //   一方 RBC(pm76/pr100/柱fail0) は残る＝「門の物差しが遅れている分を先取りする」という当初の趣旨は守られる。
+  // 【なぜ pfail を使うか】柱の線(70)を書き写さず、compute() が出した結果をそのまま読む＝再実装しない(v9.9.65)。
+  // 【r が無いときは免除しない】別枠は特権なので、測れないときは与えない側へ倒す(ルール7と同じ向き)。
+  const pf=(r&&typeof r.pfail==='number')?r.pfail:null;
+  if(pf===null)ng.push('二本柱が未評価（別枠は特権ゆえ与えない）');
+  else if(pf>0)ng.push(`二本柱が${pf}本陥落（別枠でも免除しない・v9.9.122）`);
   if(gm==null||gm<11.9)ng.push(gm==null?'営利率未測定':`営利率${gm}<11.9`);
   if(conv==null||conv<0.64)ng.push(conv==null?'FCF転換未測定':`FCF転換${conv.toFixed(2)}<0.64`);
   if(cagr==null||cagr<1.8)ng.push(cagr==null?'成長未測定':`成長${cagr}<1.8`);
   if(nde!=null&&nde>4)ng.push(`nde${nde}>4（財務キルは別枠でも残す）`);
   return ng.length?{pass:false,why:ng.join('・')}
-    :{pass:true,why:`irr=85 ∧ 歴史の継続組の下限（営利率${gm}≥11.9・FCF転換${conv.toFixed(2)}≥0.64・成長${cagr}≥1.8）∧ nde${nde==null?'—':nde}≤4`};
+    :{pass:true,why:`irr=85 ∧ 二本柱すべて通過 ∧ 歴史の継続組の下限（営利率${gm}≥11.9・FCF転換${conv.toFixed(2)}≥0.64・成長${cagr}≥1.8）∧ nde${nde==null?'—':nde}≤4`};
 }
 function ccfShrinkGate(d){
   d=d||{};
@@ -4131,7 +4145,7 @@ async function renderPlan(){
     //   (c)審査/決算ボタンの依頼文銘柄名が壊れる——Ⅵだけ他と違う規則だった（v9.9.65違反の同型）
     const tSym=String(it.d.nm||it.k.slice(3)).trim().split(/[\s_]/)[0].toUpperCase();
     // v9.9.119: irr=85 の別枠（ccfIrr85Frame の頭注に根拠。盤・score_all と同じ単一実装＝v9.9.65の掟）
-    const f85=ccfIrr85Frame(it.d);
+    const f85=ccfIrr85Frame(it.d,it.r);
     return {nm:it.d.nm||it.k.slice(3),t:tSym,s,act,memo,room,hold,pc,layer,frame85:f85.pass,frame85why:f85.why,xEr,xPass,per,shy,g:gOut,gcap:xj.gcap,gcapSrc:xj.gcapSrc,grower:growerR,moat:mg.idx,moatOK:mg.pass,moatNA:mg.na,depVeto:mg.depVeto,depGov:mg.depGov,dep:mg.dep,shrink:ccfShrinkGate(it.d),irr:it.d.irr,pos:(livePos&&livePos[tSym]!=null)?livePos[tSym]:num(it.d.pos),tier:it.r.tierShort||it.r.grade,audW:ccfAudit(it.d,it.r,it.coerce,it.ok),audB:ccfAuditBadge(ccfAudit(it.d,it.r,it.coerce,it.ok),it.k),px0:it.d.px,epsOld:(it.d.erdate&&(Date.now()-new Date(it.d.erdate).getTime())>300*864e5)};
   });
   // v9.9.119: 4本目は **irr=85 の別枠**で土俵に上がった社（Ω75未満＝layer 3）の色。
@@ -4143,8 +4157,9 @@ async function renderPlan(){
   // v9.9.25: 格75+(layer≤2)を門Xで二分——投下可(xPass) / 押し目待ち(それ以外)。actは買付判定から外す=門Xが唯一の価格関門(「今買える」なのに「監視」の矛盾を解消)。採点・格・門X閾値は不変=表示統合のみ
   // v9.9.119（2026-08-09 ユーザー明示指示「2いれて」）: **irr=85 の別枠**を第一関門の脇に置いた。
   //   irr=85 ∧ 歴史の継続組の下限（営利率11.9% / FCF転換0.64 / 売上5年CAGR1.8%）∧ nde≤4 なら、
-  //   Ω75未満でも土俵に上がる。免除するのは**Ω75+ の線だけ**で、堀70+・データ健全・事業の収縮・
-  //   dep のベト・**財務キル nde>4** はすべてそのまま適用する。根拠の全文は ccfIrr85Frame の頭注。
+  //   Ω75未満でも土俵に上がる。免除するのは**Ω75+ の線だけ**で、**二本柱の陥落(v9.9.122)**・堀70+・
+  //   データ健全・事業の収縮・dep のベト・**財務キル nde>4** はすべてそのまま適用する。
+  //   根拠の全文は ccfIrr85Frame の頭注。
   const q75all=rows.filter(r=>r.layer<=2||r.frame85).sort((a,b)=>(b.pc-a.pc)||(b.s-a.s));
   // v9.9.39(ユーザー明示指示): 堀のふるいを第三の関門に。moatIdx が線に届かない社は買付の土俵から降ろす。
   //   価格の話ではないので「押し目待ち」には入れない（下がっても堀は広がらない）＝独立した群にする。
@@ -4308,7 +4323,7 @@ async function renderPlan(){
   const govTag=r=>(r.depGov&&r.dep!=null&&r.dep>=40)
     ?`<span style="font-size:11px;color:#c08a3e;white-space:nowrap;margin-left:8px" title="dep=${r.dep}% だが相手が主権政府のため存続級依存のベトを立てていない（v9.9.121）。免除するのは『相手が消える』半分だけで、契約更改・入札で乗り換えられるriskは irr が測る。予算・政治は geopol が別に測る">政府依存${r.dep}%（ベト免除）</span>`:'';
   const f85Tag=r=>(r.frame85&&r.s<75)
-    ?`<span style="font-size:11px;color:#9b7fd4;white-space:nowrap;margin-left:8px" title="${(r.frame85why||'').replace(/"/g,'&quot;')}｜Ω75+は免除。堀70+・データ健全・事業の収縮・depのベト・**財務キル nde&gt;4** はそのまま適用される">別枠85（Ω${r.s}）</span>`:'';
+    ?`<span style="font-size:11px;color:#9b7fd4;white-space:nowrap;margin-left:8px" title="${(r.frame85why||'').replace(/"/g,'&quot;')}｜Ω75+は免除。**二本柱の陥落(v9.9.122)**・堀70+・データ健全・事業の収縮・depのベト・**財務キル nde&gt;4** はそのまま適用される">別枠85（Ω${r.s}）</span>`:'';
   // 自己相対バリュエーション（v9.9.118）——**倍率 N.Nx とまったく同じ扱い＝表示専用・合否には使わない**。
   //   「未取得」を黙って空欄にしない（ルール7）。理由まで出すのは、空欄が二つの意味
   //   （測っていない／測って中庸）を持つと、次に見た人が前者を後者と読むから。
@@ -4474,7 +4489,7 @@ async function renderPlan(){
     const fIn=q75all.filter(r=>r.frame85&&r.s<75);
     if(fIn.length){
       const st=r=>pass.includes(r)?(allocSet.has(r.t)?'🟢投下可':'🔵次点'):'⛔他の関門で不通過';
-      html+=`<div style="margin:16px 0 4px;padding:10px 12px;border:1px solid rgba(155,127,212,.45);border-radius:8px;background:rgba(155,127,212,.07);font-size:11.5px;color:var(--muted);line-height:1.85"><b style="color:#9b7fd4">◇ irr=85 の別枠で土俵に上がった社（Ω75+を免除・v9.9.119）</b><br>`
+      html+=`<div style="margin:16px 0 4px;padding:10px 12px;border:1px solid rgba(155,127,212,.45);border-radius:8px;background:rgba(155,127,212,.07);font-size:11.5px;color:var(--muted);line-height:1.85"><b style="color:#9b7fd4">◇ irr=85 の別枠で土俵に上がった社（Ω75+を免除／二本柱の陥落は免除しない・v9.9.122）</b><br>`
         +fIn.sort((a,b)=>b.s-a.s).map(r=>`　<b>${r.nm}</b> Ω${r.s}・堀${r.moat!=null?r.moat.toFixed(0):'—'}　${st(r)}<br>　<span style="color:var(--dim)">${r.frame85why||''}</span>`).join('<br>')
         +`<br><span style="color:var(--dim)"><b>【なぜ免除するか】</b>歴史検証（2018年ビンテージ irr=85 の21社・8.1年）の二つの実測に従っています——<br>`
         +`(1) <b>継続組と非継続組は入口の財務で分かれませんでした</b>。営業利益率は 20.4% vs 20.5% で<u>同一</u>、売上5年CAGRも 18.0% vs 15.5%。分けたのは<b>機構の文が断定形か願望形か</b>だけ（願望形5社のうち3社=60%が非継続／完了形16社は3社=19%）。<b>今日の台帳に願望形はゼロ</b>です（2026-08-05〜07の全数検算で irr=85 を 53社→11社へ削り、その型は全部70へ降格済み）。<br>`

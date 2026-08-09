@@ -69,7 +69,7 @@ for (const t of tickers) {
     // 関門
     xEr: x.xEr != null ? +x.xEr.toFixed(1) : null, xPass: x.xPass,
     moatOK: !!mg.pass, audE, audU, audOK: audE === 0 && audU === 0,
-    buy: buyGate(t, d, parseFloat(r.evalScore), mg, audE, audU),
+    buy: buyGate(t, d, parseFloat(r.evalScore), mg, audE, audU, r),   // v9.9.122: 別枠は r（二本柱）を要る
     exit: r.exit && r.exit.level,
   });
 }

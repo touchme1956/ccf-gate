@@ -167,9 +167,11 @@ function gates() {
   return (_gates = { stale: rd('stale_bs.json', v => v && v.verdict === '要審査'),
                      vfail: rd('validate_fail.json', v => v && (v.n || 0) > 0) });
 }
-function buyGate(t, dd, s, mg, audE, audU) {
+function buyGate(t, dd, s, mg, audE, audU, r) {
   const g = gates();
-  const f85 = ccfIrr85Frame(dd);        // v9.9.119: irr=85 の別枠（Ωの線だけ免除）
+  // v9.9.122: 別枠は **r（compute()の結果）** を要る——二本柱の陥落を免除しないため。
+  //   r を渡さない呼び出しは別枠が立たない側へ倒れる（特権は測れないときに与えない）。
+  const f85 = ccfIrr85Frame(dd, r);     // v9.9.119/122: irr=85 の別枠（Ωの線だけ免除・二本柱は免除しない）
   const shrink = ccfShrinkGate(dd);     // v9.9.99: 事業の収縮
   return (s >= 75 || f85.pass) && mg.pass === true && audE === 0 && audU === 0
          && !g.stale[t] && !g.vfail[t] && !shrink.hit;
@@ -251,7 +253,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
     }
   } catch (e) {}
   const shrink = ccfShrinkGate(dd);   // v9.9.99: 門の単一実装（再実装しない・v9.9.65の掟）
-  const f85 = ccfIrr85Frame(dd);      // v9.9.119: irr=85 の別枠（同上・門と同一実装）
+  const f85 = ccfIrr85Frame(dd, r);   // v9.9.119/122: irr=85 の別枠（同上・門と同一実装）
   const s = parseFloat(r.evalScore);
   rows.push({ t, nm, jp, s, tier: r.tierShort,
               kills: r.kills, pfail: r.pfail, exit: r.exit && r.exit.level,
@@ -273,7 +275,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               //   Ω75+ を免除する。免除するのはΩの線だけで、堀・データ健全・収縮はそのまま。
               //   根拠の全文は index.html の ccfIrr85Frame 頭注（門と同一実装＝v9.9.65の掟）
               frame85: f85.pass ? (f85.why || true) : undefined,
-              buy: buyGate(t, dd, s, mg, audE, audU) });
+              buy: buyGate(t, dd, s, mg, audE, audU, r) });
 }
 rows.sort((a, b) => b.s - a.s);
 // v9.9.88(2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」): 第五の枠。
