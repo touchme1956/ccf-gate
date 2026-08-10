@@ -1,0 +1,178 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 門2審査をCIで回す（2026-08-10新設・ユーザー指示「全部順番にやって」のⅠ）
+#
+# なぜ要るか:
+#   この門は審査の材料をすべて持っていた——待ち行列(night/chunk*.txt・rechunk*.txt)・
+#   審査官への指示(agent_prompt_template)・機械値の下ごしらえ(hachimon_fetch)・
+#   納品の合否(validate_packs)・破損の検出(audit_gate)・影響の実測(score_all)。
+#   **欠けていたのは走らせる人だけ**で、night/progress.json は pending_review 13 のまま
+#   1週間動いていなかった。「検出は自動・作業は手動」の最後の断絶がここ。
+#
+# 絶対のルール2をどう守るか:
+#   ルール2が禁じるのは *憶測で埋めること* と *根拠を書かないこと* であって、
+#   機械が原本を読んで引用つきで埋めること自体は**元から設計された夜間バッチ審査**
+#   （CLAUDE.md「夜間バッチ審査は night/」）。三重に縛る——
+#     (1) **納品検査を通らないパックは捨てる**（night/review_runner.sh が元へ戻す）
+#     (2) **main へ直接書かない。PRを作る＝マージが審査官の手**
+#     (3) **投下可が動いたらPR本文で名指し**（v9.9.52の作法）
+#
+# 要るもの: Settings → Secrets and variables → Actions に **ANTHROPIC_API_KEY**
+#   （無ければ何もせず終了する。既存ファイルは壊さない＝market.yml と同じ作法）
+# ─────────────────────────────────────────────────────────────────────────────
+name: gate2 review
+on:
+  schedule:
+    - cron: '0 17 * * 1-5'   # 平日 17:00 UTC＝market/events/ci のどれとも重ならない
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: '審査する銘柄（空なら待ち行列から自動で拾う）'
+        required: false
+      mode:
+        description: 'new（未審査）/ reaudit（再審査）'
+        required: false
+        default: 'reaudit'
+      count:
+        description: '一度に審査する社数（既定2）'
+        required: false
+        default: '2'
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+
+      - name: 鍵の確認（無ければ何もせず終了）
+        id: key
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "ANTHROPIC_API_KEY 未設定＝審査は回さない（既知の穴。明示しておく）"
+            echo "ok=false" >> $GITHUB_OUTPUT
+          else
+            echo "ok=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Claude Code CLI
+        if: steps.key.outputs.ok == 'true'
+        run: npm i -g @anthropic-ai/claude-code
+
+      - name: 審査する銘柄を決める
+        if: steps.key.outputs.ok == 'true'
+        id: pick
+        env:
+          IN_T: ${{ github.event.inputs.tickers }}
+          IN_M: ${{ github.event.inputs.mode }}
+          IN_N: ${{ github.event.inputs.count }}
+        run: |
+          MODE="${IN_M:-reaudit}"; N="${IN_N:-2}"
+          if [ -n "$IN_T" ]; then
+            LIST="$IN_T"
+          else
+            # 待ち行列の先頭から。**優先度は enqueue_reaudit が門の中での位置で付けている**
+            python3 night/enqueue_reaudit.py --json > /dev/null || true
+            LIST=$(python3 - "$MODE" "$N" <<'PY'
+          import glob, json, sys
+          mode, n = sys.argv[1], int(sys.argv[2])
+          if mode == 'reaudit':
+              try:
+                  rows = json.load(open('night/reaudit_queue.json', encoding='utf-8'))['rows']
+                  print(' '.join(r['t'] for r in rows[:n])); raise SystemExit
+              except SystemExit: raise
+              except Exception: pass
+          done = {f.split('/')[-1].split('_gate_pack')[0] for f in glob.glob('out/*_gate_pack.json')}
+          out = []
+          for f in sorted(glob.glob('night/chunk*.txt')):
+              for t in open(f).read().split():
+                  if t not in done and t not in out: out.append(t)
+                  if len(out) >= n: break
+              if len(out) >= n: break
+          print(' '.join(out))
+          PY
+          )
+          fi
+          echo "mode=$MODE" >> $GITHUB_OUTPUT
+          echo "list=$LIST" >> $GITHUB_OUTPUT
+          echo "審査対象: $LIST（$MODE）"
+
+      - name: 審査前の投下可を控える
+        if: steps.key.outputs.ok == 'true'
+        run: |
+          node night/score_all.js > /dev/null 2>&1 || true
+          cp out/score_all.json /tmp/score_before.json
+
+      - name: 門2審査（1社ずつ・納品検査を通らないものは捨てる）
+        if: steps.key.outputs.ok == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          OK=""; NG=""
+          for T in ${{ steps.pick.outputs.list }}; do
+            if bash night/review_runner.sh "$T" "${{ steps.pick.outputs.mode }}"; then
+              OK="$OK $T"
+            else
+              NG="$NG $T"
+            fi
+          done
+          echo "REVIEW_OK=$OK" >> $GITHUB_ENV
+          echo "REVIEW_NG=$NG" >> $GITHUB_ENV
+          echo "通った: ${OK:-—} ／ 納品検査で落ちた: ${NG:-—}"
+
+      - name: 影響の実測（投下可の差分・v9.9.52の作法）
+        if: steps.key.outputs.ok == 'true'
+        run: |
+          python3 night/validate_packs.py --json --summary | tail -3
+          node night/score_all.js | tail -5
+          node -e "
+            const fs=require('fs');
+            const cur=require('./out/score_all.json');
+            let b=[]; try{b=JSON.parse(fs.readFileSync('/tmp/score_before.json','utf8'))}catch{}
+            const cb=cur.filter(r=>r.buy).map(r=>r.t), bb=b.filter(r=>r.buy).map(r=>r.t);
+            const out=bb.filter(t=>!cb.includes(t)), inn=cb.filter(t=>!bb.includes(t));
+            const msg=(out.length||inn.length)
+              ? ('**投下可が変わった** — 出: '+(out.join(' ')||'—')+' ／ 入: '+(inn.join(' ')||'—'))
+              : '投下可の顔ぶれは不変（'+cb.join(' ')+'）';
+            fs.writeFileSync('/tmp/buydiff.txt', msg); console.log(msg);
+          "
+
+      - name: PRを作る（**マージが審査官の手**）
+        if: steps.key.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name  "ccf-gate bot"
+          git config user.email "noreply@github.com"
+          if git diff --quiet && git diff --staged --quiet && [ -z "$(git status --porcelain)" ]; then
+            echo "変化なし＝PRは作らない"; exit 0
+          fi
+          BR="claude/gate2-review-$(date -u +%Y%m%d-%H%M)"
+          git checkout -b "$BR"
+          git add -A out night
+          git commit -m "門2審査（自動）: ${REVIEW_OK:-なし}"
+          git push -u origin "$BR"
+          {
+            echo "## 門2審査（CI・自動）"
+            echo
+            echo "- 納品検査を通った: \`${REVIEW_OK:-—}\`"
+            echo "- **納品検査で落とした（採らなかった）**: \`${REVIEW_NG:-—}\`"
+            echo
+            echo "### 影響"
+            cat /tmp/buydiff.txt 2>/dev/null || true
+            echo
+            echo "### 見るところ"
+            echo "1. 定性項目に**原本の引用**が付いているか（\`_meta.evidence\`）"
+            echo "2. 空欄の理由が \`_meta.nulls\` に書いてあるか"
+            echo "3. 既存の値を動かしていたら \`_meta.kenshi\` に旧→新・実額・出典があるか"
+            echo
+            echo "**マージがこの審査の承認です**（絶対のルール2の「審査官の手」）。"
+          } > /tmp/pr.md
+          gh pr create --title "門2審査（自動）: ${REVIEW_OK:-なし}" --body-file /tmp/pr.md --base main --head "$BR"

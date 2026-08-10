@@ -124,6 +124,12 @@ def build():
         ("cagrt",   "成長の軌道cagrTの測定", "月1",     40,
          json_field("out/growth_trend.json", "generated"),
          "ops.yml 毎月2日／手動 python3 night/fill_growth_trend.py（反映は --write＝審査官の手）", True),
+        # 2026-08-10: **検出器の出力を作業へ流す接続**。止まると「検出は自動・作業は手動」の
+        #   断絶が戻る——新しい10-Kが出ても納品検査がFAILしても、待ち行列に何も入らなくなる。
+        ("reaudit", "再審査の待ち行列",      "月1",     40,
+         json_field("night/reaudit_queue.json", "generated"),
+         "ci.yml（push毎）＋ops.yml 毎月2日／手動 python3 night/enqueue_reaudit.py --json "
+         "&& python3 night/make_chunks.py --reaudit --top 20", True),
         ("sht",     "シェア趨勢shtの測定",   "月1",     40,
          json_field("out/sht_report.json", "asof"),
          "ops.yml 毎月2日／手動 python3 night/build_sic_cache.py && python3 night/fill_sht.py --json"

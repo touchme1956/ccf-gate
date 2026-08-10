@@ -134,6 +134,15 @@ jobs:
       - name: パック索引の再生成（Ⅵ一括取込の目録）
         continue-on-error: true
         run: python3 night/make_chunks.py | tail -5
+      # 再審査の待ち行列 → rechunk（2026-08-10新設）
+      #   検出器が見つけたものを**実際に審査できる形**（10社/枚）へ落とす。
+      #   新規審査の chunkNN.txt とは別系列にして「まだ見ていない社」と「もう一度見る社」を混ぜない。
+      #   月20社ずつ——一度に全部出すと作業リストが死ぬ（鳴りすぎる警報は鳴らないのと同じ）。
+      - name: 再審査チャンクの生成（優先度順に月20社）
+        continue-on-error: true
+        run: |
+          python3 night/enqueue_reaudit.py --json | tail -5
+          python3 night/make_chunks.py --reaudit --top 20 | tail -3
       - name: v10影スコア更新（7月のみ＝年次較正の材料）
         continue-on-error: true
         run: |
@@ -180,6 +189,6 @@ jobs:
           #   あわせて sp500_pe_monthly（自己相対の分母）・growth_trend（cagrTの測定結果）・
           #   calibration（7月のスナップショット）も add する。**足したら add も足す**——
           #   ステップだけ増やして add を忘れると「回っているのに残らない」という同じ穴が再発する。
-          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/new_listings_irr.json out/wacc_drift.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/progress.json out/er_ledger.json out/market_data.json market_data.json 2>/dev/null || true
+          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/new_listings_irr.json out/wacc_drift.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/rechunk*.txt night/reaudit_queue.json night/progress.json out/er_ledger.json out/market_data.json market_data.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push

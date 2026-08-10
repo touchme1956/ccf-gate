@@ -112,6 +112,17 @@
    "auto": true
   },
   {
+   "id": "reaudit",
+   "name": "再審査の待ち行列",
+   "cadence": "月1",
+   "due_days": 40,
+   "last": "2026-08-10",
+   "days": 0,
+   "state": "ok",
+   "how": "ci.yml（push毎）＋ops.yml 毎月2日／手動 python3 night/enqueue_reaudit.py --json && python3 night/make_chunks.py --reaudit --top 20",
+   "auto": true
+  },
+  {
    "id": "sht",
    "name": "シェア趨勢shtの測定",
    "cadence": "月1",
@@ -160,8 +171,8 @@
    "name": "納品検査FAIL表",
    "cadence": "毎営業日",
    "due_days": 4,
-   "last": "2026-08-09",
-   "days": 1,
+   "last": "2026-08-10",
+   "days": 0,
    "state": "ok",
    "how": "ci.yml（push/PR毎）／手動 python3 night/validate_packs.py --json",
    "auto": true

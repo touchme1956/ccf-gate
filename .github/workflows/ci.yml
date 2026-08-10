@@ -280,6 +280,16 @@ jobs:
         continue-on-error: true
         run: python3 night/audit_todo.py --json | tail -25
 
+      # ── 6-g. 検出器の出力を再審査の待ち行列へ流す（2026-08-10新設・表示のみ）──────
+      #   この門は検出器を増やしてきたが、**見つけたものを誰にも渡していなかった**——
+      #   audit_pack_stale / audit_stale_bs / validate_packs / watch_new_listings /
+      #   watch_events のどれも渡し先が無く、しかも make_chunks は
+      #   **既にパックのある社を除外する**ので再審査は構造的にキューへ載らなかった。
+      #   ここで優先度つきの待ち行列にする（優先度＝門の中での位置＋理由の重み）。
+      - name: 再審査の待ち行列 enqueue_reaudit（表示のみ・判定に不使用）
+        continue-on-error: true
+        run: python3 night/enqueue_reaudit.py --json | head -25
+
       # ── 7. 根拠の被覆（既知の積み残し。落とさない）────────────────────────────
       - name: 納品検査 validate_packs（表示のみ）
         continue-on-error: true
@@ -317,7 +327,7 @@ jobs:
         run: |
           git config user.name  "ccf-gate bot"
           git config user.email "noreply@github.com"
-          git add out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json 2>/dev/null || true
+          git add out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json night/reaudit_queue.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"
           else

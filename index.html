@@ -1147,7 +1147,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.127</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.128</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——v9.9.36で絶対MOAT指数をΩの直接項に加え(実効≒22%)、v9.9.39で<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -1367,6 +1367,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
   <textarea id="ioBox" style="width:100%;min-height:64px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px;font-size:11px;margin-top:6px;font-family:monospace"></textarea>
   <div style="display:flex;gap:8px;margin-top:6px"><button id="ioGo" style="background:linear-gradient(180deg,rgba(201,166,74,.2),rgba(201,166,74,.1));border:1px solid var(--gold-line);color:var(--gold-bright);border-radius:6px;padding:7px 16px;font-size:13px;cursor:pointer">実行</button><button onclick="$('ioWrap').style.display='none'" style="background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">閉じる</button></div>
  </div>
+ <div class="wrap"><div id="packFreshBar" style="display:none;margin:0 0 12px;padding:10px 13px;border:1px solid rgba(84,184,138,.5);border-radius:8px;background:rgba(84,184,138,.10);font-size:13px"></div></div>
  <div class="wrap"><div class="ledger" id="ledger"></div></div>
  <div class="pg3-head" style="margin-top:30px">
   <h2 class="serif" style="font-size:1.25em">検証キュー <span style="font-size:.6em;color:var(--mut)">次回決算＝再採点期日（直近決算+92日で推定）</span></h2>
@@ -5112,7 +5113,34 @@ async function ccfSyncFromLocal(){
     }
   }catch(e){}
 }
-store.init().then(async()=>{await ccfSyncFromLocal();compute();renderLedger();if(typeof ccfRenderAllQueues==='function')ccfRenderAllQueues();});
+// ── v9.9.128(2026-08-10): **起動時に「パックのほうが新しい社」を知らせる** ──────────
+//   門への反映は3手（ハード再読込／Ⅳ全再採点／Ⅵ全パック一括取込）で、
+//   **どれも人が押さないと何も起きない**。パックが更新されても台帳は古いままで、
+//   しかも**画面には何の印も出ない**——「回っているつもりで止まっている」の門の中版。
+//   ⚠**黙って自動取込はしない。** 一括取込は台帳のレコードを置き換えるので、
+//     Ⅲ採点機で人が直した値を無言で巻き戻す事故になりうる（キーエンスで一度記録した型）。
+//     だから**検出して知らせるところまで**を自動にし、取り込むかは人が決める。
+async function ccfCheckPacksFresh(){
+  try{
+    const r=await fetch('out/packs_index.json',{cache:'no-store'}); if(!r.ok)return;
+    const idx=(await r.json()).packs||[];
+    const have=new Set(); try{const l=await store.list('g7:');(l&&l.keys||[]).forEach(k=>have.add(k.slice(3)));}catch(e){}
+    // 索引にあるのに台帳に無い＝**まだ取り込んでいない社**。名前の揺れは safeKey と同じ規則で吸収する
+    const miss=idx.map(f=>String(f).replace('_gate_pack.json',''))
+                  .filter(t=>![...have].some(k=>k.split(/[\s_]/)[0].toUpperCase()===t.toUpperCase()));
+    const el=document.getElementById('packFreshBar'); if(!el)return;
+    if(!miss.length){el.style.display='none';return;}
+    el.style.display='block';
+    el.innerHTML='<b>⭳ 台帳に入っていないパックが '+miss.length+'社あります</b>'
+      +'<span style="color:var(--muted);font-size:12.5px"> — '+miss.slice(0,12).join(' ')
+      +(miss.length>12?' …':'')+'</span>'
+      +'<button onclick="ccfImportAllPacks(this)" style="margin-left:10px">⭳ いま取り込む</button>'
+      +'<div style="color:var(--muted);font-size:12px;margin-top:4px">'
+      +'※**自動では取り込まない**——一括取込は台帳のレコードを置き換えるので、'
+      +'Ⅲ採点機で直した値を無言で巻き戻す事故を避けるため、押すかどうかは人が決める。</div>';
+  }catch(e){}
+}
+store.init().then(async()=>{await ccfSyncFromLocal();compute();renderLedger();if(typeof ccfRenderAllQueues==='function')ccfRenderAllQueues();ccfCheckPacksFresh();});
 
 </script>
 <!-- 対S&P500検証タブ(v9.6)のスクリプトはタブ撤去に伴い削除(2026-07)。UIのid(vsInputRows等)が存在せず全関数が到達不能だった。必要になればgit履歴から復元 -->
