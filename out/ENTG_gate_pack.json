@@ -30,12 +30,12 @@
  "dur": 100,
  "geopol": 1,
  "nrr": null,
- "beta": null,
- "per": null,
+ "beta": 1.455,
+ "per": 68.38,
  "perF": null,
  "evebit": null,
- "px": 152.08,
- "shy": null,
+ "px": 144.21,
+ "shy": 0.3,
  "gr": null,
  "gcap": null,
  "analysts": null,
@@ -119,7 +119,10 @@
    "fin": "金融業態ではない→no",
    "mcap": "発行済株式数 152,800,000株（SEC dei:EntityCommonStockSharesOutstanding・filed 2026-08-04） × 株価 $152.08（Alpha Vantage GLOBAL_QUOTE・2026-08-07終値）= **23.24十億$**。2026-08-08に新規充填（それまで空欄で時価総額の比較ができなかった）。⚠**px はパックの市場欄には入れていない**——market_fetch/market_merge の帯検問を通していないため、mcap の算出根拠としてのみ記録する（per/E[r]には未反映＝門X未評価のまま）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 1,859,313,000 → 2023年 3,523,900,000 → 2025年 3,196,600,000。A案(端点) 直近2年CAGR -4.76% − その前3年CAGR 23.75% = -28.51pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -28.34pt ／ 年次YoY {'2021': 23.6, '2022': 42.8, '2023': 7.4, '2024': -8.0, '2025': -1.4} → **採用 -28.34pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "px": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 10000000.0)を通過）"
+   "px": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 10000000.0)を通過）",
+   "per": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(8.0, 200.0)を通過）",
+   "beta": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）",
+   "shy": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(-5.0, 12.0)を通過）"
   },
   "provenance": {
    "cagr": "machine",
@@ -139,7 +142,10 @@
    "eps": "machine",
    "eq": "machine",
    "cagrT": "machine",
-   "px": "market"
+   "px": "market",
+   "per": "market",
+   "beta": "market",
+   "shy": "market"
   },
   "nulls": {
    "p3": "nde を埋めたので門が同表で機械導出する",
@@ -168,13 +174,29 @@
   "market": {
    "date": "2026-08-10",
    "filled": [
-    "px"
+    "per",
+    "beta",
+    "shy"
    ],
    "src": "market_fetch/market_data.json"
+  },
+  "px": {
+   "date": "2026-08-10",
+   "day": null,
+   "ccy": "USD",
+   "src": "Finnhub",
+   "px_old": 152.08,
+   "px_new": 144.21,
+   "pct": -5.17,
+   "conv": "基準保存式 per_new = per_old × (px_new÷px_old)／shy は 1/比率",
+   "fields": {
+    "per": 68.38,
+    "shy": 0.3
+   }
   }
  },
  "dep": null,
- "ddate": "2026-08-05",
+ "ddate": "2026-08-10",
  "moatW": 70,
  "mcap": 23.24,
  "cagrT": -28.34

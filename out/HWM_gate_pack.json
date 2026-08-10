@@ -28,11 +28,11 @@
  "dur": 100,
  "geopol": 1,
  "nrr": 105,
- "beta": null,
- "per": 75.18,
+ "beta": 1.201,
+ "per": 75.67,
  "perF": null,
- "evebit": null,
- "px": 281.88,
+ "evebit": 58.0,
+ "px": 283.71,
  "shy": 0.62,
  "gr": null,
  "gcap": null,
@@ -123,7 +123,9 @@
    "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2025 に10%超の顧客開示なし。(c)『for certain raw materials and services, we depend on a number of limited source or sole source suppliers, such as for titanium sponge』は原材料の供給リスクで売上依存ではない → **上限10**（ASC280/有報の10%開示閾値が上限を証明する。のれんの上限＝無形総額 と同じ『上限の不等式』の作法。ベトは dep≥40 の一方向なので上限で裁ける）",
    "mcap": "発行済株式数 398,801,399株（SEC dei:EntityCommonStockSharesOutstanding・filed 2026-08-06）× px $281.88 = **112.41十億$**。2026-08-08に新規充填（それまで空欄で時価総額の比較ができなかった）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 5,259,000,000 → 2023年 6,640,000,000 → 2025年 8,252,000,000。A案(端点) 直近2年CAGR 11.48% − その前3年CAGR 8.08% = +3.40pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -2.42pt ／ 年次YoY {'2021': -5.5, '2022': 13.9, '2023': 17.3, '2024': 11.9, '2025': 11.1} → **採用 +3.40pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **13.5%** / 同業（SIC335x（4桁では4社しか無く3桁へ丸めた）「Rolling Drawing & Extruding of  Nonferrous Metals」・8社）の中央値 **6.0%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+13.5%)÷(1+6.0%))^5 − 1 = **+41.0%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**"
+   "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **13.5%** / 同業（SIC335x（4桁では4社しか無く3桁へ丸めた）「Rolling Drawing & Extruding of  Nonferrous Metals」・8社）の中央値 **6.0%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+13.5%)÷(1+6.0%))^5 − 1 = **+41.0%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
+   "beta": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）",
+   "evebit": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 300.0)を通過）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -160,31 +162,41 @@
    "shy": "machine",
    "p1": "machine",
    "cagrT": "machine",
-   "sht": "machine"
+   "sht": "machine",
+   "beta": "market",
+   "evebit": "market"
   },
   "basis": {
    "roic": "through-cycle-med5(?年)",
    "_note": "roic/roicg がどの基準で作られているか。v9.9.72 で through-cycle(5年中央値)へ移行したが、採取器とパックが食い違う社・系列が3年未満の社には当てていないため**台帳に二つの基準が混在する**。文字列一致で見分けるのは脆いので機械可読にした"
   },
   "px": {
-   "date": "2026-08-07",
+   "date": "2026-08-10",
    "day": null,
    "ccy": "USD",
    "src": "Finnhub",
-   "px_old": 289.72,
-   "px_new": 281.88,
-   "pct": -2.71,
+   "px_old": 281.88,
+   "px_new": 283.71,
+   "pct": 0.65,
    "conv": "基準保存式 per_new = per_old × (px_new÷px_old)／shy は 1/比率",
    "fields": {
-    "per": 75.18,
+    "per": 75.67,
     "shy": 0.62
    }
+  },
+  "market": {
+   "date": "2026-08-10",
+   "filled": [
+    "beta",
+    "evebit"
+   ],
+   "src": "market_fetch/market_data.json"
   }
  },
  "moatW": 85,
  "roiic": 116.2,
  "roiic5": "na",
- "ddate": "2026-08-07",
+ "ddate": "2026-08-10",
  "dep": 10,
  "mcap": 112.41,
  "cagrT": 3.4,
