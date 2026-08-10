@@ -216,6 +216,15 @@ def build():
         #   あわせて auto=**True**——実測では companyfacts.zip を使っておらず
         #   （`grep zipfile night/backtest_core.py` は0件・per-CIK APIと独自キャッシュ）、
         #   「資源制約で自動化できない」は**一度も試していない**の言い換えだった。
+        # v9.9.131: **人の決定(state.json)の鮮度**。株数・目標ウェイト・売却記録・検証履歴・
+        #   点灯日・個別枠は 2026-08-10 まで localStorage が正本で repo にコピーが無く、
+        #   **消えたら復元手段がゼロ**だった。repo へ移したが、門はブラウザから repo へ書けないので
+        #   「人が書き出してコミットする」経路になる＝**書き出し忘れが唯一の穴**。
+        #   だから盤で測る——auto は False（人の手が要る作業だと明示する）。
+        #   savedAt が null（未初期化）なら日付が取れず state=unknown ＝「健全と読まない」側に落ちる。
+        ("state",   "人の決定の書き出し(state.json)", "月次", 40,
+         (json_field("state.json", "savedAt") or "")[:10] or None,
+         "門のⅦ資産「📤 state.json」→ repo直下へ置いてコミット（検査 python3 night/validate_state.py）", False),
         ("backtest","疑似バックテスト",        "年1",     430,
          max((json_field(os.path.relpath(f, BASE), "generated")
               or git_date(os.path.relpath(f, BASE)) or "" for f in
