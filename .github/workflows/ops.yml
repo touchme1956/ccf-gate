@@ -167,6 +167,18 @@ jobs:
       - name: E[r]予実の突合せ（封じた観測と実現の答え合わせ）
         continue-on-error: true
         run: timeout 900 python3 night/audit_er_realized.py | tail -25
+      # 決断の材料を毎月作る（2026-08-10新設）
+      #   todo_list.json の「決断待ち」は36件あるが、**その決断の材料を作る shadow_* は
+      #   一度も定期実行されていなかった**——決断が毎回「材料を作るところ」から始まる。
+      #   影の計測は**必ず正本を元へ戻す**作りなので、CIで回しても採点は動かない。
+      #   ⚠重いものは載せない（retro_* は歴史の再構成で数十分かかる）。
+      - name: 決断の材料（影の計測・正本は必ず元へ戻る）
+        continue-on-error: true
+        run: |
+          timeout 900 python3 night/shadow_alloc_buckets.py --json 2>&1 | tail -8 || true
+          timeout 900 python3 night/shadow_irr85_proven.py 2>&1 | tail -8 || true
+          timeout 900 python3 night/shadow_frame85_kills.py 2>&1 | tail -6 || true
+          node night/audit_weights.js --q75 2>&1 | tail -12 || true
       - name: WACC既定のズレ検出 audit_wacc_stale
         continue-on-error: true
         run: timeout 300 python3 night/audit_wacc_stale.py --write
@@ -189,6 +201,6 @@ jobs:
           #   あわせて sp500_pe_monthly（自己相対の分母）・growth_trend（cagrTの測定結果）・
           #   calibration（7月のスナップショット）も add する。**足したら add も足す**——
           #   ステップだけ増やして add を忘れると「回っているのに残らない」という同じ穴が再発する。
-          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/new_listings_irr.json out/wacc_drift.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/rechunk*.txt night/reaudit_queue.json night/progress.json out/er_ledger.json out/market_data.json market_data.json 2>/dev/null || true
+          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/new_listings_irr.json out/wacc_drift.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/rechunk*.txt night/reaudit_queue.json night/progress.json out/er_ledger.json out/market_data.json market_data.json out/shadow_*.json out/gate0_run.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push

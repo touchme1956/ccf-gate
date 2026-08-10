@@ -186,16 +186,29 @@ def build():
          git_date("out/calibration.json"),
          "ops.yml（7月）／手動 python calibration_check.py"
          "——**封印は自動・v9/v10の勝敗判定はユーザーの判断**（V10_SPEC）", True),
+        # 2026-08-10: 錨を **git のコミット日 → 実行印(out/gate0_run.json)** へ。
+        #   実測では gate1_queue.json の直近コミットが門0と無関係の作業（予実台帳の基準印）で、
+        #   それでも盤は「期限内」と出していた。**年次作業ほど測り方が弱い**という倒錯を直す。
         ("gate0",   "米国門0発掘",             "年1(1-2月)", 430,
-         git_date("gate1_queue.json"),
+         json_field("out/gate0_run.json", "generated") or git_date("gate1_queue.json"),
          "python run_gate0_local.py（companyfacts.zip 1.4GB＝CI外）", False),
+        # 2026-08-10: rebuild_gate0_jp が **generated を "2026-08-03" にハードコード**していたため、
+        #   再実行しても去年の日付を名乗り**盤が永久に緑で固定**されていた（実行日を書くよう直した）。
+        #   ⚠auto は False のまま——**母集団の更新には EDINET鍵が要る**（run_gate0_jp_local.py）。
+        #     rebuild_gate0_jp は凍結スナップショットの**再ランク**であって母集団の再取得ではない。
         ("gate0jp", "日本株門0",               "年1",     430,
-         git_date("gate0_jp_queue.json"),
-         "python3 night/rebuild_gate0_jp.py --write（rerankは旧世代＝封鎖済み）", False),
+         json_field("gate0_jp_queue.json", "generated") or git_date("gate0_jp_queue.json"),
+         "python3 night/rebuild_gate0_jp.py --write（**再ランクのみ**。母集団の更新は "
+         "run_gate0_jp_local.py＝EDINET_API_KEY が要る）", "key"),
+        # 2026-08-10: 錨に **生成印(generated)** を優先させた（git コミット日は最後の手段）。
+        #   あわせて auto=**True**——実測では companyfacts.zip を使っておらず
+        #   （`grep zipfile night/backtest_core.py` は0件・per-CIK APIと独自キャッシュ）、
+        #   「資源制約で自動化できない」は**一度も試していない**の言い換えだった。
         ("backtest","疑似バックテスト",        "年1",     430,
-         max((git_date(os.path.relpath(f, BASE)) or "" for f in
+         max((json_field(os.path.relpath(f, BASE), "generated")
+              or git_date(os.path.relpath(f, BASE)) or "" for f in
               glob.glob(os.path.join(BASE, "out", "backtest_*.json"))), default=None) or None,
-         "python3 night/backtest_core.py", False),
+         "gate0.yml（年1・7月）／手動 python3 night/backtest_core.py", True),
     ]
     rows = []
     for id_, name, cad, due, last, how, auto in items:

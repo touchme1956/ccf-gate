@@ -295,6 +295,19 @@ jobs:
         continue-on-error: true
         run: python3 night/validate_packs.py --summary | tail -10
 
+      # ── 7-b. **実ブラウザで369件を取り込んでから**の検査（2026-08-10接続）───────
+      #   night/check_mobile_fit.js は playwright で ⭳全パック一括取込を実行してから
+      #   360px 幅で全9タブのはみ出しを見るが、**CIに入っていなかった**（自分で「CIには
+      #   入れていない」と書いてあった）。表示事故は**データを入れて初めて出る**種類で、
+      #   v9.9.114/116 は実際に「台帳が空のまま走査して素通り」で見逃している。
+      #   ⚠ playwright は重いので **schedule と手動のときだけ**（push毎には回さない）。
+      - name: 実ブラウザ検証（369件取込→360pxで全タブ・scheduleと手動のみ）
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        run: |
+          npm i -D playwright >/dev/null 2>&1 || true
+          node night/check_mobile_fit.js 2>&1 | tail -25
+
       # ── 8. ページの重さの予算（1.7MBまで肥大した実績があるので歯止め）──────────
       - name: ページサイズの予算
         run: |

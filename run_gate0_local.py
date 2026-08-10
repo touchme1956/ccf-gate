@@ -35,3 +35,20 @@ else:
     print('■ holdings.json なし → gate0本体の HOLDINGS/WATCH をそのまま使用')
 print('■ 実行:', p)
 exec(compile(src, p, 'exec'))
+
+# ⚠2026-08-10新設: **実行印**。回転盤(night/ops_status.py)の gate0 は
+#   `git_date('gate1_queue.json')` で最終実行を測っていたが、実測ではその直近コミットが
+#   門0とまったく無関係の作業だった（予実台帳の基準印・acq5の裏取り）。
+#   **年次作業ほど止まったことを検出したいのに、年次作業ほど測り方が弱い**という倒錯。
+#   ここで実行日そのものを残せば histval/profiles と同じ強さになる。
+import datetime as _dt, json as _json
+try:
+    _q = _json.load(open(os.path.join(BASE, 'gate1_queue.json'), encoding='utf-8'))
+    _n = len(_q if isinstance(_q, list) else (_q.get('queue') or []))
+except Exception:
+    _n = None
+_json.dump({'generated': _dt.date.today().isoformat(), 'queue_n': _n,
+            'note': '米国門0発掘の実行印。gate1_queue.json のコミット日ではなく**実行日**を残す'},
+           open(os.path.join(BASE, 'out', 'gate0_run.json'), 'w', encoding='utf-8'),
+           ensure_ascii=False, indent=1)
+print('■ 実行印: out/gate0_run.json')
