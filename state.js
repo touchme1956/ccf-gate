@@ -74,17 +74,34 @@
     };
   } catch (e) {}
 
-  function collect() {
-    var d = {}, n = 0;
+  /* collect(core) — core=true なら **検証履歴(g7log:)を外す**。
+     ⚠ これは実害から来た分割（2026-08-10）。**貼り付けで渡すと必ず切れる**——
+     `g7log:` は「一括再採点 362銘柄」の全文がそのまま入るので1件で数十KBあり、
+     しかも localStorage の並び順でログが先に来るため、**株数(pf:portfolio)が本文に
+     現れる前に切れた**（実測）。だから (a)小さい決定だけを別に出せるようにし、
+     (b)出力の**並びを重要度順に固定**して、万一切れても先頭に大事なものが載るようにする。
+     取り込み側は「data にあるキーだけ書く」ので、小さい方をコミットしても
+     手元の検証履歴が消えることはない（**消す経路は無い**）。 */
+  var ORDER = ['pf:portfolio', 'pf:sold', 'pf:weights', 'pf:monthly', 'g7ignite:map'];
+  function collect(core) {
+    var all = {}, keys = [];
     try {
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
         if (!watched(k)) continue;
+        if (core && k.indexOf('g7log:') === 0) continue;
         var v = localStorage.getItem(k);
-        if (v != null) { d[k] = v; n++; }
+        if (v != null) { all[k] = v; keys.push(k); }
       }
     } catch (e) {}
-    return { data: d, n: n };
+    keys.sort(function (a, b) {
+      var ia = ORDER.indexOf(a), ib = ORDER.indexOf(b);
+      if (ia < 0) ia = 99; if (ib < 0) ib = 99;
+      return ia - ib || (a < b ? -1 : a > b ? 1 : 0);
+    });
+    var d = {};                                  // 重要度順に詰め直す（JSONはこの順で出る）
+    keys.forEach(function (k) { d[k] = all[k]; });
+    return { data: d, n: keys.length };
   }
 
   function isDirty() { try { return localStorage.getItem(DIRTY) === '1'; } catch (e) { return false; } }
@@ -130,8 +147,8 @@
   }
 
   /* 書き出し: state.json をそのまま作って落とす。人がコミットすれば repo が正本になる。 */
-  function exportFile(btn) {
-    var c = collect();
+  function exportFile(btn, core) {
+    var c = collect(core);
     var savedAt = new Date().toISOString();
     var payload = JSON.stringify({ fmt: 'ccf-state', ver: 1, savedAt: savedAt,
       note: '門の「人の決定」の正本。repo直下に置き、門が起動時に読む。' +
@@ -150,8 +167,9 @@
       // コミットして初めて正本になる。落とすのは「コミットした」を押したとき。
       // そのとき記録する savedAt は**この書き出しのもの**でなければならない（今の時刻ではない）
       last = last || {}; last.pendingSavedAt = savedAt;
-      if (btn) { btn.textContent = '書き出した（' + c.n + '件）→ repo直下へ置いてコミット';
-                 setTimeout(function () { btn.textContent = o; }, 5200); }
+      var kb = payload.length < 1024 ? '1KB未満' : Math.round(payload.length / 1024) + 'KB';
+      if (btn) { btn.textContent = '✓ 書き出した（' + c.n + '件 / ' + kb + '・コピー済）→ ② へ';
+                 setTimeout(function () { btn.textContent = o; }, 6000); }
     } catch (e) {
       if (btn) { btn.textContent = '書き出せない'; setTimeout(function () { btn.textContent = o; }, 2000); }
     }
@@ -166,35 +184,100 @@
     } catch (e) {}
   }
 
+  /* 帯の描画。**手順を4段の番号つきで出す**（v9.9.132・ユーザー「これをもっとわかるようにして」）。
+     ここが単一実装で、index.html(門の頭) と portfolio.html(Ⅶ資産) の両方が同じものを描く。
+     ⚠ 色は変数名で渡さない——index.html は --fail/--pass、portfolio.html は --rust/--jade と
+        名前が違うので、変数名で書くと**片方のページだけ色が付かない**（v9.9.108 と同型の事故）。 */
+  var RED = '#b04a2c', GREEN = '#2f7a53', DIM = 'rgba(128,120,105,.95)';
+
+  function stepHTML(col) {
+    var c = collect(), core = collect(true);
+    var keys = Object.keys(core.data).map(function (k) {   // 見出しに出す品目は**決定だけ**の側
+      return k.indexOf('g7log:') === 0 ? '検証履歴' : ({
+        'pf:portfolio': '株数', 'pf:weights': '目標ウェイト', 'pf:sold': '売却記録',
+        'pf:monthly': '今月の個別枠', 'g7ignite:map': '点灯日'
+      }[k] || k);
+    });
+    var uniq = keys.filter(function (v, i) { return keys.indexOf(v) === i; });
+    var b = function (label, fn) {
+      return '<button onclick="' + fn + '" style="padding:8px 16px;border:1px solid ' + col +
+        ';background:' + col + ';color:#fff;border-radius:8px;font-size:13px;font-weight:600;' +
+        'cursor:pointer;font-family:inherit;white-space:nowrap">' + label + '</button>';
+    };
+    var li = function (n, t, extra) {
+      return '<div style="display:flex;gap:10px;align-items:flex-start;margin:9px 0">' +
+        '<span style="flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:' + col +
+        ';color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;margin-top:1px">' + n + '</span>' +
+        '<span style="flex:1;min-width:0">' + t + (extra ? '<div style="margin-top:7px">' + extra + '</div>' : '') + '</span></div>';
+    };
+    var kb = function (o) { var n = JSON.stringify(o).length;
+      return n < 1024 ? '1KB未満' : '約' + Math.round(n / 1024) + 'KB'; };
+    var kbAll = kb(c.data), kbCore = kb(core.data);
+    return li(1, '<b>書き出す</b>。<span style="opacity:.85">端末に落ち、<b>クリップボードにも入る</b>。</span>' +
+                 '<div style="margin-top:5px;font-size:11.8px;opacity:.9">' +
+                 '<b>決定だけ</b>＝' + core.n + '件 / <b>' + kbCore + '</b>（' + (uniq.join('・') || '—') + '）' +
+                 '　／　<b>履歴も</b>＝' + c.n + '件 / ' + kbAll + '（＋検証履歴）</div>',
+              b('📤 ① 決定だけ（小）', 'ccfState.export(this,true)') +
+              ' <button onclick="ccfState.export(this)" style="margin-left:6px;padding:8px 14px;border:1px solid ' + col +
+              ';background:transparent;color:' + col + ';border-radius:8px;font-size:12.5px;cursor:pointer;' +
+              'font-family:inherit;white-space:nowrap">履歴も（大）</button>') +
+           li(2, '<b>その中身を Claude に貼る</b>。<span style="opacity:.85">' +
+                 '<b>貼るなら「決定だけ（小）」</b>——大きいほうは長すぎて<b>途中で切れます</b>（実測）。' +
+                 '検証履歴ごと入れたいときは、落ちたファイルを repo 直下の ' +
+                 '<code style="font-size:11.5px">state.json</code> に置いてコミット。</span>') +
+           li(3, '<b>Claude が検査して commit・push する</b>。<span style="opacity:.85">' +
+                 '<code style="font-size:11.5px">night/validate_state.py</code> で形を確かめてから入れる。</span>') +
+           li(4, 'ここへ戻って <b>入れた</b> を押す。<span style="opacity:.85">この帯が消える。' +
+                 '押し忘れても壊れない——帯が出続けるだけ。</span>',
+              b('✓ ④ 入れた', 'ccfState.done(this)'));
+  }
+
   function banner(elId) {
     var el = document.getElementById(elId); if (!el) return;
     var s = last;
     if (!s) { el.innerHTML = ''; return; }
-    var msg = '', col = '', act = false;
+    var head = '', col = RED, act = false;
     if (s.verdict === 'dirty') {
-      msg = '⚠ <b>手元に未書き出しの決定があります</b>（株数・目標ウェイト・売却記録・検証履歴・点灯日・個別枠）。' +
-            'repo の state.json はまだ古いままです——<b>書き出してコミットするまで、この端末以外には存在しません</b>。';
-      col = 'var(--fail,#9c3b22)'; act = true;
+      head = '手元の決定が、<b>まだ repo に入っていません</b>';
+      act = true;
     } else if (s.verdict === 'uninit') {
-      msg = '⚠ repo の <b>state.json がまだ空</b>です（savedAt が null）。' +
-            '手元の決定は<b>この端末にしかありません</b>。書き出してコミットすると repo が正本になります。';
-      col = 'var(--fail,#9c3b22)'; act = true;
-    } else if (s.verdict === 'adopt') {
-      msg = '✓ repo の state.json から <b>' + s.applied + '件</b>を取り込みました（' + (s.savedAt || '').slice(0, 10) + '）。';
-      col = 'var(--pass,#26694a)';
+      head = 'repo の state.json は<b>まだ空</b>——株数も売却記録も<b>この端末にしかありません</b>';
+      act = true;
     } else if (s.verdict === 'stale') {
-      msg = '⚠ repo の state.json が<b>手元より古い</b>（repo ' + (s.savedAt || '').slice(0, 10) +
-            ' / 手元 ' + (s.mine || '').slice(0, 10) + '）。取り込みません——書き出してコミットしてください。';
-      col = 'var(--fail,#9c3b22)'; act = true;
+      head = 'repo の state.json が<b>手元より古い</b>（repo ' + (s.savedAt || '').slice(0, 10) +
+             ' ／ 手元 ' + (s.mine || '').slice(0, 10) + '）——取り込みません';
+      act = true;
+    } else if (s.verdict === 'adopt') {
+      el.innerHTML = '<div style="border:1px solid ' + GREEN + ';border-left:5px solid ' + GREEN +
+        ';border-radius:9px;padding:10px 14px;margin:10px 0;font-size:12.8px;line-height:1.7">' +
+        '<b style="color:' + GREEN + '">✓ repo の state.json から ' + s.applied + '件を取り込みました</b>' +
+        '<span style="opacity:.8">（' + (s.savedAt || '').slice(0, 10) + '）——この端末は repo に追いつきました。</span></div>';
+      return;
     } else { el.innerHTML = ''; return; }   // same / none は黙る
+    if (!act) { el.innerHTML = ''; return; }
     el.innerHTML = '<div style="border:1px solid ' + col + ';border-left:5px solid ' + col +
-      ';background:rgba(0,0,0,.03);border-radius:9px;padding:11px 14px;margin:10px 0;font-size:12.8px;line-height:1.75">' +
-      msg + (act ? ' <button onclick="ccfState.export(this)" style="margin-left:8px;padding:6px 13px;border:1px solid ' +
-      col + ';background:transparent;color:' + col + ';border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit">📤 書き出す</button>' : '') +
-      '</div>';
+      ';border-radius:10px;padding:13px 16px;margin:10px 0;font-size:12.9px;line-height:1.75">' +
+      '<div style="font-size:14px;font-weight:700;color:' + col + ';margin-bottom:3px">⚠ ' + head + '</div>' +
+      '<div style="color:' + DIM + ';font-size:12.2px;margin-bottom:8px">' +
+      '門は静的ページなので<b>ブラウザから repo へは書けません</b>（トークンを置かない設計）。' +
+      'だから最後の一歩だけ人の手が要ります——<b>4手で終わります</b>。</div>' +
+      stepHTML(col) + '</div>';
   }
 
-  window.ccfState = { load: load, export: exportFile, banner: banner, quiet: quiet,
+  /* ④ 「入れた」。**押すのは人**＝嘘をつけば盤(ops_status)が古いままになるだけで、データは消えない。 */
+  function done(btn) {
+    var o = btn ? btn.textContent : '';
+    markCommitted((last && last.pendingSavedAt) || new Date().toISOString());
+    if (btn) { btn.textContent = '✓ 記録した'; }
+    // 帯を出している要素を全部描き直す（門の頭・Ⅶ資産のどちらから押されても揃う）
+    setTimeout(function () {
+      last = { verdict: 'same' };
+      ['stateBar'].forEach(function (id) { try { banner(id); } catch (e) {} });
+      if (btn) btn.textContent = o;
+    }, 900);
+  }
+
+  window.ccfState = { load: load, export: exportFile, banner: banner, quiet: quiet, done: done,
                       markCommitted: markCommitted, decide: decide, collect: collect,
                       isDirty: isDirty, keys: { exact: EXACT, prefix: PREFIX },
                       get last() { return last; } };
