@@ -77,6 +77,14 @@ jobs:
       - name: irr=85の実績台帳（特権の裏づけ）
         continue-on-error: true
         run: python3 night/irr85_mech_test.py --json
+      # 新規上場社の irr 機構語（2026-08-10新設・ユーザー明示指示・鍵不要）
+      #   **上場後1年で最初の10-Kが出た瞬間に母集団へ入れる**ための掃除。
+      #   2026-08-08のスイープは一回きりで、しかも読解リストを「パックが無い社」に絞っていたため
+      #   (a)上場初年度の会社は網に掛からず (b)KRMN型（パックはあるが irr の根拠が空）が外れていた。
+      #   **判定はしない**——出るのは作業リストで、irr の刻みは原本を読む審査官が決める（ルール2）。
+      - name: 新規上場社の irr 機構語を掃く（作業リスト・判定はしない）
+        continue-on-error: true
+        run: timeout 2400 python3 night/watch_new_listings.py
       - name: v10影スコア更新（7月のみ＝年次較正の材料）
         continue-on-error: true
         run: |
@@ -96,6 +104,6 @@ jobs:
           N=$(python3 -c "import json;print(sum(1 for r in json.load(open('out/ops_status.json'))['items'] if r['state']=='due'))" 2>/dev/null || echo "?")
           MSG="monthly ops $(date -u +%Y-%m-%d)"
           [ "$N" != "0" ] && MSG="⚠ 停止疑い ${N}本｜monthly ops $(date -u +%Y-%m-%d)"
-          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json 2>/dev/null || true
+          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/new_listings_irr.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push
