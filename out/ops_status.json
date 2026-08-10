@@ -338,8 +338,9 @@
     "kind": "宿題",
     "title": "WITの再採取（有利子負債の二重計上の是正取込）",
     "due": null,
-    "note": "2026-08-04監査でseries_sumの二重計上(Borrowings+LongtermBorrowings≈64B INR)を実証・採取器は修正済み。パック側が旧値のまま＝python hachimon_fetch.py WIT で再採取し門2再審査へ",
-    "done": false
+    "note": "2026-08-04監査でseries_sumの二重計上(Borrowings+LongtermBorrowings≈64B INR)を実証・採取器は修正済み。パック側が旧値のまま＝python hachimon_fetch.py WIT で再採取し門2再審査へ｜【2026-08-10 実施】採取器の恒等式による是正を取り込んだ。**roic 17.1 → 18.9**（旧値の負債は Borrowings 161,817百万INR + LongtermBorrowings 63,954 の二重計上＝ICが過大でroicは**過小**に出ていた）。あわせて basis を `through-cycle-med5(?年)` → **single-year** へ是正——採取器はWITの5年系列を作れず、**印だけが through-cycle を名乗っていた**（LRCXと同型）。Ω25.7→29.5・判定圏外で買付は不変。",
+    "done": true,
+    "done_at": "2026-08-10"
    },
    {
     "id": "klac_divy",
@@ -875,16 +876,18 @@
    {
     "id": "fetcher_cash_stale_mwa",
     "kind": "宿題",
-    "done": false,
+    "done": true,
     "title": "採取器の現金タグが古い年で終わる社を検出する（MWAで現金431.5百万$を0と読んでいた）",
-    "note": "CashAndCashEquivalentsAtCarryingValue が2021年で終了しており nde が 1.47（正しくは0.065）と出た＝絶対のルール7。CashCashEquivalentsRestrictedCash… への乗り換えを候補に足すか、年検問を掛ける"
+    "note": "CashAndCashEquivalentsAtCarryingValue が2021年で終了しており nde が 1.47（正しくは0.065）と出た＝絶対のルール7。CashCashEquivalentsRestrictedCash… への乗り換えを候補に足すか、年検問を掛ける｜【2026-08-10 実施】採取器の `TAGS[\"cash\"]` に `CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents` ほかを追加し、**「他の年は報告があるのにその年だけ欠測」を0と読まない**年検問も入れた。実測 MWA の nde が **1.47 → 0.07**（原本 0.065）。この誤りは現金0＝より借金が多く見える**保守側**に出るので気づきにくい——DXCの負債タグ移行と同じ「静かな壊れ方」。",
+    "done_at": "2026-08-10"
    },
    {
     "id": "fetcher_stale_year_stx",
     "kind": "宿題",
-    "done": false,
+    "done": true,
     "title": "採取器が古い年の値を最新として返す経路（STXで roic=FY2022・gm/ni=FY2025）",
-    "note": "BKNG型の『取れた値＝最新の値』。roicは_tcSeriesが1年しか作れないとき、gm/niは系列が最新年に届かないときに発生。年検問はあるが roic の through-cycle 経路には掛かっていない"
+    "note": "BKNG型の『取れた値＝最新の値』。roicは_tcSeriesが1年しか作れないとき、gm/niは系列が最新年に届かないときに発生。年検問はあるが roic の through-cycle 経路には掛かっていない｜【2026-08-10 実施】through-cycle の経路に**年検問**を入れた（他の欄には既にあったのに roic にだけ無かった）。実測 STX で「ROIC系列の最新は2022年だが他の欄は2027年まである（5年の開き）」と注記が出る。**値は自動で変えない**——注記を出して審査官に見せる形（原本で埋めるか空欄にするかは人の判断）。",
+    "done_at": "2026-08-10"
    },
    {
     "id": "br_roic_degenerate",
@@ -956,10 +959,10 @@
    {
     "id": "rev_tag_sweep",
     "kind": "宿題",
-    "title": "売上タグの穴の全数掃き出し（RegulatedAndUnregulatedOperatingRevenue を最上段に使う会社）",
+    "title": "売上タグの穴の全数掃き出し——**掃引済み。残るはRSG 1社の確認**",
     "due": null,
     "done": false,
-    "note": "2026-08-09: `TAGS[\"rev\"]` に `RegulatedAndUnregulatedOperatingRevenue`（規制公益の損益計算書の最上段 OPERATING REVENUES＝総額）が無く、この行を使う会社では **ASC606 の契約収益（subset）**が分母に入って営業利益率と売上CAGRが誤っていた。採取器は塞いだ（総額を先・subsetを後の並びへ）。**NJR(2026-07-29 是正済) と NEE(2026-08-09 是正) の2社は確認したが、既存369パックの全数確認はしていない。**やること: 各パックの gm の分母（_meta.evidence.gm に実額がある）と SEC XBRL の RegulatedAndUnregulatedOperatingRevenue を突合し、食い違う社を洗う。対象は規制公益に限られる見込み（電力・ガス・水道）。判定圏(Ω72+)には該当が無い可能性が高いが、**「無い」は確認して初めて言える**（ルール7）。cagr の符号が変わると v9.9.99 の事業の収縮の関門が誤発火/誤不発するので、値が小さくても関門の入力としては効く"
+    "note": "2026-08-09: `TAGS[\"rev\"]` に `RegulatedAndUnregulatedOperatingRevenue`（規制公益の損益計算書の最上段 OPERATING REVENUES＝総額）が無く、この行を使う会社では **ASC606 の契約収益（subset）**が分母に入って営業利益率と売上CAGRが誤っていた。採取器は塞いだ（総額を先・subsetを後の並びへ）。**NJR(2026-07-29 是正済) と NEE(2026-08-09 是正) の2社は確認したが、既存369パックの全数確認はしていない。**やること: 各パックの gm の分母（_meta.evidence.gm に実額がある）と SEC XBRL の RegulatedAndUnregulatedOperatingRevenue を突合し、食い違う社を洗う。対象は規制公益に限られる見込み（電力・ガス・水道）。判定圏(Ω72+)には該当が無い可能性が高いが、**「無い」は確認して初めて言える**（ルール7）。cagr の符号が変わると v9.9.99 の事業の収縮の関門が誤発火/誤不発するので、値が小さくても関門の入力としては効く｜【2026-08-10 掃引を実施】台帳の規制公益・廃棄物14社について `RegulatedAndUnregulatedOperatingRevenue`（総額）／`Revenues`／ASC606 の3系列を SEC から引き、パックの gm の分母（evidence の実額）と突合した。**この穴に当たる社は無かった**——総額タグを持つのは D / MSEX / NEE / NJR / WTRG の5社だけで、D と MSEX は総額と一致、NEE と NJR は是正済み。⚠**WTRG は総額タグ(5,140百万$)がパック(2,474,615千$)の2倍だが、パックのほうが正しい**——gm 36.7%（920,951÷2,474,615）は規制水道の営業利益率として整合し、5.14十億$ は同社の規模ではない。**「総額タグ＝正しい」と決め打ちしないこと**が今回の教訓（このtodoの初版はそう書いていた）。⚠**残る1社: RSG**——パックの分母 19,027百万$ に対し ASC606 は 16,591百万$。gm は 17.4% だが ASC606 なら 19.9% で、Republic Services の公表営業利益率(約19-20%)に近いのは後者。**値は触っていない**（どちらが損益計算書の最上段かを原本で確認してから）。Ω72.1＝判定圏だが投下可・次点ではない。"
    },
    {
     "id": "nde_kill_monotonicity",
@@ -997,10 +1000,11 @@
    {
     "id": "v_per_basis",
     "kind": "宿題",
-    "done": false,
+    "done": true,
     "due": null,
     "title": "V(Visa)の per=30.53 は根拠が無く原本と合わない",
-    "note": "2026-08-09 shy充填の過程で発覚。per=30.53 は EPS 11.87 を含意するが、FY2025 10-K の GAAP希薄化EPS は 10.20（非GAAPでも11.47）。GAAP基準なら per≒35.5。per は E[r] の倍率の重力に効く（14.2%→13.5%程度）。Visaは株数もEPSもクラス別の次元付きタグで companyfacts に現れないので、10-K MD&A の原文（Net income 20,058 / Diluted EPS 10.20）から取ること。値は今回触っていない。"
+    "note": "2026-08-09 shy充填の過程で発覚。per=30.53 は EPS 11.87 を含意するが、FY2025 10-K の GAAP希薄化EPS は 10.20（非GAAPでも11.47）。GAAP基準なら per≒35.5。per は E[r] の倍率の重力に効く（14.2%→13.5%程度）。Visaは株数もEPSもクラス別の次元付きタグで companyfacts に現れないので、10-K MD&A の原文（Net income 20,058 / Diluted EPS 10.20）から取ること。値は今回触っていない。｜【2026-08-10 実施】**per 30.53 → 35.54** に是正（px 362.50 ÷ GAAP希薄化EPS 10.20）。旧値は evidence も kenshi も無く、EPS 11.87 を含意するのに 10-K の GAAP は 10.20・非GAAPでも 11.47 でどちらとも一致しなかった。eps 10.20 と mcap 712.85十億$ も同じ原文（MD&A『Net income $20,058 / Diluted EPS $10.20』）から埋めた＝shy と**同じ基準**。実測 **E[r] 14.2% → 13.5%**・Ω82.0で投下可は不変。⚠Visaは株数もEPSも companyfacts に現れない（クラス別の次元付きタグ）ので**この3欄は機械では永久に埋まらない**。",
+    "done_at": "2026-08-10"
    },
    {
     "id": "gate_exception_mksi",
