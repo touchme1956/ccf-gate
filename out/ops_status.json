@@ -310,6 +310,17 @@
    "auto": "key"
   },
   {
+   "id": "state",
+   "name": "人の決定の書き出し(state.json)",
+   "cadence": "月次",
+   "due_days": 40,
+   "last": null,
+   "days": null,
+   "state": "unknown",
+   "how": "門のⅦ資産「📤 state.json」→ repo直下へ置いてコミット（検査 python3 night/validate_state.py）",
+   "auto": false
+  },
+  {
    "id": "backtest",
    "name": "疑似バックテスト",
    "cadence": "年1",
@@ -1092,11 +1103,12 @@
    },
    {
     "id": "localstorage_source_of_truth",
-    "kind": "決断待ち",
-    "title": "決定を持つキーを localStorage から repo へ移すか",
-    "note": "pf:weights(目標ウェイト)・pf:portfolio(株数)・pf:sold(売却記録)・g7log:(検証履歴)・g7ignite:map(点灯日) は**localStorageが正本で repo にコピーが無い**。2026-08-10にバックアップの対象へ入れたが、**バックアップを人が押さないと消える**のは変わらない。repo側へ移せば盤で鮮度を測れる。門の設計の根幹に触るのでユーザーの判断。",
-    "done": false,
-    "added": "2026-08-10"
+    "kind": "記録",
+    "title": "決定を持つキーを localStorage から repo へ移した（v9.9.131・完了）",
+    "note": "【2026-08-10 ユーザー明示指示「repoに全部」で実施】\npf:portfolio(株数)・pf:weights・pf:sold・pf:monthly・g7ignite:map・g7log: を **state.json** へ移した。台帳 g7: は out/*_gate_pack.json が正本なので含めない。\n**正本の向きは非対称**——門は静的ページでブラウザからrepoへ書けないので、repo→門はfetchで自動／門→repoは人が『📤 state.json』で書き出してコミット（gate_exceptions.json と同じ形）。つまり自動で守られるのではなく**書き出し忘れが見える**ようになった＝回転盤に `state`(月次)を登録。\n黙って上書きしない三重の縛り: savedAt が null なら何もしない／手元に未書き出し(dirty)なら採用しない／採用は repo が新しいときだけ。判定は state.js の純関数 decide() で、実ブラウザで17項目検証済み。\n検査は `python3 night/validate_state.py`（CIで落とす）——**pf:portfolio の positions 配列が欠けると門を開いた瞬間にⅦ資産が既定値へ落として書き戻す**ので、形まで見る。\n⚠**株数と売却記録が公開リポジトリに載る**（GitHub Pages 配信＝実質公開）。中間案（株数だけrepo）も提示したうえでユーザーが『全部』を選んだ。\n残る作業: **state.json はまだ空**（savedAt=null）。ユーザーが門で書き出してコミットするまで、手元の決定はこの端末にしかない——門の帯とⅦ資産に警告が出ている。",
+    "done": true,
+    "added": "2026-08-10",
+    "done_at": "2026-08-10"
    }
   ]
  },
