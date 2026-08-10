@@ -7,7 +7,7 @@
    "kind": "宿題",
    "title": "EDINET_API_KEY を GitHub Secrets に置く",
    "due": null,
-   "note": "api.edinet-fsa.go.jp で無料登録→Settings→Secrets and variables→Actions→EDINET_API_KEY。置いた翌日から日本株17社の臨報監視・決算点検が自動化される（📖説明欄の「決算点検（日本株）」参照）",
+   "note": "api.edinet-fsa.go.jp で無料登録→Settings→Secrets and variables→Actions→EDINET_API_KEY。置いた翌日から日本株17社の臨報監視・決算点検が自動化される（📖説明欄の「決算点検（日本株）」参照）\n\n【配線の確認 2026-08-10】events.yml と ops.yml が secrets.EDINET_API_KEY を読む形になっていることを実測で確認済み＝置けば次回から効く。取得: https://api.edinet-fsa.go.jp/ （無料・APIキー発行）",
    "done": false
   },
   {
@@ -138,7 +138,7 @@
   {
    "id": "disrupt_blank_12",
    "kind": "宿題",
-   "title": "irr85由来12社の disrupt 空欄10社を原本で埋める",
+   "title": "irr85由来の disrupt 空欄を原本で埋める（実測4社: ENTG/MKSI/NOVT/ST）",
    "due": null,
    "note": "2026-08-05にパック化した12社（AEIS/BWXT/COHR/ENTG/IPGP/MKSI/NOVT/NXPI/OLED/RBC/ROG/WST）のうち10社で disrupt を空欄にした。10-Kの技術変化リスクが一般形で名指しの破壊要因を確認できなかったため。**門は空欄を最良ケース(settled)で裁くのでこの空欄は有利側に働く**（RELXの教訓）。12社ともΩ75未満なので買付への実害は無いが、作業リストとして残す",
    "done": false
@@ -267,9 +267,10 @@
    "id": "vfail_worklist_5",
    "kind": "宿題",
    "title": "納品検査FAILの5社を潰す（MSI→BR→V→SAP→RELX・合成点順＝繰り上がる順）",
-   "note": "v9.9.95で納品検査を第四の関門に入れた結果、この5社は資格を失った（投下可10社は不変）。`python3 night/audit_promotion_ready.py` が繰り上がる順で出す。**筆頭は V の roic 43.9**——機械の再計算は114.2で2.6倍ずれ、evidence も kenshi の記録も無い。ISRG(19.6→12.8で投下可から脱落)と同じ形。MSIは既知・意図的(IC縮退の疑いで要審査据置)、RELXはIFRS提出体で機械再現不能",
+   "note": "v9.9.95で納品検査を第四の関門に入れた結果、この5社は資格を失った（投下可10社は不変）。`python3 night/audit_promotion_ready.py` が繰り上がる順で出す。**筆頭は V の roic 43.9**——機械の再計算は114.2で2.6倍ずれ、evidence も kenshi の記録も無い。ISRG(19.6→12.8で投下可から脱落)と同じ形。MSIは既知・意図的(IC縮退の疑いで要審査据置)、RELXはIFRS提出体で機械再現不能\n\n【2026-08-10 完了】投下可・次点の納品検査FAILは0社（v9.9.95で第四の関門に入れた時点で解消）",
    "due": null,
-   "done": false
+   "done": true,
+   "done_at": "2026-08-10"
   },
   {
    "id": "vfail_band_rest",
@@ -298,7 +299,7 @@
   {
    "id": "single_year_25",
    "kind": "宿題",
-   "title": "判定圏で単年ROICのまま残る25社をthrough-cycle化する",
+   "title": "判定圏で単年ROICのまま残る社を through-cycle 化する（実測21社）",
    "note": "採取器とパックが15%以上食い違う社（審査官が原本で直した）／5年系列が3年未満／日本株・ADRでSEC対象外、の3種。**投下可10社は100% through-cycle 済**なので買付判断には影響しない。審査官が原本から5年系列を作れば解消。`python3 night/audit_basis.py --list`",
    "due": null,
    "done": false
@@ -543,9 +544,10 @@
   {
    "id": "sic_cache_rebuild",
    "kind": "宿題",
-   "done": false,
+   "done": true,
    "title": "out/_sic_cache.json を再構築して sht（シェア趨勢）を測れるようにする",
-   "note": "2026-08-07の再審査で CTAS・ADP・MWA・新規7社のすべてで sht が測れず f3 が片肺になった。fill_sht.py は gate0_all.csv + SEC submissions の SIC を要る。既定'flat'は中立ではない（up なら pm+3・Intel警報も鳴らない）"
+   "note": "2026-08-07の再審査で CTAS・ADP・MWA・新規7社のすべてで sht が測れず f3 が片肺になった。fill_sht.py は gate0_all.csv + SEC submissions の SIC を要る。既定'flat'は中立ではない（up なら pm+3・Intel警報も鳴らない）\n\n【2026-08-10 完了】night/build_sic_cache.py で2,653社を構築済み。sht が測れるようになりIntel警報4→8社",
+   "done_at": "2026-08-10"
   },
   {
    "id": "fetcher_cash_stale_mwa",
@@ -641,8 +643,9 @@
    "kind": "決断待ち",
    "title": "nde の扱いが 4.00 で非単調——借金が増えるとΩが +8.7pt 上がる（線の位置より重い）",
    "due": null,
-   "done": false,
-   "note": "2026-08-09 ユーザーの問い「財務キルを5にするのは？」を night/shadow_nde_kill.py で測る過程で発見。【欠陥】キルは `evalScore=min(evalScore,60)`（1個）＝**上限を掛けるだけ**なのに、レバレッジの坂 `levPen` は `2.5<nde≤4` でしか効かない。⇒ **キル帯へ入った社は坂の罰から抜ける**。実測(OKE・ndeだけ振る): 3.99→Ω16.3 / **4.01→Ω25.0** / 20→Ω25.0＝**借金が増えるほど点が上がり、上は平ら**。v9.9.93 で潰した崖と同じ型で向きが逆。【影響】nde>4 は369社中22社。坂の上限だけ外す（案D・線は4のまま）と17社のΩが下がる（TDG −20.3 / RSVR −17.7 / CHDN −17.3 / QSR −16.9 / ENTG −15.3 / CSW −14.8 …）。**投下可10社は顔ぶれ不変**＝「道具を直して判定は動かない」の較正の理想形。【線を5にする件は見送り推奨】3案とも投下可は不変。4<nde≤5 の9社は最高がCSW Ω57.9で75に遠く、しかも7/9社はキルを外すとΩが**下がる**（上の欠陥のため）。歴史(2018年・n=644)も4を支持しない（3<nde≤4 の恒久毀損7% > 4<nde≤5 の3%）が、**信用収縮がゼロの窓**なのでキルが守る事態が標本に無い＝反証ではない。【S1との整合】売却規律S1は `nde>4に転落` を引き金に持つ（絶対のルール1で保護）。買いの線だけ動かすと買う理由と売る理由が別の数字になる。**採点ロジックの変更なので明示指示が要る。値は一切触っていない**"
+   "done": true,
+   "note": "2026-08-09 ユーザーの問い「財務キルを5にするのは？」を night/shadow_nde_kill.py で測る過程で発見。【欠陥】キルは `evalScore=min(evalScore,60)`（1個）＝**上限を掛けるだけ**なのに、レバレッジの坂 `levPen` は `2.5<nde≤4` でしか効かない。⇒ **キル帯へ入った社は坂の罰から抜ける**。実測(OKE・ndeだけ振る): 3.99→Ω16.3 / **4.01→Ω25.0** / 20→Ω25.0＝**借金が増えるほど点が上がり、上は平ら**。v9.9.93 で潰した崖と同じ型で向きが逆。【影響】nde>4 は369社中22社。坂の上限だけ外す（案D・線は4のまま）と17社のΩが下がる（TDG −20.3 / RSVR −17.7 / CHDN −17.3 / QSR −16.9 / ENTG −15.3 / CSW −14.8 …）。**投下可10社は顔ぶれ不変**＝「道具を直して判定は動かない」の較正の理想形。【線を5にする件は見送り推奨】3案とも投下可は不変。4<nde≤5 の9社は最高がCSW Ω57.9で75に遠く、しかも7/9社はキルを外すとΩが**下がる**（上の欠陥のため）。歴史(2018年・n=644)も4を支持しない（3<nde≤4 の恒久毀損7% > 4<nde≤5 の3%）が、**信用収縮がゼロの窓**なのでキルが守る事態が標本に無い＝反証ではない。【S1との整合】売却規律S1は `nde>4に転落` を引き金に持つ（絶対のルール1で保護）。買いの線だけ動かすと買う理由と売る理由が別の数字になる。**採点ロジックの変更なので明示指示が要る。値は一切触っていない**\n\n【2026-08-10 完了】v9.9.126で坂の上限を外して単調化済み（17社のΩが下がり投下可10社は不変）",
+   "done_at": "2026-08-10"
   },
   {
    "id": "retro_universe_negative_equity",
@@ -747,7 +750,7 @@
    "id": "secret_anthropic",
    "kind": "宿題",
    "title": "ANTHROPIC_API_KEY を GitHub Secrets に置く（門2審査の自動化）",
-   "note": "2026-08-10に .github/workflows/review.yml と night/review_runner.sh を新設した。鍵を Settings → Secrets and variables → Actions へ置くと**平日17:00UTCに待ち行列の先頭2社を審査**し、**PRを作る**（mainへは書かない＝マージが審査官の手）。納品検査を通らないパックは捨てる。鍵が無ければ何もせず終了する（既存ファイルは壊さない）。実測 night/progress.json は pending_review 13 のまま1週間動いていない。",
+   "note": "2026-08-10に .github/workflows/review.yml と night/review_runner.sh を新設した。鍵を Settings → Secrets and variables → Actions へ置くと**平日17:00UTCに待ち行列の先頭2社を審査**し、**PRを作る**（mainへは書かない＝マージが審査官の手）。納品検査を通らないパックは捨てる。鍵が無ければ何もせず終了する（既存ファイルは壊さない）。実測 night/progress.json は pending_review 13 のまま1週間動いていない。\n\n【配線の確認 2026-08-10】review.yml が secrets.ANTHROPIC_API_KEY を読む形を実測で確認済み。回転盤で**唯一の🔑鍵待ち**。取得: https://console.anthropic.com/settings/keys",
    "done": false,
    "added": "2026-08-10"
   },
@@ -755,7 +758,7 @@
    "id": "secret_av",
    "kind": "宿題",
    "title": "AV_KEY（Alpha Vantage・無料）を Secrets に置く",
-   "note": "out/next_earnings.json は**28件すべて src=est**（SECからの推定日）。EARNINGS_CALENDAR は1リクエストで全社ぶん取れるので無料枠25回/日でも足りる。perF の充填にも効く（投下可10社中 perF があるのは4社・gcap は0社）。",
+   "note": "out/next_earnings.json は**28件すべて src=est**（SECからの推定日）。EARNINGS_CALENDAR は1リクエストで全社ぶん取れるので無料枠25回/日でも足りる。perF の充填にも効く（投下可10社中 perF があるのは4社・gcap は0社）。\n\n【2026-08-10 是正】**ops.yml が AV_KEY を渡していなかった**——kessan_calendar.py と market_fetch.py は環境変数 AV_KEY を読む設計なのに CI が渡しておらず、**Secrets に置いても何も起きない**状態だった（v9.9.133 のクリップボードと同型＝副作用の無い経路は失敗しても静か）。v9.9.134 で配線済み＝置けば次の ops.yml から効く。\n取得: https://www.alphavantage.co/support/#api-key （無料・メールだけ）",
    "done": false,
    "added": "2026-08-10"
   },
