@@ -56,6 +56,15 @@ jobs:
       #   **CIで計算してJSONで配る**（ブラウザから外部APIを叩かない）。
       #   監視リスト生成の**後**に置く——kanshi_list.json が入力なので、順序が逆だと
       #   前月の名簿で採ることになる（v9.9.112 で踏んだ「線が動いたら監視リストも再生成する」の同型）。
+      # ⚠2026-08-10: **分母の取得器を先に置いた。** hist_valuation は市場調整版(adj_pe)で
+      #   S&P500実績PERを分母に使うが、その系列を作る night/fetch_sp500_pe.py は
+      #   **どのCIからも呼ばれておらず**、out/sp500_pe_monthly.json は最新 2026-03 で止まっていた。
+      #   消費側だけ毎月回して分母を持ち越すのは「基準の違う二つを割る」型の芽そのもの
+      #   （CLAUDE.md v9.9.118 が自ら「4ヶ月ぶん持ち越し」と記録している）。
+      #   ※配信元(multpl)の遅れ自体は供給側の問題でここでは解けない——取得器を繋ぐだけ。
+      - name: S&P500実績PERの系列を更新（自己相対の分母）
+        continue-on-error: true
+        run: timeout 300 python3 night/fetch_sp500_pe.py
       - name: 自己相対バリュエーション（表示専用・合否に不使用）
         continue-on-error: true
         run: timeout 900 python3 night/hist_valuation.py --asof "$(date -u +%F)" --tickers kanshi_list.json --out out/hist_val_now.json
@@ -85,17 +94,51 @@ jobs:
       - name: 新規上場社の irr 機構語を掃く（作業リスト・判定はしない）
         continue-on-error: true
         run: timeout 2400 python3 night/watch_new_listings.py
+      # 成長の軌道 cagrT（v9.9.123・2026-08-10にCIへ接続・鍵不要）
+      #   cagrT は compute() が実際に使う採点入力で、**空欄は CCF_BLANK の 'best'＝罰が発火しない**。
+      #   ＝この道具が止まると**新しく審査した社ほど甘くなる**。表示専用ではないので優先度が高い。
+      #   ⚠**値は書かない**（--write を付けない）。出るのは out/growth_trend.json という測定結果で、
+      #     パックへ入れるのは審査官の手（絶対のルール2）。
+      - name: 成長の軌道 cagrT の再測定（測定のみ・パックには書かない）
+        continue-on-error: true
+        run: timeout 1800 python3 night/fill_growth_trend.py
+      # シェア趨勢 sht（2026-08-10新設・鍵不要）
+      #   **これが門でいちばん長く不発だった規則**——sht は全369社中322社が空欄で、門は空欄を
+      #   SELECT既定の 'flat' に化かすため、pm±3/−10・地味業界の勝者+2・**Intel警報
+      #   （gmt=down ∧ sht=down＝堀崩壊の先行検出）**・S2売却規律2規則が全社で不発だった。
+      #   原因は規約ではなく**道具の欠落**——fill_sht が要求する out/_sic_cache.json を
+      #   作る道具がリポジトリに一本も無かった（2026-08-10に build_sic_cache.py を新設）。
+      #   ⚠**--write は付けない**。出るのは out/sht_report.json という測定結果で、
+      #     パックへ入れるのは審査官の手（絶対のルール2）。
+      - name: SIC業種キャッシュ（増分・SEC submissions）
+        continue-on-error: true
+        run: timeout 1800 python3 night/build_sic_cache.py
+      - name: シェア趨勢 sht の再測定（測定のみ・パックには書かない）
+        continue-on-error: true
+        run: timeout 600 python3 night/fill_sht.py --json | tail -20
       - name: v10影スコア更新（7月のみ＝年次較正の材料）
         continue-on-error: true
         run: |
           if [ "$(date -u +%m)" = "07" ]; then python3 v10_series.py; else echo "7月以外はスキップ"; fi
-      - name: 運用サイクルの回転状態を実測
-        run: python3 night/ops_status.py
+      # 年次較正のスナップショット（2026-08-10にCIへ接続・鍵もネットもcompanyfactsも不要）
+      #   回転盤は calib を auto=False としていたが、**人の判断が要るのは v9 vs v10 の勝敗判定**であって
+      #   スナップショットの生成ではない。同じ較正ループのもう半分 v10_series.py は既に7月だけ自動で、
+      #   **片方だけ手動という非対称**が残っていた。しかもこれは**時点を逃すと永久に失われる**唯一の項目
+      #   （CLAUDE.md: 「calibration.json に v9 の Ω合成値が無く 2027-07 の答え合わせが成立しない」で一度失敗済み）。
+      - name: 年次較正のスナップショット（7月のみ・勝敗の判定は人）
+        continue-on-error: true
+        run: |
+          if [ "$(date -u +%m)" = "07" ]; then python3 calibration_check.py; else echo "7月以外はスキップ"; fi
       # WACCの既定値(無リスク金利)のズレ検出（2026-08-07新設・鍵不要）
       #   値は書き換えない——rfrの更新はユーザーの月次ルーチン。自動化するのは**検出**だけ。
       - name: WACC既定のズレ検出 audit_wacc_stale
         continue-on-error: true
         run: timeout 300 python3 night/audit_wacc_stale.py --write
+      # ⚠2026-08-10: **ops_status を最後へ移した。** 以前は wacc の**前**に居たので、
+      #   コミットされる out/ops_status.json は必ず1ヶ月前の wacc 日付を載せていた
+      #   ——盤が自分より後の作業を測れない、という順序の誤り。
+      - name: 運用サイクルの回転状態を実測（必ず最後）
+        run: python3 night/ops_status.py
 
       - name: コミット
         run: |
@@ -104,6 +147,12 @@ jobs:
           N=$(python3 -c "import json;print(sum(1 for r in json.load(open('out/ops_status.json'))['items'] if r['state']=='due'))" 2>/dev/null || echo "?")
           MSG="monthly ops $(date -u +%Y-%m-%d)"
           [ "$N" != "0" ] && MSG="⚠ 停止疑い ${N}本｜monthly ops $(date -u +%Y-%m-%d)"
-          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/new_listings_irr.json 2>/dev/null || true
+          # ⚠2026-08-10: **out/wacc_drift.json が漏れていた**——上の audit_wacc_stale が --write で
+          #   生成しているのに add されず、毎回作っては捨てていた（回転盤の waccdrift は auto=True なのに
+          #   実体が残らないので、鮮度も測れなかった）。
+          #   あわせて sp500_pe_monthly（自己相対の分母）・growth_trend（cagrTの測定結果）・
+          #   calibration（7月のスナップショット）も add する。**足したら add も足す**——
+          #   ステップだけ増やして add を忘れると「回っているのに残らない」という同じ穴が再発する。
+          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/new_listings_irr.json out/wacc_drift.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push

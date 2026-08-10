@@ -699,8 +699,19 @@ async function pfExportHoldings(btn){
 }
 
 /* ---------- 完全バックアップ／復元（門と同origin＝同じlocalStorageを保全） ---------- */
-const BK_PREFIX=['g7:','g7wait:','g7prev:','g7queue:','hm:'];
-const BK_EXACT=['g7hold:set','g7buy:map','pf:portfolio','pf:verdicts','pf:sold'];
+// v9.9.128(2026-08-10): **実データを持つ4キーがバックアップから漏れていた**。
+//   localStorage が正本で repo にコピーが無いキーは、バックアップから漏れると**復元手段がゼロ**になる。
+//   全ページの localStorage/store の呼び出しを機械で洗い出して突き合わせた結果、漏れていたのは:
+//     g7ignite:map … 点灯日・48h冷却（掟九の予実材料。index.html:4409,4425 が読み書き）
+//     g7log:…       … Ⅴ検証履歴（**人が手で書いた記録**。index.html:5028）
+//     pf:weights    … 目標ウェイト（配分の決定そのもの）
+//     pf:monthly    … 今月の個別枠（人が入れた金額）
+//     g64:…         … 旧v6.5の台帳（index.html:2920 が読み取り専用で表示）
+//   ⚠ `store` は claude モードでも localStorage へミラーする（index.html:2704 の set()）ので、
+//     localStorage を舐めるこの実装で全部拾える。
+const BK_PREFIX=['g7:','g7wait:','g7prev:','g7queue:','hm:','g7ignite:','g7log:','g64:'];
+const BK_EXACT=['g7hold:set','g7buy:map','pf:portfolio','pf:verdicts','pf:sold',
+                'pf:weights','pf:monthly','pf:showMoney','g7meta_lastExport'];
 function pfBackupAll(btn){
  const o=btn?btn.textContent:''; const data={}; let n=0;
  for(let i=0;i<localStorage.length;i++){

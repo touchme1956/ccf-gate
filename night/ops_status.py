@@ -116,6 +116,18 @@ def build():
         ("newlist", "新規上場のirr機構語",   "月1",     40,
          json_field("out/new_listings_irr.json", "generated"),
          "ops.yml 毎月2日／手動 python3 night/watch_new_listings.py", True),
+        # 2026-08-10: **採点入力の再測定2本**。どちらも --write を付けず測るだけ（ルール2）だが、
+        #   止まると**新しく審査した社ほど甘くなる**種類なので盤で見張る。
+        #   cagrT: compute() が使う欄で、空欄は CCF_BLANK の 'best'＝罰が発火しない
+        #   sht  : 空欄は SELECT既定の 'flat' に化け、**Intel警報（gmt=down ∧ sht=down）**を含む
+        #          5規則がまるごと不発になる。実測で369社中322社が空欄だった
+        ("cagrt",   "成長の軌道cagrTの測定", "月1",     40,
+         json_field("out/growth_trend.json", "generated"),
+         "ops.yml 毎月2日／手動 python3 night/fill_growth_trend.py（反映は --write＝審査官の手）", True),
+        ("sht",     "シェア趨勢shtの測定",   "月1",     40,
+         json_field("out/sht_report.json", "asof"),
+         "ops.yml 毎月2日／手動 python3 night/build_sic_cache.py && python3 night/fill_sht.py --json"
+         "（反映は --write＝審査官の手）", True),
         # v9.9.94(2026-08-06): 期末後の重大事象の検査。**回っているかを盤で見張る**——
         #   この検査が黙って止まると「パックが会社の現在を描いていない」銘柄が
         #   何食わぬ顔で投下可に戻る（APHがまさにその状態で資産の6.3%を受けていた）。
@@ -159,9 +171,15 @@ def build():
         ("v10",     "v10影スコア更新",         "年1(7月)", 430,
          json_field("out/v10_shadow.json", "generated") or git_date("out/v10_shadow.json"),
          "ops.yml（7月）／手動 python3 v10_series.py", True),
-        ("calib",   "年次較正(答え合わせ)",     "年1(7月)", 430,
+        # 2026-08-10: **auto=False → True**。人の判断が要るのは *v9 vs v10 の勝敗判定* であって
+        #   スナップショットの生成ではない（鍵もネットも companyfacts も不要）。もう半分の
+        #   v10_series.py は既に7月だけ自動で、**片方だけ手動という非対称**が残っていた。
+        #   しかもこれは**時点を逃すと永久に失われる**唯一の項目——一度失敗している
+        #   （calibration.json に v9 の Ω合成値が無く 2027-07 の答え合わせが成立しなくなった）。
+        ("calib",   "年次較正の封印(7月)",      "年1(7月)", 430,
          git_date("out/calibration.json"),
-         "python calibration_check.py——v9/v10の勝敗判定はユーザーの判断（V10_SPEC）", False),
+         "ops.yml（7月）／手動 python calibration_check.py"
+         "——**封印は自動・v9/v10の勝敗判定はユーザーの判断**（V10_SPEC）", True),
         ("gate0",   "米国門0発掘",             "年1(1-2月)", 430,
          git_date("gate1_queue.json"),
          "python run_gate0_local.py（companyfacts.zip 1.4GB＝CI外）", False),

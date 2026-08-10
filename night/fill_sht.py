@@ -192,6 +192,23 @@ def main():
     res = collect()
     ups = [x for x in res if x[2] == "up"]
     dns = [x for x in res if x[2] == "down"]
+
+    # v9.9.128(2026-08-10): **--json＝測定結果をファイルに残す**（パックには書かない）。
+    #   これが無かったので、CIで回しても結果はログに流れて消え、回転盤も鮮度を測れなかった。
+    #   **--write とは別**——パックへ sht を入れるのは審査官の手（絶対のルール2）。
+    if "--json" in sys.argv:
+        import datetime
+        doc = {"asof": datetime.date.today().isoformat(),
+               "note": "shtの機械算出（同業比の売上成長）。**測定であってパックへの書き込みではない**——"
+                       "反映は python3 night/fill_sht.py --write（審査官の手）。"
+                       "空欄は門が SELECT 既定の 'flat' に化かすので、down/up の未反映は"
+                       "Intel警報(gmt=down ∧ sht=down)などを不発にしたままにする。",
+               "n": len(res), "down": len(dns), "up": len(ups),
+               "rows": [{"t": t, "sht": v, "why": why} for t, d, v, why in sorted(res) if v]}
+        json.dump(doc, open(os.path.join(BASE, "out", "sht_report.json"), "w", encoding="utf-8"),
+                  ensure_ascii=False, indent=1)
+        print(f"→ out/sht_report.json（down {len(dns)} / up {len(ups)}）")
+
     print(f"対象 {len(res)}社 → **down {len(dns)}社 / up {len(ups)}社 / 空欄 {len(res)-len(ups)-len(dns)}社**\n")
     for lab, grp in (("down（pm−10・Intel警報・S2の入力になる）", dns), ("up（pm+3）", ups)):
         print(f"■ {lab}")
