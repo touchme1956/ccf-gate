@@ -240,6 +240,46 @@ jobs:
           if not (only_i or only_a): print('✓ 一致')
           EOF
 
+      # ── 6-d. explain_score と score_all が同じことを言うか（2026-08-10新設）───────
+      #   night/explain_score.js は**判定式を書き写していたせいで3版ぶん取り残された**前歴がある
+      #   （v9.9.98でE[r]遮断器を外した後も要求し続け、WSTで buy が食い違った）。
+      #   今は score_all の buyGate を import する正しい形だが、**写し戻しを検出する仕掛けが無い**。
+      #   v9.9.65「同じ台帳を見る二つの検査器が違うことを言ってはいけない」の番人。
+      - name: explain_score と score_all の一致（v9.9.65の番人）
+        continue-on-error: true
+        run: |
+          node -e "
+            const {buyGate}=require('./night/score_all.js');
+            if(typeof buyGate!=='function'){console.error('✗ score_all が buyGate を export していない');process.exit(1);}
+            const src=require('fs').readFileSync('night/explain_score.js','utf8');
+            if(!/require\(.\.\/score_all/.test(src)&&!/buyGate/.test(src)){
+              console.error('✗ explain_score が buyGate を呼んでいない＝判定式を写した疑い');process.exit(1);}
+            console.log('✓ explain_score は score_all の buyGate を共有している');
+          "
+
+      # ── 6-e. 表示のみの監査（2026-08-10接続・落とさない）──────────────────────
+      #   4本ともネット不要・数秒で終わるのに、どのCIからも呼ばれていなかった。
+      #   audit_irr70 が既にここに居る以上、同種を外している理由が無い。
+      #   とくに audit_basis は「基準の混在は消せなくても**見えるようにしておく**」ための道具で、
+      #   その道具自体が見えていなかった。
+      - name: 堀の根拠・根拠被覆・基準の混在・dom空欄の下駄（表示のみ）
+        continue-on-error: true
+        run: |
+          python3 night/audit_moat.py --q75 | tail -12
+          python3 night/audit_evidence.py --q75 | tail -12
+          python3 night/audit_basis.py | tail -10
+          node night/audit_dom_blank.js | tail -12
+
+      # ── 6-f. 人の作業リスト自身の健康診断（2026-08-10新設・落とさない）──────────
+      #   ops_status は**機械の周期作業**を測るが、**人の作業と判断の正本(todo_list.json)を
+      #   測るものが無かった**。実測で未完了67件のうち解決済み3件・件数のズレ2件。
+      #   **古い作業リストは無いより悪い**——「まだ残っている」と嘘をつくので本物が埋もれる。
+      #   あわせて gate_exceptions.json ↔ todo_list.json を突き合わせる
+      #   （片方にだけ足すと**四半期の財務監視が付かない＝警報を切ったまま乗る**）。
+      - name: 作業リストの健康診断 audit_todo（表示のみ）
+        continue-on-error: true
+        run: python3 night/audit_todo.py --json | tail -25
+
       # ── 7. 根拠の被覆（既知の積み残し。落とさない）────────────────────────────
       - name: 納品検査 validate_packs（表示のみ）
         continue-on-error: true
@@ -277,7 +317,7 @@ jobs:
         run: |
           git config user.name  "ccf-gate bot"
           git config user.email "noreply@github.com"
-          git add out/stale_bs.json out/pack_stale.json out/validate_fail.json 2>/dev/null || true
+          git add out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"
           else

@@ -116,6 +116,24 @@ jobs:
       - name: シェア趨勢 sht の再測定（測定のみ・パックには書かない）
         continue-on-error: true
         run: timeout 600 python3 night/fill_sht.py --json | tail -20
+      # 銘柄アイコンと代表色（2026-08-10接続・表示専用）
+      #   out/logos/index.json の note は「**night/logo_colors.py がCIで算出**」と書いていたのに
+      #   **どのCIからも呼ばれていなかった**＝説明と実装の齟齬（audit_docs が本来落とす型）。
+      #   実害は小さいが、**新しく審査した社は静かにモノグラムへ落ちる**（ロゴが出ない）。
+      - name: 銘柄アイコンと代表色（表示専用）
+        continue-on-error: true
+        run: |
+          timeout 1200 python3 night/fetch_logos.py || true
+          timeout 600 python3 night/logo_colors.py || true
+      # パック索引の再生成（2026-08-10接続）
+      #   out/packs_index.json は **Ⅵ一括取込の目録**であり v9.9.102 の**孤児レコード関門**の母集団。
+      #   生成者は make_chunks.py だけで、どのCIからも呼ばれていなかった。
+      #   実害の前例: 6146 を追加した日に索引が316件のままで一括取込しても台帳に入らなかった。
+      #   ⚠ make_chunks は夜間審査のチャンクも作るが、**未審査の社が無ければ何も増えない**
+      #     （night/make_chunks.py:44 が既にパックのある社を除外する）。
+      - name: パック索引の再生成（Ⅵ一括取込の目録）
+        continue-on-error: true
+        run: python3 night/make_chunks.py | tail -5
       - name: v10影スコア更新（7月のみ＝年次較正の材料）
         continue-on-error: true
         run: |
@@ -131,6 +149,15 @@ jobs:
           if [ "$(date -u +%m)" = "07" ]; then python3 calibration_check.py; else echo "7月以外はスキップ"; fi
       # WACCの既定値(無リスク金利)のズレ検出（2026-08-07新設・鍵不要）
       #   値は書き換えない——rfrの更新はユーザーの月次ルーチン。自動化するのは**検出**だけ。
+      # E[r]の予実の**突合せ**（2026-08-10接続）
+      #   market.yml は月初に `--snap`（観測の封印）だけを回しており、
+      #   **引数なしの突合せ（封じた観測 vs 実現リターン）は誰も回していなかった**。
+      #   回転盤の `er` は観測の封印しか測らないので、**突合せが一度も走らなくても緑**になる。
+      #   E[r] は v9.9.98 で合否から外したが「正直に記録して検証される予測」として残した項目で、
+      #   **検証が走らないなら残した意味が消える**。180日未満は年率換算しない規約は道具の側にある。
+      - name: E[r]予実の突合せ（封じた観測と実現の答え合わせ）
+        continue-on-error: true
+        run: timeout 900 python3 night/audit_er_realized.py | tail -25
       - name: WACC既定のズレ検出 audit_wacc_stale
         continue-on-error: true
         run: timeout 300 python3 night/audit_wacc_stale.py --write
@@ -153,6 +180,6 @@ jobs:
           #   あわせて sp500_pe_monthly（自己相対の分母）・growth_trend（cagrTの測定結果）・
           #   calibration（7月のスナップショット）も add する。**足したら add も足す**——
           #   ステップだけ増やして add を忘れると「回っているのに残らない」という同じ穴が再発する。
-          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/new_listings_irr.json out/wacc_drift.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json 2>/dev/null || true
+          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/new_listings_irr.json out/wacc_drift.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/progress.json out/er_ledger.json out/market_data.json market_data.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push
