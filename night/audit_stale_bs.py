@@ -89,16 +89,32 @@ def cik_of(t):
     return _TICK.get(t.upper())
 
 
+# 2026-08-10: **20-F/6-K を足した。** それまでは 10-K/10-Q だけを見ていたので、
+#   **外国私募発行体（ASML＝🟢投下可 / SAP / RELX / RACE …）は系列が空**になり、
+#   「のれんを一度も報告していない社」とまったく同じ袋に入っていた——
+#   ＝**期末後の重大事象を原理的に検出できないのに、検出できた顔をする**（ルール7の親戚）。
+#   6-K は中間財務諸表を添付するので BS項目が入ることがある。
+#   ⚠IFRS提出体は us-gaap タグを持たないことがあり、その場合は下の ifrs 経路で拾う。
+FORMS_OK = ("10-K", "10-Q", "20-F", "40-F", "6-K")
+
+
 def concept(cik, tag):
-    """{期末日: 値} を返す（インスタント値のみ＝BS項目）。取れなければ None"""
-    try:
-        d = json.loads(get(f"https://data.sec.gov/api/xbrl/companyconcept/CIK{cik}/us-gaap/{tag}.json"))
-    except Exception:
+    """{期末日: 値} を返す（インスタント値のみ＝BS項目）。取れなければ None
+    us-gaap で取れなければ **ifrs-full** も試す（20-F提出体のため・2026-08-10）"""
+    d = None
+    for ns in ("us-gaap", "ifrs-full"):
+        try:
+            d = json.loads(get(
+                f"https://data.sec.gov/api/xbrl/companyconcept/CIK{cik}/{ns}/{tag}.json"))
+            break
+        except Exception:
+            continue
+    if d is None:
         return None
     out = {}
     for u in d.get("units", {}).values():
         for x in u:
-            if x.get("start") or x.get("form") not in ("10-K", "10-Q"):
+            if x.get("start") or x.get("form") not in FORMS_OK:
                 continue
             e = x.get("end")
             if e:

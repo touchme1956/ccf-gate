@@ -9,11 +9,49 @@ night/make_chunks.py — 夜間バッチ審査のチャンク自動生成器(202
 日本株(gate0_jp_queue)はSEC採取が効かない=EDINET経路のためチャンクに入れない。
 使い方: python3 night/make_chunks.py   (既存chunkの連番の続きから10社/枚で生成)
 """
-import json, glob, os, re
+import json, glob, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
 SKIP = {"LLY", "MSFT", "ASML", "RMD"}   # hachimon_fetch.py の SKIP と同期
+
+# ── 再審査モード（2026-08-10新設）────────────────────────────────────────────
+# 【なぜ要るか】下の本体は `if t in done` で**既にパックのある社を除外する**。
+#   これは「未審査の社を漏らさない」ためには正しいが、裏返すと
+#   **再審査は構造的にキューへ載らない**——新しい10-Kが出ても、期末後にBSが激変しても、
+#   納品検査でFAILしても、検出器が見つけたものが待ち行列に入らない。
+#   ＝今日の監査が見つけた「検出は自動・作業は手動」の断絶の正体。
+#   night/enqueue_reaudit.py が検出器6本の出力を優先度つきの待ち行列にするので、
+#   ここはそれを rechunkNN.txt へ落とすだけ（**新規審査の chunkNN.txt とは別系列**にして
+#   「まだ見ていない社」と「見たがもう一度見る社」を混ぜない）。
+if "--reaudit" in sys.argv:
+    q = json.load(open("night/reaudit_queue.json", encoding="utf-8"))
+    rows = q.get("rows") or []
+    lim = None
+    if "--top" in sys.argv:
+        i = sys.argv.index("--top")
+        if i + 1 < len(sys.argv):
+            lim = int(sys.argv[i + 1])
+    already = set()
+    for f in glob.glob("night/rechunk*.txt"):
+        already |= {t for t in open(f).read().split() if t}
+    todo_r = [r["t"] for r in rows if r["t"] not in already]
+    if lim:
+        todo_r = todo_r[:lim]
+    ns = [int(m.group(1)) for f in glob.glob("night/rechunk*.txt")
+          if (m := re.search(r"rechunk(\d+)", f))]
+    s0 = max(ns) + 1 if ns else 1
+    n = 0
+    for i in range(0, len(todo_r), 10):
+        with open(f"night/rechunk{s0 + i // 10:02d}.txt", "w") as fp:
+            fp.write(" ".join(todo_r[i:i + 10]) + "\n")
+        n += 1
+    print(f"再審査 {len(todo_r)}社 → rechunk{s0:02d}〜{s0 + n - 1:02d}({n}枚)を生成"
+          if n else "再審査: 新規チャンクなし（待ち行列は既に rechunk に載っている）")
+    print("審査は night/agent_prompt_template.txt（日本株は _jp）。"
+          "**理由は night/reaudit_queue.json の reasons に書いてある**——"
+          "何を直すために再審査するのかを読んでから原本へ当たること。")
+    sys.exit(0)
 
 def tickers_of(path):
     if not os.path.exists(path):

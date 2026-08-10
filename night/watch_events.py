@@ -34,7 +34,7 @@ watch_events.py — 監視リストの 8-K を日次で見張るイベント駆�
   python3 night/watch_events.py --days 30  窓を広げる（初回・停止後の追いつき）
 出力: out/events_watch.json（ヒット・対象外・取得失敗を全部書く。失敗を「異常なし」と書かない）
 """
-import json, os, sys, time, urllib.request
+import json, os, re, sys, time, urllib.request
 from datetime import date, timedelta
 
 BASE  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -50,6 +50,46 @@ ALERT_ITEMS = {
     "4.02": "誠(会計)——過年度財務諸表の非依拠(non-reliance)",
     "5.02": "退任——取締役・主要役員の異動",
 }
+
+# ── 外国私募発行体(FPI)の 6-K（2026-08-10新設）──────────────────────────────
+# 【なぜ要るか】この道具は `if f not in ("8-K","8-K/A"): continue` で 8-K だけを見ていた。
+#   ところが **20-F を出す外国私募発行体は 8-K を一本も出さない**——重要事象は 6-K で出す。
+#   実測: ASML（**🟢投下可**）/ SAP / RELX / RACE / AZN / BUD / NVO / GSK / INFY / TSM …
+#   彼らは監視リストに載っているのに **原理的にイベントが立たない**のに、
+#   日本株の not_covered_jp と違って**穴の明示すら無く** `checked_us=38 / errors=0` と出る
+#   ＝**「監視した」顔をする**。ルール7の親戚（欠測を健全と読むな）。
+#
+# 【どう扱うか】6-K には Item 番号が無いので ALERT_ITEMS を当てられない。
+#   代わりに **8-K の Item が意味しているのと同じ事象を語で拾う**。
+#   語で拾うのは項目番号より弱いので、**警報の言葉も弱くする**（"6-K語ヒット"）——
+#   強さを偽らないのがこの台帳の作法。ヒットしない 6-K も件数として必ず出す
+#   （「見ていない」と「見て何も無い」を区別する）。
+FPI_FORMS = ("6-K", "6-K/A")
+#
+# ⚠**語は締めてある。** 初版は `\bimpairment\b` や `\bresign\w*` の素の語で拾ったところ、
+#   ASML・RELX・SAP の**半期報告が全部鳴った**——IFRSの中間財務諸表は会計方針として
+#   「impairment of financial assets」を必ず書き、ガバナンス節は必ず「resignation」に触れる。
+#   **鳴りすぎる警報は鳴らないのと同じ**なので、
+#   「**事象が起きた**」と読める言い回し（金額・実行済みの動詞）だけを拾う形へ締めた。
+FPI_ALERT = [
+    (r"impairment (?:charge|loss(?:es)?) of\b|recognis?ed an impairment|"
+     r"goodwill impairment (?:charge|loss)|wrote (?:down|off)\b|"
+     r"impairment (?:charge|loss)[^.]{0,60}?(?:million|billion|€|\$|£)",
+     "減損——8-K Item 2.06 相当"),
+    (r"non[- ]reliance|should no longer be relied upon|"
+     r"restatement of (?:our |the |its )?(?:previously issued |prior )?(?:consolidated )?financial|"
+     r"material weakness in (?:our |the )?internal control", "誠(会計)——同 4.02 相当"),
+    (r"has (?:resigned|stepped down)|will (?:resign|step down)|"
+     r"resignation of (?:the |our |mr|ms|dr)|(?:ceo|cfo|chief executive|chief financial officer)"
+     r"[^.]{0,60}?(?:to step down|will leave|departure)", "退任——同 5.02 相当"),
+    (r"\bfiled for bankruptcy|chapter 11|insolvency proceedings|"
+     r"\bplaced into (?:administration|receivership)", "誠(存続)——同 1.03 相当"),
+    (r"notice of (?:non[- ]?compliance|delisting)|"
+     r"listing (?:standard|rule)s?[^.]{0,40}?(?:non[- ]?compliance|deficien)", "誠——同 3.01 相当"),
+    (r"profit warning|(?:cut|lowered|reduced|withdrew|withdrawn)[^.]{0,40}?(?:guidance|outlook)|"
+     r"guidance[^.]{0,30}?(?:cut|lowered|reduced|withdrawn)",
+     "業績下方——8-Kに対応項目は無いが門2再審査の気づき"),
+]
 
 
 def get(url):
@@ -130,6 +170,7 @@ def main():
     missing = [t for t in us if t.upper() not in m]
 
     hits, earnings, others, errors, checked = [], [], [], [], 0
+    fpi_seen, fpi_counts = [], {}   # 6-K経路の社（外国私募発行体）
     for t in us:
         cik = m.get(t.upper())
         if not cik:
@@ -141,6 +182,43 @@ def main():
             items = rec.get("items", []); accn = rec.get("accessionNumber", [])
             docs  = rec.get("primaryDocument", [])
             checked += 1
+            # FPI判定: 窓に関係なく **recent に 8-K が一本も無く 20-F/40-F がある**なら
+            #   8-K経路では原理的に何も立たない社（＝6-K経路で見る）。
+            is_fpi = ("8-K" not in forms) and any(x in forms for x in ("20-F", "40-F", "6-K"))
+            if is_fpi:
+                fpi_seen.append(t)
+                n6 = 0
+                for i, f in enumerate(forms):
+                    if f not in FPI_FORMS or i >= len(dates) or dates[i] < since:
+                        continue
+                    n6 += 1
+                    a = (accn[i] if i < len(accn) else "").replace("-", "")
+                    url = (f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{a}/{docs[i]}"
+                           if a and i < len(docs) and docs[i] else "")
+                    # ⚠**6-K の primaryDocument は表紙**で、中身は添付(EX-99)に在る。
+                    #   実測 RACE 2026-07-30: 表紙 16KB に対し本体 ferrarinvinterimreport 1.77MB。
+                    #   表紙だけ舐めると**語が原理的にヒットしない＝鳴らない警報**になる
+                    #   （この台帳が何度も潰してきた型）。filing の index.json を引いて
+                    #   **中身の大きい文書から**読む。
+                    txt = ""
+                    if a:
+                        base = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{a}/"
+                        try:
+                            idx = json.loads(get(base + "index.json"))
+                            it = [x for x in (idx.get("directory", {}).get("item") or [])
+                                  if str(x.get("name", "")).lower().endswith((".htm", ".html", ".txt"))
+                                  and "index" not in str(x.get("name", "")).lower()]
+                            it.sort(key=lambda x: -int(x.get("size") or 0))
+                            for x in it[:2]:
+                                txt += re.sub(r"<[^>]+>", " ", get(base + x["name"])[:800000])
+                        except Exception as e:
+                            errors.append({"t": t, "err": f"6-K本文の取得失敗 {dates[i]}: {str(e)[:120]}"})
+                    flags = [lab for pat, lab in FPI_ALERT if re.search(pat, txt, re.I)]
+                    row = {"t": t, "form": f, "date": dates[i], "items": [],
+                           "flags": [f"6-K語ヒット｜{x}" for x in flags], "url": url}
+                    (hits if flags else others).append(row)
+                fpi_counts[t] = n6
+                continue
             for i, f in enumerate(forms):
                 if f not in ("8-K", "8-K/A"):
                     continue
@@ -167,6 +245,13 @@ def main():
         "asof": date.today().isoformat(),
         "window_days": days,
         "checked_us": checked,
+        # 2026-08-10: **8-K経路と6-K経路を分けて出す。**「38社を見た」の中身が
+        #   実は「8-K経路28社＋原理的に何も立たない10社」だったのを可視化する。
+        "fpi_6k": {"tickers": sorted(fpi_seen), "filings_in_window": fpi_counts,
+                   "note": "外国私募発行体は8-Kを出さず6-Kで重要事象を報じる。"
+                           "6-KにはItem番号が無いので、8-KのItemが意味するのと同じ事象を"
+                           "**語で**拾う（項目番号より弱いので警報の言葉も『6-K語ヒット』と弱くする）。"
+                           "ヒット0でも件数は出す＝『見ていない』と『見て何も無い』を区別する。"} if fpi_seen else None,
         "alerts": sorted(hits, key=lambda x: (x["date"], x["t"]), reverse=True),
         "earnings": sorted(earnings, key=lambda x: (x["date"], x["t"]), reverse=True),
         "others": sorted(others, key=lambda x: (x["date"], x["t"]), reverse=True),
@@ -184,7 +269,7 @@ def main():
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     jp_msg = (f"日本株{len(jp_cov['tickers'])}社をEDINETで走査" if jp_cov
               else f"日本株{len(jp)}社は対象外（EDINET_API_KEY未設定＝明示）")
-    print(f"イベント監視: 米国{checked}社の8-K（窓{days}日）＋{jp_msg} → 警報 {len(hits)}件 / 決算・報告 {len(earnings)}件 / その他 {len(others)}件 / 取得失敗 {len(errors)}件 / CIK不明 {len(missing)}件")
+    print(f"イベント監視: 米国{checked}社（うち6-K経路{len(fpi_seen)}社・窓{days}日）＋{jp_msg} → 警報 {len(hits)}件 / 決算・報告 {len(earnings)}件 / その他 {len(others)}件 / 取得失敗 {len(errors)}件 / CIK不明 {len(missing)}件")
     for h in hits:
         print(f"  ⚠ {h['t']} {h['date']} {'; '.join(h['flags'])}")
     if errors:

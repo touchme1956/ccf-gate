@@ -28,6 +28,17 @@ jobs:
         env:
           FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
         run: python3 night/fetch_dashboard.py
+      # 鍵なしの市場データ採取（2026-08-10接続）
+      #   market_data.json は px だけが毎日書き戻され、**per/shy/mcap/evebit/beta は
+      #   market_fetch.py 以外に書き手がおらず凍結**していた（実測 104銘柄中 per 29 / shy 26）。
+      #   market_fetch.py は Alpha Vantage の鍵（1日25回）が要るが、
+      #   **market_fetch_free.py は Yahoo chart + SEC companyfacts で鍵も上限も要らない**のに
+      #   どのCIからも呼ばれていなかった。門Xの入力を欠測のまま放置する理由が無い。
+      #   ⚠パックへ入れるのは次の market_merge.py だけ——**BANDS の常識帯検問と
+      #     _meta.nulls 保護と「null以外は上書きしない」を必ず通す**（第二のマージ経路を作らない）。
+      - name: 市場データ採取（鍵なし・Yahoo+SEC）
+        continue-on-error: true
+        run: timeout 1800 python3 market_fetch_free.py || true
       - name: 空欄のみ機械充填（常識帯の検問つき）
         run: python3 market_merge.py || true
       - name: 実測価格をパックへ反映（基準保存式・投下可の出入りを検出）

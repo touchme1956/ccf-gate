@@ -143,7 +143,10 @@ def main():
         if os.path.exists(p):
             shutil.copy(p, p + ".prev")
     out = {
-        "generated": "2026-08-03",
+        # ⚠2026-08-10: **日付がハードコードされていた**——再実行しても去年の日付を名乗るので、
+        #   回転盤(ops_status)の gate0jp が**永久に緑で固定される**（止まっても検出できない）。
+        #   これは「回っているつもりで止まっている」の最悪の形なので実行日にした。
+        "generated": __import__("datetime").date.today().isoformat(),
         "source": "EDINET_DB screen_companies（roic>=15版CSV上位200）+ gate0_jp_netcash_miss.json（roic<15の救済65）",
         "filter": f"opm>={SIEVE['opm']:.0f} & cagr3y>={SIEVE['cagr']:.0f} & equity>={SIEVE['eq']:.0f}"
                   f"（**roic条件は2026-08-03のユーザー明示指示で撤廃**）",

@@ -106,6 +106,46 @@ def build():
         ("irr85hist", "irr=85の実績台帳",      "月1",     40,
          json_field("out/irr85_history.json", "generated"),
          "ops.yml 毎月2日／手動 python3 night/irr85_mech_test.py --json", True),
+        # 2026-08-10(ユーザー明示指示「上場後1年後にirr85の銘柄は測定できるようにしたい」):
+        #   **新規上場社を母集団へ入れ続ける**。上場初年度は10-Kが無いので網に掛からず、
+        #   翌年に初めての10-Kが出ても**掃除が一回きりだと誰も見ていない**。
+        #   2026-08-08のスイープはまさにこの形で、しかも読解リストを「パックが無い社」に
+        #   絞っていたため **KRMN（irr=70・根拠が空）が読解対象から外れていた**。
+        #   止まっても今日の判定は動かないが、**測る対象が入ってこなくなる**＝
+        #   歴史が「唯一効く」と出した変数の被覆が静かに痩せる種類。
+        ("newlist", "新規上場のirr機構語",   "月1",     40,
+         json_field("out/new_listings_irr.json", "generated"),
+         "ops.yml 毎月2日／手動 python3 night/watch_new_listings.py", True),
+        # 2026-08-10: **採点入力の再測定2本**。どちらも --write を付けず測るだけ（ルール2）だが、
+        #   止まると**新しく審査した社ほど甘くなる**種類なので盤で見張る。
+        #   cagrT: compute() が使う欄で、空欄は CCF_BLANK の 'best'＝罰が発火しない
+        #   sht  : 空欄は SELECT既定の 'flat' に化け、**Intel警報（gmt=down ∧ sht=down）**を含む
+        #          5規則がまるごと不発になる。実測で369社中322社が空欄だった
+        ("cagrt",   "成長の軌道cagrTの測定", "月1",     40,
+         json_field("out/growth_trend.json", "generated"),
+         "ops.yml 毎月2日／手動 python3 night/fill_growth_trend.py（反映は --write＝審査官の手）", True),
+        # 2026-08-10: **検出器の出力を作業へ流す接続**。止まると「検出は自動・作業は手動」の
+        #   断絶が戻る——新しい10-Kが出ても納品検査がFAILしても、待ち行列に何も入らなくなる。
+        ("reaudit", "再審査の待ち行列",      "月1",     40,
+         json_field("night/reaudit_queue.json", "generated"),
+         "ci.yml（push毎）＋ops.yml 毎月2日／手動 python3 night/enqueue_reaudit.py --json "
+         "&& python3 night/make_chunks.py --reaudit --top 20", True),
+        # 2026-08-10: **自動化そのものを見張る3本**。
+        #   通知・機械是正・門2審査が止まっても、今日の判定は動かないので**気づけない**——
+        #   だからこそ盤に載せる（「回っているつもりで止まっている」を作らない）。
+        ("notify",  "通知(Issue化)",         "毎営業日", 4,
+         json_field("out/events_watch.json", "asof"),
+         "events.yml（行動が要ることだけIssueにする・冪等）", True),
+        ("fix",     "機械是正の自動提案",     "週1",     10,
+         git_date("out/score_all.json"),
+         "fix.yml 毎週土曜（判定が動かなければmain直・動けばPR）", True),
+        ("review",  "門2審査(自動)",         "毎営業日", 4,
+         git_date("night/progress.json"),
+         "review.yml 平日17:00UTC（**ANTHROPIC_API_KEY が要る**。無ければ何もせず終了）", "key"),
+        ("sht",     "シェア趨勢shtの測定",   "月1",     40,
+         json_field("out/sht_report.json", "asof"),
+         "ops.yml 毎月2日／手動 python3 night/build_sic_cache.py && python3 night/fill_sht.py --json"
+         "（反映は --write＝審査官の手）", True),
         # v9.9.94(2026-08-06): 期末後の重大事象の検査。**回っているかを盤で見張る**——
         #   この検査が黙って止まると「パックが会社の現在を描いていない」銘柄が
         #   何食わぬ顔で投下可に戻る（APHがまさにその状態で資産の6.3%を受けていた）。
@@ -149,19 +189,38 @@ def build():
         ("v10",     "v10影スコア更新",         "年1(7月)", 430,
          json_field("out/v10_shadow.json", "generated") or git_date("out/v10_shadow.json"),
          "ops.yml（7月）／手動 python3 v10_series.py", True),
-        ("calib",   "年次較正(答え合わせ)",     "年1(7月)", 430,
+        # 2026-08-10: **auto=False → True**。人の判断が要るのは *v9 vs v10 の勝敗判定* であって
+        #   スナップショットの生成ではない（鍵もネットも companyfacts も不要）。もう半分の
+        #   v10_series.py は既に7月だけ自動で、**片方だけ手動という非対称**が残っていた。
+        #   しかもこれは**時点を逃すと永久に失われる**唯一の項目——一度失敗している
+        #   （calibration.json に v9 の Ω合成値が無く 2027-07 の答え合わせが成立しなくなった）。
+        ("calib",   "年次較正の封印(7月)",      "年1(7月)", 430,
          git_date("out/calibration.json"),
-         "python calibration_check.py——v9/v10の勝敗判定はユーザーの判断（V10_SPEC）", False),
+         "ops.yml（7月）／手動 python calibration_check.py"
+         "——**封印は自動・v9/v10の勝敗判定はユーザーの判断**（V10_SPEC）", True),
+        # 2026-08-10: 錨を **git のコミット日 → 実行印(out/gate0_run.json)** へ。
+        #   実測では gate1_queue.json の直近コミットが門0と無関係の作業（予実台帳の基準印）で、
+        #   それでも盤は「期限内」と出していた。**年次作業ほど測り方が弱い**という倒錯を直す。
         ("gate0",   "米国門0発掘",             "年1(1-2月)", 430,
-         git_date("gate1_queue.json"),
+         json_field("out/gate0_run.json", "generated") or git_date("gate1_queue.json"),
          "python run_gate0_local.py（companyfacts.zip 1.4GB＝CI外）", False),
+        # 2026-08-10: rebuild_gate0_jp が **generated を "2026-08-03" にハードコード**していたため、
+        #   再実行しても去年の日付を名乗り**盤が永久に緑で固定**されていた（実行日を書くよう直した）。
+        #   ⚠auto は False のまま——**母集団の更新には EDINET鍵が要る**（run_gate0_jp_local.py）。
+        #     rebuild_gate0_jp は凍結スナップショットの**再ランク**であって母集団の再取得ではない。
         ("gate0jp", "日本株門0",               "年1",     430,
-         git_date("gate0_jp_queue.json"),
-         "python3 night/rebuild_gate0_jp.py --write（rerankは旧世代＝封鎖済み）", False),
+         json_field("gate0_jp_queue.json", "generated") or git_date("gate0_jp_queue.json"),
+         "python3 night/rebuild_gate0_jp.py --write（**再ランクのみ**。母集団の更新は "
+         "run_gate0_jp_local.py＝EDINET_API_KEY が要る）", "key"),
+        # 2026-08-10: 錨に **生成印(generated)** を優先させた（git コミット日は最後の手段）。
+        #   あわせて auto=**True**——実測では companyfacts.zip を使っておらず
+        #   （`grep zipfile night/backtest_core.py` は0件・per-CIK APIと独自キャッシュ）、
+        #   「資源制約で自動化できない」は**一度も試していない**の言い換えだった。
         ("backtest","疑似バックテスト",        "年1",     430,
-         max((git_date(os.path.relpath(f, BASE)) or "" for f in
+         max((json_field(os.path.relpath(f, BASE), "generated")
+              or git_date(os.path.relpath(f, BASE)) or "" for f in
               glob.glob(os.path.join(BASE, "out", "backtest_*.json"))), default=None) or None,
-         "python3 night/backtest_core.py", False),
+         "gate0.yml（年1・7月）／手動 python3 night/backtest_core.py", True),
     ]
     rows = []
     for id_, name, cad, due, last, how, auto in items:
@@ -173,6 +232,13 @@ def build():
             except Exception:
                 days = None
         state = "unknown" if days is None else ("due" if days > due else "ok")
+        # 2026-08-10: **鍵待ち(auto=="key")の作業を「停止疑い」と同じ赤にしない。**
+        #   鍵が無いのは*止まった*のではなく*まだ始めていない*——両方を同じ色にすると
+        #   盤が常時⚠になり、**本当に止まった作業がその中に埋もれる**
+        #   （鳴りすぎる警報は鳴らないのと同じ）。別の状態として出す。
+        #   ⚠**健全と読ませない**ためにラベルは残す＝「穴を明示する」の作法。
+        if state == "due" and auto == "key":
+            state = "nokey"
         rows.append({"id": id_, "name": name, "cadence": cad, "due_days": due,
                      "last": last, "days": days, "state": state, "how": how, "auto": auto})
     # 人のやるべきこと（宿題・決断待ち・機械で測れない定期ルーチン）は todo_list.json が正本。
@@ -183,7 +249,10 @@ def build():
     except Exception:
         pass
     return {"asof": today.isoformat(), "items": rows, "todos": todos,
-            "note": "state=due は「期限日数を超えて止まっている」の機械判定。unknown は日付が取れない＝健全と読まないこと"}
+            "note": "state=due は「期限日数を超えて止まっている」の機械判定。"
+                    "unknown は日付が取れない＝健全と読まないこと。"
+                    "**nokey は鍵待ち**（止まったのではなく、まだ始めていない）——"
+                    "健全ではないが『止まった』とも違うので別の色で出す"}
 
 
 def main():
@@ -192,9 +261,11 @@ def main():
     json.dump(out, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     n_due = sum(1 for r in out["items"] if r["state"] == "due")
     n_unk = sum(1 for r in out["items"] if r["state"] == "unknown")
-    print(f"運用サイクル {len(out['items'])}本: 期限内 {len(out['items'])-n_due-n_unk} / 停止疑い {n_due} / 不明 {n_unk}")
+    n_key = sum(1 for r in out["items"] if r["state"] == "nokey")
+    print(f"運用サイクル {len(out['items'])}本: 期限内 {len(out['items'])-n_due-n_unk-n_key}"
+          f" / 停止疑い {n_due} / 鍵待ち {n_key} / 不明 {n_unk}")
     for r in out["items"]:
-        mark = {"ok": "🟢", "due": "⚠", "unknown": "？"}[r["state"]]
+        mark = {"ok": "🟢", "due": "⚠", "unknown": "？", "nokey": "🔑"}[r["state"]]
         ago = "" if r["days"] is None else f"（{r['days']}日前・期限{r['due_days']}日）"
         print(f"  {mark} {r['name']:<14}（{r['cadence']}）最終 {r['last'] or '不明'}{ago}")
     return 0

@@ -24,21 +24,43 @@
 name: gate-ci
 
 on:
+  # 2026-08-10: **schedule を足した。** ここが最大の穴だった——
+  #   このCIが作る out/stale_bs.json ／ out/validate_fail.json ／ out/pack_stale.json は
+  #   **第四の関門そのもの**が読む（night/score_all.js:177-178 と index.html:4354,4368）。
+  #   回転盤(night/ops_status.py:122,129,141)は3本を「**毎営業日・期限4日**」と採点しているのに、
+  #   実際には push/PR のときしか走らず、しかも**書き戻していなかった**（下の permissions を見よ）。
+  #   一方 market.yml は毎営業日パックの per を書き換えて score_all を回す。
+  #   ＝**買付の顔ぶれだけが毎日更新され、それを裁く健全性の表は人が触った日にしか更新されない**
+  #   という、甘い側へ静かに壊れる形になっていた。
+  #   ⚠ bot の push は GITHUB_TOKEN なので（GitHubの再帰防止で）このCIを起動しない。
+  #     だから push トリガでは代わりにならず、schedule が要る。
+  schedule:
+    - cron: '0 22 * * 1-5'   # 平日 22:00 UTC＝market.yml(21:30)の後・events.yml(22:10)の前
   push:
     branches: ['**']
     paths:
       - 'index.html'
       - 'chomirai.html'
       - 'ami.html'
+      - 'portfolio.html'
+      - 'saiten.html'
+      - 'v10.html'
       - 'portfolio.json'
+      - 'todo_list.json'
+      - 'kanshi_list.json'
+      - 'gate_exceptions.json'
+      - '*.py'
       - 'night/**'
       - 'out/**'
       - '.github/workflows/ci.yml'
   pull_request:
   workflow_dispatch:
 
+# 2026-08-10: read → write。**検査の結果を残すため**（下の「検査結果のコミット」を見よ）。
+#   このCIが**採点や台帳に書き込まない**という思想は不変——書くのは out/ の検査結果JSONだけで、
+#   パックにも index.html にも触れない。
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   check:
@@ -163,9 +185,13 @@ jobs:
       #   SECへ問い合わせるので**判定圏(Ω72+)だけ**。ネットワークが不調でも落とさない
       #   （検査できないことを「異常なし」と偽らないため、失敗はログに残す）。
       #   out/stale_bs.json は score_all.js と門の Ⅵ が第四の関門として読む。
+      #   ⚠2026-08-10: **--write が付いていなかった**——out/stale_bs.json は第四の関門が読むのに
+      #     CIは生成すらしていなかった（night/audit_stale_bs.py:65 が `WRITE = "--write" in ARGV`）。
+      #     しかも回転盤の案内文(night/ops_status.py:124)は --write 付きで書いてあった＝
+      #     **盤が「CIが回している」と言っている作業をCIは回していなかった**。
       - name: 期末後の重大事象 audit_stale_bs（表示のみ・SEC問い合わせ）
         continue-on-error: true
-        run: timeout 900 python3 night/audit_stale_bs.py | tail -25
+        run: timeout 900 python3 night/audit_stale_bs.py --write | tail -25
 
       # ── 5-c. パックより新しい年次報告が出ていないか（2026-08-07新設）─────────────
       #   audit_stale_bs は**のれんの入替**しか見ないので、買収をしない優良企業が
@@ -190,10 +216,97 @@ jobs:
         continue-on-error: true
         run: python3 night/audit_irr70.py | tail -20
 
+      # ── 6-c. 索引と実パックの整合（2026-08-10新設・表示のみ）────────────────────
+      #   out/packs_index.json は **Ⅵ一括取込の目録**であり、v9.9.102 の**孤児レコード関門**
+      #   （index.html:4349）の母集団でもある。生成者は night/make_chunks.py だけで、
+      #   **どのCIからも呼ばれない**＝索引と実パックがずれても誰も言わない。
+      #   実害の前例: 6146 を追加した日に索引が316件のままで、一括取込しても台帳に入らなかった。
+      - name: 索引と実パックの整合（表示のみ）
+        continue-on-error: true
+        run: |
+          python3 - <<'EOF'
+          import glob, json, os, sys
+          # ⚠ packs_index.json が持つのは**ファイル名**（'MSFT_gate_pack.json'）であってティッカーではない。
+          #   ティッカーの集合と突き合わせると **件数は 369/369 で一致するのに全件ズレて見える**
+          #   ——この検査を書いた当日に実際に踏んだ。「基準の違う二つを割る」型の同族なので、
+          #   **両側をファイル名に揃えてから**比べる。
+          idx = json.load(open('out/packs_index.json', encoding='utf-8'))
+          i = set(idx.get('packs') or [])
+          a = set(os.path.basename(p) for p in glob.glob('out/*_gate_pack.json'))
+          print(f'索引 {len(i)}件 / 実パック {len(a)}件')
+          only_i, only_a = sorted(i - a), sorted(a - i)
+          if only_i: print('⚠ 索引にあるが実体が無い:', only_i)
+          if only_a: print('⚠ 実体はあるが索引に無い（Ⅵ一括取込で台帳へ入らない）:', only_a)
+          if not (only_i or only_a): print('✓ 一致')
+          EOF
+
+      # ── 6-d. explain_score と score_all が同じことを言うか（2026-08-10新設）───────
+      #   night/explain_score.js は**判定式を書き写していたせいで3版ぶん取り残された**前歴がある
+      #   （v9.9.98でE[r]遮断器を外した後も要求し続け、WSTで buy が食い違った）。
+      #   今は score_all の buyGate を import する正しい形だが、**写し戻しを検出する仕掛けが無い**。
+      #   v9.9.65「同じ台帳を見る二つの検査器が違うことを言ってはいけない」の番人。
+      - name: explain_score と score_all の一致（v9.9.65の番人）
+        continue-on-error: true
+        run: |
+          node -e "
+            const {buyGate}=require('./night/score_all.js');
+            if(typeof buyGate!=='function'){console.error('✗ score_all が buyGate を export していない');process.exit(1);}
+            const src=require('fs').readFileSync('night/explain_score.js','utf8');
+            if(!/require\(.\.\/score_all/.test(src)&&!/buyGate/.test(src)){
+              console.error('✗ explain_score が buyGate を呼んでいない＝判定式を写した疑い');process.exit(1);}
+            console.log('✓ explain_score は score_all の buyGate を共有している');
+          "
+
+      # ── 6-e. 表示のみの監査（2026-08-10接続・落とさない）──────────────────────
+      #   4本ともネット不要・数秒で終わるのに、どのCIからも呼ばれていなかった。
+      #   audit_irr70 が既にここに居る以上、同種を外している理由が無い。
+      #   とくに audit_basis は「基準の混在は消せなくても**見えるようにしておく**」ための道具で、
+      #   その道具自体が見えていなかった。
+      - name: 堀の根拠・根拠被覆・基準の混在・dom空欄の下駄（表示のみ）
+        continue-on-error: true
+        run: |
+          python3 night/audit_moat.py --q75 | tail -12
+          python3 night/audit_evidence.py --q75 | tail -12
+          python3 night/audit_basis.py | tail -10
+          node night/audit_dom_blank.js | tail -12
+
+      # ── 6-f. 人の作業リスト自身の健康診断（2026-08-10新設・落とさない）──────────
+      #   ops_status は**機械の周期作業**を測るが、**人の作業と判断の正本(todo_list.json)を
+      #   測るものが無かった**。実測で未完了67件のうち解決済み3件・件数のズレ2件。
+      #   **古い作業リストは無いより悪い**——「まだ残っている」と嘘をつくので本物が埋もれる。
+      #   あわせて gate_exceptions.json ↔ todo_list.json を突き合わせる
+      #   （片方にだけ足すと**四半期の財務監視が付かない＝警報を切ったまま乗る**）。
+      - name: 作業リストの健康診断 audit_todo（表示のみ）
+        continue-on-error: true
+        run: python3 night/audit_todo.py --json | tail -25
+
+      # ── 6-g. 検出器の出力を再審査の待ち行列へ流す（2026-08-10新設・表示のみ）──────
+      #   この門は検出器を増やしてきたが、**見つけたものを誰にも渡していなかった**——
+      #   audit_pack_stale / audit_stale_bs / validate_packs / watch_new_listings /
+      #   watch_events のどれも渡し先が無く、しかも make_chunks は
+      #   **既にパックのある社を除外する**ので再審査は構造的にキューへ載らなかった。
+      #   ここで優先度つきの待ち行列にする（優先度＝門の中での位置＋理由の重み）。
+      - name: 再審査の待ち行列 enqueue_reaudit（表示のみ・判定に不使用）
+        continue-on-error: true
+        run: python3 night/enqueue_reaudit.py --json | head -25
+
       # ── 7. 根拠の被覆（既知の積み残し。落とさない）────────────────────────────
       - name: 納品検査 validate_packs（表示のみ）
         continue-on-error: true
         run: python3 night/validate_packs.py --summary | tail -10
+
+      # ── 7-b. **実ブラウザで369件を取り込んでから**の検査（2026-08-10接続）───────
+      #   night/check_mobile_fit.js は playwright で ⭳全パック一括取込を実行してから
+      #   360px 幅で全9タブのはみ出しを見るが、**CIに入っていなかった**（自分で「CIには
+      #   入れていない」と書いてあった）。表示事故は**データを入れて初めて出る**種類で、
+      #   v9.9.114/116 は実際に「台帳が空のまま走査して素通り」で見逃している。
+      #   ⚠ playwright は重いので **schedule と手動のときだけ**（push毎には回さない）。
+      - name: 実ブラウザ検証（369件取込→360pxで全タブ・scheduleと手動のみ）
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        run: |
+          npm i -D playwright >/dev/null 2>&1 || true
+          node night/check_mobile_fit.js 2>&1 | tail -25
 
       # ── 8. ページの重さの予算（1.7MBまで肥大した実績があるので歯止め）──────────
       - name: ページサイズの予算
@@ -212,3 +325,26 @@ jobs:
               sys.exit(1)
           print('✓ 予算内')
           EOF
+
+      # ── 9. 検査結果のコミット（2026-08-10新設）──────────────────────────────
+      #   **ここが無かったせいで、上の検査は毎回走って毎回捨てられていた。**
+      #   out/stale_bs.json ／ out/validate_fail.json ／ out/pack_stale.json は
+      #   第四の関門（データ健全）の入力そのもので、直近の更新は3本とも「人が手で回した日」だった。
+      #
+      #   **schedule と手動実行のときだけ**コミットする理由:
+      #     ・push トリガでコミットすると、作業中のブランチに bot のコミットが割り込む
+      #     ・PR では書き込み権限が無いことがある（fork 由来）
+      #   ＝**人の作業の邪魔をせず、誰も触らない日にだけ機械が更新する**形にする。
+      - name: 検査結果のコミット（scheduleと手動実行のときだけ）
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name  "ccf-gate bot"
+          git config user.email "noreply@github.com"
+          git add out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json night/reaudit_queue.json 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "検査結果に変化なし"
+          else
+            N=$(python3 -c "import json;print(len(json.load(open('out/validate_fail.json')).get('rows',[])))" 2>/dev/null || echo "?")
+            git commit -m "gate checks $(date -u +%F)｜納品検査FAIL ${N}件"
+            git push
+          fi

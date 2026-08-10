@@ -742,6 +742,38 @@
    "tickers": [],
    "title": "検定の数字が画面に出るのに在庫へ書かれていなかった（hist_val2_outcome の置換検定）——是正済み",
    "note": "【2026-08-10 発見・同日是正】\nnight/hist_val2_outcome.py は `\"permutation\": {}` を初期化したまま**一度も代入していなかった**ので、置換検定の結果が**画面には出るが在庫に残らない**状態だった。報告に載った数字（偶然に1セルでも通る確率 2013 0.117 / 2015 0.024 / 2018 0.000・濃縮の中心の帰無帯）を**在庫からは検算できなかった**。\n`out[\"permutation\"][f\"{y}/{pk}\"] = pr` を足して解消。再実行すると差分は **permutation キーだけ**（他は完全一致＝決定的）で、数字も報告と一致（P_wide 0.1175 / 0.024 / 0.000）。\n\n**★型としての教訓**: night/hist_val_regime.py の `if __name__` 置き忘れ（2026-08-09・スクリプトとして回しても在庫が更新されなかった）と**同族**。あちらは『検定を回したつもりで回っていない』、こちらは『**回したが記録が残っていない**』。どちらも**一番静かな壊れ方**で、報告だけを見ていると気づけない。\n**掟: 画面に出す数字は必ず在庫にも書く。**次に検定器を書くときは、出力 dict へ代入する行と print する行を必ず対にすること。"
+  },
+  {
+   "id": "secret_anthropic",
+   "kind": "宿題",
+   "title": "ANTHROPIC_API_KEY を GitHub Secrets に置く（門2審査の自動化）",
+   "note": "2026-08-10に .github/workflows/review.yml と night/review_runner.sh を新設した。鍵を Settings → Secrets and variables → Actions へ置くと**平日17:00UTCに待ち行列の先頭2社を審査**し、**PRを作る**（mainへは書かない＝マージが審査官の手）。納品検査を通らないパックは捨てる。鍵が無ければ何もせず終了する（既存ファイルは壊さない）。実測 night/progress.json は pending_review 13 のまま1週間動いていない。",
+   "done": false,
+   "added": "2026-08-10"
+  },
+  {
+   "id": "secret_av",
+   "kind": "宿題",
+   "title": "AV_KEY（Alpha Vantage・無料）を Secrets に置く",
+   "note": "out/next_earnings.json は**28件すべて src=est**（SECからの推定日）。EARNINGS_CALENDAR は1リクエストで全社ぶん取れるので無料枠25回/日でも足りる。perF の充填にも効く（投下可10社中 perF があるのは4社・gcap は0社）。",
+   "done": false,
+   "added": "2026-08-10"
+  },
+  {
+   "id": "auto_import_decision",
+   "kind": "決断待ち",
+   "title": "門の起動時に**自動で**一括取込するか（今は検出して知らせるだけ）",
+   "note": "v9.9.128でⅣ台帳の先頭に「台帳に入っていないパックがN社」を出すようにしたが、**取り込むかは人が押す**ままにした。理由: 一括取込は台帳のレコードを置き換えるので、Ⅲ採点機で直した値を無言で巻き戻す事故になりうる（キーエンスで記録した型）。完全自動にするなら ccfCheckPacksFresh の中で ccfImportAllPacks を呼ぶだけ＝1行。",
+   "done": false,
+   "added": "2026-08-10"
+  },
+  {
+   "id": "localstorage_source_of_truth",
+   "kind": "決断待ち",
+   "title": "決定を持つキーを localStorage から repo へ移すか",
+   "note": "pf:weights(目標ウェイト)・pf:portfolio(株数)・pf:sold(売却記録)・g7log:(検証履歴)・g7ignite:map(点灯日) は**localStorageが正本で repo にコピーが無い**。2026-08-10にバックアップの対象へ入れたが、**バックアップを人が押さないと消える**のは変わらない。repo側へ移せば盤で鮮度を測れる。門の設計の根幹に触るのでユーザーの判断。",
+   "done": false,
+   "added": "2026-08-10"
   }
  ]
 }

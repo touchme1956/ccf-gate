@@ -12,6 +12,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+  issues: write   # 2026-08-10: 行動が要ることを Issue で届ける（下の notify）
 jobs:
   watch:
     runs-on: ubuntu-latest
@@ -26,6 +27,37 @@ jobs:
         run: python3 night/watch_events.py
       - name: 運用サイクルの回転状態を実測（毎日——止まった作業を翌日には⚠にする）
         run: python3 night/ops_status.py
+      # ── 通知（2026-08-10新設）─────────────────────────────────────────────
+      #   CIの全ステップは continue-on-error で、**失敗しても翌日 ops_status が⚠にするまで
+      #   誰も知らない**。門の🔔タブは表示するが**開いた人にしか届かない**。
+      #   20-30年回す前提で「知らせる経路が人が見に行くだけ」は弱いので、
+      #   **行動が要ることだけ**を Issue にする（通知が飛び、閉じるまで消えない）。
+      #   ⚠**冪等が肝**——毎日走るので、同じことで Issue が増えたらそれ自体が警報の死になる。
+      #     本文に <!--ccf:キー--> を埋め、同じキーの open issue が有れば作らない。
+      #     キーは「何が起きたか」で作るので**状態が変われば新しい Issue・変わらなければ増えない**。
+      - name: 行動が要ることを Issue にする
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 night/notify_issues.py --json > /tmp/issues.json
+          python3 - <<'PY' > /tmp/todo_issues.tsv
+          import json
+          d = json.load(open('/tmp/issues.json', encoding='utf-8'))
+          for o in d.get('issues', []):
+              body = o['body'] + "\n\n<!--ccf:" + o['k'] + "-->"
+              print("\t".join([o['k'], o['title'], ",".join(o.get('labels') or []),
+                                body.replace("\n", "\\n")]))
+          PY
+          while IFS=$'\t' read -r K T L B; do
+            [ -z "$K" ] && continue
+            if gh issue list --state open --search "ccf:$K" --json number --jq 'length' | grep -qv '^0$'; then
+              echo "既にある: $K"; continue
+            fi
+            printf '%b' "$B" > /tmp/body.md
+            gh issue create --title "$T" --body-file /tmp/body.md || echo "issue作成に失敗: $T"
+          done < /tmp/todo_issues.tsv
+
       - name: コミット（警報があれば件名に出す——毎日のノイズに埋もれさせない）
         run: |
           git config user.name  "ccf-gate bot"
