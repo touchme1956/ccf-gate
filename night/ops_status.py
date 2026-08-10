@@ -88,6 +88,24 @@ def build():
          json_field("out/hist_val_now.json", "asof"),
          "ops.yml 毎月2日／手動 python3 night/hist_valuation.py --asof 〈今日の日付〉 "
          "--tickers kanshi_list.json --out out/hist_val_now.json", True),
+        # v9.9.125(2026-08-09): 銘柄ごとの企業説明（Ⅳ台帳・Ⅵ買付順位の🏢チップ／表示専用）。
+        #   止まっても判定は動かないが、**新しく審査した社の説明が出ないまま気づかれない**ので盤に載せる。
+        ("profiles", "企業説明(原本Item1)",   "月1",     40,
+         json_field("out/profiles.json", "generated"),
+         "ops.yml 毎月2日／手動 python3 night/fetch_profiles.py", True),
+        # 2026-08-09: 門外例外（特別枠）の四半期監視。**止まると甘い側へ壊れる**——
+        #   例外は「門が止めているものを承知で越える」判断で、パックは年次基準なので
+        #   止めている当の指標(nde)が年1回しか更新されない。この道具が回らないと
+        #   **警報を切ったまま乗る**ことになる。
+        ("excwatch", "門外例外の四半期監視",  "四半期",  100,
+         json_field("out/exception_watch.json", "asof"),
+         "ops.yml 毎月2日／手動 python3 night/watch_exceptions.py", True),
+        # v9.9.124(2026-08-09): irr=85 の実績台帳（別枠85・席の優先の特権をどの社に与えるかを決める）。
+        #   **止まると穴が開く向きが危ない**——新しく irr=85 になった社は台帳に載らず「中立」扱いで
+        #   特権を受ける。実績が悪い社でもそうなるので、載せ直しが止まると**甘い側へ静かに壊れる**。
+        ("irr85hist", "irr=85の実績台帳",      "月1",     40,
+         json_field("out/irr85_history.json", "generated"),
+         "ops.yml 毎月2日／手動 python3 night/irr85_mech_test.py --json", True),
         # v9.9.94(2026-08-06): 期末後の重大事象の検査。**回っているかを盤で見張る**——
         #   この検査が黙って止まると「パックが会社の現在を描いていない」銘柄が
         #   何食わぬ顔で投下可に戻る（APHがまさにその状態で資産の6.3%を受けていた）。

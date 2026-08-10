@@ -12,7 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.dirname(__dirname);
-const { scorePack, lastCoerce } = require('./score_all.js');
+const { scorePack, lastCoerce, buyGate } = require('./score_all.js');
 
 const argv = process.argv.slice(2);
 let tickers = argv.filter(a => !a.startsWith('--'));
@@ -38,8 +38,12 @@ for (const t of tickers) {
   const mg = ccfMoatGate(r, d) || {};
   const x = ccfXJudge(d, parseFloat(r.evalScore)) || {};
   const m = ccfMoat(d) || {};
-  // B5(2026-08-04): buy は score_all.js と同じ**四関門**（v9.9.98でE[r]を外した）で出す。第四＝全件点検（要修正0かつ
-  //   未解決warn0）。従来この道具だけ旧・関門のままで、score_all と逆のことを言えた（v9.9.65違反）。
+  // B5(2026-08-04): buy は score_all.js と同じ**四関門**で出す。従来この道具だけ旧・関門のままで、
+  //   score_all と逆のことを言えた（v9.9.65違反）。
+  // 【2026-08-09 再発していた】v9.9.98でE[r]を合否から外し・v9.9.99で事業の収縮を足し・v9.9.119でirr=85の別枠を
+  //   入れ・v9.9.94/95で期末後の重大事象と納品検査FAILを関門にしたのに、**この行だけ3版ぶん取り残されていた**
+  //   （実測: WST を score_all は buy=true・この道具は buy=false と出していた）。
+  //   → **判定式を書き写さず score_all.js の buyGate() を呼ぶ**。写した時点で必ずまた割れる。
   let audE = 0, audU = 0;
   try {
     const M = d._meta || {};
@@ -65,7 +69,7 @@ for (const t of tickers) {
     // 関門
     xEr: x.xEr != null ? +x.xEr.toFixed(1) : null, xPass: x.xPass,
     moatOK: !!mg.pass, audE, audU, audOK: audE === 0 && audU === 0,
-    buy: parseFloat(r.evalScore) >= 75 && x.xPass === true && mg.pass === true && audE === 0 && audU === 0,
+    buy: buyGate(t, d, parseFloat(r.evalScore), mg, audE, audU, r),   // v9.9.122: 別枠は r（二本柱）を要る
     exit: r.exit && r.exit.level,
   });
 }

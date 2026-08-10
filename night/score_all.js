@@ -90,7 +90,8 @@ if (typeof compute !== 'function') {
 // B23(2026-08-04): compute だけでなく関門3関数も存在検問する。従来は呼び出し側の try/catch が
 //   関数消失を黙って飲み、**ccfAudit が消えると audE=0＝audOK=true＝第四の関門が静かに無効化**する
 //   方向に壊れた（「鳴らない警報は鳴りすぎる警報と同じ」）。抽出に失敗したら大声で止まる。
-for (const fn of ['ccfXJudge', 'ccfMoatGate', 'ccfAudit', 'ccfAllocTop']) {
+for (const fn of ['ccfXJudge', 'ccfMoatGate', 'ccfAudit', 'ccfAllocTop', 'ccfShrinkGate', 'ccfIrr85Frame',
+  'ccfIrr85Below']) {
   if (typeof global[fn] !== 'function' && typeof globalThis[fn] !== 'function') {
     console.error(`${fn}() を読み込めなかった。index.html の構造が変わった可能性がある——`
       + '関門の関数が無いまま続けると「点検が通った」という偽の結果を作るので中断する');
@@ -108,6 +109,15 @@ if (!KEYS.length) {
     + '門の構造が変わっている——このまま続けると全パックが既定値で採点されるので中断する');
   process.exit(1);
 }
+
+// v9.9.124: 門はこの台帳を fetch で読むが、端末には fetch が無いのでファイルから同じものを入れる。
+//   **同じ台帳を見る二つの検査器が違うことを言ってはいけない**(v9.9.65)——判定は門の ccfIrr85Below が
+//   単一実装で、ここは中身を渡すだけ。無ければ空＝検査は眠るだけ（ルール7）。
+try {
+  const hp = path.join(ROOT, 'out', 'irr85_history.json');
+  if (fs.existsSync(hp))
+    Object.assign(global.CCF_IRR85_HIST, JSON.parse(fs.readFileSync(hp, 'utf8')).items || {});
+} catch (e) {}
 
 // B4(2026-08-04): 門の applyFields は「黙って化けた」欄を __coerce に記録して ccfAudit へ渡す
 //   （v9.9.54＝acq5=2.8 が 'yes' に化けて罰が黙って効いた発生点の痕跡）。端末側の再実装は
@@ -145,7 +155,39 @@ function scorePack(d) {
   }
   return compute();
 }
-module.exports = { scorePack, lastCoerce, KEYS, SELECTS };
+// 四関門の単一実装（2026-08-09新設）。**判定式を書き写さない**——explain_score.js がこの行を
+//   書き写していたせいで v9.9.98/99/119 の改定に3版ぶん取り残され、同じ台帳を見て score_all と
+//   逆のことを言っていた（実測 WST: score_all=buy / explain_score=not buy）＝v9.9.65 の掟の破れ。
+//   門(index.html)側の pass=q75c と同一規則。
+// STALE/VFAIL は `if (require.main !== module) return;` より後で宣言されるので、
+//   **module として読まれたときはTDZに入る**。両方の文脈で同じ答えを出すために遅延ロードする。
+let _gates = null;
+function gates() {
+  if (_gates) return _gates;
+  const rd = (f, ok) => {
+    const o = {};
+    try {
+      const pp = path.join(ROOT, 'out', f);
+      if (fs.existsSync(pp))
+        for (const [k, v] of Object.entries(JSON.parse(fs.readFileSync(pp, 'utf8')).items || {}))
+          if (ok(v)) o[k] = v;
+    } catch (e) {}          // 無ければ空＝検査は眠るだけ（無いことを「異常なし」と偽らない・ルール7）
+    return o;
+  };
+  return (_gates = { stale: rd('stale_bs.json', v => v && v.verdict === '要審査'),
+                     vfail: rd('validate_fail.json', v => v && (v.n || 0) > 0) });
+}
+function buyGate(t, dd, s, mg, audE, audU, r) {
+  const g = gates();
+  // v9.9.122: 別枠は **r（compute()の結果）** を要る——二本柱の陥落を免除しないため。
+  //   r を渡さない呼び出しは別枠が立たない側へ倒れる（特権は測れないときに与えない）。
+  const f85 = ccfIrr85Frame(dd, r);     // v9.9.119/122: irr=85 の別枠（Ωの線だけ免除・二本柱は免除しない）
+  const shrink = ccfShrinkGate(dd);     // v9.9.99: 事業の収縮
+  return (s >= 75 || f85.pass) && mg.pass === true && audE === 0 && audU === 0
+         && !g.stale[t] && !g.vfail[t] && !shrink.hit;
+}
+
+module.exports = { scorePack, lastCoerce, buyGate, KEYS, SELECTS };
 
 if (require.main !== module) return;
 
@@ -170,14 +212,7 @@ for (const kv of (arg('--set') || '').split(',').filter(Boolean)) {
 //   のれんは10,575→17,555百万$(+66%)、のれん＋無形は自己資本の96%→147%へ。
 //   既存の鮮度検査は reportDate と auditDate の「年」しか見ないので**同じ年のこれは素通り**だった。
 //   ファイルが無ければ空＝検査は眠るだけ（無いことを「異常なし」と偽らない・絶対のルール7）。
-let STALE = {};
-try {
-  const sp = path.join(ROOT, 'out', 'stale_bs.json');
-  if (fs.existsSync(sp)) {
-    const j = JSON.parse(fs.readFileSync(sp, 'utf8'));
-    for (const [k, v] of Object.entries(j.items || {})) if (v && v.verdict === '要審査') STALE[k] = v;
-  }
-} catch (e) {}
+const STALE = gates().stale;
 
 // ── 納品検査(validate_packs)のFAILも第四の関門に入れる（v9.9.95・2026-08-07 ユーザー指示「いるとおもうなら入れて」）
 //   【なぜ入れるか】FAILの運用単位が「投下可10社」だったので、10番目の席が動くたびに
@@ -194,14 +229,7 @@ try {
 //   ※**v9.9.98（2026-08-07）で門X遮断器を関門から外したので呼称は「四関門」になった**
 //     （Ω75+ ∧ 堀70+ ∧ データ健全）。そのときは本文41箇所を実際にgrepで洗った。
 //   **買わない理由であって売る理由ではない**（Ω・堀・売却規律S1/S2/S3はいずれも不変）。
-let VFAIL = {};
-try {
-  const vp = path.join(ROOT, 'out', 'validate_fail.json');
-  if (fs.existsSync(vp)) {
-    const j = JSON.parse(fs.readFileSync(vp, 'utf8'));
-    for (const [k, v] of Object.entries(j.items || {})) if (v && (v.n || 0) > 0) VFAIL[k] = v;
-  }
-} catch (e) {}
+const VFAIL = gates().vfail;
 
 const rows = [];
 for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
@@ -235,6 +263,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
     }
   } catch (e) {}
   const shrink = ccfShrinkGate(dd);   // v9.9.99: 門の単一実装（再実装しない・v9.9.65の掟）
+  const f85 = ccfIrr85Frame(dd, r);   // v9.9.119/122: irr=85 の別枠（同上・門と同一実装）
   const s = parseFloat(r.evalScore);
   rows.push({ t, nm, jp, s, tier: r.tierShort,
               kills: r.kills, pfail: r.pfail, exit: r.exit && r.exit.level,
@@ -251,8 +280,12 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               irr: dd.irr,   // v9.9.100: 席の選定で irr=85 を優先するため（門の ccfAllocTop が読む）
               // v9.9.99(2026-08-07 ユーザー明示指示): **事業の収縮の遮断器**を第四の関門に。
               //   売上縮小 ∧ 営業利益率低下（門の単一実装 ccfShrinkGate を呼ぶ＝再実装しない）
-              buy: s >= 75 && mg.pass === true && audE === 0 && audU === 0
-                   && !STALE[t] && !VFAIL[t] && !shrink.hit });
+              // v9.9.119(2026-08-09 ユーザー明示指示「2いれて」): **irr=85 の別枠**。
+              //   irr=85 ∧ 歴史の継続組の下限（営利率11.9 / FCF転換0.64 / cagr1.8）∧ nde≤4 なら
+              //   Ω75+ を免除する。免除するのはΩの線だけで、堀・データ健全・収縮はそのまま。
+              //   根拠の全文は index.html の ccfIrr85Frame 頭注（門と同一実装＝v9.9.65の掟）
+              frame85: f85.pass ? (f85.why || true) : undefined,
+              buy: buyGate(t, dd, s, mg, audE, audU, r) });
 }
 rows.sort((a, b) => b.s - a.s);
 // v9.9.88(2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」): 第五の枠。
@@ -309,12 +342,15 @@ const blockers = r => {
   if (r.vFail) b.push(`⛔納品検査FAIL${r.vFail}`);
   return b.length ? b : ['—'];
 };
-const q75 = rows.filter(x => x.s >= 75);
-console.log('\nΩ75+（堀＝絶対MOAT指数／E[r]＝参考値・合否に不使用／点＝全件点検／買＝四関門すべて成立・v9.9.98）:');
+// v9.9.119: irr=85 の別枠で土俵に上がった社（Ω75未満）も**この表に出す**——
+//   出さないと「なぜΩ63.9の社が🟢に居るのか」が端末から追えず、門と端末が違うことを言う（v9.9.65）
+const q75 = rows.filter(x => x.s >= 75 || x.frame85).sort((a, b) => b.s - a.s);
+console.log('\nΩ75+（堀＝絶対MOAT指数／E[r]＝参考値・合否に不使用／点＝全件点検／買＝四関門すべて成立・v9.9.98）'
+  + '\n  ※【別枠85】＝irr=85 の別枠でΩ75+を免除して土俵に上がった社（v9.9.119）:');
 for (const r of q75) {
   const moat = r.moatNA ? ' NA ' : (r.moat == null ? '  — ' : r.moat.toFixed(0).padStart(3) + ' ');
   const aud = r.audOK ? '  ✓' : `${r.audE ? '要' + r.audE : ''}${r.audU ? '未' + r.audU : ''}`.padStart(3) + '✗';
-  console.log(`  ${r.nm.slice(0, 24).padEnd(26)} Ω${r.s.toFixed(1).padStart(5)}  堀${moat}${r.moatOK ? '✓' : '✗'}`
+  console.log(`  ${(r.nm.slice(0, 24) + (r.frame85 && r.s < 75 ? '【別枠85】' : '')).padEnd(26)} Ω${r.s.toFixed(1).padStart(5)}  堀${moat}${r.moatOK ? '✓' : '✗'}`
     // v9.9.100: E[r] の ✓/✗ を外した——v9.9.98 で E[r] は合否に効かなくなったのに、
     //   ✓/✗ が残っていると『これで落ちている』と読めてしまう（落ちた理由は blockers が名指しする）。
     + `  E[r]${r.xEr == null ? '  na' : r.xEr.toFixed(0).padStart(4) + '%'} `
