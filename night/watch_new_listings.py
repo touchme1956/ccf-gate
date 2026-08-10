@@ -46,10 +46,18 @@ night/watch_new_listings.py — **上場後1年で irr=85 を測れるように�
   つまり「新規」と言えるのは**両方とも否定できたときだけ**＝取りこぼす側に倒れる。
 
 使い方:
-  python3 night/watch_new_listings.py                 直近420日の年次報告を掃く
+  python3 night/watch_new_listings.py                 直近420日の年次報告を掃く（作業リストだけ出す）
   python3 night/watch_new_listings.py --days 420 --newdays 900
   python3 night/watch_new_listings.py --s1            IPO目論見書(S-1/424B4/F-1)も掃く
+  python3 night/watch_new_listings.py --all           一般語だけの社まで全件出す
   python3 night/watch_new_listings.py --json          機械可読で出す
+
+■ 実測（初回・2026-08-10／窓 2025-06-16..2026-08-10・新規の線 2024-02-22）
+  掃いた 1,066社 → 新規上場組 **186社** → **作業リストは6社**
+  （機構語STRONGを持つ社だけに絞る。一般語 'qualification requirements' 等まで並べると
+    REIT・白地小切手・アパレルが180社並んで**鳴りすぎる警報は鳴らないのと同じ**になる）
+    KRMN w7 ⚠根拠なし ／ ALAB w5 📖読解済み(提案85→反証70) ／ LOAR w4 ✓測定済み(85) ／
+    FLY w4 🆕未審査 ／ SELX w3 🆕未審査 ／ YSS w3 🆕未審査
 """
 import datetime
 import glob
@@ -80,6 +88,7 @@ DAYS = arg("--days", 420, int)        # 年次報告を掃く窓。上場1年目
 NEWDAYS = arg("--newdays", 900, int)  # 「最初の年次報告がこの日数以内＝新規上場組」
 AS_JSON = "--json" in sys.argv
 WITH_S1 = "--s1" in sys.argv
+SHOW_ALL = "--all" in sys.argv     # 一般語だけの社まで全部出す（既定は作業リストのみ）
 MAXPAGE = arg("--maxpage", 300, int)  # 1フレーズあたり拾う最大件数（多すぎる一般語の暴走止め）
 
 
@@ -177,6 +186,34 @@ def ledger():
     return out
 
 
+def already_read():
+    """**パックが無くても読解済みの社**: ticker → {irr, why}
+    2026-08-08 の全母集団スイープは403社を原本で読んだが、**85が出なかった社はパック化していない**。
+    ここを見ないと、毎月の掃除が同じ403社を「未審査」として出し続ける＝
+    作業リストが本物でなくなる（鳴りすぎる警報は鳴らないのと同じ）。
+    ⚠ rows は**読解者の提案**なので、反証(triage)で覆った社は最終値で上書きする
+       ——実測: ALAB は提案85 → 反証で70（『If we fail to achieve design wins』＝NVDAと同型）"""
+    out = {}
+    try:
+        for r in (json.load(open("out/irr85_hunt_result.json", encoding="utf-8")).get("rows") or []):
+            t = (r.get("ticker") or r.get("t") or "").upper()
+            if t:
+                out[t] = {"irr": r.get("irr"), "why": (r.get("why") or "")[:300],
+                          "src": "hunt2026-08-08"}
+    except Exception:
+        pass
+    try:
+        for r in (json.load(open("out/irr85_hunt_triage.json", encoding="utf-8")).get("refuted") or []):
+            t = (r.get("ticker") or "").upper()
+            if t:
+                out[t] = {"irr": r.get("finalIrr"), "why": (r.get("reason") or "")[:300],
+                          "src": "hunt2026-08-08/反証", "was": r.get("was"),
+                          "failureMode": r.get("failureMode")}
+    except Exception:
+        pass
+    return out
+
+
 def main():
     m = load_phrases()
     end = datetime.date.today()
@@ -194,7 +231,7 @@ def main():
             t["score"] = max(t.get("score", 0), d["score"])
             t["strong"] = sorted(set(t.get("strong", [])) | set(d["strong"]))
 
-    led = ledger()
+    led, red = ledger(), already_read()
     cut = (end - datetime.timedelta(days=NEWDAYS)).isoformat()
     print(f"■ {len(hits)}社の提出履歴を引いて「最初の年次報告が {cut} 以降」を選ぶ", file=sys.stderr)
     rows = []
@@ -205,26 +242,33 @@ def main():
             continue                       # 古い提出が在る／年次報告がまだ無い／古参 → 新規ではない
         t = (d["ticker"] or tk2 or "").upper()
         irr, has_ev = led.get(t, (None, None))
+        rd = red.get(t)
         state = ("✓測定済み" if (t in led and has_ev)
                  else "⚠根拠なし" if t in led
+                 else "📖読解済み" if rd
                  else "🆕未審査")
         rows.append({"cik": c, "t": t or None, "nm": d["name"], "sic": sic,
                      "firstAnnual": fa, "latestAnnual": la,
                      "score": d["score"], "strong": d["strong"], "aspir": d["aspir"],
                      "ph": sorted(d["ph"]), "ipoDoc": bool(d.get("ipo_doc")),
-                     "packIrr": irr, "hasEvidence": has_ev, "state": state})
+                     "packIrr": irr, "hasEvidence": has_ev, "read": rd, "state": state})
         if (i + 1) % 50 == 0:
             print(f"    …{i+1}/{len(hits)}社 照会済み・該当{len(rows)}社", file=sys.stderr)
 
     rows.sort(key=lambda r: (-r["score"], r["firstAnnual"]))
+    work = [r for r in rows if r["strong"] or r["state"] == "⚠根拠なし"]
     doc = {"generated": end.isoformat(),
            "window": f"{start}..{end}", "newSince": cut,
            "note": "上場後1年前後で最初の年次報告を出した会社のうち、irr の機構語を含む社。"
                    "**判定ではなく作業リスト**——irr の刻みは原本を読む審査官が決める（絶対のルール2）。"
-                   "SEC提出書類のみ＝日本株は対象外（EDINETは別経路＝穴として明示）。",
-           "nSwept": len(hits), "n": len(rows),
+                   "SEC提出書類のみ＝日本株は対象外（EDINETは別経路＝穴として明示）。"
+                   "作業リスト(work)は**機構語STRONGを含む社と、パックはあるが irr の根拠が空の社**だけ"
+                   "——一般語(qualification requirements 等)だけの社まで並べると"
+                   "『鳴りすぎる警報は鳴らないのと同じ』になるため。全件は rows に在る。",
+           "nSwept": len(hits), "n": len(rows), "nWork": len(work),
            "counts": {k: sum(1 for r in rows if r["state"] == k)
-                      for k in ("🆕未審査", "⚠根拠なし", "✓測定済み")},
+                      for k in ("🆕未審査", "📖読解済み", "⚠根拠なし", "✓測定済み")},
+           "work": [r["t"] or r["cik"] for r in work],
            "rows": rows}
     json.dump(doc, open("out/new_listings_irr.json", "w", encoding="utf-8"),
               ensure_ascii=False, indent=1)
@@ -232,18 +276,23 @@ def main():
     if AS_JSON:
         print(json.dumps(doc, ensure_ascii=False, indent=1))
         return 0
-    print(f"\n■ 上場後1年前後の新規社で irr の機構語を持つ社 {len(rows)}社"
-          f"（掃いた {len(hits)}社から）")
-    print(f"   {doc['counts']}")
-    print(f"\n{'状態':<10}{'':<7}{'強度':>3}  {'初回年次':<11}{'業種':<34}機構語")
-    for r in rows:
-        if r["score"] < 2 and r["state"] == "✓測定済み":
-            continue
-        print("%-10s%-7s%3d  %-11s%-34s%s"
+    print(f"\n■ 上場後1年前後の新規社 {len(rows)}社（掃いた {len(hits)}社から）　{doc['counts']}")
+    print(f"■ 作業リスト {len(work)}社＝機構語STRONGを含む社 ＋ irr の根拠が空の社\n")
+    print(f"{'状態':<10}{'':<7}{'強度':>3}  {'初回年次':<11}{'業種':<26}機構語 / 既に読んだ結論")
+    for r in (rows if SHOW_ALL else work):
+        note = ",".join(r["strong"] or r["ph"])[:44]
+        if r["read"]:
+            note += f"  → 読解済み irr={r['read'].get('irr')}"
+            if r["read"].get("was"):
+                note += f"（提案{r['read']['was']}→反証: {r['read'].get('failureMode')}）"
+        elif r["state"] == "⚠根拠なし":
+            note += f"  → 台帳 irr={r['packIrr']} だが根拠が空"
+        print("%-10s%-7s%3d  %-11s%-26s%s"
               % (r["state"], r["t"] or "—", r["score"], r["firstAnnual"],
-                 (r["sic"] or "")[:32], ",".join(r["strong"] or r["ph"])[:60]))
-    print("\n→ out/new_listings_irr.json")
-    print("   🆕未審査 は hachimon_fetch → 門2審査へ／⚠根拠なし は原本で irr を読み直す")
+                 (r["sic"] or "")[:24], note))
+    print("\n→ out/new_listings_irr.json（--all で全件・--s1 でIPO目論見書も掃く）")
+    print("   🆕未審査 は hachimon_fetch → 門2審査へ／⚠根拠なし は原本で irr を読み直す／"
+          "📖読解済み は 2026-08-08 のスイープで結論が出ている（再読しない）")
     return 0
 
 
