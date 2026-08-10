@@ -211,6 +211,17 @@ def already_read():
                           "failureMode": r.get("failureMode")}
     except Exception:
         pass
+    # 継続的な読解台帳（2026-08-10新設）——**この掃除で読んだ社をここに積む**。
+    #   一回きりのスイープの成果物(hunt2026-08-08)だけを見ていると、今月読んだ社が来月また
+    #   「🆕未審査」で出てくる。読解の結論はパックが無くても残す場所が要る。
+    try:
+        for r in (json.load(open("out/irr_reads.json", encoding="utf-8")).get("rows") or []):
+            t = (r.get("ticker") or "").upper()
+            if t:
+                out[t] = {"irr": r.get("irr"), "why": (r.get("why") or "")[:300],
+                          "src": f"irr_reads/{r.get('read')}", "mech": r.get("mech")}
+    except Exception:
+        pass
     return out
 
 

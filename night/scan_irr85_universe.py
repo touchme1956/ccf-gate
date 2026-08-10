@@ -37,11 +37,19 @@ STRONG = {  # 顧客側が再認定・再試験をやり直す必要を直接述
     "qualified by our customers": 3, "customer re-formulation": 3,
     "maintains that selection": 3, "certify another supplier": 3,
     "barriers to subsequent supplier": 3, "qualified for the application": 3,
-    "certification under customer": 3, "customers must generate": 3,
+    "customers must generate": 3,
     "re-qualification": 2, "requalification": 2, "lengthy qualification": 2,
     "stringent qualification": 2, "qualification period": 2,
 }
 MED = {  # 設計組込・認定の一般語（文脈次第で機構になる）
+    # ★2026-08-10 に STRONG(3) から降格した。**これは航空宇宙・防衛の定型句**——
+    #   CW・KRMN・FLY・YSS の4社が**一字同文**で持ち、4社とも
+    #   『当社の競争力は 性能・品質・短納期・納期遵守・価格・顧客サービス、そして継続的な certification に依存する』
+    #   という**競争要因の列挙**で使う＝**当社が維持しなければならないもの**の一覧であって、
+    #   「顧客が代替品を採ると顧客側に再認定の費用が生じる」とは述べていない。
+    #   CWの85は揺るがない（決定的なのは別文『must also be **certified by our individual OEM customers**』）。
+    #   取得語としては有効（KRMNをこれで拾った）ので**残すが重みは1**にする。
+    "certification under customer": 1,
     "design win": 1, "design-in": 1, "designed into our customers": 2,
     "qualification requirements": 1, "qualification process": 1,
     "qualified suppliers": 1, "approved supplier": 1, "qualify our products": 1,
