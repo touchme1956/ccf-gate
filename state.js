@@ -162,7 +162,13 @@
       a.href = url; a.download = 'state.json';
       document.body.appendChild(a); a.click();
       setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1200);
+      /* ⚠ クリップボードに**頼らない**（2026-08-10 実害）。Ⅶ資産は <iframe> の中にあり、
+         `allow="clipboard-write"` が無いとブラウザが writeText を**黙って拒否**する。
+         実測: 3回書き出しても savedAt が 17:29 のまま固定＝クリップボードが一度も更新されず、
+         同じ古い中身が貼られ続けた（しかも大きい方なので毎回途中で切れた）。
+         → **本文を画面に出して選択済みにする**。これはどのブラウザでも必ず動く。 */
       try { navigator.clipboard && navigator.clipboard.writeText(payload); } catch (e) {}
+      showBox(payload, savedAt, c.n);
       // **落とした時点では repo にまだ無い**ので dirty は落とさない——
       // コミットして初めて正本になる。落とすのは「コミットした」を押したとき。
       // そのとき記録する savedAt は**この書き出しのもの**でなければならない（今の時刻ではない）
@@ -182,6 +188,42 @@
       if (savedAt) localStorage.setItem(SAVED_AT, savedAt);
       localStorage.removeItem(DIRTY);
     } catch (e) {}
+  }
+
+  /* 書き出した中身をその場に出す（選択済み）。クリップボードが効かない環境でも渡せる。 */
+  function showBox(payload, savedAt, n) {
+    var host = document.getElementById('stateBox') || (function () {
+      var d = document.createElement('div'); d.id = 'stateBox';
+      var b = document.getElementById('stateBar');
+      if (b && b.parentNode) b.parentNode.insertBefore(d, b.nextSibling);
+      else document.body.appendChild(d);
+      return d;
+    })();
+    var kb = payload.length < 1024 ? '1KB未満' : Math.round(payload.length / 1024) + 'KB';
+    host.innerHTML =
+      '<div style="border:1px solid ' + GREEN + ';border-left:5px solid ' + GREEN +
+      ';border-radius:10px;padding:12px 14px;margin:10px 0;font-size:12.6px;line-height:1.7">' +
+      '<div style="font-weight:700;color:' + GREEN + ';margin-bottom:4px">📋 ここの中身を全部コピーして貼ってください</div>' +
+      '<div style="opacity:.85;margin-bottom:7px">' + n + '件 / ' + kb +
+      '　savedAt ' + savedAt + '　<b>枠を長押し→全選択→コピー</b>（クリップボードが自動で入らない端末向け）</div>' +
+      '<textarea id="stateBoxTa" readonly style="width:100%;height:150px;font-family:monospace;font-size:11px;' +
+      'padding:8px;border:1px solid ' + GREEN + ';border-radius:7px;background:rgba(255,255,255,.6);color:#1b1610"></textarea>' +
+      '<div style="margin-top:7px"><button onclick="ccfState.copyBox(this)" style="padding:7px 15px;border:1px solid ' +
+      GREEN + ';background:' + GREEN + ';color:#fff;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;' +
+      'font-family:inherit">📋 コピー</button></div></div>';
+    var ta = document.getElementById('stateBoxTa');
+    if (ta) { ta.value = payload; try { ta.focus(); ta.select(); } catch (e) {} }
+  }
+
+  /* execCommand は古いが、iframe でも file:// でも動く最後の砦 */
+  function copyBox(btn) {
+    var ta = document.getElementById('stateBoxTa'); if (!ta) return;
+    var o = btn ? btn.textContent : '';
+    var ok = false;
+    try { ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length); ok = document.execCommand('copy'); } catch (e) {}
+    if (!ok) { try { navigator.clipboard.writeText(ta.value); ok = true; } catch (e) {} }
+    if (btn) { btn.textContent = ok ? '✓ コピーした' : '手で選択してください';
+               setTimeout(function () { btn.textContent = o; }, 2600); }
   }
 
   /* 帯の描画。**手順を4段の番号つきで出す**（v9.9.132・ユーザー「これをもっとわかるようにして」）。
@@ -277,7 +319,7 @@
     }, 900);
   }
 
-  window.ccfState = { load: load, export: exportFile, banner: banner, quiet: quiet, done: done,
+  window.ccfState = { load: load, export: exportFile, banner: banner, quiet: quiet, done: done, copyBox: copyBox,
                       markCommitted: markCommitted, decide: decide, collect: collect,
                       isDirty: isDirty, keys: { exact: EXACT, prefix: PREFIX },
                       get last() { return last; } };
