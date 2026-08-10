@@ -45,6 +45,9 @@ import urllib.request
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out")
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from hist_val_rev import load_vintage_checked, seen_revs   # 在庫の版の検問（単一実装）
 CACHE = os.path.join(OUT, "_histval_lookahead_cache")
 UA = {"User-Agent": "ccf-gate research fortis5280@gmail.com", "Accept-Encoding": "gzip"}
 VINTAGES = [(2018, "2018-07-01"), (2015, "2015-07-01"), (2013, "2013-07-01")]
@@ -62,8 +65,9 @@ def D(s):
 
 
 def load(v):
-    with open(os.path.join(OUT, "hist_val_%d.json" % v)) as f:
-        return json.load(f)
+    # 版の検問だけを共有する（night/hist_val_rev.py は判定を一つも持たないので、
+    # この器が掲げる「検定の計算を一行も import しない」独立性は保たれる）
+    return load_vintage_checked(v)
 
 
 def med(xs):
@@ -1164,6 +1168,7 @@ def main():
                                 "OK: 自己履歴の分位を独立に作り直しても一致（履歴に未来は混ざっていない）")
 
     with open(os.path.join(OUT, "hist_val_lookahead.json"), "w") as f:
+        report["src_tool_rev"] = seen_revs()   # 読み終えてから刻む
         json.dump(report, f, ensure_ascii=False, indent=1)
     print(json.dumps({k: v for k, v in report.items()
                       if k in ("A1_structural", "C1_verdict", "A2_verdict")},

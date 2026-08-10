@@ -50,6 +50,9 @@ import statistics
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out")
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from hist_val_rev import load_vintage_checked, seen_revs   # 在庫の版の検問（単一実装）
 
 VINTAGES = (2018, 2015, 2013)          # 主ビンテージは2018（自己履歴が最も長い）
 
@@ -152,7 +155,9 @@ def worst(rows, k=8):
 
 # ── プール ───────────────────────────────────────────────────────────────────
 def load_vintage(y):
-    d = json.load(open(os.path.join(OUT, f"hist_val_{y}.json"), encoding="utf-8"))
+    # 版の検問（night/hist_val_rev.py）。版の無い在庫＝r1 と、版の混在を**読んだ瞬間に**止める。
+    # 2026-08-09に実際に踏んだ事故（2013だけr2・2015/2018がr1のまま検定4本が回っていた）の再発防止。
+    d = load_vintage_checked(y)
     rows = [r for r in d["rows"] if r.get("analysis_set")]
     return d, rows
 
@@ -252,6 +257,41 @@ def judge(ev):
             "c4": bool(c4), "c4_stop_rate": ev["stop_rate_pool"]}
 
 
+# ── 既存の関門を「同じ物差し」で数え直す（2026-08-09・判定基準の非対称の点検）─────────
+def benchmark_gate(pool_rows, flag, years, name, exact=True):
+    """**自己相対を落とした基準1〜4を、門に現に入っている遮断器へそのまま当てる。**
+
+    なぜ要るか（この道具でいちばん自分に不利な数字）:
+      事前登録の基準1は「左尾がベースの2.0倍 **かつ分子>=5社**」、基準3は「**2ビンテージ以上**」を課す。
+      ところが v9.9.99 で門の第四の関門に採用した『事業の収縮』(cagr5<0 ∧ opmD5<0) を
+      **質実証プールで数え直すと恒久毀損の分子は2〜3社**（retro_breakerの274社プールで2社／
+      本器の2018年質実証332社で3社）で、**厳密式を当てられるビンテージは1つ**しかない
+      （2013/2015の在庫に opmD5 が無い）。つまり
+      **自己相対が不合格なのは「既存の関門より弱いから」ではなく「当てた物差しが違うから」**。
+      ここで数字を出しておかないと、次に読む人が『不合格＝門の関門に劣る』と読む。
+
+    公平のために両側を書く: 分けたのは**基準2**（勝者を巻き込まないか）。
+      『事業の収縮』は止めた群の中央値が通過群**より低い**（左尾も中央値も正しい向き）のに対し、
+      自己相対は 66セル中54セルで**止めた側のほうが高い**＝勝者を巻き込む。
+      基準2は分子の大きさに依らないので、標本の薄さでは説明が付かない差である。
+
+    実装の掟: 合否の判定は judge()／stats() を**そのまま呼ぶ**（基準をここで書き直さない）。
+      欠測（flag に載っていない社）は門の実装と同じく**発火しない側**へ入れるが、
+      黙って通過群に混ぜず件数を別に数える（ルール7）。
+    """
+    stop = [r for r in pool_rows if flag.get(r["ticker"])]
+    pas = [r for r in pool_rows if not flag.get(r["ticker"])]
+    n_no_flag = sum(1 for r in pool_rows if r["ticker"] not in flag)
+    ev = {"n_pool": len(pool_rows), "n_stop": len(stop),
+          "stop_rate_pool": round(len(stop) / len(pool_rows), 4) if pool_rows else None,
+          "n_no_flag": n_no_flag,
+          "stopped": stats(stop, years), "passed": stats(pas, years),
+          "base": stats(pool_rows, years), "stopped_worst": worst(stop),
+          "stopped_perm_tickers": [r["ticker"] for r in stop
+                                   if r.get("tr_cagr") is not None and r["tr_cagr"] <= PERM]}
+    return {"gate": name, "exact": exact, "ev": ev, "judge": judge(ev)}
+
+
 def crosscheck(out):
     """**同じ台帳を見る二つの検査器が違うことを言ってはいけない**(v9.9.65)。
 
@@ -314,7 +354,7 @@ def main():
     out = {"generated": "2026-08-09", "tool": "night/hist_val_gate_test.py",
            "prereg": pre, "grid": {"pct": GRID_PCT, "z": GRID_Z, "spx": GRID_SPX},
            "z_min_months": Z_MIN_MONTHS, "perm_line": PERM, "win_line": WIN,
-           "vintages": {}, "results": [], "notes": []}
+           "vintages": {}, "results": [], "existing_gate_benchmark": [], "notes": []}
 
     indi = INDICATORS + (SENSITIVITY_ONLY if a.sensitivity else [])
     want = ("quality", "full") if a.pool == "both" else (a.pool,)
@@ -351,6 +391,22 @@ def main():
             print(f"\n  ── プール={pk}  n={len(rws)}  "
                   f"中央値 {b['median']:+.1%} / 等ウェイト {b['ew_cagr']:+.1%} / "
                   f"恒久毀損 {b['p_perm']:.1%}({b['n_perm']}社) / 15%+ {b['p_win']:.1%}")
+            # **門に現に入っている遮断器を、同じ基準で数え直す**（判定基準の非対称の点検）
+            if drop:
+                bm = benchmark_gate(rws, drop, years,
+                                    "事業の収縮（cagr5<0 ∧ opmD5<0・v9.9.99の第四の関門）",
+                                    exact=drop_exact)
+                bm.update({"vintage": y, "pool": pk, "src": drop_src})
+                out["existing_gate_benchmark"].append(bm)
+                st_, pa_, j_ = bm["ev"]["stopped"], bm["ev"]["passed"], bm["judge"]
+                if st_.get("n_ret") and pa_.get("n_ret"):
+                    print(f"     〔既存の関門を同じ物差しで〕事業の収縮: 止めた {bm['ev']['n_stop']}社"
+                          f"({bm['ev']['stop_rate_pool']:.1%}) 中央値 {st_['median']:+.1%}"
+                          f"（通過 {pa_['median']:+.1%}）恒久毀損 {st_['p_perm']:.1%}"
+                          f"({st_['n_perm']}社・濃縮 {j_.get('c1_ratio')}倍) "
+                          f"→ 基準1 {'✓' if j_['c1'] else '✗'} / 2 {'✓' if j_['c2'] else '✗'}"
+                          f" / 4 {'✓' if j_['c4'] else '✗'}"
+                          f"{'' if bm['exact'] else '  ※代理式（opmD5が在庫に無い）'}")
             print(f"     {'指標':<16}{'閾値':>6}{'止めた':>8}{'止率':>7}{'被覆':>7}"
                   f"{'止:中央':>9}{'止:等W':>9}{'止:毀損':>12}{'通:中央':>9}{'通:毀損':>10}"
                   f"  {'1':>2}{'2':>2}{'4':>2}")
@@ -455,6 +511,53 @@ def main():
               + ", ".join(f"{d}{e}@{c} {a}倍({b}社)" for a, b, c, d, e in ratios[:5]))
     out["summary"] = summ
 
+    # ── 判定基準の非対称（自分に不利な数字を先に出す）─────────────────────────
+    #   「自己相対は不合格・でも門の第四の関門は現に入っている」を並べて読めるようにする。
+    #   **どちらが正しいかを決める節ではない**（規約はユーザーの明示指示の領分）。
+    #   ここが言うのは一つだけ——**同じ基準を当てたら既存の関門も基準1・3を通らない**。
+    B = out["existing_gate_benchmark"]
+    if B:
+        print(f"\n{'='*100}\n■ 判定基準の非対称——**門に現に入っている遮断器を、同じ物差しで数え直す**")
+        print("   （自己相対を落とした基準1〔分子>=5社〕・基準3〔2ビンテージ以上〕を、v9.9.99の"
+              "『事業の収縮』へそのまま当てる）")
+        print(f"   {'V':<6}{'プール':<9}{'止めた':>7}{'止率':>7}{'止:中央':>9}{'通:中央':>9}"
+              f"{'止:毀損':>13}{'濃縮':>7}  {'1':>2}{'2':>2}{'4':>2}  式")
+        for bm in B:
+            st_, pa_, j_ = bm["ev"]["stopped"], bm["ev"]["passed"], bm["judge"]
+            if not (st_.get("n_ret") and pa_.get("n_ret")):
+                print(f"   {bm['vintage']:<6}{bm['pool']:<9}{bm['ev']['n_stop']:>7}"
+                      f"   —— 判定不能（{j_.get('why','')}）")
+                continue
+            mk = lambda b_: "✓" if b_ else "✗"
+            print(f"   {bm['vintage']:<6}{bm['pool']:<9}{bm['ev']['n_stop']:>7}"
+                  f"{bm['ev']['stop_rate_pool']:>7.1%}{st_['median']:>+9.1%}{pa_['median']:>+9.1%}"
+                  f"{st_['p_perm']:>8.1%}({st_['n_perm']:>2}社){str(j_.get('c1_ratio')):>7}"
+                  f"  {mk(j_['c1']):>2}{mk(j_['c2']):>2}{mk(j_['c4']):>2}"
+                  f"  {'厳密' if bm['exact'] else '代理(opmD5欠)'}")
+        # 基準3（2ビンテージ以上で 1∧2）を既存の関門にも当てる
+        asym = {}
+        for pk in want:
+            rows_ = [b for b in B if b["pool"] == pk and b["judge"].get("c1") is not None]
+            ok12 = [b["vintage"] for b in rows_
+                    if b["judge"]["c1"] and b["judge"]["c2"]]
+            exact_v = [b["vintage"] for b in rows_ if b["exact"]]
+            numers = {b["vintage"]: b["judge"]["c1_numer"] for b in rows_}
+            asym[pk] = {"n_vintages_measured": len(rows_), "vintages_ok_c1_and_c2": ok12,
+                        "c3_pass": len(ok12) >= 2, "c1_numer_by_vintage": numers,
+                        "vintages_exact_formula": exact_v,
+                        "max_c1_numer": max(numers.values()) if numers else None,
+                        "c2_pass_by_vintage": {b["vintage"]: b["judge"]["c2"] for b in rows_}}
+            print(f"\n   プール={pk}: 基準1∧2 を満たすビンテージ {ok12 or 'なし'} → "
+                  f"基準3(2ビンテージ以上) {'✓' if asym[pk]['c3_pass'] else '✗'}"
+                  f"／恒久毀損の分子 {numers}（基準1は5社以上を要求）"
+                  f"／厳密式で測れたビンテージ {exact_v}")
+        out["existing_gate_asymmetry"] = asym
+        print("\n   ⇒ **同じ基準を当てると、門に現に入っている『事業の収縮』も基準1・3を通らない**。"
+              "\n     自己相対が不合格なのは『既存の関門より弱いから』ではなく**当てた物差しが違うから**。"
+              "\n     ただし**分けたのは基準2**——事業の収縮は止めた群の中央値が通過群より低い"
+              "（左尾も中央値も同じ向き）のに対し、自己相対は止めた側のほうが高い＝勝者を巻き込む。"
+              "\n     基準2は分子の大きさに依らないので、**標本の薄さでは説明が付かない差**である。")
+
     # 基準5（既存の関門で既に落ちる社を除く）は、1〜4が1件も通っていなければ**当てる先が無い**。
     # それでも「除いても姿が変わらない」ことは記録に値するので差分だけ出す。
     ch = [r for r in out["results"] if r["prereg_indicator"]
@@ -474,6 +577,7 @@ def main():
         for x in cc["diffs"]:
             print("   ✗", x)
 
+    out["src_tool_rev"] = seen_revs()   # 読み終えてから刻む（初期化時に呼ぶと空になる）
     json.dump(out, open(a.json, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"\n■ 在庫: {a.json}")
     return 0

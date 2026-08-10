@@ -1,0 +1,1363 @@
+{
+ "generated": "2026-08-10",
+ "tool": "night/hist_val2_selfrel_delisted.py",
+ "vintage": 2013,
+ "prereg": {
+  "v1": "out/hist_valuation_prereg.json",
+  "v1_registered": "2026-08-09",
+  "v2": "out/hist_valuation_prereg_v2.json",
+  "v2_registered": "2026-08-09",
+  "grid_from": "v1（指標も格子も動かしていない）",
+  "criteria_from": "v2（主結果指標＝元本割れ・lift2.0倍・分子>=5社・止率<=15%）",
+  "verified": true
+ },
+ "basis": "price-only。survivor=Yahoo close(分割調整・配当なし)／退場=10-K Item5高安 ÷ SEC原本の合併対価。**adjcloseと割らないこと**",
+ "sibling_tool": "night/hist_val2_delisted.py は同じ母集団に dd5 を当てる別器（並走）",
+ "universe": {
+  "n_quality": 549,
+  "n_survivor": 374,
+  "n_restored": 45,
+  "n_censored": 130,
+  "n_seen_by_v1_v2": 358
+ },
+ "base_readings": {
+  "下限(打ち切りは元本割れしない)": {
+   "n_loss": 103,
+   "N": 549,
+   "rate": 0.1876
+  },
+  "中間(非M&Aの打ち切りだけ元本割れ)": {
+   "n_loss": 139,
+   "N": 549,
+   "rate": 0.2532,
+   "n_nonma": 36
+  },
+  "上限(打ち切りは全部元本割れ)": {
+   "n_loss": 233,
+   "N": 549,
+   "rate": 0.4244
+  }
+ },
+ "indicator_coverage": {
+  "pe_pct": {
+   "n": 103,
+   "rate": 0.1876
+  },
+  "ps_pct": {
+   "n": 104,
+   "rate": 0.1894
+  },
+  "pfcf_pct": {
+   "n": 93,
+   "rate": 0.1694
+  },
+  "adj_pe_pct": {
+   "n": 103,
+   "rate": 0.1876
+  },
+  "pe_z": {
+   "n": 103,
+   "rate": 0.1876
+  },
+  "ps_z": {
+   "n": 104,
+   "rate": 0.1894
+  }
+ },
+ "raw_pe_proxy_quality": {
+  "2013": {
+   "n": 103,
+   "rho_rawpe_vs_pe_pct": 0.4373,
+   "top_quartile_rawpe_precision_for_pe_pct_ge_090": 0.3462,
+   "median_rawpe_when_pe_pct_ge_090": 22.24,
+   "median_rawpe_otherwise": 17.57
+  },
+  "2015": {
+   "n": 368,
+   "rho_rawpe_vs_pe_pct": 0.4726,
+   "top_quartile_rawpe_precision_for_pe_pct_ge_090": 0.413,
+   "median_rawpe_when_pe_pct_ge_090": 28.33,
+   "median_rawpe_otherwise": 20.94
+  },
+  "2018": {
+   "n": 319,
+   "rho_rawpe_vs_pe_pct": 0.7026,
+   "top_quartile_rawpe_precision_for_pe_pct_ge_090": 0.575,
+   "median_rawpe_when_pe_pct_ge_090": 39.42,
+   "median_rawpe_otherwise": 20.6
+  }
+ },
+ "window_aligned_survivors_only": {
+  "n": 374,
+  "years": 13.09,
+  "median": 0.0651,
+  "ew_cagr": 0.1106,
+  "p_loss": 0.254
+ },
+ "window_note": "survivor は13.09年で揃うが退場社は0.8〜13.0年。**元本割れは符号の検定なので窓に依らない**が、中央値CAGRと等ウェイトは窓に依存するので混合プールでは主張に使わない",
+ "cells": [
+  {
+   "indicator": "pe_pct",
+   "threshold": 0.8,
+   "n_stop": 37,
+   "stop_rate_pool": 0.0674,
+   "n_stop_measured": 37,
+   "n_loss_stop": 6,
+   "stop_loss_rate": 0.1622,
+   "stop_median": 0.0818,
+   "pass_median": 0.0659,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 0.864,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.1622,
+      "extra_stops_all_of_which_must_be_losses": 13,
+      "room_under_stop_cap": 45,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.64,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.1622,
+      "extra_stops_all_of_which_must_be_losses": 26,
+      "room_under_stop_cap": 45,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.382,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.1622,
+      "extra_stops_all_of_which_must_be_losses": 169,
+      "room_under_stop_cap": 45,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "pe_pct",
+   "threshold": 0.85,
+   "n_stop": 32,
+   "stop_rate_pool": 0.0583,
+   "n_stop_measured": 32,
+   "n_loss_stop": 5,
+   "stop_loss_rate": 0.1562,
+   "stop_median": 0.0827,
+   "pass_median": 0.0664,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 0.833,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.1562,
+      "extra_stops_all_of_which_must_be_losses": 12,
+      "room_under_stop_cap": 50,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.617,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.1562,
+      "extra_stops_all_of_which_must_be_losses": 23,
+      "room_under_stop_cap": 50,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.368,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.1562,
+      "extra_stops_all_of_which_must_be_losses": 147,
+      "room_under_stop_cap": 50,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "pe_pct",
+   "threshold": 0.9,
+   "n_stop": 25,
+   "stop_rate_pool": 0.0455,
+   "n_stop_measured": 25,
+   "n_loss_stop": 3,
+   "stop_loss_rate": 0.12,
+   "stop_median": 0.1018,
+   "pass_median": 0.0659,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 0.64,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.12,
+      "extra_stops_all_of_which_must_be_losses": 11,
+      "room_under_stop_cap": 57,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.474,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.12,
+      "extra_stops_all_of_which_must_be_losses": 20,
+      "room_under_stop_cap": 57,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.283,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.12,
+      "extra_stops_all_of_which_must_be_losses": 121,
+      "room_under_stop_cap": 57,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "pe_pct",
+   "threshold": 0.95,
+   "n_stop": 13,
+   "stop_rate_pool": 0.0237,
+   "n_stop_measured": 13,
+   "n_loss_stop": 3,
+   "stop_loss_rate": 0.2308,
+   "stop_median": 0.0512,
+   "pass_median": 0.0672,
+   "c2": true,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 1.23,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.2308,
+      "extra_stops_all_of_which_must_be_losses": 4,
+      "room_under_stop_cap": 69,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.911,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.2308,
+      "extra_stops_all_of_which_must_be_losses": 8,
+      "room_under_stop_cap": 69,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.544,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.2308,
+      "extra_stops_all_of_which_must_be_losses": 54,
+      "room_under_stop_cap": 69,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "ps_pct",
+   "threshold": 0.8,
+   "n_stop": 57,
+   "stop_rate_pool": 0.1038,
+   "n_stop_measured": 57,
+   "n_loss_stop": 10,
+   "stop_loss_rate": 0.1754,
+   "stop_median": 0.0916,
+   "pass_median": 0.062,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 0.935,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.1754,
+      "extra_stops_all_of_which_must_be_losses": 19,
+      "room_under_stop_cap": 25,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.693,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.1754,
+      "extra_stops_all_of_which_must_be_losses": 39,
+      "room_under_stop_cap": 25,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.413,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.1754,
+      "extra_stops_all_of_which_must_be_losses": 254,
+      "room_under_stop_cap": 25,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "ps_pct",
+   "threshold": 0.85,
+   "n_stop": 51,
+   "stop_rate_pool": 0.0929,
+   "n_stop_measured": 51,
+   "n_loss_stop": 10,
+   "stop_loss_rate": 0.1961,
+   "stop_median": 0.0886,
+   "pass_median": 0.0651,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 1.045,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.1961,
+      "extra_stops_all_of_which_must_be_losses": 15,
+      "room_under_stop_cap": 31,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.774,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.1961,
+      "extra_stops_all_of_which_must_be_losses": 33,
+      "room_under_stop_cap": 31,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.462,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.1961,
+      "extra_stops_all_of_which_must_be_losses": 221,
+      "room_under_stop_cap": 31,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "ps_pct",
+   "threshold": 0.9,
+   "n_stop": 47,
+   "stop_rate_pool": 0.0856,
+   "n_stop_measured": 47,
+   "n_loss_stop": 9,
+   "stop_loss_rate": 0.1915,
+   "stop_median": 0.0749,
+   "pass_median": 0.0659,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 1.021,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.1915,
+      "extra_stops_all_of_which_must_be_losses": 14,
+      "room_under_stop_cap": 35,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.756,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.1915,
+      "extra_stops_all_of_which_must_be_losses": 30,
+      "room_under_stop_cap": 35,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.451,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.1915,
+      "extra_stops_all_of_which_must_be_losses": 205,
+      "room_under_stop_cap": 35,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "ps_pct",
+   "threshold": 0.95,
+   "n_stop": 31,
+   "stop_rate_pool": 0.0565,
+   "n_stop_measured": 31,
+   "n_loss_stop": 7,
+   "stop_loss_rate": 0.2258,
+   "stop_median": 0.0749,
+   "pass_median": 0.0659,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 1.204,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.2258,
+      "extra_stops_all_of_which_must_be_losses": 8,
+      "room_under_stop_cap": 51,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.892,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.2258,
+      "extra_stops_all_of_which_must_be_losses": 18,
+      "room_under_stop_cap": 51,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.532,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.2258,
+      "extra_stops_all_of_which_must_be_losses": 128,
+      "room_under_stop_cap": 51,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "pfcf_pct",
+   "threshold": 0.8,
+   "n_stop": 39,
+   "stop_rate_pool": 0.071,
+   "n_stop_measured": 39,
+   "n_loss_stop": 9,
+   "stop_loss_rate": 0.2308,
+   "stop_median": 0.0818,
+   "pass_median": 0.0659,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 1.23,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.2308,
+      "extra_stops_all_of_which_must_be_losses": 10,
+      "room_under_stop_cap": 43,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.911,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.2308,
+      "extra_stops_all_of_which_must_be_losses": 22,
+      "room_under_stop_cap": 43,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.544,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.2308,
+      "extra_stops_all_of_which_must_be_losses": 160,
+      "room_under_stop_cap": 43,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "pfcf_pct",
+   "threshold": 0.85,
+   "n_stop": 32,
+   "stop_rate_pool": 0.0583,
+   "n_stop_measured": 32,
+   "n_loss_stop": 6,
+   "stop_loss_rate": 0.1875,
+   "stop_median": 0.0723,
+   "pass_median": 0.0664,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 0.999,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.1875,
+      "extra_stops_all_of_which_must_be_losses": 10,
+      "room_under_stop_cap": 50,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.741,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.1875,
+      "extra_stops_all_of_which_must_be_losses": 21,
+      "room_under_stop_cap": 50,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.442,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.1875,
+      "extra_stops_all_of_which_must_be_losses": 140,
+      "room_under_stop_cap": 50,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "pfcf_pct",
+   "threshold": 0.9,
+   "n_stop": 23,
+   "stop_rate_pool": 0.0419,
+   "n_stop_measured": 23,
+   "n_loss_stop": 4,
+   "stop_loss_rate": 0.1739,
+   "stop_median": 0.0629,
+   "pass_median": 0.0666,
+   "c2": true,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 0.927,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.1739,
+      "extra_stops_all_of_which_must_be_losses": 8,
+      "room_under_stop_cap": 59,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.687,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.1739,
+      "extra_stops_all_of_which_must_be_losses": 16,
+      "room_under_stop_cap": 59,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.41,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.1739,
+      "extra_stops_all_of_which_must_be_losses": 103,
+      "room_under_stop_cap": 59,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "pfcf_pct",
+   "threshold": 0.95,
+   "n_stop": 15,
+   "stop_rate_pool": 0.0273,
+   "n_stop_measured": 15,
+   "n_loss_stop": 2,
+   "stop_loss_rate": 0.1333,
+   "stop_median": 0.084,
+   "pass_median": 0.0651,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 0.711,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.1333,
+      "extra_stops_all_of_which_must_be_losses": 6,
+      "room_under_stop_cap": 67,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.527,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.1333,
+      "extra_stops_all_of_which_must_be_losses": 12,
+      "room_under_stop_cap": 67,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.314,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.1333,
+      "extra_stops_all_of_which_must_be_losses": 71,
+      "room_under_stop_cap": 67,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "adj_pe_pct",
+   "threshold": 0.8,
+   "n_stop": 19,
+   "stop_rate_pool": 0.0346,
+   "n_stop_measured": 19,
+   "n_loss_stop": 4,
+   "stop_loss_rate": 0.2105,
+   "stop_median": 0.0635,
+   "pass_median": 0.0666,
+   "c2": true,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 1.122,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.2105,
+      "extra_stops_all_of_which_must_be_losses": 6,
+      "room_under_stop_cap": 63,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.831,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.2105,
+      "extra_stops_all_of_which_must_be_losses": 12,
+      "room_under_stop_cap": 63,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.496,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.2105,
+      "extra_stops_all_of_which_must_be_losses": 81,
+      "room_under_stop_cap": 63,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "adj_pe_pct",
+   "threshold": 0.85,
+   "n_stop": 15,
+   "stop_rate_pool": 0.0273,
+   "n_stop_measured": 15,
+   "n_loss_stop": 4,
+   "stop_loss_rate": 0.2667,
+   "stop_median": 0.0609,
+   "pass_median": 0.067,
+   "c2": true,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 1.421,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.2667,
+      "extra_stops_all_of_which_must_be_losses": 3,
+      "room_under_stop_cap": 67,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 1.053,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.2667,
+      "extra_stops_all_of_which_must_be_losses": 8,
+      "room_under_stop_cap": 67,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.628,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.2667,
+      "extra_stops_all_of_which_must_be_losses": 58,
+      "room_under_stop_cap": 67,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "adj_pe_pct",
+   "threshold": 0.9,
+   "n_stop": 11,
+   "stop_rate_pool": 0.02,
+   "n_stop_measured": 11,
+   "n_loss_stop": 3,
+   "stop_loss_rate": 0.2727,
+   "stop_median": 0.0609,
+   "pass_median": 0.067,
+   "c2": true,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 1.454,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.2727,
+      "extra_stops_all_of_which_must_be_losses": 2,
+      "room_under_stop_cap": 71,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 1.077,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.2727,
+      "extra_stops_all_of_which_must_be_losses": 6,
+      "room_under_stop_cap": 71,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.643,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.2727,
+      "extra_stops_all_of_which_must_be_losses": 42,
+      "room_under_stop_cap": 71,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "adj_pe_pct",
+   "threshold": 0.95,
+   "n_stop": 8,
+   "stop_rate_pool": 0.0146,
+   "n_stop_measured": 8,
+   "n_loss_stop": 3,
+   "stop_loss_rate": 0.375,
+   "stop_median": 0.0474,
+   "pass_median": 0.0668,
+   "c2": true,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 1.999,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.375,
+      "extra_stops_all_of_which_must_be_losses": 1,
+      "room_under_stop_cap": 74,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": false
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 1.481,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.375,
+      "extra_stops_all_of_which_must_be_losses": 3,
+      "room_under_stop_cap": 74,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.884,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.375,
+      "extra_stops_all_of_which_must_be_losses": 26,
+      "room_under_stop_cap": 74,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "pe_z",
+   "threshold": 1.0,
+   "n_stop": 36,
+   "stop_rate_pool": 0.0656,
+   "n_stop_measured": 36,
+   "n_loss_stop": 6,
+   "stop_loss_rate": 0.1667,
+   "stop_median": 0.0918,
+   "pass_median": 0.0655,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 0.888,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.1667,
+      "extra_stops_all_of_which_must_be_losses": 13,
+      "room_under_stop_cap": 46,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.658,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.1667,
+      "extra_stops_all_of_which_must_be_losses": 25,
+      "room_under_stop_cap": 46,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.393,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.1667,
+      "extra_stops_all_of_which_must_be_losses": 163,
+      "room_under_stop_cap": 46,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "pe_z",
+   "threshold": 1.5,
+   "n_stop": 21,
+   "stop_rate_pool": 0.0383,
+   "n_stop_measured": 21,
+   "n_loss_stop": 3,
+   "stop_loss_rate": 0.1429,
+   "stop_median": 0.1018,
+   "pass_median": 0.0659,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 0.761,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.1429,
+      "extra_stops_all_of_which_must_be_losses": 8,
+      "room_under_stop_cap": 61,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.564,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.1429,
+      "extra_stops_all_of_which_must_be_losses": 16,
+      "room_under_stop_cap": 61,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.337,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.1429,
+      "extra_stops_all_of_which_must_be_losses": 99,
+      "room_under_stop_cap": 61,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "pe_z",
+   "threshold": 2.0,
+   "n_stop": 10,
+   "stop_rate_pool": 0.0182,
+   "n_stop_measured": 10,
+   "n_loss_stop": 2,
+   "stop_loss_rate": 0.2,
+   "stop_median": 0.0503,
+   "pass_median": 0.0672,
+   "c2": true,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 1.066,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.2,
+      "extra_stops_all_of_which_must_be_losses": 3,
+      "room_under_stop_cap": 72,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.79,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.2,
+      "extra_stops_all_of_which_must_be_losses": 7,
+      "room_under_stop_cap": 72,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.471,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.2,
+      "extra_stops_all_of_which_must_be_losses": 43,
+      "room_under_stop_cap": 72,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "ps_z",
+   "threshold": 1.0,
+   "n_stop": 55,
+   "stop_rate_pool": 0.1002,
+   "n_stop_measured": 55,
+   "n_loss_stop": 10,
+   "stop_loss_rate": 0.1818,
+   "stop_median": 0.0916,
+   "pass_median": 0.0641,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 0.969,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.1818,
+      "extra_stops_all_of_which_must_be_losses": 18,
+      "room_under_stop_cap": 27,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.718,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.1818,
+      "extra_stops_all_of_which_must_be_losses": 37,
+      "room_under_stop_cap": 27,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.428,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.1818,
+      "extra_stops_all_of_which_must_be_losses": 243,
+      "room_under_stop_cap": 27,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "ps_z",
+   "threshold": 1.5,
+   "n_stop": 41,
+   "stop_rate_pool": 0.0747,
+   "n_stop_measured": 41,
+   "n_loss_stop": 8,
+   "stop_loss_rate": 0.1951,
+   "stop_median": 0.0886,
+   "pass_median": 0.0651,
+   "c2": false,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 1.04,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.1951,
+      "extra_stops_all_of_which_must_be_losses": 12,
+      "room_under_stop_cap": 41,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.771,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.1951,
+      "extra_stops_all_of_which_must_be_losses": 26,
+      "room_under_stop_cap": 41,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.46,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.1951,
+      "extra_stops_all_of_which_must_be_losses": 178,
+      "room_under_stop_cap": 41,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  },
+  {
+   "indicator": "ps_z",
+   "threshold": 2.0,
+   "n_stop": 23,
+   "stop_rate_pool": 0.0419,
+   "n_stop_measured": 23,
+   "n_loss_stop": 5,
+   "stop_loss_rate": 0.2174,
+   "stop_median": 0.0609,
+   "pass_median": 0.0666,
+   "c2": true,
+   "c4": true,
+   "by_reading": {
+    "下限(打ち切りは元本割れしない)": {
+     "base": 0.1876,
+     "lift": 1.159,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.3752,
+      "measured_hit_rate": 0.2174,
+      "extra_stops_all_of_which_must_be_losses": 6,
+      "room_under_stop_cap": 59,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "中間(非M&Aの打ち切りだけ元本割れ)": {
+     "base": 0.2532,
+     "lift": 0.859,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.5064,
+      "measured_hit_rate": 0.2174,
+      "extra_stops_all_of_which_must_be_losses": 14,
+      "room_under_stop_cap": 59,
+      "fits_under_stop_cap": true,
+      "also_needs_numerator_ge_5": true
+     }
+    },
+    "上限(打ち切りは全部元本割れ)": {
+     "base": 0.4244,
+     "lift": 0.512,
+     "c1": false,
+     "required_extremeness": {
+      "impossible": false,
+      "need_stop_loss_rate": 0.8488,
+      "measured_hit_rate": 0.2174,
+      "extra_stops_all_of_which_must_be_losses": 97,
+      "room_under_stop_cap": 59,
+      "fits_under_stop_cap": false,
+      "also_needs_numerator_ge_5": true
+     }
+    }
+   }
+  }
+ ],
+ "verdict": {
+  "n_cells": 22,
+  "n_pass_c1_and_c2_and_c4_any_reading": 0,
+  "measured_hit_rate_median": 0.1933,
+  "note": "『必要な追加』は、指標が未測定の446社の中から**全部が元本割れの社ばかりを**選び取れたと仮定したときに、基準1へ届くのに要る社数。測れた社での的中率と並べて読むこと——的中率100%を仮定して初めて届くなら、それは仮説ではなく願望である。"
+ },
+ "src_tool_rev": {
+  "hist_val_2013.json": "r2 (2026-08-09 share_scale_guard)"
+ }
+}

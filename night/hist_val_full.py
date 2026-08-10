@@ -43,6 +43,9 @@ import statistics
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out")
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from hist_val_rev import load_vintage_checked, seen_revs   # 在庫の版の検問（単一実装）
 
 VINTAGES = (2013, 2015, 2018)
 
@@ -132,10 +135,8 @@ def wilson(k, n):
 
 # ───────────────────────── 在庫の読み込み ─────────────────────────
 def load_vintage(y):
-    p = os.path.join(OUT, f"hist_val_{y}.json")
-    if not os.path.exists(p):
-        return None
-    return json.load(open(p, encoding="utf-8"))
+    # 版の検問（night/hist_val_rev.py）。版の無い在庫＝r1 と、版の混在を読んだ瞬間に止める
+    return load_vintage_checked(y, allow_missing=True)
 
 
 def usable(rows):
@@ -538,8 +539,8 @@ def main():
                            "（欠測を通す側に入れると、被覆の低い指標ほど『狭い遮断器』に見えてしまうため）。"
                            "hist_val_gate_test.py はプール全体を分母にする（実運用の遮断器は測れない社を"
                            "止めないので、基準4『止めるのは15%以下』の実運用の読みとしてはこちらが正しい）。"
-                           "実測 2018 quality pe_pct>=0.80: 止めた社数は **両器とも116社で完全一致**、"
-                           "分母が 319（定義できる社）か 332（プール全体）かの差で 36.4% と 34.9%"),
+                           "実測 2018 quality pe_pct>=0.80（採取器 r2）: 止めた社数は **両器とも117社で完全一致**、"
+                           "分母が 319（定義できる社）か 332（プール全体）かの差で 36.7% と 35.2%"),
             "verdict_impact": "無し（どちらの分母でも合格規則はゼロ）",
         },
         "not_tested": [{
@@ -551,6 +552,7 @@ def main():
         }],
     }
     p = os.path.join(OUT, "hist_val_full.json")
+    doc["src_tool_rev"] = seen_revs()   # 読み終えてから刻む
     json.dump(doc, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     if not a.quiet:
         print(f"\n書いた: {p}  （規則 {len(summary)} 本・全基準合格 {doc['n_pass_all']} 本）")

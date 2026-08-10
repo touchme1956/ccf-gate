@@ -19,6 +19,8 @@ from collections import defaultdict
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT  = os.path.join(ROOT, 'out')
 PXD  = os.path.join(OUT, '_histval_cache', 'px')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from hist_val_rev import load_vintage_checked   # 在庫の版の検問（単一実装）
 
 PERM = -0.15          # 恒久毀損の線（事前登録）
 GRID = {'pct':[0.80,0.85,0.90,0.95], 'z':[1.0,1.5,2.0], 'spx':[0.80,0.90,0.95]}
@@ -29,7 +31,8 @@ IND = {  # 指標名 -> (kind, 分位/z)
 VINT = [2013,2015,2018]
 
 def load(v):
-    return json.load(open(os.path.join(OUT, f'hist_val_{v}.json')))
+    # 版の検問（night/hist_val_rev.py）。版の無い在庫＝r1 と、版の混在を読んだ瞬間に止める
+    return load_vintage_checked(v)
 
 def med(xs):
     return round(st.median(xs),4) if xs else None
@@ -100,10 +103,6 @@ def reproduce():
             'my_c1_pass':sum(1 for c in mine.values() if c['c1']),
             'my_c2_pass':sum(1 for c in mine.values() if c['c2']),
             'my_c4_pass':sum(1 for c in mine.values() if c['c4'])}, mine
-
-if __name__=='__main__':
-    rep,_=reproduce()
-    print(json.dumps(rep,ensure_ascii=False,indent=1))
 
 # ---------------- 期間分割（px キャッシュの月次 adj から自前で作る） ----------------
 def _adj(t):
@@ -249,6 +248,7 @@ def build():
                            (2015,'quality','pe_pct',0.80),(2018,'quality','adj_pe_pct',0.80)):
         sec[f'{v}|{pool}|{ind}|{thr}']=sector_view(v,pool,ind,thr,min_n=12)
     out={'generated':'2026-08-09','tool':'night/hist_val_regime.py',
+         'src_tool_rev':{os.path.basename(k):v for k,v in __import__('hist_val_rev').seen_revs().items()},
          'lens':'レジーム（期間）と業種（SIC）で事前登録の検定を壊しにかかる独立実装',
          'reproduce_gate_test':rep,'subperiod_diag':diag,
          'power_ceiling':power,'coverage_pool_vs_event':cov,
@@ -261,3 +261,16 @@ def build():
     json.dump(out,open(os.path.join(OUT,'hist_val_regime.json'),'w'),ensure_ascii=False,indent=1)
     return out
 
+
+# ⚠ この `if __name__` は **ファイルの末尾に置く**こと。
+#   2026-08-09まで、このブロックがファイルの中ほど（reproduce() の直後）に居たため、
+#   `python3 night/hist_val_regime.py` を回しても **reproduce() しか走らず
+#   out/hist_val_regime.json が更新されなかった**（レジーム・業種の反証が在庫の古い版のまま残る）。
+#   検定を「回した」つもりで回っていない、という一番静かな壊れ方なので、置き場所を変えない。
+if __name__=='__main__':
+    o=build()
+    print(json.dumps({'reproduce_gate_test':o['reproduce_gate_test'],
+                      'src_tool_rev':o.get('src_tool_rev'),
+                      'subperiod_diag':o['subperiod_diag'],
+                      'power_ceiling':o['power_ceiling']},ensure_ascii=False,indent=1))
+    print('→ out/hist_val_regime.json')
