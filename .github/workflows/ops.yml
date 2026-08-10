@@ -138,6 +138,25 @@ jobs:
       #   検出器が見つけたものを**実際に審査できる形**（10社/枚）へ落とす。
       #   新規審査の chunkNN.txt とは別系列にして「まだ見ていない社」と「もう一度見る社」を混ぜない。
       #   月20社ずつ——一度に全部出すと作業リストが死ぬ（鳴りすぎる警報は鳴らないのと同じ）。
+      # 待ち行列の先頭を先に採取しておく（2026-08-10新設・鍵不要）
+      #   hachimon_fetch は CLAUDE.md が「月1-2回」と書く周期作業なのに
+      #   **どのCIからも呼ばれていなかった**。先に採っておくと (a)審査が速くなる
+      #   (b)**採取の失敗を審査の前に見つけられる**（AMBIQでティッカー取り違えを踏んだ型）。
+      #   ⚠これは機械値ドラフトを作るだけ＝**審査待ち**であって台帳ではない（絶対のルール2）。
+      - name: 待ち行列の先頭を先に採取（機械値ドラフト・審査待ち）
+        continue-on-error: true
+        run: |
+          T=$(python3 -c "
+          import json,glob,os
+          done={os.path.basename(f).split('_gate_pack')[0] for f in glob.glob('out/*_gate_pack.json')}
+          out=[]
+          for f in sorted(glob.glob('night/chunk*.txt')):
+              for t in open(f).read().split():
+                  if t not in done and t not in out: out.append(t)
+                  if len(out)>=5: break
+              if len(out)>=5: break
+          print(' '.join(out))" 2>/dev/null || true)
+          if [ -n "$T" ]; then timeout 1800 python hachimon_fetch.py $T | tail -8; else echo "未審査の待ち行列は空"; fi
       - name: 再審査チャンクの生成（優先度順に月20社）
         continue-on-error: true
         run: |

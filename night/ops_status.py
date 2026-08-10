@@ -130,6 +130,18 @@ def build():
          json_field("night/reaudit_queue.json", "generated"),
          "ci.yml（push毎）＋ops.yml 毎月2日／手動 python3 night/enqueue_reaudit.py --json "
          "&& python3 night/make_chunks.py --reaudit --top 20", True),
+        # 2026-08-10: **自動化そのものを見張る3本**。
+        #   通知・機械是正・門2審査が止まっても、今日の判定は動かないので**気づけない**——
+        #   だからこそ盤に載せる（「回っているつもりで止まっている」を作らない）。
+        ("notify",  "通知(Issue化)",         "毎営業日", 4,
+         json_field("out/events_watch.json", "asof"),
+         "events.yml（行動が要ることだけIssueにする・冪等）", True),
+        ("fix",     "機械是正の自動提案",     "週1",     10,
+         git_date("out/score_all.json"),
+         "fix.yml 毎週土曜（判定が動かなければmain直・動けばPR）", True),
+        ("review",  "門2審査(自動)",         "毎営業日", 4,
+         git_date("night/progress.json"),
+         "review.yml 平日17:00UTC（**ANTHROPIC_API_KEY が要る**。無ければ何もせず終了）", "key"),
         ("sht",     "シェア趨勢shtの測定",   "月1",     40,
          json_field("out/sht_report.json", "asof"),
          "ops.yml 毎月2日／手動 python3 night/build_sic_cache.py && python3 night/fill_sht.py --json"
@@ -220,6 +232,13 @@ def build():
             except Exception:
                 days = None
         state = "unknown" if days is None else ("due" if days > due else "ok")
+        # 2026-08-10: **鍵待ち(auto=="key")の作業を「停止疑い」と同じ赤にしない。**
+        #   鍵が無いのは*止まった*のではなく*まだ始めていない*——両方を同じ色にすると
+        #   盤が常時⚠になり、**本当に止まった作業がその中に埋もれる**
+        #   （鳴りすぎる警報は鳴らないのと同じ）。別の状態として出す。
+        #   ⚠**健全と読ませない**ためにラベルは残す＝「穴を明示する」の作法。
+        if state == "due" and auto == "key":
+            state = "nokey"
         rows.append({"id": id_, "name": name, "cadence": cad, "due_days": due,
                      "last": last, "days": days, "state": state, "how": how, "auto": auto})
     # 人のやるべきこと（宿題・決断待ち・機械で測れない定期ルーチン）は todo_list.json が正本。
@@ -230,7 +249,10 @@ def build():
     except Exception:
         pass
     return {"asof": today.isoformat(), "items": rows, "todos": todos,
-            "note": "state=due は「期限日数を超えて止まっている」の機械判定。unknown は日付が取れない＝健全と読まないこと"}
+            "note": "state=due は「期限日数を超えて止まっている」の機械判定。"
+                    "unknown は日付が取れない＝健全と読まないこと。"
+                    "**nokey は鍵待ち**（止まったのではなく、まだ始めていない）——"
+                    "健全ではないが『止まった』とも違うので別の色で出す"}
 
 
 def main():
@@ -239,9 +261,11 @@ def main():
     json.dump(out, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     n_due = sum(1 for r in out["items"] if r["state"] == "due")
     n_unk = sum(1 for r in out["items"] if r["state"] == "unknown")
-    print(f"運用サイクル {len(out['items'])}本: 期限内 {len(out['items'])-n_due-n_unk} / 停止疑い {n_due} / 不明 {n_unk}")
+    n_key = sum(1 for r in out["items"] if r["state"] == "nokey")
+    print(f"運用サイクル {len(out['items'])}本: 期限内 {len(out['items'])-n_due-n_unk-n_key}"
+          f" / 停止疑い {n_due} / 鍵待ち {n_key} / 不明 {n_unk}")
     for r in out["items"]:
-        mark = {"ok": "🟢", "due": "⚠", "unknown": "？"}[r["state"]]
+        mark = {"ok": "🟢", "due": "⚠", "unknown": "？", "nokey": "🔑"}[r["state"]]
         ago = "" if r["days"] is None else f"（{r['days']}日前・期限{r['due_days']}日）"
         print(f"  {mark} {r['name']:<14}（{r['cadence']}）最終 {r['last'] or '不明'}{ago}")
     return 0

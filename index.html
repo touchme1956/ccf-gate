@@ -1147,7 +1147,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.128</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.129</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——v9.9.36で絶対MOAT指数をΩの直接項に加え(実効≒22%)、v9.9.39で<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3626,16 +3626,22 @@ async function ccfEvents(btn){
   //   止まった作業を黙らせない。周期でグループ化し、1本=1カード2行（狭い画面でも折り返しで読める）
   if(ops&&Array.isArray(ops.items)){
     const due=ops.items.filter(x=>x.state==='due'), unk=ops.items.filter(x=>x.state==='unknown');
+    const nokey=ops.items.filter(x=>x.state==='nokey');
     const chip=(txt,fg,bg)=>`<span style="font-size:10px;padding:1px 8px;border-radius:9px;background:${bg};color:${fg};white-space:nowrap">${txt}</span>`;
     const autoChip=x=>x.auto===true?chip('自動','#8fc9a4','rgba(84,184,138,.14)')
       :x.auto==='key'?chip('鍵で自動','#d6b06c','rgba(214,154,60,.16)')
       :chip('手動','#c9c2b2','rgba(255,255,255,.08)');
+    // v9.9.129(2026-08-10): **鍵待ちを「停止疑い」と同じ赤にしない。**
+    //   鍵が無いのは*止まった*のではなく*まだ始めていない*——同じ色にすると盤が常時⚠になり、
+    //   **本当に止まった作業がその中に埋もれる**（鳴りすぎる警報は鳴らないのと同じ）。
+    //   ⚠健全とも読ませない：鍵の名前を出して「何を置けば動くか」まで書く。
     const stChip=x=>x.state==='due'?chip('⚠ 停止疑い','#ff9d8a','rgba(207,95,72,.20)')
+      :x.state==='nokey'?chip('🔑 鍵待ち（Secretsに鍵を置けば回る）','#d6b06c','rgba(214,154,60,.16)')
       :x.state==='unknown'?chip('？ 不明','#d6b06c','rgba(214,154,60,.16)')
       :chip('🟢 回転中','#8fc9a4','rgba(84,184,138,.10)');
     // v9.9.82: 手動/鍵で自動の作業は、タブ下部の「📖 手動作業の説明」該当項へ飛べるリンクを付ける
     const helpBtn=x=>(x.auto===true)?'':`<button onclick="const e=document.getElementById('evhelp-${x.id}');if(e){e.open=true;e.scrollIntoView({behavior:'smooth',block:'start'});}" style="padding:2px 9px;background:linear-gradient(180deg,rgba(93,140,194,.22),rgba(93,140,194,.08));border:1px solid rgba(93,140,194,.45);border-radius:6px;color:#8fb4dd;font-size:10.5px;cursor:pointer;white-space:nowrap">説明↓</button>`;
-    const card=x=>`<div style="border:1px solid var(--line);border-left:3px solid ${x.state==='due'?'#cf5f48':x.state==='unknown'?'#d69a3c':'rgba(84,184,138,.55)'};border-radius:8px;padding:8px 12px;margin:6px 0;background:rgba(255,255,255,.015)">
+    const card=x=>`<div style="border:1px solid var(--line);border-left:3px solid ${x.state==='due'?'#cf5f48':(x.state==='unknown'||x.state==='nokey')?'#d69a3c':'rgba(84,184,138,.55)'};border-radius:8px;padding:8px 12px;margin:6px 0;background:rgba(255,255,255,.015)">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <b style="font-size:13px;color:var(--ink)">${x.name}</b>${autoChip(x)}${stChip(x)}${helpBtn(x)}
           <span style="margin-left:auto;font-size:11.5px;color:${x.state==='due'?'#ff9d8a':'var(--dim)'};white-space:nowrap">最終 ${x.last||'不明'}${x.days!=null?`（${x.days}日前）`:''}</span>
@@ -3644,7 +3650,10 @@ async function ccfEvents(btn){
       </div>`;
     let inner=(due.length||unk.length)
       ?`<div style="font-size:12.5px;color:#ff9d8a;margin-bottom:4px"><b>${due.length?`⚠ 停止疑い ${due.length}本: ${due.map(x=>x.name).join('・')}`:''}${unk.length?`${due.length?'／':''}？日付不明 ${unk.length}本`:''}</b>——回っていない作業は「無い」のと同じ。カードの回し方で復旧させること</div>`
-      :`<div style="font-size:12.5px;color:var(--jade);margin-bottom:4px">✓ 全${ops.items.length}本が期限内で回っている（実測 ${ops.asof}）</div>`;
+      :`<div style="font-size:12.5px;color:var(--jade);margin-bottom:4px">✓ ${ops.items.length-nokey.length}本が期限内で回っている（実測 ${ops.asof}）</div>`;
+    // 鍵待ちは**別行で必ず出す**。停止疑いの赤に混ぜないが、緑の「全部回っている」にも混ぜない
+    //   ——鍵が無いのは止まったのではないが、健全でもない（穴は明示する・ルール7の作法）
+    if(nokey.length)inner+=`<div style="font-size:12.5px;color:#d6b06c;margin-bottom:4px"><b>🔑 鍵待ち ${nokey.length}本: ${nokey.map(x=>x.name).join('・')}</b>——GitHub の Settings → Secrets and variables → Actions に鍵を置けば回り始める（無い間は何もせず終了するので既存は壊れない）</div>`;
     for(const [label,pre] of [['毎営業日','毎営業日'],['月次','月1'],['四半期','四半期'],['年次','年1']]){
       const g=ops.items.filter(x=>String(x.cadence).startsWith(pre));
       if(!g.length)continue;

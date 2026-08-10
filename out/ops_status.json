@@ -123,6 +123,39 @@
    "auto": true
   },
   {
+   "id": "notify",
+   "name": "通知(Issue化)",
+   "cadence": "毎営業日",
+   "due_days": 4,
+   "last": "2026-08-10",
+   "days": 0,
+   "state": "ok",
+   "how": "events.yml（行動が要ることだけIssueにする・冪等）",
+   "auto": true
+  },
+  {
+   "id": "fix",
+   "name": "機械是正の自動提案",
+   "cadence": "週1",
+   "due_days": 10,
+   "last": "2026-08-10",
+   "days": 0,
+   "state": "ok",
+   "how": "fix.yml 毎週土曜（判定が動かなければmain直・動けばPR）",
+   "auto": true
+  },
+  {
+   "id": "review",
+   "name": "門2審査(自動)",
+   "cadence": "毎営業日",
+   "due_days": 4,
+   "last": "2026-08-03",
+   "days": 7,
+   "state": "nokey",
+   "how": "review.yml 平日17:00UTC（**ANTHROPIC_API_KEY が要る**。無ければ何もせず終了）",
+   "auto": "key"
+  },
+  {
    "id": "sht",
    "name": "シェア趨勢shtの測定",
    "cadence": "月1",
@@ -1025,5 +1058,5 @@
    }
   ]
  },
- "note": "state=due は「期限日数を超えて止まっている」の機械判定。unknown は日付が取れない＝健全と読まないこと"
+ "note": "state=due は「期限日数を超えて止まっている」の機械判定。unknown は日付が取れない＝健全と読まないこと。**nokey は鍵待ち**（止まったのではなく、まだ始めていない）——健全ではないが『止まった』とも違うので別の色で出す"
 }
