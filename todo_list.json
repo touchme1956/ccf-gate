@@ -7,7 +7,7 @@
    "kind": "宿題",
    "title": "EDINET_API_KEY を GitHub Secrets に置く",
    "due": null,
-   "note": "api.edinet-fsa.go.jp で無料登録→Settings→Secrets and variables→Actions→EDINET_API_KEY。置いた翌日から日本株17社の臨報監視・決算点検が自動化される（📖説明欄の「決算点検（日本株）」参照）",
+   "note": "api.edinet-fsa.go.jp で無料登録→Settings→Secrets and variables→Actions→EDINET_API_KEY。置いた翌日から日本株17社の臨報監視・決算点検が自動化される（📖説明欄の「決算点検（日本株）」参照）\n\n【配線の確認 2026-08-10】events.yml と ops.yml が secrets.EDINET_API_KEY を読む形になっていることを実測で確認済み＝置けば次回から効く。取得: https://api.edinet-fsa.go.jp/ （無料・APIキー発行）",
    "done": false
   },
   {
@@ -750,7 +750,7 @@
    "id": "secret_anthropic",
    "kind": "宿題",
    "title": "ANTHROPIC_API_KEY を GitHub Secrets に置く（門2審査の自動化）",
-   "note": "2026-08-10に .github/workflows/review.yml と night/review_runner.sh を新設した。鍵を Settings → Secrets and variables → Actions へ置くと**平日17:00UTCに待ち行列の先頭2社を審査**し、**PRを作る**（mainへは書かない＝マージが審査官の手）。納品検査を通らないパックは捨てる。鍵が無ければ何もせず終了する（既存ファイルは壊さない）。実測 night/progress.json は pending_review 13 のまま1週間動いていない。",
+   "note": "2026-08-10に .github/workflows/review.yml と night/review_runner.sh を新設した。鍵を Settings → Secrets and variables → Actions へ置くと**平日17:00UTCに待ち行列の先頭2社を審査**し、**PRを作る**（mainへは書かない＝マージが審査官の手）。納品検査を通らないパックは捨てる。鍵が無ければ何もせず終了する（既存ファイルは壊さない）。実測 night/progress.json は pending_review 13 のまま1週間動いていない。\n\n【配線の確認 2026-08-10】review.yml が secrets.ANTHROPIC_API_KEY を読む形を実測で確認済み。回転盤で**唯一の🔑鍵待ち**。取得: https://console.anthropic.com/settings/keys",
    "done": false,
    "added": "2026-08-10"
   },
@@ -758,7 +758,7 @@
    "id": "secret_av",
    "kind": "宿題",
    "title": "AV_KEY（Alpha Vantage・無料）を Secrets に置く",
-   "note": "out/next_earnings.json は**28件すべて src=est**（SECからの推定日）。EARNINGS_CALENDAR は1リクエストで全社ぶん取れるので無料枠25回/日でも足りる。perF の充填にも効く（投下可10社中 perF があるのは4社・gcap は0社）。",
+   "note": "out/next_earnings.json は**28件すべて src=est**（SECからの推定日）。EARNINGS_CALENDAR は1リクエストで全社ぶん取れるので無料枠25回/日でも足りる。perF の充填にも効く（投下可10社中 perF があるのは4社・gcap は0社）。\n\n【2026-08-10 是正】**ops.yml が AV_KEY を渡していなかった**——kessan_calendar.py と market_fetch.py は環境変数 AV_KEY を読む設計なのに CI が渡しておらず、**Secrets に置いても何も起きない**状態だった（v9.9.133 のクリップボードと同型＝副作用の無い経路は失敗しても静か）。v9.9.134 で配線済み＝置けば次の ops.yml から効く。\n取得: https://www.alphavantage.co/support/#api-key （無料・メールだけ）",
    "done": false,
    "added": "2026-08-10"
   },

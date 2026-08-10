@@ -23,9 +23,28 @@ jobs:
         with: {fetch-depth: 0}   # ops_status が git の最終コミット日で回転を測るため全履歴が要る
       - uses: actions/setup-python@v5
         with: {python-version: '3.11'}
-      - name: 決算カレンダー（SEC推定・鍵なし）
+      # v9.9.134: **AV_KEY を渡していなかった**（2026-08-10 実測）。
+      #   kessan_calendar.py は環境変数 AV_KEY を読む設計なのに ops.yml が渡しておらず、
+      #   Secrets に置いても**何も起きない**状態だった＝「鍵を置いたのに動かない」という
+      #   いちばん静かな壊れ方（副作用の無い経路は失敗しても静か・v9.9.133と同型）。
+      #   鍵が無ければ従来どおり SEC 推定で回る（**壊れない側に倒れている**）。
+      - name: 決算カレンダー（AV_KEYがあれば実日・無ければSEC推定）
         continue-on-error: true
-        run: python kessan_calendar.py
+        env:
+          AV_KEY: ${{ secrets.AV_KEY }}
+        run: |
+          if [ -n "$AV_KEY" ]; then echo "AV_KEY あり → EARNINGS_CALENDAR で実日を取る";
+          else echo "AV_KEY 未設定 → SEC推定で回る（穴として明示・無料鍵: alphavantage.co）"; fi
+          python kessan_calendar.py
+      # market_fetch は per/perF/analysts を取る（perF は判定圏の gcap の前提）。
+      #   無料枠は 25req/日 なので resume 設計。鍵が無ければ何も取らずに終わる。
+      - name: 市場データの採取（AV_KEYがあるときだけ・無料枠25req/日でresume）
+        continue-on-error: true
+        env:
+          AV_KEY: ${{ secrets.AV_KEY }}
+        run: |
+          if [ -n "$AV_KEY" ]; then timeout 900 python market_fetch.py | tail -12;
+          else echo "AV_KEY 未設定＝スキップ（perF が埋まらない穴。判定には使わないが門Xの前提）"; fi
       - name: 監視リスト生成
         continue-on-error: true
         run: python3 make_kanshi.py
