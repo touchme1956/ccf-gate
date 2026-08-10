@@ -16,7 +16,9 @@
 /*   門はテーマが3種あるので、地も gradient の終端色に合わせてテーマ別に敷く
      （1色に決め打つと light テーマで下半分が黒帯になる＝直したはずの事故を別テーマで再生産する）。 */
 html{scroll-behavior:smooth;background:#06080b;}
-html[data-theme="light"]{background:#e6e9f0;}
+/* v9.9.130: 明テーマを和紙(#f4f0e5)へ替えたときここだけ青灰(#e6e9f0)のまま残っており、
+   上端とオーバースクロールで和紙の外に青灰が出ていた。紙と同じ側の色へ */
+html[data-theme="light"]{background:#efe9dc;}
 html[data-theme="soft"]{background:#15181e;}
 body{margin:0;min-height:100vh;color:var(--ink);font-size:17px;line-height:1.95;letter-spacing:.02em;
  background:radial-gradient(1100px 600px at 50% -160px,rgba(201,166,74,.10),transparent 60%),linear-gradient(180deg,#0a0c11,#080a0e 60%,#06080b);
@@ -687,6 +689,101 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
   #pg8 div[style*="align-items:baseline"] span[style*="margin-left:6px"]{display:block;margin-left:0;margin-top:3px;}
 }
 
+/* ============================================================
+   五彩（ごさい）— v9.9.130（2026-08-10 ユーザー「色が単調」→「もっと色んな色欲しい」→「見やすさを重視」）
+   表示だけ。採点式・Ω・四関門・堀の関門70・売却規律S1/S2/S3・配分はいずれも不変。
+
+   ■ 色は「目で選ばず測って決めた」（night/… ではなくここに記録する）
+     WCAGコントラスト比を実測し、**7色すべてが AAA(7.0以上)** を満たす暗さまで
+     色相・彩度を動かさずに詰めた（別の色に化けないため）。地は12%染め。
+       藍 8.28 / 苔 7.07 / 丹 7.04 / 葡萄 7.63 / 金茶 7.08 / 縹 7.10 / 深緑 7.05
+       本文の墨/地 = 12.5〜13.2（AAA 7.0 の倍近い。染めても本文は落ちない）
+     素の伝統色のままだと **金茶 4.02・丹 4.70 で AA(4.5) を割る**。詰めたのはそのため。
+
+   ■ 濁らせない作り（v9.9.107 の教訓＝色を混ぜると必ず濁る）
+     色は **帯・見出し・数字に全強度**で出し、**地は12%まで**。
+     実測で地を20%・32%へ上げた版は藍が灰緑・苔が桃色に見えた（＝混色の泥）。
+
+   ■ 色は JS(ccfPaint) で配る
+     nth-of-type は *div の並び順* を数えるので `.lens` だけを巡れず割り当てが崩れる
+     （実測: 藍のはずの箱が桃色になった）。
+   ============================================================ */
+:root{
+  --gs1:#27406b; --gs2:#40522c; --gs3:#813521; --gs4:#6b3350;
+  --gs5:#614a14; --gs6:#2a4b7c; --gs7:#2b5342;   /* 藍 苔 丹 葡萄 金茶 縹 深緑 */
+  --c:var(--gs5);
+}
+/* 章の色（タブを変えると紙に落ちる光の色が変わる）。丹＝イベント＝警報の色 */
+#pg6{--ch:var(--gs6);} #pg9{--ch:var(--gs3);} #pg1{--ch:var(--gs1);} #pg8{--ch:var(--gs2);}
+#pg2{--ch:var(--gs5);} #pg3{--ch:#414c58;}    #pg4{--ch:var(--gs4);} #pg5{--ch:var(--gs5);}
+#pg7{--ch:var(--gs7);} .pg{--ch:var(--gs5);position:relative;}
+
+/* ① 章の環境光（ページの上から差す。本文の色には触れない） */
+.pg::before{content:"";position:fixed;left:0;right:0;top:0;height:72vh;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(1300px 560px at 50% -130px,color-mix(in srgb,var(--ch) 34%,transparent),transparent 66%),
+    radial-gradient(900px 480px at 90% 2%,color-mix(in srgb,var(--ch) 16%,transparent),transparent 62%);}
+/* ② 章の帯（ナビ下端）と走っているタブ */
+.pgnav{border-bottom:2px solid color-mix(in srgb,var(--chnav,var(--gold)) 60%,transparent);}
+html[data-theme="light"] .pgnav{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--chnav,var(--gold)) 14%,#f7f3e9),
+                                    color-mix(in srgb,var(--chnav,var(--gold)) 6%,#f3efe3));}
+html[data-theme="light"] .pgnav button.on{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--chnav,var(--gold)) 32%,transparent),
+                                    color-mix(in srgb,var(--chnav,var(--gold)) 11%,transparent));
+  border-color:color-mix(in srgb,var(--chnav,var(--gold)) 56%,transparent);
+  color:color-mix(in srgb,var(--chnav,var(--gold)) 92%,#120e06);}
+/* ③ 章の見出し */
+.pg h1.serif{border-bottom:2px solid color-mix(in srgb,var(--ch) 46%,transparent);padding-bottom:10px;}
+.pg h1.serif::after{content:"";display:inline-block;width:52px;height:3px;margin-left:14px;vertical-align:.34em;
+  background:linear-gradient(90deg,var(--ch),transparent);}
+html[data-theme="light"] .pg h1.serif{color:var(--ch);}
+
+/* ④ 五彩：箱ごとに色が巡る。色帯は不透明＝見やすさの代償ゼロで色数が増える */
+.panel,.lens,.fm,.cut,.brake{border-left:6px solid var(--c);}
+.panel::before,.panel::after{border-color:var(--c);opacity:.95;}
+.panel-h h3::before{color:var(--c);opacity:1;}
+table.dt th{color:var(--c);border-bottom-color:color-mix(in srgb,var(--c) 50%,transparent);}
+html[data-theme="light"] .panel-h h3{color:var(--c);}
+html[data-theme="light"] .lens .ln{color:var(--c);}
+html[data-theme="light"] .lens .lw{color:var(--c);}
+html[data-theme="light"] .fm b{color:var(--c);}
+html[data-theme="light"] .lens{background:linear-gradient(100deg,color-mix(in srgb,var(--c) 12%,#fffdf6),#fdfaf1 72%);
+  border-color:color-mix(in srgb,var(--c) 28%,transparent);border-left-color:var(--c);}
+html[data-theme="light"] .panel{background:linear-gradient(172deg,color-mix(in srgb,var(--c) 8%,#fffdf6),#f8f4e8 60%,#f3ecdc);
+  border-color:color-mix(in srgb,var(--c) 24%,transparent);border-left-color:var(--c);
+  box-shadow:0 12px 30px -20px rgba(60,48,20,.55);}
+html[data-theme="light"] .fm{background:linear-gradient(180deg,color-mix(in srgb,var(--c) 12%,#fffdf6),#f7f2e4);
+  border-color:color-mix(in srgb,var(--c) 32%,transparent);border-left-color:var(--c);}
+html[data-theme="light"] .cut{background:color-mix(in srgb,var(--c) 9%,#fffdf6);
+  border-color:color-mix(in srgb,var(--c) 28%,transparent);border-left-color:var(--c);}
+/* 暗テーマ側は地を染めない（暗い地に色を混ぜると沈む）。帯と字だけ色を持つ */
+html:not([data-theme="light"]) .lens .ln,html:not([data-theme="light"]) .panel-h h3{
+  color:color-mix(in srgb,var(--c) 45%,#f3ecda);}
+html:not([data-theme="light"]) .lens{background:color-mix(in srgb,var(--c) 9%,transparent);}
+
+/* ⑤ 層光：背景の光源を5つへ（従来の青は .06 で実質見えていなかった） */
+html[data-theme="light"] body{background:
+  radial-gradient(1250px 640px at 50% -180px,rgba(150,115,31,.20),transparent 62%),
+  radial-gradient(900px 620px at 94% 6%,rgba(39,64,107,.14),transparent 58%),
+  radial-gradient(840px 580px at 2% 58%,rgba(74,95,51,.12),transparent 60%),
+  radial-gradient(740px 520px at 82% 96%,rgba(165,68,42,.10),transparent 62%),
+  radial-gradient(620px 460px at 22% 108%,rgba(107,51,80,.08),transparent 62%),
+  linear-gradient(180deg,#faf7ee,#f4f0e5 52%,#e9e2d0);
+  background-attachment:fixed;}
+html[data-theme="soft"] body{background:
+  radial-gradient(1250px 640px at 50% -180px,rgba(201,166,74,.13),transparent 62%),
+  radial-gradient(900px 620px at 94% 6%,rgba(93,140,194,.09),transparent 58%),
+  radial-gradient(840px 580px at 2% 58%,rgba(104,150,110,.07),transparent 60%),
+  radial-gradient(740px 520px at 82% 96%,rgba(198,110,86,.06),transparent 62%),
+  linear-gradient(180deg,#1c2028,#181b22 60%,#15181e);background-attachment:fixed;}
+html[data-theme="dark"] body,html:not([data-theme]) body{background:
+  radial-gradient(1250px 640px at 50% -180px,rgba(201,166,74,.15),transparent 62%),
+  radial-gradient(900px 620px at 94% 6%,rgba(93,140,194,.10),transparent 58%),
+  radial-gradient(840px 580px at 2% 58%,rgba(104,150,110,.08),transparent 60%),
+  radial-gradient(740px 520px at 82% 96%,rgba(198,110,86,.07),transparent 62%),
+  linear-gradient(180deg,#0a0c11,#080a0e 60%,#06080b);background-attachment:fixed;}
+
 /* 動きを減らす設定の尊重 */
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{transition:none !important;animation:none !important;}
@@ -1147,7 +1244,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.129</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.130</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——v9.9.36で絶対MOAT指数をΩの直接項に加え(実効≒22%)、v9.9.39で<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -5064,9 +5161,35 @@ async function renderLog(){
 }
 function toggleLog(ek){const b=document.getElementById('bd_'+ek),a=document.getElementById('ar_'+ek);if(!b)return;const open=b.style.display!=='none';b.style.display=open?'none':'block';if(a)a.textContent=open?'▸':'▾';}
 async function delLog(k){if(!await uiConfirm('この検証記録を削除しますか？'))return;try{await store.delete(k);renderLog();}catch(e){}}
-function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();if(n===9&&typeof ccfEvents==='function')ccfEvents();window.scrollTo({top:0});try{const _t=document.getElementById('tab'+n);if(_t&&_t.scrollIntoView)_t.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}catch(e){}if(typeof ccfNavFade==='function')ccfNavFade();}
+function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();if(n===9&&typeof ccfEvents==='function')ccfEvents();window.scrollTo({top:0});try{const _t=document.getElementById('tab'+n);if(_t&&_t.scrollIntoView)_t.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}catch(e){}if(typeof ccfNavFade==='function')ccfNavFade();
+  /* 五彩(v9.9.130): 章の色をナビへ渡し、描き直された箱にも色を配る */
+  if(typeof ccfChapTint==='function')ccfChapTint(n);
+  if(typeof ccfPaint==='function')ccfPaint(document.getElementById('pg'+n));}
+// ── 五彩（v9.9.130）: 箱ごとに伝統色を配る＋章の色をナビへ渡す。表示だけ・採点に不介入 ──
+//   nth-of-type は *div の並び順* を数えるので `.lens` だけを巡れず割り当てが崩れる
+//   （実測: 藍のはずの箱が桃色になった）。だから JS で確実に配る。
+//   色は WCAG で AAA(7.0+) を満たすところまで暗さを詰めてある（CSSの頭注に実測値）。
+const CCF_GOSAI=['--gs1','--gs2','--gs3','--gs4','--gs5','--gs6','--gs7'];
+function ccfPaint(root){
+  try{
+    (root?[root]:Array.from(document.querySelectorAll('.pg'))).forEach(pg=>{
+      let i=0;
+      pg.querySelectorAll('.panel,.lens,.fm,.cut,.brake').forEach(el=>{
+        el.style.setProperty('--c','var('+CCF_GOSAI[i++%CCF_GOSAI.length]+')');});
+    });
+  }catch(e){}
+}
+function ccfChapTint(n){
+  try{
+    const pg=document.getElementById('pg'+n); if(!pg)return;
+    const v=getComputedStyle(pg).getPropertyValue('--ch').trim();
+    if(v)document.documentElement.style.setProperty('--chnav',v);
+  }catch(e){}
+}
 function ccfNavFade(){const n=document.querySelector('.pgnav');if(!n)return;const more=n.scrollWidth-n.clientWidth-n.scrollLeft>4;const back=n.scrollLeft>4;n.classList.toggle('has-more',more);n.classList.toggle('has-back',back);}
 try{const _n=document.querySelector('.pgnav');if(_n){_n.addEventListener('scroll',ccfNavFade,{passive:true});window.addEventListener('resize',ccfNavFade);ccfNavFade();}}catch(e){}
+/* 五彩(v9.9.130): 起動時に一度配る＋開いている章の色をナビへ */
+try{ccfPaint();const _on=document.querySelector('.pg.on');if(_on)ccfChapTint(_on.id.replace('pg',''));}catch(e){}
 // ===== Ⅶ資産 iframe を「1枚のページ」として表示：中身(portfolio.html)が自分の高さをpostMessageで通知し、iframeをフィットさせて内部スクロールバーを消す =====
 window.addEventListener('message',function(e){ if(e&&e.data&&e.data.type==='ccfPfHeight'){ const f=document.getElementById('pfFrame'); if(f&&e.data.h>0)f.style.height=(e.data.h+8)+'px'; } });
 function pfShow(){ const f=document.getElementById('pfFrame'); if(!f)return; try{f.contentWindow.location.reload();}catch(e){f.src=f.src;} }
