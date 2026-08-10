@@ -34,7 +34,7 @@
  "per": null,
  "perF": null,
  "evebit": null,
- "px": null,
+ "px": 152.08,
  "shy": null,
  "gr": null,
  "gcap": null,
@@ -118,7 +118,8 @@
    "f4": "隣接事業の売上5%超の開示が無い→60",
    "fin": "金融業態ではない→no",
    "mcap": "発行済株式数 152,800,000株（SEC dei:EntityCommonStockSharesOutstanding・filed 2026-08-04） × 株価 $152.08（Alpha Vantage GLOBAL_QUOTE・2026-08-07終値）= **23.24十億$**。2026-08-08に新規充填（それまで空欄で時価総額の比較ができなかった）。⚠**px はパックの市場欄には入れていない**——market_fetch/market_merge の帯検問を通していないため、mcap の算出根拠としてのみ記録する（per/E[r]には未反映＝門X未評価のまま）",
-   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 1,859,313,000 → 2023年 3,523,900,000 → 2025年 3,196,600,000。A案(端点) 直近2年CAGR -4.76% − その前3年CAGR 23.75% = -28.51pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -28.34pt ／ 年次YoY {'2021': 23.6, '2022': 42.8, '2023': 7.4, '2024': -8.0, '2025': -1.4} → **採用 -28.34pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。"
+   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 1,859,313,000 → 2023年 3,523,900,000 → 2025年 3,196,600,000。A案(端点) 直近2年CAGR -4.76% − その前3年CAGR 23.75% = -28.51pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -28.34pt ／ 年次YoY {'2021': 23.6, '2022': 42.8, '2023': 7.4, '2024': -8.0, '2025': -1.4} → **採用 -28.34pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
+   "px": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 10000000.0)を通過）"
   },
   "provenance": {
    "cagr": "machine",
@@ -137,7 +138,8 @@
    "ni": "machine",
    "eps": "machine",
    "eq": "machine",
-   "cagrT": "machine"
+   "cagrT": "machine",
+   "px": "market"
   },
   "nulls": {
    "p3": "nde を埋めたので門が同表で機械導出する",
@@ -162,7 +164,14 @@
    "門0では score=3・fails『FCFマイナス; ROIC; ROIC最低値; 営業利益率』"
   ],
   "auditDate": "2026-08-05",
-  "model": "claude-opus-5"
+  "model": "claude-opus-5",
+  "market": {
+   "date": "2026-08-10",
+   "filled": [
+    "px"
+   ],
+   "src": "market_fetch/market_data.json"
+  }
  },
  "dep": null,
  "ddate": "2026-08-05",
