@@ -46,6 +46,9 @@ import statistics
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out")
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from hist_val_rev import load_vintage_checked, seen_revs   # 在庫の版の検問（単一実装）
 
 # join が足す欄。**書く前に必ず消す**ので何度回しても同じ結果になる（冪等）
 JOINED = ("tr_cagr", "tr_total", "years", "mdd", "ret_start", "ret_end", "ret_stale",
@@ -214,7 +217,9 @@ def main():
     a = ap.parse_args()
     y = int(str(a.asof)[:4])
     path = a.file or os.path.join(OUT, f"hist_val_{y}.json")
-    hv = json.load(open(path, encoding="utf-8"))
+    # 版の検問（night/hist_val_rev.py）。**版の無い在庫には綴じない**——
+    # 綴じてしまうと「リターンが付いた在庫」の顔をして後段の検定へ流れる（2026-08-09に踏んだ事故の入口）
+    hv = load_vintage_checked(y, path=path)
     rows = hv["rows"]
 
     rr, rsrc, rconf, bench = returns_for(y)
@@ -271,6 +276,8 @@ def main():
     hv["join"] = {
         "tool": "night/hist_val_join.py",
         "joined": "2026-08-09",
+        # どの版の在庫へ綴じたか。後から「この数字はどの採取器で出たか」を辿れるようにする
+        "src_tool_rev": hv.get("tool_rev"),
         "returns_src": rsrc,
         "returns_conflicts": rconf,
         "benchmark": bench,

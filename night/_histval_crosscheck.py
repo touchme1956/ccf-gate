@@ -24,7 +24,9 @@ import sys
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HV = sys.argv[1] if len(sys.argv) > 1 else os.path.join(BASE, "out", "hist_val_2018.json")
 
-_hvj = json.load(open(HV))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from hist_val_rev import load_vintage_checked   # 在庫の版の検問（単一実装）
+_hvj = load_vintage_checked(None, path=HV)
 ASOF = _hvj.get("asof") or "2018-07-01"          # 例 "2015-07-01"
 Y = int(ASOF[:4])
 PREV_M = f"{Y}-{int(ASOF[5:7])-1:02d}" if int(ASOF[5:7]) > 1 else f"{Y-1}-12"

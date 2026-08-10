@@ -569,9 +569,23 @@ def dca_sim(mkt, spx, since="1926-01", use_cape=False, cash_rate=0.0):
         g = run(thr, cash_rate)
         ratio = g["terminal"] / base["terminal"]
         # 引き分けに要る現金利回り。**単調（現金利回りが高いほど待つのが得）**なので二分法でよい。
-        # 上限20%でも届かなければ「そんな金利は無い」と書く（推測で埋めない）。
-        be = None
-        if run(thr, 0.20)["terminal"] >= base["terminal"]:
+        #
+        # ⚠ 答えは3通りに割れる。**どれなのかを必ず `breakeven_case` に書く**（2026-08-09是正）。
+        #   初版は二分法の下限を cash_rate(=0) に置いたまま、遮断器が0%で既に勝っている場合も
+        #   そのまま `be=0.0` を返していた。**その 0.0 は「計算した分岐点」ではなく探索の下限そのもの**
+        #   ——真の分岐点は0%以下（負の現金利回りでも勝つ）かもしれず、下限で頭打ちになっただけ。
+        #   しかも当時は be が非Noneのとき note を None にしていたので、出力だけ見ると
+        #   「計算結果の0%」と「既定値の残り」が見分けられなかった。
+        #   **もっともらしい0は空欄より有害**（この台帳がルール7で繰り返し戒めてきた型）。
+        #   実測では全6セル（spx_pe_pct/cape_pct × 3閾値）がこの『下限で既に勝ち』の側だった。
+        be = be_case = be_note = None
+        if g["terminal"] >= base["terminal"]:
+            # 下限の現金利回りで既に常時投資以上＝この向きに分岐点は存在しない。
+            # 「0%が要る」ではなく「要らない」なので、数値は置かず None にして理由を書く。
+            be_case = "no_gap_at_floor"
+            be_note = (f"現金 {cash_rate:.2%}（＝探索の下限）でも既に常時投資を上回る"
+                       f"（常時投資比 {ratio:.4f}）＝この向きに分岐点は無い")
+        elif run(thr, 0.20)["terminal"] >= base["terminal"]:
             lo, hi_ = cash_rate, 0.20
             for _ in range(50):
                 mid = (lo + hi_) / 2
@@ -579,15 +593,19 @@ def dca_sim(mkt, spx, since="1926-01", use_cape=False, cash_rate=0.0):
                     lo = mid
                 else:
                     hi_ = mid
-            be = round(hi_, 4)
+            be, be_case = round(hi_, 4), "solved"
+            be_note = f"現金が年 {be:.2%} 以上あれば引き分け"
+        else:
+            # 上限20%でも届かなければ「そんな金利は無い」と書く（推測で埋めない）。
+            be_case, be_note = "unreachable", "現金が年20%でも常時投資に届かない"
         out["cells"].append({
             "threshold": thr, "n_stop": g["n_stop"], "stop_rate": g["stop_rate"],
             "terminal": round(g["terminal"], 1),
             "vs_always": round(ratio, 4),
             "cost_pct": round((ratio - 1) * 100, 2),
-            "breakeven_cash_rate": be,
-            "breakeven_note": (None if be is not None else
-                               "現金が年20%でも常時投資に届かない"),
+            "breakeven_cash_rate": be,          # None のときは case が理由を持つ
+            "breakeven_case": be_case,          # solved / no_gap_at_floor / unreachable
+            "breakeven_note": be_note,          # **常に文字列**（null にしない）
             "cash_left_uninvested": g["cash_left"],
         })
     return out
@@ -848,8 +866,11 @@ def main():
             print(f"     {'閾値':>6}{'止めた月':>9}{'止率':>7}{'終価':>14}{'常時投資比':>11}"
                   f"{'差':>9}{'引き分けに要る現金利回り':>26}")
             for c in s["cells"]:
+                # 数値が無いときは **どちらの意味の無しか**を短く出す（0.00% と書かない）
                 be = (f"{c['breakeven_cash_rate']:.2%}" if c["breakeven_cash_rate"] is not None
-                      else c["breakeven_note"])
+                      else ("要らない(下限で既に勝ち)"
+                            if c["breakeven_case"] == "no_gap_at_floor"
+                            else "年20%でも届かない"))
                 print(f"     {c['threshold']:>6}{c['n_stop']:>9}{c['stop_rate']:>7.1%}"
                       f"{c['terminal']:>14,.0f}{c['vs_always']:>11.3f}"
                       f"{c['cost_pct']:>+8.1f}%{be:>26}")

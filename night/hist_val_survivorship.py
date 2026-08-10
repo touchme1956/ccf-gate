@@ -52,6 +52,9 @@ import urllib.request
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out")
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from hist_val_rev import load_vintage_checked, seen_revs   # 在庫の版の検問（単一実装）
 SUBS = os.path.join(OUT, "_histval_cache", "subs")
 SEC_UA = {"User-Agent": "ccf-gate research fortis5280@gmail.com", "Accept-Encoding": "gzip"}
 
@@ -161,7 +164,8 @@ def main():
     ap.add_argument("--json", default=os.path.join(OUT, "hist_val_survivorship.json"))
     a = ap.parse_args()
 
-    hv = {y: load(f"hist_val_{y}.json") for y in VINTAGES}
+    # 版の検問（night/hist_val_rev.py）。版の無い在庫＝r1 と、版の混在を読んだ瞬間に止める
+    hv = {y: load_vintage_checked(y) for y in VINTAGES}
     coh = {y: load(f"retro_cohort_{y}.json") for y in (2013, 2015)}
     rep = {"generated": "2026-08-09", "tool": "night/hist_val_survivorship.py",
            "instrument_check": {}, "funnel": {}, "exits": {}, "left_tail": {},
@@ -368,6 +372,7 @@ def main():
             "毀損69件で検出力のある2018は0.32-0.97＝逆向き。"
             "**向きが一致しないのは、生存バイアスで薄くなった標本の宿命**")
 
+    rep["src_tool_rev"] = seen_revs()   # 読み終えてから刻む
     json.dump(rep, open(a.json, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(json.dumps(rep, ensure_ascii=False, indent=1)[:200])
     print(f"→ {a.json}")
