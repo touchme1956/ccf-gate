@@ -38,8 +38,19 @@ INVERSE = ("shy",)                     # 還元額が不変で時価だけ動く
 
 
 def buy_set():
-    """門そのもの（score_all.js）で投下可を出す。推測しない。"""
+    """門そのもの（score_all.js）で投下可を出す。推測しない。
+
+    2026-08-11の是正: **先に納品検査の表を作り直す**。
+      第四の関門（データ健全）は `out/validate_fail.json` を読むが、この道具が書き換える `per` は
+      **その表のFAIL条件そのもの**（per と px÷eps の乖離）なので、表を古いまま score_all を回すと
+      **昨日の答案で今日の合否を出す**ことになる。実害: 2026-08-10 に RBC の per を更新して
+      FAIL が立ったのに、committed の score_all.json は🟢投下可のままで、
+      門(ブラウザ・毎回validate_fail.jsonを読む)と端末が違うことを言っていた（v9.9.65の破れ）。
+      検査は369件0.12秒なので費用は無視できる。**再実装せず既存の道具を順に呼ぶ**。
+    """
     try:
+        subprocess.run(["python3", "night/validate_packs.py", "--json"],
+                       capture_output=True, text=True, timeout=300)
         subprocess.run(["node", "night/score_all.js"], capture_output=True, text=True, timeout=300)
         rows = json.load(open("out/score_all.json", encoding="utf-8"))
         return {r["t"] for r in rows if r.get("buy") is True}
