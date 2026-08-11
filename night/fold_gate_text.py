@@ -36,6 +36,15 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HTML = os.path.join(ROOT, 'index.html')
 CHECK = '--check' in sys.argv
 MARK = 'data-fold="2"'          # この版でたたんだ印（二重適用の防止）
+NEWVER = 'v9.9.137'
+BADGE = re.compile(r'(color:var\(--mut\)">)v9\.9\.\d+(<)')
+
+# 一行だけの折り畳みは飾り罫を外す。複数行の根拠には罫が効くが、
+# 一行に罫を引くと「引用の切れ端」に見える（実測・ユーザー報告）。
+PLAIN_CSS = ('.why-body{font-size:11.5px;color:var(--dim);line-height:1.85;margin-top:6px;}\n'
+             '/* 一行だけの折り畳み（段落の「つづき」・カードの注記）は飾り罫を外す。\n'
+             '   複数行の根拠には罫が効くが、一行に罫を引くと「引用の切れ端」に見える。 */\n'
+             '.why.plain{border-left:none;padding-left:0;margin:2px 0 0;}')
 
 problems = []
 stats = {}
@@ -89,9 +98,17 @@ def in_details(s, pos):
     return head.count('<details') > head.count('</details>')
 
 
-def fold_inner(s, tag, cls, summary, minlen, label):
-    """要素の**中身**をたたむ（開きタグ・閉じタグはそのまま残す＝レイアウトを壊さない）"""
+def fold_inner(s, tag, cls, summary, minlen, label, plain=False):
+    """要素の**中身**をたたむ（開きタグ・閉じタグはそのまま残す＝レイアウトを壊さない）
+
+    ⚠ **<p> の中に <details> は置けない**（HTMLの規則: p は phrasing しか入らない）。
+      入れるとブラウザが p をその場で閉じて details を外へ出し、対の </p> が
+      **空の段落**として残って margin だけを取る（実測: 空の p が 1個→13個）。
+      → 折り畳みを入れる <p> は **<div> に書き換える**。CSSは `.intro{}` /
+        `.lens .ld{}` とクラス指定なので見た目は変わらない。
+    """
     n = saved = 0
+    cl = 'why plain' if plain else 'why'
     for (a, inner_a, inner_b, b) in reversed(find_elements(s, tag, cls)):
         body = s[inner_a:inner_b]
         if textlen(body) < minlen:
@@ -101,9 +118,12 @@ def fold_inner(s, tag, cls, summary, minlen, label):
         if not balanced(body):
             problems.append('タグ収支が合わないので中止: %s.%s @%d' % (tag, cls, a))
             continue
-        s = (s[:inner_a]
-             + '<details class="why" %s><summary>%s</summary><div class="why-body">' % (MARK, summary)
-             + body + '</div></details>' + s[inner_b:])
+        open_tag, close_tag = s[a:inner_a], s[inner_b:b]
+        if tag == 'p':
+            open_tag, close_tag = open_tag.replace('<p', '<div', 1), '</div>'
+        s = (s[:a] + open_tag
+             + '<details class="%s" %s><summary>%s</summary><div class="why-body">' % (cl, MARK, summary)
+             + body + '</div></details>' + close_tag + s[b:])
         n += 1
         saved += textlen(body)
     stats[label] = (n, saved)
@@ -133,9 +153,11 @@ def fold_intro(s, minlen=200):
         lead, rest = body[:cut], body[cut:]
         if not (balanced(lead) and balanced(rest)) or textlen(rest) < 80:
             continue
-        s = (s[:inner_a] + lead
-             + '<details class="why" %s><summary>つづき</summary><div class="why-body">' % MARK
-             + rest + '</div></details>' + s[inner_b:])
+        # <p> の中に <details> は置けない（上の fold_inner の注記と同じ理由）
+        open_tag = s[a:inner_a].replace('<p', '<div', 1)
+        s = (s[:a] + open_tag + lead
+             + '<details class="why plain" %s><summary>つづき</summary><div class="why-body">' % MARK
+             + rest + '</div></details></div>' + s[b:])
         n += 1
         saved += textlen(rest)
     stats['p.intro（最初の一文を残して）'] = (n, saved)
@@ -148,8 +170,29 @@ TODO_NEW = ('''<div style="font-size:11px;color:var(--dim);margin-top:4px;line-h
             !x.note ? '' :
             // 長い note は**表題を出したまま**たたむ（実測: 全75件で 33,243字＝画面の字の大半だった）
             (String(x.note).replace(/<[^>]+>/g,'').length <= 90 ? x.note
-             : `<details class="why" ''' + MARK + '''><summary>詳しく</summary><div class="why-body">${x.note}</div></details>`)
+             : `<details class="why plain" ''' + MARK + '''><summary>詳しく</summary><div class="why-body">${x.note}</div></details>`)
           }</div>''')
+
+
+def fold_fm(s):
+    """.fm small は**ラベルを summary に**して中身だけ畳む。
+       ラベルごと畳むと箱の中身が「詳しく」だけになり、72pxの空箱に見える（実測）。"""
+    n = saved = 0
+    for (a, inner_a, inner_b, b) in reversed(find_elements(s, 'div', 'fm small')):
+        body = s[inner_a:inner_b]
+        if textlen(body) < 260 or in_details(s, a) or not balanced(body):
+            continue
+        m = re.match(r'\s*(<span class="lbl"[^>]*>.*?</span>)(.*)$', body, flags=re.S)
+        if not m:
+            continue
+        lbl, rest = m.group(1), m.group(2)
+        s = (s[:inner_a]
+             + '<details class="why" %s><summary>%s</summary><div class="why-body">' % (MARK, lbl)
+             + rest + '</div></details>' + s[inner_b:])
+        n += 1
+        saved += textlen(rest)
+    stats['div.fm small（ラベルを summary に）'] = (n, saved)
+    return s
 
 
 def main():
@@ -167,9 +210,14 @@ def main():
     else:
         problems.append('やるべきこと の note の描画箇所が見つからない')
 
+    # 一行折り畳み用のCSSを1回だけ入れる
+    old_css = '.why-body{font-size:11.5px;color:var(--dim);line-height:1.85;margin-top:6px;}'
+    if old_css in s and '.why.plain' not in s:
+        s = s.replace(old_css, PLAIN_CSS, 1)
+
     # ②③④ 静的な解説
     s = fold_inner(s, 'p', 'ld', '詳しく', 160, 'p.ld（lensの解説）')
-    s = fold_inner(s, 'div', 'fm small', '詳しく', 260, 'div.fm small（式・補足）')
+    s = fold_fm(s)
     s = fold_intro(s)
 
     if CHECK:
@@ -189,6 +237,7 @@ def main():
             print('   -', p)
         return 1
 
+    s = BADGE.sub(r'\g<1>%s\g<2>' % NEWVER, s)
     open(HTML, 'w', encoding='utf-8').write(s)
     for k, (n, sv) in stats.items():
         print('  %-28s %2d件  %6d字をたたむ' % (k, n, sv))
