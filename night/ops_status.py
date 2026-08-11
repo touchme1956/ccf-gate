@@ -129,6 +129,12 @@ def build():
         ("irr85audit", "irr=85の根拠監査",      "月1",     40,
          json_field("out/audit_irr85.json", "generated"),
          "ci.yml（push/PR毎）／手動 python3 night/audit_irr85.py", True),
+        # 2026-08-11: 機構の射程と認定の寿命（_meta.mech）。**測定は原本読解＝人の作業**だが、
+        #   この表は「まだ測っていない社」を名指しするので回し続ける意味がある
+        #   ——新しく irr=85 になった社は未着手のまま静かに溜まる（KRMNが監視から漏れたのと同じ形）。
+        ("irr85scope", "機構の射程と認定の寿命",  "月1",     40,
+         json_field("out/irr85_scope_life.json", "generated"),
+         "ops.yml 毎月2日／手動 python3 night/irr85_scope_life.py --json", True),
         ("irr85myrule", "irr=85をあなたの基準で採点", "毎営業日", 4,
          json_field("out/irr85_myrule.json", "generated"),
          "ci.yml（push/PR毎）／手動 python3 night/irr85_myrule.py --json", True),
