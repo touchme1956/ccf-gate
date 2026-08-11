@@ -3209,6 +3209,47 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
         if(!pick)return; pick.sh++; pick.need-=pick.pi.jpy; bud-=pick.pi.jpy; } };
       fill(b=>b.sh===0?b.pi.jpy:null);   // ① まだ1株も無い社へ、安い順に1株ずつ＝行き渡らせる
       fill(b=>b.pi.jpy/b.need);          // ② 残った枠は按分の残りに対していちばん無理のない1株から
+      /* ③ 使い切り（2026-08-11 ユーザー「17万ギリギリになるようにできない？」）
+         ①②は貪欲なので**枠が余っていても止まる**。実測(¥170,000): ①が安い順に
+         ENTG¥22,768 / KLAC¥30,430 / HWM¥44,792 / MKSI¥46,157 の4社を買って ¥144,147、
+         **残り¥25,800**。②は need を使い切った社を候補から外すので何も足せず、
+         未購入で最安の LRCX¥48,375 は残枠に届かない——で終わっていた。
+         ところが同じ4社でも **KLAC+HWM+MKSI+LRCX = ¥169,754（残り¥246）** という買い方がある。
+         ＝**社数は同じまま消化額だけ増やせる**。
+         そこで「①が達成した社数を下げない」ことを条件に、**消化額が最大になる組合せ**を探す。
+         **v9.9.115（1社に偏らせず行き渡らせる）は上位の目的として保持**——
+         社数を1社でも減らす案は採らない。同数のときだけ消化額で選ぶ（辞書式）。
+         探索は小さい: 1株が最安でも枠÷最安株価しか買えないので**総株数の上限は7前後**、
+         銘柄も10社前後。組合せは3万通り程度で、DFS＋枝刈りで一瞬で終わる。
+         **新しい定数は導入していない**——使うのは1株の価格と按分の残りだけ。 */
+      (function(){
+        const cand=known.filter(b=>b.pi.jpy>0&&b.pi.jpy<=AMT);
+        if(!cand.length)return;
+        const base={n:known.filter(b=>b.sh>0).length, spend:known.reduce((a,b)=>a+b.sh*b.pi.jpy,0)};
+        const budAll=AMT-unknown.reduce((a,b)=>a+b.need,0);
+        if(budAll<=0)return;
+        // 1社あたりの上限株数＝按分を1株だけ超えるところまで（1株も買えない社は対象外）
+        const it=cand.map(b=>({b,p:b.pi.jpy,cap:Math.max(1,Math.ceil(Math.max(b.x.yen||0,0)/b.pi.jpy))}))
+                     .sort((a,b)=>a.p-b.p);
+        let bestN=-1,bestS=-1,bestV=null; const cur=new Array(it.length).fill(0);
+        let guard=0;
+        (function dfs(i,rest,n,spend){
+          if(++guard>400000)return;                       // 暴走の保険（実測では数千で終わる）
+          if(i===it.length){
+            if(n>bestN||(n===bestN&&spend>bestS)){bestN=n;bestS=spend;bestV=cur.slice();}
+            return;
+          }
+          const mx=Math.min(it[i].cap, Math.floor(rest/it[i].p));
+          for(let k=mx;k>=0;k--){ cur[i]=k; dfs(i+1, rest-k*it[i].p, n+(k>0?1:0), spend+k*it[i].p); }
+          cur[i]=0;
+        })(0,budAll,0,0);
+        // 社数を減らす案は採らない（v9.9.115の約束）。同数なら消化額が多いほうへ。
+        if(bestV&&(bestN>base.n||(bestN===base.n&&bestS>base.spend))){
+          known.forEach(b=>{ b.need=(b.x.yen||0); b.sh=0; });
+          it.forEach((o,i)=>{ o.b.sh=bestV[i]; o.b.need=(o.b.x.yen||0)-bestV[i]*o.p; });
+          bud=budAll-bestS;
+        }
+      })();
       const buyL=bs.filter(b=>b.sh>0), skipL=known.filter(b=>b.sh===0);
       // v9.9.112: 注文書の各行も**銘柄名の行＋説明の行**に分ける。旧実装は長い説明に nowrap を
       //   掛けて flex で横に並べていたので、携帯の幅では説明が右へはみ出し、
@@ -3227,7 +3268,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
         `<span style="color:var(--dim)"><span style="white-space:nowrap">${ccfYen(b.need)}</span>を証券会社の現値で手計算（円÷株価）</span>`,'var(--muted)'); });
       const spent=AMT-bud-unknown.reduce((a,b)=>a+b.need,0);
       body+=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
-        <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書（株数・現値換算）</b><span style="font-size:10.5px;color:var(--dim);margin-left:8px">円の按分が正本——丸株で最も近づける執行案。<b>①まだ1株も無い社へ安い順に1株ずつ（行き渡らせる）→②残枠は按分の残りに対していちばん無理のない1株から</b></span></div>
+        <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書（株数・現値換算）</b><span style="font-size:10.5px;color:var(--dim);margin-left:8px">円の按分が正本——丸株で最も近づける執行案。<b>①まだ1株も無い社へ安い順に1株ずつ（行き渡らせる）→②残枠は按分の残りに対していちばん無理のない1株から→③社数を減らさない範囲で<u>枠を使い切る</u>組合せへ</b></span></div>
         ${ob}
         <div style="font-size:11px;color:var(--dim);margin-top:5px">合計 約${ccfYen(Math.round(spent))}${bud>=100?`／残り${ccfYen(Math.floor(bud/100)*100)}は<b>網へ</b>（または翌月へ繰越して見送り銘柄に充てる）`:''}</div>
       </div>`;
