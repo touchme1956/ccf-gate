@@ -69,6 +69,13 @@ def rows_of(f):
 
 def build():
     H = json.load(open('out/audit_hist85_today.json', encoding='utf-8'))['rows']
+    # 当時の欠測を埋めた補助在庫（night/irr85_fill_asof.py）。**主検定にも通す**——
+    #   nde18 の欠測6社は「真に無借金」と「候補タグに無い名前」で、どちらも測れる値だった。
+    #   測れるものを欠測のままにすると、標本を自分で薄くしたうえで「n が薄い」と言うことになる。
+    try:
+        FILL = json.load(open('out/irr85_asof_fill.json', encoding='utf-8')).get('items', {})
+    except Exception:
+        FILL = {}
     F1 = {r['ticker']: r for r in rows_of('out/retro_features_2018.json') if r.get('ticker')}
     F2 = {r['ticker']: r for r in rows_of('out/retro_features2_2018.json') if r.get('ticker')}
     # 定性（時制・機構）は replication の在庫から。2018年版は別ファイルで欄名が違う
@@ -93,7 +100,9 @@ def build():
         out.append(dict(
             t=t, y=1 if h['cagr18'] >= HURDLE else 0, cagr18=h['cagr18'], cagr13=h['cagr13'],
             v2018=('2018' in h['vintages']), semi=h['semi'],
-            opm=b.get('opm'), cagr5=b.get('cagr5'), conv5=b.get('conv5'), nde=a.get('nde18'),
+            opm=b.get('opm'), cagr5=b.get('cagr5'),
+            conv5=(b.get('conv5') if b.get('conv5') is not None else (FILL.get(t) or {}).get('conv5')),
+            nde=(a.get('nde18') if a.get('nde18') is not None else (FILL.get(t) or {}).get('nde18')),
             opmD5=b.get('opmD5'), accel=b.get('accel'), rnd=b.get('rnd_r'),
             payout=b.get('payout5'), netiss=b.get('netiss_r'), intcov=b.get('intcov'),
             accr=b.get('accr'), rev=b.get('rev'),
@@ -228,14 +237,27 @@ def main():
     #   そこは n=4 しかない。だから「合格した社が良い」とは読めない。
     #   この節が示すのは**床が誰を落とすか**であって、床の性能ではない。
     F1b = {r['ticker']: r for r in rows_of('out/retro_features_2018.json') if r.get('ticker')}
+    # v9.9.129追補(2026-08-11 ユーザー指示「n=4も外して」): 当時の欠測を埋めた補助在庫を重ねる。
+    #   **元の在庫は書き換えない**（歴史検証の他の道具も読むので「基準の違う二つ」を作らないため）。
+    #   欠測の正体は (A)真に無借金 と (B)候補タグに無い名前(ADI=UnsecuredLongTermDebt) の2種類で、
+    #   区別せず None にしていたのが穴だった＝**「タグが無い」と「値が0」を区別する**（ルール7）。
+    FILL = {}
+    try:
+        FILL = json.load(open('out/irr85_asof_fill.json', encoding='utf-8')).get('items', {})
+    except Exception:
+        pass          # 無ければ埋めない＝検査は眠るだけ（無いことを「異常なし」と偽らない）
     OPM, CONV, CG, ND = 11.89, 0.639, 1.76, 4.0     # v9.9.129 の下限（丸め上げ撤回後）
     print(f'\n■ ★現行の下限を当時の値へ当てる（営利率≥{OPM} ∧ FCF転換≥{CONV} ∧ 成長≥{CG} ∧ nde≤{ND}）')
     print('   ※堀・Ω・二本柱pm は再構成不能なので除外＝**機械の下限だけ**の判定')
     grp = {}
+    nfill = 0
     for r in rows:
-        t = r['t']; nde = (F1b.get(t) or {}).get('nde18')
+        t = r['t']; fl = FILL.get(t) or {}
+        nde, conv = r['nde'], r['conv5']        # build() が補助在庫を織り込み済み（二重補充しない）
+        if (F1b.get(t) or {}).get('nde18') is None and nde is not None:
+            nfill += 1
         ng, unk = [], False
-        for v, thr, lbl, m in ((r['opm'], OPM, '営利率', 100), (r['conv5'], CONV, '転換', 1),
+        for v, thr, lbl, m in ((r['opm'], OPM, '営利率', 100), (conv, CONV, '転換', 1),
                                (r['cagr5'], CG, '成長', 100), (nde, ND, 'nde', 1)):
             if v is None:
                 unk = True
@@ -243,6 +265,9 @@ def main():
                 ng.append(f'{lbl}{v*m:.2f}')
         key = '判定不能' if unk else ('合格' if not ng else '不合格')
         grp.setdefault(('標本内' if r['v2018'] else '標本外', key), []).append((t, r['cagr18'], ng))
+    if nfill:
+        print(f'   （out/irr85_asof_fill.json から {nfill}欄を補充——'
+              f'欠測の正体は「真に無借金」と「候補タグに無い名前」の2種類だった）')
     for scope, note in (('標本内', '＝下限がここから作られた。**循環なので検証にならない**'),
                         ('標本外', '＝2013/2015のみ。**こちらが本当の検証だが n が薄い**')):
         print(f'\n   ── {scope} {note}')
