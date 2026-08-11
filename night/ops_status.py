@@ -112,6 +112,23 @@ def build():
         #   止まっても今日の判定は動かない（この道具は読むだけ）が、**新着が誰にも採点されないまま溜まる**
         #   ——「8社」が写真からルールへ変わった意味が消える種類。毎営業日にした理由は、
         #   Routine が毎日走るのに月次で拾うと最大1ヶ月ぶん新着が見えないから。
+        # 2026-08-11(ユーザー指示「進めて」): irr=85 を**捌く**ための3本。いずれも読むだけ。
+        #   ①機構文の年次diff——**歴史が唯一「効く」と出した変数の劣化を機械が見張る**。
+        #     台帳に刻んだ引用が最新の年次報告にまだ在るか。⚠片側の検査（消えたら赤信号／
+        #     在っても安全ではない＝CMTL は文を残したまま壊れた）。
+        #   ②城の相関——1銘柄の上限8%は守るのに**束では一度も見ていなかった**。
+        #     半導体5社・航空防衛4社で城の62.6%なのに、同じ束かの判断材料が業種ラベルだけだった。
+        #   ③irr=85 の根拠監査——**回転盤にもCIにも登録が無く2026-08-05の54社のまま6日間止まっていた**
+        #     （実データは15社）。KRMN が監視から漏れていたのと同じ形。
+        ("irr85mech", "機構文の年次diff",      "月1",     40,
+         json_field("out/irr85_mech_diff.json", "generated"),
+         "ci.yml（push/PR毎）／手動 python3 night/irr85_mech_diff.py --json", True),
+        ("castlecorr", "城の相関（同時に落ちるか）", "月1",  40,
+         json_field("out/castle_correlation.json", "generated"),
+         "ops.yml 毎月2日／手動 python3 night/castle_correlation.py --json", True),
+        ("irr85audit", "irr=85の根拠監査",      "月1",     40,
+         json_field("out/audit_irr85.json", "generated"),
+         "ci.yml（push/PR毎）／手動 python3 night/audit_irr85.py", True),
         ("irr85myrule", "irr=85をあなたの基準で採点", "毎営業日", 4,
          json_field("out/irr85_myrule.json", "generated"),
          "ci.yml（push/PR毎）／手動 python3 night/irr85_myrule.py --json", True),

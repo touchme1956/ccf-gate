@@ -221,6 +221,21 @@ jobs:
         continue-on-error: true
         run: timeout 900 python3 night/irr85_myrule.py --json | tail -30
 
+      # ── 5-b4. 機構文の年次diff（2026-08-11新設）────────────────────────────────
+      #   **歴史が唯一「効く」と出した変数（irr=85）の劣化を機械が見張る唯一の道具**。
+      #   台帳に刻んだ原本の引用が、最新の年次報告にまだ在るかを照合する。
+      #   ⚠**片側の検査**——消えたら赤信号／在っても安全ではない（CMTL は文を残したまま
+      #   −17.2%/年で壊れた）。判定は下さない＝消えていたら門2再審査へ回すのが人の仕事。
+      - name: 機構文の年次diff irr85_mech_diff（表示のみ・SEC問い合わせ）
+        continue-on-error: true
+        run: timeout 900 python3 night/irr85_mech_diff.py --json | tail -28
+
+      # ── 5-b5. irr=85 の根拠監査（2026-08-11に回転盤へ登録）──────────────────────
+      #   ⚠登録が無かったため **2026-08-05 の54社のまま6日間止まっていた**（実データは15社）。
+      - name: irr=85 の根拠監査 audit_irr85（表示のみ）
+        continue-on-error: true
+        run: timeout 300 python3 night/audit_irr85.py | tail -12
+
       # ── 5-c. パックより新しい年次報告が出ていないか（2026-08-07新設）─────────────
       #   audit_stale_bs は**のれんの入替**しか見ないので、買収をしない優良企業が
       #   静かに1会計年度ぶん古くなるのは今日どの検査器にも掛からなかった。
@@ -377,7 +392,7 @@ jobs:
           #   **第四の関門が読む pending.json は手で回したときしか更新されなかった**。
           #   out/irr85_myrule.json は新着の検出に前回の在庫を使うので、
           #   コミットしないと**毎回「全社が新着」になり新着の意味が消える**。
-          git add out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json night/reaudit_queue.json 2>/dev/null || true
+          git add out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json night/reaudit_queue.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"
           else

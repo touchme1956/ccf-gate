@@ -217,6 +217,14 @@ jobs:
           timeout 900 python3 night/shadow_irr85_proven.py 2>&1 | tail -8 || true
           timeout 900 python3 night/shadow_frame85_kills.py 2>&1 | tail -6 || true
           node night/audit_weights.js --q75 2>&1 | tail -12 || true
+      # ── 城の相関（2026-08-11新設）───────────────────────────────────────────
+      #   1銘柄の上限8%（¼ケリー）は厳密に守るのに、**束では一度も測っていなかった**。
+      #   半導体5社が城の31.1%・航空防衛4社が31.5%＝2つで62.6% なのに、
+      #   「同じ束か」の判断材料が**業種のラベルだけ**だった——ラベルは人が貼り、相関は市場が決める。
+      #   **判定はしない**（上限も線も置かない）。Yahoo を叩くので毎PRではなく月次。
+      - name: 城の相関（同時に落ちるか・表示のみ）
+        continue-on-error: true
+        run: timeout 900 python3 night/castle_correlation.py --json 2>&1 | tail -24
       - name: WACC既定のズレ検出 audit_wacc_stale
         continue-on-error: true
         run: timeout 300 python3 night/audit_wacc_stale.py --write
@@ -239,6 +247,6 @@ jobs:
           #   あわせて sp500_pe_monthly（自己相対の分母）・growth_trend（cagrTの測定結果）・
           #   calibration（7月のスナップショット）も add する。**足したら add も足す**——
           #   ステップだけ増やして add を忘れると「回っているのに残らない」という同じ穴が再発する。
-          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/new_listings_irr.json out/wacc_drift.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/rechunk*.txt night/reaudit_queue.json night/progress.json out/er_ledger.json out/market_data.json market_data.json out/shadow_*.json out/gate0_run.json 2>/dev/null || true
+          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/new_listings_irr.json out/wacc_drift.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/rechunk*.txt night/reaudit_queue.json night/progress.json out/er_ledger.json out/market_data.json market_data.json out/shadow_*.json out/gate0_run.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push

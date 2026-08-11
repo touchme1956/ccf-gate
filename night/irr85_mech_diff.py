@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+night/irr85_mech_diff.py — **台帳に刻んだ機構文が、最新の原本にまだ在るか**（2026-08-11新設）
+
+■ なぜ要るか（この台帳で最も重い一点）
+  2026-08-05 の全数検算で確立した事実:「**irr欄の測定精度がそのまま門の精度になる**」。
+  歴史検証がこの台帳で唯一「効く」と出した変数が irr=85 だからで、
+  その85は**原本の文そのもの**（顧客の側が再認定の費用を負う、という断定）で決まる。
+  ところが——**その文を機械で見張るものが一つも無かった。**
+  新しい10-Kが出れば `enqueue_reaudit` が再審査を積むが、**読むのは人**。
+  実際 LRCX の機構文が「一字同文で現存」と確認できたのは、2026-08-07 に人が読んだから。
+  年に一度でも機械が差分を取れば、この欄の劣化が**声を上げる**ようになる。
+
+■ ⚠ これは片側の検査であり、その片側性こそが正しい
+  **文が消えたら赤信号。文が在っても安全ではない。**
+  歴史で唯一壊れた85（CMTL・−17.2%/年・DD−96%）は**機構文を残したまま壊れた**。
+  だから「在る」を合格の証拠に使ってはいけない——この道具は**消えたことだけを検出する**。
+  ＝関門の作法（買わない理由は出す／買ってよい理由は出さない）と同じ向き。
+
+■ 判定は一切変えない（読むだけ）
+  Ω・採点式・四関門・堀の関門・売却規律・配分・別枠85 のどれにも触らない。
+  出すのは out/irr85_mech_diff.json と画面だけ。消えていたら**門2再審査へ回す**のが人の仕事。
+
+■ どう照合するか（ここが実装の全部）
+  台帳の `_meta.evidence.irr` には原本の引用が『…』や ** ** で入っている。
+  そこから**英文の引用だけ**を取り出し、最新の年次報告(10-K/20-F/40-F)の本文と照合する。
+  ⚠素朴な文字列一致は必ず失敗する——引用には強調の `**`、省略の `…`、全角記号、
+  改行由来の空白の揺れが混ざる。よって:
+    (1) `**` と全角引用符を落とし、`…`/`...` で**断片へ割る**（省略をまたいで一致を求めない）
+    (2) 空白・引用符・ダッシュを正規化し、**小文字化して**比較する
+    (3) 断片が短すぎる（40字未満）ものは**照合に使わない**——偶然一致するため
+    (4) 完全一致しなければ**語の連なり**で最長一致率を出す（言い換えは「弱まった」として警告）
+  一致率の刻みは**新しい定数を作らない**——1.0=一字同文／0.8以上=ほぼ同文／それ未満=要確認。
+
+使い方:
+  python3 night/irr85_mech_diff.py            全 irr=85（既定）
+  python3 night/irr85_mech_diff.py --t CW     1社だけ
+  python3 night/irr85_mech_diff.py --json     out/irr85_mech_diff.json を書く
+"""
+import json
+import os
+import re
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.chdir(ROOT)
+sys.path.insert(0, os.path.join(ROOT, 'night'))
+import irr85_extract as EX          # get / cik_of / latest_annual / text_of を再利用（二重実装を作らない）
+
+AS_JSON = '--json' in sys.argv[1:]
+ONE = None
+for i, a in enumerate(sys.argv[1:]):
+    if a == '--t' and i + 2 <= len(sys.argv[1:]):
+        ONE = sys.argv[i + 2].upper()
+
+MIN_FRAG = 40          # これ未満の断片は照合に使わない（偶然一致する）
+NEAR = 0.80            # 語の連なりの一致率がこれ以上なら「ほぼ同文」
+
+
+def norm(s):
+    """照合用に正規化——強調・引用符・ダッシュ・空白の揺れを消して小文字化
+
+    ⚠**`**` は空白でなく空文字へ落とす**（2026-08-11の誤検出で判った）。
+      markdown の `**` は語に密着するので、空白へ置くと**句読点の直前に空白が入る**——
+      `certification**.` → `certification .` となり、本文の `certification.` と一致しなくなる。
+      実害: ST の機構文は原本に**一字同文で現存している**のに「消えた/書き換わった」と鳴った
+      （最長一致68%）。**鳴りすぎる警報は鳴らないのと同じ**なので、片側検査ほど誤検出を許さない。
+      念のため句読点の直前の空白も畳む（引用の作法が変わっても壊れないように）。"""
+    s = s.replace('**', '')
+    s = re.sub(r'[“”„«»＂"\'’‘`]', ' ', s)
+    s = re.sub(r'[–—−ー\-]+', '-', s)
+    s = re.sub(r'[\s　]+', ' ', s)
+    s = re.sub(r'\s+([,.;:)])', r'\1', s)
+    s = re.sub(r'([(])\s+', r'\1', s)
+    return s.lower().strip()
+
+
+def quotes_of(ev):
+    """根拠テキストから**英文の引用だけ**を取り出し、省略記号で断片へ割る"""
+    if not ev:
+        return []
+    out = []
+    # 『…』／「…」／'…'（全角・半角）に囲まれた塊を拾う
+    for m in re.finditer(r'[『「](.+?)[』」]', ev, re.S):
+        out.append(m.group(1))
+    frags = []
+    for q in out:
+        for part in re.split(r'…+|\.\.\.+', q):
+            p = part.strip(' 　*・,')
+            # 英文であること（ラテン文字が主体）＋十分な長さ
+            letters = sum(ch.isascii() and ch.isalpha() for ch in p)
+            if letters >= MIN_FRAG and letters / max(len(p), 1) > 0.5:
+                frags.append(p)
+    # 長い順（強い証拠から当てる）・重複を落とす
+    seen, uniq = set(), []
+    for f in sorted(frags, key=len, reverse=True):
+        k = norm(f)
+        if k in seen:
+            continue
+        seen.add(k); uniq.append(f)
+    return uniq[:6]
+
+
+def best_run(frag, body):
+    """完全一致しないとき、語の連なりの最長一致率と**どこで切れたか**を返す
+
+    ⚠ **切れた箇所を返すのが本体**。初版は率だけ返し、画面には引用の先頭180字を出していたので
+      **一致した部分ばかり見せて、壊れた部分を隠していた**（ST の誤検出でそれに気づけなかった）。
+      検査は「鳴った理由」を見せなければ、鳴っていないのと同じ。"""
+    w = norm(frag).split()
+    if not w:
+        return 0.0, ''
+    best, at = 0, 0
+    for i in range(len(w)):
+        # i から始まる最長の連なりを素直に伸ばす（断片は数十語なので十分速い）
+        j = i
+        while j < len(w) and (' ' + ' '.join(w[i:j + 1]) + ' ') in body:
+            j += 1
+        if j - i > best:
+            best, at = j - i, j
+    tail = ' '.join(w[max(0, at - 5):at + 8]) if best < len(w) else ''
+    return round(best / len(w), 3), tail
+
+
+def main():
+    packs = []
+    for f in sorted(os.listdir('out')):
+        if not f.endswith('_gate_pack.json'):
+            continue
+        d = json.load(open('out/' + f, encoding='utf-8'))
+        if str(d.get('irr')) != '85':
+            continue
+        t = f.split('_gate_pack')[0]
+        if ONE and t != ONE:
+            continue
+        packs.append((t, d))
+
+    print('■ 機構文の年次diff — **台帳に刻んだ引用が、最新の原本にまだ在るか**')
+    print('  ⚠片側の検査: **消えたら赤信号／在っても安全ではない**')
+    print('    （歴史で唯一壊れた85=CMTL は機構文を残したまま壊れた。'
+          '在ることを合格の証拠に使わない）\n')
+    out, alerts = {}, []
+    for t, d in packs:
+        ev = ((d.get('_meta') or {}).get('evidence') or {}).get('irr') or ''
+        rd = str((d.get('_meta') or {}).get('reportDate') or '')[:10]
+        frags = quotes_of(ev)
+        rec = dict(pack_report=rd, n_quotes=len(frags))
+        if not frags:
+            rec['verdict'] = '照合不能'
+            rec['why'] = '根拠に英文の引用が無い（要約だけ）＝差分を取る対象が無い'
+            out[t] = rec
+            print(f'  {t:6s} 照合不能  根拠に英文の引用が無い（要約のみ・{len(ev)}字）')
+            alerts.append((t, 'quote'))
+            continue
+        try:
+            cik = EX.cik_of(t)
+            fi = EX.latest_annual(cik)
+            body = ' ' + norm(EX.text_of(fi['url'])) + ' '
+        except SystemExit as e:
+            rec['verdict'] = '照合不能'; rec['why'] = f'原本が取れない（{e}）'
+            out[t] = rec
+            print(f'  {t:6s} 照合不能  原本が取れない（ADR/日本株など）')
+            continue
+        rec.update(form=fi['form'], filed=fi['filed'], report=fi['report'], url=fi['url'],
+                   newer_than_pack=(fi['report'] > rd))
+        res = []
+        for fr in frags:
+            exact = (' ' + norm(fr) + ' ') in body or norm(fr) in body
+            if exact:
+                r, tail = 1.0, ''
+            else:
+                r, tail = best_run(fr, body)
+            res.append(dict(frag=fr[:180], match=r, broke_at=tail))
+        rec['fragments'] = res
+        top = max(r['match'] for r in res)
+        rec['best_match'] = top
+        if top >= 1.0:
+            rec['verdict'] = '✓一字同文'
+        elif top >= NEAR:
+            rec['verdict'] = '△ほぼ同文'
+        else:
+            rec['verdict'] = '⚠消えた/書き換わった'
+            alerts.append((t, 'gone'))
+        newer = '（パックより新しい原本）' if rec['newer_than_pack'] else ''
+        print(f"  {t:6s} {rec['verdict']:<12s} 最長一致 {top:.0%}"
+              f"  {fi['form']} {fi['report']} filed {fi['filed']} {newer}")
+        if top < NEAR:
+            for r in res:
+                # **切れた箇所**を出す（引用の先頭ではなく、一致が途切れた語のまわり）
+                print(f'         一致{r["match"]:.0%}  切れた箇所: 「…{r["broke_at"]}…」')
+        out[t] = rec
+
+    gone = [t for t, k in alerts if k == 'gone']
+    noq = [t for t, k in alerts if k == 'quote']
+    print(f"\n  対象 {len(out)}社　"
+          f"✓一字同文 {sum(1 for r in out.values() if r.get('verdict')=='✓一字同文')} / "
+          f"△ほぼ同文 {sum(1 for r in out.values() if r.get('verdict')=='△ほぼ同文')} / "
+          f"⚠消えた {len(gone)} / 照合不能 {sum(1 for r in out.values() if r.get('verdict')=='照合不能')}")
+    if gone:
+        print(f'\n  ⚠⚠ **機構文が消えた/書き換わった {len(gone)}社**: {" ".join(gone)}')
+        print('     → 門2再審査へ回すこと。irr の刻みが下がれば堀が動き、'
+              '別枠85・席の優先の両方が外れる（判定はこの道具ではなく審査が下す）')
+    if noq:
+        print(f'\n  ・根拠に英文の引用が無い {len(noq)}社: {" ".join(noq)}')
+        print('     ＝**差分を取る対象そのものが無い**。次の再審査で原本の一文を引用として刻むこと')
+    if AS_JSON:
+        p = 'out/irr85_mech_diff.json'
+        json.dump(dict(generated=str(__import__('datetime').date.today()),
+                       note=('台帳 _meta.evidence.irr の英文引用が最新の年次報告にまだ在るかを照合する。'
+                             '**片側の検査**——消えたら赤信号／在っても安全ではない'
+                             '（CMTL は機構文を残したまま −17.2%/年で壊れた）。判定には一切使わない。'),
+                       gone=gone, no_quote=noq, items=out),
+                  open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+        print(f'\n→ {p}')
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
