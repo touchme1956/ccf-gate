@@ -165,6 +165,11 @@ def main():
         "panel": "out/hist_wd_panel.json",
         "prereg": "out/hist_winner_destroyer_prereg.json",
         "seed": SEED, "n_perm": N_PERM,
+        "reproducibility": {
+            "deterministic": True,
+            "checked": "同一入力で3回走らせて出力JSONのmd5が一致することを確認した",
+            "gotcha": "最初の確認は **並列セッションが残した別の /tmp/a.json を読んでいて** "
+                      "『非決定的』という誤った結論を出した。中間ファイルは必ず自分専用のパスへ置くこと"},
         "candidate": {"variable": "irr=85", "side": "winner",
                       "population": "2013+2015 プール（has_outcome ∧ window_full ∧ irr not null）",
                       "cut": "irr==85",
