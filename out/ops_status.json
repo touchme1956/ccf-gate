@@ -1,5 +1,5 @@
 {
- "asof": "2026-08-10",
+ "asof": "2026-08-11",
  "items": [
   {
    "id": "market",
@@ -7,7 +7,7 @@
    "cadence": "毎営業日",
    "due_days": 4,
    "last": "2026-08-10",
-   "days": 0,
+   "days": 1,
    "state": "ok",
    "how": "market.yml 21:30UTC（FINNHUB_KEY）",
    "auto": true
@@ -17,7 +17,7 @@
    "name": "8-K・臨報監視",
    "cadence": "毎営業日",
    "due_days": 4,
-   "last": "2026-08-09",
+   "last": "2026-08-10",
    "days": 1,
    "state": "ok",
    "how": "events.yml 22:10UTC（米国は鍵不要・日本株はEDINET_API_KEY）",
@@ -29,7 +29,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-03",
-   "days": 7,
+   "days": 8,
    "state": "ok",
    "how": "market.yml（月初・snapは月次idempotent）",
    "auto": true
@@ -40,7 +40,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-04",
-   "days": 6,
+   "days": 7,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/fill_divy.py",
    "auto": true
@@ -51,7 +51,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-09",
-   "days": 1,
+   "days": 2,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/hist_valuation.py --asof 〈今日の日付〉 --tickers kanshi_list.json --out out/hist_val_now.json",
    "auto": true
@@ -62,7 +62,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-09",
-   "days": 1,
+   "days": 2,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/fetch_profiles.py",
    "auto": true
@@ -73,7 +73,7 @@
    "cadence": "四半期",
    "due_days": 100,
    "last": "2026-08-09",
-   "days": 1,
+   "days": 2,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/watch_exceptions.py",
    "auto": true
@@ -84,7 +84,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-09",
-   "days": 1,
+   "days": 2,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/irr85_mech_test.py --json",
    "auto": true
@@ -94,10 +94,21 @@
    "name": "期末後の重大事象の検査",
    "cadence": "毎営業日",
    "due_days": 4,
-   "last": "2026-08-09",
+   "last": "2026-08-10",
    "days": 1,
    "state": "ok",
    "how": "ci.yml（push/PR毎）／手動 python3 night/audit_stale_bs.py --write",
+   "auto": true
+  },
+  {
+   "id": "pending",
+   "name": "未完了の重大事象の検査",
+   "cadence": "毎営業日",
+   "due_days": 4,
+   "last": "2026-08-11",
+   "days": 0,
+   "state": "ok",
+   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_pending.py --all --write",
    "auto": true
   },
   {
@@ -106,7 +117,7 @@
    "cadence": "毎営業日",
    "due_days": 4,
    "last": "2026-08-07",
-   "days": 3,
+   "days": 4,
    "state": "ok",
    "how": "ci.yml（push/PR毎）／手動 python3 night/audit_pack_stale.py --write",
    "auto": true
@@ -117,7 +128,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-07",
-   "days": 3,
+   "days": 4,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/audit_wacc_stale.py --write",
    "auto": true
@@ -128,7 +139,7 @@
    "cadence": "毎営業日",
    "due_days": 4,
    "last": "2026-08-09",
-   "days": 1,
+   "days": 2,
    "state": "ok",
    "how": "ci.yml（push/PR毎）／手動 python3 night/validate_packs.py --json",
    "auto": true
@@ -139,7 +150,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-09",
-   "days": 1,
+   "days": 2,
    "state": "ok",
    "how": "ops.yml／手動 python3 make_kanshi.py",
    "auto": true
@@ -150,7 +161,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-07-29",
-   "days": 12,
+   "days": 13,
    "state": "ok",
    "how": "ops.yml／手動 python kessan_calendar.py",
    "auto": true
@@ -161,7 +172,7 @@
    "cadence": "月1",
    "due_days": 40,
    "last": "2026-08-07",
-   "days": 3,
+   "days": 4,
    "state": "ok",
    "how": "ops.yml／手動 python x_watch_recalc.py",
    "auto": true
@@ -172,7 +183,7 @@
    "cadence": "四半期",
    "due_days": 100,
    "last": "2026-08-07",
-   "days": 3,
+   "days": 4,
    "state": "ok",
    "how": "ops.yml（月次で先回り）／手動 python kessan_check.py",
    "auto": true
@@ -183,7 +194,7 @@
    "cadence": "四半期",
    "due_days": 100,
    "last": "2026-08-07",
-   "days": 3,
+   "days": 4,
    "state": "ok",
    "how": "ops.yml（EDINET_API_KEYをSecretsに置けば自動）／手動 python3 kessan_check_jp.py",
    "auto": "key"
@@ -194,7 +205,7 @@
    "cadence": "年1(7月)",
    "due_days": 430,
    "last": "2026-08-04",
-   "days": 6,
+   "days": 7,
    "state": "ok",
    "how": "ops.yml（7月）／手動 python3 v10_series.py",
    "auto": true
@@ -205,7 +216,7 @@
    "cadence": "年1(7月)",
    "due_days": 430,
    "last": "2026-08-07",
-   "days": 3,
+   "days": 4,
    "state": "ok",
    "how": "python calibration_check.py——v9/v10の勝敗判定はユーザーの判断（V10_SPEC）",
    "auto": false
@@ -216,7 +227,7 @@
    "cadence": "年1(1-2月)",
    "due_days": 430,
    "last": "2026-08-07",
-   "days": 3,
+   "days": 4,
    "state": "ok",
    "how": "python run_gate0_local.py（companyfacts.zip 1.4GB＝CI外）",
    "auto": false
@@ -227,7 +238,7 @@
    "cadence": "年1",
    "due_days": 430,
    "last": "2026-08-07",
-   "days": 3,
+   "days": 4,
    "state": "ok",
    "how": "python3 night/rebuild_gate0_jp.py --write（rerankは旧世代＝封鎖済み）",
    "auto": false
@@ -238,7 +249,7 @@
    "cadence": "年1",
    "due_days": 430,
    "last": "2026-08-07",
-   "days": 3,
+   "days": 4,
    "state": "ok",
    "how": "python3 night/backtest_core.py",
    "auto": false
@@ -246,7 +257,7 @@
  ],
  "todos": {
   "note": "スケジュールに乗せた『人のやるべきこと』の正本（2026-08-04新設）。回転盤(ops_status)が測るのは機械の周期作業だけで、宿題・決断待ち・機械で測れない定期ルーチンはここに載る。🔔イベントタブが表示する。完了したら done:true にする（消さない——やった記録も資産）。追加・完了はClaudeに頼めばよい",
-  "updated": "2026-08-10",
+  "updated": "2026-08-11",
   "items": [
    {
     "id": "edinet_key",
@@ -988,6 +999,14 @@
     "tickers": [],
     "title": "検定の数字が画面に出るのに在庫へ書かれていなかった（hist_val2_outcome の置換検定）——是正済み",
     "note": "【2026-08-10 発見・同日是正】\nnight/hist_val2_outcome.py は `\"permutation\": {}` を初期化したまま**一度も代入していなかった**ので、置換検定の結果が**画面には出るが在庫に残らない**状態だった。報告に載った数字（偶然に1セルでも通る確率 2013 0.117 / 2015 0.024 / 2018 0.000・濃縮の中心の帰無帯）を**在庫からは検算できなかった**。\n`out[\"permutation\"][f\"{y}/{pk}\"] = pr` を足して解消。再実行すると差分は **permutation キーだけ**（他は完全一致＝決定的）で、数字も報告と一致（P_wide 0.1175 / 0.024 / 0.000）。\n\n**★型としての教訓**: night/hist_val_regime.py の `if __name__` 置き忘れ（2026-08-09・スクリプトとして回しても在庫が更新されなかった）と**同族**。あちらは『検定を回したつもりで回っていない』、こちらは『**回したが記録が残っていない**』。どちらも**一番静かな壊れ方**で、報告だけを見ていると気づけない。\n**掟: 画面に出す数字は必ず在庫にも書く。**次に検定器を書くときは、出力 dict へ代入する行と print する行を必ず対にすること。"
+   },
+   {
+    "id": "irr85_conv_basis",
+    "kind": "決断待ち",
+    "title": "別枠85の FCF転換だけ基準が割れている（5年合計比の線を単年の値に当てている）",
+    "due": null,
+    "note": "下限 0.639 は歴史側の conv5 = sum(FCF 5年)÷sum(NI 5年)（retro_features2.py:295・WSTの値）から作られたのに、門の ccfIrr85Frame が当てるのは**パックの単年 fcf/ni**。同じWSTで 0.639(5年) vs 0.95(単年)＝1.49倍差＝「基準の違う二つを割る」型の8例目。【今は直さない理由】単年基準で下限を作り直すと 0.086(COHR) になり床が事実上消える（継続組の単年 fcf/ni は COHR0.086/NVMI0.615/APH0.666…中央値0.992＝単年は設備投資や特損で暴れる）。門は fcf/ni を採点本体でも売却規律S2でも一貫して単年で使っており、ここだけ5年にするには out/conv5.json を配る配管が要る（pending.json / stale_bs.json / irr85_history.json と同じ作法）。床はそもそも識別しない（irr85_criteria の合格ゼロ・偽陽性率0.678）ので配管を1本増やす価値が今は無い。**線を0.086へ下げるのは誤り**。【★切り替えの引き金】単年と5年の差で**合否が変わる社が実際に買付の席に届いたとき**。実測(2026-08-11)の該当は BWXT（単年0.898✓/5年0.631⛔）と ENTG（単年1.682/5年0.744＝2.26倍差）の2社で、いずれも今はΩと財務で遠い。⚠この基準差を知らずに「線の近く」を語ると誤る——LRCX は単年0.673(線+0.03)に見えて5年では0.852で余裕がある。測り直しは python3 night/irr85_fill_asof.py --today（在庫 out/irr85_today_histbasis.json）",
+    "done": false
    }
   ]
  },
