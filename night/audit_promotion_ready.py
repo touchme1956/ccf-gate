@@ -38,9 +38,11 @@ import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+TODAY = __import__("datetime").date.today().isoformat()
 os.chdir(ROOT)
 
 BAND = "--band" in sys.argv[1:]
+JSON = "--json" in sys.argv[1:]   # 2026-08-11: 作業リストを機械可読で出す（enqueue_reaudit が読む）
 
 
 def validate(tickers):
@@ -94,10 +96,22 @@ def main():
     # ── v9.9.95 以降、納品検査FAILは第四の関門そのものなので、FAILを持つ社は quali を失う。
     #   すると**作業リストが「落ちている社」の山に埋もれて見えなくなる**ので、
     #   「根拠さえ埋めれば資格を得る社」だけを合成点順に切り出す＝ここが本当の作業リスト。
-    ready = [r for r in rows
-             if (r.get("s") or 0) >= 75 and r.get("xPass") is True and r.get("moatOK") is True
-             and (r.get("audE") or 0) == 0 and (r.get("audU") or 0) == 0
-             and r.get("staleBS") is None and (r.get("vFail") or 0) > 0]
+    # 2026-08-11 是正: **buyGate と同じ条件を並べる（納品検査FAILだけを外す）**。
+    #   旧実装は `xPass is True` を要求していたが、**v9.9.98 で門X遮断器は関門から外れている**
+    #   ——外した関門の条件がこの道具に残り、**ETN(xPass=None)・6920(xPass=False) を黙って作業リストから
+    #   落としていた**（実測: 3社→5社）。加えて buyGate が見る frame85（別枠85）・shrink（事業の収縮）・
+    #   pending（未完了の重大事象）を見ていなかった。
+    #   ⚠ ここは buyGate を import できない（Python）ので**条件を書き写している**＝v9.9.65 の例外。
+    #      score_all.js が同じ判定を row の各欄として出しているので、**その欄だけを見る**形にして
+    #      規則の再実装ではなく「結果を読む」に留める。
+    def ready_ok(r):
+        return (((r.get("s") or 0) >= 75 or r.get("frame85"))   # Ωの線 or 別枠85
+                and r.get("moatOK") is True                      # 堀70+
+                and (r.get("audE") or 0) == 0 and (r.get("audU") or 0) == 0
+                and r.get("staleBS") is None and r.get("pending") is None
+                and r.get("shrink") is None
+                and (r.get("vFail") or 0) > 0)                   # ← ここだけが残っている穴
+    ready = [r for r in rows if ready_ok(r)]
     ready.sort(key=lambda r: -(r.get("a") or 0))
     fr = validate([r["t"] for r in ready])
     print(f"\n── 🔧 根拠さえ埋めれば資格を得る {len(ready)}社 ── "
@@ -129,6 +143,18 @@ def main():
         print("✗ 関門を通っている社に FAIL がある＝ out/validate_fail.json が古い。"
               "`python3 night/validate_packs.py --json` を回してから score_all を回すこと")
         return 1
+    if JSON:
+        # 2026-08-11: **作業リストを待ち行列へ渡す**ための機械可読出力。
+        #   検出は既に自動なのに、渡し先が人の目しか無かった（enqueue_reaudit が読む）。
+        json.dump({"generated": TODAY, "n": len(ready),
+                   "note": "根拠さえ埋めれば四関門を通る社（納品検査FAILだけが残っている）。"
+                           "合成点順＝繰り上がる順。night/enqueue_reaudit.py が最優先で拾う。",
+                   "rows": [{"t": r["t"], "s": r.get("s"), "a": r.get("a"),
+                             "vFail": r.get("vFail"), "rank": i}
+                            for i, r in enumerate(ready, 1)]},
+                  open(os.path.join(ROOT, "out", "promotion_ready.json"), "w", encoding="utf-8"),
+                  ensure_ascii=False, indent=1)
+        print(f"→ out/promotion_ready.json を更新（{len(ready)}社）")
     if ready:
         print(f"::warning::根拠さえ埋めれば資格を得る: {' '.join(r['t'] for r in ready)} ——"
               f" 席順＝繰り上がる順。上から潰すと不意打ちが消える")

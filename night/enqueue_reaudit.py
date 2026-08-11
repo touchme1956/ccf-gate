@@ -40,6 +40,7 @@ night/enqueue_reaudit.py — **検出器の出力を再審査の待ち行列へ�
 import datetime
 import json
 import os
+import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -60,6 +61,16 @@ def jload(p, default=None):
 
 
 def main():
+    # 2026-08-11: **作業リストを自分で作り直してから読む**。
+    #   out/promotion_ready.json は out/score_all.json から数秒で作れるので、
+    #   「呼ぶ側が先に回してくれている」に依存しない（依存すると、今朝 market.yml が
+    #   validate_fail.json を古いまま採点していたのと同じ順序の穴ができる）。
+    #   再実装はしない——既存の道具をそのまま呼ぶ。
+    try:
+        subprocess.run([sys.executable, "night/audit_promotion_ready.py", "--json"],
+                       capture_output=True, timeout=120)
+    except Exception:
+        pass
     rows = jload("out/score_all.json", [])
     pos = {r["t"]: r for r in rows}
 
@@ -105,6 +116,18 @@ def main():
         r0, lab = rank(t)
         if r0 >= 60:
             add(t, 20, f"納品検査FAIL {v.get('n')}件（{lab}）")
+    # 3-b. **根拠さえ埋めれば四関門を通る社**——2026-08-11新設（audit_promotion_ready --json）。
+    #   検出はずっと自動だったのに、**渡し先が人の目しか無かった**（この repo が繰り返してきた
+    #   「見つけたものを誰にも渡していない」型。night/enqueue_reaudit.py の頭注そのもの）。
+    #   重みは **45＝最上位**（年次報告の40より上）。理由: この群は**次の席が空いた瞬間に繰り上がる社**で、
+    #   根拠の穴を残したまま繰り上がると 2026-08-06 に6回連続で起きた
+    #   「席に着いてから初めて検査され、2社は誤値そのものが出て脱落」がまた起きる。
+    #   ＝**不意打ちを消すために先に潰す**のが、待ち行列の中で最も価値の高い一手。
+    prank = {}
+    for v in (jload("out/promotion_ready.json").get("rows") or []):
+        add(v.get("t"), 45, f"根拠さえ埋めれば四関門を通る（繰り上がり{v.get('rank')}番目・"
+                            f"納品検査FAIL {v.get('vFail')}件）")
+        prank[str(v.get("t")).strip().upper()] = v.get("rank") or 999
     # 4. 新規上場の作業リスト（🆕未審査 / ⚠根拠なし）
     nl = jload("out/new_listings_irr.json")
     st = {r.get("t"): r.get("state") for r in (nl.get("rows") or [])}
@@ -120,10 +143,12 @@ def main():
         base, lab = rank(t)
         r = pos.get(t) or {}
         out.append({"t": t, "priority": base + d["w"], "place": lab,
+                    # 同点は**繰り上がる順**で割る（この群を先頭に置く意味そのもの）
+                    "porder": prank.get(t, 999),
                     "omega": r.get("s"), "buy": bool(r.get("buy")),
                     "quali": bool(r.get("quali")),
                     "reasons": d["why"]})
-    out.sort(key=lambda x: (-x["priority"], x["t"]))
+    out.sort(key=lambda x: (-x["priority"], x.get("porder", 999), x["t"]))
     if TOP:
         out = out[:TOP]
 
