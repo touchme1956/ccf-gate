@@ -3800,7 +3800,12 @@ async function ccfEvents(btn){
   const box=$('evBox'); if(!box)return;
   const lab=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='読込中…';}
   const j=async u=>{try{const r=await fetch(u+'?t='+Date.now());return r.ok?await r.json():null;}catch(e){return null;}};
-  const [ev,ern,ops]=await Promise.all([j('out/events_watch.json'),j('out/next_earnings.json'),j('out/ops_status.json')]);
+  // rr(out/review_runs.json)=日次の門2審査 Routine の走行ログ（2026-08-11新設）。
+  //   回転盤(ops_status)は「回っているか」しか出さないので、**何があったか**が携帯からは読めなかった
+  //   ——③に全部書いてあるのにGitHubでJSONを開かないと見えない、という穴。ここで1行だけ出す。
+  //   **ops_status に同梱せず独立JSONを直に読む**のは、走行ログが Routine から main へ直接 push され、
+  //   ops_status.json の再生成を待たずに最新化されるため（pending.json / stale_bs.json と同じ作法）。
+  const [ev,ern,ops,rr]=await Promise.all([j('out/events_watch.json'),j('out/next_earnings.json'),j('out/ops_status.json'),j('out/review_runs.json')]);
   if(btn){btn.disabled=false;btn.textContent=lab;}
   const asof=$('evAsof');
   if(asof)asof.textContent=ev?`8-K走査 ${ev.asof}（窓${ev.window_days}日・米国${ev.checked_us}社）／決算予定 生成 ${ern?ern.generated:'—'}`:'';
@@ -3832,8 +3837,28 @@ async function ccfEvents(btn){
           <b style="font-size:13px;color:var(--ink)">${x.name}</b>${autoChip(x)}${stChip(x)}${helpBtn(x)}
           <span style="margin-left:auto;font-size:11.5px;color:${x.state==='due'?'#ff9d8a':'var(--dim)'};white-space:nowrap">最終 ${x.last||'不明'}${x.days!=null?`（${x.days}日前）`:''}</span>
         </div>
-        <div style="font-size:10.5px;color:var(--dim);margin-top:4px">${x.how}</div>
+        <div style="font-size:10.5px;color:var(--dim);margin-top:4px">${x.how}</div>${runLine(x)}
       </div>`;
+    // 日次の門2審査だけは「回っているか」に加えて**何があったか**を1行出す。
+    //   表示専用・判定には一切使わない。語（PRを作った／待ち行列が空／…）は
+    //   night/log_review_run.py が JSON へ焼いたものをそのまま出す＝対応表をここに写さない(v9.9.65)。
+    //   ⚠読めないときは黙らない——ログが無いのを「異常なし」と読ませると、
+    //   まさにこの仕組みが塞いだ穴（走らなかったのと区別が付かない）を表示の側で作り直すことになる。
+    const runLine=x=>{
+      if(x.id!=='reviewrun')return '';
+      const wrap=(t,c)=>`<div style="font-size:11.5px;color:${c};margin-top:5px;padding-top:5px;border-top:1px solid rgba(255,255,255,.05)">${t}</div>`;
+      if(!rr||!Array.isArray(rr.runs))return wrap('走行ログ <b>未取得</b>——out/review_runs.json が読めない（回っているかは上の日付、何があったかは不明）','#d6b06c');
+      const r=rr.runs[rr.runs.length-1];
+      if(!r)return wrap('走行ログはまだ1件も無い','#d6b06c');
+      const bits=[`<b>${r.date}</b>`,`${r.label||r.outcome||''}`];
+      if(r.n)bits.push(`${r.n}社`);
+      if(r.tickers&&r.tickers.length)bits.push(r.tickers.join(' '));
+      if(r.pr)bits.push(`<a href="https://github.com/touchme1956/ccf-gate/pull/${r.pr}" target="_blank" style="color:#5d8cc2">PR#${r.pr}↗</a>`);
+      // 直近5回でPRが出ていない回が3つ以上＝待ち行列が本当に空か確かめる合図（端末側の警告と同じ線）
+      const tail=rr.runs.slice(-5).filter(z=>z.outcome!=='pr');
+      const warn=tail.length>=3?`<div style="color:#d6b06c;margin-top:3px">直近5回のうち ${tail.length} 回がPR無し——待ち行列が本当に空か確かめること</div>`:'';
+      return wrap(bits.join('　/　')+(r.note?`<div style="color:var(--dim);margin-top:3px">${r.note}</div>`:'')+warn,'var(--ink-soft)');
+    };
     let inner=(due.length||unk.length)
       ?`<div style="font-size:12.5px;color:#ff9d8a;margin-bottom:4px"><b>${due.length?`⚠ 停止疑い ${due.length}本: ${due.map(x=>x.name).join('・')}`:''}${unk.length?`${due.length?'／':''}？日付不明 ${unk.length}本`:''}</b>——回っていない作業は「無い」のと同じ。カードの回し方で復旧させること</div>`
       :`<div style="font-size:12.5px;color:var(--jade);margin-bottom:4px">✓ ${ops.items.length-nokey.length}本が期限内で回っている（実測 ${ops.asof}）</div>`;
