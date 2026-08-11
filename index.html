@@ -1264,7 +1264,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.134</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.135</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3173,11 +3173,19 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
   const chip=(lbl,pct,sub,yen)=>`<div class="planrow" style="padding:7px 12px;border-radius:8px;background:#c9a64a14;border:1px solid #c9a64a44;margin-top:6px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:13.5px;color:var(--ink)">${lbl}</span><span style="white-space:nowrap">${yen!=null?`<span style="font-size:11.5px;color:var(--dim);margin-right:8px">${pct}%</span><span style="font-size:18px;font-weight:700;color:#c9a64a">${ccfYen(yen)}</span>`:`<span style="font-size:18px;font-weight:700;color:#c9a64a">${pct}%</span>`}</span></div>${sub?`<div style="font-size:10.5px;color:var(--dim);margin-top:3px;line-height:1.6">${sub}</div>`:''}</div>`;
   let body='';
   if(nm.length){
+    // v9.9.135（2026-08-11 ユーザー「これをなくして下にある注文書にして」）:
+    //   **注文書が出せるときは、按分チップを出さない**。同じ内容が二度並ぶと画面が2倍の長さになり、
+    //   しかも「どちらを見て発注するのか」が毎月あいまいになる（実測: 携帯で12社ぶんスクロールしてから
+    //   ようやく注文書に着く）。**情報は消さず注文書の行へ畳む**——各行の下段に「按分¥○○（目標○%）」を
+    //   出すので、**円の按分が正本・株数は執行案**という関係は画面から読める（v9.9.52の作法）。
+    //   ⚠**注文書が出せないときはチップを出す**（個別枠が未入力＝AMT0／価格が一つも取れない）。
+    //   ここを消すと「今月いくら配るか」が画面から丸ごと消える＝黙って消す形になる。
+    let chips='';
     nm.forEach((x,i)=>{ const half=x.yen!=null?Math.floor(x.yen/2/100)*100:null;
       const pi=(x.yen!=null&&pxInfo)?pxInfo(x.r):null;
       const pxTxt=(pi&&pi.jpy>0)?`　<span style="white-space:nowrap">1株 ${pi.label}</span>`
         :(x.yen!=null?`　<span style="white-space:nowrap;color:#d69a3c">1株の価格が未取得</span>`:'');
-      body+=chip(`<b style="color:var(--dim);font-size:11.5px">${i+1}</b>　${ccfIcon(x.n)}${x.n}`, Math.round(x.p),
+      chips+=chip(`<b style="color:var(--dim);font-size:11.5px">${i+1}</b>　${ccfIcon(x.n)}${x.n}`, Math.round(x.p),
         `<span style="white-space:nowrap">目標${x.tw}%枠</span>`
         +(half!=null?`　<span style="white-space:nowrap">階段 ${ccfYen(half)}＋${ccfYen(x.yen-half)}</span>`:'')
         +pxTxt, x.yen!=null?x.yen:null); });
@@ -3200,6 +3208,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
     //   枠が大きいほど新方式が両取りになる（¥50万: 6社/残¥26,200で同じ ／
     //   **¥100万: 社数6で同じだが残り ¥22,500→¥7,200**）。①が無いと¥50万で6社→5社に落ちるので、
     //   ②だけでは足りない（比例配分は「行き渡る」を目的関数に持っていないため）
+    let order='';
     if(AMT>0&&pxInfo){
       const bs=nm.map(x=>({x,pi:pxInfo(x.r),need:x.yen||0,sh:0}));
       const known=bs.filter(b=>b.pi&&b.pi.jpy>0), unknown=bs.filter(b=>!(b.pi&&b.pi.jpy>0));
@@ -3258,21 +3267,25 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
       const orow=(name,right,sub,c)=>`<div class="planrow" style="padding:5px 7px;border-radius:7px;border-bottom:1px dashed rgba(201,166,74,.18)">`
         +`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:12.5px;color:${c}">${ccfIcon(name)}${name}</span>${right?`<span style="white-space:nowrap;font-size:12.5px">${right}</span>`:''}</div>`
         +(sub?`<div style="font-size:11px;margin-top:1px;line-height:1.55">${sub}</div>`:'')+`</div>`;
+      // v9.9.135: 按分チップを畳んだので、**正本である円の按分を各行の下段に必ず出す**
+      //   （株数は執行案・円が正本、という関係を画面から消さない）
+      const alloc=b=>`　<span style="white-space:nowrap;color:var(--dim)">按分 ${ccfYen(b.x.yen||0)}（目標${b.x.tw}%）</span>`;
       let ob='';
       buyL.forEach(b=>{ const s1=Math.floor(b.sh/2), s2=b.sh-s1, cost=Math.round(b.sh*b.pi.jpy);
         ob+=orow(b.x.n,`<b style="color:var(--jade)">${b.sh}株</b>`,
-          `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(cost)}</span>　<span style="white-space:nowrap">${b.sh===1?'指値1本＝深い側(fair線寄り)':`階段 ${s1}株＋${s2}株`}</span></span>`,'var(--ink)'); });
+          `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(cost)}</span>　<span style="white-space:nowrap">${b.sh===1?'指値1本＝深い側(fair線寄り)':`階段 ${s1}株＋${s2}株`}</span>${alloc(b)}　<span style="white-space:nowrap">1株 ${b.pi.label}</span></span>`,'var(--ink)'); });
       skipL.forEach(b=>{ ob+=orow(b.x.n,`<span style="color:#d69a3c;font-size:11.5px">今月見送り</span>`,
-        `<span style="color:#d69a3c"><span style="white-space:nowrap">1株 ${b.pi.label}</span>が残枠に届かない→翌月の枠と合算</span>`,'var(--muted)'); });
+        `<span style="color:#d69a3c"><span style="white-space:nowrap">1株 ${b.pi.label}</span>が残枠に届かない→翌月の枠と合算${alloc(b)}</span>`,'var(--muted)'); });
       unknown.forEach(b=>{ ob+=orow(b.x.n,`<span style="color:var(--dim);font-size:11.5px">価格未取得</span>`,
-        `<span style="color:var(--dim)"><span style="white-space:nowrap">${ccfYen(b.need)}</span>を証券会社の現値で手計算（円÷株価）</span>`,'var(--muted)'); });
+        `<span style="color:var(--dim)"><span style="white-space:nowrap">${ccfYen(b.need)}</span>を証券会社の現値で手計算（円÷株価）${alloc(b)}</span>`,'var(--muted)'); });
       const spent=AMT-bud-unknown.reduce((a,b)=>a+b.need,0);
-      body+=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
+      order=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
         <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書（株数・現値換算）</b><span style="font-size:10.5px;color:var(--dim);margin-left:8px">円の按分が正本——丸株で最も近づける執行案。<b>①まだ1株も無い社へ安い順に1株ずつ（行き渡らせる）→②残枠は按分の残りに対していちばん無理のない1株から→③社数を減らさない範囲で<u>枠を使い切る</u>組合せへ</b></span></div>
         ${ob}
         <div style="font-size:11px;color:var(--dim);margin-top:5px">合計 約${ccfYen(Math.round(spent))}${bud>=100?`／残り${ccfYen(Math.floor(bud/100)*100)}は<b>網へ</b>（または翌月へ繰越して見送り銘柄に充てる）`:''}</div>
       </div>`;
     }
+    body = order || chips;      // 注文書が出せるならそれだけ／出せないときは按分チップ
   }else if(!pass.length){
     body=`<div style="font-size:12px;color:var(--dim);margin-top:8px;padding:8px 10px;border:1px dashed rgba(201,166,74,.35);border-radius:8px;line-height:1.75"><b>🟢投下可がゼロ＝今月は個別を建てない。</b>四関門（Ω75+〔irr=85は別枠〕 ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件 ∧ 事業の収縮なし（売上縮小∧営業利益率低下でない））を同時に満たす銘柄が現時点で無い。押し目待ちが開通したらここに出る。</div>`;
   }else{
@@ -3293,7 +3306,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
   </div>`;
   return `<div style="background:linear-gradient(180deg,rgba(201,166,74,.10),rgba(201,166,74,.03));border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin:4px 0 20px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><h2 class="serif" style="font-size:1.2em;color:var(--gold-bright);margin:0">今月の買付プラン</h2><span style="font-size:11px;color:var(--dim)">${AMT>0?`${ccfYen(AMT)} を全額 投下可へ按分`:'投下可へ按分・合計100%'}</span></div>
-    <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">🟢投下可の各社へ、<b>目標ウェイト−現在保有%</b>の不足分で按分（不足の大きい銘柄に厚い）。番号は<b>買う順</b>（pc順位）。</div>
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">🟢投下可の各社へ、<b>目標ウェイト−現在保有%</b>の不足分で按分（不足の大きい銘柄に厚い）。<b>個別枠を入れると📋注文書（何株買うか）だけになる</b>——按分の円は各行に「按分¥○○」として残る（円が正本・株数は執行案）。未入力なら按分%の一覧が出て、番号は<b>買う順</b>（pc順位）。</div>
     ${amtRow}
     ${body}
     <div style="font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.7">指値は階段で置く——1/2を現値近傍〜開通ライン・1/2をfair線（PER clamp(8+g,16,30)）。投下可は現値で門X成立済みゆえ開通線は現値以上にある。${AMT>0?'100円単位で丸め、<b>端数は買付順位1位へ寄せて合計を個別枠に一致させる</b>。<b>株数は盤の現値＋ドル円で換算した目安</b>（正本は円の按分。指値が現値より下に約定すれば同じ円で1株多く買えることがある）。日本株は<b>単元未満株（S株・かぶミニ等）で1株から</b>買う。0株の月は無理に買わない——翌月に合算するか網へ。':''}1銘柄の目標ウェイトは<b>城60%÷投下可の社数（等ウェイト）・上限8%</b>（傾ける信号が実測で無いため等ウェイト）。上限8%＝¼ケリー相当。<b>売りは株価では動かさない（S1/S2/S3のみ）。</b><br>※<b>指数（ETF）の積立は門の外</b>——門は「どれを・買うか否か」を裁く場で、指数は常に買ってよい対象ゆえ門にかけない。毎月いくら指数へ回すかはDCA側で決める（正本はCLAUDE.md 月次運用）。<b>ただし「どのETFを土台にするか」は別の問い</b>——<a href="ami.html" style="color:var(--gold-bright)">◈ 網の門（ETFの審査）↗</a> がコスト・土台の広さ・存続性・器で裁き、<b>城とのルックスルー重複</b>を実測する。（別枠であって正本ではない。門Ωの採点・売却規律・四関門は一切上書きしない）</div>
