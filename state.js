@@ -140,6 +140,16 @@
           // 採用は「書き出し済みの状態に追いついた」ことなので dirty は落とす
           try { localStorage.setItem(SAVED_AT, s.savedAt); localStorage.removeItem(DIRTY); } catch (e) {}
         }
+        /* 2026-08-11: **stale は自分で治す**。
+           decide() は dirty を stale より先に見るので、stale に来た時点で
+           「手元に未書き出しの決定は無い」が確定している＝**人がやることは何も無い**。
+           それでも印(savedAt)だけが repo より新しいままだと、以後ずっと帯が出続ける。
+           ここで**印だけ repo に合わせる**（data は触らない＝上書きしない）。
+           そうすれば次に repo が更新されたとき正しく adopt に入る。 */
+        if (v === 'stale' && !isDirty() && s.savedAt) {
+          try { localStorage.setItem(SAVED_AT, s.savedAt); } catch (e) {}
+          v = 'same';
+        }
         last = { verdict: v, savedAt: s.savedAt || null, applied: applied,
                  mine: localSavedAt(), dirty: isDirty(), n: Object.keys(s.data || {}).length };
         return last;
@@ -286,9 +296,18 @@
       head = 'repo の state.json は<b>まだ空</b>——株数も売却記録も<b>この端末にしかありません</b>';
       act = true;
     } else if (s.verdict === 'stale') {
-      head = 'repo の state.json が<b>手元より古い</b>（repo ' + (s.savedAt || '').slice(0, 10) +
-             ' ／ 手元 ' + (s.mine || '').slice(0, 10) + '）——取り込みません';
-      act = true;
+      /* 2026-08-11: **赤い4手の帯を出さない**。
+         decide() は dirty を stale より先に見るので、**stale は必ず「手元に未書き出しは無い」**
+         の意味になる＝人がやることが何も無い。それを赤で出して4手を並べるのは、
+         鳴りすぎる警報（＝鳴らないのと同じ）そのものだった。
+         情報は消さない——**灰色の一行**にして、押すものは出さない。 */
+      el.innerHTML = '<div style="border:1px dashed ' + DIM + ';border-radius:9px;padding:8px 12px;' +
+        'margin:10px 0;font-size:12.2px;line-height:1.6;color:' + DIM + '">' +
+        'repo の state.json（' + (s.savedAt || '').slice(0, 10) + '）は手元の記録（' +
+        (s.mine || '').slice(0, 10) + '）より古いので<b>取り込みません</b>。' +
+        '手元に未書き出しの決定はありません＝<b>やることはありません</b>。' +
+        '入れ直すなら Ⅶ 保有 の「📤 決定だけ」から。</div>';
+      return;
     } else if (s.verdict === 'adopt') {
       el.innerHTML = '<div style="border:1px solid ' + GREEN + ';border-left:5px solid ' + GREEN +
         ';border-radius:9px;padding:10px 14px;margin:10px 0;font-size:12.8px;line-height:1.7">' +
@@ -309,14 +328,31 @@
   /* ④ 「入れた」。**押すのは人**＝嘘をつけば盤(ops_status)が古いままになるだけで、データは消えない。 */
   function done(btn) {
     var o = btn ? btn.textContent : '';
-    markCommitted((last && last.pendingSavedAt) || new Date().toISOString());
-    if (btn) { btn.textContent = '✓ 記録した'; }
-    // 帯を出している要素を全部描き直す（門の頭・Ⅶ資産のどちらから押されても揃う）
-    setTimeout(function () {
+    /* 2026-08-11 是正: **押した時刻を書かない**。
+       「入れた」は『repo が正本になった』の意味なので、**repo を読み直してそこに書いてある
+       savedAt に合わせる**のが正しい。押した時刻を書くと repo より必ず新しくなり、以後ずっと
+       『repo の state.json が手元より古い』と鳴り続ける（実害: 2026-08-11 の画面）。
+       しかも**この帯自身が「④ ここへ戻って押す」と案内している**＝手順どおりにやると必ずこうなる
+       ——戻ってきた時点で last.pendingSavedAt は失われており、fallback の new Date() が書かれていた。
+       ⚠ GitHub Pages の反映待ちで古い state.json が返っても害はない——repo と手元が揃うだけで、
+       新しいものが届いたら次回 adopt される。 */
+    if (btn) btn.textContent = '確認中…';
+    var fin = function (msg) {
+      if (btn) btn.textContent = msg;
+      setTimeout(function () {
+        ['stateBar'].forEach(function (id) { try { banner(id); } catch (e) {} });
+        if (btn) btn.textContent = o;
+      }, 900);
+    };
+    load().then(function (s) {
+      if (s && s.savedAt) { markCommitted(s.savedAt); last = { verdict: 'same', savedAt: s.savedAt, mine: s.savedAt }; }
+      else { if (last && last.pendingSavedAt) markCommitted(last.pendingSavedAt); last = { verdict: 'same' }; }
+      fin('✓ 記録した');
+    }).catch(function () {
+      if (last && last.pendingSavedAt) markCommitted(last.pendingSavedAt);
       last = { verdict: 'same' };
-      ['stateBar'].forEach(function (id) { try { banner(id); } catch (e) {} });
-      if (btn) btn.textContent = o;
-    }, 900);
+      fin('✓ 記録した');
+    });
   }
 
   window.ccfState = { load: load, export: exportFile, banner: banner, quiet: quiet, done: done, copyBox: copyBox,
