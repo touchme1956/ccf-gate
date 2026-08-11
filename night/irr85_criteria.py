@@ -222,6 +222,41 @@ def main():
     else:
         print('  **合格ゼロ。irr=85 の群の中で継続を分ける入口の変数は見つからない。**')
 
+    # ── ★現行の下限（v9.9.129）を当時の値へ当てる＝「過去の銘柄はどれが合格か」──────────
+    #   ⚠**標本内は循環**——下限はこのコホートの継続組15社の最小値から作られているので、
+    #   継続組は定義上ほぼ全員通る。**検証になるのは標本外（2013/2015のみで読まれた社）だけ**で、
+    #   そこは n=4 しかない。だから「合格した社が良い」とは読めない。
+    #   この節が示すのは**床が誰を落とすか**であって、床の性能ではない。
+    F1b = {r['ticker']: r for r in rows_of('out/retro_features_2018.json') if r.get('ticker')}
+    OPM, CONV, CG, ND = 11.89, 0.639, 1.76, 4.0     # v9.9.129 の下限（丸め上げ撤回後）
+    print(f'\n■ ★現行の下限を当時の値へ当てる（営利率≥{OPM} ∧ FCF転換≥{CONV} ∧ 成長≥{CG} ∧ nde≤{ND}）')
+    print('   ※堀・Ω・二本柱pm は再構成不能なので除外＝**機械の下限だけ**の判定')
+    grp = {}
+    for r in rows:
+        t = r['t']; nde = (F1b.get(t) or {}).get('nde18')
+        ng, unk = [], False
+        for v, thr, lbl, m in ((r['opm'], OPM, '営利率', 100), (r['conv5'], CONV, '転換', 1),
+                               (r['cagr5'], CG, '成長', 100), (nde, ND, 'nde', 1)):
+            if v is None:
+                unk = True
+            elif (lbl == 'nde' and v > thr) or (lbl != 'nde' and v * m < thr):
+                ng.append(f'{lbl}{v*m:.2f}')
+        key = '判定不能' if unk else ('合格' if not ng else '不合格')
+        grp.setdefault(('標本内' if r['v2018'] else '標本外', key), []).append((t, r['cagr18'], ng))
+    for scope, note in (('標本内', '＝下限がここから作られた。**循環なので検証にならない**'),
+                        ('標本外', '＝2013/2015のみ。**こちらが本当の検証だが n が薄い**')):
+        print(f'\n   ── {scope} {note}')
+        for key in ('合格', '不合格', '判定不能'):
+            g = grp.get((scope, key), [])
+            if not g:
+                continue
+            cs = [c for _, c, _ in g if c is not None]
+            mm = f'中央値{st.median(cs)*100:+.1f}%・年15%+ {sum(1 for c in cs if c>=0.15)}/{len(cs)}' if cs else ''
+            print(f'      {key} {len(g)}社  {mm}')
+            print('        ' + ' '.join(
+                f"{t}" + (f"({c*100:+.0f}%)" if c is not None else "") + (f"[{'/'.join(n)}]" if n else '')
+                for t, c, n in sorted(g, key=lambda z: -(z[1] or -9))))
+
     print('\n■ 読み方（設計上の含意）')
     print('  ・**「合格ゼロ」は失敗ではなく、現行の別枠85の設計を支持する**——')
     print('    下限を「継続組の最小値」に置いたのは、識別できないと分かっている場に')
