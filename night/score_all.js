@@ -175,7 +175,14 @@ function gates() {
     return o;
   };
   return (_gates = { stale: rd('stale_bs.json', v => v && v.verdict === '要審査'),
-                     vfail: rd('validate_fail.json', v => v && (v.n || 0) > 0) });
+                     vfail: rd('validate_fail.json', v => v && (v.n || 0) > 0),
+                     // v9.9.128: 合意済み・未完了の重大事象（night/audit_pending.py が配る）。
+                     //   **判定不能も止める**——「規模が書かれていない」「分母が取れない」は
+                     //   *測れていない*のであって*安全*ではない（ルール7: 欠測をゼロと読むな）。
+                     //   stale_bs が中間帯を素通りさせるのとは向きが逆に見えるが、あちらは
+                     //   **実額が既にBSに載っている**ので中間帯＝小さいと確定できる。こちらは未完了で
+                     //   実額が無いため、判定不能は「大きいかもしれない」を含む。
+                     pending: rd('pending.json', v => v && v.verdict !== 'ok') });
 }
 function buyGate(t, dd, s, mg, audE, audU, r) {
   const g = gates();
@@ -184,7 +191,7 @@ function buyGate(t, dd, s, mg, audE, audU, r) {
   const f85 = ccfIrr85Frame(dd, r);     // v9.9.119/122: irr=85 の別枠（Ωの線だけ免除・二本柱は免除しない）
   const shrink = ccfShrinkGate(dd);     // v9.9.99: 事業の収縮
   return (s >= 75 || f85.pass) && mg.pass === true && audE === 0 && audU === 0
-         && !g.stale[t] && !g.vfail[t] && !shrink.hit;
+         && !g.stale[t] && !g.vfail[t] && !g.pending[t] && !shrink.hit;
 }
 
 module.exports = { scorePack, lastCoerce, buyGate, KEYS, SELECTS };
@@ -231,6 +238,28 @@ const STALE = gates().stale;
 //   **買わない理由であって売る理由ではない**（Ω・堀・売却規律S1/S2/S3はいずれも不変）。
 const VFAIL = gates().vfail;
 
+// ── 合意済み・未完了の重大事象（v9.9.128・2026-08-10 ユーザー指示「1」）──────────
+//   night/audit_pending.py が出す out/pending.json を読み、第四の関門の一部として買付を止める。
+//   【発端】2026-08-07、デラウェア州衡平法裁判所が **VRSK に AccuLynx 買収（23.5億ドル）の
+//   完了へ進むよう命じた**（Verisk自身が解除していたのを「willful conduct が条件不成立を招いた」
+//   として無効と判断）。VRSK は当日 🟢投下可 のままだった。
+//   【なぜ既存の2つで捕まらなかったか＝穴は「時間」】
+//     合意/判決 ──► クローズ ──► 次の10-Q ──► 次の10-K
+//        └ 誰も見ていない ┴ 誰も ┘   stale_bs が    acq5/roic が
+//                                    初めて見る       見る
+//     ・watch_events は8-Kを毎日見るが警報は 1.03/2.06/3.01/4.02/5.02 の5つだけ。
+//       M&Aの 1.01/1.02 と 8.01 は `others` へ落ちて**記録だけ**（判定に不使用と明記）。
+//     ・stale_bs は**実際にBSに載ったのれん**を見るので、未完了の買収はのれんゼロで構造的に見えない。
+//   つまり VRSK を逃したのは運ではなく設計。**これは stale_bs の時間的な穴を塞ぐだけ**で、
+//   新しい思想も新しい定数も導入しない（判定は acq5・stale_bs と同じ問い・同じ刻み）。
+//   【1社の話ではない】台帳の _meta には既に6社ぶんの未完了・期末後の重大事象が書かれており、
+//   ALSN と CTAS には「**前方フラグ**」という語が literally 書いてある＝
+//   **審査官は既に観測して書いていた。それを読むものが一つも無かった**（足りないのは観測ではなく配線）。
+//   いちばん危ないのは VRSK ではなく **CTAS（Ω83.1＝台帳で2番目に高い・止めているのは堀66.6だけ）**で、
+//   堀が上がった瞬間 UniFirst $5.5B を抱えたまま買付に入る構図だった。
+//   ファイルが無ければ空＝検査は眠るだけ（無いことを「異常なし」と偽らない・絶対のルール7）。
+const PENDING = gates().pending;
+
 const rows = [];
 for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
   if (!f.endsWith('_gate_pack.json')) continue;
@@ -273,6 +302,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               audE, audU, audOK: audE === 0 && audU === 0,
               staleBS: STALE[t] ? STALE[t].newPct : undefined,
               vFail: VFAIL[t] ? VFAIL[t].n : undefined,
+              pending: PENDING[t] || undefined,   // v9.9.128: 合意済み・未完了の重大事象
               // v9.9.98(2026-08-07 ユーザー明示指示): **門X遮断器 E[r]≥0 を関門から外した**。
               // 四関門＝Ω75+ ∧ 堀70+ ∧ データ健全（点検err・未解決warn・期末後・納品検査）。
               // 門(index.html)の pass=q75c と同一規則（v9.9.65の掟）
@@ -340,6 +370,7 @@ const blockers = r => {
   if (r.shrink) b.push('⛔事業の収縮');
   if (r.staleBS != null) b.push('⛔期末後の重大事象');
   if (r.vFail) b.push(`⛔納品検査FAIL${r.vFail}`);
+  if (r.pending) b.push(`⛔未完了の重大事象(${r.pending.target || r.pending.kind || ''})`);
   return b.length ? b : ['—'];
 };
 // v9.9.119: irr=85 の別枠で土俵に上がった社（Ω75未満）も**この表に出す**——
@@ -385,6 +416,19 @@ console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告
   console.log(`⛔期末後の重大事象で見送り(貸借対照表がパックのreportDate以降に大きく変わった) ${st.length}社`);
   for (const r of st) console.log(`     ${r.nm.split(/\s/)[0]}  Ω${r.s.toFixed(1)}  のれんの${r.staleBS}%がreportDate以降に流入`
     + `　→ night/audit_stale_bs.py の作業リスト。最新四半期で再審査すれば復帰しうる`);
+}
+{
+  // v9.9.128: 未完了の重大事象で落ちた社も**名指しで出す**（黙って消さない・v9.9.52）。
+  //   別枠85の社（Ω75未満）も対象なので frame85 を含める
+  const pd = rows.filter(x => x.pending && (x.s >= 75 || x.frame85));
+  console.log(`⛔未完了の重大事象で見送り(合意済み・未完了の買収等でパックが会社の将来の姿を描いていない) ${pd.length}社`);
+  for (const r of pd) {
+    const p = r.pending;
+    const sz = p.size ? `${p.target || p.kind || ''} ${p.size.toLocaleString()}百万$（${p.status || ''}）＝完了後のれんの${p.newPct}%が新規`
+                      : `${p.why || '判定不能'}`;
+    console.log(`     ${r.nm.split(/\s/)[0]}  Ω${r.s.toFixed(1)}  ${sz}`
+      + `　→ night/audit_pending.py。解消/完了して数字が入れば復帰しうる`);
+  }
 }
 {
   // v9.9.99: 事業の収縮で落ちた社は**名指しで出す**（黙って消さない・v9.9.52）

@@ -167,6 +167,16 @@ jobs:
         continue-on-error: true
         run: timeout 900 python3 night/audit_stale_bs.py | tail -25
 
+      # ── 5-b2. 合意済み・**未完了**の重大事象（v9.9.128・2026-08-10）────────────
+      #   stale_bs は「実際にBSに載ったのれん」を見るので、**未完了の買収はのれんゼロで
+      #   構造的に見えない**——合意/判決からクローズを経て次の10-Qが出るまでが無防備だった。
+      #   【発端】デラウェア州衡平法裁判所が VRSK に AccuLynx($2.35B)の完了を命じた日、
+      #   VRSK は 🟢投下可 のままだった。判定は acq5・stale_bs と同じ問い・同じ刻み。
+      #   out/pending.json は score_all.js と門の Ⅵ・盤 が第四の関門として読む。
+      - name: 未完了の重大事象 audit_pending（表示のみ・SEC問い合わせ）
+        continue-on-error: true
+        run: timeout 900 python3 night/audit_pending.py --all --write | tail -20
+
       # ── 5-c. パックより新しい年次報告が出ていないか（2026-08-07新設）─────────────
       #   audit_stale_bs は**のれんの入替**しか見ないので、買収をしない優良企業が
       #   静かに1会計年度ぶん古くなるのは今日どの検査器にも掛からなかった。

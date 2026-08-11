@@ -112,6 +112,13 @@ def build():
         ("stalebs", "期末後の重大事象の検査",  "毎営業日", 4,
          json_field("out/stale_bs.json", "asof"),
          "ci.yml（push/PR毎）／手動 python3 night/audit_stale_bs.py --write", True),
+        # v9.9.128(2026-08-10): 合意済み・**未完了**の重大事象。stale_bs の**時間的な穴**を塞ぐ検査で、
+        #   これが止まると「合意/判決からクローズまでの数ヶ月〜1年超」がまた無防備になる。
+        #   ⚠ この欄は審査官が _meta.pending に書くので、**盤が緑でも書き漏らしは検出できない**
+        #   ——見落としの網は watch_events の pending_todo（8-K Item 1.01/1.02/8.01）が受け持つ。
+        ("pending", "未完了の重大事象の検査",  "毎営業日", 4,
+         json_field("out/pending.json", "asof"),
+         "ci.yml（push/PR毎）／手動 python3 night/audit_pending.py --all --write", True),
         # 2026-08-07新設: パックより新しい年次報告が出ていないか。**既存の検査が全部すり抜ける穴**——
         #   validate_packs の鮮度は「年」の差(3年でFAIL)、audit_stale_bs は のれんの入替のみ
         #   ＝買収しない優良企業が静かに1会計年度ぶん古くなるのは誰も見ていなかった。

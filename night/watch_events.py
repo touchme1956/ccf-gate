@@ -163,6 +163,32 @@ def main():
             errors.append({"t": t, "err": str(e)[:200]})
 
     jp_cov = edinet_scan(jp, days, hits, earnings, others, errors)
+
+    # ── 未完了の重大事象の「見落としの網」（v9.9.128・2026-08-10）────────────────
+    #   【なぜ要るか】第四の関門の `_meta.pending`（合意済み・未完了の買収等）は**審査官が書く**欄で、
+    #   門ができるのは「書かれていたら必ず効かせる」ところまで。書き漏らすと関門が眠る。
+    #   そこで **8-K の Item 1.01(重要な契約の締結) / 1.02(同 解除) / 8.01(その他)** を
+    #   **判定圏(Ω72+)に絞って作業リストに出す**——M&Aの合意・解除・判決はこの3つに載る。
+    #   【なぜ警報に格上げしないか】8.01 は雑多で、格上げすると「鳴りすぎる警報は鳴らないのと同じ」を
+    #   自分で作ることになる（実測: 今日の others は KLAC/APH の 8.01 が2件で、どちらも M&A ではない）。
+    #   だから **alerts には入れず、todo として別に出す**。判定には一切使わない（門の第四の関門は
+    #   あくまで `_meta.pending` を読む）——これは**人が pending を書き漏らしていないかの点検**。
+    TODO_ITEMS = {"1.01": "重要な契約の締結", "1.02": "重要な契約の解除", "8.01": "その他の事象"}
+    q72 = set()
+    try:
+        for r in json.load(open(os.path.join(os.path.dirname(OUT), "score_all.json"), encoding="utf-8")):
+            if (r.get("s") or 0) >= 72:
+                q72.add(r["t"])
+    except Exception:
+        q72 = set()      # 取れなければ空＝この網は眠るだけ（無いことを「異常なし」と偽らない・ルール7）
+    pending_todo = []
+    for r in others:
+        if r["t"] not in q72:
+            continue
+        hit = [f"Item {x}: {TODO_ITEMS[x]}" for x in r.get("items", []) if x in TODO_ITEMS]
+        if hit:
+            pending_todo.append(dict(r, todo=hit))
+
     out = {
         "asof": date.today().isoformat(),
         "window_days": days,
@@ -170,6 +196,11 @@ def main():
         "alerts": sorted(hits, key=lambda x: (x["date"], x["t"]), reverse=True),
         "earnings": sorted(earnings, key=lambda x: (x["date"], x["t"]), reverse=True),
         "others": sorted(others, key=lambda x: (x["date"], x["t"]), reverse=True),
+        "pending_todo": sorted(pending_todo, key=lambda x: (x["date"], x["t"]), reverse=True),
+        "pending_todo_note": ("判定圏(Ω72+)の Item 1.01/1.02/8.01。**警報ではなく作業リスト**——"
+                              "M&Aの合意・解除・判決はここに載るので、読んで該当すれば "
+                              "パックの _meta.pending へ書く（night/audit_pending.py が関門で読む）。"
+                              "8.01は雑多なので警報には格上げしない＝鳴りすぎる警報は鳴らないのと同じ"),
         "errors": errors,
         "cik_unresolved": missing,
         "jp": jp_cov if jp_cov else None,
@@ -187,6 +218,11 @@ def main():
     print(f"イベント監視: 米国{checked}社の8-K（窓{days}日）＋{jp_msg} → 警報 {len(hits)}件 / 決算・報告 {len(earnings)}件 / その他 {len(others)}件 / 取得失敗 {len(errors)}件 / CIK不明 {len(missing)}件")
     for h in hits:
         print(f"  ⚠ {h['t']} {h['date']} {'; '.join(h['flags'])}")
+    if pending_todo:
+        print(f"\n  📋 未完了の重大事象の点検（判定圏 {len(pending_todo)}件・**警報ではなく作業リスト**）")
+        print(f"     読んで M&A の合意・解除・判決なら パックの _meta.pending へ書く（audit_pending.py が関門で読む）")
+        for r in pending_todo:
+            print(f"     {r['t']:<6}{r['date']}  {'; '.join(r['todo'])}  {r['url']}")
     if errors:
         print("  取得失敗:", ", ".join(e["t"] for e in errors))
     print(f"→ {os.path.relpath(OUT, BASE)}")

@@ -89,14 +89,45 @@ def cik_of(t):
     return _TICK.get(t.upper())
 
 
-def concept(cik, tag):
-    """{期末日: 値} を返す（インスタント値のみ＝BS項目）。取れなければ None"""
+_FACTS = (None, None)          # (cik, 解析済みfacts) ——直前の1社だけ持つ（1社4.6MB。全社抱えると数百MB）
+
+
+def facts(cik):
+    """companyfacts を1社ぶん取って持ち回す。取れなければ None"""
+    global _FACTS
+    if _FACTS[0] == cik:
+        return _FACTS[1]
     try:
-        d = json.loads(get(f"https://data.sec.gov/api/xbrl/companyconcept/CIK{cik}/us-gaap/{tag}.json"))
+        d = json.loads(get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"))
     except Exception:
+        d = None
+    _FACTS = (cik, d)
+    return d
+
+
+def concept(cik, tag):
+    """{期末日: 値} を返す（インスタント値のみ＝BS項目）。取れなければ None
+
+    **companyconcept ではなく companyfacts から採る（2026-08-10 是正）**——
+    companyconcept は 2026-08 時点で `"units":{"USD":{}}` と**空を返す**（実測 VRSK/CTAS の
+    Goodwill・Assets とも0件。同じCIKの companyfacts には Goodwill が134件ある）。
+    CLAUDE.md は 2026-08-09 に fill_growth_trend で**まったく同じ故障を記録している**
+    （「companyconcept API が信用できない…この repo の道具が全部使っている companyfacts へ統一」）が、
+    **直したのはその1本だけで、第四の関門であるこの道具は取り残されていた**＝
+    「1社直したら同型も洗う」の取りこぼし。しかも実害の形が悪い——
+    **例外ではなく空の辞書が返る**ので、全社が「のれんの系列なし」として静かに skip され、
+    `--write` すると out/stale_bs.json が**空で上書きされて関門ごと消える**。
+    「検査が回ったつもりで回っていない」＝この台帳が最も嫌う壊れ方（hist_val_regime の
+    `if __name__` 置き忘れと同族）。下の main() に空書き込みの検問を入れてある。
+    """
+    d = facts(cik)
+    if not d:
         return None
+    units = ((d.get("facts", {}).get("us-gaap", {}) or {}).get(tag, {}) or {}).get("units", {})
     out = {}
-    for u in d.get("units", {}).values():
+    for u in units.values():
+        if not isinstance(u, list):          # 空や型崩れは黙って飛ばす（0件と読まない）
+            continue
         for x in u:
             if x.get("start") or x.get("form") not in ("10-K", "10-Q"):
                 continue
@@ -123,7 +154,7 @@ def main():
     print(f"  判定: 「今あるのれんのうち reportDate 以降に入った割合」が {NEW_YES:.0f}% 以上なら要審査")
     print(f"        （acq5 と同じ問い・同じ刻み＝新しい定数を作らない）\n")
 
-    res, skipped = {}, []
+    res, skipped, fetched = {}, [], 0     # fetched=のれんの系列が実際に取れた社数（空書き込みの検問に使う）
     for r in pick:
         t = r["t"]
         if re.fullmatch(r"\d{4}", t):        # 日本株はSEC対象外
@@ -145,6 +176,7 @@ def main():
         if not gw:
             skipped.append((t, "のれんの系列なし(のれんを持たない社を含む)"))
             continue
+        fetched += 1
         after = {k: v for k, v in gw.items() if k > rd}
         if not after:
             continue                          # reportDate 以降の提出がまだ無い＝正常
@@ -187,9 +219,21 @@ def main():
 
     if WRITE:
         path = os.path.join(OUT, "stale_bs.json")
+        # ── 空書き込みの検問（2026-08-10新設）───────────────────────────────
+        #   採取経路が壊れると **例外ではなく空の系列**が返り、全社が「のれんの系列なし」で
+        #   静かに skip され、ここで out/stale_bs.json が空で上書きされて**関門ごと消える**。
+        #   実際に踏んだ: companyconcept が `"units":{"USD":{}}` を返すようになり、
+        #   この道具は「検査が回ったつもりで回っていない」状態だった。
+        #   **一社もデータが取れていないのに書き換えるのは、検査の不在を「異常なし」と偽ること**（ルール7）。
+        if fetched == 0 and not ONE:
+            print(f"\n⛔ **書き込みを中止**——のれんの系列が取れた社が0（対象 {len(pick)}社）。"
+                  f"\n   採取経路が壊れている疑いが濃い。既存の {path} を空で上書きすると"
+                  f"\n   第四の関門（期末後の重大事象）が黙って消えるので、書かない。")
+            return 1
         json.dump({"asof": time.strftime("%Y-%m-%d"), "rule": f"のれんの新しさ≥{NEW_YES:.0f}%で要審査",
+                   "fetched": fetched,
                    "items": res}, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-        print(f"\n→ {path} を更新（score_all.js が第四の関門で読む）")
+        print(f"\n→ {path} を更新（score_all.js が第四の関門で読む・のれんが取れた社 {fetched}）")
     else:
         print("\n（--write で out/stale_bs.json を更新する）")
     return 0
