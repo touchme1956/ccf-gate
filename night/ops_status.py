@@ -53,6 +53,19 @@ def er_last_obs():
         return None
 
 
+def review_last_run():
+    """日次の門2審査 Routine が最後に走った日（out/review_runs.json の最新 date）。
+
+    **PRの有無ではなく「走ったか」で測る**——PRが出ない日（待ち行列が空・SEC不通・上限）も
+    正常な終わり方なので、PRを錨にすると空振りの日と止まった日が区別できない。
+    """
+    try:
+        d = json.load(open(os.path.join(BASE, "out", "review_runs.json"), encoding="utf-8"))
+        return max((r.get("date", "") for r in d.get("runs", [])), default=None) or None
+    except Exception:
+        return None
+
+
 def kessan_last(suffix):
     files = glob.glob(os.path.join(BASE, "out", "kessan", f"*{suffix}"))
     if not files:
@@ -74,6 +87,20 @@ def build():
         ("events",  "8-K・臨報監視",           "毎営業日", 4,
          json_field("out/events_watch.json", "asof"),
          "events.yml 22:10UTC（米国は鍵不要・日本株はEDINET_API_KEY）", True),
+        # 2026-08-11(ユーザー指示「1と2やって」): **日次の門2審査 Routine が走ったか**。
+        #   ここは他の項と穴の空き方が違う——他は「CIが止まればファイルが古くなる」ので自然に見えるが、
+        #   Routine は **GitHub Actions ではなく Claude のセッション**なので、
+        #   走らなくても・走って何もしなくても、**リポジトリには何の変化も起きない**。
+        #   しかも **Routine 起動のセッションはコード一覧に出ない**（トリガー発火は既定で除外）ので、
+        #   報告は人が直リンクを開かない限り誰の目にも触れない。
+        #   実害: 2026-08-11 の試運転は29分・出力9万トークン走って**痕跡ゼロ**で終わり、
+        #   ユーザーが「どこにもない」状態になった。
+        #   → night/log_review_run.py が**毎回1行**を残し、ここがその日付を見る。
+        #   **PRの有無ではなく「走ったか」で測る**（空振りは正常な終わり方で、止まったのとは別物）。
+        ("reviewrun", "日次 門2審査(Routine)",  "毎営業日", 4,
+         review_last_run(),
+         "Routine『【門】日次 門2審査（自動・5社）』平日05:00 JST（claude-opus-5）／"
+         "痕跡は python3 night/log_review_run.py --outcome … --push", True),
         ("er",      "E[r]予実の観測封印",      "月1",     40,
          er_last_obs(),
          "market.yml（月初・snapは月次idempotent）", True),
