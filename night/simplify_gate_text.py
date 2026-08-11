@@ -48,6 +48,19 @@ def need(cond, msg):
     return cond
 
 
+def balanced_tags(html):
+    """中身のタグ収支がゼロか（要素をまたいで切っていないか）"""
+    depth = {}
+    for m in re.finditer(r'<(/?)([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>', html):
+        closing, tag, rest = m.group(1), m.group(2).lower(), m.group(3)
+        if tag in ('br', 'hr', 'img', 'input', 'meta', 'link', 'wbr', 'col', 'source'):
+            continue
+        if rest.rstrip().endswith('/'):
+            continue
+        depth[tag] = depth.get(tag, 0) + (-1 if closing else 1)
+    return all(v == 0 for v in depth.values())
+
+
 # ── ① 版番号の掃除 ───────────────────────────────────────────────────
 def strip_versions(t):
     t = re.sub(r'[（(]\s*v9\.9\.\d+\s*[）)]', '', t)              # （v9.9.NN）ごと消す
@@ -257,7 +270,14 @@ def main():
         y = s.find(b, x)
         if not need(y >= 0, '畳む終了が見つからない: %s' % b[:50]):
             continue
-        marks.append((x, y + (len(b) if incl else 0), label, lead))
+        end = y + (len(b) if incl else 0)
+        # ⚠ **たたむ中身はタグ収支ゼロでなければならない**。開きタグの内側から始めて
+        #   閉じタグの外側で終わると、<details> が要素の中に割り込んでブラウザが組み替える。
+        #   実害: 「なぜ等ウェイトにしたか」の開始が <u> の内側にあり、</u> が
+        #   why-body の中で閉じて `<details><u><summary>` に化けていた（実ブラウザで発見）。
+        if not need(balanced_tags(s[x:end]), 'たたむ中身のタグ収支が合わない: %s' % label):
+            continue
+        marks.append((x, end, label, lead))
     # 入れ子・重なりが起きていないかを検査（初回はここで壊した）
     marks.sort()
     for i in range(1, len(marks)):
