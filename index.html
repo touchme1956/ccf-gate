@@ -3237,6 +3237,25 @@ function ccfBought(btn){
     const noPx=!(parseFloat(inp.dataset.px)>0);
     ccfToast('✓ '+(r.msg||'')+(noPx?'　⚠ 単価は未記録（盤に現在価格が無い）——Ⅶ保有で入れてください':'')
       +'　→ Ⅶ保有に反映。state.json の書き出しを忘れずに',true);
+    /* ★買ったのに「採点待ち」のままだった（2026-08-11 ユーザー「別枠のRBCのホールドが青くならない」）。
+       Ⅶの色丸は `pf:verdicts` を読むが、**その表を作るのは Ⅳ台帳の renderHoldings で、
+       対象は `g7hold:set`（門の保有印）が付いた社だけ**。株数を書いても保有印は付かないので、
+       買った社は出口判定の対象から外れ、**ホールド(青)ではなく採点待ち(灰○)**で表示され続けていた。
+       ＝「保有」が Ⅶの株数 と 門の保有印 の二箇所にあり、記帳が片方しか動かしていなかった。
+       買った＝保有なので、ここで保有印も付けて台帳を引き直す（表が書き直されて色が付く）。
+       ⚠**外すのはここではやらない**——0株の記帳経路が無い（sh>0が必須）ので、
+       解除はⅣ台帳の保有トグル＝人の明示操作に残す（黙って保有印を消さない）。 */
+    try{
+      const key=inp.dataset.nm||inp.dataset.t;
+      if(key){
+        let hs=new Set();
+        try{const hr=await store.get('g7hold:set'); if(hr&&hr.value)hs=new Set(JSON.parse(hr.value)||[]);}catch(_){}
+        if(!hs.has(key)){ hs.add(key); await store.set('g7hold:set',JSON.stringify([...hs]));
+          if(typeof renderLedger==='function')await renderLedger();   // pf:verdicts を書き直す
+          try{ frame.contentWindow.location.reload(); }catch(_){}     // Ⅶの色丸を引き直す
+        }
+      }
+    }catch(_){}
     try{ if(typeof renderPlan==='function')await renderPlan(); }catch(_){}
     try{ const db=document.getElementById('dashBox');
          if(typeof ccfDash==='function'&&db&&db.innerHTML.trim())ccfDash(); }catch(_){}
