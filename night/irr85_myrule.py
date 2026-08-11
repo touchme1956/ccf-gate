@@ -79,10 +79,17 @@ def conv5(t, fy):
     for y in yrs:
         ni, _ = F.pick(g, F.NI, y, instant=False)
         ocf, _ = F.pick(g, F.OCF, y, instant=False)
-        cap, _ = F.pick(g, F.CAPEX, y, instant=False)
+        # ⚠設備投資は **0 と欠測を区別する**（絶対のルール7）。候補タグに当たらないだけで
+        #   0 と読むと FCF が過大に出る＝この床は**甘い側へ壊れる**。実害を1件踏んでいる——
+        #   RBC は FY2023 で PaymentsToAcquirePropertyPlantAndEquipment を止め
+        #   `PaymentsForCapitalImprovements` へ移ったので、直近3年の設備投資が丸ごと0と読まれ
+        #   5年FCF転換が 1.361（真値 0.905）と出ていた。
+        cap, capwhy = F.capex_of(g, y)
         if ni is None or ocf is None:
             return None, f'5年そろわず（{yrs[0]}-{yrs[-1]}・{y}年が欠測）＝単年で代用しない'
-        fcfs.append(ocf - (cap or 0)); nis.append(ni)
+        if cap is None:
+            return None, f'{capwhy}＝ゼロと読まない（ルール7）'
+        fcfs.append(ocf - cap); nis.append(ni)
     if sum(nis) <= 0:
         return None, f'5年合計の純利益が0以下（{yrs[0]}-{yrs[-1]}）＝比が意味を持たない'
     return round(sum(fcfs) / sum(nis), 3), None

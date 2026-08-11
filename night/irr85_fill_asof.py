@@ -71,7 +71,44 @@ NI = ["NetIncomeLoss", "ProfitLoss"]
 OCF = ["NetCashProvidedByUsedInOperatingActivities",
        "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"]
 CAPEX = ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets",
-         "PaymentsToAcquirePropertyPlantAndEquipmentAndIntangibleAssets"]
+         "PaymentsToAcquirePropertyPlantAndEquipmentAndIntangibleAssets",
+         # 2026-08-11 追加: **RBC は FY2023 で PaymentsToAcquirePropertyPlantAndEquipment を止め、
+         #   FY2022 以降 `PaymentsForCapitalImprovements` で報告している**。候補に無いので
+         #   FY2024-2026 の設備投資が丸ごと 0 と読まれ、5年FCF転換が 1.361 と**過大**に出ていた。
+         "PaymentsForCapitalImprovements",
+         "PaymentsToAcquireMachineryAndEquipment", "PaymentsToAcquireBuildings"]
+
+# 設備投資の「痕跡」を候補タグの外まで探すための網（capex=0 を事実と言えるかの検問）。
+#   **絶対のルール7そのもの**——「候補タグに当たらない」と「設備投資が0」は別物で、
+#   前者をゼロと読むと FCF が過大に出る（＝この床は甘い側へ壊れる）。
+#   DEBTLIKE と同じ作法で、**痕跡が一つも無いときだけ 0 を事実とする**。
+#   ⚠買収（PaymentsToAcquireBusinesses…）は痕跡に数えない——FCF の定義は設備投資のみ控除で、
+#   買収を混ぜると「買収した年だけ FCF が消える」別の壊れ方になる。
+CAPEXLIKE = re.compile(r'(PaymentsToAcquireProperty|PaymentsToAcquireProductive|'
+                       r'PaymentsForCapitalImprovement|PaymentsToAcquireMachinery|'
+                       r'PaymentsToAcquireBuildings|PaymentsForProceedsFromProductiveAssets|'
+                       r'PaymentsToAcquireEquipment|PaymentsForCapitalExpenditure)')
+
+
+def capex_of(d, year):
+    """その年の設備投資。(値, 理由) を返す。**取れないときに 0 を返さない**（ルール7）
+       - 候補タグに当たる → その値
+       - 候補に当たらないが痕跡がある → (None, '別名で報告') ＝その年は測れない
+       - 痕跡が一つも無い → (0, None) ＝設備投資を持たない事実として 0"""
+    v, _ = pick(d, CAPEX, year, instant=False)
+    if v is not None:
+        return v, None
+    ns = (d.get('facts', {}) or {}).get('us-gaap', {}) or {}
+    for k in ns:
+        if not CAPEXLIKE.search(k):
+            continue
+        for u in (ns[k].get('units', {}) or {}).values():
+            if not isinstance(u, list):
+                continue
+            for x in u:
+                if x.get('form') in FORMS and x.get('start') and str(x.get('end', ''))[:4] == str(year):
+                    return None, f'設備投資が候補外のタグで報告されている（{k}・{year}年）'
+    return 0, None
 
 # 有利子負債の「痕跡」を候補タグの外まで探すための網（debt=0 を事実と言えるかの検問）
 DEBTLIKE = re.compile(r'(LongTermDebt|ShortTermBorrow|DebtCurrent|Borrowings|NotesPayable|SeniorNotes|'
@@ -183,18 +220,19 @@ def today_mode():
         if g and fy.isdigit():
             Y = int(fy)
             yrs = list(range(Y - 4, Y + 1))
-            fcfs, nis, ok = [], [], True
+            fcfs, nis, ok, why_c = [], [], True, None
             for y in yrs:
                 ni_y, _ = pick(g, NI, y, instant=False)
                 ocf_y, _ = pick(g, OCF, y, instant=False)
-                cap_y, _ = pick(g, CAPEX, y, instant=False)
-                if ni_y is None or ocf_y is None:
-                    ok = False; break
-                fcfs.append(ocf_y - (cap_y or 0)); nis.append(ni_y)
+                cap_y, capwhy = capex_of(g, y)      # 0と欠測を区別（ルール7・2026-08-11）
+                if ni_y is None or ocf_y is None or cap_y is None:
+                    ok = False; why_c = capwhy; break
+                fcfs.append(ocf_y - cap_y); nis.append(ni_y)
             if ok and sum(nis) > 0:
                 rec['conv5_hist'] = round(sum(fcfs) / sum(nis), 3)
             else:
-                rec['conv5_note'] = f'5年そろわず（{yrs[0]}-{yrs[-1]}）＝単年で代用しない'
+                rec['conv5_note'] = (why_c + '＝ゼロと読まない（ルール7）') if why_c else \
+                    f'5年そろわず（{yrs[0]}-{yrs[-1]}）＝単年で代用しない'
             op_y, _ = pick(g, OP, Y, instant=False)
             rev_y, _ = pick(g, REV, Y, instant=False)
             if op_y is not None and rev_y:
@@ -306,7 +344,7 @@ def main():
             for y in range(2014, 2019):
                 ni_y, _ = pick(d, NI, y, instant=False)
                 ocf_y, _ = pick(d, OCF, y, instant=False)
-                cap_y, _ = pick(d, CAPEX, y, instant=False)
+                cap_y, _ = capex_of(d, y)           # 0と欠測を区別（ルール7・2026-08-11）
                 if ni_y is None or ocf_y is None:
                     gaps.append(y); continue
                 fcfs.append(ocf_y - (cap_y or 0)); nis.append(ni_y)
