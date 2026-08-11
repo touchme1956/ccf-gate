@@ -348,11 +348,18 @@ jobs:
         run: |
           git config user.name  "ccf-gate bot"
           git config user.email "noreply@github.com"
-          git add out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json night/reaudit_queue.json 2>/dev/null || true
+          # out/score_all.json も入れる（2026-08-11の是正）——上で validate_packs → score_all の
+          #   順に回して**正しい score_all を作っているのに、コミットに含めず捨てていた**。
+          #   結果、main に残るのは market.yml が作った（古い validate_fail を読んだ）ほうで、
+          #   投下可の一覧が第四の関門と食い違っていた（実害: RBC）。作った答えは捨てない。
+          git add out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json night/reaudit_queue.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"
           else
-            N=$(python3 -c "import json;print(len(json.load(open('out/validate_fail.json')).get('rows',[])))" 2>/dev/null || echo "?")
+            # 件名の件数は **items**（validate_packs --json が書くキー）を数える。
+            #   2026-08-11まで 'rows' を見ていたので**常に0**＝「納品検査FAIL 0件」と件名が嘘をつき、
+            #   実際は280社あった。鳴らない警報は鳴りすぎる警報と同じくらい悪い。
+            N=$(python3 -c "import json;print(len(json.load(open('out/validate_fail.json')).get('items',{})))" 2>/dev/null || echo "?")
             git commit -m "gate checks $(date -u +%F)｜納品検査FAIL ${N}件"
             git push
           fi
