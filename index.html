@@ -1264,7 +1264,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.137</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.138</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3152,6 +3152,72 @@ const ccfYen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
 // **全額が投下可の各社へ配られる**（網へ回る分を差し引かない）。網へいくら回すかはDCA側で決める。
 // 配分の規約は不変: 各社の「目標ウェイト − 現在保有%」の不足分で按分（B案②・不足上位に厚い）。
 // 端数の行き先だけ変わった——網が無くなったので**買付順位1位へ寄せる**（pc順＝買う順の先頭）。
+/* ── 注文書の各行の「買った」（v9.9.138・ユーザー「買付順位から保有を入れれるようにしたい」）
+   買った株数をここで記録できるようにする。**書き込みの実装はⅦ保有(portfolio.html)にしか置かない**
+   ——親から localStorage を直接書くと、Ⅶが抱えている P は古いままで次の保存が黙って巻き戻す
+   （v9.9.131 で実際に踏んだ順序の事故）。だから親は postMessage で「足してくれ」と頼むだけ。
+   **判定には一切効かない**——保有%は配分（今月いくら買うか）にだけ使い、Ω・四関門・売却規律は不変。 */
+function ccfBoughtCtl(b){
+  const t=(b.x&&b.x.r&&b.x.r.t)||'', nm=(b.x&&b.x.n)||t;
+  if(!t||!(b.pi&&b.pi.px>0))return '';
+  const q=s=>String(s).replace(/"/g,'&quot;');
+  return `<div style="margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">`
+   +`<span style="font-size:10.5px;color:var(--dim)">買ったら記録 →</span>`
+   +`<input type="number" min="0" step="1" value="${b.sh}" data-t="${q(t)}" data-nm="${q(nm)}"`
+   +` data-px="${b.pi.px}" data-ccy="${q(b.pi.ccy||'USD')}"`
+   +` style="width:62px;padding:2px 6px;font-size:11.5px;font-family:inherit;background:var(--panel);`
+   +`border:1px solid var(--line);border-radius:5px;color:var(--ink)">`
+   +`<span style="font-size:10.5px;color:var(--dim)">株</span>`
+   +`<button onclick="ccfBought(this)" style="padding:2px 10px;font-size:11px;font-family:inherit;cursor:pointer;`
+   +`background:rgba(143,201,164,.16);border:1px solid rgba(143,201,164,.5);border-radius:5px;color:var(--jade)"`
+   +` title="Ⅶ保有の株数へ足す（加算）。買付単価は加重平均で更新。判定には使わない">✓ 保有へ</button>`
+   +`<span class="bought-msg" style="font-size:10.5px"></span></div>`;
+}
+/* 画面に浮かぶ短い帯。再描画で消えないよう body 直下に置く */
+function ccfToast(msg,ok){
+  let el=document.getElementById('ccfToast');
+  if(!el){ el=document.createElement('div'); el.id='ccfToast';
+    el.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:76px;z-index:9999;'
+      +'max-width:min(92vw,620px);padding:9px 16px;border-radius:9px;font-size:12.5px;line-height:1.6;'
+      +'box-shadow:0 6px 24px rgba(0,0,0,.35);transition:opacity .25s ease';
+    document.body.appendChild(el); }
+  el.style.background=ok?'rgba(20,44,32,.96)':'rgba(58,26,22,.96)';
+  el.style.border='1px solid '+(ok?'rgba(143,201,164,.55)':'rgba(198,110,86,.55)');
+  el.style.color=ok?'#8fc9a4':'#e0a08c';
+  el.textContent=msg; el.style.opacity='1';
+  clearTimeout(el.__t); el.__t=setTimeout(()=>{el.style.opacity='0';},5200);
+}
+/* 親→Ⅶ の依頼。返事を待って結果を出し、Ⅵを描き直す（保有%が変わると今月の按分も変わる） */
+window.__ccfBuyWait={};
+window.addEventListener('message',function(e){
+  const d=e&&e.data; if(!d||d.type!=='ccfPfBuyDone')return;
+  const f=window.__ccfBuyWait[d.id]; if(f){ delete window.__ccfBuyWait[d.id]; f(d); }
+});
+function ccfBought(btn){
+  const wrap=btn.parentElement, inp=wrap.querySelector('input'), out=wrap.querySelector('.bought-msg');
+  const sh=parseFloat(inp.value)||0;
+  if(!(sh>0)){ out.style.color='#d69a3c'; out.textContent='株数を入れてください'; return; }
+  const frame=document.getElementById('pfFrame');
+  if(!frame||!frame.contentWindow){ out.style.color='#d69a3c'; out.textContent='Ⅶ保有が読み込まれていません（Ⅶを一度開いてから）'; return; }
+  const id='b'+Date.now()+Math.random().toString(36).slice(2,6);
+  let done=false;
+  window.__ccfBuyWait[id]=async function(r){
+    done=true;
+    /* ⚠ 成功時は renderPlan() が注文書を作り直すので、**この行に書いた返事は消える**（実測）。
+       だから結果は行の外＝画面に浮かぶ帯に出す。失敗時は再描画しないので行に出してよい。 */
+    if(!r.ok){ out.style.color='#d69a3c'; out.textContent='⚠ '+(r.msg||''); ccfToast('⚠ '+(r.msg||''),false); return; }
+    btn.disabled=true; btn.style.opacity=.5;
+    ccfToast('✓ '+(r.msg||'')+'　→ Ⅶ保有に反映。state.json の書き出しを忘れずに',true);
+    try{ if(typeof renderPlan==='function')await renderPlan(); }catch(_){}
+    try{ const db=document.getElementById('dashBox');
+         if(typeof ccfDash==='function'&&db&&db.innerHTML.trim())ccfDash(); }catch(_){}
+  };
+  frame.contentWindow.postMessage({type:'ccfPfBuy',id:id,t:inp.dataset.t,nm:inp.dataset.nm,
+    sh:sh,px:parseFloat(inp.dataset.px)||0,ccy:inp.dataset.ccy},'*');
+  setTimeout(()=>{ if(!done&&window.__ccfBuyWait[id]){ delete window.__ccfBuyWait[id];
+    out.style.color='#d69a3c'; out.textContent='Ⅶ保有から返事がありません（Ⅶタブを一度開いてから）'; } },3000);
+}
+
 function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
   // v9.9.90（2026-08-05 ユーザー要望「何株買うかまで指示してほしい」）: 円の按分に加えて株数を出す。
   //   価格は盤(out/dashboard.json)の現値＋ドル円で円換算。取れない銘柄は株数を出さない（ルール7:
@@ -3273,7 +3339,8 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
       let ob='';
       buyL.forEach(b=>{ const s1=Math.floor(b.sh/2), s2=b.sh-s1, cost=Math.round(b.sh*b.pi.jpy);
         ob+=orow(b.x.n,`<b style="color:var(--jade)">${b.sh}株</b>`,
-          `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(cost)}</span>　<span style="white-space:nowrap">${b.sh===1?'指値1本＝深い側(fair線寄り)':`階段 ${s1}株＋${s2}株`}</span>${alloc(b)}　<span style="white-space:nowrap">1株 ${b.pi.label}</span></span>`,'var(--ink)'); });
+          `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(cost)}</span>　<span style="white-space:nowrap">${b.sh===1?'指値1本＝深い側(fair線寄り)':`階段 ${s1}株＋${s2}株`}</span>${alloc(b)}　<span style="white-space:nowrap">1株 ${b.pi.label}</span></span>`
+          +ccfBoughtCtl(b),'var(--ink)'); });
       skipL.forEach(b=>{ ob+=orow(b.x.n,`<span style="color:#d69a3c;font-size:11.5px">今月見送り</span>`,
         `<span style="color:#d69a3c"><span style="white-space:nowrap">1株 ${b.pi.label}</span>が残枠に届かない→翌月の枠と合算${alloc(b)}</span>`,'var(--muted)'); });
       unknown.forEach(b=>{ ob+=orow(b.x.n,`<span style="color:var(--dim);font-size:11.5px">価格未取得</span>`,
@@ -4960,9 +5027,10 @@ async function renderPlan(){
   // v9.9.90: 買付プランの株数換算。盤の現値（日本株=JPY直・米国株=USD×ドル円）で円→株数。
   //   ドル円が取れない/盤に無い銘柄は null＝株数を出さない（ルール7: 推測の価格を置かない）
   const fxU=(typeof __mkt!=='undefined'&&__mkt&&__mkt.fx&&+__mkt.fx.USDJPY)||0;
+  // v9.9.138: px/ccy も返す——注文書の「買った」がⅦへ渡す（現地通貨の単価をそのまま記録するため）
   const pxInfo=r=>{const q=__Q[r.t]; if(!(q&&q.px>0))return null;
-    if(q.ccy==='JPY')return{jpy:q.px,label:`¥${q.px.toLocaleString('ja-JP')}`};
-    if(fxU>0)return{jpy:q.px*fxU,label:`$${q.px.toLocaleString('ja-JP',{maximumFractionDigits:2})}≒¥${Math.round(q.px*fxU).toLocaleString('ja-JP')}`};
+    if(q.ccy==='JPY')return{jpy:q.px,px:q.px,ccy:'JPY',label:`¥${q.px.toLocaleString('ja-JP')}`};
+    if(fxU>0)return{jpy:q.px*fxU,px:q.px,ccy:q.ccy||'USD',label:`$${q.px.toLocaleString('ja-JP',{maximumFractionDigits:2})}≒¥${Math.round(q.px*fxU).toLocaleString('ja-JP')}`};
     return null;};
   const planBox=ccfMonthPlanBox(planRows,gap,passGap,tw,CITY,pxInfo);
   if(passIn.length){
