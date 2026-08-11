@@ -795,5 +795,46 @@ window.addEventListener('load',pfReportHeight);
 window.addEventListener('resize',pfReportHeight);
 try{ new ResizeObserver(pfReportHeight).observe(document.body); }catch(e){}
 setTimeout(pfReportHeight,300); setTimeout(pfReportHeight,900);
+
+/* ---------- Ⅵ買付順位から「買った株数」を受け取る（v9.9.138・ユーザー「買付順位から保有を入れれるようにしたい」）
+   **書き込みの実装はこのページにしか置かない**（v9.9.65: 二重に持たない）。
+   親が localStorage を直接書くと、このページが抱えている P は古いままなので、
+   次の persist() が黙って巻き戻す——**v9.9.131 で実際に踏んだ順序の事故**と同型。
+   だから親からは「足してくれ」と頼むだけにして、実際の加算・保存・再描画はここでやる。 ---------- */
+function pfAddShares(d){
+ const t=String(d.t||'').trim(), sh=+d.sh||0, px=+d.px||0;
+ if(!t)   return {ok:false, msg:'銘柄コードが空'};
+ if(!(sh>0)) return {ok:false, msg:'株数が0以下'};
+ const up=t.toUpperCase();
+ let p = P.positions.find(x=>String(x.t||'').toUpperCase()===up)
+      || (d.nm ? P.positions.find(x=>x.nm&&x.nm===d.nm) : null);
+ if(p){
+  const old=+p.sh||0;
+  /* ⚠ 金額(円)だけで記録されている行に株数を足すと、posValue が株数側へ切り替わって
+     **既存の金額が評価から消える**（sh>0&&px>0 なら sh*px を使う実装）。
+     黙って壊さず、Ⅶで株数を入れてからにしてもらう。 */
+  if(old<=0 && (+p.v||0)>0)
+   return {ok:false, msg:t+' は金額(円)で記録されています（¥'+Math.round(+p.v).toLocaleString('ja-JP')
+     +'）。株数に切り替えると既存の金額が評価から外れるので、先にⅦ保有で株数を入れてください。'};
+  p.sh = old + sh;
+  /* 買付単価は**加重平均**（含み損益が静かに狂わないように）。旧単価が無ければ今回の値 */
+  const ob=+p.bpx||0;
+  if(px>0) p.bpx = (ob>0&&old>0) ? Math.round(((ob*old+px*sh)/(old+sh))*1e4)/1e4 : px;
+  if(!(+p.npx>0)&&px>0) p.npx=px;
+  if(!p.ccy&&d.ccy) p.ccy=d.ccy;
+ }else{
+  P.positions.push({t:up, nm:d.nm||up, sleeve:'castle', kind:'個別',
+                    ccy:d.ccy||'USD', bd:'', sh:sh, bpx:px||0, npx:px||0, v:0});
+ }
+ persist(); render();
+ const now=(P.positions.find(x=>String(x.t||'').toUpperCase()===up)||{}).sh;
+ return {ok:true, msg:t+' を +'+sh+'株（保有 '+now+'株）', sh:now};
+}
+window.addEventListener('message',function(e){
+ const d=e&&e.data; if(!d||d.type!=='ccfPfBuy')return;
+ let r; try{ r=pfAddShares(d); }catch(err){ r={ok:false,msg:String(err&&err.message||err)}; }
+ try{ if(window.parent&&window.parent!==window)
+   window.parent.postMessage({type:'ccfPfBuyDone', id:d.id, ok:r.ok, msg:r.msg, sh:r.sh},'*'); }catch(_){}
+});
 </script>
 </body></html>
