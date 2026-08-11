@@ -167,7 +167,8 @@
    "2026-08-05 門2審査（新規パック化）。歴史検証(irr=85・2018年ビンテージ)21社のうち門2未審査だった12社の一つ。ユーザー指示で名指し審査。機械値は採取器(2026-08-05)の値をそのまま採用し、XBRL companyfacts で営業利益・売上・R&D・のれんの各系列を独立に再取得して検算した（書き換えた機械値は無し）",
    "roic/roicg は through-cycle(5年中央値) 18.1/6.3＝**乖離11.8pt**（罰の線15ptの下）。acq5=yes だが罰は発火しない",
    "nde 5.05倍は門の財務キル線(4倍)を超える＝キルが発火する",
-   "門0では score=3・fails『FCFマイナス; ROIC; ROIC最低値; 営業利益率』"
+   "門0では score=3・fails『FCFマイナス; ROIC; ROIC最低値; 営業利益率』",
+   "2026-08-11 機構の射程と認定の寿命を原本から記録（_meta.mech）: 射程 点推定は導けない（61.7〜94.9%）／寿命 原本に開示なし。読解＋反証専門の二段（scope=confirmed／life=confirmed）。**合否には一切使わない記録**。置き場を _meta.evidence.irr でなく _meta.mech にしたのは、irr85_mech_diff が evidence の英文引用を原本と逐語照合するため（日本語の注記を混ぜると照合の断片が汚れる）。"
   ],
   "auditDate": "2026-08-05",
   "model": "claude-opus-5",
@@ -193,6 +194,45 @@
     "per": 68.38,
     "shy": 0.3
    }
+  },
+  "mech": {
+   "scope_pct": null,
+   "scope_low": 61.7,
+   "scope_high": 94.9,
+   "scope_basis": "原本 Note 2「REVENUES」の顧客カテゴリー別売上（FY2025・百万$）から導いた。Fabs 1,973.0 ／ Equipment and Engineering 469.4 ／ Chemical and Materials 320.1 ／ Semi Distributor/Other 272.5 ／ Non-Semi 161.6 ／ Total net sales 3,196.6。半導体4カテゴリーの小計 1,973.0+469.4+320.1+272.5 = 3,035.0 で、3,035.0+161.6 = 3,196.6 と総額に完全一致する（表の内部検算OK）。【上限の読み 94.9%】= 3,035.0 ÷ 3,196.6。再認定のリスク記述は『our customers』と全社形で書かれ、対象も『most of our products』と製品側で括られていて、セグメントにも顧客類型にも限定されていない。明確に半導体の認定regimeの外にあると原本から言えるのは Non-Semi 161.6（POCO黒鉛のEDM電極・ガラス接触材・航空/光学/医療/印刷向け等）だけなので、それを除いた残り全部がこの読み。【下限の読み 61.7%】= 1,973.0 ÷ 3,196.6。『顧客自身が自社の量産プロセスを認定し直す』という機構が一義に成り立つのはファブだけ、と厳しく取った場合。Equipment and Engineering 14.7% は装置OEMへの design-in（この台帳の分類ではB設計組込＝歴史で最も弱かった型）、Chemical and Materials 10.0% は薬液メーカーが自社の製造ラインにフィルタ等を認定する二段構え、Semi Distributor/Other 8.5% は最終需要家がファブだが原本からは確認できない。【なぜ点で出せないか】原本はどのカテゴリーが認定を要するかを一度も対応づけていない。ただし帯の両端（61.7% / 94.9%）はどちらも会社自身の言葉『most of our products』（＝過半）と矛盾しない。補助の錨として、上位10社が売上の50%（TSMC単独16%）、単一プロダクトプラットフォームは3%未満、営業利益率でなく売上の構成としてMS 1,406.7（44.0%）／APS 1,799.1（56.3%）。",
+   "scope_quotes": [
+    "The following table provides information about disaggregated net sales by customer category for the years ended December 31, 2025, 2024 and 2023: (In millions) 2025 / Semiconductor: Fabs $ 1,973.0 / Equipment and Engineering 469.4 / Chemical and Materials 320.1 / Semi Distributor/Other 272.5 / Non-Semi 161.6 / Total net sales $ 3,196.6",
+    "Due to the long design and development cycle and lengthy customer product qualification periods required for most of our products, we may be unable to replace these customers quickly, if at all.",
+    "In addition, any modification to the manufacturing process of a product, including changes designed to improve manufacturing yields, process stability and product quality, could require that the product be re-qualified by customers, which can increase our costs and delay or prevent our ability to sell this product to our customers.",
+    "In 2025, our revenue was predominantly unit-driven or recurring from products consumed during semiconductor manufacturing.",
+    "Our solutions are increasingly specified into our customers’ manufacturing processes and tailored to their unique process conditions and technical roadmaps.",
+    "Our top ten customers accounted for 50%, 48% and 43% of our net sales in 2025, 2024 and 2023, respectively.",
+    "In 2025, no single product platform represented more than 3% of our net sales."
+   ],
+   "scope_null_why": "原本は「認定を要するのはどの製品・どの顧客カテゴリーか」を一度も述べていない。売上のカテゴリー別内訳（実数）は完全に取れるが、そこへ機構を割り当てる記述が無いため、点推定は原本からではなく私の判断からしか出せない。会社自身の scope の言葉は『most of our products』（過半）という定性表現ひとつだけで、これは 61.7%〜94.9% の帯のどこでも満たす。よって帯で出し、点は置かない。",
+   "life_low": null,
+   "life_high": null,
+   "life_basis": "測ろうとしたのは「一度ファブのプロセスに認定された材料・部材が、その認定のまま使われ続ける年数（＝ノード世代／プロセスの寿命に相当するもの）」。原本にはこれを述べる記述も数値も無い。原本にある年数表現はすべて**入口側（認定を取るまでの費用と時間）**で、出口側（一度取ったら何年効くか）ではない——『long design and development cycle and lengthy customer product qualification periods』『in certain cases years ahead of commercialization』『it may take several years for sales of a new product to reach a substantial level』。むしろ**契約面は逆を明示している**: 供給契約に長期購入コミットメントは通常入らず、契約は概ね12ヶ月以内、顧客が短い予告で購入をやめても契約上の手段はほとんど無い、と会社自身が書く。つまりロックは契約ではなく工程側の経済性にあり、その持続年数を会社は数字にしていない。なお同じ10-Kには取得無形の加重平均耐用年数（Customer relationships 14.0年・Developed technology 7.2年）があるが、これは買収会計上の見積り（CMC Materials等の取得関係）であって認定の寿命の開示ではないので、寿命の答えとしては採らない（別基準の二つを割ることになるため）。",
+   "life_quotes": [
+    "Due to the long design and development cycle and lengthy customer product qualification periods required for most of our products, we may be unable to replace these customers quickly, if at all.",
+    "We may enter into supply agreements with our customers, though these agreements typically do not include long-term purchase commitments.",
+    "The Company’s contracts are generally short-term in nature. Most contracts do not exceed twelve months.",
+    "Because we have limited or no contractual recourse if our customers decided to stop buying and using our products with limited advance notice, the cancellation, reduction or deferral of purchases of our products by any one of these customers could significantly reduce our revenues in any particular quarter.",
+    "Our customer relationships provide us with collaboration opportunities at early product design stages—in certain cases years ahead of commercialization—which enable us to introduce new products and applications that serve their needs.",
+    "Customer relationships $ 630.8 $ 354.5 $ 276.3 14.0 [Weighted average life in years] / Developed technology $ 1,264.5 $ 747.3 $ 517.2 7.2"
+   ],
+   "life_null_why": "原本は認定の寿命を一切開示していない。年数が出てくるのは認定を取るまでの期間（入口）だけで、取った後どれだけ持つかは語られない。構造から幅を推定しようにも、手がかりになりうる数字（取得無形の14.0年／7.2年）は買収会計の見積りで測っている対象が違い、これを寿命として出すと『基準の違う二つ』を作ることになる。逆向きの事実（契約は12ヶ月以内・長期購入コミットメントなし・契約上の手段なし）はあるが、これは契約の寿命であって認定の寿命ではない。よって null。",
+   "mechanism_summary": "顧客（半導体ファブ／装置OEM／薬液メーカー）が自分の製造プロセスに対してEntegrisの材料・部材を認定し、Entegris側が製造工程・原材料・処方を変えると「顧客が再認定をやり直す」型＝認定するのは第三者ではなく顧客自身（A工程認定／E長期認定期間に相当。この台帳の歴史側でも ENTG は mech=E と読まれている）。",
+   "caveats": "【①について】(a) 帯の下限61.7%と上限94.9%は3.4十億$の売上に対して約10.4億$の開きがあり、幅が広い。原本がカテゴリーと認定の対応を書いていない以上これ以上は縮まらない。(b) 上限94.9%は「半導体向けは全部認定を要する」という仮定を含み、原本はそれを言っていない。とくに Equipment and Engineering 14.7% は装置OEMへのdesign-inで、この台帳の分類ではB設計組込＝歴史で 0/2・恒久毀損100%（CMTL）だった最弱の型に当たる可能性が高く、同じ85の中でも質が違う。(c) Semi Distributor/Other 8.5% は最終需要家がファブだと推定できるが原本では確認できず、私は上限側に含めた（含めない読みなら上限86.4%）。(d) 下限61.7%も「ファブなら必ず認定を要する」という仮定を含む。(e) セグメント注記のヘッダーが「(In thousands)」なのに値は百万$（1,406.7）で、Note 2の「(In millions)」と総額3,196.6が一致することから百万$と確定した＝原本側の表記ミス。数値そのものは両表で整合。\n【②について】(f) 「認定の寿命が書かれていない」は「寿命が短い」の意味ではない。測れなかっただけで、実体としては長い可能性が十分ある。(g) 逆に、契約面（12ヶ月以内・長期コミットメントなし・契約上の手段なし）は寿命の**上限を保証しない**ことだけを示しており、これを寿命の代理として使うのも誤り。\n【機構そのものについて】(h) パックが引く3文のうち少なくとも2文は、原本では**Entegris側のリスク**として書かれている——1文目は自社が代替サプライヤーを認定し直す際の制約、2文目はPFAS等の規制対応で自社が処方を変えると『loss of design wins, or customers transitioning to competing products』になりうるという文脈。同じ認定regimeが既存の地位を守ると同時にEntegris自身をも縛り、design winを失わせる両刃として描かれている。85の根拠として引くなら、この向きの非対称性は割り引いて読むべき。(i) 会社は『increasingly specified into』（＝これから増える側）とも書いており、完了形の断定一色ではない。(j) 私は10-K本文のみを読んだ（決算説明会資料・投資家向けデッキは未走査）。①の点推定を可能にする数値がそちらにある可能性は残る。",
+   "verified": "scope=confirmed／life=confirmed",
+   "verify_note": "引用13件（散文10＋Note2売上表＋無形資産表）をHTML除去・記号正規化のうえ原本と逐語照合し、**全件が逐語で実在**。改変・言い換えはゼロ。文脈切りによる意味の反転もなし（機構2文はいずれもリスク要因の枠内だが、パック自身が caveat(h) で両刃と明記している）。ただし引用まわりで3件の瑕疵を名指しする。①**caveat(h)の文脈の帰属が誤り**——「any modification to the manufacturing process…re-qualified by customers」をPFAS規制対応の文脈と説明しているが、実際は『Manufacturing interruptions or delays』（工程変更・工場移管）の項にある。PFASの側には別に「may require requalification by our customers, which could result in delays, loss of design wins, or customers transitioning to competing products.」という酷似文が実在するので、(h)の主張の中身（両刃・自社リスクとしての記述）は正しく、誤っているのは指し先だけ。②**無形資産表の引用が原本の行順を入れ替えている**（原本は Developed technology→Trademarks→Customer relationships の順、引用は Customer relationships を先頭に置く）。各行の数値は逐語一致で、かつパックはこの数値を寿命として採らないと明言しているため実害なし。③**機構に不利な事実の引用漏れ**——同じRisk Factorsに「demands for dual sourcing or **rapid qualification of alternative products**」（顧客が代替品の認定を能動的に急がせる）があり、これは原本中で最も強い反証材料。パックは引いていない。逆に有利な側の「Switching away from our products may be costly and time-consuming for our customers and may introduce risk to their manufacturing yields.」も引かれていない（こちらは主張を強める側）。なお caveat(e) の「セグメント注記のヘッダーが(In thousands)なのに値は百万$」は**原本で確認済み・指摘が正しい**。\n\n**両項目とも潰せなかった。**\n\n【射程 confirmed】検算は完全一致。1,973.0+469.4+320.1+272.5=3,035.0、+161.6=3,196.6＝原本の Total net sales に一致（セグメント側 1,406.7+1,799.1−9.2=3,196.6 とも整合）。分子・分母はどちらも Note 2 の同一表から来ており、別表の継ぎ接ぎではない。3,035.0÷3,196.6=**94.94%**、1,973.0÷3,196.6=**61.72%**、パック自身が挙げる別読み（Semi Distributor/Other 除外）=**86.42%** も一致。\n\n主攻撃＝「引用は一部の製品群の話なのに全社%を当てていないか」は**成立しなかった**。原本の `qualif*` 全23箇所を列挙して確認したところ、認定に関わる記述の scope 語は「**most of our products**」「**many of our products**」「a product … re-qualified by customers」のみで、**いずれも全社・製品ベースの表現であり、セグメントにも顧客カテゴリーにも限定されていない**。同時に、**どのカテゴリーが認定を要するかを対応づける記述も原本には一切ない**。パックはこれを why_null にそのまま書き、**pct を null にして帯で出している**——数値は原本の表から、割り当ては読み手の判断、という区別が明示されている。帯の下限61.7%は会社の唯一の scope 語「most（過半）」と矛盾せず、上限94.9%が含む仮定（半導体向けは全部認定を要する）も caveat(b)(c)(d) で自己申告済み。厳しい既定の3条件（数値なき引用に%を置く／複数記述をつないで全社と言う／推定を会社の言明として出す）はいずれも該当しない。\n\n【寿命 confirmed（null が正しい）】原本の年数表現を全走査した。出てくるのは**入口側だけ**——「long design and development cycle and lengthy customer product qualification periods」「in certain cases years ahead of commercialization」「it may take several years for sales of a new product to reach a substantial level」。**一度認定された材料がその認定のまま何年使われるかを述べる記述・数値は原本に存在しない**。年数を持つ他の数字（ストックオプションの expected life 4.7年、取得無形の加重平均耐用年数 Customer relationships 14.0年・Developed technology 7.2年）はいずれも測っている対象が違い、パックは後者を「買収会計の見積りであって認定の寿命ではない＝基準の違う二つを割ることになる」として明示的に採らないと書いている。これは正しい判断。契約面（12ヶ月以内・長期購入コミットメントなし・契約上の手段なし）も逐語で実在し、caveat(g) が「寿命の代理には使えない」と正しく留保している。\n\n【残る限界（判定は変えないが記録する）】(1) 会社の scope 語「most of our products」は**製品数ベース**であり、売上%へ直接は変換できない——帯の両端はどちらも読み手の仮定を含む（パックも(b)(d)で自認）。(2) Non-Semi(161.6)を機構の外としたのは POCO黒鉛・EDM電極・ガラス接触材等の記述に基づくが、同じ段落は aerospace・medical devices・biomedical implant も挙げており、これらは本来認定の重い領域＝上限94.9%はむしろ保守側に振れている可能性がある（主張を弱める方向ではない）。(3) 10-K本文のみの検証で、決算説明会資料・投資家デッキは私も未走査（パックの caveat(j) と同じ）。",
+   "src": {
+    "form": "10-K",
+    "period": "2025-12-31",
+    "url": "https://www.sec.gov/Archives/edgar/data/1101302/000110130226000012/entg-20251231.htm"
+   },
+   "measured": "2026-08-11",
+   "note": "**記録であって選別の線ではない**——射程も寿命も合否に一切使わない。事前登録の検定(irr85_criteria・偽陽性率0.678)が「85の中の優劣を分ける入口の変数は無い」と出しており n=27 では新しい線を作れない。Ω・採点式・四関門・堀の関門・別枠85・配分は不変。"
   }
  },
  "dep": null,
