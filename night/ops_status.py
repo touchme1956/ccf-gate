@@ -53,6 +53,19 @@ def er_last_obs():
         return None
 
 
+def review_last_run():
+    """日次の門2審査 Routine が最後に走った日（out/review_runs.json の最新 date）。
+
+    **PRの有無ではなく「走ったか」で測る**——PRが出ない日（待ち行列が空・SEC不通・上限）も
+    正常な終わり方なので、PRを錨にすると空振りの日と止まった日が区別できない。
+    """
+    try:
+        d = json.load(open(os.path.join(BASE, "out", "review_runs.json"), encoding="utf-8"))
+        return max((r.get("date", "") for r in d.get("runs", [])), default=None) or None
+    except Exception:
+        return None
+
+
 def kessan_last(suffix):
     files = glob.glob(os.path.join(BASE, "out", "kessan", f"*{suffix}"))
     if not files:
@@ -74,6 +87,20 @@ def build():
         ("events",  "8-K・臨報監視",           "毎営業日", 4,
          json_field("out/events_watch.json", "asof"),
          "events.yml 22:10UTC（米国は鍵不要・日本株はEDINET_API_KEY）", True),
+        # 2026-08-11(ユーザー指示「1と2やって」): **日次の門2審査 Routine が走ったか**。
+        #   ここは他の項と穴の空き方が違う——他は「CIが止まればファイルが古くなる」ので自然に見えるが、
+        #   Routine は **GitHub Actions ではなく Claude のセッション**なので、
+        #   走らなくても・走って何もしなくても、**リポジトリには何の変化も起きない**。
+        #   しかも **Routine 起動のセッションはコード一覧に出ない**（トリガー発火は既定で除外）ので、
+        #   報告は人が直リンクを開かない限り誰の目にも触れない。
+        #   実害: 2026-08-11 の試運転は29分・出力9万トークン走って**痕跡ゼロ**で終わり、
+        #   ユーザーが「どこにもない」状態になった。
+        #   → night/log_review_run.py が**毎回1行**を残し、ここがその日付を見る。
+        #   **PRの有無ではなく「走ったか」で測る**（空振りは正常な終わり方で、止まったのとは別物）。
+        ("reviewrun", "日次 門2審査(Routine)",  "毎営業日", 4,
+         review_last_run(),
+         "Routine『【門】日次 門2審査（自動・5社）』平日05:00 JST（claude-opus-5）／"
+         "痕跡は python3 night/log_review_run.py --outcome … --push", True),
         ("er",      "E[r]予実の観測封印",      "月1",     40,
          er_last_obs(),
          "market.yml（月初・snapは月次idempotent）", True),
@@ -120,13 +147,18 @@ def build():
         #     半導体5社・航空防衛4社で城の62.6%なのに、同じ束かの判断材料が業種ラベルだけだった。
         #   ③irr=85 の根拠監査——**回転盤にもCIにも登録が無く2026-08-05の54社のまま6日間止まっていた**
         #     （実データは15社）。KRMN が監視から漏れていたのと同じ形。
-        ("irr85mech", "機構文の年次diff",      "月1",     40,
+        ("irr85mech", "機構文の年次diff",      "毎営業日", 4,
          json_field("out/irr85_mech_diff.json", "generated"),
          "ci.yml（push/PR毎）／手動 python3 night/irr85_mech_diff.py --json", True),
         ("castlecorr", "城の相関（同時に落ちるか）", "月1",  40,
          json_field("out/castle_correlation.json", "generated"),
          "ops.yml 毎月2日／手動 python3 night/castle_correlation.py --json", True),
-        ("irr85audit", "irr=85の根拠監査",      "月1",     40,
+        # ⚠期限は「月1・40日」ではなく**毎営業日・4日**（2026-08-11 同日中の是正）。
+        #   この2本は ops.yml（月次）ではなく **ci.yml（push/PR毎＋平日22:00UTCのschedule）**で回るので、
+        #   実際の周期は毎営業日。40日にすると**CIが壊れて止まっても40日間 ✓ が出続ける**——
+        #   まさにこの道具が2026-08-05から6日間止まっていたのを誰も検出できなかったのと同じ形を、
+        #   期限の側から作り直すことになる。同じ ci.yml で回る irr85myrule（毎営業日・4日）と揃える。
+        ("irr85audit", "irr=85の根拠監査",      "毎営業日", 4,
          json_field("out/audit_irr85.json", "generated"),
          "ci.yml（push/PR毎）／手動 python3 night/audit_irr85.py", True),
         # 2026-08-11: 機構の射程と認定の寿命（_meta.mech）。**測定は原本読解＝人の作業**だが、
