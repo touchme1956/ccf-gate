@@ -1,0 +1,326 @@
+/* ============================================================================
+   state.js — **人の決定を repo に置き、門はそれを読む**（v9.9.131・2026-08-10
+   ユーザー明示指示「localStorage → repo これはなに？」→「repoに全部」）
+
+   ■ 何を移すか（**localStorage が正本で repo にコピーが1バイトも無かった6つ**）
+       pf:portfolio  … 何株持っているか（Ⅶ資産）
+       pf:weights    … 目標ウェイト（配分の決定そのもの）
+       pf:sold       … 売却記録
+       pf:monthly    … 今月の個別枠
+       g7ignite:map  … 点灯日（Ulysses契約の48時間冷却）
+       g7log:…       … Ⅴ検証履歴（**人が手で書いた記録**）
+     台帳 g7: は out/*_gate_pack.json という repo の正本があるので**ここには含めない**
+     （含めると「同じものが二箇所に正本を持つ」＝この台帳が最も嫌う型になる）。
+
+   ■ なぜ「読むだけ」なのか（設計の制約を正直に書く）
+     門は GitHub Pages の静的ページで、**ブラウザから repo へ書く手段が無い**。
+     書けるようにするにはトークンをブラウザに置くことになり、それは絶対にしない。
+     よって正本の向きはこうなる:
+       repo → 門 … fetch で自動（out/dashboard.json と同じ「CIで作ってJSONで配る」作法）
+       門 → repo … **人が書き出してコミットする**（gate_exceptions.json と同じ形）
+     つまり「自動で守られる」のではなく「**書き出し忘れが見える**」ようになる。
+     見えるようにするのが本体——回転盤(ops_status)が state.json の鮮度を測る。
+
+   ■ 絶対に踏まない事故（この台帳が繰り返し記録している型）
+     **新しいほうが古いほうを黙って上書きしてはいけない。**
+     キーエンスの「Ⅵ一括取込が台帳のレコードを置き換え、Ⅲ採点機で直した値を無言で巻き戻す」
+     とまったく同じ形が、ここでは「repoのstate.jsonが手元の未書き出しの株数を消す」になる。
+     だから三重に縛る:
+       (1) state.json の savedAt が **null なら何もしない**（未初期化のrepoが手元を消さない）
+       (2) 手元に**未書き出しの変更(dirty)があれば採用しない**——警告だけ出す
+       (3) 採用は **repo のほうが新しいときだけ**（savedAt を比較する）
+     どの分岐でも**黙って消す経路が無い**ことがこの実装の全部。
+
+   ■ dirty はどう立つか
+     書き込み地点を一つずつ探して呼び出しを足すと**必ず取りこぼす**ので、
+     `localStorage.setItem/removeItem` を包んで**対象キーが書かれたら自動で立てる**。
+     `store`（claudeモード）も localStorage へミラーするので、これで全部拾える。
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var EXACT = ['pf:portfolio', 'pf:weights', 'pf:sold', 'pf:monthly', 'g7ignite:map'];
+  var PREFIX = ['g7log:'];
+  var SAVED_AT = 'ccf:stateSavedAt';   // 最後に採用/書き出しした state.json の savedAt
+  var DIRTY = 'ccf:stateDirty';        // '1' = 手元に未書き出しの変更がある
+
+  function watched(k) {
+    if (!k) return false;
+    if (EXACT.indexOf(k) >= 0) return true;
+    for (var i = 0; i < PREFIX.length; i++) if (k.indexOf(PREFIX[i]) === 0) return true;
+    return false;
+  }
+
+  /* ── 書き込みを包んで dirty を自動で立てる（呼び出し地点を探さない） ──
+     ⚠ ただし**機械が書き戻す分は数えない**。Ⅶ資産の applyDash は盤(out/dashboard.json)の
+     現在株価とドル円を pf:portfolio へ書き戻すので（v9.9.87）、素朴に包むと
+     **人が何も触らなくても毎回 dirty が立ち、警告が鳴りっぱなしになる**——
+     鳴りすぎる警報は鳴らないのと同じ。機械書き込みは quiet() で囲む。
+     失われるのは npx/fx だけで、どちらも盤から再取得できる（人の決定ではない）。 */
+  var quietDepth = 0;
+  function quiet(fn) { quietDepth++; try { return fn(); } finally { quietDepth--; } }
+  try {
+    var _set = localStorage.setItem.bind(localStorage);
+    var _rm = localStorage.removeItem.bind(localStorage);
+    localStorage.setItem = function (k, v) {
+      var r = _set(k, v);
+      if (watched(k) && !quietDepth) { try { _set(DIRTY, '1'); } catch (e) {} }
+      return r;
+    };
+    localStorage.removeItem = function (k) {
+      var r = _rm(k);
+      if (watched(k) && !quietDepth) { try { _set(DIRTY, '1'); } catch (e) {} }
+      return r;
+    };
+  } catch (e) {}
+
+  /* collect(core) — core=true なら **検証履歴(g7log:)を外す**。
+     ⚠ これは実害から来た分割（2026-08-10）。**貼り付けで渡すと必ず切れる**——
+     `g7log:` は「一括再採点 362銘柄」の全文がそのまま入るので1件で数十KBあり、
+     しかも localStorage の並び順でログが先に来るため、**株数(pf:portfolio)が本文に
+     現れる前に切れた**（実測）。だから (a)小さい決定だけを別に出せるようにし、
+     (b)出力の**並びを重要度順に固定**して、万一切れても先頭に大事なものが載るようにする。
+     取り込み側は「data にあるキーだけ書く」ので、小さい方をコミットしても
+     手元の検証履歴が消えることはない（**消す経路は無い**）。 */
+  var ORDER = ['pf:portfolio', 'pf:sold', 'pf:weights', 'pf:monthly', 'g7ignite:map'];
+  function collect(core) {
+    var all = {}, keys = [];
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (!watched(k)) continue;
+        if (core && k.indexOf('g7log:') === 0) continue;
+        var v = localStorage.getItem(k);
+        if (v != null) { all[k] = v; keys.push(k); }
+      }
+    } catch (e) {}
+    keys.sort(function (a, b) {
+      var ia = ORDER.indexOf(a), ib = ORDER.indexOf(b);
+      if (ia < 0) ia = 99; if (ib < 0) ib = 99;
+      return ia - ib || (a < b ? -1 : a > b ? 1 : 0);
+    });
+    var d = {};                                  // 重要度順に詰め直す（JSONはこの順で出る）
+    keys.forEach(function (k) { d[k] = all[k]; });
+    return { data: d, n: keys.length };
+  }
+
+  function isDirty() { try { return localStorage.getItem(DIRTY) === '1'; } catch (e) { return false; } }
+  function localSavedAt() { try { return localStorage.getItem(SAVED_AT) || null; } catch (e) { return null; } }
+
+  /* 採用の判定だけを純関数にしておく（門と端末が同じ規則を言えるように）。
+     戻り値: 'adopt' 採用する / 'dirty' 手元に未書き出しがあるので採用しない /
+             'uninit' repoが未初期化 / 'stale' repoのほうが古い / 'same' 同じ */
+  function decide(repoSavedAt, mySavedAt, dirty) {
+    if (!repoSavedAt) return 'uninit';
+    if (dirty) return 'dirty';
+    if (!mySavedAt) return 'adopt';
+    if (repoSavedAt > mySavedAt) return 'adopt';
+    if (repoSavedAt === mySavedAt) return 'same';
+    return 'stale';
+  }
+
+  var last = null;   // 最後の判定（バナー描画が読む）
+
+  function load() {
+    return fetch('state.json?_=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; })
+      .then(function (s) {
+        if (!s || s.fmt !== 'ccf-state') { last = { verdict: 'none' }; return last; }
+        var v = decide(s.savedAt || null, localSavedAt(), isDirty());
+        var applied = 0;
+        if (v === 'adopt') {
+          var d = s.data || {};
+          quiet(function () {                             // 採用は機械の書き込み＝dirty を立てない
+            for (var k in d) {
+              if (!watched(k)) continue;                  // 想定外のキーは入れない
+              try { localStorage.setItem(k, d[k]); applied++; } catch (e) {}
+            }
+          });
+          // 採用は「書き出し済みの状態に追いついた」ことなので dirty は落とす
+          try { localStorage.setItem(SAVED_AT, s.savedAt); localStorage.removeItem(DIRTY); } catch (e) {}
+        }
+        last = { verdict: v, savedAt: s.savedAt || null, applied: applied,
+                 mine: localSavedAt(), dirty: isDirty(), n: Object.keys(s.data || {}).length };
+        return last;
+      });
+  }
+
+  /* 書き出し: state.json をそのまま作って落とす。人がコミットすれば repo が正本になる。 */
+  function exportFile(btn, core) {
+    var c = collect(core);
+    var savedAt = new Date().toISOString();
+    var payload = JSON.stringify({ fmt: 'ccf-state', ver: 1, savedAt: savedAt,
+      note: '門の「人の決定」の正本。repo直下に置き、門が起動時に読む。' +
+            'ブラウザからrepoへは書けないので、書き出してコミットするのが唯一の道（state.jsの頭注）。',
+      data: c.data }, null, 1);
+    var o = btn ? btn.textContent : '';
+    try {
+      var blob = new Blob([payload], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'state.json';
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1200);
+      /* ⚠ クリップボードに**頼らない**（2026-08-10 実害）。Ⅶ資産は <iframe> の中にあり、
+         `allow="clipboard-write"` が無いとブラウザが writeText を**黙って拒否**する。
+         実測: 3回書き出しても savedAt が 17:29 のまま固定＝クリップボードが一度も更新されず、
+         同じ古い中身が貼られ続けた（しかも大きい方なので毎回途中で切れた）。
+         → **本文を画面に出して選択済みにする**。これはどのブラウザでも必ず動く。 */
+      try { navigator.clipboard && navigator.clipboard.writeText(payload); } catch (e) {}
+      showBox(payload, savedAt, c.n);
+      // **落とした時点では repo にまだ無い**ので dirty は落とさない——
+      // コミットして初めて正本になる。落とすのは「コミットした」を押したとき。
+      // そのとき記録する savedAt は**この書き出しのもの**でなければならない（今の時刻ではない）
+      last = last || {}; last.pendingSavedAt = savedAt;
+      var kb = payload.length < 1024 ? '1KB未満' : Math.round(payload.length / 1024) + 'KB';
+      if (btn) { btn.textContent = '✓ 書き出した（' + c.n + '件 / ' + kb + '・コピー済）→ ② へ';
+                 setTimeout(function () { btn.textContent = o; }, 6000); }
+    } catch (e) {
+      if (btn) { btn.textContent = '書き出せない'; setTimeout(function () { btn.textContent = o; }, 2000); }
+    }
+    return { savedAt: savedAt, n: c.n };
+  }
+
+  /* 「コミットした」の申告: dirty を落とす。**押すのは人**＝嘘をつけば盤が古いままになるだけ。 */
+  function markCommitted(savedAt) {
+    try {
+      if (savedAt) localStorage.setItem(SAVED_AT, savedAt);
+      localStorage.removeItem(DIRTY);
+    } catch (e) {}
+  }
+
+  /* 書き出した中身をその場に出す（選択済み）。クリップボードが効かない環境でも渡せる。 */
+  function showBox(payload, savedAt, n) {
+    var host = document.getElementById('stateBox') || (function () {
+      var d = document.createElement('div'); d.id = 'stateBox';
+      var b = document.getElementById('stateBar');
+      if (b && b.parentNode) b.parentNode.insertBefore(d, b.nextSibling);
+      else document.body.appendChild(d);
+      return d;
+    })();
+    var kb = payload.length < 1024 ? '1KB未満' : Math.round(payload.length / 1024) + 'KB';
+    host.innerHTML =
+      '<div style="border:1px solid ' + GREEN + ';border-left:5px solid ' + GREEN +
+      ';border-radius:10px;padding:12px 14px;margin:10px 0;font-size:12.6px;line-height:1.7">' +
+      '<div style="font-weight:700;color:' + GREEN + ';margin-bottom:4px">📋 ここの中身を全部コピーして貼ってください</div>' +
+      '<div style="opacity:.85;margin-bottom:7px">' + n + '件 / ' + kb +
+      '　savedAt ' + savedAt + '　<b>枠を長押し→全選択→コピー</b>（クリップボードが自動で入らない端末向け）</div>' +
+      '<textarea id="stateBoxTa" readonly style="width:100%;height:150px;font-family:monospace;font-size:11px;' +
+      'padding:8px;border:1px solid ' + GREEN + ';border-radius:7px;background:rgba(255,255,255,.6);color:#1b1610"></textarea>' +
+      '<div style="margin-top:7px"><button onclick="ccfState.copyBox(this)" style="padding:7px 15px;border:1px solid ' +
+      GREEN + ';background:' + GREEN + ';color:#fff;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;' +
+      'font-family:inherit">📋 コピー</button></div></div>';
+    var ta = document.getElementById('stateBoxTa');
+    if (ta) { ta.value = payload; try { ta.focus(); ta.select(); } catch (e) {} }
+  }
+
+  /* execCommand は古いが、iframe でも file:// でも動く最後の砦 */
+  function copyBox(btn) {
+    var ta = document.getElementById('stateBoxTa'); if (!ta) return;
+    var o = btn ? btn.textContent : '';
+    var ok = false;
+    try { ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length); ok = document.execCommand('copy'); } catch (e) {}
+    if (!ok) { try { navigator.clipboard.writeText(ta.value); ok = true; } catch (e) {} }
+    if (btn) { btn.textContent = ok ? '✓ コピーした' : '手で選択してください';
+               setTimeout(function () { btn.textContent = o; }, 2600); }
+  }
+
+  /* 帯の描画。**手順を4段の番号つきで出す**（v9.9.132・ユーザー「これをもっとわかるようにして」）。
+     ここが単一実装で、index.html(門の頭) と portfolio.html(Ⅶ資産) の両方が同じものを描く。
+     ⚠ 色は変数名で渡さない——index.html は --fail/--pass、portfolio.html は --rust/--jade と
+        名前が違うので、変数名で書くと**片方のページだけ色が付かない**（v9.9.108 と同型の事故）。 */
+  var RED = '#b04a2c', GREEN = '#2f7a53', DIM = 'rgba(128,120,105,.95)';
+
+  function stepHTML(col) {
+    var c = collect(), core = collect(true);
+    var keys = Object.keys(core.data).map(function (k) {   // 見出しに出す品目は**決定だけ**の側
+      return k.indexOf('g7log:') === 0 ? '検証履歴' : ({
+        'pf:portfolio': '株数', 'pf:weights': '目標ウェイト', 'pf:sold': '売却記録',
+        'pf:monthly': '今月の個別枠', 'g7ignite:map': '点灯日'
+      }[k] || k);
+    });
+    var uniq = keys.filter(function (v, i) { return keys.indexOf(v) === i; });
+    var b = function (label, fn) {
+      return '<button onclick="' + fn + '" style="padding:8px 16px;border:1px solid ' + col +
+        ';background:' + col + ';color:#fff;border-radius:8px;font-size:13px;font-weight:600;' +
+        'cursor:pointer;font-family:inherit;white-space:nowrap">' + label + '</button>';
+    };
+    var li = function (n, t, extra) {
+      return '<div style="display:flex;gap:10px;align-items:flex-start;margin:9px 0">' +
+        '<span style="flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:' + col +
+        ';color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;margin-top:1px">' + n + '</span>' +
+        '<span style="flex:1;min-width:0">' + t + (extra ? '<div style="margin-top:7px">' + extra + '</div>' : '') + '</span></div>';
+    };
+    var kb = function (o) { var n = JSON.stringify(o).length;
+      return n < 1024 ? '1KB未満' : '約' + Math.round(n / 1024) + 'KB'; };
+    var kbAll = kb(c.data), kbCore = kb(core.data);
+    return li(1, '<b>書き出す</b>。<span style="opacity:.85">端末に落ち、<b>クリップボードにも入る</b>。</span>' +
+                 '<div style="margin-top:5px;font-size:11.8px;opacity:.9">' +
+                 '<b>決定だけ</b>＝' + core.n + '件 / <b>' + kbCore + '</b>（' + (uniq.join('・') || '—') + '）' +
+                 '　／　<b>履歴も</b>＝' + c.n + '件 / ' + kbAll + '（＋検証履歴）</div>',
+              b('📤 ① 決定だけ（小）', 'ccfState.export(this,true)') +
+              ' <button onclick="ccfState.export(this)" style="margin-left:6px;padding:8px 14px;border:1px solid ' + col +
+              ';background:transparent;color:' + col + ';border-radius:8px;font-size:12.5px;cursor:pointer;' +
+              'font-family:inherit;white-space:nowrap">履歴も（大）</button>') +
+           li(2, '<b>その中身を Claude に貼る</b>。<span style="opacity:.85">' +
+                 '<b>貼るなら「決定だけ（小）」</b>——大きいほうは長すぎて<b>途中で切れます</b>（実測）。' +
+                 '検証履歴ごと入れたいときは、落ちたファイルを repo 直下の ' +
+                 '<code style="font-size:11.5px">state.json</code> に置いてコミット。</span>') +
+           li(3, '<b>Claude が検査して commit・push する</b>。<span style="opacity:.85">' +
+                 '<code style="font-size:11.5px">night/validate_state.py</code> で形を確かめてから入れる。</span>') +
+           li(4, 'ここへ戻って <b>入れた</b> を押す。<span style="opacity:.85">この帯が消える。' +
+                 '押し忘れても壊れない——帯が出続けるだけ。</span>',
+              b('✓ ④ 入れた', 'ccfState.done(this)'));
+  }
+
+  function banner(elId) {
+    var el = document.getElementById(elId); if (!el) return;
+    var s = last;
+    if (!s) { el.innerHTML = ''; return; }
+    var head = '', col = RED, act = false;
+    if (s.verdict === 'dirty') {
+      head = '手元の決定が、<b>まだ repo に入っていません</b>';
+      act = true;
+    } else if (s.verdict === 'uninit') {
+      head = 'repo の state.json は<b>まだ空</b>——株数も売却記録も<b>この端末にしかありません</b>';
+      act = true;
+    } else if (s.verdict === 'stale') {
+      head = 'repo の state.json が<b>手元より古い</b>（repo ' + (s.savedAt || '').slice(0, 10) +
+             ' ／ 手元 ' + (s.mine || '').slice(0, 10) + '）——取り込みません';
+      act = true;
+    } else if (s.verdict === 'adopt') {
+      el.innerHTML = '<div style="border:1px solid ' + GREEN + ';border-left:5px solid ' + GREEN +
+        ';border-radius:9px;padding:10px 14px;margin:10px 0;font-size:12.8px;line-height:1.7">' +
+        '<b style="color:' + GREEN + '">✓ repo の state.json から ' + s.applied + '件を取り込みました</b>' +
+        '<span style="opacity:.8">（' + (s.savedAt || '').slice(0, 10) + '）——この端末は repo に追いつきました。</span></div>';
+      return;
+    } else { el.innerHTML = ''; return; }   // same / none は黙る
+    if (!act) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div style="border:1px solid ' + col + ';border-left:5px solid ' + col +
+      ';border-radius:10px;padding:13px 16px;margin:10px 0;font-size:12.9px;line-height:1.75">' +
+      '<div style="font-size:14px;font-weight:700;color:' + col + ';margin-bottom:3px">⚠ ' + head + '</div>' +
+      '<div style="color:' + DIM + ';font-size:12.2px;margin-bottom:8px">' +
+      '門は静的ページなので<b>ブラウザから repo へは書けません</b>（トークンを置かない設計）。' +
+      'だから最後の一歩だけ人の手が要ります——<b>4手で終わります</b>。</div>' +
+      stepHTML(col) + '</div>';
+  }
+
+  /* ④ 「入れた」。**押すのは人**＝嘘をつけば盤(ops_status)が古いままになるだけで、データは消えない。 */
+  function done(btn) {
+    var o = btn ? btn.textContent : '';
+    markCommitted((last && last.pendingSavedAt) || new Date().toISOString());
+    if (btn) { btn.textContent = '✓ 記録した'; }
+    // 帯を出している要素を全部描き直す（門の頭・Ⅶ資産のどちらから押されても揃う）
+    setTimeout(function () {
+      last = { verdict: 'same' };
+      ['stateBar'].forEach(function (id) { try { banner(id); } catch (e) {} });
+      if (btn) btn.textContent = o;
+    }, 900);
+  }
+
+  window.ccfState = { load: load, export: exportFile, banner: banner, quiet: quiet, done: done, copyBox: copyBox,
+                      markCommitted: markCommitted, decide: decide, collect: collect,
+                      isDirty: isDirty, keys: { exact: EXACT, prefix: PREFIX },
+                      get last() { return last; } };
+})();

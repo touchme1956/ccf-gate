@@ -131,6 +131,8 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;line-height:1.9;}
 @media(max-width:520px){.total{font-size:32px;}.hero h1{font-size:21px;}.erow,.ehead{grid-template-columns:58px 1fr 52px 82px 28px;gap:4px;}.erow input,.erow select{padding:6px 5px;font-size:12px;}}
 </style>
+<!-- v9.9.131: 門と同じ state.js を読む（Ⅶ資産は index.html の iframe だが単独でも開けるため） -->
+<script src="state.js"></script>
 </head>
 <body>
 
@@ -155,8 +157,14 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
   <button class="btn ghost" id="bkBtn" onclick="pfBackupAll(this)" title="門と資産の全データ（台帳・保有・採点・このポートフォリオ）をJSONで保存。端末が変わっても復元で全て戻る">⬇ バックアップ</button>
   <label class="btn ghost" for="pfBkFile" style="cursor:pointer" title="バックアップJSONから全データを復元">⬆ 復元</label>
   <input id="pfBkFile" type="file" accept=".json,application/json" style="display:none" onchange="pfRestoreAll(this)">
+  <!-- v9.9.131: 人の決定の正本を repo へ。バックアップ(端末に落とすだけ)とは別物なので隣に並べる -->
+  <button class="btn ghost" id="stBtn" onclick="ccfState.export(this,true)" title="① 決定だけ（株数・売却記録・目標ウェイト・今月の個別枠・点灯日）を state.json として書き出す。数KBなのでそのままClaudeに貼れる。検証履歴は含まない">📤 ① 決定だけ</button>
+  <button class="btn ghost" id="stBtnAll" onclick="ccfState.export(this)" title="検証履歴(g7log:)も含めた完全版。数十KBあり貼り付けでは途中で切れるので、落ちたファイルを repo 直下の state.json に置いてコミットする用">📤 履歴も</button>
+  <button class="btn ghost" id="stDoneBtn" onclick="ccfState.done(this)" title="④ repo に入ったことを門に伝える（未書き出しの帯が消える）。押し忘れても壊れない——帯が出続けるだけ">✓ ④ 入れた</button>
  </div>
  <div class="mini" id="bkStat" style="margin-top:8px;text-align:center"></div>
+ <div id="stateBar"></div>
+ <div id="stateBox"></div>
 </header>
 
 <div class="wrap">
@@ -288,7 +296,8 @@ function load(){
    // 移行(2026-08-03): 保存済みの網(ETF)行を削除する。ユーザー明示指示——ページを個別銘柄だけに。
    const n=o.positions.length;
    o.positions=o.positions.filter(p=>p&&p.sleeve!=='net');
-   if(o.positions.length!==n){ try{localStorage.setItem(LS_KEY, JSON.stringify(o));}catch(e){} }
+   /* v9.9.131: 移行の書き戻しは**機械**＝dirty を立てない（人の決定ではない） */
+   if(o.positions.length!==n){ try{ccfState.quiet(()=>localStorage.setItem(LS_KEY, JSON.stringify(o)));}catch(e){try{localStorage.setItem(LS_KEY, JSON.stringify(o));}catch(_){}} }
    return o;
   }}}catch(e){}
  return JSON.parse(JSON.stringify(DEFAULT));
@@ -316,7 +325,10 @@ async function applyDash(){
   });
   const fxv=d.fx&&+d.fx.USDJPY;
   if(fxv>0&&Math.abs((+P.fx||0)-fxv)>0.005){ P.fx=Math.round(fxv*100)/100; touched=true; }
-  if(touched)persist();
+  /* v9.9.131: 盤の現在株価・ドル円の書き戻しは**機械**。ここで dirty を立てると
+     人が何も触らなくても毎回警告が鳴る＝鳴りすぎる警報は鳴らないのと同じ。
+     失うのは npx/fx だけで、どちらも盤から再取得できる（人の決定ではない）。 */
+  if(touched){ try{ccfState.quiet(persist);}catch(e){persist();} }
   render();
  }catch(e){}
 }
@@ -335,7 +347,9 @@ function render(){
  const net=pos.filter(p=>p.sleeve==='net'), castle=pos.filter(p=>p.sleeve==='castle'), cash=pos.filter(p=>p.sleeve==='cash');
  const netW=net.reduce((s,p)=>s+wOf(p),0), castleW=castle.reduce((s,p)=>s+wOf(p),0), cashW=cash.reduce((s,p)=>s+wOf(p),0); // 2026-07: 現金枠(IPS①「点灯不足の残余=現金」の現在値を可視化。網/城の%は総資産比のまま)
  // 現在の網/城ウェイトを書き出す（v9.9.53で門は読まなくなった。DCA側の判断材料として保持）
- try{localStorage.setItem('pf:weights',JSON.stringify({net:netW,city:castleW,total:total}));}catch(e){}
+ /* v9.9.131: pf:weights は P からの導出値で render のたびに書かれる＝**機械**。
+    包まないと株価が動いただけで dirty が立つ。 */
+ try{ccfState.quiet(()=>localStorage.setItem('pf:weights',JSON.stringify({net:netW,city:castleW,total:total})));}catch(e){}
 
  // 2026-08-03「金額の表示を撤去」→ v9.9.86(2026-08-05 ユーザー指示)で💴切替式に復活（既定=表示）。
  // 表示は金額の有無を問わない——金額未入力の保有（門から取込直後など）も行は出す
@@ -699,8 +713,19 @@ async function pfExportHoldings(btn){
 }
 
 /* ---------- 完全バックアップ／復元（門と同origin＝同じlocalStorageを保全） ---------- */
-const BK_PREFIX=['g7:','g7wait:','g7prev:','g7queue:','hm:'];
-const BK_EXACT=['g7hold:set','g7buy:map','pf:portfolio','pf:verdicts','pf:sold'];
+// v9.9.128(2026-08-10): **実データを持つ4キーがバックアップから漏れていた**。
+//   localStorage が正本で repo にコピーが無いキーは、バックアップから漏れると**復元手段がゼロ**になる。
+//   全ページの localStorage/store の呼び出しを機械で洗い出して突き合わせた結果、漏れていたのは:
+//     g7ignite:map … 点灯日・48h冷却（掟九の予実材料。index.html:4409,4425 が読み書き）
+//     g7log:…       … Ⅴ検証履歴（**人が手で書いた記録**。index.html:5028）
+//     pf:weights    … 目標ウェイト（配分の決定そのもの）
+//     pf:monthly    … 今月の個別枠（人が入れた金額）
+//     g64:…         … 旧v6.5の台帳（index.html:2920 が読み取り専用で表示）
+//   ⚠ `store` は claude モードでも localStorage へミラーする（index.html:2704 の set()）ので、
+//     localStorage を舐めるこの実装で全部拾える。
+const BK_PREFIX=['g7:','g7wait:','g7prev:','g7queue:','hm:','g7ignite:','g7log:','g64:'];
+const BK_EXACT=['g7hold:set','g7buy:map','pf:portfolio','pf:verdicts','pf:sold',
+                'pf:weights','pf:monthly','pf:showMoney','g7meta_lastExport'];
 function pfBackupAll(btn){
  const o=btn?btn.textContent:''; const data={}; let n=0;
  for(let i=0;i<localStorage.length;i++){
@@ -744,9 +769,19 @@ function pfBkStat(){
  el.style.color=d>14?'var(--rust)':'var(--muted)';
 }
 
-render();
-applyDash();  // v9.9.87: 盤から現在株価・ドル円を自動取得して再描画
-pfBkStat();
+/* 人の決定の正本を repo へ（v9.9.131/132・実装は state.js を共有＝二重に持たない・v9.9.65）。
+   ボタンは ccfState.export / ccfState.done を直接呼ぶ。 */
+
+/* v9.9.131: **repo の state.json を読むのが先**。
+   ⚠ ここを後回しにすると事故る（実測で踏んだ）——このページは読み込み時に P を localStorage から
+   組み立てるので、後から採用しても **P は古いまま**で、次の persist()／applyDash() の書き戻しが
+   採用した値を上書きしてしまう。実測: 門が KLAC を取り込んだ直後に iframe が旧値で潰し、
+   さらに書き戻しで dirty が立った。**読む前に採用し、採用したら組み立て直す。** */
+(function(){
+  function boot(){ try{P=load();}catch(e){} render(); applyDash(); pfBkStat();
+                   try{ccfState.banner('stateBar');}catch(e){} }
+  if(window.ccfState){ ccfState.load().then(boot).catch(boot); } else { boot(); }
+})();
 
 /* ---------- 親フレーム(門Ⅶ資産)へ自分の高さを通知＝iframeを中身にフィットさせ内部スクロールバーを消す（1枚のページ化） ---------- */
 function pfReportHeight(){

@@ -102,7 +102,17 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  "intan": ["IntangibleAssetsNetExcludingGoodwill",
            "FiniteLivedIntangibleAssetsNet","IndefiniteLivedIntangibleAssetsExcludingGoodwill",
            "IntangibleAssetsOtherThanGoodwill"],
- "cash":  ["CashAndCashEquivalentsAtCarryingValue","CashAndCashEquivalents"],
+ # 2026-08-10: **現金タグが古い年で終わる社**を実測で確認して候補を足した（絶対のルール7）。
+ #   MWA: CashAndCashEquivalentsAtCarryingValue が **2022年で終了**し、以後は
+ #   CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents（ASU2016-18で多くの社が移行）。
+ #   その結果 y0 の現金 431.5百万$ を **0** と読み、nde が 1.47（正しくは0.065）と出ていた。
+ #   ⚠この誤りは**保守側に出る**（現金0＝より借金が多く見える）ので気づきにくい——
+ #   「静かな壊れ方」の典型で、DXCの負債タグ移行とまったく同じ型。
+ #   ※制限付現金を含む点は厳密には過大だが、**欠測を0と読むより桁で正しい**。
+ #     順序は「純粋な現金 → 制限付込み」＝総額を後に置く（無形・負債と同じ作法）。
+ "cash":  ["CashAndCashEquivalentsAtCarryingValue","CashAndCashEquivalents",
+           "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+           "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsIncludingDisposalGroupAndDiscontinuedOperations"],
  "sti":   ["ShortTermInvestments","MarketableSecuritiesCurrent"],
  # 2026-07-29: 実測で取りこぼしが3件出たのでタグを拡張した（絶対のルール7「欠測をゼロと読むな」）。
  #   IDXX: リボルビング枠 LinesOfCreditCurrent 398,000千$ を数え落とし → roic 71.1→56.4
@@ -576,6 +586,11 @@ def build_numbers(facts):
         #   無借金企業もタグを出さないので機械では区別できない＝絶対のルール7(a)そのもの。
         #   **タグが無い年は算出不能として null にし、理由を残す**（誤値より空欄）。
         has_debt = (y0 in S["debtL"]) or (y0 in S["debtS"])
+        # 2026-08-10: **「他の年は報告があるのにその年だけ欠測」を0と読まない**（無形で確立した作法）。
+        #   タグを足しても新しい移行先が現れれば同じことが起きるので、**構造で検出する**。
+        if S["cash"] and y0 not in S["cash"]:
+            note.append(f"nde注意: {y0}年に現金タグが無い（他の年にはある）。0と読むと**借金が多く見える側**へ"
+                        f"ずれる。原本のBSで現金を確認せよ（MWAで431.5百万$を0と読んだ実例）")
         cash = (S["cash"].get(y0,0) or 0)+(S["sti"].get(y0,0) or 0)
         # 2026-07-29追加修正: EBITDAの営業利益も「タグが無い年を0」と読んでいた。
         #   実測 KLAC: OperatingIncomeLoss が2014年で途切れており（同社は売上−原価−R&D−販管費で
@@ -768,6 +783,21 @@ def build_numbers(facts):
         ev["roicgW5"]   = round(min(_gSeq),1)
         ev["roicgMed5"] = round(median(_gSeq),1)
         ev["_tcYears"]  = len(_rSeq)
+    # 2026-08-10: **年検問を through-cycle にも掛ける。**
+    #   他の欄には「全系列の最新年から2年以上遅れたら算出不能」という検問（BKNG事故の対策）が
+    #   あるのに、**roic の through-cycle 経路にだけ掛かっていなかった**。
+    #   実測 STX: roic が **FY2022** の1年しか作れないのに gm/ni は FY2025＝
+    #   **同じパックの中で3年ずれた値が並ぶ**（「取れた値＝最新の値」のBKNG型）。
+    #   3年未満で med5 を出さない検問は入っているが、**古い年の単年値がそのまま roic として
+    #   残る経路**は塞がっていない。ここで注記を出して審査官に見せる。
+    if roics:
+        _tcLatest = max(x[2] for x in roics)
+        _allLatest = max([y for k in ("op", "eq", "rev") for y in S.get(k, {})] or [0])
+        if _allLatest and _tcLatest < _allLatest - 1:
+            note.append(f"roic注意: ROIC系列の最新は **{_tcLatest}年** だが他の欄は {_allLatest}年まである"
+                        f"（{_allLatest - _tcLatest}年の開き）。**同じパックの中で基準の違う年が並ぶ**ので、"
+                        f"原本で最新年の投下資本を確認して埋めるか、roic を空欄にすること"
+                        f"（BKNG型『取れた値＝最新の値』の同族）")
     # 純希薄化率(株数の年率変化)
     sh,_ = series(facts, TAGS["sh"], ("shares",))
     if len(sh)>=3:

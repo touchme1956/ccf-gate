@@ -30,11 +30,11 @@
  "dur": 100,
  "geopol": 1,
  "nrr": null,
- "beta": null,
+ "beta": 1.099,
  "per": null,
  "perF": null,
  "evebit": null,
- "px": 103.43,
+ "px": 100.83,
  "shy": null,
  "gr": null,
  "gcap": null,
@@ -114,7 +114,9 @@
    "p4": "**90**。accr **−4.5% < 0**（現金が利益を上回る）＋監査意見に指摘なし。出典: SEC EDGAR 10-K FY2025（決算期末 2025-12-31・accession 0001193125-26-046377）",
    "mcap": "発行済株式数 75,623,452株（SEC dei:EntityCommonStockSharesOutstanding・filed 2026-07-29） × 株価 $103.43（Alpha Vantage GLOBAL_QUOTE・2026-08-07終値）= **7.82十億$**。2026-08-08に新規充填（それまで空欄で時価総額の比較ができなかった）。⚠**px はパックの市場欄には入れていない**——market_fetch/market_merge の帯検問を通していないため、mcap の算出根拠としてのみ記録する（per/E[r]には未反映＝門X未評価のまま）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 1,502,400,000 → 2023年 1,789,000,000 → 2025年 1,893,900,000。A案(端点) 直近2年CAGR 2.89% − その前3年CAGR 5.99% = -3.10pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -10.45pt ／ 年次YoY {'2021': -11.8, '2022': 19.1, '2023': 13.4, '2024': 6.4, '2025': -0.5} → **採用 -3.10pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "px": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 10000000.0)を通過）"
+   "px": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 10000000.0)を通過）",
+   "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **9.3%** / 同業（SIC2821「Plastic Materials, Synth Resins & Nonvulcan Elastomers」・9社）の中央値 **-3.5%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+9.3%)÷(1+-3.5%))^5 − 1 = **+86.4%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
+   "beta": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）"
   },
   "provenance": {
    "cagr": "machine",
@@ -134,7 +136,9 @@
    "eps": "machine",
    "eq": "machine",
    "cagrT": "machine",
-   "px": "market"
+   "px": "market",
+   "sht": "machine",
+   "beta": "market"
   },
   "nulls": {
    "sht": "同業中央値との比較が要るが out/_sic_cache.json が無く night/fill_sht.py を回せなかった（2026-08-07）",
@@ -178,17 +182,31 @@
    "roicConvention": "us-unified"
   },
   "kenshi": [
-   "2026-08-07 **新規パック化（門2審査）**。歴史検証(2018年ビンテージ)で irr=85 と読まれた社のうち、門2審査を一度も受けていなかった7社の一つ。門0の一次ふるいをROICで落ちており、審査優先レーン（単一failの社にしか病名を付けない）にも乗らずbacklogに落ちていた。**結果: Ω 0.0（財務キル nde 6.52 と複利停止キル）。最大限に有利な仮定を全部置いても Ω10.5**。**irr は 85 を維持した**——『The sources of carbon fiber we can use ... are generally **dictated by customer qualifications or certifications**』＋『**We are qualified to supply materials** to ... military aircraft ... programs』＝航空宇宙の材料認定は機体プログラムごとに顧客が行い、供給元を替えるとOEM側が再認定をやり直す機構（C型）。RBC・LOAR・TDG と同じ族。**堀は強いがΩが財務で落ちている**——負債/EBITDA 6.52 と門式ROIC中央値 5.1% が原因で、堀の弱さではない。"
+   "2026-08-07 **新規パック化（門2審査）**。歴史検証(2018年ビンテージ)で irr=85 と読まれた社のうち、門2審査を一度も受けていなかった7社の一つ。門0の一次ふるいをROICで落ちており、審査優先レーン（単一failの社にしか病名を付けない）にも乗らずbacklogに落ちていた。**結果: Ω 0.0（財務キル nde 6.52 と複利停止キル）。最大限に有利な仮定を全部置いても Ω10.5**。**irr は 85 を維持した**——『The sources of carbon fiber we can use ... are generally **dictated by customer qualifications or certifications**』＋『**We are qualified to supply materials** to ... military aircraft ... programs』＝航空宇宙の材料認定は機体プログラムごとに顧客が行い、供給元を替えるとOEM側が再認定をやり直す機構（C型）。RBC・LOAR・TDG と同じ族。**堀は強いがΩが財務で落ちている**——負債/EBITDA 6.52 と門式ROIC中央値 5.1% が原因で、堀の弱さではない。",
+   "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。"
   ],
   "market": {
    "date": "2026-08-10",
    "filled": [
-    "px"
+    "beta"
    ],
    "src": "market_fetch/market_data.json"
+  },
+  "px": {
+   "date": "2026-08-10",
+   "day": null,
+   "ccy": "USD",
+   "src": "Finnhub",
+   "px_old": 103.43,
+   "px_new": 100.83,
+   "pct": -2.51,
+   "conv": "基準保存式 per_new = per_old × (px_new÷px_old)／shy は 1/比率",
+   "fields": {}
   }
  },
  "moatW": 50,
  "mcap": 7.82,
- "cagrT": -3.1
+ "cagrT": -3.1,
+ "sht": "up",
+ "ddate": "2026-08-10"
 }

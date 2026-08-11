@@ -30,12 +30,12 @@
  "dur": 75,
  "geopol": 1,
  "nrr": null,
- "beta": null,
+ "beta": 1.259,
  "per": null,
  "perF": null,
- "evebit": null,
- "px": 46.67,
- "shy": null,
+ "evebit": 36.9,
+ "px": 45.79,
+ "shy": 2.89,
  "gr": null,
  "gcap": null,
  "analysts": null,
@@ -109,7 +109,10 @@
    "p1": "【機械算出・変動係数刻み】門式ROIC5年系列 FY2021-2025: 19.2/19.4/4.6/6.7/5.8 → **CV 60.1%** → 刻み(50%以上→50)で **50**。2023年に水準が1/4へ落ちており（減損・再編）不安定。出典: SEC XBRL companyfacts",
    "mcap": "発行済株式数 145,535,862株（SEC dei:EntityCommonStockSharesOutstanding・filed 2026-07-29） × 株価 $46.67（Alpha Vantage GLOBAL_QUOTE・2026-08-07終値）= **6.79十億$**。2026-08-08に新規充填（それまで空欄で時価総額の比較ができなかった）。⚠**px はパックの市場欄には入れていない**——market_fetch/market_merge の帯検問を通していないため、mcap の算出根拠としてのみ記録する（per/E[r]には未反映＝門X未評価のまま）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 3,045,578,000 → 2023年 4,054,100,000 → 2025年 3,704,500,000。A案(端点) 直近2年CAGR -4.41% − その前3年CAGR 10.00% = -14.41pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -9.85pt ／ 年次YoY {'2021': 25.5, '2022': 5.5, '2023': 0.6, '2024': -3.0, '2025': -5.8} → **採用 -9.85pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "px": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 10000000.0)を通過）"
+   "px": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 10000000.0)を通過）",
+   "beta": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）",
+   "shy": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(-5.0, 12.0)を通過）",
+   "evebit": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 300.0)を通過）"
   },
   "provenance": {
    "cagr": "machine",
@@ -125,7 +128,10 @@
    "roict": "machine",
    "eq": "machine",
    "cagrT": "machine",
-   "px": "market"
+   "px": "market",
+   "beta": "market",
+   "shy": "market",
+   "evebit": "market"
   },
   "nulls": {
    "sht": "同業中央値との比較が要るが out/_sic_cache.json が無く night/fill_sht.py を回せなかった（2026-08-07）",
@@ -176,13 +182,29 @@
   "market": {
    "date": "2026-08-10",
    "filled": [
-    "px"
+    "beta",
+    "shy",
+    "evebit"
    ],
    "src": "market_fetch/market_data.json"
+  },
+  "px": {
+   "date": "2026-08-10",
+   "day": null,
+   "ccy": "USD",
+   "src": "Finnhub",
+   "px_old": 46.67,
+   "px_new": 45.79,
+   "pct": -1.89,
+   "conv": "基準保存式 per_new = per_old × (px_new÷px_old)／shy は 1/比率",
+   "fields": {
+    "shy": 2.89
+   }
   }
  },
  "moatW": 85,
  "dep": 10,
  "mcap": 6.79,
- "cagrT": -9.85
+ "cagrT": -9.85,
+ "ddate": "2026-08-10"
 }

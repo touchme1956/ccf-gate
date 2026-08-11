@@ -89,6 +89,14 @@ def cik_of(t):
     return _TICK.get(t.upper())
 
 
+# 2026-08-10: **20-F/6-K を足した。** それまでは 10-K/10-Q だけを見ていたので、
+#   **外国私募発行体（ASML＝🟢投下可 / SAP / RELX / RACE …）は系列が空**になり、
+#   「のれんを一度も報告していない社」とまったく同じ袋に入っていた——
+#   ＝**期末後の重大事象を原理的に検出できないのに、検出できた顔をする**（ルール7の親戚）。
+#   6-K は中間財務諸表を添付するので BS項目が入ることがある。
+#   ⚠IFRS提出体は us-gaap タグを持たないので、下の concept() が ifrs-full も見る。
+FORMS_OK = ("10-K", "10-Q", "20-F", "40-F", "6-K")
+
 _FACTS = (None, None)          # (cik, 解析済みfacts) ——直前の1社だけ持つ（1社4.6MB。全社抱えると数百MB）
 
 
@@ -108,6 +116,8 @@ def facts(cik):
 def concept(cik, tag):
     """{期末日: 値} を返す（インスタント値のみ＝BS項目）。取れなければ None
 
+    us-gaap で取れなければ **ifrs-full** も見る（20-F提出体のため・2026-08-10）。
+
     **companyconcept ではなく companyfacts から採る（2026-08-10 是正）**——
     companyconcept は 2026-08 時点で `"units":{"USD":{}}` と**空を返す**（実測 VRSK/CTAS の
     Goodwill・Assets とも0件。同じCIKの companyfacts には Goodwill が134件ある）。
@@ -123,13 +133,19 @@ def concept(cik, tag):
     d = facts(cik)
     if not d:
         return None
-    units = ((d.get("facts", {}).get("us-gaap", {}) or {}).get(tag, {}) or {}).get("units", {})
+    ns_all = d.get("facts", {}) or {}
+    units = {}
+    for ns in ("us-gaap", "ifrs-full"):      # IFRS提出体は us-gaap を持たない
+        u = ((ns_all.get(ns, {}) or {}).get(tag, {}) or {}).get("units", {})
+        if u:
+            units = u
+            break
     out = {}
     for u in units.values():
         if not isinstance(u, list):          # 空や型崩れは黙って飛ばす（0件と読まない）
             continue
         for x in u:
-            if x.get("start") or x.get("form") not in ("10-K", "10-Q"):
+            if x.get("start") or x.get("form") not in FORMS_OK:
                 continue
             e = x.get("end")
             if e:

@@ -1,0 +1,137 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 機械で直せる是正を**提案する**（2026-08-10新設・「さらにもっと自動化したい」）
+#
+# なぜCIに置いてよいのか（絶対のルール2との線）:
+#   ルール2が禁じるのは **定性項目(dom/irr/rep/dur/moatW/p1-4/f1-5)を憶測で埋めること**。
+#   ここで走らせるのは**機械項目の充填器**だけ——原本のXBRLから式と実額つきで算出し、
+#   `_meta.evidence` と `provenance:"machine"` を刻むもの。定性欄には一切触れない。
+#   それでも**値を書く**道具なので、二段で守る:
+#     ・**判定が動かない**（投下可の顔ぶれ不変 ∧ 納品検査FAIL増えない ∧ 要修正増えない）
+#       → main へ直接コミット。**「道具を直して判定は動かない」がこの台帳の較正の理想形**
+#     ・**判定が動く** → **PRにして人へ**。何がどう動いたかを本文に書く（v9.9.52の作法）
+#   ＝機械は自分で直してよいが、**結論を動かすときだけ人に断る**。
+#
+# ここに置かないもの:
+#   ・門2審査（定性）＝review.yml の領分。あちらは常にPR
+#   ・WACCの**適用**（audit_wacc_stale は検出器であって適用器ではない、と道具自身が明文で書く）
+#   ・採点式・刻み・重み・関門・売却規律（絶対のルール1）
+# ─────────────────────────────────────────────────────────────────────────────
+name: machine fixes
+on:
+  schedule:
+    - cron: '0 4 * * 6'     # 毎週土曜 04:00 UTC（市場が閉じている日に静かに回す）
+  workflow_dispatch:
+    inputs:
+      tools:
+        description: 'evidence / values / both（既定 both）'
+        required: false
+        default: 'both'
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+
+      - name: 是正前の状態を控える
+        run: |
+          node night/score_all.js > /dev/null 2>&1 || true
+          python3 night/validate_packs.py --json --summary | tail -2
+          cp out/score_all.json /tmp/before_score.json
+          cp out/validate_fail.json /tmp/before_vfail.json
+
+      # (a) **値を動かさない**是正——機械項目の根拠を後追いで刻む。
+      #     一致した欄にだけ式と実額を書き、食い違う欄は**書き換えず作業リストへ出す**
+      #     （審査官が原本で直した値のほうが機械より強いから）。
+      - name: 根拠の後追い backfill_machine_evidence（値は動かさない）
+        if: github.event.inputs.tools != 'values'
+        continue-on-error: true
+        run: timeout 1800 python3 night/backfill_machine_evidence.py --write | tail -15
+
+      # (b) **値を動かす**是正——いずれも原本のXBRLから算出して evidence を刻むもの。
+      #     ⚠ fill_derived_judgment は「門が導出する値と同じなら空欄へ戻す」＝
+      #        値を*足す*のではなく*陳腐化を防ぐ*道具（p3/f5 が nde/disrupt に追随しなくなるのを防ぐ）
+      - name: 機械項目の充填（roiic / acq5 / cagrT / sht）
+        if: github.event.inputs.tools != 'evidence'
+        continue-on-error: true
+        run: |
+          timeout 1800 python3 night/fill_roiic.py --write | tail -8 || true
+          timeout 900  python3 night/fix_acq5.py --write | tail -8 || true
+          timeout 1800 python3 night/fill_growth_trend.py --write | tail -8 || true
+          timeout 900  python3 night/build_sic_cache.py | tail -3 || true
+          timeout 900  python3 night/fill_sht.py --write | tail -8 || true
+
+      - name: 判定が動いたかを実測する（**ここが分岐点**）
+        id: judge
+        run: |
+          python3 night/validate_packs.py --json --summary | tail -2
+          node night/score_all.js | tail -3
+          node -e "
+            const fs=require('fs');
+            const cur=require('./out/score_all.json');
+            const b=JSON.parse(fs.readFileSync('/tmp/before_score.json','utf8'));
+            const cb=cur.filter(r=>r.buy).map(r=>r.t).sort(), bb=b.filter(r=>r.buy).map(r=>r.t).sort();
+            const vb=JSON.parse(fs.readFileSync('/tmp/before_vfail.json','utf8')).items||{};
+            const vc=JSON.parse(fs.readFileSync('./out/validate_fail.json','utf8')).items||{};
+            const eB=b.reduce((a,r)=>a+(r.audE||0),0), eC=cur.reduce((a,r)=>a+(r.audE||0),0);
+            const moved=cur.map(r=>[r.t,(b.find(x=>x.t===r.t)||{}).s,r.s])
+              .filter(x=>typeof x[1]==='number'&&Math.abs(x[2]-x[1])>=0.05);
+            const same = cb.join()===bb.join() && Object.keys(vc).length<=Object.keys(vb).length && eC<=eB;
+            const lines=[
+              '- 投下可: '+(cb.join()===bb.join() ? '**不変** ('+cb.join(' ')+')'
+                 : '**変わった** 出 '+bb.filter(t=>!cb.includes(t)).join(' ')+' ／ 入 '+cb.filter(t=>!bb.includes(t)).join(' ')),
+              '- 納品検査FAIL: '+Object.keys(vb).length+' → '+Object.keys(vc).length,
+              '- 要修正(err): '+eB+' → '+eC,
+              '- Ωが動いた社: '+moved.length+(moved.length?' （最大 '+moved.map(x=>Math.abs(x[2]-x[1])).sort((p,q)=>q-p)[0].toFixed(1)+'pt）':'')
+            ];
+            fs.writeFileSync('/tmp/fixdiff.md', lines.join('\n'));
+            fs.writeFileSync('/tmp/same.txt', same?'yes':'no');
+            console.log(lines.join('\n'));
+          "
+          echo "same=$(cat /tmp/same.txt)" >> $GITHUB_OUTPUT
+
+      - name: 判定が動かない → main へ直接（較正の理想形）
+        if: steps.judge.outputs.same == 'yes'
+        run: |
+          git config user.name  "ccf-gate bot"
+          git config user.email "noreply@github.com"
+          git add -A out night
+          if git diff --staged --quiet; then echo "変化なし"; exit 0; fi
+          N=$(git diff --staged --name-only | grep -c "_gate_pack.json" || echo 0)
+          git commit -m "機械是正（自動）: ${N}パック｜投下可は不変"
+          git push
+
+      - name: 判定が動く → PRにして人へ
+        if: steps.judge.outputs.same != 'yes'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name  "ccf-gate bot"
+          git config user.email "noreply@github.com"
+          BR="claude/machine-fix-$(date -u +%Y%m%d-%H%M)"
+          git checkout -b "$BR"
+          git add -A out night
+          git diff --staged --quiet && { echo "変化なし"; exit 0; }
+          git commit -m "機械是正（要確認）: 判定が動いた"
+          git push -u origin "$BR"
+          {
+            echo "## 機械項目の是正で**判定が動きました**"
+            echo
+            cat /tmp/fixdiff.md
+            echo
+            echo "### 見るところ"
+            echo "- 動いた欄の \`_meta.evidence\` に式と実額があるか"
+            echo "- 審査官が原本で直した値を機械が上書きしていないか"
+            echo "  （backfill は食い違う欄を書き換えない設計だが、充填器は書く）"
+            echo
+            echo "**マージがこの是正の承認です。**"
+          } > /tmp/pr.md
+          gh pr create --title "機械是正（要確認）: 判定が動いた" --body-file /tmp/pr.md --base main --head "$BR"

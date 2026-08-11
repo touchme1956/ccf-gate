@@ -1,0 +1,64 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# 門0発掘と疑似バックテスト（年次・2026-08-10新設）
+#
+# なぜ要るか:
+#   回転盤はこの2本を「companyfacts.zip 1.4GB＝CI外」として **auto=False** にしていたが、
+#   実測すると——
+#     ・backtest_core.py は **zip を使っていない**（`grep zipfile` → 0件。per-CIK API と独自キャッシュ）
+#       ＝「資源制約」ではなく**一度も試していない**の言い換えだった
+#     ・run_gate0_local.py は zip を自分でDLする。gate0_v8_5.py:60 が自ら
+#       「DL 10-20分／zipあり10-12分・初回25-35分」と書く規模で、
+#       GitHub-hosted runner のディスクにもジョブ上限にも収まる
+#   **年に一度しか回らない作業ほど、人の記憶に頼ると止まる。**
+#
+# 注意:
+#   ・zip は .gitignore 済み＝**コミットしない**。actions/cache に退避して翌年に再利用する
+#   ・ジョブは長い（初回35分想定）ので timeout-minutes を広く取る
+#   ・失敗しても他を止めない（continue-on-error）——失敗は ops_status が翌日⚠にする
+# ─────────────────────────────────────────────────────────────────────────────
+name: gate0 annual
+on:
+  schedule:
+    - cron: '0 3 20 1 *'    # 毎年1月20日 03:00 UTC（門0は1-2月の作業）
+    - cron: '0 3 20 7 *'    # 7月＝疑似バックテストと年次較正の季節
+  workflow_dispatch:
+    inputs:
+      what:
+        description: 'gate0 / backtest / both'
+        required: false
+        default: 'both'
+permissions:
+  contents: write
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      # zip は1.4GB。**キャッシュに乗せて毎年DLし直さない**（gate0本体が45日超なら自分で捨てる）
+      - name: companyfacts.zip のキャッシュ
+        uses: actions/cache@v4
+        with:
+          path: companyfacts.zip
+          key: companyfacts-${{ github.run_id }}
+          restore-keys: companyfacts-
+      - name: 米国門0発掘（1月／手動）
+        if: github.event.inputs.what != 'backtest'
+        continue-on-error: true
+        run: timeout 17000 python run_gate0_local.py | tail -30
+      - name: 疑似バックテスト（7月／手動・zip不要）
+        if: github.event.inputs.what != 'gate0'
+        continue-on-error: true
+        run: timeout 10000 python3 night/backtest_core.py --cutoff 2018-07-01 | tail -25
+      - name: 回転盤を実測
+        run: python3 night/ops_status.py | head -3
+      - name: コミット（**zipは絶対に含めない**）
+        run: |
+          git config user.name  "ccf-gate bot"
+          git config user.email "noreply@github.com"
+          git add gate1_queue.json gate0_all.csv out/gate0_run.json out/backtest_*.json out/ops_status.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "gate0/backtest $(date -u +%Y-%m-%d)"
+          git push

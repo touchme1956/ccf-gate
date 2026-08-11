@@ -23,9 +23,28 @@ jobs:
         with: {fetch-depth: 0}   # ops_status が git の最終コミット日で回転を測るため全履歴が要る
       - uses: actions/setup-python@v5
         with: {python-version: '3.11'}
-      - name: 決算カレンダー（SEC推定・鍵なし）
+      # v9.9.134: **AV_KEY を渡していなかった**（2026-08-10 実測）。
+      #   kessan_calendar.py は環境変数 AV_KEY を読む設計なのに ops.yml が渡しておらず、
+      #   Secrets に置いても**何も起きない**状態だった＝「鍵を置いたのに動かない」という
+      #   いちばん静かな壊れ方（副作用の無い経路は失敗しても静か・v9.9.133と同型）。
+      #   鍵が無ければ従来どおり SEC 推定で回る（**壊れない側に倒れている**）。
+      - name: 決算カレンダー（AV_KEYがあれば実日・無ければSEC推定）
         continue-on-error: true
-        run: python kessan_calendar.py
+        env:
+          AV_KEY: ${{ secrets.AV_KEY }}
+        run: |
+          if [ -n "$AV_KEY" ]; then echo "AV_KEY あり → EARNINGS_CALENDAR で実日を取る";
+          else echo "AV_KEY 未設定 → SEC推定で回る（穴として明示・無料鍵: alphavantage.co）"; fi
+          python kessan_calendar.py
+      # market_fetch は per/perF/analysts を取る（perF は判定圏の gcap の前提）。
+      #   無料枠は 25req/日 なので resume 設計。鍵が無ければ何も取らずに終わる。
+      - name: 市場データの採取（AV_KEYがあるときだけ・無料枠25req/日でresume）
+        continue-on-error: true
+        env:
+          AV_KEY: ${{ secrets.AV_KEY }}
+        run: |
+          if [ -n "$AV_KEY" ]; then timeout 900 python market_fetch.py | tail -12;
+          else echo "AV_KEY 未設定＝スキップ（perF が埋まらない穴。判定には使わないが門Xの前提）"; fi
       - name: 監視リスト生成
         continue-on-error: true
         run: python3 make_kanshi.py
@@ -56,6 +75,15 @@ jobs:
       #   **CIで計算してJSONで配る**（ブラウザから外部APIを叩かない）。
       #   監視リスト生成の**後**に置く——kanshi_list.json が入力なので、順序が逆だと
       #   前月の名簿で採ることになる（v9.9.112 で踏んだ「線が動いたら監視リストも再生成する」の同型）。
+      # ⚠2026-08-10: **分母の取得器を先に置いた。** hist_valuation は市場調整版(adj_pe)で
+      #   S&P500実績PERを分母に使うが、その系列を作る night/fetch_sp500_pe.py は
+      #   **どのCIからも呼ばれておらず**、out/sp500_pe_monthly.json は最新 2026-03 で止まっていた。
+      #   消費側だけ毎月回して分母を持ち越すのは「基準の違う二つを割る」型の芽そのもの
+      #   （CLAUDE.md v9.9.118 が自ら「4ヶ月ぶん持ち越し」と記録している）。
+      #   ※配信元(multpl)の遅れ自体は供給側の問題でここでは解けない——取得器を繋ぐだけ。
+      - name: S&P500実績PERの系列を更新（自己相対の分母）
+        continue-on-error: true
+        run: timeout 300 python3 night/fetch_sp500_pe.py
       - name: 自己相対バリュエーション（表示専用・合否に不使用）
         continue-on-error: true
         run: timeout 900 python3 night/hist_valuation.py --asof "$(date -u +%F)" --tickers kanshi_list.json --out out/hist_val_now.json
@@ -77,17 +105,126 @@ jobs:
       - name: irr=85の実績台帳（特権の裏づけ）
         continue-on-error: true
         run: python3 night/irr85_mech_test.py --json
+      # 新規上場社の irr 機構語（2026-08-10新設・ユーザー明示指示・鍵不要）
+      #   **上場後1年で最初の10-Kが出た瞬間に母集団へ入れる**ための掃除。
+      #   2026-08-08のスイープは一回きりで、しかも読解リストを「パックが無い社」に絞っていたため
+      #   (a)上場初年度の会社は網に掛からず (b)KRMN型（パックはあるが irr の根拠が空）が外れていた。
+      #   **判定はしない**——出るのは作業リストで、irr の刻みは原本を読む審査官が決める（ルール2）。
+      - name: 新規上場社の irr 機構語を掃く（作業リスト・判定はしない）
+        continue-on-error: true
+        run: timeout 2400 python3 night/watch_new_listings.py
+      # 成長の軌道 cagrT（v9.9.123・2026-08-10にCIへ接続・鍵不要）
+      #   cagrT は compute() が実際に使う採点入力で、**空欄は CCF_BLANK の 'best'＝罰が発火しない**。
+      #   ＝この道具が止まると**新しく審査した社ほど甘くなる**。表示専用ではないので優先度が高い。
+      #   ⚠**値は書かない**（--write を付けない）。出るのは out/growth_trend.json という測定結果で、
+      #     パックへ入れるのは審査官の手（絶対のルール2）。
+      - name: 成長の軌道 cagrT の再測定（測定のみ・パックには書かない）
+        continue-on-error: true
+        run: timeout 1800 python3 night/fill_growth_trend.py
+      # シェア趨勢 sht（2026-08-10新設・鍵不要）
+      #   **これが門でいちばん長く不発だった規則**——sht は全369社中322社が空欄で、門は空欄を
+      #   SELECT既定の 'flat' に化かすため、pm±3/−10・地味業界の勝者+2・**Intel警報
+      #   （gmt=down ∧ sht=down＝堀崩壊の先行検出）**・S2売却規律2規則が全社で不発だった。
+      #   原因は規約ではなく**道具の欠落**——fill_sht が要求する out/_sic_cache.json を
+      #   作る道具がリポジトリに一本も無かった（2026-08-10に build_sic_cache.py を新設）。
+      #   ⚠**--write は付けない**。出るのは out/sht_report.json という測定結果で、
+      #     パックへ入れるのは審査官の手（絶対のルール2）。
+      - name: SIC業種キャッシュ（増分・SEC submissions）
+        continue-on-error: true
+        run: timeout 1800 python3 night/build_sic_cache.py
+      - name: シェア趨勢 sht の再測定（測定のみ・パックには書かない）
+        continue-on-error: true
+        run: timeout 600 python3 night/fill_sht.py --json | tail -20
+      # 銘柄アイコンと代表色（2026-08-10接続・表示専用）
+      #   out/logos/index.json の note は「**night/logo_colors.py がCIで算出**」と書いていたのに
+      #   **どのCIからも呼ばれていなかった**＝説明と実装の齟齬（audit_docs が本来落とす型）。
+      #   実害は小さいが、**新しく審査した社は静かにモノグラムへ落ちる**（ロゴが出ない）。
+      - name: 銘柄アイコンと代表色（表示専用）
+        continue-on-error: true
+        run: |
+          timeout 1200 python3 night/fetch_logos.py || true
+          timeout 600 python3 night/logo_colors.py || true
+      # パック索引の再生成（2026-08-10接続）
+      #   out/packs_index.json は **Ⅵ一括取込の目録**であり v9.9.102 の**孤児レコード関門**の母集団。
+      #   生成者は make_chunks.py だけで、どのCIからも呼ばれていなかった。
+      #   実害の前例: 6146 を追加した日に索引が316件のままで一括取込しても台帳に入らなかった。
+      #   ⚠ make_chunks は夜間審査のチャンクも作るが、**未審査の社が無ければ何も増えない**
+      #     （night/make_chunks.py:44 が既にパックのある社を除外する）。
+      - name: パック索引の再生成（Ⅵ一括取込の目録）
+        continue-on-error: true
+        run: python3 night/make_chunks.py | tail -5
+      # 再審査の待ち行列 → rechunk（2026-08-10新設）
+      #   検出器が見つけたものを**実際に審査できる形**（10社/枚）へ落とす。
+      #   新規審査の chunkNN.txt とは別系列にして「まだ見ていない社」と「もう一度見る社」を混ぜない。
+      #   月20社ずつ——一度に全部出すと作業リストが死ぬ（鳴りすぎる警報は鳴らないのと同じ）。
+      # 待ち行列の先頭を先に採取しておく（2026-08-10新設・鍵不要）
+      #   hachimon_fetch は CLAUDE.md が「月1-2回」と書く周期作業なのに
+      #   **どのCIからも呼ばれていなかった**。先に採っておくと (a)審査が速くなる
+      #   (b)**採取の失敗を審査の前に見つけられる**（AMBIQでティッカー取り違えを踏んだ型）。
+      #   ⚠これは機械値ドラフトを作るだけ＝**審査待ち**であって台帳ではない（絶対のルール2）。
+      - name: 待ち行列の先頭を先に採取（機械値ドラフト・審査待ち）
+        continue-on-error: true
+        run: |
+          T=$(python3 -c "
+          import json,glob,os
+          done={os.path.basename(f).split('_gate_pack')[0] for f in glob.glob('out/*_gate_pack.json')}
+          out=[]
+          for f in sorted(glob.glob('night/chunk*.txt')):
+              for t in open(f).read().split():
+                  if t not in done and t not in out: out.append(t)
+                  if len(out)>=5: break
+              if len(out)>=5: break
+          print(' '.join(out))" 2>/dev/null || true)
+          if [ -n "$T" ]; then timeout 1800 python hachimon_fetch.py $T | tail -8; else echo "未審査の待ち行列は空"; fi
+      - name: 再審査チャンクの生成（優先度順に月20社）
+        continue-on-error: true
+        run: |
+          python3 night/enqueue_reaudit.py --json | tail -5
+          python3 night/make_chunks.py --reaudit --top 20 | tail -3
       - name: v10影スコア更新（7月のみ＝年次較正の材料）
         continue-on-error: true
         run: |
           if [ "$(date -u +%m)" = "07" ]; then python3 v10_series.py; else echo "7月以外はスキップ"; fi
-      - name: 運用サイクルの回転状態を実測
-        run: python3 night/ops_status.py
+      # 年次較正のスナップショット（2026-08-10にCIへ接続・鍵もネットもcompanyfactsも不要）
+      #   回転盤は calib を auto=False としていたが、**人の判断が要るのは v9 vs v10 の勝敗判定**であって
+      #   スナップショットの生成ではない。同じ較正ループのもう半分 v10_series.py は既に7月だけ自動で、
+      #   **片方だけ手動という非対称**が残っていた。しかもこれは**時点を逃すと永久に失われる**唯一の項目
+      #   （CLAUDE.md: 「calibration.json に v9 の Ω合成値が無く 2027-07 の答え合わせが成立しない」で一度失敗済み）。
+      - name: 年次較正のスナップショット（7月のみ・勝敗の判定は人）
+        continue-on-error: true
+        run: |
+          if [ "$(date -u +%m)" = "07" ]; then python3 calibration_check.py; else echo "7月以外はスキップ"; fi
       # WACCの既定値(無リスク金利)のズレ検出（2026-08-07新設・鍵不要）
       #   値は書き換えない——rfrの更新はユーザーの月次ルーチン。自動化するのは**検出**だけ。
+      # E[r]の予実の**突合せ**（2026-08-10接続）
+      #   market.yml は月初に `--snap`（観測の封印）だけを回しており、
+      #   **引数なしの突合せ（封じた観測 vs 実現リターン）は誰も回していなかった**。
+      #   回転盤の `er` は観測の封印しか測らないので、**突合せが一度も走らなくても緑**になる。
+      #   E[r] は v9.9.98 で合否から外したが「正直に記録して検証される予測」として残した項目で、
+      #   **検証が走らないなら残した意味が消える**。180日未満は年率換算しない規約は道具の側にある。
+      - name: E[r]予実の突合せ（封じた観測と実現の答え合わせ）
+        continue-on-error: true
+        run: timeout 900 python3 night/audit_er_realized.py | tail -25
+      # 決断の材料を毎月作る（2026-08-10新設）
+      #   todo_list.json の「決断待ち」は36件あるが、**その決断の材料を作る shadow_* は
+      #   一度も定期実行されていなかった**——決断が毎回「材料を作るところ」から始まる。
+      #   影の計測は**必ず正本を元へ戻す**作りなので、CIで回しても採点は動かない。
+      #   ⚠重いものは載せない（retro_* は歴史の再構成で数十分かかる）。
+      - name: 決断の材料（影の計測・正本は必ず元へ戻る）
+        continue-on-error: true
+        run: |
+          timeout 900 python3 night/shadow_alloc_buckets.py --json 2>&1 | tail -8 || true
+          timeout 900 python3 night/shadow_irr85_proven.py 2>&1 | tail -8 || true
+          timeout 900 python3 night/shadow_frame85_kills.py 2>&1 | tail -6 || true
+          node night/audit_weights.js --q75 2>&1 | tail -12 || true
       - name: WACC既定のズレ検出 audit_wacc_stale
         continue-on-error: true
         run: timeout 300 python3 night/audit_wacc_stale.py --write
+      # ⚠2026-08-10: **ops_status を最後へ移した。** 以前は wacc の**前**に居たので、
+      #   コミットされる out/ops_status.json は必ず1ヶ月前の wacc 日付を載せていた
+      #   ——盤が自分より後の作業を測れない、という順序の誤り。
+      - name: 運用サイクルの回転状態を実測（必ず最後）
+        run: python3 night/ops_status.py
 
       - name: コミット
         run: |
@@ -96,6 +233,12 @@ jobs:
           N=$(python3 -c "import json;print(sum(1 for r in json.load(open('out/ops_status.json'))['items'] if r['state']=='due'))" 2>/dev/null || echo "?")
           MSG="monthly ops $(date -u +%Y-%m-%d)"
           [ "$N" != "0" ] && MSG="⚠ 停止疑い ${N}本｜monthly ops $(date -u +%Y-%m-%d)"
-          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json 2>/dev/null || true
+          # ⚠2026-08-10: **out/wacc_drift.json が漏れていた**——上の audit_wacc_stale が --write で
+          #   生成しているのに add されず、毎回作っては捨てていた（回転盤の waccdrift は auto=True なのに
+          #   実体が残らないので、鮮度も測れなかった）。
+          #   あわせて sp500_pe_monthly（自己相対の分母）・growth_trend（cagrTの測定結果）・
+          #   calibration（7月のスナップショット）も add する。**足したら add も足す**——
+          #   ステップだけ増やして add を忘れると「回っているのに残らない」という同じ穴が再発する。
+          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/new_listings_irr.json out/wacc_drift.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/rechunk*.txt night/reaudit_queue.json night/progress.json out/er_ledger.json out/market_data.json market_data.json out/shadow_*.json out/gate0_run.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push

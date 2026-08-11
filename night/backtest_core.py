@@ -260,7 +260,10 @@ def main():
         if (i + 1) % 25 == 0:
             print(f"  …{i+1}/{len(us)}（採用{len(out)}）", flush=True)
 
-    res = {"cutoff": cutoff, "n": len(out), "skipped": skipped,
+    # 2026-08-10: **generated を足した。** 回転盤は out/backtest_*.json の git コミット日で
+    #   最終実行を測っていたが、年次作業ほど「止まったこと」を検出したいのにその測り方は弱い。
+    res = {"generated": __import__("datetime").date.today().isoformat(),
+           "cutoff": cutoff, "n": len(out), "skipped": skipped,
            "caveat": ("生存バイアスあり——母集団は現在の台帳に残る社のみ。倒産・被買収は消えているため"
                       "絶対水準は上に偏る。クインタイルの相対比較と成長減衰の分布にだけ使うこと。"
                       "定性欄は遡及不能＝これはΩでなく機械コアの検証"),
