@@ -32,6 +32,20 @@ night/audit_hist85_today.py — **歴史で irr=85 と読まれた社は、今�
   「半導体を除くと2015は P=0.400 へ落ちる」と**この交絡を名指しで記録している**。
   既知の交絡を当てたのであって、都合の良い切り口を探したのではない。
 
+★2026-08-11 追補（ユーザーの問い「過去のirr85は門を通過できていたのか検証できる？」）:
+  **機械の関門は再構成できる。堀とΩは再構成できない。**
+    再構成できる … 財務キル(nde>4) ／ 事業の収縮(売上5年CAGR<0 ∧ 営業利益率5年変化<0)
+                    ／ 質実証(opm≥10% ∧ 5年FCF全年黒字)
+                    ——`retro_features_2018.json`(nde18) と `retro_features2_2018.json`(cagr5/opmD5) から
+    再構成できない … **堀70+**（rep と dur が当時読まれていない＝5本中3本では堀指数が算出不能）
+                    ／ **Ω**（定性採点を当時の原本でやり直す必要がある。retro_cohort は意図的にやっていない）
+  実測: **当時 機械の関門で落ちるのは2社だけ（STX=事業の収縮 / TDG=財務キル）。今日は17社**。
+  ＝**門は入口ではほぼ全員を通し、13年の間に起きたことで止めている**。とくに財務キル5社のうち4社は
+  当時 nde≤2.3 で、その後に借金を積んだ（**MKSI は純現金 −0.09 → 4.34**／ENTG 0.95→5.05／HXL 1.86→6.52）。
+  ⚠**だが当時落ちた2社の実現中央値は +33.4% で、通った19社の +15.7% より高い**（n=2なので結論にはできない）。
+  TDG は既記録の再確認（`retro_nde_kill85` が「キルが止めたのはTDGだけ・+21.7%/+20.7%」と記録済み）。
+  **STX は新しい発見**——v9.9.99 の事業の収縮の遮断器が、この標本で最良の +46.2% を止めていた。
+
 出すもの:
   1. 28社の実現リターン（**2018→26 と 2013→26 の2つの窓**）と最大DD
   2. 今日のΩ・堀・irr・キル・nde・roicg と四関門の判定／落ちている社の死因
@@ -228,6 +242,38 @@ def main():
     from collections import Counter
     c = Counter(r['cause'] for r in rows if not r['quali'])
     print('\n  死因の内訳: ' + ' ／ '.join(f'{k} {v}社' for k, v in c.most_common()))
+
+    # ── ★当時の機械の関門を再構成する（2026-08-11追補）──────────────────────
+    #   **堀とΩは再構成できない**（rep/dur が当時読まれておらず、定性採点も無い）。
+    #   だから「門を通過できていたか」の完全な答えは出ない。**機械の関門だけの部分的な答え**である。
+    #   それでも意味があるのは、今日の死因の大半が機械の関門だから（キル10/財務キル5/買収代金2）。
+    F1 = {r['ticker']: r for r in rows_of('out/retro_features_2018.json') if r.get('ticker')}
+    print('\n■ ★当時(2018年)の機械の関門を再構成——「門を通過できていたか」の**部分的な**答え')
+    print('   再構成できる: 財務キル(nde>4) ／ 事業の収縮(cagr5<0 ∧ opmD5<0)')
+    print('   **再構成できない: 堀70+（rep/dur が当時読まれていない）／ Ω（定性採点が無い）**')
+    print(f"   {'':6s}{'18→26':>8s} | {'当時nde':>7s}{'今nde':>7s} | {'当時cagr5':>9s}{'opmD5':>7s} | 当時 → 今日の死因")
+    then_ok, then_ng, unk = [], [], []
+    for r in rows:
+        t = r['t']; a, b = F1.get(t), F.get(t)
+        nde18 = (a or {}).get('nde18'); c5 = (b or {}).get('cagr5'); od5 = (b or {}).get('opmD5')
+        shrink = (c5 is not None and c5 < 0) and (od5 is not None and od5 < 0)
+        fin = isinstance(nde18, (int, float)) and nde18 > 4
+        v = '⛔財務キル' if fin else ('⛔事業の収縮' if shrink else
+                                  ('✓通る' if nde18 is not None else '判定不能'))
+        (then_ng if (fin or shrink) else (then_ok if nde18 is not None else unk)).append(r)
+        g = lambda z, w=7: f'{z:>{w}.2f}' if isinstance(z, (int, float)) else f'{"—":>{w}}'
+        print(f"   {t:6s}{(r['cagr18'] or 0)*100:>7.1f}% | {g(nde18)}{g(r['nde'])} | "
+              f"{g(c5,9)}{g(od5)} | {v:<10s} → {r['cause']}")
+    mo, mn = med([x['cagr18'] for x in then_ok]), med([x['cagr18'] for x in then_ng])
+    print(f"\n   **当時 機械の関門で落ちるのは {len(then_ng)}社 ／ 今日キル系で落ちるのは "
+          f"{sum(1 for r in rows if r['cause'].startswith(('財務キル','キル','買収代金')))}社**")
+    print(f"   ＝門は**入口ではほぼ全員を通し、十数年の間に起きたことで止めている**。財務キル5社のうち4社は")
+    print(f"     当時 nde≤2.3 で、その後に借金を積んだ（MKSI は**純現金 −0.09 → 4.34**／ENTG 0.95→5.05）")
+    print(f"   当時 通っていた {len(then_ok)}社の実現中央値 {(mo or 0)*100:+.1f}%/年 ／ "
+          f"落ちていた {len(then_ng)}社 {(mn or 0)*100:+.1f}%/年 ／ 判定不能 {len(unk)}社")
+    print(f"   ⚠**落ちていた側のほうが高い**（n={len(then_ng)}なので結論にはできない）——内訳は")
+    print(f"     TDG(nde5.66→+20.7%)＝既記録の再確認（retro_nde_kill85『キルが止めたのはTDGだけ』）／")
+    print(f"     **STX(事業の収縮→+46.2%)＝新しい発見**。v9.9.99 の遮断器がこの標本で最良の社を止めていた")
 
     print('\n■ 読み方')
     print('  ・**irr=85 は「買ってよい」を意味しない。** 堀の関門を通っても、財務キル・買収代金・')
