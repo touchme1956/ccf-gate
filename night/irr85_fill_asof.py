@@ -29,12 +29,23 @@ night/irr85_fill_asof.py — **irr=85 の当時(2018)の欠測を埋めて標本
   irr85_criteria.py がそれを**補助として読む**。元の retro_features_2018.json は歴史検証の
   他の道具も読むので、ここで書き換えると「基準の違う二つ」を作る。
 
-使い方: python3 night/irr85_fill_asof.py [--json]
-出力  : out/irr85_asof_fill.json  … {ticker: {nde18, conv5, basis, note}}
+★--today モード（2026-08-11 ユーザー指示「違う今の銘柄も昔の基準と同じように測って」）:
+  **今日の irr=85 を、歴史とまったく同じ式で測り直す。** これが要る理由は実害があるから——
+  別枠85の下限 **FCF転換 0.639 は WST の 5年合計比 `sum(FCF 5年)÷sum(NI 5年)`** から作られたのに、
+  門の `ccfIrr85Frame` は **パックの単年 `fcf/ni`** に当てている。
+  **同じ WST で 0.639（5年）vs 0.95（単年）＝1.49倍の差**。
+  ＝**「基準の違う二つを割る」型**（KLACの株式分割／ADRのper／JP門0のpt／through-cycleの片側変更／
+  門0の売上タグの錨／台帳のperと自己相対のpe／在庫の版の混在 に続く型）。
+  opm・cagr5・nde の3つは歴史側と門で定義が一致しているので、**割れているのは conv だけ**。
+
+使い方: python3 night/irr85_fill_asof.py [--json] [--today]
+出力  : out/irr85_asof_fill.json      … 歴史側の欠測を埋めた補助在庫
+        out/irr85_today_histbasis.json … --today で今日の irr=85 を歴史と同じ式で測った値
 """
 import json
 import os
 import re
+import statistics as st
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -43,6 +54,7 @@ sys.path.insert(0, os.path.join(ROOT, 'night'))
 import audit_stale_bs as SB          # companyfacts 経由の取得を再利用（二重実装を作らない）
 
 AS_JSON = '--json' in sys.argv[1:]
+TODAY = '--today' in sys.argv[1:]
 
 # retro_features_2018.py と**同じ候補**＋走査で見つかった不足分だけを足す
 DEBT_LT = ["LongTermDebtNoncurrent", "LongTermDebt", "DebtAndCapitalLeaseObligations",
@@ -143,7 +155,98 @@ def debt_trace(d, year=2018):
     return None
 
 
+REV = ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet",
+       "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueGoodsNet"]
+
+
+def today_mode():
+    """今日の irr=85 を**歴史とまったく同じ式**で測る（--today）"""
+    OPM, CONV, CG, ND = 11.89, 0.639, 1.76, 4.0
+    packs = []
+    for f in sorted(os.listdir('out')):
+        if not f.endswith('_gate_pack.json'):
+            continue
+        d = json.load(open('out/' + f, encoding='utf-8'))
+        if str(d.get('irr')) != '85':
+            continue
+        packs.append((f.split('_gate_pack')[0], d))
+    sa = {r['t']: r for r in json.load(open('out/score_all.json', encoding='utf-8'))}
+    print(f'■ 今日の irr=85 {len(packs)}社を**歴史と同じ式**で測る')
+    print(f'  ⚠ conv だけ基準が割れている——下限 {CONV} は歴史の **5年合計比** から作られたのに、')
+    print(f'     門は**パックの単年 fcf/ni** に当てている（同じWSTで 0.639 vs 0.95＝1.49倍差）\n')
+    print(f"  {'':6s}{'FY':>6}{'営利率':>8}{'conv単年':>9}{'conv5年':>9}{'成長':>7}{'nde':>7}  歴史基準の合否 / 門の合否")
+    out = {}
+    for t, d in packs:
+        fy = str((d.get('_meta') or {}).get('reportDate') or '')[:4]
+        g = facts(t)
+        rec = {'fy': fy}
+        if g and fy.isdigit():
+            Y = int(fy)
+            yrs = list(range(Y - 4, Y + 1))
+            fcfs, nis, ok = [], [], True
+            for y in yrs:
+                ni_y, _ = pick(g, NI, y, instant=False)
+                ocf_y, _ = pick(g, OCF, y, instant=False)
+                cap_y, _ = pick(g, CAPEX, y, instant=False)
+                if ni_y is None or ocf_y is None:
+                    ok = False; break
+                fcfs.append(ocf_y - (cap_y or 0)); nis.append(ni_y)
+            if ok and sum(nis) > 0:
+                rec['conv5_hist'] = round(sum(fcfs) / sum(nis), 3)
+            else:
+                rec['conv5_note'] = f'5年そろわず（{yrs[0]}-{yrs[-1]}）＝単年で代用しない'
+            op_y, _ = pick(g, OP, Y, instant=False)
+            rev_y, _ = pick(g, REV, Y, instant=False)
+            if op_y is not None and rev_y:
+                rec['opm_hist'] = round(op_y / rev_y * 100, 2)
+        fcf, ni = d.get('fcf'), d.get('ni')
+        rec['conv_pack'] = round(fcf / ni, 3) if (isinstance(fcf, (int, float))
+                                                 and isinstance(ni, (int, float)) and ni) else None
+        rec['gm_pack'] = d.get('gm'); rec['cagr_pack'] = d.get('cagr'); rec['nde_pack'] = d.get('nde')
+        # 歴史基準の合否（conv だけ5年へ差し替え・他はパック＝定義が一致している）
+        c5 = rec.get('conv5_hist')
+        ng = []
+        for v, thr, lbl in ((rec['gm_pack'], OPM, '営利率'), (c5, CONV, '転換5年'),
+                            (rec['cagr_pack'], CG, '成長')):
+            if v is None: ng.append(lbl + '—')
+            elif v < thr: ng.append(f'{lbl}{v:.2f}')
+        nde = rec['nde_pack']
+        if nde is None: ng.append('nde—')
+        elif nde > ND: ng.append(f'nde{nde:.2f}')
+        unk = any('—' in z for z in ng)
+        rec['hist_basis'] = '判定不能' if unk else ('合格' if not ng else '不合格')
+        rec['hist_why'] = '/'.join(ng)
+        s_ = sa.get(t, {})
+        rec['gate'] = '🟢投下可' if s_.get('buy') else ('🔵次点' if s_.get('quali') else '⛔')
+        f = lambda z, w=8, p=2: '—'.rjust(w) if z is None else f'{z:>{w}.{p}f}'
+        print(f"  {t:6s}{fy:>6}{f(rec.get('gm_pack'))}{f(rec.get('conv_pack'),9,3)}"
+              f"{f(c5,9,3)}{f(rec.get('cagr_pack'),7,1)}{f(rec.get('nde_pack'),7)}  "
+              f"{rec['hist_basis']}{('['+rec['hist_why']+']') if rec['hist_why'] else '':<22s} / {rec['gate']}")
+        out[t] = rec
+    # 基準の差でどれだけ動くか
+    diff = [(t, r['conv_pack'], r['conv5_hist']) for t, r in out.items()
+            if r.get('conv_pack') is not None and r.get('conv5_hist') is not None]
+    if diff:
+        rr = [b / a for _, a, b in diff if a]
+        print(f"\n  conv 単年 vs 5年合計比: {len(diff)}社で比較可 ／ 比の中央値 {st.median(rr):.2f}倍"
+              f" ／ 範囲 {min(rr):.2f}〜{max(rr):.2f}倍")
+        flip = [t for t, a, b in diff if (a >= 0.639) != (b >= 0.639)]
+        print(f"  **基準を歴史へ揃えると合否が変わる社: {len(flip)}社**"
+              + (f" → {' '.join(flip)}" if flip else "（今日は無し）"))
+    if AS_JSON:
+        p = 'out/irr85_today_histbasis.json'
+        json.dump(dict(generated='2026-08-11',
+                       note=('今日の irr=85 を歴史と同じ式で測った値。conv5_hist は '
+                             'sum(FCF 5年)÷sum(NI 5年)＝下限0.639 と同じ基準。'
+                             'conv_pack はパックの単年 fcf/ni＝**門が実際に使っている値**で基準が違う'),
+                       items=out), open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+        print(f'\n→ {p}')
+    return 0
+
+
 def main():
+    if TODAY:
+        return today_mode()
     H = json.load(open('out/audit_hist85_today.json', encoding='utf-8'))['rows']
 
     def rows_of(f):
