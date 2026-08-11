@@ -1264,7 +1264,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.138</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.139</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3157,21 +3157,47 @@ const ccfYen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
    ——親から localStorage を直接書くと、Ⅶが抱えている P は古いままで次の保存が黙って巻き戻す
    （v9.9.131 で実際に踏んだ順序の事故）。だから親は postMessage で「足してくれ」と頼むだけ。
    **判定には一切効かない**——保有%は配分（今月いくら買うか）にだけ使い、Ω・四関門・売却規律は不変。 */
-function ccfBoughtCtl(b){
-  const t=(b.x&&b.x.r&&b.x.r.t)||'', nm=(b.x&&b.x.n)||t;
-  if(!t||!(b.pi&&b.pi.px>0))return '';
-  const q=s=>String(s).replace(/"/g,'&quot;');
-  return `<div style="margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">`
-   +`<span style="font-size:10.5px;color:var(--dim)">買ったら記録 →</span>`
-   +`<input type="number" min="0" step="1" value="${b.sh}" data-t="${q(t)}" data-nm="${q(nm)}"`
-   +` data-px="${b.pi.px}" data-ccy="${q(b.pi.ccy||'USD')}"`
+function ccfBoughtEsc(s){ return String(s).replace(/"/g,'&quot;'); }
+/* 入力欄＋ボタンの中身（注文書の行も、銘柄の行も**これ一つ**を使う＝二重実装を作らない・v9.9.65） */
+function ccfBoughtFields(t,nm,px,ccy,sh){
+  const q=ccfBoughtEsc;
+  return `<input type="number" min="0" step="1" value="${sh||''}" data-t="${q(t)}" data-nm="${q(nm)}"`
+   +` data-px="${px||0}" data-ccy="${q(ccy||'USD')}"`
    +` style="width:62px;padding:2px 6px;font-size:11.5px;font-family:inherit;background:var(--panel);`
    +`border:1px solid var(--line);border-radius:5px;color:var(--ink)">`
    +`<span style="font-size:10.5px;color:var(--dim)">株</span>`
    +`<button onclick="ccfBought(this)" style="padding:2px 10px;font-size:11px;font-family:inherit;cursor:pointer;`
    +`background:rgba(143,201,164,.16);border:1px solid rgba(143,201,164,.5);border-radius:5px;color:var(--jade)"`
    +` title="Ⅶ保有の株数へ足す（加算）。買付単価は加重平均で更新。判定には使わない">✓ 保有へ</button>`
-   +`<span class="bought-msg" style="font-size:10.5px"></span></div>`;
+   +`<span class="bought-msg" style="font-size:10.5px"></span>`;
+}
+function ccfBoughtCtl(b){
+  const t=(b.x&&b.x.r&&b.x.r.t)||'', nm=(b.x&&b.x.n)||t;
+  if(!t||!(b.pi&&b.pi.px>0))return '';
+  return `<div style="margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">`
+   +`<span style="font-size:10.5px;color:var(--dim)">買ったら記録 →</span>`
+   +ccfBoughtFields(t,nm,b.pi.px,b.pi.ccy||'USD',b.sh)+`</div>`;
+}
+/* ── 銘柄の行の「＋株」（v9.9.139・ユーザー「全部の銘柄につけてほしい」）
+   注文書に出るのは**今月買う投下可だけ**だったので、次点・堀不足・押し目待ち・門外例外の行からは
+   記録できなかった。Ⅵの全行（brow）に付ける。**既定は畳んだボタン1つ**——
+   直前の版で「無駄な文字を減らす」ことをやったので、40行ぶんの入力欄を常時出すのは自分で打ち消す。
+   ⚠**価格が無くても記録できる**（日本株はFinnhub無料枠外で盤に現値が無い）。ただし
+   **推測の単価は入れない**（絶対のルール7）——株数だけ足し、Ⅶ保有は「金額未入力」と出す。 */
+function ccfBoughtBtn(t,nm,px,ccy){
+  if(!t)return '';
+  const q=ccfBoughtEsc;
+  return `<span class="bctl" style="white-space:nowrap;margin-left:6px;display:inline-flex;align-items:center;gap:5px"`
+   +` data-t="${q(t)}" data-nm="${q(nm)}" data-px="${px||0}" data-ccy="${q(ccy||'USD')}">`
+   +`<button onclick="ccfBoughtOpen(this)" title="買った株数をⅦ保有へ足す（加算）。判定には使わない"`
+   +` style="padding:4px 8px;font-size:11px;font-family:inherit;cursor:pointer;background:rgba(143,201,164,.10);`
+   +`border:1px solid rgba(143,201,164,.35);border-radius:6px;color:#8fc9a4">＋株</button></span>`;
+}
+function ccfBoughtOpen(btn){
+  const w=btn.parentElement, d=w.dataset, px=parseFloat(d.px)||0;
+  w.innerHTML=ccfBoughtFields(d.t,d.nm,px,d.ccy,'')
+   +(px>0?'':`<span style="font-size:10px;color:#c0894a" title="盤(out/dashboard.json)に現在価格が無い（日本株はFinnhub無料枠外）。推測の単価は入れないので、株数だけ記録してⅦ保有で単価を入れる">単価未取得</span>`);
+  const i=w.querySelector('input'); if(i)i.focus();
 }
 /* 画面に浮かぶ短い帯。再描画で消えないよう body 直下に置く */
 function ccfToast(msg,ok){
@@ -3207,7 +3233,10 @@ function ccfBought(btn){
        だから結果は行の外＝画面に浮かぶ帯に出す。失敗時は再描画しないので行に出してよい。 */
     if(!r.ok){ out.style.color='#d69a3c'; out.textContent='⚠ '+(r.msg||''); ccfToast('⚠ '+(r.msg||''),false); return; }
     btn.disabled=true; btn.style.opacity=.5;
-    ccfToast('✓ '+(r.msg||'')+'　→ Ⅶ保有に反映。state.json の書き出しを忘れずに',true);
+    /* 単価が無いまま記録した行は Ⅶで「金額未入力」になる。黙って0円の保有を作らない（ルール7）ので必ず言う */
+    const noPx=!(parseFloat(inp.dataset.px)>0);
+    ccfToast('✓ '+(r.msg||'')+(noPx?'　⚠ 単価は未記録（盤に現在価格が無い）——Ⅶ保有で入れてください':'')
+      +'　→ Ⅶ保有に反映。state.json の書き出しを忘れずに',true);
     try{ if(typeof renderPlan==='function')await renderPlan(); }catch(_){}
     try{ const db=document.getElementById('dashBox');
          if(typeof ccfDash==='function'&&db&&db.innerHTML.trim())ccfDash(); }catch(_){}
@@ -4942,7 +4971,12 @@ async function renderPlan(){
   //   posはallocTagのtooltipの中にしか出ておらず「門が保有を認識しているか」が画面から見えなかった
   //   （実例: IRMD保有なのに順位に出る→ユーザーが連携切れを疑った。連携は生きていて表示が無いだけだった）
   const posChip=r=>(r.pos>0)?`<span style="font-size:10px;color:var(--jade);margin-left:6px" title="現在保有ウェイト（${(livePos&&livePos[r.t]!=null)?'Ⅶ資産の実額から自動算出':'Ⅲ採点機の手入力pos——Ⅶ資産に株数を入れれば自動連携に切替わる'}）。保有中でも目標ウェイトに届くまでは買付順位に残る＝DCAの積み増し対象。目標に達すると「充足」＝今月0円">◆保有${r.pos.toFixed(0)}%</span>`:'';
-  const brow=(r,i,tag,extra)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${tag}${i+1}</b></span><span class="ln">${ccfIcon(r.nm)}${r.nm}${ccfBizChip(r.nm)}${r.audB||''}${pxchip(r)}${posChip(r)}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}${r.epsOld?'<span style="font-size:10px;color:#c0894a;margin-left:6px" title="原本決算期が300日超——E[r]/PERの前提が古い。決算後にeps/perを更新せよ">⏳eps古</span>':''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span>${xtag(r)}${extra||''}${reqbtns(r)}</div>`;
+  // v9.9.139: 全行に「＋株」。価格は盤の実測から採り、無ければ入れない（推測の単価を作らない・ルール7）。
+  //   通貨の判定は score_all.js:269 と**同じ式**（銘柄名の先頭が4-5桁の数字なら日本株）＝新しい規約を作らない。
+  const boughtBtn=r=>{ if(!r.t)return '';
+    const q=__Q[r.t], jp=/^\d{4,5}(\s|$|\.)/.test(r.nm||'');
+    return ccfBoughtBtn(r.t, r.nm||r.t, (q&&q.px>0)?q.px:0, (q&&q.ccy)||(jp?'JPY':'USD')); };
+  const brow=(r,i,tag,extra)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${tag}${i+1}</b></span><span class="ln">${ccfIcon(r.nm)}${r.nm}${ccfBizChip(r.nm)}${r.audB||''}${pxchip(r)}${posChip(r)}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}${r.epsOld?'<span style="font-size:10px;color:#c0894a;margin-left:6px" title="原本決算期が300日超——E[r]/PERの前提が古い。決算後にeps/perを更新せよ">⏳eps古</span>':''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span>${xtag(r)}${extra||''}${reqbtns(r)}${boughtBtn(r)}</div>`;
   // 城(総資産の60%)内の配分を自動表示(表示のみ・採点に不介入)。v9.9.70で目標は連続式 城60%×(Ω−70)÷Σ(Ω−70)。
   //   今月=各投下可の「目標−現在保有%(pos)」の不足分で按分(B案②:不足銘柄へ厚く・合計100%)。posは保有比率入力。
   // v9.9.68で城の目標比率を40%→60%へ改定したのに、この定数だけ40のまま取り残されていた（2026-08-03に発見）。
@@ -5142,7 +5176,7 @@ async function renderPlan(){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px">⚪ 監視枠 72–75——<span style="color:var(--rust)">保有しない</span>・75超えで昇格</h2>`;
     // v9.9.78: 旧act（「今買える/押し目待ち」＝v9.9.25で買付判定から外した粗いPERブレーキ）の表示を撤去。
     //   Ⅳからはv9.9.74で撤去済みなのに監視枠の行だけ残り、Ⅵの四関門と同じ言葉が別の意味で並んでいた
-    html+=watch.map(r=>`<div class="led" style="border-left:3px solid ${lcol[2]};opacity:.6"><span class="ln">${ccfIcon(r.nm)}${r.nm}</span><span class="grade" style="color:var(--steel)">${r.s}</span>${xtag(r)}${reqbtns(r)}</div>`).join('');
+    html+=watch.map(r=>`<div class="led" style="border-left:3px solid ${lcol[2]};opacity:.6"><span class="ln">${ccfIcon(r.nm)}${r.nm}</span><span class="grade" style="color:var(--steel)">${r.s}</span>${xtag(r)}${reqbtns(r)}${boughtBtn(r)}</div>`).join('');
   }
   html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8"><b>四関門</b>：<b>🟢投下可＝格75+ ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件</b>／<b>🟡押し目待ち＝格75+・堀70+だがE[r]&lt;0</b>／<b>⛔堀不足＝格75+だが堀&lt;70</b>／<b>⛔点検要修正＝台帳の値が壊れている（買わない理由であって売る理由ではない）</b>。堀を第三の関門にしたのは<u>採点で罰すると三重罰になる</u>ため——moatIdxは既にΩへ pm→sustain と直接項(.13)の二経路で入っているので、ここでさらに減点せず「買う対象から外す」だけにした（採点式・Ω・売却規律S1/S2/S3はいずれも不変）。<br><details class="why"><summary>価格・E[r]の扱い（なぜ合否に使わないのか）</summary><div class="why-body"><b>価格の関門は門X 1本</b>：旧「間（今買える）」の粗いPERブレーキは買付判定から外した（「今買える」なのに「監視」の矛盾を解消）。各群内の順位＝<b>合成順（格×0.6 ＋ E[r]%×0.4）</b>。実効レンジではE[r]+1%≈格+3.3点で<b>E[r]が主・格は安全下限（75+の合否）とタイブレーク</b>（宣言を数学に一致させた——15%目標に整合するのはE[r]主の序列）。<b>群の境界（投下可の合否）は不変</b>。E[r]%は12%＝50点として点数化（±10ptで0-100・<b>順位付けのみ＝合否には使わない</b>）、欠損はerPt=0＝群内末尾（——中立50に擬制すると実測E[r]8%の銘柄より上位に来る逆転が生じるため）。🟡の<b>開通＝PER○○（あと−○%）</b>はE[r]が0に転じる入口PER（**合否ではなく指値の目安**）と現値からの必要下落（遮断器方式に同期）。fair線＝階段指値の上段（倍率の重力ゼロ・約定時E[r]=earned）。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。<br><b>E[r]（門X期待リターン）</b>＝門X裁きⅠの現値期待リターン：還元shy + 成長g（<b>高ROIC(≥15%)×堀無傷は実証CAGRを信じる</b>／それ以外は再投資式b×ROIICを実証CAGRで頭打ち・20%上限＝証拠の上限。：資本を返しながら伸びる資本軽量コンパウンダーを再投資式が過小評価する欠陥を是正・価格規律は不変） − 倍率の重力（<b>終着PER=min(現PER, clamp(8+g,16,30))＝成長連動</b>・<b>20年</b>（10年→20年）。McKinsey価値ドライバーの理論フェアは成熟g4%≈22倍／持続成長高ROIC≈28-30倍だが、門は保守側に8+g〔下限16〕で頭を抑える＝理論値より安全余白を取る設計。成長産業と成熟産業を同じ終着PERで測らない。掟六の精神＝現PERを超えない＝拡大は見込まない、は維持）。<b>成長gの上限（2026-07-29 ユーザー明示指示）</b>：gは<b>min(実績cagr, 実力g_cap, 20%)</b>。g_capが空欄のときはΩ側と同じ暫定規約<b>「gr（=per/perF−1・1年フォワード）で代用」</b>を門Xにも通す。従来は門Xだけがこの代用を持たず、<u>実力の推定が無いまま過去のcagrで10年先を描いていた</u>（実測：全316パックのg_capが空欄＝の安全弁 min(実績,実力) は一度も作動していなかった。6920レーザーテックは会社予想が前年比−18.8%の減益なのに実績cagr42.7%由来のg=20%でE[r]16.2%✓と表示されていた）。併せて<code>gcap&gt;0</code>のガードを外した——0や負値の実力成長が「上限なし」として素通りし、減速局面を抑えるための機構がまさに減速している銘柄で無効だった。E[r]の横の<span style="color:#d69a3c">⌄</span>印は「gが実績ではなく実力側で抑えられた」の意。<br><span style="color:var(--jade)">✓＝遮断器成立（E[r]≥0——旧4条件〔E[r]≥12／投資R≥10／倍率寄与≤30%／ストレス≥7〕は歴史検証で選別力が無いと実測され廃止。歴史の勝者13社中10社を旧線が弾いていた）＝🟢投下可</span>／<span style="color:var(--rust)">✗＝E[r]マイナス→🟡押し目待ち（指値は✦門Xの監視表）</span>。順位・採点には一切影響しない。PER/ROIC欠損時はE[r]判定不能と表示。</div></details>各行の <span style="color:#8fc9a4">審査</span>＝門2審査プロトコル全文（この銘柄を門にかけ直す）／<span style="color:#d6b06c">決算</span>＝決算点検依頼文（S1-S3照合・6警報・門X前提の再計算）を、その銘柄名つきでコピー→Claudeに貼る。台帳のティア（Ⅳ）に依る。</div>`;
   pb.innerHTML=planBox+html;
