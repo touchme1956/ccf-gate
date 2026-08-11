@@ -211,6 +211,16 @@ jobs:
         continue-on-error: true
         run: timeout 900 python3 night/audit_pending.py --all --write | tail -20
 
+      # ── 5-b3. irr=85 をユーザーの基準で採点（2026-08-11新設）─────────────────────
+      #   【なぜ】ユーザーの選定ルール（irr=85 ∧ 営利率11.89 ∧ FCF転換5年0.639 ∧ 成長1.76・nde除く）は
+      #   対話で決まったが**機械のどこにも書かれていなかった**。一方 irr=85 の顔ぶれは
+      #   日次の門2審査 Routine が毎日パックを足すので動く（実測: 2026-08-11 のセッション中に14→15社）。
+      #   **判定は一切変えない**（読むだけ・score_all も index.html も触らない）——出すのは
+      #   out/irr85_myrule.json と、新着／門との食い違い／**未決の分岐(堀70)** の名指しだけ。
+      - name: irr=85 をあなたの基準で採点 irr85_myrule（表示のみ・SEC問い合わせ）
+        continue-on-error: true
+        run: timeout 900 python3 night/irr85_myrule.py --json | tail -30
+
       # ── 5-c. パックより新しい年次報告が出ていないか（2026-08-07新設）─────────────
       #   audit_stale_bs は**のれんの入替**しか見ないので、買収をしない優良企業が
       #   静かに1会計年度ぶん古くなるのは今日どの検査器にも掛からなかった。
@@ -362,7 +372,12 @@ jobs:
           #   順に回して**正しい score_all を作っているのに、コミットに含めず捨てていた**。
           #   結果、main に残るのは market.yml が作った（古い validate_fail を読んだ）ほうで、
           #   投下可の一覧が第四の関門と食い違っていた（実害: RBC）。作った答えは捨てない。
-          git add out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json night/reaudit_queue.json 2>/dev/null || true
+          # out/pending.json も入れる（2026-08-11の是正・上と同じ型の取りこぼし）——
+          #   5-b2 で audit_pending を回しているのに**コミットに含めていなかった**ので、
+          #   **第四の関門が読む pending.json は手で回したときしか更新されなかった**。
+          #   out/irr85_myrule.json は新着の検出に前回の在庫を使うので、
+          #   コミットしないと**毎回「全社が新着」になり新着の意味が消える**。
+          git add out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json night/reaudit_queue.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"
           else
