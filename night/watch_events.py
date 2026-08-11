@@ -297,6 +297,15 @@ def main():
         "note": "判定には使わない。alertsが立った銘柄は門2再審査（依頼文）へ回す。四半期点検の隙間を埋める気づきの層であり、株価は見ない",
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    # 空書き込みの検問（audit_stale_bs:243 と同じ言葉。v9.9.140）
+    #   ⚠**1社も走査できていないのに書き換えない**。SECが落ちている日に上書きすると、
+    #     alerts=[] が「見て何も無かった」に見える＝この道具が塞いだはずの穴を自分で作る。
+    #   errors が出ていること自体は正常（個別社の取得失敗は errors に載せて続行する）ので、
+    #   裁くのは **checked（実際に走査できた社数）が 0 かどうか**だけ。
+    if checked == 0 and not (jp_cov and jp_cov.get("tickers")):
+        print("⚠ 1社も走査できていない（SEC/EDINETが落ちている等）。"
+              "**out/events_watch.json を書き換えない**——空の alerts は『見て何も無い』ではない")
+        return 1
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     jp_msg = (f"日本株{len(jp_cov['tickers'])}社をEDINETで走査" if jp_cov
               else f"日本株{len(jp)}社は対象外（EDINET_API_KEY未設定＝明示）")

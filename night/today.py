@@ -68,6 +68,7 @@ SRC = [
     ('exception_watch', 'out/exception_watch.json', '門外例外の監視', 'rows'),
     ('myrule', 'out/irr85_myrule.json', 'あなたの選定ルール', 'items'),
     ('mech_diff', 'out/irr85_mech_diff.json', '機構文の年次diff', 'items'),
+    ('kessan', 'out/kessan_flags.json', '四半期点検の旗', 'items'),
 ]
 
 
@@ -189,6 +190,27 @@ def build():
         today.append(item('irr85new:' + str(t), 'today', 'irr=85 の新着: ' + str(t),
                           'あなたの選定ルール（営利率11.89 / FCF転換0.639 / 成長1.76）で採点し直す',
                           'python3 night/irr85_myrule.py', 'あなたのルール'))
+
+    # ── 四半期点検の要審査（2026-08-11: 待ち行列に流れていなかった穴を塞いだ・v9.9.140）──
+    #   ⚠「点検不能（20-F/40-F発行体）」は**採取の穴であって会社の異常ではない**ので段を分ける。
+    kf = data.get('kessan') or {}
+    for t, v in ((kf.get('items') or {}) if isinstance(kf.get('items'), dict) else {}).items():
+        if not v.get('need'):
+            continue
+        vd = str(v.get('verdict') or '')
+        where = '🟢投下可' if t in buy else ('🔵次点' if t in nxt else '')
+        if '点検不能' in vd:
+            month.append(item('kes:' + t, 'month', '四半期点検が不能: %s %s' % (t, where),
+                              vd[:90] + '（採取の穴＝再審査では直らない）',
+                              'kessan_checklist.md §C の手動確認', '四半期点検'))
+        else:
+            (today if where else month).append(
+                item('kes:' + t, 'today' if where else 'month',
+                     '四半期点検で要審査: %s %s' % (t, where), vd[:100],
+                     '🔔イベントタブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る', '四半期点検'))
+    for u in (kf.get('unparsed') or []):
+        blind.append(dict(key='kessan:' + str(u.get('t')), path=str(u.get('path')),
+                          label='四半期点検の判定', why=str(u.get('why'))))
 
     # ── 8-K警報 ──
     ev = data.get('events') or {}

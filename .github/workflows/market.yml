@@ -20,6 +20,13 @@ permissions:
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    # v9.9.140: **`| tail` が失敗を緑に化かすのを止める。**
+    #   宣言が無いと pipefail が付かず、`検査 | tail -25` は tail の成功だけを見る
+    #   ＝「検査を回したつもりで回っていない」が緑のまま通る。
+    #   実測(2026-08-11)で、今日のCIは pipefail を入れても壊れない（該当コマンドは全て exit 0）。
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -67,6 +74,10 @@ jobs:
           #   **投下可の出入りはコミット件名に出す**——毎日のノイズに埋もれさせないため。
           [ -s out/_price_commit_msg.txt ] && MSG="$(cat out/_price_commit_msg.txt)"
           rm -f out/_price_commit_msg.txt
-          git add -A market_data.json out/dashboard.json out/*_gate_pack.json out/score_all.json out/er_ledger.json || true
+          # ⚠ out/validate_fail.json は **apply_prices.py:52 が buy_set() の中で作り直す**。
+          #   ここに書かないと「毎営業日 作り直して捨てる」ことになり、門(ブラウザ)が読む
+          #   第四の関門の表だけが昨日のまま残る（v9.9.140・実測で git log に market の
+          #   コミットが1件も無かった。ci.yml で2回直したのと同じ型の3例目）。
+          git add -A market_data.json out/dashboard.json out/*_gate_pack.json out/score_all.json out/er_ledger.json out/validate_fail.json || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push

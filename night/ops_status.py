@@ -99,6 +99,11 @@ def build():
         #   **PRの有無ではなく「走ったか」で測る**（空振りは正常な終わり方で、止まったのとは別物）。
         # v9.9.140: 📋今日 の集計。**止まると画面が「今日やることはありません」と言い続ける**
         #   ——この画面はいちばん人が信じるところなので、止まったことが判る必要がある。
+        # v9.9.140: 門(ブラウザ)と端末(score_all.js)の一致。**v9.9.65の掟を機械で測る唯一の道具**
+        #   ——止まると「同じ台帳を見る二つが違うことを言う」を誰も見張っていない状態に戻る。
+        ("parity",  "門と端末の一致",          "毎営業日", 4,
+         json_field("out/gate_parity.json", "generated"),
+         "ci.yml 平日22:00UTC（実ブラウザ）／手動 node night/check_gate_parity.js", True),
         ("today",   "📋今日の集計",            "毎営業日", 4,
          json_field("out/today.json", "generated"),
          "ci.yml 平日22:00UTC／手動 python3 night/today.py --json", True),

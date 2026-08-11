@@ -27,6 +27,7 @@
  *   終了コード 1 = はみ出しあり（＝ブラウザがページを縮めて表示する状態）
  */
 const { spawn } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.dirname(__dirname);
@@ -47,7 +48,12 @@ const TABS = [['tab10', '📋 今日'], ['tab6', '📊 盤'], ['tab9', '🔔 イ
   const srv = spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: ROOT, stdio: 'ignore' });
   await new Promise(r => setTimeout(r, 1500));
   let bad = 0;
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  // v9.9.140: **/opt/pw-browsers はこの開発環境の同梱物で、GitHub Actions の ubuntu-latest には無い。**
+  //   決め打ちだと CI では起動に失敗し、`continue-on-error` + `| tail` で緑のまま素通りしていた
+  //   （実測: 唯一のCI実行で当該stepは5秒＝369件の取込が終わる時間ではない）。
+  //   **在るときだけ使い、無ければ playwright の既定（npx playwright install で入る）に任せる。**
+  const _EXE = '/opt/pw-browsers/chromium';
+  const browser = await chromium.launch(fs.existsSync(_EXE) ? { executablePath: _EXE } : {});
   try {
     const p = await browser.newPage({ viewport: { width: W, height: 760 }, deviceScaleFactor: 2 });
     p.on('pageerror', e => { console.log('  PAGEERROR', e.message); bad++; });

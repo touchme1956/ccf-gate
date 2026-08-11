@@ -66,11 +66,11 @@ def main():
     #   「呼ぶ側が先に回してくれている」に依存しない（依存すると、今朝 market.yml が
     #   validate_fail.json を古いまま採点していたのと同じ順序の穴ができる）。
     #   再実装はしない——既存の道具をそのまま呼ぶ。
-    try:
-        subprocess.run([sys.executable, "night/audit_promotion_ready.py", "--json"],
-                       capture_output=True, timeout=120)
-    except Exception:
-        pass
+    for _t in ("night/audit_promotion_ready.py", "night/kessan_flags.py"):
+        try:
+            subprocess.run([sys.executable, _t, "--json"], capture_output=True, timeout=120)
+        except Exception:
+            pass
     rows = jload("out/score_all.json", [])
     pos = {r["t"]: r for r in rows}
 
@@ -116,6 +116,25 @@ def main():
         r0, lab = rank(t)
         if r0 >= 60:
             add(t, 20, f"納品検査FAIL {v.get('n')}件（{lab}）")
+    # 2-b. **四半期点検の要審査**——2026-08-11新設（v9.9.140）。
+    #   kessan_check が正しく異常を拾っているのに、**次の仕事に渡す配線が無かった**。
+    #   実測: 要審査14社のうち7社が待ち行列に不在で、その中に **KLAC（当時の🟢投下可・警報:減損）**。
+    #   ⚠「点検不能（20-F/40-F発行体）」は**会社の異常ではなく採取の穴**なので重みを分ける
+    #     ——再審査に回しても直らない（直るのは手動確認か採取経路の追加）。
+    kf = jload("out/kessan_flags.json")
+    for t, v in (kf.get("items") or {}).items():
+        if not v.get("need"):
+            continue
+        vd = str(v.get("verdict") or "")
+        r0, lab = rank(t)
+        if "点検不能" in vd:
+            add(t, 10, f"四半期点検が不能（{lab or '台帳外'}・採取の穴であって会社の異常ではない）")
+        else:
+            add(t, 30, f"四半期点検で要審査（{lab or '台帳外'}・{vd[:44]}）")
+    for u in (kf.get("unparsed") or []):
+        # 判定行が読めなかった＝**異常なしではない**ので、作業リストに出す
+        add(u.get("t") or "?", 15, "四半期点検の判定行が読めない（out/kessan の形が変わった可能性）")
+
     # 3-b. **根拠さえ埋めれば四関門を通る社**——2026-08-11新設（audit_promotion_ready --json）。
     #   検出はずっと自動だったのに、**渡し先が人の目しか無かった**（この repo が繰り返してきた
     #   「見つけたものを誰にも渡していない」型。night/enqueue_reaudit.py の頭注そのもの）。
@@ -163,7 +182,7 @@ def main():
         json.dump(doc, open("night/reaudit_queue.json", "w", encoding="utf-8"),
                   ensure_ascii=False, indent=1)
 
-    print(f"■ 再審査の待ち行列 {len(out)}社（検出器6本の合流）")
+    print(f"■ 再審査の待ち行列 {len(out)}社（検出器7本の合流）")
     print(f"{'順':>3} {'':7}{'Ω':>6} {'位置':<10}理由")
     for i, r in enumerate(out[:40], 1):
         print(f"{i:>3} {r['t']:<7}{(r['omega'] if r['omega'] is not None else 0):>6.1f} "
