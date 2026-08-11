@@ -171,7 +171,8 @@
    "2026-08-05 門2審査（新規パック化）。歴史検証(irr=85・2018年ビンテージ)21社のうち門2未審査だった12社の一つ。ユーザー指示で名指し審査。機械値は採取器(2026-08-05)の値をそのまま採用し、XBRL companyfacts で営業利益・売上・R&D・のれんの各系列を独立に再取得して検算した（書き換えた機械値は無し）",
    "roic/roicg は through-cycle(5年中央値) 22.8/7.7＝**乖離15.1pt**で罰の線をわずかに超え、acq5=yes なので買収規律の罰−6が発火する（連続小型買収のロールアップ）",
    "門0では score=4・fails『ROIC; ROIC最低値; 営業利益率』",
-   "2026-07-29 sht 空欄 → 'down'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。"
+   "2026-07-29 sht 空欄 → 'down'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
+   "2026-08-11 機構の射程と認定の寿命を原本から記録（_meta.mech）: 射程 点推定は導けない（53〜100%）／寿命 原本に開示なし。読解＋反証専門の二段（scope=refuted／life=confirmed）。**合否には一切使わない記録**。"
   ],
   "auditDate": "2026-08-05",
   "model": "claude-opus-5",
@@ -198,6 +199,43 @@
     "per": 102.15,
     "shy": 0.66
    }
+  },
+  "mech": {
+   "scope_pct": null,
+   "scope_low": 53,
+   "scope_high": 100,
+   "scope_basis": "点推定も帯も原本からは導けない。(1)機構文（Item 1 行299／Item 1A 行537）は数値を一切含まず、53%は別の開示（Item 1「End Markets」およびNote 19の端末市場別売上構成）から来ている＝「機構の文」と「売上構成の表」という別々の記述を接いで%を作っている。(2)下限53%は二重に破れる——(a)機構文の限定語 \"certain products\" は医療の内側にも掛かるので、医療53%のうち何割が設計組込かは不明。主張はこの限定語を上限の抑制にだけ使い下限には適用していない＝非対称。(b)医療end market売上は原本自身が「hospital, life science, and other healthcare provider capital spending」に左右されると書き（行294）、OEM製品開発のタイミングと**並列**で挙げている＝非OEM需要を含む混成。FY2018 10-Kは同じ箇所で \"We also sell directly to end users.\" と明言していた（FY2025で削除）。よって医療53%は設計組込の射程の下限として使えない。(3)上限100%も主張自身が \"certain products\"/\"many OEMs\" で literal には達しないと認めており、両端とも既知で誤っている帯は測定ではない。(4)10-KはOEM組込売上を一度も数量化していない（'OEM' の全出現20箇所を確認。定量開示は上位10顧客42%と2 OEM顧客12%/11%のみ）。原本から言える唯一の硬い量は「medical end market の2 OEM顧客で連結売上の23%」だが、これは顧客集中の開示であって当該売上が設計組込であるとは述べていない。したがって scope は null（帯も置かない）。",
+   "scope_quotes": [
+    "Once certain products have been designed into a given OEM customer's product or system, there are generally significant barriers to subsequent supplier changes until the end of the product or system life cycle, especially in the medical market.",
+    "Attempts to lessen the adverse effect of any loss or reduction of sales through the rapid addition of new customers would be difficult because customers typically require lengthy qualification periods prior to placing volume orders with a new supplier.",
+    "For the year ended December 31, 2025, the medical market accounted for approximately 53% of our revenue.",
+    "For the year ended December 31, 2025, the advanced industrial market accounted for approximately 47% of our revenue.",
+    "Our top ten customers accounted for approximately 42% of our sales for the year ended December 31, 2025.",
+    "Our customers include many OEMs who integrate our products into their systems for sale to end users.",
+    "disciplined focus on our diversified business model of providing proprietary technology solutions to long life-cycle OEM customer platforms in attractive medical and advanced industrial niche markets;",
+    "During the year ended December 31, 2025, two OEM customers, each operating primarily in the medical end market across multiple product lines, represented approximately 12% and 11%, respectively, of our consolidated revenue."
+   ],
+   "scope_null_why": "点推定が導けないのは、10-KがOEM組込売上と非OEM売上を分けて開示していないため。機構文の限定語『certain products』（対象製品は一部）と『many OEMs』（全顧客ではない）はどちらも数量化されておらず、一方で機構文はセグメント限定を持たないので医療53%に切り詰めることもできない。したがって53〜100%の幅までが原本から言える限界で、その中のどこかを一点で名指しするのは憶測になる。",
+   "life_low": null,
+   "life_high": null,
+   "life_basis": "null が正しい。潰しにかかったが潰せなかった。10-K全文の「N years」表記を機械抽出して全件の出所を確かめた結果、認定・設計組込の寿命を測る年数は一つも存在しない: Keonn買収 developed technologies 9年/customer relationships 9年/trade name 14年（2199-2214行）、Motion Solutions買収 developed technologies 7年/customer relationships 13年/backlog 1年（2266-2281行）＝いずれもASC805の会計上の見積耐用年数／リース 2026-2037・英国土地2078・更新1-10年（3160行）／株式報酬の加重平均残存 1.08・1.54・3.85・3.37・4.84年／PP&Eの減価償却年数。主張はこれらを一つも流用していない（とくにcustomer relationships 9年・13年はplatform lifeの代理に見える最大の誘惑だが、明示的に退けている）。'life cycle'系4回（170/299/415/768）はいずれも年数を伴わず、定量語は \"long life-cycle\" / \"long durations\" のみ。機構の継続期間は \"until the end of the product or system life cycle\" と定性的に定義されるだけ。★主張が挙げていない追加の裏付け: 同じ537行の直前（536行）に \"None of our significant customers has entered into an agreement with us requiring it to purchase any minimum quantity of our products.\" とあり、契約上の拘束期間そのものが存在しない＝年数を置く根拠は契約側からも無い。",
+   "life_quotes": [
+    "Once certain products have been designed into a given OEM customer's product or system, there are generally significant barriers to subsequent supplier changes until the end of the product or system life cycle, especially in the medical market.",
+    "disciplined focus on our diversified business model of providing proprietary technology solutions to long life-cycle OEM customer platforms in attractive medical and advanced industrial niche markets;",
+    "A typical OEM customer will usually evaluate our products and our ability to provide application knowledge and expertise, post-sales application support, supply chain management over long durations, manufacturing capabilities, product quality, global presence, and product customization before deciding to incorporate our products into their products or systems."
+   ],
+   "life_null_why": "会社が年数を一切開示していない。機構の継続期間は『until the end of the product or system life cycle』と定性的に定義されるだけで、そのライフサイクルが何年かは10-Kのどこにも書かれていない（形容は『long life-cycle』『long durations』のみ）。10-K内の年数（無形資産の償却年数9/13/14/7年、バックログの12ヶ月、リース期間、株式報酬の権利確定期間）はいずれも認定の寿命ではないので流用しなかった。",
+   "mechanism_summary": "顧客側（医療・先端産業のOEM）が新規供給者に長期の認定期間を課し、いったん自社製品が顧客の製品・システムへ設計組込されると、供給者を替えるには顧客の側が再認定の時間と費用を負うため乗り換えが起きにくい＝認定するのは第三者ではなく顧客自身（機構B/設計組込＋顧客認定型）。",
+   "caveats": "【射程の弱点】(1)幅が53〜100%と約2倍あり、実用的な絞り込みになっていない。(2)下限53%は『especially in the medical market』を機構の限定と読んだ場合の数字だが、この語は文法的には**排他ではなく強調**（医療で特に強い＝他でも成立する）なので、真値は下限よりも上限寄りにある公算が高い。ただしそれを原本から証明できないので幅として残した。(3)上限100%も literal には達しない——『certain products』『many OEMs』が確実に100%未満へ抑えるが、どれだけ抑えるかは開示が無く数量化できない。(4)医療の分母は切り口で変わる（エンドマーケット53% vs Medical Solutionsセグメント 479,765÷980,600=48.9%）。文言に合わせて53%を採ったが、これは判断であって一意ではない。\n\n【機構の読み方の弱点】(5)パックが引く文はItem 1A Risk Factorsにあり、その修辞上の役割は『大口顧客を失っても新規顧客で素早く埋められない』という**顧客集中リスクの説明**であって、堀の主張ではない。負う側が顧客であることは確かに機構を支持するが、提示の向きは防御的である。より堀の主張として読めるのはItem 1 Businessの行302のほうで、私はそちらを射程判断の主証拠に置いた。(6)機構分類はB（設計組込）＋顧客認定型で、第三者（規制当局・OEM以外の認定機関）が認定する型ではない。追試の実測ではB型は0/2・恒久毀損100%（CMTL）で最も弱い機構だった——NOVTの実現年率が2013→2026で+25.1%ながら**直近8年は+12.3%と失速**している事実と、この分類は整合的に読める。\n\n【検証していないこと】(7)**過年度10-Kとの逐語比較をしていない**。この文言が何年も一字同文で繰り越されている定型文（RMD/RemSleepで退けた型）かどうかは未確認で、確認すれば射程・機構の信頼度は上下しうる。ここが今回いちばん大きな未検証点。(8)Item 1の『certification』はすべてNovanta自身が取得するISO 9001/13485/14001/45001・cGMP＝v9.9.49が明示除外する自社取得型なので機構の証拠に**使っていない**。後続の審査官がこれを機構と取り違えないよう明記しておく。\n\n【寿命の弱点】(9)nullは「測れなかった」ではなく「会社が開示していない」。機構の期間がプラットフォーム寿命に結び付いていること自体は原本が断定しているので、寿命が長い可能性は高いが、年数は原本から出せない。(10)customer relationships の償却年数（9年・13年）は platform life の代理として使いたくなる数字だが、会計上の見積であり流用しなかった。これを寿命として使う判断はありうるが、それは原本の測定ではなく推定である。",
+   "verified": "scope=refuted／life=confirmed",
+   "verify_note": "引用8本すべて原本に逐語で実在。言い換え・切り貼り・文脈改変はゼロ。行番号も一致（機構文=Item 1 Business「Customers」小節／「lengthy qualification periods」=Item 1A、見出しは \"The loss of sales, or significant reductions in orders from, any major customers may have a material adverse effect on us.\"、上位カテゴリは \"Risks Relating to Our Business\"＝全社カテゴリ）。数値の突合も全部合う: 医療53%＋先端産業47%=100%（Note 19の表で2025 53/2024 55/2023 54を確認）／セグメント AET 500,835＋MS 479,765＝総売上 980,600 ✓／製品能力別 182,258+318,577+237,321+242,444＝980,600 ✓／MS÷総 48.93% ✓／上位10顧客42%・2 OEM顧客12%+11% ✓。'qualification' の出現は全文で2回のみ＝いずれも537行の同一段落（ただし「同一文中に2回」は不正確で、正しくは同一段落の別々の2文）。'life cycle' 系4回（170/299/415/768）も確認どおり。軽微な誤りは2件のみで結論に影響しない: Item 1A の範囲は403-605でなく403-580（581がItem 1B）／機構文の行番号を302としているが実体は299（同一段落・抽出差）。★追加検証（主張がcaveat(7)で「未検証」と自ら挙げた点）: FY2018 10-Kと逐語比較したところ、Item 1 の機構文は2018年から現存（\"Once certain of our products have been designed into...\"＝\"of our\"以外同文・8年継続）。一方 **Item 1A の「lengthy qualification periods」はFY2018 10-Kに 'qualification' が1回も無く、後年に追加された文言**。さらにFY2018版は \"We also sell directly to end users.\" と非OEM販売を明記し、機構文の主語も \"Customers of our Photonics, Vision, and Precision Motion segments\" とセグメント限定だった（FY2025で両方とも消えている）。\n\n【scope=refuted】潰せた。決め手は「同じ限定語を下限に適用していない」という非対称性と、53%の分母が別の表から来ていること。①機構文（行299・行537）は数値ゼロ。53%はItem 1 End Markets／Note 19の端末市場別売上構成という**別の開示**で、機構の射程を測っていない。②下限53%の前提「機構は少なくとも医療全部を覆う」は、機構文自身の \"certain products\"（医療の内側にも掛かる）と、行294が医療売上を \"hospital, life science, and other healthcare provider capital spending\" 由来と書くこと（非OEM需要の混在）で二重に破れる。決定的なのはFY2018 10-Kの同じ小節に \"We also sell directly to end users.\" が明記されていたこと（FY2025で削除）——非OEM販売の存在は会社自身が過去に述べている。③上限100%も主張自身が literal には達しないと認めており、両端とも誤りと分かっている帯は測定ではない。④原本にOEM組込売上の数量化はゼロ（'OEM' 全20箇所を確認）。導ける最も硬い下限は2 OEM顧客の23%だが、これは顧客集中の開示であって設計組込の証明ではない。⑤なお主張の射程の**質的**な読み（機構文が全社カテゴリでセグメント限定を持たない）は原本で確認でき正しい——Item 1A の上位見出しは \"Risks Relating to Our Business\"、Item 1の機構文も全社記述。CWのような「一部セグメントの記述に全社%を当てる」型ではない。壊れているのは射程の向きではなく、%を置いたこと自体。\n【life=confirmed】潰せなかった。試したのは4系統——(a)10-K全文の「N years」を機械抽出して全件の出所を特定（無形償却9/9/14・7/13/1、リース2026-2037・2078・更新1-10年、株式報酬1.08/1.54/3.85/3.37/4.84、PP&E減価償却）＝認定の寿命を測るものは一つも無く、主張はどれも流用していない。(b)'life cycle'系4回すべてに年数が付いていないことを確認。(c)契約側から年数を引けないか探すと、逆に行536が「最低購入数量を課す契約は一つも無い」と述べており拘束期間すら存在しない。(d)MD&A・バックログ・セグメント注記も走査したが product/platform life の年数開示なし。会社が開示していない以上 null が正しい。\n【機構についての付随所見（判定対象外だが記録）】パックが引く「lengthy qualification periods」は**FY2018 10-Kには存在しない**（'qualification' 出現ゼロ）後年追加の文言で、かつItem 1Aでの修辞上の役割は「大口顧客を失っても新規顧客で素早く埋められない」＝**Novanta自身が新規供給者として認定期間を満たす側**の記述（\"our ability to attract new customers and **satisfy any required qualification periods**\"）。誰が費用を負うかを書いておらず、NXPIを85→70へ下げたときの「誰が認定するのかを書いていない＝新規参入障壁の記述」とほぼ同型。85を支えるのはむしろItem 1の設計組込文（8年継続・完了形）のみで、機構分類はB（設計組込）＝追試でB型は0/2・恒久毀損100%（CMTL）の最弱型。",
+   "src": {
+    "form": "10-K",
+    "period": "2025-12-31",
+    "url": "https://www.sec.gov/Archives/edgar/data/1076930/000119312526064230/novt-20251231.htm"
+   },
+   "measured": "2026-08-11",
+   "note": "**記録であって選別の線ではない**——射程も寿命も合否に一切使わない。事前登録の検定(irr85_criteria・偽陽性率0.678)が「85の中の優劣を分ける入口の変数は無い」と出しており n=27 では新しい線を作れない。Ω・採点式・四関門・堀の関門・別枠85・配分は不変。"
   }
  },
  "dep": 12,

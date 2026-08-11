@@ -185,6 +185,11 @@ def merge_runs(runs, new):
 
 def write(d, path=None):
     d["generated"] = datetime.date.today().isoformat()
+    # **語彙はこの道具だけが持つ。** 表示側（門の🔔タブ）に同じ対応表を写すと
+    #   v9.9.65「同じ台帳を見る二つが違うことを言ってはいけない」を破る種になるので、
+    #   人が読む語をここで焼き込み、ブラウザはそれを出すだけにする。
+    for r in d.get("runs") or []:
+        r["label"] = OUTCOMES.get(r.get("outcome"), r.get("outcome") or "不明")
     path = path or PATH
     os.makedirs(os.path.dirname(path), exist_ok=True)
     json.dump(d, open(path, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
