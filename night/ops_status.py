@@ -120,13 +120,18 @@ def build():
         #     半導体5社・航空防衛4社で城の62.6%なのに、同じ束かの判断材料が業種ラベルだけだった。
         #   ③irr=85 の根拠監査——**回転盤にもCIにも登録が無く2026-08-05の54社のまま6日間止まっていた**
         #     （実データは15社）。KRMN が監視から漏れていたのと同じ形。
-        ("irr85mech", "機構文の年次diff",      "月1",     40,
+        ("irr85mech", "機構文の年次diff",      "毎営業日", 4,
          json_field("out/irr85_mech_diff.json", "generated"),
          "ci.yml（push/PR毎）／手動 python3 night/irr85_mech_diff.py --json", True),
         ("castlecorr", "城の相関（同時に落ちるか）", "月1",  40,
          json_field("out/castle_correlation.json", "generated"),
          "ops.yml 毎月2日／手動 python3 night/castle_correlation.py --json", True),
-        ("irr85audit", "irr=85の根拠監査",      "月1",     40,
+        # ⚠期限は「月1・40日」ではなく**毎営業日・4日**（2026-08-11 同日中の是正）。
+        #   この2本は ops.yml（月次）ではなく **ci.yml（push/PR毎＋平日22:00UTCのschedule）**で回るので、
+        #   実際の周期は毎営業日。40日にすると**CIが壊れて止まっても40日間 ✓ が出続ける**——
+        #   まさにこの道具が2026-08-05から6日間止まっていたのを誰も検出できなかったのと同じ形を、
+        #   期限の側から作り直すことになる。同じ ci.yml で回る irr85myrule（毎営業日・4日）と揃える。
+        ("irr85audit", "irr=85の根拠監査",      "毎営業日", 4,
          json_field("out/audit_irr85.json", "generated"),
          "ci.yml（push/PR毎）／手動 python3 night/audit_irr85.py", True),
         ("irr85myrule", "irr=85をあなたの基準で採点", "毎営業日", 4,
