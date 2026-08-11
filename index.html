@@ -3152,6 +3152,86 @@ const ccfYen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
 // **全額が投下可の各社へ配られる**（網へ回る分を差し引かない）。網へいくら回すかはDCA側で決める。
 // 配分の規約は不変: 各社の「目標ウェイト − 現在保有%」の不足分で按分（B案②・不足上位に厚い）。
 // 端数の行き先だけ変わった——網が無くなったので**買付順位1位へ寄せる**（pc順＝買う順の先頭）。
+/* ── 保有の記帳（2026-08-11 ユーザー「買付順位から保有を入れれるようにしたい」）───────────
+   買ったのはⅥ買付順位を見ながらなのに、記帳はⅦ資産へ行かないとできなかった。
+   **株数を入れるだけ**の口をⅥに置く。判定には一切触れない——Ω・四関門・堀の関門・
+   売却規律S1/S2/S3・配分の式はいずれも不変で、動くのは「現在保有%」という入力だけ
+   （それは元々Ⅶの実額から来ている＝正本の置き場は変えていない）。
+
+   ⚠ **合計株数**を書く欄にした（「+N株を足す」ではない）。理由は実データにある——
+   Ⅶの初期スナップショットは *円の評価額 v だけ* を持つ行がある（MSFT v=499,960・株数なし）。
+   ここへ「買った分」を足すと **v から 株数×現値 へ評価が切り替わり、1株ぶんの額に化ける**
+   ＝保有%が桁で狂い、按分がその月まるごと壊れる。合計を書かせれば起きない。
+   注文書の「+N」ボタンは**欄の数字を増やすだけ**で、保存は「記帳」を押したときだけ。 */
+function ccfPfLoad(){ try{const o=JSON.parse(localStorage.getItem('pf:portfolio')||'null');
+  return (o&&Array.isArray(o.positions))?o:null;}catch(e){return null;} }
+function ccfPfPos(t){ const o=ccfPfLoad(); if(!o)return null;
+  const T=String(t||'').toUpperCase();
+  return o.positions.find(p=>String(p.t||'').toUpperCase()===T)||null; }
+function ccfHid(t){ return 'hsh_'+String(t||'').replace(/[^A-Za-z0-9]/g,'_'); }
+function ccfBumpShares(t,n){ const el=document.getElementById(ccfHid(t)); if(!el)return;
+  el.value=Math.max(0,(parseFloat(el.value)||0)+n); el.focus(); }
+async function ccfSaveShares(t){
+  const el=document.getElementById(ccfHid(t)); if(!el)return;
+  const sh=parseFloat(el.value);
+  if(!(sh>=0)){ alert('株数は0以上の数字で入れてください（0は「持っていない」の意味）'); return; }
+  const T=String(t).toUpperCase(), nm=el.dataset.nm||T, ccy=el.dataset.ccy||'', px=parseFloat(el.dataset.px)||0;
+  let o=ccfPfLoad();
+  if(!o)o={asof:new Date().toISOString().slice(0,10),fx:0,positions:[]};
+  let p=o.positions.find(x=>String(x.t||'').toUpperCase()===T);
+  if(!p){ p={t:T,nm:nm,sleeve:'castle',kind:'個別',ccy:ccy||'USD'}; o.positions.push(p); }
+  // 実額 v しか無かった行に株数を入れる＝評価の作り方が変わるので、**黙って切り替えない**
+  if(!(+p.sh>0)&&(+p.v>0)&&sh>0&&!confirm(
+      `${nm} は円の実額 ¥${(+p.v).toLocaleString('ja-JP')} で記録されています。\n`
+      +`株数 ${sh} を入れると、評価額は「株数×現値」に切り替わります。\n`
+      +`${sh} は**保有の合計**株数ですか？（買い足した分だけなら「いいえ」）`)) return;
+  p.sh=sh; if(px>0)p.npx=px; if(!p.ccy)p.ccy=ccy||'USD';
+  if(sh>0)delete p.v;                       // 二重に持たない（v と sh×npx が食い違う元）
+  try{ localStorage.setItem('pf:portfolio',JSON.stringify(o)); }
+  catch(e){ alert('保存できませんでした: '+e); return; }
+  el.style.outline='2px solid var(--jade)';
+  try{ const f=document.getElementById('pfFrame'); if(f)f.contentWindow.location.reload(); }catch(e){}
+  try{ if(window.ccfState&&ccfState.banner)ccfState.banner(); }catch(e){}
+  try{ await renderPlan(); }catch(e){}      // 保有%が動く＝按分も注文書も引き直す
+}
+/* Ⅵ買付順位の中の「✍ 保有の記帳」パネル。**表示と入力だけ**——書き込む先は Ⅶ資産と同じ
+   `pf:portfolio` ひとつ（正本を増やさない＝二つの置き場が食い違う型を作らない）。
+   出す行は**買付順位に載っている社**（投下可＋門外の明示判断）——ここで買った社を、
+   ここで記帳できるようにするのが目的だから。それ以外の保有はⅦ資産で編集する。 */
+function ccfHoldingsEntry(pass,pxInfo,sug,tw){
+  pass=pass||[]; sug=sug||{}; tw=tw||(()=>null);
+  if(!pass.length)return '';
+  const rows=pass.map(r=>{
+    const T=String(r.t||'').toUpperCase(); if(!T)return '';
+    const pi=pxInfo?pxInfo(r):null, p=ccfPfPos(T), id=ccfHid(T);
+    const cur=+((p||{}).sh)||0, vOnly=!(cur>0)&&(+((p||{}).v)>0);
+    const n=sug[T]||0;
+    const esc=x=>String(x==null?'':x).replace(/"/g,'&quot;');
+    const now=vOnly?`<b style="color:#d69a3c">円の実額 ¥${(+p.v).toLocaleString('ja-JP')}（株数なし）</b>`
+      :p?`現在 <b>${cur}</b>株`:'<span style="color:var(--dim)">未記帳</span>';
+    const val=cur>0&&pi?`　<span style="white-space:nowrap;color:var(--dim)">≒${ccfYen(Math.round(cur*pi.jpy))}</span>`:'';
+    return `<div class="planrow" style="padding:5px 7px;border-radius:7px;border-bottom:1px dashed rgba(201,166,74,.18)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:12.5px;color:var(--ink)">${ccfIcon(r.nm)}${r.nm}</span>
+        <span style="white-space:nowrap">
+          <input id="${id}" type="number" min="0" step="1" value="${cur||''}" placeholder="0"
+            data-nm="${esc(r.nm)}" data-ccy="${esc(pi?pi.ccy:'')}" data-px="${pi?pi.px:''}"
+            onkeydown="if(event.key==='Enter')ccfSaveShares('${T}')"
+            style="width:5.4em;padding:4px 7px;background:rgba(0,0,0,.28);border:1px solid var(--gold-line);border-radius:6px;color:var(--gold-bright);font-size:13px;text-align:right;font-family:inherit">
+          <span style="font-size:11.5px;color:var(--muted)">株</span>
+          ${n>0?`<button onclick="ccfBumpShares('${T}',${n})" title="今月の注文書の${n}株を欄に足す（保存はしない）" style="padding:3px 8px;background:transparent;border:1px solid rgba(84,184,138,.5);border-radius:6px;color:var(--jade);font-size:11px;cursor:pointer">+${n}</button>`:''}
+          <button onclick="ccfSaveShares('${T}')" style="padding:3px 10px;background:linear-gradient(180deg,rgba(201,166,74,.26),rgba(201,166,74,.08));border:1px solid var(--gold-line);border-radius:6px;color:var(--gold-bright);font-size:11.5px;cursor:pointer">記帳</button>
+        </span>
+      </div>
+      <div style="font-size:11px;color:var(--dim);margin-top:1px">${now}${val}${tw(r)!=null?`　目標${tw(r)}%`:''}${pi?`　<span style="white-space:nowrap">1株 ${pi.label}</span>`:'　<span style="color:#d69a3c">現値未取得（株数は記帳できるが評価額は出ない）</span>'}</div>
+    </div>`;}).join('');
+  return `<details class="why" style="margin-top:10px"><summary style="color:var(--gold-bright);font-size:12.5px">✍ 保有の記帳（買ったら株数をここに入れる）</summary><div class="why-body">
+    <div style="font-size:11px;color:var(--dim);margin-bottom:5px"><b>欄に書くのは「保有の合計株数」</b>——買い足した分ではない。
+    <b>「+N」は欄の数字を増やすだけ</b>で、保存は<b>記帳</b>を押したときだけ。記帳すると<b>Ⅶ保有と同じ場所</b>（<code>pf:portfolio</code>）に入り、
+    現在保有%が動くので<b>按分と注文書はその場で引き直す</b>。<b>判定は動かない</b>——Ω・四関門・堀の関門・売却規律S1/S2/S3・目標ウェイトの式はいずれも不変。
+    <br>⚠ 記帳のあとは<b>門の頭の帯から state.json を書き出してコミット</b>すること（この端末にしか無い決定なので、消えると戻らない）。</div>
+    ${rows}</div></details>`;
+}
 function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
   // v9.9.90（2026-08-05 ユーザー要望「何株買うかまで指示してほしい」）: 円の按分に加えて株数を出す。
   //   価格は盤(out/dashboard.json)の現値＋ドル円で円換算。取れない銘柄は株数を出さない（ルール7:
@@ -3159,6 +3239,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
   //   株数は現値換算の目安——指値が現値より下なら同じ円でもう1株買えることがある。正本は円の按分。
   pass=pass||[]; gap=gap||(()=>0); passGap=passGap||0; tw=tw||(()=>0);
   const AMT=ccfMonthAmt();
+  const sug={};                 // 注文書が出した推奨株数（記帳の「+N」で使う）
   const nm=[]; if(passGap>0){ pass.forEach(r=>{ const p=100*(gap(r)/passGap); if(p>=0.5)nm.push({n:r.nm,p,tw:tw(r),r}); }); }
   if(AMT>0&&nm.length){
     let s=0; nm.forEach(x=>{ x.yen=Math.floor(AMT*x.p/100/100)*100; s+=x.yen; });
@@ -3260,6 +3341,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
         }
       })();
       const buyL=bs.filter(b=>b.sh>0), skipL=known.filter(b=>b.sh===0);
+      buyL.forEach(b=>{ if(b.x.r&&b.x.r.t)sug[String(b.x.r.t).toUpperCase()]=b.sh; });
       // v9.9.112: 注文書の各行も**銘柄名の行＋説明の行**に分ける。旧実装は長い説明に nowrap を
       //   掛けて flex で横に並べていたので、携帯の幅では説明が右へはみ出し、
       //   押し出された銘柄名が「6857 ア／ド／バ／ン…」と1文字ずつ縦に潰れていた。
@@ -3309,6 +3391,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
     <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">🟢投下可の各社へ、<b>目標ウェイト−現在保有%</b>の不足分で按分（不足の大きい銘柄に厚い）。<b>個別枠を入れると📋注文書（何株買うか）だけになる</b>——按分の円は各行に「按分¥○○」として残る（円が正本・株数は執行案）。未入力なら按分%の一覧が出て、番号は<b>買う順</b>（pc順位）。</div>
     ${amtRow}
     ${body}
+    ${ccfHoldingsEntry(pass,pxInfo,sug,tw)}
     <div style="font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.7">指値は階段で置く——1/2を現値近傍〜開通ライン・1/2をfair線（PER clamp(8+g,16,30)）。投下可は現値で門X成立済みゆえ開通線は現値以上にある。${AMT>0?'100円単位で丸め、<b>端数は買付順位1位へ寄せて合計を個別枠に一致させる</b>。<b>株数は盤の現値＋ドル円で換算した目安</b>（正本は円の按分。指値が現値より下に約定すれば同じ円で1株多く買えることがある）。日本株は<b>単元未満株（S株・かぶミニ等）で1株から</b>買う。0株の月は無理に買わない——翌月に合算するか網へ。':''}1銘柄の目標ウェイトは<b>城60%÷投下可の社数（等ウェイト）・上限8%</b>（傾ける信号が実測で無いため等ウェイト）。上限8%＝¼ケリー相当。<b>売りは株価では動かさない（S1/S2/S3のみ）。</b><br>※<b>指数（ETF）の積立は門の外</b>——門は「どれを・買うか否か」を裁く場で、指数は常に買ってよい対象ゆえ門にかけない。毎月いくら指数へ回すかはDCA側で決める（正本はCLAUDE.md 月次運用）。<b>ただし「どのETFを土台にするか」は別の問い</b>——<a href="ami.html" style="color:var(--gold-bright)">◈ 網の門（ETFの審査）↗</a> がコスト・土台の広さ・存続性・器で裁き、<b>城とのルックスルー重複</b>を実測する。（別枠であって正本ではない。門Ωの採点・売却規律・四関門は一切上書きしない）</div>
   </div>`;
 }
@@ -4960,9 +5043,10 @@ async function renderPlan(){
   // v9.9.90: 買付プランの株数換算。盤の現値（日本株=JPY直・米国株=USD×ドル円）で円→株数。
   //   ドル円が取れない/盤に無い銘柄は null＝株数を出さない（ルール7: 推測の価格を置かない）
   const fxU=(typeof __mkt!=='undefined'&&__mkt&&__mkt.fx&&+__mkt.fx.USDJPY)||0;
+  // px/ccy も返す（2026-08-11・保有の記帳で「株数×現値」を作るのに要る）。円換算は従来どおり。
   const pxInfo=r=>{const q=__Q[r.t]; if(!(q&&q.px>0))return null;
-    if(q.ccy==='JPY')return{jpy:q.px,label:`¥${q.px.toLocaleString('ja-JP')}`};
-    if(fxU>0)return{jpy:q.px*fxU,label:`$${q.px.toLocaleString('ja-JP',{maximumFractionDigits:2})}≒¥${Math.round(q.px*fxU).toLocaleString('ja-JP')}`};
+    if(q.ccy==='JPY')return{jpy:q.px,label:`¥${q.px.toLocaleString('ja-JP')}`,px:q.px,ccy:'JPY'};
+    if(fxU>0)return{jpy:q.px*fxU,label:`$${q.px.toLocaleString('ja-JP',{maximumFractionDigits:2})}≒¥${Math.round(q.px*fxU).toLocaleString('ja-JP')}`,px:q.px,ccy:'USD'};
     return null;};
   const planBox=ccfMonthPlanBox(planRows,gap,passGap,tw,CITY,pxInfo);
   if(passIn.length){
