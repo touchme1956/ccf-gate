@@ -809,6 +809,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <div class="tategaki" aria-hidden="true">壊れない複利の門</div>
 <div class="tategaki tr" aria-hidden="true">Compounding, Unbroken — CCF Ω</div>
 <nav class="pgnav">
+ <button id="tab10" onclick="showPage(10)" style="color:var(--gold-bright)">📋 今日</button>
  <button id="tab6" onclick="showPage(6)" style="color:var(--gold-bright)">📊 盤</button>
 <button id="tab9" onclick="showPage(9)">🔔 イベント</button>
 <button id="tab1" onclick="showPage(1)">Ⅰ 解説</button>
@@ -823,6 +824,22 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
      Ⅳ台帳の中に置いていたら、既定で開く盤や採点機では警告が出なかった（実測）。
      失うと戻らないデータの話なので、どのタブを開いていても見える位置に置く。 -->
 <div class="wrap"><div id="stateBar"></div><div id="stateBox"></div></div>
+<!-- 📋今日（v9.9.137・2026-08-11 ユーザー要望「毎日何をすればいいか分からない」）:
+     **集計は端末の単一実装 night/today.py → out/today.json**。ここは描くだけ（dashboard.json と同じ作法）。
+     ⚠**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。
+     ★この画面の本体は「読めなかった入力」を必ず出すところ。2026-08-11 の精査で、通知(notify_issues)は
+     out/ を全消ししても「✓ 行動が要ることは無い」と印字して exit 0 になり、第四の関門も pending.json の
+     キーを items→rows に改称するだけで VRSK が投下可に入る（どちらも実測）＝**盲目のときに異常なしへ倒れる**。
+     だから「今日やることはありません」は、**入力を全部読めたときにだけ**言う。 -->
+<div id="pg10" class="pg on">
+ <h1 class="serif">📋 今日</h1>
+ <p class="intro"><b>今日やることだけを一枚に。</b>ここに何も無ければ、今日は見るだけでよい。<details class="why" data-fold="2"><summary>つづき</summary><div class="why-body"><b>すべて情報であって判定ではない</b>——売りは S1/S2/S3・買いは四関門のみで動く。集計は <code>night/today.py</code>（out/today.json）で、期限の判定は回転盤 <code>ops_status.build()</code> をそのまま呼ぶ＝二重実装を作らない（v9.9.65）。<b>「読めなかった入力」を必ず出す</b>のがこの画面の要で、検出器が黙ったときに「異常なし」と読ませないため（絶対のルール7の親戚）。細かい内訳は 🔔イベントタブ。</div></details></p>
+ <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+   <button onclick="ccfToday(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
+   <span id="tdAsof" style="font-size:11.5px;color:var(--dim)"></span>
+ </div>
+ <div id="tdBox"></div>
+</div>
 <div id="pg9" class="pg">
  <h1 class="serif">🔔 イベント</h1>
  <p class="intro"><b>運用サイクル14本の回転状態</b>・監視リストの <b>8-K警報</b>（減損2.06・退任5.02・非依拠4.02・破産1.03・上場廃止通知3.01）・<b>決算</b>（発表イベント・次回予定）を一枚で。<details class="why" data-fold="2"><summary>つづき</summary><div class="why-body"><b>すべて情報であって判定ではない</b>——警報は各行の「審査」で門2再審査の依頼文を作って回すための気づき。売りは S1/S2/S3・買いは四関門のみで動く。データ源: out/ops_status.json／out/events_watch.json（events.yml が平日22:10UTCに毎日更新）／out/next_earnings.json（ops.yml が毎月2日に再生成）。</div></details></p>
@@ -1258,13 +1275,13 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
   <div class="badge">格 と 間 を 分 か つ</div>
 </div>
 </div>
-<div id="pg2" class="pg on">
+<div id="pg2" class="pg">
 <section id="scorer">
 
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.136</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.137</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3796,6 +3813,112 @@ async function ccfDash(btn){
 // 8-K警報(watch_events.py)と決算(発表イベント・次回予定)の表示専用タブ。判定には一切使わない——
 // 警報は門2再審査の依頼文へ回す気づき。データは同一オリジンの静的JSONを読むだけ(盤と同じ配管・鍵不要)。
 // 取れなかったものは「未生成」と書く。前回値やゼロで埋めない(ルール7)。
+// ── 📋 今日（v9.9.137・2026-08-11 ユーザー要望「毎日何をすればいいか分からない」）──────────
+//   **集計は端末の単一実装 night/today.py（out/today.json）**。ここは描くだけ。
+//   ⚠判定には一切使わない——Ω・四関門・売却規律S1/S2/S3・配分のどれにも触れない。
+//   ★この画面の要は「読めなかった入力」を必ず出すこと。実測(2026-08-11)で、通知は out/ を全消ししても
+//     「✓ 行動が要ることは無い」と印字して exit 0 になり、第四の関門も pending.json のキーを
+//     items→rows に改称するだけで VRSK が投下可に入る＝**盲目のときに異常なしへ倒れる**。
+//     だから「今日やることはありません」は **入力を全部読めたときにだけ** 言う。
+//   門(ブラウザ)だけが判る2件（未書き出しの決定・台帳に入っていないパック）はここで足す。
+//     判定は再実装せず ccfState.isDirty() と ccfCheckPacksFresh() を呼ぶ（v9.9.65の掟）。
+async function ccfToday(btn){
+  const box=document.getElementById('tdBox'); if(!box)return;
+  const lab=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='読み込み中…';}
+  const j=async u=>{try{const r=await fetch(u+'?t='+Date.now());return r.ok?await r.json():null;}catch(e){return null;}};
+  const td=await j('out/today.json');
+  // 門だけが判る2件。**null は「判らなかった」で 0件とは別物**（ルール7）
+  let dirty=null; try{ if(window.ccfState&&ccfState.isDirty) dirty=!!ccfState.isDirty(); }catch(e){}
+  let miss=null;  try{ if(typeof ccfCheckPacksFresh==='function') miss=await ccfCheckPacksFresh(); }catch(e){}
+  if(btn){btn.disabled=false;btn.textContent=lab;}
+
+  const esc=t=>String(t==null?'':t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const asof=document.getElementById('tdAsof');
+  if(asof)asof.textContent=td?('集計 '+(td.generated||'—')+'　投下可 '+((td.buy||[]).length)+'社: '+(td.buy||[]).join(' ')):'';
+
+  // out/today.json が読めない＝**この画面は何も言えない**。ここで「異常なし」に倒れない。
+  if(!td){
+    box.innerHTML='<div style="padding:15px;border:1px solid rgba(207,95,72,.5);border-left:4px solid #cf5f48;'
+      +'border-radius:9px;background:rgba(207,95,72,.07)"><b style="color:#ff9d8a;font-size:15px">⚠ 今日の集計が読めません</b>'
+      +'<div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px">out/today.json が取得できませんでした。'
+      +'<b>「今日やることはありません」ではありません</b>——測れていないだけです。'
+      +'<br>手元で <code>python3 night/today.py --json</code> を回すか、CI（ci.yml）の実行を確認してください。</div></div>';
+    return;
+  }
+
+  const chip=(t,fg,bg)=>'<span style="font-size:10px;padding:1px 8px;border-radius:9px;background:'+bg+';color:'+fg+';white-space:nowrap">'+t+'</span>';
+  const card=(x,col)=>'<div style="border:1px solid var(--line);border-left:3px solid '+col+';border-radius:8px;padding:9px 12px;margin:6px 0;background:rgba(255,255,255,.015)">'
+      +'<div style="font-size:13.5px;font-weight:600;color:var(--ink)">'+esc(x.title)+'</div>'
+      +(x.why?'<div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px">'+esc(x.why)+'</div>':'')
+      +(x.how?'<div style="font-size:11px;color:var(--dim);margin-top:4px">→ '+esc(x.how)+'</div>':'')
+      +'</div>';
+  const sec=(title,inner,note)=>'<div style="margin-bottom:16px;padding:13px 15px;background:var(--panel);border:1px solid var(--line);border-radius:9px">'
+      +'<div style="font-size:13.5px;font-weight:600;color:var(--gold-bright);margin-bottom:8px">'+title+'</div>'+inner
+      +(note?'<div style="font-size:10.5px;color:var(--dim);margin-top:7px">'+note+'</div>':'')+'</div>';
+
+  // 門だけが判るぶんを「いま止まっている」に足す（出所を必ず書く）
+  const bnow=[];
+  if(dirty===true)bnow.push({title:'手元の決定がまだ repo に書き出されていません',
+    why:'株数・売却記録・目標ウェイト・点灯日は out/ に正本が無く、消えると戻りません',
+    how:'画面上の帯の①〜④（書き出す → 貼る → コミット → 入れた）'});
+  if(miss===null)bnow.push({title:'台帳の鮮度が判りません',
+    why:'out/packs_index.json が読めない＝**取り込み漏れが無いとは言えない**', how:''});
+  else if(miss&&miss.length)bnow.push({title:'台帳に入っていないパックが '+miss.length+'社',
+    why:miss.slice(0,10).join(' ')+(miss.length>10?' …':''),
+    how:'Ⅳ台帳の「⭳ 全パック一括取込」（自動では取り込みません）'});
+
+  const N=(td.now||[]).length+bnow.length, T=(td.today||[]).length;
+  const blind=td.blind||[];
+  let html='';
+
+  // 見出し——**blind が1件でもあれば「ありません」と言わない**
+  if(N+T===0&&blind.length===0){
+    html+='<div style="padding:18px;border:1px solid rgba(84,184,138,.4);border-left:4px solid #54b88a;border-radius:9px;background:rgba(84,184,138,.06);margin-bottom:16px">'
+      +'<b style="color:#8fc9a4;font-size:16px">今日やることはありません</b>'
+      +'<div style="font-size:12px;color:var(--dim);margin-top:5px">入力 '+((td.counts||{}).src||0)+'本すべて読めたうえでの「なし」です。今日は見るだけでよい。</div></div>';
+  }else{
+    html+='<div style="padding:16px;border:1px solid '+(N?'rgba(207,95,72,.5)':'rgba(214,154,60,.45)')+';border-left:4px solid '+(N?'#cf5f48':'#d69a3c')+';border-radius:9px;background:'+(N?'rgba(207,95,72,.07)':'rgba(214,154,60,.06)')+';margin-bottom:16px">'
+      +'<b style="color:'+(N?'#ff9d8a':'#d6b06c')+';font-size:16px">今日やること '+(N+T)+'件</b>'
+      +'<div style="font-size:12px;color:var(--ink-soft);margin-top:5px">'
+      +(N?'<b>いま止まっている／壊れている '+N+'件</b>　':'')+(T?'今日見るもの '+T+'件':'')+'</div></div>';
+  }
+
+  if(N)html+=sec('⚠ いま止まっている／壊れている（'+N+'件）',
+    bnow.map(x=>card(x,'#cf5f48')).join('')+(td.now||[]).map(x=>card(x,'#cf5f48')).join(''),
+    '検算しても消えない種類の破損・止まった周期作業・根拠の穴。放置すると次に線が動いたときに効きます。');
+  if(T)html+=sec('📌 今日見るもの（'+T+'件）',(td.today||[]).map(x=>card(x,'#d69a3c')).join(''),
+    '8-K警報・決算・門外例外の見張り。<b>気づきであって判定ではありません</b>——売りは S1/S2/S3 のみで動きます。');
+
+  const M=(td.month||[]).length;
+  if(M)html+='<details class="why" style="margin-bottom:16px"><summary>🗓 今月（'+M+'件）</summary><div class="why-body">'
+    +(td.month||[]).map(x=>card(x,'rgba(93,140,194,.6)')).join('')+'</div></details>';
+
+  // ★ここがこの画面の本体
+  if(blind.length){
+    html+=sec('⚠ 読めなかった入力（'+blind.length+'件）',
+      blind.map(b=>card({title:esc(b.label)+'（'+esc(b.path)+'）',why:'読めなかった理由: '+esc(b.why),how:''},'#cf5f48')).join(''),
+      '<b>この分は「異常なし」ではなく「測っていない」</b>です。上の件数はこの分を含みません。');
+  }else{
+    html+='<div style="font-size:11.5px;color:var(--dim);margin-bottom:14px;padding:8px 12px;border:1px solid rgba(84,184,138,.25);border-radius:8px">'
+      +'✅ 読めなかった入力 0件 — 入力 '+((td.counts||{}).src||0)+'本すべて読めました（＝上の「なし」は本物）</div>';
+  }
+
+  const W=td.waiting||[];
+  if(W.length){
+    const k={}; W.forEach(w=>{k[w.kind||'—']=(k[w.kind||'—']||0)+1;});
+    html+='<details class="why"><summary>⏳ 待ち（引き金つき）'+W.length+'件　'
+      +Object.keys(k).map(x=>x+' '+k[x]).join('・')+'</summary><div class="why-body">'
+      +'<div style="font-size:11.5px;color:var(--dim);margin-bottom:8px">'
+      +'<b>件数を減らすこと自体は目的ではありません</b>——大半は「今日は0社しか動かない」保険で、'
+      +'条件が満たされたときに上の段へ上がってきます。正本は todo_list.json（🔔イベントタブの「📌やるべきこと」に全文）。</div>'
+      +W.slice(0,40).map(w=>'<div style="font-size:12px;padding:3px 0;border-top:1px solid rgba(255,255,255,.04)">'
+        +chip(esc(w.kind),'#c9c2b2','rgba(255,255,255,.08)')+' '+esc(w.title)+'</div>').join('')
+      +(W.length>40?'<div style="font-size:11px;color:var(--dim);margin-top:6px">…ほか '+(W.length-40)+'件</div>':'')
+      +'</div></details>';
+  }
+  box.innerHTML=html;
+  if(typeof ccfPaint==='function')ccfPaint(document.getElementById('pg10'));
+}
 async function ccfEvents(btn){
   const box=$('evBox'); if(!box)return;
   const lab=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='読込中…';}
@@ -5386,7 +5509,7 @@ async function renderLog(){
 }
 function toggleLog(ek){const b=document.getElementById('bd_'+ek),a=document.getElementById('ar_'+ek);if(!b)return;const open=b.style.display!=='none';b.style.display=open?'none':'block';if(a)a.textContent=open?'▸':'▾';}
 async function delLog(k){if(!await uiConfirm('この検証記録を削除しますか？'))return;try{await store.delete(k);renderLog();}catch(e){}}
-function showPage(n){for(let i=1;i<=9;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();if(n===9&&typeof ccfEvents==='function')ccfEvents();window.scrollTo({top:0});try{const _t=document.getElementById('tab'+n);if(_t&&_t.scrollIntoView)_t.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}catch(e){}if(typeof ccfNavFade==='function')ccfNavFade();
+function showPage(n){for(let i=1;i<=10;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();if(n===9&&typeof ccfEvents==='function')ccfEvents();if(n===10&&typeof ccfToday==='function')ccfToday();window.scrollTo({top:0});try{const _t=document.getElementById('tab'+n);if(_t&&_t.scrollIntoView)_t.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}catch(e){}if(typeof ccfNavFade==='function')ccfNavFade();
   /* 五彩(v9.9.130): 章の色をナビへ渡し、描き直された箱にも色を配る */
   if(typeof ccfChapTint==='function')ccfChapTint(n);
   if(typeof ccfPaint==='function')ccfPaint(document.getElementById('pg'+n));}
@@ -5485,8 +5608,8 @@ async function ccfCheckPacksFresh(){
     // 索引にあるのに台帳に無い＝**まだ取り込んでいない社**。名前の揺れは safeKey と同じ規則で吸収する
     const miss=idx.map(f=>String(f).replace('_gate_pack.json',''))
                   .filter(t=>![...have].some(k=>k.split(/[\s_]/)[0].toUpperCase()===t.toUpperCase()));
-    const el=document.getElementById('packFreshBar'); if(!el)return;
-    if(!miss.length){el.style.display='none';return;}
+    const el=document.getElementById('packFreshBar');
+    if(!el||!miss.length){if(el)el.style.display='none';return miss;}
     el.style.display='block';
     el.innerHTML='<b>⭳ 台帳に入っていないパックが '+miss.length+'社あります</b>'
       +'<span style="color:var(--muted);font-size:12.5px"> — '+miss.slice(0,12).join(' ')
@@ -5495,7 +5618,8 @@ async function ccfCheckPacksFresh(){
       +'<div style="color:var(--muted);font-size:12px;margin-top:4px">'
       +'※**自動では取り込まない**——一括取込は台帳のレコードを置き換えるので、'
       +'Ⅲ採点機で直した値を無言で巻き戻す事故を避けるため、押すかどうかは人が決める。</div>';
-  }catch(e){}
+    return miss;                       // v9.9.137: 📋今日タブが同じ判定を再実装しないため返す
+  }catch(e){return null;}              // ⚠ null は「判らなかった」＝**0件と区別する**（ルール7）
 }
 store.init().then(async()=>{await ccfSyncFromLocal();compute();renderLedger();if(typeof ccfRenderAllQueues==='function')ccfRenderAllQueues();ccfCheckPacksFresh();
   /* v9.9.131: 人の決定(state.json)を repo から読む。**採用は repo のほうが新しいときだけ**で、
@@ -5504,6 +5628,11 @@ store.init().then(async()=>{await ccfSyncFromLocal();compute();renderLedger();if
         「手元」と見なして判定してしまう。 */
   try{ if(window.ccfState){ await ccfState.load(); ccfState.banner('stateBar');
        if(typeof renderLedger==='function' && ccfState.last && ccfState.last.verdict==='adopt') renderLedger(); } }catch(e){}
+  // v9.9.137: 📋今日 は既定で開くタブなので、**起動時にも描く**。
+  //   showPage() はクリックのときしか走らないので、これが無いと初回は白紙のまま
+  //   ——白紙は「今日やることはありません」に見えるので、この画面ではいちばん危ない壊れ方。
+  //   ccfState.load() の**後**に置く（未書き出しの判定に isDirty を使うため）。
+  try{ if(typeof ccfToday==='function') await ccfToday(); }catch(e){}
 });
 
 </script>

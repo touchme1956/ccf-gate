@@ -319,6 +319,16 @@ jobs:
       #   **古い作業リストは無いより悪い**——「まだ残っている」と嘘をつくので本物が埋もれる。
       #   あわせて gate_exceptions.json ↔ todo_list.json を突き合わせる
       #   （片方にだけ足すと**四半期の財務監視が付かない＝警報を切ったまま乗る**）。
+      # 📋今日（v9.9.137）: 「今日、何をすればいいか」を一枚に集める。**表示専用・判定には一切使わない。**
+      #   ⚠この道具は out/today.json を書く前に **錨(out/score_all.json)が読めているかを検問**し、
+      #     読めなければ **書かずに exit 1** で落ちる（空で上書きすると画面が
+      #     「今日やることはありません」と嘘をつくため）。だから continue-on-error を付けない。
+      #   ⚠**この step は他の検出器より後**に置くこと——上流が書いた JSON を読んで集計するので、
+      #     先に置くと1日古い在庫を今日の答えとして出す（market.yml が validate_fail を
+      #     昨日の答案で採点していたのと同じ型）。
+      - name: 📋今日の集計 today（錨が読めなければ書かずに落ちる）
+        run: python3 night/today.py --json | tail -30
+
       - name: 作業リストの健康診断 audit_todo（表示のみ）
         continue-on-error: true
         run: python3 night/audit_todo.py --json | tail -25
@@ -392,7 +402,7 @@ jobs:
           #   **第四の関門が読む pending.json は手で回したときしか更新されなかった**。
           #   out/irr85_myrule.json は新着の検出に前回の在庫を使うので、
           #   コミットしないと**毎回「全社が新着」になり新着の意味が消える**。
-          git add out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json night/reaudit_queue.json 2>/dev/null || true
+          git add out/today.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json night/reaudit_queue.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"
           else
