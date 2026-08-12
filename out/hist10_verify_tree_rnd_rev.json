@@ -1,0 +1,5569 @@
+{
+ "generated": "2026-08-12",
+ "tool": "night/hist10_verify_tree_rnd_rev.py",
+ "prereg": {
+  "file": "out/hist10_prereg.json",
+  "version": "v3",
+  "lift": 0.15,
+  "min_numerator": 20,
+  "incremental_max_caught": 0.7,
+  "note": "線は事前登録のもの。この道具は一つも作らない"
+ },
+ "candidate": {
+  "angle": "E（決定木・入れ子CV）",
+  "label_in_request": "f2_rnd_r 上位1/4 ∧ f2_rev 上位1/4（第3分割は fold で変わる）",
+  "target": "y10（tr_cagr>=10%）",
+  "pop": "P_quality|cov90_14",
+  "direction": "up",
+  "claimed": {
+   "n_group": 59,
+   "numerator": 40,
+   "lift": 0.2595,
+   "base": 0.4184,
+   "n_group_companies": 28,
+   "numerator_companies": 20
+  },
+  "explorer_verdict": "判定不能（gate1 は通ったが業種ゲートで落ちた）"
+ },
+ "independence": "hist10_angleE / hist10_diag / hist10_angleD を import していない。panel と targets の生JSONから木・fold・分位・ゲートを独立に実装した",
+ "check1_reproduce": {
+  "analysis_set": {
+   "n_rows": 901,
+   "n_companies": 382,
+   "claimed_rows": 901,
+   "claimed_companies": 382
+  },
+  "independent": {
+   "n_rows": 901,
+   "base": 0.4184,
+   "n_group": 59,
+   "numerator": 40,
+   "n_group_companies": 28,
+   "numerator_companies": 20,
+   "p_group": 0.678,
+   "lift": 0.2595,
+   "lift_ok": true,
+   "min_num_ok_companies": true,
+   "min_num_ok_rows": true,
+   "per_vintage": {
+    "2016": {
+     "n": 296,
+     "base": 0.4291,
+     "n_group": 17,
+     "k": 12,
+     "p_group": 0.7059,
+     "lift": 0.2768
+    },
+    "2017": {
+     "n": 295,
+     "base": 0.4203,
+     "n_group": 19,
+     "k": 13,
+     "p_group": 0.6842,
+     "lift": 0.2639
+    },
+    "2018": {
+     "n": 310,
+     "base": 0.4065,
+     "n_group": 23,
+     "k": 15,
+     "p_group": 0.6522,
+     "lift": 0.2457
+    }
+   },
+   "sign_ok": true,
+   "gate1_pass": true
+  },
+  "claimed": {
+   "n_rows": 901,
+   "base": 0.4184,
+   "n_group": 59,
+   "numerator": 40,
+   "n_group_companies": 28,
+   "numerator_companies": 20,
+   "p_group": 0.678,
+   "lift": 0.2595,
+   "lift_ok": true,
+   "min_num_ok": true,
+   "min_num_ok_row_reading": true,
+   "min_num_unit": "相異なる会社（登録の『20社』の字義。行で数える版も併記）",
+   "per_vintage": {
+    "2016": {
+     "n": 296,
+     "base": 0.4291,
+     "n_group": 17,
+     "k": 12,
+     "p_group": 0.7059,
+     "lift": 0.2768
+    },
+    "2017": {
+     "n": 295,
+     "base": 0.4203,
+     "n_group": 19,
+     "k": 13,
+     "p_group": 0.6842,
+     "lift": 0.2639
+    },
+    "2018": {
+     "n": 310,
+     "base": 0.4065,
+     "n_group": 23,
+     "k": 15,
+     "p_group": 0.6522,
+     "lift": 0.2457
+    }
+   },
+   "sign_stability_applicable": true,
+   "sign_ok": true,
+   "effective_required_lift": 0.15
+  },
+  "match": true,
+  "fold_rules": [
+   {
+    "fold": 0,
+    "depth": 3,
+    "mode": "best_leaf",
+    "inner_score": 0.4769,
+    "n_rule_train": 21,
+    "n_rule_test": 12,
+    "splits": [
+     {
+      "level": 0,
+      "cond": "f2_rnd_r>=q75",
+      "col": "f2_rnd_r",
+      "n_node": 728
+     },
+     {
+      "level": 1,
+      "cond": "f2_rev>=q75",
+      "col": "f2_rev",
+      "n_node": 182
+     },
+     {
+      "level": 2,
+      "cond": "f2_opmD5>=q75",
+      "col": "f2_opmD5",
+      "n_node": 41
+     },
+     {
+      "level": 2,
+      "cond": "f2_cash_r>=q75",
+      "col": "f2_cash_r",
+      "n_node": 141
+     },
+     {
+      "level": 1,
+      "cond": "f2_aturn>=q50",
+      "col": "f2_aturn",
+      "n_node": 546
+     },
+     {
+      "level": 2,
+      "cond": "f2_accr>=q75",
+      "col": "f2_accr",
+      "n_node": 283
+     },
+     {
+      "level": 2,
+      "cond": "f2_opmD5>=q25",
+      "col": "f2_opmD5",
+      "n_node": 263
+     }
+    ],
+    "leaves_used": [
+     {
+      "path": [
+       "f2_rnd_r>=q75",
+       "f2_rev>=q75",
+       "!f2_opmD5>=q75"
+      ],
+      "n_train": 21,
+      "k_train": 21,
+      "p_train": 1.0
+     }
+    ]
+   },
+   {
+    "fold": 1,
+    "depth": 3,
+    "mode": "best_leaf",
+    "inner_score": 0.3283,
+    "n_rule_train": 27,
+    "n_rule_test": 3,
+    "splits": [
+     {
+      "level": 0,
+      "cond": "f2_rev>=q75",
+      "col": "f2_rev",
+      "n_node": 718
+     },
+     {
+      "level": 1,
+      "cond": "f2_rnd_r>=q75",
+      "col": "f2_rnd_r",
+      "n_node": 180
+     },
+     {
+      "level": 2,
+      "cond": "f2_cagr5>=q50",
+      "col": "f2_cagr5",
+      "n_node": 47
+     },
+     {
+      "level": 2,
+      "cond": "f2_accr>=q50",
+      "col": "f2_accr",
+      "n_node": 133
+     },
+     {
+      "level": 1,
+      "cond": "f2_aturn>=q25",
+      "col": "f2_aturn",
+      "n_node": 538
+     },
+     {
+      "level": 2,
+      "cond": "f2_rnd_r>=q50",
+      "col": "f2_rnd_r",
+      "n_node": 404
+     },
+     {
+      "level": 2,
+      "cond": "f2_capex_r>=q75",
+      "col": "f2_capex_r",
+      "n_node": 134
+     }
+    ],
+    "leaves_used": [
+     {
+      "path": [
+       "f2_rev>=q75",
+       "f2_rnd_r>=q75",
+       "!f2_cagr5>=q50"
+      ],
+      "n_train": 27,
+      "k_train": 26,
+      "p_train": 0.963
+     }
+    ]
+   },
+   {
+    "fold": 2,
+    "depth": 3,
+    "mode": "best_leaf",
+    "inner_score": 0.1723,
+    "n_rule_train": 33,
+    "n_rule_test": 6,
+    "splits": [
+     {
+      "level": 0,
+      "cond": "f2_cagr5>=q75",
+      "col": "f2_cagr5",
+      "n_node": 724
+     },
+     {
+      "level": 1,
+      "cond": "f2_aturn>=q50",
+      "col": "f2_aturn",
+      "n_node": 181
+     },
+     {
+      "level": 2,
+      "cond": "f2_rnd_r>=q50",
+      "col": "f2_rnd_r",
+      "n_node": 72
+     },
+     {
+      "level": 2,
+      "cond": "f2_streak_rev>=q75",
+      "col": "f2_streak_rev",
+      "n_node": 109
+     },
+     {
+      "level": 1,
+      "cond": "f2_rnd_r>=q75",
+      "col": "f2_rnd_r",
+      "n_node": 543
+     },
+     {
+      "level": 2,
+      "cond": "f2_rev>=q75",
+      "col": "f2_rev",
+      "n_node": 117
+     },
+     {
+      "level": 2,
+      "cond": "f2_accr>=q50",
+      "col": "f2_accr",
+      "n_node": 426
+     }
+    ],
+    "leaves_used": [
+     {
+      "path": [
+       "!f2_cagr5>=q75",
+       "f2_rnd_r>=q75",
+       "f2_rev>=q75"
+      ],
+      "n_train": 33,
+      "k_train": 30,
+      "p_train": 0.9091
+     }
+    ]
+   },
+   {
+    "fold": 3,
+    "depth": 3,
+    "mode": "best_leaf",
+    "inner_score": 0.128,
+    "n_rule_train": 22,
+    "n_rule_test": 6,
+    "splits": [
+     {
+      "level": 0,
+      "cond": "f2_rnd_r>=q75",
+      "col": "f2_rnd_r",
+      "n_node": 709
+     },
+     {
+      "level": 1,
+      "cond": "f2_rev>=q50",
+      "col": "f2_rev",
+      "n_node": 178
+     },
+     {
+      "level": 2,
+      "cond": "f2_streak_rev>=q50",
+      "col": "f2_streak_rev",
+      "n_node": 71
+     },
+     {
+      "level": 2,
+      "cond": "f2_aturn>=q25",
+      "col": "f2_aturn",
+      "n_node": 107
+     },
+     {
+      "level": 1,
+      "cond": "f2_rev>=q50",
+      "col": "f2_rev",
+      "n_node": 531
+     },
+     {
+      "level": 2,
+      "cond": "f2_capex_r>=q50",
+      "col": "f2_capex_r",
+      "n_node": 284
+     },
+     {
+      "level": 2,
+      "cond": "f2_rnd_r>=q50",
+      "col": "f2_rnd_r",
+      "n_node": 247
+     }
+    ],
+    "leaves_used": [
+     {
+      "path": [
+       "f2_rnd_r>=q75",
+       "f2_rev>=q50",
+       "!f2_streak_rev>=q50"
+      ],
+      "n_train": 22,
+      "k_train": 22,
+      "p_train": 1.0
+     }
+    ]
+   },
+   {
+    "fold": 4,
+    "depth": 3,
+    "mode": "best_leaf",
+    "inner_score": 0.071,
+    "n_rule_train": 140,
+    "n_rule_test": 32,
+    "splits": [
+     {
+      "level": 0,
+      "cond": "f2_rnd_r>=q50",
+      "col": "f2_rnd_r",
+      "n_node": 725
+     },
+     {
+      "level": 1,
+      "cond": "f2_capex_r>=q50",
+      "col": "f2_capex_r",
+      "n_node": 363
+     },
+     {
+      "level": 2,
+      "cond": "f2_accr>=q25",
+      "col": "f2_accr",
+      "n_node": 174
+     },
+     {
+      "level": 2,
+      "cond": "f2_rev>=q25",
+      "col": "f2_rev",
+      "n_node": 189
+     },
+     {
+      "level": 1,
+      "cond": "f2_cagr5>=q75",
+      "col": "f2_cagr5",
+      "n_node": 362
+     },
+     {
+      "level": 2,
+      "cond": "f2_gw_r>=q25",
+      "col": "f2_gw_r",
+      "n_node": 89
+     },
+     {
+      "level": 2,
+      "cond": "f2_rev>=q50",
+      "col": "f2_rev",
+      "n_node": 273
+     }
+    ],
+    "leaves_used": [
+     {
+      "path": [
+       "f2_rnd_r>=q50",
+       "!f2_capex_r>=q50",
+       "f2_rev>=q25"
+      ],
+      "n_train": 140,
+      "k_train": 87,
+      "p_train": 0.6214
+     }
+    ]
+   }
+  ]
+ },
+ "check1b_boundary_and_design_sensitivity": {
+  "strict_greater": {
+   "n_rows": 901,
+   "base": 0.4184,
+   "n_group": 59,
+   "numerator": 40,
+   "n_group_companies": 28,
+   "numerator_companies": 20,
+   "p_group": 0.678,
+   "lift": 0.2595,
+   "lift_ok": true,
+   "min_num_ok_companies": true,
+   "min_num_ok_rows": true,
+   "per_vintage": {
+    "2016": {
+     "n": 296,
+     "base": 0.4291,
+     "n_group": 17,
+     "k": 12,
+     "p_group": 0.7059,
+     "lift": 0.2768
+    },
+    "2017": {
+     "n": 295,
+     "base": 0.4203,
+     "n_group": 19,
+     "k": 13,
+     "p_group": 0.6842,
+     "lift": 0.2639
+    },
+    "2018": {
+     "n": 310,
+     "base": 0.4065,
+     "n_group": 23,
+     "k": 15,
+     "p_group": 0.6522,
+     "lift": 0.2457
+    }
+   },
+   "sign_ok": true,
+   "gate1_pass": true
+  },
+  "cohort_wide_quantiles": {
+   "n_rows": 901,
+   "base": 0.4184,
+   "n_group": 55,
+   "numerator": 37,
+   "n_group_companies": 25,
+   "numerator_companies": 16,
+   "p_group": 0.6727,
+   "lift": 0.2543,
+   "lift_ok": true,
+   "min_num_ok_companies": false,
+   "min_num_ok_rows": true,
+   "per_vintage": {
+    "2016": {
+     "n": 296,
+     "base": 0.4291,
+     "n_group": 19,
+     "k": 13,
+     "p_group": 0.6842,
+     "lift": 0.2552
+    },
+    "2017": {
+     "n": 295,
+     "base": 0.4203,
+     "n_group": 17,
+     "k": 11,
+     "p_group": 0.6471,
+     "lift": 0.2267
+    },
+    "2018": {
+     "n": 310,
+     "base": 0.4065,
+     "n_group": 19,
+     "k": 13,
+     "p_group": 0.6842,
+     "lift": 0.2778
+    }
+   },
+   "sign_ok": true,
+   "gate1_pass": false
+  },
+  "fold_seed": {
+   "why": "fold の割り当ては結果の前に固定された nuisance だが、**結果がその割り当てに依存するなら、報告値はデータの性質ではなく籤の性質**。設計は一切変えず seed だけ振る",
+   "by_seed": {
+    "20260812": {
+     "n_group": 59,
+     "numerator": 40,
+     "numerator_companies": 20,
+     "lift": 0.2595,
+     "sign_ok": true,
+     "gate1_pass": true,
+     "per_vintage_lift": {
+      "2016": 0.2768,
+      "2017": 0.2639,
+      "2018": 0.2457
+     }
+    },
+    "20260813": {
+     "n_group": 65,
+     "numerator": 38,
+     "numerator_companies": 19,
+     "lift": 0.1662,
+     "sign_ok": false,
+     "gate1_pass": false,
+     "per_vintage_lift": {
+      "2016": 0.1424,
+      "2017": 0.1797,
+      "2018": 0.1769
+     }
+    },
+    "20260814": {
+     "n_group": 69,
+     "numerator": 47,
+     "numerator_companies": 24,
+     "lift": 0.2627,
+     "sign_ok": true,
+     "gate1_pass": true,
+     "per_vintage_lift": {
+      "2016": 0.3329,
+      "2017": 0.3069,
+      "2018": 0.1705
+     }
+    },
+    "20260815": {
+     "n_group": 84,
+     "numerator": 45,
+     "numerator_companies": 22,
+     "lift": 0.1173,
+     "sign_ok": false,
+     "gate1_pass": false,
+     "per_vintage_lift": {
+      "2016": 0.2006,
+      "2017": 0.1352,
+      "2018": 0.0269
+     }
+    },
+    "20260819": {
+     "n_group": 49,
+     "numerator": 36,
+     "numerator_companies": 16,
+     "lift": 0.3163,
+     "sign_ok": true,
+     "gate1_pass": false,
+     "per_vintage_lift": {
+      "2016": 0.2376,
+      "2017": 0.3444,
+      "2018": 0.3583
+     }
+    },
+    "20260823": {
+     "n_group": 35,
+     "numerator": 32,
+     "numerator_companies": 16,
+     "lift": 0.4959,
+     "sign_ok": true,
+     "gate1_pass": false,
+     "per_vintage_lift": {
+      "2016": 0.48,
+      "2017": 0.5797,
+      "2018": 0.4397
+     }
+    }
+   },
+   "n_pass_gate1": 2,
+   "n_seeds": 6,
+   "lift_min": 0.1173,
+   "lift_max": 0.4959,
+   "lift_range": 0.3786,
+   "n_group_min": 35,
+   "n_group_max": 84,
+   "numerator_companies_range": [
+    16,
+    24
+   ]
+  }
+ },
+ "check1e_positive_control_seed_stability": {
+  "why": "探索側の弁は『後段ゲートは δ=0.25 の真の効果でも通らない＝当てられない関門』。それが本当なら、**真の効果があるときに fold seed で結果が揺れるか**を測れば、観測の揺れが『効果の不在』の証拠か『手続きが粗い』せいかを切り分けられる",
+  "controls": {
+   "A_two_condition_d25": {
+    "implanted_rule": "f2_rnd_r>=q75 ∧ f2_rev>=q75（依頼文のラベル）",
+    "implanted_rows": 55,
+    "delta": 0.25,
+    "p_inside": 0.6684,
+    "p_outside": 0.4021,
+    "n_replicates": 20,
+    "lift_range_across_seeds": {
+     "median": 0.0957,
+     "min": 0.0227,
+     "max": 0.289
+    },
+    "gate1_pass_per_replicate": {
+     "median": 0,
+     "min": 0,
+     "max": 2,
+     "of_n_seeds": 6,
+     "share_of_seed_runs_passing": 0.0167
+    },
+    "share_of_replicates_with_range_ge_observed": 0.0,
+    "replicates": [
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0135,
+        "n_group": 316,
+        "numerator_companies": 97,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0237,
+        "n_group": 189,
+        "numerator_companies": 56,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": -0.0053,
+        "n_group": 208,
+        "numerator_companies": 55,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": -0.0359,
+        "n_group": 231,
+        "numerator_companies": 64,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": -0.0311,
+        "n_group": 418,
+        "numerator_companies": 110,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0103,
+        "n_group": 244,
+        "numerator_companies": 78,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0359,
+      "lift_max": 0.0237,
+      "lift_range": 0.0596,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1338,
+        "n_group": 36,
+        "numerator_companies": 14,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1142,
+        "n_group": 181,
+        "numerator_companies": 65,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.097,
+        "n_group": 133,
+        "numerator_companies": 47,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0344,
+        "n_group": 228,
+        "numerator_companies": 71,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.2065,
+        "n_group": 78,
+        "numerator_companies": 28,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.3055,
+        "n_group": 55,
+        "numerator_companies": 20,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.0344,
+      "lift_max": 0.3055,
+      "lift_range": 0.2711,
+      "n_pass": 2
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0203,
+        "n_group": 345,
+        "numerator_companies": 106,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0739,
+        "n_group": 86,
+        "numerator_companies": 35,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0929,
+        "n_group": 119,
+        "numerator_companies": 44,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.036,
+        "n_group": 139,
+        "numerator_companies": 47,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0119,
+        "n_group": 352,
+        "numerator_companies": 106,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.0097,
+        "n_group": 206,
+        "numerator_companies": 58,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0097,
+      "lift_max": 0.0929,
+      "lift_range": 0.1026,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0705,
+        "n_group": 150,
+        "numerator_companies": 49,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": -0.0137,
+        "n_group": 48,
+        "numerator_companies": 14,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0277,
+        "n_group": 247,
+        "numerator_companies": 77,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.006,
+        "n_group": 231,
+        "numerator_companies": 72,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": -0.0029,
+        "n_group": 150,
+        "numerator_companies": 51,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0465,
+        "n_group": 125,
+        "numerator_companies": 43,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0137,
+      "lift_max": 0.0705,
+      "lift_range": 0.0842,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1858,
+        "n_group": 41,
+        "numerator_companies": 16,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.176,
+        "n_group": 40,
+        "numerator_companies": 14,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.116,
+        "n_group": 50,
+        "numerator_companies": 17,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": -0.0177,
+        "n_group": 192,
+        "numerator_companies": 62,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0133,
+        "n_group": 231,
+        "numerator_companies": 69,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0837,
+        "n_group": 65,
+        "numerator_companies": 25,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0177,
+      "lift_max": 0.1858,
+      "lift_range": 0.2035,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.116,
+        "n_group": 50,
+        "numerator_companies": 15,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0552,
+        "n_group": 98,
+        "numerator_companies": 35,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0587,
+        "n_group": 67,
+        "numerator_companies": 21,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0041,
+        "n_group": 174,
+        "numerator_companies": 51,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0377,
+        "n_group": 283,
+        "numerator_companies": 87,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.0096,
+        "n_group": 142,
+        "numerator_companies": 42,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0096,
+      "lift_max": 0.116,
+      "lift_range": 0.1256,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.001,
+        "n_group": 98,
+        "numerator_companies": 33,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": -0.0124,
+        "n_group": 199,
+        "numerator_companies": 59,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0833,
+        "n_group": 156,
+        "numerator_companies": 59,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0307,
+        "n_group": 226,
+        "numerator_companies": 78,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0534,
+        "n_group": 176,
+        "numerator_companies": 59,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0193,
+        "n_group": 176,
+        "numerator_companies": 62,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0124,
+      "lift_max": 0.0833,
+      "lift_range": 0.0957,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0193,
+        "n_group": 403,
+        "numerator_companies": 128,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": -0.0375,
+        "n_group": 177,
+        "numerator_companies": 55,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0423,
+        "n_group": 296,
+        "numerator_companies": 103,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0253,
+        "n_group": 327,
+        "numerator_companies": 109,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0219,
+        "n_group": 374,
+        "numerator_companies": 121,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.034,
+        "n_group": 297,
+        "numerator_companies": 97,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0375,
+      "lift_max": 0.0423,
+      "lift_range": 0.0798,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0213,
+        "n_group": 107,
+        "numerator_companies": 37,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.026,
+        "n_group": 150,
+        "numerator_companies": 50,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": -0.0406,
+        "n_group": 181,
+        "numerator_companies": 55,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": -0.0106,
+        "n_group": 84,
+        "numerator_companies": 31,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0138,
+        "n_group": 297,
+        "numerator_companies": 98,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.004,
+        "n_group": 489,
+        "numerator_companies": 148,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0406,
+      "lift_max": 0.026,
+      "lift_range": 0.0666,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0193,
+        "n_group": 191,
+        "numerator_companies": 60,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.2086,
+        "n_group": 76,
+        "numerator_companies": 31,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0507,
+        "n_group": 152,
+        "numerator_companies": 52,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0184,
+        "n_group": 121,
+        "numerator_companies": 37,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": -0.0023,
+        "n_group": 189,
+        "numerator_companies": 60,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.0288,
+        "n_group": 216,
+        "numerator_companies": 61,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0288,
+      "lift_max": 0.2086,
+      "lift_range": 0.2374,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0092,
+        "n_group": 187,
+        "numerator_companies": 56,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1536,
+        "n_group": 47,
+        "numerator_companies": 16,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.096,
+        "n_group": 113,
+        "numerator_companies": 39,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": -0.0131,
+        "n_group": 207,
+        "numerator_companies": 62,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0004,
+        "n_group": 240,
+        "numerator_companies": 79,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0642,
+        "n_group": 69,
+        "numerator_companies": 25,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0131,
+      "lift_max": 0.1536,
+      "lift_range": 0.1667,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0916,
+        "n_group": 104,
+        "numerator_companies": 38,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1136,
+        "n_group": 118,
+        "numerator_companies": 41,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0476,
+        "n_group": 297,
+        "numerator_companies": 97,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0733,
+        "n_group": 47,
+        "numerator_companies": 17,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0773,
+        "n_group": 103,
+        "numerator_companies": 39,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0856,
+        "n_group": 197,
+        "numerator_companies": 69,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0476,
+      "lift_max": 0.1136,
+      "lift_range": 0.066,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0015,
+        "n_group": 69,
+        "numerator_companies": 23,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0927,
+        "n_group": 28,
+        "numerator_companies": 11,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0644,
+        "n_group": 53,
+        "numerator_companies": 22,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.033,
+        "n_group": 109,
+        "numerator_companies": 35,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0159,
+        "n_group": 241,
+        "numerator_companies": 80,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1078,
+        "n_group": 66,
+        "numerator_companies": 31,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0015,
+      "lift_max": 0.1078,
+      "lift_range": 0.1093,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0036,
+        "n_group": 283,
+        "numerator_companies": 97,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": -0.0221,
+        "n_group": 423,
+        "numerator_companies": 134,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0213,
+        "n_group": 265,
+        "numerator_companies": 95,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": -0.0227,
+        "n_group": 157,
+        "numerator_companies": 52,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": -0.0076,
+        "n_group": 293,
+        "numerator_companies": 99,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.0254,
+        "n_group": 276,
+        "numerator_companies": 89,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0254,
+      "lift_max": 0.0213,
+      "lift_range": 0.0467,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0043,
+        "n_group": 129,
+        "numerator_companies": 42,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0394,
+        "n_group": 106,
+        "numerator_companies": 35,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0893,
+        "n_group": 123,
+        "numerator_companies": 48,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0636,
+        "n_group": 74,
+        "numerator_companies": 28,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": -0.0374,
+        "n_group": 179,
+        "numerator_companies": 52,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.0024,
+        "n_group": 195,
+        "numerator_companies": 60,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0374,
+      "lift_max": 0.0893,
+      "lift_range": 0.1267,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2054,
+        "n_group": 59,
+        "numerator_companies": 22,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0567,
+        "n_group": 232,
+        "numerator_companies": 78,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0782,
+        "n_group": 36,
+        "numerator_companies": 10,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.2828,
+        "n_group": 44,
+        "numerator_companies": 16,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.3457,
+        "n_group": 43,
+        "numerator_companies": 17,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.2925,
+        "n_group": 35,
+        "numerator_companies": 16,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0567,
+      "lift_max": 0.3457,
+      "lift_range": 0.289,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0266,
+        "n_group": 249,
+        "numerator_companies": 78,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0383,
+        "n_group": 132,
+        "numerator_companies": 43,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0486,
+        "n_group": 71,
+        "numerator_companies": 27,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": -0.0296,
+        "n_group": 194,
+        "numerator_companies": 62,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": -0.0107,
+        "n_group": 217,
+        "numerator_companies": 66,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.0412,
+        "n_group": 192,
+        "numerator_companies": 56,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0412,
+      "lift_max": 0.0486,
+      "lift_range": 0.0898,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0105,
+        "n_group": 338,
+        "numerator_companies": 113,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": -0.0081,
+        "n_group": 318,
+        "numerator_companies": 106,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": -0.0413,
+        "n_group": 312,
+        "numerator_companies": 98,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": -0.0396,
+        "n_group": 318,
+        "numerator_companies": 106,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0052,
+        "n_group": 194,
+        "numerator_companies": 72,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.0338,
+        "n_group": 275,
+        "numerator_companies": 88,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0413,
+      "lift_max": 0.0052,
+      "lift_range": 0.0465,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0157,
+        "n_group": 99,
+        "numerator_companies": 29,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": -0.0152,
+        "n_group": 359,
+        "numerator_companies": 102,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0226,
+        "n_group": 379,
+        "numerator_companies": 119,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": -0.0132,
+        "n_group": 176,
+        "numerator_companies": 55,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0011,
+        "n_group": 312,
+        "numerator_companies": 91,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.0175,
+        "n_group": 390,
+        "numerator_companies": 112,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0175,
+      "lift_max": 0.0226,
+      "lift_range": 0.0401,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0111,
+        "n_group": 187,
+        "numerator_companies": 61,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0307,
+        "n_group": 364,
+        "numerator_companies": 105,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0201,
+        "n_group": 202,
+        "numerator_companies": 61,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0135,
+        "n_group": 437,
+        "numerator_companies": 126,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.01,
+        "n_group": 56,
+        "numerator_companies": 18,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.008,
+        "n_group": 115,
+        "numerator_companies": 32,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.008,
+      "lift_max": 0.0307,
+      "lift_range": 0.0227,
+      "n_pass": 0
+     }
+    ]
+   },
+   "B_single_condition_d25": {
+    "implanted_rule": "f2_rnd_r>=q75 のみ（貪欲な木に最も見つけやすい）",
+    "implanted_rows": 226,
+    "delta": 0.25,
+    "p_inside": 0.6684,
+    "p_outside": 0.3347,
+    "n_replicates": 20,
+    "lift_range_across_seeds": {
+     "median": 0.0846,
+     "min": 0.0475,
+     "max": 0.2482
+    },
+    "gate1_pass_per_replicate": {
+     "median": 4,
+     "min": 0,
+     "max": 6,
+     "of_n_seeds": 6,
+     "share_of_seed_runs_passing": 0.6333
+    },
+    "share_of_replicates_with_range_ge_observed": 0.0,
+    "replicates": [
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2538,
+        "n_group": 50,
+        "numerator_companies": 28,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.2501,
+        "n_group": 66,
+        "numerator_companies": 36,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.1989,
+        "n_group": 94,
+        "numerator_companies": 40,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.2138,
+        "n_group": 100,
+        "numerator_companies": 44,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.2174,
+        "n_group": 111,
+        "numerator_companies": 51,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.1946,
+        "n_group": 136,
+        "numerator_companies": 54,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.1946,
+      "lift_max": 0.2538,
+      "lift_range": 0.0592,
+      "n_pass": 3
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2135,
+        "n_group": 171,
+        "numerator_companies": 66,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.2427,
+        "n_group": 144,
+        "numerator_companies": 59,
+        "gate1_pass": true
+       },
+       "20260814": {
+        "lift": 0.2525,
+        "n_group": 102,
+        "numerator_companies": 46,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.2035,
+        "n_group": 102,
+        "numerator_companies": 40,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.2554,
+        "n_group": 184,
+        "numerator_companies": 71,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.2881,
+        "n_group": 132,
+        "numerator_companies": 60,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.2035,
+      "lift_max": 0.2881,
+      "lift_range": 0.0846,
+      "n_pass": 5
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2192,
+        "n_group": 116,
+        "numerator_companies": 49,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.2533,
+        "n_group": 72,
+        "numerator_companies": 35,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.2885,
+        "n_group": 95,
+        "numerator_companies": 42,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.2968,
+        "n_group": 87,
+        "numerator_companies": 41,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.3161,
+        "n_group": 113,
+        "numerator_companies": 48,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.3161,
+        "n_group": 113,
+        "numerator_companies": 52,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.2192,
+      "lift_max": 0.3161,
+      "lift_range": 0.0969,
+      "n_pass": 5
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2599,
+        "n_group": 118,
+        "numerator_companies": 49,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.24,
+        "n_group": 117,
+        "numerator_companies": 43,
+        "gate1_pass": true
+       },
+       "20260814": {
+        "lift": 0.2099,
+        "n_group": 113,
+        "numerator_companies": 49,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.2542,
+        "n_group": 116,
+        "numerator_companies": 46,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.3025,
+        "n_group": 125,
+        "numerator_companies": 55,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.219,
+        "n_group": 105,
+        "numerator_companies": 45,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.2099,
+      "lift_max": 0.3025,
+      "lift_range": 0.0926,
+      "n_pass": 4
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.3981,
+        "n_group": 65,
+        "numerator_companies": 35,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.3605,
+        "n_group": 63,
+        "numerator_companies": 37,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.4183,
+        "n_group": 73,
+        "numerator_companies": 38,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.4027,
+        "n_group": 50,
+        "numerator_companies": 29,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.2702,
+        "n_group": 128,
+        "numerator_companies": 61,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.3793,
+        "n_group": 59,
+        "numerator_companies": 33,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.2702,
+      "lift_max": 0.4183,
+      "lift_range": 0.1481,
+      "n_pass": 3
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2225,
+        "n_group": 124,
+        "numerator_companies": 54,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.2947,
+        "n_group": 88,
+        "numerator_companies": 50,
+        "gate1_pass": true
+       },
+       "20260814": {
+        "lift": 0.2367,
+        "n_group": 148,
+        "numerator_companies": 67,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.2391,
+        "n_group": 160,
+        "numerator_companies": 70,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.2321,
+        "n_group": 203,
+        "numerator_companies": 78,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.2617,
+        "n_group": 153,
+        "numerator_companies": 64,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.2225,
+      "lift_max": 0.2947,
+      "lift_range": 0.0722,
+      "n_pass": 6
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.253,
+        "n_group": 81,
+        "numerator_companies": 37,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.1752,
+        "n_group": 44,
+        "numerator_companies": 18,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.198,
+        "n_group": 132,
+        "numerator_companies": 50,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.237,
+        "n_group": 191,
+        "numerator_companies": 79,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.1718,
+        "n_group": 118,
+        "numerator_companies": 49,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.2002,
+        "n_group": 83,
+        "numerator_companies": 35,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.1718,
+      "lift_max": 0.253,
+      "lift_range": 0.0812,
+      "n_pass": 3
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2295,
+        "n_group": 101,
+        "numerator_companies": 43,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.2602,
+        "n_group": 76,
+        "numerator_companies": 31,
+        "gate1_pass": true
+       },
+       "20260814": {
+        "lift": 0.255,
+        "n_group": 162,
+        "numerator_companies": 62,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.2205,
+        "n_group": 135,
+        "numerator_companies": 51,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.2284,
+        "n_group": 210,
+        "numerator_companies": 80,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.1928,
+        "n_group": 107,
+        "numerator_companies": 40,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.1928,
+      "lift_max": 0.2602,
+      "lift_range": 0.0674,
+      "n_pass": 6
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1675,
+        "n_group": 154,
+        "numerator_companies": 62,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.2134,
+        "n_group": 64,
+        "numerator_companies": 26,
+        "gate1_pass": true
+       },
+       "20260814": {
+        "lift": 0.2238,
+        "n_group": 108,
+        "numerator_companies": 48,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.2393,
+        "n_group": 129,
+        "numerator_companies": 51,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.238,
+        "n_group": 141,
+        "numerator_companies": 56,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.205,
+        "n_group": 142,
+        "numerator_companies": 56,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.1675,
+      "lift_max": 0.2393,
+      "lift_range": 0.0718,
+      "n_pass": 3
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1816,
+        "n_group": 126,
+        "numerator_companies": 45,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.1746,
+        "n_group": 96,
+        "numerator_companies": 39,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.2048,
+        "n_group": 134,
+        "numerator_companies": 53,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.1478,
+        "n_group": 97,
+        "numerator_companies": 40,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.1452,
+        "n_group": 87,
+        "numerator_companies": 38,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1788,
+        "n_group": 120,
+        "numerator_companies": 49,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.1452,
+      "lift_max": 0.2048,
+      "lift_range": 0.0596,
+      "n_pass": 3
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2494,
+        "n_group": 156,
+        "numerator_companies": 65,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.1732,
+        "n_group": 105,
+        "numerator_companies": 41,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.2162,
+        "n_group": 161,
+        "numerator_companies": 63,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.2184,
+        "n_group": 151,
+        "numerator_companies": 57,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.2055,
+        "n_group": 175,
+        "numerator_companies": 70,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.2403,
+        "n_group": 184,
+        "numerator_companies": 76,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.1732,
+      "lift_max": 0.2494,
+      "lift_range": 0.0762,
+      "n_pass": 3
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1883,
+        "n_group": 77,
+        "numerator_companies": 30,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.2358,
+        "n_group": 79,
+        "numerator_companies": 31,
+        "gate1_pass": true
+       },
+       "20260814": {
+        "lift": 0.2114,
+        "n_group": 99,
+        "numerator_companies": 37,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.2223,
+        "n_group": 108,
+        "numerator_companies": 40,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.1973,
+        "n_group": 136,
+        "numerator_companies": 55,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.2066,
+        "n_group": 120,
+        "numerator_companies": 46,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.1883,
+      "lift_max": 0.2358,
+      "lift_range": 0.0475,
+      "n_pass": 3
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2454,
+        "n_group": 79,
+        "numerator_companies": 36,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.216,
+        "n_group": 97,
+        "numerator_companies": 41,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.2032,
+        "n_group": 112,
+        "numerator_companies": 45,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.2235,
+        "n_group": 110,
+        "numerator_companies": 52,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.3163,
+        "n_group": 96,
+        "numerator_companies": 46,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.2108,
+        "n_group": 93,
+        "numerator_companies": 41,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.2032,
+      "lift_max": 0.3163,
+      "lift_range": 0.1131,
+      "n_pass": 4
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2206,
+        "n_group": 140,
+        "numerator_companies": 61,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.2294,
+        "n_group": 135,
+        "numerator_companies": 52,
+        "gate1_pass": true
+       },
+       "20260814": {
+        "lift": 0.1665,
+        "n_group": 98,
+        "numerator_companies": 42,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.2397,
+        "n_group": 84,
+        "numerator_companies": 34,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.1949,
+        "n_group": 100,
+        "numerator_companies": 41,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1981,
+        "n_group": 106,
+        "numerator_companies": 45,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.1665,
+      "lift_max": 0.2397,
+      "lift_range": 0.0732,
+      "n_pass": 3
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2805,
+        "n_group": 108,
+        "numerator_companies": 49,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.3271,
+        "n_group": 112,
+        "numerator_companies": 52,
+        "gate1_pass": true
+       },
+       "20260814": {
+        "lift": 0.376,
+        "n_group": 100,
+        "numerator_companies": 47,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.3413,
+        "n_group": 94,
+        "numerator_companies": 43,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.3567,
+        "n_group": 109,
+        "numerator_companies": 53,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.3433,
+        "n_group": 103,
+        "numerator_companies": 49,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.2805,
+      "lift_max": 0.376,
+      "lift_range": 0.0955,
+      "n_pass": 5
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2871,
+        "n_group": 50,
+        "numerator_companies": 19,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.3105,
+        "n_group": 47,
+        "numerator_companies": 18,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.1144,
+        "n_group": 165,
+        "numerator_companies": 62,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.1586,
+        "n_group": 49,
+        "numerator_companies": 20,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.2725,
+        "n_group": 89,
+        "numerator_companies": 37,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.3626,
+        "n_group": 49,
+        "numerator_companies": 19,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.1144,
+      "lift_max": 0.3626,
+      "lift_range": 0.2482,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2498,
+        "n_group": 91,
+        "numerator_companies": 44,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.188,
+        "n_group": 82,
+        "numerator_companies": 36,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.182,
+        "n_group": 71,
+        "numerator_companies": 34,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.23,
+        "n_group": 86,
+        "numerator_companies": 37,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.2705,
+        "n_group": 75,
+        "numerator_companies": 37,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.2519,
+        "n_group": 127,
+        "numerator_companies": 52,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.182,
+      "lift_max": 0.2705,
+      "lift_range": 0.0885,
+      "n_pass": 4
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2161,
+        "n_group": 151,
+        "numerator_companies": 68,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.2205,
+        "n_group": 192,
+        "numerator_companies": 80,
+        "gate1_pass": true
+       },
+       "20260814": {
+        "lift": 0.2312,
+        "n_group": 155,
+        "numerator_companies": 69,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.2429,
+        "n_group": 119,
+        "numerator_companies": 53,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.17,
+        "n_group": 99,
+        "numerator_companies": 42,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.2138,
+        "n_group": 200,
+        "numerator_companies": 79,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.17,
+      "lift_max": 0.2429,
+      "lift_range": 0.0729,
+      "n_pass": 5
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.3579,
+        "n_group": 84,
+        "numerator_companies": 47,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.2412,
+        "n_group": 124,
+        "numerator_companies": 56,
+        "gate1_pass": true
+       },
+       "20260814": {
+        "lift": 0.2485,
+        "n_group": 118,
+        "numerator_companies": 54,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.2167,
+        "n_group": 116,
+        "numerator_companies": 52,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.2981,
+        "n_group": 94,
+        "numerator_companies": 49,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.2479,
+        "n_group": 158,
+        "numerator_companies": 67,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.2167,
+      "lift_max": 0.3579,
+      "lift_range": 0.1412,
+      "n_pass": 6
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2213,
+        "n_group": 139,
+        "numerator_companies": 55,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.2179,
+        "n_group": 54,
+        "numerator_companies": 24,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.164,
+        "n_group": 99,
+        "numerator_companies": 37,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.2194,
+        "n_group": 122,
+        "numerator_companies": 43,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.1736,
+        "n_group": 123,
+        "numerator_companies": 43,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.2549,
+        "n_group": 120,
+        "numerator_companies": 46,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.164,
+      "lift_max": 0.2549,
+      "lift_range": 0.0909,
+      "n_pass": 2
+     }
+    ]
+   },
+   "B_single_condition_d15": {
+    "implanted_rule": "同上",
+    "implanted_rows": 226,
+    "delta": 0.15,
+    "p_inside": 0.5684,
+    "p_outside": 0.3682,
+    "n_replicates": 20,
+    "lift_range_across_seeds": {
+     "median": 0.1036,
+     "min": 0.0521,
+     "max": 0.1338
+    },
+    "gate1_pass_per_replicate": {
+     "median": 0,
+     "min": 0,
+     "max": 4,
+     "of_n_seeds": 6,
+     "share_of_seed_runs_passing": 0.1083
+    },
+    "share_of_replicates_with_range_ge_observed": 0.0,
+    "replicates": [
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0461,
+        "n_group": 52,
+        "numerator_companies": 19,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.063,
+        "n_group": 98,
+        "numerator_companies": 30,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0603,
+        "n_group": 138,
+        "numerator_companies": 47,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0369,
+        "n_group": 157,
+        "numerator_companies": 53,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0606,
+        "n_group": 81,
+        "numerator_companies": 31,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1038,
+        "n_group": 80,
+        "numerator_companies": 29,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0369,
+      "lift_max": 0.1038,
+      "lift_range": 0.0669,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0349,
+        "n_group": 191,
+        "numerator_companies": 56,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0591,
+        "n_group": 148,
+        "numerator_companies": 47,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0794,
+        "n_group": 84,
+        "numerator_companies": 32,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.1433,
+        "n_group": 172,
+        "numerator_companies": 62,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.1213,
+        "n_group": 155,
+        "numerator_companies": 59,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1463,
+        "n_group": 127,
+        "numerator_companies": 51,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0349,
+      "lift_max": 0.1463,
+      "lift_range": 0.1114,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2445,
+        "n_group": 56,
+        "numerator_companies": 22,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1992,
+        "n_group": 91,
+        "numerator_companies": 32,
+        "gate1_pass": true
+       },
+       "20260814": {
+        "lift": 0.2405,
+        "n_group": 67,
+        "numerator_companies": 28,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.1514,
+        "n_group": 74,
+        "numerator_companies": 29,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.1876,
+        "n_group": 106,
+        "numerator_companies": 39,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.2838,
+        "n_group": 70,
+        "numerator_companies": 29,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.1514,
+      "lift_max": 0.2838,
+      "lift_range": 0.1324,
+      "n_pass": 4
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1672,
+        "n_group": 76,
+        "numerator_companies": 30,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1543,
+        "n_group": 106,
+        "numerator_companies": 38,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.1851,
+        "n_group": 129,
+        "numerator_companies": 52,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.1716,
+        "n_group": 96,
+        "numerator_companies": 36,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.1808,
+        "n_group": 108,
+        "numerator_companies": 46,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.133,
+        "n_group": 134,
+        "numerator_companies": 44,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.133,
+      "lift_max": 0.1851,
+      "lift_range": 0.0521,
+      "n_pass": 2
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.226,
+        "n_group": 79,
+        "numerator_companies": 38,
+        "gate1_pass": true
+       },
+       "20260813": {
+        "lift": 0.1731,
+        "n_group": 81,
+        "numerator_companies": 37,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.2194,
+        "n_group": 72,
+        "numerator_companies": 33,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.2243,
+        "n_group": 73,
+        "numerator_companies": 33,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.243,
+        "n_group": 80,
+        "numerator_companies": 39,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.1687,
+        "n_group": 102,
+        "numerator_companies": 44,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.1687,
+      "lift_max": 0.243,
+      "lift_range": 0.0743,
+      "n_pass": 2
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1588,
+        "n_group": 132,
+        "numerator_companies": 48,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1066,
+        "n_group": 179,
+        "numerator_companies": 64,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.1044,
+        "n_group": 162,
+        "numerator_companies": 58,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.1688,
+        "n_group": 170,
+        "numerator_companies": 63,
+        "gate1_pass": true
+       },
+       "20260819": {
+        "lift": 0.1544,
+        "n_group": 178,
+        "numerator_companies": 67,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1348,
+        "n_group": 82,
+        "numerator_companies": 31,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.1044,
+      "lift_max": 0.1688,
+      "lift_range": 0.0644,
+      "n_pass": 1
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0001,
+        "n_group": 40,
+        "numerator_companies": 13,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0515,
+        "n_group": 128,
+        "numerator_companies": 43,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0247,
+        "n_group": 209,
+        "numerator_companies": 68,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.109,
+        "n_group": 88,
+        "numerator_companies": 34,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0459,
+        "n_group": 155,
+        "numerator_companies": 53,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1337,
+        "n_group": 68,
+        "numerator_companies": 27,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0001,
+      "lift_max": 0.1337,
+      "lift_range": 0.1338,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1116,
+        "n_group": 90,
+        "numerator_companies": 40,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1227,
+        "n_group": 126,
+        "numerator_companies": 46,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0978,
+        "n_group": 98,
+        "numerator_companies": 40,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0976,
+        "n_group": 115,
+        "numerator_companies": 43,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0626,
+        "n_group": 218,
+        "numerator_companies": 73,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1868,
+        "n_group": 163,
+        "numerator_companies": 63,
+        "gate1_pass": true
+       }
+      },
+      "lift_min": 0.0626,
+      "lift_max": 0.1868,
+      "lift_range": 0.1242,
+      "n_pass": 1
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0338,
+        "n_group": 100,
+        "numerator_companies": 35,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0394,
+        "n_group": 82,
+        "numerator_companies": 26,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.11,
+        "n_group": 130,
+        "numerator_companies": 46,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.1077,
+        "n_group": 114,
+        "numerator_companies": 44,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.1028,
+        "n_group": 154,
+        "numerator_companies": 56,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1055,
+        "n_group": 96,
+        "numerator_companies": 38,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0338,
+      "lift_max": 0.11,
+      "lift_range": 0.0762,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0429,
+        "n_group": 302,
+        "numerator_companies": 98,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1003,
+        "n_group": 127,
+        "numerator_companies": 46,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0508,
+        "n_group": 228,
+        "numerator_companies": 78,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0599,
+        "n_group": 195,
+        "numerator_companies": 62,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0091,
+        "n_group": 55,
+        "numerator_companies": 20,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0516,
+        "n_group": 213,
+        "numerator_companies": 69,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0091,
+      "lift_max": 0.1003,
+      "lift_range": 0.0912,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0401,
+        "n_group": 134,
+        "numerator_companies": 48,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0681,
+        "n_group": 89,
+        "numerator_companies": 31,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.074,
+        "n_group": 92,
+        "numerator_companies": 34,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.1736,
+        "n_group": 141,
+        "numerator_companies": 59,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0682,
+        "n_group": 209,
+        "numerator_companies": 73,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1415,
+        "n_group": 106,
+        "numerator_companies": 43,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0401,
+      "lift_max": 0.1736,
+      "lift_range": 0.1335,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1565,
+        "n_group": 142,
+        "numerator_companies": 53,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1736,
+        "n_group": 69,
+        "numerator_companies": 28,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.1,
+        "n_group": 228,
+        "numerator_companies": 81,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.1387,
+        "n_group": 61,
+        "numerator_companies": 24,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.1213,
+        "n_group": 133,
+        "numerator_companies": 51,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.095,
+        "n_group": 166,
+        "numerator_companies": 60,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.095,
+      "lift_max": 0.1736,
+      "lift_range": 0.0786,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.2527,
+        "n_group": 121,
+        "numerator_companies": 52,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.2149,
+        "n_group": 77,
+        "numerator_companies": 35,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.1416,
+        "n_group": 100,
+        "numerator_companies": 39,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.169,
+        "n_group": 71,
+        "numerator_companies": 32,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.2542,
+        "n_group": 83,
+        "numerator_companies": 39,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.185,
+        "n_group": 91,
+        "numerator_companies": 38,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.1416,
+      "lift_max": 0.2542,
+      "lift_range": 0.1126,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1175,
+        "n_group": 117,
+        "numerator_companies": 43,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0624,
+        "n_group": 248,
+        "numerator_companies": 88,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0471,
+        "n_group": 214,
+        "numerator_companies": 73,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0182,
+        "n_group": 172,
+        "numerator_companies": 60,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0215,
+        "n_group": 204,
+        "numerator_companies": 65,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0705,
+        "n_group": 182,
+        "numerator_companies": 64,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0182,
+      "lift_max": 0.1175,
+      "lift_range": 0.0993,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1816,
+        "n_group": 65,
+        "numerator_companies": 25,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1678,
+        "n_group": 87,
+        "numerator_companies": 33,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.2959,
+        "n_group": 56,
+        "numerator_companies": 26,
+        "gate1_pass": true
+       },
+       "20260815": {
+        "lift": 0.2293,
+        "n_group": 88,
+        "numerator_companies": 40,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.2367,
+        "n_group": 116,
+        "numerator_companies": 49,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.2205,
+        "n_group": 72,
+        "numerator_companies": 31,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.1678,
+      "lift_max": 0.2959,
+      "lift_range": 0.1281,
+      "n_pass": 1
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0832,
+        "n_group": 106,
+        "numerator_companies": 35,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1221,
+        "n_group": 136,
+        "numerator_companies": 46,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.1956,
+        "n_group": 68,
+        "numerator_companies": 28,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.106,
+        "n_group": 187,
+        "numerator_companies": 66,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0927,
+        "n_group": 62,
+        "numerator_companies": 22,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0848,
+        "n_group": 191,
+        "numerator_companies": 67,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0832,
+      "lift_max": 0.1956,
+      "lift_range": 0.1124,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0213,
+        "n_group": 121,
+        "numerator_companies": 39,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0223,
+        "n_group": 267,
+        "numerator_companies": 85,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0507,
+        "n_group": 98,
+        "numerator_companies": 35,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0758,
+        "n_group": 95,
+        "numerator_companies": 35,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0129,
+        "n_group": 159,
+        "numerator_companies": 54,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1262,
+        "n_group": 101,
+        "numerator_companies": 40,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0129,
+      "lift_max": 0.1262,
+      "lift_range": 0.1133,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1679,
+        "n_group": 57,
+        "numerator_companies": 26,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.2169,
+        "n_group": 92,
+        "numerator_companies": 44,
+        "gate1_pass": true
+       },
+       "20260814": {
+        "lift": 0.1788,
+        "n_group": 88,
+        "numerator_companies": 38,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.1774,
+        "n_group": 85,
+        "numerator_companies": 39,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.1748,
+        "n_group": 124,
+        "numerator_companies": 52,
+        "gate1_pass": true
+       },
+       "20260823": {
+        "lift": 0.226,
+        "n_group": 61,
+        "numerator_companies": 31,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.1679,
+      "lift_max": 0.226,
+      "lift_range": 0.0581,
+      "n_pass": 2
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0482,
+        "n_group": 97,
+        "numerator_companies": 32,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0049,
+        "n_group": 175,
+        "numerator_companies": 54,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0705,
+        "n_group": 262,
+        "numerator_companies": 89,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.1085,
+        "n_group": 137,
+        "numerator_companies": 44,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.1049,
+        "n_group": 122,
+        "numerator_companies": 44,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0752,
+        "n_group": 219,
+        "numerator_companies": 74,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0049,
+      "lift_max": 0.1085,
+      "lift_range": 0.1036,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1347,
+        "n_group": 113,
+        "numerator_companies": 43,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1349,
+        "n_group": 50,
+        "numerator_companies": 19,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.1675,
+        "n_group": 117,
+        "numerator_companies": 45,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.1197,
+        "n_group": 141,
+        "numerator_companies": 48,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.1105,
+        "n_group": 128,
+        "numerator_companies": 45,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1559,
+        "n_group": 82,
+        "numerator_companies": 33,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.1105,
+      "lift_max": 0.1675,
+      "lift_range": 0.057,
+      "n_pass": 0
+     }
+    ]
+   },
+   "B_single_condition_d10": {
+    "implanted_rule": "同上",
+    "implanted_rows": 226,
+    "delta": 0.1,
+    "p_inside": 0.5184,
+    "p_outside": 0.3849,
+    "n_replicates": 20,
+    "lift_range_across_seeds": {
+     "median": 0.1059,
+     "min": 0.0436,
+     "max": 0.1733
+    },
+    "gate1_pass_per_replicate": {
+     "median": 0,
+     "min": 0,
+     "max": 0,
+     "of_n_seeds": 6,
+     "share_of_seed_runs_passing": 0.0
+    },
+    "share_of_replicates_with_range_ge_observed": 0.0,
+    "replicates": [
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0687,
+        "n_group": 173,
+        "numerator_companies": 59,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0367,
+        "n_group": 243,
+        "numerator_companies": 75,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0228,
+        "n_group": 206,
+        "numerator_companies": 63,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0142,
+        "n_group": 261,
+        "numerator_companies": 77,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": -0.0325,
+        "n_group": 237,
+        "numerator_companies": 65,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.0109,
+        "n_group": 265,
+        "numerator_companies": 73,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0325,
+      "lift_max": 0.0687,
+      "lift_range": 0.1012,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0104,
+        "n_group": 231,
+        "numerator_companies": 72,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0123,
+        "n_group": 135,
+        "numerator_companies": 41,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0192,
+        "n_group": 197,
+        "numerator_companies": 63,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0207,
+        "n_group": 226,
+        "numerator_companies": 73,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0292,
+        "n_group": 318,
+        "numerator_companies": 104,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0564,
+        "n_group": 190,
+        "numerator_companies": 65,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0104,
+      "lift_max": 0.0564,
+      "lift_range": 0.0668,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.02,
+        "n_group": 149,
+        "numerator_companies": 45,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.06,
+        "n_group": 230,
+        "numerator_companies": 68,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0753,
+        "n_group": 66,
+        "numerator_companies": 23,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0645,
+        "n_group": 135,
+        "numerator_companies": 44,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0417,
+        "n_group": 82,
+        "numerator_companies": 29,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.083,
+        "n_group": 134,
+        "numerator_companies": 46,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.02,
+      "lift_max": 0.083,
+      "lift_range": 0.063,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1801,
+        "n_group": 113,
+        "numerator_companies": 45,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1337,
+        "n_group": 106,
+        "numerator_companies": 37,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.1526,
+        "n_group": 106,
+        "numerator_companies": 42,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0807,
+        "n_group": 196,
+        "numerator_companies": 69,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.1121,
+        "n_group": 62,
+        "numerator_companies": 23,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0497,
+        "n_group": 108,
+        "numerator_companies": 34,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0497,
+      "lift_max": 0.1801,
+      "lift_range": 0.1304,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1411,
+        "n_group": 77,
+        "numerator_companies": 32,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1908,
+        "n_group": 74,
+        "numerator_companies": 35,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0175,
+        "n_group": 46,
+        "numerator_companies": 17,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.1402,
+        "n_group": 113,
+        "numerator_companies": 46,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.1761,
+        "n_group": 91,
+        "numerator_companies": 40,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0962,
+        "n_group": 111,
+        "numerator_companies": 44,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0175,
+      "lift_max": 0.1908,
+      "lift_range": 0.1733,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0005,
+        "n_group": 231,
+        "numerator_companies": 71,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0749,
+        "n_group": 263,
+        "numerator_companies": 88,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.1414,
+        "n_group": 94,
+        "numerator_companies": 39,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.1321,
+        "n_group": 171,
+        "numerator_companies": 61,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0882,
+        "n_group": 88,
+        "numerator_companies": 33,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1597,
+        "n_group": 98,
+        "numerator_companies": 36,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0005,
+      "lift_max": 0.1597,
+      "lift_range": 0.1602,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0548,
+        "n_group": 51,
+        "numerator_companies": 17,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": -0.0136,
+        "n_group": 365,
+        "numerator_companies": 115,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": -0.0306,
+        "n_group": 121,
+        "numerator_companies": 39,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0339,
+        "n_group": 206,
+        "numerator_companies": 72,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0354,
+        "n_group": 201,
+        "numerator_companies": 78,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.005,
+        "n_group": 229,
+        "numerator_companies": 79,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0548,
+      "lift_max": 0.0354,
+      "lift_range": 0.0902,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0725,
+        "n_group": 247,
+        "numerator_companies": 83,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0388,
+        "n_group": 331,
+        "numerator_companies": 107,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0705,
+        "n_group": 186,
+        "numerator_companies": 67,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0911,
+        "n_group": 121,
+        "numerator_companies": 42,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0213,
+        "n_group": 244,
+        "numerator_companies": 78,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1476,
+        "n_group": 175,
+        "numerator_companies": 66,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0213,
+      "lift_max": 0.1476,
+      "lift_range": 0.1263,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.011,
+        "n_group": 178,
+        "numerator_companies": 66,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": -0.0027,
+        "n_group": 186,
+        "numerator_companies": 65,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0646,
+        "n_group": 197,
+        "numerator_companies": 69,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0046,
+        "n_group": 112,
+        "numerator_companies": 43,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": -0.0225,
+        "n_group": 212,
+        "numerator_companies": 73,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.0492,
+        "n_group": 159,
+        "numerator_companies": 44,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0492,
+      "lift_max": 0.0646,
+      "lift_range": 0.1138,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0216,
+        "n_group": 317,
+        "numerator_companies": 100,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": -0.0149,
+        "n_group": 246,
+        "numerator_companies": 78,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": -0.0064,
+        "n_group": 234,
+        "numerator_companies": 71,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": -0.0122,
+        "n_group": 266,
+        "numerator_companies": 79,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0325,
+        "n_group": 158,
+        "numerator_companies": 57,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0016,
+        "n_group": 341,
+        "numerator_companies": 104,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0149,
+      "lift_max": 0.0325,
+      "lift_range": 0.0474,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.021,
+        "n_group": 139,
+        "numerator_companies": 43,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": -0.0218,
+        "n_group": 90,
+        "numerator_companies": 28,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": -0.0236,
+        "n_group": 93,
+        "numerator_companies": 30,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0823,
+        "n_group": 71,
+        "numerator_companies": 25,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0439,
+        "n_group": 198,
+        "numerator_companies": 68,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.08,
+        "n_group": 161,
+        "numerator_companies": 58,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0236,
+      "lift_max": 0.0823,
+      "lift_range": 0.1059,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0311,
+        "n_group": 170,
+        "numerator_companies": 53,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0768,
+        "n_group": 153,
+        "numerator_companies": 52,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0044,
+        "n_group": 196,
+        "numerator_companies": 64,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.065,
+        "n_group": 111,
+        "numerator_companies": 44,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0385,
+        "n_group": 182,
+        "numerator_companies": 63,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.0119,
+        "n_group": 290,
+        "numerator_companies": 94,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0119,
+      "lift_max": 0.0768,
+      "lift_range": 0.0887,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1349,
+        "n_group": 50,
+        "numerator_companies": 23,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0993,
+        "n_group": 113,
+        "numerator_companies": 41,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.111,
+        "n_group": 124,
+        "numerator_companies": 49,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.1105,
+        "n_group": 64,
+        "numerator_companies": 29,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.1622,
+        "n_group": 104,
+        "numerator_companies": 43,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.1651,
+        "n_group": 121,
+        "numerator_companies": 55,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0993,
+      "lift_max": 0.1651,
+      "lift_range": 0.0658,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0055,
+        "n_group": 164,
+        "numerator_companies": 55,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.021,
+        "n_group": 161,
+        "numerator_companies": 55,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": -0.0057,
+        "n_group": 283,
+        "numerator_companies": 90,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": -0.0289,
+        "n_group": 375,
+        "numerator_companies": 116,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": -0.0077,
+        "n_group": 270,
+        "numerator_companies": 88,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.0183,
+        "n_group": 255,
+        "numerator_companies": 80,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0289,
+      "lift_max": 0.021,
+      "lift_range": 0.0499,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1999,
+        "n_group": 40,
+        "numerator_companies": 17,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.1401,
+        "n_group": 92,
+        "numerator_companies": 36,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.2583,
+        "n_group": 60,
+        "numerator_companies": 27,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.1841,
+        "n_group": 87,
+        "numerator_companies": 39,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.2128,
+        "n_group": 116,
+        "numerator_companies": 49,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.157,
+        "n_group": 67,
+        "numerator_companies": 28,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.1401,
+      "lift_max": 0.2583,
+      "lift_range": 0.1182,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0075,
+        "n_group": 115,
+        "numerator_companies": 41,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": -0.0001,
+        "n_group": 137,
+        "numerator_companies": 49,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": -0.0595,
+        "n_group": 157,
+        "numerator_companies": 46,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": -0.0106,
+        "n_group": 143,
+        "numerator_companies": 49,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0453,
+        "n_group": 273,
+        "numerator_companies": 95,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0063,
+        "n_group": 213,
+        "numerator_companies": 72,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0595,
+      "lift_max": 0.0453,
+      "lift_range": 0.1048,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1005,
+        "n_group": 100,
+        "numerator_companies": 34,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0467,
+        "n_group": 263,
+        "numerator_companies": 90,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": -0.0072,
+        "n_group": 87,
+        "numerator_companies": 26,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0468,
+        "n_group": 103,
+        "numerator_companies": 33,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0156,
+        "n_group": 167,
+        "numerator_companies": 55,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0345,
+        "n_group": 268,
+        "numerator_companies": 92,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0072,
+      "lift_max": 0.1005,
+      "lift_range": 0.1077,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.0163,
+        "n_group": 349,
+        "numerator_companies": 118,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0523,
+        "n_group": 189,
+        "numerator_companies": 71,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": -0.0054,
+        "n_group": 232,
+        "numerator_companies": 79,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0173,
+        "n_group": 266,
+        "numerator_companies": 91,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": -0.0138,
+        "n_group": 262,
+        "numerator_companies": 82,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": -0.0834,
+        "n_group": 47,
+        "numerator_companies": 11,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0834,
+      "lift_max": 0.0523,
+      "lift_range": 0.1357,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": -0.0084,
+        "n_group": 95,
+        "numerator_companies": 26,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0219,
+        "n_group": 237,
+        "numerator_companies": 72,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.0352,
+        "n_group": 213,
+        "numerator_companies": 66,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0025,
+        "n_group": 118,
+        "numerator_companies": 34,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.0213,
+        "n_group": 279,
+        "numerator_companies": 90,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.006,
+        "n_group": 211,
+        "numerator_companies": 57,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": -0.0084,
+      "lift_max": 0.0352,
+      "lift_range": 0.0436,
+      "n_pass": 0
+     },
+     {
+      "per_seed": {
+       "20260812": {
+        "lift": 0.1564,
+        "n_group": 44,
+        "numerator_companies": 21,
+        "gate1_pass": false
+       },
+       "20260813": {
+        "lift": 0.0504,
+        "n_group": 119,
+        "numerator_companies": 38,
+        "gate1_pass": false
+       },
+       "20260814": {
+        "lift": 0.1223,
+        "n_group": 176,
+        "numerator_companies": 67,
+        "gate1_pass": false
+       },
+       "20260815": {
+        "lift": 0.0652,
+        "n_group": 195,
+        "numerator_companies": 68,
+        "gate1_pass": false
+       },
+       "20260819": {
+        "lift": 0.1001,
+        "n_group": 84,
+        "numerator_companies": 31,
+        "gate1_pass": false
+       },
+       "20260823": {
+        "lift": 0.0882,
+        "n_group": 46,
+        "numerator_companies": 20,
+        "gate1_pass": false
+       }
+      },
+      "lift_min": 0.0504,
+      "lift_max": 0.1564,
+      "lift_range": 0.106,
+      "n_pass": 0
+     }
+    ]
+   }
+  },
+  "observed_lift_range_across_seeds": 0.3786,
+  "observed_gate1_pass": 2,
+  "observed_n_seeds": 6,
+  "how_to_read": "A が通らないのは貪欲な木が2条件の下位群を根から掘れないため（手続きの限界）＝探索側の『後段は当てられない』の弁はこの形では正しい。**B（木が見つけられる形）で δ を振り、観測の揺れと合う δ を読む**のが本体。B も観測と同じだけ揺れるなら seed の検問からは何も言えない——正直にそう書く"
+ },
+ "check1c_named_rule_applied_uniformly": {
+  "why": "依頼文のラベルは『f2_rnd_r 上位1/4 ∧ f2_rev 上位1/4』。OOF 群は fold ごとに**別の規則**の和集合なので、(a) そのラベルの規則を一様に当てたら何が起きるか (b) OOF 群のうち何行がそのラベルを満たすか、を測る",
+  "uniform_rule": {
+   "pooled": {
+    "n_rows": 901,
+    "base": 0.4184,
+    "n_group": 57,
+    "numerator": 45,
+    "n_group_companies": 24,
+    "numerator_companies": 19,
+    "p_group": 0.7895,
+    "lift": 0.371,
+    "lift_ok": true,
+    "min_num_ok_companies": false,
+    "min_num_ok_rows": true,
+    "per_vintage": {
+     "2016": {
+      "n": 296,
+      "base": 0.4291,
+      "n_group": 18,
+      "k": 14,
+      "p_group": 0.7778,
+      "lift": 0.3487
+     },
+     "2017": {
+      "n": 295,
+      "base": 0.4203,
+      "n_group": 17,
+      "k": 14,
+      "p_group": 0.8235,
+      "lift": 0.4032
+     },
+     "2018": {
+      "n": 310,
+      "base": 0.4065,
+      "n_group": 22,
+      "k": 17,
+      "p_group": 0.7727,
+      "lift": 0.3663
+     }
+    },
+    "sign_ok": true,
+    "gate1_pass": false
+   },
+   "per_vintage": {
+    "n_rows": 901,
+    "base": 0.4184,
+    "n_group": 55,
+    "numerator": 44,
+    "n_group_companies": 22,
+    "numerator_companies": 18,
+    "p_group": 0.8,
+    "lift": 0.3816,
+    "lift_ok": true,
+    "min_num_ok_companies": false,
+    "min_num_ok_rows": true,
+    "per_vintage": {
+     "2016": {
+      "n": 296,
+      "base": 0.4291,
+      "n_group": 18,
+      "k": 14,
+      "p_group": 0.7778,
+      "lift": 0.3487
+     },
+     "2017": {
+      "n": 295,
+      "base": 0.4203,
+      "n_group": 17,
+      "k": 14,
+      "p_group": 0.8235,
+      "lift": 0.4032
+     },
+     "2018": {
+      "n": 310,
+      "base": 0.4065,
+      "n_group": 20,
+      "k": 16,
+      "p_group": 0.8,
+      "lift": 0.3935
+     }
+    },
+    "sign_ok": true,
+    "gate1_pass": false
+   }
+  },
+  "⚠_uniform_rule_is_in_sample": "この規則は木がデータを見て選んだもの。一様に当てた数字は in-sample であって held-out ではない",
+  "oof_group_rows_satisfying_named_rule": 30,
+  "oof_group_rows_total": 59,
+  "share": 0.5085,
+  "split_of_oof_group": {
+   "satisfies_named_rule": {
+    "n": 30,
+    "k": 24,
+    "p": 0.8,
+    "lift_vs_pop_base": 0.3816,
+    "companies": 13
+   },
+   "does_not": {
+    "n": 29,
+    "k": 16,
+    "p": 0.5517,
+    "lift_vs_pop_base": 0.1333,
+    "companies": 15
+   }
+  }
+ },
+ "check1d_group_internals": {
+  "why": "OOF 群は fold ごとに**別の規則**が作った行の和集合。単一の規則ではないので、『どの fold が群を作っているか』『同じ会社が何度数えられているか』を測る",
+  "per_fold_contribution": [
+   {
+    "fold": 0,
+    "n_group": 12,
+    "k": 6,
+    "p_group": 0.5,
+    "depth": 3,
+    "mode": "best_leaf",
+    "leaf_path": [
+     "f2_rnd_r>=q75",
+     "f2_rev>=q75",
+     "!f2_opmD5>=q75"
+    ],
+    "leaf_p_train": 1.0
+   },
+   {
+    "fold": 1,
+    "n_group": 3,
+    "k": 3,
+    "p_group": 1.0,
+    "depth": 3,
+    "mode": "best_leaf",
+    "leaf_path": [
+     "f2_rev>=q75",
+     "f2_rnd_r>=q75",
+     "!f2_cagr5>=q50"
+    ],
+    "leaf_p_train": 0.963
+   },
+   {
+    "fold": 2,
+    "n_group": 6,
+    "k": 6,
+    "p_group": 1.0,
+    "depth": 3,
+    "mode": "best_leaf",
+    "leaf_path": [
+     "!f2_cagr5>=q75",
+     "f2_rnd_r>=q75",
+     "f2_rev>=q75"
+    ],
+    "leaf_p_train": 0.9091
+   },
+   {
+    "fold": 3,
+    "n_group": 6,
+    "k": 5,
+    "p_group": 0.8333,
+    "depth": 3,
+    "mode": "best_leaf",
+    "leaf_path": [
+     "f2_rnd_r>=q75",
+     "f2_rev>=q50",
+     "!f2_streak_rev>=q50"
+    ],
+    "leaf_p_train": 1.0
+   },
+   {
+    "fold": 4,
+    "n_group": 32,
+    "k": 20,
+    "p_group": 0.625,
+    "depth": 3,
+    "mode": "best_leaf",
+    "leaf_path": [
+     "f2_rnd_r>=q50",
+     "!f2_capex_r>=q50",
+     "f2_rev>=q25"
+    ],
+    "leaf_p_train": 0.6214
+   }
+  ],
+  "leave_one_fold_out": [
+   {
+    "dropped_fold": 0,
+    "n_group": 47,
+    "k": 34,
+    "lift": 0.305
+   },
+   {
+    "dropped_fold": 1,
+    "n_group": 56,
+    "k": 37,
+    "lift": 0.2423
+   },
+   {
+    "dropped_fold": 2,
+    "n_group": 53,
+    "k": 34,
+    "lift": 0.2231
+   },
+   {
+    "dropped_fold": 3,
+    "n_group": 53,
+    "k": 35,
+    "lift": 0.242
+   },
+   {
+    "dropped_fold": 4,
+    "n_group": 27,
+    "k": 20,
+    "lift": 0.3223
+   }
+  ],
+  "group_companies": 28,
+  "company_appears_in_n_vintages": {
+   "1": 8,
+   "2": 9,
+   "3": 11
+  },
+  "company_level": {
+   "n_companies_in_group": 28,
+   "base_company_any_vintage_y10": 0.4581,
+   "base_company_all_vintages_y10": 0.3534,
+   "group_any": 21,
+   "group_all": 18,
+   "p_group_any": 0.75,
+   "p_group_all": 0.6429,
+   "lift_any": 0.2919,
+   "lift_all": 0.2895,
+   "binom_p_any": 0.0017,
+   "binom_p_all": 0.0017,
+   "note": "行で数えると同じ会社を最大3回数える。実効 n は行59ではなく**会社28**。会社単位の lift と、独立を仮定した素朴な二項の上側確率を併記する（群は木が選んだものなので、この p は選択を補正していない＝参考値）"
+  },
+  "leave_one_company_out": {
+   "worst": {
+    "dropped": "CSCO",
+    "n_group": 56,
+    "k": 37,
+    "numerator_companies": 19,
+    "lift": 0.2423
+   },
+   "n_tested": 28,
+   "all": [
+    {
+     "dropped": "ABBNY",
+     "n_group": 58,
+     "k": 39,
+     "numerator_companies": 19,
+     "lift": 0.254
+    },
+    {
+     "dropped": "ADBE",
+     "n_group": 58,
+     "k": 40,
+     "numerator_companies": 20,
+     "lift": 0.2713
+    },
+    {
+     "dropped": "AMAT",
+     "n_group": 58,
+     "k": 39,
+     "numerator_companies": 19,
+     "lift": 0.254
+    },
+    {
+     "dropped": "BDX",
+     "n_group": 56,
+     "k": 40,
+     "numerator_companies": 20,
+     "lift": 0.2959
+    },
+    {
+     "dropped": "BIDU",
+     "n_group": 56,
+     "k": 40,
+     "numerator_companies": 20,
+     "lift": 0.2959
+    },
+    {
+     "dropped": "BRKR",
+     "n_group": 57,
+     "k": 40,
+     "numerator_companies": 20,
+     "lift": 0.2834
+    },
+    {
+     "dropped": "CSCO",
+     "n_group": 56,
+     "k": 37,
+     "numerator_companies": 19,
+     "lift": 0.2423
+    },
+    {
+     "dropped": "CXT",
+     "n_group": 57,
+     "k": 39,
+     "numerator_companies": 19,
+     "lift": 0.2658
+    },
+    {
+     "dropped": "EA",
+     "n_group": 57,
+     "k": 39,
+     "numerator_companies": 19,
+     "lift": 0.2658
+    },
+    {
+     "dropped": "FDS",
+     "n_group": 58,
+     "k": 40,
+     "numerator_companies": 20,
+     "lift": 0.2713
+    },
+    {
+     "dropped": "GLW",
+     "n_group": 57,
+     "k": 38,
+     "numerator_companies": 19,
+     "lift": 0.2483
+    },
+    {
+     "dropped": "INTC",
+     "n_group": 56,
+     "k": 37,
+     "numerator_companies": 19,
+     "lift": 0.2423
+    },
+    {
+     "dropped": "LMT",
+     "n_group": 56,
+     "k": 37,
+     "numerator_companies": 19,
+     "lift": 0.2423
+    },
+    {
+     "dropped": "LRCX",
+     "n_group": 57,
+     "k": 38,
+     "numerator_companies": 19,
+     "lift": 0.2483
+    },
+    {
+     "dropped": "MO",
+     "n_group": 56,
+     "k": 40,
+     "numerator_companies": 20,
+     "lift": 0.2959
+    },
+    {
+     "dropped": "MSCI",
+     "n_group": 58,
+     "k": 39,
+     "numerator_companies": 19,
+     "lift": 0.254
+    },
+    {
+     "dropped": "MSFT",
+     "n_group": 56,
+     "k": 37,
+     "numerator_companies": 19,
+     "lift": 0.2423
+    },
+    {
+     "dropped": "ORCL",
+     "n_group": 56,
+     "k": 37,
+     "numerator_companies": 19,
+     "lift": 0.2423
+    },
+    {
+     "dropped": "PH",
+     "n_group": 56,
+     "k": 37,
+     "numerator_companies": 19,
+     "lift": 0.2423
+    },
+    {
+     "dropped": "QCOM",
+     "n_group": 57,
+     "k": 38,
+     "numerator_companies": 19,
+     "lift": 0.2483
+    },
+    {
+     "dropped": "RMD",
+     "n_group": 57,
+     "k": 38,
+     "numerator_companies": 19,
+     "lift": 0.2483
+    },
+    {
+     "dropped": "SGI",
+     "n_group": 57,
+     "k": 38,
+     "numerator_companies": 19,
+     "lift": 0.2483
+    },
+    {
+     "dropped": "SIRI",
+     "n_group": 58,
+     "k": 40,
+     "numerator_companies": 20,
+     "lift": 0.2713
+    },
+    {
+     "dropped": "STX",
+     "n_group": 58,
+     "k": 39,
+     "numerator_companies": 19,
+     "lift": 0.254
+    },
+    {
+     "dropped": "SYK",
+     "n_group": 56,
+     "k": 37,
+     "numerator_companies": 19,
+     "lift": 0.2423
+    },
+    {
+     "dropped": "TFX",
+     "n_group": 56,
+     "k": 40,
+     "numerator_companies": 20,
+     "lift": 0.2959
+    },
+    {
+     "dropped": "TXN",
+     "n_group": 57,
+     "k": 38,
+     "numerator_companies": 19,
+     "lift": 0.2483
+    },
+    {
+     "dropped": "WDC",
+     "n_group": 58,
+     "k": 39,
+     "numerator_companies": 19,
+     "lift": 0.254
+    }
+   ]
+  }
+ },
+ "check2_vintage": {
+  "per_vintage": {
+   "2016": {
+    "n": 296,
+    "base": 0.4291,
+    "n_group": 17,
+    "k": 12,
+    "p_group": 0.7059,
+    "lift": 0.2768
+   },
+   "2017": {
+    "n": 295,
+    "base": 0.4203,
+    "n_group": 19,
+    "k": 13,
+    "p_group": 0.6842,
+    "lift": 0.2639
+   },
+   "2018": {
+    "n": 310,
+    "base": 0.4065,
+    "n_group": 23,
+    "k": 15,
+    "p_group": 0.6522,
+    "lift": 0.2457
+   }
+  },
+  "sign_ok": true,
+  "line": 0.15,
+  "⚠_not_three_independent_evidences": "2016/2017/2018 は同じ956ティッカー（panel の既知の非対称）。群の会社が複数ビンテージに現れるなら『3ビンテージ維持』は3つの独立な証拠ではない。重なりは check1d を見よ"
+ },
+ "check3_sector": {
+  "mh_per_vintage_(prereg_gate)": {
+   "2016": {
+    "mh_risk_diff": 0.1835,
+    "strata_used": 3,
+    "strata_dropped": 42,
+    "rows_in_kept_strata": 83,
+    "group_rows_in_kept_strata": 10,
+    "group_rows_total": 17,
+    "share_of_group_measurable": 0.5882
+   },
+   "2017": {
+    "mh_risk_diff": 0.0877,
+    "strata_used": 3,
+    "strata_dropped": 43,
+    "rows_in_kept_strata": 85,
+    "group_rows_in_kept_strata": 12,
+    "group_rows_total": 19,
+    "share_of_group_measurable": 0.6316
+   },
+   "2018": {
+    "mh_risk_diff": 0.181,
+    "strata_used": 4,
+    "strata_dropped": 45,
+    "rows_in_kept_strata": 117,
+    "group_rows_in_kept_strata": 17,
+    "group_rows_total": 23,
+    "share_of_group_measurable": 0.7391
+   }
+  },
+  "mh_ok": false,
+  "mh_pooled_by_sic": {
+   "mh_risk_diff": 0.1777,
+   "strata_used": 6,
+   "strata_dropped": 44,
+   "rows_in_kept_strata": 377,
+   "group_rows_in_kept_strata": 51,
+   "group_rows_total": 59,
+   "share_of_group_measurable": 0.8644
+  },
+  "mh_pooled_by_sic_vintage": {
+   "mh_risk_diff": 0.1532,
+   "strata_used": 10,
+   "strata_dropped": 130,
+   "rows_in_kept_strata": 285,
+   "group_rows_in_kept_strata": 39,
+   "group_rows_total": 59,
+   "share_of_group_measurable": 0.661
+  },
+  "drop_one_sector_per_vintage_(prereg_gate)": {
+   "2016": {
+    "dropped_sector": "36",
+    "n_group": 14,
+    "k": 9,
+    "lift": 0.2256
+   },
+   "2017": {
+    "dropped_sector": "36",
+    "n_group": 16,
+    "k": 10,
+    "lift": 0.2207
+   },
+   "2018": {
+    "dropped_sector": "67",
+    "n_group": 23,
+    "k": 15,
+    "lift": 0.2191
+   }
+  },
+  "drop_one_sector_ok": true,
+  "drop_one_sector_pooled": {
+   "per_sector": [
+    {
+     "dropped_sector": "13",
+     "n_pop": 898,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4198,
+     "p_group": 0.678,
+     "lift": 0.2581
+    },
+    {
+     "dropped_sector": "14",
+     "n_pop": 900,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4178,
+     "p_group": 0.678,
+     "lift": 0.2602
+    },
+    {
+     "dropped_sector": "20",
+     "n_pop": 850,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4365,
+     "p_group": 0.678,
+     "lift": 0.2415
+    },
+    {
+     "dropped_sector": "21",
+     "n_pop": 898,
+     "n_group": 56,
+     "k": 40,
+     "base": 0.4198,
+     "p_group": 0.7143,
+     "lift": 0.2945
+    },
+    {
+     "dropped_sector": "22",
+     "n_pop": 898,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4198,
+     "p_group": 0.678,
+     "lift": 0.2581
+    },
+    {
+     "dropped_sector": "23",
+     "n_pop": 893,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4188,
+     "p_group": 0.678,
+     "lift": 0.2592
+    },
+    {
+     "dropped_sector": "24",
+     "n_pop": 898,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4176,
+     "p_group": 0.678,
+     "lift": 0.2604
+    },
+    {
+     "dropped_sector": "25",
+     "n_pop": 899,
+     "n_group": 57,
+     "k": 38,
+     "base": 0.4171,
+     "p_group": 0.6667,
+     "lift": 0.2495
+    },
+    {
+     "dropped_sector": "26",
+     "n_pop": 890,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4202,
+     "p_group": 0.678,
+     "lift": 0.2577
+    },
+    {
+     "dropped_sector": "27",
+     "n_pop": 895,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4212,
+     "p_group": 0.678,
+     "lift": 0.2567
+    },
+    {
+     "dropped_sector": "28",
+     "n_pop": 825,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4364,
+     "p_group": 0.678,
+     "lift": 0.2416
+    },
+    {
+     "dropped_sector": "29",
+     "n_pop": 900,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4189,
+     "p_group": 0.678,
+     "lift": 0.2591
+    },
+    {
+     "dropped_sector": "30",
+     "n_pop": 892,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.417,
+     "p_group": 0.678,
+     "lift": 0.2609
+    },
+    {
+     "dropped_sector": "31",
+     "n_pop": 895,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4179,
+     "p_group": 0.678,
+     "lift": 0.2601
+    },
+    {
+     "dropped_sector": "32",
+     "n_pop": 898,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4165,
+     "p_group": 0.678,
+     "lift": 0.2615
+    },
+    {
+     "dropped_sector": "33",
+     "n_pop": 896,
+     "n_group": 57,
+     "k": 38,
+     "base": 0.4163,
+     "p_group": 0.6667,
+     "lift": 0.2504
+    },
+    {
+     "dropped_sector": "34",
+     "n_pop": 881,
+     "n_group": 54,
+     "k": 36,
+     "base": 0.4132,
+     "p_group": 0.6667,
+     "lift": 0.2535
+    },
+    {
+     "dropped_sector": "35",
+     "n_pop": 839,
+     "n_group": 52,
+     "k": 33,
+     "base": 0.3897,
+     "p_group": 0.6346,
+     "lift": 0.2449
+    },
+    {
+     "dropped_sector": "36",
+     "n_pop": 839,
+     "n_group": 50,
+     "k": 31,
+     "base": 0.3993,
+     "p_group": 0.62,
+     "lift": 0.2207
+    },
+    {
+     "dropped_sector": "37",
+     "n_pop": 866,
+     "n_group": 56,
+     "k": 37,
+     "base": 0.4169,
+     "p_group": 0.6607,
+     "lift": 0.2439
+    },
+    {
+     "dropped_sector": "38",
+     "n_pop": 825,
+     "n_group": 46,
+     "k": 35,
+     "base": 0.4133,
+     "p_group": 0.7609,
+     "lift": 0.3475
+    },
+    {
+     "dropped_sector": "39",
+     "n_pop": 898,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4198,
+     "p_group": 0.678,
+     "lift": 0.2581
+    },
+    {
+     "dropped_sector": "40",
+     "n_pop": 892,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4126,
+     "p_group": 0.678,
+     "lift": 0.2654
+    },
+    {
+     "dropped_sector": "42",
+     "n_pop": 899,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4182,
+     "p_group": 0.678,
+     "lift": 0.2597
+    },
+    {
+     "dropped_sector": "44",
+     "n_pop": 892,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4204,
+     "p_group": 0.678,
+     "lift": 0.2576
+    },
+    {
+     "dropped_sector": "45",
+     "n_pop": 889,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4229,
+     "p_group": 0.678,
+     "lift": 0.255
+    },
+    {
+     "dropped_sector": "47",
+     "n_pop": 897,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4158,
+     "p_group": 0.678,
+     "lift": 0.2621
+    },
+    {
+     "dropped_sector": "48",
+     "n_pop": 872,
+     "n_group": 58,
+     "k": 40,
+     "base": 0.4323,
+     "p_group": 0.6897,
+     "lift": 0.2573
+    },
+    {
+     "dropped_sector": "49",
+     "n_pop": 880,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4205,
+     "p_group": 0.678,
+     "lift": 0.2575
+    },
+    {
+     "dropped_sector": "50",
+     "n_pop": 886,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4097,
+     "p_group": 0.678,
+     "lift": 0.2683
+    },
+    {
+     "dropped_sector": "51",
+     "n_pop": 898,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4198,
+     "p_group": 0.678,
+     "lift": 0.2581
+    },
+    {
+     "dropped_sector": "52",
+     "n_pop": 890,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4135,
+     "p_group": 0.678,
+     "lift": 0.2645
+    },
+    {
+     "dropped_sector": "55",
+     "n_pop": 889,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4128,
+     "p_group": 0.678,
+     "lift": 0.2651
+    },
+    {
+     "dropped_sector": "56",
+     "n_pop": 897,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4158,
+     "p_group": 0.678,
+     "lift": 0.2621
+    },
+    {
+     "dropped_sector": "58",
+     "n_pop": 893,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4188,
+     "p_group": 0.678,
+     "lift": 0.2592
+    },
+    {
+     "dropped_sector": "59",
+     "n_pop": 894,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4217,
+     "p_group": 0.678,
+     "lift": 0.2563
+    },
+    {
+     "dropped_sector": "60",
+     "n_pop": 900,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4189,
+     "p_group": 0.678,
+     "lift": 0.2591
+    },
+    {
+     "dropped_sector": "61",
+     "n_pop": 891,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4164,
+     "p_group": 0.678,
+     "lift": 0.2616
+    },
+    {
+     "dropped_sector": "62",
+     "n_pop": 879,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4164,
+     "p_group": 0.678,
+     "lift": 0.2616
+    },
+    {
+     "dropped_sector": "63",
+     "n_pop": 893,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4166,
+     "p_group": 0.678,
+     "lift": 0.2614
+    },
+    {
+     "dropped_sector": "64",
+     "n_pop": 895,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4145,
+     "p_group": 0.678,
+     "lift": 0.2634
+    },
+    {
+     "dropped_sector": "67",
+     "n_pop": 824,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4454,
+     "p_group": 0.678,
+     "lift": 0.2326
+    },
+    {
+     "dropped_sector": "70",
+     "n_pop": 891,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4175,
+     "p_group": 0.678,
+     "lift": 0.2605
+    },
+    {
+     "dropped_sector": "72",
+     "n_pop": 893,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4188,
+     "p_group": 0.678,
+     "lift": 0.2592
+    },
+    {
+     "dropped_sector": "73",
+     "n_pop": 779,
+     "n_group": 45,
+     "k": 32,
+     "base": 0.4198,
+     "p_group": 0.7111,
+     "lift": 0.2913
+    },
+    {
+     "dropped_sector": "78",
+     "n_pop": 898,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4198,
+     "p_group": 0.678,
+     "lift": 0.2581
+    },
+    {
+     "dropped_sector": "79",
+     "n_pop": 896,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4185,
+     "p_group": 0.678,
+     "lift": 0.2594
+    },
+    {
+     "dropped_sector": "80",
+     "n_pop": 893,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4166,
+     "p_group": 0.678,
+     "lift": 0.2614
+    },
+    {
+     "dropped_sector": "82",
+     "n_pop": 892,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4215,
+     "p_group": 0.678,
+     "lift": 0.2564
+    },
+    {
+     "dropped_sector": "87",
+     "n_pop": 884,
+     "n_group": 59,
+     "k": 40,
+     "base": 0.4231,
+     "p_group": 0.678,
+     "lift": 0.2549
+    }
+   ],
+   "worst_by_abs_lift": {
+    "dropped_sector": "36",
+    "n_pop": 839,
+    "n_group": 50,
+    "k": 31,
+    "base": 0.3993,
+    "p_group": 0.62,
+    "lift": 0.2207
+   },
+   "n_measurable": 50,
+   "n_skipped": 0
+  },
+  "sector_standardized_full_coverage": {
+   "by_sic": {
+    "n_group_used": 54,
+    "n_group_total": 59,
+    "share_of_group_measurable": 0.9153,
+    "group_rows_dropped_no_control_in_stratum": 5,
+    "strata_dropped": 2,
+    "observed_k": 38,
+    "expected_k_from_sector_mix": 28.4699,
+    "lift_sector_adjusted": 0.1765,
+    "read": "生の lift との差が『業種の構成』が作っていた分。MH と違い群の全行を使うので被覆の言い訳が効かない"
+   },
+   "by_sic_vintage": {
+    "n_group_used": 54,
+    "n_group_total": 59,
+    "share_of_group_measurable": 0.9153,
+    "group_rows_dropped_no_control_in_stratum": 5,
+    "strata_dropped": 5,
+    "observed_k": 38,
+    "expected_k_from_sector_mix": 28.0422,
+    "lift_sector_adjusted": 0.1844,
+    "read": "生の lift との差が『業種の構成』が作っていた分。MH と違い群の全行を使うので被覆の言い訳が効かない"
+   }
+  },
+  "composition": {
+   "population_base": 0.4184,
+   "top_sectors_in_group": [
+    {
+     "sic2": "73",
+     "group_rows": 14,
+     "share_of_group": 0.2373,
+     "share_of_population": 0.1354,
+     "sector_base_rate": 0.4098,
+     "group_rate_in_sector": 0.5714,
+     "within_sector_lift": 0.1616
+    },
+    {
+     "sic2": "38",
+     "group_rows": 13,
+     "share_of_group": 0.2203,
+     "share_of_population": 0.0844,
+     "sector_base_rate": 0.4737,
+     "group_rate_in_sector": 0.3846,
+     "within_sector_lift": -0.0891
+    },
+    {
+     "sic2": "36",
+     "group_rows": 9,
+     "share_of_group": 0.1525,
+     "share_of_population": 0.0688,
+     "sector_base_rate": 0.6774,
+     "group_rate_in_sector": 1.0,
+     "within_sector_lift": 0.3226
+    },
+    {
+     "sic2": "35",
+     "group_rows": 7,
+     "share_of_group": 0.1186,
+     "share_of_population": 0.0688,
+     "sector_base_rate": 0.8065,
+     "group_rate_in_sector": 1.0,
+     "within_sector_lift": 0.1935
+    },
+    {
+     "sic2": "34",
+     "group_rows": 5,
+     "share_of_group": 0.0847,
+     "share_of_population": 0.0222,
+     "sector_base_rate": 0.65,
+     "group_rate_in_sector": 0.8,
+     "within_sector_lift": 0.15
+    },
+    {
+     "sic2": "37",
+     "group_rows": 3,
+     "share_of_group": 0.0508,
+     "share_of_population": 0.0388,
+     "sector_base_rate": 0.4571,
+     "group_rate_in_sector": 1.0,
+     "within_sector_lift": 0.5429
+    },
+    {
+     "sic2": "21",
+     "group_rows": 3,
+     "share_of_group": 0.0508,
+     "share_of_population": 0.0033,
+     "sector_base_rate": 0.0,
+     "group_rate_in_sector": 0.0,
+     "within_sector_lift": 0.0
+    },
+    {
+     "sic2": "33",
+     "group_rows": 2,
+     "share_of_group": 0.0339,
+     "share_of_population": 0.0055,
+     "sector_base_rate": 0.8,
+     "group_rate_in_sector": 1.0,
+     "within_sector_lift": 0.2
+    },
+    {
+     "sic2": "25",
+     "group_rows": 2,
+     "share_of_group": 0.0339,
+     "share_of_population": 0.0022,
+     "sector_base_rate": 1.0,
+     "group_rate_in_sector": 1.0,
+     "within_sector_lift": 0.0
+    },
+    {
+     "sic2": "48",
+     "group_rows": 1,
+     "share_of_group": 0.0169,
+     "share_of_population": 0.0322,
+     "sector_base_rate": 0.0,
+     "group_rate_in_sector": 0.0,
+     "within_sector_lift": 0.0
+    }
+   ]
+  },
+  "raw_lift_for_comparison": 0.2595
+ },
+ "check4_irr": {
+  "coverage_note": "panel の既知の非対称: irr の読解は 2013/2015/2018 のみ。2016/2017 は irr=null＝この検問は 2018 でしか当てられない",
+  "by_vintage": {
+   "2016": {
+    "n_with_irr": 0,
+    "status": "irr の読解がこのビンテージで 0 行しかなく判定不能"
+   },
+   "2017": {
+    "n_with_irr": 0,
+    "status": "irr の読解がこのビンテージで 0 行しかなく判定不能"
+   },
+   "2018": {
+    "n_with_irr": 113,
+    "n_irr_ge70": 52,
+    "irr_ge70": {
+     "n": 52,
+     "base": 0.5769,
+     "n_group": 4,
+     "k": 4,
+     "p_group": 1.0,
+     "lift": 0.4231
+    },
+    "irr_of_group": {
+     "n": 8,
+     "counts": {
+      "50": 4,
+      "75": 3,
+      "85": 1
+     }
+    },
+    "irr_of_pop": {
+     "50": 61,
+     "85": 18,
+     "75": 34
+    }
+   }
+  }
+ },
+ "check6_incremental": {
+  "prereg_definition": "上向き＝既存関門を通る行だけに絞って lift を測り直す＋群のうち既存関門で既に落ちている割合が7割超なら不合格",
+  "per_vintage": {
+   "2016": {
+    "n_rows": 296,
+    "n_keep": 246,
+    "n_group_before": 17,
+    "n_group_after_gates": 14,
+    "share_of_group_already_blocked": 0.1765,
+    "k": 10,
+    "base": 0.4512,
+    "lift": 0.2631
+   },
+   "2017": {
+    "n_rows": 295,
+    "n_keep": 257,
+    "n_group_before": 19,
+    "n_group_after_gates": 18,
+    "share_of_group_already_blocked": 0.0526,
+    "k": 12,
+    "base": 0.4319,
+    "lift": 0.2348
+   },
+   "2018": {
+    "n_rows": 310,
+    "n_keep": 260,
+    "n_group_before": 23,
+    "n_group_after_gates": 18,
+    "share_of_group_already_blocked": 0.2174,
+    "k": 11,
+    "base": 0.4269,
+    "lift": 0.1842
+   }
+  },
+  "pooled": {
+   "n_keep": 763,
+   "n_group_before": 59,
+   "n_group_after_gates": 50,
+   "k": 33,
+   "base": 0.4364,
+   "lift": 0.2236,
+   "share_of_group_already_blocked": 0.1525
+  },
+  "line_max_caught": 0.7,
+  "explained_share_of_numerator": {
+   "P_quality": {
+    "rows": 40,
+    "explained": 40,
+    "share": 1.0,
+    "note": "母集団が P_quality なので**定義上100%**。構造の事実であって発見ではない"
+   },
+   "g_shrink(事業の収縮)": {
+    "rows": 40,
+    "explained": 5,
+    "share": 0.125
+   },
+   "g_thin(intcov<3)": {
+    "rows": 40,
+    "explained": 2,
+    "share": 0.05
+   },
+   "irr>=70(2018のみ測定可)": {
+    "rows_with_irr": 6,
+    "explained": 4,
+    "share": 0.6667
+   }
+  },
+  "⚠": "この母集団は既に P_quality なので、質実証は増分の判定に使えない（定義上100%）。使えるのは 事業の収縮 / 薄い財務 / irr>=70 の3つだけ"
+ },
+ "check5_permutation": {
+  "null": "会社単位・全ビンテージ同時。同じ sic2 かつ同じビンテージ集合の会社どうしで(vintage->label) のプロファイルを入れ替える＝業種別・年別の基準率と、同じ会社のラベルの相関を保つ",
+  "n_perm": 2000,
+  "observed_lift": 0.2595,
+  "p_value_lift_ge_observed": 0.002,
+  "fpr_gate1": 0.0075,
+  "fpr_gate1_and_mh": 0.0015,
+  "null_lift_quantiles": {
+   "p50": 0.0377,
+   "p90": 0.0964,
+   "p95": 0.12,
+   "p99": 0.1729,
+   "max": 0.2978
+  },
+  "mc_se_p": 0.001,
+  "bucket_sizes": {
+   "1": 76,
+   "2": 23,
+   "3": 13,
+   "4": 7,
+   "5": 5,
+   "6": 2,
+   "7": 1,
+   "9": 2,
+   "13": 2,
+   "15": 2,
+   "19": 1,
+   "22": 1,
+   "34": 1
+  },
+  "⚠": "バケットの大きさが1の会社は自分自身としか入れ替わらない＝ラベルが固定される。その割合を bucket_sizes で示す（帰無が弱くなる方向＝偽陽性率は過小評価になりうる）",
+  "companies_with_fixed_label": 76,
+  "companies_total": 382
+ },
+ "★verdict": {
+  "line": "事前登録: lift>=0.15 ∧ 分子>=20社 ∧ 3ビンテージ維持 ∧ 業種調整 ∧ irr層 ∧ 増分。**すべて必要。1つでも欠ければ不合格**",
+  "gates": {
+   "1_reproduce": {
+    "verdict": "一致",
+    "note": "n=59 / 分子=40 / lift=0.2595 / 群28社・分子20社 が独立実装で完全一致。ただし OOF 群は**単一の規則ではなく fold ごとに別の規則が作った行の和集合**"
+   },
+   "2_vintage": {
+    "verdict": "通過",
+    "note": "2016 0.2768 / 2017 0.2639 / 2018 0.2457。ただし群28社のうち20社が2つ以上のビンテージに現れる＝3つの独立な証拠ではない"
+   },
+   "3_sector": {
+    "verdict": "不合格",
+    "note": "事前登録のゲート（ビンテージ別 MH）が **2017 で 0.0877 < 0.15**。被覆を上げた版（全被覆の間接標準化 0.1765/0.1844・プール MH 0.1777/0.1532）は線をわずかに超えるだけ＝生 lift 0.2595 の**約3分の1は業種の構成**"
+   },
+   "4_irr": {
+    "verdict": "判定不能",
+    "note": "2016/2017 は panel に irr が1行も無い（既知の非対称）。2018 の irr>=70 層に入る群の行は **4 行**しかなく、層内の判定はできない"
+   },
+   "5_permutation": {
+    "verdict": "通過（落とせなかった）",
+    "note": "p(lift>=観測)=0.002（2000回・会社単位・全ビンテージ同時）。帰無の p99=0.1729・最大=0.2978。gate1 の偽陽性率 0.0075 ＝**雑音では出ない大きさ**"
+   },
+   "6_incremental": {
+    "verdict": "通過（落とせなかった）",
+    "note": "既存関門を通る行だけに絞っても lift 0.2236（プール）／各年 [0.2631, 0.2348, 0.1842]。群のうち既存関門で既に落ちるのは 0.1525＝線の0.70に遠い。⚠ 母集団が P_quality なので質実証は増分の判定に使えず、irr>=70 は群の40分子のうち6行しか測れない"
+   }
+  },
+  "failed_or_unjudgeable": [
+   "3_sector",
+   "4_irr"
+  ],
+  "verdict": "不合格",
+  "★which_checks_could_not_break_it": [
+   "1 再現（完全一致）",
+   "2 ビンテージ",
+   "5 置換（p=0.002）",
+   "6 増分（既存関門を通した後も lift 0.2236）"
+  ],
+  "★what_broke_it": [
+   "3 業種: 事前登録のゲート（ビンテージ別 MH）が 2017 で 0.0877 と線を割る",
+   "4 irr: 2016/2017 に irr が無く、2018 の irr>=70 層の群は 4 行＝判定不能"
+  ],
+  "★beyond_the_six_checks": {
+   "fold_seed_instability": "fold の割り当て（結果の前に固定された籤）を振ると lift は 0.1173〜0.4959、gate1 は 2/6 の seed でしか通らない。**報告値0.2595は分布の高い側の一枚**",
+   "calibrated_by_positive_control": "木が見つけられる形（1条件）の真の効果を δ=0.25/0.15/0.10 で仕込むと、seed 間の振れ幅の中央値は 0.0846 / 0.1036 / 0.1059、gate1 の通過率は 0.6333 / 0.1083 / 0.0。**観測の振れ幅 0.3786 はどの δ でも再現しない**（最大の対照でも中央値 0.1059＝観測の約1/3.6。80反復のうち観測ほど振れたものは0件）。一方で観測の通過率 0.3333 は δ=0.25 と δ=0.15 の間。＝**観測は『一様な規則の効果』の形をしていない**。業種の所見（生 lift の約1/3が業種の構成・sic2=38 では群が業種基準を下回る）と整合する",
+   "⚠_what_the_positive_control_does_NOT_show": "対照Aが 0/6 しか通らないのは『貪欲な木が6%%の下位群を根から掘れない』という**手続きの限界**であって効果の不在ではない＝探索側の『後段は当てられない関門』の弁はこの形については正しい。seed の検問が言えるのは**大きさの安定性**についてだけ",
+   "min_numerator_is_exactly_on_the_line": "群28社のうち分子は20社＝登録の線ちょうど。**28社中20社は、その1社を抜くだけで分子が19社になり gate1 が落ちる**",
+   "the_name_describes_half_the_group": "『f2_rnd_r 上位1/4 ∧ f2_rev 上位1/4』を満たす OOF 群の行は 30/59。満たす側は lift 0.3816 だが**満たさない側 29行は lift 0.1333 で線を割る**",
+   "one_fold_makes_half_the_group": "fold4 だけで群の 32/59 行。その規則は `f2_rnd_r>=q50 ∧ !f2_capex_r>=q50 ∧ f2_rev>=q25` ＝**呼び名とは別の規則**。逆に呼び名そのものの規則を引いた fold0 は、train で 21/21(p=1.00) だったのに held-out では 6/12(p=0.50)＝**lift +0.08 で線を割る**",
+   "cut_basis": "分位点を train→コホート全体に変えるだけで分子は 16 社になり gate1 が落ちる"
+  },
+  "★honest_reading": "**不合格。ただし『何も無い』ではない。** 置換(p=0.002)と増分(0.22)は落とせなかったので、R&D比が高く売上規模の大きい社が10%+を出しやすいという信号自体は在る。落ちたのは (a) その lift の約3分の1が業種の構成で、事前登録の業種ゲートを 2017 で割る (b) irr の層内では原理的に測れない、の2点。さらに6つの外側で、**報告された 0.2595 という大きさは fold の籤に依存する一枚**だと判った",
+  "★what_would_change_this": "業種を跨いで群を作らない設計（sic2 内で木を育てる）と、2016/2017 の irr 読解。どちらも新しい採取が要る＝今日の在庫では決着しない"
+ },
+ "elapsed_sec": 122.6
+}
