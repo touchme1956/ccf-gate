@@ -222,6 +222,89 @@ def moat_vs_surprise(asof, entry_key):
     return out
 
 
+def reader_judgments(asof, entry_key):
+    """★読み手の判断のうち、驚きを当てているのは irr だけか。
+    同じ器・同じ残差で moat5（主観の堀 1-5）と並べる。
+    ⚠ 既記録は「moat5 は効かない／ビンテージ依存」だが、それは**より小さい母集団**での測定だった。
+    ここでは読解の全数（2013:249 / 2015:505）で測り直し、母集団の違いも同時に出す。
+    さらに **LLMの事前知識の混入**を疑って規模で層別する（irr=85 で使った検問と同じ作法）。"""
+    m = {}
+    for f in MOAT.get(asof, []):
+        for r in rows(f):
+            t = r.get("ticker")
+            if t and t not in m:
+                m[t] = r
+    if not m:
+        return None
+    co = {r["ticker"]: r for r in rows(f"retro_cohort_{asof}.json") if r.get("ticker")}
+    px = prices(asof)
+
+    def part(a, b, c):
+        ab, ac, bc = rho(a, b), rho(a, c), rho(b, c)
+        den = math.sqrt((1 - ac * ac) * (1 - bc * bc))
+        return round((ab - ac * bc) / den, 3) if den > 0 else None
+
+    out = {"n_read": len(m), "surprise": {}, "by_grade_moat5": {}, "by_size": [], "perm": {}}
+    for name, (col, lab) in BIZ.items():
+        tk = [t for t in m if isinstance(m[t].get("moat5"), (int, float))
+              and isinstance(m[t].get("irr"), (int, float)) and t in co and t in px
+              and co[t].get(entry_key) is not None and co[t].get(col) is not None]
+        if len(tk) < 60:
+            continue
+        e = [co[t][entry_key] for t in tk]
+        f2 = [co[t][col] for t in tk]
+        _fit, res, _ = split(e, f2)
+        mo = [m[t]["moat5"] for t in tk]
+        ir = [m[t]["irr"] for t in tk]
+        out["surprise"][name] = {
+            "label": lab, "n": len(tk), "rho_moat5_irr": round(rho(mo, ir), 3),
+            "moat5_to_surprise": round(rho(mo, res), 3),
+            "moat5_to_surprise_given_irr": part(mo, res, ir),
+            "irr_to_surprise": round(rho(ir, res), 3),
+            "irr_to_surprise_given_moat5": part(ir, res, mo)}
+    tk = [t for t in m if isinstance(m[t].get("moat5"), (int, float)) and t in px]
+    if tk:
+        g = {}
+        for t in tk:
+            g.setdefault(m[t]["moat5"], []).append(px[t])
+        base = sorted(px[t] for t in tk)
+        out["by_grade_moat5"] = {
+            "base_median": round(base[len(base) // 2], 4), "base_n": len(base),
+            "grades": {str(k): {"n": len(v), "median": round(sorted(v)[len(v) // 2], 4),
+                                "p15plus": round(sum(1 for x in v if x >= 0.15) / len(v), 3)}
+                       for k, v in sorted(g.items())}}
+    # 規模で層別（事前知識の混入の検問）
+    for lo, hi, cl in ((0, 1e9, "売上<10億$"), (1e9, 1e10, "10億〜100億$"), (0, None, "全社")):
+        tk = [t for t in m if isinstance(m[t].get("moat5"), (int, float)) and t in px and t in co
+              and co[t].get("rev_asof") is not None
+              and (hi is None or lo <= co[t]["rev_asof"] < hi)]
+        if len(tk) < 50:
+            continue
+        w = lambda s: round(sum(1 for t in s if px[t] >= 0.15) / len(s), 3) if s else None
+        h4 = [t for t in tk if m[t]["moat5"] >= 4]
+        i7 = [t for t in tk if isinstance(m[t].get("irr"), (int, float)) and m[t]["irr"] >= 70]
+        out["by_size"].append({"class": cl, "n": len(tk), "base": w(tk),
+                               "moat5_ge4": {"n": len(h4), "p15plus": w(h4)},
+                               "irr_ge70": {"n": len(i7), "p15plus": w(i7)}})
+    # 置換検定（会社の並びを入れ替える）
+    rnd = random.Random(20260812 + asof)
+    for key in ("moat5", "irr"):
+        tk = [t for t in m if isinstance(m[t].get(key), (int, float)) and t in px]
+        if len(tk) < MIN_N:
+            continue
+        v = [m[t][key] for t in tk]
+        y = [px[t] for t in tk]
+        obs = abs(rho(v, y))
+        hit = 0
+        for _ in range(2000):
+            s = y[:]
+            rnd.shuffle(s)
+            if abs(rho(v, s)) >= obs:
+                hit += 1
+        out["perm"][key] = {"n": len(tk), "rho": round(obs, 3), "p": round(hit / 2000, 4)}
+    return out
+
+
 def main():
     as_json = "--json" in sys.argv
     entry = "roic_med5"
@@ -240,6 +323,7 @@ def main():
         for k in ("roic_latest", "opm", "score")}
 
     out["moat_vs_surprise"] = {str(a): moat_vs_surprise(a, entry) for a in (2013, 2015)}
+    out["reader_judgments"] = {str(a): reader_judgments(a, entry) for a in (2013, 2015)}
 
     json.dump(out, open(os.path.join(OUT, "retro_surprise.json"), "w"),
               ensure_ascii=False, indent=1)
@@ -281,6 +365,26 @@ def main():
             print(f"    刻み別リターン（ベース中央値 {g['base_median']:+.3f} / n={g['base_n']}）:")
             for k, v in g["grades"].items():
                 print(f"      irr={k:<4}n={v['n']:<4}中央値 {v['median']:+.4f}  15%+ {v['p15plus']}")
+    print("\n=== ★読み手の判断のうち、驚きを当てているのは irr だけか（moat5 と並べる）===")
+    for a, d in out["reader_judgments"].items():
+        if not d:
+            continue
+        print(f"  asof={a}（読解{d['n_read']}社）")
+        for n, v in d["surprise"].items():
+            print(f"    {v['label']:<24}n={v['n']}  moat5↔irr ρ={v['rho_moat5_irr']:+.3f}"
+                  f" | moat5→驚き {v['moat5_to_surprise']:+.3f}(irr除く {v['moat5_to_surprise_given_irr']:+.3f})"
+                  f" | irr→驚き {v['irr_to_surprise']:+.3f}(moat5除く {v['irr_to_surprise_given_moat5']:+.3f})")
+        g = d.get("by_grade_moat5") or {}
+        if g:
+            print(f"    moat5 刻み別（ベース中央値 {g['base_median']:+.3f} / n={g['base_n']}）: "
+                  + " ".join(f"{k}→{v['median']:+.3f}/15%+{v['p15plus']}(n{v['n']})"
+                             for k, v in g["grades"].items()))
+        for s in d.get("by_size", []):
+            print(f"    {s['class']:<14}n={s['n']:<4}ベース{s['base']}"
+                  f" | moat5≥4 n={s['moat5_ge4']['n']:<3}{s['moat5_ge4']['p15plus']}"
+                  f" | irr≥70 n={s['irr_ge70']['n']:<3}{s['irr_ge70']['p15plus']}")
+        print("    置換検定: " + " / ".join(
+            f"{k} ρ={v['rho']} p={v['p']} (n={v['n']})" for k, v in d.get("perm", {}).items()))
 
 
 if __name__ == "__main__":
