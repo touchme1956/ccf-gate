@@ -143,7 +143,6 @@ out.投下可の余裕 = buySet.map(t => {
   };
 });
 
-fs.writeFileSync(path.join(ROOT, 'out', 'shadow_irr_step.json'), JSON.stringify(out, null, 1));
 if (process.argv.includes('--json')) { console.log(JSON.stringify(out, null, 1)); return; }
 
 console.log(`■ 基準の照合: 正本 out/score_all.json と ${okBase ? '一致 ✓' : '**不一致 ✗**'}`);
@@ -155,6 +154,22 @@ for (const s of out.scenarios) {
     + `　出:${s.出た.join(',') || '—'}　入:${s.入った.join(',') || '—'}`
     + `　堀の関門を割った:${s.堀の関門を割った社.length}社`);
 }
+// ★落ちる理由を**二つに分ける**——「堀の関門70を割る」と「席を失う」は別の機構である。
+//   混ぜて『7社が落ちる』と書くと、堀が無傷の社まで堀の問題に見える（2026-08-12 に自分で踏んだ）。
+{
+  const g = out.投下可の余裕.filter(x => x.下げても投下可か === false);
+  const byMoat = g.filter(x => x.下げた堀 != null && x.下げた堀 < 70);
+  const bySeat = g.filter(x => !(x.下げた堀 != null && x.下げた堀 < 70));
+  out.落ちる理由の内訳 = {
+    合計: g.length,
+    '堀の関門70を割る': byMoat.map(x => `${x.t}(${x.堀}→${x.下げた堀})`),
+    '堀は無傷だが席を失う': bySeat.map(x => `${x.t}(${x.堀}→${x.下げた堀}・irr=85の優先を失う)`),
+    注: '席の順は irr=85 優先→Ω順なので、85→70 は堀が70以上でも順位を落とす（ccfAllocTop）',
+  };
+  console.log(`\n■ 落ちる理由の内訳（合計${g.length}社）`);
+  console.log(`  堀の関門70を割る      ${byMoat.length}社: ${byMoat.map(x=>x.t).join(' ') || '—'}`);
+  console.log(`  堀は無傷だが席を失う  ${bySeat.length}社: ${bySeat.map(x=>x.t).join(' ') || '—'}`);
+}
 console.log('\n■ 投下可10社の余裕（irr を1段下げたら？）');
 console.log(`  ${'銘柄'.padEnd(6)}${'irr'.padStart(5)}${'堀'.padStart(7)}${'関門70まで'.padStart(11)}   1段下げた堀   投下可のまま?`);
 for (const x of out.投下可の余裕) {
@@ -163,4 +178,5 @@ for (const x of out.投下可の余裕) {
     + `${x.一段下げると == null ? '  （最下段）' : String(x.下げた堀).padStart(8)}     `
     + `${x.下げても投下可か == null ? '—' : (x.下げても投下可か ? '✓' : '**✗ 落ちる**')}`);
 }
+fs.writeFileSync(path.join(ROOT, 'out', 'shadow_irr_step.json'), JSON.stringify(out, null, 1));
 console.log('\n→ out/shadow_irr_step.json');
