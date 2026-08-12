@@ -1,0 +1,118 @@
+{
+ "generated": "2026-08-11",
+ "title": "irr=85 以外に、勝者／破壊を分ける指標はあるか（対称探索）",
+ "asked_by": "ユーザー『irr85以外で過去リターンを出してきた銘柄たちが共通してもっていた指標をもう一度探し出して、またこういった銘柄は歴史的につぶれてきた指標も同時に探し出してほしい。これが本質』",
+ "why_preregister": "night/irr85_criteria.py の実測: 候補12本×n=27 で雑音が63%の確率で線を通る。さらに hist_valuation_prereg の教訓——『合否基準が母集団の稀少事象の実数で到達可能か』を結果を見る前に数える。この2点を守らないと、探索は必ず何かを見つけてしまう。",
+ "two_objectives_searched_symmetrically": {
+  "A_勝者": "P(実現年率 >= +15%) ——既存のハードル。新しい定数を作らない",
+  "B_破壊": "P(実現年率 <= -15%) ——既存の『恒久毀損』の定義。retro_moat_durability と同じ",
+  "note": "別々に探す。勝者の予言子と破壊の予言子は同じ変数とは限らない（この台帳は『質の指標と結果が逆を向く』を4回記録している）。片方だけ探すと非対称を見落とす"
+ },
+ "populations": {
+  "P_full": "全上場（ティッカー解決可）——破壊はここでしか十分な数が出ない",
+  "P_quality": "質実証（opm>=10% かつ 5年FCF全年黒字 かつ 営業利益全年黒字）——門が実際に当てる場所",
+  "P_moat": "堀を通った群の歴史側の相当物（irr>=70）——irr=85 の影でないことを示すための対照"
+ },
+ "vintages": {
+  "feature_rich": [
+   "2016",
+   "2017",
+   "2018"
+  ],
+  "feature_thin": [
+   "2013",
+   "2015"
+  ],
+  "independence_warning": "2016/2017/2018 は同じ956ティッカーで窓が重なる＝独立標本ではない。本当の外部検証は 2013/2015（窓13.09年/11.10年・特徴量は10本のみ）との符号一致。『3ビンテージで一致』を独立な3証拠と読んではいけない"
+ },
+ "candidates_excluded": [
+  "irr18",
+  "irr",
+  "moat5",
+  "dom18",
+  "mech",
+  "時制(完了形/願望形)"
+ ],
+ "candidates_excluded_why": "ユーザーの問いが『irr85以外』。ただし対照としては使う——見つかった指標が irr の影でないかを必ず層別で確かめる（2018年の『最大シグナルR&D』は irr85 の影だった）",
+ "candidates": {
+  "features2_20": [
+   "gm",
+   "sga_r",
+   "capex_r",
+   "rnd_r",
+   "opm",
+   "intcov",
+   "aturn",
+   "accr",
+   "cash_r",
+   "gw_r",
+   "cagr5",
+   "accel",
+   "streak_rev",
+   "streak_opm",
+   "opmD5",
+   "fcfpos5",
+   "conv5",
+   "netiss_r",
+   "payout5",
+   "rev"
+  ],
+  "path_7_2018only": [
+   "rf5",
+   "mdd5",
+   "vol_m",
+   "worst12",
+   "prox_hi",
+   "upmo_r",
+   "r2_log"
+  ],
+  "cohort_also_2013_2015": [
+   "roic_med5",
+   "roic_latest",
+   "roic_worst5",
+   "opm",
+   "sales_cagr5",
+   "fcf_conv_5y",
+   "op_all_pos",
+   "fcf_all_pos",
+   "equity_neg",
+   "score"
+  ],
+  "valuation": [
+   "pe_pct",
+   "ps_pct",
+   "pfcf_pct",
+   "adj_pe_pct",
+   "per"
+  ],
+  "context": [
+   "sic2",
+   "規模"
+  ],
+  "combos": "2本の積のみ（3本以上は n が持たない・過剰適合）"
+ },
+ "pass_line": {
+  "lift": "|P(群) - P(母集団)| >= 0.15",
+  "min_numerator": "事象の分子 >= 5社（勝者側も破壊側も）",
+  "sign_stability": "2016/2017/2018 の3つで符号が反転しない（必須）",
+  "out_of_sample": "2018で見つけたら 2016 と 2017 の両方で維持。さらに可能なら 2013/2015 でも符号一致",
+  "sector_control": "同一 sic2 内でも差が残る（Mantel-Haenszel）",
+  "not_irr_shadow": "irr>=70 の層内でも差が残る、または irr と直交",
+  "all_required": "5つすべて。1つでも欠ければ不合格"
+ },
+ "must_report_before_verdict": {
+  "reachability": "各セルで事象の実数が分子5に届きうるか（届かないセルは『不合格』ではなく『判定不能』）",
+  "effective_lift_required": "min_numerator が lift より強く縛っていないか（v2の教訓）",
+  "power": "登録した手続きが、真の lift 0.15/0.20/0.30 をどの確率で掴むか（結果の前に出す）",
+  "false_positive_rate": "結果ラベルを層内で並べ替える置換2000回で、この手続きが偶然に合格を出す確率"
+ },
+ "stopping_rule": "合格がゼロなら『ゼロ』と記録する。線を緩めて何かを通すことはしない。緩めた版を出す場合は必ず『事前登録の外』と明示し、合否には数えない",
+ "known_negative_results_not_to_rediscover": [
+  "retro_winner_profile: 勝者204社の入口の機械値に共通して高い数字は無い（全指標で中央値超シェア45-57%）",
+  "retro_capture/capture2: 14系統→20系統、3アンカー交差検証で P>=0.50 の維持ゼロ",
+  "backtest_core: through-cycle ROIC 最上位五分位が劣後",
+  "retro_er_test2: E[r] 五分位は単調でない・相関 -0.004",
+  "hist_valuation/hist_val2: 自己相対PER・dd5 とも事前登録に不合格"
+ ],
+ "novelty_of_this_run": "(1)破壊側の対称探索 (2)5ビンテージ横断の符号安定性 (3)勝者と破壊で別の変数が効く可能性、の3点。上の既知の否定的結果を再発見しても新しい発見ではない"
+}
