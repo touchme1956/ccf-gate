@@ -4,10 +4,10 @@
 # 作っているが、**分布の形そのもの**（宝くじ性・歪度・尖度・下方リスク・市場感応度）は一つも無い。
 # ここはその欄を埋める採取器。**判定はしない**（合否は事前登録した検定器の仕事）。
 #
-# 入力: out/retro_monthly_2013_2018.json（952社・2013-07〜2018-06 の60ヶ月・Yahoo adjclose）
-#       ＝**追加のネットワーク取得はゼロ**。在庫だけで作る
-# 窓: asof の直前 **36ヶ月に固定**（2016/2017/2018 の3アンカーで同じ基準にするため。
-#     60ヶ月にすると 2016 では窓が足りず、アンカーごとに窓長が変わって『基準の違う二つ』を作る）
+# 入力: out/retro_monthly_{2013_2018,2018_2026}.json を連結（952社・2013-07〜2026-08 の158ヶ月・
+#       Yahoo adjclose）＝**追加のネットワーク取得はゼロ**。在庫だけで作る
+# 窓: asof の直前 **36ヶ月に固定**（全アンカーで同じ基準にするため。窓長をアンカーごとに変えると
+#     『基準の違う二つ』を作る）
 # asof=2013 は作れない（2008-2013 の月次が在庫に無い）＝**穴として明示する**
 #
 # 市場基準: SPYの月次系列は在庫のどこにも無い（実測）。**パネル自身の等ウェイト指数**を市場とする。
@@ -16,7 +16,7 @@
 #
 # look-ahead: 窓の終端は asof の**前月末**。asof 当月は含めない
 #
-# 出力: out/retro_shape_{2016,2017,2018}.json
+# 出力: out/retro_shape_{2016..2022}.json（2019-2022 は 2026-08-12 に新設した未見のアンカー）
 # 実行: python3 night/retro_shape.py
 
 import datetime
@@ -27,9 +27,10 @@ import statistics
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out")
-SRC = os.path.join(OUT, "retro_monthly_2013_2018.json")
+SRC = [os.path.join(OUT, "retro_monthly_2013_2018.json"),
+       os.path.join(OUT, "retro_monthly_2018_2026.json")]  # 2本を連結（接合部は実測で整合・偵察が確認）
 WINDOW = 36
-ANCHORS = {2016: "2016-07-01", 2017: "2017-07-01", 2018: "2018-07-01"}
+ANCHORS = {y: f"{y}-07-01" for y in (2016, 2017, 2018, 2019, 2020, 2021, 2022)}
 
 
 def ym(ts):
@@ -39,20 +40,20 @@ def ym(ts):
 
 def load_panel():
     """{ticker: {ym: adjclose}}。同じ年月に複数バーがあるときは**最初のバー**を採る
-    （末尾の部分バーで最終月が二重にならないように。規約を先に決める）。"""
-    raw = json.load(open(SRC))
+    （末尾の部分バーで最終月が二重にならないように。規約を先に決める）。
+    2本のファイルを連結する（接合部の比は中央値1.0218・0.5〜2.0の外0件と実測済み）。"""
     panel = {}
-    for t, series in raw.items():
-        m = {}
-        for ts, px in series:
-            if px is None or px <= 0:
-                continue
-            k = ym(ts)
-            if k not in m:
-                m[k] = px
-        if m:
-            panel[t] = m
-    return panel
+    for path in SRC:
+        raw = json.load(open(path))
+        for t, series in raw.items():
+            m = panel.setdefault(t, {})
+            for ts, px in series:
+                if px is None or px <= 0:
+                    continue
+                k = ym(ts)
+                if k not in m:
+                    m[k] = px
+    return {t: m for t, m in panel.items() if m}
 
 
 def rets(m, k0, k1):
@@ -134,7 +135,7 @@ def build(anchor):
         "generated": datetime.date.today().isoformat(),
         "asof": anchor, "asof_date": ANCHORS[anchor],
         "window_months": WINDOW,
-        "source": "out/retro_monthly_2013_2018.json（Yahoo adjclose・追加取得ゼロ）",
+        "source": "out/retro_monthly_{2013_2018,2018_2026}.json を連結（Yahoo adjclose・追加取得ゼロ）",
         "market": "パネル自身の等ウェイト指数（SPYの月次は在庫に無い）＝市場ベータではなく母集団感応度",
         "note": "同一年月に複数バーがある場合は最初のバーを採る。asof当月は含めない。30ヶ月未満は欠測",
         "n": len(rows), "n_hole": len(holes), "holes": holes[:50], "rows": rows,

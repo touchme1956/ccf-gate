@@ -46,7 +46,12 @@ def build():
     C13 = {r["ticker"]: r for r in L("retro_cohort_2013.json") if r.get("ticker")}
     C15 = {r["ticker"]: r for r in L("retro_cohort_2015.json") if r.get("ticker")}
     m13 = {r["ticker"]: r for r in L("retro_moat_2013.json") + L("retro_moat_2013q.json")}
-    m15 = {r["ticker"]: r for r in L("retro_moat_2015.json") + L("retro_moat_2015q.json")}
+    # ⚠2026-08-12是正: `retro_moat_2015qb.json`(212社・うち irr=85 が9社) が読まれていなかった。
+    #   この器は 2026-08-06 に作られ、同じ日に「2015を検出力に到達するまで読み切る」で足された
+    #   qb が配線されないまま残っていた＝**作った答えを捨てていた**（この repo の常習の型）。
+    #   実害: irr=85 の n が 10 のままで、base_rate_check が引く基礎率がその上に載っていた
+    m15 = {r["ticker"]: r for r in
+           L("retro_moat_2015.json") + L("retro_moat_2015q.json") + L("retro_moat_2015qb.json")}
     A = []
     for mm, RR, CC, v in ((m13, R13, C13, 2013), (m15, R15, C15, 2015)):
         for t, r in mm.items():
