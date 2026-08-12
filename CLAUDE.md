@@ -7406,3 +7406,55 @@ moat5 が代理していた rep と dur を『歴史で答え合わせする』�
   ＝検査が設計どおり働いた。**記録するだけでは再演は防げない。検査が要る**
 - **検証**: score_all **投下可10社不変** ／ audit_gate 要修正0件・未解決2件（既知） ／
   check_html ✓ ／ audit_docs ✓ ／ **注入検査**（CWの記録を消すと未検証 8→9社・復元で8社へ戻る）
+
+## 二重読みの一件目——RBC は据置。だが**旧根拠は規約の85を証明していなかった**（2026-08-12・ユーザー指示「1やって」）
+**irr の値は動かしていない（85 のまま）。Ω・堀・採点式・刻み・重み・四関門・堀の関門70・売却規律S1/S2/S3・
+配分・別枠85・半導体上限はいずれも不変で、投下可10社も不変**（MSFT V ASML IDXX CW RMD KLAC LRCX HWM RBC）。
+動いたのは**根拠の厚みと dep の是正**だけ。
+- **なぜ RBC が最優先だったか**: 前日に入れた `audit_irr85_dual.py` が待ち行列**2位**で名指しした。
+  RBC は **別枠85(v9.9.119) を実際に使っている唯一の社**（Ω60.3 で Ω75 を免除されて🟢投下可）なのに、
+  irr=85 が独立に検証されていなかった＝**投下可10社のうち1社の資格が、無検証の一文に乗っていた**
+- **検問6点すべて通過**（FY2026 10-K 全文293,749字・機械走査＋精読）:
+  ①逐語✓（旧引用は原本に1回・一字一句／`irr85_mech_diff` も✓一字同文100%）
+  ②顧客側の費用✓ **ただし旧根拠だけでは不足**（下記）
+  ③向き✓ ④願望形でない✓（`strive to` 0回・`work closely with` 0回・すべて完了形）
+  ⑤反証の同居△（`barriers to entry` 0回・`price erosion` 0回だが競争のリスク要因は実在）
+  ⑥射程✓ **42.1%**（既存の `_meta.mech` の記録が正しかった）
+- **★収穫は「据置」ではなく「根拠が規約に届いていなかった」こと**。旧根拠は
+  『Many of the products we produce are **qualified for the application by the OEM, the DOD, the FAA,
+  the user**…』の一文だけで、これは**第三者が認定する、までしか言っていない**——
+  規約の85が要求する『**顧客の側が**再認定・再試験の費用と時間を負う』を証明していない。
+  原本から決定的な3文を特定して evidence へ追加した（いずれも `irr85_mech_diff` の正規化を通した逐語）:
+  1. **認定の権限が顧客(OEM)側にあり供給者の数を絞る**——Item 1A『Product approvals are typically issued
+     by the FAA **to designated OEMs who are Production Approval Holders** of FAA-approved aircraft.
+     These Production Approval Holders provide quality control oversight and **generally limit the number
+     of suppliers** directly servicing the commercial Aerospace market.』
+  2. **認定が機体の型式設計に埋まり、機体の寿命まで続く**——Item 1『Many of our aerospace bearings and
+     engineered component products are **designed and certified during the original development of the
+     aircraft being served, which often makes us the primary bearing supplier for the life of that
+     aircraft**.』
+  3. **乗り換えの困難を顧客の側の言葉で明言**——Item 1 Backlog『we believe that the unique nature of many
+     of our products prevents other suppliers from being able to satisfy customer orders on a timely or
+     cost-effective basis, thereby **making it impracticable for our customers to shift their purchase of
+     these products to other suppliers**.』
+  ⇒ **機構は C(第三者が用途を認定)＋D(認定業者名簿)** で確定。3ビンテージ(2013/2015/2018)で別の読み手が
+  独立に85と読んだ社という既記録とも整合する
+- **★向きの検問がいちばん微妙だった（記録する価値がある）**——RBC も**自ら承認を保有する**
+  （『We have a substantial number of product approvals』『we will not lose approvals』）＝
+  **RMD(自社特許)・IRMD(自社510(k))・HEI(自社FAA PMA)を70へ下げたのと同じ形に見える**。
+  分けたのは**立っている側**: HEI は自社PMAで**OEM純正品からの乗り換えを起こさせる側**、
+  RBC は**機体開発時に設計組込・認定された現職の側**。決め手は同じ10-Kが PMA を
+  『suppliers who **currently sell their products to the Production Approval Holders** to **also** sell
+  products to the aftermarket』と書いていること＝**RBCが先にOEM側にいることを会社自身が述べている**
+- **★副産物: dep が事実誤認だった（判定は不変）**。`_meta.nulls.dep` は
+  「**ASC280の10%超顧客の開示が無い**＝最大顧客<10%と構造的に確定できるが実数が無いので置かない」と
+  書いていたが、**原本 Note 1 は『No one customer accounted for more than 13 % of the Company's net sales
+  in fiscal 2026』と明記している**——開示は在り、しかも <10% ではない。
+  **dep=13（上限の不等式・2026-08-06に24社で確立した作法）**で確定。
+  ベトの線(≥40%)から遠いので**判定は1ミリも動かない**が、**記録された事実が誤っていた**。
+  ⇒ **二重読みは rung の是正だけの装置ではない**——同じ原本を別の目で読むと、隣の欄の誤りが出てくる
+- **実測**: 二重読み **未検証 8社 → 7社**、**🟢投下可で未検証の社はゼロ**になった。
+  待ち行列 78→77社（RBCが外れた）。次は **KRMN**（2026-08-10 に irr 70→85 へ上がったまま未検証）
+- **検証**: score_all **投下可10社・Ω・堀とも不変**（RBC Ω60.3・堀74.6）／`validate_packs RBC` **FAIL 0**／
+  `irr85_mech_diff --t RBC` ✓一字同文100%（**追加した3断片を含めて**）／
+  audit_gate 要修正0件・未解決2件（既知）
