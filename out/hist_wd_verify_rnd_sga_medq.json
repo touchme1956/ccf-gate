@@ -1,0 +1,1669 @@
+{
+ "generated": "2026-08-11",
+ "tool": "night/hist_wd_verify_rnd_sga_medq.py",
+ "prereg": "out/hist_winner_destroyer_prereg.json",
+ "candidate": {
+  "label": "f2_rnd_r[中央値超] ∧ f2_sga_r[中央値以下]",
+  "population": "P_quality",
+  "side": "win",
+  "search_side_claim": "2018 n=55 / 分子25 / lift 0.2599 / maintained 0.2424（探索側の弁: 合格）",
+  "why_verify": "探索側自身が『業種内lift +0.005〜+0.056＝ほぼゼロ（SIC36単独 +0.2284）』と書いている。潰せるはずの候補を潰しにいく。"
+ },
+ "stance": "反証が仕事。線は prereg にあり、この道具は一つも作らない。線の外の数字は『事前登録の外・診断専用』と明記する。",
+ "pass_line": {
+  "lift": 0.15,
+  "min_numerator": 5,
+  "sign_stability": [
+   2016,
+   2017,
+   2018
+  ],
+  "sector_control": "同一sic2内でも残る",
+  "not_irr_shadow": "irr>=70層内でも残る、またはirrと直交",
+  "all_required": true
+ },
+ "step0_replication": {
+  "note": "同じ台帳を見る二つの検査器が違うことを言ってはいけない(v9.9.65)。まず探索側を検算する。",
+  "by_vintage": {
+   "2016": {
+    "mine": {
+     "n_pop": 329,
+     "n_group": 50,
+     "numerator": 22,
+     "lift": 0.2424
+    },
+    "search": {
+     "n_pop": 329,
+     "n_group": 50,
+     "numerator": 22,
+     "lift": 0.2424
+    },
+    "identical": true
+   },
+   "2017": {
+    "mine": {
+     "n_pop": 327,
+     "n_group": 50,
+     "numerator": 23,
+     "lift": 0.2582
+    },
+    "search": {
+     "n_pop": 327,
+     "n_group": 50,
+     "numerator": 23,
+     "lift": 0.2582
+    },
+    "identical": true
+   },
+   "2018": {
+    "mine": {
+     "n_pop": 339,
+     "n_group": 55,
+     "numerator": 25,
+     "lift": 0.2599
+    },
+    "search": {
+     "n_pop": 339,
+     "n_group": 55,
+     "numerator": 25,
+     "lift": 0.2599
+    },
+    "identical": true
+   }
+  },
+  "all_identical": true,
+  "threshold_check": {
+   "note": "分位の作法（nearest-rank）まで揃えると閾値も一致した。⚠ 途中で statistics 流の中央値（偶数個なら2つの平均）を使うと 2018 の rnd 閾値が 0.0097 になる——群・分子・lift はどちらでも同じだったが、**閾値の作法が違えば別の群になりうる**。",
+   "mine_2018_thr_rnd": 0.0094,
+   "search_2018_thr_rnd": 0.0094,
+   "mine_2018_thr_sga": 0.1841,
+   "search_2018_thr_sga": 0.1841,
+   "identical": true
+  },
+  "core_gates_1_2_3": {
+   "pass_core": true,
+   "maintained_lift": 0.2424,
+   "min_numerator": 22,
+   "sign_stable": true,
+   "gate_failed_at": null
+  }
+ },
+ "step0b_reachability": {
+  "note": "この候補は群が50-55と大きいので MIN_NUM は縛っていない＝『lift 0.15 を割った』と『5社に届かなかった』の取り違えは起きない。",
+  "by_vintage": {
+   "2016": {
+    "n_group": 50,
+    "events_in_pop": 65,
+    "base": 0.1976,
+    "k_required_by_lift": 18,
+    "k_required_by_min_num": 5,
+    "binding": "LIFT",
+    "effective_lift_required": 0.1624,
+    "reachable": true
+   },
+   "2017": {
+    "n_group": 50,
+    "events_in_pop": 66,
+    "base": 0.2018,
+    "k_required_by_lift": 18,
+    "k_required_by_min_num": 5,
+    "binding": "LIFT",
+    "effective_lift_required": 0.1582,
+    "reachable": true
+   },
+   "2018": {
+    "n_group": 55,
+    "events_in_pop": 66,
+    "base": 0.1947,
+    "k_required_by_lift": 19,
+    "k_required_by_min_num": 5,
+    "binding": "LIFT",
+    "effective_lift_required": 0.1508,
+    "reachable": true
+   }
+  }
+ },
+ "test1_vintage_sign": {
+  "verdict": "通過",
+  "by_vintage": {
+   "2016": {
+    "n_pop": 329,
+    "p_base": 0.1976,
+    "n_group": 50,
+    "numerator": 22,
+    "p_group": 0.44,
+    "p_group_ci95": [
+     0.3116,
+     0.5769
+    ],
+    "lift": 0.2424,
+    "lift_vs_measurable_both": 0.1942,
+    "n_measurable_both": 179,
+    "fisher_p_vs_rest_of_pop": 2e-05
+   },
+   "2017": {
+    "n_pop": 327,
+    "p_base": 0.2018,
+    "n_group": 50,
+    "numerator": 23,
+    "p_group": 0.46,
+    "p_group_ci95": [
+     0.3297,
+     0.596
+    ],
+    "lift": 0.2582,
+    "lift_vs_measurable_both": 0.2127,
+    "n_measurable_both": 186,
+    "fisher_p_vs_rest_of_pop": 1e-05
+   },
+   "2018": {
+    "n_pop": 339,
+    "p_base": 0.1947,
+    "n_group": 55,
+    "numerator": 25,
+    "p_group": 0.4545,
+    "p_group_ci95": [
+     0.3303,
+     0.5848
+    ],
+    "lift": 0.2599,
+    "lift_vs_measurable_both": 0.2202,
+    "n_measurable_both": 192,
+    "fisher_p_vs_rest_of_pop": 0.0
+   }
+  },
+  "maintained_lift": 0.2424,
+  "maintained_lift_measurable_base": 0.1942,
+  "sign_stable": true,
+  "is_three_vintages_three_evidences": {
+   "answer": "いいえ。ほぼ1つの証拠。",
+   "ticker_universe_overlap_2016_2018": {
+    "inter": 956,
+    "n_a": 956,
+    "n_b": 956,
+    "share_of_a": 1.0,
+    "share_of_b": 1.0,
+    "jaccard": 1.0
+   },
+   "group_ticker_jaccard": {
+    "2016-2017": 0.6949,
+    "2017-2018": 0.6154,
+    "2016-2018": 0.5441
+   },
+   "group_winner_jaccard": {
+    "2016-2017": 0.6071,
+    "2017-2018": 0.6552,
+    "2016-2018": 0.5667
+   },
+   "outcome_spearman_2016_2018": 0.9245,
+   "outcome_win_jaccard_2016_2018": 0.6824,
+   "window_nesting": "窓はすべて2026-08終わり。2018窓(8.09年)は2016窓(10.09年)の末尾そのもの。",
+   "how_to_read": "『3ビンテージで符号一致』は独立な3証拠ではない。この候補では群の顔ぶれも勝者も大半が同じ社。"
+  },
+  "vintages_2013_2015": {
+   "status": "判定不能（不合格ではない）",
+   "why": "f2_rnd_r / f2_sga_r は retro_features2 由来で 2013/2015 のパネル行に構造的に存在しない",
+   "coverage": {
+    "2013": 0.0,
+    "2015": 0.0
+   },
+   "consequence": "prereg の out_of_sample『可能なら2013/2015でも符号一致』は当てられない＝**この候補には真の外部検証が一つも無い**。判定不能を合格の材料にしない。"
+  }
+ },
+ "test2_sector": {
+  "verdict": "通過",
+  "mantel_haenszel": {
+   "2016": {
+    "mh_risk_diff": 0.2931,
+    "strata_used": 12,
+    "strata_dropped": 35,
+    "group_covered_by_used_strata": 49,
+    "group_total": 50,
+    "group_coverage_share": 0.98
+   },
+   "2017": {
+    "mh_risk_diff": 0.294,
+    "strata_used": 13,
+    "strata_dropped": 36,
+    "group_covered_by_used_strata": 49,
+    "group_total": 50,
+    "group_coverage_share": 0.98
+   },
+   "2018": {
+    "mh_risk_diff": 0.2772,
+    "strata_used": 12,
+    "strata_dropped": 37,
+    "group_covered_by_used_strata": 55,
+    "group_total": 55,
+    "group_coverage_share": 1.0
+   }
+  },
+  "mh_caveat": "MH は群 or 対照が空の層を落とす。落とした層のぶん『調整した』の意味が薄れるので群の被覆率を必ず併記する。",
+  "indirect_standardization_no_strata_dropped": {
+   "2016": {
+    "observed_winners": 22,
+    "expected_winners_at_sector_rates": 13.0745,
+    "diff_per_member": 0.1785,
+    "note": "層を1つも落とさない業種調整。MHが群の一部しか覆えないときの補助。"
+   },
+   "2017": {
+    "observed_winners": 23,
+    "expected_winners_at_sector_rates": 13.7899,
+    "diff_per_member": 0.1842,
+    "note": "層を1つも落とさない業種調整。MHが群の一部しか覆えないときの補助。"
+   },
+   "2018": {
+    "observed_winners": 25,
+    "expected_winners_at_sector_rates": 15.5493,
+    "diff_per_member": 0.1718,
+    "note": "層を1つも落とさない業種調整。MHが群の一部しか覆えないときの補助。"
+   }
+  },
+  "dominant_sector_benchmark": {
+   "2016": {
+    "sic2": "36",
+    "n_sector_in_pop": 18,
+    "p_sector": 0.3889,
+    "lift_of_sector_alone": 0.1913,
+    "n_group_in_sector": 10,
+    "p_group_in_sector": 0.4,
+    "lift_of_pair_within_that_sector": 0.0111,
+    "share_of_group_in_that_sector": 0.2
+   },
+   "2017": {
+    "sic2": "36",
+    "n_sector_in_pop": 18,
+    "p_sector": 0.4444,
+    "lift_of_sector_alone": 0.2426,
+    "n_group_in_sector": 10,
+    "p_group_in_sector": 0.5,
+    "lift_of_pair_within_that_sector": 0.0556,
+    "share_of_group_in_that_sector": 0.2
+   },
+   "2018": {
+    "sic2": "36",
+    "n_sector_in_pop": 26,
+    "p_sector": 0.4231,
+    "lift_of_sector_alone": 0.2284,
+    "n_group_in_sector": 14,
+    "p_group_in_sector": 0.4286,
+    "lift_of_pair_within_that_sector": 0.0055,
+    "share_of_group_in_that_sector": 0.2545
+   }
+  },
+  "leave_one_sector_out": {
+   "2016": [
+    {
+     "dropped_sic2": "36",
+     "n_group_dropped": 10,
+     "lift_after": 0.2421,
+     "n_group_after": 42,
+     "numerator_after": 18,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "28",
+     "n_group_dropped": 9,
+     "lift_after": 0.3152,
+     "n_group_after": 42,
+     "numerator_after": 22,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "38",
+     "n_group_dropped": 7,
+     "lift_after": 0.2166,
+     "n_group_after": 42,
+     "numerator_after": 17,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "37",
+     "n_group_dropped": 7,
+     "lift_after": 0.235,
+     "n_group_after": 44,
+     "numerator_after": 19,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "35",
+     "n_group_dropped": 5,
+     "lift_after": 0.1877,
+     "n_group_after": 46,
+     "numerator_after": 17,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "20",
+     "n_group_dropped": 3,
+     "lift_after": 0.2584,
+     "n_group_after": 47,
+     "numerator_after": 22,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "30",
+     "n_group_dropped": 2,
+     "lift_after": 0.2143,
+     "n_group_after": 49,
+     "numerator_after": 20,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "26",
+     "n_group_dropped": 2,
+     "lift_after": 0.2406,
+     "n_group_after": 48,
+     "numerator_after": 21,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "79",
+     "n_group_dropped": 1,
+     "lift_after": 0.2502,
+     "n_group_after": 49,
+     "numerator_after": 22,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "73",
+     "n_group_dropped": 1,
+     "lift_after": 0.2438,
+     "n_group_after": 48,
+     "numerator_after": 21,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "34",
+     "n_group_dropped": 1,
+     "lift_after": 0.228,
+     "n_group_after": 50,
+     "numerator_after": 21,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "50",
+     "n_group_dropped": 1,
+     "lift_after": 0.2347,
+     "n_group_after": 49,
+     "numerator_after": 21,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "24",
+     "n_group_dropped": 1,
+     "lift_after": 0.2508,
+     "n_group_after": 49,
+     "numerator_after": 22,
+     "passes_line": true
+    }
+   ],
+   "2017": [
+    {
+     "dropped_sic2": "36",
+     "n_group_dropped": 10,
+     "lift_after": 0.2345,
+     "n_group_after": 45,
+     "numerator_after": 19,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "28",
+     "n_group_dropped": 10,
+     "lift_after": 0.2741,
+     "n_group_after": 45,
+     "numerator_after": 22,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "38",
+     "n_group_dropped": 7,
+     "lift_after": 0.1776,
+     "n_group_after": 47,
+     "numerator_after": 18,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "37",
+     "n_group_dropped": 6,
+     "lift_after": 0.2274,
+     "n_group_after": 47,
+     "numerator_after": 20,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "35",
+     "n_group_dropped": 5,
+     "lift_after": 0.2053,
+     "n_group_after": 49,
+     "numerator_after": 19,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "20",
+     "n_group_dropped": 3,
+     "lift_after": 0.289,
+     "n_group_after": 46,
+     "numerator_after": 23,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "30",
+     "n_group_dropped": 2,
+     "lift_after": 0.2225,
+     "n_group_after": 50,
+     "numerator_after": 21,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "79",
+     "n_group_dropped": 1,
+     "lift_after": 0.2663,
+     "n_group_after": 49,
+     "numerator_after": 23,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "73",
+     "n_group_dropped": 1,
+     "lift_after": 0.2266,
+     "n_group_after": 52,
+     "numerator_after": 22,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "33",
+     "n_group_dropped": 1,
+     "lift_after": 0.24,
+     "n_group_after": 50,
+     "numerator_after": 22,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "67",
+     "n_group_dropped": 1,
+     "lift_after": 0.2649,
+     "n_group_after": 46,
+     "numerator_after": 22,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "34",
+     "n_group_dropped": 1,
+     "lift_after": 0.2376,
+     "n_group_after": 51,
+     "numerator_after": 22,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "50",
+     "n_group_dropped": 1,
+     "lift_after": 0.2706,
+     "n_group_after": 49,
+     "numerator_after": 23,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "24",
+     "n_group_dropped": 1,
+     "lift_after": 0.2575,
+     "n_group_after": 50,
+     "numerator_after": 23,
+     "passes_line": true
+    }
+   ],
+   "2018": [
+    {
+     "dropped_sic2": "36",
+     "n_group_dropped": 14,
+     "lift_after": 0.2373,
+     "n_group_after": 46,
+     "numerator_after": 19,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "28",
+     "n_group_dropped": 11,
+     "lift_after": 0.3005,
+     "n_group_after": 49,
+     "numerator_after": 25,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "35",
+     "n_group_dropped": 9,
+     "lift_after": 0.1869,
+     "n_group_after": 50,
+     "numerator_after": 18,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "38",
+     "n_group_dropped": 6,
+     "lift_after": 0.1917,
+     "n_group_after": 52,
+     "numerator_after": 20,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "37",
+     "n_group_dropped": 6,
+     "lift_after": 0.2731,
+     "n_group_after": 49,
+     "numerator_after": 23,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "73",
+     "n_group_dropped": 2,
+     "lift_after": 0.2478,
+     "n_group_after": 56,
+     "numerator_after": 25,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "30",
+     "n_group_dropped": 2,
+     "lift_after": 0.2435,
+     "n_group_after": 53,
+     "numerator_after": 23,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "20",
+     "n_group_dropped": 1,
+     "lift_after": 0.2668,
+     "n_group_after": 51,
+     "numerator_after": 24,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "33",
+     "n_group_dropped": 1,
+     "lift_after": 0.254,
+     "n_group_after": 54,
+     "numerator_after": 24,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "67",
+     "n_group_dropped": 1,
+     "lift_after": 0.2636,
+     "n_group_after": 49,
+     "numerator_after": 23,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "34",
+     "n_group_dropped": 1,
+     "lift_after": 0.2511,
+     "n_group_after": 54,
+     "numerator_after": 24,
+     "passes_line": true
+    },
+    {
+     "dropped_sic2": "50",
+     "n_group_dropped": 1,
+     "lift_after": 0.2708,
+     "n_group_after": 54,
+     "numerator_after": 25,
+     "passes_line": true
+    }
+   ]
+  },
+  "within_sector_permutation_p": {
+   "2016": 0.0005,
+   "2017": 0.0005,
+   "2018": 0.0005
+  },
+  "strata_detail_2018": [
+   {
+    "sic2": "36",
+    "n_group": 14,
+    "n_other": 12,
+    "p_group": 0.4286,
+    "p_other": 0.4167,
+    "diff": 0.0119,
+    "weight": 6.4615
+   },
+   {
+    "sic2": "28",
+    "n_group": 11,
+    "n_other": 18,
+    "p_group": 0.0,
+    "p_other": 0.0556,
+    "diff": -0.0556,
+    "weight": 6.8276
+   },
+   {
+    "sic2": "35",
+    "n_group": 9,
+    "n_other": 18,
+    "p_group": 0.7778,
+    "p_other": 0.2778,
+    "diff": 0.5,
+    "weight": 6.0
+   },
+   {
+    "sic2": "37",
+    "n_group": 6,
+    "n_other": 7,
+    "p_group": 0.3333,
+    "p_other": 0.0,
+    "diff": 0.3333,
+    "weight": 3.2308
+   },
+   {
+    "sic2": "38",
+    "n_group": 6,
+    "n_other": 22,
+    "p_group": 0.8333,
+    "p_other": 0.0455,
+    "diff": 0.7879,
+    "weight": 4.7143
+   },
+   {
+    "sic2": "30",
+    "n_group": 2,
+    "n_other": 1,
+    "p_group": 1.0,
+    "p_other": 0.0,
+    "diff": 1.0,
+    "weight": 0.6667
+   },
+   {
+    "sic2": "73",
+    "n_group": 2,
+    "n_other": 40,
+    "p_group": 0.0,
+    "p_other": 0.175,
+    "diff": -0.175,
+    "weight": 1.9048
+   },
+   {
+    "sic2": "20",
+    "n_group": 1,
+    "n_other": 19,
+    "p_group": 0.0,
+    "p_other": 0.0526,
+    "diff": -0.0526,
+    "weight": 0.95
+   },
+   {
+    "sic2": "33",
+    "n_group": 1,
+    "n_other": 2,
+    "p_group": 1.0,
+    "p_other": 0.5,
+    "diff": 0.5,
+    "weight": 0.6667
+   },
+   {
+    "sic2": "34",
+    "n_group": 1,
+    "n_other": 7,
+    "p_group": 1.0,
+    "p_other": 0.1429,
+    "diff": 0.8571,
+    "weight": 0.875
+   },
+   {
+    "sic2": "50",
+    "n_group": 1,
+    "n_other": 5,
+    "p_group": 0.0,
+    "p_other": 0.4,
+    "diff": -0.4,
+    "weight": 0.8333
+   },
+   {
+    "sic2": "67",
+    "n_group": 1,
+    "n_other": 27,
+    "p_group": 1.0,
+    "p_other": 0.037,
+    "diff": 0.963,
+    "weight": 0.9643
+   }
+  ],
+  "verdict_detail": {
+   "mh_pass": true,
+   "dominant_sector_internal_pass": false,
+   "reason": "MH は層を落として計算されている一方、支配業種(SIC36)の内側では lift がほぼゼロ。二つが食い違うときは『どの社が調整の対象から外れたか』を見る。"
+  }
+ },
+ "diag_sector_only_rule": {
+  "status": "事前登録の外・診断専用（合否には数えない）",
+  "rule": "sic2 ∈ {28 化学, 35 産業機械, 36 電子, 37 輸送機器, 38 計測} ＝『R&Dを持つ製造業』",
+  "by_vintage": {
+   "2016": {
+    "n_group": 106,
+    "numerator": 29,
+    "p_group": 0.2736,
+    "lift": 0.076
+   },
+   "2017": {
+    "n_group": 111,
+    "numerator": 29,
+    "p_group": 0.2613,
+    "lift": 0.0594
+   },
+   "2018": {
+    "n_group": 123,
+    "numerator": 32,
+    "p_group": 0.2602,
+    "lift": 0.0655
+   }
+  },
+  "why": "候補の群が『R&Dが中央値超 ∧ 販管費が中央値以下』＝実質この業種束なら、業種を直接書いた規則と同じかそれ以上の lift が、より大きな n で出るはず。"
+ },
+ "test3_irr_shadow": {
+  "verdict": "通過",
+  "by_vintage": {
+   "2016": {
+    "status": "判定不能（このビンテージに irr の読解が無い）",
+    "n_with_irr": 0
+   },
+   "2017": {
+    "status": "判定不能（このビンテージに irr の読解が無い）",
+    "n_with_irr": 0
+   },
+   "2018": {
+    "n_pop_with_irr": 127,
+    "share_of_pop_with_irr": 0.3746,
+    "n_group_with_irr": 20,
+    "share_of_group_with_irr": 0.3636,
+    "corr_group_vs_irr": 0.3935,
+    "group_irr_distribution": {
+     "85": 11,
+     "50": 4,
+     "75": 5
+    },
+    "pop_irr_distribution": {
+     "50": 71,
+     "85": 18,
+     "75": 38
+    },
+    "irr>=70": {
+     "n_pop": 56,
+     "base": 0.375,
+     "n_group": 16,
+     "numerator": 12,
+     "p_group": 0.75,
+     "p_group_ci95": [
+      0.505,
+      0.8982
+     ],
+     "lift": 0.375,
+     "reaches_min_numerator": true,
+     "fisher_p": 0.0005
+    },
+    "irr<70": {
+     "n_pop": 71,
+     "base": 0.1549,
+     "n_group": 4,
+     "numerator": 2,
+     "p_group": 0.5,
+     "p_group_ci95": [
+      0.15,
+      0.85
+     ],
+     "lift": 0.3451,
+     "reaches_min_numerator": false,
+     "fisher_p": 0.11072
+    },
+    "drop_irr85_from_population": {
+     "n_pop": 321,
+     "n_group": 47,
+     "numerator": 16,
+     "lift": 0.1753,
+     "passes_line": true
+    },
+    "group_winners_with_irr85": {
+     "n": 9,
+     "tickers": [
+      "ADI",
+      "AEIS",
+      "APH",
+      "ENTG",
+      "HEI",
+      "LRCX",
+      "MKSI",
+      "TDG",
+      "WST"
+     ],
+     "share_of_group_winners": 0.36
+    }
+   }
+  },
+  "caveat": "irr の読解は 2016/2017 のパネル行に無い（2018/2013/2015 のみ）。2018 でも読解済みは母集団の一部＝**この検定は母集団の3-4割でしか当てられない**。しかも読解対象は『質実証×価格実証』寄りに選ばれた集合なので、無作為抽出ではない。"
+ },
+ "test4_leave_one_ticker_out": {
+  "verdict": "通過",
+  "method": "群に一度でも入った社を、**パネルから丸ごと**（3ビンテージとも）抜いて閾値・母集団・群・判定を作り直す",
+  "n_tickers_tested": 70,
+  "maintained_lift_min": 0.2334,
+  "maintained_lift_max": 0.2508,
+  "n_that_break_the_line": 0,
+  "worst10": [
+   {
+    "ticker": "AAPL",
+    "maintained_lift": 0.2334,
+    "min_numerator": 21,
+    "pass_core": true,
+    "lifts": [
+     0.2334,
+     0.2406,
+     0.2521
+    ]
+   },
+   {
+    "ticker": "ADI",
+    "maintained_lift": 0.2334,
+    "min_numerator": 21,
+    "pass_core": true,
+    "lifts": [
+     0.2334,
+     0.2406,
+     0.2521
+    ]
+   },
+   {
+    "ticker": "AEIS",
+    "maintained_lift": 0.2334,
+    "min_numerator": 21,
+    "pass_core": true,
+    "lifts": [
+     0.2334,
+     0.2406,
+     0.2521
+    ]
+   },
+   {
+    "ticker": "AME",
+    "maintained_lift": 0.2334,
+    "min_numerator": 21,
+    "pass_core": true,
+    "lifts": [
+     0.2334,
+     0.2406,
+     0.2521
+    ]
+   },
+   {
+    "ticker": "APH",
+    "maintained_lift": 0.2334,
+    "min_numerator": 21,
+    "pass_core": true,
+    "lifts": [
+     0.2334,
+     0.2406,
+     0.2521
+    ]
+   },
+   {
+    "ticker": "CMI",
+    "maintained_lift": 0.2334,
+    "min_numerator": 21,
+    "pass_core": true,
+    "lifts": [
+     0.2334,
+     0.2406,
+     0.2521
+    ]
+   },
+   {
+    "ticker": "COHR",
+    "maintained_lift": 0.2334,
+    "min_numerator": 21,
+    "pass_core": true,
+    "lifts": [
+     0.2334,
+     0.2406,
+     0.2599
+    ]
+   },
+   {
+    "ticker": "CSL",
+    "maintained_lift": 0.2334,
+    "min_numerator": 21,
+    "pass_core": true,
+    "lifts": [
+     0.2334,
+     0.2406,
+     0.2521
+    ]
+   },
+   {
+    "ticker": "ENTG",
+    "maintained_lift": 0.2334,
+    "min_numerator": 21,
+    "pass_core": true,
+    "lifts": [
+     0.2334,
+     0.2406,
+     0.2521
+    ]
+   },
+   {
+    "ticker": "GRMN",
+    "maintained_lift": 0.2334,
+    "min_numerator": 21,
+    "pass_core": true,
+    "lifts": [
+     0.2334,
+     0.2406,
+     0.2521
+    ]
+   }
+  ],
+  "note": "1社で消えるなら不合格。ここは『消えないこと』を確かめる検定であって、合格の証拠ではない。"
+ },
+ "test5_permutation": {
+  "verdict": "通過",
+  "null": "特徴量側（母集団・可測・閾値・群）を固定し、outcome をティッカー単位で置換する。ビンテージ間の outcome 相関と欠測構造を保ったまま特徴量↔outcome だけを壊す。置換は母集団の中で行うので基準率は保たれる。",
+  "n_permutations": 2000,
+  "selfcheck_two_code_paths": {
+   "row_path_maintained_lift": 0.2424,
+   "bitmask_path_maintained_lift": 0.2424,
+   "abs_diff": 0.0,
+   "agree": true,
+   "why": "置換の結論はビットマスク経路の正しさに全部乗っている。先に検算する。⚠ 比べるのは丸める前の値。丸めた値と比べると必ず食い違って見える（初版で踏んだ）。"
+  },
+  "single_candidate": {
+   "observed_maintained_lift": 0.2424,
+   "n_ge_observed": 0,
+   "p": 0.0005,
+   "note": "この候補『だけ』を最初から狙っていたなら、この p が答え。だが実際は1420組を眺めた後に選ばれている。"
+  },
+  "family_wise": {
+   "family": "勝者側の探索空間 2840 組（P_quality 1420 ＋ P_full 1420）",
+   "n_perm_with_at_least_one_pass": 1065,
+   "p_family_any_pass": 0.5325,
+   "max_maintained_lift_under_null": {
+    "p50": 0.1532,
+    "p90": 0.2205,
+    "p95": 0.2445,
+    "p99": 0.3016,
+    "max": 0.4496
+   },
+   "p_familywise_for_this_candidate": 0.053,
+   "how_to_read": "『族の最大 maintained lift が、この候補の観測値以上になる確率』＝選択を織り込んだ p。単体の p はこれより必ず小さく出る。⚠ 破壊側の探索（hist_wd_dst_pair）と単変量168検定は家族に入っていないので、本当の値札はこれより高い。"
+  },
+  "runtime_sec": 30.0
+ },
+ "test6_overlap_with_existing_gates": {
+  "verdict": "通過",
+  "note": "母集団が既に P_quality（質実証）なので、質実証の増分はここでは測れない＝定義上ゼロ。残る2本（事業の収縮 / 利払カバー）で当てる。**intcov は財務キル(nde>4)の歴史側の代理**であって同一ではない。",
+  "by_vintage": {
+   "2016": {
+    "n_pop": 329,
+    "n_shrink_in_pop": 28,
+    "n_shrink_in_group": 1,
+    "survivors": {
+     "収縮を除く": {
+      "n_pop": 301,
+      "base": 0.1894,
+      "n_group": 48,
+      "numerator": 21,
+      "p_group": 0.4375,
+      "lift": 0.2481,
+      "passes_line": true
+     },
+     "収縮を除く ∧ intcov>=3": {
+      "n_pop": 206,
+      "base": 0.1893,
+      "n_group": 33,
+      "numerator": 14,
+      "p_group": 0.4242,
+      "lift": 0.2349,
+      "passes_line": true
+     },
+     "収縮を除く ∧ intcov>=5": {
+      "n_pop": 176,
+      "base": 0.2045,
+      "n_group": 27,
+      "numerator": 13,
+      "p_group": 0.4815,
+      "lift": 0.2769,
+      "passes_line": true
+     }
+    }
+   },
+   "2017": {
+    "n_pop": 327,
+    "n_shrink_in_pop": 15,
+    "n_shrink_in_group": 1,
+    "survivors": {
+     "収縮を除く": {
+      "n_pop": 312,
+      "base": 0.1955,
+      "n_group": 48,
+      "numerator": 21,
+      "p_group": 0.4375,
+      "lift": 0.242,
+      "passes_line": true
+     },
+     "収縮を除く ∧ intcov>=3": {
+      "n_pop": 221,
+      "base": 0.1946,
+      "n_group": 33,
+      "numerator": 16,
+      "p_group": 0.4848,
+      "lift": 0.2903,
+      "passes_line": true
+     },
+     "収縮を除く ∧ intcov>=5": {
+      "n_pop": 190,
+      "base": 0.2053,
+      "n_group": 32,
+      "numerator": 15,
+      "p_group": 0.4688,
+      "lift": 0.2635,
+      "passes_line": true
+     }
+    }
+   },
+   "2018": {
+    "n_pop": 339,
+    "n_shrink_in_pop": 23,
+    "n_shrink_in_group": 6,
+    "survivors": {
+     "収縮を除く": {
+      "n_pop": 316,
+      "base": 0.193,
+      "n_group": 49,
+      "numerator": 23,
+      "p_group": 0.4694,
+      "lift": 0.2763,
+      "passes_line": true
+     },
+     "収縮を除く ∧ intcov>=3": {
+      "n_pop": 215,
+      "base": 0.2186,
+      "n_group": 34,
+      "numerator": 17,
+      "p_group": 0.5,
+      "lift": 0.2814,
+      "passes_line": true
+     },
+     "収縮を除く ∧ intcov>=5": {
+      "n_pop": 182,
+      "base": 0.2308,
+      "n_group": 32,
+      "numerator": 17,
+      "p_group": 0.5312,
+      "lift": 0.3005,
+      "passes_line": true
+     }
+    }
+   }
+  },
+  "increment_over_single_legs": {
+   "2016": {
+    "f2_rnd_r[中央値超]": {
+     "n_group": 159,
+     "numerator": 41,
+     "p_group": 0.2579,
+     "lift": 0.0603
+    },
+    "f2_sga_r[中央値以下]": {
+     "n_group": 93,
+     "numerator": 28,
+     "p_group": 0.3011,
+     "lift": 0.1035
+    },
+    "pair": {
+     "n_group": 50,
+     "numerator": 22,
+     "lift": 0.2424
+    },
+    "increment_vs_best_leg": 0.1389
+   },
+   "2017": {
+    "f2_rnd_r[中央値超]": {
+     "n_group": 157,
+     "numerator": 42,
+     "p_group": 0.2675,
+     "lift": 0.0657
+    },
+    "f2_sga_r[中央値以下]": {
+     "n_group": 97,
+     "numerator": 29,
+     "p_group": 0.299,
+     "lift": 0.0971
+    },
+    "pair": {
+     "n_group": 50,
+     "numerator": 23,
+     "lift": 0.2582
+    },
+    "increment_vs_best_leg": 0.1611
+   },
+   "2018": {
+    "f2_rnd_r[中央値超]": {
+     "n_group": 164,
+     "numerator": 44,
+     "p_group": 0.2683,
+     "lift": 0.0736
+    },
+    "f2_sga_r[中央値以下]": {
+     "n_group": 101,
+     "numerator": 31,
+     "p_group": 0.3069,
+     "lift": 0.1122
+    },
+    "pair": {
+     "n_group": 55,
+     "numerator": 25,
+     "lift": 0.2599
+    },
+    "increment_vs_best_leg": 0.1477
+   }
+  }
+ },
+ "diag_measurability_confound": {
+  "status": "事前登録の外・診断専用",
+  "why": "f2_sga_r は母集団の6割弱しか可測。『販管費を単独で開示しているか』自体が勝者を予言していると、群の lift はその写しになる。",
+  "by_vintage": {
+   "2016": {
+    "sga_measurable": {
+     "n": 185,
+     "k": 44,
+     "p": 0.2378
+    },
+    "sga_missing": {
+     "n": 144,
+     "k": 21,
+     "p": 0.1458
+    },
+    "diff": 0.092
+   },
+   "2017": {
+    "sga_measurable": {
+     "n": 193,
+     "k": 46,
+     "p": 0.2383
+    },
+    "sga_missing": {
+     "n": 134,
+     "k": 20,
+     "p": 0.1493
+    },
+    "diff": 0.0891
+   },
+   "2018": {
+    "sga_measurable": {
+     "n": 201,
+     "k": 45,
+     "p": 0.2239
+    },
+    "sga_missing": {
+     "n": 138,
+     "k": 21,
+     "p": 0.1522
+    },
+    "diff": 0.0717
+   }
+  }
+ },
+ "diag_shape_and_hurdle": {
+  "status": "事前登録の外・診断専用（ハードル15%だけが登録された線）",
+  "why": "同じ群を『破壊側』『分布』『別のハードル』で見る。勝者率だけ上がって破壊率も上がるなら『質』ではなく『分散』を拾っているだけ。15%ちょうどでしか出ないなら線の上に載っているだけ。",
+  "by_vintage": {
+   "2016": {
+    "destroy": {
+     "n_group": 50,
+     "numerator": 0,
+     "p_group": 0.0,
+     "p_base": 0.0213,
+     "lift": -0.0213
+    },
+    "tr_cagr_group": {
+     "p10": -0.0115,
+     "p25": 0.0307,
+     "median": 0.1352,
+     "p75": 0.2183,
+     "p90": 0.2897,
+     "mean": 0.1422
+    },
+    "tr_cagr_pop": {
+     "p10": -0.034,
+     "p25": 0.0252,
+     "median": 0.086,
+     "p75": 0.1369,
+     "p90": 0.1985,
+     "mean": 0.0797
+    },
+    "mdd_group_median": -0.502,
+    "mdd_pop_median": -0.498,
+    "hurdle_sensitivity": {
+     "10%": {
+      "p_group": 0.6,
+      "p_base": 0.4316,
+      "lift": 0.1684
+     },
+     "12%": {
+      "p_group": 0.58,
+      "p_base": 0.3283,
+      "lift": 0.2517
+     },
+     "15%": {
+      "p_group": 0.44,
+      "p_base": 0.1976,
+      "lift": 0.2424
+     },
+     "18%": {
+      "p_group": 0.36,
+      "p_base": 0.1216,
+      "lift": 0.2384
+     },
+     "20%": {
+      "p_group": 0.32,
+      "p_base": 0.0942,
+      "lift": 0.2258
+     },
+     "25%": {
+      "p_group": 0.18,
+      "p_base": 0.0456,
+      "lift": 0.1344
+     }
+    }
+   },
+   "2017": {
+    "destroy": {
+     "n_group": 50,
+     "numerator": 0,
+     "p_group": 0.0,
+     "p_base": 0.0122,
+     "lift": -0.0122
+    },
+    "tr_cagr_group": {
+     "p10": -0.0296,
+     "p25": 0.0211,
+     "median": 0.1359,
+     "p75": 0.1883,
+     "p90": 0.2429,
+     "mean": 0.1212
+    },
+    "tr_cagr_pop": {
+     "p10": -0.0414,
+     "p25": 0.0133,
+     "median": 0.0835,
+     "p75": 0.1402,
+     "p90": 0.2059,
+     "mean": 0.077
+    },
+    "mdd_group_median": -0.486,
+    "mdd_pop_median": -0.486,
+    "hurdle_sensitivity": {
+     "10%": {
+      "p_group": 0.62,
+      "p_base": 0.4251,
+      "lift": 0.1949
+     },
+     "12%": {
+      "p_group": 0.58,
+      "p_base": 0.3058,
+      "lift": 0.2742
+     },
+     "15%": {
+      "p_group": 0.46,
+      "p_base": 0.2018,
+      "lift": 0.2582
+     },
+     "18%": {
+      "p_group": 0.28,
+      "p_base": 0.1284,
+      "lift": 0.1516
+     },
+     "20%": {
+      "p_group": 0.22,
+      "p_base": 0.104,
+      "lift": 0.116
+     },
+     "25%": {
+      "p_group": 0.1,
+      "p_base": 0.0367,
+      "lift": 0.0633
+     }
+    }
+   },
+   "2018": {
+    "destroy": {
+     "n_group": 55,
+     "numerator": 0,
+     "p_group": 0.0,
+     "p_base": 0.0295,
+     "lift": -0.0295
+    },
+    "tr_cagr_group": {
+     "p10": -0.0567,
+     "p25": 0.008,
+     "median": 0.1377,
+     "p75": 0.2134,
+     "p90": 0.2627,
+     "mean": 0.1258
+    },
+    "tr_cagr_pop": {
+     "p10": -0.0664,
+     "p25": 0.0006,
+     "median": 0.0724,
+     "p75": 0.1306,
+     "p90": 0.2042,
+     "mean": 0.0677
+    },
+    "mdd_group_median": -0.486,
+    "mdd_pop_median": -0.485,
+    "hurdle_sensitivity": {
+     "10%": {
+      "p_group": 0.6364,
+      "p_base": 0.4041,
+      "lift": 0.2322
+     },
+     "12%": {
+      "p_group": 0.5818,
+      "p_base": 0.292,
+      "lift": 0.2898
+     },
+     "15%": {
+      "p_group": 0.4545,
+      "p_base": 0.1947,
+      "lift": 0.2599
+     },
+     "18%": {
+      "p_group": 0.3636,
+      "p_base": 0.1416,
+      "lift": 0.222
+     },
+     "20%": {
+      "p_group": 0.3091,
+      "p_base": 0.1032,
+      "lift": 0.2058
+     },
+     "25%": {
+      "p_group": 0.1091,
+      "p_base": 0.0413,
+      "lift": 0.0678
+     }
+    }
+   }
+  }
+ },
+ "diag_size": {
+  "status": "事前登録の外・診断専用",
+  "by_vintage": {
+   "2016": {
+    "group_median_rev": 3543.2,
+    "pop_median_rev": 2910.379,
+    "unit": "百万$"
+   },
+   "2017": {
+    "group_median_rev": 3289.0,
+    "pop_median_rev": 2704.4,
+    "unit": "百万$"
+   },
+   "2018": {
+    "group_median_rev": 4089.9,
+    "pop_median_rev": 3095.031,
+    "unit": "百万$"
+   }
+  },
+  "why": "2016-2026 は大型に有利な窓。群が大型に偏っているだけなら規模の写し。"
+ },
+ "diag_drop_two_sectors": {
+  "status": "事前登録の外・診断専用（登録された検定は『1業種ずつ』）",
+  "why": "2018の層別で効果が出ているのは SIC35(9社中7勝) と SIC38(6社中5勝) で、最大の2層 SIC36(14社)・SIC28(11社) では ±0。効果が2層に集まっていないかを見る。",
+  "by_combo": {
+   "35+38": {
+    "2016": {
+     "n_pop": 282,
+     "n_group": 37,
+     "numerator": 12,
+     "lift": 0.1541,
+     "passes_line": true
+    },
+    "2017": {
+     "n_pop": 277,
+     "n_group": 42,
+     "numerator": 14,
+     "lift": 0.1492,
+     "passes_line": false
+    },
+    "2018": {
+     "n_pop": 284,
+     "n_group": 46,
+     "numerator": 13,
+     "lift": 0.1136,
+     "passes_line": false
+    }
+   },
+   "35+38+37": {
+    "2016": {
+     "n_pop": 268,
+     "n_group": 31,
+     "numerator": 9,
+     "lift": 0.1224,
+     "passes_line": false
+    },
+    "2017": {
+     "n_pop": 263,
+     "n_group": 38,
+     "numerator": 10,
+     "lift": 0.0845,
+     "passes_line": false
+    },
+    "2018": {
+     "n_pop": 271,
+     "n_group": 41,
+     "numerator": 11,
+     "lift": 0.0986,
+     "passes_line": false
+    }
+   },
+   "36+35+38": {
+    "2016": {
+     "n_pop": 264,
+     "n_group": 29,
+     "numerator": 8,
+     "lift": 0.1206,
+     "passes_line": false
+    },
+    "2017": {
+     "n_pop": 259,
+     "n_group": 34,
+     "numerator": 9,
+     "lift": 0.0987,
+     "passes_line": false
+    },
+    "2018": {
+     "n_pop": 258,
+     "n_group": 33,
+     "numerator": 7,
+     "lift": 0.0687,
+     "passes_line": false
+    }
+   }
+  }
+ },
+ "diag_regime_split_2018": {
+  "status": "事前登録の外・診断専用",
+  "windows": {
+   "early": "2018-07 → 2022-07",
+   "late": "2022-07 → 2026-08"
+  },
+  "why": "この台帳は『irr=85 の超過はほぼAI期に出た（前期 lift+0.13 / 後期 +0.38）』と記録している。同じ形なら、この候補も窓の産物かもしれない。",
+  "detail": {
+   "group": {
+    "early": {
+     "n": 55,
+     "median": 0.0859,
+     "p_ge_15": 0.3091
+    },
+    "late": {
+     "n": 55,
+     "median": 0.176,
+     "p_ge_15": 0.5455
+    }
+   },
+   "population": {
+    "early": {
+     "n": 339,
+     "median": 0.08,
+     "p_ge_15": 0.2596
+    },
+    "late": {
+     "n": 339,
+     "median": 0.0698,
+     "p_ge_15": 0.2861
+    }
+   },
+   "lift_by_regime": {
+    "early": 0.0495,
+    "late": 0.2594
+   },
+   "sector_adjusted_by_regime": {
+    "early": {
+     "n_group": 55,
+     "observed": 17,
+     "expected_at_sector_rates": 16.0649,
+     "sector_adjusted_lift": 0.017
+    },
+    "late": {
+     "n_group": 55,
+     "observed": 30,
+     "expected_at_sector_rates": 21.6677,
+     "sector_adjusted_lift": 0.1515
+    }
+   }
+  },
+  "prior_finding_same_variable_pair": {
+   "file": "out/retro_regime_test.json（2026-08-05・別セッションの独立実測）",
+   "note": "R&D単独は両レジームでリフト維持=頑健。in-sample最良複合(**販管費低∧R&D高**)は前期リフトゼロ・後期のみP=0.70=**AI相場の産物と確定**",
+   "their_numbers": {
+    "early": {
+     "base": 0.249,
+     "combo_p": 0.259,
+     "lift": 0.01
+    },
+    "late": {
+     "base": 0.282,
+     "combo_p": 0.704,
+     "lift": 0.422
+    }
+   },
+   "their_population": "demoQ 177社（価格実証×質実証プール）・切り方は上下1/4",
+   "mine": "P_quality 339社・切り方は中央値。母集団も切り方も違うのに**同じ形**が出た",
+   "consequence": "この候補は『新しい発見』ではなく、**既に潰されている結果の再発見**。prereg の novelty_of_this_run は満たさない。"
+  }
+ },
+ "diag_group_2018": {
+  "status": "事前登録の外・診断専用",
+  "n": 55,
+  "numerator": 25,
+  "sic2_counts": {
+   "36": 14,
+   "28": 11,
+   "35": 9,
+   "38": 6,
+   "37": 6,
+   "73": 2,
+   "30": 2,
+   "20": 1,
+   "33": 1,
+   "67": 1,
+   "34": 1,
+   "50": 1
+  },
+  "winners": [
+   "AAON",
+   "AAPL",
+   "ABBNY",
+   "ADI",
+   "AEIS",
+   "AME",
+   "APH",
+   "CMI",
+   "CSL",
+   "DE",
+   "ENTG",
+   "GLW",
+   "GRMN",
+   "HEI",
+   "IDCC",
+   "KLIC",
+   "LRCX",
+   "MKSI",
+   "MOG-A",
+   "PH",
+   "TDG",
+   "TER",
+   "TXN",
+   "WDC",
+   "WST"
+  ],
+  "non_winners": [
+   "BIDU",
+   "BIIB",
+   "BWA",
+   "CBT",
+   "CE",
+   "CHD",
+   "DOX",
+   "EMN",
+   "GILD",
+   "GIS",
+   "GNTX",
+   "HUN",
+   "IFF",
+   "INTC",
+   "KRO",
+   "LII",
+   "MCHP",
+   "MTX",
+   "NEU",
+   "NXPI",
+   "OLED",
+   "QCOM",
+   "RTX",
+   "ST",
+   "STM",
+   "SWKS",
+   "TEL",
+   "VSH",
+   "VYX",
+   "WAB"
+  ]
+ },
+ "verdict": {
+  "checks": {
+   "1_vintage_sign": "通過",
+   "2_sector": "通過",
+   "3_irr": "通過",
+   "4_one_ticker": "通過",
+   "5_permutation": "通過",
+   "6_increment": "通過"
+  },
+  "registered_six": "落とせなかった",
+  "rule": "6つのうち1つでも落ちたら不合格。『落とせなかった』は『正しい』ではない。",
+  "but_three_things_the_six_gates_do_not_see": {
+   "A_selection": {
+    "what": "登録の置換は『この候補だけ』の p（0.0005）。だが候補は1420組を眺めた後で選ばれている。",
+    "family_max_p95_under_null": 0.2445,
+    "observed_maintained_lift": 0.2424,
+    "p_familywise": 0.053,
+    "reading": "観測値は帰無の族最大の95%点とほぼ同じ位置。**選択を織り込むと線上**。しかも家族は勝者側2840組だけで、破壊側の探索と単変量168検定を数えていない＝本当の値札はこれより高い。"
+   },
+   "B_regime": {
+    "lift_early_2018_2022": 0.0495,
+    "lift_late_2022_2026": 0.2594,
+    "reading": "効果はほぼ全部がAI期。**同じ変数の組が2026-08-05に別セッションで既に『AI相場の産物と確定』と記録されている**（out/retro_regime_test.json）。"
+   },
+   "C_no_true_out_of_sample": {
+    "reading": "2016/2017/2018 はティッカー宇宙が同一（jaccard 1.0）・outcome の Spearman 0.92-0.96・窓は入れ子。f2_ が無い 2013/2015 は判定不能。＝**この候補には外部標本が一つも無い**。"
+   }
+  },
+  "final": "登録6条件では落とせなかった。ただし (A)選択調整後 p=0.053 で線上 (B)効果はほぼ全部AI期で、同じ変数の組は既に『AI相場の産物』と確定済み (C)外部標本ゼロ ——よって **prereg の novelty（新しい発見）は満たさない**。規約に足す材料ではない。"
+ },
+ "runtime_sec": 31.0
+}

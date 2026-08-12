@@ -269,7 +269,17 @@ def build():
          "ops.yml（EDINET_API_KEYをSecretsに置けば自動）／手動 python3 kessan_check_jp.py", "key"),
         ("v10",     "v10影スコア更新",         "年1(7月)", 430,
          json_field("out/v10_shadow.json", "generated") or git_date("out/v10_shadow.json"),
-         "ops.yml（7月）／手動 python3 v10_series.py", True),
+         "ops.yml（7月）／手動 python3 v10_series.py"
+         "　⚠**その v10_series.py が repo に存在しない**（git 全履歴にも無い）"
+         "＝影の在庫はあるのに作り直せない。2027-07の答え合わせの前に要復旧", True),
+        # v11「引き算の門」の影（2026-08-12新設）。**v10 の轍を踏まないために回転盤へ載せる**
+        #   ——v10 は仕様書に「毎年7月に python v10_series.py」と書きながら、その道具が
+        #   一度も repo に入っていなかった（＝影が更新できないまま1年が過ぎた）。
+        #   v11 は判定に一切使わないが、**止まったことが見えるようにしておく**。
+        ("v11",     "v11影スコア更新",         "月1",     40,
+         json_field("out/v11_shadow.json", "generated") or git_date("out/v11_shadow.json"),
+         "ops.yml 毎月2日／手動 python3 night/v11_facts.py && node night/v11_gate.js"
+         "（V11_SPEC.md・正本の判定には一切使わない）", True),
         # 2026-08-10: **auto=False → True**。人の判断が要るのは *v9 vs v10 の勝敗判定* であって
         #   スナップショットの生成ではない（鍵もネットも companyfacts も不要）。もう半分の
         #   v10_series.py は既に7月だけ自動で、**片方だけ手動という非対称**が残っていた。

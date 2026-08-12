@@ -1,0 +1,1706 @@
+{
+ "generated": "2026-08-12",
+ "tool": "night/hist10_verdict.py",
+ "role": "事前登録v3（複利10%）の総括。**既存の在庫を読むだけ**。新しい測定をしない",
+ "prereg": "out/hist10_prereg.json",
+ "prereg_version": "v3",
+ "inputs": [
+  "out/hist10_prereg.json",
+  "out/hist10_targets.json",
+  "out/hist10_diag.json",
+  "out/hist10_angleA.json",
+  "out/hist10_angleB.json",
+  "out/hist10_angleC.json",
+  "out/hist10_angleD.json",
+  "out/hist10_angleE.json",
+  "out/hist10_verify_addscore3.json",
+  "out/hist10_verify_addscore20.json",
+  "out/hist10_verify_score3quart.json",
+  "out/hist10_verify_tree_rnd_rev.json",
+  "out/hist10_verify_tree_rev_aturn.json",
+  "out/hist10_verify_irr70_persist.json",
+  "out/hist10_verify_hvpe_ybiz.json",
+  "out/hist10_verify_fpr.json",
+  "out/hist_wd_verdict.json"
+ ],
+ "★headline": {
+  "n_pass_prereg": 0,
+  "by_angle": {
+   "A_hurdle10": "合格ゼロ",
+   "B_persistence": "合格ゼロ（B1は事前登録の符号不変ゲートが構造的に到達不能＝『判定不能』／B2は事前登録の外）",
+   "C_decomposition": "合格ゼロ（全1840セルが判定不能＝分解在庫が2016/2017に無い）",
+   "D_additive_score": "合格ゼロ（探索側の1件は事前登録 for_D_and_E＝外側fold で不合格）",
+   "E_tree_nested_cv": "合格ゼロ"
+  },
+  "one_line": "**事前登録v3の線を通った指標はゼロ。** 角度A（単変量）0／角度B（持続）0／角度C（分解）0（全セル判定不能）／角度D（加法スコア）は探索側が1件を出したが事前登録が角度Dに課している外側fold で不合格／角度E（木・入れ子CV）0。**そして『ゼロ』の中身は角度ごとに違う——A/E は不合格、B/C は判定不能、D は7本目のゲートで不合格。**",
+  "stopping_rule": "合格ゼロならゼロと書く。線を緩めて通さない。緩めた版は『事前登録の外』と明示し合否に数えない"
+ },
+ "★verdict_by_angle": {
+  "A_hurdle10": {
+   "judgeable": true,
+   "n_pass": 0,
+   "counts": {
+    "不合格": 162,
+    "判定不能": 390
+   },
+   "fail_gate_histogram": {
+    "sign_stability": 44,
+    "lift": 116,
+    "min_numerator": 1,
+    "sector_control": 1
+   },
+   "undetermined_gate_histogram": {
+    "sign_stability": 82,
+    "empty_group": 4,
+    "circularity": 4,
+    "sign_stability(構造的に評価不能)": 300
+   },
+   "near_miss": [
+    {
+     "key": "f2_intcov|P_quality|下位1/4",
+     "direction": "減らす",
+     "maintained_lift": 0.1541,
+     "lift_by_vintage": {
+      "2013": null,
+      "2015": null,
+      "2016": -0.1547,
+      "2017": -0.1635,
+      "2018": -0.1541
+     },
+     "numerator_by_vintage": {
+      "2013": null,
+      "2015": null,
+      "2016": 18,
+      "2017": 17,
+      "2018": 17
+     },
+     "gate_failed_at": "min_numerator"
+    },
+    {
+     "key": "f2_netiss_r|P_quality|上位1/4",
+     "direction": "減らす",
+     "maintained_lift": 0.151,
+     "lift_by_vintage": {
+      "2013": null,
+      "2015": null,
+      "2016": -0.1752,
+      "2017": -0.1619,
+      "2018": -0.151
+     },
+     "numerator_by_vintage": {
+      "2013": null,
+      "2015": null,
+      "2016": 20,
+      "2017": 20,
+      "2018": 20
+     },
+     "gate_failed_at": "sector_control"
+    }
+   ],
+   "verdict": "合格ゼロ"
+  },
+  "B_persistence": {
+   "judgeable": false,
+   "why_not": "y_persist は入口2013でしか定義できない（前半の窓が要る）。事前登録 pass_line.sign_stability は 2016/2017/2018 すべてを要求するので、**どんな指標でも字義どおりの合格は構造的に不可能**。hist10_targets.json の reachability が結果を見る前に同じことを出している",
+   "n_pass": {
+    "B1": 0,
+    "B2": 0,
+    "total": 0
+   },
+   "power_at_registered_line": {
+    "B1/P_full": 0.5102,
+    "B2/P_full": 0.1352
+   },
+   "fpr": {
+    "def": "結果ラベルを**会社単位で全ビンテージ同時に**混ぜ、同じ手続きを当てて1つでも lift>=0.15 ∧ 分子>=20（B2は符号不変も）を通す確率。置換2000回",
+    "B1_persist": {
+     "p": 0.022,
+     "n_perm": 2000,
+     "grid_cells": 222,
+     "vintages_required": [
+      2013
+     ]
+    },
+    "B2_persist": {
+     "p": 0.0,
+     "n_perm": 2000,
+     "grid_cells": 165,
+     "vintages_required": [
+      2016,
+      2017,
+      2018
+     ]
+    }
+   },
+   "verdict": "合格ゼロ（B1は事前登録の符号不変ゲートが構造的に到達不能＝『判定不能』／B2は事前登録の外）"
+  },
+  "C_decomposition": {
+   "judgeable": false,
+   "why_not": "prereg の sign_stability を当てられる候補は **0/46**",
+   "prereg_pass_count": 0,
+   "verdict_histogram": {
+    "判定不能": 1840
+   },
+   "relaxed_outside_prereg": {
+    "y10": 0,
+    "y_biz": 0,
+    "y_mult_pos": 0,
+    "y_mult10": 0,
+    "y_biz_w": 0
+   },
+   "subset_diagnostics_outside_prereg": {
+    "note": "**事前登録の外・診断**。2013 の n=92 が塞いでいるのかを切り分けるためだけにある",
+    "pass_counts_2015_2018": {
+     "y10": 0,
+     "y_biz": 1,
+     "y_mult_pos": 0,
+     "y_mult10": 0,
+     "y_biz_w": 0
+    },
+    "pass_counts_2018_only": {
+     "y10": 1,
+     "y_biz": 11,
+     "y_mult_pos": 14,
+     "y_mult10": 0,
+     "y_biz_w": 12
+    }
+   },
+   "verdict": "合格ゼロ（全1840セルが判定不能＝分解在庫が2016/2017に無い）"
+  },
+  "D_additive_score": {
+   "judgeable": true,
+   "n_pass_by_search_tool": 1,
+   "search_tool_gates_applied": "prereg の全条件（lift>=0.15 ∧ 分子>=20 ∧ 3ビンテージ符号不変 ∧ 業種調整 ∧ irr層 ∧ 増分）",
+   "prereg_clause_for_D_and_E": "加法スコアと木は**外側foldでの性能のみ**を合否に使う。in-sample は参考値として明示",
+   "outer_fold_measured_by_search_tool": false,
+   "outer_fold_result": {
+    "verifier": "night/hist10_verify_addscore3.py",
+    "verdict": "不合格",
+    "cv_fixed_structure_oof_lift": {
+     "2016": 0.1303,
+     "2017": 0.1374,
+     "2018": 0.1404
+    },
+    "cv_full_research_oof": {
+     "2016": {
+      "oof_lift": 0.2231,
+      "oof_group_n": 23,
+      "min_num_met": false
+     },
+     "2017": {
+      "oof_lift": 0.1884,
+      "oof_group_n": 23,
+      "min_num_met": false
+     },
+     "2018": {
+      "oof_lift": 0.2221,
+      "oof_group_n": 35,
+      "min_num_met": true
+     }
+    },
+    "negative_control": {
+     "null_median": {
+      "2016": 0.026,
+      "2017": 0.0224,
+      "2018": 0.0359
+     },
+     "null_p95": {
+      "2016": 0.1525,
+      "2017": 0.1416,
+      "2018": 0.1478
+     },
+     "observed": {
+      "2016": 0.1303,
+      "2017": 0.1374,
+      "2018": 0.1404
+     },
+     "p": {
+      "2016": 0.07,
+      "2017": 0.062,
+      "2018": 0.068
+     },
+     "read": "観測の OOF lift は3ビンテージとも**帰無の p95 を下回る**（p=0.06〜0.07）＝線に届かないだけでなく、帰無と区別も付いていない"
+    },
+    "in_sample_minus_oof": {
+     "2016": 0.077,
+     "2017": 0.0604,
+     "2018": 0.0569
+    }
+   },
+   "the_six_assigned_tests": {
+    "t1_reproduce": "一致",
+    "t2_vintage": "合格",
+    "t3_sector": "合格",
+    "t4_irr_layer": "合格",
+    "t5_permutation_config_fixed": "合格",
+    "t6_incremental": "合格"
+   },
+   "sibling_verifiers": {
+    "hist10_verify_score3quart(同一配置・6検問のみ)": "**6検問すべて通過＝落とせなかった**",
+    "hist10_verify_addscore20(全20本の加法スコア)": "不合格"
+   },
+   "verdict": "合格ゼロ（探索側の1件は事前登録 for_D_and_E＝外側fold で不合格）"
+  },
+  "E_tree_nested_cv": {
+   "judgeable": true,
+   "n_pass_all_gates": 0,
+   "n_pass_gate1_only": 2,
+   "n_gate1_pass_whose_later_gates_are_effectively_unreachable": 2,
+   "gate1_cells": {
+    "P_full|cov90_14|down": {
+     "oof_lift": -0.19,
+     "oof_numerator_companies": 28,
+     "per_vintage_lift": {
+      "2016": -0.1854,
+      "2017": -0.2233,
+      "2018": -0.163
+     },
+     "gate_failed_at": "sector_control",
+     "in_sample_lift_for_contrast": -0.2878
+    },
+    "P_quality|cov90_14|up": {
+     "oof_lift": 0.2595,
+     "oof_numerator_companies": 20,
+     "per_vintage_lift": {
+      "2016": 0.2768,
+      "2017": 0.2639,
+      "2018": 0.2457
+     },
+     "gate_failed_at": "sector_control",
+     "in_sample_lift_for_contrast": 0.5493
+    }
+   },
+   "in_sample_vs_oof": {
+    "P_full|cov90_14|up": {
+     "in_sample": 0.4365,
+     "out_of_fold": 0.1073
+    },
+    "P_full|cov90_14|down": {
+     "in_sample": -0.2878,
+     "out_of_fold": -0.19
+    },
+    "P_full|all20|up": {
+     "in_sample": 0.4238,
+     "out_of_fold": 0.0614
+    },
+    "P_full|all20|down": {
+     "in_sample": -0.338,
+     "out_of_fold": -0.0176
+    },
+    "P_quality|cov90_14|up": {
+     "in_sample": 0.5493,
+     "out_of_fold": 0.2595
+    },
+    "P_quality|cov90_14|down": {
+     "in_sample": -0.2381,
+     "out_of_fold": -0.0357
+    },
+    "P_quality|all20|up": {
+     "in_sample": 0.4073,
+     "out_of_fold": -0.0363
+    },
+    "P_quality|all20|down": {
+     "in_sample": -0.3551,
+     "out_of_fold": -0.0724
+    }
+   },
+   "verdict": "合格ゼロ"
+  }
+ },
+ "★10pct_vs_15pct": {
+  "reproduction_check": {
+   "what": "この道具の measure() を hurdle=0.15 で回し、公表 hist_wd_win_uni.json の lift_anchor と突合",
+   "n_checked": 60,
+   "n_mismatch": 0,
+   "mismatches": [],
+   "verdict": "完全一致＝同じものを測っている。以降の『10% vs 15%』は hurdle だけの差"
+  },
+  "base_rate": {
+   "10%": {
+    "2013": 0.4166,
+    "2015": 0.4235,
+    "2016": 0.4281,
+    "2017": 0.4059,
+    "2018": 0.3761
+   },
+   "15%": {
+    "2013": 0.2115,
+    "2015": 0.1968,
+    "2016": 0.2431,
+    "2017": 0.2334,
+    "2018": 0.2101
+   }
+  },
+  "min_numerator": {
+   "v1/v2(15%)": "事象の分子 >= 5社（勝者側も破壊側も）",
+   "v3(10%)": "事象の分子 >= 20社（**基準率が2倍なので v1 の5社より厳しくする**。緩めない）"
+  },
+  "class_counts": {
+   "どちらも線に届かない": 540,
+   "10%で新出": 2
+  },
+  "new_at_10": [
+   {
+    "key": "f2_intcov|P_quality|下位1/4",
+    "direction_10": "減らす",
+    "maintained_lift_10": 0.1541,
+    "maintained_lift_15": 0.077,
+    "verdict_10": "不合格",
+    "gate_failed_10": "min_numerator"
+   },
+   {
+    "key": "f2_netiss_r|P_quality|上位1/4",
+    "direction_10": "減らす",
+    "maintained_lift_10": 0.151,
+    "maintained_lift_15": 0.0571,
+    "verdict_10": "不合格",
+    "gate_failed_10": "sector_control"
+   }
+  ],
+  "lost_at_10": [],
+  "reachability_two_way": {
+   "10%(y10) down 可能": "**下向き（10%+を減らす向き）が到達可能なのは本当**——y10 の検定単位のうち down が可能なのは 42/65（65%）。15%ハードルだと 7/65（11%）、恒久毀損(destroy)だと 0/65（0%）＝**v1/v2 が『下向きは数学的に到達不能』と書いたのは destroy 側の話で、10% にすると両方向が測れるようになる**。",
+   "登録対象のみ(y10×P_full/P_quality)": {
+    "tests": 50,
+    "up_min_num_binding": 2,
+    "down_infeasible_by_min_num": 9,
+    "down_possible": 41
+   }
+  },
+  "power": {
+   "note": "**そして10%への変更は、線から離れた効果に対しては検出力を下げている**——δ=0.20 で 15%ハードル 0.9746 → 10%ハードル 0.9668、δ=0.10（＝線に届かない偽の効果）で 0.0239 → 0.0364 と誤合格が増える。基準率が0.5に近づくほど率の分散が最大になるためで、**10%の利得は『検出力』ではなく『到達可能性（両方向が測れる・事象が足りる）』の側にある。**",
+   "同一セル(up/quartile/2018/P_full)": {
+    "15%/5社": 0.5033,
+    "10%/20社(v3登録)": 0.5051,
+    "src": "out/hist10_diag.json what_can_be_said[2]"
+   }
+  },
+  "overlap_y10_vs_win15": {
+   "2013": {
+    "n": 956,
+    "n11": 204,
+    "n10": 193,
+    "n01": 0,
+    "n00": 559,
+    "P_a": 0.4153,
+    "P_b": 0.2134,
+    "agree": 0.7981,
+    "jaccard": 0.5139,
+    "phi": 0.618,
+    "P_b_given_a": 0.5139,
+    "P_a_given_b": 1.0
+   },
+   "2018": {
+    "n": 956,
+    "n11": 203,
+    "n10": 158,
+    "n01": 0,
+    "n00": 595,
+    "P_a": 0.3776,
+    "P_b": 0.2123,
+    "agree": 0.8347,
+    "jaccard": 0.5623,
+    "phi": 0.6666,
+    "P_b_given_a": 0.5623,
+    "P_a_given_b": 1.0
+   }
+  },
+  "v1_v2_result_for_contrast": {
+   "single_variable": {
+    "win": 0,
+    "destroy": 0,
+    "note": "**単変量では勝者側も破壊側も合格ゼロ**。合格は全部2本の積"
+   },
+   "prereg_5_gates_passed_by_search": {
+    "win": 11,
+    "destroy": 2,
+    "detail": "重複列(size_rev=f2_rev)を畳んだ (側 × 母集団 × 脚と切り方) の異なり数",
+    "distinct_variable_pairs_reported_by_the_search_tools": {
+     "win_pair": 7,
+     "dst_pair": 2,
+     "note": "切り方と母集団を無視して『変数の組』だけ数えた値。探索器自身の集計をそのまま引く。上の win/destroy の数と食い違うのは粒度の違いであって矛盾ではない。"
+    }
+   },
+   "refuted_by_verification": [
+    "f2_rnd_r[上位1/4] ∧ f2_sga_r[中央値以下] / P_full / win",
+    "f2_rnd_r[上位1/4] ∧ f2_sga_r[下位1/4] / P_full / win",
+    "f2_aturn[中央値超] ∧ f2_rnd_r[上位1/4] / P_quality / win"
+   ],
+   "survived_all_six_verifications": [
+    {
+     "candidate": "f2_rnd_r[中央値超] ∧ f2_sga_r[中央値以下] / P_quality / win",
+     "verify_tools": [
+      "verify_rnd_sga_medq"
+     ],
+     "verdict_labels": [
+      "落とせなかった"
+     ]
+    }
+   ],
+   "bottom_line_win_side": "単変量ゼロ。2本の積で7組が事前登録の5条件を文言どおりに通ったが、反証にかけた3組はすべて不合格。生き延びたのは1組だけで、それも『選択調整後 p=0.053・効果はほぼAI期・外部標本ゼロ』で novelty を満たさない（在庫の判定）。",
+   "bottom_line_destroy_side": "単変量ゼロ。2本の積で2組が事前登録の5条件を通り、**どちらも反証にかけられていない**。"
+  },
+  "variables_that_surfaced": {
+   "15%(勝者側の合格の脚)": [
+    "f2_rnd_r",
+    "f2_sga_r",
+    "f2_aturn",
+    "f2_cash_r",
+    "f2_intcov",
+    "f2_rev",
+    "f2_gw_r",
+    "f2_netiss_r"
+   ],
+   "15%(破壊側の合格の脚)": [
+    "f2_netiss_r",
+    "f2_rnd_r",
+    "f2_rev"
+   ],
+   "10%(角度A の線に最も近い2本)": [
+    "f2_intcov",
+    "f2_netiss_r"
+   ],
+   "10%(角度D の唯一の gate1 合格の脚)": [
+    "f2_rev",
+    "f2_rnd_r",
+    "f2_cagr5"
+   ],
+   "10%(角度E の木の根・プール)": [
+    "f2_rev",
+    "f2_intcov",
+    "f2_rnd_r",
+    "f2_sga_r",
+    "f2_cash_r",
+    "f2_netiss_r",
+    "f2_cagr5"
+   ],
+   "reading": "同じ族（R&D比・販管費比・売上規模・純発行・利払カバー）が両方の線で浮く。**10%にして新しい変数が出てきたわけではない**"
+  }
+ },
+ "★answers": {
+  "B_持続": {
+   "question": "『一度は出せるが続かない社』と『続く社』を分ける入口の指標はあったか",
+   "answer": "**無い（事前登録の線を通る指標はゼロ）**。ただしこの『ゼロ』は効果の不在ではなく、y_persist が入口2013でしか定義できず符号不変ゲートに到達できないこと（B1）と、厳密設計(B2)の検出力が 0.135 しかないことの合成",
+   "four_groups_B1": {
+    "両方": 206,
+    "前半だけ": 276,
+    "後半だけ": 148,
+    "どちらも": 311
+   },
+   "four_groups_B1_share": {
+    "両方": 0.2189,
+    "前半だけ": 0.2933,
+    "後半だけ": 0.1573,
+    "どちらも": 0.3305
+   },
+   "strongest_contrast_measured": {
+    "def": "『両方10%+』vs『前半だけ10%+』の AUC−0.5（B1・2013）",
+    "top": "co_rev_asof（売上規模）+0.0988",
+    "others": {
+     "co_opm": 0.0191,
+     "co_sales_cagr5": 0.0129,
+     "co_roic_med5": 0.0035,
+     "co_roic_latest": 0.0021,
+     "co_roic_worst5": -0.0104,
+     "co_fcf_conv_5y": -0.0246,
+     "co_score": -0.0158,
+     "co_fcf_all_pos": -0.0261
+    },
+    "reading": "**ROIC も FCF転換も営業利益率も、続く社と続かない社を分けていない**（AUCの持ち上がりは最大でも 0.02・符号が負のものもある）。分けたのは規模だけで、それも 0.099"
+   },
+   "past_performance_is_not_a_predictor": {
+    "B1(2013)": {
+     "n": 941,
+     "base_P_post": 0.3762,
+     "P_post_given_pre10": {
+      "k": 206,
+      "n": 482,
+      "p": 0.4274
+     },
+     "P_post_given_not_pre10": {
+      "k": 148,
+      "n": 459,
+      "p": 0.3224
+     },
+     "lift_of_past_performance": 0.0512,
+     "note": "前半のリターンは**結果の一部**であって入口の指標ではない＝対照（合否に数えない）"
+    },
+    "B2": {
+     "2016": {
+      "n": 946,
+      "base_P_post": 0.3446,
+      "P_post_given_pre10": {
+       "k": 193,
+       "n": 545,
+       "p": 0.3541
+      },
+      "P_post_given_not_pre10": {
+       "k": 133,
+       "n": 401,
+       "p": 0.3317
+      },
+      "lift_of_past_performance": 0.0095,
+      "note": "前半のリターンは**結果の一部**であって入口の指標ではない＝対照（合否に数えない）"
+     },
+     "2017": {
+      "n": 951,
+      "base_P_post": 0.3712,
+      "P_post_given_pre10": {
+       "k": 170,
+       "n": 469,
+       "p": 0.3625
+      },
+      "P_post_given_not_pre10": {
+       "k": 183,
+       "n": 482,
+       "p": 0.3797
+      },
+      "lift_of_past_performance": -0.0087,
+      "note": "前半のリターンは**結果の一部**であって入口の指標ではない＝対照（合否に数えない）"
+     },
+     "2018": {
+      "n": 952,
+      "base_P_post": 0.417,
+      "P_post_given_pre10": {
+       "k": 152,
+       "n": 372,
+       "p": 0.4086
+      },
+      "P_post_given_not_pre10": {
+       "k": 245,
+       "n": 580,
+       "p": 0.4224
+      },
+      "lift_of_past_performance": -0.0084,
+      "note": "前半のリターンは**結果の一部**であって入口の指標ではない＝対照（合否に数えない）"
+     }
+    },
+    "reading": "前半のリターンが後半を当てる度合いは B1 で +0.051、**厳密設計 B2 では +0.010／−0.009／−0.008 とほぼゼロか負**。『前半で出せた社は後半も出す』は成り立っていない（前半のリターンは入口の指標ではなく結果の一部なので合否には数えない対照）"
+   },
+   "existing_gates_do_not_predict_persistence": {
+    "B1(2013) y_persist_全母集団": {
+     "n_blocked": 617,
+     "n_pass": 324,
+     "P_persist_blocked": 0.1945,
+     "P_persist_pass": 0.2654,
+     "lift_of_gate": 0.0465
+    },
+    "B2 y_persist_全母集団": {
+     "2016": {
+      "n_blocked": 672,
+      "n_pass": 274,
+      "P_persist_blocked": 0.2128,
+      "P_persist_pass": 0.1825,
+      "lift_of_gate": -0.0215
+     },
+     "2017": {
+      "n_blocked": 666,
+      "n_pass": 285,
+      "P_persist_blocked": 0.1682,
+      "P_persist_pass": 0.2035,
+      "lift_of_gate": 0.0247
+     },
+     "2018": {
+      "n_blocked": 670,
+      "n_pass": 282,
+      "P_persist_blocked": 0.1478,
+      "P_persist_pass": 0.1879,
+      "lift_of_gate": 0.0283
+     }
+    },
+    "reading": "質実証・事業の収縮・薄い財務のいずれで切っても持続の lift は −0.022〜+0.047。**門が既に持つ関門も持続を予言していない**"
+   },
+   "control_irr_not_a_candidate": {
+    "note": "prereg.candidates は irr/moat5/dom を対照専用と明記。候補ではない",
+    "B1(2013)": {
+     "n_with_irr": 246,
+     "n_core": 143,
+     "by_irr": {
+      "irr<=50": {
+       "n": 185,
+       "P_persist": 0.1946,
+       "n_core": 96,
+       "P_後半10%+_given_前半10%+": 0.375
+      },
+      "irr=70(2018の読解では75)": {
+       "n": 51,
+       "P_persist": 0.4706,
+       "n_core": 41,
+       "P_後半10%+_given_前半10%+": 0.5854
+      },
+      "irr=85": {
+       "n": 6,
+       "P_persist": 0.6667,
+       "n_core": 5,
+       "P_後半10%+_given_前半10%+": 0.8
+      },
+      "irr=100": {
+       "n": 4,
+       "P_persist": 0.0,
+       "n_core": 1,
+       "P_後半10%+_given_前半10%+": 0.0
+      }
+     },
+     "base": {
+      "P_persist": 0.2602,
+      "P_後半_given_前半": 0.4476
+     }
+    },
+    "B2(2018)": {
+     "n_with_irr": 136,
+     "n_core": 71,
+     "by_irr": {
+      "irr<=50": {
+       "n": 73,
+       "P_persist": 0.2055,
+       "n_core": 32,
+       "P_後半10%+_given_前半10%+": 0.4688
+      },
+      "irr=70(2018の読解では75)": {
+       "n": 42,
+       "P_persist": 0.1429,
+       "n_core": 24,
+       "P_後半10%+_given_前半10%+": 0.25
+      },
+      "irr=85": {
+       "n": 21,
+       "P_persist": 0.4762,
+       "n_core": 15,
+       "P_後半10%+_given_前半10%+": 0.6667
+      }
+     },
+     "base": {
+      "P_persist": 0.2279,
+      "P_後半_given_前半": 0.4366
+     }
+    },
+    "verifier": {
+     "tool": "night/hist10_verify_irr70_persist.py",
+     "irr=70": "不合格",
+     "decisive": "検問2（ビンテージ）。測れる4設計のうち 0.15 を超えるのは入口2013だけで、2018 では符号が反転（lift -0.0851）し、2015 は割り方を2通り試してもどちらも届かない（0.115 / 0.0659）。**同じ4設計で irr=85 は一度も符号を落とさない**ので、壊れているのは設計ではなく『70という刻み』のほう"
+    }
+   },
+   "structural_limits": {
+    "down_direction_for_y_persist": {
+     "per_cell": {
+      "B1": {
+       "2013/P_full/y_persist": false,
+       "2013/P_quality/y_persist": false,
+       "2013/P_moat/y_persist": false
+      },
+      "B2": {
+       "2016/P_full/y_persist": false,
+       "2016/P_quality/y_persist": false,
+       "2017/P_full/y_persist": false,
+       "2017/P_quality/y_persist": false,
+       "2018/P_full/y_persist": false,
+       "2018/P_quality/y_persist": false,
+       "2018/P_moat/y_persist": false
+      }
+     },
+     "finding": "**y_persist では『減らす向き』が全セルで到達不能**",
+     "why": "事前登録が 10% を選んだ理由は『基準率が0.38〜0.43へ倍増するので減らす向きも絶対差liftで測れる』。ところが y_persist の基準率は **0.16〜0.27** へ戻る（両方の窓を要求するので事象が減る）。群の分子>=20 と lift<=-0.15 が同時に成立しない＝v1/v2 と同じ構造的限界がここで再来する",
+     "what_survives": "**条件付き（母集団=前半10%+ / 目的=後半も10%+）だけは基準率 0.31〜0.44 なので両方向が測れる**。核心の問いをこの形で立てたのは結果的に正しかった"
+    },
+    "P_moat_undetermined": {
+     "finding": "P_moat（irr>=70）は B1 で群15社・B2/2018 で群15社＝**分子>=20 に構造的に届かない**。2016/2017 は読解が存在せず母集団が空",
+     "reading": "P_moat のセルは『不合格』ではなく**判定不能**。ここを不合格として数えてはいけない"
+    },
+    "B2_sign_gate_is_not_three_independent_tests": {
+     "def": "B2 の3つの入口の**後半**が暦の上でどれだけ重なるか",
+     "second_halves": {
+      "2016": [
+       "2021-07",
+       "2026-08"
+      ],
+      "2017": [
+       "2022-01",
+       "2026-08"
+      ],
+      "2018": [
+       "2022-07",
+       "2026-08"
+      ]
+     },
+     "shared_months": "2022-07 → 2026-08 は3つとも共通（2016は2021-07から・2017は2022-01から）",
+     "why_it_matters": "事前登録の符号不変ゲート（2016/2017/2018 すべて）は本来『別のレジームでも立つか』を見る道具だが、B2 では**後半が実質同じ期間**なので**3つの独立した検証ではない**。前半だけが別の期間になっている"
+    },
+    "look_ahead": {
+     "B1": "co_* は約94%が look-ahead を含む（cohort の特徴量は filed で切っていない）",
+     "B2": "f2_* は filed<=asof で厳密。**この設計に look-ahead は無い**"
+    }
+   }
+  },
+  "C_分解": {
+   "question": "総リターンを当てる変数と、事業の複利を当てる変数は違ったか",
+   "answer": "**違う。ほとんど関係がない。** 変数の順位の Spearman は 0.336 / −0.104 / 0.108（C_all の 2013/2015/2018）で、符号が反転する変数が 6〜14本ある",
+   "rank_correlation": {
+    "C_all|2013": 0.3364,
+    "C_all|2015": -0.1043,
+    "C_all|2018": 0.1076,
+    "C_moat|2013": null,
+    "C_moat|2015": 0.1605,
+    "C_moat|2018": 0.2649
+   },
+   "targets_themselves_differ_phi": {
+    "2013": 0.2262,
+    "2015": 0.354,
+    "2018": 0.4283
+   },
+   "biz_vs_mult_is_negative": {
+    "2013": -0.9607,
+    "2015": -0.8822,
+    "reading": "**事業に効く変数はたいてい倍率には逆に効く**＝総リターンの上では相殺される。だから『総リターンで効かない』は『事業で効かない』を意味しない",
+    "src": "out/hist10_angleC.json ★(b)…ranking_agreement[C_all|20xx].spearman_of_variable_rankings"
+   },
+   "median_company": {
+    "median_annual_pct_by_vintage": {
+     "2013": {
+      "mult": 2.41,
+      "biz": 7.58,
+      "tr": 10.7
+     },
+     "2015": {
+      "mult": 0.71,
+      "biz": 7.91,
+      "tr": 9.75
+     },
+     "2018": {
+      "mult": 0.19,
+      "biz": 8.29,
+      "tr": 8.76
+     }
+    },
+    "reading": "8〜13年の窓で、中央値の会社の総リターンはほぼ全部が事業側から来ている（倍率は +0.19〜+2.41%/年）。**20-30年の複利に効くのは事業側**という門の前提を、分解が直接支持している"
+   },
+   "most_dangerous_type": {
+    "def": "|ρ(var, tr)| >= 2SE かつ |ρ(var, biz)| >= 2SE かつ **符号が逆**＝総リターンでは効いて見えるのに、事業の複利では逆を向く。20-30年の複利を狙う門にとって最も危険な型",
+    "rows": [
+     {
+      "variable": "f2_accr",
+      "population": "C_all",
+      "vintage": 2018,
+      "n": 271,
+      "rho_tr": 0.1528,
+      "rho_biz": -0.1826,
+      "rho_mult": 0.3181,
+      "partial_biz_given_pe_in": 0.0279
+     }
+    ],
+    "caveat": "この型は入口PERの分母の平均回帰で機械的に作れる（発生高が高い→当期利益が膨らむ→入口PERが低く見える→その後 利益が戻る）。**入口PERを統制して残るかを必ず見ること**"
+   },
+   "the_confound_eats_most_of_it": {
+    "n_survive": 11,
+    "n_tested": 117,
+    "non_valuation_survivors": [
+     {
+      "variable": "co_fcf_conv_5y",
+      "population": "C_all",
+      "by_vintage": {
+       "2013": {
+        "n": 92,
+        "raw": 0.3558,
+        "partial": 0.2554,
+        "survives": true,
+        "survived_not_appeared": true
+       },
+       "2015": {
+        "n": 318,
+        "raw": 0.1905,
+        "partial": 0.1323,
+        "survives": true,
+        "survived_not_appeared": true
+       }
+      },
+      "n_survive": 2,
+      "control_is_near_tautological": false,
+      "n_vintages": 2,
+      "partial_sign_stable": true,
+      "min_abs_partial": 0.1323
+     },
+     {
+      "variable": "f2_cash_r",
+      "population": "C_all",
+      "by_vintage": {
+       "2018": {
+        "n": 269,
+        "raw": 0.2373,
+        "partial": 0.1408,
+        "survives": true,
+        "survived_not_appeared": true
+       }
+      },
+      "n_survive": 1,
+      "control_is_near_tautological": false,
+      "n_vintages": 1,
+      "partial_sign_stable": null,
+      "min_abs_partial": 0.1408
+     },
+     {
+      "variable": "f2_accel",
+      "population": "C_all",
+      "by_vintage": {
+       "2018": {
+        "n": 275,
+        "raw": 0.2146,
+        "partial": 0.1275,
+        "survives": true,
+        "survived_not_appeared": true
+       }
+      },
+      "n_survive": 1,
+      "control_is_near_tautological": false,
+      "n_vintages": 1,
+      "partial_sign_stable": null,
+      "min_abs_partial": 0.1275
+     }
+    ],
+    "only_two_vintage_survivor": "co_fcf_conv_5y（FCF転換率）だけが2ビンテージで符号を保って残る",
+    "caveat": "co_* は 2013/2015 のコホート特徴量で**約94%の行が look-ahead を含む**"
+   },
+   "entry_PER_control": {
+    "why": "pe = 株価÷利益 なので、**入口の利益が一時的に凹んでいる社は自動的に高PERに見え**、その後 利益が戻れば事業の寄与が高く倍率の寄与が低く出る。入口PERと相関する変数は**何であれ**この鏡像を相続する。実測: 入口PER→事業 +0.34〜+0.48 / →倍率 −0.43〜−0.60（5セル全部で同符号）。**入口PERを統制しても残る事業の予言だけが、分母の平均回帰ではない**",
+    "n_survive_2se": 11,
+    "n_tested": 117,
+    "only_two_vintage_survivor": "co_fcf_conv_5y（FCF転換率）だけが2ビンテージで符号を保って残る"
+   },
+   "verifier_on_the_strongest_C_candidate": {
+    "tool": "night/hist10_verify_hvpe_ybiz.py",
+    "result": "判定不能を含み合格とは言えない",
+    "one_line": "6検問のうち 落ちた=0 判定不能=2 → **6検問では落とせなかった**（ただし2件は到達不能で判定不能＝認定もできない）",
+    "why_no_practical_value": "群は事業を年 +9.7pt 速く複利したが、倍率が年 −8.2pt 縮んで **総リターンの差は年 +0.9pt**。『事業の複利を予言した』は、恒等式の中では『倍率の縮小を予言した』と**同じ一つの事実**。倍率の平均回帰はこの台帳が既に測って記録している（入口PER 群44.2 vs 群外21.3 → 出口PER 28.4 vs 23.6 で収束）",
+    "cancellation": {
+     "Δ事業": 0.0967,
+     "Δ倍率": -0.0815,
+     "Δ分配": -0.0052,
+     "Δ残差": -0.0009,
+     "Δ総": 0.0091,
+     "相殺率": 0.8428,
+     "加法誤差": 0.0
+    }
+   },
+   "structural_limits": {
+    "1_decomposition_missing_2016_2017": {
+     "available": [
+      2013,
+      2015,
+      2018
+     ],
+     "required_by_prereg": [
+      2016,
+      2017,
+      2018
+     ],
+     "consequence": "prereg の sign_stability を当てられる候補は **0/46**",
+     "what_it_would_take": "2016/2017 の hist_val_{V}.json（自己相対の在庫）を作ること。SEC companyfacts と月次株価の再採取が要る＝この作業の範囲外"
+    },
+    "2_feature_and_decomposition_coverage_are_orthogonal": {
+     "f2_*(厳密filed<=asof)": "2016/2017/2018 のみ → 分解と重なるのは **2018 だけ**",
+     "co_*(コホート)": "2013/2015 のみ → 分解と重なるのは **2013/2015 だけ**",
+     "pa_*(値動き)": "2018 のみ",
+     "hv_*/per/size_rev": "3ビンテージ全部",
+     "n_candidates_measurable_in_all3_decomp_vintages": 8,
+     "which": [
+      "hv_pe_pct",
+      "hv_ps_pct",
+      "hv_pfcf_pct",
+      "hv_adj_pe_pct",
+      "hv_pe_z",
+      "hv_ps_z",
+      "per",
+      "size_rev"
+     ],
+     "consequence": "緩和版ゲートですら当てられるのは自己相対分位の族と per と規模だけ。**財務の変数は角度Cでは一度も3ビンテージで検定できない**"
+    },
+    "3_population_is_a_quality_subset": {
+     "pool_def": "質実証プール（opm>=10% ∧ 直近5年FCF全年黒字…在庫 hist_val_{V}.json の quality） ∧ analysis_set ∧ 入口 pe_pct あり ∧ **両端で PER が作れる**",
+     "note": "角度Cに『P_full』は無い。母集団を C_all / C_moat と呼ぶのはそのため"
+    },
+    "4_left_tail_is_removed_by_construction": {
+     "note": "出口の純利益が正でない社は PER が定義できず分解できない＝**落ちている**。落ちた社は残った社より実現年率が低い。**0で埋めていない（ルール7）**",
+     "by_vintage": {
+      "2013": {
+       "n": 11,
+       "reasons": {
+        "出口の純利益が正でない（PERが定義できない＝赤字転落）": 9,
+        "出口の発行済株数が取れない（時価総額が作れない）": 2
+       },
+       "kept_tr_cagr_median": 0.107,
+       "dropped_tr_cagr_median": 0.0127,
+       "gap": 0.0943,
+       "reading": "**落ちた社は残った社より実現年率が低い＝左裾が構造的に抜けている。**落ちた社を0で埋めていない（ルール7）——除外している。ゆえに角度Cが測るのは『profitable なまま生き残った社の中で事業が10%+複利したか』",
+       "dropped_n_with_tr": 11,
+       "dropped_P_y10": 0.0909,
+       "kept_P_y10": 0.5652
+      },
+      "2015": {
+       "n": 48,
+       "reasons": {
+        "出口の純利益が正でない（PERが定義できない＝赤字転落）": 44,
+        "出口の発行済株数が取れない（時価総額が作れない）": 4
+       },
+       "kept_tr_cagr_median": 0.0975,
+       "dropped_tr_cagr_median": -0.0226,
+       "gap": 0.1201,
+       "reading": "**落ちた社は残った社より実現年率が低い＝左裾が構造的に抜けている。**落ちた社を0で埋めていない（ルール7）——除外している。ゆえに角度Cが測るのは『profitable なまま生き残った社の中で事業が10%+複利したか』",
+       "dropped_n_with_tr": 40,
+       "dropped_P_y10": 0.0,
+       "kept_P_y10": 0.4938
+      },
+      "2018": {
+       "n": 43,
+       "reasons": {
+        "出口の純利益が正でない（PERが定義できない＝赤字転落）": 39,
+        "出口の発行済株数が取れない（時価総額が作れない）": 4
+       },
+       "kept_tr_cagr_median": 0.0876,
+       "dropped_tr_cagr_median": -0.0486,
+       "gap": 0.1362,
+       "reading": "**落ちた社は残った社より実現年率が低い＝左裾が構造的に抜けている。**落ちた社を0で埋めていない（ルール7）——除外している。ゆえに角度Cが測るのは『profitable なまま生き残った社の中で事業が10%+複利したか』",
+       "dropped_n_with_tr": 40,
+       "dropped_P_y10": 0.05,
+       "kept_P_y10": 0.4529
+      }
+     }
+    },
+    "5_size_rev_source_differs_by_vintage": {
+     "by_vintage": {
+      "2013": {
+       "co_rev_asof": 92
+      },
+      "2015": {
+       "co_rev_asof": 320
+      },
+      "2018": {
+       "f2_rev": 276
+      }
+     },
+     "note": "2013/2015 は co_rev_asof（コホート在庫・**約94%の行が look-ahead を含む**）、2018 は f2_rev（厳密 filed<=asof）。**同じ列名だが出所が違う**ので、3ビンテージにまたがる size_rev の結論は割り引くこと"
+    }
+   }
+  },
+  "D_加法スコア": {
+   "question": "弱い信号を数えると効くか。効くならそれは関数形の発見であって変数の発見ではない",
+   "answer": "**事前登録の線では効かない。** 探索側は1件を合格としたが、事前登録 pass_line.for_D_and_E が『外側foldの性能のみを合否に使う』と定めており、その外側fold を当てると 0.130/0.137/0.140 で線 0.15 を割り、**帰無の p95（0.148〜0.153）も下回る（p=0.06〜0.07）**",
+   "premise_check": {
+    "def": "依頼文の前提『個々では lift 0.15 に届かない弱い信号』が、この母集団・この二値化で本当に成り立っているかを先に確かめる。**加法スコアはこの土台を超えて初めて意味がある**",
+    "cov90_14/P_full/median": {
+     "n_candidates": 13,
+     "max_min_abs_lift_3v": 0.0681,
+     "n_reaching_line": 0
+    },
+    "reading": "『個々では 0.15 に届かない』という依頼文の前提は実測で正しい（最良でも 0.068）"
+   },
+   "is_it_a_function_form_or_a_variable": {
+    "score_vs_single_variable": {
+     "2016": [
+      {
+       "col": "f2_rev",
+       "side": "hi",
+       "n_single": 74,
+       "lift_single": 0.152,
+       "jaccard_with_group": 0.5
+      },
+      {
+       "col": "f2_rnd_r",
+       "side": "hi",
+       "n_single": 74,
+       "lift_single": 0.1385,
+       "jaccard_with_group": 0.303
+      },
+      {
+       "col": "f2_cagr5",
+       "side": "lo",
+       "n_single": 74,
+       "lift_single": 0.098,
+       "jaccard_with_group": 0.5
+      }
+     ],
+     "2017": [
+      {
+       "col": "f2_rev",
+       "side": "hi",
+       "n_single": 74,
+       "lift_single": 0.1067,
+       "jaccard_with_group": 0.5542
+      },
+      {
+       "col": "f2_rnd_r",
+       "side": "hi",
+       "n_single": 74,
+       "lift_single": 0.1337,
+       "jaccard_with_group": 0.2524
+      },
+      {
+       "col": "f2_cagr5",
+       "side": "lo",
+       "n_single": 75,
+       "lift_single": 0.033,
+       "jaccard_with_group": 0.4773
+      }
+     ],
+     "2018": [
+      {
+       "col": "f2_rev",
+       "side": "hi",
+       "n_single": 78,
+       "lift_single": 0.1448,
+       "jaccard_with_group": 0.5412
+      },
+      {
+       "col": "f2_rnd_r",
+       "side": "hi",
+       "n_single": 78,
+       "lift_single": 0.1192,
+       "jaccard_with_group": 0.2596
+      },
+      {
+       "col": "f2_cagr5",
+       "side": "lo",
+       "n_single": 78,
+       "lift_single": 0.0038,
+       "jaccard_with_group": 0.4239
+      }
+     ]
+    },
+    "what_is_the_score_a_proxy_for": {
+     "cov90_14/P_full/2018": {
+      "size_rev": {
+       "n": 766,
+       "spearman": 0.2666
+      },
+      "f2_opm": {
+       "n": 766,
+       "spearman": 0.4117
+      },
+      "f2_cagr5": {
+       "n": 766,
+       "spearman": 0.378
+      },
+      "irr": {
+       "n": 121,
+       "spearman": 0.0303
+      }
+     },
+     "cov90_14/P_quality/2018": {
+      "size_rev": {
+       "n": 310,
+       "spearman": 0.2919
+      },
+      "f2_opm": {
+       "n": 310,
+       "spearman": 0.0308
+      },
+      "f2_cagr5": {
+       "n": 310,
+       "spearman": -0.2872
+      },
+      "irr": {
+       "n": 113,
+       "spearman": 0.2406
+      }
+     },
+     "all20/P_full/2018": {
+      "size_rev": {
+       "n": 249,
+       "spearman": 0.2415
+      },
+      "f2_opm": {
+       "n": 249,
+       "spearman": 0.0749
+      },
+      "f2_cagr5": {
+       "n": 249,
+       "spearman": -0.3569
+      },
+      "irr": {
+       "n": 34,
+       "spearman": 0.0263
+      }
+     },
+     "all20/P_quality/2018": {
+      "size_rev": {
+       "n": 114,
+       "spearman": 0.2295
+      },
+      "f2_opm": {
+       "n": 114,
+       "spearman": 0.3057
+      },
+      "f2_cagr5": {
+       "n": 114,
+       "spearman": 0.2892
+      },
+      "irr": {
+       "n": 32,
+       "spearman": 0.2292
+      }
+     }
+    },
+    "sibling_verifier_found": {
+     "members_2018_sample": [
+      "MSFT",
+      "INTC",
+      "CSCO",
+      "ORCL",
+      "TXN",
+      "QCOM",
+      "AMGN",
+      "GILD",
+      "BIIB",
+      "PG",
+      "KO",
+      "PEP",
+      "MCD",
+      "MMM",
+      "ITW"
+     ],
+     "share_of_group_in_top_size_quartile": {
+      "2016": 0.7818,
+      "2017": 0.8364,
+      "2018": 0.8679
+     },
+     "lift_within_top_size_quartile": {
+      "2016": 0.0933,
+      "2017": 0.1034,
+      "2018": 0.0792
+     },
+     "read": "群の 78〜87% が売上上位1/4。**その層の中では lift 0.079〜0.103＝事前登録の線 0.15 を割る**"
+    },
+    "reading": "スコアの群の 78〜87% が売上上位1/4で、**その層の中では lift 0.079〜0.103＝線を割る**。関数形（数を数えること）ではなく規模の粗い測り方だった疑いが強い"
+   },
+   "where_it_stops_working": {
+    "lift_by_hurdle": {
+     "2016": {
+      "0.00": 0.0577,
+      "0.05": 0.1521,
+      "0.08": 0.2057,
+      "0.10": 0.2073,
+      "0.12": 0.1053,
+      "0.15": 0.0882,
+      "0.20": 0.0475
+     },
+     "2017": {
+      "0.00": 0.0693,
+      "0.05": 0.1932,
+      "0.08": 0.1926,
+      "0.10": 0.1978,
+      "0.12": 0.1177,
+      "0.15": 0.0444,
+      "0.20": -0.0028
+     },
+     "2018": {
+      "0.00": 0.0942,
+      "0.05": 0.1234,
+      "0.08": 0.1641,
+      "0.10": 0.1973,
+      "0.12": 0.1275,
+      "0.15": 0.0512,
+      "0.20": 0.038
+     }
+    },
+    "read": "事前登録の 10% で最大。12% で 0.105〜0.128、**15% で 0.044〜0.088**、20% でほぼ 0。実体は『中央値 CAGR が約 +4.4pt 高い』という水準のずれで、**門が狙う 15〜18% の帯には何の識別力も無い**"
+   },
+   "fpr": {
+    "diag(結果の前に固定)": {
+     "cov90_14": {
+      "n_2018": 766,
+      "n_2018_quality": 310,
+      "false_positive_rate": 0.1935,
+      "expected_false_passes_per_run": 0.2925,
+      "max_observed": 5,
+      "real_data_pass_count": 2
+     },
+     "all20": {
+      "n_2018": 249,
+      "n_2018_quality": 114,
+      "false_positive_rate": 0.377,
+      "expected_false_passes_per_run": 0.7865,
+      "max_observed": 10,
+      "real_data_pass_count": 1
+     }
+    },
+    "angleD(自前・探索空間を広げた分の値札)": 0.741,
+    "verifier_on_that_number": {
+     "tool": "night/hist10_verify_fpr.py",
+     "headline": "**不合格（検問6）**。数字 0.741 は再現した（5種の独立な種で 0.7389±0.0059）が、それは**梯子の一段目 gate1 の値札**であって事前登録の全条件の値札ではない。全ゲートの帰無FPRは **0.032**＝候補の23分の1。実測の『合格1件』は p≈0.0325 であって『雑音の期待とほぼ同じ』ではない"
+    }
+   }
+  },
+  "A_10%の線そのもの": {
+   "question": "10%にすると何が変わったか",
+   "answer": "**到達可能性だけが変わり、検出力はむしろ下がった。**下向き（10%+を減らす向き）は 15% の 7/65 から 42/65 へ増えたが、δ=0.20 の検出力は 0.9746→0.9668、δ=0.10 の誤合格は 0.0239→0.0364",
+   "new_at_10": [
+    {
+     "key": "f2_intcov|P_quality|下位1/4",
+     "direction_10": "減らす",
+     "maintained_lift_10": 0.1541,
+     "maintained_lift_15": 0.077,
+     "verdict_10": "不合格",
+     "gate_failed_10": "min_numerator"
+    },
+    {
+     "key": "f2_netiss_r|P_quality|上位1/4",
+     "direction_10": "減らす",
+     "maintained_lift_10": 0.151,
+     "maintained_lift_15": 0.0571,
+     "verdict_10": "不合格",
+     "gate_failed_10": "sector_control"
+    }
+   ],
+   "lost_at_10": []
+  }
+ },
+ "★limits": {
+  "out_of_sample_is_zero": {
+   "fact": "2013/2015/2016/2017/2018 は**同じ956ティッカー**（Jaccard=1.00・返り値ρ0.845〜0.967）＝out-of-sample は無い",
+   "meaning": "2013/2015/2016/2017/2018 は同じ956ティッカー。『3ビンテージで維持』は独立な3証拠ではなく、同じ会社の別の入口。しかも後半の窓は3つとも 2026-08 で終わる"
+  },
+  "look_ahead": {
+   "f2_*": "filed<=asof で厳密・違反0",
+   "co_*": "cohort(2013/2015)の特徴量は**約94%が look-ahead を含む**（features2 は違反0）",
+   "affected_angles": "B1（持続の本命設計）と C の 2013/2015 が co_* に載っている"
+  },
+  "ai_regime": {
+   "fact": "2018窓はAI相場。前期/後期で分けて必ず出す",
+   "measured": {
+    "2016": {
+     "y10": {
+      "n_def": 296,
+      "n_group": 55,
+      "k": 35,
+      "p_group": 0.6364,
+      "base": 0.4291,
+      "lift": 0.2073
+     },
+     "y_pre": {
+      "n_def": 296,
+      "n_group": 55,
+      "k": 37,
+      "p_group": 0.6727,
+      "base": 0.6149,
+      "lift": 0.0579
+     },
+     "y_post": {
+      "n_def": 296,
+      "n_group": 55,
+      "k": 26,
+      "p_group": 0.4727,
+      "base": 0.3041,
+      "lift": 0.1687
+     },
+     "y_persist_half": {
+      "n_def": 296,
+      "n_group": 55,
+      "k": 18,
+      "p_group": 0.3273,
+      "base": 0.1791,
+      "lift": 0.1482
+     }
+    },
+    "2017": {
+     "y10": {
+      "n_def": 295,
+      "n_group": 55,
+      "k": 34,
+      "p_group": 0.6182,
+      "base": 0.4203,
+      "lift": 0.1978
+     },
+     "y_pre": {
+      "n_def": 295,
+      "n_group": 55,
+      "k": 32,
+      "p_group": 0.5818,
+      "base": 0.5492,
+      "lift": 0.0327
+     },
+     "y_post": {
+      "n_def": 295,
+      "n_group": 55,
+      "k": 29,
+      "p_group": 0.5273,
+      "base": 0.3424,
+      "lift": 0.1849
+     },
+     "y_persist_half": {
+      "n_def": 295,
+      "n_group": 55,
+      "k": 17,
+      "p_group": 0.3091,
+      "base": 0.1966,
+      "lift": 0.1125
+     }
+    },
+    "2018": {
+     "y10": {
+      "n_def": 310,
+      "n_group": 53,
+      "k": 32,
+      "p_group": 0.6038,
+      "base": 0.4065,
+      "lift": 0.1973
+     },
+     "y_pre": {
+      "n_def": 310,
+      "n_group": 53,
+      "k": 27,
+      "p_group": 0.5094,
+      "base": 0.4194,
+      "lift": 0.0901
+     },
+     "y_post": {
+      "n_def": 310,
+      "n_group": 53,
+      "k": 26,
+      "p_group": 0.4906,
+      "base": 0.4129,
+      "lift": 0.0777
+     },
+     "y_persist_half": {
+      "n_def": 310,
+      "n_group": 53,
+      "k": 14,
+      "p_group": 0.2642,
+      "base": 0.1839,
+      "lift": 0.0803
+     }
+    }
+   },
+   "reading": "角度D の合格候補は 2016入口で 前半 lift +0.058／後半 +0.169、2018入口では 前半 +0.090／後半 +0.078。**効果は後半（AI期）に厚い**"
+  },
+  "survivorship": {
+   "fact": "生存バイアス: 母集団は今日ティッカーが解決できる社のみ",
+   "angleC_extra": "角度Cはさらに『出口で赤字の社は PER が作れず分解できない』ので左裾が構造的に抜ける。落ちた社の実現年率の中央値は残った社より 9.4〜13.6pt 低い"
+  },
+  "power": {
+   "at_registered_line": "δ=0.15 ちょうどの効果は約半分しか掴めない（0.4978〜0.5051）。これは設計の欠陥ではなく構造（真の効果が線と等しければ標本分布は線の上下に割れる）",
+   "angleB": {
+    "B1/P_full": 0.5102,
+    "B2/P_full": 0.1352
+   },
+   "angleD": {
+    "cov90_14/P_full": {
+     "group_sizes_3v": [
+      324,
+      311,
+      320
+     ],
+     "n_3v": [
+      766,
+      757,
+      766
+     ],
+     "base_mean": 0.4028,
+     "power_by_delta": {
+      "up/0.10": 0.0,
+      "down/0.10": 0.0,
+      "up/0.15": 0.1236,
+      "down/0.15": 0.122,
+      "up/0.20": 0.98,
+      "down/0.20": 0.99
+     }
+    },
+    "cov90_14/P_quality": {
+     "group_sizes_3v": [
+      141,
+      145,
+      156
+     ],
+     "n_3v": [
+      296,
+      295,
+      310
+     ],
+     "base_mean": 0.4186,
+     "power_by_delta": {
+      "up/0.10": 0.0,
+      "down/0.10": 0.0002,
+      "up/0.15": 0.1248,
+      "down/0.15": 0.1332,
+      "up/0.20": 0.9128,
+      "down/0.20": 0.9044
+     }
+    },
+    "all20/P_full": {
+     "group_sizes_3v": [
+      131,
+      133,
+      141
+     ],
+     "n_3v": [
+      238,
+      240,
+      249
+     ],
+     "base_mean": 0.4514,
+     "power_by_delta": {
+      "up/0.10": 0.0002,
+      "down/0.10": 0.0,
+      "up/0.15": 0.1218,
+      "down/0.15": 0.1292,
+      "up/0.20": 0.9244,
+      "down/0.20": 0.9178
+     }
+    },
+    "all20/P_quality": {
+     "group_sizes_3v": [
+      53,
+      58,
+      50
+     ],
+     "n_3v": [
+      95,
+      109,
+      114
+     ],
+     "base_mean": 0.4611,
+     "power_by_delta": {
+      "up/0.10": 0.0036,
+      "down/0.10": 0.0,
+      "up/0.15": 0.135,
+      "down/0.15": 0.0,
+      "up/0.20": 0.672,
+      "down/0.20": 0.0
+     }
+    }
+   },
+   "angleE": "δ=0.25 の真の効果を仕込んでも業種ゲートまで通るのは 0.0%（木の形の群は層が薄い）",
+   "reading": "**合格ゼロは『効果が無い』の証明ではない**。言えるのは「δ=0.20 以上の一様な効果は無い」まで"
+  },
+  "false_positive_rate": {
+   "angle_A_single": {
+    "L1_discovery_only": 0.443,
+    "L3_all3_vintages": 0.1085,
+    "L3_up_only": 0.097,
+    "L3_down_only": 0.0125,
+    "L4_plus_sector_control": 0.0235
+   },
+   "angle_D": 0.482,
+   "angle_E_in_sample": 0.91,
+   "angle_E_nested_cv": {
+    "cov90_14": 0.034,
+    "all20": 0.0125
+   },
+   "union_across_angles": {
+    "why": "探索者は角度A・D・Eを**全部試す**。実際の家族単位の偽陽性率は和集合。角度ごとの数字だけを見ると、実際に払っている値札を過小に見積もる。",
+    "with_tree_in_sample": 0.932,
+    "with_tree_nested_cv": 0.51,
+    "components": "A は L4（業種調整まで）／D と E は業種調整なし＝**Dと E の側は上限**"
+   },
+   "reading": "3つの角度を全部試すと、in-sample の木を含めれば**帰無でも 93.2% の確率で1本は『合格』が出る**。外側fold に限れば 51.0%。**この値札の上で実データは0本だった**"
+  },
+  "fragility_of_the_10pct_line": {
+   "y10": {
+    "2013": {
+     "n": 956,
+     "within_1pt": 77,
+     "share": 0.0805
+    },
+    "2015": {
+     "n": 506,
+     "within_1pt": 47,
+     "share": 0.0929
+    },
+    "2016": {
+     "n": 956,
+     "within_1pt": 85,
+     "share": 0.0889
+    },
+    "2017": {
+     "n": 956,
+     "within_1pt": 75,
+     "share": 0.0785
+    },
+    "2018": {
+     "n": 956,
+     "within_1pt": 70,
+     "share": 0.0732
+    }
+   },
+   "y_persist": {
+    "2013": {
+     "n": 941,
+     "within_1pt": 138,
+     "share": 0.1467
+    }
+   },
+   "y_biz": {
+    "2013": {
+     "n": 92,
+     "within_1pt": 11,
+     "share": 0.1196
+    },
+    "2015": {
+     "n": 319,
+     "within_1pt": 37,
+     "share": 0.116
+    },
+    "2018": {
+     "n": 276,
+     "within_1pt": 18,
+     "share": 0.0652
+    }
+   },
+   "_note": "±1pt に入る社は、測り方（窓の端・丸め・分解の残差）だけで札が裏返りうる。独立検証②が示すとおり前半の復元には1ヶ月ぶんの不定性があり、実測で 10% の線をまたぐ食い違いは 4.25%（40/941）ある"
+  },
+  "what_cannot_be_said": [
+   "**解析検出力は上限**である。業種調整(Mantel-Haenszel)と irr層の関門を解析に入れていない（この2つは合格を減らすことしかしない）。",
+   "**3ビンテージは独立標本ではない**（同じ956ティッカー・返り値の相関が高い）。『3つで維持』を独立な3証拠と読んではいけない。偽陽性率がそれを実測で示す。",
+   "**刻み・スコアの本数・分割点は事前登録に書かれていない**。ここの偽陽性率は『5刻み×上下』『J=3/5/8/10/全』『q25/q50/q75』という仮定のもとの値。実際の探索がこれより広く試せば偽陽性率は上がる。",
+   "角度D・Eは **complete-case** でしか作れない（欠測を0と読まないため）。cov90_14 で約 0.8046、all20 で約 0.2616 しか残らず、残った側は規模が大きい方へ偏る（下の coverage_confound.complete_case_selection_for_D_and_E）。**この偏りは母集団を変えるので、単変量の結果と直接比べられない。**",
+   "y10 の下向きは『10%+を減らす指標』であって『恒久毀損を増やす指標』ではない。destroy(−15%) は base が 0.15 未満なので、**下向きは依然として到達不能**（0/65）＝守りの指標を絶対差 lift で測る限界は 10% にしても解けていない。",
+   "この道具は**合否を一つも出していない**。実データの数字は手続きが動くことの確認と置換分布に対する位置の把握のためだけに載せてある。"
+  ]
+ },
+ "crosschecks": {
+  "n": 9,
+  "n_fail": 0,
+  "rows": [
+   {
+    "check": "角度A の解析集合 vs targets の基準率(P_full∩window_full)",
+    "vintage": 2013,
+    "angleA": {
+     "n": 941,
+     "k": 392
+    },
+    "targets": {
+     "n": 941,
+     "k": 392
+    },
+    "match": true
+   },
+   {
+    "check": "角度A の解析集合 vs targets の基準率(P_full∩window_full)",
+    "vintage": 2015,
+    "angleA": {
+     "n": 503,
+     "k": 213
+    },
+    "targets": {
+     "n": 503,
+     "k": 213
+    },
+    "match": true
+   },
+   {
+    "check": "角度A の解析集合 vs targets の基準率(P_full∩window_full)",
+    "vintage": 2016,
+    "angleA": {
+     "n": 946,
+     "k": 405
+    },
+    "targets": {
+     "n": 946,
+     "k": 405
+    },
+    "match": true
+   },
+   {
+    "check": "角度A の解析集合 vs targets の基準率(P_full∩window_full)",
+    "vintage": 2017,
+    "angleA": {
+     "n": 951,
+     "k": 386
+    },
+    "targets": {
+     "n": 951,
+     "k": 386
+    },
+    "match": true
+   },
+   {
+    "check": "角度A の解析集合 vs targets の基準率(P_full∩window_full)",
+    "vintage": 2018,
+    "angleA": {
+     "n": 952,
+     "k": 358
+    },
+    "targets": {
+     "n": 952,
+     "k": 358
+    },
+    "match": true
+   },
+   {
+    "check": "診断の row_filter（has_outcome ∧ window_full の行数）",
+    "diag": "has_outcome かつ window_full。全 4293 行。",
+    "targets_sum_n_defined": 4293,
+    "note": "4293 は5ビンテージの合計。角度A/D/E はここから母集団を切り出す"
+   },
+   {
+    "check": "診断の加法スコア real_data_pass_count vs 角度D 変種P の gate1 通過",
+    "detail": {
+     "cov90_14": {
+      "n_pass_mine": 2,
+      "n_pass_diag": 2,
+      "hits_identical": true,
+      "diag_recorded_real_data_pass_count": 2
+     },
+     "all20": {
+      "n_pass_mine": 1,
+      "n_pass_diag": 1,
+      "hits_identical": true,
+      "diag_recorded_real_data_pass_count": 1
+     }
+    },
+    "match": true
+   },
+   {
+    "check": "角度D の合格1件 vs 反証器 hist10_verify_addscore3 の candidate",
+    "angleD": {
+     "pop": "P_quality",
+     "subset": "cov90_14",
+     "disc": 2016,
+     "binar": "quartile",
+     "J": 3,
+     "s": 2,
+     "mode": "ge"
+    },
+    "verifier": {
+     "pop": "P_quality",
+     "subset": "cov90_14",
+     "disc": 2016,
+     "binar": "quartile",
+     "J": 3,
+     "s": 2,
+     "mode": "ge"
+    },
+    "match": true
+   },
+   {
+    "check": "角度E で gate1 を通った外側fold群",
+    "cells": {
+     "P_full|cov90_14|down": {
+      "oof_lift": -0.19,
+      "oof_numerator_companies": 28,
+      "gate_failed_at": "sector_control"
+     },
+     "P_quality|cov90_14|up": {
+      "oof_lift": 0.2595,
+      "oof_numerator_companies": 20,
+      "gate_failed_at": "sector_control"
+     }
+    },
+    "n": 2,
+    "verifiers": {
+     "P_quality|cov90_14|up": "不合格",
+     "P_full|cov90_14|down": "不合格"
+    }
+   }
+  ],
+  "note": "この道具が唯一作る数字。在庫どうしが違うことを言っていないかだけを見る（v9.9.65）"
+ },
+ "not_touched": [
+  "index.html",
+  "out/*_gate_pack.json",
+  "台帳",
+  "採点式",
+  "刻み",
+  "重み",
+  "四関門",
+  "堀の関門",
+  "売却規律S1/S2/S3",
+  "配分"
+ ]
+}

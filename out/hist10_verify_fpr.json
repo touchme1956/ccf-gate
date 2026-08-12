@@ -1,0 +1,509 @@
+{
+ "generated": "2026-08-12",
+ "tool": "night/hist10_verify_fpr.py",
+ "prereg": "out/hist10_prereg.json（線はここにある。この道具は一つも作らない）",
+ "candidate": {
+  "angle": "D",
+  "variable": "手続き全体の偽陽性率（実際に探索した4変種＝発見年2016/2018 × 中央値/上下1/4、のべ1,176配置）",
+  "claimed_value": 0.741,
+  "claimed_n_perm": 2000,
+  "claimed_reading": "雑音でも74%の確率で gate1 合格が1件以上出る手続きなので、実測の『合格1件』は雑音の期待とほぼ同じ"
+ },
+ "independence": {
+  "imports": "hist10_diag.py も hist10_angleD.py も import していない",
+  "inputs": [
+   "out/hist_wd_panel.json",
+   "out/hist10_targets.json"
+  ],
+  "algorithm": "群の数え方が別（探索側=bit-plane 加算器／こちら=累積 ge マスク）",
+  "seed": "探索側 20260812 ／ こちら [20260812999, 777001, 424242, 31415926, 20260101]（MC誤差が独立に出る）"
+ },
+ "check1_reproduction": {
+  "n_configurations": {
+   "mine": 1176,
+   "claimed": 1176,
+   "match": true
+  },
+  "observed_gate1_by_cell": {
+   "P_disc2018_median|cov90_14": 2,
+   "P_disc2018_median|all20": 1,
+   "T_disc2016_median|cov90_14": 2,
+   "T_disc2016_median|all20": 4,
+   "P_disc2018_quartile|cov90_14": 1,
+   "P_disc2018_quartile|all20": 0,
+   "T_disc2016_quartile|cov90_14": 2,
+   "T_disc2016_quartile|all20": 1
+  },
+  "observed_gate1_by_cell_published": {
+   "P_disc2018_median": {
+    "cov90_14": 2,
+    "all20": 1
+   },
+   "T_disc2016_median": {
+    "cov90_14": 2,
+    "all20": 4
+   },
+   "P_disc2018_quartile": {
+    "cov90_14": 1,
+    "all20": 0
+   },
+   "T_disc2016_quartile": {
+    "cov90_14": 2,
+    "all20": 1
+   }
+  },
+  "observed_gate1_total": 13,
+  "observed_allgates_total": 1,
+  "observed_verdicts": {
+   "不合格|sector_control": 11,
+   "判定不能|incremental(測定不能)": 1,
+   "合格|None": 1
+  },
+  "observed_verdicts_published": {
+   "不合格|sector_control": 11,
+   "判定不能|incremental(測定不能)": 1,
+   "合格|-": 1
+  },
+  "gate1_cell_mismatches": [],
+  "fpr_gate1_union_replicated": {
+   "per_seed": [
+    0.742,
+    0.736,
+    0.74,
+    0.746,
+    0.7305
+   ],
+   "mean": 0.7389,
+   "sd_across_seeds": 0.0059,
+   "claimed": 0.741,
+   "verdict": "再現した（5種 0.7389、公表 0.741）"
+  },
+  "crosscheck_claim_examined": {
+   "what_was_claimed": "事前診断 0.482 を angleD 実装で 0.453 と再現＝突合せ成立",
+   "diag_value": 0.482,
+   "angleD_value": 0.453,
+   "mine_per_seed": [
+    0.4465,
+    0.4435,
+    0.4655,
+    0.473,
+    0.461
+   ],
+   "mine_mean": 0.4579,
+   "mine_sd": 0.0126,
+   "mine_range": [
+    0.4435,
+    0.473
+   ],
+   "by_subset": {
+    "cov90_14": {
+     "diag": 0.1935,
+     "angleD": 0.1925,
+     "mine_mean": 0.1949,
+     "mine_range": [
+      0.1855,
+      0.2005
+     ]
+    },
+    "all20": {
+     "diag": 0.377,
+     "angleD": 0.351,
+     "mine_mean": 0.3541,
+     "mine_range": [
+      0.335,
+      0.3685
+     ]
+    }
+   },
+   "read": "診断の 0.482 は、同じ手続きを5回独立に回した値（0.4435〜0.473・平均 0.4579）の**外側**にある。MC誤差で説明できなくはない（単発なら z≈+2.2）が、『突合せ成立』は言いすぎ。食い違いは all20 に集中している（診断 0.377 vs 私 0.3541）"
+  },
+  "boundary_conventions_matched": {
+   "median_cut": "x >= 中央値 を hi",
+   "side_tiebreak": "median は lift>=0 で hi、quartile は大きい方の側",
+   "lift_line": "|lift| >= 0.15 で通過（< で落ちる）",
+   "min_num": "群>=20 かつ 事象>=20",
+   "note": "この4つを全部揃えて初めて観測の 13/1 と cell別 8箇所が一致した"
+  },
+  "pass": true
+ },
+ "check5_permutation": {
+  "scheme": "会社単位で全ビンテージ同時・sic2層内（探索側と同じ帰無）",
+  "perm_info": {
+   "n_common_tickers": 946,
+   "n_strata": 61,
+   "n_solo_by_vintage": {
+    "2016": 0,
+    "2017": 5,
+    "2018": 6
+   }
+  },
+  "n_perm_per_seed": 2000,
+  "n_seeds": 5,
+  "fpr_gate1_union": {
+   "per_seed": [
+    0.742,
+    0.736,
+    0.74,
+    0.746,
+    0.7305
+   ],
+   "mean": 0.7389,
+   "sd": 0.0059
+  },
+  "fpr_allgates": {
+   "per_seed": [
+    0.032,
+    0.0285,
+    0.034,
+    0.037,
+    0.0305
+   ],
+   "mean": 0.0324,
+   "sd": 0.0033
+  },
+  "expected_gate1_passes_per_run": [
+   3.1345,
+   3.0465,
+   3.073,
+   3.107,
+   3.1165
+  ],
+  "pass": true,
+  "read": "5種の独立な種で gate1 0.7389±0.0059／全ゲート 0.0324±0.0033＝MC誤差は小さい。**候補の数字そのものは安定している**"
+ },
+ "observed_vs_null": {
+  "n_perm_pooled": 10000,
+  "gate1_count": {
+   "observed": 13,
+   "null_mean": 3.0955,
+   "null_median": 2,
+   "null_p95": 11,
+   "null_max": 35,
+   "p_ge_observed": 0.0336
+  },
+  "allgates_count": {
+   "observed": 1,
+   "null_mean": 0.0375,
+   "null_p95": 0,
+   "null_max": 4,
+   "p_ge_observed": 0.0325
+  }
+ },
+ "check6_incremental": {
+  "question": "候補の 0.741 は、事前登録が要求する手続き全体の値札になっているか",
+  "ladder": {
+   "1": {
+    "gate": "gate1（lift/分子/符号）",
+    "null_fpr": 0.742,
+    "null_expected_passes": 3.1345,
+    "observed_passes": 13
+   },
+   "2": {
+    "gate": "＋業種調整",
+    "null_fpr": 0.1975,
+    "null_expected_passes": 0.3265,
+    "observed_passes": 2
+   },
+   "3": {
+    "gate": "＋irr層",
+    "null_fpr": 0.151,
+    "null_expected_passes": 0.2245,
+    "observed_passes": 2
+   },
+   "4": {
+    "gate": "＋増分＝事前登録の全条件",
+    "null_fpr": 0.032,
+    "null_expected_passes": 0.0375,
+    "observed_passes": 1
+   }
+  },
+  "diag_did_this_for_angleA": {
+   "L1_discovery_only": 0.443,
+   "L3_all3_vintages": 0.1085,
+   "L3_up_only": 0.097,
+   "L3_down_only": 0.0125,
+   "L4_plus_sector_control": 0.0235
+  },
+  "which_gate_does_the_work": {
+   "sector": "0.742 → 0.1975（3.8倍）",
+   "irr": "0.1975 → 0.151（ほとんど効かない）",
+   "incremental": "0.151 → 0.032（4.7倍）",
+   "null_rejection_counts": {
+    "不合格|sector_control": 5612,
+    "判定不能|not_irr_shadow": 200,
+    "判定不能|incremental(測定不能)": 340,
+    "合格|None": 75,
+    "不合格|incremental": 34,
+    "不合格|not_irr_shadow": 4,
+    "判定不能|sector_control(測定不能)": 4
+   }
+  },
+  "pass": false,
+  "read": "候補の 0.741 は**梯子の一段目 gate1 の値札**。事前登録は `all_required: すべて。1つでも欠ければ不合格` と書いており、実測の『合格1件』は**四段目**の数字である。四段目の帰無FPRは 0.032＝候補の 23分の1。したがって『実測の合格1件は雑音の期待とほぼ同じ』は成立しない"
+ },
+ "check2_vintage": {
+  "table": {
+   "2016のみ": {
+    "null_fpr_gate1": 1.0,
+    "null_expected": 25.8255,
+    "observed_gate1": 34
+   },
+   "2017のみ": {
+    "null_fpr_gate1": 0.9965,
+    "null_expected": 18.8095,
+    "observed_gate1": 38
+   },
+   "2018のみ": {
+    "null_fpr_gate1": 0.9995,
+    "null_expected": 23.576,
+    "observed_gate1": 62
+   },
+   "2016+2017": {
+    "null_fpr_gate1": 0.959,
+    "null_expected": 8.4125,
+    "observed_gate1": 17
+   },
+   "2016+2018": {
+    "null_fpr_gate1": 0.8875,
+    "null_expected": 5.271,
+    "observed_gate1": 18
+   },
+   "2017+2018": {
+    "null_fpr_gate1": 0.944,
+    "null_expected": 7.1745,
+    "observed_gate1": 23
+   },
+   "3ビンテージ（事前登録）": {
+    "null_fpr_gate1": 0.742,
+    "null_expected": 3.1345,
+    "observed_gate1": 13
+   }
+  },
+  "pass": true,
+  "read": "1ビンテージだけなら帰無FPRは約1.00。3ビンテージ要求は 0.742 までしか下げない＝**符号不変ゲートはほとんど守っていない**（同じ946ティッカーで Jaccard=1.00 だから）。候補の数字はどの年にも依存していない。**候補はこの検問を通る**"
+ },
+ "check3_sector": {
+  "stratification": {
+   "sic2層内（事前登録）": {
+    "gate1": 0.742,
+    "allgates": 0.032
+   },
+   "層化なし": {
+    "gate1": 0.2775,
+    "allgates": 0.0265
+   },
+   "read": "層化を外すと gate1 FPR は 0.742→0.2775 と**下がる**（層化は業種由来の雑音まで値札に入れる＝保守的）。全ゲートFPRは 0.032 vs 0.0265 でほぼ不変＝**四段目の数字は層化の選び方に依らない**"
+  },
+  "drop_one_sector": {
+   "73": {
+    "n_rows_2018": 99,
+    "null_fpr_gate1": 0.817,
+    "null_fpr_allgates": 0.043,
+    "observed_gate1": 10,
+    "observed_allgates": 0
+   },
+   "28": {
+    "n_rows_2018": 82,
+    "null_fpr_gate1": 0.675,
+    "null_fpr_allgates": 0.046,
+    "observed_gate1": 10,
+    "observed_allgates": 0
+   },
+   "36": {
+    "n_rows_2018": 73,
+    "null_fpr_gate1": 0.795,
+    "null_fpr_allgates": 0.022,
+    "observed_gate1": 4,
+    "observed_allgates": 0
+   },
+   "35": {
+    "n_rows_2018": 71,
+    "null_fpr_gate1": 0.777,
+    "null_fpr_allgates": 0.029,
+    "observed_gate1": 7,
+    "observed_allgates": 0
+   },
+   "38": {
+    "n_rows_2018": 63,
+    "null_fpr_gate1": 0.764,
+    "null_fpr_allgates": 0.029,
+    "observed_gate1": 4,
+    "observed_allgates": 2
+   },
+   "67": {
+    "n_rows_2018": 42,
+    "null_fpr_gate1": 0.755,
+    "null_fpr_allgates": 0.052,
+    "observed_gate1": 8,
+    "observed_allgates": 1
+   },
+   "49": {
+    "n_rows_2018": 40,
+    "null_fpr_gate1": 0.74,
+    "null_fpr_allgates": 0.044,
+    "observed_gate1": 11,
+    "observed_allgates": 0
+   },
+   "37": {
+    "n_rows_2018": 33,
+    "null_fpr_gate1": 0.764,
+    "null_fpr_allgates": 0.038,
+    "observed_gate1": 7,
+    "observed_allgates": 1
+   }
+  },
+  "pass": true,
+  "read": "上位8業種のどれを抜いても gate1 FPR は 0.675〜0.817、全ゲートFPRは 0.022〜0.052。**候補の数字は特定の業種に載っていない＝この検問を通る**。ただし同じ表は別のことも言っている——**観測の合格1件は業種を抜くと消える**"
+ },
+ "check4_irr": {
+  "coverage": {
+   "cov90_14|P_full|2016": {
+    "n": 766,
+    "n_irr": 0,
+    "n_irr_ge70": 0
+   },
+   "cov90_14|P_full|2017": {
+    "n": 757,
+    "n_irr": 0,
+    "n_irr_ge70": 0
+   },
+   "cov90_14|P_full|2018": {
+    "n": 766,
+    "n_irr": 121,
+    "n_irr_ge70": 59
+   },
+   "all20|P_full|2016": {
+    "n": 238,
+    "n_irr": 0,
+    "n_irr_ge70": 0
+   },
+   "all20|P_full|2017": {
+    "n": 240,
+    "n_irr": 0,
+    "n_irr_ge70": 0
+   },
+   "all20|P_full|2018": {
+    "n": 249,
+    "n_irr": 34,
+    "n_irr_ge70": 17
+   },
+   "cov90_14|P_quality|2016": {
+    "n": 296,
+    "n_irr": 0,
+    "n_irr_ge70": 0
+   },
+   "cov90_14|P_quality|2017": {
+    "n": 295,
+    "n_irr": 0,
+    "n_irr_ge70": 0
+   },
+   "cov90_14|P_quality|2018": {
+    "n": 310,
+    "n_irr": 113,
+    "n_irr_ge70": 52
+   },
+   "all20|P_quality|2016": {
+    "n": 95,
+    "n_irr": 0,
+    "n_irr_ge70": 0
+   },
+   "all20|P_quality|2017": {
+    "n": 109,
+    "n_irr": 0,
+    "n_irr_ge70": 0
+   },
+   "all20|P_quality|2018": {
+    "n": 114,
+    "n_irr": 32,
+    "n_irr_ge70": 15
+   }
+  },
+  "verdict": "判定不能",
+  "why": "irr の読解は **2018 にしか無い**（2016/2017 は全宇宙で0行）。事前登録は2016/2017/2018 の符号不変を要求するので、**irr>=70 層の中で手続きを回すことが構造的にできない**。探索側の実装も irr ゲートを `for v in (2018,)` と2018だけに当てている",
+  "what_can_be_said": {
+   "irr_gate_bite_under_null": {
+    "rejected_不合格": 4,
+    "判定不能": 200,
+    "of_total_gate1_passes": 6269.0
+   },
+   "read": "irr ゲートは帰無でほとんど何も落としていない（梯子で 0.1975→0.151）。**0.741 と 0.032 の差を作っているのは業種ゲートと増分ゲートであって irr ではない**"
+  },
+  "pass": null
+ },
+ "family_scope": {
+  "table": {
+   "中央値2変種のみ（事前診断が値札を付けた範囲）": {
+    "null_fpr_gate1": 0.5875,
+    "null_fpr_allgates": 0.013,
+    "observed_gate1": 9,
+    "observed_allgates": 0
+   },
+   "上下1/4 2変種のみ": {
+    "null_fpr_gate1": 0.51,
+    "null_fpr_allgates": 0.0195,
+    "observed_gate1": 4,
+    "observed_allgates": 1
+   },
+   "実際に探索した4変種（候補の家族）": {
+    "null_fpr_gate1": 0.742,
+    "null_fpr_allgates": 0.032,
+    "observed_gate1": 13,
+    "observed_allgates": 1
+   }
+  },
+  "read": "**中央値だけに絞ると観測の全ゲート合格は 0 件**。合格1件は上下1/4 版でしか出ず、angleD 自身が『上下1/4 は事前診断が値札を付けていない＝探索空間を広げた分は事前登録の外』と書いている。候補の**結論**を支えるのはこちらであって 0.741 ではない"
+ },
+ "study_wide_bound": {
+  "why": "候補が測ったのは角度D単体の家族。研究は角度A〜Eを走らせており、**全ゲート合格は研究全体で1件（角度Dのこれ）だけ**",
+  "angle_verdicts": {
+   "A": "n_pass 0",
+   "B": "0（構造的に到達不能と自認）",
+   "C": "0（1840件すべて判定不能と自認）",
+   "D": "1",
+   "E": "0"
+  },
+  "published_final_level_fpr": {
+   "angle_A_L4_plus_sector": 0.0235,
+   "angle_D_all_gates_measured_here": 0.032,
+   "angle_E_nested_cv": {
+    "cov90_14": 0.034,
+    "all20": 0.0125
+   }
+  },
+  "union_bound": "y10 を目的にした角度 A∪D∪E の和集合はおおむね 0.06〜0.10（正の従属があるので上界より小さい）。⚠**A と E は私が測り直していない**＝公表値からの上界であって私の実測ではない",
+  "read": "研究全体で家族を切ると、観測の1件は p≈0.06〜0.10＝**有意ではない**。候補の**結論**（角度Dは何も見つけていない）はこの水準でなら支持されうる。だが候補が挙げた根拠（0.741）ではない"
+ },
+ "crosscheck_with_sibling_verifier": {
+  "file": "out/hist10_verify_addscore3.json",
+  "what_it_verified": "合格した配置そのもの（加法スコア3本）",
+  "what_this_file_verifies": "その合格に付けられた値札（偽陽性率 0.741）",
+  "its_verdicts": {
+   "t1_reproduce": "一致",
+   "t2_vintage": "合格",
+   "t3_sector": "合格",
+   "t4_irr_layer": "合格",
+   "t5_permutation_config_fixed": "合格",
+   "t6_incremental": "合格",
+   "t7_outer_fold(prereg for_D_and_E)": "不合格",
+   "t5c_selection_adjusted_fpr": 0.0165
+  },
+  "its_extra_finding": "事前登録 pass_line.for_D_and_E『加法スコアと木は**外側foldでの性能のみ**を合否に使う』が角度Dで一度も測られておらず、測ったら線を割った（OOF の帰無検定 p=0.06〜0.07）",
+  "consistency": "**矛盾しない。同じ結論に別の道から着いている**——兄弟は『合格は事前登録の外側fold条項で落ちる』、こちらは『合格を否定するのに使われた 0.741 は段が違う（正しくは 0.032）』。どちらも『角度Dは何も見つけていない』を支持するが、**候補が挙げた根拠だけは両方とも支持していない**",
+  "note": "兄弟の OOF 帰無 p=0.06〜0.07 と、こちらの研究全体の上界 p≈0.06〜0.10 は独立に近い水準で一致する"
+ },
+ "verdict": {
+  "checks": {
+   "1_再現": "通過",
+   "2_ビンテージ": "通過",
+   "3_業種": "通過",
+   "4_irr": "判定不能（irr は2018にしか無く、層内で手続きを回せない）",
+   "5_置換": "通過",
+   "6_増分": "**不合格**"
+  },
+  "n_failed": 1,
+  "headline": "**不合格（検問6）**。数字 0.741 は再現した（5種の独立な種で 0.7389±0.0059）が、それは**梯子の一段目 gate1 の値札**であって事前登録の全条件の値札ではない。全ゲートの帰無FPRは **0.032**＝候補の23分の1。実測の『合格1件』は p≈0.0325 であって『雑音の期待とほぼ同じ』ではない",
+  "what_survives": "『gate1 だけでは何も言えない』という候補の主意は正しく、梯子（0.742→0.198→0.151→0.032）がそれを裏書きする",
+  "what_does_not": "『実測の合格1件は雑音の期待とほぼ同じ』は成立しない（段が違う）",
+  "candidate_best_defense_measured": "ただし (a) 中央値だけの家族なら観測の合格は0件 (b) 研究全体で家族を切ると p≈0.06〜0.10 (c) 合格1件は業種を抜くと消える——**結論は生き残りうるが、根拠は差し替えが要る**"
+ }
+}

@@ -1,0 +1,2717 @@
+{
+ "generated": "2026-08-12",
+ "tool": "night/hist10_verify_hvpe_ybiz.py",
+ "prereg": "out/hist10_prereg.json（線は読むだけ・一つも動かしていない）",
+ "candidate": {
+  "angle": "C（目的＝事業由来の複利）",
+  "variables": [
+   "hv_pe_pct",
+   "hv_adj_pe_pct",
+   "hv_pe_z",
+   "per"
+  ],
+  "target": "y_biz＝事業の寄与 >= +10%/年",
+  "population": "C_all（分解が作れた社）",
+  "cut": "上位1/4",
+  "claimed": {
+   "n": 69,
+   "numerator": 52,
+   "lift": 0.304
+  }
+ },
+ "★verdict": {
+  "result": "判定不能を含み合格とは言えない",
+  "failed_checks": [],
+  "undetermined_checks": [
+   "2_ビンテージ",
+   "4_irrの影"
+  ],
+  "one_line": "6検問のうち 落ちた=0 判定不能=2 → **6検問では落とせなかった**（ただし2件は到達不能で判定不能＝認定もできない）",
+  "substantive": {
+   "落とせなかったこと": "再現・業種・置換・増分の4検問を通った。2013/2015 でも lift は 0.16〜0.19 残り、irr の層内でも消えず、window 基準でも消えず、母集団の穴を挟み込んでも消えない。**この lift は雑音ではない**（置換 p=0.0005・帰無の95%点 0.076 に対し観測 0.3045）",
+   "私の反証仮説のうち外れたもの": "『自己相対PERが高いのは入口EPSが沈んでいるからで、y_biz はその分母を共有した循環』という仮説は**反証された**——入口前3年EPS成長で層別しても MH は 0.315→0.377 とむしろ上がる。逆に g_eps3_pre のほうが PER で層別すると 0.183→0.069 へ消える",
+   "それでも実務的価値が無い理由": {
+    "恒等式の中の実額(window基準・年率対数・hv_adj_pe_pct)": {
+     "Δ事業": 0.0967,
+     "Δ倍率": -0.0815,
+     "Δ分配": -0.0052,
+     "Δ残差": -0.0009,
+     "Δ総": 0.0091,
+     "相殺率": 0.8428,
+     "加法誤差": 0.0
+    },
+    "読み": "群は事業を年 +9.7pt 速く複利したが、倍率が年 −8.2pt 縮んで **総リターンの差は年 +0.9pt**。『事業の複利を予言した』は、恒等式の中では『倍率の縮小を予言した』と**同じ一つの事実**。倍率の平均回帰はこの台帳が既に測って記録している（入口PER 群44.2 vs 群外21.3 → 出口PER 28.4 vs 23.6 で収束）",
+    "総リターンでは線を割る": {
+     "y10_lift": 0.1042,
+     "line": 0.15,
+     "perm_p": 0.038
+    },
+    "分母を替えると3分の1になる": {
+     "hv_adj_pe_pct": 0.3045,
+     "hv_ps_pct": 0.107,
+     "hv_pfcf_pct": 0.1085
+    }
+   },
+   "結論": "**買付規則にはできない**。理由は『効果が無い』ではなく『測っているのが入口の倍率であり、その利得は同じ窓の中で倍率の縮小として払い戻されている』。価格の線が質の中で選別力を持たないという既存の5例と矛盾せず、むしろ目的変数を分解の片側に置き替えると price の**機械的な半分**だけが発見に見える、という6例目"
+  }
+ },
+ "checks": {
+  "1_再現": {
+   "pass": true,
+   "verdict": "✓通過",
+   "detail": "独立実装が探索側と一致（境界の約束も同じ）"
+  },
+  "2_ビンテージ": {
+   "pass": null,
+   "verdict": "判定不能",
+   "detail": "判定不能——2016/2017 に分解の在庫が存在せず、事業由来の目的そのものを作れない。**不合格ではなく判定不能**（効果が無いのではなく、登録した手続きをこの目的には当てられない）",
+   "relaxed_2013_2015_2018_pass": false,
+   "relaxed_why_failed": {
+    "lift_maintained_3v": [
+     "hv_pe_pct|上位1/4",
+     "per|上位1/4"
+    ],
+    "numerator_maintained_3v": [
+     "hv_pe_pct|中央値超",
+     "hv_adj_pe_pct|中央値超",
+     "hv_pe_z|中央値超"
+    ],
+    "note": "**lift と分子が別々の切り方でしか揃わない**。上位1/4 は lift を保つが 2013 の群が23社しかなく分子>=20 は実効 lift 0.52 を要求＝到達不能。中央値超は分子を満たすが lift が 2013/2015 で 0.08〜0.11 へ落ちる",
+    "reachability_2013": {
+     "label": "2013/C_all/上位1/4",
+     "n_pop": 92,
+     "n_group": 24,
+     "p_base": 0.3478,
+     "max_possible_numerator": 24,
+     "MIN_NUM_reachable": true,
+     "effective_required_lift": 0.4855,
+     "which_binds": "MIN_NUM",
+     "note": "MIN_NUM が拘束＝**登録した0.15より高い線を暗黙に課している**"
+    }
+   }
+  },
+  "3_業種": {
+   "pass": true,
+   "verdict": "✓通過",
+   "mh_all_over_line": true,
+   "leave_one_out_all_over_line": true
+  },
+  "4_irrの影": {
+   "pass": null,
+   "verdict": "判定不能",
+   "n_stratum": 51,
+   "detail": "lift は残る（層内 hv_pe_pct=0.3363, hv_adj_pe_pct=0.2594, hv_pe_z=0.2594, per=0.2594）が、層が51行しかなく群は約13社＝**分子>=20 が構造的に到達不能**。『分子不足』を不合格と読まない",
+   "lift_in_irr_ge70": {
+    "hv_pe_pct": 0.3363,
+    "hv_adj_pe_pct": 0.2594,
+    "hv_pe_z": 0.2594,
+    "per": 0.2594
+   },
+   "lift_in_irr_lt70": {
+    "hv_pe_pct": 0.3125,
+    "hv_adj_pe_pct": 0.3667,
+    "hv_pe_z": 0.2333,
+    "per": 0.2857
+   },
+   "orthogonal_to_irr": "両層でほぼ同じ大きさ＝irr の影ではない（irr と直交）"
+  },
+  "5_置換": {
+   "pass": true,
+   "verdict": "✓通過",
+   "single_cell_p": 0.0005,
+   "selection_adjusted_p": 0.0005,
+   "FPR_of_procedure": 0.1975
+  },
+  "6_増分": {
+   "pass": true,
+   "verdict": "✓通過",
+   "share_explained": {
+    "hv_pe_pct": 0.72,
+    "hv_adj_pe_pct": 0.7115,
+    "hv_pe_z": 0.6863,
+    "per": 0.6818
+   },
+   "circularity_warning": "C_all は**定義上すべて質実証プールの部分集合**（分解の pool_def）。したがって『質実証で説明される』は 100% で、これは発見ではなく母集団の定義。循環でない読みは within_gate_passers_relift（関門を通った行だけでもう一度測る）のほう",
+   "non_circular_relift": {
+    "hv_pe_pct": 0.3275,
+    "hv_adj_pe_pct": 0.3487,
+    "hv_pe_z": 0.3487,
+    "per": 0.3088
+   }
+  }
+ },
+ "0_inventory": {
+  "2013": {
+   "decompose_file": "hist_val_decompose_2013.json",
+   "rows": 92
+  },
+  "2015": {
+   "decompose_file": "hist_val_decompose_2015.json",
+   "rows": 320
+  },
+  "2016": {
+   "decompose_file": null,
+   "rows": 0,
+   "why": "分解の在庫が存在しない＝この目的（事業由来）を測れない"
+  },
+  "2017": {
+   "decompose_file": null,
+   "rows": 0,
+   "why": "分解の在庫が存在しない＝この目的（事業由来）を測れない"
+  },
+  "2018": {
+   "decompose_file": "hist_val_decompose_2018.json",
+   "rows": 276
+  }
+ },
+ "0_join": {
+  "2013": {
+   "decompose_rows": 92,
+   "joined": 92,
+   "unmatched": 0
+  },
+  "2015": {
+   "decompose_rows": 320,
+   "joined": 320,
+   "unmatched": 0
+  },
+  "2018": {
+   "decompose_rows": 276,
+   "joined": 276,
+   "unmatched": 0
+  }
+ },
+ "0_reachability_and_power": {
+  "main_cell": {
+   "label": "2018/C_all/上位1/4",
+   "n_pop": 276,
+   "n_group": 70,
+   "p_base": 0.4384,
+   "max_possible_numerator": 70,
+   "MIN_NUM_reachable": true,
+   "effective_required_lift": 0.15,
+   "which_binds": "LIFT",
+   "note": "LIFT が拘束＝設計どおり"
+  },
+  "power": {
+   "delta=0.1": 0.0692,
+   "delta=0.15": 0.2342,
+   "delta=0.2": 0.4942,
+   "delta=0.3": 0.9372
+  },
+  "by_vintage": {
+   "2013": {
+    "label": "2013/C_all/上位1/4",
+    "n_pop": 92,
+    "n_group": 24,
+    "p_base": 0.3478,
+    "max_possible_numerator": 24,
+    "MIN_NUM_reachable": true,
+    "effective_required_lift": 0.4855,
+    "which_binds": "MIN_NUM",
+    "note": "MIN_NUM が拘束＝**登録した0.15より高い線を暗黙に課している**"
+   },
+   "2015": {
+    "label": "2015/C_all/上位1/4",
+    "n_pop": 320,
+    "n_group": 81,
+    "p_base": 0.4062,
+    "max_possible_numerator": 81,
+    "MIN_NUM_reachable": true,
+    "effective_required_lift": 0.15,
+    "which_binds": "LIFT",
+    "note": "LIFT が拘束＝設計どおり"
+   },
+   "2018": {
+    "label": "2018/C_all/上位1/4",
+    "n_pop": 276,
+    "n_group": 70,
+    "p_base": 0.4384,
+    "max_possible_numerator": 70,
+    "MIN_NUM_reachable": true,
+    "effective_required_lift": 0.15,
+    "which_binds": "LIFT",
+    "note": "LIFT が拘束＝設計どおり"
+   }
+  },
+  "by_irr_layer": {
+   "irr>=70": {
+    "label": "irr>=70",
+    "n_pop": 51,
+    "n_group": 13,
+    "p_base": 0.5098,
+    "max_possible_numerator": 13,
+    "MIN_NUM_reachable": false,
+    "effective_required_lift": 1.0287,
+    "which_binds": "MIN_NUM",
+    "note": "MIN_NUM が拘束＝**登録した0.15より高い線を暗黙に課している**"
+   },
+   "irr<70": {
+    "label": "irr<70",
+    "n_pop": 56,
+    "n_group": 15,
+    "p_base": 0.5,
+    "max_possible_numerator": 15,
+    "MIN_NUM_reachable": false,
+    "effective_required_lift": 0.8333,
+    "which_binds": "MIN_NUM",
+    "note": "MIN_NUM が拘束＝**登録した0.15より高い線を暗黙に課している**"
+   }
+  },
+  "reading": "**分子>=20 が届かない場所で『分子不足』を不合格と読んではいけない**——それは効果の不在ではなく検出力の不在（この台帳が v1 で確立した検問: 合否基準が母集団の実数で到達可能かを結果の前に数える）"
+ },
+ "1_reproduction": {
+  "boundary_note": "探索側の約束は **上位1/4 = 値 >= 75%点（ceil順位式）**。同値があると群は25%より大きくなる。gt/rank は境界の感度を見るためだけに出す",
+  "cells": {
+   "hv_pe_pct|上位1/4": {
+    "mine_ge": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 70,
+     "numerator": 50,
+     "p_group": 0.7143,
+     "lift_vs_pop": 0.2759,
+     "lift_vs_measurable": 0.2759,
+     "q75": 0.9146,
+     "q50": 0.64,
+     "q25": 0.2051,
+     "group_share": 0.2536
+    },
+    "mine_gt_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 69,
+     "numerator": 50,
+     "p_group": 0.7246,
+     "lift_vs_pop": 0.2862,
+     "lift_vs_measurable": 0.2862,
+     "q75": 0.9146,
+     "q50": 0.64,
+     "q25": 0.2051,
+     "group_share": 0.25
+    },
+    "mine_rank_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 69,
+     "numerator": 50,
+     "p_group": 0.7246,
+     "lift_vs_pop": 0.2862,
+     "lift_vs_measurable": 0.2862,
+     "q75": 0.9146,
+     "q50": 0.64,
+     "q25": 0.2051,
+     "group_share": 0.25
+    },
+    "published": {
+     "lift": 0.2759,
+     "numerator": 50,
+     "n_group": 70,
+     "p_base": 0.4384,
+     "sector_mh": {
+      "2018": {
+       "mh_risk_diff": 0.3821,
+       "strata_used": 6,
+       "strata_dropped": 42
+      }
+     }
+    },
+    "agrees_with_published": true
+   },
+   "hv_pe_pct|中央値超": {
+    "mine_ge": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 138,
+     "numerator": 87,
+     "p_group": 0.6304,
+     "lift_vs_pop": 0.192,
+     "lift_vs_measurable": 0.192,
+     "q75": 0.9146,
+     "q50": 0.64,
+     "q25": 0.2051,
+     "group_share": 0.5
+    },
+    "mine_gt_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 138,
+     "numerator": 87,
+     "p_group": 0.6304,
+     "lift_vs_pop": 0.192,
+     "lift_vs_measurable": 0.192,
+     "q75": 0.9146,
+     "q50": 0.64,
+     "q25": 0.2051,
+     "group_share": 0.5
+    },
+    "mine_rank_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 138,
+     "numerator": 87,
+     "p_group": 0.6304,
+     "lift_vs_pop": 0.192,
+     "lift_vs_measurable": 0.192,
+     "q75": 0.9146,
+     "q50": 0.64,
+     "q25": 0.2051,
+     "group_share": 0.5
+    },
+    "published": {
+     "lift": 0.192,
+     "numerator": 87,
+     "n_group": 138,
+     "p_base": 0.4384,
+     "sector_mh": {
+      "2018": {
+       "mh_risk_diff": 0.3886,
+       "strata_used": 9,
+       "strata_dropped": 39
+      }
+     }
+    },
+    "agrees_with_published": true
+   },
+   "hv_adj_pe_pct|上位1/4": {
+    "mine_ge": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 70,
+     "numerator": 52,
+     "p_group": 0.7429,
+     "lift_vs_pop": 0.3045,
+     "lift_vs_measurable": 0.3045,
+     "q75": 0.8415,
+     "q50": 0.4432,
+     "q25": 0.1124,
+     "group_share": 0.2536
+    },
+    "mine_gt_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 69,
+     "numerator": 52,
+     "p_group": 0.7536,
+     "lift_vs_pop": 0.3152,
+     "lift_vs_measurable": 0.3152,
+     "q75": 0.8415,
+     "q50": 0.4432,
+     "q25": 0.1124,
+     "group_share": 0.25
+    },
+    "mine_rank_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 69,
+     "numerator": 52,
+     "p_group": 0.7536,
+     "lift_vs_pop": 0.3152,
+     "lift_vs_measurable": 0.3152,
+     "q75": 0.8415,
+     "q50": 0.4432,
+     "q25": 0.1124,
+     "group_share": 0.25
+    },
+    "published": {
+     "lift": 0.3045,
+     "numerator": 52,
+     "n_group": 70,
+     "p_base": 0.4384,
+     "sector_mh": {
+      "2018": {
+       "mh_risk_diff": 0.4122,
+       "strata_used": 5,
+       "strata_dropped": 43
+      }
+     }
+    },
+    "agrees_with_published": true
+   },
+   "hv_adj_pe_pct|中央値超": {
+    "mine_ge": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 138,
+     "numerator": 86,
+     "p_group": 0.6232,
+     "lift_vs_pop": 0.1848,
+     "lift_vs_measurable": 0.1848,
+     "q75": 0.8415,
+     "q50": 0.4432,
+     "q25": 0.1124,
+     "group_share": 0.5
+    },
+    "mine_gt_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 138,
+     "numerator": 86,
+     "p_group": 0.6232,
+     "lift_vs_pop": 0.1848,
+     "lift_vs_measurable": 0.1848,
+     "q75": 0.8415,
+     "q50": 0.4432,
+     "q25": 0.1124,
+     "group_share": 0.5
+    },
+    "mine_rank_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 138,
+     "numerator": 86,
+     "p_group": 0.6232,
+     "lift_vs_pop": 0.1848,
+     "lift_vs_measurable": 0.1848,
+     "q75": 0.8415,
+     "q50": 0.4432,
+     "q25": 0.1124,
+     "group_share": 0.5
+    },
+    "published": {
+     "lift": 0.1848,
+     "numerator": 86,
+     "n_group": 138,
+     "p_base": 0.4384,
+     "sector_mh": {
+      "2018": {
+       "mh_risk_diff": 0.4231,
+       "strata_used": 9,
+       "strata_dropped": 39
+      }
+     }
+    },
+    "agrees_with_published": true
+   },
+   "hv_pe_z|上位1/4": {
+    "mine_ge": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 70,
+     "numerator": 51,
+     "p_group": 0.7286,
+     "lift_vs_pop": 0.2902,
+     "lift_vs_measurable": 0.2902,
+     "q75": 1.6147,
+     "q50": 0.2176,
+     "q25": -0.391,
+     "group_share": 0.2536
+    },
+    "mine_gt_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 69,
+     "numerator": 50,
+     "p_group": 0.7246,
+     "lift_vs_pop": 0.2862,
+     "lift_vs_measurable": 0.2862,
+     "q75": 1.6147,
+     "q50": 0.2176,
+     "q25": -0.391,
+     "group_share": 0.25
+    },
+    "mine_rank_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 69,
+     "numerator": 50,
+     "p_group": 0.7246,
+     "lift_vs_pop": 0.2862,
+     "lift_vs_measurable": 0.2862,
+     "q75": 1.6147,
+     "q50": 0.2176,
+     "q25": -0.391,
+     "group_share": 0.25
+    },
+    "published": {
+     "lift": 0.2902,
+     "numerator": 51,
+     "n_group": 70,
+     "p_base": 0.4384,
+     "sector_mh": {
+      "2018": {
+       "mh_risk_diff": 0.3632,
+       "strata_used": 6,
+       "strata_dropped": 42
+      }
+     }
+    },
+    "agrees_with_published": true
+   },
+   "hv_pe_z|中央値超": {
+    "mine_ge": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 138,
+     "numerator": 86,
+     "p_group": 0.6232,
+     "lift_vs_pop": 0.1848,
+     "lift_vs_measurable": 0.1848,
+     "q75": 1.6147,
+     "q50": 0.2176,
+     "q25": -0.391,
+     "group_share": 0.5
+    },
+    "mine_gt_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 138,
+     "numerator": 86,
+     "p_group": 0.6232,
+     "lift_vs_pop": 0.1848,
+     "lift_vs_measurable": 0.1848,
+     "q75": 1.6147,
+     "q50": 0.2176,
+     "q25": -0.391,
+     "group_share": 0.5
+    },
+    "mine_rank_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 276,
+     "p_measurable": 0.4384,
+     "n_group": 138,
+     "numerator": 86,
+     "p_group": 0.6232,
+     "lift_vs_pop": 0.1848,
+     "lift_vs_measurable": 0.1848,
+     "q75": 1.6147,
+     "q50": 0.2176,
+     "q25": -0.391,
+     "group_share": 0.5
+    },
+    "published": {
+     "lift": 0.1848,
+     "numerator": 86,
+     "n_group": 138,
+     "p_base": 0.4384,
+     "sector_mh": {
+      "2018": {
+       "mh_risk_diff": 0.3836,
+       "strata_used": 9,
+       "strata_dropped": 39
+      }
+     }
+    },
+    "agrees_with_published": true
+   },
+   "per|上位1/4": {
+    "mine_ge": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 262,
+     "p_measurable": 0.4237,
+     "n_group": 66,
+     "numerator": 44,
+     "p_group": 0.6667,
+     "lift_vs_pop": 0.2283,
+     "lift_vs_measurable": 0.243,
+     "q75": 41.49,
+     "q50": 26.78,
+     "q25": 19.22,
+     "group_share": 0.2519
+    },
+    "mine_gt_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 262,
+     "p_measurable": 0.4237,
+     "n_group": 65,
+     "numerator": 44,
+     "p_group": 0.6769,
+     "lift_vs_pop": 0.2385,
+     "lift_vs_measurable": 0.2533,
+     "q75": 41.49,
+     "q50": 26.78,
+     "q25": 19.22,
+     "group_share": 0.2481
+    },
+    "mine_rank_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 262,
+     "p_measurable": 0.4237,
+     "n_group": 66,
+     "numerator": 44,
+     "p_group": 0.6667,
+     "lift_vs_pop": 0.2283,
+     "lift_vs_measurable": 0.243,
+     "q75": 41.49,
+     "q50": 26.78,
+     "q25": 19.22,
+     "group_share": 0.2519
+    },
+    "published": {
+     "lift": 0.2283,
+     "numerator": 44,
+     "n_group": 66,
+     "p_base": 0.4384,
+     "sector_mh": {
+      "2018": {
+       "mh_risk_diff": 0.2979,
+       "strata_used": 6,
+       "strata_dropped": 42
+      }
+     }
+    },
+    "agrees_with_published": true
+   },
+   "per|中央値超": {
+    "mine_ge": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 262,
+     "p_measurable": 0.4237,
+     "n_group": 131,
+     "numerator": 76,
+     "p_group": 0.5802,
+     "lift_vs_pop": 0.1417,
+     "lift_vs_measurable": 0.1565,
+     "q75": 41.49,
+     "q50": 26.78,
+     "q25": 19.22,
+     "group_share": 0.5
+    },
+    "mine_gt_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 262,
+     "p_measurable": 0.4237,
+     "n_group": 131,
+     "numerator": 76,
+     "p_group": 0.5802,
+     "lift_vs_pop": 0.1417,
+     "lift_vs_measurable": 0.1565,
+     "q75": 41.49,
+     "q50": 26.78,
+     "q25": 19.22,
+     "group_share": 0.5
+    },
+    "mine_rank_boundary": {
+     "n_pop": 276,
+     "p_pop": 0.4384,
+     "n_measurable": 262,
+     "p_measurable": 0.4237,
+     "n_group": 131,
+     "numerator": 76,
+     "p_group": 0.5802,
+     "lift_vs_pop": 0.1417,
+     "lift_vs_measurable": 0.1565,
+     "q75": 41.49,
+     "q50": 26.78,
+     "q25": 19.22,
+     "group_share": 0.5
+    },
+    "published": null
+   }
+  },
+  "mismatch": [],
+  "where_n69_comes_from": {
+   "hv_pe_pct|ge": {
+    "n_group": 70,
+    "numerator": 50,
+    "lift": 0.2759
+   },
+   "hv_pe_pct|gt": {
+    "n_group": 69,
+    "numerator": 50,
+    "lift": 0.2862
+   },
+   "hv_pe_pct|rank": {
+    "n_group": 69,
+    "numerator": 50,
+    "lift": 0.2862
+   },
+   "hv_adj_pe_pct|ge": {
+    "n_group": 70,
+    "numerator": 52,
+    "lift": 0.3045
+   },
+   "hv_adj_pe_pct|gt": {
+    "n_group": 69,
+    "numerator": 52,
+    "lift": 0.3152
+   },
+   "hv_adj_pe_pct|rank": {
+    "n_group": 69,
+    "numerator": 52,
+    "lift": 0.3152
+   },
+   "hv_pe_z|ge": {
+    "n_group": 70,
+    "numerator": 51,
+    "lift": 0.2902
+   },
+   "hv_pe_z|gt": {
+    "n_group": 69,
+    "numerator": 50,
+    "lift": 0.2862
+   },
+   "hv_pe_z|rank": {
+    "n_group": 69,
+    "numerator": 50,
+    "lift": 0.2862
+   }
+  },
+  "verdict": "独立実装が探索側と一致（境界の約束も同じ）"
+ },
+ "2_vintage": {
+  "registered_gate": {
+   "required": [
+    2016,
+    2017,
+    2018
+   ],
+   "decompose_inventory": {
+    "2016": 0,
+    "2017": 0,
+    "2018": 276
+   },
+   "missing_vintages": [
+    2016,
+    2017
+   ],
+   "status": "判定不能——2016/2017 に分解の在庫が存在せず、事業由来の目的そのものを作れない。**不合格ではなく判定不能**（効果が無いのではなく、登録した手続きをこの目的には当てられない）"
+  },
+  "by_variable": {
+   "hv_pe_pct|上位1/4": {
+    "2013": {
+     "n_pop": 92,
+     "n_group": 24,
+     "numerator": 13,
+     "p_base": 0.3478,
+     "p_group": 0.5417,
+     "lift": 0.1938
+    },
+    "2015": {
+     "n_pop": 320,
+     "n_group": 83,
+     "numerator": 47,
+     "p_base": 0.4062,
+     "p_group": 0.5663,
+     "lift": 0.16
+    },
+    "2018": {
+     "n_pop": 276,
+     "n_group": 70,
+     "numerator": 50,
+     "p_base": 0.4384,
+     "p_group": 0.7143,
+     "lift": 0.2759
+    },
+    "_lift_all3_ge_0.15": true,
+    "_numerator_all3_ge_20": false,
+    "_note": "2013/2015/2018 は**登録したビンテージではない**（登録は2016/2017/2018）。在庫がある3つで同じ線を当てた緩和版＝事前登録の外。合否には数えない"
+   },
+   "hv_pe_pct|中央値超": {
+    "2013": {
+     "n_pop": 92,
+     "n_group": 46,
+     "numerator": 21,
+     "p_base": 0.3478,
+     "p_group": 0.4565,
+     "lift": 0.1087
+    },
+    "2015": {
+     "n_pop": 320,
+     "n_group": 158,
+     "numerator": 78,
+     "p_base": 0.4062,
+     "p_group": 0.4937,
+     "lift": 0.0874
+    },
+    "2018": {
+     "n_pop": 276,
+     "n_group": 138,
+     "numerator": 87,
+     "p_base": 0.4384,
+     "p_group": 0.6304,
+     "lift": 0.192
+    },
+    "_lift_all3_ge_0.15": false,
+    "_numerator_all3_ge_20": true,
+    "_note": "2013/2015/2018 は**登録したビンテージではない**（登録は2016/2017/2018）。在庫がある3つで同じ線を当てた緩和版＝事前登録の外。合否には数えない"
+   },
+   "hv_adj_pe_pct|上位1/4": {
+    "2013": {
+     "n_pop": 92,
+     "n_group": 24,
+     "numerator": 13,
+     "p_base": 0.3478,
+     "p_group": 0.5417,
+     "lift": 0.1938
+    },
+    "2015": {
+     "n_pop": 320,
+     "n_group": 81,
+     "numerator": 43,
+     "p_base": 0.4062,
+     "p_group": 0.5309,
+     "lift": 0.1246
+    },
+    "2018": {
+     "n_pop": 276,
+     "n_group": 70,
+     "numerator": 52,
+     "p_base": 0.4384,
+     "p_group": 0.7429,
+     "lift": 0.3045
+    },
+    "_lift_all3_ge_0.15": false,
+    "_numerator_all3_ge_20": false,
+    "_note": "2013/2015/2018 は**登録したビンテージではない**（登録は2016/2017/2018）。在庫がある3つで同じ線を当てた緩和版＝事前登録の外。合否には数えない"
+   },
+   "hv_adj_pe_pct|中央値超": {
+    "2013": {
+     "n_pop": 92,
+     "n_group": 45,
+     "numerator": 20,
+     "p_base": 0.3478,
+     "p_group": 0.4444,
+     "lift": 0.0966
+    },
+    "2015": {
+     "n_pop": 320,
+     "n_group": 160,
+     "numerator": 78,
+     "p_base": 0.4062,
+     "p_group": 0.4875,
+     "lift": 0.0812
+    },
+    "2018": {
+     "n_pop": 276,
+     "n_group": 138,
+     "numerator": 86,
+     "p_base": 0.4384,
+     "p_group": 0.6232,
+     "lift": 0.1848
+    },
+    "_lift_all3_ge_0.15": false,
+    "_numerator_all3_ge_20": true,
+    "_note": "2013/2015/2018 は**登録したビンテージではない**（登録は2016/2017/2018）。在庫がある3つで同じ線を当てた緩和版＝事前登録の外。合否には数えない"
+   },
+   "hv_pe_z|上位1/4": {
+    "2013": {
+     "n_pop": 92,
+     "n_group": 24,
+     "numerator": 12,
+     "p_base": 0.3478,
+     "p_group": 0.5,
+     "lift": 0.1522
+    },
+    "2015": {
+     "n_pop": 320,
+     "n_group": 81,
+     "numerator": 44,
+     "p_base": 0.4062,
+     "p_group": 0.5432,
+     "lift": 0.137
+    },
+    "2018": {
+     "n_pop": 276,
+     "n_group": 70,
+     "numerator": 51,
+     "p_base": 0.4384,
+     "p_group": 0.7286,
+     "lift": 0.2902
+    },
+    "_lift_all3_ge_0.15": false,
+    "_numerator_all3_ge_20": false,
+    "_note": "2013/2015/2018 は**登録したビンテージではない**（登録は2016/2017/2018）。在庫がある3つで同じ線を当てた緩和版＝事前登録の外。合否には数えない"
+   },
+   "hv_pe_z|中央値超": {
+    "2013": {
+     "n_pop": 92,
+     "n_group": 46,
+     "numerator": 20,
+     "p_base": 0.3478,
+     "p_group": 0.4348,
+     "lift": 0.087
+    },
+    "2015": {
+     "n_pop": 320,
+     "n_group": 160,
+     "numerator": 78,
+     "p_base": 0.4062,
+     "p_group": 0.4875,
+     "lift": 0.0812
+    },
+    "2018": {
+     "n_pop": 276,
+     "n_group": 138,
+     "numerator": 86,
+     "p_base": 0.4384,
+     "p_group": 0.6232,
+     "lift": 0.1848
+    },
+    "_lift_all3_ge_0.15": false,
+    "_numerator_all3_ge_20": true,
+    "_note": "2013/2015/2018 は**登録したビンテージではない**（登録は2016/2017/2018）。在庫がある3つで同じ線を当てた緩和版＝事前登録の外。合否には数えない"
+   },
+   "per|上位1/4": {
+    "2013": {
+     "n_pop": 92,
+     "n_group": 23,
+     "numerator": 15,
+     "p_base": 0.3478,
+     "p_group": 0.6522,
+     "lift": 0.3043
+    },
+    "2015": {
+     "n_pop": 320,
+     "n_group": 15,
+     "numerator": 10,
+     "p_base": 0.4062,
+     "p_group": 0.6667,
+     "lift": 0.2604
+    },
+    "2018": {
+     "n_pop": 276,
+     "n_group": 66,
+     "numerator": 44,
+     "p_base": 0.4384,
+     "p_group": 0.6667,
+     "lift": 0.2283
+    },
+    "_lift_all3_ge_0.15": true,
+    "_numerator_all3_ge_20": false,
+    "_note": "2013/2015/2018 は**登録したビンテージではない**（登録は2016/2017/2018）。在庫がある3つで同じ線を当てた緩和版＝事前登録の外。合否には数えない"
+   },
+   "per|中央値超": {
+    "2013": {
+     "n_pop": 92,
+     "n_group": 44,
+     "numerator": 26,
+     "p_base": 0.3478,
+     "p_group": 0.5909,
+     "lift": 0.2431
+    },
+    "2015": {
+     "n_pop": 320,
+     "n_group": 29,
+     "numerator": 18,
+     "p_base": 0.4062,
+     "p_group": 0.6207,
+     "lift": 0.2144
+    },
+    "2018": {
+     "n_pop": 276,
+     "n_group": 131,
+     "numerator": 76,
+     "p_base": 0.4384,
+     "p_group": 0.5802,
+     "lift": 0.1417
+    },
+    "_lift_all3_ge_0.15": false,
+    "_numerator_all3_ge_20": false,
+    "_note": "2013/2015/2018 は**登録したビンテージではない**（登録は2016/2017/2018）。在庫がある3つで同じ線を当てた緩和版＝事前登録の外。合否には数えない"
+   }
+  },
+  "verdict": "登録ゲート＝判定不能。緩和版（在庫のある2013/2015/2018）でも lift と分子を同時に満たす切り方はゼロ"
+ },
+ "3_sector": {
+  "note": "MH は **群と非群が同じ業種に同居する層でしか重みを持たない**。使われた層に何行入っているかを必ず出す（探索側は strata_dropped=43 と書くだけだった）",
+  "mh": {
+   "hv_pe_pct": {
+    "n_analysed": 276,
+    "n_group": 70,
+    "crude_risk_diff_in_vs_out": 0.3696,
+    "mh_risk_diff": 0.375,
+    "strata_used": 19,
+    "strata_dropped": 29,
+    "rows_in_used_strata": 216,
+    "rows_in_dropped_strata": 60,
+    "coverage_of_rows": 0.7826
+   },
+   "hv_adj_pe_pct": {
+    "n_analysed": 276,
+    "n_group": 70,
+    "crude_risk_diff_in_vs_out": 0.4079,
+    "mh_risk_diff": 0.439,
+    "strata_used": 19,
+    "strata_dropped": 29,
+    "rows_in_used_strata": 217,
+    "rows_in_dropped_strata": 59,
+    "coverage_of_rows": 0.7862
+   },
+   "hv_pe_z": {
+    "n_analysed": 276,
+    "n_group": 70,
+    "crude_risk_diff_in_vs_out": 0.3888,
+    "mh_risk_diff": 0.3688,
+    "strata_used": 19,
+    "strata_dropped": 29,
+    "rows_in_used_strata": 213,
+    "rows_in_dropped_strata": 63,
+    "coverage_of_rows": 0.7717
+   },
+   "per": {
+    "n_analysed": 262,
+    "n_group": 66,
+    "crude_risk_diff_in_vs_out": 0.3248,
+    "mh_risk_diff": 0.3163,
+    "strata_used": 16,
+    "strata_dropped": 32,
+    "rows_in_used_strata": 189,
+    "rows_in_dropped_strata": 73,
+    "coverage_of_rows": 0.7214
+   }
+  },
+  "leave_one_sector_out": {
+   "hv_pe_pct": {
+    "worst5": [
+     {
+      "dropped_sic2": "73",
+      "n_dropped": 35,
+      "n_left": 241,
+      "n_group": 61,
+      "numerator": 42,
+      "lift": 0.257
+     },
+     {
+      "dropped_sic2": "23",
+      "n_dropped": 3,
+      "n_left": 273,
+      "n_group": 69,
+      "numerator": 48,
+      "lift": 0.2634
+     },
+     {
+      "dropped_sic2": "20",
+      "n_dropped": 13,
+      "n_left": 263,
+      "n_group": 66,
+      "numerator": 47,
+      "lift": 0.2635
+     },
+     {
+      "dropped_sic2": "28",
+      "n_dropped": 19,
+      "n_left": 257,
+      "n_group": 65,
+      "numerator": 46,
+      "lift": 0.2641
+     },
+     {
+      "dropped_sic2": "38",
+      "n_dropped": 23,
+      "n_left": 253,
+      "n_group": 64,
+      "numerator": 44,
+      "lift": 0.2685
+     }
+    ],
+    "min_lift": 0.257,
+    "all_stay_over_line": true
+   },
+   "hv_adj_pe_pct": {
+    "worst5": [
+     {
+      "dropped_sic2": "73",
+      "n_dropped": 35,
+      "n_left": 241,
+      "n_group": 61,
+      "numerator": 44,
+      "lift": 0.2898
+     },
+     {
+      "dropped_sic2": "20",
+      "n_dropped": 13,
+      "n_left": 263,
+      "n_group": 66,
+      "numerator": 49,
+      "lift": 0.2938
+     },
+     {
+      "dropped_sic2": "63",
+      "n_dropped": 3,
+      "n_left": 273,
+      "n_group": 69,
+      "numerator": 51,
+      "lift": 0.2996
+     },
+     {
+      "dropped_sic2": "31",
+      "n_dropped": 2,
+      "n_left": 274,
+      "n_group": 69,
+      "numerator": 51,
+      "lift": 0.3012
+     },
+     {
+      "dropped_sic2": "37",
+      "n_dropped": 13,
+      "n_left": 263,
+      "n_group": 66,
+      "numerator": 49,
+      "lift": 0.3014
+     }
+    ],
+    "min_lift": 0.2898,
+    "all_stay_over_line": true
+   },
+   "hv_pe_z": {
+    "worst5": [
+     {
+      "dropped_sic2": "67",
+      "n_dropped": 23,
+      "n_left": 253,
+      "n_group": 64,
+      "numerator": 45,
+      "lift": 0.2565
+     },
+     {
+      "dropped_sic2": "20",
+      "n_dropped": 13,
+      "n_left": 263,
+      "n_group": 66,
+      "numerator": 47,
+      "lift": 0.2635
+     },
+     {
+      "dropped_sic2": "35",
+      "n_dropped": 25,
+      "n_left": 251,
+      "n_group": 63,
+      "numerator": 44,
+      "lift": 0.2761
+     },
+     {
+      "dropped_sic2": "48",
+      "n_dropped": 6,
+      "n_left": 270,
+      "n_group": 68,
+      "numerator": 49,
+      "lift": 0.2761
+     },
+     {
+      "dropped_sic2": "28",
+      "n_dropped": 19,
+      "n_left": 257,
+      "n_group": 65,
+      "numerator": 47,
+      "lift": 0.2795
+     }
+    ],
+    "min_lift": 0.2565,
+    "all_stay_over_line": true
+   },
+   "per": {
+    "worst5": [
+     {
+      "dropped_sic2": "35",
+      "n_dropped": 23,
+      "n_left": 239,
+      "n_group": 60,
+      "numerator": 38,
+      "lift": 0.2317
+     },
+     {
+      "dropped_sic2": "20",
+      "n_dropped": 13,
+      "n_left": 249,
+      "n_group": 63,
+      "numerator": 42,
+      "lift": 0.2329
+     },
+     {
+      "dropped_sic2": "30",
+      "n_dropped": 3,
+      "n_left": 259,
+      "n_group": 65,
+      "numerator": 43,
+      "lift": 0.2368
+     },
+     {
+      "dropped_sic2": "72",
+      "n_dropped": 2,
+      "n_left": 260,
+      "n_group": 66,
+      "numerator": 44,
+      "lift": 0.2397
+     },
+     {
+      "dropped_sic2": "45",
+      "n_dropped": 2,
+      "n_left": 260,
+      "n_group": 66,
+      "numerator": 44,
+      "lift": 0.2397
+     }
+    ],
+    "min_lift": 0.2317,
+    "all_stay_over_line": true
+   }
+  }
+ },
+ "4_irr_layer": {
+  "coverage": {
+   "n_C_all_2018": 276,
+   "with_irr_reading": 107,
+   "irr_ge_70": 51,
+   "irr_lt_70": 56,
+   "no_reading": 169,
+   "note": "読解が無い行は『irr<70』ではない＝判定不能（欠測を0と読まない）"
+  },
+  "irr>=70": {
+   "n_stratum": 51,
+   "status": "測定",
+   "hv_pe_pct": {
+    "n_group": 13,
+    "numerator": 11,
+    "p_group": 0.8462,
+    "p_stratum": 0.5098,
+    "lift": 0.3363,
+    "meets_min_num": false
+   },
+   "hv_adj_pe_pct": {
+    "n_group": 13,
+    "numerator": 10,
+    "p_group": 0.7692,
+    "p_stratum": 0.5098,
+    "lift": 0.2594,
+    "meets_min_num": false
+   },
+   "hv_pe_z": {
+    "n_group": 13,
+    "numerator": 10,
+    "p_group": 0.7692,
+    "p_stratum": 0.5098,
+    "lift": 0.2594,
+    "meets_min_num": false
+   },
+   "per": {
+    "n_group": 13,
+    "numerator": 10,
+    "p_group": 0.7692,
+    "p_stratum": 0.5098,
+    "lift": 0.2594,
+    "meets_min_num": false
+   }
+  },
+  "irr<70": {
+   "n_stratum": 56,
+   "status": "測定",
+   "hv_pe_pct": {
+    "n_group": 16,
+    "numerator": 13,
+    "p_group": 0.8125,
+    "p_stratum": 0.5,
+    "lift": 0.3125,
+    "meets_min_num": false
+   },
+   "hv_adj_pe_pct": {
+    "n_group": 15,
+    "numerator": 13,
+    "p_group": 0.8667,
+    "p_stratum": 0.5,
+    "lift": 0.3667,
+    "meets_min_num": false
+   },
+   "hv_pe_z": {
+    "n_group": 15,
+    "numerator": 11,
+    "p_group": 0.7333,
+    "p_stratum": 0.5,
+    "lift": 0.2333,
+    "meets_min_num": false
+   },
+   "per": {
+    "n_group": 14,
+    "numerator": 11,
+    "p_group": 0.7857,
+    "p_stratum": 0.5,
+    "lift": 0.2857,
+    "meets_min_num": false
+   }
+  },
+  "irrの読解あり全部": {
+   "n_stratum": 107,
+   "status": "測定",
+   "hv_pe_pct": {
+    "n_group": 28,
+    "numerator": 23,
+    "p_group": 0.8214,
+    "p_stratum": 0.5047,
+    "lift": 0.3168,
+    "meets_min_num": true
+   },
+   "hv_adj_pe_pct": {
+    "n_group": 27,
+    "numerator": 22,
+    "p_group": 0.8148,
+    "p_stratum": 0.5047,
+    "lift": 0.3101,
+    "meets_min_num": true
+   },
+   "hv_pe_z": {
+    "n_group": 27,
+    "numerator": 20,
+    "p_group": 0.7407,
+    "p_stratum": 0.5047,
+    "lift": 0.2361,
+    "meets_min_num": true
+   },
+   "per": {
+    "n_group": 26,
+    "numerator": 20,
+    "p_group": 0.7692,
+    "p_stratum": 0.5047,
+    "lift": 0.2646,
+    "meets_min_num": true
+   }
+  }
+ },
+ "5_permutation": {
+  "design": "会社ごとの結果ベクトルをまるごと入れ替える（全ビンテージ同時・所属パターン内）。ビンテージ内で独立に混ぜると従属が壊れて偽陽性率が過小に出る（この台帳が実測済み）。**逆に所属パターンを無視して混ぜると事象が欠測として消え、これも過小になる**——この道具の初版が実際に踏んだ",
+  "single_cell_hv_adj_pe_pct": {
+   "observed": 0.3045,
+   "n_perm": 2000,
+   "p_value": 0.0005,
+   "null_p50": 0.0045,
+   "null_p95": 0.0759,
+   "null_max": 0.1902,
+   "null_design": "所属パターン内で結果ベクトルを入れ替え（各年の母集団・事象数を保存）"
+  },
+  "single_cell_hv_pe_pct": {
+   "observed": 0.2759,
+   "n_perm": 2000,
+   "p_value": 0.0005,
+   "null_p50": -0.0098,
+   "null_p95": 0.0759,
+   "null_max": 0.1902,
+   "null_design": "所属パターン内で結果ベクトルを入れ替え（各年の母集団・事象数を保存）"
+  },
+  "single_cell_hv_adj_pe_pct_on_y10": {
+   "observed": 0.1042,
+   "n_perm": 2000,
+   "p_value": 0.038,
+   "null_p50": 0.0042,
+   "null_p95": 0.09,
+   "null_max": 0.2328,
+   "null_design": "所属パターン内で結果ベクトルを入れ替え（各年の母集団・事象数を保存）"
+  },
+  "family_max|PER族のみ(4変数×4切り方×2母集団)": {
+   "n_cells": 32,
+   "observed_max_abs_lift": 0.3045,
+   "p_value_selection_adjusted": 0.0005,
+   "FPR_at_least_one_cell_passes(lift>=0.15 & num>=20)": 0.0185
+  },
+  "family_max|2018のy_biz全画面(全候補変数)": {
+   "n_cells": 277,
+   "observed_max_abs_lift": 0.3045,
+   "p_value_selection_adjusted": 0.0005,
+   "FPR_at_least_one_cell_passes(lift>=0.15 & num>=20)": 0.1975
+  }
+ },
+ "6_incremental": {
+  "reading": "勝者側の増分＝『その群の成功社は、門が既に持つ関門で **すでに選ばれている社** ではないか』。説明が7割を超えるなら新しい指標としての実務的価値は無い（事前登録の線）",
+  "by_variable": {
+   "hv_pe_pct": {
+    "n_group": 70,
+    "n_wins": 50,
+    "wins_inside_P_quality": 50,
+    "wins_share_inside_P_quality": 1.0,
+    "wins_not_shrinking": 46,
+    "wins_not_thin(known)": 40,
+    "wins_thin_unknown": 7,
+    "wins_irr_ge_70": 10,
+    "wins_irr_unknown": 27,
+    "wins_inside_all_existing_gates": 36,
+    "share_explained_by_existing_gates": 0.72,
+    "over_70pct_line": true,
+    "excess_over_population_share": 0.0425,
+    "within_gate_passers_relift": {
+     "n_pass_gates": 187,
+     "n_group": 47,
+     "numerator": 36,
+     "p_group": 0.766,
+     "p_base": 0.4385,
+     "lift": 0.3275,
+     "meets_min_num": true
+    }
+   },
+   "hv_adj_pe_pct": {
+    "n_group": 70,
+    "n_wins": 52,
+    "wins_inside_P_quality": 52,
+    "wins_share_inside_P_quality": 1.0,
+    "wins_not_shrinking": 47,
+    "wins_not_thin(known)": 42,
+    "wins_thin_unknown": 6,
+    "wins_irr_ge_70": 11,
+    "wins_irr_unknown": 28,
+    "wins_inside_all_existing_gates": 37,
+    "share_explained_by_existing_gates": 0.7115,
+    "over_70pct_line": true,
+    "excess_over_population_share": 0.034,
+    "within_gate_passers_relift": {
+     "n_pass_gates": 187,
+     "n_group": 47,
+     "numerator": 37,
+     "p_group": 0.7872,
+     "p_base": 0.4385,
+     "lift": 0.3487,
+     "meets_min_num": true
+    }
+   },
+   "hv_pe_z": {
+    "n_group": 70,
+    "n_wins": 51,
+    "wins_inside_P_quality": 51,
+    "wins_share_inside_P_quality": 1.0,
+    "wins_not_shrinking": 47,
+    "wins_not_thin(known)": 39,
+    "wins_thin_unknown": 8,
+    "wins_irr_ge_70": 11,
+    "wins_irr_unknown": 28,
+    "wins_inside_all_existing_gates": 35,
+    "share_explained_by_existing_gates": 0.6863,
+    "over_70pct_line": false,
+    "excess_over_population_share": 0.0087,
+    "within_gate_passers_relift": {
+     "n_pass_gates": 187,
+     "n_group": 47,
+     "numerator": 37,
+     "p_group": 0.7872,
+     "p_base": 0.4385,
+     "lift": 0.3487,
+     "meets_min_num": true
+    }
+   },
+   "per": {
+    "n_group": 66,
+    "n_wins": 44,
+    "wins_inside_P_quality": 44,
+    "wins_share_inside_P_quality": 1.0,
+    "wins_not_shrinking": 43,
+    "wins_not_thin(known)": 31,
+    "wins_thin_unknown": 8,
+    "wins_irr_ge_70": 14,
+    "wins_irr_unknown": 17,
+    "wins_inside_all_existing_gates": 30,
+    "share_explained_by_existing_gates": 0.6818,
+    "over_70pct_line": false,
+    "excess_over_population_share": 0.0043,
+    "within_gate_passers_relift": {
+     "n_pass_gates": 179,
+     "n_group": 45,
+     "numerator": 33,
+     "p_group": 0.7333,
+     "p_base": 0.4246,
+     "lift": 0.3088,
+     "meets_min_num": true
+    }
+   }
+  },
+  "baseline": {
+   "n_pop": 276,
+   "pop_share_inside_all_existing_gates": 0.6775,
+   "components": {
+    "P_quality": 1.0,
+    "not_shrinking": 0.9457,
+    "intcov_known": 0.8152,
+    "intcov_known_and_ge3": 0.7174
+   },
+   "why_this_matters": "母集団の 72% が既に関門の内側なら、群の成功社の 72% が内側でも**それは基準率であって説明ではない**。差（群の割合 − 母集団の割合）を見る"
+  },
+  "structural_note": "C_all は**定義上すべて質実証プールの部分集合**（分解の pool_def）。したがって『質実証で説明される』は 100% で、これは発見ではなく母集団の定義。循環でない読みは within_gate_passers_relift（関門を通った行だけでもう一度測る）のほう"
+ },
+ "S1_mechanism": {
+  "question": "自己相対PERが高い＝**入口の利益が自分の履歴に対して低い**（分母が一時的に沈んでいる）。y_biz は ln(出口EPS/入口EPS)＝**同じ入口EPSを分母に持つ**。予測変数と目的変数が分母を共有していれば、これは事業の質の発見ではなく恒等式の影",
+  "by_vintage": {
+   "2013": {
+    "n": 92,
+    "hv_pe_pct": {
+     "n": 92,
+     "rho_biz(事業)": 0.2451,
+     "rho_mult(倍率)": -0.369,
+     "rho_tr(総リターン)": 0.0242,
+     "se_approx": 0.1048,
+     "group_vs_rest": {
+      "pre_entry_3y_EPS成長_中央値_群": 0.045,
+      "pre_entry_3y_EPS成長_中央値_群外": 0.1539,
+      "入口PER_中央値_群": 20.74,
+      "入口PER_中央値_群外": 17.395,
+      "読み": "群の入口EPS成長が群外より低いなら、高い自己相対PERの正体は『分母が沈んでいる』"
+     }
+    },
+    "hv_adj_pe_pct": {
+     "n": 92,
+     "rho_biz(事業)": 0.2299,
+     "rho_mult(倍率)": -0.3635,
+     "rho_tr(総リターン)": -0.0009,
+     "se_approx": 0.1048,
+     "group_vs_rest": {
+      "pre_entry_3y_EPS成長_中央値_群": 0.045,
+      "pre_entry_3y_EPS成長_中央値_群外": 0.1497,
+      "入口PER_中央値_群": 21.535,
+      "入口PER_中央値_群外": 17.085,
+      "読み": "群の入口EPS成長が群外より低いなら、高い自己相対PERの正体は『分母が沈んでいる』"
+     }
+    },
+    "hv_pe_z": {
+     "n": 92,
+     "rho_biz(事業)": 0.2728,
+     "rho_mult(倍率)": -0.3472,
+     "rho_tr(総リターン)": 0.0627,
+     "se_approx": 0.1048,
+     "group_vs_rest": {
+      "pre_entry_3y_EPS成長_中央値_群": 0.045,
+      "pre_entry_3y_EPS成長_中央値_群外": 0.1539,
+      "入口PER_中央値_群": 20.74,
+      "入口PER_中央値_群外": 17.37,
+      "読み": "群の入口EPS成長が群外より低いなら、高い自己相対PERの正体は『分母が沈んでいる』"
+     }
+    },
+    "per": {
+     "n": 88,
+     "rho_biz(事業)": 0.4446,
+     "rho_mult(倍率)": -0.5803,
+     "rho_tr(総リターン)": -0.0499,
+     "se_approx": 0.1072,
+     "group_vs_rest": {
+      "pre_entry_3y_EPS成長_中央値_群": 0.143,
+      "pre_entry_3y_EPS成長_中央値_群外": 0.1385,
+      "入口PER_中央値_群": 31.0,
+      "入口PER_中央値_群外": 17.12,
+      "読み": "群の入口EPS成長が群外より低いなら、高い自己相対PERの正体は『分母が沈んでいる』"
+     }
+    }
+   },
+   "2015": {
+    "n": 320,
+    "hv_pe_pct": {
+     "n": 320,
+     "rho_biz(事業)": 0.2355,
+     "rho_mult(倍率)": -0.2799,
+     "rho_tr(総リターン)": -0.039,
+     "se_approx": 0.056,
+     "group_vs_rest": {
+      "pre_entry_3y_EPS成長_中央値_群": 0.0431,
+      "pre_entry_3y_EPS成長_中央値_群外": 0.1079,
+      "入口PER_中央値_群": 28.54,
+      "入口PER_中央値_群外": 20.63,
+      "読み": "群の入口EPS成長が群外より低いなら、高い自己相対PERの正体は『分母が沈んでいる』"
+     }
+    },
+    "hv_adj_pe_pct": {
+     "n": 320,
+     "rho_biz(事業)": 0.2143,
+     "rho_mult(倍率)": -0.2759,
+     "rho_tr(総リターン)": -0.0742,
+     "se_approx": 0.056,
+     "group_vs_rest": {
+      "pre_entry_3y_EPS成長_中央値_群": 0.004,
+      "pre_entry_3y_EPS成長_中央値_群外": 0.1111,
+      "入口PER_中央値_群": 30.86,
+      "入口PER_中央値_群外": 20.94,
+      "読み": "群の入口EPS成長が群外より低いなら、高い自己相対PERの正体は『分母が沈んでいる』"
+     }
+    },
+    "hv_pe_z": {
+     "n": 320,
+     "rho_biz(事業)": 0.2302,
+     "rho_mult(倍率)": -0.2751,
+     "rho_tr(総リターン)": -0.0346,
+     "se_approx": 0.056,
+     "group_vs_rest": {
+      "pre_entry_3y_EPS成長_中央値_群": 0.0369,
+      "pre_entry_3y_EPS成長_中央値_群外": 0.1111,
+      "入口PER_中央値_群": 30.06,
+      "入口PER_中央値_群外": 20.63,
+      "読み": "群の入口EPS成長が群外より低いなら、高い自己相対PERの正体は『分母が沈んでいる』"
+     }
+    },
+    "per": {
+     "n": 59,
+     "rho_biz(事業)": 0.3881,
+     "rho_mult(倍率)": -0.3407,
+     "rho_tr(総リターン)": 0.1143,
+     "se_approx": 0.1313,
+     "group_vs_rest": {
+      "pre_entry_3y_EPS成長_中央値_群": 0.0923,
+      "pre_entry_3y_EPS成長_中央値_群外": 0.1311,
+      "入口PER_中央値_群": 32.08,
+      "入口PER_中央値_群外": 19.935,
+      "読み": "群の入口EPS成長が群外より低いなら、高い自己相対PERの正体は『分母が沈んでいる』"
+     }
+    }
+   },
+   "2018": {
+    "n": 276,
+    "hv_pe_pct": {
+     "n": 276,
+     "rho_biz(事業)": 0.494,
+     "rho_mult(倍率)": -0.4334,
+     "rho_tr(総リターン)": 0.0654,
+     "se_approx": 0.0603,
+     "group_vs_rest": {
+      "pre_entry_3y_EPS成長_中央値_群": -0.0764,
+      "pre_entry_3y_EPS成長_中央値_群外": 0.155,
+      "入口PER_中央値_群": 39.83,
+      "入口PER_中央値_群外": 21.26,
+      "読み": "群の入口EPS成長が群外より低いなら、高い自己相対PERの正体は『分母が沈んでいる』"
+     }
+    },
+    "hv_adj_pe_pct": {
+     "n": 276,
+     "rho_biz(事業)": 0.4936,
+     "rho_mult(倍率)": -0.4428,
+     "rho_tr(総リターン)": 0.0618,
+     "se_approx": 0.0603,
+     "group_vs_rest": {
+      "pre_entry_3y_EPS成長_中央値_群": -0.0956,
+      "pre_entry_3y_EPS成長_中央値_群外": 0.1529,
+      "入口PER_中央値_群": 44.225,
+      "入口PER_中央値_群外": 21.26,
+      "読み": "群の入口EPS成長が群外より低いなら、高い自己相対PERの正体は『分母が沈んでいる』"
+     }
+    },
+    "hv_pe_z": {
+     "n": 276,
+     "rho_biz(事業)": 0.4935,
+     "rho_mult(倍率)": -0.4263,
+     "rho_tr(総リターン)": 0.0688,
+     "se_approx": 0.0603,
+     "group_vs_rest": {
+      "pre_entry_3y_EPS成長_中央値_群": -0.0917,
+      "pre_entry_3y_EPS成長_中央値_群外": 0.1543,
+      "入口PER_中央値_群": 43.295,
+      "入口PER_中央値_群外": 21.26,
+      "読み": "群の入口EPS成長が群外より低いなら、高い自己相対PERの正体は『分母が沈んでいる』"
+     }
+    },
+    "per": {
+     "n": 262,
+     "rho_biz(事業)": 0.4265,
+     "rho_mult(倍率)": -0.4032,
+     "rho_tr(総リターン)": -0.0003,
+     "se_approx": 0.0619,
+     "group_vs_rest": {
+      "pre_entry_3y_EPS成長_中央値_群": 0.0532,
+      "pre_entry_3y_EPS成長_中央値_群外": 0.1332,
+      "入口PER_中央値_群": 45.965,
+      "入口PER_中央値_群外": 21.26,
+      "読み": "群の入口EPS成長が群外より低いなら、高い自己相対PERの正体は『分母が沈んでいる』"
+     }
+    }
+   }
+  }
+ },
+ "S2S3_other_targets": {
+  "note": "同じ群・同じ切り方で目的だけ替える。y10（総リターン10%+）で消えるなら、事業側の lift は倍率側で相殺されている",
+  "hv_pe_pct": {
+   "y_biz": {
+    "n_group": 70,
+    "numerator": 50,
+    "p_group": 0.7143,
+    "p_base": 0.4384,
+    "lift": 0.2759
+   },
+   "y10": {
+    "n_group": 70,
+    "numerator": 39,
+    "p_group": 0.5571,
+    "p_base": 0.4529,
+    "lift": 0.1042
+   },
+   "y_mult_pos": {
+    "n_group": 70,
+    "numerator": 19,
+    "p_group": 0.2714,
+    "p_base": 0.5217,
+    "lift": -0.2503
+   },
+   "y_biz_w": {
+    "n_group": 70,
+    "numerator": 50,
+    "p_group": 0.7143,
+    "p_base": 0.4239,
+    "lift": 0.2904
+   },
+   "_cancellation": 0.9072
+  },
+  "hv_adj_pe_pct": {
+   "y_biz": {
+    "n_group": 70,
+    "numerator": 52,
+    "p_group": 0.7429,
+    "p_base": 0.4384,
+    "lift": 0.3045
+   },
+   "y10": {
+    "n_group": 70,
+    "numerator": 39,
+    "p_group": 0.5571,
+    "p_base": 0.4529,
+    "lift": 0.1042
+   },
+   "y_mult_pos": {
+    "n_group": 70,
+    "numerator": 17,
+    "p_group": 0.2429,
+    "p_base": 0.5217,
+    "lift": -0.2789
+   },
+   "y_biz_w": {
+    "n_group": 70,
+    "numerator": 52,
+    "p_group": 0.7429,
+    "p_base": 0.4239,
+    "lift": 0.3189
+   },
+   "_cancellation": 0.9159
+  },
+  "hv_pe_z": {
+   "y_biz": {
+    "n_group": 70,
+    "numerator": 51,
+    "p_group": 0.7286,
+    "p_base": 0.4384,
+    "lift": 0.2902
+   },
+   "y10": {
+    "n_group": 70,
+    "numerator": 38,
+    "p_group": 0.5429,
+    "p_base": 0.4529,
+    "lift": 0.09
+   },
+   "y_mult_pos": {
+    "n_group": 70,
+    "numerator": 20,
+    "p_group": 0.2857,
+    "p_base": 0.5217,
+    "lift": -0.236
+   },
+   "y_biz_w": {
+    "n_group": 70,
+    "numerator": 51,
+    "p_group": 0.7286,
+    "p_base": 0.4239,
+    "lift": 0.3047
+   },
+   "_cancellation": 0.8132
+  },
+  "per": {
+   "y_biz": {
+    "n_group": 66,
+    "numerator": 44,
+    "p_group": 0.6667,
+    "p_base": 0.4384,
+    "lift": 0.2283
+   },
+   "y10": {
+    "n_group": 66,
+    "numerator": 31,
+    "p_group": 0.4697,
+    "p_base": 0.4529,
+    "lift": 0.0168
+   },
+   "y_mult_pos": {
+    "n_group": 66,
+    "numerator": 21,
+    "p_group": 0.3182,
+    "p_base": 0.5217,
+    "lift": -0.2036
+   },
+   "y_biz_w": {
+    "n_group": 66,
+    "numerator": 43,
+    "p_group": 0.6515,
+    "p_base": 0.4239,
+    "lift": 0.2276
+   },
+   "_cancellation": 0.8918
+  }
+ },
+ "S4_population_hole": {
+  "2013": {
+   "dropped_n": 11,
+   "kept_n": 92,
+   "kept_tr_med": 0.107,
+   "dropped_tr_med": 0.0127,
+   "reasons": {
+    "出口の純利益が正でない（PERが定義できない＝赤字転落）": 9,
+    "出口の発行済株数が取れない（時価総額が作れない）": 2
+   },
+   "dropped_with_entry_pe_pct": 11,
+   "dropped_in_top_quartile_of_kept": 3,
+   "top_quartile_share_among_dropped": 0.2727,
+   "top_quartile_share_among_kept": 0.2609,
+   "bracket_lift_upper(落ちた社を全部成功と置く)": 0.1751,
+   "bracket_lift_lower(落ちた社を全部失敗と置く)": 0.1708,
+   "which_is_defensible": "下端。落ちた社の大半は**出口の純利益が正でない**＝利益は伸びていない。『事業が+10%/年で複利した』の側には入りようがない。ただし ln が定義できないので厳密には判定不能＝だから挟み込みで出す"
+  },
+  "2015": {
+   "dropped_n": 48,
+   "kept_n": 320,
+   "kept_tr_med": 0.0975,
+   "dropped_tr_med": -0.0226,
+   "reasons": {
+    "出口の純利益が正でない（PERが定義できない＝赤字転落）": 44,
+    "出口の発行済株数が取れない（時価総額が作れない）": 4
+   },
+   "dropped_with_entry_pe_pct": 40,
+   "dropped_in_top_quartile_of_kept": 9,
+   "top_quartile_share_among_dropped": 0.225,
+   "top_quartile_share_among_kept": 0.2594,
+   "bracket_lift_upper(落ちた社を全部成功と置く)": 0.1365,
+   "bracket_lift_lower(落ちた社を全部失敗と置く)": 0.1498,
+   "which_is_defensible": "下端。落ちた社の大半は**出口の純利益が正でない**＝利益は伸びていない。『事業が+10%/年で複利した』の側には入りようがない。ただし ln が定義できないので厳密には判定不能＝だから挟み込みで出す"
+  },
+  "2018": {
+   "dropped_n": 43,
+   "kept_n": 276,
+   "kept_tr_med": 0.0876,
+   "dropped_tr_med": -0.0486,
+   "reasons": {
+    "出口の純利益が正でない（PERが定義できない＝赤字転落）": 39,
+    "出口の発行済株数が取れない（時価総額が作れない）": 4
+   },
+   "dropped_with_entry_pe_pct": 40,
+   "dropped_in_top_quartile_of_kept": 8,
+   "top_quartile_share_among_dropped": 0.2,
+   "top_quartile_share_among_kept": 0.2536,
+   "bracket_lift_upper(落ちた社を全部成功と置く)": 0.2341,
+   "bracket_lift_lower(落ちた社を全部失敗と置く)": 0.2581,
+   "which_is_defensible": "下端。落ちた社の大半は**出口の純利益が正でない**＝利益は伸びていない。『事業が+10%/年で複利した』の側には入りようがない。ただし ln が定義できないので厳密には判定不能＝だから挟み込みで出す"
+  }
+ },
+ "S6_circularity": {
+  "question": "y_biz = ln(出口EPS/入口EPS)。自己相対PERの分母も**同じ入口EPS**。入口EPSが一時的に沈んでいる社は (i)自己相対PERが高く (ii)出口EPS/入口EPS が大きい——これは事業の質ではなく**同じ分母を二度使っているだけ**ではないか",
+  "a_denominator_swap": {
+   "note": "分母が EPS でない自己相対倍率（売上・FCF）でも同じ lift が出るなら『割高/割安』という経済的な概念が効いている。EPS 分母のときだけ出るなら分母の共有が正体",
+   "cells": {
+    "hv_pe_pct": {
+     "分母": "入口EPS（y_biz と共有）",
+     "y_biz": {
+      "n_measurable": 276,
+      "n_group": 70,
+      "numerator": 50,
+      "p_group": 0.7143,
+      "p_base": 0.4384,
+      "lift": 0.2759
+     },
+     "y10": {
+      "n_measurable": 276,
+      "n_group": 70,
+      "numerator": 39,
+      "p_group": 0.5571,
+      "p_base": 0.4529,
+      "lift": 0.1042
+     }
+    },
+    "hv_adj_pe_pct": {
+     "分母": "入口EPS（y_biz と共有）",
+     "y_biz": {
+      "n_measurable": 276,
+      "n_group": 70,
+      "numerator": 52,
+      "p_group": 0.7429,
+      "p_base": 0.4384,
+      "lift": 0.3045
+     },
+     "y10": {
+      "n_measurable": 276,
+      "n_group": 70,
+      "numerator": 39,
+      "p_group": 0.5571,
+      "p_base": 0.4529,
+      "lift": 0.1042
+     }
+    },
+    "hv_pe_z": {
+     "分母": "入口EPS（y_biz と共有）",
+     "y_biz": {
+      "n_measurable": 276,
+      "n_group": 70,
+      "numerator": 51,
+      "p_group": 0.7286,
+      "p_base": 0.4384,
+      "lift": 0.2902
+     },
+     "y10": {
+      "n_measurable": 276,
+      "n_group": 70,
+      "numerator": 38,
+      "p_group": 0.5429,
+      "p_base": 0.4529,
+      "lift": 0.09
+     }
+    },
+    "per": {
+     "分母": "入口EPS（y_biz と共有）",
+     "y_biz": {
+      "n_measurable": 262,
+      "n_group": 66,
+      "numerator": 44,
+      "p_group": 0.6667,
+      "p_base": 0.4384,
+      "lift": 0.2283
+     },
+     "y10": {
+      "n_measurable": 262,
+      "n_group": 66,
+      "numerator": 31,
+      "p_group": 0.4697,
+      "p_base": 0.4529,
+      "lift": 0.0168
+     }
+    },
+    "hv_ps_pct": {
+     "分母": "売上（共有しない）",
+     "y_biz": {
+      "n_measurable": 260,
+      "n_group": 66,
+      "numerator": 36,
+      "p_group": 0.5455,
+      "p_base": 0.4384,
+      "lift": 0.107
+     },
+     "y10": {
+      "n_measurable": 260,
+      "n_group": 66,
+      "numerator": 33,
+      "p_group": 0.5,
+      "p_base": 0.4529,
+      "lift": 0.0471
+     }
+    },
+    "hv_pfcf_pct": {
+     "分母": "FCF（共有しない）",
+     "y_biz": {
+      "n_measurable": 253,
+      "n_group": 64,
+      "numerator": 35,
+      "p_group": 0.5469,
+      "p_base": 0.4384,
+      "lift": 0.1085
+     },
+     "y10": {
+      "n_measurable": 253,
+      "n_group": 64,
+      "numerator": 29,
+      "p_group": 0.4531,
+      "p_base": 0.4529,
+      "lift": 0.0002
+     }
+    },
+    "hv_ps_z": {
+     "分母": "売上（共有しない）",
+     "y_biz": {
+      "n_measurable": 263,
+      "n_group": 66,
+      "numerator": 36,
+      "p_group": 0.5455,
+      "p_base": 0.4384,
+      "lift": 0.107
+     },
+     "y10": {
+      "n_measurable": 263,
+      "n_group": 66,
+      "numerator": 35,
+      "p_group": 0.5303,
+      "p_base": 0.4529,
+      "lift": 0.0774
+     }
+    }
+   }
+  },
+  "b_condition_on_entry_eps_slump": {
+   "note": "入口前3年のEPS成長（g_eps3_pre）で層別。**沈み具合を揃えても** PER の lift が残るか。消えるなら PER は平均回帰の影",
+   "strata_bounds": {
+    "q25": -0.019738,
+    "q50": 0.119399,
+    "q75": 0.227653
+   },
+   "cells": {
+    "hv_pe_pct": {
+     "status": "測定",
+     "n": 269,
+     "crude_lift_vs_measurable": 0.2856,
+     "mh_risk_diff": 0.3319,
+     "strata_used": 3,
+     "rows_covered": 202,
+     "detail": [
+      {
+       "stratum": "Q1(最も沈んでいる)",
+       "n_group": 41,
+       "n_out": 27,
+       "p_group": 0.7317,
+       "p_out": 0.4444,
+       "risk_diff": 0.2873
+      },
+      {
+       "stratum": "Q2",
+       "n_group": 16,
+       "n_out": 51,
+       "p_group": 0.75,
+       "p_out": 0.3725,
+       "risk_diff": 0.3775
+      },
+      {
+       "stratum": "Q3",
+       "n_group": 11,
+       "n_out": 56,
+       "p_group": 0.6364,
+       "p_out": 0.2857,
+       "risk_diff": 0.3506
+      }
+     ]
+    },
+    "hv_adj_pe_pct": {
+     "status": "測定",
+     "n": 269,
+     "crude_lift_vs_measurable": 0.3151,
+     "mh_risk_diff": 0.3773,
+     "strata_used": 4,
+     "rows_covered": 269,
+     "detail": [
+      {
+       "stratum": "Q1(最も沈んでいる)",
+       "n_group": 40,
+       "n_out": 28,
+       "p_group": 0.75,
+       "p_out": 0.4286,
+       "risk_diff": 0.3214
+      },
+      {
+       "stratum": "Q2",
+       "n_group": 17,
+       "n_out": 50,
+       "p_group": 0.7059,
+       "p_out": 0.38,
+       "risk_diff": 0.3259
+      },
+      {
+       "stratum": "Q3",
+       "n_group": 8,
+       "n_out": 59,
+       "p_group": 0.75,
+       "p_out": 0.2881,
+       "risk_diff": 0.4619
+      },
+      {
+       "stratum": "Q4(最も伸びていた)",
+       "n_group": 3,
+       "n_out": 64,
+       "p_group": 1.0,
+       "p_out": 0.2812,
+       "risk_diff": 0.7188
+      }
+     ]
+    },
+    "hv_pe_z": {
+     "status": "測定",
+     "n": 269,
+     "crude_lift_vs_measurable": 0.3003,
+     "mh_risk_diff": 0.3542,
+     "strata_used": 3,
+     "rows_covered": 202,
+     "detail": [
+      {
+       "stratum": "Q1(最も沈んでいる)",
+       "n_group": 40,
+       "n_out": 28,
+       "p_group": 0.75,
+       "p_out": 0.4286,
+       "risk_diff": 0.3214
+      },
+      {
+       "stratum": "Q2",
+       "n_group": 19,
+       "n_out": 48,
+       "p_group": 0.6842,
+       "p_out": 0.375,
+       "risk_diff": 0.3092
+      },
+      {
+       "stratum": "Q3",
+       "n_group": 9,
+       "n_out": 58,
+       "p_group": 0.7778,
+       "p_out": 0.2759,
+       "risk_diff": 0.5019
+      }
+     ]
+    },
+    "per": {
+     "status": "測定",
+     "n": 257,
+     "crude_lift_vs_measurable": 0.2374,
+     "mh_risk_diff": 0.2864,
+     "strata_used": 4,
+     "rows_covered": 257,
+     "detail": [
+      {
+       "stratum": "Q1(最も沈んでいる)",
+       "n_group": 22,
+       "n_out": 43,
+       "p_group": 0.6818,
+       "p_out": 0.5581,
+       "risk_diff": 0.1237
+      },
+      {
+       "stratum": "Q2",
+       "n_group": 19,
+       "n_out": 46,
+       "p_group": 0.6842,
+       "p_out": 0.3478,
+       "risk_diff": 0.3364
+      },
+      {
+       "stratum": "Q3",
+       "n_group": 12,
+       "n_out": 53,
+       "p_group": 0.5833,
+       "p_out": 0.3019,
+       "risk_diff": 0.2814
+      },
+      {
+       "stratum": "Q4(最も伸びていた)",
+       "n_group": 12,
+       "n_out": 50,
+       "p_group": 0.6667,
+       "p_out": 0.2,
+       "risk_diff": 0.4667
+      }
+     ]
+    },
+    "hv_ps_pct": {
+     "status": "測定",
+     "n": 253,
+     "crude_lift_vs_measurable": 0.0764,
+     "mh_risk_diff": 0.1707,
+     "strata_used": 4,
+     "rows_covered": 253,
+     "detail": [
+      {
+       "stratum": "Q1(最も沈んでいる)",
+       "n_group": 9,
+       "n_out": 57,
+       "p_group": 1.0,
+       "p_out": 0.5614,
+       "risk_diff": 0.4386
+      },
+      {
+       "stratum": "Q2",
+       "n_group": 11,
+       "n_out": 52,
+       "p_group": 0.4545,
+       "p_out": 0.4615,
+       "risk_diff": -0.007
+      },
+      {
+       "stratum": "Q3",
+       "n_group": 25,
+       "n_out": 39,
+       "p_group": 0.52,
+       "p_out": 0.2308,
+       "risk_diff": 0.2892
+      },
+      {
+       "stratum": "Q4(最も伸びていた)",
+       "n_group": 20,
+       "n_out": 40,
+       "p_group": 0.35,
+       "p_out": 0.35,
+       "risk_diff": 0.0
+      }
+     ]
+    },
+    "hv_pfcf_pct": {
+     "status": "測定",
+     "n": 247,
+     "crude_lift_vs_measurable": 0.1192,
+     "mh_risk_diff": 0.1307,
+     "strata_used": 4,
+     "rows_covered": 247,
+     "detail": [
+      {
+       "stratum": "Q1(最も沈んでいる)",
+       "n_group": 20,
+       "n_out": 41,
+       "p_group": 0.85,
+       "p_out": 0.5366,
+       "risk_diff": 0.3134
+      },
+      {
+       "stratum": "Q2",
+       "n_group": 15,
+       "n_out": 47,
+       "p_group": 0.4667,
+       "p_out": 0.4681,
+       "risk_diff": -0.0014
+      },
+      {
+       "stratum": "Q3",
+       "n_group": 19,
+       "n_out": 43,
+       "p_group": 0.4211,
+       "p_out": 0.3256,
+       "risk_diff": 0.0955
+      },
+      {
+       "stratum": "Q4(最も伸びていた)",
+       "n_group": 8,
+       "n_out": 54,
+       "p_group": 0.375,
+       "p_out": 0.3148,
+       "risk_diff": 0.0602
+      }
+     ]
+    },
+    "hv_ps_z": {
+     "status": "測定",
+     "n": 256,
+     "crude_lift_vs_measurable": 0.0931,
+     "mh_risk_diff": 0.1848,
+     "strata_used": 4,
+     "rows_covered": 256,
+     "detail": [
+      {
+       "stratum": "Q1(最も沈んでいる)",
+       "n_group": 11,
+       "n_out": 55,
+       "p_group": 0.9091,
+       "p_out": 0.5636,
+       "risk_diff": 0.3455
+      },
+      {
+       "stratum": "Q2",
+       "n_group": 9,
+       "n_out": 54,
+       "p_group": 0.4444,
+       "p_out": 0.463,
+       "risk_diff": -0.0185
+      },
+      {
+       "stratum": "Q3",
+       "n_group": 21,
+       "n_out": 44,
+       "p_group": 0.5238,
+       "p_out": 0.2727,
+       "risk_diff": 0.2511
+      },
+      {
+       "stratum": "Q4(最も伸びていた)",
+       "n_group": 24,
+       "n_out": 38,
+       "p_group": 0.4167,
+       "p_out": 0.2895,
+       "risk_diff": 0.1272
+      }
+     ]
+    }
+   }
+  },
+  "c_entry_vs_exit_PER_level": {
+   "hv_pe_pct": {
+    "入口PER_群": 39.83,
+    "入口PER_群外": 21.26,
+    "出口PER_群": 26.895,
+    "出口PER_群外": 23.915,
+    "入口前3年EPS成長_群": -0.0764,
+    "入口前3年EPS成長_群外": 0.155,
+    "入口前3年売上成長_群": 0.0495,
+    "入口前3年売上成長_群外": 0.0548,
+    "読み": "出口PERがほぼ同じで入口PERだけ違うなら、事業の寄与の差は『入口の分母が沈んでいた』ことの裏返しにすぎない"
+   },
+   "hv_adj_pe_pct": {
+    "入口PER_群": 44.225,
+    "入口PER_群外": 21.26,
+    "出口PER_群": 28.43,
+    "出口PER_群外": 23.575,
+    "入口前3年EPS成長_群": -0.0956,
+    "入口前3年EPS成長_群外": 0.1529,
+    "入口前3年売上成長_群": 0.0648,
+    "入口前3年売上成長_群外": 0.0506,
+    "読み": "出口PERがほぼ同じで入口PERだけ違うなら、事業の寄与の差は『入口の分母が沈んでいた』ことの裏返しにすぎない"
+   },
+   "hv_pe_z": {
+    "入口PER_群": 43.295,
+    "入口PER_群外": 21.26,
+    "出口PER_群": 27.68,
+    "出口PER_群外": 23.755,
+    "入口前3年EPS成長_群": -0.0917,
+    "入口前3年EPS成長_群外": 0.1543,
+    "入口前3年売上成長_群": 0.054,
+    "入口前3年売上成長_群外": 0.0533,
+    "読み": "出口PERがほぼ同じで入口PERだけ違うなら、事業の寄与の差は『入口の分母が沈んでいた』ことの裏返しにすぎない"
+   },
+   "per": {
+    "入口PER_群": 45.965,
+    "入口PER_群外": 21.26,
+    "出口PER_群": 31.77,
+    "出口PER_群外": 22.82,
+    "入口前3年EPS成長_群": 0.0532,
+    "入口前3年EPS成長_群外": 0.1332,
+    "入口前3年売上成長_群": 0.0843,
+    "入口前3年売上成長_群外": 0.0414,
+    "読み": "出口PERがほぼ同じで入口PERだけ違うなら、事業の寄与の差は『入口の分母が沈んでいた』ことの裏返しにすぎない"
+   }
+  },
+  "d_who_predicts_what": {
+   "note": "PER を使わずに『入口前のEPS成長が低い』を直接の指標にしたら何が起きるか",
+   "g_eps3_pre_下位1/4 → y_biz": {
+    "n_measurable": 269,
+    "n_group": 68,
+    "numerator": 42,
+    "p_group": 0.6176,
+    "p_base": 0.4384,
+    "lift": 0.1792
+   },
+   "g_eps3_pre_下位1/4 → y10": {
+    "n_measurable": 269,
+    "n_group": 68,
+    "numerator": 31,
+    "p_group": 0.4559,
+    "p_base": 0.4529,
+    "lift": 0.003
+   },
+   "g_eps3_pre_下位1/4 → y_mult_pos": {
+    "n_measurable": 269,
+    "n_group": 68,
+    "numerator": 20,
+    "p_group": 0.2941,
+    "p_base": 0.5217,
+    "lift": -0.2276
+   },
+   "PERをg_eps3_preで層別した後のMH": {
+    "status": "測定",
+    "n": 269,
+    "crude_lift_vs_measurable": 0.3151,
+    "mh_risk_diff": 0.3773,
+    "strata_used": 4,
+    "rows_covered": 269,
+    "detail": [
+     {
+      "stratum": "Q1(最も沈んでいる)",
+      "n_group": 40,
+      "n_out": 28,
+      "p_group": 0.75,
+      "p_out": 0.4286,
+      "risk_diff": 0.3214
+     },
+     {
+      "stratum": "Q2",
+      "n_group": 17,
+      "n_out": 50,
+      "p_group": 0.7059,
+      "p_out": 0.38,
+      "risk_diff": 0.3259
+     },
+     {
+      "stratum": "Q3",
+      "n_group": 8,
+      "n_out": 59,
+      "p_group": 0.75,
+      "p_out": 0.2881,
+      "risk_diff": 0.4619
+     },
+     {
+      "stratum": "Q4(最も伸びていた)",
+      "n_group": 3,
+      "n_out": 64,
+      "p_group": 1.0,
+      "p_out": 0.2812,
+      "risk_diff": 0.7188
+     }
+    ]
+   },
+   "g_eps3_preをPERで層別した後のMH": {
+    "status": "測定",
+    "n": 269,
+    "crude_lift_vs_measurable": 0.1827,
+    "mh_risk_diff": 0.0692,
+    "strata_used": 2,
+    "rows_covered": 269,
+    "detail": [
+     {
+      "stratum": "低",
+      "n_group": 28,
+      "n_out": 173,
+      "p_group": 0.4286,
+      "p_out": 0.3121,
+      "risk_diff": 0.1164
+     },
+     {
+      "stratum": "高",
+      "n_group": 40,
+      "n_out": 28,
+      "p_group": 0.75,
+      "p_out": 0.75,
+      "risk_diff": 0.0
+     }
+    ]
+   }
+  }
+ },
+ "S8_identity_decomposition": {
+  "identity": "**window 基準でだけ恒等式が閉じる**: tr = mult_w + biz_w + div + resid_w （実測 最大誤差 1.5e-06）。signal 基準は tr−(mult+biz+div) の中央値が 0.0065 ・最大 0.205 で閉じない＝加法の話は window 基準でしかしてはいけない",
+  "note_target_basis": "目的変数 y_biz は signal 基準（在庫の主表）だが、window 基準の y_biz_w でも lift は 0.31 前後で変わらない（S2 参照）",
+  "by_variable": {
+   "hv_pe_pct": {
+    "n_group": 70,
+    "n_rest": 206,
+    "n_measured": 276,
+    "平均_倍率_群": -0.0689,
+    "平均_倍率_群外": 0.0144,
+    "Δ平均_倍率": -0.0833,
+    "平均_事業_群": 0.144,
+    "平均_事業_群外": 0.0428,
+    "Δ平均_事業": 0.1012,
+    "平均_分配_群": 0.0151,
+    "平均_分配_群外": 0.0198,
+    "Δ平均_分配": -0.0047,
+    "平均_残差_群": -0.0007,
+    "平均_残差_群外": 0.0006,
+    "Δ平均_残差": -0.0013,
+    "平均_総_群": 0.0896,
+    "平均_総_群外": 0.0776,
+    "Δ平均_総": 0.0119,
+    "加法の検算(Δ倍率+Δ事業+Δ分配+Δ残差)": 0.0119,
+    "加法の誤差": 0.0,
+    "相殺率": 0.8231,
+    "中央値_総_群": 0.0997,
+    "中央値_総_群外": 0.0767,
+    "読み": "Δ事業 と Δ倍率 がほぼ同じ大きさで逆符号なら、『高い自己相対PERは事業の複利を予言する』と『高い自己相対PERは倍率の縮小を予言する』は**恒等式の中では同じ一つの事実**。倍率の平均回帰はこの台帳が既に測って記録している"
+   },
+   "hv_adj_pe_pct": {
+    "n_group": 70,
+    "n_rest": 206,
+    "n_measured": 276,
+    "平均_倍率_群": -0.0676,
+    "平均_倍率_群外": 0.014,
+    "Δ平均_倍率": -0.0815,
+    "平均_事業_群": 0.1407,
+    "平均_事業_群外": 0.0439,
+    "Δ平均_事業": 0.0967,
+    "平均_分配_群": 0.0148,
+    "平均_分配_群外": 0.0199,
+    "Δ平均_分配": -0.0052,
+    "平均_残差_群": -0.0004,
+    "平均_残差_群外": 0.0005,
+    "Δ平均_残差": -0.0009,
+    "平均_総_群": 0.0875,
+    "平均_総_群外": 0.0783,
+    "Δ平均_総": 0.0091,
+    "加法の検算(Δ倍率+Δ事業+Δ分配+Δ残差)": 0.0091,
+    "加法の誤差": 0.0,
+    "相殺率": 0.8428,
+    "中央値_総_群": 0.0997,
+    "中央値_総_群外": 0.0755,
+    "読み": "Δ事業 と Δ倍率 がほぼ同じ大きさで逆符号なら、『高い自己相対PERは事業の複利を予言する』と『高い自己相対PERは倍率の縮小を予言する』は**恒等式の中では同じ一つの事実**。倍率の平均回帰はこの台帳が既に測って記録している"
+   },
+   "hv_pe_z": {
+    "n_group": 70,
+    "n_rest": 206,
+    "n_measured": 276,
+    "平均_倍率_群": -0.0655,
+    "平均_倍率_群外": 0.0133,
+    "Δ平均_倍率": -0.0787,
+    "平均_事業_群": 0.139,
+    "平均_事業_群外": 0.0445,
+    "Δ平均_事業": 0.0945,
+    "平均_分配_群": 0.015,
+    "平均_分配_群外": 0.0198,
+    "Δ平均_分配": -0.0048,
+    "平均_残差_群": -0.0009,
+    "平均_残差_群外": 0.0007,
+    "Δ平均_残差": -0.0015,
+    "平均_総_群": 0.0877,
+    "平均_総_群外": 0.0783,
+    "Δ平均_総": 0.0094,
+    "加法の検算(Δ倍率+Δ事業+Δ分配+Δ残差)": 0.0095,
+    "加法の誤差": 0.0001,
+    "相殺率": 0.8328,
+    "中央値_総_群": 0.0995,
+    "中央値_総_群外": 0.0767,
+    "読み": "Δ事業 と Δ倍率 がほぼ同じ大きさで逆符号なら、『高い自己相対PERは事業の複利を予言する』と『高い自己相対PERは倍率の縮小を予言する』は**恒等式の中では同じ一つの事実**。倍率の平均回帰はこの台帳が既に測って記録している"
+   },
+   "per": {
+    "n_group": 66,
+    "n_rest": 196,
+    "n_measured": 262,
+    "平均_倍率_群": -0.0576,
+    "平均_倍率_群外": 0.0117,
+    "Δ平均_倍率": -0.0693,
+    "平均_事業_群": 0.1235,
+    "平均_事業_群外": 0.0473,
+    "Δ平均_事業": 0.0761,
+    "平均_分配_群": 0.0148,
+    "平均_分配_群外": 0.0198,
+    "Δ平均_分配": -0.005,
+    "平均_残差_群": 0.0006,
+    "平均_残差_群外": 0.0001,
+    "Δ平均_残差": 0.0005,
+    "平均_総_群": 0.0813,
+    "平均_総_群外": 0.079,
+    "Δ平均_総": 0.0023,
+    "加法の検算(Δ倍率+Δ事業+Δ分配+Δ残差)": 0.0023,
+    "加法の誤差": 0.0,
+    "相殺率": 0.9106,
+    "中央値_総_群": 0.0872,
+    "中央値_総_群外": 0.084,
+    "読み": "Δ事業 と Δ倍率 がほぼ同じ大きさで逆符号なら、『高い自己相対PERは事業の複利を予言する』と『高い自己相対PERは倍率の縮小を予言する』は**恒等式の中では同じ一つの事実**。倍率の平均回帰はこの台帳が既に測って記録している"
+   }
+  }
+ },
+ "S7_null_construction_matters": {
+  "fixed_design(結果ラベルだけ動かす)": {
+   "FPR_at_least_one_pass": 0.1525,
+   "p_of_observed_max": 0.001
+  },
+  "also_shuffle_analysis_set(探索側)": {
+   "FPR_at_least_one_pass": 0.415,
+   "p_of_observed_max": 0.0005
+  },
+  "observed": {
+   "max_abs_lift": 0.3045,
+   "n_passing_cells": 11,
+   "n_cells_in_procedure": 277,
+   "n_tickers_pool": 402
+  },
+  "reading": "探索側は**分析集合の所属ごと**入れ替える（A も動く）。すると群と母集団の交わりが縮み、小さい群で極端な lift が出やすくなる＝帰無分布が広がり FPR が上がる。設計を固定して結果ラベルだけ動かすのが標準の帰無（この台帳の hist_wd_verify_destroy と同じ作法）"
+ },
+ "★reversal": {
+  "R1_目的と予測変数が分母を共有している": {
+   "rho_biz_2018": 0.4936,
+   "rho_mult_2018": -0.4428,
+   "rho_tr_2018": 0.0618,
+   "se": 0.0603,
+   "群の入口前3年EPS成長": -0.0956,
+   "群外の入口前3年EPS成長": 0.1529
+  },
+  "R2_総リターンでは線を割る": {
+   "hv_pe_pct": {
+    "y_biz": 0.2759,
+    "y10": 0.1042,
+    "相殺": 0.9072
+   },
+   "hv_adj_pe_pct": {
+    "y_biz": 0.3045,
+    "y10": 0.1042,
+    "相殺": 0.9159
+   },
+   "hv_pe_z": {
+    "y_biz": 0.2902,
+    "y10": 0.09,
+    "相殺": 0.8132
+   },
+   "per": {
+    "y_biz": 0.2283,
+    "y10": 0.0168,
+    "相殺": 0.8918
+   }
+  },
+  "R3_分母を替えると消える": {
+   "hv_pe_pct": {
+    "y_biz_lift": 0.2759,
+    "分母": "入口EPS（y_biz と共有）"
+   },
+   "hv_adj_pe_pct": {
+    "y_biz_lift": 0.3045,
+    "分母": "入口EPS（y_biz と共有）"
+   },
+   "hv_pe_z": {
+    "y_biz_lift": 0.2902,
+    "分母": "入口EPS（y_biz と共有）"
+   },
+   "per": {
+    "y_biz_lift": 0.2283,
+    "分母": "入口EPS（y_biz と共有）"
+   },
+   "hv_ps_pct": {
+    "y_biz_lift": 0.107,
+    "分母": "売上（共有しない）"
+   },
+   "hv_pfcf_pct": {
+    "y_biz_lift": 0.1085,
+    "分母": "FCF（共有しない）"
+   },
+   "hv_ps_z": {
+    "y_biz_lift": 0.107,
+    "分母": "売上（共有しない）"
+   }
+  },
+  "R4_入口EPSの沈みで層別すると": {
+   "hv_pe_pct": 0.3319,
+   "hv_adj_pe_pct": 0.3773,
+   "hv_pe_z": 0.3542,
+   "per": 0.2864,
+   "hv_ps_pct": 0.1707,
+   "hv_pfcf_pct": 0.1307,
+   "hv_ps_z": 0.1848
+  },
+  "R5_恒等式の中では倍率の縮小と同じ一つの事実": {
+   "hv_pe_pct": {
+    "Δ事業": 0.1012,
+    "Δ倍率": -0.0833,
+    "Δ総": 0.0119,
+    "相殺率": 0.8231
+   },
+   "hv_adj_pe_pct": {
+    "Δ事業": 0.0967,
+    "Δ倍率": -0.0815,
+    "Δ総": 0.0091,
+    "相殺率": 0.8428
+   },
+   "hv_pe_z": {
+    "Δ事業": 0.0945,
+    "Δ倍率": -0.0787,
+    "Δ総": 0.0094,
+    "相殺率": 0.8328
+   },
+   "per": {
+    "Δ事業": 0.0761,
+    "Δ倍率": -0.0693,
+    "Δ総": 0.0023,
+    "相殺率": 0.9106
+   }
+  }
+ },
+ "note_on_MH_difference_vs_explorer": "探索側の MH は層の最小サイズを n1>=3 ∧ n0>=3 に取るので使用層5・この道具は1以上で19。値は 0.4122 vs 0.439 で結論は同じ。**データではなく層の最小サイズの約束の差**",
+ "limits": [
+  "母集団は分解が作れた社＝**出口の純利益が正**の社だけ。左裾が構造的に抜けている",
+  "2013/2015/2018 は同じ956ティッカー由来＝out-of-sample ではない",
+  "co_* は 2013/2015 のみ・f2_* は 2016/2017/2018 のみ＝3ビンテージ全部で測れるのは hv_* と per と規模だけ",
+  "この道具は候補を潰しにかかっている。落とせなかった場合だけ『落とせなかった』と書く"
+ ]
+}

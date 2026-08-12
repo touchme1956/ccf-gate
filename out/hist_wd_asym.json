@@ -1,0 +1,5600 @@
+{
+ "generated": "2026-08-11",
+ "tool": "night/hist_wd_asym.py",
+ "prereg": "out/hist_winner_destroyer_prereg.json",
+ "inputs": {
+  "win": "out/hist_wd_win_uni.json",
+  "destroy": "out/hist_wd_dst_uni.json"
+ },
+ "objective": "勝者(A)と破壊(B)を同じ表に並べ、『上を狙う』と『下を防ぐ』で採るべき変数が違うかを見る。**探索的**——合否は W1/D1 の verdict が持つ。",
+ "this_tool_computes_no_lift": "lift は W1/D1 の値をそのまま読む（二重実装を作らない）。読む前に両者の構造一致を全セルで検算する。",
+ "verification_two_checkers_agree": {
+  "why": "W1 と D1 は同じ解析集合・同じ切り方を使うので、群の作り方が一致するのは恒等的。一致しないなら、どちらかが壊れている。**lift を再計算せずに読む前提**がこれ。",
+  "cells_win": 598,
+  "cells_dst": 598,
+  "cells_only_in_one": [],
+  "structural_mismatches": 0,
+  "mismatch_examples": [],
+  "verdict": "✓ 全セルで一致＝そのまま読んでよい"
+ },
+ "quadrant_naming": {
+  "axes": "横軸 lift_win / 縦軸 lift_destroy（どちらも P(群) − P(母集団)）",
+  "右下": "純粋な追い風（勝者↑ 破壊↓）＝望ましい意味で『両方効く』のはここ",
+  "左上": "純粋な向かい風（勝者↓ 破壊↑）",
+  "右上": "極端を作る（勝者↑ 破壊↑）＝ボラティリティ型。**『両方効く』ではない**",
+  "左下": "凪（勝者↓ 破壊↓）＝安全だが伸びない",
+  "⚠依頼文との差": "依頼文は『右上(両方効く)』と書いているが、右上は勝者も破壊も増える象限。依頼文の項目3『勝者にも破壊にも正＝極端を作る』と同じ象限を指しており、呼び名だけが食い違っている。右上を『両方効く』と読むと**ボラティリティを選別力と誤認する**ので、ここでは象限名を実体で書く。"
+ },
+ "base_rates": {
+  "win": {
+   "2013": {
+    "n": 941,
+    "wins": 199
+   },
+   "2015": {
+    "n": 503,
+    "wins": 99
+   },
+   "2016": {
+    "n": 946,
+    "wins": 230
+   },
+   "2017": {
+    "n": 951,
+    "wins": 222
+   },
+   "2018": {
+    "n": 952,
+    "wins": 200
+   }
+  },
+  "destroy": {
+   "2013": {
+    "n": 941,
+    "destroys": 49,
+    "wins": 199
+   },
+   "2015": {
+    "n": 503,
+    "destroys": 9,
+    "wins": 99
+   },
+   "2016": {
+    "n": 946,
+    "destroys": 55,
+    "wins": 230
+   },
+   "2017": {
+    "n": 951,
+    "destroys": 60,
+    "wins": 222
+   },
+   "2018": {
+    "n": 952,
+    "destroys": 77,
+    "wins": 200
+   }
+  },
+  "note": "破壊は稀事象。2015 は 503社中 **9件(1.8%)**＝この年は破壊側の分子がどの群でも5に届きにくい。守る向き(破壊↓)はさらに届かない。"
+ },
+ "how_to_read": {
+  "coordinate": "2016/2017/2018 の lift の中央値。min|lift|と符号安定も併記。",
+  "vintages_not_independent": "2016/2017/2018 は同じ956ティッカーで窓が重なる。中央値は『3つの独立な証拠の代表値』ではない。",
+  "floors": "象限の頭数は床 0.00/0.02/0.05/0.10 の4通りを全部出す。床の選び方で結論が変わるなら、それは結論ではない。",
+  "explore_floor_is_outside_prereg": "片側判定の床 0.1 は依頼文の探索用。prereg の線は 0.15。ここから出るものはすべて**事前登録の外**で、合否には数えない。",
+  "mirror_cuts": "同じ変数の 上位1/4 と 下位1/4 は鏡・中央値超と中央値以下は補集合。1変数につき実質2つの見方しかないので、頭数は四分位だけで数える。",
+  "duplicate": "f2_rev と size_rev は D1 の実測で同一列。変数レベルでは1本に畳んだ。"
+ },
+ "quadrant_counts_by_floor": {
+  "floor_0.00": {
+   "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）": 26,
+   "左上 純粋な向かい風（勝者↓ 破壊↑）": 27,
+   "左下 凪（勝者↓ 破壊↓・安全だが伸びない）": 22,
+   "右下 純粋な追い風（勝者↑ 破壊↓）": 9
+  },
+  "floor_0.02": {
+   "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）": 18,
+   "左上 純粋な向かい風（勝者↓ 破壊↑）": 20,
+   "帯の中（どちらも床未満）": 23,
+   "左下 凪（勝者↓ 破壊↓・安全だが伸びない）": 17,
+   "右下 純粋な追い風（勝者↑ 破壊↓）": 6
+  },
+  "floor_0.05": {
+   "帯の中（どちらも床未満）": 59,
+   "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）": 9,
+   "左上 純粋な向かい風（勝者↓ 破壊↑）": 10,
+   "左下 凪（勝者↓ 破壊↓・安全だが伸びない）": 2,
+   "右下 純粋な追い風（勝者↑ 破壊↓）": 4
+  },
+  "floor_0.10": {
+   "帯の中（どちらも床未満）": 80,
+   "左上 純粋な向かい風（勝者↓ 破壊↑）": 3,
+   "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）": 1
+  }
+ },
+ "one_sided_destroy_only": {
+  "note": "|lift_destroy| >= 0.1 かつ |lift_win| < 0.1。＝破壊だけを分け、勝者を分けない群。**事前登録の外**",
+  "n": 2,
+  "rows": [
+   {
+    "variable": "f2_rev",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": -0.0279,
+    "lift_destroy_med": 0.105,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "quadrant": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "destroy_numerator_by_vintage": {
+     "2016": 38,
+     "2017": 40,
+     "2018": 48
+    },
+    "win_numerator_by_vintage": {
+     "2016": 51,
+     "2017": 47,
+     "2018": 47
+    },
+    "destroy_rr_by_vintage": {
+     "2016": 2.7578,
+     "2017": 2.6639,
+     "2018": 2.4935
+    },
+    "n_group_by_vintage": {
+     "2016": 237,
+     "2017": 238,
+     "2018": 238
+    },
+    "ratio_destroy_over_win": 3.76
+   },
+   {
+    "variable": "size_rev",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": -0.0279,
+    "lift_destroy_med": 0.105,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "quadrant": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "destroy_numerator_by_vintage": {
+     "2013": 32,
+     "2015": 2,
+     "2016": 38,
+     "2017": 40,
+     "2018": 48
+    },
+    "win_numerator_by_vintage": {
+     "2013": 37,
+     "2015": 20,
+     "2016": 51,
+     "2017": 47,
+     "2018": 47
+    },
+    "destroy_rr_by_vintage": {
+     "2013": 2.6039,
+     "2015": 0.8871,
+     "2016": 2.7578,
+     "2017": 2.6639,
+     "2018": 2.4935
+    },
+    "n_group_by_vintage": {
+     "2013": 236,
+     "2015": 126,
+     "2016": 237,
+     "2017": 238,
+     "2018": 238
+    },
+    "ratio_destroy_over_win": 3.76
+   }
+  ]
+ },
+ "one_sided_win_only": {
+  "note": "|lift_win| >= 0.1 かつ |lift_destroy| < 0.1。＝勝者だけを分け、破壊を分けない群。**事前登録の外**",
+  "n": 2,
+  "rows": [
+   {
+    "variable": "f2_rnd_r",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": 0.1234,
+    "lift_destroy_med": 0.0001,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "quadrant": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "destroy_numerator_by_vintage": {
+     "2016": 2,
+     "2017": 1,
+     "2018": 1
+    },
+    "win_numerator_by_vintage": {
+     "2016": 26,
+     "2017": 24,
+     "2018": 27
+    },
+    "destroy_rr_by_vintage": {
+     "2016": 1.1605,
+     "2017": 1.0093,
+     "2018": 0.4084
+    },
+    "n_group_by_vintage": {
+     "2016": 81,
+     "2017": 81,
+     "2018": 83
+    },
+    "ratio_destroy_over_win": 0.0
+   },
+   {
+    "variable": "f2_aturn",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": -0.1045,
+    "lift_destroy_med": 0.0284,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "quadrant": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "destroy_numerator_by_vintage": {
+     "2016": 21,
+     "2017": 20,
+     "2018": 26
+    },
+    "win_numerator_by_vintage": {
+     "2016": 33,
+     "2017": 30,
+     "2018": 31
+    },
+    "destroy_rr_by_vintage": {
+     "2016": 1.5176,
+     "2017": 1.3319,
+     "2018": 1.3506
+    },
+    "n_group_by_vintage": {
+     "2016": 238,
+     "2017": 238,
+     "2018": 238
+    },
+    "ratio_destroy_over_win": 0.27
+   }
+  ]
+ },
+ "both_sides_over_floor": {
+  "note": "両側とも |lift| >= 0.1。**事前登録の外**",
+  "n": 0,
+  "rows": []
+ },
+ "extremes_makers": {
+  "note": "右上＝勝者にも破壊にも正。**この群を『両方効く』と読んではいけない**——上も下も増える＝分散が大きいということ。20-30年の複利では1回の恒久毀損が20年効くので、この象限は追い風ではない。",
+  "n": 26,
+  "top": [
+   {
+    "variable": "f2_opm",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": 0.0432,
+    "lift_destroy_med": 0.0836,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 69,
+     "2017": 54,
+     "2018": 57
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 27,
+     "2017": 34,
+     "2018": 37
+    }
+   },
+   {
+    "variable": "f2_rnd_r",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": 0.1234,
+    "lift_destroy_med": 0.0001,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "win_numerator_by_vintage": {
+     "2016": 26,
+     "2017": 24,
+     "2018": 27
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 2,
+     "2017": 1,
+     "2018": 1
+    }
+   },
+   {
+    "variable": "f2_netiss_r",
+    "population": "P_quality",
+    "cut": "下位1/4",
+    "lift_win_med": 0.0973,
+    "lift_destroy_med": 0.0085,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 23,
+     "2017": 23,
+     "2018": 18
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 2,
+     "2017": 2,
+     "2018": 3
+    }
+   },
+   {
+    "variable": "f2_rnd_r",
+    "population": "P_full",
+    "cut": "上位1/4",
+    "lift_win_med": 0.0549,
+    "lift_destroy_med": 0.048,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 71,
+     "2017": 62,
+     "2018": 62
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 25,
+     "2017": 26,
+     "2018": 28
+    }
+   },
+   {
+    "variable": "f2_cash_r",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": 0.0821,
+    "lift_destroy_med": 0.0034,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "win_numerator_by_vintage": {
+     "2016": 24,
+     "2017": 23,
+     "2018": 19
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 2,
+     "2017": 0,
+     "2018": 4
+    }
+   },
+   {
+    "variable": "f2_cash_r",
+    "population": "P_full",
+    "cut": "上位1/4",
+    "lift_win_med": 0.0556,
+    "lift_destroy_med": 0.0241,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 69,
+     "2017": 64,
+     "2018": 63
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 19,
+     "2017": 18,
+     "2018": 27
+    }
+   },
+   {
+    "variable": "f2_accr",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": 0.0335,
+    "lift_destroy_med": 0.0419,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 64,
+     "2017": 61,
+     "2018": 57
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 23,
+     "2017": 22,
+     "2018": 32
+    }
+   },
+   {
+    "variable": "f2_fcfpos5",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": 0.0111,
+    "lift_destroy_med": 0.0585,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 87,
+     "2017": 76,
+     "2018": 73
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 33,
+     "2017": 41,
+     "2018": 46
+    }
+   },
+   {
+    "variable": "f2_gm",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": 0.0564,
+    "lift_destroy_med": 0.0105,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 16,
+     "2017": 17,
+     "2018": 13
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 2,
+     "2017": 1,
+     "2018": 3
+    }
+   },
+   {
+    "variable": "f2_aturn",
+    "population": "P_full",
+    "cut": "上位1/4",
+    "lift_win_med": 0.0565,
+    "lift_destroy_med": 0.0052,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 65,
+     "2017": 69,
+     "2018": 66
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 15,
+     "2017": 17,
+     "2018": 20
+    }
+   },
+   {
+    "variable": "f2_accel",
+    "population": "P_full",
+    "cut": "上位1/4",
+    "lift_win_med": 0.0462,
+    "lift_destroy_med": 0.0108,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 65,
+     "2017": 67,
+     "2018": 61
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 16,
+     "2017": 19,
+     "2018": 21
+    }
+   },
+   {
+    "variable": "f2_streak_rev",
+    "population": "P_quality",
+    "cut": "下位1/4",
+    "lift_win_med": 0.0294,
+    "lift_destroy_med": 0.0094,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "win_numerator_by_vintage": {
+     "2016": 37,
+     "2017": 22,
+     "2018": 20
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 5,
+     "2017": 1,
+     "2018": 7
+    }
+   },
+   {
+    "variable": "f2_cagr5",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": 0.0229,
+    "lift_destroy_med": 0.0125,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 68,
+     "2017": 61,
+     "2018": 46
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 16,
+     "2017": 18,
+     "2018": 28
+    }
+   },
+   {
+    "variable": "f2_accel",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": 0.0219,
+    "lift_destroy_med": 0.0122,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 18,
+     "2017": 18,
+     "2018": 23
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 3,
+     "2017": 2,
+     "2018": 3
+    }
+   },
+   {
+    "variable": "f2_streak_rev",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": 0.0204,
+    "lift_destroy_med": 0.0131,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 105,
+     "2017": 100,
+     "2018": 82
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 25,
+     "2017": 30,
+     "2018": 41
+    }
+   },
+   {
+    "variable": "f2_capex_r",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": 0.0208,
+    "lift_destroy_med": 0.0102,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 62,
+     "2017": 60,
+     "2018": 44
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 16,
+     "2017": 15,
+     "2018": 24
+    }
+   },
+   {
+    "variable": "f2_streak_opm",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": 0.0107,
+    "lift_destroy_med": 0.0195,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 76,
+     "2017": 62,
+     "2018": 46
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 20,
+     "2017": 24,
+     "2018": 24
+    }
+   },
+   {
+    "variable": "f2_gw_r",
+    "population": "P_quality",
+    "cut": "下位1/4",
+    "lift_win_med": 0.0171,
+    "lift_destroy_med": 0.0125,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 17,
+     "2017": 19,
+     "2018": 18
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 2,
+     "2017": 2,
+     "2018": 6
+    }
+   },
+   {
+    "variable": "f2_sga_r",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": 0.021,
+    "lift_destroy_med": 0.0082,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "win_numerator_by_vintage": {
+     "2016": 10,
+     "2017": 11,
+     "2018": 11
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 1,
+     "2017": 1,
+     "2018": 3
+    }
+   },
+   {
+    "variable": "f2_accr",
+    "population": "P_quality",
+    "cut": "下位1/4",
+    "lift_win_med": 0.0196,
+    "lift_destroy_med": 0.0034,
+    "win_sign_stable": false,
+    "destroy_sign_stable": false,
+    "win_numerator_by_vintage": {
+     "2016": 14,
+     "2017": 18,
+     "2018": 18
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 2,
+     "2017": 0,
+     "2018": 4
+    }
+   },
+   {
+    "variable": "f2_capex_r",
+    "population": "P_quality",
+    "cut": "下位1/4",
+    "lift_win_med": 0.0053,
+    "lift_destroy_med": 0.0176,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 14,
+     "2017": 18,
+     "2018": 17
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 3,
+     "2017": 3,
+     "2018": 4
+    }
+   },
+   {
+    "variable": "f2_sga_r",
+    "population": "P_quality",
+    "cut": "下位1/4",
+    "lift_win_med": 0.021,
+    "lift_destroy_med": 0.0,
+    "win_sign_stable": false,
+    "destroy_sign_stable": false,
+    "win_numerator_by_vintage": {
+     "2016": 9,
+     "2017": 13,
+     "2018": 11
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 1,
+     "2017": 0,
+     "2018": 4
+    }
+   },
+   {
+    "variable": "f2_aturn",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": 0.0073,
+    "lift_destroy_med": 0.0028,
+    "win_sign_stable": false,
+    "destroy_sign_stable": false,
+    "win_numerator_by_vintage": {
+     "2016": 17,
+     "2017": 16,
+     "2018": 18
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 2,
+     "2017": 1,
+     "2018": 3
+    }
+   },
+   {
+    "variable": "f2_accr",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0,
+    "lift_destroy_med": 0.0062,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "win_numerator_by_vintage": {
+     "2016": 16,
+     "2017": 17,
+     "2018": 14
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 3,
+     "2017": 1,
+     "2018": 3
+    }
+   },
+   {
+    "variable": "f2_fcfpos5",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": 0.0,
+    "lift_destroy_med": 0.0,
+    "win_sign_stable": false,
+    "destroy_sign_stable": false,
+    "win_numerator_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_numerator_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    }
+   }
+  ]
+ },
+ "calm_mirror": {
+  "note": "左下＝勝者も破壊も減る（凪）。極端を作る変数の裏返しが凪なら、その軸は実在する。",
+  "n": 22,
+  "top": [
+   {
+    "variable": "f2_cash_r",
+    "population": "P_quality",
+    "cut": "下位1/4",
+    "lift_win_med": -0.0768,
+    "lift_destroy_med": -0.0054,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false
+   },
+   {
+    "variable": "f2_opm",
+    "population": "P_full",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0422,
+    "lift_destroy_med": -0.0364,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_cash_r",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": -0.0481,
+    "lift_destroy_med": -0.0278,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_gw_r",
+    "population": "P_full",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0572,
+    "lift_destroy_med": -0.0102,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_gw_r",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0433,
+    "lift_destroy_med": -0.0122,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_conv5",
+    "population": "P_quality",
+    "cut": "下位1/4",
+    "lift_win_med": -0.033,
+    "lift_destroy_med": -0.0172,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_payout5",
+    "population": "P_quality",
+    "cut": "下位1/4",
+    "lift_win_med": -0.0375,
+    "lift_destroy_med": -0.0122,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_capex_r",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0417,
+    "lift_destroy_med": -0.006,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false
+   },
+   {
+    "variable": "f2_conv5",
+    "population": "P_full",
+    "cut": "上位1/4",
+    "lift_win_med": -0.013,
+    "lift_destroy_med": -0.0308,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_streak_rev",
+    "population": "P_full",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0094,
+    "lift_destroy_med": -0.0339,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_fcfpos5",
+    "population": "P_full",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0035,
+    "lift_destroy_med": -0.036,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_opmD5",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0311,
+    "lift_destroy_med": -0.006,
+    "win_sign_stable": false,
+    "destroy_sign_stable": false
+   },
+   {
+    "variable": "f2_gm",
+    "population": "P_quality",
+    "cut": "下位1/4",
+    "lift_win_med": -0.0143,
+    "lift_destroy_med": -0.0213,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_conv5",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": -0.013,
+    "lift_destroy_med": -0.0207,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_payout5",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": -0.022,
+    "lift_destroy_med": -0.0117,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_streak_rev",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0238,
+    "lift_destroy_med": -0.0092,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_streak_opm",
+    "population": "P_full",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0137,
+    "lift_destroy_med": -0.0177,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_payout5",
+    "population": "P_full",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0112,
+    "lift_destroy_med": -0.0174,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_rnd_r",
+    "population": "P_full",
+    "cut": "下位1/4",
+    "lift_win_med": -0.0147,
+    "lift_destroy_med": -0.0136,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_opm",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0048,
+    "lift_destroy_med": -0.0213,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true
+   },
+   {
+    "variable": "f2_accr",
+    "population": "P_full",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0179,
+    "lift_destroy_med": -0.004,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false
+   },
+   {
+    "variable": "f2_streak_opm",
+    "population": "P_quality",
+    "cut": "上位1/4",
+    "lift_win_med": -0.0095,
+    "lift_destroy_med": -0.0072,
+    "win_sign_stable": false,
+    "destroy_sign_stable": false
+   }
+  ]
+ },
+ "instrument_asymmetry": {
+  "why": "prereg は勝者・破壊の両方に同じ線（|lift|>=0.15）を当てている。だが lift は絶対差なので、**到達しうる上限が基準率で決まる**——増やす向きは 1−p、減らす向きは p。基準率が線より低い目的では『減らす向き』が数学的に不可能になる。『合格ゼロ』を読む前に、そもそも合格しうるかを目的ごとに数える。",
+  "by_vintage": {
+   "2016": {
+    "n": 946,
+    "win": {
+     "events": 230,
+     "base_rate": 0.2431,
+     "max_lift_increase": 0.7569,
+     "max_lift_decrease": 0.2431,
+     "increase_reachable": true,
+     "decrease_reachable": true,
+     "group_p_needed_to_pass_increase": 0.3931
+    },
+    "destroy": {
+     "events": 55,
+     "base_rate": 0.0581,
+     "max_lift_increase": 0.9419,
+     "max_lift_decrease": 0.0581,
+     "increase_reachable": true,
+     "decrease_reachable": false,
+     "group_p_needed_to_pass_increase": 0.2081,
+     "multiple_of_base_needed": 3.58
+    }
+   },
+   "2017": {
+    "n": 951,
+    "win": {
+     "events": 222,
+     "base_rate": 0.2334,
+     "max_lift_increase": 0.7666,
+     "max_lift_decrease": 0.2334,
+     "increase_reachable": true,
+     "decrease_reachable": true,
+     "group_p_needed_to_pass_increase": 0.3834
+    },
+    "destroy": {
+     "events": 60,
+     "base_rate": 0.0631,
+     "max_lift_increase": 0.9369,
+     "max_lift_decrease": 0.0631,
+     "increase_reachable": true,
+     "decrease_reachable": false,
+     "group_p_needed_to_pass_increase": 0.2131,
+     "multiple_of_base_needed": 3.38
+    }
+   },
+   "2018": {
+    "n": 952,
+    "win": {
+     "events": 200,
+     "base_rate": 0.2101,
+     "max_lift_increase": 0.7899,
+     "max_lift_decrease": 0.2101,
+     "increase_reachable": true,
+     "decrease_reachable": true,
+     "group_p_needed_to_pass_increase": 0.3601
+    },
+    "destroy": {
+     "events": 77,
+     "base_rate": 0.0809,
+     "max_lift_increase": 0.9191,
+     "max_lift_decrease": 0.0809,
+     "increase_reachable": true,
+     "decrease_reachable": false,
+     "group_p_needed_to_pass_increase": 0.2309,
+     "multiple_of_base_needed": 2.85
+    }
+   }
+  },
+  "headline": "勝者側は**増やす向きも減らす向きも到達可能**（基準率 21-24% > 0.15）。破壊側は**減らす向きが全ビンテージで数学的に不可能**（基準率 5.8-8.1% < 0.15＝群の破壊がゼロでも |lift| は基準率までしか下がらない）。増やす向きも、群の破壊率が基準率の 2.9-3.6倍 に達して初めて線に届く。＝**同じ 0.15 の線が、『上を狙う』には普通の関門・『下を防ぐ』には通れない関門になっている。**したがって『破壊側の合格ゼロ』は『下を防ぐ変数が無い』ことの証拠にならない。稀事象の物差しは比(RR)であって絶対差ではない——D1 の outside_prereg_relative_risk を見よ。",
+  "consequence_for_Q4": "『上を狙う』と『下を防ぐ』で採るべき変数が違うか、という問いに対し、**この事前登録の線では対称に答えられない**。片側だけ通れない物差しで両側を測ると、『下を防ぐ変数は見つからなかった』という結論が、変数の性質ではなく線の引き方から出てしまう。"
+ },
+ "monotonicity_asymmetry": {
+  "note": "五分位の順位相関（spearman）を両側で並べる。1本の切り方より強い証拠——『破壊側は単調なのに勝者側は平ら』なら、その変数は**下を防ぐためだけの変数**。|spearman|>=0.6 を『単調に近い』の目安に使う（**探索用・事前登録の外**）。",
+  "support_rule": "破壊の総事象が 25 件（五分位1ビンあたり平均 5 件＝prereg の min_numerator を五分位に当てた数）に満たないビンテージがあれば **spearman を読まない**。P_quality の破壊は総事象 4-10件で、ビンが 0,1,1,0,2 のような数になる＝1社の移動で ρ が 0.5 動く。",
+  "destroy_monotone_win_flat": [
+   {
+    "variable": "f2_gw_r",
+    "population": "P_full",
+    "win_spearman": [
+     -0.3,
+     -0.3,
+     -0.4
+    ],
+    "destroy_spearman": [
+     -0.3591,
+     -0.7,
+     -1.0
+    ],
+    "win_med": -0.3,
+    "destroy_med": -0.7,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.4,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      18,
+      9,
+      9,
+      4,
+      11
+     ],
+     "2017": [
+      17,
+      12,
+      10,
+      6,
+      10
+     ],
+     "2018": [
+      21,
+      17,
+      13,
+      12,
+      9
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_intcov",
+    "population": "P_full",
+    "win_spearman": [
+     0.4104,
+     0.4,
+     0.8
+    ],
+    "destroy_spearman": [
+     -0.5643,
+     -0.9,
+     -0.6669
+    ],
+    "win_med": 0.41,
+    "destroy_med": -0.667,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.257,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      16,
+      6,
+      4,
+      3,
+      6
+     ],
+     "2017": [
+      16,
+      8,
+      5,
+      3,
+      3
+     ],
+     "2018": [
+      23,
+      11,
+      3,
+      3,
+      6
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   }
+  ],
+  "win_monotone_destroy_flat": [
+   {
+    "variable": "f2_rnd_r",
+    "population": "P_quality",
+    "win_spearman": [
+     0.8,
+     0.8,
+     0.8
+    ],
+    "destroy_spearman": [
+     0.4,
+     -0.3162,
+     -0.8
+    ],
+    "win_med": 0.8,
+    "destroy_med": -0.316,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "gap": -0.484,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      3,
+      0,
+      1,
+      1,
+      2
+     ],
+     "2017": [
+      3,
+      0,
+      0,
+      0,
+      1
+     ],
+     "2018": [
+      7,
+      0,
+      2,
+      0,
+      1
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_aturn",
+    "population": "P_full",
+    "win_spearman": [
+     0.7,
+     0.7,
+     0.9
+    ],
+    "destroy_spearman": [
+     0.0,
+     -0.3,
+     -0.2052
+    ],
+    "win_med": 0.7,
+    "destroy_med": -0.205,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "gap": -0.495,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      18,
+      6,
+      8,
+      11,
+      12
+     ],
+     "2017": [
+      17,
+      12,
+      7,
+      11,
+      13
+     ],
+     "2018": [
+      20,
+      16,
+      7,
+      16,
+      17
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_streak_rev",
+    "population": "P_full",
+    "win_spearman": [
+     -1.0,
+     -0.5,
+     -1.0
+    ],
+    "destroy_spearman": [
+     -0.5,
+     -0.5,
+     -1.0
+    ],
+    "win_med": -1.0,
+    "destroy_med": -0.5,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": -0.5,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      25,
+      19,
+      0,
+      10,
+      0
+     ],
+     "2017": [
+      30,
+      0,
+      21,
+      9,
+      0
+     ],
+     "2018": [
+      41,
+      0,
+      22,
+      11,
+      0
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_accel",
+    "population": "P_full",
+    "win_spearman": [
+     0.3,
+     0.7,
+     0.9
+    ],
+    "destroy_spearman": [
+     0.3,
+     -0.1,
+     -0.3
+    ],
+    "win_med": 0.7,
+    "destroy_med": -0.1,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "gap": -0.6,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      12,
+      8,
+      6,
+      10,
+      16
+     ],
+     "2017": [
+      18,
+      6,
+      10,
+      9,
+      17
+     ],
+     "2018": [
+      27,
+      13,
+      6,
+      10,
+      20
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_cash_r",
+    "population": "P_quality",
+    "win_spearman": [
+     0.8944,
+     0.9747,
+     0.9747
+    ],
+    "destroy_spearman": [
+     0.527,
+     -0.4472,
+     0.3591
+    ],
+    "win_med": 0.975,
+    "destroy_med": 0.359,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "gap": -0.616,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      1,
+      2,
+      1,
+      1,
+      2
+     ],
+     "2017": [
+      1,
+      0,
+      2,
+      0,
+      0
+     ],
+     "2018": [
+      1,
+      2,
+      0,
+      1,
+      4
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_intcov",
+    "population": "P_quality",
+    "win_spearman": [
+     0.9747,
+     0.6669,
+     0.9747
+    ],
+    "destroy_spearman": [
+     -0.3591,
+     -0.7071,
+     -0.2236
+    ],
+    "win_med": 0.975,
+    "destroy_med": -0.359,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": -0.616,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      3,
+      1,
+      0,
+      0,
+      2
+     ],
+     "2017": [
+      2,
+      0,
+      0,
+      0,
+      0
+     ],
+     "2018": [
+      5,
+      0,
+      0,
+      0,
+      1
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_aturn",
+    "population": "P_quality",
+    "win_spearman": [
+     0.6669,
+     0.6,
+     0.7
+    ],
+    "destroy_spearman": [
+     0.0,
+     -0.1054,
+     0.0513
+    ],
+    "win_med": 0.667,
+    "destroy_med": 0.0,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "gap": -0.667,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      2,
+      1,
+      1,
+      2,
+      1
+     ],
+     "2017": [
+      2,
+      0,
+      0,
+      1,
+      1
+     ],
+     "2018": [
+      3,
+      2,
+      2,
+      0,
+      3
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_netiss_r",
+    "population": "P_quality",
+    "win_spearman": [
+     -0.9,
+     -1.0,
+     -0.6
+    ],
+    "destroy_spearman": [
+     -0.1118,
+     0.2236,
+     -0.0513
+    ],
+    "win_med": -0.9,
+    "destroy_med": -0.051,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "gap": -0.849,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      2,
+      1,
+      2,
+      0,
+      2
+     ],
+     "2017": [
+      2,
+      0,
+      0,
+      0,
+      2
+     ],
+     "2018": [
+      2,
+      1,
+      2,
+      2,
+      1
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   }
+  ],
+  "monotone_on_both_sides": [
+   {
+    "variable": "f2_rev",
+    "population": "P_full",
+    "win_spearman": [
+     0.4,
+     0.9747,
+     0.8
+    ],
+    "destroy_spearman": [
+     -0.9747,
+     -0.8,
+     -0.9
+    ],
+    "win_med": 0.8,
+    "destroy_med": -0.9,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.1,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      33,
+      8,
+      8,
+      4,
+      2
+     ],
+     "2017": [
+      35,
+      10,
+      11,
+      1,
+      3
+     ],
+     "2018": [
+      42,
+      15,
+      14,
+      2,
+      3
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "size_rev",
+    "population": "P_full",
+    "win_spearman": [
+     0.4,
+     0.9747,
+     0.8
+    ],
+    "destroy_spearman": [
+     -0.9747,
+     -0.8,
+     -0.9
+    ],
+    "win_med": 0.8,
+    "destroy_med": -0.9,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.1,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      33,
+      8,
+      8,
+      4,
+      2
+     ],
+     "2017": [
+      35,
+      10,
+      11,
+      1,
+      3
+     ],
+     "2018": [
+      42,
+      15,
+      14,
+      2,
+      3
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_gm",
+    "population": "P_full",
+    "win_spearman": [
+     -0.8208,
+     -0.9,
+     -0.8208
+    ],
+    "destroy_spearman": [
+     0.9,
+     1.0,
+     0.6708
+    ],
+    "win_med": -0.821,
+    "destroy_med": 0.9,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.079,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      5,
+      7,
+      5,
+      8,
+      11
+     ],
+     "2017": [
+      6,
+      7,
+      7,
+      8,
+      10
+     ],
+     "2018": [
+      9,
+      9,
+      10,
+      9,
+      15
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_opm",
+    "population": "P_full",
+    "win_spearman": [
+     -0.8721,
+     -0.9,
+     -0.6
+    ],
+    "destroy_spearman": [
+     -0.9,
+     -0.9,
+     -0.9
+    ],
+    "win_med": -0.872,
+    "destroy_med": -0.9,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.028,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      27,
+      8,
+      12,
+      5,
+      3
+     ],
+     "2017": [
+      32,
+      8,
+      10,
+      6,
+      4
+     ],
+     "2018": [
+      33,
+      15,
+      17,
+      5,
+      4
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_sga_r",
+    "population": "P_full",
+    "win_spearman": [
+     -0.8,
+     -0.9,
+     -1.0
+    ],
+    "destroy_spearman": [
+     0.9,
+     0.5,
+     0.7
+    ],
+    "win_med": -0.9,
+    "destroy_med": 0.7,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": -0.2,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      3,
+      4,
+      4,
+      4,
+      12
+     ],
+     "2017": [
+      3,
+      8,
+      2,
+      6,
+      11
+     ],
+     "2018": [
+      3,
+      10,
+      5,
+      6,
+      14
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_cash_r",
+    "population": "P_full",
+    "win_spearman": [
+     1.0,
+     0.6669,
+     1.0
+    ],
+    "destroy_spearman": [
+     0.7,
+     0.2052,
+     0.7
+    ],
+    "win_med": 1.0,
+    "destroy_med": 0.7,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": -0.3,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      6,
+      13,
+      8,
+      10,
+      17
+     ],
+     "2017": [
+      11,
+      9,
+      11,
+      7,
+      18
+     ],
+     "2018": [
+      9,
+      18,
+      10,
+      15,
+      21
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   }
+  ],
+  "unsupported_looks_monotone_but_is_noise": {
+   "note": "|ρ|>=0.6 だが事象が足りない＝**発見として読んではいけない**もの。隠さずに全部出す（次に同じ表を見た人が『単調だ』と拾わないため）。",
+   "n": 8,
+   "rows": [
+    {
+     "variable": "f2_gw_r",
+     "population": "P_quality",
+     "win_spearman": [
+      -0.2,
+      -0.6669,
+      0.1539
+     ],
+     "destroy_spearman": [
+      -0.1118,
+      -0.9487,
+      -0.8721
+     ],
+     "win_med": -0.2,
+     "destroy_med": -0.872,
+     "win_sign_stable": false,
+     "destroy_sign_stable": true,
+     "gap": 0.672,
+     "destroy_events_by_vintage": {
+      "2016": 7,
+      "2017": 4,
+      "2018": 10
+     },
+     "win_events_by_vintage": {
+      "2016": 65,
+      "2017": 66,
+      "2018": 66
+     },
+     "destroy_quintile_counts": {
+      "2016": [
+       2,
+       1,
+       1,
+       2,
+       1
+      ],
+      "2017": [
+       2,
+       1,
+       1,
+       0,
+       0
+      ],
+      "2018": [
+       3,
+       5,
+       2,
+       0,
+       0
+      ]
+     },
+     "destroy_spearman_supported": false,
+     "win_spearman_supported": true,
+     "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+    },
+    {
+     "variable": "f2_rev",
+     "population": "P_quality",
+     "win_spearman": [
+      0.2052,
+      0.1,
+      0.2052
+     ],
+     "destroy_spearman": [
+      -0.4472,
+      -0.7906,
+      -0.8208
+     ],
+     "win_med": 0.205,
+     "destroy_med": -0.791,
+     "win_sign_stable": true,
+     "destroy_sign_stable": true,
+     "gap": 0.585,
+     "destroy_events_by_vintage": {
+      "2016": 7,
+      "2017": 4,
+      "2018": 10
+     },
+     "win_events_by_vintage": {
+      "2016": 65,
+      "2017": 66,
+      "2018": 66
+     },
+     "destroy_quintile_counts": {
+      "2016": [
+       2,
+       1,
+       2,
+       2,
+       0
+      ],
+      "2017": [
+       1,
+       2,
+       1,
+       0,
+       0
+      ],
+      "2018": [
+       5,
+       2,
+       1,
+       2,
+       0
+      ]
+     },
+     "destroy_spearman_supported": false,
+     "win_spearman_supported": true,
+     "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+    },
+    {
+     "variable": "size_rev",
+     "population": "P_quality",
+     "win_spearman": [
+      0.2052,
+      0.1,
+      0.2052
+     ],
+     "destroy_spearman": [
+      -0.4472,
+      -0.7906,
+      -0.8208
+     ],
+     "win_med": 0.205,
+     "destroy_med": -0.791,
+     "win_sign_stable": true,
+     "destroy_sign_stable": true,
+     "gap": 0.585,
+     "destroy_events_by_vintage": {
+      "2016": 7,
+      "2017": 4,
+      "2018": 10
+     },
+     "win_events_by_vintage": {
+      "2016": 65,
+      "2017": 66,
+      "2018": 66
+     },
+     "destroy_quintile_counts": {
+      "2016": [
+       2,
+       1,
+       2,
+       2,
+       0
+      ],
+      "2017": [
+       1,
+       2,
+       1,
+       0,
+       0
+      ],
+      "2018": [
+       5,
+       2,
+       1,
+       2,
+       0
+      ]
+     },
+     "destroy_spearman_supported": false,
+     "win_spearman_supported": true,
+     "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+    },
+    {
+     "variable": "f2_gm",
+     "population": "P_quality",
+     "win_spearman": [
+      0.6,
+      -0.0513,
+      0.1
+     ],
+     "destroy_spearman": [
+      0.527,
+      0.6708,
+      0.8208
+     ],
+     "win_med": 0.1,
+     "destroy_med": 0.671,
+     "win_sign_stable": false,
+     "destroy_sign_stable": true,
+     "gap": 0.571,
+     "destroy_events_by_vintage": {
+      "2016": 7,
+      "2017": 4,
+      "2018": 10
+     },
+     "win_events_by_vintage": {
+      "2016": 65,
+      "2017": 66,
+      "2018": 66
+     },
+     "destroy_quintile_counts": {
+      "2016": [
+       0,
+       1,
+       1,
+       0,
+       2
+      ],
+      "2017": [
+       0,
+       0,
+       1,
+       0,
+       1
+      ],
+      "2018": [
+       0,
+       1,
+       1,
+       1,
+       3
+      ]
+     },
+     "destroy_spearman_supported": false,
+     "win_spearman_supported": true,
+     "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+    },
+    {
+     "variable": "f2_payout5",
+     "population": "P_quality",
+     "win_spearman": [
+      0.1,
+      0.3591,
+      0.1539
+     ],
+     "destroy_spearman": [
+      0.8944,
+      0.7071,
+      0.0513
+     ],
+     "win_med": 0.154,
+     "destroy_med": 0.707,
+     "win_sign_stable": true,
+     "destroy_sign_stable": true,
+     "gap": 0.553,
+     "destroy_events_by_vintage": {
+      "2016": 7,
+      "2017": 4,
+      "2018": 10
+     },
+     "win_events_by_vintage": {
+      "2016": 65,
+      "2017": 66,
+      "2018": 66
+     },
+     "destroy_quintile_counts": {
+      "2016": [
+       0,
+       1,
+       1,
+       1,
+       4
+      ],
+      "2017": [
+       0,
+       0,
+       0,
+       0,
+       4
+      ],
+      "2018": [
+       2,
+       1,
+       1,
+       0,
+       4
+      ]
+     },
+     "destroy_spearman_supported": false,
+     "win_spearman_supported": true,
+     "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+    },
+    {
+     "variable": "f2_conv5",
+     "population": "P_quality",
+     "win_spearman": [
+      -0.1,
+      -0.2052,
+      0.4617
+     ],
+     "destroy_spearman": [
+      0.6156,
+      0.5774,
+      0.7
+     ],
+     "win_med": -0.1,
+     "destroy_med": 0.616,
+     "win_sign_stable": false,
+     "destroy_sign_stable": true,
+     "gap": 0.516,
+     "destroy_events_by_vintage": {
+      "2016": 7,
+      "2017": 4,
+      "2018": 10
+     },
+     "win_events_by_vintage": {
+      "2016": 65,
+      "2017": 66,
+      "2018": 66
+     },
+     "destroy_quintile_counts": {
+      "2016": [
+       0,
+       1,
+       3,
+       1,
+       2
+      ],
+      "2017": [
+       0,
+       0,
+       2,
+       0,
+       2
+      ],
+      "2018": [
+       1,
+       1,
+       0,
+       3,
+       4
+      ]
+     },
+     "destroy_spearman_supported": false,
+     "win_spearman_supported": true,
+     "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+    },
+    {
+     "variable": "f2_opm",
+     "population": "P_quality",
+     "win_spearman": [
+      0.3078,
+      0.0,
+      0.2
+     ],
+     "destroy_spearman": [
+      -0.6708,
+      -0.3,
+      -0.9
+     ],
+     "win_med": 0.2,
+     "destroy_med": -0.671,
+     "win_sign_stable": false,
+     "destroy_sign_stable": true,
+     "gap": 0.471,
+     "destroy_events_by_vintage": {
+      "2016": 7,
+      "2017": 4,
+      "2018": 10
+     },
+     "win_events_by_vintage": {
+      "2016": 65,
+      "2017": 66,
+      "2018": 66
+     },
+     "destroy_quintile_counts": {
+      "2016": [
+       4,
+       0,
+       3,
+       0,
+       0
+      ],
+      "2017": [
+       1,
+       1,
+       1,
+       1,
+       0
+      ],
+      "2018": [
+       5,
+       2,
+       2,
+       1,
+       0
+      ]
+     },
+     "destroy_spearman_supported": false,
+     "win_spearman_supported": true,
+     "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+    },
+    {
+     "variable": "f2_opmD5",
+     "population": "P_quality",
+     "win_spearman": [
+      -0.5,
+      -0.6,
+      0.3591
+     ],
+     "destroy_spearman": [
+      -0.6669,
+      -0.5798,
+      -0.8208
+     ],
+     "win_med": -0.5,
+     "destroy_med": -0.667,
+     "win_sign_stable": false,
+     "destroy_sign_stable": true,
+     "gap": 0.167,
+     "destroy_events_by_vintage": {
+      "2016": 7,
+      "2017": 4,
+      "2018": 10
+     },
+     "win_events_by_vintage": {
+      "2016": 65,
+      "2017": 66,
+      "2018": 66
+     },
+     "destroy_quintile_counts": {
+      "2016": [
+       3,
+       2,
+       0,
+       1,
+       1
+      ],
+      "2017": [
+       1,
+       2,
+       0,
+       1,
+       0
+      ],
+      "2018": [
+       3,
+       3,
+       2,
+       0,
+       2
+      ]
+     },
+     "destroy_spearman_supported": false,
+     "win_spearman_supported": true,
+     "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+    }
+   ]
+  },
+  "all_sorted_by_gap": [
+   {
+    "variable": "f2_gw_r",
+    "population": "P_quality",
+    "win_spearman": [
+     -0.2,
+     -0.6669,
+     0.1539
+    ],
+    "destroy_spearman": [
+     -0.1118,
+     -0.9487,
+     -0.8721
+    ],
+    "win_med": -0.2,
+    "destroy_med": -0.872,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "gap": 0.672,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      2,
+      1,
+      1,
+      2,
+      1
+     ],
+     "2017": [
+      2,
+      1,
+      1,
+      0,
+      0
+     ],
+     "2018": [
+      3,
+      5,
+      2,
+      0,
+      0
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_rev",
+    "population": "P_quality",
+    "win_spearman": [
+     0.2052,
+     0.1,
+     0.2052
+    ],
+    "destroy_spearman": [
+     -0.4472,
+     -0.7906,
+     -0.8208
+    ],
+    "win_med": 0.205,
+    "destroy_med": -0.791,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.585,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      2,
+      1,
+      2,
+      2,
+      0
+     ],
+     "2017": [
+      1,
+      2,
+      1,
+      0,
+      0
+     ],
+     "2018": [
+      5,
+      2,
+      1,
+      2,
+      0
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "size_rev",
+    "population": "P_quality",
+    "win_spearman": [
+     0.2052,
+     0.1,
+     0.2052
+    ],
+    "destroy_spearman": [
+     -0.4472,
+     -0.7906,
+     -0.8208
+    ],
+    "win_med": 0.205,
+    "destroy_med": -0.791,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.585,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      2,
+      1,
+      2,
+      2,
+      0
+     ],
+     "2017": [
+      1,
+      2,
+      1,
+      0,
+      0
+     ],
+     "2018": [
+      5,
+      2,
+      1,
+      2,
+      0
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_gm",
+    "population": "P_quality",
+    "win_spearman": [
+     0.6,
+     -0.0513,
+     0.1
+    ],
+    "destroy_spearman": [
+     0.527,
+     0.6708,
+     0.8208
+    ],
+    "win_med": 0.1,
+    "destroy_med": 0.671,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "gap": 0.571,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      0,
+      1,
+      1,
+      0,
+      2
+     ],
+     "2017": [
+      0,
+      0,
+      1,
+      0,
+      1
+     ],
+     "2018": [
+      0,
+      1,
+      1,
+      1,
+      3
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_payout5",
+    "population": "P_quality",
+    "win_spearman": [
+     0.1,
+     0.3591,
+     0.1539
+    ],
+    "destroy_spearman": [
+     0.8944,
+     0.7071,
+     0.0513
+    ],
+    "win_med": 0.154,
+    "destroy_med": 0.707,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.553,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      0,
+      1,
+      1,
+      1,
+      4
+     ],
+     "2017": [
+      0,
+      0,
+      0,
+      0,
+      4
+     ],
+     "2018": [
+      2,
+      1,
+      1,
+      0,
+      4
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_conv5",
+    "population": "P_quality",
+    "win_spearman": [
+     -0.1,
+     -0.2052,
+     0.4617
+    ],
+    "destroy_spearman": [
+     0.6156,
+     0.5774,
+     0.7
+    ],
+    "win_med": -0.1,
+    "destroy_med": 0.616,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "gap": 0.516,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      0,
+      1,
+      3,
+      1,
+      2
+     ],
+     "2017": [
+      0,
+      0,
+      2,
+      0,
+      2
+     ],
+     "2018": [
+      1,
+      1,
+      0,
+      3,
+      4
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_opm",
+    "population": "P_quality",
+    "win_spearman": [
+     0.3078,
+     0.0,
+     0.2
+    ],
+    "destroy_spearman": [
+     -0.6708,
+     -0.3,
+     -0.9
+    ],
+    "win_med": 0.2,
+    "destroy_med": -0.671,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "gap": 0.471,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      4,
+      0,
+      3,
+      0,
+      0
+     ],
+     "2017": [
+      1,
+      1,
+      1,
+      1,
+      0
+     ],
+     "2018": [
+      5,
+      2,
+      2,
+      1,
+      0
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_opmD5",
+    "population": "P_full",
+    "win_spearman": [
+     -0.5643,
+     -0.1,
+     0.2
+    ],
+    "destroy_spearman": [
+     -0.3,
+     -0.5643,
+     -0.527
+    ],
+    "win_med": -0.1,
+    "destroy_med": -0.527,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "gap": 0.427,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      16,
+      8,
+      10,
+      6,
+      14
+     ],
+     "2017": [
+      22,
+      16,
+      4,
+      2,
+      16
+     ],
+     "2018": [
+      26,
+      17,
+      6,
+      6,
+      17
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_gw_r",
+    "population": "P_full",
+    "win_spearman": [
+     -0.3,
+     -0.3,
+     -0.4
+    ],
+    "destroy_spearman": [
+     -0.3591,
+     -0.7,
+     -1.0
+    ],
+    "win_med": -0.3,
+    "destroy_med": -0.7,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.4,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      18,
+      9,
+      9,
+      4,
+      11
+     ],
+     "2017": [
+      17,
+      12,
+      10,
+      6,
+      10
+     ],
+     "2018": [
+      21,
+      17,
+      13,
+      12,
+      9
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_intcov",
+    "population": "P_full",
+    "win_spearman": [
+     0.4104,
+     0.4,
+     0.8
+    ],
+    "destroy_spearman": [
+     -0.5643,
+     -0.9,
+     -0.6669
+    ],
+    "win_med": 0.41,
+    "destroy_med": -0.667,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.257,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      16,
+      6,
+      4,
+      3,
+      6
+     ],
+     "2017": [
+      16,
+      8,
+      5,
+      3,
+      3
+     ],
+     "2018": [
+      23,
+      11,
+      3,
+      3,
+      6
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_sga_r",
+    "population": "P_quality",
+    "win_spearman": [
+     -0.1118,
+     -0.2,
+     -0.2
+    ],
+    "destroy_spearman": [
+     0.7071,
+     0.4472,
+     0.0513
+    ],
+    "win_med": -0.2,
+    "destroy_med": 0.447,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.247,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      0,
+      1,
+      1,
+      1,
+      1
+     ],
+     "2017": [
+      0,
+      1,
+      0,
+      0,
+      1
+     ],
+     "2018": [
+      3,
+      1,
+      0,
+      0,
+      3
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_conv5",
+    "population": "P_full",
+    "win_spearman": [
+     -0.9,
+     0.1,
+     0.5643
+    ],
+    "destroy_spearman": [
+     -0.3,
+     -0.3,
+     0.1026
+    ],
+    "win_med": 0.1,
+    "destroy_med": -0.3,
+    "win_sign_stable": false,
+    "destroy_sign_stable": false,
+    "gap": 0.2,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      7,
+      3,
+      5,
+      5,
+      4
+     ],
+     "2017": [
+      10,
+      2,
+      5,
+      6,
+      4
+     ],
+     "2018": [
+      11,
+      4,
+      6,
+      5,
+      11
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_netiss_r",
+    "population": "P_full",
+    "win_spearman": [
+     -0.5,
+     -0.1,
+     -0.1
+    ],
+    "destroy_spearman": [
+     1.0,
+     0.3,
+     0.3
+    ],
+    "win_med": -0.1,
+    "destroy_med": 0.3,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.2,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      5,
+      6,
+      7,
+      8,
+      23
+     ],
+     "2017": [
+      9,
+      5,
+      7,
+      6,
+      27
+     ],
+     "2018": [
+      13,
+      8,
+      10,
+      10,
+      26
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_opmD5",
+    "population": "P_quality",
+    "win_spearman": [
+     -0.5,
+     -0.6,
+     0.3591
+    ],
+    "destroy_spearman": [
+     -0.6669,
+     -0.5798,
+     -0.8208
+    ],
+    "win_med": -0.5,
+    "destroy_med": -0.667,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "gap": 0.167,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      3,
+      2,
+      0,
+      1,
+      1
+     ],
+     "2017": [
+      1,
+      2,
+      0,
+      1,
+      0
+     ],
+     "2018": [
+      3,
+      3,
+      2,
+      0,
+      2
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_rev",
+    "population": "P_full",
+    "win_spearman": [
+     0.4,
+     0.9747,
+     0.8
+    ],
+    "destroy_spearman": [
+     -0.9747,
+     -0.8,
+     -0.9
+    ],
+    "win_med": 0.8,
+    "destroy_med": -0.9,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.1,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      33,
+      8,
+      8,
+      4,
+      2
+     ],
+     "2017": [
+      35,
+      10,
+      11,
+      1,
+      3
+     ],
+     "2018": [
+      42,
+      15,
+      14,
+      2,
+      3
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "size_rev",
+    "population": "P_full",
+    "win_spearman": [
+     0.4,
+     0.9747,
+     0.8
+    ],
+    "destroy_spearman": [
+     -0.9747,
+     -0.8,
+     -0.9
+    ],
+    "win_med": 0.8,
+    "destroy_med": -0.9,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.1,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      33,
+      8,
+      8,
+      4,
+      2
+     ],
+     "2017": [
+      35,
+      10,
+      11,
+      1,
+      3
+     ],
+     "2018": [
+      42,
+      15,
+      14,
+      2,
+      3
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_accel",
+    "population": "P_quality",
+    "win_spearman": [
+     0.3,
+     0.3591,
+     0.6156
+    ],
+    "destroy_spearman": [
+     0.7379,
+     0.4104,
+     0.4472
+    ],
+    "win_med": 0.359,
+    "destroy_med": 0.447,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.088,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      1,
+      1,
+      1,
+      1,
+      2
+     ],
+     "2017": [
+      1,
+      0,
+      1,
+      0,
+      2
+     ],
+     "2018": [
+      2,
+      2,
+      1,
+      2,
+      3
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_gm",
+    "population": "P_full",
+    "win_spearman": [
+     -0.8208,
+     -0.9,
+     -0.8208
+    ],
+    "destroy_spearman": [
+     0.9,
+     1.0,
+     0.6708
+    ],
+    "win_med": -0.821,
+    "destroy_med": 0.9,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.079,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      5,
+      7,
+      5,
+      8,
+      11
+     ],
+     "2017": [
+      6,
+      7,
+      7,
+      8,
+      10
+     ],
+     "2018": [
+      9,
+      9,
+      10,
+      9,
+      15
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_streak_opm",
+    "population": "P_full",
+    "win_spearman": [
+     -1.0,
+     -0.9487,
+     0.2
+    ],
+    "destroy_spearman": [
+     -0.8,
+     -1.0,
+     -1.0
+    ],
+    "win_med": -0.949,
+    "destroy_med": -1.0,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "gap": 0.051,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      20,
+      24,
+      0,
+      9,
+      1
+     ],
+     "2017": [
+      24,
+      22,
+      0,
+      12,
+      2
+     ],
+     "2018": [
+      24,
+      30,
+      0,
+      15,
+      3
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_accr",
+    "population": "P_quality",
+    "win_spearman": [
+     -0.0513,
+     0.1,
+     -0.5
+    ],
+    "destroy_spearman": [
+     0.1,
+     0.4472,
+     -0.3
+    ],
+    "win_med": -0.051,
+    "destroy_med": 0.1,
+    "win_sign_stable": false,
+    "destroy_sign_stable": false,
+    "gap": 0.049,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      2,
+      1,
+      0,
+      1,
+      3
+     ],
+     "2017": [
+      0,
+      0,
+      3,
+      0,
+      1
+     ],
+     "2018": [
+      4,
+      2,
+      0,
+      1,
+      3
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_accr",
+    "population": "P_full",
+    "win_spearman": [
+     -0.3591,
+     -0.5,
+     -0.1
+    ],
+    "destroy_spearman": [
+     -0.4,
+     -0.8,
+     -0.3
+    ],
+    "win_med": -0.359,
+    "destroy_med": -0.4,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.041,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      19,
+      10,
+      5,
+      4,
+      14
+     ],
+     "2017": [
+      19,
+      10,
+      12,
+      6,
+      10
+     ],
+     "2018": [
+      29,
+      16,
+      3,
+      8,
+      18
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_opm",
+    "population": "P_full",
+    "win_spearman": [
+     -0.8721,
+     -0.9,
+     -0.6
+    ],
+    "destroy_spearman": [
+     -0.9,
+     -0.9,
+     -0.9
+    ],
+    "win_med": -0.872,
+    "destroy_med": -0.9,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.028,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      27,
+      8,
+      12,
+      5,
+      3
+     ],
+     "2017": [
+      32,
+      8,
+      10,
+      6,
+      4
+     ],
+     "2018": [
+      33,
+      15,
+      17,
+      5,
+      4
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_rnd_r",
+    "population": "P_full",
+    "win_spearman": [
+     0.8,
+     0.4,
+     0.4
+    ],
+    "destroy_spearman": [
+     0.4,
+     0.4,
+     0.8
+    ],
+    "win_med": 0.4,
+    "destroy_med": 0.4,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.0,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      22,
+      0,
+      5,
+      6,
+      22
+     ],
+     "2017": [
+      24,
+      0,
+      5,
+      9,
+      22
+     ],
+     "2018": [
+      32,
+      0,
+      6,
+      14,
+      23
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_streak_opm",
+    "population": "P_quality",
+    "win_spearman": [
+     -0.8,
+     -0.4,
+     1.0
+    ],
+    "destroy_spearman": [
+     -0.6325,
+     0.8,
+     0.4
+    ],
+    "win_med": -0.4,
+    "destroy_med": 0.4,
+    "win_sign_stable": false,
+    "destroy_sign_stable": false,
+    "gap": 0.0,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      5,
+      0,
+      2,
+      0,
+      0
+     ],
+     "2017": [
+      0,
+      2,
+      1,
+      0,
+      1
+     ],
+     "2018": [
+      1,
+      6,
+      1,
+      0,
+      2
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_streak_rev",
+    "population": "P_quality",
+    "win_spearman": [
+     -1.0,
+     -0.5,
+     -0.5
+    ],
+    "destroy_spearman": [
+     -0.5,
+     -0.5,
+     -0.5
+    ],
+    "win_med": -0.5,
+    "destroy_med": -0.5,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": 0.0,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      1,
+      4,
+      2,
+      0,
+      0
+     ],
+     "2017": [
+      1,
+      2,
+      1,
+      0,
+      0
+     ],
+     "2018": [
+      7,
+      0,
+      3,
+      0,
+      0
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_cagr5",
+    "population": "P_quality",
+    "win_spearman": [
+     -0.6,
+     -1.0,
+     0.1026
+    ],
+    "destroy_spearman": [
+     0.6156,
+     0.5798,
+     -0.7
+    ],
+    "win_med": -0.6,
+    "destroy_med": 0.58,
+    "win_sign_stable": false,
+    "destroy_sign_stable": false,
+    "gap": -0.02,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      1,
+      2,
+      0,
+      2,
+      2
+     ],
+     "2017": [
+      0,
+      1,
+      0,
+      2,
+      1
+     ],
+     "2018": [
+      4,
+      3,
+      0,
+      2,
+      1
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_capex_r",
+    "population": "P_full",
+    "win_spearman": [
+     -0.3,
+     -0.7,
+     -0.4
+    ],
+    "destroy_spearman": [
+     -0.6,
+     -0.1,
+     -0.3
+    ],
+    "win_med": -0.4,
+    "destroy_med": -0.3,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": -0.1,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      13,
+      12,
+      7,
+      9,
+      11
+     ],
+     "2017": [
+      11,
+      18,
+      4,
+      9,
+      15
+     ],
+     "2018": [
+      20,
+      12,
+      16,
+      7,
+      17
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_capex_r",
+    "population": "P_quality",
+    "win_spearman": [
+     0.0,
+     -0.6,
+     -0.7182
+    ],
+    "destroy_spearman": [
+     -0.8208,
+     -0.4472,
+     -0.1
+    ],
+    "win_med": -0.6,
+    "destroy_med": -0.447,
+    "win_sign_stable": false,
+    "destroy_sign_stable": true,
+    "gap": -0.153,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      3,
+      1,
+      2,
+      1,
+      0
+     ],
+     "2017": [
+      3,
+      0,
+      0,
+      1,
+      0
+     ],
+     "2018": [
+      4,
+      2,
+      0,
+      2,
+      2
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_sga_r",
+    "population": "P_full",
+    "win_spearman": [
+     -0.8,
+     -0.9,
+     -1.0
+    ],
+    "destroy_spearman": [
+     0.9,
+     0.5,
+     0.7
+    ],
+    "win_med": -0.9,
+    "destroy_med": 0.7,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": -0.2,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      3,
+      4,
+      4,
+      4,
+      12
+     ],
+     "2017": [
+      3,
+      8,
+      2,
+      6,
+      11
+     ],
+     "2018": [
+      3,
+      10,
+      5,
+      6,
+      14
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_cash_r",
+    "population": "P_full",
+    "win_spearman": [
+     1.0,
+     0.6669,
+     1.0
+    ],
+    "destroy_spearman": [
+     0.7,
+     0.2052,
+     0.7
+    ],
+    "win_med": 1.0,
+    "destroy_med": 0.7,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": -0.3,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      6,
+      13,
+      8,
+      10,
+      17
+     ],
+     "2017": [
+      11,
+      9,
+      11,
+      7,
+      18
+     ],
+     "2018": [
+      9,
+      18,
+      10,
+      15,
+      21
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_payout5",
+    "population": "P_full",
+    "win_spearman": [
+     0.1,
+     0.5,
+     0.6
+    ],
+    "destroy_spearman": [
+     -0.0513,
+     0.3,
+     0.0513
+    ],
+    "win_med": 0.5,
+    "destroy_med": 0.051,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "gap": -0.449,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      9,
+      2,
+      4,
+      5,
+      5
+     ],
+     "2017": [
+      8,
+      5,
+      3,
+      6,
+      8
+     ],
+     "2018": [
+      11,
+      6,
+      5,
+      5,
+      12
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_rnd_r",
+    "population": "P_quality",
+    "win_spearman": [
+     0.8,
+     0.8,
+     0.8
+    ],
+    "destroy_spearman": [
+     0.4,
+     -0.3162,
+     -0.8
+    ],
+    "win_med": 0.8,
+    "destroy_med": -0.316,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "gap": -0.484,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      3,
+      0,
+      1,
+      1,
+      2
+     ],
+     "2017": [
+      3,
+      0,
+      0,
+      0,
+      1
+     ],
+     "2018": [
+      7,
+      0,
+      2,
+      0,
+      1
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_aturn",
+    "population": "P_full",
+    "win_spearman": [
+     0.7,
+     0.7,
+     0.9
+    ],
+    "destroy_spearman": [
+     0.0,
+     -0.3,
+     -0.2052
+    ],
+    "win_med": 0.7,
+    "destroy_med": -0.205,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "gap": -0.495,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      18,
+      6,
+      8,
+      11,
+      12
+     ],
+     "2017": [
+      17,
+      12,
+      7,
+      11,
+      13
+     ],
+     "2018": [
+      20,
+      16,
+      7,
+      16,
+      17
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_streak_rev",
+    "population": "P_full",
+    "win_spearman": [
+     -1.0,
+     -0.5,
+     -1.0
+    ],
+    "destroy_spearman": [
+     -0.5,
+     -0.5,
+     -1.0
+    ],
+    "win_med": -1.0,
+    "destroy_med": -0.5,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": -0.5,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      25,
+      19,
+      0,
+      10,
+      0
+     ],
+     "2017": [
+      30,
+      0,
+      21,
+      9,
+      0
+     ],
+     "2018": [
+      41,
+      0,
+      22,
+      11,
+      0
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_accel",
+    "population": "P_full",
+    "win_spearman": [
+     0.3,
+     0.7,
+     0.9
+    ],
+    "destroy_spearman": [
+     0.3,
+     -0.1,
+     -0.3
+    ],
+    "win_med": 0.7,
+    "destroy_med": -0.1,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "gap": -0.6,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      12,
+      8,
+      6,
+      10,
+      16
+     ],
+     "2017": [
+      18,
+      6,
+      10,
+      9,
+      17
+     ],
+     "2018": [
+      27,
+      13,
+      6,
+      10,
+      20
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_cagr5",
+    "population": "P_full",
+    "win_spearman": [
+     -0.9,
+     -0.7,
+     0.5643
+    ],
+    "destroy_spearman": [
+     0.0,
+     -0.1,
+     -0.3
+    ],
+    "win_med": -0.7,
+    "destroy_med": -0.1,
+    "win_sign_stable": false,
+    "destroy_sign_stable": false,
+    "gap": -0.6,
+    "destroy_events_by_vintage": {
+     "2016": 55,
+     "2017": 60,
+     "2018": 77
+    },
+    "win_events_by_vintage": {
+     "2016": 230,
+     "2017": 222,
+     "2018": 200
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      15,
+      9,
+      8,
+      5,
+      18
+     ],
+     "2017": [
+      13,
+      15,
+      8,
+      9,
+      15
+     ],
+     "2018": [
+      21,
+      17,
+      9,
+      12,
+      17
+     ]
+    },
+    "destroy_spearman_supported": true,
+    "win_spearman_supported": true,
+    "support_note": null
+   },
+   {
+    "variable": "f2_cash_r",
+    "population": "P_quality",
+    "win_spearman": [
+     0.8944,
+     0.9747,
+     0.9747
+    ],
+    "destroy_spearman": [
+     0.527,
+     -0.4472,
+     0.3591
+    ],
+    "win_med": 0.975,
+    "destroy_med": 0.359,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "gap": -0.616,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      1,
+      2,
+      1,
+      1,
+      2
+     ],
+     "2017": [
+      1,
+      0,
+      2,
+      0,
+      0
+     ],
+     "2018": [
+      1,
+      2,
+      0,
+      1,
+      4
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_intcov",
+    "population": "P_quality",
+    "win_spearman": [
+     0.9747,
+     0.6669,
+     0.9747
+    ],
+    "destroy_spearman": [
+     -0.3591,
+     -0.7071,
+     -0.2236
+    ],
+    "win_med": 0.975,
+    "destroy_med": -0.359,
+    "win_sign_stable": true,
+    "destroy_sign_stable": true,
+    "gap": -0.616,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      3,
+      1,
+      0,
+      0,
+      2
+     ],
+     "2017": [
+      2,
+      0,
+      0,
+      0,
+      0
+     ],
+     "2018": [
+      5,
+      0,
+      0,
+      0,
+      1
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_aturn",
+    "population": "P_quality",
+    "win_spearman": [
+     0.6669,
+     0.6,
+     0.7
+    ],
+    "destroy_spearman": [
+     0.0,
+     -0.1054,
+     0.0513
+    ],
+    "win_med": 0.667,
+    "destroy_med": 0.0,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "gap": -0.667,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      2,
+      1,
+      1,
+      2,
+      1
+     ],
+     "2017": [
+      2,
+      0,
+      0,
+      1,
+      1
+     ],
+     "2018": [
+      3,
+      2,
+      2,
+      0,
+      3
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   },
+   {
+    "variable": "f2_netiss_r",
+    "population": "P_quality",
+    "win_spearman": [
+     -0.9,
+     -1.0,
+     -0.6
+    ],
+    "destroy_spearman": [
+     -0.1118,
+     0.2236,
+     -0.0513
+    ],
+    "win_med": -0.9,
+    "destroy_med": -0.051,
+    "win_sign_stable": true,
+    "destroy_sign_stable": false,
+    "gap": -0.849,
+    "destroy_events_by_vintage": {
+     "2016": 7,
+     "2017": 4,
+     "2018": 10
+    },
+    "win_events_by_vintage": {
+     "2016": 65,
+     "2017": 66,
+     "2018": 66
+    },
+    "destroy_quintile_counts": {
+     "2016": [
+      2,
+      1,
+      2,
+      0,
+      2
+     ],
+     "2017": [
+      2,
+      0,
+      0,
+      0,
+      2
+     ],
+     "2018": [
+      2,
+      1,
+      2,
+      2,
+      1
+     ]
+    },
+    "destroy_spearman_supported": false,
+    "win_spearman_supported": true,
+    "support_note": "破壊の総事象が 25 件に届かないビンテージがある＝五分位の順位相関は1社の移動で動く。**単調に見えても雑音**"
+   }
+  ]
+ },
+ "variable_level_best_destroy_direction": {
+  "note": "変数ごとに『破壊|lift|が最大になる向き』を1本選び、**その同じ群で勝者側がどうなっているか**を並べる。破壊の予言子が勝者も拾うのかを直接見る表。",
+  "rows": [
+   {
+    "variable": "f2_rev",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.105,
+    "win_lift_in_same_group": -0.0279,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": -0.0279,
+    "destroy_lift_in_same_group": 0.105,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_opm",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0836,
+    "win_lift_in_same_group": 0.0432,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": 0.0432,
+    "destroy_lift_in_same_group": 0.0836,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_opmD5",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0607,
+    "win_lift_in_same_group": -0.0362,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": -0.0362,
+    "destroy_lift_in_same_group": 0.0607,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_fcfpos5",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0585,
+    "win_lift_in_same_group": 0.0111,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": 0.0111,
+    "destroy_lift_in_same_group": 0.0585,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_netiss_r",
+    "population": "P_full",
+    "best_destroy_cut": "上位1/4",
+    "destroy_lift_there": 0.0534,
+    "win_lift_in_same_group": -0.0749,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": -0.0749,
+    "destroy_lift_in_same_group": 0.0534,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_intcov",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.048,
+    "win_lift_in_same_group": -0.0251,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": -0.0251,
+    "destroy_lift_in_same_group": 0.048,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_rnd_r",
+    "population": "P_full",
+    "best_destroy_cut": "上位1/4",
+    "destroy_lift_there": 0.048,
+    "win_lift_in_same_group": 0.0549,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": 0.0549,
+    "destroy_lift_in_same_group": 0.048,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_accr",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0419,
+    "win_lift_in_same_group": 0.0335,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": 0.0335,
+    "destroy_lift_in_same_group": 0.0419,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_streak_rev",
+    "population": "P_full",
+    "best_destroy_cut": "上位1/4",
+    "destroy_lift_there": -0.0339,
+    "win_lift_in_same_group": -0.0094,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左下 凪（勝者↓ 破壊↓・安全だが伸びない）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": 0.0204,
+    "destroy_lift_in_same_group": 0.0131,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_payout5",
+    "population": "P_quality",
+    "best_destroy_cut": "上位1/4",
+    "destroy_lift_there": 0.0328,
+    "win_lift_in_same_group": -0.0084,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": -0.0375,
+    "destroy_lift_in_same_group": -0.0122,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_conv5",
+    "population": "P_full",
+    "best_destroy_cut": "上位1/4",
+    "destroy_lift_there": -0.0308,
+    "win_lift_in_same_group": -0.013,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左下 凪（勝者↓ 破壊↓・安全だが伸びない）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": -0.013,
+    "destroy_lift_in_same_group": -0.0308,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_sga_r",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": -0.0292,
+    "win_lift_in_same_group": 0.0951,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "右下 純粋な追い風（勝者↑ 破壊↓）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": 0.0951,
+    "destroy_lift_in_same_group": -0.0292,
+    "same_direction_serves_both": true
+   },
+   {
+    "variable": "f2_aturn",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0284,
+    "win_lift_in_same_group": -0.1045,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": -0.1045,
+    "destroy_lift_in_same_group": 0.0284,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_cash_r",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": -0.0278,
+    "win_lift_in_same_group": -0.0481,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左下 凪（勝者↓ 破壊↓・安全だが伸びない）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": 0.0556,
+    "destroy_lift_in_same_group": 0.0241,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_opm",
+    "population": "P_quality",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0269,
+    "win_lift_in_same_group": -0.03,
+    "destroy_sign_stable": false,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": -0.03,
+    "destroy_lift_in_same_group": 0.0269,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_gw_r",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.025,
+    "win_lift_in_same_group": -0.0088,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": -0.0572,
+    "destroy_lift_in_same_group": -0.0102,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_intcov",
+    "population": "P_quality",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0249,
+    "win_lift_in_same_group": -0.0788,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": -0.0788,
+    "destroy_lift_in_same_group": 0.0249,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_cagr5",
+    "population": "P_quality",
+    "best_destroy_cut": "上位1/4",
+    "destroy_lift_there": 0.0244,
+    "win_lift_in_same_group": -0.0433,
+    "destroy_sign_stable": false,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": -0.0433,
+    "destroy_lift_in_same_group": 0.0244,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_accel",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0227,
+    "win_lift_in_same_group": -0.0319,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": 0.0462,
+    "destroy_lift_in_same_group": 0.0108,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_gm",
+    "population": "P_quality",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": -0.0213,
+    "win_lift_in_same_group": -0.0143,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "左下 凪（勝者↓ 破壊↓・安全だが伸びない）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": 0.0564,
+    "destroy_lift_in_same_group": 0.0105,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_cagr5",
+    "population": "P_full",
+    "best_destroy_cut": "上位1/4",
+    "destroy_lift_there": 0.0209,
+    "win_lift_in_same_group": -0.0234,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": -0.0234,
+    "destroy_lift_in_same_group": 0.0209,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_streak_opm",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0195,
+    "win_lift_in_same_group": 0.0107,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": -0.0137,
+    "destroy_lift_in_same_group": -0.0177,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_capex_r",
+    "population": "P_quality",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0176,
+    "win_lift_in_same_group": 0.0053,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": -0.0417,
+    "destroy_lift_in_same_group": -0.006,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_payout5",
+    "population": "P_full",
+    "best_destroy_cut": "上位1/4",
+    "destroy_lift_there": -0.0174,
+    "win_lift_in_same_group": -0.0112,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左下 凪（勝者↓ 破壊↓・安全だが伸びない）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": -0.022,
+    "destroy_lift_in_same_group": -0.0117,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_conv5",
+    "population": "P_quality",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": -0.0172,
+    "win_lift_in_same_group": -0.033,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左下 凪（勝者↓ 破壊↓・安全だが伸びない）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": -0.0608,
+    "destroy_lift_in_same_group": 0.0134,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_gm",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": -0.0164,
+    "win_lift_in_same_group": 0.0695,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "右下 純粋な追い風（勝者↑ 破壊↓）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": 0.0695,
+    "destroy_lift_in_same_group": -0.0164,
+    "same_direction_serves_both": true
+   },
+   {
+    "variable": "f2_opmD5",
+    "population": "P_quality",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0153,
+    "win_lift_in_same_group": -0.0166,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": -0.0311,
+    "destroy_lift_in_same_group": -0.006,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_gw_r",
+    "population": "P_quality",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0125,
+    "win_lift_in_same_group": 0.0171,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": -0.0433,
+    "destroy_lift_in_same_group": -0.0122,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_accel",
+    "population": "P_quality",
+    "best_destroy_cut": "上位1/4",
+    "destroy_lift_there": 0.0122,
+    "win_lift_in_same_group": 0.0219,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": 0.0219,
+    "destroy_lift_in_same_group": 0.0122,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_rev",
+    "population": "P_quality",
+    "best_destroy_cut": "上位1/4",
+    "destroy_lift_there": -0.0122,
+    "win_lift_in_same_group": 0.0193,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "右下 純粋な追い風（勝者↑ 破壊↓）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": 0.0193,
+    "destroy_lift_in_same_group": -0.0122,
+    "same_direction_serves_both": true
+   },
+   {
+    "variable": "f2_capex_r",
+    "population": "P_full",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0102,
+    "win_lift_in_same_group": 0.0208,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": -0.0597,
+    "destroy_lift_in_same_group": 0.0017,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_streak_rev",
+    "population": "P_quality",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0094,
+    "win_lift_in_same_group": 0.0294,
+    "destroy_sign_stable": false,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": 0.0294,
+    "destroy_lift_in_same_group": 0.0094,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_netiss_r",
+    "population": "P_quality",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0085,
+    "win_lift_in_same_group": 0.0973,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": 0.0973,
+    "destroy_lift_in_same_group": 0.0085,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_rnd_r",
+    "population": "P_quality",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0083,
+    "win_lift_in_same_group": -0.0447,
+    "destroy_sign_stable": false,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": 0.1234,
+    "destroy_lift_in_same_group": 0.0001,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_sga_r",
+    "population": "P_quality",
+    "best_destroy_cut": "上位1/4",
+    "destroy_lift_there": 0.0082,
+    "win_lift_in_same_group": 0.021,
+    "destroy_sign_stable": false,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": 0.021,
+    "destroy_lift_in_same_group": 0.0082,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_streak_opm",
+    "population": "P_quality",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0073,
+    "win_lift_in_same_group": -0.0052,
+    "destroy_sign_stable": false,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": -0.0095,
+    "destroy_lift_in_same_group": -0.0072,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_accr",
+    "population": "P_quality",
+    "best_destroy_cut": "上位1/4",
+    "destroy_lift_there": 0.0062,
+    "win_lift_in_same_group": -0.0,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": 0.0196,
+    "destroy_lift_in_same_group": 0.0034,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_aturn",
+    "population": "P_quality",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": 0.0058,
+    "win_lift_in_same_group": -0.0555,
+    "destroy_sign_stable": true,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "best_win_cut": "下位1/4",
+    "win_lift_there": -0.0555,
+    "destroy_lift_in_same_group": 0.0058,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_cash_r",
+    "population": "P_quality",
+    "best_destroy_cut": "下位1/4",
+    "destroy_lift_there": -0.0054,
+    "win_lift_in_same_group": -0.0768,
+    "destroy_sign_stable": false,
+    "win_sign_stable_there": true,
+    "quadrant_at_best_destroy": "左下 凪（勝者↓ 破壊↓・安全だが伸びない）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": 0.0821,
+    "destroy_lift_in_same_group": 0.0034,
+    "same_direction_serves_both": false
+   },
+   {
+    "variable": "f2_fcfpos5",
+    "population": "P_quality",
+    "best_destroy_cut": "上位1/4",
+    "destroy_lift_there": 0.0,
+    "win_lift_in_same_group": 0.0,
+    "destroy_sign_stable": false,
+    "win_sign_stable_there": false,
+    "quadrant_at_best_destroy": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "best_win_cut": "上位1/4",
+    "win_lift_there": 0.0,
+    "destroy_lift_in_same_group": 0.0,
+    "same_direction_serves_both": false
+   }
+  ]
+ },
+ "irr_contrast_not_a_candidate": {
+  "why": "prereg は irr を候補から外し『対照としては使う』と定めている。この台帳の既存の結論『上を狙うなら85／下を防ぐなら70』が**目的ごとに別の指標が要る**ことの実例なら、irr の刻みは象限で分かれて見えるはず。",
+  "pooled_2013_2015": {
+   "50": {
+    "n": 576,
+    "win_k": 92,
+    "win_p": 0.1597,
+    "destroy_k": 15,
+    "destroy_p": 0.026,
+    "destroy_expected_at_base": 13.05,
+    "p_zero_destroy_poisson": null
+   },
+   "70": {
+    "n": 131,
+    "win_k": 48,
+    "win_p": 0.3664,
+    "destroy_k": 0,
+    "destroy_p": 0.0,
+    "destroy_expected_at_base": 3.15,
+    "p_zero_destroy_poisson": 0.0428
+   },
+   "85": {
+    "n": 19,
+    "win_k": 11,
+    "win_p": 0.5789,
+    "destroy_k": 2,
+    "destroy_p": 0.1053,
+    "destroy_expected_at_base": 0.43,
+    "p_zero_destroy_poisson": null
+   },
+   "100": {
+    "n": 18,
+    "win_k": 1,
+    "win_p": 0.0556,
+    "destroy_k": 0,
+    "destroy_p": 0.0,
+    "destroy_expected_at_base": 0.37,
+    "p_zero_destroy_poisson": 0.6899
+   }
+  },
+  "pooled_note": "窓の長い2ビンテージ（13.09年/11.10年）だけを束ねた。刻みが 50/70/85/100 で揃うのもこの2つだけ（2018 は 75）。⚠**2013 と 2015 はティッカーが重なる＝独立標本ではない**ので、束ねた n も p 値も『独立な証拠の積み上げ』ではない。ポアソンの p は『基準率どおりなら破壊が何件出るはずか』の目安であって検定ではない。",
+  "reproduces_existing_record": "retro_moat_durability の既存の記録（irr=70 恒久毀損 0.02・n=101／irr=85 0.10・n=10）を、**別の解析集合で独立に再現している**（ここでは 70: 0/131・85: 2/19=0.105）。同じ台帳の二つの道具が同じことを言っている＝v9.9.65 の意味で健全。",
+  "analysis_set_recomputed_matches_W1D1": [
+   {
+    "vintage": 2013,
+    "recomputed": {
+     "n": 941,
+     "wins": 199,
+     "destroys": 49
+    },
+    "D1": {
+     "n": 941,
+     "destroys": 49,
+     "wins": 199
+    },
+    "match": true
+   },
+   {
+    "vintage": 2015,
+    "recomputed": {
+     "n": 503,
+     "wins": 99,
+     "destroys": 9
+    },
+    "D1": {
+     "n": 503,
+     "destroys": 9,
+     "wins": 99
+    },
+    "match": true
+   },
+   {
+    "vintage": 2016,
+    "recomputed": {
+     "n": 946,
+     "wins": 230,
+     "destroys": 55
+    },
+    "D1": {
+     "n": 946,
+     "destroys": 55,
+     "wins": 230
+    },
+    "match": true
+   },
+   {
+    "vintage": 2017,
+    "recomputed": {
+     "n": 951,
+     "wins": 222,
+     "destroys": 60
+    },
+    "D1": {
+     "n": 951,
+     "destroys": 60,
+     "wins": 222
+    },
+    "match": true
+   },
+   {
+    "vintage": 2018,
+    "recomputed": {
+     "n": 952,
+     "wins": 200,
+     "destroys": 77
+    },
+    "D1": {
+     "n": 952,
+     "destroys": 77,
+     "wins": 200
+    },
+    "match": true
+   }
+  ],
+  "caveat": "⚠ 刻みがビンテージで違う（2013/2015 は 50/70/85/100、2018 は 50/75/85）。**通時で1本の系列として繋がない**。2016/2017 に読解は存在しない＝prereg の必須ゲート（2016/2017/2018 の符号不変）は irr には当てられない。n も小さい（2013 の 85 は6社・2018 は21社）＝方向の傍証であって検定ではない。",
+  "rows": [
+   {
+    "vintage": 2013,
+    "irr": 50,
+    "n": 185,
+    "win_k": 26,
+    "win_p": 0.1405,
+    "win_lift": -0.0749,
+    "destroy_k": 8,
+    "destroy_p": 0.0432,
+    "destroy_lift": 0.0067,
+    "destroy_rr": 1.182,
+    "base_win": 0.2154,
+    "base_destroy": 0.0366,
+    "quadrant": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "n_readable": 246
+   },
+   {
+    "vintage": 2013,
+    "irr": 70,
+    "n": 51,
+    "win_k": 23,
+    "win_p": 0.451,
+    "win_lift": 0.2355,
+    "destroy_k": 0,
+    "destroy_p": 0.0,
+    "destroy_lift": -0.0366,
+    "destroy_rr": 0.0,
+    "base_win": 0.2154,
+    "base_destroy": 0.0366,
+    "quadrant": "右下 純粋な追い風（勝者↑ 破壊↓）",
+    "n_readable": 246
+   },
+   {
+    "vintage": 2013,
+    "irr": 85,
+    "n": 6,
+    "win_k": 4,
+    "win_p": 0.6667,
+    "win_lift": 0.4512,
+    "destroy_k": 1,
+    "destroy_p": 0.1667,
+    "destroy_lift": 0.1301,
+    "destroy_rr": 4.556,
+    "base_win": 0.2154,
+    "base_destroy": 0.0366,
+    "quadrant": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "n_readable": 246
+   },
+   {
+    "vintage": 2013,
+    "irr": 100,
+    "n": 4,
+    "win_k": 0,
+    "win_p": 0.0,
+    "win_lift": -0.2154,
+    "destroy_k": 0,
+    "destroy_p": 0.0,
+    "destroy_lift": -0.0366,
+    "destroy_rr": 0.0,
+    "base_win": 0.2154,
+    "base_destroy": 0.0366,
+    "quadrant": "左下 凪（勝者↓ 破壊↓・安全だが伸びない）",
+    "n_readable": 246
+   },
+   {
+    "vintage": 2015,
+    "irr": 50,
+    "n": 391,
+    "win_k": 66,
+    "win_p": 0.1688,
+    "win_lift": -0.03,
+    "destroy_k": 7,
+    "destroy_p": 0.0179,
+    "destroy_lift": 0.0018,
+    "destroy_rr": 1.114,
+    "base_win": 0.1988,
+    "base_destroy": 0.0161,
+    "quadrant": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "n_readable": 498
+   },
+   {
+    "vintage": 2015,
+    "irr": 70,
+    "n": 80,
+    "win_k": 25,
+    "win_p": 0.3125,
+    "win_lift": 0.1137,
+    "destroy_k": 0,
+    "destroy_p": 0.0,
+    "destroy_lift": -0.0161,
+    "destroy_rr": 0.0,
+    "base_win": 0.1988,
+    "base_destroy": 0.0161,
+    "quadrant": "右下 純粋な追い風（勝者↑ 破壊↓）",
+    "n_readable": 498
+   },
+   {
+    "vintage": 2015,
+    "irr": 85,
+    "n": 13,
+    "win_k": 7,
+    "win_p": 0.5385,
+    "win_lift": 0.3397,
+    "destroy_k": 1,
+    "destroy_p": 0.0769,
+    "destroy_lift": 0.0609,
+    "destroy_rr": 4.788,
+    "base_win": 0.1988,
+    "base_destroy": 0.0161,
+    "quadrant": "右上 極端を作る（勝者↑ 破壊↑・ボラティリティ型）",
+    "n_readable": 498
+   },
+   {
+    "vintage": 2015,
+    "irr": 100,
+    "n": 14,
+    "win_k": 1,
+    "win_p": 0.0714,
+    "win_lift": -0.1274,
+    "destroy_k": 0,
+    "destroy_p": 0.0,
+    "destroy_lift": -0.0161,
+    "destroy_rr": 0.0,
+    "base_win": 0.1988,
+    "base_destroy": 0.0161,
+    "quadrant": "左下 凪（勝者↓ 破壊↓・安全だが伸びない）",
+    "n_readable": 498
+   },
+   {
+    "vintage": 2018,
+    "irr": 50,
+    "n": 73,
+    "win_k": 12,
+    "win_p": 0.1644,
+    "win_lift": -0.1003,
+    "destroy_k": 3,
+    "destroy_p": 0.0411,
+    "destroy_lift": 0.019,
+    "destroy_rr": 1.863,
+    "base_win": 0.2647,
+    "base_destroy": 0.0221,
+    "quadrant": "左上 純粋な向かい風（勝者↓ 破壊↑）",
+    "n_readable": 136
+   },
+   {
+    "vintage": 2018,
+    "irr": 75,
+    "n": 42,
+    "win_k": 9,
+    "win_p": 0.2143,
+    "win_lift": -0.0504,
+    "destroy_k": 0,
+    "destroy_p": 0.0,
+    "destroy_lift": -0.0221,
+    "destroy_rr": 0.0,
+    "base_win": 0.2647,
+    "base_destroy": 0.0221,
+    "quadrant": "左下 凪（勝者↓ 破壊↓・安全だが伸びない）",
+    "n_readable": 136
+   },
+   {
+    "vintage": 2018,
+    "irr": 85,
+    "n": 21,
+    "win_k": 15,
+    "win_p": 0.7143,
+    "win_lift": 0.4496,
+    "destroy_k": 0,
+    "destroy_p": 0.0,
+    "destroy_lift": -0.0221,
+    "destroy_rr": 0.0,
+    "base_win": 0.2647,
+    "base_destroy": 0.0221,
+    "quadrant": "右下 純粋な追い風（勝者↑ 破壊↓）",
+    "n_readable": 136
+   }
+  ]
+ },
+ "gate_unevaluable": {
+  "why": "prereg の必須ゲートは 2016/2017/2018 の符号不変。co_(2013/2015のみ)・pa_(2018のみ)・hv_/per(2016/2017に無い) は**結果を見る前から構造的に判定不能**。『不合格』と書いてはいけない（hist_valuation v1 の教訓のゲート版）。",
+  "variables": {
+   "co_equity_neg": [
+    2013,
+    2015
+   ],
+   "co_fcf_all_pos": [
+    2013,
+    2015
+   ],
+   "co_fcf_conv_5y": [
+    2013,
+    2015
+   ],
+   "co_op_all_pos": [
+    2013,
+    2015
+   ],
+   "co_opm": [
+    2013,
+    2015
+   ],
+   "co_rev_asof": [
+    2013,
+    2015
+   ],
+   "co_roic_latest": [
+    2013,
+    2015
+   ],
+   "co_roic_med5": [
+    2013,
+    2015
+   ],
+   "co_roic_worst5": [
+    2013,
+    2015
+   ],
+   "co_sales_cagr5": [
+    2013,
+    2015
+   ],
+   "co_score": [
+    2013,
+    2015
+   ],
+   "f2_accel": [
+    2018
+   ],
+   "f2_accr": [
+    2018
+   ],
+   "f2_aturn": [
+    2018
+   ],
+   "f2_cagr5": [
+    2018
+   ],
+   "f2_capex_r": [
+    2018
+   ],
+   "f2_cash_r": [
+    2018
+   ],
+   "f2_conv5": [
+    2018
+   ],
+   "f2_fcfpos5": [
+    2018
+   ],
+   "f2_gm": [
+    2018
+   ],
+   "f2_gw_r": [
+    2018
+   ],
+   "f2_intcov": [
+    2018
+   ],
+   "f2_netiss_r": [
+    2018
+   ],
+   "f2_opm": [
+    2018
+   ],
+   "f2_opmD5": [
+    2018
+   ],
+   "f2_payout5": [
+    2018
+   ],
+   "f2_rev": [
+    2018
+   ],
+   "f2_rnd_r": [
+    2018
+   ],
+   "f2_sga_r": [
+    2018
+   ],
+   "f2_streak_opm": [
+    2018
+   ],
+   "f2_streak_rev": [
+    2018
+   ],
+   "hv_adj_pe_pct": [
+    2013,
+    2015,
+    2018
+   ],
+   "hv_pe_pct": [
+    2013,
+    2015,
+    2018
+   ],
+   "hv_pe_z": [
+    2013,
+    2015,
+    2018
+   ],
+   "hv_pfcf_pct": [
+    2013,
+    2015,
+    2018
+   ],
+   "hv_ps_pct": [
+    2013,
+    2015,
+    2018
+   ],
+   "hv_ps_z": [
+    2013,
+    2015,
+    2018
+   ],
+   "pa_mdd5": [
+    2018
+   ],
+   "pa_prox_hi": [
+    2018
+   ],
+   "pa_r2_log": [
+    2018
+   ],
+   "pa_rf5": [
+    2018
+   ],
+   "pa_upmo_r": [
+    2018
+   ],
+   "pa_vol_m": [
+    2018
+   ],
+   "pa_worst12": [
+    2018
+   ],
+   "per": [
+    2013,
+    2015,
+    2018
+   ],
+   "size_rev": [
+    2013,
+    2015,
+    2018
+   ]
+  },
+  "n_variables": 46
+ },
+ "limitations": {
+  "exploratory": "この道具の出力に合否は無い。prereg の5条件の判定は W1/D1 が持つ。",
+  "vintage_overlap": "2016/2017/2018 は独立標本ではない（同じ956ティッカー・窓が重なる）。",
+  "rare_event": "破壊の分子は小さい。守る向きは min_numerator に構造的に届かない。",
+  "survivorship": "母集団はティッカーが解決できた社＝退場社が薄い。破壊側は**この偏りの影響を最も強く受ける**（out/retro_delisted_secpx_2013.json の挟み込みでは、2013年の恒久毀損は 2.00〜25.68% の幅がありうる）。",
+  "quartile_cannot_see_U": "四分位の切り方はU字を見られない。五分位の単調性で補っている。",
+  "not_causal": "どれも同時点の相関。原因ではない。",
+  "size_confound_not_cleared_for_all": "破壊側の単変量で最強は size(f2_rev/size_rev)＝五分位で Q1 17-22% → Q5 1.1-1.6%。したがって他の破壊予言子は『size の言い換え』でありうる。D1 の size_shadow_diagnostic がsize 四分位で層別しており、**f2_opm と f2_intcov は P_full の四分位で層別後も符号が3ビンテージ安定**（opm 下位1/4: MH 0.040/0.072/0.063、intcov 下位1/4: 0.028/0.044/0.074）＝size とは別の情報を持つ。**一方 f2_gm・f2_sga_r・f2_cash_r は P_full の四分位でsize 層別が当てられていない＝size の影かどうか未確認**。ここは断定せず、次に測るべき先として名指しする。",
+  "gm_vs_opm_opposite_signs": "f2_gm(粗利率) は破壊ρ +0.90 / 勝者ρ −0.82、f2_opm(営業利益率) は破壊ρ −0.90 / 勝者ρ −0.87 ＝**破壊に対して符号が逆**。差は営業費用（sga_r は破壊ρ +0.70）なので『粗利は高いが営業費用も高い＝営業利益率が低い』帯が破壊に寄っている、と読むのが整合的。ただしこれは3変数の符号から組み立てた解釈であって、**その帯を直接切って測ってはいない**（2本の積は W2/D2 の領分）。"
+ }
+}

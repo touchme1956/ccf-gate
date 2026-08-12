@@ -1,0 +1,1822 @@
+{
+ "generated": "2026-08-11",
+ "tool": "night/hist_wd_verify_irr85.py",
+ "panel": "out/hist_wd_panel.json",
+ "prereg": "out/hist_winner_destroyer_prereg.json",
+ "seed": 20260811,
+ "n_perm": 2000,
+ "reproducibility": {
+  "deterministic": true,
+  "checked": "同一入力で3回走らせて出力JSONのmd5が一致することを確認した",
+  "gotcha": "最初の確認は **並列セッションが残した別の /tmp/a.json を読んでいて** 『非決定的』という誤った結論を出した。中間ファイルは必ず自分専用のパスへ置くこと"
+ },
+ "candidate": {
+  "variable": "irr=85",
+  "side": "winner",
+  "population": "2013+2015 プール（has_outcome ∧ window_full ∧ irr not null）",
+  "cut": "irr==85",
+  "claimed": {
+   "n": 19,
+   "numerator": 11,
+   "lift": 0.3746
+  }
+ },
+ "prereg_status": {
+  "is_registered_candidate": false,
+  "candidates_excluded": [
+   "irr18",
+   "irr",
+   "moat5",
+   "dom18",
+   "mech",
+   "時制(完了形/願望形)"
+  ],
+  "why": "ユーザーの問いが『irr85以外』。prereg は irr を candidates_excluded に置き、『対照としては使う』と明記している。したがって irr=85 を『事前登録に合格した新指標』として数えることは定義上できない。以下は対照が何をしているかを測るために当てる。"
+ },
+ "tests": {
+  "T0_reproduce": {
+   "winner": {
+    "n_group": 19,
+    "num_group": 11,
+    "p_group": 0.5789,
+    "n_base": 744,
+    "num_base": 152,
+    "p_base": 0.2043,
+    "lift": 0.3746,
+    "passes_lift_line": true,
+    "passes_min_numerator": true
+   },
+   "destroyer": {
+    "n_group": 19,
+    "num_group": 2,
+    "p_group": 0.1053,
+    "n_base": 744,
+    "num_base": 17,
+    "p_base": 0.0228,
+    "lift": 0.0824,
+    "passes_lift_line": false,
+    "passes_min_numerator": false
+   },
+   "matches_claim": true,
+   "verdict": "再現した"
+  },
+  "E1_cluster_duplication": {
+   "question": "n=19 は19社か",
+   "rows_in_group": 19,
+   "unique_tickers_in_group": 14,
+   "duplicated_tickers": [
+    "CMTL",
+    "CW",
+    "DLB",
+    "LRCX",
+    "RBC"
+   ],
+   "winner_rows": 11,
+   "winner_unique": [
+    "CW",
+    "ENTG",
+    "LRCX",
+    "MKSI",
+    "RBC",
+    "STX",
+    "TDG",
+    "WST"
+   ],
+   "destroyer_rows": 2,
+   "destroyer_unique": [
+    "CMTL"
+   ],
+   "population_rows": 744,
+   "population_unique_tickers": 598,
+   "collapsed_winner": {
+    "n_group": 14,
+    "num_group": 8,
+    "p_group": 0.5714,
+    "n_base": 598,
+    "num_base": 125,
+    "p_base": 0.209,
+    "lift": 0.3624,
+    "passes_lift_line": true,
+    "passes_min_numerator": true
+   },
+   "collapsed_destroyer": {
+    "n_group": 14,
+    "num_group": 1,
+    "p_group": 0.0714,
+    "n_base": 598,
+    "num_base": 15,
+    "p_base": 0.0251,
+    "lift": 0.0463,
+    "passes_lift_line": false,
+    "passes_min_numerator": false
+   },
+   "verdict": "分子11は**8社**・破壊2は**1社**。畳んでも lift 0.3624・分子 8 で線は保つ"
+  },
+  "T1_vintage_sign": {
+   "prereg_requires": "2016/2017/2018 の3つで符号が反転しない（必須）",
+   "structural_problem": "2016/2017 に irr の読解が存在しない（native readings = 0）。panel.known_asymmetries も『irr の読解は 2013/2015/2018 のみ』と明記。＝必須基準そのものが irr については構造的に検定不能",
+   "native_vintages": {
+    "2013": {
+     "winner": {
+      "n_group": 6,
+      "num_group": 4,
+      "p_group": 0.6667,
+      "n_base": 246,
+      "num_base": 53,
+      "p_base": 0.2154,
+      "lift": 0.4512,
+      "passes_lift_line": true,
+      "passes_min_numerator": false
+     },
+     "destroyer": {
+      "n_group": 6,
+      "num_group": 1,
+      "p_group": 0.1667,
+      "n_base": 246,
+      "num_base": 9,
+      "p_base": 0.0366,
+      "lift": 0.1301,
+      "passes_lift_line": false,
+      "passes_min_numerator": false
+     },
+     "irr_levels": {
+      "50": 185,
+      "70": 51,
+      "85": 6,
+      "100": 4
+     },
+     "group_tickers": [
+      "CMTL",
+      "CW",
+      "DLB",
+      "LRCX",
+      "RBC",
+      "WST"
+     ]
+    },
+    "2015": {
+     "winner": {
+      "n_group": 13,
+      "num_group": 7,
+      "p_group": 0.5385,
+      "n_base": 498,
+      "num_base": 99,
+      "p_base": 0.1988,
+      "lift": 0.3397,
+      "passes_lift_line": true,
+      "passes_min_numerator": true
+     },
+     "destroyer": {
+      "n_group": 13,
+      "num_group": 1,
+      "p_group": 0.0769,
+      "n_base": 498,
+      "num_base": 8,
+      "p_base": 0.0161,
+      "lift": 0.0609,
+      "passes_lift_line": false,
+      "passes_min_numerator": false
+     },
+     "irr_levels": {
+      "50": 391,
+      "70": 80,
+      "100": 14,
+      "85": 13
+     },
+     "group_tickers": [
+      "CMTL",
+      "CW",
+      "DLB",
+      "ENTG",
+      "HXL",
+      "KALU",
+      "LRCX",
+      "MKSI",
+      "MWA",
+      "RBC",
+      "ST",
+      "STX",
+      "TDG"
+     ]
+    },
+    "2018": {
+     "winner": {
+      "n_group": 21,
+      "num_group": 15,
+      "p_group": 0.7143,
+      "n_base": 136,
+      "num_base": 36,
+      "p_base": 0.2647,
+      "lift": 0.4496,
+      "passes_lift_line": true,
+      "passes_min_numerator": true
+     },
+     "destroyer": {
+      "n_group": 21,
+      "num_group": 0,
+      "p_group": 0.0,
+      "n_base": 136,
+      "num_base": 3,
+      "p_base": 0.0221,
+      "lift": -0.0221,
+      "passes_lift_line": false,
+      "passes_min_numerator": false
+     },
+     "irr_levels": {
+      "50": 73,
+      "85": 21,
+      "75": 42
+     },
+     "group_tickers": [
+      "ADI",
+      "AEIS",
+      "AMAT",
+      "APH",
+      "BWXT",
+      "COHR",
+      "CW",
+      "ENTG",
+      "HEI",
+      "IPGP",
+      "LRCX",
+      "MKSI",
+      "MPWR",
+      "NOVT",
+      "NVMI",
+      "NXPI",
+      "OLED",
+      "RBC",
+      "ROG",
+      "TDG",
+      "WST"
+     ]
+    }
+   },
+   "carried_forward_2016_2017": {
+    "2016": {
+     "winner": {
+      "n_group": 18,
+      "num_group": 11,
+      "p_group": 0.6111,
+      "n_base": 526,
+      "num_base": 127,
+      "p_base": 0.2414,
+      "lift": 0.3697,
+      "passes_lift_line": true,
+      "passes_min_numerator": true
+     },
+     "native_irr_readings_in_this_vintage": 0,
+     "irr_near_src_of_group": {
+      "2018": 6,
+      "2015": 12
+     },
+     "rows_with_lookahead_src": 6,
+     "lookahead_share": 0.3333
+    },
+    "2017": {
+     "winner": {
+      "n_group": 27,
+      "num_group": 18,
+      "p_group": 0.6667,
+      "n_base": 526,
+      "num_base": 119,
+      "p_base": 0.2262,
+      "lift": 0.4404,
+      "passes_lift_line": true,
+      "passes_min_numerator": true
+     },
+     "native_irr_readings_in_this_vintage": 0,
+     "irr_near_src_of_group": {
+      "2018": 21,
+      "2015": 6
+     },
+     "rows_with_lookahead_src": 21,
+     "lookahead_share": 0.7778
+    }
+   },
+   "carry_warning": "irr_near は他ビンテージの読解の持ち回り。(a)同じラベルを別の窓に当てるだけで独立な証拠ではない (b)src>vintage なら look-ahead（2017は78%がそれ）",
+   "sign_native": {
+    "2013": 0.4512,
+    "2015": 0.3397,
+    "2018": 0.4496
+   },
+   "sign_reversed_native": false,
+   "verdict": "判定不能（必須の 2016/2017 に irr の観測が無い）／native 3ビンテージでは符号は反転していない"
+  },
+  "E2_independence": {
+   "years_by_vintage": {
+    "2013": 13.09,
+    "2015": 11.1,
+    "2018": 8.09
+   },
+   "all_windows_end": "2026-08（終点が共通＝終点の相場は全ビンテージに等しく乗る）",
+   "shared_years_2013_vs_2015": 11.1,
+   "shared_share_of_2013_window": 0.848,
+   "group_rows_across_3_vintages": 40,
+   "group_unique_companies_across_3_vintages": 28,
+   "overlap_2018_with_2013_2015": [
+    "CW",
+    "ENTG",
+    "LRCX",
+    "MKSI",
+    "RBC",
+    "TDG",
+    "WST"
+   ],
+   "verdict": "40行＝28社。2018 は 2013/2015 と7社を共有し窓も8.09年ぶん重なる。『3ビンテージで符号一致』は独立な3証拠ではない（prereg の independence_warning どおり）"
+  },
+  "T2_sector": {
+   "group_sic2_distribution": {
+    "36": 2,
+    "35": 7,
+    "67": 2,
+    "38": 3,
+    "30": 1,
+    "28": 1,
+    "33": 1,
+    "None": 1,
+    "37": 1
+   },
+   "largest_sic2": "35",
+   "largest_sic2_share_of_group_rows": 0.3684,
+   "largest_sic2_share_of_winners": 0.6364,
+   "mantel_haenszel_winner": {
+    "mh_risk_diff": 0.2858,
+    "mh_odds_ratio": 3.8432,
+    "strata_used": 9,
+    "n_rows_in_used_strata": 371,
+    "n_rows_total": 744,
+    "strata_detail": [
+     {
+      "stratum": "35",
+      "n_exposed": 7,
+      "num_exposed": 7,
+      "p_exposed": 1.0,
+      "n_unexposed": 41,
+      "num_unexposed": 14,
+      "p_unexposed": 0.341
+     },
+     {
+      "stratum": "38",
+      "n_exposed": 3,
+      "num_exposed": 2,
+      "p_exposed": 0.667,
+      "n_unexposed": 43,
+      "num_unexposed": 14,
+      "p_unexposed": 0.326
+     },
+     {
+      "stratum": "67",
+      "n_exposed": 2,
+      "num_exposed": 0,
+      "p_exposed": 0.0,
+      "n_unexposed": 38,
+      "num_unexposed": 3,
+      "p_unexposed": 0.079
+     },
+     {
+      "stratum": "36",
+      "n_exposed": 2,
+      "num_exposed": 0,
+      "p_exposed": 0.0,
+      "n_unexposed": 41,
+      "num_unexposed": 18,
+      "p_unexposed": 0.439
+     },
+     {
+      "stratum": "28",
+      "n_exposed": 1,
+      "num_exposed": 0,
+      "p_exposed": 0.0,
+      "n_unexposed": 58,
+      "num_unexposed": 3,
+      "p_unexposed": 0.052
+     },
+     {
+      "stratum": "30",
+      "n_exposed": 1,
+      "num_exposed": 1,
+      "p_exposed": 1.0,
+      "n_unexposed": 8,
+      "num_unexposed": 2,
+      "p_unexposed": 0.25
+     },
+     {
+      "stratum": "33",
+      "n_exposed": 1,
+      "num_exposed": 0,
+      "p_exposed": 0.0,
+      "n_unexposed": 7,
+      "num_unexposed": 2,
+      "p_unexposed": 0.286
+     },
+     {
+      "stratum": "37",
+      "n_exposed": 1,
+      "num_exposed": 1,
+      "p_exposed": 1.0,
+      "n_unexposed": 20,
+      "num_unexposed": 3,
+      "p_unexposed": 0.15
+     },
+     {
+      "stratum": "NA",
+      "n_exposed": 1,
+      "num_exposed": 0,
+      "p_exposed": 0.0,
+      "n_unexposed": 96,
+      "num_unexposed": 14,
+      "p_unexposed": 0.146
+     }
+    ]
+   },
+   "mantel_haenszel_destroyer": {
+    "mh_risk_diff": 0.0968,
+    "mh_odds_ratio": 9.8743,
+    "strata_used": 9,
+    "n_rows_in_used_strata": 371,
+    "n_rows_total": 744,
+    "strata_detail": [
+     {
+      "stratum": "35",
+      "n_exposed": 7,
+      "num_exposed": 0,
+      "p_exposed": 0.0,
+      "n_unexposed": 41,
+      "num_unexposed": 0,
+      "p_unexposed": 0.0
+     },
+     {
+      "stratum": "38",
+      "n_exposed": 3,
+      "num_exposed": 0,
+      "p_exposed": 0.0,
+      "n_unexposed": 43,
+      "num_unexposed": 0,
+      "p_unexposed": 0.0
+     },
+     {
+      "stratum": "67",
+      "n_exposed": 2,
+      "num_exposed": 0,
+      "p_exposed": 0.0,
+      "n_unexposed": 38,
+      "num_unexposed": 2,
+      "p_unexposed": 0.053
+     },
+     {
+      "stratum": "36",
+      "n_exposed": 2,
+      "num_exposed": 2,
+      "p_exposed": 1.0,
+      "n_unexposed": 41,
+      "num_unexposed": 1,
+      "p_unexposed": 0.024
+     },
+     {
+      "stratum": "28",
+      "n_exposed": 1,
+      "num_exposed": 0,
+      "p_exposed": 0.0,
+      "n_unexposed": 58,
+      "num_unexposed": 4,
+      "p_unexposed": 0.069
+     },
+     {
+      "stratum": "30",
+      "n_exposed": 1,
+      "num_exposed": 0,
+      "p_exposed": 0.0,
+      "n_unexposed": 8,
+      "num_unexposed": 0,
+      "p_unexposed": 0.0
+     },
+     {
+      "stratum": "33",
+      "n_exposed": 1,
+      "num_exposed": 0,
+      "p_exposed": 0.0,
+      "n_unexposed": 7,
+      "num_unexposed": 0,
+      "p_unexposed": 0.0
+     },
+     {
+      "stratum": "37",
+      "n_exposed": 1,
+      "num_exposed": 0,
+      "p_exposed": 0.0,
+      "n_unexposed": 20,
+      "num_unexposed": 0,
+      "p_unexposed": 0.0
+     },
+     {
+      "stratum": "NA",
+      "n_exposed": 1,
+      "num_exposed": 0,
+      "p_exposed": 0.0,
+      "n_unexposed": 96,
+      "num_unexposed": 2,
+      "p_unexposed": 0.021
+     }
+    ]
+   },
+   "mh_caveat": "MH は片側しかいない層を落とすので、実効の母数は 371/744 行",
+   "stratified_permutation_winner": {
+    "observed_lift": 0.3746,
+    "n_perm": 2000,
+    "p_one_sided": 0.005,
+    "clustered": false,
+    "stratified": true
+   },
+   "stratified_permutation_winner_clustered": {
+    "observed_lift": 0.3746,
+    "n_perm": 2000,
+    "p_one_sided": 0.0105,
+    "clustered": true,
+    "stratified": true
+   },
+   "leave_one_sector_out": [
+    {
+     "n_group": 18,
+     "num_group": 11,
+     "p_group": 0.6111,
+     "n_base": 685,
+     "num_base": 149,
+     "p_base": 0.2175,
+     "lift": 0.3936,
+     "passes_lift_line": true,
+     "passes_min_numerator": true,
+     "dropped_sic2": "28",
+     "dropped_tickers": [
+      "HXL"
+     ]
+    },
+    {
+     "n_group": 18,
+     "num_group": 10,
+     "p_group": 0.5556,
+     "n_base": 735,
+     "num_base": 149,
+     "p_base": 0.2027,
+     "lift": 0.3528,
+     "passes_lift_line": true,
+     "passes_min_numerator": true,
+     "dropped_sic2": "30",
+     "dropped_tickers": [
+      "ENTG"
+     ]
+    },
+    {
+     "n_group": 18,
+     "num_group": 11,
+     "p_group": 0.6111,
+     "n_base": 736,
+     "num_base": 150,
+     "p_base": 0.2038,
+     "lift": 0.4073,
+     "passes_lift_line": true,
+     "passes_min_numerator": true,
+     "dropped_sic2": "33",
+     "dropped_tickers": [
+      "KALU"
+     ]
+    },
+    {
+     "n_group": 12,
+     "num_group": 4,
+     "p_group": 0.3333,
+     "n_base": 696,
+     "num_base": 131,
+     "p_base": 0.1882,
+     "lift": 0.1451,
+     "passes_lift_line": false,
+     "passes_min_numerator": false,
+     "dropped_sic2": "35",
+     "dropped_tickers": [
+      "CW",
+      "LRCX",
+      "RBC",
+      "STX"
+     ]
+    },
+    {
+     "n_group": 17,
+     "num_group": 11,
+     "p_group": 0.6471,
+     "n_base": 701,
+     "num_base": 134,
+     "p_base": 0.1912,
+     "lift": 0.4559,
+     "passes_lift_line": true,
+     "passes_min_numerator": true,
+     "dropped_sic2": "36",
+     "dropped_tickers": [
+      "CMTL"
+     ]
+    },
+    {
+     "n_group": 18,
+     "num_group": 10,
+     "p_group": 0.5556,
+     "n_base": 723,
+     "num_base": 148,
+     "p_base": 0.2047,
+     "lift": 0.3509,
+     "passes_lift_line": true,
+     "passes_min_numerator": true,
+     "dropped_sic2": "37",
+     "dropped_tickers": [
+      "TDG"
+     ]
+    },
+    {
+     "n_group": 16,
+     "num_group": 9,
+     "p_group": 0.5625,
+     "n_base": 698,
+     "num_base": 136,
+     "p_base": 0.1948,
+     "lift": 0.3677,
+     "passes_lift_line": true,
+     "passes_min_numerator": true,
+     "dropped_sic2": "38",
+     "dropped_tickers": [
+      "MKSI",
+      "ST",
+      "WST"
+     ]
+    },
+    {
+     "n_group": 17,
+     "num_group": 11,
+     "p_group": 0.6471,
+     "n_base": 704,
+     "num_base": 149,
+     "p_base": 0.2116,
+     "lift": 0.4354,
+     "passes_lift_line": true,
+     "passes_min_numerator": true,
+     "dropped_sic2": "67",
+     "dropped_tickers": [
+      "DLB"
+     ]
+    }
+   ],
+   "leave_one_sic1_out": [
+    {
+     "n_group": 18,
+     "num_group": 11,
+     "p_group": 0.6111,
+     "n_base": 631,
+     "num_base": 144,
+     "p_base": 0.2282,
+     "lift": 0.3829,
+     "passes_lift_line": true,
+     "passes_min_numerator": true,
+     "dropped_sic1": "2"
+    },
+    {
+     "n_group": 4,
+     "num_group": 0,
+     "p_group": 0.0,
+     "n_base": 551,
+     "num_base": 81,
+     "p_base": 0.147,
+     "lift": -0.147,
+     "passes_lift_line": false,
+     "passes_min_numerator": false,
+     "dropped_sic1": "3"
+    },
+    {
+     "n_group": 17,
+     "num_group": 11,
+     "p_group": 0.6471,
+     "n_base": 669,
+     "num_base": 144,
+     "p_base": 0.2152,
+     "lift": 0.4318,
+     "passes_lift_line": true,
+     "passes_min_numerator": true,
+     "dropped_sic1": "6"
+    }
+   ],
+   "loso_failures": [
+    {
+     "dropped_sic2": "35",
+     "tickers": [
+      "CW",
+      "LRCX",
+      "RBC",
+      "STX"
+     ],
+     "lift": 0.1451,
+     "num_group": 4
+    }
+   ],
+   "loso_failure_fairness_check": {
+    "35": {
+     "residual": {
+      "n_group": 12,
+      "num_group": 4,
+      "p_group": 0.3333,
+      "n_base": 696,
+      "num_base": 131,
+      "p_base": 0.1882,
+      "lift": 0.1451,
+      "passes_lift_line": false,
+      "passes_min_numerator": false
+     },
+     "ratio_p_group_over_p_base": 1.77,
+     "perm_within_vintage": {
+      "observed_lift": 0.1451,
+      "n_perm": 2000,
+      "p_one_sided": 0.179,
+      "clustered": false,
+      "stratified": true
+     },
+     "perm_within_vintage_clustered": {
+      "observed_lift": 0.1451,
+      "n_perm": 2000,
+      "p_one_sided": 0.166,
+      "clustered": true,
+      "stratified": true
+     },
+     "note": "群の37%を落とすので弱まるのは当然。問うべきは『残りが雑音と区別できるか』"
+    }
+   },
+   "verdict": "MH は残る（RD 0.2858・perm p=0.0050）。だが **sic2=35(CW/LRCX/RBC/STX) を抜くと lift 0.1451・分子 4** で事前登録の両方の線を割り、しかも残りは perm p=0.179＝雑音と区別できない。1業種が結果を作っている"
+  },
+  "T3_irr_shadow": {
+   "note": "候補が irr 自身なので『irr の影か』は『85 は 70/100 と別の刻みか』に読み替える",
+   "by_irr_level": {
+    "50": {
+     "n": 576,
+     "win_num": 92,
+     "p_win": 0.1597,
+     "destroy_num": 15,
+     "p_destroy": 0.026
+    },
+    "70": {
+     "n": 131,
+     "win_num": 48,
+     "p_win": 0.3664,
+     "destroy_num": 0,
+     "p_destroy": 0.0
+    },
+    "85": {
+     "n": 19,
+     "win_num": 11,
+     "p_win": 0.5789,
+     "destroy_num": 2,
+     "p_destroy": 0.1053
+    },
+    "100": {
+     "n": 18,
+     "win_num": 1,
+     "p_win": 0.0556,
+     "destroy_num": 0,
+     "p_destroy": 0.0
+    }
+   },
+   "within_irr_ge_70": {
+    "n_group": 19,
+    "num_group": 11,
+    "p_group": 0.5789,
+    "n_base": 168,
+    "num_base": 60,
+    "p_base": 0.3571,
+    "lift": 0.2218,
+    "passes_lift_line": true,
+    "passes_min_numerator": true
+   },
+   "vs_irr_70_only": {
+    "n_group": 19,
+    "num_group": 11,
+    "p_group": 0.5789,
+    "n_base": 150,
+    "num_base": 59,
+    "p_base": 0.3933,
+    "lift": 0.1856,
+    "passes_lift_line": true,
+    "passes_min_numerator": true
+   },
+   "mh_stratified_by_moat5": {
+    "mh_risk_diff": 0.3144,
+    "mh_odds_ratio": 3.87,
+    "strata_used": 4,
+    "n_rows_in_used_strata": 675,
+    "n_rows_total": 744,
+    "strata_detail": [
+     {
+      "stratum": "4",
+      "n_exposed": 12,
+      "num_exposed": 8,
+      "p_exposed": 0.667,
+      "n_unexposed": 162,
+      "num_unexposed": 39,
+      "p_unexposed": 0.241
+     },
+     {
+      "stratum": "2",
+      "n_exposed": 3,
+      "num_exposed": 1,
+      "p_exposed": 0.333,
+      "n_unexposed": 228,
+      "num_unexposed": 29,
+      "p_unexposed": 0.127
+     },
+     {
+      "stratum": "3",
+      "n_exposed": 2,
+      "num_exposed": 1,
+      "p_exposed": 0.5,
+      "n_unexposed": 253,
+      "num_unexposed": 53,
+      "p_unexposed": 0.209
+     },
+     {
+      "stratum": "5",
+      "n_exposed": 2,
+      "num_exposed": 1,
+      "p_exposed": 0.5,
+      "n_unexposed": 13,
+      "num_unexposed": 9,
+      "p_unexposed": 0.692
+     }
+    ]
+   },
+   "verdict": "50(.160)<70(.366)<85(.579) は単調。85 は irr>=70 層内でも +0.2218 残る＝『85 だけが跳ねる』のではなく irr が連続に効き、85 がその上端。irr=100 は .056 で最下位＝刻みの順序は単調ではない"
+  },
+  "T4_leave_one_out": {
+   "row_level": {
+    "min_lift": 0.3523,
+    "min_numerator": 10,
+    "detail": [
+     {
+      "n_group": 18,
+      "num_group": 11,
+      "p_group": 0.6111,
+      "n_base": 743,
+      "num_base": 152,
+      "p_base": 0.2046,
+      "lift": 0.4065,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "CMTL@2013"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "CW@2013"
+     },
+     {
+      "n_group": 18,
+      "num_group": 11,
+      "p_group": 0.6111,
+      "n_base": 743,
+      "num_base": 152,
+      "p_base": 0.2046,
+      "lift": 0.4065,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "DLB@2013"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "LRCX@2013"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "RBC@2013"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "WST@2013"
+     },
+     {
+      "n_group": 18,
+      "num_group": 11,
+      "p_group": 0.6111,
+      "n_base": 743,
+      "num_base": 152,
+      "p_base": 0.2046,
+      "lift": 0.4065,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "CMTL@2015"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "CW@2015"
+     },
+     {
+      "n_group": 18,
+      "num_group": 11,
+      "p_group": 0.6111,
+      "n_base": 743,
+      "num_base": 152,
+      "p_base": 0.2046,
+      "lift": 0.4065,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "DLB@2015"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "ENTG@2015"
+     },
+     {
+      "n_group": 18,
+      "num_group": 11,
+      "p_group": 0.6111,
+      "n_base": 743,
+      "num_base": 152,
+      "p_base": 0.2046,
+      "lift": 0.4065,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "HXL@2015"
+     },
+     {
+      "n_group": 18,
+      "num_group": 11,
+      "p_group": 0.6111,
+      "n_base": 743,
+      "num_base": 152,
+      "p_base": 0.2046,
+      "lift": 0.4065,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "KALU@2015"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "LRCX@2015"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "MKSI@2015"
+     },
+     {
+      "n_group": 18,
+      "num_group": 11,
+      "p_group": 0.6111,
+      "n_base": 743,
+      "num_base": 152,
+      "p_base": 0.2046,
+      "lift": 0.4065,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "MWA@2015"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "RBC@2015"
+     },
+     {
+      "n_group": 18,
+      "num_group": 11,
+      "p_group": 0.6111,
+      "n_base": 743,
+      "num_base": 152,
+      "p_base": 0.2046,
+      "lift": 0.4065,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "ST@2015"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "STX@2015"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped": "TDG@2015"
+     }
+    ]
+   },
+   "ticker_level": {
+    "min_lift": 0.3273,
+    "min_numerator": 9,
+    "detail": [
+     {
+      "n_group": 17,
+      "num_group": 11,
+      "p_group": 0.6471,
+      "n_base": 742,
+      "num_base": 152,
+      "p_base": 0.2049,
+      "lift": 0.4422,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "CMTL"
+     },
+     {
+      "n_group": 17,
+      "num_group": 9,
+      "p_group": 0.5294,
+      "n_base": 742,
+      "num_base": 150,
+      "p_base": 0.2022,
+      "lift": 0.3273,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "CW"
+     },
+     {
+      "n_group": 17,
+      "num_group": 11,
+      "p_group": 0.6471,
+      "n_base": 742,
+      "num_base": 152,
+      "p_base": 0.2049,
+      "lift": 0.4422,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "DLB"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 742,
+      "num_base": 150,
+      "p_base": 0.2022,
+      "lift": 0.3534,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "ENTG"
+     },
+     {
+      "n_group": 18,
+      "num_group": 11,
+      "p_group": 0.6111,
+      "n_base": 743,
+      "num_base": 152,
+      "p_base": 0.2046,
+      "lift": 0.4065,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "HXL"
+     },
+     {
+      "n_group": 18,
+      "num_group": 11,
+      "p_group": 0.6111,
+      "n_base": 743,
+      "num_base": 152,
+      "p_base": 0.2046,
+      "lift": 0.4065,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "KALU"
+     },
+     {
+      "n_group": 17,
+      "num_group": 9,
+      "p_group": 0.5294,
+      "n_base": 742,
+      "num_base": 150,
+      "p_base": 0.2022,
+      "lift": 0.3273,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "LRCX"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "MKSI"
+     },
+     {
+      "n_group": 18,
+      "num_group": 11,
+      "p_group": 0.6111,
+      "n_base": 743,
+      "num_base": 152,
+      "p_base": 0.2046,
+      "lift": 0.4065,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "MWA"
+     },
+     {
+      "n_group": 17,
+      "num_group": 9,
+      "p_group": 0.5294,
+      "n_base": 742,
+      "num_base": 150,
+      "p_base": 0.2022,
+      "lift": 0.3273,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "RBC"
+     },
+     {
+      "n_group": 18,
+      "num_group": 11,
+      "p_group": 0.6111,
+      "n_base": 743,
+      "num_base": 152,
+      "p_base": 0.2046,
+      "lift": 0.4065,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "ST"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "STX"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "TDG"
+     },
+     {
+      "n_group": 18,
+      "num_group": 10,
+      "p_group": 0.5556,
+      "n_base": 743,
+      "num_base": 151,
+      "p_base": 0.2032,
+      "lift": 0.3523,
+      "passes_lift_line": true,
+      "passes_min_numerator": true,
+      "dropped_ticker": "WST"
+     }
+    ]
+   },
+   "verdict": "1社を全行落としても lift は最小 0.3273・分子は最小 9 で両方の線を保つ＝1社では消えない"
+  },
+  "T5_permutation": {
+   "freedom": {
+    "vintage": {
+     "strata": 2,
+     "strata_with_both_sides": 2,
+     "rows_in_those_strata": 744,
+     "rows_total": 744
+    },
+    "sic2": {
+     "strata": 60,
+     "strata_with_both_sides": 9,
+     "rows_in_those_strata": 371,
+     "rows_total": 744
+    },
+    "vintage_x_sic2": {
+     "strata": 109,
+     "strata_with_both_sides": 13,
+     "rows_in_those_strata": 338,
+     "rows_total": 744
+    }
+   },
+   "unstratified": {
+    "observed_lift": 0.3746,
+    "n_perm": 2000,
+    "p_one_sided": 0.001,
+    "clustered": false,
+    "stratified": false
+   },
+   "within_vintage": {
+    "observed_lift": 0.3746,
+    "n_perm": 2000,
+    "p_one_sided": 0.0,
+    "clustered": false,
+    "stratified": true
+   },
+   "within_vintage_clustered": {
+    "observed_lift": 0.3746,
+    "n_perm": 2000,
+    "p_one_sided": 0.0015,
+    "clustered": true,
+    "stratified": true
+   },
+   "within_vintage_x_sic2": {
+    "observed_lift": 0.3746,
+    "n_perm": 2000,
+    "p_one_sided": 0.0125,
+    "clustered": false,
+    "stratified": true
+   },
+   "within_vintage_x_sic2_clustered": {
+    "observed_lift": 0.3746,
+    "n_perm": 2000,
+    "p_one_sided": 0.042,
+    "clustered": true,
+    "stratified": true
+   },
+   "destroyer_within_vintage": {
+    "observed_lift": 0.0824,
+    "n_perm": 2000,
+    "p_one_sided": 0.0625,
+    "clustered": false,
+    "stratified": true
+   },
+   "verdict": "勝者側は最も厳しい層別（ビンテージ×業種・クラスタ）でも p=0.0420。破壊側は p=0.0625 で 0.05 を割らない"
+  },
+  "T6_overlap_existing_gates": {
+   "pool_2013_2015": {
+    "measurable": [
+     "質実証(P_quality)",
+     "事業の収縮の上位集合(co_sales_cagr5<0)",
+     "債務超過(co_equity_neg)"
+    ],
+    "not_measurable_here": [
+     "事業の収縮の厳密式(opmD5 は 2013/2015 の在庫に無い)",
+     "財務キル nde>4 相当(intcov は 2013/2015 の在庫に無い)"
+    ],
+    "group_in_quality": 16,
+    "group_n": 19,
+    "lift_within_quality_pool": {
+     "n_group": 16,
+     "num_group": 10,
+     "p_group": 0.625,
+     "n_base": 587,
+     "num_base": 113,
+     "p_base": 0.1925,
+     "lift": 0.4325,
+     "passes_lift_line": true,
+     "passes_min_numerator": true
+    },
+    "group_hit_by_shrink_superset": [
+     "CMTL@2013",
+     "CMTL@2015",
+     "MKSI@2015",
+     "MWA@2015"
+    ],
+    "group_equity_neg": [
+     "TDG@2015"
+    ]
+   },
+   "destroyer_CMTL_vs_gates": [
+    {
+     "row": "CMTL@2013",
+     "P_quality": true,
+     "co_sales_cagr5": -0.1406,
+     "co_opm": 0.1078,
+     "co_equity_neg": false,
+     "co_score": 3
+    },
+    {
+     "row": "CMTL@2015",
+     "P_quality": true,
+     "co_sales_cagr5": -0.1583,
+     "co_opm": 0.1109,
+     "co_equity_neg": false,
+     "co_score": 3
+    }
+   ],
+   "vintage_2018_strict": {
+    "n_group": 21,
+    "shrink_gate_hits": [],
+    "intcov_lt_3_hits": [],
+    "lift_within_quality": {
+     "n_group": 18,
+     "num_group": 13,
+     "p_group": 0.7222,
+     "n_base": 127,
+     "num_base": 32,
+     "p_base": 0.252,
+     "lift": 0.4703,
+     "passes_lift_line": true,
+     "passes_min_numerator": true
+    }
+   },
+   "verdict": "勝者側は『止める』のではなく『選ぶ』ので増分の問いは『質実証の中でも効くか』。質実証の中で lift 0.4325・分子 10 ＝ 質実証の影ではない。2018の厳密式では収縮・低カバレッジのヒットゼロ＝既存関門と重ならない"
+  },
+  "E3_ex_semiconductor": {
+   "semi_in_group": [
+    "ENTG",
+    "LRCX",
+    "MKSI",
+    "STX"
+   ],
+   "winner_ex_semi": {
+    "n_group": 14,
+    "num_group": 6,
+    "p_group": 0.4286,
+    "n_base": 727,
+    "num_base": 137,
+    "p_base": 0.1884,
+    "lift": 0.2401,
+    "passes_lift_line": true,
+    "passes_min_numerator": true
+   },
+   "destroyer_ex_semi": {
+    "n_group": 14,
+    "num_group": 2,
+    "p_group": 0.1429,
+    "n_base": 727,
+    "num_base": 17,
+    "p_base": 0.0234,
+    "lift": 0.1195,
+    "passes_lift_line": false,
+    "passes_min_numerator": false
+   },
+   "collapsed_ex_semi": {
+    "n_group": 10,
+    "num_group": 4,
+    "p_group": 0.4,
+    "n_base": 584,
+    "num_base": 113,
+    "p_base": 0.1935,
+    "lift": 0.2065,
+    "passes_lift_line": true,
+    "passes_min_numerator": false
+   }
+  },
+  "E4_population_composition": {
+   "2013": {
+    "irr_rows": 246,
+    "source": "retro_returns_2013_all（全上場956）のうち読解済み",
+    "base_win": 0.2154,
+    "quality_share": 0.6626
+   },
+   "2015": {
+    "irr_rows": 498,
+    "source": "retro_returns_2015_q（506社＝質実証プール寄り・全社ではない）",
+    "base_win": 0.1988,
+    "quality_share": 0.8514
+   },
+   "note": "性質の違う2つを1つのベースに混ぜている。ベース率は近い(0.215/0.199)のでリフトの主因ではないが、ビンテージ層別の置換で確かめてある(T5)",
+   "design_caveat": "CLAUDE.md の記録: 2015 は irr=85 が n>=5 に届かないため質実証プールから130社を追加して検出力を得た＝母集団は設計されている（停止規則は事前固定）"
+  },
+  "E5_reachability_power": {
+   "base_rate": 0.2043,
+   "group_n": 19,
+   "events_required_by_lift_line": 7,
+   "min_numerator_line": 5,
+   "binding_constraint": "lift",
+   "effective_required_lift": 0.1641,
+   "reachable": true,
+   "power": {
+    "0.15": 0.5346,
+    "0.2": 0.7053,
+    "0.3": 0.9221,
+    "0.3746": 0.9812
+   },
+   "false_positive_rate_binomial_single_variable": 0.0745,
+   "note": "検出力は lift+分子 の部分だけ。符号安定・業種・irr層内の3つは含まない（含めれば検出力はこれより低い）。FPR は単一変数の値であり、prereg が想定する20本探索の多重性は含まない"
+  },
+  "E6_destroyer_side_alone": {
+   "rows": [
+    "CMTL@2013",
+    "CMTL@2015"
+   ],
+   "unique_companies": [
+    "CMTL"
+   ],
+   "n_unique": 1,
+   "lift": 0.0824,
+   "p_group": 0.1053,
+   "p_base": 0.0228,
+   "risk_ratio": 4.62,
+   "passes_min_numerator": false,
+   "permutation_p": 0.0625,
+   "verdict": "分子2行＝**1社(CMTL)を2回数えたもの**。事前登録の分子>=5に到達しない＝判定不能。RR4.6 は1社に載っている"
+  },
+  "E7_window_length": {
+   "years_by_vintage": {
+    "2013": 13.09,
+    "2015": 11.1,
+    "2018": 8.09
+   },
+   "base_win_by_vintage": {
+    "2013": 0.2154,
+    "2015": 0.1988,
+    "2018": 0.2647
+   },
+   "note": "年率ハードルなので窓長で直接は歪まないが、窓が長いほど15%/年の維持は難しくベース率が下がる（実測 0.215/0.199/0.265）。ビンテージ間でベース率を直接比べない"
+  },
+  "E8_combined_stress": {
+   "grid": {
+    "as_is": {
+     "rows": {
+      "n_group": 19,
+      "num_group": 11,
+      "p_group": 0.5789,
+      "n_base": 744,
+      "num_base": 152,
+      "p_base": 0.2043,
+      "lift": 0.3746,
+      "passes_lift_line": true,
+      "passes_min_numerator": true
+     },
+     "collapsed": {
+      "n_group": 14,
+      "num_group": 8,
+      "p_group": 0.5714,
+      "n_base": 598,
+      "num_base": 125,
+      "p_base": 0.209,
+      "lift": 0.3624,
+      "passes_lift_line": true,
+      "passes_min_numerator": true
+     }
+    },
+    "drop_sic2_35": {
+     "rows": {
+      "n_group": 12,
+      "num_group": 4,
+      "p_group": 0.3333,
+      "n_base": 696,
+      "num_base": 131,
+      "p_base": 0.1882,
+      "lift": 0.1451,
+      "passes_lift_line": false,
+      "passes_min_numerator": false
+     },
+     "collapsed": {
+      "n_group": 10,
+      "num_group": 4,
+      "p_group": 0.4,
+      "n_base": 559,
+      "num_base": 111,
+      "p_base": 0.1986,
+      "lift": 0.2014,
+      "passes_lift_line": true,
+      "passes_min_numerator": false
+     }
+    },
+    "ex_semi": {
+     "rows": {
+      "n_group": 14,
+      "num_group": 6,
+      "p_group": 0.4286,
+      "n_base": 727,
+      "num_base": 137,
+      "p_base": 0.1884,
+      "lift": 0.2401,
+      "passes_lift_line": true,
+      "passes_min_numerator": true
+     },
+     "collapsed": {
+      "n_group": 10,
+      "num_group": 4,
+      "p_group": 0.4,
+      "n_base": 584,
+      "num_base": 113,
+      "p_base": 0.1935,
+      "lift": 0.2065,
+      "passes_lift_line": true,
+      "passes_min_numerator": false
+     }
+    },
+    "drop_sic2_35_and_ex_semi": {
+     "rows": {
+      "n_group": 10,
+      "num_group": 2,
+      "p_group": 0.2,
+      "n_base": 682,
+      "num_base": 119,
+      "p_base": 0.1745,
+      "lift": 0.0255,
+      "passes_lift_line": false,
+      "passes_min_numerator": false
+     },
+     "collapsed": {
+      "n_group": 8,
+      "num_group": 2,
+      "p_group": 0.25,
+      "n_base": 547,
+      "num_base": 101,
+      "p_base": 0.1846,
+      "lift": 0.0654,
+      "passes_lift_line": false,
+      "passes_min_numerator": false
+     }
+    }
+   },
+   "verdict": "業種最大群(sic2=35)を抜くと行ベースで lift 0.1451・分子 4、畳むと lift 0.2014・分子 4 ＝ どちらも事前登録の線を割る"
+  },
+  "E9_llm_prior_contamination": {
+   "why": "CLAUDE.md: 2018では『売上10億$未満の無名社だけでも lift+0.31』で否定できたが、2015の無名社サブセットには irr85 が0社でこの検問は効かせられなかった、と記録がある。2013+2015 プールなら当てられる",
+   "by_size": {
+    "under_1B": {
+     "n_group": 8,
+     "num_group": 3,
+     "p_group": 0.375,
+     "n_base": 246,
+     "num_base": 43,
+     "p_base": 0.1748,
+     "lift": 0.2002,
+     "passes_lift_line": true,
+     "passes_min_numerator": false
+    },
+    "under_2B": {
+     "n_group": 12,
+     "num_group": 5,
+     "p_group": 0.4167,
+     "n_base": 349,
+     "num_base": 66,
+     "p_base": 0.1891,
+     "lift": 0.2276,
+     "passes_lift_line": true,
+     "passes_min_numerator": true
+    }
+   },
+   "group_sizes_musd": [
+    [
+     "CMTL",
+     2015,
+     307.3,
+     false
+    ],
+    [
+     "CMTL",
+     2013,
+     319.8,
+     false
+    ],
+    [
+     "RBC",
+     2013,
+     403.1,
+     true
+    ],
+    [
+     "RBC",
+     2015,
+     445.3,
+     true
+    ],
+    [
+     "MWA",
+     2015,
+     793.4,
+     false
+    ],
+    [
+     "MKSI",
+     2015,
+     813.5,
+     true
+    ],
+    [
+     "DLB",
+     2013,
+     909.7,
+     false
+    ],
+    [
+     "DLB",
+     2015,
+     970.6,
+     false
+    ],
+    [
+     "ENTG",
+     2015,
+     1081.1,
+     true
+    ],
+    [
+     "WST",
+     2013,
+     1368.4,
+     true
+    ],
+    [
+     "KALU",
+     2015,
+     1391.9,
+     false
+    ],
+    [
+     "HXL",
+     2015,
+     1861.2,
+     false
+    ],
+    [
+     "CW",
+     2013,
+     2118.1,
+     true
+    ],
+    [
+     "CW",
+     2015,
+     2205.7,
+     true
+    ],
+    [
+     "TDG",
+     2015,
+     2707.1,
+     true
+    ],
+    [
+     "ST",
+     2015,
+     2975.0,
+     false
+    ],
+    [
+     "LRCX",
+     2013,
+     3598.9,
+     true
+    ],
+    [
+     "LRCX",
+     2015,
+     5259.3,
+     true
+    ],
+    [
+     "STX",
+     2015,
+     13739.0,
+     true
+    ]
+   ]
+  },
+  "E10_hurdle_sensitivity": {
+   "note": "事前登録は 15% 固定。これは『15%の一点でしか出ない結果ではないか』の確認で、合否には数えない",
+   "grid": {
+    "0.10": {
+     "p_group": 0.6842,
+     "p_base": 0.4341,
+     "lift": 0.2501,
+     "num_group": 13
+    },
+    "0.12": {
+     "p_group": 0.5789,
+     "p_base": 0.3401,
+     "lift": 0.2389,
+     "num_group": 11
+    },
+    "0.15": {
+     "p_group": 0.5789,
+     "p_base": 0.2043,
+     "lift": 0.3746,
+     "num_group": 11
+    },
+    "0.18": {
+     "p_group": 0.5789,
+     "p_base": 0.1277,
+     "lift": 0.4513,
+     "num_group": 11
+    },
+    "0.20": {
+     "p_group": 0.5263,
+     "p_base": 0.0995,
+     "lift": 0.4269,
+     "num_group": 10
+    }
+   }
+  }
+ },
+ "verdict": {
+  "six_tests": {
+   "T1_vintage_sign": {
+    "result": "判定不能",
+    "why": "必須の 2016/2017 に irr の観測がゼロ。持ち回り(irr_near)は同じラベルの再利用＋2017は78%が look-ahead"
+   },
+   "T2_sector": {
+    "result": "不合格",
+    "why": "MH は残るが sic2=35 を抜くと lift 0.1451(<0.15)・分子 4(<5)、残りは perm p=0.179 で雑音と区別できない"
+   },
+   "T3_irr_shadow": {
+    "result": "合格（ただし読み替えの上で）",
+    "why": "85 は irr>=70 層内でも +0.2218。ただし 50<70<85 は単調で『85 だけが跳ねる』ではない。irr=100 は最下位で順序は崩れる"
+   },
+   "T4_one_company": {
+    "result": "合格",
+    "why": "1社を全行落としても lift 0.3273・分子 9"
+   },
+   "T5_permutation": {
+    "result": "合格（最厳では際どい）",
+    "why": "vintage×sic2×クラスタで p=0.0420。単一変数の FPR 0.0745 に近い"
+   },
+   "T6_overlap": {
+    "result": "合格",
+    "why": "質実証の中でも lift 0.4325・分子10。2018厳密式で収縮・低カバレッジのヒットゼロ"
+   }
+  },
+  "overall": "不合格",
+  "overall_why": [
+   "(0) そもそも prereg.candidates_excluded に irr が入っており、『事前登録に合格した新指標』として数えることは定義上できない（対照）",
+   "(1) T2 で落ちた——sic2=35 の4社(CW/LRCX/RBC/STX)が11勝者のうち7を出しており、抜くと事前登録の2本の線をどちらも割り、残りは雑音と区別できない",
+   "(2) T1 は判定不能——必須の 2016/2017 に irr の観測が無い。prereg 自身の作法では判定不能は不合格ではないが、必須基準が満たされたとも数えられない",
+   "(3) 破壊側(E6)は分子2行＝1社(CMTL)で分子>=5に届かない＝判定不能"
+  ],
+  "what_did_not_fall": [
+   "関連そのものは実在する: 畳んでも(E1) 1社抜きでも(T4) 置換でも(T5) 質実証の中でも(T6) 残る",
+   "既存関門との重複はゼロ(T6)＝もし本物なら増分がある",
+   "ハードルを 0.10〜0.20 で振っても符号は不変(E10)＝15%の一点の産物ではない",
+   "小型(<$2B)だけでも lift 0.2276・分子5(E9)＝LLMの事前知識だけでは説明しにくい"
+  ],
+  "the_single_most_load_bearing_fact": "sic2=35 の CW/LRCX/RBC/STX ——この4社が7行すべて勝者(7/7)。irr=85 の勝者側の証拠は、実質この1業種4社に載っている"
+ }
+}
