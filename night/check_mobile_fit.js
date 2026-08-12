@@ -27,13 +27,16 @@
  *   終了コード 1 = はみ出しあり（＝ブラウザがページを縮めて表示する状態）
  */
 const { spawn } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.dirname(__dirname);
 const argv = process.argv.slice(2);
 const W = argv.includes('--width') ? Number(argv[argv.indexOf('--width') + 1]) : 360;
 const PORT = 8971;
-const TABS = [['tab6', '📊 盤'], ['tab9', '🔔 イベント'], ['tab1', 'Ⅰ 解説'], ['tab8', 'Ⅱ 実行手順'],
+// ⚠タブを増やしたらここにも足すこと——**決め打ちの一覧なので、足し忘れると新しいタブだけ検査されない**
+//   （v9.9.140 の 📋今日 で実際に踏んだ。9本を検査して「全タブ✓」と出るので、穴が緑に見える）
+const TABS = [['tab10', '📋 今日'], ['tab6', '📊 盤'], ['tab9', '🔔 イベント'], ['tab1', 'Ⅰ 解説'], ['tab8', 'Ⅱ 実行手順'],
                ['tab2', 'Ⅲ 採点機'], ['tab3', 'Ⅳ 台帳'], ['tab4', 'Ⅴ 検証履歴'],
                ['tab5', 'Ⅵ 買付順位'], ['tab7', 'Ⅶ 保有']];
 
@@ -45,7 +48,12 @@ const TABS = [['tab6', '📊 盤'], ['tab9', '🔔 イベント'], ['tab1', 'Ⅰ
   const srv = spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: ROOT, stdio: 'ignore' });
   await new Promise(r => setTimeout(r, 1500));
   let bad = 0;
-  const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  // v9.9.140: **/opt/pw-browsers はこの開発環境の同梱物で、GitHub Actions の ubuntu-latest には無い。**
+  //   決め打ちだと CI では起動に失敗し、`continue-on-error` + `| tail` で緑のまま素通りしていた
+  //   （実測: 唯一のCI実行で当該stepは5秒＝369件の取込が終わる時間ではない）。
+  //   **在るときだけ使い、無ければ playwright の既定（npx playwright install で入る）に任せる。**
+  const _EXE = '/opt/pw-browsers/chromium';
+  const browser = await chromium.launch(fs.existsSync(_EXE) ? { executablePath: _EXE } : {});
   try {
     const p = await browser.newPage({ viewport: { width: W, height: 760 }, deviceScaleFactor: 2 });
     p.on('pageerror', e => { console.log('  PAGEERROR', e.message); bad++; });

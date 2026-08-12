@@ -223,6 +223,15 @@ def main():
     print("     見落としの網は night/watch_events.py の 8-K作業リスト（1.01/1.02/8.01）が受け持つ")
 
     if WRITE:
+        # 空書き込みの検問（audit_stale_bs:243 と同じ言葉。v9.9.140）
+        #   ⚠錨は pick ではなく **rows（母数）**——`--t T` では pick が1社なのが正常なので、
+        #     pick で裁くと単社実行のたびに落ちる。**score_all が空＝第四の関門の入力が作れない**。
+        #   検査の不在を「異常なし」と偽らないため、**書かずに落ちる**。
+        #   （実測: pending.json が空/キー違いになると VRSK が投下可に入り HWM が落ちる）
+        if not rows:
+            print("\n⚠ out/score_all.json が空（または読めない）。**pending.json を書き換えない**"
+                  "——空で上書きすると第四の関門が全社について通過になる")
+            return 1
         path = os.path.join(OUT, "pending.json")
         json.dump({"asof": time.strftime("%Y-%m-%d"),
                    "rule": f"対価÷(現のれん+対価) ≥{NEW_YES:.0f}% で要審査（acq5・stale_bsと同じ刻み）",

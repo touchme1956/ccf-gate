@@ -164,25 +164,39 @@ function scorePack(d) {
 let _gates = null;
 function gates() {
   if (_gates) return _gates;
-  const rd = (f, ok) => {
+  // v9.9.140: **「読めない」と「該当なし」を区別する（fail-loud）。**
+  //   旧実装はコメントで「無いことを『異常なし』と偽らない」と書きながら、コードは
+  //   例外を握り潰して空マップを返していた＝**その関門が全社について通過**していた。
+  //   実測(2026-08-11): pending.json のキーを items→rows に**改称するだけ**で
+  //   VRSK が投下可に入り HWM が落ちる。ファイルは読めるので「壊れた」ようには見えない。
+  //   ⚠**fail-closed にはしない**——読めないときに全社を止めると投下可0社になり、
+  //     月次DCAが全額 網 へ流れる（それ自体が静かな事故）。**正しいのは fail-loud**＝
+  //     判定は従来どおり（眠らせる）が、**眠っていることを必ず名指しで出す**。
+  const blind = [];
+  const rd = (f, ok, label) => {
     const o = {};
-    try {
-      const pp = path.join(ROOT, 'out', f);
-      if (fs.existsSync(pp))
-        for (const [k, v] of Object.entries(JSON.parse(fs.readFileSync(pp, 'utf8')).items || {}))
-          if (ok(v)) o[k] = v;
-    } catch (e) {}          // 無ければ空＝検査は眠るだけ（無いことを「異常なし」と偽らない・ルール7）
+    const pp = path.join(ROOT, 'out', f);
+    if (!fs.existsSync(pp)) { blind.push({ f, label, why: 'ファイルが無い' }); return o; }
+    let j;
+    try { j = JSON.parse(fs.readFileSync(pp, 'utf8')); }
+    catch (e) { blind.push({ f, label, why: 'JSONとして読めない（' + e.message.slice(0, 40) + '）' }); return o; }
+    if (!j || typeof j !== 'object' || !Object.prototype.hasOwnProperty.call(j, 'items')) {
+      blind.push({ f, label, why: '期待したキー "items" が無い（あるのは ' + Object.keys(j || {}).slice(0, 6).join(',') + '）' });
+      return o;                                   // ← ここが items→rows 型を捕まえる
+    }
+    for (const [k, v] of Object.entries(j.items || {})) if (ok(v)) o[k] = v;
     return o;
   };
-  return (_gates = { stale: rd('stale_bs.json', v => v && v.verdict === '要審査'),
-                     vfail: rd('validate_fail.json', v => v && (v.n || 0) > 0),
+  return (_gates = { blind,
+                     stale: rd('stale_bs.json', v => v && v.verdict === '要審査', '期末後の貸借対照表'),
+                     vfail: rd('validate_fail.json', v => v && (v.n || 0) > 0, '納品検査のFAIL'),
                      // v9.9.128: 合意済み・未完了の重大事象（night/audit_pending.py が配る）。
                      //   **判定不能も止める**——「規模が書かれていない」「分母が取れない」は
                      //   *測れていない*のであって*安全*ではない（ルール7: 欠測をゼロと読むな）。
                      //   stale_bs が中間帯を素通りさせるのとは向きが逆に見えるが、あちらは
                      //   **実額が既にBSに載っている**ので中間帯＝小さいと確定できる。こちらは未完了で
                      //   実額が無いため、判定不能は「大きいかもしれない」を含む。
-                     pending: rd('pending.json', v => v && v.verdict !== 'ok') });
+                     pending: rd('pending.json', v => v && v.verdict !== 'ok', '未完了の重大事象') });
 }
 function buyGate(t, dd, s, mg, audE, audU, r) {
   const g = gates();
@@ -438,4 +452,14 @@ console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告
     + `　→ 数字が戻れば自動で復帰。買わない理由であって売る理由ではない`);
 }
 console.log(`   ※全${rows.length}社: 要修正 ${rows.reduce((a,x)=>a+x.audE,0)}件 / 未解決警告 ${rows.reduce((a,x)=>a+x.audU,0)}件`);
+// v9.9.140: **第四の関門が眠っていたら必ず名指しで出す（fail-loud）**。
+//   判定は止めない（fail-closed にすると投下可0社になり月次DCAが全額 網 へ流れる）が、
+//   **眠っていることを黙らない**。実測: pending.json のキーを items→rows に改称するだけで
+//   VRSK が投下可に入り HWM が落ちるので、これが出ていない日の投下可だけを信じてよい。
+{ const _b = gates().blind || [];
+  if (_b.length) {
+    console.log(`\n⚠⚠ **第四の関門が ${_b.length}本 眠っています**（判定は止めていません＝この一覧は信用できません）`);
+    for (const x of _b) console.log(`   ・${x.label}（out/${x.f}）… ${x.why}`);
+    console.log('   → これは「該当なし」ではなく「測っていない」。上の🟢投下可はこの関門を通っていません。');
+  } }
 console.log(`\n→ out/${outFile}（全${rows.length}件・降順）`+ (partial ? '　※部分実行なので正本 score_all.json は書き換えていない' : ''));

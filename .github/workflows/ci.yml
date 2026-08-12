@@ -65,6 +65,13 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # v9.9.140: **`| tail` が失敗を緑に化かすのを止める。**
+    #   宣言が無いと pipefail が付かず、`検査 | tail -25` は tail の成功だけを見る
+    #   ＝「検査を回したつもりで回っていない」が緑のまま通る。
+    #   実測(2026-08-11)で、今日のCIは pipefail を入れても壊れない（該当コマンドは全て exit 0）。
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
         with:
@@ -288,8 +295,9 @@ jobs:
       #   （v9.9.98でE[r]遮断器を外した後も要求し続け、WSTで buy が食い違った）。
       #   今は score_all の buyGate を import する正しい形だが、**写し戻しを検出する仕掛けが無い**。
       #   v9.9.65「同じ台帳を見る二つの検査器が違うことを言ってはいけない」の番人。
+      # v9.9.140: **continue-on-error を外した。** 番人が落ちてもワークフローが緑なら、
+      #   番人が居ないのと同じ（実測で2本とも飾りになっていた）。
       - name: explain_score と score_all の一致（v9.9.65の番人）
-        continue-on-error: true
         run: |
           node -e "
             const {buyGate}=require('./night/score_all.js');
@@ -319,6 +327,16 @@ jobs:
       #   **古い作業リストは無いより悪い**——「まだ残っている」と嘘をつくので本物が埋もれる。
       #   あわせて gate_exceptions.json ↔ todo_list.json を突き合わせる
       #   （片方にだけ足すと**四半期の財務監視が付かない＝警報を切ったまま乗る**）。
+      # 📋今日（v9.9.140）: 「今日、何をすればいいか」を一枚に集める。**表示専用・判定には一切使わない。**
+      #   ⚠この道具は out/today.json を書く前に **錨(out/score_all.json)が読めているかを検問**し、
+      #     読めなければ **書かずに exit 1** で落ちる（空で上書きすると画面が
+      #     「今日やることはありません」と嘘をつくため）。だから continue-on-error を付けない。
+      #   ⚠**この step は他の検出器より後**に置くこと——上流が書いた JSON を読んで集計するので、
+      #     先に置くと1日古い在庫を今日の答えとして出す（market.yml が validate_fail を
+      #     昨日の答案で採点していたのと同じ型）。
+      - name: 📋今日の集計 today（錨が読めなければ書かずに落ちる）
+        run: python3 night/today.py --json | tail -30
+
       - name: 作業リストの健康診断 audit_todo（表示のみ）
         continue-on-error: true
         run: python3 night/audit_todo.py --json | tail -25
@@ -346,10 +364,17 @@ jobs:
       #   ⚠ playwright は重いので **schedule と手動のときだけ**（push毎には回さない）。
       - name: 実ブラウザ検証（369件取込→360pxで全タブ・scheduleと手動のみ）
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        continue-on-error: true
         run: |
+          # v9.9.140: **`npm i -D playwright` はブラウザ本体を落とさない。**
+          #   これだけだと chromium が無く、しかも `continue-on-error` + `| tail` で緑のまま素通りする
+          #   （実測: 唯一のCI実行で当該stepは5秒＝369件を取り込む時間ではない）。
+          #   `npx playwright install` でブラウザ本体を入れる。**入らなければここで落とす**
+          #   ——「検査を回したつもりで回っていない」のがこの repo の最大の事故の型だから。
           npm i -D playwright >/dev/null 2>&1 || true
+          npx playwright install --with-deps chromium >/dev/null 2>&1 || \
+            npx playwright install chromium >/dev/null 2>&1 || true
           node night/check_mobile_fit.js 2>&1 | tail -25
+          node night/check_gate_parity.js 2>&1 | tail -25
 
       # ── 8. ページの重さの予算（1.7MBまで肥大した実績があるので歯止め）──────────
       - name: ページサイズの予算
@@ -392,7 +417,7 @@ jobs:
           #   **第四の関門が読む pending.json は手で回したときしか更新されなかった**。
           #   out/irr85_myrule.json は新着の検出に前回の在庫を使うので、
           #   コミットしないと**毎回「全社が新着」になり新着の意味が消える**。
-          git add out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json night/reaudit_queue.json 2>/dev/null || true
+          git add out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json night/reaudit_queue.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"
           else

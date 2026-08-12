@@ -32,6 +32,13 @@ permissions:
 jobs:
   fix:
     runs-on: ubuntu-latest
+    # v9.9.140: **`| tail` が失敗を緑に化かすのを止める。**
+    #   宣言が無いと pipefail が付かず、`検査 | tail -25` は tail の成功だけを見る
+    #   ＝「検査を回したつもりで回っていない」が緑のまま通る。
+    #   実測(2026-08-11)で、今日のCIは pipefail を入れても壊れない（該当コマンドは全て exit 0）。
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
@@ -84,13 +91,24 @@ jobs:
             const eB=b.reduce((a,r)=>a+(r.audE||0),0), eC=cur.reduce((a,r)=>a+(r.audE||0),0);
             const moved=cur.map(r=>[r.t,(b.find(x=>x.t===r.t)||{}).s,r.s])
               .filter(x=>typeof x[1]==='number'&&Math.abs(x[2]-x[1])>=0.05);
-            const same = cb.join()===bb.join() && Object.keys(vc).length<=Object.keys(vb).length && eC<=eB;
+            // v9.9.140: **件数比較をやめて集合差で見る。** 旧実装は
+            //   Object.keys(vc).length <= Object.keys(vb).length だったので、
+            //   **3社のFAILが別の3社に入れ替わっても same=yes** になり、そのまま main へ直接 push された。
+            //   ＋Ωの移動幅も条件に入れる（旧実装は moved を印字するだけで判定に使っていなかった）。
+            const vNew = Object.keys(vc).filter(t=>!(t in vb));      // 新しく壊れた社
+            const maxMove = moved.length ? Math.max(...moved.map(x=>Math.abs(x[2]-x[1]))) : 0;
+            const same = cb.join()===bb.join()
+                      && vNew.length===0
+                      && Object.keys(vc).length<=Object.keys(vb).length
+                      && eC<=eB
+                      && maxMove < 1.0;                              // 1pt以上動いたら人が見る
             const lines=[
               '- 投下可: '+(cb.join()===bb.join() ? '**不変** ('+cb.join(' ')+')'
                  : '**変わった** 出 '+bb.filter(t=>!cb.includes(t)).join(' ')+' ／ 入 '+cb.filter(t=>!bb.includes(t)).join(' ')),
               '- 納品検査FAIL: '+Object.keys(vb).length+' → '+Object.keys(vc).length,
               '- 要修正(err): '+eB+' → '+eC,
-              '- Ωが動いた社: '+moved.length+(moved.length?' （最大 '+moved.map(x=>Math.abs(x[2]-x[1])).sort((p,q)=>q-p)[0].toFixed(1)+'pt）':'')
+              '- Ωが動いた社: '+moved.length+(moved.length?' （最大 '+maxMove.toFixed(1)+'pt）':''),
+              '- 新しく納品検査FAILになった社: '+(vNew.length?'**'+vNew.join(' ')+'**':'なし')
             ];
             fs.writeFileSync('/tmp/fixdiff.md', lines.join('\n'));
             fs.writeFileSync('/tmp/same.txt', same?'yes':'no');
@@ -103,7 +121,12 @@ jobs:
         run: |
           git config user.name  "ccf-gate bot"
           git config user.email "noreply@github.com"
-          git add -A out night
+          # v9.9.140: **`git add -A out night` をやめる。** この分岐は main へ直接 push するので、
+          #   他ステップの残骸まで巻き込むと「判定が動かない」という約束の外へ出る。
+          #   触ってよいのは**この道具が書くもの**だけ＝パックと、パックから機械的に作った在庫。
+          #   （night/ を丸ごと足していたのは、そもそも道具のソースを bot が書き換える経路が無いので不要）
+          git add out/*_gate_pack.json out/score_all.json out/validate_fail.json \
+                  out/roiic.json out/acq5.json out/growth_trend.json out/sht.json 2>/dev/null || true
           if git diff --staged --quiet; then echo "変化なし"; exit 0; fi
           N=$(git diff --staged --name-only | grep -c "_gate_pack.json" || echo 0)
           git commit -m "機械是正（自動）: ${N}パック｜投下可は不変"

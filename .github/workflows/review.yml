@@ -42,6 +42,13 @@ permissions:
 jobs:
   review:
     runs-on: ubuntu-latest
+    # v9.9.140: **`| tail` が失敗を緑に化かすのを止める。**
+    #   宣言が無いと pipefail が付かず、`検査 | tail -25` は tail の成功だけを見る
+    #   ＝「検査を回したつもりで回っていない」が緑のまま通る。
+    #   実測(2026-08-11)で、今日のCIは pipefail を入れても壊れない（該当コマンドは全て exit 0）。
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
