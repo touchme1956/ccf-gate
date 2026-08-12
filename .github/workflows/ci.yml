@@ -243,6 +243,15 @@ jobs:
         continue-on-error: true
         run: timeout 300 python3 night/audit_irr85.py | tail -12
 
+      # ── 5-b6. irr=85 の二重読み（2026-08-12・A-1）────────────────────────────
+      #   実測: 同じ111社でも読解の班が違うと irr=85 の付与率が 5.4%→17.1%（3.2倍・p=0.017）。
+      #   門は irr=85 に別枠と席の優先を与えているので「いつ・誰に読まれたか」で資格が動きうる。
+      #   ⚠**関門ではない**——未検証は欠陥ではなく工程の途中。出すのは作業リストだけで、
+      #   終了コードは常に0（continue-on-error に頼らず器の側で保証してある）。
+      - name: irr=85 の二重読み audit_irr85_dual（作業リスト・表示のみ）
+        continue-on-error: true
+        run: timeout 300 python3 night/audit_irr85_dual.py | tail -30
+
       # ── 5-c. パックより新しい年次報告が出ていないか（2026-08-07新設）─────────────
       #   audit_stale_bs は**のれんの入替**しか見ないので、買収をしない優良企業が
       #   静かに1会計年度ぶん古くなるのは今日どの検査器にも掛からなかった。
@@ -417,7 +426,7 @@ jobs:
           #   **第四の関門が読む pending.json は手で回したときしか更新されなかった**。
           #   out/irr85_myrule.json は新着の検出に前回の在庫を使うので、
           #   コミットしないと**毎回「全社が新着」になり新着の意味が消える**。
-          git add out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json night/reaudit_queue.json 2>/dev/null || true
+          git add out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json out/irr85_dual.json night/reaudit_queue.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"
           else

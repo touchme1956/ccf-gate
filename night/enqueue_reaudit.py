@@ -71,7 +71,8 @@ def main():
     #   **union で解決**した（片方を捨てると、その因子が黙って消える）。
     for _t in (["night/audit_promotion_ready.py", "--json"],
                ["night/kessan_flags.py", "--json"],
-               ["night/audit_irr70.py", "--json"]):
+               ["night/audit_irr70.py", "--json"],
+               ["night/audit_irr85_dual.py", "--json"]):
         try:
             subprocess.run([sys.executable] + _t, capture_output=True, timeout=180)
         except Exception:
@@ -171,6 +172,18 @@ def main():
         r0, lab = rank(v.get("t"))
         if r0 >= 60:
             add(v.get("t"), 22, f"irr=70 に摩擦の機構の根拠が無い（{v.get('cls')}・{v.get('n')}字）")
+    # 4-c. **irr=85 の二重読みが済んでいない社**（2026-08-12新設・A-1）
+    #   実測: 同じ111社でも読解の班が違うと irr=85 の付与率が 5.4%→17.1%（3.2倍・p=0.017）。
+    #   門は irr=85 に**別枠(v9.9.119)と席の優先(v9.9.100)**を与えているので、
+    #   「いつ・誰に読まれたか」で買付の資格が動きうる。**足りないのは新規に付けたときの二重読み**。
+    #   ⚠ 関門にはしない（未検証は欠陥ではなく工程の途中＝v9.9.66 が未解決warnで出した結論と同じ）。
+    #   重み **48**——`promotion_ready`(45) より上。理由: 繰り上がりは「席が空いたら効く」話だが、
+    #   未検証の85は**今この瞬間、別枠と席の優先という特権を無検証で使っている**から。
+    for v in (jload("out/irr85_dual.json").get("todo") or []):
+        w = 48 if v.get("buy") else (40 if v.get("in_band") else 30)
+        add(v.get("ticker"), w,
+            f"irr=85 の二重読みが未了（{v.get('state')}・根拠{v.get('evidence_len')}字"
+            + ("・🟢投下可" if v.get("buy") else ("・判定圏" if v.get("in_band") else "") ) + "）")
     # 5. 8-K / 6-K の警報（門2再審査の「気づき」＝判定には使わない）
     for a in (jload("out/events_watch.json").get("alerts") or []):
         add(a.get("t"), 15, f"{a.get('form')} {a.get('date')}：" + "／".join(a.get("flags") or []))
