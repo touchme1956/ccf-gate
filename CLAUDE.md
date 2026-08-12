@@ -7458,3 +7458,48 @@ moat5 が代理していた rep と dur を『歴史で答え合わせする』�
 - **検証**: score_all **投下可10社・Ω・堀とも不変**（RBC Ω60.3・堀74.6）／`validate_packs RBC` **FAIL 0**／
   `irr85_mech_diff --t RBC` ✓一字同文100%（**追加した3断片を含めて**）／
   audit_gate 要修正0件・未解決2件（既知）
+
+## irr=85 の二重読みを15社**全数**やり切った（2026-08-12・ユーザー「続けて」）——**未検証0社。だが3社で『機構文が外側の文』だった**
+**値は一つも動かしていない。** Ω・堀・採点式・刻み・重み・四関門・堀の関門70・売却規律S1/S2/S3・配分・
+別枠85・半導体上限はいずれも不変で、**投下可10社も不変**（MSFT V ASML IDXX CW RMD KLAC LRCX HWM RBC）。
+audit_gate 要修正0件・未解決2件（既知）も不変。
+- **結果**: 二重読み **未検証 8社 → 0社**、**留保つき 5社**（BWXT・MKSI・NOVT・KRMN・ENTG）。
+  | 銘柄 | 判定 | 要旨 |
+  | **WST** | 据置 | 『due to the large amount of data and information that **customers must generate** to demonstrate…equivalent』＝顧客が同等性データを作り直す。⚠同じリスク要因が『規制が緩めば競争圧力が増す』と**堀の規制依存を会社自身が明言** |
+  | **HXL** | 据置 | 『The sources of carbon fiber we can use…are generally **dictated by customer qualifications or certifications**』＋F-35等に**プログラム単位で認定済**。'barriers to entry' 2件は**どちらも支持側**（qualification database が参入障壁） |
+  | **ST** | 据置 | **15社で最も明快**——『This results in **high switching costs for automotive manufacturers**…**sensors are rarely changed during a platform lifecycle**(5〜7年)』を**2箇所で反復**。'switch' の他7件は製品名 |
+  | **KRMN** | 据置(留保) | 顧客側の費用を**三箇所で断定**（TDG/LOARと同型）・射程100%を Item境界の独立計測で再現。⚠**反証2件を新発見**——政府のデータ権『the government **could attempt to establish alternative suppliers**』／顧客のインソース。**同じ防衛の RBC には前者の型が0回**＝定型文ではない |
+  | **MKSI** | 据置(留保) | 引用2件が**どちらも当社が自社の供給元を替えるときの話**。copy exact は顧客側の規制だが『顧客が当社から他社へ替えるとき顧客が費用を負う』の直接文は無い。逆に『**Difficulties in displacing competitors' products that are designed into customers' products**』＝ONTO型の外側の文が同居 |
+  | **NOVT** | 据置(留保) | 唯一の引用が『失った売上を新規顧客で埋めるのは難しい、顧客は**新しい供給者**に長い認定期間を課すから』＝**当社が外側にいるときの文**。根拠 **156字＝15社で最薄** |
+  | **ENTG** | 据置(留保)**最強** | 下記 |
+- **★最大の発見: 2026-08-08 の EDGAR 全文探索で確立した型が、既に85が付いている台帳の中にも入っていた**。
+  あのとき22社を落とした理由は『**機構文はリスク要因の中にあり、見出しが逆を言っている**——同じ一文が、
+  据わっている側には堀の証明、外側にいる側には自分が入れない証明になる』だった。
+  **今回その型が MKSI・NOVT・ENTG の3社で見つかった**（いずれも「当社が新規顧客を取るのが難しい」か
+  「当社が自社の仕入先を替えると顧客の再認定が要る」）。⚠**3社ともΩ22〜36で判定圏外**なので今日の実害はゼロ。
+  だが**Ωが上がった瞬間に効く**——AFYA・ECL・ISRG・IDXXで繰り返し起きた「線が動くと既存の穴が見える」の先回り
+- **★ENTG——2018年に85を支えた当の文が2025年10-Kから消えていた**。
+  『high customer re-formulation and qualification change costs』の一致率は **14%**。
+  残る3引用は (a)当社が代替供給者を認定する話 (b)当社が処方を変えると顧客が再認定→
+  『**customers transitioning to competing products**』＝**堀ではなくリスク** (c)『we may be **unable to
+  replace these customers quickly**』＝外側の文。さらに全文走査で
+  **'switching cost' 0回・'designed into' 0回・'change costs' 0回・'costly for our customers' 0回**
+  ＝**顧客側の乗り換え費用を述べる文が2025年10-Kに一つも無い**。
+  ⇒ **次に読むときは 70 への変更を第一候補として当たること**（今日変更しないのは、初回審査も全文を読んで
+  おり、私の一読で3社の値を動かすのは慎重さを欠くから。留保として記録し待ち行列へ回した）
+- **★そしてそれを `irr85_mech_diff` が隠していた——verdict が `max(断片の一致率)` だった**。
+  ENTG は ✓一字同文 **100%** と表示されていた。**「消えたら赤信号」を掲げる道具が、集計の仕方で
+  自分の存在理由を打ち消していた**（`hist_val_regime` の `if __name__` 置き忘れ・`notify_issues` の
+  fail-open と同族＝**検査が回ったつもりで回っていない**）。
+  - **是正**: `min_match` と `low_frags` を記録し、**verdict が緑でも欠けた断片を必ず名指しで出す**。
+    実測で 4社が該当（CW・ENTG・HXL・KRMN）
+  - **⚠verdict は max のまま残した**——根拠には**他社の比較引用**が混ざる（CWにTDGの文、HXLにLOAR/RBCの文、
+    KRMNにLOARの文＝「同型」を論じるため）。他社の文はこの社の原本に原理的に無いので、
+    **min で裁くと必ず誤検出する**＝鳴りすぎる警報は鳴らないのと同じ。
+    **裁かずに見せる**のが正しい落とし所で、画面には「他社の引用なら正常／自社の機構文なら消えている」と併記した
+- **留保を装飾で終わらせない配線**: `enqueue_reaudit` に **4-d** を追加——
+  `reserved ∧ ✓検証済` を重み24/20/15（未検証の48/40/30の**約半分**＝一度は読まれているから）で待ち行列へ。
+  実測: KRMN 35位 / BWXT 66 / ENTG 67 / MKSI 71 / NOVT 72
+- **検証**: score_all 投下可10社不変／audit_gate 要修正0件・未解決2件／`validate_packs` の FAIL 3件
+  （ENTG/MKSI/WST）は**変更前と同一**＝この作業では増えていない／check_html ✓／audit_docs ✓／
+  `irr85_mech_diff` 15社とも ✓一字同文（欠けた断片4社を新たに表示）

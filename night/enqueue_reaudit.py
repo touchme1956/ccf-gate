@@ -179,11 +179,22 @@ def main():
     #   ⚠ 関門にはしない（未検証は欠陥ではなく工程の途中＝v9.9.66 が未解決warnで出した結論と同じ）。
     #   重み **48**——`promotion_ready`(45) より上。理由: 繰り上がりは「席が空いたら効く」話だが、
     #   未検証の85は**今この瞬間、別枠と席の優先という特権を無検証で使っている**から。
-    for v in (jload("out/irr85_dual.json").get("todo") or []):
+    _dual = jload("out/irr85_dual.json")
+    for v in (_dual.get("todo") or []):
         w = 48 if v.get("buy") else (40 if v.get("in_band") else 30)
         add(v.get("ticker"), w,
             f"irr=85 の二重読みが未了（{v.get('state')}・根拠{v.get('evidence_len')}字"
             + ("・🟢投下可" if v.get("buy") else ("・判定圏" if v.get("in_band") else "") ) + "）")
+    # 4-d. **二重読みが「留保つき」で終わった社**（2026-08-12追加）
+    #   ⚠留保を記録しただけでは装飾で終わる。留保＝「85の根拠に穴があると別の読み手が書いた」なので、
+    #   全文の再読へ回す。ただし**未検証より軽い**（一度は読まれている）＝重みは未了の半分。
+    for v in (_dual.get("rows") or []):
+        if not v.get("reserved") or v.get("state") != "✓検証済":
+            continue
+        w = 24 if v.get("buy") else (20 if v.get("in_band") else 15)
+        add(v.get("ticker"), w,
+            f"irr=85 の二重読みが**留保つき**（別の読み手が根拠の穴を記録・根拠{v.get('evidence_len')}字"
+            + ("・🟢投下可" if v.get("buy") else ("・判定圏" if v.get("in_band") else "")) + "）")
     # 5. 8-K / 6-K の警報（門2再審査の「気づき」＝判定には使わない）
     for a in (jload("out/events_watch.json").get("alerts") or []):
         add(a.get("t"), 15, f"{a.get('form')} {a.get('date')}：" + "／".join(a.get("flags") or []))

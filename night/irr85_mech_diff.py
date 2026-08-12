@@ -174,7 +174,14 @@ def main():
             res.append(dict(frag=fr[:180], match=r, broke_at=tail))
         rec['fragments'] = res
         top = max(r['match'] for r in res)
+        low = min(r['match'] for r in res)
         rec['best_match'] = top
+        rec['min_match'] = low
+        # ⚠**verdict は max のまま**——根拠には**他社の比較引用**が混ざる
+        #   （CW に TDG の文、HXL に LOAR/RBC の文、KRMN に LOAR の文…「同型」を論じるため）。
+        #   他社の文はこの社の原本には原理的に無いので、min で裁くと必ず誤検出する。
+        #   ＝**鳴りすぎる警報は鳴らないのと同じ**（片側検査ほど誤検出を許さない）。
+        rec['low_frags'] = [dict(match=r['match'], frag=r['frag']) for r in res if r['match'] < NEAR]
         if top >= 1.0:
             rec['verdict'] = '✓一字同文'
         elif top >= NEAR:
@@ -189,6 +196,15 @@ def main():
             for r in res:
                 # **切れた箇所**を出す（引用の先頭ではなく、一致が途切れた語のまわり）
                 print(f'         一致{r["match"]:.0%}  切れた箇所: 「…{r["broke_at"]}…」')
+        elif rec['low_frags']:
+            # ★2026-08-12 追加。**verdict が緑でも、欠けた断片は必ず名指しで出す。**
+            #   実害で判った——ENTG は台帳の4断片のうち **2018年ビンテージで85を支えた当の文**
+            #   『high customer re-formulation and qualification change costs』が2025年10-Kから
+            #   **消えている**（一致14%）のに、max=100% で ✓一字同文 と表示されていた。
+            #   ＝この道具の存在理由（消えたら赤信号）を、集計の仕方が自分で打ち消していた。
+            for r in rec['low_frags']:
+                print(f'         ⚠要確認 一致{r["match"]:.0%}: 「{r["frag"][:96]}…」')
+            print('           ↑ 他社の比較引用ならこれで正常。**この社自身の機構文なら消えている**')
         out[t] = rec
 
     gone = [t for t, k in alerts if k == 'gone']
@@ -201,6 +217,11 @@ def main():
         print(f'\n  ⚠⚠ **機構文が消えた/書き換わった {len(gone)}社**: {" ".join(gone)}')
         print('     → 門2再審査へ回すこと。irr の刻みが下がれば堀が動き、'
               '別枠85・席の優先の両方が外れる（判定はこの道具ではなく審査が下す）')
+    lowlist = [t for t, r in out.items() if r.get('low_frags')]
+    if lowlist:
+        print(f'\n  ⚠ **verdict は緑だが欠けた断片を持つ {len(lowlist)}社**: {" ".join(lowlist)}')
+        print('     verdict は max で裁く（根拠に他社の比較引用が混ざるので min では必ず誤検出する）。'
+              'その代わり欠けた断片は必ず上に名指しで出す——**他社の引用なら正常／自社の機構文なら消えている**')
     if noq:
         print(f'\n  ・根拠に英文の引用が無い {len(noq)}社: {" ".join(noq)}')
         print('     ＝**差分を取る対象そのものが無い**。次の再審査で原本の一文を引用として刻むこと')
