@@ -88,6 +88,41 @@ const srv = http.createServer((q, r) => {
   ok(/まだ repo に入っていません/.test(t) && nb >= 2,
      '⑤ 未書き出しの決定 → 赤い帯 + ボタン' + nb + '個');
 
+  /* ⑥⑦⑧ 2026-08-12（3回目の破れ・ユーザー「これがでないようにして」）
+     ⭳全パック一括取込／↻全再採点 は最後に `saveLog({title:'一括再採点 …銘柄'})` を自動で呼び、
+     それが `g7log:` を書く。旧実装はそこで dirty を立てていたので、
+     **手順書どおりの運用で毎回 赤い帯が出ていた**（決定は1バイトも変えていないのに）。 */
+  const install = () => pg.evaluate(([d]) => {
+    localStorage.clear();
+    for (const k in d) localStorage.setItem(k, d[k]);
+    localStorage.removeItem('ccf:stateDirty');
+    localStorage.setItem('ccf:stateSavedAt', '1999-01-01T00:00:00.000Z');
+  }, [st.data]);
+
+  await install(); await pg.reload(); await pg.waitForTimeout(1500);
+  await pg.evaluate(() => saveLog({ date: '2026-08-12', title: '一括再採点 369銘柄', body: 'x' }));
+  await pg.waitForTimeout(400);
+  ok(await pg.evaluate(() => localStorage.getItem('ccf:stateDirty') === null),
+     '⑥ 機械の検証履歴(g7log:)では dirty が立たない');
+  await pg.reload(); await pg.waitForTimeout(1500);
+  ok(!(await bar()), '   再読込しても帯は出ない');
+
+  // ⑦ 既に立ってしまった旗は自己修復する（違うのは盤が書き戻した npx/fx だけ）
+  await pg.evaluate(() => localStorage.setItem('ccf:stateDirty', '1'));
+  await pg.reload(); await pg.waitForTimeout(1500);
+  ok(!(await bar()) && await pg.evaluate(() => localStorage.getItem('ccf:stateDirty') === null),
+     '⑦ 価格の書き戻ししか違わない旗は自己修復して消える');
+
+  // ⑧ ★正規化が本物の決定を隠していないこと（株数を1株だけ変える）
+  await pg.evaluate(() => {
+    const o = JSON.parse(localStorage.getItem('pf:portfolio'));
+    o.positions[0].sh = (o.positions[0].sh || 0) + 1;
+    localStorage.setItem('pf:portfolio', JSON.stringify(o));
+  });
+  await pg.reload(); await pg.waitForTimeout(1500);
+  ok(/まだ repo に入っていません/.test(await bar()),
+     '⑧ 株数(sh)を1株変えたら帯が出る（正規化は決定を隠さない）');
+
   ok(errs.length === 0, 'pageerror ' + errs.length + '件');
   await b.close(); srv.close();
   console.log(ng ? `\n✗ ${ng}件の不一致` : '\n✓ 帯は鳴るべきときだけ鳴る');
