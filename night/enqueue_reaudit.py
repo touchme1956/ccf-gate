@@ -66,11 +66,14 @@ def main():
     #   「呼ぶ側が先に回してくれている」に依存しない（依存すると、今朝 market.yml が
     #   validate_fail.json を古いまま採点していたのと同じ順序の穴ができる）。
     #   再実装はしない——既存の道具をそのまま呼ぶ。
-    try:
-        subprocess.run([sys.executable, "night/audit_promotion_ready.py", "--json"],
-                       capture_output=True, timeout=120)
-    except Exception:
-        pass
+    for tool in (["night/audit_promotion_ready.py", "--json"],
+                 # 2026-08-12: irr=70 の根拠の triage も同じ理由でここで作り直す
+                 #   （呼ぶ側の順序に依存すると、古い在庫を今日の作業リストとして配ることになる）
+                 ["night/audit_irr70.py", "--json"]):
+        try:
+            subprocess.run([sys.executable] + tool, capture_output=True, timeout=180)
+        except Exception:
+            pass
     rows = jload("out/score_all.json", [])
     pos = {r["t"]: r for r in rows}
 
@@ -134,6 +137,19 @@ def main():
     for t in (nl.get("work") or []):
         s = st.get(t) or ""
         add(t, 25 if s == "⚠根拠なし" else 15, f"新規上場の掃除 {s or ''}".strip())
+    # 4-b. **irr=70 で「摩擦の機構」の根拠が無い社**（2026-08-12新設・規約改定と対）
+    #   規約を「70は残余ではなく積極的な主張＝機構の名指し＋原本引用が要る」へ改めたので、
+    #   その要求を満たさない社は**充填の対象**になる。渡し先が人の目しか無いと腐るので待ち行列へ入れる。
+    #   重み22 は 納品検査FAIL(20) と 新規上場の根拠なし(25) の間。**判定圏だけ**に絞る
+    #   （全213社を並べると作業リストが死ぬ——因子3と同じ規律）。
+    #   ⚠実測の重み: 判定圏の70を50に落とすと**投下可10社中7社が落ちる**（night/shadow_irr_step.js）。
+    #   刻み別のラベル一致率は70だけ0.706（50は0.971・85/100は1.00）＝**穴はここ一点**。
+    for v in (jload("out/audit_irr70.json").get("rows") or []):
+        if str(v.get("cls", "")).startswith(("A", "B")):
+            continue                      # A=機構を名指し / B=認定の語（Bは85側の疑いで別作業）
+        r0, lab = rank(v.get("t"))
+        if r0 >= 60:
+            add(v.get("t"), 22, f"irr=70 に摩擦の機構の根拠が無い（{v.get('cls')}・{v.get('n')}字）")
     # 5. 8-K / 6-K の警報（門2再審査の「気づき」＝判定には使わない）
     for a in (jload("out/events_watch.json").get("alerts") or []):
         add(a.get("t"), 15, f"{a.get('form')} {a.get('date')}：" + "／".join(a.get("flags") or []))

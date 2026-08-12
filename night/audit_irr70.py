@@ -106,8 +106,27 @@ def main():
         risky = [r for r in rows if r["buy"] and r["cls"] != "A 摩擦の機構を名指し"]
         print(f"\n■ 読む順（投下可で分類がA以外＝{len(risky)}社）: "
               f"{' '.join(r['t'] for r in risky) or 'なし'}")
-        print("  実測の重み: **判定圏の70を50に落とすと45社中19社が堀の関門を割り、投下可6社が落ちる**"
-              "（6857/HWM/IDXX/IRMD/KLAC/RMD）。一方 85→70 では投下可は0社しか動かない。")
+        # ⚠2026-08-12 更新: 旧記述は「投下可6社が落ちる（6857/HWM/IDXX/IRMD/KLAC/RMD）」だったが、
+        #   **当時の名簿に対する測定**で今日は4社入れ替わっている。今日の実測は night/shadow_irr_step.js。
+        print("  実測の重み(2026-08-12・night/shadow_irr_step.js): **判定圏の70を50に落とすと"
+              "19社が堀の関門を割り、投下可10社中7社が落ちる**"
+              "（KLAC 余裕0.3pt / HWM 1.1 / V 2.7 / IDXX 3.3 / LRCX 3.6 / RBC 4.6 / RMD 4.8）。"
+              "一方 85→70 でも 50→70 でも投下可は0社しか動かない＝**コストは 70→50 の一方向**。")
+
+    # --json: 待ち行列(night/enqueue_reaudit.py)へ渡すための在庫を書く。
+    #   **検出はずっと自動だったのに渡し先が人の目しか無かった**——この repo が繰り返してきた型
+    #   （enqueue_reaudit.py の頭注そのもの）。分類 D/C の社は「70を積極的に支持する根拠が無い」＝
+    #   2026-08-12 の規約改定（70は残余ではなく積極的な主張）で**充填の対象**になる。
+    if "--json" in sys.argv[1:]:
+        import datetime
+        json.dump({"generated": datetime.date.today().isoformat(),
+                   "tool": "night/audit_irr70.py",
+                   "stance": "evidence の文言を見る triage であって原本の判定ではない",
+                   "scope": scope, "n": len(rows),
+                   "counts": dict(c),
+                   "rows": rows}, open(os.path.join(OUT, "audit_irr70.json"), "w",
+                                       encoding="utf-8"), ensure_ascii=False, indent=1)
+        print("\n→ out/audit_irr70.json")
     return 0
 
 
