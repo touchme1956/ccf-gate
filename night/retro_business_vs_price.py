@@ -115,7 +115,10 @@ def build(asof):
             px_src.append({"file": name, "added": got})
 
     ind, tgt = {}, {}
-    for t in set(co) | set(f2) | set(fu):
+    # ⚠ sorted() が要る——set の反復順は PYTHONHASHSEED で毎回変わるので、
+    #   置換検定の組み合わせ方が実行ごとに変わり **同じ入力で p が動く**（実測 0.155 vs 0.174）。
+    #   ρ は順序に依らないので無害だが、**同じものを二度測ったら同じ答えが出る**を壊す
+    for t in sorted(set(co) | set(f2) | set(fu)):
         d = {}
         for k in COHORT_IND:
             v = co.get(t, {}).get(k)
