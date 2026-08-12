@@ -184,7 +184,19 @@ jobs:
       - name: v10影スコア更新（7月のみ＝年次較正の材料）
         continue-on-error: true
         run: |
-          if [ "$(date -u +%m)" = "07" ]; then python3 v10_series.py; else echo "7月以外はスキップ"; fi
+          # ⚠ v10_series.py は repo に存在しない（git 全履歴にも無い）。7月に走っても失敗するだけなので
+          #   **存在するときだけ走らせ、無ければ「復旧が要る」と大声で言う**（黙って成功に見せない）。
+          if [ "$(date -u +%m)" != "07" ]; then echo "7月以外はスキップ";
+          elif [ -f v10_series.py ]; then python3 v10_series.py;
+          else echo "::warning::v10_series.py が存在しない——v10影が更新できない。2027-07の答え合わせの前に要復旧"; fi
+      # v11「引き算の門」の影（2026-08-12新設・V11_SPEC.md）
+      #   **正本の判定には一切使わない。** v10 が「仕様書に書いてあるのに道具が無い」状態で1年放置された
+      #   ので、v11 は最初から回転盤とCIに載せて**止まったことが見える**ようにする。
+      - name: v11影スコア更新（影・合否に不使用）
+        continue-on-error: true
+        run: |
+          timeout 2400 python3 night/v11_facts.py || true
+          node night/v11_gate.js | tail -20
       # 年次較正のスナップショット（2026-08-10にCIへ接続・鍵もネットもcompanyfactsも不要）
       #   回転盤は calib を auto=False としていたが、**人の判断が要るのは v9 vs v10 の勝敗判定**であって
       #   スナップショットの生成ではない。同じ較正ループのもう半分 v10_series.py は既に7月だけ自動で、
@@ -250,6 +262,6 @@ jobs:
           #   あわせて sp500_pe_monthly（自己相対の分母）・growth_trend（cagrTの測定結果）・
           #   calibration（7月のスナップショット）も add する。**足したら add も足す**——
           #   ステップだけ増やして add を忘れると「回っているのに残らない」という同じ穴が再発する。
-          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/rechunk*.txt night/reaudit_queue.json night/progress.json out/er_ledger.json out/market_data.json market_data.json out/shadow_*.json out/gate0_run.json 2>/dev/null || true
+          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/rechunk*.txt night/reaudit_queue.json night/progress.json out/er_ledger.json out/market_data.json market_data.json out/shadow_*.json out/gate0_run.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push
