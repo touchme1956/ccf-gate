@@ -42,6 +42,8 @@ HDRS = {"User-Agent": f"ccf-gate {EMAIL}", "Accept-Encoding": "gzip, deflate"}
 
 VINTAGES = {
     2018: {"asof": "2018-07-01", "returns": "retro_returns_2018.json", "cikmap": "retro_sic.json"},
+    2017: {"asof": "2017-07-01", "returns": "retro_returns_2017.json", "cikmap": "retro_sic.json"},
+    2016: {"asof": "2016-07-01", "returns": "retro_returns_2016.json", "cikmap": "retro_sic.json"},
     2013: {"asof": "2013-07-01", "returns": "retro_returns_2013_all.json", "cikmap": "retro_cohort_2013.json"},
 }
 
