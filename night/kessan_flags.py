@@ -60,9 +60,30 @@ def build():
         v = m.group(1).strip()
         d = re.search(r'点検日\s*(\d{4}-\d{2}-\d{2})', body)
         q = re.search(r'四半期末\s*(\d{4}-\d{2}-\d{2})', body)
+        qend = q.group(1) if q else None
+        # ★2026-08-12 追加: **パックの原本が既にこの四半期を含んでいるか**
+        #   実害で判った——KLAC の「警報:減損」($230.4M・旧PCB部門)は
+        #   **2026-07-30 / 2026-08-03 / 2026-08-12 と三度**この行列の上位に載り、
+        #   三度とも人が原本へ戻って「既知の再掲・空振り」と結論している。
+        #   四半期点検は 10-Q(四半期末 2026-03-31) を読むのに、パックは
+        #   **FY2026 10-K(期末 2026-06-30・監査 2026-08-07)** で既にその期間を含んでいた。
+        #   ⚠**抑制はしない**（要審査を異常なしに書き換えるのは「測っていない」と
+        #     「測って問題なし」の取り違えを自分で作ること）。印を付けて順位を下げるだけ。
+        #   ⚠criterion は **reportDate ≥ 四半期末** の一点に絞る。auditDate で測ると
+        #     「新しい日に審査したが、読んだ原本は古い」社まで拾う
+        #     （実測: auditDate 基準なら8社／reportDate 基準なら1社＝KLACだけ）。
+        pk = os.path.join('out', f'{t}_gate_pack.json')
+        prep = None
+        if os.path.exists(pk):
+            try:
+                prep = str((json.load(open(pk, encoding='utf-8')).get('_meta') or {})
+                           .get('reportDate') or '')[:10] or None
+            except Exception:
+                prep = None
         rows[t] = dict(t=t, verdict=v, need=v.startswith('要審査'),
                        checked=d.group(1) if d else None,
-                       qend=q.group(1) if q else None,
+                       qend=qend, pack_report=prep,
+                       superseded=bool(prep and qend and prep >= qend),
                        jp='_jp' in os.path.basename(f))
     return dict(generated=__import__('datetime').date.today().isoformat(),
                 note=('kessan_check(.py/_jp.py) が out/kessan/*.txt に書いた判定を機械可読にしただけ。'
@@ -79,7 +100,15 @@ def main():
     print('■ 四半期点検の旗（out/kessan/*.txt を機械可読にしただけ・判定は作っていない）')
     print('  点検済み %d社 / 要審査 %d社' % (o['n'], o['n_need']))
     for r in need:
-        print('    ・%-6s %s  （点検日 %s）' % (r['t'], r['verdict'][:70], r['checked'] or '不明'))
+        sup = ('  ★パックの原本が既にこの四半期を含む（期末 %s ≥ 四半期末 %s）＝空振りの可能性'
+               % (r['pack_report'], r['qend'])) if r.get('superseded') else ''
+        print('    ・%-6s %s  （点検日 %s）%s'
+              % (r['t'], r['verdict'][:70], r['checked'] or '不明', sup))
+    nsup = sum(1 for r in need if r.get('superseded'))
+    if nsup:
+        print('\n  ★ うち %d社は**パックの原本が既にその四半期を含む**＝再審査の優先度を下げる。' % nsup)
+        print('     ⚠抑制はしない——「要審査」を「異常なし」に書き換えると、'
+              '『測っていない』と『測って問題なし』の取り違えを自分で作ることになる')
     if o['unparsed']:
         print('\n  ⚠ 判定行が読めなかった %d件 — **「異常なし」ではない**' % len(o['unparsed']))
         for u in o['unparsed']:

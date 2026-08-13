@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-11",
+ "generated": "2026-08-13",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "MSFT",
@@ -23,22 +23,14 @@
   "BR"
  ],
  "counts": {
-  "now": 2,
-  "today": 8,
-  "month": 14,
-  "waiting": 75,
+  "now": 1,
+  "today": 5,
+  "month": 16,
+  "waiting": 77,
   "blind": 0,
   "src": 15
  },
  "now": [
-  {
-   "k": "ops:today",
-   "level": "now",
-   "title": "回っているか判らない: 📋今日の集計",
-   "why": "最終実行の日付が取れない＝**健全と読まないこと**",
-   "how": "ci.yml 平日22:00UTC／手動 python3 night/today.py --json",
-   "src": "回転盤"
-  },
   {
    "k": "wacc",
    "level": "now",
@@ -66,14 +58,6 @@
    "src": "四半期点検"
   },
   {
-   "k": "kes:KLAC",
-   "level": "today",
-   "title": "四半期点検で要審査: KLAC 🟢投下可",
-   "why": "要審査: 警報:減損",
-   "how": "🔔イベントタブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
-   "src": "四半期点検"
-  },
-  {
    "k": "kes:MCO",
    "level": "today",
    "title": "四半期点検で要審査: MCO 🔵次点",
@@ -90,22 +74,6 @@
    "src": "8-K監視"
   },
   {
-   "k": "earn:LRCX",
-   "level": "today",
-   "title": "決算: LRCX（2026-08-11）監視",
-   "why": "本日",
-   "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
-   "src": "決算カレンダー"
-  },
-  {
-   "k": "earn:MPTI",
-   "level": "today",
-   "title": "決算: MPTI（2026-08-12）監視",
-   "why": "1日後",
-   "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
-   "src": "決算カレンダー"
-  },
-  {
    "k": "exc:TDG",
    "level": "today",
    "title": "門外例外の見張り: TDG",
@@ -115,6 +83,14 @@
   }
  ],
  "month": [
+  {
+   "k": "key:review",
+   "level": "month",
+   "title": "鍵待ちで始まっていない: 門2審査(自動)",
+   "why": "止まったのではなく、まだ始めていない",
+   "how": "review.yml 平日17:00UTC（**ANTHROPIC_API_KEY が要る**。無ければ何もせず終了）",
+   "src": "回転盤"
+  },
   {
    "k": "kes:4071",
    "level": "month",
@@ -145,6 +121,14 @@
    "title": "四半期点検で要審査: CELH ",
    "why": "要審査: 警報:減損  ☀吉報:吉流通（第二S字・流通の兆候→原文スニペット確認）",
    "how": "🔔イベントタブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
+   "src": "四半期点検"
+  },
+  {
+   "k": "kes:KLAC",
+   "level": "month",
+   "title": "四半期点検で要審査: KLAC 🟢投下可（空振りの可能性）",
+   "why": "要審査: 警報:減損  ★パックの原本が既にこの四半期を含む（期末2026-06-30 ≥ 四半期末2026-03-31）",
+   "how": "既に審査済かを _meta.kenshi で確かめる。新規事象なら門2再審査へ",
    "src": "四半期点検"
   },
   {
@@ -677,6 +661,18 @@
    "k": "todo:irr85_myrule_moat_line",
    "kind": "決断待ち",
    "title": "あなたの irr=85 基準に「堀70」は入るのか（未決・まだ一度も試されていない）",
+   "due": null
+  },
+  {
+   "k": "todo:moat5_residual",
+   "kind": "宿題",
+   "title": "moat5 が運んでいるものの正体は何か——rep/dur では説明できないと確定した",
+   "due": null
+  },
+  {
+   "k": "todo:moat_rung_top_inverted",
+   "kind": "決断待ち",
+   "title": "⚠ 堀の刻みの『最上段』が2つの欄で実測に反した（irr=100 と dur=100）",
    "due": null
   }
  ],
