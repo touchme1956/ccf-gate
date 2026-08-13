@@ -3948,7 +3948,7 @@ async function ccfDash(btn){
   const nextUp=four.filter(v=>!allocT.has(v.t)).sort((a,b)=>mechD(a)-mechD(b)||ccfAllocScore(b)-ccfAllocScore(a)||b.s-a.s);
   const audBlocked=judged.filter(v=>v.blocked);
   const buyHtml=buy.length?buy.map((v,i)=>{const q=Q[v.t];
-    return `<div class="led"><span style="font-size:15px;color:var(--gold-bright);min-width:28px"><b>${i+1}</b></span><span class="ln">${ccfIcon(v.nm)}${v.nm}${(v.frame85&&v.s<75)?'<span style="font-size:10px;color:#9b7fd4;margin-left:6px" title="irr=85 の別枠で土俵に上がった社（Ω75+は免除。二本柱の陥落・財務キルnde&gt;4・堀・データ健全・収縮・depのベトはそのまま適用）">別枠85</span>':''}</span>`
+    return `<div class="led"><span style="font-size:15px;color:var(--gold-bright);min-width:28px"><b>${i+1}</b></span><span class="ln">${ccfIcon(v.nm)}${v.nm}${(v.frame85&&v.s<75)?'<span style="font-size:10px;color:#9b7fd4;margin-left:6px" title="irr=85 の別枠で土俵に上がった社（Ω75+は免除。二本柱の陥落・財務キル（nde&gt;4 または 利払カバー&lt;3）・堀・データ健全・収縮・depのベトはそのまま適用）">別枠85</span>':''}</span>`
       +`<span style="font-size:12px;min-width:70px;text-align:right">${q?('$'+q.px.toFixed(2)):'—'}</span>`
       +`<span style="font-size:12px;min-width:70px;text-align:right;color:${q?col(q.chgPct||0):'var(--dim)'}">${q&&q.chgPct!=null?sign(q.chgPct)+'%':'—'}</span>`
       +`<span style="font-size:12px;min-width:58px;text-align:right;color:var(--gold-bright)">Ω${v.s.toFixed(1)}</span>`
@@ -4568,7 +4568,7 @@ function ccfAllocTop(cands,maxN){
 //   免除するのはΩの**線**だけで、**Ωの中身のうち持続の二本柱は免除しない**。
 //   さらに v9.9.124: out/irr85_history.json の verdict=below（その社自身の実現複利の中央値が
 //   ハードル15%未満）なら**別枠も席の優先も与えない**。載っていない社は中立（在庫の境界は道具の側）。
-//   堀70+ ／ データ健全 ／ 事業の収縮 ／ dep のベト ／ **財務キル nde>4** もそのまま適用する。
+//   堀70+ ／ データ健全 ／ 事業の収縮 ／ dep のベト ／ **財務キル（nde>4 または 利払カバー<3）** もそのまま適用する。
 //   根拠の全文は ccfIrr85Frame の頭注（門・盤・score_all が同じ実装を読む＝v9.9.65）。
 // なぜ第三の関門か: moatIdx は既にΩへ二経路（pm→sustain と直接項.13）で入っているので、
 //   ここでさらに減点すると同じ信号の三重罰になる。だから採点は動かさず「買う対象から外す」
@@ -4639,10 +4639,16 @@ const CCF_MOAT_GATE=70;
 //      当てると通るのは2社で、不通過19社のうち**14社の死因が買収**だった。RBC はその典型——
 //      roicg 7.0<WACC で Ω63.9 だが、単年は既に8.41%（WACCまで0.52pt）で借金を返しながら伸びている。
 // 【何を免除し、何を残すか】免除するのは **Ω75+ の線だけ**（Ωを潰しているキルも一緒に外れる）。
-//   **財務キル nde>4 は明示的に残す**——ここがユーザーの選択（案②）。歴史は「レバレッジは継続を
+//   **財務キルは明示的に残す**——ここがユーザーの選択（案②）。歴史は「レバレッジは継続を
 //   予言しなかった」と言うが、実質は 6/10 vs 9/11 ＝**1社の差**で n=21、しかも**信用収縮がゼロの窓**の話。
 //   キルが守っている事態がそもそも標本に入っていない。**穏やかな窓で反証が出なかったことは反証ではない。**
 //   堀70+ ／ データ健全 ／ 事業の収縮なし ／ dep のベト は**すべてそのまま適用**する。
+//   ★2026-08-13: 財務キルが **nde>4 または 利払カバー<3** の OR になった（v9.9.142）ので、
+//     **この再検査も両方を見る**。片方だけ残すと「財務キルは別枠でも残す」と書きながら
+//     **キルの半分しか残さない**ことになる（v9.9.122 で「二本柱の陥落は免除しない」を足したのと同じ穴）。
+//     実測: 今日 irr=85 で利払カバー<3 の4社（ENTG 2.28 / KRMN 1.61 / MKSI 2.49 / ST 1.59）は
+//     **4社とも nde>4 でも落ちる**＝**今日は誰も動かない純粋なラチェット**。効くのは
+//     「利払カバーは薄いが nde は線の下」という社が現れたとき。**空欄では発火しない**（キルと同じ向き）
 // 【下限は歴史の実測の最小値であって発明した数字ではない】継続組15社の最小値:
 //   営業利益率 **11.89%(COHR)** ／ FCF転換 **0.639(WST)** ／ 売上5年CAGR **1.76%(CW)**。
 //   ⚠**この下限は「壊れる社を捕まえる」ためのものではない**——実際に壊れた IPGP(営利率39.1%)・
@@ -4718,7 +4724,7 @@ async function ccfLoadIrr85Hist(){
 function ccfIrr85Frame(d,r){
   const n=v=>{const x=parseFloat(v);return isFinite(x)?x:null;};
   const irr=n(d&&d.irr), gm=n(d&&d.gm), cagr=n(d&&d.cagr), nde=n(d&&d.nde);
-  const fcf=n(d&&d.fcf), ni=n(d&&d.ni);
+  const fcf=n(d&&d.fcf), ni=n(d&&d.ni), icv=n(d&&d.intcov);
   if(irr!==85)return {pass:false,why:null};
   const _hb=ccfIrr85Below(d);
   if(_hb)return {pass:false,why:`本人の実現複利の中央値 ${(_hb.med*100).toFixed(1)}% が歴史のハードル15%未満`
@@ -4741,8 +4747,9 @@ function ccfIrr85Frame(d,r){
   if(conv==null||conv<0.639)ng.push(conv==null?'FCF転換未測定':`FCF転換${conv.toFixed(3)}<0.639`);
   if(cagr==null||cagr<1.76)ng.push(cagr==null?'成長未測定':`成長${cagr}<1.76`);
   if(nde!=null&&nde>4)ng.push(`nde${nde}>4（財務キルは別枠でも残す）`);
+  if(icv!=null&&icv<3)ng.push(`利払カバー${icv}<3（財務キルは別枠でも残す）`);
   return ng.length?{pass:false,why:ng.join('・')}
-    :{pass:true,why:`irr=85 ∧ 二本柱すべて通過 ∧ 歴史の継続組の下限（営利率${gm}≥11.89・FCF転換${conv.toFixed(3)}≥0.639・成長${cagr}≥1.76）∧ nde${nde==null?'—':nde}≤4`};
+    :{pass:true,why:`irr=85 ∧ 二本柱すべて通過 ∧ 歴史の継続組の下限（営利率${gm}≥11.89・FCF転換${conv.toFixed(3)}≥0.639・成長${cagr}≥1.76）∧ 財務キルなし（nde${nde==null?'—':nde}≤4 ∧ 利払カバー${icv==null?'—':icv}≥3）`};
 }
 function ccfShrinkGate(d){
   d=d||{};
@@ -4901,7 +4908,7 @@ async function renderPlan(){
   // v9.9.119（2026-08-09 ユーザー明示指示「2いれて」）: **irr=85 の別枠**を第一関門の脇に置いた。
   //   irr=85 ∧ 歴史の継続組の下限（営利率11.89% / FCF転換0.639 / 売上5年CAGR1.76%）∧ nde≤4 なら、
   //   Ω75未満でも土俵に上がる。免除するのは**Ω75+ の線だけ**で、**二本柱の陥落(v9.9.122)**・堀70+・
-  //   データ健全・事業の収縮・dep のベト・**財務キル nde>4** はすべてそのまま適用する。
+  //   データ健全・事業の収縮・dep のベト・**財務キル（nde>4 または 利払カバー<3）** はすべてそのまま適用する。
   //   根拠の全文は ccfIrr85Frame の頭注。
   const q75all=rows.filter(r=>r.layer<=2||r.frame85).sort((a,b)=>(b.pc-a.pc)||(b.s-a.s));
   // v9.9.39(ユーザー明示指示): 堀のふるいを第三の関門に。moatIdx が線に届かない社は買付の土俵から降ろす。
@@ -5089,7 +5096,7 @@ async function renderPlan(){
   const govTag=r=>(r.depGov&&r.dep!=null&&r.dep>=40)
     ?`<span style="font-size:11px;color:#c08a3e;white-space:nowrap;margin-left:8px" title="dep=${r.dep}% だが相手が主権政府のため存続級依存のベトを立てていない。免除するのは『相手が消える』半分だけで、契約更改・入札で乗り換えられるriskは irr が測る。予算・政治は geopol が別に測る">政府依存${r.dep}%（ベト免除）</span>`:'';
   const f85Tag=r=>(r.frame85&&r.s<75)
-    ?`<span style="font-size:11px;color:#9b7fd4;white-space:nowrap;margin-left:8px" title="${(r.frame85why||'').replace(/"/g,'&quot;')}｜Ω75+は免除。**二本柱の陥落**・堀70+・データ健全・事業の収縮・depのベト・**財務キル nde&gt;4** はそのまま適用される">別枠85（Ω${r.s}）</span>`:'';
+    ?`<span style="font-size:11px;color:#9b7fd4;white-space:nowrap;margin-left:8px" title="${(r.frame85why||'').replace(/"/g,'&quot;')}｜Ω75+は免除。**二本柱の陥落**・堀70+・データ健全・事業の収縮・depのベト・**財務キル（nde&gt;4 または 利払カバー&lt;3）** はそのまま適用される">別枠85（Ω${r.s}）</span>`:'';
   // v9.9.124: irr=85 の社には**その社自身の実現複利**を出す。特権（別枠85・席の優先）の裏づけが
   //   本人の実績にあるのか、それとも「まだ答え合わせができていない」のかが画面から判るようにする。
   //   **表示は判定ではない**——判定は ccfIrr85Below（verdict=below だけ特権を外す）。
@@ -5341,7 +5348,7 @@ async function renderPlan(){
         +`<br><span style="color:var(--dim)"><b>【なぜ免除するか】</b>歴史検証（2018年ビンテージ irr=85 の21社・8.1年）の二つの実測に従っています——<br>`
         +`(1) <b>継続組と非継続組は入口の財務で分かれませんでした</b>。営業利益率は 20.4% vs 20.5% で<u>同一</u>、売上5年CAGRも 18.0% vs 15.5%。分けたのは<b>機構の文が断定形か願望形か</b>だけ（願望形5社のうち3社=60%が非継続／完了形16社は3社=19%）。<b>今日の台帳に願望形はゼロ</b>です（2026-08-05〜07の全数検算で irr=85 を 53社→11社へ削り、その型は全部70へ降格済み）。<br>`
         +`(2) <b>Ωは irr=85 の社を買収由来の指標で系統的に落とします</b>。歴史の21社に今日の門を当てると通るのは2社で、<u>不通過19社のうち14社の死因が買収</u>でした（night/audit_hist85_today.py）。<br>`
-        +`<b>【免除するのはΩ75+の線だけ】</b>堀70+ ／ データ健全（点検・期末後の重大事象・納品検査）／ 事業の収縮なし ／ dep のベト ／ <b style="color:#c98c3c">財務キル nde&gt;4</b> は<u>すべてそのまま適用</u>します。財務キルを残したのはあなたの選択（案②）で、歴史が「レバレッジは継続を予言しなかった」と言うのは実質1社差・n=21・<b>信用収縮がゼロの窓</b>の話だから——<u>穏やかな窓で反証が出なかったことは反証ではありません</u>。<br>`
+        +`<b>【免除するのはΩ75+の線だけ】</b>堀70+ ／ データ健全（点検・期末後の重大事象・納品検査）／ 事業の収縮なし ／ dep のベト ／ <b style="color:#c98c3c">財務キル（nde&gt;4 <b>または</b> 利払カバー&lt;3）</b> は<u>すべてそのまま適用</u>します。財務キルを残したのはあなたの選択（案②）で、歴史が「レバレッジは継続を予言しなかった」と言うのは実質1社差・n=21・<b>信用収縮がゼロの窓</b>の話だから——<u>穏やかな窓で反証が出なかったことは反証ではありません</u>。<br>`
         +`<b>【下限は歴史の実測の最小値】</b>継続組15社の最小値<b>そのもの</b>（営業利益率 <b>11.89%</b>(COHR) ／ FCF転換 <b>0.639</b>(WST) ／ 売上5年CAGR <b>1.76%</b>(CW)）で、発明した数字ではありません。<b style="color:#9b7fd4">v9.9.129 で丸め上げ（11.9/0.64/1.8）をやめました</b>——丸めていたせいで<u>線を作った当の3社が自分の線で落ちて</u>いたためです（COHR −0.01／WST −0.001／<b>CW −0.04</b>。3社とも継続組で、CWは今日の投下可・堀87.8）。<b>床のつもりが勝者に食い込んでいた。</b>実測では投下可10社・別枠5社とも不変＝純粋なラチェット。<br><b>【なぜ「最小値」でよいのか＝識別する線を引かない】</b><code>night/irr85_criteria.py</code> が事前登録つきで検定した結果、irr=85 の27社について当時の機械値12本＋定性3本のどれも<b>合格ゼロ</b>（惜しいものは全部「ビンテージまたは半導体層で符号が反転」）。<b>偽陽性率 0.630</b>＝雑音が63%通る緩い試験を実データが1本も通らなかった＝<b>85の中の優劣を分ける入口の変数は無い</b>。だから別枠に「識別する基準」は置かず、「最悪の勝者を下回るな」という床だけを置いています。⚠ただし<b>この下限は「壊れる社を捕まえる」ためのものではありません</b>——実際に壊れた IPGP(営利率39.1%)・OLED(43.6%) は入口の財務が最良でした。下限が落とすのは<u>歴史の勝者の範囲にすら入らない社</u>だけです。<br><b style="color:#d69a3c">⚠【FCF転換だけ基準が違う】</b>下限 <b>0.639 は歴史側の「5年合計比」</b><code>sum(FCF 5年)÷sum(NI 5年)</code>（WSTの値）から作られているのに、<b>門が当てているのはパックの単年 fcf/ni</b> で<u>基準が違います</u>——<b>同じWSTで 0.639（5年）vs 0.95（単年）＝1.49倍の差</b>。この台帳が繰り返し踏んでいる「基準の違う二つを割る」型です。<b>直さず残しているのは、単年基準で下限を作り直すと 0.086（COHR）になり床が事実上消えるから</b>（継続組の単年 fcf/ni は COHR0.086 / NVMI0.615 / APH0.666 …中央値0.992＝<u>単年の FCF/NI は一年の設備投資や特損で暴れるので床の物差しに向かない</u>）。門は fcf/ni を採点本体でも売却規律S2でも一貫して単年で使っており、ここだけ5年にするには <code>out/conv5.json</code> を配る配管が要ります。<b>床はそもそも識別しない</b>ので今は割に合わないと判断しました（<b>線を 0.086 へ下げるのは誤り</b>）。<b>切り替えの引き金</b>＝単年と5年の差で合否が変わる社が実際に席に届いたとき（実測の該当は <b>BWXT</b> 単年0.898✓/5年0.631⛔ と <b>ENTG</b> 2.26倍差の2社で、いずれもΩと財務で遠い）。<u>⚠この基準差を知らずに「線の近く」を語ると誤ります</u>——<b>LRCX は単年0.673（線+0.03）に見えて、5年基準では 0.852 で余裕があります</b>。測り直しは <code>python3 night/irr85_fill_asof.py --today</code>。<br>`
         +`<b>【限界】</b>n=21 の単一ビンテージ・8.1年の一窓・非継続は6社。<b>規則にできる強度ではない</b>ものを、あなたの明示指示で規則にしています。Ω・採点式・売却規律S1/S2/S3・堀の関門70はいずれも不変。</span></div>`;
     }

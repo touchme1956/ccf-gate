@@ -24,9 +24,16 @@ night/audit_intcov.py — 利払カバーの**被覆と基準**を数える（20
      単独の帯検問では捕まらない**もっともらしい範囲内の誤り**を捕まえる
   3. 穴を**名前で出す**（日本株を「対象外」と黙って落とさない）
 
-■ ⚠ この器は買付を止めない
-  利払カバーは今日の門のどの判定にも使われていない（財務キルは `nde>4`）。
-  ここに出るのは**キルの物差しを替えるかを決めるための材料**であって、欠陥の一覧ではない。
+■ ★2026-08-13 v9.9.142 で、利払カバーは**キルの入力になった**
+  財務キルは `nde>4` **または** `intcov_strict<3` の OR（ユーザー明示指示「入れて」）。
+  **交換ではなく追加**なので被覆が薄くても絶対に緩くならないが、**空欄ではキルが眠る＝未測定が有利**。
+  だからこの器の仕事は「材料を出す」から**「穴を名前で出し続ける」**へ変わった。
+  ⚠ それでもこの器**自身**は買付を止めない（判定は compute() の側）。
+
+■ ⚠ 4. パックが v11_facts に追随しているか（`fill_intcov` が止まった検出）
+  キルの入力はパックの `intcov` 欄で、`night/fill_intcov.py` が v11_facts から写す。
+  **これが止まると新しいパックの `intcov` が永久に空欄＝キルが眠る＝甘い側へ静かに壊れる**。
+  「書けるのに書かれていない社」を数えて出す（0 が正常）。
 
 使い方: python3 night/audit_intcov.py [--json] [--list]
 出力: out/audit_intcov.json（--json）
@@ -71,6 +78,7 @@ def main():
         rows.append({
             "t": t, "omega": s.get("s"), "buy": bool(s.get("buy")),
             "nde": d.get("nde"),
+            "pack_intcov": d.get("intcov"),   # ★キルが実際に読む値（v11_facts ではなくパックの欄）
             "intcov": f.get("intcov"), "intcov_strict": f.get("intcov_strict"),
             "intcov_cash": f.get("intcov_cash"),
             "basis": f.get("int_basis"), "period": f.get("int_strict_period") or "annual",
@@ -170,6 +178,14 @@ def main():
           f" ／ 最高Ω {max([r['omega'] or 0 for r in add], default=0):.1f}")
     print("  ⇒ **追加は被覆が薄くても絶対に緩くならない。交換は測れない社のキルが外れる。**")
 
+    # ★パックが v11_facts に追随しているか＝`fill_intcov` が止まった検出（0 が正常）。
+    #   止まると新しいパックの intcov が空欄のまま＝キルが眠る＝**甘い側へ静かに壊れる**。
+    behind = [r for r in rows if r["intcov_strict"] is not None
+              and (r["pack_intcov"] is None or abs(r["pack_intcov"] - r["intcov_strict"]) > 1e-9)]
+    print(f"\n■ パックの追随（fill_intcov が止まった検出）: 遅れ {len(behind)}社"
+          + ("（0＝正常）" if not behind else
+             f"　⚠ python3 night/fill_intcov.py --write が要る: {' '.join(r['t'] for r in behind[:12])}"))
+
     cands = [r for r in rows if r["cands"]]
     if cands:
         print(f"\n■ ⏳候補列に無い利息らしいタグが実在する社 {len(cands)}社（作業リスト・値は採っていない）")
@@ -196,6 +212,7 @@ def main():
                "swap_loses_kill": [r["t"] for r in lost],
                "swap_loses_kill_unmeasured": [r["t"] for r in blind],
                "add_newly_killed": [r["t"] for r in add],
+               "packs_behind_fill_intcov": [r["t"] for r in behind],
                "tag_candidates": {r["t"]: r["cands"] for r in cands},
                "rows": rows}
         json.dump(out, open(os.path.join(OUT, "audit_intcov.json"), "w", encoding="utf-8"),
