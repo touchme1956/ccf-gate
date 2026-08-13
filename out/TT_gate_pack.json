@@ -2,14 +2,14 @@
  "nm": "TT",
  "roic": 59.0,
  "roicg": 25.6,
- "nde": 0.54,
+ "nde": 0.82,
  "z": 3.51,
  "gpa": null,
  "accr": -1.3,
  "gm": 18.6,
  "gmt": "up",
  "roict": "up",
- "cagr": 5.8,
+ "cagr": 11.4,
  "fcf": 3.19,
  "ni": 2.92,
  "sbc": 0.41,
@@ -112,7 +112,9 @@
    "2026-08-03 v9.9.67でΩが72を超え監視枠入り。eps が未取得と判明",
    "acq5 の根拠を機械判定で記録（値はyesのまま据置）: のれんの新しさ +17.3%。この欄は roicGap>15 と組んで**一律−6**が効く最大級の段差なのに、判定圏16社中9社が根拠なしだった（実測でKLAC/VRSK/HWMは誤りだった）ため裏取りした",
    "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）",
-   "2026-08-06 rep/dur を原本で確定。dur 85→75（ネットワーク効果の記述なし）"
+   "2026-08-06 rep/dur を原本で確定。dur 85→75（ネットワーク効果の記述なし）",
+   "2026-08-13 採取器の是正の取り残しを反映: cagr 5.8→11.4 / nde 0.54→0.82。**旧値は根拠が無く、採取器の現行版と食い違っていた**（このパックの審査は 2026-07 で、採取器はその後3回直っている）。採用の条件は3つ——(1)パックに根拠が無い (2)採取器の年がパックの会計年度と一致 (3)**採取器が示した実額から式を独立に再計算して一致**。roic/roicg/roict/dilNet は IC縮退・窓の問題があるので**保留**した。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた。測り直し: python3 night/backfill_machine_evidence.py --stamps",
+   "2026-08-13 採取器との食い違いを検討したが**保留**した欄: roic roicg dilNet。理由——roic/roicg は **IC縮退**（投下資本が自己資本のごく一部まで縮んで発散する型）か、採取器自身が『有利子負債タグ不在＝0扱いのため過大』と警告している。dilNet は採取器の窓が15年で規約の窓と違う。cagr は系列に欠年がある。**もっともらしい誤値より空欄・据置**。原本で確定するのが本筋（todo pack_collector_drift）"
   ],
   "evidence": {
    "dom": "10-K FY2025(tt-20251231.htm) Item1 Competitive Conditions: 『Our products and services are sold in highly competitive markets throughout the world. Due to the diversity of these products and services and the variety of markets served, we encounter a wide variety of competitors that vary by product line and services. They include well-established regional or specialized competitors, as well as larger U.S. and non-U.S. corporations or divisions of larger companies. ... We are one of the leading manufacturers in the world of HVAC systems and services and transport temperature control products and services.』 Item1A Risk Factors『The markets that we serve are highly competitive. We compete worldwide with a number of other manufacturers and distributors that produce and sell similar products. ... Due to our global footprint we are competing worldwide with large companies and with smaller, local operators who may have customer, regulatory or economic advantages in the geographies in which they are located.』。**自社シェア%の開示なし／上位N社合計シェアの開示なし／競合の実名列挙すらなし**——原本に数値が存在しないため70/85/100は主張不能(『one of the leading manufacturers』は順位の自称＝v9.9.41規約4によりどの刻みの証拠にもならない)。他方、提出書類自身が「a wide variety of competitors that vary by product line」「large companies and with smaller, local operators」「a number of other manufacturers and distributors that produce and sell **similar products**」と、同等品を多数が供給する**構造的な分散**を述べており、自社40%以上・上位2社≥80%・上位3社≥80%のいずれも原本からは成立しない → 市場構造=競争(<40%)＝刻み50。Americas/EMEA/Asia Pacificの3セグメントに区別なく同一の記述が置かれ全社が同じ刻みに落ちるため50を確定(v9.9.41規約1・3)",
@@ -129,7 +131,9 @@
    "irr": "10-K FY2025 に顧客側の再認定の記述なし。HVACは仕様組込と保守契約で摩擦があるが認証ロックではない→70",
    "rep": "HVACの複製困難性は**ブランド＋独立ディーラー網＋保守の全国展開**にある。10-Kは『our market position』を知財より重視すると自認（『our market position than our patents and/or licenses』）＝知財ではなく組織と流通の堀。同規模の競合(Carrier/Daikin/Lennox)は存在するので複製不能ではない→80",
    "dur": "**dur 85→75 へ是正**。10-Kにネットワーク効果の記述なし。据付済み機器の保守・部品・ディーラー関係＝スイッチングコスト型で75",
-   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 12,454,700,000 → 2023年 17,677,600,000 → 2025年 21,321,900,000。A案(端点) 直近2年CAGR 9.83% − その前3年CAGR 12.38% = -2.56pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -3.27pt ／ 年次YoY {'2021': 13.5, '2022': 13.1, '2023': 10.5, '2024': 12.2, '2025': 7.5} → **採用 -2.56pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。"
+   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 12,454,700,000 → 2023年 17,677,600,000 → 2025年 21,321,900,000。A案(端点) 直近2年CAGR 9.83% − その前3年CAGR 12.38% = -2.56pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -3.27pt ／ 年次YoY {'2021': 13.5, '2022': 13.1, '2023': 10.5, '2024': 12.2, '2025': 7.5} → **採用 -2.56pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
+   "cagr": "機械算出: 売上 2020年 12,454,700,000 → 2025年 21,321,900,000＝5年の年率",
+   "nde": "機械算出 2025年: (有利子負債 5,308,100,000 − 現金同等物 1,763,300,000) ÷ (営業利益 3,967,400,000 + 減価償却 371,900,000)"
   },
   "provenance": {
    "roict": "machine",

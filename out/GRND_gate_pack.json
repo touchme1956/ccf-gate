@@ -10,8 +10,8 @@
  "gmt": "up",
  "roict": null,
  "cagr": 31.1,
- "fcf": 0.14,
- "ni": 0.09,
+ "fcf": 0.1408,
+ "ni": 0.0948,
  "sbc": 12.39,
  "dilNet": 2.16,
  "acc": "usgaap",
@@ -112,7 +112,9 @@
    "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
    "2026-08-02 市場価格を自動更新: px 16.36 → 17.34（+6.0%）。per 34.81→36.9。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
    "2026-08-06 dep の3軸を走査。(b)チャネル依存が質的に存続級（Apple/Google 2社で substantially all の決済）だが単一相手の売上%が開示されず数値化できないため空欄。規約の穴として _meta.nulls に記録",
-   "2026-08-06 irr/rep/dur を原本で確定・3欄とも据置。durは構造上ネットワーク効果が働きうるが原本に明示記述が無いので上げない"
+   "2026-08-06 irr/rep/dur を原本で確定・3欄とも据置。durは構造上ネットワーク効果が働きうるが原本に明示記述が無いので上げない",
+   "2026-08-13 採取器の是正の取り残しを反映: fcf 0.14→0.1408 / ni 0.09→0.0948。**旧値は根拠が無く、採取器の現行版と食い違っていた**（このパックの審査は 2026-07 で、採取器はその後3回直っている）。採用の条件は3つ——(1)パックに根拠が無い (2)採取器の年がパックの会計年度と一致 (3)**採取器が示した実額から式を独立に再計算して一致**。roic/roicg/roict/dilNet は IC縮退・窓の問題があるので**保留**した。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた。測り直し: python3 night/backfill_machine_evidence.py --stamps",
+   "2026-08-13 採取器との食い違いを検討したが**保留**した欄: roic。理由——roic/roicg は **IC縮退**（投下資本が自己資本のごく一部まで縮んで発散する型）か、採取器自身が『有利子負債タグ不在＝0扱いのため過大』と警告している。dilNet は採取器の窓が15年で規約の窓と違う。cagr は系列に欠年がある。**もっともらしい誤値より空欄・据置**。原本で確定するのが本筋（todo pack_collector_drift）"
   ],
   "evidence": {
    "moatW": "【2026-07-29 v9.9.41再監査 → 50を維持】売上の内訳(10-K FY2025): Direct revenue(有料サブスクリプション Grindr XTRA/Unlimited＋アドオン) 366,297千USD = 83.3% / Indirect revenue(広告) 73,601千USD = 16.7%、総額 439,898千USD。10-K本文でも「we also generate indirect revenue, representing 16.7%, 15.6%, and 13.2% of total revenue for the years ended December 31, 2025, 2024, and 2023」と一致。報告セグメントは1つ(Schedule of Segment Information)。地域別 Domestic 254,300 = 57.8% / International 185,598 = 42.2%だが、v9.9.41追加規約により地域別は独立した堀に数えない。→ 広告(Indirect)は同一アプリの同一ユーザー網を再現金化したもので、10-K自身が「both of which are driven by the Grindr platform」と述べるとおり同一プラットフォームに乗る＝v9.9.41追加規約により1本。その1本の中で Direct が83.3%(≥80%)の単一製品ライン → 50。出典: SEC 10-K FY2025 grnd-20251231.htm (Disaggregation of Revenues / Item 1 Business)",
@@ -130,7 +132,9 @@
    "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 17.34 USD（前回 16.36・+6.0%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
    "irr": "10-K FY2025 に顧客側の再認定の記述なし。消費者向けアプリで乗り換えは無料→70（ただし下の dur のとおり地域内のユーザー密度が実質の摩擦）",
    "rep": "10-K『the Grindr platform has benefited from **first mover advantage globally**, resulting in MAUs in over **190 countries and territories**』＝先行者利得とユーザー基盤。ただし同じ10-Kが『**Concerns relating to our products and services … could negatively impact our user base**』と基盤の可逆性を認め、競合(Tinder/Hinge等)も同規模の資本を持つ→60",
-   "dur": "**75 で確定（検算して据置）**。位置情報型の出会いアプリは構造上ユーザー密度が価値を決めるが、**10-Kに『ネットワーク効果』の明示記述は無い**（あるのは first mover advantage と MAU の記述）。憶測で85(ネットワーク効果)へ上げず、実装済みの移行摩擦＝スイッチングコスト型75に留める。**堀59.2で関門には遠く、1段では判定は動かない**"
+   "dur": "**75 で確定（検算して据置）**。位置情報型の出会いアプリは構造上ユーザー密度が価値を決めるが、**10-Kに『ネットワーク効果』の明示記述は無い**（あるのは first mover advantage と MAU の記述）。憶測で85(ネットワーク効果)へ上げず、実装済みの移行摩擦＝スイッチングコスト型75に留める。**堀59.2で関門には遠く、1段では判定は動かない**",
+   "fcf": "機械算出 2025年: 営業CF 141,518,000 − 設備投資 746,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）",
+   "ni": "機械算出 2025年: 純利益 94,751,000（÷1e9で十億単位表示）"
   },
   "nulls": {
    "市場データ_保留": "2026-07-28 汚染除去: 安全弁が保留した値が、弁を付ける前の実行で既にパックへ書き込まれていたため空欄化した (shy=15.49, mcap=3.1931, evebit=24.8)。shy=14.05%は12%超でmcap過小の疑い。誤値のまま残すと門Xが偽の投下可を点灯させる",
