@@ -12,7 +12,7 @@ gate_fetch v3.0 — SEC一撃採取器（壊れない複利の門 v9.6・Ⅲ採�
          series_sum の総額タグ複数対応で採取器側は是正済みだが、パック自体はここでは直さない
          （審査官の検算経路を通すこと）。
 """
-import json, re, sys, time, urllib.request, os
+import hashlib, json, re, sys, time, urllib.request, os
 from statistics import median
 
 EMAIL   = "fortis5280@gmail.com"        # ★1. 自分のメールに書き換える(SECの必須マナー)
@@ -46,6 +46,29 @@ def cik_of(ticker):
         if v["ticker"].upper() == ticker.upper():
             return str(v["cik_str"]).zfill(10)
     raise SystemExit(f"CIK不明: {ticker}")
+
+# ---------- 採取器の版（2026-08-13新設）----------
+# ★なぜ要るか: **採取器が直ってもパックが追いつかない**という取り残しが実在した。
+#   実測(2026-08-13) nde が12社で「純現金」と誤っており（ENB は実際には有利子負債 104,410百万CAD）、
+#   12社とも審査日は 2026-07——その後の是正3回（08-03 無形の合成／08-07 有利子負債の二重計上を
+#   恒等式で確定／08-09 規制公益の売上タグ）をどれも受け取っていなかった。
+#   そして**どのパックがどの版で作られたかを記録する欄が一つも無かった**ので、
+#   全社を再計算する（約40分）以外に知る方法が無かった。
+# ★版は**ファイルの内容ハッシュ**にする——手で上げる定数だと必ず忘れる（この台帳が
+#   版番号・堀の線・四関門の再掲で繰り返し踏んだ「数字を書き写した箇所は必ず陳腐化する」型）。
+#   ⚠ 注釈を1文字直しただけでも版が変わる＝**過剰に鳴る側**。それでよい——
+#   過剰に鳴れば再計算して backfill_diff が「実際は差が無い」と言うだけだが、
+#   鳴らなければ取り残しが静かに残る。**片側の誤りだけを許す**設計。
+def _fetcher_rev():
+    try:
+        with open(os.path.abspath(__file__), "rb") as _f:
+            return "h" + hashlib.sha256(_f.read()).hexdigest()[:10]
+    except Exception:
+        return None
+
+
+FETCHER_REV = _fetcher_rev()
+
 
 # ---------- XBRL: 年次系列の取り出し ----------
 def facts_of(cik):

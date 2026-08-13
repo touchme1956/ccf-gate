@@ -89,7 +89,7 @@
    "p4": "『assessing the risk that a material weakness exists, testing and evaluating the design and operating effectiveness』は監査手続の定型文であり実指摘ではない。accr=-2.9%(<0=現金が利益に先行)→無限定前提で90(Unresolved Staff Comments本文はhits断片のみで最終確認推奨)",
    "f1": "ROIIC(FY2023→25 ΔNOPAT6.7/ΔIC60.3=約11%)が新興国WACC(概ね12-13%)を下回る。成長は低リターンのれん型M&A(Capco)依存でroicg≈12%<WACCが裏付け=55",
    "f4": "『the IT Services segment generated 99.3% of our revenue...IT Products segment generated 0.7% of revenue』かつIT Productsは縮小→売上5%超の成長隣接事業なし=50",
-   "roic": "機械算出 2025年: NOPAT 114,285,228,828（営業利益 151,271,000,000×(1−実効税率24.5%)） ÷ IC 639,800,000,000＝自己資本 830,447,000,000 + 有利子負債 161,817,000,000 − のれん 325,014,000,000 − 無形 27,450,000,000。**IC/自己資本=77.0%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）｜有利子負債の内訳: Borrowings(総額) + CurrentPortionOfLongtermBorrowings=0｜**v9.9.72: through-cycle 化**。5年系列 5年の**中央値 18.9%** を採用（直近年 17.9% / 最悪 17.9%）。roicg も同じ年の系列の中央値 11.5% にして roic≥roicg を保つ｜**2026-08-10 是正 17.1 → 18.9**: 旧値の有利子負債は `Borrowings=161,817,000,000 + LongtermBorrowings=63,954,000,000` と**二重計上**していた（LongtermBorrowings は Borrowings の構成要素）。採取器は 2026-08-04 に恒等式で確定して是正済みだったが、**パック側が旧値のまま取り残されていた**（todo `wit_refetch`）。二重計上は IC を過大にするので roic は**過小**に出る＝保守側の誤りで気づきにくい。",
+   "roic": "機械算出 2025年: NOPAT 114,285,228,828（営業利益 151,271,000,000×(1−実効税率24.5%)） ÷ IC 639,800,000,000＝自己資本 830,447,000,000 + 有利子負債 161,817,000,000 − のれん 325,014,000,000 − 無形 27,450,000,000。**IC/自己資本=77.0%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）｜有利子負債の内訳: Borrowings(総額) + CurrentPortionOfLongtermBorrowings=0｜**v9.9.72: through-cycle 化**。5年系列 5年の**中央値 18.9%** を採用（直近年 17.9% / 最悪 17.9%）。roicg も同じ年の系列の中央値 11.5% にして roic≥roicg を保つ",
    "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 830,447,000,000 + 有利子負債 161,817,000,000)＝のれん込み。roic(除外)との差が買収規律の指標",
    "roict": "機械算出: のれん除外ROIC 5年系列 18.9% / 19.7% / 16.7% / 16.9% / 16.2%（最古→直近の差で判定）",
    "gm": "機械算出 2025年: 営業利益 151,271,000,000 ÷ 売上 890,884,000,000（粗利ではない）",
@@ -133,6 +133,30 @@
   "basis": {
    "roic": "single-year",
    "_note": "roic/roicg がどの基準で作られているか。v9.9.72 で through-cycle(5年中央値)へ移行したが、採取器とパックが食い違う社・系列が3年未満の社には当てていないため**台帳に二つの基準が混在する**。文字列一致で見分けるのは脆いので機械可読にした"
+  },
+  "machine_check": {
+   "date": "2026-08-13",
+   "rev": "h625b28e1c0",
+   "ok": [
+    "accr",
+    "cagr",
+    "eps",
+    "gm",
+    "gmt",
+    "gpa",
+    "nde",
+    "roic",
+    "roicg"
+   ],
+   "diff": [
+    "roict"
+   ],
+   "hand": [],
+   "gone": [
+    "fcf",
+    "ni"
+   ],
+   "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
   }
  },
  "roiic": 0.5,

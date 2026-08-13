@@ -95,8 +95,8 @@
    "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 1,195,700,000 + 有利子負債 0)＝のれん込み。roic(除外)との差が買収規律の指標。**有利子負債タグ不在＝0扱いのため過大の可能性あり（要原本確認）**",
    "roict": "機械算出: のれん除外ROIC 5年系列 13.2% / 13.3% / 7.9% / 2.4%（最古→直近の差で判定）",
    "gpa": "機械算出 2025年: 売上総利益 256,800,000 ÷ 総資産 1,429,900,000",
-   "fcf": "機械算出 2025年: 営業CF 101,200,000 − 設備投資 30,100,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）",
-   "ni": "機械算出 2025年: 純利益 -61,800,000（÷1e9で十億単位表示）",
+   "fcf": "機械算出 2025年: 営業CF 101,200,000 − 設備投資 30,100,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
+   "ni": "機械算出 2025年: 純利益 -61,800,000（÷1e9で十億単位表示）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
    "eps": "機械算出 2025年: 純利益 -61,800,000 ÷ 株数 17,800,000（TTMではなく通期実績）",
    "eq": "機械算出 2025年: 自己資本 1,195,700,000 → 正(pos)",
    "irr": "10-K『We **strive to** differentiate our products and secure long-term demand through our engagement with our customers to **design in** our materials and components as part of their product development processes. The value of any design-in largely depends upon the decision of our customers to manufacture their products or systems in sufficient volume』＝設計組込だが**願望形**で、顧客側の再認定を要する断定は無い→70。歴史検証で当社の引用は『願望形』(P=0.40群)に分類され、実際に前方8.1年のリターンは年率1.6%だった",
@@ -158,7 +158,29 @@
    "門0では score=2・fails『営業赤字; 売上CAGR; ROIC; ROIC最低値; 営業利益率』"
   ],
   "auditDate": "2026-08-05",
-  "model": "claude-opus-5"
+  "model": "claude-opus-5",
+  "machine_check": {
+   "date": "2026-08-13",
+   "rev": "h625b28e1c0",
+   "ok": [
+    "accr",
+    "cagr",
+    "dilNet",
+    "eps",
+    "fcf",
+    "gm",
+    "gmt",
+    "gpa",
+    "ni",
+    "roic",
+    "roicg",
+    "roict"
+   ],
+   "diff": [],
+   "hand": [],
+   "gone": [],
+   "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
+  }
  },
  "dep": null,
  "ddate": "2026-08-05",
