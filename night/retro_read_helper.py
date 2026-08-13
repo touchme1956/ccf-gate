@@ -36,15 +36,33 @@ def plain(url):
 
 
 def doc(t, asof):
+    """そのビンテージの原本を落として素のテキストで返す
+
+    ⚠2026-08-12是正: 初版は `retro_readlist_{asof}.json` **1本しか見ていなかった**ので、
+      2015の q/qb 追加分（342社）と 2018（readlist が存在しない）が
+      **『readlist に無い』で落ちていた**——原本が実在するのに読めない、という
+      「測れるものを測れないことにする」型（ルール7の逆向き）。
+      候補を **readlist の全変種 ＋ retro_pillars_docs_{asof}.json** へ広げる。"""
     os.makedirs(DOC, exist_ok=True)
     p = os.path.join(DOC, f"{asof}_{t}.txt")
-    if os.path.exists(p):
+    if os.path.exists(p) and os.path.getsize(p) > 200:
         return open(p, encoding="utf-8").read()
-    rl = json.load(open(os.path.join(OUT, f"retro_readlist_{asof}.json"), encoding="utf-8"))
-    row = next((r for r in rl["rows"] if r["ticker"] == t), None)
-    if not row:
-        sys.exit(f"{t}: readlist_{asof} に無い")
-    s = plain(row["url"])
+    url = None
+    for cand in (f"retro_readlist_{asof}.json", f"retro_readlist_{asof}q.json",
+                 f"retro_readlist_{asof}qb.json", f"retro_pillars_docs_{asof}.json"):
+        fp = os.path.join(OUT, cand)
+        if not os.path.exists(fp):
+            continue
+        d = json.load(open(fp, encoding="utf-8"))
+        rows = d["rows"] if isinstance(d, dict) and "rows" in d else d
+        row = next((r for r in rows if r.get("ticker") == t and r.get("url")), None)
+        if row:
+            url = row["url"]
+            break
+    if not url:
+        sys.exit(f"{t}: asof={asof} の原本のURLが見つからない"
+                 f"（readlist_{asof}/{asof}q/{asof}qb・pillars_docs_{asof} を探した）")
+    s = plain(url)
     open(p, "w", encoding="utf-8").write(s)
     return s
 
