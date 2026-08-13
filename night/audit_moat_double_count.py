@@ -60,6 +60,11 @@ REG = [
     r"commission", r"rate case", r"規制", r"フランチャイズ", r"料金",
 ]
 GROUPS = {"SOLE": SOLE, "REG": REG}
+# 「法で守られた排他的な事業権」——コンセッション・フランチャイズ・専属区域。
+# ⚠ SOLE より狭い（技術的な唯一供給を含まない）。これが**どの柱に置かれているか**を数えるため
+EXCL = re.compile(r"exclusive franchise|exclusive right|exclusive territor|exclusive concession|"
+                  r"franchised territory|free from .{0,25}competition|no competition for|"
+                  r"not .{0,20}subject to competition|独占コンセッション|排他的|独占的", re.I)
 
 QUOTE = re.compile(r"『([^』]{20,})』|“([^”]{20,})”|\"([^\"]{20,})\"|「([^」]{20,})」")
 MIN_SHARE = 40          # 共通部分文字列の最短（字）
@@ -302,6 +307,32 @@ def main():
                   f"moatW={v['moatW'] and int(v['moatW'])}  堀 {r['moat'] and round(r['moat'],1)}")
         print()
 
+    # ★2026-08-13 追加: 二重計上より大きい問題が出たので数える——
+    #   **同じ型の事実（法で守られた排他的な事業権）が、社によって別の柱に置かれている**。
+    #   規約はこの事実がどの柱に属すかを言っていないので、読み手ごとに置き場所が変わる。
+    place = {}
+    for pack in load():
+        t = (pack.get("nm") or "?").split(" ")[0]
+        if only and t.upper() not in only:
+            continue
+        ev = ((pack.get("_meta") or {}).get("evidence") or {})
+        hit = [k for k in W if EXCL.search(str(ev.get(k) or ""))]
+        if hit:
+            place[t] = {"where": hit, "vals": {k: num(pack.get(k)) for k in W},
+                        "omega": (sc.get(t) or {}).get("s"), "buy": bool((sc.get(t) or {}).get("buy"))}
+    if place:
+        cnt = {}
+        for v in place.values():
+            cnt["+".join(sorted(v["where"]))] = cnt.get("+".join(sorted(v["where"])), 0) + 1
+        print(f"── ★『法で守られた排他的な事業権』を根拠に持つ社 {len(place)}社 — その事実が置かれた柱 ──")
+        print("  ⚠ 規約はこの事実がどの柱に属すかを言っていない。**置き場所が読み手ごとに変わる**")
+        for k, v in sorted(cnt.items(), key=lambda x: -x[1]):
+            print(f"     {k:<18} {v}社")
+        both = [t for t, v in place.items() if len(v["where"]) >= 2]
+        print(f"  ★**同じ社の中で二つ以上の柱に置かれている**（＝literal な二重計上）: "
+              f"{len(both)}社  {' '.join(sorted(both)) or '—'}")
+        print()
+
     grponly = [r for r in res if r["pairs"] and not any(x["shared_quote"] for x in r["pairs"])]
     print(f"── 機構語だけが両方の欄に出る社 {len(grponly)}社 ──")
     print("  ⚠**弱い証拠**。同じ語でも別の事実を指しうるので、これだけで二重計上と断じない")
@@ -312,9 +343,9 @@ def main():
             print(f"     {r['t']:<7} Ω{(r.get('omega') or 0):>5.1f}  {ps}  [{','.join(gs)}]")
 
     if as_json:
-        out = {"tool": "audit_moat_double_count", "rev": "r1",
+        out = {"tool": "audit_moat_double_count", "rev": "r2",
                "n_packs": len(res), "n_quote_shared": len(qshare), "n_definition": len(defn),
-               "n_group_only": len(grponly), "rows": hit}
+               "n_group_only": len(grponly), "exclusive_placement": place, "rows": hit}
         with open(os.path.join(OUT, "moat_double_count.json"), "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=1)
         print("\n→ out/moat_double_count.json")
