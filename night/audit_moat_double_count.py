@@ -167,6 +167,41 @@ def moat_idx(d, drop=None):
     return max(0.0, min(96.0, g + cult))
 
 
+def pillar_corr(packs):
+    """★引用の共有とは**独立**の証拠——柱どうしの順位相関。
+    規約が別のものを測っているはずの柱が強く相関するのは、重なりの疑いになる。
+    ⚠ 相関は「同じ事実を数えている」の証明ではない（良い会社は全部の柱が高い）。
+      ただし **moatW が他と +0.13〜0.18 しか相関しない**のが内部対照で、
+      高い相関が単なる『良い会社の後光』では説明できないことを示す。"""
+    import itertools, math
+    def rank(v):
+        s2 = sorted(range(len(v)), key=lambda i: v[i]); r = [0] * len(v); i = 0
+        while i < len(s2):
+            j = i
+            while j + 1 < len(s2) and v[s2[j + 1]] == v[s2[i]]:
+                j += 1
+            for k in range(i, j + 1):
+                r[s2[k]] = (i + j) / 2 + 1
+            i = j + 1
+        return r
+    def rho(a, b):
+        ra, rb = rank(a), rank(b); n = len(a)
+        ma, mb = sum(ra) / n, sum(rb) / n
+        num = sum((x - ma) * (y - mb) for x, y in zip(ra, rb))
+        da = math.sqrt(sum((x - ma) ** 2 for x in ra))
+        db = math.sqrt(sum((y - mb) ** 2 for y in rb))
+        return num / (da * db) if da and db else 0.0
+    vals = [{k: num(p.get(k)) for k in W} for p in packs]
+    out = []
+    for a, b in itertools.combinations(W, 2):
+        xy = [(x[a], x[b]) for x in vals if x[a] is not None and x[b] is not None]
+        if len(xy) < 30:
+            continue
+        out.append({"a": a, "b": b, "n": len(xy),
+                    "rho": round(rho([x for x, _ in xy], [y for _, y in xy]), 3)})
+    return sorted(out, key=lambda r: -r["rho"])
+
+
 def load():
     rows = []
     for f in sorted(glob.glob(os.path.join(OUT, "*_gate_pack.json"))):
@@ -333,6 +368,15 @@ def main():
               f"{len(both)}社  {' '.join(sorted(both)) or '—'}")
         print()
 
+    corr = pillar_corr(load())
+    print("── ★柱どうしの順位相関（引用の共有とは独立の証拠）──")
+    print("  ⚠相関は二重計上の証明ではない。だが**moatW だけが他と弱くしか相関しない**のが内部対照で、")
+    print("    高い相関が単なる『良い会社の後光』では説明できないことを示す")
+    for c_ in corr:
+        print(f"     {c_['a']:>6} × {c_['b']:<6} n={c_['n']:>3}  rho={c_['rho']:+.3f}  "
+              + "#" * max(0, int(c_["rho"] * 40)))
+    print()
+
     grponly = [r for r in res if r["pairs"] and not any(x["shared_quote"] for x in r["pairs"])]
     print(f"── 機構語だけが両方の欄に出る社 {len(grponly)}社 ──")
     print("  ⚠**弱い証拠**。同じ語でも別の事実を指しうるので、これだけで二重計上と断じない")
@@ -343,9 +387,9 @@ def main():
             print(f"     {r['t']:<7} Ω{(r.get('omega') or 0):>5.1f}  {ps}  [{','.join(gs)}]")
 
     if as_json:
-        out = {"tool": "audit_moat_double_count", "rev": "r2",
+        out = {"tool": "audit_moat_double_count", "rev": "r3",
                "n_packs": len(res), "n_quote_shared": len(qshare), "n_definition": len(defn),
-               "n_group_only": len(grponly), "exclusive_placement": place, "rows": hit}
+               "n_group_only": len(grponly), "exclusive_placement": place, "pillar_corr": corr, "rows": hit}
         with open(os.path.join(OUT, "moat_double_count.json"), "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=1)
         print("\n→ out/moat_double_count.json")
