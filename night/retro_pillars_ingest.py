@@ -11,7 +11,9 @@
 #   (3) **引用の逐語照合**——原本キャッシュ out/_retro_docs/2013_{T}.txt に一字一句あるかを機械で見る。
 #       キャッシュが無い社は skip（None）＝「照合できなかった」と「合わなかった」を分ける
 #
-# 実行: python3 night/retro_pillars_ingest.py <workflow_output.json> [--write]
+# 実行: python3 night/retro_pillars_ingest.py <workflow_output.json> [--write] [--asof 2015]
+#   ⚠2026-08-12: asof をパラメータ化した（初版は2013固定）。**判定規則は一字も変えていない**
+#     ——変えたらビンテージ間の比較が成立しない（事前登録 retro_moat_pillars_prereg_oos.json）。
 
 import json
 import os
@@ -24,14 +26,15 @@ DOC = os.path.join(OUT, "_retro_docs")
 LEVELS = {"rep": {35, 60, 80, 100}, "dur": {55, 75, 85, 100},
           "dom": {50, 70, 85, 100}, "moatW": {50, 70, 85, 100}}
 PILLARS = list(LEVELS)
+ASOF = 2013
 
 
 def norm(s):
     return re.sub(r"\s+", " ", (s or "")).strip().lower()
 
 
-def verbatim(t, q):
-    p = os.path.join(DOC, f"2013_{t}.txt")
+def verbatim(t, q, asof=2013):
+    p = os.path.join(DOC, f"{asof}_{t}.txt")
     if not q or not os.path.exists(p):
         return None
     body = norm(open(p, encoding="utf-8", errors="ignore").read())
@@ -50,6 +53,8 @@ def verbatim(t, q):
 def main():
     if len(sys.argv) < 2:
         sys.exit("usage: retro_pillars_ingest.py <workflow_output.json> [--write]")
+    global ASOF
+    ASOF = int(sys.argv[sys.argv.index("--asof") + 1]) if "--asof" in sys.argv else 2013
     raw = json.load(open(sys.argv[1], encoding="utf-8"))
     res = raw.get("result", raw)
     batches = res.get("batches", [])
@@ -110,7 +115,7 @@ def main():
         for k in PILLARS:
             if rec[k] is None:
                 continue
-            r = verbatim(t, rec.get(k + "_quote"))
+            r = verbatim(t, rec.get(k + "_quote"), ASOF)
             rec[k + "_verbatim"] = r
             if r is None:
                 continue
@@ -123,10 +128,11 @@ def main():
     rows = [rowsById[t] for t in sorted(rowsById)]
     cov = {k: sum(1 for r in rows if r[k] is not None) for k in PILLARS}
     out = {
-        "generated": "2026-08-12", "asof": 2013,
-        "source": "workflow wf_aff647b7-9ef（21班×原本読解 ＋ 強い主張への反証専門）",
+        "generated": "2026-08-12", "asof": ASOF,
+        "source": "原本読解 ＋ 強い主張への反証専門（班数はバッチ表のとおり）",
         "blind": "読解班には リターン・株価・過去の読解(irr/moat5) を見せていない",
-        "prereg": "out/retro_moat_pillars_prereg.json（読解の結果を見る前にコミット）",
+        "prereg": ("out/retro_moat_pillars_prereg.json" if ASOF == 2013
+                   else "out/retro_moat_pillars_prereg_oos.json（読解を1社も始める前にコミット）"),
         "n": len(rows), "coverage": cov,
         "verify_applied": applied, "verify_unmatched": unmatched,
         "coerced": coerced,
@@ -141,7 +147,7 @@ def main():
         a = out["quote_audit"][k]
         print(f"  引用の逐語一致 {k:<7}{a['verbatim']}/{a['checked']}" + (f" (={a['rate']})" if a["rate"] is not None else " (キャッシュ無し)"))
     if "--write" in sys.argv:
-        p = os.path.join(OUT, "retro_moat_pillars_2013.json")
+        p = os.path.join(OUT, f"retro_moat_pillars_{ASOF}.json")
         json.dump(out, open(p, "w"), ensure_ascii=False)
         print("→", p)
     else:
