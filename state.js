@@ -8,7 +8,8 @@
        pf:sold       … 売却記録
        pf:monthly    … 今月の個別枠
        g7ignite:map  … 点灯日（Ulysses契約の48時間冷却）
-       g7log:…       … Ⅴ検証履歴（**人が手で書いた記録**）
+       g7log:…       … Ⅴ検証履歴（**記録であって決定ではない**。大半は⭳一括取込／↻全再採点が
+                        自動で残すもので、赤い帯＝dirty は立てない。下の「dirty はどう立つか」）
      台帳 g7: は out/*_gate_pack.json という repo の正本があるので**ここには含めない**
      （含めると「同じものが二箇所に正本を持つ」＝この台帳が最も嫌う型になる）。
 
@@ -35,6 +36,11 @@
      書き込み地点を一つずつ探して呼び出しを足すと**必ず取りこぼす**ので、
      `localStorage.setItem/removeItem` を包んで**対象キーが書かれたら自動で立てる**。
      `store`（claudeモード）も localStorage へミラーするので、これで全部拾える。
+     ⚠ ただし**立てるのは決定の5キーだけ**（decides()）。`g7log:`（検証履歴）は集めはするが
+       旗は立てない——⭳全パック一括取込／↻全再採点 が最後に自動で1件書くので、
+       **手順書どおりの運用で毎回 赤い帯が出ていた**（2026-08-12 実測・是正）。
+     ⚠ そして**旗を信じない**。読み込みのたびに nothingPending() が中身を突き合わせ、
+       決定が repo と一致していれば旗を落とす（2026-08-11 に stale を自分で治したのと同じ形）。
    ========================================================================== */
 (function () {
   'use strict';
@@ -51,6 +57,22 @@
     return false;
   }
 
+  /* ★**集める集合**と**警報を鳴らす集合**は別（2026-08-12・ユーザー「これがでないようにして」）。
+     旧実装は watched() 一つで両方を兼ねていたので、**`g7log:`（検証履歴）を書いただけで
+     「手元の決定が、まだ repo に入っていません」という赤い帯が出た**。
+     ⚠ この帯は手順書どおりの運用で必ず出る——⭳全パック一括取込／↻全再採点 が最後に
+        `saveLog({title:'一括再採点 369銘柄'})` を自動で呼び、それが `g7log:` を書くから
+        （index.html:2820）。**人は決定を一つも触っていない**。実測: 決定5キーは1バイトも変わらず
+        `ccf:stateDirty='1'` だけが立つ。applyDash と同じ「機械の書き戻しで警報が鳴りっぱなし」の型で、
+        **鳴りすぎる警報は鳴らないのと同じ**。
+     ⚠ そもそも旧実装は筋が通っていなかった——帯が第一に勧める「① 決定だけ（小）」は
+        **設計上 `g7log:` を含まない**（collect(core) が外す）。つまり
+        「検証履歴で鳴った帯を、検証履歴を含まない書き出しで消す」ことになっていた。
+     ⇒ **dirty が守るのは決定（EXACT の5キー）だけ**とはっきりさせる。`g7log:` は記録であって
+        決定ではない。書き出し（履歴も）と収集からは外していないので、repo へ入れる道は残る
+        （鮮度は回転盤の `state`〔月次〕が測る）。 */
+  function decides(k) { return !!k && EXACT.indexOf(k) >= 0; }
+
   /* ── 書き込みを包んで dirty を自動で立てる（呼び出し地点を探さない） ──
      ⚠ ただし**機械が書き戻す分は数えない**。Ⅶ資産の applyDash は盤(out/dashboard.json)の
      現在株価とドル円を pf:portfolio へ書き戻すので（v9.9.87）、素朴に包むと
@@ -64,12 +86,12 @@
     var _rm = localStorage.removeItem.bind(localStorage);
     localStorage.setItem = function (k, v) {
       var r = _set(k, v);
-      if (watched(k) && !quietDepth) { try { _set(DIRTY, '1'); } catch (e) {} }
+      if (decides(k) && !quietDepth) { try { _set(DIRTY, '1'); } catch (e) {} }
       return r;
     };
     localStorage.removeItem = function (k) {
       var r = _rm(k);
-      if (watched(k) && !quietDepth) { try { _set(DIRTY, '1'); } catch (e) {} }
+      if (decides(k) && !quietDepth) { try { _set(DIRTY, '1'); } catch (e) {} }
       return r;
     };
   } catch (e) {}
@@ -119,6 +141,55 @@
     return 'stale';
   }
 
+  /* nothingPending(repoData) — **旗を信じず、中身で確かめる**。
+     手元の決定キーが repo の state.json と一つ残らず一致するなら、**書き出すものは定義上ゼロ**。
+     ⚠ これは「危ないものを隠す」検査ではない——一つでも食い違えば false を返すので、
+        本物の未書き出しは絶対に消えない（片側だけに倒れる）。
+     なぜ要るか: 旗は一度立つと書き出すまで落ちないので、**上の欠陥で既に立ってしまった端末**は
+     直しただけでは帯が消えない。2026-08-11 に stale を自分で治したのと同じ形で、旗の側も治す。 */
+  /* ⚠ **素の文字列比較では一度も一致しない**。決定のファイルに機械の書き戻しが混ざっているから。
+     推測せず実測した（2026-08-12・素の読み込み直後に state.json と突き合わせ）——食い違うのは
+       pf:portfolio … `fx` と 各行の `npx` / `npxAuto` の**3項目だけ**（盤の現在株価とドル円・v9.9.87）
+                      ※ `sh`(株数) `v`(金額) `bpx` は**1件も動かない**＝人の決定は無傷
+       pf:weights   … `city`(浮動小数の誤差) と `total`＝**全部が P からの導出値**（portfolio.html:350）
+       pf:sold / pf:monthly / g7ignite:map … **完全一致**
+     ⇒ 落とすのはこの実測どおりの範囲だけにする。**広く落とすと本物の決定を隠す**ので、
+        JSONとして読めなければ素の比較へ倒す（片側だけに倒れる）。 */
+  var DERIVED_KEY = { 'pf:weights': 1 };                 // キーごと導出値（機械しか書かない）
+  var MACHINE_FLD = { fx: 1, npx: 1, npxAuto: 1 };       // 盤から書き戻される欄
+  function stripMachine(v) {
+    var o = JSON.parse(v);
+    if (o && typeof o === 'object') {
+      for (var f in MACHINE_FLD) delete o[f];
+      if (Array.isArray(o.positions)) {
+        o.positions = o.positions.map(function (p) {
+          if (!p || typeof p !== 'object') return p;
+          var q = {}; for (var kk in p) if (!MACHINE_FLD[kk]) q[kk] = p[kk];
+          return q;
+        });
+      }
+    }
+    return JSON.stringify(o);
+  }
+  function sameDecision(k, mine, theirs) {
+    if (mine === theirs) return true;
+    if (mine == null || theirs == null) return false;
+    try { return stripMachine(mine) === stripMachine(theirs); } catch (e) { return false; }
+  }
+  function nothingPending(repoData) {
+    try {
+      for (var i = 0; i < EXACT.length; i++) {
+        var k = EXACT[i];
+        if (DERIVED_KEY[k]) continue;
+        var mine = localStorage.getItem(k);
+        var theirs = (repoData && Object.prototype.hasOwnProperty.call(repoData, k)) ? repoData[k] : null;
+        if (mine == null && theirs == null) continue;
+        if (!sameDecision(k, mine, theirs)) return false;   // 一つでも違えば「未書き出しがある」側へ
+      }
+      return true;
+    } catch (e) { return false; }
+  }
+
   var last = null;   // 最後の判定（バナー描画が読む）
 
   function load() {
@@ -127,6 +198,11 @@
       .catch(function () { return null; })
       .then(function (s) {
         if (!s || s.fmt !== 'ccf-state') { last = { verdict: 'none' }; return last; }
+        // 旗が立っていても、決定が repo と一致しているなら書き出すものは無い＝自分で落とす
+        var healed = false;
+        if (isDirty() && nothingPending(s.data || {})) {
+          try { localStorage.removeItem(DIRTY); healed = true; } catch (e) {}
+        }
         var v = decide(s.savedAt || null, localSavedAt(), isDirty());
         var applied = 0;
         if (v === 'adopt') {
@@ -151,7 +227,8 @@
           v = 'same';
         }
         last = { verdict: v, savedAt: s.savedAt || null, applied: applied,
-                 mine: localSavedAt(), dirty: isDirty(), n: Object.keys(s.data || {}).length };
+                 mine: localSavedAt(), dirty: isDirty(), healed: healed,
+                 n: Object.keys(s.data || {}).length };
         return last;
       });
   }
