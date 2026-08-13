@@ -13,7 +13,10 @@ night/moat_dc_verdicts.py — 二重計上の読解の結果を在庫へ落と�
   読み手の verdict と反証の refuted をそのまま記録する。ここで多数決や書き換えをしない。
   （二つの検査器が違うことを言ったら、**どちらかに寄せずに両方見せる**のがこの台帳の作法）
 
-使い方: python3 night/moat_dc_verdicts.py --in <workflow_result.json>
+使い方:
+  python3 night/moat_dc_verdicts.py --in <workflow_result.json>
+  python3 night/moat_dc_verdicts.py --journal <workflows/wf_xxx/journal.jsonl>
+      ← ワークフローの返り値の形に依存せず journal から直接組む（返り値が取れないときの経路）
 """
 import json, os, re, sys, collections
 
@@ -39,10 +42,43 @@ def sign(q):
 
 
 def main():
-    src = sys.argv[sys.argv.index("--in") + 1] if "--in" in sys.argv else None
-    if not src or not os.path.exists(src):
-        sys.exit("--in にワークフローの返り値の JSON を渡すこと")
-    wf = json.load(open(src, encoding="utf-8"))
+    if "--journal" in sys.argv:
+        jp = sys.argv[sys.argv.index("--journal") + 1]
+        if not os.path.exists(jp):
+            sys.exit(f"journal が無い: {jp}")
+        v, c = [], []
+        for line in open(jp, encoding="utf-8"):
+            try:
+                e = json.loads(line)
+            except Exception:
+                continue
+            if e.get("type") != "result":
+                continue
+            r = e.get("result")
+            if not isinstance(r, dict):
+                continue
+            # ⚠ 段の判別は**返り値の形**で行う（ラベルに依存しない＝スクリプトを書き換えても壊れない）
+            if isinstance(r.get("verdicts"), list):
+                v += r["verdicts"]
+            if isinstance(r.get("results"), list):
+                c += r["results"]
+        # 同じ班が再実行されると重複しうるので id で一意化（**後勝ち**にしない＝最初の判定を残す）
+        seen = set(); v2 = []
+        for x in v:
+            if x.get("id") in seen:
+                continue
+            seen.add(x.get("id")); v2.append(x)
+        seen = set(); c2 = []
+        for x in c:
+            if x.get("id") in seen:
+                continue
+            seen.add(x.get("id")); c2.append(x)
+        wf = {"verdicts": v2, "checks": c2}
+    else:
+        src = sys.argv[sys.argv.index("--in") + 1] if "--in" in sys.argv else None
+        if not src or not os.path.exists(src):
+            sys.exit("--in か --journal を渡すこと")
+        wf = json.load(open(src, encoding="utf-8"))
     verdicts = wf.get("verdicts") or []
     checks = wf.get("checks") or []
     refuted = {c["id"]: c for c in checks if c.get("refuted")}
@@ -74,14 +110,28 @@ def main():
         rows.append(r)
 
     missing = sorted(set(items) - {v["id"] for v in verdicts})
-    confirmed = [r for r in rows if r["final"] == "up"]
+    # ★2026-08-13 是正: 初版は「反証で潰れなかった up」を確定として数えたが、
+    #   **反証をまだ受けていない up まで確定に入れていた**＝この台帳が繰り返し戒める
+    #   「『測っていない』と『測って問題なし』の取り違え」を、自分の器の中で作っていた。
+    #   → 反証を**実際に受けた**ものだけを確定とし、未検証は別の袋へ入れて名指しで出す。
+    checked = {c["id"] for c in checks}
+    confirmed = [r for r in rows if r["final"] == "up" and r["id"] in checked]
+    unverified = [r for r in rows if r["verdict"] == "up" and r["id"] not in checked]
 
     cnt = collections.Counter(r["final"] for r in rows)
     print(f"■ 読解 {len(rows)}件 / 渡した対 {len(items)}件"
           + (f"  ⚠**返ってこなかった {len(missing)}件**: {' '.join(missing)}" if missing else ""))
     print(f"  最終判定: {dict(cnt)}")
-    print(f"  up の主張 {sum(1 for r in rows if r['verdict']=='up')}件 → 反証で潰れた "
-          f"{sum(1 for r in rows if r['verdict']=='up' and r['refuted'])}件 → **残った {len(confirmed)}件**")
+    print(f"  up の主張 {sum(1 for r in rows if r['verdict']=='up')}件 → 反証を受けた "
+          f"{sum(1 for r in rows if r['verdict']=='up' and r['id'] in checked)}件"
+          f"（潰れた {sum(1 for r in rows if r['verdict']=='up' and r['refuted'])}件 / "
+          f"**残った {len(confirmed)}件**）")
+    if unverified:
+        print(f"  ⏳**まだ反証を受けていない up が {len(unverified)}件**"
+              "——確定ではない（『測っていない』を『測って問題なし』にしない）:")
+        for r in unverified:
+            print(f"     {r['ticker']:<7} {r['a']}×{r['b']}  Ω{(r.get('omega') or 0):.1f}"
+                  + ("  🟢投下可" if r["buy"] else ""))
     print()
 
     # ★読み手 vs 機械の粗い符号（食い違いを名指しで出す＝どちらかが誤っている場所）
@@ -108,12 +158,15 @@ def main():
     else:
         print("── 反証を通った「上向き二重計上」は **0件** ──")
 
-    out = {"tool": "moat_dc_verdicts", "rev": "r1",
+    out = {"tool": "moat_dc_verdicts", "rev": "r2",
            "n_items_sent": len(items), "n_verdicts": len(rows), "n_missing": len(missing),
            "missing": missing, "counts": dict(cnt),
            "cross_machine_reader": {f"{k[0]}/{k[1]}": v for k, v in cross.items()},
+           "n_unverified_up": len(unverified),
            "confirmed_up": [{"ticker": r["ticker"], "a": r["a"], "b": r["b"], "id": r["id"],
                              "keep": r.get("keep"), "reason": r.get("reason")} for r in confirmed],
+           "unverified_up": [{"ticker": r["ticker"], "a": r["a"], "b": r["b"], "id": r["id"]}
+                             for r in unverified],
            "rows": rows}
     with open(os.path.join(OUT, "moat_dc_verdicts.json"), "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, indent=1)
