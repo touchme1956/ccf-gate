@@ -285,6 +285,12 @@ def build():
         #   ——v10 は仕様書に「毎年7月に python v10_series.py」と書きながら、その道具が
         #   一度も repo に入っていなかった（＝影が更新できないまま1年が過ぎた）。
         #   v11 は判定に一切使わないが、**止まったことが見えるようにしておく**。
+        # 採取器の是正がパックに届いているかの実測（2026-08-13新設）。
+        #   **止まると「取り残し」が静かに溜まる**——nde の12社はこの経路で8ヶ月見えなかった。
+        ("bfdiff",  "採取器とパックの食い違い",  "月1",     40,
+         json_field("out/backfill_diff.json", "generated") or git_date("out/backfill_diff.json"),
+         "ops.yml 毎月2日／手動 python3 night/backfill_machine_evidence.py --json"
+         "（**読むだけ**。--sync は単位ずれ・年ずれを注入するので自動では走らせない）", True),
         ("v11",     "v11影スコア更新",         "月1",     40,
          json_field("out/v11_shadow.json", "generated") or git_date("out/v11_shadow.json"),
          "ops.yml 毎月2日／手動 python3 night/v11_facts.py && node night/v11_gate.js"

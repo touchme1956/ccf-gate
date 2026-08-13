@@ -76,9 +76,37 @@ def note_kenshi(meta, line):
         meta["kenshi"] = [line]
 
 
+def classify(old, new):
+    """★2026-08-13 追加: 食い違いを**原因で分ける**。
+       実測で、根拠なしの食い違い382件は**均質な作業リストではなかった**——
+       ・PKE の fcf 11.0 → 0.0095 は **単位のずれ**（パックは百万$・採取器は十億$）＝同期すると桁が壊れる
+       ・AVGO の ni 23.1 → 5.895 は **年ずれ**（採取器がFY2024・パックがFY2025）＝比べてはいけない二つ
+       ・nde の12社は **本物の取り残し**（採取器の是正がパックに届いていない）
+       一括 --sync はこの三つを区別しないので、**桁の誤りと年の誤りを注入する**。
+       ⚠ これは原因の**当たり**であって断定ではない（3倍差は年ずれとIC縮退の両方でありうる）"""
+    try:
+        a, b = float(old), float(new)
+    except (TypeError, ValueError):
+        return "enum"
+    if a == 0 or b == 0:
+        return "zero"
+    r = a / b
+    if 300 < abs(r) < 3000 or 1 / 3000 < abs(r) < 1 / 300:
+        return "unit"          # ★同期禁止
+    if r < 0:
+        return "sign"
+    if 0.8 <= r <= 1.25:
+        return "small"
+    if 0.33 <= r <= 3:
+        return "mid"
+    return "large"             # ★年ずれ・IC縮退の疑い＝個別に検算
+
+
 def main():
     write = "--write" in sys.argv or "--sync" in sys.argv
     sync = "--sync" in sys.argv
+    as_json = "--json" in sys.argv
+    rows_json = []
     only = {a.upper() for a in sys.argv[1:] if not a.startswith("--")}
 
     packs = []
@@ -158,6 +186,13 @@ def main():
                 n_diff += 1
         n_gone += len(gone)
 
+        for fld, old, new, hand in diffs:
+            rows_json.append({"t": t, "field": fld, "old": old, "new": new,
+                              "hand": bool(hand),
+                              # ★根拠があれば「審査官が原本で置いた値」の可能性＝機械より強い
+                              "has_evidence": bool((meta.get("evidence") or {}).get(fld)),
+                              "class": classify(old, new)})
+
         if diffs or gone:
             head = f"{t:6s}"
             for fld, old, new, hand in diffs:
@@ -188,6 +223,39 @@ def main():
           f" / 手入力ゆえ触らず {n_hand} / 機械で再現不能 {n_gone}")
     if err:
         print(f"  取得失敗 {len(err)}社: " + " ".join(t for t, _ in err))
+
+    if as_json:
+        import collections as _c
+        sc = {}
+        sp = os.path.join(BASE, "out", "score_all.json")
+        if os.path.exists(sp):
+            _d = json.load(open(sp, encoding="utf-8"))
+            sc = {r["t"]: r for r in (_d if isinstance(_d, list) else _d.get("rows", []))}
+        for r in rows_json:
+            s_ = sc.get(r["t"]) or {}
+            r["omega"], r["buy"] = s_.get("s"), bool(s_.get("buy"))
+        todo = [r for r in rows_json if not r["hand"] and not r["has_evidence"]]
+        out = {"tool": "night/backfill_machine_evidence.py --json",
+               "generated": TODAY, "n_packs": len(packs), "n_diff": len(rows_json),
+               "note": ("食い違いを『根拠の有無』と『原因』で仕分ける。**根拠がある欄は審査官が原本で"
+                        "置いた可能性があり機械より強い**ので作業リストから外す。原因の class は "
+                        "unit(単位ずれ＝同期禁止) / large(3倍超＝年ずれ・IC縮退の疑い) / sign / mid / "
+                        "small / enum / zero。⚠**一括 --sync はこれを区別しない**"),
+               "by_evidence": {"has_evidence": len(rows_json) - len(todo),
+                               "no_evidence_TODO": len(todo)},
+               "todo_by_class": dict(_c.Counter(r["class"] for r in todo)),
+               "todo_q72": [r for r in todo if (r.get("omega") or 0) >= 72],
+               "todo_buy": [r for r in todo if r["buy"]],
+               "rows": rows_json}
+        # ★部分実行で正本を潰さない（今日 v11_facts.py で同じ事故を実際に踏んだ。
+        #   score_all.js の --jp/--us が正本を約40行で潰したのと同じ型）。構造で塞ぐ。
+        out["partial"] = sorted(only) if only else None
+        dest = os.path.join(BASE, "out",
+                            "backfill_diff.partial.json" if only else "backfill_diff.json")
+        json.dump(out, open(dest, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        print(f"\n→ {os.path.relpath(dest, BASE)}（根拠なし={len(todo)} / "
+              f"判定圏={len(out['todo_q72'])} / 投下可={len(out['todo_buy'])}）"
+              + ("  ⚠部分実行なので正本は書き換えていない" if only else ""))
     if not write:
         print("  ※--write で一致欄に根拠を刻む。--sync で食い違いも実測値へ直す")
     return 0
