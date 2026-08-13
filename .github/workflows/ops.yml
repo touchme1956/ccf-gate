@@ -203,6 +203,11 @@ jobs:
         continue-on-error: true
         run: |
           timeout 2400 python3 night/v11_facts.py || true
+          # ★2026-08-13: 利払カバーをパックへ充填（v9.9.142 で財務キルの第二の物差しになった）。
+          #   **compute() は DOM しか見ない**ので、パックの欄として流さないとキルが読めない。
+          #   ⚠ 使うのは intcov_strict（真正の利息だけ）——FinanceCosts を混ぜると
+          #     純現金の会社が3未満に見える（実測8社）。空書き込みの検問は器の中にある。
+          timeout 300 python3 night/fill_intcov.py --write || true
           node night/v11_gate.js | tail -20
       # 年次較正のスナップショット（2026-08-10にCIへ接続・鍵もネットもcompanyfactsも不要）
       #   回転盤は calib を auto=False としていたが、**人の判断が要るのは v9 vs v10 の勝敗判定**であって
@@ -285,6 +290,13 @@ jobs:
           #   あわせて sp500_pe_monthly（自己相対の分母）・growth_trend（cagrTの測定結果）・
           #   calibration（7月のスナップショット）も add する。**足したら add も足す**——
           #   ステップだけ増やして add を忘れると「回っているのに残らない」という同じ穴が再発する。
+          # ⚠2026-08-13: **パックを add していなかった。** ops.yml には既にパックへ書く器が3本ある
+          #   （audit_wacc_stale --write / backfill_machine_evidence --write / fill_intcov --write）のに
+          #   `out/*_gate_pack.json` が add の一覧に無く、**毎月作っては捨てていた**。
+          #   これは今日4回直した「作った答えを捨てる」型（score_all / pending / validate_fail / 今回）。
+          #   とくに fill_intcov は **v9.9.142 の財務キルの入力**なので、残らないと
+          #   新しいパックの利払カバーが永久に空欄＝キルが眠り続ける。
+          git add out/*_gate_pack.json
           git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/backfill_diff.json out/backfill_stamps.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/rechunk*.txt night/reaudit_queue.json night/progress.json out/er_ledger.json out/market_data.json market_data.json out/shadow_*.json out/gate0_run.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push
