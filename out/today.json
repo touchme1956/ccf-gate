@@ -1,32 +1,31 @@
 {
- "generated": "2026-08-13",
+ "generated": "2026-08-14",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "MSFT",
-  "V",
   "ASML",
+  "V",
   "IDXX",
-  "CW",
   "RMD",
-  "KLAC",
+  "CW",
   "LRCX",
+  "6857",
   "HWM",
   "RBC"
  ],
  "next": [
   "6146",
-  "6857",
-  "IRMD",
   "MA",
   "ADBE",
+  "IRMD",
   "MCO",
   "BR"
  ],
  "counts": {
   "now": 1,
   "today": 6,
-  "month": 16,
-  "waiting": 77,
+  "month": 17,
+  "waiting": 82,
   "blind": 0,
   "src": 15
  },
@@ -44,7 +43,7 @@
   {
    "k": "kes:6857",
    "level": "today",
-   "title": "四半期点検で要審査: 6857 🔵次点",
+   "title": "四半期点検で要審査: 6857 🟢投下可",
    "why": "要審査: 警報:減損  ※数値は自己検算で破棄（警報のみで判定）",
    "how": "🔔イベントタブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
@@ -134,7 +133,7 @@
   {
    "k": "kes:KLAC",
    "level": "month",
-   "title": "四半期点検で要審査: KLAC 🟢投下可（空振りの可能性）",
+   "title": "四半期点検で要審査: KLAC （空振りの可能性）",
    "why": "要審査: 警報:減損  ★パックの原本が既にこの四半期を含む（期末2026-06-30 ≥ 四半期末2026-03-31）",
    "how": "既に審査済かを _meta.kenshi で確かめる。新規事象なら門2再審査へ",
    "src": "四半期点検"
@@ -204,12 +203,20 @@
    "src": "繰り上がり"
   },
   {
-   "k": "pr:6920",
+   "k": "pr:RELX",
    "level": "month",
-   "title": "根拠を埋めれば席に着く: 6920（繰り上がり3番目）",
-   "why": "Ω76.6・納品検査FAIL 1件",
-   "how": "python3 night/validate_packs.py 6920",
+   "title": "根拠を埋めれば席に着く: RELX（繰り上がり3番目）",
+   "why": "Ω75.7・納品検査FAIL 1件",
+   "how": "python3 night/validate_packs.py RELX",
    "src": "繰り上がり"
+  },
+  {
+   "k": "todoaudit",
+   "level": "month",
+   "title": "やることリストの点検で 1件",
+   "why": "解決済みなのに未完のまま／件数のずれ／重複／例外との食い違い",
+   "how": "python3 night/audit_todo.py",
+   "src": "todo点検"
   },
   {
    "k": "dca",
@@ -243,12 +250,6 @@
    "k": "todo:haibun_gap",
    "kind": "決断待ち",
    "title": "総合E[r] 13.3% vs 目標15%の未達1.7ptにどう向き合うか",
-   "due": null
-  },
-  {
-   "k": "todo:correlation",
-   "kind": "決断待ち",
-   "title": "半導体連鎖の集中（城の54%＝31.8pt）に相関上限を入れるか",
    "due": null
   },
   {
@@ -330,18 +331,6 @@
    "due": null
   },
   {
-   "k": "todo:irr_mech_next_vintage",
-   "kind": "決断待ち",
-   "title": "堀に『認定するのが誰か(mech)』を記録するか",
-   "due": null
-  },
-  {
-   "k": "todo:irr85_power",
-   "kind": "決断待ち",
-   "title": "irr=85 の追試を検出力の足りる規模でやり直すか",
-   "due": null
-  },
-  {
    "k": "todo:fico_irr_fhfa",
    "kind": "宿題",
    "title": "FICOのirrをFHFA/GSE一次資料で再判定できるか",
@@ -356,7 +345,7 @@
   {
    "k": "todo:moat_dom_blank_dep",
    "kind": "決断待ち",
-   "title": "投下可3社がdom空欄の下駄で関門を通っている（記録のない空欄は2026-08-11に塞いだ）",
+   "title": "投下可5社がdom空欄の下駄で関門を通っている（記録のない空欄は2026-08-11に塞いだ）",
    "due": null
   },
   {
@@ -678,10 +667,58 @@
    "due": null
   },
   {
-   "k": "todo:moat_rung_top_inverted",
+   "k": "todo:moat_dom_irr_double_count",
    "kind": "決断待ち",
-   "title": "⚠ 堀の刻みの『最上段』が2つの欄で実測に反した（irr=100 と dur=100）",
+   "title": "【測定完了・v9.9.141の積み残し】二重計上を数えた——本命は irr×dom ではなく irr×dur。実害はほぼ無い",
    "due": null
+  },
+  {
+   "k": "todo:moat_rep_dur_oos_family_p",
+   "kind": "決断待ち",
+   "title": "rep/dur の OOS は個別pは通るが族pが0.0985で通らない——どう扱うか",
+   "due": null
+  },
+  {
+   "k": "todo:intcov_jp_hole",
+   "kind": "宿題",
+   "title": "利払カバーが日本株68社で0件——EDINETの支払利息が要る",
+   "due": null
+  },
+  {
+   "k": "todo:intcov_basis_finance_costs",
+   "kind": "宿題",
+   "title": "FinanceCosts で作った利払カバーは利息ではない——真正の利息が採れない社の穴埋め",
+   "due": null
+  },
+  {
+   "k": "todo:nde_netcash_false",
+   "kind": "宿題",
+   "title": "財務キルの入力 nde の誤り——12社是正済み・残り25社は作業リスト",
+   "due": null
+  },
+  {
+   "k": "todo:pack_collector_drift",
+   "kind": "宿題",
+   "title": "採取器の是正の取り残し——判定圏17件是正・保留11件（IC縮退等）・圏外365件は作業リスト",
+   "due": null
+  },
+  {
+   "k": "todo:irr_scope_wholeco",
+   "kind": "決断待ち",
+   "title": "irr に dom と同じ『全社ベース』の規則を書くか——**書くなら事前登録→15社の再読解が先**",
+   "due": null
+  },
+  {
+   "k": "todo:gate0_queue_width",
+   "kind": "決断待ち",
+   "title": "門0のキューの幅——★測ったら実質的な問題ではなかった。残る本当の議題は「業態除外(金融/REIT/資源/海運/中国) 107社を開けるか」",
+   "due": ""
+  },
+  {
+   "k": "todo:gate_history_prereg",
+   "kind": "予約議題",
+   "title": "門の判定の履歴が溜まったら「通り続けている社は durable か」を事前登録して一度だけ測る",
+   "due": "2027-02"
   }
  ],
  "blind": []
