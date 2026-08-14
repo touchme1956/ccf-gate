@@ -137,9 +137,19 @@ def main():
                         "accr", "fcf", "ni", "dilNet", "sbc", "z", "gpa", "intcov",
                         "eq", "acc")}
             rows[t]["_fy"] = ev.get("reportDate") or ev.get("fy")
+            # ★案A(2026-08-14): p1(ROIC変動係数) と p2(不況時の営利DD) を機械で出すための系列。
+            #   ここでは**保存するだけ**——刻みを当てるのは build 側（採取と判定を混ぜない）。
+            rows[t]["tc"] = ev.get("_tcSeries")          # {年: [roic, roicg]} ＝ p1 の材料
+            try:                                          # 営業利益の年次系列 ＝ p2 の材料
+                rows[t]["op"] = H.series(cut(facts, deadline), H.TAGS["op"])[0] or None
+            except Exception:
+                rows[t]["op"] = None
             if i % 25 == 0:
                 print(f"   {i}/{len(cik)} …")
-        p = os.path.join(OUT, f"omega_retro_machine_{yr}.json")
+        # ★部分実行は .partial へ（2026-08-14・**同じ日に3度目**）。v11_facts / backfill と同じ構造で塞ぐ。
+        #   正本を数社で上書きすると、それを読む build/test がその数社を全母集団と誤認して静かに嘘をつく。
+        part = bool(only or limit)
+        p = os.path.join(OUT, f"omega_retro_machine_{yr}{'.partial' if part else ''}.json")
         json.dump({"generated": __import__("time").strftime("%Y-%m-%d"),
                    "vintage": yr, "deadline": deadline,
                    "note": "門の hachimon_fetch.build_numbers を filed<=締切 で切った facts に当てたもの"
