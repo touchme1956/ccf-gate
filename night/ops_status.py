@@ -121,6 +121,17 @@ def build():
         #   **表示だけの作業でも盤に載せる**——止まると門は「未取得」ではなく
         #   **古い分位を今日の分位として出し続ける**（JSONが残るので画面は何も言わない）。
         #   黙って劣化する種類なので、回転の側で見張る。
+        # ★v9.9.143(2026-08-14・ユーザー指示「1.2.3すべてやりたい」)
+        #   ②門が自分の過去の判定を持つ。**止まると履歴に穴が空き、後から埋められない**
+        #   （git の score_all.json は CI と作業ブランチが交互に入って一本の系列にならない）。
+        ("gatehist", "門の判定の履歴",            "毎営業日", 4,
+         json_field("out/gate_state.json", "day"),
+         "market.yml が毎日／手動 python3 night/gate_history.py --append", True),
+        #   ①irr の被覆。**判定には使わない**が、13年の検証を生き延びた唯一の指標が
+        #   母集団の12.3%にしか付いていない、という数字を見えるところに置き続ける。
+        ("irrcov", "irr の被覆と未審査の穴",       "月1",     40,
+         json_field("out/irr_coverage.json", "generated"),
+         "ci.yml 月次／手動 python3 night/audit_irr_coverage.py", True),
         ("histval", "自己相対バリュエーション",  "月1",     40,
          json_field("out/hist_val_now.json", "asof"),
          "ops.yml 毎月2日／手動 python3 night/hist_valuation.py --asof 〈今日の日付〉 "
