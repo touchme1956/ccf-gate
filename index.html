@@ -3852,7 +3852,7 @@ async function ccfDash(btn){
   const [mkt,ern,stl,vfl,pnd,pidx]=await Promise.all([j('out/dashboard.json'),j('out/next_earnings.json'),
                                              j('out/stale_bs.json'),j('out/validate_fail.json'),
                                              j('out/pending.json'),
-                                             j('out/packs_index.json'),ccfLoadIrr85Hist(),ccfLoadProfiles()]);
+                                             j('out/packs_index.json'),ccfLoadIrr85Hist(),ccfLoadIrr85Scope(),ccfLoadProfiles()]);
   const dPackT=pidx?new Set((pidx.packs||[]).map(f=>String(f).replace(/_gate_pack\.json$/,'').toUpperCase())):null;
   // v9.9.140: 盤も Ⅵ と同じ ccfGateInput を呼ぶ（**読めなければ blind に積んで画面に出す**）
   const dBlind=[];
@@ -4721,6 +4721,25 @@ async function ccfLoadIrr85Hist(){
   try{Object.defineProperty(CCF_IRR85_HIST,'__loaded',{value:true,enumerable:false});}catch(e){}
   return CCF_IRR85_HIST;
 }
+// ★機構の射程（2026-08-13・**表示専用。合否には一切使わない**）
+// 【なぜ出すか】射程は 2026-08-11 に「同じ85の中に 12.29% と 100% が同居していた」から測ったのに、
+//   **index.html も score_all.js も一度も読んでいなかった**＝「見つけたものを誰にも渡していない」型。
+//   決めるのは人なので、決める人の目の前に置く（倍率 N.Nx・自己相対 と同じ扱い）。
+// 【なぜ合否に使わないか】使う根拠が実測に無い——点推定と本人の実現複利の**順位相関 ρ=−0.143(n=6)**で、
+//   **最も狭い CW(12.3%) が2番目に良い(+24.8%/年)・中庸の ST(57%) が最下位(−0.2%)**。
+//   しかも**歴史側(2013/2015/2018)は射程を一度も記録していない**ので out-of-sample の検証が原理的にできず、
+//   15社中6社は**点推定が原本から導けない**（帯のみ）。閾値を置くと帯の扱いで未測定が有利/不利へ倒れる。
+// 【dom の「全社ベース」を irr に写す案は別物】あれは閾値ではなく「散っていたら空欄」。写すと CW は 70 では
+//   なく**空欄**になり、CW/LRCX は dom も空欄なので**5本中3本＝堀 算出不能**で投下可から落ちる（実測）。
+//   ただし射程<100%は「散っている」の証明ではないので、**15社の再読解が先**。todo `irr_scope_wholeco`
+var CCF_IRR85_SCOPE={};
+async function ccfLoadIrr85Scope(){
+  if(CCF_IRR85_SCOPE.__loaded)return CCF_IRR85_SCOPE;
+  try{ const j=await (await fetch('out/irr85_scope_life.json?t='+Date.now())).json();
+       CCF_IRR85_SCOPE=Object.assign({},j.items||{}); }catch(e){ CCF_IRR85_SCOPE={}; }
+  try{Object.defineProperty(CCF_IRR85_SCOPE,'__loaded',{value:true,enumerable:false});}catch(e){}
+  return CCF_IRR85_SCOPE;
+}
 function ccfIrr85Frame(d,r){
   const n=v=>{const x=parseFloat(v);return isFinite(x)?x:null;};
   const irr=n(d&&d.irr), gm=n(d&&d.gm), cagr=n(d&&d.cagr), nde=n(d&&d.nde);
@@ -4948,7 +4967,7 @@ async function renderPlan(){
   //   ——vfMap/staleMap は銘柄コードで引くので、孤児は「該当なし」で全部素通りする＝
   //   v9.9.95で塞いだ「未測定が最良ケース」の穴が、キーの側から開いていた。
   //   **黙って消さず名指しで出す**（v9.9.52）。直し方は Ⅳ台帳で旧レコードを削除するだけ。
-  await ccfLoadIrr85Hist();   // v9.9.124: irr=85 の実績台帳（別枠85・席の優先の判定に要る）
+  await ccfLoadIrr85Hist(); await ccfLoadIrr85Scope();   // v9.9.124: irr=85 の実績台帳（別枠85・席の優先の判定に要る）
   await ccfLoadProfiles();    // v9.9.125: 企業説明（表示専用・判定に不使用）
   let packT=null;
   try{ const _i=await (await fetch('out/packs_index.json?t='+Date.now())).json();
@@ -5108,6 +5127,25 @@ async function renderPlan(){
     const w=Object.entries(h.w||{}).filter(([,v])=>v!=null).map(([k2,v])=>`${k2}年 ${(v*100).toFixed(1)}%`).join(' / ');
     const bad=h.verdict==='below';
     return `<span style="font-size:11px;color:${bad?'#c05a5a':'#4f8f6a'};white-space:nowrap;margin-left:8px" title="その社自身の実現複利（配当込み・重なる窓）: ${w}｜${bad?'ハードル15%を割っているので irr=85 の特権（別枠85・席の優先）を取り上げる。**Ω75+の道は開いている**':'ハードル15%以上＝特権の裏づけあり'}">実績 ${(h.med*100).toFixed(1)}%${bad?'⛔特権なし':''}</span>`;
+  };
+  // ★機構の射程（2026-08-13）——**倍率 N.Nx・自己相対 とまったく同じ扱い＝表示専用・合否には使わない**。
+  //   irr=85 は「顧客側が再認定の費用を負う」という**一つの機構**で付くが、その機構が
+  //   **売上の何割に及んでいるか**は社によってまるで違う（実測 CW 12.3% 〜 KRMN 100%）。
+  //   堀は全社に効くので、狭い射程の85は「一部の事業の機構で全社の堀を立てている」形になる。
+  //   **色は付けない**——色を付けると線があるように見えるが、ρ=−0.143 で線を引く根拠は無い。
+  const scopeTag=r=>{
+    if(+r.irr!==85)return '';
+    const k=String(r.nm||r.t||'').trim().split(/[\s_]/)[0].toUpperCase();
+    const s=CCF_IRR85_SCOPE&&CCF_IRR85_SCOPE[k];
+    const T='｜**合否には一切使わない**（表示専用）。使う根拠が実測に無い——射程と本人の実現複利の順位相関は ρ=−0.143(n=6) で、最も狭い CW 12.3% が2番目に良く(+24.8%/年)・中庸の ST 57% が最下位(−0.2%)。歴史側(2013/2015/2018)は射程を一度も記録していないので out-of-sample の検証が原理的にできない。測り直しは night/irr85_scope_life.py（月次・out/irr85_scope_life.json）';
+    if(!s)return `<span style="font-size:11px;color:var(--dim);white-space:nowrap;margin-left:8px" title="機構の射程が在庫に無い（未測定）。**前回値やゼロで埋めない**${T}">射程 未取得</span>`;
+    const num=v=>(v==null||v==='None'||v==='')?null:(isFinite(+v)?+v:null);
+    const p=num(s.scope_pct), lo=num(s.scope_low), hi=num(s.scope_high);
+    const txt=(p!=null)?`射程 ${p.toFixed(1)}%`
+      :(lo!=null&&hi!=null)?`射程 ${lo.toFixed(0)}–${hi.toFixed(0)}%`
+      :(hi!=null)?`射程 ≤${hi.toFixed(1)}%`:(lo!=null)?`射程 ≥${lo.toFixed(1)}%`:'射程 点推定不能';
+    const why=String(s.scope_basis||s.scope_null_why||'').slice(0,300).replace(/"/g,'&quot;').replace(/\n/g,' ');
+    return `<span style="font-size:11px;color:var(--dim);white-space:nowrap;margin-left:8px" title="機構（顧客側が再認定の費用を負う型）が及んでいる売上の割合。原本から測った実数${p==null?'——**点推定は原本から導けず帯だけ**（測れないことを測れたことにしない）':''}: ${why}${T}">${txt}</span>`;
   };
   // 自己相対バリュエーション（v9.9.118）——**倍率 N.Nx とまったく同じ扱い＝表示専用・合否には使わない**。
   //   「未取得」を黙って空欄にしない（ルール7）。理由まで出すのは、空欄が二つの意味
@@ -5307,7 +5345,7 @@ async function renderPlan(){
   if(passIn.length){
     const cityFill=passIn.reduce((a,r)=>a+tw(r)/CITY*100,0), allFilled=passGap<=0;
     html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px;color:var(--gold-bright)">🟢 投下可</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">四関門（Ω75+〔irr=85は別枠〕・堀70+・点検0件・事業の収縮なし）を通り、<b>席の上位10社</b>に入った銘柄。買うのはここだけ。<details class="why"><summary>席の選び方——なぜ irr=85 を先に置くのか</summary><div class="why-body">四関門を通過し、かつ<b>irr=85優先→Ω順の上位10社（半導体連鎖は城の30%まで）＝ポートフォリオの枠内</b>（<b style="color:var(--gold-bright)">irr=85〔顧客側が再認定の費用を負う型〕を席の先頭へ</b>——歴史検証がこの台帳で唯一「効く」と出した変数がこれひとつだから。プール754件で P(継続) は 50:0.162 &lt; 70:0.366 &lt; <b>85:0.579</b>、2018年ビンテージは等加重 <b>+24.6%/年</b>（SPY 15.0%）。<u>E[r]を固定してもirr=85の効果は残るが、irrを固定するとE[r]の効果は消える</u>。<b>irr=100は入れない</b>——歴史では100が最下位（0.056/0.091）。<b style="color:var(--gold-bright)">（ユーザー明示指示「irr85は歴史的にみて今後も複利中央値が高いと見込めるものだけ特別にポートフォリオにいれたい」）で、その社自身の実現複利がハードル15%を割っていると判っている社から特権（別枠85・席の優先）を外した</b>——各行の<b>「実績 N.N%」</b>がその裏づけ（out/irr85_history.json＝night/irr85_mech_test.py が配る）。<u>絞る軸に「機構の型」を使わなかったのは実測の結果</u>: 型ごとの n は2〜8しかなく、しかも <b>CW がまったく同じ引用で 2013読解=D認定業者名簿 / 2015読解=C第三者が用途を認定 に割れた</b>（irr の刻み85自体は147社の追試で一度も揺れていないのに、下位ラベルは読み手で変わる）。<b>実績が追えない社（ASML=20-F／LOAR=2024年IPO／VRSK=コホートscreenが自己資本マイナスで落とした）は中立</b>——在庫の境界は道具の側の限界であって会社の性質ではないから。<u>取り上げるのは近道だけで、Ω75+の道は開いている</u>。実測: 今日は誰も動かない純粋なラチェット（下回るのは HXL 7.3% / ST −0.2% の2社で、どちらも財務キル nde&gt;4 で既に⛔）。重みを上げる案は判定圏でirrが変動係数6.6%の定数ゆえ実測で死んでいるので、採点ではなく席の順で拾う）。（2026-08-05ユーザー明示指示「上位10社を買い付け可にして」。第五の枠——四関門は資格・第五の枠は席数）。サイズは<b>城60%÷投下可の社数（等ウェイト）・上限8%</b>（<b>等ウェイトへ</b>——Ωは配分の順位に寄与ゼロ〔全社一定にしても順位0/11箇所〕、E[r]は歴史でirr層内の効果が +1.2/−4.4/+1.5pt＝方向なし、そして従来の配分案の比較は「総合＝城%×加重E[r]」で採点しており現行案が定義上必ず勝つ循環だった。傾ける信号が無いので傾けない。**席の選定**は irr=85 を先に置き、残りをΩ順にした（E[r]項を外し・irr=85優先を追加）。実測: 上位10社は遮断器化以前の旧4条件の投下可10社と完全同一＝二つの道が同じ集合へ収束。11位以下は🔵次点として名指し表示——資格は保つのでΩが上がれば自動で昇格。旧の(Ω−70)按分・旧段差8/5/3の経緯はCLAUDE.md。銘柄別の厳密¼ケリーは✦門Xの計算機で検算し、下回るならその値を上限にmemoへ根拠を記録。自動連携はしない=主観勝率を機械に入れない）。</div></details><b style="color:var(--gold-bright)">目標%</b>＝総資産に対する目標ウェイト／<b style="color:var(--gold-bright)">今月%</b>＝今月の個別枠を「目標−現在保有%」の不足分で按分(B案②・合計100%。posはⅦ資産の実額から自動算出・無い銘柄のみ採点機の手入力)。<b>二序列の役割</b>: pc順位＝買う順（複数点灯時の優先）／gap按分＝金額。<br><details class="why"><summary>各行の「倍率 N.Nx」とは（合否には使わない）</summary><div class="why-body"><b style="color:#c98c3c">各行の「倍率 N.Nx」は 現PER÷fairPER</b>（fairPER=clamp(8+成長,16,30)）。<b>合否には一切使わない</b>——歴史検証(night/retro_price_tail.py・3ビンテージ)では<u>質・堀を通った社の中では高倍率が中央値を下げない</u>（3倍超で 10.1% vs 通過 7.1%・15%+ 27% vs 18%／2013年 PER&gt;50 で 9.1% vs 8.3%／2015年 PER&gt;40 で 9.5% vs 7.5%）。一貫して悪いのは恒久毀損だけで、質実証プールでの分子は<b>1社</b>＝規約にするには薄い。また門の記録の非対称——<u>3割高づかみの20年コスト年−1.3% vs 買い逃し年−19%</u>——も押し目待ちに不利。<b>だから止めない。代わりに階段指値の深段（fair線）を出す</b>ので、成行で買うか階段で入るかは君の判断。</div></details><details class="why"><summary>各行の「自己相対 上位M%」とは（合否には使わない）</summary><div class="why-body"><b style="color:#c98c3c">各行の「自己相対 過去N年で上位M%（市場調整 上位M'%）」は 現PERが<u>その銘柄自身の</u>過去のPER分布の何%タイルか——<u>素と市場調整の二つ</u>を出す</b>（市場調整版を併記。<b>素だけだと「高い」側へ systematic に誤る</b>——事前登録が「2009-2018は倍率拡大期なので素の自己分位は全員が高く出る＝この交絡を外すために必須」と市場調整版を名指しで要求しているのに、<u>表示だけがその交絡を外していなかった</u>。実測32社で素−市場調整の中央値 <b>+2.5ポイント</b>・<b>23社で素のほうが高い</b>〔最大 MA +35 / IDXX +29 / VRSK +24ポイント〕。色は<u>二つが同じ帯に入ったときだけ</u>付ける＝一致しない社を色で決め打ちしない。⚠市場調整の分母(S&amp;P500実績PER)は配信元が2026-03までしか無く<b>4ヶ月ぶん持ち越し</b>＝「基準の違う二つを割る」型の芽なので強く読まないこと。データは <code>out/hist_val_now.json</code>＝CIが <code>night/hist_valuation.py</code> を月次で回して配る。取れない銘柄は<b>「未取得」と理由つきで出す</b>——前回値やゼロで埋めない）。<b>これも合否には一切使わない</b>。<u>座標系としては新しい</u>——この台帳が測ってきた価格の線は全部<b>横断面</b>（他社と比べて高いか）で、横断面PERは「高い」と「質が高い」を分離できないが自己相対は会社固定効果を差し引く。<b>だが遮断器としては事前登録の6基準に一つも合格しなかった</b>（2026-08-09・<code>out/hist_valuation_prereg.json</code> を結果を見る前に固定して検定）：質実証プール66セルで<b>基準1〔止めた群の恒久毀損≥ベースの2.0倍かつ分子≥5社〕は 0/66</b>、<b>基準2〔勝者を巻き込まない〕は 54/66 で逆</b>（＝止めた側のほうが中央値が高い）、基準3は0件。自社史上いちばん高い五分位の実現は<u>3ビンテージとも最安五分位を下回らなかった</u>（2018年 Q1 7.6% → Q5 9.4%）。線を緩めても、事前登録の分子≥5を保つ限り0件（分子を3へ緩めて初めて 2015の<b>full</b>プールで1セル＝合否を決める quality からは0件）。<b>だから wire していない</b>——横断面PER(2013/2015)・fairPER倍率・E[r]に続き、<u>価格の線が質・堀の中で選別力を持たなかった4例目</u>として記録する。</div></details>投下可の城内合計 ${cityFill.toFixed(0)}%${cityFill<100?'（残りは押し目待ちの開通 or 網へ回す）':cityFill>100?'（>100%＝目標比で按分）':''}。${allFilled?'<b style="color:var(--jade)">投下可は全て目標充足＝今月の個別枠は網へ回す。</b>':''}</div>`;
-    html+=passIn.map((r,i)=>brow(r,i,'',`${f85Tag(r)}${histTag(r)}${govTag(r)}${allocTag(r)}${priceTag(r)}${hvTag(r)}<span style="font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:8px">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span>${ulys(r)}`)).join('');
+    html+=passIn.map((r,i)=>brow(r,i,'',`${f85Tag(r)}${histTag(r)}${scopeTag(r)}${govTag(r)}${allocTag(r)}${priceTag(r)}${hvTag(r)}<span style="font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:8px">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span>${ulys(r)}`)).join('');
   }
   // ◇ 門外の明示判断で買う社（v9.9.129）——**門は⛔のまま。名指しで出す**（v9.9.52の裏返し）
   if(exRows.length){
@@ -5322,14 +5360,14 @@ async function renderPlan(){
       const e=exOf(r)||{};
       const kind=`<span style="font-size:11px;color:#9b7fd4;white-space:nowrap;margin-left:8px" title="${String(e.why||'').replace(/"/g,'&quot;')}｜解除の合図: ${String(e.release||'').replace(/"/g,'&quot;')}">${e.kind||'門外'}｜目標${tw(r)}%</span>`;
       const blk=`<span style="font-size:11px;color:#d69a3c;white-space:nowrap;margin-left:8px" title="門がこの社を⛔にしている理由。例外で買っても、この判定は変わらない">門の判定 ⛔（Ω${r.s}）</span>`;
-      return brow(r,i,'◇',`${kind}${blk}${histTag(r)}${priceTag(r)}`);
+      return brow(r,i,'◇',`${kind}${blk}${histTag(r)}${scopeTag(r)}${priceTag(r)}`);
     }).join('');
   }
   // 🔵 次点（v9.9.88）: 四関門は通過したがΩ11位以下＝買わない。黙って消さない（v9.9.52の教訓）
   if(passOut.length){
     const ranked=passOut.slice().sort((a,b)=>aScore(b)-aScore(a));
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:#5d8cc2">🔵 次点</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">四関門は通過したが席順${MAXN+1}位以下＝<b>買わない</b>。<b>ポートフォリオはΩ上位${MAXN}社まで</b>（席の順＝irr=85を先に→残りをΩ順）。席順が上位に入れば自動で🟢へ昇格する。<b>売却の理由にはならない</b>——保有中の銘柄はS1/S2/S3のみで裁く。</div>`;
-    html+=ranked.map((r,i)=>brow(r,i,'次',`${f85Tag(r)}${histTag(r)}${govTag(r)}<span style="font-size:11px;color:#5d8cc2;white-space:nowrap;margin-left:8px" title="席の選定は **irr=85 を先に → 残りをΩ順**（E[r]項を外し・irr=85優先を追加）。配分は等ウェイト">Ω順位${MAXN+1+i}位</span>`)).join('');
+    html+=ranked.map((r,i)=>brow(r,i,'次',`${f85Tag(r)}${histTag(r)}${scopeTag(r)}${govTag(r)}<span style="font-size:11px;color:#5d8cc2;white-space:nowrap;margin-left:8px" title="席の選定は **irr=85 を先に → 残りをΩ順**（E[r]項を外し・irr=85優先を追加）。配分は等ウェイト">Ω順位${MAXN+1+i}位</span>`)).join('');
   } else html+=`<div style="color:var(--dim);font-size:13px;margin:10px 0">🟢 投下可なし——質75+・門X成立・堀70+を同時に満たす銘柄が現時点でゼロ。網と指値待機へ。</div>`;
   // v9.9.98: 🟡押し目待ち／⛔門X未評価は**関門ではなくなった**ので、除外の節をやめて注記にした。
   //   価格は合否に一切使わない（歴史検証: 価格の線は堀の中で選別力を持たない）。

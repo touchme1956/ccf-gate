@@ -77,6 +77,27 @@ def score_map():
     return m
 
 
+def scope_of(m):
+    """機構の射程を人が読める文字列に。**点と帯を書き分ける**——`_meta.mech` は
+    点推定が原本から導けない社を scope_pct=None・scope_low/high で持つので、
+    素の数字で並べると『測れていない』が『測れた』に見える（v9.9.119 で踏んだ型）。"""
+    def num(v):
+        try:
+            return None if v in (None, "", "None") else float(v)
+        except Exception:
+            return None
+    p, lo, hi = num(m.get("scope_pct")), num(m.get("scope_low")), num(m.get("scope_high"))
+    if p is not None:
+        return f"{p:.1f}%"
+    if lo is not None and hi is not None:
+        return f"{lo:.0f}-{hi:.0f}%"
+    if hi is not None:
+        return f"<={hi:.1f}%"
+    if lo is not None:
+        return f">={lo:.1f}%"
+    return None
+
+
 def days_since(iso):
     try:
         y, mo, dd = (int(x) for x in str(iso)[:10].split("-"))
@@ -113,6 +134,11 @@ def main():
             "in_band": (st.get("s") or 0) >= 72,
             "evidence_len": len((m.get("evidence") or {}).get("irr") or ""),
             "has_mech": bool(m.get("mech")),
+            # ★機構の射程（2026-08-13追加・**表示だけ。順位にも合否にも使わない**）
+            #   検問⑥「機構の射程——全社の記述か一セグメントのリスク要因の中か」を数字で見せる。
+            #   ⚠ **線は引かない**——射程と本人の実現複利の順位相関は ρ=−0.143(n=6) で、
+            #   最も狭い CW(12.3%) が2番目に良い。狭いことは欠陥の証拠ではなく、**読むときに確かめる点**。
+            "scope": scope_of(m.get("mech") or {}),
             "verify": ver,
         })
 
@@ -137,14 +163,14 @@ def main():
     print(f"=== irr=85 の二重読み（{out['generated']}）===")
     print(f"  対象 {out['n_irr85']}社 ／ **未検証・要再検証 {out['n_todo']}社** ／ 留保つき {out['n_reserved']}社")
     print(f"  ⚠ これは作業リストであって関門ではない（未検証は欠陥ではなく工程の途中）\n")
-    print(f"  {'銘柄':<7}{'状態':<7}{'Ω':>6} {'堀':>5}  {'最終の二重読み':<12}{'根拠':>5}  印")
+    print(f"  {'銘柄':<7}{'状態':<7}{'Ω':>6} {'堀':>5}  {'最終の二重読み':<12}{'根拠':>5}  {'射程':<12}印")
     for r in (out["rows"] if show_all else todo + [x for x in out["rows"] if x["state"] == "✓検証済"]):
         mark = ("🟢投下可" if r["buy"] else ("・判定圏" if r["in_band"] else ""))
         if r["reserved"]:
             mark += " ⚠留保つき"
         last = r["last_dual"] or "—"
         print(f"  {r['ticker']:<7}{r['state']:<7}{(r['omega'] or 0):>6.1f} {(r['moat'] or 0):>5.1f}  "
-              f"{last:<12}{r['evidence_len']:>5}字  {mark}")
+              f"{last:<12}{r['evidence_len']:>5}字  {(r['scope'] or '未取得'):<12}{mark}")
     if todo:
         print(f"\n  【二重読みの検問（審査プロトコルと同じ6点）】")
         for i, s in enumerate([
