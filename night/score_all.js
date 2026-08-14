@@ -321,6 +321,8 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               // 四関門＝Ω75+ ∧ 堀70+ ∧ データ健全（点検err・未解決warn・期末後・納品検査）。
               // 門(index.html)の pass=q75c と同一規則（v9.9.65の掟）
               shrink: shrink.hit ? shrink.why : undefined,
+              // v9.9.143 ③: 目的の二分（表示専用・判定に不使用）。Ω_raw=壊れない^.459 × 複利^.541 の恒等分解
+              objD: r.objDurable, objC: r.objCompound,
               irr: dd.irr,   // v9.9.100: 席の選定で irr=85 を優先するため（門の ccfAllocTop が読む）
               // v9.9.99(2026-08-07 ユーザー明示指示): **事業の収縮の遮断器**を第四の関門に。
               //   売上縮小 ∧ 営業利益率低下（門の単一実装 ccfShrinkGate を呼ぶ＝再実装しない）

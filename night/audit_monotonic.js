@@ -120,6 +120,36 @@ function main() {
     if (list.length > 4) console.log(`        …他${list.length - 4}社`);
   }
 
+  // ── (A2) ★連動して動かすと違反は残るか（2026-08-14新設・欠陥と測り方を分ける）─────────
+  //   (A) は**1欄だけ**を動かす。だが roic を単独で上げるのは「同じ利益で のれん除外ICだけ縮んだ」
+  //   ＝**利益の出所がより買収の除外に依存した**という意味で、roicGap の罰が増えるのは設計どおり。
+  //   事業が本当に良くなるときは **roic も roicg も一緒に上がる**。そこで両方を同じだけ動かして測る。
+  //   ⚠ここを分けないと「Ωの最大の入力が逆向き」という**強い結論を、測り方の副作用から**出してしまう。
+  if (viol.roic) {
+    let only = 0, ptBoth = 0, ratioBoth = 0, n = 0;
+    const rows = [];
+    for (const { t, d } of packs) {
+      if (typeof d.roic !== 'number' || typeof d.roicg !== 'number') continue;
+      n++;
+      const base = S({ ...d });
+      const a = S({ ...d, roic: d.roic + 20 });                               // ①単独
+      const b = S({ ...d, roic: d.roic + 5, roicg: d.roicg + 5 });            // ②同じpt
+      const c = S({ ...d, roic: d.roic * 1.2, roicg: d.roicg * 1.2 });        // ③同じ比率
+      if (a < base - 0.05) only++;
+      if (b < base - 0.05) ptBoth++;
+      if (c < base - 0.05) ratioBoth++;
+      if (a < base - 0.05) rows.push([t, d.roic, d.roicg, base, a, b, c]);
+    }
+    console.log('\n── (A2) ★連動: roic と roicg を一緒に動かすと違反は残るか ──');
+    console.log(`   ① roic だけ +20pt        → Ω が下がる ${only}社 / ${n}社  ← (A)と同じ測り方`);
+    console.log(`   ② roic も roicg も +5pt   → Ω が下がる ${ptBoth}社 / ${n}社  ← **事業が良くなった形**`);
+    console.log(`   ③ roic も roicg も ×1.2   → Ω が下がる ${ratioBoth}社 / ${n}社  （比率だと乖離ptが開く）`);
+    for (const [t, r, g, bs, a, b, c] of rows.slice(0, 6))
+      console.log(`        ${t.padEnd(7)} roic ${r.toFixed(1)} / roicg ${g.toFixed(1)}`
+                + `  Ω ${bs.toFixed(1)} → ①${a.toFixed(1)} ②${b.toFixed(1)} ③${c.toFixed(1)}`);
+    console.log(`   ⇒ ②が0なら (A) の roic の違反は**測り方のアーティファクトで、欠陥ではない**`);
+  }
+
   // ── (B) 崖 ─────────────────────────────────────────
   console.log('\n── (B) 崖：入力を連続に動かしたとき Ω が 0.5pt 以上跳ぶ点 ──');
   const cliffs = {};

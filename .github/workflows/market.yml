@@ -65,6 +65,13 @@ jobs:
           else
             echo "月初以外なのでスキップ（台帳は月1回で足りる）"
           fi
+      # ★門が自分の過去の判定を持つ（v9.9.143・2026-08-14）。**判定には一切使わない**——
+      #   記録を貯めるだけで、効くかどうかは溜まってから事前登録して一度だけ測る。
+      #   ⚠ここ（market.yml＝main で毎日走る同じジョブ）に置くのが肝: 履歴を**一つの系列**に保つ。
+      #     開発ブランチの途中経過を混ぜると、別々の門の版の判定を一本の時系列に並べることになる
+      #     （backfill で実際に踏んだ罠。out/score_all.json の履歴は CI と作業が交互に入る）。
+      - name: 門の履歴へ今日の判定を追記
+        run: python3 night/gate_history.py --append || true
       - name: コミット
         run: |
           git config user.name  "ccf-gate bot"
@@ -78,6 +85,6 @@ jobs:
           #   ここに書かないと「毎営業日 作り直して捨てる」ことになり、門(ブラウザ)が読む
           #   第四の関門の表だけが昨日のまま残る（v9.9.140・実測で git log に market の
           #   コミットが1件も無かった。ci.yml で2回直したのと同じ型の3例目）。
-          git add -A market_data.json out/dashboard.json out/*_gate_pack.json out/score_all.json out/er_ledger.json out/validate_fail.json || true
+          git add -A market_data.json out/dashboard.json out/*_gate_pack.json out/score_all.json out/er_ledger.json out/validate_fail.json out/gate_history.jsonl out/gate_state.json || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push
