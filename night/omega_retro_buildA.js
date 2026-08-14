@@ -45,6 +45,15 @@ const V = {
           mach: 'out/omega_retro_machine_2015.json', judg: 'out/omega_retro_judg_2015.json' },
 };
 
+/* ★H3(ablation)用: OMEGA_ABLATE=roic,dom,... を渡すと、その欄を**全社その欄の中央値に固定**する。
+   null にはしない——AMENDMENT で判ったとおり空欄は中立ではなく「潰し」で、
+   欄を消すと『情報を抜いた効果』と『水準が落ちた効果』が混ざるため。
+   OMEGA_OUT があれば出力ファイル名に付ける（正本 out/omega_retro_A_{yr}.json を潰さない）。 */
+const ABL = (process.env.OMEGA_ABLATE || '').split(',').map(s => s.trim()).filter(Boolean);
+const SUF = process.env.OMEGA_OUT ? `_${process.env.OMEGA_OUT}` : '';
+const med = arr => { const a = arr.filter(x => x != null).sort((x, y) => x - y);
+  return a.length ? a[Math.floor(a.length / 2)] : null; };
+
 for (const yr of Object.keys(V)) {
   const v = V[yr];
   if (!fs.existsSync(path.join(ROOT, v.mach))) {
@@ -60,6 +69,18 @@ for (const yr of Object.keys(V)) {
 
   const out = {};
   let nLegs = 0, nMach = 0;
+  // ablate する欄の中央値を先に出す（対象は下の d と同じ作り方で組んだ母集団）
+  const pool = [];
+  for (const [t, p] of Object.entries(P)) {
+    const lg = { dom: p.dom, irr: irr[t], rep: p.rep, dur: p.dur, moatW: p.moatW };
+    if (Object.values(lg).filter(x => x != null).length < 4) continue;
+    const m = M[t]; if (!m) continue;
+    pool.push({ ...lg, ...m, p1: (J[t] || {}).p1, p2: (J[t] || {}).p2, p4: (J[t] || {}).p4 });
+  }
+  const FIX = {};
+  for (const f of ABL) FIX[f] = med(pool.map(x => x[f]));
+  if (ABL.length) console.log(`  [ablate] ${ABL.map(f => `${f}→${FIX[f]}`).join(' / ')}`);
+
   for (const [t, p] of Object.entries(P)) {
     const legs = { dom: p.dom, irr: irr[t], rep: p.rep, dur: p.dur, moatW: p.moatW };
     const nl = Object.values(legs).filter(x => x != null).length;
@@ -74,6 +95,7 @@ for (const yr of Object.keys(V)) {
       fcf: m.fcf, ni: m.ni, dilNet: m.dilNet, sbc: m.sbc, z: m.z, gpa: m.gpa,
       intcov: m.intcov, eq: m.eq, acc: m.acc,
       p1: (J[t]||{}).p1, p2: (J[t]||{}).p2, p4: (J[t]||{}).p4 };
+    for (const f of ABL) d[f] = FIX[f];      // ★中立固定（null にしない）
     const r = scorePack(d);
     out[t] = { omega: r.evalScore, moat: r.moatIdx, pm: r.pm, pr: r.pr,
                pfail: r.pfail, kills: (r.kills || []).length,
@@ -81,12 +103,13 @@ for (const yr of Object.keys(V)) {
                has: { roic: m.roic != null, roicg: m.roicg != null, nde: m.nde != null,
                       roiic: m.roiic != null, gm: m.gm != null, cagr: m.cagr != null } };
   }
-  const p = path.join(ROOT, 'out', `omega_retro_A_${yr}.json`);
+  const p = path.join(ROOT, 'out', `omega_retro_A_${yr}${SUF}.json`);
   fs.writeFileSync(p, JSON.stringify({
     generated: new Date().toISOString().slice(0, 10), vintage: +yr,
-    note: '門の compute() をそのまま歴史の入力に当てた Ω̂。再構成できない欄（f2/f4/f5・erosion/disrupt/'
-        + 'moatdecay/expiry/geopol・acq5・sht・gls）は全社 null で固定＝順位に寄与しない。'
-        + 'Ω̂ は Ω ではない——測っているのは「再構成できた部分の重みが正しいか」だけ。',
+    note: '★案A: 門の compute() に p1/p2/p4（門の刻みで機械導出・night/omega_retro_judg.py）を足した Ω̂。'
+        + '**Ω ではない**——f1（roiic の被覆 11%/53% と WACC 不在で埋められない）・f2/f3/f4（原本読解が要る）・'
+        + 'now の価格項（per が歴史側に無い）を依然欠く。erosion/disrupt/moatdecay/expiry/geopol・acq5・sht・gls も'
+        + '全社 null で固定＝順位に寄与しない。測っているのは「再構成できた部分の重みが正しいか」だけ。',
     n_moat_ok: nLegs, n: Object.keys(out).length, items: out,
   }, null, 1));
   const withRoic = Object.values(out).filter(x => x.has.roic).length;
