@@ -71,7 +71,8 @@ def main():
     #   **union で解決**した（片方を捨てると、その因子が黙って消える）。
     for _t in (["night/audit_promotion_ready.py", "--json"],
                ["night/kessan_flags.py", "--json"],
-               ["night/audit_irr70.py", "--json"]):
+               ["night/audit_irr70.py", "--json"],
+               ["night/audit_irr85_dual.py", "--json"]):
         try:
             subprocess.run([sys.executable] + _t, capture_output=True, timeout=180)
         except Exception:
@@ -134,6 +135,15 @@ def main():
         r0, lab = rank(t)
         if "点検不能" in vd:
             add(t, 10, f"四半期点検が不能（{lab or '台帳外'}・採取の穴であって会社の異常ではない）")
+        elif v.get("superseded"):
+            # ★2026-08-12: **パックの原本が既にその四半期を含む**＝空振りの可能性が高い。
+            #   実害——KLAC の「警報:減損」($230.4M・旧PCB部門)は 2026-07-30 / 08-03 / 08-12 と
+            #   **三度**この行列の上位に載り、三度とも人が原本へ戻って「既知の再掲」と結論した。
+            #   ⚠**外さない**（要審査を消すのは「測っていない」と「測って問題なし」の取り違え）。
+            #   順位だけ「点検不能」と同じ帯へ落とし、理由に日付を書いて**なぜ低いかを見せる**。
+            add(t, 10, f"四半期点検で要審査（{lab or '台帳外'}・{vd[:34]}）"
+                       f"／★パックの原本が既にこの四半期を含む"
+                       f"（期末{v.get('pack_report')} ≥ 四半期末{v.get('qend')}）＝空振りの可能性")
         else:
             add(t, 30, f"四半期点検で要審査（{lab or '台帳外'}・{vd[:44]}）")
     for u in (kf.get("unparsed") or []):
@@ -171,6 +181,29 @@ def main():
         r0, lab = rank(v.get("t"))
         if r0 >= 60:
             add(v.get("t"), 22, f"irr=70 に摩擦の機構の根拠が無い（{v.get('cls')}・{v.get('n')}字）")
+    # 4-c. **irr=85 の二重読みが済んでいない社**（2026-08-12新設・A-1）
+    #   実測: 同じ111社でも読解の班が違うと irr=85 の付与率が 5.4%→17.1%（3.2倍・p=0.017）。
+    #   門は irr=85 に**別枠(v9.9.119)と席の優先(v9.9.100)**を与えているので、
+    #   「いつ・誰に読まれたか」で買付の資格が動きうる。**足りないのは新規に付けたときの二重読み**。
+    #   ⚠ 関門にはしない（未検証は欠陥ではなく工程の途中＝v9.9.66 が未解決warnで出した結論と同じ）。
+    #   重み **48**——`promotion_ready`(45) より上。理由: 繰り上がりは「席が空いたら効く」話だが、
+    #   未検証の85は**今この瞬間、別枠と席の優先という特権を無検証で使っている**から。
+    _dual = jload("out/irr85_dual.json")
+    for v in (_dual.get("todo") or []):
+        w = 48 if v.get("buy") else (40 if v.get("in_band") else 30)
+        add(v.get("ticker"), w,
+            f"irr=85 の二重読みが未了（{v.get('state')}・根拠{v.get('evidence_len')}字"
+            + ("・🟢投下可" if v.get("buy") else ("・判定圏" if v.get("in_band") else "") ) + "）")
+    # 4-d. **二重読みが「留保つき」で終わった社**（2026-08-12追加）
+    #   ⚠留保を記録しただけでは装飾で終わる。留保＝「85の根拠に穴があると別の読み手が書いた」なので、
+    #   全文の再読へ回す。ただし**未検証より軽い**（一度は読まれている）＝重みは未了の半分。
+    for v in (_dual.get("rows") or []):
+        if not v.get("reserved") or v.get("state") != "✓検証済":
+            continue
+        w = 24 if v.get("buy") else (20 if v.get("in_band") else 15)
+        add(v.get("ticker"), w,
+            f"irr=85 の二重読みが**留保つき**（別の読み手が根拠の穴を記録・根拠{v.get('evidence_len')}字"
+            + ("・🟢投下可" if v.get("buy") else ("・判定圏" if v.get("in_band") else "")) + "）")
     # 5. 8-K / 6-K の警報（門2再審査の「気づき」＝判定には使わない）
     for a in (jload("out/events_watch.json").get("alerts") or []):
         add(a.get("t"), 15, f"{a.get('form')} {a.get('date')}：" + "／".join(a.get("flags") or []))

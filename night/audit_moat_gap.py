@@ -18,6 +18,9 @@ audit_moat.py との違い:
 
 刻みは規約の値しか許さない（ここが肝）:
   dom 50/70/85/100 ・ irr 50/70/85/100 ・ rep 35/60/80/100 ・ dur 55/75/85/100 ・ moatW 50/70/85/100
+  ★v9.9.141: **irr と dur の 100 は堀指数の採点では 85 として扱う**（歴史で最上段が一つ下を下回った）。
+    よってこの2本では「85→100」は**指数を1ミリも動かさない**——道具がその道を提示しないよう
+    moat_idx に同じ読み替えを入れてある。台帳に書く値は 100 のまま（記録は消さない）。
   「dom を 70→80 にすれば通る」という助言は**存在しない刻みなので実行不能**。
   中間値を提示すると、審査官が刻みを無視して数字を作る誘因になる（絶対のルール2の逆走）。
 
@@ -90,9 +93,17 @@ def num(v):
     return None if x <= 0 else x
 
 
+# v9.9.141: index.html の ccfMoat と同じ **最上段の読み替え**。
+#   irr/dur の 100 は堀指数の採点では 85 として扱う（歴史で最上段が一つ下を下回ったため）。
+#   ★この道具に入れないと「irr 85→100 で通る」という**実際には通らない道**を提示してしまう
+#     ——v9.9.65「同じ台帳を見る二つの検査器が違うことを言ってはいけない」の破れになる。
+TOPCAP = {"irr": 85, "dur": 85}
+
+
 def moat_idx(d):
-    """index.html の ccfMoat と同値（cultAdj -2 まで含める）。4本未満はNA。"""
+    """index.html の ccfMoat と同値（TOPCAP と cultAdj -2 まで含める）。4本未満はNA。"""
     legs = [(k, num(d.get(k))) for k in W]
+    legs = [(k, (TOPCAP[k] if (k in TOPCAP and v == 100) else v)) for k, v in legs]
     legs = [(k, v) for k, v in legs if v is not None]
     if len(legs) < 4:
         return None

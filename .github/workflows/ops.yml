@@ -203,6 +203,11 @@ jobs:
         continue-on-error: true
         run: |
           timeout 2400 python3 night/v11_facts.py || true
+          # ★2026-08-13: 利払カバーをパックへ充填（v9.9.142 で財務キルの第二の物差しになった）。
+          #   **compute() は DOM しか見ない**ので、パックの欄として流さないとキルが読めない。
+          #   ⚠ 使うのは intcov_strict（真正の利息だけ）——FinanceCosts を混ぜると
+          #     純現金の会社が3未満に見える（実測8社）。空書き込みの検問は器の中にある。
+          timeout 300 python3 night/fill_intcov.py --write || true
           node night/v11_gate.js | tail -20
       # 年次較正のスナップショット（2026-08-10にCIへ接続・鍵もネットもcompanyfactsも不要）
       #   回転盤は calib を auto=False としていたが、**人の判断が要るのは v9 vs v10 の勝敗判定**であって
@@ -247,6 +252,22 @@ jobs:
       - name: 城の相関（同時に落ちるか・表示のみ）
         continue-on-error: true
         run: timeout 900 python3 night/castle_correlation.py --json 2>&1 | tail -24
+      # ── 採取器の是正がパックに届いているかの実測（2026-08-13新設）────────────────
+      #   ★実害: nde が12社で「純現金」と誤っていた（ENB は実際には有利子負債 104,410百万CAD）。
+      #     原因は**採取器が直ってもパックが追いつかない**こと——281社(76%)が 2026-07 の審査で、
+      #     その後の採取器の是正3回（無形の合成・有利子負債の二重計上・規制公益の売上タグ）を
+      #     受け取っていない。そして**どのパックがどの版で作られたかを記録する欄が一つも無い**ので、
+      #     再計算する以外に知る方法がない。これを毎月やる。
+      #   ⚠ **--sync は絶対に自動で走らせない**——実測で食い違い382件のうち
+      #     2件は単位のずれ(PKE fcf 11.0→0.0095)・39件は3倍超(年ずれ/IC縮退の疑い)で、
+      #     一括反映すると**桁の誤りと年の誤りを注入する**（影の計測でΩが最大66.7pt動いた）。
+      #     この器は**読むだけ**。直すのは人が原因を確かめてから。
+      - name: 採取器とパックの食い違い（読むだけ・--sync は走らせない）
+        continue-on-error: true
+        run: |
+          timeout 3000 python3 night/backfill_machine_evidence.py --write --json 2>&1 | tail -12
+          python3 night/backfill_machine_evidence.py --stamps --json 2>&1 | tail -8
+
       - name: WACC既定のズレ検出 audit_wacc_stale
         continue-on-error: true
         run: timeout 300 python3 night/audit_wacc_stale.py --write
@@ -269,6 +290,13 @@ jobs:
           #   あわせて sp500_pe_monthly（自己相対の分母）・growth_trend（cagrTの測定結果）・
           #   calibration（7月のスナップショット）も add する。**足したら add も足す**——
           #   ステップだけ増やして add を忘れると「回っているのに残らない」という同じ穴が再発する。
-          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/rechunk*.txt night/reaudit_queue.json night/progress.json out/er_ledger.json out/market_data.json market_data.json out/shadow_*.json out/gate0_run.json 2>/dev/null || true
+          # ⚠2026-08-13: **パックを add していなかった。** ops.yml には既にパックへ書く器が3本ある
+          #   （audit_wacc_stale --write / backfill_machine_evidence --write / fill_intcov --write）のに
+          #   `out/*_gate_pack.json` が add の一覧に無く、**毎月作っては捨てていた**。
+          #   これは今日4回直した「作った答えを捨てる」型（score_all / pending / validate_fail / 今回）。
+          #   とくに fill_intcov は **v9.9.142 の財務キルの入力**なので、残らないと
+          #   新しいパックの利払カバーが永久に空欄＝キルが眠り続ける。
+          git add out/*_gate_pack.json
+          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/backfill_diff.json out/backfill_stamps.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/rechunk*.txt night/reaudit_queue.json night/progress.json out/er_ledger.json out/market_data.json market_data.json out/shadow_*.json out/gate0_run.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push

@@ -1,8 +1,13 @@
 {
- "generated": "2026-08-12",
+ "generated": "2026-08-13",
  "tool": "night/v11_facts.py",
  "definitions": {
   "intcov": "OperatingIncomeLoss(年次)/InterestExpense(年次)＝retro_features2.py と同一定義・同一タグ順",
+  "int_basis": "interest（真正の利息）/ interest_plus（債務消滅損等を含む）/ finance_costs（IFRSの財務費用＝為替差損等を含む）/ net（受取利息と相殺）",
+  "intcov_strict": "**基準が interest の利息だけ**で作った利払カバー。intcov と違い上位概念・純額を混ぜない＝キルの物差しに使えるのはこちら",
+  "int_tag_candidates": "候補列に無いが利息らしいタグを実在するものだけ列挙した作業リスト。**値は採っていない**（本当に利息かは人が確かめる）",
+  "intcov_cash": "**現金で払った利息**（資本化利息を除く）で作った利払カバー。発生ベースではないので intcov / intcov_strict とは別基準——混ぜて割らないこと",
+  "int_strict_period": "annual か quarters_sum（年次タグが無い社は同一会計年度の四半期4本を合算）",
   "op5_all_pos": "アンカーFYから5年すべて営業利益が正",
   "fcf5_all_pos": "アンカーFYから5年すべて (営業CF−設備投資) が正",
   "no_debt_evidence": "有利子負債・利息の痕跡タグが一つも無い＝無借金（上限の不等式で結論）"
@@ -128,7 +133,8 @@
    "cik": "0000824142",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
-    "intcov": "支払利息の年次は 2020年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2020年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestIncomeExpenseNet",
@@ -142,13 +148,20 @@
    "op5_all_pos": true,
    "opm": 10.14,
    "opm_fy": 2025,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 8.807,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "ABNB": {
    "nm": "ABNB",
    "cik": "0001559720",
    "nulls": {
-    "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
+    "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -164,7 +177,13 @@
    "op5_all_pos": true,
    "opm": 20.78,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 1272.0,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "ACI": {
    "nm": "ACI",
@@ -189,7 +208,9 @@
    "int": 454600000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2026,
-   "intcov": 1.601
+   "int_basis": "interest",
+   "intcov": 1.601,
+   "intcov_strict": 1.601
   },
   "ACM": {
    "nm": "ACM",
@@ -215,7 +236,9 @@
    "int": 184304000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 5.57
+   "int_basis": "interest",
+   "intcov": 5.57,
+   "intcov_strict": 5.57
   },
   "ACN": {
    "nm": "ACN",
@@ -237,7 +260,9 @@
    "int": 228555000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 44.74
+   "int_basis": "interest",
+   "intcov": 44.74,
+   "intcov_strict": 44.74
   },
   "ADBE": {
    "nm": "ADBE",
@@ -262,7 +287,9 @@
    "int": 263000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 33.103
+   "int_basis": "interest",
+   "intcov": 33.103,
+   "intcov_strict": 33.103
   },
   "ADI": {
    "nm": "ADI",
@@ -289,7 +316,9 @@
    "int": 317716000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 9.23
+   "int_basis": "interest",
+   "intcov": 9.23,
+   "intcov_strict": 9.23
   },
   "ADP": {
    "nm": "ADP",
@@ -329,7 +358,9 @@
    "int": 80000000,
    "int_tag": "InterestExpense",
    "int_fy": 2026,
-   "intcov": 19.725
+   "int_basis": "interest",
+   "intcov": 19.725,
+   "intcov_strict": 19.725
   },
   "AEIS": {
    "nm": "AEIS",
@@ -356,12 +387,16 @@
    "int": 16700000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 10.06
+   "int_basis": "interest",
+   "intcov": 10.06,
+   "intcov_strict": 10.06
   },
   "AFYA": {
    "nm": "AFYA",
    "cik": "0001771007",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "FinanceCosts"
    ],
@@ -376,6 +411,7 @@
    "int": 561024000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_basis": "finance_costs",
    "intcov": 2.162
   },
   "ALLE": {
@@ -403,12 +439,16 @@
    "int": 101000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 8.51
+   "int_basis": "interest",
+   "intcov": 8.51,
+   "intcov_strict": 8.51
   },
   "ALSN": {
    "nm": "ALSN",
    "cik": "0001411207",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
     "InterestIncomeExpenseNet",
@@ -425,7 +465,13 @@
    "fcf5_all_pos": true,
    "opm": 29.24,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 7.333,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "ALV": {
    "nm": "ALV",
@@ -448,7 +494,9 @@
    "int": 103000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 10.563
+   "int_basis": "interest",
+   "intcov": 10.563,
+   "intcov_strict": 10.563
   },
   "AMAT": {
    "nm": "AMAT",
@@ -473,12 +521,16 @@
    "int": 269000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 30.814
+   "int_basis": "interest",
+   "intcov": 30.814,
+   "intcov_strict": 30.814
   },
   "AMBIQ": {
    "nm": "AMBIQ",
    "cik": "0001937441",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "FinanceCosts"
    ],
@@ -493,6 +545,7 @@
    "int": 592899000,
    "int_tag": "FinanceCosts",
    "int_fy": 2024,
+   "int_basis": "finance_costs",
    "intcov": 0.819
   },
   "AME": {
@@ -517,7 +570,9 @@
    "int": 81254000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 23.51
+   "int_basis": "interest",
+   "intcov": 23.51,
+   "intcov_strict": 23.51
   },
   "AMGN": {
    "nm": "AMGN",
@@ -541,7 +596,9 @@
    "int": 2755000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 3.296
+   "int_basis": "interest",
+   "intcov": 3.296,
+   "intcov_strict": 3.296
   },
   "AMPH": {
    "nm": "AMPH",
@@ -565,13 +622,16 @@
    "int": 25481000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 5.51
+   "int_basis": "interest",
+   "intcov": 5.51,
+   "intcov_strict": 5.51
   },
   "AM": {
    "nm": "AM",
    "cik": "0001623925",
    "nulls": {
-    "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
+    "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -587,7 +647,13 @@
    "op5_all_pos": true,
    "opm": 54.25,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 3.435,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "ANET": {
    "nm": "ANET",
@@ -627,12 +693,16 @@
    "int": 367800000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 15.956
+   "int_basis": "interest",
+   "intcov": 15.956,
+   "intcov_strict": 15.956
   },
   "ASAIY": {
    "nm": "ASAIY",
    "cik": "0001834048",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "FinanceCosts",
     "ShortTermBorrowings"
@@ -648,6 +718,7 @@
    "int": 3233000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2024,
+   "int_basis": "finance_costs",
    "intcov": 1.189
   },
   "ASML": {
@@ -673,13 +744,16 @@
    "int": 118300000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 95.532
+   "int_basis": "interest",
+   "intcov": 95.532,
+   "intcov_strict": 95.532
   },
   "ASR": {
    "nm": "ASR",
    "cik": "0001123452",
    "nulls": {
-    "fcf5_note": "設備投資タグが一度も無い＝営業CFのみで判定"
+    "fcf5_note": "設備投資タグが一度も無い＝営業CFのみで判定",
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
    "debt_trace": [
     "FinanceCosts"
@@ -695,6 +769,7 @@
    "int": 826708000,
    "int_tag": "FinanceCosts",
    "int_fy": 2024,
+   "int_basis": "finance_costs",
    "intcov": 21.192
   },
   "ATMU": {
@@ -719,7 +794,9 @@
    "int": 33400000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 8.952
+   "int_basis": "interest",
+   "intcov": 8.952,
+   "intcov_strict": 8.952
   },
   "AVGO": {
    "nm": "AVGO",
@@ -746,7 +823,9 @@
    "int": 3210000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 7.939
+   "int_basis": "interest",
+   "intcov": 7.939,
+   "intcov_strict": 7.939
   },
   "AWI": {
    "nm": "AWI",
@@ -770,12 +849,16 @@
    "int": 33000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 13.058
+   "int_basis": "interest",
+   "intcov": 13.058,
+   "intcov_strict": 13.058
   },
   "AXIA": {
    "nm": "AXIA",
    "cik": "0001439124",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "FinanceCosts"
    ],
@@ -790,12 +873,15 @@
    "int": 10140093000,
    "int_tag": "FinanceCosts",
    "int_fy": 2024,
+   "int_basis": "finance_costs",
    "intcov": 1.934
   },
   "AZN": {
    "nm": "AZN",
    "cik": "0000901832",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "FinanceCosts"
    ],
@@ -810,6 +896,7 @@
    "int": 1694000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_basis": "finance_costs",
    "intcov": 8.113
   },
   "AZO": {
@@ -835,7 +922,9 @@
    "int": 490025000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 7.367
+   "int_basis": "interest",
+   "intcov": 7.367,
+   "intcov_strict": 7.367
   },
   "BBW": {
    "nm": "BBW",
@@ -872,7 +961,9 @@
    "int": 47000000,
    "int_tag": "InterestExpense",
    "int_fy": 2026,
-   "intcov": 29.553
+   "int_basis": "interest",
+   "intcov": 29.553,
+   "intcov_strict": 29.553
   },
   "BCPC": {
    "nm": "BCPC",
@@ -880,7 +971,8 @@
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "opm": "売上の年次が 2021年止まりでアンカー 2025年から古い",
-    "intcov": "支払利息の年次は 2017年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2017年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestIncomeExpenseNet",
@@ -892,7 +984,15 @@
    "fy_basis": "pack",
    "fy_end": "2025-12-31",
    "op5_all_pos": true,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 19.742,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestPaidNet(2025)",
+    "us-gaap:UnrecognizedTaxBenefitsIncomeTaxPenaltiesAndInterestExpense(2024)"
+   ]
   },
   "BKNG": {
    "nm": "BKNG",
@@ -918,12 +1018,16 @@
    "int": 1617000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 5.458
+   "int_basis": "interest",
+   "intcov": 5.458,
+   "intcov_strict": 5.458
   },
   "BMI": {
    "nm": "BMI",
    "cik": "0000009092",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "InterestIncomeExpenseNet",
     "InterestPaidNet",
@@ -940,6 +1044,7 @@
    "int": 5124000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
+   "int_basis": "net",
    "intcov": 35.796
   },
   "BRC": {
@@ -963,7 +1068,9 @@
    "int": 4747000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 49.85
+   "int_basis": "interest",
+   "intcov": 49.85,
+   "intcov_strict": 49.85
   },
   "BR": {
    "nm": "BR",
@@ -987,7 +1094,9 @@
    "int": 111800000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2026,
-   "intcov": 11.633
+   "int_basis": "interest",
+   "intcov": 11.633,
+   "intcov_strict": 11.633
   },
   "BSX": {
    "nm": "BSX",
@@ -1010,7 +1119,9 @@
    "int": 349000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 10.352
+   "int_basis": "interest",
+   "intcov": 10.352,
+   "intcov_strict": 10.352
   },
   "BSY": {
    "nm": "BSY",
@@ -1036,7 +1147,9 @@
    "int": 7581000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 47.833
+   "int_basis": "interest",
+   "intcov": 47.833,
+   "intcov_strict": 47.833
   },
   "BUD": {
    "nm": "BUD",
@@ -1057,7 +1170,11 @@
    "int": 5146000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
-   "intcov": 2.994
+   "int_basis": "finance_costs",
+   "intcov": 2.994,
+   "intcov_strict": 4.506,
+   "int_strict_tag": "InterestExpense",
+   "int_strict_fy": 2024
   },
   "BWXT": {
    "nm": "BWXT",
@@ -1083,7 +1200,9 @@
    "int": 4540000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 89.088
+   "int_basis": "interest",
+   "intcov": 89.088,
+   "intcov_strict": 89.088
   },
   "CAAP": {
    "nm": "CAAP",
@@ -1104,7 +1223,9 @@
    "int": 90827000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 5.376
+   "int_basis": "interest",
+   "intcov": 5.376,
+   "intcov_strict": 5.376
   },
   "CAMT": {
    "nm": "CAMT",
@@ -1128,7 +1249,9 @@
   "CAT": {
    "nm": "CAT",
    "cik": "0000018230",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "InterestPaidNet",
     "LongTermDebtNoncurrent",
@@ -1142,7 +1265,14 @@
    "fcf5_all_pos": true,
    "opm": 16.5,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 6.054,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:IncomeTaxExaminationPenaltiesAndInterestExpense(2025)",
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "CDNS": {
    "nm": "CDNS",
@@ -1165,7 +1295,9 @@
    "int": 116541000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 12.803
+   "int_basis": "interest",
+   "intcov": 12.803,
+   "intcov_strict": 12.803
   },
   "CELH": {
    "nm": "CELH",
@@ -1192,12 +1324,16 @@
    "int": 48977000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 2.88
+   "int_basis": "interest",
+   "intcov": 2.88,
+   "intcov_strict": 2.88
   },
   "CEPU": {
    "nm": "CEPU",
    "cik": "0001717161",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "FinanceCosts"
    ],
@@ -1212,6 +1348,7 @@
    "int": 171609857000,
    "int_tag": "FinanceCosts",
    "int_fy": 2024,
+   "int_basis": "finance_costs",
    "intcov": 1.149
   },
   "CHDN": {
@@ -1239,7 +1376,9 @@
    "int": 297700000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 2.297
+   "int_basis": "interest",
+   "intcov": 2.297,
+   "intcov_strict": 2.297
   },
   "CHE": {
    "nm": "CHE",
@@ -1263,7 +1402,9 @@
    "int": 1750000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 193.283
+   "int_basis": "interest",
+   "intcov": 193.283,
+   "intcov_strict": 193.283
   },
   "CHH": {
    "nm": "CHH",
@@ -1290,7 +1431,9 @@
    "int": 91148000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 4.919
+   "int_basis": "interest",
+   "intcov": 4.919,
+   "intcov_strict": 4.919
   },
   "CHKP": {
    "nm": "CHKP",
@@ -1311,7 +1454,8 @@
    "nm": "CLMB",
    "cik": "0000945983",
    "nulls": {
-    "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
+    "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestPaidNet",
@@ -1325,7 +1469,14 @@
    "op5_all_pos": true,
    "opm": 4.47,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 205.528,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestIncomeExpenseNonoperatingNet(2025)",
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "CMG": {
    "nm": "CMG",
@@ -1342,7 +1493,10 @@
    "fcf5_all_pos": true,
    "opm": 16.23,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "int_tag_candidates": [
+    "us-gaap:UnrecognizedTaxBenefitsInterestOnIncomeTaxesExpense(2025)"
+   ]
   },
   "CMTL": {
    "nm": "CMTL",
@@ -1366,7 +1520,9 @@
    "int": 45650000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": -3.047
+   "int_basis": "interest",
+   "intcov": -3.047,
+   "intcov_strict": -3.047
   },
   "COHR": {
    "nm": "COHR",
@@ -1393,13 +1549,16 @@
    "int": 286872000,
    "int_tag": "InterestExpense",
    "int_fy": 2023,
-   "intcov": -0.129
+   "int_basis": "interest",
+   "intcov": -0.129,
+   "intcov_strict": -0.129
   },
   "COKE": {
    "nm": "COKE",
    "cik": "0000317540",
    "nulls": {
-    "intcov": "支払利息の年次は 2022年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2022年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -1417,7 +1576,14 @@
    "fcf5_all_pos": true,
    "opm": 13.15,
    "opm_fy": 2025,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 10.24,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "COLL": {
    "nm": "COLL",
@@ -1440,7 +1606,9 @@
    "int": 82312000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 2.182
+   "int_basis": "interest",
+   "intcov": 2.182,
+   "intcov_strict": 2.182
   },
   "CPAC": {
    "nm": "CPAC",
@@ -1461,7 +1629,9 @@
    "int": 99752000,
    "int_tag": "InterestExpense",
    "int_fy": 2024,
-   "intcov": 3.92
+   "int_basis": "interest",
+   "intcov": 3.92,
+   "intcov_strict": 3.92
   },
   "CPAY": {
    "nm": "CPAY",
@@ -1486,12 +1656,16 @@
    "int": 403848000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 4.938
+   "int_basis": "interest",
+   "intcov": 4.938,
+   "intcov_strict": 4.938
   },
   "CPA": {
    "nm": "CPA",
    "cik": "0001345105",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "FinanceCosts"
    ],
@@ -1506,6 +1680,7 @@
    "int": 18126000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_basis": "finance_costs",
    "intcov": 45.182
   },
   "CPRT": {
@@ -1513,7 +1688,8 @@
    "cik": "0000900075",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い",
-    "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestIncomeExpenseNet",
@@ -1528,7 +1704,15 @@
    "fy_end": "2025-07-31",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 840.373,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestIncomeExpenseNonoperatingNet(2025)",
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "CRAI": {
    "nm": "CRAI",
@@ -1552,7 +1736,9 @@
    "int": 5358000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 15.514
+   "int_basis": "interest",
+   "intcov": 15.514,
+   "intcov_strict": 15.514
   },
   "CSCO": {
    "nm": "CSCO",
@@ -1579,7 +1765,9 @@
    "int": 1593000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 7.382
+   "int_basis": "interest",
+   "intcov": 7.382,
+   "intcov_strict": 7.382
   },
   "CSL": {
    "nm": "CSL",
@@ -1605,12 +1793,16 @@
    "int": 78500000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 12.771
+   "int_basis": "interest",
+   "intcov": 12.771,
+   "intcov_strict": 12.771
   },
   "CSW": {
    "nm": "CSW",
    "cik": "0001624794",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
     "InterestPaidNet",
@@ -1626,7 +1818,14 @@
    "fcf5_all_pos": true,
    "opm": 15.57,
    "opm_fy": 2026,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 8.058,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2026,
+   "int_tag_candidates": [
+    "us-gaap:DefinedBenefitPlanInterestCost(2026)",
+    "us-gaap:InterestPaidNet(2026)"
+   ]
   },
   "CTAS": {
    "nm": "CTAS",
@@ -1652,7 +1851,9 @@
    "int": 101108000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 23.339
+   "int_basis": "interest",
+   "intcov": 23.339,
+   "intcov_strict": 23.339
   },
   "CVCO": {
    "nm": "CVCO",
@@ -1675,7 +1876,9 @@
    "int": 541000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 422.494
+   "int_basis": "interest",
+   "intcov": 422.494,
+   "intcov_strict": 422.494
   },
   "CW": {
    "nm": "CW",
@@ -1700,7 +1903,9 @@
    "int": 43148000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 14.683
+   "int_basis": "interest",
+   "intcov": 14.683,
+   "intcov_strict": 14.683
   },
   "DCI": {
    "nm": "DCI",
@@ -1725,7 +1930,9 @@
    "int": 24200000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 20.471
+   "int_basis": "interest",
+   "intcov": 20.471,
+   "intcov_strict": 20.471
   },
   "DDS": {
    "nm": "DDS",
@@ -1761,7 +1968,9 @@
    "int": 2530000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 499.171
+   "int_basis": "interest",
+   "intcov": 499.171,
+   "intcov_strict": 499.171
   },
   "DELL": {
    "nm": "DELL",
@@ -1786,13 +1995,16 @@
    "int": 1560000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 5.224
+   "int_basis": "interest",
+   "intcov": 5.224,
+   "intcov_strict": 5.224
   },
   "DLB": {
    "nm": "DLB",
    "cik": "0001308547",
    "nulls": {
-    "opm": "売上の年次が 2021年止まりでアンカー 2025年から古い"
+    "opm": "売上の年次が 2021年止まりでアンカー 2025年から古い",
+    "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
    "debt_trace": [
     "InterestExpense",
@@ -1807,12 +2019,15 @@
    "int": 15376000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
+   "int_basis": "net",
    "intcov": 17.232
   },
   "DLO": {
    "nm": "DLO",
    "cik": "0001846832",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "FinanceCosts"
    ],
@@ -1827,6 +2042,7 @@
    "int": 27855000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_basis": "finance_costs",
    "intcov": 7.895
   },
   "DOCS": {
@@ -1869,7 +2085,9 @@
    "int": 115900000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 11.754
+   "int_basis": "interest",
+   "intcov": 11.754,
+   "intcov_strict": 11.754
   },
   "DSGX": {
    "nm": "DSGX",
@@ -1890,7 +2108,9 @@
    "int": 967000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 217.144
+   "int_basis": "interest",
+   "intcov": 217.144,
+   "intcov_strict": 217.144
   },
   "DTM": {
    "nm": "DTM",
@@ -1917,7 +2137,9 @@
    "int": 169000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 3.633
+   "int_basis": "interest",
+   "intcov": 3.633,
+   "intcov_strict": 3.633
   },
   "DXCM": {
    "nm": "DXCM",
@@ -1940,7 +2162,9 @@
    "int": 14300000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 63.762
+   "int_basis": "interest",
+   "intcov": 63.762,
+   "intcov_strict": 63.762
   },
   "DXC": {
    "nm": "DXC",
@@ -1965,13 +2189,17 @@
    "int": 216000000,
    "int_tag": "InterestExpense",
    "int_fy": 2026,
-   "intcov": 4.491
+   "int_basis": "interest",
+   "intcov": 4.491,
+   "intcov_strict": 4.491
   },
   "D": {
    "nm": "D",
    "cik": "0000715957",
    "nulls": {
-    "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
+    "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
+    "intcov_strict": "採れた利息タグ InterestAndDebtExpense の基準は **interest_plus**＝利息＋債務消滅損等を含む上位概念。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -1993,7 +2221,11 @@
    "int": 2022000000,
    "int_tag": "InterestAndDebtExpense",
    "int_fy": 2025,
-   "intcov": 2.183
+   "int_basis": "interest_plus",
+   "intcov": 2.183,
+   "intcov_cash": 2.454,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025
   },
   "EBAY": {
    "nm": "EBAY",
@@ -2020,7 +2252,9 @@
    "int": 246000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 9.256
+   "int_basis": "interest",
+   "intcov": 9.256,
+   "intcov_strict": 9.256
   },
   "ECL": {
    "nm": "ECL",
@@ -2046,7 +2280,9 @@
    "int": 306200000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 8.941
+   "int_basis": "interest",
+   "intcov": 8.941,
+   "intcov_strict": 8.941
   },
   "EE": {
    "nm": "EE",
@@ -2071,7 +2307,9 @@
    "int": 258300000,
    "int_tag": "InterestCostsIncurred",
    "int_fy": 2025,
-   "intcov": 1.032
+   "int_basis": "interest",
+   "intcov": 1.032,
+   "intcov_strict": 1.032
   },
   "EME": {
    "nm": "EME",
@@ -2096,7 +2334,9 @@
    "int": 12020000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 142.547
+   "int_basis": "interest",
+   "intcov": 142.547,
+   "intcov_strict": 142.547
   },
   "ENB": {
    "nm": "ENB",
@@ -2123,7 +2363,9 @@
    "int": 5023000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 2.182
+   "int_basis": "interest",
+   "intcov": 2.182,
+   "intcov_strict": 2.182
   },
   "ENSG": {
    "nm": "ENSG",
@@ -2149,7 +2391,9 @@
    "int": 7988000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 53.243
+   "int_basis": "interest",
+   "intcov": 53.243,
+   "intcov_strict": 53.243
   },
   "ENTG": {
    "nm": "ENTG",
@@ -2175,13 +2419,16 @@
    "int": 199800000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 2.282
+   "int_basis": "interest",
+   "intcov": 2.282,
+   "intcov_strict": 2.282
   },
   "EPAM": {
    "nm": "EPAM",
    "cik": "0001352010",
    "nulls": {
-    "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
+    "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestPaidNet",
@@ -2194,7 +2441,13 @@
    "fy_end": "2025-12-31",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 372.228,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "ETN": {
    "nm": "ETN",
@@ -2238,7 +2491,9 @@
    "int": 68278000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 2.731
+   "int_basis": "interest",
+   "intcov": 2.731,
+   "intcov_strict": 2.731
   },
   "EXEL": {
    "nm": "EXEL",
@@ -2280,7 +2535,9 @@
    "int": 17611000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 17.816
+   "int_basis": "interest",
+   "intcov": 17.816,
+   "intcov_strict": 17.816
   },
   "EXPD": {
    "nm": "EXPD",
@@ -2357,7 +2614,9 @@
    "int": 6200000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 267.048
+   "int_basis": "interest",
+   "intcov": 267.048,
+   "intcov_strict": 267.048
   },
   "FCFS": {
    "nm": "FCFS",
@@ -2401,7 +2660,9 @@
    "int": 57749000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 12.958
+   "int_basis": "interest",
+   "intcov": 12.958,
+   "intcov_strict": 12.958
   },
   "FELE": {
    "nm": "FELE",
@@ -2424,7 +2685,9 @@
    "int": 10641000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 25.278
+   "int_basis": "interest",
+   "intcov": 25.278,
+   "intcov_strict": 25.278
   },
   "FICO": {
    "nm": "FICO",
@@ -2451,7 +2714,9 @@
    "int": 133647000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 6.92
+   "int_basis": "interest",
+   "intcov": 6.92,
+   "intcov_strict": 6.92
   },
   "FISV": {
    "nm": "FISV",
@@ -2477,7 +2742,9 @@
    "int": 1531000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 3.8
+   "int_basis": "interest",
+   "intcov": 3.8,
+   "intcov_strict": 3.8
   },
   "FSS": {
    "nm": "FSS",
@@ -2501,7 +2768,9 @@
    "int": 14100000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 24.177
+   "int_basis": "interest",
+   "intcov": 24.177,
+   "intcov_strict": 24.177
   },
   "FTNT": {
    "nm": "FTNT",
@@ -2526,7 +2795,9 @@
    "int": 20100000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 103.716
+   "int_basis": "interest",
+   "intcov": 103.716,
+   "intcov_strict": 103.716
   },
   "GCT": {
    "nm": "GCT",
@@ -2551,7 +2822,9 @@
    "int": 200000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 724.88
+   "int_basis": "interest",
+   "intcov": 724.88,
+   "intcov_strict": 724.88
   },
   "GDDY": {
    "nm": "GDDY",
@@ -2577,13 +2850,17 @@
    "int": 151000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 7.466
+   "int_basis": "interest",
+   "intcov": 7.466,
+   "intcov_strict": 7.466
   },
   "GEN": {
    "nm": "GEN",
    "cik": "0000849399",
    "nulls": {
-    "opm": "売上の年次が 2014年止まりでアンカー 2026年から古い"
+    "opm": "売上の年次が 2014年止まりでアンカー 2026年から古い",
+    "intcov_strict": "採れた利息タグ InterestAndDebtExpense の基準は **interest_plus**＝利息＋債務消滅損等を含む上位概念。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -2602,7 +2879,11 @@
    "int": 569000000,
    "int_tag": "InterestAndDebtExpense",
    "int_fy": 2026,
-   "intcov": 3.726
+   "int_basis": "interest_plus",
+   "intcov": 3.726,
+   "intcov_cash": 3.387,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2026
   },
   "GILD": {
    "nm": "GILD",
@@ -2627,7 +2908,9 @@
    "int": 1024000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 9.787
+   "int_basis": "interest",
+   "intcov": 9.787,
+   "intcov_strict": 9.787
   },
   "GLXZ": {
    "nm": "GLXZ",
@@ -2653,14 +2936,17 @@
    "int": 3587921,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 2.28
+   "int_basis": "interest",
+   "intcov": 2.28,
+   "intcov_strict": 2.28
   },
   "GMAB": {
    "nm": "GMAB",
    "cik": "0001434265",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
-    "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
+    "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
    "debt_trace": [
     "FinanceCosts"
@@ -2674,6 +2960,7 @@
    "int": 269000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_basis": "finance_costs",
    "intcov": 3.959
   },
   "GMED": {
@@ -2694,7 +2981,11 @@
    "fcf5_all_pos": true,
    "opm": 16.33,
    "opm_fy": 2025,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestIncomeExpenseNonoperatingNet(2025)"
+   ]
   },
   "GNTX": {
    "nm": "GNTX",
@@ -2739,7 +3030,9 @@
    "int": 736000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 175.325
+   "int_basis": "interest",
+   "intcov": 175.325,
+   "intcov_strict": 175.325
   },
   "GOOS": {
    "nm": "GOOS",
@@ -2776,7 +3069,9 @@
   "GRND": {
    "nm": "GRND",
    "cik": "0001820144",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
     "InterestIncomeExpenseNet",
@@ -2793,7 +3088,13 @@
    "fcf5_all_pos": true,
    "opm": 28.71,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 6.281,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "GRVY": {
    "nm": "GRVY",
@@ -2811,7 +3112,9 @@
   "GSK": {
    "nm": "GSK",
    "cik": "0001131399",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "FinanceCosts",
     "InterestExpense"
@@ -2827,6 +3130,7 @@
    "int": 701000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_basis": "finance_costs",
    "intcov": 11.315
   },
   "GWW": {
@@ -2853,7 +3157,9 @@
    "int": 81000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 30.802
+   "int_basis": "interest",
+   "intcov": 30.802,
+   "intcov_strict": 30.802
   },
   "G": {
    "nm": "G",
@@ -2879,7 +3185,11 @@
    "int": 73516000,
    "int_tag": "InterestAndDebtExpense",
    "int_fy": 2025,
-   "intcov": 10.205
+   "int_basis": "interest_plus",
+   "intcov": 10.205,
+   "intcov_strict": 8.83,
+   "int_strict_tag": "InterestExpenseNonoperating",
+   "int_strict_fy": 2024
   },
   "HALO": {
    "nm": "HALO",
@@ -2906,7 +3216,9 @@
    "int": 18126000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 25.875
+   "int_basis": "interest",
+   "intcov": 25.875,
+   "intcov_strict": 25.875
   },
   "HCKT": {
    "nm": "HCKT",
@@ -2928,7 +3240,9 @@
    "int": 1716000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 13.714
+   "int_basis": "interest",
+   "intcov": 13.714,
+   "intcov_strict": 13.714
   },
   "HD": {
    "nm": "HD",
@@ -2955,7 +3269,9 @@
    "int": 2412000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 8.661
+   "int_basis": "interest",
+   "intcov": 8.661,
+   "intcov_strict": 8.661
   },
   "HEI": {
    "nm": "HEI",
@@ -2980,7 +3296,9 @@
    "int": 129877000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 7.846
+   "int_basis": "interest",
+   "intcov": 7.846,
+   "intcov_strict": 7.846
   },
   "HPQ": {
    "nm": "HPQ",
@@ -3006,7 +3324,9 @@
    "int": 430000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 7.381
+   "int_basis": "interest",
+   "intcov": 7.381,
+   "intcov_strict": 7.381
   },
   "HRMY": {
    "nm": "HRMY",
@@ -3033,7 +3353,9 @@
    "int": 14649000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 14.231
+   "int_basis": "interest",
+   "intcov": 14.231,
+   "intcov_strict": 14.231
   },
   "HUBB": {
    "nm": "HUBB",
@@ -3061,7 +3383,10 @@
   "HWM": {
    "nm": "HWM",
    "cik": "0000004281",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ InterestAndDebtExpense の基準は **interest_plus**＝利息＋債務消滅損等を含む上位概念。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "InterestAndDebtExpense",
     "InterestExpense",
@@ -3083,7 +3408,11 @@
    "int": 176000000,
    "int_tag": "InterestAndDebtExpense",
    "int_fy": 2025,
-   "intcov": 11.625
+   "int_basis": "interest_plus",
+   "intcov": 11.625,
+   "intcov_cash": 13.032,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025
   },
   "HXL": {
    "nm": "HXL",
@@ -3107,7 +3436,9 @@
    "int": 37700000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 4.552
+   "int_basis": "interest",
+   "intcov": 4.552,
+   "intcov_strict": 4.552
   },
   "IBP": {
    "nm": "IBP",
@@ -3132,12 +3463,17 @@
    "int": 31700000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 12.189
+   "int_basis": "interest",
+   "intcov": 12.189,
+   "intcov_strict": 12.189
   },
   "IDT": {
    "nm": "IDT",
    "cik": "0001005731",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "InterestIncomeExpenseNet",
     "InterestPaidNet"
@@ -3153,7 +3489,11 @@
    "int": 6127000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
-   "intcov": 16.39
+   "int_basis": "net",
+   "intcov": 16.39,
+   "intcov_cash": 912.945,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025
   },
   "IDXX": {
    "nm": "IDXX",
@@ -3179,12 +3519,16 @@
    "int": 38852000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 35.005
+   "int_basis": "interest",
+   "intcov": 35.005,
+   "intcov_strict": 35.005
   },
   "IHG": {
    "nm": "IHG",
    "cik": "0000858446",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "FinanceCosts"
    ],
@@ -3199,6 +3543,7 @@
    "int": 202000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_basis": "finance_costs",
    "intcov": 5.931
   },
   "IMXI": {
@@ -3224,7 +3569,9 @@
    "int": 11836000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 4.702
+   "int_basis": "interest",
+   "intcov": 4.702,
+   "intcov_strict": 4.702
   },
   "INCY": {
    "nm": "INCY",
@@ -3245,14 +3592,17 @@
    "int": 2428000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 623.912
+   "int_basis": "interest",
+   "intcov": 623.912,
+   "intcov_strict": 623.912
   },
   "INFY": {
    "nm": "INFY",
    "cik": "0001067491",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
-    "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
+    "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い",
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
    "debt_trace": [
     "FinanceCosts"
@@ -3265,6 +3615,7 @@
    "int": 49000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_basis": "finance_costs",
    "intcov": 83.082
   },
   "INTU": {
@@ -3290,7 +3641,9 @@
    "int": 247000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 19.931
+   "int_basis": "interest",
+   "intcov": 19.931,
+   "intcov_strict": 19.931
   },
   "IPAR": {
    "nm": "IPAR",
@@ -3316,13 +3669,16 @@
    "int": 7248000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 37.295
+   "int_basis": "interest",
+   "intcov": 37.295,
+   "intcov_strict": 37.295
   },
   "IPGP": {
    "nm": "IPGP",
    "cik": "0001111928",
    "nulls": {
-    "intcov": "支払利息の年次は 2011年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2011年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestPaidNet",
@@ -3338,7 +3694,15 @@
    "fcf5_all_pos": false,
    "opm": 1.31,
    "opm_fy": 2025,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 57.982,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:IncomeTaxExaminationPenaltiesAndInterestExpense(2025)",
+    "us-gaap:InterestIncomeExpenseNonoperatingNet(2025)",
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "IP": {
    "nm": "IP",
@@ -3384,7 +3748,9 @@
    "int": 14700000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 16.053
+   "int_basis": "interest",
+   "intcov": 16.053,
+   "intcov_strict": 16.053
   },
   "IRMD": {
    "nm": "IRMD",
@@ -3439,12 +3805,16 @@
    "int": 1725205,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 11.635
+   "int_basis": "interest",
+   "intcov": 11.635,
+   "intcov_strict": 11.635
   },
   "ITRN": {
    "nm": "ITRN",
    "cik": "0001337117",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "InterestPaidNet",
     "LongTermDebt",
@@ -3459,7 +3829,13 @@
    "fcf5_all_pos": true,
    "opm": 21.45,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 2965.375,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2024,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2024)"
+   ]
   },
   "IT": {
    "nm": "IT",
@@ -3484,13 +3860,17 @@
    "int": 125277000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 8.188
+   "int_basis": "interest",
+   "intcov": 8.188,
+   "intcov_strict": 8.188
   },
   "JKHY": {
    "nm": "JKHY",
    "cik": "0000779152",
    "nulls": {
-    "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
+    "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い",
+    "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestExpense",
@@ -3511,7 +3891,11 @@
    "int": 17321000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
-   "intcov": 32.834
+   "int_basis": "net",
+   "intcov": 32.834,
+   "intcov_cash": 56.622,
+   "int_cash_tag": "InterestPaid",
+   "int_cash_fy": 2025
   },
   "KALU": {
    "nm": "KALU",
@@ -3534,7 +3918,9 @@
    "int": 50100000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 3.768
+   "int_basis": "interest",
+   "intcov": 3.768,
+   "intcov_strict": 3.768
   },
   "KARO": {
    "nm": "KARO",
@@ -3555,13 +3941,18 @@
    "int": 50866000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
-   "intcov": 25.8
+   "int_basis": "finance_costs",
+   "intcov": 25.8,
+   "intcov_strict": 12.25,
+   "int_strict_tag": "InterestCostsIncurred",
+   "int_strict_fy": 2024
   },
   "KFRC": {
    "nm": "KFRC",
    "cik": "0000930420",
    "nulls": {
-    "intcov": "支払利息の年次は 2015年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2015年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestPaidNet",
@@ -3575,13 +3966,20 @@
    "fcf5_all_pos": true,
    "opm": 3.77,
    "opm_fy": 2025,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 13.333,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "KGS": {
    "nm": "KGS",
    "cik": "0001767042",
    "nulls": {
-    "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -3598,13 +3996,21 @@
    "fcf5_all_pos": false,
    "opm": 25.99,
    "opm_fy": 2025,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 2.015,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "KLAC": {
    "nm": "KLAC",
    "cik": "0000319201",
    "nulls": {
-    "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
+    "all": "営業利益の年次が 2014年止まりでパックの 2026年から古い＝この社は導出（売上−原価−R&D−販管費）が要る。**パックの gm 41.7% × 売上 13,579,476,000 で復元**（採取器が自己検証つきで導出した値・再実装ではない）",
+    "op5_all_pos": "営業利益の年次が5年そろわない"
    },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -3616,7 +4022,19 @@
     "ShortTermBorrowings"
    ],
    "no_debt_evidence": false,
-   "intcov_na_reason": "unmeasured"
+   "op_source": "pack_gm",
+   "fy": 2026,
+   "fy_basis": "pack",
+   "fy_end": null,
+   "fcf5_all_pos": true,
+   "opm": 41.7,
+   "opm_fy": 2026,
+   "int": 284440000,
+   "int_tag": "InterestExpenseNonoperating",
+   "int_fy": 2026,
+   "int_basis": "interest",
+   "intcov": 19.908,
+   "intcov_strict": 19.908
   },
   "KO": {
    "nm": "KO",
@@ -3643,7 +4061,9 @@
    "int": 1654000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 8.32
+   "int_basis": "interest",
+   "intcov": 8.32,
+   "intcov_strict": 8.32
   },
   "KRMN": {
    "nm": "KRMN",
@@ -3671,7 +4091,9 @@
    "int": 45200000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 1.614
+   "int_basis": "interest",
+   "intcov": 1.614,
+   "intcov_strict": 1.614
   },
   "KTB": {
    "nm": "KTB",
@@ -3698,7 +4120,9 @@
    "int": 62162000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 5.418
+   "int_basis": "interest",
+   "intcov": 5.418,
+   "intcov_strict": 5.418
   },
   "LDOS": {
    "nm": "LDOS",
@@ -3706,7 +4130,8 @@
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
-    "intcov": "支払利息の年次は 2021年が最新でアンカー 2026年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2021年が最新でアンカー 2026年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestIncomeExpenseNet",
@@ -3720,7 +4145,14 @@
    "fy_end": "2026-01-02",
    "opm": 12.28,
    "opm_fy": 2026,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 9.586,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2026,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2026)",
+    "us-gaap:InterestPaidNet(2026)"
+   ]
   },
   "LECO": {
    "nm": "LECO",
@@ -3746,7 +4178,9 @@
    "int": 58379000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 12.3
+   "int_basis": "interest",
+   "intcov": 12.3,
+   "intcov_strict": 12.3
   },
   "LEG": {
    "nm": "LEG",
@@ -3801,7 +4235,9 @@
    "int": 5184000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 13.1
+   "int_basis": "interest",
+   "intcov": 13.1,
+   "intcov_strict": 13.1
   },
   "LMT": {
    "nm": "LMT",
@@ -3828,7 +4264,9 @@
    "int": 1118000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 6.915
+   "int_basis": "interest",
+   "intcov": 6.915,
+   "intcov_strict": 6.915
   },
   "LOAR": {
    "nm": "LOAR",
@@ -3854,7 +4292,9 @@
    "int": 25665000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 4.14
+   "int_basis": "interest",
+   "intcov": 4.14,
+   "intcov_strict": 4.14
   },
   "LOMA": {
    "nm": "LOMA",
@@ -3891,12 +4331,16 @@
    "int": 4000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2024,
-   "intcov": 68849.75
+   "int_basis": "interest",
+   "intcov": 68849.75,
+   "intcov_strict": 68849.75
   },
   "LOW": {
    "nm": "LOW",
    "cik": "0000060667",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "InterestPaidNet",
     "LongTermDebt",
@@ -3912,12 +4356,24 @@
    "fcf5_all_pos": true,
    "opm": 11.77,
    "opm_fy": 2026,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 6.819,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2026,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2026)",
+    "us-gaap:InterestCostsCapitalizedAdjustment(2026)",
+    "us-gaap:InterestExpenseLongTermDebt(2026)",
+    "us-gaap:InterestExpenseOther(2026)",
+    "us-gaap:InterestPaidNet(2026)"
+   ]
   },
   "LQDT": {
    "nm": "LQDT",
    "cik": "0001235468",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "InterestIncomeExpenseNet"
    ],
@@ -3932,6 +4388,7 @@
    "int": 4375000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
+   "int_basis": "net",
    "intcov": 8.015
   },
   "LRCX": {
@@ -3959,14 +4416,17 @@
    "int": 155903000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2026,
-   "intcov": 52.595
+   "int_basis": "interest",
+   "intcov": 52.595,
+   "intcov_strict": 52.595
   },
   "LRN": {
    "nm": "LRN",
    "cik": "0001157408",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い",
-    "intcov": "支払利息の年次は 2018年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2018年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestPaidNet",
@@ -3979,7 +4439,14 @@
    "fy_end": "2025-06-30",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 39.38,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestPaidNet(2026)"
+   ]
   },
   "LSTR": {
    "nm": "LSTR",
@@ -4004,12 +4471,16 @@
    "int": 5586000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 27.135
+   "int_basis": "interest",
+   "intcov": 27.135,
+   "intcov_strict": 27.135
   },
   "LULU": {
    "nm": "LULU",
    "cik": "0001397187",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "InterestPaidNet",
     "ShortTermBorrowings"
@@ -4022,13 +4493,20 @@
    "fcf5_all_pos": true,
    "opm": 19.91,
    "opm_fy": 2026,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 2150.404,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2026,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2026)"
+   ]
   },
   "MANH": {
    "nm": "MANH",
    "cik": "0001056696",
    "nulls": {
-    "opm": "売上の年次が 2015年止まりでアンカー 2025年から古い"
+    "opm": "売上の年次が 2015年止まりでアンカー 2025年から古い",
+    "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
    "debt_trace": [
     "InterestIncomeExpenseNet"
@@ -4042,6 +4520,7 @@
    "int": 4389000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
+   "int_basis": "net",
    "intcov": 63.75
   },
   "MA": {
@@ -4068,7 +4547,9 @@
    "int": 680000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 27.79
+   "int_basis": "interest",
+   "intcov": 27.79,
+   "intcov_strict": 27.79
   },
   "MCO": {
    "nm": "MCO",
@@ -4092,12 +4573,16 @@
    "int": 251000000,
    "int_tag": "InterestExpenseBorrowings",
    "int_fy": 2025,
-   "intcov": 13.351
+   "int_basis": "interest",
+   "intcov": 13.351,
+   "intcov_strict": 13.351
   },
   "MEDP": {
    "nm": "MEDP",
    "cik": "0001668397",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "InterestPaidNet",
     "ShortTermBorrowings"
@@ -4110,14 +4595,22 @@
    "fcf5_all_pos": true,
    "opm": 21.14,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 2613.275,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2024,
+   "int_tag_candidates": [
+    "us-gaap:InterestIncomeExpenseNonoperatingNet(2025)",
+    "us-gaap:InterestPaidNet(2024)"
+   ]
   },
   "MELI": {
    "nm": "MELI",
    "cik": "0001099590",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
-    "intcov": "支払利息の年次は 2017年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2017年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestPaidNet",
@@ -4133,7 +4626,14 @@
    "op5_all_pos": true,
    "opm": 11.08,
    "opm_fy": 2025,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 5.239,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "META": {
    "nm": "META",
@@ -4159,7 +4659,9 @@
    "int": 1090000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 76.4
+   "int_basis": "interest",
+   "intcov": 76.4,
+   "intcov_strict": 76.4
   },
   "MGRC": {
    "nm": "MGRC",
@@ -4182,7 +4684,9 @@
    "int": 30622000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 7.956
+   "int_basis": "interest",
+   "intcov": 7.956,
+   "intcov_strict": 7.956
   },
   "MKSI": {
    "nm": "MKSI",
@@ -4206,12 +4710,16 @@
    "int": 212000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 2.491
+   "int_basis": "interest",
+   "intcov": 2.491,
+   "intcov_strict": 2.491
   },
   "MNST": {
    "nm": "MNST",
    "cik": "0000865752",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
     "InterestPaidNet",
@@ -4227,12 +4735,22 @@
    "fcf5_all_pos": true,
    "opm": 29.17,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 453.317,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2024)",
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "MPTI": {
    "nm": "MPTI",
    "cik": "0001902314",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "InterestIncomeExpenseNet",
     "InterestPaidNet",
@@ -4249,7 +4767,11 @@
    "int": 539000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
-   "intcov": 19.093
+   "int_basis": "net",
+   "intcov": 19.093,
+   "intcov_cash": 1143.444,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025
   },
   "MPWR": {
    "nm": "MPWR",
@@ -4307,7 +4829,9 @@
    "int": 31799000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 11.693
+   "int_basis": "interest",
+   "intcov": 11.693,
+   "intcov_strict": 11.693
   },
   "MSCI": {
    "nm": "MSCI",
@@ -4333,7 +4857,9 @@
    "int": 209889000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 8.164
+   "int_basis": "interest",
+   "intcov": 8.164,
+   "intcov_strict": 8.164
   },
   "MSEX": {
    "nm": "MSEX",
@@ -4361,7 +4887,9 @@
    "int": 14295000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 3.804
+   "int_basis": "interest",
+   "intcov": 3.804,
+   "intcov_strict": 3.804
   },
   "MSFT": {
    "nm": "MSFT",
@@ -4387,7 +4915,9 @@
    "int": 3051000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 50.881
+   "int_basis": "interest",
+   "intcov": 50.881,
+   "intcov_strict": 50.881
   },
   "MSI": {
    "nm": "MSI",
@@ -4414,7 +4944,9 @@
    "int": 360000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 8.3
+   "int_basis": "interest",
+   "intcov": 8.3,
+   "intcov_strict": 8.3
   },
   "MTN": {
    "nm": "MTN",
@@ -4441,7 +4973,9 @@
    "int": 171628000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 3.263
+   "int_basis": "interest",
+   "intcov": 3.263,
+   "intcov_strict": 3.263
   },
   "MUSA": {
    "nm": "MUSA",
@@ -4465,7 +4999,9 @@
    "int": 110900000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 6.479
+   "int_basis": "interest",
+   "intcov": 6.479,
+   "intcov_strict": 6.479
   },
   "MWA": {
    "nm": "MWA",
@@ -4493,7 +5029,9 @@
    "int": 20000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 13.03
+   "int_basis": "interest",
+   "intcov": 13.03,
+   "intcov_strict": 13.03
   },
   "NATH": {
    "nm": "NATH",
@@ -4518,14 +5056,17 @@
    "int": 2857000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 10.536
+   "int_basis": "interest",
+   "intcov": 10.536,
+   "intcov_strict": 10.536
   },
   "NBIX": {
    "nm": "NBIX",
    "cik": "0000914475",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い",
-    "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "ConvertibleDebtNoncurrent",
@@ -4539,7 +5080,13 @@
    "fy_end": "2025-12-31",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 356.562,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2024,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2024)"
+   ]
   },
   "NDSN": {
    "nm": "NDSN",
@@ -4566,14 +5113,17 @@
    "int": 104156000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 6.833
+   "int_basis": "interest",
+   "intcov": 6.833,
+   "intcov_strict": 6.833
   },
   "NEE": {
    "nm": "NEE",
    "cik": "0000753308",
    "nulls": {
     "fcf5_note": "設備投資タグが一度も無い＝営業CFのみで判定",
-    "opm": "売上の年次が 2012年止まりでアンカー 2025年から古い"
+    "opm": "売上の年次が 2012年止まりでアンカー 2025年から古い",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestPaidNet",
@@ -4587,7 +5137,13 @@
    "fy_end": "2025-12-31",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 2.365,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "NFLX": {
    "nm": "NFLX",
@@ -4612,7 +5168,9 @@
    "int": 776510000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 17.162
+   "int_basis": "interest",
+   "intcov": 17.162,
+   "intcov_strict": 17.162
   },
   "NICE": {
    "nm": "NICE",
@@ -4638,7 +5196,9 @@
    "int": 46000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2024,
-   "intcov": 11868.565
+   "int_basis": "interest",
+   "intcov": 11868.565,
+   "intcov_strict": 11868.565
   },
   "NJR": {
    "nm": "NJR",
@@ -4663,14 +5223,17 @@
    "int": 128595000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 3.957
+   "int_basis": "interest",
+   "intcov": 3.957,
+   "intcov_strict": 3.957
   },
   "NOVT": {
    "nm": "NOVT",
    "cik": "0001076930",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い",
-    "intcov": "支払利息の年次は 2011年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2011年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestPaidNet",
@@ -4683,13 +5246,23 @@
    "fy_end": "2025-12-31",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 4.166,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:DefinedBenefitPlanInterestCost(2025)",
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestPaidNet(2025)",
+    "us-gaap:UnrecognizedTaxBenefitsIncomeTaxPenaltiesAndInterestExpense(2024)"
+   ]
   },
   "NSSC": {
    "nm": "NSSC",
    "cik": "0000069633",
    "nulls": {
-    "intcov": "支払利息の年次は 2019年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2019年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestIncomeExpenseNet",
@@ -4703,7 +5276,14 @@
    "fcf5_all_pos": true,
    "opm": 25.47,
    "opm_fy": 2025,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 3844.143,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2024,
+   "int_tag_candidates": [
+    "us-gaap:InterestIncomeExpenseNonoperatingNet(2025)",
+    "us-gaap:InterestPaidNet(2024)"
+   ]
   },
   "NVDA": {
    "nm": "NVDA",
@@ -4729,7 +5309,9 @@
    "int": 259000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 503.425
+   "int_basis": "interest",
+   "intcov": 503.425,
+   "intcov_strict": 503.425
   },
   "NVMI": {
    "nm": "NVMI",
@@ -4750,7 +5332,9 @@
    "int": 1996000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 126.988
+   "int_basis": "interest",
+   "intcov": 126.988,
+   "intcov_strict": 126.988
   },
   "NVO": {
    "nm": "NVO",
@@ -4771,13 +5355,16 @@
    "int": 4207000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 30.344
+   "int_basis": "interest",
+   "intcov": 30.344,
+   "intcov_strict": 30.344
   },
   "NVT": {
    "nm": "NVT",
    "cik": "0001720635",
    "nulls": {
-    "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -4796,7 +5383,14 @@
    "fcf5_all_pos": true,
    "opm": 15.84,
    "opm_fy": 2025,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 5.808,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "NXPI": {
    "nm": "NXPI",
@@ -4823,14 +5417,18 @@
    "int": 466000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 6.539
+   "int_basis": "interest",
+   "intcov": 6.539,
+   "intcov_strict": 6.539
   },
   "NYT": {
    "nm": "NYT",
    "cik": "0000071691",
    "nulls": {
     "opm": "売上の年次が 2020年止まりでアンカー 2025年から古い",
-    "intcov_fy": "アンカー 2025年に利息が無いので**分子・分母とも 2024年**で算出（年をまたいで割らない）"
+    "intcov_fy": "アンカー 2025年に利息が無いので**分子・分母とも 2024年**で算出（年をまたいで割らない）",
+    "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestIncomeExpenseNet",
@@ -4845,7 +5443,11 @@
    "int": 36485000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2024,
-   "intcov": 9.623
+   "int_basis": "net",
+   "intcov": 9.623,
+   "intcov_cash": 3887.901,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025
   },
   "ODD": {
    "nm": "ODD",
@@ -4862,7 +5464,10 @@
    "fcf5_all_pos": true,
    "opm": 14.67,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "int_tag_candidates": [
+    "us-gaap:InterestIncomeExpenseNonoperatingNet(2024)"
+   ]
   },
   "OKE": {
    "nm": "OKE",
@@ -4889,7 +5494,9 @@
    "int": 1783000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 3.22
+   "int_basis": "interest",
+   "intcov": 3.22,
+   "intcov_strict": 3.22
   },
   "OLED": {
    "nm": "OLED",
@@ -4926,7 +5533,9 @@
    "int": 63933000,
    "int_tag": "InterestExpense",
    "int_fy": 2024,
-   "intcov": 6.083
+   "int_basis": "interest",
+   "intcov": 6.083,
+   "intcov_strict": 6.083
   },
   "ORLY": {
    "nm": "ORLY",
@@ -4949,7 +5558,9 @@
    "int": 235064000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 14.722
+   "int_basis": "interest",
+   "intcov": 14.722,
+   "intcov_strict": 14.722
   },
   "OTIS": {
    "nm": "OTIS",
@@ -4976,7 +5587,9 @@
    "int": 217000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 9.829
+   "int_basis": "interest",
+   "intcov": 9.829,
+   "intcov_strict": 9.829
   },
   "PAC": {
    "nm": "PAC",
@@ -4999,7 +5612,9 @@
    "int": 15000000,
    "int_tag": "InterestExpense",
    "int_fy": 2024,
-   "intcov": 1003.376
+   "int_basis": "interest",
+   "intcov": 1003.376,
+   "intcov_strict": 1003.376
   },
   "PAYC": {
    "nm": "PAYC",
@@ -5025,7 +5640,9 @@
    "int": 3400000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 166.824
+   "int_basis": "interest",
+   "intcov": 166.824,
+   "intcov_strict": 166.824
   },
   "PAYX": {
    "nm": "PAYX",
@@ -5052,12 +5669,16 @@
    "int": 269500000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 9.315
+   "int_basis": "interest",
+   "intcov": 9.315,
+   "intcov_strict": 9.315
   },
   "PCTY": {
    "nm": "PCTY",
    "cik": "0001591698",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "InterestPaidNet",
     "LongTermDebt"
@@ -5070,7 +5691,13 @@
    "fcf5_all_pos": true,
    "opm": 19.06,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 23.83,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2026)"
+   ]
   },
   "PH": {
    "nm": "PH",
@@ -5096,7 +5723,9 @@
    "int": 409000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 10.628
+   "int_basis": "interest",
+   "intcov": 10.628,
+   "intcov_strict": 10.628
   },
   "PKE": {
    "nm": "PKE",
@@ -5119,7 +5748,8 @@
    "cik": "0000810136",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い",
-    "intcov": "支払利息の年次は 2019年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2019年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestExpense",
@@ -5135,7 +5765,14 @@
    "fy_end": "2025-10-31",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 2081.61,
+   "int_cash_tag": "InterestPaid",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestPaid(2025)"
+   ]
   },
   "PLNT": {
    "nm": "PLNT",
@@ -5162,13 +5799,16 @@
    "int": 108244000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 3.646
+   "int_basis": "interest",
+   "intcov": 3.646,
+   "intcov_strict": 3.646
   },
   "PMTS": {
    "nm": "PMTS",
    "cik": "0001641614",
    "nulls": {
-    "opm": "売上の年次が 2020年止まりでアンカー 2025年から古い"
+    "opm": "売上の年次が 2020年止まりでアンカー 2025年から古い",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestPaidNet",
@@ -5182,7 +5822,14 @@
    "fy_end": "2025-12-31",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 1.695,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "PRDO": {
    "nm": "PRDO",
@@ -5203,7 +5850,9 @@
    "int": 6465000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 30.317
+   "int_basis": "interest",
+   "intcov": 30.317,
+   "intcov_strict": 30.317
   },
   "PRGS": {
    "nm": "PRGS",
@@ -5230,7 +5879,9 @@
    "int": 70850000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 2.164
+   "int_basis": "interest",
+   "intcov": 2.164,
+   "intcov_strict": 2.164
   },
   "PTC": {
    "nm": "PTC",
@@ -5253,7 +5904,9 @@
    "int": 77019000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 12.755
+   "int_basis": "interest",
+   "intcov": 12.755,
+   "intcov_strict": 12.755
   },
   "PWR": {
    "nm": "PWR",
@@ -5278,7 +5931,9 @@
    "int": 261445000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 6.164
+   "int_basis": "interest",
+   "intcov": 6.164,
+   "intcov_strict": 6.164
   },
   "PYPL": {
    "nm": "PYPL",
@@ -5304,14 +5959,17 @@
    "int": 441000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 13.753
+   "int_basis": "interest",
+   "intcov": 13.753,
+   "intcov_strict": 13.753
   },
   "PZZA": {
    "nm": "PZZA",
    "cik": "0000901491",
    "nulls": {
     "opm": "売上の年次が 2021年止まりでアンカー 2025年から古い",
-    "intcov": "支払利息の年次は 2022年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2022年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -5327,7 +5985,16 @@
    "fy_end": "2025-12-28",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 2.234,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:EffectiveIncomeTaxRateReconciliationMinorityInterestIncomeExpense(2024)",
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:IncomeTaxReconciliationMinorityInterestIncomeExpense(2024)",
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "QCOM": {
    "nm": "QCOM",
@@ -5350,7 +6017,9 @@
    "int": 664000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 18.607
+   "int_basis": "interest",
+   "intcov": 18.607,
+   "intcov_strict": 18.607
   },
   "QLYS": {
    "nm": "QLYS",
@@ -5374,7 +6043,9 @@
   "QSR": {
    "nm": "QSR",
    "cik": "0001618756",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
     "InterestPaidNet",
@@ -5390,7 +6061,16 @@
    "fcf5_all_pos": true,
    "opm": 23.34,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 3.084,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestExpenseDebtExcludingAmortization(2025)",
+    "us-gaap:InterestPaidNet(2025)",
+    "us-gaap:UnrecognizedTaxBenefitsIncomeTaxPenaltiesAndInterestExpense(2025)"
+   ]
   },
   "RACE": {
    "nm": "RACE",
@@ -5411,7 +6091,9 @@
    "int": 99206000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 21.266
+   "int_basis": "interest",
+   "intcov": 21.266,
+   "intcov_strict": 21.266
   },
   "RBA": {
    "nm": "RBA",
@@ -5437,7 +6119,9 @@
    "int": 191600000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 3.723
+   "int_basis": "interest",
+   "intcov": 3.723,
+   "intcov_strict": 3.723
   },
   "RBC": {
    "nm": "RBC",
@@ -5465,13 +6149,16 @@
    "int": 49800000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 8.454
+   "int_basis": "interest",
+   "intcov": 8.454,
+   "intcov_strict": 8.454
   },
   "RELX": {
    "nm": "RELX",
    "cik": "0000929869",
    "nulls": {
-    "opm": "売上の年次が 2021年止まりでアンカー 2025年から古い"
+    "opm": "売上の年次が 2021年止まりでアンカー 2025年から古い",
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
    "debt_trace": [
     "FinanceCosts"
@@ -5485,6 +6172,7 @@
    "int": 298000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_basis": "finance_costs",
    "intcov": 10.158
   },
   "RL": {
@@ -5509,7 +6197,9 @@
    "int": 54200000,
    "int_tag": "InterestExpense",
    "int_fy": 2026,
-   "intcov": 21.756
+   "int_basis": "interest",
+   "intcov": 21.756,
+   "intcov_strict": 21.756
   },
   "RMBS": {
    "nm": "RMBS",
@@ -5532,14 +6222,17 @@
    "int": 1373000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 189.525
+   "int_basis": "interest",
+   "intcov": 189.525,
+   "intcov_strict": 189.525
   },
   "RMD": {
    "nm": "RMD",
    "cik": "0000943819",
    "nulls": {
     "opm": "売上の年次が 2020年止まりでアンカー 2025年から古い",
-    "intcov": "支払利息の年次は 2021年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2021年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -5556,7 +6249,14 @@
    "fy_end": "2025-06-30",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 59.312,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestIncomeExpenseNonoperatingNet(2025)",
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "RMR": {
    "nm": "RMR",
@@ -5581,13 +6281,17 @@
    "int": 4308000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 9.699
+   "int_basis": "interest",
+   "intcov": 9.699,
+   "intcov_strict": 9.699
   },
   "ROG": {
    "nm": "ROG",
    "cik": "0000084748",
    "nulls": {
-    "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
+    "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い",
+    "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestIncomeExpenseNet",
@@ -5603,7 +6307,11 @@
    "int": 800000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
-   "intcov": -56.25
+   "int_basis": "net",
+   "intcov": -56.25,
+   "intcov_cash": -37.5,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025
   },
   "ROL": {
    "nm": "ROL",
@@ -5630,7 +6338,9 @@
    "int": 28558000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 25.424
+   "int_basis": "interest",
+   "intcov": 25.424,
+   "intcov_strict": 25.424
   },
   "ROP": {
    "nm": "ROP",
@@ -5656,13 +6366,17 @@
    "int": 325000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 6.878
+   "int_basis": "interest",
+   "intcov": 6.878,
+   "intcov_strict": 6.878
   },
   "ROST": {
    "nm": "ROST",
    "cik": "0000745732",
    "nulls": {
-    "op5_all_pos": "営業利益の年次が5年そろわない"
+    "op5_all_pos": "営業利益の年次が5年そろわない",
+    "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestIncomeExpenseNet",
@@ -5681,7 +6395,11 @@
    "int": 134800000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2026,
-   "intcov": 20.084
+   "int_basis": "net",
+   "intcov": 20.084,
+   "intcov_cash": 48.538,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2026
   },
   "RSG": {
    "nm": "RSG",
@@ -5705,7 +6423,9 @@
    "int": 574000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 5.753
+   "int_basis": "interest",
+   "intcov": 5.753,
+   "intcov_strict": 5.753
   },
   "RSVR": {
    "nm": "RSVR",
@@ -5729,7 +6449,9 @@
    "int": 26451641,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 1.445
+   "int_basis": "interest",
+   "intcov": 1.445,
+   "intcov_strict": 1.445
   },
   "SAP": {
    "nm": "SAP",
@@ -5770,7 +6492,9 @@
    "int": 50500000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 26.291
+   "int_basis": "interest",
+   "intcov": 26.291,
+   "intcov_strict": 26.291
   },
   "SPGI": {
    "nm": "SPGI",
@@ -5795,7 +6519,9 @@
    "int": 287000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 22.571
+   "int_basis": "interest",
+   "intcov": 22.571,
+   "intcov_strict": 22.571
   },
   "SPSC": {
    "nm": "SPSC",
@@ -5838,13 +6564,16 @@
    "int": 2271000,
    "int_tag": "InterestExpense",
    "int_fy": 2024,
-   "intcov": 189.333
+   "int_basis": "interest",
+   "intcov": 189.333,
+   "intcov_strict": 189.333
   },
   "STRL": {
    "nm": "STRL",
    "cik": "0000874238",
    "nulls": {
-    "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
+    "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -5858,7 +6587,16 @@
    "fy_end": "2025-12-31",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 22.751,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestIncomeExpenseNonoperatingNet(2024)",
+    "us-gaap:InterestPaidNet(2025)",
+    "us-gaap:UnrecognizedTaxBenefitsInterestOnIncomeTaxesExpense(2025)"
+   ]
   },
   "STX": {
    "nm": "STX",
@@ -5883,7 +6621,9 @@
    "int": 284000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
-   "intcov": 14.415
+   "int_basis": "interest",
+   "intcov": 14.415,
+   "intcov_strict": 14.415
   },
   "ST": {
    "nm": "ST",
@@ -5909,7 +6649,9 @@
    "int": 149100000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 1.593
+   "int_basis": "interest",
+   "intcov": 1.593,
+   "intcov_strict": 1.593
   },
   "SYK": {
    "nm": "SYK",
@@ -5932,13 +6674,16 @@
    "int": 582000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 8.4
+   "int_basis": "interest",
+   "intcov": 8.4,
+   "intcov_strict": 8.4
   },
   "SYY": {
    "nm": "SYY",
    "cik": "0000096021",
    "nulls": {
-    "intcov": "支払利息の年次は 2013年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2013年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -5955,7 +6700,14 @@
    "fcf5_all_pos": true,
    "opm": 3.8,
    "opm_fy": 2025,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 4.909,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "TDC": {
    "nm": "TDC",
@@ -5980,12 +6732,16 @@
    "int": 26000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 7.885
+   "int_basis": "interest",
+   "intcov": 7.885,
+   "intcov_strict": 7.885
   },
   "TDG": {
    "nm": "TDG",
    "cik": "0001260221",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
     "InterestExpenseNonoperating",
@@ -6003,7 +6759,13 @@
    "fcf5_all_pos": true,
    "opm": 47.16,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 2.812,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "TDY": {
    "nm": "TDY",
@@ -6030,7 +6792,9 @@
    "int": 59600000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 19.292
+   "int_basis": "interest",
+   "intcov": 19.292,
+   "intcov_strict": 19.292
   },
   "TGLS": {
    "nm": "TGLS",
@@ -6056,7 +6820,9 @@
    "int": 5965000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 38.682
+   "int_basis": "interest",
+   "intcov": 38.682,
+   "intcov_strict": 38.682
   },
   "TGS": {
    "nm": "TGS",
@@ -6077,12 +6843,16 @@
    "int": 55710108000,
    "int_tag": "InterestExpense",
    "int_fy": 2024,
-   "intcov": 10.057
+   "int_basis": "interest",
+   "intcov": 10.057,
+   "intcov_strict": 10.057
   },
   "TIGO": {
    "nm": "TIGO",
    "cik": "0000912958",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "FinanceCosts"
    ],
@@ -6097,12 +6867,15 @@
    "int": 702000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_basis": "finance_costs",
    "intcov": 2.335
   },
   "TIMB": {
    "nm": "TIMB",
    "cik": "0001826168",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "FinanceCosts"
    ],
@@ -6117,6 +6890,7 @@
    "int": 3350234000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_basis": "finance_costs",
    "intcov": 1.894
   },
   "TJX": {
@@ -6160,7 +6934,9 @@
    "int": 202724000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 4.119
+   "int_basis": "interest",
+   "intcov": 4.119,
+   "intcov_strict": 4.119
   },
   "TOL": {
    "nm": "TOL",
@@ -6181,13 +6957,19 @@
    "fy_end": "2025-10-31",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "int_tag_candidates": [
+    "us-gaap:RealEstateInventoryCapitalizedInterestCostsIncurred(2025)",
+    "us-gaap:UnrecognizedTaxBenefitsIncomeTaxPenaltiesAndInterestExpense(2025)",
+    "us-gaap:UnrecognizedTaxBenefitsInterestOnIncomeTaxesExpense(2024)"
+   ]
   },
   "TRN": {
    "nm": "TRN",
    "cik": "0000099780",
    "nulls": {
-    "intcov": "支払利息の年次は 2020年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2020年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -6203,12 +6985,23 @@
    "fcf5_all_pos": false,
    "opm": 30.1,
    "opm_fy": 2025,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 2.38,
+   "int_cash_tag": "InterestPaid",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:EffectiveIncomeTaxRateReconciliationMinorityInterestIncomeExpense(2025)",
+    "us-gaap:IncomeTaxReconciliationMinorityInterestIncomeExpense(2025)",
+    "us-gaap:InterestPaid(2025)",
+    "us-gaap:UnrecognizedTaxBenefitsIncomeTaxPenaltiesAndInterestExpense(2024)"
+   ]
   },
   "TSM": {
    "nm": "TSM",
    "cik": "0001046179",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
    "debt_trace": [
     "FinanceCosts"
    ],
@@ -6223,6 +7016,7 @@
    "int": 320100000,
    "int_tag": "FinanceCosts",
    "int_fy": 2024,
+   "int_basis": "finance_costs",
    "intcov": 125.957
   },
   "TTD": {
@@ -6245,7 +7039,9 @@
    "int": 1790000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 329.23
+   "int_basis": "interest",
+   "intcov": 329.23,
+   "intcov_strict": 329.23
   },
   "TTEK": {
    "nm": "TTEK",
@@ -6271,7 +7067,9 @@
    "int": 40639000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 10.05
+   "int_basis": "interest",
+   "intcov": 10.05,
+   "intcov_strict": 10.05
   },
   "TT": {
    "nm": "TT",
@@ -6294,12 +7092,17 @@
    "int": 226700000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 17.501
+   "int_basis": "interest",
+   "intcov": 17.501,
+   "intcov_strict": 17.501
   },
   "TXN": {
    "nm": "TXN",
    "cik": "0000097476",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ InterestAndDebtExpense の基準は **interest_plus**＝利息＋債務消滅損等を含む上位概念。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
     "InterestAndDebtExpense",
@@ -6319,7 +7122,11 @@
    "int": 543000000,
    "int_tag": "InterestAndDebtExpense",
    "int_fy": 2025,
-   "intcov": 11.092
+   "int_basis": "interest_plus",
+   "intcov": 11.092,
+   "intcov_cash": 11.113,
+   "int_cash_tag": "InterestPaid",
+   "int_cash_fy": 2025
   },
   "TYL": {
    "nm": "TYL",
@@ -6346,7 +7153,11 @@
    "int": 4995000,
    "int_tag": "InterestAndDebtExpense",
    "int_fy": 2025,
-   "intcov": 71.607
+   "int_basis": "interest_plus",
+   "intcov": 71.607,
+   "intcov_strict": 71.607,
+   "int_strict_tag": "InterestExpenseNonoperating",
+   "int_strict_fy": 2025
   },
   "UFPT": {
    "nm": "UFPT",
@@ -6372,12 +7183,16 @@
    "int": 9804000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 9.418
+   "int_basis": "interest",
+   "intcov": 9.418,
+   "intcov_strict": 9.418
   },
   "UI": {
    "nm": "UI",
    "cik": "0001511737",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "InterestPaidNet",
     "LongTermDebt",
@@ -6392,13 +7207,20 @@
    "fcf5_all_pos": false,
    "opm": 32.5,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 26.935,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "ULTA": {
    "nm": "ULTA",
    "cik": "0001403568",
    "nulls": {
-    "intcov": "支払利息の年次は 2018年が最新でアンカー 2026年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2018年が最新でアンカー 2026年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestPaidNet",
@@ -6412,7 +7234,15 @@
    "fcf5_all_pos": true,
    "opm": 12.37,
    "opm_fy": 2026,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 158.482,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2026,
+   "int_tag_candidates": [
+    "us-gaap:InterestIncomeExpenseNonoperatingNet(2025)",
+    "us-gaap:InterestPaidNet(2026)",
+    "us-gaap:UnrecognizedTaxBenefitsIncomeTaxPenaltiesAndInterestExpense(2026)"
+   ]
   },
   "UPBD": {
    "nm": "UPBD",
@@ -6434,7 +7264,9 @@
    "int": 112980000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 1.977
+   "int_basis": "interest",
+   "intcov": 1.977,
+   "intcov_strict": 1.977
   },
   "UTHR": {
    "nm": "UTHR",
@@ -6458,7 +7290,9 @@
    "int": 19500000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 76.538
+   "int_basis": "interest",
+   "intcov": 76.538,
+   "intcov_strict": 76.538
   },
   "VEEV": {
    "nm": "VEEV",
@@ -6500,7 +7334,9 @@
    "int": 64600000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 3.691
+   "int_basis": "interest",
+   "intcov": 3.691,
+   "intcov_strict": 3.691
   },
   "VRSK": {
    "nm": "VRSK",
@@ -6524,7 +7360,9 @@
    "int": 170900000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 7.864
+   "int_basis": "interest",
+   "intcov": 7.864,
+   "intcov_strict": 7.864
   },
   "V": {
    "nm": "V",
@@ -6549,7 +7387,9 @@
    "int": 589000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 40.737
+   "int_basis": "interest",
+   "intcov": 40.737,
+   "intcov_strict": 40.737
   },
   "WAB": {
    "nm": "WAB",
@@ -6575,14 +7415,17 @@
    "int": 225000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 7.969
+   "int_basis": "interest",
+   "intcov": 7.969,
+   "intcov_strict": 7.969
   },
   "WAY": {
    "nm": "WAY",
    "cik": "0001990354",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
-    "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
+    "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -6598,7 +7441,15 @@
    "fy_end": "2025-12-31",
    "opm": 22.68,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 3.053,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2025)",
+    "us-gaap:InterestPaidNet(2025)",
+    "us-gaap:UnrecognizedTaxBenefitsIncomeTaxPenaltiesAndInterestExpense(2025)"
+   ]
   },
   "WCN": {
    "nm": "WCN",
@@ -6624,7 +7475,9 @@
    "int": 334551000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 5.112
+   "int_basis": "interest",
+   "intcov": 5.112,
+   "intcov_strict": 5.112
   },
   "WDFC": {
    "nm": "WDFC",
@@ -6649,13 +7502,16 @@
    "int": 3441000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 30.164
+   "int_basis": "interest",
+   "intcov": 30.164,
+   "intcov_strict": 30.164
   },
   "WFRD": {
    "nm": "WFRD",
    "cik": "0001603923",
    "nulls": {
-    "opm": "売上の年次が 2022年止まりでアンカー 2025年から古い"
+    "opm": "売上の年次が 2022年止まりでアンカー 2025年から古い",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -6672,7 +7528,14 @@
    "fy_end": "2025-12-31",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 6.048,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2025)",
+    "us-gaap:UnrecognizedTaxBenefitsIncomeTaxPenaltiesAndInterestExpense(2025)"
+   ]
   },
   "WHD": {
    "nm": "WHD",
@@ -6699,12 +7562,16 @@
    "int": 695000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 360.433
+   "int_basis": "interest",
+   "intcov": 360.433,
+   "intcov_strict": 360.433
   },
   "WING": {
    "nm": "WING",
    "cik": "0001636222",
-   "nulls": {},
+   "nulls": {
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "InterestPaidNet",
     "LongTermDebt",
@@ -6719,7 +7586,13 @@
    "fcf5_all_pos": true,
    "opm": 25.73,
    "opm_fy": 2025,
-   "intcov_na_reason": "unmeasured"
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 3.438,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2025)"
+   ]
   },
   "WIT": {
    "nm": "WIT",
@@ -6740,7 +7613,11 @@
    "int": 173000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
-   "intcov": 10.237
+   "int_basis": "finance_costs",
+   "intcov": 10.237,
+   "intcov_strict": 0.13,
+   "int_strict_tag": "InterestExpense",
+   "int_strict_fy": 2024
   },
   "WM": {
    "nm": "WM",
@@ -6763,12 +7640,17 @@
    "int": 1000000000,
    "int_tag": "InterestCostsIncurred",
    "int_fy": 2025,
-   "intcov": 4.308
+   "int_basis": "interest",
+   "intcov": 4.308,
+   "intcov_strict": 4.308
   },
   "WSO": {
    "nm": "WSO",
    "cik": "0000105016",
-   "nulls": {},
+   "nulls": {
+    "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
    "debt_trace": [
     "InterestIncomeExpenseNet",
     "InterestPaidNet",
@@ -6787,7 +7669,11 @@
    "int": 17329000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
-   "intcov": 41.569
+   "int_basis": "net",
+   "intcov": 41.569,
+   "intcov_cash": 1033.496,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025
   },
   "WST": {
    "nm": "WST",
@@ -6814,7 +7700,9 @@
    "int": 15100000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 38.735
+   "int_basis": "interest",
+   "intcov": 38.735,
+   "intcov_strict": 38.735
   },
   "WTRG": {
    "nm": "WTRG",
@@ -6842,7 +7730,9 @@
    "int": 329081000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 5.71
+   "int_basis": "interest",
+   "intcov": 5.71,
+   "intcov_strict": 5.71
   },
   "WTS": {
    "nm": "WTS",
@@ -6865,7 +7755,9 @@
    "int": 10800000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
-   "intcov": 41.491
+   "int_basis": "interest",
+   "intcov": 41.491,
+   "intcov_strict": 41.491
   },
   "XPEL": {
    "nm": "XPEL",
@@ -6892,7 +7784,9 @@
    "int": 83000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 754.807
+   "int_basis": "interest",
+   "intcov": 754.807,
+   "intcov_strict": 754.807
   },
   "YALA": {
    "nm": "YALA",
@@ -6915,7 +7809,8 @@
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
-    "intcov": "支払利息の年次は 2023年が最新でアンカー 2026年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
+    "intcov": "支払利息の年次は 2023年が最新でアンカー 2026年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
    "debt_trace": [
     "InterestExpense",
@@ -6931,7 +7826,14 @@
    "fy_end": "2026-01-03",
    "opm": 11.43,
    "opm_fy": 2026,
-   "intcov_na_reason": "stale"
+   "intcov_na_reason": "stale",
+   "intcov_cash": 44.978,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2026,
+   "int_tag_candidates": [
+    "us-gaap:FinanceLeaseInterestExpense(2026)",
+    "us-gaap:InterestPaidNet(2026)"
+   ]
   },
   "YORW": {
    "nm": "YORW",
@@ -6958,7 +7860,9 @@
    "int": 10262000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
-   "intcov": 2.7
+   "int_basis": "interest",
+   "intcov": 2.7,
+   "intcov_strict": 2.7
   },
   "ZTS": {
    "nm": "ZTS",
@@ -7002,7 +7906,10 @@
    "int": 28600000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
-   "intcov": 9.752
+   "int_basis": "interest",
+   "intcov": 9.752,
+   "intcov_strict": 9.752
   }
- }
+ },
+ "partial": null
 }

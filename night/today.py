@@ -203,6 +203,15 @@ def build():
             month.append(item('kes:' + t, 'month', '四半期点検が不能: %s %s' % (t, where),
                               vd[:90] + '（採取の穴＝再審査では直らない）',
                               'kessan_checklist.md §C の手動確認', '四半期点検'))
+        elif v.get('superseded'):
+            # ★2026-08-12: パックの原本が既にこの四半期を含む＝空振りの可能性が高い。
+            #   **消さずに「今月」へ落とす**（要審査を異常なしに書き換えると
+            #   『測っていない』と『測って問題なし』の取り違えを自分で作る）。
+            month.append(item(
+                'kes:' + t, 'month', '四半期点検で要審査: %s %s（空振りの可能性）' % (t, where),
+                vd[:70] + '  ★パックの原本が既にこの四半期を含む（期末%s ≥ 四半期末%s）'
+                % (v.get('pack_report'), v.get('qend')),
+                '既に審査済かを _meta.kenshi で確かめる。新規事象なら門2再審査へ', '四半期点検'))
         else:
             (today if where else month).append(
                 item('kes:' + t, 'today' if where else 'month',

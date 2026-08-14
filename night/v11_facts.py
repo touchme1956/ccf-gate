@@ -60,6 +60,39 @@ INT = ["InterestExpense", "InterestExpenseDebt", "InterestAndDebtExpense"]
 INT_EXT = ["InterestExpenseNonoperating", "InterestExpenseOperatingAndNonoperating",
            "InterestExpenseBorrowings", "InterestIncomeExpenseNet", "FinanceCosts",
            "InterestAndDebtExpenseNet", "InterestCostsIncurred"]
+
+# ★2026-08-13 追加: **利息タグには基準がある**。上の候補列は「代替」として並べてあるが、
+#   実測すると `taxonomy_agreement` の一致率は **0.345** しかない＝そもそも同じ概念ではない。
+#   とくに危ないのが2つ——
+#     `FinanceCosts`(IFRS)  = 支払利息 **＋ 為替差損・リース利息・引当の割引** の上位概念。
+#         実害: 中南米の高金利・通貨安の社（AFYA/TIGO/TIMB/AXIA/ASAIY/CEPU）で
+#         **nde が純現金なのに利払カバーが3未満**という内部矛盾が出る＝為替差損を利息と読んでいる
+#     `InterestIncomeExpenseNet` = 受取利息と**相殺後の純額**。実測で符号が逆に出る例あり
+#         （InterestExpenseDebt 777,000,000 に対し同年 −950,500,000）
+#   → 候補列そのものは**変えない**（`intcov` は retro_features2.py と同一基準で、
+#      歴史側の実測〔濃縮11.0倍〕がその基準で出ている。ここを黙って変えると
+#      「基準の違う二つを割る」型を自分で作る）。
+#      代わりに **基準を記録し、真正の利息だけで作った `intcov_strict` を別に出す**。
+#      ＝roic の `_meta.basis.roic`（through-cycle / single-year / na）とまったく同じ作法。
+INT_BASIS = {
+    # 真正の利息（＝この基準の値だけが「利息を払えるか」を測っている）
+    "InterestExpense": "interest", "InterestExpenseDebt": "interest",
+    "InterestExpenseNonoperating": "interest", "InterestExpenseBorrowings": "interest",
+    "InterestExpenseOperatingAndNonoperating": "interest", "InterestCostsIncurred": "interest",
+    # 上位概念（利息＋その他の財務費用。過小に見える＝カバーが実際より低く出る側）
+    "InterestAndDebtExpense": "interest_plus", "InterestAndDebtExpenseNet": "interest_plus",
+    "FinanceCosts": "finance_costs",
+    # 純額（受取利息と相殺。符号すら逆になりうる）
+    "InterestIncomeExpenseNet": "net",
+}
+INT_PURE = [t for t in INT + INT_EXT if INT_BASIS.get(t) == "interest"]
+# ★現金で払った利息（CF計算書の補足開示）。**発生ベースの利息費用とは基準が違う**
+#   （資本化利息を除く・未払や PIK を含まない・支払時期のずれ）ので `intcov` には混ぜない。
+#   だが**測れないよりはるかにまし**——実害: TDG（nde 5.88・債務超過）は
+#   年次の利息費用タグを一つも持たず、四半期も **Q4 が離散タグで存在しない**
+#   （米国の10-Kは通期しか出さない）ので3本しか揃わず、この経路が無いと**完全に不可視**になる。
+#   ⚠ `InterestPaidNet` の "Net" は**資本化利息を除く**の意味で、受取利息との相殺ではない。
+INT_CASH = ["InterestPaidNet", "InterestPaid"]
 REV = ["Revenues", "RegulatedAndUnregulatedOperatingRevenue",
        "RevenueFromContractWithCustomerExcludingAssessedTax",
        "RevenueFromContractWithCustomerIncludingAssessedTax",
@@ -155,6 +188,87 @@ def annual(F, tags, allow_neg=True, per_year=False):
         if seen:
             return {y: v[1] for y, v in seen.items()}, {y: v[2] for y, v in seen.items()}, tg
     return {}, {}, None
+
+
+def quarters_sum(F, tags, fy_end):
+    """★2026-08-13 追加: **年次タグが無い社のために四半期を足して12ヶ月を作る**。
+       実害: TDG（nde 5.88・債務超過＝台帳で最もレバレッジの重い社）は年次の利息タグを
+       一つも持たず、あるのは `InterestIncomeExpenseNet`（**負**＝純額）と `InterestPaidNet`（現金）だけ。
+       四半期には `InterestExpenseNonoperating` が実在するので、足せば真正の利息で測れる。
+       ⚠ **もっともらしい誤値より空欄**——次のどれかが崩れたら作らない:
+         ・その会計年度に**ちょうど4本**そろう ・全部が正（費用）
+         ・期間の合計が11〜13ヶ月 ・重なりが無い
+       返り値: (tag, 合計, [期間]) か (None, None, None)"""
+    if not fy_end:
+        return None, None, None
+    import datetime as _dt
+    try:
+        end = _dt.date.fromisoformat(fy_end)
+    except Exception:
+        return None, None, None
+    start_lim = end - _dt.timedelta(days=370)
+    for tg in tags:
+        js = _ns(F, tg)
+        if not js:
+            continue
+        U = js.get('units') or {}
+        if not U:
+            continue
+        un = 'USD' if 'USD' in U else max(U, key=lambda k: len(U[k]))
+        best = {}
+        for x in U[un]:
+            s, e, fd = x.get('start'), x.get('end'), x.get('filed', '')
+            if not s or not e:
+                continue
+            try:
+                ds, de = _dt.date.fromisoformat(s), _dt.date.fromisoformat(e)
+            except Exception:
+                continue
+            m = (de.year * 12 + de.month) - (ds.year * 12 + ds.month)
+            if m < 2 or m > 4:            # 四半期だけ（年次・半期は別経路）
+                continue
+            if not (start_lim < de <= end):
+                continue
+            k = (s, e)
+            if k not in best or fd > best[k][0]:
+                best[k] = (fd, x['val'])
+        qs = sorted(best.items())
+        if len(qs) != 4:
+            continue
+        if any(v[1] <= 0 for _, v in qs):          # 費用なのに0以下＝符号規約が違う
+            continue
+        spans = [(_dt.date.fromisoformat(a), _dt.date.fromisoformat(b)) for (a, b), _ in qs]
+        if any(spans[i][0] < spans[i - 1][1] for i in range(1, 4)):   # 重なり
+            continue
+        tot_m = (spans[-1][1].year * 12 + spans[-1][1].month) - (spans[0][0].year * 12 + spans[0][0].month)
+        if tot_m < 11 or tot_m > 13:
+            continue
+        return tg, sum(v[1] for _, v in qs), [f'{a}→{b}' for (a, b), _ in qs]
+    return None, None, None
+
+
+def pick_int(F, op, anchor, tags):
+    """利息を1本選ぶ。**比の分子と分母は必ず同じ年**（年をまたいで割るのが「基準の違う二つ」の型）。
+       アンカーに届く候補のうち優先順が最上位／届かなければ最新年が最も新しい候補／
+       アンカーから2年以上古いなら算出不能（古い利息で今日を裁かない・BKNG型の回避）。
+       返り値: (tag, year, value) か (None, 'stale'|'none', 注記)"""
+    cands = []
+    for tg in tags:
+        m, _, _ = annual(F, [tg])
+        ys = [y for y in sorted(set(m) & set(op)) if m[y] > 0]
+        if ys:
+            cands.append((tg, ys, m))
+    if not cands:
+        return None, 'none', None
+    for tg, ys, m in cands:
+        if anchor in ys:
+            return tg, anchor, m[anchor]
+    newest = max(ys[-1] for _, ys, _ in cands)
+    if anchor is not None and anchor - newest <= 1:
+        tg, ys, m = next(c for c in cands if c[1][-1] == newest)
+        return tg, newest, m[newest]
+    return None, 'stale', (f'支払利息の年次は {newest}年が最新でアンカー {anchor}年から'
+                           '2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）')
 
 
 def trace_recent(F, anchor, back=3):
@@ -258,8 +372,23 @@ def main():
             #   （実測 KLAC: `OperatingIncomeLoss` が2015年で終了し 2014年を掴んでいた。
             #    CLAUDE.md が既に記録している型で、正しくは売上−原価−R&D−販管費の導出が要る）
             rec['nulls']['all'] = (f'営業利益の年次が {max(op)}年止まりでパックの {rd}年から古い'
-                                   '＝この社は導出（売上−原価−R&D−販管費）が要る。今日は未測定とする')
+                                   '＝この社は導出（売上−原価−R&D−販管費）が要る')
             op = {}
+            # ★2026-08-13: **採取器が既に出した答えを読む**（導出を再実装しない・v9.9.65）。
+            #   hachimon_fetch は直接タグが届かない社で 売上−原価−R&D−販管費 を導出し、
+            #   **その会社自身が報告している年で一致するときだけ採用する**自己検証を掛けている。
+            #   その結果が `gm`（営業利益率）としてパックに入っているので、売上を掛けて戻す。
+            #   ⚠ ここで導出式をもう一度書くと、採取器と違う答えを出す二つの検査器ができる。
+            #   実害: KLAC は🟢投下可なのに、この経路が無いと**分子が無くて利払カバーが永久に測れない**
+            gmv = d.get('gm')
+            if gmv is not None and rd and int(rd) in rev:
+                try:
+                    op = {int(rd): float(gmv) / 100.0 * rev[int(rd)]}
+                    rec['op_source'] = 'pack_gm'
+                    rec['nulls']['all'] += (f'。**パックの gm {gmv}% × 売上 {rev[int(rd)]:,.0f} で復元**'
+                                            '（採取器が自己検証つきで導出した値・再実装ではない）')
+                except (TypeError, ValueError):
+                    op = {}
         if op:
             anchor = int(rd) if (rd and int(rd) in op) else max(op)
             rec['fy'] = anchor
@@ -296,37 +425,87 @@ def main():
         #     採取器 series() が確立した規則をそのまま当てる——
         #     **アンカーに届く候補のうち優先順が最上位**／届く候補が無ければ最新年が最も新しい候補／
         #     それでもアンカーから2年以上古いなら**算出不能**（古い利息で今日を裁かない）。
-        cands = []
-        for tg in INT + INT_EXT:
-            m, _, _ = annual(F, [tg])
-            ys = [y for y in sorted(set(m) & set(op)) if m[y] > 0]
-            if ys:
-                cands.append((tg, ys, m))
-        hit_ie = None
-        for tg, ys, m in cands:
-            if anchor in ys:
-                hit_ie = (tg, anchor, m[anchor])
-                break
-        if not hit_ie and cands:
-            newest = max(ys[-1] for _, ys, _ in cands)
-            if anchor is not None and anchor - newest <= 1:
-                tg, ys, m = next(c for c in cands if c[1][-1] == newest)
-                hit_ie = (tg, newest, m[newest])
-            else:
-                rec['intcov_na_reason'] = 'stale'
-                rec['nulls']['intcov'] = (f'支払利息の年次は {newest}年が最新でアンカー {anchor}年から'
-                                          '2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）')
-        if hit_ie:
-            tg, y, val = hit_ie
+        tg, y, val = pick_int(F, op, anchor, INT + INT_EXT)
+        if tg is None and y == 'stale':
+            rec['intcov_na_reason'] = 'stale'
+            rec['nulls']['intcov'] = val
+        if tg:
             rec['int'], rec['int_tag'], rec['int_fy'] = val, tg, y
+            rec['int_basis'] = INT_BASIS.get(tg, 'unknown')
             rec['intcov'] = round(op[y] / val, 3)
             if y != anchor:
                 rec['nulls']['intcov_fy'] = (f'アンカー {anchor}年に利息が無いので'
                                              f'**分子・分母とも {y}年**で算出（年をまたいで割らない）')
+            # ★真正の利息だけで作り直す。基準が `interest` でない社は **null にして理由を書く**
+            #   ——「測っていない」を「測って問題なし」にしない（絶対のルール7の同族）
+            if rec['int_basis'] == 'interest':
+                rec['intcov_strict'] = rec['intcov']
+            else:
+                stg, sy, sval = pick_int(F, op, anchor, INT_PURE)
+                if stg:
+                    rec['intcov_strict'] = round(op[sy] / sval, 3)
+                    rec['int_strict_tag'], rec['int_strict_fy'] = stg, sy
+                else:
+                    rec['nulls']['intcov_strict'] = (
+                        f'採れた利息タグ {tg} の基準は **{rec["int_basis"]}**＝'
+                        + {'finance_costs': 'IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）',
+                           'interest_plus': '利息＋債務消滅損等を含む上位概念',
+                           'net': '受取利息と相殺した純額（符号すら逆になりうる）'}.get(
+                               rec['int_basis'], '不明')
+                        + '。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能')
         elif rec['no_debt_evidence']:
             rec['intcov_na_reason'] = 'no_debt'          # 無借金＝測れないのではなく「無い」
         elif not rec.get('intcov_na_reason'):
             rec['intcov_na_reason'] = 'unmeasured'        # 負債の痕跡はあるのに利息が採れない
+
+        # ★年次の真正タグが無い社は、四半期を足して12ヶ月を作る（TDG がこの形）。
+        #   **分子はアンカー年の営業利益**なので、分母も同じ会計年度でなければ足さない
+        if rec.get('intcov_strict') is None and not rec['no_debt_evidence'] and anchor in op:
+            qtg, qsum, qspans = quarters_sum(F, INT_PURE, rec.get('fy_end'))
+            if qtg and qsum > 0:
+                rec['intcov_strict'] = round(op[anchor] / qsum, 3)
+                rec['int_strict_tag'], rec['int_strict_fy'] = qtg, anchor
+                rec['int_strict_period'] = 'quarters_sum'
+                rec['int_strict_spans'] = qspans
+                rec['nulls'].pop('intcov_strict', None)
+                if rec.get('intcov') is None:            # intcov 側も埋まっていなければ併記
+                    rec['int'], rec['int_tag'], rec['int_fy'] = qsum, qtg, anchor
+                    rec['int_basis'], rec['int_period'] = 'interest', 'quarters_sum'
+                    rec['intcov'] = rec['intcov_strict']
+                    rec['intcov_na_reason'] = None
+                    rec['nulls'].pop('intcov', None)
+
+        # ★最後の砦: 現金で払った利息（基準が違うので **別の欄**に置き、intcov には混ぜない）
+        if rec.get('intcov_strict') is None and not rec['no_debt_evidence'] and anchor in op:
+            ctg, cy, cval = pick_int(F, op, anchor, INT_CASH)
+            if ctg:
+                rec['intcov_cash'] = round(op[cy] / cval, 3)
+                rec['int_cash_tag'], rec['int_cash_fy'] = ctg, cy
+                rec['nulls']['intcov_cash'] = ('現金で払った利息（資本化利息を除く）÷営業利益。'
+                                               '**発生ベースの利息費用ではない**＝キルの物差しにするなら'
+                                               'この基準の違いを承知のうえで')
+
+        # ★被覆の穴を**推測で埋めず、名前で出す**（2026-08-13）。
+        #   候補列に無いタグで利息を報告している社は、タグ名を足せば測れるようになる
+        #   ——ADI の `UnsecuredLongTermDebt`（候補に無い名前で5,192百万$）と同じ型。
+        #   ⚠ここでは値を採らない。**実在するタグ名を作業リストへ出すだけ**——
+        #     見つけたタグが本当に利息かは人が確かめる（勝手に足すと基準が混ざる）
+        if rec.get('intcov') is None and rec['intcov_na_reason'] in ('unmeasured', 'stale'):
+            known, found = set(INT + INT_EXT), []
+            for ns, dd in (F or {}).items():
+                if not isinstance(dd, dict):
+                    continue
+                for tg in dd:
+                    if tg in known or 'Interest' not in tg:
+                        continue
+                    if not any(k in tg for k in ('Expense', 'Cost', 'Paid', 'Charge')):
+                        continue
+                    m, _, _ = annual(F, [tg])
+                    ys = [yy for yy in sorted(set(m) & set(op)) if m[yy] > 0]
+                    if ys and anchor is not None and anchor - ys[-1] <= 1:
+                        found.append(f'{ns}:{tg}({ys[-1]})')
+            if found:
+                rec['int_tag_candidates'] = sorted(set(found))
         items[t] = rec
         if (i + 1) % 40 == 0:
             print(f'  … {i+1}/{len(packs)}', file=sys.stderr)
@@ -335,21 +514,46 @@ def main():
     out = {'generated': time.strftime('%Y-%m-%d'), 'tool': 'night/v11_facts.py',
            'definitions': {
                'intcov': 'OperatingIncomeLoss(年次)/InterestExpense(年次)＝retro_features2.py と同一定義・同一タグ順',
+               'int_basis': 'interest（真正の利息）/ interest_plus（債務消滅損等を含む）/ '
+                            'finance_costs（IFRSの財務費用＝為替差損等を含む）/ net（受取利息と相殺）',
+               'intcov_strict': '**基準が interest の利息だけ**で作った利払カバー。'
+                                'intcov と違い上位概念・純額を混ぜない＝キルの物差しに使えるのはこちら',
+               'int_tag_candidates': '候補列に無いが利息らしいタグを実在するものだけ列挙した作業リスト。'
+                                     '**値は採っていない**（本当に利息かは人が確かめる）',
+               'intcov_cash': '**現金で払った利息**（資本化利息を除く）で作った利払カバー。'
+                              '発生ベースではないので intcov / intcov_strict とは別基準——混ぜて割らないこと',
+               'int_strict_period': 'annual か quarters_sum（年次タグが無い社は同一会計年度の四半期4本を合算）',
                'op5_all_pos': 'アンカーFYから5年すべて営業利益が正',
                'fcf5_all_pos': 'アンカーFYから5年すべて (営業CF−設備投資) が正',
                'no_debt_evidence': '有利子負債・利息の痕跡タグが一つも無い＝無借金（上限の不等式で結論）'},
            'holes': {'jp': jp, 'no_cik': nocik, 'fetch_fail': fail},
            'taxonomy_agreement': tax_agree(agree),
            'items': items}
-    json.dump(out, open('out/v11_facts.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    # ★2026-08-13: **部分実行で正本を潰さない**。`--only` の6社で全299社の在庫を上書きする事故を
+    #   実際に踏んだ（score_all.js の `--jp/--us` が正本を約40行で潰したのと同じ型・在庫は git から復元）。
+    #   旗つきの実行は `.partial` へ書く＝**構造で塞ぐ**（注意力に頼らない）
+    dest = 'out/v11_facts.partial.json' if ONLY else 'out/v11_facts.json'
+    out['partial'] = sorted(ONLY) if ONLY else None
+    json.dump(out, open(dest, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     g = lambda k: sum(1 for v in items.values() if v.get(k) is not None)
     nod = sum(1 for v in items.values() if v.get('intcov_na_reason') == 'no_debt')
     unm = sum(1 for v in items.values() if v.get('intcov_na_reason') == 'unmeasured')
+    import collections as _c
+    bas = _c.Counter(v.get('int_basis') for v in items.values() if v.get('int_basis'))
+    cand = [t for t, v in items.items() if v.get('int_tag_candidates')]
     print(f'■ v11 機械項目: {len(items)}社 ／ intcov {g("intcov")} '
           f'（無借金 {nod} ／ 拡張タグのみ {g("intcov_ext")} ／ 未測定 {unm}）'
           f' ／ op5 {g("op5_all_pos")} ／ fcf5 {g("fcf5_all_pos")}')
+    qsum = sum(1 for v in items.values() if v.get('int_strict_period') == 'quarters_sum')
+    print(f'  利息の基準: ' + ' ／ '.join(f'{k} {v}' for k, v in bas.most_common())
+          + f'  → **intcov_strict {g("intcov_strict")}社**（基準が interest のものだけ'
+          + (f'・うち四半期合算 {qsum}社' if qsum else '') + '）')
+    print(f'  現金で払った利息でしか測れない社: {g("intcov_cash")}社（別基準・混ぜて割らない）')
+    if cand:
+        print(f'  ⏳候補列に無い利息らしいタグが実在する社 {len(cand)}社（作業リスト・値は採っていない）: '
+              + ' '.join(cand[:12]) + (' …' if len(cand) > 12 else ''))
     print(f'  ⚠日本株 {len(jp)}社は SEC 経路に無く**構造的な穴**（CIK不明 {len(nocik)}／取得失敗 {len(fail)}）')
-    print('→ out/v11_facts.json')
+    print(f'→ {dest}' + ('  ⚠部分実行なので正本は書き換えていない' if ONLY else ''))
     return 0
 
 

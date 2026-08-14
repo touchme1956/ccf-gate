@@ -243,6 +243,15 @@ jobs:
         continue-on-error: true
         run: timeout 300 python3 night/audit_irr85.py | tail -12
 
+      # ── 5-b6. irr=85 の二重読み（2026-08-12・A-1）────────────────────────────
+      #   実測: 同じ111社でも読解の班が違うと irr=85 の付与率が 5.4%→17.1%（3.2倍・p=0.017）。
+      #   門は irr=85 に別枠と席の優先を与えているので「いつ・誰に読まれたか」で資格が動きうる。
+      #   ⚠**関門ではない**——未検証は欠陥ではなく工程の途中。出すのは作業リストだけで、
+      #   終了コードは常に0（continue-on-error に頼らず器の側で保証してある）。
+      - name: irr=85 の二重読み audit_irr85_dual（作業リスト・表示のみ）
+        continue-on-error: true
+        run: timeout 300 python3 night/audit_irr85_dual.py | tail -30
+
       # ── 5-c. パックより新しい年次報告が出ていないか（2026-08-07新設）─────────────
       #   audit_stale_bs は**のれんの入替**しか見ないので、買収をしない優良企業が
       #   静かに1会計年度ぶん古くなるのは今日どの検査器にも掛からなかった。
@@ -320,6 +329,28 @@ jobs:
           python3 night/audit_evidence.py --q75 | tail -12
           python3 night/audit_basis.py | tail -10
           node night/audit_dom_blank.js | tail -12
+
+      # ── 6-e2. 利払カバーの被覆と基準（2026-08-13新設・表示のみ・落とさない）────────
+      #   歴史側は「利払カバー<3 は nde>4 より左尾をよく分ける」と出した（濃縮 11.0倍 vs 2.82倍）が、
+      #   **今日の台帳へそのまま当てると門が緩くなる**——被覆 58%・日本株 0/68 で、
+      #   交換すると TDG（nde 5.88・債務超過）のキルが「測れない」を理由に外れる。
+      #   さらに `FinanceCosts`（IFRSの財務費用＝為替差損等を含む）を利息と読んで
+      #   **純現金なのに利払カバー3未満**という内部矛盾が出ていた。
+      #   ⚠ この検査は買付を止めない（利払カバーは今日のどの判定にも使われていない）。
+      #      物差しを替えるかを決めるための**材料**を、止まらないように毎回出す。
+      - name: 利払カバーの被覆・基準・内部矛盾（表示のみ）
+        continue-on-error: true
+        run: python3 night/audit_intcov.py --json | tail -30
+
+      # ── 6-e3. 採取器の版とパックの検算状態（2026-08-13新設・取得なし・0.1秒）──────────
+      #   ★これが「パックに採取器の版を刻む」の効き目。今までは
+      #     「採取器を直したがパックが追いつかない」取り残しを**全社再計算(約40分)**しないと
+      #     知れなかった（実害: nde が12社で「純現金」と誤り、8ヶ月見えなかった）。
+      #     刻印したので**取得を一切せずに一瞬で答える**＝毎回のCIで回せる。
+      #   ⚠ 落とさない——取り残しは「欠陥」ではなく「工程の途中」（irr85の二重読みと同じ扱い）。
+      - name: 採取器の版とパックの検算状態（表示のみ・取得なし）
+        continue-on-error: true
+        run: python3 night/backfill_machine_evidence.py --stamps --json | tail -20
 
       # ── 6-f. 人の作業リスト自身の健康診断（2026-08-10新設・落とさない）──────────
       #   ops_status は**機械の周期作業**を測るが、**人の作業と判断の正本(todo_list.json)を
@@ -417,7 +448,7 @@ jobs:
           #   **第四の関門が読む pending.json は手で回したときしか更新されなかった**。
           #   out/irr85_myrule.json は新着の検出に前回の在庫を使うので、
           #   コミットしないと**毎回「全社が新着」になり新着の意味が消える**。
-          git add out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json night/reaudit_queue.json 2>/dev/null || true
+          git add out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json out/irr85_dual.json night/reaudit_queue.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"
           else

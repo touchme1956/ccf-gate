@@ -126,7 +126,8 @@
    "dep": "**dep = 10（上限値）**——10-K FY2025 の Customers 節が『We have **hundreds of customers** in the various industries that we serve. **No customer accounted for more than 10% of our total net sales** during 2025, 2024, or 2023.』と述べる。「10%超の顧客なし」は **dep≤10 を証明する**ので上限値として記録する（のれんの上限＝無形総額 と同じ作法。ベトは dep≥40 の一方向なので上限で裁ける）。\n《旧値47の何が誤りだったか（2026-08-07是正）》同じ節の次の文『Approximately **47%** of our total net sales for 2025 … were derived from **contracts with agencies of, and prime contractors to, the U.S. Government**』をdep へ入れていた。だがこれは**エンドマーケットの追跡**であって取引相手の集中ではない——(i)会社は**hundreds of customers** と書き、米国政府を『顧客』と呼んでいない (ii)47%の内訳は会社自身が『direct sales as a prime contractor **and indirect sales as a subcontractor**』と説明しており、**直接の取引相手は各プライム/各エージェンシー** (iii)dep欄の定義は『**単一の**取引相手への売上依存%』。\n《BWXTとの対比で識別が働くことを確認した》**BWXT は同じ政府依存でも dep=68 のまま正しい**——同社10-Kは『**Our largest and primary customer** of our Government Operations segment **is the U.S. Government**』と**単数の顧客として名指し**し、XBRLでも `bwxt:USGovernmentMember` × `us-gaap:CustomerConcentrationRiskMember` でタグ付けしている。**規約は変えていない**——欄の定義に忠実に測ると2社が別の答えになる、というだけ。\n《47%を捨てていない》米国防予算への依存は**geopol=1 が既に測っている**（根拠: 『U.S. defense spending has historically been cyclical and is subject to periodic congressional action』＋政府向け58%）。**取引相手の乗り換えリスク（dep）と予算・政治リスク（geopol）は別物**で、歴史の恒久毀損（ASPS=Ocwen／TRIP=Google／CELH=Pepsi）は前者の型だった。\n3軸の確認: (a)顧客集中 ≤10（上記） (b)チャネル依存 なし（直販・プライム経由の分散） (c)仕入・製造委託 10-K『raw materials … are available from numerous sources』＝単一委託なし。→ 3軸の最大値 10。",
    "gmt": "**flat（横ばい）で据置**。営業利益率の3年トレンド。採取器の機械判定は 'up' だが、CWは2023年に営業利益率が段階的に切り上がった後の高原（10-K FY2025 の営業利益 633,521千$ / 売上 3,498,372千$ ＝18.1%）で、直近3年の傾きは緩やか。**⚠ 採取器と食い違うので要審査**——'up' なら gmPt が上がりΩは 80.0→80.3 と微増する（実測）。判定は動かないが、原本の3年系列で確定させること。なお **v9.9.99 の事業の収縮の関門は cagr<0 ∧ gmt=down で発火する**ので、flat/up のどちらでも発火しない",
    "mcap": "発行済株式数 36,934,444株（SEC dei:EntityCommonStockSharesOutstanding・filed 2026-08-06）× px $691.52 = **25.54十億$**。2026-08-08に新規充填（それまで空欄で時価総額の比較ができなかった）",
-   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 2,391,336,000 → 2023年 2,845,373,000 → 2025年 3,498,372,000。A案(端点) 直近2年CAGR 10.88% − その前3年CAGR 5.97% = +4.92pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +6.31pt ／ 年次YoY {'2021': 4.6, '2022': 2.2, '2023': 11.3, '2024': 9.7, '2025': 12.1} → **採用 +6.31pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。"
+   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 2,391,336,000 → 2023年 2,845,373,000 → 2025年 3,498,372,000。A案(端点) 直近2年CAGR 10.88% − その前3年CAGR 5.97% = +4.92pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +6.31pt ／ 年次YoY {'2021': 4.6, '2022': 2.2, '2023': 11.3, '2024': 9.7, '2025': 12.1} → **採用 +6.31pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
+   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 14.683。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -226,6 +227,41 @@
    },
    "measured": "2026-08-11",
    "note": "**記録であって選別の線ではない**——射程も寿命も合否に一切使わない。事前登録の検定(irr85_criteria・偽陽性率0.678)が「85の中の優劣を分ける入口の変数は無い」と出しており n=27 では新しい線を作れない。Ω・採点式・四関門・堀の関門・別枠85・配分は不変。"
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-05",
+    "kind": "二重読み",
+    "verdict": "据置",
+    "by": "全数監査 night/audit_irr85.py ＋ 原本の全文走査（初回審査とは別の読み手・別セッション）",
+    "note": "irr=85 を原本で再確認・据置（全数監査 night/audit_irr85.py）。機構の引用を evidence へ刻んだ",
+    "backfilled": "2026-08-12 に当該パックの _meta.kenshi に実在する記録から後追いで刻んだ。新規に読み直したのではない"
+   }
+  ],
+  "machine_check": {
+   "date": "2026-08-13",
+   "rev": "h625b28e1c0",
+   "ok": [
+    "accr",
+    "dilNet",
+    "eps",
+    "fcf",
+    "gm",
+    "gpa",
+    "ni"
+   ],
+   "diff": [
+    "nde",
+    "roic",
+    "roicg",
+    "roict"
+   ],
+   "hand": [
+    "cagr",
+    "gmt"
+   ],
+   "gone": [],
+   "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
   }
  },
  "roiic": "na",
@@ -233,5 +269,6 @@
  "ddate": "2026-08-13",
  "dep": 10,
  "mcap": 25.54,
- "cagrT": 6.31
+ "cagrT": 6.31,
+ "intcov": 14.683
 }

@@ -16,8 +16,15 @@
 #   out/retro_moat_2013{,q}.json     … 既存の irr / moat5（**読解班には見せていない**。突合せはここで初めて行う）
 #   out/_retro_docs/2013_{T}.txt     … 原本のキャッシュ（引用の verbatim 照合に使う。無ければ照合を skip）
 #
-# 出力: out/retro_moat_pillars_test.json
-# 実行: python3 night/retro_pillars_test.py [--json]
+# 出力: out/retro_moat_pillars_test{,_2015}.json
+# 実行: python3 night/retro_pillars_test.py [--json] [--asof 2015]
+#
+# ⚠2026-08-12: asof をパラメータ化した（初版は2013固定）。**判定規則は一字も変えていない**
+#   ——MIN_N=150 も MODE_SHARE_CAP=0.85 も NPERM=2000 も HURDLE=0.15 もそのまま。
+#   変えたのはデータの出所だけ。**2013の置換の種は元の 20130712 のまま**にした——
+#   種を変えたら記録済みの p が 0.108→0.119 と動き、**過去の記録を再現できなくなる**
+#   （実際に一度やって気づいた）。新しいビンテージだけ年ごとの種を使う。事前登録は out/retro_moat_pillars_prereg_oos.json。
+#   ★H2（2013で読んでいない社だけの厳密OOS）を追加した——これも事前登録済みの主判定。
 
 import json
 import math
@@ -30,6 +37,7 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out")
 DOC = os.path.join(OUT, "_retro_docs")
 NPERM = 2000
+ASOF = 2013
 HURDLE = 0.15
 MIN_N = 150          # 事前登録: 被覆がこれ未満なら「検出力不足で判定不能」
 MODE_SHARE_CAP = 0.85  # 事前登録: 最頻値の占有がこれ以上なら「測れない」
@@ -39,6 +47,11 @@ LEVELS = {"rep": [35, 60, 80, 100], "dur": [55, 75, 85, 100],
 # 門の絶対MOAT指数の重み（index.html の ccfMoat と同じ）
 W = {"dom": .25, "irr": .25, "rep": .20, "moatW": .18, "dur": .12}
 CAP96 = 96           # ccfMoat は各本と指数を96で頭打ちにする
+# ★v9.9.141 で門は irr/dur の 100 を 85 として採点するようになったが、**ここには入れない**。
+#   この器が測っているのは「**その改定の根拠になった当の刻み**が歴史で効いたか」であり、
+#   S5 が再現するのは**改定前の門**でなければならない（改定後の門で当て直すと循環になる）。
+#   加えて 2013 の記録済みの ρ・p を再現できなくなる（同じ日に置換の種で一度踏んだ型）。
+#   ⚠これは「二つの検査器が違うことを言う」破れではない——見ている台帳も問いも別だから。
 
 
 def rows(path, key="rows"):
@@ -133,7 +146,7 @@ def verbatim(t, quote):
     """引用が原本のキャッシュに一字一句あるか。キャッシュが無ければ None（skip）"""
     if not quote:
         return None
-    p = os.path.join(DOC, f"2013_{t}.txt")
+    p = os.path.join(DOC, f"{ASOF}_{t}.txt")
     if not os.path.exists(p):
         return None
     body = norm(open(p, encoding="utf-8", errors="ignore").read())
@@ -187,22 +200,35 @@ def moat_index(d, irr):
 
 
 def main():
+    global ASOF
     as_json = "--json" in sys.argv
-    src = rows("retro_moat_pillars_2013.json")
+    ASOF = int(sys.argv[sys.argv.index("--asof") + 1]) if "--asof" in sys.argv else 2013
+    RET = {2013: ["retro_returns_2013_all.json"],
+           2015: ["retro_returns_2015.json", "retro_returns_2015_q.json"],
+           2018: ["retro_returns_2018.json"]}[ASOF]
+    PREV = {2013: ["retro_moat_2013.json", "retro_moat_2013q.json"],
+            2015: ["retro_moat_2015.json", "retro_moat_2015q.json", "retro_moat_2015qb.json"],
+            2018: ["retro_moat_2018.json", "retro_moat_2018_rest.json"]}[ASOF]
+    YRS = {2013: 13.09, 2015: 11.10, 2018: 8.09}[ASOF]
+    src = rows(f"retro_moat_pillars_{ASOF}.json")
     if not src:
-        print("out/retro_moat_pillars_2013.json が無い（読解の納品待ち）")
+        print(f"out/retro_moat_pillars_{ASOF}.json が無い（読解の納品待ち）")
         sys.exit(1)
     px, mdd = {}, {}
-    for r in rows("retro_returns_2013_all.json"):
-        if r.get("ticker") and r.get("tr_cagr") is not None:
-            px[r["ticker"]] = r["tr_cagr"]
-            if r.get("mdd") is not None:
-                mdd[r["ticker"]] = r["mdd"]
-    prev = {}
-    for f in ("retro_moat_2013.json", "retro_moat_2013q.json"):
+    for f in RET:
         for r in rows(f):
-            if r.get("ticker"):
-                prev.setdefault(r["ticker"], r)
+            if r.get("ticker") and r.get("tr_cagr") is not None:
+                px.setdefault(r["ticker"], r["tr_cagr"])
+                if r.get("mdd") is not None:
+                    mdd.setdefault(r["ticker"], r["mdd"])
+    prev = {}
+    for f in PREV:
+        for r in rows(f):
+            t = r.get("ticker") or r.get("t")
+            if t:
+                prev.setdefault(t, r)
+    # ★H2: 2013で rep/dur を読んでいない社＝真に独立な標本（事前登録の主判定）
+    read13 = {r.get("ticker") for r in rows("retro_moat_pillars_2013.json")} if ASOF != 2013 else set()
 
     D = {r["ticker"]: r for r in src if r.get("ticker")}
     tk = [t for t in D if t in px]
@@ -212,8 +238,9 @@ def main():
             "loss": round(sum(1 for t in tk if px[t] < 0) / len(tk), 3),
             "impair": round(sum(1 for t in tk if px[t] <= -HURDLE) / len(tk), 3)}
 
-    out = {"generated": "2026-08-12", "asof": 2013, "window_years": 13.09,
-           "prereg": "out/retro_moat_pillars_prereg.json（読解の結果を見る前にコミット）",
+    out = {"generated": "2026-08-12", "asof": ASOF, "window_years": YRS,
+           "prereg": ("out/retro_moat_pillars_prereg.json" if ASOF == 2013 else
+                      "out/retro_moat_pillars_prereg_oos.json（読解を1社も始める前にコミット）"),
            "note": "判定はしない。規約・値・採点式・刻み・重み・関門には触れない",
            "base": base, "coverage": {}, "quote_audit": {}, "primary": {}, "secondary": {}}
 
@@ -240,20 +267,35 @@ def main():
         r = rho(a, b)
         tab = grade_table(list(zip(a, b)), base)
         rec = {"n": len(have), "rho": round(r, 3) if r is not None else None,
-               "perm_p": perm_p(a, b, 20130712 + len(k)),
+               "perm_p": perm_p(a, b, (20130712 if ASOF == 2013 else ASOF * 10000 + 701) + len(k)),
                "monotone_median": monotone(tab), "monotone_p15": monotone(tab, "p15"),
                "grades": tab,
                "verdict_note": ("被覆不足（n<%d）で判定不能" % MIN_N) if len(have) < MIN_N else None}
         out["primary"][k] = rec
         if r is not None:
             fam.append((abs(r), k, have, a, b))
+    # ★H2 厳密OOS: 2013で読んでいない社だけで同じ主判定を回す（事前登録の主判定）
+    if read13:
+        fresh = [t for t in tk if t not in read13]
+        out["primary"]["_strict_oos"] = {"n_pool": len(fresh),
+            "note": "2013で rep/dur を読んでいない社だけ＝真に独立な標本（事前登録 H2）"}
+        for k in ("rep", "dur"):
+            have = [t for t in fresh if isinstance(D[t].get(k), (int, float))]
+            a2, b2 = [D[t][k] for t in have], [px[t] for t in have]
+            r2 = rho(a2, b2)
+            out["primary"]["_strict_oos"][k] = {
+                "n": len(have), "rho": round(r2, 3) if r2 is not None else None,
+                "perm_p": perm_p(a2, b2, ASOF * 10000 + 702 + len(k)),
+                "grades": grade_table(list(zip(a2, b2)), base),
+                "verdict_note": ("被覆不足（n<%d）で判定不能" % MIN_N) if len(have) < MIN_N else None}
+
     # 族全体（2本のうち最大|ρ|を同じ置換で裁く）
     if fam:
         fam.sort(reverse=True)
         obs = fam[0][0]
         common = [t for t in tk if all(isinstance(D[t].get(k), (int, float)) for k in ("rep", "dur"))]
         if len(common) >= 30:
-            rnd = random.Random(20130712)
+            rnd = random.Random(20130712 if ASOF == 2013 else ASOF * 10000 + 701)
             y = [px[t] for t in common]
             hit = 0
             for _ in range(NPERM):
@@ -347,14 +389,14 @@ def main():
             "lift_p15": (round(f(hi)["p15"] - base["p15"], 3) if hi else None),
             "note": "門の関門70+ を歴史で答え合わせする初めての機会。5本のうち3本以上が非nullの社のみ"}
 
-    json.dump(out, open(os.path.join(OUT, "retro_moat_pillars_test.json"), "w"),
+    json.dump(out, open(os.path.join(OUT, "retro_moat_pillars_test.json" if ASOF == 2013 else f"retro_moat_pillars_test_{ASOF}.json"), "w"),
               ensure_ascii=False, indent=1)
     if as_json:
         print(json.dumps(out, ensure_ascii=False, indent=1))
         return
 
     b = out["base"]
-    print(f"=== 2013→2026（13.09年）n={b['n']}  ベース 中央値{b['median']:+.4f} / P(15%+) {b['p15']}"
+    print(f"=== {ASOF}→2026（{YRS}年）n={b['n']}  ベース 中央値{b['median']:+.4f} / P(15%+) {b['p15']}"
           f" / 元本割れ {b['loss']} / 恒久毀損 {b['impair']} ===")
     print("\n【被覆と引用の照合】")
     for k in PILLARS:

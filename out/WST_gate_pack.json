@@ -94,10 +94,10 @@
    "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 3,176,000,000 + 有利子負債 202,800,000)＝のれん込み。roic(除外)との差が買収規律の指標",
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT -144,523,992 ÷ Δ投下資本 482,800,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 2,896,000,000→3,378,800,000（+16.7%）",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 132,864,637 ÷ Δ投下資本 1,266,800,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 2,112,000,000→3,378,800,000（+60.0%）",
-   "roict": "機械算出: のれん除外ROIC 5年系列 25.9% / 22.2% / 18.1% / 16.9% / 14.4%（最古→直近の差で判定）",
+   "roict": "機械算出: のれん除外ROIC 5年系列 26.4% / 22.2% / 18.9% / 16.9% / 14.4%（最古→直近の差で判定）",
    "gpa": "機械算出 2025年: 売上総利益 1,104,000,000 ÷ 総資産 4,270,000,000",
-   "fcf": "機械算出 2025年: 営業CF 754,800,000 − 設備投資 285,900,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）",
-   "ni": "機械算出 2025年: 純利益 493,700,000（÷1e9で十億単位表示）",
+   "fcf": "機械算出 2025年: 営業CF 754,800,000 − 設備投資 285,900,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
+   "ni": "機械算出 2025年: 純利益 493,700,000（÷1e9で十億単位表示）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
    "eps": "機械算出 2025年: 純利益 493,700,000 ÷ 株数 72,000,000（TTMではなく通期実績）",
    "eq": "機械算出 2025年: 自己資本 3,176,000,000 → 正(pos)",
    "acq5": "のれん残高(百万$) 2020 111.1→2021 109.9→2022 107.3→2023 108.5→2024 106.0→2025 109.9。新しさ=(109.9−111.1)÷109.9=**−1.1%**（10%未満）→大型買収なし=no。5年間ののれんの動きは為替換算の揺れの範囲",
@@ -125,7 +125,8 @@
    "per": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(8.0, 200.0)を通過）",
    "beta": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）",
    "shy": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(-5.0, 12.0)を通過）",
-   "evebit": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 300.0)を通過）"
+   "evebit": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 300.0)を通過）",
+   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 38.735。利息タグ InterestExpenseDebt（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict"
   },
   "provenance": {
    "cagr": "machine",
@@ -174,7 +175,8 @@
    "門0(gate0_all.csv)では score=4・fails『売上CAGR; ROIC; FCF転換』で待ち行列に乗っていなかった。門0のroicは単年・別規約(roic_latest 13.7%)",
    "2026-08-09 v9.9.120 moatW None→70: 規約の刻みの穴を塞いだ（ユーザー明示指示「刻みの穴を埋めて」）。70を残余の刻み（最大製品<70% かつ 最大顧客<20%）とし、50を「1製品≥70% or 最大顧客≥20%」へ統一。新しい定数は導入していない。",
    "2026-07-29 sht 空欄 → 'down'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
-   "2026-08-11 機構の射程と認定の寿命を原本から記録（_meta.mech）: 射程 81.1%／寿命 原本に開示なし。読解＋反証専門の二段（scope=confirmed／life=confirmed）。**合否には一切使わない記録**。置き場を _meta.evidence.irr でなく _meta.mech にしたのは、irr85_mech_diff が evidence の英文引用を原本と逐語照合するため（日本語の注記を混ぜると照合の断片が汚れる）。"
+   "2026-08-11 機構の射程と認定の寿命を原本から記録（_meta.mech）: 射程 81.1%／寿命 原本に開示なし。読解＋反証専門の二段（scope=confirmed／life=confirmed）。**合否には一切使わない記録**。置き場を _meta.evidence.irr でなく _meta.mech にしたのは、irr85_mech_diff が evidence の英文引用を原本と逐語照合するため（日本語の注記を混ぜると照合の断片が汚れる）。",
+   "2026-08-12 irr=85 の二重読み（**据置**）。**値は動かしていない**（irr 85・Ω・堀とも不変）。検問6点すべて通過。"
   ],
   "auditDate": "2026-08-05",
   "model": "claude-opus-5",
@@ -236,11 +238,45 @@
    },
    "measured": "2026-08-11",
    "note": "**記録であって選別の線ではない**——射程も寿命も合否に一切使わない。事前登録の検定(irr85_criteria・偽陽性率0.678)が「85の中の優劣を分ける入口の変数は無い」と出しており n=27 では新しい線を作れない。Ω・採点式・四関門・堀の関門・別枠85・配分は不変。"
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-12",
+    "kind": "二重読み",
+    "verdict": "据置",
+    "by": "初回審査とは別の読み手。night/audit_irr85_dual.py が名指し。最新の年次報告を全文取得して機械走査＋精読",
+    "note": "①逐語✓（@113,622・irr85_mech_diff ✓100%）／②顧客側の費用✓ **明快**——『due to the large amount of data and information that **customers must generate** to demonstrate that the components and devices are equivalent and pose no additional risk to the patient』＝乗り換えるなら顧客が同等性データを作り直す／③向き✓（当社が受ける認証ではなく顧客側の負担）／④願望形でない✓（work closely with は仕入先の話・strive to は顧客対応の話＝**機構文と無関係**）／⑤反証△ **同じリスク要因が『規制が緩めば堀が消える』と会社自身が述べる**——見出しは『Changes in the regulation of drug products and devices may increase competitive pressure』で、機構文の直後が『If the applicable regulations were to be modified in a way that reduced the level of data and information needed to prove equivalency…it is likely that the competitive pressure would increase』。**機構を否定しない**（失うものが在ることの裏返し）が、堀が規制依存であることは記録に値する／⑥射程✓ 81.1%（既記録・Note19 と Note3 の二つの開示で確認済）。"
+   }
+  ],
+  "machine_check": {
+   "date": "2026-08-13",
+   "rev": "h625b28e1c0",
+   "ok": [
+    "accr",
+    "cagr",
+    "dilNet",
+    "eps",
+    "fcf",
+    "gm",
+    "gmt",
+    "gpa",
+    "nde",
+    "ni",
+    "roict"
+   ],
+   "diff": [
+    "roic",
+    "roicg"
+   ],
+   "hand": [],
+   "gone": [],
+   "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
   }
  },
  "dep": 15.8,
  "ddate": "2026-08-13",
  "moatW": 70,
  "cagrT": -0.01,
- "sht": "down"
+ "sht": "down",
+ "intcov": 38.735
 }

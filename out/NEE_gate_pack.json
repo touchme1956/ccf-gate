@@ -124,8 +124,8 @@
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 4,704,274,879 ÷ Δ投下資本 46,792,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 102,827,000,000→149,619,000,000（+45.5%）",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 3,239,971,650 ÷ Δ投下資本 65,473,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 84,146,000,000→149,619,000,000（+77.8%）",
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 3.1% / 2022 3.7% / 2023 7.9% / 2024 5.7% / 2025 5.8% → 平均 5.2% / σ 1.7pt / **CV 32.8%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **65**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
-   "gm": "【2026-08-09 是正 32.1→30.2】門の定義=営業利益率=営業利益÷**売上高(総営業収益)**。FY2025実額: 営業利益 8,280百万$ ÷ OPERATING REVENUES 27,412百万$ = 30.21%。旧値32.1は分母に**ASC606の契約収益 25,800百万$（総営業収益の subset）**を使っていた——2026-07-29に NJR で是正したのとまったく同じ型で、NEEだけ取り残されていた",
-   "gmt": "【2026-08-09 再計算・判定はdown据置】総営業収益ベースの営業利益率3年: FY2023 10,237÷28,114=36.4% → FY2024 7,479÷24,753=30.2% → FY2025 8,280÷27,412=30.2%。直近−3年前=−6.2pt<−1pt → down。旧evidenceの「2023 41.3%→2025 32.1%」は分母がASC606 subsetだった",
+   "gm": "機械算出 2025年: 営業利益 8,280,000,000 ÷ 売上 27,412,000,000（粗利ではない）",
+   "gmt": "機械算出: 営業利益率 2023年 36.4% → 2025年 30.2%（±1ptでup/down）",
    "irr": "10-K FY2025 COMPETITION『FPL's service to its electric retail customers is provided primarily under **franchise agreements** negotiated with municipalities or counties. During the term of a franchise agreement, which is typically 30 years, **the municipality or county agrees not to form its own utility**』＋『annual operating revenues from wholesale and industrial electric customers combined represented **approximately 5%** of FPL's total operating revenues』＝競争にさらされるのは売上の約5%のみ＝全社ベースで100(実質唯一供給)。",
    "cagr": "【2026-08-09 是正 −3.0→8.8】門の定義=5年売上CAGR。損益計算書の最上段 OPERATING REVENUES (us-gaap:RegulatedAndUnregulatedOperatingRevenue) の実額: FY2020 17,997百万$ → FY2025 27,412百万$ → (27412/17997)^(1/5)−1 = 8.79% → 8.8%。ASC606の契約収益 (RevenueFromContractWithCustomerIncludingAssessedTax・FY2020 17,000 → FY2025 25,800) で取っても +8.7% で同じ帯。**旧値 −3.0 はどちらの系列からも再現できない**（根拠も無かった）。出典: https://www.sec.gov/Archives/edgar/data/753308/000075330826000015/nee-20251231.htm",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 17,997,000,000 → 2023年 28,114,000,000 → 2025年 27,412,000,000。A案(端点) 直近2年CAGR -1.26% − その前3年CAGR 16.03% = -17.29pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -23.38pt ／ 年次YoY {'2021': -5.2, '2022': 22.8, '2023': 34.2, '2024': -12.0, '2025': 10.7} → **採用 -17.29pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。"
@@ -152,6 +152,28 @@
   "basis": {
    "roic": "through-cycle-med5(?年)",
    "_note": "roic/roicg がどの基準で作られているか。v9.9.72 で through-cycle(5年中央値)へ移行したが、採取器とパックが食い違う社・系列が3年未満の社には当てていないため**台帳に二つの基準が混在する**。文字列一致で見分けるのは脆いので機械可読にした"
+  },
+  "machine_check": {
+   "date": "2026-08-13",
+   "rev": "h625b28e1c0",
+   "ok": [
+    "accr",
+    "dilNet",
+    "eps",
+    "gm",
+    "gmt",
+    "nde",
+    "roic",
+    "roicg",
+    "roict"
+   ],
+   "diff": [],
+   "hand": [],
+   "gone": [
+    "fcf",
+    "ni"
+   ],
+   "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
   }
  },
  "mcap": 183.53,
