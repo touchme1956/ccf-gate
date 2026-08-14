@@ -489,6 +489,22 @@ for path, data in [("gate1_queue.json",queue),("gate1_backlog.json",backlog),
     with open(f"{SAVE_DIR}/{path}","w",encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=1)
 
+# ── v9.9.144(2026-08-14 ユーザー明示指示「1やって」)：★落ちた理由をCSVに残す ──────────────
+#   **選別基準は一つも変えていない**。既に計算済みの値を書き出すだけ（記録の追加）。
+#   【なぜ要るか】gate0_all.csv は **excluded を計算する前に**書かれていたので、
+#   「2,902社中2,605社が門2審査に載っていない」の**内訳が後から辿れなかった**。
+#   実際に私（2026-08-14）はそれを「キューの幅の問題」と読み違え、
+#   測り直して初めて **業態除外107 / 棚55 / 低マージン16 / pt足切り96** と分かった。
+#   ＝v9.9.52「落ちた社は名指しで出す」の門0版。黙って消えるものを作らない。
+#   ⚠ pt は keep（除外を通った社）にしか付かないので、除外組は空欄になる＝それが正しい
+#     （除外された社に pt は存在しない。0 で埋めない・絶対のルール7）。
+for r in RESULTS:
+    r.setdefault("excluded", None)      # 除外判定の対象外(score<6かつ救済外)は None のまま＝「判定していない」
+with open(f"{SAVE_DIR}/gate0_all.csv","w",newline="",encoding="utf-8-sig") as fp:
+    w = csv.DictWriter(fp, fieldnames=cols+["excluded","pt","neg_flag"], extrasaction="ignore")
+    w.writeheader(); w.writerows(RESULTS)
+print(f"    gate0_all.csv を除外理由つきで再書き出し（excluded/pt/neg_flag を追加）")
+
 def line(i, r):
     fl = "⚑ " if r.get("neg_flag") else "Rx" if r.get("rx") else "  "  # ⚑=負資本合流(v8.2)
     bm = f" 〔{r['byomei']}〕" if r.get("byomei") else ""              # 病名(v8.4)
