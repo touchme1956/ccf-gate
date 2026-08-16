@@ -48,9 +48,9 @@
  "p2": 95,
  "p3": null,
  "p4": 90,
- "f1": 85,
- "f2": 80,
- "f3": 75,
+ "f1": 75.0,
+ "f2": 50.0,
+ "f3": 55.0,
  "f4": 60,
  "f5": null,
  "_meta": {
@@ -79,7 +79,10 @@
    "2026-08-02 市場価格を自動更新: px 179.17 → 183.62（+2.5%）。per 23.52→24.1　evebit 17.6→18.0　shy 2.07→2.02。基準保存式で換算（期間基準は不変）。GitHub Actions が毎営業日コミットする out/dashboard.json より。",
    "2026-08-03 acq5='no' 据置＋根拠を記録。全件点検が「ROIC乖離が2.3倍超で acq5=no＝のれん乖離−6を免除中」と警告していたが、根拠が _meta に無かった。原本で確認して据置。",
    "2026-08-04 dom横断探索(自社6-K統合報告書/四半期報告・EDGAR全文検索)を実施→空欄据置。統合報告書の『market share leader』列挙はIDC出典名指しだが%なし＝順位主張。詳細は_meta.nulls.dom",
-   "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）"
+   "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）",
+   "2026-08-16 【判断項目の根拠を20-F原本から確定（納品検査FAIL 2件の解消）】p4/f1/f2/f3/f4 に根拠が無く納品不可だった。原本 20-F FY2025 (sap-20251231x20f.htm) を全文走査して確定: **p4 90 据置**（ICFR effective・BDOの監査報告・material weakness ゼロ・ITEM 4A None・accr −2.6%）／**f1 85→75**／**f2 80→50**／**f3 75→55**／**f4 60 据置**。ni の根拠も刻んだ（純利益 7,326百万EUR）。★**f1 の 85 は規約に無い中間値だった**——roiic='na' の枝は 75/60 しかなく、85 は ROIIC枝の 80+5(再投資率≥30%) でしか出ない。roiic が na（＝Δ投下資本が −6.2% で再投資が限定的）なのに再投資加点を当てるのは定義上ありえない。**実測: Ω 79.3 → 78.0**（f1/f2/f3 の3欄で −1.3pt）。堀73・E[r]5% は不変で、納品検査FAILが解消して四関門を通る",
+   "2026-08-16 f2 の扱いに台帳内の不整合があることを記録する（今日は先例の多いほうへ揃えた）。『TAM・浸透率の数値開示が原本に無い』場合、IDXX と CDNS は **50**（どちらも 65→50・同じ文言で是正）、一方 RMD は **80** を維持している（『数値なきため注記』）。同じ欠測に3通りの答えがある。SAP は先例の多い 50 に揃えたが、**原本の定性証拠はむしろ浸透率が低いこと（クラウド移行の途上）を支持する**——刻み 90/80 が *測った* p を要求する以上 50 に倒すのは規約どおりだが、『測っていない』と『測って飽和』が同じ点になるのは v9.9.55 が潰してきた型でもある。**規約の較正の議題**として残す（値も刻みも変えていない）",
+   "2026-08-16 **roic/roicg には触れていない（残る作業リスト）**。パックの roic 30.9 / roicg 13.4 は**単年かつ無形の控除が 0**（evidence に『無形 0』と明記）で、v9.9.72 の through-cycle は『採取器とパックが15%以内で一致する社だけ』当てる規約により SAP には当てていない。IFRS原本から門式で5年を組み直すと roic中央値 26.7% / roicg中央値 7.7% で、**roicg が WACC 8.93% を割って −8 が発火し Ω 69.6＝判定圏外**になりうる。これは今日の作業（判断項目の根拠付け）とは別の判断で、原本から IFRS の無形・有利子負債を5年ぶん再構成する必要がある。**今日それを一緒にやると『根拠を刻む作業』と『基準を替える作業』が混ざる**ので分けた"
   ],
   "evidence": {
    "expiry": "限セクション『(ヒットなし)』。コンセッション/特許束依存の期限型独占ではないソフトウェア業態→no",
@@ -113,7 +116,13 @@
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 15.5% / 2022 12.0% / 2023 20.3% / 2024 12.8% / 2025 30.9% → 平均 18.3% / σ 6.9pt / **CV 37.8%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **65**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 183.62 USD（前回 179.17・+2.5%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
    "acq5": "【2026-08-03 原本】のれん残高 €27.54bn(2020) → €29.01bn(2025)、**新しさ =(29.01−27.54)÷29.01 = +5.1%**。同期間の企業結合の支出（IFRS: CashFlowsUsedInObtainingControlOfSubsidiaries…）は 2022 €0.68 + 2023 €1.17 + 2024 €1.11 + 2025 €0.70 = **€3.66bn**で、仮に全額がのれんになったとしても現のれんの12.6%、実務的な配分（7割程度）なら約9%＝**いずれも30%の線に遠く届かない**。現のれんの主体は Concur(2014・$8.3bn)・Ariba(2012)・SuccessFactors(2012) の遺産のれん。※残高の『新しさ』だけを見ると**ここでは過小に出る**——2023年に Qualtrics を売却してのれんが €33.08bn→€29.08bn へ落ちており、新規買収分がその減少に隠れる。だから取得対価の側からも裏を取った （CTAS/JKHY で使ったのと同じ二系列の突き合わせ）→ **no**（出典: SAP SE Form 20-F・SEC XBRL companyfacts ifrs-full）",
-   "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)20-F FY2025 に10%超の顧客開示なし（IFRS8.34も10%閾値）。『concentration of credit risk … mitigated through global diversification of counterparties』 → **上限10**（10%開示閾値が上限を証明する『上限の不等式』。ベトは dep≥40 の一方向なので上限で裁ける）"
+   "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)20-F FY2025 に10%超の顧客開示なし（IFRS8.34も10%閾値）。『concentration of credit risk … mitigated through global diversification of counterparties』 → **上限10**（10%開示閾値が上限を証明する『上限の不等式』。ベトは dep≥40 の一方向なので上限で裁ける）",
+   "ni": "機械算出 2025年: 純利益 7,326,000,000 EUR（÷1e9で十億EUR表示 7.3）。原本の連結持分変動計算書 12/31/2025 行『Profit after tax 7,161（親会社株主）＋165（非支配持分）＝7,326』と一致。出典 20-F FY2025 (sap-20251231x20f.htm)。門は fcf/ni を比でしか使わないので単位規約はパックのまま",
+   "p4": "**90**＝規約『accr<0 かつ 監査意見無限定 → 90』。(a) accr = −2.6%（純利益 7,326 − 営業CF 9,156）÷ 総資産 70,362＝**負**（利益より現金が多い＝保守側）。(b) 監査意見: 20-F FY2025 (sap-20251231x20f.htm)『Based on the assessment under these criteria, SAP management has concluded that, as of December 31, 2025, the Company's internal control over financial reporting **was effective**. BDO AG Wirtschaftsprüfungsgesellschaft … has issued its audit report on the effectiveness of SAP's internal control over financial reporting』。(c) 全文走査で material weakness の指摘はゼロ（唯一のヒットは監査手続の定型記述『assessing the risk that a material weakness exists』）。(d)『ITEM 4A. UNRESOLVED STAFF COMMENTS **None.**』",
+   "f1": "**75**＝規約『roiic=na は還元の質で 75/60』。roiic(3年窓) は Δ投下資本が **−3,389百万EUR（−6.2%）＝減少**で増分利回りが定義できず na（成熟還元型）。よって ROIIC のはしご（90/80/70/55）ではなく還元の質で裁く。還元は明確に高い側 → 75: FY2025 の配当 **2,743百万EUR** ＋ 自己株式取得 **1,916百万EUR** ＝ 4,659百万EUR で、同年のフリーキャッシュフロー **8,240百万EUR** の 57%。配当方針も原本に『our dividend policy is to pay a dividend of **at least 40% of the SAP Group's non-IFRS profit after tax** from continuing operations』と明文。純現金（nde −0.22）。⚠**旧値 85 は規約に無い中間値だった**——na の枝には 75/60 しか無く、85 は ROIIC枝の 80+5(再投資率≥30%) でしか出ない。roiic が na（＝再投資が限定的）なのに再投資加点を当てるのは定義上ありえない",
+   "f2": "**50**＝規約『TAM浸透率p%とTAM成長g%』の数値開示が原本に無いための保守側。20-F FY2025 (sap-20251231x20f.htm) 全文で TAM／addressable market の数値はゼロ（'addressable markets' の2件はいずれも のれん減損テストの前提と非上場株式の公正価値評価の記述で、市場規模の数値ではない）。90/80 の刻みは *測った* p<20 / p<40 を要求するので置けない。**IDXX（65→50）・CDNS（65→50）と同じ扱い**——どちらも『TAM・浸透率の数値開示が無い＝規約の保守側』で50にした先例。⚠ただし成長余地そのものは原本に定性の証拠がある（Cloud ERP Suite が +28% で 18,119百万EUR・current cloud backlog 21.05十億EUR＝年間クラウド売上とほぼ同額・『customers using over four SAP solutions more than doubling since 2021, now accounting for over 20% of our customer base』）。浸透率の実数が開示されれば上がりうる欄で、**RMD が同じ『数値なし』で 80 を維持している**のと不整合＝台帳全体の較正の議題として記録する",
+   "f3": "**55**＝規約『R&D/売上3年とシェア趨勢の2符号: 両+→90 / 片方→75 / 両−→55』。(1) R&D/売上は原本の MD&A が3年連続の低下を明記——『R&D expense as a percentage of total revenue **decreased to 18.0% in 2025 (2024: 19.1%)**』／『**decreased to 19.1% in 2024 (2023: 20.3%)**』＝ **20.3 → 19.1 → 18.0%** の一方向で **−**。（実額は 6,324 → 6,514 → 6,633百万EUR と増えているが、規約が問うのは売上比）(2) シェア趨勢は原本に数値開示が無く（sht も空欄）**+ の証拠が取れない**。よって『両+』でも『片方+』でもない → 55。⚠これは『シェアが縮んだ』の断定ではない——sht が実測で埋まれば 75 へ上がりうる。旧値 75 は『片方+』を前提にしていたが、その + が何かは記録されていなかった",
+   "f4": "**60（据置・育成中）**＝規約『隣接事業が売上5%超で成長→80 / 育成中→60 / なし→50』。20-F FY2025 (sap-20251231x20f.htm) の2セグメント制で Core Services は 4,262百万EUR＝売上の11.6% と 5% は超えるが、**成長していない**（2024 4,346 → 2025 4,262百万EUR＝−2%。原本も『our services business trends away from traditional software licensing and consulting revenue toward more revenue from cloud solutions』と縮小方向を明記）。一方 Business AI / Business Data Cloud は売上の内訳が開示されておらず育成中 → 60"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -124,7 +133,8 @@
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(財務はEUR・NYSE:SAPはADR USD建て、通貨混線注意)",
    "p3": "【2026-07-29】規約どおり空欄へ戻した。p3 は門が nde=-0.22 から同表で導出する（純現金→95 / <1→85 / <2.5→70 / 以上→50）。台帳にあった 95 は導出値と一致していたので、値を置いておく意味が無い——むしろ値が残っていると門はそれを『逸脱評価』として尊重し、nde を直しても p3 が追随しなくなる（陳腐化する）。審査プロトコル『ndeを埋めれば空欄可＝門が機械導出』。",
    "f5": "【2026-07-29】規約どおり空欄へ戻した。f5 は門が disrupt='unsettled' から同表で導出する（settled→85 / unsettled→65 / threat→45）。台帳にあった 65 は導出値と一致していたので、値を置いておく意味が無い——むしろ値が残っていると門はそれを『逸脱評価』として尊重し、disrupt を直しても f5 が追随しなくなる（陳腐化する）。審査プロトコル『disruptを埋めれば空欄可＝門が機械導出』。",
-   "cagrT": "成長の軌道を算出できない: 年次の売上が1年ぶんしか採れない（accelには6年が要る）"
+   "cagrT": "成長の軌道を算出できない: 年次の売上が1年ぶんしか採れない（accelには6年が要る）",
+   "dom": "**原本にシェアの数値開示なし＝刻みを導けないため空欄**（内容は _meta.evidence.dom と同じ。納品検査は nulls を『空欄の理由』として読むのでこちらにも置く）。20-F FY2025 (sap-20251231x20f.htm) 全文確認: 自社に関する記述は『To strengthen our position as **a leading enterprise software company**』のみで、v9.9.41(4)『順位の自称はどの刻みの証拠にもならない』に当たる。シェアの%も上位N社の合計%も無い。リスク節はむしろ逆向き（『**Market Share and Profit**: Our market share and profit could …』＝失う側のリスク記述）"
   },
   "kenshi_erosion": "2026-07-20 erosion横断再判定(一次証拠基準): emerging→none。主力ERPの競合置換実績なし(移行は自社S/4HANAへ)・営利up・roict up。WorkdayのHCM浸食は周辺領域で10年来既知、主力未達",
   "market": {
