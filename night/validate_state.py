@@ -16,6 +16,8 @@ night/validate_state.py — **人の決定の正本 state.json を検査する**
   (3) 値が JSON として読めるか（pf:portfolio 等は JSON 文字列）
   (4) **何が欠けているか**（欠けていること自体は失敗ではない。まだ入れていないだけ）
   (5) savedAt が未来でないか（端末の時計ずれは「repoのほうが新しい」を永久に成立させる）
+  (6) **holdings.json と割れていないか**——株数の正本はここ、銘柄名の一覧は holdings.json。
+      二つが割れると「株数はあるのに保有として扱われない社」ができる（下の注を見よ）
 
 ■ 何を FAIL にするか（線は高く置く）
   形が壊れている／想定外のキー／値が壊れている／savedAt が未来 だけ。
@@ -119,10 +121,38 @@ def main():
     nlog = sum(1 for k in data if k.startswith("g7log:"))
     (have if nlog else miss).append("g7log:")
 
+    # (6) holdings.json と割れていないか（**二度起きた型**: IRMD 2026-08-05 / RBC 2026-08-16）
+    #   株数の正本は state.json、銘柄名の一覧は holdings.json。実測でリポジトリ中
+    #   **保有株数を持つ追跡ファイルは state.json ただ一つ**で、holdings.json は名前しか持たない。
+    #   二つが割れると「**株数はあるのに保有として扱われない社**」ができる——
+    #   門0のHOLDINGS差替え(run_gate0_local)・四半期点検(kessan_check/calendar)・
+    #   kill_impactの保有判定・make_kanshiの監視 が全部この一覧のほうを見るため。
+    #   ⚠ FAIL にはしない: 書き出しは人がブラウザから state.json だけをコミットする経路なので、
+    #   **割れている瞬間は正常に存在しうる**。問題は放置されることなので、名指しで出し続ける。
+    drift = {"only_state": [], "only_holdings": []}
+    hp = os.path.join(ROOT, "holdings.json")
+    if "pf:portfolio" in data and os.path.exists(hp):
+        try:
+            pos = json.loads(data["pf:portfolio"]).get("positions") or []
+            held = {str(p.get("t") or "").upper() for p in pos if (p.get("sh") or 0) > 0}
+            names = {str(t).upper() for t in
+                     (json.load(open(hp, encoding="utf-8")).get("holdings") or [])}
+            drift["only_state"] = sorted(held - names)
+            drift["only_holdings"] = sorted(names - held)
+        except Exception as e:
+            warns.append(f"holdings.json との突合せができない: {e}")
+    for t in drift["only_state"]:
+        warns.append(f"{t} は state.json に株数があるのに holdings.json に無い"
+                     "——門0のHOLDINGS差替え・四半期点検・kill_impact の保有判定から漏れる")
+    for t in drift["only_holdings"]:
+        warns.append(f"{t} は holdings.json にあるのに state.json に株数が無い"
+                     "（売却済みなら holdings.json から外す／未入力ならⅦ資産で株数を入れる）")
+
     if AS_JSON:
         print(json.dumps({"ok": not fails, "savedAt": saved, "n": len(data),
                           "have": have, "missing": miss, "logs": nlog,
-                          "fails": fails, "warns": warns}, ensure_ascii=False, indent=1))
+                          "drift": drift, "fails": fails, "warns": warns},
+                         ensure_ascii=False, indent=1))
         return 1 if fails else 0
 
     print("■ 人の決定の正本 state.json の検査（night/validate_state.py）")
