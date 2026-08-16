@@ -442,7 +442,7 @@ console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告
   console.log(`⛔未完了の重大事象で見送り(合意済み・未完了の買収等でパックが会社の将来の姿を描いていない) ${pd.length}社`);
   for (const r of pd) {
     const p = r.pending;
-    const sz = p.size ? `${p.target || p.kind || ''} ${p.size.toLocaleString()}百万$（${p.status || ''}）＝完了後のれんの${p.newPct}%が新規`
+    const sz = p.size ? `${p.target || p.kind || ''} ${p.size.toLocaleString()}百万$（${p.status || ''}）＝${p.pctLabel || `完了後のれんの${p.newPct}%が新規`}`
                       : `${p.why || '判定不能'}`;
     console.log(`     ${r.nm.split(/\s/)[0]}  Ω${r.s.toFixed(1)}  ${sz}`
       + `　→ night/audit_pending.py。解消/完了して数字が入れば復帰しうる`);
