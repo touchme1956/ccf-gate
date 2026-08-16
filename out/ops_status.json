@@ -259,8 +259,8 @@
    "name": "機械是正の自動提案",
    "cadence": "週1",
    "due_days": 10,
-   "last": "2026-08-14",
-   "days": 2,
+   "last": "2026-08-16",
+   "days": 0,
    "state": "ok",
    "how": "fix.yml 毎週土曜（判定が動かなければmain直・動けばPR）",
    "auto": true
@@ -270,8 +270,8 @@
    "name": "門2審査(自動)",
    "cadence": "毎営業日",
    "due_days": 4,
-   "last": "2026-08-08",
-   "days": 8,
+   "last": "2026-08-09",
+   "days": 7,
    "state": "nokey",
    "how": "review.yml 平日17:00UTC（**ANTHROPIC_API_KEY が要る**。無ければ何もせず終了）",
    "auto": "key"
@@ -369,8 +369,8 @@
    "name": "X監視表(開通ライン)",
    "cadence": "月1",
    "due_days": 40,
-   "last": "2026-08-08",
-   "days": 8,
+   "last": "2026-08-09",
+   "days": 7,
    "state": "ok",
    "how": "ops.yml／手動 python x_watch_recalc.py",
    "auto": true
@@ -380,8 +380,8 @@
    "name": "決算点検（米国）",
    "cadence": "四半期",
    "due_days": 100,
-   "last": "2026-08-08",
-   "days": 8,
+   "last": "2026-08-09",
+   "days": 7,
    "state": "ok",
    "how": "ops.yml（月次で先回り）／手動 python kessan_check.py",
    "auto": true
@@ -391,8 +391,8 @@
    "name": "決算点検（日本株）",
    "cadence": "四半期",
    "due_days": 100,
-   "last": "2026-08-08",
-   "days": 8,
+   "last": "2026-08-09",
+   "days": 7,
    "state": "ok",
    "how": "ops.yml（EDINET_API_KEYをSecretsに置けば自動）／手動 python3 kessan_check_jp.py",
    "auto": "key"
@@ -405,7 +405,7 @@
    "last": "2026-08-04",
    "days": 12,
    "state": "ok",
-   "how": "ops.yml（7月）／手動 python3 v10_series.py　⚠**その v10_series.py が repo に存在しない**（git 全履歴にも無い）＝影の在庫はあるのに作り直せない。2027-07の答え合わせの前に要復旧",
+   "how": "ops.yml（7月）／手動 python3 v10_series.py　⚠**実行は out/v10_shadow.json を上書きする**——2027-07の答え合わせの材料はcalibration.json の凍結キー（v10_scores_2026／snapshots.2026）から採ること",
    "auto": true
   },
   {
@@ -435,8 +435,8 @@
    "name": "年次較正の封印(7月)",
    "cadence": "年1(7月)",
    "due_days": 430,
-   "last": "2026-08-08",
-   "days": 8,
+   "last": "2026-08-09",
+   "days": 7,
    "state": "ok",
    "how": "ops.yml（7月）／手動 python calibration_check.py——**封印は自動・v9/v10の勝敗判定はユーザーの判断**（V10_SPEC）",
    "auto": true
@@ -446,8 +446,8 @@
    "name": "米国門0発掘",
    "cadence": "年1(1-2月)",
    "due_days": 430,
-   "last": "2026-08-08",
-   "days": 8,
+   "last": "2026-08-09",
+   "days": 7,
    "state": "ok",
    "how": "python run_gate0_local.py（companyfacts.zip 1.4GB＝CI外）",
    "auto": false
@@ -479,8 +479,8 @@
    "name": "疑似バックテスト",
    "cadence": "年1",
    "due_days": 430,
-   "last": "2026-08-08",
-   "days": 8,
+   "last": "2026-08-09",
+   "days": 7,
    "state": "ok",
    "how": "gate0.yml（年1・7月）／手動 python3 night/backtest_core.py",
    "auto": true
@@ -488,7 +488,7 @@
  ],
  "todos": {
   "note": "スケジュールに乗せた『人のやるべきこと』の正本（2026-08-04新設）。回転盤(ops_status)が測るのは機械の周期作業だけで、宿題・決断待ち・機械で測れない定期ルーチンはここに載る。🔔イベントタブが表示する。完了したら done:true にする（消さない——やった記録も資産）。追加・完了はClaudeに頼めばよい",
-  "updated": "2026-08-14",
+  "updated": "2026-08-16",
   "items": [
    {
     "id": "edinet_key",
@@ -1479,6 +1479,14 @@
     "title": "パックの mcap 欄が古いまま・単位も混在（発見度negSの入力）",
     "note": "v9.9.146 で目標ウェイトは px×(ni÷eps) から作るようにしたので配分への実害は無い。だが mcap 欄そのものは残り、**発見度(negS)の入力として古い値が効き続けている**（156社で発火中）。実測: mcap÷px が含意する株数は ni÷eps 比で 0.80〜1.02倍にばらつき、px/ni/eps がそろう183社のうち75社が10%超ずれるか欠測、**うち9社は発見度の帯(<2 / >100)を跨ぐ**。今日の価格比では跨ぐ社0。直し方は二つで、**別の判断として分けて扱うこと**——(a)`night/apply_prices.py` の SCALE に mcap を足す（mcap は px に厳密に比例＝per/perF と同じ資格。evebit を外した理由〔EV=時価総額+純負債で価格に比例するのは前者だけ〕はここには当たらない。実測で今日は帯を跨ぐ社0＝**純粋なラチェット**）／(b)JP株の mcap を十億円→十億ドルへ揃える（発見度の刻みは十億ドル前提なので、**直すとJP株が全社『超大型』から外れてΩが動く**＝絶対のルール1の領分）。",
     "tickers": []
+   },
+   {
+    "id": "v10_vintage_choice",
+    "kind": "決断待ち",
+    "title": "2027-07の答え合わせに使う v10 のビンテージを決める（07-27版n=28 か 08-04版n=40）",
+    "due": "2027-07",
+    "note": "2026年の v10影は二つあり別の版（2026-08-16に実測で確定・両方 repo に凍結済）。(a)snapshots.2026 の v10欄＝2026-07-27版・28社 (b)v10_scores_2026.byTicker＝2026-08-04版・40社。重なる28社のうち12社で値が食い違う（UI 71.1→68.9 / ADBE 82.3→80.0 / ASML 67.3→69.1 / V 77.3→78.6 ほか）＝カバレッジ拡大だけでなく定性の入力（パック）が書き換わっている。⚠足して52社にはできない（同じ社が両方に居る）。判断材料: 07-27版は V10_SPEC 自身が『統計的に弱い』と書いた側だが、**v9側の凍結が2026-07-30なので時点として近い**。08-04版はカバレッジが広いが12社が別の入力。決めるのは絶対のルール1の領分——値も規約も触っていない",
+    "done": false
    }
   ]
  },
