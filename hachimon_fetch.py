@@ -1213,8 +1213,32 @@ if __name__ == "__main__":
     # コマンドライン引数があれば使う(Colabの -f 等の疑似引数は無視)、無ければTICKERSを使う
     args = [a for a in sys.argv[1:] if re.fullmatch(r"[A-Za-z][A-Za-z.\-]{0,7}", a)]
     targets = args or TICKERS or load_queue()
+    ok, ng = [], []
     for t in targets:
         try:
             run(t)
+            ok.append(t)
         except Exception as e:
             print(f"{t}: 失敗 → {e}")
+            ng.append(t)
+    # ⚠2026-08-17新設: **実行印**。回転盤(night/ops_status.py)は錨ファイルの日付で
+    #   「回っているか」を測るが、この採取器の出力は out/{T}_gate_input.json という
+    #   **銘柄ごとのファイル**で、盤が見る単一の錨が無かった＝**止まっても誰も気づけない**。
+    #   run_gate0_local.py の実行印(out/gate0_run.json)と同じ作法で1本残す。
+    #   ⚠ 成功と失敗を分けて数える——「走った」と「全部採れた」を混ぜない（ルール7）。
+    try:
+        import datetime as _dt, json as _json, glob as _g, os as _os
+        _stock = [_os.path.basename(f).split('_gate_input')[0]
+                  for f in _g.glob(_os.path.join(OUT, '*_gate_input.json'))]
+        _done = {_os.path.basename(f).split('_gate_pack')[0]
+                 for f in _g.glob(_os.path.join(OUT, '*_gate_pack.json'))}
+        _json.dump({'generated': _dt.date.today().isoformat(),
+                    'n_ok': len(ok), 'n_fail': len(ng), 'ok': ok, 'fail': ng,
+                    'stock_unreviewed': len([t for t in _stock if t not in _done]),
+                    'note': '機械値の下ごしらえ(hachimon_fetch)の実行印。'
+                            'stock_unreviewed=採取ずみで未審査の在庫＝門2審査の何日分あるか'},
+                   open(_os.path.join(OUT, 'fetch_run.json'), 'w', encoding='utf-8'),
+                   ensure_ascii=False, indent=1)
+        print('■ 実行印: out/fetch_run.json')
+    except Exception as _e:
+        print(f'▲ 実行印を書けなかった: {_e}')

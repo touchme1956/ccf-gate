@@ -230,6 +230,14 @@ def build():
         ("cagrt",   "成長の軌道cagrTの測定", "月1",     40,
          json_field("out/growth_trend.json", "generated"),
          "ops.yml 毎月2日／手動 python3 night/fill_growth_trend.py（反映は --write＝審査官の手）", True),
+        # 2026-08-17新設: **機械値の下ごしらえ（採取）**。ops.yml が月1で回しているのに
+        #   **盤に無かった**——出力が out/{T}_gate_input.json という**銘柄ごとのファイル**で、
+        #   盤が見る単一の錨が存在しなかったため。止まっても誰も気づけない典型の穴。
+        #   ⚠ここが止まると門2審査は**在庫が尽きるまで気づかない**（実測の在庫58社＝約12日）。
+        #   在庫の数は out/fetch_run.json の stock_unreviewed に入る（📋今日が読む）。
+        ("fetch",   "機械値の採取(門1)",     "月1",     40,
+         json_field("out/fetch_run.json", "generated"),
+         "ops.yml 毎月2日（未審査の先頭5社）／手動 python hachimon_fetch.py [T ...]", True),
         # 2026-08-10: **検出器の出力を作業へ流す接続**。止まると「検出は自動・作業は手動」の
         #   断絶が戻る——新しい10-Kが出ても納品検査がFAILしても、待ち行列に何も入らなくなる。
         ("reaudit", "再審査の待ち行列",      "月1",     40,

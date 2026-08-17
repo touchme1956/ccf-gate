@@ -70,6 +70,7 @@ SRC = [
     ('mech_diff', 'out/irr85_mech_diff.json', '機構文の年次diff', 'items'),
     ('kessan', 'out/kessan_flags.json', '四半期点検の旗', 'items'),
     ('freshness', 'out/freshness.json', '中身と入力の鮮度', 'rows'),
+    ('fetch_run', 'out/fetch_run.json', '機械値の採取の実行印', 'generated'),
 ]
 
 
@@ -174,6 +175,67 @@ def build():
     elif data.get('review_runs') is not None:
         now.append(item('review', 'now', '門2審査の走行ログが1件も無い',
                         '空振りでも1行残す規約なので、0件は「走っていない」', '', '審査ログ'))
+
+    # ── ★毎営業日と宣言した作業が、本当に毎営業日 走っているか（2026-08-17新設）──
+    #   回転盤は**最後にいつ走ったか**しか見ない。だから「5営業日のうち2日だけ走った」は
+    #   最終日が近ければ🟢に見える——**日付の死角（A/B/C）に続く4つ目、頻度の死角**。
+    #   実測(2026-08-17): ログ開始 08-11 以降の営業日5日に対しログは2日で、
+    #   盤は「最終 08-16・1日前」で🟢だった。門2審査は待ち行列を消化する**装置の心臓**なので、
+    #   飛び飛びに走っているのが見えないのは重い（在庫58社＝12日分あるので今すぐ枯れはしないが）。
+    #   ⚠ 新しい定数を作らない——窓は盤と同じ期限4日、線は「毎営業日」という**宣言そのもの**。
+    #   ⚠ 今日はまだ終わっていないので窓から外す（走っていないのが正常）。
+    #
+    #   ★★ 営業日は **JST で数える**（初版は UTC で数えて誤検出した・実測で捕まえた）。
+    #   `log_review_run.py` は `datetime.now(timezone.utc)` で date を書くが、
+    #   Routine の cron は `0 20 * * 0-4`＝**20:00 UTC ＝ 05:00 JST の月〜金**。
+    #   つまり **JST月曜の実行は UTC日曜として記録される**——実測 2026-08-16 22:55Z は
+    #   JST 2026-08-17(月) 07:55 の firing。UTC の曜日で数えると
+    #   (1) その回は「土日」として**永久に数から漏れ**、(2) 金曜は**常に抜けとして鳴る**。
+    #   ＝この repo が12回踏んだ「**基準の違う二つを割る**」型そのもの。
+    #   → `date`+`at` を JST へ直してから曜日を見る（at が無い行は date を JST 日付と読む）。
+    if runs:
+        def _jst(r):
+            d0, at = (r.get('date') or '')[:10], (r.get('at') or '')
+            if not d0:
+                return None
+            try:
+                if at:
+                    u = datetime.datetime.fromisoformat(d0 + 'T' + at.replace('Z', '+00:00'))
+                    return (u + datetime.timedelta(hours=9)).date().isoformat()
+            except Exception:
+                pass
+            return d0
+        have = {x for x in (_jst(r) for r in runs) if x}
+        # 「今日」も JST で（UTC の今日だと窓が1日ずれる）
+        jtoday = (datetime.datetime.now(datetime.timezone.utc)
+                  + datetime.timedelta(hours=9)).date()
+        first = min(have) if have else None
+        win, d = [], jtoday - datetime.timedelta(days=1)
+        while len(win) < 4 and (first is None or d.isoformat() >= first):
+            if d.weekday() < 5:
+                win.append(d.isoformat())
+            d -= datetime.timedelta(days=1)
+        miss = [x for x in win if x not in have]
+        if win and miss:
+            month.append(item('reviewfreq', 'month',
+                              '門2審査が毎営業日 走っていない（直近%d営業日で%d日）' % (len(win), len(win) - len(miss)),
+                              '抜け: ' + ' '.join(sorted(miss))
+                              + '（JST。ログはUTC記録なので直して数えている）'
+                              + '／盤は最後の日付しか見ないので🟢に見える',
+                              'Routine の発火履歴を確認（claude.ai の Routines）', '審査ログ'))
+
+    # ── 採取ずみで未審査の在庫（2026-08-17新設）──
+    #   ⚠ 線は Routine 自身の設定「5社/回」を借りる＝**新しい定数を作らない**。
+    #   ⚠ 在庫0でも門2審査は止まらない（待ち行列の大半は既存パックの再審査で、
+    #     採取ずみの機械値を要さない）。だから「止まっている」ではなく「今月」に置く。
+    fr = data.get('fetch_run') or {}
+    st = fr.get('stock_unreviewed')
+    if isinstance(st, int) and st < 5:
+        month.append(item('fetchstock', 'month',
+                          '採取ずみで未審査の在庫が %d社（Routineの1回分5社に満たない）' % st,
+                          '新規銘柄の初回審査に要る機械値が尽きかけている'
+                          '（既存パックの再審査は在庫が0でも進む）',
+                          'python hachimon_fetch.py（引数なしで待ち行列の先頭5社）', '採取の実行印'))
 
     # ── 機構文が消えた（irr=85 の根拠そのもの）──
     for t in ((data.get('mech_diff') or {}).get('gone') or []):

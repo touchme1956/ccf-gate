@@ -297,6 +297,16 @@ jobs:
           #   とくに fill_intcov は **v9.9.142 の財務キルの入力**なので、残らないと
           #   新しいパックの利払カバーが永久に空欄＝キルが眠り続ける。
           git add out/*_gate_pack.json
+          # ⚠2026-08-17: **採取の出力を add していなかった（同じ型の5回目）。**
+          #   2026-08-10 に「待ち行列の先頭を先に採取」ステップを足したとき、その出力
+          #   `out/{T}_gate_input.json` / `_hits.txt` を add の一覧に入れ忘れていた——
+          #   **すぐ上のコメントが「ステップだけ増やして add を忘れると『回っているのに残らない』」と
+          #   警告している当のことを、同じ日に足したステップでやっていた。**
+          #   実害: 月1で採った機械値ドラフトが毎回 捨てられ、翌月また同じ社を採り直す
+          #   （SECへの無駄な往復＋審査は永久に「採取ずみ在庫ゼロ」から始まる）。
+          #   out/fetch_run.json は**盤の錨**（月1・期限40日）なので、これが残らないと
+          #   採取が止まったことを検出する機構ごと止まる。
+          git add out/*_gate_input.json out/*_hits.txt out/fetch_run.json 2>/dev/null || true
           git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/backfill_diff.json out/backfill_stamps.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/rechunk*.txt night/reaudit_queue.json night/progress.json out/er_ledger.json out/market_data.json market_data.json out/shadow_*.json out/gate0_run.json 2>/dev/null || true
           git diff --staged --quiet || git commit -m "$MSG"
           git push
