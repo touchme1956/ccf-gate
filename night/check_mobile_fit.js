@@ -34,11 +34,18 @@ const ROOT = path.dirname(__dirname);
 const argv = process.argv.slice(2);
 const W = argv.includes('--width') ? Number(argv[argv.indexOf('--width') + 1]) : 360;
 const PORT = 8971;
-// ⚠タブを増やしたらここにも足すこと——**決め打ちの一覧なので、足し忘れると新しいタブだけ検査されない**
-//   （v9.9.140 の 📋今日 で実際に踏んだ。9本を検査して「全タブ✓」と出るので、穴が緑に見える）
-const TABS = [['tab10', '📋 今日'], ['tab6', '📊 盤'], ['tab9', '🔔 イベント'], ['tab1', 'Ⅰ 解説'], ['tab8', 'Ⅱ 実行手順'],
-               ['tab2', 'Ⅲ 採点機'], ['tab3', 'Ⅳ 台帳'], ['tab4', 'Ⅴ 検証履歴'],
-               ['tab5', 'Ⅵ 買付順位'], ['tab7', 'Ⅶ 保有']];
+// ★タブの一覧は**決め打ちにしない**（2026-08-17 に構造で塞いだ）。
+//   旧実装は配列に書き写しており、頭注自身が「足し忘れると新しいタブだけ検査されない」と
+//   警告していた——**v9.9.140 の 📋今日 で実際に踏み、9本を検査して「全タブ✓」と出た**＝穴が緑に見える。
+//   注意力に頼る限り必ず再発するので、**実ブラウザの nav から読む**形にした。
+//   ⚠ 読めなければ 0本で「✓」と言わずに**落とす**（測っていないことを問題なしと言わない）。
+async function tabsFromDom(p) {
+  const t = await p.evaluate(() => Array.from(document.querySelectorAll('.pgnav button'))
+    .map(b => [b.id, (b.textContent || '').replace(/\s+/g, ' ').trim()])
+    .filter(x => x[0]));
+  if (!t.length) throw new Error('.pgnav からタブを1つも読めない——検査が成立しないので落とす');
+  return t;
+}
 
 (async () => {
   let chromium;
@@ -73,6 +80,8 @@ const TABS = [['tab10', '📋 今日'], ['tab6', '📊 盤'], ['tab9', '🔔 イ
     console.log(`■ 携帯幅 ${W}px で門が収まるか（台帳 ${n} 件を取り込んで実測）\n`);
     if (n < 100) { console.log('  ⚠ 取込が少ない——out/packs_index.json を確認すること'); }
 
+    const TABS = await tabsFromDom(p);
+    console.log(`  （タブ ${TABS.length}本を nav から読んだ: ${TABS.map(x => x[0]).join(' ')}）\n`);
     for (const [id, label] of TABS) {
       await p.evaluate(i => { const e = document.getElementById(i); e && e.click(); }, id);
       await p.waitForTimeout(2200);

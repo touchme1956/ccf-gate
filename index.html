@@ -716,7 +716,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 /* 章の色（タブを変えると紙に落ちる光の色が変わる）。丹＝イベント＝警報の色 */
 #pg6{--ch:var(--gs6);} #pg9{--ch:var(--gs3);} #pg1{--ch:var(--gs1);} #pg8{--ch:var(--gs2);}
 #pg2{--ch:var(--gs5);} #pg3{--ch:#414c58;}    #pg4{--ch:var(--gs4);} #pg5{--ch:var(--gs5);}
-#pg7{--ch:var(--gs7);} .pg{--ch:var(--gs5);position:relative;}
+#pg7{--ch:var(--gs7);} #pg11{--ch:var(--gs2);} .pg{--ch:var(--gs5);position:relative;}
 
 /* ① 章の環境光（ページの上から差す。本文の色には触れない） */
 .pg::before{content:"";position:fixed;left:0;right:0;top:0;height:72vh;z-index:-1;pointer-events:none;
@@ -815,6 +815,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
  <button id="tab10" onclick="showPage(10)" style="color:var(--gold-bright)">📋 今日</button>
  <button id="tab6" onclick="showPage(6)" style="color:var(--gold-bright)">📊 盤</button>
 <button id="tab9" onclick="showPage(9)">🔔 イベント</button>
+<button id="tab11" onclick="showPage(11)">🩺 点検</button>
 <button id="tab1" onclick="showPage(1)">Ⅰ 解説</button>
 <button id="tab8" onclick="showPage(8)">Ⅱ 実行手順</button>
 <button id="tab2" onclick="showPage(2)">Ⅲ 採点機</button>
@@ -836,16 +837,30 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
      だから「今日やることはありません」は、**入力を全部読めたときにだけ**言う。 -->
 <div id="pg10" class="pg on">
  <h1 class="serif">📋 今日</h1>
- <p class="intro"><b>今日やることだけを一枚に。</b>ここに何も無ければ、今日は見るだけでよい。<details class="why" data-fold="2"><summary>つづき</summary><div class="why-body"><b>すべて情報であって判定ではない</b>——売りは S1/S2/S3・買いは四関門のみで動く。集計は <code>night/today.py</code>（out/today.json）で、期限の判定は回転盤 <code>ops_status.build()</code> をそのまま呼ぶ＝二重実装を作らない（v9.9.65）。<b>「読めなかった入力」を必ず出す</b>のがこの画面の要で、検出器が黙ったときに「異常なし」と読ませないため（絶対のルール7の親戚）。細かい内訳は 🔔イベントタブ。</div></details></p>
+ <p class="intro"><b>今日やることだけを一枚に。</b>ここに何も無ければ、今日は見るだけでよい。<details class="why" data-fold="2"><summary>つづき</summary><div class="why-body"><b>すべて情報であって判定ではない</b>——売りは S1/S2/S3・買いは四関門のみで動く。集計は <code>night/today.py</code>（out/today.json）で、期限の判定は回転盤 <code>ops_status.build()</code> をそのまま呼ぶ＝二重実装を作らない（v9.9.65）。<b>「読めなかった入力」を必ず出す</b>のがこの画面の要で、検出器が黙ったときに「異常なし」と読ませないため（絶対のルール7の親戚）。<b>点検が何を見つけたかは 🩺点検タブ</b>、作業が回っているかは 🔔イベントタブ。</div></details></p>
  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
    <button onclick="ccfToday(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
    <span id="tdAsof" style="font-size:11.5px;color:var(--dim)"></span>
  </div>
  <div id="tdBox"></div>
 </div>
+<!-- 🩺 点検（2026-08-17新設）: **毎日の点検が何を見つけたか**を一枚で。
+     既存の2枚と役割が重ならない——📋今日=「人が今日やること」／🔔イベント=「作業が回っているか（回転盤）」／
+     ここ=「**回った検査が何を出したか**」。回転盤は🟢でも中身の結果は画面のどこにも出ていなかった
+     （実測: audit_gate の要修正/未解決・門と端末の一致・凍った日付・鮮度は
+      GitHubでJSONを開かないと読めなかった）。表示だけで判定には一切使わない。 -->
+<div id="pg11" class="pg">
+ <h1 class="serif">🩺 点検</h1>
+ <div class="intro"><b>毎日の点検が何を見つけたか。</b>回転盤（🔔イベント）が「回ったか」を見るのに対し、ここは<b>回った検査の結果</b>を出す。<details class="why plain" data-fold="2"><summary>つづき</summary><div class="why-body"><b>すべて情報であって判定ではない</b>——売りは S1/S2/S3・買いは四関門のみで動く。<b>読めなかった検査は「異常なし」ではなく「測れていない」と出す</b>のがこの画面の要（絶対のルール7）。各行の数字はその検査の在庫JSONをそのまま読んだもので、ここで判定を作り直さない（v9.9.65）。</div></details></div>
+ <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+   <button onclick="ccfCheck(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
+   <span id="ckAsof" style="font-size:11.5px;color:var(--dim)"></span>
+ </div>
+ <div id="ckBox"></div>
+</div>
 <div id="pg9" class="pg">
  <h1 class="serif">🔔 イベント</h1>
- <div class="intro"><b>運用サイクル14本の回転状態</b>・監視リストの <b>8-K警報</b>（減損2.06・退任5.02・非依拠4.02・破産1.03・上場廃止通知3.01）・<b>決算</b>（発表イベント・次回予定）を一枚で。<details class="why plain" data-fold="2"><summary>つづき</summary><div class="why-body"><b>すべて情報であって判定ではない</b>——警報は各行の「審査」で門2再審査の依頼文を作って回すための気づき。売りは S1/S2/S3・買いは四関門のみで動く。データ源: out/ops_status.json／out/events_watch.json（events.yml が平日22:10UTCに毎日更新）／out/next_earnings.json（ops.yml が毎月2日に再生成）。</div></details></div>
+ <div class="intro"><b>運用サイクル14本の回転状態</b>・監視リストの <b>8-K警報</b>（減損2.06・退任5.02・非依拠4.02・破産1.03・上場廃止通知3.01）・<b>決算</b>（発表イベント・次回予定）を一枚で。<details class="why plain" data-fold="2"><summary>つづき</summary><div class="why-body"><b>すべて情報であって判定ではない</b>——警報は各行の「審査」で門2再審査の依頼文を作って回すための気づき。売りは S1/S2/S3・買いは四関門のみで動く。データ源: out/ops_status.json／out/events_watch.json（events.yml が平日22:10UTCに毎日更新）／out/next_earnings.json（ops.yml が毎月2日に再生成）。<b>回った検査が何を出したかは 🩺点検タブ</b>（ここは「回ったか」だけを見る）。</div></details></div>
  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
    <button onclick="ccfEvents(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
    <span id="evAsof" style="font-size:11.5px;color:var(--dim)"></span>
@@ -1281,7 +1296,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.147</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.148</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -4164,6 +4179,239 @@ async function ccfToday(btn){
   box.innerHTML=html;
   if(typeof ccfPaint==='function')ccfPaint(document.getElementById('pg10'));
 }
+// ── 🩺 点検（2026-08-17新設）: **毎日の点検が何を見つけたか** ──────────────────
+//   役割の分担: 📋今日=人が今日やること／🔔イベント=作業が回っているか（回転盤）／
+//   ここ=**回った検査が何を出したか**。実測で、audit_gate の要修正・未解決／門と端末の一致／
+//   凍った日付／鮮度は **GitHubでJSONを開かないと読めなかった**（回転盤は🟢としか言わない）。
+//
+//   ★この画面の設計の要は一つだけ——**読めなかった検査を「異常なし」に倒さない**。
+//     各行は3状態を持つ: ✓(測って問題なし) / ⚠(測って見つかった) / **?(測れていない)**。
+//     ?を✓と同じ緑にした瞬間、この画面は嘘をつく道具になる（絶対のルール7）。
+//   ★判定を作り直さない——数字は各検査の在庫JSONをそのまま読む（v9.9.65）。
+async function ccfCheck(btn){
+  const box=document.getElementById('ckBox'); if(!box)return;
+  const lab=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='読み込み中…';}
+  const j=async u=>{try{const r=await fetch(u+'?t='+Date.now());return r.ok?await r.json():null;}catch(e){return null;}};
+  const F={sa:'out/score_all.json',pa:'out/gate_parity.json',vf:'out/validate_fail.json',
+           pe:'out/pending.json',sb:'out/stale_bs.json',ps:'out/pack_stale.json',
+           fz:'out/frozen_dates.json',fr:'out/freshness.json',ta:'out/todo_audit.json',
+           rr:'out/review_runs.json',md:'out/irr85_mech_diff.json',du:'out/irr85_dual.json',
+           mr:'out/irr85_myrule.json',op:'out/ops_status.json',fe:'out/fetch_run.json'};
+  const K=Object.keys(F), got=await Promise.all(K.map(k=>j(F[k])));
+  const D={}; K.forEach((k,i)=>D[k]=got[i]);
+  if(btn){btn.disabled=false;btn.textContent=lab;}
+
+  const esc=t=>String(t==null?'':t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const arr=(d,k)=>(d&&Array.isArray(d[k]))?d[k]:null;   // null=測れていない（0件と区別する）
+  const dayOf=s=>{try{const t=Date.parse(String(s).slice(0,10)+'T00:00:00Z');
+    return isNaN(t)?null:Math.max(0,Math.round((Date.now()-t)/864e5));}catch(e){return null;}};
+
+  // 錨(score_all)が読めなければこの画面は何も言えない。ここで緑に倒れない
+  if(!D.sa||!Array.isArray(D.sa)){
+    box.innerHTML='<div style="padding:15px;border:1px solid rgba(207,95,72,.5);border-left:4px solid #cf5f48;'
+      +'border-radius:9px;background:rgba(207,95,72,.07)"><b style="color:#ff9d8a;font-size:15px">⚠ 点検の結果が読めません</b>'
+      +'<div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px">out/score_all.json が取得できませんでした。'
+      +'<b>「異常なし」ではありません</b>——測れていないだけです。'
+      +'<br>手元で <code>node night/score_all.js</code> を回すか、CI（ci.yml）の実行を確認してください。</div></div>';
+    return; }
+
+  const rows=D.sa, buy=rows.filter(r=>r.buy), band=rows.filter(r=>(r.s||0)>=72);
+  const audE=rows.filter(r=>r.audE).length, audU=rows.filter(r=>r.audU).length;
+  const asof=document.getElementById('ckAsof');
+  if(asof)asof.textContent='全'+rows.length+'社　投下可 '+buy.length+'社　判定圏 '+band.length+'社';
+
+  // ── 1行 = 1検査。v は測定値・s は状態・src は出所 ──────────────
+  //   s: 'ok'（測って問題なし）/ 'warn'（測って見つかった）/ 'na'（**測れていない**）
+  const L=[];
+  const add=(name,s,v,why,src)=>L.push({name:name,s:s,v:v,why:why||'',src:src||'',g:L.__g});
+  const grp=g=>{L.__g=g;};
+
+  // 判定圏(Ω72+)＝**門自身の線**。「今日の買付に効くか」をこの線だけで分ける（新しい線を作らない）
+  const bandSet={}; band.forEach(r=>bandSet[r.t]=1);
+  const aud=(nm,f,zeroWhy)=>{const hit=rows.filter(f),hot=hit.filter(r=>bandSet[r.t]);
+    add(nm,(hot.length?'warn':(hit.length?'info':'ok')),
+        hit.length+'件'+(hit.length?('（判定圏 '+hot.length+'）'):''),
+        (hit.length?((hot.length?'判定圏: '+hot.map(r=>r.t).join(' ')+'　／　':'判定圏には無い　')
+                     +'全体: '+hit.map(r=>r.t).join(' ')):zeroWhy),'score_all.json');};
+
+  grp('門の答え');
+  add('投下可',(buy.length?'ok':'warn'),buy.length+'社',
+      buy.map(r=>r.t).join(' '),'score_all.json');
+  aud('点検の要修正（第四の関門）',r=>r.audE,'取込で化けた／列挙値違反／内部矛盾／不可能値は無い');
+  aud('未解決の警告（端末側の関門）',r=>r.audU,'_metaに根拠のある警告は✓検算済として数えない');
+
+  grp('門と端末が同じことを言っているか');
+  if(!D.pa)add('Ωと投下可の一致','na','測れていない','out/gate_parity.json が読めない＝**食い違っていない証拠にはならない**','gate_parity.json');
+  else{
+    const ok=D.pa.ok===true, bad=Array.isArray(D.pa.bad)?D.pa.bad.length:null;
+    add('Ωと投下可の一致',(ok?'ok':'warn'),
+        (D.pa.n_ledger!=null?('Ω '+D.pa.n_ledger+'/'+D.pa.n_term+' 一致'):(ok?'一致':'食い違い')),
+        (ok?'実ブラウザで取り込んだ台帳と端末の score_all が同じことを言っている':
+            ('食い違い '+(bad==null?'?':bad)+'件'))+'　測定 '+esc(D.pa.generated||'—'),'gate_parity.json');
+  }
+
+  grp('データの健全（買付を止める入力）');
+  // ⚠ items は **銘柄をキーにした dict**（配列ではない）。実測で踏んだ——
+  //   配列だけを受ける読み方にしていたら4件とも「測れていない」と出た。
+  //   ファイルは読めているのに読み手が間違っている、という**最も紛らわしい偽の?**なので、
+  //   両方の形を受けたうえで「どちらでもない」ときだけ null にする。
+  const keys=(d,k)=>{if(!d)return null;const v=d[k];
+    if(Array.isArray(v))return v.map(x=>(x&&(x.t||x.ticker))||String(x));
+    if(v&&typeof v==='object')return Object.keys(v);
+    return null;};
+  // ★件数だけ出すと「鳴りすぎる警報は鳴らないのと同じ」になる——納品検査FAILの275件は
+  //   大半が判定圏の外の既知の積み残しで、今日の買付には効かない。
+  //   かといって隠すのは論外なので、**門自身の線（判定圏 Ω72+）で内訳を出す**。
+  //   新しい線を作っていない＝この repo が既に使っている線（bandSet）をそのまま当てるだけ。
+  const pair=(nm,ks,zeroWhy,src)=>{
+    if(ks===null){add(nm,'na','測れていない','out/'+src+' が読めない、または items の形が違う',src);return;}
+    const hot=ks.filter(t=>bandSet[t]);
+    add(nm,(hot.length?'warn':(ks.length?'info':'ok')),
+        ks.length+'件'+(ks.length?('（判定圏 '+hot.length+'）'):''),
+        (ks.length?((hot.length?('判定圏: '+hot.join(' ')+'　／　'):'判定圏には無い＝今日の買付には効かない　')
+                    +'全体: '+ks.slice(0,12).join(' ')+(ks.length>12?' …':'')):zeroWhy),src);};
+  pair('納品検査 FAIL',keys(D.vf,'items'),'値があるのに根拠が無いパックは無い','validate_fail.json');
+  pair('未完了の重大事象',keys(D.pe,'items'),'完了後にのれんの3割超が入れ替わる合意は無い','pending.json');
+  pair('期末後の貸借対照表',keys(D.sb,'items'),'期末後にのれんが大きく動いた社は無い','stale_bs.json');
+  pair('パックの会計年度の遅れ',keys(D.ps,'items'),'新しい年次報告が出たまま未反映の社は無い','pack_stale.json');
+
+  grp('道具そのものが生きているか');
+  const fzn=arr(D.fz,'frozen');
+  add('凍った日付',(fzn===null?'na':(fzn.length?'warn':'ok')),
+      (fzn===null?'測れていない':fzn.length+'件'),
+      (fzn===null?'out/frozen_dates.json が読めない':
+       (fzn.length?fzn.map(x=>x.file+':'+x.line).join(' '):
+        '実行時の今日を意味する名前に固定日は入っていない（歴史検証の錨は設計どおり除外）')),'frozen_dates.json');
+  if(!D.fr)add('中身と入力の鮮度','na','測れていない','out/freshness.json が読めない','freshness.json');
+  else{
+    const nf=D.fr.n_flagged, nu=D.fr.n_unmeasurable, nl=D.fr.n_src_lag;
+    add('中身と入力の鮮度',(nf?'warn':'ok'),
+        (nf||0)+'件 要確認',
+        '測った '+(D.fr.n_checked||0)+'件／**測れない '+(nu||0)+'件**'
+        +(nl?('／配信元の限界 '+nl+'件（我々の停止ではない）'):'')
+        +'　※日付は動くのに中身が凍る(B)・入力が死ぬ(C)を見る','freshness.json');
+  }
+  const ru=arr(D.rr,'runs');
+  if(ru===null)add('門2審査の走行ログ','na','測れていない','out/review_runs.json が読めない','review_runs.json');
+  else{
+    // ★営業日は JST で数える——ログは UTC 記録だが Routine は 05:00 JST の月〜金に発火する。
+    //   UTC の曜日で数えると JST月曜の回が「日曜」として漏れ、金曜が常に抜けとして鳴る
+    //   （端末側 night/today.py と同じ直し方。二つの画面が違うことを言わないため）
+    const jd=r=>{const d0=String(r.date||'').slice(0,10),at=String(r.at||'');
+      if(!d0)return null; if(!at)return d0;
+      const t=Date.parse(d0+'T'+at.replace('Z','+00:00')); if(isNaN(t))return d0;
+      return new Date(t+9*3600e3).toISOString().slice(0,10);};
+    const have={}; ru.forEach(r=>{const x=jd(r); if(x)have[x]=1;});
+    const first=Object.keys(have).sort()[0]||null;
+    const jnow=new Date(Date.now()+9*3600e3), win=[];
+    let d=new Date(jnow.getTime()-864e5);
+    while(win.length<4){const iso=d.toISOString().slice(0,10);
+      if(first&&iso<first)break;
+      if(d.getUTCDay()>=1&&d.getUTCDay()<=5)win.push(iso);
+      d=new Date(d.getTime()-864e5);}
+    const miss=win.filter(x=>!have[x]);
+    const last=ru.length?ru[ru.length-1]:null;
+    add('門2審査が毎営業日 走ったか',(win.length&&miss.length?'warn':'ok'),
+        (win.length?((win.length-miss.length)+'/'+win.length+'営業日'):'—'),
+        (miss.length?('抜け: '+miss.join(' ')+'（JST。盤は最後の日付しか見ないので🟢に見える）'):'')
+        +(last?('　最新 '+esc(last.date)+' '+esc(last.label||last.outcome||'')+(last.n?('・'+last.n+'社'):'')):''),
+        'review_runs.json');
+  }
+  if(!D.ta)add('やることリストの点検','na','測れていない','out/todo_audit.json が読めない','todo_audit.json');
+  else{
+    const dr=(D.ta.drifted||[]).length,du2=(D.ta.duplicates||[]).length,
+          rs=(D.ta.resolved||[]).length,gm=(D.ta.gate_exception_mismatch||[]).length,
+          bad2=dr+du2+rs+gm;
+    add('やることリストの点検',(bad2?'warn':'ok'),(bad2?bad2+'件':'ずれ無し'),
+        '未完 '+(D.ta.open!=null?D.ta.open:'?')+'件／件数のずれ '+dr+'・重複 '+du2
+        +'・解決済みなのに done:false '+rs+'・門外例外の食い違い '+gm,'todo_audit.json');
+  }
+  if(!D.fe)add('機械値の採取','na','測れていない','out/fetch_run.json が読めない','fetch_run.json');
+  else{const st=D.fe.stock_unreviewed;
+    add('機械値の採取',((st!=null&&st<5)?'warn':'ok'),
+        (st!=null?('在庫 '+st+'社'):'—'),
+        '最終 '+esc(D.fe.generated||'—')+'（'+(D.fe.n_ok||0)+'社成功'
+        +((D.fe.n_fail||0)?('・'+D.fe.n_fail+'社失敗'):'')+'）'
+        +(st!=null&&st<5?'　※Routineの1回分5社に満たない':'　※採取ずみで未審査＝新規銘柄の初回審査に要る在庫'),
+        'fetch_run.json');}
+
+  grp('irr=85 の見張り（歴史で唯一効いた欄）');
+  const gone=arr(D.md,'gone');
+  add('機構文が原本に現存するか',(gone===null?'na':(gone.length?'warn':'ok')),
+      (gone===null?'測れていない':(gone.length?gone.length+'社で消えた':'全社 一字同文')),
+      (gone===null?'out/irr85_mech_diff.json が読めない':
+       (gone.length?gone.map(x=>x.t||x).join(' '):'⚠片側の検査——消えたら赤信号だが、在っても安全ではない')),'irr85_mech_diff.json');
+  if(!D.du)add('二重読み','na','測れていない','out/irr85_dual.json が読めない','irr85_dual.json');
+  else add('二重読み',((D.du.n_todo||0)?'warn':'ok'),
+      (D.du.n_todo||0)+'社 未検証',
+      '対象 '+(D.du.n_irr85||0)+'社／留保つき '+(D.du.n_reserved||0)+'社'
+      +'　※関門ではなく作業リスト（未検証は欠陥ではなく工程の途中）','irr85_dual.json');
+  if(!D.mr)add('あなたの基準との食い違い','na','測れていない','out/irr85_myrule.json が読めない','irr85_myrule.json');
+  else{
+    // ⚠ counts のキーは**日本語**（"合格"/"判定不能"/"不合格"）。英語キーを当てて '?' を出していた——
+    //   在庫の形を確かめずに読むと、読めているのに「測れていない」に見える偽の?になる（実測で是正）
+    const c=D.mr.counts||{},nm2=x=>((x&&(x.t||x.ticker))||String(x));
+    const gi=(D.mr.gap_in||[]).map(nm2),go=(D.mr.gap_out||[]).map(nm2),nw=(D.mr.new||[]).map(nm2);
+    add('あなたの基準との食い違い',((gi.length+go.length)?'info':'ok'),
+      (gi.length+go.length)?((gi.length+go.length)+'社'):'一致',
+      '合格 '+(c['合格']!=null?c['合格']:'?')+'社／判定不能 '+(c['判定不能']!=null?c['判定不能']:'?')
+      +'社／不合格 '+(c['不合格']!=null?c['不合格']:'?')+'社'
+      +(nw.length?('　新着 '+nw.join(' ')):'')
+      +(gi.length?('　基準は通るが門が止める: '+gi.join(' ')):'')
+      +(go.length?('　門は通すが基準を割る: '+go.join(' ')):''),'irr85_myrule.json');}
+
+  // ── 回転盤の一行要約（詳細は🔔イベント。ここでは「止まっているか」だけ）──
+  let opsLine='';
+  if(D.op&&Array.isArray(D.op.items)){
+    const it=D.op.items, stop=it.filter(x=>x.state==='stop'||x.state==='late'||x.over);
+    opsLine='<div style="font-size:11.5px;color:var(--dim);margin-top:2px">'
+      +'回転盤 '+it.length+'本のうち停止疑い <b style="color:'+(stop.length?'#ff9d8a':'#8fc9a4')+'">'
+      +stop.length+'本</b>'+(stop.length?('（'+stop.slice(0,6).map(x=>esc(x.label||x.id)).join('・')+'）'):'')
+      +'　→ 内訳は 🔔 イベントタブ</div>';
+  }else opsLine='<div style="font-size:11.5px;color:#ffcf8a;margin-top:2px">回転盤が読めていません（out/ops_status.json）</div>';
+
+  // ── 描画 ──────────────────────────────────────────────
+  //   info = 件数はあるが判定圏の外＝作業リスト（今日の買付には効かない）。
+  //   warn と同じ色にすると本物が埋もれるので分ける（v9.9.66 の ✓検算済 と同じ作法）
+  const COL={ok:'#54b88a',warn:'#e0a23c',info:'#7f93ad',na:'#8a8f98'};
+  const ICO={ok:'✓',warn:'⚠',info:'・',na:'?'};
+  const nOk=L.filter(x=>x.s==='ok').length,nW=L.filter(x=>x.s==='warn').length,
+        nI=L.filter(x=>x.s==='info').length,nNa=L.filter(x=>x.s==='na').length;
+  const line=x=>'<div style="display:flex;gap:9px;align-items:baseline;padding:7px 0;border-top:1px solid rgba(255,255,255,.05)">'
+    +'<span style="color:'+COL[x.s]+';font-size:13px;min-width:1.1em">'+ICO[x.s]+'</span>'
+    +'<span style="flex:1;min-width:9em"><b style="font-size:12.5px;color:var(--ink)">'+esc(x.name)+'</b>'
+    +(x.why?'<div style="font-size:11px;color:var(--ink-soft);margin-top:2px;word-break:break-word">'+esc(x.why)+'</div>':'')
+    +(x.src?'<div style="font-size:10px;color:var(--dim);margin-top:1px">'+esc(x.src)+'</div>':'')+'</span>'
+    +'<span style="font-size:12.5px;font-weight:600;color:'+COL[x.s]+';white-space:nowrap">'+esc(x.v)+'</span></div>';
+  const sec=(t,inner,note)=>'<div style="margin-bottom:16px;padding:13px 15px;background:var(--panel);border:1px solid var(--line);border-radius:9px">'
+    +'<div style="font-size:13.5px;font-weight:600;color:var(--gold-bright);margin-bottom:4px">'+t+'</div>'+inner
+    +(note?'<div style="font-size:10.5px;color:var(--dim);margin-top:7px">'+note+'</div>':'')+'</div>';
+
+  let html='<div style="margin-bottom:14px;padding:11px 15px;border-radius:9px;border:1px solid '
+    +(nW?'rgba(224,162,60,.45)':(nNa?'rgba(138,143,152,.4)':'rgba(84,184,138,.4)'))
+    +';background:'+(nW?'rgba(224,162,60,.07)':(nNa?'rgba(138,143,152,.06)':'rgba(84,184,138,.06)'))+'">'
+    +'<b style="font-size:14.5px;color:'+(nW?'#e8b95c':(nNa?'#b9bec7':'#8fc9a4'))+'">'
+    +(nW?('⚠ 判定圏に効くもの '+nW+'件'):(nNa?'測れていない検査があります':'✓ 今日の点検で判定圏に効くものは無い'))+'</b>'
+    +'<div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px">'
+    +'測って問題なし '+nOk+'／<b>判定圏に効く '+nW+'</b>／判定圏の外の作業リスト '+nI
+    +'／<b>測れていない '+nNa+'</b>'
+    +'　※<b>「測れていない」は「異常なし」ではない</b>／判定圏＝Ω72+（門自身の線）</div>'+opsLine+'</div>';
+
+  const gs=[]; L.forEach(x=>{if(!gs.length||gs[gs.length-1].g!==x.g)gs.push({g:x.g,xs:[]});gs[gs.length-1].xs.push(x);});
+  gs.forEach(g=>{html+=sec(g.g,g.xs.map(line).join(''));});
+
+  const naL=L.filter(x=>x.s==='na');
+  if(naL.length)html+=sec('⚠ 測れていない検査（この画面が何も言えない部分）',
+    naL.map(x=>'<div style="font-size:12px;padding:4px 0;color:var(--ink-soft)">・<b>'+esc(x.name)+'</b>　'+esc(x.why)+'</div>').join(''),
+    '検出器が黙ったときに「異常なし」と読ませないために必ず出す。手元で該当のツールを回すか CI の実行を確認してください');
+
+  html+='<div style="font-size:10.5px;color:var(--dim);margin-top:4px">'
+    +'すべて表示専用——Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3・配分はこの画面から一切動かない。'
+    +'数字は各検査の在庫JSONをそのまま読んだもので、ここで判定を作り直していない（v9.9.65）。'
+    +'作業の周期そのものは 🔔 イベントの回転盤、人がやることは 📋 今日。</div>';
+  box.innerHTML=html;
+  if(typeof ccfPaint==='function')ccfPaint(document.getElementById('pg11'));
+}
 async function ccfEvents(btn){
   const box=$('evBox'); if(!box)return;
   const lab=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='読込中…';}
@@ -5946,7 +6194,7 @@ async function renderLog(){
 }
 function toggleLog(ek){const b=document.getElementById('bd_'+ek),a=document.getElementById('ar_'+ek);if(!b)return;const open=b.style.display!=='none';b.style.display=open?'none':'block';if(a)a.textContent=open?'▸':'▾';}
 async function delLog(k){if(!await uiConfirm('この検証記録を削除しますか？'))return;try{await store.delete(k);renderLog();}catch(e){}}
-function showPage(n){for(let i=1;i<=10;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();if(n===9&&typeof ccfEvents==='function')ccfEvents();if(n===10&&typeof ccfToday==='function')ccfToday();window.scrollTo({top:0});try{const _t=document.getElementById('tab'+n);if(_t&&_t.scrollIntoView)_t.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}catch(e){}if(typeof ccfNavFade==='function')ccfNavFade();
+function showPage(n){for(let i=1;i<=11;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();if(n===9&&typeof ccfEvents==='function')ccfEvents();if(n===10&&typeof ccfToday==='function')ccfToday();if(n===11&&typeof ccfCheck==='function')ccfCheck();window.scrollTo({top:0});try{const _t=document.getElementById('tab'+n);if(_t&&_t.scrollIntoView)_t.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}catch(e){}if(typeof ccfNavFade==='function')ccfNavFade();
   /* 五彩(v9.9.130): 章の色をナビへ渡し、描き直された箱にも色を配る */
   if(typeof ccfChapTint==='function')ccfChapTint(n);
   if(typeof ccfPaint==='function')ccfPaint(document.getElementById('pg'+n));}
