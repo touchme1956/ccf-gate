@@ -1296,7 +1296,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.149</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.150</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -4457,8 +4457,17 @@ async function ccfEvents(btn){
           <b style="font-size:13px;color:var(--ink)">${x.name}</b>${autoChip(x)}${stChip(x)}${helpBtn(x)}
           <span style="margin-left:auto;font-size:11.5px;color:${x.state==='due'?'#ff9d8a':'var(--dim)'};white-space:nowrap">最終 ${x.last||'不明'}${x.days!=null?`（${x.days}日前）`:''}</span>
         </div>
-        <div style="font-size:10.5px;color:var(--dim);margin-top:4px">${x.how}</div>${runLine(x)}
+        ${whatLine(x)}
+        <div style="font-size:10.5px;color:var(--dim);margin-top:4px">回し方: ${x.how}</div>${runLine(x)}
       </div>`;
+    // v9.9.150(2026-08-17 ユーザー指示「説明がないせいでなにがなにをしているのか分からない」):
+    //   旧カードは **回し方(コマンド)しか出していなかった**ので、名前だけでは何の作業か判らなかった。
+    //   「何をする／止まると何が起きる」を本文として先に置き、コマンドは「回し方:」と前置きして下へ。
+    //   ⚠ 文は night/ops_status.py の WHAT が正本——**門に写さない**（写した時点で必ず割れる・v9.9.65）。
+    //   ⚠ 説明が無い項は黙って空けず「説明がまだ書かれていない」と出す（ルール7）。
+    const whatLine=x=>x.what
+      ? `<div style="font-size:11.5px;color:var(--ink-soft);margin-top:5px;line-height:1.65">${x.what}</div>`
+      : `<div style="font-size:11.5px;color:#d6b06c;margin-top:5px">説明がまだ書かれていない（night/ops_status.py の WHAT へ）</div>`;
     // 日次の門2審査だけは「回っているか」に加えて**何があったか**を1行出す。
     //   表示専用・判定には一切使わない。語（PRを作った／待ち行列が空／…）は
     //   night/log_review_run.py が JSON へ焼いたものをそのまま出す＝対応表をここに写さない(v9.9.65)。
@@ -4582,7 +4591,7 @@ async function ccfEvents(btn){
       `<b>何のため</b>: companyfactsの提出日で「当時読めた数字」だけからthrough-cycle ROIC等を再構成し、その後の配当込みリターン・実現成長と突合する。<b>E[r]のg=20%上限・成長減衰（結論を4pt動かす最大の未較正項）の実測分布</b>を予実台帳より4年早く得る。<br>`+
       `<b>初回実測(2018→2026)</b>: 機械ROIC最上段(43.7%超)だけがリターン劣後10.4%／当時cagr≥20%の22社のその後の実現成長は中央値18.2%・20%維持は9/22社。<br>`+
       `<b>手順</b>: <code>python3 night/backtest_core.py</code>（<code>--cutoff 2015-07-01</code> で別年代）。<b>生存バイアスあり＝相対比較と分布にだけ使う</b>。結果を採点へ入れるかは明示指示の領分`),
-    '「自動」の10本はCI（market.yml／events.yml／ops.yml）が回すので説明不要——止まれば回転盤が⚠にする。ここに載るのは人の手か判断が要る作業だけ');
+    '2026-08-17: **各作業が何をしているかは、上の回転盤の各カードに全45本ぶん書いてある**（旧版はコマンドしか出しておらず、名前だけでは何の作業か判らなかった）。ここに残るのは<b>人の手順が要る作業の手順書</b>——いつ・どうやる・終わるとどうなるか。自動の作業は止まれば回転盤が⚠にするので手順は要らない');
   box.innerHTML=html;
 }
 // ── 門X裁きⅠ（単一実装・v9.9.39 切り出し）───────────────────────────────────
