@@ -48,7 +48,7 @@
  "p3": 85,
  "p4": 90,
  "f1": 90,
- "f2": 80,
+ "f2": 65.0,
  "f3": 75,
  "f4": 80,
  "f5": 65,
@@ -82,7 +82,8 @@
    "**v9.9.72 roic を through-cycle 化**: roic 131.0→116.1 / roicg 56.9→51.1。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央116.1% / 最悪86.0%）。比は**パックが審査した年(2025)**の採取器値 roic130.99 / roicg56.94 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
    "acq5 の根拠を機械判定で記録（値はyesのまま据置）: のれんの新しさ +48.1%。この欄は roicGap>15 と組んで**一律−6**が効く最大級の段差なのに、判定圏16社中9社が根拠なしだった（実測でKLAC/VRSK/HWMは誤りだった）ため裏取りした",
    "2026-08-06 eps=16.5 / dilNet=−2.2 の根拠を刻んだ（値は不変・XBRLで再現確認）。採取器が『機械で再現不能』としていたのは MA が CommonStockSharesOutstanding 系タグを持たないためで、EarningsPerShareDiluted と WeightedAverageNumberOfSharesOutstandingBasic から確定した。あわせて backfill_machine_evidence で機械項目9欄に式と実額を充填。validate FAIL 解消",
-   "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）"
+   "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）",
+   "2026-08-16 f2 80 → 65.0（規約の統一）。『TAM浸透率・TAM成長のどちらも原本に数値開示が無い』社の既定を 65 に統一した（65 は未測定の事実を主張しない唯一の刻み。50 は原本が飽和を示す社専用に戻した）。是正前は同じ状況に判定圏26社で6通りの値が並んでいた"
   ],
   "evidence": {
    "dom": "MA自身の10-K(FY2025) Item1 Competition には**シェアの数値開示が無い**——『We compete worldwide with payments networks such as Visa, American Express, JCB, China UnionPay and Discover, among others. ... Some competitors have more market share than we do in certain jurisdictions.』(定性のみ)。そこで、提出書類の中に引用された第三者調査を原本扱いとする規約に従い、同一のNilson系実数表を採用する: Visa Inc. 10-K FY2025 Item1 COMPETITION の暦年2024比較表(出典表記『Mastercard data sourced from The Nilson Report issue 1288 (June 2025)』、Mastercard欄は Maestro/Cirrus を除く)。Payments Volume($B): Visa 13,433 / **Mastercard 8,014** / American Express 1,750 / JCB 319 / Diners Club-Discover 253 → 5網合計 23,769。**自社(MA)シェア 33.7%**(Total Transactions では 204/538=37.9%、Cards では 3,146/8,337=37.7%)。**上位2社(Visa+Mastercard)合計 21,447 = 90.2%**(Transactions 95.7% / Cards 95.4%)。→ 自社単独は40%未満だが**上位2社合計≥80%の複占の一角**(首位はVisa)＝v9.9.38の刻み70に該当。刻み85『複占の首位』は自社が首位でないため不可、刻み50『競争<40%』はCadence事例と同型の誤適用になるため不可。(出典: Mastercard 10-K FY2025 Item1 Competition https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm ／ 実数はVisa Inc. 10-K FY2025 Item1 COMPETITION 表 https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm )。【2026-07-29 堀再監査で再確認・70を維持】85『複占の首位』は上位2社で≥80%かつ**自社が首位**を要するが、採用したNilson系実数表でMAは首位ではない(Visaが上位)。よって刻みは70『複占の一角』が上限。",
@@ -99,7 +100,7 @@
    "p3": "純負債0.42x EBITDA(<1)→85(純現金ではない点をkenshiで補正)",
    "p4": "『assessing the risk that a material weakness exists』は監査手続の定型文で実指摘ではない+『Item 1B. Unresolved staff comments Not applicable』→無限定・クリーン。accr=-4.9%(<0・保守的)→90",
    "f1": "ΔNOPAT/ΔIC(FY2023→2025): 税後営利≈11.6→15.3十億(Δ~3.7)/投下資本≈22.5→26.7十億(Δ~4.2)=ROIIC≈88%≫WACC+15→90。ただし還元の大半は自社株買いで投下資本が積み上がらず(資本超軽量)",
-   "f2": "決済総フロー(カード化・A2A・B2B・給付等$百兆規模)に対するMA浸透は低一桁%。hitsに明示TAM数値なし→保守的に80(注記: TAM浸透式のネットワーク業態当てはめは概念的)",
+   "f2": "決済総フロー(カード化・A2A・B2B・給付等$百兆規模)に対するMA浸透は低一桁%。hitsに明示TAM数値なし→保守的に80(注記: TAM浸透式のネットワーク業態当てはめは概念的)｜**【2026-08-16 f2 の規約を統一（ユーザー明示指示「3つともやって」）】**TAM浸透率・TAM成長のどちらも原本に数値開示が無いときは **65** とする。理由: 刻み(90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60)は**測った p** を前提にしており、90/80 は『測って低浸透』を、**50 は『測って飽和(p≥60)』を主張する**——どちらも未測定では言えない。65（p<60＝飽和していない）が**唯一、測っていない事実を主張しない刻み**。**50 は原本が高浸透を積極的に示す社だけに残す**（成熟・支配的と会社自身が述べる等）ので、情報は圧縮されず逆に増える。⚠是正前は同じ『TAM開示なし』に 50/55/65/70/75/80 の**6通り**が並んでいた（判定圏26社）。実測: 65統一・50統一のどちらでも**投下可10社は顔ぶれも数も不変**＝結果ではなく原理で選んだ",
    "f3": "R&D売上比の区分開示なし(技術投資は『Advanced analytics and AI solutions』『40% tokenized』で高水準)。シェア趨勢は地域混在(一部で劣後)=片方+→75。5大顧客集中は21%で横ばい(悪化なし・-10不適用)",
    "f4": "付加価値サービス(『value propositions』『Advanced analytics and AI solutions』『Mastercard Digital First』=データ/サイバー/コンサル)が売上の相当部分で高成長=隣接事業>5%成長→80",
    "f5": "disrupt=unsettled連動→65(A2A/口座間網の未決脅威)",
