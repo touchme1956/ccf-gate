@@ -1,0 +1,1400 @@
+{
+ "generated": "2026-08-17",
+ "note": "回転盤は日付しか見ない。この器は『日付は動いたが中身/入力が死んでいる』を測る。判定は持たない＝採点にも門にも触れない作業リスト",
+ "n_checked": 38,
+ "n_flagged": 0,
+ "n_src_lag": 1,
+ "n_unmeasurable": 6,
+ "rows": [
+  {
+   "id": "market",
+   "name": "株価・盤データ",
+   "anchor": "out/dashboard.json",
+   "due_days": 4,
+   "board_last": "2026-08-13",
+   "board_state": "ok",
+   "body_last": "2026-08-13",
+   "body_days": 4,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/fetch_dashboard.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "events",
+   "name": "8-K・臨報監視",
+   "anchor": "out/events_watch.json",
+   "due_days": 4,
+   "board_last": "2026-08-14",
+   "board_state": "ok",
+   "body_last": "2026-08-14",
+   "body_days": 3,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/enqueue_reaudit.py",
+    "night/watch_events.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/audit_irr70.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/irr85_dual.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/kessan_flags.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/new_listings_irr.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/pack_stale.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/promotion_ready.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/stale_bs.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/validate_fail.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-16"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "parity",
+   "name": "門と端末の一致",
+   "anchor": "out/gate_parity.json",
+   "due_days": 4,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/check_gate_parity.js"
+   ],
+   "inputs": [
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "today",
+   "name": "📋今日の集計",
+   "anchor": "out/today.json",
+   "due_days": 4,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/irr85_fill_asof.py",
+    "night/today.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/audit_hist85_today.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-11"
+    },
+    {
+     "path": "out/irr85_asof_fill.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-11"
+    },
+    {
+     "path": "out/irr85_today_histbasis.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-11"
+    },
+    {
+     "path": "out/retro_features2_2018.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    },
+    {
+     "path": "out/retro_features_2018.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    },
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/events_watch.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/exception_watch.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-11"
+    },
+    {
+     "path": "out/freshness.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/irr85_mech_diff.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/irr85_myrule.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/kessan_flags.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/next_earnings.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    },
+    {
+     "path": "out/pending.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-16"
+    },
+    {
+     "path": "out/promotion_ready.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/review_runs.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-16"
+    },
+    {
+     "path": "out/stale_bs.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/todo_audit.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/validate_fail.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-16"
+    },
+    {
+     "path": "out/wacc_drift.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "freshness",
+   "name": "中身と入力の鮮度",
+   "anchor": "out/freshness.json",
+   "due_days": 4,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": null,
+   "body_days": null,
+   "body_note": "自分の出力なので本体検査は行わない（所見が安定＝本体が動かないのが正常）",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/check_freshness.py"
+   ],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "divy",
+   "name": "配当分離(divY)",
+   "anchor": "out/divy.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/fill_divy.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/dashboard.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-13"
+    },
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "irrcov",
+   "name": "irr の被覆と未審査の穴",
+   "anchor": "out/irr_coverage.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/audit_irr_coverage.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/_sic_cache.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "histval",
+   "name": "自己相対バリュエーション",
+   "anchor": "out/hist_val_now.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/hist_valuation.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/sp500_pe_monthly.json",
+     "data_end": "2026-03",
+     "data_days": 169,
+     "body_last": "2026-08-08"
+    }
+   ],
+   "flags": [],
+   "src_lag": [
+    "入力 sp500_pe_monthly.json: 取得は2026-08-17に成功したがデータは2026-03止まり（169日前）＝**配信元の限界**であって我々の停止ではない"
+   ]
+  },
+  {
+   "id": "profiles",
+   "name": "企業説明(原本Item1)",
+   "anchor": "out/profiles.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/fetch_profiles.py"
+   ],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "excwatch",
+   "name": "門外例外の四半期監視",
+   "anchor": "out/exception_watch.json",
+   "due_days": 100,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-11",
+   "body_days": 6,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "irr85hist",
+   "name": "irr=85の実績台帳",
+   "anchor": "out/irr85_history.json",
+   "due_days": 40,
+   "board_last": "2026-08-09",
+   "board_state": "ok",
+   "body_last": "2026-08-09",
+   "body_days": 8,
+   "body_note": "作成(2026-08-09)から本体は一度も動いていない（全1版）",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/irr85_mech_test.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/irr85_mech_test.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/retro_moat_2013.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    },
+    {
+     "path": "out/retro_moat_2013q.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    },
+    {
+     "path": "out/retro_moat_2015.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    },
+    {
+     "path": "out/retro_moat_2015q.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    },
+    {
+     "path": "out/retro_moat_2015qb.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    },
+    {
+     "path": "out/retro_returns_2013_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    },
+    {
+     "path": "out/retro_returns_2015_q.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    },
+    {
+     "path": "out/retro_returns_2018.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    },
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "irr85mech",
+   "name": "機構文の年次diff",
+   "anchor": "out/irr85_mech_diff.json",
+   "due_days": 4,
+   "board_last": "2026-08-14",
+   "board_state": "ok",
+   "body_last": "2026-08-14",
+   "body_days": 3,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/irr85_mech_diff.py"
+   ],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "castlecorr",
+   "name": "城の相関（同時に落ちるか）",
+   "anchor": "out/castle_correlation.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "irr85audit",
+   "name": "irr=85の根拠監査",
+   "anchor": "out/audit_irr85.json",
+   "due_days": 4,
+   "board_last": "2026-08-14",
+   "board_state": "ok",
+   "body_last": "2026-08-14",
+   "body_days": 3,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/audit_irr85.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "irr85scope",
+   "name": "機構の射程と認定の寿命",
+   "anchor": "out/irr85_scope_life.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-11",
+   "body_days": 6,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "irr85myrule",
+   "name": "irr=85をあなたの基準で採点",
+   "anchor": "out/irr85_myrule.json",
+   "due_days": 4,
+   "board_last": "2026-08-14",
+   "board_state": "ok",
+   "body_last": "2026-08-14",
+   "body_days": 3,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "irr85dual",
+   "name": "irr=85の二重読み",
+   "anchor": "out/irr85_dual.json",
+   "due_days": 4,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/audit_irr85_dual.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "newlist",
+   "name": "新規上場のirr機構語",
+   "anchor": "out/new_listings_irr.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/watch_new_listings.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/irr85_hunt_result.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    },
+    {
+     "path": "out/irr85_hunt_triage.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    },
+    {
+     "path": "out/irr_reads.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-10"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "cagrt",
+   "name": "成長の軌道cagrTの測定",
+   "anchor": "out/growth_trend.json",
+   "due_days": 40,
+   "board_last": "2026-08-09",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/fill_growth_trend.py"
+   ],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "reaudit",
+   "name": "再審査の待ち行列",
+   "anchor": "night/reaudit_queue.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/enqueue_reaudit.py",
+    "night/make_chunks.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/audit_irr70.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/events_watch.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/irr85_dual.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/kessan_flags.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/new_listings_irr.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/pack_stale.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/promotion_ready.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/stale_bs.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/validate_fail.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-16"
+    },
+    {
+     "path": "out/packs_index.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "notify",
+   "name": "通知(Issue化)",
+   "anchor": "out/events_watch.json",
+   "due_days": 4,
+   "board_last": "2026-08-14",
+   "board_state": "ok",
+   "body_last": "2026-08-14",
+   "body_days": 3,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/enqueue_reaudit.py",
+    "night/watch_events.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/audit_irr70.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/irr85_dual.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/kessan_flags.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/new_listings_irr.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/pack_stale.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/promotion_ready.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/stale_bs.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/validate_fail.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-16"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "fix",
+   "name": "機械是正の自動提案",
+   "anchor": "out/score_all.json",
+   "due_days": 10,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/audit_pending.py",
+    "night/gate_history.py",
+    "night/shadow_alloc_moat.py",
+    "night/shadow_frame85_kills.py",
+    "night/shadow_gmpt.py",
+    "night/shadow_irr85_proven.py",
+    "night/shadow_jp_us_roic.py",
+    "night/shadow_nde_kill.py",
+    "night/today.py",
+    "night/validate_packs.py",
+    "make_kanshi.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/pending.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-16"
+    },
+    {
+     "path": "out/gate_state.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "sht",
+   "name": "シェア趨勢shtの測定",
+   "anchor": "out/sht_report.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/fill_sht.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/_sic_cache.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "stalebs",
+   "name": "期末後の重大事象の検査",
+   "anchor": "out/stale_bs.json",
+   "due_days": 4,
+   "board_last": "2026-08-14",
+   "board_state": "ok",
+   "body_last": "2026-08-14",
+   "body_days": 3,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/audit_stale_bs.py",
+    "night/enqueue_reaudit.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/audit_irr70.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/events_watch.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/irr85_dual.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/kessan_flags.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/new_listings_irr.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/pack_stale.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/promotion_ready.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/validate_fail.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-16"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "pending",
+   "name": "未完了の重大事象の検査",
+   "anchor": "out/pending.json",
+   "due_days": 4,
+   "board_last": "2026-08-16",
+   "board_state": "ok",
+   "body_last": "2026-08-16",
+   "body_days": 1,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/audit_pending.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "packstale",
+   "name": "パックの会計年度の遅れ",
+   "anchor": "out/pack_stale.json",
+   "due_days": 4,
+   "board_last": "2026-08-14",
+   "board_state": "ok",
+   "body_last": "2026-08-14",
+   "body_days": 3,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/audit_pack_stale.py",
+    "night/enqueue_reaudit.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/audit_irr70.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/events_watch.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/irr85_dual.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/kessan_flags.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/new_listings_irr.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/promotion_ready.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/stale_bs.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/validate_fail.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-16"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "waccdrift",
+   "name": "WACC既定のズレ検出",
+   "anchor": "out/wacc_drift.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-08",
+   "body_days": 9,
+   "body_note": "作成(2026-08-08)から本体は一度も動いていない（全2版）",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/audit_wacc_stale.py"
+   ],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "vfail",
+   "name": "納品検査FAIL表",
+   "anchor": "out/validate_fail.json",
+   "due_days": 4,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-16",
+   "body_days": 1,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "kanshi",
+   "name": "監視リスト生成",
+   "anchor": "kanshi_list.json",
+   "due_days": 40,
+   "board_last": "2026-08-11",
+   "board_state": "ok",
+   "body_last": "2026-08-11",
+   "body_days": 6,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "kessan_check.py",
+    "make_kanshi.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "cal",
+   "name": "決算カレンダー",
+   "anchor": "out/next_earnings.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-08",
+   "body_days": 9,
+   "body_note": "作成(2026-08-08)から本体は一度も動いていない（全1版）",
+   "data_end": null,
+   "data_days": null,
+   "generator": [],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "xwatch",
+   "name": "X監視表(開通ライン)",
+   "anchor": "gate1_x_watch.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "v10",
+   "name": "v10影スコア更新",
+   "anchor": "out/v10_shadow.json",
+   "due_days": 430,
+   "board_last": "2026-08-04",
+   "board_state": "ok",
+   "body_last": "2026-08-08",
+   "body_days": 9,
+   "body_note": "作成(2026-08-08)から本体は一度も動いていない（全1版）",
+   "data_end": null,
+   "data_days": null,
+   "generator": [],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "bfdiff",
+   "name": "採取器とパックの食い違い",
+   "anchor": "out/backfill_diff.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/backfill_machine_evidence.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/backfill_stamps.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "v11",
+   "name": "v11影スコア更新",
+   "anchor": "out/v11_shadow.json",
+   "due_days": 40,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/v11_gate.js"
+   ],
+   "inputs": [
+    {
+     "path": "out/pending.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-16"
+    },
+    {
+     "path": "out/score_all.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/stale_bs.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-14"
+    },
+    {
+     "path": "out/v11_facts.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-17"
+    },
+    {
+     "path": "out/validate_fail.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-16"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "calib",
+   "name": "年次較正の封印(7月)",
+   "anchor": "out/calibration.json",
+   "due_days": 430,
+   "board_last": "2026-08-08",
+   "board_state": "ok",
+   "body_last": "2026-08-08",
+   "body_days": 9,
+   "body_note": "作成(2026-08-08)から本体は一度も動いていない（全1版）",
+   "data_end": null,
+   "data_days": null,
+   "generator": [],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "gate0",
+   "name": "米国門0発掘",
+   "anchor": "out/gate0_run.json",
+   "due_days": 430,
+   "board_last": "2026-08-17",
+   "board_state": "ok",
+   "body_last": "2026-08-17",
+   "body_days": 0,
+   "body_note": "作成(2026-08-17)から本体は一度も動いていない（全1版）",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "run_gate0_local.py"
+   ],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "gate0jp",
+   "name": "日本株門0",
+   "anchor": "gate0_jp_queue.json",
+   "due_days": 430,
+   "board_last": "2026-08-03",
+   "board_state": "ok",
+   "body_last": "2026-08-08",
+   "body_days": 9,
+   "body_note": "作成(2026-08-08)から本体は一度も動いていない（全1版）",
+   "data_end": null,
+   "data_days": null,
+   "generator": [
+    "night/make_chunks.py",
+    "night/rebuild_gate0_jp.py",
+    "night/rerank_gate0_jp.py"
+   ],
+   "inputs": [
+    {
+     "path": "out/packs_index.json",
+     "data_end": null,
+     "data_days": null,
+     "body_last": "2026-08-08"
+    }
+   ],
+   "flags": [],
+   "src_lag": []
+  },
+  {
+   "id": "state",
+   "name": "人の決定の書き出し(state.json)",
+   "anchor": "state.json",
+   "due_days": 40,
+   "board_last": "2026-08-10",
+   "board_state": "ok",
+   "body_last": "2026-08-10",
+   "body_days": 7,
+   "body_note": "",
+   "data_end": null,
+   "data_days": null,
+   "generator": [],
+   "inputs": [],
+   "flags": [],
+   "src_lag": []
+  }
+ ],
+ "unmeasurable": [
+  {
+   "id": "reviewrun",
+   "name": "日次 門2審査(Routine)",
+   "why": "錨が単一ファイルでなくヘルパ経由（review_last_run()）＝この器では追えない"
+  },
+  {
+   "id": "er",
+   "name": "E[r]予実の観測封印",
+   "why": "錨が単一ファイルでなくヘルパ経由（er_last_obs()）＝この器では追えない"
+  },
+  {
+   "id": "gatehist",
+   "name": "門の判定の履歴",
+   "anchor": "out/gate_state.json",
+   "why": "錨の検算が合わない（盤 2026-08-13 / この器 2026-08-14）"
+  },
+  {
+   "id": "kessanUS",
+   "name": "決算点検（米国）",
+   "why": "錨をソースから特定できなかった（式: kessan_last(\"_qcheck.txt\")）"
+  },
+  {
+   "id": "kessanJP",
+   "name": "決算点検（日本株）",
+   "why": "錨をソースから特定できなかった（式: kessan_last(\"_qcheck_jp.txt\")）"
+  },
+  {
+   "id": "backtest",
+   "name": "疑似バックテスト",
+   "why": "錨が複数ファイルの集約（max((json_field(os.path.relpath(f, BASE), \"generat…）＝この器では追えない"
+  }
+ ]
+}

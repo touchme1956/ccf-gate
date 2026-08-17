@@ -106,7 +106,7 @@
    "dur": "dur=100(規制型)。10-K Item1 Regulation:『MIS, certain of the Company's credit rating affiliates, and many of the issuers and/or securities that MIS and the affiliates rate, are subject to extensive regulation in the U.S. (including by state and local authorities), EU, U.K. and in other countries.』Item1A:『The current U.S. laws and regulations relating to MIS, including the Reform Act and the Dodd-Frank Act: ... provide the SEC with direct jurisdiction over CRAs that seek NRSRO status, and grant authority to the SEC to inspect the operations of CRAs』。堀の型はネットワーク(85)でもスイッチングコスト(75)でもブランド単独(55)でもなく、NRSRO/ESMA/FCAという規制枠に埋め込まれた事業免許型。出典 https://www.sec.gov/Archives/edgar/data/1059556/000162828026009136/mco-20251231.htm",
    "roic": "【2026-08-03 原本検算】roic=93.7% / roicg=23.9%、**IC/自己資本 = 69%** で縮退なし（night/recalc_roic.py の実測がパック現行値と完全一致）。乖離3.9倍は Bureau van Dijk・RMS 買収由来ののれんが実体で、roicGapの減点で処理済み。過去にICが負の年があるが当期は健全＝算出可（audit_roic.py 頭注に既記）（出典: SEC XBRL companyfacts / night/recalc_roic.py）｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央79.1% / 最悪57.6%・比は審査年2025）",
    "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 4,054,000,000 + 有利子負債 6,994,000,000)＝のれん込み。roic(除外)との差が買収規律の指標",
-   "roict": "機械算出: のれん除外ROIC 5年系列 79.1% / 76.7% / 70.5% / 93.6%（最古→直近の差で判定）",
+   "roict": "機械算出: のれん除外ROIC 5年系列 76.7% / 70.5% / 93.6%（最古→直近の差で判定）",
    "gmt": "機械算出: 営業利益率 2023年 36.1% → 2025年 43.4%（±1ptでup/down）",
    "fcf": "機械算出 2025年: 営業CF 2,901,000,000 − 設備投資 326,000,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
    "ni": "機械算出 2025年: 純利益 2,459,000,000（÷1e9で十億単位表示）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
@@ -194,23 +194,23 @@
    }
   },
   "machine_check": {
-   "date": "2026-08-13",
-   "rev": "h625b28e1c0",
+   "date": "2026-08-17",
+   "rev": "hbe508e91ce",
    "ok": [
     "accr",
     "dilNet",
     "fcf",
     "gmt",
-    "ni"
+    "ni",
+    "roict"
    ],
    "diff": [
     "eps",
-    "nde",
-    "roicg",
-    "roict"
+    "roicg"
    ],
    "hand": [
-    "cagr"
+    "cagr",
+    "roic"
    ],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"

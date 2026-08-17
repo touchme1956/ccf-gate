@@ -107,6 +107,18 @@ def build():
         ("today",   "📋今日の集計",            "毎営業日", 4,
          json_field("out/today.json", "generated"),
          "ci.yml 平日22:00UTC／手動 python3 night/today.py --json", True),
+        # 2026-08-17新設: **この盤自身の死角を見張る器**。
+        #   ここ（ops_status）は錨の**日付しか見ていない**が、日付と中身は独立に壊れる——
+        #     A 日付が凍る（中身は動く）＝**偽陽性**。実際に audit_irr85_dual で5日間鳴りっぱなしだった
+        #     B 日付は動くが中身が凍る    ＝**偽陰性**
+        #     C 中身も動くが入力が死ぬ    ＝**偽陰性**。実測 sp500_pe_monthly(2026-03停止)→hist_val_now(08-09)
+        #   A は check_frozen_dates（CIで落とす）、**B と C は check_freshness** が測る。
+        #   偽陰性は盤が緑なので誰も探しに行かない＝**この器が止まると死角が死角のまま戻る**。
+        #   ⚠ 作業リストなのでCIでは落とさない（鳴りすぎる警報は鳴らないのと同じ）。
+        #     落とさない以上、止まったことを見るのはここしかない。
+        ("freshness", "中身と入力の鮮度",       "毎営業日", 4,
+         json_field("out/freshness.json", "generated"),
+         "ci.yml 平日22:00UTC／手動 python3 night/check_freshness.py --json", True),
         ("reviewrun", "日次 門2審査(Routine)",  "毎営業日", 4,
          review_last_run(),
          "Routine『【門】日次 門2審査（自動・5社）』平日05:00 JST（claude-opus-5）／"
@@ -233,9 +245,16 @@ def build():
         ("fix",     "機械是正の自動提案",     "週1",     10,
          git_date("out/score_all.json"),
          "fix.yml 毎週土曜（判定が動かなければmain直・動けばPR）", True),
-        ("review",  "門2審査(自動)",         "毎営業日", 4,
-         git_date("night/progress.json"),
-         "review.yml 平日17:00UTC（**ANTHROPIC_API_KEY が要る**。無ければ何もせず終了）", "key"),
+        # 2026-08-17: **`review.yml` を畳んだので、この行も降ろす**（ユーザー指示「3つともやって」）。
+        #   経緯は消さない——review.yml は **走行回数 0** のまま9日前が最終で、盤の「鍵待ち」は
+        #   この1件だけだった。同じ仕事を Routine『【門】日次 門2審査（自動・5社）』が毎日していて
+        #   （盤の `reviewrun` は🟢）、CLAUDE.md 自身が
+        #   「$を払って未実証の経路を開くより、$を払わず実証済みの経路を毎日に伸ばす」と記録している。
+        #   ＝**直すのではなく降ろすのが筋**。降ろせば「鍵待ち」という常設の黄色が消え、
+        #   盤が本当に全緑になる（鳴りっぱなしを一つ減らす）。
+        #   ⚠ 門2審査そのものは止まらない——見張りは `reviewrun`（毎営業日・期限4日・
+        #     night/log_review_run.py が毎回1行残す）が引き続き担う。
+        #   ⚠ 復活させたいときは git 履歴に review.yml が残っている（ANTHROPIC_API_KEY が要る）。
         ("sht",     "シェア趨勢shtの測定",   "月1",     40,
          json_field("out/sht_report.json", "asof"),
          "ops.yml 毎月2日／手動 python3 night/build_sic_cache.py && python3 night/fill_sht.py --json"

@@ -1,0 +1,222 @@
+{
+ "generated": "2026-08-17",
+ "n_ok": 27,
+ "n_fail": 0,
+ "n_nokey": 3,
+ "steps": [
+  {
+   "n": 3,
+   "name": "決算カレンダー（AV_KEYがあれば実日・無ければSEC推定）",
+   "state": "nokey",
+   "why": "鍵が無い: AV_KEY"
+  },
+  {
+   "n": 4,
+   "name": "市場データの採取（AV_KEYがあるときだけ・無料枠25req/日でresume）",
+   "state": "nokey",
+   "why": "鍵が無い: AV_KEY"
+  },
+  {
+   "n": 5,
+   "name": "監視リスト生成",
+   "state": "ok",
+   "sec": 0.0,
+   "tail": "  ※特別監視枠(irr=85)——Ω75未満だが型が最良なので残す: BWXT ENTG HXL KRMN LOAR MKSI NOVT ST TDG WST\n  追加 0: (なし)\n  除外 0: (なし)\n  ⚠日本株 17社 (3092 3649 3922 3923 4071 4519 4732 4776 4828 5038 6146 6857 6861 6920 7741 8035 8136) は kessan_check.py / kessan_calendar.py の対象外（SEC経路）。kessan_check_jp.py で点検すること\n\n→ kanshi_list.json を更新。次: python kessan_check.py / python kessan_calendar.py"
+  },
+  {
+   "n": 6,
+   "name": "X監視表の開通ライン再計算",
+   "state": "ok",
+   "sec": 0.1,
+   "tail": "8136   ΩNone earned22.0% 開通PER28.5 fair線PER28.0 既に開通圏——再採点で確認\nRBC    ΩNone earned7.0% 開通PER56.6 fair線PER16.0 既に開通圏——再採点で確認\nVRSK   ΩNone earned9.7% 開通PER28.3 fair線PER16.0 既に開通圏——再採点で確認\nMANH   ΩNone earned15.6% 開通PER54.6 fair線PER21.0 既に開通圏——再採点で確認\nBR     ΩNone earned6.5% 開通PER17.5 fair線PER16.0 既に開通圏——再採点で確認\nAPH    ΩNone earned20.4% 開通PER47.6 fair線PER28.0 既に開通圏——再採点で確認"
+  },
+  {
+   "n": 7,
+   "name": "保有・監視の決算点検（米・四半期作業の月次先回り）",
+   "state": "ok",
+   "sec": 83.3,
+   "tail": "  TDG    YoY   22.5%  営利差  -1.7pt  → 異常なし(機械判定)\n  UI     YoY   18.7%  営利差   2.7pt  → 異常なし(機械判定)\n  V      YoY   17.1%  営利差   7.8pt  → 異常なし(機械判定)\n  VRSK   YoY    3.9%  営利差   1.2pt  → 異常なし(機械判定)\n  WST    YoY   13.8%  営利差   0.5pt  → 要審査: 警報:集(新規出現) / 警報:減損\n要審査が出た銘柄は、門の依頼文ボタンで門2再審査へ。ADR(ASML/TSM/NVMI)は決算リリース/6-Kを手動確認。"
+  },
+  {
+   "n": 8,
+   "name": "決算点検（日本株・EDINET鍵があるときだけ自動）",
+   "state": "nokey",
+   "why": "鍵が無い: EDINET_API_KEY"
+  },
+  {
+   "n": 9,
+   "name": "配当分離(divY)——予実台帳の補正項",
+   "state": "ok",
+   "sec": 16.6,
+   "tail": "  NVDA    0.02%  DPS 0.04（CommonStockDividendsPerShareDeclared・FY末2026-01-25）÷ px 225.3／shy 0.75%と整合\n  RACE   —  IFRS/ADR提出体(20-F系)＝DPSの通貨・ADR比の検算が要るため機械では置かない（us-gaapタグ不在は無配の証拠にならない）\n  RELX   —  IFRS/ADR提出体(20-F系)＝DPSの通貨・ADR比の検算が要るため機械では置かない（us-gaapタグ不在は無配の証拠にならない）\n  RMD     1.06%  DPS 2.4（CommonStockDividendsPerShareDeclared・FY末2026-06-30）÷ px 226.74／shy 1.6%と整合\n  V       0.16%  DPS 0.59（CommonStockDividendsPerShareDeclared・FY末2025-09-30）÷ px 365.45／shy 3.2%と整合\n  VRSK   —  配当支払CFはあるがDPSタグが取れない＝算出不能（株数経由はKLAC型の分割事故を再生産するため使わない）"
+  },
+  {
+   "n": 10,
+   "name": "S&P500実績PERの系列を更新（自己相対の分母）",
+   "state": "ok",
+   "sec": 0.8,
+   "tail": "■ 書き出し: /home/user/ccf-gate/out/sp500_pe_monthly.json  1863点  最新 2026-03=25.43  2013-07=18.12  2015-07=22.4"
+  },
+  {
+   "n": 11,
+   "name": "自己相対バリュエーション（表示専用・合否に不使用）",
+   "state": "ok",
+   "sec": 46.2,
+   "tail": "25/56  pe_pct算出:7  9s\n  50/56  pe_pct算出:27  38s\n  56/56  pe_pct算出:32  46s\n■ 書き出し: out/hist_val_now.json  56社 / pe_pct 32社 (57.1%)"
+  },
+  {
+   "n": 12,
+   "name": "企業説明の採取（表示専用・合否に不使用）",
+   "state": "ok",
+   "sec": 56.7,
+   "tail": "■ out/profiles.json  369社\n   原本の事業説明     252社（68%）\n   セグメント構成     142社（台帳のmoatW根拠・日本株を含む）\n   未取得の理由つき   129社"
+  },
+  {
+   "n": 13,
+   "name": "門外例外の四半期監視（TDG/LOAR/MKSI）",
+   "state": "ok",
+   "sec": 3.8,
+   "tail": "  TDG   2026-06-27        5.88      5.87     2.40      32,899   +4.7%  —横ばい（線の上）／債務超過\n  VRSK  2026-03-31        2.56      2.30    11.57       4,476  -28.8%  ✓線の下（次の年次報告で門が自力で取り込む見込み）／債務超過\n  WST   2026-06-30       -0.78     -0.27    85.76         203   +0.0%  ✓線の下（次の年次報告で門が自力で取り込む見込み）\n  ENTG  2026-06-27        5.05      3.49     2.56       3,456   -5.3%  ✓線の下（次の年次報告で門が自力で取り込む見込み）\n\n→ out/exception_watch.json"
+  },
+  {
+   "n": 14,
+   "name": "irr=85の実績台帳（特権の裏づけ）",
+   "state": "ok",
+   "sec": 0.1,
+   "tail": "  VRSK           —        —        —        —     追えない   81.3  83.6  ⛔   歴史の読解なし\n  → 実績が追えるのは 11/15社。うち中央値が年15%+ は 9社\n  ⚠ ASML/VRSK/LOAR は米国10-K経路の在庫に無い（ASML=20-F提出体・LOAR=2024年IPO・VRSK=コホートscreenが自己資本マイナスで落とした＝ルール7の10例目）\n\n→ out/irr85_history.json（実績あり11社・うち verdict=below は 2社）\n→ out/irr85_mech_test.json"
+  },
+  {
+   "n": 15,
+   "name": "新規上場社の irr 機構語を掃く（作業リスト・判定はしない）",
+   "state": "ok",
+   "sec": 524.4,
+   "tail": "🆕未審査      —        2  2026-03-30                           requalification\n🆕未審査      —        2  2026-03-31                           requalification\n🆕未審査      YDES     2  2026-04-30 Services-Medical Laborat  lengthy qualification\n\n→ out/new_listings_irr.json（--all で全件・--s1 でIPO目論見書も掃く）\n   🆕未審査 は hachimon_fetch → 門2審査へ／⚠根拠なし は原本で irr を読み直す／📖読解済み は 2026-08-08 のスイープで結論が出ている（再読しない）"
+  },
+  {
+   "n": 16,
+   "name": "成長の軌道 cagrT の再測定（測定のみ・パックには書かない）",
+   "state": "ok",
+   "sec": 180.2,
+   "tail": "■ 成長の軌道 cagrT = 直近2年CAGR − その前3年CAGR（歴史検証 retro_features2 の accel と同一定義）\n  算出 277社 / 見送り 92社\n  分布: 最小-135.5pt / 25%-9.7 / 中央-3.7 / 75%+1.3 / 最大+51.5pt\n  減速(<0) 188社 / 加速(≥0) 89社\n→ out/growth_trend.json"
+  },
+  {
+   "n": 17,
+   "name": "SIC業種キャッシュ（増分・SEC submissions）",
+   "state": "ok",
+   "sec": 1.0,
+   "tail": "■ out/_sic_cache.json  2654社（今回 +1 / 欠測18・理由つき 18件）\n   → python3 night/fill_sht.py --json で sht の作業リストが出る（--write はパックへ書くので審査官の手＝絶対のルール2）"
+  },
+  {
+   "n": 18,
+   "name": "シェア趨勢 sht の再測定（測定のみ・パックには書かない）",
+   "state": "ok",
+   "sec": 0.2,
+   "tail": "\n■ down（pm−10・Intel警報・S2の入力になる）\n\n■ up（pm+3）\n\n※--impact で「誰がどう動くか」を実測 / --write でパックへ書き込む"
+  },
+  {
+   "n": 19,
+   "name": "銘柄アイコンと代表色（表示専用）",
+   "state": "ok",
+   "sec": 2.0,
+   "tail": "   RACE   （色なし）                            淡い地\n   6920   （色なし）                            淡い地\n   MA     #eb001b #f79e1b                  淡い地\n   ADBE   #eb1000                          淡い地\n   KLAC   #00a7e1                          淡い地\n   CDNS   （色なし）                            淡い地"
+  },
+  {
+   "n": 20,
+   "name": "パック索引の再生成（Ⅵ一括取込の目録）",
+   "state": "ok",
+   "sec": 0.0,
+   "tail": "米国: 新規チャンクなし\n日本株: 新規チャンクなし\n→ out/packs_index.json 更新(369パック)\n進行はnight/progress.jsonへ。審査はagent_prompt_template.txt(正本はⅡ手順3と同期)で。"
+  },
+  {
+   "n": 21,
+   "name": "待ち行列の先頭を先に採取（機械値ドラフト・審査待ち）",
+   "state": "ok",
+   "sec": 12.9,
+   "tail": "SANG: CIK 0001753368\n  → out/SANG_gate_input.json / SANG_hits.txt\nMO: CIK 0000764180\n  → out/MO_gate_input.json / MO_hits.txt\nAAPL: CIK 0000320193\n  → out/AAPL_gate_input.json / AAPL_hits.txt"
+  },
+  {
+   "n": 22,
+   "name": "再審査チャンクの生成（優先度順に月20社）",
+   "state": "ok",
+   "sec": 0.5,
+   "tail": " 40 0001965934   0.0 台帳外       新規上場の掃除\n    …ほか 26社\n\n→ night/reaudit_queue.json\n再審査 20社 → rechunk03〜04(2枚)を生成\n審査は night/agent_prompt_template.txt（日本株は _jp）。**理由は night/reaudit_queue.json の reasons に書いてある**——何を直すために再審査するのかを読んでから原本へ当たること。"
+  },
+  {
+   "n": 23,
+   "name": "v10影スコア更新（7月のみ＝年次較正の材料）",
+   "state": "ok",
+   "sec": 0.0,
+   "tail": "7月以外はスキップ"
+  },
+  {
+   "n": 24,
+   "name": "v11影スコア更新（影・合否に不使用）",
+   "state": "ok",
+   "sec": 224.3,
+   "tail": "   64社  5年すべてFCF黒字が測れない\n   30社  5年すべて営業利益黒字が測れない\n   12社  機構が未測定\n    3社  営業利益率が測れない\n\n→ out/v11_shadow.json　※未実装——「通り続けている期間」を repo が記録していないため。機構Aを先に置くところまでは決まるが、同格の中の順は今日は作れない（設計の未解決点）"
+  },
+  {
+   "n": 25,
+   "name": "年次較正のスナップショット（7月のみ・勝敗の判定は人）",
+   "state": "ok",
+   "sec": 0.0,
+   "tail": "7月以外はスキップ"
+  },
+  {
+   "n": 26,
+   "name": "E[r]予実の突合せ（封じた観測と実現の答え合わせ）",
+   "state": "ok",
+   "sec": 0.0,
+   "tail": "\n■ いま封じた観測で気づくこと: **成長 g が上限20%に張り付いている 7/31社**\n    3923 8136 4071 5038 NVDA IRMD 6857\n    g=min(実績cagr, 実力gcap, 20%) の**20%上限が効いている**＝E[r]は「20%成長」を前提に置いている。\n    実際の持続成長がこれ未満なら E[r] はその分だけ過大に出る。\n    **予実がここで効く**——差が安定して負なら、上限20%かハードル12%のどちらかが緩い。"
+  },
+  {
+   "n": 27,
+   "name": "決断の材料（影の計測・正本は必ず元へ戻る）",
+   "state": "ok",
+   "sec": 3.4,
+   "tail": "cagr        0.98%       0.80          0   30\nnde         0.00%       0.81          3   29\n   飽和: roicPt(≥40で96点頭打ち) 17/29社 ／ F7のROIC項(≥25で100点頭打ち) 27/29社\n\n※ ルーブリック9欄＋堀5本の合計: 実効 48% / 名目 50%\n  残りは機械項目（ROIC・営業利益率・成長・負債）と now/pr が担う。"
+  },
+  {
+   "n": 28,
+   "name": "機構の射程と認定の寿命（表示のみ・未着手を名指し）",
+   "state": "ok",
+   "sec": 0.1,
+   "tail": "   WST     81.1%  Proprietary Products 2,492.1百万$ ÷ 連結純売上 3,074.1百万$ = 81.07%（Note 19 Segmen\n   TDG     90.0%  原本に「認定ロックの裏にある売上」を直接示す数字は無い。導出できるのは二つの別々の実数で、両者は機構の二つの限（りん）にそれぞれ対応する。【上限側＝\n   LOAR    95.0%  【まずセクションを確認した——CW型の罠は無かった】機構文（『再認定をやり直さない』）は原本に2回だけ出現し、2回とも Item 1. Busine\n   KRMN   100.0%  【反証側で再現できた確定事項】(1)機構文は全文で3回・**独立に数え直して一致**——offset 45,888(Item 1 BUSINESS「\n\n→ out/irr85_scope_life.json"
+  },
+  {
+   "n": 29,
+   "name": "城の相関（同時に落ちるか・表示のみ）",
+   "state": "ok",
+   "sec": 5.0,
+   "tail": "   6146  WST    ρ=-0.167  (other/other・120ヶ月)\n   6146  VRSK   ρ=-0.130  (other/other・120ヶ月)\n   6146  RBC    ρ=-0.125  (other/aero・120ヶ月)\n   6146  ENTG   ρ=-0.124  (other/semi・120ヶ月)\n\n→ out/castle_correlation.json"
+  },
+  {
+   "n": 30,
+   "name": "採取器とパックの食い違い（読むだけ・--sync は走らせない）",
+   "state": "ok",
+   "sec": 390.2,
+   "tail": "       EXPO    Ω 71.9  fcf ni\n       SPSC    Ω 71.9  cagr fcf ni\n       INTU    Ω 71.8  roic\n       PKE     Ω 71.8  cagr dilNet fcf ni roicg\n\n→ out/backfill_stamps.json"
+  },
+  {
+   "n": 31,
+   "name": "WACC既定のズレ検出 audit_wacc_stale",
+   "state": "ok",
+   "sec": 0.4,
+   "tail": "  ズレ        +0.15pt\n  ⚠ **刻み(0.1)より大きくズレている＝更新どき**\n     index.html の `id=\"rfr\"` の value と、`n('rfr')||…` のフォールバックを**両方** 4.63 へ。更新後は `node night/score_all.js` で影響を確認すること\n     ※ 参考: 2026-08-07の実測では +0.12pt を当てただけで **116社のΩが動き最大10.20pt**（`roicg<WACC` のキルが小さなズレを増幅する）\n\n→ /home/user/ccf-gate/out/wacc_drift.json を更新"
+  },
+  {
+   "n": 32,
+   "name": "運用サイクルの回転状態を実測（必ず最後）",
+   "state": "ok",
+   "sec": 1.8,
+   "tail": "  🟢 v11影スコア更新     （月1）最終 2026-08-17（0日前・期限40日）\n  🟢 年次較正の封印(7月)   （年1(7月)）最終 2026-08-08（9日前・期限430日）\n  🟢 米国門0発掘        （年1(1-2月)）最終 2026-08-08（9日前・期限430日）\n  🟢 日本株門0         （年1）最終 2026-08-03（14日前・期限430日）\n  🟢 人の決定の書き出し(state.json)（月次）最終 2026-08-10（7日前・期限40日）\n  🟢 疑似バックテスト      （年1）最終 2026-08-08（9日前・期限430日）"
+  },
+  {
+   "n": 33,
+   "name": "コミット",
+   "state": "skip",
+   "why": "--skip 指定"
+  }
+ ],
+ "note": "ops.yml をこの場で実行した記録。手順は ops.yml から読む（書き写さない）。鍵が無いステップは『実行した』と数えない"
+}

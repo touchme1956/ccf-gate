@@ -69,6 +69,7 @@ SRC = [
     ('myrule', 'out/irr85_myrule.json', 'あなたの選定ルール', 'items'),
     ('mech_diff', 'out/irr85_mech_diff.json', '機構文の年次diff', 'items'),
     ('kessan', 'out/kessan_flags.json', '四半期点検の旗', 'items'),
+    ('freshness', 'out/freshness.json', '中身と入力の鮮度', 'rows'),
 ]
 
 
@@ -190,6 +191,24 @@ def build():
         today.append(item('irr85new:' + str(t), 'today', 'irr=85 の新着: ' + str(t),
                           'あなたの選定ルール（営利率11.89 / FCF転換0.639 / 成長1.76）で採点し直す',
                           'python3 night/irr85_myrule.py', 'あなたのルール'))
+
+    # ── 中身と入力の鮮度（2026-08-17新設）──
+    #   回転盤は**日付しか見ていない**ので「日付は動いたが中身/入力が死んでいる」は🟢に見える。
+    #   ⚠ CIでは落とさない作業リストなので、ここに出さないと**CIログの中だけで完結する**
+    #     ——review_runs で塞いだ「一覧に出ない場所で完結していた」の同型を作らない。
+    fr = data.get('freshness') or {}
+    for r in (fr.get('rows') or []):
+        for f in (r.get('flags') or []):
+            month.append(item('fresh:' + str(r.get('id')) + ':' + f[:12], 'month',
+                              '中身/入力が前進していない: ' + str(r.get('name')), f,
+                              'python3 night/check_freshness.py', '鮮度'))
+    # **測れないものは健全と読まない**（ルール7）——数だけ出して、内訳は器で見る
+    nun = fr.get('n_unmeasurable')
+    if nun:
+        month.append(item('fresh:unmeasurable', 'month',
+                          '鮮度を測れない錨が %d件' % nun,
+                          '「測っていない」であって「測って問題なし」ではない',
+                          'python3 night/check_freshness.py', '鮮度'))
 
     # ── 四半期点検の要審査（2026-08-11: 待ち行列に流れていなかった穴を塞いだ・v9.9.140）──
     #   ⚠「点検不能（20-F/40-F発行体）」は**採取の穴であって会社の異常ではない**ので段を分ける。

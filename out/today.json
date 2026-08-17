@@ -1,33 +1,34 @@
 {
- "generated": "2026-08-14",
+ "generated": "2026-08-17",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "MSFT",
+  "IDXX",
   "ASML",
   "V",
-  "IDXX",
-  "RMD",
   "CW",
   "LRCX",
   "6857",
-  "HWM",
+  "6146",
+  "RMD",
   "RBC"
  ],
  "next": [
-  "6146",
+  "HWM",
   "MA",
   "ADBE",
   "IRMD",
   "MCO",
-  "BR"
+  "BR",
+  "RELX"
  ],
  "counts": {
   "now": 1,
   "today": 6,
   "month": 17,
-  "waiting": 82,
+  "waiting": 87,
   "blind": 0,
-  "src": 15
+  "src": 16
  },
  "now": [
   {
@@ -91,12 +92,12 @@
  ],
  "month": [
   {
-   "k": "key:review",
+   "k": "fresh:unmeasurable",
    "level": "month",
-   "title": "鍵待ちで始まっていない: 門2審査(自動)",
-   "why": "止まったのではなく、まだ始めていない",
-   "how": "review.yml 平日17:00UTC（**ANTHROPIC_API_KEY が要る**。無ければ何もせず終了）",
-   "src": "回転盤"
+   "title": "鮮度を測れない錨が 6件",
+   "why": "「測っていない」であって「測って問題なし」ではない",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
   },
   {
    "k": "kes:4071",
@@ -123,19 +124,35 @@
    "src": "四半期点検"
   },
   {
-   "k": "kes:CELH",
+   "k": "kes:BWXT",
    "level": "month",
-   "title": "四半期点検で要審査: CELH ",
-   "why": "要審査: 警報:減損  ☀吉報:吉流通（第二S字・流通の兆候→原文スニペット確認）",
+   "title": "四半期点検で要審査: BWXT ",
+   "why": "要審査: 警報:集(新規出現)",
    "how": "🔔イベントタブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },
   {
-   "k": "kes:KLAC",
+   "k": "kes:CELH",
    "level": "month",
-   "title": "四半期点検で要審査: KLAC （空振りの可能性）",
-   "why": "要審査: 警報:減損  ★パックの原本が既にこの四半期を含む（期末2026-06-30 ≥ 四半期末2026-03-31）",
-   "how": "既に審査済かを _meta.kenshi で確かめる。新規事象なら門2再審査へ",
+   "title": "四半期点検で要審査: CELH ",
+   "why": "要審査: 営利率 前年比-10.1pt / 警報:減損  ☀吉報:吉流通（第二S字・流通の兆候→原文スニペット確認）",
+   "how": "🔔イベントタブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
+   "src": "四半期点検"
+  },
+  {
+   "k": "kes:ENTG",
+   "level": "month",
+   "title": "四半期点検で要審査: ENTG ",
+   "why": "要審査: 警報:減損",
+   "how": "🔔イベントタブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
+   "src": "四半期点検"
+  },
+  {
+   "k": "kes:KRMN",
+   "level": "month",
+   "title": "四半期点検で要審査: KRMN ",
+   "why": "要審査: 警報:誠 / 警報:集(新規出現)",
+   "how": "🔔イベントタブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },
   {
@@ -147,10 +164,10 @@
    "src": "四半期点検"
   },
   {
-   "k": "kes:MSI",
+   "k": "kes:NOVT",
    "level": "month",
-   "title": "四半期点検で要審査: MSI ",
-   "why": "要審査: 営利率 前年比-3.7pt",
+   "title": "四半期点検で要審査: NOVT ",
+   "why": "要審査: 警報:集(新規出現)",
    "how": "🔔イベントタブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },
@@ -165,7 +182,7 @@
   {
    "k": "kes:RELX",
    "level": "month",
-   "title": "四半期点検が不能: RELX ",
+   "title": "四半期点検が不能: RELX 🔵次点",
    "why": "要審査: 点検不能（10-Q/10-K系列なし＝20-F/40-F発行体の可能性。手動確認要）（採取の穴＝再審査では直らない）",
    "how": "kessan_checklist.md §C の手動確認",
    "src": "四半期点検"
@@ -179,35 +196,19 @@
    "src": "四半期点検"
   },
   {
-   "k": "kes:UI",
+   "k": "kes:WST",
    "level": "month",
-   "title": "四半期点検で要審査: UI ",
-   "why": "要審査: 警報:誠",
+   "title": "四半期点検で要審査: WST ",
+   "why": "要審査: 警報:集(新規出現) / 警報:減損",
    "how": "🔔イベントタブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },
   {
-   "k": "pr:SAP",
-   "level": "month",
-   "title": "根拠を埋めれば席に着く: SAP（繰り上がり1番目）",
-   "why": "Ω79.3・納品検査FAIL 2件",
-   "how": "python3 night/validate_packs.py SAP",
-   "src": "繰り上がり"
-  },
-  {
    "k": "pr:ETN",
    "level": "month",
-   "title": "根拠を埋めれば席に着く: ETN（繰り上がり2番目）",
+   "title": "根拠を埋めれば席に着く: ETN（繰り上がり1番目）",
    "why": "Ω79.0・納品検査FAIL 2件",
    "how": "python3 night/validate_packs.py ETN",
-   "src": "繰り上がり"
-  },
-  {
-   "k": "pr:RELX",
-   "level": "month",
-   "title": "根拠を埋めれば席に着く: RELX（繰り上がり3番目）",
-   "why": "Ω75.7・納品検査FAIL 1件",
-   "how": "python3 night/validate_packs.py RELX",
    "src": "繰り上がり"
   },
   {
@@ -525,7 +526,7 @@
   {
    "k": "todo:br_roic_degenerate",
    "kind": "決断待ち",
-   "title": "BR/ADP/MSI 型——ICが総資産のごく一部まで縮退する社の縮退ガード",
+   "title": "BR の roic を原本で確定（ICg縮退ガードが5年中4年を除外）※MSIは2026-08-16に解決",
    "due": null
   },
   {
@@ -610,12 +611,6 @@
    "k": "todo:retro_exit_date_form15",
    "kind": "宿題",
    "title": "上流の exit_date が誤っている（Form 15 は証券の種類ごとに出る）——生きている会社を母集団から消していた",
-   "due": null
-  },
-  {
-   "k": "todo:secret_anthropic",
-   "kind": "宿題",
-   "title": "ANTHROPIC_API_KEY を GitHub Secrets に置く（門2審査の自動化）",
    "due": null
   },
   {
@@ -719,6 +714,42 @@
    "kind": "予約議題",
    "title": "門の判定の履歴が溜まったら「通り続けている社は durable か」を事前登録して一度だけ測る",
    "due": "2027-02"
+  },
+  {
+   "k": "todo:mcap_field_stale",
+   "kind": "決断待ち",
+   "title": "パックの mcap 欄が古いまま・単位も混在（発見度negSの入力）",
+   "due": null
+  },
+  {
+   "k": "todo:roicgap_null_penalty",
+   "kind": "決断待ち",
+   "title": "roic が算出不能のとき、買収規律の罰 −6 をどう扱うか",
+   "due": null
+  },
+  {
+   "k": "todo:f2_convention_sweep",
+   "kind": "宿題",
+   "title": "f2 の統一規約を判定圏外へも広げる",
+   "due": null
+  },
+  {
+   "k": "todo:board_measures_output_not_input",
+   "kind": "宿題",
+   "title": "回転盤が『出力』だけを見て『入力』の停止を検出できない（検出器は 2026-08-17 に新設）",
+   "due": null
+  },
+  {
+   "k": "todo:wf_never_run",
+   "kind": "宿題",
+   "title": "fix.yml / gate0.yml を1回ずつ実行する（ops.yml は 2026-08-17 に実行済み）",
+   "due": null
+  },
+  {
+   "k": "todo:market_yml_skipped_friday",
+   "kind": "宿題",
+   "title": "market.yml が 2026-08-14(金) を飛ばしている——盤は期限ちょうどの線上",
+   "due": null
   }
  ],
  "blind": []
