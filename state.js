@@ -155,7 +155,14 @@
        pf:sold / pf:monthly / g7ignite:map … **完全一致**
      ⇒ 落とすのはこの実測どおりの範囲だけにする。**広く落とすと本物の決定を隠す**ので、
         JSONとして読めなければ素の比較へ倒す（片側だけに倒れる）。 */
-  var DERIVED_KEY = { 'pf:weights': 1 };                 // キーごと導出値（機械しか書かない）
+  /* ⚠2026-08-17 追加: `g7ignite:map`（点灯日）も**機械しか書かない**。
+     index.html の renderPlan が、投下可の顔ぶれが変わるたびに点灯日と消灯印を自動で入れる
+     ——人が触る UI は一つも無い。ところがここで中身を比べていたため、
+     **投下可が動いた日は必ず repo と食い違い、旗が自己修復できず帯が出っぱなし**になった
+     （書き込み側は quiet() で囲んだが、既に立ってしまった旗はこちらでしか治せない）。
+     ⚠ 書き出しの対象からは外さない——点灯日は out/ に正本が無いので repo へは要る。
+       その鮮度は回転盤の `state`（月次）が測る。**赤い帯は「人の決定」だけを守る。** */
+  var DERIVED_KEY = { 'pf:weights': 1, 'g7ignite:map': 1 };   // 機械しか書かないキー
   var MACHINE_FLD = { fx: 1, npx: 1, npxAuto: 1 };       // 盤から書き戻される欄
   function stripMachine(v) {
     var o = JSON.parse(v);
@@ -176,6 +183,27 @@
     if (mine == null || theirs == null) return false;
     try { return stripMachine(mine) === stripMachine(theirs); } catch (e) { return false; }
   }
+  /* pendingKeys(repoData) — **どの決定が未書き出しか**を名指しで返す（2026-08-17新設）。
+     旧版の帯は「手元の決定が repo に入っていません」としか言わず、**何が未書き出しかを出さなかった**
+     ので、読み手には本物か誤検知かが判らなかった（実際その状態でユーザーから「そもそもいるの？」と
+     問われた）。判定は nothingPending と同じ sameDecision を使う＝二つの答えが割れない。 */
+  var LABEL = { 'pf:portfolio': '株数', 'pf:sold': '売却記録',
+                'pf:weights': '目標ウェイト', 'pf:monthly': '今月の個別枠', 'g7ignite:map': '点灯日' };
+  function pendingKeys(repoData) {
+    var out = [];
+    try {
+      for (var i = 0; i < EXACT.length; i++) {
+        var k = EXACT[i];
+        if (DERIVED_KEY[k]) continue;                    // 機械しか書かないキーは人の決定ではない
+        var mine = localStorage.getItem(k);
+        var theirs = (repoData && Object.prototype.hasOwnProperty.call(repoData, k)) ? repoData[k] : null;
+        if (mine == null && theirs == null) continue;
+        if (!sameDecision(k, mine, theirs)) out.push(LABEL[k] || k);
+      }
+    } catch (e) { return null; }                          // 測れなければ null（0件と区別する・ルール7）
+    return out;
+  }
+
   function nothingPending(repoData) {
     try {
       for (var i = 0; i < EXACT.length; i++) {
@@ -228,6 +256,7 @@
         }
         last = { verdict: v, savedAt: s.savedAt || null, applied: applied,
                  mine: localSavedAt(), dirty: isDirty(), healed: healed,
+                 pend: pendingKeys(s.data || {}),        // 何が未書き出しか（null=測れなかった）
                  n: Object.keys(s.data || {}).length };
         return last;
       });
@@ -393,13 +422,30 @@
       return;
     } else { el.innerHTML = ''; return; }   // same / none は黙る
     if (!act) { el.innerHTML = ''; return; }
-    el.innerHTML = '<div style="border:1px solid ' + col + ';border-left:5px solid ' + col +
-      ';border-radius:10px;padding:13px 16px;margin:10px 0;font-size:12.9px;line-height:1.75">' +
-      '<div style="font-size:14px;font-weight:700;color:' + col + ';margin-bottom:3px">⚠ ' + head + '</div>' +
-      '<div style="color:' + DIM + ';font-size:12.2px;margin-bottom:8px">' +
+    /* ★2026-08-17（ユーザー「これが全部のタブで勝手にでる。そもそもいるの？」）:
+       **一行に畳む。** 旧版は4手を常時展開しており、携帯では**画面の大半を占めていた**
+       ——しかも「決定が入っていません」としか言わず、**何が未書き出しかを出さなかった**ので、
+       読み手には本物か誤検知かが判らなかった。
+       ⚠ 消しはしない——守っているのは**株数と売却記録**で、これは out/ に正本が無く
+         localStorage が消えたら戻らない唯一のデータ（holdings.json は銘柄名しか持たない）。
+       ⇒ **何が未書き出しかを名指しし、手順は畳む。** 全タブに出るのは v9.9.132 の意図どおり
+         （Ⅳ台帳の中に置いていたら既定タブで見えなかった）。 */
+    var names = (s.pend && s.pend.length) ? s.pend.join('・')
+              : (s.pend === null ? null : null);
+    var what = names ? ('<b>' + names + '</b>が未書き出し')
+             : (s.verdict === 'uninit'
+                ? '<b>repo の state.json がまだ空</b>——株数も売却記録もこの端末にしかありません'
+                : '手元の決定が repo に入っていません');
+    el.innerHTML = '<details style="border:1px solid ' + col + ';border-left:5px solid ' + col +
+      ';border-radius:10px;padding:9px 14px;margin:10px 0;font-size:12.6px;line-height:1.7">' +
+      '<summary style="cursor:pointer;color:' + col + ';font-weight:600;list-style:none">' +
+      '⚠ ' + what + '　<span style="font-weight:400;font-size:11.5px;opacity:.85">' +
+      '——押すと直し方（4手）</span></summary>' +
+      '<div style="color:' + DIM + ';font-size:12px;margin:8px 0 4px">' +
       '門は静的ページなので<b>ブラウザから repo へは書けません</b>（トークンを置かない設計）。' +
-      'だから最後の一歩だけ人の手が要ります——<b>4手で終わります</b>。</div>' +
-      stepHTML(col) + '</div>';
+      'だから最後の一歩だけ人の手が要ります——<b>4手で終わります</b>。' +
+      '<br>※<b>点灯日と目標ウェイトは機械が書く記録</b>なのでここでは数えません（鮮度は⚙自動化の回転盤が測る）。' +
+      '</div>' + stepHTML(col) + '</details>';
   }
 
   /* ④ 「入れた」。**押すのは人**＝嘘をつけば盤(ops_status)が古いままになるだけで、データは消えない。 */

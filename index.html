@@ -1296,7 +1296,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.150</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.151</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -5465,7 +5465,14 @@ async function renderPlan(){
     }
   }
   for(const k of Object.keys(ign)){ if(!passSet.has(k)&&!ign[k].off){ign[k].off=new Date(nowTs).toISOString().slice(0,10);ignChanged=true;} }
-  if(ignChanged){try{await store.set('g7ignite:map',JSON.stringify(ign));}catch(e){}}
+  // ⚠v9.9.151(2026-08-17): **quiet() で囲む。** ここは *機械* の書き込み——投下可の顔ぶれが変わるたびに
+  //   点灯日と消灯印が自動で入る。囲まないと `setItem` の包みが dirty を立て、
+  //   **人が何も触っていないのに「手元の決定が repo に入っていません」が全タブで鳴り続ける**
+  //   （実測でそうなった。今日は投下可が何度も入れ替わったので開くたびに書き換わっていた）。
+  //   v9.9.131 が applyDash と render() を quiet() で囲んだのと**同じ種類の取りこぼし**。
+  //   ⚠ 書き出しの対象からは外さない——点灯日は out/ に正本が無い記録なので repo へは要る。
+  //     その鮮度は回転盤の `state`（月次）が測る＝赤い帯の仕事ではない。
+  if(ignChanged){try{await (window.ccfState&&ccfState.quiet?ccfState.quiet(()=>store.set('g7ignite:map',JSON.stringify(ign))):store.set('g7ignite:map',JSON.stringify(ign)));}catch(e){}}
   const ulys=r=>{
     const e=ign[r.nm]; let out='';
     if(e&&!e.off){const hLeft=48-(nowTs-e.ts)/3.6e6;
