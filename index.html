@@ -1296,7 +1296,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.153</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.154</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3899,6 +3899,92 @@ async function ccfInspectAll(btn){
 //   out/dashboard.json（GitHub ActionsがFinnhubから毎営業日コミット・鍵はSecretsでブラウザに出ない）／
 //   out/next_earnings.json。**取れなかったものは「未取得」と書く**（前回値やゼロで埋めない＝ルール7）。
 let __dashCache=null;
+// ── 📈 トータルリターン（v9.9.154・2026-08-17 ユーザー要望「購入した銘柄／ポートフォリオ／
+//    S&P500 のトータルリターンと% をすべて見れるように」）
+//   **表示専用**——Ω・四関門・売却規律・配分のどれにも触れない。
+//   計算は端末の単一実装 night/fetch_returns.py が持ち、ここは out/returns.json を描くだけ（v9.9.65）。
+//   ★三つとも**円建てに揃えてある**。ドル建てのリターンと円建ての資産を並べるのは
+//     この台帳が12回踏んだ「基準の違う二つを割る」型そのものなので、S&P500 も円へ直して比べる。
+//     そのうえで**為替の寄与を別の列で出す**——混ぜると円安で儲かったのを
+//     「銘柄選択が上手かった」と読み違える。
+function ccfReturnsHTML(R){
+  // 端末側の注記は Markdown の ** で強調が書いてあるので <b> へ直す（生の ** が画面に出ないように）
+  const md=t=>String(t==null?'':t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+  if(!R) return '<div style="font-size:12.5px;color:var(--dim)">out/returns.json が読めない——'
+    + '<code>python3 night/fetch_returns.py</code> で作る（鍵不要）。'
+    + '<b>「読めない」と「損益ゼロ」は別物</b>なので0とは出さない。</div>';
+  const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+  const pc=n=>(n>0?'+':'')+(n*100).toFixed(2)+'%';
+  const col=n=>n>0?'var(--jade,#3f8f6b)':(n<0?'var(--rust,#a8442a)':'var(--dim)');
+  const P=R.portfolio, B=R.benchmark;
+  const hdr='<div class="led" style="opacity:.65;font-size:10.5px"><span class="ln">銘柄</span>'
+    +'<span style="min-width:92px;text-align:right">取得(円)</span>'
+    +'<span style="min-width:92px;text-align:right">評価(円)</span>'
+    +'<span style="min-width:96px;text-align:right">損益</span>'
+    +'<span style="min-width:66px;text-align:right">価格</span>'
+    +'<span style="min-width:66px;text-align:right">配当込</span>'
+    +'<span style="min-width:62px;text-align:right">うち為替</span></div>';
+  let rows='';
+  (R.positions||[]).forEach(r=>{
+    if(r.skip){ rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}</span>`
+      +`<span style="font-size:11.5px;color:var(--dim)">—— ${r.skip}</span></div>`; return; }
+    const est=r.src==='est'
+      ? `<span title="買付単価(bpx)が未記録なので ${r.bd} の終値で推定。実際の約定値でも手数料込みでもない" style="font-size:9.5px;color:#d69a3c;margin-left:4px">推定</span>` : '';
+    rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}${est}</span>`
+      +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(r.cost_jpy)}</span>`
+      +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(r.val_jpy)}</span>`
+      +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(r.pl_jpy)}">${r.pl_jpy>0?'+':''}${yen(r.pl_jpy)}</span>`
+      +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(r.ret_px_jpy)}">${pc(r.ret_px_jpy)}</span>`
+      +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(r.ret_tr_jpy)}"><b>${pc(r.ret_tr_jpy)}</b></span>`
+      +`<span style="font-size:11.5px;min-width:62px;text-align:right;color:var(--dim)">${pc(r.fx_ret)}</span></div>`;
+  });
+  let sum='';
+  if(P){
+    const tr=(P.ret_tr!=null?P.ret_tr:P.ret);
+    sum=`<div class="led" style="border-top:2px solid var(--line);margin-top:4px">`
+      +`<span class="ln"><b>ポートフォリオ合計</b></span>`
+      +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(P.cost_jpy)}</span>`
+      +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(P.val_jpy)}</span>`
+      +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(P.pl_jpy)}">${P.pl_jpy>0?'+':''}${yen(P.pl_jpy)}</span>`
+      +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(P.ret)}">${pc(P.ret)}</span>`
+      +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(tr)}"><b>${pc(tr)}</b></span>`
+      +`<span style="min-width:62px"></span></div>`;
+    if(B){
+      const d=tr-B.ret;
+      sum+=`<div class="led"><span class="ln">S&amp;P500（配当込み・円建て）</span>`
+        +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(B.cost_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(B.val_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(B.pl_jpy)}">${B.pl_jpy>0?'+':''}${yen(B.pl_jpy)}</span>`
+        +`<span style="min-width:66px"></span>`
+        +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(B.ret)}"><b>${pc(B.ret)}</b></span>`
+        +`<span style="min-width:62px"></span></div>`
+        +`<div style="font-size:12.5px;padding:8px 12px;margin-top:6px;background:var(--panel2);border:1px solid var(--line);border-radius:8px">`
+        +`S&amp;P500 との差（配当込み・円建て）: <b style="color:${col(d)};font-size:15px">${(d>0?'+':'')+(d*100).toFixed(2)}pt</b>`
+        +` <span style="color:var(--dim)">——同じ円を同じ日に S&amp;P500 へ入れていたらどうだったか</span></div>`;
+    }
+  }
+  let warn='';
+  if(R.annualized===false && R.annualize_why)
+    warn+=`<div style="font-size:11px;color:#d69a3c;margin-top:8px;line-height:1.8">⚠ ${md(R.annualize_why)}</div>`;
+  const est=(R.positions||[]).filter(r=>r.src==='est');
+  if(est.length)
+    warn+=`<div style="font-size:11px;color:#d69a3c;margin-top:6px;line-height:1.8">⚠ <b>取得単価が未記録 ${est.length}件</b>`
+      +`（${est.map(r=>r.t).join(' / ')}）——買付日の終値で推定している。<b>実際の約定値でも手数料込みでもない。</b>`
+      +` Ⅶ資産の「✎編集」→<b>買付単価</b>を入れると実記録に変わる</div>`;
+  const cf=(R.positions||[]).filter(r=>r.v_conflict);
+  if(cf.length)
+    warn+=`<div style="font-size:11px;color:#d69a3c;margin-top:6px;line-height:1.8">⚠ <b>state.json の金額(v)と食い違う ${cf.length}件</b>: `
+      +cf.map(r=>`${r.t}（v ${yen(r.v_conflict.v)} / 取得 ${yen(r.v_conflict.cost)} / 評価 ${yen(r.v_conflict.val)}）`).join('・')
+      +`——<b>どちらが正しいかは機械には判らない</b>ので名指しするだけ。株数があるとき v は採点にも表示にも使われない</div>`;
+  (R.blind||[]).forEach(b=>{ warn+=`<div style="font-size:11px;color:var(--rust);margin-top:6px">✗ 読めなかった入力: ${md(b)}</div>`; });
+  return hdr+rows+sum+warn
+    +`<div style="font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.8">`
+    +`<b>価格</b>=終値ベース（証券口座の含み損益と一致・配当は入らない）／`
+    +`<b>配当込</b>=adjclose ベース＝<b>S&amp;P500TR と同じ基準</b>。`
+    +`片方だけ見ると必ず誤読する（価格リターンには配当が入らないので構造的に低く出る）。`
+    +`データ源 ${R.source||'—'}・${R.generated||'—'} 生成</div>`;
+}
+
 async function ccfDash(btn){
   const box=$('dashBox'); if(!box)return;
   const lab=btn?btn.textContent:''; if(btn){btn.disabled=true;btn.textContent='読込中…';}
@@ -3911,10 +3997,13 @@ async function ccfDash(btn){
   // v9.9.124: 盤も irr=85 の実績台帳を読む（席の優先の判定に要る）。Ⅵと同じものを同じ関数で読む（v9.9.65）
   // v9.9.129: 盤も**未完了の重大事象**（out/pending.json）を読む。Ⅵにだけ入れて盤を洗い忘れると
   //   v9.9.94→95 のAPHとまったく同じ「盤では🟢・Ⅵでは⛔」が三度目の再発になる（v9.9.65の掟）。
-  const [mkt,ern,stl,vfl,pnd,pidx]=await Promise.all([j('out/dashboard.json'),j('out/next_earnings.json'),
+  // v9.9.154: トータルリターン（out/returns.json）も読む。**計算は端末の単一実装
+  //   night/fetch_returns.py が持ち、門は描くだけ**（dashboard.json と同じ作法・v9.9.65）。
+  const [mkt,ern,stl,vfl,pnd,pidx,rtn]=await Promise.all([j('out/dashboard.json'),j('out/next_earnings.json'),
                                              j('out/stale_bs.json'),j('out/validate_fail.json'),
                                              j('out/pending.json'),
-                                             j('out/packs_index.json'),ccfLoadIrr85Hist(),ccfLoadIrr85Scope(),ccfLoadProfiles()]);
+                                             j('out/packs_index.json'),j('out/returns.json'),
+                                             ccfLoadIrr85Hist(),ccfLoadIrr85Scope(),ccfLoadProfiles()]);
   const dPackT=pidx?new Set((pidx.packs||[]).map(f=>String(f).replace(/_gate_pack\.json$/,'').toUpperCase())):null;
   // v9.9.140: 盤も Ⅵ と同じ ccfGateInput を呼ぶ（**読めなければ blind に積んで画面に出す**）
   const dBlind=[];
@@ -4032,6 +4121,8 @@ async function ccfDash(btn){
             <b>Ⅳ台帳の「￥ 価格だけ更新」</b>に <code>6146 38000</code> のように「コード 現値」を行区切りで貼れば更新できる（月1回・DCAの買付時でよい）。
             per は<b>価格の変化率だけ</b>を反映する式で再計算されるので、利益の期間基準は壊れない。</span></div>`:''),
         '評価額・含み損益は<b>記帳のための情報</b>。出口判定はS1/S2/S3のみで、含み損益では動かさない')
+    + sec('📈 トータルリターン', ccfReturnsHTML(rtn),
+        '<b>すべて円建て</b>——ドル建てのリターンと円建ての資産を並べると「基準の違う二つを割る」型になるため、S&amp;P500 も円へ直して比べる。<b>表示専用で判定には使わない</b>')
     + sec('🟢 投下可', buyHtml
         // v9.9.145: 半導体上限を撤去したので「（半導体上限）」の印は消えた。
         //   集中そのものは Ⅵ の◇注記が出し続ける（関門を消しても事実は消さない）。
