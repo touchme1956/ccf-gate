@@ -26,6 +26,11 @@ B と C は**偽陰性**なのが質が悪い——盤が緑なので、誰も�
    **ファイルは新しいのに、中のデータがカバーする期間が伸びていない**を捕まえる。
 ③ **入力の鮮度**: 錨の生成器を静的に特定し、その生成器が読む out/*.json を入力として、
    ①②を伝播する。**入力の宣言を人が書かなくてよい**（コードから導出する）。
+   ⚠ 入力が古い理由は**二つ**——(a)取りに行っていない＝我々の停止 (b)取りに行ったが
+   配信元にそれ以上が無い＝**配信元の限界**。取得日と末端を比べれば機械で分けられる。
+   混ぜると (b) で永久に鳴り続け、今朝直した鳴りっぱなしを自分で作ることになる。
+   **だが (b) を消しはしない**——取得器が壊れて古い値を返す形も同じ見え方をするので、
+   別の段に意味を書いて出す。
 
 ## この器が守っている作法
 
@@ -294,7 +299,7 @@ def main():
                          "body_last": None, "body_days": None,
                          "body_note": "自分の出力なので本体検査は行わない（所見が安定＝本体が動かないのが正常）",
                          "data_end": None, "data_days": None,
-                         "generator": ["night/check_freshness.py"], "inputs": [], "flags": []})
+                         "generator": ["night/check_freshness.py"], "inputs": [], "flags": [], "src_lag": []})
             continue
 
         blast, walked, why = body_last_change(anchor)
@@ -327,22 +332,40 @@ def main():
             flags.append(f"本体が直近{walked}版で一度も動いていない")
         if ddays is not None and ddays > due:
             flags.append(f"中のデータが{dend}止まり（{ddays}日前・期限{due}日）")
+        # ⚠ 入力のデータが古い理由は**二つある**ので分ける（2026-08-17 に実際に走らせて確定した）。
+        #   (a)取りに行っていない＝我々の停止  (b)取りに行ったが配信元にそれ以上が無い＝**配信元の限界**
+        #   実測: sp500_pe_monthly は今日 fetch に成功して generated が今日になったのに
+        #   series の末端は 2026-03 のまま＝(b)。これを「止まっている」と鳴らし続けると
+        #   **今朝直した鳴りっぱなし（audit_irr85_dual）を自分で作る**ことになる。
+        #   ⚠ ただし**隠さない**——別の段に、意味を書いて出す（取得器が壊れて古い値を返す形も
+        #   同じ見え方をしうるので、消してしまうと本物を見逃す）。
+        src_lag = []
         for i in ins:
-            if i["data_days"] is not None and i["data_days"] > due:
+            if i["data_days"] is None or i["data_days"] <= due:
+                continue
+            fetched = ops_status.json_field(i["path"], "generated", "asof", "date", "updated")
+            fdays = (TODAY - datetime.date.fromisoformat(fetched)).days if fetched else None
+            if fdays is not None and fdays <= due:
+                src_lag.append(f"入力 {os.path.basename(i['path'])}: 取得は{fetched}に成功したが"
+                               f"データは{i['data_end']}止まり（{i['data_days']}日前）"
+                               f"＝**配信元の限界**であって我々の停止ではない")
+            else:
                 flags.append(f"入力 {os.path.basename(i['path'])} のデータが"
-                             f"{i['data_end']}止まり（{i['data_days']}日前）")
+                             f"{i['data_end']}止まり（{i['data_days']}日前"
+                             + (f"・最後に取得したのは{fetched}" if fetched else "・取得日が不明") + "）")
 
         rows.append({"id": jid, "name": name, "anchor": anchor, "due_days": due,
                      "board_last": job["last"], "board_state": job["state"],
                      "body_last": blast, "body_days": bdays, "body_note": why,
                      "data_end": dend, "data_days": ddays,
-                     "generator": gens, "inputs": ins, "flags": flags})
+                     "generator": gens, "inputs": ins, "flags": flags, "src_lag": src_lag})
 
     hits = [r for r in rows if r["flags"]]
+    lags = [r for r in rows if r.get("src_lag")]
     out = {"generated": TODAY.isoformat(),
            "note": "回転盤は日付しか見ない。この器は『日付は動いたが中身/入力が死んでいる』を測る。"
                    "判定は持たない＝採点にも門にも触れない作業リスト",
-           "n_checked": len(rows), "n_flagged": len(hits),
+           "n_checked": len(rows), "n_flagged": len(hits), "n_src_lag": len(lags),
            "n_unmeasurable": len(unmeasurable),
            "rows": rows, "unmeasurable": unmeasurable}
     if "--json" in sys.argv:
@@ -352,7 +375,8 @@ def main():
     print("=" * 74)
     print("中身と入力の鮮度（回転盤は日付しか見ていない）")
     print("=" * 74)
-    print(f"錨 {len(rows)}件を検査 ／ 作業リスト {len(hits)}件 ／ **測れない {len(unmeasurable)}件**")
+    print(f"錨 {len(rows)}件を検査 ／ 作業リスト {len(hits)}件 ／ "
+          f"配信元の限界 {len(lags)}件 ／ **測れない {len(unmeasurable)}件**")
     if unmeasurable:
         print("\n■ 測れない（健全と読まないこと）")
         for u in unmeasurable:
@@ -363,6 +387,12 @@ def main():
             print(f"\n   {r['name']}（盤: {r['board_state']} 最終 {r['board_last']}）")
             for f in r["flags"]:
                 print(f"      ★ {f}")
+    if lags:
+        print("\n■ 配信元の限界（我々の停止ではない・だが隠さない）")
+        for r in lags:
+            for f in r["src_lag"]:
+                print(f"   {r['name']}")
+                print(f"      · {f}")
     if show_all:
         print("\n■ 全件")
         for r in rows:
