@@ -808,7 +808,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 </style>
 <!-- v9.9.131: 人の決定(state.json)の読み書き。**両ページが同じ実装を読む**（写すと必ず割れる・v9.9.65）。
      本体より前に読むのは localStorage.setItem の包み(dirty検出)を先に効かせるため -->
-<script src="state.js"></script></head><body>
+<script src="state.js"></script><script src="icon.js"></script></head><body>
 <div class="tategaki" aria-hidden="true">壊れない複利の門</div>
 <div class="tategaki tr" aria-hidden="true">Compounding, Unbroken — CCF Ω</div>
 <nav class="pgnav">
@@ -1296,7 +1296,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.151</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.153</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -4740,65 +4740,12 @@ function ccfXJudge(d,s){
 //   Ωをそのまま比に使うのは定数を一つも導入しない唯一の形。
 // 【E[r]は消していない】計算・表示・Ⅵの開通ライン・予実台帳(audit_er_realized)はすべて従来どおり。
 //   **決定に使うのをやめただけ**——記録を消すと「E[r]が正しかったのか」を永久に検証できなくなる。
-// v9.9.103: 銘柄アイコン（表示専用・判定には一切不使用）。**単一実装**——Ⅳ台帳／Ⅵ買付順位／盤／Ⅶ資産が同じ関数を呼ぶ。
-//   out/logos/index.json（night/fetch_logos.py がCIで取り込む目録）で拡張子を引く。
-//   目録が未着でも svg→png の順で試すので表示は壊れない。取れない銘柄はモノグラムのまま
-//   ＝「ロゴが無い」と「別の会社のロゴ」を取り違えない（ルール7の作法）。
-let CCF_LOGO=null;
-(async()=>{try{const r=await fetch('out/logos/index.json');if(r.ok)CCF_LOGO=(await r.json()).have||{};}catch(e){CCF_LOGO={};}})();
-function ccfIcon(nm){
-  const t=String(nm||'').trim().split(/[\s_]/)[0].toUpperCase();
-  if(!t)return '';
-  let h=0; for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;   // 同じ銘柄はいつも同じ色
-  const hue=h%360, mono=(t.replace(/[^A-Z0-9]/g,'').slice(0,2)||'?');
-  const esc=t.replace(/[^A-Z0-9.\-]/g,'');
-  const m=CCF_LOGO?CCF_LOGO[esc]:null;
-  const ext=m&&!m.x&&(m.ext||m), c=(m&&m.c)||null;
-  const cs=(m&&m.cs)||(c?[c]:[]);
-  const PX=x=>[1,3,5].map(i=>parseInt(x.substr(i,2),16));
-  const A=(x,a)=>`rgba(${PX(x).join(',')},${a})`;
-  const glow=c?c:(ext?'rgba(200,190,170,.5)':`hsl(${hue} 62% 52%)`);
-  // タイルの地色: 既定は「代表色を1割だけ白に混ぜた淡色」。
-  //   ただし **d=1（白い線画で透過あり）は白い地に置くと消える**ので、代表色を暗い地へ1.8割混ぜる。
-  let tile='#fff';
-  const rgb=(c&&/^#[0-9a-f]{6}$/i.test(c))?PX(c):null;
-  if(m&&m.d) tile=rgb?`rgb(${rgb.map(v=>Math.round(26+(v-26)*.18)).join(',')})`:'#20242c';
-  else if(rgb) tile=`rgb(${rgb.map(v=>Math.round(255-(255-v)*.10)).join(',')})`;
-  // ── v9.9.107: 行の彩色は「**色を補間しない**」のが肝 ──────────────────────
-  //   v9.9.106 は複数色を1本のリニアで繋いだが、**橙→緑→青の補間は途中で必ず茶色を通る**ので
-  //   行が濁って見えた（実機で撮って確認）。さらに各色を白へ35%寄せていたため彩度も落ちていた。
-  //   → 各色を**別々の楕円の光**として重ねる。重なりは加算的に見えるだけで補間しないので濁らない。
-  //   左端の色バーが輪郭を作り、「滲み」ではなく「意図した意匠」に見せる。
-  //   不透明度は色ごとに焼き込む（要素の opacity で一律に薄めるとバーまで沈む）。
-  //   v9.9.108（ユーザー「もっと色をはっきりさせて」）: 5案を実機で並べて比べ、最も強い案を採った。
-  //   はっきりさせる手は3つあり、**濃さを上げるだけでは足りない**——
-  //   (1)不透明度を約2倍 (2)**中間停止で芯を作る**（0%→42%まで濃さを保ってから落とす。
-  //   単純な放射は中心から即座に薄まるので「色があるのにぼんやり」になる）(3)彩度1.35倍（CSS側）。
-  //   v9.9.109（ユーザー「最後まで色が届くようにしてほしい」）: **光の大きさと位置を px から % へ**。
-  //   px固定だと**行幅・行高に追従しない**ので、幅の広い行では右2/3が地の色のまま残り、
-  //   携帯で折り返して背の高くなった行では上下の隅が染まらなかった（実機の画面写真で発覚）。
-  //   → 幅80%・高さ150%の光を、色数に応じて等間隔（1色=中央 / 2色=20:75 / 3色=12:50:86）に置く。
-  //   端の光は行の外まではみ出すので、**どんな幅でも左端から右端まで色が届く**。
-  //   **補間しない**という v9.9.107 の肝は不変（色どうしを繋がないので濁らない）。
-  let grad='';
-  if(cs.length){
-    //   濃さは二段階で下げた（ユーザー「もう少しうすく」→「もう少し薄く」）。v9.9.108比で
-    //   **v9.9.110 が ×0.60**、**v9.9.111 が ×0.34**（.62/.54/.48 → .21/.18/.16）。
-    //   毎回 4案を実機で並べて選んでいる（×0.60/×0.45/×0.34/×0.25。×0.25は暗いテーマで消える）。
-    //   **薄くするのは光だけ**——(a)届く範囲（80%×150%・%配置）は不変＝v9.9.109で直したことを
-    //   打ち消さない (b)彩度1.35も不変＝色相の純度の話で濃さとは別の軸 (c)**左端バーは .75 のまま**
-    //   ＝バーまで薄めると「意匠」ではなく「滲み」に戻る（v9.9.107の教訓）。
-    //   **一つの要望に一つの軸だけ動かす**——まとめて触ると次の注文で何を戻せばよいか判らなくなる。
-    const L=[`linear-gradient(90deg,${A(cs[0],.75)} 0 5px,rgba(0,0,0,0) 5px)`];
-    const POS={1:['50%'],2:['20%','75%'],3:['12%','50%','86%']}[Math.min(3,cs.length)];
-    const AL=[.21,.18,.16];
-    cs.slice(0,3).forEach((x,i)=>{const al=AL[i];
-      L.push(`radial-gradient(80% 150% at ${POS[i]} 50%,${A(x,al)} 0%,${A(x,al*.45)} 42%,${A(x,0)} 100%)`);});
-    grad=`<i class="tgrad" style="background:${L.join(',')}"></i>`;
-  }
-  const img=!ext?'':`<img loading="lazy" decoding="async" alt="" src="out/logos/${esc}.${ext}" onerror="this.remove()">`;
-  return grad+`<span class="tico" title="${esc}" style="--g:${glow};--tile:${tile};background:hsl(${hue} 34% 24%);color:hsl(${hue} 68% 80%)">${mono}${img}</span>`;
-}
+// v9.9.152: 銘柄アイコンと行の彩色は **icon.js（単一実装）** へ移した。
+//   両ページに同じ3017字がコピーされており、v9.9.108 で「関数を同期しただけでは足りない」
+//   （CSSは共有されないので二つの画面が違うものを見せる）という破れを一度踏んでいる。
+//   state.js と同じ作法で一本にし、あわせて **目録が後から届いても全タブを塗り直す**
+//   （ccfIconRepaint）ようにした——従来は起動時に描かれたタブだけ色が付かなかった。
+//   CSS(.tico/.tgrad) は寸法が違うので各ページに残す。
 
 function ccfAllocScore(c){
   return Math.max(0,((c&&c.s)||0));

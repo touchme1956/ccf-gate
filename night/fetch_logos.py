@@ -96,14 +96,46 @@ def main():
                 miss.append(t)
             if i % 50 == 0:
                 print(f"  {i}/{len(todo)}  取得{len(got)} 未取得{len(miss)}", flush=True)
-    idx = {t: existing(t) for t in ts}
-    idx = {t: e for t, e in idx.items() if e}
-    total = sum(os.path.getsize(os.path.join(DIR, f"{t}.{e}")) for t, e in idx.items())
+    # ★2026-08-17 の是正（ユーザー報告「新しく入った銘柄に色がない」）——
+    #   旧実装は index.json を**ディスクから作り直す**だけだったので、
+    #   night/logo_colors.py が測った c/cs/d/x を**毎回まるごと捨てていた**。
+    #   実測: 2026-08-17 の ops.yml で 色あり 318 → 104（PNG 214件が全滅）。
+    #   ＝この repo が4回踏んだ「作った答えを捨てる」型（score_all / pending / validate_fail に続く5例目）。
+    #   指紋は per-ticker の `b`（バイト数）で、**`b` を書くのは logo_colors だけ**。
+    #   ここは「`b` が今のファイルと一致するなら測定値ごと持ち回す／変わったら測定値も捨てる」
+    #   ＝色が消えるのは**絵が本当に差し替わったとき**に限られる。
+    prev = {}
+    try:
+        with open(os.path.join(DIR, "index.json"), encoding="utf-8") as f:
+            prev = json.load(f).get("have") or {}
+    except Exception:
+        prev = {}
+    idx, n_carry, n_drop = {}, 0, []
+    for t in ts:
+        e = existing(t)
+        if not e:
+            continue
+        size = os.path.getsize(os.path.join(DIR, f"{t}.{e}"))
+        p = prev.get(t) if isinstance(prev.get(t), dict) else {}
+        keep = {}
+        if p.get("ext") == e and p.get("b") == size:
+            # ⚠ **k（モノクロのロゴの灰・v9.9.153）を入れ忘れると47銘柄の灰が毎回消える**。
+            #   持ち回す欄を増やしたら、必ずここにも足すこと（logo_colors が書く欄と対）。
+            keep = {k: p[k] for k in ("b", "c", "cs", "k", "d", "x", "m") if k in p}
+            if keep.get("c") or keep.get("k"):
+                n_carry += 1
+        elif p.get("c") or p.get("k"):
+            n_drop.append(t)                      # 絵が変わった＝色は測り直し（logo_colors が拾う）
+        idx[t] = {"ext": e, **keep}
+    total = sum(os.path.getsize(os.path.join(DIR, f"{t}.{v['ext']}")) for t, v in idx.items())
     o = {"generated": time.strftime("%Y-%m-%d"), "n": len(idx), "bytes": total,
-         "note": "門は同一オリジンで out/logos/{T}.{ext} を読む。無い銘柄はモノグラムで描く（欠測を別物で埋めない）",
+         "note": "門は同一オリジンで out/logos/{T}.{ext} を読む。無い銘柄はモノグラムで描く（欠測を別物で埋めない）。"
+                 "c/cs/d/x は night/logo_colors.py の測定値で、b（バイト数）が一致する限り持ち回す",
          "have": idx, "missing": sorted(set(ts) - set(idx))}
     json.dump(o, open(os.path.join(DIR, "index.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"\n取得済み **{len(idx)}/{len(ts)}銘柄**（合計 {total/1024:.0f}KB）")
+    print(f"代表色の持ち回し: 据置 {n_carry}件"
+          f"{f' ／ 画像が変わったので測り直し {len(n_drop)}件: ' + ' '.join(n_drop[:20]) if n_drop else ''}")
     if o["missing"]:
         print(f"未取得 {len(o['missing'])}: {' '.join(o['missing'][:40])}")
     print(f"→ {DIR}/index.json")

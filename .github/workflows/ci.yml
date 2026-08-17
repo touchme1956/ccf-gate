@@ -445,6 +445,10 @@ jobs:
             npx playwright install chromium >/dev/null 2>&1 || true
           node night/check_mobile_fit.js 2>&1 | tail -25
           node night/check_gate_parity.js 2>&1 | tail -25
+          # v9.9.152: **目録が後から届いても全タブに色が乗るか**。
+          #   「たまたま間に合えば緑」になる種類なので、この検査は目録の到着を3秒遅らせて測る。
+          #   実測の注入検査: 塗り直しを外すと**台帳384行の光が0**になって落ちる（＝ユーザー報告の症状）。
+          node night/check_icon_colors.js 2>&1 | tail -25
 
       # ── 8. ページの重さの予算（1.7MBまで肥大した実績があるので歯止め）──────────
       - name: ページサイズの予算

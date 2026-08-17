@@ -146,11 +146,27 @@ jobs:
       #   out/logos/index.json の note は「**night/logo_colors.py がCIで算出**」と書いていたのに
       #   **どのCIからも呼ばれていなかった**＝説明と実装の齟齬（audit_docs が本来落とす型）。
       #   実害は小さいが、**新しく審査した社は静かにモノグラムへ落ちる**（ロゴが出ない）。
+      # ★2026-08-17（v9.9.152・ユーザー報告「新しく入った銘柄に色がない」）——
+      #   **この2行が色を消していた**。実測: この日の実行で 色あり 318 → 104（PNGの214件が全滅）。
+      #   (1) fetch_logos が index.json をディスクから作り直して測定値を捨て
+      #   (2) logo_colors が **Pillow 不在**で PNG を測れず、その「測れなかった」を色なしで上書き
+      #   ＝ pip install がどのworkflowにも無いので、**CIでは最初からPNGが測れていなかった**。
+      #   是正: fetch_logos は指紋(b)が一致する測定値を持ち回す／logo_colors は
+      #   **標準ライブラリだけでPNGを読む**（Pillow任意）＋測れなければ前回の測定を残す＋
+      #   色が減る書き込みは拒否（--allow-loss が無い限り exit 1）。
+      #   Pillow は「あればPILで測る」だけの高速路。**入らなくても色は出る**ので || true でよい。
       - name: 銘柄アイコンと代表色（表示専用）
         continue-on-error: true
         run: |
+          pip install --quiet Pillow 2>/dev/null || echo "※Pillow無し——標準ライブラリの読み手で測る（設計どおり）"
           timeout 1200 python3 night/fetch_logos.py || true
           timeout 600 python3 night/logo_colors.py || true
+          python3 - <<'PY'
+          import json
+          h=json.load(open('out/logos/index.json'))['have']
+          n=sum(1 for v in h.values() if v.get('c'))
+          print(f"::notice::ロゴ代表色 {n}/{len(h)}銘柄（色が減っていたら logo_colors が中止して前の値を残す）")
+          PY
       # パック索引の再生成（2026-08-10接続）
       #   out/packs_index.json は **Ⅵ一括取込の目録**であり v9.9.102 の**孤児レコード関門**の母集団。
       #   生成者は make_chunks.py だけで、どのCIからも呼ばれていなかった。

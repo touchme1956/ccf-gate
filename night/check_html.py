@@ -19,6 +19,10 @@ night/check_html.py — index.html の構造検査（2026-07-29新設）
   1. 各タブ（#pg1..#pg8）の <div> と </div> の収支がゼロか
   2. スクリプトが参照する要素ID（$('xxx') / getElementById）が HTML に存在するか
   3. 各 <script> ブロックが構文として通るか
+  4. **外部スクリプト（<script src=...>）が実在し・構文が通り・呼ばれている ccf* を定義しているか**
+     （2026-08-17新設。icon.js を新設して ccfIcon を両ページの外へ出したので、
+       **ファイルが欠けると全銘柄の行が描けなくなる**——inline のときには有り得なかった壊れ方。
+       state.js も同じ危険を負っていたが検査が無かった。index.html と portfolio.html の両方を見る）
 使い方: python3 night/check_html.py   （終了コード1で不合格）
 """
 import re
@@ -72,6 +76,34 @@ def main():
     r = subprocess.run(["node", "-e", js], capture_output=True, text=True)
     if r.returncode:
         fails.append("スクリプトの構文エラー: " + r.stdout.strip()[:200])
+
+    # --- 4. 外部スクリプトの実在・構文・ccf* の解決（両ページ） ---
+    #   inline を外へ出した瞬間に「ファイルが無ければ全行が描けない」という壊れ方が生まれる。
+    #   呼んでいる ccf*() が inline にも外部にも無ければ、それは**その形の事故**そのもの。
+    for page in ("index.html", "portfolio.html"):
+        if not os.path.exists(page):
+            continue
+        ps = open(page, encoding="utf-8").read()
+        srcs = re.findall(r'<script[^>]*\bsrc="([^"]+)"', ps)
+        pool = "".join(re.findall(r"<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)</script>", ps))
+        for src in srcs:
+            if not os.path.exists(src):
+                fails.append(f"{page}: <script src=\"{src}\"> が実在しない"
+                             f"（読み込めないと、その中の関数を呼ぶ行が全部描けない）")
+                continue
+            r = subprocess.run(["node", "--check", src], capture_output=True, text=True)
+            if r.returncode:
+                fails.append(f"{src}: 構文エラー {(r.stderr or r.stdout).strip()[:160]}")
+            pool += "\n" + open(src, encoding="utf-8").read()
+        defined = set(re.findall(r"function\s+(ccf\w+)", pool)) | \
+            set(re.findall(r"(?:const|let|var)\s+(ccf\w+)\s*=", pool)) | \
+            set(re.findall(r"window\.(ccf\w+)\s*=", pool))
+        # 呼び出しだけを拾う（`obj.ccfFoo(` のようなメンバ呼び出しは別物なので除く）
+        called = set(re.findall(r"(?<![.\w])(ccf\w+)\s*\(", pool))
+        miss = sorted(called - defined)
+        if miss:
+            fails.append(f"{page}: 呼ばれているのにどこにも定義が無い関数 {miss}"
+                         f"（外部スクリプトの取りこぼし＝ブラウザで初めて落ちる）")
 
     if fails:
         print("✗ index.html の構造検査に不合格")
