@@ -31,7 +31,9 @@ ops.yml を直せばこの器も自動で追随する。
 
 実行: python3 night/run_ops.py [--wf ops.yml] [--only 3,7] [--skip 17] [--dry-run]
       --wf で **fix.yml / gate0.yml** も同じ器で回せる（どちらも実行0回のまま）
-在庫: out/{ワークフロー名}_run.json（いつ・何が走って・何が落ちたかの記録）
+在庫: out/wfrun_{ワークフロー名}.json（いつ・何が走って・何が落ちたかの記録）
+      ⚠ `wfrun_` を前置するのは、ワークフロー自身が作る在庫（例 out/gate0_run.json＝
+        run_gate0_local.py の実行印）と名前がぶつかるのを防ぐため。実際に一度潰した。
 """
 import argparse
 import datetime
@@ -165,8 +167,11 @@ def main():
            "note": "ops.yml をこの場で実行した記録。手順は ops.yml から読む（書き写さない）。"
                    "鍵が無いステップは『実行した』と数えない"}
     if not a.dry_run:
+        # ⚠ 名前は `wfrun_` を必ず前置する。実測で踏んだ——素朴に `{stem}_run.json` にしたら
+        #   **run_gate0_local.py 自身の実行印 out/gate0_run.json を上書きした**（盤がそれを読む）。
+        #   ワークフローが作る在庫と、この器が作る記録は**名前空間を分ける**。
         stem = a.wf.replace(".yml", "")
-        with open(os.path.join(BASE, "out", f"{stem}_run.json"), "w", encoding="utf-8") as f:
+        with open(os.path.join(BASE, "out", f"wfrun_{stem}.json"), "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=1)
     return 0
 
