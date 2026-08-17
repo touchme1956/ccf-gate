@@ -115,6 +115,16 @@ jobs:
       - name: 説明とコードの齟齬 audit_docs
         run: python3 night/audit_docs.py
 
+      # ── 1-c. 日付が凍っているツール（2026-08-17新設・**同じ事故を二度踏んだので機構で塞ぐ**）──
+      #   1回目 backfill_machine_evidence.py: TODAY="2026-07-29" が2週間残り「いつ検算したか」が消えた。
+      #   2回目 audit_irr85_dual.py: TODAY=date(2026,8,12) が5日残り、**二つを同時に壊していた**——
+      #     (a) generated が動かず**回転盤が永久に「停止疑い」**（鳴りっぱなしは鳴らないのと同じ）
+      #     (b) **STALE_DAYS(400日)の一斉再読の周期が凍る**＝「人が周期を覚えていなくてよい」機構が停止。
+      #   例外を出さず、ファイルは毎回きちんと書かれ、中身も正しい顔をしている＝**読んでも判らない**。
+      #   歴史検証(retro_/hist/_prereg)の asof は固定が正しいので除外する（動かすと look-ahead）。
+      - name: 日付が凍っているツール check_frozen_dates
+        run: python3 night/check_frozen_dates.py --json
+
       # ── 2-a. 人の決定の正本 state.json（v9.9.131）──────────────────────────
       #   ブラウザが吐いたファイルを人がコミットする経路なので、**形が壊れたまま入りうる**。
       #   壊れていると門は「未初期化」と読んで黙って何もしない＝壊れたことが誰にも見えない。
@@ -455,7 +465,7 @@ jobs:
           #   **第四の関門が読む pending.json は手で回したときしか更新されなかった**。
           #   out/irr85_myrule.json は新着の検出に前回の在庫を使うので、
           #   コミットしないと**毎回「全社が新着」になり新着の意味が消える**。
-          git add out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json out/irr85_dual.json night/reaudit_queue.json 2>/dev/null || true
+          git add out/frozen_dates.json out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json out/irr85_dual.json night/reaudit_queue.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"
           else

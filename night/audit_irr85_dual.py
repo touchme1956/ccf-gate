@@ -50,7 +50,16 @@ import sys
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out")
 STALE_DAYS = 400          # 回転盤の「年次」(430日)より少し手前で鳴らす
-TODAY = datetime.date(2026, 8, 12)
+# ⚠ ここを固定値にしてはいけない（2026-08-17に実際に踏んで是正した）。
+#   旧: TODAY = datetime.date(2026, 8, 12) ＝ 5日間そのまま残り、二つのものを同時に壊していた——
+#   (1) `generated` が動かないので**回転盤が永久に「停止疑い」**を出す（実際に出ていた）。
+#       この盤の唯一の仕事は「止まった作業を見つけること」なのに、鳴りっぱなしは鳴らないのと同じ。
+#   (2) もっと重い: **STALE_DAYS の一斉再読の周期が凍る**。age_days が伸びなくなるので
+#       「400日を超えた検証は自動で作業リストへ戻る＝周期を人が覚えている必要が無い」という
+#       機構そのものが黙って止まる。**止まったことを検出する機構も同時に壊れる**のが質の悪いところ。
+#   backfill_machine_evidence.py の TODAY 固定（2週間放置）と同型。
+#   再発は night/check_frozen_dates.py が機械で止める（CI）。
+TODAY = datetime.date.today()
 
 
 def packs():
