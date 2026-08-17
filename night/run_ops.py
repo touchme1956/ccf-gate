@@ -29,8 +29,9 @@ ops.yml を直せばこの器も自動で追随する。
 - 実行後に **score_all を回して投下可の顔ぶれが変わっていないかを必ず出す**。
   変わったら「変わった」と言う（黙って変えない）。
 
-実行: python3 night/run_ops.py [--only 3,7,8] [--skip 17] [--dry-run] [--timeout 900]
-在庫: out/ops_run.json（いつ・何が走って・何が落ちたかの記録）
+実行: python3 night/run_ops.py [--wf ops.yml] [--only 3,7] [--skip 17] [--dry-run]
+      --wf で **fix.yml / gate0.yml** も同じ器で回せる（どちらも実行0回のまま）
+在庫: out/{ワークフロー名}_run.json（いつ・何が走って・何が落ちたかの記録）
 """
 import argparse
 import datetime
@@ -42,18 +43,17 @@ import sys
 import time
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-WF = os.path.join(BASE, ".github", "workflows", "ops.yml")
 TODAY = datetime.date.today()
 
 
-def steps_from_workflow():
-    """ops.yml から (番号, 名前, run, env, timeout) を取り出す。**書き写さない**。"""
+def steps_from_workflow(wf):
+    """ワークフローから (番号, 名前, run, env, timeout) を取り出す。**書き写さない**。"""
     try:
         import yaml
     except ImportError:
         print("✗ pyyaml が無い（pip install pyyaml）", file=sys.stderr)
         return []
-    doc = yaml.safe_load(open(WF, encoding="utf-8"))
+    doc = yaml.safe_load(open(wf, encoding="utf-8"))
     out = []
     for job in (doc.get("jobs") or {}).values():
         for i, st in enumerate(job.get("steps") or [], 1):
@@ -81,21 +81,27 @@ def needed_keys(st):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--wf", default="ops.yml",
+                    help="走らせるワークフロー（既定 ops.yml）。fix.yml / gate0.yml も同じ器で回せる")
     ap.add_argument("--only", default="")
     ap.add_argument("--skip", default="")
     ap.add_argument("--timeout", type=int, default=900)
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
-    steps = steps_from_workflow()
+    wf = os.path.join(BASE, ".github", "workflows", a.wf)
+    if not os.path.exists(wf):
+        print(f"✗ {a.wf} が無い → 何もせず終了")
+        return 1
+    steps = steps_from_workflow(wf)
     if not steps:
-        print("✗ ops.yml からステップを読めない → 何もせず終了")
+        print(f"✗ {a.wf} からステップを読めない → 何もせず終了")
         return 1
     only = {int(x) for x in a.only.split(",") if x.strip()}
     skip = {int(x) for x in a.skip.split(",") if x.strip()}
 
     print("=" * 74)
-    print(f"月次運用（ops.yml）をこの場で実行 — 全{len(steps)}ステップ")
+    print(f"{a.wf} をこの場で実行 — 全{len(steps)}ステップ")
     print("=" * 74)
 
     recs = []
@@ -154,12 +160,13 @@ def main():
             if r["state"] in ("fail", "timeout"):
                 print(f"   {r['n']:2}. {r['name'][:44]}  {r.get('err','timeout')[:160]}")
 
-    out = {"generated": TODAY.isoformat(), "n_ok": n_ok, "n_fail": n_fail,
+    out = {"generated": TODAY.isoformat(), "workflow": a.wf, "n_ok": n_ok, "n_fail": n_fail,
            "n_nokey": n_key, "steps": recs,
            "note": "ops.yml をこの場で実行した記録。手順は ops.yml から読む（書き写さない）。"
                    "鍵が無いステップは『実行した』と数えない"}
     if not a.dry_run:
-        with open(os.path.join(BASE, "out", "ops_run.json"), "w", encoding="utf-8") as f:
+        stem = a.wf.replace(".yml", "")
+        with open(os.path.join(BASE, "out", f"{stem}_run.json"), "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=1)
     return 0
 

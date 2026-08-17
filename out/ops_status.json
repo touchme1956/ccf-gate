@@ -380,8 +380,8 @@
    "name": "X監視表(開通ライン)",
    "cadence": "月1",
    "due_days": 40,
-   "last": "2026-08-08",
-   "days": 9,
+   "last": "2026-08-17",
+   "days": 0,
    "state": "ok",
    "how": "ops.yml／手動 python x_watch_recalc.py",
    "auto": true
@@ -391,8 +391,8 @@
    "name": "決算点検（米国）",
    "cadence": "四半期",
    "due_days": 100,
-   "last": "2026-08-08",
-   "days": 9,
+   "last": "2026-08-17",
+   "days": 0,
    "state": "ok",
    "how": "ops.yml（月次で先回り）／手動 python kessan_check.py",
    "auto": true
@@ -1510,18 +1510,18 @@
    {
     "id": "board_measures_output_not_input",
     "kind": "宿題",
-    "title": "回転盤が『出力』だけを見ていて『入力』の停止を検出できない",
+    "title": "回転盤が『出力』だけを見て『入力』の停止を検出できない（検出器は 2026-08-17 に新設）",
     "due": null,
     "done": false,
-    "note": "2026-08-17 の実測。今日 audit_irr85_dual の TODAY 凍結（出力は動くのに日付が凍る）を直したが、**その鏡像**——**日付は動くのに入力が凍る**——が塞がっていない。\n\n【実測】**out/sp500_pe_monthly.json（自己相対バリュエーションの分母）は最終 2026-03＝5ヶ月遅れ**。ところが出力 out/hist_val_now.json は generated 2026-08-09 で新しい顔をし、**盤は出力しか見ていないので🟢のまま**。38社に『分母の持ち越し』注記が入っている。CLAUDE.md v9.9.119 はこの症状を『4ヶ月ぶん持ち越し』と記録しているが**検出器を配線していなかった**——そして静かに5ヶ月へ伸びた。\n\n⚠遅れ自体は配信元(multpl)の側の限界で、我々の失敗ではない。**穴は『それを誰も測っていないこと』のほう**。配信が再開しても気づかず、12ヶ月へ伸びても気づかない。\n\n【同型（盤の外にある入力）】out/_sic_cache.json（2654件・shtの入力。CLAUDE.md が『SICキャッシュの再構築が作業リストの筆頭』と書いている当のもの）／out/kessan/*.txt（決算点検(米)の出力に錨が無い）／out/{T}_gate_input.json（採取の出力に錨が無い）。\n\n【⚠直し方に注意】素朴に盤へ錨を1本足すと、**配信元が止まっている間ずっと⚠が出続ける**＝今日直した『鳴りっぱなしは鳴らないのと同じ』を自分で作る。筋は (a)hist_val_now 自体に『分母の遅れ日数』を持たせ (b)閾値を超えたら市場調整版を**未取得と明示して出さない**（ルール7の作法）。表示の規約に触るのでユーザーの判断が要る"
+    "note": "2026-08-17 に **night/check_freshness.py** を新設して塞いだ（CI 1-d・回転盤 `freshness`・📋今日）。\n①本体の前進（日付欄を除いたハッシュ）②データの末端 ③入力の鮮度（生成器をコードから導出）を測る。\n\n★**当初の見立ては誤りだった**——「S&P500実績PERの分母を取り直す配線が無い」と書いたが、\n`ops.yml:93` が 2026-08-10 に既に `fetch_sp500_pe.py` を `hist_valuation` の前へ入れていた。\nそして 2026-08-17 に**実際に走らせて確定**: 取得は成功し generated は 08-17 になったのに\nseries の末端は **2026-03 のまま**＝**遅れは配信元(multpl)の側**で、我々の停止ではない。\n→ check_freshness は (a)取りに行っていない と (b)配信元の限界 を機械で分ける（混ぜると永久に鳴る）。\n\n【残り】盤の外にある入力: out/_sic_cache.json ／ out/kessan/*.txt ／ out/{T}_gate_input.json。\n【残り】鮮度を**測れない錨が8件**（ヘルパ経由5・錨の検算不一致2・ファイル無し1）＝\n『測っていない』であって『測って問題なし』ではない。ops_status 側の錨の持ち方を直せば追えるようになる。"
    },
    {
     "id": "wf_never_run",
     "kind": "宿題",
-    "title": "ops.yml / fix.yml / gate0.yml を本番の前に1回ずつ手で発火させる",
+    "title": "fix.yml / gate0.yml を1回ずつ実行する（ops.yml は 2026-08-17 に実行済み）",
     "due": null,
     "done": false,
-    "note": "2026-08-17 に GitHub API で **ops.yml の実行回数 0（total_count:0）** を確認した。月次29ステップで、次の発火は9月2日 23:00 UTC。**29ステップが一度も通らないまま本番が来る**。\n\nops.yml が作るはずの在庫の日付を見ると next_earnings 08-08 / divy 08-08 / logos 08-08 / profiles 08-09 / castle_correlation 08-11 / v11_facts 08-13 ＝**全部 手で回した日付**で、ops.yml が作った痕跡が一つも無い。\n\nCLAUDE.md 2026-08-11 が既に同じ宿題を書いている（fix.yml と gate0.yml も実行0回）。この環境には gh が無いので**押せるのはユーザーだけ**。⚠fix.yml は値を動かさない側から／gate0.yml は5時間ジョブを避ける引数を明示すること"
+    "note": "2026-08-17: **ops.yml をセッションから実行した**（GitHub Actions ではなく `python3 night/run_ops.py`＝ops.yml を yaml で読んでこの場で走らせる器を新設）。\n実測 **実行27 / 失敗0 / 鍵が無くて未実行3**（AV_KEY×2・EDINET_API_KEY×1）。\n月次の錨が12本 前進（divy/profiles/hist_val_now/castle_correlation/irr85_scope_life/v11_facts/backfill_diff/sp500_pe_monthly/exception_watch/sht_report/new_listings_irr/wacc_drift）。\nパック299件が変わったが**採点欄が動いたパックは0件**（全件を機械で突合せ・_metaのみ）。投下可10社は不変。\n\n【残り】`fix.yml`（6ステップ）と `gate0.yml`（5ステップ）は依然 **実行0回**。\n同じ器で回せる: `python3 night/run_ops.py --wf fix.yml --dry-run`。\n⚠ **fix.yml のステップ8はmainへ直接push・9はPR作成**なので、セッションから回すときは必ず外すこと。\n⚠ gate0.yml は companyfacts.zip(1.4GB・実測29秒で取得可)が要り、5時間ジョブになりうる。"
    },
    {
     "id": "market_yml_skipped_friday",
