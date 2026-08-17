@@ -84,9 +84,22 @@ const srv = http.createServer((q, r) => {
   await pg.evaluate(() => { localStorage.setItem('pf:monthly', '123456'); });
   await pg.evaluate(() => ccfState.load().then(() => ccfState.banner('stateBar')));
   await pg.waitForTimeout(1200);
-  const t = await bar(), nb = await pg.locator('#stateBar button').count();
-  ok(/まだ repo に入っていません/.test(t) && nb >= 2,
-     '⑤ 未書き出しの決定 → 赤い帯 + ボタン' + nb + '個');
+  /* ⚠2026-08-17: **文言で判定しない。** ここは以前
+     「帯のコピーを書き換えたらテストが落ちた」を踏んで `/未書き出し/` へ直した箇所だが、
+     その後また `/まだ repo に入っていません/` という**完全一致**に戻っていた
+     （2026-08-17 に帯を一行へ畳んで文言を変えたら、挙動は正しいのに ⑤⑧ が落ちた）。
+     測るのは**行動できるか**——(a)帯が現に見えている (b)直す手段（ボタン）が在る
+     (c)**何が未書き出しかを名指ししている**。文言は変わってよい。 */
+  const nb = await pg.locator('#stateBar button').count();
+  const vis = await pg.evaluate(() => {
+    const e = document.getElementById('stateBar');
+    return !!e && e.getBoundingClientRect().height > 0;
+  });
+  const named = await pg.evaluate(() =>
+    ['株数', '売却記録', '今月の個別枠', 'state.json'].some(w =>
+      (document.getElementById('stateBar').innerText || '').indexOf(w) >= 0));
+  ok(vis && nb >= 2 && named,
+     '⑤ 未書き出しの決定 → 帯が見える(' + vis + ') + ボタン' + nb + '個 + 名指し(' + named + ')');
 
   /* ⑥⑦⑧ 2026-08-12（3回目の破れ・ユーザー「これがでないようにして」）
      ⭳全パック一括取込／↻全再採点 は最後に `saveLog({title:'一括再採点 …銘柄'})` を自動で呼び、
@@ -120,8 +133,13 @@ const srv = http.createServer((q, r) => {
     localStorage.setItem('pf:portfolio', JSON.stringify(o));
   });
   await pg.reload(); await pg.waitForTimeout(1500);
-  ok(/まだ repo に入っていません/.test(await bar()),
-     '⑧ 株数(sh)を1株変えたら帯が出る（正規化は決定を隠さない）');
+  /* 同上——文言ではなく「帯が見えて、株数だと名指ししているか」で測る */
+  const v8 = await pg.evaluate(() => {
+    const e = document.getElementById('stateBar');
+    return !!e && e.getBoundingClientRect().height > 0
+      && (e.innerText || '').indexOf('株数') >= 0;
+  });
+  ok(v8, '⑧ 株数(sh)を1株変えたら帯が出て「株数」と名指しする（正規化は決定を隠さない）');
 
   ok(errs.length === 0, 'pageerror ' + errs.length + '件');
   await b.close(); srv.close();
