@@ -107,6 +107,18 @@ def build():
         ("today",   "📋今日の集計",            "毎営業日", 4,
          json_field("out/today.json", "generated"),
          "ci.yml 平日22:00UTC／手動 python3 night/today.py --json", True),
+        # 2026-08-17新設: **この盤自身の死角を見張る器**。
+        #   ここ（ops_status）は錨の**日付しか見ていない**が、日付と中身は独立に壊れる——
+        #     A 日付が凍る（中身は動く）＝**偽陽性**。実際に audit_irr85_dual で5日間鳴りっぱなしだった
+        #     B 日付は動くが中身が凍る    ＝**偽陰性**
+        #     C 中身も動くが入力が死ぬ    ＝**偽陰性**。実測 sp500_pe_monthly(2026-03停止)→hist_val_now(08-09)
+        #   A は check_frozen_dates（CIで落とす）、**B と C は check_freshness** が測る。
+        #   偽陰性は盤が緑なので誰も探しに行かない＝**この器が止まると死角が死角のまま戻る**。
+        #   ⚠ 作業リストなのでCIでは落とさない（鳴りすぎる警報は鳴らないのと同じ）。
+        #     落とさない以上、止まったことを見るのはここしかない。
+        ("freshness", "中身と入力の鮮度",       "毎営業日", 4,
+         json_field("out/freshness.json", "generated"),
+         "ci.yml 平日22:00UTC／手動 python3 night/check_freshness.py --json", True),
         ("reviewrun", "日次 門2審査(Routine)",  "毎営業日", 4,
          review_last_run(),
          "Routine『【門】日次 門2審査（自動・5社）』平日05:00 JST（claude-opus-5）／"
