@@ -48,6 +48,16 @@ night/audit_pending.py — **合意済み・未完了の重大事象**で買付�
   **のれんを持たない社は総資産で裁く**——「のれんが無い＝影響なし」ではない（ルール7: 欠測をゼロと読むな）。
   買収は必ず何らかの資産を増やすので、のれん系列が無い社は 対価÷総資産 を同じ刻みに当てる。
 
+  **売却(divestiture)だけは分母が違う＝対価÷総資産（2026-08-16是正・刻みは買収と同一）**。
+  買収では現のれんと対価が互いに素なので足して割るのが正しいが、**売却で出ていく事業は既に分母の中にある**。
+  同じ式を当てると (a)分母で二重に数え (b)『新しくなる』が0なのに正の%が出る＝答えが問いに対応しない。
+  しかも判定が「のれんの大きさ」という無関係な量で決まる——実測 RMD の MatrixCare($490M)は
+  のれん基準 14.4%(判定不能=買付を止める) / 総資産基準 **5.5%(ok)** で、のれんが仮に$10Bなら同じ取引が4.7%(ok)。
+  **閾値の選び方ではなく分母の category error**（「基準の違う二つを割る」型）。総資産基準は
+  売上3.9%・営業利益1.5%・時価総額1.5%という独立な三つの物差しとも向きが揃う。
+  ⚠**売却でも大きければ止まる**（注入検査済み: 同じRMDで対価3,000百万$＝総資産の33.5%にすると要審査）。
+  ⚠買収側は一切変えていない（実測 CTAS 61.1% / VRSK 55.8% で要審査のまま）。
+
 思想:
   この道具は**読むだけ**で、採点にもパックにも書き込まない。
   検出は「この銘柄は買付の土俵に載せない」＝第四の関門の領分であり、
@@ -123,21 +133,37 @@ def pendings(meta):
     return [x for x in p if isinstance(x, dict)]
 
 
-def base_of(t, meta):
-    """規模を測る分母。のれん優先、無ければ総資産。(値, 何を使ったか) を返す"""
+def base_of(t, meta, kind=None):
+    """規模を測る分母。(値, 何を使ったか) を返す。
+
+    **kind で分母が変わる。閾値(NEW_YES/NEW_NO)は一つも変えない**（2026-08-16是正）:
+
+      買収  … のれん優先、無ければ総資産。問いは「対価÷(現のれん+対価)＝完了後のれんの何割が新規か」。
+              現のれんと対価は**互いに素**（新しいのれんが上に乗る）ので足して割るのが正しい。
+
+      売却  … **総資産のみ**。問いは「対価÷総資産＝会社の何割が出ていくか」。
+              売る事業は**既に現のれん・総資産の中にある**ので、買収と同じ式にすると
+              (a)分母で二重に数える (b)『新しくなる』が0なのに正の%が出る＝**答えが問いに対応しない**。
+              しかも判定が「のれんの大きさ」という無関係な量で決まる——実測 RMD の MatrixCare 売却($490M)は
+              のれん基準だと 14.4%(判定不能=買付を止める) だが、のれんが仮に$10Bなら同じ取引が 4.7%(ok)。
+              **これは閾値の選び方ではなく分母の category error**（この台帳が11回踏んだ「基準の違う二つを割る」型）。
+              総資産で測れば 490/8,966=5.5%＝ok で、売上3.9%・営業利益1.5%・時価総額1.5%の実測とも向きが揃う。
+              ⚠**売却でも大きければ止まる**——総資産の30%を売れば要審査になる（刻みは買収と同一）。
+    """
     if re.fullmatch(r"\d{4}", t):
         return None, "日本株(SEC対象外)"
     cik = SB.cik_of(t)
     if not cik:
         return None, "CIK不明(ADR等)"
-    for tag, lbl in (("Goodwill", "のれん"), ("Assets", "総資産")):
+    tags = (("Assets", "総資産"),) if kind == "divestiture" else (("Goodwill", "のれん"), ("Assets", "総資産"))
+    for tag, lbl in tags:
         s = SB.concept(cik, tag)
         if s:
             k = max(s)
             v = s[k]
             if v and v > 0:
                 return (v / 1e6, f"{lbl}({k})")
-    return None, "のれん・総資産とも取得不能"
+    return None, ("総資産が取得不能" if kind == "divestiture" else "のれん・総資産とも取得不能")
 
 
 def main():
@@ -151,8 +177,10 @@ def main():
 
     print(f"■ 合意済み・未完了の重大事象（_meta.pending）　対象 {len(pick)}社"
           f"{'（判定圏 Ω72+）' if not (ALL or ONE) else ''}")
-    print(f"  判定: 「完了したらのれんの何割が新しくなるか＝対価÷(現のれん+対価)」が {NEW_YES:.0f}% 以上なら要審査")
-    print(f"        （acq5・stale_bs と同じ問い・同じ刻み＝新しい定数を作らない）\n")
+    print(f"  判定: 買収=「対価÷(現のれん+対価)＝完了後のれんの何割が新規か」／"
+          f"売却=「対価÷総資産＝会社の何割が出ていくか」が {NEW_YES:.0f}% 以上なら要審査")
+    print(f"        （acq5・stale_bs と同じ刻み＝新しい定数を作らない。売却で分母が違うのは"
+          f"『売る事業は既に分母の中にある』ため）\n")
 
     res, skipped, seen = {}, [], 0
     for r in pick:
@@ -178,27 +206,36 @@ def main():
                           items=[{k: x.get(k) for k in ("kind", "target", "status", "src")} for x in live])
             print(f"  {t:<7}⚠ 判定不能——size_usd_m が書かれていない")
             continue
-        base, src = base_of(t, d.get("_meta"))
+        big0 = max(sized, key=lambda x: x["size_usd_m"])
+        kind0 = str(big0.get("kind") or "").lower()
+        base, src = base_of(t, d.get("_meta"), kind0)
         if base is None:
             res[t] = dict(verdict="判定不能", why=f"分母が取れない（{src}）",
                           omega=r.get("s"), buy=bool(r.get("buy")),
                           items=[{k: x.get(k) for k in ("kind", "target", "status", "size_usd_m")} for x in sized])
             print(f"  {t:<7}⚠ 判定不能——{src}")
             continue
-        big = max(sized, key=lambda x: x["size_usd_m"])
+        big = big0
         size = float(big["size_usd_m"])
-        new_pct = size / (base + size) * 100.0
+        # 売却は「売る事業が既に分母の中にある」ので +size しない（base_of の頭注）。閾値は買収と同一
+        new_pct = (size / base if kind0 == "divestiture" else size / (base + size)) * 100.0
         verdict = ("要審査" if new_pct >= NEW_YES
                    else "判定不能" if new_pct > NEW_NO else "ok")
         rec = dict(verdict=verdict, newPct=round(new_pct, 1), size=size, base=round(base, 1),
                    baseSrc=src, kind=big.get("kind"), target=big.get("target"),
+                   metric=("対価÷総資産＝会社の何割が出ていくか" if kind0 == "divestiture"
+                           else "対価÷(現のれん+対価)＝完了後のれんの何割が新規か"),
+                   # 表示はここが正本。**売却で「のれんが新規」と書くと事実に反する**ので kind で言い分ける
+                   pctLabel=(f"総資産の{new_pct:.1f}%が出ていく" if kind0 == "divestiture"
+                             else f"完了後のれんの{new_pct:.1f}%が新規"),
                    status=big.get("status"), src=big.get("src"), note=big.get("note"),
                    omega=r.get("s"), buy=bool(r.get("buy")), n=len(live))
         if verdict != "ok":
             res[t] = rec
         mark = "⚠ " + verdict if verdict != "ok" else "✓"
+        lbl2 = "規模" if kind0 == "divestiture" else "新しさ"
         print(f"  {t:<7}{str(big.get('target') or big.get('kind') or '')[:18]:<19}"
-              f"{size:>9,.0f} 百万$  ÷ {src:<22}  新しさ {new_pct:>5.1f}%  {mark}")
+              f"{size:>9,.0f} 百万$  ÷ {src:<22}  {lbl2:<3}{new_pct:>5.1f}%  {mark}")
 
     print()
     bad = {k: v for k, v in res.items() if v["verdict"] == "要審査"}
@@ -211,7 +248,7 @@ def main():
             #   **Ωが判定圏か**で目立たせる——止めた事実そのものは上の verdict が言っている。
             mark = " ← **判定圏(Ω75+)**" if (v.get("omega") or 0) >= 75 else ""
             print(f"   {t:<7}Ω{v['omega']:.1f}  {v.get('target') or ''} {v['size']:,.0f}百万$"
-                  f"（{v.get('status')}）＝完了後のれんの{v['newPct']:.1f}%が新規{mark}")
+                  f"（{v.get('status')}）＝{v.get('pctLabel') or ('完了後のれんの%.1f%%が新規' % v['newPct'])}{mark}")
     if mid:
         print("■ 判定不能（中間帯・規模不明・分母不明——acq5と同じく空欄に倒すが関門は掛ける）")
         for t, v in mid.items():

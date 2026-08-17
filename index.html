@@ -4001,7 +4001,7 @@ async function ccfDash(btn){
         // v9.9.145: 半導体上限を撤去したので「（半導体上限）」の印は消えた。
         //   集中そのものは Ⅵ の◇注記が出し続ける（関門を消しても事実は消さない）。
         + (nextUp.length?`<div style="font-size:11px;color:#5d8cc2;margin-top:6px">🔵 次点（四関門通過・席順11位以下＝買わない）: ${nextUp.map(v=>v.nm).join(' / ')} — 順位が上がれば自動で昇格（詳細はⅥ）</div>`:'')
-        + (audBlocked.length?`<div style="font-size:11px;color:var(--rust);margin-top:6px">⛔ 第四の関門で除外: ${audBlocked.map(v=>`${v.nm}（${[v.audE?`要修正${v.audE}件`:'',v.stale!=null?`期末後にのれん${v.stale}%流入`:'',v.vf?`納品検査FAIL${v.vf}件`:'',v.pend?`未完了: ${v.pend.target||v.pend.kind||''}${v.pend.newPct?` 完了後のれんの${v.pend.newPct}%が新規`:''}`:''].filter(Boolean).join('・')}）`).join(' / ')} — Ⅳ台帳の⚠バッジ／<code>audit_stale_bs</code>／<code>audit_pending</code>／<code>audit_promotion_ready</code> で直せる（黙って消さない）</div>`:''),
+        + (audBlocked.length?`<div style="font-size:11px;color:var(--rust);margin-top:6px">⛔ 第四の関門で除外: ${audBlocked.map(v=>`${v.nm}（${[v.audE?`要修正${v.audE}件`:'',v.stale!=null?`期末後にのれん${v.stale}%流入`:'',v.vf?`納品検査FAIL${v.vf}件`:'',v.pend?`未完了: ${v.pend.target||v.pend.kind||''}${v.pend.newPct?` ${v.pend.pctLabel||`完了後のれんの${v.pend.newPct}%が新規`}`:''}`:''].filter(Boolean).join('・')}）`).join(' / ')} — Ⅳ台帳の⚠バッジ／<code>audit_stale_bs</code>／<code>audit_pending</code>／<code>audit_promotion_ready</code> で直せる（黙って消さない）</div>`:''),
         '買うのはここだけ（四関門を通り、席の上位10社に入った銘柄）。金額はⅥ買付順位の「今月の個別枠」で按分される')
     + sec('📅 次回決算（21日以内）', ernHtml, '決算が来たら <code>python kessan_check.py</code>（日本株は <code>kessan_check_jp.py</code>）を回す')
     + sec('📰 最新ニュース', newsHtml, '判定には使わない——原本（10-Q/有報）に書かれるまで門は動かない');
@@ -5125,7 +5125,7 @@ async function renderPlan(){
   //   score_all の blockers() は理由を全部出す（v9.9.52）ので、門だけが一つしか言わないのは
   //   「同じ台帳を見る二つの検査器が違うことを言う」（v9.9.65）。→ どの節に入っても印を添える。
   const pchip=r=>{const p=pendMap[skey(r)];if(!p)return '';
-    const d=p.size?`${p.target||p.kind||''} ${(+p.size).toLocaleString()}百万$${p.newPct?`・完了後のれんの${p.newPct}%が新規`:''}`:(p.why||'判定不能');
+    const d=p.size?`${p.target||p.kind||''} ${(+p.size).toLocaleString()}百万$${p.newPct?`・${p.pctLabel||`完了後のれんの${p.newPct}%が新規`}`:''}`:(p.why||'判定不能');
     return `<span style="font-size:10px;color:#9b7fd4;margin-left:6px" title="合意済み・未完了の重大事象（out/pending.json）。この社は別の理由で先に落ちているが、こちらの関門にも掛かっている＝落ちた理由は全部出す（v9.9.52）">先${d}</span>`;};
   // v9.9.99: 事業の収縮の遮断器を第四の関門に。**価格ではなく事業の状態**で切る
   //   （歴史で測って最良: 止めた群の恒久毀損5倍・かつ止めた群の中央値も低い＝両方向とも正しい）
@@ -5600,7 +5600,7 @@ async function renderPlan(){
   if(pendOut.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:var(--rust)">⛔ 未完了の重大事象で見送り（合意済み・まだ閉じていない買収等）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px"><b>採点しているのが「これからの会社」ではない</b>組。合意済み・株主承認済み・裁判所命令済みなど<u>確度が高いのにまだ貸借対照表に載っていない</u>重大事象を抱えた銘柄。<b>穴は「時間」だった</b>——8-K監視の警報は Item 1.03/2.06/3.01/4.02/5.02 の5つだけで<u>M&amp;Aの 1.01/1.02 と 8.01 は判定に不使用</u>、期末後の重大事象(stale_bs)は<b>実際にBSに載ったのれん</b>を見るので<u>未完了の買収はのれんがゼロで構造的に見えない</u>。合意/判決からクローズを経て次の10-Qが出るまでの<b>数ヶ月〜1年超が無防備</b>だった。<br>※<b>これは stale_bs の時間的な穴を塞ぐだけ</b>で、判定は acq5・stale_bs と<b>同じ問い・同じ刻み</b>（「完了したらのれんの何割が新しくなるか＝対価÷(現のれん+対価)」≥30%）＝新しい定数を作っていない。<b>規模不明・分母不明も止める</b>——測れていないのであって安全ではない（絶対のルール7）。<b>売却の理由にはならない</b>——保有中の銘柄はS1/S2/S3のみで裁く（堀不足・点検・期末後と同じ扱い＝買わない理由であって売る理由ではない）。解消または完了して数字が入れば自動で復帰する（<code>python3 night/audit_pending.py</code>）。<br>※<b>完全な自動化ではない</b>——判決も合意も数字ではないので、<code>_meta.pending</code> を書くのは審査官。門ができるのは「<u>書かれていたら必ず効かせる</u>」ところまで。見落としの網は 🔔イベントタブの<b>8-K作業リスト（Item 1.01/1.02/8.01）</b>が受け持つ（警報には格上げしない——8.01は雑多で「鳴りすぎる警報は鳴らないのと同じ」を自分で作ることになるから）。</div>`;
     html+=pendOut.map((r,i)=>{const p=pendMap[skey(r)]||{};
-      const d=p.size?`${p.target||p.kind||''} ${(+p.size).toLocaleString()}百万$（${p.status||''}）＝完了後のれんの${p.newPct}%が新規`:(p.why||'判定不能');
+      const d=p.size?`${p.target||p.kind||''} ${(+p.size).toLocaleString()}百万$（${p.status||''}）＝${p.pctLabel||`完了後のれんの${p.newPct}%が新規`}`:(p.why||'判定不能');
       return brow(r,i,'先',`<span style="font-size:11.5px;color:var(--rust);margin-left:8px">${d}</span>`);}).join('');
   }
   // ⛔ 納品検査(validate_packs)のFAILで落ちた組（v9.9.95）。**黙って消さない**（v9.9.52の教訓）。
