@@ -215,6 +215,52 @@ def lum_svg(p):
     return 235.0 if (w and w >= d) else None
 
 
+# ── モノクロのロゴの「墨の濃さ」（v9.9.153・2026-08-17 ユーザー指示「入れて」）──────────
+#   from_png / from_svg が色を返さない＝ロゴが**実質モノクロ**（黒地に白文字・黒のワードマーク等）。
+#   従来はここで行を染めなかったので、実測49銘柄（KRMN・CTAS・RACE 等）の行が無色のままだった。
+#   **黒・白・灰はそのロゴが現に持っている色**なので、明度から灰を作るのは「存在しない色を足す」
+#   ことではない（v9.9.105 が禁じたのは**ハッシュ色**＝そのロゴと何の関係も無い色）。
+#   ⚠ 帯で挟むのは**両テーマで見えるようにするため**——素の値だと黒ロゴは #000 に張り付いて
+#     暗いテーマで消え、白ロゴは #fff に張り付いて明るいテーマで消える。
+#     挟んでも**暗いロゴは暗い側・明るいロゴは明るい側**に残るので、ロゴの明暗の情報は失われない。
+#   ★帯は実機で測って決めた（この台帳の作法: 見た目は文章で判断せず撮って比べる）。
+#     行の中央の合成ピクセルと地の差（0-255・大きいほど見える）:
+#       帯 [0.34,0.70] … 明るい灰 明テーマ **Δ16** / 暗テーマ Δ34 ／ 暗い灰 Δ35 / **Δ14**
+#       帯 [0.40,0.60] … 明るい灰 **Δ21** / Δ28 ／ 暗い灰 Δ32 / **Δ18**   ← 採用（最悪ケースが最良）
+#     参考: 有彩色の行（MSFT）は 明 Δ67 / 暗 Δ40。**灰は有彩色より控えめ**に出る（それでよい）。
+#     ⚠ 灰は `.tgrad{filter:saturate(1.35)}` の恩恵を受けられない（彩度0を1.35倍しても0）ので、
+#       同じ不透明度でも有彩色より弱く見える。**不透明度(.21/.18/.16)は変えない**——
+#       あれは「もう少し薄く」を二度受けて較正した数字で、灰のために動かすと約束を破ることになる。
+#       代わりに**灰の明度そのものを地から離す**のが、既存の較正を壊さない直し方。
+GREY_LO, GREY_HI = 0.40, 0.60
+
+
+def grey_hex(lum255):
+    q = int(round(min(GREY_HI, max(GREY_LO, lum255 / 255.0)) * 255))
+    return "#%02x%02x%02x" % (q, q, q)
+
+
+def mono_png(p):
+    """不透明画素の**明度の中央値**から灰を作る（平均だと少数の白地に引っぱられる）。"""
+    px = [(r, g, b) for r, g, b, a in pixels(p, (96, 96)) if a >= 120]
+    if not px:
+        return None
+    return grey_hex(statistics.median(0.2126 * r + 0.7152 * g + 0.0722 * b for r, g, b in px))
+
+
+def mono_svg(p):
+    """塗りに現れる**無彩色（白・黒・灰）の中央値**から灰を作る。
+    塗りが一つも無い（currentColor や CSS クラスで塗る）SVGは **None**＝測っていないので染めない。"""
+    lum = []
+    for h in svg_fills(open(p, encoding="utf-8", errors="ignore").read()):
+        r, g, b = (int(h[i:i + 2], 16) for i in (0, 2, 4))
+        hh, ss, vv = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+        if ss >= 0.18:           # 有彩色は from_svg の領分（ここは無彩色だけを見る）
+            continue
+        lum.append(0.2126 * r + 0.7152 * g + 0.0722 * b)
+    return grey_hex(statistics.median(lum)) if lum else None
+
+
 def from_png(p, n=3):
     """代表色を**最大n色**返す（面積の多い色相ビン順）。
     v9.9.106: 1色だと単調なので、ロゴが実際に持っている色を複数拾って多段グラデーションにする。
@@ -241,13 +287,32 @@ def from_png(p, n=3):
     return out
 
 
+def svg_fills(s):
+    """SVGの塗りを **#hex / 色名 / rgb() のすべて**から拾って16進6桁で返す。
+    ⚠ 2026-08-17: 旧実装は `#hex` しか見ておらず、**Finnhub 由来のSVGが使う `rgb(212,42,28)` を
+    取りこぼしていた**——AZO は実際には赤いのに「色なし」として扱われていた（実測1銘柄）。"""
+    out = []
+    for m in re.finditer(r'(?:fill|stop-color|stroke)\s*[:=]\s*"?(#[0-9a-fA-F]{3,6}\b|white\b|black\b'
+                         r'|rgb\(\s*\d+\s*[,\s]\s*\d+\s*[,\s]\s*\d+\s*\))', s, re.I):
+        v = m.group(1).lower()
+        if v.startswith("rgb("):
+            r, g, b = (int(x) for x in re.findall(r"\d+", v)[:3])
+            if max(r, g, b) > 255:
+                continue
+            out.append("%02x%02x%02x" % (r, g, b))
+            continue
+        h = {"white": "ffffff", "black": "000000"}.get(v, v.lstrip("#"))
+        if len(h) == 3:
+            h = "".join(x * 2 for x in h)
+        if len(h) == 6:
+            out.append(h)
+    return out
+
+
 def from_svg(p, n=3):
     s = open(p, encoding="utf-8", errors="ignore").read()
     c = collections.Counter()
-    for m in re.finditer(r'(?:fill|stop-color|stroke)\s*[:=]\s*"?#([0-9a-fA-F]{3,6})', s):
-        h = m.group(1)
-        if len(h) == 3:
-            h = "".join(x * 2 for x in h)
+    for h in svg_fills(s):
         if len(h) != 6 or NEUTRAL.match(h):
             continue
         r, g, b = (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
@@ -263,7 +328,7 @@ def main():
     allow_loss = "--allow-loss" in sys.argv
     d = json.load(open(IDX, encoding="utf-8"))
     have = d.get("have") or {}
-    prev_ok = {t for t, v in have.items() if isinstance(v, dict) and v.get("c")}
+    prev_ok = {t for t, v in have.items() if isinstance(v, dict) and (v.get("c") or v.get("k"))}
     out, n_new, n_keep, n_none, fails, kept_worse = {}, 0, 0, 0, [], []
     for t, cur in sorted(have.items()):
         cur = cur if isinstance(cur, dict) else {"ext": cur}
@@ -303,8 +368,18 @@ def main():
         #   色の消滅を受け入れる（＝色が減るのは常に「絵が変わったから」に限られる）。
         #   PILと標準ライブラリの読み手は縮小の仕方が違い、実測3銘柄(EXEL/MPWR/TRN)で
         #   py側だけ色が出ない。この規則があるとCIがPIL無しで回っても色を落とさない。
-        if (err or not col) and cur.get("c") and not allow_loss and (err or cur.get("b") == size):
-            keep = {k: cur[k] for k in ("c", "cs", "d", "x", "m") if k in cur}
+        # v9.9.153: 有彩色が採れなかった＝モノクロのロゴ。**そのロゴ自身の明度**から灰を作る。
+        #   ⚠ x=1（画像が実質白紙）のときは作らない——白紙の明度を測っても意味が無いし、
+        #     門はその画像を描かずモノグラムを見せるので、行だけ染めても正体不明の帯になる。
+        grey = None
+        if not col and not err and not bad:
+            try:
+                grey = mono_png(p) if ext == "png" else mono_svg(p)
+            except Exception:
+                grey = None
+        if (err or not (col or grey)) and (cur.get("c") or cur.get("k")) \
+                and not allow_loss and (err or cur.get("b") == size):
+            keep = {k: cur[k] for k in ("c", "cs", "k", "d", "x", "m") if k in cur}
             out[t] = {"ext": ext, **({"b": size} if size is not None else {}), **keep}
             (fails if err else kept_worse).append(f"{t}{'('+err+')' if err else ''}")
             continue
@@ -317,17 +392,20 @@ def main():
         out[t] = {"ext": ext, **({"b": size} if size is not None else {}),
                   **({"c": col} if col else {}),
                   **({"cs": cols} if len(cols) > 1 else {}),
+                  **({"k": grey} if (grey and not col) else {}),
                   **({"d": 1} if dark else {}), **({"x": 1} if bad else {}),
-                  **({"m": src} if (src and col) else {})}
+                  **({"m": src} if (src and (col or grey)) else {})}
         n_new += 1
         if not col:
             n_none += 1
-    ok = [(t, v["c"]) for t, v in out.items() if v.get("c")]
-    lost = sorted(prev_ok - {t for t, _ in ok})
+    ok = [t for t, v in out.items() if v.get("c")]
+    grey_ok = [t for t, v in out.items() if v.get("k")]
+    lost = sorted(prev_ok - set(ok) - set(grey_ok))
     if lost and not allow_loss:
         # ★空書き込みの検問（audit_stale_bs:243 と同じ言葉）——**色が減る書き込みは拒否**する。
         #   採取が壊れたときに表示が黙って劣化するのを、人の注意力ではなく機構で防ぐ。
-        print(f"⚠ 中止: 色を失う銘柄が {len(lost)}件 ある（前 {len(prev_ok)} → 後 {len(ok)}）")
+        print(f"⚠ 中止: 色を失う銘柄が {len(lost)}件 ある"
+              f"（前 {len(prev_ok)} → 後 {len(ok)+len(grey_ok)}〔有彩 {len(ok)}＋灰 {len(grey_ok)}〕）")
         print(f"   {' '.join(lost[:40])}")
         print("   ロゴ画像が本当に差し替わったのなら --allow-loss を付けて通す。"
               "そうでなければ読み手（Pillow / _png_pixels）が壊れている")
@@ -339,7 +417,7 @@ def main():
                  "c=ロゴの代表色（night/logo_colors.py がCIで算出）——門はこれで淡い発光を描く。"
                  "色が出せなかった銘柄はティッカーのハッシュ色へフォールバック。"
                  "b=画像のバイト数＝色の指紋（一致する限り測り直さない・fetch_logos が持ち回す）。"
-                 "m=py は Pillow 不在で標準ライブラリの読み手が測った印")
+                 "m=py は Pillow 不在で標準ライブラリの読み手が測った印。k=モノクロのロゴを**そのロゴ自身の明度**から灰にした色（v9.9.153・有彩色が採れないときだけ）")
     json.dump(d, open(IDX, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"画素の読み手: {'+'.join(sorted(PIXSRC)) or '（PNGを読まなかった）'}"
           f"{'  ⚠ Pillow が無い（標準ライブラリで代替）' if PIXSRC == {'py'} else ''}")
@@ -349,7 +427,8 @@ def main():
     if kept_worse:
         print(f"今回の読み手では色が出ず**前回の測定を残した {len(kept_worse)}銘柄**"
               f"（画像は前回と同一）: {' '.join(kept_worse[:20])}")
-    print(f"色あり **{len(ok)}/{len(out)}銘柄**")
+    print(f"色あり **{len(ok)}/{len(out)}銘柄** ＋ モノクロのロゴを明度から灰に **{len(grey_ok)}銘柄**"
+          f"（＝行が染まるのは {len(ok)+len(grey_ok)}銘柄）")
     nd = sum(1 for v in out.values() if v.get("d"))
     nx = [t for t, v in out.items() if v.get("x")]
     n2 = sum(1 for v in out.values() if len(v.get("cs") or []) >= 2)

@@ -12,7 +12,7 @@
  *   ②は「たまたま間に合えば緑になる」ので、**目録の到着を意図的に遅らせて測る**しかない。
  *
  * ■ 何を測るか
- *   ① 目録に色がある銘柄の行に、実際に光（.tgrad の background）が乗っているか——**全タブ**
+ *   ① 目録に色がある銘柄（有彩 c ／ **モノクロのロゴの灰 k**）の行に、実際に光が乗っているか——**全タブ**
  *   ② 目録を3秒遅らせても①が成り立つか（＝ccfIconRepaint が塗り直しているか）
  *   ③ Ⅶ資産（iframe・portfolio.html）でも成り立つか——**両ページが同じ実装を読んでいるか**の実測
  *   ④ pageerror
@@ -54,7 +54,8 @@ const probe = () => {
       const bg = (g && g.classList && g.classList.contains('tgrad')) ? (g.style.background || '') : '';
       n++;
       if (bg) lit++;
-      if (m.c && !bg && miss.length < 6) miss.push(t);
+      // v9.9.153: 灰(k)も「色が乗るべき行」に数える——数えないと47銘柄が検査の外に落ちる
+      if ((m.c || m.k) && !bg && miss.length < 6) miss.push(t);
     }
     if (n) out.tabs[id] = { n, lit, miss };
   }
@@ -72,7 +73,7 @@ const probe = () => {
   let idx;
   try { idx = JSON.parse(fs.readFileSync(path.join(ROOT, 'out', 'logos', 'index.json'), 'utf8')).have || {}; }
   catch (e) { console.log('⚠ out/logos/index.json が読めない＝比較の錨が無い'); process.exit(1); }
-  const nColor = Object.values(idx).filter(v => v && v.c).length;
+  const nColor = Object.values(idx).filter(v => v && (v.c || v.k)).length;   // 有彩色＋灰(k)
 
   const srv = spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: ROOT, stdio: 'ignore' });
   await new Promise(r => setTimeout(r, 1500));
@@ -84,7 +85,8 @@ const probe = () => {
     const errs = [];
     const p = await ctx.newPage();
     p.on('pageerror', e => errs.push(e.message.slice(0, 140)));
-    console.log(`■ 行の彩色の検査（目録: 色あり ${nColor}/${Object.keys(idx).length}銘柄）`);
+    console.log(`■ 行の彩色の検査（目録: 行が染まる ${nColor}/${Object.keys(idx).length}銘柄`
+      + `＝有彩 ${Object.values(idx).filter(v => v && v.c).length} ＋ 灰 ${Object.values(idx).filter(v => v && v.k && !v.c).length}）`);
 
     // ── 準備: 台帳を本番と同じ状態にする（⭳全パック一括取込）
     await p.goto(`http://localhost:${PORT}/index.html`, { waitUntil: 'domcontentloaded' });
@@ -169,7 +171,7 @@ const probe = () => {
           const g = sp.previousElementSibling;
           const bg = (g && g.classList && g.classList.contains('tgrad')) ? (g.style.background || '') : '';
           n++; if (bg) lit++;
-          if (m.c && !bg && miss.length < 6) miss.push(sp.getAttribute('data-ic'));
+          if ((m.c || m.k) && !bg && miss.length < 6) miss.push(sp.getAttribute('data-ic'));
         }
         return { n, lit, miss, noIdx, fn: typeof ccfIcon === 'function', rp: typeof ccfIconRepaint === 'function' };
       });

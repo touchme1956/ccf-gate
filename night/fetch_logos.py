@@ -119,10 +119,12 @@ def main():
         p = prev.get(t) if isinstance(prev.get(t), dict) else {}
         keep = {}
         if p.get("ext") == e and p.get("b") == size:
-            keep = {k: p[k] for k in ("b", "c", "cs", "d", "x", "m") if k in p}
-            if keep.get("c"):
+            # ⚠ **k（モノクロのロゴの灰・v9.9.153）を入れ忘れると47銘柄の灰が毎回消える**。
+            #   持ち回す欄を増やしたら、必ずここにも足すこと（logo_colors が書く欄と対）。
+            keep = {k: p[k] for k in ("b", "c", "cs", "k", "d", "x", "m") if k in p}
+            if keep.get("c") or keep.get("k"):
                 n_carry += 1
-        elif p.get("c"):
+        elif p.get("c") or p.get("k"):
             n_drop.append(t)                      # 絵が変わった＝色は測り直し（logo_colors が拾う）
         idx[t] = {"ext": e, **keep}
     total = sum(os.path.getsize(os.path.join(DIR, f"{t}.{v['ext']}")) for t, v in idx.items())
