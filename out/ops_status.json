@@ -10,7 +10,8 @@
    "days": 4,
    "state": "ok",
    "how": "market.yml 21:30UTC（FINNHUB_KEY）",
-   "auto": true
+   "auto": true,
+   "what": "監視している銘柄の株価とドル円を毎日取ってくる。止まると盤とⅦ資産の評価額が古い株価のままになる（買付の合否は動かないが、いくら持っているかが合わなくなる）"
   },
   {
    "id": "events",
@@ -21,7 +22,8 @@
    "days": 3,
    "state": "ok",
    "how": "events.yml 22:10UTC（米国は鍵不要・日本株はEDINET_API_KEY）",
-   "auto": true
+   "auto": true,
+   "what": "保有・監視銘柄の臨時の届出（減損・役員の退任・監査人が過去の決算を「信頼できない」と言う・破産・上場廃止の通知）を毎日拾う。四半期の点検と点検のあいだ3ヶ月の隙間を埋める見張りで、止まるとその隙間が無防備になる"
   },
   {
    "id": "parity",
@@ -32,7 +34,8 @@
    "days": 0,
    "state": "ok",
    "how": "ci.yml 平日22:00UTC（実ブラウザ）／手動 node night/check_gate_parity.js",
-   "auto": true
+   "auto": true,
+   "what": "ブラウザで見る門と、端末の計算が同じ答えを出すかを実ブラウザで369社ぶん突き合わせる。止まると「同じ台帳を見る二つが違うことを言う」を誰も見張らなくなる"
   },
   {
    "id": "today",
@@ -43,7 +46,8 @@
    "days": 0,
    "state": "ok",
    "how": "ci.yml 平日22:00UTC／手動 python3 night/today.py --json",
-   "auto": true
+   "auto": true,
+   "what": "各検出器の結果を集めて「📋今日やること」を作る。止まるとあの画面が古い中身を出し続ける——しかも見た目は「やることはありません」と同じになる"
   },
   {
    "id": "freshness",
@@ -54,7 +58,8 @@
    "days": 0,
    "state": "ok",
    "how": "ci.yml 平日22:00UTC／手動 python3 night/check_freshness.py --json",
-   "auto": true
+   "auto": true,
+   "what": "この回転盤自身の死角を見る。盤は各作業の『日付』しか見ないので、①日付は動くのに中身が凍っている ②中身は動くのに元データが死んでいる、を別に測る"
   },
   {
    "id": "reviewrun",
@@ -65,7 +70,8 @@
    "days": 1,
    "state": "ok",
    "how": "Routine『【門】日次 門2審査（自動・5社）』平日05:00 JST（claude-opus-5）／痕跡は python3 night/log_review_run.py --outcome … --push",
-   "auto": true
+   "auto": true,
+   "what": "毎朝5時(日本時間)に待ち行列の先頭5社を原本で審査してPRを出す。止まると新しい会社の審査も、既存の社の再審査も進まない"
   },
   {
    "id": "er",
@@ -76,7 +82,8 @@
    "days": 14,
    "state": "ok",
    "how": "market.yml（月初・snapは月次idempotent）",
-   "auto": true
+   "auto": true,
+   "what": "「この株は年何%」という門の推定を、月に一度そのときの株価とともに封じ込める。20年後に推定が当たっていたかを答え合わせするための台帳で、止まると検証が永久にできない"
   },
   {
    "id": "divy",
@@ -87,7 +94,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/fill_divy.py",
-   "auto": true
+   "auto": true,
+   "what": "各社の配当利回りを別に記録する。株価だけ見ると配当のぶんリターンが低く出るので、上の予実を突き合わせるときにこれが要る"
   },
   {
    "id": "gatehist",
@@ -98,7 +106,8 @@
    "days": 4,
    "state": "ok",
    "how": "market.yml が毎日／手動 python3 night/gate_history.py --append",
-   "auto": true
+   "auto": true,
+   "what": "毎日の採点結果のうち『変わったところだけ』を残す。止まると履歴に穴が空き、後から埋められない（gitの履歴はCIと作業ブランチが混ざって一本の系列にならない）"
   },
   {
    "id": "irrcov",
@@ -109,7 +118,8 @@
    "days": 0,
    "state": "ok",
    "how": "ci.yml 月次／手動 python3 night/audit_irr_coverage.py",
-   "auto": true
+   "auto": true,
+   "what": "歴史の検証で唯一効いた指標(irr＝顧客が乗り換えるとき費用を負うか)が、全上場企業の何%に付いているかを数える。判定には使わない"
   },
   {
    "id": "histval",
@@ -120,7 +130,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/hist_valuation.py --asof 〈今日の日付〉 --tickers kanshi_list.json --out out/hist_val_now.json",
-   "auto": true
+   "auto": true,
+   "what": "今のPERが『その銘柄自身の過去』の何%タイルかを出す。表示だけで合否には使わない。止まると古い分位を今日の分位として出し続ける（画面は何も言わない）"
   },
   {
    "id": "profiles",
@@ -131,7 +142,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/fetch_profiles.py",
-   "auto": true
+   "auto": true,
+   "what": "各社の原本(10-K・有報)から「何をしている会社か」を抜いて配る。表示だけ"
   },
   {
    "id": "excwatch",
@@ -142,7 +154,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/watch_exceptions.py",
-   "auto": true
+   "auto": true,
+   "what": "門が止めているのを承知で買った銘柄を、止めている当の指標で四半期ごとに測り直す。止まると警報を切ったまま乗ることになる"
   },
   {
    "id": "irr85hist",
@@ -153,7 +166,8 @@
    "days": 8,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/irr85_mech_test.py --json",
-   "auto": true
+   "auto": true,
+   "what": "irr=85 の特権（Ω75未満でも土俵に上がれる／席で先に置く）を与えてよい社かを、その社自身の過去の実現リターンで裁く材料。止まると新しく85になった社が無検証で特権を受ける＝甘い側へ壊れる"
   },
   {
    "id": "irr85mech",
@@ -164,7 +178,8 @@
    "days": 3,
    "state": "ok",
    "how": "ci.yml（push/PR毎）／手動 python3 night/irr85_mech_diff.py --json",
-   "auto": true
+   "auto": true,
+   "what": "堀の根拠にした原本の一文が、最新の年次報告にまだ在るかを一字一句で照合する。消えたら赤信号（ただし在っても安全の証明にはならない片側の検査）"
   },
   {
    "id": "castlecorr",
@@ -175,7 +190,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/castle_correlation.py --json",
-   "auto": true
+   "auto": true,
+   "what": "保有銘柄が『同時に落ちる』関係にないかを10年の値動きで測る。1銘柄8%の上限は守っていても束では一度も見ていなかったので、その材料"
   },
   {
    "id": "irr85audit",
@@ -186,7 +202,8 @@
    "days": 3,
    "state": "ok",
    "how": "ci.yml（push/PR毎）／手動 python3 night/audit_irr85.py",
-   "auto": true
+   "auto": true,
+   "what": "irr=85 の根拠が「顧客の側が再認定の費用と時間を負う」を本当に述べているかを型で仕分ける作業リスト。自社が取る認証や願望形は当たらない"
   },
   {
    "id": "irr85scope",
@@ -197,7 +214,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/irr85_scope_life.py --json",
-   "auto": true
+   "auto": true,
+   "what": "その堀が会社の売上の何%に及ぶか、認定は何年もつかを原本から拾う。表示だけで線は引かない"
   },
   {
    "id": "irr85myrule",
@@ -208,7 +226,8 @@
    "days": 3,
    "state": "ok",
    "how": "ci.yml（push/PR毎）／手動 python3 night/irr85_myrule.py --json",
-   "auto": true
+   "auto": true,
+   "what": "irr=85 の社を、あなた自身の選定ルール（営業利益率・FCF転換・売上成長の下限）で採点し、門との食い違いを名指しする"
   },
   {
    "id": "irr85dual",
@@ -219,7 +238,8 @@
    "days": 0,
    "state": "ok",
    "how": "ci.yml（push/PR毎）／手動 python3 night/audit_irr85_dual.py",
-   "auto": true
+   "auto": true,
+   "what": "新しく irr=85 を付けたとき、別の読み手が独立に検証したかを数える。関門ではなく作業リスト（未検証は欠陥ではなく工程の途中）"
   },
   {
    "id": "newlist",
@@ -230,7 +250,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/watch_new_listings.py",
-   "auto": true
+   "auto": true,
+   "what": "上場して最初の年次報告が出た会社を掃いて、堀の機構を示す言い回しがあるか探す作業リスト。刻みを決めるのは原本を読む人"
   },
   {
    "id": "cagrt",
@@ -241,7 +262,8 @@
    "days": 8,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/fill_growth_trend.py（反映は --write＝審査官の手）",
-   "auto": true
+   "auto": true,
+   "what": "売上の伸びが加速しているか減速しているかを測る。**これは採点に効く欄**で、空欄だと減速の罰が発火しないので、止まると新しく審査した社ほど甘くなる"
   },
   {
    "id": "fetch",
@@ -252,7 +274,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml 毎月2日（未審査の先頭5社）／手動 python hachimon_fetch.py [T ...]",
-   "auto": true
+   "auto": true,
+   "what": "審査の前に、原本から機械で読める数字（売上・利益・負債など）を下ごしらえする。止まると新規銘柄の審査が在庫切れで止まる（在庫の残り日数はこのカードに出る）"
   },
   {
    "id": "reaudit",
@@ -263,7 +286,8 @@
    "days": 0,
    "state": "ok",
    "how": "ci.yml（push毎）＋ops.yml 毎月2日／手動 python3 night/enqueue_reaudit.py --json && python3 night/make_chunks.py --reaudit --top 20",
-   "auto": true
+   "auto": true,
+   "what": "各検出器が見つけたものを『次に審査すべき順』に並べる。止まると検出と作業がつながらず、見つけても誰にも渡らない"
   },
   {
    "id": "notify",
@@ -274,7 +298,8 @@
    "days": 3,
    "state": "ok",
    "how": "events.yml（行動が要ることだけIssueにする・冪等）",
-   "auto": true
+   "auto": true,
+   "what": "行動が要ることだけをGitHubのIssueにする。画面は開いた人にしか届かないので、その代わり"
   },
   {
    "id": "fix",
@@ -285,7 +310,8 @@
    "days": 0,
    "state": "ok",
    "how": "fix.yml 毎週土曜（判定が動かなければmain直・動けばPR）",
-   "auto": true
+   "auto": true,
+   "what": "機械で直せる不整合を毎週見つけて直す。採点が動かない直しはそのまま、動く直しはPRにして人が見る"
   },
   {
    "id": "sht",
@@ -296,7 +322,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/build_sic_cache.py && python3 night/fill_sht.py --json（反映は --write＝審査官の手）",
-   "auto": true
+   "auto": true,
+   "what": "同業と比べて売上シェアが伸びているか縮んでいるかを測る。粗利率の低下と組で『堀が崩れ始めた』先行警報になる"
   },
   {
    "id": "stalebs",
@@ -307,7 +334,8 @@
    "days": 3,
    "state": "ok",
    "how": "ci.yml（push/PR毎）／手動 python3 night/audit_stale_bs.py --write",
-   "auto": true
+   "auto": true,
+   "what": "決算の期末より後に貸借対照表が大きく動いていないか（買収でのれんが跳ねた等）を四半期報告で見る。買付を止める関門の入力"
   },
   {
    "id": "pending",
@@ -318,7 +346,8 @@
    "days": 1,
    "state": "ok",
    "how": "ci.yml（push/PR毎）／手動 python3 night/audit_pending.py --all --write",
-   "auto": true
+   "auto": true,
+   "what": "合意済みだがまだ閉じていない買収などを見る。完了するとのれんの3割超が入れ替わる規模なら買付を止める（採点しているのが『これからの会社』ではなくなるため）"
   },
   {
    "id": "packstale",
@@ -329,7 +358,8 @@
    "days": 3,
    "state": "ok",
    "how": "ci.yml（push/PR毎）／手動 python3 night/audit_pack_stale.py --write",
-   "auto": true
+   "auto": true,
+   "what": "新しい年次報告が出ているのに、審査が古い年のままの社を出す。放っておくと1年前の会社の姿で配分を決めることになる"
   },
   {
    "id": "waccdrift",
@@ -340,7 +370,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/audit_wacc_stale.py --write",
-   "auto": true
+   "auto": true,
+   "what": "割引率の前提（国債利回り）が市場と離れていないかを見る。離れたら人が採点機の欄を更新する（規約の変更ではなく入力の更新）"
   },
   {
    "id": "vfail",
@@ -351,7 +382,8 @@
    "days": 0,
    "state": "ok",
    "how": "ci.yml（push/PR毎）／手動 python3 night/validate_packs.py --json",
-   "auto": true
+   "auto": true,
+   "what": "「値は入っているが根拠が書かれていない」欄を持つ社の一覧。買付を止める関門の入力で、席に着く社は0件でなければならない"
   },
   {
    "id": "kanshi",
@@ -362,7 +394,8 @@
    "days": 6,
    "state": "ok",
    "how": "ops.yml／手動 python3 make_kanshi.py",
-   "auto": true
+   "auto": true,
+   "what": "株価・決算・臨時報告を追う銘柄の名簿を作り直す。止まると、新しく買付に入った社の株価が取れないまま気づかれない"
   },
   {
    "id": "cal",
@@ -373,7 +406,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml／手動 python kessan_calendar.py",
-   "auto": true
+   "auto": true,
+   "what": "監視銘柄の次の決算発表日を取って、Googleカレンダーに取り込めるファイルを作る"
   },
   {
    "id": "xwatch",
@@ -384,7 +418,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml／手動 python x_watch_recalc.py",
-   "auto": true
+   "auto": true,
+   "what": "『あといくら下がれば期待リターンが0になるか』の線を計算し直す。成行で買わずに指値で入るときの目安"
   },
   {
    "id": "kessanUS",
@@ -395,7 +430,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml（月次で先回り）／手動 python kessan_check.py",
-   "auto": true
+   "auto": true,
+   "what": "保有・監視銘柄の直近四半期を機械で点検し、売上と利益率の変調・警報語（減損／退任など）を拾う。要審査は再審査の待ち行列へ回る"
   },
   {
    "id": "kessanJP",
@@ -406,7 +442,8 @@
    "days": 9,
    "state": "ok",
    "how": "ops.yml（EDINET_API_KEYをSecretsに置けば自動）／手動 python3 kessan_check_jp.py",
-   "auto": "key"
+   "auto": "key",
+   "what": "同じ点検を日本株の有報PDFで行う。数値は桁が割れて読めないことが多いので警報語だけで裁く。EDINETの無料鍵が要る"
   },
   {
    "id": "v10",
@@ -417,7 +454,8 @@
    "days": 13,
    "state": "ok",
    "how": "ops.yml（7月）／手動 python3 v10_series.py　⚠**その v10_series.py が repo に存在しない**（git 全履歴にも無い）＝影の在庫はあるのに作り直せない。2027-07の答え合わせの前に要復旧",
-   "auto": true
+   "auto": true,
+   "what": "次の世代の採点式を影で並走させ、2027年に新旧どちらが当たっていたか答え合わせするための記録"
   },
   {
    "id": "bfdiff",
@@ -428,7 +466,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/backfill_machine_evidence.py --json（**読むだけ**。--sync は単位ずれ・年ずれを注入するので自動では走らせない）",
-   "auto": true
+   "auto": true,
+   "what": "機械の採取器を直しても、既に審査済みのデータは自動では直らない。そのズレ（取り残し）を数えて作業リストにする"
   },
   {
    "id": "v11",
@@ -439,7 +478,8 @@
    "days": 0,
    "state": "ok",
    "how": "ops.yml 毎月2日／手動 python3 night/v11_facts.py && node night/v11_gate.js（V11_SPEC.md・正本の判定には一切使わない）",
-   "auto": true
+   "auto": true,
+   "what": "v10 と同じく、別の設計の採点式を影で走らせて記録する"
   },
   {
    "id": "calib",
@@ -450,7 +490,8 @@
    "days": 9,
    "state": "ok",
    "how": "ops.yml（7月）／手動 python calibration_check.py——**封印は自動・v9/v10の勝敗判定はユーザーの判断**（V10_SPEC）",
-   "auto": true
+   "auto": true,
+   "what": "毎年7月に『そのときの判定』を凍結して残す。後から答え合わせできるようにするためで、**時点を逃すと永久に失われる**唯一の作業"
   },
   {
    "id": "gate0",
@@ -461,7 +502,8 @@
    "days": 0,
    "state": "ok",
    "how": "python run_gate0_local.py（companyfacts.zip 1.4GB＝CI外）",
-   "auto": false
+   "auto": false,
+   "what": "全上場企業から審査候補を絞る年1回の一次ふるい。1.4GBの財務データが要るのでCIでは回せない"
   },
   {
    "id": "gate0jp",
@@ -472,7 +514,8 @@
    "days": 14,
    "state": "ok",
    "how": "python3 night/rebuild_gate0_jp.py --write（**再ランクのみ**。母集団の更新は run_gate0_jp_local.py＝EDINET_API_KEY が要る）",
-   "auto": "key"
+   "auto": "key",
+   "what": "同じ一次ふるいを日本株で行う。母集団そのものの更新にはEDINETの鍵が要る（鍵なしでできるのは順位の付け直しまで）"
   },
   {
    "id": "state",
@@ -483,7 +526,8 @@
    "days": 7,
    "state": "ok",
    "how": "門のⅦ資産「📤 state.json」→ repo直下へ置いてコミット（検査 python3 night/validate_state.py）",
-   "auto": false
+   "auto": false,
+   "what": "株数・売却記録・目標ウェイトなど、ブラウザにしかない『人が決めたこと』をrepoへ書き出す。門はブラウザからrepoへ書けないので人の手が要り、**忘れると消えたとき戻らない**"
   },
   {
    "id": "backtest",
@@ -494,7 +538,8 @@
    "days": 0,
    "state": "ok",
    "how": "gate0.yml（年1・7月）／手動 python3 night/backtest_core.py",
-   "auto": true
+   "auto": true,
+   "what": "『当時読めた数字だけ』で過去に遡って採点し、その後の実際のリターンと突き合わせる。成長の減衰など、予実台帳の答えを先取りするための材料"
   }
  ],
  "todos": {
