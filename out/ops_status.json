@@ -402,8 +402,8 @@
    "name": "監視リスト生成",
    "cadence": "月1",
    "due_days": 40,
-   "last": "2026-08-11",
-   "days": 6,
+   "last": "2026-08-17",
+   "days": 0,
    "state": "ok",
    "how": "ops.yml／手動 python3 make_kanshi.py",
    "auto": true,
@@ -450,8 +450,8 @@
    "name": "決算点検（日本株）",
    "cadence": "四半期",
    "due_days": 100,
-   "last": "2026-08-10",
-   "days": 7,
+   "last": "2026-08-17",
+   "days": 0,
    "state": "ok",
    "how": "ops.yml（EDINET_API_KEYをSecretsに置けば自動）／手動 python3 kessan_check_jp.py",
    "auto": "key",
@@ -498,8 +498,8 @@
    "name": "年次較正の封印(7月)",
    "cadence": "年1(7月)",
    "due_days": 430,
-   "last": "2026-08-10",
-   "days": 7,
+   "last": "2026-08-08",
+   "days": 9,
    "state": "ok",
    "how": "ops.yml（7月）／手動 python calibration_check.py——**封印は自動・v9/v10の勝敗判定はユーザーの判断**（V10_SPEC）",
    "auto": true,
@@ -563,8 +563,8 @@
     "kind": "宿題",
     "title": "EDINET_API_KEY を GitHub Secrets に置く",
     "due": null,
-    "note": "api.edinet-fsa.go.jp で無料登録→Settings→Secrets and variables→Actions→EDINET_API_KEY。置いた翌日から日本株17社の臨報監視・決算点検が自動化される（📖説明欄の「決算点検（日本株）」参照）\n\n【配線の確認 2026-08-10】events.yml と ops.yml が secrets.EDINET_API_KEY を読む形になっていることを実測で確認済み＝置けば次回から効く。取得: https://api.edinet-fsa.go.jp/ （無料・APIキー発行）",
-    "done": false
+    "note": "api.edinet-fsa.go.jp で無料登録→Settings→Secrets and variables→Actions→EDINET_API_KEY。置いた翌日から日本株17社の臨報監視・決算点検が自動化される（📖説明欄の「決算点検（日本株）」参照）\n\n【配線の確認 2026-08-10】events.yml と ops.yml が secrets.EDINET_API_KEY を読む形になっていることを実測で確認済み＝置けば次回から効く。取得: https://api.edinet-fsa.go.jp/ （無料・APIキー発行）\n\n【完了 2026-08-17】Secrets に置いて events.yml を手で発火→実測で `jp: {covered:true, days_scanned:7, tickers:[17社]}` / errors 0。半期報告書3件・自己株券買付状況報告書2件等を実際に拾った。ops.yml でも日本株17社の決算点検(out/kessan/*_qcheck_jp.txt)が初めて生成された（要審査9社・異常なし8社）。⚠ 途中で名前を `EDINET`（誤）で置いていて効かなかった——**ワークフローが読む名前と1字1句一致が要る**。",
+    "done": true
    },
    {
     "id": "wit_refetch",
@@ -1314,8 +1314,8 @@
     "id": "secret_av",
     "kind": "宿題",
     "title": "AV_KEY（Alpha Vantage・無料）を Secrets に置く",
-    "note": "out/next_earnings.json は**28件すべて src=est**（SECからの推定日）。EARNINGS_CALENDAR は1リクエストで全社ぶん取れるので無料枠25回/日でも足りる。perF の充填にも効く（投下可10社中 perF があるのは4社・gcap は0社）。\n\n【2026-08-10 是正】**ops.yml が AV_KEY を渡していなかった**——kessan_calendar.py と market_fetch.py は環境変数 AV_KEY を読む設計なのに CI が渡しておらず、**Secrets に置いても何も起きない**状態だった（v9.9.133 のクリップボードと同型＝副作用の無い経路は失敗しても静か）。v9.9.134 で配線済み＝置けば次の ops.yml から効く。\n取得: https://www.alphavantage.co/support/#api-key （無料・メールだけ）",
-    "done": false,
+    "note": "out/next_earnings.json は**28件すべて src=est**（SECからの推定日）。EARNINGS_CALENDAR は1リクエストで全社ぶん取れるので無料枠25回/日でも足りる。perF の充填にも効く（投下可10社中 perF があるのは4社・gcap は0社）。\n\n【2026-08-10 是正】**ops.yml が AV_KEY を渡していなかった**——kessan_calendar.py と market_fetch.py は環境変数 AV_KEY を読む設計なのに CI が渡しておらず、**Secrets に置いても何も起きない**状態だった（v9.9.133 のクリップボードと同型＝副作用の無い経路は失敗しても静か）。v9.9.134 で配線済み＝置けば次の ops.yml から効く。\n取得: https://www.alphavantage.co/support/#api-key （無料・メールだけ）\n\n【完了 2026-08-17】実測: 決算カレンダーが **est 39件 → av 10件 + est 29件**。ASML 2027-02-25→**2026-10-14**（−134日）/ SAP 2027-02-26→2026-10-21（−128日）＝20-F提出体はSEC推定が構造的に外れる。⚠ **perF は10社中4社のまま**（AV の ForwardPE が多くの社で null）＝下の perF の宿題は残る。⚠⚠ 初回は鍵が効いていたのに成果が捨てられていた——`git add` の巻き添え（別項）。**緑＝成功ではない**の実例。",
+    "done": true,
     "added": "2026-08-10"
    },
    {
@@ -1611,6 +1611,30 @@
     "due": null,
     "done": true,
     "note": "ops.yml が月1で回しているのに**盤に無かった**——出力が out/{T}_gate_input.json という\n**銘柄ごとのファイル**で、盤が見る単一の錨が存在しなかったため＝止まっても誰も気づけない。\nrun_gate0_local.py の実行印と同じ作法で **out/fetch_run.json** を1本残すようにし、盤に `fetch`（月1・期限40日）を追加。\n在庫 stock_unreviewed（採取ずみ未審査）も同梱し、5社（Routineの1回分）を割ったら📋今日が鳴る。\n⚠ 実装で1件踏んだ: 変数名を `OUT_DIR` と書いたが実際は `OUT`。`except Exception` で握っていたので\n  **NameError が『▲ 実行印を書けなかった』の1行になって静かに死ぬ**ところだった（実行して確認し是正）。\n実測: 盤 44→45本・停止疑い0／在庫58社"
+   },
+   {
+    "id": "review_routine_silent",
+    "kind": "宿題",
+    "title": "日次 門2審査 Routine が毎日発火しているのに成果が出ない——原因が見えない",
+    "note": "【実測 2026-08-17】cron `0 20 * * 0-4`＝月〜金 05:00 JST で正しく、`last_fired_at` も当日。だが **門2審査のPRは #179（08-16・5社）の1本だけ**で、`out/review_runs.json` の走行ログも **2件だけ**（08-11 試運転 / 08-16 pr）。他のPRは全部 対話セッションのもの。\n**原因が見えないのは、走行ログを残す指示が手順の最後(step 8)にあるから**——途中でセッション上限に当たったり落ちたりすると何も残らず、『発火したが力尽きた』と『発火しなかった』が区別できない。\n→ **開始時に1行残す**（`--outcome started`）形にすれば、fail-loud になる（v9.9.140 と同じ思想）。**速くする前に、なぜ出ていないかが見える状態にするのが先。**",
+    "done": false,
+    "added": "2026-08-17"
+   },
+   {
+    "id": "claude_md_fixed_cost",
+    "kind": "決断待ち",
+    "title": "CLAUDE.md 983KB＝審査セッションが毎回読む固定費をどうするか",
+    "note": "【実測 2026-08-17】CLAUDE.md は **983KB / 508,319文字 ≒ 50万トークン**。CLAUDE.md 自身は『653KB＝新規セッションが毎回読む固定費』と記録しており、**1.5倍に膨らんでいる**。\n審査セッションは **10-Kを1行も読む前にこれを読まされる**（10-K本文が30〜50万字）。中身の大半は歴史検証の記録で、**1社を裁くのに必要なのは 絶対のルール＋審査プロトコル＋採取の落とし穴**だけ。\n案: CLAUDE.md を『毎回読む規約』と『必要なときだけ読む経緯』に割る（記録は消さない・読む順を変える）。50万→10万トークンなら1社あたりの予算が5倍。\n⚠ **この台帳の価値の大半はあの記録**なので、分け方はユーザーの判断。そして **CLAUDE.md 自身が『1回の起動で処理する社数が多いほど1社あたりの固定費は安くなる』**と書いている＝これを先にやらずに社数だけ増やすとセッション上限に当たって逆効果。",
+    "done": false,
+    "added": "2026-08-17"
+   },
+   {
+    "id": "adv6857_impair_prior",
+    "kind": "宿題",
+    "title": "6857 の減損警報は過年度の記述——四半期点検の要審査を原本で確定させる",
+    "note": "【実測 2026-08-17・EDINET鍵の初回走査】`out/kessan/6857_qcheck_jp.txt` が『要審査: 警報:減損』を立てたが、有報の本文は『**前**連結会計年度…のれん及び無形資産の一部減損損失21,393百万円』で、当期は **+2,641百万円の利益へ24,173百万円改善**している＝**キーワードが過去の記述に当たっただけ**。\n機械はここまで判別しないので『要審査』は設計どおりだが、**6857 は🟢投下可**なので待ち行列（現2位）で原本を読んで確定させること。\n⚠ 同じ走査で17社中12社が『数値は自己検算で破棄』（PDFの桁分断）＝判定は警報語だけで行われている。",
+    "done": false,
+    "added": "2026-08-17"
    }
   ]
  },
