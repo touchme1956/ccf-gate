@@ -749,9 +749,9 @@
   {
    "id": "secret_anthropic",
    "kind": "宿題",
-   "title": "ANTHROPIC_API_KEY を GitHub Secrets に置く（門2審査の自動化）",
-   "note": "2026-08-10に .github/workflows/review.yml と night/review_runner.sh を新設した。鍵を Settings → Secrets and variables → Actions へ置くと**平日17:00UTCに待ち行列の先頭2社を審査**し、**PRを作る**（mainへは書かない＝マージが審査官の手）。納品検査を通らないパックは捨てる。鍵が無ければ何もせず終了する（既存ファイルは壊さない）。実測 night/progress.json は pending_review 13 のまま1週間動いていない。\n\n【配線の確認 2026-08-10】review.yml が secrets.ANTHROPIC_API_KEY を読む形を実測で確認済み。回転盤で**唯一の🔑鍵待ち**。取得: https://console.anthropic.com/settings/keys",
-   "done": false,
+   "title": "ANTHROPIC_API_KEY は不要になった（review.yml を畳んだため・2026-08-17）",
+   "note": "2026-08-10に .github/workflows/review.yml と night/review_runner.sh を新設した。鍵を Settings → Secrets and variables → Actions へ置くと**平日17:00UTCに待ち行列の先頭2社を審査**し、**PRを作る**（mainへは書かない＝マージが審査官の手）。納品検査を通らないパックは捨てる。鍵が無ければ何もせず終了する（既存ファイルは壊さない）。実測 night/progress.json は pending_review 13 のまま1週間動いていない。\n\n【配線の確認 2026-08-10】review.yml が secrets.ANTHROPIC_API_KEY を読む形を実測で確認済み。回転盤で**唯一の🔑鍵待ち**。取得: https://console.anthropic.com/settings/keys\n\n【2026-08-17 決着】**この鍵は要らなくなった。** review.yml を畳んだので読む先が無い。門2審査は Routine（セッション自身が審査官＝鍵不要）が毎日やっており、そちらが実証済みの経路。鍵を買う必要は無い。",
+   "done": true,
    "added": "2026-08-10"
   },
   {
@@ -1034,11 +1034,11 @@
   },
   {
    "id": "review_yml_retire",
-   "kind": "決断待ち",
-   "title": "review.yml を畳むか（鍵待ちの唯一の1件・Routine と重複）",
+   "kind": "宿題",
+   "title": "review.yml を畳んだ（2026-08-17・鍵待ちの唯一の1件が消えた）",
    "due": null,
-   "done": false,
-   "note": "回転盤の『鍵待ち』はこの1件だけ（門2審査(自動)・最終 2026-08-08）。ANTHROPIC_API_KEY が無く**一度も走っていない**。\n\n一方 Routine『日次 門2審査（自動・5社）』が同じ仕事を毎日していて、盤の『日次 門2審査(Routine)』は🟢（最終 2026-08-16）。CLAUDE.md 自身が『review.yml の走行回数は 0＝$を払って未実証の経路を開くより、$を払わず実証済みの経路を毎日に伸ばすを採った』と書いている。\n\n⇒ **直すのではなく降ろすのが筋**。降ろせば盤の44本が本当に全緑になり、『鍵待ち』という常設の黄色が消える。降ろす＝ワークフロー削除と ops_status の行の削除（経緯は残す）"
+   "done": true,
+   "note": "2026-08-17 ユーザー指示「3つともやって」で**畳んだ**（`.github/workflows/review.yml` を削除・回転盤の `review` 行も降ろした。経緯は ops_status.py のコメントと git 履歴に残る）。\n\n根拠: **走行回数 0** のまま9日前が最終で、盤の『鍵待ち』はこの1件だけだった。同じ仕事を Routine『【門】日次 門2審査（自動・5社）』が毎日していて盤の `reviewrun` は🟢。\nCLAUDE.md 自身が「$を払って未実証の経路を開くより、$を払わず実証済みの経路を毎日に伸ばす」と記録している。\n\n実測: 回転盤 **45本→44本・鍵待ち 1→0＝全緑**。\n⚠ 門2審査そのものは止まらない——見張りは `reviewrun`（毎営業日・期限4日）が引き続き担う。\n⚠ 復活させたいときは git 履歴に review.yml が残っている。"
   }
  ]
 }

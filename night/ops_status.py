@@ -245,9 +245,16 @@ def build():
         ("fix",     "機械是正の自動提案",     "週1",     10,
          git_date("out/score_all.json"),
          "fix.yml 毎週土曜（判定が動かなければmain直・動けばPR）", True),
-        ("review",  "門2審査(自動)",         "毎営業日", 4,
-         git_date("night/progress.json"),
-         "review.yml 平日17:00UTC（**ANTHROPIC_API_KEY が要る**。無ければ何もせず終了）", "key"),
+        # 2026-08-17: **`review.yml` を畳んだので、この行も降ろす**（ユーザー指示「3つともやって」）。
+        #   経緯は消さない——review.yml は **走行回数 0** のまま9日前が最終で、盤の「鍵待ち」は
+        #   この1件だけだった。同じ仕事を Routine『【門】日次 門2審査（自動・5社）』が毎日していて
+        #   （盤の `reviewrun` は🟢）、CLAUDE.md 自身が
+        #   「$を払って未実証の経路を開くより、$を払わず実証済みの経路を毎日に伸ばす」と記録している。
+        #   ＝**直すのではなく降ろすのが筋**。降ろせば「鍵待ち」という常設の黄色が消え、
+        #   盤が本当に全緑になる（鳴りっぱなしを一つ減らす）。
+        #   ⚠ 門2審査そのものは止まらない——見張りは `reviewrun`（毎営業日・期限4日・
+        #     night/log_review_run.py が毎回1行残す）が引き続き担う。
+        #   ⚠ 復活させたいときは git 履歴に review.yml が残っている（ANTHROPIC_API_KEY が要る）。
         ("sht",     "シェア趨勢shtの測定",   "月1",     40,
          json_field("out/sht_report.json", "asof"),
          "ops.yml 毎月2日／手動 python3 night/build_sic_cache.py && python3 night/fill_sht.py --json"
