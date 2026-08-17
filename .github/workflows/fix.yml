@@ -126,8 +126,19 @@ jobs:
           #   他ステップの残骸まで巻き込むと「判定が動かない」という約束の外へ出る。
           #   触ってよいのは**この道具が書くもの**だけ＝パックと、パックから機械的に作った在庫。
           #   （night/ を丸ごと足していたのは、そもそも道具のソースを bot が書き換える経路が無いので不要）
-          git add out/*_gate_pack.json out/score_all.json out/validate_fail.json \
-                  out/roiic.json out/acq5.json out/growth_trend.json out/sht.json 2>/dev/null || true
+          # ⚠2026-08-17: **ここも `git add` の巻き添えで全部捨てる形だった。**
+          #   `out/roiic.json` / `out/acq5.json` / `out/sht.json` は実在せず（充填器はパックへ直接書く）、
+          #   `git add a b c` は1つでも実在しないと**全体が失敗して1つもステージしない**——
+          #   末尾の `2>/dev/null || true` がそれを無音にする。
+          #   このワークフローは**実行0回**なので実害は出ていないが、初回に main へ空コミットを
+          #   押すところだった（`git diff --staged --quiet` で "変化なし" と出て静かに終わる）。
+          #   `ccf_git_add` は1パスずつ add して落ちたものを名指しする＝巻き添えが起きない。
+          . night/git_add_safe.sh
+          #   ⚠ `out/roiic.json` / `out/acq5.json` / `out/sht.json` は**どの道具も書かない幻のパス**
+          #     （fill_roiic・fix_acq5 はパックへ直接書き、fill_sht が書くのは `out/sht_report.json`）。
+          #     3つとも外し、実在する sht_report.json を入れた。
+          ccf_git_add 'out/*_gate_pack.json' out/score_all.json out/validate_fail.json \
+                      out/growth_trend.json out/sht_report.json
           if git diff --staged --quiet; then echo "変化なし"; exit 0; fi
           N=$(git diff --staged --name-only | grep -c "_gate_pack.json" || echo 0)
           git commit -m "機械是正（自動）: ${N}パック｜投下可は不変"

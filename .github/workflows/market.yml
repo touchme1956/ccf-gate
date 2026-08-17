@@ -85,6 +85,10 @@ jobs:
           #   ここに書かないと「毎営業日 作り直して捨てる」ことになり、門(ブラウザ)が読む
           #   第四の関門の表だけが昨日のまま残る（v9.9.140・実測で git log に market の
           #   コミットが1件も無かった。ci.yml で2回直したのと同じ型の3例目）。
-          git add -A market_data.json out/dashboard.json out/*_gate_pack.json out/score_all.json out/er_ledger.json out/validate_fail.json out/gate_history.jsonl out/gate_state.json || true
+          # ⚠2026-08-17: `git add -A a b c` も**1つでも実在しないパスがあれば全体が失敗**する。
+          #   ここは今日は全パス実在するが、`out/gate_history.jsonl` / `out/gate_state.json` は
+          #   gate_history.py が初回に作るまで存在しない＝**新しい環境では全滅する**形だった。
+          . night/git_add_safe.sh
+          ccf_git_add market_data.json out/dashboard.json 'out/*_gate_pack.json' out/score_all.json out/er_ledger.json out/validate_fail.json out/gate_history.jsonl out/gate_state.json
           git diff --staged --quiet || git commit -m "$MSG"
           git push

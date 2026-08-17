@@ -312,7 +312,17 @@ jobs:
           #   これは今日4回直した「作った答えを捨てる」型（score_all / pending / validate_fail / 今回）。
           #   とくに fill_intcov は **v9.9.142 の財務キルの入力**なので、残らないと
           #   新しいパックの利払カバーが永久に空欄＝キルが眠り続ける。
-          git add out/*_gate_pack.json
+          # ⚠2026-08-17: **一つの実在しないパスが add 全体を落としていた（同じ型の6回目・最悪の形）。**
+          #   `git add a b c` は1つでもパスが実在しないと**全体が失敗して1つもステージしない**。
+          #   末尾の `2>/dev/null || true` がエラーも終了コードも消すので、完全に無音で起きる。
+          #   下の38パスの一覧に **`out/market_data.json`（実在しない。本物は repo 直下）** が
+          #   混じっており、**38パス全部が捨てられていた**（GitHub上での初回実行 run_number 1 で実測）。
+          #   このとき AV_KEY は正しく効いていて、ログには `Alpha Vantage: 10/39 銘柄の決算日を取得`
+          #   `ASML 2026-10-14` と出ていた——**鍵は効いていたのに成果だけが捨てられていた。**
+          #   悪いパスを消すだけでは今日の1件しか直らない（次にステップを足せばまた起きる）ので、
+          #   **1パスずつ add して落ちたものを名指しする** `ccf_git_add` を通す＝巻き添えが構造的に起きない。
+          . night/git_add_safe.sh
+          ccf_git_add 'out/*_gate_pack.json'
           # ⚠2026-08-17: **採取の出力を add していなかった（同じ型の5回目）。**
           #   2026-08-10 に「待ち行列の先頭を先に採取」ステップを足したとき、その出力
           #   `out/{T}_gate_input.json` / `_hits.txt` を add の一覧に入れ忘れていた——
@@ -322,7 +332,9 @@ jobs:
           #   （SECへの無駄な往復＋審査は永久に「採取ずみ在庫ゼロ」から始まる）。
           #   out/fetch_run.json は**盤の錨**（月1・期限40日）なので、これが残らないと
           #   採取が止まったことを検出する機構ごと止まる。
-          git add out/*_gate_input.json out/*_hits.txt out/fetch_run.json 2>/dev/null || true
-          git add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/backfill_diff.json out/backfill_stamps.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos night/chunk*.txt night/rechunk*.txt night/reaudit_queue.json night/progress.json out/er_ledger.json out/market_data.json market_data.json out/shadow_*.json out/gate0_run.json 2>/dev/null || true
+          ccf_git_add 'out/*_gate_input.json' 'out/*_hits.txt' out/fetch_run.json
+          #   ⚠ `out/market_data.json` は**存在しない**（market_fetch.py は repo 直下の
+          #     `market_data.json` に書く）。これが38パス全部を巻き添えにしていた元凶なので外した。
+          ccf_git_add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/backfill_diff.json out/backfill_stamps.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos 'night/chunk*.txt' 'night/rechunk*.txt' night/reaudit_queue.json night/progress.json out/er_ledger.json market_data.json 'out/shadow_*.json' out/gate0_run.json
           git diff --staged --quiet || git commit -m "$MSG"
           git push
