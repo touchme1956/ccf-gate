@@ -125,6 +125,17 @@ jobs:
       - name: 日付が凍っているツール check_frozen_dates
         run: python3 night/check_frozen_dates.py --json
 
+      # ── 1-c2. 「作った答えを捨てる」の6回目を構造で止める（2026-08-17新設）──────
+      #   `git add a b c` は**1つでもパスが実在しないと全体が失敗して1つもステージしない**。
+      #   末尾の `2>/dev/null || true` がエラーも終了コードも消すので**完全に無音**で起きる。
+      #   実測: ops.yml の38パスの add に `out/market_data.json`（実在しない）が混じり、
+      #   **38パス全部が捨てられていた**——AV_KEY は効いていて
+      #   `Alpha Vantage: 10/39 銘柄の決算日を取得` とログに出ていたのに、成果だけが消えた。
+      #   fix.yml も同型（幻のパス3つ）。**落とす**のは ccf_git_add を通していない行だけ
+      #   （通していれば実行時に無くても巻き添えは起きないので警告で足りる）。
+      - name: git add の巻き添え検査 check_workflow_add
+        run: python3 night/check_workflow_add.py
+
       # ── 1-d. 中身と入力の鮮度（2026-08-17新設）─────────────────────────────
       #   回転盤は**日付しか見ていない**。日付と中身は独立に壊れるので型は三つある——
       #     A 日付が凍る（中身は動く）＝1-c で塞いだ・**偽陽性**（鳴りっぱなし）
@@ -476,7 +487,12 @@ jobs:
           #   **第四の関門が読む pending.json は手で回したときしか更新されなかった**。
           #   out/irr85_myrule.json は新着の検出に前回の在庫を使うので、
           #   コミットしないと**毎回「全社が新着」になり新着の意味が消える**。
-          git add out/frozen_dates.json out/freshness.json out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json out/irr85_dual.json night/reaudit_queue.json 2>/dev/null || true
+          # ⚠2026-08-17: `git add` は**1つでもパスが実在しないと全体が失敗して1つもステージしない**。
+          #   末尾の `2>/dev/null || true` がそれを無音にするので、ここは今日は全パスが実在していても
+          #   **次に検査を1本足した日に静かに全滅しうる**（ops.yml で実際に起きた）。
+          #   ccf_git_add は1パスずつ add して落ちたものを名指しする＝巻き添えが構造的に起きない。
+          . night/git_add_safe.sh
+          ccf_git_add out/frozen_dates.json out/freshness.json out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json out/irr85_dual.json night/reaudit_queue.json
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"
           else
