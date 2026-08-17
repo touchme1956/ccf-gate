@@ -814,7 +814,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <nav class="pgnav">
  <button id="tab10" onclick="showPage(10)" style="color:var(--gold-bright)">📋 今日</button>
  <button id="tab6" onclick="showPage(6)" style="color:var(--gold-bright)">📊 盤</button>
-<button id="tab9" onclick="showPage(9)">🔔 イベント</button>
+<button id="tab9" onclick="showPage(9)">⚙ 自動化</button>
 <button id="tab11" onclick="showPage(11)">🩺 点検</button>
 <button id="tab1" onclick="showPage(1)">Ⅰ 解説</button>
 <button id="tab8" onclick="showPage(8)">Ⅱ 実行手順</button>
@@ -837,7 +837,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
      だから「今日やることはありません」は、**入力を全部読めたときにだけ**言う。 -->
 <div id="pg10" class="pg on">
  <h1 class="serif">📋 今日</h1>
- <p class="intro"><b>今日やることだけを一枚に。</b>ここに何も無ければ、今日は見るだけでよい。<details class="why" data-fold="2"><summary>つづき</summary><div class="why-body"><b>すべて情報であって判定ではない</b>——売りは S1/S2/S3・買いは四関門のみで動く。集計は <code>night/today.py</code>（out/today.json）で、期限の判定は回転盤 <code>ops_status.build()</code> をそのまま呼ぶ＝二重実装を作らない（v9.9.65）。<b>「読めなかった入力」を必ず出す</b>のがこの画面の要で、検出器が黙ったときに「異常なし」と読ませないため（絶対のルール7の親戚）。<b>点検が何を見つけたかは 🩺点検タブ</b>、作業が回っているかは 🔔イベントタブ。</div></details></p>
+ <p class="intro"><b>今日やることだけを一枚に。</b>ここに何も無ければ、今日は見るだけでよい。<details class="why" data-fold="2"><summary>つづき</summary><div class="why-body"><b>すべて情報であって判定ではない</b>——売りは S1/S2/S3・買いは四関門のみで動く。集計は <code>night/today.py</code>（out/today.json）で、期限の判定は回転盤 <code>ops_status.build()</code> をそのまま呼ぶ＝二重実装を作らない（v9.9.65）。<b>「読めなかった入力」を必ず出す</b>のがこの画面の要で、検出器が黙ったときに「異常なし」と読ませないため（絶対のルール7の親戚）。<b>点検が何を見つけたかは 🩺点検タブ</b>、作業が回っているかは ⚙自動化タブ。</div></details></p>
  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
    <button onclick="ccfToday(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
    <span id="tdAsof" style="font-size:11.5px;color:var(--dim)"></span>
@@ -845,13 +845,13 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
  <div id="tdBox"></div>
 </div>
 <!-- 🩺 点検（2026-08-17新設）: **毎日の点検が何を見つけたか**を一枚で。
-     既存の2枚と役割が重ならない——📋今日=「人が今日やること」／🔔イベント=「作業が回っているか（回転盤）」／
+     既存の2枚と役割が重ならない——📋今日=「人が今日やること」／⚙自動化=「作業が回っているか（回転盤）」／
      ここ=「**回った検査が何を出したか**」。回転盤は🟢でも中身の結果は画面のどこにも出ていなかった
      （実測: audit_gate の要修正/未解決・門と端末の一致・凍った日付・鮮度は
       GitHubでJSONを開かないと読めなかった）。表示だけで判定には一切使わない。 -->
 <div id="pg11" class="pg">
  <h1 class="serif">🩺 点検</h1>
- <div class="intro"><b>毎日の点検が何を見つけたか。</b>回転盤（🔔イベント）が「回ったか」を見るのに対し、ここは<b>回った検査の結果</b>を出す。<details class="why plain" data-fold="2"><summary>つづき</summary><div class="why-body"><b>すべて情報であって判定ではない</b>——売りは S1/S2/S3・買いは四関門のみで動く。<b>読めなかった検査は「異常なし」ではなく「測れていない」と出す</b>のがこの画面の要（絶対のルール7）。各行の数字はその検査の在庫JSONをそのまま読んだもので、ここで判定を作り直さない（v9.9.65）。</div></details></div>
+ <div class="intro"><b>毎日の点検が何を見つけたか。</b>回転盤（⚙自動化）が「回ったか」を見るのに対し、ここは<b>回った検査の結果</b>を出す。<details class="why plain" data-fold="2"><summary>つづき</summary><div class="why-body"><b>すべて情報であって判定ではない</b>——売りは S1/S2/S3・買いは四関門のみで動く。<b>読めなかった検査は「異常なし」ではなく「測れていない」と出す</b>のがこの画面の要（絶対のルール7）。各行の数字はその検査の在庫JSONをそのまま読んだもので、ここで判定を作り直さない（v9.9.65）。</div></details></div>
  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
    <button onclick="ccfCheck(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
    <span id="ckAsof" style="font-size:11.5px;color:var(--dim)"></span>
@@ -859,8 +859,8 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
  <div id="ckBox"></div>
 </div>
 <div id="pg9" class="pg">
- <h1 class="serif">🔔 イベント</h1>
- <div class="intro"><b>運用サイクル14本の回転状態</b>・監視リストの <b>8-K警報</b>（減損2.06・退任5.02・非依拠4.02・破産1.03・上場廃止通知3.01）・<b>決算</b>（発表イベント・次回予定）を一枚で。<details class="why plain" data-fold="2"><summary>つづき</summary><div class="why-body"><b>すべて情報であって判定ではない</b>——警報は各行の「審査」で門2再審査の依頼文を作って回すための気づき。売りは S1/S2/S3・買いは四関門のみで動く。データ源: out/ops_status.json／out/events_watch.json（events.yml が平日22:10UTCに毎日更新）／out/next_earnings.json（ops.yml が毎月2日に再生成）。<b>回った検査が何を出したかは 🩺点検タブ</b>（ここは「回ったか」だけを見る）。</div></details></div>
+ <h1 class="serif">⚙ 自動化</h1>
+ <div class="intro"><b>周期作業が回っているか（回転盤）</b>と、<b>自動化が拾ってきたもの</b>——監視リストの <b>8-K警報</b>（減損2.06・退任5.02・非依拠4.02・破産1.03・上場廃止通知3.01）・<b>決算</b>（発表イベント・次回予定）——そして<b>機械では測れない人の宿題（📌やるべきこと）</b>を一枚で。<b>この画面は機械と人が同居している</b>——名前は「自動化」だが、📌 だけは<u>止まっても盤が検出できない種類</u>なので名前で隠さないよう明記する。<details class="why plain" data-fold="2"><summary>つづき</summary><div class="why-body"><b>すべて情報であって判定ではない</b>——警報は各行の「審査」で門2再審査の依頼文を作って回すための気づき。売りは S1/S2/S3・買いは四関門のみで動く。データ源: out/ops_status.json／out/events_watch.json（events.yml が平日22:10UTCに毎日更新）／out/next_earnings.json（ops.yml が毎月2日に再生成）。<b>回った検査が何を出したかは 🩺点検タブ</b>（ここは「回ったか」だけを見る）。</div></details></div>
  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
    <button onclick="ccfEvents(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
    <span id="evAsof" style="font-size:11.5px;color:var(--dim)"></span>
@@ -1296,7 +1296,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.148</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.149</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -4041,7 +4041,11 @@ async function ccfDash(btn){
     + sec('📅 次回決算（21日以内）', ernHtml, '決算が来たら <code>python kessan_check.py</code>（日本株は <code>kessan_check_jp.py</code>）を回す')
     + sec('📰 最新ニュース', newsHtml, '判定には使わない——原本（10-Q/有報）に書かれるまで門は動かない');
 }
-// ── 🔔 イベント（v9.9.79・2026-08-04 ユーザー要望「決算も含めて別のタブで欲しい」）────────
+// ── ⚙ 自動化（v9.9.79 で「🔔 イベント」として新設・2026-08-04 ユーザー要望「決算も含めて別のタブで欲しい」）
+//   v9.9.149(2026-08-17 ユーザー指示「イベントの名前を変えて欲しい。自動化など当てはまるものに」)で改称。
+//   中身は**機械と人が同居**している——⚙運用サイクル(回転盤45本)・📖手動作業の説明 が機械側、
+//   📌やるべきこと が人側、⚠8-K警報・📄決算・📅カレンダー が「自動化が拾ってきたもの」。
+//   名前で人側を隠さないよう、intro に中身を列挙してある。
 // 8-K警報(watch_events.py)と決算(発表イベント・次回予定)の表示専用タブ。判定には一切使わない——
 // 警報は門2再審査の依頼文へ回す気づき。データは同一オリジンの静的JSONを読むだけ(盤と同じ配管・鍵不要)。
 // 取れなかったものは「未生成」と書く。前回値やゼロで埋めない(ルール7)。
@@ -4170,7 +4174,7 @@ async function ccfToday(btn){
       +Object.keys(k).map(x=>x+' '+k[x]).join('・')+'</summary><div class="why-body">'
       +'<div style="font-size:11.5px;color:var(--dim);margin-bottom:8px">'
       +'<b>件数を減らすこと自体は目的ではありません</b>——大半は「今日は0社しか動かない」保険で、'
-      +'条件が満たされたときに上の段へ上がってきます。正本は todo_list.json（🔔イベントタブの「📌やるべきこと」に全文）。</div>'
+      +'条件が満たされたときに上の段へ上がってきます。正本は todo_list.json（⚙自動化タブの「📌やるべきこと」に全文）。</div>'
       +W.slice(0,40).map(w=>'<div style="font-size:12px;padding:3px 0;border-top:1px solid rgba(255,255,255,.04)">'
         +chip(esc(w.kind),'#c9c2b2','rgba(255,255,255,.08)')+' '+esc(w.title)+'</div>').join('')
       +(W.length>40?'<div style="font-size:11px;color:var(--dim);margin-top:6px">…ほか '+(W.length-40)+'件</div>':'')
@@ -4180,7 +4184,7 @@ async function ccfToday(btn){
   if(typeof ccfPaint==='function')ccfPaint(document.getElementById('pg10'));
 }
 // ── 🩺 点検（2026-08-17新設）: **毎日の点検が何を見つけたか** ──────────────────
-//   役割の分担: 📋今日=人が今日やること／🔔イベント=作業が回っているか（回転盤）／
+//   役割の分担: 📋今日=人が今日やること／⚙自動化=作業が回っているか（回転盤）／
 //   ここ=**回った検査が何を出したか**。実測で、audit_gate の要修正・未解決／門と端末の一致／
 //   凍った日付／鮮度は **GitHubでJSONを開かないと読めなかった**（回転盤は🟢としか言わない）。
 //
@@ -4360,14 +4364,14 @@ async function ccfCheck(btn){
       +(gi.length?('　基準は通るが門が止める: '+gi.join(' ')):'')
       +(go.length?('　門は通すが基準を割る: '+go.join(' ')):''),'irr85_myrule.json');}
 
-  // ── 回転盤の一行要約（詳細は🔔イベント。ここでは「止まっているか」だけ）──
+  // ── 回転盤の一行要約（詳細は⚙自動化。ここでは「止まっているか」だけ）──
   let opsLine='';
   if(D.op&&Array.isArray(D.op.items)){
     const it=D.op.items, stop=it.filter(x=>x.state==='stop'||x.state==='late'||x.over);
     opsLine='<div style="font-size:11.5px;color:var(--dim);margin-top:2px">'
       +'回転盤 '+it.length+'本のうち停止疑い <b style="color:'+(stop.length?'#ff9d8a':'#8fc9a4')+'">'
       +stop.length+'本</b>'+(stop.length?('（'+stop.slice(0,6).map(x=>esc(x.label||x.id)).join('・')+'）'):'')
-      +'　→ 内訳は 🔔 イベントタブ</div>';
+      +'　→ 内訳は ⚙ 自動化タブ</div>';
   }else opsLine='<div style="font-size:11.5px;color:#ffcf8a;margin-top:2px">回転盤が読めていません（out/ops_status.json）</div>';
 
   // ── 描画 ──────────────────────────────────────────────
@@ -4408,7 +4412,7 @@ async function ccfCheck(btn){
   html+='<div style="font-size:10.5px;color:var(--dim);margin-top:4px">'
     +'すべて表示専用——Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3・配分はこの画面から一切動かない。'
     +'数字は各検査の在庫JSONをそのまま読んだもので、ここで判定を作り直していない（v9.9.65）。'
-    +'作業の周期そのものは 🔔 イベントの回転盤、人がやることは 📋 今日。</div>';
+    +'作業の周期そのものは ⚙ 自動化の回転盤、人がやることは 📋 今日。</div>';
   box.innerHTML=html;
   if(typeof ccfPaint==='function')ccfPaint(document.getElementById('pg11'));
 }
@@ -5866,7 +5870,7 @@ async function renderPlan(){
   }
   // ⛔ 合意済み・未完了の重大事象で落ちた組（v9.9.129）。**黙って消さない**（v9.9.52の教訓）。
   if(pendOut.length){
-    html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:var(--rust)">⛔ 未完了の重大事象で見送り（合意済み・まだ閉じていない買収等）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px"><b>採点しているのが「これからの会社」ではない</b>組。合意済み・株主承認済み・裁判所命令済みなど<u>確度が高いのにまだ貸借対照表に載っていない</u>重大事象を抱えた銘柄。<b>穴は「時間」だった</b>——8-K監視の警報は Item 1.03/2.06/3.01/4.02/5.02 の5つだけで<u>M&amp;Aの 1.01/1.02 と 8.01 は判定に不使用</u>、期末後の重大事象(stale_bs)は<b>実際にBSに載ったのれん</b>を見るので<u>未完了の買収はのれんがゼロで構造的に見えない</u>。合意/判決からクローズを経て次の10-Qが出るまでの<b>数ヶ月〜1年超が無防備</b>だった。<br>※<b>これは stale_bs の時間的な穴を塞ぐだけ</b>で、判定は acq5・stale_bs と<b>同じ問い・同じ刻み</b>（「完了したらのれんの何割が新しくなるか＝対価÷(現のれん+対価)」≥30%）＝新しい定数を作っていない。<b>規模不明・分母不明も止める</b>——測れていないのであって安全ではない（絶対のルール7）。<b>売却の理由にはならない</b>——保有中の銘柄はS1/S2/S3のみで裁く（堀不足・点検・期末後と同じ扱い＝買わない理由であって売る理由ではない）。解消または完了して数字が入れば自動で復帰する（<code>python3 night/audit_pending.py</code>）。<br>※<b>完全な自動化ではない</b>——判決も合意も数字ではないので、<code>_meta.pending</code> を書くのは審査官。門ができるのは「<u>書かれていたら必ず効かせる</u>」ところまで。見落としの網は 🔔イベントタブの<b>8-K作業リスト（Item 1.01/1.02/8.01）</b>が受け持つ（警報には格上げしない——8.01は雑多で「鳴りすぎる警報は鳴らないのと同じ」を自分で作ることになるから）。</div>`;
+    html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:var(--rust)">⛔ 未完了の重大事象で見送り（合意済み・まだ閉じていない買収等）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px"><b>採点しているのが「これからの会社」ではない</b>組。合意済み・株主承認済み・裁判所命令済みなど<u>確度が高いのにまだ貸借対照表に載っていない</u>重大事象を抱えた銘柄。<b>穴は「時間」だった</b>——8-K監視の警報は Item 1.03/2.06/3.01/4.02/5.02 の5つだけで<u>M&amp;Aの 1.01/1.02 と 8.01 は判定に不使用</u>、期末後の重大事象(stale_bs)は<b>実際にBSに載ったのれん</b>を見るので<u>未完了の買収はのれんがゼロで構造的に見えない</u>。合意/判決からクローズを経て次の10-Qが出るまでの<b>数ヶ月〜1年超が無防備</b>だった。<br>※<b>これは stale_bs の時間的な穴を塞ぐだけ</b>で、判定は acq5・stale_bs と<b>同じ問い・同じ刻み</b>（「完了したらのれんの何割が新しくなるか＝対価÷(現のれん+対価)」≥30%）＝新しい定数を作っていない。<b>規模不明・分母不明も止める</b>——測れていないのであって安全ではない（絶対のルール7）。<b>売却の理由にはならない</b>——保有中の銘柄はS1/S2/S3のみで裁く（堀不足・点検・期末後と同じ扱い＝買わない理由であって売る理由ではない）。解消または完了して数字が入れば自動で復帰する（<code>python3 night/audit_pending.py</code>）。<br>※<b>完全な自動化ではない</b>——判決も合意も数字ではないので、<code>_meta.pending</code> を書くのは審査官。門ができるのは「<u>書かれていたら必ず効かせる</u>」ところまで。見落としの網は ⚙自動化タブの<b>8-K作業リスト（Item 1.01/1.02/8.01）</b>が受け持つ（警報には格上げしない——8.01は雑多で「鳴りすぎる警報は鳴らないのと同じ」を自分で作ることになるから）。</div>`;
     html+=pendOut.map((r,i)=>{const p=pendMap[skey(r)]||{};
       const d=p.size?`${p.target||p.kind||''} ${(+p.size).toLocaleString()}百万$（${p.status||''}）＝${p.pctLabel||`完了後のれんの${p.newPct}%が新規`}`:(p.why||'判定不能');
       return brow(r,i,'先',`<span style="font-size:11.5px;color:var(--rust);margin-left:8px">${d}</span>`);}).join('');

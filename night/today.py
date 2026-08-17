@@ -297,7 +297,7 @@ def build():
             (today if where else month).append(
                 item('kes:' + t, 'today' if where else 'month',
                      '四半期点検で要審査: %s %s' % (t, where), vd[:100],
-                     '🔔イベントタブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る', '四半期点検'))
+                     '⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る', '四半期点検'))
     for u in (kf.get('unparsed') or []):
         blind.append(dict(key='kessan:' + str(u.get('t')), path=str(u.get('path')),
                           label='四半期点検の判定', why=str(u.get('why'))))
@@ -308,7 +308,7 @@ def build():
         today.append(item('alert:%s:%s' % (a.get('t'), a.get('date')), 'today',
                           '8-K警報: %s（%s）' % (a.get('t'), a.get('date')),
                           ' / '.join(a.get('flags') or a.get('items') or []),
-                          '🔔イベントタブの「審査」で門2再審査の依頼文を作る', '8-K監視'))
+                          '⚙自動化タブの「審査」で門2再審査の依頼文を作る', '8-K監視'))
     for e in (ev.get('errors') or []):
         blind.append(dict(key='events:' + str(e.get('t') or '?'), path='out/events_watch.json',
                           label='8-K監視の取得失敗', why=str(e.get('why') or e)[:80]))
