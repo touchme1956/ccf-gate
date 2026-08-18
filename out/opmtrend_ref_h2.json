@@ -1,0 +1,3490 @@
+{
+ "generated": "2026-08-18",
+ "tool": "night/opmtrend_ref_h2.py",
+ "role": "反証専門。測定側のコードを import せず out/opmtrend_base.json から独立に組み直す",
+ "prereg": "out/opm_trend_prereg.json",
+ "line_guard": {
+  "prereg_thresholds_text": "opmD5 < -0.02 / -0.05 / -0.10（**絶対の比率pt**。分布の分位から決めると結果を見て線を引くことになるので、会計的に意味のある刻みを結果の前に固定する）",
+  "prereg_line_text": "濃縮 >= 2.0倍 かつ 分子 >= 5社 かつ **止めた群の中央値が通過群より低い** かつ 止率 <= 15%（hist_val v2 の6基準を流用・新しい物差しを作らない）",
+  "thresholds_used": [
+   -0.02,
+   -0.05,
+   -0.1
+  ],
+  "thresholds_in_prereg_text": [
+   "-0.02",
+   "-0.05",
+   "-0.10"
+  ],
+  "line_words_present": [
+   "2.0倍",
+   "5社",
+   "中央値",
+   "15%"
+  ],
+  "ok": true
+ },
+ "constants": {
+  "HURDLE": 0.15,
+  "IMPAIR": -0.15,
+  "QUAL_OPM_PCT": 10.0,
+  "QUAL_FCFPOS": 5,
+  "CONC_MIN": 2.0,
+  "MIN_NUM": 5,
+  "MAX_STOP": 0.15,
+  "THRESHOLDS": [
+   -0.02,
+   -0.05,
+   -0.1
+  ]
+ },
+ "unit_recheck": {
+  "2013": {
+   "n_rows": 944,
+   "opm_raw_absmedian": 0.12115,
+   "opm_pct_median": 10.325,
+   "opm_pct_is_pct": true,
+   "opmD5_absmedian": 0.0382,
+   "opmD5_looks_ratio": true,
+   "opmD5_n": 449,
+   "opmD5_missing": 495,
+   "opmD5_neg_share": 0.4009,
+   "row_band_mismatch_n": 12,
+   "row_band_mismatch": [
+    "ACAD",
+    "AIM",
+    "BGMS",
+    "CLDX",
+    "CYTK",
+    "GERN",
+    "INO",
+    "LCTX",
+    "LXRX",
+    "MBOT",
+    "PRSO",
+    "SBLK"
+   ]
+  },
+  "2016": {
+   "n_rows": 956,
+   "opm_raw_absmedian": 0.1223,
+   "opm_pct_median": 9.21,
+   "opm_pct_is_pct": true,
+   "opmD5_absmedian": 0.04155,
+   "opmD5_looks_ratio": true,
+   "opmD5_n": 878,
+   "opmD5_missing": 78,
+   "opmD5_neg_share": 0.5194,
+   "row_band_mismatch_n": 16,
+   "row_band_mismatch": [
+    "ACAD",
+    "AIM",
+    "BGMS",
+    "CLDX",
+    "CRIS",
+    "LCTX",
+    "MBOT",
+    "NBIX",
+    "NOG",
+    "PAYD",
+    "PRPO",
+    "PRSO",
+    "RIOT",
+    "SD",
+    "SDEV",
+    "TKR"
+   ]
+  },
+  "2017": {
+   "n_rows": 956,
+   "opm_raw_absmedian": 0.1212,
+   "opm_pct_median": 9.4,
+   "opm_pct_is_pct": true,
+   "opmD5_absmedian": 0.04145,
+   "opmD5_looks_ratio": true,
+   "opmD5_n": 874,
+   "opmD5_missing": 82,
+   "opmD5_neg_share": 0.524,
+   "row_band_mismatch_n": 15,
+   "row_band_mismatch": [
+    "ACAD",
+    "AIM",
+    "BGMS",
+    "CLDX",
+    "CRIS",
+    "GERN",
+    "LCTX",
+    "MBOT",
+    "NBIX",
+    "PRPO",
+    "PRSO",
+    "RIOT",
+    "SD",
+    "SGMOQ",
+    "YDKG"
+   ]
+  },
+  "2018": {
+   "n_rows": 956,
+   "opm_raw_absmedian": 0.1168,
+   "opm_pct_median": 9.79,
+   "opm_pct_is_pct": true,
+   "opmD5_absmedian": 0.03765,
+   "opmD5_looks_ratio": true,
+   "opmD5_n": 878,
+   "opmD5_missing": 78,
+   "opmD5_neg_share": 0.5057,
+   "row_band_mismatch_n": 14,
+   "row_band_mismatch": [
+    "AIM",
+    "CLDX",
+    "CRIS",
+    "CYTK",
+    "GERN",
+    "LCTX",
+    "MBOT",
+    "NTPIF",
+    "PRPO",
+    "RIOT",
+    "SD",
+    "TROO",
+    "VXRT",
+    "YDKG"
+   ]
+  },
+  "2019": {
+   "n_rows": 956,
+   "opm_raw_absmedian": 0.1188,
+   "opm_pct_median": 9.75,
+   "opm_pct_is_pct": true,
+   "opmD5_absmedian": 0.0401,
+   "opmD5_looks_ratio": true,
+   "opmD5_n": 869,
+   "opmD5_missing": 87,
+   "opmD5_neg_share": 0.5017,
+   "row_band_mismatch_n": 13,
+   "row_band_mismatch": [
+    "AIM",
+    "BGMS",
+    "CLDX",
+    "GERN",
+    "GURE",
+    "INO",
+    "LCTX",
+    "MBOT",
+    "NTPIF",
+    "RIOT",
+    "SD",
+    "TROO",
+    "VXRT"
+   ]
+  },
+  "2020": {
+   "n_rows": 956,
+   "opm_raw_absmedian": 0.1127,
+   "opm_pct_median": 9.25,
+   "opm_pct_is_pct": true,
+   "opmD5_absmedian": 0.03895,
+   "opmD5_looks_ratio": true,
+   "opmD5_n": 874,
+   "opmD5_missing": 82,
+   "opmD5_neg_share": 0.4977,
+   "row_band_mismatch_n": 11,
+   "row_band_mismatch": [
+    "AIM",
+    "BGMS",
+    "CLDX",
+    "CYTK",
+    "GERN",
+    "IDN",
+    "INO",
+    "LCTX",
+    "MBOT",
+    "NTPIF",
+    "TROO"
+   ]
+  },
+  "2021": {
+   "n_rows": 956,
+   "opm_raw_absmedian": 0.11835,
+   "opm_pct_median": 7.73,
+   "opm_pct_is_pct": true,
+   "opmD5_absmedian": 0.04875,
+   "opmD5_looks_ratio": true,
+   "opmD5_n": 862,
+   "opmD5_missing": 94,
+   "opmD5_neg_share": 0.5452,
+   "row_band_mismatch_n": 10,
+   "row_band_mismatch": [
+    "AIM",
+    "BGMS",
+    "CLDX",
+    "GERN",
+    "GEVO",
+    "INO",
+    "LCTX",
+    "MBOT",
+    "TROO",
+    "VXRT"
+   ]
+  },
+  "2022": {
+   "n_rows": 956,
+   "opm_raw_absmedian": 0.13345,
+   "opm_pct_median": 10.915,
+   "opm_pct_is_pct": true,
+   "opmD5_absmedian": 0.0432,
+   "opmD5_looks_ratio": true,
+   "opmD5_n": 862,
+   "opmD5_missing": 94,
+   "opmD5_neg_share": 0.413,
+   "row_band_mismatch_n": 10,
+   "row_band_mismatch": [
+    "AIM",
+    "CLDX",
+    "CRIS",
+    "GERN",
+    "GEVO",
+    "INO",
+    "LCTX",
+    "LXRX",
+    "MBOT",
+    "VXRT"
+   ]
+  }
+ },
+ "qual_pool_recheck": {
+  "2013": {
+   "mine": 236,
+   "base_flag": 236,
+   "only_mine": [],
+   "only_base": [],
+   "agree": true
+  },
+  "2016": {
+   "mine": 329,
+   "base_flag": 329,
+   "only_mine": [],
+   "only_base": [],
+   "agree": true
+  },
+  "2017": {
+   "mine": 327,
+   "base_flag": 327,
+   "only_mine": [],
+   "only_base": [],
+   "agree": true
+  },
+  "2018": {
+   "mine": 340,
+   "base_flag": 340,
+   "only_mine": [],
+   "only_base": [],
+   "agree": true
+  },
+  "2019": {
+   "mine": 331,
+   "base_flag": 331,
+   "only_mine": [],
+   "only_base": [],
+   "agree": true
+  },
+  "2020": {
+   "mine": 311,
+   "base_flag": 311,
+   "only_mine": [],
+   "only_base": [],
+   "agree": true
+  },
+  "2021": {
+   "mine": 281,
+   "base_flag": 281,
+   "only_mine": [],
+   "only_base": [],
+   "agree": true
+  },
+  "2022": {
+   "mine": 340,
+   "base_flag": 340,
+   "only_mine": [],
+   "only_base": [],
+   "agree": true
+  }
+ },
+ "reachability_recheck": {
+  "2013/all": {
+   "n": 944,
+   "n_impair": 49,
+   "reachable": true,
+   "why_not": null
+  },
+  "2013/qual": {
+   "n": 236,
+   "n_impair": 3,
+   "reachable": false,
+   "why_not": "毀損の実数 3 < 分子の下限 5"
+  },
+  "2016/all": {
+   "n": 956,
+   "n_impair": 57,
+   "reachable": true,
+   "why_not": null
+  },
+  "2016/qual": {
+   "n": 329,
+   "n_impair": 7,
+   "reachable": true,
+   "why_not": null
+  },
+  "2017/all": {
+   "n": 956,
+   "n_impair": 61,
+   "reachable": true,
+   "why_not": null
+  },
+  "2017/qual": {
+   "n": 327,
+   "n_impair": 4,
+   "reachable": false,
+   "why_not": "毀損の実数 4 < 分子の下限 5"
+  },
+  "2018/all": {
+   "n": 956,
+   "n_impair": 77,
+   "reachable": true,
+   "why_not": null
+  },
+  "2018/qual": {
+   "n": 340,
+   "n_impair": 10,
+   "reachable": true,
+   "why_not": null
+  },
+  "2019/all": {
+   "n": 956,
+   "n_impair": 68,
+   "reachable": true,
+   "why_not": null
+  },
+  "2019/qual": {
+   "n": 331,
+   "n_impair": 9,
+   "reachable": true,
+   "why_not": null
+  },
+  "2020/all": {
+   "n": 956,
+   "n_impair": 82,
+   "reachable": true,
+   "why_not": null
+  },
+  "2020/qual": {
+   "n": 311,
+   "n_impair": 13,
+   "reachable": true,
+   "why_not": null
+  },
+  "2021/all": {
+   "n": 956,
+   "n_impair": 144,
+   "reachable": true,
+   "why_not": null
+  },
+  "2021/qual": {
+   "n": 281,
+   "n_impair": 29,
+   "reachable": true,
+   "why_not": null
+  },
+  "2022/all": {
+   "n": 956,
+   "n_impair": 129,
+   "reachable": true,
+   "why_not": null
+  },
+  "2022/qual": {
+   "n": 340,
+   "n_impair": 27,
+   "reachable": true,
+   "why_not": null
+  }
+ },
+ "cells": [
+  {
+   "vintage": 2013,
+   "pool": "all",
+   "th": -0.02,
+   "n": 944,
+   "n_stop": 123,
+   "stop_rate": 0.1303,
+   "base_impair": 0.05191,
+   "impair_in_pool": 49,
+   "num": 4,
+   "p_stop": 0.03252,
+   "conc": 0.6265,
+   "med_stop": 0.0909,
+   "med_pass": 0.0788,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": false,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2013,
+   "pool": "all",
+   "th": -0.05,
+   "n": 944,
+   "n_stop": 65,
+   "stop_rate": 0.0689,
+   "base_impair": 0.05191,
+   "impair_in_pool": 49,
+   "num": 3,
+   "p_stop": 0.04615,
+   "conc": 0.8892,
+   "med_stop": 0.0816,
+   "med_pass": 0.0795,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": false,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2013,
+   "pool": "all",
+   "th": -0.1,
+   "n": 944,
+   "n_stop": 36,
+   "stop_rate": 0.0381,
+   "base_impair": 0.05191,
+   "impair_in_pool": 49,
+   "num": 2,
+   "p_stop": 0.05556,
+   "conc": 1.0703,
+   "med_stop": 0.08905,
+   "med_pass": 0.07955,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": false,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2013,
+   "pool": "qual",
+   "th": -0.02,
+   "n": 236,
+   "n_stop": 47,
+   "stop_rate": 0.1992,
+   "base_impair": 0.01271,
+   "impair_in_pool": 3,
+   "num": 1,
+   "p_stop": 0.02128,
+   "conc": 1.6738,
+   "med_stop": 0.0769,
+   "med_pass": 0.1023,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": false,
+   "verdict": "判定不能"
+  },
+  {
+   "vintage": 2013,
+   "pool": "qual",
+   "th": -0.05,
+   "n": 236,
+   "n_stop": 16,
+   "stop_rate": 0.0678,
+   "base_impair": 0.01271,
+   "impair_in_pool": 3,
+   "num": 1,
+   "p_stop": 0.0625,
+   "conc": 4.9167,
+   "med_stop": 0.0715,
+   "med_pass": 0.1004,
+   "ok_conc": true,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": false,
+   "verdict": "判定不能"
+  },
+  {
+   "vintage": 2013,
+   "pool": "qual",
+   "th": -0.1,
+   "n": 236,
+   "n_stop": 7,
+   "stop_rate": 0.0297,
+   "base_impair": 0.01271,
+   "impair_in_pool": 3,
+   "num": 0,
+   "p_stop": 0.0,
+   "conc": 0.0,
+   "med_stop": 0.0816,
+   "med_pass": 0.0975,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": false,
+   "verdict": "判定不能"
+  },
+  {
+   "vintage": 2016,
+   "pool": "all",
+   "th": -0.02,
+   "n": 956,
+   "n_stop": 325,
+   "stop_rate": 0.34,
+   "base_impair": 0.05962,
+   "impair_in_pool": 57,
+   "num": 23,
+   "p_stop": 0.07077,
+   "conc": 1.1869,
+   "med_stop": 0.0747,
+   "med_pass": 0.0867,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2016,
+   "pool": "all",
+   "th": -0.05,
+   "n": 956,
+   "n_stop": 229,
+   "stop_rate": 0.2395,
+   "base_impair": 0.05962,
+   "impair_in_pool": 57,
+   "num": 21,
+   "p_stop": 0.0917,
+   "conc": 1.538,
+   "med_stop": 0.0721,
+   "med_pass": 0.0867,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2016,
+   "pool": "all",
+   "th": -0.1,
+   "n": 956,
+   "n_stop": 143,
+   "stop_rate": 0.1496,
+   "base_impair": 0.05962,
+   "impair_in_pool": 57,
+   "num": 15,
+   "p_stop": 0.1049,
+   "conc": 1.7593,
+   "med_stop": 0.0542,
+   "med_pass": 0.087,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2016,
+   "pool": "qual",
+   "th": -0.02,
+   "n": 329,
+   "n_stop": 80,
+   "stop_rate": 0.2432,
+   "base_impair": 0.02128,
+   "impair_in_pool": 7,
+   "num": 3,
+   "p_stop": 0.0375,
+   "conc": 1.7625,
+   "med_stop": 0.07965,
+   "med_pass": 0.087,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2016,
+   "pool": "qual",
+   "th": -0.05,
+   "n": 329,
+   "n_stop": 48,
+   "stop_rate": 0.1459,
+   "base_impair": 0.02128,
+   "impair_in_pool": 7,
+   "num": 3,
+   "p_stop": 0.0625,
+   "conc": 2.9375,
+   "med_stop": 0.07285,
+   "med_pass": 0.0877,
+   "ok_conc": true,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2016,
+   "pool": "qual",
+   "th": -0.1,
+   "n": 329,
+   "n_stop": 21,
+   "stop_rate": 0.0638,
+   "base_impair": 0.02128,
+   "impair_in_pool": 7,
+   "num": 1,
+   "p_stop": 0.04762,
+   "conc": 2.2381,
+   "med_stop": 0.0467,
+   "med_pass": 0.0888,
+   "ok_conc": true,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2017,
+   "pool": "all",
+   "th": -0.02,
+   "n": 956,
+   "n_stop": 323,
+   "stop_rate": 0.3379,
+   "base_impair": 0.06381,
+   "impair_in_pool": 61,
+   "num": 35,
+   "p_stop": 0.10836,
+   "conc": 1.6982,
+   "med_stop": 0.0577,
+   "med_pass": 0.0815,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2017,
+   "pool": "all",
+   "th": -0.05,
+   "n": 956,
+   "n_stop": 213,
+   "stop_rate": 0.2228,
+   "base_impair": 0.06381,
+   "impair_in_pool": 61,
+   "num": 26,
+   "p_stop": 0.12207,
+   "conc": 1.913,
+   "med_stop": 0.0501,
+   "med_pass": 0.0807,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2017,
+   "pool": "all",
+   "th": -0.1,
+   "n": 956,
+   "n_stop": 129,
+   "stop_rate": 0.1349,
+   "base_impair": 0.06381,
+   "impair_in_pool": 61,
+   "num": 16,
+   "p_stop": 0.12403,
+   "conc": 1.9438,
+   "med_stop": 0.0422,
+   "med_pass": 0.0781,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2017,
+   "pool": "qual",
+   "th": -0.02,
+   "n": 327,
+   "n_stop": 79,
+   "stop_rate": 0.2416,
+   "base_impair": 0.01223,
+   "impair_in_pool": 4,
+   "num": 2,
+   "p_stop": 0.02532,
+   "conc": 2.0696,
+   "med_stop": 0.0798,
+   "med_pass": 0.08355,
+   "ok_conc": true,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": false,
+   "verdict": "判定不能"
+  },
+  {
+   "vintage": 2017,
+   "pool": "qual",
+   "th": -0.05,
+   "n": 327,
+   "n_stop": 41,
+   "stop_rate": 0.1254,
+   "base_impair": 0.01223,
+   "impair_in_pool": 4,
+   "num": 1,
+   "p_stop": 0.02439,
+   "conc": 1.9939,
+   "med_stop": 0.079,
+   "med_pass": 0.0837,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": false,
+   "verdict": "判定不能"
+  },
+  {
+   "vintage": 2017,
+   "pool": "qual",
+   "th": -0.1,
+   "n": 327,
+   "n_stop": 14,
+   "stop_rate": 0.0428,
+   "base_impair": 0.01223,
+   "impair_in_pool": 4,
+   "num": 1,
+   "p_stop": 0.07143,
+   "conc": 5.8393,
+   "med_stop": 0.02295,
+   "med_pass": 0.0838,
+   "ok_conc": true,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": false,
+   "verdict": "判定不能"
+  },
+  {
+   "vintage": 2018,
+   "pool": "all",
+   "th": -0.02,
+   "n": 956,
+   "n_stop": 292,
+   "stop_rate": 0.3054,
+   "base_impair": 0.08054,
+   "impair_in_pool": 77,
+   "num": 35,
+   "p_stop": 0.11986,
+   "conc": 1.4882,
+   "med_stop": 0.0366,
+   "med_pass": 0.0787,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2018,
+   "pool": "all",
+   "th": -0.05,
+   "n": 956,
+   "n_stop": 185,
+   "stop_rate": 0.1935,
+   "base_impair": 0.08054,
+   "impair_in_pool": 77,
+   "num": 28,
+   "p_stop": 0.15135,
+   "conc": 1.8791,
+   "med_stop": 0.0092,
+   "med_pass": 0.0778,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2018,
+   "pool": "all",
+   "th": -0.1,
+   "n": 956,
+   "n_stop": 110,
+   "stop_rate": 0.1151,
+   "base_impair": 0.08054,
+   "impair_in_pool": 77,
+   "num": 20,
+   "p_stop": 0.18182,
+   "conc": 2.2574,
+   "med_stop": -0.00365,
+   "med_pass": 0.07395,
+   "ok_conc": true,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": true,
+   "reachable": true,
+   "verdict": "合格"
+  },
+  {
+   "vintage": 2018,
+   "pool": "qual",
+   "th": -0.02,
+   "n": 340,
+   "n_stop": 76,
+   "stop_rate": 0.2235,
+   "base_impair": 0.02941,
+   "impair_in_pool": 10,
+   "num": 3,
+   "p_stop": 0.03947,
+   "conc": 1.3421,
+   "med_stop": 0.0582,
+   "med_pass": 0.0807,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2018,
+   "pool": "qual",
+   "th": -0.05,
+   "n": 340,
+   "n_stop": 31,
+   "stop_rate": 0.0912,
+   "base_impair": 0.02941,
+   "impair_in_pool": 10,
+   "num": 2,
+   "p_stop": 0.06452,
+   "conc": 2.1935,
+   "med_stop": 0.0482,
+   "med_pass": 0.0775,
+   "ok_conc": true,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2018,
+   "pool": "qual",
+   "th": -0.1,
+   "n": 340,
+   "n_stop": 12,
+   "stop_rate": 0.0353,
+   "base_impair": 0.02941,
+   "impair_in_pool": 10,
+   "num": 1,
+   "p_stop": 0.08333,
+   "conc": 2.8333,
+   "med_stop": -0.00835,
+   "med_pass": 0.07675,
+   "ok_conc": true,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2019,
+   "pool": "all",
+   "th": -0.02,
+   "n": 956,
+   "n_stop": 283,
+   "stop_rate": 0.296,
+   "base_impair": 0.07113,
+   "impair_in_pool": 68,
+   "num": 28,
+   "p_stop": 0.09894,
+   "conc": 1.391,
+   "med_stop": 0.036,
+   "med_pass": 0.08,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2019,
+   "pool": "all",
+   "th": -0.05,
+   "n": 956,
+   "n_stop": 187,
+   "stop_rate": 0.1956,
+   "base_impair": 0.07113,
+   "impair_in_pool": 68,
+   "num": 21,
+   "p_stop": 0.1123,
+   "conc": 1.5788,
+   "med_stop": 0.0239,
+   "med_pass": 0.0755,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2019,
+   "pool": "all",
+   "th": -0.1,
+   "n": 956,
+   "n_stop": 124,
+   "stop_rate": 0.1297,
+   "base_impair": 0.07113,
+   "impair_in_pool": 68,
+   "num": 15,
+   "p_stop": 0.12097,
+   "conc": 1.7007,
+   "med_stop": 0.04045,
+   "med_pass": 0.0707,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2019,
+   "pool": "qual",
+   "th": -0.02,
+   "n": 331,
+   "n_stop": 70,
+   "stop_rate": 0.2115,
+   "base_impair": 0.02719,
+   "impair_in_pool": 9,
+   "num": 2,
+   "p_stop": 0.02857,
+   "conc": 1.0508,
+   "med_stop": 0.065,
+   "med_pass": 0.0824,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2019,
+   "pool": "qual",
+   "th": -0.05,
+   "n": 331,
+   "n_stop": 39,
+   "stop_rate": 0.1178,
+   "base_impair": 0.02719,
+   "impair_in_pool": 9,
+   "num": 1,
+   "p_stop": 0.02564,
+   "conc": 0.943,
+   "med_stop": 0.0506,
+   "med_pass": 0.0825,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2019,
+   "pool": "qual",
+   "th": -0.1,
+   "n": 331,
+   "n_stop": 19,
+   "stop_rate": 0.0574,
+   "base_impair": 0.02719,
+   "impair_in_pool": 9,
+   "num": 1,
+   "p_stop": 0.05263,
+   "conc": 1.9357,
+   "med_stop": 0.0506,
+   "med_pass": 0.07975,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2020,
+   "pool": "all",
+   "th": -0.02,
+   "n": 956,
+   "n_stop": 285,
+   "stop_rate": 0.2981,
+   "base_impair": 0.08577,
+   "impair_in_pool": 82,
+   "num": 29,
+   "p_stop": 0.10175,
+   "conc": 1.1863,
+   "med_stop": 0.0656,
+   "med_pass": 0.1042,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2020,
+   "pool": "all",
+   "th": -0.05,
+   "n": 956,
+   "n_stop": 180,
+   "stop_rate": 0.1883,
+   "base_impair": 0.08577,
+   "impair_in_pool": 82,
+   "num": 20,
+   "p_stop": 0.11111,
+   "conc": 1.2954,
+   "med_stop": 0.0613,
+   "med_pass": 0.10105,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2020,
+   "pool": "all",
+   "th": -0.1,
+   "n": 956,
+   "n_stop": 103,
+   "stop_rate": 0.1077,
+   "base_impair": 0.08577,
+   "impair_in_pool": 82,
+   "num": 11,
+   "p_stop": 0.1068,
+   "conc": 1.2451,
+   "med_stop": 0.0916,
+   "med_pass": 0.0975,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2020,
+   "pool": "qual",
+   "th": -0.02,
+   "n": 311,
+   "n_stop": 72,
+   "stop_rate": 0.2315,
+   "base_impair": 0.0418,
+   "impair_in_pool": 13,
+   "num": 1,
+   "p_stop": 0.01389,
+   "conc": 0.3323,
+   "med_stop": 0.066,
+   "med_pass": 0.0995,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2020,
+   "pool": "qual",
+   "th": -0.05,
+   "n": 311,
+   "n_stop": 36,
+   "stop_rate": 0.1158,
+   "base_impair": 0.0418,
+   "impair_in_pool": 13,
+   "num": 0,
+   "p_stop": 0.0,
+   "conc": 0.0,
+   "med_stop": 0.1146,
+   "med_pass": 0.0873,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": false,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2020,
+   "pool": "qual",
+   "th": -0.1,
+   "n": 311,
+   "n_stop": 17,
+   "stop_rate": 0.0547,
+   "base_impair": 0.0418,
+   "impair_in_pool": 13,
+   "num": 0,
+   "p_stop": 0.0,
+   "conc": 0.0,
+   "med_stop": 0.1165,
+   "med_pass": 0.08665,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": false,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2021,
+   "pool": "all",
+   "th": -0.02,
+   "n": 956,
+   "n_stop": 349,
+   "stop_rate": 0.3651,
+   "base_impair": 0.15063,
+   "impair_in_pool": 144,
+   "num": 53,
+   "p_stop": 0.15186,
+   "conc": 1.0082,
+   "med_stop": 0.0136,
+   "med_pass": 0.0544,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2021,
+   "pool": "all",
+   "th": -0.05,
+   "n": 956,
+   "n_stop": 252,
+   "stop_rate": 0.2636,
+   "base_impair": 0.15063,
+   "impair_in_pool": 144,
+   "num": 45,
+   "p_stop": 0.17857,
+   "conc": 1.1855,
+   "med_stop": 0.002,
+   "med_pass": 0.05445,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2021,
+   "pool": "all",
+   "th": -0.1,
+   "n": 956,
+   "n_stop": 162,
+   "stop_rate": 0.1695,
+   "base_impair": 0.15063,
+   "impair_in_pool": 144,
+   "num": 33,
+   "p_stop": 0.2037,
+   "conc": 1.3524,
+   "med_stop": -0.0022,
+   "med_pass": 0.05025,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2021,
+   "pool": "qual",
+   "th": -0.02,
+   "n": 281,
+   "n_stop": 78,
+   "stop_rate": 0.2776,
+   "base_impair": 0.1032,
+   "impair_in_pool": 29,
+   "num": 5,
+   "p_stop": 0.0641,
+   "conc": 0.6211,
+   "med_stop": 0.0325,
+   "med_pass": 0.0531,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2021,
+   "pool": "qual",
+   "th": -0.05,
+   "n": 281,
+   "n_stop": 41,
+   "stop_rate": 0.1459,
+   "base_impair": 0.1032,
+   "impair_in_pool": 29,
+   "num": 4,
+   "p_stop": 0.09756,
+   "conc": 0.9453,
+   "med_stop": 0.0392,
+   "med_pass": 0.04615,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2021,
+   "pool": "qual",
+   "th": -0.1,
+   "n": 281,
+   "n_stop": 15,
+   "stop_rate": 0.0534,
+   "base_impair": 0.1032,
+   "impair_in_pool": 29,
+   "num": 1,
+   "p_stop": 0.06667,
+   "conc": 0.646,
+   "med_stop": 0.0864,
+   "med_pass": 0.0425,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": false,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2022,
+   "pool": "all",
+   "th": -0.02,
+   "n": 956,
+   "n_stop": 253,
+   "stop_rate": 0.2646,
+   "base_impair": 0.13494,
+   "impair_in_pool": 129,
+   "num": 41,
+   "p_stop": 0.16206,
+   "conc": 1.201,
+   "med_stop": 0.0368,
+   "med_pass": 0.0722,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2022,
+   "pool": "all",
+   "th": -0.05,
+   "n": 956,
+   "n_stop": 163,
+   "stop_rate": 0.1705,
+   "base_impair": 0.13494,
+   "impair_in_pool": 129,
+   "num": 32,
+   "p_stop": 0.19632,
+   "conc": 1.4549,
+   "med_stop": 0.0244,
+   "med_pass": 0.0696,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2022,
+   "pool": "all",
+   "th": -0.1,
+   "n": 956,
+   "n_stop": 104,
+   "stop_rate": 0.1088,
+   "base_impair": 0.13494,
+   "impair_in_pool": 129,
+   "num": 24,
+   "p_stop": 0.23077,
+   "conc": 1.7102,
+   "med_stop": -0.0049,
+   "med_pass": 0.06915,
+   "ok_conc": false,
+   "ok_num": true,
+   "ok_med": true,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2022,
+   "pool": "qual",
+   "th": -0.02,
+   "n": 340,
+   "n_stop": 63,
+   "stop_rate": 0.1853,
+   "base_impair": 0.07941,
+   "impair_in_pool": 27,
+   "num": 4,
+   "p_stop": 0.06349,
+   "conc": 0.7995,
+   "med_stop": 0.0739,
+   "med_pass": 0.0696,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": false,
+   "ok_rate": false,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2022,
+   "pool": "qual",
+   "th": -0.05,
+   "n": 340,
+   "n_stop": 31,
+   "stop_rate": 0.0912,
+   "base_impair": 0.07941,
+   "impair_in_pool": 27,
+   "num": 3,
+   "p_stop": 0.09677,
+   "conc": 1.2186,
+   "med_stop": 0.0841,
+   "med_pass": 0.0696,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": false,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  },
+  {
+   "vintage": 2022,
+   "pool": "qual",
+   "th": -0.1,
+   "n": 340,
+   "n_stop": 15,
+   "stop_rate": 0.0441,
+   "base_impair": 0.07941,
+   "impair_in_pool": 27,
+   "num": 2,
+   "p_stop": 0.13333,
+   "conc": 1.679,
+   "med_stop": 0.1187,
+   "med_pass": 0.0696,
+   "ok_conc": false,
+   "ok_num": false,
+   "ok_med": false,
+   "ok_rate": true,
+   "pass": false,
+   "reachable": true,
+   "verdict": "不合格"
+  }
+ ],
+ "independent_reconciliation": {
+  "n_compared": 48,
+  "mismatch": [],
+  "fields": [
+   "n",
+   "n_stop",
+   "num",
+   "impair_in_pool",
+   "conc",
+   "med_stop",
+   "med_pass",
+   "stop_rate",
+   "base_impair",
+   "p_stop",
+   "verdict"
+  ],
+  "agree": true,
+  "their_pass": [
+   "2018/all/-0.1"
+  ],
+  "my_pass": [
+   "2018/all/-0.1"
+  ],
+  "their_undecided": [
+   "2013/qual/-0.02",
+   "2013/qual/-0.05",
+   "2013/qual/-0.1",
+   "2017/qual/-0.02",
+   "2017/qual/-0.05",
+   "2017/qual/-0.1"
+  ],
+  "my_undecided": [
+   "2013/qual/-0.02",
+   "2013/qual/-0.05",
+   "2013/qual/-0.1",
+   "2017/qual/-0.02",
+   "2017/qual/-0.05",
+   "2017/qual/-0.1"
+  ]
+ },
+ "warnings": [],
+ "attack_pass_and_near": {
+  "2018/all/-0.1": {
+   "cell": "2018/all/-0.1",
+   "kind": "合格",
+   "raw": {
+    "n": 956,
+    "n_stop": 110,
+    "stop_rate": 0.1151,
+    "base_impair": 0.08054,
+    "num": 20,
+    "conc": 2.2574,
+    "med_stop": -0.00365,
+    "med_pass": 0.07395,
+    "pass": true
+   },
+   "attacks": {
+    "sic2_mh": {
+     "observed": 20.0,
+     "expected": 10.309,
+     "n_strata_used": 19,
+     "n_strata_skipped": 42,
+     "mh_conc": 1.9401
+    },
+    "drop_one_sic2": {
+     "n_sic2": 61,
+     "n_breaks": 1,
+     "breaks": [
+      {
+       "sic2": "28",
+       "n_dropped": 82,
+       "conc": 1.9726,
+       "num": 13,
+       "pass": false
+      }
+     ],
+     "conc_min": 1.9726,
+     "conc_max": 2.488
+    },
+    "numerator_by_sic2": [
+     [
+      "28",
+      7
+     ],
+     [
+      "73",
+      5
+     ],
+     [
+      "17",
+      1
+     ],
+     [
+      "26",
+      1
+     ],
+     [
+      "33",
+      1
+     ],
+     [
+      "35",
+      1
+     ],
+     [
+      "38",
+      1
+     ],
+     [
+      "44",
+      1
+     ],
+     [
+      "64",
+      1
+     ],
+     [
+      "78",
+      1
+     ]
+    ],
+    "rev_missing_n": 1,
+    "size_tertiles": [
+     {
+      "tertile": "小",
+      "n": 318,
+      "n_stop": 68,
+      "stop_rate": 0.2138,
+      "base_impair": 0.16981,
+      "num": 19,
+      "conc": 1.6454,
+      "med_stop": -0.02825,
+      "med_pass": 0.0384,
+      "pass": false,
+      "rev_median_musd": 300.4
+     },
+     {
+      "tertile": "中",
+      "n": 318,
+      "n_stop": 27,
+      "stop_rate": 0.0849,
+      "base_impair": 0.05346,
+      "num": 1,
+      "conc": 0.6928,
+      "med_stop": 0.0302,
+      "med_pass": 0.0706,
+      "pass": false,
+      "rev_median_musd": 2078.5
+     },
+     {
+      "tertile": "大",
+      "n": 319,
+      "n_stop": 15,
+      "stop_rate": 0.047,
+      "base_impair": 0.01567,
+      "num": 0,
+      "conc": 0.0,
+      "med_stop": -0.0168,
+      "med_pass": 0.09555,
+      "pass": false,
+      "rev_median_musd": 10561.0
+     }
+    ],
+    "size_mh": {
+     "observed": 20.0,
+     "expected": 13.226,
+     "n_strata_used": 3,
+     "n_strata_skipped": 0,
+     "mh_conc": 1.5122
+    },
+    "size_halves": {
+     "小": {
+      "n": 477,
+      "n_stop": 81,
+      "stop_rate": 0.1698,
+      "base_impair": 0.13836,
+      "num": 20,
+      "conc": 1.7845,
+      "med_stop": -0.0052,
+      "med_pass": 0.0403,
+      "pass": false
+     },
+     "大": {
+      "n": 478,
+      "n_stop": 29,
+      "stop_rate": 0.0607,
+      "base_impair": 0.02092,
+      "num": 0,
+      "conc": 0.0,
+      "med_stop": 0.0233,
+      "med_pass": 0.0948,
+      "pass": false
+     },
+     "cut_musd": 2090.0
+    },
+    "opm_missing_n": 55,
+    "opm_level": {
+     "opm<0（赤字）": {
+      "n": 131,
+      "n_stop": 67,
+      "stop_rate": 0.5115,
+      "base_impair": 0.22137,
+      "num": 15,
+      "conc": 1.0113,
+      "med_stop": -0.0081,
+      "med_pass": -0.0275,
+      "pass": false
+     },
+     "opm>=0（黒字）": {
+      "n": 770,
+      "n_stop": 43,
+      "stop_rate": 0.0558,
+      "base_impair": 0.05844,
+      "num": 5,
+      "conc": 1.9897,
+      "med_stop": -0.0004,
+      "med_pass": 0.0768,
+      "pass": false
+     },
+     "opm>=5": {
+      "n": 630,
+      "n_stop": 29,
+      "stop_rate": 0.046,
+      "base_impair": 0.05397,
+      "num": 3,
+      "conc": 1.9168,
+      "med_stop": -0.0168,
+      "med_pass": 0.0722,
+      "pass": false
+     },
+     "opm>=10": {
+      "n": 440,
+      "n_stop": 19,
+      "stop_rate": 0.0432,
+      "base_impair": 0.03636,
+      "num": 1,
+      "conc": 1.4474,
+      "med_stop": -0.0004,
+      "med_pass": 0.0767,
+      "pass": false
+     }
+    },
+    "opm_mh_tertile": {
+     "observed": 20.0,
+     "expected": 13.293,
+     "n_strata_used": 3,
+     "n_strata_skipped": 0,
+     "mh_conc": 1.5046
+    },
+    "mh_size_x_opm_3x3": {
+     "observed": 20.0,
+     "expected": 16.644,
+     "n_strata_used": 8,
+     "n_strata_skipped": 1,
+     "mh_conc": 1.2017
+    },
+    "opmD5_magnitude": {
+     "常識帯 -1.0<opmD5<th": {
+      "n_stop": 95,
+      "stop_rate": 0.0994,
+      "num": 16,
+      "conc": 2.091,
+      "med_stop": -0.0021,
+      "med_pass": 0.0722
+     },
+     "極端 opmD5<=-1.0": {
+      "n_stop": 15,
+      "stop_rate": 0.0157,
+      "num": 4,
+      "conc": 3.3108,
+      "med_stop": -0.0555,
+      "med_pass": 0.0686
+     }
+    },
+    "drop_one_company": {
+     "n_tried": 956,
+     "n_breaks": 0,
+     "breaks": [],
+     "conc_min": 2.1904,
+     "conc_max": 2.2847,
+     "note": "プールから丸ごと抜く＝分子・分母・止めた群が同時に動く（毀損社だけを抜く退化した形ではない）"
+    },
+    "window_length": {
+     "modal_years": 8.09,
+     "n_short": 4,
+     "short_in_stop": 0,
+     "short_impaired_in_stop": 0,
+     "full_only": {
+      "n": 952,
+      "n_stop": 110,
+      "stop_rate": 0.1155,
+      "base_impair": 0.08088,
+      "num": 20,
+      "conc": 2.2479,
+      "med_stop": -0.00365,
+      "med_pass": 0.0735,
+      "pass": true
+     }
+    },
+    "measured_only": {
+     "n": 878,
+     "n_stop": 110,
+     "stop_rate": 0.1253,
+     "base_impair": 0.082,
+     "num": 20,
+     "conc": 2.2172,
+     "med_stop": -0.00365,
+     "med_pass": 0.0723,
+     "pass": true
+    },
+    "bootstrap": {
+     "B": 2000,
+     "conc_median": 2.233,
+     "ci90": [
+      1.6228,
+      2.9102
+     ],
+     "ci95": [
+      1.5049,
+      3.0803
+     ],
+     "p_conc_below_2": 0.271,
+     "p_all4_pass": 0.729
+    }
+   }
+  },
+  "2017/all/-0.05": {
+   "cell": "2017/all/-0.05",
+   "kind": "線に近い不合格",
+   "raw": {
+    "n": 956,
+    "n_stop": 213,
+    "stop_rate": 0.2228,
+    "base_impair": 0.06381,
+    "num": 26,
+    "conc": 1.913,
+    "med_stop": 0.0501,
+    "med_pass": 0.0807,
+    "pass": false
+   },
+   "attacks": {
+    "sic2_mh": {
+     "observed": 26.0,
+     "expected": 16.053,
+     "n_strata_used": 20,
+     "n_strata_skipped": 41,
+     "mh_conc": 1.6197
+    },
+    "drop_one_sic2": {
+     "n_sic2": 61,
+     "n_breaks": 61,
+     "breaks": [
+      {
+       "sic2": "28",
+       "n_dropped": 82,
+       "conc": 1.7751,
+       "num": 17,
+       "pass": false
+      },
+      {
+       "sic2": "36",
+       "n_dropped": 73,
+       "conc": 1.8224,
+       "num": 23,
+       "pass": false
+      },
+      {
+       "sic2": "20",
+       "n_dropped": 28,
+       "conc": 1.8325,
+       "num": 25,
+       "pass": false
+      },
+      {
+       "sic2": "38",
+       "n_dropped": 64,
+       "conc": 1.8642,
+       "num": 24,
+       "pass": false
+      },
+      {
+       "sic2": "51",
+       "n_dropped": 11,
+       "conc": 1.8661,
+       "num": 25,
+       "pass": false
+      },
+      {
+       "sic2": "17",
+       "n_dropped": 5,
+       "conc": 1.8691,
+       "num": 25,
+       "pass": false
+      },
+      {
+       "sic2": "64",
+       "n_dropped": 5,
+       "conc": 1.8691,
+       "num": 25,
+       "pass": false
+      },
+      {
+       "sic2": "37",
+       "n_dropped": 33,
+       "conc": 1.8734,
+       "num": 26,
+       "pass": false
+      }
+     ],
+     "conc_min": 1.7751,
+     "conc_max": 2.0485
+    },
+    "numerator_by_sic2": [
+     [
+      "28",
+      9
+     ],
+     [
+      "73",
+      5
+     ],
+     [
+      "36",
+      3
+     ],
+     [
+      "38",
+      2
+     ],
+     [
+      "17",
+      1
+     ],
+     [
+      "20",
+      1
+     ],
+     [
+      "51",
+      1
+     ],
+     [
+      "61",
+      1
+     ],
+     [
+      "64",
+      1
+     ],
+     [
+      "67",
+      1
+     ],
+     [
+      "78",
+      1
+     ]
+    ],
+    "rev_missing_n": 0,
+    "size_tertiles": [
+     {
+      "tertile": "小",
+      "n": 318,
+      "n_stop": 106,
+      "stop_rate": 0.3333,
+      "base_impair": 0.13836,
+      "num": 22,
+      "conc": 1.5,
+      "med_stop": 0.02555,
+      "med_pass": 0.05445,
+      "pass": false,
+      "rev_median_musd": 267.6
+     },
+     {
+      "tertile": "中",
+      "n": 319,
+      "n_stop": 61,
+      "stop_rate": 0.1912,
+      "base_impair": 0.04389,
+      "num": 4,
+      "conc": 1.4941,
+      "med_stop": 0.0805,
+      "med_pass": 0.0813,
+      "pass": false,
+      "rev_median_musd": 1849.8
+     },
+     {
+      "tertile": "大",
+      "n": 319,
+      "n_stop": 46,
+      "stop_rate": 0.1442,
+      "base_impair": 0.0094,
+      "num": 0,
+      "conc": 0.0,
+      "med_stop": 0.07745,
+      "med_pass": 0.0959,
+      "pass": false,
+      "rev_median_musd": 10161.2
+     }
+    ],
+    "size_mh": {
+     "observed": 26.0,
+     "expected": 17.776,
+     "n_strata_used": 3,
+     "n_strata_skipped": 0,
+     "mh_conc": 1.4626
+    },
+    "size_halves": {
+     "小": {
+      "n": 478,
+      "n_stop": 143,
+      "stop_rate": 0.2992,
+      "base_impair": 0.11297,
+      "num": 23,
+      "conc": 1.4237,
+      "med_stop": 0.0313,
+      "med_pass": 0.0575,
+      "pass": false
+     },
+     "大": {
+      "n": 478,
+      "n_stop": 70,
+      "stop_rate": 0.1464,
+      "base_impair": 0.01464,
+      "num": 3,
+      "conc": 2.9265,
+      "med_stop": 0.0865,
+      "med_pass": 0.09555,
+      "pass": false
+     },
+     "cut_musd": 1868.0
+    },
+    "opm_missing_n": 56,
+    "opm_level": {
+     "opm<0（赤字）": {
+      "n": 149,
+      "n_stop": 106,
+      "stop_rate": 0.7114,
+      "base_impair": 0.18792,
+      "num": 18,
+      "conc": 0.9036,
+      "med_stop": 0.0421,
+      "med_pass": 0.0002,
+      "pass": false
+     },
+     "opm>=0（黒字）": {
+      "n": 751,
+      "n_stop": 107,
+      "stop_rate": 0.1425,
+      "base_impair": 0.04261,
+      "num": 8,
+      "conc": 1.7547,
+      "med_stop": 0.0606,
+      "med_pass": 0.08145,
+      "pass": false
+     },
+     "opm>=5": {
+      "n": 602,
+      "n_stop": 76,
+      "stop_rate": 0.1262,
+      "base_impair": 0.03821,
+      "num": 7,
+      "conc": 2.4108,
+      "med_stop": 0.0368,
+      "med_pass": 0.0741,
+      "pass": true
+     },
+     "opm>=10": {
+      "n": 428,
+      "n_stop": 56,
+      "stop_rate": 0.1308,
+      "base_impair": 0.03271,
+      "num": 4,
+      "conc": 2.1837,
+      "med_stop": 0.05245,
+      "med_pass": 0.0746,
+      "pass": false
+     }
+    },
+    "opm_mh_tertile": {
+     "observed": 26.0,
+     "expected": 19.93,
+     "n_strata_used": 3,
+     "n_strata_skipped": 0,
+     "mh_conc": 1.3046
+    },
+    "mh_size_x_opm_3x3": {
+     "observed": 26.0,
+     "expected": 22.592,
+     "n_strata_used": 8,
+     "n_strata_skipped": 1,
+     "mh_conc": 1.1508
+    },
+    "opmD5_magnitude": {
+     "常識帯 -1.0<opmD5<th": {
+      "n_stop": 193,
+      "stop_rate": 0.2019,
+      "num": 20,
+      "conc": 1.6241,
+      "med_stop": 0.0573,
+      "med_pass": 0.0783
+     },
+     "極端 opmD5<=-1.0": {
+      "n_stop": 20,
+      "stop_rate": 0.0209,
+      "num": 6,
+      "conc": 4.7016,
+      "med_stop": -0.0068,
+      "med_pass": 0.07525
+     }
+    },
+    "drop_one_company": {
+     "n_tried": 956,
+     "n_breaks": 956,
+     "breaks": [
+      [
+       "AIM",
+       1.877,
+       25,
+       false
+      ],
+      [
+       "ASPS",
+       1.877,
+       25,
+       false
+      ],
+      [
+       "AVD",
+       1.877,
+       25,
+       false
+      ],
+      [
+       "CMTL",
+       1.877,
+       25,
+       false
+      ],
+      [
+       "CRIS",
+       1.877,
+       25,
+       false
+      ],
+      [
+       "EFOI",
+       1.877,
+       25,
+       false
+      ],
+      [
+       "EHTH",
+       1.877,
+       25,
+       false
+      ],
+      [
+       "FMC",
+       1.877,
+       25,
+       false
+      ]
+     ],
+     "conc_min": 1.877,
+     "conc_max": 1.9429,
+     "note": "プールから丸ごと抜く＝分子・分母・止めた群が同時に動く（毀損社だけを抜く退化した形ではない）"
+    },
+    "window_length": {
+     "modal_years": 9.09,
+     "n_short": 5,
+     "short_in_stop": 4,
+     "short_impaired_in_stop": 0,
+     "full_only": {
+      "n": 951,
+      "n_stop": 209,
+      "stop_rate": 0.2198,
+      "base_impair": 0.06309,
+      "num": 26,
+      "conc": 1.9718,
+      "med_stop": 0.0501,
+      "med_pass": 0.08105,
+      "pass": false
+     }
+    },
+    "measured_only": {
+     "n": 874,
+     "n_stop": 213,
+     "stop_rate": 0.2437,
+     "base_impair": 0.06865,
+     "num": 26,
+     "conc": 1.7781,
+     "med_stop": 0.0501,
+     "med_pass": 0.0792,
+     "pass": false
+    },
+    "bootstrap": {
+     "B": 2000,
+     "conc_median": 1.9056,
+     "ci90": [
+      1.44,
+      2.3792
+     ],
+     "ci95": [
+      1.3676,
+      2.4867
+     ],
+     "p_conc_below_2": 0.6265,
+     "p_all4_pass": 0.0
+    }
+   }
+  },
+  "2017/all/-0.1": {
+   "cell": "2017/all/-0.1",
+   "kind": "線に近い不合格",
+   "raw": {
+    "n": 956,
+    "n_stop": 129,
+    "stop_rate": 0.1349,
+    "base_impair": 0.06381,
+    "num": 16,
+    "conc": 1.9438,
+    "med_stop": 0.0422,
+    "med_pass": 0.0781,
+    "pass": false
+   },
+   "attacks": {
+    "sic2_mh": {
+     "observed": 16.0,
+     "expected": 10.254,
+     "n_strata_used": 14,
+     "n_strata_skipped": 47,
+     "mh_conc": 1.5604
+    },
+    "drop_one_sic2": {
+     "n_sic2": 61,
+     "n_breaks": 56,
+     "breaks": [
+      {
+       "sic2": "36",
+       "n_dropped": 73,
+       "conc": 1.7225,
+       "num": 13,
+       "pass": false
+      },
+      {
+       "sic2": "28",
+       "n_dropped": 82,
+       "conc": 1.7497,
+       "num": 10,
+       "pass": false
+      },
+      {
+       "sic2": "64",
+       "n_dropped": 5,
+       "conc": 1.8574,
+       "num": 15,
+       "pass": false
+      },
+      {
+       "sic2": "78",
+       "n_dropped": 4,
+       "conc": 1.8909,
+       "num": 15,
+       "pass": false
+      },
+      {
+       "sic2": "37",
+       "n_dropped": 33,
+       "conc": 1.8914,
+       "num": 16,
+       "pass": false
+      },
+      {
+       "sic2": "38",
+       "n_dropped": 64,
+       "conc": 1.9065,
+       "num": 15,
+       "pass": false
+      },
+      {
+       "sic2": "49",
+       "n_dropped": 40,
+       "conc": 1.9068,
+       "num": 16,
+       "pass": false
+      },
+      {
+       "sic2": "87",
+       "n_dropped": 16,
+       "conc": 1.9113,
+       "num": 16,
+       "pass": false
+      }
+     ],
+     "conc_min": 1.7225,
+     "conc_max": 2.1704
+    },
+    "numerator_by_sic2": [
+     [
+      "28",
+      6
+     ],
+     [
+      "73",
+      4
+     ],
+     [
+      "36",
+      3
+     ],
+     [
+      "38",
+      1
+     ],
+     [
+      "64",
+      1
+     ],
+     [
+      "78",
+      1
+     ]
+    ],
+    "rev_missing_n": 0,
+    "size_tertiles": [
+     {
+      "tertile": "小",
+      "n": 318,
+      "n_stop": 72,
+      "stop_rate": 0.2264,
+      "base_impair": 0.13836,
+      "num": 15,
+      "conc": 1.5057,
+      "med_stop": 0.01195,
+      "med_pass": 0.05175,
+      "pass": false,
+      "rev_median_musd": 267.6
+     },
+     {
+      "tertile": "中",
+      "n": 319,
+      "n_stop": 37,
+      "stop_rate": 0.116,
+      "base_impair": 0.04389,
+      "num": 1,
+      "conc": 0.6158,
+      "med_stop": 0.0629,
+      "med_pass": 0.0828,
+      "pass": false,
+      "rev_median_musd": 1849.8
+     },
+     {
+      "tertile": "大",
+      "n": 319,
+      "n_stop": 20,
+      "stop_rate": 0.0627,
+      "base_impair": 0.0094,
+      "num": 0,
+      "conc": 0.0,
+      "med_stop": 0.0967,
+      "med_pass": 0.0949,
+      "pass": false,
+      "rev_median_musd": 10161.2
+     }
+    ],
+    "size_mh": {
+     "observed": 16.0,
+     "expected": 11.774,
+     "n_strata_used": 3,
+     "n_strata_skipped": 0,
+     "mh_conc": 1.3589
+    },
+    "size_halves": {
+     "小": {
+      "n": 478,
+      "n_stop": 95,
+      "stop_rate": 0.1987,
+      "base_impair": 0.11297,
+      "num": 16,
+      "conc": 1.4908,
+      "med_stop": 0.0097,
+      "med_pass": 0.055,
+      "pass": false
+     },
+     "大": {
+      "n": 478,
+      "n_stop": 34,
+      "stop_rate": 0.0711,
+      "base_impair": 0.01464,
+      "num": 0,
+      "conc": 0.0,
+      "med_stop": 0.09735,
+      "med_pass": 0.0944,
+      "pass": false
+     },
+     "cut_musd": 1868.0
+    },
+    "opm_missing_n": 56,
+    "opm_level": {
+     "opm<0（赤字）": {
+      "n": 149,
+      "n_stop": 84,
+      "stop_rate": 0.5638,
+      "base_impair": 0.18792,
+      "num": 13,
+      "conc": 0.8236,
+      "med_stop": 0.0333,
+      "med_pass": 0.0157,
+      "pass": false
+     },
+     "opm>=0（黒字）": {
+      "n": 751,
+      "n_stop": 45,
+      "stop_rate": 0.0599,
+      "base_impair": 0.04261,
+      "num": 3,
+      "conc": 1.5646,
+      "med_stop": 0.072,
+      "med_pass": 0.0791,
+      "pass": false
+     },
+     "opm>=5": {
+      "n": 602,
+      "n_stop": 28,
+      "stop_rate": 0.0465,
+      "base_impair": 0.03821,
+      "num": 3,
+      "conc": 2.8043,
+      "med_stop": -0.0029,
+      "med_pass": 0.0727,
+      "pass": false
+     },
+     "opm>=10": {
+      "n": 428,
+      "n_stop": 19,
+      "stop_rate": 0.0444,
+      "base_impair": 0.03271,
+      "num": 2,
+      "conc": 3.218,
+      "med_stop": 0.0133,
+      "med_pass": 0.0739,
+      "pass": false
+     }
+    },
+    "opm_mh_tertile": {
+     "observed": 16.0,
+     "expected": 13.56,
+     "n_strata_used": 3,
+     "n_strata_skipped": 0,
+     "mh_conc": 1.1799
+    },
+    "mh_size_x_opm_3x3": {
+     "observed": 16.0,
+     "expected": 15.896,
+     "n_strata_used": 8,
+     "n_strata_skipped": 1,
+     "mh_conc": 1.0066
+    },
+    "opmD5_magnitude": {
+     "常識帯 -1.0<opmD5<th": {
+      "n_stop": 109,
+      "stop_rate": 0.114,
+      "num": 10,
+      "conc": 1.4378,
+      "med_stop": 0.0573,
+      "med_pass": 0.0768
+     },
+     "極端 opmD5<=-1.0": {
+      "n_stop": 20,
+      "stop_rate": 0.0209,
+      "num": 6,
+      "conc": 4.7016,
+      "med_stop": -0.0068,
+      "med_pass": 0.07525
+     }
+    },
+    "drop_one_company": {
+     "n_tried": 956,
+     "n_breaks": 956,
+     "breaks": [
+      [
+       "AIM",
+       1.8652,
+       15,
+       false
+      ],
+      [
+       "ASPS",
+       1.8652,
+       15,
+       false
+      ],
+      [
+       "CMTL",
+       1.8652,
+       15,
+       false
+      ],
+      [
+       "CRIS",
+       1.8652,
+       15,
+       false
+      ],
+      [
+       "EFOI",
+       1.8652,
+       15,
+       false
+      ],
+      [
+       "EHTH",
+       1.8652,
+       15,
+       false
+      ],
+      [
+       "GAIA",
+       1.8652,
+       15,
+       false
+      ],
+      [
+       "HHS",
+       1.8652,
+       15,
+       false
+      ]
+     ],
+     "conc_min": 1.8652,
+     "conc_max": 1.9742,
+     "note": "プールから丸ごと抜く＝分子・分母・止めた群が同時に動く（毀損社だけを抜く退化した形ではない）"
+    },
+    "window_length": {
+     "modal_years": 9.09,
+     "n_short": 5,
+     "short_in_stop": 3,
+     "short_impaired_in_stop": 0,
+     "full_only": {
+      "n": 951,
+      "n_stop": 126,
+      "stop_rate": 0.1325,
+      "base_impair": 0.06309,
+      "num": 16,
+      "conc": 2.0127,
+      "med_stop": 0.0421,
+      "med_pass": 0.0781,
+      "pass": true
+     }
+    },
+    "measured_only": {
+     "n": 874,
+     "n_stop": 129,
+     "stop_rate": 0.1476,
+     "base_impair": 0.06865,
+     "num": 16,
+     "conc": 1.8067,
+     "med_stop": 0.0422,
+     "med_pass": 0.0768,
+     "pass": false
+    },
+    "bootstrap": {
+     "B": 2000,
+     "conc_median": 1.925,
+     "ci90": [
+      1.2609,
+      2.5908
+     ],
+     "ci95": [
+      1.1673,
+      2.7171
+     ],
+     "p_conc_below_2": 0.582,
+     "p_all4_pass": 0.3845
+    }
+   }
+  }
+ },
+ "pass_cells": [
+  "2018/all/-0.1"
+ ],
+ "near_cells": [
+  "2017/all/-0.05",
+  "2017/all/-0.1"
+ ],
+ "permutation_family": {
+  "perm_n": 2000,
+  "seed": 20260818,
+  "family_size": 42,
+  "observed_pass": 1,
+  "observed_pass_cells": [
+   "2018/all/-0.1"
+  ],
+  "p_family_at_least_1": 0.2175,
+  "p_family_at_least_2": 0.0625,
+  "mean_pass_under_null": 0.3085,
+  "max_pass_under_null": 5,
+  "note": "会社単位・全ビンテージ同時に結果だけを入れ替える。ビンテージ内で独立に混ぜると従属が壊れ偽陽性率を大きく過小評価する（既記録）"
+ },
+ "permutation_cell": {
+  "2018/all/-0.1": {
+   "B": 2000,
+   "observed_conc": 2.2574,
+   "p_cell": 0.0,
+   "note": "結果ラベルをプール内で並べ替え（1セル単独＝多重検定の値札を掛ける前）"
+  }
+ },
+ "pooled_controlled": {
+  "all/-0.02": {
+   "vintage_stratified_conc": 1.2328,
+   "obs": 248.0,
+   "exp": 201.17,
+   "size_x_opm_controlled_conc": 0.9781,
+   "mh_obs": 248.0,
+   "mh_exp": 253.56,
+   "n_strata": 68,
+   "stop_rate_total": 0.2924
+  },
+  "qual/-0.02": {
+   "vintage_stratified_conc": 0.8949,
+   "obs": 21.0,
+   "exp": 23.47,
+   "size_x_opm_controlled_conc": 0.8066,
+   "mh_obs": 21.0,
+   "mh_exp": 26.04,
+   "n_strata": 40,
+   "stop_rate_total": 0.2265
+  },
+  "all/-0.05": {
+   "vintage_stratified_conc": 1.4604,
+   "obs": 196.0,
+   "exp": 134.21,
+   "size_x_opm_controlled_conc": 1.0196,
+   "mh_obs": 196.0,
+   "mh_exp": 192.23,
+   "n_strata": 68,
+   "stop_rate_total": 0.193
+  },
+  "qual/-0.05": {
+   "vintage_stratified_conc": 1.2609,
+   "obs": 15.0,
+   "exp": 11.9,
+   "size_x_opm_controlled_conc": 1.0805,
+   "mh_obs": 15.0,
+   "mh_exp": 13.88,
+   "n_strata": 40,
+   "stop_rate_total": 0.1134
+  },
+  "all/-0.1": {
+   "vintage_stratified_conc": 1.6273,
+   "obs": 136.0,
+   "exp": 83.58,
+   "size_x_opm_controlled_conc": 1.0132,
+   "mh_obs": 136.0,
+   "mh_exp": 134.23,
+   "n_strata": 68,
+   "stop_rate_total": 0.1193
+  },
+  "qual/-0.1": {
+   "vintage_stratified_conc": 1.3926,
+   "obs": 7.0,
+   "exp": 5.03,
+   "size_x_opm_controlled_conc": 1.1622,
+   "mh_obs": 7.0,
+   "mh_exp": 6.02,
+   "n_strata": 38,
+   "stop_rate_total": 0.0481
+  }
+ },
+ "numerator_overlap": {
+  "per_vintage_num": {
+   "2013": [
+    "BHC",
+    "TDW"
+   ],
+   "2016": [
+    "AIM",
+    "ASPS",
+    "CRIS",
+    "EHTH",
+    "GEVO",
+    "HHS",
+    "LPSN",
+    "MBOT",
+    "MYGN",
+    "PRPO",
+    "PRSO",
+    "SDEV",
+    "SLNH",
+    "SUNE",
+    "YDKG"
+   ],
+   "2017": [
+    "AIM",
+    "ASPS",
+    "CMTL",
+    "CRIS",
+    "EFOI",
+    "EHTH",
+    "GAIA",
+    "HHS",
+    "LPSN",
+    "MYGN",
+    "PRPO",
+    "PRSO",
+    "SGMOQ",
+    "VERU",
+    "VXRT",
+    "YDKG"
+   ],
+   "2018": [
+    "ASPS",
+    "BOOM",
+    "CREX",
+    "CRIS",
+    "EHTH",
+    "GAIA",
+    "GURE",
+    "HHS",
+    "INO",
+    "ITP",
+    "MYGN",
+    "OIS",
+    "PRPO",
+    "SCOR",
+    "SGMOQ",
+    "SUNE",
+    "TOPS",
+    "VERU",
+    "VXRT",
+    "YDKG"
+   ],
+   "2019": [
+    "ASPS",
+    "BBBY",
+    "BHC",
+    "CRIS",
+    "EFOI",
+    "GURE",
+    "ITP",
+    "MYGN",
+    "SCOR",
+    "SGMOQ",
+    "SUNE",
+    "UAA",
+    "VERU",
+    "XRAY",
+    "YDKG"
+   ],
+   "2020": [
+    "EBS",
+    "EFOI",
+    "GURE",
+    "INO",
+    "ITP",
+    "LPSN",
+    "MYGN",
+    "SCOR",
+    "VERU",
+    "VXRT",
+    "YDKG"
+   ],
+   "2021": [
+    "AHT",
+    "ASPS",
+    "EL",
+    "GEVO",
+    "GURE",
+    "INO",
+    "IPGP",
+    "ITP",
+    "JBLU",
+    "LCTX",
+    "LPSN",
+    "MLCO",
+    "MYGN",
+    "OSUR",
+    "PAR",
+    "PLCE",
+    "PXLW",
+    "RDI",
+    "RGS",
+    "RICK",
+    "RRGB",
+    "SCKT",
+    "TACT",
+    "TCX",
+    "TOPS",
+    "TRIP",
+    "TROO",
+    "TULP",
+    "UAA",
+    "UONE",
+    "VERU",
+    "VXRT",
+    "XRAY"
+   ],
+   "2022": [
+    "AHT",
+    "AIM",
+    "CMTL",
+    "EHTH",
+    "FISV",
+    "GEVO",
+    "GTN",
+    "INO",
+    "KRO",
+    "LPSN",
+    "MYGN",
+    "OFIX",
+    "PAR",
+    "PRSO",
+    "PXLW",
+    "RDI",
+    "SAM",
+    "SDEV",
+    "SGMOQ",
+    "SMSI",
+    "SUNE",
+    "TCX",
+    "TULP",
+    "VXRT"
+   ]
+  },
+  "pairwise": {
+   "2013x2016": {
+    "A": 2,
+    "B": 15,
+    "shared": 0,
+    "jaccard": 0.0
+   },
+   "2013x2017": {
+    "A": 2,
+    "B": 16,
+    "shared": 0,
+    "jaccard": 0.0
+   },
+   "2013x2018": {
+    "A": 2,
+    "B": 20,
+    "shared": 0,
+    "jaccard": 0.0
+   },
+   "2013x2019": {
+    "A": 2,
+    "B": 15,
+    "shared": 1,
+    "jaccard": 0.062
+   },
+   "2013x2020": {
+    "A": 2,
+    "B": 11,
+    "shared": 0,
+    "jaccard": 0.0
+   },
+   "2013x2021": {
+    "A": 2,
+    "B": 33,
+    "shared": 0,
+    "jaccard": 0.0
+   },
+   "2013x2022": {
+    "A": 2,
+    "B": 24,
+    "shared": 0,
+    "jaccard": 0.0
+   },
+   "2016x2017": {
+    "A": 15,
+    "B": 16,
+    "shared": 10,
+    "jaccard": 0.476
+   },
+   "2016x2018": {
+    "A": 15,
+    "B": 20,
+    "shared": 8,
+    "jaccard": 0.296
+   },
+   "2016x2019": {
+    "A": 15,
+    "B": 15,
+    "shared": 5,
+    "jaccard": 0.2
+   },
+   "2016x2020": {
+    "A": 15,
+    "B": 11,
+    "shared": 3,
+    "jaccard": 0.13
+   },
+   "2016x2021": {
+    "A": 15,
+    "B": 33,
+    "shared": 4,
+    "jaccard": 0.091
+   },
+   "2016x2022": {
+    "A": 15,
+    "B": 24,
+    "shared": 8,
+    "jaccard": 0.258
+   },
+   "2017x2018": {
+    "A": 16,
+    "B": 20,
+    "shared": 11,
+    "jaccard": 0.44
+   },
+   "2017x2019": {
+    "A": 16,
+    "B": 15,
+    "shared": 7,
+    "jaccard": 0.292
+   },
+   "2017x2020": {
+    "A": 16,
+    "B": 11,
+    "shared": 6,
+    "jaccard": 0.286
+   },
+   "2017x2021": {
+    "A": 16,
+    "B": 33,
+    "shared": 5,
+    "jaccard": 0.114
+   },
+   "2017x2022": {
+    "A": 16,
+    "B": 24,
+    "shared": 8,
+    "jaccard": 0.25
+   },
+   "2018x2019": {
+    "A": 20,
+    "B": 15,
+    "shared": 10,
+    "jaccard": 0.4
+   },
+   "2018x2020": {
+    "A": 20,
+    "B": 11,
+    "shared": 8,
+    "jaccard": 0.348
+   },
+   "2018x2021": {
+    "A": 20,
+    "B": 33,
+    "shared": 8,
+    "jaccard": 0.178
+   },
+   "2018x2022": {
+    "A": 20,
+    "B": 24,
+    "shared": 6,
+    "jaccard": 0.158
+   },
+   "2019x2020": {
+    "A": 15,
+    "B": 11,
+    "shared": 7,
+    "jaccard": 0.368
+   },
+   "2019x2021": {
+    "A": 15,
+    "B": 33,
+    "shared": 7,
+    "jaccard": 0.171
+   },
+   "2019x2022": {
+    "A": 15,
+    "B": 24,
+    "shared": 3,
+    "jaccard": 0.083
+   },
+   "2020x2021": {
+    "A": 11,
+    "B": 33,
+    "shared": 7,
+    "jaccard": 0.189
+   },
+   "2020x2022": {
+    "A": 11,
+    "B": 24,
+    "shared": 4,
+    "jaccard": 0.129
+   },
+   "2021x2022": {
+    "A": 33,
+    "B": 24,
+    "shared": 11,
+    "jaccard": 0.239
+   }
+  },
+  "companies_appearing_in_multiple_vintages": [
+   "MYGN",
+   "ASPS",
+   "LPSN",
+   "VERU",
+   "VXRT",
+   "YDKG",
+   "CRIS",
+   "EHTH",
+   "GURE",
+   "INO",
+   "ITP",
+   "SGMOQ",
+   "SUNE",
+   "AIM",
+   "EFOI",
+   "GEVO",
+   "HHS",
+   "PRPO",
+   "PRSO",
+   "SCOR",
+   "AHT",
+   "BHC",
+   "CMTL",
+   "GAIA",
+   "PAR",
+   "PXLW",
+   "RDI",
+   "SDEV",
+   "TCX",
+   "TOPS",
+   "TULP",
+   "UAA",
+   "XRAY"
+  ],
+  "n_unique_companies": 62,
+  "n_person_vintage": 136,
+  "note": "同じ社が複数ビンテージで数えられる＝8ビンテージは独立な8つの証拠ではない"
+ },
+ "lookahead_check": {
+  "2013": {
+   "features_deadline": "2013-07-01",
+   "returns_start": "2013-07-01",
+   "ok": true,
+   "note": "features は filed<=deadline で切ってある（ファイルの note に明記）"
+  },
+  "2016": {
+   "features_deadline": "2016-07-01",
+   "returns_start": "2016-07-01",
+   "ok": true,
+   "note": "features は filed<=deadline で切ってある（ファイルの note に明記）"
+  },
+  "2017": {
+   "features_deadline": "2017-07-01",
+   "returns_start": "2017-07-01",
+   "ok": true,
+   "note": "features は filed<=deadline で切ってある（ファイルの note に明記）"
+  },
+  "2018": {
+   "features_deadline": "2018-07-01",
+   "returns_start": "2018-07-01",
+   "ok": true,
+   "note": "features は filed<=deadline で切ってある（ファイルの note に明記）"
+  },
+  "2019": {
+   "features_deadline": "2019-07-01",
+   "returns_start": "2019-07-01",
+   "ok": true,
+   "note": "features は filed<=deadline で切ってある（ファイルの note に明記）"
+  },
+  "2020": {
+   "features_deadline": "2020-07-01",
+   "returns_start": "2020-07-01",
+   "ok": true,
+   "note": "features は filed<=deadline で切ってある（ファイルの note に明記）"
+  },
+  "2021": {
+   "features_deadline": "2021-07-01",
+   "returns_start": "2021-07-01",
+   "ok": true,
+   "note": "features は filed<=deadline で切ってある（ファイルの note に明記）"
+  },
+  "2022": {
+   "features_deadline": "2022-07-01",
+   "returns_start": "2022-07-01",
+   "ok": true,
+   "note": "features は filed<=deadline で切ってある（ファイルの note に明記）"
+  }
+ },
+ "pooled_controlled_null": {
+  "all/-0.02": {
+   "B": 2000,
+   "n_strata": 68,
+   "observed_mh_conc": 0.9781,
+   "p_within_stratum": 0.7095,
+   "null_q50": 0.9978,
+   "null_q95": 1.0648,
+   "null_q99": 1.0964,
+   "detectable_note": "観測が null_q95 を超えて初めて有意。この器の検出力の目安"
+  },
+  "all/-0.05": {
+   "B": 2000,
+   "n_strata": 68,
+   "observed_mh_conc": 1.0196,
+   "p_within_stratum": 0.361,
+   "null_q50": 0.9988,
+   "null_q95": 1.082,
+   "null_q99": 1.1132,
+   "detectable_note": "観測が null_q95 を超えて初めて有意。この器の検出力の目安"
+  },
+  "all/-0.1": {
+   "B": 2000,
+   "n_strata": 68,
+   "observed_mh_conc": 1.0132,
+   "p_within_stratum": 0.4165,
+   "null_q50": 0.9983,
+   "null_q95": 1.1026,
+   "null_q99": 1.1547,
+   "detectable_note": "観測が null_q95 を超えて初めて有意。この器の検出力の目安"
+  },
+  "qual/-0.02": {
+   "B": 2000,
+   "n_strata": 40,
+   "observed_mh_conc": 0.8066,
+   "p_within_stratum": 0.913,
+   "null_q50": 0.9986,
+   "null_q95": 1.2675,
+   "null_q99": 1.3827,
+   "detectable_note": "観測が null_q95 を超えて初めて有意。この器の検出力の目安"
+  },
+  "qual/-0.05": {
+   "B": 2000,
+   "n_strata": 40,
+   "observed_mh_conc": 1.0805,
+   "p_within_stratum": 0.4025,
+   "null_q50": 1.0085,
+   "null_q95": 1.4407,
+   "null_q99": 1.5128,
+   "detectable_note": "観測が null_q95 を超えて初めて有意。この器の検出力の目安"
+  },
+  "qual/-0.1": {
+   "B": 2000,
+   "n_strata": 38,
+   "observed_mh_conc": 1.1622,
+   "p_within_stratum": 0.405,
+   "null_q50": 0.9962,
+   "null_q95": 1.6603,
+   "null_q99": 1.9923,
+   "detectable_note": "観測が null_q95 を超えて初めて有意。この器の検出力の目安"
+  }
+ },
+ "pooled_uncontrolled_null": {
+  "all/-0.02": {
+   "observed_mh_conc": 1.2328,
+   "p": 0.0
+  },
+  "all/-0.05": {
+   "observed_mh_conc": 1.4604,
+   "p": 0.0
+  },
+  "all/-0.1": {
+   "observed_mh_conc": 1.6273,
+   "p": 0.0
+  },
+  "qual/-0.02": {
+   "observed_mh_conc": 0.8949,
+   "p": 0.758
+  },
+  "qual/-0.05": {
+   "observed_mh_conc": 1.2609,
+   "p": 0.197
+  },
+  "qual/-0.1": {
+   "observed_mh_conc": 1.3926,
+   "p": 0.2185
+  }
+ },
+ "same_threshold_across_vintages": {
+  "rows": [
+   {
+    "vintage": 2013,
+    "conc": 1.0703,
+    "num": 2,
+    "n_stop": 36,
+    "stop_rate": 0.0381,
+    "verdict": "不合格"
+   },
+   {
+    "vintage": 2016,
+    "conc": 1.7593,
+    "num": 15,
+    "n_stop": 143,
+    "stop_rate": 0.1496,
+    "verdict": "不合格"
+   },
+   {
+    "vintage": 2017,
+    "conc": 1.9438,
+    "num": 16,
+    "n_stop": 129,
+    "stop_rate": 0.1349,
+    "verdict": "不合格"
+   },
+   {
+    "vintage": 2018,
+    "conc": 2.2574,
+    "num": 20,
+    "n_stop": 110,
+    "stop_rate": 0.1151,
+    "verdict": "合格"
+   },
+   {
+    "vintage": 2019,
+    "conc": 1.7007,
+    "num": 15,
+    "n_stop": 124,
+    "stop_rate": 0.1297,
+    "verdict": "不合格"
+   },
+   {
+    "vintage": 2020,
+    "conc": 1.2451,
+    "num": 11,
+    "n_stop": 103,
+    "stop_rate": 0.1077,
+    "verdict": "不合格"
+   },
+   {
+    "vintage": 2021,
+    "conc": 1.3524,
+    "num": 33,
+    "n_stop": 162,
+    "stop_rate": 0.1695,
+    "verdict": "不合格"
+   },
+   {
+    "vintage": 2022,
+    "conc": 1.7102,
+    "num": 24,
+    "n_stop": 104,
+    "stop_rate": 0.1088,
+    "verdict": "不合格"
+   }
+  ],
+  "conc_min": 1.0703,
+  "conc_max": 2.2574,
+  "note": "母集団はほぼ同じ956社・窓は1年ずつずれるだけ。この帯が「同じ現象を測り直したときのぶれ幅」"
+ },
+ "verdict_refutation": {
+  "role": "反証専門",
+  "independent_recompute": "48セルすべて一致（n / n_stop / 分子 / 濃縮 / 中央値 / 止率 / ベース毀損率 / 判定）",
+  "agrees_with_measurement_verdict": true,
+  "conclusion": "測定側の「不合格」は支持される。しかも測定側が残した「方向は実在する(1.2〜1.6倍)」も反証された",
+  "headline": "唯一の合格セル 2018/all/-0.10 は、規模と利益率の水準という二つの交絡で説明が付く。8ビンテージをプールして両方を同時に統制すると濃縮は 1.63 → 1.01（p=0.42）＝方向すら残らない",
+  "broke": [
+   {
+    "attack": "(a) 業種SIC2で層別(MH)",
+    "value": 1.9401,
+    "note": "観測20.0 / 期待10.309"
+   },
+   {
+    "attack": "(a) 1業種抜き",
+    "value": [
+     {
+      "sic2": "28",
+      "n_dropped": 82,
+      "conc": 1.9726,
+      "num": 13,
+      "pass": false
+     }
+    ],
+    "note": "1/61 通りで割れる"
+   },
+   {
+    "attack": "(b) 規模の三分位（事前登録どおり）",
+    "value": [
+     [
+      "小",
+      1.6454,
+      19
+     ],
+     [
+      "中",
+      0.6928,
+      1
+     ],
+     [
+      "大",
+      0.0,
+      0
+     ]
+    ],
+    "note": "三分位すべてで割れる"
+   },
+   {
+    "attack": "(b) 規模で層別(MH)",
+    "value": 1.5122,
+    "note": ""
+   },
+   {
+    "attack": "★(b2) 利益率の水準で層別",
+    "value": {
+     "opm<0（赤字）": 1.0113,
+     "opm>=0（黒字）": 1.9897,
+     "opm>=5": 1.9168,
+     "opm>=10": 1.4474
+    },
+    "note": "赤字の中では 1.01＝完全にゼロ／黒字の中でも 1.99 で線を割る＝止めていたのは「利益率が下がった社」ではなく「赤字の零細」"
+   },
+   {
+    "attack": "★(b2) 規模×利益率 3x3 で同時に層別(MH)",
+    "value": 1.2017,
+    "note": "観測20.0 / 期待16.644＝粗の2.257がほぼ消える"
+   },
+   {
+    "attack": "(i) ブートストラップ",
+    "value": {
+     "ci90": [
+      1.6228,
+      2.9102
+     ],
+     "p(conc<2.0)": 0.271,
+     "p(4基準すべて合格)": 0.729
+    },
+    "note": "線の2.0倍が信頼区間の内側＝この標本で 2.0 を上回るかは運の範囲"
+   },
+   {
+    "attack": "★隣接ビンテージのぶれ",
+    "value": {
+     "conc_min": 1.0703,
+     "conc_max": 2.2574
+    },
+    "note": "母集団はほぼ同じ956社で窓が1年ずれるだけなのに 1.07〜2.26 と動く＝線の2.0は手続き自身のぶれ幅の中にある"
+   },
+   {
+    "attack": "★★8ビンテージをプールして規模×利益率を統制",
+    "value": {
+     "uncontrolled": 1.6273,
+     "controlled": 1.0132,
+     "p_within_stratum": 0.4165
+    },
+    "note": "測定側が「方向は実在する(1.2〜1.6倍)」と書いた残りは、統制すると 1.01・p=0.42＝**方向すら残らない**"
+   },
+   {
+    "attack": "★分子の重なり",
+    "value": {
+     "person_vintage": 136,
+     "unique_companies": 62,
+     "in_2plus_vintages": 33
+    },
+    "note": "8ビンテージは8つの証拠ではない"
+   },
+   {
+    "attack": "(d) 置換検定（会社単位・全ビンテージ同時）",
+    "value": {
+     "p_family_at_least_1": 0.2175,
+     "family_size": 42
+    },
+    "note": "家族42セルで偶然1つ以上通る確率が2割超＝合格1件は雑音と区別がつかない"
+   }
+  ],
+  "not_broken": [
+   {
+    "attack": "(c) 1社抜き（プールごと）",
+    "value": {
+     "conc_min": 2.1904,
+     "conc_max": 2.2847
+    },
+    "note": "956通りすべてで合格のまま＝単一企業の話ではない"
+   },
+   {
+    "attack": "(g) 窓長の非一様",
+    "value": {
+     "short_in_stop": 0,
+     "full_only_conc": 2.2479
+    },
+    "note": "止めた110社に窓の短い行は1社も無い＝年率換算の非一様では説明できない"
+   },
+   {
+    "attack": "(分母) 測れた社だけを分母にする",
+    "value": {
+     "conc": 2.2172,
+     "n": 878
+    },
+    "note": "2013 は欠測が毀損率を歪めるが、この合格セルは分母の取り方では動かない"
+   },
+   {
+    "attack": "(e2) opmD5 の極端値（分母の縮退）を外す",
+    "value": {
+     "常識帯 -1.0<opmD5<th": {
+      "n_stop": 95,
+      "stop_rate": 0.0994,
+      "num": 16,
+      "conc": 2.091,
+      "med_stop": -0.0021,
+      "med_pass": 0.0722
+     },
+     "極端 opmD5<=-1.0": {
+      "n_stop": 15,
+      "stop_rate": 0.0157,
+      "num": 4,
+      "conc": 3.3108,
+      "med_stop": -0.0555,
+      "med_pass": 0.0686
+     }
+    },
+    "note": "常識帯 -1.0<opmD5<-0.10 だけでも 2.09／分子16＝micro売上の桁化けだけでは説明できない"
+   },
+   {
+    "attack": "(f) look-ahead",
+    "value": {
+     "2013": true,
+     "2016": true,
+     "2017": true,
+     "2018": true,
+     "2019": true,
+     "2020": true,
+     "2021": true,
+     "2022": true
+    },
+    "note": "8ビンテージすべてで 信号の締切 == 結果の窓の開始（features は filed<=deadline）"
+   },
+   {
+    "attack": "(e) 単位・欄名",
+    "value": {
+     "qual_pool_agrees": true,
+     "row_band_mismatch_total": 101,
+     "opmD5_neg_share_range": [
+      0.4009,
+      0.5452
+     ]
+    },
+    "note": "opm の比率→%換算・質実証プール・opmD5の符号割合とも独立に再現。rev は8ビンテージとも生ドルで一貫"
+   },
+   {
+    "attack": "(d2) セル単独の置換",
+    "value": {
+     "2018/all/-0.1": {
+      "B": 2000,
+      "observed_conc": 2.2574,
+      "p_cell": 0.0,
+      "note": "結果ラベルをプール内で並べ替え（1セル単独＝多重検定の値札を掛ける前）"
+     }
+    },
+    "note": "素の関連そのものは本物（p は極小）。問題は家族の値札と交絡であって、関連の有無ではない"
+   }
+  ],
+  "discrepancy_with_measurement": [
+   {
+    "item": "セル単独の置換 p",
+    "mine": 0.0,
+    "theirs": 0.003,
+    "why": "乱数の種と実装が違うだけ。どちらも「単独では極小」で結論は同じ（私の値のほうが極端＝測定側に有利に丸めていない）"
+   },
+   {
+    "item": "測定側の探索「方向は実在する(プールMH 1.23/1.46/1.63)」",
+    "mine": "同じ数字を独立に再現した。だが規模×利益率を統制すると 0.98/1.02/1.01 へ落ち、深いほど強いという単調性も消える",
+    "why": "測定側はプールMHをビンテージ層だけで作っており、社の性質を統制していない"
+   }
+  ],
+  "how_far_to_trust": [
+   "★この所見（opmD5 単独の遮断器）は採用してはいけない。粗の関連は本物だが、中身は「赤字の零細企業」の言い換え",
+   "★測定側の不合格は正しい。ただし理由は「線に届かない」ではなく「線に届いた1セルが交絡で説明できる」ほうが強い",
+   "独立標本はゼロ（同じ956社・窓は2026-08で共通・分子62社がのべ136回数えられる）",
+   "生存バイアスは既記録のまま（左尾は 2.00〜25.68% の幅）。ここでは全ビンテージに等しく乗る",
+   "「壊せなかった」4件（1社抜き・窓長・分母・極端値）は、この所見を支持する材料ではない——いずれも「別の壊れ方ではない」と言っただけで、交絡の説明を否定しない"
+  ],
+  "honest_counterexample": {
+   "why": "反証者が「壊れた」ものだけを出すのは片側の報告になる。私が作った探索的な部分集合の中で4基準を通るものがあれば必ず名指しする",
+   "n_subgroups_tried": 27,
+   "n_passing": 1,
+   "passing": [
+    {
+     "cell": "2017/all/-0.05",
+     "subgroup": "opm水準 opm>=5",
+     "n": 602,
+     "n_stop": 76,
+     "stop_rate": 0.1262,
+     "num": 7,
+     "conc": 2.4108,
+     "pass": true
+    }
+   ],
+   "caveat": "これは事前登録に無い事後の切り方（事前登録のプールは 全社 と 質実証(opm>=10% ∧ fcfpos5>=5) の2つだけ）。27 通り試して 1 通り通るのは偶然の範囲。しかも同じ切り方が他のセルでは通らない＝安定しない"
+  }
+ },
+ "selfcheck_opm_unit": {
+  "why": "base は opm をファイル単位で×100する。行ごとの帯検問と 101 行で食い違う（深い赤字の零細）。その曖昧さで私の結論（統制後は 1.0）が動かないかを自分で検算する",
+  "row_band_mismatch_total": 101,
+  "results": {
+   "base の opm（ファイル単位で換算）": {
+    "pooled_controlled_conc": 1.0132,
+    "obs": 136.0,
+    "exp": 134.23,
+    "n_strata": 68,
+    "v2018_only": 1.2017
+   },
+   "行ごとの帯検問で作り直した opm": {
+    "pooled_controlled_conc": 1.013,
+    "obs": 136.0,
+    "exp": 134.25,
+    "n_strata": 68,
+    "v2018_only": 1.1968
+   }
+  },
+  "verdict": "動かない（プール統制後 1.0131 vs 1.0130／2018単体 1.2017 vs 1.1968）。食い違う行はどちらの読みでも「赤字」「最小分位」に入るため層が変わらない"
+ },
+ "honesty_exploratory_subgroups": {
+  "why": "反証者が「壊れた」ものだけを出すのは片側の報告になる。私が作った探索的な部分集合の中で4基準を通るものがあれば必ず名指しする",
+  "n_subgroups_tried": 27,
+  "n_passing": 1,
+  "passing": [
+   {
+    "cell": "2017/all/-0.05",
+    "subgroup": "opm水準 opm>=5",
+    "n": 602,
+    "n_stop": 76,
+    "stop_rate": 0.1262,
+    "num": 7,
+    "conc": 2.4108,
+    "pass": true
+   }
+  ],
+  "caveat": "これは事前登録に無い事後の切り方（事前登録のプールは 全社 と 質実証(opm>=10% ∧ fcfpos5>=5) の2つだけ）。27 通り試して 1 通り通るのは偶然の範囲。しかも同じ切り方が他のセルでは通らない＝安定しない"
+ }
+}

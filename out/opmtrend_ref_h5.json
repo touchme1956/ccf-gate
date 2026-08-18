@@ -1,0 +1,2337 @@
+{
+ "generated": "2026-08-18",
+ "tool": "night/opmtrend_ref_h5.py",
+ "role": "H5 の反証専門。測定側 out/opmtrend_h5.json を壊しにいく。値も規約も1バイト変えない。",
+ "reads": [
+  "out/opmtrend_base.json",
+  "out/opmtrend_h5.json",
+  "out/retro_features2_*.json",
+  "out/retro_sic.json"
+ ],
+ "line_borrowed": {
+  "line": 0.15,
+  "why": "H5 に line が無いので測定側は H1 の線を借りた。私も同じものを借りる（別の線を持ち込むと比較にならない）"
+ },
+ "attacks_declared_before_results": {
+  "A_break_the_fail": [
+   "A1 streak_opm という別の操作化",
+   "A2 対称に深い線",
+   "A3 不感帯つき3値",
+   "A4 業種年で中心化した残差",
+   "A5 水準を統制した偏順位相関",
+   "A6 窓の重なり(gap)"
+  ],
+  "B_break_the_level_claim": [
+   "B1 業種内",
+   "B2 規模3分位",
+   "B3 1業種抜き/1社抜き",
+   "B4 置換(会社単位・全対同時)",
+   "B5 外れ値・黒字赤字",
+   "B6 gap==5 限定"
+  ]
+ },
+ "base_vs_raw": {
+  "note": "base.json は測定側が作った中間物。生の retro_features2_*.json と突き合わせる",
+  "vintages": {
+   "2013": {
+    "n_compared": 944,
+    "n_mismatch": 0,
+    "detail": {}
+   },
+   "2016": {
+    "n_compared": 956,
+    "n_mismatch": 0,
+    "detail": {}
+   },
+   "2017": {
+    "n_compared": 956,
+    "n_mismatch": 0,
+    "detail": {}
+   },
+   "2018": {
+    "n_compared": 956,
+    "n_mismatch": 0,
+    "detail": {}
+   },
+   "2019": {
+    "n_compared": 956,
+    "n_mismatch": 0,
+    "detail": {}
+   },
+   "2020": {
+    "n_compared": 956,
+    "n_mismatch": 0,
+    "detail": {}
+   },
+   "2021": {
+    "n_compared": 956,
+    "n_mismatch": 0,
+    "detail": {}
+   },
+   "2022": {
+    "n_compared": 956,
+    "n_mismatch": 0,
+    "detail": {}
+   }
+  },
+  "total_mismatch": 0
+ },
+ "unit_check": {
+  "2013": {
+   "opm_pct_median": 10.325,
+   "opm_raw_median_abs": 0.1212,
+   "band_test_says": "比率(×100で%)",
+   "opm_pct_in_sane_band_share": 0.9788,
+   "opmD5_median": 0.011,
+   "opmD5_abs_median": 0.0382,
+   "opmD5_neg_share": 0.4009,
+   "opmD5_zero_exact_n": 0,
+   "qual_n": 236
+  },
+  "2016": {
+   "opm_pct_median": 9.21,
+   "opm_raw_median_abs": 0.1223,
+   "band_test_says": "比率(×100で%)",
+   "opm_pct_in_sane_band_share": 0.9701,
+   "opmD5_median": -0.0022,
+   "opmD5_abs_median": 0.0416,
+   "opmD5_neg_share": 0.5194,
+   "opmD5_zero_exact_n": 0,
+   "qual_n": 329
+  },
+  "2017": {
+   "opm_pct_median": 9.4,
+   "opm_raw_median_abs": 0.1212,
+   "band_test_says": "比率(×100で%)",
+   "opm_pct_in_sane_band_share": 0.9722,
+   "opmD5_median": -0.002,
+   "opmD5_abs_median": 0.0415,
+   "opmD5_neg_share": 0.524,
+   "opmD5_zero_exact_n": 2,
+   "qual_n": 327
+  },
+  "2018": {
+   "opm_pct_median": 9.79,
+   "opm_raw_median_abs": 0.1168,
+   "band_test_says": "比率(×100で%)",
+   "opm_pct_in_sane_band_share": 0.9745,
+   "opmD5_median": -0.0005,
+   "opmD5_abs_median": 0.0377,
+   "opmD5_neg_share": 0.5057,
+   "opmD5_zero_exact_n": 0,
+   "qual_n": 340
+  },
+  "2019": {
+   "opm_pct_median": 9.75,
+   "opm_raw_median_abs": 0.1188,
+   "band_test_says": "比率(×100で%)",
+   "opm_pct_in_sane_band_share": 0.9754,
+   "opmD5_median": -0.0002,
+   "opmD5_abs_median": 0.0401,
+   "opmD5_neg_share": 0.5017,
+   "opmD5_zero_exact_n": 0,
+   "qual_n": 331
+  },
+  "2020": {
+   "opm_pct_median": 9.25,
+   "opm_raw_median_abs": 0.1127,
+   "band_test_says": "比率(×100で%)",
+   "opm_pct_in_sane_band_share": 0.9752,
+   "opmD5_median": 0.0001,
+   "opmD5_abs_median": 0.0389,
+   "opmD5_neg_share": 0.4977,
+   "opmD5_zero_exact_n": 1,
+   "qual_n": 311
+  },
+  "2021": {
+   "opm_pct_median": 7.73,
+   "opm_raw_median_abs": 0.1184,
+   "band_test_says": "比率(×100で%)",
+   "opm_pct_in_sane_band_share": 0.9729,
+   "opmD5_median": -0.0063,
+   "opmD5_abs_median": 0.0488,
+   "opmD5_neg_share": 0.5452,
+   "opmD5_zero_exact_n": 1,
+   "qual_n": 281
+  },
+  "2022": {
+   "opm_pct_median": 10.915,
+   "opm_raw_median_abs": 0.1335,
+   "band_test_says": "比率(×100で%)",
+   "opm_pct_in_sane_band_share": 0.9739,
+   "opmD5_median": 0.0097,
+   "opmD5_abs_median": 0.0432,
+   "opmD5_neg_share": 0.413,
+   "opmD5_zero_exact_n": 1,
+   "qual_n": 340
+  },
+  "_verdict": "opm は base では % で入っており（中央 9-16）、qual の >=10 は %同士の比較。opmD5 は比率pt（中央 |x| ~0.03）。単位の取り違えは見つからなかった"
+ },
+ "independent_recompute": {
+  "note": "base.json の rows から素朴に組み直し、h5.json と突き合わせる",
+  "cells": {
+   "all/2013->2018": {
+    "mine": {
+     "n": 442,
+     "n_now_down": 176,
+     "n_now_up": 266,
+     "matrix": {
+      "down_down": 79,
+      "down_up": 97,
+      "up_down": 140,
+      "up_up": 126
+     },
+     "base_next_down": 0.4955,
+     "p_next_down_given_now_down": 0.4489,
+     "p_next_down_given_now_up": 0.5263,
+     "lift_base": -0.0466,
+     "lift_contrast": -0.0775,
+     "ceiling_lift_base": 0.5045,
+     "rho_opmD5": 0.0212,
+     "level_control": {
+      "n": 442,
+      "rho_opm": 0.6233,
+      "base_next_below_median": 0.5,
+      "p_next_below_given_now_below": 0.724,
+      "lift_base": 0.224
+     },
+     "instrument_rho_rev": 0.9361
+    },
+    "diffs": "一致"
+   },
+   "all/2016->2021": {
+    "mine": {
+     "n": 843,
+     "n_now_down": 439,
+     "n_now_up": 404,
+     "matrix": {
+      "down_down": 219,
+      "down_up": 220,
+      "up_down": 240,
+      "up_up": 164
+     },
+     "base_next_down": 0.5445,
+     "p_next_down_given_now_down": 0.4989,
+     "p_next_down_given_now_up": 0.5941,
+     "lift_base": -0.0456,
+     "lift_contrast": -0.0952,
+     "ceiling_lift_base": 0.4555,
+     "rho_opmD5": -0.14,
+     "level_control": {
+      "n": 843,
+      "rho_opm": 0.5677,
+      "base_next_below_median": 0.4994,
+      "p_next_below_given_now_below": 0.7387,
+      "lift_base": 0.2393
+     },
+     "instrument_rho_rev": 0.9619
+    },
+    "diffs": "一致"
+   },
+   "all/2017->2022": {
+    "mine": {
+     "n": 845,
+     "n_now_down": 441,
+     "n_now_up": 404,
+     "matrix": {
+      "down_down": 175,
+      "down_up": 266,
+      "up_down": 178,
+      "up_up": 226
+     },
+     "base_next_down": 0.4178,
+     "p_next_down_given_now_down": 0.3968,
+     "p_next_down_given_now_up": 0.4406,
+     "lift_base": -0.0209,
+     "lift_contrast": -0.0438,
+     "ceiling_lift_base": 0.5822,
+     "rho_opmD5": -0.0855,
+     "level_control": {
+      "n": 845,
+      "rho_opm": 0.6066,
+      "base_next_below_median": 0.4994,
+      "p_next_below_given_now_below": 0.7725,
+      "lift_base": 0.2731
+     },
+     "instrument_rho_rev": 0.9686
+    },
+    "diffs": "一致"
+   },
+   "qual/2013->2018": {
+    "mine": {
+     "n": 220,
+     "n_now_down": 73,
+     "n_now_up": 147,
+     "matrix": {
+      "down_down": 37,
+      "down_up": 36,
+      "up_down": 86,
+      "up_up": 61
+     },
+     "base_next_down": 0.5591,
+     "p_next_down_given_now_down": 0.5068,
+     "p_next_down_given_now_up": 0.585,
+     "lift_base": -0.0522,
+     "lift_contrast": -0.0782,
+     "ceiling_lift_base": 0.4409,
+     "rho_opmD5": 0.0023,
+     "level_control": {
+      "n": 220,
+      "rho_opm": 0.6804,
+      "base_next_below_median": 0.5,
+      "p_next_below_given_now_below": 0.8,
+      "lift_base": 0.3
+     },
+     "instrument_rho_rev": 0.9527
+    },
+    "diffs": "一致"
+   },
+   "qual/2016->2021": {
+    "mine": {
+     "n": 313,
+     "n_now_down": 126,
+     "n_now_up": 187,
+     "matrix": {
+      "down_down": 67,
+      "down_up": 59,
+      "up_down": 129,
+      "up_up": 58
+     },
+     "base_next_down": 0.6262,
+     "p_next_down_given_now_down": 0.5317,
+     "p_next_down_given_now_up": 0.6898,
+     "lift_base": -0.0945,
+     "lift_contrast": -0.1581,
+     "ceiling_lift_base": 0.3738,
+     "rho_opmD5": -0.1264,
+     "level_control": {
+      "n": 313,
+      "rho_opm": 0.5564,
+      "base_next_below_median": 0.4984,
+      "p_next_below_given_now_below": 0.7308,
+      "lift_base": 0.2324
+     },
+     "instrument_rho_rev": 0.9561
+    },
+    "diffs": "一致"
+   },
+   "qual/2017->2022": {
+    "mine": {
+     "n": 315,
+     "n_now_down": 121,
+     "n_now_up": 194,
+     "matrix": {
+      "down_down": 57,
+      "down_up": 64,
+      "up_down": 92,
+      "up_up": 102
+     },
+     "base_next_down": 0.473,
+     "p_next_down_given_now_down": 0.4711,
+     "p_next_down_given_now_up": 0.4742,
+     "lift_base": -0.0019,
+     "lift_contrast": -0.0032,
+     "ceiling_lift_base": 0.527,
+     "rho_opmD5": -0.0607,
+     "level_control": {
+      "n": 315,
+      "rho_opm": 0.5808,
+      "base_next_below_median": 0.4984,
+      "p_next_below_given_now_below": 0.7325,
+      "lift_base": 0.2341
+     },
+     "instrument_rho_rev": 0.9594
+    },
+    "diffs": "一致"
+   }
+  },
+  "max_abs_diff": 0.0,
+  "mismatches": [],
+  "verdict": "完全一致"
+ },
+ "A6_gap_overlap": {
+  "note": "gap=fy_next-fy_now。4以下なら窓が年を共有し符号違いで入る＝機械的な負の相関",
+  "pairs": {
+   "2013->2018": {
+    "gap_dist": {
+     "4": 3,
+     "5": 438,
+     "6": 1
+    },
+    "share_gap5": 0.991,
+    "gap5": {
+     "n": 438,
+     "n_now_down": 174,
+     "n_now_up": 264,
+     "matrix": {
+      "down_down": 77,
+      "down_up": 97,
+      "up_down": 139,
+      "up_up": 125
+     },
+     "base_next_down": 0.4932,
+     "p_next_down_given_now_down": 0.4425,
+     "p_next_down_given_now_up": 0.5265,
+     "lift_base": -0.0506,
+     "lift_contrast": -0.084,
+     "ceiling_lift_base": 0.5068,
+     "rho_opmD5": 0.0194
+    },
+    "gap_le4": {
+     "n": 3,
+     "too_small": true
+    },
+    "gap_ge6": {
+     "n": 1,
+     "too_small": true
+    }
+   },
+   "2016->2021": {
+    "gap_dist": {
+     "0": 3,
+     "2": 2,
+     "4": 5,
+     "5": 829,
+     "6": 1,
+     "7": 3
+    },
+    "share_gap5": 0.9834,
+    "gap5": {
+     "n": 829,
+     "n_now_down": 431,
+     "n_now_up": 398,
+     "matrix": {
+      "down_down": 214,
+      "down_up": 217,
+      "up_down": 237,
+      "up_up": 161
+     },
+     "base_next_down": 0.544,
+     "p_next_down_given_now_down": 0.4965,
+     "p_next_down_given_now_up": 0.5955,
+     "lift_base": -0.0475,
+     "lift_contrast": -0.099,
+     "ceiling_lift_base": 0.456,
+     "rho_opmD5": -0.1516
+    },
+    "gap_le4": {
+     "n": 10,
+     "n_now_down": 5,
+     "n_now_up": 5,
+     "matrix": {
+      "down_down": 4,
+      "down_up": 1,
+      "up_down": 2,
+      "up_up": 3
+     },
+     "base_next_down": 0.6,
+     "p_next_down_given_now_down": 0.8,
+     "p_next_down_given_now_up": 0.4,
+     "lift_base": 0.2,
+     "lift_contrast": 0.4,
+     "ceiling_lift_base": 0.4,
+     "rho_opmD5": 0.3939
+    },
+    "gap_ge6": {
+     "n": 4,
+     "too_small": true
+    }
+   },
+   "2017->2022": {
+    "gap_dist": {
+     "0": 3,
+     "1": 1,
+     "3": 1,
+     "4": 8,
+     "5": 823,
+     "6": 6,
+     "7": 2,
+     "8": 1
+    },
+    "share_gap5": 0.974,
+    "gap5": {
+     "n": 823,
+     "n_now_down": 426,
+     "n_now_up": 397,
+     "matrix": {
+      "down_down": 167,
+      "down_up": 259,
+      "up_down": 175,
+      "up_up": 222
+     },
+     "base_next_down": 0.4156,
+     "p_next_down_given_now_down": 0.392,
+     "p_next_down_given_now_up": 0.4408,
+     "lift_base": -0.0235,
+     "lift_contrast": -0.0488,
+     "ceiling_lift_base": 0.5844,
+     "rho_opmD5": -0.0926
+    },
+    "gap_le4": {
+     "n": 13,
+     "n_now_down": 9,
+     "n_now_up": 4,
+     "matrix": {
+      "down_down": 5,
+      "down_up": 4,
+      "up_down": 1,
+      "up_up": 3
+     },
+     "base_next_down": 0.4615,
+     "p_next_down_given_now_down": 0.5556,
+     "p_next_down_given_now_up": 0.25,
+     "lift_base": 0.094,
+     "lift_contrast": 0.3056,
+     "ceiling_lift_base": 0.5385,
+     "rho_opmD5": 0.0879
+    },
+    "gap_ge6": {
+     "n": 9,
+     "too_small": true
+    }
+   }
+  }
+ },
+ "A1_streak_opm": {
+  "note": "streak_opm=4遷移のうち上昇した年数。down = streak<=1（半分未満が上昇）",
+  "pairs": {
+   "all/2013->2018": {
+    "n": 442,
+    "n_now_down": 94,
+    "base_next_down": 0.2557,
+    "p_next_down_given_now_down": 0.1809,
+    "lift_base": -0.0748,
+    "lift_contrast": -0.095,
+    "rho_streak": -0.0719
+   },
+   "all/2016->2021": {
+    "n": 843,
+    "n_now_down": 269,
+    "base_next_down": 0.274,
+    "p_next_down_given_now_down": 0.2528,
+    "lift_base": -0.0212,
+    "lift_contrast": -0.0312,
+    "rho_streak": -0.0566
+   },
+   "all/2017->2022": {
+    "n": 845,
+    "n_now_down": 249,
+    "base_next_down": 0.1964,
+    "p_next_down_given_now_down": 0.1807,
+    "lift_base": -0.0157,
+    "lift_contrast": -0.0223,
+    "rho_streak": -0.0228
+   },
+   "qual/2013->2018": {
+    "n": 220,
+    "n_now_down": 39,
+    "base_next_down": 0.3364,
+    "p_next_down_given_now_down": 0.2821,
+    "lift_base": -0.0543,
+    "lift_contrast": -0.066,
+    "rho_streak": -0.0503
+   },
+   "qual/2016->2021": {
+    "n": 313,
+    "n_now_down": 85,
+    "base_next_down": 0.3291,
+    "p_next_down_given_now_down": 0.3294,
+    "lift_base": 0.0003,
+    "lift_contrast": 0.0005,
+    "rho_streak": -0.0011
+   },
+   "qual/2017->2022": {
+    "n": 315,
+    "n_now_down": 68,
+    "base_next_down": 0.2286,
+    "p_next_down_given_now_down": 0.2794,
+    "lift_base": 0.0508,
+    "lift_contrast": 0.0648,
+    "rho_streak": 0.0564
+   }
+  }
+ },
+ "A2_symmetric_depth": {
+  "note": "測定側は「今<th → 次<0」（非対称）。ここは「今<th → 次<th」（対称）",
+  "pairs": {
+   "all/2013->2018": {
+    "n": 442,
+    "thresholds": {
+     "-0.02": {
+      "n_now_below": 120,
+      "base_next_below": 0.3145,
+      "p": 0.35,
+      "lift_base": 0.0355
+     },
+     "-0.05": {
+      "n_now_below": 64,
+      "base_next_below": 0.1855,
+      "p": 0.2656,
+      "lift_base": 0.0801
+     },
+     "-0.1": {
+      "n_now_below": 35,
+      "base_next_below": 0.0973,
+      "p": 0.2286,
+      "lift_base": 0.1313
+     }
+    }
+   },
+   "all/2016->2021": {
+    "n": 843,
+    "thresholds": {
+     "-0.02": {
+      "n_now_below": 311,
+      "base_next_below": 0.4045,
+      "p": 0.3859,
+      "lift_base": -0.0187
+     },
+     "-0.05": {
+      "n_now_below": 218,
+      "base_next_below": 0.2942,
+      "p": 0.3028,
+      "lift_base": 0.0086
+     },
+     "-0.1": {
+      "n_now_below": 134,
+      "base_next_below": 0.1898,
+      "p": 0.2164,
+      "lift_base": 0.0266
+     }
+    }
+   },
+   "all/2017->2022": {
+    "n": 845,
+    "thresholds": {
+     "-0.02": {
+      "n_now_below": 311,
+      "base_next_below": 0.2982,
+      "p": 0.3215,
+      "lift_base": 0.0233
+     },
+     "-0.05": {
+      "n_now_below": 204,
+      "base_next_below": 0.1929,
+      "p": 0.2451,
+      "lift_base": 0.0522
+     },
+     "-0.1": {
+      "n_now_below": 126,
+      "base_next_below": 0.1231,
+      "p": 0.2143,
+      "lift_base": 0.0912
+     }
+    }
+   },
+   "qual/2013->2018": {
+    "n": 220,
+    "thresholds": {
+     "-0.02": {
+      "n_now_below": 47,
+      "base_next_below": 0.4091,
+      "p": 0.4681,
+      "lift_base": 0.059
+     },
+     "-0.05": {
+      "n_now_below": 16,
+      "base_next_below": 0.2227,
+      "p": 0.1875,
+      "lift_base": -0.0352
+     },
+     "-0.1": {
+      "n_now_below": 7,
+      "base_next_below": 0.1227,
+      "p": 0.2857,
+      "lift_base": 0.163
+     }
+    }
+   },
+   "qual/2016->2021": {
+    "n": 313,
+    "thresholds": {
+     "-0.02": {
+      "n_now_below": 79,
+      "base_next_below": 0.4601,
+      "p": 0.4304,
+      "lift_base": -0.0297
+     },
+     "-0.05": {
+      "n_now_below": 47,
+      "base_next_below": 0.3323,
+      "p": 0.3191,
+      "lift_base": -0.0131
+     },
+     "-0.1": {
+      "n_now_below": 21,
+      "base_next_below": 0.2109,
+      "p": 0.381,
+      "lift_base": 0.1701
+     }
+    }
+   },
+   "qual/2017->2022": {
+    "n": 315,
+    "thresholds": {
+     "-0.02": {
+      "n_now_below": 76,
+      "base_next_below": 0.3397,
+      "p": 0.3816,
+      "lift_base": 0.0419
+     },
+     "-0.05": {
+      "n_now_below": 41,
+      "base_next_below": 0.2127,
+      "p": 0.2927,
+      "lift_base": 0.08
+     },
+     "-0.1": {
+      "n_now_below": 14,
+      "base_next_below": 0.1206,
+      "p": 0.2857,
+      "lift_base": 0.1651
+     }
+    }
+   }
+  }
+ },
+ "A3_deadband3": {
+  "note": "|opmD5| < 0.005 を flat。down→down を測る",
+  "pairs": {
+   "all/2013->2018": {
+    "n": 442,
+    "n_now_down": 162,
+    "base_next_down": 0.4434,
+    "p": 0.4012,
+    "lift_base": -0.0422,
+    "lift_contrast": -0.0746
+   },
+   "all/2016->2021": {
+    "n": 843,
+    "n_now_down": 406,
+    "base_next_down": 0.5065,
+    "p": 0.4778,
+    "lift_base": -0.0287,
+    "lift_contrast": -0.0684
+   },
+   "all/2017->2022": {
+    "n": 845,
+    "n_now_down": 404,
+    "base_next_down": 0.3858,
+    "p": 0.3663,
+    "lift_base": -0.0195,
+    "lift_contrast": -0.0467
+   },
+   "qual/2013->2018": {
+    "n": 220,
+    "n_now_down": 67,
+    "base_next_down": 0.5273,
+    "p": 0.4925,
+    "lift_base": -0.0347,
+    "lift_contrast": -0.0727
+   },
+   "qual/2016->2021": {
+    "n": 313,
+    "n_now_down": 123,
+    "base_next_down": 0.5783,
+    "p": 0.5041,
+    "lift_base": -0.0742,
+    "lift_contrast": -0.1153
+   },
+   "qual/2017->2022": {
+    "n": 315,
+    "n_now_down": 113,
+    "base_next_down": 0.4349,
+    "p": 0.4159,
+    "lift_base": -0.019,
+    "lift_contrast": -0.0371
+   }
+  }
+ },
+ "A4_sector_centered": {
+  "note": "各ビンテージ・各SIC2の中央値を引いた残差で測り直す（層別ではなく中心化）",
+  "pairs": {
+   "all/2013->2018": {
+    "n": 442,
+    "n_sic2": 56,
+    "n_now_down": 204,
+    "base_next_down": 0.4615,
+    "p": 0.4608,
+    "lift_base": -0.0008,
+    "rho_centered": -0.0287
+   },
+   "all/2016->2021": {
+    "n": 843,
+    "n_sic2": 60,
+    "n_now_down": 404,
+    "base_next_down": 0.4792,
+    "p": 0.4208,
+    "lift_base": -0.0584,
+    "rho_centered": -0.1381
+   },
+   "all/2017->2022": {
+    "n": 845,
+    "n_sic2": 59,
+    "n_now_down": 405,
+    "base_next_down": 0.4793,
+    "p": 0.4395,
+    "lift_base": -0.0398,
+    "rho_centered": -0.096
+   },
+   "qual/2013->2018": {
+    "n": 220,
+    "n_sic2": 43,
+    "n_now_down": 97,
+    "base_next_down": 0.4409,
+    "p": 0.4124,
+    "lift_base": -0.0285,
+    "rho_centered": -0.0647
+   },
+   "qual/2016->2021": {
+    "n": 313,
+    "n_sic2": 47,
+    "n_now_down": 145,
+    "base_next_down": 0.4633,
+    "p": 0.4138,
+    "lift_base": -0.0495,
+    "rho_centered": -0.1153
+   },
+   "qual/2017->2022": {
+    "n": 315,
+    "n_sic2": 48,
+    "n_now_down": 144,
+    "base_next_down": 0.4571,
+    "p": 0.4653,
+    "lift_base": 0.0081,
+    "rho_centered": -0.0605
+   }
+  }
+ },
+ "A5_partial_level": {
+  "note": "opm(now) を統制した rho(opmD5_now, opmD5_next)。機械的な平均回帰を外した後に残るか",
+  "pairs": {
+   "all/2013->2018": {
+    "n": 442,
+    "rho_raw": 0.0212,
+    "rho_partial_given_level": 0.0611,
+    "rho_level_now_vs_next_change": -0.1367
+   },
+   "all/2016->2021": {
+    "n": 843,
+    "rho_raw": -0.14,
+    "rho_partial_given_level": -0.0548,
+    "rho_level_now_vs_next_change": -0.2163
+   },
+   "all/2017->2022": {
+    "n": 845,
+    "rho_raw": -0.0855,
+    "rho_partial_given_level": -0.0281,
+    "rho_level_now_vs_next_change": -0.1458
+   },
+   "qual/2013->2018": {
+    "n": 220,
+    "rho_raw": 0.0023,
+    "rho_partial_given_level": -0.0016,
+    "rho_level_now_vs_next_change": 0.069
+   },
+   "qual/2016->2021": {
+    "n": 313,
+    "rho_raw": -0.1264,
+    "rho_partial_given_level": -0.1173,
+    "rho_level_now_vs_next_change": -0.0638
+   },
+   "qual/2017->2022": {
+    "n": 315,
+    "rho_raw": -0.0607,
+    "rho_partial_given_level": -0.0444,
+    "rho_level_now_vs_next_change": -0.1265
+   }
+  }
+ },
+ "B1_level_within_sector": {
+  "note": "SIC2 の中で中央値を取り直して当て直す（層内の lift を社数で加重平均）",
+  "pairs": {
+   "all/2013->2018": {
+    "n_all": 442,
+    "n_sectors_used": 7,
+    "n_in_used": 219,
+    "within_sector_lift_weighted": 0.1912,
+    "pooled_lift": 0.224
+   },
+   "all/2016->2021": {
+    "n_all": 843,
+    "n_sectors_used": 11,
+    "n_in_used": 520,
+    "within_sector_lift_weighted": 0.2407,
+    "pooled_lift": 0.2393
+   },
+   "all/2017->2022": {
+    "n_all": 845,
+    "n_sectors_used": 11,
+    "n_in_used": 521,
+    "within_sector_lift_weighted": 0.2542,
+    "pooled_lift": 0.2731
+   },
+   "qual/2013->2018": {
+    "n_all": 220,
+    "n_sectors_used": 1,
+    "n_in_used": 31,
+    "within_sector_lift_weighted": 0.2495,
+    "pooled_lift": 0.3
+   },
+   "qual/2016->2021": {
+    "n_all": 313,
+    "n_sectors_used": 4,
+    "n_in_used": 116,
+    "within_sector_lift_weighted": 0.2062,
+    "pooled_lift": 0.2324
+   },
+   "qual/2017->2022": {
+    "n_all": 315,
+    "n_sectors_used": 4,
+    "n_in_used": 119,
+    "within_sector_lift_weighted": 0.2329,
+    "pooled_lift": 0.2341
+   }
+  }
+ },
+ "B2_level_by_size": {
+  "note": "売上3分位の中で当て直す",
+  "pairs": {
+   "all/2013->2018": {
+    "small": {
+     "n": 147,
+     "lift_base": 0.2568,
+     "rho": 0.6704
+    },
+    "mid": {
+     "n": 147,
+     "lift_base": 0.2431,
+     "rho": 0.5703
+    },
+    "large": {
+     "n": 148,
+     "lift_base": 0.2162,
+     "rho": 0.6376
+    }
+   },
+   "all/2016->2021": {
+    "small": {
+     "n": 281,
+     "lift_base": 0.1565,
+     "rho": 0.5014
+    },
+    "mid": {
+     "n": 281,
+     "lift_base": 0.2589,
+     "rho": 0.5682
+    },
+    "large": {
+     "n": 281,
+     "lift_base": 0.2716,
+     "rho": 0.6201
+    }
+   },
+   "all/2017->2022": {
+    "small": {
+     "n": 281,
+     "lift_base": 0.1804,
+     "rho": 0.5192
+    },
+    "mid": {
+     "n": 281,
+     "lift_base": 0.2661,
+     "rho": 0.6268
+    },
+    "large": {
+     "n": 283,
+     "lift_base": 0.3067,
+     "rho": 0.6562
+    }
+   },
+   "qual/2013->2018": {
+    "small": {
+     "n": 73,
+     "lift_base": 0.2291,
+     "rho": 0.6712
+    },
+    "mid": {
+     "n": 73,
+     "lift_base": 0.3402,
+     "rho": 0.7203
+    },
+    "large": {
+     "n": 74,
+     "lift_base": 0.2568,
+     "rho": 0.654
+    }
+   },
+   "qual/2016->2021": {
+    "small": {
+     "n": 104,
+     "lift_base": 0.2019,
+     "rho": 0.4643
+    },
+    "mid": {
+     "n": 104,
+     "lift_base": 0.2885,
+     "rho": 0.6498
+    },
+    "large": {
+     "n": 105,
+     "lift_base": 0.274,
+     "rho": 0.5668
+    }
+   },
+   "qual/2017->2022": {
+    "small": {
+     "n": 105,
+     "lift_base": 0.1971,
+     "rho": 0.5749
+    },
+    "mid": {
+     "n": 105,
+     "lift_base": 0.274,
+     "rho": 0.6093
+    },
+    "large": {
+     "n": 105,
+     "lift_base": 0.2548,
+     "rho": 0.5829
+    }
+   }
+  }
+ },
+ "B3_leave_one_out": {
+  "note": "1業種抜き（lift の範囲）と 1社抜き（rho の範囲）",
+  "pairs": {
+   "2013->2018": {
+    "full_lift": 0.224,
+    "full_rho": 0.6233,
+    "n_sectors": 56,
+    "lift_min_after_drop": [
+     "67",
+     0.2048
+    ],
+    "lift_max_after_drop": [
+     "35",
+     0.2414
+    ],
+    "rho_min_after_drop_1co": [
+     "CME",
+     0.6207
+    ],
+    "rho_max_after_drop_1co": [
+     "BB",
+     0.6316
+    ]
+   },
+   "2016->2021": {
+    "full_lift": 0.2393,
+    "full_rho": 0.5677,
+    "n_sectors": 60,
+    "lift_min_after_drop": [
+     "49",
+     0.2345
+    ],
+    "lift_max_after_drop": [
+     "48",
+     0.2531
+    ],
+    "rho_min_after_drop_1co": [
+     "FLNA",
+     0.5662
+    ],
+    "rho_max_after_drop_1co": [
+     "MBOT",
+     0.5733
+    ]
+   },
+   "2017->2022": {
+    "full_lift": 0.2731,
+    "full_rho": 0.6066,
+    "n_sectors": 59,
+    "lift_min_after_drop": [
+     "37",
+     0.2702
+    ],
+    "lift_max_after_drop": [
+     "36",
+     0.2898
+    ],
+    "rho_min_after_drop_1co": [
+     "MBOT",
+     0.6052
+    ],
+    "rho_max_after_drop_1co": [
+     "SD",
+     0.6122
+    ]
+   }
+  }
+ },
+ "B5_level_outliers": {
+  "note": "opm には -2698% のような赤字バイオが実在する。絞ると消えるか",
+  "pairs": {
+   "2013->2018": {
+    "全社": {
+     "n": 442,
+     "lift_base": 0.224,
+     "rho": 0.6233
+    },
+    "opm_now と opm_next が [-100,100]%": {
+     "n": 442,
+     "lift_base": 0.224,
+     "rho": 0.6233
+    },
+    "opm_now > 0（黒字のみ）": {
+     "n": 412,
+     "lift_base": 0.2476,
+     "rho": 0.6538
+    },
+    "opm_now と opm_next が両方 > 0": {
+     "n": 390,
+     "lift_base": 0.2692,
+     "rho": 0.719
+    },
+    "opm_now >= 10%（質実証の水準）": {
+     "n": 271,
+     "lift_base": 0.2722,
+     "rho": 0.65
+    }
+   },
+   "2016->2021": {
+    "全社": {
+     "n": 843,
+     "lift_base": 0.2393,
+     "rho": 0.5677
+    },
+    "opm_now と opm_next が [-100,100]%": {
+     "n": 812,
+     "lift_base": 0.2512,
+     "rho": 0.545
+    },
+    "opm_now > 0（黒字のみ）": {
+     "n": 710,
+     "lift_base": 0.2662,
+     "rho": 0.5529
+    },
+    "opm_now と opm_next が両方 > 0": {
+     "n": 585,
+     "lift_base": 0.3119,
+     "rho": 0.7191
+    },
+    "opm_now >= 10%（質実証の水準）": {
+     "n": 405,
+     "lift_base": 0.224,
+     "rho": 0.5196
+    }
+   },
+   "2017->2022": {
+    "全社": {
+     "n": 845,
+     "lift_base": 0.2731,
+     "rho": 0.6066
+    },
+    "opm_now と opm_next が [-100,100]%": {
+     "n": 813,
+     "lift_base": 0.274,
+     "rho": 0.6027
+    },
+    "opm_now > 0（黒字のみ）": {
+     "n": 705,
+     "lift_base": 0.2813,
+     "rho": 0.6343
+    },
+    "opm_now と opm_next が両方 > 0": {
+     "n": 645,
+     "lift_base": 0.2896,
+     "rho": 0.6927
+    },
+    "opm_now >= 10%（質実証の水準）": {
+     "n": 402,
+     "lift_base": 0.2065,
+     "rho": 0.5554
+    }
+   }
+  }
+ },
+ "B6_level_gap5": {
+  "note": "gap==5（年を共有しない）に限った水準の持続",
+  "pairs": {
+   "2013->2018": {
+    "n": 438,
+    "lift_base": 0.2202,
+    "rho": 0.6307
+   },
+   "2016->2021": {
+    "n": 829,
+    "lift_base": 0.2397,
+    "rho": 0.5705
+   },
+   "2017->2022": {
+    "n": 823,
+    "lift_base": 0.2719,
+    "rho": 0.6044
+   }
+  }
+ },
+ "B4_permutation": {
+  "note": "会社ラベル1本の置換を全対の next 側へ同時に当てる（対どうしの従属を保つ）",
+  "n_perm": 2000,
+  "seed": 20260818,
+  "n_companies": 859,
+  "opmD5_rho": {
+   "observed_mean": -0.0681,
+   "p_greater": 0.9995,
+   "p_less": 0.001,
+   "null_p2_5": -0.0484,
+   "null_p50": 0.0002,
+   "null_p97_5": 0.0464
+  },
+  "level_lift": {
+   "observed_mean": 0.2455,
+   "p_greater": 0.0005,
+   "null_p2_5": -0.0277,
+   "null_p50": -0.0003,
+   "null_p97_5": 0.0285
+  }
+ },
+ "lookahead": {
+  "note": "信号の会計年度末(fy_end)が締切(deadline)より後の行が無いか。⚠H5 は信号→信号なので結果窓との look-ahead は原理的に無い。ここで見るのは信号側の規約違反だけ",
+  "vintages": {
+   "2013": {
+    "deadline": "2013-07-01",
+    "n": 944,
+    "fy_end_after_deadline_n": 0,
+    "sample": []
+   },
+   "2016": {
+    "deadline": "2016-07-01",
+    "n": 956,
+    "fy_end_after_deadline_n": 0,
+    "sample": []
+   },
+   "2017": {
+    "deadline": "2017-07-01",
+    "n": 956,
+    "fy_end_after_deadline_n": 0,
+    "sample": []
+   },
+   "2018": {
+    "deadline": "2018-07-01",
+    "n": 956,
+    "fy_end_after_deadline_n": 0,
+    "sample": []
+   },
+   "2019": {
+    "deadline": "2019-07-01",
+    "n": 956,
+    "fy_end_after_deadline_n": 0,
+    "sample": []
+   },
+   "2020": {
+    "deadline": "2020-07-01",
+    "n": 956,
+    "fy_end_after_deadline_n": 0,
+    "sample": []
+   },
+   "2021": {
+    "deadline": "2021-07-01",
+    "n": 956,
+    "fy_end_after_deadline_n": 0,
+    "sample": []
+   },
+   "2022": {
+    "deadline": "2022-07-01",
+    "n": 956,
+    "fy_end_after_deadline_n": 0,
+    "sample": []
+   }
+  }
+ },
+ "verdicts": {
+  "A_fail_broken": [
+   "A2 qual/2016->2021 th=-0.1 lift_base=0.1701 n=21"
+  ],
+  "B_level_claim_broken_where": "壊せなかった——どの切り方でも線を保つ"
+ },
+ "A2b_magnitude_vs_direction": {
+  "note": "rho(|now|,|next|) と rho(now,next) を並べる。振れ幅だけが持続しているなら、片側の閾値は必ず正の lift を出すが方向の情報は無い",
+  "pairs": {
+   "all/2013->2018": {
+    "n": 442,
+    "rho_signed": 0.0212,
+    "rho_abs": 0.3141,
+    "magnitude_th0.05": {
+     "n_now": 175,
+     "base": 0.3484,
+     "p": 0.4629,
+     "lift": 0.1144
+    },
+    "mirror_th0.05": {
+     "now_below": {
+      "n": 64,
+      "P_next_below": 0.2656,
+      "P_next_above": 0.25
+     },
+     "now_above": {
+      "n": 111,
+      "P_next_above": 0.2252,
+      "P_next_below": 0.2072
+     }
+    },
+    "within_volatile_th0.05": {
+     "n": 81,
+     "same_sign": 42,
+     "share_same_sign": 0.5185
+    },
+    "magnitude_th0.1": {
+     "n_now": 101,
+     "base": 0.1674,
+     "p": 0.3168,
+     "lift": 0.1494
+    },
+    "mirror_th0.1": {
+     "now_below": {
+      "n": 35,
+      "P_next_below": 0.2286,
+      "P_next_above": 0.2286
+     },
+     "now_above": {
+      "n": 66,
+      "P_next_above": 0.1364,
+      "P_next_below": 0.1061
+     }
+    },
+    "within_volatile_th0.1": {
+     "n": 32,
+     "same_sign": 17,
+     "share_same_sign": 0.5312
+    }
+   },
+   "all/2016->2021": {
+    "n": 843,
+    "rho_signed": -0.14,
+    "rho_abs": 0.4017,
+    "magnitude_th0.05": {
+     "n_now": 377,
+     "base": 0.4923,
+     "p": 0.6552,
+     "lift": 0.1629
+    },
+    "mirror_th0.05": {
+     "now_below": {
+      "n": 218,
+      "P_next_below": 0.3028,
+      "P_next_above": 0.3807
+     },
+     "now_above": {
+      "n": 159,
+      "P_next_above": 0.195,
+      "P_next_below": 0.4214
+     }
+    },
+    "within_volatile_th0.05": {
+     "n": 247,
+     "same_sign": 97,
+     "share_same_sign": 0.3927
+    },
+    "magnitude_th0.1": {
+     "n_now": 213,
+     "base": 0.3179,
+     "p": 0.5822,
+     "lift": 0.2642
+    },
+    "mirror_th0.1": {
+     "now_below": {
+      "n": 134,
+      "P_next_below": 0.2164,
+      "P_next_above": 0.3657
+     },
+     "now_above": {
+      "n": 79,
+      "P_next_above": 0.2025,
+      "P_next_below": 0.3797
+     }
+    },
+    "within_volatile_th0.1": {
+     "n": 124,
+     "same_sign": 45,
+     "share_same_sign": 0.3629
+    }
+   },
+   "all/2017->2022": {
+    "n": 845,
+    "rho_signed": -0.0855,
+    "rho_abs": 0.3869,
+    "magnitude_th0.05": {
+     "n_now": 365,
+     "base": 0.4663,
+     "p": 0.6411,
+     "lift": 0.1748
+    },
+    "mirror_th0.05": {
+     "now_below": {
+      "n": 204,
+      "P_next_below": 0.2451,
+      "P_next_above": 0.4216
+     },
+     "now_above": {
+      "n": 161,
+      "P_next_above": 0.3168,
+      "P_next_below": 0.2919
+     }
+    },
+    "within_volatile_th0.05": {
+     "n": 234,
+     "same_sign": 101,
+     "share_same_sign": 0.4316
+    },
+    "magnitude_th0.1": {
+     "n_now": 226,
+     "base": 0.2722,
+     "p": 0.5,
+     "lift": 0.2278
+    },
+    "mirror_th0.1": {
+     "now_below": {
+      "n": 126,
+      "P_next_below": 0.2143,
+      "P_next_above": 0.3571
+     },
+     "now_above": {
+      "n": 100,
+      "P_next_above": 0.16,
+      "P_next_below": 0.25
+     }
+    },
+    "within_volatile_th0.1": {
+     "n": 113,
+     "same_sign": 43,
+     "share_same_sign": 0.3805
+    }
+   },
+   "qual/2013->2018": {
+    "n": 220,
+    "rho_signed": 0.0023,
+    "rho_abs": 0.2428,
+    "magnitude_th0.05": {
+     "n_now": 73,
+     "base": 0.35,
+     "p": 0.4384,
+     "lift": 0.0884
+    },
+    "mirror_th0.05": {
+     "now_below": {
+      "n": 16,
+      "P_next_below": 0.1875,
+      "P_next_above": 0.0625
+     },
+     "now_above": {
+      "n": 57,
+      "P_next_above": 0.2105,
+      "P_next_below": 0.2807
+     }
+    },
+    "within_volatile_th0.05": {
+     "n": 32,
+     "same_sign": 15,
+     "share_same_sign": 0.4688
+    },
+    "magnitude_th0.1": {
+     "n_now": 37,
+     "base": 0.1818,
+     "p": 0.2973,
+     "lift": 0.1155
+    },
+    "mirror_th0.1": {
+     "now_below": {
+      "n": 7,
+      "P_next_below": 0.2857,
+      "P_next_above": 0.0
+     },
+     "now_above": {
+      "n": 30,
+      "P_next_above": 0.1333,
+      "P_next_below": 0.1667
+     }
+    },
+    "within_volatile_th0.1": {
+     "n": 11,
+     "same_sign": 6,
+     "share_same_sign": 0.5455
+    }
+   },
+   "qual/2016->2021": {
+    "n": 313,
+    "rho_signed": -0.1264,
+    "rho_abs": 0.1991,
+    "magnitude_th0.05": {
+     "n_now": 115,
+     "base": 0.4601,
+     "p": 0.5739,
+     "lift": 0.1138
+    },
+    "mirror_th0.05": {
+     "now_below": {
+      "n": 47,
+      "P_next_below": 0.3191,
+      "P_next_above": 0.2766
+     },
+     "now_above": {
+      "n": 68,
+      "P_next_above": 0.0735,
+      "P_next_below": 0.4853
+     }
+    },
+    "within_volatile_th0.05": {
+     "n": 66,
+     "same_sign": 20,
+     "share_same_sign": 0.303
+    },
+    "magnitude_th0.1": {
+     "n_now": 50,
+     "base": 0.262,
+     "p": 0.48,
+     "lift": 0.218
+    },
+    "mirror_th0.1": {
+     "now_below": {
+      "n": 21,
+      "P_next_below": 0.381,
+      "P_next_above": 0.0476
+     },
+     "now_above": {
+      "n": 29,
+      "P_next_above": 0.0345,
+      "P_next_below": 0.4828
+     }
+    },
+    "within_volatile_th0.1": {
+     "n": 24,
+     "same_sign": 9,
+     "share_same_sign": 0.375
+    }
+   },
+   "qual/2017->2022": {
+    "n": 315,
+    "rho_signed": -0.0607,
+    "rho_abs": 0.2161,
+    "magnitude_th0.05": {
+     "n_now": 118,
+     "base": 0.4254,
+     "p": 0.5593,
+     "lift": 0.1339
+    },
+    "mirror_th0.05": {
+     "now_below": {
+      "n": 41,
+      "P_next_below": 0.2927,
+      "P_next_above": 0.2683
+     },
+     "now_above": {
+      "n": 77,
+      "P_next_above": 0.2208,
+      "P_next_below": 0.3377
+     }
+    },
+    "within_volatile_th0.05": {
+     "n": 66,
+     "same_sign": 29,
+     "share_same_sign": 0.4394
+    },
+    "magnitude_th0.1": {
+     "n_now": 56,
+     "base": 0.2063,
+     "p": 0.3214,
+     "lift": 0.1151
+    },
+    "mirror_th0.1": {
+     "now_below": {
+      "n": 14,
+      "P_next_below": 0.2857,
+      "P_next_above": 0.0
+     },
+     "now_above": {
+      "n": 42,
+      "P_next_above": 0.0238,
+      "P_next_below": 0.3095
+     }
+    },
+    "within_volatile_th0.1": {
+     "n": 18,
+     "same_sign": 5,
+     "share_same_sign": 0.2778
+    }
+   }
+  }
+ },
+ "A2c_family_permutation": {
+  "note": "★A2 は事前登録に無い私の後知恵の探索。族としての値札を先に払う",
+  "observed": {
+   "families_passing": 1,
+   "best_mean_lift": 0.1661,
+   "detail": {
+    "all/th-0.02": {
+     "mean_lift": 0.0134,
+     "lifts": [
+      0.0355,
+      -0.0187,
+      0.0233
+     ],
+     "all_pass": false
+    },
+    "all/th-0.05": {
+     "mean_lift": 0.047,
+     "lifts": [
+      0.0801,
+      0.0086,
+      0.0522
+     ],
+     "all_pass": false
+    },
+    "all/th-0.1": {
+     "mean_lift": 0.083,
+     "lifts": [
+      0.1313,
+      0.0266,
+      0.0912
+     ],
+     "all_pass": false
+    },
+    "qual/th-0.02": {
+     "mean_lift": 0.0237,
+     "lifts": [
+      0.059,
+      -0.0297,
+      0.0419
+     ],
+     "all_pass": false
+    },
+    "qual/th-0.05": {
+     "mean_lift": 0.0105,
+     "lifts": [
+      -0.0352,
+      -0.0131,
+      0.08
+     ],
+     "all_pass": false
+    },
+    "qual/th-0.1": {
+     "mean_lift": 0.1661,
+     "lifts": [
+      0.163,
+      0.1701,
+      0.1651
+     ],
+     "all_pass": true
+    }
+   }
+  },
+  "null": {
+   "n_perm": 2000,
+   "seed": 20260818,
+   "P_at_least_one_family_passes": 0.001,
+   "family_p_of_best_mean_lift": 0.0095,
+   "null_best_p95": 0.1109,
+   "null_best_p97_5": 0.1298,
+   "null_best_max": 0.3013
+  },
+  "numerators_vs_prereg_H2_bar": {
+   "all/th-0.02/2013->2018": {
+    "n_now_below": 120,
+    "numerator": 42,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "AKAM",
+     "AMSC",
+     "APEI",
+     "BLKB",
+     "CDP",
+     "CE",
+     "CLF",
+     "CMP",
+     "DLB",
+     "EOG",
+     "EXC",
+     "FE"
+    ]
+   },
+   "all/th-0.02/2016->2021": {
+    "n_now_below": 311,
+    "numerator": 120,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "ACIC",
+     "ACIW",
+     "ADI",
+     "ADTN",
+     "ALB",
+     "ALCO",
+     "ALV",
+     "AORT",
+     "APEI",
+     "APLE",
+     "ARCO",
+     "ASPS"
+    ]
+   },
+   "all/th-0.02/2017->2022": {
+    "n_now_below": 311,
+    "numerator": 100,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "ACIC",
+     "ADTN",
+     "AIM",
+     "APEI",
+     "APLE",
+     "ATEC",
+     "ATNI",
+     "AXON",
+     "BB",
+     "BFH",
+     "BIDU",
+     "BKD"
+    ]
+   },
+   "all/th-0.05/2013->2018": {
+    "n_now_below": 64,
+    "numerator": 17,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "AMSC",
+     "CLF",
+     "EOG",
+     "FE",
+     "FRO",
+     "FSLR",
+     "HLIT",
+     "HP",
+     "MSFT",
+     "NRG",
+     "PTEN",
+     "RIG"
+    ]
+   },
+   "all/th-0.05/2016->2021": {
+    "n_now_below": 218,
+    "numerator": 66,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "ADTN",
+     "ALB",
+     "AORT",
+     "ASPS",
+     "ATEC",
+     "ATI",
+     "BB",
+     "BLKB",
+     "BRT",
+     "BSX",
+     "CBT",
+     "CEVA"
+    ]
+   },
+   "all/th-0.05/2017->2022": {
+    "n_now_below": 204,
+    "numerator": 50,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "ACIC",
+     "AIM",
+     "ATEC",
+     "ATNI",
+     "AXON",
+     "BB",
+     "BFH",
+     "BIDU",
+     "BKNG",
+     "CHKP",
+     "CLDX",
+     "CMTL"
+    ]
+   },
+   "all/th-0.1/2013->2018": {
+    "n_now_below": 35,
+    "numerator": 8,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "AMSC",
+     "CLF",
+     "EOG",
+     "FRO",
+     "HLIT",
+     "RIG",
+     "SM",
+     "TDW"
+    ]
+   },
+   "all/th-0.1/2016->2021": {
+    "n_now_below": 134,
+    "numerator": 29,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "ASPS",
+     "ATEC",
+     "ATI",
+     "BB",
+     "BRT",
+     "CEVA",
+     "CPIX",
+     "DHX",
+     "EXE",
+     "GEVO",
+     "LCTX",
+     "LPSN"
+    ]
+   },
+   "all/th-0.1/2017->2022": {
+    "n_now_below": 126,
+    "numerator": 27,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "ACIC",
+     "AIM",
+     "BB",
+     "BIDU",
+     "CLDX",
+     "CMTL",
+     "DHX",
+     "DWSN",
+     "EFOI",
+     "EHTH",
+     "EXE",
+     "GASS"
+    ]
+   },
+   "qual/th-0.02/2013->2018": {
+    "n_now_below": 47,
+    "numerator": 22,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "AKAM",
+     "APEI",
+     "CDP",
+     "CMP",
+     "DLB",
+     "EOG",
+     "EXC",
+     "HAL",
+     "KEX",
+     "MATW",
+     "MORN",
+     "MSFT"
+    ]
+   },
+   "qual/th-0.02/2016->2021": {
+    "n_now_below": 79,
+    "numerator": 34,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "ACIC",
+     "ADI",
+     "ALB",
+     "APEI",
+     "APLE",
+     "BDX",
+     "BFH",
+     "CEVA",
+     "CL",
+     "COO",
+     "DLB",
+     "DLR"
+    ]
+   },
+   "qual/th-0.02/2017->2022": {
+    "n_now_below": 76,
+    "numerator": 29,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "APEI",
+     "APLE",
+     "AXON",
+     "BFH",
+     "BIDU",
+     "BKNG",
+     "CEVA",
+     "CHKP",
+     "COO",
+     "DLR",
+     "EDU",
+     "FFIV"
+    ]
+   },
+   "qual/th-0.05/2013->2018": {
+    "n_now_below": 16,
+    "numerator": 3,
+    "meets_prereg_H2_bar_5": false,
+    "tickers": [
+     "EOG",
+     "MSFT",
+     "RIG"
+    ]
+   },
+   "qual/th-0.05/2016->2021": {
+    "n_now_below": 47,
+    "numerator": 15,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "ALB",
+     "CEVA",
+     "DLR",
+     "ISRG",
+     "MELI",
+     "MYGN",
+     "RYN",
+     "SFL",
+     "SPOK",
+     "TAP-A",
+     "TPR",
+     "TRIP"
+    ]
+   },
+   "qual/th-0.05/2017->2022": {
+    "n_now_below": 41,
+    "numerator": 12,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "AXON",
+     "BFH",
+     "BIDU",
+     "BKNG",
+     "CHKP",
+     "GTN",
+     "MATV",
+     "MYGN",
+     "ORCL",
+     "SPOK",
+     "TRIP",
+     "ZD"
+    ]
+   },
+   "qual/th-0.1/2013->2018": {
+    "n_now_below": 7,
+    "numerator": 2,
+    "meets_prereg_H2_bar_5": false,
+    "tickers": [
+     "EOG",
+     "RIG"
+    ]
+   },
+   "qual/th-0.1/2016->2021": {
+    "n_now_below": 21,
+    "numerator": 8,
+    "meets_prereg_H2_bar_5": true,
+    "tickers": [
+     "CEVA",
+     "MELI",
+     "MYGN",
+     "RYN",
+     "SFL",
+     "TPR",
+     "TRIP",
+     "WEX"
+    ]
+   },
+   "qual/th-0.1/2017->2022": {
+    "n_now_below": 14,
+    "numerator": 4,
+    "meets_prereg_H2_bar_5": false,
+    "tickers": [
+     "BIDU",
+     "MYGN",
+     "TRIP",
+     "ZD"
+    ]
+   }
+  }
+ },
+ "A2d_overlap_and_loo": {
+  "note": "qual × th=-0.1 の群。3対に同じ会社が出るなら独立標本ではない",
+  "pairs": {
+   "2013->2018": {
+    "n": 220,
+    "n_now_below": 7,
+    "numerator": 2,
+    "numerator_tickers": [
+     "EOG",
+     "RIG"
+    ],
+    "base": 0.1227,
+    "lift": 0.163,
+    "loo_min": [
+     "EOG",
+     0.0439
+    ],
+    "loo_max": [
+     "STRA",
+     0.2106
+    ],
+    "next_dist_deep": [
+     0.2857,
+     0.1429,
+     0.1429,
+     0.4286,
+     0.0
+    ],
+    "next_dist_all": [
+     0.1227,
+     0.2864,
+     0.3,
+     0.2318,
+     0.0591
+    ],
+    "bins": [
+     "<-0.10",
+     "-0.10..-0.02",
+     "-0.02..0.02",
+     "0.02..0.10",
+     ">0.10"
+    ]
+   },
+   "2016->2021": {
+    "n": 313,
+    "n_now_below": 21,
+    "numerator": 8,
+    "numerator_tickers": [
+     "CEVA",
+     "MELI",
+     "MYGN",
+     "RYN",
+     "SFL",
+     "TPR",
+     "TRIP",
+     "WEX"
+    ],
+    "base": 0.2109,
+    "lift": 0.1701,
+    "loo_min": [
+     "CEVA",
+     0.1391
+    ],
+    "loo_max": [
+     "ZD",
+     0.1891
+    ],
+    "next_dist_deep": [
+     0.381,
+     0.2857,
+     0.2381,
+     0.0476,
+     0.0476
+    ],
+    "next_dist_all": [
+     0.2109,
+     0.2492,
+     0.3003,
+     0.1885,
+     0.0511
+    ],
+    "bins": [
+     "<-0.10",
+     "-0.10..-0.02",
+     "-0.02..0.02",
+     "0.02..0.10",
+     ">0.10"
+    ]
+   },
+   "2017->2022": {
+    "n": 315,
+    "n_now_below": 14,
+    "numerator": 4,
+    "numerator_tickers": [
+     "BIDU",
+     "MYGN",
+     "TRIP",
+     "ZD"
+    ],
+    "base": 0.1206,
+    "lift": 0.1651,
+    "loo_min": [
+     "BIDU",
+     0.1101
+    ],
+    "loo_max": [
+     "ZBH",
+     0.1871
+    ],
+    "next_dist_deep": [
+     0.2857,
+     0.0,
+     0.0714,
+     0.6429,
+     0.0
+    ],
+    "next_dist_all": [
+     0.1206,
+     0.219,
+     0.2984,
+     0.2762,
+     0.0857
+    ],
+    "bins": [
+     "<-0.10",
+     "-0.10..-0.02",
+     "-0.02..0.02",
+     "0.02..0.10",
+     ">0.10"
+    ]
+   }
+  },
+  "overlap": {
+   "rows_total": 42,
+   "unique_companies": 32,
+   "companies_in_multiple_pairs": 10,
+   "which": {
+    "MCHP": [
+     "2013->2018",
+     "2016->2021"
+    ],
+    "STRA": [
+     "2013->2018",
+     "2016->2021"
+    ],
+    "BIDU": [
+     "2016->2021",
+     "2017->2022"
+    ],
+    "DLB": [
+     "2016->2021",
+     "2017->2022"
+    ],
+    "MELI": [
+     "2016->2021",
+     "2017->2022"
+    ],
+    "MYGN": [
+     "2016->2021",
+     "2017->2022"
+    ],
+    "SFL": [
+     "2016->2021",
+     "2017->2022"
+    ],
+    "TPR": [
+     "2016->2021",
+     "2017->2022"
+    ],
+    "TRIP": [
+     "2016->2021",
+     "2017->2022"
+    ],
+    "ZD": [
+     "2016->2021",
+     "2017->2022"
+    ]
+   }
+  }
+ },
+ "B1b_level_sector_centered": {
+  "note": "B1 は n>=20 の業種しか使えず被覆が半分。ここは業種中央値を引いた残差で全行を使う",
+  "pairs": {
+   "all/2013->2018": {
+    "n": 442,
+    "n_sic2": 56,
+    "lift_base": 0.2247,
+    "rho": 0.57
+   },
+   "all/2016->2021": {
+    "n": 843,
+    "n_sic2": 60,
+    "lift_base": 0.2163,
+    "rho": 0.5165
+   },
+   "all/2017->2022": {
+    "n": 845,
+    "n_sic2": 59,
+    "lift_base": 0.2565,
+    "rho": 0.538
+   },
+   "qual/2013->2018": {
+    "n": 220,
+    "n_sic2": 43,
+    "lift_base": 0.2292,
+    "rho": 0.5938
+   },
+   "qual/2016->2021": {
+    "n": 313,
+    "n_sic2": 47,
+    "lift_base": 0.2312,
+    "rho": 0.5025
+   },
+   "qual/2017->2022": {
+    "n": 315,
+    "n_sic2": 48,
+    "lift_base": 0.2373,
+    "rho": 0.5522
+   }
+  }
+ },
+ "macro_vs_company": {
+  "note": "ビンテージ間で符号の割合がどれだけ動くか vs 会社自身の前回の符号がどれだけ動かすか",
+  "neg_share_by_vintage": {
+   "2013": {
+    "n": 449,
+    "neg_share": 0.4009
+   },
+   "2016": {
+    "n": 878,
+    "neg_share": 0.5194
+   },
+   "2017": {
+    "n": 874,
+    "neg_share": 0.524
+   },
+   "2018": {
+    "n": 878,
+    "neg_share": 0.5057
+   },
+   "2019": {
+    "n": 869,
+    "neg_share": 0.5017
+   },
+   "2020": {
+    "n": 874,
+    "neg_share": 0.4977
+   },
+   "2021": {
+    "n": 862,
+    "neg_share": 0.5452
+   },
+   "2022": {
+    "n": 862,
+    "neg_share": 0.413
+   }
+  },
+  "range_all_vintages_pp": 14.43,
+  "range_excl_2013_pp": 13.22,
+  "company_own_prior_sign_moves_pp": [
+   -4.66,
+   -4.56,
+   -2.09
+  ],
+  "read": "窓（マクロ）が十数pt動かす一方、会社自身の前回の符号は数pt しか動かさず、しかも逆向き"
+ },
+ "A2e_level_matched_control": {
+  "note": "深く下がった群の相手として、同じ opm 帯(±3pt)で now>=-0.02 の社を対照に置く。水準の平均回帰が正体ならここで消えるはず",
+  "pairs": {
+   "2013->2018": {
+    "n_deep": 7,
+    "P_deep": 0.2857,
+    "n_ctrl": 132,
+    "P_ctrl": 0.0985,
+    "raw_base": 0.1227,
+    "raw_lift": 0.163,
+    "lift_vs_level_matched_ctrl": 0.1872,
+    "level_alone_low_half": 0.1273,
+    "level_alone_high_half": 0.1182
+   },
+   "2016->2021": {
+    "n_deep": 21,
+    "P_deep": 0.381,
+    "n_ctrl": 219,
+    "P_ctrl": 0.1826,
+    "raw_base": 0.2109,
+    "raw_lift": 0.1701,
+    "lift_vs_level_matched_ctrl": 0.1983,
+    "level_alone_low_half": 0.1667,
+    "level_alone_high_half": 0.2548
+   },
+   "2017->2022": {
+    "n_deep": 14,
+    "P_deep": 0.2857,
+    "n_ctrl": 220,
+    "P_ctrl": 0.0727,
+    "raw_base": 0.1206,
+    "raw_lift": 0.1651,
+    "lift_vs_level_matched_ctrl": 0.213,
+    "level_alone_low_half": 0.0637,
+    "level_alone_high_half": 0.1772
+   }
+  },
+  "read": "水準で対応させても lift はむしろ大きくなる＝水準の交絡では説明できない（＝潰せなかった）"
+ },
+ "power_independent": {
+  "note": "線は『3対すべて lift_base>=0.15』。真の一様な持続 delta を置いて何%で合格が出るか",
+  "pools": {
+   "all": {
+    "cfg_n_ndown_base": [
+     [
+      442,
+      176,
+      0.4955
+     ],
+     [
+      843,
+      439,
+      0.5445
+     ],
+     [
+      845,
+      441,
+      0.4178
+     ]
+    ],
+    "power": {
+     "0.05": 0.0,
+     "0.1": 0.0,
+     "0.15": 0.12,
+     "0.2": 0.968,
+     "0.25": 1.0,
+     "0.3": 1.0
+    }
+   },
+   "qual": {
+    "cfg_n_ndown_base": [
+     [
+      220,
+      73,
+      0.5591
+     ],
+     [
+      313,
+      126,
+      0.6262
+     ],
+     [
+      315,
+      121,
+      0.473
+     ]
+    ],
+    "power": {
+     "0.05": 0.0,
+     "0.1": 0.0018,
+     "0.15": 0.1242,
+     "0.2": 0.766,
+     "0.25": 0.99,
+     "0.3": 1.0
+    }
+   }
+  },
+  "read": "delta=0.20 以上なら検出できる（all 0.97 / qual 0.77）。delta=0.15 ちょうどは 0.12 ＝コイン投げ以下"
+ },
+ "final_verdict": {
+  "1_independent_recompute": "完全一致（最大差 0.0）",
+  "2_base_vs_raw": "生ファイルとの食い違い 0 件",
+  "3_A_fail_not_broken": "事前登録の統計（符号の持続）はどの切り方でも線に届かない。A1(streak) A3(不感帯) A4(業種中心化) A5(水準統制) A6(gap5) すべて負または~0",
+  "4_A2_one_postoc_cell_survived": {
+   "what": "qual × 対称に深い線(-0.10pt) は3対とも lift>=0.15（0.163/0.170/0.165）で、族の置換 p=0.0095、水準で対応させた対照でも消えない",
+   "but": [
+    "★事前登録に無い私の後知恵の探索（H5 の統計は『次<0』であって『次<-0.10』ではない）",
+    "分子が 2 / 8 / 4 ＝ prereg H2 が深い線に課している『分子>=5社』を3対中2対で満たさない",
+    "42行のうち実社数32・10社が複数の対に重複（MYGN と TRIP は分子にも二度出る）",
+    "全社プール（n=35/134/126 と厚い）では 0.131/0.027/0.091 ＝ 通らない。合格は qual に絞って n を 7/21/14 にして初めて出る",
+    "全社プールでの機構は方向ではなく振れ幅（rho_abs 0.20-0.40 vs rho_signed -0.14〜+0.02／振れる群の同符号率 0.28-0.55）",
+    "深い群の next の最頻ビンは3対中2対で『中くらいの上昇』（+0.02..+0.10 に 0.429 / 0.643）"
+   ],
+   "verdict": "壊せなかった。だが『発見』として扱ってはいけない——事前登録し、未見のビンテージ(2019/2020)で一度だけ当てるべき候補"
+  },
+  "5_B_level_claim_not_broken": "業種内(0.19-0.25) 規模3分位(0.16-0.34) 1業種抜き(0.20-0.29) 外れ値除去(むしろ上がる) gap5限定(0.22-0.27) 置換(p=0.0005) ——6系統すべてで線を保つ",
+  "6_units": "opm は base で % / opmD5 は比率pt。取り違え無し",
+  "7_lookahead": "8ビンテージとも fy_end>deadline は 0 件",
+  "8_power": "delta=0.20 なら検出できる(all 0.97)。delta=0.15 ちょうどは 0.12 ＝『0.15 未満の一様な持続は無い』とは言えない",
+  "how_far_to_trust": "『符号の持続はゼロ〜わずかに負』は信じてよい（独立再計算・6セル全負・置換で有意・機械バイアスも gap5 で外れる）。『トレンドは反転する』は信じてはいけない（水準の平均回帰が半分から3分の2を説明する）。『振れ幅は持続する』は本物（rho_abs 0.20-0.40）。『深い下落は持続する』は未検証の候補であって結論ではない"
+ }
+}
