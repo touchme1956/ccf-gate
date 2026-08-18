@@ -716,7 +716,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 /* 章の色（タブを変えると紙に落ちる光の色が変わる）。丹＝イベント＝警報の色 */
 #pg6{--ch:var(--gs6);} #pg9{--ch:var(--gs3);} #pg1{--ch:var(--gs1);} #pg8{--ch:var(--gs2);}
 #pg2{--ch:var(--gs5);} #pg3{--ch:#414c58;}    #pg4{--ch:var(--gs4);} #pg5{--ch:var(--gs5);}
-#pg7{--ch:var(--gs7);} #pg11{--ch:var(--gs2);} .pg{--ch:var(--gs5);position:relative;}
+#pg7{--ch:var(--gs7);} #pg11{--ch:var(--gs2);} #pg12{--ch:var(--gs7);} .pg{--ch:var(--gs5);position:relative;}
 
 /* ① 章の環境光（ページの上から差す。本文の色には触れない） */
 .pg::before{content:"";position:fixed;left:0;right:0;top:0;height:72vh;z-index:-1;pointer-events:none;
@@ -814,6 +814,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <nav class="pgnav">
  <button id="tab10" onclick="showPage(10)" style="color:var(--gold-bright)">📋 今日</button>
  <button id="tab6" onclick="showPage(6)" style="color:var(--gold-bright)">📊 盤</button>
+<button id="tab12" onclick="showPage(12)">📈 成績</button>
 <button id="tab9" onclick="showPage(9)">⚙ 自動化</button>
 <button id="tab11" onclick="showPage(11)">🩺 点検</button>
 <button id="tab1" onclick="showPage(1)">Ⅰ 解説</button>
@@ -875,6 +876,19 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
    <span id="dashAsof" style="font-size:11.5px;color:var(--dim)"></span>
  </div>
  <div id="dashBox"><div style="color:var(--dim);font-size:13px">「↻ 更新」で読み込む。</div></div>
+</div>
+<!-- 📈成績（v9.9.156・2026-08-18 ユーザー要望「別のタブでグラフ込みで作れる？もちろん自動更新で」）:
+     **計算は端末の単一実装 night/fetch_returns.py**（out/returns.json ＋ out/returns_series.json）。
+     門は描くだけ＝dashboard.json と同じ作法（v9.9.65）。market.yml が平日21:30UTCに更新する。
+     ⚠**表示専用**——Ω・四関門・売却規律・配分のどれにも触れない。
+     ⚠ グラフは外部ライブラリを使わない素のSVG（CSPで外部スクリプトは読めない・二重実装も作らない）。 -->
+<div id="pg12" class="pg">
+ <h1 class="serif">📈 成績</h1>
+ <p class="intro"><b>同じ円を同じ日に S&amp;P500 へ入れていたら</b>——を毎日引き直したグラフ。<b>すべて円建て</b>で、指数も円へ直してある。<details class="why plain" data-fold="2"><summary>つづき</summary><div class="why-body"><b>表示専用で判定には使わない</b>——売りは S1/S2/S3・買いは四関門のみで動く。計算は端末の <code>night/fetch_returns.py</code> が持ち、門は <code>out/returns.json</code> と <code>out/returns_series.json</code> を描くだけ（v9.9.65）。<b>毎営業日 market.yml が更新する</b>ので、開けば最新になっている。⚠ 買付日が<b>想定</b>の行があるうちは、この線そのものが置いた前提の上にある——窓のどこを取るかで差がどれだけ動くかは下の表に出してある。⚠ 網(ETF)は Ⅶ資産が扱わない設計なので、これは<b>城（個別銘柄）だけ</b>の成績で、資産全体ではない。</div></details></p>
+ <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+   <button onclick="ccfPerf()" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
+ </div>
+ <div id="perfBox"><div style="color:var(--dim);font-size:13px">読込中…</div></div>
 </div>
 <div id="pg1" class="pg">
 
@@ -1296,7 +1310,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.155</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.156</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3907,6 +3921,165 @@ let __dashCache=null;
 //     この台帳が12回踏んだ「基準の違う二つを割る」型そのものなので、S&P500 も円へ直して比べる。
 //     そのうえで**為替の寄与を別の列で出す**——混ぜると円安で儲かったのを
 //     「銘柄選択が上手かった」と読み違える。
+/* ══ 📈 成績（v9.9.156・2026-08-18 ユーザー要望「別のタブでグラフ込みで作れる？もちろん自動更新で」）══
+   **表示専用**——Ω・採点式・四関門・堀の関門・売却規律S1/S2/S3・配分のどれにも触れない。
+   ★自動更新の作法は価格・ロゴと同じ:「CIで計算してJSONで配り、門は描くだけ」。
+     推移は night/fetch_returns.py が out/returns_series.json を作り、market.yml が
+     毎営業日コミットする。ブラウザから外部APIを叩かない（同一オリジンの静的JSONだけ）。
+   ★グラフは**外部ライブラリを使わない素のSVG**。CSPで外部スクリプトは読めないし、
+     入れれば「同じものを二つの実装が描く」ことになる（v9.9.65）。
+   ⚠ viewBox は 720 幅の固定。360px の画面では約半分に縮むので、
+     文字は user unit で 17〜20 に取る（14 で書くと実寸7pxになって読めない）。 */
+function ccfNiceStep(span, want){
+  const raw=span/Math.max(1,want), p=Math.pow(10,Math.floor(Math.log10(raw)||0)), r=raw/p;
+  return (r<=1?1:r<=2?2:r<=2.5?2.5:r<=5?5:10)*p;
+}
+/* sets: [{name,v:[..],c:'色',dash:true?,w:太さ}]  fmt: 目盛りの書式 */
+function ccfSvgLine(sets, opts){
+  opts=opts||{};
+  const W=720, H=opts.h||300, PL=opts.pl||56, PR=12, PT=12, PB=opts.pb||22;
+  const use=sets.filter(s=>s&&s.v&&s.v.length>1);
+  if(!use.length) return '';
+  const n=Math.max.apply(null,use.map(s=>s.v.length));
+  let lo=Infinity, hi=-Infinity;
+  use.forEach(s=>s.v.forEach(y=>{ if(y==null||!isFinite(y))return; if(y<lo)lo=y; if(y>hi)hi=y; }));
+  if(!isFinite(lo)||!isFinite(hi)) return '';
+  if(opts.zero){ lo=Math.min(lo,0); hi=Math.max(hi,0); }
+  if(hi<=lo) hi=lo+1;
+  const pad=(hi-lo)*0.10; lo-=pad; hi+=pad;
+  const X=i=>PL+(W-PL-PR)*(n<2?0:i/(n-1));
+  const Y=y=>PT+(H-PT-PB)*(1-(y-lo)/(hi-lo));
+  const fmt=opts.fmt||(y=>String(Math.round(y)));
+  const step=ccfNiceStep(hi-lo,4);
+  let grid='';
+  for(let g=Math.ceil(lo/step)*step; g<=hi+1e-9; g+=step){
+    const y=Y(g), z=Math.abs(g)<step*1e-6;
+    grid+=`<line x1="${PL}" x2="${W-PR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--line,#28344a)" `
+        + `stroke-width="${z?1.6:1}" opacity="${z?.85:.42}"/>`
+        + `<text x="${PL-7}" y="${(y+6).toFixed(1)}" text-anchor="end" font-size="17" fill="var(--muted,#94a0b4)">${fmt(g)}</text>`;
+  }
+  let paths='';
+  use.forEach(s=>{
+    let d='', open=false;
+    s.v.forEach((y,i)=>{ if(y==null||!isFinite(y)){open=false;return;}
+      d+=(open?'L':'M')+X(i).toFixed(1)+' '+Y(y).toFixed(1)+' '; open=true; });
+    if(!d) return;
+    if(s.fill){
+      const z=Y(Math.min(Math.max(0,lo),hi));
+      paths+=`<path d="${d}L${X(s.v.length-1).toFixed(1)} ${z.toFixed(1)} L${X(0).toFixed(1)} ${z.toFixed(1)} Z" `
+           + `fill="${s.c}" opacity=".13" stroke="none"/>`;
+    }
+    paths+=`<path d="${d}" fill="none" stroke="${s.c}" stroke-width="${s.w||2.4}" `
+         + `stroke-linejoin="round" stroke-linecap="round"${s.dash?' stroke-dasharray="7 5" opacity=".62"':''}/>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" style="width:100%;height:auto;display:block;overflow:visible">`
+       + grid + paths + '</svg>';
+}
+/* 横棒（銘柄別の寄与）。値は円。0を跨ぐので中央から左右に伸ばす */
+function ccfSvgBars(items){
+  if(!items.length) return '';
+  // ⚠ 右の余白は**ラベルの実長**で決める。104 で切ると「+¥131,877（+26.38%）」が枠外へ出る（実測）
+  const W=720, RH=34, H=items.length*RH+10, PL=112;
+  const PR=Math.max(120, Math.min(300, 11*Math.max.apply(null,items.map(x=>x.lab.length))+16));
+  const m=Math.max.apply(null,items.map(x=>Math.abs(x.v)))||1;
+  const zx=PL+(W-PL-PR)*(items.some(x=>x.v<0)?0.34:0.02);
+  const sc=(W-PR-zx-6)/m;
+  let g=`<line x1="${zx}" x2="${zx}" y1="4" y2="${H-6}" stroke="var(--line,#28344a)" stroke-width="1.4" opacity=".8"/>`;
+  items.forEach((x,i)=>{
+    const y=8+i*RH, w=Math.abs(x.v)*sc, neg=x.v<0;
+    g+=`<rect x="${(neg?zx-Math.min(w,zx-PL):zx).toFixed(1)}" y="${y}" width="${Math.max(1.5,neg?Math.min(w,zx-PL):w).toFixed(1)}" `
+     + `height="${RH-13}" rx="3" fill="${neg?'var(--fail,#cf7a60)':'var(--pass,#8cc091)'}" opacity=".78"/>`
+     + `<text x="${PL-9}" y="${y+RH-19}" text-anchor="end" font-size="18" fill="var(--ink,#f0ecdf)">${x.t}</text>`
+     + `<text x="${W-PR+8}" y="${y+RH-19}" font-size="16" fill="${neg?'var(--fail,#cf7a60)':'var(--pass,#8cc091)'}">${x.lab}</text>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" style="width:100%;height:auto;display:block;overflow:visible">${g}</svg>`;
+}
+function ccfPerfLegend(items){
+  return '<div style="display:flex;flex-wrap:wrap;gap:12px;margin:2px 0 6px;font-size:11.5px">'
+    + items.map(x=>`<span style="display:inline-flex;align-items:center;gap:5px;white-space:nowrap">`
+        + `<span style="width:${x.dash?16:12}px;height:3px;background:${x.c};opacity:${x.dash?.62:1};border-radius:2px;display:inline-block"></span>`
+        + `<b style="color:var(--ink,#f0ecdf)">${x.name}</b>${x.val?`<span style="color:${x.c}">${x.val}</span>`:''}</span>`).join('')
+    + '</div>';
+}
+function ccfPerfHTML(R,S){
+  const box=(t,sub,body)=>`<div class="panel" style="margin:14px 0"><div style="font-size:13px;font-weight:600;color:var(--gold-bright,#ecd494);margin-bottom:2px">${t}</div>`
+    +`<div style="font-size:11px;color:var(--muted,#94a0b4);margin-bottom:8px;line-height:1.7">${sub}</div>${body}</div>`;
+  if(!R) return '<div style="font-size:12.5px;color:var(--muted,#94a0b4)">out/returns.json が読めない——'
+    + '<b>「リターンがゼロ」ではなく「測れていない」</b>。端末で <code>python3 night/fetch_returns.py</code> を回すか、'
+    + 'market.yml（平日21:30UTC）の実行を待つ。</div>';
+  const pc=n=>(n==null||!isFinite(n))?'——':(n>0?'+':'')+(n*100).toFixed(2)+'%';
+  const pt=n=>(n==null||!isFinite(n))?'——':(n>0?'+':'')+(n*100).toFixed(1)+'pt';
+  const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+  let out='';
+  if(S&&S.days&&S.days.length>1){
+    const d=S.days, inv=S.inv, tr=S.tr, val=S.val, bmk=S.bmk;
+    const rTr=tr.map((x,i)=>x/inv[i]-1), rPx=val.map((x,i)=>x/inv[i]-1), rBm=bmk.map((x,i)=>x/inv[i]-1);
+    const diff=rTr.map((x,i)=>x-rBm[i]);
+    const last=a=>a[a.length-1];
+    const span=`<div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted,#94a0b4);margin-top:1px">`
+      +`<span>${d[0]}</span><span>${d[d.length-1]}</span></div>`;
+    // ① 累積リターンの推移
+    out+=box('① 累積リターンの推移（円建て）',
+      '<b>同じ円を同じ日に入れていたら</b>、を毎日引き直したもの。'
+      +'指数(^SP500TR)は配当込みなので、<b>保有も配当込みの線を主に読む</b>——価格ベースと引き算すると配当のぶんだけ保有が低く出る。'
+      +'買付日が判る行だけで作ってあり、終点は下の表と一致する（機械で検算済み）。',
+      ccfPerfLegend([
+        {name:'保有（配当込）',c:'var(--gold-bright,#ecd494)',val:pc(last(rTr))},
+        {name:'S&P500（配当込）',c:'var(--pass,#8cc091)',val:pc(last(rBm))},
+        {name:'保有（価格）',c:'var(--muted,#94a0b4)',dash:1,val:pc(last(rPx))}])
+      + ccfSvgLine([{v:rBm,c:'var(--pass,#8cc091)'},{v:rPx,c:'var(--muted,#94a0b4)',dash:1,w:2},
+                    {v:rTr,c:'var(--gold-bright,#ecd494)',w:2.8}],
+                   {zero:1,fmt:y=>(y>0?'+':'')+(y*100).toFixed(0)+'%'}) + span);
+    // ② 差
+    out+=box('② S&P500 との差の推移',
+      '① の二本（<b>どちらも配当込み</b>）の引き算。0より上なら勝っている。'
+      +'<b>買付日が想定の行を含む</b>ので、この線そのものも置いた前提の上にある。',
+      ccfPerfLegend([{name:'差（保有 − S&P500）',c:last(diff)>=0?'var(--pass,#8cc091)':'var(--fail,#cf7a60)',val:pt(last(diff))}])
+      + ccfSvgLine([{v:diff,c:last(diff)>=0?'var(--pass,#8cc091)':'var(--fail,#cf7a60)',fill:1,w:2.6}],
+                   {zero:1,h:210,fmt:y=>(y>0?'+':'')+(y*100).toFixed(0)+'pt'}) + span);
+    // ③ 投じた円
+    out+=box('③ 投じた円（分母）の推移',
+      '入金のたびに段が上がる。<b>①②の分母はこれ</b>——段が上がった直後は、'
+      + 'その銘柄の値動きが全体に効き始めたばかりなので、差の線が振れやすい。',
+      ccfPerfLegend([{name:'投じた円',c:'var(--gs4,#6b3350)',val:yen(last(inv))}])
+      + ccfSvgLine([{v:inv,c:'var(--gs4,#6b3350)',fill:1,w:2.2}],
+                   {h:150,pl:74,fmt:y=>'¥'+Math.round(y/10000)+'万'}) + span);
+  }else{
+    out+=box('推移','','<div style="font-size:12px;color:#d69a3c">推移が作れない——'
+      + '<b>「損益ゼロ」ではなく「測れていない」</b>。買付日が判る行が2日ぶん揃わないと線が引けない。'
+      + (S===null?'（out/returns_series.json が読めなかった）':'')+'</div>');
+  }
+  // ④ 銘柄別の寄与
+  const ps=(R.positions||[]).filter(r=>!r.skip&&r.pl_jpy!=null)
+            .slice().sort((a,b)=>(b.pl_jpy||0)-(a.pl_jpy||0));
+  if(ps.length) out+=box('④ 銘柄別の損益（円）',
+    '<b>金額</b>の寄与。%が大きくても投じた円が小さければ全体は動かない——'
+    +'この門は<b>時価総額Tierで配分する</b>ので、上位Tierほど棒が長くなるのが設計どおり。',
+    ccfSvgBars(ps.map(r=>({t:r.t,v:r.pl_jpy,
+      lab:(r.pl_jpy>0?'+':'')+yen(r.pl_jpy)+'（'+pc(r.ret_px_jpy)+'）'}))));
+  // 表は既存の単一実装をそのまま呼ぶ（二重に持たない・v9.9.65）
+  out+=box('⑤ 明細（表）','グラフと同じデータの表。行ごとの入口・取得額の出所・想定日の窓はここで読む。',
+    ccfReturnsHTML(R));
+  if(S&&S.endpoint_gap&&!S.endpoint_gap.ok)
+    out+='<div style="font-size:11.5px;color:#c9534f;margin-top:8px">⚠ <b>推移の終点が表の合計と合わない</b>'
+      + '（評価 '+S.endpoint_gap.val+'円 / 取得 '+S.endpoint_gap.cost+'円 / 配当込 '+S.endpoint_gap.tr
+      + '円 / 指数 '+S.endpoint_gap.bmk+'円）——どちらかが壊れている。数字を信じる前に直すこと</div>';
+  if(S&&S.downsampled)
+    out+='<div style="font-size:11px;color:var(--muted,#94a0b4);margin-top:6px">ℹ 推移は '+S.downsampled.before
+      + '点を '+S.downsampled.after+'点へ間引いて描いている（'+S.downsampled.step+'日ごと・両端は残す）。線の形だけの話で、表の数字は間引いていない</div>';
+  return out;
+}
+async function ccfPerf(){
+  const box=document.getElementById('perfBox'); if(!box) return;
+  if(box.dataset.busy==='1') return; box.dataset.busy='1';
+  box.innerHTML='<div style="font-size:12px;color:var(--muted,#94a0b4)">読込中…</div>';
+  const j=async u=>{ try{ const r=await fetch(u+'?t='+Date.now()); return r.ok?await r.json():null; }catch(e){ return null; } };
+  const [R,S]=await Promise.all([j('out/returns.json'), j('out/returns_series.json')]);
+  box.innerHTML=ccfPerfHTML(R,S);
+  box.dataset.busy='0';
+  try{ if(typeof ccfPaint==='function') ccfPaint(document.getElementById('pg12')); }catch(e){}
+  try{ if(typeof ccfIconRepaint==='function') ccfIconRepaint(); }catch(e){}
+}
 function ccfReturnsHTML(R){
   // 端末側の注記は Markdown の ** で強調が書いてあるので <b> へ直す（生の ** が画面に出ないように）
   const md=t=>String(t==null?'':t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
@@ -3993,6 +4166,8 @@ function ccfReturnsHTML(R){
     //      だから比較は C(=同じ集合の保有側) と B を必ず対で描く。
     if(B&&C){
       const d=C.ret-B.ret;
+      // ★同じ基準どうし（配当込 vs ^SP500TR）。compared_tr が無い古い JSON では価格ベースへ倒す
+      const dTr=(R.compared_tr?R.compared_tr.ret:C.ret)-B.ret;
       const nOut=(R.positions||[]).filter(r=>r.cmp_out).length;
       sum+=`<div style="font-size:11px;color:var(--dim);margin:10px 0 2px">── 同じ日・同じ円で比べられる分だけ`
         +(nOut?`（${nOut}社は下の理由で外している）`:'')+` ──</div>`
@@ -4003,6 +4178,13 @@ function ccfReturnsHTML(R){
         +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(C.pl_jpy)}">${C.pl_jpy>0?'+':''}${yen(C.pl_jpy)}</span>`
         +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(C.ret)}"><b>${pc(C.ret)}</b></span>`
         +`<span style="min-width:66px"></span><span style="min-width:62px"></span></div>`
+        + (R.compared_tr ? `<div class="led"><span class="ln">保有（配当込）<span style="font-size:9.5px;color:var(--dim);margin-left:5px">指数と同じ基準</span></span>`
+        +`<span style="min-width:74px"></span>`
+        +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(R.compared_tr.cost_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(R.compared_tr.val_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(R.compared_tr.pl_jpy)}">${R.compared_tr.pl_jpy>0?'+':''}${yen(R.compared_tr.pl_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(R.compared_tr.ret)}"><b>${pc(R.compared_tr.ret)}</b></span>`
+        +`<span style="min-width:66px"></span><span style="min-width:62px"></span></div>` : '')
         +`<div class="led"><span class="ln">S&amp;P500（配当込み・円建て）</span>`
       +`<span style="min-width:74px"></span>`
         +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(B.cost_jpy)}</span>`
@@ -4011,13 +4193,20 @@ function ccfReturnsHTML(R){
         +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(B.ret)}"><b>${pc(B.ret)}</b></span>`
         +`<span style="min-width:66px"></span><span style="min-width:62px"></span></div>`
         +`<div style="font-size:12.5px;padding:8px 12px;margin-top:6px;background:var(--panel2);border:1px solid var(--line);border-radius:8px">`
-        +`S&amp;P500 との差（円建て）: <b style="color:${col(d)};font-size:15px">${(d>0?'+':'')+(d*100).toFixed(2)}pt</b>`
+        +`S&amp;P500 との差（円建て）: <b style="color:${col(dTr)};font-size:15px">${(dTr>0?'+':'')+(dTr*100).toFixed(2)}pt</b>`
         +` <span style="color:var(--dim)">——同じ円を同じ日に S&amp;P500 へ入れていたらどうだったか</span>`
+        // ★差は**同じ基準どうし**（保有の配当込 vs ^SP500TR）で出す。価格ベースの保有を
+        //   配当込みの指数と引くと、配当のぶんだけ保有が構造的に低く出る（基準の違う二つ）
+        +(R.compared_tr?`<div style="font-size:11px;color:var(--dim);margin-top:3px">`
+          +`どちらも<b>配当込み</b>で揃えてある。参考: 価格ベースの保有と引くと `
+          +`<b>${(d>0?'+':'')+(d*100).toFixed(2)}pt</b>——指数だけ配当が入るので保有が低く出る</div>`:'')
         +(()=>{ // ★想定日の上に載っている数字なら、**動く幅を必ず一緒に出す**。
                 //   1点だけ出すと「測った数字」に見える——幅こそがこの行の情報
           const br=R.benchmark_range, nE=(R.positions||[]).filter(r=>r.bd_est).length;
           if(!br||!nE) return '';
-          const lo=C.ret-Math.max(...br), hi=C.ret-Math.min(...br);
+          // 幅も**同じ基準**（配当込みの保有）から引く。上の点推定と土俵を揃える
+          const base=R.compared_tr?R.compared_tr.ret:C.ret;
+          const lo=base-Math.max(...br), hi=base-Math.min(...br);
           return `<div style="margin-top:6px;font-size:11.5px;color:#d69a3c;line-height:1.85">`
             +`⚠ うち <b>${nE}社は買付日が想定</b>（取引履歴が無いので終値から置いた）。候補日のどこを取るかで差は`
             +` <b>${(lo*100).toFixed(2)}〜${(hi*100).toFixed(2)}pt</b> に開く`
@@ -4234,8 +4423,19 @@ async function ccfDash(btn){
             <b>Ⅳ台帳の「￥ 価格だけ更新」</b>に <code>6146 38000</code> のように「コード 現値」を行区切りで貼れば更新できる（月1回・DCAの買付時でよい）。
             per は<b>価格の変化率だけ</b>を反映する式で再計算されるので、利益の期間基準は壊れない。</span></div>`:''),
         '評価額・含み損益は<b>記帳のための情報</b>。出口判定はS1/S2/S3のみで、含み損益では動かさない')
-    + sec('📈 トータルリターン', ccfReturnsHTML(rtn),
-        '<b>すべて円建て</b>——ドル建てのリターンと円建ての資産を並べると「基準の違う二つを割る」型になるため、S&amp;P500 も円へ直して比べる。<b>表示専用で判定には使わない</b>')
+    // v9.9.156: トータルリターンの表とグラフは **📈成績タブ**（pg12）へ移した。
+    //   同じものを二箇所に置くと、片方を直してもう片方を忘れる（v9.9.65 の掟）。
+    //   ここは**入口だけ**残す——盤から辿れなくなると「作ったのに誰も読まない」型になる。
+    + sec('📈 成績', `<div style="font-size:12.5px;color:var(--ink);line-height:1.9">`
+        + (rtn&&rtn.compared_tr
+            ? `保有（配当込）<b style="color:var(--gold-bright)">${(rtn.compared_tr.ret*100>0?'+':'')}${(rtn.compared_tr.ret*100).toFixed(2)}%</b>`
+              + `　／　S&amp;P500 <b>${(rtn.benchmark&&rtn.benchmark.ret!=null)?((rtn.benchmark.ret*100>0?'+':'')+(rtn.benchmark.ret*100).toFixed(2)+'%'):'——'}</b>`
+              + ((rtn.benchmark&&rtn.benchmark.ret!=null)
+                  ? `　／　差 <b style="color:${rtn.compared_tr.ret>=rtn.benchmark.ret?'var(--jade)':'var(--rust)'}">`
+                    + `${((rtn.compared_tr.ret-rtn.benchmark.ret)*100>0?'+':'')}${((rtn.compared_tr.ret-rtn.benchmark.ret)*100).toFixed(2)}pt</b>` : '')
+            : 'out/returns.json が読めない——<b>「リターンがゼロ」ではなく測れていない</b>')
+        + `<br><button onclick="showPage(12)" style="margin-top:7px;padding:7px 14px;background:linear-gradient(180deg,rgba(201,166,74,.26),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:12.5px;font-weight:600;cursor:pointer">📈 成績タブでグラフと明細を見る</button></div>`,
+        '<b>推移のグラフと銘柄別の明細は 📈成績タブ</b>へ移した（同じものを二箇所に置かない）。ここは要約だけ')
     + sec('🟢 投下可', buyHtml
         // v9.9.145: 半導体上限を撤去したので「（半導体上限）」の印は消えた。
         //   集中そのものは Ⅵ の◇注記が出し続ける（関門を消しても事実は消さない）。
@@ -6365,7 +6565,7 @@ async function renderLog(){
 }
 function toggleLog(ek){const b=document.getElementById('bd_'+ek),a=document.getElementById('ar_'+ek);if(!b)return;const open=b.style.display!=='none';b.style.display=open?'none':'block';if(a)a.textContent=open?'▸':'▾';}
 async function delLog(k){if(!await uiConfirm('この検証記録を削除しますか？'))return;try{await store.delete(k);renderLog();}catch(e){}}
-function showPage(n){for(let i=1;i<=11;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();if(n===9&&typeof ccfEvents==='function')ccfEvents();if(n===10&&typeof ccfToday==='function')ccfToday();if(n===11&&typeof ccfCheck==='function')ccfCheck();window.scrollTo({top:0});try{const _t=document.getElementById('tab'+n);if(_t&&_t.scrollIntoView)_t.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}catch(e){}if(typeof ccfNavFade==='function')ccfNavFade();
+function showPage(n){for(let i=1;i<=12;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();if(n===9&&typeof ccfEvents==='function')ccfEvents();if(n===10&&typeof ccfToday==='function')ccfToday();if(n===11&&typeof ccfCheck==='function')ccfCheck();if(n===12&&typeof ccfPerf==='function')ccfPerf();window.scrollTo({top:0});try{const _t=document.getElementById('tab'+n);if(_t&&_t.scrollIntoView)_t.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}catch(e){}if(typeof ccfNavFade==='function')ccfNavFade();
   /* 五彩(v9.9.130): 章の色をナビへ渡し、描き直された箱にも色を配る */
   if(typeof ccfChapTint==='function')ccfChapTint(n);
   if(typeof ccfPaint==='function')ccfPaint(document.getElementById('pg'+n));}
