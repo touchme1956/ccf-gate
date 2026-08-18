@@ -3918,7 +3918,15 @@ function ccfReturnsHTML(R){
   const pc=n=>(n==null)?'——':((n>0?'+':'')+(n*100).toFixed(2)+'%');
   const col=n=>(n==null)?'var(--dim)':(n>0?'var(--jade,#3f8f6b)':(n<0?'var(--rust,#a8442a)':'var(--dim)'));
   const P=R.portfolio, B=R.benchmark, C=R.compared;
+  // ★「いつで計算したのか」を画面が答えられるようにする（2026-08-18 ユーザーの問い）
+  const exD=[...new Set((R.positions||[]).map(r=>r.asof).filter(Boolean))].join('/');
+  const exF=[...new Set((R.positions||[]).map(r=>r.fx1_day).filter(Boolean))].join('/');
+  const asofLine=`<div style="font-size:11px;color:var(--dim);margin:0 0 6px;line-height:1.8">`
+    +`<b>出口</b>（全銘柄で共通）: 株価 ${exD||'—'}　指数 ^SP500TR ${R.bench_asof||'—'}　ドル円 ${exF||'—'}`
+    +`<br><b>入口</b>: 銘柄ごとに別々（下の「入口」列）。`
+    +`<b>S&amp;P500 の%は1本の窓の指数リターンではなく、各行を別々の入口から走らせた加重合成</b></div>`;
   const hdr='<div class="led" style="opacity:.65;font-size:10.5px"><span class="ln">銘柄</span>'
+    +'<span style="min-width:74px;text-align:center">入口</span>'
     +'<span style="min-width:92px;text-align:right">取得(円)</span>'
     +'<span style="min-width:92px;text-align:right">評価(円)</span>'
     +'<span style="min-width:96px;text-align:right">損益</span>'
@@ -3928,6 +3936,7 @@ function ccfReturnsHTML(R){
   let rows='';
   (R.positions||[]).forEach(r=>{
     if(r.skip){ rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}</span>`
+      +`<span style="min-width:74px"></span>`
       +`<span style="font-size:11.5px;color:var(--dim)">—— ${r.skip}</span></div>`; return; }
     const est=r.src==='est'
       ? `<span title="買付単価(bpx)が未記録なので ${r.bd} の終値で推定。実際の約定値でも手数料込みでもない" style="font-size:9.5px;color:#d69a3c;margin-left:4px">推定</span>` : '';
@@ -3949,6 +3958,10 @@ function ccfReturnsHTML(R){
         + (w?`。終値がその水準だったのは ${w.first}〜${w.last}`:'')
         + `" style="font-size:9.5px;color:#d69a3c;margin-left:4px">買付日?</span>` : '';
     rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}${est}${jpc}${est2}${bds}</span>`
+      +`<span style="font-size:11px;min-width:74px;text-align:center;color:var(--dim)"`
+      +` title="この日に買ったものとして計算している。指数もこの日から走らせる`
+      +(r.fx0?`。入口のドル円 ${r.fx0.toFixed(2)} → 出口 ${(r.fx1||0).toFixed(2)}`:'')
+      +`">${r.bd||'—'}</span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(r.cost_jpy)}</span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(r.val_jpy)}</span>`
       +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(r.pl_jpy)}">${r.pl_jpy>0?'+':''}${yen(r.pl_jpy)}</span>`
@@ -3961,6 +3974,7 @@ function ccfReturnsHTML(R){
     const tr=(P.ret_tr!=null?P.ret_tr:P.ret);
     sum=`<div class="led" style="border-top:2px solid var(--line);margin-top:4px">`
       +`<span class="ln"><b>ポートフォリオ合計</b><span style="font-size:9.5px;color:var(--dim);margin-left:5px">城のみ</span></span>`
+      +`<span style="min-width:74px"></span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(P.cost_jpy)}</span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(P.val_jpy)}</span>`
       +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(P.pl_jpy)}">${P.pl_jpy>0?'+':''}${yen(P.pl_jpy)}</span>`
@@ -3977,12 +3991,14 @@ function ccfReturnsHTML(R){
       sum+=`<div style="font-size:11px;color:var(--dim);margin:10px 0 2px">── 同じ日・同じ円で比べられる分だけ`
         +(nOut?`（${nOut}社は下の理由で外している）`:'')+` ──</div>`
         +`<div class="led"><span class="ln">保有（この集合）</span>`
+      +`<span style="min-width:74px"></span>`
         +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(C.cost_jpy)}</span>`
         +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(C.val_jpy)}</span>`
         +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(C.pl_jpy)}">${C.pl_jpy>0?'+':''}${yen(C.pl_jpy)}</span>`
         +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(C.ret)}"><b>${pc(C.ret)}</b></span>`
         +`<span style="min-width:66px"></span><span style="min-width:62px"></span></div>`
         +`<div class="led"><span class="ln">S&amp;P500（配当込み・円建て）</span>`
+      +`<span style="min-width:74px"></span>`
         +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(B.cost_jpy)}</span>`
         +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(B.val_jpy)}</span>`
         +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(B.pl_jpy)}">${B.pl_jpy>0?'+':''}${yen(B.pl_jpy)}</span>`
@@ -4058,7 +4074,7 @@ function ccfReturnsHTML(R){
       +cf.map(r=>`${r.t}（v ${yen(r.v_conflict.v)} / 取得 ${yen(r.v_conflict.cost)} / 評価 ${yen(r.v_conflict.val)}）`).join('・')
       +`——<b>どちらが正しいかは機械には判らない</b>ので名指しするだけ。株数があるとき v は採点にも表示にも使われない</div>`;
   (R.blind||[]).forEach(b=>{ warn+=`<div style="font-size:11px;color:var(--rust);margin-top:6px">✗ 読めなかった入力: ${md(b)}</div>`; });
-  return hdr+rows+sum+warn
+  return asofLine+hdr+rows+sum+warn
     +`<div style="font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.8">`
     +`<b>価格</b>=終値ベース（証券口座の含み損益と一致・配当は入らない）／`
     +`<b>配当込</b>=adjclose ベース＝<b>S&amp;P500TR と同じ基準</b>。`
