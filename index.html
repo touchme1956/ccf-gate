@@ -3997,7 +3997,7 @@ function ccfReturnsHTML(R){
           if(!br||!nE) return '';
           const lo=C.ret-Math.max(...br), hi=C.ret-Math.min(...br);
           return `<div style="margin-top:6px;font-size:11.5px;color:#d69a3c;line-height:1.85">`
-            +`⚠ うち <b>${nE}社は買付日が想定</b>（取引履歴が無いので終値から置いた）。窓の両端まで動かすと差は`
+            +`⚠ うち <b>${nE}社は買付日が想定</b>（取引履歴が無いので終値から置いた）。候補日のどこを取るかで差は`
             +` <b>${(lo*100).toFixed(2)}〜${(hi*100).toFixed(2)}pt</b> に開く`
             +`<br><span style="color:var(--dim)">＝この一つの数字は「測った」ではなく<b>置いた前提の上の数字</b>。`
             +`Ⅶ資産の「✎編集」→買付日に取引履歴の日付を入れれば確定する</span></div>`;
@@ -4044,8 +4044,14 @@ function ccfReturnsHTML(R){
         return `　<b>${r.t}</b> 単独では <b>${(r.cmp_range[0]*100).toFixed(1)}〜${(r.cmp_range[1]*100).toFixed(1)}pt</b>`
           +`<span style="color:var(--dim)">（窓 ${bw.first}〜${bw.last}・${bw.n}日／${bw.how||''}）</span>`;
       }).join('<br>')
-      +`<br><span style="color:var(--dim)">窓が狭い行（MSFT 3日・RMD 2日）は<b>終値とドル円の二つが同じ日で一致</b>したもの`
-      +`——独立な二系列が合うのは偶然では起きにくいので、こちらは硬い</span></div>`;
+      +(()=>{ // ⚠ 数字を焼き付けない（必ず陳腐化する）——硬い行はデータから拾う
+          const firm=(R.positions||[]).filter(r=>r.bd_win&&/A∩B/.test(r.bd_win.how||''))
+            .map(r=>`${r.t} ${r.bd_win.n}日`);
+          return firm.length
+            ? `<br><span style="color:var(--dim)">窓が狭い行（${firm.join('・')}）は`
+              +`<b>終値とドル円の二つが同じ日で一致</b>したもの——独立な二系列が合うのは`
+              +`偶然では起きにくいので、こちらは硬い</span>` : '';
+        })()+`</div>`;
   const cf=(R.positions||[]).filter(r=>r.v_conflict);
   if(cf.length)
     warn+=`<div style="font-size:11px;color:#d69a3c;margin-top:6px;line-height:1.8">⚠ <b>state.json の金額(v)と食い違う ${cf.length}件</b>: `
