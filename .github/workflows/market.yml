@@ -72,6 +72,17 @@ jobs:
       #     （backfill で実際に踏んだ罠。out/score_all.json の履歴は CI と作業が交互に入る）。
       - name: 門の履歴へ今日の判定を追記
         run: python3 night/gate_history.py --append || true
+      # ── トータルリターン（v9.9.154・2026-08-17新設・鍵不要）──────────────────
+      #   保有／ポートフォリオ／S&P500 のトータルリターンを**円建てに揃えて**出す。
+      #   **表示専用**——Ω・四関門・売却規律・配分のどれにも触れない。
+      #   価格が毎営業日動くのでここ（market.yml）に置く。Yahoo 一本（鍵不要）。
+      #   ⚠ 1社も測れなければ**書かずに落ちる**（空の結果は「損益ゼロ」ではない）。
+      #   v9.9.156: 同じ実行で **out/returns_series.json**（📈成績タブの推移）も書く。
+      #     ⚠ 下の git add に入れ忘れると「毎営業日 作り直して捨てる」型になる（この repo で7回踏んだ）。
+      - name: トータルリターン（表示専用・円建て）
+        continue-on-error: true
+        run: timeout 300 python3 night/fetch_returns.py | tail -20
+
       - name: コミット
         run: |
           git config user.name  "ccf-gate bot"
@@ -89,6 +100,10 @@ jobs:
           #   ここは今日は全パス実在するが、`out/gate_history.jsonl` / `out/gate_state.json` は
           #   gate_history.py が初回に作るまで存在しない＝**新しい環境では全滅する**形だった。
           . night/git_add_safe.sh
-          ccf_git_add market_data.json out/dashboard.json 'out/*_gate_pack.json' out/score_all.json out/er_ledger.json out/validate_fail.json out/gate_history.jsonl out/gate_state.json
+          ccf_git_add market_data.json out/dashboard.json out/returns.json out/returns_series.json 'out/*_gate_pack.json' out/score_all.json out/er_ledger.json out/validate_fail.json out/gate_history.jsonl out/gate_state.json
           git diff --staged --quiet || git commit -m "$MSG"
-          git push
+          # ⚠2026-08-18: 素の `git push` は remote が進んだだけで弾かれ、
+          #   **作ったコミットがまるごと捨てられる**（market.yml が2営業日連続で70ファイル失った）。
+          #   cron は10〜40分ふつうに遅れるので「時間をずらす」では防げない。rebase して再試行する。
+          . night/git_push_safe.sh
+          ccf_git_push

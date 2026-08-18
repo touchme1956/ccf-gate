@@ -142,7 +142,11 @@ jobs:
           if git diff --staged --quiet; then echo "変化なし"; exit 0; fi
           N=$(git diff --staged --name-only | grep -c "_gate_pack.json" || echo 0)
           git commit -m "機械是正（自動）: ${N}パック｜投下可は不変"
-          git push
+          # ⚠2026-08-18: 素の `git push` は remote が進んだだけで弾かれ、
+          #   **作ったコミットがまるごと捨てられる**（market.yml が2営業日連続で70ファイル失った）。
+          #   cron は10〜40分ふつうに遅れるので「時間をずらす」では防げない。rebase して再試行する。
+          . night/git_push_safe.sh
+          ccf_git_push
 
       - name: 判定が動く → PRにして人へ
         if: steps.judge.outputs.same != 'yes'

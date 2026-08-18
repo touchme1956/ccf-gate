@@ -76,4 +76,8 @@ jobs:
           [ "$D" -gt 0 ] && MSG="⚠ サイクル停止疑い ${D}本｜$MSG"
           git add out/events_watch.json out/ops_status.json
           git diff --staged --quiet || git commit -m "$MSG"
-          git push
+          # ⚠2026-08-18: 素の `git push` は remote が進んだだけで弾かれ、
+          #   **作ったコミットがまるごと捨てられる**（market.yml が2営業日連続で70ファイル失った）。
+          #   cron は10〜40分ふつうに遅れるので「時間をずらす」では防げない。rebase して再試行する。
+          . night/git_push_safe.sh
+          ccf_git_push
