@@ -38,8 +38,11 @@
     (b) S&P500 との比較が「**同じ日**に入れていたら」でなくなる＝比較の意味が消える
   よって `bpx` が `bd` の終値と 3% 超ずれたら `bd_suspect` を立て、
   **その行は S&P500 との比較から外す**（円建ての取得額も「概算」と明示する）。
-  ⚠ 買付日を推定して埋めることはしない——平均取得価額は複数回買付の平均でありうるので、
-    終値が一致する日を「買付日」と決めるのは推測。代わりに**その水準だった期間**を候補として出す。
+  ⚠ 買付日をこの道具が推定して埋めることはしない。代わりに**その水準だった期間**を候補として出す。
+    ★2026-08-18 ユーザー指示「かいつけ日は想定日でいい」を受けて、`night/estimate_bd.py` が
+    **別の道具として**想定日を書く（`bdEst:true` + `bdWin`）。この道具はその札を読んで
+    **「想定」と明示したまま**比較を出し、**窓の両端で答えがどう動くか**を必ず併記する
+    ——実測で RBC は −0.3〜−15.9pt と 15pt 動く＝**想定が答えを支配する行がある**。
 
 ■ 年率換算はしない（180日未満）
   audit_er_realized / kessan_check_jp と同じ判断。数日の値動きを年率にすると桁が暴れ、
@@ -153,6 +156,7 @@ def main():
     tot_cost = tot_val = tot_cost_tr = tot_val_tr = 0.0
     bench_cost = bench_val = 0.0
     cmp_cost = cmp_val = 0.0
+    bench_ends = [0.0, 0.0]   # 想定日の窓の両端で指数がどうなるか
 
     for p in positions:
         t = p["t"]
@@ -264,6 +268,8 @@ def main():
         if r.get("cost_tr_jpy"):
             tot_cost_tr += r["cost_tr_jpy"]; tot_val_tr += r["val_tr_jpy"]
 
+        r["bd_est"] = bool(p.get("bdEst"))
+        r["bd_win"] = p.get("bdWin")
         r["_k"], r["_k0"] = k, k0
 
     # ── ★ 同じ `bd` を持つ行への伝播 ────────────────────────────────────
@@ -294,7 +300,7 @@ def main():
         if r.get("skip"):
             continue
         k, k0 = r.pop("_k", None), r.pop("_k0", None)
-        if r.get("bd_suspect"):
+        if r.get("bd_suspect") and not r.get("bd_est"):
             r["cmp_out"] = "買付日が判らない（bd が台帳の記入日）＝同じ日で比べられない"
         elif not (bench and r.get("bd") and k0):
             r["cmp_out"] = "買付日か指数か為替が取れない＝同じ日で比べられない"
@@ -309,6 +315,29 @@ def main():
                 bench_val += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
                 cmp_cost += r["cost_jpy"]
                 cmp_val += r["val_jpy"]
+                # ★想定日なら、窓の両端でも同じ計算をして**答えがどれだけ動くか**を出す。
+                #   1点だけ出すと「測った数字」に見えてしまう——動く幅こそがこの行の情報。
+                w = r.get("bd_win")
+                if w:
+                    ends = []
+                    for d in (w.get("first"), w.get("last")):
+                        bx = on_or_before(bench, d) if d else None
+                        fxx = on_or_before(fx, d) if (fx and d) else None
+                        if bx and fxx and fxx[0]:
+                            spv = r["cost_jpy"] * (b1 / bx[1]) * (k / fxx[0])
+                            ends.append(r["ret_px_jpy"] - (spv / r["cost_jpy"] - 1))
+                    if len(ends) == 2:
+                        r["cmp_range"] = [min(ends), max(ends)]
+                        bench_ends[0] += r["cost_jpy"] * (b1 / on_or_before(bench, w["first"])[1]) \
+                            * (k / on_or_before(fx, w["first"])[0])
+                        bench_ends[1] += r["cost_jpy"] * (b1 / on_or_before(bench, w["last"])[1]) \
+                            * (k / on_or_before(fx, w["last"])[0])
+                    else:
+                        bench_ends[0] += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
+                        bench_ends[1] += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
+                else:
+                    bench_ends[0] += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
+                    bench_ends[1] += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
 
     def pack(cost, val, cost_tr=None, val_tr=None):
         if not cost or cost <= 0:
@@ -342,6 +371,9 @@ def main():
                      "③ bd の終値で推定。行ごとに `cost_src` / `src` に書いてある"),
         },
         "compared": pack(cmp_cost, cmp_val),
+        # 想定日の窓の両端で指数がどうなるか＝**この比較がどれだけ想定に依存しているか**
+        "benchmark_range": ([min(bench_ends) / cmp_cost - 1, max(bench_ends) / cmp_cost - 1]
+                            if cmp_cost > 0 and bench_ends[0] and bench_ends[1] else None),
         "annualized": None,
         "span_days": span,
         "positions": rows,
@@ -352,6 +384,10 @@ def main():
     }
     if span is not None and span >= ANNUALIZE_MIN_DAYS:
         out["annualized"] = True
+        if any(r.get("bd_est") for r in rows):
+            # ⚠ 年数そのものが想定なので、年率は想定の上に想定を重ねた数字になる
+            out["annualize_why"] = ("⚠ 保有期間が**想定日から数えた日数**なので、年率も想定の上の数字。"
+                                    "取引履歴の日付が入るまでは累積の%のほうを見ること")
     else:
         out["annualized"] = False
         out["annualize_why"] = (f"保有期間が {span} 日＝{ANNUALIZE_MIN_DAYS}日未満なので**年率換算しない**。"
@@ -381,7 +417,10 @@ def main():
             if not src:
                 src = {"actual": "実記録(単価)", "est": f"推定({r['bd']}の終値)",
                        "jpy_only": "円のみ"}.get(r.get("src"), "?")
-            if r.get("bd_suspect"):
+            if r.get("bd_est"):
+                w = r.get("bd_win") or {}
+                src += f" ⚠想定日({w.get('n','?')}日窓)"
+            elif r.get("bd_suspect"):
                 src += " ⚠買付日不明"
             print(f"  {r['t']:<7}{r['sh']:>4.0f} {r['cost_jpy']:>10,.0f} {r['val_jpy']:>10,.0f} "
                   f"{r['pl_jpy']:>+10,.0f} {pct(r.get('ret_px_jpy'))} {pct(r.get('ret_tr_jpy'))} "
@@ -399,6 +438,19 @@ def main():
             print(f"  {'S&P500':<7}{'':>4} {bc['cost_jpy']:>10,.0f} {bc['val_jpy']:>10,.0f} "
                   f"{bc['pl_jpy']:>+10,.0f} {pct(bc['ret'])}  ← 同じ円を同じ日に入れていたら")
             print(f"\n  差（円建て）: {(cc['ret']-bc['ret'])*100:+.2f}pt")
+            br = out.get("benchmark_range")
+            nEst = sum(1 for r in rows if r.get("bd_est"))
+            if br and nEst:
+                lo = (cc["ret"] - max(br)) * 100
+                hi = (cc["ret"] - min(br)) * 100
+                print(f"  ⚠ うち **{nEst}社は買付日が想定**。窓の両端まで動かすと差は "
+                      f"**{lo:+.2f}〜{hi:+.2f}pt** に開く")
+                print("     ＝この一つの数字は「測った」ではなく「置いた前提の上の数字」。"
+                      "取引履歴の日付を入れれば確定する")
+            for r in rows:
+                if r.get("cmp_range") and abs(r["cmp_range"][1] - r["cmp_range"][0]) > 0.05:
+                    print(f"       {r['t']:<6} 単独では {r['cmp_range'][0]*100:+.1f}〜"
+                          f"{r['cmp_range'][1]*100:+.1f}pt ＝想定が答えを支配している")
         else:
             print("\n  ✗ **S&P500 との比較が1社も作れない**——「同じ円を同じ日に」の"
                   "『同じ日』が判らないため。買付日(bd)を入れれば出る")

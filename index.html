@@ -3936,13 +3936,19 @@ function ccfReturnsHTML(R){
       ? `<span title="証券アプリの取得価額（円）をそのまま使っている＝買付時のドル円を仮定していない" style="font-size:9.5px;color:var(--jade,#3f8f6b);margin-left:4px">実円</span>` : '';
     // ★ bd が買付日でない行は、円換算も為替の寄与も**概算**（買付日でない日のドル円を使っている）
     const w=r.bd_window;
-    const bds=r.bd_suspect
+    const bw=r.bd_win;
+    const est2=r.bd_est
+      ? `<span title="買付日は**想定**（取引履歴が無いので、終値がその水準だった日から置いた）。`
+        + `窓 ${bw?bw.first+'〜'+bw.last+'・'+bw.n+'日':'—'}／${bw?bw.how:''}`
+        + (r.cmp_range?`。この行だけで S&P500 との差は ${(r.cmp_range[0]*100).toFixed(1)}〜${(r.cmp_range[1]*100).toFixed(1)}pt に動く`:'')
+        + `" style="font-size:9.5px;color:#d69a3c;margin-left:4px">想定日</span>` : '';
+    const bds=(!r.bd_est&&r.bd_suspect)
       ? `<span title="bd(${r.bd}) は台帳に行を作った日で、買付日ではない`
         + (r.bd_gap!=null?`（実記録の単価はその日の終値と ${(r.bd_gap*100).toFixed(1)}% 違う）`:'（同じ日付の別の行で実証）')
         + `。円換算と為替の寄与は概算・S&P500 との比較からは外してある`
         + (w?`。終値がその水準だったのは ${w.first}〜${w.last}`:'')
         + `" style="font-size:9.5px;color:#d69a3c;margin-left:4px">買付日?</span>` : '';
-    rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}${est}${jpc}${bds}</span>`
+    rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}${est}${jpc}${est2}${bds}</span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(r.cost_jpy)}</span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(r.val_jpy)}</span>`
       +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(r.pl_jpy)}">${r.pl_jpy>0?'+':''}${yen(r.pl_jpy)}</span>`
@@ -3984,7 +3990,18 @@ function ccfReturnsHTML(R){
         +`<span style="min-width:66px"></span><span style="min-width:62px"></span></div>`
         +`<div style="font-size:12.5px;padding:8px 12px;margin-top:6px;background:var(--panel2);border:1px solid var(--line);border-radius:8px">`
         +`S&amp;P500 との差（円建て）: <b style="color:${col(d)};font-size:15px">${(d>0?'+':'')+(d*100).toFixed(2)}pt</b>`
-        +` <span style="color:var(--dim)">——同じ円を同じ日に S&amp;P500 へ入れていたらどうだったか</span></div>`;
+        +` <span style="color:var(--dim)">——同じ円を同じ日に S&amp;P500 へ入れていたらどうだったか</span>`
+        +(()=>{ // ★想定日の上に載っている数字なら、**動く幅を必ず一緒に出す**。
+                //   1点だけ出すと「測った数字」に見える——幅こそがこの行の情報
+          const br=R.benchmark_range, nE=(R.positions||[]).filter(r=>r.bd_est).length;
+          if(!br||!nE) return '';
+          const lo=C.ret-Math.max(...br), hi=C.ret-Math.min(...br);
+          return `<div style="margin-top:6px;font-size:11.5px;color:#d69a3c;line-height:1.85">`
+            +`⚠ うち <b>${nE}社は買付日が想定</b>（取引履歴が無いので終値から置いた）。窓の両端まで動かすと差は`
+            +` <b>${(lo*100).toFixed(2)}〜${(hi*100).toFixed(2)}pt</b> に開く`
+            +`<br><span style="color:var(--dim)">＝この一つの数字は「測った」ではなく<b>置いた前提の上の数字</b>。`
+            +`Ⅶ資産の「✎編集」→買付日に取引履歴の日付を入れれば確定する</span></div>`;
+        })()+`</div>`;
     }else{
       sum+=`<div style="font-size:12.5px;padding:8px 12px;margin-top:8px;background:var(--panel2);`
         +`border:1px solid var(--rust,#a8442a);border-radius:8px;line-height:1.85">`
@@ -4018,6 +4035,17 @@ function ccfReturnsHTML(R){
     +`ℹ この合計は<b>城（個別銘柄）だけ</b>。網(ETF)は Ⅶ資産が扱わない設計（2026-08-03 ユーザー指示で`
     +`<code>sleeve:'net'</code> の行は読込時に削除される）なので、XLK/QQQ/SMH/FANG+ は入っていない。`
     +`資産全体では網が約6割あるので、<b>これは資産全体のリターンではない</b></div>`;
+  // 想定が答えを支配している行（窓の両端で5pt以上動く）は名指しで出す
+  const wide=(R.positions||[]).filter(r=>r.cmp_range&&Math.abs(r.cmp_range[1]-r.cmp_range[0])>0.05);
+  if(wide.length)
+    warn+=`<div style="font-size:11px;color:#d69a3c;margin-top:6px;line-height:1.9">⚠ <b>想定が答えを支配している ${wide.length}件</b>`
+      +`——買付日の窓が広く、どこを取るかで結論が変わる:<br>`
+      +wide.map(r=>{const bw=r.bd_win||{};
+        return `　<b>${r.t}</b> 単独では <b>${(r.cmp_range[0]*100).toFixed(1)}〜${(r.cmp_range[1]*100).toFixed(1)}pt</b>`
+          +`<span style="color:var(--dim)">（窓 ${bw.first}〜${bw.last}・${bw.n}日／${bw.how||''}）</span>`;
+      }).join('<br>')
+      +`<br><span style="color:var(--dim)">窓が狭い行（MSFT 3日・RMD 2日）は<b>終値とドル円の二つが同じ日で一致</b>したもの`
+      +`——独立な二系列が合うのは偶然では起きにくいので、こちらは硬い</span></div>`;
   const cf=(R.positions||[]).filter(r=>r.v_conflict);
   if(cf.length)
     warn+=`<div style="font-size:11px;color:#d69a3c;margin-top:6px;line-height:1.8">⚠ <b>state.json の金額(v)と食い違う ${cf.length}件</b>: `
