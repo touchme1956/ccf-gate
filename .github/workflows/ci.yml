@@ -61,6 +61,7 @@ on:
 #   パックにも index.html にも触れない。
 permissions:
   contents: write
+  actions: read      # 2026-08-18: ci_health.py が workflow の run の結末を読む
 
 jobs:
   check:
@@ -404,6 +405,19 @@ jobs:
       #   ⚠**この step は他の検出器より後**に置くこと——上流が書いた JSON を読んで集計するので、
       #     先に置くと1日古い在庫を今日の答えとして出す（market.yml が validate_fail を
       #     昨日の答案で採点していたのと同じ型）。
+      # 2026-08-18新設: **自動化そのものが「走って失敗した」かを見る**。
+      #   回転盤(ops_status)は成果物の日付しか見ないので、workflow が走って失敗しても
+      #   「止まっている疑い」としか言えない——直し方がまったく違うのに。
+      #   実測: market.yml が 8/14・8/17 に走り、採取もパック反映も全部成功してコミットまで作ったのに
+      #   `git push` が `! [rejected]` で弾かれ、70ファイル分の成果が runner ごと捨てられた。
+      #   ⚠ 表示のための器なので **CIを落とさない**（continue-on-error）。
+      #     読めなければ ci_health.py 自身が blind に理由を積み、📋今日が「測っていない」と出す（ルール7）。
+      #   ⚠ **この経路は手元で検証できない**——プロキシが api.github.com を通さないため。
+      #     初回のCI実行までは未実証。out/ci_health.json が出来ているかで確かめること。
+      - name: 自動化の健康診断 ci_health（表示のみ・CIは落とさない）
+        continue-on-error: true
+        run: python3 night/ci_health.py --write
+
       - name: 📋今日の集計 today（錨が読めなければ書かずに落ちる）
         run: python3 night/today.py --json | tail -30
 
@@ -496,7 +510,7 @@ jobs:
           #   **次に検査を1本足した日に静かに全滅しうる**（ops.yml で実際に起きた）。
           #   ccf_git_add は1パスずつ add して落ちたものを名指しする＝巻き添えが構造的に起きない。
           . night/git_add_safe.sh
-          ccf_git_add out/frozen_dates.json out/freshness.json out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json out/irr85_dual.json night/reaudit_queue.json
+          ccf_git_add out/ci_health.json out/frozen_dates.json out/freshness.json out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json out/irr85_dual.json night/reaudit_queue.json
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"
           else

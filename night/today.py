@@ -71,6 +71,7 @@ SRC = [
     ('kessan', 'out/kessan_flags.json', '四半期点検の旗', 'items'),
     ('freshness', 'out/freshness.json', '中身と入力の鮮度', 'rows'),
     ('fetch_run', 'out/fetch_run.json', '機械値の採取の実行印', 'generated'),
+    ('ci_health', 'out/ci_health.json', '自動化そのものの健康診断', 'rows'),
 ]
 
 
@@ -163,6 +164,28 @@ def build():
                         '市場 %s%% vs 門 %s%%（乖離 %s > 刻み %s）'
                         % ((w.get('market') or {}).get('rfr'), g.get('html'), w.get('drift'), g.get('step')),
                         'Ⅲ採点機の WACC 欄を更新（規約の変更ではなく入力の更新）', 'wacc_drift'))
+
+    # ── 自動化そのものが「走って失敗した」か（2026-08-18新設）──
+    #   ⚠ 回転盤(ops_status)は**成果物の日付しか見ていない**ので、
+    #   workflow が走って失敗しても「止まっている疑い」としか言えない。直し方がまったく違うのに。
+    #   実測(2026-08-18): market.yml は 8/14・8/17 に走り、採取もパック反映も**全部成功**して
+    #   コミットまで作ったのに `git push` が `! [rejected] main -> main` で弾かれ、
+    #   **70ファイル分の成果が runner ごと捨てられた**。盤の表示は「止まっている疑い」だった。
+    ch = data.get('ci_health') or {}
+    for r in (ch.get('rows') or []):
+        if r.get('conclusion') != 'failure':
+            continue
+        st = r.get('failed_steps')
+        detail = '直近の実行(%s)が失敗' % (r.get('at') or '?')
+        if st:
+            detail += '——落ちたステップ: ' + ' / '.join(st)
+        elif st is None and r.get('run_id'):
+            detail += '（ステップ名は読めなかった）'
+        now.append(item('ci:' + str(r.get('wf')), 'now',
+                        '走って失敗している: ' + str(r.get('wf')),
+                        detail,
+                        (r.get('url') or 'GitHub Actions のログを見る')
+                        + '　⚠『止まっている』ではなく『走って失敗』——直し方が違う', 'ci_health'))
 
     # ── 門2審査の走行ログ（空振りも1行残す規約なので、行が無い＝走っていない）──
     runs = (data.get('review_runs') or {}).get('runs') or []
