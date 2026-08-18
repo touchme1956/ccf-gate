@@ -65,6 +65,10 @@ import urllib.request
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out", "returns.json")
+# ⚠ 推移は**別ファイル**に置く。20年で5000点まで伸びるので、盤が毎回読む
+#   returns.json に混ぜると表を出すだけの画面が推移のぶんまで払うことになる。
+OUT_SERIES = os.path.join(BASE, "out", "returns_series.json")
+MAX_POINTS = 600          # これを超えたら間引く（両端は必ず残す）
 UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
 BENCH = "^SP500TR"      # S&P500 トータルリターン指数（配当再投資込み）
 FX = "JPY=X"            # USDJPY
@@ -129,6 +133,91 @@ def level_window(ser, px, tol=0.005):
     return {"first": hits[0], "last": hits[-1], "n": len(hits), "tol_pct": tol * 100}
 
 
+def build_series(rows, sers, bench, fx, compared, compared_tr, benchmark):
+    """日次の推移（円建て）。**表示専用**——判定にも合計にも使わない。
+
+    作り方は終点の式とまったく同じで、日付だけ動かす:
+      値   = Σ 株数 × 終値(d) × ドル円(d)
+      配当込 = Σ 取得額(円) × (adjclose(d)/adjclose(買付日)) × (ドル円(d)/ドル円(買付日))
+      指数  = Σ 取得額(円) × (^SP500TR(d)/^SP500TR(買付日)) × (ドル円(d)/ドル円(買付日))
+    ★だから **終点は既存の合計と一致しなければならない**。一致しなければ
+      「同じ台帳を見る二つの検査器が違うことを言っている」(v9.9.65) ので、
+      ずれを `endpoint_gap` として必ず書き出す（黙って直さない）。
+    ⚠ 買付日が判らない行（cmp_out）は**入れない**——比較の集合と揃えるため。
+    """
+    use = [r for r in rows if not r.get("skip") and not r.get("cmp_out")
+           and r.get("bd") and r.get("cost_jpy") and sers.get(r["t"])]
+    if not use or not bench or not fx:
+        return None
+    start = min(r["bd"] for r in use)
+    end = max((r.get("asof") or "") for r in use)
+    spine = [d for d in sorted(bench) if start <= d <= end]
+    if len(spine) < 2:
+        return None
+
+    days, inv_a, val_a, tr_a, bmk_a = [], [], [], [], []
+    for d in spine:
+        inv = val = tr = bmk = 0.0
+        b = on_or_before(bench, d); f = on_or_before(fx, d)
+        if not (b and f):
+            continue
+        for r in use:
+            if r["bd"] > d:
+                continue                      # まだ入金していない＝この日は分母に入らない
+            c = on_or_before(sers[r["t"]], d)
+            b0 = on_or_before(bench, r["bd"])
+            if not (c and b0):
+                continue
+            jp = r["ccy"] == "JPY"
+            k = 1.0 if jp else f[0]
+            k0 = 1.0 if jp else float(r.get("fx0") or 0)
+            if not k0:
+                continue
+            fxr = k / k0
+            inv += r["cost_jpy"]
+            v = r["sh"] * c[0] * k
+            val += v
+            # 配当の寄与だけを価格に掛ける（終点の式と同じ・v9.9.156）
+            c0 = on_or_before(sers[r["t"]], r["bd"])
+            df = ((c[1] / c0[1]) / (c[0] / c0[0])) if (c0 and c0[0] and c0[1] and c[0]) else 1.0
+            tr += v * df
+            bmk += r["cost_jpy"] * (b[1] / b0[1]) * fxr
+        if inv <= 0:
+            continue
+        days.append(d); inv_a.append(round(inv))
+        val_a.append(round(val)); tr_a.append(round(tr)); bmk_a.append(round(bmk))
+    if len(days) < 2:
+        return None
+
+    # ★終点の検算——ここが合わなければ推移か合計のどちらかが壊れている
+    gap = None
+    if compared and compared.get("cost_jpy"):
+        # ★3本とも突き合わせる。1本だけ合わせても「たまたま合った」を排除できない
+        gap = {"val": round(val_a[-1] - compared["val_jpy"]),
+               "cost": round(inv_a[-1] - compared["cost_jpy"]),
+               "tr": (round(tr_a[-1] - compared_tr["val_jpy"]) if compared_tr else None),
+               "bmk": (round(bmk_a[-1] - benchmark["val_jpy"]) if benchmark else None)}
+        tol = max(50, compared["val_jpy"] * 0.001)
+        gap["ok"] = all(abs(gap[k]) <= tol for k in ("val", "cost", "tr", "bmk")
+                        if gap.get(k) is not None)
+
+    # 間引き（両端は必ず残す）。線を描くためだけなので等間隔でよい
+    thin = None
+    if len(days) > MAX_POINTS:
+        step = (len(days) + MAX_POINTS - 1) // MAX_POINTS
+        idx = list(range(0, len(days), step))
+        if idx[-1] != len(days) - 1:
+            idx.append(len(days) - 1)
+        thin = {"step": step, "before": len(days), "after": len(idx)}
+        days = [days[i] for i in idx]; inv_a = [inv_a[i] for i in idx]
+        val_a = [val_a[i] for i in idx]; tr_a = [tr_a[i] for i in idx]
+        bmk_a = [bmk_a[i] for i in idx]
+
+    return {"days": days, "inv": inv_a, "val": val_a, "tr": tr_a, "bmk": bmk_a,
+            "n": len(use), "tickers": sorted(r["t"] for r in use),
+            "endpoint_gap": gap, "downsampled": thin}
+
+
 def main():
     st_path = os.path.join(BASE, "state.json")
     if not os.path.exists(st_path):
@@ -162,9 +251,10 @@ def main():
         blind.append(f"{BENCH}（S&P500トータルリターン指数）が取れない")
 
     rows, notes = [], []
+    sers = {}                 # 推移を組むために銘柄ごとの系列を持ち回す
     tot_cost = tot_val = tot_cost_tr = tot_val_tr = 0.0
     bench_cost = bench_val = 0.0
-    cmp_cost = cmp_val = 0.0
+    cmp_cost = cmp_val = cmp_val_tr = 0.0
     bench_ends = [0.0, 0.0]   # 想定日の窓の両端で指数がどうなるか
 
     for p in positions:
@@ -176,6 +266,7 @@ def main():
         ser = yahoo(sym, t0, t1)
         r = {"t": t, "nm": p.get("nm") or t, "ccy": "JPY" if jp else "USD",
              "sh": sh, "bd": bd}
+        sers[t] = ser
         if not ser:
             r["skip"] = "Yahooで価格が取れない"
             rows.append(r); notes.append(f"{t}: 価格が取れない"); continue
@@ -217,12 +308,22 @@ def main():
                     + (f"（終値がこの水準だったのは {w['first']}〜{w['last']}）" if w else "")
                     + "。S&P500 との比較から外し、円換算は概算として出す")
 
-        # 配当込みの起点は adjclose 側で取る（指数と基準を揃えるため）
-        if at_bd and at_bd[0] and r["cost_px"]:
-            adj0 = r["cost_px"] * (at_bd[1] / at_bd[0])   # 実記録の単価を同じ比率でずらす
+        # ── 配当の寄与だけを取り出す（v9.9.156で是正）──────────────────────
+        #   ★**いくらで買ったかに依らない**——窓だけで決まる比にする:
+        #       配当の寄与 = (adj(今)/adj(買付日)) ÷ (終値(今)/終値(買付日))
+        #   旧実装は adj0 = 取得単価 × (adj/終値) と置いて `adj(今)/adj0` を配当込みとしていたが、
+        #   これは「**想定日の株価で買った場合**の配当込み」であって、実際に払った金額の
+        #   リターンではない。実コストと想定日の株価が違う行（取得額が実記録＋買付日が想定）で
+        #   両者が割れる＝同じ行の中で「基準の違う二つ」を並べていた。
+        #   実測(MSFT): 価格 +26.38%（実コスト ¥62,495/株）vs 旧・配当込 +21.20%（想定日 ¥65,305/株）
+        #   ＝5.18pt の差は**配当ではなく入口の値段の違い**。配当の寄与は実は +0.26pt しかない。
+        #   決定打は **RBC（無配当なのに配当込 −0.72% < 価格 −0.33%）**＝定義上ありえない値が出ていた。
+        if at_bd and at_bd[0] and at_bd[1] and cl_now:
+            div_f = (aj_now / at_bd[1]) / (cl_now / at_bd[0])
         else:
-            adj0 = None                                    # 起点の日が無い＝配当込みは出せない
-
+            div_f = None                                   # 起点の日が無い＝配当込みは出せない
+        r["div_f"] = div_f
+        r["_adj0"] = at_bd[1] if at_bd else None
         fx0 = on_or_before(fx, bd)[0] if (fx and bd and on_or_before(fx, bd)) else None
         # ⚠ 出口のドル円は **last(fx) ではなく「その銘柄の株価の日」** に合わせる。
         #   実測(2026-08-18): ドル円の系列に 08-17 が無く 08-16→08-18 と飛ぶので、
@@ -260,10 +361,11 @@ def main():
         r["ret_px_local"] = (cl_now / r["cost_px"] - 1) if r["cost_px"] else None
         # ── 配当込み: 起点の日が要る。無ければ **出さない**（価格リターンで代用すると
         #    配当のぶんだけ静かに過小に出て、S&P500TR と基準が割れる）──
-        if adj0:
-            r["ret_tr_local"] = aj_now / adj0 - 1
+        if div_f:
+            # 価格リターンに**配当の寄与だけ**を掛ける。分母は実際に払った円のまま
+            r["ret_tr_local"] = ((cl_now / r["cost_px"]) * div_f - 1) if r["cost_px"] else None
             r["cost_tr_jpy"] = r["cost_jpy"]                              # 同じ円を投じた前提
-            r["val_tr_jpy"] = r["cost_jpy"] * (aj_now / adj0) * (k / k0 if k0 else 1.0)
+            r["val_tr_jpy"] = r["val_jpy"] * div_f
             r["ret_tr_jpy"] = r["val_tr_jpy"] / r["cost_tr_jpy"] - 1
         else:
             r["ret_tr_local"] = r["ret_tr_jpy"] = None
@@ -338,6 +440,10 @@ def main():
                 bench_val += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
                 cmp_cost += r["cost_jpy"]
                 cmp_val += r["val_jpy"]
+                # ★指数は配当込み(^SP500TR)なので、**同じ基準**の保有側も持つ。
+                #   価格ベースの保有を配当込みの指数と引き算すると、配当のぶんだけ
+                #   保有が構造的に低く出る（「基準の違う二つを割る」型）
+                cmp_val_tr += (r.get("val_tr_jpy") or r["val_jpy"])
                 # ★想定日なら、窓の両端でも同じ計算をして**答えがどれだけ動くか**を出す。
                 #   1点だけ出すと「測った数字」に見えてしまう——動く幅こそがこの行の情報。
                 w = r.get("bd_win")
@@ -400,6 +506,8 @@ def main():
                      "③ bd の終値で推定。行ごとに `cost_src` / `src` に書いてある"),
         },
         "compared": pack(cmp_cost, cmp_val),
+        "compared_tr": pack(cmp_cost, cmp_val_tr),   # 指数と同じ配当込みの基準
+
         # 想定日の窓の両端で指数がどうなるか＝**この比較がどれだけ想定に依存しているか**
         "benchmark_range": ([min(bench_ends) / cmp_cost - 1, max(bench_ends) / cmp_cost - 1]
                             if cmp_cost > 0 and bench_ends[0] and bench_ends[1] else None),
@@ -430,8 +538,35 @@ def main():
             print("   ", b)
         return 1
 
+    # ── 日次の推移（別ファイル・表示専用）────────────────────────────────
+    ser_out = build_series(rows, sers, bench, fx, out.get("compared"),
+                             out.get("compared_tr"), out.get("benchmark"))
+    for r in rows:
+        r.pop("_adj0", None)
+
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+
+    if ser_out:
+        ser_out["generated"] = out["generated"]
+        ser_out["tool"] = "night/fetch_returns.py"
+        ser_out["base_ccy"] = "JPY"
+        ser_out["note"] = ("日次の推移。**表示専用**——Ω・四関門・売却規律・配分のどれにも触れない。"
+                           "終点の式と同じ計算を日付だけ動かして作ってあるので、"
+                           "終点は out/returns.json の `compared` と一致する（endpoint_gap で検算）。"
+                           "買付日が判らない行は入っていない＝比較の集合と揃えてある。")
+        json.dump(ser_out, open(OUT_SERIES, "w", encoding="utf-8"),
+                  ensure_ascii=False, separators=(",", ":"))
+        g = ser_out.get("endpoint_gap") or {}
+        if g and not g.get("ok"):
+            notes.append("推移の終点が合計と合わない（"
+                         + " / ".join(f"{k} {g[k]:+,}円" for k in ("val", "cost", "tr", "bmk")
+                                      if g.get(k) is not None)
+                         + "）——推移か合計のどちらかが壊れている")
+    else:
+        # ⚠ 空で上書きしない。「推移が作れなかった」と「推移がゼロ」は別物（ルール7）
+        notes.append("推移が作れなかった（買付日が判る行が2日ぶん揃わない）——"
+                     "out/returns_series.json は更新していない")
 
     if "--json" not in sys.argv:
         pc = out["portfolio"]; bc = out["benchmark"]; cc = out["compared"]
@@ -468,17 +603,30 @@ def main():
             print(f"\n  ── 同じ日・同じ円で比べられる分だけ（{len(rows)-len(out_of)-sum(1 for r in rows if r.get('skip'))}社）──")
             print(f"  {'保有':<7}{'':<12}{'':>4} {cc['cost_jpy']:>10,.0f} {cc['val_jpy']:>10,.0f} "
                   f"{cc['pl_jpy']:>+10,.0f} {pct(cc['ret'])}")
+            ct = out.get("compared_tr")
+            if ct:
+                print(f"  {'保有(配当込)':<7}{'':<8}{'':>4} {ct['cost_jpy']:>10,.0f} {ct['val_jpy']:>10,.0f} "
+                      f"{ct['pl_jpy']:>+10,.0f} {pct(ct['ret'])}  ← 指数と同じ基準")
             print(f"  {'S&P500':<7}{'':<12}{'':>4} {bc['cost_jpy']:>10,.0f} {bc['val_jpy']:>10,.0f} "
                   f"{bc['pl_jpy']:>+10,.0f} {pct(bc['ret'])}  ← 同じ円を同じ日に入れていたら")
-            print(f"\n  差（円建て）: {(cc['ret']-bc['ret'])*100:+.2f}pt")
+            # ★差は**同じ基準どうし**（配当込 vs ^SP500TR）を主に出す。
+            #   価格ベースの保有を配当込みの指数と引くと、配当のぶんだけ保有が低く出る
+            if ct:
+                print(f"\n  差（円建て・**配当込どうし**）: {(ct['ret']-bc['ret'])*100:+.2f}pt"
+                      f"　／　参考: 価格ベースの保有と引くと {(cc['ret']-bc['ret'])*100:+.2f}pt"
+                      "（指数だけ配当が入る＝保有が構造的に低く出る）")
+            else:
+                print(f"\n  差（円建て）: {(cc['ret']-bc['ret'])*100:+.2f}pt")
             print(f"  ⚠ S&P500 の {bc['ret']*100:+.2f}% は**1本の窓の指数リターンではない**——"
                   f"銘柄ごとに別々の入口から走らせた{len([r for r in rows if not r.get('skip') and not r.get('cmp_out')])}本の"
                   "加重合成（投じた円で重みづけ）")
             br = out.get("benchmark_range")
             nEst = sum(1 for r in rows if r.get("bd_est"))
             if br and nEst:
-                lo = (cc["ret"] - max(br)) * 100
-                hi = (cc["ret"] - min(br)) * 100
+                # 幅も**同じ基準**（配当込みの保有）から引く。点推定と土俵を揃える
+                _b = (ct or cc)["ret"]
+                lo = (_b - max(br)) * 100
+                hi = (_b - min(br)) * 100
                 print(f"  ⚠ うち **{nEst}社は買付日が想定**。候補日のどこを取るかで差は "
                       f"**{lo:+.2f}〜{hi:+.2f}pt** に開く")
                 print("     ＝この一つの数字は「測った」ではなく「置いた前提の上の数字」。"
