@@ -19,6 +19,19 @@
   実測で MSFT は36日→**3日**、RMD は18日→**2日**まで狭まった。片方しか無ければ窓は広いままで、
   そのぶん答えは想定に依存する（`--report` が窓の両端で答えがどう動くかを出す）。
 
+■ ユーザーの申告で窓を切る（`bdAfter` / `bdBefore`）
+  ★2026-08-18 に **MSFT の想定日を 2024-04-26 と置いて外した**——ユーザーの
+  「マイクロソフトは2026だよ？」で判明。実測で **S&P500 との差が −39.7pt → +4.1pt ＝33pt の誤り**。
+  終値とドル円が2024年にも同じ水準を通っていたので、**平均が偶然その日に一致していた**。
+  ⇒ 人が知っている範囲は `bdAfter`/`bdBefore` に書いて窓を切る。**推測より申告が強い。**
+
+■ 複数回買付は内訳で解く（`bdLots`）
+  平均取得価額は複数回買付の平均でありうるので、**単一の日が存在しないことがある**。
+  実測 MSFT は 2株@¥59,091 ＋ 1株@¥72,333 ＝ ¥190,515 の2ロット（合計がぴったり合う）。
+  `bdLots` があれば **各ロットを別々に指数へ当てて**から、同じ結果を出す「等価な単一日」を逆算する
+  （台帳は1銘柄1行なので）。3つの制約——ロットごとの円/株・USDの平均取得価額・円の合計——を
+  同時に満たす組だけを採るので、**過剰決定＝解が出れば強い**。
+
 ■ 想定日は**窓の中央値**にする（最も偏りが少ない・決定的）
   ⚠ 直感に反するが「最新の一致日」を採ってはいけない——保有期間が最短になる＝
   **S&P500 の複利期間も最短になる＝自分に一番有利な仮定**を選ぶことになる。
@@ -40,6 +53,46 @@ ST = os.path.join(ROOT, "state.json")
 TOL = 0.005          # ±0.5%
 _spec = importlib.util.spec_from_file_location("fr", os.path.join(ROOT, "night", "fetch_returns.py"))
 fr = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(fr)   # 価格の採り方を再実装しない
+
+
+def solve_lots(ser, fxs, bench, lots, bpx, bjpy, ds):
+    """複数回買付を内訳から解き、(等価な単一日の窓, 説明) を返す。
+
+    各ロットを**別々に**指数へ当ててから、同じ指数の結果を出す単一日を逆算する
+    （台帳は1銘柄1行なので）。制約は3つ同時＝過剰決定なので、解が出れば強い。
+    """
+    tot_sh = sum(l["sh"] for l in lots)
+    fx1 = fr.last(fxs)[1][0]; b1 = fr.last(bench)[1][1]
+    ok = []
+    for l in lots:                       # ロットごとに「円/株が一致する日」を先に絞る
+        l["_d"] = [d for d in ds if (lambda f: f and abs(ser[d][0] * f[0] - l["jpy"]) / l["jpy"] < 0.01)
+                   (fr.on_or_before(fxs, d))]
+        if not l["_d"]:
+            return [], "内訳のどれかが窓に無い"
+    def walk(i, chosen):
+        if i == len(lots):
+            usd = sum(l["sh"] * ser[d][0] for l, d in zip(lots, chosen)) / tot_sh
+            yen = sum(l["sh"] * ser[d][0] * fr.on_or_before(fxs, d)[0] for l, d in zip(lots, chosen))
+            if bpx and abs(usd / bpx - 1) > 0.01: return
+            if bjpy and abs(yen / bjpy - 1) > 0.01: return
+            sp = sum(l["sh"] * ser[d][0] * fr.on_or_before(fxs, d)[0]
+                     * (b1 / fr.on_or_before(bench, d)[1]) * (fx1 / fr.on_or_before(fxs, d)[0])
+                     for l, d in zip(lots, chosen))
+            ok.append((sp / yen, list(chosen)))
+            return
+        for d in lots[i]["_d"]:
+            walk(i + 1, chosen + [d])
+    walk(0, [])
+    if not ok:
+        return [], "内訳の組が3つの制約を同時に満たさない"
+    # 各組の「等価な単一日」＝同じ指数の伸びを出す日
+    eq = []
+    for mult, _ in ok:
+        best = min(ds, key=lambda d: abs((b1 / fr.on_or_before(bench, d)[1])
+                                         * (fx1 / fr.on_or_before(fxs, d)[0]) - mult))
+        eq.append(best)
+    eq = sorted(set(eq))
+    return eq, f"内訳{len(lots)}ロットを別々に指数へ当てた等価日（{len(ok)}通りの組）"
 
 
 def candidates(ser, fxs, sh, bpx, bjpy):
@@ -85,23 +138,48 @@ def main():
         ser = fr.yahoo(t if not t[:1].isdigit() else f"{t}.T", t0, t1)
         if not ser:
             print(f"  {t:<6}—— 価格が取れない"); continue
-        win, how = candidates(ser, fxs, sh, bpx, bjpy)
+        # ★人の申告で窓を切る（推測より申告が強い）
+        lo, hi = p.get("bdAfter"), p.get("bdBefore")
+        if lo or hi:
+            ser = {d: v for d, v in ser.items() if (not lo or d >= lo) and (not hi or d <= hi)}
+            if not ser:
+                print(f"  {t:<6}—— 申告の範囲に価格が無い"); continue
+        lots = p.get("bdLots")
+        if lots:
+            win, how = solve_lots(ser, fxs, bench, [dict(l) for l in lots], bpx, bjpy, sorted(ser))
+        else:
+            win, how = candidates(ser, fxs, sh, bpx, bjpy)
         if not win:
             print(f"  {t:<6}—— 終値がその水準だった日が見つからない（{how}）"); continue
-        pick = win[len(win) // 2]          # 中央値＝最も偏りが少ない
-        cost = bjpy if bjpy else sh * bpx * fr.on_or_before(fxs, pick)[0]
+        cost = bjpy if bjpy else sh * bpx * fr.on_or_before(fxs, win[len(win) // 2])[0]
         val = sh * fr.last(ser)[1][0] * fx1
-        diffs = []
-        for d in (win[0], pick, win[-1]):
-            b0 = fr.on_or_before(bench, d); f0 = fr.on_or_before(fxs, d)[0]
-            sp = cost * (b1 / b0[1]) * (fx1 / f0)
-            diffs.append((val / cost - 1) - (sp / cost - 1))
+        # ⚠ **窓の両端だけを見てはいけない**——S&P500 との差は日付に対して単調ではないので、
+        #   両端が最小・最大とは限らない（実測で中央値の答えが「両端の幅」の外に出た）。
+        #   候補**全部**を計算して、幅は min/max、想定日は**答えが中央値になる日**にする。
+        scored = []
+        for d in win:
+            b0 = fr.on_or_before(bench, d); f0 = fr.on_or_before(fxs, d)
+            if not b0 or not f0:
+                continue
+            sp = cost * (b1 / b0[1]) * (fx1 / f0[0])
+            scored.append(((val / cost - 1) - (sp / cost - 1), d))
+        if not scored:
+            print(f"  {t:<6}—— 指数か為替が窓に無い"); continue
+        scored.sort()
+        pick = scored[len(scored) // 2][1]     # 答えが中央値になる日＝最も偏りが少ない
+        lo, hi = scored[0][0], scored[-1][0]
         span = f"{win[0]}〜{win[-1]}({len(win)}日)"
-        rng = f"{diffs[1]*100:+.1f}pt（窓の両端で {diffs[0]*100:+.1f}〜{diffs[2]*100:+.1f}）"
+        rng = f"{scored[len(scored)//2][0]*100:+.1f}pt（幅 {lo*100:+.1f}〜{hi*100:+.1f}）"
         print(f"  {t:<6}{pick:<12}{span:<26}{how:<26}{rng:>26}")
         if write:
             p["bd"] = pick; p["bdEst"] = True
-            p["bdWin"] = {"first": win[0], "last": win[-1], "n": len(win), "how": how}
+            # 候補日を**全部**持たせる——幅を出すのは fetch_returns 側の仕事だが、
+            # 「どの日が候補か」の正本はここ一つ（v9.9.65: 二重に持たない）。両端だけだと
+            # 答えが日付に単調でないぶんを取りこぼす（実測で IRMD の幅が -24.5〜-11.2 → -29.8〜-8.3）
+            p["bdWin"] = {"first": win[0], "last": win[-1], "n": len(win), "how": how,
+                          "days": win}
+            if p.get("bdAfter") or p.get("bdBefore"):
+                p["bdWin"]["bound"] = f"{p.get('bdAfter') or ''}〜{p.get('bdBefore') or ''}（申告）"
             n += 1
     if write:
         st["data"]["pf:portfolio"] = json.dumps(pf, ensure_ascii=False, separators=(",", ":"))

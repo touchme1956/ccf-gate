@@ -320,18 +320,24 @@ def main():
                 w = r.get("bd_win")
                 if w:
                     ends = []
-                    for d in (w.get("first"), w.get("last")):
+                    # ⚠ **両端だけを見てはいけない**——差は日付に単調でないので、両端が min/max とは
+                    #   限らない（実測 IRMD: 両端 -24.5〜-11.2 に対し全候補では -29.8〜-8.3）。
+                    #   候補日の正本は estimate_bd が書く `bdWin.days`。無ければ両端で代用する。
+                    for d in (w.get("days") or [w.get("first"), w.get("last")]):
                         bx = on_or_before(bench, d) if d else None
                         fxx = on_or_before(fx, d) if (fx and d) else None
                         if bx and fxx and fxx[0]:
                             spv = r["cost_jpy"] * (b1 / bx[1]) * (k / fxx[0])
                             ends.append(r["ret_px_jpy"] - (spv / r["cost_jpy"] - 1))
-                    if len(ends) == 2:
+                    if len(ends) >= 2:
                         r["cmp_range"] = [min(ends), max(ends)]
-                        bench_ends[0] += r["cost_jpy"] * (b1 / on_or_before(bench, w["first"])[1]) \
-                            * (k / on_or_before(fx, w["first"])[0])
-                        bench_ends[1] += r["cost_jpy"] * (b1 / on_or_before(bench, w["last"])[1]) \
-                            * (k / on_or_before(fx, w["last"])[0])
+                        # 合計側の幅も**全候補の中の最良/最悪**で積む（両端ではなく）
+                        sp_all = []
+                        for d in (w.get("days") or [w["first"], w["last"]]):
+                            bx = on_or_before(bench, d); fxx = on_or_before(fx, d) if fx else None
+                            if bx and fxx and fxx[0]:
+                                sp_all.append(r["cost_jpy"] * (b1 / bx[1]) * (k / fxx[0]))
+                        bench_ends[0] += min(sp_all); bench_ends[1] += max(sp_all)
                     else:
                         bench_ends[0] += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
                         bench_ends[1] += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
@@ -443,7 +449,7 @@ def main():
             if br and nEst:
                 lo = (cc["ret"] - max(br)) * 100
                 hi = (cc["ret"] - min(br)) * 100
-                print(f"  ⚠ うち **{nEst}社は買付日が想定**。窓の両端まで動かすと差は "
+                print(f"  ⚠ うち **{nEst}社は買付日が想定**。候補日のどこを取るかで差は "
                       f"**{lo:+.2f}〜{hi:+.2f}pt** に開く")
                 print("     ＝この一つの数字は「測った」ではなく「置いた前提の上の数字」。"
                       "取引履歴の日付を入れれば確定する")
