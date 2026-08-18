@@ -8833,3 +8833,42 @@ index.html を退避→**1〜2行だけ差し替え**→score_all→**必ず元�
 **言えるのは「+24.6%/年・P=0.71 は額面どおりには受け取れない」まで**で、
 **irr=85 が無効だとは言っていない**——半導体を外し社単位で数えてもなお 70 を +0.10 上回り、
 AI相場の前の窓でも刻みは単調に立ち、**恒久毀損の少なさでは 70 のほうが強い**。
+
+## 「投下可の外に入れるべき社はあるか」を数えた——**候補は1社。KLAC の irr が LRCX と同じ文で違う刻みだった**（2026-08-18・ユーザーの問い）
+**値も規約も採点式も刻みも重みも関門も売却規律も配分も1バイト触っていない。投下可10社も不変**
+（ASML CW LRCX RBC MSFT IDXX V 6857 6146 RMD）。動かしたのは KLAC の `_meta.kenshi` と todo だけ。
+- **先に全部数えた**（Ω75+ で投下可の外に居る21社を、止めているもので分類）:
+  | 群 | 社 | 性質 |
+  | 既に買っている | **VRSK**（Ω81.3・堀83.6・止めているのは AccuLynx だけ） | `gate_exceptions.json` の門外例外で**按分に入っている**＝やることは無い |
+  | 席順だけ（🔵次点） | HWM MA ADBE IRMD MCO BR RELX | **四関門は全部通っている**。入れる＝席数 N=10 を増やす話＝規約の判断 |
+  | 測定さえ直せば | **ETN**（納品検査FAIL・埋めても次点8位相当・**出口=s1**）／**APH**（期末後の重大事象・のれん39.8%が新規） | どちらも「入れるべき」には届かない |
+  | 堀があと1pt | **KLAC 69.3（0.7pt）** / NVDA 69.0（1.0pt） | ここだけが本当の境目 |
+  | 遠い | CTAS 66.6(+未完了) / 3923・4071 67.9 / JKHY 66.6 / MANH 62.9 / RACE 62.7 / 5038 59.2 ほか | 単独昇格の本が無いか、再監査ずみ据置 |
+  `audit_moat_gap --list` が「読む価値がある」と名指しするのも **KLAC NVDA CTAS MANH の4社**だけ
+- **★KLAC の原本を読んだら、規約の当て方が LRCX と食い違っていた**（FY2026 10-K 全文497,329字を再走査）:
+  | | **LRCX（irr=85）** | **KLAC（irr=70）** |
+  | 前半 | semiconductor manufacturers **must make a substantial investment to qualify and integrate** new capital equipment into semiconductor production lines | Semiconductor manufacturers generally **must commit significant resources to qualify, install and integrate** process control and yield management equipment into a semiconductor production line |
+  | 中盤 | once ... selected ... and **qualified it for production, the manufacturer generally maintains that selection** for that specific production application | once ... selects a particular supplier's ... equipment, **the manufacturer generally relies upon that equipment for that specific production line application for an extended period of time** |
+  | 締め | Accordingly, **we may experience difficulty in selling to a given customer if that customer has qualified a competitor's equipment** | Accordingly, we expect it to be **more difficult to sell our products to a given customer** ... **if that customer initially selects a competitor's equipment** |
+  | 位置 | 72,387＝**Item 1A の中**（19.3%） | 187,979＝**Item 1A の中**（37.8%） |
+  **三節そろって同型で、締めの句まで同じで、置かれている節も同じ。**
+- **既存の記録は34件については正しく、35件目を説明していなかった**——`evidence.irr` は
+  『KLAの qualification は当社の装置が顧客の工程を検査・認定する側』と書くが、実測で **'qualif' 35件のうち
+  顧客が主語なのは1件だけ**で、それがこの文（残り34件はヘッジ会計のXBRLタグ／従業員研修／自社の再生機／
+  工程ツールの開発と認定＝記録どおり）。同じ evidence の**『顧客側の再認定を述べる文は一つも無い』は
+  この一文で反証される**。前日の ENTG（`switching cost` という連語で探して `switch` 1件を落とした）と**同じ型**
+  ——**機構語は件数で束ねず、顧客が主語の文だけ抜いて全部読む**
+- **影の計測（パックを退避→irr=85→score_all→復元・sha256一致）**: 堀 69.3→**72.7**（関門70を通過）・
+  Ω 79.5→80.3・**投下可に入り RMD が押し出される**
+- **★それでも今日は動かさない**（絶対のルール1/2）: (a)この欄は**別枠85と席の優先という二つの特権**を持ち
+  買付の顔ぶれを変える (b)**2026-08-18に自分で入れた二重読みの規約**が「新しく85を付けたら別の読み手が検証する」を
+  要求している (c)**反対材料も実在する**——2026-08-05の『LRCX/AMATは工程レシピに固着する側・KLAは工程を測る側』は
+  経済的に筋の通る区別で、計測装置は原理的に入替が軽い可能性がある。
+  ⚠ただし**規約の刻みは「顧客の側が再認定の費用を負うか」の一点**なので、その一点で読む限りこの文は条件を満たす。
+  記録は `_meta.kenshi` と todo `klac_irr_recheck` へ（**evidence.irr には書かない**——`irr85_mech_diff` が
+  英文引用を逐語照合するので日本語の注記を混ぜると照合の断片が汚れる・v9.9.128の作法）
+- **NVDA は道が塞がっている**（堀69.0）——dom空欄と moatW=50 は**再監査ずみ据置**、rep 80→100 は規約の最上段。
+  残る道は irr 70→85 だけだが、2026-08-06 に『design win の文は当社自身の競争リスク・
+  'qualif' は当社が自社のファウンドリを認定する話＝向きが逆』として**同じ機構の双子（NXPI/TSM）と揃えて**下げた経緯がある
+- 検証: score_all **投下可10社不変**（採点欄の変化ゼロ・変わったのは `_meta.kenshi` のみ）／
+  validate_packs KLAC **FAIL 0**／check_html ✓／audit_docs ✓

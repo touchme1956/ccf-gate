@@ -1,6 +1,6 @@
 {
  "note": "スケジュールに乗せた『人のやるべきこと』の正本（2026-08-04新設）。回転盤(ops_status)が測るのは機械の周期作業だけで、宿題・決断待ち・機械で測れない定期ルーチンはここに載る。⚙自動化タブが表示する。完了したら done:true にする（消さない——やった記録も資産）。追加・完了はClaudeに頼めばよい",
- "updated": "2026-08-17",
+ "updated": "2026-08-18",
  "items": [
   {
    "id": "edinet_key",
@@ -1055,6 +1055,17 @@
    "due": null,
    "done": true,
    "note": "ops.yml が月1で回しているのに**盤に無かった**——出力が out/{T}_gate_input.json という\n**銘柄ごとのファイル**で、盤が見る単一の錨が存在しなかったため＝止まっても誰も気づけない。\nrun_gate0_local.py の実行印と同じ作法で **out/fetch_run.json** を1本残すようにし、盤に `fetch`（月1・期限40日）を追加。\n在庫 stock_unreviewed（採取ずみ未審査）も同梱し、5社（Routineの1回分）を割ったら📋今日が鳴る。\n⚠ 実装で1件踏んだ: 変数名を `OUT_DIR` と書いたが実際は `OUT`。`except Exception` で握っていたので\n  **NameError が『▲ 実行印を書けなかった』の1行になって静かに死ぬ**ところだった（実行して確認し是正）。\n実測: 盤 44→45本・停止疑い0／在庫58社"
+  },
+  {
+   "id": "klac_irr_recheck",
+   "kind": "決断待ち",
+   "tickers": [
+    "KLAC"
+   ],
+   "title": "KLAC の irr=70 を二重読みで確定させる（LRCX の85と三節そろって同型の文が原本にある）",
+   "due": null,
+   "note": "2026-08-18に発見。KLAC FY2026 10-K 位置187,979（Item 1A）に『Semiconductor manufacturers generally must commit significant resources to qualify, install and integrate ... the manufacturer generally relies upon that equipment ... for an extended period of time』があり、LRCX の irr=85 の機構文（同じく Item 1A・位置72,387）と**三節そろって同型**。既存の evidence.irr の『顧客側の再認定を述べる文は一つも無い』はこの一文で反証される（'qualif' 35件のうち34件は記録どおりで、35件目だけが顧客を主語にする）。影の計測: irr=85 なら 堀69.3→72.7・Ω80.3・**投下可に入り RMD が押し出される**。⚠反対材料: 2026-08-05の『LRCX/AMATは工程レシピに固着する側・KLAは工程を測る側』は経済的に筋が通る。決めるのは (a)二重読みの検問6点を当てる (b)同じ機構の双子（LRCX/AMAT/ONTO/ACMR）で刻みが揃うか確かめる、の順。**買付の顔ぶれが動くのでユーザーの判断の領分**（絶対のルール1/2）",
+   "done": false
   }
  ]
 }
