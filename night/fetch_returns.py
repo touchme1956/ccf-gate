@@ -100,6 +100,15 @@ def on_or_before(series, day):
     return series[max(ks)] if ks else None
 
 
+def day_on_or_before(series, day):
+    """その日、無ければ直前の営業日の**日付**。無ければ None。
+    ⚠ `on_or_before` は値しか返さない——**どの日の値を掴んだか**が要る場面があるので分けてある
+    （実測: ドル円の系列に 08-17 が無く 08-16→08-18 と飛ぶ。掴んだ日を知らないと
+     『08-18のドル円 × 08-17の株価』を黙って掛けてしまう）。"""
+    ks = [k for k in series if k <= day]
+    return max(ks) if ks else None
+
+
 def last(series):
     k = max(series)
     return k, series[k]
@@ -209,8 +218,16 @@ def main():
             adj0 = None                                    # 起点の日が無い＝配当込みは出せない
 
         fx0 = on_or_before(fx, bd)[0] if (fx and bd and on_or_before(fx, bd)) else None
-        fx1 = last(fx)[1][0] if fx else None
+        # ⚠ 出口のドル円は **last(fx) ではなく「その銘柄の株価の日」** に合わせる。
+        #   実測(2026-08-18): ドル円の系列に 08-17 が無く 08-16→08-18 と飛ぶので、
+        #   `last(fx)` は **08-18 のドル円 × 08-17 の株価** を掛けていた＝「基準の違う二つ」。
+        #   差(pt)には効かない（保有側と指数側の両方に同じ係数が掛かる）が、
+        #   両方の絶対%が +0.168pt ずれる。**掛ける二つは同じ日から採る。**
+        _f1 = on_or_before(fx, lastd) if fx else None
+        fx1 = _f1[0] if _f1 else (last(fx)[1][0] if fx else None)
         r["fx0"], r["fx1"] = fx0, fx1
+        r["fx0_day"] = day_on_or_before(fx, bd) if (fx and bd) else None
+        r["fx1_day"] = day_on_or_before(fx, lastd) if fx else None
 
         k = 1.0 if jp else (fx1 or 0)
         k0 = 1.0 if jp else (fx0 or 0)
@@ -380,6 +397,7 @@ def main():
         # 想定日の窓の両端で指数がどうなるか＝**この比較がどれだけ想定に依存しているか**
         "benchmark_range": ([min(bench_ends) / cmp_cost - 1, max(bench_ends) / cmp_cost - 1]
                             if cmp_cost > 0 and bench_ends[0] and bench_ends[1] else None),
+        "bench_asof": last(bench)[0] if bench else None,
         "annualized": None,
         "span_days": span,
         "positions": rows,
@@ -412,13 +430,16 @@ def main():
     if "--json" not in sys.argv:
         pc = out["portfolio"]; bc = out["benchmark"]; cc = out["compared"]
         pct = lambda v: f"{v*100:>+7.2f}%" if v is not None else f"{'——':>8}"
-        print(f"■ トータルリターン（円建て・{out['generated']}）  起点 {start}"
-              + (f"・{span}日" if span is not None else ""))
-        print(f"  {'銘柄':<7}{'株数':>4} {'取得':>10} {'評価':>10} {'損益':>10} "
+        exit_days = sorted({r.get("asof") for r in rows if r.get("asof")})
+        exit_fx = sorted({r.get("fx1_day") for r in rows if r.get("fx1_day")})
+        print(f"■ トータルリターン（円建て・{out['generated']} 生成）")
+        print(f"  出口（全銘柄で共通）: 株価 {'/'.join(exit_days) or '—'}"
+              f"　指数 ^SP500TR {out.get('bench_asof') or '—'}　ドル円 {'/'.join(exit_fx) or '—'}")
+        print(f"  {'銘柄':<7}{'入口(想定)':<12}{'株数':>4} {'取得':>10} {'評価':>10} {'損益':>10} "
               f"{'価格%':>8} {'配当込%':>8} {'うち為替':>8}  取得額の出所")
         for r in rows:
             if r.get("skip"):
-                print(f"  {r['t']:<7}{'':>4} —— {r['skip']}"); continue
+                print(f"  {r['t']:<7}{'':<12}{'':>4} —— {r['skip']}"); continue
             src = {"actual_jpy": "実記録(円)", "px_x_fx": ""}.get(r.get("cost_src"), "")
             if not src:
                 src = {"actual": "実記録(単価)", "est": f"推定({r['bd']}の終値)",
@@ -428,22 +449,25 @@ def main():
                 src += f" ⚠想定日({w.get('n','?')}日窓)"
             elif r.get("bd_suspect"):
                 src += " ⚠買付日不明"
-            print(f"  {r['t']:<7}{r['sh']:>4.0f} {r['cost_jpy']:>10,.0f} {r['val_jpy']:>10,.0f} "
+            print(f"  {r['t']:<7}{(r.get('bd') or '—'):<12}{r['sh']:>4.0f} {r['cost_jpy']:>10,.0f} {r['val_jpy']:>10,.0f} "
                   f"{r['pl_jpy']:>+10,.0f} {pct(r.get('ret_px_jpy'))} {pct(r.get('ret_tr_jpy'))} "
                   f"{pct(r.get('fx_ret'))}  {src}")
         if pc:
-            print(f"\n  {'合計':<7}{'':>4} {pc['cost_jpy']:>10,.0f} {pc['val_jpy']:>10,.0f} "
+            print(f"\n  {'合計':<7}{'':<12}{'':>4} {pc['cost_jpy']:>10,.0f} {pc['val_jpy']:>10,.0f} "
                   f"{pc['pl_jpy']:>+10,.0f} {pct(pc['ret'])} {pct(pc.get('ret_tr'))}"
                   f"   ← 保有ぜんぶ（S&P500と比べられない行も含む）")
         # ── S&P500 との比較は**同じ集合どうし**でしか出さない ──────────────
         out_of = [r for r in rows if r.get("cmp_out")]
         if bc and cc:
             print(f"\n  ── 同じ日・同じ円で比べられる分だけ（{len(rows)-len(out_of)-sum(1 for r in rows if r.get('skip'))}社）──")
-            print(f"  {'保有':<7}{'':>4} {cc['cost_jpy']:>10,.0f} {cc['val_jpy']:>10,.0f} "
+            print(f"  {'保有':<7}{'':<12}{'':>4} {cc['cost_jpy']:>10,.0f} {cc['val_jpy']:>10,.0f} "
                   f"{cc['pl_jpy']:>+10,.0f} {pct(cc['ret'])}")
-            print(f"  {'S&P500':<7}{'':>4} {bc['cost_jpy']:>10,.0f} {bc['val_jpy']:>10,.0f} "
+            print(f"  {'S&P500':<7}{'':<12}{'':>4} {bc['cost_jpy']:>10,.0f} {bc['val_jpy']:>10,.0f} "
                   f"{bc['pl_jpy']:>+10,.0f} {pct(bc['ret'])}  ← 同じ円を同じ日に入れていたら")
             print(f"\n  差（円建て）: {(cc['ret']-bc['ret'])*100:+.2f}pt")
+            print(f"  ⚠ S&P500 の {bc['ret']*100:+.2f}% は**1本の窓の指数リターンではない**——"
+                  f"銘柄ごとに別々の入口から走らせた{len([r for r in rows if not r.get('skip') and not r.get('cmp_out')])}本の"
+                  "加重合成（投じた円で重みづけ）")
             br = out.get("benchmark_range")
             nEst = sum(1 for r in rows if r.get("bd_est"))
             if br and nEst:
