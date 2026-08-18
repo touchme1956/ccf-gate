@@ -190,7 +190,13 @@ def main():
             r["cost_px"], r["src"] = bpx, "actual"
         elif at_bd:
             r["cost_px"], r["src"] = at_bd[0], "est"
-            notes.append(f"{t}: 買付単価が未記録——{bd}の終値で推定")
+            # ⚠ 取得額(円)が実記録なら、推定した単価は**現地通貨のリターンにしか効かない**
+            #   （円建ては bjpy、配当込みは adjclose の比なので単価が約分される）。
+            #   ひとまとめに「推定」と書くと、実記録の円まで推定に見える
+            notes.append(
+                f"{t}: 買付単価（現地通貨）が未記録——{bd}の終値で推定"
+                + ("。取得額(円)は実記録なので円建てと配当込みには効かない"
+                   if bjpy > 0 else "。取得額もこの単価から出している"))
         elif bjpy > 0:
             r["cost_px"], r["src"] = None, "jpy_only"   # 円だけ判っている（現地通貨のリターンは出せない）
         else:

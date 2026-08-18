@@ -56,7 +56,7 @@ fr = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(fr)   # �
 
 
 def solve_lots(ser, fxs, bench, lots, bpx, bjpy, ds):
-    """複数回買付を内訳から解き、(等価な単一日の窓, 説明) を返す。
+    """複数回買付を内訳から解き、(窓, 説明, 想定日, 置き換えの誤差pt) を返す。
 
     各ロットを**別々に**指数へ当ててから、同じ指数の結果を出す単一日を逆算する
     （台帳は1銘柄1行なので）。制約は3つ同時＝過剰決定なので、解が出れば強い。
@@ -65,16 +65,27 @@ def solve_lots(ser, fxs, bench, lots, bpx, bjpy, ds):
     fx1 = fr.last(fxs)[1][0]; b1 = fr.last(bench)[1][1]
     ok = []
     for l in lots:                       # ロットごとに「円/株が一致する日」を先に絞る
-        l["_d"] = [d for d in ds if (lambda f: f and abs(ser[d][0] * f[0] - l["jpy"]) / l["jpy"] < 0.01)
-                   (fr.on_or_before(fxs, d))]
+        cand = []
+        for d in ds:
+            f = fr.on_or_before(fxs, d)
+            per = l["jpy"] / l["sh"]
+            if not f or abs(ser[d][0] * f[0] - per) / per >= 0.01:
+                continue
+            # ★そのロットだけ現地通貨の平均取得価額が判っていれば、それも制約に足す
+            if l.get("usd") and abs(ser[d][0] / l["usd"] - 1) >= 0.01:
+                continue
+            cand.append(d)
+        l["_d"] = cand
         if not l["_d"]:
-            return [], "内訳のどれかが窓に無い"
+            return [], "内訳のどれかが窓に無い", None, None
     def walk(i, chosen):
         if i == len(lots):
             usd = sum(l["sh"] * ser[d][0] for l, d in zip(lots, chosen)) / tot_sh
             yen = sum(l["sh"] * ser[d][0] * fr.on_or_before(fxs, d)[0] for l, d in zip(lots, chosen))
             if bpx and abs(usd / bpx - 1) > 0.01: return
             if bjpy and abs(yen / bjpy - 1) > 0.01: return
+            if len(set(chosen)) < len(chosen) and len({id(l) for l in lots}) > 1:
+                pass   # 同じ日に複数ロットは有りうる（同日に別口座で買う）ので弾かない
             sp = sum(l["sh"] * ser[d][0] * fr.on_or_before(fxs, d)[0]
                      * (b1 / fr.on_or_before(bench, d)[1]) * (fx1 / fr.on_or_before(fxs, d)[0])
                      for l, d in zip(lots, chosen))
@@ -84,15 +95,24 @@ def solve_lots(ser, fxs, bench, lots, bpx, bjpy, ds):
             walk(i + 1, chosen + [d])
     walk(0, [])
     if not ok:
-        return [], "内訳の組が3つの制約を同時に満たさない"
+        return [], "内訳の組が3つの制約を同時に満たさない", None, None
     # 各組の「等価な単一日」＝同じ指数の伸びを出す日
     eq = []
     for mult, _ in ok:
         best = min(ds, key=lambda d: abs((b1 / fr.on_or_before(bench, d)[1])
                                          * (fx1 / fr.on_or_before(fxs, d)[0]) - mult))
-        eq.append(best)
-    eq = sorted(set(eq))
-    return eq, f"内訳{len(lots)}ロットを別々に指数へ当てた等価日（{len(ok)}通りの組）"
+        eq.append((mult, best))
+    # ⚠ 窓は重複を除いて出す（表示のため）が、**中央値は「組」の中央値**で採る。
+    #   重複を除いてから中央を取ると、同じ等価日に落ちる組の重みが消えて答えがずれる
+    #   （実測: 本当の3ロット計算の中央 +14.5pt に対し、重複除去だと +12.9pt ＝1.6pt の差）。
+    eq.sort()
+    hint = eq[len(eq) // 2][1]
+    # ★置き換えの誤差を測って一緒に返す。等価日は「一番近い営業日」なので厳密には一致せず、
+    #   台帳が1銘柄1行である以上この残差は消せない。**消せないものは黙らせずに出す**
+    eqerr = max(abs((b1 / fr.on_or_before(bench, d)[1])
+                    * (fx1 / fr.on_or_before(fxs, d)[0]) - m) for m, d in eq)
+    return sorted({d for _, d in eq}), \
+        f"内訳{len(lots)}ロットを別々に指数へ当てた等価日（{len(ok)}通りの組）", hint, eqerr
 
 
 def candidates(ser, fxs, sh, bpx, bjpy):
@@ -108,12 +128,12 @@ def candidates(ser, fxs, sh, bpx, bjpy):
                 B.append(d)
     both = sorted(set(A) & set(B))
     if both:
-        return both, "A∩B（終値とドル円の両方が一致）"
+        return both, "A∩B（終値とドル円の両方が一致）", None, None
     if A:
-        return A, "A（終値のみ）"
+        return A, "A（終値のみ）", None, None
     if B:
-        return B, "B（円の取得額のみ）"
-    return [], "該当なし"
+        return B, "B（円の取得額のみ）", None, None
+    return [], "該当なし", None, None
 
 
 def main():
@@ -146,9 +166,10 @@ def main():
                 print(f"  {t:<6}—— 申告の範囲に価格が無い"); continue
         lots = p.get("bdLots")
         if lots:
-            win, how = solve_lots(ser, fxs, bench, [dict(l) for l in lots], bpx, bjpy, sorted(ser))
+            win, how, hint, eqerr = solve_lots(ser, fxs, bench, [dict(l) for l in lots],
+                                        bpx, bjpy, sorted(ser))
         else:
-            win, how = candidates(ser, fxs, sh, bpx, bjpy)
+            win, how, hint, eqerr = candidates(ser, fxs, sh, bpx, bjpy)
         if not win:
             print(f"  {t:<6}—— 終値がその水準だった日が見つからない（{how}）"); continue
         cost = bjpy if bjpy else sh * bpx * fr.on_or_before(fxs, win[len(win) // 2])[0]
@@ -166,10 +187,15 @@ def main():
         if not scored:
             print(f"  {t:<6}—— 指数か為替が窓に無い"); continue
         scored.sort()
-        pick = scored[len(scored) // 2][1]     # 答えが中央値になる日＝最も偏りが少ない
+        # 内訳がある行は**組の中央値**（hint）を使う。無ければ候補日の中で答えが中央になる日
+        pick = hint or scored[len(scored) // 2][1]
         lo, hi = scored[0][0], scored[-1][0]
+        # ★出す中央値は「採った日 pick の答え」。hint を採ったのに scored の中央を
+        #   表示すると、直したはずの重みのずれが画面にだけ残る（v9.9.65 の同型）
+        mid = next((v for v, d in scored if d == pick), scored[len(scored) // 2][0])
         span = f"{win[0]}〜{win[-1]}({len(win)}日)"
-        rng = f"{scored[len(scored)//2][0]*100:+.1f}pt（幅 {lo*100:+.1f}〜{hi*100:+.1f}）"
+        err = f"±{eqerr*100:.1f}" if eqerr and eqerr * 100 >= 0.05 else ""
+        rng = f"{mid*100:+.1f}{err}pt（幅 {lo*100:+.1f}〜{hi*100:+.1f}）"
         print(f"  {t:<6}{pick:<12}{span:<26}{how:<26}{rng:>26}")
         if write:
             p["bd"] = pick; p["bdEst"] = True

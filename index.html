@@ -3938,8 +3938,14 @@ function ccfReturnsHTML(R){
     if(r.skip){ rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}</span>`
       +`<span style="min-width:74px"></span>`
       +`<span style="font-size:11.5px;color:var(--dim)">—— ${r.skip}</span></div>`; return; }
+    // ⚠ 取得額(円)が実記録なら、推定した単価が効くのは**現地通貨のリターンだけ**
+    //   （円建ては bjpy、配当込みは adjclose の比なので単価が約分される）
     const est=r.src==='est'
-      ? `<span title="買付単価(bpx)が未記録なので ${r.bd} の終値で推定。実際の約定値でも手数料込みでもない" style="font-size:9.5px;color:#d69a3c;margin-left:4px">推定</span>` : '';
+      ? `<span title="買付単価（現地通貨）が未記録なので ${r.bd} の終値で推定。実際の約定値でも手数料込みでもない`
+        + (r.cost_src==='actual_jpy'
+            ? '。ただし取得額(円)は実記録なので、円建て・配当込み・S&P500との差には効かない'
+            : '。取得額(円)もこの単価から出している')
+        + `" style="font-size:9.5px;color:#d69a3c;margin-left:4px">推定</span>` : '';
     // 取得額が**実際に出した円**なら、為替を仮定していない＝いちばん硬い
     const jpc=r.cost_src==='actual_jpy'
       ? `<span title="証券アプリの取得価額（円）をそのまま使っている＝買付時のドル円を仮定していない" style="font-size:9.5px;color:var(--jade,#3f8f6b);margin-left:4px">実円</span>` : '';
@@ -4036,6 +4042,9 @@ function ccfReturnsHTML(R){
   if(est.length)
     warn+=`<div style="font-size:11px;color:#d69a3c;margin-top:6px;line-height:1.8">⚠ <b>取得単価が未記録 ${est.length}件</b>`
       +`（${est.map(r=>r.t).join(' / ')}）——買付日の終値で推定している。<b>実際の約定値でも手数料込みでもない。</b>`
+      + (est.every(r=>r.cost_src==='actual_jpy')
+          ? `<br><span style="color:var(--dim)">この ${est.length}件は<b>取得額(円)が実記録</b>なので、推定が効くのは<b>現地通貨のリターンだけ</b>`
+            + `——円建て・配当込み・S&amp;P500との差は実記録の円で出ている</span>` : '')
       +` Ⅶ資産の「✎編集」→<b>買付単価</b>を入れると実記録に変わる</div>`;
   // ★ 比較から外した行は**名指しで出す**（v9.9.52 の作法——黙って消すと理由が追えない）
   const oo=(R.positions||[]).filter(r=>r.cmp_out);
@@ -4128,17 +4137,23 @@ async function ccfDash(btn){
     : '<b style="color:#d69a3c">out/dashboard.json が未生成</b>——GitHub Actions（.github/workflows/market.yml）に FINNHUB_KEY を設定すると毎営業日入る。それまで価格・前日比・ニュースは空欄';
 
   // ── 保有（評価額・含み損益・円換算）
-  let rows='', totJ=0, totCost=0, miss=[];
+  let rows='', totJ=0, totCost=0, totCostVal=0, noCost=[], miss=[];
   const pos=(pf&&Array.isArray(pf.positions))?pf.positions:[];
   pos.forEach(p=>{
     const t=String(p.t||'').toUpperCase(); if(!t)return;
-    const sh=+p.sh||0, bpx=+p.bpx||0, q=Q[t];
+    const sh=+p.sh||0, bpx=+p.bpx||0, bjpy=+p.bjpy||0, q=Q[t];
     const cur=q?q.px:(+p.npx||0);                 // 実測が無ければ手入力の現値
     const src=q?'':'<span style="font-size:9.5px;color:#d69a3c;margin-left:4px">手入力</span>';
     const jpy=p.ccy==='JPY'?1:(FX||0);
     const val=(sh>0&&cur>0)?(p.ccy==='JPY'?sh*cur:sh*cur*jpy):(+p.v||0);
-    const cost=(sh>0&&bpx>0)?(p.ccy==='JPY'?sh*bpx:sh*bpx*jpy):0;
+    // ★取得額は ① bjpy（実際に出した円）② sh×bpx×為替 の順。fetch_returns.py と同じ優先順。
+    //   bjpy を見ないと、単価が未記録の行（複数回買付で現地通貨の平均が出せない社）が
+    //   **取得額ゼロ**になり、下の合計が「元手なしで増えた」形に化ける（実測 +202%）
+    const cost=bjpy>0?bjpy:((sh>0&&bpx>0)?(p.ccy==='JPY'?sh*bpx:sh*bpx*jpy):0);
     totJ+=val; totCost+=cost;
+    // ⚠ 合計の含み損益は**取得額が判っている行だけ**で作る。全部の評価額から
+    //   一部の取得額を引くと、測れていない行のぶんが利益に化ける（ルール7）
+    if(cost>0) totCostVal+=val; else if(val>0) noCost.push(t);
     const pl=cost>0?val-cost:null, plP=cost>0?(val/cost-1)*100:null;
     const L=led[t]||{}, R=L.r||{};
     const ex={s1:'🔴S1',s2:'🟠S2',s3:'🟡S3',hold:'—'}[(R.exit&&R.exit.level)||'hold']||'—';
@@ -4151,10 +4166,11 @@ async function ccfDash(btn){
       +`<span style="font-size:12px;min-width:56px;text-align:right;color:var(--gold-bright)">${R.evalScore||'—'}</span>`
       +`<span style="font-size:11.5px;min-width:44px;text-align:right">${ex}</span></div>`;
   });
-  const plAll=totCost>0?totJ-totCost:null;
+  const plAll=totCost>0?totCostVal-totCost:null;
   const head=`<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);padding:10px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:10px">
     <span>総資産 <b style="font-size:16px;color:var(--gold-bright)">${totJ?yen(totJ):'—'}</b></span>
-    ${plAll!=null?`<span style="border-left:1px solid var(--line);padding-left:14px">含み損益 <b style="color:${col(plAll)}">${plAll>0?'+':''}${yen(plAll)}（${sign((totJ/totCost-1)*100)}%）</b></span>`:''}
+    ${plAll!=null?`<span style="border-left:1px solid var(--line);padding-left:14px">含み損益 <b style="color:${col(plAll)}">${plAll>0?'+':''}${yen(plAll)}（${sign((totCostVal/totCost-1)*100)}%）</b></span>`:''}
+    ${noCost.length?`<span style="font-size:10.5px;color:#d69a3c;padding-left:10px" title="取得額(bjpy)も買付単価(bpx)も無い行。評価額は総資産に入るが、含み損益からは外してある——測れていないものを利益に数えないため">含み損益の対象外 ${noCost.join(' / ')}</span>`:''}
     ${FX?`<span style="border-left:1px solid var(--line);padding-left:14px">$1=¥${FX}</span>`:''}
     <span style="border-left:1px solid var(--line);padding-left:14px;color:var(--dim)">保有${pos.length}件</span></div>`;
   const hdr=`<div class="led" style="opacity:.65;font-size:10.5px"><span class="ln">銘柄</span><span style="min-width:78px;text-align:right">現在値</span><span style="min-width:82px;text-align:right">前日比</span><span style="min-width:96px;text-align:right">評価額</span><span style="min-width:110px;text-align:right">含み損益</span><span style="min-width:56px;text-align:right">Ω</span><span style="min-width:44px;text-align:right">出口</span></div>`;
