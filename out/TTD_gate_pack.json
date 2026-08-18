@@ -28,9 +28,9 @@
  "dur": 85,
  "geopol": 0,
  "nrr": 105,
- "beta": null,
- "per": null,
- "perF": null,
+ "beta": 1.037,
+ "per": 16.83,
+ "perF": 18.35,
  "evebit": null,
  "px": null,
  "shy": null,
@@ -104,7 +104,10 @@
    "roict": "機械算出: のれん除外ROIC 5年系列 8.2% / 2.7% / 6.2% / 11.2% / 16.0%（最古→直近の差で判定）",
    "nde": "機械算出 2025年: (有利子負債 0 − 現金同等物 1,303,057,000) ÷ (営業利益 589,321,000 + 減価償却 115,784,000)。**有利子負債は候補タグ・独立走査とも痕跡ゼロ＝実質無借金**（欠測を0と読んだのではない）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 836,033,000 → 2023年 1,946,120,000 → 2025年 2,896,284,000。A案(端点) 直近2年CAGR 21.99% − その前3年CAGR 32.53% = -10.54pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -9.83pt ／ 年次YoY {'2021': 43.1, '2022': 31.9, '2023': 23.3, '2024': 25.6, '2025': 18.5} → **採用 -9.83pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 329.23。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict"
+   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 329.23。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
+   "per": "市場データ機械充填 2026-08-18: market_fetch/market_data.json（常識帯(8.0, 200.0)を通過）",
+   "perF": "市場データ機械充填 2026-08-18: market_fetch/market_data.json（常識帯(1.0, 500.0)を通過）",
+   "beta": "市場データ機械充填 2026-08-18: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -127,7 +130,10 @@
    "sht": "machine",
    "roict": "machine",
    "nde": "machine",
-   "cagrT": "machine"
+   "cagrT": "machine",
+   "per": "market",
+   "perF": "market",
+   "beta": "market"
   },
   "basis": {
    "roic": "through-cycle-med5(5年)",
@@ -153,6 +159,15 @@
     "dilNet"
    ],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
+  },
+  "market": {
+   "date": "2026-08-18",
+   "filled": [
+    "per",
+    "perF",
+    "beta"
+   ],
+   "src": "market_fetch/market_data.json"
   }
  },
  "sht": "up",
