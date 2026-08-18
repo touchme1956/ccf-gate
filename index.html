@@ -1296,7 +1296,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.153</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.154</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3729,20 +3729,34 @@ function ccfAudit(d,r,coerced,okKeys){
 //   ★後者が要点——**ブラウザは _meta を読めない**ので、この情報は台帳へ取り込んだ瞬間に
 //   見えなくなっていた。新しい情報を作るのではなく、**既に払ったコストを見えるようにする**。
 //   **表示専用・判定には一切使わない**（ロゴ・盤・自己相対と同じ扱い）。
-var CCF_PROFILE={};
+//   ★v9.9.154（2026-08-18 ユーザー「事業説明が英語は分からない。何をしている会社などが
+//   分かるようにしたい」）: **日本語の要約を主にし、素材（原本の英文）は畳んで併記する**。
+//   要約は out/profiles_ja.json（night/profiles_ja.py）＝**別ファイル**に置く——profiles.json は
+//   採取器が毎回作り直すので、同じファイルに書くと次の実行で消える（2026-08-17 に
+//   fetch_logos が logo_colors の測定値を捨てた「作った答えを捨てる」型と同じ穴）。
+//   ⚠**古さの判定は門ではなく端末**（profiles_ja.py --audit / CI / 回転盤）。門は _meta を
+//   読めないのと同じ理由で、素材の指紋を照合できない。門にできるのは
+//   **素材を必ず併記して、食い違いを読み手が見つけられる形にする**ところまで。
+var CCF_PROFILE={}, CCF_PROFILE_JA={};
 async function ccfLoadProfiles(){
   if(CCF_PROFILE.__loaded)return CCF_PROFILE;
   try{ const j=await (await fetch('out/profiles.json?t='+Date.now())).json();
        CCF_PROFILE=Object.assign({},j.items||{}); }catch(e){ CCF_PROFILE={}; }
+  try{ const j=await (await fetch('out/profiles_ja.json?t='+Date.now())).json();
+       CCF_PROFILE_JA=Object.assign({},j.items||{}); }catch(e){ CCF_PROFILE_JA={}; }
   // 取れなければ空＝チップが出ないだけ（無いことを「異常なし」と偽らない・絶対のルール7）
   try{Object.defineProperty(CCF_PROFILE,'__loaded',{value:true,enumerable:false});}catch(e){}
   return CCF_PROFILE;
 }
+// 日本語要約（無ければ null）。**単一実装**をチップと詳細が共有する（v9.9.65）
+function ccfBizJa(k){const r=CCF_PROFILE_JA&&CCF_PROFILE_JA[ccfBizKey(k)];return (r&&r.ja)?r:null;}
 function ccfBizKey(x){return String(x||'').trim().split(/[\s_]/)[0].toUpperCase();}
 function ccfBizChip(nm){
   const k=ccfBizKey(nm), p=CCF_PROFILE&&CCF_PROFILE[k];
   if(!p)return '';
-  const tip=(p.sic?p.sic+'｜':'')+String(p.biz||p.seg||'').replace(/<[^>]+>/g,'').slice(0,180);
+  // 日本語要約があればそれを見せる（英文は読めなければ在っても無いのと同じ）
+  const ja=ccfBizJa(k);
+  const tip=(p.sic?p.sic+'｜':'')+(ja?ja.ja:String(p.biz||p.seg||'').replace(/<[^>]+>/g,'')).slice(0,180);
   return `<span onclick="event.stopPropagation();ccfBizOpen('${k}')" title="${tip.replace(/"/g,'&quot;')}"`
     +` style="font-size:10px;color:#7f9bb5;border:1px solid #7f9bb555;background:#7f9bb514;border-radius:4px;`
     +`padding:1px 5px;margin-left:6px;cursor:pointer;white-space:nowrap">🏢 事業</span>`;
@@ -3760,12 +3774,28 @@ function ccfBizOpen(k){
     el.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:16px';
     el.onclick=e=>{if(e.target===el)el.remove();};document.body.appendChild(el);return el;})();
   const src=p.src_used||p.src;
+  // ── 事業（日本語）。素材は必ず併記する——第三者の要約を使わない理由（原本と食い違っても
+  //    気づけない）は要約にもそのまま当たるので、**もとの文を畳んで隣に置く**。
+  const jr=ccfBizJa(k);
+  const fold=(ttl,body)=>body?`<details style="margin-top:6px"><summary style="font-size:11px;color:var(--muted);cursor:pointer">${ttl}</summary>`
+    +`<div style="font-size:11.5px;color:var(--dim);line-height:1.8;margin-top:4px">${esc(body)}</div></details>`:'';
+  const bizJa = jr
+    ? `<div style="margin-top:12px"><div style="font-size:11px;color:var(--gold-bright);letter-spacing:.05em">事業（日本語の要約）</div>`
+      +`<div style="font-size:13.5px;color:var(--ink);line-height:1.95;margin-top:4px">${esc(jr.ja)}</div>`
+      +`<div style="font-size:10.5px;color:var(--dim);margin-top:4px">※`
+      +(jr.src==='biz'?`原本 ${esc(p.form||'年次報告')} の冒頭（下の原文）だけから要約したもの`
+                     :`台帳の審査根拠（下の各節＝審査官が原本から日本語で書いた事業の事実）だけから要約したもの`)
+      +`。<b>原本そのものではない</b>ので、下の素材と突き合わせて読むこと</div>`
+      +fold('原文（原本 '+esc(p.form||'年次報告')+' の冒頭・英語）',p.biz)+`</div>`
+    : sec('事業（原本 '+esc(p.form||'年次報告')+' の冒頭）',p.biz,
+        '※原本の英文をそのまま抜いている（第三者の要約を使わないのは、原本と食い違っても気づけないため）。'
+        +'<b>日本語の要約はまだ作られていない</b>——night/profiles_ja.py で作る');
   box.innerHTML=`<div style="background:var(--panel,#15161a);border:1px solid var(--gold-line);border-radius:14px;max-width:720px;width:100%;max-height:84vh;overflow:auto;padding:18px 20px">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
       <h2 class="serif" style="margin:0;font-size:1.15em;color:var(--gold-bright)">${esc(p.nm||k)}${p.sic?`<span style="font-size:.62em;color:var(--muted);margin-left:8px">${esc(p.sic)}</span>`:''}</h2>
       <button onclick="document.getElementById('ccfBizModal').remove()" style="background:transparent;border:1px solid var(--dim);color:var(--dim);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">閉じる</button></div>
     <div style="font-size:11px;color:var(--muted);margin-top:4px"><b>表示専用</b>——Ω・堀・買付の判定には一切使わない。</div>
-    ${sec('事業（原本 '+esc(p.form||'年次報告')+' の冒頭）',p.biz,'※原本の英文をそのまま抜いている（第三者の要約を使わないのは、原本と食い違っても気づけないため）')}
+    ${bizJa}
     ${sec('売上の構成（台帳の審査根拠）',p.seg)}
     ${sec('競争上の位置（台帳の審査根拠）',p.pos)}
     ${sec('依存先（台帳の審査根拠）',p.dep)}

@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-17",
+ "generated": "2026-08-18",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "MSFT",
@@ -23,14 +23,30 @@
   "RELX"
  ],
  "counts": {
-  "now": 1,
+  "now": 3,
   "today": 8,
-  "month": 17,
+  "month": 22,
   "waiting": 88,
   "blind": 0,
-  "src": 17
+  "src": 18
  },
  "now": [
+  {
+   "k": "ops:market",
+   "level": "now",
+   "title": "止まっている疑い: 株価・盤データ",
+   "why": "最終 2026-08-13（5日前・期限4日）",
+   "how": "market.yml 21:30UTC（FINNHUB_KEY）",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:gatehist",
+   "level": "now",
+   "title": "止まっている疑い: 門の判定の履歴",
+   "why": "最終 2026-08-13（5日前・期限4日）",
+   "how": "market.yml が毎日／手動 python3 night/gate_history.py --append",
+   "src": "回転盤"
+  },
   {
    "k": "wacc",
    "level": "now",
@@ -93,7 +109,7 @@
    "k": "earn:JKHY",
    "level": "today",
    "title": "決算: JKHY（2026-08-18）",
-   "why": "1日後",
+   "why": "本日",
    "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
    "src": "決算カレンダー"
   },
@@ -124,10 +140,66 @@
    "src": "鮮度"
   },
   {
-   "k": "kes:4071",
+   "k": "kes:3092",
    "level": "month",
-   "title": "四半期点検で要審査: 4071 ",
-   "why": "要審査: 警報:減損  ※数値は自己検算で破棄（警報のみで判定）",
+   "title": "四半期点検で要審査: 3092 ",
+   "why": "要審査: 売上YoY -9.4% / 警報:集(新規出現) / 警報:減損",
+   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
+   "src": "四半期点検"
+  },
+  {
+   "k": "kes:4519",
+   "level": "month",
+   "title": "四半期点検で要審査: 4519 ",
+   "why": "要審査: 警報:減損",
+   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
+   "src": "四半期点検"
+  },
+  {
+   "k": "kes:4732",
+   "level": "month",
+   "title": "四半期点検で要審査: 4732 ",
+   "why": "要審査: 警報:集(新規出現)  ※数値は自己検算で破棄（警報のみで判定）",
+   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
+   "src": "四半期点検"
+  },
+  {
+   "k": "kes:4776",
+   "level": "month",
+   "title": "四半期点検で要審査: 4776 ",
+   "why": "要審査: 売上YoY -13.9%",
+   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
+   "src": "四半期点検"
+  },
+  {
+   "k": "kes:4828",
+   "level": "month",
+   "title": "四半期点検で要審査: 4828 ",
+   "why": "要審査: 警報:誠 / 警報:集(新規出現)  ※数値は自己検算で破棄（警報のみで判定）",
+   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
+   "src": "四半期点検"
+  },
+  {
+   "k": "kes:6861",
+   "level": "month",
+   "title": "四半期点検で要審査: 6861 ",
+   "why": "要審査: 警報:集(新規出現)  ※数値は自己検算で破棄（警報のみで判定）",
+   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
+   "src": "四半期点検"
+  },
+  {
+   "k": "kes:7741",
+   "level": "month",
+   "title": "四半期点検で要審査: 7741 ",
+   "why": "要審査: 警報:減損 / 警報:退任",
+   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
+   "src": "四半期点検"
+  },
+  {
+   "k": "kes:8035",
+   "level": "month",
+   "title": "四半期点検で要審査: 8035 ",
+   "why": "要審査: 警報:集(新規出現)  ※数値は自己検算で破棄（警報のみで判定）",
    "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },
@@ -135,7 +207,7 @@
    "k": "kes:8136",
    "level": "month",
    "title": "四半期点検で要審査: 8136 ",
-   "why": "要審査: 警報:誠 / 警報:集(新規出現) / 警報:減損  ※数値は自己検算で破棄（警報のみで判定）",
+   "why": "要審査: 警報:誠 / 警報:減損  ※数値は自己検算で破棄（警報のみで判定）",
    "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },
@@ -144,14 +216,6 @@
    "level": "month",
    "title": "四半期点検で要審査: BMI ",
    "why": "要審査: 売上YoY -6.6%",
-   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
-   "src": "四半期点検"
-  },
-  {
-   "k": "kes:BWXT",
-   "level": "month",
-   "title": "四半期点検で要審査: BWXT ",
-   "why": "要審査: 警報:集(新規出現)",
    "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },
@@ -175,7 +239,7 @@
    "k": "kes:KRMN",
    "level": "month",
    "title": "四半期点検で要審査: KRMN ",
-   "why": "要審査: 警報:誠 / 警報:集(新規出現)",
+   "why": "要審査: 警報:誠",
    "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },
@@ -184,14 +248,6 @@
    "level": "month",
    "title": "四半期点検で要審査: MANH ",
    "why": "要審査: 営利率 前年比-4.8pt / 警報:誠",
-   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
-   "src": "四半期点検"
-  },
-  {
-   "k": "kes:NOVT",
-   "level": "month",
-   "title": "四半期点検で要審査: NOVT ",
-   "why": "要審査: 警報:集(新規出現)",
    "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },
@@ -223,7 +279,7 @@
    "k": "kes:WST",
    "level": "month",
    "title": "四半期点検で要審査: WST ",
-   "why": "要審査: 警報:集(新規出現) / 警報:減損",
+   "why": "要審査: 警報:減損",
    "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },

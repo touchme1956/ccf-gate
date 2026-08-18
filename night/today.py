@@ -69,6 +69,7 @@ SRC = [
     ('myrule', 'out/irr85_myrule.json', 'あなたの選定ルール', 'items'),
     ('mech_diff', 'out/irr85_mech_diff.json', '機構文の年次diff', 'items'),
     ('kessan', 'out/kessan_flags.json', '四半期点検の旗', 'items'),
+    ('profiles_ja', 'out/profiles_ja_audit.json', '事業説明の日本語要約の被覆', 'counts'),
     ('freshness', 'out/freshness.json', '中身と入力の鮮度', 'rows'),
     ('fetch_run', 'out/fetch_run.json', '機械値の採取の実行印', 'generated'),
 ]
@@ -253,6 +254,20 @@ def build():
         today.append(item('irr85new:' + str(t), 'today', 'irr=85 の新着: ' + str(t),
                           'あなたの選定ルール（営利率11.89 / FCF転換0.639 / 成長1.76）で採点し直す',
                           'python3 night/irr85_myrule.py', 'あなたのルール'))
+
+    # ── 事業説明の日本語要約（v9.9.154・2026-08-18新設。表示専用・判定には一切使わない）──
+    #   門は Ω・堀・E[r] という**評価**を全部出すのに、「何をしている会社か」は英文のままだった。
+    #   新しく審査した社／原本が新しくなった社は**訳が無いまま静かに増える**ので、ここへ出す。
+    #   ⚠ 材料なし18社は出さない——原本の英文も台帳の日本語根拠も無く、
+    #      作業として渡しても書けない（憶測で書かせないための穴の明示は --audit の側）。
+    pj = data.get('profiles_ja') or {}
+    for r in (pj.get('todo') or []):
+        st = str(r.get('state') or '')
+        month.append(item('pja:' + str(r.get('t')), 'month',
+                          ('事業説明の日本語要約が無い: ' if st == '未訳'
+                           else '事業説明の素材が変わった（訳が古い）: ') + str(r.get('nm') or r.get('t')),
+                          '素材=' + str(r.get('kind') or '?') + '（原本の英文 or 台帳の日本語根拠）',
+                          'python3 night/profiles_ja.py --next 12 → 要約を書いて --add', '日本語要約'))
 
     # ── 中身と入力の鮮度（2026-08-17新設）──
     #   回転盤は**日付しか見ていない**ので「日付は動いたが中身/入力が死んでいる」は🟢に見える。
