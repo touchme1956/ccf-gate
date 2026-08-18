@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-17",
+ "generated": "2026-08-18",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "MSFT",
@@ -23,14 +23,30 @@
   "RELX"
  ],
  "counts": {
-  "now": 1,
+  "now": 3,
   "today": 8,
   "month": 22,
-  "waiting": 89,
+  "waiting": 92,
   "blind": 0,
   "src": 17
  },
  "now": [
+  {
+   "k": "ops:market",
+   "level": "now",
+   "title": "止まっている疑い: 株価・盤データ",
+   "why": "最終 2026-08-13（5日前・期限4日）",
+   "how": "market.yml 21:30UTC（FINNHUB_KEY）",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:gatehist",
+   "level": "now",
+   "title": "止まっている疑い: 門の判定の履歴",
+   "why": "最終 2026-08-13（5日前・期限4日）",
+   "how": "market.yml が毎日／手動 python3 night/gate_history.py --append",
+   "src": "回転盤"
+  },
   {
    "k": "wacc",
    "level": "now",
@@ -93,7 +109,7 @@
    "k": "earn:JKHY",
    "level": "today",
    "title": "決算: JKHY（2026-08-18）",
-   "why": "1日後",
+   "why": "本日",
    "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
    "src": "決算カレンダー"
   },
@@ -817,6 +833,24 @@
    "k": "todo:adv6857_impair_prior",
    "kind": "宿題",
    "title": "6857 の減損警報は過年度の記述——四半期点検の要審査を原本で確定させる",
+   "due": null
+  },
+  {
+   "k": "todo:pf_msft_shares",
+   "kind": "宿題",
+   "title": "MSFT の株数が三通りに割れている（台帳8 / 楽天3 / マネーアプリ2）",
+   "due": null
+  },
+  {
+   "k": "todo:pf_missing_bd",
+   "kind": "宿題",
+   "title": "買付日(bd)が台帳の記入日で、S&P500 との比較ができない",
+   "due": null
+  },
+  {
+   "k": "todo:pf_net_etf_out",
+   "kind": "決断待ち",
+   "title": "網(ETF)がⅦ資産に持てない＝トータルリターンが城だけになる",
    "due": null
   }
  ],

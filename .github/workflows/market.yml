@@ -100,4 +100,8 @@ jobs:
           . night/git_add_safe.sh
           ccf_git_add market_data.json out/dashboard.json out/returns.json 'out/*_gate_pack.json' out/score_all.json out/er_ledger.json out/validate_fail.json out/gate_history.jsonl out/gate_state.json
           git diff --staged --quiet || git commit -m "$MSG"
-          git push
+          # ⚠2026-08-18: 素の `git push` は remote が進んだだけで弾かれ、
+          #   **作ったコミットがまるごと捨てられる**（market.yml が2営業日連続で70ファイル失った）。
+          #   cron は10〜40分ふつうに遅れるので「時間をずらす」では防げない。rebase して再試行する。
+          . night/git_push_safe.sh
+          ccf_git_push

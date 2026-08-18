@@ -337,4 +337,8 @@ jobs:
           #     `market_data.json` に書く）。これが38パス全部を巻き添えにしていた元凶なので外した。
           ccf_git_add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/backfill_diff.json out/backfill_stamps.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos 'night/chunk*.txt' 'night/rechunk*.txt' night/reaudit_queue.json night/progress.json out/er_ledger.json market_data.json 'out/shadow_*.json' out/gate0_run.json
           git diff --staged --quiet || git commit -m "$MSG"
-          git push
+          # ⚠2026-08-18: 素の `git push` は remote が進んだだけで弾かれ、
+          #   **作ったコミットがまるごと捨てられる**（market.yml が2営業日連続で70ファイル失った）。
+          #   cron は10〜40分ふつうに遅れるので「時間をずらす」では防げない。rebase して再試行する。
+          . night/git_push_safe.sh
+          ccf_git_push

@@ -22,10 +22,24 @@
   片方だけ出すと必ず誤読する（audit_er_realized が記録した
   「価格リターンには配当が入らない。揃えずに結論すると自分で作った偏りを発見と誤認する」）。
 
-■ 取得単価（絶対のルール7 —— 欠測を勝手に埋めない）
-  `bpx`（買付単価）があれば src="actual"。無ければ **買付日の終値**で src="est" と明示する。
-  `bd` も無ければ **測れない**（null）——推測の数字は出さない。
+■ 取得額（絶対のルール7 —— 欠測を勝手に埋めない）
+  円建ての投資家にとっての一次データは **実際に出した円**なので、優先順はこう:
+    ① `bjpy`（取得額・円）  … 証券アプリの「取得価額」。**為替を仮定せずに済む唯一の値**
+    ② `bpx`（買付単価・現地通貨）… 証券口座の「平均取得価額」。現地通貨のリターンは厳密になる
+    ③ 無ければ `bd`（買付日）の終値で推定し src="est" と明示する
+    ④ どれも無ければ **測れない**（skip）——推測の数字は出さない
   ⚠ est は「その日の終値」であって「実際に約定した値」ではない。手数料もスプレッドも入らない。
+
+■ ★`bd` が買付日でないことがある（2026-08-18・実測で判った）
+  `bd` は**台帳に行を作った日**が入っていることがある。実測: 4社とも `bd=2026-08-05` なのに、
+  証券口座の平均取得価額はその日の終値と **3.8〜16.4% 食い違う**（MSFT 407.73 vs 487.46 等）
+  ＝**実際の買付はもっと前**。これを放置すると二つ壊れる——
+    (a) 円換算に**買付日でない日のドル円**を使う（＝「基準の違う二つを割る」型）
+    (b) S&P500 との比較が「**同じ日**に入れていたら」でなくなる＝比較の意味が消える
+  よって `bpx` が `bd` の終値と 3% 超ずれたら `bd_suspect` を立て、
+  **その行は S&P500 との比較から外す**（円建ての取得額も「概算」と明示する）。
+  ⚠ 買付日を推定して埋めることはしない——平均取得価額は複数回買付の平均でありうるので、
+    終値が一致する日を「買付日」と決めるのは推測。代わりに**その水準だった期間**を候補として出す。
 
 ■ 年率換算はしない（180日未満）
   audit_er_realized / kessan_check_jp と同じ判断。数日の値動きを年率にすると桁が暴れ、
@@ -88,6 +102,21 @@ def last(series):
     return k, series[k]
 
 
+def level_window(ser, px, tol=0.005):
+    """終値がその水準（±tol）だった期間を返す。**買付日の推定ではない**。
+
+    平均取得価額は複数回買付の平均でありうるので、終値が一致する日を買付日と決めるのは推測。
+    ここが返すのは「人が取引履歴のどこを見ればよいか」の**候補の窓**であって、
+    どこにも書き戻さないし計算にも一切使わない（絶対のルール7）。
+    """
+    if not px:
+        return None
+    hits = [d for d in sorted(ser) if abs(ser[d][0] - px) / px < tol]
+    if not hits:
+        return None
+    return {"first": hits[0], "last": hits[-1], "n": len(hits), "tol_pct": tol * 100}
+
+
 def main():
     st_path = os.path.join(BASE, "state.json")
     if not os.path.exists(st_path):
@@ -106,7 +135,10 @@ def main():
     start = min(days) if days else None
     if not start:
         print("✗ 買付日(bd)が1件も無い——リターンの起点が決まらないので書かない"); return 1
-    t0 = int(datetime.datetime.strptime(start, "%Y-%m-%d").timestamp()) - 86400 * 10
+    # ⚠ 窓は **3年** 遡る。`bd` が買付日でないことがあるので（下の bd_suspect）、
+    #   bd の10日前から採ると「終値がその水準だった期間」に届かず候補窓が出せない（実測）。
+    #   リクエスト数は変わらない（1銘柄1回）ので、広く採って損は無い。
+    t0 = int(datetime.datetime.strptime(start, "%Y-%m-%d").timestamp()) - 86400 * 1100
     t1 = int(time.time())
 
     fx = yahoo(FX, t0, t1)
@@ -120,6 +152,7 @@ def main():
     rows, notes = [], []
     tot_cost = tot_val = tot_cost_tr = tot_val_tr = 0.0
     bench_cost = bench_val = 0.0
+    cmp_cost = cmp_val = 0.0
 
     for p in positions:
         t = p["t"]
@@ -136,22 +169,40 @@ def main():
 
         lastd, (cl_now, aj_now) = last(ser)
         r["asof"] = lastd
-        # ── 取得単価 ────────────────────────────────────────────────
+        # ── 取得額（① bjpy ② bpx ③ bd の終値）────────────────────────
         bpx = float(p.get("bpx") or 0)
+        bjpy = float(p.get("bjpy") or 0)          # 取得額（円）＝実際に出した円
         at_bd = on_or_before(ser, bd) if bd else None
         if bpx > 0:
             r["cost_px"], r["src"] = bpx, "actual"
         elif at_bd:
             r["cost_px"], r["src"] = at_bd[0], "est"
             notes.append(f"{t}: 買付単価が未記録——{bd}の終値で推定")
+        elif bjpy > 0:
+            r["cost_px"], r["src"] = None, "jpy_only"   # 円だけ判っている（現地通貨のリターンは出せない）
         else:
-            r["skip"] = "買付単価も買付日も無い＝取得額が測れない"
+            r["skip"] = "買付単価も買付日も取得額(円)も無い＝取得額が測れない"
             rows.append(r); continue
+
+        # ★ bd が買付日か検算する。実記録の単価が bd の終値と食い違えば bd は買付日でない
+        if r["src"] == "actual" and at_bd and at_bd[0]:
+            gap = r["cost_px"] / at_bd[0] - 1
+            r["bd_gap"] = gap
+            if abs(gap) > 0.03:
+                r["bd_suspect"] = True
+                r["bd_window"] = level_window(ser, r["cost_px"])
+                w = r["bd_window"]
+                notes.append(
+                    f"{t}: **bd({bd}) は買付日ではない**——実記録の単価 {r['cost_px']:,.2f} は"
+                    f"その日の終値 {at_bd[0]:,.2f} と {gap*100:+.1f}% 違う"
+                    + (f"（終値がこの水準だったのは {w['first']}〜{w['last']}）" if w else "")
+                    + "。S&P500 との比較から外し、円換算は概算として出す")
+
         # 配当込みの起点は adjclose 側で取る（指数と基準を揃えるため）
-        aj_bd = at_bd[1] if at_bd else r["cost_px"]
-        cl_bd = at_bd[0] if at_bd else r["cost_px"]
-        # 実記録の bpx がある場合、adjclose 起点は bpx を同じ比率でずらす
-        adj0 = r["cost_px"] * (aj_bd / cl_bd) if cl_bd else r["cost_px"]
+        if at_bd and at_bd[0] and r["cost_px"]:
+            adj0 = r["cost_px"] * (at_bd[1] / at_bd[0])   # 実記録の単価を同じ比率でずらす
+        else:
+            adj0 = None                                    # 起点の日が無い＝配当込みは出せない
 
         fx0 = on_or_before(fx, bd)[0] if (fx and bd and on_or_before(fx, bd)) else None
         fx1 = last(fx)[1][0] if fx else None
@@ -159,22 +210,39 @@ def main():
 
         k = 1.0 if jp else (fx1 or 0)
         k0 = 1.0 if jp else (fx0 or 0)
-        if not k or not k0:
+        if not k:
             r["skip"] = "ドル円が取れないので円建てにできない"
             rows.append(r); continue
 
-        r["cost_jpy"] = sh * r["cost_px"] * k0
+        # ── 取得額（円）: bjpy が最優先＝**実際に出した円**。為替を仮定しない ──
+        if bjpy > 0:
+            r["cost_jpy"], r["cost_src"] = bjpy, "actual_jpy"
+            if not jp and r["cost_px"] and sh:
+                r["fx_implied"] = bjpy / (sh * r["cost_px"])   # 逆算した買付時のドル円
+        elif k0:
+            r["cost_jpy"], r["cost_src"] = sh * r["cost_px"] * k0, "px_x_fx"
+        else:
+            r["skip"] = "買付日のドル円が取れない＝円建ての取得額が出せない"
+            rows.append(r); continue
+
         r["val_jpy"] = sh * cl_now * k
-        r["cost_tr_jpy"] = sh * adj0 * k0
-        r["val_tr_jpy"] = sh * aj_now * k
         r["px_now"] = cl_now
-        # ── リターン ──────────────────────────────────────────────
-        r["ret_px_local"] = cl_now / r["cost_px"] - 1                    # 現地通貨・価格のみ
-        r["ret_tr_local"] = aj_now / adj0 - 1                            # 現地通貨・配当込み
-        r["ret_px_jpy"] = r["val_jpy"] / r["cost_jpy"] - 1                # 円建て・価格のみ
-        r["ret_tr_jpy"] = r["val_tr_jpy"] / r["cost_tr_jpy"] - 1          # 円建て・配当込み
-        r["fx_ret"] = (k / k0 - 1) if not jp else 0.0                     # 為替の寄与
         r["pl_jpy"] = r["val_jpy"] - r["cost_jpy"]
+        r["ret_px_jpy"] = r["val_jpy"] / r["cost_jpy"] - 1                # 円建て・価格のみ
+        # ── 現地通貨（bpx が実記録なら**厳密**＝証券口座の損益率と一致する）──
+        r["ret_px_local"] = (cl_now / r["cost_px"] - 1) if r["cost_px"] else None
+        # ── 配当込み: 起点の日が要る。無ければ **出さない**（価格リターンで代用すると
+        #    配当のぶんだけ静かに過小に出て、S&P500TR と基準が割れる）──
+        if adj0:
+            r["ret_tr_local"] = aj_now / adj0 - 1
+            r["cost_tr_jpy"] = r["cost_jpy"]                              # 同じ円を投じた前提
+            r["val_tr_jpy"] = r["cost_jpy"] * (aj_now / adj0) * (k / k0 if k0 else 1.0)
+            r["ret_tr_jpy"] = r["val_tr_jpy"] / r["cost_tr_jpy"] - 1
+        else:
+            r["ret_tr_local"] = r["ret_tr_jpy"] = None
+            r["cost_tr_jpy"] = r["val_tr_jpy"] = None
+            notes.append(f"{t}: 買付日が無いので**配当込み**が出せない（価格ベースだけ）")
+        r["fx_ret"] = ((k / k0 - 1) if k0 else None) if not jp else 0.0   # 為替の寄与
         r["days"] = (datetime.date.fromisoformat(lastd) - datetime.date.fromisoformat(bd)).days if bd else None
         # ── 内部矛盾: state.json の `v`（円）と突き合わせる ──────────────
         #   `v` は posValue() の**フォールバック**（sh も px も無いときだけ使う）なので、
@@ -193,19 +261,57 @@ def main():
         rows.append(r)
 
         tot_cost += r["cost_jpy"]; tot_val += r["val_jpy"]
-        tot_cost_tr += r["cost_tr_jpy"]; tot_val_tr += r["val_tr_jpy"]
+        if r.get("cost_tr_jpy"):
+            tot_cost_tr += r["cost_tr_jpy"]; tot_val_tr += r["val_tr_jpy"]
 
-        # ── 同じ円を同じ日に S&P500 へ入れていたら ──────────────────
-        if bench and bd:
-            b0 = on_or_before(bench, bd)
-            if b0:
+        r["_k"], r["_k0"] = k, k0
+
+    # ── ★ 同じ `bd` を持つ行への伝播 ────────────────────────────────────
+    #   実測で4社とも `bd=2026-08-05` が同じだった＝**取引ごとの買付日ではなく、
+    #   台帳に行をまとめて作った日**。うち3社は実記録の単価と食い違うことが証明できたので、
+    #   **その日付そのものが買付日ではない**——同じ日付を持つ残りの行も同じ穴に落ちている。
+    #   ⚠ これは「1行の証拠を全社へ広げる」のではなく「その**日付**が記入日だと判った」話。
+    #     だから伝播は *同じ bd 文字列を持つ行* に限る（2行以上で共有されているときだけ）。
+    bad_bd = {r["bd"] for r in rows if r.get("bd_suspect") and r.get("bd")}
+    for b in sorted(bad_bd):
+        share = [r for r in rows if r.get("bd") == b]
+        if len(share) < 2:
+            continue
+        for r in share:
+            if not r.get("bd_suspect") and not r.get("skip"):
+                r["bd_suspect"] = True
+                r["bd_suspect_by"] = "batch"
+                if r.get("cost_px") and r.get("src") == "actual":
+                    r["bd_window"] = r.get("bd_window") or None
+                notes.append(f"{r['t']}: 同じ日付 {b} の別の行で「買付日ではない」ことが実証された"
+                             "＝この行の bd も台帳の記入日。S&P500 との比較から外す")
+
+    # ── 同じ円を同じ日に S&P500 へ入れていたら ──────────────────────────
+    #   ★「**同じ日**に」が成立する行だけを比べる。bd が買付日でない行を混ぜると、
+    #     数ヶ月持った銘柄と12日ぶんの指数を比べることになる＝**精度でなく種類の誤り**。
+    #     だから比較の合計(`compared`)は指数(`benchmark`)と**必ず同じ集合**で作る。
+    for r in rows:
+        if r.get("skip"):
+            continue
+        k, k0 = r.pop("_k", None), r.pop("_k0", None)
+        if r.get("bd_suspect"):
+            r["cmp_out"] = "買付日が判らない（bd が台帳の記入日）＝同じ日で比べられない"
+        elif not (bench and r.get("bd") and k0):
+            r["cmp_out"] = "買付日か指数か為替が取れない＝同じ日で比べられない"
+        else:
+            b0 = on_or_before(bench, r["bd"])
+            if not b0:
+                r["cmp_out"] = "指数にその日が無い"
+            else:
                 b1 = last(bench)[1][1]
                 # 指数はUSD建て。円で買う＝入金時のドル円で換算し、出口のドル円で戻す
                 bench_cost += r["cost_jpy"]
                 bench_val += r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
+                cmp_cost += r["cost_jpy"]
+                cmp_val += r["val_jpy"]
 
     def pack(cost, val, cost_tr=None, val_tr=None):
-        if cost <= 0:
+        if not cost or cost <= 0:
             return None
         o = {"cost_jpy": round(cost), "val_jpy": round(val),
              "pl_jpy": round(val - cost), "ret": val / cost - 1}
@@ -215,7 +321,10 @@ def main():
         return o
 
     meas = [r for r in rows if not r.get("skip")]
-    span = max([r["days"] for r in meas if r.get("days") is not None], default=None)
+    span = max([r["days"] for r in meas if r.get("days") is not None
+                and not r.get("bd_suspect")], default=None)
+    if span is None:      # 信用できる bd が一つも無いときは、あるものから取って印を付ける
+        span = max([r["days"] for r in meas if r.get("days") is not None], default=None)
     out = {
         "generated": datetime.date.today().isoformat(),
         "tool": "night/fetch_returns.py",
@@ -227,8 +336,12 @@ def main():
         "basis": {
             "price": "終値ベース＝証券口座の含み損益と一致する（配当は入らない）",
             "total": "adjclose ベース＝配当再投資込み。**S&P500TR と同じ基準**",
-            "benchmark": "^SP500TR（配当再投資込み）を、各買付日のドル円で円へ直して比較",
+            "benchmark": ("^SP500TR（配当再投資込み）を、各買付日のドル円で円へ直して比較。"
+                          "**買付日が判る行だけ**で作り、`compared`（同じ集合の保有側）と必ず対で読む"),
+            "cost": ("① bjpy=取得額(円・実際に出した円) ② bpx=平均取得価額(現地通貨) "
+                     "③ bd の終値で推定。行ごとに `cost_src` / `src` に書いてある"),
         },
+        "compared": pack(cmp_cost, cmp_val),
         "annualized": None,
         "span_days": span,
         "positions": rows,
@@ -255,27 +368,47 @@ def main():
     json.dump(out, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
     if "--json" not in sys.argv:
-        pc = out["portfolio"]; bc = out["benchmark"]
+        pc = out["portfolio"]; bc = out["benchmark"]; cc = out["compared"]
+        pct = lambda v: f"{v*100:>+7.2f}%" if v is not None else f"{'——':>8}"
         print(f"■ トータルリターン（円建て・{out['generated']}）  起点 {start}"
               + (f"・{span}日" if span is not None else ""))
         print(f"  {'銘柄':<7}{'株数':>4} {'取得':>10} {'評価':>10} {'損益':>10} "
-              f"{'価格%':>8} {'配当込%':>8} {'うち為替':>8}  取得単価")
+              f"{'価格%':>8} {'配当込%':>8} {'うち為替':>8}  取得額の出所")
         for r in rows:
             if r.get("skip"):
                 print(f"  {r['t']:<7}{'':>4} —— {r['skip']}"); continue
+            src = {"actual_jpy": "実記録(円)", "px_x_fx": ""}.get(r.get("cost_src"), "")
+            if not src:
+                src = {"actual": "実記録(単価)", "est": f"推定({r['bd']}の終値)",
+                       "jpy_only": "円のみ"}.get(r.get("src"), "?")
+            if r.get("bd_suspect"):
+                src += " ⚠買付日不明"
             print(f"  {r['t']:<7}{r['sh']:>4.0f} {r['cost_jpy']:>10,.0f} {r['val_jpy']:>10,.0f} "
-                  f"{r['pl_jpy']:>+10,.0f} {r['ret_px_jpy']*100:>+7.2f}% {r['ret_tr_jpy']*100:>+7.2f}% "
-                  f"{r['fx_ret']*100:>+7.2f}%  "
-                  f"{'実記録' if r['src']=='actual' else '推定(' + str(r['bd']) + 'の終値)'}")
+                  f"{r['pl_jpy']:>+10,.0f} {pct(r.get('ret_px_jpy'))} {pct(r.get('ret_tr_jpy'))} "
+                  f"{pct(r.get('fx_ret'))}  {src}")
         if pc:
             print(f"\n  {'合計':<7}{'':>4} {pc['cost_jpy']:>10,.0f} {pc['val_jpy']:>10,.0f} "
-                  f"{pc['pl_jpy']:>+10,.0f} {pc['ret']*100:>+7.2f}% "
-                  f"{pc.get('ret_tr',0)*100:>+7.2f}%")
-        if bc:
+                  f"{pc['pl_jpy']:>+10,.0f} {pct(pc['ret'])} {pct(pc.get('ret_tr'))}"
+                  f"   ← 保有ぜんぶ（S&P500と比べられない行も含む）")
+        # ── S&P500 との比較は**同じ集合どうし**でしか出さない ──────────────
+        out_of = [r for r in rows if r.get("cmp_out")]
+        if bc and cc:
+            print(f"\n  ── 同じ日・同じ円で比べられる分だけ（{len(rows)-len(out_of)-sum(1 for r in rows if r.get('skip'))}社）──")
+            print(f"  {'保有':<7}{'':>4} {cc['cost_jpy']:>10,.0f} {cc['val_jpy']:>10,.0f} "
+                  f"{cc['pl_jpy']:>+10,.0f} {pct(cc['ret'])}")
             print(f"  {'S&P500':<7}{'':>4} {bc['cost_jpy']:>10,.0f} {bc['val_jpy']:>10,.0f} "
-                  f"{bc['pl_jpy']:>+10,.0f} {bc['ret']*100:>+7.2f}%  ← 同じ円を同じ日に入れていたら")
-            if pc:
-                print(f"\n  差（配当込み・円建て）: {(pc.get('ret_tr', pc['ret'])-bc['ret'])*100:+.2f}pt")
+                  f"{bc['pl_jpy']:>+10,.0f} {pct(bc['ret'])}  ← 同じ円を同じ日に入れていたら")
+            print(f"\n  差（円建て）: {(cc['ret']-bc['ret'])*100:+.2f}pt")
+        else:
+            print("\n  ✗ **S&P500 との比較が1社も作れない**——「同じ円を同じ日に」の"
+                  "『同じ日』が判らないため。買付日(bd)を入れれば出る")
+        if out_of:
+            print(f"\n  ⚠ 比較から外した {len(out_of)}社:")
+            for r in out_of:
+                w = r.get("bd_window")
+                hint = (f"（終値がその水準だったのは {w['first']}〜{w['last']}"
+                        f"・{w['n']}日）" if w else "")
+                print(f"      {r['t']:<6} {r['cmp_out']}{hint}")
         if not out["annualized"]:
             print(f"\n  ⚠ {out['annualize_why']}")
         conf = [r for r in rows if r.get("v_conflict")]

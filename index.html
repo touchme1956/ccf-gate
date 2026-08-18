@@ -1296,7 +1296,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.154</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.155</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3899,7 +3899,7 @@ async function ccfInspectAll(btn){
 //   out/dashboard.json（GitHub ActionsがFinnhubから毎営業日コミット・鍵はSecretsでブラウザに出ない）／
 //   out/next_earnings.json。**取れなかったものは「未取得」と書く**（前回値やゼロで埋めない＝ルール7）。
 let __dashCache=null;
-// ── 📈 トータルリターン（v9.9.154・2026-08-17 ユーザー要望「購入した銘柄／ポートフォリオ／
+// ── 📈 トータルリターン（v9.9.155・2026-08-17 ユーザー要望「購入した銘柄／ポートフォリオ／
 //    S&P500 のトータルリターンと% をすべて見れるように」）
 //   **表示専用**——Ω・四関門・売却規律・配分のどれにも触れない。
 //   計算は端末の単一実装 night/fetch_returns.py が持ち、ここは out/returns.json を描くだけ（v9.9.65）。
@@ -3914,9 +3914,10 @@ function ccfReturnsHTML(R){
     + '<code>python3 night/fetch_returns.py</code> で作る（鍵不要）。'
     + '<b>「読めない」と「損益ゼロ」は別物</b>なので0とは出さない。</div>';
   const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
-  const pc=n=>(n>0?'+':'')+(n*100).toFixed(2)+'%';
-  const col=n=>n>0?'var(--jade,#3f8f6b)':(n<0?'var(--rust,#a8442a)':'var(--dim)');
-  const P=R.portfolio, B=R.benchmark;
+  // ⚠ null は 0% と出さない。**「測れなかった」と「ゼロだった」は別物**（絶対のルール7の表示版）
+  const pc=n=>(n==null)?'——':((n>0?'+':'')+(n*100).toFixed(2)+'%');
+  const col=n=>(n==null)?'var(--dim)':(n>0?'var(--jade,#3f8f6b)':(n<0?'var(--rust,#a8442a)':'var(--dim)'));
+  const P=R.portfolio, B=R.benchmark, C=R.compared;
   const hdr='<div class="led" style="opacity:.65;font-size:10.5px"><span class="ln">銘柄</span>'
     +'<span style="min-width:92px;text-align:right">取得(円)</span>'
     +'<span style="min-width:92px;text-align:right">評価(円)</span>'
@@ -3930,7 +3931,18 @@ function ccfReturnsHTML(R){
       +`<span style="font-size:11.5px;color:var(--dim)">—— ${r.skip}</span></div>`; return; }
     const est=r.src==='est'
       ? `<span title="買付単価(bpx)が未記録なので ${r.bd} の終値で推定。実際の約定値でも手数料込みでもない" style="font-size:9.5px;color:#d69a3c;margin-left:4px">推定</span>` : '';
-    rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}${est}</span>`
+    // 取得額が**実際に出した円**なら、為替を仮定していない＝いちばん硬い
+    const jpc=r.cost_src==='actual_jpy'
+      ? `<span title="証券アプリの取得価額（円）をそのまま使っている＝買付時のドル円を仮定していない" style="font-size:9.5px;color:var(--jade,#3f8f6b);margin-left:4px">実円</span>` : '';
+    // ★ bd が買付日でない行は、円換算も為替の寄与も**概算**（買付日でない日のドル円を使っている）
+    const w=r.bd_window;
+    const bds=r.bd_suspect
+      ? `<span title="bd(${r.bd}) は台帳に行を作った日で、買付日ではない`
+        + (r.bd_gap!=null?`（実記録の単価はその日の終値と ${(r.bd_gap*100).toFixed(1)}% 違う）`:'（同じ日付の別の行で実証）')
+        + `。円換算と為替の寄与は概算・S&P500 との比較からは外してある`
+        + (w?`。終値がその水準だったのは ${w.first}〜${w.last}`:'')
+        + `" style="font-size:9.5px;color:#d69a3c;margin-left:4px">買付日?</span>` : '';
+    rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}${est}${jpc}${bds}</span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(r.cost_jpy)}</span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(r.val_jpy)}</span>`
       +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(r.pl_jpy)}">${r.pl_jpy>0?'+':''}${yen(r.pl_jpy)}</span>`
@@ -3942,25 +3954,46 @@ function ccfReturnsHTML(R){
   if(P){
     const tr=(P.ret_tr!=null?P.ret_tr:P.ret);
     sum=`<div class="led" style="border-top:2px solid var(--line);margin-top:4px">`
-      +`<span class="ln"><b>ポートフォリオ合計</b></span>`
+      +`<span class="ln"><b>ポートフォリオ合計</b><span style="font-size:9.5px;color:var(--dim);margin-left:5px">城のみ</span></span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(P.cost_jpy)}</span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(P.val_jpy)}</span>`
       +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(P.pl_jpy)}">${P.pl_jpy>0?'+':''}${yen(P.pl_jpy)}</span>`
       +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(P.ret)}">${pc(P.ret)}</span>`
       +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(tr)}"><b>${pc(tr)}</b></span>`
       +`<span style="min-width:62px"></span></div>`;
-    if(B){
-      const d=tr-B.ret;
-      sum+=`<div class="led"><span class="ln">S&amp;P500（配当込み・円建て）</span>`
+    // ── S&P500 との比較は「同じ円を**同じ日**に」なので、買付日が判る行だけで作る。
+    //    ★保有の合計(P)と指数(B)は**別の集合**になりうる——混ぜて差を出すと、数ヶ月持った
+    //      銘柄と12日ぶんの指数を比べることになる＝**精度でなく種類の誤り**。
+    //      だから比較は C(=同じ集合の保有側) と B を必ず対で描く。
+    if(B&&C){
+      const d=C.ret-B.ret;
+      const nOut=(R.positions||[]).filter(r=>r.cmp_out).length;
+      sum+=`<div style="font-size:11px;color:var(--dim);margin:10px 0 2px">── 同じ日・同じ円で比べられる分だけ`
+        +(nOut?`（${nOut}社は下の理由で外している）`:'')+` ──</div>`
+        +`<div class="led"><span class="ln">保有（この集合）</span>`
+        +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(C.cost_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(C.val_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(C.pl_jpy)}">${C.pl_jpy>0?'+':''}${yen(C.pl_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(C.ret)}"><b>${pc(C.ret)}</b></span>`
+        +`<span style="min-width:66px"></span><span style="min-width:62px"></span></div>`
+        +`<div class="led"><span class="ln">S&amp;P500（配当込み・円建て）</span>`
         +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(B.cost_jpy)}</span>`
         +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(B.val_jpy)}</span>`
         +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(B.pl_jpy)}">${B.pl_jpy>0?'+':''}${yen(B.pl_jpy)}</span>`
-        +`<span style="min-width:66px"></span>`
         +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(B.ret)}"><b>${pc(B.ret)}</b></span>`
-        +`<span style="min-width:62px"></span></div>`
+        +`<span style="min-width:66px"></span><span style="min-width:62px"></span></div>`
         +`<div style="font-size:12.5px;padding:8px 12px;margin-top:6px;background:var(--panel2);border:1px solid var(--line);border-radius:8px">`
-        +`S&amp;P500 との差（配当込み・円建て）: <b style="color:${col(d)};font-size:15px">${(d>0?'+':'')+(d*100).toFixed(2)}pt</b>`
+        +`S&amp;P500 との差（円建て）: <b style="color:${col(d)};font-size:15px">${(d>0?'+':'')+(d*100).toFixed(2)}pt</b>`
         +` <span style="color:var(--dim)">——同じ円を同じ日に S&amp;P500 へ入れていたらどうだったか</span></div>`;
+    }else{
+      sum+=`<div style="font-size:12.5px;padding:8px 12px;margin-top:8px;background:var(--panel2);`
+        +`border:1px solid var(--rust,#a8442a);border-radius:8px;line-height:1.85">`
+        +`<b style="color:var(--rust,#a8442a)">S&amp;P500 との比較が1社も作れない</b>`
+        +`——「同じ円を<b>同じ日</b>に入れていたら」の『同じ日』が判らないため。`
+        +`<b>買付日</b>を Ⅶ資産の「✎編集」→<b>買付日</b>へ入れれば出る。`
+        +`<span style="color:var(--dim)">下の各行に、終値がその取得単価だった期間を候補として出してある`
+        +`（推定して埋めることはしない——平均取得価額は複数回買付の平均でありうるので、`
+        +`終値が一致する日を買付日と決めるのは推測になる）。</span></div>`;
     }
   }
   let warn='';
@@ -3971,6 +4004,20 @@ function ccfReturnsHTML(R){
     warn+=`<div style="font-size:11px;color:#d69a3c;margin-top:6px;line-height:1.8">⚠ <b>取得単価が未記録 ${est.length}件</b>`
       +`（${est.map(r=>r.t).join(' / ')}）——買付日の終値で推定している。<b>実際の約定値でも手数料込みでもない。</b>`
       +` Ⅶ資産の「✎編集」→<b>買付単価</b>を入れると実記録に変わる</div>`;
+  // ★ 比較から外した行は**名指しで出す**（v9.9.52 の作法——黙って消すと理由が追えない）
+  const oo=(R.positions||[]).filter(r=>r.cmp_out);
+  if(oo.length)
+    warn+=`<div style="font-size:11px;color:#d69a3c;margin-top:6px;line-height:1.9">⚠ <b>S&amp;P500 との比較から外した ${oo.length}件</b>`
+      +`——比較は「同じ円を<b>同じ日</b>に」なので、買付日が判らない行を混ぜると<b>精度ではなく種類の誤り</b>になる:<br>`
+      +oo.map(r=>{const w=r.bd_window;
+        return `　<b>${r.t}</b> ${r.cmp_out}`
+          +(w?`<span style="color:var(--dim)">（終値がその水準だったのは ${w.first}〜${w.last}・${w.n}日）</span>`:'');
+      }).join('<br>')+`</div>`;
+  // ★ 網(ETF)はⅦ資産が構造的に持たない——**「入っていない」と「ゼロ」を取り違えない**
+  warn+=`<div style="font-size:11px;color:var(--dim);margin-top:6px;line-height:1.8">`
+    +`ℹ この合計は<b>城（個別銘柄）だけ</b>。網(ETF)は Ⅶ資産が扱わない設計（2026-08-03 ユーザー指示で`
+    +`<code>sleeve:'net'</code> の行は読込時に削除される）なので、XLK/QQQ/SMH/FANG+ は入っていない。`
+    +`資産全体では網が約6割あるので、<b>これは資産全体のリターンではない</b></div>`;
   const cf=(R.positions||[]).filter(r=>r.v_conflict);
   if(cf.length)
     warn+=`<div style="font-size:11px;color:#d69a3c;margin-top:6px;line-height:1.8">⚠ <b>state.json の金額(v)と食い違う ${cf.length}件</b>: `
@@ -3997,7 +4044,7 @@ async function ccfDash(btn){
   // v9.9.124: 盤も irr=85 の実績台帳を読む（席の優先の判定に要る）。Ⅵと同じものを同じ関数で読む（v9.9.65）
   // v9.9.129: 盤も**未完了の重大事象**（out/pending.json）を読む。Ⅵにだけ入れて盤を洗い忘れると
   //   v9.9.94→95 のAPHとまったく同じ「盤では🟢・Ⅵでは⛔」が三度目の再発になる（v9.9.65の掟）。
-  // v9.9.154: トータルリターン（out/returns.json）も読む。**計算は端末の単一実装
+  // v9.9.155: トータルリターン（out/returns.json）も読む。**計算は端末の単一実装
   //   night/fetch_returns.py が持ち、門は描くだけ**（dashboard.json と同じ作法・v9.9.65）。
   const [mkt,ern,stl,vfl,pnd,pidx,rtn]=await Promise.all([j('out/dashboard.json'),j('out/next_earnings.json'),
                                              j('out/stale_bs.json'),j('out/validate_fail.json'),
