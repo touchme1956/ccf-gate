@@ -231,7 +231,7 @@ footer{text-align:center;padding:42px 0 80px;}
 #scorer .subscore{width:100%}}
 
 /* v9.1: 3ページナビ（2026-07 UI磨き: ピル型・タップ44px・金の下光・スクロールバー非表示） */
-.pgnav{position:sticky;top:0;z-index:99;display:flex;gap:7px;justify-content:flex-start;align-items:center;min-height:var(--navh,58px);padding:9px 12px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));background:rgba(8,10,14,.86);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);border-bottom:1px solid var(--gold-line);box-shadow:0 6px 24px rgba(0,0,0,.30);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.pgnav{position:sticky;top:0;z-index:99;display:flex;gap:7px;justify-content:center;align-items:center;flex-wrap:wrap;row-gap:5px;min-height:var(--navh,58px);padding:9px 12px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));background:rgba(8,10,14,.86);backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4);border-bottom:1px solid var(--gold-line);box-shadow:0 6px 24px rgba(0,0,0,.30);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .pgnav::-webkit-scrollbar{display:none;}
 .pgnav button{background:transparent;border:1px solid transparent;color:var(--muted);border-radius:999px;padding:10px 15px;min-height:40px;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.03em;white-space:nowrap;flex:0 0 auto;transition:color .18s ease,background .18s ease,border-color .18s ease;}
 .pgnav button:hover{color:var(--gold-bright);border-color:var(--gold-line);background:rgba(201,166,74,.07);}
@@ -367,7 +367,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
   .navsub{display:none;}   /* 「Ⅳ 台帳（保存記録）」の括弧書きはスマホでは畳む */
   /* テーマ切替ボタンが入力欄に重なっていた（実測: TEXTAREA の上に乗り、その部分がタップ不能）。
      下部固定ナビの上へ逃がし、半透明にして下の文字が読めるようにする。 */
-  #themeToggle{bottom:calc(var(--navb,58px) + 14px)!important;right:10px!important;
+  /* v9.9.157: 変数名が --navb（どこにも定義が無い＝常に既定の58pxに落ちていた）だった。
+     ナビは折り返しで段数が変わるので、**実測の --navbh**（ccfNavFit が入れる）に揃える。 */
+  #themeToggle{bottom:calc(var(--navbh,72px) + 14px)!important;right:10px!important;
                transform:scale(.88);transform-origin:100% 100%;opacity:.92;}
   /* ナビは下段固定になるため、上端の貼り付き高さはゼロ */
   .wrap{padding:0 16px;}
@@ -380,7 +382,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
   .gr{min-width:70px;padding:11px 4px;}
   /* タブナビを親指の届く画面下部へ固定（アプリのタブバー式） */
   .pgnav{position:fixed;top:auto;bottom:0;left:0;right:0;border-bottom:none;border-top:1px solid var(--gold-line);box-shadow:0 -6px 24px rgba(0,0,0,.35);padding-bottom:max(9px,env(safe-area-inset-bottom));}
-  body{padding-bottom:calc(76px + env(safe-area-inset-bottom));}
+  /* ⚠ ナビが折り返して2段になると 76px 固定では本文の下端が隠れる。
+     実測の高さ(--navbh)に追従させる（JS の ccfNavFit が入れる）。 */
+  body{padding-bottom:calc(var(--navbh,76px) + env(safe-area-inset-bottom));}
   /* 表は枠内で横スクロール（画面がはみ出さない）。
      欄に最小幅が無いと4欄が390pxへ潰され、「時期」欄が42px＝文字が縦一列に流れていた
      （実測: 幅42px・高さ526px）。最小幅を与えて表の中だけを横スクロールさせる */
@@ -404,12 +408,22 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
      `padding:10px 14px` で**丸ごと打ち消していた**——実測 nav 幅 757px（意図は約700px）。
      縦だけを指定して、横の詰めを生かす。 */
   .pgnav button{min-height:42px;padding-top:10px;padding-bottom:10px;}
+  /* v9.9.157: 携帯ではローマ数字と補足を畳んで段数を減らす（1段あたりの本数を増やす）。
+     ⚠ 消すのは**飾りだけ**——章の名前そのものは残す。 */
+  .pgnav .navnum,.pgnav .navsub{display:none;}
+  /* さらに狭い画面では語尾も畳む（実行手順→手順 / 検証履歴→履歴 / 買付順位→買付 / 採点機→採点）。
+     ⚠ **章が判る最短の語**までしか削らない——「実行」だけ残すと何のタブか判らなくなる。 */
+  @media(max-width:430px){.pgnav .navtail{display:none;}}
+  .pgnav button{padding-left:8px;padding-right:8px;}
   /* iOSのフォーカス時自動ズームを防ぐ＝入力は16px */
   #scorer input#nm,#scorer input[type=number],#scorer select,#scorer .auto textarea{font-size:16px;}
   #scorer input[type=number]{width:96px;}
   #scorer .wrap{padding:0 14px;}
-  /* テーマ切替は下段ナビの上へ＝ホームバー・ナビと被らない */
-  #themeToggle{right:12px !important;bottom:calc(74px + env(safe-area-inset-bottom)) !important;}
+  /* テーマ切替は下段ナビの上へ＝ホームバー・ナビと被らない
+     ⚠ v9.9.157: ここが **74px 固定**で、上の --navbh の指定を後から打ち消していた
+       （実測: ナビが2段=118px になってもボタンは74pxのまま＝ナビの中に重なる）。
+       ナビの高さを3箇所に別々の名前で書いていたのが原因なので --navbh へ統一する。 */
+  #themeToggle{right:12px !important;bottom:calc(var(--navbh,74px) + env(safe-area-inset-bottom)) !important;}
 }
 
 /* ============================================================
@@ -817,13 +831,13 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <button id="tab12" onclick="showPage(12)">📈 成績</button>
 <button id="tab9" onclick="showPage(9)">⚙ 自動化</button>
 <button id="tab11" onclick="showPage(11)">🩺 点検</button>
-<button id="tab1" onclick="showPage(1)">Ⅰ 解説</button>
-<button id="tab8" onclick="showPage(8)">Ⅱ 実行手順</button>
-<button id="tab2" onclick="showPage(2)">Ⅲ 採点機</button>
-<button id="tab3" onclick="showPage(3)">Ⅳ 台帳<span class="navsub">（保存記録）</span></button>
-<button id="tab4" onclick="showPage(4)">Ⅴ 検証履歴</button>
-<button id="tab5" onclick="showPage(5)">Ⅵ 買付順位</button>
-<button id="tab7" onclick="showPage(7)" style="color:var(--gold-bright)">Ⅶ 保有</button>
+<button id="tab1" onclick="showPage(1)"><span class="navnum">Ⅰ </span>解説</button>
+<button id="tab8" onclick="showPage(8)"><span class="navnum">Ⅱ </span><span class="navtail">実行</span>手順</button>
+<button id="tab2" onclick="showPage(2)"><span class="navnum">Ⅲ </span>採点<span class="navtail">機</span></button>
+<button id="tab3" onclick="showPage(3)"><span class="navnum">Ⅳ </span>台帳<span class="navsub">（保存記録）</span></button>
+<button id="tab4" onclick="showPage(4)"><span class="navnum">Ⅴ </span><span class="navtail">検証</span>履歴</button>
+<button id="tab5" onclick="showPage(5)"><span class="navnum">Ⅵ </span>買付<span class="navtail">順位</span></button>
+<button id="tab7" onclick="showPage(7)" style="color:var(--gold-bright)"><span class="navnum">Ⅶ </span>保有</button>
 </nav>
 <!-- v9.9.131/132: 人の決定(state.json)の帯。**全タブの外**に置く——
      Ⅳ台帳の中に置いていたら、既定で開く盤や採点機では警告が出なかった（実測）。
@@ -1310,7 +1324,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.156</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.157</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -6590,7 +6604,18 @@ function ccfChapTint(n){
     if(v)document.documentElement.style.setProperty('--chnav',v);
   }catch(e){}
 }
-function ccfNavFade(){const n=document.querySelector('.pgnav');if(!n)return;const more=n.scrollWidth-n.clientWidth-n.scrollLeft>4;const back=n.scrollLeft>4;n.classList.toggle('has-more',more);n.classList.toggle('has-back',back);}
+/* v9.9.157: ナビの高さを実測して本文へ渡す。**折り返しで段数が変わる**ので固定値が使えない。
+   ⚠ 上に貼り付くとき(sticky)だけ --navh を入れる——携帯は下に固定なので 0 のままでよい
+     （#scorer .duo が top:calc(var(--navh) - 1px) で使う）。下固定のときは --navbh で本文の下余白を空ける。 */
+function ccfNavFit(){try{
+  const n=document.querySelector('.pgnav'); if(!n)return;
+  const h=Math.round(n.getBoundingClientRect().height);
+  const fixed=getComputedStyle(n).position==='fixed';
+  const r=document.documentElement.style;
+  if(fixed){ r.setProperty('--navbh',(h+16)+'px'); r.removeProperty('--navh'); }
+  else { r.setProperty('--navh',h+'px'); r.removeProperty('--navbh'); }
+}catch(e){}}
+function ccfNavFade(){ccfNavFit();const n=document.querySelector('.pgnav');if(!n)return;const more=n.scrollWidth-n.clientWidth-n.scrollLeft>4;const back=n.scrollLeft>4;n.classList.toggle('has-more',more);n.classList.toggle('has-back',back);}
 try{const _n=document.querySelector('.pgnav');if(_n){_n.addEventListener('scroll',ccfNavFade,{passive:true});window.addEventListener('resize',ccfNavFade);ccfNavFade();}}catch(e){}
 /* 五彩(v9.9.130): 起動時に一度配る＋開いている章の色をナビへ */
 try{ccfPaint();const _on=document.querySelector('.pg.on');if(_on)ccfChapTint(_on.id.replace('pg',''));}catch(e){}
@@ -6744,7 +6769,10 @@ function ccfDownload(btn){
   function label(t){return t==="light"?"\u2600 \u660e\u308b\u3044":t==="soft"?"\u25d0 \u6de1":"\u263e \u6f06\u9ed2";}
   var b=document.createElement("button");
   b.id="themeToggle";
-  b.style.cssText="position:fixed;right:14px;bottom:14px;z-index:9999;"
+  /* v9.9.157: ナビが下固定のとき(携帯)は**ナビの上**へ逃がす。--navbh は ccfNavFit が
+     実測して入れる（折り返しで段数が変わるので固定値では必ずどこかで重なる）。
+     ⚠ デスクトップでは --navbh を消しているので 0+14=14px ＝従来どおり。 */
+  b.style.cssText="position:fixed;right:14px;bottom:calc(var(--navbh,0px) + 14px);z-index:9999;"
     +"font:500 13px/1 'Zen Kaku Gothic New',sans-serif;letter-spacing:.04em;"
     +"padding:9px 13px;border-radius:999px;cursor:pointer;"
     +"color:#ecd494;background:rgba(20,24,32,.82);"
