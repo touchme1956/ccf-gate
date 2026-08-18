@@ -71,4 +71,8 @@ jobs:
           . night/git_add_safe.sh
           ccf_git_add gate1_queue.json gate0_all.csv out/gate0_run.json 'out/backtest_*.json' out/ops_status.json
           git diff --staged --quiet || git commit -m "gate0/backtest $(date -u +%Y-%m-%d)"
-          git push
+          # ⚠2026-08-18: 素の `git push` は remote が進んだだけで弾かれ、
+          #   **作ったコミットがまるごと捨てられる**（market.yml が2営業日連続で70ファイル失った）。
+          #   cron は10〜40分ふつうに遅れるので「時間をずらす」では防げない。rebase して再試行する。
+          . night/git_push_safe.sh
+          ccf_git_push

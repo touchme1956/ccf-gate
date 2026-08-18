@@ -133,7 +133,7 @@ jobs:
       #   `Alpha Vantage: 10/39 銘柄の決算日を取得` とログに出ていたのに、成果だけが消えた。
       #   fix.yml も同型（幻のパス3つ）。**落とす**のは ccf_git_add を通していない行だけ
       #   （通していれば実行時に無くても巻き添えは起きないので警告で足りる）。
-      - name: git add の巻き添え検査 check_workflow_add
+      - name: 「作った答えを捨てる」検査（git add の巻き添え／main への素の push）
         run: python3 night/check_workflow_add.py
 
       # ── 1-d. 中身と入力の鮮度（2026-08-17新設）─────────────────────────────
@@ -505,5 +505,9 @@ jobs:
             #   実際は280社あった。鳴らない警報は鳴りすぎる警報と同じくらい悪い。
             N=$(python3 -c "import json;print(len(json.load(open('out/validate_fail.json')).get('items',{})))" 2>/dev/null || echo "?")
             git commit -m "gate checks $(date -u +%F)｜納品検査FAIL ${N}件"
-            git push
+            # ⚠2026-08-18: 素の `git push` は remote が進んだだけで弾かれ、
+            #   **作ったコミットがまるごと捨てられる**（market.yml が2営業日連続で70ファイル失った）。
+            #   cron は10〜40分ふつうに遅れるので「時間をずらす」では防げない。rebase して再試行する。
+            . night/git_push_safe.sh
+            ccf_git_push
           fi
