@@ -269,7 +269,9 @@ def cmd_stats(a):
             body = sum(1 for h in d['hits']['hits'] if h['_source'].get('file_type') in ROOTSET)
             seen = len(d['hits']['hits']) or 1
             if tot == 0:
-                # ★引用符つきの0件は測定の欠陥のことがある。語のAND検索へ落として拾い直す
+                # ★完全一致が0件＝**その文字列は窓の中の年次報告に存在しない**（頭注のとおり検算済み）。
+                #   それでも語のAND検索へ落とすのは「近い変種」を拾うためであって、
+                #   0件を疑っているからではない。だから証拠の強さが違う——閾値も重みも別に持つ。
                 time.sleep(0.13)
                 d2 = fts(p['p'], a.window_start, a.window_end, quoted=False)
                 t2 = d2['hits']['total']['value']
@@ -292,9 +294,12 @@ def cmd_stats(a):
     out = {'generated': dt.date.today().isoformat(), 'tool': 'night/irr85_hunt2.py', 'tool_rev': TOOL_REV,
            'window': [a.window_start, a.window_end], 'vocab': os.path.basename(a.vocab),
            'flood_threshold': FLOOD, 'flood_threshold_terms': FLOOD_TERMS,
-           'note': ('⚠ 引用符つきの0件は「使われていない」ではない——EDGAR全文検索の取りこぼし。'
-                    '実測 "asme section iii" 0件 vs 引用符なし60件。0件は語のAND検索へ落として拾い、'
-                    '文字列の実在は --material の全文走査が裁く'),
+           'note': ('★完全一致の0件は「本当に0件」＝その文字列は窓の中の年次報告に存在しない。'
+                    '⚠ 私は最初これを取りこぼしと誤診した（"asme section iii" 0件 vs 引用符なし60件）が、'
+                    '取ってきて確かめたらAND検索の60件はどれも literally 含んでいなかった。'
+                    'verdict の読み方: ok=完全一致で使える ／ ok_terms=完全一致0件だが語ANDが静かで近い変種を拾える ／ '
+                    'flood_terms=**完全一致0件**かつ語ANDが騒がしい（＝文字列は存在しない・語は一般英語）／ '
+                    'dead=どちらも0件。**flood_terms は網の穴ではなく「その言い回しは誰も書いていない」という測定**。'
            'n': {'phrases': len(rows), 'ok': len(ok), 'ok_terms': len(okt),
                  'flood': len(fl), 'dead': len(dd), 'error': len(er)},
            'rows': sorted(rows, key=lambda r: -(r.get('total') or 0)), 'anti': an}
