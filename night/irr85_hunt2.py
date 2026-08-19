@@ -279,18 +279,10 @@ def cmd_screen(a):
             print(f'  … {i}/{len(ph)}  社数 {len(uni)}', file=sys.stderr)
         time.sleep(0.13)
 
-    # 反証語は「同じ文書に出るか」を見る＝減点の材料。判定はしない
-    for i, aa in enumerate(an, 1):
-        try:
-            _t, rows, _x = hits_of(aa['p'], a.window_start, a.window_end, max_pages=MAX_PAGES)
-        except Exception as e:
-            err.append({'p': aa['p'], 'anti': True, 'err': str(e)[:140]})
-            continue
-        for r in rows:
-            if r['cik'] in uni:
-                uni[r['cik']]['anti'][aa['p']] = uni[r['cik']]['anti'].get(aa['p'], 0) + 1
-        time.sleep(0.13)
-
+    # ★反証語はここでは投げない。全文が手に入る --material 段で見る——
+    #   (a) 安い（反証語は一般語が多く、FTSだと洪水になって網を潰す）
+    #   (b) 正確（同じ文書に在るかだけでなく、**どのItem・どの見出しの下に在るか**まで判る。
+    #       22件の失敗はどれも「置き場所」で決まっていた）
     if not uni:
         print('✗ 1社も当たっていない＝在庫を上書きしない', file=sys.stderr)
         return 1
@@ -312,7 +304,7 @@ def cmd_screen(a):
     out = {'generated': dt.date.today().isoformat(), 'tool': 'night/irr85_hunt2.py', 'tool_rev': TOOL_REV,
            'window': [a.window_start, a.window_end], 'forms': FORMS,
            'note': '本文のみ（添付書類は落とす）。除外した社も理由つきで残す＝黙って消さない',
-           'n': {'phrases_sent': len(ph), 'anti_sent': len(an), 'ciks': len(rows),
+           'n': {'phrases_sent': len(ph), 'anti_sent': 0, 'ciks': len(rows),
                  'excluded': sum(1 for r in rows if r['excluded'])},
            'truncated': trunc, 'errors': err, 'rows': rows}
     json.dump(out, open(os.path.join(OUT, 'irr85_hunt2_universe.json'), 'w', encoding='utf-8'),
@@ -353,11 +345,97 @@ def cmd_rank(a):
     return 0
 
 
+def cmd_material(a):
+    """★読み手へ配る材料を1回の取得で作る（v9.9.65: 同じ材料を全員が見る）
+
+    readlist の上位を順に取り、night/irr85_section.py の scan をそのまま呼んで
+    機構文の**置き場所**（Item・直前の見出し3つ・全文での出現回数）と反証語の同居を採る。
+    判定は一切しない——判定は原本を読む審査官の仕事（絶対のルール2）。
+    """
+    import importlib.util as _iu
+    _sp = _iu.spec_from_file_location('_sec', os.path.join(HERE, 'irr85_section.py'))
+    sec = _iu.module_from_spec(_sp)
+    _sp.loader.exec_module(sec)
+
+    rl = json.load(open(os.path.join(OUT, 'irr85_hunt2_readlist.json'), encoding='utf-8'))
+    ph, an = load_vocab(a.vocab)
+    dirs = {p['p']: p.get('dir', 'neutral') for p in ph}
+    phrases = sorted(dirs)
+    antis = sorted({x['p'] for x in an})
+
+    rows = rl['rows'][:a.limit]
+    out_path = os.path.join(OUT, 'irr85_hunt2_material.json')
+    done = {}
+    if os.path.exists(out_path) and not a.fresh:
+        done = {r['cik']: r for r in json.load(open(out_path, encoding='utf-8'))['rows']}
+        print(f'  既存 {len(done)}社は再取得しない')
+
+    res, fail = [], []
+    for i, r in enumerate(rows, 1):
+        if r['cik'] in done:
+            res.append(done[r['cik']])
+            continue
+        try:
+            adsh, fn = r['doc'].split(':', 1)
+            url = f"https://www.sec.gov/Archives/edgar/data/{int(r['cik'])}/{adsh.replace('-', '')}/{fn}"
+            lines = sec.fetch_text(url)
+            hits, counts, items, toc = sec.scan(lines, phrases + antis, maxn=40)
+            for h in hits:
+                h['dir'] = sorted({dirs.get(p, 'ANTI' if p in antis else 'neutral') for p in h['phrases']})
+            # ★反証語は「文書のどこかに在る」では減点にならない。
+            #   実測: LOAR（3ビンテージ確定の85）は 'barriers to entry' が6回出る——航空防衛の10-Kでは常態。
+            #   22件の失敗の型(4)は「**機構文そのものが**参入障壁の記述だった」であって、
+            #   語が別の場所に在ることではない。⇒ **同じ段落に同居しているか**だけを数える
+            nAdoc = sum(1 for h in hits if 'ANTI' in h['dir'])
+            nA = sum(1 for h in hits if 'ANTI' in h['dir']
+                     and ('customer_bears' in h['dir'] or 'lock_evidence' in h['dir']))
+            nC = sum(1 for h in hits if 'customer_bears' in h['dir'])
+            res.append({**{k: r[k] for k in ('cik', 'name', 'sic', 'filed', 'doc', 'rank_score')},
+                        'url': url, 'items': items[:30], 'n_lines': len(lines),
+                        'n_hits': len(hits), 'n_customer_bears': nC,
+                        'n_anti': nA, 'n_anti_doc': nAdoc,
+                        'counts': {p: c for p, c in counts.items() if c}, 'hits': hits})
+        except Exception as e:
+            fail.append({'cik': r['cik'], 'name': r['name'], 'err': str(e)[:160]})
+        if i % 10 == 0:
+            print(f'  … {i}/{len(rows)}  取得済 {len(res)} 失敗 {len(fail)}', file=sys.stderr)
+        time.sleep(0.15)
+
+    if not res:
+        print('✗ 1社も取れていない＝在庫を上書きしない', file=sys.stderr)
+        return 1
+    # 材料が揃ったので順位を作り直す（置き場所を織り込む）
+    for r in res:
+        body = sum(1 for h in r['hits'] if 'customer_bears' in h['dir'] and not h['cust'] is False)
+        risk = sum(1 for h in r['hits']
+                   if 'customer_bears' in h['dir'] and (h['item'] or '').lower().startswith('item 1a'))
+        r['refined'] = round(r['n_customer_bears'] * 5 + body * 1.5 - risk * 1.0
+                             - r['n_anti'] * 3.0, 2)   # 同居する反証語だけを、強く引く
+    res.sort(key=lambda r: -r['refined'])
+    json.dump({'generated': dt.date.today().isoformat(), 'tool': 'night/irr85_hunt2.py --material',
+               'tool_rev': TOOL_REV,
+               'note': ('読み手へ配る材料。判定は一切していない。refined は読む順のためだけの数で、'
+                        'Item 1A のリスク見出しの下にある顧客負担文は**減点**する'
+                        '（22件の失敗はどれも置き場所で決まった＝ACMR/SPR/TGI型）'),
+               'n': {'asked': len(rows), 'got': len(res), 'failed': len(fail)},
+               'failures': fail, 'rows': res},
+              open(out_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    print(f'\n材料 {len(res)}社（失敗 {len(fail)}）→ out/irr85_hunt2_material.json')
+    print(f"{'順':>3} {'社名':40}{'点':>7}{'顧客負担':>9}{'同居反証':>9}{'文書内反証':>11}")
+    for i, r in enumerate(res[:30], 1):
+        print(f"{i:>3} {(r['name'] or '')[:38]:40}{r['refined']:7.1f}{r['n_customer_bears']:9}"
+              f"{r['n_anti']:9}{r.get('n_anti_doc', 0):11}")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--stats', action='store_true')
     ap.add_argument('--screen', action='store_true')
     ap.add_argument('--rank', action='store_true')
+    ap.add_argument('--material', action='store_true')
+    ap.add_argument('--limit', type=int, default=200)
+    ap.add_argument('--fresh', action='store_true')
     ap.add_argument('--vocab', default=os.path.join(HERE, 'irr85_vocab2.json'))
     ap.add_argument('--window-start', default='2024-01-01')
     ap.add_argument('--window-end', default=dt.date.today().isoformat())
@@ -369,6 +447,8 @@ def main():
         return cmd_screen(a)
     if a.rank:
         return cmd_rank(a)
+    if a.material:
+        return cmd_material(a)
     ap.print_help()
     return 0
 
