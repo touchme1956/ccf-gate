@@ -59,6 +59,23 @@ import ops_status  # noqa: E402  ← 期限も錨も盤のものを使う（二�
 
 TODAY = datetime.date.today()
 
+# **本体が動かないのが正常な器**（本体検査の対象外）。**理由を必ず書く**——
+#   ここへ足すことは「この器の本体が凍っても鳴らさない」と宣言することなので、
+#   「本体が動く＝異常が起きた」と言い切れる器だけを入れる。日付の側は盤が別に見ている。
+BODY_STABLE = {
+    # 値は {"why": 理由, "gen": 生成器}。gen は generator_of() が引けない錨だけ書く
+    #   ——除外したせいで「誰が作った錨か」の情報まで消える（実測で freshness が空になった）。
+    "freshness": {"why": "自分の出力なので本体検査は行わない（所見が安定＝本体が動かないのが正常）",
+                  "gen": ["night/check_freshness.py"]},
+    # 2026-08-19追加: 実測で「本体が5日動いていない（期限4日）」と鳴っていたが、**これは誤検出**。
+    #   この器は irr=85 の機構文を**毎回 SEC から取り直して**照合する（irr85_extract.get() が
+    #   urlopen する＝キャッシュを読んでいるのではない）。原本(10-K/20-F)は年1回しか変わらないので
+    #   **中身が動かない＝原本も取得も安定**で二重に健全。逆に本体が動く＝機構文が消えた／取得に失敗した
+    #   ＝赤信号のほうで、それは gone/no_quote に出る（実測 gone:[]・15社とも一字同文）。
+    "irr85mech": {"why": "原本を毎回SECから取り直して照合する器。原本は年1回しか変わらないので本体が動かないのが正常"
+                         "（動く＝機構文が消えた/取得失敗＝赤信号のほう）。止まったことは盤の日付が見る"},
+}
+
 # 「これは日付欄であって中身ではない」——本体のハッシュから外す鍵。
 #   ここを外さないと、generated だけ動いて中身が凍っている状態を永久に検出できない。
 DATE_KEYS = {"generated", "generated_at", "asof", "as_of", "date", "updated", "updated_at",
@@ -289,17 +306,18 @@ def main():
                                  "why": f"錨の検算が合わない（盤 {job['last']} / この器 {mine}）"})
             continue
 
-        # ⚠ 自分の出力は本体検査から外す。この器の本体は「所見」なので、所見が安定していれば
-        #   本体は動かないのが正常——素朴に測ると**自分を凍結と誤認して永久に鳴る**
-        #   （今日直した audit_irr85_dual の鳴りっぱなしを、それを直す器の中で再演することになる）。
-        #   日付の側は盤が見ているので、止まったことは検出できる。
-        if jid == "freshness":
+        # ⚠ **本体が動かないのが正常な器**は本体検査から外す。素朴に測ると
+        #   健全なものを凍結と誤認して**永久に鳴る**（鳴りすぎる警報は鳴らないのと同じ）。
+        #   ⚠ 外してよいのは「**本体が動く＝異常が起きた**」と言い切れる器だけ。
+        #     日付の側は盤が毎営業日見ているので、止まったことは別に検出できる。
+        if jid in BODY_STABLE:
             rows.append({"id": jid, "name": name, "anchor": anchor, "due_days": due,
                          "board_last": job["last"], "board_state": job["state"],
                          "body_last": None, "body_days": None,
-                         "body_note": "自分の出力なので本体検査は行わない（所見が安定＝本体が動かないのが正常）",
+                         "body_note": BODY_STABLE[jid]["why"],
                          "data_end": None, "data_days": None,
-                         "generator": ["night/check_freshness.py"], "inputs": [], "flags": [], "src_lag": []})
+                         "generator": BODY_STABLE[jid].get("gen") or generator_of(anchor),
+                         "inputs": [], "flags": [], "src_lag": []})
             continue
 
         blast, walked, why = body_last_change(anchor)
