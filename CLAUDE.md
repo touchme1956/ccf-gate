@@ -9047,3 +9047,96 @@ check_workflow_add ✓（add・push とも）／ YAML 6本とも構文OK
   **score_all 差分0件・投下可10社不変**／audit_gate 要修正2件・未解決2件（変更前と同じ）／
   check_mobile_fit 360px 全タブ ✓／check_gate_parity Ω369/369一致・pageerror 0／
   **check_icon_colors 行461/光457・色があるのに乗っていない行 0・Ⅶ資産 4/4**（灰も検査の対象に入れた）
+
+## irr=85 の第二次の狩り——**語彙を「機構の意味」から作り直しても、台帳の外に新しい85は無かった**（2026-08-19・ユーザー指示「1をやって」）
+**値も規約も採点式も刻みも重みも関門も売却規律も配分も1バイト触っていない。投下可10社も不変。**
+道具 `night/irr85_hunt2.py`（`--stats/--screen/--rank/--material`）／`night/irr85_section.py`（機構文の**置き場所**を出す）／
+`night/irr85_hunt2_selftest.py`（**未知を探す前に既知を掴めるか**）／`night/irr85_hunt2_verdict.py`（答えを在庫から組み立てる）／
+語彙 `night/irr85_vocab2.json`（352本）。在庫 `out/irr85_hunt2_{stats,universe,readlist,material,selftest,read,verdict}.json`。
+- **なぜやったか**: 2026-08-08 の第一次（403社＋20-F 38社を読んで**新しい85はゼロ**）が、自分でこう限界を書いていた——
+  「フレーズは**確定済み85の実文から作った**ので、**まだ見たことのない言い回しの機構は原理的に拾えない**」。
+  ＝**あの空振りは「知っている言い回ししか探していないから」で説明できてしまう**。第二次はその説明を潰すためにやった
+
+### 答え: **27社を原本で読み、85の提案は0社。反証の班は一度も発火しなかった**
+| | |
+| 読解 | **27社**（並列2・13.8M出力トークン・514ツール使用・108分） |
+| 刻みの分布 | **50 が18社 ／ 70 が9社 ／ 85 は0社** |
+| 反証 | 提案が0件なので**発火せず**（前回は22社の提案が全部潰れた） |
+70の9社（ORCL/AKTS/SRDX/EMBJ/ALOT/NPO/CODA/SRI/TBRG）は、v9.9.144 の改定どおり
+**摩擦の機構を原本の実文で名指しできた社**＝50へ落とさない側の根拠つき。
+
+### ★空振りの意味が変わった。第一次では言えなかった4つが今回は測れている
+- **①「探せなかった語」はゼロ**。352本のうち **`flood`（完全一致が1500件超で送れない）は 0本**。
+  ＝「その言い回しは一般英語すぎて検索できなかった」という穴が無い。
+  完全一致が0件だった **163本(46%)** は網の穴ではなく**測定**——
+  `costly for our customers to switch` / `customers would bear the cost` / `require our customers to redesign` /
+  `difficult and expensive for our customers` / `switching costs for vehicle manufacturers` /
+  `approved by the aircraft manufacturer` / `amend the type certificate` / `obtain their own reach registration` は
+  **2024-01〜2026-08 の 10-K/20-F/40-F に一度も書かれていない**。
+  使えた189本の完全一致は**中央値わずか4件**＝極めて特異な語彙で、**空振りを「鈍い網のせい」では説明できない**
+- **②掘った場所が第一次と重ならない**。第二次の readlist **1,782社** と第一次が触れた 518社の重なりは **0社**
+  （語彙も v1 の24本と**重なり0**）。⇒ **同じ場所を二度掘ったのではない**
+- **③実証済みの語を台帳の外へ当て直すと、ほぼ何も当たらない**（この狩りで最も決定的な測定・`--selftest` に常設）。
+  自己検証で**既知の85を実際に掴んだ33本**を未審査1,782社へ当てると、**完全一致で当たるのは3本だけ**:
+  | 語 | 未審査 | 正体 |
+  | `device master file` | **44社** | **FDA QSR 21 CFR 820 の定型文**＝自社が持つ記録・型(1)。26社の実文を確認 |
+  | `naval nuclear propulsion program` | 3社 | SMR・AMTM（読了・両方50）／Deep Isolation は**役員の経歴** |
+  | `life of the platform` | 3社 | SARO（読了・50）／OneStream は**繰延手数料の償却年数**／FTAI は ESG リスク要因 |
+  | **残り30本** | **0社** | ここに顧客負担の意味を運ぶ語が**全部**入っている |
+  0社だった側: `not typically economical for oems to repeat`(LOAR) ／
+  `impracticable for our customers to shift their purchase`(RBC) ／
+  `costly and time consuming for our customers`・`product be re-qualified by customers`(ENTG) ／
+  `require customer approval`・`additional customer qualifications`(HXL・CW) ／
+  `once a supplier has been qualified on a particular program`(KRMN) ／
+  `high switching costs for automotive manufacturers`(ST) ／ `copy exact requirements`(MKSI) …
+- **④自己検証を先に通してある**——既知の85 **15社中13社**を掴む（掴めない2社は ASML=20-F の dom型／LRCX=v1側の語）。
+  **掴めることを示さずに空振りを報告すると、それは測定ではなく無能の告白になる**
+
+### ★読解で出た「同じ文なのに85でない」の実例（前回のSPR/CWの教訓が2例目を得た）
+- **ALOT（AstroNova）が決定的**——原本に **`we must obtain certifications for our products by customers`**
+  ＝**CWの決定的な一文とほぼ同じ構造**が実在する。だが直後が
+  `If we fail to obtain... our business ... could be materially and adversely affected`＝**損をするのは当社**で、
+  置き場所は Item 1A の **`Legal and Regulatory Risks:`** の下。
+  **SPR を70へ落としたのとまったく同じ構造**（機構文を持ちながら順守義務の列挙に置かれ、対応するリスクが自社ライセンスの話）。
+  ⇒ **陽性語の網は候補を作るだけ。合否は「どこにあり、誰が損をするか」が決める**、が2例目を得た
+- **SRDX（Surmodics）が最も惜しい**——Item 1 Competition に
+  「規制承認の費用と時間が、承認後に**顧客が**製造プロセスを変える可能性を下げる」が実在し、承認責任も原本の別箇所で顧客側と明記。
+  だが **`we believe that ... significantly reduces the likelihood`＝尤度の記述で義務文ではない**
+  （WST『customers must generate』・CW『must also be certified by』・LRCX『must make a substantial investment to qualify』に相当するものが無い）。
+  加えて同じ原本が**90日前通知で理由を問わず解約可**・licensee は当社技術を使わない形へ改変可・
+  そして名指しの licensee 本人（Abbott/BSX/Medtronic/Edwards）が**内製のコーティング能力を保有**＝型(5)
+- **TBRG（TruBridge）は正反対だった**——`Our services also relieve the hospital staff of the time-consuming
+  burden of data conversion.`＝**移行の負担を当社が引き受けることを売り文句にしている**。
+  ⇒ **摩擦が実在することの証拠ではあるが、費用を負うのが逆**
+- **NPO（Enpro）は型(4)の教科書例**——`which enable **us** to satisfy the substantial upfront qualification
+  processes required by many of our customers`＝負担は当社。KALU『suppliers must pass a rigorous qualification
+  process』・NXPI『characterized by stringent qualification processes』と同型。
+  `Process of Record` の側は `LeanTeq **partners closely with** OEMs … **to achieve** PoR qualifications`＝**願望形**
+- **AKTS は ONTO型**——リスク項目の見出しが
+  `Winning business ... often requires us to incur significant expense, from which we may ultimately generate no revenue.`
+  ＝**外側にいる社が自分の入場コストを述べる型**
+- **EMBJ は自分で外側だと書いている**——全文で唯一 `barrier` を含む文の直後が
+  `As a relatively new entrant to the executive jets market, we face significant competition from companies with longer operating histories`
+- **銀行の `deconversion` は「顧客の10-Kに機構語が出る」型だった**——13社すべて**銀行本体**（＝コア処理業者の顧客）で、
+  自分が払う解約費用として書いている。ベンダー側の GPN も読んだが 50（唯一の switch が
+  「referral partner が他の処理業者へ乗り換え、当社の決済機能を**内製化**する」＝型(2)＋型(5)が同一文に同居）
+
+### 残っているリスク（正直に）
+- **読解は網の上位に集中している**。既知の85でも NOVT(51位) WST(184) BWXT(330) MKSI(718) TDG(765) は下位に落ちる。
+  ⇒ 弱い言い回しの85を取り逃す risk は残る。ただし**下位(≥50位)の5社中3社は台帳自身が二重読みで留保つき**
+  （NOVT・BWXT・MKSI）で、上位(≤12位)8社では2社。**網の順位が下がる社＝根拠が弱い社**という関係が実測にある
+  （⚠ n=13 の観察であって規則ではない）
+- **語彙は352本でも有限**。機構の意味から作ったが、**まだ誰も思いつかない書き方**は原理的に拾えない。
+  ただし①のとおり **46%が「誰も書いていない」**と出たので、**言い回しの空間は思ったより狭い**
+  ——第一次が実文から作った24本で13/15の recall を出せた理由がこれ
+- 20-F/40-F の非製造業（海運・銀行・ホテル・中国系サービス）は個別には読んでいない／日本株は SEC経路の外で構造的に対象外
+
+### 含意（規約は一つも触っていない・絶対のルール1/6）
+1. **「新しい85を外で探す」は二度潰れた**。第一次（実文由来の語彙・441社読解）と
+   第二次（意味由来の語彙・重なり0の1,782社・27社読解）が、**独立の語彙・独立の母集団で同じ答え**を出した。
+   ⇒ **irr=85 は母集団の1〜3%しか出ない稀なラベル**（歴史実測）という記述が、今日また裏付けられた
+2. **増やすべきは母集団ではなく測定の精度**。2026-08-12 に「irr の穴は 70 のただ一点（一致率0.706）」と測ってあり、
+   **判定圏の irr=70 は213社**。**そこが門の買付を実際に決めている**（投下可10社中6社が irr 1段で堀の関門を割る）
+3. **この狩りで得た最大の資産は語彙ではなく「置き場所」の器**——`night/irr85_section.py` が
+   Item と直前の見出し3つと全文での出現回数を出す。**SPR/CW・ALOT/CW の二例が示すとおり、
+   85と70を分けているのは文ではなく置き場所と誰が損をするか**で、それを機械で見せる道具は今日はじめて常設になった
