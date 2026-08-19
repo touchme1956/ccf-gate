@@ -1762,6 +1762,28 @@ roic を through-cycle 化した論法（「重みでなく、その欄が何を
   順位が上がれば自動で枠入り。黙って消すとv9.9.52型）。半導体連鎖31.5pt=城の53%は相関上限の決断待ちのまま。
   Ⅵ買付順位の「投下可」(Ω75+ ∧ 門X遮断器〔E[r]≥0・v9.9.84〕 ∧ 絶対MOAT指数70+ ∧ 点検0件)へ、目標との不足分で按分
   (B案②＝実装どおり。実質は不足上位に厚い。pc順位=買う順・gap按分=金額の二序列)。指値は階段（1/2をX開通ライン・1/2をfair線=倍率の重力ゼロ線。2026-07改定＝約定期待値12%錨付けの是正）。1銘柄の目標ウェイトは **城60% × (Ω−70) ÷ Σ(Ω−70)、上限8%**（v9.9.70・2026-08-03 ユーザー明示指示で**段差8/5/3から連続へ**）。旧式は Ω80/77/75 の線で割れ、**IRMD 80.1 と MSFT 79.1 の1.0pt差で配分が1.6倍**違っていた——門の本文Ⅰ「ティア内の小数差に意味はなく、選別は間（価格）が行う」と正面から矛盾していた。実測（城60%へ正規化・網9%）: 旧 3.0〜7.9%/総合13.56% → **新 3.3〜7.6%/総合13.63%**＝リスクの取り方をほぼ変えずに境界の恣意性だけを除いた。**上限8%（¼ケリー相当）は維持**——比で配ると銘柄数が減ったとき1銘柄が過大になるため（投下可5社なら1社12%）。刻みの候補も実測した: (Ω−74)は1.8〜10.1%で幅が開きすぎ、(Ω−74)²は0.5〜16.5%で¼ケリーを大きく超える。**質(Ω)とE[r]は逆相関している**（ASML Ω82.8でE[r]15.0% / ADBE Ω76.4でE[r]23.6%）ので、質を重視するほど加重E[r]は下がる（等加重17.21% / (Ω−70)16.71%）。それでも質で張るのは、20年の複利では**1回の恒久的な毀損が20年ぶん複利で効く**から。
+- **NVDAの irr を 85→70 に是正（2026-08-06・ユーザーの指摘「エヌビディアは外れたはず」）——投下可から脱落**:
+  2026-08-05の全数監査では『歴史検証で+20.6%/年を出したADIと同一構文』として据置いたが、FY2026 10-K(362,575字)を
+  網羅走査すると**顧客側の再認定の記述がゼロ**だった——語の実測 **re-qualif 0 / designed into 0 / switching cost 0 /
+  barrier to entry 0 / lock-in 0**。機構語＋顧客語の同居文は全文で10本しかなく、機構に触れる3本はいずれも
+  『pre-sales assistance to our partner network in designing, testing, and **qualifying system designs**』
+  （＝**当社が支援する側**。AMDを同一構文で75と判定した型）／『**Qualification time**…can reduce, or create
+  volatility in, our revenue』（収益変動リスクとしての記述）／『Obtaining **design wins** may involve a lengthy process』。
+  逆に代替可能性の自認が決定的——『Some of our customers have in-house expertise…and **can use or develop their own
+  solutions to replace those we are providing**』／競争要因に『conformity to **industry standard APIs**』
+  （**MSIを85→70にした論拠と同型**＝規格は業界公開で当社の私有物ではない）／『our effective foreclosure from the
+  China market **helped our competitors build larger developer and customer ecosystems to challenge us worldwide**』。
+  - **旧根拠は二重計上だった**: 旧evidenceは『installed base/developer ecosystem＝CUDAが事実上の規格→85』だが、
+    その引用（『the number of developers and installed base…**strengthens our ecosystem**』）は
+    **ネットワーク効果の記述そのもの**で、**同じ引用で dur=85 が既に立っている**。
+    同じ信号を二度数えない（v9.9.45のTAM柱・v9.9.67のFの二重計上と同じ作法）
+  - **横並び**: SWKSは『changing suppliers involves significant cost, time, effort and risk **on the part of that
+    manufacturer**』と顧客のコストを明示してなお75。NVDAの記述はそれより弱い。CDNSも同日同じ理由で85→70
+  - **実測**: Ω77.8→76.7 ／ 堀73.6→**69.0**で堀の関門70を割り**⛔堀不足**へ。配分は11社→**10社**、
+    空いた枠は半導体内で再配分され（ASML 4.6→5.5 / 6857 3.5→4.5 / KLAC 3.2→4.2 / 6146 2.9→3.8）
+    連鎖比率は30.0%のまま、総合 13.76%→13.61%。**繰り上げは起きない**（10社で城60%が埋まるため）
+  - **教訓**: 『他社の引用と同一構文だから』は根拠として弱い。**その社の紙が何を言っているかを直接読む**。
+    しかも類推の相手だったADI自身、2013年の紙では design win 型で75相当だった
 - **相関上限＋入れ替え（v9.9.91・2026-08-06 ユーザー明示指示「E[r]≥10% ＋ 半導体≤30%（11社・13.76%）を採ります」）**:
   **半導体連鎖（ASML/KLAC/NVDA/6857/6146）の目標ウェイト合計は城の30%まで。空いた分は E[r]≥10% の次点から
   繰り上げて城60%を埋める**（減らすのではなく**入れ替える**）。判定は `ccfAlloc`（単一実装。`ccfAllocTop` は
