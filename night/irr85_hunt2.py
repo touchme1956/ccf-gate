@@ -400,9 +400,70 @@ def cmd_screen(a):
     return 0
 
 
+def sic_spread(rows):
+    """★フレーズごとに「当たった社の業種がどれだけ散るか」を測る。
+
+    機構の語は少数の業種に集まるはず（fabの工程認定は半導体に、型式証明は航空に）。
+    **広く散る語は一般英語**で、機構を指していない。実測(2026-08-19):
+      'authority to operate' 88社/27業種（最頻SIC2の占有0.14）＝銀行にも鉱山にも病院にも出る
+      'resin lifetime' 102社/29業種 0.15 ／ 'authority having jurisdiction' 47社/21業種 0.21
+    これは私の主観ではなくデータ自身の性質なので、**測って落とす**（消さずに重みを下げる）。
+    """
+    import collections as _c
+    byp = _c.defaultdict(list)
+    for r in rows:
+        for k in ('customer_bears', 'lock_evidence', 'neutral'):
+            for p in r[k]:
+                byp[p].append((r.get('sic') or '0000')[:2])
+    out = {}
+    for p, sics in byp.items():
+        n = len(sics)
+        top = _c.Counter(sics).most_common(1)[0][1] / n if n else 0
+        out[p] = {'n': n, 'sic2': len(set(sics)), 'top_share': round(top, 3),
+                  'generic': bool(n >= 20 and top < 0.30)}
+    return out
+
+
+def collapse(ps):
+    """★近い言い回しが同じ一文を何度も数えるのを止める。
+
+    実測: Prenetics は 'revalidate their manufacturing processes' /
+    'require our customers to revalidate' / 'customers to revalidate' /
+    'would be required to revalidate' の4本に当たって顧客負担4件＝20点になったが、
+    **原本では一文**。部分文字列の関係にあるものは最長の1本だけ数える。
+    """
+    ps = sorted(set(ps), key=len, reverse=True)
+    keep = []
+    for p in ps:
+        if not any(p in q for q in keep):
+            keep.append(p)
+    return keep
+
+
+# ★「誰が費用を負うか」を**フレーズの文字列そのもの**が名指ししているか。
+#   機構の定義は『**顧客の側が**再認定の費用と時間を負う』なので、
+#   その主語が語の中に無いフレーズは、機構ではなく**領域マーカー**にすぎない。
+#   実測(2026-08-19)で上位を埋めたのは全部これだった——
+#     new premarket notification / new dietary ingredient notification / reload licensing /
+#     premarket tobacco product application / bureau of safety and environmental enforcement
+#   ＝どれも**顧客自身が出す提出書類の名前**で、当たるのは供給者ではなく顧客の10-K。
+#   批評レンズが『ヒットの母集団が顧客側に偏るので、供給者の堀を探す網としては精度ゼロ』と
+#   名指ししたのと同じ族が、別の語で湧き続けるので**語ごとに落とすのではなく規則で裁く**。
+SUBJ = re.compile(
+    r'\b(customers?|oems?|end[- ]users?|purchasers?|licensees?|operators?|insurers?|'
+    r'integrators?|airframers?|manufacturers?|utilit(?:y|ies)|prime contractors?|'
+    r'their|his|patient)\b', re.I)
+
+
+def names_subject(p):
+    """そのフレーズは費用を負う主体を名指ししているか"""
+    return bool(SUBJ.search(p))
+
+
 def cmd_rank(a):
     u = json.load(open(os.path.join(OUT, 'irr85_hunt2_universe.json'), encoding='utf-8'))
     rows = [r for r in u['rows'] if not r['excluded']]
+    spread = sic_spread(u['rows'])
     def score(r):
         # ★門0スコアもΩも使わない（irr=85 の半分は門0スコア4点以下から出る）
         # ★完全一致と語AND検索を**同じ重みで足さない**——証拠の強さが違う。
@@ -415,14 +476,27 @@ def cmd_rank(a):
         w = {'customer_bears': 5.0, 'lock_evidence': 2.0, 'neutral': 0.5}
         tot = 0.0
         for k, wt in w.items():
-            for p in r.get(k) or []:
-                tot += (wt if md.get(p, 'phrase') == 'phrase' else 0.3)
+            for p in collapse(r.get(k) or []):          # ①同じ一文の重複を潰す
+                v = wt if md.get(p, 'phrase') == 'phrase' else 0.3
+                if (spread.get(p) or {}).get('generic'):
+                    v *= 0.15                            # ②業種が散る語＝一般英語。消さず重みだけ落とす
+                if k == 'customer_bears' and not names_subject(p):
+                    v *= 0.2                             # ③費用を負う主体を名指ししない語は領域マーカー
+                tot += v
         return tot - len(r.get('anti') or []) * 1.5
     for r in rows:
         r['rank_score'] = round(score(r), 2)
+        r['generic_hits'] = [p for k in ('customer_bears', 'lock_evidence', 'neutral')
+                             for p in (r.get(k) or []) if (spread.get(p) or {}).get('generic')]
     rows.sort(key=lambda r: -r['rank_score'])
     out = {'generated': dt.date.today().isoformat(), 'tool': 'night/irr85_hunt2.py', 'tool_rev': TOOL_REV,
+           'phrase_spread': {p: v for p, v in sorted(spread.items(), key=lambda kv: -kv[1]['n'])[:80]},
            'note': ('読む順＝【完全一致】顧客負担×5 + 固着×2 + 機構語×0.5 ／【語AND】一律×0.3。'
+                    '①部分文字列で重なる語は最長の1本だけ数える（同じ一文の多重計上を止める）。'
+                    '②当たった社の業種が散る語（n≥20 かつ最頻SIC2<30%）は×0.15——'
+                    'authority to operate は27業種に出る一般英語で機構ではない。'
+                    '③顧客負担の語でも**費用を負う主体を名指ししない**もの（new premarket notification 等の'
+                    '顧客自身の提出書類名）は×0.2——当たるのは供給者ではなく顧客の10-Kだから。'
                     '門0スコアもΩも使わない（実測: irr=85 の半分は門0スコア4点以下から出る）。'
                     '語ANDを軽くするのは証拠の強さが違うから——演習で候補2,518社の66%が語ANDだけだった'),
            'n': {'total': len(u['rows']), 'excluded': len(u['rows']) - len(rows), 'readable': len(rows)},
@@ -463,7 +537,21 @@ def cmd_material(a):
     if os.path.exists(stp):
         loose_ph = [x['p'] for x in json.load(open(stp, encoding='utf-8'))['rows']
                     if x.get('verdict') == 'ok_terms']
-    rows = rl['rows'][:a.limit]
+    # ★一つの業種が読解の枠を食い潰さないようにする（多面的な掃き寄せ）。
+    #   実測: 語の順位だけで採ると上位200社中**131社が SIC 28（医薬・化学）**になり、
+    #   台帳が実測した機構の分布（航空防衛7 / 半導体4 / 医薬包装・保険データ・精密・車載に各1）と合わない。
+    #   **一つの網で全部を釣ろうとすると、いちばん語彙の多い産業だけが残る。**
+    import collections as _c
+    cap = _c.Counter()
+    rows = []
+    for r in rl['rows']:
+        k = (r.get('sic') or '0000')[:2]
+        if cap[k] >= a.per_sic:
+            continue
+        cap[k] += 1
+        rows.append(r)
+        if len(rows) >= a.limit:
+            break
     out_path = os.path.join(OUT, 'irr85_hunt2_material.json')
     done = {}
     if os.path.exists(out_path) and not a.fresh:
@@ -521,13 +609,34 @@ def cmd_material(a):
     if not res:
         print('✗ 1社も取れていない＝在庫を上書きしない', file=sys.stderr)
         return 1
-    # 材料が揃ったので順位を作り直す（置き場所を織り込む）
+    # ★材料が揃ったので順位を**文脈で**作り直す。
+    #   スクリーンの語だけでは向きが決まらない——これは前回22件の失敗そのもの。実測でも
+    #   'right of reference' を書くのはDMFを**参照する顧客**、'device master file' は当社自身のDMRでも出る。
+    #   ここでは実際の文が手に入るので (a)顧客が主語か (b)当社が主語でないか (c)願望形でないか
+    #   (d)同じ段落に反証が同居しないか (e)Item 1A のリスク要因の中でないか を全部使える。
     for r in res:
-        body = sum(1 for h in r['hits'] if 'customer_bears' in h['dir'] and not h['cust'] is False)
-        risk = sum(1 for h in r['hits']
-                   if 'customer_bears' in h['dir'] and (h['item'] or '').lower().startswith('item 1a'))
-        r['refined'] = round(r['n_customer_bears'] * 5 + body * 1.5 - risk * 1.0
-                             - r['n_anti'] * 3.0, 2)   # 同居する反証語だけを、強く引く
+        good = 0.0
+        risky = 0.0
+        wish = 0
+        for h in r['hits']:
+            d = h.get('dir') or []
+            if 'ANTI' in d:
+                continue
+            cb = 'customer_bears' in d
+            le = 'lock_evidence' in d
+            if not (cb or le):
+                continue
+            if h.get('wish'):
+                wish += 1
+                continue
+            if h.get('cust') and not h.get('self'):
+                good += 3.0 if cb else 1.2     # 顧客が主語・当社は主語でない＝本物の候補
+            elif h.get('cust'):
+                good += 1.0 if cb else 0.4     # 両方が主語＝文脈次第
+            if (h.get('item') or '').lower().startswith('item 1a'):
+                risky += 0.5                    # 置き場所の減点（SPR/ACMR型）
+        r['ctx'] = {'good': round(good, 2), 'in_risk_item': risky, 'wish': wish}
+        r['refined'] = round(good - risky - r['n_anti'] * 3.0 - wish * 0.5, 2)
     res.sort(key=lambda r: -r['refined'])
     json.dump({'generated': dt.date.today().isoformat(), 'tool': 'night/irr85_hunt2.py --material',
                'tool_rev': TOOL_REV,
@@ -538,10 +647,11 @@ def cmd_material(a):
                'failures': fail, 'rows': res},
               open(out_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     print(f'\n材料 {len(res)}社（失敗 {len(fail)}）→ out/irr85_hunt2_material.json')
-    print(f"{'順':>3} {'社名':40}{'点':>7}{'顧客負担':>9}{'同居反証':>9}{'文書内反証':>11}")
-    for i, r in enumerate(res[:30], 1):
-        print(f"{i:>3} {(r['name'] or '')[:38]:40}{r['refined']:7.1f}{r['n_customer_bears']:9}"
-              f"{r['n_anti']:9}{r.get('n_anti_doc', 0):11}")
+    print(f"{'順':>3} {'社名':34}{'SIC':>5}{'点':>7}{'顧客が主語':>11}{'1A':>6}{'反証':>6}")
+    for i, r in enumerate(res[:34], 1):
+        cx = r.get('ctx') or {}
+        print(f"{i:>3} {(r['name'] or '').split('(')[0][:32]:34}{str(r.get('sic') or '')[:4]:>5}"
+              f"{r['refined']:7.1f}{cx.get('good', 0):11}{cx.get('in_risk_item', 0):6}{r['n_anti']:6}")
     return 0
 
 
@@ -552,6 +662,7 @@ def main():
     ap.add_argument('--rank', action='store_true')
     ap.add_argument('--material', action='store_true')
     ap.add_argument('--limit', type=int, default=200)
+    ap.add_argument('--per-sic', type=int, default=25, dest='per_sic')
     ap.add_argument('--fresh', action='store_true')
     ap.add_argument('--vocab', default=os.path.join(HERE, 'irr85_vocab2.json'))
     ap.add_argument('--window-start', default='2024-01-01')

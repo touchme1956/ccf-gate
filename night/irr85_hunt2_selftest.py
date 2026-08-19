@@ -34,9 +34,27 @@ def main():
         t = (r.get('ticker') or '').upper()
         if t:
             by_t[t] = r
-    # 読む順の点は cmd_rank と同じ式（書き写さず、universe の欄から組み直す）
+    # ★順位は cmd_rank が作った readlist をそのまま読む（式を書き写さない・v9.9.65）。
+    #   既知の85は readlist からは除外されているので、**除外前の全社**で同じ式を当て直す必要がある。
+    #   その式は night/irr85_hunt2.py の単一実装を import して使う。
+    import importlib.util as _iu
+    _sp = _iu.spec_from_file_location('_h2', os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                          'irr85_hunt2.py'))
+    h2 = _iu.module_from_spec(_sp)
+    _sp.loader.exec_module(h2)
+    spread = h2.sic_spread(u['rows'])
+
     def sc(r):
-        return len(r['customer_bears']) * 5 + len(r['lock_evidence']) * 2 + len(r['neutral']) * 0.4
+        md = r.get('mode') or {}
+        w = {'customer_bears': 5.0, 'lock_evidence': 2.0, 'neutral': 0.5}
+        tot = 0.0
+        for k, wt in w.items():
+            for p in h2.collapse(r.get(k) or []):
+                v = wt if md.get(p, 'phrase') == 'phrase' else 0.3
+                if (spread.get(p) or {}).get('generic'):
+                    v *= 0.15
+                tot += v
+        return tot
     ranked = sorted(u['rows'], key=lambda r: -sc(r))
     pos = {(r.get('ticker') or '').upper(): i + 1 for i, r in enumerate(ranked)}
 
