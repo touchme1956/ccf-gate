@@ -9123,6 +9123,12 @@ check_workflow_add ✓（add・push とも）／ YAML 6本とも構文OK
   ——今回洗った先: index.html 7箇所（計算2・入力欄の既定1・説明文3・移行コード1）／`night/v12_gate.js`／
   `night/audit_wacc_stale.py` の頭注／`todo_list.json` の note。
 - **版番号は上げていない**（採点式・刻み・重み・関門を1つも変えていないため）。audit_docs ✓。
+- **⚠ Ωを載せる生成物も一緒に再生成する**——WACC は150社のΩを動かすので、`out/score_all.json` だけでなく
+  **`out/promotion_ready.json` / `out/irr85_dual.json` / `out/audit_irr70.json`** も値が変わる
+  （実測: 顔ぶれ・件数はいずれも不変で、動いたのは載っているΩだけ）。
+  ＝「規則を変えたら文も全部 grep で洗う」の**生成物版**。CIが毎営業日〜月1で再生成するので
+  放置しても古いまま固定はされないが、**手で更新した日は自分で洗って同じコミットに入れる**
+  （でないと『Ωが動いた日』と『生成物が追いついた日』が git 上で別の日になる）。
 - 検証: check_html ✓／audit_docs ✓／**score_all 投下可10社・Ω75+ 30社・四関門17社とも不変**／
   audit_gate 要修正2件・未解決警告2件（**変更前と同じ**）／検出器が鳴り止む（更新後のズレ +0.03pt＝刻み内）。
   ⚠ **`check_gate_parity` は playwright がこの環境に無く skip＝「一致した」ではなく「測っていない」**
