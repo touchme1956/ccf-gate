@@ -280,7 +280,8 @@ def cmd_stats(a):
     dd = [r for r in rows if r['verdict'] == 'dead']
     er = [r for r in rows if r['verdict'] == 'error']
     out = {'generated': dt.date.today().isoformat(), 'tool': 'night/irr85_hunt2.py', 'tool_rev': TOOL_REV,
-           'window': [a.window_start, a.window_end], 'flood_threshold': FLOOD, 'flood_threshold_terms': FLOOD_TERMS,
+           'window': [a.window_start, a.window_end], 'vocab': os.path.basename(a.vocab),
+           'flood_threshold': FLOOD, 'flood_threshold_terms': FLOOD_TERMS,
            'note': ('⚠ 引用符つきの0件は「使われていない」ではない——EDGAR全文検索の取りこぼし。'
                     '実測 "asme section iii" 0件 vs 引用符なし60件。0件は語のAND検索へ落として拾い、'
                     '文字列の実在は --material の全文走査が裁く'),
@@ -335,6 +336,7 @@ def cmd_screen(a):
                                           'forms': set(), 'docs': {}, 'ph': {}, 'anti': {}})
             u['forms'].add(r['form'])
             u['ph'][p['p']] = u['ph'].get(p['p'], 0) + 1
+            u.setdefault('mode', {})[p['p']] = p.get('mode', 'phrase')
             u['docs'][r['doc']] = r['filed']
         if i % 10 == 0:
             print(f'  … {i}/{len(ph)}  社数 {len(uni)}', file=sys.stderr)
@@ -364,10 +366,12 @@ def cmd_screen(a):
                      'doc': sorted(u['docs'].items(), key=lambda kv: kv[1])[-1][0] if u['docs'] else None,
                      'filed': max(u['docs'].values()) if u['docs'] else None,
                      'customer_bears': cb, 'lock_evidence': le, 'neutral': ne,
+                     'mode': u.get('mode', {}),
                      'anti': sorted(u['anti'].keys()),
                      'excluded': (e[0] if e else None), 'excluded_t': (e[1] if e else None)})
     out = {'generated': dt.date.today().isoformat(), 'tool': 'night/irr85_hunt2.py', 'tool_rev': TOOL_REV,
            'window': [a.window_start, a.window_end], 'forms': FORMS,
+           'vocab': os.path.basename(a.vocab),
            'note': '本文のみ（添付書類は落とす）。除外した社も理由つきで残す＝黙って消さない',
            'n': {'phrases_sent': len(ph), 'anti_sent': 0, 'ciks': len(rows),
                  'excluded': sum(1 for r in rows if r['excluded']),
@@ -391,14 +395,26 @@ def cmd_rank(a):
     rows = [r for r in u['rows'] if not r['excluded']]
     def score(r):
         # ★門0スコアもΩも使わない（irr=85 の半分は門0スコア4点以下から出る）
-        return (len(r['customer_bears']) * 5 + len(r['lock_evidence']) * 2
-                + len(r['neutral']) * 0.4 - len(r['anti']) * 1.5)
+        # ★完全一致と語AND検索を**同じ重みで足さない**——証拠の強さが違う。
+        #   実測(2026-08-19 演習): 当たった2,518社のうち**1,675社(66%)が語ANDだけ**で、
+        #   その大半は 'approved by the aircraft manufacturer'(507社) のような
+        #   「common word が200頁のどこかに在る」だけの社だった。同じ重みで足すと順位が雑音に支配される。
+        #   ただし語ANDを捨てもしない——同じ演習で **CW/HXL/TDG/RBC/KRMN は語ANDでしか掴めていない**。
+        #   ⇒ 語ANDは「既に完全一致で当たった社を押し上げる」ぶんだけ効かせる（単独では上位に来ない）
+        md = r.get('mode') or {}
+        w = {'customer_bears': 5.0, 'lock_evidence': 2.0, 'neutral': 0.5}
+        tot = 0.0
+        for k, wt in w.items():
+            for p in r.get(k) or []:
+                tot += (wt if md.get(p, 'phrase') == 'phrase' else 0.3)
+        return tot - len(r.get('anti') or []) * 1.5
     for r in rows:
         r['rank_score'] = round(score(r), 2)
     rows.sort(key=lambda r: -r['rank_score'])
     out = {'generated': dt.date.today().isoformat(), 'tool': 'night/irr85_hunt2.py', 'tool_rev': TOOL_REV,
-           'note': ('読む順＝方向(customer_bears)×5 + 固着(lock_evidence)×2 + 機構語×0.4 − 反証語×1.5。'
-                    '門0スコアもΩも使わない——実測で irr=85 の半分は門0スコア4点以下から出るため'),
+           'note': ('読む順＝【完全一致】顧客負担×5 + 固着×2 + 機構語×0.5 ／【語AND】一律×0.3。'
+                    '門0スコアもΩも使わない（実測: irr=85 の半分は門0スコア4点以下から出る）。'
+                    '語ANDを軽くするのは証拠の強さが違うから——演習で候補2,518社の66%が語ANDだけだった'),
            'n': {'total': len(u['rows']), 'excluded': len(u['rows']) - len(rows), 'readable': len(rows)},
            'rows': rows}
     json.dump(out, open(os.path.join(OUT, 'irr85_hunt2_readlist.json'), 'w', encoding='utf-8'),
