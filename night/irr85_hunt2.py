@@ -181,6 +181,29 @@ def ticker_cik_map():
     return m
 
 
+def gate0_map():
+    """門0の母集団（gate0_all.csv）をティッカーで引く。
+    ★母集団に**無い**社は「門0の穴」として別立てで出す——RBC(irr=85・13年で年率+20.5%)は
+      売上タグの決算日の錨のずれで母集団から丸ごと消えていた前例がある（HOYAも同型）。
+      機構を持つ社が門0の外に居ることは実際に起きる。"""
+    m = {}
+    p = os.path.join(ROOT, 'gate0_all.csv')
+    if not os.path.exists(p):
+        return m
+    import csv
+    with open(p, encoding='utf-8-sig') as f:      # ⚠BOM付き。utf-8 で開くと ticker 列が空になり
+        for r in csv.DictReader(f):               #   「漏れ0社」というもっともらしい嘘が出る（既記録）
+            t = (r.get('ticker') or '').strip().upper()
+            if t:
+                m[t] = r
+    return m
+
+
+def ticker_of(display_name):
+    m = re.search(r'\(([A-Z0-9.\-]{1,6})\)\s*\(CIK', display_name or '')
+    return m.group(1) if m else None
+
+
 def excluded_sets():
     """除外する社と理由。**黙って消さないため理由を持ち回す**"""
     ex = {}
@@ -296,6 +319,7 @@ def cmd_screen(a):
         ph = [dict(p, mode=keep[p['p']]) for p in ph if p['p'] in keep]
 
     ex = excluded_sets()
+    g0 = gate0_map()
     uni, trunc, err = {}, [], []
     for i, p in enumerate(ph, 1):
         try:
@@ -332,7 +356,11 @@ def cmd_screen(a):
         le = [k for k, _ in hit if dirs.get(k) == 'lock_evidence']
         ne = [k for k, _ in hit if dirs.get(k) == 'neutral']
         e = ex.get(c)
-        rows.append({'cik': c, 'name': u['name'], 'sic': u['sic'], 'forms': sorted(u['forms']),
+        tk = ticker_of(u['name'])
+        g = g0.get(tk or '')
+        rows.append({'cik': c, 'name': u['name'], 'ticker': tk, 'sic': u['sic'],
+                     'in_gate0': bool(g), 'g0_score': (g or {}).get('score'),
+                     'g0_fails': (g or {}).get('fails'), 'forms': sorted(u['forms']),
                      'doc': sorted(u['docs'].items(), key=lambda kv: kv[1])[-1][0] if u['docs'] else None,
                      'filed': max(u['docs'].values()) if u['docs'] else None,
                      'customer_bears': cb, 'lock_evidence': le, 'neutral': ne,
@@ -342,11 +370,13 @@ def cmd_screen(a):
            'window': [a.window_start, a.window_end], 'forms': FORMS,
            'note': '本文のみ（添付書類は落とす）。除外した社も理由つきで残す＝黙って消さない',
            'n': {'phrases_sent': len(ph), 'anti_sent': 0, 'ciks': len(rows),
-                 'excluded': sum(1 for r in rows if r['excluded'])},
+                 'excluded': sum(1 for r in rows if r['excluded']),
+                 'outside_gate0': sum(1 for r in rows if not r['excluded'] and not r['in_gate0'])},
            'truncated': trunc, 'errors': err, 'rows': rows}
     json.dump(out, open(os.path.join(OUT, 'irr85_hunt2_universe.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, indent=1)
-    print(f"\n当たった社 {len(rows)}（うち除外 {out['n']['excluded']}）／投げたフレーズ {len(ph)}＋反証 {len(an)}")
+    print(f"\n当たった社 {len(rows)}（うち審査済みで除外 {out['n']['excluded']} ／ "
+          f"門0の母集団の外 {out['n']['outside_gate0']}）／投げたフレーズ {len(ph)}")
     if trunc:
         print(f"⚠ ページ上限に当たったフレーズ {len(trunc)}本（黙って切っていない）:")
         for t in trunc[:10]:
@@ -374,11 +404,12 @@ def cmd_rank(a):
     json.dump(out, open(os.path.join(OUT, 'irr85_hunt2_readlist.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, indent=1)
     print(f"読む候補 {len(rows)}社（除外 {out['n']['excluded']}社は理由つきで universe に残っている）\n")
-    print(f"{'順':>3} {'T/社名':38}{'SIC':>6}{'点':>7}  顧客負担 / 固着 / 反証")
+    print(f"{'順':>3} {'T/社名':38}{'SIC':>6}{'門0':>5}{'点':>7}  顧客負担 / 固着")
     for i, r in enumerate(rows[:40], 1):
         nm = (r['name'] or '')[:36]
-        print(f"{i:>3} {nm:38}{str(r['sic'] or ''):>6}{r['rank_score']:7.1f}  "
-              f"{len(r['customer_bears'])} / {len(r['lock_evidence'])} / {len(r['anti'])}")
+        g0 = (r.get('g0_score') if r.get('in_gate0') else '穴')
+        print(f"{i:>3} {nm:38}{str(r['sic'] or ''):>6}{str(g0):>5}{r['rank_score']:7.1f}  "
+              f"{len(r['customer_bears'])} / {len(r['lock_evidence'])}")
     return 0
 
 
