@@ -119,7 +119,9 @@ function floor0(p) {
 // ── 段2 拒否 ───────────────────────────────────────────────
 const WACC_FALLBACK = 8.93;   // v9 が使っている値（新しい定数を作らない）
 // v9 と同じ WACC（index.html:1818-1820 と同式・新しい定数を作らない）
-const RFR = 4.48, ERP = 4.45, BETA_DFLT = 1.0;
+const RFR = 4.68, ERP = 4.45, BETA_DFLT = 1.0;  // ⚠ v9(index.html)と同じ値に揃える
+//   ——2026-08-19 に門の既定が 4.48→4.68 へ更新されたので here も追随した。
+//   揃えないと **同じ台帳を見る二つの門が違う資本コストで裁く**（v9.9.65 の破れ）。
 const waccOf = (p) => { const b = num(p.beta); return RFR + (b === null ? BETA_DFLT : b) * ERP; };
 
 // ★2026-08-13 改訂1（結果を見た後）: rep の線を 60 → 80
