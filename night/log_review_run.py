@@ -63,6 +63,15 @@ PATH = os.path.join(BASE, REL)
 #   同じ「PR無し」でも意味がまるで違う。区別が消えると、この台帳が繰り返し潰してきた
 #   「測っていない」と「測って問題なし」の取り違えを、運用の側で作ることになる。
 OUTCOMES = {
+    # **開始の印**（2026-08-19実装）。手順0で1行・手順8で結末を1行＝合わせて必ず2回残す。
+    #   これが無いと **発火したが途中で力尽きた日** と **そもそも発火しなかった日** が
+    #   外から区別できない。実測(2026-08-19): Routine は毎日発火している
+    #   （last_fired_at 08-19T20:06Z）のに、走行ログは 08-11 と 08-16 の**2件しか無かった**
+    #   ——08-17(日)・08-18(月)の発火は痕跡ゼロ。2026-08-11 に塞いだはずの
+    #   「一覧に出ない場所で完結していた」がそのまま再発していた。
+    #   ⚠ started は**結末ではない**。閉じないまま残った日は open_days() が名指しする
+    #     ＝started を足しただけでは fail-loud にならない（印と検出は対で要る）。
+    "started":     "開始した（結末はまだ）",
     "pr":          "PRを作った",
     "empty":       "待ち行列が空＝審査待ちなし",
     "limit":       "セッション上限で打ち切り",
@@ -183,6 +192,49 @@ def merge_runs(runs, new):
     return runs
 
 
+def jst_date(r):
+    """走行ログの1行を **JST の日付**にする。
+
+    ⚠ ここを UTC のまま数えてはいけない——書き込みは `datetime.now(timezone.utc)` なのに、
+      Routine の cron は `0 20 * * 0-4` ＝ **20:00 UTC ＝ 05:00 JST の月〜金**。
+      つまり **JST月曜の実行が UTC日曜として記録される**（実測 2026-08-16 22:55Z は
+      JST 08-17(月) 07:55 の firing）。UTC の曜日で数えると その回は「土日」として
+      永久に漏れ、金曜は常に抜けとして鳴る＝この repo が繰り返し踏んだ
+      「**基準の違う二つを割る**」型そのもの。
+    """
+    d0 = (r.get("date") or "")[:10]
+    at = r.get("at") or ""
+    if not d0:
+        return None
+    if at:
+        try:
+            u = datetime.datetime.fromisoformat(d0 + "T" + at.replace("Z", "+00:00"))
+            return (u + datetime.timedelta(hours=9)).date().isoformat()
+        except Exception:
+            pass
+    return d0
+
+
+def open_days(runs, jtoday=None):
+    """**開始したのに結末が残っていない日**（＝発火したが途中で力尽きた日）を JST で返す。
+
+    started の存在理由そのもの——**印を足すだけでは何も検出しない**。
+    ⚠ **当日は返さない**。発火直後はまだ走っている最中で、鳴らせば誤検出になる
+      （鳴りすぎる警報は鳴らないのと同じ）。
+    ⚠ 「結末が無い」と「発火しなかった」は別物。後者は today.py の頻度の検査が見る。
+    """
+    if jtoday is None:
+        jtoday = (datetime.datetime.now(datetime.timezone.utc)
+                  + datetime.timedelta(hours=9)).date().isoformat()
+    started, closed = set(), set()
+    for r in runs or []:
+        d = jst_date(r)
+        if not d:
+            continue
+        (started if r.get("outcome") == "started" else closed).add(d)
+    return sorted(d for d in started - closed if d != jtoday)
+
+
 def write(d, path=None):
     d["generated"] = datetime.date.today().isoformat()
     # **語彙はこの道具だけが持つ。** 表示側（門の🔔タブ）に同じ対応表を写すと
@@ -208,8 +260,19 @@ def show(d):
         print(f"{r.get('date',''):<11}{OUTCOMES.get(r.get('outcome'), r.get('outcome','')):<13}"
               f"{r.get('n', 0):>4}  {pr}{t}"
               + (f" — {r['note']}" if r.get("note") else ""))
+    # ★開始したまま閉じていない日を名指しする（started の存在理由）
+    op = open_days(runs)
+    if op:
+        print(f"\n⚠ 開始したが結末が残っていない {len(op)}日: {' '.join(op)}")
+        print("   ＝発火はしたが途中で力尽きた日。結末の1行が要る"
+              "（--outcome limit / error / source_down …）")
+
     # **空振りが続いていることを黙って見過ごさない**（止まっているのと見分けが付かないため）
-    tail = [r for r in runs[-5:] if r.get("outcome") != "pr"]
+    #   ⚠ started は**結末ではない**ので、結末の系列から先に外してから直近5回を採る。
+    #     混ぜると「開始の印を足しただけ」でこの警報が鳴りやすくなり、
+    #     しかも結末の履歴が started に押し出されて見えなくなる。
+    ends = [r for r in runs if r.get("outcome") != "started"]
+    tail = [r for r in ends[-5:] if r.get("outcome") != "pr"]
     if len(tail) >= 3:
         print(f"\n⚠ 直近5回のうち {len(tail)} 回がPR無し。"
               f"待ち行列が本当に空か `python3 night/enqueue_reaudit.py` で確かめること")

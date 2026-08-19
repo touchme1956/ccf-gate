@@ -45,6 +45,9 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
 sys.path.insert(0, os.path.join(ROOT, 'night'))
+import log_review_run  # noqa: E402
+#   ↑ 走行ログの**語彙(OUTCOMES)・JSTへの直し・開いたままの検出**はあの道具が正本。
+#     ここへ写すと『同じ台帳を見る二つが違うことを言う』種になる（v9.9.65）。
 
 AS_JSON = '--json' in sys.argv[1:]
 TODAY = datetime.date.today()
@@ -176,6 +179,20 @@ def build():
         now.append(item('review', 'now', '門2審査の走行ログが1件も無い',
                         '空振りでも1行残す規約なので、0件は「走っていない」', '', '審査ログ'))
 
+    # ── ★開始したのに結末が残っていない日（2026-08-19実装）──
+    #   **「発火しなかった」（下の頻度の検査）とは別物**。混ぜてはいけない——
+    #   直し方が違う: あちらは Routine の発火を確かめる話、こちらは**セッションが途中で死んだ**話。
+    #   ⚠ 当日は出さない（走っている最中に鳴らすのは誤検出）＝open_days が除く。
+    if runs:
+        op = log_review_run.open_days(runs)
+        if op:
+            now.append(item('reviewopen', 'now',
+                            '門2審査が「開始」のまま閉じていない %d日' % len(op),
+                            '開始の1行はあるのに結末の1行が無い: ' + ' '.join(op)
+                            + '（JST）＝発火はしたが途中で力尽きた日',
+                            'その日のセッションを確認して結末を1行足す（night/log_review_run.py '
+                            '--outcome limit|error|source_down --push）', '審査ログ'))
+
     # ── ★毎営業日と宣言した作業が、本当に毎営業日 走っているか（2026-08-17新設）──
     #   回転盤は**最後にいつ走ったか**しか見ない。だから「5営業日のうち2日だけ走った」は
     #   最終日が近ければ🟢に見える——**日付の死角（A/B/C）に続く4つ目、頻度の死角**。
@@ -194,18 +211,8 @@ def build():
     #   ＝この repo が12回踏んだ「**基準の違う二つを割る**」型そのもの。
     #   → `date`+`at` を JST へ直してから曜日を見る（at が無い行は date を JST 日付と読む）。
     if runs:
-        def _jst(r):
-            d0, at = (r.get('date') or '')[:10], (r.get('at') or '')
-            if not d0:
-                return None
-            try:
-                if at:
-                    u = datetime.datetime.fromisoformat(d0 + 'T' + at.replace('Z', '+00:00'))
-                    return (u + datetime.timedelta(hours=9)).date().isoformat()
-            except Exception:
-                pass
-            return d0
-        have = {x for x in (_jst(r) for r in runs) if x}
+        #   ⚠ JST への直しは log_review_run.jst_date が正本（理由もそちらに書いてある）。
+        have = {x for x in (log_review_run.jst_date(r) for r in runs) if x}
         # 「今日」も JST で（UTC の今日だと窓が1日ずれる）
         jtoday = (datetime.datetime.now(datetime.timezone.utc)
                   + datetime.timedelta(hours=9)).date()
