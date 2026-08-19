@@ -211,6 +211,46 @@ def main():
         pers.append({"from": ka, "to": kb, "n": len(pairs), "rho": rho,
                      "上位半分が次も上位半分の割合": hit})
 
+    # ★★★円建てで測り直す——**この投資家の通貨は円**。
+    #   上の数字はすべてドル建てで、円で見た実感とは違う。
+    #   実測: 2011-08 のドル円は 76.8円（史上最安値圏）→ 2026-08 は 159.1円。
+    #   この15年、**円安が年5〜10pt をリターンに乗せていた**。
+    #   ⚠ これは将来の期待ではない——76.8→159 をもう一度やるには 320円が要る。
+    #   逆に円高へ戻ると同じ大きさの逆風になる。**ETF間の差(年0〜2pt)より大きい**。
+    fxs = fetch("JPY=X")
+    fxsec = None
+    if fxs:
+        def cg(ser, a, b, f=None):
+            ks = sorted(k for k in ser if a <= k <= b)
+            if len(ks) < 12:
+                return None
+            k0, k1 = ks[0], ks[-1]
+            y = ((int(k1[:4]) - int(k0[:4])) * 12 + (int(k1[5:]) - int(k0[5:]))) / 12.0
+            v0, v1 = ser[k0], ser[k1]
+            if f:
+                if k0 not in f or k1 not in f:
+                    return None
+                v0 *= f[k0]
+                v1 *= f[k1]
+            return round((v1 / v0) ** (1 / y) - 1, 4)
+        fxsec = {"note": "同じ系列を円建てへ直しただけ（配当込みのadjclose × その月のドル円）",
+                 "windows": []}
+        for a, b in (("2000-06", "2026-08"), ("2011-08", "2026-08"),
+                     ("2016-08", "2026-08"), ("2021-08", "2026-08")):
+            if a not in fxs or b not in fxs:
+                continue
+            yy = ((int(b[:4]) - int(a[:4])) * 12 + (int(b[5:]) - int(a[5:]))) / 12.0
+            w = {"window": f"{a}→{b}", "fx_from": round(fxs[a], 1), "fx_to": round(fxs[b], 1),
+                 "fx_cagr": round((fxs[b] / fxs[a]) ** (1 / yy) - 1, 4), "rows": []}
+            for t in ("SMH", "SOXX", "XLK", "VGT", "QQQ", "SPY", "VTI", "VT"):
+                if t not in series:
+                    continue
+                u, j = cg(series[t], a, b), cg(series[t], a, b, fxs)
+                if u is None or j is None:
+                    continue
+                w["rows"].append({"t": t, "usd": u, "jpy": j, "diff_pt": round((j - u) * 100, 1)})
+            fxsec["windows"].append(w)
+
     # ★★共通の開始日で揃える——「転がる10年の最悪」は**設定日で決まってしまう**。
     #   実測: SMH(2000-06開始・ドットコムの天井を含む) 最悪 -13.1% vs
     #         SOXX(2001-07開始・崩壊の後から) 最悪 -3.1%。ほぼ同じ半導体指数なのに10pt差。
@@ -287,6 +327,7 @@ def main():
         "windows": [f"{a}→{b}" for a, b in WINDOWS],
         "n_fetched": len(series), "missing": miss,
         "★持続の検定": pers,
+        "★★円建てで測り直す": fxsec,
         "★共通の開始日で揃えた比較": common,
         "★選定規則を回した結果": ruletest,
         "★読み方": [
@@ -342,6 +383,13 @@ def main():
             print(f"    {r['t']:6s} {r['group']:10s} {(r['cagr'] or 0)*100:>6.1f}% "
                   f"{(r['maxdd'] or 0)*100:>7.0f}% {(r['roll10_worst'] or 0)*100:>7.1f}% "
                   f"{(r['roll10_med'] or 0)*100:>7.1f}%")
+    if fxsec:
+        print("\n  ★★円建てで測り直す（この投資家の通貨は円）")
+        for w in fxsec["windows"]:
+            print(f"\n    {w['window']}  ドル円 {w['fx_from']}→{w['fx_to']}円（年{w['fx_cagr']*100:+.1f}%）")
+            for r in w["rows"]:
+                print(f"      {r['t']:5s} USD {r['usd']*100:>6.1f}%/年 → "
+                      f"**円建て {r['jpy']*100:>6.1f}%/年**  差 {r['diff_pt']:+5.1f}pt")
     print("\n  ★持続（前の窓の順位は次の窓を当てるか）")
     for p in pers:
         print(f"    {p['from']} → {p['to']}  n={p['n']}  ρ={p['rho']}  "
