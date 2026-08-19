@@ -15,6 +15,7 @@ night/irr85_hunt2_selftest.py — **未知へ当てる前に、既知の85を取
 
 実行: python3 night/irr85_hunt2_selftest.py
 """
+import datetime as dt
 import json
 import os
 import sys
@@ -73,6 +74,51 @@ def main():
     if missed:
         print(f"\n⚠ 掴めなかった {len(missed)}社（この社の機構語が語彙に無い）: {' '.join(missed)}")
         print('  ——日本株はSEC経路の外なので原理的に掴めない。それ以外は語彙の穴')
+
+    # ─────────────────────────────────────────────────────────────────
+    # ★実証済みの語を、未審査の母集団へ当て直す（この狩りで最も決定的な測定）
+    #
+    # 自己検証は「網が既知の85を掴むか」を測る。だが本当に知りたいのは逆で、
+    # **その網が掴んだのと同じ語に、台帳の外の社が当たるか**。
+    #   ・当たらなければ「この機構は台帳の外に存在しない」＝空振りが**証拠**になる
+    #   ・当たれば読む先が名指しで出る
+    # ⚠ 完全一致と語ANDを必ず分ける——語ANDは "boeing"+"material"+"specification" が
+    #   同じ段落に散っているだけでも当たる。実測でこの3語の完全一致は母集団に**0件**。
+    #   混ぜると「37社が当たった」というもっともらしい嘘になる。
+    # ─────────────────────────────────────────────────────────────────
+    proven = sorted({p for _, _, _, cb, le in hit for p in (list(cb) + list(le))})
+    rlp = os.path.join(OUT, 'irr85_hunt2_readlist.json')
+    recall = None
+    if os.path.exists(rlp) and proven:
+        rl = json.load(open(rlp, encoding='utf-8'))['rows']
+        ex, an, who = {}, {}, {}
+        for r in rl:
+            md = r.get('mode') or {}
+            for k in ('customer_bears', 'lock_evidence', 'neutral'):
+                for q in (r.get(k) or []):
+                    if q not in proven:
+                        continue
+                    an[q] = an.get(q, 0) + 1
+                    if md.get(q, 'phrase') == 'phrase':
+                        ex[q] = ex.get(q, 0) + 1
+                        who.setdefault(q, []).append(r.get('ticker') or r.get('name', '')[:24])
+        recall = {'n_proven': len(proven), 'n_readlist': len(rl),
+                  'exact': ex, 'terms_only': {q: an[q] for q in an if not ex.get(q)},
+                  'zero': [q for q in proven if not ex.get(q)], 'who': who}
+        print(f"\n■ その語を、**台帳の外の {len(rl)}社**へ当て直す（完全一致だけを数える）")
+        if ex:
+            for q, n in sorted(ex.items(), key=lambda kv: -kv[1]):
+                print(f"   {n:>4}社  {q}   [{' '.join(sorted(set(who[q]))[:6])}]")
+        print(f"   **一社も当たらない語 {len(recall['zero'])}/{len(proven)}本**"
+              f"（うち語ANDだけ当たる {len(recall['terms_only'])}本＝文字列は母集団に無い）")
+
+    json.dump({'generated': dt.date.today().isoformat(), 'tool': 'night/irr85_hunt2_selftest.py',
+               'n_known': len(known), 'n_hit': len(hit), 'missed': missed,
+               'hit': [{'t': t, 'rank': p, 'score': round(s, 2),
+                        'customer_bears': list(cb), 'lock_evidence': list(le)}
+                       for t, p, s, cb, le in sorted(hit, key=lambda x: (x[1] or 99999))],
+               'proven_phrases': proven, 'recall_on_unreviewed': recall},
+              open(os.path.join(OUT, 'irr85_hunt2_selftest.json'), 'w'), ensure_ascii=False, indent=1)
     return 0
 
 
