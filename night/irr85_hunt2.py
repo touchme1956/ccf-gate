@@ -251,7 +251,17 @@ def cmd_stats(a):
     ph, an = load_vocab(a.vocab)
     if a.only:
         ph = [p for p in ph if a.only.lower() in p['p']]
-    rows = []
+    # 測り直しは高い（1本あたり最大2リクエスト）。既に測った語は据え置く（--fresh で全部測り直す）
+    prev = {}
+    stp = os.path.join(OUT, 'irr85_hunt2_stats.json')
+    if os.path.exists(stp) and not a.fresh:
+        prev = {r['p']: r for r in json.load(open(stp, encoding='utf-8'))['rows']
+                if r.get('verdict') != 'error'}
+        todo = [p for p in ph if p['p'] not in prev]
+        if len(todo) < len(ph):
+            print(f'  既測 {len(ph) - len(todo)}本は据え置き／新規 {len(todo)}本を測る')
+        ph = todo
+    rows = [prev[k] for k in prev] if prev else []
     for i, p in enumerate(ph, 1):
         try:
             d = fts(p['p'], a.window_start, a.window_end)
