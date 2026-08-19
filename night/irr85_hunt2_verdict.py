@@ -135,6 +135,26 @@ def main():
                len(rc.get('zero') or [])),
         }
 
+    # ── ③b 順位の低い既知85は、台帳自身が「留保つき」と言っている ──
+    #   読解は上位しか当てていないので、「弱い言い回しの85が下位に隠れていないか」が残る。
+    #   その残りの大きさを、**既知の85が下位に落ちるとき何が起きているか**で測る。
+    #   ⚠ n=13 の観察であって規則ではない。
+    dual = jload('irr85_dual.json')
+    if sf and dual:
+        dm = {r['ticker']: r for r in dual.get('rows', [])}
+        band = {'top': [], 'low': []}
+        for h in sf.get('hit', []):
+            k = 'top' if (h.get('rank') or 9999) <= 12 else 'low'
+            band[k].append((h['t'], bool(dm.get(h['t'], {}).get('reserved'))))
+        o['rank_vs_reservation'] = {
+            k: {'n': len(v), 'reserved': [t for t, r in v if r],
+                'rate': round(sum(1 for _, r in v if r) / max(1, len(v)), 2)}
+            for k, v in band.items()}
+        o['rank_vs_reservation']['note'] = (
+            '網の上位に来る既知85は根拠が強く、下位に落ちる社は台帳自身が二重読みで留保を付けている。'
+            '⇒ 読解が上位に集中していることの残りリスクは「弱い言い回しの85を取り逃す」だが、'
+            'そういう社は仮に見つけても留保つきになる種類。⚠ n=13 の観察であって規則ではない')
+
     # ── ④ 読解と反証 ─────────────────────────────────────────
     if rd:
         o['read'] = {'n': (rd.get('n') or {}), 'survived': [x.get('ticker') for x in (rd.get('survived') or [])],
@@ -171,6 +191,11 @@ def main():
         for p, n in sorted((r['exact_hits_on_unreviewed'] or {}).items(), key=lambda kv: -kv[1]):
             print(f"      {n:>4}社  {p}")
         print(f"   **一社も当たらない語 {r['phrases_with_zero_unreviewed_exact']}本**")
+    if 'rank_vs_reservation' in o:
+        rv = o['rank_vs_reservation']
+        print(f"\n③b 網の順位と、台帳の二重読みの留保  上位(≤12位) {rv['top']['n']}社中 留保 {len(rv['top']['reserved'])}社"
+              f" ／ 下位(≥50位) {rv['low']['n']}社中 留保 {len(rv['low']['reserved'])}社"
+              f" {rv['low']['reserved']}")
     if o['read']:
         n = o['read']['n']
         print(f"\n④ 読解 {n.get('read')}社 → 85の提案 {n.get('proposed85')}社 →"
