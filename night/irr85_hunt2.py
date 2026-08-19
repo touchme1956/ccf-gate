@@ -66,6 +66,12 @@ ROOTSET = {'10-K', '20-F', '40-F'}
 MAX_PAGES = 20
 # 実測ヒット数がこれを超えるフレーズは「網を潰す」ので本スクリーンから外す（--stats が判定）
 FLOOD = 1500
+# ★語のAND検索（引用符つきが0件だった救済経路）は**別の閾値で裁く**。
+#   完全一致のヒットは「その言い回しが在る」証拠だが、AND検索のヒットは
+#   「その単語が200頁のどこかに在る」だけ——証拠の強さが違うものを同じ線で扱うのは
+#   この台帳が11回踏んだ「基準の違う二つを並べる」型。実測でも
+#   "require additional flight testing"(AND) は1425件＝ほぼ全部が無関係
+FLOOD_TERMS = 250
 
 TOOL_REV = 'r1 (2026-08-19)'
 
@@ -82,15 +88,29 @@ def get(url, tries=5):
     raise RuntimeError(f'EDGAR FTS 不通: {last}')
 
 
-def fts(phrase, start, end, frm=0):
-    p = {'q': f'"{phrase}"', 'forms': FORMS, 'dateRange': 'custom',
+def fts(phrase, start, end, frm=0, quoted=True):
+    """★引用符つき＝完全一致。引用符なし＝語のAND。**この二つは証拠の強さが違う**。
+
+    ⚠ 私は最初「引用符つきは取りこぼす欠陥がある」と誤診した（"asme section iii" が0件なのに
+      引用符なしは60件だったため）。**取ってきて確かめたら外れていた**——AND検索の60件は
+      どれも "asme section iii" を literally 含まず、'asme' と 'section' と 'iii' が
+      別々の場所に在るだけだった。⇒ **完全一致の検索は壊れていない。0件は本当に0件。**
+      （"10 CFR 50.59" が0で "10 CFR Part 50" が6件なのも同じ——後者のほうが実際に使われる書き方）
+      強い結論ほど先に道具を疑う、は正しい作法だが、**疑った結果が外れたらそれも書く**。
+
+    それでもAND検索を残すのは、**近い変種**を拾う経路として使えるから
+    （"witness and hold points" が0でも "witness and hold point inspections" は在りうる）。
+    ただし証拠としては弱いので閾値を別に持ち（FLOOD_TERMS）、--material 段で
+    「同じ段落に全部の語が在るか」の緩い照合をして初めて材料に載せる。
+    """
+    p = {'q': (f'"{phrase}"' if quoted else phrase), 'forms': FORMS, 'dateRange': 'custom',
          'startdt': start, 'enddt': end, 'from': str(frm)}
     return get(EFTS + urllib.parse.urlencode(p))
 
 
-def hits_of(phrase, start, end, max_pages=MAX_PAGES):
+def hits_of(phrase, start, end, max_pages=MAX_PAGES, quoted=True):
     """本文だけを返す。(total, rows, truncated)"""
-    d = fts(phrase, start, end)
+    d = fts(phrase, start, end, quoted=quoted)
     total = d['hits']['total']['value']
     rows, page = [], 0
     while True:
@@ -113,7 +133,7 @@ def hits_of(phrase, start, end, max_pages=MAX_PAGES):
         if got >= total or page >= max_pages:
             break
         time.sleep(0.13)
-        d = fts(phrase, start, end, frm=got)
+        d = fts(phrase, start, end, frm=got, quoted=quoted)
     return total, rows, (total > page * 100)
 
 
@@ -215,27 +235,42 @@ def cmd_stats(a):
             tot = d['hits']['total']['value']
             body = sum(1 for h in d['hits']['hits'] if h['_source'].get('file_type') in ROOTSET)
             seen = len(d['hits']['hits']) or 1
-            rows.append({**p, 'total': tot, 'body_ratio': round(body / seen, 3),
-                         'verdict': 'flood' if tot > FLOOD else ('dead' if tot == 0 else 'ok')})
+            if tot == 0:
+                # ★引用符つきの0件は測定の欠陥のことがある。語のAND検索へ落として拾い直す
+                time.sleep(0.13)
+                d2 = fts(p['p'], a.window_start, a.window_end, quoted=False)
+                t2 = d2['hits']['total']['value']
+                rows.append({**p, 'total': 0, 'total_terms': t2, 'mode': 'terms',
+                             'verdict': ('flood_terms' if t2 > FLOOD_TERMS
+                                         else ('dead' if t2 == 0 else 'ok_terms'))})
+            else:
+                rows.append({**p, 'total': tot, 'mode': 'phrase', 'body_ratio': round(body / seen, 3),
+                             'verdict': 'flood' if tot > FLOOD else 'ok'})
         except Exception as e:
             rows.append({**p, 'total': None, 'verdict': 'error', 'err': str(e)[:120]})
         if i % 20 == 0:
             print(f'  … {i}/{len(ph)}', file=sys.stderr)
         time.sleep(0.13)
     ok = [r for r in rows if r['verdict'] == 'ok']
-    fl = [r for r in rows if r['verdict'] == 'flood']
+    okt = [r for r in rows if r['verdict'] == 'ok_terms']
+    fl = [r for r in rows if r['verdict'] in ('flood', 'flood_terms')]
     dd = [r for r in rows if r['verdict'] == 'dead']
     er = [r for r in rows if r['verdict'] == 'error']
     out = {'generated': dt.date.today().isoformat(), 'tool': 'night/irr85_hunt2.py', 'tool_rev': TOOL_REV,
-           'window': [a.window_start, a.window_end], 'flood_threshold': FLOOD,
-           'n': {'phrases': len(rows), 'ok': len(ok), 'flood': len(fl), 'dead': len(dd), 'error': len(er)},
+           'window': [a.window_start, a.window_end], 'flood_threshold': FLOOD, 'flood_threshold_terms': FLOOD_TERMS,
+           'note': ('⚠ 引用符つきの0件は「使われていない」ではない——EDGAR全文検索の取りこぼし。'
+                    '実測 "asme section iii" 0件 vs 引用符なし60件。0件は語のAND検索へ落として拾い、'
+                    '文字列の実在は --material の全文走査が裁く'),
+           'n': {'phrases': len(rows), 'ok': len(ok), 'ok_terms': len(okt),
+                 'flood': len(fl), 'dead': len(dd), 'error': len(er)},
            'rows': sorted(rows, key=lambda r: -(r.get('total') or 0)), 'anti': an}
     if not rows:
         print('✗ 1本も測れていない＝在庫を上書きしない', file=sys.stderr)
         return 1
     json.dump(out, open(os.path.join(OUT, 'irr85_hunt2_stats.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, indent=1)
-    print(f"語彙 {len(rows)}本 → 使える {len(ok)} / 洪水 {len(fl)} / 0件 {len(dd)} / 失敗 {len(er)}")
+    print(f"語彙 {len(rows)}本 → 完全一致で使える {len(ok)} / 語AND で拾える {len(okt)} / "
+          f"洪水 {len(fl)} / 本当に0件 {len(dd)} / 失敗 {len(er)}")
     if fl:
         print('\n■ 洪水（>%d件・本スクリーンから外す）' % FLOOD)
         for r in fl[:30]:
@@ -252,18 +287,20 @@ def cmd_screen(a):
     keep = None
     if os.path.exists(st_path):
         s = json.load(open(st_path, encoding='utf-8'))
-        keep = {r['p'] for r in s['rows'] if r['verdict'] == 'ok'}
+        keep = {r['p']: r.get('mode', 'phrase') for r in s['rows']
+                if r['verdict'] in ('ok', 'ok_terms')}
         print(f"（--stats の実測に従い {len(keep)}本だけ投げる）")
     if a.only:
         ph = [p for p in ph if a.only.lower() in p['p']]
     elif keep is not None:
-        ph = [p for p in ph if p['p'] in keep]
+        ph = [dict(p, mode=keep[p['p']]) for p in ph if p['p'] in keep]
 
     ex = excluded_sets()
     uni, trunc, err = {}, [], []
     for i, p in enumerate(ph, 1):
         try:
-            total, rows, tr = hits_of(p['p'], a.window_start, a.window_end)
+            total, rows, tr = hits_of(p['p'], a.window_start, a.window_end,
+                                      quoted=(p.get('mode', 'phrase') == 'phrase'))
         except Exception as e:
             err.append({'p': p['p'], 'err': str(e)[:140]})
             continue
@@ -363,6 +400,12 @@ def cmd_material(a):
     phrases = sorted(dirs)
     antis = sorted({x['p'] for x in an})
 
+    # terms モードで拾ったフレーズ（完全一致では0件だったもの）を緩い照合へ回す
+    loose_ph = []
+    stp = os.path.join(OUT, 'irr85_hunt2_stats.json')
+    if os.path.exists(stp):
+        loose_ph = [x['p'] for x in json.load(open(stp, encoding='utf-8'))['rows']
+                    if x.get('verdict') == 'ok_terms']
     rows = rl['rows'][:a.limit]
     out_path = os.path.join(OUT, 'irr85_hunt2_material.json')
     done = {}
@@ -380,6 +423,22 @@ def cmd_material(a):
             url = f"https://www.sec.gov/Archives/edgar/data/{int(r['cik'])}/{adsh.replace('-', '')}/{fn}"
             lines = sec.fetch_text(url)
             hits, counts, items, toc = sec.scan(lines, phrases + antis, maxn=40)
+            # ★terms モードで見つけた社は完全一致では当たらないことがある。
+            #   「同じ段落に全部の語が在る」まで緩めて拾い直す（近い変種のため）。
+            #   ⚠ 緩い照合は別の欄に入れる——完全一致と混ぜると証拠の強さが判らなくなる
+            loose = []
+            if loose_ph:
+                for ln in lines:
+                    if not (60 <= len(ln) <= 2400):
+                        continue
+                    low = ln.lower()
+                    for lp in loose_ph:
+                        toks = [t for t in lp.split() if len(t) > 2]
+                        if toks and all(t in low for t in toks) and lp not in low:
+                            loose.append({'phrase': lp, 'text': ln[:900]})
+                            break
+                    if len(loose) >= 8:
+                        break
             for h in hits:
                 h['dir'] = sorted({dirs.get(p, 'ANTI' if p in antis else 'neutral') for p in h['phrases']})
             # ★反証語は「文書のどこかに在る」では減点にならない。
@@ -394,7 +453,8 @@ def cmd_material(a):
                         'url': url, 'items': items[:30], 'n_lines': len(lines),
                         'n_hits': len(hits), 'n_customer_bears': nC,
                         'n_anti': nA, 'n_anti_doc': nAdoc,
-                        'counts': {p: c for p, c in counts.items() if c}, 'hits': hits})
+                        'counts': {p: c for p, c in counts.items() if c},
+                        'loose': loose, 'hits': hits})
         except Exception as e:
             fail.append({'cik': r['cik'], 'name': r['name'], 'err': str(e)[:160]})
         if i % 10 == 0:
