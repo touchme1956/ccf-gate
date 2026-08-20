@@ -97,8 +97,22 @@ def roic_series(t):
             skip.append(f"{y}:純利益/自己資本タグ不在")
             continue
         if not ((y in dl) or (y in ds)):
-            skip.append(f"{y}:有利子負債タグ不在")           # ルール7: 0と読まない
-            continue
+            # ★2026-08-20 是正: ここで一律に skip すると **本当に無借金の会社の p1 が永久に算出不能**になる。
+            #   「候補タグに当たらない」だけでは (a)本当に無借金 と (b)知らないタグで報告している を区別できず、
+            #   (b)を(a)と誤れば NJR/HEI/APH の事故（debt=0 で IC が縮退し ROIC が発散）が再発するが、
+            #   (a)を(b)と誤れば IRMD/MANH のように**無借金の優良企業が永久に測れない**。
+            #   採取器 hachimon_fetch は 2026-08-03 に `debt_evidence()` でこの穴を塞いでおり、
+            #   **そのコメントは MANH を名指しで偽陽性の実例に挙げている**——にもかかわらず
+            #   この道具だけ取り残されていた（companyconcept 故障で fill_growth_trend だけ直して
+            #   audit_stale_bs が残った件・recalc_roic が hachimon_fetch の検問を持たなかった件と**同型の3例目**）。
+            #   実害: MANH のパックは nde の根拠に「痕跡ゼロ＝実質無借金」と書きながら、
+            #   同じパックの p1_note が「有利子負債タグ不在で算出不能」と言う＝
+            #   **同じ台帳の中で二つの検査器が違うことを言う**（v9.9.65の破れ）。
+            #   → 採取器と**同じ関数**を呼ぶ（判定を書き写さない）。痕跡がゼロのときだけ debt=0 を事実とする。
+            if H.debt_evidence(f, y):
+                skip.append(f"{y}:有利子負債タグ不在（ただし痕跡あり＝未知のタグで報告の疑い）")  # ルール7: 0と読まない
+                continue
+            # 痕跡ゼロ＝無借金と確定。dl/ds に無いままでも .get(y, 0) が 0 を返すので以降はそのまま通る
         tax = max(0.0, min(0.5, 1 - S["ni"][y] / max(S["ni"][y] + S["tax"].get(y, 0), 1)))
         ic = S["eq"][y] + dl.get(y, 0) + ds.get(y, 0) - S["gw"].get(y, 0) - S["intan"].get(y, 0)
         if ic <= 0 or ic < 0.20 * max(S["eq"][y], 1):
