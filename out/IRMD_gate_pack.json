@@ -10,8 +10,8 @@
  "gmt": "flat",
  "roict": "up",
  "cagr": 21.5,
- "fcf": 17.1,
- "ni": 22.5,
+ "fcf": 0.0171,
+ "ni": 0.0225,
  "sbc": 3.5,
  "dilNet": 0.63,
  "acc": "usgaap",
@@ -78,7 +78,8 @@
    "2026-08-05 irr 85→70 是正。根拠が自社の510(k)クリアランス・自社ISO13485＝規約が明示除外する型。原本走査で顧客側再認定の記述なし。'qualified suppliers'は方向が逆(自社→仕入先)。Ω 78.8→77.7 の見込み・投下可は不変(影の計測で確認済み)",
    "2026-08-05 dilNet の根拠を刻んだ（validate_packs の FAIL 解消・値は 0.63 のまま据置）。希薄化後株数系列を13年分検算し分割の不連続が無いことを確認",
    "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）",
-   "2026-08-19 irr=70 **据置**（買付圏の二重読み）。旧evidenceは全文が『85ではない』の証明で70の根拠が無かったので、原本から機構を刻んだ——**proprietary disposable IV tubing sets**（本文4箇所）＋Disposables 17,564/83,814＝**売上の21.0%**。反証も同居（モニタは『customers being reluctant to switch … to ours』＝ONTO型）。**値は不変**"
+   "2026-08-19 irr=70 **据置**（買付圏の二重読み）。旧evidenceは全文が『85ではない』の証明で70の根拠が無かったので、原本から機構を刻んだ——**proprietary disposable IV tubing sets**（本文4箇所）＋Disposables 17,564/83,814＝**売上の21.0%**。反証も同居（モニタは『customers being reluctant to switch … to ours』＝ONTO型）。**値は不変**",
+   "2026-08-20 単位是正: ni 22.5→0.0225 / fcf 17.1→0.0171（百万$→十億$・ちょうど1000で割った）。**値ではなく単位の札の誤り**——conv=fcf/ni は不変なのでΩは動かない。発見の経路: `ccfMcapUSD`(v9.9.146) が px×ni÷eps で絶対値を使うようになったため、px87.4×ni22.5÷eps1.76 = 1117十億$ ＝ mcap欄 1.2341 の約905.4倍 に化けていた。⚠この単位の食い違いは backfill_machine_evidence が「門は比でしか使わない」として**知ったうえで許していた**もので、絶対値の消費者が増えた時点で前提が崩れていた。"
   ],
   "evidence": {
    "dom": "【2026-07-29 堀再監査・dom=100(実質唯一供給)の当否を原本で厳密確認→全社では刻みが立たず空欄】SEC 10-K FY2025(irmd-20251231x10k.htm, 2026-03-06提出)の Competition 節を製品ライン別に読むと構造が正反対に割れる。(1)MRI対応IV輸液ポンプ＝実質唯一供給: 『We do not believe there is currently any direct competition for our MRI compatible IV infusion pump systems. As a result, we believe that our MRidium 3870 and 3860+ MRI compatible IV infusion pumps are the only true MRI compatible IV infusion pumps available today』(Item 1 冒頭も『We are the only known provider of a non-magnetic intravenous (IV) infusion pump system that is specifically designed to be safe for use during MRI procedures』)。ただしこれが当たるのは Revenue by Type の『MRI Compatible IV Infusion Pump Systems $31,636千』=総売上$83,814千の37.7%に限られる。しかも同節は『We also compete with manufacturers of \"shielded box\" solutions that are intended as \"workarounds\"... The providers of shielded boxes include B. Braun, Fresenius Kabi and MIPM Mammendorfer Institut für Physik und Medizin』『Many of our potential customers opt not to purchase our MRI compatible IV infusion pump systems and instead use makeshift workarounds... To this extent, we are in competition with conventional IV infusion pump manufacturers and distributors』『We believe that the market for MRI compatible IV infusion pump products is underpenetrated』と述べており、『MRI検査中の輸液』という用途市場で見れば代替手段が併存し、その中での自社シェア%は原本に無い。(2)MRI対応患者バイタルモニタ＝自社は首位ですらない: 『We believe the dominant competitor with a market-leading position in MRI compatible vital signs monitoring is Invivo Research, which was founded by Roger Susi, our founder, President, and Chief Executive Officer, and Chairman of the Board. Invivo Research is now owned by Koninklijke Philips NV』『Other large and well-known companies such as GE Healthcare Technologies and Schiller AG, also have competing products as do other smaller privately held companies』。これは $26,427千=31.5% を占める。→ 売上の37.7%は唯一供給(刻み100)、31.5%は自社が首位でない競争市場(刻み50側)で、単一の刻みに帰着しない。しかも原本にはどちらの市場についてもシェア%も上位N社合計%も一切無い(あるのは設置基盤の実数=13,098ポンプチャネル/3,397モニタのみ)。v9.9.38の但し書き『複数事業で構造が違い単一の刻みに帰着しない会社は空欄が正解』(実例MSFT)と同型 ⇒ dom=null(事業別内訳は _meta.nulls.dom)。出典: https://www.sec.gov/Archives/edgar/data/1325618/000110465926024691/irmd-20251231x10k.htm",
@@ -105,8 +106,8 @@
    "gm": "機械算出 2025年: 営業利益 26,147,000 ÷ 売上 83,814,000（粗利ではない）",
    "gmt": "機械算出: 営業利益率 2023年 30.6% → 2025年 31.2%（±1ptでup/down）",
    "cagr": "機械算出: 売上 2020年 31,717,372 → 2025年 83,814,000＝5年の年率",
-   "fcf": "機械算出 2025年: 営業CF 24,947,000 − 設備投資 7,765,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
-   "ni": "機械算出 2025年: 純利益 22,480,000（÷1e9で十億単位表示）（門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま。比は一致）",
+   "fcf": "機械算出 2025年: 営業CF 24,947,000 − 設備投資 7,765,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）（★2026-08-20 単位是正: **ちょうど1000で割った**（百万$→十億$）。値は正しく単位の札だけが違った＝`conv=fcf/ni` は恒等的に不変でΩは動かない。`ccfMcapUSD` が px×ni÷eps で**絶対値**を使うため、百万のままだと時価総額が1000倍に化ける）",
+   "ni": "機械算出 2025年: 純利益 22,480,000（÷1e9で十億単位表示）（★2026-08-20 単位是正: **ちょうど1000で割った**（百万$→十億$）。値は正しく単位の札だけが違った＝`conv=fcf/ni` は恒等的に不変でΩは動かない。`ccfMcapUSD` が px×ni÷eps で**絶対値**を使うため、百万のままだと時価総額が1000倍に化ける）",
    "accr": "機械算出 2025年: (純利益 22,480,000 − 営業CF 24,947,000) ÷ 総資産 108,776,000",
    "gpa": "機械算出 2025年: 売上総利益 64,324,000 ÷ 総資産 108,776,000",
    "eps": "機械算出 2025年: 純利益 22,480,000 ÷ 株数 12,781,774（TTMではなく通期実績）",

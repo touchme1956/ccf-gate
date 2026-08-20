@@ -11,7 +11,7 @@
  "roict": "up",
  "cagr": 11.6,
  "fcf": null,
- "ni": 308.7,
+ "ni": 0.3087,
  "sbc": 21.9,
  "dilNet": -1.98,
  "acc": "usgaap",
@@ -74,7 +74,8 @@
    "2026-07-19 検死確定: 単位検証済: ni=308.7は百万$でfcfと同単位・conv/perは自己整合のため無影響。表記だけ他パック(十億)と異なる",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=95.1 / 5年窓=145.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均41.5%・σ5.8pt・CV13.9%）。",
-   "**v9.9.72 roic を through-cycle 化**: roic 50.0→41.1 / roicg 25.4→20.6。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央41.1% / 最悪35.2%）。比は**パックが審査した年(2025)**の採取器値 roic50.01 / roicg25.42 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
+   "**v9.9.72 roic を through-cycle 化**: roic 50.0→41.1 / roicg 25.4→20.6。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央41.1% / 最悪35.2%）。比は**パックが審査した年(2025)**の採取器値 roic50.01 / roicg25.42 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
+   "2026-08-20 単位是正: ni 308.7→0.3087 / fcf None→None（百万$→十億$・ちょうど1000で割った）。**値ではなく単位の札の誤り**——conv=fcf/ni は不変なのでΩは動かない。発見の経路: `ccfMcapUSD`(v9.9.146) が px×ni÷eps で絶対値を使うようになったため、pxNone×ni308.7÷eps7.19 = 0十億$ ＝ mcap欄 None の約None倍 に化けていた。⚠この単位の食い違いは backfill_machine_evidence が「門は比でしか使わない」として**知ったうえで許していた**もので、絶対値の消費者が増えた時点で前提が崩れていた。"
   ],
   "evidence": {
    "expiry": "『Patent protection extends for varying periods according to the date of patent filing or grant and the legal term of a patent in the various countries where patent protection is obtained』=通常特許で満了型独占(コンセッション・特許束依存)ではない→no",

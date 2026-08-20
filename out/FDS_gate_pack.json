@@ -11,7 +11,7 @@
  "roict": "down",
  "cagr": 9.3,
  "fcf": null,
- "ni": 597.0,
+ "ni": 0.597,
  "sbc": 2.7,
  "dilNet": -0.35,
  "acc": "usgaap",
@@ -77,7 +77,8 @@
    "2026-07-29 acq5 2411.6 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "2026-07-29 p1 65→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均98.5%・σ28.3pt・CV28.7%）。",
    "2026-08-17 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=11.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-08-20 irr=70 据置（二重読み・根拠を書き直し）"
+   "2026-08-20 irr=70 据置（二重読み・根拠を書き直し）",
+   "2026-08-20 単位是正: ni 597.0→0.597 / fcf None→None（百万$→十億$・ちょうど1000で割った）。**値ではなく単位の札の誤り**——conv=fcf/ni は不変なのでΩは動かない。発見の経路: `ccfMcapUSD`(v9.9.146) が px×ni÷eps で絶対値を使うようになったため、pxNone×ni597.0÷eps15.86 = 0十億$ ＝ mcap欄 None の約None倍 に化けていた。⚠この単位の食い違いは backfill_machine_evidence が「門は比でしか使わない」として**知ったうえで許していた**もので、絶対値の消費者が増えた時点で前提が崩れていた。"
   ],
   "evidence": {
    "dom": "『We continue to experience intense competition across all of our products and services』『compete for greater market share』→財務データはBloomberg等との寡占市場でFDS個別シェアは低位(<40%)=50",
