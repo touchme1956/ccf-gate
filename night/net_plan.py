@@ -32,7 +32,30 @@ _s = importlib.util.spec_from_file_location("etf_returns", os.path.join(BASE, "n
 _m = importlib.util.module_from_spec(_s); sys.modules["etf_returns"] = _m; _s.loader.exec_module(_m)
 fetch, cagr, maxdd = _m.fetch, _m.cagr, _m.maxdd
 
-NEW = ["XLK", "SMH", "GRID", "ITA", "NASA"]        # ユーザーが決めた新しい網
+# ★網の顔ぶれと**中の重み**は portfolio.json（人の決定の置き場）から読む。
+#   ここに書き写すと必ず割れる（v9.9.65）。読めなければ下の既定へ倒す。
+NEW_FALLBACK = ["XLK", "SMH", "GRID", "ITA", "NASA"]
+
+
+def net_target():
+    """(顔ぶれ, {t: 総資産に対する%} or None, 重みの出所) を返す。
+    ⚠**一本でも重みが無ければ全体を等分へ倒す**——指定のある本だけ重くすると
+      「指定の穴が配分に化ける」（門の ccfNetRows / ccfMcapWeights と同じ作法）。"""
+    try:
+        t = (json.load(open(os.path.join(BASE, "portfolio.json"), encoding="utf-8")).get("target") or {})
+        names = [str(x).strip().upper() for x in (t.get("ami_names") or []) if str(x).strip()]
+        if not names:
+            return NEW_FALLBACK, None, "既定（portfolio.json に ami_names が無い）"
+        w = {str(k).strip().upper(): float(v) for k, v in (t.get("ami_weights") or {}).items()}
+        miss = [n for n in names if not w.get(n)]
+        if w and not miss:
+            return names, {n: w[n] for n in names}, "portfolio.json の target.ami_weights"
+        return names, None, ("等分（重みが無い本: " + "・".join(miss) + "）" if miss else "等分（ami_weights が未設定）")
+    except Exception:
+        return NEW_FALLBACK, None, "既定（portfolio.json が読めない）"
+
+
+NEW, NET_W, NET_W_SRC = net_target()
 OLD = ["XLK", "QQQ", "SMH"]                         # 現行（FANG+ は holdings 未取得）
 BENCH = ["SPY", "VT"]
 # 網の門(ami.html)のキル。**新しい定数を作らない**——ami.html:290-293 と同じ数字
@@ -52,7 +75,9 @@ def build(net_pct):
     prof = json.load(open(os.path.join(BASE, "out", "etf_profiles.json")))["etfs"]
     out = {"asof": TODAY_S,
            "決定": {"網": NEW, "網の比率": net_pct, "城の比率": 100 - net_pct,
-                    "網の中の重み": "未指定——ここでは等ウェイト（各20%）で計算した。変えるなら重みを決めること"},
+                    "網の中の重み": (NET_W if NET_W else "未指定——等ウェイトで計算した"),
+                    "重みの出所": NET_W_SRC,
+                    "重みの合計": (round(sum(NET_W.values()), 4) if NET_W else None)},
            "注意": ["ETFの選定と網/城の比率は門の外（DCA側）。この道具は判定を持たない",
                     "経費率は唯一 確実に複利へ効く数字。リターンは推定だが費用は確定"]}
 
@@ -79,8 +104,11 @@ def build(net_pct):
     out["網の門(ami.html)の規約"] = gate
 
     # ---- (3) 加重経費率
-    w = 1.0 / len(NEW)
-    er_new = sum(prof[t]["er"] for t in NEW if t in prof) * w
+    # ★重みは決定どおり（無ければ等分）。**加重経費率は唯一 確実に複利へ効く数字**なので、
+    #   等分で出した数字を「決定の経費率」として出さない。
+    rel = (NET_W if NET_W else {t: 1.0 for t in NEW})
+    _rw = sum(rel.get(t, 0) for t in NEW if t in prof) or 1.0
+    er_new = sum(prof[t]["er"] * rel.get(t, 0) for t in NEW if t in prof) / _rw
     er_old = None
     try:
         pf = json.load(open(os.path.join(BASE, "portfolio.json")))
@@ -89,7 +117,7 @@ def build(net_pct):
         er_old = sum(prof[p["ticker"]]["er"] * p["value_jpy"] for p in amis if p["ticker"] in prof) / s
     except Exception:
         pass
-    out["加重経費率"] = {"新（等ウェイト5本）": round(er_new * 100, 4),
+    out["加重経費率"] = {("新（%s）" % NET_W_SRC): round(er_new * 100, 4),
                         "現行（XLK/QQQ/SMH・FANG+除く）": (round(er_old * 100, 4) if er_old else None),
                         "20年で終価に効く分": f"新 約{(1-(1-er_new)**20)*100:.1f}% / 現行 約{(1-(1-er_old)**20)*100:.1f}%" if er_old else None}
 
@@ -132,7 +160,8 @@ def build(net_pct):
                 agg[sym] = agg.get(sym, 0) + net_w * ww * x
                 cov += net_w * ww * x
         return agg, cov
-    for nm, nets in (("新（XLK/SMH/GRID/ITA/NASA 等ウェイト）", {t: 0.2 for t in NEW}),
+    _rs = sum(rel.get(t, 0) for t in NEW) or 1.0
+    for nm, nets in (("新（%s／%s）" % ("/".join(NEW), NET_W_SRC), {t: rel.get(t, 0) / _rs for t in NEW}),
                      ("現行（XLK55/QQQ23/SMH22 ＝ FANG+を除いて正規化）", {"XLK": .551, "QQQ": .237, "SMH": .224})):
         nw = net_pct / 100.0 if nm.startswith("新") else 0.596
         agg, cov = look(nets, nw)
@@ -148,7 +177,7 @@ def build(net_pct):
     out["限界"] = [
         "★網の門のキルに当たる本は上の「網の門(ami.html)の規約」に実額で出る（設定の新しい本は年率にしない）",
         "★GRID は保有の約半分が米国外（海外上場）。ルックスルーの個別名は積めるが米国株ではない",
-        "網の中の重みは未指定＝等ウェイトで計算した。重みを変えれば全部動く",
+        "網の中の重みの出所は「%s」。重みを変えれば加重経費率もルックスルーも全部動く" % NET_W_SRC,
         "純資産のキルは円建ての線なので USDJPY=158 で概算した（境目から遠いので判定は動かない）",
         "FANG+ は holdings 未取得＝現行のルックスルーに 1.2% の穴がある",
     ]
