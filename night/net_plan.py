@@ -14,10 +14,19 @@
 #
 # 実行: python3 night/net_plan.py [--net 50] [--json]
 # 出力: out/net_plan.json
-import json, os, sys, importlib.util
+import json, os, sys, importlib.util, datetime
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out", "net_plan.json")
+
+# ★日付は実行時に採る（2026-08-20 是正）。初版は asof も年数も窓の終端も **2026-08-19 を焼き付けて**いた。
+#   回転盤に載せた瞬間に、これは「回しても asof が動かない＝盤が永久に緑」になる
+#   ——`backfill_machine_evidence.TODAY` が 2026-07-29 のまま固定されて
+#   「いつ検算したかが判らない」状態になったのとまったく同じ型。
+#   数字を書き写した箇所は必ず陳腐化する。
+TODAY = datetime.date.today()
+TODAY_S = TODAY.isoformat()
+NOW_YM = f"{TODAY.year:04d}-{TODAY.month:02d}"
 
 _s = importlib.util.spec_from_file_location("etf_returns", os.path.join(BASE, "night", "etf_returns.py"))
 _m = importlib.util.module_from_spec(_s); sys.modules["etf_returns"] = _m; _s.loader.exec_module(_m)
@@ -32,13 +41,16 @@ KILL_AGE_Y = 3
 KILL_ER_PCT = 0.75
 USDJPY_FOR_AUM = 158.0      # 純資産のキルは円建ての線なので換算が要る（概算・判定の境目から遠い）
 
-# 重ならない窓（GRID の設定 2009-11 以降で3つ取れる）
-WINDOWS = [("2010-08", "2015-08"), ("2015-08", "2020-08"), ("2020-08", "2026-08")]
+# 重ならない窓（GRID の設定 2009-11 以降で3つ取れる）。**最後の窓の終端は今月**
+#   ——固定にすると再実行しても測る範囲が広がらず、盤だけ緑で中身が凍る。
+SAME_START = "2010-08"
+def windows():
+    return [("2010-08", "2015-08"), ("2015-08", "2020-08"), ("2020-08", NOW_YM)]
 
 
 def build(net_pct):
     prof = json.load(open(os.path.join(BASE, "out", "etf_profiles.json")))["etfs"]
-    out = {"asof": "2026-08-19",
+    out = {"asof": TODAY_S,
            "決定": {"網": NEW, "網の比率": net_pct, "城の比率": 100 - net_pct,
                     "網の中の重み": "未指定——ここでは等ウェイト（各20%）で計算した。変えるなら重みを決めること"},
            "注意": ["ETFの選定と網/城の比率は門の外（DCA側）。この道具は判定を持たない",
@@ -52,7 +64,7 @@ def build(net_pct):
             gate[t] = {"error": "holdings 未取得"}
             continue
         y0, m0 = int(p["inc"][:4]), int(p["inc"][5:7])
-        age = round(((2026 - y0) * 12 + (8 - m0)) / 12.0, 1)
+        age = round(((TODAY.year - y0) * 12 + (TODAY.month - m0)) / 12.0, 1)
         aum_oku = p["aum"] * USDJPY_FOR_AUM / 1e8
         kills = []
         if age < KILL_AGE_Y:
@@ -85,7 +97,7 @@ def build(net_pct):
     ser = {t: fetch(t) for t in NEW + OLD + BENCH}
     ser = {k: v for k, v in ser.items() if v}
     wins = {}
-    for a, b in WINDOWS:
+    for a, b in windows():
         row = {}
         for t, s in ser.items():
             c = cagr(s, a, b)
@@ -97,10 +109,10 @@ def build(net_pct):
     out["重ならない窓"] = wins
     same = {}
     for t, s in ser.items():
-        c = cagr(s, "2010-08", "2026-08")
+        c = cagr(s, SAME_START, NOW_YM)
         if c is not None:
-            same[t] = {"年率": round(c, 4), "最大下落": maxdd(s, "2010-08", "2026-08")}
-    out["同じ窓 2010-08→2026-08（GRIDの設定以降）"] = dict(sorted(same.items(), key=lambda z: -z[1]["年率"]))
+            same[t] = {"年率": round(c, 4), "最大下落": maxdd(s, SAME_START, NOW_YM)}
+    out[f"同じ窓 {SAME_START}→{NOW_YM}（GRIDの設定以降）"] = dict(sorted(same.items(), key=lambda z: -z[1]["年率"]))
 
     # ---- (4) ルックスルー
     pf = json.load(open(os.path.join(BASE, "portfolio.json")))
@@ -134,7 +146,7 @@ def build(net_pct):
         }
 
     out["限界"] = [
-        "★NASA は設定 2026-03＝0.4年で、この台帳の物差しでは実績が測れない（年率にしない）",
+        "★網の門のキルに当たる本は上の「網の門(ami.html)の規約」に実額で出る（設定の新しい本は年率にしない）",
         "★GRID は保有の約半分が米国外（海外上場）。ルックスルーの個別名は積めるが米国株ではない",
         "網の中の重みは未指定＝等ウェイトで計算した。重みを変えれば全部動く",
         "純資産のキルは円建ての線なので USDJPY=158 で概算した（境目から遠いので判定は動かない）",

@@ -15,7 +15,7 @@
   ・鍵が無ければ**何も壊さず終了**（既存ファイルを空で上書きしない）
   ・取得できなかった銘柄は**書かない**——欠測をゼロや前回値で埋めない（絶対のルール7）
 """
-import json, os, sys, time, urllib.request, urllib.error
+import json, os, re, sys, time, urllib.request, urllib.error
 from datetime import datetime, timezone
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -55,6 +55,26 @@ def tickers():
         for r in json.load(open("out/score_all.json", encoding="utf-8")):
             if (r.get("s") or 0) >= 72:
                 s.add(str(r.get("t", "")).upper())
+    except Exception:
+        pass
+    # ── 網(ETF)も価格を採る（2026-08-20 ユーザー指示「買付順位にETFもいれて」）──────────
+    #   Ⅵ買付順位が網の5本を出すようになったので、**株数を出すには価格が要る**。
+    #   出所は portfolio.json の **target.ami_names（目標の5本）** と **positions（実際に持っている本）**
+    #   ——目標から外れたが保有している本（QQQ/FANG+）も価格が要る（黙って消さないため・v9.9.52）。
+    #   ⚠ここに足さないと、門は「単価未取得」と出し続ける（推測の価格は置かない＝ルール7）。
+    try:
+        #   ⚠ `portfolio.json` の ticker は**表示のラベル**でもあるので、ティッカーとして
+        #     成立しない文字列が混じる（実測 `FANG+`＝iFreeNEXT等の非上場投信で、
+        #     どの価格APIにも存在しない）。**毎日404を叩いて diag を埋めるのは
+        #     「鳴りすぎる警報は鳴らないのと同じ」**なので、ティッカーの形のものだけ採る。
+        #     ⚠**黙って落としているのではない**——門のⅥは目標から外れた本を
+        #     `◇ 目標から外れたが、まだ持っている本` として保有%つきで名指しで出す（v9.9.52）し、
+        #     価格が要る欄（株数）はそもそもその行に無い。
+        TK = re.compile(r"^[A-Z0-9][A-Z0-9.\-]{0,5}$")
+        pf = json.load(open("portfolio.json", encoding="utf-8"))
+        cand = [str(t).strip().upper() for t in ((pf.get("target") or {}).get("ami_names") or [])]
+        cand += [str(pos.get("ticker", "")).strip().upper() for pos in (pf.get("positions") or [])]
+        s |= {t for t in cand if t and TK.match(t)}
     except Exception:
         pass
     return sorted(t for t in s if t)

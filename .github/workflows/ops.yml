@@ -94,6 +94,14 @@ jobs:
       - name: 自己相対バリュエーション（表示専用・合否に不使用）
         continue-on-error: true
         run: timeout 900 python3 night/hist_valuation.py --asof "$(date -u +%F)" --tickers kanshi_list.json --out out/hist_val_now.json
+      # 網(ETF)の材料（v9.9.160・2026-08-20新設・鍵不要）
+      #   Ⅵ買付順位の ◈網 の節がこれを読む。網の門(ami.html)のキル（設定3年／純資産／経費率）と
+      #   実効銘柄数・加重経費率・ルックスルーを出す。**判定は持たない**——ETFの選定と
+      #   網/城の比率は門の外（DCA側）の決断で、Ω・四関門・売却規律には触れない。
+      #   止まると **NASA が3年を越えても⛔のまま**／経費率が古いまま画面に出続ける。
+      - name: 網(ETF)の材料（表示専用・合否に不使用）
+        continue-on-error: true
+        run: timeout 900 python3 night/net_plan.py
       # 銘柄ごとの企業説明（v9.9.125・2026-08-09新設・鍵不要）
       #   原本(10-K/20-F)の Item1 冒頭と、台帳の _meta.evidence（事業の事実）を同一オリジンで配る。
       #   **表示専用**——Ω・堀・買付の判定には一切使わない。日本株のPDF経路は穴として明示している。
@@ -335,7 +343,7 @@ jobs:
           ccf_git_add 'out/*_gate_input.json' 'out/*_hits.txt' out/fetch_run.json
           #   ⚠ `out/market_data.json` は**存在しない**（market_fetch.py は repo 直下の
           #     `market_data.json` に書く）。これが38パス全部を巻き添えにしていた元凶なので外した。
-          ccf_git_add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/backfill_diff.json out/backfill_stamps.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos 'night/chunk*.txt' 'night/rechunk*.txt' night/reaudit_queue.json night/progress.json out/er_ledger.json market_data.json 'out/shadow_*.json' out/gate0_run.json
+          ccf_git_add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/net_plan.json out/backfill_diff.json out/backfill_stamps.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos 'night/chunk*.txt' 'night/rechunk*.txt' night/reaudit_queue.json night/progress.json out/er_ledger.json market_data.json 'out/shadow_*.json' out/gate0_run.json
           git diff --staged --quiet || git commit -m "$MSG"
           # ⚠2026-08-18: 素の `git push` は remote が進んだだけで弾かれ、
           #   **作ったコミットがまるごと捨てられる**（market.yml が2営業日連続で70ファイル失った）。

@@ -206,6 +206,14 @@ def build():
          json_field("out/hist_val_now.json", "asof"),
          "ops.yml 毎月2日／手動 python3 night/hist_valuation.py --asof 〈今日の日付〉 "
          "--tickers kanshi_list.json --out out/hist_val_now.json", True),
+        # v9.9.160(2026-08-20): 網(ETF)の材料。**Ⅵ買付順位の◈網の節がこれを読む**——
+        #   網の門(ami.html)のキル（設定3年／純資産／経費率）と実効銘柄数を出す。
+        #   止まると **NASA が3年を越えても⛔のまま**／経費率や純資産が古いまま画面に出続ける。
+        #   価格(dashboard)と同じ「CIで計算してJSONで配り、門は描くだけ」の配管なので、
+        #   配る側が止まったことを盤が言えないと、門は古い材料を今日の材料として出す。
+        ("netplan", "網(ETF)の材料",            "月1",     40,
+         json_field("out/net_plan.json", "asof"),
+         "ops.yml 毎月2日／手動 python3 night/net_plan.py", True),
         # v9.9.154(2026-08-17): トータルリターン（盤の📈節・表示専用）。
         #   価格が毎営業日動くので market.yml に置いてある＝毎営業日の錨。
         ("returns", "トータルリターン",        "毎営業日", 4,
