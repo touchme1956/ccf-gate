@@ -111,8 +111,11 @@ def fetch_src(t, pack):
         return open(p, encoding='utf-8', errors='ignore').read(), 'cache'
     src = (pack.get('_meta') or {}).get('source') or ''
     txt, how = None, None
-    if 'edinet' in src.lower():
-        m = re.search(r'(S1[0-9A-Z]{7})', src)
+    # ⚠ **日本株の source は一様ではない**（2026-08-20 に実測）——EDINET直PDF / Yahooのdisclosure /
+    #   irbank / 日経 / 会社IRのPDF が混在する。しかも EDINET の docID は **8文字**（S + 7）で、
+    #   9文字を期待する正規表現だと 2477 の S100WQOA を取り落とす。
+    if not txt and re.search(r'\.pdf(\?|$|\s|／)', src, re.I) or 'edinet' in src.lower():
+        m = re.search(r'\bS[0-9A-Z]{7}\b', src)
         if m:
             try:
                 import pypdf, io, urllib.request
@@ -123,6 +126,23 @@ def fetch_src(t, pack):
                 how = f'EDINET {m.group(1)}'
             except BaseException as e:
                 how = f'EDINET失敗: {e}'
+    if txt is None:
+        # docID が無くても PDF の直URLなら取れる（Yahoo disclosure・会社IR・日経など）
+        for u in re.split(r'[\s／]+', src):
+            if not re.match(r'https?://', u) or not re.search(r'\.pdf(\?|$)', u, re.I):
+                continue
+            try:
+                import pypdf, io, urllib.request
+                b = urllib.request.urlopen(urllib.request.Request(u, headers=EX.UA), timeout=120).read()
+                r = pypdf.PdfReader(io.BytesIO(b))
+                txt = ''.join((pg.extract_text() or '') for pg in r.pages)
+                how = 'PDF ' + u.rsplit('/', 1)[-1][:40]
+                break
+            except BaseException as e:
+                how = f'PDF失敗: {type(e).__name__}'
+    if txt is None and re.match(r'^\d{4,5}$', t):
+        # 日本株で PDF も docID も無い＝SECへ落とすと必ず CIK不明。**穴として明示する**（ルール7）
+        return None, (how or '') + '｜日本株だが原本のPDF/docIDが _meta.source に無い（EDINET経路の穴）'
     if txt is None:
         try:
             if src.startswith('http') and '/Archives/' in src:
