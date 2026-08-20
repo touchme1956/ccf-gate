@@ -125,8 +125,12 @@ def collect(keep=None):
             final_rung=(v.get('final_rung') if moved else r.get('rung')),
             hold=bool(r.get('hold') or (v and v.get('hold'))),
             refuted=moved,
-            mechanism=r.get('mechanism') or '',
-            scope=r.get('scope') or '',
+            # ★覆ったときは**反証側の機構**を採る（2026-08-20）。
+            #   50→70 へ覆した反証は、読解の mechanism（50なので空）を引き継ぐと
+            #   **「機構の名前が無い70」**が台帳に残る＝v9.9.144（70を置くなら機構を名指しする）に反する。
+            #   実害: SPGI/TGS/ENB の3社が引用は優れているのに機構欄が空だった。
+            mechanism=((v.get('mechanism') if moved else '') or r.get('mechanism') or ''),
+            scope=((v.get('scope') if moved else '') or r.get('scope') or ''),
             confidence=r.get('confidence') or '',
             evidence_gap=bool(r.get('evidence_gap')),
             source_note=r.get('source_note') or '',

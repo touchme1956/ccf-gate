@@ -55,6 +55,12 @@ def check(r):
     qs = [q.get('q', '') for q in (r.get('quotes') or []) if q.get('q')]
     if rung == 70 and not qs:
         return False, '70なのに引用が無い（v9.9.144: 付けられないなら50）', []
+    # ★70 は**機構の名指し**も要る（v9.9.144 の要求は「機構を名指し、原本の引用を付ける」の**両方**）。
+    #   引用だけ通すと「機構の名前が無い70」が残り、次の読み手がまた同じ検証をやり直す。
+    #   実害: 反証で 50→70 へ覆った3社（SPGI/TGS/ENB）が、引用は優れているのに機構欄が空だった
+    #   ——反証の schema に機構の欄が無かったのが原因（設計の穴・同日是正）。
+    if rung == 70 and not (r.get('mechanism') or '').strip():
+        return False, '70なのに機構が名指しされていない（v9.9.144: 機構と引用の両方が要る）', []
     b = body(t)
     if b is None:
         return False, '原本キャッシュが無い＝逐語照合できない', []
