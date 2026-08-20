@@ -1,0 +1,153 @@
+# night/net_plan.py — 決めた網(ETF)の中身と比率を測る（2026-08-19新設）
+#
+# 【何のための道具か】
+#   ユーザーが決めた網の構成を、この台帳の物差しで測って材料を出す。
+#   **判定はしない**——ETFの選定と網/城の比率は門の外（DCA側の決断）で、
+#   門Ωの採点・四関門・堀の関門・売却規律にはいっさい触れない。
+#
+# 【測るもの】
+#   (1) 網の門(ami.html)の規約をそのまま当てる（レバレッジ／純資産100億円／設定3年／経費率0.75%）
+#   (2) 重ならない窓での実績（設定の新しい本は「測れない」と出す。年率にしない）
+#   (3) 加重経費率——**唯一 確実に複利へ効く数字**
+#   (4) ルックスルー（城＋網）——1銘柄8%上限は城の中でしか効かないので、束は必ず分解して見る
+#   (5) 現行の網との差分
+#
+# 実行: python3 night/net_plan.py [--net 50] [--json]
+# 出力: out/net_plan.json
+import json, os, sys, importlib.util
+
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(BASE, "out", "net_plan.json")
+
+_s = importlib.util.spec_from_file_location("etf_returns", os.path.join(BASE, "night", "etf_returns.py"))
+_m = importlib.util.module_from_spec(_s); sys.modules["etf_returns"] = _m; _s.loader.exec_module(_m)
+fetch, cagr, maxdd = _m.fetch, _m.cagr, _m.maxdd
+
+NEW = ["XLK", "SMH", "GRID", "ITA", "NASA"]        # ユーザーが決めた新しい網
+OLD = ["XLK", "QQQ", "SMH"]                         # 現行（FANG+ は holdings 未取得）
+BENCH = ["SPY", "VT"]
+# 網の門(ami.html)のキル。**新しい定数を作らない**——ami.html:290-293 と同じ数字
+KILL_AUM_OKU = 100          # 億円
+KILL_AGE_Y = 3
+KILL_ER_PCT = 0.75
+USDJPY_FOR_AUM = 158.0      # 純資産のキルは円建ての線なので換算が要る（概算・判定の境目から遠い）
+
+# 重ならない窓（GRID の設定 2009-11 以降で3つ取れる）
+WINDOWS = [("2010-08", "2015-08"), ("2015-08", "2020-08"), ("2020-08", "2026-08")]
+
+
+def build(net_pct):
+    prof = json.load(open(os.path.join(BASE, "out", "etf_profiles.json")))["etfs"]
+    out = {"asof": "2026-08-19",
+           "決定": {"網": NEW, "網の比率": net_pct, "城の比率": 100 - net_pct,
+                    "網の中の重み": "未指定——ここでは等ウェイト（各20%）で計算した。変えるなら重みを決めること"},
+           "注意": ["ETFの選定と網/城の比率は門の外（DCA側）。この道具は判定を持たない",
+                    "経費率は唯一 確実に複利へ効く数字。リターンは推定だが費用は確定"]}
+
+    # ---- (1) 網の門の規約
+    gate = {}
+    for t in NEW:
+        p = prof.get(t)
+        if not p:
+            gate[t] = {"error": "holdings 未取得"}
+            continue
+        y0, m0 = int(p["inc"][:4]), int(p["inc"][5:7])
+        age = round(((2026 - y0) * 12 + (8 - m0)) / 12.0, 1)
+        aum_oku = p["aum"] * USDJPY_FOR_AUM / 1e8
+        kills = []
+        if age < KILL_AGE_Y:
+            kills.append(f"設定から {age}年 < 3年——実績が無い")
+        if aum_oku < KILL_AUM_OKU:
+            kills.append(f"純資産 {aum_oku:.0f}億円 < 100億円——償還リスク")
+        if p["er"] * 100 > KILL_ER_PCT:
+            kills.append(f"経費率 {p['er']*100:.3f}% > 0.75%")
+        gate[t] = {"設定": p["inc"], "年数": age, "純資産(億円)": round(aum_oku),
+                   "経費率%": round(p["er"] * 100, 3), "実効銘柄数": p.get("eff_n"),
+                   "キル": kills or "なし"}
+    out["網の門(ami.html)の規約"] = gate
+
+    # ---- (3) 加重経費率
+    w = 1.0 / len(NEW)
+    er_new = sum(prof[t]["er"] for t in NEW if t in prof) * w
+    er_old = None
+    try:
+        pf = json.load(open(os.path.join(BASE, "portfolio.json")))
+        amis = [p for p in pf["positions"] if p["sleeve"] == "網"]
+        s = sum(p["value_jpy"] for p in amis if p["ticker"] in prof)
+        er_old = sum(prof[p["ticker"]]["er"] * p["value_jpy"] for p in amis if p["ticker"] in prof) / s
+    except Exception:
+        pass
+    out["加重経費率"] = {"新（等ウェイト5本）": round(er_new * 100, 4),
+                        "現行（XLK/QQQ/SMH・FANG+除く）": (round(er_old * 100, 4) if er_old else None),
+                        "20年で終価に効く分": f"新 約{(1-(1-er_new)**20)*100:.1f}% / 現行 約{(1-(1-er_old)**20)*100:.1f}%" if er_old else None}
+
+    # ---- (2) 窓
+    ser = {t: fetch(t) for t in NEW + OLD + BENCH}
+    ser = {k: v for k, v in ser.items() if v}
+    wins = {}
+    for a, b in WINDOWS:
+        row = {}
+        for t, s in ser.items():
+            c = cagr(s, a, b)
+            if c is not None:
+                row[t] = round(c, 4)
+        na = [t for t in NEW if t not in row]
+        wins[f"{a}→{b}"] = {"年率": dict(sorted(row.items(), key=lambda z: -z[1])),
+                            "測れない": na}
+    out["重ならない窓"] = wins
+    same = {}
+    for t, s in ser.items():
+        c = cagr(s, "2010-08", "2026-08")
+        if c is not None:
+            same[t] = {"年率": round(c, 4), "最大下落": maxdd(s, "2010-08", "2026-08")}
+    out["同じ窓 2010-08→2026-08（GRIDの設定以降）"] = dict(sorted(same.items(), key=lambda z: -z[1]["年率"]))
+
+    # ---- (4) ルックスルー
+    pf = json.load(open(os.path.join(BASE, "portfolio.json")))
+    tot = pf["total_jpy"]
+    castle = {p["ticker"]: p["value_jpy"] / tot for p in pf["positions"] if p["sleeve"] == "城"}
+    cs = sum(castle.values())
+    def look(nets, net_w):
+        agg, cov = {}, 0.0
+        for t, v in castle.items():                      # 城は現在の顔ぶれを比例で (100-net) へ
+            agg[t] = agg.get(t, 0) + v / cs * (1 - net_w)
+            cov += v / cs * (1 - net_w)
+        for t, ww in nets.items():
+            p = prof.get(t)
+            if not p:
+                continue
+            for sym, x in p["h"]:
+                agg[sym] = agg.get(sym, 0) + net_w * ww * x
+                cov += net_w * ww * x
+        return agg, cov
+    for nm, nets in (("新（XLK/SMH/GRID/ITA/NASA 等ウェイト）", {t: 0.2 for t in NEW}),
+                     ("現行（XLK55/QQQ23/SMH22 ＝ FANG+を除いて正規化）", {"XLK": .551, "QQQ": .237, "SMH": .224})):
+        nw = net_pct / 100.0 if nm.startswith("新") else 0.596
+        agg, cov = look(nets, nw)
+        SEMI = {"NVDA","TSM","AVGO","AMD","ASML","MU","AMAT","LRCX","TXN","ADI","KLAC","INTC","MRVL",
+                "QCOM","CDNS","SNPS","MPWR","TER","NXPI","STM","ARM","ALAB","MCHP","ON","SWKS",
+                "COHR","LITE","SNDK","STX","WDC","KEYS","SMCI","ENTG","MKSI","ONTO","AEIS"}
+        out.setdefault("ルックスルー", {})[nm] = {
+            "網の比率": round(nw * 100, 1), "カバー率": round(cov * 100, 1),
+            "上位12": [[s, round(x * 100, 2)] for s, x in sorted(agg.items(), key=lambda z: -z[1])[:12]],
+            "半導体連鎖": round(sum(x for s, x in agg.items() if s in SEMI) * 100, 1),
+        }
+
+    out["限界"] = [
+        "★NASA は設定 2026-03＝0.4年で、この台帳の物差しでは実績が測れない（年率にしない）",
+        "★GRID は保有の約半分が米国外（海外上場）。ルックスルーの個別名は積めるが米国株ではない",
+        "網の中の重みは未指定＝等ウェイトで計算した。重みを変えれば全部動く",
+        "純資産のキルは円建ての線なので USDJPY=158 で概算した（境目から遠いので判定は動かない）",
+        "FANG+ は holdings 未取得＝現行のルックスルーに 1.2% の穴がある",
+    ]
+    return out
+
+
+if __name__ == "__main__":
+    n = 50
+    if "--net" in sys.argv:
+        n = int(sys.argv[sys.argv.index("--net") + 1])
+    o = build(n)
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    json.dump(o, open(OUT, "w"), ensure_ascii=False, indent=1)
+    print(json.dumps(o, ensure_ascii=False, indent=1))
