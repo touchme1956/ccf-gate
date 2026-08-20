@@ -78,17 +78,39 @@ def collect(keep=None):
                 t = str(x['ticker']).strip()
                 if keep is not None and t not in keep:
                     continue
-                # 反証は refuted/final_rung を持つ。読解は rung を持つ
+                # ★**排他で分類してはいけない**（2026-08-20の実害）。
+                #   readmass は読解と反証を**1行にまとめて**返すので、その行は
+                #   `rung`（読解）と `refuted`（反証）を**両方**持つ。
+                #   elif で分けると読解が消え、`for t, r in reads.items()` から
+                #   その社が丸ごと落ちる——**反証が成功した社ほど落ちる**という最悪の向き。
+                #   実際 T1〜T7 は反証がセッション上限で死んで `refuted` が無かったので
+                #   読解として通り、**反証が通った T8 の ECL/QLYS だけが静かに消えていた**。
+                #   ⇒ 二つの if にして、まとめ行は**読解でもあり反証でもある**として扱う。
+                #   （_o が同じになるので「反証は読解より後」の検問も等号で通る）
                 if 'refuted' in x or 'final_rung' in x:
                     refs[t] = dict(x, _o=order, _wf=os.path.basename(os.path.dirname(j)))
-                elif 'rung' in x:
+                if 'rung' in x:
                     # ★同じ社を二つの班が独立に読むことがある（日本株は材料の経路が違うので
                     #   わざと二重に走らせた）。**後勝ちで捨てず、一致率の材料として残す**——
                     #   この改定の目的そのものが「一致率 0.706 を上げること」なので、
                     #   偶然できた二重読みは**この作業で唯一の再現性の実測**になる。
-                    dup.setdefault(t, []).append(dict(x, _o=order,
-                                                      _wf=os.path.basename(os.path.dirname(j))))
-                    reads[t] = dict(x, _o=order, _wf=os.path.basename(os.path.dirname(j)))
+                    cand = dict(x, _o=order, _wf=os.path.basename(os.path.dirname(j)))
+                    dup.setdefault(t, []).append(cand)
+                    # ★**後勝ちではなく「出所を名指しした読解」を優先する**（2026-08-20）。
+                    #   日本株は材料の経路が二つある——決算短信しか無いキャッシュで読んだ班と、
+                    #   EDINET から有報を取り直した班。前者は保留に倒れ、後者は docId と
+                    #   提出URLを `source_note` に書く。**実測で分離は綺麗**（4社とも
+                    #   保留側は source_note が空・取り直し側は 726〜1275字）。
+                    #   後勝ちのままだと**順序が変われば判定が変わる**——今日は取り直しが
+                    #   後に走ったので正しい側が採られたが、それは規則ではなく偶然。
+                    #   ⇒ 出所を書いた読解を優先し、同格なら後勝ち。
+                    #   （v9.9.144 が「機構を名指しできないなら50」と要求するのと同じ原理を、
+                    #     読解の採否にも当てる＝**証拠を示した側を採る**）
+                    prev = reads.get(t)
+                    if (prev is None
+                            or (bool(cand.get('source_note')) and not prev.get('source_note'))
+                            or (bool(cand.get('source_note')) == bool(prev.get('source_note')))):
+                        reads[t] = cand
     out = []
     for t, r in reads.items():
         v = refs.get(t)
