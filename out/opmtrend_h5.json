@@ -1,0 +1,1261 @@
+{
+ "generated": "2026-08-18",
+ "tool": "night/opmtrend_h5.py",
+ "role": "H5（トレンドの持続性）のみ。合否は宣言した線だけで裁く。値も規約も一切変えない。",
+ "prereg": "out/opm_trend_prereg.json の H5_persistence",
+ "base": "out/opmtrend_base.json（結合し直していない）",
+ "line_declaration": {
+  "h5_has_no_line_of_its_own": true,
+  "borrowed_from": "H1_selector",
+  "line": "lift >= 0.15 かつ すべての対で符号が同じ",
+  "primary_stat": "lift_base = P(次も opmD5<0 | 今 opmD5<0) − P(次も opmD5<0)（事前登録 H5 の文言どおり）",
+  "secondary_stat": "lift_contrast = P(次<0 | 今<0) − P(次<0 | 今>=0)（H1 と同じ形）",
+  "note": "lift_base = (1−f)·lift_contrast（f=今<0の割合）なので約2倍ちがう。両方を別々に裁いて両方報告する。"
+ },
+ "pairs": [
+  "2013->2018",
+  "2016->2021",
+  "2017->2022"
+ ],
+ "pools": {
+  "all": "全社",
+  "qual": "質実証（opm>=10% かつ fcfpos5>=5）。**now 側のビンテージ**で評価"
+ },
+ "warnings": [
+  "2013 の opmD5 被覆は 48%・opmD5 がある社の売上中央値は欠測社の 5.91倍＝**大型に偏った別の標本**。2013->2018 の対は他の2対と比較可能でない（土台の警告を引き継ぐ）"
+ ],
+ "reachability": {
+  "all": {
+   "2013->2018": {
+    "n": 442,
+    "n_now_down": 176,
+    "base_next_down": 0.4955,
+    "ceiling_lift_base": 0.5045,
+    "reachable": true
+   },
+   "2016->2021": {
+    "n": 843,
+    "n_now_down": 439,
+    "base_next_down": 0.5445,
+    "ceiling_lift_base": 0.4555,
+    "reachable": true
+   },
+   "2017->2022": {
+    "n": 845,
+    "n_now_down": 441,
+    "base_next_down": 0.4178,
+    "ceiling_lift_base": 0.5822,
+    "reachable": true
+   }
+  },
+  "qual": {
+   "2013->2018": {
+    "n": 220,
+    "n_now_down": 73,
+    "base_next_down": 0.5591,
+    "ceiling_lift_base": 0.4409,
+    "reachable": true
+   },
+   "2016->2021": {
+    "n": 313,
+    "n_now_down": 126,
+    "base_next_down": 0.6262,
+    "ceiling_lift_base": 0.3738,
+    "reachable": true
+   },
+   "2017->2022": {
+    "n": 315,
+    "n_now_down": 121,
+    "base_next_down": 0.473,
+    "ceiling_lift_base": 0.527,
+    "reachable": true
+   }
+  }
+ },
+ "results": {
+  "all": {
+   "2013->2018": {
+    "n": 442,
+    "n_now_down": 176,
+    "n_now_up": 266,
+    "matrix": {
+     "down_down": 79,
+     "down_up": 97,
+     "up_down": 140,
+     "up_up": 126
+    },
+    "base_next_down": 0.4955,
+    "p_next_down_given_now_down": 0.4489,
+    "p_next_down_given_now_up": 0.5263,
+    "lift_base": -0.0466,
+    "lift_contrast": -0.0775,
+    "ceiling_lift_base": 0.5045,
+    "rho_opmD5": 0.0212,
+    "median_now": 0.0114,
+    "median_next": 0.001,
+    "level_control": {
+     "n": 442,
+     "rho_opm": 0.6233,
+     "base_next_below_median": 0.5,
+     "p_next_below_given_now_below": 0.724,
+     "lift_base": 0.224
+    },
+    "instrument_check": {
+     "n": 442,
+     "rho_rev": 0.9361
+    },
+    "by_depth": {
+     "-0.02": {
+      "n": 120,
+      "p_next_down": 0.45,
+      "lift_base": -0.0455
+     },
+     "-0.05": {
+      "n": 64,
+      "p_next_down": 0.4531,
+      "lift_base": -0.0424
+     },
+     "-0.1": {
+      "n": 35,
+      "p_next_down": 0.4286,
+      "lift_base": -0.0669
+     }
+    },
+    "diagnostics_posthoc": {
+     "n": 442,
+     "note": "合否には使わない。負の rho の正体を分けるための診断",
+     "partial_rho_change_given_level": 0.0611,
+     "rho_level_now_vs_next_change": -0.1367,
+     "rho_change_now_vs_next_level": 0.213
+    }
+   },
+   "2016->2021": {
+    "n": 843,
+    "n_now_down": 439,
+    "n_now_up": 404,
+    "matrix": {
+     "down_down": 219,
+     "down_up": 220,
+     "up_down": 240,
+     "up_up": 164
+    },
+    "base_next_down": 0.5445,
+    "p_next_down_given_now_down": 0.4989,
+    "p_next_down_given_now_up": 0.5941,
+    "lift_base": -0.0456,
+    "lift_contrast": -0.0952,
+    "ceiling_lift_base": 0.4555,
+    "rho_opmD5": -0.14,
+    "median_now": -0.0024,
+    "median_next": -0.006,
+    "level_control": {
+     "n": 843,
+     "rho_opm": 0.5677,
+     "base_next_below_median": 0.4994,
+     "p_next_below_given_now_below": 0.7387,
+     "lift_base": 0.2393
+    },
+    "instrument_check": {
+     "n": 843,
+     "rho_rev": 0.9619
+    },
+    "by_depth": {
+     "-0.02": {
+      "n": 311,
+      "p_next_down": 0.4855,
+      "lift_base": -0.059
+     },
+     "-0.05": {
+      "n": 218,
+      "p_next_down": 0.4541,
+      "lift_base": -0.0904
+     },
+     "-0.1": {
+      "n": 134,
+      "p_next_down": 0.4403,
+      "lift_base": -0.1042
+     }
+    },
+    "diagnostics_posthoc": {
+     "n": 843,
+     "note": "合否には使わない。負の rho の正体を分けるための診断",
+     "partial_rho_change_given_level": -0.0548,
+     "rho_level_now_vs_next_change": -0.2163,
+     "rho_change_now_vs_next_level": 0.1767
+    }
+   },
+   "2017->2022": {
+    "n": 845,
+    "n_now_down": 441,
+    "n_now_up": 404,
+    "matrix": {
+     "down_down": 175,
+     "down_up": 266,
+     "up_down": 178,
+     "up_up": 226
+    },
+    "base_next_down": 0.4178,
+    "p_next_down_given_now_down": 0.3968,
+    "p_next_down_given_now_up": 0.4406,
+    "lift_base": -0.0209,
+    "lift_contrast": -0.0438,
+    "ceiling_lift_base": 0.5822,
+    "rho_opmD5": -0.0855,
+    "median_now": -0.0017,
+    "median_next": 0.0096,
+    "level_control": {
+     "n": 845,
+     "rho_opm": 0.6066,
+     "base_next_below_median": 0.4994,
+     "p_next_below_given_now_below": 0.7725,
+     "lift_base": 0.2731
+    },
+    "instrument_check": {
+     "n": 845,
+     "rho_rev": 0.9686
+    },
+    "by_depth": {
+     "-0.02": {
+      "n": 311,
+      "p_next_down": 0.3923,
+      "lift_base": -0.0255
+     },
+     "-0.05": {
+      "n": 204,
+      "p_next_down": 0.3922,
+      "lift_base": -0.0256
+     },
+     "-0.1": {
+      "n": 126,
+      "p_next_down": 0.3492,
+      "lift_base": -0.0685
+     }
+    },
+    "diagnostics_posthoc": {
+     "n": 845,
+     "note": "合否には使わない。負の rho の正体を分けるための診断",
+     "partial_rho_change_given_level": -0.0281,
+     "rho_level_now_vs_next_change": -0.1458,
+     "rho_change_now_vs_next_level": 0.1909
+    }
+   }
+  },
+  "qual": {
+   "2013->2018": {
+    "n": 220,
+    "n_now_down": 73,
+    "n_now_up": 147,
+    "matrix": {
+     "down_down": 37,
+     "down_up": 36,
+     "up_down": 86,
+     "up_up": 61
+    },
+    "base_next_down": 0.5591,
+    "p_next_down_given_now_down": 0.5068,
+    "p_next_down_given_now_up": 0.585,
+    "lift_base": -0.0522,
+    "lift_contrast": -0.0782,
+    "ceiling_lift_base": 0.4409,
+    "rho_opmD5": 0.0023,
+    "median_now": 0.0221,
+    "median_next": -0.006,
+    "level_control": {
+     "n": 220,
+     "rho_opm": 0.6804,
+     "base_next_below_median": 0.5,
+     "p_next_below_given_now_below": 0.8,
+     "lift_base": 0.3
+    },
+    "instrument_check": {
+     "n": 220,
+     "rho_rev": 0.9527
+    },
+    "by_depth": {
+     "-0.02": {
+      "n": 47,
+      "p_next_down": 0.5532,
+      "lift_base": -0.0059
+     },
+     "-0.05": {
+      "n": 16,
+      "p_next_down": 0.625,
+      "lift_base": 0.0659
+     },
+     "-0.1": {
+      "n": 7,
+      "p_next_down": 0.5714,
+      "lift_base": 0.0123
+     }
+    },
+    "diagnostics_posthoc": {
+     "n": 220,
+     "note": "合否には使わない。負の rho の正体を分けるための診断",
+     "partial_rho_change_given_level": -0.0016,
+     "rho_level_now_vs_next_change": 0.069,
+     "rho_change_now_vs_next_level": 0.0816
+    }
+   },
+   "2016->2021": {
+    "n": 313,
+    "n_now_down": 126,
+    "n_now_up": 187,
+    "matrix": {
+     "down_down": 67,
+     "down_up": 59,
+     "up_down": 129,
+     "up_up": 58
+    },
+    "base_next_down": 0.6262,
+    "p_next_down_given_now_down": 0.5317,
+    "p_next_down_given_now_up": 0.6898,
+    "lift_base": -0.0945,
+    "lift_contrast": -0.1581,
+    "ceiling_lift_base": 0.3738,
+    "rho_opmD5": -0.1264,
+    "median_now": 0.0087,
+    "median_next": -0.0158,
+    "level_control": {
+     "n": 313,
+     "rho_opm": 0.5564,
+     "base_next_below_median": 0.4984,
+     "p_next_below_given_now_below": 0.7308,
+     "lift_base": 0.2324
+    },
+    "instrument_check": {
+     "n": 313,
+     "rho_rev": 0.9561
+    },
+    "by_depth": {
+     "-0.02": {
+      "n": 79,
+      "p_next_down": 0.5316,
+      "lift_base": -0.0946
+     },
+     "-0.05": {
+      "n": 47,
+      "p_next_down": 0.5745,
+      "lift_base": -0.0517
+     },
+     "-0.1": {
+      "n": 21,
+      "p_next_down": 0.7619,
+      "lift_base": 0.1357
+     }
+    },
+    "diagnostics_posthoc": {
+     "n": 313,
+     "note": "合否には使わない。負の rho の正体を分けるための診断",
+     "partial_rho_change_given_level": -0.1173,
+     "rho_level_now_vs_next_change": -0.0638,
+     "rho_change_now_vs_next_level": -0.031
+    }
+   },
+   "2017->2022": {
+    "n": 315,
+    "n_now_down": 121,
+    "n_now_up": 194,
+    "matrix": {
+     "down_down": 57,
+     "down_up": 64,
+     "up_down": 92,
+     "up_up": 102
+    },
+    "base_next_down": 0.473,
+    "p_next_down_given_now_down": 0.4711,
+    "p_next_down_given_now_up": 0.4742,
+    "lift_base": -0.0019,
+    "lift_contrast": -0.0032,
+    "ceiling_lift_base": 0.527,
+    "rho_opmD5": -0.0607,
+    "median_now": 0.0117,
+    "median_next": 0.0045,
+    "level_control": {
+     "n": 315,
+     "rho_opm": 0.5808,
+     "base_next_below_median": 0.4984,
+     "p_next_below_given_now_below": 0.7325,
+     "lift_base": 0.2341
+    },
+    "instrument_check": {
+     "n": 315,
+     "rho_rev": 0.9594
+    },
+    "by_depth": {
+     "-0.02": {
+      "n": 76,
+      "p_next_down": 0.4737,
+      "lift_base": 0.0007
+     },
+     "-0.05": {
+      "n": 41,
+      "p_next_down": 0.4878,
+      "lift_base": 0.0148
+     },
+     "-0.1": {
+      "n": 14,
+      "p_next_down": 0.3571,
+      "lift_base": -0.1159
+     }
+    },
+    "diagnostics_posthoc": {
+     "n": 315,
+     "note": "合否には使わない。負の rho の正体を分けるための診断",
+     "partial_rho_change_given_level": -0.0444,
+     "rho_level_now_vs_next_change": -0.1265,
+     "rho_change_now_vs_next_level": 0.0172
+    }
+   }
+  }
+ },
+ "verdicts": {
+  "all": {
+   "lift_base": {
+    "verdict": "不合格",
+    "values": {
+     "2013->2018": -0.0466,
+     "2016->2021": -0.0456,
+     "2017->2022": -0.0209
+    },
+    "same_sign": true,
+    "min": -0.0466,
+    "max": -0.0209,
+    "line": "lift >= 0.15（向きつき）",
+    "crossed_line_in_opposite_direction": false,
+    "why": "最大 lift -0.0209 < 0.15（しかも全対で負＝持続ではなく平均回帰の向き）"
+   },
+   "lift_contrast": {
+    "verdict": "不合格",
+    "values": {
+     "2013->2018": -0.0775,
+     "2016->2021": -0.0952,
+     "2017->2022": -0.0438
+    },
+    "same_sign": true,
+    "min": -0.0952,
+    "max": -0.0438,
+    "line": "lift >= 0.15（向きつき）",
+    "crossed_line_in_opposite_direction": false,
+    "why": "最大 lift -0.0438 < 0.15（しかも全対で負＝持続ではなく平均回帰の向き）"
+   },
+   "undecidable": []
+  },
+  "qual": {
+   "lift_base": {
+    "verdict": "不合格",
+    "values": {
+     "2013->2018": -0.0522,
+     "2016->2021": -0.0945,
+     "2017->2022": -0.0019
+    },
+    "same_sign": true,
+    "min": -0.0945,
+    "max": -0.0019,
+    "line": "lift >= 0.15（向きつき）",
+    "crossed_line_in_opposite_direction": false,
+    "why": "最大 lift -0.0019 < 0.15（しかも全対で負＝持続ではなく平均回帰の向き）"
+   },
+   "lift_contrast": {
+    "verdict": "不合格",
+    "values": {
+     "2013->2018": -0.0782,
+     "2016->2021": -0.1581,
+     "2017->2022": -0.0032
+    },
+    "same_sign": true,
+    "min": -0.1581,
+    "max": -0.0032,
+    "line": "lift >= 0.15（向きつき）",
+    "crossed_line_in_opposite_direction": false,
+    "why": "最大 lift -0.0032 < 0.15（しかも全対で負＝持続ではなく平均回帰の向き）"
+   },
+   "undecidable": []
+  }
+ },
+ "permutation": {
+  "all": {
+   "n_perm": 2000,
+   "seed": 20260818,
+   "p_lift_one_sided_high": {
+    "2013->2018": 0.8756,
+    "2016->2021": 0.9965,
+    "2017->2022": 0.9095
+   },
+   "p_lift_one_sided_low": {
+    "2013->2018": 0.1249,
+    "2016->2021": 0.004,
+    "2017->2022": 0.091
+   },
+   "p_rho_two_sided": {
+    "2013->2018": 0.7266,
+    "2016->2021": 0.0005,
+    "2017->2022": 0.017
+   },
+   "false_positive_rate_of_declared_line": 0.0
+  },
+  "qual": {
+   "n_perm": 2000,
+   "seed": 20260818,
+   "p_lift_one_sided_high": {
+    "2013->2018": 0.7961,
+    "2016->2021": 0.993,
+    "2017->2022": 0.5302
+   },
+   "p_lift_one_sided_low": {
+    "2013->2018": 0.2044,
+    "2016->2021": 0.0075,
+    "2017->2022": 0.4703
+   },
+   "p_rho_two_sided": {
+    "2013->2018": 0.982,
+    "2016->2021": 0.045,
+    "2017->2022": 0.3383
+   },
+   "false_positive_rate_of_declared_line": 0.0
+  }
+ },
+ "power_of_declared_line": {
+  "all": {
+   "note": "真の lift_base が L のとき、宣言した線が合格を出す確率（全対同時）",
+   "n_sim": 2000,
+   "power": {
+    "0.05": 0.0,
+    "0.1": 0.0,
+    "0.15": 0.1095,
+    "0.2": 0.965,
+    "0.25": 1.0,
+    "0.3": 1.0
+   }
+  },
+  "qual": {
+   "note": "真の lift_base が L のとき、宣言した線が合格を出す確率（全対同時）",
+   "n_sim": 2000,
+   "power": {
+    "0.05": 0.0,
+    "0.1": 0.0005,
+    "0.15": 0.1425,
+    "0.2": 0.7625,
+    "0.25": 0.9865,
+    "0.3": 1.0
+   }
+  }
+ },
+ "adversarial": {
+  "all": {
+   "2013->2018": {
+    "gap_dist": {
+     "4": 3,
+     "5": 438,
+     "6": 1
+    },
+    "gap5_only": {
+     "n": 438,
+     "n_now_down": 174,
+     "n_now_up": 264,
+     "matrix": {
+      "down_down": 77,
+      "down_up": 97,
+      "up_down": 139,
+      "up_up": 125
+     },
+     "base_next_down": 0.4932,
+     "p_next_down_given_now_down": 0.4425,
+     "p_next_down_given_now_up": 0.5265,
+     "lift_base": -0.0506,
+     "lift_contrast": -0.084,
+     "ceiling_lift_base": 0.5068,
+     "rho_opmD5": 0.0194,
+     "median_now": 0.0114,
+     "median_next": 0.0011,
+     "level_control": {
+      "n": 438,
+      "rho_opm": 0.6307,
+      "base_next_below_median": 0.5,
+      "p_next_below_given_now_below": 0.7202,
+      "lift_base": 0.2202
+     },
+     "instrument_check": {
+      "n": 438,
+      "rho_rev": 0.9368
+     },
+     "by_depth": {
+      "-0.02": {
+       "n": 119,
+       "p_next_down": 0.4454,
+       "lift_base": -0.0478
+      },
+      "-0.05": {
+       "n": 63,
+       "p_next_down": 0.4444,
+       "lift_base": -0.0487
+      },
+      "-0.1": {
+       "n": 34,
+       "p_next_down": 0.4118,
+       "lift_base": -0.0814
+      }
+     },
+     "diagnostics_posthoc": {
+      "n": 438,
+      "note": "合否には使わない。負の rho の正体を分けるための診断",
+      "partial_rho_change_given_level": 0.0595,
+      "rho_level_now_vs_next_change": -0.136,
+      "rho_change_now_vs_next_level": 0.2153
+     }
+    },
+    "within_sic2": {
+     "n": 282,
+     "n_sic2_used": 12,
+     "lift_base": -0.0649,
+     "median_rho_within_sic2": -0.036
+    },
+    "by_size_tercile": {
+     "small": {
+      "n": 147,
+      "lift_base": -0.0027,
+      "rho": 0.0622
+     },
+     "mid": {
+      "n": 147,
+      "lift_base": -0.0702,
+      "rho": 0.0614
+     },
+     "large": {
+      "n": 148,
+      "lift_base": -0.0674,
+      "rho": -0.0484
+     }
+    },
+    "leave_one_sic2_out": {
+     "full_lift_base": -0.0466,
+     "full_rho": 0.0212,
+     "min": {
+      "drop_sic2": "49",
+      "n_dropped": 32,
+      "lift_base": -0.0585,
+      "rho": 0.0095
+     },
+     "max": {
+      "drop_sic2": "37",
+      "n_dropped": 15,
+      "lift_base": -0.0345,
+      "rho": 0.03
+     },
+     "n_variants": 12
+    }
+   },
+   "2016->2021": {
+    "gap_dist": {
+     "0": 3,
+     "2": 2,
+     "4": 5,
+     "5": 829,
+     "6": 1,
+     "7": 3
+    },
+    "gap5_only": {
+     "n": 829,
+     "n_now_down": 431,
+     "n_now_up": 398,
+     "matrix": {
+      "down_down": 214,
+      "down_up": 217,
+      "up_down": 237,
+      "up_up": 161
+     },
+     "base_next_down": 0.544,
+     "p_next_down_given_now_down": 0.4965,
+     "p_next_down_given_now_up": 0.5955,
+     "lift_base": -0.0475,
+     "lift_contrast": -0.099,
+     "ceiling_lift_base": 0.456,
+     "rho_opmD5": -0.1516,
+     "median_now": -0.0023,
+     "median_next": -0.0062,
+     "level_control": {
+      "n": 829,
+      "rho_opm": 0.5705,
+      "base_next_below_median": 0.4994,
+      "p_next_below_given_now_below": 0.7391,
+      "lift_base": 0.2397
+     },
+     "instrument_check": {
+      "n": 829,
+      "rho_rev": 0.9619
+     },
+     "by_depth": {
+      "-0.02": {
+       "n": 305,
+       "p_next_down": 0.482,
+       "lift_base": -0.0621
+      },
+      "-0.05": {
+       "n": 214,
+       "p_next_down": 0.4486,
+       "lift_base": -0.0954
+      },
+      "-0.1": {
+       "n": 131,
+       "p_next_down": 0.4351,
+       "lift_base": -0.1089
+      }
+     },
+     "diagnostics_posthoc": {
+      "n": 829,
+      "note": "合否には使わない。負の rho の正体を分けるための診断",
+      "partial_rho_change_given_level": -0.0649,
+      "rho_level_now_vs_next_change": -0.2246,
+      "rho_change_now_vs_next_level": 0.175
+     }
+    },
+    "within_sic2": {
+     "n": 668,
+     "n_sic2_used": 22,
+     "lift_base": -0.0488,
+     "median_rho_within_sic2": -0.054
+    },
+    "by_size_tercile": {
+     "small": {
+      "n": 281,
+      "lift_base": -0.0389,
+      "rho": -0.2236
+     },
+     "mid": {
+      "n": 281,
+      "lift_base": -0.0459,
+      "rho": -0.0718
+     },
+     "large": {
+      "n": 281,
+      "lift_base": -0.047,
+      "rho": -0.119
+     }
+    },
+    "leave_one_sic2_out": {
+     "full_lift_base": -0.0456,
+     "full_rho": -0.14,
+     "min": {
+      "drop_sic2": "33",
+      "n_dropped": 19,
+      "lift_base": -0.0507,
+      "rho": -0.149
+     },
+     "max": {
+      "drop_sic2": "37",
+      "n_dropped": 27,
+      "lift_base": -0.0403,
+      "rho": -0.1321
+     },
+     "n_variants": 22
+    }
+   },
+   "2017->2022": {
+    "gap_dist": {
+     "0": 3,
+     "1": 1,
+     "3": 1,
+     "4": 8,
+     "5": 823,
+     "6": 6,
+     "7": 2,
+     "8": 1
+    },
+    "gap5_only": {
+     "n": 823,
+     "n_now_down": 426,
+     "n_now_up": 397,
+     "matrix": {
+      "down_down": 167,
+      "down_up": 259,
+      "up_down": 175,
+      "up_up": 222
+     },
+     "base_next_down": 0.4156,
+     "p_next_down_given_now_down": 0.392,
+     "p_next_down_given_now_up": 0.4408,
+     "lift_base": -0.0235,
+     "lift_contrast": -0.0488,
+     "ceiling_lift_base": 0.5844,
+     "rho_opmD5": -0.0926,
+     "median_now": -0.0013,
+     "median_next": 0.0096,
+     "level_control": {
+      "n": 823,
+      "rho_opm": 0.6044,
+      "base_next_below_median": 0.4994,
+      "p_next_below_given_now_below": 0.7713,
+      "lift_base": 0.2719
+     },
+     "instrument_check": {
+      "n": 823,
+      "rho_rev": 0.9684
+     },
+     "by_depth": {
+      "-0.02": {
+       "n": 298,
+       "p_next_down": 0.3893,
+       "lift_base": -0.0263
+      },
+      "-0.05": {
+       "n": 194,
+       "p_next_down": 0.3918,
+       "lift_base": -0.0238
+      },
+      "-0.1": {
+       "n": 118,
+       "p_next_down": 0.3475,
+       "lift_base": -0.0681
+      }
+     },
+     "diagnostics_posthoc": {
+      "n": 823,
+      "note": "合否には使わない。負の rho の正体を分けるための診断",
+      "partial_rho_change_given_level": -0.0337,
+      "rho_level_now_vs_next_change": -0.1553,
+      "rho_change_now_vs_next_level": 0.1832
+     }
+    },
+    "within_sic2": {
+     "n": 671,
+     "n_sic2_used": 22,
+     "lift_base": -0.0258,
+     "median_rho_within_sic2": -0.1101
+    },
+    "by_size_tercile": {
+     "small": {
+      "n": 281,
+      "lift_base": -0.0156,
+      "rho": -0.1025
+     },
+     "mid": {
+      "n": 281,
+      "lift_base": -0.012,
+      "rho": -0.0745
+     },
+     "large": {
+      "n": 283,
+      "lift_base": -0.0473,
+      "rho": -0.1293
+     }
+    },
+    "leave_one_sic2_out": {
+     "full_lift_base": -0.0209,
+     "full_rho": -0.0855,
+     "min": {
+      "drop_sic2": "48",
+      "n_dropped": 25,
+      "lift_base": -0.0255,
+      "rho": -0.1
+     },
+     "max": {
+      "drop_sic2": "28",
+      "n_dropped": 73,
+      "lift_base": -0.015,
+      "rho": -0.0704
+     },
+     "n_variants": 22
+    }
+   }
+  },
+  "qual": {
+   "2013->2018": {
+    "gap_dist": {
+     "4": 2,
+     "5": 217,
+     "6": 1
+    },
+    "gap5_only": {
+     "n": 217,
+     "n_now_down": 72,
+     "n_now_up": 145,
+     "matrix": {
+      "down_down": 36,
+      "down_up": 36,
+      "up_down": 85,
+      "up_up": 60
+     },
+     "base_next_down": 0.5576,
+     "p_next_down_given_now_down": 0.5,
+     "p_next_down_given_now_up": 0.5862,
+     "lift_base": -0.0576,
+     "lift_contrast": -0.0862,
+     "ceiling_lift_base": 0.4424,
+     "rho_opmD5": 0.0126,
+     "median_now": 0.0216,
+     "median_next": -0.006,
+     "level_control": {
+      "n": 217,
+      "rho_opm": 0.6849,
+      "base_next_below_median": 0.4977,
+      "p_next_below_given_now_below": 0.8056,
+      "lift_base": 0.3079
+     },
+     "instrument_check": {
+      "n": 217,
+      "rho_rev": 0.9546
+     },
+     "by_depth": {
+      "-0.02": {
+       "n": 47,
+       "p_next_down": 0.5532,
+       "lift_base": -0.0044
+      },
+      "-0.05": {
+       "n": 16,
+       "p_next_down": 0.625,
+       "lift_base": 0.0674
+      },
+      "-0.1": {
+       "n": 7,
+       "p_next_down": 0.5714,
+       "lift_base": 0.0138
+      }
+     },
+     "diagnostics_posthoc": {
+      "n": 217,
+      "note": "合否には使わない。負の rho の正体を分けるための診断",
+      "partial_rho_change_given_level": 0.0087,
+      "rho_level_now_vs_next_change": 0.0688,
+      "rho_change_now_vs_next_level": 0.0932
+     }
+    },
+    "within_sic2": {
+     "n": 125,
+     "n_sic2_used": 7,
+     "lift_base": -0.0402,
+     "median_rho_within_sic2": 0.0712
+    },
+    "by_size_tercile": {
+     "small": {
+      "n": 73,
+      "lift_base": 0.0187,
+      "rho": 0.0632
+     },
+     "mid": {
+      "n": 73,
+      "lift_base": -0.1164,
+      "rho": -0.0709
+     },
+     "large": {
+      "n": 74,
+      "lift_base": -0.0691,
+      "rho": 0.0223
+     }
+    },
+    "leave_one_sic2_out": {
+     "full_lift_base": -0.0522,
+     "full_rho": 0.0023,
+     "min": {
+      "drop_sic2": "38",
+      "n_dropped": 19,
+      "lift_base": -0.0819,
+      "rho": -0.0423
+     },
+     "max": {
+      "drop_sic2": "28",
+      "n_dropped": 16,
+      "lift_base": -0.0294,
+      "rho": 0.0446
+     },
+     "n_variants": 7
+    }
+   },
+   "2016->2021": {
+    "gap_dist": {
+     "4": 2,
+     "5": 309,
+     "7": 2
+    },
+    "gap5_only": {
+     "n": 309,
+     "n_now_down": 124,
+     "n_now_up": 185,
+     "matrix": {
+      "down_down": 65,
+      "down_up": 59,
+      "up_down": 128,
+      "up_up": 57
+     },
+     "base_next_down": 0.6246,
+     "p_next_down_given_now_down": 0.5242,
+     "p_next_down_given_now_up": 0.6919,
+     "lift_base": -0.1004,
+     "lift_contrast": -0.1677,
+     "ceiling_lift_base": 0.3754,
+     "rho_opmD5": -0.1407,
+     "median_now": 0.0087,
+     "median_next": -0.016,
+     "level_control": {
+      "n": 309,
+      "rho_opm": 0.5471,
+      "base_next_below_median": 0.4984,
+      "p_next_below_given_now_below": 0.7273,
+      "lift_base": 0.2289
+     },
+     "instrument_check": {
+      "n": 309,
+      "rho_rev": 0.9561
+     },
+     "by_depth": {
+      "-0.02": {
+       "n": 77,
+       "p_next_down": 0.5195,
+       "lift_base": -0.1051
+      },
+      "-0.05": {
+       "n": 46,
+       "p_next_down": 0.5652,
+       "lift_base": -0.0594
+      },
+      "-0.1": {
+       "n": 21,
+       "p_next_down": 0.7619,
+       "lift_base": 0.1373
+      }
+     },
+     "diagnostics_posthoc": {
+      "n": 309,
+      "note": "合否には使わない。負の rho の正体を分けるための診断",
+      "partial_rho_change_given_level": -0.1291,
+      "rho_level_now_vs_next_change": -0.0809,
+      "rho_change_now_vs_next_level": -0.0343
+     }
+    },
+    "within_sic2": {
+     "n": 196,
+     "n_sic2_used": 9,
+     "lift_base": -0.0697,
+     "median_rho_within_sic2": 0.0105
+    },
+    "by_size_tercile": {
+     "small": {
+      "n": 104,
+      "lift_base": -0.0656,
+      "rho": -0.0907
+     },
+     "mid": {
+      "n": 104,
+      "lift_base": -0.1286,
+      "rho": -0.1073
+     },
+     "large": {
+      "n": 105,
+      "lift_base": -0.1244,
+      "rho": -0.147
+     }
+    },
+    "leave_one_sic2_out": {
+     "full_lift_base": -0.0945,
+     "full_rho": -0.1264,
+     "min": {
+      "drop_sic2": "67",
+      "n_dropped": 19,
+      "lift_base": -0.1117,
+      "rho": -0.1402
+     },
+     "max": {
+      "drop_sic2": "73",
+      "n_dropped": 44,
+      "lift_base": -0.0833,
+      "rho": -0.1033
+     },
+     "n_variants": 9
+    }
+   },
+   "2017->2022": {
+    "gap_dist": {
+     "4": 1,
+     "5": 312,
+     "6": 1,
+     "8": 1
+    },
+    "gap5_only": {
+     "n": 312,
+     "n_now_down": 118,
+     "n_now_up": 194,
+     "matrix": {
+      "down_down": 55,
+      "down_up": 63,
+      "up_down": 92,
+      "up_up": 102
+     },
+     "base_next_down": 0.4712,
+     "p_next_down_given_now_down": 0.4661,
+     "p_next_down_given_now_up": 0.4742,
+     "lift_base": -0.0051,
+     "lift_contrast": -0.0081,
+     "ceiling_lift_base": 0.5288,
+     "rho_opmD5": -0.0676,
+     "median_now": 0.0125,
+     "median_next": 0.0049,
+     "level_control": {
+      "n": 312,
+      "rho_opm": 0.5905,
+      "base_next_below_median": 0.5,
+      "p_next_below_given_now_below": 0.7372,
+      "lift_base": 0.2372
+     },
+     "instrument_check": {
+      "n": 312,
+      "rho_rev": 0.9606
+     },
+     "by_depth": {
+      "-0.02": {
+       "n": 73,
+       "p_next_down": 0.4658,
+       "lift_base": -0.0054
+      },
+      "-0.05": {
+       "n": 39,
+       "p_next_down": 0.4872,
+       "lift_base": 0.016
+      },
+      "-0.1": {
+       "n": 14,
+       "p_next_down": 0.3571,
+       "lift_base": -0.114
+      }
+     },
+     "diagnostics_posthoc": {
+      "n": 312,
+      "note": "合否には使わない。負の rho の正体を分けるための診断",
+      "partial_rho_change_given_level": -0.0483,
+      "rho_level_now_vs_next_change": -0.1448,
+      "rho_change_now_vs_next_level": 0.0243
+     }
+    },
+    "within_sic2": {
+     "n": 202,
+     "n_sic2_used": 9,
+     "lift_base": -0.019,
+     "median_rho_within_sic2": -0.0002
+    },
+    "by_size_tercile": {
+     "small": {
+      "n": 105,
+      "lift_base": 0.0387,
+      "rho": -0.032
+     },
+     "mid": {
+      "n": 105,
+      "lift_base": -0.0657,
+      "rho": -0.1176
+     },
+     "large": {
+      "n": 105,
+      "lift_base": 0.0022,
+      "rho": -0.079
+     }
+    },
+    "leave_one_sic2_out": {
+     "full_lift_base": -0.0019,
+     "full_rho": -0.0607,
+     "min": {
+      "drop_sic2": "48",
+      "n_dropped": 13,
+      "lift_base": -0.0126,
+      "rho": -0.0847
+     },
+     "max": {
+      "drop_sic2": "20",
+      "n_dropped": 19,
+      "lift_base": 0.0165,
+      "rho": -0.0428
+     },
+     "n_variants": 9
+    }
+   }
+  }
+ },
+ "unit_check": {
+  "opmD5": "比率pt のまま（土台の opmD5）。%pt は opmD5_pp。閾値 -0.02/-0.05/-0.10 は比率pt",
+  "opm": "土台で%へ換算済み（opm列）。qual の 10% 判定は土台が実施"
+ },
+ "level_vs_change": [
+  {
+   "pool": "all",
+   "pair": "2013->2018",
+   "n": 442,
+   "rho_opmD5(変化)": 0.0212,
+   "rho_opm(水準)": 0.6233,
+   "rho_rev(計測器)": 0.9361,
+   "lift_base_opmD5": -0.0466,
+   "lift_base_opm水準": 0.224
+  },
+  {
+   "pool": "all",
+   "pair": "2016->2021",
+   "n": 843,
+   "rho_opmD5(変化)": -0.14,
+   "rho_opm(水準)": 0.5677,
+   "rho_rev(計測器)": 0.9619,
+   "lift_base_opmD5": -0.0456,
+   "lift_base_opm水準": 0.2393
+  },
+  {
+   "pool": "all",
+   "pair": "2017->2022",
+   "n": 845,
+   "rho_opmD5(変化)": -0.0855,
+   "rho_opm(水準)": 0.6066,
+   "rho_rev(計測器)": 0.9686,
+   "lift_base_opmD5": -0.0209,
+   "lift_base_opm水準": 0.2731
+  },
+  {
+   "pool": "qual",
+   "pair": "2013->2018",
+   "n": 220,
+   "rho_opmD5(変化)": 0.0023,
+   "rho_opm(水準)": 0.6804,
+   "rho_rev(計測器)": 0.9527,
+   "lift_base_opmD5": -0.0522,
+   "lift_base_opm水準": 0.3
+  },
+  {
+   "pool": "qual",
+   "pair": "2016->2021",
+   "n": 313,
+   "rho_opmD5(変化)": -0.1264,
+   "rho_opm(水準)": 0.5564,
+   "rho_rev(計測器)": 0.9561,
+   "lift_base_opmD5": -0.0945,
+   "lift_base_opm水準": 0.2324
+  },
+  {
+   "pool": "qual",
+   "pair": "2017->2022",
+   "n": 315,
+   "rho_opmD5(変化)": -0.0607,
+   "rho_opm(水準)": 0.5808,
+   "rho_rev(計測器)": 0.9594,
+   "lift_base_opmD5": -0.0019,
+   "lift_base_opm水準": 0.2341
+  }
+ ],
+ "period_vs_company": {
+  "note": "opmD5<0 の割合はビンテージ（＝マクロの窓）でどれだけ動くか vs 会社自身の前回の符号でどれだけ動くか",
+  "share_negative_by_vintage": {
+   "2013": 0.4009,
+   "2016": 0.5194,
+   "2017": 0.524,
+   "2018": 0.5057,
+   "2019": 0.5017,
+   "2020": 0.4977,
+   "2021": 0.5452,
+   "2022": 0.413
+  },
+  "spread_across_vintages_pp": 14.43,
+  "company_own_prior_lift_base_pp_range": [
+   -9.45,
+   -0.19
+  ]
+ },
+ "limits": [
+  "8ビンテージは同じ956社・窓が重なる＝真の out-of-sample はゼロ（事前登録の限界をそのまま引き継ぐ）",
+  "2013 の opmD5 被覆は48%で大型に偏る（上の warnings）",
+  "**機械的な負のバイアス**: opmD5_now = opm[a]−opm[a−4]、opmD5_next = opm[b]−opm[b−4]。b−4 = a+1 は a の隣年で強く相関するので、端点の一過性の揺れは now を上げ next を下げる向きに入る。＝持続がゼロでも ρ はやや負へ引かれる。gap==5 でもこの偏りは残る（gap<=4 なら同じ年が符号違いで共有され、もっと強く効く）",
+  "opmD5 は会計上の営業利益率で一過性費用を調整しない",
+  "gmt(門の3値・審査官の判断) と opmD5(機械の連続量) は同じものではない"
+ ]
+}

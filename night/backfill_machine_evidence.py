@@ -213,15 +213,27 @@ def main():
             continue
         evid = calc.get("_evid") or {}
 
-        # fcf / ni は門が**比でしか使わない**（conv=fcf/ni、reinvest=1−conv）。
-        # パック側が百万$、機械が十億$のように単位規約が違っても比が同じなら実害は無い。
+        # fcf / ni は門が**比で使う**（conv=fcf/ni、reinvest=1−conv）ので、判定は比で行う——
         # 絶対値で突き合わせると単位差だけで全社が作業リストに乗り、**鳴りすぎる警報は
-        # 鳴らないのと同じ**になる。よって fcf/ni は比で判定する。
+        # 鳴らないのと同じ**になるため。
+        # ★★だが「比が合えば単位はそのままでよい」は**誤りだった**（2026-08-20 に実害）——
+        #   v9.9.146 の `ccfMcapUSD` が `px × ni ÷ eps` で**絶対値**を使うようになり、
+        #   百万$のまま残っていた **IRMD** の時価総額が **1,117十億$ ＝ MSFT級**に化けて
+        #   配分の T1（≥1兆$）で 6.78% を受けていた（実体 1.23十億$＝T5）。
+        #   旧実装はこの社へ「門はfcf/niを比でしか使わないため、パック側の単位規約はそのまま」と
+        #   **注記まで刻んで許していた**。**既知の穴は但し書きではなくガードで塞ぐこと**（CLAUDE.md）。
+        #   → 比が合っても**桁が1000倍ずれていたら作業リストへ出す**（黙って祝福しない）。
+        #   是正の道具は `night/fix_ni_unit.py`（--write で ちょうど1000で割る＝conv不変・Ωも不変）。
         ratio_ok = None
+        unit_off = False
         if all(isinstance(d.get(k), (int, float)) for k in ("fcf", "ni")) and d.get("ni"):
             nf, nn_ = calc.get("fcf_abs"), calc.get("ni_abs")
             if isinstance(nf, (int, float)) and isinstance(nn_, (int, float)) and nn_:
                 ratio_ok = same(d["fcf"] / d["ni"] * 100, nf / nn_ * 100)
+                # 桁の照合（十億$の規約から1000倍ずれていないか）
+                if nn_ and d["ni"]:
+                    k = abs(d["ni"]) / abs(nn_ / 1e9)
+                    unit_off = (k > 100) or (k < 0.01)
 
         stamped, diffs, gone = [], [], []
         for fld, src in MAP.items():
@@ -237,10 +249,13 @@ def main():
                 gone.append(fld)
                 continue
             if fld in ("fcf", "ni") and ratio_ok is not None:
+                if ratio_ok and unit_off:
+                    # 比は合うが**単位が十億でない**＝ccfMcapUSD が絶対値で使うので実害がある
+                    diffs.append((fld, stored, new, hand))
+                    continue
                 if ratio_ok:
                     if evid.get(fld) and not hand:
-                        ev_m[fld] = (evid[fld] + "（門はfcf/niを比でしか使わないため、"
-                                                 "パック側の単位規約はそのまま。比は一致）")
+                        ev_m[fld] = evid[fld]
                         pv[fld] = "machine"
                         stamped.append(fld)
                     continue

@@ -176,9 +176,48 @@ def jp_quotes(codes):
     return out
 
 
+def fetch_fx():
+    """ドル円を引く（**鍵は要らない**）。取れなければ None——ゼロで埋めない（絶対のルール7）。
+
+    為替: Finnhub の /forex/rates は**無料枠では引けない**（2026-07-30の実測で quote が返らず
+      USDJPY=None になった）。鍵不要で使える open.er-api.com へ切り替えてある。
+    """
+    fx = _get("https://open.er-api.com/v6/latest/USD")
+    if fx and isinstance(fx.get("rates"), dict) and fx["rates"].get("JPY"):
+        return {"USDJPY": round(float(fx["rates"]["JPY"]), 3),
+                "src": "open.er-api.com（鍵不要）",
+                # ★fx は自分の時刻を持つ。out['asof'] は**株価**の時刻なので、
+                #   鍵が無くて為替だけ更新した日に asof を読むと為替の鮮度を誤る
+                "asof": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    return None
+
+
 def main():
     if not KEY:
-        print("FINNHUB_KEY が無い → 何も書かずに終了（既存ファイルは壊さない）")
+        # ★2026-08-18 の是正（ユーザーの問い「為替を自動更新できるようにしたほうがよい?」で発覚）——
+        #   **ドル円は鍵が要らないのに、鍵の検問の後ろに置かれていた**。
+        #   ＝FINNHUB_KEY が切れた日は、引けるはずの為替まで一緒に止まる。
+        #   為替は Ⅶ資産の円換算と v9.9.146 の時価総額Tier（配分）に効くので、
+        #   「株価が止まった」と「為替も止まった」が同時に起きると影響が二重になる。
+        #   → **鍵が無くても為替だけは更新する。ただし既存の quotes は絶対に壊さない**
+        #     （読んで fx だけ差し替える＝audit_stale_bs:243 と同じ空書き込みの検問）。
+        fxo = fetch_fx()
+        if fxo and os.path.exists("out/dashboard.json"):
+            try:
+                cur = json.load(open("out/dashboard.json", encoding="utf-8"))
+                if isinstance(cur.get("quotes"), dict) and cur["quotes"]:
+                    cur["fx"] = fxo
+                    json.dump(cur, open("out/dashboard.json", "w", encoding="utf-8"),
+                              ensure_ascii=False, indent=1)
+                    print(f"  ※鍵が無いので株価は据置。**ドル円だけ更新した** USDJPY={fxo['USDJPY']}"
+                          f"（株価の asof は {cur.get('asof')} のまま）")
+                else:
+                    print("  ※既存 dashboard.json に株価が無い＝空で上書きしないため為替も書かない")
+            except Exception as e:
+                print(f"  ※既存 dashboard.json を読めないので為替も書かない（{e}）")
+        elif not fxo:
+            print("  ※ドル円も引けなかった（open.er-api.com）")
+        print("FINNHUB_KEY が無い → 株価とニュースは書かずに終了（既存ファイルは壊さない）")
         print("  設定: GitHub → Settings → Secrets and variables → Actions → FINNHUB_KEY")
         # 2026-08-02是正: **CIでは異常終了する**。
         #   初回実行で env に FINNHUB_KEY が空のまま渡り、スクリプトは正しく「何も書かず終了」したが
@@ -195,13 +234,23 @@ def main():
     ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
     out = {"asof": ts, "quotes": {}, "news": {}, "fx": {}}
 
-    # 為替: Finnhub の /forex/rates は**無料枠では引けない**（2026-07-30の実測で quote が返らず
-    #   USDJPY=None になった）。鍵不要で使える open.er-api.com へ切り替える。
-    #   取れなければ書かない——盤は「為替未取得」と出し、Ⅶ保有の手入力値へ落ちる（ゼロで埋めない）。
-    fx = _get("https://open.er-api.com/v6/latest/USD")
-    if fx and isinstance(fx.get("rates"), dict) and fx["rates"].get("JPY"):
-        out["fx"]["USDJPY"] = round(float(fx["rates"]["JPY"]), 3)
-        out["fx"]["src"] = "open.er-api.com（鍵不要）"
+    # 為替（鍵不要・単一実装 fetch_fx）。取れなければ書かない——盤は「為替未取得」と出し、
+    #   Ⅶ保有の手入力値へ落ちる（ゼロで埋めない）。
+    fxo = fetch_fx()
+    if fxo:
+        out["fx"] = fxo
+    else:
+        # ★引けなかった日に**前回の為替を捨てない**。株価は今日の値・為替は前回の値、と分けて持つ
+        #   （fx.asof がその日付を持つので、どの日の為替かは画面から辿れる）
+        try:
+            prev = json.load(open("out/dashboard.json", encoding="utf-8")).get("fx") or {}
+            if prev.get("USDJPY"):
+                out["fx"] = dict(prev)
+                out["fx"]["stale"] = True
+                print(f"  ※ドル円が引けなかった → 前回値を据え置く USDJPY={prev.get('USDJPY')}"
+                      f"（{prev.get('asof') or '取得日不明'}）")
+        except Exception:
+            pass
 
     ALL = tickers()
     JP = [t for t in ALL if t.isdigit()]

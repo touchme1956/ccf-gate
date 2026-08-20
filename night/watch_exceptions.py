@@ -259,8 +259,21 @@ def main():
             rec['verdict'] = '△改善（まだ線の上）'
         else:
             rec['verdict'] = '—横ばい（線の上）'
+        # ★2026-08-18 の是正（ユーザーの問い「かなり危ない状況なのでは？」で発覚）——
+        #   旧実装は債務超過を **verdict の後ろへ足すだけ** だったので、VRSK が
+        #   『✓線の下（次の年次報告で門が自力で取り込む見込み）／債務超過』と表示されていた。
+        #   **この二つは正反対を指している**——nde は線の下だが、**債務超過は門のキルそのもの**
+        #   （index.html:1919 `eq==='neg' → kills.push('債務超過')`／同 3081 `S1.push('債務超過に転落')`）。
+        #   ＝次の年次報告が持ってくるのは「取り込み」ではなく **キルと売却シグナル** である。
+        #   実測(2026-08-18・影の計測): VRSK の eq を neg にすると **Ω81.3→59.6・キル1・出口 hold→s1**。
+        #   台帳の eq=neg は13社あり、**13社すべて Ω≤52・出口=s1**（ORLY/BKNG/AZO/FICO/MSCI…）。
+        #   **甘い側へ静かに壊れる**種類なので、✓を上書きして先頭に出す。表示専用・判定には不使用。
         if rec.get('equity') is not None and rec['equity'] < 0:
-            rec['verdict'] += '／債務超過'
+            if str(rec.get('pack_eq') or '') == 'pos':
+                rec['verdict'] = ('⚠**債務超過（パックはまだ pos）＝次の年次報告でキルと出口s1が来る**'
+                                  + '／nde: ' + rec['verdict'])
+            else:
+                rec['verdict'] += '／債務超過（パックに反映ずみ）'
         if rec.get('debt_chg') is not None and rec['debt_chg'] > 0.10:
             rec['verdict'] += f"／⚠新規借入 前四半期比 +{rec['debt_chg']*100:.0f}%"
         rows.append(rec)

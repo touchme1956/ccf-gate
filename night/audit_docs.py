@@ -238,6 +238,55 @@ def check(h, f):
                     % (f['badge_version'], f['max_version']),
                     [(line_of(h, idx) if idx > 0 else 0, '採点機 v%s' % f['badge_version'])]))
 
+    # ⑧-b 版番号の歴史記述が書き換わっていないか（v9.9.158・2026-08-19新設）
+    #   ★実害を踏んで足した検査——v9.9.157 の作業で `sed 's/v9.9.156/v9.9.157/'` を index.html 全体へ
+    #   掛けたため、**過去の版を指す歴史記述まで7箇所が書き換わった**（📈トータルリターンの v9.9.155 は
+    #   二段階でクロバーされ v9.9.157 になっていた）。版番号を「今の版」に揃えてよいのは**バッジだけ**で、
+    #   本文とコード注釈の版番号は**いつ何が入ったかの記録**＝書き換えたら記録が消える。
+    #   検査は git の直前コミットと突き合わせる：**バッジ以外の行で版番号の値が変わっていたら鳴らす**。
+    #   ⚠ git が無い／初回コミットでは黙って飛ばす（測れないことを異常と言わない・ルール7）。
+    #   ⚠**マージ中は飛ばす**——版番号は別セッションと**衝突する**ことがあり（実測: main が v9.9.156/157 を
+    #   別の変更で使っていた）、そのときは**こちらを繰り下げるのが正しい作法**（v9.9.118→119 の前例）。
+    #   マージ中に HEAD と比べても、相手側の行が丸ごと増えるので比較そのものが意味を持たない。
+    #   飛ばしたことは**黙らずに出す**（鳴らない検査を残さない）。コミット後は MERGE_HEAD が消えるのでCIには出ない。
+    try:
+        import subprocess, os
+        if os.path.exists(os.path.join(ROOT, '.git', 'MERGE_HEAD')):
+            out.append(('WARN', 'version_history_merge',
+                        'マージ中のため版番号の歴史検査を飛ばした'
+                        '（版番号は別セッションと衝突しうる＝繰り下げが正当に起きる）', []))
+            raise StopIteration
+        prev = subprocess.run(['git', 'show', 'HEAD:index.html'],
+                              capture_output=True, text=True, timeout=20)
+        if prev.returncode == 0 and prev.stdout:
+            vre = re.compile(r'v9\.9\.\d+')
+            def _k(l): return vre.sub('§', l)
+            pmap = {}
+            for l in prev.stdout.split('\n'):
+                if vre.search(l):
+                    pmap.setdefault(_k(l), l)
+            moved = []
+            for i, l in enumerate(h.split('\n')):
+                if not vre.search(l) or '採点機' in l:
+                    continue
+                o = pmap.get(_k(l))
+                # ★**上がった側だけ鳴らす**。一括sed の署名は「古い版 → 今上げようとしている版」で
+                #   必ず**増える**向き。逆に**減る**のは今回のような**修復**なので通す
+                #   （行の他の文字が変わっていれば _k が一致せずそもそも検査に掛からない
+                #    ＝ここへ来るのは「版番号だけが違う同一行」＝sed の署名そのもの）。
+                def _mx(x): return max((int(v.rsplit('.', 1)[1]) for v in vre.findall(x)), default=0)
+                if o and vre.findall(o) != vre.findall(l) and _mx(l) > _mx(o):
+                    moved.append((i + 1, '%s → %s ｜ %s'
+                                  % (','.join(vre.findall(o)), ','.join(vre.findall(l)),
+                                     strip_tags(l.strip())[:70])))
+            if moved:
+                out.append(('FAIL', 'version_history_rewritten',
+                            '版番号の歴史記述が直前コミットから書き換わっている'
+                            '（版を上げてよいのは採点機のバッジだけ。一括sedは歴史記述を巻き込む）',
+                            moved))
+    except Exception:
+        pass
+
     # ⑨ 堀の関門の線が文中と一致するか
     if f['moat_gate']:
         bad = []

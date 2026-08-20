@@ -1,0 +1,5574 @@
+{
+ "generated": "2026-08-18",
+ "tool": "night/opmtrend_h4.py",
+ "prereg": "out/opm_trend_prereg.json / H4_shrink_gate",
+ "base": "out/opmtrend_base.json",
+ "rule": "cagr5<0 ∧ opmD5<0（自由変数ゼロ＝c6は構造上成立）",
+ "line": {
+  "concentration_min": 2.0,
+  "numerator_min": 5,
+  "median_not_worse": true,
+  "stop_rate_max": 0.15,
+  "aggregation": "判定可能な全ビンテージで成立＝プール別合格。all/qual のどちらか一方でも成立すれば H4 合格",
+  "fixed_before_running": true
+ },
+ "c5_note": "c5(増分)は H4 では定義上判定不能（この規則そのものが既存の第四の関門）。代替として片方だけとの比較を③に置いた（事前登録に無い適応と明記）",
+ "replication": {
+  "pool_src": "out/retro_er_test.json（581社）",
+  "n_pool": 581,
+  "got": {
+   "n_pool": 581,
+   "base_n": 581,
+   "base_med_pct": 7.2,
+   "base_impair": 0.0448,
+   "blocked_n": 49,
+   "blocked_med_pct": 6.3,
+   "blocked_impair": 0.1429,
+   "blocked_loss": 0.2857,
+   "passed_n": 532,
+   "passed_med_pct": 7.3,
+   "passed_impair": 0.0357,
+   "concentration": 3.19
+  },
+  "ref": {
+   "base_n": 581,
+   "base_med_pct": 7.2,
+   "base_impair": 0.045,
+   "blocked_n": 49,
+   "blocked_med_pct": 6.3,
+   "blocked_impair": 0.143,
+   "blocked_loss": 0.286,
+   "passed_n": 532,
+   "passed_med_pct": 7.3,
+   "passed_impair": 0.036
+  },
+  "fields": {
+   "base_n": {
+    "ref": 581,
+    "got": 581,
+    "same": true
+   },
+   "base_med_pct": {
+    "ref": 7.2,
+    "got": 7.2,
+    "same": true
+   },
+   "base_impair": {
+    "ref": 0.045,
+    "got": 0.0448,
+    "same": true
+   },
+   "blocked_n": {
+    "ref": 49,
+    "got": 49,
+    "same": true
+   },
+   "blocked_med_pct": {
+    "ref": 6.3,
+    "got": 6.3,
+    "same": true
+   },
+   "blocked_impair": {
+    "ref": 0.143,
+    "got": 0.1429,
+    "same": true
+   },
+   "blocked_loss": {
+    "ref": 0.286,
+    "got": 0.2857,
+    "same": true
+   },
+   "passed_n": {
+    "ref": 532,
+    "got": 532,
+    "same": true
+   },
+   "passed_med_pct": {
+    "ref": 7.3,
+    "got": 7.3,
+    "same": true
+   },
+   "passed_impair": {
+    "ref": 0.036,
+    "got": 0.0357,
+    "same": true
+   }
+  },
+  "reproduced": true,
+  "note": "retro_breaker_test.py:118 の式 `(cagr5 or 0)<0 ∧ (opmD5 or 0)<0` をそのまま当て、%と小数の単位差だけ揃えて比べた"
+ },
+ "na_sensitivity": {
+  "2013": {
+   "coverage": 0.4756,
+   "main": {
+    "n": 41,
+    "stop": 0.0434,
+    "conc": 0.47
+   },
+   "strict": {
+    "n": 41,
+    "stop": 0.0913,
+    "conc": 1.821,
+    "n_na": 495,
+    "verdict": "不合格"
+   }
+  },
+  "2016": {
+   "coverage": 0.9184,
+   "main": {
+    "n": 161,
+    "stop": 0.1684,
+    "conc": 1.46
+   },
+   "strict": {
+    "n": 161,
+    "stop": 0.1834,
+    "conc": 1.39,
+    "n_na": 78,
+    "verdict": "不合格"
+   }
+  },
+  "2017": {
+   "coverage": 0.9142,
+   "main": {
+    "n": 169,
+    "stop": 0.1768,
+    "conc": 1.669
+   },
+   "strict": {
+    "n": 169,
+    "stop": 0.1934,
+    "conc": 1.552,
+    "n_na": 82,
+    "verdict": "不合格"
+   }
+  },
+  "2018": {
+   "coverage": 0.9184,
+   "main": {
+    "n": 142,
+    "stop": 0.1485,
+    "conc": 1.837
+   },
+   "strict": {
+    "n": 142,
+    "stop": 0.1617,
+    "conc": 1.804,
+    "n_na": 78,
+    "verdict": "不合格"
+   }
+  },
+  "2019": {
+   "coverage": 0.909,
+   "main": {
+    "n": 137,
+    "stop": 0.1433,
+    "conc": 1.129
+   },
+   "strict": {
+    "n": 137,
+    "stop": 0.1577,
+    "conc": 1.091,
+    "n_na": 87,
+    "verdict": "不合格"
+   }
+  },
+  "2020": {
+   "coverage": 0.9142,
+   "main": {
+    "n": 109,
+    "stop": 0.114,
+    "conc": 1.39
+   },
+   "strict": {
+    "n": 109,
+    "stop": 0.1247,
+    "conc": 1.409,
+    "n_na": 82,
+    "verdict": "不合格"
+   }
+  },
+  "2021": {
+   "coverage": 0.9017,
+   "main": {
+    "n": 176,
+    "stop": 0.1841,
+    "conc": 1.396
+   },
+   "strict": {
+    "n": 176,
+    "stop": 0.2042,
+    "conc": 1.394,
+    "n_na": 94,
+    "verdict": "不合格"
+   }
+  },
+  "2022": {
+   "coverage": 0.9017,
+   "main": {
+    "n": 112,
+    "stop": 0.1172,
+    "conc": 1.125
+   },
+   "strict": {
+    "n": 112,
+    "stop": 0.1299,
+    "conc": 1.138,
+    "n_na": 94,
+    "verdict": "不合格"
+   }
+  }
+ },
+ "na_composition": {
+  "2013": {
+   "has": {
+    "n": 449,
+    "rev_med": 3641390000,
+    "impair": 0.0134,
+    "med": 0.0936
+   },
+   "na": {
+    "n": 495,
+    "rev_med": 616494000,
+    "impair": 0.0869,
+    "med": 0.0578
+   }
+  },
+  "2016": {
+   "has": {
+    "n": 878,
+    "rev_med": 1757868500,
+    "impair": 0.0626,
+    "med": 0.0784
+   },
+   "na": {
+    "n": 78,
+    "rev_med": 4844741500,
+    "impair": 0.0256,
+    "med": 0.0909
+   }
+  },
+  "2017": {
+   "has": {
+    "n": 874,
+    "rev_med": 1777585500,
+    "impair": 0.0686,
+    "med": 0.0718
+   },
+   "na": {
+    "n": 82,
+    "rev_med": 4386113000,
+    "impair": 0.0122,
+    "med": 0.0967
+   }
+  },
+  "2018": {
+   "has": {
+    "n": 878,
+    "rev_med": 1918742000,
+    "impair": 0.082,
+    "med": 0.0659
+   },
+   "na": {
+    "n": 78,
+    "rev_med": 3920733000,
+    "impair": 0.0641,
+    "med": 0.0878
+   }
+  },
+  "2019": {
+   "has": {
+    "n": 869,
+    "rev_med": 2215362000,
+    "impair": 0.0736,
+    "med": 0.0673
+   },
+   "na": {
+    "n": 87,
+    "rev_med": 3387726000,
+    "impair": 0.046,
+    "med": 0.0838
+   }
+  },
+  "2020": {
+   "has": {
+    "n": 874,
+    "rev_med": 2354208500,
+    "impair": 0.0847,
+    "med": 0.095
+   },
+   "na": {
+    "n": 82,
+    "rev_med": 2794752500,
+    "impair": 0.0976,
+    "med": 0.1092
+   }
+  },
+  "2021": {
+   "has": {
+    "n": 862,
+    "rev_med": 2184400000,
+    "impair": 0.1508,
+    "med": 0.0398
+   },
+   "na": {
+    "n": 94,
+    "rev_med": 2598074000,
+    "impair": 0.1489,
+    "med": 0.0384
+   }
+  },
+  "2022": {
+   "has": {
+    "n": 862,
+    "rev_med": 2597964500,
+    "impair": 0.1334,
+    "med": 0.0668
+   },
+   "na": {
+    "n": 94,
+    "rev_med": 3250792000,
+    "impair": 0.1489,
+    "med": 0.05
+   }
+  }
+ },
+ "selfcheck": {
+  "cells": [
+   {
+    "cell": "2013/all",
+    "ok": true
+   },
+   {
+    "cell": "2013/qual",
+    "ok": true
+   },
+   {
+    "cell": "2016/all",
+    "ok": true
+   },
+   {
+    "cell": "2016/qual",
+    "ok": true
+   },
+   {
+    "cell": "2017/all",
+    "ok": true
+   },
+   {
+    "cell": "2017/qual",
+    "ok": true
+   },
+   {
+    "cell": "2018/all",
+    "ok": true
+   },
+   {
+    "cell": "2018/qual",
+    "ok": true
+   },
+   {
+    "cell": "2019/all",
+    "ok": true
+   },
+   {
+    "cell": "2019/qual",
+    "ok": true
+   },
+   {
+    "cell": "2020/all",
+    "ok": true
+   },
+   {
+    "cell": "2020/qual",
+    "ok": true
+   },
+   {
+    "cell": "2021/all",
+    "ok": true
+   },
+   {
+    "cell": "2021/qual",
+    "ok": true
+   },
+   {
+    "cell": "2022/all",
+    "ok": true
+   },
+   {
+    "cell": "2022/qual",
+    "ok": true
+   }
+  ],
+  "mismatches": 0
+ },
+ "concentration_summary": {
+  "and": {
+   "vals": [
+    0.47,
+    1.46,
+    1.669,
+    1.837,
+    1.129,
+    1.39,
+    1.396,
+    1.125
+   ],
+   "median": 1.393,
+   "lo": 0.47,
+   "hi": 1.837,
+   "n_above_1": 7,
+   "n_above_line": 0
+  },
+  "cagr_only": {
+   "vals": [
+    1.605,
+    1.154,
+    1.271,
+    1.319,
+    1.149,
+    1.283,
+    1.369,
+    1.357
+   ],
+   "median": 1.301,
+   "lo": 1.149,
+   "hi": 1.605,
+   "n_above_1": 8,
+   "n_above_line": 0
+  },
+  "opm_only": {
+   "vals": [
+    0.536,
+    1.178,
+    1.403,
+    1.287,
+    1.065,
+    0.938,
+    0.89,
+    0.979
+   ],
+   "median": 1.022,
+   "lo": 0.536,
+   "hi": 1.403,
+   "n_above_1": 4,
+   "n_above_line": 0
+  }
+ },
+ "rank_of_2018_in_and": 1,
+ "replication_pool_warning": {
+  "msg": "retro_breaker_test の母集団は er_test の581社。base の 2018/all は956社",
+  "all956": {
+   "blocked": 142,
+   "stop_rate": 0.1485,
+   "impair": 0.1479,
+   "base_impair": 0.0805,
+   "concentration": 1.837
+  }
+ },
+ "verdict": {
+  "overall": "不合格",
+  "by_pool": {
+   "all": {
+    "fail_kinds": {
+     "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）": 1,
+     "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）": 7
+    },
+    "verdict": "不合格",
+    "n_judged": 8,
+    "n_pass": 0,
+    "n_undecidable": 0,
+    "detail": [
+     {
+      "vintage": 2013,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": false,
+      "c4": true,
+      "concentration": 0.47,
+      "n_impair_blocked": 1,
+      "stop_rate": 0.0434,
+      "why": "c1: 濃縮0.47倍(線2.0) 分子1社(線5); c2: 止めた中央値+0.1093 > 通過+0.0792＝勝者を巻き込む"
+     },
+     {
+      "vintage": 2016,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": true,
+      "c4": false,
+      "concentration": 1.46,
+      "n_impair_blocked": 14,
+      "stop_rate": 0.1684,
+      "why": "c1: 濃縮1.46倍(線2.0) 分子14社(線5); c4: 止率16.8%(線15%)＝遮断器でなく間引き"
+     },
+     {
+      "vintage": 2017,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": true,
+      "c4": false,
+      "concentration": 1.669,
+      "n_impair_blocked": 18,
+      "stop_rate": 0.1768,
+      "why": "c1: 濃縮1.669倍(線2.0) 分子18社(線5); c4: 止率17.7%(線15%)＝遮断器でなく間引き"
+     },
+     {
+      "vintage": 2018,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": true,
+      "c4": true,
+      "concentration": 1.837,
+      "n_impair_blocked": 21,
+      "stop_rate": 0.1485,
+      "why": "c1: 濃縮1.837倍(線2.0) 分子21社(線5)"
+     },
+     {
+      "vintage": 2019,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": true,
+      "c4": true,
+      "concentration": 1.129,
+      "n_impair_blocked": 11,
+      "stop_rate": 0.1433,
+      "why": "c1: 濃縮1.129倍(線2.0) 分子11社(線5)"
+     },
+     {
+      "vintage": 2020,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": true,
+      "c4": true,
+      "concentration": 1.39,
+      "n_impair_blocked": 13,
+      "stop_rate": 0.114,
+      "why": "c1: 濃縮1.39倍(線2.0) 分子13社(線5)"
+     },
+     {
+      "vintage": 2021,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": true,
+      "c4": false,
+      "concentration": 1.396,
+      "n_impair_blocked": 37,
+      "stop_rate": 0.1841,
+      "why": "c1: 濃縮1.396倍(線2.0) 分子37社(線5); c4: 止率18.4%(線15%)＝遮断器でなく間引き"
+     },
+     {
+      "vintage": 2022,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": true,
+      "c4": true,
+      "concentration": 1.125,
+      "n_impair_blocked": 17,
+      "stop_rate": 0.1172,
+      "why": "c1: 濃縮1.125倍(線2.0) 分子17社(線5)"
+     }
+    ]
+   },
+   "qual": {
+    "fail_kinds": {
+     "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）": 6
+    },
+    "verdict": "不合格",
+    "n_judged": 6,
+    "n_pass": 0,
+    "n_undecidable": 2,
+    "detail": [
+     {
+      "vintage": 2013,
+      "verdict": "判定不能",
+      "c1": null,
+      "c2": null,
+      "c4": null,
+      "concentration": 0.0,
+      "n_impair_blocked": 0,
+      "stop_rate": 0.0297,
+      "why": "毀損の実数 3 < 分子の下限 5"
+     },
+     {
+      "vintage": 2016,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": true,
+      "c4": true,
+      "concentration": 1.676,
+      "n_impair_blocked": 1,
+      "stop_rate": 0.0851,
+      "why": "c1: 濃縮1.676倍(線2.0) 分子1社(線5)"
+     },
+     {
+      "vintage": 2017,
+      "verdict": "判定不能",
+      "c1": null,
+      "c2": null,
+      "c4": null,
+      "concentration": 0.0,
+      "n_impair_blocked": 0,
+      "stop_rate": 0.0459,
+      "why": "毀損の実数 4 < 分子の下限 5"
+     },
+     {
+      "vintage": 2018,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": true,
+      "c4": true,
+      "concentration": 4.435,
+      "n_impair_blocked": 3,
+      "stop_rate": 0.0676,
+      "why": "c1: 濃縮4.435倍(線2.0) 分子3社(線5)"
+     },
+     {
+      "vintage": 2019,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": true,
+      "c4": true,
+      "concentration": 2.724,
+      "n_impair_blocked": 2,
+      "stop_rate": 0.0816,
+      "why": "c1: 濃縮2.724倍(線2.0) 分子2社(線5)"
+     },
+     {
+      "vintage": 2020,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": false,
+      "c4": true,
+      "concentration": 0.0,
+      "n_impair_blocked": 0,
+      "stop_rate": 0.0386,
+      "why": "c1: 濃縮0.0倍(線2.0) 分子0社(線5); c2: 止めた中央値+0.1368 > 通過+0.0873＝勝者を巻き込む"
+     },
+     {
+      "vintage": 2021,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": false,
+      "c4": true,
+      "concentration": 0.539,
+      "n_impair_blocked": 1,
+      "stop_rate": 0.0641,
+      "why": "c1: 濃縮0.539倍(線2.0) 分子1社(線5); c2: 止めた中央値+0.0560 > 通過+0.0411＝勝者を巻き込む"
+     },
+     {
+      "vintage": 2022,
+      "verdict": "不合格",
+      "c1": false,
+      "c2": false,
+      "c4": true,
+      "concentration": 0.0,
+      "n_impair_blocked": 0,
+      "stop_rate": 0.0294,
+      "why": "c1: 濃縮0.0倍(線2.0) 分子0社(線5); c2: 止めた中央値+0.1565 > 通過+0.0709＝勝者を巻き込む"
+     }
+    ]
+   }
+  }
+ },
+ "cells": {
+  "2013/all/and/main": {
+   "vintage": 2013,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 13.09,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 944,
+   "n_used": 944,
+   "n_na": 0,
+   "stop_rate": 0.0434,
+   "base": {
+    "n": 944,
+    "med": 0.0798,
+    "impair": 0.0519,
+    "n_impair": 49,
+    "loss": 0.2309,
+    "hurdle": 0.2108,
+    "worst": -0.8911
+   },
+   "blocked": {
+    "n": 41,
+    "med": 0.1093,
+    "impair": 0.0244,
+    "n_impair": 1,
+    "loss": 0.1707,
+    "hurdle": 0.3171,
+    "worst": -0.2079
+   },
+   "passed": {
+    "n": 903,
+    "med": 0.0792,
+    "impair": 0.0532,
+    "n_impair": 48,
+    "loss": 0.2337,
+    "hurdle": 0.206,
+    "worst": -0.8911
+   },
+   "concentration": 0.47,
+   "impair_lift": -0.0275,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.47倍(線2.0) 分子1社(線5); c2: 止めた中央値+0.1093 > 通過+0.0792＝勝者を巻き込む"
+   }
+  },
+  "2013/all/and/strict": {
+   "vintage": 2013,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 13.09,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 944,
+   "n_used": 449,
+   "n_na": 495,
+   "stop_rate": 0.0913,
+   "base": {
+    "n": 449,
+    "med": 0.0936,
+    "impair": 0.0134,
+    "n_impair": 6,
+    "loss": 0.1381,
+    "hurdle": 0.216,
+    "worst": -0.5265
+   },
+   "blocked": {
+    "n": 41,
+    "med": 0.1093,
+    "impair": 0.0244,
+    "n_impair": 1,
+    "loss": 0.1707,
+    "hurdle": 0.3171,
+    "worst": -0.2079
+   },
+   "passed": {
+    "n": 408,
+    "med": 0.0936,
+    "impair": 0.0123,
+    "n_impair": 5,
+    "loss": 0.1348,
+    "hurdle": 0.2059,
+    "worst": -0.5265
+   },
+   "concentration": 1.821,
+   "impair_lift": 0.011,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮1.821倍(線2.0) 分子1社(線5); c2: 止めた中央値+0.1093 > 通過+0.0936＝勝者を巻き込む"
+   }
+  },
+  "2013/all/cagr_only/main": {
+   "vintage": 2013,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 13.09,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 944,
+   "n_used": 944,
+   "n_na": 0,
+   "stop_rate": 0.1907,
+   "base": {
+    "n": 944,
+    "med": 0.0798,
+    "impair": 0.0519,
+    "n_impair": 49,
+    "loss": 0.2309,
+    "hurdle": 0.2108,
+    "worst": -0.8911
+   },
+   "blocked": {
+    "n": 180,
+    "med": 0.0736,
+    "impair": 0.0833,
+    "n_impair": 15,
+    "loss": 0.2889,
+    "hurdle": 0.1833,
+    "worst": -0.8911
+   },
+   "passed": {
+    "n": 764,
+    "med": 0.0807,
+    "impair": 0.0445,
+    "n_impair": 34,
+    "loss": 0.2173,
+    "hurdle": 0.2173,
+    "worst": -0.5592
+   },
+   "concentration": 1.605,
+   "impair_lift": 0.0314,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.605倍(線2.0) 分子15社(線5); c4: 止率19.1%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2013/all/cagr_only/strict": {
+   "vintage": 2013,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 13.09,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 944,
+   "n_used": 942,
+   "n_na": 2,
+   "stop_rate": 0.1911,
+   "base": {
+    "n": 942,
+    "med": 0.08,
+    "impair": 0.051,
+    "n_impair": 48,
+    "loss": 0.2304,
+    "hurdle": 0.2113,
+    "worst": -0.8911
+   },
+   "blocked": {
+    "n": 180,
+    "med": 0.0736,
+    "impair": 0.0833,
+    "n_impair": 15,
+    "loss": 0.2889,
+    "hurdle": 0.1833,
+    "worst": -0.8911
+   },
+   "passed": {
+    "n": 762,
+    "med": 0.0811,
+    "impair": 0.0433,
+    "n_impair": 33,
+    "loss": 0.2165,
+    "hurdle": 0.2178,
+    "worst": -0.5592
+   },
+   "concentration": 1.633,
+   "impair_lift": 0.0323,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.633倍(線2.0) 分子15社(線5); c4: 止率19.1%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2013/all/opm_only/main": {
+   "vintage": 2013,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 13.09,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 944,
+   "n_used": 944,
+   "n_na": 0,
+   "stop_rate": 0.1907,
+   "base": {
+    "n": 944,
+    "med": 0.0798,
+    "impair": 0.0519,
+    "n_impair": 49,
+    "loss": 0.2309,
+    "hurdle": 0.2108,
+    "worst": -0.8911
+   },
+   "blocked": {
+    "n": 180,
+    "med": 0.0914,
+    "impair": 0.0278,
+    "n_impair": 5,
+    "loss": 0.1611,
+    "hurdle": 0.2056,
+    "worst": -0.2079
+   },
+   "passed": {
+    "n": 764,
+    "med": 0.0783,
+    "impair": 0.0576,
+    "n_impair": 44,
+    "loss": 0.2474,
+    "hurdle": 0.212,
+    "worst": -0.8911
+   },
+   "concentration": 0.536,
+   "impair_lift": -0.0241,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮0.536倍(線2.0) 分子5社(線5); c2: 止めた中央値+0.0914 > 通過+0.0783＝勝者を巻き込む; c4: 止率19.1%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2013/all/opm_only/strict": {
+   "vintage": 2013,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 13.09,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 944,
+   "n_used": 449,
+   "n_na": 495,
+   "stop_rate": 0.4009,
+   "base": {
+    "n": 449,
+    "med": 0.0936,
+    "impair": 0.0134,
+    "n_impair": 6,
+    "loss": 0.1381,
+    "hurdle": 0.216,
+    "worst": -0.5265
+   },
+   "blocked": {
+    "n": 180,
+    "med": 0.0914,
+    "impair": 0.0278,
+    "n_impair": 5,
+    "loss": 0.1611,
+    "hurdle": 0.2056,
+    "worst": -0.2079
+   },
+   "passed": {
+    "n": 269,
+    "med": 0.097,
+    "impair": 0.0037,
+    "n_impair": 1,
+    "loss": 0.1227,
+    "hurdle": 0.223,
+    "worst": -0.5265
+   },
+   "concentration": 2.075,
+   "impair_lift": 0.0144,
+   "judge": {
+    "verdict": "不合格",
+    "c1": true,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "止率（遮断器ではなく間引き）",
+    "why": "c4: 止率40.1%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2013/qual/and/main": {
+   "vintage": 2013,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": false,
+   "reach_why": "毀損の実数 3 < 分子の下限 5",
+   "years": 13.09,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 236,
+   "n_used": 236,
+   "n_na": 0,
+   "stop_rate": 0.0297,
+   "base": {
+    "n": 236,
+    "med": 0.0968,
+    "impair": 0.0127,
+    "n_impair": 3,
+    "loss": 0.1356,
+    "hurdle": 0.2076,
+    "worst": -0.5265
+   },
+   "blocked": {
+    "n": 7,
+    "med": 0.0754,
+    "impair": 0.0,
+    "n_impair": 0,
+    "loss": 0.2857,
+    "hurdle": 0.1429,
+    "worst": -0.1443
+   },
+   "passed": {
+    "n": 229,
+    "med": 0.097,
+    "impair": 0.0131,
+    "n_impair": 3,
+    "loss": 0.131,
+    "hurdle": 0.2096,
+    "worst": -0.5265
+   },
+   "concentration": 0.0,
+   "impair_lift": -0.0127,
+   "judge": {
+    "verdict": "判定不能",
+    "why": "毀損の実数 3 < 分子の下限 5",
+    "c1": null,
+    "c2": null,
+    "c4": null
+   }
+  },
+  "2013/qual/and/strict": {
+   "vintage": 2013,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": false,
+   "reach_why": "毀損の実数 3 < 分子の下限 5",
+   "years": 13.09,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 236,
+   "n_used": 221,
+   "n_na": 15,
+   "stop_rate": 0.0317,
+   "base": {
+    "n": 221,
+    "med": 0.0945,
+    "impair": 0.009,
+    "n_impair": 2,
+    "loss": 0.1357,
+    "hurdle": 0.1991,
+    "worst": -0.5265
+   },
+   "blocked": {
+    "n": 7,
+    "med": 0.0754,
+    "impair": 0.0,
+    "n_impair": 0,
+    "loss": 0.2857,
+    "hurdle": 0.1429,
+    "worst": -0.1443
+   },
+   "passed": {
+    "n": 214,
+    "med": 0.0955,
+    "impair": 0.0093,
+    "n_impair": 2,
+    "loss": 0.1308,
+    "hurdle": 0.2009,
+    "worst": -0.5265
+   },
+   "concentration": 0.0,
+   "impair_lift": -0.009,
+   "judge": {
+    "verdict": "判定不能",
+    "why": "毀損の実数 3 < 分子の下限 5",
+    "c1": null,
+    "c2": null,
+    "c4": null
+   }
+  },
+  "2013/qual/cagr_only/main": {
+   "vintage": 2013,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": false,
+   "reach_why": "毀損の実数 3 < 分子の下限 5",
+   "years": 13.09,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 236,
+   "n_used": 236,
+   "n_na": 0,
+   "stop_rate": 0.1314,
+   "base": {
+    "n": 236,
+    "med": 0.0968,
+    "impair": 0.0127,
+    "n_impair": 3,
+    "loss": 0.1356,
+    "hurdle": 0.2076,
+    "worst": -0.5265
+   },
+   "blocked": {
+    "n": 31,
+    "med": 0.0933,
+    "impair": 0.0,
+    "n_impair": 0,
+    "loss": 0.1613,
+    "hurdle": 0.1613,
+    "worst": -0.1443
+   },
+   "passed": {
+    "n": 205,
+    "med": 0.0985,
+    "impair": 0.0146,
+    "n_impair": 3,
+    "loss": 0.1317,
+    "hurdle": 0.2146,
+    "worst": -0.5265
+   },
+   "concentration": 0.0,
+   "impair_lift": -0.0127,
+   "judge": {
+    "verdict": "判定不能",
+    "why": "毀損の実数 3 < 分子の下限 5",
+    "c1": null,
+    "c2": null,
+    "c4": null
+   }
+  },
+  "2013/qual/cagr_only/strict": {
+   "vintage": 2013,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": false,
+   "reach_why": "毀損の実数 3 < 分子の下限 5",
+   "years": 13.09,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 236,
+   "n_used": 236,
+   "n_na": 0,
+   "stop_rate": 0.1314,
+   "base": {
+    "n": 236,
+    "med": 0.0968,
+    "impair": 0.0127,
+    "n_impair": 3,
+    "loss": 0.1356,
+    "hurdle": 0.2076,
+    "worst": -0.5265
+   },
+   "blocked": {
+    "n": 31,
+    "med": 0.0933,
+    "impair": 0.0,
+    "n_impair": 0,
+    "loss": 0.1613,
+    "hurdle": 0.1613,
+    "worst": -0.1443
+   },
+   "passed": {
+    "n": 205,
+    "med": 0.0985,
+    "impair": 0.0146,
+    "n_impair": 3,
+    "loss": 0.1317,
+    "hurdle": 0.2146,
+    "worst": -0.5265
+   },
+   "concentration": 0.0,
+   "impair_lift": -0.0127,
+   "judge": {
+    "verdict": "判定不能",
+    "why": "毀損の実数 3 < 分子の下限 5",
+    "c1": null,
+    "c2": null,
+    "c4": null
+   }
+  },
+  "2013/qual/opm_only/main": {
+   "vintage": 2013,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": false,
+   "reach_why": "毀損の実数 3 < 分子の下限 5",
+   "years": 13.09,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 236,
+   "n_used": 236,
+   "n_na": 0,
+   "stop_rate": 0.3093,
+   "base": {
+    "n": 236,
+    "med": 0.0968,
+    "impair": 0.0127,
+    "n_impair": 3,
+    "loss": 0.1356,
+    "hurdle": 0.2076,
+    "worst": -0.5265
+   },
+   "blocked": {
+    "n": 73,
+    "med": 0.0816,
+    "impair": 0.0137,
+    "n_impair": 1,
+    "loss": 0.1507,
+    "hurdle": 0.1507,
+    "worst": -0.1512
+   },
+   "passed": {
+    "n": 163,
+    "med": 0.1039,
+    "impair": 0.0123,
+    "n_impair": 2,
+    "loss": 0.1288,
+    "hurdle": 0.2331,
+    "worst": -0.5265
+   },
+   "concentration": 1.079,
+   "impair_lift": 0.001,
+   "judge": {
+    "verdict": "判定不能",
+    "why": "毀損の実数 3 < 分子の下限 5",
+    "c1": null,
+    "c2": null,
+    "c4": null
+   }
+  },
+  "2013/qual/opm_only/strict": {
+   "vintage": 2013,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": false,
+   "reach_why": "毀損の実数 3 < 分子の下限 5",
+   "years": 13.09,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 236,
+   "n_used": 221,
+   "n_na": 15,
+   "stop_rate": 0.3303,
+   "base": {
+    "n": 221,
+    "med": 0.0945,
+    "impair": 0.009,
+    "n_impair": 2,
+    "loss": 0.1357,
+    "hurdle": 0.1991,
+    "worst": -0.5265
+   },
+   "blocked": {
+    "n": 73,
+    "med": 0.0816,
+    "impair": 0.0137,
+    "n_impair": 1,
+    "loss": 0.1507,
+    "hurdle": 0.1507,
+    "worst": -0.1512
+   },
+   "passed": {
+    "n": 148,
+    "med": 0.1008,
+    "impair": 0.0068,
+    "n_impair": 1,
+    "loss": 0.1284,
+    "hurdle": 0.223,
+    "worst": -0.5265
+   },
+   "concentration": 1.522,
+   "impair_lift": 0.0047,
+   "judge": {
+    "verdict": "判定不能",
+    "why": "毀損の実数 3 < 分子の下限 5",
+    "c1": null,
+    "c2": null,
+    "c4": null
+   }
+  },
+  "2016/all/and/main": {
+   "vintage": 2016,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 10.09,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.1684,
+   "base": {
+    "n": 956,
+    "med": 0.0821,
+    "impair": 0.0596,
+    "n_impair": 57,
+    "loss": 0.2395,
+    "hurdle": 0.2448,
+    "worst": -0.9163
+   },
+   "blocked": {
+    "n": 161,
+    "med": 0.0763,
+    "impair": 0.087,
+    "n_impair": 14,
+    "loss": 0.3168,
+    "hurdle": 0.2919,
+    "worst": -0.7435
+   },
+   "passed": {
+    "n": 795,
+    "med": 0.0844,
+    "impair": 0.0541,
+    "n_impair": 43,
+    "loss": 0.2239,
+    "hurdle": 0.2352,
+    "worst": -0.9163
+   },
+   "concentration": 1.46,
+   "impair_lift": 0.0274,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.46倍(線2.0) 分子14社(線5); c4: 止率16.8%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2016/all/and/strict": {
+   "vintage": 2016,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 10.09,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 878,
+   "n_na": 78,
+   "stop_rate": 0.1834,
+   "base": {
+    "n": 878,
+    "med": 0.0784,
+    "impair": 0.0626,
+    "n_impair": 55,
+    "loss": 0.2403,
+    "hurdle": 0.2426,
+    "worst": -0.9163
+   },
+   "blocked": {
+    "n": 161,
+    "med": 0.0763,
+    "impair": 0.087,
+    "n_impair": 14,
+    "loss": 0.3168,
+    "hurdle": 0.2919,
+    "worst": -0.7435
+   },
+   "passed": {
+    "n": 717,
+    "med": 0.083,
+    "impair": 0.0572,
+    "n_impair": 41,
+    "loss": 0.2232,
+    "hurdle": 0.2315,
+    "worst": -0.9163
+   },
+   "concentration": 1.39,
+   "impair_lift": 0.0244,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.39倍(線2.0) 分子14社(線5); c4: 止率18.3%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2016/all/cagr_only/main": {
+   "vintage": 2016,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 10.09,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.2887,
+   "base": {
+    "n": 956,
+    "med": 0.0821,
+    "impair": 0.0596,
+    "n_impair": 57,
+    "loss": 0.2395,
+    "hurdle": 0.2448,
+    "worst": -0.9163
+   },
+   "blocked": {
+    "n": 276,
+    "med": 0.081,
+    "impair": 0.0688,
+    "n_impair": 19,
+    "loss": 0.2754,
+    "hurdle": 0.2862,
+    "worst": -0.9163
+   },
+   "passed": {
+    "n": 680,
+    "med": 0.0822,
+    "impair": 0.0559,
+    "n_impair": 38,
+    "loss": 0.225,
+    "hurdle": 0.2279,
+    "worst": -0.6982
+   },
+   "concentration": 1.154,
+   "impair_lift": 0.0092,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.154倍(線2.0) 分子19社(線5); c4: 止率28.9%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2016/all/cagr_only/strict": {
+   "vintage": 2016,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 10.09,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.2887,
+   "base": {
+    "n": 956,
+    "med": 0.0821,
+    "impair": 0.0596,
+    "n_impair": 57,
+    "loss": 0.2395,
+    "hurdle": 0.2448,
+    "worst": -0.9163
+   },
+   "blocked": {
+    "n": 276,
+    "med": 0.081,
+    "impair": 0.0688,
+    "n_impair": 19,
+    "loss": 0.2754,
+    "hurdle": 0.2862,
+    "worst": -0.9163
+   },
+   "passed": {
+    "n": 680,
+    "med": 0.0822,
+    "impair": 0.0559,
+    "n_impair": 38,
+    "loss": 0.225,
+    "hurdle": 0.2279,
+    "worst": -0.6982
+   },
+   "concentration": 1.154,
+   "impair_lift": 0.0092,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.154倍(線2.0) 分子19社(線5); c4: 止率28.9%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2016/all/opm_only/main": {
+   "vintage": 2016,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 10.09,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.477,
+   "base": {
+    "n": 956,
+    "med": 0.0821,
+    "impair": 0.0596,
+    "n_impair": 57,
+    "loss": 0.2395,
+    "hurdle": 0.2448,
+    "worst": -0.9163
+   },
+   "blocked": {
+    "n": 456,
+    "med": 0.0822,
+    "impair": 0.0702,
+    "n_impair": 32,
+    "loss": 0.2632,
+    "hurdle": 0.2763,
+    "worst": -0.7435
+   },
+   "passed": {
+    "n": 500,
+    "med": 0.0816,
+    "impair": 0.05,
+    "n_impair": 25,
+    "loss": 0.218,
+    "hurdle": 0.216,
+    "worst": -0.9163
+   },
+   "concentration": 1.178,
+   "impair_lift": 0.0106,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.178倍(線2.0) 分子32社(線5); c2: 止めた中央値+0.0822 > 通過+0.0816＝勝者を巻き込む; c4: 止率47.7%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2016/all/opm_only/strict": {
+   "vintage": 2016,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 10.09,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 878,
+   "n_na": 78,
+   "stop_rate": 0.5194,
+   "base": {
+    "n": 878,
+    "med": 0.0784,
+    "impair": 0.0626,
+    "n_impair": 55,
+    "loss": 0.2403,
+    "hurdle": 0.2426,
+    "worst": -0.9163
+   },
+   "blocked": {
+    "n": 456,
+    "med": 0.0822,
+    "impair": 0.0702,
+    "n_impair": 32,
+    "loss": 0.2632,
+    "hurdle": 0.2763,
+    "worst": -0.7435
+   },
+   "passed": {
+    "n": 422,
+    "med": 0.0764,
+    "impair": 0.0545,
+    "n_impair": 23,
+    "loss": 0.2156,
+    "hurdle": 0.2062,
+    "worst": -0.9163
+   },
+   "concentration": 1.121,
+   "impair_lift": 0.0076,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.121倍(線2.0) 分子32社(線5); c2: 止めた中央値+0.0822 > 通過+0.0764＝勝者を巻き込む; c4: 止率51.9%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2016/qual/and/main": {
+   "vintage": 2016,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 10.09,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 329,
+   "n_used": 329,
+   "n_na": 0,
+   "stop_rate": 0.0851,
+   "base": {
+    "n": 329,
+    "med": 0.086,
+    "impair": 0.0213,
+    "n_impair": 7,
+    "loss": 0.152,
+    "hurdle": 0.1976,
+    "worst": -0.6338
+   },
+   "blocked": {
+    "n": 28,
+    "med": 0.0851,
+    "impair": 0.0357,
+    "n_impair": 1,
+    "loss": 0.1429,
+    "hurdle": 0.2857,
+    "worst": -0.1703
+   },
+   "passed": {
+    "n": 301,
+    "med": 0.0867,
+    "impair": 0.0199,
+    "n_impair": 6,
+    "loss": 0.1528,
+    "hurdle": 0.1894,
+    "worst": -0.6338
+   },
+   "concentration": 1.676,
+   "impair_lift": 0.0144,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮1.676倍(線2.0) 分子1社(線5)"
+   }
+  },
+  "2016/qual/and/strict": {
+   "vintage": 2016,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 10.09,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 329,
+   "n_used": 325,
+   "n_na": 4,
+   "stop_rate": 0.0862,
+   "base": {
+    "n": 325,
+    "med": 0.0867,
+    "impair": 0.0215,
+    "n_impair": 7,
+    "loss": 0.1477,
+    "hurdle": 0.1969,
+    "worst": -0.6338
+   },
+   "blocked": {
+    "n": 28,
+    "med": 0.0851,
+    "impair": 0.0357,
+    "n_impair": 1,
+    "loss": 0.1429,
+    "hurdle": 0.2857,
+    "worst": -0.1703
+   },
+   "passed": {
+    "n": 297,
+    "med": 0.087,
+    "impair": 0.0202,
+    "n_impair": 6,
+    "loss": 0.1481,
+    "hurdle": 0.1886,
+    "worst": -0.6338
+   },
+   "concentration": 1.66,
+   "impair_lift": 0.0142,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮1.66倍(線2.0) 分子1社(線5)"
+   }
+  },
+  "2016/qual/cagr_only/main": {
+   "vintage": 2016,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 10.09,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 329,
+   "n_used": 329,
+   "n_na": 0,
+   "stop_rate": 0.1641,
+   "base": {
+    "n": 329,
+    "med": 0.086,
+    "impair": 0.0213,
+    "n_impair": 7,
+    "loss": 0.152,
+    "hurdle": 0.1976,
+    "worst": -0.6338
+   },
+   "blocked": {
+    "n": 54,
+    "med": 0.0969,
+    "impair": 0.0185,
+    "n_impair": 1,
+    "loss": 0.1296,
+    "hurdle": 0.2593,
+    "worst": -0.1703
+   },
+   "passed": {
+    "n": 275,
+    "med": 0.0747,
+    "impair": 0.0218,
+    "n_impair": 6,
+    "loss": 0.1564,
+    "hurdle": 0.1855,
+    "worst": -0.6338
+   },
+   "concentration": 0.869,
+   "impair_lift": -0.0028,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": false,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.869倍(線2.0) 分子1社(線5); c2: 止めた中央値+0.0969 > 通過+0.0747＝勝者を巻き込む; c4: 止率16.4%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2016/qual/cagr_only/strict": {
+   "vintage": 2016,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 10.09,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 329,
+   "n_used": 329,
+   "n_na": 0,
+   "stop_rate": 0.1641,
+   "base": {
+    "n": 329,
+    "med": 0.086,
+    "impair": 0.0213,
+    "n_impair": 7,
+    "loss": 0.152,
+    "hurdle": 0.1976,
+    "worst": -0.6338
+   },
+   "blocked": {
+    "n": 54,
+    "med": 0.0969,
+    "impair": 0.0185,
+    "n_impair": 1,
+    "loss": 0.1296,
+    "hurdle": 0.2593,
+    "worst": -0.1703
+   },
+   "passed": {
+    "n": 275,
+    "med": 0.0747,
+    "impair": 0.0218,
+    "n_impair": 6,
+    "loss": 0.1564,
+    "hurdle": 0.1855,
+    "worst": -0.6338
+   },
+   "concentration": 0.869,
+   "impair_lift": -0.0028,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": false,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.869倍(線2.0) 分子1社(線5); c2: 止めた中央値+0.0969 > 通過+0.0747＝勝者を巻き込む; c4: 止率16.4%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2016/qual/opm_only/main": {
+   "vintage": 2016,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 10.09,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 329,
+   "n_used": 329,
+   "n_na": 0,
+   "stop_rate": 0.3891,
+   "base": {
+    "n": 329,
+    "med": 0.086,
+    "impair": 0.0213,
+    "n_impair": 7,
+    "loss": 0.152,
+    "hurdle": 0.1976,
+    "worst": -0.6338
+   },
+   "blocked": {
+    "n": 128,
+    "med": 0.0926,
+    "impair": 0.0391,
+    "n_impair": 5,
+    "loss": 0.1641,
+    "hurdle": 0.2344,
+    "worst": -0.6338
+   },
+   "passed": {
+    "n": 201,
+    "med": 0.0772,
+    "impair": 0.01,
+    "n_impair": 2,
+    "loss": 0.1443,
+    "hurdle": 0.1741,
+    "worst": -0.1783
+   },
+   "concentration": 1.836,
+   "impair_lift": 0.0178,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.836倍(線2.0) 分子5社(線5); c2: 止めた中央値+0.0926 > 通過+0.0772＝勝者を巻き込む; c4: 止率38.9%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2016/qual/opm_only/strict": {
+   "vintage": 2016,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 10.09,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 329,
+   "n_used": 325,
+   "n_na": 4,
+   "stop_rate": 0.3938,
+   "base": {
+    "n": 325,
+    "med": 0.0867,
+    "impair": 0.0215,
+    "n_impair": 7,
+    "loss": 0.1477,
+    "hurdle": 0.1969,
+    "worst": -0.6338
+   },
+   "blocked": {
+    "n": 128,
+    "med": 0.0926,
+    "impair": 0.0391,
+    "n_impair": 5,
+    "loss": 0.1641,
+    "hurdle": 0.2344,
+    "worst": -0.6338
+   },
+   "passed": {
+    "n": 197,
+    "med": 0.0844,
+    "impair": 0.0102,
+    "n_impair": 2,
+    "loss": 0.1371,
+    "hurdle": 0.1726,
+    "worst": -0.1783
+   },
+   "concentration": 1.819,
+   "impair_lift": 0.0176,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.819倍(線2.0) 分子5社(線5); c2: 止めた中央値+0.0926 > 通過+0.0844＝勝者を巻き込む; c4: 止率39.4%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2017/all/and/main": {
+   "vintage": 2017,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 9.09,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.1768,
+   "base": {
+    "n": 956,
+    "med": 0.0732,
+    "impair": 0.0638,
+    "n_impair": 61,
+    "loss": 0.2678,
+    "hurdle": 0.2354,
+    "worst": -0.8463
+   },
+   "blocked": {
+    "n": 169,
+    "med": 0.0608,
+    "impair": 0.1065,
+    "n_impair": 18,
+    "loss": 0.3195,
+    "hurdle": 0.2485,
+    "worst": -0.7666
+   },
+   "passed": {
+    "n": 787,
+    "med": 0.0768,
+    "impair": 0.0546,
+    "n_impair": 43,
+    "loss": 0.2567,
+    "hurdle": 0.2325,
+    "worst": -0.8463
+   },
+   "concentration": 1.669,
+   "impair_lift": 0.0427,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.669倍(線2.0) 分子18社(線5); c4: 止率17.7%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2017/all/and/strict": {
+   "vintage": 2017,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 9.09,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 874,
+   "n_na": 82,
+   "stop_rate": 0.1934,
+   "base": {
+    "n": 874,
+    "med": 0.0718,
+    "impair": 0.0686,
+    "n_impair": 60,
+    "loss": 0.2666,
+    "hurdle": 0.2323,
+    "worst": -0.8463
+   },
+   "blocked": {
+    "n": 169,
+    "med": 0.0608,
+    "impair": 0.1065,
+    "n_impair": 18,
+    "loss": 0.3195,
+    "hurdle": 0.2485,
+    "worst": -0.7666
+   },
+   "passed": {
+    "n": 705,
+    "med": 0.0753,
+    "impair": 0.0596,
+    "n_impair": 42,
+    "loss": 0.2539,
+    "hurdle": 0.2284,
+    "worst": -0.8463
+   },
+   "concentration": 1.552,
+   "impair_lift": 0.0379,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.552倍(線2.0) 分子18社(線5); c4: 止率19.3%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2017/all/cagr_only/main": {
+   "vintage": 2017,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 9.09,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.3096,
+   "base": {
+    "n": 956,
+    "med": 0.0732,
+    "impair": 0.0638,
+    "n_impair": 61,
+    "loss": 0.2678,
+    "hurdle": 0.2354,
+    "worst": -0.8463
+   },
+   "blocked": {
+    "n": 296,
+    "med": 0.0699,
+    "impair": 0.0811,
+    "n_impair": 24,
+    "loss": 0.2905,
+    "hurdle": 0.25,
+    "worst": -0.8463
+   },
+   "passed": {
+    "n": 660,
+    "med": 0.0772,
+    "impair": 0.0561,
+    "n_impair": 37,
+    "loss": 0.2576,
+    "hurdle": 0.2288,
+    "worst": -0.7013
+   },
+   "concentration": 1.271,
+   "impair_lift": 0.0173,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.271倍(線2.0) 分子24社(線5); c4: 止率31.0%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2017/all/cagr_only/strict": {
+   "vintage": 2017,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 9.09,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.3096,
+   "base": {
+    "n": 956,
+    "med": 0.0732,
+    "impair": 0.0638,
+    "n_impair": 61,
+    "loss": 0.2678,
+    "hurdle": 0.2354,
+    "worst": -0.8463
+   },
+   "blocked": {
+    "n": 296,
+    "med": 0.0699,
+    "impair": 0.0811,
+    "n_impair": 24,
+    "loss": 0.2905,
+    "hurdle": 0.25,
+    "worst": -0.8463
+   },
+   "passed": {
+    "n": 660,
+    "med": 0.0772,
+    "impair": 0.0561,
+    "n_impair": 37,
+    "loss": 0.2576,
+    "hurdle": 0.2288,
+    "worst": -0.7013
+   },
+   "concentration": 1.271,
+   "impair_lift": 0.0173,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.271倍(線2.0) 分子24社(線5); c4: 止率31.0%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2017/all/opm_only/main": {
+   "vintage": 2017,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 9.09,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.4791,
+   "base": {
+    "n": 956,
+    "med": 0.0732,
+    "impair": 0.0638,
+    "n_impair": 61,
+    "loss": 0.2678,
+    "hurdle": 0.2354,
+    "worst": -0.8463
+   },
+   "blocked": {
+    "n": 458,
+    "med": 0.0674,
+    "impair": 0.0895,
+    "n_impair": 41,
+    "loss": 0.2926,
+    "hurdle": 0.2336,
+    "worst": -0.7666
+   },
+   "passed": {
+    "n": 498,
+    "med": 0.0785,
+    "impair": 0.0402,
+    "n_impair": 20,
+    "loss": 0.245,
+    "hurdle": 0.2369,
+    "worst": -0.8463
+   },
+   "concentration": 1.403,
+   "impair_lift": 0.0257,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.403倍(線2.0) 分子41社(線5); c4: 止率47.9%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2017/all/opm_only/strict": {
+   "vintage": 2017,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 9.09,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 874,
+   "n_na": 82,
+   "stop_rate": 0.524,
+   "base": {
+    "n": 874,
+    "med": 0.0718,
+    "impair": 0.0686,
+    "n_impair": 60,
+    "loss": 0.2666,
+    "hurdle": 0.2323,
+    "worst": -0.8463
+   },
+   "blocked": {
+    "n": 458,
+    "med": 0.0674,
+    "impair": 0.0895,
+    "n_impair": 41,
+    "loss": 0.2926,
+    "hurdle": 0.2336,
+    "worst": -0.7666
+   },
+   "passed": {
+    "n": 416,
+    "med": 0.0756,
+    "impair": 0.0457,
+    "n_impair": 19,
+    "loss": 0.238,
+    "hurdle": 0.2308,
+    "worst": -0.8463
+   },
+   "concentration": 1.305,
+   "impair_lift": 0.0209,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.305倍(線2.0) 分子41社(線5); c4: 止率52.4%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2017/qual/and/main": {
+   "vintage": 2017,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": false,
+   "reach_why": "毀損の実数 4 < 分子の下限 5",
+   "years": 9.09,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 327,
+   "n_used": 327,
+   "n_na": 0,
+   "stop_rate": 0.0459,
+   "base": {
+    "n": 327,
+    "med": 0.0835,
+    "impair": 0.0122,
+    "n_impair": 4,
+    "loss": 0.2018,
+    "hurdle": 0.2018,
+    "worst": -0.5551
+   },
+   "blocked": {
+    "n": 15,
+    "med": 0.1058,
+    "impair": 0.0,
+    "n_impair": 0,
+    "loss": 0.0667,
+    "hurdle": 0.3333,
+    "worst": -0.0786
+   },
+   "passed": {
+    "n": 312,
+    "med": 0.078,
+    "impair": 0.0128,
+    "n_impair": 4,
+    "loss": 0.2083,
+    "hurdle": 0.1955,
+    "worst": -0.5551
+   },
+   "concentration": 0.0,
+   "impair_lift": -0.0122,
+   "judge": {
+    "verdict": "判定不能",
+    "why": "毀損の実数 4 < 分子の下限 5",
+    "c1": null,
+    "c2": null,
+    "c4": null
+   }
+  },
+  "2017/qual/and/strict": {
+   "vintage": 2017,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": false,
+   "reach_why": "毀損の実数 4 < 分子の下限 5",
+   "years": 9.09,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 327,
+   "n_used": 324,
+   "n_na": 3,
+   "stop_rate": 0.0463,
+   "base": {
+    "n": 324,
+    "med": 0.0817,
+    "impair": 0.0123,
+    "n_impair": 4,
+    "loss": 0.2006,
+    "hurdle": 0.2037,
+    "worst": -0.5551
+   },
+   "blocked": {
+    "n": 15,
+    "med": 0.1058,
+    "impair": 0.0,
+    "n_impair": 0,
+    "loss": 0.0667,
+    "hurdle": 0.3333,
+    "worst": -0.0786
+   },
+   "passed": {
+    "n": 309,
+    "med": 0.077,
+    "impair": 0.0129,
+    "n_impair": 4,
+    "loss": 0.2071,
+    "hurdle": 0.1974,
+    "worst": -0.5551
+   },
+   "concentration": 0.0,
+   "impair_lift": -0.0123,
+   "judge": {
+    "verdict": "判定不能",
+    "why": "毀損の実数 4 < 分子の下限 5",
+    "c1": null,
+    "c2": null,
+    "c4": null
+   }
+  },
+  "2017/qual/cagr_only/main": {
+   "vintage": 2017,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": false,
+   "reach_why": "毀損の実数 4 < 分子の下限 5",
+   "years": 9.09,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 327,
+   "n_used": 327,
+   "n_na": 0,
+   "stop_rate": 0.1743,
+   "base": {
+    "n": 327,
+    "med": 0.0835,
+    "impair": 0.0122,
+    "n_impair": 4,
+    "loss": 0.2018,
+    "hurdle": 0.2018,
+    "worst": -0.5551
+   },
+   "blocked": {
+    "n": 57,
+    "med": 0.0963,
+    "impair": 0.0,
+    "n_impair": 0,
+    "loss": 0.1228,
+    "hurdle": 0.2105,
+    "worst": -0.0786
+   },
+   "passed": {
+    "n": 270,
+    "med": 0.0762,
+    "impair": 0.0148,
+    "n_impair": 4,
+    "loss": 0.2185,
+    "hurdle": 0.2,
+    "worst": -0.5551
+   },
+   "concentration": 0.0,
+   "impair_lift": -0.0122,
+   "judge": {
+    "verdict": "判定不能",
+    "why": "毀損の実数 4 < 分子の下限 5",
+    "c1": null,
+    "c2": null,
+    "c4": null
+   }
+  },
+  "2017/qual/cagr_only/strict": {
+   "vintage": 2017,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": false,
+   "reach_why": "毀損の実数 4 < 分子の下限 5",
+   "years": 9.09,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 327,
+   "n_used": 327,
+   "n_na": 0,
+   "stop_rate": 0.1743,
+   "base": {
+    "n": 327,
+    "med": 0.0835,
+    "impair": 0.0122,
+    "n_impair": 4,
+    "loss": 0.2018,
+    "hurdle": 0.2018,
+    "worst": -0.5551
+   },
+   "blocked": {
+    "n": 57,
+    "med": 0.0963,
+    "impair": 0.0,
+    "n_impair": 0,
+    "loss": 0.1228,
+    "hurdle": 0.2105,
+    "worst": -0.0786
+   },
+   "passed": {
+    "n": 270,
+    "med": 0.0762,
+    "impair": 0.0148,
+    "n_impair": 4,
+    "loss": 0.2185,
+    "hurdle": 0.2,
+    "worst": -0.5551
+   },
+   "concentration": 0.0,
+   "impair_lift": -0.0122,
+   "judge": {
+    "verdict": "判定不能",
+    "why": "毀損の実数 4 < 分子の下限 5",
+    "c1": null,
+    "c2": null,
+    "c4": null
+   }
+  },
+  "2017/qual/opm_only/main": {
+   "vintage": 2017,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": false,
+   "reach_why": "毀損の実数 4 < 分子の下限 5",
+   "years": 9.09,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 327,
+   "n_used": 327,
+   "n_na": 0,
+   "stop_rate": 0.3792,
+   "base": {
+    "n": 327,
+    "med": 0.0835,
+    "impair": 0.0122,
+    "n_impair": 4,
+    "loss": 0.2018,
+    "hurdle": 0.2018,
+    "worst": -0.5551
+   },
+   "blocked": {
+    "n": 124,
+    "med": 0.0959,
+    "impair": 0.0242,
+    "n_impair": 3,
+    "loss": 0.2097,
+    "hurdle": 0.25,
+    "worst": -0.5551
+   },
+   "passed": {
+    "n": 203,
+    "med": 0.0725,
+    "impair": 0.0049,
+    "n_impair": 1,
+    "loss": 0.197,
+    "hurdle": 0.1724,
+    "worst": -0.1532
+   },
+   "concentration": 1.984,
+   "impair_lift": 0.012,
+   "judge": {
+    "verdict": "判定不能",
+    "why": "毀損の実数 4 < 分子の下限 5",
+    "c1": null,
+    "c2": null,
+    "c4": null
+   }
+  },
+  "2017/qual/opm_only/strict": {
+   "vintage": 2017,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": false,
+   "reach_why": "毀損の実数 4 < 分子の下限 5",
+   "years": 9.09,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 327,
+   "n_used": 324,
+   "n_na": 3,
+   "stop_rate": 0.3827,
+   "base": {
+    "n": 324,
+    "med": 0.0817,
+    "impair": 0.0123,
+    "n_impair": 4,
+    "loss": 0.2006,
+    "hurdle": 0.2037,
+    "worst": -0.5551
+   },
+   "blocked": {
+    "n": 124,
+    "med": 0.0959,
+    "impair": 0.0242,
+    "n_impair": 3,
+    "loss": 0.2097,
+    "hurdle": 0.25,
+    "worst": -0.5551
+   },
+   "passed": {
+    "n": 200,
+    "med": 0.0722,
+    "impair": 0.005,
+    "n_impair": 1,
+    "loss": 0.195,
+    "hurdle": 0.175,
+    "worst": -0.1532
+   },
+   "concentration": 1.967,
+   "impair_lift": 0.0119,
+   "judge": {
+    "verdict": "判定不能",
+    "why": "毀損の実数 4 < 分子の下限 5",
+    "c1": null,
+    "c2": null,
+    "c4": null
+   }
+  },
+  "2018/all/and/main": {
+   "vintage": 2018,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 8.09,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.1485,
+   "base": {
+    "n": 956,
+    "med": 0.0669,
+    "impair": 0.0805,
+    "n_impair": 77,
+    "loss": 0.3033,
+    "hurdle": 0.2123,
+    "worst": -0.8017
+   },
+   "blocked": {
+    "n": 142,
+    "med": 0.0282,
+    "impair": 0.1479,
+    "n_impair": 21,
+    "loss": 0.4225,
+    "hurdle": 0.1901,
+    "worst": -0.8017
+   },
+   "passed": {
+    "n": 814,
+    "med": 0.0714,
+    "impair": 0.0688,
+    "n_impair": 56,
+    "loss": 0.2826,
+    "hurdle": 0.2162,
+    "worst": -0.7716
+   },
+   "concentration": 1.837,
+   "impair_lift": 0.0674,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": true,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.837倍(線2.0) 分子21社(線5)"
+   }
+  },
+  "2018/all/and/strict": {
+   "vintage": 2018,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 8.09,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 878,
+   "n_na": 78,
+   "stop_rate": 0.1617,
+   "base": {
+    "n": 878,
+    "med": 0.0659,
+    "impair": 0.082,
+    "n_impair": 72,
+    "loss": 0.3018,
+    "hurdle": 0.2107,
+    "worst": -0.8017
+   },
+   "blocked": {
+    "n": 142,
+    "med": 0.0282,
+    "impair": 0.1479,
+    "n_impair": 21,
+    "loss": 0.4225,
+    "hurdle": 0.1901,
+    "worst": -0.8017
+   },
+   "passed": {
+    "n": 736,
+    "med": 0.0706,
+    "impair": 0.0693,
+    "n_impair": 51,
+    "loss": 0.2785,
+    "hurdle": 0.2147,
+    "worst": -0.7716
+   },
+   "concentration": 1.804,
+   "impair_lift": 0.0659,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.804倍(線2.0) 分子21社(線5); c4: 止率16.2%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2018/all/cagr_only/main": {
+   "vintage": 2018,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 8.09,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.2856,
+   "base": {
+    "n": 956,
+    "med": 0.0669,
+    "impair": 0.0805,
+    "n_impair": 77,
+    "loss": 0.3033,
+    "hurdle": 0.2123,
+    "worst": -0.8017
+   },
+   "blocked": {
+    "n": 273,
+    "med": 0.0566,
+    "impair": 0.1062,
+    "n_impair": 29,
+    "loss": 0.3626,
+    "hurdle": 0.2051,
+    "worst": -0.8017
+   },
+   "passed": {
+    "n": 683,
+    "med": 0.0717,
+    "impair": 0.0703,
+    "n_impair": 48,
+    "loss": 0.2796,
+    "hurdle": 0.2152,
+    "worst": -0.7716
+   },
+   "concentration": 1.319,
+   "impair_lift": 0.0257,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.319倍(線2.0) 分子29社(線5); c4: 止率28.6%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2018/all/cagr_only/strict": {
+   "vintage": 2018,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 8.09,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 955,
+   "n_na": 1,
+   "stop_rate": 0.2859,
+   "base": {
+    "n": 955,
+    "med": 0.0674,
+    "impair": 0.0796,
+    "n_impair": 76,
+    "loss": 0.3026,
+    "hurdle": 0.2126,
+    "worst": -0.8017
+   },
+   "blocked": {
+    "n": 273,
+    "med": 0.0566,
+    "impair": 0.1062,
+    "n_impair": 29,
+    "loss": 0.3626,
+    "hurdle": 0.2051,
+    "worst": -0.8017
+   },
+   "passed": {
+    "n": 682,
+    "med": 0.0718,
+    "impair": 0.0689,
+    "n_impair": 47,
+    "loss": 0.2786,
+    "hurdle": 0.2155,
+    "worst": -0.7716
+   },
+   "concentration": 1.334,
+   "impair_lift": 0.0266,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.334倍(線2.0) 分子29社(線5); c4: 止率28.6%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2018/all/opm_only/main": {
+   "vintage": 2018,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 8.09,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.4644,
+   "base": {
+    "n": 956,
+    "med": 0.0669,
+    "impair": 0.0805,
+    "n_impair": 77,
+    "loss": 0.3033,
+    "hurdle": 0.2123,
+    "worst": -0.8017
+   },
+   "blocked": {
+    "n": 444,
+    "med": 0.0522,
+    "impair": 0.1036,
+    "n_impair": 46,
+    "loss": 0.3536,
+    "hurdle": 0.1914,
+    "worst": -0.8017
+   },
+   "passed": {
+    "n": 512,
+    "med": 0.0813,
+    "impair": 0.0605,
+    "n_impair": 31,
+    "loss": 0.2598,
+    "hurdle": 0.2305,
+    "worst": -0.7409
+   },
+   "concentration": 1.287,
+   "impair_lift": 0.0231,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.287倍(線2.0) 分子46社(線5); c4: 止率46.4%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2018/all/opm_only/strict": {
+   "vintage": 2018,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 8.09,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 878,
+   "n_na": 78,
+   "stop_rate": 0.5057,
+   "base": {
+    "n": 878,
+    "med": 0.0659,
+    "impair": 0.082,
+    "n_impair": 72,
+    "loss": 0.3018,
+    "hurdle": 0.2107,
+    "worst": -0.8017
+   },
+   "blocked": {
+    "n": 444,
+    "med": 0.0522,
+    "impair": 0.1036,
+    "n_impair": 46,
+    "loss": 0.3536,
+    "hurdle": 0.1914,
+    "worst": -0.8017
+   },
+   "passed": {
+    "n": 434,
+    "med": 0.0806,
+    "impair": 0.0599,
+    "n_impair": 26,
+    "loss": 0.2488,
+    "hurdle": 0.2304,
+    "worst": -0.6808
+   },
+   "concentration": 1.263,
+   "impair_lift": 0.0216,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.263倍(線2.0) 分子46社(線5); c4: 止率50.6%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2018/qual/and/main": {
+   "vintage": 2018,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 8.09,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 340,
+   "n_used": 340,
+   "n_na": 0,
+   "stop_rate": 0.0676,
+   "base": {
+    "n": 340,
+    "med": 0.0736,
+    "impair": 0.0294,
+    "n_impair": 10,
+    "loss": 0.2471,
+    "hurdle": 0.1971,
+    "worst": -0.706
+   },
+   "blocked": {
+    "n": 23,
+    "med": 0.0522,
+    "impair": 0.1304,
+    "n_impair": 3,
+    "loss": 0.3478,
+    "hurdle": 0.2174,
+    "worst": -0.3182
+   },
+   "passed": {
+    "n": 317,
+    "med": 0.0762,
+    "impair": 0.0221,
+    "n_impair": 7,
+    "loss": 0.2397,
+    "hurdle": 0.1956,
+    "worst": -0.706
+   },
+   "concentration": 4.435,
+   "impair_lift": 0.101,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮4.435倍(線2.0) 分子3社(線5)"
+   }
+  },
+  "2018/qual/and/strict": {
+   "vintage": 2018,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 8.09,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 340,
+   "n_used": 340,
+   "n_na": 0,
+   "stop_rate": 0.0676,
+   "base": {
+    "n": 340,
+    "med": 0.0736,
+    "impair": 0.0294,
+    "n_impair": 10,
+    "loss": 0.2471,
+    "hurdle": 0.1971,
+    "worst": -0.706
+   },
+   "blocked": {
+    "n": 23,
+    "med": 0.0522,
+    "impair": 0.1304,
+    "n_impair": 3,
+    "loss": 0.3478,
+    "hurdle": 0.2174,
+    "worst": -0.3182
+   },
+   "passed": {
+    "n": 317,
+    "med": 0.0762,
+    "impair": 0.0221,
+    "n_impair": 7,
+    "loss": 0.2397,
+    "hurdle": 0.1956,
+    "worst": -0.706
+   },
+   "concentration": 4.435,
+   "impair_lift": 0.101,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮4.435倍(線2.0) 分子3社(線5)"
+   }
+  },
+  "2018/qual/cagr_only/main": {
+   "vintage": 2018,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 8.09,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 340,
+   "n_used": 340,
+   "n_na": 0,
+   "stop_rate": 0.1941,
+   "base": {
+    "n": 340,
+    "med": 0.0736,
+    "impair": 0.0294,
+    "n_impair": 10,
+    "loss": 0.2471,
+    "hurdle": 0.1971,
+    "worst": -0.706
+   },
+   "blocked": {
+    "n": 66,
+    "med": 0.058,
+    "impair": 0.0606,
+    "n_impair": 4,
+    "loss": 0.2879,
+    "hurdle": 0.2121,
+    "worst": -0.3182
+   },
+   "passed": {
+    "n": 274,
+    "med": 0.0777,
+    "impair": 0.0219,
+    "n_impair": 6,
+    "loss": 0.2372,
+    "hurdle": 0.1934,
+    "worst": -0.706
+   },
+   "concentration": 2.061,
+   "impair_lift": 0.0312,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮2.061倍(線2.0) 分子4社(線5); c4: 止率19.4%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2018/qual/cagr_only/strict": {
+   "vintage": 2018,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 8.09,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 340,
+   "n_used": 340,
+   "n_na": 0,
+   "stop_rate": 0.1941,
+   "base": {
+    "n": 340,
+    "med": 0.0736,
+    "impair": 0.0294,
+    "n_impair": 10,
+    "loss": 0.2471,
+    "hurdle": 0.1971,
+    "worst": -0.706
+   },
+   "blocked": {
+    "n": 66,
+    "med": 0.058,
+    "impair": 0.0606,
+    "n_impair": 4,
+    "loss": 0.2879,
+    "hurdle": 0.2121,
+    "worst": -0.3182
+   },
+   "passed": {
+    "n": 274,
+    "med": 0.0777,
+    "impair": 0.0219,
+    "n_impair": 6,
+    "loss": 0.2372,
+    "hurdle": 0.1934,
+    "worst": -0.706
+   },
+   "concentration": 2.061,
+   "impair_lift": 0.0312,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮2.061倍(線2.0) 分子4社(線5); c4: 止率19.4%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2018/qual/opm_only/main": {
+   "vintage": 2018,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 8.09,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 340,
+   "n_used": 340,
+   "n_na": 0,
+   "stop_rate": 0.3676,
+   "base": {
+    "n": 340,
+    "med": 0.0736,
+    "impair": 0.0294,
+    "n_impair": 10,
+    "loss": 0.2471,
+    "hurdle": 0.1971,
+    "worst": -0.706
+   },
+   "blocked": {
+    "n": 125,
+    "med": 0.0603,
+    "impair": 0.04,
+    "n_impair": 5,
+    "loss": 0.288,
+    "hurdle": 0.168,
+    "worst": -0.706
+   },
+   "passed": {
+    "n": 215,
+    "med": 0.0814,
+    "impair": 0.0233,
+    "n_impair": 5,
+    "loss": 0.2233,
+    "hurdle": 0.214,
+    "worst": -0.2646
+   },
+   "concentration": 1.361,
+   "impair_lift": 0.0106,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.361倍(線2.0) 分子5社(線5); c4: 止率36.8%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2018/qual/opm_only/strict": {
+   "vintage": 2018,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 8.09,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 340,
+   "n_used": 340,
+   "n_na": 0,
+   "stop_rate": 0.3676,
+   "base": {
+    "n": 340,
+    "med": 0.0736,
+    "impair": 0.0294,
+    "n_impair": 10,
+    "loss": 0.2471,
+    "hurdle": 0.1971,
+    "worst": -0.706
+   },
+   "blocked": {
+    "n": 125,
+    "med": 0.0603,
+    "impair": 0.04,
+    "n_impair": 5,
+    "loss": 0.288,
+    "hurdle": 0.168,
+    "worst": -0.706
+   },
+   "passed": {
+    "n": 215,
+    "med": 0.0814,
+    "impair": 0.0233,
+    "n_impair": 5,
+    "loss": 0.2233,
+    "hurdle": 0.214,
+    "worst": -0.2646
+   },
+   "concentration": 1.361,
+   "impair_lift": 0.0106,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.361倍(線2.0) 分子5社(線5); c4: 止率36.8%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2019/all/and/main": {
+   "vintage": 2019,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 7.08,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.1433,
+   "base": {
+    "n": 956,
+    "med": 0.068,
+    "impair": 0.0711,
+    "n_impair": 68,
+    "loss": 0.2877,
+    "hurdle": 0.25,
+    "worst": -0.845
+   },
+   "blocked": {
+    "n": 137,
+    "med": 0.0598,
+    "impair": 0.0803,
+    "n_impair": 11,
+    "loss": 0.3577,
+    "hurdle": 0.2555,
+    "worst": -0.845
+   },
+   "passed": {
+    "n": 819,
+    "med": 0.0697,
+    "impair": 0.0696,
+    "n_impair": 57,
+    "loss": 0.2759,
+    "hurdle": 0.2491,
+    "worst": -0.7884
+   },
+   "concentration": 1.129,
+   "impair_lift": 0.0092,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": true,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.129倍(線2.0) 分子11社(線5)"
+   }
+  },
+  "2019/all/and/strict": {
+   "vintage": 2019,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 7.08,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 869,
+   "n_na": 87,
+   "stop_rate": 0.1577,
+   "base": {
+    "n": 869,
+    "med": 0.0673,
+    "impair": 0.0736,
+    "n_impair": 64,
+    "loss": 0.2854,
+    "hurdle": 0.2451,
+    "worst": -0.845
+   },
+   "blocked": {
+    "n": 137,
+    "med": 0.0598,
+    "impair": 0.0803,
+    "n_impair": 11,
+    "loss": 0.3577,
+    "hurdle": 0.2555,
+    "worst": -0.845
+   },
+   "passed": {
+    "n": 732,
+    "med": 0.0679,
+    "impair": 0.0724,
+    "n_impair": 53,
+    "loss": 0.2719,
+    "hurdle": 0.2432,
+    "worst": -0.7884
+   },
+   "concentration": 1.091,
+   "impair_lift": 0.0067,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.091倍(線2.0) 分子11社(線5); c4: 止率15.8%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2019/all/cagr_only/main": {
+   "vintage": 2019,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 7.08,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.2688,
+   "base": {
+    "n": 956,
+    "med": 0.068,
+    "impair": 0.0711,
+    "n_impair": 68,
+    "loss": 0.2877,
+    "hurdle": 0.25,
+    "worst": -0.845
+   },
+   "blocked": {
+    "n": 257,
+    "med": 0.0569,
+    "impair": 0.0817,
+    "n_impair": 21,
+    "loss": 0.3307,
+    "hurdle": 0.2451,
+    "worst": -0.845
+   },
+   "passed": {
+    "n": 699,
+    "med": 0.0736,
+    "impair": 0.0672,
+    "n_impair": 47,
+    "loss": 0.2718,
+    "hurdle": 0.2518,
+    "worst": -0.7884
+   },
+   "concentration": 1.149,
+   "impair_lift": 0.0106,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.149倍(線2.0) 分子21社(線5); c4: 止率26.9%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2019/all/cagr_only/strict": {
+   "vintage": 2019,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 7.08,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 955,
+   "n_na": 1,
+   "stop_rate": 0.2691,
+   "base": {
+    "n": 955,
+    "med": 0.0681,
+    "impair": 0.0712,
+    "n_impair": 68,
+    "loss": 0.288,
+    "hurdle": 0.2503,
+    "worst": -0.845
+   },
+   "blocked": {
+    "n": 257,
+    "med": 0.0569,
+    "impair": 0.0817,
+    "n_impair": 21,
+    "loss": 0.3307,
+    "hurdle": 0.2451,
+    "worst": -0.845
+   },
+   "passed": {
+    "n": 698,
+    "med": 0.074,
+    "impair": 0.0673,
+    "n_impair": 47,
+    "loss": 0.2722,
+    "hurdle": 0.2521,
+    "worst": -0.7884
+   },
+   "concentration": 1.147,
+   "impair_lift": 0.0105,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.147倍(線2.0) 分子21社(線5); c4: 止率26.9%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2019/all/opm_only/main": {
+   "vintage": 2019,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 7.08,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.4561,
+   "base": {
+    "n": 956,
+    "med": 0.068,
+    "impair": 0.0711,
+    "n_impair": 68,
+    "loss": 0.2877,
+    "hurdle": 0.25,
+    "worst": -0.845
+   },
+   "blocked": {
+    "n": 436,
+    "med": 0.059,
+    "impair": 0.0757,
+    "n_impair": 33,
+    "loss": 0.3211,
+    "hurdle": 0.2362,
+    "worst": -0.845
+   },
+   "passed": {
+    "n": 520,
+    "med": 0.0737,
+    "impair": 0.0673,
+    "n_impair": 35,
+    "loss": 0.2596,
+    "hurdle": 0.2615,
+    "worst": -0.7884
+   },
+   "concentration": 1.065,
+   "impair_lift": 0.0046,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.065倍(線2.0) 分子33社(線5); c4: 止率45.6%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2019/all/opm_only/strict": {
+   "vintage": 2019,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 7.08,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 869,
+   "n_na": 87,
+   "stop_rate": 0.5017,
+   "base": {
+    "n": 869,
+    "med": 0.0673,
+    "impair": 0.0736,
+    "n_impair": 64,
+    "loss": 0.2854,
+    "hurdle": 0.2451,
+    "worst": -0.845
+   },
+   "blocked": {
+    "n": 436,
+    "med": 0.059,
+    "impair": 0.0757,
+    "n_impair": 33,
+    "loss": 0.3211,
+    "hurdle": 0.2362,
+    "worst": -0.845
+   },
+   "passed": {
+    "n": 433,
+    "med": 0.0722,
+    "impair": 0.0716,
+    "n_impair": 31,
+    "loss": 0.2494,
+    "hurdle": 0.254,
+    "worst": -0.7884
+   },
+   "concentration": 1.029,
+   "impair_lift": 0.0021,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.029倍(線2.0) 分子33社(線5); c4: 止率50.2%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2019/qual/and/main": {
+   "vintage": 2019,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 7.08,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 331,
+   "n_used": 331,
+   "n_na": 0,
+   "stop_rate": 0.0816,
+   "base": {
+    "n": 331,
+    "med": 0.0786,
+    "impair": 0.0272,
+    "n_impair": 9,
+    "loss": 0.2356,
+    "hurdle": 0.2236,
+    "worst": -0.2739
+   },
+   "blocked": {
+    "n": 27,
+    "med": 0.0695,
+    "impair": 0.0741,
+    "n_impair": 2,
+    "loss": 0.2593,
+    "hurdle": 0.1852,
+    "worst": -0.2739
+   },
+   "passed": {
+    "n": 304,
+    "med": 0.0795,
+    "impair": 0.023,
+    "n_impair": 7,
+    "loss": 0.2336,
+    "hurdle": 0.227,
+    "worst": -0.2727
+   },
+   "concentration": 2.724,
+   "impair_lift": 0.0469,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮2.724倍(線2.0) 分子2社(線5)"
+   }
+  },
+  "2019/qual/and/strict": {
+   "vintage": 2019,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 7.08,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 331,
+   "n_used": 328,
+   "n_na": 3,
+   "stop_rate": 0.0823,
+   "base": {
+    "n": 328,
+    "med": 0.0795,
+    "impair": 0.0274,
+    "n_impair": 9,
+    "loss": 0.2348,
+    "hurdle": 0.2256,
+    "worst": -0.2739
+   },
+   "blocked": {
+    "n": 27,
+    "med": 0.0695,
+    "impair": 0.0741,
+    "n_impair": 2,
+    "loss": 0.2593,
+    "hurdle": 0.1852,
+    "worst": -0.2739
+   },
+   "passed": {
+    "n": 301,
+    "med": 0.0803,
+    "impair": 0.0233,
+    "n_impair": 7,
+    "loss": 0.2326,
+    "hurdle": 0.2292,
+    "worst": -0.2727
+   },
+   "concentration": 2.704,
+   "impair_lift": 0.0467,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮2.704倍(線2.0) 分子2社(線5)"
+   }
+  },
+  "2019/qual/cagr_only/main": {
+   "vintage": 2019,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 7.08,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 331,
+   "n_used": 331,
+   "n_na": 0,
+   "stop_rate": 0.1662,
+   "base": {
+    "n": 331,
+    "med": 0.0786,
+    "impair": 0.0272,
+    "n_impair": 9,
+    "loss": 0.2356,
+    "hurdle": 0.2236,
+    "worst": -0.2739
+   },
+   "blocked": {
+    "n": 55,
+    "med": 0.0568,
+    "impair": 0.0727,
+    "n_impair": 4,
+    "loss": 0.2727,
+    "hurdle": 0.1818,
+    "worst": -0.2739
+   },
+   "passed": {
+    "n": 276,
+    "med": 0.0827,
+    "impair": 0.0181,
+    "n_impair": 5,
+    "loss": 0.2283,
+    "hurdle": 0.2319,
+    "worst": -0.2727
+   },
+   "concentration": 2.673,
+   "impair_lift": 0.0455,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮2.673倍(線2.0) 分子4社(線5); c4: 止率16.6%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2019/qual/cagr_only/strict": {
+   "vintage": 2019,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 7.08,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 331,
+   "n_used": 330,
+   "n_na": 1,
+   "stop_rate": 0.1667,
+   "base": {
+    "n": 330,
+    "med": 0.0789,
+    "impair": 0.0273,
+    "n_impair": 9,
+    "loss": 0.2364,
+    "hurdle": 0.2242,
+    "worst": -0.2739
+   },
+   "blocked": {
+    "n": 55,
+    "med": 0.0568,
+    "impair": 0.0727,
+    "n_impair": 4,
+    "loss": 0.2727,
+    "hurdle": 0.1818,
+    "worst": -0.2739
+   },
+   "passed": {
+    "n": 275,
+    "med": 0.0828,
+    "impair": 0.0182,
+    "n_impair": 5,
+    "loss": 0.2291,
+    "hurdle": 0.2327,
+    "worst": -0.2727
+   },
+   "concentration": 2.663,
+   "impair_lift": 0.0454,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮2.663倍(線2.0) 分子4社(線5); c4: 止率16.7%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2019/qual/opm_only/main": {
+   "vintage": 2019,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 7.08,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 331,
+   "n_used": 331,
+   "n_na": 0,
+   "stop_rate": 0.4169,
+   "base": {
+    "n": 331,
+    "med": 0.0786,
+    "impair": 0.0272,
+    "n_impair": 9,
+    "loss": 0.2356,
+    "hurdle": 0.2236,
+    "worst": -0.2739
+   },
+   "blocked": {
+    "n": 138,
+    "med": 0.0639,
+    "impair": 0.0217,
+    "n_impair": 3,
+    "loss": 0.2609,
+    "hurdle": 0.2101,
+    "worst": -0.2739
+   },
+   "passed": {
+    "n": 193,
+    "med": 0.0834,
+    "impair": 0.0311,
+    "n_impair": 6,
+    "loss": 0.2176,
+    "hurdle": 0.2332,
+    "worst": -0.2727
+   },
+   "concentration": 0.798,
+   "impair_lift": -0.0055,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.798倍(線2.0) 分子3社(線5); c4: 止率41.7%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2019/qual/opm_only/strict": {
+   "vintage": 2019,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 7.08,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 331,
+   "n_used": 328,
+   "n_na": 3,
+   "stop_rate": 0.4207,
+   "base": {
+    "n": 328,
+    "med": 0.0795,
+    "impair": 0.0274,
+    "n_impair": 9,
+    "loss": 0.2348,
+    "hurdle": 0.2256,
+    "worst": -0.2739
+   },
+   "blocked": {
+    "n": 138,
+    "med": 0.0639,
+    "impair": 0.0217,
+    "n_impair": 3,
+    "loss": 0.2609,
+    "hurdle": 0.2101,
+    "worst": -0.2739
+   },
+   "passed": {
+    "n": 190,
+    "med": 0.0872,
+    "impair": 0.0316,
+    "n_impair": 6,
+    "loss": 0.2158,
+    "hurdle": 0.2368,
+    "worst": -0.2727
+   },
+   "concentration": 0.792,
+   "impair_lift": -0.0057,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.792倍(線2.0) 分子3社(線5); c4: 止率42.1%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2020/all/and/main": {
+   "vintage": 2020,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 6.08,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.114,
+   "base": {
+    "n": 956,
+    "med": 0.0965,
+    "impair": 0.0858,
+    "n_impair": 82,
+    "loss": 0.273,
+    "hurdle": 0.3536,
+    "worst": -0.8913
+   },
+   "blocked": {
+    "n": 109,
+    "med": 0.0783,
+    "impair": 0.1193,
+    "n_impair": 13,
+    "loss": 0.3211,
+    "hurdle": 0.3394,
+    "worst": -0.6151
+   },
+   "passed": {
+    "n": 847,
+    "med": 0.0975,
+    "impair": 0.0815,
+    "n_impair": 69,
+    "loss": 0.2668,
+    "hurdle": 0.3554,
+    "worst": -0.8913
+   },
+   "concentration": 1.39,
+   "impair_lift": 0.0335,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": true,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.39倍(線2.0) 分子13社(線5)"
+   }
+  },
+  "2020/all/and/strict": {
+   "vintage": 2020,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 6.08,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 874,
+   "n_na": 82,
+   "stop_rate": 0.1247,
+   "base": {
+    "n": 874,
+    "med": 0.095,
+    "impair": 0.0847,
+    "n_impair": 74,
+    "loss": 0.2735,
+    "hurdle": 0.3513,
+    "worst": -0.8913
+   },
+   "blocked": {
+    "n": 109,
+    "med": 0.0783,
+    "impair": 0.1193,
+    "n_impair": 13,
+    "loss": 0.3211,
+    "hurdle": 0.3394,
+    "worst": -0.6151
+   },
+   "passed": {
+    "n": 765,
+    "med": 0.0956,
+    "impair": 0.0797,
+    "n_impair": 61,
+    "loss": 0.2667,
+    "hurdle": 0.3529,
+    "worst": -0.8913
+   },
+   "concentration": 1.409,
+   "impair_lift": 0.0346,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": true,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.409倍(線2.0) 分子13社(線5)"
+   }
+  },
+  "2020/all/cagr_only/main": {
+   "vintage": 2020,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 6.08,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.228,
+   "base": {
+    "n": 956,
+    "med": 0.0965,
+    "impair": 0.0858,
+    "n_impair": 82,
+    "loss": 0.273,
+    "hurdle": 0.3536,
+    "worst": -0.8913
+   },
+   "blocked": {
+    "n": 218,
+    "med": 0.1003,
+    "impair": 0.1101,
+    "n_impair": 24,
+    "loss": 0.289,
+    "hurdle": 0.3532,
+    "worst": -0.8913
+   },
+   "passed": {
+    "n": 738,
+    "med": 0.0955,
+    "impair": 0.0786,
+    "n_impair": 58,
+    "loss": 0.2683,
+    "hurdle": 0.3537,
+    "worst": -0.7811
+   },
+   "concentration": 1.283,
+   "impair_lift": 0.0243,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.283倍(線2.0) 分子24社(線5); c2: 止めた中央値+0.1003 > 通過+0.0955＝勝者を巻き込む; c4: 止率22.8%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2020/all/cagr_only/strict": {
+   "vintage": 2020,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 6.08,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 955,
+   "n_na": 1,
+   "stop_rate": 0.2283,
+   "base": {
+    "n": 955,
+    "med": 0.0966,
+    "impair": 0.0848,
+    "n_impair": 81,
+    "loss": 0.2723,
+    "hurdle": 0.3539,
+    "worst": -0.8913
+   },
+   "blocked": {
+    "n": 218,
+    "med": 0.1003,
+    "impair": 0.1101,
+    "n_impair": 24,
+    "loss": 0.289,
+    "hurdle": 0.3532,
+    "worst": -0.8913
+   },
+   "passed": {
+    "n": 737,
+    "med": 0.0956,
+    "impair": 0.0773,
+    "n_impair": 57,
+    "loss": 0.2673,
+    "hurdle": 0.3541,
+    "worst": -0.7811
+   },
+   "concentration": 1.298,
+   "impair_lift": 0.0253,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.298倍(線2.0) 分子24社(線5); c2: 止めた中央値+0.1003 > 通過+0.0956＝勝者を巻き込む; c4: 止率22.8%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2020/all/opm_only/main": {
+   "vintage": 2020,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 6.08,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.455,
+   "base": {
+    "n": 956,
+    "med": 0.0965,
+    "impair": 0.0858,
+    "n_impair": 82,
+    "loss": 0.273,
+    "hurdle": 0.3536,
+    "worst": -0.8913
+   },
+   "blocked": {
+    "n": 435,
+    "med": 0.0802,
+    "impair": 0.0805,
+    "n_impair": 35,
+    "loss": 0.3103,
+    "hurdle": 0.3126,
+    "worst": -0.7811
+   },
+   "passed": {
+    "n": 521,
+    "med": 0.1051,
+    "impair": 0.0902,
+    "n_impair": 47,
+    "loss": 0.2418,
+    "hurdle": 0.3877,
+    "worst": -0.8913
+   },
+   "concentration": 0.938,
+   "impair_lift": -0.0053,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮0.938倍(線2.0) 分子35社(線5); c4: 止率45.5%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2020/all/opm_only/strict": {
+   "vintage": 2020,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 6.08,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 874,
+   "n_na": 82,
+   "stop_rate": 0.4977,
+   "base": {
+    "n": 874,
+    "med": 0.095,
+    "impair": 0.0847,
+    "n_impair": 74,
+    "loss": 0.2735,
+    "hurdle": 0.3513,
+    "worst": -0.8913
+   },
+   "blocked": {
+    "n": 435,
+    "med": 0.0802,
+    "impair": 0.0805,
+    "n_impair": 35,
+    "loss": 0.3103,
+    "hurdle": 0.3126,
+    "worst": -0.7811
+   },
+   "passed": {
+    "n": 439,
+    "med": 0.1037,
+    "impair": 0.0888,
+    "n_impair": 39,
+    "loss": 0.2369,
+    "hurdle": 0.3895,
+    "worst": -0.8913
+   },
+   "concentration": 0.95,
+   "impair_lift": -0.0042,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮0.95倍(線2.0) 分子35社(線5); c4: 止率49.8%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2020/qual/and/main": {
+   "vintage": 2020,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 6.08,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 311,
+   "n_used": 311,
+   "n_na": 0,
+   "stop_rate": 0.0386,
+   "base": {
+    "n": 311,
+    "med": 0.0879,
+    "impair": 0.0418,
+    "n_impair": 13,
+    "loss": 0.2476,
+    "hurdle": 0.3312,
+    "worst": -0.4124
+   },
+   "blocked": {
+    "n": 12,
+    "med": 0.1368,
+    "impair": 0.0,
+    "n_impair": 0,
+    "loss": 0.0833,
+    "hurdle": 0.5,
+    "worst": -0.1328
+   },
+   "passed": {
+    "n": 299,
+    "med": 0.0873,
+    "impair": 0.0435,
+    "n_impair": 13,
+    "loss": 0.2542,
+    "hurdle": 0.3244,
+    "worst": -0.4124
+   },
+   "concentration": 0.0,
+   "impair_lift": -0.0418,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.0倍(線2.0) 分子0社(線5); c2: 止めた中央値+0.1368 > 通過+0.0873＝勝者を巻き込む"
+   }
+  },
+  "2020/qual/and/strict": {
+   "vintage": 2020,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 6.08,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 311,
+   "n_used": 308,
+   "n_na": 3,
+   "stop_rate": 0.039,
+   "base": {
+    "n": 308,
+    "med": 0.0892,
+    "impair": 0.0422,
+    "n_impair": 13,
+    "loss": 0.2468,
+    "hurdle": 0.3344,
+    "worst": -0.4124
+   },
+   "blocked": {
+    "n": 12,
+    "med": 0.1368,
+    "impair": 0.0,
+    "n_impair": 0,
+    "loss": 0.0833,
+    "hurdle": 0.5,
+    "worst": -0.1328
+   },
+   "passed": {
+    "n": 296,
+    "med": 0.0876,
+    "impair": 0.0439,
+    "n_impair": 13,
+    "loss": 0.2534,
+    "hurdle": 0.3277,
+    "worst": -0.4124
+   },
+   "concentration": 0.0,
+   "impair_lift": -0.0422,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.0倍(線2.0) 分子0社(線5); c2: 止めた中央値+0.1368 > 通過+0.0876＝勝者を巻き込む"
+   }
+  },
+  "2020/qual/cagr_only/main": {
+   "vintage": 2020,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 6.08,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 311,
+   "n_used": 311,
+   "n_na": 0,
+   "stop_rate": 0.1318,
+   "base": {
+    "n": 311,
+    "med": 0.0879,
+    "impair": 0.0418,
+    "n_impair": 13,
+    "loss": 0.2476,
+    "hurdle": 0.3312,
+    "worst": -0.4124
+   },
+   "blocked": {
+    "n": 41,
+    "med": 0.099,
+    "impair": 0.0488,
+    "n_impair": 2,
+    "loss": 0.1463,
+    "hurdle": 0.3659,
+    "worst": -0.4124
+   },
+   "passed": {
+    "n": 270,
+    "med": 0.0867,
+    "impair": 0.0407,
+    "n_impair": 11,
+    "loss": 0.263,
+    "hurdle": 0.3259,
+    "worst": -0.3587
+   },
+   "concentration": 1.167,
+   "impair_lift": 0.007,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮1.167倍(線2.0) 分子2社(線5); c2: 止めた中央値+0.0990 > 通過+0.0867＝勝者を巻き込む"
+   }
+  },
+  "2020/qual/cagr_only/strict": {
+   "vintage": 2020,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 6.08,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 311,
+   "n_used": 311,
+   "n_na": 0,
+   "stop_rate": 0.1318,
+   "base": {
+    "n": 311,
+    "med": 0.0879,
+    "impair": 0.0418,
+    "n_impair": 13,
+    "loss": 0.2476,
+    "hurdle": 0.3312,
+    "worst": -0.4124
+   },
+   "blocked": {
+    "n": 41,
+    "med": 0.099,
+    "impair": 0.0488,
+    "n_impair": 2,
+    "loss": 0.1463,
+    "hurdle": 0.3659,
+    "worst": -0.4124
+   },
+   "passed": {
+    "n": 270,
+    "med": 0.0867,
+    "impair": 0.0407,
+    "n_impair": 11,
+    "loss": 0.263,
+    "hurdle": 0.3259,
+    "worst": -0.3587
+   },
+   "concentration": 1.167,
+   "impair_lift": 0.007,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮1.167倍(線2.0) 分子2社(線5); c2: 止めた中央値+0.0990 > 通過+0.0867＝勝者を巻き込む"
+   }
+  },
+  "2020/qual/opm_only/main": {
+   "vintage": 2020,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 6.08,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 311,
+   "n_used": 311,
+   "n_na": 0,
+   "stop_rate": 0.4051,
+   "base": {
+    "n": 311,
+    "med": 0.0879,
+    "impair": 0.0418,
+    "n_impair": 13,
+    "loss": 0.2476,
+    "hurdle": 0.3312,
+    "worst": -0.4124
+   },
+   "blocked": {
+    "n": 126,
+    "med": 0.0807,
+    "impair": 0.0238,
+    "n_impair": 3,
+    "loss": 0.2778,
+    "hurdle": 0.3254,
+    "worst": -0.2145
+   },
+   "passed": {
+    "n": 185,
+    "med": 0.099,
+    "impair": 0.0541,
+    "n_impair": 10,
+    "loss": 0.227,
+    "hurdle": 0.3351,
+    "worst": -0.4124
+   },
+   "concentration": 0.569,
+   "impair_lift": -0.018,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.569倍(線2.0) 分子3社(線5); c4: 止率40.5%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2020/qual/opm_only/strict": {
+   "vintage": 2020,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 6.08,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 311,
+   "n_used": 308,
+   "n_na": 3,
+   "stop_rate": 0.4091,
+   "base": {
+    "n": 308,
+    "med": 0.0892,
+    "impair": 0.0422,
+    "n_impair": 13,
+    "loss": 0.2468,
+    "hurdle": 0.3344,
+    "worst": -0.4124
+   },
+   "blocked": {
+    "n": 126,
+    "med": 0.0807,
+    "impair": 0.0238,
+    "n_impair": 3,
+    "loss": 0.2778,
+    "hurdle": 0.3254,
+    "worst": -0.2145
+   },
+   "passed": {
+    "n": 182,
+    "med": 0.0993,
+    "impair": 0.0549,
+    "n_impair": 10,
+    "loss": 0.2253,
+    "hurdle": 0.3407,
+    "worst": -0.4124
+   },
+   "concentration": 0.564,
+   "impair_lift": -0.0184,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.564倍(線2.0) 分子3社(線5); c4: 止率40.9%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2021/all/and/main": {
+   "vintage": 2021,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 5.08,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.1841,
+   "base": {
+    "n": 956,
+    "med": 0.0398,
+    "impair": 0.1506,
+    "n_impair": 144,
+    "loss": 0.4038,
+    "hurdle": 0.2395,
+    "worst": -0.9347
+   },
+   "blocked": {
+    "n": 176,
+    "med": 0.0123,
+    "impair": 0.2102,
+    "n_impair": 37,
+    "loss": 0.4659,
+    "hurdle": 0.2159,
+    "worst": -0.9347
+   },
+   "passed": {
+    "n": 780,
+    "med": 0.0474,
+    "impair": 0.1372,
+    "n_impair": 107,
+    "loss": 0.3897,
+    "hurdle": 0.2449,
+    "worst": -0.8533
+   },
+   "concentration": 1.396,
+   "impair_lift": 0.0596,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.396倍(線2.0) 分子37社(線5); c4: 止率18.4%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2021/all/and/strict": {
+   "vintage": 2021,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 5.08,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 862,
+   "n_na": 94,
+   "stop_rate": 0.2042,
+   "base": {
+    "n": 862,
+    "med": 0.0398,
+    "impair": 0.1508,
+    "n_impair": 130,
+    "loss": 0.4049,
+    "hurdle": 0.232,
+    "worst": -0.9347
+   },
+   "blocked": {
+    "n": 176,
+    "med": 0.0123,
+    "impair": 0.2102,
+    "n_impair": 37,
+    "loss": 0.4659,
+    "hurdle": 0.2159,
+    "worst": -0.9347
+   },
+   "passed": {
+    "n": 686,
+    "med": 0.0482,
+    "impair": 0.1356,
+    "n_impair": 93,
+    "loss": 0.3892,
+    "hurdle": 0.2362,
+    "worst": -0.8533
+   },
+   "concentration": 1.394,
+   "impair_lift": 0.0594,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.394倍(線2.0) 分子37社(線5); c4: 止率20.4%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2021/all/cagr_only/main": {
+   "vintage": 2021,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 5.08,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.3096,
+   "base": {
+    "n": 956,
+    "med": 0.0398,
+    "impair": 0.1506,
+    "n_impair": 144,
+    "loss": 0.4038,
+    "hurdle": 0.2395,
+    "worst": -0.9347
+   },
+   "blocked": {
+    "n": 296,
+    "med": 0.0316,
+    "impair": 0.2061,
+    "n_impair": 61,
+    "loss": 0.4392,
+    "hurdle": 0.2162,
+    "worst": -0.9347
+   },
+   "passed": {
+    "n": 660,
+    "med": 0.0482,
+    "impair": 0.1258,
+    "n_impair": 83,
+    "loss": 0.3879,
+    "hurdle": 0.25,
+    "worst": -0.8533
+   },
+   "concentration": 1.369,
+   "impair_lift": 0.0555,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.369倍(線2.0) 分子61社(線5); c4: 止率31.0%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2021/all/cagr_only/strict": {
+   "vintage": 2021,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 5.08,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.3096,
+   "base": {
+    "n": 956,
+    "med": 0.0398,
+    "impair": 0.1506,
+    "n_impair": 144,
+    "loss": 0.4038,
+    "hurdle": 0.2395,
+    "worst": -0.9347
+   },
+   "blocked": {
+    "n": 296,
+    "med": 0.0316,
+    "impair": 0.2061,
+    "n_impair": 61,
+    "loss": 0.4392,
+    "hurdle": 0.2162,
+    "worst": -0.9347
+   },
+   "passed": {
+    "n": 660,
+    "med": 0.0482,
+    "impair": 0.1258,
+    "n_impair": 83,
+    "loss": 0.3879,
+    "hurdle": 0.25,
+    "worst": -0.8533
+   },
+   "concentration": 1.369,
+   "impair_lift": 0.0555,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.369倍(線2.0) 分子61社(線5); c4: 止率31.0%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2021/all/opm_only/main": {
+   "vintage": 2021,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 5.08,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.4916,
+   "base": {
+    "n": 956,
+    "med": 0.0398,
+    "impair": 0.1506,
+    "n_impair": 144,
+    "loss": 0.4038,
+    "hurdle": 0.2395,
+    "worst": -0.9347
+   },
+   "blocked": {
+    "n": 470,
+    "med": 0.0314,
+    "impair": 0.134,
+    "n_impair": 63,
+    "loss": 0.4255,
+    "hurdle": 0.2149,
+    "worst": -0.9347
+   },
+   "passed": {
+    "n": 486,
+    "med": 0.0514,
+    "impair": 0.1667,
+    "n_impair": 81,
+    "loss": 0.3827,
+    "hurdle": 0.2634,
+    "worst": -0.8533
+   },
+   "concentration": 0.89,
+   "impair_lift": -0.0166,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮0.89倍(線2.0) 分子63社(線5); c4: 止率49.2%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2021/all/opm_only/strict": {
+   "vintage": 2021,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 5.08,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 862,
+   "n_na": 94,
+   "stop_rate": 0.5452,
+   "base": {
+    "n": 862,
+    "med": 0.0398,
+    "impair": 0.1508,
+    "n_impair": 130,
+    "loss": 0.4049,
+    "hurdle": 0.232,
+    "worst": -0.9347
+   },
+   "blocked": {
+    "n": 470,
+    "med": 0.0314,
+    "impair": 0.134,
+    "n_impair": 63,
+    "loss": 0.4255,
+    "hurdle": 0.2149,
+    "worst": -0.9347
+   },
+   "passed": {
+    "n": 392,
+    "med": 0.0544,
+    "impair": 0.1709,
+    "n_impair": 67,
+    "loss": 0.3801,
+    "hurdle": 0.2526,
+    "worst": -0.8533
+   },
+   "concentration": 0.889,
+   "impair_lift": -0.0168,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮0.889倍(線2.0) 分子63社(線5); c4: 止率54.5%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2021/qual/and/main": {
+   "vintage": 2021,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 5.08,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 281,
+   "n_used": 281,
+   "n_na": 0,
+   "stop_rate": 0.0641,
+   "base": {
+    "n": 281,
+    "med": 0.0439,
+    "impair": 0.1032,
+    "n_impair": 29,
+    "loss": 0.3737,
+    "hurdle": 0.1886,
+    "worst": -0.8533
+   },
+   "blocked": {
+    "n": 18,
+    "med": 0.056,
+    "impair": 0.0556,
+    "n_impair": 1,
+    "loss": 0.2222,
+    "hurdle": 0.2778,
+    "worst": -0.1799
+   },
+   "passed": {
+    "n": 263,
+    "med": 0.0411,
+    "impair": 0.1065,
+    "n_impair": 28,
+    "loss": 0.384,
+    "hurdle": 0.1825,
+    "worst": -0.8533
+   },
+   "concentration": 0.539,
+   "impair_lift": -0.0476,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.539倍(線2.0) 分子1社(線5); c2: 止めた中央値+0.0560 > 通過+0.0411＝勝者を巻き込む"
+   }
+  },
+  "2021/qual/and/strict": {
+   "vintage": 2021,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 5.08,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 281,
+   "n_used": 281,
+   "n_na": 0,
+   "stop_rate": 0.0641,
+   "base": {
+    "n": 281,
+    "med": 0.0439,
+    "impair": 0.1032,
+    "n_impair": 29,
+    "loss": 0.3737,
+    "hurdle": 0.1886,
+    "worst": -0.8533
+   },
+   "blocked": {
+    "n": 18,
+    "med": 0.056,
+    "impair": 0.0556,
+    "n_impair": 1,
+    "loss": 0.2222,
+    "hurdle": 0.2778,
+    "worst": -0.1799
+   },
+   "passed": {
+    "n": 263,
+    "med": 0.0411,
+    "impair": 0.1065,
+    "n_impair": 28,
+    "loss": 0.384,
+    "hurdle": 0.1825,
+    "worst": -0.8533
+   },
+   "concentration": 0.539,
+   "impair_lift": -0.0476,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.539倍(線2.0) 分子1社(線5); c2: 止めた中央値+0.0560 > 通過+0.0411＝勝者を巻き込む"
+   }
+  },
+  "2021/qual/cagr_only/main": {
+   "vintage": 2021,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 5.08,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 281,
+   "n_used": 281,
+   "n_na": 0,
+   "stop_rate": 0.1423,
+   "base": {
+    "n": 281,
+    "med": 0.0439,
+    "impair": 0.1032,
+    "n_impair": 29,
+    "loss": 0.3737,
+    "hurdle": 0.1886,
+    "worst": -0.8533
+   },
+   "blocked": {
+    "n": 40,
+    "med": 0.0685,
+    "impair": 0.1,
+    "n_impair": 4,
+    "loss": 0.25,
+    "hurdle": 0.225,
+    "worst": -0.2922
+   },
+   "passed": {
+    "n": 241,
+    "med": 0.0331,
+    "impair": 0.1037,
+    "n_impair": 25,
+    "loss": 0.3942,
+    "hurdle": 0.1826,
+    "worst": -0.8533
+   },
+   "concentration": 0.969,
+   "impair_lift": -0.0032,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.969倍(線2.0) 分子4社(線5); c2: 止めた中央値+0.0685 > 通過+0.0331＝勝者を巻き込む"
+   }
+  },
+  "2021/qual/cagr_only/strict": {
+   "vintage": 2021,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 5.08,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 281,
+   "n_used": 281,
+   "n_na": 0,
+   "stop_rate": 0.1423,
+   "base": {
+    "n": 281,
+    "med": 0.0439,
+    "impair": 0.1032,
+    "n_impair": 29,
+    "loss": 0.3737,
+    "hurdle": 0.1886,
+    "worst": -0.8533
+   },
+   "blocked": {
+    "n": 40,
+    "med": 0.0685,
+    "impair": 0.1,
+    "n_impair": 4,
+    "loss": 0.25,
+    "hurdle": 0.225,
+    "worst": -0.2922
+   },
+   "passed": {
+    "n": 241,
+    "med": 0.0331,
+    "impair": 0.1037,
+    "n_impair": 25,
+    "loss": 0.3942,
+    "hurdle": 0.1826,
+    "worst": -0.8533
+   },
+   "concentration": 0.969,
+   "impair_lift": -0.0032,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.969倍(線2.0) 分子4社(線5); c2: 止めた中央値+0.0685 > 通過+0.0331＝勝者を巻き込む"
+   }
+  },
+  "2021/qual/opm_only/main": {
+   "vintage": 2021,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 5.08,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 281,
+   "n_used": 281,
+   "n_na": 0,
+   "stop_rate": 0.4484,
+   "base": {
+    "n": 281,
+    "med": 0.0439,
+    "impair": 0.1032,
+    "n_impair": 29,
+    "loss": 0.3737,
+    "hurdle": 0.1886,
+    "worst": -0.8533
+   },
+   "blocked": {
+    "n": 126,
+    "med": 0.0385,
+    "impair": 0.0794,
+    "n_impair": 10,
+    "loss": 0.3968,
+    "hurdle": 0.1825,
+    "worst": -0.2463
+   },
+   "passed": {
+    "n": 155,
+    "med": 0.0545,
+    "impair": 0.1226,
+    "n_impair": 19,
+    "loss": 0.3548,
+    "hurdle": 0.1935,
+    "worst": -0.8533
+   },
+   "concentration": 0.769,
+   "impair_lift": -0.0238,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮0.769倍(線2.0) 分子10社(線5); c4: 止率44.8%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2021/qual/opm_only/strict": {
+   "vintage": 2021,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 5.08,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 281,
+   "n_used": 281,
+   "n_na": 0,
+   "stop_rate": 0.4484,
+   "base": {
+    "n": 281,
+    "med": 0.0439,
+    "impair": 0.1032,
+    "n_impair": 29,
+    "loss": 0.3737,
+    "hurdle": 0.1886,
+    "worst": -0.8533
+   },
+   "blocked": {
+    "n": 126,
+    "med": 0.0385,
+    "impair": 0.0794,
+    "n_impair": 10,
+    "loss": 0.3968,
+    "hurdle": 0.1825,
+    "worst": -0.2463
+   },
+   "passed": {
+    "n": 155,
+    "med": 0.0545,
+    "impair": 0.1226,
+    "n_impair": 19,
+    "loss": 0.3548,
+    "hurdle": 0.1935,
+    "worst": -0.8533
+   },
+   "concentration": 0.769,
+   "impair_lift": -0.0238,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮0.769倍(線2.0) 分子10社(線5); c4: 止率44.8%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2022/all/and/main": {
+   "vintage": 2022,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 4.08,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.1172,
+   "base": {
+    "n": 956,
+    "med": 0.0642,
+    "impair": 0.1349,
+    "n_impair": 129,
+    "loss": 0.3567,
+    "hurdle": 0.3169,
+    "worst": -0.9481
+   },
+   "blocked": {
+    "n": 112,
+    "med": 0.058,
+    "impair": 0.1518,
+    "n_impair": 17,
+    "loss": 0.3839,
+    "hurdle": 0.3304,
+    "worst": -0.9481
+   },
+   "passed": {
+    "n": 844,
+    "med": 0.0655,
+    "impair": 0.1327,
+    "n_impair": 112,
+    "loss": 0.3531,
+    "hurdle": 0.3152,
+    "worst": -0.8729
+   },
+   "concentration": 1.125,
+   "impair_lift": 0.0169,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": true,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.125倍(線2.0) 分子17社(線5)"
+   }
+  },
+  "2022/all/and/strict": {
+   "vintage": 2022,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 4.08,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 862,
+   "n_na": 94,
+   "stop_rate": 0.1299,
+   "base": {
+    "n": 862,
+    "med": 0.0668,
+    "impair": 0.1334,
+    "n_impair": 115,
+    "loss": 0.3561,
+    "hurdle": 0.3121,
+    "worst": -0.9481
+   },
+   "blocked": {
+    "n": 112,
+    "med": 0.058,
+    "impair": 0.1518,
+    "n_impair": 17,
+    "loss": 0.3839,
+    "hurdle": 0.3304,
+    "worst": -0.9481
+   },
+   "passed": {
+    "n": 750,
+    "med": 0.0674,
+    "impair": 0.1307,
+    "n_impair": 98,
+    "loss": 0.352,
+    "hurdle": 0.3093,
+    "worst": -0.8729
+   },
+   "concentration": 1.138,
+   "impair_lift": 0.0184,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": true,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.138倍(線2.0) 分子17社(線5)"
+   }
+  },
+  "2022/all/cagr_only/main": {
+   "vintage": 2022,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 4.08,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.2228,
+   "base": {
+    "n": 956,
+    "med": 0.0642,
+    "impair": 0.1349,
+    "n_impair": 129,
+    "loss": 0.3567,
+    "hurdle": 0.3169,
+    "worst": -0.9481
+   },
+   "blocked": {
+    "n": 213,
+    "med": 0.0562,
+    "impair": 0.1831,
+    "n_impair": 39,
+    "loss": 0.3709,
+    "hurdle": 0.3099,
+    "worst": -0.9481
+   },
+   "passed": {
+    "n": 743,
+    "med": 0.0659,
+    "impair": 0.1211,
+    "n_impair": 90,
+    "loss": 0.3526,
+    "hurdle": 0.319,
+    "worst": -0.8729
+   },
+   "concentration": 1.357,
+   "impair_lift": 0.0482,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.357倍(線2.0) 分子39社(線5); c4: 止率22.3%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2022/all/cagr_only/strict": {
+   "vintage": 2022,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 4.08,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 955,
+   "n_na": 1,
+   "stop_rate": 0.223,
+   "base": {
+    "n": 955,
+    "med": 0.0652,
+    "impair": 0.134,
+    "n_impair": 128,
+    "loss": 0.356,
+    "hurdle": 0.3173,
+    "worst": -0.9481
+   },
+   "blocked": {
+    "n": 213,
+    "med": 0.0562,
+    "impair": 0.1831,
+    "n_impair": 39,
+    "loss": 0.3709,
+    "hurdle": 0.3099,
+    "worst": -0.9481
+   },
+   "passed": {
+    "n": 742,
+    "med": 0.066,
+    "impair": 0.1199,
+    "n_impair": 89,
+    "loss": 0.3518,
+    "hurdle": 0.3194,
+    "worst": -0.8729
+   },
+   "concentration": 1.366,
+   "impair_lift": 0.0491,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮1.366倍(線2.0) 分子39社(線5); c4: 止率22.3%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2022/all/opm_only/main": {
+   "vintage": 2022,
+   "pool": "all",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 4.08,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 956,
+   "n_used": 956,
+   "n_na": 0,
+   "stop_rate": 0.3724,
+   "base": {
+    "n": 956,
+    "med": 0.0642,
+    "impair": 0.1349,
+    "n_impair": 129,
+    "loss": 0.3567,
+    "hurdle": 0.3169,
+    "worst": -0.9481
+   },
+   "blocked": {
+    "n": 356,
+    "med": 0.0538,
+    "impair": 0.132,
+    "n_impair": 47,
+    "loss": 0.382,
+    "hurdle": 0.2865,
+    "worst": -0.9481
+   },
+   "passed": {
+    "n": 600,
+    "med": 0.0707,
+    "impair": 0.1367,
+    "n_impair": 82,
+    "loss": 0.3417,
+    "hurdle": 0.335,
+    "worst": -0.854
+   },
+   "concentration": 0.979,
+   "impair_lift": -0.0029,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮0.979倍(線2.0) 分子47社(線5); c4: 止率37.2%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2022/all/opm_only/strict": {
+   "vintage": 2022,
+   "pool": "all",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 4.08,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 956,
+   "n_used": 862,
+   "n_na": 94,
+   "stop_rate": 0.413,
+   "base": {
+    "n": 862,
+    "med": 0.0668,
+    "impair": 0.1334,
+    "n_impair": 115,
+    "loss": 0.3561,
+    "hurdle": 0.3121,
+    "worst": -0.9481
+   },
+   "blocked": {
+    "n": 356,
+    "med": 0.0538,
+    "impair": 0.132,
+    "n_impair": 47,
+    "loss": 0.382,
+    "hurdle": 0.2865,
+    "worst": -0.9481
+   },
+   "passed": {
+    "n": 506,
+    "med": 0.0741,
+    "impair": 0.1344,
+    "n_impair": 68,
+    "loss": 0.3379,
+    "hurdle": 0.33,
+    "worst": -0.854
+   },
+   "concentration": 0.99,
+   "impair_lift": -0.0014,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": true,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮0.99倍(線2.0) 分子47社(線5); c4: 止率41.3%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2022/qual/and/main": {
+   "vintage": 2022,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 4.08,
+   "rule": "and",
+   "strict": false,
+   "n_pool": 340,
+   "n_used": 340,
+   "n_na": 0,
+   "stop_rate": 0.0294,
+   "base": {
+    "n": 340,
+    "med": 0.0723,
+    "impair": 0.0794,
+    "n_impair": 27,
+    "loss": 0.3235,
+    "hurdle": 0.2941,
+    "worst": -0.4919
+   },
+   "blocked": {
+    "n": 10,
+    "med": 0.1565,
+    "impair": 0.0,
+    "n_impair": 0,
+    "loss": 0.4,
+    "hurdle": 0.5,
+    "worst": -0.073
+   },
+   "passed": {
+    "n": 330,
+    "med": 0.0709,
+    "impair": 0.0818,
+    "n_impair": 27,
+    "loss": 0.3212,
+    "hurdle": 0.2879,
+    "worst": -0.4919
+   },
+   "concentration": 0.0,
+   "impair_lift": -0.0794,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.0倍(線2.0) 分子0社(線5); c2: 止めた中央値+0.1565 > 通過+0.0709＝勝者を巻き込む"
+   }
+  },
+  "2022/qual/and/strict": {
+   "vintage": 2022,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 4.08,
+   "rule": "and",
+   "strict": true,
+   "n_pool": 340,
+   "n_used": 338,
+   "n_na": 2,
+   "stop_rate": 0.0296,
+   "base": {
+    "n": 338,
+    "med": 0.0723,
+    "impair": 0.0799,
+    "n_impair": 27,
+    "loss": 0.3225,
+    "hurdle": 0.2929,
+    "worst": -0.4919
+   },
+   "blocked": {
+    "n": 10,
+    "med": 0.1565,
+    "impair": 0.0,
+    "n_impair": 0,
+    "loss": 0.4,
+    "hurdle": 0.5,
+    "worst": -0.073
+   },
+   "passed": {
+    "n": 328,
+    "med": 0.0709,
+    "impair": 0.0823,
+    "n_impair": 27,
+    "loss": 0.3201,
+    "hurdle": 0.2866,
+    "worst": -0.4919
+   },
+   "concentration": 0.0,
+   "impair_lift": -0.0799,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.0倍(線2.0) 分子0社(線5); c2: 止めた中央値+0.1565 > 通過+0.0709＝勝者を巻き込む"
+   }
+  },
+  "2022/qual/cagr_only/main": {
+   "vintage": 2022,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 4.08,
+   "rule": "cagr_only",
+   "strict": false,
+   "n_pool": 340,
+   "n_used": 340,
+   "n_na": 0,
+   "stop_rate": 0.0912,
+   "base": {
+    "n": 340,
+    "med": 0.0723,
+    "impair": 0.0794,
+    "n_impair": 27,
+    "loss": 0.3235,
+    "hurdle": 0.2941,
+    "worst": -0.4919
+   },
+   "blocked": {
+    "n": 31,
+    "med": 0.0894,
+    "impair": 0.0645,
+    "n_impair": 2,
+    "loss": 0.3871,
+    "hurdle": 0.3226,
+    "worst": -0.277
+   },
+   "passed": {
+    "n": 309,
+    "med": 0.0696,
+    "impair": 0.0809,
+    "n_impair": 25,
+    "loss": 0.3172,
+    "hurdle": 0.2913,
+    "worst": -0.4919
+   },
+   "concentration": 0.812,
+   "impair_lift": -0.0149,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.812倍(線2.0) 分子2社(線5); c2: 止めた中央値+0.0894 > 通過+0.0696＝勝者を巻き込む"
+   }
+  },
+  "2022/qual/cagr_only/strict": {
+   "vintage": 2022,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 4.08,
+   "rule": "cagr_only",
+   "strict": true,
+   "n_pool": 340,
+   "n_used": 340,
+   "n_na": 0,
+   "stop_rate": 0.0912,
+   "base": {
+    "n": 340,
+    "med": 0.0723,
+    "impair": 0.0794,
+    "n_impair": 27,
+    "loss": 0.3235,
+    "hurdle": 0.2941,
+    "worst": -0.4919
+   },
+   "blocked": {
+    "n": 31,
+    "med": 0.0894,
+    "impair": 0.0645,
+    "n_impair": 2,
+    "loss": 0.3871,
+    "hurdle": 0.3226,
+    "worst": -0.277
+   },
+   "passed": {
+    "n": 309,
+    "med": 0.0696,
+    "impair": 0.0809,
+    "n_impair": 25,
+    "loss": 0.3172,
+    "hurdle": 0.2913,
+    "worst": -0.4919
+   },
+   "concentration": 0.812,
+   "impair_lift": -0.0149,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": true,
+    "fail_kind": "検出力（止めた群の毀損が分子5に届かない＝規則の性能を測れていない）",
+    "why": "c1: 濃縮0.812倍(線2.0) 分子2社(線5); c2: 止めた中央値+0.0894 > 通過+0.0696＝勝者を巻き込む"
+   }
+  },
+  "2022/qual/opm_only/main": {
+   "vintage": 2022,
+   "pool": "qual",
+   "na_reading": "main(欠測は止めない側)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 4.08,
+   "rule": "opm_only",
+   "strict": false,
+   "n_pool": 340,
+   "n_used": 340,
+   "n_na": 0,
+   "stop_rate": 0.2971,
+   "base": {
+    "n": 340,
+    "med": 0.0723,
+    "impair": 0.0794,
+    "n_impair": 27,
+    "loss": 0.3235,
+    "hurdle": 0.2941,
+    "worst": -0.4919
+   },
+   "blocked": {
+    "n": 101,
+    "med": 0.0739,
+    "impair": 0.0495,
+    "n_impair": 5,
+    "loss": 0.3267,
+    "hurdle": 0.2871,
+    "worst": -0.2653
+   },
+   "passed": {
+    "n": 239,
+    "med": 0.0696,
+    "impair": 0.0921,
+    "n_impair": 22,
+    "loss": 0.3222,
+    "hurdle": 0.2971,
+    "worst": -0.4919
+   },
+   "concentration": 0.623,
+   "impair_lift": -0.0299,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮0.623倍(線2.0) 分子5社(線5); c2: 止めた中央値+0.0739 > 通過+0.0696＝勝者を巻き込む; c4: 止率29.7%(線15%)＝遮断器でなく間引き"
+   }
+  },
+  "2022/qual/opm_only/strict": {
+   "vintage": 2022,
+   "pool": "qual",
+   "na_reading": "strict(欠測を両群から外す)",
+   "reachable": true,
+   "reach_why": null,
+   "years": 4.08,
+   "rule": "opm_only",
+   "strict": true,
+   "n_pool": 340,
+   "n_used": 338,
+   "n_na": 2,
+   "stop_rate": 0.2988,
+   "base": {
+    "n": 338,
+    "med": 0.0723,
+    "impair": 0.0799,
+    "n_impair": 27,
+    "loss": 0.3225,
+    "hurdle": 0.2929,
+    "worst": -0.4919
+   },
+   "blocked": {
+    "n": 101,
+    "med": 0.0739,
+    "impair": 0.0495,
+    "n_impair": 5,
+    "loss": 0.3267,
+    "hurdle": 0.2871,
+    "worst": -0.2653
+   },
+   "passed": {
+    "n": 237,
+    "med": 0.0696,
+    "impair": 0.0928,
+    "n_impair": 22,
+    "loss": 0.3207,
+    "hurdle": 0.2954,
+    "worst": -0.4919
+   },
+   "concentration": 0.62,
+   "impair_lift": -0.0304,
+   "judge": {
+    "verdict": "不合格",
+    "c1": false,
+    "c2": false,
+    "c4": false,
+    "fail_kind": "効果量（分子は足りているのに濃縮が線に届かない＝規則の性能を測れている）",
+    "why": "c1: 濃縮0.62倍(線2.0) 分子5社(線5); c2: 止めた中央値+0.0739 > 通過+0.0696＝勝者を巻き込む; c4: 止率29.9%(線15%)＝遮断器でなく間引き"
+   }
+  }
+ },
+ "base_warnings": [
+  "2019: ベンチマークは SPY ではない（EW(パネル自身の等ウェイト指数・SPYの月次は在庫に無い)）。**SPYと呼ばないこと**——呼べば『基準の違う二つ』を自分で作る",
+  "2020: ベンチマークは SPY ではない（EW(パネル自身の等ウェイト指数・SPYの月次は在庫に無い)）。**SPYと呼ばないこと**——呼べば『基準の違う二つ』を自分で作る",
+  "2021: ベンチマークは SPY ではない（EW(パネル自身の等ウェイト指数・SPYの月次は在庫に無い)）。**SPYと呼ばないこと**——呼べば『基準の違う二つ』を自分で作る",
+  "2022: ベンチマークは SPY ではない（EW(パネル自身の等ウェイト指数・SPYの月次は在庫に無い)）。**SPYと呼ばないこと**——呼べば『基準の違う二つ』を自分で作る",
+  "2013: opmD5 の被覆が 449/944（48%）——欠測が半分近い。このビンテージの opmD5 は**別の母集団**を測っている疑い。H1 の『8ビンテージすべてで符号が同じ』を当てるときに必ず注記すること"
+ ],
+ "lesson_reachability": "★土台の reachability（神の遮断器でも分子5に届くか）は**必要条件であって十分条件ではない**。質実証プールは8ビンテージ中6つが reachable=true だったのに、実際の規則が止めた群の毀損は 0〜3社で一度も分子5に届かなかった＝**この不合格は規則の性能を測れていない**。一方 全社プールは 2016〜2022 の7ビンテージで分子11〜37社あり、**濃縮が線に届かないという効果量の不合格＝規則の性能を測れている**。次に事前登録を書くときは『神の遮断器』だけでなく『**その規則が現に止める群**で分子が足りるか』も結果の前に数えること",
+ "limits": [
+  "8ビンテージは同じ956社で窓が重なる＝真の out-of-sample はゼロ",
+  "窓の長さが 4.08〜13.09年と違う。ベース率をビンテージ間で直接比べない",
+  "2013 は opmD5 の被覆が48%・欠測が小型に偏る（土台の警告）。主判定(欠測は止めない側)だと通過群が別の母集団を含む",
+  "2019〜2022 のベンチマークは SPY ではない（EW）。ただし H4 はベンチマークを一度も使わない（絶対の年率で裁く）ので合否には効かない",
+  "生存バイアスは既記録のまま（左尾は 2.00〜25.68% の幅）"
+ ]
+}

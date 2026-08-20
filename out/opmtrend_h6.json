@@ -1,0 +1,860 @@
+{
+ "generated": "2026-08-18",
+ "tool": "night/opmtrend_h6.py",
+ "prereg": "out/opm_trend_prereg.json",
+ "hypothesis": "H6（重ならない窓）: すべての窓が2026-08で終わる問題を外しても H1 は残るか",
+ "reads": [
+  "out/opmtrend_base.json",
+  "out/retro_monthly_*.json",
+  "out/_spy_monthly.json",
+  "out/retro_features2_*.json（deadline の確認のみ）",
+  "out/beat_spy_rule.json（突合せ）"
+ ],
+ "writes_nothing_else": "値・規約・採点式・刻み・重み・関門・売却規律・配分には1バイトも触っていない",
+ "seed": 20260818,
+ "line_from_prereg": "H1 の線をそのまま当てる: lift >= 0.15 かつ **すべての窓で符号が同じ**（事前登録の『8ビンテージすべて』の『すべて』を4窓へ機械的に当てただけ。線 0.15 も lift の向きも群の下限20も H1 と同一）",
+ "lift_direction": "lift = P(前方年率>=15% | opmD5>=0) − P(... | opmD5<0)（事前登録 H1 と同一）",
+ "window_def": {
+  "months": 39,
+  "n": 4,
+  "how": "night/beat_spy_rule.py と同一（k0=パネル最古月から39ヶ月ずつ・端点は共有）",
+  "windows": [
+   "2013-07→2016-10",
+   "2016-10→2020-01",
+   "2020-01→2023-04",
+   "2023-04→2026-07"
+  ]
+ },
+ "cross_check_vs_beat_spy_rule": {
+  "file": "out/beat_spy_rule.json",
+  "ok": true,
+  "detail": [
+   {
+    "w": 1,
+    "spy_here": 0.0955,
+    "spy_there": 0.0955,
+    "n_here": 944,
+    "n_there": 944,
+    "match": true
+   },
+   {
+    "w": 2,
+    "spy_here": 0.1582,
+    "spy_there": 0.1582,
+    "n_here": 951,
+    "n_there": 951,
+    "match": true
+   },
+   {
+    "w": 3,
+    "spy_here": 0.0996,
+    "spy_there": 0.0996,
+    "n_here": 955,
+    "n_there": 955,
+    "match": true
+   },
+   {
+    "w": 4,
+    "spy_here": 0.2126,
+    "spy_there": 0.2126,
+    "n_here": 956,
+    "n_there": 956,
+    "match": true
+   }
+  ]
+ },
+ "signal_timing": [
+  {
+   "w": 1,
+   "window": "2013-07→2016-10",
+   "k0": 24162,
+   "k1": 24201,
+   "years": 3.25,
+   "vintage": 2013,
+   "signal_asof": "2013-07-01",
+   "gap_months": 0,
+   "spy": 0.0955,
+   "unused_later_vintages": [
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022
+   ],
+   "n_panel": 944,
+   "n_short_span": 3,
+   "n_in_vintage": 944,
+   "n_opmD5": 449,
+   "coverage_opmD5": 0.4756,
+   "base_hit": 0.2775,
+   "base_beat": 0.4301,
+   "median_tr": 0.0782
+  },
+  {
+   "w": 2,
+   "window": "2016-10→2020-01",
+   "k0": 24201,
+   "k1": 24240,
+   "years": 3.25,
+   "vintage": 2016,
+   "signal_asof": "2016-07-01",
+   "gap_months": 3,
+   "spy": 0.1582,
+   "unused_later_vintages": [
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022
+   ],
+   "n_panel": 951,
+   "n_short_span": 4,
+   "n_in_vintage": 951,
+   "n_opmD5": 874,
+   "coverage_opmD5": 0.919,
+   "base_hit": 0.4185,
+   "base_beat": 0.3975,
+   "median_tr": 0.1126
+  },
+  {
+   "w": 3,
+   "window": "2020-01→2023-04",
+   "k0": 24240,
+   "k1": 24279,
+   "years": 3.25,
+   "vintage": 2019,
+   "signal_asof": "2019-07-01",
+   "gap_months": 6,
+   "spy": 0.0996,
+   "unused_later_vintages": [
+    2020,
+    2021,
+    2022
+   ],
+   "n_panel": 955,
+   "n_short_span": 2,
+   "n_in_vintage": 955,
+   "n_opmD5": 868,
+   "coverage_opmD5": 0.9089,
+   "base_hit": 0.2628,
+   "base_beat": 0.3728,
+   "median_tr": 0.0578
+  },
+  {
+   "w": 4,
+   "window": "2023-04→2026-07",
+   "k0": 24279,
+   "k1": 24318,
+   "years": 3.25,
+   "vintage": 2022,
+   "signal_asof": "2022-07-01",
+   "gap_months": 9,
+   "spy": 0.2126,
+   "unused_later_vintages": [],
+   "n_panel": 956,
+   "n_short_span": 1,
+   "n_in_vintage": 956,
+   "n_opmD5": 862,
+   "coverage_opmD5": 0.9017,
+   "base_hit": 0.3556,
+   "base_beat": 0.2542,
+   "median_tr": 0.0746
+  }
+ ],
+ "per_window": [
+  {
+   "w": 1,
+   "window": "2013-07→2016-10",
+   "k0": 24162,
+   "k1": 24201,
+   "years": 3.25,
+   "vintage": 2013,
+   "signal_asof": "2013-07-01",
+   "gap_months": 0,
+   "spy": 0.0955,
+   "unused_later_vintages": [
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022
+   ],
+   "n_panel": 944,
+   "n_short_span": 3,
+   "n_in_vintage": 944,
+   "n_opmD5": 449,
+   "coverage_opmD5": 0.4756,
+   "base_hit": 0.2775,
+   "base_beat": 0.4301,
+   "median_tr": 0.0782
+  },
+  {
+   "w": 2,
+   "window": "2016-10→2020-01",
+   "k0": 24201,
+   "k1": 24240,
+   "years": 3.25,
+   "vintage": 2016,
+   "signal_asof": "2016-07-01",
+   "gap_months": 3,
+   "spy": 0.1582,
+   "unused_later_vintages": [
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022
+   ],
+   "n_panel": 951,
+   "n_short_span": 4,
+   "n_in_vintage": 951,
+   "n_opmD5": 874,
+   "coverage_opmD5": 0.919,
+   "base_hit": 0.4185,
+   "base_beat": 0.3975,
+   "median_tr": 0.1126
+  },
+  {
+   "w": 3,
+   "window": "2020-01→2023-04",
+   "k0": 24240,
+   "k1": 24279,
+   "years": 3.25,
+   "vintage": 2019,
+   "signal_asof": "2019-07-01",
+   "gap_months": 6,
+   "spy": 0.0996,
+   "unused_later_vintages": [
+    2020,
+    2021,
+    2022
+   ],
+   "n_panel": 955,
+   "n_short_span": 2,
+   "n_in_vintage": 955,
+   "n_opmD5": 868,
+   "coverage_opmD5": 0.9089,
+   "base_hit": 0.2628,
+   "base_beat": 0.3728,
+   "median_tr": 0.0578
+  },
+  {
+   "w": 4,
+   "window": "2023-04→2026-07",
+   "k0": 24279,
+   "k1": 24318,
+   "years": 3.25,
+   "vintage": 2022,
+   "signal_asof": "2022-07-01",
+   "gap_months": 9,
+   "spy": 0.2126,
+   "unused_later_vintages": [],
+   "n_panel": 956,
+   "n_short_span": 1,
+   "n_in_vintage": 956,
+   "n_opmD5": 862,
+   "coverage_opmD5": 0.9017,
+   "base_hit": 0.3556,
+   "base_beat": 0.2542,
+   "median_tr": 0.0746
+  }
+ ],
+ "cells": [
+  {
+   "w": 1,
+   "pool": "all",
+   "window": "2013-07→2016-10",
+   "vintage": 2013,
+   "n": 449,
+   "n_pos": 269,
+   "n_neg": 180,
+   "spy": 0.0955,
+   "usable": true,
+   "base_hit": 0.3185,
+   "base_beat": 0.4833,
+   "p_hit_pos": 0.3383,
+   "p_hit_neg": 0.2889,
+   "p_beat_pos": 0.5093,
+   "p_beat_neg": 0.4444,
+   "median_tr_pos": 0.0962,
+   "median_tr_neg": 0.0836,
+   "lift_hit": 0.0494,
+   "lift_beat": 0.0648
+  },
+  {
+   "w": 1,
+   "pool": "qual",
+   "window": "2013-07→2016-10",
+   "vintage": 2013,
+   "n": 221,
+   "n_pos": 148,
+   "n_neg": 73,
+   "spy": 0.0955,
+   "usable": true,
+   "base_hit": 0.3122,
+   "base_beat": 0.5249,
+   "p_hit_pos": 0.3514,
+   "p_hit_neg": 0.2329,
+   "p_beat_pos": 0.5743,
+   "p_beat_neg": 0.4247,
+   "median_tr_pos": 0.1142,
+   "median_tr_neg": 0.0868,
+   "lift_hit": 0.1185,
+   "lift_beat": 0.1497
+  },
+  {
+   "w": 2,
+   "pool": "all",
+   "window": "2016-10→2020-01",
+   "vintage": 2016,
+   "n": 874,
+   "n_pos": 422,
+   "n_neg": 452,
+   "spy": 0.1582,
+   "usable": true,
+   "base_hit": 0.4188,
+   "base_beat": 0.397,
+   "p_hit_pos": 0.4194,
+   "p_hit_neg": 0.4181,
+   "p_beat_pos": 0.3934,
+   "p_beat_neg": 0.4004,
+   "median_tr_pos": 0.1106,
+   "median_tr_neg": 0.1138,
+   "lift_hit": 0.0013,
+   "lift_beat": -0.0071
+  },
+  {
+   "w": 2,
+   "pool": "qual",
+   "window": "2016-10→2020-01",
+   "vintage": 2016,
+   "n": 325,
+   "n_pos": 197,
+   "n_neg": 128,
+   "spy": 0.1582,
+   "usable": true,
+   "base_hit": 0.4708,
+   "base_beat": 0.4431,
+   "p_hit_pos": 0.467,
+   "p_hit_neg": 0.4766,
+   "p_beat_pos": 0.4416,
+   "p_beat_neg": 0.4453,
+   "median_tr_pos": 0.1415,
+   "median_tr_neg": 0.1353,
+   "lift_hit": -0.0096,
+   "lift_beat": -0.0037
+  },
+  {
+   "w": 3,
+   "pool": "all",
+   "window": "2020-01→2023-04",
+   "vintage": 2019,
+   "n": 868,
+   "n_pos": 433,
+   "n_neg": 435,
+   "spy": 0.0996,
+   "usable": true,
+   "base_hit": 0.265,
+   "base_beat": 0.3721,
+   "p_hit_pos": 0.2633,
+   "p_hit_neg": 0.2667,
+   "p_beat_pos": 0.3903,
+   "p_beat_neg": 0.354,
+   "median_tr_pos": 0.0639,
+   "median_tr_neg": 0.052,
+   "lift_hit": -0.0034,
+   "lift_beat": 0.0363
+  },
+  {
+   "w": 3,
+   "pool": "qual",
+   "window": "2020-01→2023-04",
+   "vintage": 2019,
+   "n": 328,
+   "n_pos": 190,
+   "n_neg": 138,
+   "spy": 0.0996,
+   "usable": true,
+   "base_hit": 0.2104,
+   "base_beat": 0.3659,
+   "p_hit_pos": 0.2211,
+   "p_hit_neg": 0.1957,
+   "p_beat_pos": 0.3947,
+   "p_beat_neg": 0.3261,
+   "median_tr_pos": 0.0758,
+   "median_tr_neg": 0.0674,
+   "lift_hit": 0.0254,
+   "lift_beat": 0.0686
+  },
+  {
+   "w": 4,
+   "pool": "all",
+   "window": "2023-04→2026-07",
+   "vintage": 2022,
+   "n": 862,
+   "n_pos": 506,
+   "n_neg": 356,
+   "spy": 0.2126,
+   "usable": true,
+   "base_hit": 0.355,
+   "base_beat": 0.2529,
+   "p_hit_pos": 0.3656,
+   "p_hit_neg": 0.3399,
+   "p_beat_pos": 0.2609,
+   "p_beat_neg": 0.2416,
+   "median_tr_pos": 0.0804,
+   "median_tr_neg": 0.0515,
+   "lift_hit": 0.0257,
+   "lift_beat": 0.0193
+  },
+  {
+   "w": 4,
+   "pool": "qual",
+   "window": "2023-04→2026-07",
+   "vintage": 2022,
+   "n": 338,
+   "n_pos": 237,
+   "n_neg": 101,
+   "spy": 0.2126,
+   "usable": true,
+   "base_hit": 0.3343,
+   "base_beat": 0.213,
+   "p_hit_pos": 0.3207,
+   "p_hit_neg": 0.3663,
+   "p_beat_pos": 0.2152,
+   "p_beat_neg": 0.2079,
+   "median_tr_pos": 0.074,
+   "median_tr_neg": 0.0832,
+   "lift_hit": -0.0457,
+   "lift_beat": 0.0073
+  }
+ ],
+ "summary": {
+  "all": {
+   "hurdle15": {
+    "windows": 4,
+    "usable_windows": 4,
+    "lifts": [
+     0.0494,
+     0.0013,
+     -0.0034,
+     0.0257
+    ],
+    "n_lift_ge_line": 0,
+    "sign_pos": 3,
+    "sign_neg": 1,
+    "all_same_sign": false,
+    "pooled_lift": 0.0119,
+    "median_lift": 0.0135,
+    "mean_lift_weighted": 0.0139,
+    "min_lift": -0.0034,
+    "max_lift": 0.0494,
+    "readings": {
+     "i_strict_all_windows_ge_line": false,
+     "ii_pooled_ge_line": false,
+     "iii_median_ge_line": false
+    },
+    "verdict": "不合格",
+    "why": "符号が4窓で揃わない、または lift がどの読み方でも線 0.15 に届かない"
+   },
+   "beat_spy": {
+    "windows": 4,
+    "usable_windows": 4,
+    "lifts": [
+     0.0648,
+     -0.0071,
+     0.0363,
+     0.0193
+    ],
+    "n_lift_ge_line": 0,
+    "sign_pos": 3,
+    "sign_neg": 1,
+    "all_same_sign": false,
+    "pooled_lift": 0.0185,
+    "median_lift": 0.0278,
+    "mean_lift_weighted": 0.0233,
+    "min_lift": -0.0071,
+    "max_lift": 0.0648,
+    "readings": {
+     "i_strict_all_windows_ge_line": false,
+     "ii_pooled_ge_line": false,
+     "iii_median_ge_line": false
+    },
+    "verdict": "不合格",
+    "why": "符号が4窓で揃わない、または lift がどの読み方でも線 0.15 に届かない"
+   }
+  },
+  "qual": {
+   "hurdle15": {
+    "windows": 4,
+    "usable_windows": 4,
+    "lifts": [
+     0.1185,
+     -0.0096,
+     0.0254,
+     -0.0457
+    ],
+    "n_lift_ge_line": 0,
+    "sign_pos": 2,
+    "sign_neg": 2,
+    "all_same_sign": false,
+    "pooled_lift": 0.0167,
+    "median_lift": 0.0079,
+    "mean_lift_weighted": 0.0132,
+    "min_lift": -0.0457,
+    "max_lift": 0.1185,
+    "readings": {
+     "i_strict_all_windows_ge_line": false,
+     "ii_pooled_ge_line": false,
+     "iii_median_ge_line": false
+    },
+    "verdict": "不合格",
+    "why": "符号が4窓で揃わない、または lift がどの読み方でも線 0.15 に届かない"
+   },
+   "beat_spy": {
+    "windows": 4,
+    "usable_windows": 4,
+    "lifts": [
+     0.1497,
+     -0.0037,
+     0.0686,
+     0.0073
+    ],
+    "n_lift_ge_line": 0,
+    "sign_pos": 3,
+    "sign_neg": 1,
+    "all_same_sign": false,
+    "pooled_lift": 0.036,
+    "median_lift": 0.0379,
+    "mean_lift_weighted": 0.0469,
+    "min_lift": -0.0037,
+    "max_lift": 0.1497,
+    "readings": {
+     "i_strict_all_windows_ge_line": false,
+     "ii_pooled_ge_line": false,
+     "iii_median_ge_line": false
+    },
+    "verdict": "不合格",
+    "why": "符号が4窓で揃わない、または lift がどの読み方でも線 0.15 に届かない"
+   }
+  }
+ },
+ "strict_full_span": {
+  "all": {
+   "lifts_hit": [
+    0.0478,
+    -0.0015,
+    0.0,
+    0.0245
+   ],
+   "median_hit": 0.0123,
+   "lifts_beat": [
+    0.0624,
+    -0.0098,
+    0.0393,
+    0.0178
+   ],
+   "median_beat": 0.0285,
+   "all_same_sign_hit": false,
+   "n_dropped": 7
+  },
+  "qual": {
+   "lifts_hit": [
+    0.1185,
+    -0.0096,
+    0.0313,
+    -0.0457
+   ],
+   "median_hit": 0.0109,
+   "lifts_beat": [
+    0.1497,
+    -0.0037,
+    0.0736,
+    0.0073
+   ],
+   "median_beat": 0.0404,
+   "all_same_sign_hit": false,
+   "n_dropped": 1
+  }
+ },
+ "permutation": {
+  "all": {
+   "n_perm": 2000,
+   "observed_median_lift": 0.0135,
+   "null_median_p50": -0.0002,
+   "null_median_p95": 0.035,
+   "p_value_median_lift": 0.2599,
+   "false_positive_rate_of_procedure": 0.0,
+   "note": "会社→会社の一つの写像を4窓へ同時に当てる（窓間の従属を壊さない）"
+  },
+  "qual": {
+   "n_perm": 2000,
+   "observed_median_lift": 0.0079,
+   "null_median_p50": 0.0004,
+   "null_median_p95": 0.061,
+   "p_value_median_lift": 0.4378,
+   "false_positive_rate_of_procedure": 0.0,
+   "note": "会社→会社の一つの写像を4窓へ同時に当てる（窓間の従属を壊さない）"
+  }
+ },
+ "power": {
+  "all": {
+   "0.05": 0.0,
+   "0.10": 0.0035,
+   "0.15": 0.4805,
+   "0.20": 0.9965,
+   "0.25": 1.0,
+   "0.30": 1.0
+  },
+  "qual": {
+   "0.05": 0.001,
+   "0.10": 0.04,
+   "0.15": 0.5055,
+   "0.20": 0.9655,
+   "0.25": 0.9995,
+   "0.30": 1.0
+  }
+ },
+ "closest_to_line": {
+  "top3": [
+   {
+    "w": 1,
+    "pool": "qual",
+    "outcome": "SPY超",
+    "lift": 0.1497,
+    "gap_to_line": 0.0003
+   },
+   {
+    "w": 1,
+    "pool": "qual",
+    "outcome": "15%+",
+    "lift": 0.1185,
+    "gap_to_line": 0.0315
+   },
+   {
+    "w": 3,
+    "pool": "qual",
+    "outcome": "SPY超",
+    "lift": 0.0686,
+    "gap_to_line": 0.0814
+   }
+  ],
+  "note": "★最大でも線に届かない。しかも仮に届いても手続きは『すべての窓で符号が同じ』を同時に要求するので、1セルでは合格にならない"
+ },
+ "vs_h1_same_procedure_different_windows": {
+  "note": "窓を重ならないものに替えても lift の大きさは同じ帯に留まるか",
+  "rows": [
+   {
+    "pool": "all",
+    "outcome": "15%+",
+    "h1_median": 0.0277,
+    "h1_min": -0.0702,
+    "h1_max": 0.0769,
+    "h1_verdict": "不合格",
+    "h6_median": 0.0135,
+    "h6_min": -0.0034,
+    "h6_max": 0.0494,
+    "h6_verdict": "不合格"
+   },
+   {
+    "pool": "all",
+    "outcome": "ベンチ超",
+    "h1_median": 0.0336,
+    "h1_spy_only_median": 0.0114,
+    "h6_median": 0.0278,
+    "h6_verdict": "不合格",
+    "note": "H1 のベンチは SPY と EW の混成／H6 は4窓とも実SPY"
+   },
+   {
+    "pool": "qual",
+    "outcome": "15%+",
+    "h1_median": 0.0131,
+    "h1_min": -0.075,
+    "h1_max": 0.0723,
+    "h1_verdict": "不合格",
+    "h6_median": 0.0079,
+    "h6_min": -0.0457,
+    "h6_max": 0.1185,
+    "h6_verdict": "不合格"
+   },
+   {
+    "pool": "qual",
+    "outcome": "ベンチ超",
+    "h1_median": 0.0318,
+    "h1_spy_only_median": -0.0105,
+    "h6_median": 0.0379,
+    "h6_verdict": "不合格",
+    "note": "H1 のベンチは SPY と EW の混成／H6 は4窓とも実SPY"
+   }
+  ]
+ },
+ "exploratory_not_preregistered": {
+  "caveat": "事前登録に無い事後の切り方。合否・線の根拠にしない。記述のみ",
+  "question": "W1 が唯一はっきり正なのは母集団（ビンテージ2013の被覆＝大型寄り）のせいか",
+  "rows": [
+   {
+    "w": 1,
+    "pool": "all",
+    "subset": "全部",
+    "n": 449,
+    "n_pos": 269,
+    "n_neg": 180,
+    "lift_hit": 0.0494
+   },
+   {
+    "w": 1,
+    "pool": "all",
+    "subset": "2013被覆の社だけ",
+    "n": 449,
+    "n_pos": 269,
+    "n_neg": 180,
+    "lift_hit": 0.0494
+   },
+   {
+    "w": 1,
+    "pool": "qual",
+    "subset": "全部",
+    "n": 221,
+    "n_pos": 148,
+    "n_neg": 73,
+    "lift_hit": 0.1185
+   },
+   {
+    "w": 1,
+    "pool": "qual",
+    "subset": "2013被覆の社だけ",
+    "n": 221,
+    "n_pos": 148,
+    "n_neg": 73,
+    "lift_hit": 0.1185
+   },
+   {
+    "w": 2,
+    "pool": "all",
+    "subset": "全部",
+    "n": 874,
+    "n_pos": 422,
+    "n_neg": 452,
+    "lift_hit": 0.0013
+   },
+   {
+    "w": 2,
+    "pool": "all",
+    "subset": "2013被覆の社だけ",
+    "n": 445,
+    "n_pos": 219,
+    "n_neg": 226,
+    "lift_hit": -0.0272
+   },
+   {
+    "w": 2,
+    "pool": "qual",
+    "subset": "全部",
+    "n": 325,
+    "n_pos": 197,
+    "n_neg": 128,
+    "lift_hit": -0.0096
+   },
+   {
+    "w": 2,
+    "pool": "qual",
+    "subset": "2013被覆の社だけ",
+    "n": 220,
+    "n_pos": 133,
+    "n_neg": 87,
+    "lift_hit": -0.0772
+   },
+   {
+    "w": 3,
+    "pool": "all",
+    "subset": "全部",
+    "n": 868,
+    "n_pos": 433,
+    "n_neg": 435,
+    "lift_hit": -0.0034
+   },
+   {
+    "w": 3,
+    "pool": "all",
+    "subset": "2013被覆の社だけ",
+    "n": 437,
+    "n_pos": 213,
+    "n_neg": 224,
+    "lift_hit": 0.008
+   },
+   {
+    "w": 3,
+    "pool": "qual",
+    "subset": "全部",
+    "n": 328,
+    "n_pos": 190,
+    "n_neg": 138,
+    "lift_hit": 0.0254
+   },
+   {
+    "w": 3,
+    "pool": "qual",
+    "subset": "2013被覆の社だけ",
+    "n": 217,
+    "n_pos": 126,
+    "n_neg": 91,
+    "lift_hit": -0.0055
+   },
+   {
+    "w": 4,
+    "pool": "all",
+    "subset": "全部",
+    "n": 862,
+    "n_pos": 506,
+    "n_neg": 356,
+    "lift_hit": 0.0257
+   },
+   {
+    "w": 4,
+    "pool": "all",
+    "subset": "2013被覆の社だけ",
+    "n": 434,
+    "n_pos": 266,
+    "n_neg": 168,
+    "lift_hit": -0.0038
+   },
+   {
+    "w": 4,
+    "pool": "qual",
+    "subset": "全部",
+    "n": 338,
+    "n_pos": 237,
+    "n_neg": 101,
+    "lift_hit": -0.0457
+   },
+   {
+    "w": 4,
+    "pool": "qual",
+    "subset": "2013被覆の社だけ",
+    "n": 232,
+    "n_pos": 162,
+    "n_neg": 70,
+    "lift_hit": -0.0504
+   }
+  ],
+  "reading": "W2〜W4 を W1 と同じ社へ揃えると lift はむしろ負へ動く＝W1 の正の lift は『大型なら効く』では説明が付かない（窓の側の特異）"
+ },
+ "warnings": [
+  "W1（信号=ビンテージ2013）の opmD5 被覆が 48%——他の窓と同じ母集団ではない"
+ ],
+ "limits": [
+  "4窓は同じ956社のパネル＝会社が最大4回出る。窓どうしは期間としては重ならないが**標本としては独立ではない**",
+  "★W1 の信号はビンテージ2013で opmD5 の被覆が約48%・しかも欠測が小型に偏る（base の警告）＝他の3窓と同じ母集団ではない",
+  "信号と窓の開始のあいだに 0/3/6/9ヶ月の隙間がある（使える中で最も新しいビンテージを使った結果）",
+  "各窓は3.25年＝13年の窓より短く、年率の分散が大きい。ベース率も窓ごとに大きく違う",
+  "パネルは今日ティッカーが引ける社＝生存バイアス（既記録）",
+  "SPY は配当込み(adjclose)・個別も同じ adjclose なので基準は揃っている",
+  "この器は上限や機構を測るものではない。H1 の線に照らして合否を出すだけ"
+ ]
+}
