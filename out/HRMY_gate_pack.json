@@ -23,7 +23,7 @@
  "erosion": "emerging",
  "disrupt": "unsettled",
  "dom": 70,
- "irr": 70,
+ "irr": 50,
  "rep": 60,
  "dur": 75,
  "geopol": 2,
@@ -75,7 +75,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=7.3 / 5年窓=19.1。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
    "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均24.8%・σ6.5pt・CV26.2%）。",
-   "**v9.9.72 roic を through-cycle 化**: roic 16.3→27.1 / roicg 14.9→20.6。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央26.5% / 最悪15.9%）。比は**パックが審査した年(2025)**の採取器値 roic15.95 / roicg14.6 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
+   "**v9.9.72 roic を through-cycle 化**: roic 16.3→27.1 / roicg 14.9→20.6。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央26.5% / 最悪15.9%）。比は**パックが審査した年(2025)**の採取器値 roic15.95 / roicg14.6 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "expiry": "『manufacturers may seek to launch generic products following the expiration of the applicable exclusivity period we obtain, even if we still have patent protection for our product』+『patent protection for the Pitolisant HD narcolepsy and IH programs in 2028. Utility patents have been filed for Pitolisant GR and Pitolisant HD, with the potential for patent protection to the mid-2040s』→単剤(WAKIX/pitolisant)の独占が特許/独占期限に依存する期限型=yes",
@@ -83,7 +84,7 @@
    "erosion": "『downward pricing pressure on the price of WAKIX and any other future approved products due to social or political pressure to lower the cost of drugs』『Competition from other biotechnology and pharmaceutical companies is intense and is expected to increase』。ただしWAKIX売上は+21%(714.7→868.5)で継続成長・実シェア喪失なし→emerging",
    "disrupt": "循セクション(disrupt)キーワードヒットなし。技術的破壊よりも特許崖・競合薬(オキシベート等)による代替が本質で、崖後のフランチャイズ持続性が未確定→unsettled",
    "dom": "『WAKIX is a first-in-class molecule with a novel mechanism of action and is the only selective H3 receptor antagonist/inverse agonist approved』『first-and-only FDA-approved treatment for narcolepsy that is not scheduled as a controlled substance by the DEA』=作用機序ニッチでは唯一。ただしナルコレプシー市場全体はオキシベート等と分有、hitsに市場シェア数値なし・『competition is intense』→寡占レベル=70(保守)",
-   "irr": "『the exclusive right to commercialize the pharmaceutical compound pitolisant』=pitolisant分子の唯一供給(特許/ライセンス独占)。ただし患者は他ナルコレプシー治療に切替可能。安定患者の処方継続摩擦あり→高摩擦移行困難=70",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『The key competitive factors affecting the success of WAKIX, and any other product candidates that we develop, if approved, are likely to be efficacy, safety, convenience, price, the level of generic competition and the availability of reimbursement from government and other third-party payors.』（Item 1 Business — Competition / WAKIX）——競争要因に移行費用・切替障壁が一つも無く、逆にジェネリック競争が明示される　『WAKIX competes with currently FDA-approved products for the treatment of EDS and/or cataplexy in adults and pediatric patients six years and older with narcolepsy, all of which are controlled substances.』（Item 1 Business — Competition / WAKIX）——同じ適応の承認済み代替が実在すると会社自身が述べ、以下に多数を名指しする　『Switching or adding additional CROs involves additional cost and requires management time and focus.』（Item 1A Risk Factors（第三者への委託））——全文で唯一の switch がこれ。負担するのは当社であって顧客ではない＝検問3-(2)の向きが逆の典型　『third-party payors may refuse to include a particular branded drug in their formularies or otherwise restrict patient access through formulary controls or otherwise to a branded drug when a less costly generic equivalent or other alternative is available.』（Item 1 Business — 償還・価格）——フォーミュラリは払者が乗り換えを強制する装置として書かれており、引き留める摩擦ではない　『For the year ended December 31, 2025, three customers accounted for 100% of gross product revenue; Caremark LLC accounted for 38% of gross product revenue; Accredo Health Group, Inc. accounted for 36% of gross product revenue; and PANTHERx Specialty Pharmacy LLC accounted for 26% of gross product revenue.』（Item 1 Business — Customers）——直接の顧客は3社の専門薬局で、収益は出荷時点認識・支払条件1年以内＝複数年の購買義務が構造的に無い　《反証（同じ原本に同居する）》『As of January 2023, Xyrem is now available as generic sodium oxybate – one version is marketed by Hikma Pharmaceuticals through their agreement with Jazz Pharmaceuticals (launched in January 2023), and the other version is marketed by Amneal Pharmaceuticals through their agreement with Jazz Pharmaceuticals (launched in July 2023).』 ／ 『The greater resources of these competitors may enable them to develop, obtain regulatory approval for or market competing products more quickly or effectively, making it extremely difficult for us to capture a share of the market for our product.』 ／ 『the topline data from the dosing optimization study of pitolisant GR showed 100% of patients successfully initiated treatment at the therapeutic dose of 17.8mg, eliminating the need for dose titration』　《射程》全社（WAKIXの純製品売上 $868.5百万が実質すべて）。摩擦の機構が原本に無いので射程を語る対象がない　《検問と反証の経緯》【検問1・2】70を支える引用が無い。【★反証を試みた経緯】50に落とす前に、台帳が主張する『安定患者の処方継続摩擦』を原本で徹底的に探した。実数: remain on 0 ／ stay on 0 ／ continue therapy 0 ／ maintained on 0 ／ stable patient 0 ／ adherence 0 ／ persistenc 0 ／ substitut 0 ／ discontinu 1（摩擦の記述なし）。**switch は全文でわずか1件、しかも『当社がCROを乗り換える』話**（検問3-(2) 向きが逆）。次に医薬で唯一ありうる顧客側の再認定＝用量再調整(titration)を探したが、titrat 3件は全部**pitolisant GRがtitrationを不要にする**開発の記述で、摩擦を下げる側だった。REMS 8件も競合Xyrem/Xywavの制限プログラムの説明で当社の障壁ではない。formular 10件は『払者が後発品や代替がある場合にブランド薬をフォーミュラリから外す/患者アクセスを制限しうる』＝AMGNと同じく払者の力の記述。specialty pharmacy 経路も救えなかった——**3社で総製品売上の100%**（Caremark 38%・Accredo 36%・PANTHERx 26%）という顧客集中はdepの領分で、支払条件は1年以内・収益は**出荷時点で認識**＝複数年の購買義務は存在しない。【検問3】旧根拠が引く『the exclusive right to commercialize ... pitolisant』はBioprojetから当社が**受けた**独占ライセンス＝当社の供給側の権利で、顧客が乗り換えに負う費用ではない（(1)(2)型）。【検問4】反証が同居どころか支配的: Competition節が代替を列挙する——Xyrem、Xywav、Provigil、Nuvigil、methylphenidate、amphetamine、off-labelの抗うつ薬、Sunosi、Avadelの1日1回オキシベート、そして**Hikma版とAmneal版のジェネリック sodium oxybate が既に上市済**。競争要因は efficacy, safety, convenience, price, generic competition, reimbursement。さらにONTO型の記述『競合の潤沢な資源は…**当社が**市場シェアを取ることを極めて困難にしうる』。代替不能性の実体はNCE独占・Orange Book特許・Paragraph IV＝**expiry欄の領分で、irrで数えると二重計上**。【評価】旧根拠は当社が受けた独占ライセンスを引き、**自ら『患者は他ナルコレプシー治療に切替可能』と反証を述べたうえで**『安定患者の処方継続摩擦あり→70』と引用ゼロで断定している＝evidence_gap",
    "rep": "first-in-class・novel MOAの新薬複製は開発に数年・多額・規制承認を要し困難。ただし$10B/数十年級の絶対複製不能ではなく、特許失効後はジェネリックで容易に複製される→困難=60",
    "dur": "堀の型は特許/規制独占+処方スイッチングコスト(『patent term is 20 years from the earliest date of filing』)。50年コンセッション級の物理/規制耐久ではなく単一分子の有限特許依存→スイッチングコスト級=75",
    "geopol": "『For the year ended December 31, 2025, three customers accounted for 100% of gross product revenue; Caremark 38%, Accredo 36%, PANTHERx 26%』+『our only commercial product, WAKIX』=製品100%単剤集中・顧客(専門薬局流通)100%3社集中。ただし顧客集中は米専門薬流通の構造的性質(最終患者は分散)であり真の重は単剤依存→2(重)。地政学(米国内単一市場)自体は軽微",
@@ -172,7 +173,17 @@
    "hand": [],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "roiic": 7.3,
  "roiic5": 19.1,

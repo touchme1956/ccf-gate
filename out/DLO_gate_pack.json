@@ -23,7 +23,7 @@
  "erosion": "emerging",
  "disrupt": "unsettled",
  "dom": 50,
- "irr": 70,
+ "irr": 50,
  "rep": 60,
  "dur": 75,
  "geopol": 2,
@@ -75,11 +75,12 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=30.5 / 5年窓=None。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
    "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均27.5%・σ3.8pt・CV13.8%）。",
-   "**v9.9.72 roic を through-cycle 化**: roic 28.9→27.9 / roicg 28.9→27.6。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央31.4% / 最悪24.1%）。比は**パックが審査した年(2025)**の採取器値 roic32.53 / roicg28.86 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
+   "**v9.9.72 roic を through-cycle 化**: roic 28.9→27.9 / roicg 28.9→27.6。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央31.4% / 最悪24.1%）。比は**パックが審査した年(2025)**の採取器値 roic32.53 / roicg28.86 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "dom": "『We compete with large companies, some of them with a substantially larger scale and higher investment capacity than us』→シェア開示なし・大手との競争市場(<40%)=50",
-   "irr": "『rigorous vetting processes with global enterprise merchants that invest significant time and resources』→統合・審査の移行摩擦は高いが唯一供給ではない=70",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『While our merchant customer contracts, including those with our largest merchants, are generally of indefinite term, they are terminable upon relatively short written notice.』（Item 3.D Risk Factors — 顧客集中・価格圧力の項）——検問4の『随時解約可』。契約に期間の縛りが無い　『Moreover, these contracts are not exclusive and do not prevent merchants from transacting with and sending all or substantial transaction volumes to our competitors.』（Item 3.D Risk Factors — 同上）——会社自身が『関係は非排他』と明記＝検問4の列挙そのもの　『Therefore, these and other merchants could shift business away at any given time without necessarily terminating their contracts with us.』（Item 3.D Risk Factors — 直前が『our large merchants often have arrangements with multiple payment service providers』）——解約すらせずにいつでも volume を移せる＝移行摩擦の完全な否定(multi-homing)　『Merchants can also choose to route all or just a portion of their applicable pay-in and pay-out volume through us.』（Item 4.B Business Overview — 台帳が引用した vetting の文の2文あと）——台帳の引用の直後に会社自身が置いた文。一部だけ流せる＝ロックインではない　『Our direct connections with merchants serve as a strong competitive advantage and barrier to entry for competing providers』（Item 4.B Business Overview — 台帳の引用と同じ段落の結論文）——会社自身が barrier to entry と名指し＝検問3(4)により rep の領分で irr ではない　『As a result, potential clients often resist changing vendors or integrating with new vendors. We seek to overcome this resistance』（Item 3.D Risk Factors — 見出し『Potential merchant clients may be reluctant to switch to a new vendor…which may adversely affect our growth』）——ONTO型。切替摩擦は当社が顧客を奪えない理由として書かれている　《反証（同じ原本に同居する）》『We are often subject to rigorous vetting processes with global enterprise merchants that invest significant time and resources in the selection, diligence, and on-boarding of technology and payments providers.』 ／ 『This onboarding process can often take several months as these merchants assess our technological capabilities, ability to comply with their data security protocols, and adherence to regulatory, tax and compliance requirements.』　《射程》台帳が主張した機構の射程は enterprise merchants(TPV の99%)だが、下記のとおり機構そのものが irr ではなく rep / ONTO型に落ちる　《検問と反証の経緯》検問1: 台帳の引用『rigorous vetting processes with global enterprise merchants that invest significant time and resources』は**原本に一字一句存在する(1件)**。ここは旧根拠が正しい。検問2: 機構も一応名指しされている(数ヶ月かかる vetting・on-boarding に merchants が時間と資源を投じる)。**だが検問3で落ちる**——(a)同じ段落の結論が『Our direct connections with merchants serve as a strong competitive advantage and **barrier to entry for competing providers**』＝会社自身が barrier to entry と名指し。検問3(4)により『原本が barrier to entry と書いていたら rep の領分で irr ではない』。6146 の『60年以上のテストカット…』の次の文が『新興企業から見ると非常に高い参入障壁』だったのと**同型**。(b)switching を正面から論じる箇所は Item 3.D リスク要因で、主語が『Potential merchant clients』＝**当社がまだ取れていない顧客**、結語が『which may adversely affect our growth』『We seek to overcome this resistance』＝**検問3(5)のONTO型＝当社が外側にいる証明**。検問4: 決定的な反証が5つ同居(下記quotes)——短期通知で解約可・非排他・いつでも volume を移せる・一部だけルーティング可・大口は複数PSPと契約。検問5: 上記のとおり射程以前。★反証を試みた経緯(70を残せないか探した): switching cost 0 / multi-home 0 / churn 0。NRR は定義の記述はあるが実数の開示を確認できなかった。retention 11件を全件読んだが、うち moat に使えるものは無く、保険の retentions と人材の retention が混ざる。20-F なので RELX 型(本体に無く添付にある)を疑ったが、キャッシュは F-50 まで含む完全な本体で、**契約条件そのもの(短期通知解約・非排他・volume 移動自由)が本体に明記**されている以上、添付書類が覆せる種類の論点ではない。★台帳の旧根拠: 引用は実在するが、同じ段落の結論(barrier to entry)と同じ原本の契約条件を読まずに『統合・審査の移行摩擦は高い』と読んだ点で規約を満たしていない。",
    "rep": "『our compliance, tax, and fraud management capabilities create a competitive edge that is difficult to replicate』→困難(極困難の根拠までは無し。自社も2016年創業で構築)=60",
    "dur": "堀の型はエンタープライズ加盟店の統合スイッチングコスト(vetting引用)+現地規制対応のプロセス知。排他的規制ではないため75(スイッチングコスト)",
    "erosion": "『We may also face pricing pressures from competitors. As new competitors enter the emerging markets landscape…』+粗利率3年連続低下(42.6→36.8%)=emerging",
@@ -165,7 +166,17 @@
     "ni"
    ],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "roiic": 30.5,
  "sht": "up",

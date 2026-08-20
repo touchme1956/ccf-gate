@@ -23,18 +23,18 @@
  "erosion": "none",
  "disrupt": "settled",
  "dom": 50,
- "irr": 70,
+ "irr": 50,
  "rep": 60,
  "dur": 75,
  "moatW": 85,
  "geopol": 0,
  "nrr": 105,
  "beta": 0.892,
- "per": 30.22,
+ "per": 28.35,
  "perF": null,
  "evebit": 22.5,
- "px": 507.1,
- "shy": 0.83,
+ "px": 475.64,
+ "shy": 0.89,
  "gr": null,
  "gcap": null,
  "analysts": null,
@@ -117,7 +117,8 @@
    "**v9.9.72 roic を through-cycle 化**: roic 56.1→56.1 / roicg 15.6→15.6。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央56.0% / 最悪38.9%）。比は**パックが審査した年(2025)**の採取器値 roic56.01 / roicg15.59 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
    "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）",
    "2026-08-06 rep/dur を原本で確定。rep 80→60（10-Kが『競合の方が大きい』『自社の相対位置を特定できない』と自認）・dur 85→75（ネットワーク効果の記述なし）。**堀 70.1→65.2 で関門70を割る**＝買付の土俵から降りる（買わない理由であって売る理由ではない）",
-   "2026-08-13 採取器の是正の取り残しを反映: gmt flat→up。**旧値は根拠が無く、採取器の現行版と食い違っていた**（このパックの審査は 2026-07 で、採取器はその後3回直っている）。採用の条件は3つ——(1)パックに根拠が無い (2)採取器の年がパックの会計年度と一致 (3)**採取器が示した実額から式を独立に再計算して一致**。roic/roicg/roict/dilNet は IC縮退・窓の問題があるので**保留**した。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた。測り直し: python3 night/backfill_machine_evidence.py --stamps"
+   "2026-08-13 採取器の是正の取り残しを反映: gmt flat→up。**旧値は根拠が無く、採取器の現行版と食い違っていた**（このパックの審査は 2026-07 で、採取器はその後3回直っている）。採用の条件は3つ——(1)パックに根拠が無い (2)採取器の年がパックの会計年度と一致 (3)**採取器が示した実額から式を独立に再計算して一致**。roic/roicg/roict/dilNet は IC縮退・窓の問題があるので**保留**した。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた。測り直し: python3 night/backfill_machine_evidence.py --stamps",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "moatW": "セグメント別売上(FY2025・10-K 2025-12-31期): Utility Solutions 62.8%(3,672.3百万$)【内訳 Grid Infrastructure 47.0%(2,748.2) / Grid Automation 15.8%(924.1)】 / Electrical Solutions 37.2%(2,172.3)【内訳 Industrial 22.0%(1,287.1) / Electrical Products 15.1%(885.2) / Retail and Builder 0.0%(0.0・当期に撤退)】、合計5,844.6百万$。両報告セグメントとも≥15%。顧客・競合・チャネルが別(Utility Solutions=電力事業者向けにスペックイン、Electrical Solutions=産業/商業向けを電材ディストリビュータ経由)でそれぞれ独立した参入障壁を持つ。顧客集中は同10-K『We are not dependent on a single customer, however, our top ten customers account for approximately 42% of our Net sales』で単一顧客への依存なし。→ 独立した堀は2本(主力Utility＋育った隣接Electrical) → moatW=85。出典: https://www.sec.gov/Archives/edgar/data/48898/000162828026007500/hubb-20251231.htm (R66/R119・Item1 Customers) 【2026-07-29 再監査で据置=85を追認】原本(10-K INDUSTRY SEGMENT DATA / 収益の分解注記)の実数を再確認: Utility Solutions $3,672.3M=62.8%(Grid Infrastructure $2,748.2M＋Grid Automation $924.1M) / Electrical Solutions $2,172.3M=37.2%(Industrial $1,287.1M＋Electrical Products $885.2M＋Retail and Builder $0.0M)、総額$5,844.6M。報告セグメントは2本しかなく両方とも≥売上15%＝100(独立した堀3つ以上)は不成立、85が該当。v9.9.41のmoatW追加規約(共通の中核技術に全事業が乗るなら1本)の適用可否も点検したが、Utility=送配電網ハードウェア/メータ・グリッド監視(顧客=電力事業者、ユーティリティ調達の認定・スペックイン。米国$3,518.9M・国際$153.4M)、Electrical=産業/商業向け電気製品(顧客=電材ディストリビュータ経由の産業・商業顧客。米国$1,892.4M・国際$279.9M)で、中核技術・顧客・チャネル・調達規制が別系統＝共通の中核に乗る関係ではない(営業利益もUtility $789.9M / Electrical $418.9Mと独立に立つ)。顧客集中はItem1 Customers/注記『We are not dependent on a single customer, however, our top ten customers account for approximately 42% of our Net sales』＝単一顧客への依存なし(50の発動条件『最大顧客≥20%』に該当する単一顧客の開示は無い)。→ 独立した堀2本＝85を維持。",
@@ -139,7 +140,7 @@
    "roicg": "｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央56.0% / 最悪38.9%・比は審査年2025）",
    "nde": "機械算出 2025年: (有利子負債 2,325,400,000 − 現金同等物 497,900,000) ÷ (営業利益 1,208,800,000 + 減価償却 206,100,000)",
    "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2025『**We are not dependent on a single customer**, however, our **top ten customers account for approximately 42% of our Net sales**』＝上位10社で42%だが単一最大は10%未満（ASC280開示なし） → **上限10**（10%開示閾値が上限を証明する『上限の不等式』。ベトは dep≥40 の一方向なので上限で裁ける）",
-   "irr": "10-K FY2025 に顧客側の再認定の記述なし。配電・送電機器は仕様と流通で摩擦があるが認証ロックではない→70",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『Although this backlog is important, the majority of Hubbell’s revenues result from sales of inventoried products or products that have short periods of manufacture.』（Item 1 Business — 直前見出し『Backlog』）——会社自身が、収益の大半は在庫品ないし製造期間の短い製品の販売だと述べる。継続的な義務や設置基盤ではなく都度の物販だという自認で、70の機構と正面から反対する　『two-thirds of the Company’s Net sales are to distributors who then sell directly into our end markets.』（Note 1 Significant Accounting Policies — 直前見出し『Revenue Recognition』）——旧根拠の『流通で摩擦がある』の実体。売上の三分の二は流通業者へ渡しており、最終顧客との間に中間業者が立つ。摩擦の記述ではなく販路の記述　『Hubbell experiences substantial competition in all categories of its business, but does not compete with the same companies in all of its product categories.』（Item 1 Business — 直前見出し『Competition』）——Competition節の全文が競争の激しさの記述に終始し、移行障壁を一言も述べない。規約はこの型を70の根拠にしないと明示している　『Hubbell cannot specify with precision the number of competitors in each product category or their relative market position.』（Item 1 Business — 直前見出し『Competition』）——自社の相対的位置すら把握していないと述べる。顧客が乗り換えにくいという主張を支える材料が原本の側に存在しない　『We rely on our suppliers to produce high quality materials, components and finished goods according to our specifications, including timely delivery.』（Item 1A Risk Factors — サプライチェーンのリスク要因）——原本の specification 35件のうち顧客関連でない唯一の実文がこれ。当社が自社の仕入先へ仕様を課す＝向きが逆（除外類型2）。旧根拠の『仕様で摩擦』はこの文の誤読でしか成立しない　『While Hubbell deems these patents to be of value, it does not consider its business to be dependent upon patent protection.』（Item 1 Business — 直前見出し『Patents』）——約3,250件の特許を持ちながら事業は特許に依存しないと自認。技術的な固着で顧客が縛られる構造ではないことの傍証　《反証（同じ原本に同居する）》『As of December 31, 2025, the Company had approximately $ 20 million of unsatisfied performance obligations for contracts with an original expected length of greater than one year, primarily relating to long-term contracts of the Aclara business (within the Utility Solutions segment) to deliver and install meters, metering communications and grid monitoring sensor technology.』 ／ 『The Company also has performance obligations, primarily within the Utility Solutions segment, that are recognized over time due to the customized nature of the product and the Company’s enforceable right to receive payment for work performed to date in the event of a cancellation.』 ／ 『We are not dependent on a single customer, however, our top ten customers account for approximately 42% of our Net sales.』　《射程》射程を論じる機構そのものが無い。売上構成は Utility Solutions 63% / Electrical Solutions 37%（FY2025 Net sales $5,844.6百万）で、両セグメントのどの記述にも顧客側の移行障壁が無い。唯一の複数年契約は Aclara（Utility内）の約$20百万＝全社売上の0.342%。　《検問と反証の経緯》①逐語: 引用は全て原本(10-K FY2025・420,407字)に一字一句在ることを機械照合済。②機構の名指し: 規約の粒度（複数年の購買義務／消耗品の専用性／データ移行・再教育／設置基盤／工程への組込／解約率）を全走査したが70を支える機構文がゼロ。実数: switching cost 0 / switching 0 / installed base 0 / proprietary 0 / consumable 0 / renewal 0 / churn 0 / lock 0 / sole source 0 / single source 0 / designed in 0 / aftermarket 0 / compatib 0 / interoperab 0 / legacy 0 / barrier 0 / service life 0 / lifecycle 0 / engineered 0。ヒットする語も中身が別物——switch 2件は製品名（配電用スイッチ）、qualif 14件は全て年金(qualified pension plan)と Valuation and Qualifying Accounts、certif 5件はSOX証明と定款、approved 8件は取締役会の増配・自社株買い承認、retention 2件は株式報酬、upgrade 1件は自社ERP、installed 2件は製品保証の『properly installed』。③向き: 顧客に関わらない唯一の仕様の実文は『We rely on our suppliers to produce ... according to our specifications』＝当社が自社の仕入先へ仕様を課す話で除外類型(2)。旧根拠の言う『仕様』は原本にこれ以外に無い。④反証の同居: 価格圧力を自認、売上の三分の二が流通業者経由、特許は『does not consider its business to be dependent upon patent protection』、Competition節は『substantial competition』かつ『cannot specify with precision the number of competitors』（規約が明示的に70の根拠にならないと定める型）。⑤射程: 機構が無いので射程の対象が無い。★反証の試み（70を立てにいった経緯）: (a)唯一の候補である Aclara の複数年契約に実数を当てた——1年超の未充足履行義務は約$20百万で Net sales $5,844.6百万の0.342%。門の較正（MSFT RPO 2.0倍で70／MCO 1.16倍で70／ADBE 0.94倍で50）に照らすと桁が三つ違い、しかも同じ Item 1 が『majority of Hubbell's revenues result from sales of inventoried products or products that have short periods of manufacture』と在庫品売りだと明言する。(b)公益のAMI設置基盤で救えないか探したが Aclara 2件・advanced metering 4件・AMI 1件しか無く、実態は『weak advanced metering infrastructure and meter project activity』＝需要の話。(c)顧客承認リストや工程認定を tooling 2 / mold 1 / dies 1 / relay 1 まで当てたが全て買収先の説明。(d)キーワードに依らない意味走査（同一文に customer と cost|time|require|qualify|convert|migrate 等）で22文を目視したが機構文ゼロ。落とせる材料が一つも見つからなかったので50。",
    "rep": "**rep 80→60 へ是正**。10-K Competition が**自ら**『**some of its competitors are larger companies with substantial financial and other resources**』と述べ、さらに『Hubbell **cannot specify with precision** the number of competitors in each product category or their relative market position』＝自社の相対位置すら把握できない。同社が挙げる優位は『product performance, reliability, quality and technological innovation』『**reputation** as a manufacturer of quality products』＝評判であって複製不能性の実体ではない→60",
    "dur": "**dur 85→75 へ是正**。10-Kにネットワーク効果の記述なし。『**more than 75 brands**』と流通(電材問屋・ホームセンター)経由の販売＝ブランド＋流通だが、電力会社向けは仕様承認と据付の継続関係があるのでスイッチングコスト型75",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 3,682,500,000 → 2023年 5,372,900,000 → 2025年 5,844,600,000。A案(端点) 直近2年CAGR 4.30% − その前3年CAGR 13.42% = -9.12pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -9.59pt ／ 年次YoY {'2021': 13.9, '2022': 18.0, '2023': 8.6, '2024': 4.8, '2025': 3.8} → **採用 -9.12pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
@@ -176,17 +177,17 @@
    "_note": "roic/roicg がどの基準で作られているか。v9.9.72 で through-cycle(5年中央値)へ移行したが、採取器とパックが食い違う社・系列が3年未満の社には当てていないため**台帳に二つの基準が混在する**。文字列一致で見分けるのは脆いので機械可読にした"
   },
   "px": {
-   "date": "2026-08-13",
+   "date": "2026-08-19",
    "day": null,
    "ccy": "USD",
    "src": "Finnhub",
-   "px_old": 512.9,
-   "px_new": 507.1,
-   "pct": -1.13,
+   "px_old": 483.86,
+   "px_new": 475.64,
+   "pct": -1.7,
    "conv": "基準保存式 per_new = per_old × (px_new÷px_old)／shy は 1/比率",
    "fields": {
-    "per": 30.22,
-    "shy": 0.83
+    "per": 28.35,
+    "shy": 0.89
    }
   },
   "machine_check": {
@@ -209,13 +210,23 @@
     "ni"
    ],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "mcap": 25.63,
  "roiic": 16.8,
  "roiic5": 21.7,
  "sht": "up",
- "ddate": "2026-08-13",
+ "ddate": "2026-08-19",
  "dep": 10,
  "cagrT": -9.12
 }

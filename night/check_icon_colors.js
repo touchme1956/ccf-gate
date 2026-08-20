@@ -181,7 +181,47 @@ const probe = () => {
       else console.log(`  ✓ Ⅶ資産（別ページ・同じ icon.js）: 行 ${pf.n} / 光 ${pf.lit}`);
     }
 
-    // ── ④ pageerror
+    // ── ④ 📈成績タブのグラフ: **線に色が乗っているか**（v9.9.156）
+    //   ロゴと同じ族の事故——`--jade`/`--rust`/`--dim` は #scorer にスコープされていて
+    //   成績タブでは解決せず、**stroke が none ＝線が丸ごと消える**（実測で S&P500 の線が
+    //   見えなかった）。文字色なら親から継いで見えるので、**線だけが静かに消える**。
+    //   コードを読んでも見つからない種類なので、実ブラウザで computed 値を数える。
+    {
+      await p.evaluate(() => { try { showPage(12); } catch (e) {} });
+      await p.waitForTimeout(3200);
+      const g = await p.evaluate(() => {
+        const pg = document.getElementById('pg12');
+        if (!pg) return { no: '成績タブが無い' };
+        const svg = [...pg.querySelectorAll('svg')];
+        if (!svg.length) return { no: 'グラフが1枚も描かれていない' };
+        const dead = [];
+        let nStroke = 0, nFill = 0;
+        svg.forEach((s, i) => {
+          s.querySelectorAll('path,rect,line,text').forEach(el => {
+            const cs = getComputedStyle(el);
+            const wantS = el.getAttribute('stroke'), wantF = el.getAttribute('fill');
+            if (wantS && wantS !== 'none') {
+              nStroke++;
+              if (cs.stroke === 'none' || !cs.stroke) dead.push(`図${i + 1} ${el.tagName} stroke=${wantS}`);
+            }
+            if (wantF && wantF !== 'none') {
+              nFill++;
+              if (cs.fill === 'none' || !cs.fill) dead.push(`図${i + 1} ${el.tagName} fill=${wantF}`);
+            }
+          });
+        });
+        return { svg: svg.length, nStroke, nFill, dead: dead.slice(0, 6) };
+      });
+      if (g.no) { bad++; console.log(`  ✗ 📈成績: ${g.no}`); }
+      else if (g.dead.length) {
+        bad++;
+        console.log(`  ✗ 📈成績: **色が解決せず消えている** ${g.dead.length}件 — ${g.dead.join(' / ')}`);
+      } else {
+        console.log(`  ✓ 📈成績: グラフ ${g.svg}枚・線${g.nStroke}/塗${g.nFill} すべて色が乗っている`);
+      }
+    }
+
+    // ── ⑤ pageerror
     if (errs.length) { bad++; console.log(`  ✗ pageerror ${errs.length}件: ` + errs.slice(0, 3).join(' | ')); }
     else console.log('  ✓ pageerror 0');
   } finally {

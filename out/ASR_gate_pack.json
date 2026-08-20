@@ -23,14 +23,14 @@
  "erosion": "emerging",
  "disrupt": "settled",
  "dom": 100,
- "irr": 70,
+ "irr": 50,
  "rep": 80,
  "dur": 100,
  "geopol": 2,
  "nrr": 105,
- "beta": null,
- "per": null,
- "perF": null,
+ "beta": 0.199,
+ "per": 13.85,
+ "perF": 11.49,
  "evebit": null,
  "px": null,
  "shy": null,
@@ -71,7 +71,8 @@
    "2026-07-19 発見度実データ: analysts=9 instOwn=12.736(AV)",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=34.0 / 5年窓=None。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 80→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均14.8%・σ6.2pt・CV41.8%）。",
-   "2026-08-06 irr 85→70。コンセッション＝運営権であって認証ロックではない。空港4社(ASR/OMAB/PAC/CAAP)の刻みを同じ論拠で揃えた"
+   "2026-08-06 irr 85→70。コンセッション＝運営権であって認証ロックではない。空港4社(ASR/OMAB/PAC/CAAP)の刻みを同じ論拠で揃えた",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "expiry": "『We operate each of our Mexican airports under 50-year concessions granted as of 1998』→満了2048年頃・残り約22年。『sanctions have been imposed at least three times』で取消、『rescate/requisa(国家収用)』条項あり。コロンビア側も『expected revenues到達で終了』条項",
@@ -100,8 +101,11 @@
    "cagr": "機械算出: 売上 2019年 16,821,638,000 → 2024年 31,332,787,000＝5年の年率",
    "nde": "機械算出 2024年: (有利子負債 13,803,270,000 − 現金同等物 20,083,457,000) ÷ (営業利益 17,519,806,000 + 減価償却 0)",
    "roiic": "機械算出 2021→2024年(3年窓): ΔNOPAT 5,249,488,392 ÷ Δ投下資本 15,422,478,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 59,549,603,000→74,972,081,000（+25.9%）",
-   "irr": "20-F FY2025 『Airplan has **concessions to operate** the following airports in Colombia』。空港の堀は**運営権(コンセッション)と立地**で、顧客(航空会社・旅客)が乗り換えに再認定費用を負う機構は無い。しかも各社の20-Fは競合空港・他の観光地との競争をリスクとして明記する。コンセッションの期間と立地による摩擦で70。",
-   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2019年 16,821,638,000 → 2022年 25,313,882,000 → 2024年 31,332,787,000。A案(端点) 直近2年CAGR 11.26% − その前3年CAGR 14.59% = -3.34pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -23.08pt ／ 年次YoY {'2020': -24.9, '2021': 48.8, '2022': 34.8, '2023': 2.0, '2024': 21.3} → **採用 -3.34pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。"
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『None of our contracts with our principal airline customers obligate them to continue providing service to our airports and we can offer no assurance that competing airlines would seek to increase their flight schedules if any of our key customers reduced their use of our airports.』（Item 3.D Risk Factors — 主要航空会社顧客への依存）——会社自身が顧客の継続義務の不在を断定＝移行障壁の明示的否定　『Although in the past we were able to renew our agreements with our principal airline customers at our Mexican airports, some of these contracts are scheduled to expire in December 2025 and we cannot assure whether these will be renewed.』（Item 3.D Risk Factors — 主要航空会社顧客への依存）——契約は満了し毎回更新を勝ち取る必要がある＝ロックではない　『Since our business is substantially dependent on international tourists, the principal competition to our Mexican airports is from competing tourist destinations.』（Item 4 — Business Overview — Principal Air Traffic customers of our Mexican Airports — Competition）——Competition節が代替(他の観光地)の存在だけを述べ、摩擦を一つも述べない　『The Mexican government could grant new concessions that compete with our airports, including the Cancún International Airport.』（Item 3.D Risk Factors — コンセッションに関するリスク(見出し)）——最大資産カンクンにも競合コンセッションが与えられうる　『A concession holder may not limit the number of providers of complementary services in its airport, except in instances where space, efficiency and/or safety warrant such limitation.』（Item 4 — MEXICAN REGULATORY FRAMEWORK — 補完サービス）——規制が強制的にアクセスを開かせる＝囲い込みの逆　『Our principal competition is from competing destinations in Colombia and Latin America.』（Item 4 — Business Overview — Colombian Airports — Competition）——コロンビアでも同じ構造　《反証（同じ原本に同居する）》『Airplan has concessions to operate the following airports in Colombia』　《射程》機構が無いので射程なし。コンセッションの排他性は立地の独占＝dom の領分(台帳は既に dom=100 を付与)で、顧客が乗り換える際に負う費用ではない　《検問と反証の経緯》【検問4が決定打】会社自身が顧客の拘束を明示的に否定している——『None of our contracts with our principal airline customers obligate them to continue providing service to our airports』。加えて主要航空会社との契約は2025年12月に満了予定で更新の保証は無いと書く＝毎回勝ち取る型(RSG/WCNの競争入札型と同じ)。MAの『Many of our customer relationships are not exclusive』と同型で、より直接的。【検問2】原本1,117,047字を走査: switch 0/switching cost 0/lock-in 0/installed base 0/multi-year 0/renewal rate 0/churn 0/requalif 0/certified by 0/barriers to entry 0/alternative airport 0。【検問1-3】旧根拠の唯一の引用『Airplan has concessions to operate the following airports in Colombia』はコロンビア子会社が運営権を持つという事実の記述で摩擦を一つも述べない。しかも旧根拠は自ら『顧客が乗り換えに再認定費用を負う機構は無い』『20-Fは競合空港・他の観光地との競争をリスクとして明記する』と書いた上で70を結論しており、自分の反証材料で70を主張している。【反証を試みた経緯】航空会社側の期間拘束を探して lease 275件・slot 6件・gate 95件・concession 817件・Airport Use Agreements を読んだ。LMM(サンフアン)のAirport Use AgreementsはAerostarとSignatory Airlinesの関係を定めるが期間拘束の記述は原本に無く、LMMは旅客1,360万人でグループの一部。規制はむしろアクセスを開かせる側で、COFECEは2019年にカンクンの独占的慣行(アクセス拒否)で行政責任を認定している。落とせなかったのではなく、全社の記述が明示的に拘束は無いと言っている。【evidence_gap】true。",
+   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2019年 16,821,638,000 → 2022年 25,313,882,000 → 2024年 31,332,787,000。A案(端点) 直近2年CAGR 11.26% − その前3年CAGR 14.59% = -3.34pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -23.08pt ／ 年次YoY {'2020': -24.9, '2021': 48.8, '2022': 34.8, '2023': 2.0, '2024': 21.3} → **採用 -3.34pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
+   "per": "市場データ機械充填 2026-08-18: market_fetch/market_data.json（常識帯(8.0, 200.0)を通過）",
+   "perF": "市場データ機械充填 2026-08-18: market_fetch/market_data.json（常識帯(1.0, 500.0)を通過）",
+   "beta": "市場データ機械充填 2026-08-18: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -124,7 +128,10 @@
    "nde": "machine",
    "roiic": "machine",
    "p1": "machine",
-   "cagrT": "machine"
+   "cagrT": "machine",
+   "per": "market",
+   "perF": "market",
+   "beta": "market"
   },
   "basis": {
    "roic": "single-year",
@@ -150,7 +157,26 @@
     "ni"
    ],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "market": {
+   "date": "2026-08-18",
+   "filled": [
+    "per",
+    "perF",
+    "beta"
+   ],
+   "src": "market_fetch/market_data.json"
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "roiic": 34.0,
  "cagrT": -3.34

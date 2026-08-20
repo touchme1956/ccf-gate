@@ -72,7 +72,8 @@ def main():
     for _t in (["night/audit_promotion_ready.py", "--json"],
                ["night/kessan_flags.py", "--json"],
                ["night/audit_irr70.py", "--json"],
-               ["night/audit_irr85_dual.py", "--json"]):
+               ["night/audit_irr85_dual.py", "--json"],
+               ["night/audit_irr85_dual.py", "--rung", "70", "--json"]):
         try:
             subprocess.run([sys.executable] + _t, capture_output=True, timeout=180)
         except Exception:
@@ -194,6 +195,22 @@ def main():
         add(v.get("ticker"), w,
             f"irr=85 の二重読みが未了（{v.get('state')}・根拠{v.get('evidence_len')}字"
             + ("・🟢投下可" if v.get("buy") else ("・判定圏" if v.get("in_band") else "") ) + "）")
+    # 4-c2. **irr=70 の二重読みが未了**（2026-08-19追加・買付圏だけ）
+    #   ★85と70では費用の出方がまったく違う。実測(shadow_irr_step):
+    #     判定圏の **70→50 は投下可を10社→5社**にする（6社が堀の関門70を割り、RBCは席を失う）。
+    #     一方 **50→70 も 85→70 も 0社しか動かさない**＝**コストは 70→50 の一方向**。
+    #   しかも一致率は **70 だけが 0.706**（85は1.00・50は0.971）＝**最も揺れる刻みが、最も費用を持つ**。
+    #   ⚠ 重みは 85 の未了(48)より**軽い 36**——85は「特権を無検証で使っている」が、
+    #     70は「特権ではなく通常の刻み」だから。だが promotion_ready(45) の下・
+    #     納品検査FAIL(20) の上に置く＝**繰り上がりより後、根拠の穴より先**。
+    #   ⚠ **買付圏の外は積まない**（全213社を積むと作業リストが埋まって誰も読まなくなる）。
+    _d70 = jload("out/irr70_dual.json")
+    for v in (_d70.get("todo") or []):
+        w = 36 if v.get("buy") else 28
+        add(v.get("ticker"), w,
+            f"irr=70 の二重読みが未了（{v.get('state')}・根拠{v.get('evidence_len')}字"
+            + ("・🟢投下可" if v.get("buy") else "・判定圏") + "）")
+
     # 4-d. **二重読みが「留保つき」で終わった社**（2026-08-12追加）
     #   ⚠留保を記録しただけでは装飾で終わる。留保＝「85の根拠に穴があると別の読み手が書いた」なので、
     #   全文の再読へ回す。ただし**未検証より軽い**（一度は読まれている）＝重みは未了の半分。

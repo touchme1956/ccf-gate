@@ -245,8 +245,17 @@ def check(h, f):
     #   本文とコード注釈の版番号は**いつ何が入ったかの記録**＝書き換えたら記録が消える。
     #   検査は git の直前コミットと突き合わせる：**バッジ以外の行で版番号の値が変わっていたら鳴らす**。
     #   ⚠ git が無い／初回コミットでは黙って飛ばす（測れないことを異常と言わない・ルール7）。
+    #   ⚠**マージ中は飛ばす**——版番号は別セッションと**衝突する**ことがあり（実測: main が v9.9.156/157 を
+    #   別の変更で使っていた）、そのときは**こちらを繰り下げるのが正しい作法**（v9.9.118→119 の前例）。
+    #   マージ中に HEAD と比べても、相手側の行が丸ごと増えるので比較そのものが意味を持たない。
+    #   飛ばしたことは**黙らずに出す**（鳴らない検査を残さない）。コミット後は MERGE_HEAD が消えるのでCIには出ない。
     try:
-        import subprocess
+        import subprocess, os
+        if os.path.exists(os.path.join(ROOT, '.git', 'MERGE_HEAD')):
+            out.append(('WARN', 'version_history_merge',
+                        'マージ中のため版番号の歴史検査を飛ばした'
+                        '（版番号は別セッションと衝突しうる＝繰り下げが正当に起きる）', []))
+            raise StopIteration
         prev = subprocess.run(['git', 'show', 'HEAD:index.html'],
                               capture_output=True, text=True, timeout=20)
         if prev.returncode == 0 and prev.stdout:

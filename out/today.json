@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-18",
+ "generated": "2026-08-19",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "MSFT",
@@ -23,30 +23,14 @@
   "RELX"
  ],
  "counts": {
-  "now": 3,
-  "today": 8,
-  "month": 22,
-  "waiting": 93,
+  "now": 1,
+  "today": 6,
+  "month": 23,
+  "waiting": 94,
   "blind": 0,
   "src": 17
  },
  "now": [
-  {
-   "k": "ops:market",
-   "level": "now",
-   "title": "止まっている疑い: 株価・盤データ",
-   "why": "最終 2026-08-13（5日前・期限4日）",
-   "how": "market.yml 21:30UTC（FINNHUB_KEY）",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:gatehist",
-   "level": "now",
-   "title": "止まっている疑い: 門の判定の履歴",
-   "why": "最終 2026-08-13（5日前・期限4日）",
-   "how": "market.yml が毎日／手動 python3 night/gate_history.py --append",
-   "src": "回転盤"
-  },
   {
    "k": "wacc",
    "level": "now",
@@ -98,22 +82,6 @@
    "src": "8-K監視"
   },
   {
-   "k": "alert:CELH:2026-08-10",
-   "level": "today",
-   "title": "8-K警報: CELH（2026-08-10）",
-   "why": "Item 5.02: 退任——取締役・主要役員の異動",
-   "how": "⚙自動化タブの「審査」で門2再審査の依頼文を作る",
-   "src": "8-K監視"
-  },
-  {
-   "k": "earn:JKHY",
-   "level": "today",
-   "title": "決算: JKHY（2026-08-18）",
-   "why": "本日",
-   "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
-   "src": "決算カレンダー"
-  },
-  {
    "k": "exc:TDG",
    "level": "today",
    "title": "門外例外の見張り: TDG",
@@ -127,14 +95,22 @@
    "k": "reviewfreq",
    "level": "month",
    "title": "門2審査が毎営業日 走っていない（直近4営業日で1日）",
-   "why": "抜け: 2026-08-12 2026-08-13 2026-08-14（JST。ログはUTC記録なので直して数えている）／盤は最後の日付しか見ないので🟢に見える",
+   "why": "抜け: 2026-08-14 2026-08-18 2026-08-19（JST。ログはUTC記録なので直して数えている）／盤は最後の日付しか見ないので🟢に見える",
    "how": "Routine の発火履歴を確認（claude.ai の Routines）",
    "src": "審査ログ"
   },
   {
+   "k": "fresh:irr85mech:本体が5日動いていない（",
+   "level": "month",
+   "title": "中身/入力が前進していない: 機構文の年次diff",
+   "why": "本体が5日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
    "k": "fresh:unmeasurable",
    "level": "month",
-   "title": "鮮度を測れない錨が 6件",
+   "title": "鮮度を測れない錨が 5件",
    "why": "「測っていない」であって「測って問題なし」ではない",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
@@ -857,6 +833,12 @@
    "k": "todo:pf_v_field_meaning",
    "kind": "宿題",
    "title": "Ⅶ資産の `v` が行ごとに違うものを指している",
+   "due": null
+  },
+  {
+   "k": "todo:perf_tab_etf_hole",
+   "kind": "宿題",
+   "title": "📈成績タブは城（個別）だけ——網(ETF)が入っていないので資産全体の成績ではない",
    "due": null
   }
  ],

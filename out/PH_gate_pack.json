@@ -23,7 +23,7 @@
  "erosion": "none",
  "disrupt": "settled",
  "dom": 50,
- "irr": 70,
+ "irr": 50,
  "rep": 80,
  "dur": 75,
  "moatW": 85,
@@ -114,7 +114,8 @@
    "acq5 の根拠を機械判定で記録（値はyesのまま据置）: のれんの新しさ +26.4%。この欄は roicGap>15 と組んで**一律−6**が効く最大級の段差なのに、判定圏16社中9社が根拠なしだった（実測でKLAC/VRSK/HWMは誤りだった）ため裏取りした",
    "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）",
    "2026-08-06 rep/dur を原本で確定。dur 85→75（ネットワーク効果の記述なし）。**堀 70.1→69.0 で関門70を割る**",
-   "2026-08-13 nde是正 -0.1 → 1.21。**旧値は根拠が無く、純現金と主張していたが原本(SEC XBRL)に実額の有利子負債がある**。機械算出 2025年: (有利子負債 7,508,000,000 − 現金同等物 467,000,000) ÷ (営業利益 4,347,000,000 + 減価償却 1,468,000,000) 原因はタグ改称（LongTermDebt / LongTermDebtNoncurrent 系が数年前で終わり LongTermDebtAndCapitalLeaseObligations 等へ移る）＝ECL(ルール7の8例目)・CDNS(9例目)と同じ型。発見は night/audit_intcov.py の内部矛盾検査（純現金なのに利息を払っている）。値は採取器 hachimon_fetch.py の出力そのもの（人が式を作り直していない）。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた"
+   "2026-08-13 nde是正 -0.1 → 1.21。**旧値は根拠が無く、純現金と主張していたが原本(SEC XBRL)に実額の有利子負債がある**。機械算出 2025年: (有利子負債 7,508,000,000 − 現金同等物 467,000,000) ÷ (営業利益 4,347,000,000 + 減価償却 1,468,000,000) 原因はタグ改称（LongTermDebt / LongTermDebtNoncurrent 系が数年前で終わり LongTermDebtAndCapitalLeaseObligations 等へ移る）＝ECL(ルール7の8例目)・CDNS(9例目)と同じ型。発見は night/audit_intcov.py の内部矛盾検査（純現金なのに利息を払っている）。値は採取器 hachimon_fetch.py の出力そのもの（人が式を作り直していない）。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "dom": "10-K FY2025(ph-20250630.htm) Item1 Competition: 『Parker operates in highly competitive markets and industries. We offer our products over numerous, varied markets through our divisions operating in 43 countries. Our global scope means that we have hundreds of competitors across our various markets and product offerings. ... Although each of our segments has numerous competitors, given our market and product breadth, no single competitor competes with the Company with respect to all the products we manufacture and sell.』／DI主要競合として13社を実名列挙(Bosch Rexroth AG, Danaher, Danfoss A/S, Donaldson, Emerson Climate Technologies, Emerson/ASCO, Festo, Freudenberg-NOK, Gates, IMI/Norgren, SMC, Swagelok, Trelleborg)、Aerospace主要競合として9社(Crane Co., Eaton, Honeywell, Moog, RTX, Safran, Senior plc, Triumph, Woodward)。Item1A『Our operations are subject to competition from a wide variety of global, regional and local competitors』。**自社シェア%の開示なし／上位N社合計シェアの開示なし**——原本に数値が存在しないため70/85/100は主張不能。一方で提出書類自身が「hundreds of competitors」「no single competitor competes with all products」と**構造的に分散**を述べ、名指し競合だけで9-13社ある以上、上位2社≥80%(複占)も上位3社≥80%(3社寡占)も成立せず、自社シェア40%以上も定義上ありえない → 市場構造=競争(<40%・寡占構造非該当)＝刻み50。Diversified Industrial・Aerospace Systemsの双方が同じ記述・同じ刻みに落ちるため全社ベースで50を確定(v9.9.41規約1・3)",
@@ -131,7 +132,7 @@
    "eps": "【2026-07-30 全件点検で更新】機械算出（SEC XBRL・FY2026通期実績）: 純利益 ÷ 期中株数 = 27.88。旧値 22.12 は前年度の通期実績で、新しい年次報告が出たため陳腐化していた。**TTMではなく通期実績**——per は TTM 基準で別に算出されているため per は変更しない。",
    "acq5": "【2026-08-03 機械判定】のれん残高 2020年 7,869,935,000 → 2025年 10,694,000,000。**新しさ =(直近−5年前)÷直近= +26.4%**（今あるのれんのうち直近5年に増えた割合）→ **中間帯(10-30%)＝規約では空欄**。ただし門は空欄をSELECT既定の'yes'に化かすため、値は'yes'のまま据え置く（'no'に倒すと規約が支持しない主張になる）",
    "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2025『Due to our **diverse group of customers throughout the world**, we do not consider ourself exposed to any concentration of credit risks』＋10%超の顧客開示なし → **上限10**（10%開示閾値が上限を証明する『上限の不等式』。ベトは dep≥40 の一方向なので上限で裁ける）",
-   "irr": "10-K FY2025 に顧客側の再認定の記述なし。航空宇宙部門はFAA認証を要するが全社ベースでは多角化した産業部品で移行摩擦にとどまる→70",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『Parker operates in highly competitive markets and industries.』（Item 1. Business — 見出し『Competition』の冒頭）——規約が明示的に70の根拠にならないと定める型。競争の激しさは移行障壁を語らない　『Our global scope means that we have hundreds of competitors across our various markets and product offerings.』（Item 1. Business — 見出し『Competition』）——代替先が多数存在することを会社自身が述べる＝50側　『We do not depend on any single patent, trademark, copyright, trade secret or license or group of patents, trademarks, copyrights, trade secrets or licenses to any material extent.』（Item 1. Business — 見出し『Patents, Trademarks, Licenses』（直後が『Backlog and Seasonal Nature of Business』））——排他的な技術・権利への依存を会社自身が否定。代替不能性を支える柱が原本の側から否定されている　『Contracts consist of individual purchase orders for standard product, blanket purchase orders and production contracts.』（Item 8. Financial Statements — 収益認識注記（Diversified Industrial Segment の契約形態））——複数年の購買義務が無いことの直接の記述。都度発注と包括発注で、期間の拘束を述べていない　『Backlog at June 30, 2025 was $ 11.0 billion, of which approximately 71 percent is expected to be recognized as revenue within the next 12 months and the balance thereafter.』（Item 8. Financial Statements — 注記『Remaining performance obligations』）——売上19,850百万$に対し0.55倍・71%が12ヶ月以内。ADBEを50とした水準より弱く、複数年の購買義務としても立たない　『In the Diversified Industrial Segment, Parker competes based on product quality and innovation, customer experience, manufacturing and distribution capability, aftermarket support, and price competitiveness.』（Item 1. Business — 見出し『Competition』）——売上の68.8%を占める側の競争軸に価格が入る＝移行摩擦で守られているという記述ではない　《反証（同じ原本に同居する）》『This has enabled us to obtain significant original equipment business on new aircraft programs for our systems and components, as well as the follow-on repair and replacement business for these programs.』　《射程》Aerospace Systems 6,185/19,850 = **31.2%**（Diversified Industrial 68.8%）。仮に航空側に認定機構があっても全社ベースでは3割で、しかも下記のとおりその機構は原本に一度も書かれていない　《検問と反証の経緯》【検問1】引用7件とも原本に逐語一致（各1回）。【検問2】摩擦の機構を名指しする文が原本に一つも無い。【検問3・4】反証が原本の Competition 節に断定として並ぶ——『Parker operates in highly competitive markets and industries.』『hundreds of competitors』、競争要因は『product quality and innovation, customer experience, manufacturing and distribution capability, aftermarket support, and price competitiveness』、さらに知財について『We do not depend on any single patent, trademark, copyright, trade secret or license … to any material extent.』と自ら依存を否定。契約形態も『individual purchase orders for standard product, blanket purchase orders and production contracts』＝都度発注。【検問5】射程は上記。\n\n【50にするための反証の試み＝70を支える文を探した経緯】原本305,012字を全走査（Item 1A Risk Factors 本文が含まれる完全な10-Kであることを確認済み）。`switching cost` **0回**／`switch` **0回**／`sole source` **0回**／`single source` **0回**／`designed into` 0／`design-in` 0／`design win` 0／`proprietary` **0回**／`installed base` 0／`multi-year` 0／`long-term agreement` 0／`barrier to entry` 0／`approved supplier` 0／`type certificate` 0／`PMA` 0。残った候補語も中身は全て無関係——`qualif` 5回は**qualified individuals（人材）とqualified/nonqualified pension・stock plan**、`certif` 3回は**SOX 302/906 の証明書（Exhibit索引）**、`life of the` 3回は**株式報酬の予想残存年数**。摩擦語×(customer/OEM/end-user/distributor)の全文走査で候補は**2文**だけで、どちらも顧客側の費用を述べない（1文は販売チャネルの説明、1文は『products manufactured to the customer's specifications』という収益認識注記の一節で、移動の費用も義務も述べない）。複数年の購買義務としても立たない——backlog 11.0十億$は売上19,850百万$の**0.55倍**で、しかも**71%が12ヶ月以内**＝ADBEを50とした水準（0.94倍・65%が12ヶ月以内）より弱い。70に最も近いのは Aerospace の『follow-on repair and replacement business』だが、これは**当社が後継業務を獲得した**という事実の記述で、顧客が再認定・再試験の費用を負うとは一言も述べない（HWMが70で受理された『sources of alternatives … may not be readily available to Howmet or its customers』に相当する文が存在しない）。落とせる材料しか出なかったので50。\n\n【台帳の旧根拠は規約を満たしていない】旧evidenceは『10-K FY2025 に顧客側の再認定の記述なし』＝**「85ではない」の証明**で始まり、続く『航空宇宙部門はFAA認証を要するが』という機構の断定は、**原本に `FAA` が0回・`Federal Aviation` が0回・`aviation` が0回**で一度も現れない。v9.9.144 が禁じた 6857型（結論に置いた機構が原本に一言も無い）そのもの。",
    "rep": "10-K『given our market and product breadth, **no single competitor competes with the Company with respect to all the products we manufacture and sell**』＝**複製困難性の実体は幅そのもの**（43カ国・分権経営・『Global distribution network』『Application engineering expertise』）。**ただし個々の製品では複製可能**——同じ10-Kが『hundreds of competitors』『We **do not depend on any single patent, trademark, copyright, trade secret or license** … to any material extent』と知財依存を自ら否定する。→ 複製不能とは言い切れず極困難＝80",
    "dur": "**dur 85→75 へ是正**。10-Kにネットワーク効果の記述なし。効いているのは『Global distribution network』と機器への組込・保守の継続関係＝スイッチングコスト型で75",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 13,695,520,000 → 2023年 19,065,000,000 → 2025年 19,850,000,000。A案(端点) 直近2年CAGR 2.04% − その前3年CAGR 11.66% = -9.62pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -8.48pt ／ 年次YoY {'2021': 4.8, '2022': 10.6, '2023': 20.2, '2024': 4.5, '2025': -0.4} → **採用 -8.48pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
@@ -192,7 +193,17 @@
    "hand": [],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "mcap": 119.88,
  "roiic": 66.3,

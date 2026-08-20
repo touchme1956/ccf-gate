@@ -23,18 +23,18 @@
  "erosion": "none",
  "disrupt": "settled",
  "dom": 50,
- "irr": 70,
+ "irr": 50,
  "rep": 80,
  "dur": 75,
  "moatW": 70,
  "geopol": 1,
  "nrr": 105,
  "beta": 1.195,
- "per": 36.23,
+ "per": 34.54,
  "perF": null,
  "evebit": 26.8,
- "px": 477.69,
- "shy": 2.18,
+ "px": 455.48,
+ "shy": 2.29,
  "gr": null,
  "gcap": null,
  "analysts": null,
@@ -114,7 +114,8 @@
    "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）",
    "2026-08-06 rep/dur を原本で確定。dur 85→75（ネットワーク効果の記述なし）",
    "2026-08-13 採取器の是正の取り残しを反映: cagr 5.8→11.4 / nde 0.54→0.82。**旧値は根拠が無く、採取器の現行版と食い違っていた**（このパックの審査は 2026-07 で、採取器はその後3回直っている）。採用の条件は3つ——(1)パックに根拠が無い (2)採取器の年がパックの会計年度と一致 (3)**採取器が示した実額から式を独立に再計算して一致**。roic/roicg/roict/dilNet は IC縮退・窓の問題があるので**保留**した。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた。測り直し: python3 night/backfill_machine_evidence.py --stamps",
-   "2026-08-13 採取器との食い違いを検討したが**保留**した欄: roic roicg dilNet。理由——roic/roicg は **IC縮退**（投下資本が自己資本のごく一部まで縮んで発散する型）か、採取器自身が『有利子負債タグ不在＝0扱いのため過大』と警告している。dilNet は採取器の窓が15年で規約の窓と違う。cagr は系列に欠年がある。**もっともらしい誤値より空欄・据置**。原本で確定するのが本筋（todo pack_collector_drift）"
+   "2026-08-13 採取器との食い違いを検討したが**保留**した欄: roic roicg dilNet。理由——roic/roicg は **IC縮退**（投下資本が自己資本のごく一部まで縮んで発散する型）か、採取器自身が『有利子負債タグ不在＝0扱いのため過大』と警告している。dilNet は採取器の窓が15年で規約の窓と違う。cagr は系列に欠年がある。**もっともらしい誤値より空欄・据置**。原本で確定するのが本筋（todo pack_collector_drift）",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "dom": "10-K FY2025(tt-20251231.htm) Item1 Competitive Conditions: 『Our products and services are sold in highly competitive markets throughout the world. Due to the diversity of these products and services and the variety of markets served, we encounter a wide variety of competitors that vary by product line and services. They include well-established regional or specialized competitors, as well as larger U.S. and non-U.S. corporations or divisions of larger companies. ... We are one of the leading manufacturers in the world of HVAC systems and services and transport temperature control products and services.』 Item1A Risk Factors『The markets that we serve are highly competitive. We compete worldwide with a number of other manufacturers and distributors that produce and sell similar products. ... Due to our global footprint we are competing worldwide with large companies and with smaller, local operators who may have customer, regulatory or economic advantages in the geographies in which they are located.』。**自社シェア%の開示なし／上位N社合計シェアの開示なし／競合の実名列挙すらなし**——原本に数値が存在しないため70/85/100は主張不能(『one of the leading manufacturers』は順位の自称＝v9.9.41規約4によりどの刻みの証拠にもならない)。他方、提出書類自身が「a wide variety of competitors that vary by product line」「large companies and with smaller, local operators」「a number of other manufacturers and distributors that produce and sell **similar products**」と、同等品を多数が供給する**構造的な分散**を述べており、自社40%以上・上位2社≥80%・上位3社≥80%のいずれも原本からは成立しない → 市場構造=競争(<40%)＝刻み50。Americas/EMEA/Asia Pacificの3セグメントに区別なく同一の記述が置かれ全社が同じ刻みに落ちるため50を確定(v9.9.41規約1・3)",
@@ -128,7 +129,7 @@
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 62.1% / 2022 62.2% / 2023 76.3% / 2024 86.7% / 2025 76.2% → 平均 72.7% / σ 9.4pt / **CV 13.0%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **90**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "acq5": "【2026-08-03 機械判定】のれん残高 2020年 5,342,800,000 → 2025年 6,457,000,000。**新しさ =(直近−5年前)÷直近= +17.3%**（今あるのれんのうち直近5年に増えた割合）→ **中間帯(10-30%)＝規約では空欄**。ただし門は空欄をSELECT既定の'yes'に化かすため、値は'yes'のまま据え置く（'no'に倒すと規約が支持しない主張になる）",
    "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2025『We have **no single external customer that accounted for more than 10%** of our consolidated net revenues in 2025, 2024 or 2023. **No material part of our business is dependent** …』 → **上限10**（ASC280/有報の10%開示閾値が上限を証明する。のれんの上限＝無形総額 と同じ『上限の不等式』の作法。ベトは dep≥40 の一方向なので上限で裁ける）",
-   "irr": "10-K FY2025 に顧客側の再認定の記述なし。HVACは仕様組込と保守契約で摩擦があるが認証ロックではない→70",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『Revenue from goods and services transferred to customers at a point in time accounted for approximately 79 %, 80 % and 81 % of the Company's revenue for the years ended December 31, 2025, 2024 and 2023, respectively.』（Item 8 Financial Statements — NOTE 12. REVENUE / Disaggregated Revenue）——売上の約8割が都度取引。継続的な購買義務に乗っている部分が構造的に小さいことを会社自身が数字で示している　『approximately 20 % of the contract liability balance at December 31, 2025 was classified as noncurrent and not expected to be recognized as revenue in the next 12 months』（Item 8 — NOTE 12. REVENUE / Contract Balances）——12ヶ月超は20%だけ＝80%が1年以内。ADBE(65%が12ヶ月以内)を50とした基準に照らしてもさらに短期で、MSFT(12ヶ月以内30%)・MCO(45%が1年超)の70とは桁が違う　『These contracts have a typical term of less than one year』（Item 8 — NOTE 12. REVENUE / Performance Obligations — Contracting and installation）——工事・据付は1年未満。多年の拘束はここには無い　『The principal methods of competition in these markets relate to price, quality, delivery, service and support, technology and innovation.』（Item 1. Business — Competition）——競争手段の筆頭が価格。移行障壁への言及が競争の節に一つも無い　『We must maintain the quality of our products, retain longstanding relationships with major customers, continue to grow our business by establishing relationships with new customers』（Item 1A. Risk Factors — We face significant competition in the markets that we serve.）——顧客維持を構造ではなく『維持し続けねばならない努力』として書く＝毎期勝ち取る型で、乗り換えの摩擦の主張ではない　『the Company does not consider any single patent, trademark, copyright, trade secret, proprietary technology, technical data, business process or any other confidential information (or any related group of any such items) to be of material importance to any segment or to the business as a whole』（Item 1. Business — Patents and Licenses）——知財への実質的依存を会社自身が否定。専有技術による固着の主張が原本に無いことの裏付け　《反証（同じ原本に同居する）》『The Company provides various levels of preventative and/or repair and maintenance type service agreements for its customers. The typical length of a contract is between 12 months and 60 months.』 ／ 『As an industry leader with an extensive global install base, our growth strategy includes expanding recurring revenue through services and rental options.』　《検問と反証の経緯》【結論】50。摩擦の機構を名指しした原本の引用が一つも作れず、会社自身の実数が逆を示す。\n【検問1】引用9件を原本と逐語照合し全件一致（%前後の空白も原文どおり）。\n【検問2】機構を名指しする文が無い。416,483字の10-Kで switch が驚くべきことに0回。switching cost 0／installed base 0／lock-in 0／remaining performance obligation 0／designed into 0／design-in 0／genuine part 0／requalif 0／re-qualif 0／customer approval 0／qualified by our customers 0／purchase commitment 0／take-or-pay 0／minimum purchase 0／non-cancel 0／committed volume 0／churn 0／subscription 0／renewal rate 0／stickiness 0／interoperab 0／barriers to entry 0。実体のある唯一の候補は『service agreements … typical length … between 12 months and 60 months』の1件のみ。\n【実数が逆を示す（決定打）】(a)『Revenue from goods and services transferred to customers at a point in time accounted for approximately 79 %, 80 % and 81 %』＝売上の約8割が point-in-time の都度取引。(b)契約負債は current 1,374.1＋noncurrent 350.5＝1,724.6百万$＝売上21,321.9百万$の8.1%。台帳の比較軸では MSFT 2.0倍→70／MCO 1.16倍→70／ADBE 0.94倍→50 で、TTはADBEより桁が一つ下。(c)『approximately 20 % of the contract liability balance … was classified as noncurrent and not expected to be recognized as revenue in the next 12 months』＝80%が12ヶ月以内。ADBEは65%が12ヶ月以内で50とされたので、TTはADBEより弱い。(d)工事・据付契約は『typical term of less than one year』。(e)受注残7,769.4百万$は equipment と contracting/installation のみでサービス契約を含まず、しかも『subject to revision and deferral, and to a lesser extent cancellation or termination』。⇒多年サービス契約は over-time 収益(全社の約21%)の内数から1年未満の工事契約を除いた残りで、売上の一桁%規模。\n【検問3 向き】install base の唯一の1件は『our growth strategy includes expanding recurring revenue through services and rental options』＝自社の成長戦略の箇条書きで、顧客が負う費用・時間・義務を一つも述べない（RMDを50とした型と同一）。dossier の『認定・認証』17件は従業員研修・SOC 2（自社取得＝型(1)）・qualified settlement fund・『as specified in its charter』等で全てノイズ。『embedded』は制御製品に組み込まれた技術のサイバーリスクの話で顧客工程への組込ではない。『retention rate』96%/92%は従業員の定着率で顧客ではない。\n【検問4 反証の同居】競争手段の筆頭が価格——『The principal methods of competition in these markets relate to price, quality, delivery, service and support, technology and innovation.』／『The markets that we serve are highly competitive』『new entrants』『pricing pressures』／顧客維持は構造ではなく努力目標として書かれる（『We must maintain the quality of our products, retain longstanding relationships with major customers…』）／知財依存を自ら否定（『does not consider any single patent … to be of material importance to any segment or to the business as a whole』）。\n【検問5 射程】Services の売上は 5,956.2+902.7+480.7＝7,339.6百万$＝全社の34.4%だが、上記のとおりその大半は point-in-time の部品・スポット修理と1年未満の工事で、多年契約部分は一桁%。いずれにせよ機構が立たないので射程で救えない。\n【反証を試みた経緯】50に落とす前に70を立てられないかを二段階で探した。一次26語（switching cost/installed base/retrofit/aftermarket/service agreement/multi-year/RPO/specified/proprietary/OEM/attrition/renewal/lock-in/in-house 等）、二次40語（costly for our c",
    "rep": "HVACの複製困難性は**ブランド＋独立ディーラー網＋保守の全国展開**にある。10-Kは『our market position』を知財より重視すると自認（『our market position than our patents and/or licenses』）＝知財ではなく組織と流通の堀。同規模の競合(Carrier/Daikin/Lennox)は存在するので複製不能ではない→80",
    "dur": "**dur 85→75 へ是正**。10-Kにネットワーク効果の記述なし。据付済み機器の保守・部品・ディーラー関係＝スイッチングコスト型で75",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 12,454,700,000 → 2023年 17,677,600,000 → 2025年 21,321,900,000。A案(端点) 直近2年CAGR 9.83% − その前3年CAGR 12.38% = -2.56pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -3.27pt ／ 年次YoY {'2021': 13.5, '2022': 13.1, '2023': 10.5, '2024': 12.2, '2025': 7.5} → **採用 -2.56pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
@@ -156,17 +157,17 @@
    "_note": "roic/roicg がどの基準で作られているか。v9.9.72 で through-cycle(5年中央値)へ移行したが、採取器とパックが食い違う社・系列が3年未満の社には当てていないため**台帳に二つの基準が混在する**。文字列一致で見分けるのは脆いので機械可読にした"
   },
   "px": {
-   "date": "2026-08-13",
+   "date": "2026-08-19",
    "day": null,
    "ccy": "USD",
    "src": "Finnhub",
-   "px_old": 478.55,
-   "px_new": 477.69,
-   "pct": -0.18,
+   "px_old": 463.37,
+   "px_new": 455.48,
+   "pct": -1.7,
    "conv": "基準保存式 per_new = per_old × (px_new÷px_old)／shy は 1/比率",
    "fields": {
-    "per": 36.23,
-    "shy": 2.18
+    "per": 34.54,
+    "shy": 2.29
    }
   },
   "machine_check": {
@@ -189,12 +190,22 @@
     "ni"
    ],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "mcap": 103.49,
  "roiic": 62.8,
  "roiic5": 143.7,
- "ddate": "2026-08-13",
+ "ddate": "2026-08-19",
  "dep": 10,
  "cagrT": -2.56,
  "intcov": 17.501

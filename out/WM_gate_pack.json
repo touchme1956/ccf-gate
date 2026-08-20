@@ -23,7 +23,7 @@
  "erosion": "emerging",
  "disrupt": "settled",
  "dom": 70,
- "irr": 70,
+ "irr": 50,
  "rep": 80,
  "dur": 100,
  "geopol": 0,
@@ -71,11 +71,12 @@
    "2026-07-19 偽失格修正: roic:null→17.9; roicg:null→10.3。根拠[op4308M eq9990M debt22907M gw13880M]。null roic→門で誤失格していた値を原本XBRLから復元",
    "2026-07-29 投下資本の算定バグ検算: roic 17.9→22.3、roicg 10.3→10.4、nde null→3.17、roict null→flat。有利子負債 22,907百万$(1年内 711 + 長期 22,196)は2026-07-19の復元で既に入っていたが、**無形資産 3,767百万$ の控除が漏れていた**ためroicが過小だった。ndeは長期債務欠落のままnullで残っていたのを実額で復元。原本(10-K accession 0001104659-26-012049)の連結貸借対照表から実額を採取して再計算。roic/roicg/roicEx/nde/roict/_meta 以外は一切変更していない。",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=4.3 / 5年窓=7.2。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均9.2%・σ0.5pt・CV5.1%）。"
+   "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均9.2%・σ0.5pt・CV5.1%）。",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "dom": "『we are a leading recycler in the U.S. and Canada』+『We own or operate 257 landfill sites, which is the largest network of landfills throughout [N.America]』+『our largest customer represented less than 5% of annual revenues』→ 北米最大手の寡占リーダー(WM/Republic/Waste Connectionsの3社寡占、全国シェア40-69%圏)=70",
-   "irr": "『All solid waste management companies must have access to a disposal facility, such as a solid waste landfill. The significant capital require[ments]』+『the availability of airspace within the geographic region』+『fitness laws can present...barriers to entry into market areas』→ 埋立許可・エアスペース希少による高摩擦・移行困難=70",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『The significant capital requirements of developing and operating a landfill serve as a barrier to landfill ownership』（Item 1 Business — Landfills（台帳の旧根拠(a)。原本は『landfill **ownership**への障壁』＝参入障壁で顧客の移行障壁ではない））——旧根拠が型(4)である証拠　『While fitness laws can present potential increased costs and barriers to entry into market areas』（Item 1 Business — Regulation（台帳の旧根拠(c)））——原本自身が『barriers to entry』と名指し＝repの領分　『the extensive environmental regulation applicable to our industry is also a barrier to rapid entry that benefits our Company』（Item 1A Risk Factors — 規制動向（'barrier' 4件目・2箇所に同文））——原本の barrier は4件とも参入障壁であることの補強　『We face intense competition based on pricing and quality of service.』（Item 1 Business — Competition（旧根拠(b)『airspace…』の直後の文））——競争軸が価格とサービス品質＝取引ごとに再競争される　『We do not disclose the value of unsatisfied performance obligations for these contracts as our right to consideration corresponds directly to the value provided to the customer for services completed to date』（Notes to Consolidated Financial Statements — Long-Term Contracts）——最有力候補(30%・残存4年)に将来の購買義務が無いことの決定打　『Separately, for many of our customers we provide services under multi-year contracts that can restrict our ability to increase prices and the timing of such increases.』（Item 1A Risk Factors — 価格改定）——多年契約の向きが『当社を縛る』側　《反証（同じ原本に同居する）》『could be unable to pay amounts owed to us or renew contracts with us at previous or increased rates』 ／ 『exclusive franchise arrangements with municipalities. When this happens, we may lose customers』　《射程》—（50なので射程は問わない）。参考: 多年契約は売上の約30%（加重残存約4年）だが下記のとおり顧客拘束ではない　《検問と反証の経緯》【検問1】台帳の旧根拠3片はすべて原本に実在。ただし【検問3(4)】で全滅した。旧根拠は(a)埋立の資本要件(b)『the availability of airspace within the geographic region』(c)fitness lawsの3片の合成だが、原本を当たると (a)は『serve as a barrier to landfill **ownership**』＝所有の参入障壁、(c)は『barriers to **entry** into market areas』＝原本が自ら『参入障壁』と名指し(しかも同じ文が『これらは全体として重要な悪影響を与えていない』と続く)、(b)に至っては Competition節の**価格決定要因の列挙**の一項で摩擦の話ですらない(直後が『We face intense competition based on pricing and quality of service.』)。**6146の型そのもの**——引用の周辺が rep(複製障壁)と名指ししている。\n【自分の結論への反証＝70を支える文を探した実数】611,236字を走査: switch/switching **0件** / lock-in 0 / installed base 0 / new entrant 0 / retention rate 0 / churn 0 / renewal rate 0 / sole source 0 / migration 0。'barrier' の**4件は4件とも参入障壁**。'exclusive' 12件のうち顧客関連は2件のみ。'terminate|cancel' 31件はすべて株式報酬・債務・リースで顧客契約の解約条項は0件。\n【最有力の70候補を1つ潰した】注記の『Approximately 30 % of our total revenue is derived from contracts with a remaining term greater than one year』(加重残存約4年)は多年契約の実数なので最後まで検討した。落とした理由は同じ注記の続き——対価が『primarily variable in nature』(戸数・重量・容器数連動)で最低数量が無く、『**We do not disclose the value of unsatisfied performance obligations**…our right to consideration corresponds directly to the value provided…**to date**』＝**将来の購買義務が開示すべき額として存在しない**。MSFT が70を維持した根拠(RPO $678十億・12ヶ月以内30%・unconditional right to invoice)と**同じASC606の欄で正反対**を述べている。しかもリスク要因での向きは『multi-year contracts **that can restrict our ability to increase prices**』＝**当社を縛る**側。\n【第2の候補も潰した】自治体の排他フランチャイズ(3〜10年)は実在するが、原本が『competitors…to win competitively-bid contracts, including **exclusive franchise arrangements with municipalities. When this happens, we may lose customers**』と書く＝**競争入札で定期的に取り直し、実際に失う**。台帳が2026-08-06にRSG/WCNで確立した読みと一致。\n【検問4 反証の同居】Stericycle統合の『**customer loss** resulting from frustration due to billing or service issues』／顧客が『renew contracts with us at previous or increased rates』できない可能性／『**nonrenewal of a customer contract**』を業務事象として列挙。\n【evidence_gap】旧根拠は3片とも規約を満たしていない(2片が型(4)、1片は摩擦と無関係)。規約どおり50。",
    "rep": "『the largest network of landfills』+『significant capital requirements』→ 数十年かけた埋立網は新規許可が事実上不能で複製極困難=80(hitsが$10B級/数十年を明示定量化しないため100でなく80)",
    "dur": "規制(『fitness laws...barriers to entry』)+物理(257埋立地・『airspace within the geographic region』)の複合堀=規制/物理型=100",
    "erosion": "蝕: 『A decrease in waste volumes generated results in an increase in competitive pricing pressure』(景気連動)+『consolidation of the customer base...exert downward pricing pressure』(Stericycle=医療廃棄物セグメント)→ 中核埋立堀は健在だが周縁で価格圧力顕在化=emerging",
@@ -152,7 +153,17 @@
     "ni"
    ],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "roiic": 4.3,
  "roiic5": 7.2,

@@ -47,6 +47,45 @@ import json
 import os
 import sys
 
+# ─────────────────────────────────────────────────────────────────────────
+# ★2026-08-19: **irr=70 の買付圏にも二重読みを広げた**
+#
+#   なぜ（費用の非対称）: 実測(night/shadow_irr_step.js)で
+#     判定圏の **70→50 は投下可を10社→5社**にする（6社が堀の関門70を割り、RBCは席を失う）。
+#     一方 **50→70 も 85→70 も 0社しか動かさない**＝**コストは 70→50 の一方向**。
+#   そして刻み別のラベル一致率は 100:1.00(n=3) / 85:1.00(n=5) / **70:0.706(n=34)** / 50:0.971(n=104)
+#     ＝**70だけが不安定**なのに、85にある三層（根拠の型・逐語照合・二重読み）のうち
+#     70が持っていたのはキーワードのtriageだけだった。
+#
+#   ⚠ **全213社は対象にしない**。全数を積むと作業リストが埋まって
+#     「鳴りすぎる警報は鳴らないのと同じ」になり、しかも費用が生じるのは買付圏だけ。
+#
+#   検問は 85 とは**別**（問いが違う）——85は「顧客が費用を負うか」、70は「50ではないと言えるか」。
+#   v9.9.144（2026-08-12 ユーザー明示指示）が定めた
+#   「70を置くなら**摩擦の機構を名指しし、原本の引用を付ける**／付けられないなら50」を検問に落としただけで、
+#   **新しい定数も新しい刻みも導入していない**。
+# ─────────────────────────────────────────────────────────────────────────
+CHECKS = {
+    '85': [
+        "引用が原本に一字一句あるか（irr85_mech_diff が機械で照合）",
+        "引用が『**顧客の側が**再認定・再試験の費用と時間を負う』を述べているか",
+        "向きが逆でないか（自社が受ける認証／自社が仕入先を認定する話は当たらない）",
+        "願望形でないか（we work closely with / strive to）",
+        "同じ原本に反証が同居していないか（low barriers to entry / price erosion）",
+        "機構の射程——全社の記述か、一セグメントのリスク要因の中か",
+    ],
+    '70': [
+        "引用が原本に一字一句あるか（irr85_mech_diff --rung 70 --buy が機械で照合）",
+        "**摩擦の機構を名指ししているか**——複数年の購買義務／消耗品の専用性／"
+        "データ移行・再教育の費用／設置基盤／工程への組込／解約率・更新率の実数。"
+        "『highly competitive』『many competitors』は根拠にならない（競争の激しさは移行障壁を語らない）",
+        "向きが逆でないか——**当社が外側にいる証明ではないか**（ONTO型『高い切替コストゆえ"
+        "**我々が**競合から顧客を奪いにくい』）／当社が自社の仕入先を替える話ではないか",
+        "同じ原本に反証が同居していないか（low barriers to entry ／ 顧客の内製 ／ 随時解約可 ／ 短い製品寿命）",
+        "摩擦の射程——全社の記述か、一セグメントだけか",
+    ],
+}
+
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out")
 STALE_DAYS = 400          # 回転盤の「年次」(430日)より少し手前で鳴らす
@@ -82,7 +121,11 @@ def score_map():
     for r in rs:
         t = (r.get("t") or r.get("ticker") or r.get("nm") or "").split()[0]
         if t:
-            m[t] = {"s": r.get("s"), "buy": bool(r.get("buy")), "moat": r.get("moat")}
+            # ⚠ quali(四関門を通ったか) を落とすと、買付圏の「次点」が黙って消える。
+            #   2026-08-19 に実際に踏んだ——irr=70 の band が 13社→**6社**に痩せ、
+            #   しかも痩せたことが画面に出ないので「次点は検証済み」と読めてしまう。
+            m[t] = {"s": r.get("s"), "buy": bool(r.get("buy")),
+                    "quali": bool(r.get("quali")), "moat": r.get("moat")}
     return m
 
 
@@ -115,15 +158,32 @@ def days_since(iso):
         return None
 
 
+def buy_band(S):
+    """買付圏＝🟢投下可 ＋ 🔵次点（四関門を通っているが席に入っていない社）。
+    **判定を再実装しない**——score_all の buy/quali をそのまま読む（v9.9.65）。"""
+    return {t for t, v in S.items() if v.get("buy") or v.get("quali")}
+
+
 def main():
     as_json = "--json" in sys.argv
     show_all = "--all" in sys.argv
+    rung = "85"
+    for i, a in enumerate(sys.argv):
+        if a == "--rung" and i + 1 < len(sys.argv):
+            rung = sys.argv[i + 1]
     S = score_map()
+    BAND = buy_band(S) if rung == "70" else None
+    if rung == "70" and not BAND:
+        print("⚠ out/score_all.json が読めないので買付圏を絞れない。"
+              "**全社を対象にしたと誤解させないよう中止する**（0件を『異常なし』と読ませない）")
+        return
 
     rows = []
     for t, d in packs():
         dd = d.get("data") or d
-        if dd.get("irr") != 85:
+        if str(dd.get("irr")) != rung:
+            continue
+        if BAND is not None and t not in BAND:
             continue
         m = d.get("_meta") or {}
         ver = m.get("irr85_verify") or []
@@ -156,7 +216,8 @@ def main():
     todo = sorted([r for r in rows if r["state"] != "✓検証済"], key=rank)
     out = {
         "generated": TODAY.isoformat(),
-        "note": "irr=85 の二重読みの有無。**関門ではなく作業リスト**（未検証は欠陥ではなく工程の途中）",
+        "rung": rung, "band": ("買付圏(投下可+次点)のみ" if BAND is not None else "全社"),
+        "note": f"irr={rung} の二重読みの有無。**関門ではなく作業リスト**（未検証は欠陥ではなく工程の途中）",
         "why": "同じ111社で班により irr=85 の付与率が 5.4%→17.1%（3.2倍・p=0.017）と動くと実測された",
         "stale_days": STALE_DAYS,
         "n_irr85": len(rows), "n_todo": len(todo),
@@ -164,12 +225,14 @@ def main():
         "todo": todo,
         "rows": sorted(rows, key=rank),
     }
-    json.dump(out, open(os.path.join(OUT, "irr85_dual.json"), "w"), ensure_ascii=False, indent=1)
+    json.dump(out, open(os.path.join(OUT, "irr85_dual.json" if rung == "85" else f"irr{rung}_dual.json"), "w"),
+              ensure_ascii=False, indent=1)
 
     if as_json:
         print(json.dumps(out, ensure_ascii=False, indent=1))
         return
-    print(f"=== irr=85 の二重読み（{out['generated']}）===")
+    print(f"=== irr={rung} の二重読み（{out['generated']}）"
+          + ("・買付圏(投下可+次点)のみ" if BAND is not None else "") + " ===")
     print(f"  対象 {out['n_irr85']}社 ／ **未検証・要再検証 {out['n_todo']}社** ／ 留保つき {out['n_reserved']}社")
     print(f"  ⚠ これは作業リストであって関門ではない（未検証は欠陥ではなく工程の途中）\n")
     print(f"  {'銘柄':<7}{'状態':<7}{'Ω':>6} {'堀':>5}  {'最終の二重読み':<12}{'根拠':>5}  {'射程':<12}印")
@@ -181,15 +244,10 @@ def main():
         print(f"  {r['ticker']:<7}{r['state']:<7}{(r['omega'] or 0):>6.1f} {(r['moat'] or 0):>5.1f}  "
               f"{last:<12}{r['evidence_len']:>5}字  {(r['scope'] or '未取得'):<12}{mark}")
     if todo:
-        print(f"\n  【二重読みの検問（審査プロトコルと同じ6点）】")
-        for i, s in enumerate([
-                "引用が原本に一字一句あるか（irr85_mech_diff が機械で照合）",
-                "引用が『**顧客の側が**再認定・再試験の費用と時間を負う』を述べているか",
-                "向きが逆でないか（自社が受ける認証／自社が仕入先を認定する話は当たらない）",
-                "願望形でないか（we work closely with / strive to）",
-                "同じ原本に反証が同居していないか（low barriers to entry / price erosion）",
-                "機構の射程——全社の記述か、一セグメントのリスク要因の中か"], 1):
-            print(f"   {i}. {s}")
+        ck = CHECKS.get(rung, CHECKS["85"])
+        print(f"\n  【二重読みの検問（審査プロトコルと同じ{len(ck)}点）】")
+        for i, q in enumerate(ck, 1):
+            print(f"   {i}. {q}")
         print("  記録は `_meta.irr85_verify` へ（evidence の中に書かない＝逐語照合が汚れる）")
 
 
