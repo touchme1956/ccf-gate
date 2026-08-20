@@ -72,10 +72,11 @@
    "FY整合: XBRL最新FY2025(2025-09-30)とhits原本(10-K 2025-09-30)一致。通貨は単一USDで混在・IAS29・株数断絶なし",
    "2026-07-29 ROIC分母の検算: roic 111.0→**null**、roicg 15.6 据置(原本検算一致)、nde 0.93 据置(原本検算一致)、IC/自己資本=**18.4%(2割未満)**、5年系列 51.1/38.7/461.7/78.2/111.0(最大÷最小11.9倍)。理由=のれん3,493,316+無形824,663が自己資本3,826,229の1.13倍でICが705,684千$まで縮退。FY2023はIC=73,315千$(自己資本の2.7%)でroicが461.7%に発散＝識別力なし。経済実態はroicg=15.6%で評価すること。roic/roict/_meta 以外は変更していない。",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=31.3 / 5年窓=22.4。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 acq5 1.93 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
+   "2026-07-29 acq5 1.93 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-08-20 irr=70 据置（二重読み・根拠を書き直し）"
   ],
   "evidence": {
-   "irr": "『software support agreements and related relationships represent the underlying relationships and agreements with customers of the acquired company's installed base』→据付基盤への埋込みで移行摩擦高い→70",
+   "irr": "**irr 70（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　《機構》複数年の購買義務——『multi-year, non-cancellable subscription contracts』を収益認識方針が事実として2箇所で明記し、RPOの実数（総額2,870.7百万$＝売上の1.05倍、うち45%が12ヶ月超先）が裏づける　『Our multi-year, non-cancellable subscription contracts provide customers with an annual right to exchange software within the original subscription with other software.』（Item 7. MD&A — Critical Accounting Policies and Estimates / Revenue Recognition（Right to exchange）。同一文は Notes — Revenue Recognition にも再掲）——規約が列挙する機構『複数年の購買義務』の直接の記述。願望形でも自社認証でもなく契約構造の事実で、顧客側が複数年拘束される　『Of the total, we expect to recognize approximately 55% over the next 12 months, 24% over the next 13 to 24 months, and the remaining amount thereafter.』（Notes to Consolidated Financial Statements — Remaining Performance Obligations (RPO)）——45%が12ヶ月超先。MCO(45%→70)と一致し ADBE(35%→50)を上回る＝機構が実数で裏づく　『As of September 30, 2025, RPO totaled $2,870.7 million, of which $827.1 million is recorded in Deferred revenue and $2,043.6 million is not yet recorded in the Consolidated Balance Sheets.』（Notes — Remaining Performance Obligations (RPO)）——RPO/売上=1.05倍。うち2,043.6百万$はBSにすら載っていない将来の拘束　『These large contracts with longer durations additionally drove a $179 million (89%) year-over-year increase in long-term receivables and a $601 million (27%) year-over-year increase in Remaining Performance Obligations (RPO).』（Item 7. MD&A — Revenue（Software Revenue の説明））——拘束が縮小ではなく拡大方向にあることの実数　『These deferred costs (primarily commissions) are amortized proportionately related to revenue over 5 years, which is generally longer than the term of the initial contract because of anticipated renewals』（Notes — Costs to Obtain or Fulfill a Contract）——会社自身が契約期間を超える顧客継続を会計上の前提に置いている（DOCSの8〜14ヶ月と対照）　《反証（同じ原本に同居する）》『The markets for our products and solutions are rapidly changing and characterized by intense competition, disruptive technology developments, evolving distribution models and increasingly lower barriers to entry.』 ／ 『Customer lists and contracts and software support agreements and related relationships represent the underlying relationships and agreements with customers of the acquired company’s installed base.』　《射程》ほぼ全社。recurring revenue 2,600.5百万$ ÷ 総売上 2,739.2百万$ ＝ 94.9%（PLM 63.6% / CAD 36.4%）　《検問と反証の経緯》【結論】規約が列挙する機構『複数年の購買義務』を、原本が事実として名指ししており、実数もそれを支えるので70。【自分で走査した実数（10-K全308,986字）】switch **0件**／switching cost 0／retrain 0／churn 0／mission-critical 0／installed base 1／multi-year 3／renewal rate 1／remaining performance obligation 2／renew 9／ARR 86。【70の根拠】(1)『Our multi-year, non-cancellable subscription contracts provide customers with an annual right to exchange software...』が**収益認識の会計方針の中で2回**出る。これは願望でも自社認証でもなく、契約構造の事実の記述で、顧客側が複数年拘束されることを述べている。(2)実数が支える——RPO 2,870.7百万$／総売上 2,739.2百万$ = **1.05倍**、内訳は『55%が12ヶ月以内・24%が13〜24ヶ月・残りはそれ以降』＝**45%が12ヶ月超先**。台帳の較正と突き合わせると MCO（1.16倍・45%が1年超先→70）とほぼ同一で、ADBE（0.94倍・65%が12ヶ月以内・解約不能は4%→50）を明確に上回る。(3)方向も強まっている——『notably longer average duration of contracts』が長期債権+89%・RPO+27%を駆動。(4)販売手数料を**5年**で償却し、その理由を『generally longer than the term of the initial contract because of anticipated renewals』と書く＝会社自身が契約期間を超える顧客継続を前提にしている（DOCSの8〜14ヶ月と対照的）。【70を落とせるか反証を試みた経緯】(a)terminate 20件・cancel 4件を**全件読んだ**。顧客が自由に解約できるという記述は無く、terminate の顧客関連は1件のみ（ESG要求に応えられなければ『customers may reduce or terminate their contracts』という条件付きリスク文）で、会計方針の non-cancellable と正面から矛盾しない。cancel の該当2件はいずれも当の『multi-year, non-cancellable subscription contracts』自身。(b)顧客の内製・垂直統合を探した——in-house 0／build their own 0／develop their own 0／home-grown 0。(c)Competition 節を読んだが Autodesk/Dassault/Siemens 等の競合名の列挙のみで、乗り換えが容易という記述は無い。(d)『annual right to exchange』は一見反証だが、交換先は**PTCの製品内**（within the original subscription）に限られ、PTCから出る権利ではない＝拘束の中の柔軟性で、むしろ複数年拘束の存在を前提にしている。**落とせなかった**。【ただし反証は1件残る（正直に記録）】risk factor が『increasingly lower barriers to entry』と書く。これは規約の検問4が列挙する反証語だが、同時に型4（barrier to entry は rep の領分で irr ではない）に当たり、参入障壁の低さは『競合が現れうるか』の話で『顧客が出て行けるか』の話ではない。台帳の rep=60 が既にこの事実を反映しており、irr でも減点すると同一事実の二重計上になる（6146で見つけた『同じ段落の別の文を irr と rep に分ける』型の逆）。confidence を high でなく med にしたのはこの一点による。【evidence_gap】true——台帳の旧根拠『software support agreements and related relationships represent the underlying relationships and agreements with customers of the acquired company's installed base』は、原本を当たると **Critical Accounting Estimates の『Valuation of Assets and Liabilities Acquired in Business Combinations』**、すなわち企業結合の**無形資産の区分の定義文**だった。摩擦を一言も述べておらず、しかもPTC自身の顧客ではなく被買収会社の installed base の話。70の根拠として成立していない（結論は正しかったが根拠は別物だった）",
    "rep": "『rapidly changing and characterized by intense competition, disruptive technology developments, evolving distribution models and increasingly lower barriers to entry』→参入障壁低下をPTC自身がリスク開示→複製困難だが唯一無二とは言えず保守60",
    "dur": "同installed base/support agreements→CAD/PLMが顧客の設計ワークフローに埋込むスイッチングコスト→75",
    "erosion": "同『disruptive technology developments and increasingly lower barriers to entry』(自社リスク開示)→emerging",
@@ -165,7 +166,17 @@
    "hand": [],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 70,
+    "verdict": "据置",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=med｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "roiic": 31.3,
  "roiic5": 22.4,

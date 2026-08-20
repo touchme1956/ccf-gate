@@ -23,7 +23,7 @@
  "erosion": "emerging",
  "disrupt": "unsettled",
  "dom": 70,
- "irr": 70,
+ "irr": 50,
  "rep": 80,
  "dur": 85,
  "geopol": 1,
@@ -110,7 +110,8 @@
    "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均18.2%・σ4.4pt・CV24.0%）。",
    "2026-08-03 f5 75 → 空欄。disrupt=unsettled の導出値は 65 で、逸脱評価なのに根拠が無かった。**disrupt は測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない（未測定なのは全317社中3社＝ADP/META/NJRのみで、そちらは値を残す）。影の計測: Ωの動きは最大+0.4/最小−0.2pt・Ω72/75の線を跨ぐ社0・投下可7社不変（f5の実効ウェイトは約4%）",
    "2026-08-03 p3 85 → 空欄。nde=3.91 の導出値は 50。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ",
-   "**v9.9.72 roic を through-cycle 化**: roic 18.5→18.5 / roicg 15.3→15.3。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央16.4% / 最悪13.4%）。比は**パックが審査した年(2025)**の採取器値 roic16.36 / roicg14.78 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
+   "**v9.9.72 roic を through-cycle 化**: roic 18.5→18.5 / roicg 15.3→15.3。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央16.4% / 最悪13.4%）。比は**パックが審査した年(2025)**の採取器値 roic16.36 / roicg14.78 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "gm": "機械算出 2025年: 営業利益 11,151,000,000 ÷ 売上 67,589,000,000（粗利ではない）",
@@ -125,7 +126,8 @@
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 13.4% / 2022 14.6% / 2023 23.9% / 2024 23.1% / 2025 16.4% → 平均 18.2% / σ 4.4pt / **CV 24.0%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "roic": "｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央16.4% / 最悪13.4%・比は審査年2025）",
    "roicg": "｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央16.4% / 最悪13.4%・比は審査年2025）",
-   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 41,748,000,000 → 2023年 67,060,000,000 → 2025年 67,589,000,000。A案(端点) 直近2年CAGR 0.39% − その前3年CAGR 17.11% = -16.72pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -16.12pt ／ 年次YoY {'2021': 22.1, '2022': 16.6, '2023': 12.8, '2024': -3.4, '2025': 4.3} → **採用 -16.12pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。"
+   "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 41,748,000,000 → 2023年 67,060,000,000 → 2025年 67,589,000,000。A案(端点) 直近2年CAGR 0.39% − その前3年CAGR 17.11% = -16.72pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -16.12pt ／ 年次YoY {'2021': 22.1, '2022': 16.6, '2023': 12.8, '2024': -3.4, '2025': 4.3} → **採用 -16.12pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『Although no one competitor is believed to produce all of the same types of equipment that we do, there are numerous companies, large and small, which compete with us in the sale of each of our products.』（Item 1. Business — 直前見出し『Competitive Environment / Dealers and Distributors』）——多数の競合の存在。移行障壁を語らず、規約が『70の根拠にならない』と名指しする型そのもの　『These sales and service agreements are terminable at will by either party primarily upon 90 days written notice.』（Item 1. Business — 直前見出し『Dealers and Distributors』）——流通の関係すら90日通知で随時解約可＝検問4の『随時解約可』　『Our dealers do not deal exclusively with our products; however, in most cases sales and servicing of our products are the dealers’ principal business.』（Item 1. Business — 直前見出し『Dealers and Distributors』）——会社自身が関係の非排他を明記＝検問4の列挙　『as customers may choose to extend preventative maintenance and delay overhauls when possible』（Item 1A. Risk Factors — 直前見出し『Economic conditions affecting the industries we serve』）——部品(aftermarket)は顧客が先送りできる裁量支出だと会社自身が書く＝razor-blade型の摩擦の否定　『We do not regard our business as being dependent upon any single patent or group of patents.』（Item 1. Business — 直前見出し『Patents and Trademarks』）——知財由来の代替不能性も自ら否定　《反証（同じ原本に同居する）》『We machine and assemble some of the components used in our machines, engines and power generation units and to support our after-market dealer parts sales.』　《射程》機構が原本に存在しないため射程以前。セグメントは Construction / Resource / Power & Energy の3本で、どのセグメントの記述にも顧客側の移行費用の記述は無い　《検問と反証の経緯》検問1: 引用は全件 原本と一字一句照合済み。検問2: 摩擦の機構が原本に一つも無い——70を支える文を探して機構語を全走査したが switching 0件 / installed base 0件 / proprietary 0件 / multi-year 0件 / recurring revenue 0件 / lock-in 0件 / Customer Value Agreement 0件。検問3: 唯一の『長期契約』記述は『long-term commitments entered into with key suppliers for minimum purchase quantities』＝当社→仕入先の義務で向きが逆(型2)。検問4: 反証が支配的（下記 quotes）。検問5: 射程以前。★反証を試みた経緯: razor-blade(消耗部品)の線を疑って aftermarket 3件・parts 39件・remanufactur 17件・rebuild 3件を全件読んだが、専用部品・純正指定・互換不可の記述はゼロ。それどころか唯一の aftermarket リスク文は『customers may choose to extend preventative maintenance and delay overhauls』＝顧客が部品購入を先送りできる側。dealer network 7件も流通の記述で、10-K はむしろ『subject to the inventory management decisions and sourcing practices of our dealers』とリスク側に置く。仕上げに customer/user/fleet/owner を含み摩擦語(switch/migrat/cost/invest/train/integrat/embed/lock/commit/obligat/renew/retention/qualif/certif等)を含む文を機械抽出して全49件を読んだが、顧客が移行に負う費用・時間・義務を述べた文は1件も無かった。barriers to entry の唯一の1件は関税・貿易政策の話。★台帳の旧根拠: `_meta.evidence.irr` が完全に空で、irr=70 の根拠が一つも記録されていない＝規約(v9.9.144『付けられないなら50』)を満たしていない。"
   },
   "provenance": {
    "gm": "machine",
@@ -170,7 +172,17 @@
    ],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "mcap": 398.13,
  "roiic": 24.7,

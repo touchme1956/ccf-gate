@@ -23,7 +23,7 @@
  "erosion": "emerging",
  "disrupt": "unsettled",
  "dom": 50,
- "irr": 70,
+ "irr": 50,
  "rep": 60,
  "dur": 100,
  "moatW": 50,
@@ -72,7 +72,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=81.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 acq5 0.03 → None。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "2026-07-29 p1 70→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均10.9%・σ4.0pt・CV36.6%）。",
-   "2026-08-13 nde是正 -0.79 → 0.28。**旧値は根拠が無く、純現金と主張していたが原本(SEC XBRL)に実額の有利子負債がある**。機械算出 2025年: (有利子負債 1,240,900,000 − 現金同等物 917,700,000) ÷ (営業利益 911,800,000 + 減価償却 251,800,000) 原因はタグ改称（LongTermDebt / LongTermDebtNoncurrent 系が数年前で終わり LongTermDebtAndCapitalLeaseObligations 等へ移る）＝ECL(ルール7の8例目)・CDNS(9例目)と同じ型。発見は night/audit_intcov.py の内部矛盾検査（純現金なのに利息を払っている）。値は採取器 hachimon_fetch.py の出力そのもの（人が式を作り直していない）。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた"
+   "2026-08-13 nde是正 -0.79 → 0.28。**旧値は根拠が無く、純現金と主張していたが原本(SEC XBRL)に実額の有利子負債がある**。機械算出 2025年: (有利子負債 1,240,900,000 − 現金同等物 917,700,000) ÷ (営業利益 911,800,000 + 減価償却 251,800,000) 原因はタグ改称（LongTermDebt / LongTermDebtNoncurrent 系が数年前で終わり LongTermDebtAndCapitalLeaseObligations 等へ移る）＝ECL(ルール7の8例目)・CDNS(9例目)と同じ型。発見は night/audit_intcov.py の内部矛盾検査（純現金なのに利息を払っている）。値は採取器 hachimon_fetch.py の出力そのもの（人が式を作り直していない）。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "gmt": "『we have experienced, and anticipate that we will continue to experience, decreasing prices for our products due to... pricing pressure from managed care organizations and other third-party payors』(蝕)+GP系列4年連続低下→down",
@@ -80,7 +81,7 @@
    "disrupt": "蝕にpricing pressure/market share競争はあるが技術代替(非侵襲測定等)のヒットなし。Abbott(Libre)との競合デュオポリで確定独占ではない→unsettled",
    "moatdecay": "ROIC 10.3→32.1%上昇・rev高成長・『Stelo... expands access to CGM beyond people with diabetes』(OTC生体センサでTAM拡大)→蝕なし=no",
    "expiry": "限セクション『(ヒットなし)』。特許ベース医療機器でコンセッション/期限型独占に非該当→no",
-   "irr": "(2026-07-28 原本精読で充填)移行摩擦の存在: G7/G7 15 Dayは『an integrated continuous glucose monitoring system, or iCGM, and is classified as a Class II device by the FDA, and is subject to special controls for iCGMs that outline requirements for assuring CGM accuracy, reliability and clinical relevance』＝FDAクラスII・iCGM特別管理下の処方機器で、参入も切替も規制手続を伴う(Steloのみ『By virtue of not requiring a prescription』の非処方OTC)。加えて米国では『the G7 is covered by Medicare and Medicaid in the majority of states and by commercial insurers, subject to satisfaction of certain eligibility and coverage criteria』＝償還要件充足が使用条件で、患者側の変更には処方・保険手続・機器/アプリ再設定が要る。一方 唯一供給(100)・規格ロック(85)は明確に否定される: Item1 Competition『The market for glucose monitoring devices is intensely competitive』『We have competed with Abbott and their Libre family of CGM products for many years』『Abbott Diabetes Care has received FDA clearance to integrate certain versions of their Libre sensors into automated insulin delivery systems』(競合が同じAID統合の承認を保有＝規格が排他的でない)、競争要因も『cost of products and eligibility for reimbursement』が明記。さらに支払者側が能動的に代替を誘導する: 『Private third-party payors, as well as governments, increasingly employ formularies to control costs...often implement formularies with co-payment tiers to encourage utilization of certain products』、2028年からのCMS競争入札で『we expect that Medicare reimbursement for our CGM systems will decrease beginning in 2028』。→ 規制・処方・償還・機器統合により移行は高摩擦だが、承認済みの直接代替(Abbott Libre、シェア上位)が存在し支払者主導の乗換が現に働く＝高摩擦移行困難 irr=70(85/100は原本が否定)。出典: SEC 10-K FY2025 dxcm-20251231.htm Item1 Products/Competition、Item1A Risks Related to Pricing and Reimbursement",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『The market for glucose monitoring devices is intensely competitive, subject to rapid change and significantly affected by new product introductions and other market activities of industry participants.』（Item 1. Business — Competition）——競争の激しさ。移行障壁の記述は同節に一つも無い　『cost of products and eligibility for reimbursement』（Item 1. Business — Competition（principal competitive factors の箇条書き））——競争要因が価格と償還適格性＝移行障壁ではない　『Likewise, Abbott Diabetes Care has received FDA clearance to integrate certain versions of their Libre sensors into automated insulin delivery systems and is pursuing such integrations with third-party insulin delivery devices.』（Item 1. Business — Competition）——最強のロック候補（AID統合）が競合にも開いていると会社が明記　『could impair our ability to meet the demand of our customers and cause them to cancel orders or switch to competitive products』（Item 1A. Risk Factors — 単一調達先への依存）——顧客は競合品へ乗り換えうると会社自身が書く　『Private third-party payors, including self-insured employers, often implement formularies with co-payment tiers to encourage utilization of certain products and have also been raising co-payments required from beneficiaries, particularly for higher-cost products.』（Item 1A. Risk Factors — 価格と償還）——支払者主導の乗換誘導が現に働く　『The G6 was the first type of CGM system permitted by the FDA to be used as part of an integrated system with other compatible medical devices and electronic interfaces』（Item 1. Business — Products / Dexcom G6）——iCGM は相互運用の規格＝台帳の旧根拠は向きを取り違えている　《反証（同じ原本に同居する）》『an integrated continuous glucose monitoring system, or iCGM, and is classified as a Class II device by the FDA, and is subject to special controls for iCGMs』 ／ 『the G7 is covered by Medicare and Medicaid in the majority of states and by commercial insurers, subject to satisfaction of certain eligibility and coverage criteria』 ／ 『We have competed with Abbott and their Libre family of CGM products for many years.』　《検問と反証の経緯》検問1: 採用引用は全て原本に逐語存在。検問2 機構の名指し=不可: installed base 0件、multi-year 0件、long-term contract に該当する購買義務なし、解約率・更新率・リカーリング売上%の開示なし（recurring の18件は全てXBRLの FairValueMeasurementsNonrecurring と税務の『normal, recurring operations』）。proprietary 15件は全て当社のIP保護（patents/trade secrets）＝repの領分で、唯一の製品文脈『our proprietary receiver』も同じ文が『can be obtained through the use of a compatible mobile device, such as an iOS or Android device』と続く。検問3 向き: 台帳の旧根拠が置く FDA クラスII・iCGM 特別管理は型(1)自社が取得する側の認証であり、旧根拠自身が『参入も切替も』と書くとおり型(4)新規参入障壁でもある。さらに旧根拠はiCGMを移行障壁と読むが、原本のiCGMは逆で『permitted by the FDA to be used as part of an integrated system with other compatible medical devices』＝相互運用の規格であり、当社は Real-Time API で『expands connectivity and interoperability』を能動的に推進している。検問4 反証の同居: (a)供給が滞れば顧客は『cancel orders or switch to competitive products』と会社が明記 (b)Competition節が『intensely competitive』、競争要因は『cost of products and eligibility for reimbursement』『comfort and ease of use』『brand awareness』で移行障壁は一つも無い (c)Abbott が Libre を AID へ統合するFDAクリアランスを取得済＝最強のロック候補である AID 統合の経路が競合にも開いている (d)支払者が co-payment tier の formulary で特定製品へ誘導 (e)2028年からのCMS競争入札 (f)Abbott と worldwide, royalty-free, non-exclusive の相互ライセンスを締結 (g)DTCマーケティングが主要施策＝患者を毎回獲得しにいく側。検問5 射程: 機構が立たず該当なし。★70への反証の試み: switch 3件（1件は上記反証、1件はMedicareのレンタル移行、1件は当社の部品供給元の切替）、formulary 6件、compatib 13件、interoperab 2件、exclusiv 11件、proprietary 15件、automated insulin delivery 11件、Clarity 全件、retention/churn の探索を実施。データ履歴のロック、患者維持率、センサー売上%のいずれも開示が無い。70を積極的に支える文は見つからなかった。evidence_gap: 台帳の旧根拠は詳細だが、機構が自社取得のFDAクリアランスと参入障壁に依拠し、iCGM の相互運用性を逆に読んでおり、規約(v9.9.144)を満たしていない。",
    "rep": "『obtained marketing authorization from the FDA for the G6 via the de novo process』『G7』『510(k) process』+『single sources... custom nature of various parts we design』=FDA認可プロセス+カスタム設計部品で複製困難→60(困難)",
    "dur": "『present barriers to entry』(規制)+FDA de novo/510k認可レジーム+『custom nature of various parts we design』(プロセス知)=規制/プロセス知型の耐久性→100(強度ではなく型の分類。競合デュオポリで排他性はない点は注記)",
    "geopol": "『operations in countries outside the United States, which accounted for approximately 28% of our revenue』『no individual country outside the United States generated revenue that represented more than 10%』(地理分散・米国中心72%)+『single-source suppliers』供給リスク+DOJ/FCPA文脈→1(中)",
@@ -159,7 +160,17 @@
    "hand": [],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "roiic": "na",
  "roiic5": 81.3,

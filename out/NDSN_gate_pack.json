@@ -24,7 +24,7 @@
  "disrupt": "settled",
  "dom": 50,
  "moatW": 85,
- "irr": 70,
+ "irr": 50,
  "rep": 80,
  "dur": 85,
  "geopol": 1,
@@ -110,7 +110,8 @@
    "2026-07-29 _meta.kenshi が文字列で保存されていたため配列へ正規化した（ASR様式は配列が正）。内容は改行区切りの要素へ分解しただけで一文字も捨てていない。文字列のままだと検死の追記が list.append で落ちる＝**この社だけ監査の記録が伸びなくなる**。",
    "2026-07-29 p1 85→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均47.2%・σ4.8pt・CV10.3%）。",
    "2026-08-03 f5 75 → 空欄。disrupt=settled の導出値は 85 で、逸脱評価なのに根拠が無かった。**disrupt は測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない（未測定なのは全317社中3社＝ADP/META/NJRのみで、そちらは値を残す）。影の計測: Ωの動きは最大+0.4/最小−0.2pt・Ω72/75の線を跨ぐ社0・投下可7社不変（f5の実効ウェイトは約4%）",
-   "2026-08-03 p3 60 → 空欄。nde=2.39 の導出値は 70。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ"
+   "2026-08-03 p3 60 → 空欄。nde=2.39 の導出値は 70。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "dom": "10-K FY2025(ndsn-20251031.htm) Item1 Competitive Conditions: 『We operate in a competitive global marketplace and compete with many large, well-established and highly competitive manufacturers and service providers. ... Our equipment is sold in competition with a wide variety of alternative bonding, sealing, finishing, coating, processing, testing, inspecting and fluid control techniques. Potential uses for our equipment include any production processes that require preparation, modification or curing of surfaces; dispensing, application, processing or control of fluids and materials; or testing and inspecting for quality.』 続けて『Many factors influence our competitive position, including pricing, product quality, and service. We maintain a leadership position in our business segments...』。**自社シェア%の開示なし／上位N社合計シェアの開示なし／競合の実名列挙すらなし**——原本に数値が無いため70/85/100は主張不能(『leadership position』は順位の自称でシェアの証拠にならない=v9.9.41規約4)。他方、提出書類自身が「many large, well-established and highly competitive manufacturers and service providers」＝**多数の企業**が同等の装置・サービスを供給しており、かつ「a wide variety of alternative bonding, sealing, finishing... techniques」＝**同等品を多数が製造可能**なうえ代替工法一般とも競合する、と**構造的に分散**を述べており、自社シェア40%以上・上位2社≥80%・上位3社≥80%のいずれも成立しえない → 市場構造=競争(<40%)＝刻み50。IPS/MFS/ATSの3セグメントに区別なく同一の記述が置かれており、全社が同じ刻みに落ちるため50を確定(v9.9.41規約1・3)",
@@ -130,7 +131,8 @@
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 287,634,333 ÷ Δ投下資本 2,451,796,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 2,903,029,000→5,354,825,000（+84.5%）",
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 52.1% / 2022 43.0% / 2023 53.9% / 2024 44.8% / 2025 42.2% → 平均 47.2% / σ 4.8pt / **CV 10.3%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **90**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 2,121,100,000 → 2023年 2,628,632,000 → 2025年 2,791,687,000。A案(端点) 直近2年CAGR 3.05% − その前3年CAGR 7.41% = -4.36pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -6.60pt ／ 年次YoY {'2021': 11.4, '2022': 9.7, '2023': 1.5, '2024': 2.3, '2025': 3.8} → **採用 -4.36pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 6.833。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict"
+   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 6.833。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『Certain arrangements may include installation, installation supervision, training and spare parts, which tend to be completed in a short period of time, at an insignificant cost, and utilizing skills not unique to us, therefore, these items are typically regarded as inconsequential or not material.』（Item 8 財務諸表 — Note 1 — Significant accounting policies（収益認識））——据付・訓練・補修部品が僅少費用で当社固有の技能を要さない、と会社自身が明言。設置基盤・消耗品による摩擦の正面からの否定　『Our equipment is sold in competition with a wide variety of alternative bonding, sealing, finishing, coating, processing, testing, inspecting and fluid control techniques.』（Item 1. Business — 見出し「Competitive Conditions」）——製品どうしではなく代替『手法』とも競合すると書く＝代替容易の側　『Many factors influence our competitive position, including pricing, product quality, and service.』（Item 1. Business — Competitive Conditions）——価格が競争要因の筆頭に挙がる。移行障壁の記述は同節に無い　『we believe that our competitive advantage is also largely attributable to the technical, marketing, and sales competence and capabilities of our employees, rather than on any individual patent or trademark』（Item 1. Business — 見出し「Intellectual Property」）——優位の源泉を従業員の能力に帰し、知財による固着を会社自身が否定　『In 2025, no single customer accounted for ten percent or more of our sales.』（Item 1. Business — 見出し「General Description of Business」）——顧客集中も無い。設置基盤・専用消耗品による固着を示す実数が原本のどこにも無い　《反証（同じ原本に同居する）》『This segment integrates our proprietary product technologies into the progressive stages of a customer’s production processes』 ／ 『Surgical Solutions – Microplegia myocardial protection devices and related consumables used in cardiac surgical procedures.』　《射程》—（機構が立たないため射程なし。参考: 唯一の工程組込候補である ATS セグメントは $624,510千／$2,791,687千＝22.4%。IPS 47.7%・MFS 29.9%）　《検問と反証の経緯》【evidence_gap】true。台帳の irr 根拠は**空文字列**で、旧根拠は規約を満たす以前に存在しない。【検問2 機構／消耗品(razor-blade)の線を本気で探した実数】10-K全文(320KB)を走査した: **consumable 1回**・installed base 0・switch 0・switching cost 0・razor 0・replacement part 0・spare part 1・wear part 0・compatible 0・third-party parts 0・aftermarket 1・genuine 1・multi-year 0・backlog 0・barrier 0・new entrant 0・designed into 0・integrated into 0・process of record 0・validat 0・recurring 7（全てXBRLタグと非経常費用）。ヒットを全件読んだ——consumable の唯一の1件は「Surgical Solutions – Microplegia myocardial protection devices and related consumables used in cardiac surgical procedures.」＝製品ラインの箇条書きで、専用性も売上比も互換品の排除も一言も無い。aftermarket 1件は**役員の経歴**（Meritor の Aftermarket Americas 担当）、genuine 1件は「genuine customer satisfaction」。qualif 17件は**全件がHR・年金・監査意見・「qualified distributors」**で、顧客が製品を認定する話は一つも無い。proprietary 11件は**すべて当社の技術**（「our proprietary dispensing and material processing technology」等）で、顧客が縛られる消耗品の専用性ではない。**摩擦の機構を名指しした文が一つも無い**ので、v9.9.144により50。【検問4 反証（決定的）】収益認識の注記が「Certain arrangements may include installation, installation supervision, training and spare parts, which tend to be completed in a short period of time, **at an insignificant cost, and utilizing skills not unique to us**」＝据付・据付監督・訓練・補修部品は費用が僅少で**当社固有の技能を要さない**と会社自身が書いている。IRMDを70にした「proprietary disposable IV tubing sets」（本文4箇所＋消耗品が売上の21.0%）とは正反対で、6146を50にしたのと同じ形（専用0・純正0・互換0）。さらに Item 1 の Competitive Conditions が「many large, well-established and highly competitive manufacturers」「Our equipment is sold in competition with **a wide variety of alternative** bonding, sealing, finishing, coating, processing, testing, inspecting and fluid control techniques」＝**代替手法そのものと競合している**と書き、「Many factors influence our competitive position, including **pricing**, product quality, and service」＝価格競争。知財も「we do not consider the expiration or loss of any single patent, trademark, or intellectual property right, to be material」。顧客集中も「no single customer accounted for ten percent or more of our sales」。【検問3 向き】唯一の工程組込候補は ATS の「This segment integrates our proprietary product technologies into the progressive stages of a customer’s production processes」だが、**顧客が負う費用・時間・義務を一つも述べない製品ライン説明**（RMDの installed base 型＝引用は在るが摩擦を述べていない）で、射程も 22.4%。【検問5 射程】上記。上の27語＋全文の二次走査（competit 23件全読を含む）まで探して70にできる材料が見つからなかった。"
   },
   "provenance": {
    "roic": "machine",
@@ -178,7 +180,17 @@
    "hand": [],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "mcap": 15.89,
  "roiic": 1.1,

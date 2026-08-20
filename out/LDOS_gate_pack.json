@@ -23,7 +23,7 @@
  "erosion": "emerging",
  "disrupt": "unsettled",
  "dom": 50,
- "irr": 70,
+ "irr": 50,
  "rep": 60,
  "dur": 100,
  "geopol": 2,
@@ -71,12 +71,13 @@
    "2026-07-19 偽失格修正: roic:null→33.8(のれん椅子型)。根拠[op2109M eq4916M debt20M gw6342M]。null roic→門で誤失格していた値を原本XBRLから復元",
    "2026-07-29 投下資本の算定バグ検算: roic 33.8→58.4、roicg 32.6→16.9、nde null→1.48、roict up(据置・系列は再計算)。**有利子負債 4,648百万$(1年内 20 + 長期 4,628)のうち長期4,628が欠落していた**——LongTermDebtNoncurrentタグが2013年止まりで、2026-07-19の『偽失格修正』もdebt=20(DebtCurrentのみ)で復元していたため過小のまま残っていた。原本(10-K accession 0001336920-26-000030)の連結貸借対照表から実額を採取して再計算。roic/roicg/roicEx/nde/roict/_meta 以外は一切変更していない。",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=84.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 p1 65→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均49.2%・σ17.4pt・CV35.3%）。"
+   "2026-07-29 p1 65→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均49.2%・σ17.4pt・CV35.3%）。",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "expiry": "『Our technical services and products are not generally dependent upon patent protection, although we do selectively seek patent protection』→特許・コンセッション等の期限型独占なし=no",
    "dom": "『These competitive pressures in our market or our failure to compete effectively may result in fewer orders, reduced revenue and margins, and loss of market share』+『greater competition and increased pricing pressure』→競争入札市場・シェア<40%=50",
-   "irr": "『delivering mission-critical solutions, Leidos generated 87% of revenues... from U.S. government contracts』(機密・クリアランス保有人員による高摩擦)一方で『continuing competitive bidding process, including GSA Schedule and other multi-award contracts』(常時再入札)→高摩擦だが移行は起こりうる=70",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『IDIQ contracts often have multi-year terms and unfunded ceiling amounts, therefore enabling, but not committing, the U.S. government to purchase substantial amounts of services or products from one or more contractors.』（Item 1. Business（CONTRACT TYPES／契約方式の説明））——複数年の購買義務という唯一の候補機構を、会社自身が『拘束しない』と明示的に否定する　『contracting methods that give them the ability to select multiple contract winners or pre-qualify certain contractors to provide services or products on established general terms and conditions rather than through single-award contracts』（Item 1. Business（契約方式の説明））——顧客(政府)が意図的に単独調達を避け複数勝者を選ぶ構造＝移行障壁の反対　『the U.S. government’s ability to cancel any contract at any time through a termination for the convenience.』（Item 1. Business（契約の性質））——随時解約可＝検問4　『Any of these changes could impair our ability to obtain new contracts or renew our existing contracts when customers recompete those contracts.』（Item 1A. Risk Factors（調達方式の変化のリスク））——既存契約も顧客が再入札にかける＝継続は毎回勝ち取るもの　『We compete by offering strong technical expertise, mission understanding, and retaining qualified staff, including those with security clearances.』（Item 1. Business — Competition）——旧根拠が機構とした『クリアランス保有人員』は、原本では競争入札で勝つための要素として書かれている　《反証（同じ原本に同居する）》『As of January 2, 2026, our total backlog was $49.0 billion, including $9.7 billion in funded backlog.』 ／ 『With a focus on delivering mission-critical solutions, Leidos generated 87% of revenues for the fiscal year ended January 2, 2026, (“fiscal 2025”) from U.S. government contracts, either as a prime contractor or a subcontractor to others.』　《射程》全社（売上の87%が米政府契約）。契約形態は Definitive Award / IDIQ / GSA Schedule のいずれも競争入札か多者選定で、どの帯にも顧客側の移行費用が無い。　《検問と反証の経緯》【検問1】旧根拠の引用『delivering mission-critical solutions, Leidos generated 87% of revenues … from U.S. government contracts』は原本に実在する。【検問2】だがこれは顧客集中の実数であって移行障壁ではない——TSM の irr を85→70 に是正したときの読み（集中は依存の指標であって認証ロックの証拠ではない）がそのまま当てはまる。旧根拠が括弧で足した機構『機密・クリアランス保有人員による高摩擦』は原本の引用ではない。実際にクリアランス9件を全件読むと、すべて (a)当社が採用・維持できるかという当社側の risk（『talent with such security clearances are in great demand』）(b)違反時に失う対象 (c)競争入札で勝つための要素、として書かれ、顧客が負う費用・時間を述べる文はゼロ。【検問3】向きは逆ではないが機構がそもそも無い。【検問4】反証が四つ同居する（決定的）——(a)IDIQ を会社自ら『enabling, but not committing』と否定 (b)『termination for the convenience』で政府はいつでも解約可 (c)既存契約は customers recompete される (d)GSA Schedule は『pre-qualify … rather than through single-award contracts』＝政府が意図的に単独調達を避ける構造。【検問5】射程は全社だが機構が無い。【反証の試み＝70を支える文を探した経緯】全文463,584字を走査: switching cost 0 ／ switch 0 ／ installed base 0 ／ re-bid 0 ／ barrier 0 ／ churn 0 ／ terminate for convenience の裏返しは1件。'multi-year' 5件は全部読んだが、IDIQ の非拘束性の説明か、当社の価格転嫁力の弱さ（『the lack of pricing leverage and power to renegotiate long-term, multi-year contracts』）で、いずれも70の逆。'incumbent' の唯一の1件も『restrict our ability to re-compete on incumbent work』＝当社が現職の座を守れないriskの側。数量でも救えない——backlog $49.0B のうち funded は $9.7B（20%・売上 $17,174M の0.56倍）で、その直後に政府がオプションを行使しない・解約する risk が書かれる。【evidence_gap】true。旧根拠は自分の中で『continuing competitive bidding process … (常時再入札)』と書きながら『高摩擦だが移行は起こりうる=70』と結論しており、規約が要求する機構の名指しと引用が無い。",
    "rep": "$17十億規模のクリアランス保有人員基盤は複製に年単位を要するが、同規模の競合(政府IT大手)が既存→数年で追随可の中間=60(hits堀セクション直接ヒットなし・規模は財務から推定と明記)",
    "dur": "『A finding of material weakness in our business system audits or other reviews can result in the suspension of payments... until the material weakness is corrected and the DCMA accepts our remediations』→DCMA承認業務システム・機密クリアランス=規制/プロセス知型の参入障壁=100(業界全体の参入障壁でありLDOS個別の価格支配力ではない点はdom=50に反映)",
    "geopol": "『Leidos generated 87% of revenues for the fiscal year ended January 2, 2026 ... from U.S. government contracts』+『contracts with the DoW and U.S. Intelligence Community ... represented approximately 49% of our total revenues for fiscal 2025』→単一顧客(米連邦)87%集中+予算/シャットダウン依存=2(重)",
@@ -148,7 +149,17 @@
     "ni"
    ],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "roiic": "na",
  "roiic5": 84.3,

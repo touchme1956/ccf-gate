@@ -24,7 +24,7 @@
  "disrupt": "settled",
  "dom": 50,
  "moatW": 85,
- "irr": 70,
+ "irr": 50,
  "rep": 80,
  "dur": 100,
  "geopol": 1,
@@ -74,10 +74,11 @@
    "2026-07-29 投下資本の算定バグ検算: roic 93.0→null(実測63.4%だが>60%＝縮退帯につき算出不能)、roicg 19.5→13.1、nde null→1.60、roict up→null。**有利子負債 2,167,945千$(1年内 3,358 + 長期 2,164,587)が丸ごと欠落していた**——採取器がLongTermDebtNoncurrent/LongTermDebtCurrentタグでしか負債を探しておらず、HEICOがWencor買収以降LongTermDebtAndCapitalLeaseObligations系タグで開示していたため debt=0 と読み、IC＝自己資本−のれん−無形へ縮退していた。原本(10-K accession 0000046619-25-000082)の連結貸借対照表から実額を採取して再計算。roic/roicg/roicEx/nde/roict/_meta 以外のフィールドは一切変更していない。",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=8.3 / 5年窓=8.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 90→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均30.9%・σ14.6pt・CV47.1%）。",
-   "2026-08-06 irr 85→70。旧根拠(FAA PMA / DER承認)は自社取得側でv9.9.49が明示除外する型。RMD/IRMDと同じ是正"
+   "2026-08-06 irr 85→70。旧根拠(FAA PMA / DER承認)は自社取得側でv9.9.49が明示除外する型。RMD/IRMDと同じ是正",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
-   "irr": "10-K FY2025 の認証はすべて**当社が取得する側**——『replacement parts must receive a **PMA from the FAA** to sell the replacement part』『proprietary repairs approved by an FAA-qualified designated engineering representative』。v9.9.49『自社が取得する側の認証は当たらない』の型（RMDの510(k)・IRMDと同型）。顧客側の再認定に触れる唯一の文は『Transitions to new suppliers may result in ... the required recertification of parts obtained from **new suppliers**』＝**当社の仕入先を替えるとき**の話で向きが違う。むしろ当社の事業モデルはOEM純正品からPMA代替品への**乗り換えを起こさせる側**。移行摩擦は存在する(70)。",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『The competition is principally based on price and service to the extent that our parts are interchangeable.』（Item 1. BUSINESS — Competition）——部品が互換であり競争は価格中心、と会社自身が書く＝移行障壁の不在の直接の自認　『we believe that the PMA process creates a significant barrier to entry in this market niche through both its technical demands and its limits on the rate at which competitors can bring products to market.』（Item 1. BUSINESS（PMA プロセスの説明））——旧根拠が irr の柱に置いた PMA を、原本自身が barrier to entry と名指しする＝検問3(4)で rep の領分　『Transitions to new suppliers may result in significant costs and delays, including those related to the required recertification of parts obtained from new suppliers with our customers and/or regulatory agencies.』（Item 1A. RISK FACTORS（供給網のリスク））——原本で唯一の recertification。負担するのは当社であり、当社が仕入先を替えるときの話＝検問3(2)　『Some major commercial airlines own and operate their own service centers and sell repair and overhaul services to other aircraft operators.』（Item 1. BUSINESS — Competition）——顧客の垂直統合が同居＝検問4　《反証（同じ原本に同居する）》『The Company expects to recognize $ 1,358.7 million of this amount during fiscal 2026 and $ 748.9 million thereafter』 ／ 『Some of the repair and overhaul services provided by the FSG are proprietary repairs approved by an FAA-qualified designated engineering representative (“DER”) and/or by the owner/operator.』　《射程》FSG（交換部品・修理）と ETG（電子部品）の両セグメント。どちらにも顧客側の移行費用を述べる文が無い。　《検問と反証の経緯》【検問1】旧根拠の引用（PMA、DER承認の proprietary repairs、supplier transition の recertification）はすべて原本に実在する。【検問2】しかし機構の名指しが成立していない。PMA も DER も当社が FAA から取得する認証で検問3(1)、唯一の 'recertification' は当社が仕入先を替えるときの当社の供給risk＝検問3(2)。【検問3】さらに会社自身が『the PMA process creates a significant barrier to entry』と書いており、これは検問3(4)＝rep(複製障壁)の領分（台帳は rep=80 で既に数えている）。事業モデルも OEM 純正品からの乗り換えを起こさせる側で、原本は『the three principal jet engine OEMs … have been the sole source of substantially all jet engine replacement parts』と書く＝ロックされている側は OEM であって当社ではない。【検問4】反証が三つ同居する——(a)『our parts are interchangeable』と会社が明言 (b)『Some major commercial airlines own and operate their own service centers』＝顧客の垂直統合 (c)OEM も自社サービスセンターを維持。【検問5】射程を論じるまでもなく機構が無い。【反証の試み＝70を支える文を探した経緯】全文367,003字を走査: switching cost 0 ／ installed base 0 ／ multi-year 0 ／ long-term contract 0 ／ long-term agreement 0 ／ renewal 0 ／ retention 0 ／ churn 0 ／ lock 0 ／ requalif 0 ／ certified by 0 ／ qualified by 0。'switch' の2件は製品名（latching ferrite switches／patch panels and switches）で機構ではない。'proprietary' 10件も全部が当社の trade secret・製造ノウハウ・自社ブランド製品で、原本は『We have no material patents … instead, we primarily rely on trade secret protection』と書く＝rep の材料。数量面でも救えなかった——RPO $2,107.6M は売上 $4,485.0M の0.47倍で、うち $1,358.7M（64.5%）が翌期に認識される。これは 50 と判定された ADBE（0.94倍・65%が12ヶ月以内）より薄く、70 の MSFT（2.0倍・加重残存2.3年・12ヶ月以内30%）とは別物。【evidence_gap】true。旧根拠は本文の全部が『85ではない』の証明で終わり、末尾の『移行摩擦は存在する(70)』を支える引用が一つも無い——brief が名指しする典型型。",
    "rep": "『In recent years, the FAA granted us PMAs for approximately 400 to 550 new parts...per year』『We benefit from our proprietary rights relating to certain design, engineering and manufacturing processes』=数十年累積のPMA/DER群は極困難=80",
    "dur": "『approved by the Federal Aviation Administration (FAA)』の規制承認プロセスとDER承認に依存=規制/プロセス知=100",
    "erosion": "蝕hits『uniquely positioned to...gain market share』=市場シェア獲得中で堀の浸食なし=none",
@@ -178,7 +179,17 @@
    ],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "mcap": 50.8768,
  "roiic": 8.3,

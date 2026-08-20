@@ -23,7 +23,7 @@
  "erosion": "none",
  "disrupt": "unsettled",
  "dom": 50,
- "irr": 70,
+ "irr": 50,
  "rep": 60,
  "dur": 75,
  "moatW": 50,
@@ -114,7 +114,8 @@
    "2026-08-06 dep の3軸を走査。(b)チャネル依存が質的に存続級（Apple/Google 2社で substantially all の決済）だが単一相手の売上%が開示されず数値化できないため空欄。規約の穴として _meta.nulls に記録",
    "2026-08-06 irr/rep/dur を原本で確定・3欄とも据置。durは構造上ネットワーク効果が働きうるが原本に明示記述が無いので上げない",
    "2026-08-13 採取器の是正の取り残しを反映: fcf 0.14→0.1408 / ni 0.09→0.0948。**旧値は根拠が無く、採取器の現行版と食い違っていた**（このパックの審査は 2026-07 で、採取器はその後3回直っている）。採用の条件は3つ——(1)パックに根拠が無い (2)採取器の年がパックの会計年度と一致 (3)**採取器が示した実額から式を独立に再計算して一致**。roic/roicg/roict/dilNet は IC縮退・窓の問題があるので**保留**した。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた。測り直し: python3 night/backfill_machine_evidence.py --stamps",
-   "2026-08-13 採取器との食い違いを検討したが**保留**した欄: roic。理由——roic/roicg は **IC縮退**（投下資本が自己資本のごく一部まで縮んで発散する型）か、採取器自身が『有利子負債タグ不在＝0扱いのため過大』と警告している。dilNet は採取器の窓が15年で規約の窓と違う。cagr は系列に欠年がある。**もっともらしい誤値より空欄・据置**。原本で確定するのが本筋（todo pack_collector_drift）"
+   "2026-08-13 採取器との食い違いを検討したが**保留**した欄: roic。理由——roic/roicg は **IC縮退**（投下資本が自己資本のごく一部まで縮んで発散する型）か、採取器自身が『有利子負債タグ不在＝0扱いのため過大』と警告している。dilNet は採取器の窓が15年で規約の窓と違う。cagr は系列に欠年がある。**もっともらしい誤値より空欄・据置**。原本で確定するのが本筋（todo pack_collector_drift）",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "moatW": "【2026-07-29 v9.9.41再監査 → 50を維持】売上の内訳(10-K FY2025): Direct revenue(有料サブスクリプション Grindr XTRA/Unlimited＋アドオン) 366,297千USD = 83.3% / Indirect revenue(広告) 73,601千USD = 16.7%、総額 439,898千USD。10-K本文でも「we also generate indirect revenue, representing 16.7%, 15.6%, and 13.2% of total revenue for the years ended December 31, 2025, 2024, and 2023」と一致。報告セグメントは1つ(Schedule of Segment Information)。地域別 Domestic 254,300 = 57.8% / International 185,598 = 42.2%だが、v9.9.41追加規約により地域別は独立した堀に数えない。→ 広告(Indirect)は同一アプリの同一ユーザー網を再現金化したもので、10-K自身が「both of which are driven by the Grindr platform」と述べるとおり同一プラットフォームに乗る＝v9.9.41追加規約により1本。その1本の中で Direct が83.3%(≥80%)の単一製品ライン → 50。出典: SEC 10-K FY2025 grnd-20251231.htm (Disaggregation of Revenues / Item 1 Business)",
@@ -130,7 +131,7 @@
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 87,846,980 ÷ Δ投下資本 76,033,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 386,832,000→462,865,000（+19.7%）",
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **31.8%** / 同業（SIC7370「Services-Computer Programming, Data Processing, Etc.」・43社）の中央値 **7.6%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+31.8%)÷(1+7.6%))^5 − 1 = **+175.6%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
    "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 17.34 USD（前回 16.36・+6.0%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
-   "irr": "10-K FY2025 に顧客側の再認定の記述なし。消費者向けアプリで乗り換えは無料→70（ただし下の dur のとおり地域内のユーザー密度が実質の摩擦）",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『In addition, within the social networking industry more generally, costs for users to switch between products and services are low, and users have a propensity to try new approaches to connecting with other people and to use multiple products and services at the same time.』（Item 1A. Risk Factors／競争のリスク要因『The online social networking and dating app industries are highly competitive …』の中）——会社自身が『利用者の切替コストは低い』『複数のサービスを同時に使う（マルチホーミング）』と断定している。50（代替容易）の直接の根拠で、同時に70を積極的に否定する　『The Company classifies subscription deferred revenue as current and recognizes revenue straight-line over the term of the applicable subscription period or expected completion of the performance obligation which range from one week to twelve … months』（Item 8. Financial Statements／Notes — Revenue Recognition, Deferred Revenue（…はページ跨ぎの版面情報を省いた箇所））——複数年の購買義務が存在しないことの実数。繰延収益は全額が流動、契約は最短1週間〜最長12ヶ月。繰延収益24,285千$は売上439,898千$の5.5%　『The Grindr mobile application is free to download and provides certain services and features to Grindr’s users at no cost.』（Item 7. Management’s Discussion and Analysis／Overview）——フリーミアム＝入退出に金銭的な障壁が無い。設置基盤・導入費用のような70の機構が構造的に存在しないことの裏づけ　《反証（同じ原本に同居する）》『In part because of the network effects of our platform, any decrease in user retention, growth, or engagement could render our products and services less attractive to users, which is likely to have a material and adverse impact on our revenue, business, financial condition, and results of operations.』 ／ 『As a “gayborhood” on our users’ mobile devices, our platform is a meaningful part of our users’ lives and has embedded us at the center of their communities, as they seek relationships of various forms, whether intimate, romantic, or social.』 ／ 『In addition, to the extent that some of our competitors were first movers in particular geographic regions, their positions in those regions could create barriers to our entry.』　《射程》全社（単一の消費者向けプラットフォーム。FY2025 売上439,898千$＝direct 366,297千$(83.3%・サブスク) ＋ indirect 73,601千$(16.7%・広告)）。低い切替コストの記述は『the social networking industry more generally』＝当社が営む産業全体についてで、一セグメントに限定されていない　《検問と反証の経緯》【結論: 50。会社自身が切替コストは低いと書いている】\n【検問5点】1.引用: 3件とも原本に一字一句あることを機械照合で確認（改行の畳み込みのみ）。2.機構: 70を支える機構は原本に**名指しされていない**。3.向き: 70候補として最も近い『network effects』の一文は、顧客が負う費用ではなく『利用者が減ると魅力が落ちてさらに減る』という**下方スパイラルのリスク**として書かれており向きが逆。『first movers … could create barriers to our entry』は当社が締め出される側＝ONTO型（検問3-(5)）。『barriers to entry』は2件ともAIで**下がる**方向の記述で、しかも参入障壁は rep の領分（検問3-(4)）。4.反証の同居: 同一10-Kに『costs for users to switch … are low』『use multiple products and services at the same time』（マルチホーミング）『free to download』『delete their accounts』が同居。5.射程: 全社（上記scope）。\n【反証を試みた経緯——70を支える文を探した実数】(a)機構語の全文grep: switching cost **0件** / lock-in 0 / lock in 0 / sticky 0 / stickiness 0 / churn 0 / installed base 0 / critical mass 0 / density 0 / multi-home 0 / habit 0 / cannot be replicated 0 / difficult to replicate 0 / hard to replicate 0 / moat 0。network effect は**1件のみ**で上記のとおり向きが逆。(b)全2,713文を機械で走査し『利用者を主語に持つ文 × 摩擦語』の候補**77文**を抽出、うち『離脱に費用がかかる』と読みうる文へ絞ると**5文**しか残らず、その5文の中身は ①切替コストは低いという当の反証 ②当社が指標の集計方法を switch する話 ③当社が第三者プロバイダへ migrate する話（当社の供給リスク＝向きが逆） ④⑤情報漏洩で信用を失う話——**70を支える文は全文に一つも無かった**。(c)会社自身の最良の主張である『Our Competitive Advantages』6項目を全部読んだが、Largest / Highly Engaged / Preeminent Brand / first-mover による Organic Growth / Superior User Experience / Strong Margins で、**顧客が負う費用・時間・義務を述べる項目はゼロ**（規模・ブランド・先行者＝dom と rep の領分で irr ではない）。(d)70の機構になりうる『複数年の購買義務』を実数で潰した——繰延収益は**全額を流動に分類**し、契約期間は『one week to twelve … months』。繰延収益24,285千$は売上439,898千$の**5.5%**にすぎない。briefの較正（MSFT: RPOが売上の2.0倍・加重残存2.3年・12ヶ月以内30%→70 ／ MCO: 1.16倍・45%が1年超先→70 ／ **ADBE: 0.94倍・65%が12ヶ月以内→50**）に当てると、GRNDは50と裁かれたADBEより桁で弱い。(e)解約率・更新率の実数を探して retention 16件を全件読んだが、数値の開示は無く全部が『retentionが毀損しうる』というリスク文で、逆に『they may reduce their use of, or disengage from, our platform or delete their accounts』と離脱の容易さを書いていた。**以上を尽くして70を支える材料は出なかったので50**。\n【evidence_gap: true】台帳の現行 irr 根拠は『10-K FY2025 に顧客側の再認定の記述なし。消費者向けアプリで乗り換えは無料→70』。前段は『85ではない』の証明で、v9.9.144 が禁じた型そのもの。しかも後段は『乗り換えは無料』＝**摩擦が無いことを自ら述べておきながら70を結論している**（規約上それは50の定義）。残る『地域内のユーザー密度が実質の摩擦』は原本に対応する文が無く（density 0件・critical mass 0件）、かつ『下の dur のとおり』と別の柱へ委ねている＝irr の根拠になっていない。旧根拠は規約を満たしていない。",
    "rep": "10-K『the Grindr platform has benefited from **first mover advantage globally**, resulting in MAUs in over **190 countries and territories**』＝先行者利得とユーザー基盤。ただし同じ10-Kが『**Concerns relating to our products and services … could negatively impact our user base**』と基盤の可逆性を認め、競合(Tinder/Hinge等)も同規模の資本を持つ→60",
    "dur": "**75 で確定（検算して据置）**。位置情報型の出会いアプリは構造上ユーザー密度が価値を決めるが、**10-Kに『ネットワーク効果』の明示記述は無い**（あるのは first mover advantage と MAU の記述）。憶測で85(ネットワーク効果)へ上げず、実装済みの移行摩擦＝スイッチングコスト型75に留める。**堀59.2で関門には遠く、1段では判定は動かない**",
    "fcf": "機械算出 2025年: 営業CF 141,518,000 − 設備投資 746,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）",
@@ -199,7 +200,17 @@
    "hand": [],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "mcap": null,
  "roiic": 115.5,

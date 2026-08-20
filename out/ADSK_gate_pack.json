@@ -23,7 +23,7 @@
  "erosion": "emerging",
  "disrupt": "unsettled",
  "dom": 70,
- "irr": 70,
+ "irr": 50,
  "rep": 60,
  "dur": 75,
  "geopol": 1,
@@ -75,11 +75,12 @@
    "2026-07-19 発見度実データ: analysts=34 instOwn=98.273(AV)",
    "2026-07-29 ROIC分母の検算: roic 141.3→null、IC/自己資本=25.7%(ただしFY2022/23は負、FY2024/25は4-5%)、理由=のれん+無形が自己資本の1.56倍でICが縮退・5年系列が桁で振れ識別力なし。roicg=20.0とnde=-0.06は原本と一致で据置。roict は roic系列が使えないため roicg系列(15.5→20.0%)で判定し down→up に訂正。",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=11.7 / 5年窓=16.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-07-29 acq5 2.24 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。"
+   "2026-07-29 acq5 2.24 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "dom": "『competitors... PTC Inc., 3D Systems Corporation, Siemens PLM, and Trimble Navigation Limited, among others』+『characterized by vigorous competition』→設計SWの寡占構造=70(市場share%の明示はhitsになし)",
-   "irr": "『collections having AutoCAD or AutoCAD LT as a component』=AutoCADが基盤部品化+専門ワークフローで高摩擦。反面『limited barriers to entry』で規格ロック(85)とは言い切れず→70",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『During fiscal 2026 and 2025, combined revenue from our AutoCAD and AutoCAD LT family products, not including collections having AutoCAD or AutoCAD LT as a component, represented 25% and 26% of our total net revenue, respectively.』（Item 1A Risk Factors — 製品集中（旧根拠が引いた語の実際の文脈））——『as a component』は当社のバンドル同梱の意味。摩擦ではなく売上集中の開示で、旧根拠の読みは誤り　『The software industry has limited barriers to entry, and the availability of computing power with continually expanding performance at progressively lower prices contributes to the ease of market entry.』（Item 1 Business —「Competition」（Adobe/Bentley/Dassault/Hexagon/MSC/Nemetschek/Oracle/Procore/PTC/3D Systems/Siemens PLM/Trimble を実名列挙））——会社自身が参入の容易さを断定。Item 1A にも同文が再掲される　『This shift further lowers barriers to entry and poses a disruptive challenge to established software companies.』（Item 1 Business —「Competition」／Item 1A Risk Factors（両方に出る））——障壁が『下がる』方向の断定＝検問3(2)　『The design software market is characterized by vigorous competition in each of the vertical markets in which we compete, both from existing competitors and by entry of new competitors with innovative technologies.』（Item 1 Business —「Competition」）——新規参入が現に起きていると述べる　『Remaining performance obligations (short-term and long-term deferred revenue plus unbilled deferred revenue) (“RPO”) was $8.30 billion, an increase of 20% compared to the fourth quarter in the prior fiscal year.』（Item 7 MD&A —「OVERVIEW OF FISCAL 2026」）——売上$7,206Mに対し1.15倍。次のcurrent RPOと合わせて期間構造を測る錨　『Current remaining performance obligations were $5.48 billion, an increase of 23% compared to the prior fiscal year.』（Item 7 MD&A —「OVERVIEW OF FISCAL 2026」）——12ヶ月以内が66%＝1年超は34%。50と判定されたADBE(65%が12ヶ月以内)とほぼ同じで、70のMSFT/MCOとは違う　《反証（同じ原本に同居する）》『Enterprise Business Agreements (EBAs): Represents programs providing enterprise customers with token-based access to a broad pool of Autodesk products over a defined contract term.』 ／ 『Net revenue retention rate (“NR3”) was above the range of 100% and 110%, on a constant currency basis, as of both January 31, 2026 and 2025.』　《射程》全社。旧根拠のAutoCAD系は総売上の25%（FY2026）だが、その数字は収益集中リスクの開示であって摩擦の射程ではない　《検問と反証の経緯》【旧根拠は禁じられた型の複合】(1)後半『「limited barriers to entry」で規格ロック(85)とは言い切れず→70』は**『85ではない』の証明**そのもので、規約が明示的に70の根拠にならないとする型。(2)前半の『collections having AutoCAD or AutoCAD LT as a component』を『AutoCADが基盤部品化』と読んでいるが、原本での意味は**当社の製品バンドル（collections）にAutoCADが同梱されている**であり、元の文は『combined revenue from our AutoCAD and AutoCAD LT family products, not including collections having AutoCAD or AutoCAD LT as a component, represented 25% and 26% of our total net revenue』＝**売上集中の開示**。BRの『single source』＝ワンストップの誤読と同型。【70を支える文を探した実数】原本447,223字をgrep: switch 0 / switching cost 0 / retrain 0 / re-train 0 / learning curve 0 / migrat 1（無関係）/ lock-in 0（lock 3件は『Lockheed』等）/ file format 0 / DWG 0。certif 28件はほぼXBRLの Certificates of Deposit タグで、実体のある1件は**学生の資格取得支援**。training 17件は当社/リセラーが提供する支援サービス。workflow 13件は全部が製品便益の宣伝（『streamlined workflows』『collaborative design workflow』）で顧客の費用を述べない。interoperab 3件は**逆向き**（第三者が『products that are interoperable with AutoCAD』を売る＝移行を容易にする側）。【量的検定】RPO $8.30B ÷ 売上 $7,206M ＝ **1.15倍**、current RPO $5.48B ＝ **12ヶ月以内 66%**（1年超は34%）。ブリーフの較正に当てると MSFT(2.0倍・12ヶ月以内30%)=70 / MCO(1.16倍・45%が1年超)=70 に対し **ADBE(0.94倍・12ヶ月以内65%)=50** と期間構造がほぼ一致＝ADBE側。non-cancellable の2件は**Autodeskが自社ベンダーへ負う**購入義務 $618M で向きが逆。【検問4】『The software industry has limited barriers to entry…』と『This shift further lowers barriers to entry…』を**2箇所ずつ**、競合12社を実名列挙し『vigorous competition』。⇒50。",
    "rep": "『The software industry has limited barriers to entry』(×4)+『ease of market entry』→40年 ecosystemで複製は困難だが、低参入障壁の自己開示があり80上限には届かず→60",
    "dur": "subscription/『new transaction model』+AutoCAD組込collections=スイッチングコスト型→75",
    "erosion": "『loss of market share』『competition... likely to intensify in the future』『pricing pressure』→競争激化の初期兆候=emerging(実際のシェア喪失の証拠はなし)",
@@ -165,7 +166,17 @@
     "roict"
    ],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "roiic": 11.7,
  "roiic5": 16.3,

@@ -23,7 +23,7 @@
  "erosion": "none",
  "disrupt": "unsettled",
  "dom": 70,
- "irr": 70,
+ "irr": 50,
  "rep": 60,
  "dur": 85,
  "geopol": 0,
@@ -108,7 +108,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=3.4 / 5年窓=5.9。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 _meta.kenshi が文字列で保存されていたため配列へ正規化した（ASR様式は配列が正）。内容は改行区切りの要素へ分解しただけで一文字も捨てていない。文字列のままだと検死の追記が list.append で落ちる＝**この社だけ監査の記録が伸びなくなる**。",
    "2026-08-03 f5 75 → 空欄。disrupt=unsettled の導出値は 65 で、逸脱評価なのに根拠が無かった。**disrupt は測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない（未測定なのは全317社中3社＝ADP/META/NJRのみで、そちらは値を残す）。影の計測: Ωの動きは最大+0.4/最小−0.2pt・Ω72/75の線を跨ぐ社0・投下可7社不変（f5の実効ウェイトは約4%）",
-   "2026-08-03 p3 50 → 空欄。nde=1.51 の導出値は 70。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ"
+   "2026-08-03 p3 50 → 空欄。nde=1.51 の導出値は 70。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 5,571,400,000 + 有利子負債 2,334,000,000)＝のれん込み。roic(除外)との差が買収規律の指標",
@@ -123,7 +124,8 @@
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 211,784,725 ÷ Δ投下資本 6,189,490,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 1,904,610,000→8,094,100,000（+325.0%）",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 379,790,214 ÷ Δ投下資本 6,410,702,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 1,683,398,000→8,094,100,000（+380.8%）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 1,377,260,000 → 2023年 3,679,600,000 → 2025年 4,590,700,000。A案(端点) 直近2年CAGR 11.70% − その前3年CAGR 38.76% = -27.06pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -10.56pt ／ 年次YoY {'2021': 2.9, '2022': 22.4, '2023': 112.2, '2024': 16.4, '2025': 7.2} → **採用 -10.56pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 3.723。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict"
+   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 3.723。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『Our agreements with insurance company suppliers are generally subject to cancellation by either party upon 30 to 90 days’ notice.』（Item 1A Risk Factors — 供給者リスク（上位3社で売上の23%））——最も濃い顧客関係が30〜90日通知で解約可＝随時解約可　『Generally, institutional and dealer suppliers make non-binding long-term commitments with us regarding consignment volumes.』（Item 1A Risk Factors — 同上）——『long-term commitments』が同じ文で non-binding と自己否定＝購買義務は存在しない　『Our market position and competitive advantage could be threatened by our competitors and/or disruptive new entrants.』（Item 1A Risk Factors 見出し（Risk Factor Summary にも再掲））——新規参入が当社を脅かす側＝ロックの反対　『we may face increasing competition from online wholesale and retail marketplaces』（Item 1A Risk Factors — IAAの競争）——物理拠点を持たない代替が参入しうる＝代替容易　『SmartEquip, an innovative technology platform that supports customers' management of the equipment lifecycle and integrates parts procurement with both original equipment manufacturers (“OEMs”) and dealers』（Item 1 Business — Company Overview（'SmartEquip' は全文3件））——唯一の工程組込候補。規模・契約期間・顧客の費用がいずれも未開示で機構として立たない　《反証（同じ原本に同居する）》『Our agreements with insurance company suppliers are generally subject to cancellation by either party upon 30 to 90 days’ notice.』 ／ 『If we lose one or more of our significant suppliers, or if one or more of our large suppliers were to significantly reduce volume for any reason or favor competitors or new entrants, we may not be successful in replacing such business』　《射程》—（50なので射程は問わない）　《検問と反証の経緯》【evidence_gap】台帳の irr 根拠は**空文字(0字)**。irr=70 を支える記述が台帳に一つも無い。\n【自分の結論への反証＝70を支える文を探した実数】387,286字を走査: switch/switching **0件** / switching cost 0 / lock-in 0 / **multi-year 0件** / long-term contract 0 / installed base 0 / retention 0 / churn 0 / network effect 0。'barrier' 1件は**貿易障壁(関税)**、'new entrant' 4件は**当社を脅かす側**、'renewal' 5件は**すべて当社が借主のリース**、'exclusive' の顧客関連は0件。\n【最有力候補2つを潰した】(a)**IAAの保険会社との供給契約**——marketplace で最も濃い関係(上位3社で売上の23%)なので最後まで当たったが、原本が『Our agreements with insurance company suppliers are generally subject to **cancellation by either party upon 30 to 90 days’ notice**』と明示。**随時解約可**そのもの(検問4)。さらに『institutional and dealer suppliers make **non-binding** long-term commitments』＝『long-term commitments』と書いてある当の文が**non-binding と自己否定している**——引用の後半が逆を言う型(6146と同型)。(b)**SmartEquip**(部品調達をOEM・ディーラーと統合するプラットフォーム)——工程組込の候補として当たったが、記述は**全文3件でブランド紹介のみ**、売上規模・契約期間・顧客が負う費用のいずれも開示が無い。\n【検問4 反証の同居】『Our market position and competitive advantage could be threatened by our competitors and/or **disruptive new entrants**』／『we may face increasing competition from **online wholesale and retail marketplaces (generally without any meaningful physical presence)**』／『If we lose one or more of our significant suppliers…**or favor competitors or new entrants**, we may not be successful in replacing such business』。買い手側の唯一の契約は『buyer platform registration fees…for a one - or two-year term』だが、登録料は他所での併用を妨げない。規約どおり50。"
   },
   "provenance": {
    "roicg": "machine",
@@ -169,7 +171,17 @@
    "hand": [],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "mcap": 20.6,
  "roiic": 3.4,

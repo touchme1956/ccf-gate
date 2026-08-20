@@ -23,7 +23,7 @@
  "erosion": "active",
  "disrupt": "unsettled",
  "dom": 70,
- "irr": 70,
+ "irr": 50,
  "rep": 80,
  "dur": 85,
  "geopol": 1,
@@ -106,7 +106,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=62.9 / 5年窓=17.0。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 _meta.kenshi が文字列で保存されていたため配列へ正規化した（ASR様式は配列が正）。内容は改行区切りの要素へ分解しただけで一文字も捨てていない。文字列のままだと検死の追記が list.append で落ちる＝**この社だけ監査の記録が伸びなくなる**。",
    "2026-07-29 p1 70→50（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均12.2%・σ6.3pt・CV51.8%）。",
-   "2026-08-06 irr 85→70。旧根拠は自社取得側の承認／自社サプライヤの認定＝**向きが逆**（2026-08-05 に NVDA・MSI・ASML の旧根拠で見つけたのと同型）。堀の本体は特許＝expiry欄の領分"
+   "2026-08-06 irr 85→70。旧根拠は自社取得側の承認／自社サプライヤの認定＝**向きが逆**（2026-08-05 に NVDA・MSI・ASML の旧根拠で見つけたのと同型）。堀の本体は特許＝expiry欄の領分",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "roic": "機械算出 2025年: NOPAT 11,339,470,972（営業利益 13,743,000,000×(1−実効税率17.5%)） ÷ IC 57,099,000,000＝自己資本 48,719,000,000 + 有利子負債 29,622,000,000 − のれん 21,242,000,000 − 無形 0。**IC/自己資本=117.2%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）",
@@ -121,7 +122,7 @@
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 7,582,470,972 ÷ Δ投下資本 12,051,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 66,290,000,000→78,341,000,000（+18.2%）",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 7,195,107,336 ÷ Δ投下資本 42,323,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 36,018,000,000→78,341,000,000（+117.5%）",
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 2.1% / 2022 8.1% / 2023 14.8% / 2024 16.2% / 2025 19.9% → 平均 12.2% / σ 6.3pt / **CV 51.8%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **50**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
-   "irr": "10-K/20-F の 'qualif/certif' は**すべて向きが逆**——20-F に顧客側の再認定の記述なし（記述は源泉徴収と監査意見の qualified のみ）。 当社が受ける承認(FDA/EMA)は**自社が取得する側**でv9.9.49が明示除外する型、当社が行う認定は**自社サプライヤ**に対するもので、いずれも『顧客(医師・薬局・支払者)が乗り換えに再認定費用を負う』ではない。この事業の代替不能性は**特許の独占期間**に由来し、門はそれを `expiry` 欄で別に測っている（irr でもう一度数えると二重計上）。処方習慣・フォーミュラリの摩擦で70。",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『Brilinta sales in the US decreased by 48% to $393 million (2024: $751 million; 2023: $744 million), driven by generic entry in 2025.』（Item 5 相当 — Business Overview—Geographical Review「US / CVRM」の製品別コメント）——独占失効の直後に顧客が即座に乗り換える実数。移行に費用も時間もかからないことの直接証拠　『Brilique sales in Europe decreased by 45% (CER: 46%) to $147 million (2024: $268 million; 2023: $271 million) due to generic entry in the second quarter.』（Business Overview—Geographical Review「Europe / CVRM」）——同じ現象が別地域でも起きる＝地域固有の制度ではなく事業の性質であることの裏づけ　『A number of our products are subject to generic competition in one or more markets.』（Item 4 — 「Patent Expiries of Key Marketed Products as at February 10, 2026」の表の前書き）——会社自身が既にジェネリック競合下にあると明記。防御は特許期間であって顧客側の移行障壁ではない　『improved affordability offsetting Medicare Part D redesign and also discounts to secure preferential formulary placement』（Business Overview—Geographical Review「US / Oncology」Calquence の増収要因）——旧根拠が主張する『フォーミュラリの摩擦』が原本では逆向き＝当社が割引を払って位置を買う。formulary は20-F本体で1回・添付では0回　『Changes in prescribing habits.』（Item 3.D Risk Factors — 「Failure to execute our commercial strategy」の商業化リスクの箇条書き）——旧根拠が主張する『処方習慣』は原本ではリスクとして列挙されるだけで、摩擦の機構として述べられていない　《射程》全社。2025年 製品売上の主力（Tagrisso 7,254 / Imfinzi 6,063 / Farxiga 8,400 百万$ 等）はいずれも特許・規制データ独占で守られる型で、独占失効時の挙動は下の実数が示す　《検問と反証の経緯》【材料の補強＝この社だけ追加取得した】キャッシュ out/_src_cache/AZN.txt は20-F本体で、Item 4.B Business Overview と Strategic Report（Therapy Area Review pp.12-25／Business Review pp.26-46）は**exhibit 15.1 へ incorporated by reference**（本体に『exhibit 15.1』が59回）＝RELX が ex15d2 に機構を持っていた型に当たる。そこで SEC から azn-20251231xex15d1.htm（Annual Report & Form 20-F Information 2025）を実際に取得しテキスト化（1,044,186字）して併せて走査した。**hold にしないのはこのため**。【検問2 機構＋反証の試み】20-F本体と添付の**両方**で機構語を走査した実数: 本体 switching cost 0／switch 1／formulary 1／installed base 0／multi-year 0／long-term contract 0／supply agreement 0／companion diagnostic 0／adherence 0／interchangeab 0／loyal 0。添付(年次報告) switching cost 0／switch 1／formulary 0／installed base 0／multi-year 0／long-term contract 0／lock-in 0／barrier to entry 0／loyal 0／interchangeab 0。当たった少数を全件読んだ: 添付の switch は『Fuel switching (clean heat)』＝バイオメタン調達／inhaler 3件は pMDI の代替推進剤(GHG)／device 22件と companion diagnostic 2件は R&D の成果（Roche と共同の FDA Breakthrough Device Designation）／adherence 6件は ESG 指標『number of patients treated』の推計に使う仮定と『regulatory adherence』。**製薬の代替不能性を顧客側の移行費用として述べる文は、本体にも添付にも1件も無かった**。【検問3 向き】台帳の旧根拠が自ら認めるとおり、qualif/certif は全部『当社が受けるFDA/EMA承認』＝検問3-(1)、『当社が自社サプライヤを認定』＝検問3-(2)。【検問4 反証の同居——ここが決定的】独占が切れた瞬間の実数が同じ原本に載っている: Brilinta は US で**1年で48%減**、欧州(Brilique)は**45%減**、いずれも generic entry が理由と明記。Pulmicort も新興国で27%減。つまり顧客（医師・薬局・支払者）は費用も時間も負わずに即座に乗り換える。さらに旧根拠が主張する『フォーミュラリの摩擦』は原本では逆向きで、当社が**割引を払って**フォーミュラリ位置を買う（Calquence の増収要因に『discounts to secure preferential formulary placement』）。『処方習慣』も原本ではリスク要因の列挙『Changes in prescribing habits.』として出るだけ。【検問5 射程】機構が無いので不能。【台帳の旧根拠】全文が『85ではない』の証明で終わり、最後に『処方習慣・フォーミュラリの摩擦で70。』と**引用のない断定**を置いている。v9.9.144 が名指しで禁じた型に該当。旧根拠自身が正しく述べるとおり、この事業の代替不能性は特許の独占期間に由来し、それは門が `expiry` で別に測っている（irr で二度数えない）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 26,617,000,000 → 2023年 45,811,000,000 → 2025年 58,739,000,000。A案(端点) 直近2年CAGR 13.23% − その前3年CAGR 19.84% = -6.61pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -5.20pt ／ 年次YoY {'2021': 40.6, '2022': 18.5, '2023': 3.3, '2024': 18.0, '2025': 8.6} → **採用 -5.20pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。"
   },
   "provenance": {
@@ -168,7 +169,17 @@
     "roict"
    ],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "mcap": 127.48,
  "roiic": 62.9,

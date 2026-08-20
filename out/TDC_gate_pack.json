@@ -23,7 +23,7 @@
  "erosion": "active",
  "disrupt": "threat",
  "dom": 50,
- "irr": 70,
+ "irr": 50,
  "rep": 35,
  "dur": 55,
  "geopol": 1,
@@ -111,7 +111,8 @@
    "2026-07-29 p1 75→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均51.4%・σ23.0pt・CV44.8%）。",
    "2026-08-03 f5 40 → 空欄。disrupt=threat の導出値は 45 で、逸脱評価なのに根拠が無かった。**disrupt は測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない（未測定なのは全317社中3社＝ADP/META/NJRのみで、そちらは値を残す）。影の計測: Ωの動きは最大+0.4/最小−0.2pt・Ω72/75の線を跨ぐ社0・投下可7社不変（f5の実効ウェイトは約4%）",
    "2026-08-03 p3 70 → 空欄。nde=-0.13 の導出値は 95。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ",
-   "**v9.9.72 roic を through-cycle 化**: roic 61.1→61.1 / roicg 21.8→21.8。**5年の中央値**（系列[2023, 2024, 2025]・中央61.1% / 最悪58.7%）。比は**パックが審査した年(2025)**の採取器値 roic61.11 / roicg21.82 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
+   "**v9.9.72 roic を through-cycle 化**: roic 61.1→61.1 / roicg 21.8→21.8。**5年の中央値**（系列[2023, 2024, 2025]・中央61.1% / 最悪58.7%）。比は**パックが審査した年(2025)**の採取器値 roic61.11 / roicg21.82 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "roic": "2026-07-29 機械検算(night/recalc_roic.py・SEC companyfacts CIK0000816761)。FY2025実額: 営業利益 205,000,000 / 自己資本 230,000,000 / 有利子負債 456,000,000 / のれん 399,000,000 / 無形 42,000,000 → IC(のれん除外)=245,000,000。IC=245百万$＝自己資本の107%。現行値と一致し追認。roic=61.1% / roicg=21.8%。5年系列: FY2021 37.2% / FY2022 16.1% / FY2023 58.7% / FY2024 84.0% / FY2025 61.1%。**タグ欠落なし**＝機械値が信頼できる社として適用。｜**v9.9.72 through-cycle**: 系列[2023, 2024, 2025]の中央値（中央61.1% / 最悪58.7%・比は審査年2025）",
@@ -130,7 +131,8 @@
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **-3.5%** / 同業（SIC7372「Services-Prepackaged Software」・154社）の中央値 **13.2%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+-3.5%)÷(1+13.2%))^5 − 1 = **-55.0%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で20%以上縮んだ＝**down**",
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 37.2% / 2022 16.1% / 2023 58.7% / 2024 84.0% / 2025 61.1% → 平均 51.4% / σ 23.0pt / **CV 44.8%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **65**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 1,836,000,000 → 2023年 1,833,000,000 → 2025年 1,663,000,000。A案(端点) 直近2年CAGR -4.75% − その前3年CAGR -0.05% = -4.70pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -6.87pt ／ 年次YoY {'2021': 4.4, '2022': -6.4, '2023': 2.1, '2024': -4.5, '2025': -5.0} → **採用 -4.70pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 7.885。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict"
+   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 7.885。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『we provide our customers with the opportunity to de-risk their buying decisions with our hybrid capabilities, so they can deploy across the top public clouds, private cloud and on-premises, coupled with flexibility in purchasing and portable licensing』（Item 1. Business — Competition）——会社自身が『可搬なライセンス』『購入の柔軟性』を競争優位として掲げる＝移行障壁の逆。ADBEの『without the friction of switching between workflows and platforms』と同型　『some customers have selected offerings of one of our competitors and existing customers may do so in the future. As a result, such customers have cancelled all or a portion of their arrangements with us』（Item 1A. Risk Factors — 「If existing customers fail to renew, or cancel their subscription license arrangements or support agreements…」）——顧客の実際の離反を会社が認めている（検問4）　『there can be no assurance that our current customers will migrate from on-premises to the cloud with Teradata, renew their subscription and/or support agreements, or agree to the same terms when they renew』（Item 1A. Risk Factors — 同上）——更新の保証が無いと明言＝解約率・更新率の実数による70の根拠が成立しない　『our on-premises subscription arrangements may provide the customers with the right to cancel our agreement upon certain notice periods』（Item 1A. Risk Factors — ARR・収益認識に関するリスク）——随時解約可＝検問4の直撃　『approximately $ 1,167 million of the amount includes customer-only general cancellation for convenience terms that the Company is contractually obligated to perform unless the customer notifies the Company otherwise.』（Notes to Consolidated Financial Statements — Revenue（Remaining unsatisfied obligations））——RPO $2,182M の53.5%が顧客都合で解約可＝『複数年の購買義務』が実数で否定される　『The Company expects to recognize revenue of approximately $ 537 million in the next year from contracts that are non-cancelable.』（Notes to Consolidated Financial Statements — Revenue（Remaining unsatisfied obligations））——真に拘束される額は売上$1,663Mの32.3%のみ　《反証（同じ原本に同居する）》『We estimate that approximately 70% of our backlog at the end of fiscal 2025 will be recognized as revenue in fiscal 10 2026, as work is being performed.』 ／ 『The Company expects to recognize revenue of approximately $ 537 million in the next year from contracts that are non-cancelable.』　《射程》全社（単一の分析プラットフォーム事業）。RPO $2,182M ÷ 売上$1,663M = 1.31倍だが、うち年1が$1,473M＝67.5%、$1,167M＝53.5%が『顧客都合の随時解約可』、真に拘束されるのは翌年$537M＝売上の32.3%　《検問と反証の経緯》【台帳の状態】irr=70 なのに _meta.evidence.irr が完全な空欄＝規約v9.9.144が要求する『機構の名指し＋原本の引用』がゼロ。旧根拠は存在しない。【検問1】引用は全件を原本と逐語照合（正規化後）して一致確認。【検問2・3】70を支える機構を探したが原本に無い——自分でgrepした実数: switching cost 0／switch 0／installed base 0／lock-in 0／retrain 0／learning curve 0／barrier to entry 0／in-house 0／data gravity 0／petabyte 0／mission-critical 0。migrat は8件あるが、内訳は(a)当社が提供する『data and workload migration tools and services』＝移行を容易にする側 (b)当社が顧客をクラウドへ移す話 (c)顧客が競合へ移る話、の3種で顧客側の費用を述べる文はゼロ。embedded 2件は『embedded experts』(コンサル要員)とXBRLタグの説明。replace 3件は全部が人材採用と社内システムの話。【検問4】反証がむしろ本文の主張になっている——(i)Competition節が自ら『flexibility in purchasing and portable licensing』を売り文句にする＝可搬性を差別化として掲げており、ロックインの逆 (ii)リスク要因が『some customers have selected offerings of one of our competitors … such customers have cancelled all or a portion of their arrangements with us』と実際の離反を認める (iii)『on-premises subscription arrangements may provide the customers with the right to cancel our agreement upon certain notice periods』＝随時解約権 (iv)実数も逆——RPO 1.31倍のうち53.5%が顧客都合の解約可、真に非解約は翌年$537M（売上の32.3%）だけ。ブリーフの物差しで並べると MSFT(2.0倍・加重残存2.3年・12ヶ月以内30%→70)／MCO(1.16倍・45%が1年超先→70)／ADBE(0.94倍・解約不能4%・65%が12ヶ月以内→50) に対し TDC は『1.31倍だが67.5%が年1・過半が解約可』でADBE側。(v)ARRも Total ARR +3% の中身は Subscription −4%／Maintenance −13%、Cloud Net Expansion 117%→108%、総収入 −5%・recurring −2%。【検問5】射程は全社（単一事業）だが、その全社で機構が無い。【反証を試みた経緯】50という結論を崩そうとして、データウェアハウスの常識である『データ重力＝移行費用』が書かれていないかを狙って data gravity/petabyte/mission-critical/entrenched/sticky/rip and replace/four decades/long-standing まで追加走査したが、当たったのは 'four decades of domain expertise'（当社の経験年数＝rep の領分）と 'embedded experts'（人員）だけで、顧客が負う費用・時間・義務を述べる文は一つも出なかった。→ 規約どおり50。"
   },
   "provenance": {
    "roicg": "machine",
@@ -179,7 +181,17 @@
    "hand": [],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "mcap": 2.88,
  "roiic": "na",

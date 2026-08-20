@@ -23,7 +23,7 @@
  "erosion": "emerging",
  "disrupt": "unsettled",
  "dom": 85,
- "irr": 70,
+ "irr": 50,
  "rep": 80,
  "dur": 85,
  "geopol": 1,
@@ -69,11 +69,12 @@
    "IPO(2021/6)で株数66.8→163.5M(FY2022)・equity66.7→878.6Mへ断絶。ROIC系列の初期低位(10.2%)はIPO現金の資本ドラッグ由来で事業ROICではない点に留意(p1はこのため上昇トレンド)",
    "acq5: 直近5年の買収はFY2023 53.5M/FY2026 26.5M等の小型bolt-onのみ(大型なし)。のれん85M=資産の7.6%と小さくroicg乖離軽微。enum値はユーザー判定に委ねnull",
    "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
-   "**v9.9.72 roic を through-cycle 化**: roic 20.3→16.2 / roicg 17.7→14.5。**5年の中央値**（系列[2022, 2023, 2024, 2025, 2026]・中央16.2% / 最悪12.2%）。比は**パックが審査した年(2026)**の採取器値 roic20.29 / roicg17.73 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC"
+   "**v9.9.72 roic を through-cycle 化**: roic 20.3→16.2 / roicg 17.7→14.5。**5年の中央値**（系列[2022, 2023, 2024, 2025, 2026]・中央16.2% / 最悪12.2%）。比は**パックが審査した年(2026)**の採取器値 roic20.29 / roicg17.73 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
+   "2026-08-20 irr 70 → 50（二重読み）"
   ],
   "evidence": {
    "dom": "『over 3 million registered members ... represent more than 85% of U.S. physicians』→医師ネットワークの圧倒的カバー=85(圧倒70-89%)",
-   "irr": "『Internet search engines could also compete』+ネットワーク効果。医師側は埋込むが顧客(広告主)は代替マーケチャネルあり=高摩擦移行困難70",
+   "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『We do not typically enter into long-term contracts with our pharmaceutical manufacturer customers, who represent a significant portion of our revenue.』（Item 1A. Risk Factors — 顧客の獲得・維持に関するリスク）——主要顧客群に複数年の購買義務が無いことを会社自身が断定。MA型の自己否定　『When we do enter into long-term relationships with customers, they can generally terminate their relationship with us or move their marketing activity to a new agency with whom we do not currently do business.』（Item 1A. Risk Factors — 同上（直後の文））——長期関係でも解約でき代理店ごと移せる＝移行障壁の不在を会社自身が述べる　『Since the majority of the Company’s contracts have a duration of one year or less, the Company has elected not to disclose remaining performance obligations in accordance with the optional exemption in ASC 606.』（Notes to Consolidated Financial Statements — Revenue Recognition / Contract Balances）——契約の過半が1年以下。MA を50とした根拠と同一の形　『Remaining performance obligations for contracts with an original duration greater than one year are not material.』（Notes — Revenue Recognition / Contract Balances）——1年超の拘束が重要性を持たない＝複数年の購買義務は成立しない　『Deferred compensation is generally amortized over the weighted-average contractual term, ranging from 8 months to 14 months.』（Notes — Deferred Contract Costs）——会社自身の会計上の顧客期間が8〜14ヶ月。BR(約5.6年)・PTC(5年・anticipated renewals)と対照的　『Our net revenue retention rate is directly tied to our revenue growth rate and thus fluctuates as that growth rate fluctuates.』（Item 7. MD&A — Key Business Metrics / Net Revenue Retention Rate）——会社自身がNRRを成長率の写しと位置づける＝固着の指標として使えない　《反証（同じ原本に同居する）》『Hiring and Workflow Solutions contracts are noncancelable and customers are billed in annual, quarterly, or monthly installments in advance of the service period, and revenue is recognized ratably over the contractual term.』 ／ 『Net revenue retention rate 109% 119% 114%』　《射程》主要顧客である製薬メーカー（『a significant portion of our revenue』）に長期契約が無いと会社自身が明記。subscription は総売上 644,863千$ のうち 608,413千$＝94.3% だが、その大半が1年以下　《検問と反証の経緯》【結論】会社自身が長期契約の不在と顧客の離脱の容易さを明記しており、実数もそれを裏づけるので50。【★会社自身が否定している（MA型）】『We do not typically enter into long-term contracts with our pharmaceutical manufacturer customers, who represent a significant portion of our revenue.』——主要顧客群に長期契約が無いと断定。直後の文がさらに強い：『When we do enter into long-term relationships with customers, they can generally **terminate** their relationship with us or **move their marketing activity to a new agency** with whom we do not currently do business.』＝長期関係であっても解約でき、代理店ごと移せる。MA を70→50 に落とした『Many of our customer relationships are not exclusive ... may not ultimately reduce the risk that customers may terminate』と同型。【★実数が逆を示す】(1)『Since the majority of the Company's contracts have a duration of one year or less, the Company has elected not to disclose remaining performance obligations in accordance with the optional exemption in ASC 606.』＋『Remaining performance obligations for contracts with an original duration greater than one year are **not material**.』——MA が『elected the optional exemption』＋not material で50 になったのと一字違わぬ形。(2)『Deferred revenue balances are generally expected to be recognized within 12 months.』(3)決定打——販売手数料の償却が『over the weighted-average contractual term, ranging from **8 months to 14 months**』。BR（顧客システム改修費を約5.6年で償却→70）や PTC（anticipated renewals ゆえ5年→70）と対照的で、会社自身が1年強しか顧客生存を見込んでいない。【自分で走査した実数（10-K全441,085字）】switching cost **0件**／lock-in 0／stickiness・sticky 0／habit 0／electronic health record 0／EHR 1／switch 1件（『the flexibility to **switch between voice and video** at will』＝製品機能で顧客の乗り換えではない。MA の switching＝決済ルーティングと同じ『同じ語が逆の意味』型）。difficult to replace 2件は**両方とも向きが逆**——1件は自社の従業員（at-will で離職しうる）、1件は自社がライセンスする第三者技術（型2 当社の供給リスク）。【70を支える最有力候補を潰した経緯】(1)Workflow Tools の臨床ワークフロー埋込み：埋め込まれるのは**医師（無償の member）**であって支払う顧客ではない。台帳の evidence 自身が『医師側は埋込むが顧客(広告主)は代替マーケチャネルあり』と認めており、それは50の理由であって70の理由ではない。(2)『Hiring and Workflow Solutions contracts are noncancelable』は確かに解約不能だが、(a)Marketing Solutions（製薬広告＝主力）を含まず、(b)上記のとおり契約の過半が1年以下で1年超のRPOは重要性なし、(c)10-K の売上開示は Subscription/Other の2区分のみで Workflow の売上規模が示されず射程が測れない。(3)NRR は 109%（前期119%・前々期114%）で**低下中**、しかも会社自身が『Our net revenue retention rate is directly tied to our revenue growth rate』＝成長率の写しであって固着の指標ではないと書く。サイボウズを70とした根拠（製品別 Churn 0.4〜1.0% の実数＋値上げ後も解約率1%未満という自然実験）に相当するものが無い。**落とせなかったのではなく、いずれも70に届かなかった**。【evidence_gap】true——台帳の旧根拠は二重に成立していない。(a)引用『Internet search engines could also compete』は**原本に存在しない**（実文は『Internet search engines could also **change their methodologies** in ways that adversely affect our ability to optimize our page rankings within their search results.』＝Competition の risk factor＝反証側の文）。(",
    "rep": "『powerful network effects』+『We verify the identities and credentials of our medical professionals through integration with third-party』15年構築の検証済ネットワーク=極困難80(数十年/$10B級の複製不能とまでは言えず)",
    "dur": "『The ecosystem we have created in the medical community benefits from powerful network effects. Medical professional engagement with our platform increases as the breadth and utility of our tools expand, attracting even more members』=ネットワーク85",
    "erosion": "『in the past we have lost marketing spend and associated revenue when a pharmaceutical brand marketed on our platform lost patent protection』(実現済の製薬特許切れ収入喪失)+『increased competition could cause pricing pressure, loss of market share』=emerging",
@@ -156,7 +157,17 @@
    "hand": [],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
-  }
+  },
+  "irr85_verify": [
+   {
+    "date": "2026-08-20",
+    "kind": "二重読み",
+    "rung": 50,
+    "verdict": "是正(70→50)",
+    "by": "irr=70 の二重読み（未検証200社の一斉検証・5点検問）",
+    "note": "confidence=high｜旧根拠は規約を満たしていなかった"
+   }
+  ]
  },
  "sht": "up",
  "cagrT": -5.46
