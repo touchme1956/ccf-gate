@@ -46,8 +46,15 @@ BEAR = [
   r'(?:qualif\w+|re-?qualif\w+|certif\w+|re-?certif\w+|validat\w+|re-?validat\w+|generate|invest|commit)', '顧客がmust'),
  (r'\bmust (?:also )?be (?:certif|qualif|approv|validat)\w+ by[^.]{0,80}'
   r'(?:customers?|OEMs?|manufacturers?|clients?)', '顧客に認定される'),
- (r'(?:costly|expensive|time[- ]consuming|difficult|impractic\w+|not (?:typically )?economical)'
-  r'[^.]{0,60}for (?:our |their |the )?(?:customers?|OEMs?|clients?|manufacturers?)', '顧客に費用がかかる'),
+ # ⚠ **『more expensive for customers』は値段の話であって乗り換え費用ではない**（2026-08-20 実測）——
+ #   関税・インフレ・信用収縮のリスク文が全社で当たり、上位を埋めた。
+ #   採るのは「**乗り換え・置き換え・再実装が**顧客にとって高い」形だけ。
+ (r'(?:costly|expensive|time[- ]consuming|difficult|impractic\w+|burdensome|not (?:typically )?economical)'
+  r'[^.]{0,80}for (?:our |their |the )?(?:customers?|OEMs?|clients?|manufacturers?)'
+  r'[^.]{0,120}(?:switch|replac|migrat|convert|transition|re-?implement|re-?qualif|re-?certif|re-?validat|change (?:suppliers?|vendors?|providers?))'
+  r'|(?:switch|replac|migrat|convert|transition|re-?implement)\w*[^.]{0,80}'
+  r'(?:is|are|would be|can be|could be) (?:costly|expensive|time[- ]consuming|difficult|burdensome)'
+  r'[^.]{0,60}for (?:our |their |the )?(?:customers?|clients?|OEMs?)', '顧客に乗り換え費用'),
  (r'(?:customers?|manufacturers?|OEMs?)[^.]{0,100}(?:would|will|may) (?:have to|need to|be required to)'
   r'[^.]{0,120}(?:re-?qualif\w+|re-?certif\w+|re-?validat\w+|re-?test|requalification)', '顧客が再認定'),
  (r'\bre-?qualif\w+ (?:by|from|of) (?:our |their |the )?(?:customers?|OEMs?|clients?)', '顧客による再認定'),
