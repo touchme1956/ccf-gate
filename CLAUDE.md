@@ -9237,3 +9237,67 @@ rep=『これらの環境整備は…参入障壁となります』＝直後の�
 - ⚠ 日本株が投下可から0社になったが、これは**日本株を落とす規則を入れたのではない**——
   2社とも「原本に機構が書かれていない」で落ちた。**6146/6857 は EDINET 経路なので `irr85_mech_diff` の
   逐語照合が構造的に効かない**（穴として明示済み）ので、この2社は**機械の見張りが最も薄い場所**だった
+
+## 買付圏の irr=70 を**全数**二重読みした（続き・2026-08-19 ユーザー「やって」）——**さらに2社が50へ。だが連鎖は止まり、未検証0社になった**
+**採点式・刻み・重み・四関門・堀の関門70・売却規律S1/S2/S3・配分・別枠85はいっさい触っていない。**
+最終の投下可10社 = **MSFT IDXX ASML V CW LRCX HWM IRMD MCO RBC**（日本株0・次点は BR/RELX の2社だけ）。
+**買付圏(投下可+次点)の irr=70 は 8社とも二重読み済・未検証0社・逐語照合 8/8 ✓一字同文** になった。
+
+### 繰り上がった3社を読んだら、2社が落ちた（＝連鎖）
+| | 判定 | 決め手 |
+| **HWM** | 70維持 | 『Because of approval, license, and qualification requirements … sources of alternatives … **may not be readily available to Howmet or its customers**』＋『Howmet has **long-term contracts with a significant number of its customers**』。射程 **約87%**（Forged Wheels 12.6% は航空の認定要件の外） |
+| **ADBE** | **70→50** | 『再訓練コスト』が**原本に無い**（retrain 0/learning curve 0）。旧引用『end-to-end, ideation-to-creation platform』は**同じ文が『without the friction of switching between workflows and platforms』で終わる** |
+| **MA** | **70→50** | 『**Many of our customer relationships are not exclusive.** … business agreements … **may not ultimately reduce the risk that customers may terminate their relationships with us**』＝会社自身が否定 |
+
+- **ADBE は 6857 と 6146 の欠陥を1社で両方持っていた**——結論に置いた機構が原本に無い（6857型）／
+  引用の後半が逆を言う（6146型）。しかも**唯一の量的候補も実数が逆を示した**——RPO は売上の **0.94倍**で
+  『Non-cancellable and non-refundable committed funds … comprised approximately **4%** of the total remaining
+  performance obligations. Approximately **65%** … expected to be recognized **over the next 12 months**』
+  ＝MSFT の 2.0倍/12ヶ月以内30% とは正反対で、**年次サブスクとして自然な水準**
+- **MA は実在する排他性が ONTO型**だった——Item 1A の見出しが『Exclusive/near exclusive relationships
+  **certain customers have with our competitors**…』で、本文は『These relationships may make it **difficult or
+  cost-prohibitive for us** to do significant amounts of business with these customers』＝**締め出されているのは当社**。
+  RPO も『**elected the optional exemption to not disclose**』（本業）＋付加価値分$2.0十億は『not material』
+
+### そして連鎖は止まった——繰り上がった IRMD・MCO と、次点の BR・RELX は4社とも70が立った
+| | 機構（原本の言葉） | 射程 |
+| **IRMD** | **消耗品の専用性**『**proprietary disposable IV tubing sets**』（本文4箇所）＋実数 Disposables 17,564/83,814＝**売上の21.0%** | 約59%（ポンプ系） |
+| **MCO** | **複数年の購買義務**『signed **multi-year arrangements** for hosted and installed subscription-based products』＋RPO **$4.8十億**・『55%が1年以内/25%が1〜2年』＝**45%が1年超先** | **53.4%**（MAセグメント） |
+| **BR** | **顧客システムの改修**『direct costs incurred to **set up or convert a client's systems to function with the Company's technology**』繰延 **819.3百万$＝総資産の約9%**・年償却145.5→**含意期間 約5.6年**＋『existing customers' **multi-year contracts**』 | 全社 |
+| **RELX** | **複数年の購買義務＋工程への組込**『We have **multi-year contracts in place for much of the revenue base**』『**embedded in the clinical workflow**』 | **全社** |
+- ★**4社とも「旧evidenceに70の根拠が無い／誤読」だった**。IRMD と MCO は全文が『85ではない』の証明だけ
+  （MCO に至っては『10-K本文がこれを移行障壁として**述べてはいない**』と自認していた＝v9.9.144 なら自動的に50）。
+  **BR の『single source solution』は誤読**——文脈は『corporate issuers a single source solution that spans the
+  entire shareholder communications and corporate disclosure lifecycle』＝**ワンストップ（品揃え）**であって
+  supplier 用語の『唯一調達先』ではない。**同じ語が業界で逆の意味を持つ**（MA の switching と同じ族）
+- ★**IRMD を70、6146 を50に分けたのは『proprietary』の一語**。6146 は 専用0・純正0・互換0 で、原本が
+  『最適な装置と**消耗品の選択**』と選べる前提で書く。IRMD は proprietary を4箇所で使い実数も出す。
+  **razor-blade は構造の名前であって根拠ではない**——専用性が原本に書いてあるかで分かれる
+- ★**RELX で危うく取り違えるところだった**——20-F**本体**だけを走査すると `multi-year` は2件で、
+  **どちらも役員報酬の Multi-Year Incentive Interests**。機構は**添付 ex15d2（93.6万字）**に在る。
+  `irr85_mech_diff` の `sibling_body` が拾う経路と同じ穴で、**20-F は本体を読んだだけでは読んだことにならない**
+
+### 道具の欠陥をもう1件見つけて直した——**引用を縮めるときは必ず … を置く**
+HWM の 2026-08-07 の根拠が、原本の『including **to reduce the amount of Howmet's products they purchase,**
+to switch to…』から**一節を省略記号なしで落としていた**ため、逐語照合が **55%** の⚠を出していた。
+省略箇所に `…` を入れて解消（`quotes_of` はそこで断片を割る）。
+**却下した引用を『』に入れない（MSFT）／数字の前後の空白（XBRLタグ割れ）／黙った省略（HWM）**——
+**根拠の書き方が3通りに壊れると、逐語照合はその3通りとも「機構文が消えた」に見せる**。
+
+### 一日を通しての実測
+- **irr=70 の二重読みは 12社中12社を実施**（5社＋繰り上がり3社＋さらに繰り上がり2社＋次点2社）。
+  結果は **70維持 7社 ／ 50へ是正 5社**（RMD 6146 6857 ADBE MA）。**旧根拠が規約を満たしていたのは 0社**
+  ——維持した7社も**全社で根拠を書き直した**（機構を初めて名指ししたのが IRMD・MCO、
+  誤読の是正が BR・MSFT、向きの是正が MSFT、省略の是正が HWM）
+- **投下可は最初も最後も10社**だが、顔ぶれは **6857 6146 RMD ADBE MA が出て、HWM IRMD MCO が入り、
+  日本株が2→0社**になった。次点は **BR/RELX の2社だけ**＝ベンチがほぼ空
+- 要修正2件（既知のCMTL/AMBIQ）・**未解決警告2件**（既知のBMI/3939）・投下可と次点の納品検査 FAIL 0 は不変
+- ⚠ **`check_gate_parity` は playwright 不在で skip**（＝「一致した」ではなく「測っていない」）。CIで走る
+
+### ★この一日の本当の発見
+**irr=70 は「積極的な主張」に改めた（v9.9.144）のに、その主張を誰も原本で確かめていなかった。**
+確かめたら **12社中12社で根拠が規約を満たしておらず、5社は刻みそのものが誤りだった**。
+ラベル一致率が 70 だけ 0.706（85は1.00）だったのは、**読み手のぶれではなく、
+70 が『85を否定した残り』として置かれてきたから**——0.706 は測定のばらつきではなく**手続きの欠落**の指標だった。
+⇒ **次に同じ問いを立てるなら、刻みごとに「何を証拠として要求するか」を先に書くこと**。
+85 には3層（根拠の型・逐語照合・二重読み）があり 1.00 が出ていた。70 には何も無く 0.706 だった。**差は手続きの差**
