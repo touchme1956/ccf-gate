@@ -99,7 +99,7 @@ def main():
     rows = json.load(open(a[0]))
     rows = rows.get('rows') if isinstance(rows, dict) else rows
     write = '--write' in a
-    ok, skip, changed = [], [], []
+    ok, skip, changed, held = [], [], [], []
     for r in rows:
         good, why, ng = check(r)
         t = r['ticker']; rung = r.get('final_rung', r.get('rung'))
@@ -108,7 +108,22 @@ def main():
             skip.append((t, 'パックが無い')); continue
         d = json.load(open(p)); old = d.get('irr')
         if not good:
-            skip.append((t, why + (('｜' + ' / '.join(ng[:2])) if ng else ''))); continue
+            skip.append((t, why + (('｜' + ' / '.join(ng[:2])) if ng else '')))
+            # ★保留・不受理の理由は**パックに残す**（値は触らない）。
+            #   残さないと次の読み手が同じ穴を掘る——台帳が dom の探索で
+            #   「否定的結果も _meta.nulls へ記録する」と決めたのと同じ作法。
+            if write:
+                m = d.setdefault('_meta', {})
+                k = m.get('kenshi'); k = [k] if isinstance(k, str) else (k or [])
+                k.append(f'{D} irr の二重読み: 値は据置（{old}）。'
+                         + ('材料が薄く判定できず保留' if r.get('hold')
+                            else '85と読まれたので3層の手続きへ回す' if rung == 85
+                            else '不受理: ' + why)
+                         + '——' + (r.get('reason') or '')[:1400])
+                m['kenshi'] = k
+                json.dump(d, open(p, 'w'), ensure_ascii=False, indent=1)
+                held.append(t)
+            continue
         if write:
             m = d.setdefault('_meta', {})
             d['irr'] = rung
@@ -132,6 +147,8 @@ def main():
         if old != rung:
             changed.append((t, old, rung))
     print(f'■ 判定 {len(rows)}件 → 受理 {len(ok)}／見送り {len(skip)}　（{"書いた" if write else "検問のみ"}）')
+    if held:
+        print(f'  不受理の理由をパックへ記録（値は据置）: {len(held)}社  ' + ' '.join(held))
     print(f'  値が動く: {len(changed)}社  ' + ' '.join(f'{t}:{o}→{n}' for t, o, n in changed[:40]))
     for t, why in skip:
         print(f'  ✗ {t:6} {why[:120]}')
