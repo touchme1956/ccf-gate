@@ -43,6 +43,10 @@ def body(t):
 def check(r):
     """この行を書いてよいか。返り値 (ok, 落とした理由, 逐語NGの引用)"""
     t = r.get('ticker')
+    # ★材料が薄い社は**書かない**。読み手が hold を立てたらそれを尊重する——
+    #   決算短信しか無い日本株で 50 と書くと『読めていない』を『機構が無い』に化かす（ルール7）。
+    if r.get('hold'):
+        return False, '読み手が保留にした（材料が薄い）: ' + (r.get('reason') or '')[:80], []
     rung = r.get('final_rung', r.get('rung'))
     if rung not in (50, 70, 85):
         return False, f'刻みが規約に無い: {rung}', []
