@@ -62,7 +62,7 @@ def targets():
 
 
 def collect(keep=None):
-    reads, refs = {}, {}
+    reads, refs, dup = {}, {}, {}
     order = 0
     for j in sorted(glob.glob(os.path.join(WF, '*', 'journal.jsonl')),
                     key=lambda p: os.path.getmtime(p)):
@@ -82,6 +82,12 @@ def collect(keep=None):
                 if 'refuted' in x or 'final_rung' in x:
                     refs[t] = dict(x, _o=order, _wf=os.path.basename(os.path.dirname(j)))
                 elif 'rung' in x:
+                    # ★同じ社を二つの班が独立に読むことがある（日本株は材料の経路が違うので
+                    #   わざと二重に走らせた）。**後勝ちで捨てず、一致率の材料として残す**——
+                    #   この改定の目的そのものが「一致率 0.706 を上げること」なので、
+                    #   偶然できた二重読みは**この作業で唯一の再現性の実測**になる。
+                    dup.setdefault(t, []).append(dict(x, _o=order,
+                                                      _wf=os.path.basename(os.path.dirname(j))))
                     reads[t] = dict(x, _o=order, _wf=os.path.basename(os.path.dirname(j)))
     out = []
     for t, r in reads.items():
@@ -109,13 +115,13 @@ def collect(keep=None):
             wf=r.get('_wf'),
         ))
     out.sort(key=lambda x: x['ticker'])
-    return out, reads, refs
+    return out, reads, refs, dup
 
 
 def main():
     quiet = '--quiet' in sys.argv
     todo = targets()
-    out, reads, refs = collect(set(todo))
+    out, reads, refs, dup = collect(set(todo))
     json.dump(out, open(OUT, 'w'), ensure_ascii=False, indent=1)
     # 読むはずだった社
     got = {x['ticker'] for x in out}
@@ -133,6 +139,18 @@ def main():
     print(f'\n★まだ読んでいない {len(miss)}社')
     if miss:
         print('  ' + ' '.join(miss))
+    # ★二重に読まれた社の一致率——この作業で唯一の再現性の実測
+    twice = {t: v for t, v in dup.items() if len(v) >= 2}
+    if twice:
+        agree = sum(1 for v in twice.values() if len({x.get('rung') for x in v}) == 1)
+        print(f'\n★二重に読まれた {len(twice)}社 — 刻みが一致 {agree}社'
+              f'（一致率 {agree/len(twice):.3f}）')
+        for t, v in sorted(twice.items()):
+            rr = [f"{x.get('rung')}{'(保留)' if x.get('hold') else ''}@{x['_wf'][3:10]}" for x in v]
+            mark = '✓' if len({x.get('rung') for x in v}) == 1 else '⚠割れた'
+            print(f'   {mark} {t:6} ' + ' / '.join(rr))
+        print('  ⚠ 2026-08-12 の実測は irr=70 で **0.706**（85は1.00）。改定の狙いはここを上げること')
+
     # 反証だけあって読解が無い（＝読解が落ちた）社
     orphan = [t for t in refs if t not in reads]
     if orphan:
