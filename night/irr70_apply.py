@@ -92,6 +92,14 @@ def evidence(r):
                  + ' ／ '.join('『' + (c.get('q') or '').strip() + '』' for c in r['counter_quotes'][:4] if c.get('q')))
     if r.get('scope'):
         L.append('《射程》' + r['scope'])
+    # ★**出所（docID・提出URL）を必ず刻む**（2026-08-20）。
+    #   `out/_src_cache/` は .gitignore されている＝**逐語照合のキャッシュはこの容器の中にしか無い**。
+    #   容器が回収されれば、今日 EDINET から取り直した有報も消える。
+    #   docID と提出URL が残っていれば**キャッシュを再構築できる**が、
+    #   残っていなければ「引用は在るが照合できない」状態になり、
+    #   CLAUDE.md が記録する『日本株は逐語照合が構造的に効かない』へ逆戻りする。
+    if r.get('source_note'):
+        L.append('《原本の出所》' + str(r['source_note'])[:900])
     L.append('《検問と反証の経緯》' + (r.get('reason') or '')[:2600])
     if r.get('ref_why'):
         L.append('《別の読み手による反証》' + str(r['ref_why'])[:1600])
