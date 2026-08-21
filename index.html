@@ -1324,7 +1324,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.161</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.162</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -5353,12 +5353,36 @@ function ccfMcapTier(m){ for(const t of CCF_MCAP_TIERS){ if(m>=t.min)return t; }
 //   ⚠**v9.9.159 現在この指定を使っている社は0社**——TDGは一度 T5 を指定したが、ユーザー指示「t4にして」で
 //   **測定どおり(T4)へ戻した**。経路は残す：特別枠(in_castle_split:false)を0社のまま残すのと同じ理由で、
 //   次に「測った段と違う段に置く」決定が来たときに使う。
-function ccfMcapWeights(list,city,cap,over){
+// ★手で決めた重み（v9.9.162・2026-08-20 ユーザー指示「個別銘柄の組み合わせをしたい」→「重みを手で決める」）
+//   正本は `portfolio.json` の `target.castle_weights`（**総資産に対する%**）。
+//   **網の `ami_weights` とまったく同じ作法**にしてある（新しい規約を作らない）——
+//   (a)**一社でも重みが無ければ全体を Tier へ倒し、その社を名指しする**
+//      ＝指定のある社だけ手で重くすると「指定の穴が配分に化ける」。
+//      席は Ω が動けば入れ替わるので、**新しい社が席に入った瞬間に Tier へ戻って名指しする**のが正しい
+//      （黙って一部だけ手・一部だけ機械、という混成にしない）。
+//   (b)**合計が城の枠と食い違っても黙って正規化しない**——名指しで警告し値はそのまま使う。
+//   (c)**上限8%（¼ケリー）を掛けない**——8%を承知で越えると決めたのが手指定の意味そのもので、
+//      掛けると決定を黙って打ち消す（特別枠 in_castle_split:false と同じ扱い）。ただし越えた社は名指しする。
+function ccfMcapWeights(list,city,cap,over,hand){
   list=list||[]; over=over||{}; const w={}, missing=[], tier={};
+  const n0=list.length;
+  if(hand&&Object.keys(hand).length&&n0){
+    const hm=list.filter(x=>!(+hand[x&&x.t]>0)).map(x=>x&&x.t);
+    if(!hm.length){
+      list.forEach(x=>{w[x.t]=+hand[x.t];});
+      const hsum=list.reduce((a,x)=>a+ +hand[x.t],0);
+      const hover=list.filter(x=>+hand[x.t]>cap+1e-9).map(x=>x.t);
+      list.forEach(x=>{tier[x.t]='手指定';});
+      return {mode:'hand',w,missing:[],n:n0,tier,hsum,hover,handMiss:[]};
+    }
+    // 欠けている社があるので Tier へ倒す（下へ落ちる）。何が欠けたかは呼び出し側で出す。
+    var _handMiss=hm;
+  }
   for(const x of list){ if(!(x&&+x.m>0)&&!over[x&&x.t])missing.push(x&&x.t); }   // 指定があれば時価総額は要らない
   const n=list.length;
-  if(!n)return {mode:'none',w,missing:[],n:0,tier};
-  if(missing.length){ list.forEach(x=>{w[x.t]=Math.min(cap,city/n);}); return {mode:'equal',w,missing,n,tier}; }
+  const _hm2=(typeof _handMiss!=='undefined')?_handMiss:[];
+  if(!n)return {mode:'none',w,missing:[],n:0,tier,handMiss:_hm2};
+  if(missing.length){ list.forEach(x=>{w[x.t]=Math.min(cap,city/n);}); return {mode:'equal',w,missing,n,tier,handMiss:_hm2}; }
   // Tierの相対ウェイトへ写してから正規化する（＝按分の入力は時価総額そのものではなく段の値）
   const pts=list.map(x=>{ const o=over[x.t];
     const T=o?(CCF_MCAP_TIERS.find(t=>t.name.split(' ')[0]===String(o).toUpperCase())||ccfMcapTier(x.m)):ccfMcapTier(x.m);
@@ -5373,7 +5397,7 @@ function ccfMcapWeights(list,city,cap,over){
     free=free.filter(x=>!over.includes(x));
     if(!free.length)break;
   }
-  return {mode:'mcap',w,missing:[],n,tier};
+  return {mode:'mcap',w,missing:[],n,tier,handMiss:_hm2};
 }
 function ccfAllocTop(cands,maxN){
   maxN=maxN||10;
@@ -6231,7 +6255,11 @@ async function renderPlan(){
     const list=seat.concat(exS).map(r=>({t:r.t,m:r.mcapU}));
     // Tierの指定は門外例外にだけ（席の社は測定で決まる）
     const over={}; exS.forEach(r=>{const o=(exOf(r)||{}).tier_override; if(o)over[r.t]=o;});
-    return ccfMcapWeights(list,CITY,CAP,over);
+    // ★手で決めた重み（v9.9.162）。正本は portfolio.json の target.castle_weights。
+    //   欠けていれば Tier へ倒して名指しする（ccfMcapWeights の中で判定）。
+    const HW=(()=>{const h=((__pf&&__pf.target)||{}).castle_weights; if(!h)return null;
+      const o={}; for(const k in h){const v=+h[k]; if(v>0)o[String(k).toUpperCase()]=v;} return o;})();
+    return ccfMcapWeights(list,CITY,CAP,over,HW);
   })();
   const twRaw=(()=>{const n=pass.reduce((a,r)=>a+(allocSet.has(r.t)?1:0),0)+exSplitN;
     return r=>{const e=exOf(r);
@@ -6247,12 +6275,19 @@ async function renderPlan(){
     const filled=tw(r)>0&&gap(r)<=0, m=passGap>0?gap(r)/passGap*100:0;
     const mcTxt=(r.mcapU>0)?`時価総額 ${r.mcapU>=1000?(r.mcapU/1000).toFixed(2)+'兆':r.mcapU.toFixed(1)+'十億'}$（px×ni÷eps・ドル円${__fxU>0?__fxU.toFixed(2):'—'}で換算）`:'時価総額 未取得';
     const tn=twInfo.tier&&twInfo.tier[r.t];
-    const modeTxt=twInfo.mode==='mcap'
-      ?`目標${tw(r)}% = **${tn||'—'}**（相対ウェイト 8:6:4:3:2 を城${CITY}%へ正規化・上限${CAP}%＝¼ケリーで頭打ち）。${mcTxt}。&#10;`
+    const hMissTxt=(twInfo.handMiss&&twInfo.handMiss.length)
+      ?`⚠**手で決めた重み(castle_weights)が揃っていないので Tier へ倒している**——${twInfo.handMiss.join('・')} に重みが無い。指定のある社だけ手で重くすると「指定の穴が配分に化ける」ので全体を倒す（網の ami_weights と同じ作法）。&#10;`:'';
+    const modeTxt=twInfo.mode==='hand'
+      ?`目標${tw(r)}% = **手で決めた重み**（portfolio.json の target.castle_weights・総資産に対する%）。${mcTxt}。&#10;`
+       +`合計 ${(+((twInfo.hsum)||0).toFixed(2))}%${Math.abs((twInfo.hsum||0)-CITY)>0.05?` ⚠**城の枠 ${CITY}% と食い違っています——黙って正規化していません**（人の決定を機械が書き換えない）。値はそのまま使うので実際の城はこの合計になります。`:` ＝ 城の枠 ${CITY}% にちょうど一致。`}&#10;`
+       +`${(twInfo.hover&&twInfo.hover.length)?`⚠**上限${CAP}%（¼ケリー）を越えている社: ${twInfo.hover.join('・')}**——手指定にはCAPを掛けません（掛けると決定を黙って打ち消すため。特別枠と同じ扱い）。承知のうえで越えている前提です。&#10;`:``}`
+       +`Tierの自動配分に戻すには portfolio.json の castle_weights を消してください（今日のTierなら ${tn||'—'}）。&#10;`
+      :twInfo.mode==='mcap'
+      ?hMissTxt+`目標${tw(r)}% = **${tn||'—'}**（相対ウェイト 8:6:4:3:2 を城${CITY}%へ正規化・上限${CAP}%＝¼ケリーで頭打ち）。${mcTxt}。&#10;`
        +`境界はディケイド（1兆/3千億/1千億/3百億$）で今日の顔ぶれに合わせた線ではない——実測で隣との比は MSFT|V 5.14倍・LRCX|6857 2.57倍・6857|IDXX 3.64倍＝**自然な隙間に落ち、同着を一つも割らない**。&#10;`
        +`Tierが変わるには時価総額が **10%〜201%** 動く必要がある（Ωの段差8/5/3〔v9.9.70で廃止〕が失敗したのは境界が測定誤差σ2.5ptの内側だったから＝ここには当たらない）。&#10;`
        +`**固定%にしない理由**: 8/6/4/3/2 をそのまま%にすると合計51%（3段8/5/3〔v9.9.70で廃止〕なら70%）で**合計が銘柄数に依存する**＝v9.9.70が段差をやめた当の欠陥が戻る。正規化すれば城の按分枠は定義上ちょうど${CITY}%。&#10;`
-      :`⚠**等ウェイトへ倒している**（城${CITY}%÷${twInfo.n}社＝席${MAXN}＋門外例外${Math.max(0,twInfo.n-MAXN)}）——${(twInfo.missing||[]).join('・')} の時価総額が測れないため。一社でも測れないときに部分集合だけ時価で傾けると「測れた社だけが重くなる」＝測定の穴が配分に化ける。${mcTxt}。&#10;`;
+      :hMissTxt+`⚠**等ウェイトへ倒している**（城${CITY}%÷${twInfo.n}社＝席${MAXN}＋門外例外${Math.max(0,twInfo.n-MAXN)}）——${(twInfo.missing||[]).join('・')} の時価総額が測れないため。一社でも測れないときに部分集合だけ時価で傾けると「測れた社だけが重くなる」＝測定の穴が配分に化ける。${mcTxt}。&#10;`;
     return `<span style="font-size:11px;color:${filled?'var(--dim)':'var(--gold-bright)'};white-space:nowrap" title="${modeTxt}今月=目標−現在${(r.pos||0).toFixed(0)}%の不足分で按分(B案②)。&#10;（2026-08-14 ユーザー明示指示「時価総額順にウエイト上げてほしい」→「Tier分け」でB2を選択。Ω・E[r]では傾けない——Ωは配分の順位に寄与ゼロ、E[r]は歴史でirr層内の効果が +1.2/−4.4/+1.5pt＝方向なし）">目標${tw(r)}%${tn?'｜'+tn.split(' ')[0]:''}｜今月${filled?'充足':m.toFixed(0)+'%'}</span>`;};
   // v9.9.90: 買付プランの株数換算。盤の現値（日本株=JPY直・米国株=USD×ドル円）で円→株数。
   //   ドル円が取れない/盤に無い銘柄は null＝株数を出さない（ルール7: 推測の価格を置かない）
@@ -6265,6 +6300,33 @@ async function renderPlan(){
   const planBox=ccfMonthPlanBox(planRows,gap,passGap,tw,CITY,pxInfo);
   if(passIn.length){
     const cityFill=passIn.reduce((a,r)=>a+tw(r)/CITY*100,0), allFilled=passGap<=0;
+    // ★手で決めた重み／その穴を**見える帯で**出す（ツールチップだけに隠さない・v9.9.52）
+    if(twInfo.mode==='hand'){
+      const bad=Math.abs((twInfo.hsum||0)-CITY)>0.05, ov=(twInfo.hover||[]);
+      html+=`<div style="margin:10px 0 4px;padding:9px 12px;border-radius:8px;font-size:11.5px;line-height:1.8;`
+        +`border:1px solid ${bad||ov.length?'rgba(214,154,60,.5)':'rgba(155,127,212,.45)'};`
+        +`background:${bad||ov.length?'rgba(214,154,60,.07)':'rgba(155,127,212,.07)'};color:var(--muted)">`
+        +`<b style="color:#9b7fd4">✋ 城の目標ウェイトは「手で決めた重み」で配っています</b>`
+        +`——正本は <code>portfolio.json</code> の <code>target.castle_weights</code>（総資産に対する%）。`
+        +`<b>時価総額Tierの自動配分は使っていません</b>（castle_weights を消せばTierへ戻ります）。`
+        +`合計 <b>${(+((twInfo.hsum)||0).toFixed(2))}%</b>`
+        +(bad?` <b style="color:#d69a3c">⚠ 城の枠 ${CITY}% と食い違っています——黙って正規化していません</b>`
+              +`（人の決定を機械が書き換えない）。値はそのまま使うので、<u>実際の城はこの合計になります</u>。`
+             :` ＝ 城の枠 ${CITY}% にちょうど一致。`)
+        +(ov.length?`<br><b style="color:#d69a3c">⚠ 上限${CAP}%（¼ケリー）を越えている社: ${ov.join('・')}</b>`
+              +`——手指定にはCAPを掛けません（掛けると決定を黙って打ち消すため。特別枠と同じ扱い）。承知のうえの選択として扱います。`:'')
+        +`<br><span style="color:var(--dim)">⚠ <b>席は Ω が動けば入れ替わります</b>。新しい社が席に入って重みが無ければ、`
+        +`門は<u>全体を Tier へ倒してその社を名指しします</u>——一部だけ手・一部だけ機械という混成にしないため`
+        +`（網の <code>ami_weights</code> とまったく同じ作法）。</span></div>`;
+    } else if(twInfo.handMiss&&twInfo.handMiss.length){
+      html+=`<div style="margin:10px 0 4px;padding:9px 12px;border-radius:8px;font-size:11.5px;line-height:1.8;`
+        +`border:1px solid rgba(214,154,60,.5);background:rgba(214,154,60,.07);color:var(--muted)">`
+        +`<b style="color:#d69a3c">⚠ 手で決めた重み(castle_weights)が揃っていないので、時価総額Tierへ倒しています</b>`
+        +`——<b>${twInfo.handMiss.join('・')}</b> に重みがありません。`
+        +`<u>指定のある社だけ手で重くすると「指定の穴が配分に化ける」</u>ので全体を倒します`
+        +`（時価総額が一社でも測れなければ等ウェイトへ倒すのと同じ作法）。`
+        +`<code>portfolio.json</code> の <code>castle_weights</code> に足すか、丸ごと消してTierに戻してください。</div>`;
+    }
     html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px;color:var(--gold-bright)">🟢 投下可</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">四関門（Ω75+〔irr=85は別枠〕・堀70+・点検0件・事業の収縮なし）を通り、<b>席の上位10社</b>に入った銘柄。買うのはここだけ。<details class="why"><summary>席の選び方——なぜ irr=85 を先に置くのか</summary><div class="why-body">四関門を通過し、かつ<b>irr=85優先→Ω順の上位10社（半導体上限は v9.9.145 で撤去）＝ポートフォリオの枠内</b>（<b style="color:var(--gold-bright)">irr=85〔顧客側が再認定の費用を負う型〕を席の先頭へ</b>——歴史検証がこの台帳で唯一「効く」と出した変数がこれひとつだから。プール754件で P(継続) は 50:0.162 &lt; 70:0.366 &lt; <b>85:0.579</b>、2018年ビンテージは等加重 <b>+24.6%/年</b>（SPY 15.0%）。<u>E[r]を固定してもirr=85の効果は残るが、irrを固定するとE[r]の効果は消える</u>。<b>irr=100は入れない</b>——歴史では100が最下位（0.056/0.091）。<b style="color:var(--gold-bright)">（ユーザー明示指示「irr85は歴史的にみて今後も複利中央値が高いと見込めるものだけ特別にポートフォリオにいれたい」）で、その社自身の実現複利がハードル15%を割っていると判っている社から特権（別枠85・席の優先）を外した</b>——各行の<b>「実績 N.N%」</b>がその裏づけ（out/irr85_history.json＝night/irr85_mech_test.py が配る）。<u>絞る軸に「機構の型」を使わなかったのは実測の結果</u>: 型ごとの n は2〜8しかなく、しかも <b>CW がまったく同じ引用で 2013読解=D認定業者名簿 / 2015読解=C第三者が用途を認定 に割れた</b>（irr の刻み85自体は147社の追試で一度も揺れていないのに、下位ラベルは読み手で変わる）。<b>実績が追えない社（ASML=20-F／LOAR=2024年IPO／VRSK=コホートscreenが自己資本マイナスで落とした）は中立</b>——在庫の境界は道具の側の限界であって会社の性質ではないから。<u>取り上げるのは近道だけで、Ω75+の道は開いている</u>。実測: 今日は誰も動かない純粋なラチェット（下回るのは HXL 7.3% / ST −0.2% の2社で、どちらも財務キル nde&gt;4 で既に⛔）。重みを上げる案は判定圏でirrが変動係数6.6%の定数ゆえ実測で死んでいるので、採点ではなく席の順で拾う）。（2026-08-05ユーザー明示指示「上位10社を買い付け可にして」。第五の枠——四関門は資格・第五の枠は席数）。サイズは<b>時価総額Tier（5段 8:6:4:3:2 を城の按分枠（50%−特別枠・v9.9.159で特別枠は0社）へ正規化）・上限8%</b>（<b>2026-08-14 ユーザー明示指示で等ウェイト→時価総額比→Tierへ</b>。<u>Ω・E[r]では傾けない</u>——Ωは配分の順位に寄与ゼロ〔全社一定にしても順位0/11箇所〕、E[r]は歴史でirr層内の効果が +1.2/−4.4/+1.5pt＝方向なし、そして従来の配分案の比較は「総合＝城%×加重E[r]」で採点しており現行案が定義上必ず勝つ循環だった。傾ける信号が無いので傾けない。**席の選定**は irr=85 を先に置き、残りをΩ順にした（E[r]項を外し・irr=85優先を追加）。実測: 上位10社は遮断器化以前の旧4条件の投下可10社と完全同一＝二つの道が同じ集合へ収束。11位以下は🔵次点として名指し表示——資格は保つのでΩが上がれば自動で昇格。旧の(Ω−70)按分・旧段差8/5/3の経緯はCLAUDE.md。銘柄別の厳密¼ケリーは✦門Xの計算機で検算し、下回るならその値を上限にmemoへ根拠を記録。自動連携はしない=主観勝率を機械に入れない）。</div></details><b style="color:var(--gold-bright)">目標%</b>＝総資産に対する目標ウェイト／<b style="color:var(--gold-bright)">今月%</b>＝今月の個別枠を「目標−現在保有%」の不足分で按分(B案②・合計100%。posはⅦ資産の実額から自動算出・無い銘柄のみ採点機の手入力)。<b>二序列の役割</b>: pc順位＝買う順（複数点灯時の優先）／gap按分＝金額。<br><details class="why"><summary>各行の「倍率 N.Nx」とは（合否には使わない）</summary><div class="why-body"><b style="color:#c98c3c">各行の「倍率 N.Nx」は 現PER÷fairPER</b>（fairPER=clamp(8+成長,16,30)）。<b>合否には一切使わない</b>——歴史検証(night/retro_price_tail.py・3ビンテージ)では<u>質・堀を通った社の中では高倍率が中央値を下げない</u>（3倍超で 10.1% vs 通過 7.1%・15%+ 27% vs 18%／2013年 PER&gt;50 で 9.1% vs 8.3%／2015年 PER&gt;40 で 9.5% vs 7.5%）。一貫して悪いのは恒久毀損だけで、質実証プールでの分子は<b>1社</b>＝規約にするには薄い。また門の記録の非対称——<u>3割高づかみの20年コスト年−1.3% vs 買い逃し年−19%</u>——も押し目待ちに不利。<b>だから止めない。代わりに階段指値の深段（fair線）を出す</b>ので、成行で買うか階段で入るかは君の判断。</div></details><details class="why"><summary>各行の「自己相対 上位M%」とは（合否には使わない）</summary><div class="why-body"><b style="color:#c98c3c">各行の「自己相対 過去N年で上位M%（市場調整 上位M'%）」は 現PERが<u>その銘柄自身の</u>過去のPER分布の何%タイルか——<u>素と市場調整の二つ</u>を出す</b>（市場調整版を併記。<b>素だけだと「高い」側へ systematic に誤る</b>——事前登録が「2009-2018は倍率拡大期なので素の自己分位は全員が高く出る＝この交絡を外すために必須」と市場調整版を名指しで要求しているのに、<u>表示だけがその交絡を外していなかった</u>。実測32社で素−市場調整の中央値 <b>+2.5ポイント</b>・<b>23社で素のほうが高い</b>〔最大 MA +35 / IDXX +29 / VRSK +24ポイント〕。色は<u>二つが同じ帯に入ったときだけ</u>付ける＝一致しない社を色で決め打ちしない。⚠市場調整の分母(S&amp;P500実績PER)は配信元が2026-03までしか無く<b>4ヶ月ぶん持ち越し</b>＝「基準の違う二つを割る」型の芽なので強く読まないこと。データは <code>out/hist_val_now.json</code>＝CIが <code>night/hist_valuation.py</code> を月次で回して配る。取れない銘柄は<b>「未取得」と理由つきで出す</b>——前回値やゼロで埋めない）。<b>これも合否には一切使わない</b>。<u>座標系としては新しい</u>——この台帳が測ってきた価格の線は全部<b>横断面</b>（他社と比べて高いか）で、横断面PERは「高い」と「質が高い」を分離できないが自己相対は会社固定効果を差し引く。<b>だが遮断器としては事前登録の6基準に一つも合格しなかった</b>（2026-08-09・<code>out/hist_valuation_prereg.json</code> を結果を見る前に固定して検定）：質実証プール66セルで<b>基準1〔止めた群の恒久毀損≥ベースの2.0倍かつ分子≥5社〕は 0/66</b>、<b>基準2〔勝者を巻き込まない〕は 54/66 で逆</b>（＝止めた側のほうが中央値が高い）、基準3は0件。自社史上いちばん高い五分位の実現は<u>3ビンテージとも最安五分位を下回らなかった</u>（2018年 Q1 7.6% → Q5 9.4%）。線を緩めても、事前登録の分子≥5を保つ限り0件（分子を3へ緩めて初めて 2015の<b>full</b>プールで1セル＝合否を決める quality からは0件）。<b>だから wire していない</b>——横断面PER(2013/2015)・fairPER倍率・E[r]に続き、<u>価格の線が質・堀の中で選別力を持たなかった4例目</u>として記録する。</div></details>投下可の城内合計 ${cityFill.toFixed(0)}%${cityFill<100?'（残りは押し目待ちの開通 or 網へ回す）':cityFill>100?'（>100%＝目標比で按分）':''}。${allFilled?'<b style="color:var(--jade)">投下可は全て目標充足＝今月の個別枠は網へ回す。</b>':''}</div>`;
     html+=passIn.map((r,i)=>brow(r,i,'',`${f85Tag(r)}${histTag(r)}${objTag(r)}${scopeTag(r)}${govTag(r)}${allocTag(r)}${priceTag(r)}${hvTag(r)}<span style="font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:8px">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span>${ulys(r)}`)).join('');
   }
