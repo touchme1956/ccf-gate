@@ -46,14 +46,31 @@ def snapshot(cal, year):
         row["auditDate"] = (o.get("_meta") or {}).get("auditDate")
         snap[t] = row
     # v10影スコア(系列の門・V10_SPEC.md)も保存——2027-07に v9予実 vs v10予実 の勝敗を裁く材料
+    #
+    # ★2026-08-16: **どの版の v10 を封じたかを必ず記録する**。2026年はここが無かったせいで
+    #   「snapshots.2026 の v10＝07-27版28社」と「out/v10_shadow.json＝08-04版40社」が
+    #   別物だと気づくのに、値を1社ずつ突き合わせるまで判らなかった（重なる28社のうち12社が食い違い
+    #   ＝08-04のパック一斉是正で定性の入力が書き換わっていた）。
+    #   ⚠ ops.yml は 7月に v10_series.py → calibration_check.py の順で走るので通常は同じ日に揃うが、
+    #     **手で片方だけ走らせると静かにずれる**。ずれたことが後から判る形にしておく。
+    v10_prov = {"file": "out/v10_shadow.json", "generated": None, "n": 0}
     try:
-        v10 = json.load(open("out/v10_shadow.json", encoding="utf-8")).get("scores", {})
+        vd = json.load(open("out/v10_shadow.json", encoding="utf-8"))
+        v10 = vd.get("scores", {})
+        v10_prov["generated"] = vd.get("generated")
+        v10_prov["n"] = len(v10)
         for t, r in v10.items():
             snap.setdefault(t, {})["v10"] = r.get("v10")
-    except Exception:
-        pass
+    except Exception as e:
+        v10_prov["error"] = str(e)
     cal["snapshots"][year] = snap
-    print(f"snapshot {year}: {len(snap)}銘柄を保存")
+    # 出所は snapshots[year] の中に置かない（ティッカーの辞書なので混ざる）。兄弟キーへ。
+    cal.setdefault("_snapshot_prov", {})[year] = {
+        "recorded": str(date.today()), "v10": v10_prov,
+        "packs": len([f for f in glob.glob("out/*_gate_pack.json")]),
+    }
+    print(f"snapshot {year}: {len(snap)}銘柄を保存"
+          f"（v10影 {v10_prov['n']}社・generated {v10_prov['generated']}）")
     return cal
 
 def transition(cal, prev_y, cur_y, key, order):
