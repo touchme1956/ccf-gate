@@ -11603,6 +11603,22 @@ CLAUDE.md の節見出し・検証行の3箇所を同期し、採点機のバッ
 `check_mobile_fit` を隠れたタブで測った件と同族）。**生成物は回した後に中身を読んで確かめる。**
 なお today.py 自身の**空書き込みの検問**は正しく働いており、壊れた形では上書きされていない
 
+### ★★もう一つ踏んだ——`git stash pop` は index を戻さないので、マージが「作った答えを捨てた」
+japan-stocks のマージを commit する直前に、3922/6777 の納品検査 FAIL がマージ前から在ったものかを
+確かめるため `git stash` → 検査 → `git stash pop` した。
+**`git stash pop` は `--index` を付けないと、戻した変更をすべて unstaged にする**ので、
+直前の `git add -A` が無効になり、`git commit`（`-a` なし）は**staged だった新規4ファイルしか拾わなかった**。
+⇒ **マージ自体は記録されたので git は「取り込み済み」と言うのに、衝突の解決が全部 作業ツリーに
+取り残された**。しかも push 済みだったので、**origin/main が一時的に「マージしたのに中身が欠けた」状態**になった。
+- **これは「作った答えを捨てる」型の 8例目**で、経路が今までと違う——
+  1〜3例目は CI の `git add` 漏れ／4例目は採取器が上流の測定値を破棄／
+  5例目は素の `git push` が rebase で弾かれる／今回は**自分の手順**。
+  ＝**作る・積む・着地の3段のうち「積む」で落ちた**
+- **教訓**: `git stash pop` のあとは必ず `git status` を読む。`git commit` は staged しか見ないので
+  **「add したはず」を信じない**。そして**コミットしたら `git show --stat` で中身を数える**
+  ——「回した『つもり』で回っていない」（today.py の `--json`・`hist_val_regime` の `if __name__`）の
+  **コミット版**で、**成果物を作ったことと、それが残ったことは別**
+
 ### 検証（5本すべて取り込んだ後）
 check_html ✓ ／ audit_docs 要修正0 ／ validate_state ✓ ／ check_workflow_add ✓ ／
 audit_promotion_ready 投下可・次点とも FAIL 0 ／ audit_gate 369社 要修正2件・未解決警告0件 ／
