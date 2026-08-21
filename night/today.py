@@ -72,6 +72,7 @@ SRC = [
     ('profiles_ja', 'out/profiles_ja_audit.json', '事業説明の日本語要約の被覆', 'counts'),
     ('freshness', 'out/freshness.json', '中身と入力の鮮度', 'rows'),
     ('fetch_run', 'out/fetch_run.json', '機械値の採取の実行印', 'generated'),
+    ('ci_health', 'out/ci_health.json', '自動化そのものの健康診断', 'rows'),
 ]
 
 
@@ -164,6 +165,28 @@ def build():
                         '市場 %s%% vs 門 %s%%（乖離 %s > 刻み %s）'
                         % ((w.get('market') or {}).get('rfr'), g.get('html'), w.get('drift'), g.get('step')),
                         'Ⅲ採点機の WACC 欄を更新（規約の変更ではなく入力の更新）', 'wacc_drift'))
+
+    # ── 自動化そのものが「走って失敗した」か（2026-08-18新設）──
+    #   ⚠ 回転盤(ops_status)は**成果物の日付しか見ていない**ので、
+    #   workflow が走って失敗しても「止まっている疑い」としか言えない。直し方がまったく違うのに。
+    #   実測(2026-08-18): market.yml は 8/14・8/17 に走り、採取もパック反映も**全部成功**して
+    #   コミットまで作ったのに `git push` が `! [rejected] main -> main` で弾かれ、
+    #   **70ファイル分の成果が runner ごと捨てられた**。盤の表示は「止まっている疑い」だった。
+    ch = data.get('ci_health') or {}
+    for r in (ch.get('rows') or []):
+        if r.get('conclusion') != 'failure':
+            continue
+        st = r.get('failed_steps')
+        detail = '直近の実行(%s)が失敗' % (r.get('at') or '?')
+        if st:
+            detail += '——落ちたステップ: ' + ' / '.join(st)
+        elif st is None and r.get('run_id'):
+            detail += '（ステップ名は読めなかった）'
+        now.append(item('ci:' + str(r.get('wf')), 'now',
+                        '走って失敗している: ' + str(r.get('wf')),
+                        detail,
+                        (r.get('url') or 'GitHub Actions のログを見る')
+                        + '　⚠『止まっている』ではなく『走って失敗』——直し方が違う', 'ci_health'))
 
     # ── 門2審査の走行ログ（空振りも1行残す規約なので、行が無い＝走っていない）──
     runs = (data.get('review_runs') or {}).get('runs') or []
@@ -377,11 +400,19 @@ def build():
                       'Ⅵ買付順位の「今月の個別枠」に金額を入れると注文書が出る',
                       'Ⅵ買付順位タブ → 📋今月の注文書', '月次'))
 
-    # ── 待ち（引き金つき）。**件数を減らすことは目的ではない** ──
+    # ── 待ち。**件数を減らすことは目的ではないが、誰がやるかで分けないと人が消化できない** ──
+    #   2026-08-18(ユーザー「まちおおすぎない？消化しきれない」)——実測で
+    #   総127→137件を2日で足しており、**足す速さが消す速さを上回っていた**。
+    #   だが中身を数えると **83件のうち人がやるのは30件で、手を動かせるのは5件**だった。
+    #   残りは (a)原本読解＝**日次Routineが待ち行列から消化する** (b)採取器・検査器のバグ＝実装
+    #   (c)データ経路が無い＝**「終わる」ことがない立ち位置の記録**。
+    #   → `owner` で割り、**人のものだけ名前を出す**。他は数だけ。**リストからは何も消していない**。
     for t in (((ops or {}).get('todos') or {}).get('items') or []):
         if not t.get('done'):
             waiting.append(dict(k='todo:' + str(t.get('id')), kind=t.get('kind') or '',
-                                title=t.get('title') or '', due=t.get('due')))
+                                title=t.get('title') or '', due=t.get('due'),
+                                owner=t.get('owner') or '人',
+                                tickers=t.get('tickers') or []))
 
     return dict(
         generated=TODAY.isoformat(),
@@ -413,11 +444,37 @@ def main():
         if not rows:
             print('    （なし）')
         print()
-    kinds = {}
+    # 誰がやるかで割る。**人のものだけ名前を出す**——他を並べても人は消化できないから
+    todo_tk = {w['k'][5:]: w.get('tickers') for w in o['waiting']
+               if w['k'].startswith('todo:') and w.get('tickers')}
+    own = {}
     for w in o['waiting']:
-        kinds[w['kind']] = kinds.get(w['kind'], 0) + 1
-    print('  【待ち（引き金つき）】%d件  %s' % (c['waiting'], kinds))
-    print('     ※件数を減らすこと自体は目的ではない（大半は今日0社しか動かない保険）')
+        own.setdefault(w.get('owner') or '人', []).append(w)
+    mine = own.get('人', [])
+    hands = [w for w in mine if w['kind'] == '宿題']          # 今すぐ手を動かせる
+    dec_live = [w for w in mine if w['kind'] == '決断待ち' and w['title'].startswith('【今日効く】')]
+    dec_dorm = [w for w in mine if w['kind'] == '決断待ち' and not w['title'].startswith('【今日効く】')]
+    rest = [w for w in mine if w['kind'] not in ('宿題', '決断待ち')]
+    print('  【あなたの手を動かすもの】%d件' % len(hands))
+    for w in hands:
+        print('    ・' + w['title'][:78])
+    # 決断は**毎日は出さない**。名前を毎日並べると読み飛ばす訓練になるだけで、
+    #   それが「消化しきれない」の正体だった。決断に要るのは日次の注意ではなく**定期の棚卸し**で、
+    #   その仕組みは既にリストにある（定期(手動)『決断待ちの棚卸し（四半期）』）。
+    print('  【あなたの決断】今日 判定を動かす %d件 ／ 休眠(引き金つき) %d件 ／ 定期・予約 %d件'
+          % (len(dec_live), len(dec_dorm), len(rest)))
+    print('     → 名前は ⚙自動化タブ／`python3 night/today.py --json`。'
+          '**毎日は読まない**——四半期の「決断待ちの棚卸し」でまとめて見る')
+    # ⚠「待ち行列が消化する」は**銘柄を名指ししたものだけ**。名指ししていないものは
+    #   どの queue にも流れない——ラベルを貼っただけで消化されるわけではない（2026-08-18 の実測で0件だった）
+    rev = own.get('審査', [])
+    rev_q = [w for w in rev if (todo_tk.get(w['k'][5:]) if w['k'].startswith('todo:') else None)]
+    print('  【人がやらないもの】 審査 %d件（うち %d件は待ち行列へ流れている／残り %d件は銘柄を名指ししていないので流れない）'
+          % (len(rev), len(rev_q), len(rev) - len(rev_q)))
+    print('                       実装 %d件 ／ 測れない範囲 %d件（＝「終わる」ことがない立ち位置の記録）'
+          % (len(own.get('道具', [])), len(own.get('穴', []))))
+    print('     ※リストからは何も消していない。**誰がやるかで割っただけ**'
+          '（todo_list.json の owner）。件数を減らすこと自体は目的ではない')
     print()
     # ★ここがこの道具の本体
     if o['blind']:

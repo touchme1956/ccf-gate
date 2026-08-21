@@ -35,6 +35,7 @@ night/audit_todo.py — **人の作業リスト自身が古びていないかを
   python3 night/audit_todo.py --json   out/todo_audit.json を書く
 """
 import glob
+import itertools
 import json
 import os
 import re
@@ -129,6 +130,7 @@ def main():
     open_items = [i for i in items if not i.get("done")]
 
     resolved, drifted, dup, notes = [], [], [], []
+    dup_maybe = []   # 「重複かもしれない」候補。**判定しない**（スコアを出して人が読む）
 
     # (1) 決着の実測
     for i in open_items:
@@ -162,14 +164,61 @@ def main():
             drifted.append({"id": i["id"], "claimed": claimed[0] + "社",
                             "actual": actual[0] + "社", "evidence": ev})
 
-    # (3) 重複（title が実質同じ未完了項目）
+    # (3) 重複。**2026-08-18 に較正して作り直した**（ユーザー「直して」）。
+    #   旧実装は「タイトル先頭36字の完全一致」だけで、**言い換えた重複を原理的に拾えなかった**
+    #   ——実例 `ami_fangplus`「FANG+ を網の門で審査する（実保有なのに一度も裁いていない）」と
+    #   `ami_fangplus_gate`「FANG+ が網の門で未審査（実保有4本のうち唯一）」は先頭36字が違う。
+    #
+    #   【較正して分かったこと（実測137件・全ペア）】
+    #     ・**id の前方一致は 1/1・誤検出0**（`ami_fangplus` ⊂ `ami_fangplus_gate`）＝最も安い確実な信号
+    #     ・**タイトルの意味的な類似は単独では使えない**。正解ペアの文字bigram Jaccard は **0.25** しかなく、
+    #       そこまで閾値を下げると**4ペア鳴って正解1件＝適合率25%**。鳴りすぎる警報は鳴らないのと同じ
+    #     ・`同一ticker × 同kind × 同owner` は **6組すべて誤検出**（CW の gmt と roic は別の欄／
+    #       MSFT の株数と v欄は別／CTAS の再審査と UniFirst 買収は別）＝この軸は重複を意味しない
+    #     ・**だが「未完了どうし」に絞ると 4ペア → 1ペアへ落ちた**。残った1件
+    #       （routine_freq_gap / review_routine_silent）は**互いに矛盾していて本物の疑い**だった。
+    #       ＝誤検出の正体は**完了済みを混ぜていたこと**で、絞りは意味ではなく**状態**で効く
+    #
+    #   → 二段にする。**確実なものだけ「重複」と呼び、似ているだけは「候補」**にしてスコアを出す（判定しない）。
+    #     ⚠ どちらも今日のデータでは誤検出0だが **n=1 ずつ**なので、適合率は主張しない
+    def _bigrams(t):
+        t = re.sub(r"[\s（）()【】・、。「」*`]", "", t or "")
+        return {t[i:i + 2] for i in range(len(t) - 1)} or ({t} if t else set())
+
+    def _jaccard(a, b):
+        A, B = _bigrams(a), _bigrams(b)
+        return len(A & B) / len(A | B) if (A | B) else 0.0
+
+    # (3-a) 確実: id が前方一致（`x` と `x_...`）。相手は完了済みでもよい——統合先が閉じている場合がある
+    for a in open_items:
+        for b in items:
+            if a is b or not a.get("id") or not b.get("id"):
+                continue
+            if a["id"].startswith(b["id"] + "_"):
+                dup.append({"id": a["id"], "same_as": b["id"], "how": "idが前方一致",
+                            "title": a.get("title", "")[:60]})
+
+    # (3-b) 確実: タイトルが実質同一（旧実装をこの特殊形として残す）
     seen = {}
     for i in open_items:
         k = re.sub(r"[\s（）()]", "", (i.get("title") or ""))[:36]
         if k and k in seen:
-            dup.append({"id": i["id"], "same_as": seen[k], "title": i.get("title", "")[:60]})
+            dup.append({"id": i["id"], "same_as": seen[k], "how": "タイトル先頭36字が一致",
+                        "title": i.get("title", "")[:60]})
         elif k:
             seen[k] = i["id"]
+
+    # (3-c) 候補: **未完了どうし** ∧ 文字bigram Jaccard≥0.25 ∧ 同kind ∧ 同owner。断定しない
+    _named = {x["id"] for x in dup}
+    for a, b in itertools.combinations(open_items, 2):
+        if a["id"] in _named or b["id"] in _named:
+            continue
+        if a.get("kind") != b.get("kind") or (a.get("owner") or "") != (b.get("owner") or ""):
+            continue
+        sc = _jaccard(a.get("title"), b.get("title"))
+        if sc >= 0.25:
+            dup_maybe.append({"id": a["id"], "same_as": b["id"], "score": round(sc, 3),
+                              "a": a.get("title", "")[:56], "b": b.get("title", "")[:56]})
 
     # (4) gate_exceptions.json ↔ todo_list.json（**片方だけに足すと監視が付かない**）
     exc = []
@@ -196,7 +245,7 @@ def main():
                    "**判定も値も変えない。** 総花的な陳腐化検出ではなく、"
                    "**id ごとに『何を測れば決着するか』を明示した検査**だけを持つ（測れないものは測らない）。",
            "open": len(open_items), "checked": len(CHECKS),
-           "resolved": resolved, "drifted": drifted, "duplicates": dup,
+           "resolved": resolved, "drifted": drifted, "duplicates": dup, "duplicates_maybe": dup_maybe,
            "gate_exception_mismatch": exc, "notes": notes}
     if AS_JSON:
         json.dump(doc, open("out/todo_audit.json", "w", encoding="utf-8"),
@@ -209,9 +258,15 @@ def main():
     print(f"\n▶ **件数が実測とずれている** {len(drifted)}件")
     for r in drifted:
         print(f"   ⚠ {r['id']:26s} 記載{r['claimed']} → 実測{r['actual']}　{r['evidence']}")
-    print(f"\n▶ **重複** {len(dup)}件")
+    print(f"\n▶ **重複（確実）** {len(dup)}件")
     for r in dup:
-        print(f"   ⚠ {r['id']:26s} ≒ {r['same_as']}")
+        print(f"   ⚠ {r['id']:26s} ≒ {r['same_as']}  （{r.get('how', '')}）")
+    # 候補は**断定しない**。似ているだけかもしれないので、スコアと両方の題を出して人が読む
+    print(f"\n▶ 重複の**候補**（断定しない・未完了どうし・題の類似≥0.25 ∧ 同種別 ∧ 同担当） {len(dup_maybe)}件")
+    for r in dup_maybe:
+        print(f"   ? {r['id']} / {r['same_as']}  類似 {r['score']}")
+        print(f"       A: {r['a']}")
+        print(f"       B: {r['b']}")
     print(f"\n▶ **門外例外の食い違い** {len(exc)}件"
           + ("（gate_exceptions.json と todo_list.json は互いを参照しない）" if exc else "  ✓ 一致"))
     for r in exc:

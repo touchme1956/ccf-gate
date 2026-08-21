@@ -63,6 +63,12 @@ PATH = os.path.join(BASE, REL)
 #   同じ「PR無し」でも意味がまるで違う。区別が消えると、この台帳が繰り返し潰してきた
 #   「測っていない」と「測って問題なし」の取り違えを、運用の側で作ることになる。
 OUTCOMES = {
+    # 2026-08-18新設。**手順の最初に1行残すための語**。
+    #   走行ログは手順の最後(step 8)にしか無かったので、途中でセッション上限に当たったり落ちたりすると
+    #   **何も残らず、『発火したが力尽きた』と『発火しなかった』が区別できない**（実測: 走行ログ2件に対し
+    #   Routine は毎日発火していた）。開始時に1行置けば fail-loud になる——v9.9.140 と同じ思想。
+    #   ⚠ `started` のまま終わっている行＝**途中で死んだ日**。下の print がそれを名指しする
+    "started":     "開始した（結末はまだ）",
     "pr":          "PRを作った",
     "empty":       "待ち行列が空＝審査待ちなし",
     "limit":       "セッション上限で打ち切り",
@@ -209,7 +215,16 @@ def show(d):
               f"{r.get('n', 0):>4}  {pr}{t}"
               + (f" — {r['note']}" if r.get("note") else ""))
     # **空振りが続いていることを黙って見過ごさない**（止まっているのと見分けが付かないため）
-    tail = [r for r in runs[-5:] if r.get("outcome") != "pr"]
+    # ⚠ `started` のまま終わっている日を名指しする。**これが「発火したが力尽きた」の証拠**
+    #   ——同じ日に結末の行（pr/empty/limit/...）が無ければ、その日は途中で死んでいる
+    _term = {d0.get("date") for d0 in runs if d0.get("outcome") not in (None, "started")}
+    _orph = sorted({d0.get("date") for d0 in runs
+                    if d0.get("outcome") == "started" and d0.get("date") not in _term})
+    if _orph:
+        print(f"\n⚠ **開始したが結末が残っていない日 {len(_orph)}件**——"
+              f"『発火したが力尽きた』のか『ログを書き忘れた』のかは外から判らない: "
+              + " ".join(_orph[-6:]))
+    tail = [r for r in runs[-5:] if r.get("outcome") not in ("pr", "started")]
     if len(tail) >= 3:
         print(f"\n⚠ 直近5回のうち {len(tail)} 回がPR無し。"
               f"待ち行列が本当に空か `python3 night/enqueue_reaudit.py` で確かめること")

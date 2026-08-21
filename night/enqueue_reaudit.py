@@ -39,6 +39,7 @@ night/enqueue_reaudit.py — **検出器の出力を再審査の待ち行列へ�
 """
 import datetime
 import json
+import pathlib
 import os
 import subprocess
 import sys
@@ -235,6 +236,10 @@ def main():
                     "omega": r.get("s"), "buy": bool(r.get("buy")),
                     "quali": bool(r.get("quali")),
                     "reasons": d["why"]})
+    # 8本目: todo_list の owner='審査' で銘柄を名指ししたもの（2026-08-18）
+    for _t, _w, _why in from_todo(pathlib.Path(__file__).resolve().parent.parent):
+        add(_t, _w, _why)
+
     out.sort(key=lambda x: (-x["priority"], x.get("porder", 999), x["t"]))
     if TOP:
         out = out[:TOP]
@@ -250,7 +255,7 @@ def main():
         json.dump(doc, open("night/reaudit_queue.json", "w", encoding="utf-8"),
                   ensure_ascii=False, indent=1)
 
-    print(f"■ 再審査の待ち行列 {len(out)}社（検出器7本の合流）")
+    print(f"■ 再審査の待ち行列 {len(out)}社（検出器7本＋宿題の合流）")
     print(f"{'順':>3} {'':7}{'Ω':>6} {'位置':<10}理由")
     for i, r in enumerate(out[:40], 1):
         print(f"{i:>3} {r['t']:<7}{(r['omega'] if r['omega'] is not None else 0):>6.1f} "
@@ -260,6 +265,29 @@ def main():
     print("\n→ night/reaudit_queue.json" if AS_JSON else "\n（--json で night/reaudit_queue.json を書く）")
     return 0
 
+
+
+# ── 8. todo_list.json の owner='審査' で銘柄を名指ししたもの（2026-08-18新設）────────────
+#   【なぜ足すか】2026-08-18(ユーザー「まちおおすぎない？消化しきれない」)の棚卸しで
+#   「審査29件は待ち行列が消化する」と分類したが、**実測で tickers を持つのは0件**＝
+#   **ラベルを貼っただけで、実際にはどの queue にも流れていなかった**。書いたことを事実にする。
+#   【なぜ owner で絞るか】CLAUDE.md は「**todo_list.json を丸ごと待ち行列へ流すのは駄目**
+#   ——ticker を名指しする未完49件の多くが規約・配分の決断＝絶対のルール1に触れる」と記録している。
+#   `owner='審査'`（＝原本読解）はその判別子そのもので、決断・実装・穴は入らない。
+#   【重み12】検出器7本より**弱く**扱う——自己申告の作業であって、機械が見つけた異常ではないから。
+def from_todo(root):
+    """owner='審査' ∧ tickers を持つ未完了だけを拾う。決断・実装・穴は構造的に入らない"""
+    out = []
+    try:
+        d = json.loads((root / 'todo_list.json').read_text(encoding='utf-8'))
+    except Exception:
+        return out
+    for t in (d.get('items') or []):
+        if t.get('done') or t.get('owner') != '審査':
+            continue
+        for tk in (t.get('tickers') or []):
+            out.append((str(tk), 12, '宿題(原本読解): ' + str(t.get('title', ''))[:60]))
+    return out
 
 if __name__ == "__main__":
     sys.exit(main())
