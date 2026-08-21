@@ -11812,3 +11812,55 @@ STEPカードを畳もうとしたら安全装置（タグ収支ゼロ）が止�
 - ⚠ 切替の既定を当てる経路に **`document.readyState` の分岐**を入れてある——
   `DOMContentLoaded` が既に発火していたらリスナは一度も呼ばれず、
   **「既定が効かない」という静かな壊れ方**になる（この script の置き場所が変われば起きる）
+
+## 並走ブランチの取り込み・第二回——**前回の「別の歴史だからマージ不可」は、浅いクローンの産物だった**（2026-08-21・ユーザー指示「マージして」）
+**採点式・刻み・重み・四関門・堀の関門70・売却規律S1/S2/S3・配分は1バイト触っていない。
+投下可10社（ASML CW LRCX RBC MSFT IDXX V HWM IRMD MCO）・次点2社（BR RELX）・
+要修正2件・未解決警告0件は、取り込みの後も完全に同じ。** 取り込んだのは **1本だけ**。
+
+### ★★前回の記録を訂正する——`git merge-base` が嘘をついていた
+同じ日の前回のマージで、私はこう書いた——
+「**マージしてはいけない: `historical-ticker-validation-6aho7f`・`copilot-ui-improve`＝no merge base（別の歴史）**」。
+**この根拠は誤りだった。** 今回 13本で同じ「no merge base」が出たので追うと、
+**`.git/shallow` が在り、main の見える歴史が 2026-08-10 までしかなかった**
+（`session-2724ac` は 2026-07-17 から始まる）。`git fetch --unshallow` すると
+**355 → 1,048 commits** になり、**「別の歴史」に見えていた13本のうち11本に共通の祖先が現れた**。
+- ⇒ **浅いクローンでは `git merge-base` は「共通の祖先が無い」と「見えていない」を区別しない。**
+  ルール7（欠測をゼロと読むな）が **git の側で起きた形**で、**「測れなかった」を「別の歴史」と読んでいた**
+- ⚠ ただし**結論そのものは変わらない**——`historical-ticker-validation-6aho7f` は今回
+  内容で読み直しても**マージしてはいけない側**だった（下記）。**理由が誤っていただけで、判断は正しかった**。
+  だが**理由が誤ったまま記録に残ると、次に同じ状況で誤った道具を使う**ので訂正する
+- **次にやる人へ**: 並走の棚卸しは **`git fetch --unshallow` を最初にやる**。
+  そのうえで数えるのは commit 数ではなく **`git cat-file -e main:<成果物>`＝main に無いファイル**
+
+### 分類——**11本のうち、内容が main に無いのは1本だけ**
+| 分類 | ブランチ |
+| **取り込んだ (1)** | `remove-approval-requests-znvlgv`（`.claude/settings.json` 50行） |
+| **内容は既に main にある (3)** | `market-cap-performance-ceiling-rwyt8e` ／ `compound-median-15-percent-analysis-qozjps` ／ `portfolio-holdings-simplify-bm8xvk` |
+| **マージしてはいけない (7)** | 下表 |
+| （不可視だった残り2本） | unshallow 後も本当に無関係 |
+
+**「してはいけない」の7本は、主張ではなく実測で退けた**:
+| ブランチ | 実測 |
+| `future-stock-return-gate-lzm5li` | index.html が **v9.9.2 / v9.9.25** 期・**+214行**＝**v9.10〜9.12 の別エンジン**。今日の門を丸ごと巻き戻す |
+| **`historical-ticker-validation-6aho7f`** | **SEMI／半導体連鎖の実装が4箇所**。main は **v9.9.145 でユーザー明示指示「やはり半導体の制限は外すよ」により撤去済み**＝**取り込むと明示指示を打ち消す** |
+| `cooling-explanation-enmvsk` | **`g7ignite` を消す**変更。main は**意図して残している**（`state.js` に8箇所・v9.9.131 が「人の決定6つ」の一つに数えた点灯日・48h冷却） |
+| `code-review-investment-tools-d5443h` | 土台が **v9.9.78** |
+| `session-2724ac` / `button-ui-design-improvements-v185dd` | 土台が **v9.9.25** |
+| `copilot-ui-improve` | **20ファイル・3,787行を削除** |
+
+### ★取り込む前に「権限の白リスト」を1行ずつ読んだ——**ワイルドカードの裏の書き込み経路まで**
+`.claude/settings.json` は**承認プロンプトを減らすための読み取り専用の白リスト**（`score_all.js` / `audit_*` /
+`validate_*` / `kill_impact` / `recalc_roic` ／ EDINET の read 系 MCP ／ Alpha Vantage の GLOBAL_QUOTE・SPLITS）。
+- **無いことを確かめた**: `rm` / `git push` / `git commit` / `Write` / `Edit` / `chmod` / `sudo` / `Bash(*)` の**どれも無い**
+- **★ワイルドカードの先で何が書かれるかを実装で確かめた**——`Bash(python3 night/recalc_roic.py:*)` のような
+  `:*` は引数を任意にするので、**スクリプト自身が書くファイル**を読んだ:
+  `recalc_roic.py` → `out/roic_recalc.json` のみ ／ `validate_packs.py` → 自分の出力のみ ／
+  `score_all.js --jp/--us` → **`.partial` へ書く**（正本を部分実行で潰す事故は 2026-08-04 に是正済み）。
+  **パック・index.html・state.json へ届く経路はゼロ**
+- ⇒ **白リストは「何を許すか」ではなく「許した先が何を書くか」で読む。** 名前だけでは分からない
+
+### 検証（取り込み後）
+check_html ✓ ／ audit_docs ✓（表示 v9.9.167・齟齬なし）／ validate_state ✓ ／
+**score_all 投下可10社・次点2社とも不変**（⛔未完了の重大事象 2社＝VRSK/CTAS も変化なし）／
+audit_gate 全369社 **要修正2件・未解決警告0件**（いずれも既知・変更前と同じ）
