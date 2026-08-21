@@ -107,8 +107,25 @@ def _yahoo_ctx():
     return op, crumb
 
 
-def jp_quotes(codes):
-    """日本株はYahoo Financeから取る。
+def yahoo_quotes(codes, suffix=""):
+    """Yahoo Finance から引く（**鍵が要らない唯一の経路**）。
+
+    ★2026-08-21（ユーザー指示「網5銘柄自動で価格取得できるようにして」）で**日本株専用をやめ、
+      汎用にした**。変えたのは `suffix`（日本株は ".T"）だけ——**日本株用と米国ETF用に二つ書くと
+      必ず割れる**ので単一実装にする（v9.9.65の掟）。`jp_quotes` は薄い包みとして残す。
+
+    なぜ要ったか（2026-08-21の実測）: **Finnhub の無料枠は ETF の quote を返さない**。
+      要求62銘柄に対し取得57で、**欠落は GRID / ITA / NASA / SMH / XLK ＝網の5本ちょうど**だった。
+      Yahoo は同じ5本を鍵なしで返す（実測 XLK 183.10 / SMH 562.65 / GRID 181.16 / ITA 237.56 /
+      NASA 24.32・すべて USD）。SMH 562.65 は 2026-08-21 の証券口座の画面（2株 $1,125.30）と一致。
+
+    ⚠**もっと重い欠陥が同時に見つかった**——米国側のループは
+      `if q and q.get("c")` で失敗を**黙って捨てており、diag も missing も一切残していなかった**。
+      だから「5本が消えている」ことがどこからも見えなかった（out/dashboard.json に diag キーすら無い）。
+      ＝このリポジトリが何度も塞いできた **fail-open**（notify_issues が out/ 全消しでも「異常なし」と
+      言った件・score_all の gates が例外を握り潰した件と同族）。**取れなかったことは必ず残す。**
+    """
+    """（旧）日本株はYahoo Financeから取る。
 
     なぜ別経路か（2026-08-02実測）: **Finnhubの無料枠は東証を返さない**（6146.T/6857.T/TSE:6146 とも
     HTTP 401）。Alpha Vantage の GLOBAL_QUOTE も空。stooq は404。FMPはPremium必須。
@@ -127,8 +144,9 @@ def jp_quotes(codes):
     for c in codes:
         got = False
         for host in hosts:
-            for path in (f"/v8/finance/chart/{c}.T?interval=1d&range=10d",
-                         f"/v7/finance/quote?symbols={c}.T" + (f"&crumb={crumb}" if crumb else "")):
+            sym = f"{c}{suffix}"
+            for path in (f"/v8/finance/chart/{sym}?interval=1d&range=10d",
+                         f"/v7/finance/quote?symbols={sym}" + (f"&crumb={crumb}" if crumb else "")):
                 try:
                     with op.open(f"https://{host}{path}", timeout=20) as r:
                         j = json.loads(r.read().decode("utf-8", "ignore"))
@@ -136,7 +154,7 @@ def jp_quotes(codes):
                         res = j["chart"]["result"][0]
                         m = res["meta"]
                         px = m.get("regularMarketPrice")
-                        ccy = m.get("currency") or "JPY"
+                        ccy = m.get("currency") or ("JPY" if suffix == ".T" else "USD")
                         # 2026-08-02 是正: **chartPreviousClose を前日終値に使ってはいけない**。
                         #   これは「指定レンジの**直前**の終値」で、range=5d なら**5営業日前**の値。
                         #   初回はこれを使ったため 6146 が −6.66% / 6857 が +14.52% と、
@@ -165,10 +183,10 @@ def jp_quotes(codes):
                         q = (j.get("quoteResponse") or {}).get("result") or []
                         if not q:
                             continue
-                        px, prev, ccy = q[0].get("regularMarketPrice"), q[0].get("regularMarketPreviousClose"), q[0].get("currency") or "JPY"
+                        px, prev, ccy = q[0].get("regularMarketPrice"), q[0].get("regularMarketPreviousClose"), q[0].get("currency") or ("JPY" if suffix == ".T" else "USD")
                     if not px:
                         continue
-                    d = {"px": px, "prev": prev, "ccy": ccy}
+                    d = {"px": px, "prev": prev, "ccy": ccy, "src": "yahoo"}
                     if locals().get("pxday"):
                         d["day"] = pxday
                     if prev:
@@ -193,7 +211,13 @@ def jp_quotes(codes):
         print("  ── 失敗の実際（先頭6件）")
         for d in diag[:6]:
             print("    " + d)
+    yahoo_quotes.last_diag = diag
     return out
+
+
+def jp_quotes(codes):
+    """日本株（東証）。**中身は yahoo_quotes と同じ**——suffix を渡すだけ（二重に持たない）。"""
+    return yahoo_quotes(codes, suffix=".T")
 
 
 def fetch_fx():
@@ -222,22 +246,68 @@ def main():
         #   → **鍵が無くても為替だけは更新する。ただし既存の quotes は絶対に壊さない**
         #     （読んで fx だけ差し替える＝audit_stale_bs:243 と同じ空書き込みの検問）。
         fxo = fetch_fx()
-        if fxo and os.path.exists("out/dashboard.json"):
+        # ★2026-08-21 の是正（ユーザー指示「網5銘柄自動で価格取得できるようにして」で発覚）——
+        #   **Yahoo は鍵が要らないのに、鍵の検問の後ろに置かれていた**。3日前に ドル円 でまったく
+        #   同じことを直したばかり（「鍵が切れた日は、引けるはずのものまで一緒に止まる」）。
+        #   → **鍵が無くても Yahoo で株価を引く**。ニュースだけは Finnhub にしか無いので**据え置く**
+        #     （消すと「作った答えを捨てる」になる。前回の見出しだと判るよう newsStale を立てる）。
+        #   ⚠**取れなければ既存を壊さない**（空書き込みの検問・audit_stale_bs:243 と同じ言葉）。
+        #   ⚠CI は従来どおり `::error::` で赤くする——「鍵が無くても回る」ことと
+        #     「鍵が無いのが正常」は別（鳴らない警報を作らない）。
+        cur = {}
+        if os.path.exists("out/dashboard.json"):
             try:
-                cur = json.load(open("out/dashboard.json", encoding="utf-8"))
-                if isinstance(cur.get("quotes"), dict) and cur["quotes"]:
-                    cur["fx"] = fxo
-                    json.dump(cur, open("out/dashboard.json", "w", encoding="utf-8"),
-                              ensure_ascii=False, indent=1)
-                    print(f"  ※鍵が無いので株価は据置。**ドル円だけ更新した** USDJPY={fxo['USDJPY']}"
-                          f"（株価の asof は {cur.get('asof')} のまま）")
-                else:
-                    print("  ※既存 dashboard.json に株価が無い＝空で上書きしないため為替も書かない")
+                cur = json.load(open("out/dashboard.json", encoding="utf-8")) or {}
             except Exception as e:
-                print(f"  ※既存 dashboard.json を読めないので為替も書かない（{e}）")
-        elif not fxo:
-            print("  ※ドル円も引けなかった（open.er-api.com）")
-        print("FINNHUB_KEY が無い → 株価とニュースは書かずに終了（既存ファイルは壊さない）")
+                cur = {}
+                print(f"  ※既存 dashboard.json を読めない（{e}）")
+        ALL = tickers()
+        JP = [t for t in ALL if t.isdigit()]
+        US = [t for t in ALL if not t.isdigit()]
+        print(f"鍵が無いので Yahoo だけで引く（対象 {len(ALL)}社）")
+        yq = {}
+        if US:
+            yq.update(yahoo_quotes(US))
+        if JP:
+            yq.update(jp_quotes(JP))
+        print(f"  Yahoo で {len(yq)}/{len(ALL)}社 取得")
+        if yq:
+            nw = cur.get("news") or {}
+            out2 = {"asof": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                    "quotes": yq, "news": nw, "fx": fxo or (cur.get("fx") or {}),
+                    "missing": sorted(t for t in ALL if t not in yq),
+                    "noKey": True}
+            if nw:
+                out2["newsStale"] = (cur.get("asof") or "")   # 見出しは前回のもの＝いつのか判るようにする
+            if not fxo and (cur.get("fx") or {}).get("USDJPY"):
+                out2["fx"] = dict(cur["fx"]); out2["fx"]["stale"] = True
+            os.makedirs("out", exist_ok=True)
+            json.dump(out2, open("out/dashboard.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+            md = {}
+            if os.path.exists("market_data.json"):
+                try:
+                    md = json.load(open("market_data.json", encoding="utf-8"))
+                except Exception:
+                    md = {}
+            for t, q in yq.items():
+                md.setdefault(t, {})["px"] = q["px"]
+            json.dump(md, open("market_data.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+            print(f"→ out/dashboard.json（株価{len(yq)}社=Yahoo / ニュースは前回の{len(nw)}社を据置 / "
+                  f"USDJPY={out2['fx'].get('USDJPY')}）")
+            if out2["missing"]:
+                print(f"  ⚠ 取れなかった {len(out2['missing'])}社: {' '.join(out2['missing'])}")
+        else:
+            # 1社も取れなかった＝空で上書きしない。為替だけは従来どおり差し替える
+            print("  ※Yahoo で1社も取れなかった＝空で上書きしない（既存ファイルは壊さない）")
+            if fxo and isinstance(cur.get("quotes"), dict) and cur["quotes"]:
+                cur["fx"] = fxo
+                json.dump(cur, open("out/dashboard.json", "w", encoding="utf-8"),
+                          ensure_ascii=False, indent=1)
+                print(f"  ※ドル円だけ更新した USDJPY={fxo['USDJPY']}（株価の asof は {cur.get('asof')} のまま）")
+        if not fxo:
+            print("  ※ドル円は引けなかった（open.er-api.com）")
+        print("FINNHUB_KEY が無い → ニュースは取れない"
+              + ("（株価は Yahoo で引いた）" if yq else "（株価も引けなかった＝既存ファイルは無傷）"))
         print("  設定: GitHub → Settings → Secrets and variables → Actions → FINNHUB_KEY")
         # 2026-08-02是正: **CIでは異常終了する**。
         #   初回実行で env に FINNHUB_KEY が空のまま渡り、スクリプトは正しく「何も書かず終了」したが
@@ -286,7 +356,7 @@ def main():
         if q and q.get("c"):
             out["quotes"][t] = {"px": q.get("c"), "prev": q.get("pc"),
                                 "chg": q.get("d"), "chgPct": q.get("dp"),
-                                "high": q.get("h"), "low": q.get("l")}
+                                "high": q.get("h"), "low": q.get("l"), "src": "finnhub"}
         n = _get(f"{API}/company-news?symbol={t}&from={ts[:8]}01&to={ts[:10]}&token={KEY}")
         if isinstance(n, list) and n:
             out["news"][t] = [{"h": x.get("headline"), "u": x.get("url"),
@@ -294,6 +364,29 @@ def main():
         if i % 30 == 0:
             print(f"  {i}/{len(T)}")
         time.sleep(1.1)          # 無料枠の分あたり制限に対する保険
+
+    # ── Finnhub が返さなかったぶんを Yahoo で拾う（2026-08-21 ユーザー指示「網5銘柄自動で価格取得できるようにして」）
+    #   ★**Finnhub の無料枠は ETF の quote を返さない**——実測で欠落は網の5本ちょうど
+    #     （GRID / ITA / NASA / SMH / XLK）。Yahoo は同じ5本を**鍵なしで**返す。
+    #   ★**Finnhub を主のままにする**のが肝。57銘柄の出所を丸ごと乗り換えると
+    #     価格のスナップショットの時刻が全社ぶん変わる＝要求されていない変更を判定の入力に入れることになる。
+    #     ここは**取れなかったものだけ**を足す＝**純粋なラチェット**（既存の値は1件も動かない）。
+    #   ★出所は quote ごとに `src` で残す（後から「どの経路で採った値か」を辿れる）。
+    miss = [t for t in T if t not in out["quotes"]]
+    if miss:
+        print(f"  Finnhub が返さなかった {len(miss)}社 → Yahoo で拾う: {' '.join(miss)}")
+        yq = yahoo_quotes(miss)
+        out["quotes"].update(yq)
+        print(f"  Yahoo で {len(yq)}/{len(miss)}社 取得")
+
+    # ★取れなかったものは**必ず残す**（絶対のルール7）。
+    #   旧実装は米国側の失敗を `if q and q.get("c")` で黙って捨てており、diag も missing も
+    #   一切書いていなかった——だから**網の5本が消えていることがどこからも見えなかった**。
+    #   「測れなかった」と「無い」を取り違えないために、要求したのに取れなかった銘柄を名前で書く。
+    got = set(out["quotes"])
+    out["missing"] = sorted(t for t in ALL if t not in got)
+    if out["missing"]:
+        print(f"  ⚠ 取れなかった {len(out['missing'])}社: {' '.join(out['missing'])}")
 
     os.makedirs("out", exist_ok=True)
     json.dump(out, open("out/dashboard.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
