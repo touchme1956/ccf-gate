@@ -55,8 +55,35 @@ def net_target():
         return NEW_FALLBACK, None, "既定（portfolio.json が読めない）"
 
 
+def net_now():
+    """**今 実際に持っている網**を portfolio.json から読む。
+    ★ここを書き写すと必ず陳腐化する——2026-08-21 まで `OLD=["XLK","QQQ","SMH"]` と
+    網59.6%・XLK55/QQQ23/SMH22 が**ハードコード**されていて、保有が
+    XLK/SMH/NASA・網30.8% に変わった後も「現行」として古い姿を比較対象に出し続けていた。
+    戻り: (顔ぶれ, {t: 網の中での比}, 網の比率%, holdings が無くて積めない本)"""
+    try:
+        pf = json.load(open(os.path.join(BASE, "portfolio.json"), encoding="utf-8"))
+        prof = json.load(open(os.path.join(BASE, "out", "etf_profiles.json"), encoding="utf-8")).get("etfs", {})
+        ami = [p for p in pf["positions"] if p.get("sleeve") == "網" and (p.get("value_jpy") or 0) > 0]
+        if not ami:
+            return [], {}, 0.0, []
+        tot = sum(p["value_jpy"] for p in ami)
+        names = [p["ticker"] for p in ami]
+        w = {p["ticker"]: p["value_jpy"] / tot for p in ami}
+        pct = float((pf.get("summary") or {}).get("ami_net_pct") or 0.0)
+        # holdings（構成銘柄）が無い本はルックスルーに積めない＝穴として名指しする
+        # ⚠ prof が空＝etf_profiles.json が読めなかった、を「全本に穴がある」と言わない（ルール7）。
+        #    実際 2026-08-21 に キーを "funds"（正しくは "etfs"）と書いて、カバー率100%のすぐ隣で
+        #    「積めない本: XLK・SMH・NASA」というもっともらしい嘘を出した。
+        hole = ([t for t in names if not (prof.get(t) or {}).get("h")] if prof
+                else ["（etf_profiles.json が読めず判定できない）"])
+        return names, w, pct, hole
+    except Exception:
+        return [], {}, 0.0, []
+
+
 NEW, NET_W, NET_W_SRC = net_target()
-OLD = ["XLK", "QQQ", "SMH"]                         # 現行（FANG+ は holdings 未取得）
+OLD, OLD_W, OLD_PCT, OLD_HOLE = net_now()          # 現行＝portfolio.json の実測
 BENCH = ["SPY", "VT"]
 # 網の門(ami.html)のキル。**新しい定数を作らない**——ami.html:290-293 と同じ数字
 KILL_AUM_OKU = 100          # 億円
@@ -118,7 +145,8 @@ def build(net_pct):
     except Exception:
         pass
     out["加重経費率"] = {("新（%s）" % NET_W_SRC): round(er_new * 100, 4),
-                        "現行（XLK/QQQ/SMH・FANG+除く）": (round(er_old * 100, 4) if er_old else None),
+                        ("現行（%s）" % ("/".join(OLD) if OLD else "保有なし")):
+                            (round(er_old * 100, 4) if er_old else None),
                         "20年で終価に効く分": f"新 約{(1-(1-er_new)**20)*100:.1f}% / 現行 約{(1-(1-er_old)**20)*100:.1f}%" if er_old else None}
 
     # ---- (2) 窓
@@ -162,8 +190,9 @@ def build(net_pct):
         return agg, cov
     _rs = sum(rel.get(t, 0) for t in NEW) or 1.0
     for nm, nets in (("新（%s／%s）" % ("/".join(NEW), NET_W_SRC), {t: rel.get(t, 0) / _rs for t in NEW}),
-                     ("現行（XLK55/QQQ23/SMH22 ＝ FANG+を除いて正規化）", {"XLK": .551, "QQQ": .237, "SMH": .224})):
-        nw = net_pct / 100.0 if nm.startswith("新") else 0.596
+                     ("現行（%s ＝ portfolio.json の実測）" % "/".join(
+                         "%s%.0f" % (t, OLD_W[t] * 100) for t in OLD) if OLD else "現行（保有なし）", OLD_W)):
+        nw = net_pct / 100.0 if nm.startswith("新") else OLD_PCT / 100.0
         agg, cov = look(nets, nw)
         SEMI = {"NVDA","TSM","AVGO","AMD","ASML","MU","AMAT","LRCX","TXN","ADI","KLAC","INTC","MRVL",
                 "QCOM","CDNS","SNPS","MPWR","TER","NXPI","STM","ARM","ALAB","MCHP","ON","SWKS",
@@ -179,7 +208,8 @@ def build(net_pct):
         "★GRID は保有の約半分が米国外（海外上場）。ルックスルーの個別名は積めるが米国株ではない",
         "網の中の重みの出所は「%s」。重みを変えれば加重経費率もルックスルーも全部動く" % NET_W_SRC,
         "純資産のキルは円建ての線なので USDJPY=158 で概算した（境目から遠いので判定は動かない）",
-        "FANG+ は holdings 未取得＝現行のルックスルーに 1.2% の穴がある",
+        ("現行のルックスルーに積めない本（holdings 未取得）: %s" % "・".join(OLD_HOLE))
+        if OLD_HOLE else "現行の網は全本の holdings がそろっている＝ルックスルーに穴なし",
     ]
     return out
 
