@@ -1,7 +1,7 @@
 {
  "nm": "MANH",
- "roic": 120.9,
- "roicg": 90.2,
+ "roic": 80.3,
+ "roicg": 62.3,
  "nde": -1.17,
  "z": null,
  "gpa": null,
@@ -43,7 +43,7 @@
  "indG": null,
  "founder": null,
  "fin": null,
- "p1": 65,
+ "p1": 90,
  "p2": 95,
  "p3": 95,
  "p4": 90,
@@ -79,7 +79,8 @@
    "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）",
    "2026-08-13 採取器の是正の取り残しを反映: cagr 8.9→13.0。**旧値は根拠が無く、採取器の現行版と食い違っていた**（このパックの審査は 2026-07 で、採取器はその後3回直っている）。採用の条件は3つ——(1)パックに根拠が無い (2)採取器の年がパックの会計年度と一致 (3)**採取器が示した実額から式を独立に再計算して一致**。roic/roicg/roict/dilNet は IC縮退・窓の問題があるので**保留**した。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた。測り直し: python3 night/backfill_machine_evidence.py --stamps",
    "2026-08-13 採取器との食い違いを検討したが**保留**した欄: roic roicg。理由——roic/roicg は **IC縮退**（投下資本が自己資本のごく一部まで縮んで発散する型）か、採取器自身が『有利子負債タグ不在＝0扱いのため過大』と警告している。dilNet は採取器の窓が15年で規約の窓と違う。cagr は系列に欠年がある。**もっともらしい誤値より空欄・据置**。原本で確定するのが本筋（todo pack_collector_drift）",
-   "2026-08-20 irr=70 据置（二重読み・根拠を書き直し）"
+   "2026-08-20 irr=70 据置（二重読み・根拠を書き直し）",
+   "2026-08-20 **roic 120.9→80.3 / roicg 90.2→62.3 / p1 65→90 を原本で確定**（2026-08-13に保留した欄）。★旧値は誤りで、**実額から完全に再現できた＝推測ではなく証明**——221,042,000 ÷ 245,095,000 = 90.185→90.2 ／ ÷(245,095,000−62,244,000) = 120.89→120.9。分子は **営業利益279,800,000×固定0.79**（規約は実効税率23.07%）、分母は **2025-03-31＝第1四半期末**の自己資本。**FY2025期末の自己資本は 314,765,000 で、前年299,126,000から増えている**——MANHは第1四半期に自社株買いを集中させるので3月末だけ245Mまで落ち期末には戻る。kenshi の「2025は自社株買いで株主資本299→245Mに縮小」はその季節性を期末の姿と取り違えたもの＝**「基準の違う二つを割る」型**（245,095,000 は companyfacts 全体で **10-Q行にしか存在しない**ことを反証が確認）。2026-07-19の「FY版ズレ訂正: 85.2/68.4→120.9/90.2」は、**85.2/68.4 が FY2025単年の門式として正しい値**で、この「訂正」はズレを直したのではなく期末残高を四半期末残高に置き換えて新たに作り込んでいた。★p1=65 も三重の値だった——**誤った系列**（最終年だけ分母245M＝人工的な外れ値でσが10.83→16.2ptに膨張）に、**v9.9.50で廃止された絶対σ刻み**を当て、さらに「σ8pt級→65相当」と**手で上書き**していた。⚠適用の根拠に引く条項: v9.9.72の「採取器と15%以内で一致する社だけ through-cycle を当てる」**ではない**（MANHは41.8%/31.9%食い違いでこのゲートを通らない）。引くのは `pack_collector_drift` の**個別に原本で確定する経路**で、3条件を満たす: (1)evidence.roic が None・provenance に項なし＝根拠なし (2)採取器の年2025=パックのreportDate (3)実額から式を独立再計算して一致（読解・反証の2人が別々に再現）。影の計測: roic/roicg の是正だけならΩは1ミリも動かない（79.2→79.2・roicPtはroic≥40で飽和・F7はroic≥25で満点）。p1 65→90 で **Ω79.2→80.7・ティア堅実→最上位**。ただし**堀62.9<70で堀不足なのでどの案でも投下可にはならない**"
   ],
   "evidence": {
    "dom": "【dom=50】FY2025 10-K(CIK 0001056696, acc 0001193125-26-037138, manh-20251231.htm)Item1『Competition』は同等ソリューションの供給者を実名で多数列挙する: 『Our competitors are diverse and offer a variety of solutions directed at various aspects of enterprise commerce. Existing competitors include: Corporate information technology departments of current or potential customers capable of internally developing solutions; ERP vendors, including: Oracle, SAP and Infor, among others; Supply chain execution and planning vendors, including Blue Yonder/Panasonic (formerly JDA), E2Open, Infios (formerly Korber, HighJump), SAS Institute, the Sterling Commerce division of IBM, Relex, and others; POS vendors, including Aptos, Oracle, Jumpmind, Salesforce and others; and Smaller independent companies』。さらに自社より大きい競合の存在を明記する: 『Some of these ERP and other potential competitors have longer operating histories; significantly more financial, technical, marketing, and other resources; greater name recognition; broader solutions; and larger installed bases of customers than us』。MD&Aも中核市場を『core omnichannel operation ..., supply chain commerce operations (Warehouse Management, Transportation Management and Labor Management), and inventory optimization, which are intensely competitive markets characterized by rapid technological change』とする。同等品を多数社が供給し、かつ自社より大きい導入基盤を持つ競合が複数いる＝自社が40%以上を占めることは構造上ありえない → 刻み50(競争<40%、寡占構造にも非該当)。v9.9.41 規約3(50は残余の刻みで構造記述があれば数値なしで確定・ここを空欄にしない)に従い50を確定。なお『We are a market leader in the supply chain management and omnichannel software solutions market as defined by industry analysts such as ARC Advisory Group and Gartner』は順位の自称(数値なし)で、どの刻みの証拠にもならない(規約4)ため採らない。出典: SEC 10-K FY2025 manh-20251231.htm Item1 Competition / Item1A / Item7 Revenue\n【2026-08-04 dom昇格路の掘り尽くし探索】audit_moat_gap実測で dom 50→85 が堀の関門70への唯一の単独昇格路だったため、KLACで確立した4経路で探索した。結論: 提出書類にベンダー別シェアの実数は存在せず、85も70も算術で閉じている＝50で確定（掘り尽くし）。①自社の10-K以外の提出書類: 2021-2026の8-K全39本のitemsを全走査（2.02決算/5.02人事/5.07総会/5.03定款/2.05リストラ/7.01のみ）＝Investor Day型デッキの添付なし。決算リリースEX-99.1（acc 0001193125-26-024382 と 0001193125-26-320952 を実読）は『gaining market share』『well positioned to continue to gain market share in the large supply chain commerce market』の自称のみで数値なし。ARS（株主向け年次報告2022・acc 0000950170-23-010284 のPDF実読）のGartner引用は『supply chain software支出の約75%がNA/西欧』という地理分布のみでベンダー別シェアではない。②EDGAR全文検索(efts.sec.gov): 『\"Manhattan Associates\"』の非MANH提出書類101件(2021-2026・10-K/S-1/F-1/424B4/20-F)を全件列挙し競合型を実読——E2open S-1(2021-03-08 acc 0001104659-21-032892)および10-K EX-99.1: 『The SCM software market is highly fragmented. There are many players offering point solutions that specialize in niche segments of SCM software』とし、MANHを『Manhattan Associates in supply chain execution』とpoint solutionの一つに数える＝断片化の第三者構造記述（自社10-Kの『larger installed bases of customers than us』と整合）。Symbotic S-1=人物経歴のみ／CID Holdco 10-K=競合列挙のみ（『ERP, MES or WMS Players…Korber, SAP, Microsoft, Oracle, Blue Yonder, Infor, and Manhattan Associates』）／Blackbaud・NCR・JKHY=報酬ピア表。クエリ『\"WMS market share\"』『\"share of the WMS market\"』はEDGAR全体で0件。③競合の提出書類: Blue Yonder(Panasonic傘下)・Körber/Infios=非上場でEDGAR対象外、Kinaxis=TSXのみ。SPSC/DSGXは『Manhattan Associates』ヒット自体なし。④算術的閉包（filedの実数のみで両側から挟む）: dom85は自社シェア70-89%を要する→MANH総売上$1,081.4M(FY2025 10-K)から市場全体≤$1.54Bが必要。だが競合E2openのfiled S-1はNA+EUだけのSCMソフトTAMを$45B超・約85%がwhitespaceと推定＝第三者ソフトが現に提供している部分だけで約$6.75B（『市場≤$1.54B』の4.4倍）。ソフト型売上(cloud 408.1+maintenance 130.0+license 14.8=$552.9M)ではシェア上限約8%、総売上でも約16%。70（シェア≥40%→市場≤$2.70B）も同じ算術で閉じる。複占の首位（上位2社≥80%）も閉じる——Panasonic説明会補足資料(EDINET・FY2023)のBlue Yonder standalone売上1,235億円(公表レート130円/$≈$950M)はMANHと同規模で、仮に両社を上位2社と置いても計約$2B≈served市場の3割<<80%。TAMは推計値だが、served部分の推計を半分に割り引いても40%/70%の線はいずれも跨がない。復帰の道は開示の変化か新しい第三者シェア表のみ",
@@ -118,7 +119,10 @@
    "beta": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）",
    "shy": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(-5.0, 12.0)を通過）",
    "evebit": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 300.0)を通過）",
-   "cagr": "機械算出: 売上 2020年 586,372,000 → 2025年 1,081,392,000＝5年の年率"
+   "cagr": "機械算出: 売上 2020年 586,372,000 → 2025年 1,081,392,000＝5年の年率",
+   "roic": "through-cycle（5年中央値・v9.9.72）＝**80.3**。門式 IC=自己資本+有利子負債−のれん−無形、NOPAT=営業利益×(1−実効税率)。FY2021-2025 の系列 58.7/75.7/**80.3**/90.4/85.2 の中央値（FY2023）。FY2023の実額: 営業利益 209,881,000／税引前 213,671,000／法人税 37,103,000（実効税率17.36%・会社報告の EffectiveIncomeTaxRateContinuingOperations 0.174 と一致）→ NOPAT 173,436,116 ÷ IC 216,043,000。**有利子負債=0 は事実であって欠測ではない**（三重確認: ①候補タグの外まで広域走査して当たるのは受注残と2018年で終了した capital lease の将来最低支払額のみ・debt_evidence() も痕跡ゼロ ②貸借対照表に債務の行が無い③会社の明文『Our cash at December 31, 2025 totaled $328.7 million, **with no debt. We currently have no credit facilities.**』が FY2021/2023/2025 の各MD&Aに実在）。**無形=0 も事実**（BSに無形の行が無い・10-K本文『Amortization of intangibles was immaterial』・反証が独立に本体4年分で確認）。**IC縮退なし**（IC/自己資本 75.2/72.6/77.6/79.2/80.2%＝5年とも2割超。MSI 9-16%・BR 12.4% とは別物）。原本: accn 0001193125-26-037138（FY2025 10-K・パックの _meta.source と同一）ほか4冊",
+   "roicg": "through-cycle（5年中央値）＝**62.3**。NOPAT ÷ (自己資本+有利子負債)。系列 44.2/54.9/**62.3**/71.6/68.4 の中央値。**roic と同じ FY2023 から出る**ので「基準の違う二つ」にならない。5年とも roic ≥ roicg の恒等式が保たれている。roicGap 18.0pt だが acq5=no なので買収規律の罰は不発（不変）",
+   "p1": "ROIC5年の変動係数（v9.9.50の規約）＝**90**。系列 58.7/75.7/80.3/90.4/85.2 → 平均78.06%・σ(pstdev)10.83pt → **CV 13.88% < 15% → 90**。σは母σ——門の正本3箇所（fill_derived_judgment.py:171・shadow_p1_cv.py:84・omega_retro_judg.py:94）がすべて statistics.pstdev。⚠**境界に近い**: CV13.88% は線15%まで1.12pt。標本σ(n−1)なら15.51%で80になる。片側の脆さで、最低年(FY2021 58.7%)が−2.6pt動くと跨ぐが、上へ動くと系列が締まって90が堅くなる。リース負債を含めた感度でも CV12.53%＝90のまま（規約はリース除外・hachimon_fetch.py:155）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -175,7 +179,7 @@
    }
   },
   "machine_check": {
-   "date": "2026-08-17",
+   "date": "2026-08-20",
    "rev": "h087af899d9",
    "ok": [
     "accr",
