@@ -808,6 +808,13 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
    規則そのものは常に見える。**なぜその規則なのか**（経緯・実測・却下した案）は
    畳んで置く。**消さない**——index.html にしか無い記述があり、ここは正本だから。
    畳むのは「読む順」の問題であって、記録を捨てる話ではない。 */
+/* 折り畳み。data-fold="1"=v9.9.134 手作業 ／ "2"=v9.9.136 fold_gate_text.py ／
+   **"3"=v9.9.165 fold_gate_text2.py**（Ⅰ解説の .panel/.cut）。
+   ⚠v9.9.160 は別セッションが「買付順位にETFもいれて」で先に使っていたので繰り下げた
+   （v9.9.118→119 と同じ作法。番号は衝突したが、二つの変更は独立）。
+   ★たたむ先は数えてから決める——「折り畳みの外・スクロール枠の外」の字だけを実測すると
+     Ⅰ解説 9,052 / Ⅲ採点機 5,976 / Ⅱ実行手順 3,701。素朴に数えるとⅡが最大に見えるが、
+     その6,000字近くは審査プロトコル全文＝max-height:340px の枠の中で高さを取っていない。 */
 .why{margin:7px 0;border-left:2px solid var(--gold-line);padding-left:10px;}
 .why>summary{cursor:pointer;list-style:none;color:var(--dim);font-size:11.5px;
   letter-spacing:.02em;padding:2px 0;transition:color .15s ease;}
@@ -966,9 +973,9 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 
   <p style="margin:8px 0 0;line-height:1.9;font-size:13px;color:var(--ink,#d8d2c4)">つまり未来の門は「25%の配分枠」ではなく、<b style="color:var(--gold-bright)">掛け算の一項（弱ければ全体を殺す）× その外側の絶対条件（キル・二本柱・価格ブレーキ）× 内部の11要素</b>という四重で効いている。質・持続・未来が三つ揃って初めて高得点になる設計で、どれか一つの高さで他の低さを埋めることはできない。</p>
  </div></details></div>
- <div class="cut" style="background:rgba(201,166,74,.07);border-color:var(--gold-line);margin-top:18px;">
+ <div class="cut" style="background:rgba(201,166,74,.07);border-color:var(--gold-line);margin-top:18px;"><details class="why" data-fold="3"><summary>詳しく</summary><div class="why-body">
   <b style="color:var(--gold-bright);">厳格化の方針（重要）：</b>厳しくするのは<b style="color:var(--gold-bright);">未来門（質・成長・堀）と複利スプレッド</b>だけ。<b style="color:var(--gold-bright);">価格は厳しくしない</b>。20年検証で「個別株は低PERで選んでも当たらない（Cisco/Intelの罠）」と確認済みだから、PERは選別に使わず、極端な高値づかみ（ASMLのPER54型）だけを弾くブレーキとする。ブレーキは<b style="color:var(--gold-bright);">成長連動</b>——成熟株は据え置き（PER50/EV-EBIT35）、実証成長×資本効率×堀無傷（grower＝cagr≥15・ROIC≥20・堀無傷）は論外線を緩める（PER62・V0上限68/52）。高成長は高PERでも複利をもたらすため、成長株と成熟株を一律基準で弾かない（IRMD型が一律キャップで押し目待ちに落ちるのを是正）。積立投資ではドルコスト平均が高値づかみを自動で薄めるため、ブレーキを過度に締める実益は小さい。
- </div>
+ </div></details></div>
 </div>
 </div>
 
@@ -979,8 +986,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
  <div class="h2">★ 持続の二本柱 ― MOAT ∧ ROIC（両方70以上）</div>
  <p class="intro">長期複利のエンジンは掛け算。どれか一つ切れたら複利は止まる。今のROICは「過去に堀があった」結果にすぎない。リターンを決めるのは <b style="color:var(--gold-bright)">堀が続くか・資本効率が続くか</b>。だから二本柱を独立させ、門の中で最重量とする（持続スコア＝Ωの30%）。<b>市場の伸びしろ（滑走路）は第三の柱ではなく、未来の門 f2・F11 が担う</b>——理由は下段。</p>
 
- <div class="panel">
-  <div class="panel-h"><h3>二本柱と重み（ROIC最大）</h3><span class="pass">各 ≥ 70 で通過</span></div>
+ <div class="panel"><details class="why" data-fold="3"><summary><div class="panel-h"><h3>二本柱と重み（ROIC最大）</h3><span class="pass">各 ≥ 70 で通過</span></div></summary><div class="why-body">
 
   <div class="lens acc">
    <div class="lh"><span class="ln">① MOAT 持続 ― 堀こそ源泉</span><span class="lw">47.5%</span></div>
@@ -999,14 +1005,14 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
    持続総合 ＝ exp( <b>0.475</b>·ln(MOAT持続) ＋ <b>0.525</b>·ln(ROIC持続) )<br>
    <span class="rd">幾何平均ゆえ、MOATが弱い銘柄はROICが高くても全体が沈む＝「堀が最重要」を数字が体現する。通過＝二本柱とも ≥ 70。一つでも70未満なら段階減点（崖ではない）。</span>
   </div>
- </div>
+ </div></details></div>
 
- <div class="cut" style="background:rgba(201,166,74,.07);border:1px solid rgba(201,166,74,.25);border-radius:10px;padding:13px 16px;margin-top:14px">
+ <div class="cut" style="background:rgba(201,166,74,.07);border:1px solid rgba(201,166,74,.25);border-radius:10px;padding:13px 16px;margin-top:14px"><details class="why" data-fold="3"><summary>詳しく</summary><div class="why-body">
   <b style="color:var(--gold-bright);">なぜ二本柱か：</b> ROICが高くてもTAMが尽きれば成長は止まり（成熟優良株の罠）、TAMが広くてもMOATがなければ利益は競合に奪われ（成長するが儲からない罠）、MOATがあってもROICが低ければ価値を生まない（堀はあるが稼げない罠）。<b>三つの罠はいずれも実在する。</b>だが柱にできるのは<u>測れるもの</u>だけ。
   <div style="margin-top:9px;padding-top:9px;border-top:1px solid rgba(201,166,74,.2)"><b style="color:var(--gold-bright);">TAM柱を畳んだ理由（2026-07-29 ユーザー明示指示）：</b> 入力の浸透率(pen)は<b>全316パックで一度も埋まらなかった</b>。怠慢ではない——<b>TAMは売り手側の数字で、10-Kに監査済みの事実として載らない</b>。dom規約(4) が「『a leader』『largest』等の順位の自称はどの刻みの証拠にもならない」と決めたのと同じ性質のもので、<b>憶測禁止（絶対のルール2）を守る限りTAMは原本から測れない</b>。0/316 は門が正しく拒否した結果だった。<br>
   にもかかわらず門は空欄を <code>parseFloat('')||0</code> で <b>浸透率0%＝滑走路無限</b>と読み、<b>+27点の満額ボーナスを全社に配っていた</b>（202社=64%が滑走路100点に張り付き＝情報を持たない定数）。遮断し、欄ごと畳んだ。<b>採点は1点も動いていない</b>（既に全社が同じ経路だったため）。<br>
   <b>滑走路の問いは消えていない。</b>未来の門で <b>f2 滑走路（6%）</b>と <b>F11 成長率（9%）</b>が担い、どちらも316/316社が実測済み。さらに本来の複利余地＝<b>再投資率 × 増分利回り</b>は <b>f1 複利エンジン（14%）</b>と <b>F6 内部複利（12%）</b>が測る設計になっている（ただしF6は入力のROIIC³が全社空欄のため現在は定数を返している＝別途是正待ち）。</div>
- </div>
+ </div></details></div>
 </div>
 </div>
 
@@ -1024,8 +1030,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
  <div class="h2">質を三つの時制で測る</div>
  <p class="intro">同じ会社を、過去（壊れない実績）・現在（今の価値創造）・未来（伸びる力）の三つの時制で独立採点する。確実性は過去→未来へ下がるため、各時制の重みも変える。三時制の加重幾何平均が質の総合点。</p>
 
- <div class="panel">
-  <div class="panel-h"><h3>質の三門と数式</h3><span class="pass">最上位80＋／堅実72＋（投下閾値75）</span></div>
+ <div class="panel"><details class="why" data-fold="3"><summary><div class="panel-h"><h3>質の三門と数式</h3><span class="pass">最上位80＋／堅実72＋（投下閾値75）</span></div></summary><div class="why-body">
 
   <div class="lens">
    <div class="lh"><span class="ln">① 過去門〈壊れない実績〉</span><span class="lw">40%</span></div>
@@ -1061,14 +1066,14 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
    <span class="rd">ティア：<b>最上位＝80以上／堅実＝72以上</b>。<b>投下閾値＝75以上</b>——新規投下はこれに加え堀のふるい（絶対MOAT指数70+）と点検（要修正0件）＝四関門を要する。<b>スプレッドは報告ROICで判定し、のれん調整での救済はしない</b></span>
   </div>
   <div class="cut"><b>過去門の足切り：</b>純負債/EBITDA&gt;4・自己資本マイナス・Z&lt;1.8 のいずれかでGE/Citi/Lehman型を即排除。<b>現在門の足切り：</b>ROIC−WACC ≤ 0 で資本破壊企業を排除。</div>
- </div>
+ </div></details></div>
 </div>
 
 <div class="block" style="padding-top:10px;">
  <div class="tag">Gate I · B — Verify &amp; Discipline</div>
  <div class="h2">検証と規律</div>
  <p class="intro">採点は一度きりでは機能しない。過去で検証し、規律で守る。</p>
- <div class="panel">
+ <div class="panel"><details class="why" data-fold="3"><summary><span class="lbl">検証と規律</span></summary><div class="why-body">
   <div class="rows">
    <div class="row"><div class="ic">検</div><div class="tx"><b>検証（バックテスト）</b>20年前に当てて、勝者を捉え罠を避けられたかを確認。過剰最適化を避ける。例：Cisco/Intelを未来門で弾き、Mastercardを捉えられたか。</div></div>
    <div class="row"><div class="ic">規</div><div class="tx"><b>売却の規律</b>株価下落では売らない。売るのは質が崩れた時だけ（下のS1/S2/S3）。</div></div>
@@ -1080,14 +1085,13 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
    <details class="why"><summary>S1/S2/S3 の中身</summary><div class="why-body"><b>S1 全売却検討</b>＝キル発生・スプレッド陥落・disrupt=threat・二本柱陥落　／　<b>S2 縮小検討</b>＝質スコア3期連続低下・キル前夜帯(nde&gt;3, Z''&lt;1.8, スプレッド&lt;3pt)・erosion=active・堀軌道反転・FCF転換&lt;65　／　<b>S3 記録のみ</b>＝2期連続低下警告・g*過熱・保有比率超過<br></div></details>
    <span class="rd">株価の下落・含み損は売却条件に含めない。売るのは「会社の質」が崩れた時だけ（全文は下段IPS③）。</span>
   </div>
- </div>
+ </div></details></div>
 </div>
 
 <div class="block" style="padding-top:10px;">
  <div class="tag">Gate I · C — Allocation &amp; Review</div>
  <div class="h2">配分と再評価</div>
- <div class="panel">
-  <div class="panel-h"><h3>配分</h3><span class="pass">網50% / 城50%（2026-08-19 ユーザー明示指示）</span></div>
+ <div class="panel"><details class="why" data-fold="3"><summary><div class="panel-h"><h3>配分</h3><span class="pass">網50% / 城50%（2026-08-19 ユーザー明示指示）</span></div></summary><div class="why-body">
   <table class="dt">
    <thead><tr><th>層</th><th>中身</th><th>比率</th><th>役割</th></tr></thead>
    <tbody>
@@ -1101,14 +1105,14 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
    残る論点：ASMLは城入り済みだが、網にSMHが残っている（当初方針は「SMHを抜く＝ASMLが入る」の同時実行）<br>
    <span class="rd">網の5本（2026-08-19 ユーザー決定）：XLK・SMH・GRID・ITA・NASA。リバランスは売却でなく<b>新規資金の配分</b>で行う（DCAの原則＝売却・課税なし・不足側に厚く）。上限は城<b>50%</b>、網は50%を土台として残す。<details class="why"><summary>旧記述（QQQ/FANG+の頃・SMHを整理する理由）</summary><div class="why-body">「城のASMLと重複／最も循環的で土台向きでない／優先順位はXLK&gt;QQQ&gt;SMH。半導体露出は薄いETFではなく確信のASMLに集約する」——<b>この方針は2026-08-19の決定で撤回された</b>（SMHは網に残り、QQQとFANG+が外れた）。実測は SMH が重ならない全窓で1位（2010-2026で年28.4%・最大下落−40%）で、ルックスルーの半導体は網の5本化で 48.4%→32.3% へ下がる。</div></details></span>
   </div></details></div>
- </div>
+ </div></details></div>
 </div>
 
 <div class="block" style="padding-top:10px;">
  <div class="tag">Gate I · D — Review Calendar</div>
  <div class="h2">点検カレンダー — 四層の周期</div>
  <div class="intro">頻度は「堀が変化する速度」に合わせる。堀は四半期では滅多に動かないが数年で動く。<details class="why plain" data-fold="2"><summary>つづき</summary><div class="why-body">だから深い<b>判断（全面再採点）は年1回</b>、堀の<b>監視は四半期</b>。「買うリズム（毎月・自動積立）」と「選ぶリズム（年1回・手動）」を分ける。<b style="color:var(--gold-bright)">ただし事実（8-K）は四半期を待たない</b>——大型M&A・CEO交代・ガイダンス撤回・減損は起きた週に即・再採点トリガーになる。そこで四半期監視の上に<b>週次の早期警報スイープ（自動・アラート辞書スキャン）</b>と<b>月2回の採取・審査（新規の供給と買い窓）</b>を重ねた「抜けのない運用サイクル」を正とする（下表＝堀監視の哲学的土台、実運用の全周期は kessan_checklist.md／IPS に集約）。</div></details></div>
- <div class="panel">
+ <div class="panel"><details class="why" data-fold="3"><summary><span class="lbl">点検カレンダー — 四層の周期</span></summary><div class="why-body">
   <table class="dt">
    <thead><tr><th>周期</th><th>時期</th><th>やること</th><th>負担</th></tr></thead>
    <tbody>
@@ -1123,7 +1127,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
    <details class="why"><summary>S1/S2/S3 の中身</summary><div class="why-body"><b>S1 全売却検討</b>＝キル発生・スプレッド陥落・disrupt=threat・二本柱陥落　／　<b>S2 縮小検討</b>＝質スコア3期連続低下・キル前夜帯・erosion=active・堀軌道反転・FCF転換&lt;65　／　<b>S3 記録のみ</b>＝警告レベル（詳細はIPS③）</div></details>
    <span class="rd">含み損・株価下落は売却理由にしない（むしろ押し目で買い増す）。売るのは会社の質が崩れた時だけ。買付（毎月積立）はこのカレンダーと別に、証券会社の自動設定で機械的に。</span>
   </div>
- </div>
+ </div></details></div>
 </div>
 </div>
 
@@ -1141,8 +1145,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
  <div class="h2">未来門〈軌〉— 11要素と数式（v9.2）</div>
  <p class="intro">価格は見ない。「これから株価を上げる力が残っているか」を、手入力5観点＋財務データからの自動算出6要素＝計11要素で点数化（各0〜100）し、加重幾何平均で合成する。ここが判定の中心。</p>
 
- <div class="panel">
-  <div class="panel-h"><h3>11の要素（手入力5 ＋ 自動算出6）</h3><span class="pass">Fは総合の一項（重み0.25）——合否は総合ティア80/72・投下75で裁く</span></div>
+ <div class="panel"><details class="why" data-fold="3"><summary><div class="panel-h"><h3>11の要素（手入力5 ＋ 自動算出6）</h3><span class="pass">Fは総合の一項（重み0.25）——合否は総合ティア80/72・投下75で裁く</span></div></summary><div class="why-body">
 
   <div class="lens acc">
    <div class="lh"><span class="ln">① 複利エンジン（再投資 × ROIIC）</span><span class="lw">14%</span></div>
@@ -1262,7 +1265,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
    <div class="gr"><div class="lt">回避</div><div class="rg">〜72</div></div>
   </div>
   <div class="cut"><b>現行の裁き＝総合ティア（最上位80／堅実72）＋投下の四関門（Ω75+〔irr=85は別枠〕 ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件 ∧ 事業の収縮なし（売上縮小∧営業利益率低下でない））。</b> ハード足切り：ROIIC&lt;WACC／堀の明確な減衰（F64上限）／実存的ディスラプション。価格はここ（格）では一切見ない。</div>
- </div>
+ </div></details></div>
 </div>
 
 <div class="block" style="padding-top:10px;">
@@ -1325,7 +1328,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.164</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.165</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
