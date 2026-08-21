@@ -1324,7 +1324,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.162</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.163</span></h1>
     <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
 </header>
@@ -3326,14 +3326,57 @@ function ccfNetRows(np, pf){
   return {rows, drop, netPct, each, useW, miss, wsum, asof:(np&&np.asof)||''};
 }
 
+// ── 今月の入金総額を城/網へ振り分ける（v9.9.163・2026-08-20 ユーザー指示
+//    「城の重み50で振り分けと網の重み50%振り分けで投資の振り分けも両方ともで振り分けるようにして」）─────
+// ★**総額を一つ入れると、目標比（城50 / 網50）で二つの枠に割れる**。割った先はそれぞれの規約どおり
+//   ——城は時価総額Tier（or 手指定）の「目標−保有」の不足按分、網は ami_weights の不足按分。
+// ★**割り方は portfolio.json の target（shiro_castle_pct / ami_net_pct）から採る**——ここに 50 を
+//   書き写すと、目標を変えたとき割り方だけ古いまま残る（数字を書き写した箇所は必ず陳腐化する）。
+// ★**端数は城へ寄せる**（網 = 総額 − 城）ので、二つの枠は**必ず総額にぴったり一致する**。
+// ★正本の優先順: **総額が入っていれば総額が正本**で、個別枠(pf:monthly)・網枠(pf:monthly_net)は
+//   そこから導かれた値を表示する。個別の欄を手で直すと**総額を消して手動へ戻る**（画面に明記）。
+//   ——二つの正本が同時に効く状態を作らない。
+// ⚠**この割り方は DCA の規約（不足している側に厚く寄せる）とは別**。規約どおりなら今は城が目標より
+//   薄いので城へ厚く寄せることになる。ユーザーの明示指示は目標比なのでそれを既定にし、
+//   **規約どおりならいくらになるかは画面に併記する**（隠さない）。
+function ccfSleeveTarget(){
+  const t=(typeof window!=='undefined'&&window.__ccfSleeveTarget)?window.__ccfSleeveTarget:null;
+  const c=t&&+t.c>0?+t.c:50, n=t&&+t.n>0?+t.n:50;
+  return {c,n,src:(t&&t.src)||'既定 50/50（portfolio.json の target が読めない）'};
+}
+function ccfTotalAmt(){let v=0;try{v=ccfParseYen(localStorage.getItem('pf:monthly_total')||'');}catch(e){}return v>0?v:0;}
+function ccfSetTotalAmt(el){
+  const v=ccfParseYen(el&&el.value);
+  try{ if(v>0)localStorage.setItem('pf:monthly_total',String(v)); else localStorage.removeItem('pf:monthly_total'); }catch(e){}
+  if(typeof renderPlan==='function')renderPlan();
+}
+function ccfSleeveSplit(){
+  const T=ccfTotalAmt(); if(!(T>0))return null;
+  const {c,n,src}=ccfSleeveTarget(); const sum=c+n;
+  if(!(sum>0))return null;
+  const castle=Math.round(T*c/sum);          // 端数は城へ寄せる（下で 網=総額−城 にするため）
+  return {total:T,castle,net:T-castle,cPct:c,nPct:n,src};
+}
+function ccfCastleAmt(){const sp=ccfSleeveSplit(); return sp?sp.castle:ccfMonthAmt();}
+function ccfNetBudget(){const sp=ccfSleeveSplit(); return sp?sp.net:ccfNetAmt();}
 function ccfNetAmt(){let v=0;try{v=ccfParseYen(localStorage.getItem('pf:monthly_net')||'');}catch(e){}return v>0?v:0;}
+// ★正本を二つ同時に効かせない（v9.9.163）——総額が入っているあいだ、城枠/網枠は**そこから導かれた値**。
+//   そこを手で直したら「手動へ戻す」という意思表示なので、**総額の指定を解除する**（画面の文言と実装を一致させる）。
+//   ⚠消去（空を入れる）では総額に触らない——導出値を消しても総額から再び導かれるので、意味が無いどころか
+//     「消したのに戻る」という不可解な挙動になる。触るのは**手で値を入れたとき**だけ。
+function ccfClearTotalIfHandEdit(v){
+  if(!(v>0))return;
+  try{ if(ccfParseYen(localStorage.getItem('pf:monthly_total')||'')>0)localStorage.removeItem('pf:monthly_total'); }catch(e){}
+}
 function ccfSetNetAmt(el){
   const v=ccfParseYen(el&&el.value);
+  ccfClearTotalIfHandEdit(v);
   try{ if(v>0)localStorage.setItem('pf:monthly_net',String(v)); else localStorage.removeItem('pf:monthly_net'); }catch(e){}
   if(typeof renderPlan==='function')renderPlan();
 }
 function ccfSetMonthAmt(el){
   const v=ccfParseYen(el&&el.value);
+  ccfClearTotalIfHandEdit(v);
   try{ if(v>0)localStorage.setItem('pf:monthly',String(v)); else localStorage.removeItem('pf:monthly'); }catch(e){}
   if(typeof renderPlan==='function')renderPlan();
 }
@@ -3464,7 +3507,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
   //   推測の価格で株数を作らない——「価格未取得」と明示して手計算へ回す）。
   //   株数は現値換算の目安——指値が現値より下なら同じ円でもう1株買えることがある。正本は円の按分。
   pass=pass||[]; gap=gap||(()=>0); passGap=passGap||0; tw=tw||(()=>0);
-  const AMT=ccfMonthAmt();
+  const AMT=ccfCastleAmt();          // v9.9.163: 総額が入っていれば城の取り分（目標比）
   const nm=[]; if(passGap>0){ pass.forEach(r=>{ const p=100*(gap(r)/passGap); if(p>=0.5)nm.push({n:r.nm,p,tw:tw(r),r}); }); }
   if(AMT>0&&nm.length){
     let s=0; nm.forEach(x=>{ x.yen=Math.floor(AMT*x.p/100/100)*100; s+=x.yen; });
@@ -3603,17 +3646,49 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo){
       :`<b>投下可${pass.length}社が全て目標ウェイトに到達済み</b>——個別枠は「目標−現在保有」の不足分で按分する規約（B案②）なので、不足がゼロなら配る先が無い。<br><span style="color:var(--muted)">${rowsTxt}</span><br>現在保有%は<b>Ⅶ保有の実額</b>から自動算出（無い銘柄のみⅢ採点機の手入力pos）。<b>保有していないのに到達済みと出るならpos欄が実態と違う</b>——Ⅶ保有を実額で入れ直すか採点機のposを直せば行が出る。`;
     body=`<div style="font-size:11.5px;color:var(--dim);margin-top:8px;padding:8px 10px;border:1px dashed rgba(201,166,74,.35);border-radius:8px;line-height:1.75">今月は配分先が無い理由：${why}</div>`;
   }
+  // ★今月の入金総額 → 城/網へ目標比で割る（v9.9.163）
+  const SP=ccfSleeveSplit(), ST=ccfSleeveTarget(), TA=ccfTotalAmt();
+  const totRow=(()=>{
+    const now=(typeof window!=='undefined'&&window.__ccfSleeveNow)?window.__ccfSleeveNow:null;
+    // DCAの規約（不足側に厚く）ならいくらか——**併記するだけで、割り方は変えない**
+    let dca='';
+    if(SP&&now){
+      const gc=Math.max(0,ST.c-now.c), gn=Math.max(0,ST.n-now.n), g=gc+gn;
+      dca=(g>0)
+        ?`規約どおり（不足側に厚く）なら 城 ${ccfYen(Math.round(SP.total*gc/g))} ／ 網 ${ccfYen(Math.round(SP.total*gn/g))}`
+         +`（今 城${now.c.toFixed(1)}% / 網${now.n.toFixed(1)}%${now.asof?'・'+now.asof+'時点':''}）`
+        :`今は城も網も目標以上なので、規約どおりでも配る先の差が出ない（今 城${now.c.toFixed(1)}% / 網${now.n.toFixed(1)}%）`;
+    }
+    return `<div style="display:flex;align-items:center;gap:7px;margin:9px 0 3px;flex-wrap:wrap">
+    <span style="font-size:12px;color:var(--muted)">今月の入金総額</span>
+    <input id="ccfTotalAmtIn" type="text" inputmode="numeric" autocomplete="off" value="${TA>0?TA.toLocaleString('ja-JP'):''}" placeholder="タップして入力"
+      onchange="ccfSetTotalAmt(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+      style="width:150px;padding:6px 9px;background:${TA>0?'rgba(0,0,0,.28)':'rgba(155,127,212,.10)'};border:${TA>0?'1px solid rgba(155,127,212,.55)':'1px dashed #9b7fd4'};border-radius:6px;color:#b9a3e6;font-size:14.5px;font-weight:${TA>0?'600':'400'};text-align:${TA>0?'right':'center'};font-family:inherit">
+    <span style="font-size:12px;color:var(--muted)">円</span>
+    ${TA>0?`<button onclick="ccfSetTotalAmt({value:''})" title="総額を消して、城と網を個別に入れる形に戻す" style="padding:3px 9px;background:transparent;border:1px solid var(--dim);border-radius:6px;color:var(--dim);font-size:11px;cursor:pointer">消去</button>`
+           :`<span style="font-size:11.5px;color:#9b7fd4">← ここに入れると <b>城${ST.c}% / 網${ST.n}%</b> に割れて両方へ配られる</span>`}
+  </div>${SP?`<div style="font-size:11.5px;color:var(--muted);margin:0 0 6px;padding:8px 11px;border-radius:8px;border:1px solid rgba(155,127,212,.4);background:rgba(155,127,212,.07);line-height:1.8">
+    <b style="color:#9b7fd4">${ccfYen(SP.total)}</b> を目標比で割った：
+    <b style="color:var(--gold-bright)">城 ${ccfYen(SP.castle)}（${SP.cPct}%）</b> ／
+    <b style="color:#6fa8c9">網 ${ccfYen(SP.net)}（${SP.nPct}%）</b>
+    <span style="color:var(--dim)">（合計 ${ccfYen(SP.castle+SP.net)}＝端数は城へ寄せるので総額にぴったり一致。割り方は ${SP.src}）</span><br>
+    <span style="color:var(--dim)">城はこのあと 目標ウェイト−保有 の不足按分で各社へ、網は下の <span style="color:#6fa8c9">◈ 網（ETF）</span> で ami_weights の不足按分で各本へ。
+    <b>総額が入っているあいだは総額が正本</b>——下の「今月の個別枠」と網枠は<u>ここから導かれた値</u>を表示します（個別に手で入れたいときは総額を消してください）。</span>
+    ${dca?`<br><span style="color:#d69a3c">⚠ ${dca}</span> <span style="color:var(--dim)">——目標比で割るのはユーザーの明示指示（2026-08-20）。<u>DCAの規約は「不足している側に厚く寄せる」</u>なので、規約どおりの数字も隠さず併記しています。どちらで買うかはあなたの判断。</span>`:''}
+  </div>`:''}`;})();
   const amtRow=`<div style="display:flex;align-items:center;gap:7px;margin:9px 0 3px;flex-wrap:wrap">
-    <span style="font-size:12px;color:var(--muted)">今月の個別枠</span>
+    <span style="font-size:12px;color:var(--muted)">今月の個別枠${SP?'<span style="color:#9b7fd4">（総額から導出）</span>':''}</span>
     <input id="ccfMonthAmtIn" type="text" inputmode="numeric" autocomplete="off" value="${AMT>0?AMT.toLocaleString('ja-JP'):''}" placeholder="タップして入力"
       onchange="ccfSetMonthAmt(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
       style="width:150px;padding:6px 9px;background:${AMT>0?'rgba(0,0,0,.28)':'rgba(214,154,60,.10)'};border:${AMT>0?'1px solid var(--gold-line)':'1px dashed #d69a3c'};border-radius:6px;color:var(--gold-bright);font-size:14.5px;font-weight:${AMT>0?'600':'400'};text-align:${AMT>0?'right':'center'};font-family:inherit">
     <span style="font-size:12px;color:var(--muted)">円</span>
-    ${AMT>0?`<button onclick="ccfSetMonthAmt({value:''})" title="金額を消して%表示に戻す" style="padding:3px 9px;background:transparent;border:1px solid var(--dim);border-radius:6px;color:var(--dim);font-size:11px;cursor:pointer">消去</button>`:`<span style="font-size:11.5px;color:#d69a3c">← <b>未入力</b>。ここに <b>17万</b> と打つと下が円になる</span>`}
+    ${SP?`<span style="font-size:11.5px;color:#9b7fd4">← 総額 ${ccfYen(SP.total)} の ${SP.cPct}%。<b>ここを手で直すと総額の指定は解除され</b>、城と網を個別に入れる形へ戻ります</span>`
+        :(AMT>0?`<button onclick="ccfSetMonthAmt({value:''})" title="金額を消して%表示に戻す" style="padding:3px 9px;background:transparent;border:1px solid var(--dim);border-radius:6px;color:var(--dim);font-size:11px;cursor:pointer">消去</button>`:`<span style="font-size:11.5px;color:#d69a3c">← <b>未入力</b>。ここに <b>17万</b> と打つと下が円になる</span>`)}
   </div>`;
   return `<div style="background:linear-gradient(180deg,rgba(201,166,74,.10),rgba(201,166,74,.03));border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin:4px 0 20px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><h2 class="serif" style="font-size:1.2em;color:var(--gold-bright);margin:0">今月の買付プラン</h2><span style="font-size:11px;color:var(--dim)">${AMT>0?`${ccfYen(AMT)} を全額 投下可へ按分`:'投下可へ按分・合計100%'}</span></div>
     <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">🟢投下可の各社へ、<b>目標ウェイト−現在保有%</b>の不足分で按分（不足の大きい銘柄に厚い）。<b>個別枠を入れると📋注文書（何株買うか）だけになる</b>——按分の円は各行に「按分¥○○」として残る（円が正本・株数は執行案）。未入力なら按分%の一覧が出て、番号は<b>買う順</b>（pc順位）。</div>
+    ${totRow}
     ${amtRow}
     ${body}
     <div style="font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.7">指値は階段で置く——1/2を現値近傍〜開通ライン・1/2をfair線（PER clamp(8+g,16,30)）。投下可は現値で門X成立済みゆえ開通線は現値以上にある。${AMT>0?'100円単位で丸め、<b>端数は買付順位1位へ寄せて合計を個別枠に一致させる</b>。<b>株数は盤の現値＋ドル円で換算した目安</b>（正本は円の按分。指値が現値より下に約定すれば同じ円で1株多く買えることがある）。日本株は<b>単元未満株（S株・かぶミニ等）で1株から</b>買う。0株の月は無理に買わない——翌月に合算するか網へ。':''}1銘柄の目標ウェイトは<b>時価総額Tier（5段 8:6:4:3:2 を城の按分枠（50%−特別枠・v9.9.159で特別枠は0社）へ正規化）・上限8%</b>（2026-08-14 ユーザー明示指示。時価総額＝px×ni÷eps・日本株はドル円で換算。境界はディケイド＝1兆/3千億/1千億/3百億$。一社でも測れなければ等ウェイトへ倒し、その旨を各行の目標%に出す）。上限8%＝¼ケリー相当。<b>売りは株価では動かさない（S1/S2/S3のみ）。</b><br>※<b>指数（ETF）の積立は門の外</b>——門は「どれを・買うか否か」を裁く場で、指数は常に買ってよい対象ゆえ門にかけない。毎月いくら指数へ回すかはDCA側で決める（正本はCLAUDE.md 月次運用）。<b>2026-08-20（ユーザー指示「買付順位にETFもいれて」）から、その円を下の <span style="color:#6fa8c9">◈ 網（ETF）</span> の節に出す</b>——<u>買う場所が二つに割れていたのを一枚に戻しただけ</u>で、門の裁きに入れたのではない（投下可の枠には入れない・Ω・四関門・堀の関門70・売却規律S1/S2/S3・城の按分はいずれも不変）。<b>ただし「どのETFを土台にするか」は別の問い</b>——<a href="ami.html" style="color:var(--gold-bright)">◈ 網の門（ETFの審査）↗</a> がコスト・土台の広さ・存続性・器で裁き、<b>城とのルックスルー重複</b>を実測する。（別枠であって正本ではない。門Ωの採点・売却規律・四関門は一切上書きしない）</div>
@@ -5722,6 +5797,19 @@ async function renderPlan(){
   //   ⚠読めなければ**節そのものを出さず、読めなかったと出す**（空で描いて「網は無い」に見せない・ルール7）
   let __np=null; try{const r=await fetch('out/net_plan.json?t='+Date.now()); if(r.ok)__np=await r.json();}catch(e){}
   let __pf=null; try{const r=await fetch('portfolio.json?t='+Date.now()); if(r.ok)__pf=await r.json();}catch(e){}
+  // ★城/網の目標比と、今の実際の比率をグローバルへ（v9.9.163）。
+  //   ccfMonthPlanBox は独立した関数で __pf を持たないので、ここで一度だけ置いて共有する。
+  //   ⚠**書き写さない**——目標比は portfolio.json の target が正本で、読めなければ既定 50/50 へ倒して
+  //     その旨を出す（勝手に別の比を作らない）。
+  try{
+    const t=(__pf&&__pf.target)||null;
+    const c=t&&+t.shiro_castle_pct>0?+t.shiro_castle_pct:null, n=t&&+t.ami_net_pct>0?+t.ami_net_pct:null;
+    window.__ccfSleeveTarget=(c&&n)?{c,n,src:'portfolio.json の target'}:null;
+    // 今の実際の比率（DCAの規約＝不足側に厚く、を併記するため）
+    let sc=0,sn=0; for(const q of ((__pf&&__pf.positions)||[])){
+      const w=+q.weight_pct||0; if(q.sleeve==='城')sc+=w; else if(q.sleeve==='網')sn+=w; }
+    window.__ccfSleeveNow=(sc>0||sn>0)?{c:sc,n:sn,asof:(__pf&&__pf.asof)||''}:null;
+  }catch(e){ window.__ccfSleeveTarget=null; window.__ccfSleeveNow=null; }
   let __hv=null; try{const r=await fetch('out/hist_val_now.json?t='+Date.now()); if(r.ok)__hv=await r.json();}catch(e){}
   const __HV=(()=>{const m={};for(const x of ((__hv&&__hv.rows)||[]))if(x&&x.ticker)m[x.ticker]=x;return m;})();
   const __hvAsof=(__hv&&__hv.asof)||'';
@@ -6350,7 +6438,7 @@ async function renderPlan(){
         +`<code>python3 night/net_plan.py --net 50</code> で作り直せます。</div>`;
       return;
     }
-    const N=ccfNetRows(__np,__pf), NA=ccfNetAmt();
+    const N=ccfNetRows(__np,__pf), NA=ccfNetBudget();   // v9.9.163: 総額が入っていれば網の取り分（目標比）
     if(!N.rows.length)return;
     // 円の按分——**城とまったく同じ B案②（目標−保有の不足で按分）**。
     //   ★一度「目標どおりに等分」で書いて実測したら、**XLK が目標10%に対し保有31.8%（3.2倍）なのに
@@ -6437,16 +6525,20 @@ async function renderPlan(){
         +`黙って一覧から消すと「なぜ消えたか」が追えなくなる（v9.9.52）。</div>`;
     }
     // 網枠の入力
-    html+=`<div style="margin-top:8px;padding:8px 11px;border-radius:8px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap">`
-      +`<span style="font-size:12px;color:var(--muted);white-space:nowrap">今月の網枠</span>`
+    const NSP=ccfSleeveSplit();
+    html+=`<div style="margin-top:8px;padding:8px 11px;border-radius:8px;background:var(--panel);border:1px solid ${NSP?'rgba(155,127,212,.45)':'var(--line)'};display:flex;align-items:center;gap:8px;flex-wrap:wrap">`
+      +`<span style="font-size:12px;color:var(--muted);white-space:nowrap">今月の網枠${NSP?'<span style="color:#9b7fd4">（総額から導出）</span>':''}</span>`
       +`<input id="netAmt" value="${NA>0?NA.toLocaleString('ja-JP'):''}" placeholder="例: 17万"`
       +` onchange="ccfSetNetAmt(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"`
-      +` style="width:110px;padding:4px 8px;font-size:13px;font-family:inherit;background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--ink)">`
-      +(NA>0?`<button onclick="ccfSetNetAmt({value:''})" style="padding:3px 9px;background:transparent;border:1px solid var(--dim);border-radius:6px;color:var(--dim);font-size:11px;cursor:pointer">消去</button>`
-            :`<span style="font-size:11.5px;color:#d69a3c">← <b>未入力</b>。入れると上が円になる</span>`)
+      +` style="width:110px;padding:4px 8px;font-size:13px;font-family:inherit;background:var(--bg);border:1px solid ${NSP?'rgba(155,127,212,.55)':'var(--line)'};border-radius:6px;color:var(--ink)">`
+      +(NSP?`<span style="font-size:11.5px;color:#9b7fd4">← 総額 <b>${ccfYen(NSP.total)}</b> の <b>${NSP.nPct}%</b>（上の「今月の買付プラン」で入力）。`
+            +`<b>ここを手で直すと総額の指定は解除され</b>、城と網を個別に入れる形へ戻ります</span>`
+          :(NA>0?`<button onclick="ccfSetNetAmt({value:''})" style="padding:3px 9px;background:transparent;border:1px solid var(--dim);border-radius:6px;color:var(--dim);font-size:11px;cursor:pointer">消去</button>`
+            :`<span style="font-size:11.5px;color:#d69a3c">← <b>未入力</b>。入れると上が円になる。<b>上の「今月の入金総額」に入れれば城と網へ自動で割れる</b></span>`))
       +`<span style="font-size:11px;color:var(--dim)">⚠ <b>上の「今月の個別枠」とは別の欄</b>——`
       +`個別枠は v9.9.53 以来「城だけの金額」の意味で保存されているので、ここを入金総額へ読み替えると`
-      +`<u>保存済みの決定の意味が黙って変わる</u>（城の取り分が勝手に減る）。だから足した。</span></div>`;
+      +`<u>保存済みの決定の意味が黙って変わる</u>（城の取り分が勝手に減る）。だから足した`
+      +`（v9.9.163 で<b>総額</b>を別のキー <code>pf:monthly_total</code> として新設し、両方をそこから導く形にした）。</span></div>`;
   })();
 
   // ◇ 門外の明示判断で買う社（v9.9.129）——**門は⛔のまま。名指しで出す**（v9.9.52の裏返し）
