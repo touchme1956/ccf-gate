@@ -97,8 +97,8 @@ footer{border-top:1px solid var(--line);padding:26px 0 60px;color:var(--dim);fon
 <nav class="tabs" id="tabs">
  <button class="on" onclick="show(1,this)">Ⅰ 網の思想</button>
  <button onclick="show(2,this)">Ⅱ ルックスルー点検</button>
- <button onclick="show(3,this)">Ⅲ ETF採点機</button>
- <button onclick="show(4,this)">Ⅳ 現在の網の判定</button>
+ <button onclick="show(3,this)">Ⅲ 採点の廃止（記録）</button>
+ <button onclick="show(4,this)">Ⅳ 現在の網（生の数字）</button>
  <button onclick="location.href='index.html'">↩ 門Ω（個別）</button>
 </nav>
 
@@ -166,55 +166,81 @@ footer{border-top:1px solid var(--line);padding:26px 0 60px;color:var(--dim);fon
  <div id="ltBox"></div>
 </div></div>
 
-<!-- ═══════════════ Ⅲ 採点機 ═══════════════ -->
+<!-- ═══════════════ Ⅲ 採点の廃止（記録） ═══════════════ -->
 <div id="pg3" class="pg"><div class="wrap block">
- <h1 style="font-size:24px">ETF採点機</h1>
- <p class="sub" style="margin:6px 0 14px">1本のETFを裁く。<b>網Ω = 幾何平均(コスト .40 ・ 土台の広さ .30 ・ 存続性 .20 ・ 器の効率 .10)</b>。
-  幾何平均なので<u>1本でも弱いと全体が沈む</u>（門Ωと同じ作法）。</p>
+ <h1 style="font-size:24px">網Ωの採点は廃止した（2026-08-19）</h1>
+ <p class="sub" style="margin:6px 0 14px">ユーザー明示指示「網の門の採点は使えない」→「畳んで」。
+  <b>採点機と網Ωの合成点・関門を撤去した。</b>ページは残す——<u>なぜ廃止したかを消すと、同じものをまた作るから</u>
+  （門Ωの「規則は失効したが経緯は消さない」と同じ作法）。<b>Ⅰ思想 と Ⅱルックスルー は生きている。</b></p>
 
- <div class="grid2">
-  <div class="panel" style="margin:0">
-   <h2 style="font-size:16px">入力</h2>
-   <div class="row"><div class="rl">ティッカー / 名称</div><div class="rc"><input id="e_t" placeholder="例: VT"></div></div>
-   <div class="row"><div class="rl">経費率<span class="h">年率%。目論見書の実質コストがあればそちら</span></div><div class="rc"><input id="e_er" type="number" step="0.01" value="0.06"><span class="u">%</span></div></div>
-   <div class="row"><div class="rl">純資産<span class="h">100億円未満は償還リスクでキル</span></div><div class="rc"><input id="e_aum" type="number" step="1" value="1000"><span class="u">億円</span></div></div>
-   <div class="row"><div class="rl">設定からの年数<span class="h">3年未満はキル（実績が無い）</span></div><div class="rc"><input id="e_age" type="number" step="0.5" value="17"><span class="u">年</span></div></div>
-   <div class="row"><div class="rl">組入銘柄数<span class="h">土台の広さの一次指標</span></div><div class="rc"><input id="e_n" type="number" step="1" value="9500"><span class="u">銘柄</span></div></div>
-   <div class="row"><div class="rl">上位10銘柄の比率<span class="h">実効的な分散。数だけ多くても上位集中なら広くない</span></div><div class="rc"><input id="e_top10" type="number" step="0.1" value="20"><span class="u">%</span></div></div>
-   <div class="row"><div class="rl">最大セクター比率<span class="h">1セクターに何%か</span></div><div class="rc"><input id="e_sec" type="number" step="0.1" value="19.2"><span class="u">%</span></div></div>
-   <div class="row"><div class="rl">城との重複<span class="h">Ⅱの実測値。城の保有銘柄がこのETFの何%を占めるか</span></div><div class="rc"><input id="e_ov" type="number" step="0.1" value="0"><span class="u">%</span></div></div>
-   <div class="row"><div class="rl">レバレッジ／インバース</div><div class="rc"><select id="e_lev"><option value="no">なし</option><option value="yes">あり（論外）</option></select></div></div>
-   <div class="row"><div class="rl">複製方法</div><div class="rc"><select id="e_rep"><option value="phys">現物</option><option value="synth">合成（スワップ）</option></select></div></div>
-   <div class="row"><div class="rl">器<span class="h">日本の個人投資家としての税の効率</span></div><div class="rc"><select id="e_wrap">
-     <option value="jp_toshin">国内投信（分配なし・再投資型）</option>
-     <option value="jp_etf">国内上場ETF（分配あり）</option>
-     <option value="us_etf">米国上場ETF（分配・米国側10%源泉）</option></select></div></div>
-   <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
-    <button class="btn" onclick="scoreETF()">採点する</button>
-    <button class="btn ghost" onclick="loadSample('VT')">VT を入れる</button>
-    <button class="btn ghost" onclick="loadSample('XLK')">XLK を入れる</button>
-    <button class="btn ghost" onclick="loadSample('SMH')">SMH を入れる</button>
-   </div>
-  </div>
-
-  <div class="panel" style="margin:0">
-   <h2 style="font-size:16px">判定</h2>
-   <div id="e_out"><p class="sub">左の欄を埋めて「採点する」を押す。</p></div>
-  </div>
+ <div class="panel">
+  <h2>廃止した理由 — 三つとも実測</h2>
+  <p style="font-size:13.5px;color:var(--ink-soft)">
+  <b>① 一度も検証されていなかった。</b>門Ωは13年・5系統・204通り・7アンカー・事前登録つきの検定を通っている。
+  網Ωの重み(.40/.30/.20/.10)・刻み・キル・関門の線は<b>すべて設計の類推で書かれ、何にも当てられていない</b>
+  （CLAUDE.md の網Ω言及11行を走査して、検証・較正・実測・ビンテージ・事前登録の語が<b>ゼロ</b>）。
+  しかも門Ωで実証した「<u>重みを変えても順位はほとんど動かない（ρ0.994+）／動かせるのは欄が何を測っているか</u>」という
+  教訓が、網Ωには一度も当たっていなかった。</p>
+  <p style="font-size:13.5px;color:var(--ink-soft)">
+  <b>② 分散の代理が弱かった。</b>「これは分散になっているか」を担うのは <code>城との重複</code>＝<b>名前の重なり</b>ひとつ。
+  月次パネル(2018-07〜2026-08・97ヶ月)で<b>実際の相関</b>と突き合わせると——
+  IHF ρ0.248（重複0.0%）／ XLV 0.408（0.5%）／ ITA 0.455（0.0%）／ MISL 0.475（0.0%）／ PAVE 0.532（1.0%）／
+  SMH 0.563（5.1%）／ IHI 0.598（4.5%）／ GRID 0.628（0.0%）／ QQQ 0.671（5.4%）／ XLK 0.683（<b>8.5%</b>）／
+  <b>VT 0.819（3.6%）</b>。名前の重複と実際の相関の相関は <b>+0.626</b> で、
+  <b style="color:var(--rust)">最大の外れ値が、唯一 関門を通っていた VT</b>——名前の重なりは最小なのに実際の動きは城と最も似ている。
+  ⚠ただし VT の行は<b>測れていない</b>（9500銘柄中41件しか採れず、それがメガキャップに偏る）＝
+  「VTは分散にならない」の証明ではなく「<b>この代理では判定できない</b>」の証明。</p>
+  <p style="font-size:13.5px;color:var(--ink-soft)">
+  <b>③ 11本中1本しか通らず、その1本は誰でも知っている既定解だった。</b>
+  広さ≥60 は構造的な締め出しではない（50銘柄でも上位10が25%・最大セクター25%なら 73.4）。
+  それでも通るのは全世界インデックスだけで、<b>「買うべきは広くて安い指数」を言い直しているだけ</b>——
+  門Ωと違って、その前提の根拠を持っていない。</p>
  </div>
+
+ <div class="panel">
+  <h2>設計上の欠陥 — 二つの役目を一つの点数に押し込んでいた</h2>
+  <p style="font-size:13.5px;color:var(--ink-soft)">
+  網が<b>市場そのもの</b>（自分に優位が無いと認める場所）なら、問うのは<u>コストと被覆だけ</u>で、
+  点数は要らない——答えは一つに決まる。<br>
+  網が<b>第二の賭け</b>（テック・電化などに張る）なら、それは<u>第二の城</u>であって、
+  門Ωの論法で裁くべきで、網Ωの物差しではない。<br>
+  今の網（XLK/QQQ/SMH＝テックへの賭け）を<b>前者の規則で採点したから、全部⛔になった</b>。
+  <b style="color:var(--gold-bright)">決めるべきは「どのETFか」ではなく「網はどちらなのか」</b>——これは点数ではなく人の決断。</p>
+ </div>
+
+ <div class="panel">
+  <h2>残したもの / 消したもの</h2>
+  <p style="font-size:13.5px;color:var(--ink-soft)">
+  <b>残した</b>: Ⅰ思想（コストの算術は今も正しい——唯一、事前に確実に判り複利で効く数字）／
+  <b>Ⅱ ルックスルー点検</b>（これは採点ではなく<u>測定</u>。MSFT 28.4%・半導体38.2〜41.8%・上位5で56.5% を出したのはここ）／
+  Ⅳ 現在の網の<b>生の数字</b>（経費率・純資産・銘柄数・上位10・最大セクター・城との重複）。<br>
+  <b>消した</b>: 網Ωの合成点／土台の関門（広さ≥60 ∧ コスト≥68 ∧ 重複&lt;30%）／1本ずつ入力する採点機／
+  端末側の一括採点 <code>night/score_ami.js</code>（2026-08-19 に作って同日に畳んだ）。<br>
+  <b>キル（レバレッジ／純資産100億円未満／設定3年未満／経費率0.75%超）は Ⅰ に文として残す</b>——
+  これは点数ではなく<u>論外線</u>で、較正が要る種類のものではない。</p>
+ </div>
+
+ <div class="flag f-warn"><i>!</i><div><b>もう一度作りたくなったら、先にこれを読むこと。</b>
+  作り直すなら必要なのは「重みの調整」ではなく<b>(a)名前の重複を実測の相関へ置き換える</b>か
+  <b>(b)合成点をやめて生の数字（コスト／城との相関／存続性）を並べるだけにする</b>。
+  ⚠そして<b>何に対して当てるのかを先に決める</b>——網Ωが検定できなかったのは、
+  「良い網とは何か」の答えが測定ではなく<u>前提</u>だったから。</div></div>
 </div></div>
 
 <!-- ═══════════════ Ⅳ 現在の網 ═══════════════ -->
 <div id="pg4" class="pg"><div class="wrap block">
- <h1 style="font-size:24px">現在の網の判定</h1>
- <p class="sub" style="margin:6px 0 0">portfolio.json の網（ETF）を、この門の採点で並べる。<b>判定であって指示ではない</b>——
-  網の入替は門の外（DCA側）の決断。</p>
+ <h1 style="font-size:24px">現在の網（生の数字）</h1>
+ <p class="sub" style="margin:6px 0 0">portfolio.json の網（ETF）の<b>実測値をそのまま並べる</b>。
+  <b style="color:var(--rust)">網Ωの合成点と関門は 2026-08-19 に廃止した</b>（Ⅲ参照）——
+  <u>順位を作らず、判断材料だけを出す</u>。網の入替は門の外（DCA側）の決断。</p>
  <div id="curBox"></div>
 </div></div>
 
 <footer><div class="wrap">
  網の門 v1.0 ・ CCF Ω の別枠。<b>正本ではない</b>——門Ωの採点・売却規律S1/S2/S3・四関門をここは一切上書きしない。
- 網Ω＝幾何平均(コスト.40・土台.30・存続.20・器.10)。キル＝レバレッジ／純資産100億円未満／設定3年未満／経費率0.75%超。
+ <b>網Ωの採点は 2026-08-19 に廃止した（Ⅲ 参照）</b>——検証されておらず、分散の代理（名前の重なり）が実際の相関を説明せず、
+ 11本中1本しか通らずその1本は既定解だったため。残しているのは<b>思想・ルックスルーの測定・生の数字</b>だけ。
+ キル（レバレッジ／純資産100億円未満／設定3年未満／経費率0.75%超）は論外線として Ⅰ に文で残す。
  データ源: out/etf_profiles.json（Alpha Vantage ETF_PROFILE 実採取）・portfolio.json。
  本書は個人の投資基準の整理であり投資助言ではない。スコア・数式は枠組みであり将来を保証しない。
 </div></footer>
@@ -248,110 +274,24 @@ window.addEventListener('resize',navFade);
      ・幾何平均（弱い項が全体を殺す）
      ・白黒にできる死因だけキル、程度問題は ramp（坂）
      ・単調性を壊さない（良くしたのに点が下がる、を作らない）        */
-function gm(vals,ws){let s=0,w=0;for(let i=0;i<vals.length;i++){
- const v=Math.max(1,Math.min(100,vals[i]));s+=ws[i]*Math.log(v);w+=ws[i];}
- return Math.exp(s/w);}
-/* 単調な坂（門Ωの ramp と同じ思想。区間線形で単調性は自明） */
-function ramp(x,pts){
- if(x==null||isNaN(x))return null;
- if(x<=pts[0][0])return pts[0][1];
- for(let i=0;i<pts.length-1;i++){
-  const[a,ya]=pts[i],[b,yb]=pts[i+1];
-  if(x<=b)return ya+(yb-ya)*(x-a)/(b-a);
- }
- return pts[pts.length-1][1];
-}
+
+
 
 /* コスト: 経費率が低いほど高得点。0.03%=満点 / 0.75%=論外線 */
-function costPt(er){return ramp(er,[[0.03,100],[0.10,92],[0.20,82],[0.35,68],[0.50,55],[0.75,35],[1.50,10]]);}
+
 /* 土台の広さ: 銘柄数・上位10集中・最大セクターの幾何平均 */
-function breadthPt(n,top10,sec){
- const a=ramp(Math.log10(Math.max(n,1)),[[1,30],[1.7,50],[2,62],[2.7,80],[3,90],[3.7,100]]); // 10→30, 500→80, 5000→100
- const b=ramp(top10,[[10,100],[20,92],[30,78],[45,58],[60,38],[80,15]]);
- const c=ramp(sec,[[15,100],[25,88],[40,68],[60,45],[80,22],[95,10]]);
- return gm([a,b,c],[.30,.35,.35]);
-}
+
 /* 存続性: 純資産・年数 */
-function durPt(aum,age){
- const a=ramp(aum,[[100,25],[300,45],[1000,65],[5000,82],[20000,94],[100000,100]]); // 億円
- const b=ramp(age,[[3,40],[5,58],[10,78],[15,90],[25,100]]);
- return gm([a,b],[.55,.45]);
-}
+
 /* 器の効率: 日本の個人投資家として。分配のたびに課税される器は複利が漏れる */
-function wrapPt(w){return ({jp_toshin:95,jp_etf:72,us_etf:62})[w]||70;}
 
-function scoreETF(){
- const v=id=>{const e=document.getElementById(id);return e?e.value:'';};
- const num=id=>{const x=parseFloat(v(id));return isNaN(x)?null:x;};
- const er=num('e_er'),aum=num('e_aum'),age=num('e_age'),n=num('e_n'),
-       top10=num('e_top10'),sec=num('e_sec'),ov=num('e_ov')||0;
- const lev=v('e_lev'),rep=v('e_rep'),wrap=v('e_wrap');
- const kills=[],warns=[];
- if(lev==='yes')kills.push('レバレッジ／インバース型——日次リセットのボラティリティ減価で長期保有は数学的に目減りする');
- if(aum!=null&&aum<100)kills.push(`純資産 ${aum}億円 &lt; 100億円——償還リスク`);
- if(age!=null&&age<3)kills.push(`設定から ${age}年 &lt; 3年——実績が無い`);
- if(er!=null&&er>0.75)kills.push(`経費率 ${er}% &gt; 0.75%——20年で終価の約14%が消える`);
- if(rep==='synth')warns.push('合成（スワップ）型——カウンターパーティリスク。現物型を優先する');
- if(ov>=30)warns.push(`城との重複 ${ov}%——土台ではなく城の増幅器になっている`);
 
- const C=costPt(er==null?0.5:er), B=breadthPt(n||1,top10==null?50:top10,sec==null?50:sec),
-       D=durPt(aum==null?100:aum,age==null?3:age), T=wrapPt(wrap);
- let W=gm([C,B,D,T],[.40,.30,.20,.10]);
- /* 城との重複は「土台の資格」を削る。採点でなく関門で使うのが門Ωの作法だが、
-    網は本数が少なく関門だけだと情報が消えるので、段階減点にして序列を残す */
- const ovPen = ov<=10?0 : ramp(ov,[[10,0],[20,3],[30,7],[50,14],[70,22]]);
- W=Math.max(0,W-ovPen);
- if(kills.length)W=Math.min(W,Math.max(20,45-8*(kills.length-1)));
 
- const pass = kills.length===0 && B>=60 && C>=68 && ov<30;
- const tier = W>=85?['最上の土台','var(--gold-bright)']:W>=75?['良い土台','var(--jade)']
-            : W>=62?['使えるが妥協あり','var(--steel)']:['土台として不適','var(--rust)'];
-
- let h=`<div style="display:flex;gap:16px;align-items:baseline;flex-wrap:wrap">
-   <div><div class="sub">網Ω</div><div class="big" style="color:${tier[1]}">${W.toFixed(1)}</div></div>
-   <div><div class="sub">判定</div><div style="font-family:var(--mincho);font-size:20px;color:${tier[1]}">${tier[0]}</div></div>
-   <div><div class="sub">土台の関門</div><div style="font-family:var(--mincho);font-size:20px;color:${pass?'var(--jade)':'var(--rust)'}">${pass?'🟢 通過':'⛔ 不通過'}</div></div>
-  </div><div style="margin-top:14px">`;
- const legs=[['コスト',C,.40],['土台の広さ',B,.30],['存続性',D,.20],['器の効率',T,.10]];
- for(const[nm,val,w] of legs){
-  h+=`<div style="margin:9px 0"><div style="display:flex;justify-content:space-between;font-size:12.5px">
-    <span>${nm} <span class="sub">重み${(w*100).toFixed(0)}%</span></span><b>${val.toFixed(1)}</b></div>
-    <div class="bar"><i style="width:${Math.max(0,Math.min(100,val)).toFixed(0)}%"></i></div></div>`;
- }
- h+='</div>';
- if(ovPen>0)h+=`<div class="flag f-warn"><i>!</i><div><b>城との重複 ${ov}% で −${ovPen.toFixed(1)}</b>——網は「広い土台」であるべきで、城と同じ賭けなら分散していない</div></div>`;
- kills.forEach(k=>h+=`<div class="flag f-cut"><i>✕</i><div><b>論外：</b>${k}</div></div>`);
- warns.forEach(k=>h+=`<div class="flag f-warn"><i>!</i><div>${k}</div></div>`);
- if(!kills.length&&pass)h+='<div class="flag f-ok"><i>✓</i><div>キルなし・土台の関門を通過。網の候補として使える</div></div>';
- if(!pass&&!kills.length){
-   const why=[];if(B<60)why.push(`土台の広さ ${B.toFixed(0)} &lt; 60`);
-   if(C<68)why.push(`コスト ${C.toFixed(0)} &lt; 68（経費率が高い）`);
-   if(ov>=30)why.push(`城との重複 ${ov}% ≥ 30%`);
-   h+=`<div class="flag f-warn"><i>⛔</i><div><b>土台の関門 不通過：</b>${why.join(' ／ ')}</div></div>`;
- }
- /* 20年のコスト影響を実額で見せる（抽象的な%を体感へ落とす） */
- if(er!=null){
-  const drag=(1-Math.pow(1-er/100,20))*100;
-  h+=`<div class="flag"><i>¥</i><div>経費率 ${er}% を20年払うと、終価の <b>${drag.toFixed(1)}%</b> が手数料に消える
-   （毎月10万円積立なら、20年で概算 <b>${(2400*drag/100).toFixed(0)}万円</b> 相当の重み）</div></div>`;
- }
- document.getElementById('e_out').innerHTML=h;
-}
 
 /* 実採取(out/etf_profiles.json)から機械算出した値。手で置いた数字は一つも無い——
    憶測の数値を既定値に混ぜると「測っていない」が「測って良い」に化ける（門Ωの絶対のルール2/7と同じ作法）。
    城との重複は portfolio.json の城(MSFT/ASML/RMD)基準・純資産はUSD×155で億円換算・年数は2026-08-06基準。 */
-const SAMPLES={
- VT:{t:'VT',er:0.06,aum:150040,age:18.1,n:9500,top10:20.7,sec:19.2,ov:3.6,lev:'no',rep:'phys',wrap:'us_etf'},
- XLK:{t:'XLK',er:0.08,aum:192045,age:27.6,n:75,top10:61.0,sec:99.1,ov:8.5,lev:'no',rep:'phys',wrap:'us_etf'},
- SMH:{t:'SMH',er:0.35,aum:119660,age:14.6,n:26,top10:70.8,sec:84.3,ov:5.1,lev:'no',rep:'phys',wrap:'us_etf'},
- QQQ:{t:'QQQ',er:0.18,aum:759655,age:27.4,n:100,top10:46.0,sec:57.7,ov:5.4,lev:'no',rep:'phys',wrap:'us_etf'},
-};
-function loadSample(k){const s=SAMPLES[k];if(!s)return;
- const set=(i,v)=>{const e=document.getElementById(i);if(e)e.value=v;};
- set('e_t',s.t);set('e_er',s.er);set('e_aum',s.aum);set('e_age',s.age);set('e_n',s.n);
- set('e_top10',s.top10);set('e_sec',s.sec);set('e_ov',s.ov);set('e_lev',s.lev);set('e_rep',s.rep);set('e_wrap',s.wrap);
- scoreETF();}
+
 
 /* ── コストの表（Ⅰ） ─────────────────────────────────── */
 (function costTable(){
@@ -437,37 +377,32 @@ async function boot(){
  /* ---- 現在の網の判定 ---- */
  const castle=new Set(pos.filter(p=>!etfs[p.ticker]&&p.sleeve!=='網').map(p=>p.ticker));
  let c='<div class="scroll" style="margin-top:14px"><table><thead><tr>'+
-  '<th>ETF</th><th>資産比</th><th>経費率</th><th>純資産</th><th>銘柄数</th><th>上位10</th><th>最大セクター</th><th>城との重複</th><th>網Ω</th><th>関門</th></tr></thead><tbody>';
+  '<th>ETF</th><th>資産比</th><th>経費率</th><th>20年で消える</th><th>純資産</th><th>銘柄数</th><th>上位10</th><th>最大セクター</th><th>城との重複</th></tr></thead><tbody>';
  const list=pos.filter(p=>etfs[p.ticker]);
  for(const p of list){
   const e=etfs[p.ticker];
   const top10=e.h.slice(0,10).reduce((a,b)=>a+b[1],0)*100;
   const maxSec=Math.max(...Object.values(e.sec))*100;
   const ov=e.h.filter(x=>castle.has(x[0])).reduce((a,b)=>a+b[1],0)*100;
-  const age=(new Date()-new Date(e.inc))/(365.25*864e5);
   const aumOku=e.aum*155/1e8; // USD→円(概算155)→億円
-  const C=costPt(e.er*100),B=breadthPt(e.n,top10,maxSec),D=durPt(aumOku,age),T=wrapPt('us_etf');
-  let W=gm([C,B,D,T],[.40,.30,.20,.10]);
-  const ovPen= ov<=10?0:ramp(ov,[[10,0],[20,3],[30,7],[50,14],[70,22]]);
-  W=Math.max(0,W-ovPen);
-  const pass = B>=60 && C>=68 && ov<30 && !e.lev;
-  const col=pass?'var(--jade)':'var(--rust)';
+  const drag20=(1-Math.pow(1-e.er,20))*100;   // 20年で経費率が確実に持っていく分＝唯一の確定値
   c+=`<tr><td><b>${p.ticker}</b><br><span class="sub">${e.nm}</span></td>
    <td>${p.weight_pct.toFixed(1)}%</td><td>${(e.er*100).toFixed(2)}%</td>
+   <td style="color:${drag20>=5?'var(--rust)':drag20>=2?'var(--ink)':'var(--jade)'}"><b>${drag20.toFixed(1)}%</b></td>
    <td>${(aumOku/10000).toFixed(1)}兆</td><td>${e.n}</td><td>${top10.toFixed(0)}%</td>
-   <td>${maxSec.toFixed(0)}%</td><td style="color:${ov>=30?'var(--rust)':'var(--ink)'}">${ov.toFixed(1)}%</td>
-   <td style="color:${col}"><b>${W.toFixed(1)}</b></td>
-   <td style="color:${col}">${pass?'🟢':'⛔'}</td></tr>`;
+   <td>${maxSec.toFixed(0)}%</td><td>${ov.toFixed(1)}%</td></tr>`;
  }
  c+='</tbody></table></div>';
  c+=`<div class="flag f-warn" style="margin-top:12px"><i>!</i><div>
-  <b>「城との重複」の読み方</b>——そのETFの中身のうち、城が個別に持っている銘柄が占める割合。
-  高いほど「網を買っているつもりで城を買い増している」ことになる。
+  <b>⚠「城との重複」は名前の重なりであって、実際の相関ではない。</b>
+  月次97ヶ月の実測では XLK ρ0.683（重複8.5%）に対し <b>GRID ρ0.628（重複0.0%）</b>、
+  <b>VT ρ0.819（重複3.6%）</b>——<u>名前が重ならなくても同じ動きをする</u>。
+  この欄は<b>参考</b>として残してあり、2026-08-19 に網Ωの関門から外した（Ⅲ参照）。
   <u>コストが安いことと土台が広いことは別</u>で、XLKは経費率0.08%と極めて安いが土台としては1セクターに99%寄っている。</div></div>`;
  c+=`<div class="flag"><i>◇</i><div>ここに出ていない候補（VT・VTI・国内の全世界インデックス投信など）はⅢの採点機で個別に裁ける。
   <b>国内の再投資型投信は「器の効率」で有利</b>——分配のたびに課税される器は複利が漏れるため。</div></div>`;
  cur.innerHTML=c;
 }
-document.addEventListener('DOMContentLoaded',()=>{navFade();boot();scoreETF();});
+document.addEventListener('DOMContentLoaded',()=>{navFade();boot();});
 </script>
 </body></html>
