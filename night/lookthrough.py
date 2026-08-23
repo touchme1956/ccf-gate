@@ -33,6 +33,39 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
 AS_JSON = "--json" in sys.argv
 WHATIF = "--what-if" in sys.argv
+# ★任意の網の構成を、同じ物差しで測る（2026-08-19新設）
+#   例: --net "XLK=15,SMH=15,GRID=15,MISL=5"  ＝**総資産に対する%**で網を組む。
+#   ⚠ 案をこの中にハードコードで増やし続けると必ず陳腐化する（v9.9.145 の SEMI 列挙と同じ問題）。
+#     候補を検討するたびに引数で渡せる形にしておく。指定すると --what-if も自動で立つ。
+# ★ETFの中身を**門の判定で**見る（2026-08-19新設）。--gate "MISL,GRID"
+#   なぜ要るか: 「金のつるはし（掘る人でなく道具を売る側）」を網で取りたい、という問いに
+#   この台帳は既に答えを持っている——13年の検証で唯一「効く」と出た変数 irr=85
+#   （顧客の側が再認定の費用を負う型）は、まさにつるはしの機構そのもの。
+#   ところが**ETFは同じ業界の「機構を持つ社」と「持たない社」を区別しない**。
+#   実測: 2018年ビンテージの irr=85 のうち、引用が願望形だった5社は3社が非継続
+#   （IPGP −6.6%/年・ROG +1.6%・OLED −0.6%）。**同じ業界の中で結果が割れる。**
+#   だから「この ETF を門の目で見ると何を買うことになるのか」を数える。**判定には使わない。**
+# ★ETFを「つるはしか」で見る（2026-08-19新設）。--chain "GRID,MISL"
+#   ユーザーの明示指示「ETFはirrの評価はいらない。そのETFが今後伸びる産業で金のツルハシかが大事」。
+#   つるはしの判定は**層**で行う——供給(誰が勝っても払ってもらえる) / 元請(勝者を取り合う) / 需要側(資産を運用する)。
+#   層の割り当ては night/chain_layers.json（**判断**であって測定ではない・外に出してあるので誰でも直せる）。
+#   産業の伸びは gate0_all.csv の **実測**（売上5年CAGR・営業利益率・ROIC）を保有比で加重する。
+#   ⚠測れた分だけで加重するので、**測れた割合を必ず併記する**（未取得を0と読むと薄く見える・ルール7）。
+CHAIN_SPEC = None
+for _i, _a in enumerate(sys.argv):
+    if _a == "--chain" and _i + 1 < len(sys.argv):
+        CHAIN_SPEC = sys.argv[_i + 1]
+
+GATE_SPEC = None
+for _i, _a in enumerate(sys.argv):
+    if _a == "--gate" and _i + 1 < len(sys.argv):
+        GATE_SPEC = sys.argv[_i + 1]
+
+NET_SPEC = None
+for _i, _a in enumerate(sys.argv):
+    if _a == "--net" and _i + 1 < len(sys.argv):
+        NET_SPEC = sys.argv[_i + 1]
+        WHATIF = True
 CAP = 8.0   # 門の1銘柄上限（¼ケリー・v9.9.96）。ここでは**判定に使わず物差しとして表示するだけ**
 
 # 半導体連鎖（v9.9.117 の SEMI と同じ思想＝同じ設備投資サイクルに乗るか）
@@ -165,7 +198,29 @@ def whatif(b):
                       "max_pct": round(rows[0][1] / total * 100, 1) if rows and total else 0,
                       "semi_pct": round(semi / total * 100, 1) if total else 0,
                       "n_over_cap": sum(1 for t, v in m.items() if v / total * 100 > CAP),
+                      # ★半導体は**幅**で出す（2026-08-19）。未取得を0として比べると、
+                      #   **中身が採れていない案ほど「分散して見える」**——実測 VT は9500銘柄中41件しか
+                      #   採れず未取得35%で、半導体13.8%は「薄い」ではなく「測れていない」。
+                      #   下限=未取得を全部 非半導体と置く／上限=全部 半導体と置く。
+                      #   ＝**未取得の大きさが違う案どうしを、下限だけで比べてはいけない**（ルール7）。
+                      "semi_hi": round((semi + sum(unknown.values())) / total * 100, 1) if total else 0,
                       "unknown_pct": round(sum(unknown.values()) / total * 100, 1) if total else 0})
+
+    if NET_SPEC:
+        # **総資産に対する%**で受ける（円ではない）。読めない指定は黙って無視せず落とす。
+        alloc = {}
+        for part in NET_SPEC.split(","):
+            k, _, v = part.partition("=")
+            k = k.strip().upper()
+            if not k or not v.strip():
+                raise SystemExit(f"--net の書式は 'XLK=15,SMH=15' （%）。読めない: {part!r}")
+            alloc[k] = total * float(v) / 100.0
+        miss = [k for k in alloc if k not in prof.get("etfs", {})]
+        if miss:
+            # ⚠ 中身を持っていないETFを混ぜると**分解できない分が「無い」ことにされる**（ルール7）。
+            print(f"   ⚠ 中身が未取得のETF: {', '.join(miss)}"
+                  f" — 下の『未取得』に丸ごと乗る。実際の集中はこれ以上")
+        run(f"★指定 {NET_SPEC}（網 {sum(alloc.values())/total*100:.0f}%）", alloc)
 
     run("A 現行（XLK/QQQ/SMH/FANG+）", n_map)
     tot_net = sum(n_map.values())
@@ -176,6 +231,118 @@ def whatif(b):
     run("D 網を 40%→30% に減らす（現行の中身のまま）",
         {k: v * 0.75 for k, v in n_map.items()})
     return cases
+
+
+def gate_view(specs):
+    """ETFの中身を score_all.json（門の判定）と突き合わせる。**表示だけ。**"""
+    prof = (jload("out/etf_profiles.json") or {}).get("etfs", {})
+    rows = jload("out/score_all.json") or []
+    G = {r["t"]: r for r in rows}
+    for sym in [x.strip().upper() for x in specs.split(",") if x.strip()]:
+        e = prof.get(sym)
+        if not e:
+            print(f"\n■ {sym} — ⚠ 中身が未取得（out/etf_profiles.json に無い）。**測っていない**")
+            continue
+        h = e.get("h") or []
+        cov = sum(w for _, w in h)
+        buckets = {"buy": [], "next": [], "block": [], "unrated": []}
+        irr = {}
+        for t, w in h:
+            r = G.get(t)
+            if not r:
+                buckets["unrated"].append((t, w)); continue
+            k = "buy" if r.get("buy") else ("next" if r.get("quali") else "block")
+            buckets[k].append((t, w, r))
+            v = r.get("irr")
+            if v:
+                irr[v] = irr.get(v, 0) + w
+        inl = sum(w for _, w in h) - sum(w for _, w in buckets["unrated"])
+        print(f"\n■ {sym}（{e.get('nm','')}）  中身のうち銘柄が判るのは {cov*100:.1f}%"
+              f"（残り {100-cov*100:.1f}% は配信元で symbol=n/a か未取得＝**測れていない**）")
+        print(f"   台帳にある社 {inl*100:5.1f}%  ／  台帳に無い社 {sum(w for _,w in buckets['unrated'])*100:5.1f}%")
+        for k, lab in (("buy", "🟢門が買う"), ("next", "🔵次点(資格あり)"), ("block", "⛔門が落とした")):
+            b2 = sorted(buckets[k], key=lambda x: -x[1])
+            if not b2:
+                continue
+            tot = sum(x[1] for x in b2) * 100
+            print(f"   {lab} {tot:5.1f}%  " + " ".join(
+                f"{x[0]}{x[1]*100:.1f}" for x in b2[:8]) + (" …" if len(b2) > 8 else ""))
+        if irr:
+            print("   irr の内訳: " + " / ".join(
+                f"{k}→{v*100:.1f}%" for k, v in sorted(irr.items(), reverse=True))
+                + "　（85＝顧客側が再認定を要する型＝歴史で唯一効いた刻み）")
+    return 0
+
+
+
+def chain_view(specs):
+    """ETFを『つるはしか』で見る。層＝判断（chain_layers.json）／伸び＝実測（gate0_all.csv）。**表示だけ。**"""
+    import csv as _csv
+    prof = (jload("out/etf_profiles.json") or {}).get("etfs", {})
+    lay = jload("night/chain_layers.json") or {}
+    LMAP, LNAME = lay.get("map", {}), lay.get("layers", {})
+    U = {}
+    try:
+        with open(os.path.join(ROOT, "gate0_all.csv"), encoding="utf-8-sig") as f:
+            for r in _csv.DictReader(f):
+                if r.get("ticker"):
+                    U[r["ticker"]] = r
+    except Exception as e:
+        print(f"⚠ gate0_all.csv が読めない（{e}）＝**伸びは測れていない**")
+    if not U:
+        print("⚠ 母集団が0件＝照合が成立していない。**0を発見と読まない**")
+
+    def num(r, k):
+        try:
+            v = float(r.get(k) or "")
+            return v if v == v else None
+        except Exception:
+            return None
+
+    print("\n■ つるはし判定（層＝判断 / 伸び＝実測）  物差し: night/chain_layers.json")
+    for sym in [x.strip().upper() for x in specs.split(",") if x.strip()]:
+        e = prof.get(sym)
+        if not e:
+            print(f"\n□ {sym} — ⚠ 中身が未取得。**測っていない**")
+            continue
+        h = e.get("h") or []
+        cov = sum(w for _, w in h)
+        agg = {"supply": [], "contract": [], "prime": [], "demand": [], "?": []}
+        for t, w in h:
+            agg[LMAP.get(t, "?")].append((t, w))
+        gw = {}
+        for key, col in (("cagr", "sales_cagr5"), ("opm", "opm"), ("roic", "roic_latest")):
+            num_, den = 0.0, 0.0
+            for t, w in h:
+                r = U.get(t)
+                v = num(r, col) if r else None
+                if v is not None:
+                    num_ += v * w
+                    den += w
+            gw[key] = (num_ / den * 100 if den else None, den)
+        print(f"\n□ {sym}（{e.get('nm','')}）")
+        print(f"   中身のうち銘柄が判るのは {cov*100:.1f}%")
+        for k in ("supply", "contract", "prime", "demand", "?"):
+            b = sorted(agg[k], key=lambda x: -x[1])
+            if not b:
+                continue
+            tot = sum(w for _, w in b) * 100
+            nm = LNAME.get(k, "層が未分類（＝判定していない）")
+            print(f"   {tot:5.1f}%  {nm}")
+            print("          " + " ".join(f"{t}{w*100:.1f}" for t, w in b[:9])
+                  + (" …" if len(b) > 9 else ""))
+        s = sum(w for _, w in agg["supply"]) * 100
+        c = sum(w for _, w in agg["contract"]) * 100
+        p = sum(w for _, w in agg["prime"]) * 100
+        print(f"   → 供給 {s:.1f} : 請負 {c:.1f} : 元請 {p:.1f}" +
+              ("　つるはし側が厚い" if s > c + p else "　掘る人側が厚い" if p > s else ""))
+        for key, lab in (("cagr", "売上5年CAGR"), ("opm", "営業利益率"), ("roic", "ROIC")):
+            v, den = gw[key]
+            if v is None:
+                print(f"   {lab}: **測れていない**")
+            else:
+                print(f"   {lab} {v:5.1f}%（保有の {den*100:.0f}% で加重）")
+    return 0
 
 
 def main():
@@ -209,12 +376,20 @@ def main():
         print(f"   {r['t']:6} {r['pct']:5.2f}%  ¥{round(r['yen']):>9,}")
     print(f"\n  半導体連鎖 {b['semi_pct']}%　／　上位5銘柄 {b['top5_pct']}%")
 
+    if GATE_SPEC:
+        gate_view(GATE_SPEC)
+
+    if CHAIN_SPEC:
+        chain_view(CHAIN_SPEC)
+
     if WHATIF:
         print("\n■ 網の中身・比率を替えたら（**提案であって規約ではない**）")
-        print(f"   {'案':38} {'最大の1銘柄':>16} {'半導体':>7} {'8%超':>5} {'未取得':>7}")
+        print(f"   {'案':38} {'最大の1銘柄':>16} {'半導体(下限〜上限)':>19} {'8%超':>5} {'未取得':>7}")
         for c in whatif(b):
             print(f"   {c['case']:38} {str(c['max_t'])+' '+str(c['max_pct'])+'%':>16}"
-                  f" {c['semi_pct']:6.1f}% {c['n_over_cap']:4}件 {c['unknown_pct']:6.1f}%")
+                  f" {c['semi_pct']:8.1f}〜{c['semi_hi']:5.1f}% {c['n_over_cap']:4}件 {c['unknown_pct']:6.1f}%")
+        print("   ⚠ 半導体は**幅**。上限＝未取得が全部半導体だった場合。"
+              "未取得の大きさが違う案は下限だけで比べられない（VTは9500銘柄中41件しか中身が採れていない）")
     return 0
 
 
