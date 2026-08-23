@@ -58,6 +58,11 @@ def castle():
     fx = pf.get("fx") or 0
     out = {}
     for p in pf.get("positions") or []:
+        # ★v9.9.169 から台帳(pf:portfolio)は**網(ETF)も持つ**（ユーザー指示「保有に入れてほしい」）。
+        #   網は下の net() が portfolio.json から読んで**中身へ分解する**ので、
+        #   ここで数えると **同じ ETF を2回**（丸ごと1回＋構成銘柄へ分解して1回）数える。
+        if p.get("sleeve") == "net":
+            continue
         t = (p.get("t") or "").upper()
         sh = p.get("sh") or 0
         px = p.get("npx") or p.get("bpx") or 0

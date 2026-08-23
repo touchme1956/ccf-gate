@@ -127,6 +127,7 @@ def main():
     #   二つが割れると「**株数はあるのに保有として扱われない社**」ができる——
     #   門0のHOLDINGS差替え(run_gate0_local)・四半期点検(kessan_check/calendar)・
     #   kill_impactの保有判定・make_kanshiの監視 が全部この一覧のほうを見るため。
+    #   ⚠ 突合せの対象は**個別銘柄だけ**——網(ETF)は下のとおり除く。
     #   ⚠ FAIL にはしない: 書き出しは人がブラウザから state.json だけをコミットする経路なので、
     #   **割れている瞬間は正常に存在しうる**。問題は放置されることなので、名指しで出し続ける。
     drift = {"only_state": [], "only_holdings": []}
@@ -134,7 +135,12 @@ def main():
     if "pf:portfolio" in data and os.path.exists(hp):
         try:
             pos = json.loads(data["pf:portfolio"]).get("positions") or []
-            held = {str(p.get("t") or "").upper() for p in pos if (p.get("sh") or 0) > 0}
+            # ★網(ETF)は holdings.json に**入れない**（v9.9.169）。この一覧を読むのは
+            #   門0のHOLDINGS差替え・四半期点検(kessan_check)・kill_impact・make_kanshi の
+            #   **個別銘柄の機械**だけで、指数はそのどれの対象でもない。
+            #   除かないと ETF の数だけ**永久に消えない警告**が出る＝鳴りすぎる警報は鳴らないのと同じ。
+            held = {str(p.get("t") or "").upper() for p in pos
+                    if (p.get("sh") or 0) > 0 and p.get("sleeve") != "net"}
             names = {str(t).upper() for t in
                      (json.load(open(hp, encoding="utf-8")).get("holdings") or [])}
             drift["only_state"] = sorted(held - names)
@@ -147,6 +153,39 @@ def main():
     for t in drift["only_holdings"]:
         warns.append(f"{t} は holdings.json にあるのに state.json に株数が無い"
                      "（売却済みなら holdings.json から外す／未入力ならⅦ資産で株数を入れる）")
+
+    # (7) portfolio.json と割れていないか（v9.9.169・**網が台帳に入って二つになった**）
+    #   台帳(state.json) … 門(ブラウザ)の Ⅵ/Ⅶ/盤/📈成績 が読む**今の実額**
+    #   portfolio.json  … night の道具（net_plan・lookthrough）が読む**repoのスナップショット**
+    #   ＝同じ保有を二つが述べる。割れると「同じ台帳を見る二つの検査器が違うことを言う」(v9.9.65)。
+    #   ⚠ FAIL にはしない——ブラウザで買った直後は**割れているのが正常**（人が両方を更新するまで）。
+    #     問題は放置されることなので、**株数の差を名指しで出し続ける**。
+    pj = os.path.join(ROOT, "portfolio.json")
+    if "pf:portfolio" in data and os.path.exists(pj):
+        try:
+            led = {}
+            for p in (json.loads(data["pf:portfolio"]).get("positions") or []):
+                t = str(p.get("t") or "").upper()
+                if t and p.get("sleeve") != "cash":
+                    led[t] = led.get(t, 0) + (p.get("sh") or 0)
+            snap = {}
+            for x in (json.load(open(pj, encoding="utf-8")).get("positions") or []):
+                t = str(x.get("ticker") or "").upper()
+                if t:
+                    snap[t] = snap.get(t, 0) + (x.get("sh") or 0)
+            for t in sorted(set(led) | set(snap)):
+                a, b = led.get(t), snap.get(t)
+                if a is None:
+                    warns.append(f"{t} は portfolio.json にあるのに state.json の台帳に無い"
+                                 "（門のⅦ資産・盤・📈成績から漏れる）")
+                elif b is None:
+                    warns.append(f"{t} は state.json の台帳にあるのに portfolio.json に無い"
+                                 "（night/net_plan・lookthrough から漏れる）")
+                elif a != b:
+                    warns.append(f"{t} の株数が割れている: state.json {a} vs portfolio.json {b}"
+                                 "——門(ブラウザ)と night の道具が違う保有を見る")
+        except Exception as e:
+            warns.append(f"portfolio.json との突合せができない: {e}")
 
     if AS_JSON:
         print(json.dumps({"ok": not fails, "savedAt": saved, "n": len(data),

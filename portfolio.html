@@ -193,7 +193,7 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
 
  <div class="card">
   <h2>保有一覧</h2>
-  <p class="sub">個別銘柄の保有だけを出す（金額なし・ETFは扱わない）。右の<b>□スイッチ</b>がチェック＝保有中。外すと売却として記録し「売却済み」へ移る。門の出口判定（<b style="color:var(--v1)">S1売却検討</b>／<b style="color:var(--v2)">S2縮小</b>／<b style="color:var(--v3)">S3記録のみ</b>／<b style="color:var(--v4)">ホールド</b>）は各行の下に色つきで出る——判定は門（Ⅳ台帳）を開くと更新される。</p>
+  <p class="sub">保有を出す（個別銘柄＋<b>網(ETF)</b>・v9.9.169）。<b>出口判定が付くのは個別銘柄だけ</b>——門Ωは指数を裁かないので網の行に S1/S2/S3 は出ない。右の<b>□スイッチ</b>がチェック＝保有中。外すと売却として記録し「売却済み」へ移る。門の出口判定（<b style="color:var(--v1)">S1売却検討</b>／<b style="color:var(--v2)">S2縮小</b>／<b style="color:var(--v3)">S3記録のみ</b>／<b style="color:var(--v4)">ホールド</b>）は各行の下に色つきで出る——判定は門（Ⅳ台帳）を開くと更新される。</p>
   <div style="margin:0 0 10px"><button class="btn" id="rescoreBtn" onclick="pfRescorePrompt(this)" style="border-color:rgba(84,184,138,.5);color:#8fc9a4;background:linear-gradient(180deg,rgba(84,184,138,.20),rgba(84,184,138,.06))" title="保有の個別銘柄を、今の門が必要とする全項目で採点し直す依頼文をコピー。Claudeに貼ると完成パックJSONが返る→Ⅲ採点機に取込">📋 個別の再採点依頼文をコピー</button> <span class="mini" style="text-align:left;display:inline">最新データで門Ω＋門Xにかけ直す。返ったJSONを門「Ⅲ採点機」の貼付欄へ。</span></div>
   <div id="holdList"></div>
  </div>
@@ -241,11 +241,14 @@ let P = load();
 function load(){
  try{const s=localStorage.getItem(LS_KEY); if(s){const o=JSON.parse(s);
   if(o&&Array.isArray(o.positions)){
-   // 移行(2026-08-03): 保存済みの網(ETF)行を削除する。ユーザー明示指示——ページを個別銘柄だけに。
-   const n=o.positions.length;
-   o.positions=o.positions.filter(p=>p&&p.sleeve!=='net');
-   /* v9.9.131: 移行の書き戻しは**機械**＝dirty を立てない（人の決定ではない） */
-   if(o.positions.length!==n){ try{ccfState.quiet(()=>localStorage.setItem(LS_KEY, JSON.stringify(o)));}catch(e){try{localStorage.setItem(LS_KEY, JSON.stringify(o));}catch(_){}} }
+   /* ★網(ETF)の行は**消さない**（v9.9.169・2026-08-23 ユーザー指示「保有に入れてほしい」）。
+      2026-08-03 の指示「ページを個別銘柄だけに」で `sleeve:'net'` を削除していたが、
+      その結果 **ETFはこの端末の台帳(pf:portfolio)に一行も存在せず**、
+      Ⅶ資産・📊盤の総資産/含み損益・📈成績が**城(個別)だけ**を出していた
+      （実測 2026-08-23: 総資産 ¥1.15M と表示・実勢は ¥2.31M）。
+      ユーザーの新しい指示が 2026-08-03 の指示を上書きする。**移行の削除は撤去**した。
+      ⚠ただし「個別銘柄だけを裁く」という**門の思想は不変**——網の行に
+        出口判定(S1/S2/S3)は付けない（門Ωは指数を裁かない）。下の render() を見よ。 */
    return o;
   }}}catch(e){}
  return JSON.parse(JSON.stringify(DEFAULT));
@@ -312,7 +315,8 @@ function render(){
  // ---- 保有一覧（右側は□保有/売却スイッチ）------------------------------------------
  // 2026-08-03「保有の色を統一してほしい」で判定色・色丸・網/城バッジを全廃 →
  // 2026-08-04「保有の色分けは消さないでほしい」で**判定の色だけ戻した**。
- // 網/城バッジは戻さない（ETFを扱わなくなり全行が城＝情報量ゼロ）。□スイッチもそのまま。
+ // 網/城バッジは戻さない（判定色は「判定」の意味に限定する）。□スイッチもそのまま。
+ // v9.9.169: 網(ETF)の行が戻ったので、網であることは**info の文字**で言う（色は使わない）。
  const vmap=(function(){try{return JSON.parse(localStorage.getItem('pf:verdicts')||'{}');}catch(e){return {};}})();
  const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm];                     // 名の完全一致
    const pt=(p.t||'').toUpperCase();
@@ -328,8 +332,8 @@ function render(){
   if(!v.ts)return ' · 判定日不明（門Ⅳで更新）';
   const d=Math.floor((Date.now()-v.ts)/864e5);
   return d>90?` · ⚠判定${d}日前（門Ⅳで更新を）`:` · 判定${d===0?'今日':d+'日前'}`; };
- // 並び: 個別(城)→現金。枠内は評価額順（金額は出さないが順序の錨には使う）
- const ord={castle:0,cash:1};
+ // 並び: 個別(城)→網(ETF)→現金。枠内は評価額順（金額は出さないが順序の錨には使う）
+ const ord={castle:0,net:1,cash:2};
  const sorted=shown.slice().sort((a,b)=>(ord[a.sleeve]??0)-(ord[b.sleeve]??0)||(b._v||0)-(a._v||0));
  document.getElementById('holdList').innerHTML = sorted.length
    ? sorted.map(p=>{
@@ -349,9 +353,14 @@ function render(){
            amtTxt=`${det}<b style="color:var(--ink,#dfe6f2)">¥${Math.round(p._v).toLocaleString()}</b>${total>0?`（${(p._v/total*100).toFixed(1)}%）`:''}`;
          } else if(p.sleeve!=='cash'){ amtTxt='<span style="color:var(--muted)">金額未入力（✎編集で株数と単価を）</span>'; }
        }
-       const info=[p.t||'', p.sleeve==='cash'?'現金':'', amtTxt, vTxt].filter(Boolean).join(' · ');
+       // v9.9.169: 網は「門の裁きではない」と行に書く——出口判定が付かない理由を画面に出す（v9.9.52）
+       const kindTxt = p.sleeve==='cash' ? '現金'
+                     : p.sleeve==='net'  ? '網(ETF)・門の裁きではない' : '';
+       const info=[p.t||'', kindTxt, amtTxt, vTxt].filter(Boolean).join(' · ');
        // □スイッチ(2026-08-03 ユーザー指示): チェック=保有中。外すと売却として記録し「売却済み」へ移す
-       const sw = (p.sleeve==='castle')
+       // v9.9.169: 網にも□スイッチを出す——出さないと**売却を記録する経路が無く行を外せない**
+       //   （出口判定を付けないこととは別。判定は門の仕事、記帳は台帳の仕事）
+       const sw = (p.sleeve==='castle'||p.sleeve==='net')
          ? `<label class="hswitch"><input type="checkbox" checked onchange="pfSell(${idx},this)">保有</label>`
          : '<div class="vlabel" style="color:var(--muted)">—</div>';
        return `<div class="row"><div class="nm">${dot}${ccfIcon(p.t||p.nm)}${p.nm||p.t}<div class="kind">${info}</div></div>${sw}</div>`;
@@ -771,7 +780,11 @@ function pfAddShares(d){
   if(!(+p.npx>0)&&px>0) p.npx=px;
   if(!p.ccy&&d.ccy) p.ccy=d.ccy;
  }else{
-  P.positions.push({t:up, nm:d.nm||up, sleeve:'castle', kind:'個別',
+  /* v9.9.169: 袖(城/網)は**頼む側が言う**。言わなければ従来どおり城＝既定は変えない。
+     ⚠ 網の行に出口判定は付かない（門Ωは指数を裁かない）ので、この一語が
+       「門が裁く対象か」を分ける唯一の印になる。 */
+  const sl = (d.sleeve==='net') ? 'net' : 'castle';
+  P.positions.push({t:up, nm:d.nm||up, sleeve:sl, kind:(sl==='net'?'ETF':'個別'),
                     ccy:d.ccy||'USD', bd:'', sh:sh, bpx:px||0, npx:px||0, v:0});
  }
  persist(); render();

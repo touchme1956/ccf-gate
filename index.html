@@ -913,7 +913,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
      ⚠ グラフは外部ライブラリを使わない素のSVG（CSPで外部スクリプトは読めない・二重実装も作らない）。 -->
 <div id="pg12" class="pg">
  <h1 class="serif">📈 成績</h1>
- <p class="intro"><b>同じ円を同じ日に S&amp;P500 へ入れていたら</b>——を毎日引き直したグラフ。<b>すべて円建て</b>で、指数も円へ直してある。<details class="why plain" data-fold="2"><summary>つづき</summary><div class="why-body"><b>表示専用で判定には使わない</b>——売りは S1/S2/S3・買いは四関門のみで動く。計算は端末の <code>night/fetch_returns.py</code> が持ち、門は <code>out/returns.json</code> と <code>out/returns_series.json</code> を描くだけ（v9.9.65）。<b>毎営業日 market.yml が更新する</b>ので、開けば最新になっている。⚠ 買付日が<b>想定</b>の行があるうちは、この線そのものが置いた前提の上にある——窓のどこを取るかで差がどれだけ動くかは下の表に出してある。⚠ 網(ETF)は Ⅶ資産が扱わない設計なので、これは<b>城（個別銘柄）だけ</b>の成績で、資産全体ではない。</div></details></p>
+ <p class="intro"><b>同じ円を同じ日に S&amp;P500 へ入れていたら</b>——を毎日引き直したグラフ。<b>すべて円建て</b>で、指数も円へ直してある。<details class="why plain" data-fold="2"><summary>つづき</summary><div class="why-body"><b>表示専用で判定には使わない</b>——売りは S1/S2/S3・買いは四関門のみで動く。計算は端末の <code>night/fetch_returns.py</code> が持ち、門は <code>out/returns.json</code> と <code>out/returns_series.json</code> を描くだけ（v9.9.65）。<b>毎営業日 market.yml が更新する</b>ので、開けば最新になっている。⚠ 買付日が<b>想定</b>の行があるうちは、この線そのものが置いた前提の上にある——窓のどこを取るかで差がどれだけ動くかは下の表に出してある。⚠ <b>網(ETF)も 2026-08-23 から保有に入っている</b>（v9.9.169・ユーザー指示「保有に入れてほしい」）。ただし<b>取得額が測れない行はこの合計に入らない</b>——入っている本と入っていない本は下の合計の行と ℹ の行が<b>名指しで</b>出す。「入っていない」と「ゼロ」を取り違えないよう、欠けている重み(%)まで書いてある。</div></details></p>
  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
    <button onclick="ccfPerf()" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
  </div>
@@ -1336,7 +1336,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.168</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.169</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
@@ -3330,14 +3330,57 @@ function ccfNetOv(){ try{const o=JSON.parse(localStorage.getItem('pf:net')||'nul
    これ一つを読む。二箇所で足すと「同じ台帳を見る二つが違うことを言う」。
    overlay は¥へ足し、**総資産も同じだけ増える**（新規資金で買ったので当然）＝他の行の%はそのぶん薄まる。
    基準は一つ（portfolio.json の¥ ＋ 記録した時点の¥）で、既存の行の評価は一切いじらない。 */
+/* ★台帳(pf:portfolio)を円で読む（v9.9.169）。**城も網も同じ一つの台帳**から採る。
+   評価は Ⅶ保有の posValue と同じ式（株数×(現値||買付単価)×ドル円）。
+   ⚠**株数があるのに値段が無い行が一つでもあれば、地図ごと諦める**（ok:false）——
+     その行だけ0円で数えると、その本が「持っていない」ことになり
+     不足按分がそこへ厚く流れる。livePos の bad.v と同じ作法（ルール7）。 */
+function ccfLedgerMap(){
+  let o=null; try{o=JSON.parse(localStorage.getItem('pf:portfolio')||'null');}catch(e){}
+  if(!o||!Array.isArray(o.positions)||!o.positions.length)
+    return {ok:false,why:'台帳(Ⅶ保有)に保有が無い'};
+  const fx=+o.fx||0, byT={}; let why='';
+  for(const p of o.positions){
+    const t=String(p.t||'').toUpperCase(); if(!t)continue;
+    const sh=+p.sh||0, px=(+p.npx||0)>0?+p.npx:(+p.bpx||0);
+    let v=0;
+    if(sh>0&&px>0){
+      if(p.ccy==='JPY')v=sh*px;
+      else if(fx>0)v=sh*px*fx;
+      else { why=t+' の円換算にドル円が要る（台帳の fx が空）'; break; }
+    }else{
+      v=+p.v||0;
+      if(!(v>0)&&sh>0){ why=t+' は株数があるのに値段が無い（Ⅶ保有で単価を）'; break; }
+    }
+    if(!(v>0))continue;
+    // 袖の名は台帳が castle/net、portfolio.json が 城/網。**ここで一つに揃える**
+    const sl=(p.sleeve==='net')?'網':(p.sleeve==='castle')?'城':'';
+    const e=byT[t]||(byT[t]={v:0,sleeve:sl});
+    e.v+=v; if(!e.sleeve)e.sleeve=sl;
+  }
+  if(why)return {ok:false,why};
+  if(!Object.keys(byT).length)return {ok:false,why:'台帳に円で評価できる保有が無い'};
+  return {ok:true,byT,asof:o.asof||''};
+}
+/* 保有%の**単一実装**（v9.9.65）——◈網の節・📋今月の注文書・城/網の振り分け(__ccfSleeveNow)・
+   城の pos%(livePos) が**これ一つ**を読む。二箇所で足すと「同じ台帳を見る二つが違うことを言う」。
+   ★出所は ① 台帳(pf:portfolio) ② 読めなければ portfolio.json のスナップショット、の順。
+     台帳を第一にするのは v9.9.30 が城で決めた作法（記帳凍結の実額より**今の実額**）。
+     どちらを使ったかは src に入れて**画面に出す**——基準を黙って切り替えない。 */
 function ccfPfLive(pf){
-  if(!pf||!Array.isArray(pf.positions))return null;
   const o=ccfNetOv(); let add=null, dropped=null;
-  if(o){ const b=String(o.base||''), a=String(pf.asof||'');
-    if(a&&b&&a>b)dropped={base:b,asof:a,add:o.add}; else add=o.add; }
-  const byT={};
-  for(const q of pf.positions){ if(!q||!q.ticker)continue;
-    byT[String(q.ticker).toUpperCase()]={v:+q.value_jpy||0,sleeve:q.sleeve||'',addJpy:0,addSh:0,noPx:false}; }
+  const snapAsof=String((pf&&pf.asof)||'');
+  if(o){ const b=String(o.base||'');
+    if(snapAsof&&b&&snapAsof>b)dropped={base:b,asof:snapAsof,add:o.add}; else add=o.add; }
+  const L=ccfLedgerMap();
+  let byT=null, src='', asof='', why='';
+  if(L.ok){ byT=L.byT; src='ledger'; asof=L.asof||snapAsof; }
+  else if(pf&&Array.isArray(pf.positions)&&pf.positions.length){
+    byT={}; for(const q of pf.positions){ if(!q||!q.ticker)continue;
+      byT[String(q.ticker).toUpperCase()]={v:+q.value_jpy||0,sleeve:q.sleeve||''}; }
+    src='snapshot'; asof=snapAsof; why=L.why;
+  }else return null;
+  for(const t in byT){ byT[t].addJpy=0; byT[t].addSh=0; byT[t].noPx=false; }
   if(add)for(const k in add){ const t=String(k).toUpperCase(), a=add[k]||{};
     if(!byT[t])byT[t]={v:0,sleeve:'網',addJpy:0,addSh:0,noPx:false};
     byT[t].addJpy=+a.jpy||0; byT[t].addSh=+a.sh||0;
@@ -3347,43 +3390,15 @@ function ccfPfLive(pf){
   let sc=0,sn=0; const nt=[];
   for(const t in byT){ const w=byT[t].v/tot*100; byT[t].w=w;
     if(byT[t].sleeve==='城')sc+=w; else if(byT[t].sleeve==='網'){sn+=w; nt.push(t);} }
-  return {total:tot,byT,c:sc,n:sn,net:nt,asof:pf.asof||'',add:add||null,dropped,
+  return {total:tot,byT,c:sc,n:sn,net:nt,asof,src,why,add:add||null,dropped,
           hasOv:!!(add&&Object.keys(add).length)};
 }
-/* 記録の書き込み。**土台(base)が変わったら前の記録は捨てる**——portfolio.json が更新されたら
-   その買付は既にスナップショットに入っている（上の規約と同じ理由）。 */
-function ccfNetAddSave(t,sh,jpy,base){
-  let o=ccfNetOv();
-  if(!o||String(o.base||'')!==String(base||''))o={base:String(base||''),add:{}};
-  const k=String(t).toUpperCase(), a=o.add[k]||{sh:0,jpy:0,n:0};
-  a.sh=(+a.sh||0)+sh; a.jpy=(+a.jpy||0)+(jpy||0); a.n=(+a.n||0)+1;
-  a.last=new Date().toISOString().slice(0,10); o.add[k]=a;
-  localStorage.setItem('pf:net',JSON.stringify(o));   // state.js の包みが dirty を立てる
-  return a;
-}
-function ccfNetBought(btn){
-  const wrap=btn.parentElement, inp=wrap.querySelector('input'), out=wrap.querySelector('.bought-msg');
-  const t=String(inp.dataset.t||'').toUpperCase(), sh=parseFloat(inp.value)||0;
-  const px=parseFloat(inp.dataset.px)||0, ccy=inp.dataset.ccy||'USD';
-  const base=(typeof window!=='undefined'&&window.__ccfPfAsof)||'';
-  const bad=m=>{ out.style.color='#d69a3c'; out.textContent=m; };
-  if(!t)return bad('銘柄が空');
-  if(!(sh>0))return bad('株数を入れてください');
-  /* ⚠ 土台の asof が無いと「いつのスナップショットに重ねた記録か」が判らず、
-     次に portfolio.json が更新されたときに二重計上を捨てられない。だから記録しない。 */
-  if(!base)return bad('portfolio.json が読めていないので記録できません（重ねる土台の asof が要る）');
-  const fx=+((typeof window!=='undefined'&&window.__ccfFxU)||0);
-  const jpy = px>0 ? Math.round(ccy==='JPY' ? sh*px : (fx>0 ? sh*px*fx : 0)) : 0;
-  let a; try{ a=ccfNetAddSave(t,sh,jpy,base); }catch(e){ return bad('保存できません: '+(e&&e.message||e)); }
-  btn.disabled=true; btn.style.opacity=.5;
-  ccfToast('✓ '+t+' を +'+sh+'株（記録の累計 '+a.sh+'株'+((+a.jpy>0)?'・'+ccfYen(a.jpy):'')+'）'
-    +((jpy>0)?'　→ 保有%と今月の按分に反映。'
-             :'　⚠ 単価が取れず¥に換算できていません＝この株数ぶん保有%は動きません（推測の単価を入れないため）。')
-    +'state.json の書き出しを忘れずに', true);
-  if(typeof renderPlan==='function')renderPlan();
-}
-/* 取消——Ⅶ資産のような編集画面が網には無いので、**打ち間違いを直す道**を必ず用意する
-   （足せるのに直せないと、誤記録が localStorage を手で触るまで永久に残る）。 */
+/* ★v9.9.169 で **pf:net への書き込みは撤去**した（2026-08-23 ユーザー指示「保有に入れてほしい」）。
+   網の行の「＋株」は個別株と**同じ ccfBought**＝Ⅶ保有(portfolio.html)の台帳へ postMessage で足す。
+   ⚠ 読みと取消だけ残す——**既に記録した人の決定を黙って消さない**（v9.9.52）。
+     旧経路の記録は下の ccfPfLive が台帳の上に重ねて数え続け、
+     portfolio.json が新しくなった時点で規約どおり捨てられる（下記 dropped）。 */
+/* 取消——旧経路(pf:net)の記録を消す道。**足せるのに直せない画面を作らない**。 */
 function ccfNetUndo(t){
   const o=ccfNetOv(); const k=String(t||'').toUpperCase();
   if(!o||!o.add||!o.add[k])return;
@@ -3393,20 +3408,21 @@ function ccfNetUndo(t){
   ccfToast('✓ '+k+' の記録（+'+(+a.sh||0)+'株）を取り消しました', true);
   if(typeof renderPlan==='function')renderPlan();
 }
-/* 網の行の「＋株」（v9.9.168）。**入力欄とボタンの中身は ccfBoughtFields の単一実装**を
-   個別株と共有し、書き手だけ ccfNetBought へ差し替える（v9.9.65: 二重に持たない）。
-   記録がある行には**累計と取消**を必ず出す——足せるのに直せない画面を作らない。 */
+/* 網の行の「＋株」（v9.9.168 → v9.9.169 で書き手も個別株と同じにした）。
+   入力欄・ボタン・書き込みのすべてを個別株と共有し、**違うのは袖(sleeve)の一語だけ**（v9.9.65）。
+   旧経路(pf:net)の記録が残っている行には**累計と取消**を出す——黙って消さない。 */
 function ccfNetBoughtCtl(r,qq){
   const px=(qq&&qq.px>0)?qq.px:0, ccy=(qq&&qq.ccy)||'USD';
-  let h=ccfBoughtBtn(r.t,r.t,px,ccy,'ccfNetBought');
+  let h=ccfBoughtBtn(r.t,r.t,px,ccy,'net');
   if((r.addSh||0)>0){
     h+=`<span style="white-space:nowrap;margin-left:6px;font-size:10.5px;color:#6fa8c9"`
-      +` title="このブラウザに記録した買付（pf:net）。portfolio.json のスナップショットに重ねて保有%を出しています。`
-      +`portfolio.json が新しくなったらこの記録は捨てられます（二重に数えないため）。state.json へ書き出すのを忘れずに">`
-      +`記録 +${r.addSh}株${(r.addJpy>0)?'（'+ccfYen(r.addJpy)+'）':''}</span>`
+      +` title="旧経路(pf:net)でこのブラウザに記録した買付。台帳(Ⅶ保有)の上に重ねて保有%を出しています。`
+      +`v9.9.169 から＋株は台帳へ直接足すので、新しい記録はここに出ません。`
+      +`portfolio.json が新しくなったらこの旧記録は捨てられます（二重に数えないため）">`
+      +`旧記録 +${r.addSh}株${(r.addJpy>0)?'（'+ccfYen(r.addJpy)+'）':''}</span>`
       +(r.noPx?`<span style="white-space:nowrap;margin-left:5px;font-size:10.5px;color:#d69a3c"`
         +` title="記録した時に盤へ現在価格が無く、¥に換算できていない。保有%はこの株数ぶん動きません（推測の単価を入れないため・ルール7）">⚠ ¥未換算</span>`:'')
-      +`<button onclick="ccfNetUndo('${r.t}')" title="この本の記録を取り消す（portfolio.json は触りません）"`
+      +`<button onclick="ccfNetUndo('${r.t}')" title="この本の**旧記録**を取り消す（台帳・portfolio.json は触りません）"`
       +` style="margin-left:5px;padding:1px 7px;font-size:10.5px;font-family:inherit;cursor:pointer;`
       +`background:transparent;border:1px solid var(--dim);border-radius:5px;color:var(--dim)">取消</button>`;
   }
@@ -3558,14 +3574,14 @@ const ccfYen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
    **判定には一切効かない**——保有%は配分（今月いくら買うか）にだけ使い、Ω・四関門・売却規律は不変。 */
 function ccfBoughtEsc(s){ return String(s).replace(/"/g,'&quot;'); }
 /* 入力欄＋ボタンの中身（注文書の行も、銘柄の行も**これ一つ**を使う＝二重実装を作らない・v9.9.65） */
-function ccfBoughtFields(t,nm,px,ccy,sh,fn){
-  const q=ccfBoughtEsc;
+function ccfBoughtFields(t,nm,px,ccy,sh,sleeve){
+  const q=ccfBoughtEsc, sl=(sleeve==='net')?'net':'castle';
   return `<input type="number" min="0" step="1" value="${sh||''}" data-t="${q(t)}" data-nm="${q(nm)}"`
-   +` data-px="${px||0}" data-ccy="${q(ccy||'USD')}"`
+   +` data-px="${px||0}" data-ccy="${q(ccy||'USD')}" data-sleeve="${sl}"`
    +` style="width:62px;padding:2px 6px;font-size:11.5px;font-family:inherit;background:var(--panel);`
    +`border:1px solid var(--line);border-radius:5px;color:var(--ink)">`
    +`<span style="font-size:10.5px;color:var(--dim)">株</span>`
-   +`<button onclick="${fn||'ccfBought'}(this)" style="padding:2px 10px;font-size:11px;font-family:inherit;cursor:pointer;`
+   +`<button onclick="ccfBought(this)" style="padding:2px 10px;font-size:11px;font-family:inherit;cursor:pointer;`
    +`background:rgba(143,201,164,.16);border:1px solid rgba(143,201,164,.5);border-radius:5px;color:var(--jade)"`
    +` title="Ⅶ保有の株数へ足す（加算）。買付単価は加重平均で更新。判定には使わない">✓ 保有へ</button>`
    +`<span class="bought-msg" style="font-size:10.5px"></span>`;
@@ -3583,18 +3599,18 @@ function ccfBoughtCtl(b){
    直前の版で「無駄な文字を減らす」ことをやったので、40行ぶんの入力欄を常時出すのは自分で打ち消す。
    ⚠**価格が無くても記録できる**（日本株はFinnhub無料枠外で盤に現値が無い）。ただし
    **推測の単価は入れない**（絶対のルール7）——株数だけ足し、Ⅶ保有は「金額未入力」と出す。 */
-function ccfBoughtBtn(t,nm,px,ccy,fn){
+function ccfBoughtBtn(t,nm,px,ccy,sleeve){
   if(!t)return '';
   const q=ccfBoughtEsc;
   return `<span class="bctl" style="white-space:nowrap;margin-left:6px;display:inline-flex;align-items:center;gap:5px"`
-   +` data-t="${q(t)}" data-nm="${q(nm)}" data-px="${px||0}" data-ccy="${q(ccy||'USD')}" data-fn="${q(fn||'ccfBought')}">`
+   +` data-t="${q(t)}" data-nm="${q(nm)}" data-px="${px||0}" data-ccy="${q(ccy||'USD')}" data-sleeve="${(sleeve==='net')?'net':'castle'}">`
    +`<button onclick="ccfBoughtOpen(this)" title="買った株数をⅦ保有へ足す（加算）。判定には使わない"`
    +` style="padding:4px 8px;font-size:11px;font-family:inherit;cursor:pointer;background:rgba(143,201,164,.10);`
    +`border:1px solid rgba(143,201,164,.35);border-radius:6px;color:#8fc9a4">＋株</button></span>`;
 }
 function ccfBoughtOpen(btn){
   const w=btn.parentElement, d=w.dataset, px=parseFloat(d.px)||0;
-  w.innerHTML=ccfBoughtFields(d.t,d.nm,px,d.ccy,'',d.fn)
+  w.innerHTML=ccfBoughtFields(d.t,d.nm,px,d.ccy,'',d.sleeve)
    +(px>0?'':`<span style="font-size:10px;color:#c0894a" title="盤(out/dashboard.json)に現在価格が無い（日本株はFinnhub無料枠外）。推測の単価は入れないので、株数だけ記録してⅦ保有で単価を入れる">単価未取得</span>`);
   const i=w.querySelector('input'); if(i)i.focus();
 }
@@ -3634,6 +3650,7 @@ function ccfBought(btn){
     btn.disabled=true; btn.style.opacity=.5;
     /* 単価が無いまま記録した行は Ⅶで「金額未入力」になる。黙って0円の保有を作らない（ルール7）ので必ず言う */
     const noPx=!(parseFloat(inp.dataset.px)>0);
+    const isNet=(inp.dataset.sleeve==='net');
     ccfToast('✓ '+(r.msg||'')+(noPx?'　⚠ 単価は未記録（盤に現在価格が無い）——Ⅶ保有で入れてください':'')
       +'　→ Ⅶ保有に反映。state.json の書き出しを忘れずに',true);
     /* ★買ったのに「採点待ち」のままだった（2026-08-11 ユーザー「別枠のRBCのホールドが青くならない」）。
@@ -3643,8 +3660,10 @@ function ccfBought(btn){
        ＝「保有」が Ⅶの株数 と 門の保有印 の二箇所にあり、記帳が片方しか動かしていなかった。
        買った＝保有なので、ここで保有印も付けて台帳を引き直す（表が書き直されて色が付く）。
        ⚠**外すのはここではやらない**——0株の記帳経路が無い（sh>0が必須）ので、
-       解除はⅣ台帳の保有トグル＝人の明示操作に残す（黙って保有印を消さない）。 */
-    try{
+       解除はⅣ台帳の保有トグル＝人の明示操作に残す（黙って保有印を消さない）。
+       ⚠**網(ETF)には付けない**（v9.9.169）——保有印は「門が出口判定を出す対象」の印で、
+         門Ωは指数を裁かない。付けるとⅣ台帳が採点していない社の判定を書こうとする。 */
+    if(!isNet)try{
       const key=inp.dataset.nm||inp.dataset.t;
       if(key){
         let hs=new Set();
@@ -3660,7 +3679,7 @@ function ccfBought(btn){
          if(typeof ccfDash==='function'&&db&&db.innerHTML.trim())ccfDash(); }catch(_){}
   };
   frame.contentWindow.postMessage({type:'ccfPfBuy',id:id,t:inp.dataset.t,nm:inp.dataset.nm,
-    sh:sh,px:parseFloat(inp.dataset.px)||0,ccy:inp.dataset.ccy},'*');
+    sh:sh,px:parseFloat(inp.dataset.px)||0,ccy:inp.dataset.ccy,sleeve:inp.dataset.sleeve},'*');
   setTimeout(()=>{ if(!done&&window.__ccfBuyWait[id]){ delete window.__ccfBuyWait[id];
     out.style.color='#d69a3c'; out.textContent='Ⅶ保有から返事がありません（Ⅶタブを一度開いてから）'; } },3000);
 }
@@ -4553,8 +4572,20 @@ function ccfReturnsHTML(R){
   let sum='';
   if(P){
     const tr=(P.ret_tr!=null?P.ret_tr:P.ret);
+    /* ★「城のみ」と焼き付けてはいけない——2026-08-23 から網も台帳に入る（v9.9.169）し、
+       取得額が測れない行はこの合計に**入らない**。実測ではその行が資産の41.7%だった。
+       ⚠ 文に焼き付けず実際の行から数える（数字を書き写した箇所は必ず陳腐化する）。
+       ⚠「入っていない」と「ゼロ」を取り違えないよう、欠けている重みまで名指しする。 */
+    const skR=(R.positions||[]).filter(r=>r.skip);
+    const skV=skR.reduce((a,r)=>a+(r.val_only_jpy||0),0);
+    const chip=skR.length
+      ? `<span style="font-size:9.5px;color:#d69a3c;margin-left:5px">${(R.positions||[]).length-skR.length}社ぶん・`
+        +`<b>${skR.map(r=>r.t).join('/')} は入っていない</b>`
+        +(skV>0?`（評価 ${yen(skV)}＝保有の ${(skV/((P.val_jpy||0)+skV)*100).toFixed(1)}%）`:'（重みも測れない）')
+        +`</span>`
+      : `<span style="font-size:9.5px;color:var(--dim);margin-left:5px">保有ぜんぶ</span>`;
     sum=`<div class="led" style="border-top:2px solid var(--line);margin-top:4px">`
-      +`<span class="ln"><b>ポートフォリオ合計</b><span style="font-size:9.5px;color:var(--dim);margin-left:5px">城のみ</span></span>`
+      +`<span class="ln"><b>ポートフォリオ合計</b>${chip}</span>`
       +`<span style="min-width:74px"></span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(P.cost_jpy)}</span>`
       +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(P.val_jpy)}</span>`
@@ -4646,12 +4677,23 @@ function ccfReturnsHTML(R){
         return `　<b>${r.t}</b> ${r.cmp_out}`
           +(w?`<span style="color:var(--dim)">（終値がその水準だったのは ${w.first}〜${w.last}・${w.n}日）</span>`:'');
       }).join('<br>')+`</div>`;
-  // ★ 網(ETF)はⅦ資産が構造的に持たない——**「入っていない」と「ゼロ」を取り違えない**
-  warn+=`<div style="font-size:11px;color:var(--dim);margin-top:6px;line-height:1.8">`
-    +`ℹ この合計は<b>城（個別銘柄）だけ</b>。網(ETF)は Ⅶ資産が扱わない設計（2026-08-03 ユーザー指示で`
-    +`<code>sleeve:'net'</code> の行は読込時に削除される）なので、`
-    +`${(((window.__ccfSleeveNow||{}).net)||[]).join('/')||'網の本'} は入っていない。`
-    +`資産全体では網が${((window.__ccfSleeveNow||{}).n>0)?'約'+Math.round(window.__ccfSleeveNow.n)+'%':'それなりの割合'}あるので、<b>これは資産全体のリターンではない</b></div>`;
+  /* ★ 網(ETF)も 2026-08-23（ユーザー指示「保有に入れてほしい」）から Ⅶ資産の台帳に入る（v9.9.169）。
+     ただし**取得が測れない本は依然として入らない**ので、
+     「入っている本」と「入っていない本」を**名指しで**出す——「入っていない」と「ゼロ」を取り違えない。
+     ⚠ 文に焼き付けず、実際の行から数える（数字を書き写した箇所は必ず陳腐化する）。 */
+  {
+    const netT=(((window.__ccfSleeveNow||{}).net)||[]);
+    const ok=new Set((R.positions||[]).filter(r=>!r.skip).map(r=>r.t));
+    const inN=netT.filter(t=>ok.has(t)), outN=netT.filter(t=>!ok.has(t));
+    if(netT.length)
+      warn+=`<div style="font-size:11px;color:var(--dim);margin-top:6px;line-height:1.8">`
+        +`ℹ <b>網(ETF)も 2026-08-23 から保有に入っている</b>（v9.9.169）。`
+        +(inN.length?`この合計に入っている網: <b>${inN.join('/')}</b>。`:'')
+        +(outN.length?`<b style="color:#d69a3c">入っていない網: ${outN.join('/')}</b>`
+          +`——取得が測れない行（上の「比較から外した」を見よ）。<b>これは資産全体のリターンではない</b>`
+          :`網はすべて入っている。`)
+        +`</div>`;
+  }
   // 想定が答えを支配している行（窓の両端で5pt以上動く）は名指しで出す
   const wide=(R.positions||[]).filter(r=>r.cmp_range&&Math.abs(r.cmp_range[1]-r.cmp_range[0])>0.05);
   if(wide.length)
@@ -6061,6 +6103,7 @@ async function renderPlan(){
   //   ccfMonthPlanBox は独立した関数で __pf を持たないので、ここで一度だけ置いて共有する。
   //   ⚠**書き写さない**——目標比は portfolio.json の target が正本で、読めなければ既定 50/50 へ倒して
   //     その旨を出す（勝手に別の比を作らない）。
+  let __LV=null;
   try{
     const t=(__pf&&__pf.target)||null;
     const c=t&&+t.shiro_castle_pct>0?+t.shiro_castle_pct:null, n=t&&+t.ami_net_pct>0?+t.ami_net_pct:null;
@@ -6068,8 +6111,8 @@ async function renderPlan(){
     // 今の実際の比率（DCAの規約＝不足側に厚く、を併記するため）
     // ★v9.9.168: ここで足し直さず **ccfPfLive の単一実装**から採る——◈網の節と別々に足すと
     //   「同じ台帳を見る二つが違うことを言う」（網の買付を記録したのに袖の比率だけ古い、が起きる）。
-    const LV0=ccfPfLive(__pf);
-    window.__ccfSleeveNow=LV0?{c:LV0.c,n:LV0.n,net:LV0.net,asof:LV0.asof,ov:LV0.hasOv}:null;
+    __LV=ccfPfLive(__pf);
+    window.__ccfSleeveNow=__LV?{c:__LV.c,n:__LV.n,net:__LV.net,asof:__LV.asof,ov:__LV.hasOv,src:__LV.src}:null;
     // 記録の書き込みに要る（土台の asof と、株数→¥の換算レート）。renderPlan の外から呼ばれるため
     window.__ccfPfAsof=(__pf&&__pf.asof)||''; window.__ccfFxU=__fxU;
   }catch(e){ window.__ccfSleeveTarget=null; window.__ccfSleeveNow=null; }
@@ -6106,16 +6149,15 @@ async function renderPlan(){
   const num=x=>parseFloat(x)||0;
   // v9.9.30: 現在保有pos%はⅦ資産の実額(pf:portfolio)から都度算出——手入力d.posは記帳凍結で陳腐化し、
   //   買付後も同銘柄へ不足按分が続く欠陥があった。実額が無い銘柄のみd.posへフォールバック
-  const livePos=(()=>{try{const o=JSON.parse(localStorage.getItem('pf:portfolio')||'null');
-    if(!o||!Array.isArray(o.positions))return null;
-    // v9.9.78: fx欠測時の (fx||1) はUSD建てを1ドル=1円で円建てと混ぜていた＝pos%が桁で歪む
-    //   （盤は FX||0＝同じ台帳を見る二箇所が違う値を出していた）。換算不能な建玉が混ざるなら
-    //   マップ全体を諦めて null＝手入力d.posへフォールバック（ルール7: 埋められないものを埋めない）
-    const fx=+o.fx||0, bad={v:false}, val=p=>{const sh=+p.sh||0,pxv=(+p.npx||0)>0?+p.npx:(+p.bpx||0);
-      if(sh>0&&pxv>0){if(p.ccy==='JPY')return sh*pxv; if(fx>0)return sh*pxv*fx;}
-      const mv=+p.v||0; if(!(mv>0)&&sh>0&&pxv>0)bad.v=true; return mv;};
-    let tot=0; const m={}; o.positions.forEach(p=>{const v=val(p); tot+=v; if(p.t)m[String(p.t).toUpperCase()]=(m[String(p.t).toUpperCase()]||0)+v;});
-    if(bad.v||!(tot>0))return null; Object.keys(m).forEach(k=>m[k]=m[k]/tot*100); return m;}catch(e){return null;}})();
+  /* ★v9.9.169: **ccfPfLive の単一実装から採る**（v9.9.65）。以前はここで台帳を別に足していたが、
+     ◈網の節・袖の振り分けと**同じ量を二箇所で計算していた**＝いつか割れる形だった。
+     v9.9.78 の教訓（fx欠測時に換算不能な建玉が混ざるならマップ全体を諦める）は
+     ccfLedgerMap の ok:false としてそのまま引き継いでいる。
+     ⚠ 分母は**総資産**（城＋網）になった——目標ウェイト(Tier)が総資産に対する%なので、
+       城だけの分母で pos% を出していた旧実装は基準が違っていた。実測: 投下可の按分は不変
+       （持っている城はいずれも目標を大きく超えているので、どちらの分母でも不足0）。 */
+  const livePos=(()=>{ if(!__LV||!__LV.byT)return null;
+    const m={}; for(const t in __LV.byT)m[t]=__LV.byT[t].w; return m; })();
   const rows=items.map(it=>{
     const s=num(it.r.evalScore), act=it.r.act||'', memo=it.d.memo||'';
     // 間の余地: 全ブレーキ通過後、最初のブレーキまでの上昇余地%(大きいほど安全)
@@ -6742,10 +6784,15 @@ async function renderPlan(){
           +`——<u>指定のある本だけ重くすると「指定の穴が配分に化ける」</u>ので全体を倒します`
           +`（時価総額が一社でも測れなければ城を等ウェイトへ倒すのと同じ作法）。決めたら <code>portfolio.json</code> へ。`)
       +`円の按分は<b>城と同じ「目標−保有」の不足按分</b>（DCA＝不足側に厚く・売却なし）。`
-      +`保有%の土台は <code>portfolio.json</code>${(__pf&&__pf.asof)?'（'+__pf.asof+'時点）':''}`
-      +`——Ⅶ資産は網の行を消す仕様（2026-08-03 ユーザー明示指示「個別銘柄だけに」）なのでブラウザの台帳に網は無い。`
-      +`<b>各行の「＋株」で買付を記録すると、その分を重ねて保有%を出す</b>（v9.9.168）`
-      +`——記録は <code>pf:net</code> に入り、<b>state.json へ書き出して初めて repo に残る</b>。`
+      +(((N.live&&N.live.src)==='ledger')
+         ?`保有%の土台は<b>この端末の台帳（Ⅶ資産）</b>${(N.live.asof)?'（'+N.live.asof+'時点）':''}`
+          +`——2026-08-23 のユーザー指示「保有に入れてほしい」で<b>網もⅦ資産の保有に入れた</b>（v9.9.169）ので、`
+          +`城と網が<u>一つの台帳</u>から出る。<b>各行の「＋株」は個別株とまったく同じ経路</b>でⅦ資産の株数へ足す`
+          +`——<b>state.json へ書き出して初めて repo に残る</b>。`
+         :`保有%の土台は <code>portfolio.json</code>${(__pf&&__pf.asof)?'（'+__pf.asof+'時点）':''}`
+          +`——<b style="color:#d69a3c">この端末の台帳（Ⅶ資産）が読めないので、スナップショットへ倒しています</b>`
+          +`${(N.live&&N.live.why)?'（'+N.live.why+'）':''}。`
+          +`これは「測って問題なし」ではなく<u>測れていない</u>ので、Ⅶ資産を一度開いて株数を入れてください。`)
       +(N.live&&N.live.hasOv
          ?`　<b style="color:#6fa8c9">◆ いま重ねている記録がある</b>（下の行の「記録 +N株」）。`
           +`<u>portfolio.json が新しくなったら、この記録は捨てられます</u>（既にスナップショットへ入っている公算が高く、二重に数えないため）。`

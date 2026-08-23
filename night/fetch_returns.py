@@ -292,6 +292,14 @@ def main():
             r["cost_px"], r["src"] = None, "jpy_only"   # 円だけ判っている（現地通貨のリターンは出せない）
         else:
             r["skip"] = "買付単価も買付日も取得額(円)も無い＝取得額が測れない"
+            # ★取得額が測れなくても**評価額は測れる**。合計の行が「ぜんぶ」と名乗るなら、
+            #   入っていない行の重みを名指しできないと嘘になる（v9.9.52）。
+            #   ⚠ cost も pl も置かない——この行は損益にも S&P500 との比較にも一切入らない。
+            #   ⚠ 掛ける二つは同じ日から採る（2026-08-18の是正）
+            _fs = on_or_before(fx, lastd) if fx else None
+            _kv = 1.0 if jp else ((_fs[0] if _fs else 0) or 0)
+            if _kv and sh > 0 and cl_now:
+                r["val_only_jpy"] = sh * cl_now * _kv
             rows.append(r); continue
 
         # ★ bd が買付日か検算する。実記録の単価が bd の終値と食い違えば bd は買付日でない
@@ -594,9 +602,24 @@ def main():
                   f"{r['pl_jpy']:>+10,.0f} {pct(r.get('ret_px_jpy'))} {pct(r.get('ret_tr_jpy'))} "
                   f"{pct(r.get('fx_ret'))}  {src}")
         if pc:
+            # ★「保有ぜんぶ」と書いてはいけない——取得額が測れない行はこの合計に入らない。
+            #   実測(2026-08-23): XLK/SMH が入らず、それは**資産の4割**だった。
+            #   「入っていない」と「ゼロ」を取り違えないよう、欠けている重みまで名指しする。
+            sk = [r for r in rows if r.get("skip")]
+            skv = sum(r.get("val_only_jpy") or 0 for r in sk)
             print(f"\n  {'合計':<7}{'':<12}{'':>4} {pc['cost_jpy']:>10,.0f} {pc['val_jpy']:>10,.0f} "
                   f"{pc['pl_jpy']:>+10,.0f} {pct(pc['ret'])} {pct(pc.get('ret_tr'))}"
-                  f"   ← 保有ぜんぶ（S&P500と比べられない行も含む）")
+                  f"   ← {len(rows)-len(sk)}社ぶん（S&P500と比べられない行も含む）")
+            if sk:
+                nm = " / ".join(r["t"] for r in sk)
+                if skv > 0:
+                    w = skv / (pc["val_jpy"] + skv) * 100
+                    print(f"  ⚠ この合計に **{nm} は入っていない**（取得額が測れない）"
+                          f"——評価額 ¥{skv:,.0f}＝保有の {w:.1f}%。"
+                          f"**これは資産全体のリターンではない**")
+                else:
+                    print(f"  ⚠ この合計に **{nm} は入っていない**（取得額が測れない）"
+                          f"——評価額も測れないので、欠けている重みすら判らない")
         # ── S&P500 との比較は**同じ集合どうし**でしか出さない ──────────────
         out_of = [r for r in rows if r.get("cmp_out")]
         if bc and cc:

@@ -64,13 +64,27 @@ def solve_lots(ser, fxs, bench, lots, bpx, bjpy, ds):
     tot_sh = sum(l["sh"] for l in lots)
     fx1 = fr.last(fxs)[1][0]; b1 = fr.last(bench)[1][1]
     ok = []
-    for l in lots:                       # ロットごとに「円/株が一致する日」を先に絞る
+    for l in lots:                       # ロットごとに「値段が一致する日」を先に絞る
+        # ★★そのロットの**約定日が判っていれば、それが最強の制約**（v9.9.169）。
+        #   推測で窓を作らず、その一日に固定する（実測 > 想定）。
+        if l.get("bd"):
+            if l["bd"] not in ser:
+                return [], f"内訳の確定日 {l['bd']} が価格の窓に無い", None, None
+            l["_d"] = [l["bd"]]
+            continue
+        # ⚠ ロットは**円か現地通貨のどちらか**しか判らないことがある（v9.9.169で実際に踏んだ）。
+        #   旧実装は l["jpy"] を必ず読んでいたので、現地通貨だけのロットで KeyError で落ちた。
+        if not l.get("jpy") and not l.get("usd"):
+            return [], "内訳に円も現地通貨も無い＝日を絞る手がかりが無い", None, None
         cand = []
         for d in ds:
             f = fr.on_or_before(fxs, d)
-            per = l["jpy"] / l["sh"]
-            if not f or abs(ser[d][0] * f[0] - per) / per >= 0.01:
+            if not f:
                 continue
+            if l.get("jpy"):
+                per = l["jpy"] / l["sh"]
+                if abs(ser[d][0] * f[0] - per) / per >= 0.01:
+                    continue
             # ★そのロットだけ現地通貨の平均取得価額が判っていれば、それも制約に足す
             if l.get("usd") and abs(ser[d][0] / l["usd"] - 1) >= 0.01:
                 continue
@@ -155,6 +169,12 @@ def main():
         bpx = float(p.get("bpx") or 0); bjpy = float(p.get("bjpy") or 0)
         if not sh or (not bpx and not bjpy):
             print(f"  {t:<6}—— 取得単価も取得額も無いので想定できない"); continue
+        # ★**取引履歴で確定した bd は上書きしない**（v9.9.169・2026-08-23）。
+        #   この道具の頭注どおり「取引履歴が判ったら上書きすること」＝**実測 > 想定**。
+        #   `bdEst` が無い bd は約定履歴から入れた確定日で、ここで想定へ戻すと
+        #   **確かな日付を推測で潰す**（実測: RBC は 2026-08-11 が約定日と判っている）。
+        if p.get("bd") and not p.get("bdEst"):
+            print(f"  {t:<6}{p['bd']:<12}—— 取引履歴で確定済み（想定しない）"); continue
         ser = fr.yahoo(t if not t[:1].isdigit() else f"{t}.T", t0, t1)
         if not ser:
             print(f"  {t:<6}—— 価格が取れない"); continue
