@@ -37,6 +37,19 @@ WHATIF = "--what-if" in sys.argv
 #   例: --net "XLK=15,SMH=15,GRID=15,MISL=5"  ＝**総資産に対する%**で網を組む。
 #   ⚠ 案をこの中にハードコードで増やし続けると必ず陳腐化する（v9.9.145 の SEMI 列挙と同じ問題）。
 #     候補を検討するたびに引数で渡せる形にしておく。指定すると --what-if も自動で立つ。
+# ★ETFの中身を**門の判定で**見る（2026-08-19新設）。--gate "MISL,GRID"
+#   なぜ要るか: 「金のつるはし（掘る人でなく道具を売る側）」を網で取りたい、という問いに
+#   この台帳は既に答えを持っている——13年の検証で唯一「効く」と出た変数 irr=85
+#   （顧客の側が再認定の費用を負う型）は、まさにつるはしの機構そのもの。
+#   ところが**ETFは同じ業界の「機構を持つ社」と「持たない社」を区別しない**。
+#   実測: 2018年ビンテージの irr=85 のうち、引用が願望形だった5社は3社が非継続
+#   （IPGP −6.6%/年・ROG +1.6%・OLED −0.6%）。**同じ業界の中で結果が割れる。**
+#   だから「この ETF を門の目で見ると何を買うことになるのか」を数える。**判定には使わない。**
+GATE_SPEC = None
+for _i, _a in enumerate(sys.argv):
+    if _a == "--gate" and _i + 1 < len(sys.argv):
+        GATE_SPEC = sys.argv[_i + 1]
+
 NET_SPEC = None
 for _i, _a in enumerate(sys.argv):
     if _a == "--net" and _i + 1 < len(sys.argv):
@@ -204,6 +217,47 @@ def whatif(b):
     return cases
 
 
+def gate_view(specs):
+    """ETFの中身を score_all.json（門の判定）と突き合わせる。**表示だけ。**"""
+    prof = (jload("out/etf_profiles.json") or {}).get("etfs", {})
+    rows = jload("out/score_all.json") or []
+    G = {r["t"]: r for r in rows}
+    for sym in [x.strip().upper() for x in specs.split(",") if x.strip()]:
+        e = prof.get(sym)
+        if not e:
+            print(f"\n■ {sym} — ⚠ 中身が未取得（out/etf_profiles.json に無い）。**測っていない**")
+            continue
+        h = e.get("h") or []
+        cov = sum(w for _, w in h)
+        buckets = {"buy": [], "next": [], "block": [], "unrated": []}
+        irr = {}
+        for t, w in h:
+            r = G.get(t)
+            if not r:
+                buckets["unrated"].append((t, w)); continue
+            k = "buy" if r.get("buy") else ("next" if r.get("quali") else "block")
+            buckets[k].append((t, w, r))
+            v = r.get("irr")
+            if v:
+                irr[v] = irr.get(v, 0) + w
+        inl = sum(w for _, w in h) - sum(w for _, w in buckets["unrated"])
+        print(f"\n■ {sym}（{e.get('nm','')}）  中身のうち銘柄が判るのは {cov*100:.1f}%"
+              f"（残り {100-cov*100:.1f}% は配信元で symbol=n/a か未取得＝**測れていない**）")
+        print(f"   台帳にある社 {inl*100:5.1f}%  ／  台帳に無い社 {sum(w for _,w in buckets['unrated'])*100:5.1f}%")
+        for k, lab in (("buy", "🟢門が買う"), ("next", "🔵次点(資格あり)"), ("block", "⛔門が落とした")):
+            b2 = sorted(buckets[k], key=lambda x: -x[1])
+            if not b2:
+                continue
+            tot = sum(x[1] for x in b2) * 100
+            print(f"   {lab} {tot:5.1f}%  " + " ".join(
+                f"{x[0]}{x[1]*100:.1f}" for x in b2[:8]) + (" …" if len(b2) > 8 else ""))
+        if irr:
+            print("   irr の内訳: " + " / ".join(
+                f"{k}→{v*100:.1f}%" for k, v in sorted(irr.items(), reverse=True))
+                + "　（85＝顧客側が再認定を要する型＝歴史で唯一効いた刻み）")
+    return 0
+
+
 def main():
     b = build()
     if AS_JSON:
@@ -234,6 +288,9 @@ def main():
     for r in b["top"][:10]:
         print(f"   {r['t']:6} {r['pct']:5.2f}%  ¥{round(r['yen']):>9,}")
     print(f"\n  半導体連鎖 {b['semi_pct']}%　／　上位5銘柄 {b['top5_pct']}%")
+
+    if GATE_SPEC:
+        gate_view(GATE_SPEC)
 
     if WHATIF:
         print("\n■ 網の中身・比率を替えたら（**提案であって規約ではない**）")
