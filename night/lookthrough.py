@@ -45,6 +45,17 @@ WHATIF = "--what-if" in sys.argv
 #   実測: 2018年ビンテージの irr=85 のうち、引用が願望形だった5社は3社が非継続
 #   （IPGP −6.6%/年・ROG +1.6%・OLED −0.6%）。**同じ業界の中で結果が割れる。**
 #   だから「この ETF を門の目で見ると何を買うことになるのか」を数える。**判定には使わない。**
+# ★ETFを「つるはしか」で見る（2026-08-19新設）。--chain "GRID,MISL"
+#   ユーザーの明示指示「ETFはirrの評価はいらない。そのETFが今後伸びる産業で金のツルハシかが大事」。
+#   つるはしの判定は**層**で行う——供給(誰が勝っても払ってもらえる) / 元請(勝者を取り合う) / 需要側(資産を運用する)。
+#   層の割り当ては night/chain_layers.json（**判断**であって測定ではない・外に出してあるので誰でも直せる）。
+#   産業の伸びは gate0_all.csv の **実測**（売上5年CAGR・営業利益率・ROIC）を保有比で加重する。
+#   ⚠測れた分だけで加重するので、**測れた割合を必ず併記する**（未取得を0と読むと薄く見える・ルール7）。
+CHAIN_SPEC = None
+for _i, _a in enumerate(sys.argv):
+    if _a == "--chain" and _i + 1 < len(sys.argv):
+        CHAIN_SPEC = sys.argv[_i + 1]
+
 GATE_SPEC = None
 for _i, _a in enumerate(sys.argv):
     if _a == "--gate" and _i + 1 < len(sys.argv):
@@ -258,6 +269,77 @@ def gate_view(specs):
     return 0
 
 
+
+def chain_view(specs):
+    """ETFを『つるはしか』で見る。層＝判断（chain_layers.json）／伸び＝実測（gate0_all.csv）。**表示だけ。**"""
+    import csv as _csv
+    prof = (jload("out/etf_profiles.json") or {}).get("etfs", {})
+    lay = jload("night/chain_layers.json") or {}
+    LMAP, LNAME = lay.get("map", {}), lay.get("layers", {})
+    U = {}
+    try:
+        with open(os.path.join(ROOT, "gate0_all.csv"), encoding="utf-8-sig") as f:
+            for r in _csv.DictReader(f):
+                if r.get("ticker"):
+                    U[r["ticker"]] = r
+    except Exception as e:
+        print(f"⚠ gate0_all.csv が読めない（{e}）＝**伸びは測れていない**")
+    if not U:
+        print("⚠ 母集団が0件＝照合が成立していない。**0を発見と読まない**")
+
+    def num(r, k):
+        try:
+            v = float(r.get(k) or "")
+            return v if v == v else None
+        except Exception:
+            return None
+
+    print("\n■ つるはし判定（層＝判断 / 伸び＝実測）  物差し: night/chain_layers.json")
+    for sym in [x.strip().upper() for x in specs.split(",") if x.strip()]:
+        e = prof.get(sym)
+        if not e:
+            print(f"\n□ {sym} — ⚠ 中身が未取得。**測っていない**")
+            continue
+        h = e.get("h") or []
+        cov = sum(w for _, w in h)
+        agg = {"supply": [], "contract": [], "prime": [], "demand": [], "?": []}
+        for t, w in h:
+            agg[LMAP.get(t, "?")].append((t, w))
+        gw = {}
+        for key, col in (("cagr", "sales_cagr5"), ("opm", "opm"), ("roic", "roic_latest")):
+            num_, den = 0.0, 0.0
+            for t, w in h:
+                r = U.get(t)
+                v = num(r, col) if r else None
+                if v is not None:
+                    num_ += v * w
+                    den += w
+            gw[key] = (num_ / den * 100 if den else None, den)
+        print(f"\n□ {sym}（{e.get('nm','')}）")
+        print(f"   中身のうち銘柄が判るのは {cov*100:.1f}%")
+        for k in ("supply", "contract", "prime", "demand", "?"):
+            b = sorted(agg[k], key=lambda x: -x[1])
+            if not b:
+                continue
+            tot = sum(w for _, w in b) * 100
+            nm = LNAME.get(k, "層が未分類（＝判定していない）")
+            print(f"   {tot:5.1f}%  {nm}")
+            print("          " + " ".join(f"{t}{w*100:.1f}" for t, w in b[:9])
+                  + (" …" if len(b) > 9 else ""))
+        s = sum(w for _, w in agg["supply"]) * 100
+        c = sum(w for _, w in agg["contract"]) * 100
+        p = sum(w for _, w in agg["prime"]) * 100
+        print(f"   → 供給 {s:.1f} : 請負 {c:.1f} : 元請 {p:.1f}" +
+              ("　つるはし側が厚い" if s > c + p else "　掘る人側が厚い" if p > s else ""))
+        for key, lab in (("cagr", "売上5年CAGR"), ("opm", "営業利益率"), ("roic", "ROIC")):
+            v, den = gw[key]
+            if v is None:
+                print(f"   {lab}: **測れていない**")
+            else:
+                print(f"   {lab} {v:5.1f}%（保有の {den*100:.0f}% で加重）")
+    return 0
+
+
 def main():
     b = build()
     if AS_JSON:
@@ -291,6 +373,9 @@ def main():
 
     if GATE_SPEC:
         gate_view(GATE_SPEC)
+
+    if CHAIN_SPEC:
+        chain_view(CHAIN_SPEC)
 
     if WHATIF:
         print("\n■ 網の中身・比率を替えたら（**提案であって規約ではない**）")
