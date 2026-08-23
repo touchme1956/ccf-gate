@@ -10,6 +10,10 @@
                         城枠と網枠は portfolio.json の target 50/50 から導かれる）
        pf:monthly    … 今月の個別枠（城）
        pf:monthly_net… 今月の網枠（ETF・v9.9.160で新設）
+       pf:net        … 網(ETF)の買付の記録（v9.9.168で新設）。**Ⅶ資産は sleeve:'net' の行を
+                        読み込み時に削除する**（2026-08-03 ユーザー明示指示「個別銘柄だけに」）ので、
+                        ETFの株数は pf:portfolio に置けない。門だけが読む別のキーとして持ち、
+                        portfolio.json（静的スナップショット）に重ねて保有%を出す
        g7ignite:map  … 点灯日（Ulysses契約の48時間冷却）
        g7log:…       … Ⅴ検証履歴（**記録であって決定ではない**。大半は⭳一括取込／↻全再採点が
                         自動で残すもので、赤い帯＝dirty は立てない。下の「dirty はどう立つか」）
@@ -48,7 +52,7 @@
 (function () {
   'use strict';
 
-  var EXACT = ['pf:portfolio', 'pf:weights', 'pf:sold', 'pf:monthly_total', 'pf:monthly', 'pf:monthly_net', 'g7ignite:map'];
+  var EXACT = ['pf:portfolio', 'pf:net', 'pf:weights', 'pf:sold', 'pf:monthly_total', 'pf:monthly', 'pf:monthly_net', 'g7ignite:map'];
   var PREFIX = ['g7log:'];
   var SAVED_AT = 'ccf:stateSavedAt';   // 最後に採用/書き出しした state.json の savedAt
   var DIRTY = 'ccf:stateDirty';        // '1' = 手元に未書き出しの変更がある
@@ -107,7 +111,7 @@
      (b)出力の**並びを重要度順に固定**して、万一切れても先頭に大事なものが載るようにする。
      取り込み側は「data にあるキーだけ書く」ので、小さい方をコミットしても
      手元の検証履歴が消えることはない（**消す経路は無い**）。 */
-  var ORDER = ['pf:portfolio', 'pf:sold', 'pf:weights', 'pf:monthly_total', 'pf:monthly', 'pf:monthly_net', 'g7ignite:map'];
+  var ORDER = ['pf:portfolio', 'pf:net', 'pf:sold', 'pf:weights', 'pf:monthly_total', 'pf:monthly', 'pf:monthly_net', 'g7ignite:map'];
   function collect(core) {
     var all = {}, keys = [];
     try {
@@ -155,7 +159,8 @@
        pf:portfolio … `fx` と 各行の `npx` / `npxAuto` の**3項目だけ**（盤の現在株価とドル円・v9.9.87）
                       ※ `sh`(株数) `v`(金額) `bpx` は**1件も動かない**＝人の決定は無傷
        pf:weights   … `city`(浮動小数の誤差) と `total`＝**全部が P からの導出値**（portfolio.html:350）
-       pf:sold / pf:monthly_total / pf:monthly / pf:monthly_net / g7ignite:map … **完全一致**
+       pf:sold / pf:net / pf:monthly_total / pf:monthly / pf:monthly_net / g7ignite:map … **完全一致**
+       ※ pf:net は 2026-08-22 新設。**人しか書かない**（門の◈網の「＋株」だけが書き手で、機械の書き戻しは無い）
      ⇒ 落とすのはこの実測どおりの範囲だけにする。**広く落とすと本物の決定を隠す**ので、
         JSONとして読めなければ素の比較へ倒す（片側だけに倒れる）。 */
   /* ⚠2026-08-17 追加: `g7ignite:map`（点灯日）も**機械しか書かない**。
@@ -190,7 +195,7 @@
      旧版の帯は「手元の決定が repo に入っていません」としか言わず、**何が未書き出しかを出さなかった**
      ので、読み手には本物か誤検知かが判らなかった（実際その状態でユーザーから「そもそもいるの？」と
      問われた）。判定は nothingPending と同じ sameDecision を使う＝二つの答えが割れない。 */
-  var LABEL = { 'pf:portfolio': '株数', 'pf:sold': '売却記録',
+  var LABEL = { 'pf:portfolio': '株数', 'pf:net': '網(ETF)の買付記録', 'pf:sold': '売却記録',
                 'pf:weights': '目標ウェイト', 'pf:monthly_total': '今月の入金総額',
                 'pf:monthly': '今月の個別枠', 'pf:monthly_net': '今月の網枠', 'g7ignite:map': '点灯日' };
   function pendingKeys(repoData) {
@@ -356,7 +361,8 @@
     var c = collect(), core = collect(true);
     var keys = Object.keys(core.data).map(function (k) {   // 見出しに出す品目は**決定だけ**の側
       return k.indexOf('g7log:') === 0 ? '検証履歴' : ({
-        'pf:portfolio': '株数', 'pf:weights': '目標ウェイト', 'pf:sold': '売却記録',
+        'pf:portfolio': '株数', 'pf:net': '網(ETF)の買付記録',
+        'pf:weights': '目標ウェイト', 'pf:sold': '売却記録',
         'pf:monthly_total': '今月の入金総額',
         'pf:monthly': '今月の個別枠', 'pf:monthly_net': '今月の網枠', 'g7ignite:map': '点灯日'
       }[k] || k);
