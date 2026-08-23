@@ -33,6 +33,15 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
 AS_JSON = "--json" in sys.argv
 WHATIF = "--what-if" in sys.argv
+# ★任意の網の構成を、同じ物差しで測る（2026-08-19新設）
+#   例: --net "XLK=15,SMH=15,GRID=15,MISL=5"  ＝**総資産に対する%**で網を組む。
+#   ⚠ 案をこの中にハードコードで増やし続けると必ず陳腐化する（v9.9.145 の SEMI 列挙と同じ問題）。
+#     候補を検討するたびに引数で渡せる形にしておく。指定すると --what-if も自動で立つ。
+NET_SPEC = None
+for _i, _a in enumerate(sys.argv):
+    if _a == "--net" and _i + 1 < len(sys.argv):
+        NET_SPEC = sys.argv[_i + 1]
+        WHATIF = True
 CAP = 8.0   # 門の1銘柄上限（¼ケリー・v9.9.96）。ここでは**判定に使わず物差しとして表示するだけ**
 
 # 半導体連鎖（v9.9.117 の SEMI と同じ思想＝同じ設備投資サイクルに乗るか）
@@ -160,7 +169,29 @@ def whatif(b):
                       "max_pct": round(rows[0][1] / total * 100, 1) if rows and total else 0,
                       "semi_pct": round(semi / total * 100, 1) if total else 0,
                       "n_over_cap": sum(1 for t, v in m.items() if v / total * 100 > CAP),
+                      # ★半導体は**幅**で出す（2026-08-19）。未取得を0として比べると、
+                      #   **中身が採れていない案ほど「分散して見える」**——実測 VT は9500銘柄中41件しか
+                      #   採れず未取得35%で、半導体13.8%は「薄い」ではなく「測れていない」。
+                      #   下限=未取得を全部 非半導体と置く／上限=全部 半導体と置く。
+                      #   ＝**未取得の大きさが違う案どうしを、下限だけで比べてはいけない**（ルール7）。
+                      "semi_hi": round((semi + sum(unknown.values())) / total * 100, 1) if total else 0,
                       "unknown_pct": round(sum(unknown.values()) / total * 100, 1) if total else 0})
+
+    if NET_SPEC:
+        # **総資産に対する%**で受ける（円ではない）。読めない指定は黙って無視せず落とす。
+        alloc = {}
+        for part in NET_SPEC.split(","):
+            k, _, v = part.partition("=")
+            k = k.strip().upper()
+            if not k or not v.strip():
+                raise SystemExit(f"--net の書式は 'XLK=15,SMH=15' （%）。読めない: {part!r}")
+            alloc[k] = total * float(v) / 100.0
+        miss = [k for k in alloc if k not in prof.get("etfs", {})]
+        if miss:
+            # ⚠ 中身を持っていないETFを混ぜると**分解できない分が「無い」ことにされる**（ルール7）。
+            print(f"   ⚠ 中身が未取得のETF: {', '.join(miss)}"
+                  f" — 下の『未取得』に丸ごと乗る。実際の集中はこれ以上")
+        run(f"★指定 {NET_SPEC}（網 {sum(alloc.values())/total*100:.0f}%）", alloc)
 
     run("A 現行（XLK/QQQ/SMH/FANG+）", n_map)
     tot_net = sum(n_map.values())
@@ -206,10 +237,12 @@ def main():
 
     if WHATIF:
         print("\n■ 網の中身・比率を替えたら（**提案であって規約ではない**）")
-        print(f"   {'案':38} {'最大の1銘柄':>16} {'半導体':>7} {'8%超':>5} {'未取得':>7}")
+        print(f"   {'案':38} {'最大の1銘柄':>16} {'半導体(下限〜上限)':>19} {'8%超':>5} {'未取得':>7}")
         for c in whatif(b):
             print(f"   {c['case']:38} {str(c['max_t'])+' '+str(c['max_pct'])+'%':>16}"
-                  f" {c['semi_pct']:6.1f}% {c['n_over_cap']:4}件 {c['unknown_pct']:6.1f}%")
+                  f" {c['semi_pct']:8.1f}〜{c['semi_hi']:5.1f}% {c['n_over_cap']:4}件 {c['unknown_pct']:6.1f}%")
+        print("   ⚠ 半導体は**幅**。上限＝未取得が全部半導体だった場合。"
+              "未取得の大きさが違う案は下限だけで比べられない（VTは9500銘柄中41件しか中身が採れていない）")
     return 0
 
 
