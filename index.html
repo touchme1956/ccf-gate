@@ -4549,7 +4549,10 @@ function ccfReturnsHTML(R){
     const w=r.bd_window;
     const bw=r.bd_win;
     const est2=r.bd_est
-      ? `<span title="買付日は**想定**（取引履歴が無いので、終値がその水準だった日から置いた）。`
+      ? `<span title="買付日は**想定**。`
+        + (/^内訳/.test(bw&&bw.how||'')
+             ? `取得の記録は複数ロットに割れていて単一の買付日が存在しないので、同じ結果を出す**等価な一日**を逆算した（＝そもそも取引日ではない）。`
+             : `取引履歴が無いので、終値がその水準だった日から置いた。`)
         + `窓 ${bw?bw.first+'〜'+bw.last+'・'+bw.n+'日':'—'}／${bw?bw.how:''}`
         + (r.cmp_range?`。この行だけで S&P500 との差は ${(r.cmp_range[0]*100).toFixed(1)}〜${(r.cmp_range[1]*100).toFixed(1)}pt に動く`:'')
         + `" style="font-size:9.5px;color:#d69a3c;margin-left:4px">想定日</span>` : '';
