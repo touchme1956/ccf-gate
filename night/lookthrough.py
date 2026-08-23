@@ -24,6 +24,8 @@ night/lookthrough.py — **資産全体を1銘柄まで分解する**（v9.9.134
   python3 night/lookthrough.py            人が読む形
   python3 night/lookthrough.py --json     out/lookthrough.json を書く
   python3 night/lookthrough.py --what-if  網の中身・比率を替えたらどうなるかを並べる
+  python3 night/lookthrough.py --pick     資産全体の「つるはし比率」を層で割る
+  python3 night/lookthrough.py --pick --castle "MSFT=8.0,ASML=7.26,..."  城の姿を変えて測る
 """
 import json
 import os
@@ -55,6 +57,21 @@ CHAIN_SPEC = None
 for _i, _a in enumerate(sys.argv):
     if _a == "--chain" and _i + 1 < len(sys.argv):
         CHAIN_SPEC = sys.argv[_i + 1]
+
+# ★資産全体の「つるはし比率」を測る（2026-08-19新設）。--pick
+#   ユーザーの明示指示「ツルハシを持つことを何よりも優先したい」。
+#   ETF1本ずつではなく**資産全体**（城＋網をルックスルー）を層で割る。
+#   ⚠**層は判断**（chain_layers.json）。だから結論が読みに依存しない
+#   **二重のつるはし**（装置・材料・EDA＋認定済み航空部品）を必ず併記する。
+#   ⚠**未取得は0と読まない**（ルール7）——別の列に出し、そのぶん供給%は下限として読む。
+#   城の姿を変えて測るには --castle "MSFT=8.00,ASML=7.26,..."（**総資産に対する%**）。
+#   目標ウェイトをここへ焼き付けない——Ⅵが Tier で毎日計算しており、
+#   写した数字は必ず陳腐化する（版番号・堀の線・四関門の再掲で繰り返し踏んだ型）。
+PICK = "--pick" in sys.argv
+CASTLE_SPEC = None
+for _i, _a in enumerate(sys.argv):
+    if _a == "--castle" and _i + 1 < len(sys.argv):
+        CASTLE_SPEC = sys.argv[_i + 1]
 
 GATE_SPEC = None
 for _i, _a in enumerate(sys.argv):
@@ -340,6 +357,86 @@ def chain_view(specs):
     return 0
 
 
+def _spec(txt, total):
+    """"XLK=15,SMH=15" → {ticker: 円}。**総資産に対する%**で受ける。"""
+    out = {}
+    for part in (txt or "").split(","):
+        if "=" not in part:
+            continue
+        k, v = part.split("=", 1)
+        try:
+            out[k.strip().upper()] = total * float(v) / 100.0
+        except ValueError:
+            print(f"⚠ 読めない指定を無視した: {part!r}")
+    return out
+
+
+def pick_view(castle_spec=None):
+    """資産全体のつるはし比率。**表示だけ・判定には一切使わない。**"""
+    lay = jload("night/chain_layers.json") or {}
+    LMAP, LNAME = lay.get("map", {}), lay.get("layers", {})
+    DEEP = {x.upper() for x in (lay.get("deep") or [])}
+    prof = jload("out/etf_profiles.json") or {}
+    if not LMAP:
+        print("⚠ chain_layers.json の map が空＝**照合が成立していない**。0を発見と読まない")
+        return 1
+    c, _, cerr = castle()
+    n, _ = net()
+    if cerr:
+        print("⚠", cerr)
+    T = sum(c.values()) + sum(n.values())
+    if T <= 0:
+        print("⚠ 総資産が0＝**測れていない**")
+        return 1
+
+    def one(cm, nm, lab):
+        look, unk = explode(nm, prof)
+        tot = sum(cm.values()) + sum(nm.values())
+        agg, deep, semi = {}, 0.0, 0.0
+        for src in (cm, look):
+            for t, v in src.items():
+                t = t.upper()
+                agg[LMAP.get(t, "?")] = agg.get(LMAP.get(t, "?"), 0) + v
+                if t in DEEP:
+                    deep += v
+                if t in SEMI:
+                    semi += v
+        u = sum(unk.values())
+        agg["?"] = agg.get("?", 0) + u
+        g = lambda k: agg.get(k, 0) / tot * 100
+        return dict(lab=lab, supply=g("supply"), deep=deep / tot * 100, contract=g("contract"),
+                    prime=g("prime"), demand=g("demand"), unk=g("?"),
+                    semi=semi / tot * 100, semi_hi=(semi + u) / tot * 100)
+
+    cases = [one(c, n, f"現行（城{sum(c.values())/T*100:.0f}% / 網{sum(n.values())/T*100:.0f}%）")]
+    if castle_spec:
+        ct = _spec(castle_spec, T)
+        rest = T - sum(ct.values())
+        if rest < 0:
+            print("⚠ --castle の合計が100%を超えている＝網が負になる。測らない")
+            return 1
+        nt = sum(n.values()) or 1
+        cases.append(one(ct, {k: v * rest / nt for k, v in n.items()}, "指定した城（網は今の中身のまま）"))
+        cases.append(one(ct, {"SMH": rest}, "同＋網を全部SMH"))
+    variants = []
+    if NET_SPEC:                       # --net で渡した案も**同じ物差し**で並べる
+        variants.append((NET_SPEC, f"★指定の網 {NET_SPEC}"))
+    variants += [("SMH=30,XLK=20", "網を SMH30/XLK20"), ("SMH=53", "網を全部SMH")]
+    for spec, lab in variants:
+        m = _spec(spec, T)
+        cases.append(one(c, m, lab + "（城は今のまま）"))
+
+    print("\n■ 資産全体のつるはし比率  物差し: night/chain_layers.json（**層は判断・測定ではない**）")
+    print(f"   {'案':<34}{'供給':>7}{'うち二重':>9}{'元請':>7}{'需要側':>8}{'測れず':>8}{'半導体(下〜上)':>17}")
+    for r in cases:
+        print(f"   {r['lab']:<34}{r['supply']:6.1f}%{r['deep']:8.1f}%{r['prime']:6.1f}%"
+              f"{r['demand']:7.1f}%{r['unk']:7.1f}%{r['semi']:8.1f}〜{r['semi_hi']:5.1f}%")
+    print("   ⚠『測れず』は未取得＋層が未分類。**0と読まない**ので供給%は下限として読む")
+    print("   ⚠『うち二重』＝どちらの読みでも供給に残る層（装置・材料・EDA＋認定済み航空部品）。"
+          "層の割り当ては読みで反転するので、順位はこの列で読む")
+    return 0
+
+
 def main():
     b = build()
     if AS_JSON:
@@ -376,6 +473,9 @@ def main():
 
     if CHAIN_SPEC:
         chain_view(CHAIN_SPEC)
+
+    if PICK or CASTLE_SPEC:
+        pick_view(CASTLE_SPEC)
 
     if WHATIF:
         print("\n■ 網の中身・比率を替えたら（**提案であって規約ではない**）")
