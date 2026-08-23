@@ -1336,7 +1336,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.169</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.170</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
@@ -4557,7 +4557,13 @@ function ccfReturnsHTML(R){
         + `。円換算と為替の寄与は概算・S&P500 との比較からは外してある`
         + (w?`。終値がその水準だったのは ${w.first}〜${w.last}`:'')
         + `" style="font-size:9.5px;color:#d69a3c;margin-left:4px">買付日?</span>` : '';
-    rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}${est}${jpc}${est2}${bds}</span>`
+    /* ★取得の記録が保有株数に足りない行（v9.9.170）——bpx をそのまま全株へ広げると
+       残りの株の単価を**推測して黙って使う**ことになる。端末の ⚠ と同じことを門でも言う（v9.9.65） */
+    const cp=r.cost_partial
+      ? `<span title="取得の記録は ${r.cost_partial.known}株ぶんだけで、保有は ${r.cost_partial.sh}株。`
+        + `残りの株の約定が未確認なので、取得額はその分だけ概算（単価を全株へ広げている）`
+        + `" style="font-size:9.5px;color:#d69a3c;margin-left:4px">取得 ${r.cost_partial.known}/${r.cost_partial.sh}株</span>` : '';
+    rows+=`<div class="led"><span class="ln">${ccfIcon(r.t)}${r.t}${est}${jpc}${est2}${bds}${cp}</span>`
       +`<span style="font-size:11px;min-width:74px;text-align:center;color:var(--dim)"`
       +` title="この日に買ったものとして計算している。指数もこの日から走らせる`
       +(r.fx0?`。入口のドル円 ${r.fx0.toFixed(2)} → 出口 ${(r.fx1||0).toFixed(2)}`:'')
@@ -6329,6 +6335,13 @@ async function renderPlan(){
   //   ⚠画面の文字列を解析する形にしていたら誤検出した（実測: 説明文の「🟢投下可」を拾い、
   //     さらに買付の行に印が無いので10社すべてを不一致と報告した）。**描画ではなく判断そのものを測る。**
   try{ window.__ccfBuyList=passIn.map(r=>String(r.nm||r.t||'').trim().split(/\s/)[0].toUpperCase()); }catch(e){}
+  /* ★**眠っている関門も一緒に公開する**（v9.9.170）。__ccfBuyList だけを出すと、
+     関門のJSONが届く前の描画を「門の判断」として読まれる——実測(2026-08-23)で
+     check_gate_parity が固定6秒で読んで **VRSK が入り MCO が落ちた偽の不一致**を出した
+     （VRSK は out/pending.json だけで止まる社なので、そこが眠ると必ずすり抜ける）。
+     画面には ⚠⚠ が出ていたのに、機械が読む側にその事実が無かった。
+     ⚠ 誤警報を出す検査は無い検査より悪い——この道具は「買付を保留せよ」と言うのだから。 */
+  try{ window.__ccfBuyBlind=gBlind.map(b=>b.label); }catch(e){}
   const passSet=new Set(passIn.map(r=>r.nm)); // v9.9.88: 点灯=枠内の投下可のみ（次点で冷却時計を回さない）
   for(const r of passIn){
     const e=ign[r.nm];

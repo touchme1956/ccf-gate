@@ -225,7 +225,13 @@ def main():
     st = json.load(open(st_path, encoding="utf-8"))
     try:
         pf = json.loads((st.get("data") or {}).get("pf:portfolio") or "{}")
-        positions = [p for p in (pf.get("positions") or []) if (p.get("sh") or 0) > 0]
+        # ★株数の無い行（金額だけの記録）も**落とさず名指しする**（v9.9.52）。
+        #   実測(2026-08-23): QQQ は画面の実額 ¥67,109 は判るのに、$422.13 が
+        #   QQQ($713.44)でも QQQM($293.76)でも整数株にならず**銘柄を特定できない**。
+        #   黙って落とすと、合計が何を指すかを数えるときに**分母からも消える**＝
+        #   「入っていない」ことすら見えなくなる。
+        positions = [p for p in (pf.get("positions") or [])
+                     if (p.get("sh") or 0) > 0 or (p.get("v") or 0) > 0]
     except Exception as e:
         print(f"✗ pf:portfolio が読めない: {e}"); return 1
     if not positions:
@@ -267,6 +273,11 @@ def main():
         r = {"t": t, "nm": p.get("nm") or t, "ccy": "JPY" if jp else "USD",
              "sh": sh, "bd": bd}
         sers[t] = ser
+        if sh <= 0:
+            # 金額だけの記録＝株数が判らない。評価額は台帳の v をそのまま使う
+            r["skip"] = "株数が判らない（金額だけの記録）＝価格からリターンを出せない"
+            r["val_only_jpy"] = float(p.get("v") or 0)
+            rows.append(r); continue
         if not ser:
             r["skip"] = "Yahooで価格が取れない"
             rows.append(r); notes.append(f"{t}: 価格が取れない"); continue
@@ -361,6 +372,16 @@ def main():
             r["skip"] = "買付日のドル円が取れない＝円建ての取得額が出せない"
             rows.append(r); continue
 
+        # ★取得の記録が**何株ぶんか**を見る。足りなければ名指しする（v9.9.52 ＋ ルール7）——
+        #   実測(2026-08-23 ITA): 約定履歴で確認できたのは 2株@$238.22 だけなのに保有は3株。
+        #   bpx をそのまま3株へ広げると、3株目の単価を**推測して黙って使う**ことになる。
+        lots = p.get("bdLots") or []
+        known = sum(float(l.get("sh") or 0) for l in lots
+                    if (l.get("usd") or l.get("jpy") or l.get("bd")))
+        if lots and known > 0 and known < sh - 1e-9:
+            r["cost_partial"] = {"known": known, "sh": sh}
+            notes.append(f"{t}: 取得の記録は **{known:g}株ぶん**だけ（保有 {sh:g}株）——"
+                         f"残りは約定が未確認。取得額はその分だけ概算")
         r["val_jpy"] = sh * cl_now * k
         r["px_now"] = cl_now
         r["pl_jpy"] = r["val_jpy"] - r["cost_jpy"]

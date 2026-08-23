@@ -51,7 +51,7 @@ const TOL = 0.05;                       // Ωの許容差（表示は小数1桁�
   await new Promise(r => setTimeout(r, 1500));
   const EXE = '/opt/pw-browsers/chromium';
   const browser = await chromium.launch(fs.existsSync(EXE) ? { executablePath: EXE } : {});
-  let bad = 0, _nLed = 0, _gateBuy = null;
+  let bad = 0, _nLed = 0, _gateBuy = null, _blind = null;
   try {
     const p = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     const errs = [];
@@ -99,11 +99,32 @@ const TOL = 0.05;                       // Ωの許容差（表示は小数1桁�
     // ② Ⅵ買付順位の🟢投下可
     await p.evaluate(() => { const t = document.getElementById('tab5'); if (t) t.click(); });
     await p.waitForTimeout(6000);
+    // ★**関門が眠っている間は比べない**（v9.9.170）。固定待ちだけだと out/pending.json 等が
+    //   届く前の描画を掴み、**偽の不一致**を出す（実測: VRSK が入り MCO が落ちた）。
+    //   Ⅵは眠っている関門を window.__ccfBuyBlind に公開するので、空になるまで待つ。
+    //   ⚠ 空にならなければ「不一致」ではなく **「測れなかった」** と言う（ルール7）。
+    for (let i = 0; i < 30; i++) {
+      _blind = await p.evaluate(() => (window.__ccfBuyBlind || null));
+      if (Array.isArray(_blind) && !_blind.length) break;
+      await p.waitForTimeout(1000);
+      await p.evaluate(() => { const t = document.getElementById('tab5'); if (t) t.click(); });
+    }
+    if (_blind == null) console.log('  ⚠ Ⅵが眠っている関門を公開していない（版が古い＝この検査は不完全）');
+    else if (_blind.length) {
+      bad++;
+      console.log('  ✗ **測れなかった**——第四の関門が ' + _blind.length + '本 眠ったまま: ' + _blind.join(' / '));
+      console.log('     ＝門と端末が違うことを言っているのではなく、門がまだ判断できていない。');
+    }
     // ⚠**描画ではなく判断そのものを測る。** 画面の文字列を解析する形にしたら誤検出した
     //   （説明文の「🟢投下可」を拾い、さらに買付の行に印が無いので10社すべてを不一致と報告した）。
     //   Ⅵは v9.9.140 から window.__ccfBuyList に**自分が投下可と判断した集合**を公開する。
     const gateBuy = await p.evaluate(() => (window.__ccfBuyList || null)); _gateBuy = gateBuy;
-    if (gateBuy == null) {
+    // ★眠った関門があるうちは**投下可を比べない**——比べると「測れなかった」を「食い違い」に化かす。
+    //   実測(2026-08-23): pending.json を隠すと 門にだけ VRSK / 端末にだけ MCO と出るが、
+    //   それは門が違う判断をしたのではなく、門がその関門をまだ通していないだけ。
+    if (Array.isArray(_blind) && _blind.length) {
+      console.log('  — 🟢投下可の突合せは飛ばした（関門が眠っている状態で比べても意味が無い）');
+    } else if (gateBuy == null) {
       bad++;
       console.log('  ✗ Ⅵ買付順位が判断を公開していない（window.__ccfBuyList が無い＝描けていないか版が古い）');
     } else {
@@ -135,8 +156,17 @@ const TOL = 0.05;                       // Ωの許容差（表示は小数1桁�
             + 'bad>0 は v9.9.65 の破れ＝どちらが正しいかはこの道具では判らない。' }, null, 1), 'utf8');
   } catch (e) {}
   if (bad) {
-    console.log('\n✗ **門と端末が違うことを言っています**（v9.9.65の破れ）。');
-    console.log('  ⚠ 買付の判断はこれが解消するまで保留すること——どちらが正しいかはこの道具では判らない。');
+    // ★**「測れなかった」と「食い違い」を分ける**（v9.9.170・ルール7）——
+    //   関門が眠っているだけのときに「違うことを言っている」と言うと、
+    //   この道具自身が誤診を出すことになる（しかも文面は「買付を保留せよ」と言う）。
+    if (Array.isArray(_blind) && _blind.length) {
+      console.log('\n✗ **測れなかった**（門と端末が食い違ったのではない）。');
+      console.log('  眠っている関門: ' + _blind.join(' / '));
+      console.log('  ⚠ 直し方は out/ のそのファイルを作り直すこと。門の判断そのものは疑わなくてよい。');
+    } else {
+      console.log('\n✗ **門と端末が違うことを言っています**（v9.9.65の破れ）。');
+      console.log('  ⚠ 買付の判断はこれが解消するまで保留すること——どちらが正しいかはこの道具では判らない。');
+    }
     process.exit(1);
   }
   console.log('\n✓ 門と端末は同じことを言っている');
