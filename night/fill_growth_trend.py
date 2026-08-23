@@ -36,6 +36,34 @@ import time
 import gzip
 import urllib.error
 import urllib.request
+import re
+import datetime
+
+TODAY = datetime.date.today().isoformat()   # ⚠焼き付けない（回すたびに動く＝止まったことが見える）
+
+
+def cik_from_pack(x):
+    """パック自身が持っている CIK を第二の出所にする。
+       ★推測ではない——`_meta.source` は**その社の原本の在処**（EDGAR の URL）で、
+         審査官がそこを読んで値を置いている。ティッカーの対応表が引けない社でも、
+         原本の在処は必ずパックに書いてある（実測 AXIA: .../edgar/data/1439124/ebr-20251231.htm）。
+       ⚠ `_meta` の中の**文字列だけ**を見る（数値の混入を避ける）。複数見つかったら**採らない**
+         ——別の社の URL が混ざっている可能性を、黙って一つ選んで潰さない。"""
+    m = x.get('_meta') or {}
+    found = set()
+
+    def walk(v):
+        if isinstance(v, str):
+            for g in re.findall(r'edgar/data/(\d{1,10})', v):
+                found.add(int(g))
+        elif isinstance(v, dict):
+            for w in v.values():
+                walk(w)
+        elif isinstance(v, list):
+            for w in v:
+                walk(w)
+    walk(m)
+    return found.pop() if len(found) == 1 else None
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
@@ -148,7 +176,22 @@ def main():
         d = x.get('data') or x
         cik = T2C.get(t.upper())
         if cik is None:
-            skip.append((t, '日本株ほかSEC対象外（CIKが引けない）＝穴として明示する'))
+            # ★ティッカーの対応表が引けないことは「SEC対象外」を意味しない。
+            #   実測(2026-08-23 AXIA): Eletrobras が **AXIA Energia S.A.** へ改称し、SECの
+            #   company_tickers.json は ADR の **AXIAY / AXICY** で載る。ticker が引けないだけで
+            #   CIK 1439124 は現に 20-F を出しており、パック自身の `_meta.source` も EDGAR の URL。
+            #   → **パックが持っている CIK を第二の出所にする**（推測ではなく、その社の原本の在処）。
+            cik = cik_from_pack(x)
+        if cik is None:
+            # ⚠ここへ来ても**既にある機械値は消さない**。理由が「引けなかった」なら、
+            #   それは『測れなかった』であって『無い』ではない（絶対のルール7）。
+            #   実測(2026-08-23 AXIA): 旧実装は evidence つきの cagrT=10.19 を null で上書きし、
+            #   `nulls` に「SEC対象外」と書いた——**同じパックの evidence と source が SEC を指すのに**。
+            #   ＝値・根拠・空欄理由の三つが互いに矛盾する状態を、道具が自分で作っていた。
+            had = (d.get('cagrT') is not None)
+            skip.append((t, 'ティッカーが SEC の対応表に無く、パックからも CIK を取れない'
+                            + ('（**既にある機械値は消さない**——測れなかっただけで、無いのではない）' if had else '')
+                            + '＝穴として明示する', had))
             continue
         # 錨は**パックの会計年度**（審査した年で測る。採取器が先へ進んでいても引きずられない）
         rd = (d.get('reportDate') or (x.get('_meta') or {}).get('reportDate') or '')
@@ -159,7 +202,9 @@ def main():
         cf = get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json", gz=True)
         time.sleep(0.12)                           # SECのレート制限(10req/s)を守る
         if not cf:
-            skip.append((t, 'companyfacts が取得できない'))
+            # ⚠**一時的な取得失敗**＝『測れなかった』であって『無い』ではない（絶対のルール7）。
+            #   既に機械値があるなら消さない——次に取れたときに測り直せばよい。
+            skip.append((t, 'companyfacts が取得できない', d.get('cagrT') is not None))
             continue
         F = cf.get('facts') or {}
         cand = []
@@ -173,7 +218,7 @@ def main():
                     cand.append(aa)
         ser = splice(cand, anchor)
         if len(ser) < 6:
-            skip.append((t, f'年次の売上が{len(ser)}年ぶんしか採れない（accelには6年が要る）'))
+            skip.append((t, f'年次の売上が{len(ser)}年ぶんしか採れない（accelには6年が要る）', False))
             continue
         ys = sorted(ser)
         a = anchor if (anchor is not None and anchor in ser) else None
@@ -185,16 +230,16 @@ def main():
                     a = anchor - k
                     break
         if a is None:
-            skip.append((t, f'パックの会計年度{anchor}が売上系列({ys[0]}-{ys[-1]})に無い'))
+            skip.append((t, f'パックの会計年度{anchor}が売上系列({ys[0]}-{ys[-1]})に無い', False))
             continue
         need = [a, a - 2, a - 5]
         if any(y not in ser for y in need) or any(ser[y] <= 0 for y in need):
-            skip.append((t, f'窓の年が欠けている（要 {a-5}/{a-2}/{a}・在庫 {ys[0]}-{ys[-1]}）'))
+            skip.append((t, f'窓の年が欠けている（要 {a-5}/{a-2}/{a}・在庫 {ys[0]}-{ys[-1]}）', False))
             continue
         c2 = cagr(ser[a - 2], ser[a], 2)
         c1 = cagr(ser[a - 5], ser[a - 2], 3)
         if c1 is None or c2 is None:
-            skip.append((t, '売上が負またはゼロの年があり CAGR を作れない'))
+            skip.append((t, '売上が負またはゼロの年があり CAGR を作れない', False))
             continue
         acc_e = (c2 - c1) * 100                       # A案: 端点どうしのCAGRの差（= 歴史検証の accel）
         # ── B案（中央値）と交差させる（2026-08-09・COVID窓のartifact対策）─────────────────
@@ -256,26 +301,44 @@ def main():
                 f"B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。"
                 f"候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。")
             m.setdefault('provenance', {})['cagrT'] = 'machine'
+            # ★値を書いたら**古い空欄理由を消す**。残すと「値は 10.19」「算出できない」が
+            #   同じパックに同居する（実測 2026-08-23 AXIA）。空欄理由は値が無いことの説明で、
+            #   値があるなら説明する対象が無い。
+            for k in ('cagrT', 'cagrT_remeasure'):
+                (m.get('nulls') or {}).pop(k, None)
             json.dump(x, open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
             n += 1
-        for t, why in skip:
+        for t, why, had in skip:
             p = f"out/{t}_gate_pack.json"
             if not os.path.exists(p):
                 continue
             x = json.load(open(p, encoding='utf-8'))
+            m = x.setdefault('_meta', {})
+            if had:
+                # ★既にある機械値は**触らない**。再測定できなかったことだけを記録する
+                #   （値を消すと evidence が「消えた値の導出」として残り、
+                #     nulls が「無い」と言い、source は SEC を指す＝三つが互いに矛盾する）。
+                m.setdefault('nulls', {})['cagrT_remeasure'] = f'今回は再測定できなかった: {why}'
+                json.dump(x, open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+                continue
             # **キーは置いて値を null にする**——受理キーは門の applyFields が正で、
             #   キーごと無いと納品検査の様式一致で落ちる（他の未測定欄と同じ形にそろえる）
             (x.get('data') or x)['cagrT'] = None
-            m = x.setdefault('_meta', {})
             m.setdefault('nulls', {})['cagrT'] = f'成長の軌道を算出できない: {why}'
             json.dump(x, open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
         print(f'\n→ {n}社へ cagrT を書き込み・{len(skip)}社へ理由つき空欄を刻んだ')
 
-    json.dump({'generated': '2026-08-09',
+    # ★部分実行は**正本を書かない**。`--only` の rows は当然その社ぶんしか無いので、
+    #   そのまま out/growth_trend.json へ落とすと **在庫が 277社 → 1社 に潰れる**
+    #   （実測 2026-08-23 AXIA の復旧で実際に踏んだ）。score_all.js の `--jp/--us` が
+    #   正本を約40行で潰したのと同型なので、同じ作法で `.partial` へ逃がす。
+    dest = 'out/growth_trend.partial.json' if ONLY else 'out/growth_trend.json'
+    json.dump({'generated': TODAY,
+               'partial': sorted(ONLY) if ONLY else None,
                'note': 'cagrT = CAGR(a-2→a,2) − CAGR(a-5→a-2,3)。retro_features2 の accel と同一定義',
-               'rows': rows, 'skipped': [{'t': t, 'why': w} for t, w in skip]},
-              open('out/growth_trend.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
-    print('→ out/growth_trend.json')
+               'rows': rows, 'skipped': [{'t': t, 'why': w, 'kept': k} for t, w, k in skip]},
+              open(dest, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    print(f'→ {dest}')
     return 0
 
 
