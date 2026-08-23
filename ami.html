@@ -393,6 +393,28 @@ async function boot(){
    <td>${maxSec.toFixed(0)}%</td><td>${ov.toFixed(1)}%</td></tr>`;
  }
  c+='</tbody></table></div>';
+
+ /* ---- ★決めた「目標の網」を記録として出す（2026-08-19）----
+    ⚠ここでは**再計算しない**。同じ数字を二つの実装が持つと必ず割れる（v9.9.65）——
+      実際、この画面の城は portfolio.json の 2026-08-07 スナップショット（MSFT/ASML/RMD）で、
+      night/lookthrough.py の城は state.json の実保有（+RBC/IRMD）。同じ「目標の網の半導体%」を
+      両方で計算させたら 33.7〜42.2% と 27.6〜36.2% に割れた。**測った数字は道具ひとつが持つ。**
+      この画面が持つのは『何を決めたか』だけで、『それがどうなるか』は道具が出す。 */
+ const TM=((P.target||{}).ami_mix)||{}, tmix=TM.pct_of_total||{};
+ if(Object.keys(tmix).length){
+  const miss=Object.keys(tmix).filter(t=>!etfs[t]);
+  c+=`<div class="panel" style="margin-top:14px"><h2 style="font-size:16px">★決めた「目標の網」（記録）</h2>
+   <p class="sub"><b>これは目標であって保有ではない。</b>上の表は証券アプリのスナップショット（実額）で、
+   目標を書いても実額は動かない——<u>起きていない取引を記録しない</u>ため。
+   出所: <code>portfolio.json</code> の <code>target.ami_mix</code>（${TM.asof||''}・ユーザー明示指示）</p>
+   <p style="margin:8px 0"><b>${Object.entries(tmix).map(([t,v])=>`${t} ${v}%`).join('　/　')}</b>
+   　<span class="sub">＝総資産に対する% ・ 網 計 ${Object.values(tmix).reduce((a,b)=>a+b,0)}%</span></p>
+   ${miss.length?`<p class="sub">⚠ 中身が未取得: <b>${miss.join(', ')}</b>＝この画面でも道具でも「未取得」として別に数える（0と読まない）</p>`:''}
+   <p class="sub">この目標で資産全体がどうなるか（半導体・つるはし比率・8%超）は
+   <code>python3 night/lookthrough.py --pick</code> と <code>--what-if</code> が出す。
+   <b>この画面は再計算しない</b>——同じ数字を二つの実装が持つと必ず割れるため。</p></div>`;
+ }
+
  c+=`<div class="flag f-warn" style="margin-top:12px"><i>!</i><div>
   <b>⚠「城との重複」は名前の重なりであって、実際の相関ではない。</b>
   月次97ヶ月の実測では XLK ρ0.683（重複8.5%）に対し <b>GRID ρ0.628（重複0.0%）</b>、

@@ -234,6 +234,14 @@ def whatif(b):
                   f" — 下の『未取得』に丸ごと乗る。実際の集中はこれ以上")
         run(f"★指定 {NET_SPEC}（網 {sum(alloc.values())/total*100:.0f}%）", alloc)
 
+    tmix, tasof = target_mix()
+    if tmix and not NET_SPEC:
+        miss = [k for k in tmix if k not in prof.get("etfs", {})]
+        if miss:
+            print(f"   ⚠ 目標の網に中身が未取得のETF: {', '.join(miss)} — 『未取得』に丸ごと乗る")
+        run(f"★目標の網（portfolio.json {tasof}・網 {sum(tmix.values()):.0f}%）",
+            {k: total * v / 100.0 for k, v in tmix.items()})
+
     run("A 現行（XLK/QQQ/SMH/FANG+）", n_map)
     tot_net = sum(n_map.values())
     run("B 網を全部 VT へ", {"VT": tot_net})
@@ -357,6 +365,15 @@ def chain_view(specs):
     return 0
 
 
+def target_mix():
+    """portfolio.json の target.ami_mix ＝**人が決めた網の目標**（保有ではない）。
+    ★記録したのに誰も読まないと『見つけたものを誰にも渡していない型』になるので、
+      --net を書かなくても各ビューが自動で並べる。**判定には一切使わない。**"""
+    t = ((jload("portfolio.json") or {}).get("target") or {}).get("ami_mix") or {}
+    pct = t.get("pct_of_total") or {}
+    return ({k.upper(): float(v) for k, v in pct.items()}, t.get("asof"))
+
+
 def _spec(txt, total):
     """"XLK=15,SMH=15" → {ticker: 円}。**総資産に対する%**で受ける。"""
     out = {}
@@ -421,6 +438,11 @@ def pick_view(castle_spec=None):
     variants = []
     if NET_SPEC:                       # --net で渡した案も**同じ物差し**で並べる
         variants.append((NET_SPEC, f"★指定の網 {NET_SPEC}"))
+    else:                              # 書かなければ**記録された目標の網**を並べる
+        tmix, tasof = target_mix()
+        if tmix:
+            variants.append((",".join(f"{k}={v:g}" for k, v in tmix.items()),
+                             f"★目標の網（{tasof}・網{sum(tmix.values()):.0f}%）"))
     variants += [("SMH=30,XLK=20", "網を SMH30/XLK20"), ("SMH=53", "網を全部SMH")]
     for spec, lab in variants:
         m = _spec(spec, T)
