@@ -16,13 +16,15 @@ night/check_html.py — index.html の構造検査（2026-07-29新設）
   ＝**採点が合っていることは、門が動いていることを意味しない。**
 
 検査項目:
-  1. 各タブ（#pg1..#pg8）の <div> と </div> の収支がゼロか
+  1. 各タブ（#pg1..#pg12・既定タブ含む）の <div> と </div> の収支がゼロか
   2. スクリプトが参照する要素ID（$('xxx') / getElementById）が HTML に存在するか
   3. 各 <script> ブロックが構文として通るか
   4. **外部スクリプト（<script src=...>）が実在し・構文が通り・呼ばれている ccf* を定義しているか**
      （2026-08-17新設。icon.js を新設して ccfIcon を両ページの外へ出したので、
        **ファイルが欠けると全銘柄の行が描けなくなる**——inline のときには有り得なかった壊れ方。
        state.js も同じ危険を負っていたが検査が無かった。index.html と portfolio.html の両方を見る）
+  5. **onclick/onchange が「呼び出し」か**（2026-08-23新設）。onclick="save" は関数を評価するだけで
+     押しても何も起きない。例外も出ないので pageerror にも現れない＝**一番静かな壊れ方**。
 使い方: python3 night/check_html.py   （終了コード1で不合格）
 """
 import re
@@ -41,13 +43,15 @@ def main():
     fails = []
 
     # --- 1. タブごとの div 収支 ---
-    idx = [m.start() for m in re.finditer(r'<div id="pg\d"[^>]*class="pg"', body)]
+    # ⚠ 旧実装は r'pg\d"' + class="pg" 完全一致だったので **pg10/11/12 と既定タブ(class="pg on")を
+    #    一つも検査していなかった**（2026-08-23 に発見）。2桁と class の前方一致を許す。
+    idx = [m.start() for m in re.finditer(r'<div id="pg\d+"[^>]*class="pg\b', body)]
     if not idx:
         fails.append("タブ（<div id=\"pgN\" class=\"pg\">）が見つからない")
     idx.append(len(body))
     for k in range(len(idx) - 1):
         seg = body[idx[k]:idx[k + 1]]
-        nm = re.search(r'id="(pg\d)"', seg).group(1)
+        nm = re.search(r'id="(pg\d+)"', seg).group(1)
         o, c = len(re.findall(r"<div\b", seg)), len(re.findall(r"</div>", seg))
         if o != c:
             fails.append(f"{nm}: <div>{o} / </div>{c} = 収支 {o-c}"
@@ -105,6 +109,18 @@ def main():
             fails.append(f"{page}: 呼ばれているのにどこにも定義が無い関数 {miss}"
                          f"（外部スクリプトの取りこぼし＝ブラウザで初めて落ちる）")
 
+    # --- 5. onclick が「呼び出し」になっているか（2026-08-23新設） ---
+    #  v9.9.134 の一括整形が onclick から () を「無駄な表記」として削り、
+    #  **この銘柄を記録 / 全件書き出し / 依頼文を作る など9個のボタンが12日間 死んでいた**。
+    #  onclick="save" は関数を*評価するだけ*で呼ばない——押しても何も起きず、
+    #  例外も出ないので pageerror にも出ない。**副作用の無い経路は失敗しても静か**。
+    #  既存の検査4は「その関数が存在するか」しか見ないので、これを素通りしていた。
+    dead = re.findall(r'on(?:click|change|input)="([A-Za-z_$][A-Za-z0-9_$]*(?:\.[A-Za-z_$][A-Za-z0-9_$]*)*)"', s)
+    if dead:
+        fails.append("押しても何も起きないハンドラ（() が無い＝関数を評価するだけ）: "
+                     + ", ".join(sorted(set(dead)))
+                     + "  → onclick=\"fn()\" にする")
+
     if fails:
         print("✗ index.html の構造検査に不合格")
         for f in fails:
@@ -112,7 +128,7 @@ def main():
         print("\n※採点が合っていることは、門が動いていることを意味しない。"
               "表示だけが壊れる事故はここでしか捕まらない")
         return 1
-    print("✓ index.html 構造検査: タブのdiv収支・参照IDの実在・スクリプト構文 すべて通過")
+    print("✓ index.html 構造検査: タブのdiv収支・参照IDの実在・スクリプト構文・ハンドラの呼び出し すべて通過")
     return 0
 
 

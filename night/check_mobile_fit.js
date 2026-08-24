@@ -39,12 +39,22 @@ const PORT = 8971;
 //   警告していた——**v9.9.140 の 📋今日 で実際に踏み、9本を検査して「全タブ✓」と出た**＝穴が緑に見える。
 //   注意力に頼る限り必ず再発するので、**実ブラウザの nav から読む**形にした。
 //   ⚠ 読めなければ 0本で「✓」と言わずに**落とす**（測っていないことを問題なしと言わない）。
+//   ⚠**v9.9.171 でナビを 6群 + 章立てに分けた瞬間、この関数は 6本しか返さなくなった**——
+//     `.pgnav` は群のボタン(grp1..6)で、**ページ(pg1..12)は #chapNav の側にある**。
+//     気づかずに回すと「全タブ✓」と出るのに 6ページが一度も測られない＝**穴が緑に見える**。
+//     ⇒ **ページの数(.pg)と突き合わせて、足りなければ落とす**（注意力ではなく構造で塞ぐ）。
 async function tabsFromDom(p) {
-  const t = await p.evaluate(() => Array.from(document.querySelectorAll('.pgnav button'))
-    .map(b => [b.id, (b.textContent || '').replace(/\s+/g, ' ').trim()])
-    .filter(x => x[0]));
-  if (!t.length) throw new Error('.pgnav からタブを1つも読めない——検査が成立しないので落とす');
-  return t;
+  const r = await p.evaluate(() => {
+    const btn = Array.from(document.querySelectorAll('#chapNav button, .pgnav button'))
+      .filter(b => /^tab\d+$/.test(b.id))
+      .map(b => [b.id, (b.textContent || '').replace(/\s+/g, ' ').trim()]);
+    return { btn, pages: document.querySelectorAll('div.pg').length };
+  });
+  if (!r.btn.length) throw new Error('nav からタブを1つも読めない——検査が成立しないので落とす');
+  if (r.btn.length < r.pages)
+    throw new Error(`nav から読めたタブ ${r.btn.length}本 < ページ ${r.pages}枚`
+      + '——**測れていないページがある**。tabN のボタンを持つ nav を全部見ること');
+  return r.btn;
 }
 
 (async () => {
@@ -121,14 +131,23 @@ async function tabsFromDom(p) {
       const p2 = await browser.newPage({ viewport: { width: W2, height: 760 } });
       await p2.goto(`http://localhost:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
       await p2.waitForTimeout(700);
+      // ★**群を切り替えて章のナビも実際に出す**——既定の群（📋今日）は章が1本しかなく
+      //   ナビ自体が display:none なので、切り替えないと**章のボタンを一度も測らない**。
       const r = await p2.evaluate(() => {
         const n = document.querySelector('.pgnav');
         if (!n) return { no: true };
         const nr = n.getBoundingClientRect(), hid = [];
-        [...n.querySelectorAll('button')].forEach(b => {
-          const q = b.getBoundingClientRect();
-          if (q.left < nr.left - 1 || q.right > nr.right + 1 || q.top < nr.top - 1 || q.bottom > nr.bottom + 1)
-            hid.push(b.textContent.trim());
+        // ★群のナビ（.pgnav）と**章のナビ（#chapNav）の両方**を見る。
+        //   章のナビは今の群のボタンだけを出すので、display:none のものは数えない。
+        const boxes = [n, document.getElementById('chapNav')].filter(Boolean);
+        boxes.forEach(box => {
+          const br = box.getBoundingClientRect();
+          [...box.querySelectorAll('button')].forEach(b => {
+            if (b.offsetParent === null) return;      // その群でないタブは出ていなくて正しい
+            const q = b.getBoundingClientRect();
+            if (q.left < br.left - 1 || q.right > br.right + 1 || q.top < br.top - 1 || q.bottom > br.bottom + 1)
+              hid.push(b.textContent.trim());
+          });
         });
         // ★浮いているボタンがナビに重なっていないか。ナビの高さは折り返しで変わるので、
         //   固定値で逃がしていると必ずどこかの幅で重なる（実測: 74px 固定のまま2段=118pxになった）
@@ -136,13 +155,37 @@ async function tabsFromDom(p) {
         let ov = null;
         if (t) {
           const a = t.getBoundingClientRect();
-          if (!(a.right < nr.left || a.left > nr.right || a.bottom < nr.top || a.top > nr.bottom))
-            ov = 'themeToggle';
+          for (const box of boxes) {
+            const br = box.getBoundingClientRect();
+            if (br.height && !(a.right < br.left || a.left > br.right || a.bottom < br.top || a.top > br.bottom))
+              ov = 'themeToggle';
+          }
         }
-        return { n: n.querySelectorAll('button').length, hid, h: Math.round(nr.height), ov,
-                 over: n.scrollWidth - n.clientWidth };
+        const shown = boxes.reduce((c, b) => c + [...b.querySelectorAll('button')].filter(x => x.offsetParent !== null).length, 0);
+        const hh = boxes.reduce((c, b) => c + Math.round(b.getBoundingClientRect().height), 0);
+        return { n: shown, hid, h: hh, ov, over: n.scrollWidth - n.clientWidth };
       });
+      // 群を1つずつ開いて、章のボタンがナビの箱に収まっているか
+      const gbad = [];
+      for (let g = 1; g <= 6; g++) {
+        const q = await p2.evaluate(gg => {
+          if (typeof showGroup !== 'function') return null;
+          showGroup(gg);
+          const box = document.getElementById('chapNav');
+          if (!box || box.offsetParent === null) return { skip: true };
+          const br = box.getBoundingClientRect(), out = [];
+          [...box.querySelectorAll('button')].forEach(b => {
+            if (b.offsetParent === null) return;
+            const a = b.getBoundingClientRect();
+            if (a.left < br.left - 1 || a.right > br.right + 1 || a.top < br.top - 1 || a.bottom > br.bottom + 1)
+              out.push(b.textContent.trim());
+          });
+          return { hid: out, h: Math.round(br.height) };
+        }, g);
+        if (q && !q.skip && q.hid.length) gbad.push(`群${g}: ${q.hid.join(' | ')}`);
+      }
       await p2.close();
+      if (gbad.length) { bad++; console.log(`  ✗ ${W2}px: **章のタブが画面外**（${gbad.join(' ／ ')}）`); }
       if (r.no) { bad++; console.log(`  ✗ ${W2}px: .pgnav が無い`); }
       else if (r.hid.length) {
         bad++;
