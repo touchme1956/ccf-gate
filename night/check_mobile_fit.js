@@ -166,23 +166,45 @@ async function tabsFromDom(p) {
         return { n: shown, hid, h: hh, ov, over: n.scrollWidth - n.clientWidth };
       });
       // 群を1つずつ開いて、章のボタンがナビの箱に収まっているか
-      const gbad = [];
+      const gbad = [], gskip = [];
+      let gok = 0;
       for (let g = 1; g <= 6; g++) {
         const q = await p2.evaluate(gg => {
-          if (typeof showGroup !== 'function') return null;
+          if (typeof showGroup !== 'function') return { skip: 'showGroup が無い' };
           showGroup(gg);
           const box = document.getElementById('chapNav');
-          if (!box || box.offsetParent === null) return { skip: true };
-          const br = box.getBoundingClientRect(), out = [];
+          if (!box) return { skip: '#chapNav が無い' };
+          /* ★2026-08-24 是正: ここは `box.offsetParent === null` で見えるかを判定していた。
+             だが #chapNav は 640px 以下で position:fixed になり、
+             **fixed の要素は（見えていても）offsetParent が null を返す**。
+             ＝携帯の幅では6群ぜんぶが黙って skip され、それでも ✓ が出ていた。
+             night/check_navstack.js の頭注が名指ししているのと同じ罠を、この道具が踏んでいた。
+             見えているかは **computed の display/visibility/opacity と実寸**で見る。 */
+          const cs = getComputedStyle(box);
+          if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0)
+            return { skip: `章の帯が出ていない(${cs.display}/${cs.visibility}/${cs.opacity})` };
+          const br = box.getBoundingClientRect();
+          if (!br.width || !br.height) return { skip: '章の帯の実寸が 0' };
+          const out = [];
           [...box.querySelectorAll('button')].forEach(b => {
-            if (b.offsetParent === null) return;
+            const bs = getComputedStyle(b);
+            if (bs.display === 'none' || bs.visibility === 'hidden') return;
             const a = b.getBoundingClientRect();
+            if (!a.width || !a.height) return;
             if (a.left < br.left - 1 || a.right > br.right + 1 || a.top < br.top - 1 || a.bottom > br.bottom + 1)
               out.push(b.textContent.trim());
           });
           return { hid: out, h: Math.round(br.height) };
         }, g);
-        if (q && !q.skip && q.hid.length) gbad.push(`群${g}: ${q.hid.join(' | ')}`);
+        // ★測れなかったことを黙って飲み込まない（ルール7: 「測っていない」を「異常なし」と言わない）
+        if (!q || q.skip) { gskip.push(`群${g}: ${(q && q.skip) || '評価できない'}`); continue; }
+        gok++;
+        if (q.hid.length) gbad.push(`群${g}: ${q.hid.join(' | ')}`);
+      }
+      if (gskip.length) {
+        // 6群ぜんぶ測れなかった＝この幅の章の帯を一度も検査していない。✓ を出してはいけない
+        if (gok === 0) { bad++; console.log(`  ✗ ${W2}px: **章の帯を6群とも測れなかった**——「異常なし」ではない（${gskip[0]}）`); }
+        else console.log(`  ⚠ ${W2}px: 章の帯を測れなかった群 ${gskip.length}件（${gskip.join(' ／ ')}）`);
       }
       await p2.close();
       if (gbad.length) { bad++; console.log(`  ✗ ${W2}px: **章のタブが画面外**（${gbad.join(' ／ ')}）`); }
@@ -194,7 +216,8 @@ async function tabsFromDom(p) {
       } else if (r.ov) {
         bad++;
         console.log(`  ✗ ${W2}px: **${r.ov} がナビに重なっている**（押せないタブができる）`);
-      } else console.log(`  ✓ ${W2}px: ${r.n}本すべて見える（ナビの高さ ${r.h}px）・浮きボタンの重なりなし`);
+      } else console.log(`  ✓ ${W2}px: ${r.n}本すべて見える（ナビの高さ ${r.h}px）・浮きボタンの重なりなし`
+                       + `・章の帯 ${gok}/6群を実測`);
     }
   } finally {
     await browser.close();

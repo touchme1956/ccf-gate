@@ -22,8 +22,14 @@
  *   ② 二段が**隣り合っている**か（隙間 0〜3px。離れる＝押した場所と現れる場所がずれる）
  *   ③ テーマ切替ボタンが**どちらの帯にも重なっていない**か（v9.9.157 の再発）
  *   ④ 文書幅が画面幅を超えていないか（ブラウザの縮小表示）
- *   ⑤ pageerror
+ *   ⑤ **押した群と、開いたページ／並んでいる章が一致しているか**（2026-08-24追加）
+ *   ⑥ pageerror
+ *   ⚠ **色（コントラスト）は測っていない**——3テーマで回すが、見ているのは位置と可視だけ。
+ *      「3テーマで通った」を「3テーマとも読める」と読まないこと（ルール7）。
  *   ⚠ **判定は作らない**——採点・関門・売却規律には一切触れない。表示だけを測る。
+ *
+ * ■ ⚠ 可視は display だけで決まらない
+ *   visibility:hidden / opacity:0 はレイアウトを残すので**矩形は返る**。3つとも見る。
  *
  * ■ ⚠ 固定要素は offsetParent が null になる
  *   可視判定を offsetParent!==null でやると、**fixed にした瞬間に「見えない」と誤報する**。
@@ -39,7 +45,17 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.dirname(__dirname);
-const PORT = 8791;
+/* ★2026-08-24 是正: 8791 は night/check_state_banner.js が既に使っていた（決め打ちの衝突）。
+   CIは順に回すので普通は当たらないが、前の検査のサーバが残ると
+   **python の http.server は静かに死に、page.goto だけが落ちて「門が壊れた」に見える**。
+   固定値をやめて**空きポートを実測**する（環境変数で固定もできる）。 */
+async function freePort() {
+  return await new Promise(res => {
+    const srv = require('net').createServer();
+    srv.listen(0, '127.0.0.1', () => { const p = srv.address().port; srv.close(() => res(p)); });
+    srv.on('error', () => res(8794));
+  });
+}
 const WIDTHS = [360, 390, 430, 768, 980, 1280];
 const THEMES = ['light', 'dark', 'soft'];
 const GROUPS = [1, 2, 3, 4, 5, 6];
@@ -53,6 +69,7 @@ const GROUPS = [1, 2, 3, 4, 5, 6];
     process.exit(0);
   }
 
+  const PORT = Number(process.env.CCF_PORT || await freePort());
   const srv = spawn('python3', ['-m', 'http.server', String(PORT)], { cwd: ROOT, stdio: 'ignore' });
   await new Promise(r => setTimeout(r, 1500));
   const EXE = '/opt/pw-browsers/chromium';
@@ -73,14 +90,17 @@ const GROUPS = [1, 2, 3, 4, 5, 6];
           await p.evaluate(gg => { const b = document.getElementById('grp' + gg); if (b) b.click(); }, g);
           await p.waitForTimeout(200);
           cells++;
-          const r = await p.evaluate(() => {
+          const r = await p.evaluate(gg => {
             const gn = document.getElementById('grpNav'), cn = document.getElementById('chapNav');
             if (!gn || !cn) return { fatal: 'grpNav / chapNav が無い' };
             const G = gn.getBoundingClientRect(), C = cn.getBoundingClientRect();
-            const chapHidden = getComputedStyle(cn).display === 'none';
+            /* ★2026-08-24 是正: display だけを見ていた。visibility:hidden / opacity:0 でも
+               **押せないのに「出ている」と数えてしまう**（どちらもレイアウトは残るので矩形は返る）。 */
+            const vis = e => { const c = getComputedStyle(e);
+              return c.display !== 'none' && c.visibility !== 'hidden' && +c.opacity !== 0; };
+            const chapHidden = !vis(cn);
             // ⚠ fixed の要素は offsetParent が null。**矩形**で可視を測る
-            const chaps = Array.from(cn.querySelectorAll('button'))
-              .filter(x => getComputedStyle(x).display !== 'none');
+            const chaps = Array.from(cn.querySelectorAll('button')).filter(vis);
             const off = chaps.filter(x => {
               const r = x.getBoundingClientRect();
               return r.width === 0 || r.top < 0 || r.bottom > window.innerHeight
@@ -93,17 +113,35 @@ const GROUPS = [1, 2, 3, 4, 5, 6];
             const T = tt ? tt.getBoundingClientRect() : null;
             const ov = (A, B) => A && B && !(A.right <= B.left || A.left >= B.right
               || A.bottom <= B.top || A.top >= B.bottom);
+            /* ★2026-08-24 追加: **押した場所と、開いた場所が同じ群か**を初めて突き合わせる。
+               それまでは「章のボタンが画面内か」しか見ておらず、
+               群3を押して群4のページが開いても、チップが群2のまま並んでいても、全部 ✓ だった。
+               ⚠ CCF_GROUP は const なので window に載らない（グローバル字句環境）。
+                  だから JS の定数ではなく **DOM の data-g** で突き合わせる——
+                  data-g と CCF_GROUP の一致そのものは check_html の検査6が別に見る。 */
+            const pg = window.__ccfPage;
+            const tab = document.getElementById('tab' + pg);
+            const landedG = tab ? tab.dataset.g : null;
+            const shownG = Array.from(new Set(chaps.map(x => x.dataset.g))).sort();
+            const wantN = Array.from(cn.querySelectorAll('button[data-g="' + gg + '"]')).length;
             return {
-              page: window.__ccfPage, chapN: chaps.length, chapHidden, off, gap,
+              page: pg, chapN: chaps.length, chapHidden, off, gap, landedG, shownG, wantN,
               tOverG: ov(T, G), tOverC: !chapHidden && ov(T, C),
               docW: document.documentElement.scrollWidth, vw: window.innerWidth,
             };
-          });
+          }, g);
           const why = [];
           if (r.fatal) why.push(r.fatal);
           else {
             if (r.chapHidden) why.push('章の帯が出ていない（二段目が画面に無い＝「タブが消えた」に見える）');
             if (r.chapN === 0) why.push('章のボタンが0本');
+            // 押した群 ≠ 開いたページの群（チップは群Aに並ぶのに押すと群Bへ飛ぶ、の逆）
+            if (r.landedG !== String(g))
+              why.push(`群${g}を押したのに開いたのは pg${r.page}（その章は群${r.landedG || '不明'}）`);
+            if (r.shownG.length !== 1 || r.shownG[0] !== String(g))
+              why.push(`並んでいる章が群${g}のものだけではない: [${r.shownG.join(',')}]`);
+            if (r.chapN !== r.wantN)
+              why.push(`章の本数が合わない 見え${r.chapN} / この群の総数${r.wantN}`);
             if (r.off.length) why.push('章が画面の外: ' + r.off.join(' / '));
             if (r.gap < -1 || r.gap > 3) why.push('二段が離れている/重なっている ' + r.gap + 'px');
             if (r.tOverG || r.tOverC) why.push('テーマ切替ボタンがナビに重なる');

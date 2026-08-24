@@ -159,6 +159,11 @@ def fold_span(s, a, b, summary, label):
     if not brace_ok(s, a, b):
         problems.append('${...} の途中で切ろうとした: %s' % label)
         return s
+    pr = F.pressables(body)
+    if pr:
+        # ★2026-08-24新設: 押せるものを畳むと**字ではなく機能が消える**（導線3本を実際に畳んだ）
+        problems.append('押せるものが入っている（先に外へ出す）: %s ← %s' % (label, ' / '.join(pr[:3])))
+        return s
     stats.append((label, textlen(body)))
     return (s[:a]
             + '<details class="why plain" %s><summary>%s</summary><div class="why-body">' % (MARK, summary)
@@ -264,8 +269,10 @@ def main():
             continue
         m = hits[0]
         e = s.find('</p>', m.end())
-        if done(m.end()):
-            continue
+        # ★2026-08-24 是正: ここに `done(m.end())` という**定義されていない関数**の呼び出しが在った。
+        #   PCONV の鍵が <p> として1回だけ見つかるとき＝**クリーンな index.html に当てるとき**にだけ通る枝なので、
+        #   一度当てた後の再実行では `not hits` で先に continue して**永久に踏まない**＝
+        #   「動いているから正しい」に見えていた。判定は下の done_f が正しく持っている。
         # ★todo と**同じ列**に入れる（別々に当てると、先に当てた分だけ位置がずれて
         #   「タグ収支が合わない」という嘘の中止になる。実際に一度そうなった）
         if done_f(m.end()):
@@ -276,6 +283,11 @@ def main():
     for key in FM:
         m = re.search(r'<span class="lbl"[^>]*>%s</span>' % re.escape(key), s)
         if not m:
+            # ★2026-08-24 是正: 適用すると `<span class="lbl">` は `<summary class="lbl">` になるので、
+            #   **当てた後は「ラベルが見つからない」という嘘の中止**になっていた（再実行できない＝
+            #   クリーンから作り直すと途中で止まる）。summary になっていれば適用済みとして黙って飛ばす。
+            if re.search(r'<summary class="lbl"[^>]*>%s</summary>' % re.escape(key), s):
+                continue
             problems.append('.fm small のラベルが見つからない: %r' % key)
             continue
         if done_f(m.end()):
@@ -314,6 +326,10 @@ def main():
         body = s[a:b]
         if not F.balanced(body):
             problems.append('タグ収支が合わない: %s' % label)
+            continue
+        pr = F.pressables(body)
+        if pr:
+            problems.append('押せるものが入っている（先に外へ出す）: %s ← %s' % (label, ' / '.join(pr[:3])))
             continue
         stats.append((label, textlen(body)))
         s = (s[:oa] + s[oa:a].replace('<p', '<div', 1)

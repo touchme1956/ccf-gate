@@ -112,6 +112,12 @@ def fold_one(s, a, b, summary):
     head = re.sub(r'\s+', '', re.sub(r'<[^>]+>', '', body))[:2]
     if any(head.startswith(x) for x in NEVER_HEAD):
         return None
+    # ★2026-08-24新設: 押せるものを畳むと**字ではなく機能が消える**
+    #   （v9.9.171/172 で他ページへの導線3本を実際に畳んだ）。先に外へ出すこと。
+    pr = F.pressables(body)
+    if pr:
+        print('   ⏭ 押せるものが入っているので触らない: %s' % ' / '.join(pr[:3]))
+        return None
     new = ('<div%s><details class="why plain" %s><summary>%s</summary>'
            '<div class="why-body">%s</div></details></div>' % (attrs, MARK, summary, body))
     return s[:a] + new + s[b:]

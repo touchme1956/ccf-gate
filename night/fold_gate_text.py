@@ -54,6 +54,26 @@ def textlen(html):
     return len(re.sub(r'\s+', '', re.sub(r'<[^>]+>', '', html)))
 
 
+PRESSABLE = re.compile(
+    r'<a\b[^>]*\bhref\s*=\s*["\'](?!#)'      # 他ページ・外部への導線
+    r'|<(?:button|input|select|textarea)\b'    # 押す・入れる部品
+    r'|\bon(?:click|change|input|submit)\s*=',  # 手書きのハンドラ
+    re.I)
+
+
+def pressables(html):
+    """畳もうとしている中身に**押せるもの**が入っていないか（2026-08-24新設）。
+
+    ★なぜ要るか（実害）: v9.9.171/172 で説明を畳んだとき、
+      **chomirai.html / v10.html / portfolio.html への導線3本を一緒に畳んだ**。
+      字を減らすつもりが**機能を隠した**——別ページへの唯一の入口が
+      「詳しく」の中に消え、探しても見つからない（「成績はどこへ？」と同じ形）。
+    ⚠ この道具が畳んでよいのは**読む字**だけ。押すものは畳む前に外へ出す。
+      `href="#..."` は同じページ内の目印なので対象外。
+    返り値: 見つかった断片のリスト（空なら安全）"""
+    return [m.group(0) for m in PRESSABLE.finditer(html)]
+
+
 def balanced(html):
     """中身のタグ収支がゼロか（要素をまたいで切っていないか）"""
     depth = {}

@@ -863,6 +863,13 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
    文字は var(--muted)=rgb(106,98,82)。v9.9.108/v9.9.156 で二度踏んだ
    「色を一箇所でしか定義しない」型を、貼り付く帯で三度目に踏んだ。
    群ナビより**一段 沈めた**地にして、どちらが上位かを地の明度でも読めるようにする。 */
+/* ★2026-08-24 追加: **平の地を先に置く**。`background` はショートハンドなので、
+   color-mix() が解釈できない（Chrome<111 / Safari<16.2 / Firefox<113）と
+   **宣言ごと無効**になり、基底の rgba(12,15,20,.94) ＝ ほぼ黒 へ戻る＝
+   文字 var(--muted) と合わせて**コントラスト 2.86**（実測）＝上で直したはずの
+   「黒地に黒文字」がそのまま再来する。`.pgnav` は 259/530行に平の rgba を持っていて
+   二重に守られているのに、`.chapnav` は color-mix の1本だけだった。 */
+html[data-theme="light"] .chapnav{background:rgba(238,233,220,.96);}
 html[data-theme="light"] .chapnav{
   background:linear-gradient(180deg,color-mix(in srgb,var(--chnav,var(--gold)) 9%,#f2ecdf),
                                     color-mix(in srgb,var(--chnav,var(--gold)) 5%,#ede7d9));}
@@ -903,7 +910,7 @@ html[data-theme="soft"] .chapnav{background:rgba(20,23,29,.94);}
  <button id="grp6" onclick="showGroup(6)">📖 手引き</button>
 </nav>
 <!-- 章のチップ。**常にDOMに在る**（群が閉じていても getElementById で見つかる＝検査器が壊れない）。
-     章が1つだけの群では帯ごと隠す（押す先が1つしか無い帯は場所を取るだけ） -->
+     ⚠ v9.9.173 で**章が1つの群でも出す**ようにした（隠すと二段目の存在が画面から消えるため）。 -->
 <div class="chapnav" id="chapNav">
  <button id="tab10" onclick="showPage(10)" data-g="1">📋 今日やること</button>
  <button id="tab6"  onclick="showPage(6)"  data-g="2">📊 盤</button>
@@ -1352,7 +1359,7 @@ html[data-theme="soft"] .chapnav{background:rgba(20,23,29,.94);}
   </div>
  </div>
  <div class="fm small" style="margin-top:16px;">
-  <span class="lbl">補助 — 上限超過時だけ使う「目標株価」</span><details class="why plain" data-fold="7"><summary>補助 — 上限超過時だけ使う「目標株価」</summary><div class="why-body">
+  <details class="why plain" data-fold="7"><summary class="lbl">補助 — 上限超過時だけ使う「目標株価」</summary><div class="why-body">
   妥当価格 ≈ <b>来期FCF ÷ ( WACC − g )</b>　（g ＝ b × ROIIC、WACC ＝ RFR＋β×ERP）<br>
   割安度 D ＝ ( 妥当価格 − 株価 ) ÷ 妥当価格<br>
   買値 ＝ 予想EPS × 目標PER　（目標PER ＝ min( 自己10年中央値, 50, g×1.5 )）<br>
@@ -1382,8 +1389,8 @@ html[data-theme="soft"] .chapnav{background:rgba(20,23,29,.94);}
 <div class="block" style="padding-top:16px;padding-bottom:20px;">
  <div class="tag" style="background:linear-gradient(180deg,rgba(201,166,74,.22),rgba(201,166,74,.08));border-color:rgba(201,166,74,.4);color:var(--gold-bright)">別枠 · CCF X（超未来の門）</div>
  <div class="h2">✦ 門X 超未来 — 期待リターンの三項分解</div>
- <div class="intro">正本（門Ω）が「壊れないか」を裁くのに対し、門Xは「これから上げるか・払って見合うか」を <b style="color:var(--gold-bright)">期待リターン E[r] ＝ 純還元（現金還元−希薄化）＋ b×ROIIC ＋ 倍率の重力</b> に分解して裁く別枠だ。<details class="why plain" data-fold="2"><summary>つづき</summary><div class="why-body">予知はせず、非対称チェック・複利の漏れ・ケリー（¼上限）まで一枚で見る。<b>正本の採点・売却規律には一切干渉しない</b>——門Xは表示・グルーピングのみ。<u>新規投下の四関門（質スコア75+ ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件）のうち門X条件はここで裁く</u>（堀のふるいは正本Ω側の判定）。解説の最後に常設で埋め込む。別タブでも開ける。
- <a href="chomirai.html" target="_blank" style="color:var(--gold-bright)">新しいタブで開く ↗</a></div></details></div>
+ <div class="intro">正本（門Ω）が「壊れないか」を裁くのに対し、門Xは「これから上げるか・払って見合うか」を <b style="color:var(--gold-bright)">期待リターン E[r] ＝ 純還元（現金還元−希薄化）＋ b×ROIIC ＋ 倍率の重力</b> に分解して裁く別枠だ。<a href="chomirai.html" target="_blank" style="float:right;font-size:12px;margin-left:10px;color:var(--gold-bright)">新しいタブで開く ↗</a><details class="why plain" data-fold="2"><summary>つづき</summary><div class="why-body">予知はせず、非対称チェック・複利の漏れ・ケリー（¼上限）まで一枚で見る。<b>正本の採点・売却規律には一切干渉しない</b>——門Xは表示・グルーピングのみ。<u>新規投下の四関門（質スコア75+ ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件）のうち門X条件はここで裁く</u>（堀のふるいは正本Ω側の判定）。解説の最後に常設で埋め込む。別タブでも開ける。
+ </div></details></div>
  <iframe src="chomirai.html" loading="lazy" style="width:100%;height:calc(100vh - 150px);min-height:600px;border:1px solid var(--line);border-radius:10px;background:#070a10"></iframe>
 </div>
 
@@ -1654,14 +1661,14 @@ html[data-theme="soft"] .chapnav{background:rgba(20,23,29,.94);}
 <div id="pg5" class="pg">
  <div class="pg3-head">
   <h1 class="serif">買付順位 <span style="font-size:.5em;color:var(--mut)">3層ルール自動適用</span></h1>
-  <div style="color:var(--muted);font-size:14px;line-height:1.9"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><a href="v10.html" target="_blank" style="float:right;font-size:12px;color:var(--gold-bright);border:1px solid var(--gold-line);border-radius:7px;padding:4px 10px;text-decoration:none" title="v10「系列の門」影スコア——正本の合否には不使用。2027-07の較正で新旧を答え合わせ">✦ v10影スコア ↗</a>台帳から自動生成。目標ウェイトは<b style="color:var(--gold-bright)">時価総額Tier（5段 8:6:4:3:2 を城の按分枠（50%−特別枠・v9.9.159で特別枠は0社）へ正規化）・上限8%</b>（2026-08-14 ユーザー明示指示「時価総額順にウエイト上げてほしい」→「Tier分け」）。<b style="color:var(--gold-bright)">Ω順（E[r]項を外した）</b> は<b>席の選定にのみ</b>使う（E[r]点は錨12%=50点。<u>質だけでなく期待リターンとの積</u>。E[r]≤2%は自動でウェイト0）（段差8/5/3→連続へ・E[r]との積へ）／<b style="color:var(--dim)">72–75＝監視枠（保有せず・75超えで昇格）</b>。<b>🟢投下可・🔵次点の並びはΩ順＝繰り上がりの順と一致する（配分は時価総額Tierなので並び順とは別）</b>。<b style="color:#d69a3c">半導体連鎖の相関上限は2026-08-14に撤去した（v9.9.145・ユーザー明示指示）</b>——Ωも堀も上の社が上限だけで席を外れていたため（実測: 出 HWM Ω78.0/堀70.1 ／ 入 6146 Ω78.2/堀74.8）。<b>集中そのものは下の◇注記で測って出し続ける</b>（関門を消しても、それが守っていた事実は消さない）。⚠1銘柄8%は守られるが<b>束としての相関は今日から誰も止めない</b>＝承知のうえの交換。堀不足・点検・期末後の群は投下可の資格を持たないので、従来の合成順位（格×0.6＋E[r]点×0.4）で並ぶ。<b>門は「買ってよい」まで——買うかは君の判断。</b></div></details></div>
+  <div style="color:var(--muted);font-size:14px;line-height:1.9"><a href="v10.html" target="_blank" style="float:right;font-size:12px;color:var(--gold-bright);border:1px solid var(--gold-line);border-radius:7px;padding:4px 10px;text-decoration:none" title="v10「系列の門」影スコア——正本の合否には不使用。2027-07の較正で新旧を答え合わせ">✦ v10影スコア ↗</a><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body">台帳から自動生成。目標ウェイトは<b style="color:var(--gold-bright)">時価総額Tier（5段 8:6:4:3:2 を城の按分枠（50%−特別枠・v9.9.159で特別枠は0社）へ正規化）・上限8%</b>（2026-08-14 ユーザー明示指示「時価総額順にウエイト上げてほしい」→「Tier分け」）。<b style="color:var(--gold-bright)">Ω順（E[r]項を外した）</b> は<b>席の選定にのみ</b>使う（E[r]点は錨12%=50点。<u>質だけでなく期待リターンとの積</u>。E[r]≤2%は自動でウェイト0）（段差8/5/3→連続へ・E[r]との積へ）／<b style="color:var(--dim)">72–75＝監視枠（保有せず・75超えで昇格）</b>。<b>🟢投下可・🔵次点の並びはΩ順＝繰り上がりの順と一致する（配分は時価総額Tierなので並び順とは別）</b>。<b style="color:#d69a3c">半導体連鎖の相関上限は2026-08-14に撤去した（v9.9.145・ユーザー明示指示）</b>——Ωも堀も上の社が上限だけで席を外れていたため（実測: 出 HWM Ω78.0/堀70.1 ／ 入 6146 Ω78.2/堀74.8）。<b>集中そのものは下の◇注記で測って出し続ける</b>（関門を消しても、それが守っていた事実は消さない）。⚠1銘柄8%は守られるが<b>束としての相関は今日から誰も止めない</b>＝承知のうえの交換。堀不足・点検・期末後の群は投下可の資格を持たないので、従来の合成順位（格×0.6＋E[r]点×0.4）で並ぶ。<b>門は「買ってよい」まで——買うかは君の判断。</b></div></details></div>
  </div>
  <div class="wrap"><div id="planBox"></div></div>
 </div>
 
 <div id="pg7" class="pg">
 <div class="wrap" style="padding-top:14px">
- <div style="font-size:12.5px;color:var(--muted);margin:0 0 8px"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body">全保有を一枚で。株数・単価を入れると評価額を自動計算し、この端末に保存（門と同じ保存方式）。行頭の色丸は出口判定（S1/S2/S3/ホールド/採点待ち）。<b>網／城の内訳ビューは2026-07-29に撤去した</b>——目標60/40のリバランスは<b>Ⅵ買付順位の「今月の買付プラン」</b>が正本（保有データから網/城ウェイトを計算して渡している）。「⭳ 門の保有から取込」で台帳の保有を城として取り込み、「🏛 門の台帳へ登録」で逆方向。<a href="portfolio.html" target="_blank" style="color:var(--gold-bright)">新しいタブで開く ↗</a></div></details></div> <iframe id="pfFrame" src="portfolio.html" scrolling="no" allow="clipboard-write" style="width:100%;height:1600px;border:0;background:transparent;display:block;overflow:hidden"></iframe>
+ <div style="font-size:12.5px;color:var(--muted);margin:0 0 8px"><a href="portfolio.html" target="_blank" style="float:right;font-size:12px;margin-left:10px;color:var(--gold-bright)">新しいタブで開く ↗</a><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body">全保有を一枚で。株数・単価を入れると評価額を自動計算し、この端末に保存（門と同じ保存方式）。行頭の色丸は出口判定（S1/S2/S3/ホールド/採点待ち）。<b>網／城の内訳ビューは2026-07-29に撤去した</b>——目標60/40のリバランスは<b>Ⅵ買付順位の「今月の買付プラン」</b>が正本（保有データから網/城ウェイトを計算して渡している）。「⭳ 門の保有から取込」で台帳の保有を城として取り込み、「🏛 門の台帳へ登録」で逆方向。</div></details></div> <iframe id="pfFrame" src="portfolio.html" scrolling="no" allow="clipboard-write" style="width:100%;height:1600px;border:0;background:transparent;display:block;overflow:hidden"></iframe>
 </div>
 </div>
 <div id="pg8" class="pg">
@@ -3012,7 +3019,7 @@ function applyJSON(){
 }
 
 // ----- v9.1: サンドボックス対応UI(alert/confirmはclaude.ai環境で無効のため自前実装) -----
-function uiNotice(msg,ms){try{const b=document.body;if(!b)return;const n=document.createElement('div');n.style.cssText='position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid rgba(201,166,74,.45);color:#f0ecdf;padding:10px 16px;border-radius:8px;font-size:13px;z-index:9999;max-width:86%;box-shadow:0 6px 24px rgba(0,0,0,.5)';n.textContent=msg;b.appendChild(n);setTimeout(()=>{try{b.removeChild(n)}catch(e){}},ms||3400);}catch(e){}}
+function uiNotice(msg,ms){try{const b=document.body;if(!b)return;const n=document.createElement('div');n.style.cssText='position:fixed;bottom:calc(var(--navbh, 18px) + 8px);left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid rgba(201,166,74,.45);color:#f0ecdf;padding:10px 16px;border-radius:8px;font-size:13px;z-index:9999;max-width:86%;box-shadow:0 6px 24px rgba(0,0,0,.5)';n.textContent=msg;b.appendChild(n);setTimeout(()=>{try{b.removeChild(n)}catch(e){}},ms||3400);}catch(e){}}
 function uiConfirm(msg){return new Promise(res=>{try{const b=document.body;if(!b){res(true);return;}
  const ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;background:rgba(8,10,14,.74);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px';
  ov.innerHTML=`<div style="background:var(--panel);border:1px solid #28344a;border-radius:12px;padding:20px 22px;max-width:440px;font-size:14px;line-height:1.85;color:#f0ecdf"><div>${msg}</div><div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px"><button data-uic="no" style="background:var(--panel2);border:1px solid #28344a;color:#cfc5ab;border-radius:6px;padding:7px 16px;cursor:pointer;font-size:13px">やめる</button><button data-uic="yes" style="background:linear-gradient(180deg,rgba(201,166,74,.25),rgba(201,166,74,.12));border:1px solid rgba(201,166,74,.5);color:#ecd494;border-radius:6px;padding:7px 16px;cursor:pointer;font-size:13px">実行</button></div></div>`;
@@ -3684,7 +3691,9 @@ function ccfBoughtOpen(btn){
 function ccfToast(msg,ok){
   let el=document.getElementById('ccfToast');
   if(!el){ el=document.createElement('div'); el.id='ccfToast';
-    el.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:76px;z-index:9999;'
+    el.style.cssText='position:fixed;left:50%;transform:translateX(-50%);'
+      /* ★2026-08-24 是正: 下固定のナビが二段(群59+章53=112px)になったので、76px 固定だと章の帯に36px重なり、z-index 9999 のトーストが**唯一の章チップを覆って消えるまで押せなく**していた。ナビの実測(--navbh)に乗せる。 */
+      +'bottom:calc(var(--navbh, 76px) + 8px);z-index:9999;'
       +'max-width:min(92vw,620px);padding:9px 16px;border-radius:9px;font-size:12.5px;line-height:1.6;'
       +'box-shadow:0 6px 24px rgba(0,0,0,.35);transition:opacity .25s ease';
     document.body.appendChild(el); }
@@ -7396,7 +7405,7 @@ function showGroup(g){
   const n=(CCF_GROUP[cur]===g)?cur:(CCF_GROUP_HEAD[g]||10);
   showPage(n);
 }
-/* 章の帯: 今の群の章だけ出す。章が1つの群では帯ごと隠す */
+/* 章の帯: 今の群の章だけ出す。⚠ v9.9.173 以降は**章が1つの群でも帯を出す**（下の注記） */
 function ccfChapNav(n){
   try{
     const g=CCF_GROUP[n]||1;
@@ -7414,6 +7423,14 @@ function ccfChapNav(n){
        ユーザーの「成績はどこへ？」はこれ（実測: 起動直後 chapNav が display:none）。
        出したり消したりすると本文の位置も跳ねる。**常に同じ形**にする。 */
     nav.style.display=shown?'':'none';
+    /* ★2026-08-24 是正: **章の見え方を変えたら必ず測り直す**。
+       起動時は 五彩の初期化行が ccfNavFade()→ccfNavFit() を**先に**走らせるので、
+       ここで11本を隠す前の「12本ぜんぶ見えている帯」を測っていた。
+       実測(360/390/430px): --chaph 141px(実高53) / --navbh 216px(正 128) が
+       **最初のタップまで直らず**、テーマ切替ボタンが📋今日の
+       「⚠ いま止まっている」の行に重なって**その警告のタップを奪っていた**（fail-loud の破れ）。
+       呼ぶ側の順序に依存させず、**絞った側が測り直す**形にする。 */
+    if(typeof ccfNavFit==='function')ccfNavFit();
   }catch(e){}
 }
 function showPage(n){window.__ccfPage=n;ccfChapNav(n);for(let i=1;i<=12;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();if(n===9&&typeof ccfEvents==='function')ccfEvents();if(n===10&&typeof ccfToday==='function')ccfToday();if(n===11&&typeof ccfCheck==='function')ccfCheck();if(n===12&&typeof ccfPerf==='function')ccfPerf();window.scrollTo({top:0});try{const _t=document.getElementById('tab'+n);if(_t&&_t.scrollIntoView)_t.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}catch(e){}if(typeof ccfNavFade==='function')ccfNavFade();
@@ -7456,7 +7473,13 @@ function ccfNavFit(){try{
   const fixed=getComputedStyle(n).position==='fixed';
   const r=document.documentElement.style;
   r.setProperty('--pgh',h+'px');
-  r.setProperty('--chaph',ch+'px');
+  /* ★2026-08-24 是正: --chaph は「**上に積まれている**章の帯の高さ」。
+     携帯では章の帯は画面の**下**に居るので 0 を入れる——**--navh を fixed のとき
+     removeProperty しているのと同じ理由**で、片方だけ作法から漏れていた。
+     実害: `#scorer .duo` の top が calc(0+53-1)=**52px** になり、画面上端に何も無いまま
+     採点の判定帯が52px下に浮いて、その隙間を本文が素通りしていた（360/390/430px で実測）。
+     ⚠ --navbh（本文の下余白）は**実測の ch をそのまま**使う——下の帯は場所を取っているので。 */
+  r.setProperty('--chaph',(fixed?0:ch)+'px');
   if(fixed){ r.setProperty('--navbh',(h+ch+16)+'px'); r.removeProperty('--navh'); }
   else { r.setProperty('--navh',h+'px'); r.removeProperty('--navbh'); }
 }catch(e){}}
