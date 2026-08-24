@@ -314,18 +314,29 @@ def main():
             rows.append(r); continue
 
         # ★ bd が買付日か検算する。実記録の単価が bd の終値と食い違えば bd は買付日でない
-        if r["src"] == "actual" and at_bd and at_bd[0]:
+        #   ⚠ **複数ロットの「等価日」には当ててはいけない**（2026-08-23 XLK で実際に誤検出した）。
+        #     値段の違う2ロットの**加重平均**が、どこか一日の終値と一致する道理は無い——
+        #     XLK は $169.509 と $185.43 が 9.4% 離れているので、等価日の終値と必ず数%ずれる。
+        #     ＝この検査は「bd が記入日に化けている」を捕まえる道具で、
+        #       **等価日は最初から取引日ではない**（1銘柄1行の台帳に複数ロットを収める構造の帰結）。
+        #     鳴らせば「発見」ではなく構造の言い直しになり、鳴りすぎる警報は鳴らないのと同じ。
+        _costed_lots = [l for l in (p.get("bdLots") or []) if (l.get("usd") or l.get("jpy"))]
+        r["bd_equiv"] = bool(len(_costed_lots) >= 2 and p.get("bdEst"))
+        if r["src"] == "actual" and at_bd and at_bd[0] and not r["bd_equiv"]:
             gap = r["cost_px"] / at_bd[0] - 1
             r["bd_gap"] = gap
             if abs(gap) > 0.03:
                 r["bd_suspect"] = True
                 r["bd_window"] = level_window(ser, r["cost_px"])
                 w = r["bd_window"]
+                # ⚠ 文は**挙動に合わせる**。想定日(bd_est)の行は下の比較で**外していない**
+                #   （外すのは `bd_suspect and not bd_est`）。「外す」と書くと画面が嘘をつく。
                 notes.append(
                     f"{t}: **bd({bd}) は買付日ではない**——実記録の単価 {r['cost_px']:,.2f} は"
                     f"その日の終値 {at_bd[0]:,.2f} と {gap*100:+.1f}% 違う"
                     + (f"（終値がこの水準だったのは {w['first']}〜{w['last']}）" if w else "")
-                    + "。S&P500 との比較から外し、円換算は概算として出す")
+                    + ("。想定日なので比較には残すが、幅で読むこと" if p.get("bdEst")
+                       else "。S&P500 との比較から外し、円換算は概算として出す"))
 
         # ── 配当の寄与だけを取り出す（v9.9.156で是正）──────────────────────
         #   ★**いくらで買ったかに依らない**——窓だけで決まる比にする:
