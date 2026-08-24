@@ -340,7 +340,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
 #scorer .btn-g:active{box-shadow:0 1px 5px rgba(201,166,74,.28);}
 
 /* 採点機の二段判定帯：ナビの下に正しく貼り付く（従来はナビの裏に隠れた） */
-#scorer .duo{top:calc(var(--navh) - 1px);}
+#scorer .duo{top:calc(var(--navh) + var(--chaph,0px) - 1px);}  /* v9.9.173: 章の帯のぶんも下げる */
 
 /* テーマ切替ボタン：浮遊感 */
 #themeToggle:hover{transform:translateY(-2px) scale(1.04);}
@@ -418,7 +418,15 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none;}
   /* さらに狭い画面では語尾も畳む（実行手順→手順 / 検証履歴→履歴 / 買付順位→買付 / 採点機→採点）。
      ⚠ **章が判る最短の語**までしか削らない——「実行」だけ残すと何のタブか判らなくなる。 */
   @media(max-width:430px){.pgnav .navtail{display:none;}}
-  .pgnav button{padding-left:8px;padding-right:8px;}
+  /* ★v9.9.173: 群ナビを**1段に収める**。章の帯を常時出すことにしたので、
+     群が2段のままだと携帯の固定ナビが 102+53=155px＝画面の18%を食う
+     （統合前の12タブが102px・1タップだったので、それより悪くなる）。
+     実測(360px): 素のままだと need=389 > avail=348 で2段。
+     横padding 8→5px と絵文字と語の間の詰め(word-spacing)で **need=329**＝19pxの余裕で1段。
+     ⚠ 縦は触らない——タップ標的の高さ(42px)は上の規則が持っている。
+     ⚠ 320px では2段へ折り返す（それでよい・潰して読めなくするよりまし）。 */
+  .pgnav button{padding-left:5px;padding-right:5px;word-spacing:-4px;}
+  .chapnav button{word-spacing:-3px;}
   /* iOSのフォーカス時自動ズームを防ぐ＝入力は16px */
   #scorer input#nm,#scorer input[type=number],#scorer select,#scorer .auto textarea{font-size:16px;}
   #scorer input[type=number]{width:96px;}
@@ -844,8 +852,21 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
    群のナビ(.pgnav)より一段 弱く見せる——同じ強さだと「どっちが上位か」が読めない。
    ⚠ 色は :root にある変数だけ使い fallback を添える（--jade/--rust は #scorer にスコープされていて
       他タブでは解決せず線が丸ごと消える。v9.9.108/v9.9.156 で二度踏んだ）。 */
-.chapnav{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;align-items:center;
-  padding:8px 12px 2px;max-width:var(--maxw);margin:0 auto;}
+.chapnav{position:sticky;top:var(--pgh,58px);z-index:98;
+  display:flex;gap:6px;flex-wrap:wrap;justify-content:center;align-items:center;
+  padding:7px 12px;margin:0 auto;
+  background:rgba(12,15,20,.94);backdrop-filter:blur(12px) saturate(1.3);
+  -webkit-backdrop-filter:blur(12px) saturate(1.3);
+  border-bottom:1px solid var(--line);}
+/* ★テーマごとに地を定義する。**しないと既定の明テーマで「黒地に黒文字」になる**——
+   実測: 群ナビは linear-gradient(#f7f3e9…) なのに章の帯だけ rgba(8,10,14,.9) で、
+   文字は var(--muted)=rgb(106,98,82)。v9.9.108/v9.9.156 で二度踏んだ
+   「色を一箇所でしか定義しない」型を、貼り付く帯で三度目に踏んだ。
+   群ナビより**一段 沈めた**地にして、どちらが上位かを地の明度でも読めるようにする。 */
+html[data-theme="light"] .chapnav{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--chnav,var(--gold)) 9%,#f2ecdf),
+                                    color-mix(in srgb,var(--chnav,var(--gold)) 5%,#ede7d9));}
+html[data-theme="soft"] .chapnav{background:rgba(20,23,29,.94);}
 .chapnav button{background:transparent;border:1px solid var(--line);color:var(--muted);
   border-radius:999px;padding:6px 13px;min-height:32px;font-size:12.5px;font-family:inherit;
   cursor:pointer;white-space:nowrap;flex:0 0 auto;
@@ -854,8 +875,12 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 .chapnav button.on{color:var(--gold-bright);border-color:var(--gold-line);
   background:color-mix(in srgb,var(--chnav,var(--gold)) 16%,transparent);font-weight:600;}
 @media(max-width:640px){
-  /* 携帯は群のナビが**下に固定**されるので、章の帯は本文の頭に居る。詰める */
-  .chapnav{padding:6px 8px 0;gap:4px;}
+  /* ★v9.9.173: 携帯は群のナビが**下に固定**されるので、章の帯も**そのすぐ上**へ固定する。
+     旧実装は本文の頭(static)に置いていた——**押す場所は画面の下・現れる場所は画面の上**で、
+     実測 y=742(群) vs y=6(章)。押した本人の視線の外に出るので「タブが消えた」に見えた。
+     ⚠ --pgh は ccfNavFit が実測して入れる（折り返しで段数が変わるので固定値が使えない）。 */
+  .chapnav{position:fixed;left:0;right:0;bottom:var(--pgh,58px);top:auto;
+    padding:6px 8px;gap:4px;border-bottom:none;border-top:1px solid var(--line);}
   .chapnav button{padding:6px 10px;font-size:12px;min-height:34px;}
 }
 </style>
@@ -1375,7 +1400,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.172</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.173</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</div></details></div>
   </div>
@@ -7384,7 +7409,11 @@ function ccfChapNav(n){
       if(mine)shown++;
       b.className=(b.id==='tab'+n?'on':'');
     });
-    nav.style.display=(shown>1)?'':'none';
+    /* ★v9.9.173: **章が1つの群でも出す**。旧実装は shown>1 で帯ごと隠していたので、
+       既定の📋今日（章1つ）では**二段目が存在すること自体が画面に無かった**——
+       ユーザーの「成績はどこへ？」はこれ（実測: 起動直後 chapNav が display:none）。
+       出したり消したりすると本文の位置も跳ねる。**常に同じ形**にする。 */
+    nav.style.display=shown?'':'none';
   }catch(e){}
 }
 function showPage(n){window.__ccfPage=n;ccfChapNav(n);for(let i=1;i<=12;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();if(n===9&&typeof ccfEvents==='function')ccfEvents();if(n===10&&typeof ccfToday==='function')ccfToday();if(n===11&&typeof ccfCheck==='function')ccfCheck();if(n===12&&typeof ccfPerf==='function')ccfPerf();window.scrollTo({top:0});try{const _t=document.getElementById('tab'+n);if(_t&&_t.scrollIntoView)_t.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}catch(e){}if(typeof ccfNavFade==='function')ccfNavFade();
@@ -7414,13 +7443,21 @@ function ccfChapTint(n){
 }
 /* v9.9.157: ナビの高さを実測して本文へ渡す。**折り返しで段数が変わる**ので固定値が使えない。
    ⚠ 上に貼り付くとき(sticky)だけ --navh を入れる——携帯は下に固定なので 0 のままでよい
-     （#scorer .duo が top:calc(var(--navh) - 1px) で使う）。下固定のときは --navbh で本文の下余白を空ける。 */
+     （#scorer .duo が top:calc(var(--navh) + var(--chaph) - 1px) で使う）。下固定のときは --navbh で本文の下余白を空ける。 */
 function ccfNavFit(){try{
   const n=document.querySelector('.pgnav'); if(!n)return;
   const h=Math.round(n.getBoundingClientRect().height);
+  /* ★v9.9.173: 章の帯も**貼り付く側**になったので、二段まとめて測る。
+     片方だけ測ると (a)本文の下端が章の帯に隠れる (b)テーマ切替ボタンが帯に重なる。
+     ⚠ --pgh は群ナビ**単体**の高さ（章の帯が自分の位置を決めるのに使う）。
+        --navh に混ぜると .pgnav{min-height:var(--navh)} が自分を押し広げる**帰還ループ**になる。 */
+  const c=document.querySelector('.chapnav');
+  const ch=(c&&getComputedStyle(c).display!=='none')?Math.round(c.getBoundingClientRect().height):0;
   const fixed=getComputedStyle(n).position==='fixed';
   const r=document.documentElement.style;
-  if(fixed){ r.setProperty('--navbh',(h+16)+'px'); r.removeProperty('--navh'); }
+  r.setProperty('--pgh',h+'px');
+  r.setProperty('--chaph',ch+'px');
+  if(fixed){ r.setProperty('--navbh',(h+ch+16)+'px'); r.removeProperty('--navh'); }
   else { r.setProperty('--navh',h+'px'); r.removeProperty('--navbh'); }
 }catch(e){}}
 function ccfNavFade(){ccfNavFit();const n=document.querySelector('.pgnav');if(!n)return;const more=n.scrollWidth-n.clientWidth-n.scrollLeft>4;const back=n.scrollLeft>4;n.classList.toggle('has-more',more);n.classList.toggle('has-back',back);}
