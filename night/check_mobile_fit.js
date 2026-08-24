@@ -92,6 +92,7 @@ async function tabsFromDom(p) {
 
     const TABS = await tabsFromDom(p);
     console.log(`  （タブ ${TABS.length}本を nav から読んだ: ${TABS.map(x => x[0]).join(' ')}）\n`);
+    const sunkAll = new Set();
     for (const [id, label] of TABS) {
       await p.evaluate(i => { const e = document.getElementById(i); e && e.click(); }, id);
       await p.waitForTimeout(2200);
@@ -110,6 +111,22 @@ async function tabsFromDom(p) {
         out.sort((a, c) => c.right - a.right);
         return { sw: de.scrollWidth, cw: de.clientWidth, n: out.length, top: out.slice(0, 5) };
       });
+      /* ★2026-08-24新設: **門の別ページへの導線が折り畳みの中に飲み込まれていないか**。
+         v9.9.171/172 で説明を畳んだとき、chomirai/v10/portfolio/ami への
+         **唯一の入口を5本まとめて「詳しく」の中へ隠した**——字を減らすつもりが機能を隠した
+         （「成績はどこへ？」とまったく同じ形）。畳み器の側にも F.pressables() の検問を入れたが、
+         **JS が実行時に組み立てる節はそこを通らない**ので、描いた後の DOM でも数える。
+         ⚠ details の中でも **open なら見えている**ので、閉じているものだけを数える。 */
+      const sunk = await p.evaluate(() => {
+        const out = [];
+        document.querySelectorAll('a[href$=".html"]').forEach(a => {
+          const d = a.closest('details');
+          if (d && !d.open) out.push(a.getAttribute('href') + ' ← 「'
+            + (d.querySelector('summary') || {}).textContent + '」の中');
+        });
+        return out;
+      });
+      sunk.forEach(x => sunkAll.add(`${label}: ${x}`));
       const ok = r.sw <= r.cw + 1;
       if (!ok) bad++;
       console.log(`  ${ok ? '✓' : '✗'} ${label.padEnd(12)} scrollW=${r.sw} / 画面=${r.cw}`
@@ -120,6 +137,15 @@ async function tabsFromDom(p) {
     }
     console.log(bad ? `\n✗ ${bad}件。長い注記の white-space:nowrap を外し、割ってはいけない数字の対だけを守ること`
                     : '\n✓ 全タブで文書幅が画面幅に収まっている（ブラウザの縮小表示は起きない）');
+
+    if (sunkAll.size) {
+      bad += sunkAll.size;
+      console.log(`\n✗ **門の別ページへの導線が畳みの中に沈んでいる ${sunkAll.size}件**`
+        + '——字を減らすつもりが**機能を隠している**。<details> の**手前**へ出すこと');
+      for (const x of sunkAll) console.log('     ' + x);
+    } else {
+      console.log('✓ 門の別ページへの導線は、どれも折り畳みの外にある');
+    }
 
     // ── ★タブが全部見えているか（v9.9.157）──────────────────────────────
     //   ⚠**この検査が無かったせいで、Ⅵ買付順位とⅦ保有が画面外に出たまま出荷された**
