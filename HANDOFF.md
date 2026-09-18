@@ -104,7 +104,25 @@ git merge gitlab/main
 2. **CI の二重起動を止める** — GitLab側は `[read-only]` タグで `market` / `score` / `shadow` を skip する設計。**GitHub Actions 側にはその仕組みが無い**ので、`.github/workflows/market.yml` 等が古い前提で無条件に回る。どちらを生かすか決める。
 3. **サイトの配信確認** — `gate-site-7xxoql` の `7467165`「CIを止めていたのは `NOW` という名前の固定日1行だった」。同じ地雷が踏まれていないか、`touchme1956.github.io/ccf-gate/index.html` の表示日付で確認する。
 
-### Step 4 — もし403が再発したら
+### Step 4 — 403 が出たときの読み分け（2026-09-18 実測）
+
+この文書を書いたセッションから `git push` を試したところ、**読み取りは通るが書き込みは403**だった。ただし 08-24 のときとはメッセージが違う:
+
+```
+remote: access denied by the git proxy: touchme1956/ccf-gate is not in this session's
+        authorized repository set, so the proxy will not inject a credential for it.
+        To fix, add the repository to the session's sources.
+fatal: unable to access 'https://github.com/touchme1956/ccf-gate.git/': error 403
+```
+
+| メッセージ | 意味 | 直し方 |
+|---|---|---|
+| `Claude doesn't have GitHub access to ... for your organization`（08-24） | 組織側の認可が無い | 組織の設定 |
+| `not in this session's authorized repository set`（09-18・今回） | **セッションにこのrepoが登録されていないだけ** | **セッションの sources にこのリポジトリを追加する** |
+
+つまり今回の403は組織の権限問題ではなく**セッション設定**。ブランチに今日の日付のコミットがあるのは、sources に登録済みの別セッションから押しているため、と説明がつく。
+
+それでも通らないときは bundle 手渡し:
 
 ```bash
 git bundle create ccfgate-$(date +%Y%m%d).bundle 33448e4..main
@@ -275,7 +293,7 @@ v1の穴だけを8点埋めた改訂版（刻み 100/85/70/50/null は不変）:
 - `.gitlab-ci.yml` の 501〜930行は未読（1〜500・931〜1192のみ）
 - CIジョブのログ未確認 — `retro-oos-check`（ticker/CIK の一致件数）、`retro-oos2-shoot`
 - **GitHub側の並走ブランチ29本のうち、`gate-site-7xxoql` が取り込んでいない9本の中身**は未確認。`70ebc8a` の triage 記録を先に読むこと
-- **GitHub への push が現在通るかは未検証**（読み取りが通ることと、`main` へのブランチに今日の日付があることまでしか確認していない）
+- ~~GitHub への push が現在通るか~~ → **2026-09-18 に検証済み。このセッションからは403**（理由は Step 4 の表）。この文書自体も `docs/handoff-gitlab-retro` にコミット済みだが push できていない
 
 ---
 
