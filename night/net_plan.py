@@ -102,6 +102,7 @@ def build(net_pct):
     prof = json.load(open(os.path.join(BASE, "out", "etf_profiles.json")))["etfs"]
     out = {"asof": TODAY_S,
            "決定": {"網": NEW, "網の比率": net_pct, "城の比率": 100 - net_pct,
+                    "比率の出所": globals().get("NET_PCT_SRC", "呼び出し側の指定"),
                     "網の中の重み": (NET_W if NET_W else "未指定——等ウェイトで計算した"),
                     "重みの出所": NET_W_SRC,
                     "重みの合計": (round(sum(NET_W.values()), 4) if NET_W else None)},
@@ -214,11 +215,36 @@ def build(net_pct):
     return out
 
 
+def net_pct_target():
+    """★網の**比率**も portfolio.json（人の決定の置き場）から読む。戻り: (%, 出所)
+    ⚠ここを書き写すと必ず陳腐化する——2026-09-18 まで `n = 50` と**ハードコード**されており、
+      同日の明示指示「城は30%網は70%に変更する」の後も『網の比率 50 / 城の比率 50』と
+      出し続けていた（顔ぶれと中の重みは読むのに、比率だけ焼き付いていた）。
+      この道具の頭注が言う「数字を書き写した箇所は必ず陳腐化する」を、自分で踏んでいた。
+    ⚠読めなければ**既定へ倒したことを出所に書く**——黙って 50 を出すと
+      『測っていない』が『測って50』に化ける（絶対のルール7）。"""
+    try:
+        t = (json.load(open(os.path.join(BASE, "portfolio.json"), encoding="utf-8")).get("target") or {})
+        v = t.get("ami_net_pct")
+        if v is None:
+            return 50, "既定50（portfolio.json の target.ami_net_pct が無い）"
+        return float(v), "portfolio.json の target.ami_net_pct"
+    except Exception:
+        return 50, "既定50（portfolio.json が読めない）"
+
+
 if __name__ == "__main__":
-    n = 50
+    n, NET_PCT_SRC = net_pct_target()
     if "--net" in sys.argv:
         n = int(sys.argv[sys.argv.index("--net") + 1])
+        NET_PCT_SRC = "--net で上書き"
     o = build(n)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    json.dump(o, open(OUT, "w"), ensure_ascii=False, indent=1)
+    # ★`--net` で比率を振ったときは**正本を書かない**（.partial へ）。
+    #   影の計測が正本を潰す型は score_all.js の --jp/--us、fill_growth_trend の --only、
+    #   v11_facts の --only で三度踏んでいる。**注意力ではなく構造で塞ぐ**。
+    dst = OUT if NET_PCT_SRC != "--net で上書き" else OUT.replace(".json", ".partial.json")
+    json.dump(o, open(dst, "w"), ensure_ascii=False, indent=1)
+    if dst != OUT:
+        print("# --net で振ったので %s へ書いた（正本 %s は触っていない）" % (dst, OUT), file=sys.stderr)
     print(json.dumps(o, ensure_ascii=False, indent=1))

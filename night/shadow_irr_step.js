@@ -65,7 +65,7 @@ function evaluate(mutate) {
     try { row.a = +ccfAllocScore(row).toFixed(2); } catch (e) { row.a = 0; }
     rows.push(row);
   }
-  const sel = ccfAllocTop(rows.filter(x => x.quali), 10);
+  const sel = ccfAllocTop(rows.filter(x => x.quali), 5);
   for (const r of rows) r.buy = r.quali && sel.has(r.t);
   return rows;
 }

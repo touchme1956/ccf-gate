@@ -110,7 +110,13 @@ def read_code_facts(h):
     m = re.search(r'const evLimit\s*=\s*\(roicV>=30\?(\d+):roicV<15\?(\d+):(\d+)\)', h)
     f['ev_limit'] = (int(m.group(1)), int(m.group(2)), int(m.group(3))) if m else None
 
-    m = re.search(r"ccfAllocTop\(cands,\s*maxN\)\{\s*maxN\s*=\s*maxN\s*\|\|\s*(\d+)", h)
+    # v9.9.174: 席の数は **var CCF_SEATS** が正本になった（呼び出し側は引数を省く）。
+    #   ⚠ 旧実装は `maxN=maxN||10` の数字を読んでいたので、定数化した瞬間に **None＝この検査が
+    #     まるごと眠った**（「測れなかった」が「異常なし」に化ける型）。定数を第一に読み、
+    #     見つからなければ従来の既定値から拾う。**どちらも取れなければ黙って通さず名指しする**。
+    m = re.search(r"\bvar\s+CCF_SEATS\s*=\s*(\d+)", h)
+    if not m:
+        m = re.search(r"ccfAllocTop\(cands,\s*maxN\)\{\s*maxN\s*=\s*maxN\s*\|\|\s*(\d+)", h)
     f['alloc_n'] = int(m.group(1)) if m else None
 
     # 表示バージョン（<h1>のバッジ）と、ファイル内に現れる最大バージョン
@@ -302,12 +308,26 @@ def check(h, f):
                         bad))
 
     # ⑩ 投下可の枠数が文中と一致するか
+    if not f['alloc_n']:
+        out.append(('FAIL', 'alloc_seats_unreadable',
+                    '席の数(CCF_SEATS)を index.html から読めなかった——この検査が眠るので、'
+                    '本文の「上位N社」がコードと食い違っても気づけない', []))
     if f['alloc_n']:
         bad = []
+        # ⚠ 歴史記述（「いつ・こう変えた」の経緯）は残すのが正しい——CLAUDE.md が明示。
+        #   v9.9.174 で席を 10→5 にしたとき、**当時の値を語る6箇所のコメントが一斉に鳴った**。
+        #   ここを鳴らし続けると「鳴りすぎる警報は鳴らないのと同じ」になる。
+        #   除外は ⑧ と同じ二段——**JSコメントの中** かつ **版番号か日付が近くにある**。
+        #   片方だけでは緩い: コメントでも印の無い記述は今の操作説明でありうるし、
+        #   印があっても本文（読者が読む位置）なら現在形の指示として読まれる。
+        histmark = re.compile(r'v9\.9\.\d+|\d{4}-\d\d-\d\d')
         for m in re.finditer(r'(?:合成点上位|Ω上位|irr=85優先→Ω順の上位)(\d+)社', h):
-            if int(m.group(1)) != f['alloc_n']:
-                bad.append((line_of(h, m.start()),
-                            strip_tags(h[max(0, m.start() - 80):m.start() + 90])))
+            if int(m.group(1)) == f['alloc_n']:
+                continue
+            win = h[max(0, m.start() - 160):m.start() + 120]
+            if in_js_comment(h, m.start()) and histmark.search(win):
+                continue        # 当時の席数を語る歴史記述＝正しい
+            bad.append((line_of(h, m.start()), strip_tags(h[max(0, m.start() - 80):m.start() + 90])))
         if bad:
             out.append(('FAIL', 'alloc_seats',
                         '投下可の枠数が本文とコードで食い違う（コード maxN=%d）' % f['alloc_n'], bad))
