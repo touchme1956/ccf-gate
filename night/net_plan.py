@@ -34,20 +34,32 @@ fetch, cagr, maxdd = _m.fetch, _m.cagr, _m.maxdd
 
 # ★網の顔ぶれと**中の重み**は portfolio.json（人の決定の置き場）から読む。
 #   ここに書き写すと必ず割れる（v9.9.65）。読めなければ下の既定へ倒す。
-NEW_FALLBACK = ["XLK", "SMH", "GRID", "ITA", "NASA"]
+NEW_FALLBACK = ["QQQM", "XLK", "SMH", "GRID", "ITA", "NASA"]
 
 
 def net_target():
     """(顔ぶれ, {t: 総資産に対する%} or None, 重みの出所) を返す。
     ⚠**一本でも重みが無ければ全体を等分へ倒す**——指定のある本だけ重くすると
-      「指定の穴が配分に化ける」（門の ccfNetRows / ccfMcapWeights と同じ作法）。"""
+      「指定の穴が配分に化ける」（門の ccfNetRows / ccfMcapWeights と同じ作法）。
+    ⚠**0% は「測って0」であって「未指定」ではない**（2026-09-18 ユーザー明示指示
+      「GRID・ITA・NASA は各0%（名前は残す・売らない）」）。旧実装は `not w.get(n)` で
+      見ていたので **0 が未指定と同じ扱いになり、GRID0 を書くと全体が等分へ倒れていた**
+      ——「測っていない」と「測って0」の取り違え（ルール7）を配分の側で作っていた。
+      判定は**値の大小ではなくキーの有無**で行う（None・空文字・数でない値は未指定へ倒す）。"""
     try:
         t = (json.load(open(os.path.join(BASE, "portfolio.json"), encoding="utf-8")).get("target") or {})
         names = [str(x).strip().upper() for x in (t.get("ami_names") or []) if str(x).strip()]
         if not names:
             return NEW_FALLBACK, None, "既定（portfolio.json に ami_names が無い）"
-        w = {str(k).strip().upper(): float(v) for k, v in (t.get("ami_weights") or {}).items()}
-        miss = [n for n in names if not w.get(n)]
+        w = {}
+        for k, v in (t.get("ami_weights") or {}).items():
+            if v is None or v == "":
+                continue
+            try:
+                w[str(k).strip().upper()] = float(v)
+            except (TypeError, ValueError):
+                continue
+        miss = [n for n in names if n not in w]
         if w and not miss:
             return names, {n: w[n] for n in names}, "portfolio.json の target.ami_weights"
         return names, None, ("等分（重みが無い本: " + "・".join(miss) + "）" if miss else "等分（ami_weights が未設定）")
@@ -214,10 +226,23 @@ def build(net_pct):
     return out
 
 
+def net_pct_default():
+    """網の比率は **portfolio.json の target.ami_net_pct が正本**（読めなければ50）。
+    ⚠**ここに数字を書き写さない**——2026-09-18 に 網50→80% へ改定されたとき、
+      書き写したままだと重みは新しいのに「網の比率」だけ50のまま出力され、
+      同じ台帳を見る二つが違うことを言う（v9.9.65）。"""
+    try:
+        t = (json.load(open(os.path.join(BASE, "portfolio.json"), encoding="utf-8")).get("target") or {})
+        v = float(t.get("ami_net_pct"))
+        return v if 0 < v <= 100 else 50
+    except Exception:
+        return 50
+
+
 if __name__ == "__main__":
-    n = 50
+    n = net_pct_default()
     if "--net" in sys.argv:
-        n = int(sys.argv[sys.argv.index("--net") + 1])
+        n = float(sys.argv[sys.argv.index("--net") + 1])
     o = build(n)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     json.dump(o, open(OUT, "w"), ensure_ascii=False, indent=1)

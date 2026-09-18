@@ -400,11 +400,14 @@ async function boot(){
       night/lookthrough.py の城は state.json の実保有（+RBC/IRMD）。同じ「目標の網の半導体%」を
       両方で計算させたら 33.7〜42.2% と 27.6〜36.2% に割れた。**測った数字は道具ひとつが持つ。**
       この画面が持つのは『何を決めたか』だけで、『それがどうなるか』は道具が出す。 */
- /* ⚠正本は `target.ami_weights`（2026-08-20 ユーザー明示指示 XLK15/SMH10/GRID10/ITA10/NASA5）。
+ /* ⚠正本は `target.ami_weights`（**2026-09-18 ユーザー明示指示 QQQM40/XLK30/SMH10 ＋ GRID0/ITA0/NASA0**。
+    旧: 2026-08-20 の XLK15/SMH10/GRID10/ITA10/NASA5）。
     門(index.html) も night/net_plan.py も night/lookthrough.py もここを読む＝**同じ量を一つの場所で持つ**。
-    旧 `ami_mix`（2026-08-19 の指示）は翌日に置き換わったので、無いときだけ拾う。 */
+    旧 `ami_mix`（2026-08-19 の指示）は置き換わったので、無いときだけ拾う。
+    ⚠**0% は「測って0」であって「未指定」ではない**——この画面は決めた値をそのまま並べるだけなので
+    0 も 0 として出す（判定も正規化もしない）。 */
  const _T=(P.target||{});
- const TM=_T.ami_weights?{asof:'2026-08-20',src:'target.ami_weights'}:((_T.ami_mix)||{});
+ const TM=_T.ami_weights?{asof:'2026-09-18',src:'target.ami_weights'}:((_T.ami_mix)||{});
  const tmix=_T.ami_weights||((_T.ami_mix||{}).pct_of_total)||{};
  if(Object.keys(tmix).length){
   const miss=Object.keys(tmix).filter(t=>!etfs[t]);
