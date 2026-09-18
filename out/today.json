@@ -18,38 +18,14 @@
   "RELX"
  ],
  "counts": {
-  "now": 20,
-  "today": 4,
-  "month": 29,
+  "now": 4,
+  "today": 2,
+  "month": 38,
   "waiting": 89,
   "blind": 0,
   "src": 19
  },
  "now": [
-  {
-   "k": "ops:market",
-   "level": "now",
-   "title": "止まっている疑い: 株価・盤データ",
-   "why": "最終 2026-08-21（28日前・期限4日）",
-   "how": "market.yml 21:30UTC（FINNHUB_KEY）",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:events",
-   "level": "now",
-   "title": "止まっている疑い: 8-K・臨報監視",
-   "why": "最終 2026-08-21（28日前・期限4日）",
-   "how": "events.yml 22:10UTC（米国は鍵不要・日本株はEDINET_API_KEY）",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:freshness",
-   "level": "now",
-   "title": "止まっている疑い: 中身と入力の鮮度",
-   "why": "最終 2026-08-23（26日前・期限4日）",
-   "how": "ci.yml 平日22:00UTC／手動 python3 night/check_freshness.py --json",
-   "src": "回転盤"
-  },
   {
    "k": "ops:reviewrun",
    "level": "now",
@@ -59,124 +35,20 @@
    "src": "回転盤"
   },
   {
-   "k": "ops:er",
+   "k": "ci:ci.yml",
    "level": "now",
-   "title": "止まっている疑い: E[r]予実の観測封印",
-   "why": "最終 2026-08-03（46日前・期限40日）",
-   "how": "market.yml（月初・snapは月次idempotent）",
-   "src": "回転盤"
+   "title": "走って失敗している: ci.yml",
+   "why": "直近の実行(2026-09-18T11:04:48Z)が失敗——落ちたステップ: 日付が凍っているツール check_frozen_dates",
+   "how": "https://github.com/touchme1956/ccf-gate/actions/runs/35337843796　⚠『止まっている』ではなく『走って失敗』——直し方が違う",
+   "src": "ci_health"
   },
   {
-   "k": "ops:gatehist",
+   "k": "ci:fix.yml",
    "level": "now",
-   "title": "止まっている疑い: 門の判定の履歴",
-   "why": "最終 2026-08-21（28日前・期限4日）",
-   "how": "market.yml が毎日／手動 python3 night/gate_history.py --append",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:returns",
-   "level": "now",
-   "title": "止まっている疑い: トータルリターン",
-   "why": "最終 2026-08-23（26日前・期限4日）",
-   "how": "market.yml 平日21:30UTC／手動 python3 night/fetch_returns.py",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:returnseries",
-   "level": "now",
-   "title": "止まっている疑い: 成績の推移(グラフ)",
-   "why": "最終 2026-08-23（26日前・期限4日）",
-   "how": "market.yml 平日21:30UTC／手動 python3 night/fetch_returns.py",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:irr85mech",
-   "level": "now",
-   "title": "止まっている疑い: 機構文の年次diff",
-   "why": "最終 2026-08-20（29日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/irr85_mech_diff.py --json",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:irr85audit",
-   "level": "now",
-   "title": "止まっている疑い: irr=85の根拠監査",
-   "why": "最終 2026-08-19（30日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_irr85.py",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:irr85myrule",
-   "level": "now",
-   "title": "止まっている疑い: irr=85をあなたの基準で採点",
-   "why": "最終 2026-08-19（30日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/irr85_myrule.py --json",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:irr85dual",
-   "level": "now",
-   "title": "止まっている疑い: irr=85の二重読み",
-   "why": "最終 2026-08-23（26日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_irr85_dual.py",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:irr70dual",
-   "level": "now",
-   "title": "止まっている疑い: irr=70の二重読み(買付圏)",
-   "why": "最終 2026-08-23（26日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_irr85_dual.py --rung 70",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:notify",
-   "level": "now",
-   "title": "止まっている疑い: 通知(Issue化)",
-   "why": "最終 2026-08-21（28日前・期限4日）",
-   "how": "events.yml（行動が要ることだけIssueにする・冪等）",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:fix",
-   "level": "now",
-   "title": "止まっている疑い: 機械是正の自動提案",
-   "why": "最終 2026-08-23（26日前・期限10日）",
-   "how": "fix.yml 毎週土曜（判定が動かなければmain直・動けばPR）",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:stalebs",
-   "level": "now",
-   "title": "止まっている疑い: 期末後の重大事象の検査",
-   "why": "最終 2026-08-19（30日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_stale_bs.py --write",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:pending",
-   "level": "now",
-   "title": "止まっている疑い: 未完了の重大事象の検査",
-   "why": "最終 2026-08-20（29日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_pending.py --all --write",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:packstale",
-   "level": "now",
-   "title": "止まっている疑い: パックの会計年度の遅れ",
-   "why": "最終 2026-08-19（30日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_pack_stale.py --write",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:vfail",
-   "level": "now",
-   "title": "止まっている疑い: 納品検査FAIL表",
-   "why": "最終 2026-08-23（26日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/validate_packs.py --json",
-   "src": "回転盤"
+   "title": "走って失敗している: fix.yml",
+   "why": "直近の実行(2026-08-22T04:34:35Z)が失敗——落ちたステップ: 判定が動く → PRにして人へ",
+   "how": "https://github.com/touchme1956/ccf-gate/actions/runs/32552060449　⚠『止まっている』ではなく『走って失敗』——直し方が違う",
+   "src": "ci_health"
   },
   {
    "k": "review",
@@ -197,22 +69,6 @@
    "src": "四半期点検"
   },
   {
-   "k": "alert:3922:2026-08-21",
-   "level": "today",
-   "title": "8-K警報: 3922（2026-08-21）",
-   "why": "臨時報告書＝重要事象（役員異動・訂正等）の可能性——原本を読む(EDINETでdocID検索)",
-   "how": "⚙自動化タブの「審査」で門2再審査の依頼文を作る",
-   "src": "8-K監視"
-  },
-  {
-   "k": "alert:RMD:2026-08-17",
-   "level": "today",
-   "title": "8-K警報: RMD（2026-08-17）",
-   "why": "Item 4.01: 監査人の交代——**disagreement / reportable event の有無を原本(Item 4.01(a))で確かめよ**。無ければ通常のローテーション、有れば誠(会計) / Item 5.02: 退任——取締役・主要役員の異動",
-   "how": "⚙自動化タブの「審査」で門2再審査の依頼文を作る",
-   "src": "8-K監視"
-  },
-  {
    "k": "exc:TDG",
    "level": "today",
    "title": "門外例外の見張り: TDG",
@@ -223,14 +79,6 @@
  ],
  "month": [
   {
-   "k": "key:cihealth",
-   "level": "month",
-   "title": "鍵待ちで始まっていない: 自動化の健康診断",
-   "why": "止まったのではなく、まだ始めていない",
-   "how": "ci.yml 平日22:00UTC（actions:read）／手動 GH_TOKEN=... python3 night/ci_health.py --write",
-   "src": "回転盤"
-  },
-  {
    "k": "reviewfreq",
    "level": "month",
    "title": "門2審査の走行ログが残っていない（直近4営業日で0日ぶん）",
@@ -239,41 +87,121 @@
    "src": "審査ログ"
   },
   {
-   "k": "fresh:irr85audit:本体が6日動いていない（",
+   "k": "fresh:market:本体が28日動いていない",
+   "level": "month",
+   "title": "中身/入力が前進していない: 株価・盤データ",
+   "why": "本体が28日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:events:本体が28日動いていない",
+   "level": "month",
+   "title": "中身/入力が前進していない: 8-K・臨報監視",
+   "why": "本体が28日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:cihealth:本体が28日動いていない",
+   "level": "month",
+   "title": "中身/入力が前進していない: 自動化の健康診断",
+   "why": "本体が28日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:returns:本体が26日動いていない",
+   "level": "month",
+   "title": "中身/入力が前進していない: トータルリターン",
+   "why": "本体が26日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:returnseries:本体が26日動いていない",
+   "level": "month",
+   "title": "中身/入力が前進していない: 成績の推移(グラフ)",
+   "why": "本体が26日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:irr85audit:本体が32日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: irr=85の根拠監査",
-   "why": "本体が6日動いていない（期限4日）",
+   "why": "本体が32日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:irr85myrule:本体が6日動いていない（",
+   "k": "fresh:irr85myrule:本体が32日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: irr=85をあなたの基準で採点",
-   "why": "本体が6日動いていない（期限4日）",
+   "why": "本体が32日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:stalebs:本体が6日動いていない（",
+   "k": "fresh:irr85dual:本体が26日動いていない",
+   "level": "month",
+   "title": "中身/入力が前進していない: irr=85の二重読み",
+   "why": "本体が26日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:irr70dual:本体が26日動いていない",
+   "level": "month",
+   "title": "中身/入力が前進していない: irr=70の二重読み(買付圏)",
+   "why": "本体が26日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:notify:本体が28日動いていない",
+   "level": "month",
+   "title": "中身/入力が前進していない: 通知(Issue化)",
+   "why": "本体が28日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:stalebs:本体が32日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: 期末後の重大事象の検査",
-   "why": "本体が6日動いていない（期限4日）",
+   "why": "本体が32日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:packstale:本体が6日動いていない（",
+   "k": "fresh:pending:本体が29日動いていない",
+   "level": "month",
+   "title": "中身/入力が前進していない: 未完了の重大事象の検査",
+   "why": "本体が29日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:packstale:本体が32日動いていない",
    "level": "month",
    "title": "中身/入力が前進していない: パックの会計年度の遅れ",
-   "why": "本体が6日動いていない（期限4日）",
+   "why": "本体が32日動いていない（期限4日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:vfail:本体が28日動いていない",
+   "level": "month",
+   "title": "中身/入力が前進していない: 納品検査FAIL表",
+   "why": "本体が28日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
    "k": "fresh:unmeasurable",
    "level": "month",
-   "title": "鮮度を測れない錨が 5件",
+   "title": "鮮度を測れない錨が 6件",
    "why": "「測っていない」であって「測って問題なし」ではない",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"

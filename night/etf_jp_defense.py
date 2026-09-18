@@ -135,7 +135,10 @@ def build():
     # ---- ★網の門(ami.html)の規約をそのまま当てる（判定を新しく作らない）
     #   キル: レバレッジ／純資産100億円未満／**設定3年未満**／経費率0.75%超
     import datetime
-    NOW = datetime.date(2026, 8, 19)
+    # 2026-09-18 是正: ここは「設定から何年たったか」を測る**実行時の今日**であって、
+    #   基準時点ではない。固定していたせいで年数が凍り、しかも check_frozen_dates が
+    #   毎回 CI を落としていた（この1行だけで gate-ci は 8/24 以降すべて失敗していた）。
+    NOW = datetime.date.today()
     gate = {}
     for t in list(JP) + list(US):
         if t not in ser:
