@@ -13561,3 +13561,88 @@ check_frozen_dates ✓（①の是正後）／ fix_ni_unit ✓ ／
 audit_promotion_ready 投下可・次点とも FAIL 0 ／
 **check_gate_parity（実ブラウザ・369件取込）Ω 369/369 一致・投下可5社が門と端末で一致・pageerror 0** ／
 **check_mobile_fit 6幅すべてで全7本が見える・章の帯 6/6群** ／ **check_navstack 108通り ✓**
+
+## 並走ブランチの取り込み・第七回——**ffで19件。そして「三つ目の系譜(GitLab)」を測って、届かないと確定した**（2026-09-18・ユーザー指示「マージして」→「これを引き継いで」）
+**採点式・刻み・重み・四関門・堀の関門70・売却規律S1/S2/S3・席の数(5)・配分・別枠85 は1バイト触っていない。
+投下可5社（ASML CW LRCX RBC MSFT）・次点7社・要修正2件（既知の CMTL/AMBIQ）・未解決警告0件は取り込みの後も不変。**
+取り込んだのは **2本**＝`origin/claude/gate-site-7xxoql`（19件・**fast-forward**）と、ユーザーが bundle で手渡した
+`docs/handoff-gitlab-retro`（HANDOFF.md 302行）。
+
+### ★fast-forward だったので、版番号の歴史検査が眠らずに走った
+第六回は `.git/MERGE_HEAD` があるあいだ `audit_docs` の `version_history_rewritten` が skip され、
+そのことを自分で「飛ばした状態の ✓ を最終の ✓ と読まない」と書いていた。**今回は ff なので MERGE_HEAD が無く、
+その検査を含んだうえで「齟齬なし・投下可の枠数 5・表示 v9.9.174」が出た**＝より強い合格。
+
+### ★前回までの triage の「理由」が2件とも誤っていた（結論は正しい・理由を訂正する）
+残る9本を退ける理由として記録されていたもののうち、**実測で2件が逆だった**:
+| 記録されていた理由 | 実測 |
+| `historical-ticker-validation`＝**SEMI/半導体連鎖の実装を持つ**ので取り込むと v9.9.145 の明示指示を打ち消す | **そのブランチの SEMI は0件・main が2件**。しかも main の2件は v9.9.145 が「上限は消したが**測定は残した**」と書いた `semiN`/`semiPct` のほう。ブランチは v9.9.91期でそもそも v9.9.117(半導体上限)より**前**＝実装を持ちようがない |
+| `cooling-explanation`＝`g7ignite` を消す | `index.html` の g7ignite は **branch 3件 / main 3件で同数**。撤去そのものは事実（commit が明言）だが、**grep の数では判別できない**（撤去後に歴史記述が残るため） |
+- **★退ける結論は変わらない。ただし根拠は版の世代差のほう**——実測の index.html:
+  **main 7,539行**に対し `historical-ticker-validation` 4,350行(v9.9.91) ／ `cooling-explanation` 4,274行(v9.9.91) ／
+  `code-review-investment-tools` 4,293行(v9.9.90) ／ `portfolio-holdings-simplify`・`button-ui-design-improvements` 4,003行(v9.9.77) ／
+  `future-stock-return-gate` 3,149行(v9.9.25) ／ `session-2724ac` 2,953行(v9.9.26) ／
+  **`copilot-ui-improve` は58行＝門を丸ごと削除**。
+- **★「内容は既に main にある」2本の数え方も検算した**——`git ls-tree` の全パスを
+  `git cat-file -e HEAD:<path>` に掛けると **missing 0件**。古い7本で missing が出るのは
+  `gate0_v8_1〜4.py`・`gate1_young.json` 等の**旧エンジンの遺物**だけ（現行は `gate0_v8_5.py`）
+- **教訓**: **退ける理由は、退ける結論と同じだけ検算すること。** 理由が誤ったまま記録に残ると、
+  次に同じ状況で**誤った道具**（ここでは grep の件数）を使う。この台帳が繰り返してきた
+  「強い結論ほど先に道具を疑う」の、**triage版**
+
+### ★`check_gate_parity` が skip ではなく実測で通った（前回までは測れていなかった）
+第三〜六回は「playwright が無く skip＝**『一致した』ではなく『測っていない』**」で終わっていた。
+実測すると **playwright 1.56.1 はグローバル(`/opt/node22/lib/node_modules`)に在り、
+プロジェクトから解決できていないだけ**だった。`NODE_PATH` を通すと3本とも走る:
+**check_gate_parity（実ブラウザ・369件取込）Ω 369/369 一致・投下可5社が門と端末で一致・pageerror 0** ／
+**check_mobile_fit 6幅すべてで7本とも見える・章の帯 6/6群** ／ **check_navstack 108通り ✓**。
+⇒ **skip を「この環境では無理」と読まずに、無理の中身を測ると通ることがある。**
+
+### ★三つ目の系譜——GitLab `yu-group5324737/ccfgate2` は在る。だが**このセッションからは git で届かない**
+引き継ぎ文書（`HANDOFF.md`・repo に取り込み済み）が言うとおり、系譜は3つに割れている。実測:
+| 系統 | 最終 | 中身 |
+| GitHub `main`（＝今回の ff の到達点） | 2026-09-18 | v9.9.174・ETFの歴史検証・CI是正 |
+| **GitLab `main`（`e0fce2cd`）** | 2026-09-17 | **遡及検証(規約v1/v2 の out-of-sample)**・`night/` 543本(GitHubは359)・`.gitlab-ci.yml`・**v9.9.175/176/177** |
+- **到達できるのは MCP の読み取りAPIだけ**。`git ls-remote` は
+  `could not read Username`＝**匿名不可・資格情報がこのセッションに無い**（env・`~/.git-credentials`・
+  `~/.claude/` を全部当たって GitLab のトークンは0件。proxy の 403 ですらなく、**git に渡す資格が存在しない**）
+- ⚠**だから「一括で取り込んだ」と書けない。** MCP で1ファイルずつ読めば内容は写せるが、
+  **`night/` 189本＋`out/` 36本超＋`CLAUDE.md` +約1,500行**で、しかも
+  `out/retro_oos2_read_2013.json` は GitLab 側で**9回に分けて積む**ほど大きい。
+  手で写した木は履歴を持たず、**第四の系譜**になる
+
+### ★GitLab にあって GitHub に無い「明示指示の改定」が3つ。うち1つは**今日の買付に現に効いている**
+| 版 | 指示 | GitHub側 |
+| v9.9.175 | 門外例外**6社**を買付から外す | GitHub は v9.9.174 で**5社**を降ろした（`gate_exceptions.json` の items は VRSK/WST/ENTG/MKSI/TDG＝**BWXT が無い**） |
+| **v9.9.176** | **「別枠85を席から外す——Ω75+を通った社だけ座れる」** | **未反映** |
+| v9.9.177 | 「cwが外れてるので元に戻して」＝`gate_exclusions.json` の items を空に | **`gate_exclusions.json` が GitHub に存在しない**（GitLab の v9.9.172 で新設）＝単独では当たらない |
+- **★v9.9.176 の効きを `out/score_all.json` から計算した（index.html は触っていない）**——
+  席は `mech()`（irr=85 を先）→Ω降順。四関門通過12社の実測は
+  **mech=0: ASML 81.3 / CW 79.6 / LRCX 78.6 / RBC 60.0 ／ mech=1: MSFT 83.6 / IDXX 81.6 / V 81.4 / HWM 77.8 …**。
+  現行の上位5席は **ASML CW LRCX RBC MSFT**＝**Ω60.0 の RBC が Ω83.6 の MSFT より先に座っている**。
+  **Ω75+ を課すと RBC が席を外れ、IDXX（81.6）が繰り上がる**＝**投下可は ASML CW LRCX MSFT IDXX**。
+  RBC は資格を失わず🔵次点（別枠85＝土俵は不変）。GitLab のコミットメッセージが書く
+  「実測の席順で Ω82.5 の MSFT が5番目まで押し下げられていた。ユーザーの問い『なぜRBCがトップ5？』がこれ」と一致する
+- ⚠**値は触っていない。**(a)改定は 172→175→176→177 の**連鎖**で、176 だけ当てると
+  GitHub が「174 の次に 176」という**歯抜けの版**になる (b)引き継ぎ文書自身が
+  「何も考えずにマージすると版番号が壊れる」「機械的なマージはしない」と戒めている
+  (c)**門外例外の社数が 5 vs 6 で食い違う**ので、突き合わせずに片方だけ持ち込めない。
+  ⇒ **正しい形は git での本マージ**で、それには資格情報が要る＝**人の手当てが要る**
+
+### 残した穴（名指しする）
+1. **GitLab の git 資格情報がこのセッションに無い**——直し方は2つ。
+   (a)セッションの sources に GitLab を足す (b)GitLab 側から `git bundle create` を手渡す
+   （**過去に102→111→114コミットで3回この手が使われている**と HANDOFF.md が記録）
+2. **判定の食い違いが1件 生きている**——上の v9.9.176（RBC vs IDXX）。**GitHub main は今、
+   ユーザーの明示指示と違う席順を出している**
+3. HANDOFF.md の未解決9件（第0段の穴・ticker→CIK の取り違え・`pt` の二重定義・別ビンテージ未実施 ほか）は
+   そのまま引き継ぎ。**CLAUDE.md からは この節が `HANDOFF.md` への入口**
+
+### 検証（ff の後・マージ完了後に回した）
+check_html ✓ ／ **audit_docs ✓（齟齬なし・投下可の枠数5・表示 v9.9.174・版番号の歴史検査も込み）** ／
+validate_state ✓ ／ check_workflow_add ✓（add・push とも）／ check_frozen_dates ✓（**CIを28日止めていた
+`NOW` の固定日が実際に直っていることを実走で確認**）／
+**score_all 🟢投下可5社 ASML CW LRCX RBC MSFT・🔵次点7社** ／
+audit_gate 369社 **要修正2件（既知）・警告84件は全て✓検算済・未解決0件** ／
+audit_promotion_ready 投下可・次点とも FAIL 0 ／
+**check_gate_parity Ω 369/369 一致・pageerror 0** ／ **check_mobile_fit 6幅 ✓** ／ **check_navstack 108通り ✓**
