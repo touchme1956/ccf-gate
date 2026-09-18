@@ -13450,3 +13450,34 @@ check_html ✓ ／ audit_docs ✓（表示 v9.9.174・齟齬なし・**注入検
 audit_promotion_ready 投下可5・次点7とも **FAIL 0** ／ net_plan ✓（比率の出所つき）／ lookthrough ✓ ／
 **check_gate_parity（実ブラウザ・369件取込）Ω 369/369 一致・投下可5社が門と端末で一致・pageerror 0** ／
 **check_mobile_fit 360〜1280px の6幅すべてで全12タブが見える・文書幅は画面幅に収まる**
+
+## 並走ブランチの取り込み・第六回——**5銘柄の改定を取り込み、版番号は4例目の繰り下げ**（2026-09-18）
+**採点式・刻み・重み・四関門・堀の関門70・売却規律S1/S2/S3・上限8%（¼ケリー）・Tierの刻みは1バイト触っていない。**
+取り込んだのは **1本**＝`origin/claude/narrow-purchases-five-stocks-vutxfl`（tip `3dd5499`）。
+中身は上の **v9.9.174「買付を5銘柄に絞った」** そのもの（席10→5・門外例外5社を按分から降ろす・城50→30/網50→70）。
+- **衝突は2件**: **CLAUDE.md は append-append**（+100行・削除ゼロ＝両方の記録を時系列で残す）／
+  **index.html は版番号を v9.9.171 → v9.9.174 へ繰り下げ**——このブランチは先に `mon-ui-improvement` の
+  v9.9.171/172/173 を取り込んでいた。**並走の版番号衝突はこれで4例目**で、二つの変更は独立
+  （あちらは表示の統合・こちらは席の数と城/網の比率）
+- **★マージ後に両側が生きていることを実測で確かめた**——`var CCF_SEATS=5` と
+  `CCF_GROUP`/`ccfChapNav`/`showGroup`/`--chaph`（二段ナビ）が同居し、衝突マーカーは0件。
+  **`check_navstack` 108通り ✓・`check_mobile_fit` 6幅すべてで章の帯 6/6群を実測**＝
+  **表示の統合（mon-ui側）が席の改定で壊れていない**ことを、席の側の検査ではなく**あちらの検査**で確かめた
+- **★`audit_docs` はマージ中だけ版番号の歴史検査を飛ばす**（`.git/MERGE_HEAD` があれば skip＝繰り下げが正当に起きるため）。
+  **飛ばした状態の ✓ を最終の ✓ と読まない**ので、**マージを commit した後にもう一度回して
+  「齟齬なし・投下可の枠数 5」を確認した**——**検査が眠っている間の合格は合格ではない**
+- **残る並走 9本は全部、前の回で内容まで見て退けたもの**。今回は tip の日付を数え直して
+  **一本も動いていない**ことを確認しただけ（最新でも 2026-08-19）:
+  `future-stock-return-gate`(v9.9.2/25期の別エンジン)／`session-2724ac`／`button-ui-design-improvements`／
+  `code-review-investment-tools`(v9.9.78期)／**`historical-ticker-validation`（SEMI/半導体連鎖の実装を持つが
+  main は v9.9.145 のユーザー明示指示「やはり半導体の制限は外すよ」で撤去済み＝取り込むと明示指示を打ち消す）**／
+  `cooling-explanation`（main が意図して残している `g7ignite` を消す）／`copilot-ui-improve`（20ファイル3,787行の削除）／
+  内容が既に含まれている2本（`portfolio-holdings-simplify`・`compound-median-15-percent-analysis`）。
+  ⚠ 後者2本は **commit 数では 20本・5本 ahead に見える**が、**`git cat-file -e HEAD:<path>` で数えると
+  HEAD に無いファイルは0件**＝**commit 数で「未マージ」を数えると過大に出る**（第三回で記録した三点diffの罠と同じ族）
+- **`origin/main` は HEAD に完全に含まれる**（main ahead 0 / HEAD ahead 17）
+- 検証: check_html ✓ ／ **audit_docs（マージ完了後）✓ 齟齬なし・投下可の枠数 5** ／ validate_state ✓ ／
+  check_workflow_add ✓ ／ **score_all 🟢投下可5社 ASML CW LRCX RBC MSFT・🔵次点7社・全369社 要修正2件（既知の
+  CMTL/AMBIQ）・未解決警告0件** ／ audit_promotion_ready 投下可・次点とも FAIL 0 ／
+  **check_gate_parity（実ブラウザ・369件取込）Ω 369/369 一致・投下可5社が門と端末で一致・pageerror 0** ／
+  **check_mobile_fit 6幅すべて ✓（章の帯 6/6群・導線は折り畳みの外）** ／ **check_navstack 108通り ✓**
