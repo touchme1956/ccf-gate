@@ -159,6 +159,19 @@ def grade(path):
         pool_n=len(pool_r),
         orig70=A.value_tag(pool_r, lambda r: r['irr'] == MID[r['v']]),
         keep70=A.value_tag(pool_r, lambda r: r['irr'] == MID[r['v']] and r.get('verdict') == 'keep70'))
+    # ── ビンテージ別（★事前登録の外＝結果を見た後に足した診断）────────
+    #    窓の長さが 13.09/11.10/8.09年 と違うので P(15%+) のベース率が違う。
+    #    束ねた数字が一つの年に支配されていないかを見るためだけに出す。
+    res['by_vintage'] = {}
+    for v in sorted(MID):
+        pv = [r for r in rs_c if r['v'] == v and r['irr'] in (50, MID[v])]
+        if not pv: continue
+        f = lambda pred: A.value_tag(pv, pred, B_perm=2000, B_boot=2000)
+        res['by_vintage'][v] = dict(
+            pool_n=len(pv), years=round(pv[0]['years'], 2), base=A.stats(pv)['p15'],
+            orig70=f(lambda r: r['irr'] == MID[v]),
+            keep70=f(lambda r: r['irr'] == MID[v] and r.get('verdict') == 'keep70'),
+            demote=f(lambda r: r['irr'] == MID[v] and r.get('verdict') == 'demote50'))
     res['rows'] = [dict(v=r['v'], t=r['t'], irr=r['irr'], verdict=r.get('verdict'),
                         cagr=round(r['cagr'], 4), semi=r['semi']) for r in mid]
     return res
