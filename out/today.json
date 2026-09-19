@@ -1,11 +1,11 @@
 {
- "generated": "2026-08-23",
+ "generated": "2026-09-19",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "MSFT",
   "IDXX",
-  "ASML",
   "V",
+  "ASML",
   "CW",
   "LRCX",
   "HWM",
@@ -18,26 +18,162 @@
   "RELX"
  ],
  "counts": {
-  "now": 2,
-  "today": 5,
-  "month": 28,
-  "waiting": 88,
+  "now": 19,
+  "today": 4,
+  "month": 29,
+  "waiting": 94,
   "blind": 0,
   "src": 19
  },
  "now": [
   {
+   "k": "ops:market",
+   "level": "now",
+   "title": "止まっている疑い: 株価・盤データ",
+   "why": "最終 2026-08-21（29日前・期限4日）",
+   "how": "market.yml 21:30UTC（FINNHUB_KEY）",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:events",
+   "level": "now",
+   "title": "止まっている疑い: 8-K・臨報監視",
+   "why": "最終 2026-08-21（29日前・期限4日）",
+   "how": "events.yml 22:10UTC（米国は鍵不要・日本株はEDINET_API_KEY）",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:today",
+   "level": "now",
+   "title": "止まっている疑い: 📋今日の集計",
+   "why": "最終 2026-08-23（27日前・期限4日）",
+   "how": "ci.yml 平日22:00UTC／手動 python3 night/today.py --json",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:freshness",
+   "level": "now",
+   "title": "止まっている疑い: 中身と入力の鮮度",
+   "why": "最終 2026-08-23（27日前・期限4日）",
+   "how": "ci.yml 平日22:00UTC／手動 python3 night/check_freshness.py --json",
+   "src": "回転盤"
+  },
+  {
    "k": "ops:reviewrun",
    "level": "now",
    "title": "止まっている疑い: 日次 門2審査(Routine)",
-   "why": "最終 2026-08-16（7日前・期限4日）",
+   "why": "最終 2026-08-16（34日前・期限4日）",
    "how": "Routine『【門】日次 門2審査（自動・5社）』平日05:00 JST（claude-opus-5）／痕跡は python3 night/log_review_run.py --outcome … --push",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:er",
+   "level": "now",
+   "title": "止まっている疑い: E[r]予実の観測封印",
+   "why": "最終 2026-08-03（47日前・期限40日）",
+   "how": "market.yml（月初・snapは月次idempotent）",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:gatehist",
+   "level": "now",
+   "title": "止まっている疑い: 門の判定の履歴",
+   "why": "最終 2026-08-21（29日前・期限4日）",
+   "how": "market.yml が毎日／手動 python3 night/gate_history.py --append",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:returns",
+   "level": "now",
+   "title": "止まっている疑い: トータルリターン",
+   "why": "最終 2026-08-23（27日前・期限4日）",
+   "how": "market.yml 平日21:30UTC／手動 python3 night/fetch_returns.py",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:returnseries",
+   "level": "now",
+   "title": "止まっている疑い: 成績の推移(グラフ)",
+   "why": "最終 2026-08-23（27日前・期限4日）",
+   "how": "market.yml 平日21:30UTC／手動 python3 night/fetch_returns.py",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:irr85hist",
+   "level": "now",
+   "title": "止まっている疑い: irr=85の実績台帳",
+   "why": "最終 2026-08-09（41日前・期限40日）",
+   "how": "ops.yml 毎月2日／手動 python3 night/irr85_mech_test.py --json",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:irr85mech",
+   "level": "now",
+   "title": "止まっている疑い: 機構文の年次diff",
+   "why": "最終 2026-08-20（30日前・期限4日）",
+   "how": "ci.yml（push/PR毎）／手動 python3 night/irr85_mech_diff.py --json",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:irr85audit",
+   "level": "now",
+   "title": "止まっている疑い: irr=85の根拠監査",
+   "why": "最終 2026-08-19（31日前・期限4日）",
+   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_irr85.py",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:irr85myrule",
+   "level": "now",
+   "title": "止まっている疑い: irr=85をあなたの基準で採点",
+   "why": "最終 2026-08-19（31日前・期限4日）",
+   "how": "ci.yml（push/PR毎）／手動 python3 night/irr85_myrule.py --json",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:notify",
+   "level": "now",
+   "title": "止まっている疑い: 通知(Issue化)",
+   "why": "最終 2026-08-21（29日前・期限4日）",
+   "how": "events.yml（行動が要ることだけIssueにする・冪等）",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:stalebs",
+   "level": "now",
+   "title": "止まっている疑い: 期末後の重大事象の検査",
+   "why": "最終 2026-08-19（31日前・期限4日）",
+   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_stale_bs.py --write",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:pending",
+   "level": "now",
+   "title": "止まっている疑い: 未完了の重大事象の検査",
+   "why": "最終 2026-08-20（30日前・期限4日）",
+   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_pending.py --all --write",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:packstale",
+   "level": "now",
+   "title": "止まっている疑い: パックの会計年度の遅れ",
+   "why": "最終 2026-08-19（31日前・期限4日）",
+   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_pack_stale.py --write",
+   "src": "回転盤"
+  },
+  {
+   "k": "ops:vfail",
+   "level": "now",
+   "title": "止まっている疑い: 納品検査FAIL表",
+   "why": "最終 2026-08-23（27日前・期限4日）",
+   "how": "ci.yml（push/PR毎）／手動 python3 night/validate_packs.py --json",
    "src": "回転盤"
   },
   {
    "k": "review",
    "level": "now",
-   "title": "門2審査の走行ログが 7日前で止まっている",
+   "title": "門2審査の走行ログが 34日前で止まっている",
    "why": "最終 2026-08-16",
    "how": "Routine の発火を確認 / night/log_review_run.py --push",
    "src": "審査ログ"
@@ -69,14 +205,6 @@
    "src": "8-K監視"
   },
   {
-   "k": "earn:NVDA",
-   "level": "today",
-   "title": "決算: NVDA（2026-08-26）",
-   "why": "3日後",
-   "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
-   "src": "決算カレンダー"
-  },
-  {
    "k": "exc:TDG",
    "level": "today",
    "title": "門外例外の見張り: TDG",
@@ -87,10 +215,18 @@
  ],
  "month": [
   {
+   "k": "key:cihealth",
+   "level": "month",
+   "title": "鍵待ちで始まっていない: 自動化の健康診断",
+   "why": "止まったのではなく、まだ始めていない",
+   "how": "ci.yml 平日22:00UTC（actions:read）／手動 GH_TOKEN=... python3 night/ci_health.py --write",
+   "src": "回転盤"
+  },
+  {
    "k": "reviewfreq",
    "level": "month",
    "title": "門2審査の走行ログが残っていない（直近4営業日で0日ぶん）",
-   "why": "抜け: 2026-08-18 2026-08-19 2026-08-20 2026-08-21（JST。ログはUTC記録なので直して数えている）／⚠ これはログの話で、発火したかは repo からは判らない——「走らなかった」と「走ったが痕跡を残せなかった」を区別できない／盤は最後の日付しか見ないので🟢に見える",
+   "why": "抜け: 2026-09-15 2026-09-16 2026-09-17 2026-09-18（JST。ログはUTC記録なので直して数えている）／⚠ これはログの話で、発火したかは repo からは判らない——「走らなかった」と「走ったが痕跡を残せなかった」を区別できない／盤は最後の日付しか見ないので🟢に見える",
    "how": "claude.ai の Routines で発火履歴を見る（発火していればセッション側で手順0が飛ばされたか力尽きている）",
    "src": "審査ログ"
   },
@@ -514,7 +650,7 @@
   {
    "k": "todo:single_year_25",
    "kind": "宿題",
-   "title": "判定圏で単年ROICのまま残る社を through-cycle 化する（実測17社）",
+   "title": "判定圏で単年ROICのまま残る社を through-cycle 化する（実測11社）",
    "due": null,
    "owner": "審査",
    "tickers": []
@@ -1070,6 +1206,68 @@
    "title": "fix.yml が『判定が動いた』ときの PR が作られていない——枝だけが置かれる",
    "due": null,
    "owner": "道具",
+   "tickers": []
+  },
+  {
+   "k": "todo:irr85_verify_note_truncated",
+   "kind": "宿題",
+   "title": "irr=85 の検証記録(_meta.mech.verify_note)が 3006字で打ち切られ、反証の一覧が8社で読めない",
+   "due": null,
+   "owner": "審査",
+   "tickers": [
+    "CW",
+    "LRCX",
+    "RBC",
+    "VRSK",
+    "WST",
+    "LOAR",
+    "TDG",
+    "KRMN"
+   ]
+  },
+  {
+   "k": "todo:irr85_scope_objection_cw",
+   "kind": "宿題",
+   "title": "二重読みの後に射程の反証が出た2社（CW＝🟢投下可・BWXT）——✓が中身として古い",
+   "due": null,
+   "owner": "審査",
+   "tickers": [
+    "CW",
+    "BWXT"
+   ]
+  },
+  {
+   "k": "todo:rbc_basis_contradiction",
+   "kind": "審査",
+   "title": "RBC の roic の基準が機械可読な印と evidence で食い違う（🟢投下可）",
+   "due": null,
+   "owner": "審査",
+   "tickers": [
+    "RBC"
+   ]
+  },
+  {
+   "k": "todo:frozen_date_dict_literal",
+   "kind": "宿題",
+   "title": "check_frozen_dates は**変数名しか見ない**——辞書リテラルの固定日は素通りする（実測40件）",
+   "due": null,
+   "owner": "道具",
+   "tickers": []
+  },
+  {
+   "k": "todo:actions_schedule_stopped",
+   "kind": "宿題",
+   "title": "★GitHub Actions の**schedule が2026-08-21で全部止まった**（state は active・repo からは直せない）",
+   "due": null,
+   "owner": "人",
+   "tickers": []
+  },
+  {
+   "k": "todo:unmerged_fix_branch_0918",
+   "kind": "宿題",
+   "title": "★CIを止めていた1行の修正が**未マージのブランチにしか無い**（＝「作った答えを捨てる」の9例目）",
+   "due": null,
+   "owner": "人",
    "tickers": []
   }
  ],

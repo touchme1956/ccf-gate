@@ -1430,6 +1430,33 @@
    "tickers": [
     "RBC"
    ]
+  },
+  {
+   "id": "frozen_date_dict_literal",
+   "kind": "宿題",
+   "owner": "道具",
+   "title": "check_frozen_dates は**変数名しか見ない**——辞書リテラルの固定日は素通りする（実測40件）",
+   "note": "実測(2026-09-19): 検出器の錨は `^\\s*(TODAY|NOW|ASOF|GENERATED|RUN_DATE)\\s*=` ＝**左辺の変数名**だけ。だから `out = {\"asof\": \"2026-08-19\", …}` のように**辞書のキーとして書いた固定日は一度も鳴らない**。\n\n★実害が同じファイルで出た——`night/etf_jp_defense.py` は `NOW = datetime.date(2026,8,19)`（変数＝鳴る）と `{\"asof\": \"2026-08-19\"}`（辞書＝鳴らない）の**両方**を持っていた。別のセッションが 2026-09-18 に前者だけを直し、**後者は残った**（`origin/claude/gate-site-7xxoql:76` で確認）＝出力JSONは今日も『2026-08-19に測った』と名乗る。\n\n実測の件数: 除外群(retro_/hist/_prereg)を外して **40件**（`\"generated\"`/`\"asof\"` に固定日）。内訳の大半は shadow_* / opmtrend_* / irr85_* / filing_behavior_* ＝**一度きりの研究**で、`generated` を固定するのが正しい社（記録として凍らせている）と、回すたびに嘘になる社が**混ざっている**。\n\n⚠**だから今日は検出器を広げていない**——40件を一律にハード失敗させると「鳴りすぎる警報は鳴らないのと同じ」を自分で作る。やることは (a)40件を1本ずつ読んで『記録として凍らせている／回すたびに嘘になる』を分ける (b)後者だけを実行時の日付へ直す (c)そのうえで検出器の錨に辞書リテラルを足す（除外の仕組みは EXEMPT_FILE をそのまま使えるが、shadow_*/opmtrend_* は今の除外に入っていないので**除外の線をどこに引くかが本体**）。\n\n実測のコマンド: `grep -rn --include='*.py' -E '[\"'\\''](asof|generated)[\"'\\'']\\s*:\\s*[\"'\\'']20[0-9][0-9]-' night/ | grep -vE '(^|/)_?(retro_?|hist|v10_|v11_|v12_|omega_retro)|_prereg'",
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "actions_schedule_stopped",
+   "kind": "宿題",
+   "owner": "人",
+   "title": "★GitHub Actions の**schedule が2026-08-21で全部止まった**（state は active・repo からは直せない）",
+   "note": "実測(2026-09-19): `market.yml` の最後の実行は **2026-08-21T21:51Z で success**（通算27回）、`events.yml` は **2026-08-21T22:37Z で success**（通算16回）、`ci.yml` は直近30回に **schedule の実行が1件も無い**（2026-08-24→2026-09-18 は**どの経路でも実行ゼロ**）。一方 push / pull_request の経路は今も動く。\n\n`actions_get get_workflow market.yml` は **`state: \"active\"`** を返すので、**GitHubが文書化している『60日 無活動で schedule を自動停止』ではない**（自動停止なら state が変わる）。原因はこの repo の中からは判らない。**判らないことを『判った』と書かないために、ここには症状だけを置く**（絶対のルール7）。\n\n★効き: ci.yml と market.yml と ops.yml の**コミットする step は schedule と手動実行のときだけ**走る。だから schedule が止まると **out/*.json（第四の関門が読む stale_bs / validate_fail / pending を含む）が更新されなくなる**——実測で `out/dashboard.json` は 2026-08-21 のまま、回転盤は **51本中 停止疑い18**。これが main が26日コミットゼロだった主因（もう一つは gate-ci が step8 で35本を skip していたこと＝別件・是正済み）。\n\nやること（**ユーザーの判断が要る**）: (a)Actions の画面で schedule を手で一度起動して復帰するか見る (b)戻らなければ cron の再登録／リポジトリ設定の Actions の権限を確認 (c)⚠ `actions_run_trigger` で回すと **main へコミットする**ので、明示の許可なしには押さない。",
+   "due": null,
+   "done": false
+  },
+  {
+   "id": "unmerged_fix_branch_0918",
+   "kind": "宿題",
+   "owner": "人",
+   "title": "★CIを止めていた1行の修正が**未マージのブランチにしか無い**（＝「作った答えを捨てる」の9例目）",
+   "note": "実測(2026-09-19): 別のセッションが **2026-09-18 に同じ根本原因を見つけて直していた**——コミット `7467165`「サイトを28日ぶりに更新した——CIを止めていたのは NOW という名前の固定日1行だった」。そのブランチの gate-ci は **2026-09-18 に2回 success**（`claude/gate-site-7xxoql` 11:43 / `claude/merge-wkogtm` 12:26）＝直近30回で緑なのはこの2回だけで、**緑になった理由がまさにその1行**。\n\n★ところが **`git merge-base --is-ancestor` は両方とも NO**＝main は今も `NOW = datetime.date(2026, 8, 19)` を持つ。だから**その後に切られたブランチは全部この赤を相続する**（実測: 09-18〜09-19 の16回すべて failure）。\n\n⇒ **枝の上にしか無い修正は、何も修正していない。** これは CLAUDE.md が8回記録してきた「作った答えを捨てる」の9例目で、今回の経路は *CIの `git add` 漏れ* でも *素の push* でもなく**『直したがマージしていない』**。\n\nやること: `claude/merge-wkogtm`（v9.9.171〜173・12タブを6群へ畳む二段ナビ・`night/check_navstack.js` 新設・第七回の取り込みの記録を含む）を main へ取り込むか判断する。⚠ 取り込みの前に `git fetch --unshallow`（浅いクローンでは `git merge-base` が『別の歴史』と嘘をつく・2026-08-21の記録）。⚠ `night/etf_jp_defense.py` と `.github/workflows/ci.yml` はこちらも触ったので衝突する——**こちらは `asof` も直し ci.yml の並びも直している**ので、衝突は『両方を採る』で解く。",
+   "due": null,
+   "done": false
   }
  ]
 }

@@ -20,9 +20,13 @@
 #
 # 実行: python3 night/etf_jp_defense.py [--json]
 # 出力: out/etf_jp_defense.json
+import datetime
 import json, os, sys, importlib.util
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# ★日付は実行時に採る（固定すると『いつ測ったか』が永久に嘘になる。
+#   backfill_machine_evidence.TODAY / irr85_er の generated と同型の事故）
+TODAY = datetime.date.today()
 OUT = os.path.join(BASE, "out", "etf_jp_defense.json")
 
 _s = importlib.util.spec_from_file_location("etf_jp", os.path.join(BASE, "night", "etf_jp.py"))
@@ -73,7 +77,7 @@ def corr(x, y, minn=5):
 
 
 def build():
-    out = {"asof": "2026-08-19",
+    out = {"asof": TODAY.isoformat(),
            "問い": "防衛・航空で日本で買える器のうち一番いいのはどれか",
            "注意": ["ETFの選定は門の外（DCA側）。この道具は判定を持たない",
                     "★4本とも上場が新しく、年率換算しない（180日未満は年率にしない規約の精神）",
@@ -134,8 +138,11 @@ def build():
 
     # ---- ★網の門(ami.html)の規約をそのまま当てる（判定を新しく作らない）
     #   キル: レバレッジ／純資産100億円未満／**設定3年未満**／経費率0.75%超
-    import datetime
-    NOW = datetime.date(2026, 8, 19)
+    # ⚠**実行時の今日でなければならない**——ここは「設定から3年」のキルを測る錨で、
+    #   固定すると**回しても年数が増えない＝新しいETFが永久に⛔のまま**になる
+    #   （net_plan.py で踏んだ「回しても asof が動かない＝盤が永久に緑」と同型。
+    #    2026-09-19: 固定日 2026-08-19 が入っていたのを check_frozen_dates が捕まえた）
+    NOW = TODAY
     gate = {}
     for t in list(JP) + list(US):
         if t not in ser:
