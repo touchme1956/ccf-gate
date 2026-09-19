@@ -384,7 +384,16 @@ def main():
         print(f'\n  ・根拠に英文の引用が無い {len(noq)}社: {" ".join(noq)}')
         print('     ＝**差分を取る対象そのものが無い**。次の再審査で原本の一文を引用として刻むこと')
     if AS_JSON:
-        p = 'out/irr85_mech_diff.json'
+        # ⚠**刻みごとに別のファイルへ書く**（2026-09-19の実害）——
+        #   `--json` が刻みに依らず out/irr85_mech_diff.json へ書いていたので、
+        #   `--rung 70 --json` を回すと **85 の結果を丸ごと潰していた**。
+        #   `score_all.js --jp/--us` ／ `v11_facts --only` ／ `fill_growth_trend --only` が
+        #   踏んだ「正本を部分実行で潰す」型の4例目で、しかも
+        #   **today.py と ops_status は out/irr85_mech_diff.json だけを読む**ので、
+        #   潰れた瞬間に「85の機構文を見張っている」という表示が**70の話に化ける**。
+        #   ＝値が壊れるのではなく**何を見張っているかが黙って入れ替わる**種類の事故。
+        p = ('out/irr85_mech_diff.json' if str(RUNG) == '85'
+             else 'out/irr%s_mech_diff.json' % RUNG)
         json.dump(dict(generated=str(__import__('datetime').date.today()),
                        note=('台帳 _meta.evidence.irr の英文引用が最新の年次報告にまだ在るかを照合する。'
                              '**片側の検査**——消えたら赤信号／在っても安全ではない'

@@ -71,6 +71,7 @@ SRC = [
     ('exception_watch', 'out/exception_watch.json', '門外例外の監視', 'rows'),
     ('myrule', 'out/irr85_myrule.json', 'あなたの選定ルール', 'items'),
     ('mech_diff', 'out/irr85_mech_diff.json', '機構文の年次diff', 'items'),
+    ('mech_diff70', 'out/irr70_mech_diff.json', '機構文の年次diff(irr=70)', 'items'),
     ('kessan', 'out/kessan_flags.json', '四半期点検の旗', 'items'),
     ('profiles_ja', 'out/profiles_ja_audit.json', '事業説明の日本語要約の被覆', 'counts'),
     ('freshness', 'out/freshness.json', '中身と入力の鮮度', 'rows'),
@@ -280,10 +281,15 @@ def build():
                           '（既存パックの再審査は在庫が0でも進む）',
                           'python hachimon_fetch.py（引数なしで待ち行列の先頭5社）', '採取の実行印'))
 
-    # ── 機構文が消えた（irr=85 の根拠そのもの）──
-    for t in ((data.get('mech_diff') or {}).get('gone') or []):
-        now.append(item('mech:' + str(t), 'now', '機構文が消えた/書き換わった: ' + str(t),
-                        'irr=85 の根拠の引用が最新の原本に無い', 'python3 night/irr85_mech_diff.py --t ' + str(t), '機構diff'))
+    # ── 機構文が消えた（irr の根拠そのもの）──
+    #   ⚠**70 も同じ重さで見る**（2026-09-19に配線）。実測(shadow_irr_step)で
+    #   判定圏の 70→50 は投下可を10社→5社にする一方、50→70 も 85→70 も0社しか動かさない
+    #   ＝コストは 70→50 の一方向。85 だけ見張って 70 を見ないのは非対称だった。
+    for rung, key in (('85', 'mech_diff'), ('70', 'mech_diff70')):
+        for t in ((data.get(key) or {}).get('gone') or []):
+            now.append(item('mech%s:%s' % (rung, t), 'now', '機構文が消えた/書き換わった: ' + str(t),
+                            'irr=%s の根拠の引用が最新の原本に無い' % rung,
+                            'python3 night/irr85_mech_diff.py --rung %s --t %s' % (rung, t), '機構diff'))
 
     # ── あなたの選定ルール（irr=85）: 未決の分岐と新着 ──
     mr = data.get('myrule') or {}
