@@ -16,7 +16,9 @@
 ⚠ 数字をこの器の外へ書き写さないこと。写した数字は必ず陳腐化する（base_rate_check が
   「n=10」を焼き付けて実際に陳腐化した）。引用するときは out/irr_rung_audit.json から読む。
 
-使い方: python3 night/irr_rung_audit.py [--power] [--semi-list] [--json]
+使い方: python3 night/irr_rung_audit.py [--power] [--others] [--cond] [--semi-list] [--json]
+  --cond      家族の帰無を超えた候補を、別の窓と条件付きで当て直す
+  --others    irr 以外の候補（堀の柱・機械の指標）を**同じ物差し**で測る
   --power     検出力を測る（重い・純Pythonで数分）。既定は走らせない
   --semi-list 半導体連鎖の判定を1社ずつSIC記述つきで出す（線は判断なので引き直せるように）
 """
@@ -214,6 +216,142 @@ def cross_check(rows):
             'reconciled': (d.get('n_total') == len(seen)) and (diff == len(uq)),
             'unrated_companies': sorted(uq.values(), key=lambda u: (u['v'], u['t']))}
 
+# --- irr 以外の候補を、同じ物差しで測る（irr_rung_audit.py へ差し込む断片）---
+PILL = ('rep', 'dur', 'dom', 'moatW')
+
+def pillars():
+    """堀の柱の読解（2013/2015のみ。2018は読まれていない＝穴）。"""
+    P = {}
+    for v in ('2013', '2015'):
+        try: rs = L(f'retro_moat_pillars_{v}.json')['rows']
+        except Exception: continue
+        for r in rs:
+            P[(v, r['ticker'])] = {k: r.get(k) for k in PILL}
+    return P
+
+FEAT = {
+    # ⚠ ビンテージをまたいで**混ぜない**。2013 と 2018 は欄の定義が違う
+    #   （実測: gw_r=のれん比率 / gwg=のれんの増加 ＝別物）。混ぜたら「基準の違う二つを割る」型。
+    '2013': ('retro_features2_2013.json', 'ticker',
+             ['rev', 'gm', 'opm', 'cagr5', 'cash_r', 'gw_r', 'aturn', 'capex_r', 'rnd_r', 'accr',
+              'intcov', 'conv5', 'netiss_r', 'payout5', 'sga_r', 'fcfpos5', 'opmD5', 'streak_rev']),
+    '2018': ('retro_features_2018.json', 'ticker',
+             ['opm18', 'opmD', 'accel', 'rnd18', 'conv58', 'payout58', 'gwg', 'nde18']),
+}
+
+def feats(v):
+    fn, tk, ks = FEAT[v]
+    try: rs = L(fn)['rows']
+    except Exception: return {}, []
+    return {r[tk]: r for r in rs}, ks
+
+def _q(vals, p):
+    s = sorted(vals); i = max(0, min(len(s)-1, int(round(p*(len(s)-1)))))
+    return s[i]
+
+def family(pool, cands, B_perm=2000):
+    """候補を同じ物差しで測り、**家族全体の値札**も出す。
+    ⚠ 候補を何本も並べたら、1本の p だけ見てはいけない（雑音でもどれかは通る）。
+      帰無は『同じ1回のシャッフルを全候補へ当てて最大 lift を取る』＝候補どうしの相関を壊さない。
+    ⚠ 候補ごとに pool が違う（欄の被覆が違う）ので、**pool と base も必ず併記**する。
+      pool が違う候補どうしを lift の大小で並べてはいけない。"""
+    n = len(pool)
+    win = [1 if r['cagr'] >= HURDLE else 0 for r in pool]
+    res, idxs = {}, {}
+    for lab, sel in cands:
+        sub = [(i, r) for i, r in enumerate(pool) if sel(r) is not None]
+        if len(sub) < 30: 
+            res[lab] = {'skip': f'pool {len(sub)} < 30（測らない）'}; continue
+        si = [i for i, r in sub]; gi = [i for i, r in sub if sel(r)]
+        if len(gi) < 5 or len(gi) == len(si):
+            res[lab] = {'skip': f'群 {len(gi)}/{len(si)}（測らない）'}; continue
+        idxs[lab] = (si, gi)
+        w = [win[i] for i in si]; g = [si.index(i) for i in gi]
+        obs = lift_of(w, g, len(si))
+        res[lab] = dict(lift=round(obs, 3), n_pool=len(si), n_group=len(gi),
+                        base=round(sum(w)/len(w), 3))
+    # 家族の帰無（1回のシャッフルを全候補へ）
+    rnd = random.Random(SEED + 7); order = list(range(n)); fam = []
+    per = {lab: 0 for lab in idxs}
+    for _ in range(B_perm):
+        rnd.shuffle(order)
+        pw = [0]*n
+        for pos, src in enumerate(order): pw[pos] = win[src]
+        mx = 0.0
+        for lab, (si, gi) in idxs.items():
+            w = [pw[i] for i in si]; g = [si.index(i) for i in gi]
+            l = lift_of(w, g, len(si))
+            if l is None: continue
+            if l >= res[lab]['lift']: per[lab] += 1
+            mx = max(mx, l)
+        fam.append(mx)
+    fam.sort()
+    for lab in idxs: res[lab]['p'] = round(per[lab]/B_perm, 4)
+    fam95 = round(fam[int(.95*B_perm)], 3)
+    for lab in idxs:
+        res[lab]['family_p95'] = fam95
+        res[lab]['beats_family'] = res[lab]['lift'] > fam95
+    return {'family_null_p95': fam95, 'n_candidates': len(idxs), 'cands': res}
+
+
+def pill_cands(P):
+    """堀の柱の候補。⚠刻みは既存のものだけ（新しい線を作らない）。"""
+    def g(k):
+        return lambda r, k=k: P.get((r['v'], r['t']), {}).get(k)
+    out = []
+    for k, lines in (('rep', (80, 60)), ('dur', (100, 85, 75)),
+                     ('dom', (70,)), ('moatW', (85, 70))):
+        for ln in lines:
+            out.append((f'{k}>={ln}',
+                        lambda r, k=k, ln=ln: (None if g(k)(r) is None else g(k)(r) >= ln)))
+    out.append(('moat5>=4', lambda r: (None if r.get('m5') is None else r['m5'] >= 4)))
+    out.append(('irr=85（錨）', lambda r: r['irr'] == 85))
+    out.append(('irr>=70（錨）', lambda r: r['irr'] >= 70))
+    return out
+
+def feat_cands(F, ks, pool):
+    """機械の候補。上位1/4 と 下位1/4 の**両方**を家族に入れる
+    （向きを結果を見てから選ぶと、それ自体が当てにいく行為になる）。"""
+    out = []
+    for k in ks:
+        vals = [F[r['t']][k] for r in pool if r['t'] in F and F[r['t']].get(k) is not None]
+        if len(vals) < 30: continue
+        hi, lo = _q(vals, 0.75), _q(vals, 0.25)
+        def mk(k, thr, up):
+            def f(r):
+                v = F.get(r['t'], {}).get(k)
+                if v is None: return None
+                return (v >= thr) if up else (v <= thr)
+            return f
+        out.append((f'{k} 上位1/4', mk(k, hi, True)))
+        out.append((f'{k} 下位1/4', mk(k, lo, False)))
+    return out
+
+
+def survive(rows, lab, sel_of, vintages):
+    """家族の帰無を超えた候補にだけ当てる生き残り検査。
+    ⚠ ここで測るのは3つ——(a)半導体を外しても残るか (b)irr の影ではないか
+      (c)**別のビンテージで再現するか**。(c) が最も重い（窓を変えても立つか）。
+    ⚠ この検査は『候補を落とすため』であって、通ったら採用という意味ではない（規約はルール1の領分）。"""
+    f = lambda s_: (sum(1 for r in s_ if r['cagr'] >= HURDLE)/len(s_)) if s_ else None
+    def one(pool, sel):
+        p = [r for r in pool if sel(r) is not None]
+        g = [r for r in p if sel(r)]; o = [r for r in p if not sel(r)]
+        if len(g) < 5 or len(o) < 5: return {'skip': f'群{len(g)}/{len(p)}'}
+        return dict(lift=round(f(g)-f(o), 3), n_group=len(g), n_pool=len(p), base=round(f(p), 3))
+    out = {}
+    for v in vintages:
+        pv = [r for r in rows if r['v'] == v]
+        sel = sel_of(v)
+        if sel is None: out[v] = {'skip': 'この窓では欄が無い'}; continue
+        out[v] = {
+            '全体': one(pv, sel),
+            '非半導体のみ': one([r for r in pv if not r['semi']], sel),
+            'irr<85のみ': one([r for r in pv if r['irr'] < 85], sel),
+            'irr=50のみ': one([r for r in pv if r['irr'] == 50], sel),
+        }
+    return out
+
 
 def main():
     args = sys.argv[1:]
@@ -260,14 +398,77 @@ def main():
         out['power_note'] = 'lift が線に届かないことは、この確率が低ければ「効果が無い」を意味しない'
     else:
         out['power'] = None
-        out['power_note'] = '--power で測る（重いので既定では走らせない）'
+        out['power_note'] = '--power で測る（重いので既定では走らせない）'  # 持ち回しは書き込み時に行う
+
+
+    if '--others' in args:
+        P = pillars()
+        havep = [r for r in uni if (r['v'], r['t']) in P]
+        oth = {'堀の柱（読解・2013+2015。2018は読まれていない＝穴）':
+                   dict(pool_note=f'per-company {len(havep)}社', **family(havep, pill_cands(P)))}
+        for v in ('2013', '2018'):
+            F, ks = feats(v)
+            pv = [r for r in rows if r['v'] == v]
+            if not F or not pv: continue
+            oth[f'機械（{v}ビンテージ・単一の定義集合）'] = dict(
+                pool_note=f'{v}の のべ {len(pv)}社',
+                **family(pv, feat_cands(F, ks, pv) +
+                         [('irr=85（錨）', lambda r: r['irr'] == 85),
+                          ('irr>=70（錨）', lambda r: r['irr'] >= 70),
+                          ('半導体連鎖（対照）', lambda r: r['semi'])]))
+        out['others'] = oth
+        out['others_note'] = ('候補ごとに pool が違う（欄の被覆が違う）。pool をまたいで lift の'
+                              '大小を並べてはいけない。family_null_p95 は「同じ1回のシャッフルを'
+                              '全候補へ当てた最大 lift」の95%点＝候補を並べたことの値札。')
+
+
+    if '--cond' in args:
+        # 家族の帰無を超えた「機械の候補」だけを、別の窓と条件付きで当て直す
+        FV = {}
+        for v in ('2013', '2018'):
+            F, ks = feats(v); FV[v] = (F, ks)
+        def sel_of_key(base_key):
+            names = {'2013': base_key[0], '2018': base_key[1]}
+            def mk(v):
+                F, ks = FV.get(v, ({}, []))
+                k = names.get(v)
+                if not F or k not in ks: return None
+                pv = [r for r in rows if r['v'] == v and r['t'] in F and F[r['t']].get(k) is not None]
+                vals = [F[r['t']][k] for r in pv]
+                if len(vals) < 30: return None
+                thr = _q(vals, 0.75)
+                def f(r):
+                    x = F.get(r['t'], {}).get(k)
+                    return None if x is None else x >= thr
+                return f
+            return mk
+        # ⚠ 2013の rnd_r と 2018の rnd18 は「R&D/売上」で同じ量（定義を確認して対にした）
+        out['survive'] = {'R&D/売上 上位1/4': survive(rows, 'rnd', sel_of_key(('rnd_r', 'rnd18')), ('2013', '2018'))}
+        out['survive_note'] = ('家族の帰無を超えた候補だけを当て直す。'
+                               '⚠ 別のビンテージで再現しないなら、それは窓の性質であって指標の性質ではない。')
 
     if '--semi-list' in args:
         out['semi_list'] = sorted([dict(t=r['t'], sic=r['sic'], desc=r['sicDesc'], irr=r['irr'])
                                    for r in uni if r['semi']], key=lambda x: x['t'])
 
     p = os.path.join(B, 'irr_rung_audit.json')
+    # ★旗を付けずに回すと、前回の重い測定（--power 等）が静かに消える。
+    #   実測: --others だけで回した回に power が None で上書きされた＝この台帳が8回踏んだ
+    #   「作った答えを捨てる」型を、旗の組み合わせで自分で作っていた。
+    #   → 今回作らなかったブロックは**いつ測ったかの札を付けて持ち回す**（捨てない・嘘もつかない）。
+    carried = []
+    try: prev = json.load(open(p))
+    except Exception: prev = {}
+    for k in ('power', 'others', 'survive', 'semi_list'):
+        if out.get(k) in (None, {}) and prev.get(k) not in (None, {}):
+            out[k] = prev[k]
+            out.setdefault('carried_over', {})[k] = prev.get('generated', '不明')
+            carried.append(k)
+    if carried:
+        out['carried_over_note'] = ('この回の旗では作らなかったので、前回の測定を持ち回した。'
+                                    '日付は carried_over を見ること（今日測った数字ではない）。')
     with open(p, 'w') as f: json.dump(out, f, ensure_ascii=False, indent=1)
+    if carried: print('⚠ 今回作らなかったブロックを持ち回した（今日の測定ではない）: ' + ', '.join(carried))
 
     if '--json' in args:
         print(json.dumps(out, ensure_ascii=False, indent=1)); return
@@ -289,6 +490,26 @@ def main():
     print(f"\n--- 歴史の刻み → 今日の台帳の刻み（今日の分布 {out['today_rung_dist']}）---")
     for h, a in out['agreement_hist_vs_today'].items():
         print(f"   歴史{h:<4} n={a['n']:<3} 同じ刻み {a['same']}/{a['n']} = {a['rate']:.0%}   行き先 {a['to']}")
+
+    if out.get('others'):
+        for blk, d in out['others'].items():
+            print(f"\n--- {blk} ---   {d['pool_note']}／候補{d['n_candidates']}本  家族の帰無95%点 {d['family_null_p95']:+.3f}")
+            for lab, v in sorted(d['cands'].items(), key=lambda kv: -(kv[1].get('lift') or -9)):
+                if 'skip' in v: print(f"   {lab:<18} — {v['skip']}"); continue
+                mark = '★家族の帰無を超える' if v['beats_family'] else ''
+                print(f"   {lab:<18} lift {v['lift']:+.3f}  群{v['n_group']:>3}/{v['n_pool']:<4} base {v['base']:.3f}  p={v['p']:.4f} {mark}")
+
+
+    if out.get('survive'):
+        print("\n--- 生き残り検査（家族の帰無を超えた候補だけ）---")
+        for lab, d in out['survive'].items():
+            print(f"   {lab}")
+            for v, cd in d.items():
+                if 'skip' in cd: print(f"     {v}: {cd['skip']}"); continue
+                for c, x in cd.items():
+                    if 'skip' in x: print(f"     {v} {c:<12} — {x['skip']}")
+                    else: print(f"     {v} {c:<12} lift {x['lift']:+.3f} 群{x['n_group']:>3}/{x['n_pool']:<4} base {x['base']:.3f}")
+
     if out.get('power'):
         print("\n--- 検出力（真の効果Δを p<0.05 で拾える確率）---")
         for lab, d in out['power'].items(): print(f"   {lab:<24} " + "  ".join(f"{k}→{v:.2f}" for k, v in d.items()))
