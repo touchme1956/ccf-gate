@@ -123,7 +123,8 @@ def main():
                          s=r.get('s'), moat_idx=r.get('moat'), buy=bool(r.get('buy')), gate=r.get('xEr')))
         time.sleep(0.2)
     rows.sort(key=lambda z: -z['er'])
-    print('\n■ irr=85 の14社 —— **期待値 E[r] の高い順**（合否・キル・関門・席はすべて無視／式は門X本体のまま）')
+    # ⚠ 社数は焼き付けない（2026-09-19: 見出しが14のまま表は15行あった）
+    print(f'\n■ irr=85 の{len(rows)}社 —— **期待値 E[r] の高い順**（合否・キル・関門・席はすべて無視／式は門X本体のまま）')
     print(f"  {'':<6}{'PER':>7}{'倍率':>7}{'shy':>7}{'g':>7}{'重力':>7}{'★E[r]':>8}   {'gの根拠':<24}門")
     for i, r in enumerate(rows, 1):
         print(f"  {i:>2}.{r['t']:<5}{r['per']:>7.1f}{r['x']:>6.2f}x{r['shy']:>6.2f}%{r['g']:>6.1f}%"
@@ -134,7 +135,7 @@ def main():
     print('  ・**倍率(PER÷fairPER)はほぼ全社2〜8倍**。歴史では質の中で価格は選別力を持たなかったが、')
     print('    E[r]の式は倍率の重力として必ず引く＝この順位は価格の影響を受けている')
     if AS_JSON:
-        json.dump({'generated': '2026-08-09', 'eurusd': EURUSD, 'rows': rows},
+        json.dump({'generated': date.today().isoformat(), 'eurusd': EURUSD, 'rows': rows},
                   open('out/irr85_er.json', 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
         print('\n→ out/irr85_er.json')
     return 0
