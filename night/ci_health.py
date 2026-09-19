@@ -28,8 +28,13 @@
 使い方:
   python3 night/ci_health.py            人が読む形
   python3 night/ci_health.py --write    out/ci_health.json を書く（CI用）
-  ※ 認証は GITHUB_TOKEN / GH_TOKEN（Actions では自動で入る）。
-     公開リポジトリでも Actions API は**未認証だと403**なので、鍵が無ければ測れない。
+  ※ 認証は GITHUB_TOKEN / GH_TOKEN。公開リポジトリでも Actions API は**未認証だと403**なので、
+     鍵が無ければ測れない。
+     ⚠2026-09-19訂正: **「Actions では自動で入る」は誤り**だった。`GITHUB_TOKEN` は式
+       `${{ github.token }}` からは読めるが、**ステップの `env:` に書かないとプロセスには渡らない**。
+       ci.yml がそれを書いていなかったので、この器は新設(2026-08-18)から2026-09-19まで
+       **CIで一度も書き込めていなかった**（空書き込みの検問で正しく書かずに落ち、
+       `continue-on-error` がそれを緑に隠し、回転盤には `nokey`＝鍵待ちと出ていた）。
 """
 import json, os, sys, urllib.request, urllib.error
 from datetime import datetime, timezone
@@ -57,7 +62,9 @@ def build():
     rows, blind = [], []
     if not TOKEN:
         blind.append('GITHUB_TOKEN / GH_TOKEN が無い——Actions API は公開リポジトリでも未認証だと403。'
-                     'CI では自動で入る。手元で見たいなら GH_TOKEN を渡すこと')
+                     'CI ではステップの env: に `${{ github.token }}` を書けば渡る'
+                     '（**自動では入らない**。ci.yml が書き忘れていて2026-09-19まで一度も測れていなかった）。'
+                     '手元で見たいなら GH_TOKEN を渡すこと')
     for wf in workflows():
         if not TOKEN:
             continue

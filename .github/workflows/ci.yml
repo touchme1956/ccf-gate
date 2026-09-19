@@ -279,6 +279,18 @@ jobs:
         continue-on-error: true
         run: timeout 900 python3 night/audit_pending.py --all --write | tail -20
 
+      # ⚠2026-09-19新設: **第四の関門の入力を更新した後で score_all を回し直す。**
+      #   audit_stale_bs / audit_pending は自分が Ω・buy を知るために score_all.json を読み、
+      #   その結果を score_all が次回読む——**一周の遅れが構造的にある**（両ツールが自分で注記している）。
+      #   循環なので順番の入れ替えでは解けない。解けるのは「入力を書いた後にもう一度採点する」だけ。
+      #   放置すると **同じコミットの中で score_all.json と pending.json が食い違う**。
+      #   実測(2026-09-19 run 715): CTAS の pending が のれん(2026-02-28)基準61.1% → (2026-05-31)基準60.8% へ
+      #   更新されたのに、コミットされた score_all.json は更新前の値を抱いていた
+      #   （今日は buy=False のままで判定は動かないが、**新しく pending が立った社では投下可がずれる**）。
+      #   ＝2026-08-11 に「market.yml が古い validate_fail を読んで採点していた」と同じ型。1秒で済む。
+      - name: 第四の関門の入力を反映して score_all を回し直す（コミットの内部整合）
+        run: node night/score_all.js | tail -4
+
       # ── 5-b3. irr=85 をユーザーの基準で採点（2026-08-11新設）─────────────────────
       #   【なぜ】ユーザーの選定ルール（irr=85 ∧ 営利率11.89 ∧ FCF転換5年0.639 ∧ 成長1.76・nde除く）は
       #   対話で決まったが**機械のどこにも書かれていなかった**。一方 irr=85 の顔ぶれは
@@ -477,6 +489,15 @@ jobs:
       #     初回のCI実行までは未実証。out/ci_health.json が出来ているかで確かめること。
       - name: 自動化の健康診断 ci_health（表示のみ・CIは落とさない）
         continue-on-error: true
+        # ⚠2026-09-19: **鍵を渡していなかったので、この器は新設(2026-08-18)から一度も働いていなかった。**
+        #   `GITHUB_TOKEN` は Actions が**環境変数として自動で入れてはくれない**
+        #   （式 `${{ github.token }}` からは読めるが、env に書かないとプロセスには渡らない）。
+        #   ci_health.py の頭注が「Actions では自動で入る」と書いていたのは誤り。
+        #   症状の出方が質の悪い形だった——鍵が無いと空書き込みの検問で**書かずに落ち**、
+        #   `continue-on-error` がそれを緑に隠し、回転盤には `nokey`＝「🔑鍵待ち」と出る。
+        #   ＝**鍵は最初から在るのに「人が鍵を用意していない」と読める表示**になっていた。
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: python3 night/ci_health.py --write
 
       - name: 📋今日の集計 today（錨が読めなければ書かずに落ちる）
