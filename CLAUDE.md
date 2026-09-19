@@ -13048,3 +13048,116 @@ audit_promotion_ready 投下可・次点とも FAIL 0 ／
 ②の基準は FCF転換が**5年合計比**で門の単年とは別基準（v9.9.129 に記録された基準差）／
 ③は**今日の価格1点**で、価格が動けば順位も動く（この順位の安定性そのものは**測っていない**）／
 射程・寿命は**合否に一切使っていない記録**で、n=27 では新しい線を作れない
+
+## ASML の irr を 85 → 70 へ是正した（2026-09-19・ユーザー指示「それをやって」）——★決め手は**両方の前の読解が見落としていた RPO** で、見落とした理由は構造的だった
+**Ω・採点式・刻み・重み・四関門・堀の関門70・売却規律S1/S2/S3・配分（時価総額Tier）・別枠85 の規約はいずれも1バイト触っていない。
+投下可10社は顔ぶれも不変**（ASML CW HWM IDXX IRMD LRCX MCO MSFT RBC V・要修正2件〔既知のCMTL/AMBIQ〕・未解決警告0件も不変）。
+動いたのは **ASML の irr 1欄** と、それに連なる**席の順だけ**。
+
+### 発端——ランキングを作る作業が、ランキングより重い問いを掘り当てていた
+2026-09-19 の「irr=85 の中でランクづけ」で、**期待値1位・投下可1位の ASML について、
+同じパックの `_meta.mech`（measured 2026-08-11・`verified: scope=revised`）が
+`_meta.evidence.irr`（2026-08-05の二重読み）を名指しで否定している**のを見つけた。
+そこで**原本を読んだ**——FY2025 20-F / Annual Report 2025（filed 2026-02-25・`_meta.source` のURL）を全文取得し、
+**機構語を「単語で」網羅走査した**（1,354,634字）。
+
+### 判定: 85 は成立せず、100 も成立せず、**70 は実数で成立する**
+- **85 にしない（顧客の側が再認定の費用と時間を負う記述がゼロ）**——実測:
+  **requalif 0 / re-qualif 0 / process of record 0 / design win 0 / designed into 0 / time-consuming 0 /
+  incumbent 0 / retrain 0 / sunk 0 / non-cancel 0**。`qualif` は54件あるが**事業の話は2件だけ**
+  （残52件は人材9・ガバナンスと報酬7・税と会計とヘッジ33・EUタクソノミ3）で、**2件とも主語が ASML**。
+  しかも一方は**所在が「Metrology and inspection → YieldStar 550」＝光学メトロロジーの節で、EUV露光機の話ではない**
+  （M&I は 824.6÷32,667.3＝**売上の2.52%**）。**旧根拠はこの一文を EUV(35.52%) の機構として引いていた**＝
+  引用が述べている製品群と、%を当てている製品群が別物だった（2026-08-11 の検証記録が「致命的」と書いた指摘を、原本で独立に確認）
+- **★SAT は「顧客が負う再認定」ではない——同じ段落が自分で解除している**。Note 2 は
+  『Each system's performance is **re-tested through a site acceptance test (SAT) after installation**』の近くで
+  『**We have never failed to successfully complete installation of a system at a customer's premises.**』
+  『customer acceptance at FAT is proven, will occur upon **delivery**』と続け、しかも
+  『**the majority of** our systems undergo a factory acceptance test』で全数ではない。
+  ＝**一度も失敗が無く、ASMLが完了を待たずに収益認識する定型手続き**。顧客の乗り換え費用の証拠として引くと**意味が反転する**
+- **Zeiss の脚は引用が1本も無く、向きが逆**——原本は
+  『The number of lithography systems **we are able to produce is limited by** the production capacity of …
+  Carl Zeiss SMT, **our sole supplier** of lenses』『we could be unable to fulfill orders … **our business**』＝
+  **ASML自身の供給リスク**。**2026-08-05 に一度是正した型（v9.9.49 の明示除外）が `mechanism_summary` に復活していた**
+- **100 にしない（全社ベース・v9.9.41(1)）**——『**We compete primarily with Canon and Nikon in respect of DUV systems**』
+  『Each continues to offer products that **compete directly** with our DUV systems』。
+  **DUV売上比 36.88% > EUV 35.52%**。同じリスク要因が『highly competitive』『price-based competition, resulting in
+  lower prices and lower sales and margins』とも書く。⚠ CLAUDE.md は **2026-08-05 にこの理由で 100 を一度退けている**
+- **★70 を支える機構（実数つき・3本）**:
+  ①**複数年の購買義務**——『volume purchase agreements with our customers which **cover up to five years**』（volume purchase agreement 15回）＋
+   『the remaining performance obligations amount to **€ 46.5 billion**』『**65 %** … recognized during the next 12 months』
+   ＝**RPO 1.42倍・35%が12ヶ月より先**。梯子（2026-08-20 に確立）では MCO 1.16倍/45%が1年超＝70 を**倍率で上回り**、
+   期間の形は ADBE(0.94倍/65%が12ヶ月以内＝50) と同じ。⚠**解約可能性は原本が明示しない**
+   （non-cancel 0・take-or-pay 0。ADBEのように『96%が解約可能』とも書かない）＝中間
+  ②**工程への組込＋代替の不存在**——『ASML is currently the world's **only manufacturer of EUV** lithography systems』＋
+   『shifting from complex multi-patterning to **simpler single patterning** using EUV … requires only one exposure per layer』
+   『reduces the number of masks and process steps, while also improving yield』。EUV＝**35.52%**
+  ③**設置基盤**——『leverage our **large and growing system installed base** … over a **lifetime of more than 20 years**』
+   （installed base 32回）。サービス＋フィールドオプション 8,193.0÷32,667.3＝**25.08%**
+- **同居する反証を70の弱点として明記した（検問⑤）**——『customers **may perform more of these services themselves**,
+  find other third-party suppliers to provide them』（**会社自身が顧客の内製化を認める**＝SRDX・GPNを50にした型(5)）／
+  『if customers … **shift toward architectures that rely less on lithography**』／『alternative technological solutions』／
+  『new competitors … **ambition of self-sufficiency** in the geopolitical context』。
+  なお『a trusted and indispensable partner』は**願望形**（『we **aim to** … positioning ourselves as』）なので根拠にしない
+
+### ★★なぜ二度の読解が RPO を見落としたのか——**探した語彙が 85 のものだったから**
+2026-08-05 と 2026-08-11 は**どちらも qualif / certif / switch で走査している**。
+**70 の機構（複数年の購買義務・RPO）はその網の外にある**ので、原理的に出てこない。
+**CLAUDE.md は 2026-08-12 にこれを既に書いていた**——「`irr85_extract.py` は 70 を裁けない——語彙は**85を探すため**のもの」。
+⇒ **「85ではない」を確かめる走査は、「70である」を確かめる走査ではない。** 刻みを下げるときは**その刻みの語彙で引き直す**
+
+### 実測（先に測ってから値を動かした）
+**堀 81.6 → 77.7**（関門70は通過）・**Ω 81.4 → 80.5**・**投下可10社は顔ぶれ不変**。
+動いたのは**席の順だけ**——`irr===85` を見る**席の優先(v9.9.100)**を失うので
+**ASML 1位 → 7位**（前 `ASML CW LRCX RBC MSFT IDXX V HWM IRMD MCO` → 後 `CW LRCX RBC MSFT IDXX V ASML HWM IRMD MCO`）。
+配分は時価総額Tierなので**目標ウェイトの数値は不変**（端数の行き先だけが動く）。
+**別枠85 は使っていなかった社**（Ω80.5 で Ω75 を自力で通る）ので、そちらの影響もゼロ。
+検証: `validate_packs ASML` **FAIL 0 / warn 0** ／ `irr85_mech_diff` は ASML が対象外になり**残る14社とも ✓一字同文** ／
+**実ブラウザで席順そのものを確認**（`window.__ccfBuyList` は `mechR`→`ccfAllocScore`→Ω の順で並ぶので席順そのもの）:
+`CW LRCX RBC MSFT IDXX V ASML HWM IRMD MCO`＝**ASML 7位/10社**・眠っている関門 0本・pageerror 0
+
+### ★副産物1: 二重読みの台帳が、後から出た反証を一つも見ていなかった（`night/audit_irr85_dual.py` を是正）
+この道具は **15社すべて「✓検証済・未検証0社」**と出していた。**だが見ていたのは日付と字数だけ**で、
+**同じ欄について後の道具(`irr85_scope_life`)が出した反証を読まない**。実測:
+**`scope=refuted` 3社（HXL / MKSI / NOVT）・`scope=revised` 3社（ASML / BWXT / CW）＝6社で射程が覆っているのに、全員 ✓**。
+- 是正: `_meta.mech.verified` に refuted/revised があれば **⚠射程** を出し、
+  **その反証が最後の二重読みより後なら状態を「反証が後」**にする（✓を名乗らせない）。
+  ⇒ **CW（🟢投下可・堀86.1＝台帳最高なのに射程 12.29%）が待ち行列の1位**、BWXT も「反証が後」へ。
+  HXL/MKSI/NOVT は二重読みが反証より後なので ✓ のままだが、**⚠射程 の印は必ず添える**＝**✓ が単独で立つことは無くなった**
+- **★もう一つ直した（こちらの方が重い）: 85 を検証した記録が、70 を検証した記録として数えられていた**。
+  ASML の irr を 70 へ下げた直後、この道具は **2026-08-05 の「85 の二重読み」を根拠に ✓検証済** と出した。
+  ⇒ **刻みが変わった日以降の二重読みだけを数える**（verdict に 是正/変更/撤回/引き上げ/引き下げ を含む記録の日付で切る）。
+  ASML は正しく **未検証** へ。**「85を検証した記録は、70を検証した記録ではない。」**
+  ⚠ 待ち行列の文言も直した——「二重読みが未了」ではなく**「二重読みの**後に**射程の反証が出た」**（読まれてはいる）
+
+### ★副産物2: `verify_note` が 3006字で打ち切られている（15社中9社）
+**ちょうど 3006字が9社**で、**末尾が全部 `…〔以下略〕`**（残る6社は 2311〜2912字で文として終わる）＝**上限の署名**。
+**書き込み時に失われているので repo からは復元できない**。⇒ `audit_irr85_dual` が
+**`✂検証記録が打ち切られている`** と名指しし（実測8社）、todo `irr85_verify_note_truncated` に登録した。
+⚠**この節の判定（誰の機構が否定されているか）は、切られた末尾を読まずに出している**——
+ASML も『→ life は con…〔以下略〕』で切れているので、**9社については結論の一部を見ていない**
+
+### ★副産物3: 「投下可10社は100% through-cycle 済」が、もう正しくない
+`audit_todo` が `single_year_25` の件数ずれ（記載17社→実測11社）を検出したので測り直したら、
+**同じ項の別の一文のほうが重かった**——実測は **through-cycle 8 / single-year 1(**CW**) / 印なし 1(**RBC**)**。
+- **CW は当てないのが正しい社**（採取器と審査年で16%食い違い＝v9.9.72 の許容15%外。2026-08-04 に記録済み）
+- **⚠RBC は別の話**——`_meta.basis` が**無い**（＝道具は through-cycle を名乗らない）のに
+  `_meta.evidence.roic` が「**v9.9.72: through-cycle 化**。5年系列 **1年**の中央値 38.4%」と書く。
+  **1点の中央値はその点そのもの**で、v9.9.72 が『採取器が系列1-2年でも med5 を出していた』として
+  **3年以上のガード**を入れた当の型（当時それで在庫が 220→181社 に減った）。**値も揃っていない**（evidence 38.4/7.7 vs パック 38.3/7.0）。
+  ⚠**RBC は別枠85で席に入っている社（Ω60.1）で、roic は Ω の実効36.5%＝単独最大の入力**なので、
+  **印を直すだけのつもりで値を動かさない**こと。原本を読むまで触らず todo `rbc_basis_contradiction` へ
+- ⇒ **「数字を書き写した箇所は必ず陳腐化する」の、もう一段深い顔**：
+  陳腐化した**件数**は道具が検出したが、**陳腐化した「100%です」という一文は誰も検出できていなかった**
+
+### 検証
+check_html ✓ ／ audit_docs ✓（表示 v9.9.170・齟齬なし）／ validate_state ✓ ／ audit_todo **件数ずれ0・重複0** ／
+**score_all 投下可10社（顔ぶれ不変）・要修正2件・未解決警告0件** ／ audit_promotion_ready 投下可・次点とも FAIL 0 ／
+**check_gate_parity（実ブラウザ・369件取込）Ω 369/369 一致・投下可10社が門と端末で一致・pageerror 0** ／
+**check_mobile_fit 360〜1280px の6幅すべてで全12タブが見える・文書幅は画面幅に収まる**
+
+### 限界（正直に）
+**表セル由来の余分な空白で語が割れる**（実測『high-volume ma nufacturin g』・数字の前に ` .`）ので、
+引用は空白を畳んで照合したものと、割れを避けて短く切ったものを混ぜている——**この artifact は evidence にも明記した**／
+走査は**単語**で掛けたが、**まだ誰も思いつかない書き方の機構は原理的に拾えない**（2026-08-19 の第二次の狩りと同じ限界）／
+RPO の**解約可能性が原本に無い**ので、梯子の第三の軸（Gartner と ADBE を分けた軸）では**ASMLを裁けていない**
