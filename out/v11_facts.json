@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-17",
+ "generated": "2026-09-19",
  "tool": "night/v11_facts.py",
  "definitions": {
   "intcov": "OperatingIncomeLoss(年次)/InterestExpense(年次)＝retro_features2.py と同一定義・同一タグ順",
@@ -85,14 +85,17 @@
   ],
   "no_cik": [
    "AMBI",
-   "CPRX"
+   "AXIA",
+   "CPRX",
+   "ISSC",
+   "LEG"
   ],
   "fetch_fail": []
  },
  "taxonomy_agreement": {
-  "n": 1034,
+  "n": 1031,
   "agree_2pct": 357,
-  "rate": 0.345,
+  "rate": 0.346,
   "examples": [
    {
     "primary": "InterestExpense",
@@ -345,7 +348,8 @@
     "InterestIncomeExpenseNet",
     "InterestPaidNet",
     "LongTermDebt",
-    "NotesPayableCurrent"
+    "NotesPayableCurrent",
+    "ShortTermBorrowings"
    ],
    "no_debt_evidence": false,
    "fy": 2026,
@@ -852,29 +856,6 @@
    "int_basis": "interest",
    "intcov": 13.058,
    "intcov_strict": 13.058
-  },
-  "AXIA": {
-   "nm": "AXIA",
-   "cik": "0001439124",
-   "nulls": {
-    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
-   },
-   "debt_trace": [
-    "FinanceCosts"
-   ],
-   "no_debt_evidence": false,
-   "fy": 2024,
-   "fy_basis": "latest",
-   "fy_end": "2024-12-31",
-   "op5_all_pos": true,
-   "fcf5_all_pos": true,
-   "opm": 48.8,
-   "opm_fy": 2024,
-   "int": 10140093000,
-   "int_tag": "FinanceCosts",
-   "int_fy": 2024,
-   "int_basis": "finance_costs",
-   "intcov": 1.934
   },
   "AZN": {
    "nm": "AZN",
@@ -1831,7 +1812,7 @@
    "nm": "CTAS",
    "cik": "0000723254",
    "nulls": {
-    "opm": "売上の年次が 2019年止まりでアンカー 2025年から古い"
+    "opm": "売上の年次が 2019年止まりでアンカー 2026年から古い"
    },
    "debt_trace": [
     "InterestExpense",
@@ -1843,17 +1824,17 @@
     "LongTermDebtNoncurrent"
    ],
    "no_debt_evidence": false,
-   "fy": 2025,
-   "fy_basis": "latest",
-   "fy_end": "2025-05-31",
+   "fy": 2026,
+   "fy_basis": "pack",
+   "fy_end": "2026-05-31",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "int": 101108000,
+   "int": 106285000,
    "int_tag": "InterestExpenseNonoperating",
-   "int_fy": 2025,
+   "int_fy": 2026,
    "int_basis": "interest",
-   "intcov": 23.339,
-   "intcov_strict": 23.339
+   "intcov": 24.524,
+   "intcov_strict": 24.524
   },
   "CVCO": {
    "nm": "CVCO",
@@ -1979,6 +1960,7 @@
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
     "InterestExpense",
+    "InterestExpenseDebt",
     "InterestExpenseNonoperating",
     "InterestPaidNet",
     "LongTermDebt",
@@ -3782,33 +3764,6 @@
    "opm_fy": 2025,
    "intcov_na_reason": "no_debt"
   },
-  "ISSC": {
-   "nm": "ISSC",
-   "cik": "0000836690",
-   "nulls": {},
-   "debt_trace": [
-    "DebtInstrumentCarryingAmount",
-    "InterestExpense",
-    "InterestPaidNet",
-    "LongTermDebt",
-    "LongTermDebtCurrent",
-    "LongTermDebtNoncurrent"
-   ],
-   "no_debt_evidence": false,
-   "fy": 2025,
-   "fy_basis": "pack",
-   "fy_end": "2025-09-30",
-   "op5_all_pos": true,
-   "fcf5_all_pos": true,
-   "opm": 23.81,
-   "opm_fy": 2025,
-   "int": 1725205,
-   "int_tag": "InterestExpense",
-   "int_fy": 2025,
-   "int_basis": "interest",
-   "intcov": 11.635,
-   "intcov_strict": 11.635
-  },
   "ITRN": {
    "nm": "ITRN",
    "cik": "0001337117",
@@ -4181,21 +4136,6 @@
    "int_basis": "interest",
    "intcov": 12.3,
    "intcov_strict": 12.3
-  },
-  "LEG": {
-   "nm": "LEG",
-   "cik": "0000058492",
-   "nulls": {
-    "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
-   },
-   "debt_trace": [
-    "DebtAndCapitalLeaseObligations",
-    "InterestExpense",
-    "InterestPaidNet",
-    "LongTermDebtAndCapitalLeaseObligations"
-   ],
-   "no_debt_evidence": false,
-   "intcov_na_reason": "unmeasured"
   },
   "LLY": {
    "nm": "LLY",
@@ -6704,8 +6644,8 @@
    "int_cash_tag": "InterestPaidNet",
    "int_cash_fy": 2025,
    "int_tag_candidates": [
-    "us-gaap:FinanceLeaseInterestExpense(2025)",
-    "us-gaap:InterestPaidNet(2025)"
+    "us-gaap:FinanceLeaseInterestExpense(2026)",
+    "us-gaap:InterestPaidNet(2026)"
    ]
   },
   "TDC": {
@@ -7211,7 +7151,7 @@
    "int_cash_tag": "InterestPaidNet",
    "int_cash_fy": 2025,
    "int_tag_candidates": [
-    "us-gaap:InterestPaidNet(2025)"
+    "us-gaap:InterestPaidNet(2026)"
    ]
   },
   "ULTA": {
