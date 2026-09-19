@@ -193,6 +193,21 @@ def indiv_null(group, M, order_src, spy_mult, months, B, seed):
         if e >= obs: ge += 1
     return dict(n=len(idx), excess=round(obs, 4), p=round((ge+1)/(B+1), 4), B=B)
 
+def rebal_excess(g, pan, k0, k1, spy_mult, step=12):
+    """★年1回 等ウェイトへ戻した場合の超過。**買い持ちとの差が集中の効き**。
+    ⚠ 門の配分は1銘柄8%上限（¼ケリー）でリバランスする。一方この検証の結果変数は
+      事前登録どおり『買い持ち・リバランスなし』なので、**1社が終価を支配しうる**
+      （実測: 探索の最良は終価の86.4%がNVDA 1社）。両方を並べて初めて
+      「組合せが効いた」と「1社が効いた」を分けられる。
+    ⚠ 取引コストと税は入っていない＝実運用の提案ではなく**頑健性の検査**。"""
+    tot = 1.0; k = k0
+    while k < k1:
+        kn = min(k+step, k1)
+        vals = [pan[t][kn]/pan[t][k] for t in g if k in pan[t] and kn in pan[t]]
+        if not vals: return None
+        tot *= sum(vals)/len(vals); k = kn
+    return cagr(tot, k1-k0) - cagr(spy_mult, k1-k0)
+
 def evaluate(rule_atoms, y, pan, spy, k1, SEMI):
     """規則を**そのアンカーのデータで作り直して**当てる（銘柄リストではなく規則を凍結する）。"""
     k0 = int(y)*12 + 6
@@ -302,11 +317,18 @@ def main():
             irr = Dy['irr']
             rec = {'years': round(mo/12, 2), 'pool_n': len(pl),
                    'spy_cagr': round(cagr(sm, mo), 4), 'rows': {}}
+            rec['_groups'] = {}
             def put(lab, g):
                 g = set(g) & set(pl)
                 if len(g) < 3: rec['rows'][lab] = {'skip': f'n={len(g)} 少なすぎる'}; return
                 d = indiv_null(g, My, pl, sm, mo, B, int(y))
-                d['semi'] = sum(1 for t in g if t in SEMI); rec['rows'][lab] = d
+                d['semi'] = sum(1 for t in g if t in SEMI)
+                rb = rebal_excess(g, pan, a0, END, sm)
+                d['rebal'] = round(rb, 4) if rb is not None else None
+                tot = sum(My[t] for t in g)
+                top = sorted(((My[t]/tot, t) for t in g), reverse=True)
+                d['top1_share'] = round(top[0][0], 4); d['top1'] = top[0][1]
+                rec['rows'][lab] = d; rec['_groups'][lab] = g
             for r in sorted({v for v in irr.values() if v}):
                 put(f'irr=={r}', [t for t in irr if irr[t] == r])
             put('irr>=85', [t for t in irr if (irr[t] or 0) >= 85])
@@ -315,14 +337,28 @@ def main():
             put('irr>=85 ∧ 非半導体', [t for t in irr if (irr[t] or 0) >= 85 and t not in SEMI])
             put('irr in(70,75) ∧ 非半導体', [t for t in irr if irr[t] in (70, 75) and t not in SEMI])
             put('irr==50 ∧ 非半導体', [t for t in irr if irr[t] == 50 and t not in SEMI])
+            # ★診断そのものも家族として裁く（自分の掟を自分へ当てる）
+            gs = [(k, v) for k, v in rec.get('_groups', {}).items() if len(v) >= 3]
+            if gs:
+                fq = family_null(gs, My, pl, sm, mo, B, 4242)
+                rec['family_of_diag'] = fq
+                rec['family_of_diag_note'] = ('★この値札は **私が n=4〜6 の小さい群を診断に入れた** ことで押し上がる'
+                    '（最大を取るので分散の大きい小群が帰無を支配する）。個別の p と両方見ること。')
+                for k, v in rec['rows'].items():
+                    if 'excess' in v: v['beats_diag_family'] = bool(v['excess'] > fq['p95'])
+            rec.pop('_groups', None)
             diag['anchors'][y] = rec
         # 探索の最良も個別の帰無で測り直す（家族の値札との差を見せる）
         atmap = {n: g for n, g, h in at}
         best = scored[0]; gb = None
         for pp in [x.strip() for x in best['rule'].split('∧')]:
             gb = atmap[pp] if gb is None else (gb & atmap[pp])
+        rb = rebal_excess(gb, pan, k0, END, spym)
+        tot = sum(M[t] for t in gb); top = sorted(((M[t]/tot, t) for t in gb), reverse=True)
         diag['search_best_individual'] = {'rule': best['rule'],
-                                          **(indiv_null(gb, M, pool, spym, months, B, SEED) or {})}
+                                          **(indiv_null(gb, M, pool, spym, months, B, SEED) or {}),
+                                          'rebal': round(rb, 4) if rb is not None else None,
+                                          'top1_share': round(top[0][0], 4), 'top1': top[0][1]}
         out['indiv_diag'] = diag
 
     with open(os.path.join(OUT, 'combo_spy.json'), 'w') as f:
@@ -356,15 +392,22 @@ def main():
         print(f"    ここは **事前に1本だけ名指しして** 当てた場合。⚠ アンカーは社が重なるので独立ではない。")
         for y, rec in dg['anchors'].items():
             print(f"\n  ■ {y}-07 ／ {rec['years']}年 ／ 母集団{rec['pool_n']}社 ／ SPY {rec['spy_cagr']*100:+.1f}%/年")
+            fq = rec.get('family_of_diag')
+            if fq: print(f"     （この診断{len(rec['rows'])}本を家族として裁くと 95%点 {fq['p95']*100:+.1f}pt）")
             for lab, v in rec['rows'].items():
                 if 'skip' in v: print(f"       {lab:<26} —（{v['skip']}）"); continue
                 star = '★' if v['p'] < 0.05 else '  '
-                print(f"    {star} {lab:<26} {v['excess']*100:+6.1f}pt n={v['n']:<4} 半導体{v['semi']:<3} p={v['p']:.4f}")
+                fam_ok = '★家族超え' if v.get('beats_diag_family') else ''
+                rbs = f"{v['rebal']*100:+6.1f}" if v.get('rebal') is not None else "     —"
+                print(f"    {star} {lab:<24} 買持{v['excess']*100:+6.1f} 年リバ{rbs} n={v['n']:<4}"
+                      f" 半導体{v['semi']:<3} 最大1社{v['top1_share']*100:4.0f}%({v['top1']}) p={v['p']:.4f} {fam_ok}")
         sb = dg.get('search_best_individual', {})
         if 'p' in sb:
             print(f"\n    [探索の最良] {sb['rule']}")
-            print(f"       {sb['excess']*100:+.1f}pt n={sb['n']} 個別p={sb['p']:.4f}"
-                  f" → だが家族の値札 {fam['p95']*100:+.1f}pt を通らない＝**探索の費用で消える**")
+            print(f"       買い持ち {sb['excess']*100:+.1f}pt n={sb['n']} 個別p={sb['p']:.4f}"
+                  f" → 家族の値札 {fam['p95']*100:+.1f}pt を通らない＝**探索の費用で消える**")
+            print(f"       ★さらに 年1回リバランスで {sb['rebal']*100:+.1f}pt へ落ちる"
+                  f"（終価の {sb['top1_share']*100:.1f}% が {sb['top1']} 1社）＝**組合せではなく1社の買い持ちだった**")
     print(f"\n■ 全基準を通った規則: {len(out['survivors'])}本  {out['survivors'] if out['survivors'] else ''}")
     print(f"→ out/combo_spy.json")
 
