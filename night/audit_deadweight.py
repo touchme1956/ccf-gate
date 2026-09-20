@@ -111,6 +111,11 @@ RANGES = {
     "expiry": ["no", "yes"], "gmt": ["down", "up"], "roict": ["down", "up"], "sht": ["down", "up"],
     "acq5": ["yes", "no"], "fin": ["no", "yes"], "eq": ["pos", "neg"], "acc": ["usgaap", "jgaap"],
     "founder": ["no", "yes"], "rak": ["no", "yes"], "indG": ["below", "above"], "idx": ["no", "yes"],
+    # v9.9.171(2026-09-19): **発見度(negS)の入力3本がこの表から抜けていた**。negS は evalScore を
+    #   ±1.5/−1.0 **直接**動かす唯一の修飾子なのに、idx だけが載っていて「0.09pt＝ほぼ動かない」に見えていた。
+    #   ＝Ωを直接動かす経路が「無駄か否か」の検査を一度も受けていなかった。詳細は night/audit_neglect.py。
+    #   ⚠ negS は v9.9.171 でΩから外したので、以後この3本は0と出るのが正常（表示専用になった証拠）。
+    "analysts": [3, 50], "instOwn": [20, 90], "mcap": [1, 200],
 }
 
 

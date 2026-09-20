@@ -1407,7 +1407,7 @@ html[data-theme="soft"] .chapnav{background:rgba(20,23,29,.94);}
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.174</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.175</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</div></details></div>
   </div>
@@ -2335,7 +2335,14 @@ function compute(){
     //   founder='no'明示なら memo記載があっても加点しない(誤マッチ防止)
     const founderV=($('founder')&&$('founder').value)?$('founder').value:'';
     const memoV=($('memo')&&$('memo').value)?$('memo').value:'';
-    if(founderV==='yes'||(founderV!=='no'&&/創業者|オーナー|founder|創業家/.test(memoV)))sc+=8;
+    // v9.9.175: **memo の文字列マッチのフォールバックを外した**（ユーザー明示指示「必要ないスコアを外して」）。
+    //   旧: `founderV!=='no' && /創業者|オーナー|founder|創業家/.test(memoV)` でも +8。
+    //   ＝**memo に「オーナー」の語があるだけで根拠なく +8 が入る経路**（memoは自由記述で審査の欄ではない）。
+    //   実測（night/shadow_drop_scores.py の B2）: この枝だけで加点されている社は **0社**＝今日は誰も動かない
+    //   純粋なラチェット。構造化フィールド founder(yes/no) を唯一の判定にする。
+    //   ⚠ founder='yes' の +8 そのものは**残す**（Fahlenbrach 2009 JFQA に基づく規約で、
+    //     実効は最大0.2pt と小さいが「効果が小さい」と「働いていない」は別・下の記録を見よ）。
+    if(founderV==='yes')sc+=8; void(memoV);
     // ⑥財務要塞(ネットキャッシュ=資本配分の自由度): nde<-0.5=+4
     if(n('nde')<-0.5)sc+=4;
     return Math.max(30,Math.min(100,sc));
@@ -2497,9 +2504,39 @@ function compute(){
     if(mcapV<2) negS+=2;        // 超小型: ほぼ確実に未カバー → 発見前
     else if(mcapV>100) negS-=1; // 超大型: ほぼ確実に発見済
   }
-  let negApplied=0;
-  if(negS>=2){negApplied=1.5;evalScore=Math.min(100,evalScore+1.5);}
-  else if(negS<=-2){negApplied=-1.0;evalScore=Math.max(0,evalScore-1.0);}
+  // ===== v9.9.175（2026-09-19 ユーザー明示指示「Ωの検証もして必要ないスコアを外して」）=====
+  //   **発見度(negS)をΩから外した。計算と表示は残す（情報は消さない・数だけ消す＝v9.9.76の作法）。**
+  //   外した理由は「効果が小さいから」ではなく **向きが逆で、しかも未測定が有利になっていたから**:
+  //   ① `night/audit_neglect.py` の実測——negApplied≠0 の50社のうち **29社(58%)が「時価総額の代理」**
+  //      ＝`anl<=0 && io<=0 && mcap>0` の枝で、**アナリスト数も機関保有も測っていないから加点**されていた。
+  //      しかも **代理経路は加点29社・減点0社＝加点しかしていない**。
+  //      ＝この台帳が erosion/disrupt/acq5/sht/堀の空欄 で繰り返し潰してきた
+  //        **「測らないほうが有利」**の型が、Ωに直接足し引きする唯一の修飾子に残っていた。
+  //   ② 向きが歴史と逆——negSが+2を与える帯(<$2B)と−1を与える帯(>$100B)のその後（repoの歴史在庫）:
+  //        2018全社   <$2B 中央 3.2%・恒久毀損0.14 ／ >$100B 中央15.1%・恒久毀損0.00
+  //        2018質実証 <$2B 中央 4.9%・恒久毀損0.05 ／ 据置 8.9%・0.02  ← **質で絞っても向きは同じ**
+  //        2013全社   <$2B 中央 5.8%・恒久毀損0.09 ／ >$100B 中央15.7%・恒久毀損0.00（別ビンテージで再現）
+  //      ＝**よく壊れよく負けた帯に加点し、よく生き残りよく勝った帯から減点していた。**
+  //      既記録とも整合する——retro_business_vs_price で株価に対して唯一残った指標は**売上規模(大型側)**で、
+  //      retro_capture の「売上50億$+ → 生存 +20.8pt」＝規模が当てているのは『消えないこと』。
+  //   ③ `idx='no' → +1` は、すぐ上のコメント自身が「指数採用効果は Greenwood-Sammon 2025 で
+  //      7.4%→0.3% に**消滅**」と書いている効果を加点に使っていた。
+  //   ④ `mcap` 欄は**社ごとに日付が違い、JP株は十億円・米国株は十億ドルで単位が混在**（todo `mcap_field_stale`）。
+  //      刻み(<2 / >100)は十億ドル前提なので、JP株が代理経路に乗ると符号が逆に出る（今日は dormant だが latent）。
+  //   ⚠ **なぜ検査から漏れていたか**: `night/audit_deadweight.py --swing` の RANGES に
+  //      **analysts / instOwn / mcap が入っていない**ので、この経路は「無駄か否か」の表に一度も載らなかった
+  //      （idx だけが入っていて「0.09pt＝ほぼ動かない」に見えていた）。同日 RANGES へ3本を追加した。
+  //   実測（night/shadow_drop_scores.py）: Ωが動くのは42社・最大1.5pt。
+  //      **投下可は10社のまま、IRMD が落ちて BR が入る**（IRMD の+1.5は
+  //      「アナリスト数を測っていないので時価総額で代理した」加点で、実データではない）。Ω75+24社・Ω72+34社は不変。
+  //   negS の値そのものは下で表示に残す（採点には不使用）。入力欄(analysts/instOwn/mcap/idx)も残す。
+  const negApplied=0; // ★Ωには足し引きしない（v9.9.175）
+  if(negS!==0){
+    const _via=(anlV<=0&&ioV<=0&&mcapV>0);
+    psig.innerHTML+=`<div class="flag f-warn"><i>i</i><div><b>発見度 negS ${negS>0?'+':''}${negS}（表示のみ・Ωには不使用・v9.9.175）：</b>`
+      +`${_via?'<u>アナリスト数も機関保有も未取得のため時価総額で代理した値</u>＝測っていないことの言い換えで、実データではない。':'アナリスト数・機関保有・指数採用から算出。'}`
+      +` 歴史の実測では<u>この向きは報われていない</u>（negSが加点する&lt;$2B帯は2018年ビンテージで中央3.2%・恒久毀損0.14、減点する&gt;$100B帯は中央15.1%・恒久毀損0.00。質実証プール・2013年ビンテージでも同じ向き）→ <code>night/audit_neglect.py</code></div></div>`;
+  }
   const geopolLevel=$('geopol')?n('geopol'):0; // null安全(入力欄が無い環境でも動作)
   let geopolPen=0;
   if(geopolLevel>=1){
