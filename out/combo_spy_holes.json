@@ -1,0 +1,517 @@
+{
+ "generated": "2026-09-19",
+ "role": "★探索空間の穴の面（combo_spy の第三者検証）。判定ではない。事前登録は書き換えていない。門にも触らない（絶対のルール1）",
+ "tools": [
+  "night/combo_spy_shapes.py",
+  "night/combo_spy_freeze.py",
+  "night/combo_spy_within.py",
+  "night/combo_spy_price.py"
+ ],
+ "reproduced_baseline": {
+  "pool_n": 941,
+  "spy_cagr": 0.1419,
+  "equal_weight_all": 0.1415,
+  "n_atoms": 50,
+  "n_candidates": 2446,
+  "best": 0.172,
+  "note": "combo_spy.json と完全一致"
+ },
+ "selftest": {
+  "family_null_w_matches_combo_spy": true,
+  "NOT_taken_within_have": true,
+  "note": "重み付きの帰無は一様重みで combo_spy.family_null と一致。NOT は have の中で取り、測っていない社を「満たさない」にしていない"
+ },
+ "hole_found": {
+  "forms_searched": {
+   "F0_AND3_baseline": {
+    "n_candidates": 2446,
+    "best_excess": 0.172,
+    "family_p95": 0.1899,
+    "n_beating_family": 0
+   },
+   "F1_OR_NOT_2way": {
+    "n_candidates": 7350,
+    "best_excess": 0.1773,
+    "family_p95": 0.1838,
+    "n_beating_family": 0
+   },
+   "F2_AND3_signed": {
+    "n_candidates": 53845,
+    "best_excess": 0.2059,
+    "family_p95": 0.1942,
+    "n_beating_family": 8
+   },
+   "F3_topN_composite": {
+    "n_candidates": 35698,
+    "best_excess": 0.1962,
+    "family_p95": 0.2009,
+    "n_beating_family": 0
+   },
+   "F4_sector_neutral": {
+    "n_candidates": 1944,
+    "best_excess": 0.0891,
+    "family_p95": 0.1231,
+    "n_beating_family": 0
+   },
+   "F5_weighted": {
+    "n_candidates": 180,
+    "best_excess": 0.1146,
+    "family_p95": 0.1522,
+    "n_beating_family": 0
+   },
+   "F6_AND3_plus_new": {
+    "n_candidates": 19549,
+    "best_excess": 0.1925,
+    "family_p95": 0.1964,
+    "n_beating_family": 0
+   },
+   "F3b_topN_all_feats": {
+    "n_candidates": 15591,
+    "best_excess": 0.1962,
+    "family_p95": 0.1991,
+    "n_beating_family": 0
+   },
+   "F7_ALL_TOGETHER": {
+    "n_candidates": 125336,
+    "best_excess": 0.2059,
+    "family_p95": 0.2023,
+    "n_beating_family": 3
+   }
+  },
+  "headline": "NOT を足した F2（53,845本）で 8本、全形を一つの家族にした F7（125,336本）で 3本が、それぞれ自分の家族の帰無95%点を超えた",
+  "prereg_criteria_applied": {
+   "passed_all_4": [
+    "rnd_r↑1/4 ∧ ¬(accr↓1/4) ∧ 半導体連鎖",
+    "¬(gm↓1/4) ∧ ¬(accr↓1/4) ∧ 半導体連鎖",
+    "¬(opm↓1/4) ∧ rnd_r↑1/4 ∧ 半導体連鎖",
+    "¬(cash_r↑1/4) ∧ ¬(aturn↓1/4) ∧ 半導体連鎖"
+   ],
+   "n": 4
+  }
+ },
+ "killer": {
+  "note": "★層の効果と層の中の選別を分ける。母集団941でシャッフルする帰無はこれができない",
+  "universe": "半導体連鎖",
+  "universe_n": 59,
+  "universe_excess": 0.143,
+  "semi_family": {
+   "n_candidates": 319,
+   "best_excess": 0.2059,
+   "best_rule": "rnd_r↑1/4 ∧ ¬(accr↓1/4) ∧ 半導体連鎖",
+   "best_n": 20,
+   "family_p95_within_semi": 0.2193,
+   "family_med_within_semi": 0.2101,
+   "family_p95_whole_pool": 0.1694,
+   "n_beating_within": 0,
+   "n_beating_pool": 104,
+   "top8": [
+    {
+     "rule": "rnd_r↑1/4 ∧ ¬(accr↓1/4) ∧ 半導体連鎖",
+     "n": 20,
+     "excess": 0.2059
+    },
+    {
+     "rule": "¬(gm↓1/4) ∧ ¬(accr↓1/4) ∧ 半導体連鎖",
+     "n": 20,
+     "excess": 0.2053
+    },
+    {
+     "rule": "¬(cash_r↑1/4) ∧ rnd_r↑1/4 ∧ 半導体連鎖",
+     "n": 22,
+     "excess": 0.2033
+    },
+    {
+     "rule": "¬(cash_r↑1/4) ∧ ¬(sga_r↑1/4) ∧ 半導体連鎖",
+     "n": 23,
+     "excess": 0.2011
+    },
+    {
+     "rule": "¬(rev↓1/4) ∧ ¬(cash_r↑1/4) ∧ 半導体連鎖",
+     "n": 24,
+     "excess": 0.1981
+    },
+    {
+     "rule": "¬(cash_r↑1/4) ∧ ¬(gw_r↓1/4) ∧ 半導体連鎖",
+     "n": 22,
+     "excess": 0.1975
+    },
+    {
+     "rule": "¬(opm↓1/4) ∧ rnd_r↑1/4 ∧ 半導体連鎖",
+     "n": 21,
+     "excess": 0.1973
+    },
+    {
+     "rule": "¬(cash_r↑1/4) ∧ ¬(aturn↓1/4) ∧ 半導体連鎖",
+     "n": 25,
+     "excess": 0.197
+    }
+   ]
+  },
+  "nonsemi_family": {
+   "n_candidates": 3135,
+   "universe_n": 882,
+   "universe_excess": -0.0249,
+   "best_excess": 0.0739,
+   "best_rule": "moatW>=70 ∧ gm↓1/4 ∧ 非半導体",
+   "best_n": 21,
+   "family_p95_within": 0.0798,
+   "family_med_within": 0.057,
+   "n_beating_within": 0,
+   "top8": [
+    {
+     "rule": "moatW>=70 ∧ gm↓1/4 ∧ 非半導体",
+     "n": 21,
+     "excess": 0.0739
+    },
+    {
+     "rule": "¬(rep>=80) ∧ gm↓1/4 ∧ 非半導体",
+     "n": 22,
+     "excess": 0.066
+    },
+    {
+     "rule": "¬(rep>=80) ∧ opm↓1/4 ∧ 非半導体",
+     "n": 22,
+     "excess": 0.0631
+    },
+    {
+     "rule": "irr>=70 ∧ ¬(sga_r↓1/4) ∧ 非半導体",
+     "n": 20,
+     "excess": 0.0569
+    },
+    {
+     "rule": "¬(moatW>=85) ∧ gm↓1/4 ∧ 非半導体",
+     "n": 27,
+     "excess": 0.0564
+    },
+    {
+     "rule": "¬(irr>=70) ∧ gm↓1/4 ∧ 非半導体",
+     "n": 32,
+     "excess": 0.0503
+    },
+    {
+     "rule": "¬(moat5>=4) ∧ gm↓1/4 ∧ 非半導体",
+     "n": 31,
+     "excess": 0.0486
+    },
+    {
+     "rule": "¬(rep>=60) ∧ aturn↑1/4 ∧ 非半導体",
+     "n": 26,
+     "excess": 0.047
+    }
+   ]
+  }
+ },
+ "mechanism": {
+  "r_excess_vs_top1_share": 0.513,
+  "cands_containing_NVDA": 17,
+  "cands_total": 2446,
+  "median_excess_with_NVDA_pt": 9.4,
+  "median_excess_without_NVDA_pt": -2.4,
+  "max_excess_without_NVDA_pt": 12.4,
+  "top30_containing_NVDA": 11,
+  "top100_containing_NVDA": 15,
+  "drop_top1_from_top10": [
+   [
+    17.2,
+    -0.9,
+    "NVDA"
+   ],
+   [
+    17.2,
+    7.0,
+    "NVDA"
+   ],
+   [
+    16.8,
+    -0.6,
+    "NVDA"
+   ],
+   [
+    16.4,
+    11.1,
+    "NVDA"
+   ],
+   [
+    16.2,
+    -1.9,
+    "NVDA"
+   ],
+   [
+    14.3,
+    -2.8,
+    "NVDA"
+   ],
+   [
+    14.3,
+    9.7,
+    "NVDA"
+   ],
+   [
+    12.4,
+    11.3,
+    "LRCX"
+   ],
+   [
+    12.0,
+    9.1,
+    "AMD"
+   ],
+   [
+    11.2,
+    8.5,
+    "AMD"
+   ]
+  ]
+ },
+ "price_structure": {
+  "by_min_n": [
+   {
+    "min_n": 20,
+    "n_cands": 2446,
+    "best": 0.172,
+    "best_rule": "rnd_r↑1/4 ∧ intcov↑1/4 ∧ streak_rev↑1/4",
+    "best_n": 20,
+    "p95": 0.1896,
+    "med": 0.1731,
+    "beats": false,
+    "n_beats": 0
+   },
+   {
+    "min_n": 25,
+    "n_cands": 1860,
+    "best": 0.1719,
+    "best_rule": "rnd_r↑1/4 ∧ opmD5↑1/4",
+    "best_n": 26,
+    "p95": 0.1722,
+    "med": 0.1569,
+    "beats": false,
+    "n_beats": 0
+   },
+   {
+    "min_n": 30,
+    "n_cands": 1422,
+    "best": 0.1641,
+    "best_rule": "rnd_r↑1/4 ∧ 半導体連鎖",
+    "best_n": 43,
+    "p95": 0.1574,
+    "med": 0.1425,
+    "beats": true,
+    "n_beats": 1
+   },
+   {
+    "min_n": 40,
+    "n_cands": 914,
+    "best": 0.1641,
+    "best_rule": "rnd_r↑1/4 ∧ 半導体連鎖",
+    "best_n": 43,
+    "p95": 0.1372,
+    "med": 0.1215,
+    "beats": true,
+    "n_beats": 2
+   },
+   {
+    "min_n": 50,
+    "n_cands": 640,
+    "best": 0.143,
+    "best_rule": "半導体連鎖",
+    "best_n": 59,
+    "p95": 0.1193,
+    "med": 0.1066,
+    "beats": true,
+    "n_beats": 1
+   },
+   {
+    "min_n": 75,
+    "n_cands": 275,
+    "best": 0.075,
+    "best_rule": "rnd_r↑1/4 ∧ streak_rev↑1/4",
+    "best_n": 79,
+    "p95": 0.094,
+    "med": 0.0795,
+    "beats": false,
+    "n_beats": 0
+   },
+   {
+    "min_n": 100,
+    "n_cands": 149,
+    "best": 0.0624,
+    "best_rule": "opmD5↑1/4",
+    "best_n": 113,
+    "p95": 0.0759,
+    "med": 0.063,
+    "beats": false,
+    "n_beats": 0
+   },
+   {
+    "min_n": 150,
+    "n_cands": 68,
+    "best": 0.0497,
+    "best_rule": "rnd_r↑1/4",
+    "best_n": 235,
+    "p95": 0.0558,
+    "med": 0.0426,
+    "beats": false,
+    "n_beats": 0
+   }
+  ],
+  "drop_top_winners": [
+   {
+    "dropped": 0,
+    "names": [],
+    "n_cands": 2446,
+    "p95": 0.1896,
+    "best": 0.172,
+    "n_beats": 0
+   },
+   {
+    "dropped": 1,
+    "names": [
+     "NVDA"
+    ],
+    "n_cands": 2445,
+    "p95": 0.1081,
+    "best": 0.1242,
+    "n_beats": 4
+   },
+   {
+    "dropped": 3,
+    "names": [
+     "NVDA",
+     "AMD",
+     "FIX"
+    ],
+    "n_cands": 2444,
+    "p95": 0.0915,
+    "best": 0.1242,
+    "n_beats": 5
+   },
+   {
+    "dropped": 5,
+    "names": [
+     "NVDA",
+     "AMD",
+     "FIX",
+     "IESC",
+     "LRCX"
+    ],
+    "n_cands": 2441,
+    "p95": 0.0748,
+    "best": 0.1134,
+    "n_beats": 10
+   },
+   {
+    "dropped": 10,
+    "names": [
+     "NVDA",
+     "AMD",
+     "FIX",
+     "IESC",
+     "LRCX",
+     "AXON",
+     "MU",
+     "CAMT",
+     "STRL",
+     "MPWR"
+    ],
+    "n_cands": 2422,
+    "p95": 0.0505,
+    "best": 0.0689,
+    "n_beats": 4
+   }
+  ],
+  "reproduces_other_implementation": "NVDA 1社を抜くと家族95%点 +19.0→+10.8pt（別実装の +19.0→+10.9 と一致）"
+ },
+ "reachability_gap": {
+  "note": "★事前登録の到達可能性の確認は「SPY を超える規則が実在するか」を見ている。基準1が要求するのは「家族の帰無95%点(+18.8pt)を超えること」で、両者は別",
+  "god_rule_topN_excess_pt": {
+   "20": 26.5,
+   "30": 23.4,
+   "50": 19.8,
+   "75": 17.0,
+   "100": 15.1,
+   "150": 12.4,
+   "188": 11.0,
+   "250": 9.2,
+   "400": 6.2,
+   "941": -0.0
+  },
+  "crossover": "N≈50 より大きい群では、**前方リターンを完全に知っていても**基準1を通らない",
+  "prereg_named_candidates": {
+   "半導体連鎖(n=59)": 14.3,
+   "irr>=85(n=10)": 7.0
+  },
+  "consequence": "基準1は事実上「n≲50 の規則」にしか到達できない＝値札が最も小群の宝くじに支配される帯"
+ },
+ "refresh_form": {
+  "note": "★combo_spy は「2013年の順位で買って13年持つ」形しか探していない。年次で貼り替える形を足した",
+  "n_candidates": 2592,
+  "family_p95": 0.1041,
+  "n_beating": 1,
+  "top": [
+   {
+    "rule": "年次貼替 上位20: rnd_r + −sga_r",
+    "N": 20,
+    "excess": 0.1431,
+    "legs": [
+     20,
+     20,
+     20,
+     20
+    ]
+   },
+   {
+    "rule": "年次貼替 上位30: rnd_r + −sga_r",
+    "N": 30,
+    "excess": 0.1022,
+    "legs": [
+     30,
+     30,
+     30,
+     30
+    ]
+   },
+   {
+    "rule": "年次貼替 上位20: aturn + netiss_r",
+    "N": 20,
+    "excess": 0.0796,
+    "legs": [
+     20,
+     20,
+     20,
+     20
+    ]
+   }
+  ],
+  "survivor_by_leg": {
+   "2013-2016": 4.5,
+   "2016-2017": 34.6,
+   "2017-2018": 1.3,
+   "2018-2026": 17.6,
+   "semi_share_by_leg": [
+    45,
+    45,
+    50,
+    60
+   ]
+  },
+  "survivor_excess_pt": 14.3,
+  "survivor_excess_without_semis_pt": 1.5,
+  "within_semi_family": {
+   "n_candidates": 1152,
+   "best_pt": 20.9,
+   "p95_pt": 19.6,
+   "med_pt": 17.1,
+   "n_beating": 3,
+   "note": "★層の中で家族の値札を払うと、3/1152 が +1.3pt だけ超える。家族の値札を払わないと p=0.002 に見える"
+  }
+ },
+ "limits": [
+  "すべて 2013-07 起点・2026-08 終点の in-sample。真の out-of-sample はゼロ",
+  "生存バイアス（今日ティッカーが引ける941社）。左尾は 2.00〜25.68% の幅（既記録）",
+  "半導体連鎖の線は判断（retro_sic の sicDesc/sic による）。引き直せば数字は動く",
+  "層の中の検定は**私が探索で選んだ規則を後から当てている**ものを含む。家族の値札を払った版だけを結論に使った",
+  "年次貼替の対照で被覆の線を 200→30 へ下げた（半導体が49社しかないため）。この対照だけの変更と明記",
+  "hist_val の mdd / tr_cagr / ret_* は**前方**の量なので predictor に入れていない（hist_val_join.py:54 の JOINED）",
+  "accel(196) / pe_pct(140) / ps_pct(165) / pfcf_pct(127) / adj_pe_pct(140) は被覆<300 で不採用＝「効かない」ではなく「測っていない」"
+ ]
+}
