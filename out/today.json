@@ -1,36 +1,35 @@
 {
- "generated": "2026-09-19",
+ "generated": "2026-09-20",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "MSFT",
-  "IDXX",
   "V",
-  "ASML",
   "CW",
   "LRCX",
-  "HWM",
-  "IRMD",
-  "MCO",
   "RBC"
  ],
  "next": [
+  "IDXX",
+  "ASML",
+  "HWM",
+  "MCO",
   "BR",
   "RELX"
  ],
  "counts": {
   "now": 4,
-  "today": 2,
+  "today": 3,
   "month": 23,
   "waiting": 94,
   "blind": 0,
-  "src": 19
+  "src": 20
  },
  "now": [
   {
    "k": "ops:reviewrun",
    "level": "now",
    "title": "止まっている疑い: 日次 門2審査(Routine)",
-   "why": "最終 2026-08-16（34日前・期限4日）",
+   "why": "最終 2026-08-16（35日前・期限4日）",
    "how": "Routine『【門】日次 門2審査（自動・5社）』平日05:00 JST（claude-opus-5）／痕跡は python3 night/log_review_run.py --outcome … --push",
    "src": "回転盤"
   },
@@ -53,7 +52,7 @@
   {
    "k": "review",
    "level": "now",
-   "title": "門2審査の走行ログが 34日前で止まっている",
+   "title": "門2審査の走行ログが 35日前で止まっている",
    "why": "最終 2026-08-16",
    "how": "Routine の発火を確認 / night/log_review_run.py --push",
    "src": "審査ログ"
@@ -63,10 +62,18 @@
   {
    "k": "kes:MCO",
    "level": "today",
-   "title": "四半期点検で要審査: MCO 🟢投下可",
+   "title": "四半期点検で要審査: MCO 🔵次点",
    "why": "要審査: 警報:減損",
    "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
+  },
+  {
+   "k": "earn:CTAS",
+   "level": "today",
+   "title": "決算: CTAS（2026-09-23）",
+   "why": "3日後",
+   "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
+   "src": "決算カレンダー"
   },
   {
    "k": "exc:TDG",
@@ -985,14 +992,6 @@
    "tickers": []
   },
   {
-   "k": "todo:irr70_cybozu_deck_cache",
-   "kind": "宿題",
-   "title": "4776 サイボウズの irr=70 は説明会資料が原本——逐語照合のキャッシュに入っていないので検証できない",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
    "k": "todo:src_cache_ephemeral",
    "kind": "宿題",
    "title": "逐語照合のキャッシュ out/_src_cache/ は .gitignore＝この容器の中にしか無い",
@@ -1025,12 +1024,21 @@
    "tickers": []
   },
   {
+   "k": "todo:gate_exception_unexecuted",
+   "kind": "宿題",
+   "title": "【休眠・引き金つき】門外例外の「買うと決めた」と「買った」の乖離を、機械が検出できない",
+   "due": null,
+   "owner": "道具",
+   "tickers": []
+  },
+  {
    "k": "todo:irr85_verify_note_truncated",
    "kind": "宿題",
-   "title": "irr=85 の検証記録(_meta.mech.verify_note)が 3006字で打ち切られ、反証の一覧が8社で読めない",
+   "title": "irr=85 の検証記録(_meta.mech.verify_note)が 3006字で打ち切られ、反証の一覧が9社で読めない——中身が丸ごと不明なのは KRMN / WST の2社だけ（どちらも⛔）",
    "due": null,
    "owner": "審査",
    "tickers": [
+    "ASML",
     "CW",
     "LRCX",
     "RBC",
