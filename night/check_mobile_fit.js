@@ -116,7 +116,15 @@ async function tabsFromDom(p) {
     //     （ユーザー報告「買付順位などが消えてる」）。`.pgnav` は自分で overflow-x:auto を
     //     持つので**文書幅は広がらない**——上の検査は構造的に素通りする。
     //   「押せる場所にあるか」は幅とは別の問いなので、別に数える。
-    console.log('\n■ タブが全部見えているか（ナビの折り返し）');
+    //   ★v9.9.171: タブは既定で畳まれ、7本は「⋯ ほか」の中に入った（ユーザー指示「下のタブが多すぎる」）。
+    //     だから問いは「**見えるか**」から「**たどり着けるか**」へ変わる——
+    //     `display:none` のボタンを画面外と数えると、意図した折り畳みが毎回 ✗ になり
+    //     （＝鳴りすぎる警報は鳴らないのと同じ）本物の事故が埋もれる。
+    //     ⚠ だが甘くはしない。**二段で測る**:
+    //       ① 畳んだ状態: 見えているボタンが全部ナビの中にあること ＋ **⋯ 自身が見えること**
+    //       ② ⋯ を押した状態: **12本すべてが見えること**（＝畳んだ先が本当に開く）
+    //     ①だけだと「⋯ を押しても出てこない」を見逃す＝タブが消えたのと同じになる。
+    console.log('\n■ タブへたどり着けるか（畳んだ状態＋⋯を押した状態の二段・v9.9.171）');
     for (const W2 of [360, 390, 430, 768, 980, 1280]) {
       const p2 = await browser.newPage({ viewport: { width: W2, height: 760 } });
       await p2.goto(`http://localhost:${PORT}/index.html`, { waitUntil: "domcontentloaded" });
@@ -125,11 +133,18 @@ async function tabsFromDom(p) {
         const n = document.querySelector('.pgnav');
         if (!n) return { no: true };
         const nr = n.getBoundingClientRect(), hid = [];
-        [...n.querySelectorAll('button')].forEach(b => {
+        const vis = b => getComputedStyle(b).display !== 'none';
+        [...n.querySelectorAll('button')].filter(vis).forEach(b => {
           const q = b.getBoundingClientRect();
           if (q.left < nr.left - 1 || q.right > nr.right + 1 || q.top < nr.top - 1 || q.bottom > nr.bottom + 1)
             hid.push(b.textContent.trim());
         });
+        // ⋯ が見えていなければ、畳まれた7本へ行く道が無い＝タブが消えたのと同じ
+        const more = document.getElementById('navMore');
+        const folded = n.classList.contains('folded');
+        const noWay = folded && (!more || !vis(more)
+                      || more.getBoundingClientRect().right > nr.right + 1
+                      || more.getBoundingClientRect().bottom > nr.bottom + 1);
         // ★浮いているボタンがナビに重なっていないか。ナビの高さは折り返しで変わるので、
         //   固定値で逃がしていると必ずどこかの幅で重なる（実測: 74px 固定のまま2段=118pxになった）
         const t = document.getElementById('themeToggle');
@@ -139,19 +154,49 @@ async function tabsFromDom(p) {
           if (!(a.right < nr.left || a.left > nr.right || a.bottom < nr.top || a.top > nr.bottom))
             ov = 'themeToggle';
         }
-        return { n: n.querySelectorAll('button').length, hid, h: Math.round(nr.height), ov,
+        return { n: n.querySelectorAll('button').length,
+                 nvis: [...n.querySelectorAll('button')].filter(vis).length,
+                 hid, h: Math.round(nr.height), ov, folded, noWay,
                  over: n.scrollWidth - n.clientWidth };
       });
+      // ② ⋯ を押して、畳まれた分が本当に出てくるか
+      let op = null;
+      if (!r.no && r.folded) {
+        await p2.evaluate(() => { const m = document.getElementById('navMore'); m && m.click(); });
+        await p2.waitForTimeout(350);
+        op = await p2.evaluate(() => {
+          const n = document.querySelector('.pgnav'), nr = n.getBoundingClientRect(), hid = [];
+          const bs = [...n.querySelectorAll('button')];
+          const vis = b => getComputedStyle(b).display !== 'none';
+          bs.filter(vis).forEach(b => {
+            const q = b.getBoundingClientRect();
+            if (q.left < nr.left - 1 || q.right > nr.right + 1 || q.top < nr.top - 1 || q.bottom > nr.bottom + 1)
+              hid.push(b.textContent.trim());
+          });
+          const shown = bs.filter(b => /^tab\d+$/.test(b.id)).filter(vis).length;
+          const total = bs.filter(b => /^tab\d+$/.test(b.id)).length;
+          return { shown, total, hid, h: Math.round(nr.height) };
+        });
+      }
       await p2.close();
       if (r.no) { bad++; console.log(`  ✗ ${W2}px: .pgnav が無い`); }
-      else if (r.hid.length) {
+      else if (r.noWay) {
+        bad++;
+        console.log(`  ✗ ${W2}px: **「⋯ ほか」が見えない**——畳まれたタブへ行く道が無い（消えたのと同じ）`);
+      } else if (r.hid.length) {
         bad++;
         console.log(`  ✗ ${W2}px: **${r.hid.length}本が画面外**（${r.hid.join(' | ')}）`
                   + ` ——横スクロールすれば届くが「消えた」と読まれる`);
       } else if (r.ov) {
         bad++;
         console.log(`  ✗ ${W2}px: **${r.ov} がナビに重なっている**（押せないタブができる）`);
-      } else console.log(`  ✓ ${W2}px: ${r.n}本すべて見える（ナビの高さ ${r.h}px）・浮きボタンの重なりなし`);
+      } else if (op && (op.shown !== op.total || op.hid.length)) {
+        bad++;
+        console.log(`  ✗ ${W2}px: **⋯ を押しても全部出ない**（出た ${op.shown}/${op.total}本`
+                  + `${op.hid.length ? ` ・画面外 ${op.hid.join(' | ')}` : ''}）`);
+      } else console.log(`  ✓ ${W2}px: 畳 ${r.nvis}本（高さ ${r.h}px）`
+                  + (op ? ` → ⋯ を押すと ${op.shown}/${op.total}本すべて見える（高さ ${op.h}px）` : '')
+                  + `・浮きボタンの重なりなし`);
     }
   } finally {
     await browser.close();

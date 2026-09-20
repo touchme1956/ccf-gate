@@ -110,7 +110,11 @@ def read_code_facts(h):
     m = re.search(r'const evLimit\s*=\s*\(roicV>=30\?(\d+):roicV<15\?(\d+):(\d+)\)', h)
     f['ev_limit'] = (int(m.group(1)), int(m.group(2)), int(m.group(3))) if m else None
 
-    m = re.search(r"ccfAllocTop\(cands,\s*maxN\)\{\s*maxN\s*=\s*maxN\s*\|\|\s*(\d+)", h)
+    # v9.9.171: 席の数は **CCF_SEATS 一箇所**へ移した（呼び出し側は引数を省く）。
+    #   ⚠ 旧実装は `maxN=maxN||10` の即値を読んでいたので、定数化した瞬間に None＝
+    #   **この検査が黙って止まる**（fail-open）。定数を第一に読み、旧形も後方互換で見る。
+    m = re.search(r"const\s+CCF_SEATS\s*=\s*(\d+)", h) \
+        or re.search(r"ccfAllocTop\(cands,\s*maxN\)\{\s*maxN\s*=\s*maxN\s*\|\|\s*(\d+)", h)
     f['alloc_n'] = int(m.group(1)) if m else None
 
     # 表示バージョン（<h1>のバッジ）と、ファイル内に現れる最大バージョン

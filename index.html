@@ -240,6 +240,11 @@ footer{text-align:center;padding:42px 0 80px;}
 .pgnav button{background:transparent;border:1px solid transparent;color:var(--muted);border-radius:999px;padding:10px 15px;min-height:40px;font-size:13px;font-family:inherit;cursor:pointer;letter-spacing:.03em;white-space:nowrap;flex:0 0 auto;transition:color .18s ease,background .18s ease,border-color .18s ease;}
 .pgnav button:hover{color:var(--gold-bright);border-color:var(--gold-line);background:rgba(201,166,74,.07);}
 .pgnav button.on{background:linear-gradient(180deg,rgba(201,166,74,.26),rgba(201,166,74,.10));border-color:var(--gold-line);color:var(--gold-bright);font-weight:600;box-shadow:inset 0 1px 0 rgba(236,212,148,.22),0 2px 12px rgba(201,166,74,.16);}
+/* v9.9.171: 畳んでいるあいだ「⋯ ほか」の中のタブを隠す。**消していない**——#navMore で全部出る。
+   ⚠ display:none なので `element.click()` は従来どおり効く（検査器 check_mobile_fit はそこを通る）。 */
+.pgnav.folded button[data-more]{display:none;}
+#navMore{color:var(--dim);border-color:rgba(255,255,255,.10);}
+#navMore:hover{color:var(--gold-bright);}
 .pg{display:none;}.pg.on{display:block;}
 .pg3-head{max-width:var(--maxw);margin:36px auto 0;padding:0 24px;}
 
@@ -840,19 +845,26 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <script src="state.js"></script><script src="icon.js"></script></head><body>
 <div class="tategaki" aria-hidden="true">壊れない複利の門</div>
 <div class="tategaki tr" aria-hidden="true">Compounding, Unbroken — CCF Ω</div>
-<nav class="pgnav">
+<!-- タブの折り畳み（v9.9.171・2026-09-20 ユーザー指示「下のタブが多すぎる」）:
+     **毎日押す5本だけを出し、残り7本は「⋯ ほか」の中**へ。⚠**消していない**——一押しで全部出る。
+     実測(2026-09-20): 12本だと携帯(360/390/430px)で**下のバーが2段・102px**を占めていた。
+     ★data-more が「⋯ の中」の印。data-short は**⋯ のラベルに出す短い章名**——
+       畳んでいるあいだに⋯の中の章を開いていると ⋯ 自身がその名前になり on が付く。
+       でないと「今どこに居るか」が画面から消える（黙って消さない=v9.9.52の裏返し）。 -->
+<nav class="pgnav folded">
  <button id="tab10" onclick="showPage(10)" style="color:var(--gold-bright)">📋 今日</button>
  <button id="tab6" onclick="showPage(6)" style="color:var(--gold-bright)">📊 盤</button>
-<button id="tab12" onclick="showPage(12)">📈 成績</button>
-<button id="tab9" onclick="showPage(9)">⚙ 自動化</button>
-<button id="tab11" onclick="showPage(11)">🩺 点検</button>
-<button id="tab1" onclick="showPage(1)"><span class="navnum">Ⅰ </span>解説</button>
-<button id="tab8" onclick="showPage(8)"><span class="navnum">Ⅱ </span><span class="navtail">実行</span>手順</button>
-<button id="tab2" onclick="showPage(2)"><span class="navnum">Ⅲ </span>採点<span class="navtail">機</span></button>
-<button id="tab3" onclick="showPage(3)"><span class="navnum">Ⅳ </span>台帳<span class="navsub">（保存記録）</span></button>
-<button id="tab4" onclick="showPage(4)"><span class="navnum">Ⅴ </span><span class="navtail">検証</span>履歴</button>
 <button id="tab5" onclick="showPage(5)"><span class="navnum">Ⅵ </span>買付<span class="navtail">順位</span></button>
 <button id="tab7" onclick="showPage(7)" style="color:var(--gold-bright)"><span class="navnum">Ⅶ </span>保有</button>
+<button id="tab12" onclick="showPage(12)">📈 成績</button>
+<button id="navMore" onclick="ccfNavMore()" aria-expanded="false" title="残りのタブを出す／畳む（消していない・一押しで全部出る）">⋯ ほか</button>
+<button id="tab11" onclick="showPage(11)" data-more data-short="点検">🩺 点検</button>
+<button id="tab9" onclick="showPage(9)" data-more data-short="自動化">⚙ 自動化</button>
+<button id="tab2" onclick="showPage(2)" data-more data-short="採点機"><span class="navnum">Ⅲ </span>採点<span class="navtail">機</span></button>
+<button id="tab3" onclick="showPage(3)" data-more data-short="台帳"><span class="navnum">Ⅳ </span>台帳<span class="navsub">（保存記録）</span></button>
+<button id="tab4" onclick="showPage(4)" data-more data-short="検証履歴"><span class="navnum">Ⅴ </span><span class="navtail">検証</span>履歴</button>
+<button id="tab1" onclick="showPage(1)" data-more data-short="解説"><span class="navnum">Ⅰ </span>解説</button>
+<button id="tab8" onclick="showPage(8)" data-more data-short="実行手順"><span class="navnum">Ⅱ </span><span class="navtail">実行</span>手順</button>
 </nav>
 <!-- v9.9.131/132: 人の決定(state.json)の帯。**全タブの外**に置く——
      Ⅳ台帳の中に置いていたら、既定で開く盤や採点機では警告が出なかった（実測）。
@@ -1231,7 +1243,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 
   <div class="lens" style="border-color:#779">
    <div class="lh"><span class="ln">IPS — ポートフォリオ構築と行動規律（段階1・2026-07-12制定）</span></div>
-   <div class="ld"><details class="why" data-fold="2"><summary>詳しく</summary><div class="why-body"><b>①ポジションサイジング（スコア階層+クォーターKelly上限）</b>——対象は<b>act=「今 買える」かつ総合75+のみ</b>（「買える」≠「買うべき」: 価格ゲートが開いても質75未満は投下対象外）。目標ウェイト: <b>時価総額Tier（T1≥1兆$:8 / T2 3千億〜1兆:6 / T3 1千億〜3千億:4 / T4 3百億〜1千億:3 / T5 &lt;3百億:2 の相対値を城の按分枠（50%−特別枠・v9.9.159で特別枠は0社）へ正規化）、1銘柄の上限8%</b>（上限に当たった分は残りの社へ再配分するので城の按分枠は定義上ちょうど埋まる）。<b>席の順＝irr=85を先に→残りをΩ順</b>（E[r]点は錨12%=50点・±10ptで0-100。<u>質だけでなく期待リターンとの積</u>＝幾何平均の思想。<b>E[r]≤2%は自動でウェイト0</b>になり遮断器(E[r]≥0)と連続につながる）。段差8/5/3→連続(Ω−70)へ、E[r]との積へ（遮断器化で投下可が増えたとき(Ω−70)按分のままだと低E[r]の社が城の枠を食い総合が下がったため）。<details class="why"><summary>配分の経緯（段差8/5/3 → 連続 → 等ウェイト → 時価総額Tier）と、ケリー比率</summary><div class="why-body"><u>旧式は Ω80/77/75 の線で8/5/3に割れ、IRMD 80.1 と MSFT 79.1 の1.0pt差で配分が1.6倍違っていた</u>——本文Ⅰの「ティア内の小数差に意味はなく、選別は間（価格）が行う」と正面から矛盾しており、境界のわずかな測定差が資金配分を跳ねさせていた。連続にすればΩの順位どおりに滑らかになる。実測（城の按分枠（50%−特別枠・v9.9.159で特別枠は0社）へ正規化・網9%と仮定）: 旧 3.0〜7.9%/総合13.56% → <b>新 3.3〜7.6%/総合13.63%</b>＝<b>リスクの取り方をほとんど変えずに境界の恣意性だけを取り除いた</b>。<b style="color:var(--gold-bright)">（2026-08-14 ユーザー明示指示「時価総額順にウエイト上げてほしい」で 等ウェイト → 時価総額比 へ）</b>——時価総額は <code>px×(ni÷eps)</code> で作り、日本株はドル円で揃える。<u>パックの <code>mcap</code> 欄は使わない</u>（社ごとに違う日付の株価で測った値で、実測の含意株数が 0.80〜1.02倍にばらつく。しかもJP株は十億<b>円</b>・米国株は十億<b>ドル</b>で、その欄は発見度の入力＝十億ドル前提なので直すとΩが動く）。<b>実測(2026-08-19・15社・城の按分枠50%)</b>: <b>7.41 / 5.56 / 3.70 / 2.78 / 1.85%・合計ちょうど50%・上限8%に当たる社は無し</b>（等ウェイトなら全社3.33%。v9.9.159で特別枠TDG 8.8%が按分へ入り、Tierは測定どおりT4＝2.78%）。<u>一社でも時価総額が測れなければ等ウェイトへ倒す</u>——部分集合だけ傾けると「測れた社だけが重くなる」＝測定の穴が配分に化ける。上限8%（＝質80+の従来値・¼ケリー相当。フルKellyは50-80%DDを生むため1/4に抑制）は維持する——比で配ると銘柄数が減ったとき1銘柄が過大になるため（投下可5社なら1社12%）。合計>100%なら比例縮小、<b>未満なら残余＝現金</b>——点灯が少ない市況ほど自動的に現金が積み上がる（門の慎重さを現金比率に直結）。コア銘柄数の目安20〜30——ただし<b>Cohen-Polk-Silliの集中プレミアム+2.8〜4.5%は上位1〜5ベストアイデア集中の効果で、アイデア順位とともに単調減衰し20〜30銘柄の準分散ではほぼ消滅する</b>（2026-07精査で引用を是正）。15%目標を追うなら城の実効銘柄数12〜20への絞り込みが5年大改修の議題（左裾は網が下支え）。<b>（2026-08-03）の実測で判ったこと</b>: 総合リターンの実効の天井を決めているのは網/城の比率ではなく<u>この8/5/3%そのもの</u>——投下可10社を全部満たしても城は45%にしかならないので、城60%へ上げても45%で頭打ちになる。実測: <b>8/5/3→総合12.0% ／ 10/7/4→13.1% ／ 12/8/5(≒⅜ケリー)→13.9% ／ 15/10/6(≒½ケリー)→15.0%</b>。<b>総合15%はケリー比率を½まで上げて初めて届く＝下落耐性とのトレードオフの決断であり、門の精度の問題ではない。</b>フルKellyが50-80%DDを生むという前提のまま¼を動かすかどうかは、予実台帳(night/audit_er_realized.py)でE[r]の偏りを測ってから決めるのが筋。</div></details><b>投下の四関門（2026-07-21追記／2026-07-29に堀を追加／2026-08-03に点検を追加）</b>——Ω75+は「持ってよい」の資格に過ぎない。<b>新規投下はΩ75+かつ絶対MOAT指数70+かつ点検の要修正0件かつ事業の収縮なし（売上縮小∧営業利益率低下でない）</b>を要し、さらに<b>irr=85優先→Ω順の上位10社（第五の枠）</b>だけが実際に買付枠に入る（四段は資格・上位10社は席数。11位以下は🔵次点＝資格は保つが買わない）。サイズは上の連続式の目標ウェイト（上限8%＝<b>¼ケリー相当</b>）を上限とし、銘柄別の厳密¼ケリーを✦門Xの計算機で検算して下回るならその値へ縮小（主観勝率を自動連携しない＝手動検算の規律）。指値は<b>階段で置く（2026-07改定）</b>——資金の1/2をX開通ライン（約定時E[r]=12）・1/2をfair線（終着PER線=倍率の重力ゼロ・約定時E[r]=earned）。開通線一本の指値は約定期待値を12%ちょうどに錨付けするための是正で、倍率拡大は相変わらず計上しない=掟六と両立。<b>掟六v2（2026-07-23・成長連動）</b>——門Xの終着PERは<b>min(現PER, clamp(8+g,16,30))</b>で成長に連動（McKinsey価値ドライバー準拠：成熟g4%は22倍が正当だが持続成長する高ROIC企業は28-30倍が正当）。<b>高成長はPERが高くても複利をもたらす</b>ため、成長産業と成熟産業を一律の終着PER22で測らない。ただしgは実証CAGR頭打ち・現PERを超えない（ハイプと倍率拡大は封じる）。<b>間（価格ゲート）も同思想</b>——実証成長×資本効率×堀無傷（cagr≥15・ROIC≥20・erosion none・disrupt≠threat＝<b>grower</b>）の銘柄は、一律の論外線（PER50・V0上限）を成長連動で緩める（PER論外62・V0上限は下限を68/52へ引き上げ・ROIC文脈EV上限×1.3）。<u>V0上限は固定値ではなく質連動</u>——<code>perCeil=clamp(質×0.75, 55, 70)</code>・<code>evCeil=clamp(質×0.56, 40, 52)</code>（v9.2最終で固定60/45から動的へ。質88→PER上限66／質80→60／質73以下→55）。これでΩ75+×門X✓を通過する高成長株（IRMD型）が一律キャップだけで押し目待ちに落ちるのを是正。<b>格＝評価スコアには一切触れず、間（act）のみ</b>。緩和はgrower4条件を全て満たす銘柄に限定し、安全弁（V0）は残す。<br>
+   <div class="ld"><details class="why" data-fold="2"><summary>詳しく</summary><div class="why-body"><b>①ポジションサイジング（スコア階層+クォーターKelly上限）</b>——対象は<b>act=「今 買える」かつ総合75+のみ</b>（「買える」≠「買うべき」: 価格ゲートが開いても質75未満は投下対象外）。目標ウェイト: <b>時価総額Tier（T1≥1兆$:8 / T2 3千億〜1兆:6 / T3 1千億〜3千億:4 / T4 3百億〜1千億:3 / T5 &lt;3百億:2 の相対値を城の按分枠（50%−特別枠・v9.9.159で特別枠は0社）へ正規化）、1銘柄の上限8%</b>（上限に当たった分は残りの社へ再配分するので城の按分枠は定義上ちょうど埋まる）。<b>席の順＝irr=85を先に→残りをΩ順</b>（E[r]点は錨12%=50点・±10ptで0-100。<u>質だけでなく期待リターンとの積</u>＝幾何平均の思想。<b>E[r]≤2%は自動でウェイト0</b>になり遮断器(E[r]≥0)と連続につながる）。段差8/5/3→連続(Ω−70)へ、E[r]との積へ（遮断器化で投下可が増えたとき(Ω−70)按分のままだと低E[r]の社が城の枠を食い総合が下がったため）。<details class="why"><summary>配分の経緯（段差8/5/3 → 連続 → 等ウェイト → 時価総額Tier）と、ケリー比率</summary><div class="why-body"><u>旧式は Ω80/77/75 の線で8/5/3に割れ、IRMD 80.1 と MSFT 79.1 の1.0pt差で配分が1.6倍違っていた</u>——本文Ⅰの「ティア内の小数差に意味はなく、選別は間（価格）が行う」と正面から矛盾しており、境界のわずかな測定差が資金配分を跳ねさせていた。連続にすればΩの順位どおりに滑らかになる。実測（城の按分枠（50%−特別枠・v9.9.159で特別枠は0社）へ正規化・網9%と仮定）: 旧 3.0〜7.9%/総合13.56% → <b>新 3.3〜7.6%/総合13.63%</b>＝<b>リスクの取り方をほとんど変えずに境界の恣意性だけを取り除いた</b>。<b style="color:var(--gold-bright)">（2026-08-14 ユーザー明示指示「時価総額順にウエイト上げてほしい」で 等ウェイト → 時価総額比 へ）</b>——時価総額は <code>px×(ni÷eps)</code> で作り、日本株はドル円で揃える。<u>パックの <code>mcap</code> 欄は使わない</u>（社ごとに違う日付の株価で測った値で、実測の含意株数が 0.80〜1.02倍にばらつく。しかもJP株は十億<b>円</b>・米国株は十億<b>ドル</b>で、その欄は発見度の入力＝十億ドル前提なので直すとΩが動く）。<b>実測(2026-08-19・15社・城の按分枠50%)</b>: <b>7.41 / 5.56 / 3.70 / 2.78 / 1.85%・合計ちょうど50%・上限8%に当たる社は無し</b>（等ウェイトなら全社3.33%。v9.9.159で特別枠TDG 8.8%が按分へ入り、Tierは測定どおりT4＝2.78%）。<u>一社でも時価総額が測れなければ等ウェイトへ倒す</u>——部分集合だけ傾けると「測れた社だけが重くなる」＝測定の穴が配分に化ける。上限8%（＝質80+の従来値・¼ケリー相当。フルKellyは50-80%DDを生むため1/4に抑制）は維持する——比で配ると銘柄数が減ったとき1銘柄が過大になるため（投下可5社なら1社12%）。合計>100%なら比例縮小、<b>未満なら残余＝現金</b>——点灯が少ない市況ほど自動的に現金が積み上がる（門の慎重さを現金比率に直結）。コア銘柄数の目安20〜30——ただし<b>Cohen-Polk-Silliの集中プレミアム+2.8〜4.5%は上位1〜5ベストアイデア集中の効果で、アイデア順位とともに単調減衰し20〜30銘柄の準分散ではほぼ消滅する</b>（2026-07精査で引用を是正）。15%目標を追うなら城の実効銘柄数12〜20への絞り込みが5年大改修の議題（左裾は網が下支え）。<b>（2026-08-03）の実測で判ったこと</b>: 総合リターンの実効の天井を決めているのは網/城の比率ではなく<u>この8/5/3%そのもの</u>——投下可10社を全部満たしても城は45%にしかならないので、城60%へ上げても45%で頭打ちになる。実測: <b>8/5/3→総合12.0% ／ 10/7/4→13.1% ／ 12/8/5(≒⅜ケリー)→13.9% ／ 15/10/6(≒½ケリー)→15.0%</b>。<b>総合15%はケリー比率を½まで上げて初めて届く＝下落耐性とのトレードオフの決断であり、門の精度の問題ではない。</b>フルKellyが50-80%DDを生むという前提のまま¼を動かすかどうかは、予実台帳(night/audit_er_realized.py)でE[r]の偏りを測ってから決めるのが筋。</div></details><b>投下の四関門（2026-07-21追記／2026-07-29に堀を追加／2026-08-03に点検を追加）</b>——Ω75+は「持ってよい」の資格に過ぎない。<b>新規投下はΩ75+かつ絶対MOAT指数70+かつ点検の要修正0件かつ事業の収縮なし（売上縮小∧営業利益率低下でない）</b>を要し、さらに<b>irr=85優先→Ω順の上位5社（第五の枠）</b>だけが実際に買付枠に入る（四段は資格・上位5社は席数。6位以下は🔵次点＝資格は保つが買わない）。<u>席の数は 2026-09-20 ユーザー明示指示「買付は5社に縛って」で 10→5</u>（v9.9.171・数字はコードの <code>CCF_SEATS</code> 一箇所）。サイズは上の連続式の目標ウェイト（上限8%＝<b>¼ケリー相当</b>）を上限とし、銘柄別の厳密¼ケリーを✦門Xの計算機で検算して下回るならその値へ縮小（主観勝率を自動連携しない＝手動検算の規律）。指値は<b>階段で置く（2026-07改定）</b>——資金の1/2をX開通ライン（約定時E[r]=12）・1/2をfair線（終着PER線=倍率の重力ゼロ・約定時E[r]=earned）。開通線一本の指値は約定期待値を12%ちょうどに錨付けするための是正で、倍率拡大は相変わらず計上しない=掟六と両立。<b>掟六v2（2026-07-23・成長連動）</b>——門Xの終着PERは<b>min(現PER, clamp(8+g,16,30))</b>で成長に連動（McKinsey価値ドライバー準拠：成熟g4%は22倍が正当だが持続成長する高ROIC企業は28-30倍が正当）。<b>高成長はPERが高くても複利をもたらす</b>ため、成長産業と成熟産業を一律の終着PER22で測らない。ただしgは実証CAGR頭打ち・現PERを超えない（ハイプと倍率拡大は封じる）。<b>間（価格ゲート）も同思想</b>——実証成長×資本効率×堀無傷（cagr≥15・ROIC≥20・erosion none・disrupt≠threat＝<b>grower</b>）の銘柄は、一律の論外線（PER50・V0上限）を成長連動で緩める（PER論外62・V0上限は下限を68/52へ引き上げ・ROIC文脈EV上限×1.3）。<u>V0上限は固定値ではなく質連動</u>——<code>perCeil=clamp(質×0.75, 55, 70)</code>・<code>evCeil=clamp(質×0.56, 40, 52)</code>（v9.2最終で固定60/45から動的へ。質88→PER上限66／質80→60／質73以下→55）。これでΩ75+×門X✓を通過する高成長株（IRMD型）が一律キャップだけで押し目待ちに落ちるのを是正。<b>格＝評価スコアには一切触れず、間（act）のみ</b>。緩和はgrower4条件を全て満たす銘柄に限定し、安全弁（V0）は残す。<br>
    <b>①-b 器（口座）の選択——非課税枠は「配分」と同じ重さの決断（2026-08-06新設）</b>——
    <u>門はこれまで「どれを・いくら」だけを裁いてきたが、「どの器で持つか」を一度も見ていなかった</u>。
    実測すると、これは門が較正してきたどの調整よりも大きい。<b>総合E[r] 13.12%（城59.3%×15.94% ＋ 網40.7%×9%）を
@@ -1300,7 +1312,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
  <div class="tag">Synthesis</div>
  <div class="h2">最終判定 — 四象限</div>
  <div class="quad">
-  <div class="q win"><div class="cond">Ω 75+ × 絶対MOAT指数 70+ × 点検 要修正0 × 事業の収縮なし ＋ irr=85優先→Ω順の上位10社</div><div class="v">投下可</div><div class="d">質も値段も揃った。サイズは<b>時価総額Tier（5段 8:6:4:3:2 を城の按分枠（50%−特別枠・v9.9.159で特別枠は0社）へ正規化）・上限8%</b>（合成点按分→等ウェイト→時価総額Tier。2026-08-14 ユーザー明示指示）と門Xの厳密ケリーの小さい方。</div></div>
+  <div class="q win"><div class="cond">Ω 75+ × 絶対MOAT指数 70+ × 点検 要修正0 × 事業の収縮なし ＋ irr=85優先→Ω順の上位5社</div><div class="v">投下可</div><div class="d">質も値段も揃った。サイズは<b>時価総額Tier（5段 8:6:4:3:2 を城の按分枠（50%−特別枠・v9.9.159で特別枠は0社）へ正規化）・上限8%</b>（合成点按分→等ウェイト→時価総額Tier。2026-08-14 ユーザー明示指示）と門Xの厳密ケリーの小さい方。</div></div>
   <div class="q"><div class="cond">Ω 75+ × 門X 未達</div><div class="v">押し目待ち</div><div class="d">良い会社を高値で掴まない。指値は階段＝1/2を開通ライン・1/2をfair線（例：ASML PER54型）。</div></div>
   <div class="q"><div class="cond">Ω 72–75（堅実）</div><div class="v">監視枠</div><div class="d">保有しない。75超えで昇格。安くても投下しない＝Cisco/Intel型の罠を避ける。</div></div>
   <div class="q"><div class="cond">Ω 72未満 ∨ キル</div><div class="v">回避</div><div class="d">伸びる力が乏しい・壊れうる。問答無用で見送り。網へ。</div></div>
@@ -1336,7 +1348,7 @@ html[data-theme="dark"] body,html:not([data-theme]) body{background:
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.170</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.171</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <p class="sub"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</p>
   </div>
@@ -4848,9 +4860,9 @@ async function ccfDash(btn){
       return {nm:L.nm,t,s:sc,moat:mg.idx,audE,stale:dStale[t]?dStale[t].newPct:null,shrink:sh,irr:d.irr,frame85:f85.pass,
               vf:dVf[t]?dVf[t].n:null,pend:dPend[t]||null,
               ok:three&&audE===0&&dq,blocked:three&&(audE>0||!dq),xEr:x.xEr};});
-  // v9.9.88: 第五の枠（irr=85優先→Ω順の上位10社。半導体上限は v9.9.145 で撤去）を盤にも適用——Ⅵと同じ ccfAllocTop（単一実装・v9.9.65の掟）
+  // v9.9.88: 第五の枠（irr=85優先→Ω順の上位 CCF_SEATS 社。半導体上限は v9.9.145 で撤去）を盤にも適用——Ⅵと同じ ccfAllocTop（単一実装・v9.9.65の掟）
   const four=judged.filter(v=>v.ok);
-  const allocT=ccfAllocTop(four,10);
+  const allocT=ccfAllocTop(four);   // v9.9.171: 席の数は CCF_SEATS（書き写さない）
   // v9.9.91: 並びは**配分と同じ合成点順**（旧Ω順は「買う順」を名乗りながら配分と食い違っていた）
   const mechD=v=>((+v.irr===85)&&!ccfIrr85Below(v))?0:1;   // v9.9.124: 席の優先と同じ判定（単一実装）
   const buy=four.filter(v=>allocT.has(v.t)).sort((a,b)=>mechD(a)-mechD(b)||ccfAllocScore(b)-ccfAllocScore(a)||b.s-a.s);
@@ -4895,9 +4907,9 @@ async function ccfDash(btn){
     + sec('🟢 投下可', buyHtml
         // v9.9.145: 半導体上限を撤去したので「（半導体上限）」の印は消えた。
         //   集中そのものは Ⅵ の◇注記が出し続ける（関門を消しても事実は消さない）。
-        + (nextUp.length?`<div style="font-size:11px;color:#5d8cc2;margin-top:6px">🔵 次点（四関門通過・席順11位以下＝買わない）: ${nextUp.map(v=>v.nm).join(' / ')} — 順位が上がれば自動で昇格（詳細はⅥ）</div>`:'')
+        + (nextUp.length?`<div style="font-size:11px;color:#5d8cc2;margin-top:6px">🔵 次点（四関門通過・席順${(allocT.seats||0)+1}位以下＝買わない）: ${nextUp.map(v=>v.nm).join(' / ')} — 順位が上がれば自動で昇格（詳細はⅥ）</div>`:'')
         + (audBlocked.length?`<div style="font-size:11px;color:var(--rust);margin-top:6px">⛔ 第四の関門で除外: ${audBlocked.map(v=>`${v.nm}（${[v.audE?`要修正${v.audE}件`:'',v.stale!=null?`期末後にのれん${v.stale}%流入`:'',v.vf?`納品検査FAIL${v.vf}件`:'',v.pend?`未完了: ${v.pend.target||v.pend.kind||''}${v.pend.newPct?` ${v.pend.pctLabel||`完了後のれんの${v.pend.newPct}%が新規`}`:''}`:''].filter(Boolean).join('・')}）`).join(' / ')} — Ⅳ台帳の⚠バッジ／<code>audit_stale_bs</code>／<code>audit_pending</code>／<code>audit_promotion_ready</code> で直せる（黙って消さない）</div>`:''),
-        '買うのはここだけ（四関門を通り、席の上位10社に入った銘柄）。金額はⅥ買付順位の「今月の個別枠」で按分される')
+        `買うのはここだけ（四関門を通り、席の上位${allocT.seats||0}社に入った銘柄）。金額はⅥ買付順位の「今月の個別枠」で按分される`)
     + sec('📅 次回決算（21日以内）', ernHtml, '決算が来たら <code>python kessan_check.py</code>（日本株は <code>kessan_check_jp.py</code>）を回す')
     + sec('📰 最新ニュース', newsHtml, '判定には使わない——原本（10-Q/有報）に書かれるまで門は動かない');
 }
@@ -5551,10 +5563,11 @@ function ccfXJudge(d,s){
   return out;
 }
 // ── 第五の枠（v9.9.88・2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」）─────────
-// 投下可 ＝ 四関門(Ω75+〔irr=85は別枠〕 ∧ 堀70+ ∧ 点検0件 ∧ 事業の収縮なし) ∧ **irr=85優先→Ω順の上位10社**（半導体上限は v9.9.145 で撤去）。
+// ★席の数は **v9.9.171(2026-09-20 ユーザー明示指示「買付は5社に縛って」)で 10→5**。数字は CCF_SEATS 一箇所だけ。
+// 投下可 ＝ 四関門(Ω75+〔irr=85は別枠〕 ∧ 堀70+ ∧ 点検0件 ∧ 事業の収縮なし) ∧ **irr=85優先→Ω順の上位CCF_SEATS社**（半導体上限は v9.9.145 で撤去）。
 // 席の選定 = **Ω順**（v9.9.98でE[r]項を外した）。旧: 合成点 = Ω × E[r]点÷50（E[r]点は合成順の錨12%=50点・±10ptで0-100・v9.9.30＝新しい定数なし）。
-// 11位以下は「🔵次点」＝買わないが投下可の資格は保持し、Ωが上がれば自動で枠入り（黙って消さない・v9.9.52）。
-// 実測(2026-08-05): 上位10社は遮断器化以前の旧・門X4条件の投下可10社と完全同一＝二つの道が同じ集合へ収束。
+// 席から溢れた社は「🔵次点」＝買わないが投下可の資格は保持し、Ωが上がれば自動で枠入り（黙って消さない・v9.9.52）。
+// 実測(2026-08-05): 当時の上位10社は遮断器化以前の旧・門X4条件の投下可10社と完全同一＝二つの道が同じ集合へ収束。
 // 単一実装: Ⅵ買付順位・盤(ccfDash)・night/score_all.js・予実snapは必ずこの関数を使う（v9.9.65の掟）。
 // cands: [{t,s,xEr}] の配列。E[r]欠損は erPt0＝枠に入らない（E[r]不明のまま買わない）。
 // v9.9.91(2026-08-06 ユーザー指摘「買付順位おかしくない？」): **合成点を単一実装として切り出した**。
@@ -5638,7 +5651,7 @@ function ccfAllocScore(c){
 //   （2013年は70も0.451と強い）／2018年の+24.6%は半導体・AI期に偏る（非半導体を除くと2015はP=0.400）。
 //   だから**関門にはせず、資格を満たした社の中の並び順にだけ効かせる**——外れても失うのは順位だけ。
 // ── v9.9.145（2026-08-14 ユーザー明示指示「やはり半導体の制限は外すよ。今いい銘柄をきちんといれるように」）
-//    ★**半導体連鎖の相関上限を撤去した**。席の選定は irr=85優先→Ω順の上位10社だけになる。
+//    ★**半導体連鎖の相関上限を撤去した**。席の選定は irr=85優先→Ω順の上位 CCF_SEATS 社だけになる（当時10社・v9.9.171で5社）。
 // 【何が動いたか（撤去前に実測）】動くのは**1組だけ**——
 //    **出 HWM（Ω78.0・堀70.1）／ 入 6146 ディスコ（Ω78.2・堀74.8）**。
 //    6146 は**Ωも堀も HWM より上**なのに上限で席を外れていた＝ユーザーの言う「いい銘柄が入っていない」の実体。
@@ -5794,8 +5807,13 @@ function ccfMcapWeights(list,city,cap,over,hand){
   }
   return {mode:'mcap',w,missing:[],n,tier,handMiss:_hm2};
 }
+// ★席の数はここ一箇所だけ（v9.9.171・2026-09-20 ユーザー明示指示「買付は5社に縛って」）。
+//   ⚠**同じ数字を呼び出し側に書き写さない**——この台帳が繰り返し記録している
+//   「数字を書き写した箇所は必ず陳腐化する」の型。Ⅵ・盤・score_all・shadow・予実snapは
+//   **引数を省いて**呼び、表示に要る社数は戻り値の `.seats` から読む（v9.9.65の掟）。
+const CCF_SEATS=5;
 function ccfAllocTop(cands,maxN){
-  maxN=maxN||10;
+  maxN=maxN||CCF_SEATS;
   // 相関の束＝装置・材料・検査・EDA・デバイスまで含む「半導体連鎖」（CLAUDE.md の用法に合わせる）。
   // 束として同じ設備投資サイクルに乗るかで採る（IPGP等のレーザー・光学は当たらない）。
   const SEMI=new Set(['ASML','LRCX','KLAC','AMAT','ONTO','ACMR','NVMI','MKSI','ENTG','TER','COHR','AEIS',
@@ -5818,6 +5836,7 @@ function ccfAllocTop(cands,maxN){
   //   それが守っていた事実まで消してはいけない。表示専用・席の選定には一切効かない。
   s.semiN=ns; s.semiPct=pick.length?Math.round(ns/pick.length*100):0;
   s.capped=[];   // 後方互換（上限が無いので常に空）
+  s.seats=maxN;  // v9.9.171: 席の数を戻り値で配る＝呼び出し側が数字を書き写さずに表示できる
   return s;
 }
 // ── 堀のふるい（v9.9.39・ユーザー明示指示 2026-07-28）──────────────────────────
@@ -6311,9 +6330,9 @@ async function renderPlan(){
   //   VRSK は堀85.3＝台帳最高・irr=85 が3ビンテージで確認された社で、E[r]−0.9 の一点だけで止まっていた。
   //   E[r] の計算・表示・開通ライン・予実台帳は不変＝**決定に使うのをやめただけ**。
   const pass=q75c;
-  // v9.9.88: 第五の枠——投下可＝四関門∧irr=85優先→Ω順の上位10社（半導体上限は v9.9.145 で撤去）（判定は単一実装 ccfAllocTop）。
+  // v9.9.88: 第五の枠——投下可＝四関門∧irr=85優先→Ω順の上位 CCF_SEATS 社（半導体上限は v9.9.145 で撤去）（判定は単一実装 ccfAllocTop）。
   //   点灯(Ulysses)・配分・表示のすべてが「枠内=passIn」を投下可として扱う。11位以下=passOutは🔵次点
-  const allocSet=ccfAllocTop(pass,10);
+  const allocSet=ccfAllocTop(pass);   // v9.9.171: 席の数は CCF_SEATS（書き写さない）
   // v9.9.91: **行の順を配分と同じ合成点順にした**（旧 pc=0.6Ω+0.4E点 は加重和で、積の合成点と順位が違った。
   //   実測でASMLが表示6位・配分1位／MAが表示3位・配分7位。端数の行き先「買付順位1位」も最大ウェイトと不一致だった）
   const mechR=r=>((+r.irr===85)&&!ccfIrr85Below(r))?0:1;   // v9.9.100: 表示の順も席の順と同じ規則（v9.9.91の掟）。v9.9.124の実績判定も共有
@@ -6590,7 +6609,7 @@ async function renderPlan(){
   // 【¼ケリーの8%上限は残す】比で配ると銘柄数が減ったとき1銘柄が過大になる（投下可5社なら1社12%）。
   //   絶対の上限8%（質80+の従来値＝¼ケリー相当）で頭打ちにし、余った分は網へ回す＝従来の安全弁を保存。
   // v9.9.87（2026-08-05 ユーザー明示指示「質の良さと加重のE[r]のバランスで得点をつけては」「ポートフォリオを10社までにしたい」）:
-  //   配分の重みを (Ω−70)×E[r]点÷50 の合成へ、配分対象をirr=85優先→Ω順の上位10社（半導体上限は v9.9.145 で撤去）に制限した。
+  //   配分の重みを (Ω−70)×E[r]点÷50 の合成へ、配分対象を**当時の上位10社**（席順＝irr=85優先→Ω順。半導体上限は v9.9.145 で撤去・席の数は v9.9.171 で5）に制限した。
   //   E[r]点は合成順と同じ錨（12%=50点・±10ptで0-100・v9.9.30）＝**新しい定数を一つも発明していない**
   //   （質の超過分(Ω−70)=v9.9.70 と 価格の点数化=v9.9.30 という較正済みの目盛り2つの掛け算だけ。
   //   掛け算なので幾何平均の思想＝弱点を隠せない、とも揃う。E[r]≤2%は自動的にウェイト0＝遮断器(0%)と連続）。
@@ -6599,7 +6618,7 @@ async function renderPlan(){
   //   加重E[r] 12.67→16.71%・総合 11.20→13.63%。旧ハードル未満7社(V/IDXX/SAP/MCO/CDNS/MSI/RELX)は
   //   投下可のまま「配分枠外」＝黙って消さず名指し表示（v9.9.52の教訓）。
   //   遮断器・Ω・堀の関門・売却規律S1/S2/S3は不変——これは配分（DCA側）の規約。
-  const CAP=8, MAXN=10; // allocSet/passIn/passOut は pass 直後で定義済み（点灯にも使うため）
+  const CAP=8, MAXN=(typeof CCF_SEATS==='number'?CCF_SEATS:10); // v9.9.171: 席の数は CCF_SEATS 一箇所から読む。// allocSet/passIn/passOut は pass 直後で定義済み（点灯にも使うため）
   // ★城の合計(CITY_TOTAL)は特別枠を含む。按分の枠 CITY は exFixed を引いた残り＝下で定義する
   //   （旧実装は CITY=60 が**按分の枠**で、特別枠 TDG 8.8% はその上に乗っていたので
   //    実際の城は 68.8%・網は 31.2% だった＝表の『網40/城60』と食い違っていた）
@@ -6624,7 +6643,7 @@ async function renderPlan(){
   //   【だから等ウェイト】傾ける信号が無いなら傾けないのが正直。v9.9.93が錨(Ω−70)を外した理由
   //   「増幅されていたのは信号ではなく測定誤差」の終着点でもある（Ωのσは2.50ptしかなく、
   //   ISRGの誤値1件でΩが12pt動いた実績がある＝順位差より測定誤差のほうが大きい帯）。
-  //   【不変】1銘柄の上限8%（¼ケリー）・第五の枠(上位10社)・四関門・Ω・売却規律（城の比率は v9.9.158 で50%へ）。
+  //   【当時 不変だったもの】1銘柄の上限8%（¼ケリー）・第五の枠(当時10社・v9.9.171で5社)・四関門・Ω・売却規律（城の比率は v9.9.158 で50%へ）。
   //   等ウェイトは 60/10=6.0% で上限8%の内側なので、集中度は上がらない（むしろ幅が縮む）。
   //   【選定は v9.9.98 以降 Ω順】（この注記が書かれた当時は合成点順）——選定の物差しを何にするかは別の決断（irr=85の席確保）。
   // v9.9.129: 門外例外を按分に入れる。**城の按分の母集団は「席の社 ＋ in_castle_split の例外」**
@@ -6756,7 +6775,7 @@ async function renderPlan(){
         +`（時価総額が一社でも測れなければ等ウェイトへ倒すのと同じ作法）。`
         +`<code>portfolio.json</code> の <code>castle_weights</code> に足すか、丸ごと消してTierに戻してください。</div>`;
     }
-    html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px;color:var(--gold-bright)">🟢 投下可</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">四関門（Ω75+〔irr=85は別枠〕・堀70+・点検0件・事業の収縮なし）を通り、<b>席の上位10社</b>に入った銘柄。買うのはここだけ。<details class="why"><summary>席の選び方——なぜ irr=85 を先に置くのか</summary><div class="why-body">四関門を通過し、かつ<b>irr=85優先→Ω順の上位10社（半導体上限は v9.9.145 で撤去）＝ポートフォリオの枠内</b>（<b style="color:var(--gold-bright)">irr=85〔顧客側が再認定の費用を負う型〕を席の先頭へ</b>——歴史検証がこの台帳で唯一「効く」と出した変数がこれひとつだから。プール754件で P(継続) は 50:0.162 &lt; 70:0.366 &lt; <b>85:0.579</b>、2018年ビンテージは等加重 <b>+24.6%/年</b>（SPY 15.0%）。<u>E[r]を固定してもirr=85の効果は残るが、irrを固定するとE[r]の効果は消える</u>。<b>irr=100は入れない</b>——歴史では100が最下位（0.056/0.091）。<b style="color:var(--gold-bright)">（ユーザー明示指示「irr85は歴史的にみて今後も複利中央値が高いと見込めるものだけ特別にポートフォリオにいれたい」）で、その社自身の実現複利がハードル15%を割っていると判っている社から特権（別枠85・席の優先）を外した</b>——各行の<b>「実績 N.N%」</b>がその裏づけ（out/irr85_history.json＝night/irr85_mech_test.py が配る）。<u>絞る軸に「機構の型」を使わなかったのは実測の結果</u>: 型ごとの n は2〜8しかなく、しかも <b>CW がまったく同じ引用で 2013読解=D認定業者名簿 / 2015読解=C第三者が用途を認定 に割れた</b>（irr の刻み85自体は147社の追試で一度も揺れていないのに、下位ラベルは読み手で変わる）。<b>実績が追えない社（ASML=20-F／LOAR=2024年IPO／VRSK=コホートscreenが自己資本マイナスで落とした）は中立</b>——在庫の境界は道具の側の限界であって会社の性質ではないから。<u>取り上げるのは近道だけで、Ω75+の道は開いている</u>。実測: 今日は誰も動かない純粋なラチェット（下回るのは HXL 7.3% / ST −0.2% の2社で、どちらも財務キル nde&gt;4 で既に⛔）。重みを上げる案は判定圏でirrが変動係数6.6%の定数ゆえ実測で死んでいるので、採点ではなく席の順で拾う）。（2026-08-05ユーザー明示指示「上位10社を買い付け可にして」。第五の枠——四関門は資格・第五の枠は席数）。サイズは<b>時価総額Tier（5段 8:6:4:3:2 を城の按分枠（50%−特別枠・v9.9.159で特別枠は0社）へ正規化）・上限8%</b>（<b>2026-08-14 ユーザー明示指示で等ウェイト→時価総額比→Tierへ</b>。<u>Ω・E[r]では傾けない</u>——Ωは配分の順位に寄与ゼロ〔全社一定にしても順位0/11箇所〕、E[r]は歴史でirr層内の効果が +1.2/−4.4/+1.5pt＝方向なし、そして従来の配分案の比較は「総合＝城%×加重E[r]」で採点しており現行案が定義上必ず勝つ循環だった。傾ける信号が無いので傾けない。**席の選定**は irr=85 を先に置き、残りをΩ順にした（E[r]項を外し・irr=85優先を追加）。実測: 上位10社は遮断器化以前の旧4条件の投下可10社と完全同一＝二つの道が同じ集合へ収束。11位以下は🔵次点として名指し表示——資格は保つのでΩが上がれば自動で昇格。旧の(Ω−70)按分・旧段差8/5/3の経緯はCLAUDE.md。銘柄別の厳密¼ケリーは✦門Xの計算機で検算し、下回るならその値を上限にmemoへ根拠を記録。自動連携はしない=主観勝率を機械に入れない）。</div></details><b style="color:var(--gold-bright)">目標%</b>＝総資産に対する目標ウェイト／<b style="color:var(--gold-bright)">今月%</b>＝今月の個別枠を「目標−現在保有%」の不足分で按分(B案②・合計100%。posはⅦ資産の実額から自動算出・無い銘柄のみ採点機の手入力)。<b>二序列の役割</b>: pc順位＝買う順（複数点灯時の優先）／gap按分＝金額。<br><details class="why"><summary>各行の「倍率 N.Nx」とは（合否には使わない）</summary><div class="why-body"><b style="color:#c98c3c">各行の「倍率 N.Nx」は 現PER÷fairPER</b>（fairPER=clamp(8+成長,16,30)）。<b>合否には一切使わない</b>——歴史検証(night/retro_price_tail.py・3ビンテージ)では<u>質・堀を通った社の中では高倍率が中央値を下げない</u>（3倍超で 10.1% vs 通過 7.1%・15%+ 27% vs 18%／2013年 PER&gt;50 で 9.1% vs 8.3%／2015年 PER&gt;40 で 9.5% vs 7.5%）。一貫して悪いのは恒久毀損だけで、質実証プールでの分子は<b>1社</b>＝規約にするには薄い。また門の記録の非対称——<u>3割高づかみの20年コスト年−1.3% vs 買い逃し年−19%</u>——も押し目待ちに不利。<b>だから止めない。代わりに階段指値の深段（fair線）を出す</b>ので、成行で買うか階段で入るかは君の判断。</div></details><details class="why"><summary>各行の「自己相対 上位M%」とは（合否には使わない）</summary><div class="why-body"><b style="color:#c98c3c">各行の「自己相対 過去N年で上位M%（市場調整 上位M'%）」は 現PERが<u>その銘柄自身の</u>過去のPER分布の何%タイルか——<u>素と市場調整の二つ</u>を出す</b>（市場調整版を併記。<b>素だけだと「高い」側へ systematic に誤る</b>——事前登録が「2009-2018は倍率拡大期なので素の自己分位は全員が高く出る＝この交絡を外すために必須」と市場調整版を名指しで要求しているのに、<u>表示だけがその交絡を外していなかった</u>。実測32社で素−市場調整の中央値 <b>+2.5ポイント</b>・<b>23社で素のほうが高い</b>〔最大 MA +35 / IDXX +29 / VRSK +24ポイント〕。色は<u>二つが同じ帯に入ったときだけ</u>付ける＝一致しない社を色で決め打ちしない。⚠市場調整の分母(S&amp;P500実績PER)は配信元が2026-03までしか無く<b>4ヶ月ぶん持ち越し</b>＝「基準の違う二つを割る」型の芽なので強く読まないこと。データは <code>out/hist_val_now.json</code>＝CIが <code>night/hist_valuation.py</code> を月次で回して配る。取れない銘柄は<b>「未取得」と理由つきで出す</b>——前回値やゼロで埋めない）。<b>これも合否には一切使わない</b>。<u>座標系としては新しい</u>——この台帳が測ってきた価格の線は全部<b>横断面</b>（他社と比べて高いか）で、横断面PERは「高い」と「質が高い」を分離できないが自己相対は会社固定効果を差し引く。<b>だが遮断器としては事前登録の6基準に一つも合格しなかった</b>（2026-08-09・<code>out/hist_valuation_prereg.json</code> を結果を見る前に固定して検定）：質実証プール66セルで<b>基準1〔止めた群の恒久毀損≥ベースの2.0倍かつ分子≥5社〕は 0/66</b>、<b>基準2〔勝者を巻き込まない〕は 54/66 で逆</b>（＝止めた側のほうが中央値が高い）、基準3は0件。自社史上いちばん高い五分位の実現は<u>3ビンテージとも最安五分位を下回らなかった</u>（2018年 Q1 7.6% → Q5 9.4%）。線を緩めても、事前登録の分子≥5を保つ限り0件（分子を3へ緩めて初めて 2015の<b>full</b>プールで1セル＝合否を決める quality からは0件）。<b>だから wire していない</b>——横断面PER(2013/2015)・fairPER倍率・E[r]に続き、<u>価格の線が質・堀の中で選別力を持たなかった4例目</u>として記録する。</div></details>投下可の城内合計 ${cityFill.toFixed(0)}%${cityFill<100?'（残りは押し目待ちの開通 or 網へ回す）':cityFill>100?'（>100%＝目標比で按分）':''}。${allFilled?'<b style="color:var(--jade)">投下可は全て目標充足＝今月の個別枠は網へ回す。</b>':''}</div>`;
+    html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px;color:var(--gold-bright)">🟢 投下可</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">四関門（Ω75+〔irr=85は別枠〕・堀70+・点検0件・事業の収縮なし）を通り、<b>席の上位${MAXN}社</b>に入った銘柄。買うのはここだけ。<details class="why"><summary>席の選び方——なぜ irr=85 を先に置くのか</summary><div class="why-body">四関門を通過し、かつ<b>irr=85優先→Ω順の上位${MAXN}社（半導体上限は v9.9.145 で撤去）＝ポートフォリオの枠内</b>（<b style="color:var(--gold-bright)">irr=85〔顧客側が再認定の費用を負う型〕を席の先頭へ</b>——歴史検証がこの台帳で唯一「効く」と出した変数がこれひとつだから。プール754件で P(継続) は 50:0.162 &lt; 70:0.366 &lt; <b>85:0.579</b>、2018年ビンテージは等加重 <b>+24.6%/年</b>（SPY 15.0%）。<u>E[r]を固定してもirr=85の効果は残るが、irrを固定するとE[r]の効果は消える</u>。<b>irr=100は入れない</b>——歴史では100が最下位（0.056/0.091）。<b style="color:var(--gold-bright)">（ユーザー明示指示「irr85は歴史的にみて今後も複利中央値が高いと見込めるものだけ特別にポートフォリオにいれたい」）で、その社自身の実現複利がハードル15%を割っていると判っている社から特権（別枠85・席の優先）を外した</b>——各行の<b>「実績 N.N%」</b>がその裏づけ（out/irr85_history.json＝night/irr85_mech_test.py が配る）。<u>絞る軸に「機構の型」を使わなかったのは実測の結果</u>: 型ごとの n は2〜8しかなく、しかも <b>CW がまったく同じ引用で 2013読解=D認定業者名簿 / 2015読解=C第三者が用途を認定 に割れた</b>（irr の刻み85自体は147社の追試で一度も揺れていないのに、下位ラベルは読み手で変わる）。<b>実績が追えない社（ASML=20-F／LOAR=2024年IPO／VRSK=コホートscreenが自己資本マイナスで落とした）は中立</b>——在庫の境界は道具の側の限界であって会社の性質ではないから。<u>取り上げるのは近道だけで、Ω75+の道は開いている</u>。実測: 今日は誰も動かない純粋なラチェット（下回るのは HXL 7.3% / ST −0.2% の2社で、どちらも財務キル nde&gt;4 で既に⛔）。重みを上げる案は判定圏でirrが変動係数6.6%の定数ゆえ実測で死んでいるので、採点ではなく席の順で拾う）。（2026-08-05ユーザー明示指示「上位10社を買い付け可にして」。第五の枠——四関門は資格・第五の枠は席数）。<b>★席の数は 2026-09-20 ユーザー明示指示「買付は5社に縛って」で 10→5</b>（v9.9.171。数字はコードの <code>CCF_SEATS</code> 一箇所で、Ⅵ・盤・score_all・予実snapは引数を省いて呼ぶ＝書き写さない）。<u>実測</u>: 投下可 10→<b>5社</b>（ASML CW LRCX RBC MSFT）・次点 2→<b>7社</b>（IDXX V HWM IRMD MCO BR RELX）。<b>Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3・上限8%は不変</b>——落ちた5社は資格を保ったまま次点へ移り、Ωが上がれば自動で戻る。サイズは<b>時価総額Tier（5段 8:6:4:3:2 を城の按分枠（50%−特別枠・v9.9.159で特別枠は0社）へ正規化）・上限8%</b>（<b>2026-08-14 ユーザー明示指示で等ウェイト→時価総額比→Tierへ</b>。<u>Ω・E[r]では傾けない</u>——Ωは配分の順位に寄与ゼロ〔全社一定にしても順位0/11箇所〕、E[r]は歴史でirr層内の効果が +1.2/−4.4/+1.5pt＝方向なし、そして従来の配分案の比較は「総合＝城%×加重E[r]」で採点しており現行案が定義上必ず勝つ循環だった。傾ける信号が無いので傾けない。**席の選定**は irr=85 を先に置き、残りをΩ順にした（E[r]項を外し・irr=85優先を追加）。実測: 上位10社は遮断器化以前の旧4条件の投下可10社と完全同一＝二つの道が同じ集合へ収束。11位以下は🔵次点として名指し表示——資格は保つのでΩが上がれば自動で昇格。旧の(Ω−70)按分・旧段差8/5/3の経緯はCLAUDE.md。銘柄別の厳密¼ケリーは✦門Xの計算機で検算し、下回るならその値を上限にmemoへ根拠を記録。自動連携はしない=主観勝率を機械に入れない）。</div></details><b style="color:var(--gold-bright)">目標%</b>＝総資産に対する目標ウェイト／<b style="color:var(--gold-bright)">今月%</b>＝今月の個別枠を「目標−現在保有%」の不足分で按分(B案②・合計100%。posはⅦ資産の実額から自動算出・無い銘柄のみ採点機の手入力)。<b>二序列の役割</b>: pc順位＝買う順（複数点灯時の優先）／gap按分＝金額。<br><details class="why"><summary>各行の「倍率 N.Nx」とは（合否には使わない）</summary><div class="why-body"><b style="color:#c98c3c">各行の「倍率 N.Nx」は 現PER÷fairPER</b>（fairPER=clamp(8+成長,16,30)）。<b>合否には一切使わない</b>——歴史検証(night/retro_price_tail.py・3ビンテージ)では<u>質・堀を通った社の中では高倍率が中央値を下げない</u>（3倍超で 10.1% vs 通過 7.1%・15%+ 27% vs 18%／2013年 PER&gt;50 で 9.1% vs 8.3%／2015年 PER&gt;40 で 9.5% vs 7.5%）。一貫して悪いのは恒久毀損だけで、質実証プールでの分子は<b>1社</b>＝規約にするには薄い。また門の記録の非対称——<u>3割高づかみの20年コスト年−1.3% vs 買い逃し年−19%</u>——も押し目待ちに不利。<b>だから止めない。代わりに階段指値の深段（fair線）を出す</b>ので、成行で買うか階段で入るかは君の判断。</div></details><details class="why"><summary>各行の「自己相対 上位M%」とは（合否には使わない）</summary><div class="why-body"><b style="color:#c98c3c">各行の「自己相対 過去N年で上位M%（市場調整 上位M'%）」は 現PERが<u>その銘柄自身の</u>過去のPER分布の何%タイルか——<u>素と市場調整の二つ</u>を出す</b>（市場調整版を併記。<b>素だけだと「高い」側へ systematic に誤る</b>——事前登録が「2009-2018は倍率拡大期なので素の自己分位は全員が高く出る＝この交絡を外すために必須」と市場調整版を名指しで要求しているのに、<u>表示だけがその交絡を外していなかった</u>。実測32社で素−市場調整の中央値 <b>+2.5ポイント</b>・<b>23社で素のほうが高い</b>〔最大 MA +35 / IDXX +29 / VRSK +24ポイント〕。色は<u>二つが同じ帯に入ったときだけ</u>付ける＝一致しない社を色で決め打ちしない。⚠市場調整の分母(S&amp;P500実績PER)は配信元が2026-03までしか無く<b>4ヶ月ぶん持ち越し</b>＝「基準の違う二つを割る」型の芽なので強く読まないこと。データは <code>out/hist_val_now.json</code>＝CIが <code>night/hist_valuation.py</code> を月次で回して配る。取れない銘柄は<b>「未取得」と理由つきで出す</b>——前回値やゼロで埋めない）。<b>これも合否には一切使わない</b>。<u>座標系としては新しい</u>——この台帳が測ってきた価格の線は全部<b>横断面</b>（他社と比べて高いか）で、横断面PERは「高い」と「質が高い」を分離できないが自己相対は会社固定効果を差し引く。<b>だが遮断器としては事前登録の6基準に一つも合格しなかった</b>（2026-08-09・<code>out/hist_valuation_prereg.json</code> を結果を見る前に固定して検定）：質実証プール66セルで<b>基準1〔止めた群の恒久毀損≥ベースの2.0倍かつ分子≥5社〕は 0/66</b>、<b>基準2〔勝者を巻き込まない〕は 54/66 で逆</b>（＝止めた側のほうが中央値が高い）、基準3は0件。自社史上いちばん高い五分位の実現は<u>3ビンテージとも最安五分位を下回らなかった</u>（2018年 Q1 7.6% → Q5 9.4%）。線を緩めても、事前登録の分子≥5を保つ限り0件（分子を3へ緩めて初めて 2015の<b>full</b>プールで1セル＝合否を決める quality からは0件）。<b>だから wire していない</b>——横断面PER(2013/2015)・fairPER倍率・E[r]に続き、<u>価格の線が質・堀の中で選別力を持たなかった4例目</u>として記録する。</div></details>投下可の城内合計 ${cityFill.toFixed(0)}%${cityFill<100?'（残りは押し目待ちの開通 or 網へ回す）':cityFill>100?'（>100%＝目標比で按分）':''}。${allFilled?'<b style="color:var(--jade)">投下可は全て目標充足＝今月の個別枠は網へ回す。</b>':''}</div>`;
     html+=passIn.map((r,i)=>brow(r,i,'',`${f85Tag(r)}${histTag(r)}${objTag(r)}${scopeTag(r)}${govTag(r)}${allocTag(r)}${priceTag(r)}${hvTag(r)}<span style="font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:8px">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span>${ulys(r)}`)).join('');
   }
   // ◈ 網（ETF）——v9.9.160・2026-08-20 ユーザー指示「買付順位にETFもいれて」
@@ -7327,6 +7346,9 @@ try{ // 既定は隠す。明示的に「出す」を選んだ端末だけ出す
 function showPage(n){for(let i=1;i<=12;i++){const p=document.getElementById('pg'+i),t=document.getElementById('tab'+i);if(p)p.className='pg'+(i===n?' on':'');if(t)t.className=(i===n?'on':'');}if(n===4&&typeof renderLog==='function')renderLog();if(n===5&&typeof renderPlan==='function')renderPlan();if(n===8&&typeof ccfRenderQueueInto==='function')ccfRenderQueueInto('queueShelf_fetch','untaken');if(n===7&&typeof pfShow==='function')pfShow();if(n===6&&typeof ccfDash==='function')ccfDash();if(n===9&&typeof ccfEvents==='function')ccfEvents();if(n===10&&typeof ccfToday==='function')ccfToday();if(n===11&&typeof ccfCheck==='function')ccfCheck();if(n===12&&typeof ccfPerf==='function')ccfPerf();window.scrollTo({top:0});try{const _t=document.getElementById('tab'+n);if(_t&&_t.scrollIntoView)_t.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});}catch(e){}if(typeof ccfNavFade==='function')ccfNavFade();
   /* 五彩(v9.9.130): 章の色をナビへ渡し、描き直された箱にも色を配る */
   if(typeof ccfChapTint==='function')ccfChapTint(n);
+  /* v9.9.171: 章を選んだら「⋯」は畳み直す（開きっぱなしにしない）。
+     ⋯ の中の章を選んだときは ccfNavFold が ⋯ のラベルをその章名にして on を付ける。 */
+  if(typeof ccfNavFold==='function')ccfNavFold(false);
   if(typeof ccfPaint==='function')ccfPaint(document.getElementById('pg'+n));}
 // ── 五彩（v9.9.130）: 箱ごとに伝統色を配る＋章の色をナビへ渡す。表示だけ・採点に不介入 ──
 //   nth-of-type は *div の並び順* を数えるので `.lens` だけを巡れず割り当てが崩れる
@@ -7361,7 +7383,28 @@ function ccfNavFit(){try{
   else { r.setProperty('--navh',h+'px'); r.removeProperty('--navbh'); }
 }catch(e){}}
 function ccfNavFade(){ccfNavFit();const n=document.querySelector('.pgnav');if(!n)return;const more=n.scrollWidth-n.clientWidth-n.scrollLeft>4;const back=n.scrollLeft>4;n.classList.toggle('has-more',more);n.classList.toggle('has-back',back);}
+/* ── タブの折り畳み（v9.9.171・2026-09-20 ユーザー指示「下のタブが多すぎる」）─────────────
+   毎日押す5本（📋今日/📊盤/Ⅵ買付/Ⅶ保有/📈成績）だけを出し、残り7本は「⋯ ほか」の中へ。
+   ⚠**消していない**——一押しで全部出る。実測(2026-09-20 変更前): 携帯360/390/430pxで**2段102px**。
+   ★畳んだまま「⋯ の中」の章を開いているときは、**⋯ 自身がその章名になり on が付く**
+     ——でないと『今どこに居るか』が画面から消える（v9.9.52 の裏返し＝黙って消さない）。
+   ★開いているあいだ ⋯ は「✕ 閉じる」になる（同じボタンが開閉の両方を指すと押し先が読めない）。 */
+function ccfNavFold(open){try{
+  const n=document.querySelector('.pgnav'); if(!n)return;
+  n.classList.toggle('folded',!open);
+  const m=document.getElementById('navMore'); if(m){
+    const cur=n.querySelector('button[data-more].on');
+    m.textContent=open?'✕ 閉じる':(cur?('⋯ '+(cur.dataset.short||cur.textContent.trim())):'⋯ ほか');
+    m.className=(!open&&cur)?'on':'';
+    m.setAttribute('aria-expanded',open?'true':'false');
+  }
+  if(typeof ccfNavFade==='function')ccfNavFade();
+}catch(e){}}
+function ccfNavMore(){const n=document.querySelector('.pgnav');ccfNavFold(!!(n&&n.classList.contains('folded')));}
 try{const _n=document.querySelector('.pgnav');if(_n){_n.addEventListener('scroll',ccfNavFade,{passive:true});window.addEventListener('resize',ccfNavFade);ccfNavFade();}}catch(e){}
+/* v9.9.171: 起動時にも一度そろえる——**既定タブは showPage() を通らない**ので
+   （v9.9.140 で📋今日が初回に白紙だったのと同じ経路）、ここで ⋯ のラベルと on を確定させる。 */
+try{ccfNavFold(false);}catch(e){}
 /* 五彩(v9.9.130): 起動時に一度配る＋開いている章の色をナビへ */
 try{ccfPaint();const _on=document.querySelector('.pg.on');if(_on)ccfChapTint(_on.id.replace('pg',''));}catch(e){}
 // ===== Ⅶ資産 iframe を「1枚のページ」として表示：中身(portfolio.html)が自分の高さをpostMessageで通知し、iframeをフィットさせて内部スクロールバーを消す =====
