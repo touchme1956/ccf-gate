@@ -96,7 +96,7 @@ def snap(all_names=False, force=False):
     js = r"""
 const fs=require('fs'),path=require('path');
 const ROOT=process.argv[2], ALL=process.argv[3]==='1';
-const {scorePack}=require(ROOT+'/night/score_all.js');
+const {scorePack,lastCoerce,buyGate}=require(ROOT+'/night/score_all.js');
 const out=[];
 for(const f of fs.readdirSync(ROOT+'/out')){
   if(!f.endsWith('_gate_pack.json'))continue;
@@ -104,17 +104,36 @@ for(const f of fs.readdirSync(ROOT+'/out')){
   let d; try{d=JSON.parse(fs.readFileSync(ROOT+'/out/'+f,'utf8'));}catch{continue;}
   let r; try{r=scorePack(d);}catch{continue;}
   const s=parseFloat(r.evalScore); if(!isFinite(s)||s<=0)continue;
-  if(!ALL&&s<75)continue;
+  const coerce=lastCoerce();
+  // ⚠2026-09-19: **Ω75未満で切ると 別枠85(v9.9.119) の社が観測から構造的に落ちる**。
+  //   実測: RBC は Ω60.1 で irr=85 の別枠で席に入っている🟢投下可なのに、
+  //   この行のせいで 2026-08-03 の初回スナップから一度も観測されていなかった。
+  let f85={};try{f85=ccfIrr85Frame(d,r)||{};}catch{}
+  if(!ALL&&s<75&&f85.pass!==true)continue;
   let x={},mg={};
   try{x=ccfXJudge(d,s)||{};}catch{}
   try{mg=ccfMoatGate(r,d)||{};}catch{}
+  // 第四の関門の材料（score_all.js:300 と同じ作り方）——buyGate へ渡す**引数**であって判定ではない。
+  let audE=0,audU=0;
+  try{const M=d._meta||{};
+    for(const w of (ccfAudit(d,r,coerce)||[])){
+      if(w.lv==='err')audE++;
+      else if(w.lv==='warn'&&!((M.evidence||{})[w.k]||(M.nulls||{})[w.k]))audU++;}
+  }catch{}
   out.push({t,omega:+s.toFixed(1),tier:r.tierShort,
     er:x.xEr==null?null:+x.xEr.toFixed(2), xPass:x.xPass===true,
     g:x.g==null?null:+x.g.toFixed(2), shy:x.shy==null?null:+x.shy,
     gcap:x.gcap==null?null:+x.gcap.toFixed(2), gcapSrc:x.gcapSrc||null,
-    per:d.per==null?null:+d.per, px:d.px==null?null:+d.px,
+    per:d.per==null?null:+d.per, px:d.px==null?null:+d.px, irr:d.irr==null?null:+d.irr,
     moat:mg.idx==null?null:+mg.idx.toFixed(1), moatOK:!!mg.pass,
-    buy:s>=75&&x.xPass===true&&mg.pass===true,
+    // ⚠2026-09-19: ここは **門の buyGate をそのまま呼ぶ**（v9.9.65: 判定式を書き写さない）。
+    //   それまで `s>=75 && xPass && moat` と**書き写して**いた＝v9.9.98で門X(E[r])が
+    //   合否から外れた 2026-08-07 の改定を受け取っておらず、別枠85・データ健全・
+    //   事業の収縮・期末後/未完了の重大事象・納品検査FAIL のどれも見ていなかった。
+    //   実害: 2026-09-19 の観測が **BR/VRSK を投下可・CW/RBC を非投下可**と
+    //   4社ぶん逆に封じた（score_all は MSFT IDXX V ASML CW LRCX HWM IRMD MCO RBC）。
+    //   ラベルは**後から計算し直せない**（だから封じている）ので、誤りは永久に残る。
+    buy:buyGate(t,d,s,mg,audE,audU,r),
     // 2026-08-04: 売却規律S1/S2/S3の予実も封じる——買いの検証(E[r])は始まったのに売りの検証はゼロだった。
     //   歴史検証の答え(掟三=勝者を売らないが右裾の源泉)に照らすと、S1/S2の誤発火は20年で最も高くつく誤り型。
     //   月次でexitを記録しておけば「s1が立った銘柄のその後」を将来突合できる(divYと同じ発想=後から取れない記録)
@@ -125,7 +144,10 @@ for(const f of fs.readdirSync(ROOT+'/out')){
 // quali=四段側の資格 / buy=枠内。観測の意味変化は er_ledger の basis_changes に記録済み
 if(typeof ccfAllocTop==='function'){
   const four=out.filter(o=>o.buy);
-  const sel=ccfAllocTop(four.map(o=>({t:o.t,s:o.omega,xEr:o.er})),10);
+  // ⚠2026-09-19: **irr を渡していなかったので席の優先(v9.9.100)が効いていなかった。**
+  //   ccfAllocTop の mech() は `+c.irr===85` を読む。渡さないと別枠85の社は
+  //   Ω順の最後尾へ落ち、実測で **RBC(Ω60.1・irr=85・🟢投下可) が BR に押し出されていた**。
+  const sel=ccfAllocTop(four.map(o=>({t:o.t,s:o.omega,xEr:o.er,irr:o.irr})),10);
   out.forEach(o=>{o.quali=o.buy; if(o.buy)o.buy=sel.has(o.t);});
 }
 console.log(JSON.stringify(out));

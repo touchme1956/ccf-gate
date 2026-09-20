@@ -306,11 +306,20 @@ FEATS = ["agr1", "agr5", "noa_r", "lease_r", "leasex", "sbc_r", "age_pp", "gwimp
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--asof", type=int, default=2018)
+    # 母集団とCIK表の選び方は retro_features2.py と**同じ**にした（2026-09-20・既定は従来どおり）。
+    # 理由: 2015 は retro_returns_2015.json が164社の抽出で、実際の母集団は
+    # retro_returns_2015_q.json の506社（164 ⊂ 506）。かつ**101社が cohort_2013 に無い**。
+    ap.add_argument("--returns", default=None,
+                    help="母集団に使う out/retro_returns_*.json（省略時 retro_returns_{asof}.json）")
     args = ap.parse_args()
     deadline = f"{args.asof}-07-01"
-    rets = json.load(open(os.path.join(BASE, "out", f"retro_returns_{args.asof}.json")))
+    rname = args.returns or f"retro_returns_{args.asof}.json"
+    rets = json.load(open(os.path.join(BASE, "out", rname)))
     tickers = sorted({r["ticker"] for r in rets["rows"] if r.get("ticker")})
-    cohort = json.load(open(os.path.join(BASE, "out", "retro_cohort_2013.json")))
+    cname = f"retro_cohort_{args.asof}.json"
+    if not os.path.exists(os.path.join(BASE, "out", cname)):
+        cname = "retro_cohort_2013.json"
+    cohort = json.load(open(os.path.join(BASE, "out", cname)))
     t2cik = {r["ticker"]: r["cik"] for r in cohort["rows"] if r.get("ticker")}
     z = zipfile.ZipFile(os.path.join(BASE, "companyfacts.zip"))
     have = set(z.namelist())
@@ -335,6 +344,7 @@ def main():
     out = {"generated": datetime.date.today().isoformat(), "asof": args.asof, "deadline": deadline,
            "note": "night/retro_features2.py の作法を import して再利用（look-ahead は filed<=deadline・"
                    "インスタントは各年のFY末日±10日・CF活動は三値読み）。判定はしない採取器。",
+           "universe_file": rname, "cohort_file": cname,
            "n": len(rows), "n_missing_cik": len(miss), "coverage": cov, "rows": rows}
     p = os.path.join(BASE, "out", f"retro_fund2_{args.asof}.json")
     json.dump(out, open(p, "w"), ensure_ascii=False)

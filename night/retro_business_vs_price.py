@@ -26,6 +26,7 @@
 # 出力: out/retro_business_vs_price.json
 # 実行: python3 night/retro_business_vs_price.py [--json]
 
+import datetime
 import json
 import math
 import os
@@ -240,7 +241,15 @@ def halves():
 
 def main():
     as_json = "--json" in sys.argv
-    out = {"generated": "2026-08-12",
+    # ⚠ 生成日は**実行時**に採る（2026-09-20是正）。初版は "2026-08-12" を焼き付けており、
+    #   回し直すと「2026-08-12に測った」と名乗り続けた（`check_frozen_dates` の錨は左辺の
+    #   変数名だけなので**辞書リテラルの固定日は鳴らない**＝todo frozen_date_dict_literal の族）。
+    #   ⚠ 2026-09-20 の再実行は **2015アンカーの指標が8本→43本へ増えた後**のもの＝
+    #   初版（features2_2015 / fund2_2015 が在庫に無く co.* だけだった8本）とは別の測定。
+    out = {"generated": datetime.date.today().isoformat(),
+           "prior_run": {"generated": "2026-08-12",
+                         "what": "2015は features2_2015 / fund2_2015 が在庫に無く co.* の8指標だけ"
+                                 "（族p 0.175 はその8本に対する値）"},
            "note": "同じ指標で『事業の未来』と『株価の未来』を当て比べる。判定はしない",
            "method": "Spearman順位相関（tie平均）。多重検定は会社の並びを1回入れ替える置換で族全体を裁く",
            "anchors": {}}

@@ -44,6 +44,7 @@
 import datetime
 import glob
 import json
+import re
 import os
 import sys
 
@@ -150,6 +151,82 @@ def scope_of(m):
     return None
 
 
+# ★★ 後から出た反証を読む（2026-09-19新設）
+#   これが無かったせいで **CW / BWXT が「✓検証済」と出ていた**——どちらも二重読み(08-05/08-06)の**後**に
+#   `night/irr85_scope_life.py` が射程を revised と判定している（mech.measured 2026-08-11）。
+#   ＝この道具は**日付と字数しか見ておらず、同じ欄について後で出た反証を一つも読まなかった**。
+#   ⚠ 二重読みの日付が反証より**後**なら、読み手はそれを見たうえで判断している（HXL/MKSI/NOVT）ので
+#     「未検証」には落とさない。**それでも印は必ず出す**——✓ が単独で立つと
+#     「反証は存在しない」と読まれる（`irr85_mech_diff` が『在っても安全ではない』と書く片側性と同じ話）。
+SCOPE_BAD = ("refuted", "revised")
+
+
+def mech_objection(m):
+    """_meta.mech の verified を読み、後から出た反証を返す。判定はしない（表示と作業リストだけ）。"""
+    mm = m.get("mech") or {}
+    v = str(mm.get("verified") or "")
+    if not v:
+        return None
+    bad = [seg.strip() for seg in re.split(r"[／/]", v)
+           if any(k in seg for k in SCOPE_BAD)]
+    if not bad:
+        return None
+    return {"verified": v, "bad": bad, "measured": mm.get("measured") or None,
+            # ★verify_note の打ち切りも同じ場所で名指しする（2026-09-19）
+            #   実測: **3006字ちょうどが8社**で末尾が全部『…〔以下略〕』＝上限の署名
+            #   （残る6社は2311〜2912字で文として終わる）。打ち切られるのは末尾の
+            #   「潰せなかったもの（試したこと）」の節なので、**反証の一覧が読めない**。
+            #   ⚠ 本文は書き込み時に失われており repo からは復元できない＝再検証しか手が無い。
+            "note_truncated": str(mm.get("verify_note") or "").rstrip().endswith("〔以下略〕")}
+
+
+def cut_tail(note):
+    """★打ち切られた記録の「どこで切れたか」を返す（2026-09-20新設・表示だけ）。
+    それまでは ✂ の印だけで、**何が読めていないのかが判らなかった**。
+    実測: 切れるのは末尾で、その多くが **節の見出しの直後**——
+      KRMN 『【主張が拾い漏らした反証材料2件（報告のみ…』＝見出しだけで中身ゼロ／
+      LRCX 『【revised に足りない軽微な瑕疵2件】(a)…』＝(a)が引用の途中で切れ (b)は全損／
+      WST  『【攻撃5: 語彙の読み替え…】→ 実在の弱点だが**主張…』。
+    ⇒ **切れた節の見出しと言いかけの断片を出す**と「どこから再開するか」が判る。
+    ⚠ これは復元ではない。本文は書き込み時に失われており repo からは取れない
+      （在庫 `out/irr85_scope_life.json` の写しも**同じ3006字で同一に切れている**＝実測15/15一致）。
+    ⚠ 3006 = 本文3000字 + 『…〔以下略〕』6字＝**上限3000の署名**（実測で9社が3006字ちょうど）。"""
+    v = str(note or "")
+    if not v.rstrip().endswith("〔以下略〕"):
+        return None
+    body = v[:-6]
+    i = body.rfind("【")
+    head = body[i:i + 40] if i >= 0 else ""
+    # 言いかけの断片＝最後の句点/区切りより後ろ
+    k = max(body.rfind("。"), body.rfind("／"))
+    frag = body[k + 1:] if k >= 0 else body[-120:]
+    return {"len": len(v), "last_head": head, "frag": frag[-160:],
+            "head_only": bool(head) and i >= 0 and len(body) - i <= 60}
+
+
+def trunc_all(S, rung):
+    """★打ち切りの点呼は**刻みで絞らない**（2026-09-20是正・実測で穴を踏んだ）。
+    `_meta.mech` は刻みが動いても残るのに、この道具は `irr==rung` の社しか見ないので、
+    **ASML を 85→70 へ是正した瞬間、その打ち切られた記録が一覧から消えた**
+    （実測: 私の直接計測は9社・この道具は8社。消えたのは **🟢投下可の ASML**）。
+    ＝「85を検証した記録は70を検証した記録ではない」の**逆向き**の穴で、
+      刻みが下がると mech の記録とその打ち切りが見えなくなる。
+    ⇒ mech を持つ社は刻みに関係なく数え、**今の刻みが rung でない社はそう明示する**。"""
+    out = []
+    for t, d in packs():
+        mm = (d.get("_meta") or {}).get("mech") or {}
+        if not isinstance(mm, dict):
+            continue
+        cut = cut_tail(mm.get("verify_note"))
+        if not cut:
+            continue
+        dd = d.get("data") or d
+        st = S.get(t, {})
+        out.append({"t": t, "irr": dd.get("irr"), "off_rung": str(dd.get("irr")) != rung,
+                    "buy": st.get("buy"), "omega": st.get("s"), **cut})
+    return sorted(out, key=lambda x: (0 if x["buy"] else 1, -(x["omega"] or 0)))
+
+
 def days_since(iso):
     try:
         y, mo, dd = (int(x) for x in str(iso)[:10].split("-"))
@@ -189,16 +266,39 @@ def main():
         ver = m.get("irr85_verify") or []
         if isinstance(ver, dict):
             ver = [ver]
-        duals = [v for v in ver if isinstance(v, dict) and v.get("kind") == "二重読み"]
+        duals_all = [v for v in ver if isinstance(v, dict) and v.get("kind") == "二重読み"]
+        # ★★刻みが動いた後の二重読みだけを数える（2026-09-19新設）
+        #   これが無いと **刻みを変えた社が「✓検証済」に見える**。実測で踏んだ——
+        #   ASML は 2026-09-19 に irr 85→70 へ是正したのに、2026-08-05 の「85の二重読み」が残っているため
+        #   irr=70 の一覧で ✓ と出た。**85を検証した記録は、70を検証した記録ではない。**
+        #   ⚠ 是正の日は `verdict` から読む（是正／変更／撤回／引き上げ／引き下げ）。
+        #     刻みを動かした読み手自身の記録は「一度目」なので、二重読みとしては数えない。
+        chg = max((str(v.get("date") or "") for v in ver
+                   if isinstance(v, dict)
+                   and any(k in str(v.get("verdict") or "")
+                           for k in ("是正", "変更", "撤回", "引き上げ", "引き下げ"))), default="")
+        duals = [v for v in duals_all if str(v.get("date") or "")[:10] >= (chg[:10] or "0000-00-00")]
         latest = max((v.get("date") or "" for v in duals), default=None) or None
         age = days_since(latest) if latest else None
         held = [v for v in duals if str(v.get("verdict") or "").startswith("据置(留保")]
         st = S.get(t, {})
+        obj = mech_objection(m)
+        # ★反証が**その後の検証より新しい**なら、その✓は中身として古い＝作業リストへ戻す。
+        #   ⚠比べる相手は「二重読み(kind=='二重読み')の日付」ではなく**irr85_verify の全記録の最新**。
+        #     kind は「二重読み」以外もある（実測: 2026-09-19 ASML『原本の実読（三度目）』）ので、
+        #     二重読みだけで比べると**反証に答えた記録があるのに永久に鳴り続ける**。
+        #   ⚠さらに `_meta.mech` は **irr=85 の射程の記録**なので、刻みが85でない社に当てない
+        #     （85→70 へ動いた社は、その反証が是正の理由そのもの＝もう作業ではない）。
+        _anyv = max((v.get("date") or "" for v in ver if isinstance(v, dict)), default="")
+        obj_newer = bool(rung == "85" and obj and obj.get("measured")
+                         and str(obj["measured"])[:10] > (str(_anyv)[:10] or "0000-00-00"))
         state = ("未検証" if not duals
-                 else ("検証が古い" if (age is not None and age > STALE_DAYS) else "✓検証済"))
+                 else ("検証が古い" if (age is not None and age > STALE_DAYS)
+                       else ("反証が後" if obj_newer else "✓検証済")))
         rows.append({
             "ticker": t, "state": state, "last_dual": latest, "age_days": age,
-            "n_dual": len(duals), "reserved": bool(held),
+            "n_dual": len(duals), "n_dual_all": len(duals_all),
+            "rung_changed": chg or None, "reserved": bool(held),
             "omega": st.get("s"), "moat": st.get("moat"), "buy": st.get("buy"),
             "in_band": (st.get("s") or 0) >= 72,
             "evidence_len": len((m.get("evidence") or {}).get("irr") or ""),
@@ -208,6 +308,10 @@ def main():
             #   ⚠ **線は引かない**——射程と本人の実現複利の順位相関は ρ=−0.143(n=6) で、
             #   最も狭い CW(12.3%) が2番目に良い。狭いことは欠陥の証拠ではなく、**読むときに確かめる点**。
             "scope": scope_of(m.get("mech") or {}),
+            "objection": obj, "objection_newer": obj_newer,
+            "note_truncated": bool(obj and obj.get("note_truncated")) or
+                              str(((m.get("mech") or {}).get("verify_note")) or "").rstrip().endswith("〔以下略〕"),
+            "cut": cut_tail(((m.get("mech") or {}).get("verify_note"))),
             "verify": ver,
         })
 
@@ -222,9 +326,21 @@ def main():
         "stale_days": STALE_DAYS,
         "n_irr85": len(rows), "n_todo": len(todo),
         "n_reserved": sum(1 for r in rows if r["reserved"]),
+        "n_objection": sum(1 for r in rows if r["objection"] and rung == "85"),
+        "n_objection_newer": sum(1 for r in rows if r["objection_newer"]),
+        # ⚠ 件数は **truncated（刻みで絞らない点呼）** から採る。rows から数えると
+        #   刻みが動いた社（ASML）が落ちて **同じ報告の中で 8社 と 9社 が並ぶ**（v9.9.65の破れ）。
+        "n_note_truncated": None,  # ← 下で truncated の長さを入れる
+        "n_note_truncated_in_rung": sum(1 for r in rows if r["note_truncated"]),
+        # ★打ち切りの優先順を**買付に効くかで**分ける（2026-09-20）。
+        #   実測: 切れている9社のうち **投下可は ASML/CW/LRCX/RBC の4社**で、
+        #   **中身が丸ごと不明なのは KRMN(Ω15.3) と WST(Ω47.9)＝どちらも⛔**。
+        #   ⇒ 「9社で結論の一部を見ていない」は正しいが、**買付に効く形で見ていないのは1社**（LRCX）。
+        "truncated": trunc_all(S, rung),
         "todo": todo,
         "rows": sorted(rows, key=rank),
     }
+    out["n_note_truncated"] = len(out["truncated"])
     json.dump(out, open(os.path.join(OUT, "irr85_dual.json" if rung == "85" else f"irr{rung}_dual.json"), "w"),
               ensure_ascii=False, indent=1)
 
@@ -234,15 +350,44 @@ def main():
     print(f"=== irr={rung} の二重読み（{out['generated']}）"
           + ("・買付圏(投下可+次点)のみ" if BAND is not None else "") + " ===")
     print(f"  対象 {out['n_irr85']}社 ／ **未検証・要再検証 {out['n_todo']}社** ／ 留保つき {out['n_reserved']}社")
-    print(f"  ⚠ これは作業リストであって関門ではない（未検証は欠陥ではなく工程の途中）\n")
+    print(f"  ⚠ これは作業リストであって関門ではない（未検証は欠陥ではなく工程の途中）")
+    if out["n_objection"]:
+        print(f"  ⚠ **後から出た射程の反証あり {out['n_objection']}社**"
+              f"（うち二重読みより後に出た＝✓が中身として古い {out['n_objection_newer']}社）"
+              f"／検証記録が3006字で打ち切られている {out['n_note_truncated']}社"
+              + (f"（うち今の刻みが irr={rung} なのは {out['n_note_truncated_in_rung']}社"
+                 f"——残りは刻みが動いた後も mech の記録が残っている社）"
+                 if out['n_note_truncated'] != out['n_note_truncated_in_rung'] else ""))
+    print()
     print(f"  {'銘柄':<7}{'状態':<7}{'Ω':>6} {'堀':>5}  {'最終の二重読み':<12}{'根拠':>5}  {'射程':<12}印")
     for r in (out["rows"] if show_all else todo + [x for x in out["rows"] if x["state"] == "✓検証済"]):
         mark = ("🟢投下可" if r["buy"] else ("・判定圏" if r["in_band"] else ""))
         if r["reserved"]:
             mark += " ⚠留保つき"
+        if r["objection"] and out["rung"] == "85":
+            mark += " ⚠射程" + "/".join(x.split("=")[-1] for x in r["objection"]["bad"])
+        if r["note_truncated"]:
+            mark += " ✂検証記録が打ち切られている"
         last = r["last_dual"] or "—"
         print(f"  {r['ticker']:<7}{r['state']:<7}{(r['omega'] or 0):>6.1f} {(r['moat'] or 0):>5.1f}  "
               f"{last:<12}{r['evidence_len']:>5}字  {(r['scope'] or '未取得'):<12}{mark}")
+    if out["truncated"]:
+        print(f"\n  【✂ 検証記録が打ち切られている {len(out['truncated'])}社——どこで切れたか】")
+        print("   ⚠ 本文は書き込み時に失われており **repo からは復元できない**"
+              "（在庫の写しも同じ3006字で同一に切れている＝実測15/15一致）。再検証しか手が無い。")
+        print("   ⚠ 3006字 = 本文3000 + 『…〔以下略〕』6 ＝**上限3000の署名**。次に書く人はここを超えないこと。")
+        print("   ⚠ **一律に『復元できない』ではない**——CW の切れた走査は同じ在庫の `mech.life_basis` /"
+              " `life_null_why` に同じ内容が残っており、原本を取り直した独立な走査がそれを再現した(2026-09-20)。")
+        print("   ⚠ `verified`(confirmed/revised/refuted) は切れる前に確定している。切れているのは"
+              "**結論に至った後の記述**か、**節自身が『revise に至らない／報告のみ・数値は動かない』と宣言した部分**"
+              "（実測: KRMN の見出しがまさにそう書いている）。**WST の攻撃5だけは中身が判らない**。")
+        for r in sorted(out["truncated"], key=lambda x: (0 if x["buy"] else 1, -(x["omega"] or 0))):
+            tag = "🟢投下可" if r["buy"] else "⛔"
+            off = f" ⚠今の刻みは irr={r['irr']}（mech は刻みが動く前の記録）" if r.get("off_rung") else ""
+            hd = r.get("last_head") or "（節の見出しなし）"
+            print(f"   {r['t']:<6}{tag:<8}{'★見出しだけで中身ゼロ ' if r.get('head_only') else ''}"
+                  f"最後の節: {hd}{off}")
+            print(f"          言いかけ: …{r.get('frag') or ''}")
     if todo:
         ck = CHECKS.get(rung, CHECKS["85"])
         print(f"\n  【二重読みの検問（審査プロトコルと同じ{len(ck)}点）】")

@@ -313,12 +313,25 @@ FEATS = ["gm", "sga_r", "capex_r", "aturn", "accr", "streak_rev", "streak_opm", 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--asof", type=int, default=2018)
+    # 母集団のファイル名を明示できるようにした（2026-09-20・既定は従来どおり）。
+    # 2015だけ retro_returns_2015.json が164社の抽出で、実際に読解された母集団は
+    # retro_returns_2015_q.json の506社（164 ⊂ 506）。既定のまま回すと342社が落ちる。
+    ap.add_argument("--returns", default=None,
+                    help="母集団に使う out/retro_returns_*.json（省略時 retro_returns_{asof}.json）")
     args = ap.parse_args()
     deadline = f"{args.asof}-07-01"
 
-    rets = json.load(open(os.path.join(BASE, "out", f"retro_returns_{args.asof}.json")))
+    rname = args.returns or f"retro_returns_{args.asof}.json"
+    rets = json.load(open(os.path.join(BASE, "out", rname)))
     tickers = sorted({r["ticker"] for r in rets["rows"] if r.get("ticker")})
-    cohort = json.load(open(os.path.join(BASE, "out", "retro_cohort_2013.json")))
+    # CIK表は **asofと同じビンテージのcohort**を優先する（無ければ従来どおり2013へ）。
+    # 実測: 2015の母集団506社のうち **101社が cohort_2013 に無い**ので、2013表だけだと
+    # その101社は cik無しで黙って落ちる（＝ここで測れるのに測らない形になる・ルール7）。
+    # 両cohortにある社のCIKは **食い違い0件**（実測）なので、優先しても基準は割れない。
+    cname = f"retro_cohort_{args.asof}.json"
+    if not os.path.exists(os.path.join(BASE, "out", cname)):
+        cname = "retro_cohort_2013.json"
+    cohort = json.load(open(os.path.join(BASE, "out", cname)))
     t2cik = {r["ticker"]: r["cik"] for r in cohort["rows"] if r.get("ticker")}
 
     z = zipfile.ZipFile(os.path.join(BASE, "companyfacts.zip"))
@@ -356,7 +369,8 @@ def main():
             "SalesRevenueNet 2,582M。構成要素は総額を超えない）。gmのCOGSは総額タグ優先・無ければ"
             "Goods+Servicesの和（片方だけ報告の社は過大の可能性＝注意）。")
     out = {"generated": datetime.date.today().isoformat(), "asof": args.asof,
-           "deadline": deadline, "note": note, "n": len(rows), "rows": rows}
+           "deadline": deadline, "universe_file": rname, "cohort_file": cname,
+           "note": note, "n": len(rows), "rows": rows}
     path = os.path.join(BASE, "out", f"retro_features2_{args.asof}.json")
     json.dump(out, open(path, "w"), ensure_ascii=False, indent=1)
     got = {k: sum(1 for r in rows if k in r) for k in FEATS}

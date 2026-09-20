@@ -193,8 +193,14 @@ def main():
     _dual = jload("out/irr85_dual.json")
     for v in (_dual.get("todo") or []):
         w = 48 if v.get("buy") else (40 if v.get("in_band") else 30)
+        # ★2026-09-19: state に「反証が後」が入った（二重読みの**後**に irr85_scope_life が
+        #   射程を refuted/revised と判定した社）。**「未了」と呼ぶと嘘になる**——読まれてはいる。
+        #   読まれた後に反証が出た、が正しい。実測で CW(🟢投下可) と BWXT が該当。
+        _st = str(v.get("state") or "")
+        _head = ("irr=85 の二重読みの**後に射程の反証が出た**" if _st == "反証が後"
+                 else "irr=85 の二重読みが未了")
         add(v.get("ticker"), w,
-            f"irr=85 の二重読みが未了（{v.get('state')}・根拠{v.get('evidence_len')}字"
+            f"{_head}（{_st}・根拠{v.get('evidence_len')}字"
             + ("・🟢投下可" if v.get("buy") else ("・判定圏" if v.get("in_band") else "") ) + "）")
     # 4-c2. **irr=70 の二重読みが未了**（2026-08-19追加・買付圏だけ）
     #   ★85と70では費用の出方がまったく違う。実測(shadow_irr_step):

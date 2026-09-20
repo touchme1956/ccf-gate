@@ -4,8 +4,8 @@
  "buy": [
   "MSFT",
   "IDXX",
-  "ASML",
   "V",
+  "ASML",
   "CW",
   "LRCX",
   "HWM",
@@ -18,54 +18,14 @@
   "RELX"
  ],
  "counts": {
-  "now": 20,
-  "today": 4,
-  "month": 29,
-  "waiting": 88,
+  "now": 4,
+  "today": 2,
+  "month": 23,
+  "waiting": 94,
   "blind": 0,
-  "src": 20
+  "src": 19
  },
  "now": [
-  {
-   "k": "ops:market",
-   "level": "now",
-   "title": "止まっている疑い: 株価・盤データ",
-   "why": "最終 2026-08-21（29日前・期限4日）",
-   "how": "market.yml 21:30UTC（FINNHUB_KEY）",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:events",
-   "level": "now",
-   "title": "止まっている疑い: 8-K・臨報監視",
-   "why": "最終 2026-08-21（29日前・期限4日）",
-   "how": "events.yml 22:10UTC（米国は鍵不要・日本株はEDINET_API_KEY）",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:parity",
-   "level": "now",
-   "title": "止まっている疑い: 門と端末の一致",
-   "why": "最終 2026-08-23（27日前・期限4日）",
-   "how": "ci.yml 平日22:00UTC（実ブラウザ）／手動 node night/check_gate_parity.js",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:today",
-   "level": "now",
-   "title": "止まっている疑い: 📋今日の集計",
-   "why": "最終 2026-08-23（27日前・期限4日）",
-   "how": "ci.yml 平日22:00UTC／手動 python3 night/today.py --json",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:freshness",
-   "level": "now",
-   "title": "止まっている疑い: 中身と入力の鮮度",
-   "why": "最終 2026-08-23（27日前・期限4日）",
-   "how": "ci.yml 平日22:00UTC／手動 python3 night/check_freshness.py --json",
-   "src": "回転盤"
-  },
   {
    "k": "ops:reviewrun",
    "level": "now",
@@ -75,108 +35,20 @@
    "src": "回転盤"
   },
   {
-   "k": "ops:er",
+   "k": "wacc",
    "level": "now",
-   "title": "止まっている疑い: E[r]予実の観測封印",
-   "why": "最終 2026-08-03（47日前・期限40日）",
-   "how": "market.yml（月初・snapは月次idempotent）",
-   "src": "回転盤"
+   "title": "WACC が更新どき",
+   "why": "市場 4.94% vs 門 4.68%（乖離 0.26 > 刻み 0.1）",
+   "how": "Ⅲ採点機の WACC 欄を更新（規約の変更ではなく入力の更新）",
+   "src": "wacc_drift"
   },
   {
-   "k": "ops:gatehist",
+   "k": "ci:fix.yml",
    "level": "now",
-   "title": "止まっている疑い: 門の判定の履歴",
-   "why": "最終 2026-08-21（29日前・期限4日）",
-   "how": "market.yml が毎日／手動 python3 night/gate_history.py --append",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:returns",
-   "level": "now",
-   "title": "止まっている疑い: トータルリターン",
-   "why": "最終 2026-08-23（27日前・期限4日）",
-   "how": "market.yml 平日21:30UTC／手動 python3 night/fetch_returns.py",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:returnseries",
-   "level": "now",
-   "title": "止まっている疑い: 成績の推移(グラフ)",
-   "why": "最終 2026-08-23（27日前・期限4日）",
-   "how": "market.yml 平日21:30UTC／手動 python3 night/fetch_returns.py",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:irr85hist",
-   "level": "now",
-   "title": "止まっている疑い: irr=85の実績台帳",
-   "why": "最終 2026-08-09（41日前・期限40日）",
-   "how": "ops.yml 毎月2日／手動 python3 night/irr85_mech_test.py --json",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:irr85audit",
-   "level": "now",
-   "title": "止まっている疑い: irr=85の根拠監査",
-   "why": "最終 2026-08-19（31日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_irr85.py",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:irr85myrule",
-   "level": "now",
-   "title": "止まっている疑い: irr=85をあなたの基準で採点",
-   "why": "最終 2026-08-19（31日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/irr85_myrule.py --json",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:notify",
-   "level": "now",
-   "title": "止まっている疑い: 通知(Issue化)",
-   "why": "最終 2026-08-21（29日前・期限4日）",
-   "how": "events.yml（行動が要ることだけIssueにする・冪等）",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:fix",
-   "level": "now",
-   "title": "止まっている疑い: 機械是正の自動提案",
-   "why": "最終 2026-08-23（27日前・期限10日）",
-   "how": "fix.yml 毎週土曜（判定が動かなければmain直・動けばPR）",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:stalebs",
-   "level": "now",
-   "title": "止まっている疑い: 期末後の重大事象の検査",
-   "why": "最終 2026-08-19（31日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_stale_bs.py --write",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:pending",
-   "level": "now",
-   "title": "止まっている疑い: 未完了の重大事象の検査",
-   "why": "最終 2026-08-20（30日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_pending.py --all --write",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:packstale",
-   "level": "now",
-   "title": "止まっている疑い: パックの会計年度の遅れ",
-   "why": "最終 2026-08-19（31日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/audit_pack_stale.py --write",
-   "src": "回転盤"
-  },
-  {
-   "k": "ops:vfail",
-   "level": "now",
-   "title": "止まっている疑い: 納品検査FAIL表",
-   "why": "最終 2026-08-23（27日前・期限4日）",
-   "how": "ci.yml（push/PR毎）／手動 python3 night/validate_packs.py --json",
-   "src": "回転盤"
+   "title": "走って失敗している: fix.yml",
+   "why": "直近の実行(2026-08-22T04:34:35Z)が失敗——落ちたステップ: 判定が動く → PRにして人へ",
+   "how": "https://github.com/touchme1956/ccf-gate/actions/runs/32552060449　⚠『止まっている』ではなく『走って失敗』——直し方が違う",
+   "src": "ci_health"
   },
   {
    "k": "review",
@@ -197,22 +69,6 @@
    "src": "四半期点検"
   },
   {
-   "k": "alert:3922:2026-08-21",
-   "level": "today",
-   "title": "8-K警報: 3922（2026-08-21）",
-   "why": "臨時報告書＝重要事象（役員異動・訂正等）の可能性——原本を読む(EDINETでdocID検索)",
-   "how": "⚙自動化タブの「審査」で門2再審査の依頼文を作る",
-   "src": "8-K監視"
-  },
-  {
-   "k": "alert:RMD:2026-08-17",
-   "level": "today",
-   "title": "8-K警報: RMD（2026-08-17）",
-   "why": "Item 4.01: 監査人の交代——**disagreement / reportable event の有無を原本(Item 4.01(a))で確かめよ**。無ければ通常のローテーション、有れば誠(会計) / Item 5.02: 退任——取締役・主要役員の異動",
-   "how": "⚙自動化タブの「審査」で門2再審査の依頼文を作る",
-   "src": "8-K監視"
-  },
-  {
    "k": "exc:TDG",
    "level": "today",
    "title": "門外例外の見張り: TDG",
@@ -223,14 +79,6 @@
  ],
  "month": [
   {
-   "k": "key:cihealth",
-   "level": "month",
-   "title": "鍵待ちで始まっていない: 自動化の健康診断",
-   "why": "止まったのではなく、まだ始めていない",
-   "how": "ci.yml 平日22:00UTC（actions:read）／手動 GH_TOKEN=... python3 night/ci_health.py --write",
-   "src": "回転盤"
-  },
-  {
    "k": "reviewfreq",
    "level": "month",
    "title": "門2審査の走行ログが残っていない（直近4営業日で0日ぶん）",
@@ -239,34 +87,18 @@
    "src": "審査ログ"
   },
   {
-   "k": "fresh:irr85audit:本体が6日動いていない（",
+   "k": "fresh:cihealth:本体が29日動いていない",
    "level": "month",
-   "title": "中身/入力が前進していない: irr=85の根拠監査",
-   "why": "本体が6日動いていない（期限4日）",
+   "title": "中身/入力が前進していない: 自動化の健康診断",
+   "why": "本体が29日動いていない（期限4日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
   {
-   "k": "fresh:irr85myrule:本体が6日動いていない（",
+   "k": "fresh:irr85hist:本体が41日動いていない",
    "level": "month",
-   "title": "中身/入力が前進していない: irr=85をあなたの基準で採点",
-   "why": "本体が6日動いていない（期限4日）",
-   "how": "python3 night/check_freshness.py",
-   "src": "鮮度"
-  },
-  {
-   "k": "fresh:stalebs:本体が6日動いていない（",
-   "level": "month",
-   "title": "中身/入力が前進していない: 期末後の重大事象の検査",
-   "why": "本体が6日動いていない（期限4日）",
-   "how": "python3 night/check_freshness.py",
-   "src": "鮮度"
-  },
-  {
-   "k": "fresh:packstale:本体が6日動いていない（",
-   "level": "month",
-   "title": "中身/入力が前進していない: パックの会計年度の遅れ",
-   "why": "本体が6日動いていない（期限4日）",
+   "title": "中身/入力が前進していない: irr=85の実績台帳",
+   "why": "本体が41日動いていない（期限40日）",
    "how": "python3 night/check_freshness.py",
    "src": "鮮度"
   },
@@ -281,9 +113,17 @@
   {
    "k": "kes:3092",
    "level": "month",
-   "title": "四半期点検で要審査: 3092 （空振りの可能性）",
-   "why": "要審査: 売上YoY -9.4% / 警報:集(新規出現) / 警報:減損  ★パックの原本が既にこの四半期を含む（期末2026-03-31 ≥ 四半期末2026-03-31）",
-   "how": "既に審査済かを _meta.kenshi で確かめる。新規事象なら門2再審査へ",
+   "title": "四半期点検で要審査: 3092 ",
+   "why": "要審査: 売上YoY -9.4% / 警報:減損",
+   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
+   "src": "四半期点検"
+  },
+  {
+   "k": "kes:4071",
+   "level": "month",
+   "title": "四半期点検で要審査: 4071 ",
+   "why": "要審査: 警報:減損  ※数値は自己検算で破棄（警報のみで判定）",
+   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },
   {
@@ -292,14 +132,6 @@
    "title": "四半期点検で要審査: 4519 ",
    "why": "要審査: 警報:減損",
    "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
-   "src": "四半期点検"
-  },
-  {
-   "k": "kes:4732",
-   "level": "month",
-   "title": "四半期点検で要審査: 4732 （空振りの可能性）",
-   "why": "要審査: 警報:集(新規出現)  ※数値は自己検算で破棄（警報のみで判定）  ★パックの原本が既にこの四半期を含む（期末2026-03-31 ≥ 四半期末2026-03-31）",
-   "how": "既に審査済かを _meta.kenshi で確かめる。新規事象なら門2再審査へ",
    "src": "四半期点検"
   },
   {
@@ -314,7 +146,7 @@
    "k": "kes:4828",
    "level": "month",
    "title": "四半期点検で要審査: 4828 （空振りの可能性）",
-   "why": "要審査: 警報:誠 / 警報:集(新規出現)  ※数値は自己検算で破棄（警報のみで判定）  ★パックの原本が既にこの四半期を含む（期末2026-03-31 ≥ 四半期末2026-03-31）",
+   "why": "要審査: 警報:誠  ※数値は自己検算で破棄（警報のみで判定）  ★パックの原本が既にこの四半期を含む（期末2026-03-31 ≥ 四半期末2026-03-31）",
    "how": "既に審査済かを _meta.kenshi で確かめる。新規事象なら門2再審査へ",
    "src": "四半期点検"
   },
@@ -327,27 +159,11 @@
    "src": "四半期点検"
   },
   {
-   "k": "kes:6861",
-   "level": "month",
-   "title": "四半期点検で要審査: 6861 （空振りの可能性）",
-   "why": "要審査: 警報:集(新規出現)  ※数値は自己検算で破棄（警報のみで判定）  ★パックの原本が既にこの四半期を含む（期末2026-03-20 ≥ 四半期末2026-03-20）",
-   "how": "既に審査済かを _meta.kenshi で確かめる。新規事象なら門2再審査へ",
-   "src": "四半期点検"
-  },
-  {
    "k": "kes:7741",
    "level": "month",
-   "title": "四半期点検で要審査: 7741 （空振りの可能性）",
-   "why": "要審査: 警報:減損 / 警報:退任  ★パックの原本が既にこの四半期を含む（期末2026-03-31 ≥ 四半期末2026-03-31）",
-   "how": "既に審査済かを _meta.kenshi で確かめる。新規事象なら門2再審査へ",
-   "src": "四半期点検"
-  },
-  {
-   "k": "kes:8035",
-   "level": "month",
-   "title": "四半期点検で要審査: 8035 （空振りの可能性）",
-   "why": "要審査: 警報:集(新規出現)  ※数値は自己検算で破棄（警報のみで判定）  ★パックの原本が既にこの四半期を含む（期末2026-03-31 ≥ 四半期末2026-03-31）",
-   "how": "既に審査済かを _meta.kenshi で確かめる。新規事象なら門2再審査へ",
+   "title": "四半期点検で要審査: 7741 ",
+   "why": "要審査: 警報:減損 / 警報:退任",
+   "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
   },
   {
@@ -437,14 +253,6 @@
    "why": "要審査: 警報:減損",
    "how": "⚙自動化タブの「審査」で門2再審査／night/enqueue_reaudit.py で順位を見る",
    "src": "四半期点検"
-  },
-  {
-   "k": "todoaudit",
-   "level": "month",
-   "title": "やることリストの点検で 1件",
-   "why": "解決済みなのに未完のまま／件数のずれ／重複／例外との食い違い",
-   "how": "python3 night/audit_todo.py",
-   "src": "todo点検"
   },
   {
    "k": "dca",
@@ -658,7 +466,7 @@
   {
    "k": "todo:single_year_25",
    "kind": "宿題",
-   "title": "判定圏で単年ROICのまま残る社を through-cycle 化する（実測17社）",
+   "title": "判定圏で単年ROICのまま残る社を through-cycle 化する（実測11社）",
    "due": null,
    "owner": "審査",
    "tickers": []
@@ -1214,6 +1022,68 @@
    "title": "fix.yml が『判定が動いた』ときの PR が作られていない——枝だけが置かれる",
    "due": null,
    "owner": "道具",
+   "tickers": []
+  },
+  {
+   "k": "todo:irr85_verify_note_truncated",
+   "kind": "宿題",
+   "title": "irr=85 の検証記録(_meta.mech.verify_note)が 3006字で打ち切られ、反証の一覧が8社で読めない",
+   "due": null,
+   "owner": "審査",
+   "tickers": [
+    "CW",
+    "LRCX",
+    "RBC",
+    "VRSK",
+    "WST",
+    "LOAR",
+    "TDG",
+    "KRMN"
+   ]
+  },
+  {
+   "k": "todo:irr85_scope_objection_cw",
+   "kind": "宿題",
+   "title": "二重読みの後に射程の反証が出た2社（CW＝🟢投下可・BWXT）——✓が中身として古い",
+   "due": null,
+   "owner": "審査",
+   "tickers": [
+    "CW",
+    "BWXT"
+   ]
+  },
+  {
+   "k": "todo:rbc_basis_contradiction",
+   "kind": "審査",
+   "title": "RBC の roic の基準が機械可読な印と evidence で食い違う（🟢投下可）",
+   "due": null,
+   "owner": "審査",
+   "tickers": [
+    "RBC"
+   ]
+  },
+  {
+   "k": "todo:frozen_date_dict_literal",
+   "kind": "宿題",
+   "title": "check_frozen_dates は**変数名しか見ない**——辞書リテラルの固定日は素通りする（実測40件）",
+   "due": null,
+   "owner": "道具",
+   "tickers": []
+  },
+  {
+   "k": "todo:actions_schedule_stopped",
+   "kind": "宿題",
+   "title": "★GitHub Actions の**schedule が2026-08-21で全部止まった**（state は active・repo からは直せない）",
+   "due": null,
+   "owner": "人",
+   "tickers": []
+  },
+  {
+   "k": "todo:unmerged_fix_branch_0918",
+   "kind": "宿題",
+   "title": "★CIを止めていた1行の修正が**未マージのブランチにしか無い**（＝「作った答えを捨てる」の9例目）",
+   "due": null,
+   "owner": "人",
    "tickers": []
   }
  ],

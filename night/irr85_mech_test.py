@@ -25,10 +25,15 @@ night/irr85_mech_test.py — **irr=85 の中を「歴史的に複利中央値が
 出力: out/irr85_mech_test.json
 """
 import glob
-import json
+import datetime, json
 import os
 import statistics as st
 import sys
+
+# ⚠ generated は**実行時**に採る。2026-09-19まで '2026-08-09' を焼き付けており、
+#   回転盤(ops_status)の錨が out/irr85_history.json の generated なので、
+#   **毎月回っているのに永久に「止まっている」と表示されていた**（同日 irr85_er.py でも同型を直した）。
+TODAY = datetime.date.today().isoformat()
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
@@ -163,7 +168,7 @@ def main():
                              w={'13.1': o['r13'], '11.1': o['r15'], '8.1': o['r18']},
                              verdict='below' if o['med'] < H else 'above')
     gp = 'out/irr85_history.json'
-    json.dump({'generated': '2026-08-09', 'hurdle': H,
+    json.dump({'generated': TODAY, 'hurdle': H,
                'note': 'その社自身の実現複利（配当込み・重なる3窓の中央値）。verdict=below は '
                        'irr=85 の特権（別枠85・席の優先）を取り上げる。**載っていない社は中立**'
                        '——在庫は米国10-K・2013年コホートに限られ、載らない理由は会社ではなく道具の側にある',
@@ -173,7 +178,7 @@ def main():
 
     if AS_JSON:
         p = 'out/irr85_mech_test.json'
-        json.dump({'generated': '2026-08-09', 'hurdle': H, 'mech_table': tab,
+        json.dump({'generated': TODAY, 'hurdle': H, 'mech_table': tab,
                    'mech_rows': rows, 'label_stability': {t: {r['v']: r['mech'] for r in v}
                                                           for t, v in multi.items()},
                    'today': out}, open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
