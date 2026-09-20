@@ -890,10 +890,130 @@ html[data-theme="soft"] .chapnav{background:rgba(20,23,29,.94);}
     padding:6px 8px;gap:4px;border-bottom:none;border-top:1px solid var(--line);}
   .chapnav button{padding:6px 10px;font-size:12px;min-height:34px;}
 }
+
+/* ============================================================
+   意匠レイヤー「息づく地」（v9.9.177・2026-09-20 ユーザー要望
+   「もっとおしゃれに一流のデザインに」「企業が使う動画が裏で動くようなおしゃれな背景」）
+   — **表示だけ**。Ω・採点式・刻み・重み・四関門・堀の関門70・売却規律S1/S2/S3・配分は1バイトも触っていない。
+
+   ★なぜ「動画ファイル」を置かないか（測ってから決めた・v9.9.108の作法）
+     実測: 画面のうち地がそのまま見えている割合は 📋今日 11.6% / 💰資産 10.9% / 🛒買付 20.3%
+     / 📒台帳 28.9% / 🩺点検 15.5% / 📖手引き 3.7%。**本文の箱がほぼ覆う**ので、
+     3〜10MB の動画を毎回落としても見えるのは1〜3割。しかも index.html は既に 966KB で、
+     携帯(360px)の検査を抱えている門にとって**確定した費用**になる（コストは唯一 確実に効く数字）。
+     加えて iOS の低電力モードは autoplay を**黙って**止めるので、落とした上で映らない経路がある。
+     → **同じ「裏で動いている」感じを CSS だけで作る＝追加のダウンロード 0 バイト**にした。
+   ★可読性を落とさない線: 地の層は本文の**下**(z-index:-1)にしか居ない・pointer-events:none・
+     不透明度は暗テーマで最大 .22 / 和紙テーマで最大 .13。動くのは transform だけ＝合成のみで再描画しない。
+   ★prefers-reduced-motion では**全部止める**（動きが要る意匠にしない）。
+   ============================================================ */
+
+/* ── ⓪ ★塗り順の是正（この一手が無いと ①②は一切見えない）
+   ★実測でこの門の意匠層が**一度も画面に出ていなかった**ことが判った（1440px・買付タブ）:
+     金脈(html::before) を消しても差 **平均0.00・2以上動いた画素 0.0%**／
+     和紙の粒子(body::before) を消しても **最大差 0**／
+     ところが **body の背景を外すと 90.3% の画素が動いた**。
+   原因は CSS の塗り順——`html{background}` が在るので body の背景は canvas へ伝播せず
+   **body 自身の箱の背景**として塗られる。負の z-index(-1) の層は
+   「文脈を作る要素(html)の背景」の直後＝**body の背景より前**に塗られるので、
+   body の**不透明な底**（層光の最終レイヤ linear-gradient）が
+   金脈も粒子も新しい地も全部覆っていた。
+   → **不透明な底だけを html へ移し、body には層光の5つの radial をそのまま残す**。
+     色も座標も不透明度も一つも変えていない（層の置き場所だけを直した）。
+   ⚠ここは「層光(5光源)」の直後に置くこと——同じ specificity の後出しで勝つ形なので、
+     層光の側を編集すると**この是正が静かに外れて意匠が再び消える**。 */
+html{background-image:linear-gradient(180deg,#0a0c11,#080a0e 60%,#06080b);background-attachment:fixed;}
+html[data-theme="light"]{background-image:linear-gradient(180deg,#faf7ee,#f4f0e5 52%,#e9e2d0);background-attachment:fixed;}
+html[data-theme="soft"]{background-image:linear-gradient(180deg,#1c2028,#181b22 60%,#15181e);background-attachment:fixed;}
+html[data-theme="light"] body{background:
+  radial-gradient(1250px 640px at 50% -180px,rgba(150,115,31,.20),transparent 62%),
+  radial-gradient(900px 620px at 94% 6%,rgba(39,64,107,.14),transparent 58%),
+  radial-gradient(840px 580px at 2% 58%,rgba(74,95,51,.12),transparent 60%),
+  radial-gradient(740px 520px at 82% 96%,rgba(165,68,42,.10),transparent 62%),
+  radial-gradient(620px 460px at 22% 108%,rgba(107,51,80,.08),transparent 62%);
+  background-attachment:fixed;}
+html[data-theme="soft"] body{background:
+  radial-gradient(1250px 640px at 50% -180px,rgba(201,166,74,.13),transparent 62%),
+  radial-gradient(900px 620px at 94% 6%,rgba(93,140,194,.09),transparent 58%),
+  radial-gradient(840px 580px at 2% 58%,rgba(104,150,110,.07),transparent 60%),
+  radial-gradient(740px 520px at 82% 96%,rgba(198,110,86,.06),transparent 62%);
+  background-attachment:fixed;}
+html[data-theme="dark"] body,html:not([data-theme]) body{background:
+  radial-gradient(1250px 640px at 50% -180px,rgba(201,166,74,.15),transparent 62%),
+  radial-gradient(900px 620px at 94% 6%,rgba(93,140,194,.10),transparent 58%),
+  radial-gradient(840px 580px at 2% 58%,rgba(104,150,110,.08),transparent 60%),
+  radial-gradient(740px 520px at 82% 96%,rgba(198,110,86,.07),transparent 62%);
+  background-attachment:fixed;}
+
+/* ── ① 息づく光（三つの淡い光が別々の周期で漂う＝模様が反復して見えない） ── */
+#ccfaura{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
+  contain:strict;will-change:transform;}
+#ccfaura i{position:absolute;display:block;border-radius:50%;
+  /* ⚠ 色は変数名で渡さない（v9.9.108: --jade 等は #scorer にスコープされており、
+     ここで var() を書くと線や地が**丸ごと消える**）。テーマごとに実値で書く */
+  will-change:transform;}
+#ccfaura i.a{width:76vw;height:76vw;left:-22vw;top:-26vw;
+  background:radial-gradient(closest-side,rgba(201,166,74,.30),rgba(201,166,74,.10) 46%,transparent 72%);
+  animation:ccfAuraA 68s ease-in-out infinite alternate;}
+#ccfaura i.b{width:66vw;height:66vw;right:-20vw;top:14vh;
+  background:radial-gradient(closest-side,rgba(93,140,194,.26),rgba(93,140,194,.08) 48%,transparent 74%);
+  animation:ccfAuraB 91s ease-in-out infinite alternate;}
+#ccfaura i.c{width:58vw;height:58vw;left:8vw;bottom:-24vw;
+  background:radial-gradient(closest-side,rgba(43,83,66,.26),rgba(43,83,66,.08) 48%,transparent 74%);
+  animation:ccfAuraC 113s ease-in-out infinite alternate;}
+@keyframes ccfAuraA{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(9vw,7vh,0) scale(1.14)}}
+@keyframes ccfAuraB{from{transform:translate3d(0,0,0) scale(1.06)}to{transform:translate3d(-11vw,10vh,0) scale(.92)}}
+@keyframes ccfAuraC{from{transform:translate3d(0,0,0) scale(.96)}to{transform:translate3d(13vw,-9vh,0) scale(1.12)}}
+/* 和紙テーマは紙の白を濁らせないよう、光を弱く・金と藍だけに寄せる（v9.9.107: 混ぜると泥になる） */
+html[data-theme="light"] #ccfaura i.a{background:radial-gradient(closest-side,rgba(150,115,31,.20),rgba(150,115,31,.07) 46%,transparent 72%);}
+html[data-theme="light"] #ccfaura i.b{background:radial-gradient(closest-side,rgba(60,95,158,.15),rgba(60,95,158,.05) 48%,transparent 74%);}
+html[data-theme="light"] #ccfaura i.c{background:radial-gradient(closest-side,rgba(150,115,31,.13),rgba(150,115,31,.04) 48%,transparent 74%);}
+html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgba(201,166,74,.24),rgba(201,166,74,.08) 46%,transparent 72%);}
+
+/* ── ② 門の写真を「ゆっくり寄る」（Ken Burns）＝企業サイトの hero 動画と同じ効き
+       ⚠ 実測で .hero-banner(560px) が実際に見えるのは 📖手引き だけ。**そこが唯一
+         本物の hero 動画が見える場所**なので、動きはここに集中させる。 ── */
+.hero-banner{overflow:hidden;background-image:none;}
+.hero-banner::before{content:"";position:absolute;inset:-4%;
+  background-image:url('assets/hero-gate.jpg');background-size:cover;background-position:center 30%;
+  transform:scale(1.02);transform-origin:52% 42%;
+  animation:ccfKen 52s ease-in-out infinite alternate;will-change:transform;}
+.hero-banner::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(8,10,14,.15),rgba(8,10,14,.15) 38%,rgba(8,10,14,.82) 84%,var(--bg) 100%);}
+@keyframes ccfKen{from{transform:scale(1.02) translate3d(0,0,0)}to{transform:scale(1.13) translate3d(-1.2%,-1.6%,0)}}
+.hero-inner{z-index:2;}
+
+/* ── ③ 本文の左右に余白を作る（可読性の実害を実測で見つけて直した）
+   実測(1728px): 📋今日 / 💰資産 / 🩺点検 は本文が **x=0 から始まり**、
+   縦書きの銘(.tategaki, x=26〜49)と**重なっていた**（重なり 9 / 7 / 10 件）。
+   これは「装飾は本文に勝たない」(v9.9.36の.tategakiの注記)の破れ。
+   → 広い画面でだけ .pg に余白を与える。**.wrap を持つタブは中央のまま動かない**
+     （.wrap は max-width:1080 の margin:auto なので、余白を引いた 1584px の中でも
+      中央 324px に来る＝実測で確認済み）。
+   ⚠ hero と gatebanner は**端まで届く意匠**なので負のマージンで逃がす（帯が浮くと安っぽい）。 */
+@media(min-width:1280px){
+  .pg{padding-left:72px;padding-right:72px;}
+  .pg > .hero,.pg > .gatebanner{margin-left:-72px;margin-right:-72px;}
+  /* hero は端まで届く帯に戻すが、**中の文字の箱**まで端まで伸びると縦書きの銘と枠が重なる
+     （文字は中央寄せなので字は当たらないが、箱で測る検査は当たる＝将来の誤検出の種）。
+     中身だけ measure を持たせる＝見た目は変わらず、箱の重なりも消える */
+  .hero-inner{max-width:1180px;margin-left:auto;margin-right:auto;}
+}
+
+/* ── ④ 動きを望まない利用者にはすべて止める（意匠は動きに依存しない） ── */
+@media (prefers-reduced-motion: reduce){
+  #ccfaura i,.hero-banner::before{animation:none !important;}
+  #ccfaura i.a{transform:translate3d(4vw,3vh,0)}
+  #ccfaura i.b{transform:translate3d(-5vw,4vh,0)}
+  #ccfaura i.c{transform:translate3d(6vw,-4vh,0)}
+  .hero-banner::before{transform:scale(1.06)}
+}
 </style>
 <!-- v9.9.131: 人の決定(state.json)の読み書き。**両ページが同じ実装を読む**（写すと必ず割れる・v9.9.65）。
      本体より前に読むのは localStorage.setItem の包み(dirty検出)を先に効かせるため -->
 <script src="state.js"></script><script src="icon.js"></script></head><body>
+<!-- v9.9.177 息づく地（表示だけ・判定に不使用）。三つの淡い光が別々の周期で漂う＝追加ダウンロード0バイトで「裏で動く背景」を作る -->
+<div id="ccfaura" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i></div>
 <div class="tategaki" aria-hidden="true">壊れない複利の門</div>
 <div class="tategaki tr" aria-hidden="true">Compounding, Unbroken — CCF Ω</div>
 <!-- v9.9.171（2026-08-23 ユーザー指示「使わないタブをなくして統合」）:
@@ -1405,7 +1525,7 @@ html[data-theme="soft"] .chapnav{background:rgba(20,23,29,.94);}
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.176</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.177</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</div></details></div>
   </div>
