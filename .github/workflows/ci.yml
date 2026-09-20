@@ -286,11 +286,19 @@ jobs:
       #   そして 85 には三層の防御（根拠の型・逐語照合・二重読み）があるのに、
       #   **70 にはキーワードのtriage(audit_irr70)しか無かった**——本人の頭注が
       #   「機械のキーワード抽出は70を支持できない（実測で偽陽性だらけ）」と書いている当のもの。
-      #   ⚠ **全213社ではなく買付圏(投下可+次点)だけ**に当てる。全数だと作業リストが埋まって
-      #   「鳴りすぎる警報は鳴らないのと同じ」になり、しかも費用が生じるのは買付圏だけ。
-      - name: 機構文の年次diff irr=70・買付圏（表示のみ・SEC問い合わせ）
+      #   ★**2026-09-19に買付圏 → irr=70 の全数へ広げた。理由は母数が変わったこと**——
+      #   この枠を買付圏に絞った根拠は「全**213社**だと作業リストが埋まる」だったが、
+      #   2026-08-20 の全数二重読みで **163社が 70→50 へ落ち、irr=70 は 45社**になった。
+      #   45社は 85 の15社と同じ桁で、「鳴りすぎる」理由がもう成り立たない。
+      #   ⚠**広げた実害が現に出ていた**——JKHY は堀66.6で⛔堀不足＝**買付圏の外**なので
+      #   この枠が一度も見ておらず、FY2026 10-K(2026-08-28提出)が出て根拠の一本が
+      #   書き換わったことに 22日間 誰も気づかなかった（人が手で回して初めて出た）。
+      #   ⚠**--json を付ける**。付けないと画面に出るだけで 📋今日 にも回転盤にも渡らない＝
+      #   「見つけたものを誰にも渡していない」型になる。書き先は out/irr70_mech_diff.json で、
+      #   **85の out/irr85_mech_diff.json とは別ファイル**（同じ名前へ書くと85の結果を潰す）。
+      - name: 機構文の年次diff irr=70・全数（表示のみ・SEC問い合わせ）
         continue-on-error: true
-        run: timeout 900 python3 night/irr85_mech_diff.py --rung 70 --buy | tail -24
+        run: timeout 900 python3 night/irr85_mech_diff.py --rung 70 --json | tail -24
 
       # ── 5-b5. irr=85 の根拠監査（2026-08-11に回転盤へ登録）──────────────────────
       #   ⚠登録が無かったため **2026-08-05 の54社のまま6日間止まっていた**（実データは15社）。
@@ -560,7 +568,7 @@ jobs:
           #   **次に検査を1本足した日に静かに全滅しうる**（ops.yml で実際に起きた）。
           #   ccf_git_add は1パスずつ add して落ちたものを名指しする＝巻き添えが構造的に起きない。
           . night/git_add_safe.sh
-          ccf_git_add out/frozen_dates.json out/freshness.json out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/audit_irr85.json out/irr85_dual.json out/irr70_dual.json night/reaudit_queue.json out/ci_health.json
+          ccf_git_add out/frozen_dates.json out/freshness.json out/today.json out/gate_parity.json out/kessan_flags.json out/stale_bs.json out/pack_stale.json out/validate_fail.json out/todo_audit.json out/score_all.json out/promotion_ready.json out/pending.json out/irr85_myrule.json out/irr85_mech_diff.json out/irr70_mech_diff.json out/audit_irr85.json out/irr85_dual.json out/irr70_dual.json night/reaudit_queue.json out/ci_health.json
           if git diff --staged --quiet; then
             echo "検査結果に変化なし"
           else
