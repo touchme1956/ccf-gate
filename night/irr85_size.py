@@ -86,6 +86,30 @@ def split_lift(rows, key):
                 med_lo=round(med([r['tr'] for r in lo]), 4))
 
 
+def perm_lift_p(rows, key, seed=20260920, N=20000):
+    """中央値二分の lift が偶然かを片側置換で測る（2026-09-20新設）。
+    ⚠**lift の大きさを見る前にこれを見る**——n=13〜27 では lift は簡単に大きく出る。
+    リターンだけを入れ替える（規模の分布はそのまま）＝『規模は何も言っていない』が帰無。"""
+    v = [r for r in rows if r.get(key) is not None and r.get('tr') is not None]
+    if len(v) < 6:
+        return None
+    base = split_lift(v, key)
+    if not base:
+        return None
+    obs = base['lift']
+    rnd = __import__('random').Random(seed)
+    trs = [r['tr'] for r in v]
+    cnt = 0
+    for _ in range(N):
+        rnd.shuffle(trs)
+        w = [dict(**{key: r[key]}, tr=t) for r, t in zip(v, trs)]
+        x = split_lift(w, key)
+        if x and x['lift'] >= obs:
+            cnt += 1
+    return dict(lift=obs, n=len(v), p_one_sided=round((cnt + 1) / (N + 1), 4), N=N)
+
+
+
 # ---------- 今日の門（A/B/C） ----------
 def today_part():
     if not os.path.exists('out/score_all.json'):
@@ -235,6 +259,78 @@ def hist_part():
         inside=split_lift([r for r in g85 if r['semi'] is True and r.get('rev') is not None], 'rev'),
         outside=split_lift([r for r in g85 if r['semi'] is False and r.get('rev') is not None], 'rev'))
     res['cohort_split'] = split_lift([r for r in cohort if r.get('rev') is not None], 'rev')
+    res['perm'] = perm_lift_p(g85, 'rev')   # ⚠lift を読む前にこれを読む
+    res['rows'] = g85
+    return res
+
+
+# ---------- 歴史（D2）: 2015アンカーでの再現（2026-09-20新設） ----------
+# なぜ要ったか: D は 2018年時点の売上 × 2018→2026 の**一つの窓**しか見ていない。
+#   2015アンカーの rev は **`out/retro_features2_2015.json` が在庫に無く測れなかった**
+#   （2026-09-20 に `retro_features2.py --asof 2015 --returns retro_returns_2015_q.json` で作成）。
+#   ⇒ ここは **独立な窓での再現の試み**であって、D の結論を置き換えるものではない。
+#
+# ⚠ 母集団の性質が 2018 と違う（**ここを混ぜると「基準の違う二つ」になる**）:
+#   2018 = コホート956社（広い）／ 2015 = **質実証プール(opm≥10% ∧ 5年FCF全年黒字 ∧
+#   営業利益全年黒字)＋既存164社の 506社**＝**選ばれた群**。
+#   よって **ベース率(P15)をビンテージ間で直接比べてはいけない**。比べてよいのは
+#   群内の lift と ρ の **符号**まで。
+#
+# ⚠ 刻みは **2015ビンテージの読解だけ**を使う（2018年の読みを2015に当てると look-ahead）。
+def hist_2015_part():
+    fp, rp = 'out/retro_features2_2015.json', 'out/retro_returns_2015_q.json'
+    if not (os.path.exists(fp) and os.path.exists(rp)):
+        return dict(skipped='在庫なし（%s / %s）' % (fp, rp))
+    f2 = {r['ticker']: r for r in rows_of(fp)}
+    ret = {r['ticker']: r for r in rows_of(rp)}
+    sic = {r['ticker']: r for r in rows_of('out/retro_sic.json')}
+    rung = {}
+    for v, f, key, fld in VINTAGES:
+        if v != '2015' or not os.path.exists(f):
+            continue
+        for r in rows_of(f):
+            t, x = r.get(key), r.get(fld)
+            if t and x in (50, 70, 75, 85, 100):
+                rung[t] = x
+
+    def mk(t):
+        a, b, sc = f2.get(t), ret.get(t), sic.get(t)
+        s4 = (sc or {}).get('sic')
+        return dict(t=t, rev=(a or {}).get('rev'), tr=(b or {}).get('tr_cagr'),
+                    years=(b or {}).get('years'), sic=s4,
+                    semi=(s4 in SEMI_SIC) if s4 else None, irr=rung.get(t))
+
+    def pack(rows, label):
+        v = [r for r in rows if r.get('tr') is not None]
+        vr = [r for r in v if r.get('rev') is not None]
+        rho, n_rho = spearman([r['rev'] for r in vr], [r['tr'] for r in vr])
+        return dict(label=label, n=len(rows), n_ret=len(v), n_rev=len(vr),
+                    med_tr=(round(med([r['tr'] for r in v]), 4) if v else None),
+                    p15=(round(sum(1 for r in v if r['tr'] >= HURDLE) / len(v), 3) if v else None),
+                    rho_rev_tr=(round(rho, 3) if rho is not None else None), n_rho=n_rho,
+                    split=split_lift(vr, 'rev'))
+
+    g85 = [mk(t) for t, x in sorted(rung.items()) if x == 85]
+    others = {}
+    for t, x in rung.items():
+        if x != 85:
+            others.setdefault(x, []).append(mk(t))
+    pool = [mk(t) for t in sorted(ret)]
+    res = dict(universe=rp, features=fp,
+               pool_note='質実証プール＋既存164＝506社。**広いコホートではない**のでベース率を2018と直接比べない',
+               n_read=len(rung),
+               all85=pack(g85, 'irr=85（2015読解）'),
+               pool=pack(pool, '2015プール全体'),
+               by_rung={str(k): pack(v, 'irr=%d' % k) for k, v in sorted(others.items())})
+    res['semi'] = dict(
+        inside=pack([r for r in g85 if r['semi'] is True], 'irr=85 ∧ 半導体連鎖'),
+        outside=pack([r for r in g85 if r['semi'] is False], 'irr=85 ∧ 非半導体'))
+    res['perm'] = perm_lift_p(g85, 'rev')
+    # ★独立な標本かを必ず数える——2018側の28社と重なっていれば「再現」とは言えない
+    u = set(collect85())
+    mine = {r['t'] for r in g85}
+    res['overlap_with_union85'] = dict(n_2015=len(mine), n_union=len(u),
+                                       overlap=len(mine & u), only_2015=sorted(mine - u))
     res['rows'] = g85
     return res
 
@@ -243,10 +339,11 @@ def main():
     t = today_part()
     ch = mcap_channel_all()
     h = hist_part()
+    h15 = hist_2015_part()
     al = alloc_part()
     out = dict(generated=TODAY, hurdle=HURDLE, alloc=al,
                note='時価総額は歴史側の在庫に一件も無い（代理は売上規模）。Dは事前登録の無い事後の測定。',
-               today=t, mcap_channel=ch, hist=h)
+               today=t, mcap_channel=ch, hist=h, hist_2015=h15)
     json.dump(out, open('out/irr85_size.json', 'w', encoding='utf-8'),
               ensure_ascii=False, indent=1)
 
@@ -296,6 +393,29 @@ def main():
     print('  ⚠ irr=85 の lift +0.192 は `irr85_criteria` の事前登録検定が rev について出した値と一致し、')
     print('     層別の −0.05 / +0.333 も「半導体で符号が反転」の実測を独立に再現した＝**不合格の再確認**。')
     print('  ⚠ n=27 では lift の分解能が粗い——売上と営業利益率は**別々の分割**なのに同じ lift 0.192 を返す。')
+    if 'skipped' in h15:
+        print('\n【D2】2015アンカーでの再現 … %s' % h15['skipped'])
+    else:
+        print('\n【D2】2015アンカーでの再現（売上は2015年時点・リターンは2015→2026＝11.1年）')
+        print('  母集団 %s（読解 %d社）  ⚠%s' % (h15['universe'], h15['n_read'], h15['pool_note']))
+        for x in [h15['all85'], h15['pool']] + [h15['by_rung'][k] for k in sorted(h15['by_rung'])]:
+            print('  %-22s n=%-3d 中央値 %s  P(≥15%%) %s  ρ(売上,リターン) %s (n=%d)'
+                  % (x['label'], x['n_ret'], x['med_tr'], x['p15'], x['rho_rev_tr'], x['n_rho']))
+        for k in ('inside', 'outside'):
+            x = h15['semi'][k]
+            print('  %-22s n=%-3d 中央値 %s  P(≥15%%) %s  ρ %s (n=%d)'
+                  % (x['label'], x['n_ret'], x['med_tr'], x['p15'], x['rho_rev_tr'], x['n_rho']))
+        print('  中央値二分の lift  irr=85:', json.dumps(h15['all85']['split'], ensure_ascii=False))
+        print('                  プール全体:', json.dumps(h15['pool']['split'], ensure_ascii=False))
+        ov = h15['overlap_with_union85']
+        print('  ★独立ではない: 2015読解の85 %d社は **%d社とも** 2018側の和集合%d社に含まれる（新規 %s）'
+              % (ov['n_2015'], ov['overlap'], ov['n_union'], ov['only_2015'] or 'なし'))
+        print('  ★そして lift は両アンカーとも偶然と区別が付かない——'
+              '2018 %s ／ 2015 %s'
+              % (json.dumps(h['perm'], ensure_ascii=False), json.dumps(h15['perm'], ensure_ascii=False)))
+        print('  ⇒ **規模の lift は「符号が反転しなかった」だけで、再現でも有意でもない。**')
+        print('  ⚠ 半導体の層別は2015では検定できない（85のうち半導体は2社）＝'
+              '2018の符号反転(−0.05/+0.333)はここでは確かめられていない。')
     print('\n→ out/irr85_size.json')
 
 
