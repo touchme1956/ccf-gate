@@ -34,20 +34,32 @@ fetch, cagr, maxdd = _m.fetch, _m.cagr, _m.maxdd
 
 # ★網の顔ぶれと**中の重み**は portfolio.json（人の決定の置き場）から読む。
 #   ここに書き写すと必ず割れる（v9.9.65）。読めなければ下の既定へ倒す。
-NEW_FALLBACK = ["XLK", "SMH", "GRID", "ITA", "NASA"]
+NEW_FALLBACK = ["QQQM", "XLK", "SMH", "GRID", "ITA", "NASA"]
 
 
 def net_target():
     """(顔ぶれ, {t: 総資産に対する%} or None, 重みの出所) を返す。
     ⚠**一本でも重みが無ければ全体を等分へ倒す**——指定のある本だけ重くすると
-      「指定の穴が配分に化ける」（門の ccfNetRows / ccfMcapWeights と同じ作法）。"""
+      「指定の穴が配分に化ける」（門の ccfNetRows / ccfMcapWeights と同じ作法）。
+    ⚠**0% は「測って0」であって「未指定」ではない**（2026-09-18 ユーザー明示指示
+      「GRID・ITA・NASA は各0%（名前は残す・売らない）」）。旧実装は `not w.get(n)` で
+      見ていたので **0 が未指定と同じ扱いになり、GRID0 を書くと全体が等分へ倒れていた**
+      ——「測っていない」と「測って0」の取り違え（ルール7）を配分の側で作っていた。
+      判定は**値の大小ではなくキーの有無**で行う（None・空文字・数でない値は未指定へ倒す）。"""
     try:
         t = (json.load(open(os.path.join(BASE, "portfolio.json"), encoding="utf-8")).get("target") or {})
         names = [str(x).strip().upper() for x in (t.get("ami_names") or []) if str(x).strip()]
         if not names:
             return NEW_FALLBACK, None, "既定（portfolio.json に ami_names が無い）"
-        w = {str(k).strip().upper(): float(v) for k, v in (t.get("ami_weights") or {}).items()}
-        miss = [n for n in names if not w.get(n)]
+        w = {}
+        for k, v in (t.get("ami_weights") or {}).items():
+            if v is None or v == "":
+                continue
+            try:
+                w[str(k).strip().upper()] = float(v)
+            except (TypeError, ValueError):
+                continue
+        miss = [n for n in names if n not in w]
         if w and not miss:
             return names, {n: w[n] for n in names}, "portfolio.json の target.ami_weights"
         return names, None, ("等分（重みが無い本: " + "・".join(miss) + "）" if miss else "等分（ami_weights が未設定）")
@@ -221,6 +233,8 @@ def net_pct_target():
       同日の明示指示「城は30%網は70%に変更する」の後も『網の比率 50 / 城の比率 50』と
       出し続けていた（顔ぶれと中の重みは読むのに、比率だけ焼き付いていた）。
       この道具の頭注が言う「数字を書き写した箇所は必ず陳腐化する」を、自分で踏んでいた。
+      ★**同じ欠陥を二つのセッションが同じ日に別々に見つけて別々に直した**（09:09 の 城30/網70 と
+        17:32 の 城20/網80）。取り込みでは出所を残す側（下記ルール7）へ、帯の検問（0<v<=100）を足した。
     ⚠読めなければ**既定へ倒したことを出所に書く**——黙って 50 を出すと
       『測っていない』が『測って50』に化ける（絶対のルール7）。"""
     try:
@@ -228,7 +242,10 @@ def net_pct_target():
         v = t.get("ami_net_pct")
         if v is None:
             return 50, "既定50（portfolio.json の target.ami_net_pct が無い）"
-        return float(v), "portfolio.json の target.ami_net_pct"
+        v = float(v)
+        if not (0 < v <= 100):
+            return 50, "既定50（target.ami_net_pct=%s が帯[0,100]の外）" % v
+        return v, "portfolio.json の target.ami_net_pct"
     except Exception:
         return 50, "既定50（portfolio.json が読めない）"
 
@@ -236,7 +253,7 @@ def net_pct_target():
 if __name__ == "__main__":
     n, NET_PCT_SRC = net_pct_target()
     if "--net" in sys.argv:
-        n = int(sys.argv[sys.argv.index("--net") + 1])
+        n = float(sys.argv[sys.argv.index("--net") + 1])
         NET_PCT_SRC = "--net で上書き"
     o = build(n)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)

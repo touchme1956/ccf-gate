@@ -7,7 +7,8 @@
        pf:weights    … 目標ウェイト（配分の決定そのもの）
        pf:sold       … 売却記録
        pf:monthly_total… 今月の入金総額（v9.9.163で新設。**入っていればこれが正本**で、
-                        城枠と網枠は portfolio.json の target 50/50 から導かれる）
+                        城枠と網枠は portfolio.json の target（shiro_castle_pct / ami_net_pct）から導かれる。
+                        ⚠**ここに比を書き写さない**——2026-09-18 に 城50/網50 → 城20/網80 へ改定された）
        pf:monthly    … 今月の個別枠（城）
        pf:monthly_net… 今月の網枠（ETF・v9.9.160で新設）
        pf:net        … 網(ETF)の買付の記録（v9.9.168で新設）。**Ⅶ資産は sleeve:'net' の行を
