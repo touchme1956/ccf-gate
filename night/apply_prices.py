@@ -36,6 +36,17 @@ os.chdir(BASE)
 SCALE = ("per", "perF")                # 価格に比例する欄（時価そのものが分子/分母の欄だけ）
 INVERSE = ("shy",)                     # 還元額が不変で時価だけ動く＝1/比率
 
+# 2026-09-18 新設: **株式分割を「値下がり」と読んで書き込むのを止める**。
+#   基準保存式は「価格が動いた」前提なので、分割では per を分割比で割ってしまう（shy は掛けてしまう）。
+#   実害: APH は 2026-09-03 の 2:1 分割で per 45.11→22.52・shy 0.47→0.94 と書かれた（この日に是正）。
+#   ⚠ validate_packs の「per が帯の下・shy が帯の上へ逆方向に同時に外れる」は KLAC(per5.6/shy12.9)の
+#     ような**桁の誤り**しか捕まえない——2:1 なら per22.5 も shy0.94 も帯の中なので素通りする（実測）。
+#   直し方は「比率から分割を推測する」ではなく**測れないなら書かない**（絶対のルール7）:
+#   大きく動いた社は書かずに**名前で出す**。人が SPLITS を見て、分割なら手で是正し、
+#   本物の値動きなら --force-move で通す。⚠代金: 本物の暴落・急騰は1回ぶん反映が遅れる
+#   （実測 2026-08-21→09-18 の28日で 25%超は 63社中2社＝APH〔分割〕と KRMN〔本物の−34%〕だけ）。
+SPLIT_SUSPECT = 0.25                   # この幅を超えたら分割の疑いとして書かずに人へ渡す
+
 
 def buy_set():
     """門そのもの（score_all.js）で投下可を出す。推測しない。
@@ -72,7 +83,7 @@ def main():
         return 0
 
     before = buy_set() if write else None
-    rows, protected = [], []
+    rows, protected, suspect = [], [], []
     for f in sorted(os.listdir("out")):
         if not f.endswith("_gate_pack.json"):
             continue
@@ -94,6 +105,9 @@ def main():
         new = float(q["px"])
         r = new / old
         if abs(r - 1) < 0.0005:            # 動いていない社は触らない（無用なコミットを作らない）
+            continue
+        if abs(r - 1) >= SPLIT_SUSPECT and "--force-move" not in sys.argv:
+            suspect.append((t, old, new, r))   # 分割かもしれない＝書かずに人へ渡す
             continue
         meta = d.setdefault("_meta", {})
         decided = set((meta.get("nulls") or {}))
@@ -131,6 +145,14 @@ def main():
         print(f"  {t:8}{o:12,.2f} → {n:12,.2f}  {(r-1)*100:+6.1f}%")
     if protected:
         print(f"  🛡 空欄と決めた欄は触らず: {' / '.join(protected[:8])}")
+    if suspect:
+        print(f"\n  ⚠ 分割の疑いで **書いていない** {len(suspect)}社"
+              f"（{int(SPLIT_SUSPECT*100)}%超の変動）——分割なら基準保存式は per を壊す:")
+        for t, o, n, r in sorted(suspect, key=lambda x: -abs(x[3] - 1)):
+            print(f"     {t:8}{o:12,.2f} → {n:12,.2f}  {(r-1)*100:+6.1f}%  比 {r:.4f}")
+        print("     確認: Alpha Vantage SPLITS で分割履歴を見る。"
+              "**分割だった** → px/per/shy/eps を手で是正（per は不変・eps は分割比で割る）。"
+              "**本物の値動き** → python3 night/apply_prices.py --write --force-move")
 
     msg = f"market prices {ASOF}｜{len(rows)}社"
     if write and before is not None:

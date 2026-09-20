@@ -30,6 +30,7 @@ out/score_all.partial.json
 out/v11_facts.partial.json
 out/backfill_diff.partial.json
 out/growth_trend.partial.json
+out/net_plan.partial.json
 out/_roic_series_cache.json
 
 finnhub_key.txt
@@ -55,3 +56,15 @@ out/wfrun_*.partial.json
 # SECのティッカー→CIK地図（派生キャッシュ・7日で自動更新）
 out/_ticker_cik.json
 out/_src_cache/
+out/_etf_beat_cache.json.gz
+
+# 使い捨ての計測用プローブ（実ブラウザで一度だけ測る script）。
+#   ⚠ 恒久の見張りは night/check_*.js に置くこと——`_probe_` はその場で捨てる前提の名前で、
+#   コミットすると「どれが今も回っている検査か」が読めなくなる。
+#   実測の記録は CLAUDE.md へ、繰り返し測るなら check_* へ昇格させる。
+night/_probe_*.js
+
+# 使い捨ての比較用スナップショット（レビューや注入検査で「直す前の index.html」を横に置くとき）。
+#   ⚠ 先頭の `_` がこの repo の「捨てる前提」の印（out/_*.log・night/_probe_*.js と同じ作法）。
+#   ⚠ 先頭 `_` を要求するので v10.html などの本物は当たらない。
+/_*.html

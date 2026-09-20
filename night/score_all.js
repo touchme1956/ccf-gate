@@ -335,12 +335,25 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
 }
 rows.sort((a, b) => b.s - a.s);
 // v9.9.88(2026-08-05 ユーザー明示指示「上位10社を買い付け可にして」): 第五の枠。
-//   投下可＝四関門∧席順上位10社（v9.9.98でE[r]項を外し・v9.9.100でirr=85を先頭へ）。判定は門の ccfAllocTop（単一実装＝Ⅵ・盤・snapと同一・v9.9.65の掟）。
-//   四段通過だが11位以下は quali=true / buy=false ＝🔵次点（買わないが資格は保持）。
+//   投下可＝四関門∧席順の上位 **CCF_SEATS 社**（v9.9.98でE[r]項を外し・v9.9.100でirr=85を先頭へ。
+//   v9.9.174で 10→5＝ユーザー明示指示「まずは買付を5銘柄に絞りたい」。席の数は index.html の定数が正本）。判定は門の ccfAllocTop（単一実装＝Ⅵ・盤・snapと同一・v9.9.65の掟）。
+//   四段通過だが席から溢れた社は quali=true / buy=false ＝🔵次点（買わないが資格は保持）。
+// ★席の数は index.html の `var CCF_SEATS` が正本——**ここに数字を写さない**（写した数字は必ず陳腐化する）。
+//   var なのでグローバルオブジェクトのプロパティになり、間接 eval 後にここから拾える
+//   （`const`/`let` はグローバル**オブジェクト**のプロパティにならないので拾えない）。
+//   ⚠ 読めなければ**黙って既定へ倒さず止める**——席数を取り違えると「買ってよい社」を静かに増減させるので、
+//     「測れなかった」を「問題なし」にしない（ルール7）。表示の文言もこの定数から作る。
+const SEATS = (typeof global.CCF_SEATS === 'number' && global.CCF_SEATS > 0) ? global.CCF_SEATS
+  : (typeof globalThis.CCF_SEATS === 'number' && globalThis.CCF_SEATS > 0) ? globalThis.CCF_SEATS : null;
+if (SEATS === null) {
+  console.error('CCF_SEATS(席の数) を index.html から読めなかった。門の構造が変わった可能性がある——'
+    + '既定へ倒すと買ってよい社の数が静かに変わるので中断する');
+  process.exit(1);
+}
 let ALLOC_SEMI_N = 0, ALLOC_SEMI_PCT = 0;   // v9.9.145: 上限は撤去。集中は測って出し続ける
 {
   const four = rows.filter(r => r.buy);
-  const sel = ccfAllocTop(four, 10);
+  const sel = ccfAllocTop(four, SEATS);
   ALLOC_SEMI_N = sel.semiN || 0; ALLOC_SEMI_PCT = sel.semiPct || 0;
   for (const r of rows) { r.quali = r.buy; if (r.buy) r.buy = sel.has(r.t); }
   // 合成点を**出力にも載せる**（2026-08-07）。下流の道具（audit_promotion_ready 等）が
@@ -402,7 +415,7 @@ for (const r of q75) {
     //   ✓/✗ が残っていると『これで落ちている』と読めてしまう（落ちた理由は blockers が名指しする）。
     + `  E[r]${r.xEr == null ? '  na' : r.xEr.toFixed(0).padStart(4) + '%'} `
     + `  点${aud}`
-    + `  ${r.buy ? '🟢投下可' : r.quali ? '🔵次点(11位以下)' : blockers(r).join('＋')}  出口=${r.exit}`);
+    + `  ${r.buy ? '🟢投下可' : r.quali ? `🔵次点(${SEATS + 1}位以下)` : blockers(r).join('＋')}  出口=${r.exit}`);
 }
 // v9.9.91→v9.9.100: ロスターの並びは**席の順**（irr=85優先→Ω順）。当時の呼称は「合成点上位10社」と名乗りながらΩで並べていた）
 // v9.9.94(2026-08-06): ここに合成点を**書き写していた**のをやめ、門の単一実装 ccfAllocScore を呼ぶ。
@@ -414,10 +427,10 @@ const _ascore = x => ccfAllocScore(x);
 const _mech = x => (+x.irr === 85) ? 0 : 1;
 const buy = rows.filter(x => x.buy).sort((a, b) => _mech(a) - _mech(b) || _ascore(b) - _ascore(a) || b.s - a.s);
 const nextUp = rows.filter(x => x.quali && !x.buy).sort((a, b) => _mech(a) - _mech(b) || _ascore(b) - _ascore(a) || b.s - a.s);
-console.log(`\n🟢投下可(四関門∧irr=85優先→Ω順の上位10社／半導体上限は v9.9.145 で撤去) ${buy.length}社`
+console.log(`\n🟢投下可(四関門∧irr=85優先→Ω順の上位${SEATS}社／半導体上限は v9.9.145 で撤去) ${buy.length}社`
   + `　日本株${buy.filter(x => x.jp).length}／米国等${buy.filter(x => !x.jp).length}`
   + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
-if (nextUp.length) console.log(`🔵次点(四関門通過・席順11位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
+if (nextUp.length) console.log(`🔵次点(四関門通過・席順${SEATS + 1}位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
 // v9.9.117: 半導体連鎖の相関上限（城の30%）で席から外れた社は**名指しで出す**（黙って消さない・v9.9.52）。
 //   門(Ⅵ・盤)と端末が同じことを言う（v9.9.65の掟）
 // v9.9.145: 上限は撤去したが**集中は測って見せ続ける**（関門を消しても事実は消さない）
