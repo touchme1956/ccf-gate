@@ -35,6 +35,7 @@ night/shadow_irr85_privilege.py — **irr=85 の「特権」を外したら投�
 使い方: python3 night/shadow_irr85_privilege.py [--only A]
 出力  : out/shadow_irr85_privilege.json
 """
+import datetime as dt
 import hashlib
 import json
 import os
@@ -207,7 +208,11 @@ def main():
         assert sha(HTML) == h0, '★index.html の復元に失敗した'
         print('\n（index.html と out/score_all.json を復元した — sha256 一致）')
 
-    json.dump({'generated': '2026-08-18', 'fx': fx, 'ex_split': ex_split,
+    # ⚠ 生成日を文字列で焼き付けない——回し直すたびに中身は今日の台帳に変わるのに、
+    #   日付だけ 2026-08-18 のまま残る＝`base_rate_check.py` が「n=10」を焼き付けて
+    #   陳腐化したのと同じ型（2026-09-21に実際に踏んだ: 席10→5の版で回した結果が
+    #   8月の日付を名乗っていた）。他の影の計測器と同じ idiom へ揃える。
+    json.dump({'generated': dt.date.today().isoformat(), 'fx': fx, 'ex_split': ex_split,
                'note': 'これは影の計測であって規約の改定案ではない（絶対のルール1）。'
                        '正本の採点・刻み・重み・関門・売却規律・配分はいっさい変えていない。',
                'cases': out},
