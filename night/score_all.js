@@ -91,7 +91,7 @@ if (typeof compute !== 'function') {
 //   関数消失を黙って飲み、**ccfAudit が消えると audE=0＝audOK=true＝第四の関門が静かに無効化**する
 //   方向に壊れた（「鳴らない警報は鳴りすぎる警報と同じ」）。抽出に失敗したら大声で止まる。
 for (const fn of ['ccfXJudge', 'ccfMoatGate', 'ccfAudit', 'ccfAllocTop', 'ccfShrinkGate', 'ccfIrr85Frame',
-  'ccfIrr85FrameLegacy', 'ccfIrr85Below']) {
+  'ccfIrr85FrameLegacy', 'ccfIrr85Below', 'ccfOwnerVeto']) {
   if (typeof global[fn] !== 'function' && typeof globalThis[fn] !== 'function') {
     console.error(`${fn}() を読み込めなかった。index.html の構造が変わった可能性がある——`
       + '関門の関数が無いまま続けると「点検が通った」という偽の結果を作るので中断する');
@@ -117,6 +117,17 @@ try {
   const hp = path.join(ROOT, 'out', 'irr85_history.json');
   if (fs.existsSync(hp))
     Object.assign(global.CCF_IRR85_HIST, JSON.parse(fs.readFileSync(hp, 'utf8')).items || {});
+} catch (e) {}
+
+// v9.9.179: 人の拒否権（gate_exceptions.json の vetoes）。**門は fetch・端末はファイル**で
+//   **同じものを読む**＝同じ台帳を見る二つの検査器が違うことを言わない(v9.9.65)。
+//   判定は門の ccfOwnerVeto が単一実装で、ここは中身を渡すだけ。無ければ空＝眠るだけ（ルール7）。
+try {
+  const vp = path.join(ROOT, 'gate_exceptions.json');
+  if (fs.existsSync(vp)) {
+    for (const v of (JSON.parse(fs.readFileSync(vp, 'utf8')).vetoes || []))
+      if (v && v.t && v.why) global.CCF_OWNER_VETO[String(v.t).trim().split(/[\s_]/)[0].toUpperCase()] = v;
+  }
 } catch (e) {}
 
 // B4(2026-08-04): 門の applyFields は「黙って化けた」欄を __coerce に記録して ccfAudit へ渡す
@@ -205,8 +216,9 @@ function buyGate(t, dd, s, mg, audE, audU, r) {
   // v9.9.178: 別枠85 は撤去＝f85.pass は常に false（門と同一実装。戻すときはこの1関数だけ）
   const f85 = ccfIrr85Frame(dd, r);
   const shrink = ccfShrinkGate(dd);     // v9.9.99: 事業の収縮
+  // v9.9.179: 人の拒否権（門が通した社を人が買付から外す）。門と同一実装・同一ファイル
   return (s >= 75 || f85.pass) && mg.pass === true && audE === 0 && audU === 0
-         && !g.stale[t] && !g.vfail[t] && !g.pending[t] && !shrink.hit;
+         && !g.stale[t] && !g.vfail[t] && !g.pending[t] && !shrink.hit && !ccfOwnerVeto(t);
 }
 
 module.exports = { scorePack, lastCoerce, buyGate, KEYS, SELECTS };
@@ -332,6 +344,8 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
               //   Ω75+ を免除する。免除するのはΩの線だけで、堀・データ健全・収縮はそのまま。
               //   根拠の全文は index.html の ccfIrr85Frame 頭注（門と同一実装＝v9.9.65の掟）
               frame85: f85.pass ? (f85.why || true) : undefined,
+              // v9.9.179: 人の拒否権（門が通した社を人が買付から外す）。**黙って消さない**ので行に載せる
+              veto: (ccfOwnerVeto(t) || undefined),
               buy: buyGate(t, dd, s, mg, audE, audU, r) });
 }
 rows.sort((a, b) => b.s - a.s);
@@ -401,6 +415,7 @@ const blockers = r => {
   if (r.staleBS != null) b.push('⛔期末後の重大事象');
   if (r.vFail) b.push(`⛔納品検査FAIL${r.vFail}`);
   if (r.pending) b.push(`⛔未完了の重大事象(${r.pending.target || r.pending.kind || ''})`);
+  if (r.veto) b.push('⛔人の判断で見送り（門は通している）');
   return b.length ? b : ['—'];
 };
 // v9.9.178: **別枠85 を撤去した**ので frame85 は常に false＝この表はΩ75+だけになる。
@@ -466,6 +481,12 @@ console.log(`⛔点検で見送り(Ω75+・堀70+だが要修正/未解決警告
   // v9.9.99: 事業の収縮で落ちた社は**名指しで出す**（黙って消さない・v9.9.52）
   const sh = rows.filter(r => r.s >= 75 && r.moatOK && r.shrink);
   console.log(`⛔事業の収縮で見送り(Ω75+・堀70+だが売上縮小 ∧ 営業利益率低下) ${sh.length}社`);
+{
+  // v9.9.179: **人の拒否権で落ちた社を名指しで出す**（門は通している＝黙って消さない・v9.9.52）
+  const vt = rows.filter(x => x.veto && (x.s >= 75 || x.frame85));
+  console.log(`⛔人の判断で見送り(四関門は通過。gate_exceptions.json の vetoes) ${vt.length}社`);
+  for (const r of vt) console.log(`     ${r.nm.split(/\s/)[0]}  Ω${r.s.toFixed(1)}  ${r.veto.why || ''}`    + `${r.veto.since ? `（${r.veto.since}）` : ''}　→ gate_exceptions.json の vetoes から1行消せば戻る`);
+}
   for (const r of sh) console.log(`     ${r.nm.split(/\s/)[0]}  Ω${r.s.toFixed(1)}  ${r.shrink}`
     + `　→ 数字が戻れば自動で復帰。買わない理由であって売る理由ではない`);
 }

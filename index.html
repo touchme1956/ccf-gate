@@ -1525,7 +1525,7 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.178</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.179</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</div></details></div>
   </div>
@@ -4982,6 +4982,7 @@ async function ccfDash(btn){
   //   自分で破っていた＝「規則を変えたら、規則を使う場所も全部grepで洗う」の表示版の再発）。
   // v9.9.102: 盤もⅥと同じ**孤児判定**（パックの無い台帳レコードは買付の土俵に乗せない）を読む。
   //   ここを洗い忘れると v9.9.95 のAPHと同じ「盤では🟢・Ⅵでは⛔」が再発する（v9.9.65の掟）。
+  await ccfLoadOwnerVeto();   // v9.9.179: 人の拒否権（Ⅵ・score_all と同じ単一実装）
   // v9.9.124: 盤も irr=85 の実績台帳を読む（v9.9.178 で特権を撤去したので**表示のみ**）。Ⅵと同じものを同じ関数で読む（v9.9.65）
   // v9.9.129: 盤も**未完了の重大事象**（out/pending.json）を読む。Ⅵにだけ入れて盤を洗い忘れると
   //   v9.9.94→95 のAPHとまったく同じ「盤では🟢・Ⅵでは⛔」が三度目の再発になる（v9.9.65の掟）。
@@ -5081,7 +5082,8 @@ async function ccfDash(btn){
       const sh=ccfShrinkGate(d);
       const orph=!!(dPackT&&!dPackT.has(String(t).toUpperCase()));   // v9.9.102: パック無しの旧レコード
       // v9.9.129: 未完了の重大事象もⅥと同じ判定にする（盤の洗い忘れ＝v9.9.94→95のAPHの再発を防ぐ）
-      const dq=!dStale[t]&&!dVf[t]&&!dPend[t]&&!sh.hit&&!orph;   // 期末後・納品検査FAIL・未完了の重大事象・事業の収縮・孤児（Ⅵと同じ判定）
+      // v9.9.179: **人の拒否権**もここに入れる（Ⅵと同じ判定＝v9.9.65の掟）。blocked に落ちるので盤でも名指しされる
+      const dq=!dStale[t]&&!dVf[t]&&!dPend[t]&&!sh.hit&&!orph&&!ccfOwnerVeto(t);   // 期末後・納品検査FAIL・未完了の重大事象・事業の収縮・孤児・人の拒否権（Ⅵと同じ判定）
       return {nm:L.nm,t,s:sc,moat:mg.idx,audE,stale:dStale[t]?dStale[t].newPct:null,shrink:sh,irr:d.irr,frame85:f85.pass,
               vf:dVf[t]?dVf[t].n:null,pend:dPend[t]||null,
               ok:three&&audE===0&&dq,blocked:three&&(audE>0||!dq),xEr:x.xEr};});
@@ -5795,7 +5797,12 @@ function ccfXJudge(d,s){
 //   ならない（グローバル字句環境に入る）ので、端末側が `global.CCF_SEATS` で拾えない。
 //   ⚠ 席を変えたら **night/score_all.js の表示** と **CLAUDE.md の月次運用の節**も同じ数になっているか確かめること
 //     （ここを読むので数字の同期は要らないが、**文の言い回し**は別物）。
-var CCF_SEATS=5;
+// ★v9.9.179（2026-09-21 ユーザー明示指示「では6銘柄で」）: 席を **5→6** へ。
+//   【なぜ】v9.9.178 で irr=85 の席の優先を撤去したら LRCX(Ω78.6・四関門通過)が 6位で席の外へ出た。
+//     LRCX は**Ω順でも合成点順でも6位**＝並べ方の問題ではなく**席が5つしかないこと**で落ちていた。
+//     特権を戻して6位を1位へ持ち上げるのではなく、**席を1つ広げる**ほうを選んだ（証拠が支えない規則を復活させない）。
+//   ⚠ 席の数は**リスクの取り方**であって採点ではない。Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3 は不変。
+var CCF_SEATS=6;
 // 投下可 ＝ 四関門(Ω75+ ∧ 堀70+ ∧ 点検0件 ∧ 事業の収縮なし) ∧ **合成点順の上位 CCF_SEATS 社**（半導体上限は v9.9.145 / 別枠85・irr=85優先は v9.9.178 で撤去）。
 // 席の選定 = **Ω順**（v9.9.98でE[r]項を外した）。旧: 合成点 = Ω × E[r]点÷50（E[r]点は合成順の錨12%=50点・±10ptで0-100・v9.9.30＝新しい定数なし）。
 // 席から溢れた社は「🔵次点」＝買わないが投下可の資格は保持し、Ωが上がれば自動で枠入り（黙って消さない・v9.9.52）。
@@ -6307,6 +6314,31 @@ function ccfIrr85FrameLegacy(d,r){
   return ng.length?{pass:false,why:ng.join('・')}
     :{pass:true,why:`irr=85 ∧ 二本柱すべて通過 ∧ 歴史の継続組の下限（営利率${gm}≥11.89・FCF転換${conv.toFixed(3)}≥0.639・成長${cagr}≥1.76）∧ 財務キルなし（nde${nde==null?'—':nde}≤4 ∧ 利払カバー${icv==null?'—':icv}≥3）`};
 }
+// ★人の拒否権（owner veto・v9.9.179・2026-09-21 ユーザー明示指示
+//   「VとIDXXは成長に限界を感じるから入れたくない」）
+// 【何をするか】**門が通した社を、人が買付から外す**。`gate_exceptions.json` の**鏡像**——
+//   あちらは「門が⛔にした社を人が買う」、こちらは「門が🟢にした社を人が買わない」。
+// 【門の判定は変えない】Ω・採点式・刻み・重み・堀の関門70・キル・売却規律S1/S2/S3 はいずれも不変。
+//   **買わない理由であって売る理由ではない**（堀不足・点検とまったく同じ非対称）。
+// 【黙って消さない】Ⅵは **⛔人の判断で見送り** として名指し＋理由つきで出す（v9.9.52の掟）。
+//   理由を書かない拒否権は作らない——`why` が無い行は**拒否権として成立させない**。
+// 【置き場】`gate_exceptions.json` の `vetoes`（root＝holdings.json と同じ人の決定の置き場）。
+//   門は fetch・端末(score_all)は同じファイルを読む＝**同じ台帳を見る二つの検査器**（v9.9.65の掟）。
+// ⚠ 空＝拒否権なし。読めなければ**眠るだけ**で、勝手に誰かを止めない（ルール7の向き＝fail-open）。
+var CCF_OWNER_VETO={};
+async function ccfLoadOwnerVeto(){
+  if(CCF_OWNER_VETO.__loaded)return CCF_OWNER_VETO;
+  try{ const j=await (await fetch('gate_exceptions.json?t='+Date.now())).json();
+       for(const v of ((j&&j.vetoes)||[]))
+         if(v&&v.t&&v.why)CCF_OWNER_VETO[String(v.t).trim().split(/[\s_]/)[0].toUpperCase()]=v; }catch(e){}
+  try{Object.defineProperty(CCF_OWNER_VETO,'__loaded',{value:true,enumerable:false});}catch(e){}
+  return CCF_OWNER_VETO;
+}
+function ccfOwnerVeto(x){
+  const raw=(x&&typeof x==='object')?(x.t||x.nm||''):(x||'');
+  const k=String(raw).trim().split(/[\s_]/)[0].toUpperCase();
+  return (k&&CCF_OWNER_VETO[k])?CCF_OWNER_VETO[k]:null;
+}
 function ccfShrinkGate(d){
   d=d||{};
   const c=(d.cagr===''||d.cagr==null)?null:parseFloat(d.cagr);
@@ -6527,7 +6559,7 @@ async function renderPlan(){
   //   ——vfMap/staleMap は銘柄コードで引くので、孤児は「該当なし」で全部素通りする＝
   //   v9.9.95で塞いだ「未測定が最良ケース」の穴が、キーの側から開いていた。
   //   **黙って消さず名指しで出す**（v9.9.52）。直し方は Ⅳ台帳で旧レコードを削除するだけ。
-  await ccfLoadIrr85Hist(); await ccfLoadIrr85Scope();   // v9.9.124: irr=85 の実績台帳（v9.9.178 で特権を撤去したので表示のみ。旧: 別枠85・席の優先の判定に要る）
+  await ccfLoadIrr85Hist(); await ccfLoadIrr85Scope(); await ccfLoadOwnerVeto();   // v9.9.124: irr=85 の実績台帳（v9.9.178 で特権を撤去したので表示のみ。旧: 別枠85・席の優先の判定に要る）
   await ccfLoadProfiles();    // v9.9.125: 企業説明（表示専用・判定に不使用）
   let packT=null;
   try{ const _i=await (await fetch('out/packs_index.json?t='+Date.now())).json();
@@ -6575,7 +6607,9 @@ async function renderPlan(){
   const orphanOut=q75.filter(r=>orphan(r));
   const _ok=r=>!orphan(r)&&!(r.audW||[]).some(w=>w.lv==='err')&&!staleMap[skey(r)]&&!vfMap[skey(r)]&&!pendMap[skey(r)];
   const shrinkOut=q75.filter(r=>_ok(r)&&r.shrink.hit);
-  const q75c=q75.filter(r=>_ok(r)&&!r.shrink.hit);
+  // v9.9.179: **人の拒否権**（gate_exceptions.json の vetoes）。門の判定は変えず買付からだけ外す
+  const vetoOut=q75.filter(r=>_ok(r)&&!r.shrink.hit&&ccfOwnerVeto(r));
+  const q75c=q75.filter(r=>_ok(r)&&!r.shrink.hit&&!ccfOwnerVeto(r));
   // v9.9.98（2026-08-07 ユーザー明示指示）: **門X遮断器 E[r]≥0 を買付の関門から外した**。
   //   関門は Ω75+ ∧ 堀70+ ∧ データ健全（点検・期末後の重大事象・納品検査）∧ 事業の収縮なし の**四関門**になり、
   //   **門は価格を合否に一切使わない**。歴史検証の結論（2013年703社・2015年で符号反転＝
@@ -6932,14 +6966,15 @@ async function renderPlan(){
   //     in_castle_split:false ＋ weight_pct:0）——席だけ5にしても例外が残れば買付先は10社のままで、
   //     しかも例外の取り分は 10.4%→19.1% と**増える**（分母が小さくなるので）。
   //     実測で**5社とも保有ゼロ**だったので売却は一切発生していない。記録は◇の節に残る。
-  //   ⚠ exFixed は weight_pct:0 なので 0 のまま＝**CITY は城の合計そのもの**・母集団は**席5社だけ**。
+  //   ⚠ exFixed は weight_pct:0 なので 0 のまま＝**CITY は城の合計そのもの**・母集団は**席の社だけ**
+  //     （v9.9.179 で席は6。人の拒否権で外れた社も in_castle_split:false＝按分に入らない）。
   // ── v9.9.176(2026-09-18 ユーザー明示指示「CHANGESETをQQQM40/XLK30/SMH10に書き換えて」→城50→20%) ──
   //   ⚠**比率を書き写さない**——`shiro_castle_pct` を変えたとき、袖の振り分け(ccfSleeveTarget) は
   //     新しい比で配るのに城の按分枠だけ古い数字のまま残る＝同じ台帳を見る二つが違うことを言う（v9.9.65）。
   //     正本は portfolio.json の target で、読めなければ既定50へ倒す。
   //     ★**この一行が無ければ、同じ日の二つの指示（09:09 城30 / 17:32 城20）を取り込んだ時点で
   //       袖は20%・按分は30%という食い違いが静かに残っていた**（30 も 20 も書き写しだから）。
-  //   【実測】城20%・席5社＝平均4%<8% で上限に当たる社は無く、Tierはさらに素直に効く。
+  //   【実測(v9.9.174・席5のとき)】城20%・席5社＝平均4%<8% で上限に当たる社は無く、Tierはさらに素直に効く。
   const CITY_TOTAL=(()=>{const v=+(((__pf&&__pf.target)||{}).shiro_castle_pct); return v>0?v:50;})();
   const exFixed=exRows.reduce((a,r)=>{const e=exOf(r);return a+((e&&!e.in_castle_split)?(+e.weight_pct||0):0);},0);
   const CITY=Math.max(0,CITY_TOTAL-exFixed);
@@ -7253,6 +7288,17 @@ async function renderPlan(){
   if(shrinkOut.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:var(--rust)">⛔ 事業の収縮で見送り（Ω75+・堀70+だが売上縮小 ∧ 営業利益率低下）</h2><div style="font-size:11.5px;color:var(--dim);margin-bottom:6px"><details class="why plain" data-fold="7"><summary>ℹ なぜ落ちるのか（事業の収縮）</summary><div class="why-body"><b>縮んでいる会社は買わない</b>組。<b>売上が縮小しており、同時に営業利益率も低下している</b>——片方だけなら循環的な一年や投資期の利益率低下でありうるが、<b>両方同時は「事業が縮んでいる」以外の説明が難しい</b>。門が既に持つ <b>Intel警報（gmt=down ∧ sht=down）</b>とほぼ同じ積を、警報ではなく関門にしたもの（新しい欄も新しい定数も導入していない）。<br><b>歴史の実測</b>（night/retro_breaker_test.py・2018年起点8.1年・配当込み）: この規則が止めた群の<b>恒久毀損率（年率≤−15%）は 14.3%＝ベース4.5%の3.2倍</b>、質実証プール内では<b>11.1%＝ベース2.2%の5倍</b>で、しかも<b>止めた群の中央値リターン(5.4%)も通過群(7.6%)より低い＝両方向とも正しい</b>。旧・門X遮断器(E[r]&lt;0)は左尾を掴む一方で<u>止めた群の中央値のほうが高く</u>、勝者を巻き込んでいた。<br><b>売却の理由にはならない</b>——保有中の銘柄はS1/S2/S3のみで裁く（堀不足とまったく同じ扱い＝買わない理由であって売る理由ではない）。数字が戻れば自動で🟢へ復帰する。<br>※<b>未測定では発火しない</b>（gmtが空欄なら既定'flat'＝'down'に化けない）。dep(存続級依存)のベトと同じ作法で、少数だけ止める高精度の関門として設計している。空欄の理由は _meta.nulls へ。</div></details></div>`;
     html+=shrinkOut.map((r,i)=>brow(r,i,'縮',pchip(r)+`<span style="font-size:11.5px;white-space:nowrap;color:var(--rust);margin-left:8px">${r.shrink.why}</span>`)).join('');
+  }
+  // ⛔ 人の拒否権で落ちた組（v9.9.179・ユーザー明示指示）。**門は通している**——外したのは人の判断なので
+  //   名指し＋理由＋いつの決定かを必ず出す（v9.9.52。黙って消すと「なぜ消えたか」が追えない）
+  if(vetoOut.length){
+    html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:#9b7fd4">⛔ 人の判断で見送り（門は通している）</h2>`
+      +`<div style="font-size:11.5px;color:var(--dim);margin-bottom:6px">四関門をすべて通過しているのに、<b>あなたの明示判断</b>で買付から外している社。`
+      +`<b>門の採点・四関門・堀の関門70・売却規律S1/S2/S3 はいっさい変えていない</b>——`
+      +`<u>買わない理由であって売る理由ではない</u>（堀不足・点検と同じ非対称）。`
+      +`決定の置き場は <code>gate_exceptions.json</code> の <code>vetoes</code>。1行消せばその場で戻る。</div>`;
+    html+=vetoOut.map((r,i)=>{const v=ccfOwnerVeto(r)||{};
+      return brow(r,i,'判',`<span style="font-size:11.5px;color:#9b7fd4;margin-left:8px">${(v.why||'')}${v.since?`（${v.since}）`:''}</span>`);}).join('');
   }
   // ⛔ 堀のふるいで落ちた組(v9.9.39・ユーザー明示指示)。価格の問題ではないので押し目待ちには入れない
   if(moatOut.length){
