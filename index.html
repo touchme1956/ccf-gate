@@ -1525,7 +1525,7 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.182</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.183</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</div></details></div>
   </div>
@@ -1585,7 +1585,7 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
     <div class="row"><div class="rl">のれん込みROIC<span class="h">経営の買収規律を測る。除外ROICとの乖離15pt超で警告</span></div><div class="rc"><input type="number" id="roicg" step="0.1" value="25"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">ROIIC³（3年増分ROIC）<span class="h">3年累計ΔNOPAT÷3年累計新規投下資本。単年の暴れを排除。実質無再投資なら空欄=na</span></div><div class="rc"><input type="text" id="roiic" value="25" style="width:90px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px;text-align:right"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">5年窓ROIIC<span class="h">v9.1：3年窓がサイクルピーク跨ぎでキルされた場合のみ必須。5年窓≥WACCならキル保留→アンバー−6に緩和</span></div><div class="rc"><input type="text" id="roiic5" value="" placeholder="na" style="width:90px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px;text-align:right"><span class="u">%</span></div></div>
-    <div class="row"><div class="rl">直近5年に大型買収<span class="h">v9.1：「なし」なら、のれん乖離アンバーを免除（Visa Europe型の遺産のれん誤爆防止）。<b>かつて免除されなかった roicg&lt;WACC の−8は v9.9.182 で撤去した</b>——免除した事実を別の規則で罰していたため（実測: 36社中7社が acq5=no・筆頭SAP）</span></div><div class="rc"><select id="acq5"><option value="yes" selected>あり（乖離チェック有効）</option><option value="no">なし（遺産のれん＝免除）</option></select></div></div>
+    <div class="row"><div class="rl">直近5年に大型買収<span class="h">⚠ <b>この欄は v9.9.183 以降、門の採点に一切効かない</b>。免除の相手だった「のれん乖離>15pt→0〜−6」を撤去したため（歴史で7ビンテージ全FAIL・恒久毀損は7年すべて逆向き。乖離＝のれんの重み×収益性で、罰の大部分が収益性を罰していた）。相棒の roicg&lt;WACC の−8 も v9.9.182 で撤去済み。欄は残す——採取器 <code>fill_sht.py</code> が「買ったシェアと勝ち取ったシェアを売上高では区別できない」ために端末側で読む</span></div><div class="rc"><select id="acq5"><option value="yes" selected>あり（乖離チェック有効）</option><option value="no">なし（遺産のれん＝免除）</option></select></div></div>
     <div class="row"><div class="rl">買収支出の5年合計 ÷ 期初総資産 acqS5<span class="h"><b>買収の強度</b>＝Σ(直近5会計年度の買収支出) ÷ 総資産(審査年−5)。帯で点が付く（<b>0=買収しない −1 ／ 〜0.085=控えめ <u>+2</u> ／ 〜0.311=中 +1 ／ 0.311超=大きく買う 0</b>）。境界は2015-2021の7ビンテージの三分位の切れ目の<b>中央値</b>で、7年ぶんほとんど動かない（新しい定数ではない）。<b>のれん残高ではなく支出で測る</b>——残高は減損・売却・為替で汚れ、同じ661社でも読み方次第で最下位が入れ替わった。<b>空欄は0点＝加点も減点もしない</b>。⚠買収支出の行を切り出さない社（MSFT型）は0ではなく<b>空欄</b>にする。機械充填は <code>python3 night/fill_acqS5.py --write</code></span></div><div class="rc"><input type="text" id="acqS5" value="" placeholder="空欄=未測定" style="width:90px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px;text-align:right"></div></div>
     <div class="row"><div class="rl">純有利子負債 / EBITDA<span class="h">2.5超から段階減点（(nde−2.5)×6・<b>上限なし</b>＝坂の上限 4 を撤廃）、&gt;4 で論外。<b>旧実装は 2.5〜4 でしか坂が効かず、4.00 を跨ぐとΩが+8.7pt<u>上がった</u></b>（キルは上限を掛けるだけで坂の罰から抜けるため。実測 OKE: nde3.99→Ω16.3 / 4.01→25.0 / 20→25.0）</span></div><div class="rc"><input type="number" id="nde" step="0.1" value="1.0"><span class="u">x</span></div></div>
     <div class="row"><div class="rl">利払カバー（営業利益÷支払利息）<span class="h"><b>3未満で財務キル</b>（nde&gt;4 と<b>OR</b>＝どちらかで発火。片方が測れなくても片方が効く）。★歴史の実測（2016-18ビンテージ・層0の653社）で、<b>止めた側の恒久毀損の濃縮は 11.0倍</b>（nde&gt;4 は 2.82倍）で<b>止めた群の中央値も低い＝両方向とも正しい</b>。nde が借金の<b>大きさ</b>を測るのに対し、こちらは<b>重さ（払えるか）</b>を測る——同じ4倍の借金でも金利2%と9%は別物で、nde は金利をまったく見ていない。⚠<b>必ず真正の利息だけ</b>で作ること（`intcov_strict`）——IFRSの `FinanceCosts` は為替差損・リース利息・引当の割引を含む<b>上位概念</b>で、これで作ると<b>純現金の会社が利払カバー3未満に見える</b>（実測8社）。⚠<b>空欄はキルが眠る＝未測定が有利</b>。日本株は SEC 経路の外で<b>68社すべて空欄</b>（EDINET の支払利息が要る）。測り直しは night/audit_intcov.py</span></div><div class="rc"><input type="number" id="intcov" step="0.1" value=""><span class="u">x</span></div></div>
@@ -2214,32 +2214,33 @@ function compute(){
   const dilV=nn('dilNet');
   if(dilV!==null&&dilV>3)ambers.push(`純希薄化 ${dilV.toFixed(1)}%/年 ${dilV>5?'＞5——殺相当。F10資本配分を手動で再評価':'＞3——警戒帯'}（表示のみ・v9.6）`);
   if(betaRaw<0.8)ambers.push(`β${betaRaw.toFixed(2)}→0.8にクリップ（WACC過小推定防止）`);
-  // dual-ROIC acquisition discipline check
-  // 【既知の定義差・2026-08-04記録】ここの roic は ccfRoicJudge 後の値＝roicEx があれば roicEx（v9.9.25の帰結）。
-  //   規約の字義は roicGap=roic−roicg で、端末検査器(audit_roic等)は生の roic を使う。JP は roicEx=roic 同値、
-  //   US パックは roicEx をほぼ持たないため今日は実害ゼロだが、roicEx≠roic の社が来ると罰の発火条件が
-  //   検査器と割れる。挙動の変更は採点式に触れる＝絶対のルール1の領分なので注記のみ（変えるなら明示指示で）
-  const roicGap=roicg?roic-roicg:0;
-  const acq5=($('acq5')&&$('acq5').value)?$('acq5').value:'yes';
-  if(roicg&&roicGap>15){
-    if(acq5==='no')ambers.push(`のれん込みROIC乖離${roicGap.toFixed(0)}ptだが直近5年に大型買収なし＝遺産のれん——減点免除（Visa/Adobe型の誤爆防止・v9.1）`);
-    // v9.9.93（2026-08-06 ユーザー明示指示「3つともやって」）: **6点の崖を段階減点へ**。
-    //   旧: `amberPen+=6` の二値。門は他の全部で崖を潰してある（柱不足→段階減点／F6→ramp／
-    //   キル→キル数で段階化／geopol→連続）のに、**ここだけが二値の6点の崖として残っていた**。
-    //   実害: 全362社を掃くと **181社(50%)で「roicを上げるとΩが下がる」**が起きていた
-    //   （night/audit_monotonic.js で検出）。とくに **MSFTは乖離15.4pt＝線の0.4pt上にいるだけで
-    //   満額の−6を払っていた**——乖離85pt(ADBE)と同じ罰。「程度問題はすべて坂」に反する。
-    //   刻み: `ramp(gap,[[15,0],[30,6]])`。**両端は不変**——15以下は0（従来どおり免除）、
-    //   30以上は6（従来どおり満額）。動くのは中間帯46社だけ。
-    //   【上限を30にした理由——結果で選ばない】この規則で**較正された数字は15ptただ一つ**なので、
-    //   22/25/28 のどれを採っても**新しい定数を発明**することになる。15の2倍＝30 は
-    //   既にある数から導けて新しい定数を作らない唯一の選び方（E[r]点の錨を「12%=50点」に
-    //   置いたときと同じ作法）。v9.9.71で「数字が動かないことを選定理由にしたら忖度」と
-    //   撤回した教訓の裏返しで、**総合リターンが上がることも選定理由にしていない**。
-    //   実測: Ωが動く46社・最大+6.0pt、Ω75+ 29→33社、総合 13.12%→13.32%。
-    //   **投下可は CDNS が11位へ下がり APH が入る**（下の注記を見よ）。
-    else {const _gp=ramp(roicGap,[[15,0],[30,6]]);amberPen+=_gp;ambers.push(`のれん込みROIC乖離${roicGap.toFixed(0)}pt——買収規律に疑義 −${_gp.toFixed(1)}`);}
-  }
+  // ★`のれん込みROIC乖離>15pt ∧ acq5=yes → 0〜−6` は **v9.9.183 で撤去した**
+  //   （2026-09-21 ユーザー指示「1.2.3を歴史検証」→ 結果を見て「cやって」＝撤去を選択）。
+  //   旧実装: `const roicGap = roicg ? roic-roicg : 0;`
+  //           `if(roicg && roicGap>15){ acq5==='no' ? 免除 : amberPen += ramp(roicGap,[[15,0],[30,6]]) }`
+  // 【歴史で落ちた——事前登録つき。全文は docs/CLAUDE_ARCHIVE.md の「未検定の崖3本を歴史で検定した」】
+  //   (a)**門の15ptという線は、そもそも歴史側で再現できなかった**——門の乖離は IC=(自己資本+有利子負債)
+  //      基準、歴史の代理は総資産基準で**別スケール**。15ptを超えるのは各年 0〜4社しかいない。
+  //      ⇒ 事前登録どおり scale-free の副検定（買収した社の中で乖離の上位1/4 vs 残り）で**向き**を見た。
+  //   (b)**その副検定は 7ビンテージすべてで FAIL**。とくに**恒久毀損は7年すべて逆向き**
+  //      （高乖離側のほうが薄い: 0.013 vs 0.072 ／ 0.014 vs 0.094 …）。
+  //   (c)★**正体**: `乖離 = のれんの重み × 収益性` ——門の定義そのものが
+  //      `roic−roicg = NOPAT×(1/IC除外 − 1/IC込み)` なので、**同じのれん比率なら収益性が高い社ほど
+  //      乖離が大きく出る**。分けて測ると 収益性だけ上位1/4 は**7年すべてで中央値が高く毀損が薄い**
+  //      （10.5 vs 7.0 ／ 9.2 vs 5.9 …）＝強い**正**の予測子。のれんの重みだけ上位1/4 は一貫した信号なし。
+  //      ⇒ **乖離を罰することは、その大部分で「収益性が高いこと」を罰していた。**
+  // 【なぜ (b)線を上げる / (d)定義から収益性を外す ではなく撤去か】
+  //   線を上げても「大きい乖離ほど悪い」という前提自体が支持されないので的は外れたまま。
+  //   (d)の「のれんの重みだけ」も**一貫した信号が出なかった**ので、作っても測っていない形を描くことになる。
+  //   ＝v9.9.182（roicg<WACC）と同じ判断: **強度ではなく存在が問題**だった。
+  // 【代金・影の計測】この罰を受けていたのは全369社中72社（合計 −308.1pt）。Ωが動く社と席の移動は記録を見よ。
+  // 【⚠ acq5 はこれで採点に一切効かなくなった】門の中で acq5 を読む規則はもう無い
+  //   （`fill_sht.py` が「買ったシェアと勝ち取ったシェアを売上高では区別できない」ために使うのは
+  //   **採取器の側**で、門の採点ではない）。CCF_BLANK の分類も 'pena'→'ok' へ直してある。
+  // 【残した反対材料】買収そのものの扱いは 2026-08-06 の逆U字（控えめが最良）で既に acqS5 が持っている。
+  //   「買った資産が稼いでいるか」を見る罰は、これで門から2本とも消えた——**買収の質を見る規則はゼロ**。
+  //   それが痛いと判るのは、質の悪い買収で壊れる社が判定圏に現れたときで、そのときは
+  //   **歴史で支持された形**（acqS5 の帯／ROIC≤WACC キル）で捕まえるのが筋。
   // ★`roicg<WACC → −8` は **v9.9.182 で撤去した**（2026-09-21 ユーザー明示指示「外して」）。
   //   旧実装: `if(roicg && roicg<wacc && roicg>0){ amberPen+=8 }`（acq5 の条件なし・二値）。
   // 【なぜ外したか——3つとも実測】
@@ -2259,7 +2260,8 @@ function compute(){
   //   その信号を担うのは roic 本体で、B群11社はΩがとうに低く線を跨がない。検定の限界（代理指標・
   //   狙った群は n=73/56/112 と薄い・2013と2015はコホート重複＝真の out-of-sample はゼロ）も据え置き。
   // ── 買収の強度（v9.9.180新設 → v9.9.181で物差しを買収支出へ・2026-09-21 ユーザー明示指示）──
-  //   上の乖離の罰（roicGap）は「買った資産が**稼いでいるか**」を測る（もう1本あった roicg<WACC の −8 は v9.9.182 で撤去）。
+  //   ⚠ かつてここには「買った資産が**稼いでいるか**」を測る罰が2本あったが、**どちらも歴史で落ちて撤去した**
+  //   （roicg<WACC の −8 は v9.9.182／のれん乖離>15pt の 0〜−6 は v9.9.183）。買収に関して門が持つのはこの項だけ。
   //   ここは「**どれだけ買っているか**」を測る——歴史が分けたのは後者で、しかも逆U字だった。
   //   加点にもなるので amberPen（減点のみ）ではなく evalScore の調整として持つ。
   const _acq=ccfAcqBand(nn('acqS5'));
@@ -4274,7 +4276,9 @@ const CCF_BLANK={
   eq:['best',"既定'pos'＝債務超過キルの検問を素通りする"],   rak:['ok',"既定'yes'＝取引可。上場株では空欄が正常（CLAUDE.md『保険としては正常』・全317社空欄）"],
   geopol:['best',"既定'0'＝地政学の減点がゼロになる"],       moatdecay:['best',"既定'no'＝市場縮小なしとして採点される"],
   expiry:['best',"既定'no'＝期限型独占キルの検問を素通りする"],
-  acq5:['pena',"既定'yes'＝のれん込みROIC乖離 −6 が黙って効く"],
+  // v9.9.183: 乖離の罰を撤去したので **acq5 は門の採点に一切効かなくなった**（'pena'→'ok'）。
+  //   採取器 fill_sht.py が「買ったシェアと勝ち取ったシェアを売上高では区別できない」ために使うのは端末側。
+  acq5:['ok','v9.9.183 で のれん乖離の罰を撤去したため**門の採点には効かない**（採取器 fill_sht.py が端末側で使うだけ）'],
   sht:['skew',"既定'flat'——中立ではない（up なら pm+3、Intel警報も鳴らない）"],
   gmt:['skew',"既定'flat'"], roict:['skew',"既定'flat'"], nrr:['skew','既定105'],
   per:['stop','門X（四関門の第二）が評価不能になる'], px:['stop','per の検算ができない'], eps:['stop','per の検算ができない'],
@@ -4396,31 +4400,18 @@ function ccfAudit(d,r,coerced,okKeys){
     if(roic>60) add('warn','roic',`roic ${roic}% が roicg ${roicg}% の <b>${gx}倍</b>（要検算）`,
       'のれん控除で投下資本が縮退している可能性。IC/自己資本が2割未満なら算出不能（ルール7(b)）。`python3 night/recalc_roic.py {T}` で原本から実額を出せ');
     else add('info','roic',`roic ${roic}% が roicg ${roicg}% の ${gx}倍——買収体として設計どおり`,
-      'roicGapの減点で既に処理されている。roic≤60なので分母縮退ではない（audit_roic.py の【参考】区分）');
+      '⚠ v9.9.183 で のれん乖離の減点は撤去したので「罰で処理済み」ではない——**買収体として設計どおりという意味だけ**。roic≤60なので分母縮退ではない（audit_roic.py の【参考】区分）');
   }
-  /* 2026-08-16 ユーザー明示指示「3つともやって」: **roic が算出不能だと買収規律の罰が黙って外れる。**
-     compute() の `const roicGap = roicg ? roic-roicg : 0` は roic が空欄のとき roic を 0 と読むので、
-     roicGap は必ず負になり `roicGap>15` が成立しない＝**−6 が発火しない**。
-     ＝『測れない』が『買収依存なし』として採点される＝この台帳が erosion/disrupt/acq5/sht/堀5本で
-     潰してきた「未測定が最良ケース」の型。しかも roic が算出不能になる主因は
-     **のれん・無形が投下資本を食い尽くしたこと**＝買収依存が最大という、まさに逆の証拠である。
-     【実測 2026-08-16】roic空欄 ∧ roicg あり は **23社**（うち acq5='yes' が18社）。
-     ただし**判定圏(Ω72+)は RELX 1社だけで、その RELX は acq5='no'**（罰はもともと出ない）＝
-     **今日は誰も動かない純粋なラチェット**。投下可0社。
-     【キーを 'roicGap' にした理由】`_meta.nulls.roic` に空欄の理由が書いてあっても、
-     **罰が黙って外れている事実は消えない**。欄名キーにすると v9.9.76 の ok印で抑止されてしまうので、
-     パックに存在しないキー名にして「roic を測るまで消えない」形にした。
-     消し方は一つ——**roic を測ること**（大半の23社は縮退ではなくタグ欠測が原因で、測れば消える）。 */
-  if(roic==null&&roicg!=null&&roicg>0&&(d.acq5==='yes'||d.acq5==null||d.acq5===''))
-    /* 既存の空欄検査と同じく **Ω72+ でだけ warn**（decide）。Ω40の社で鳴らしても行動につながらず、
-       「鳴りすぎる警報は鳴らないのと同じ」を自分で作る（v9.9.55 の較正で二度失敗した線引き）。
-       実測: 無条件 warn だと18社で鳴り未解決が 2→20件、Ω72+ に絞ると **0社**（RELXは acq5='no'）。 */
-    add(decide?'warn':'info','roicGap','<b>roic が算出不能なので、のれん込みROIC乖離の減点 −6 が黙って外れている</b>',
-        'roicGap は roic を 0 と読むため必ず負になり `>15` が成立しない＝**未測定が最良ケース**。'
-        +'roic を原本から測って埋めるか、算出不能が正しいなら acq5 を原本で確定させよ（acq5=no なら罰はそもそも出ない）');
-  if(roic!=null&&roicg!=null&&roicg>0&&roic/roicg>=2&&d.acq5==='no')
-    add('warn','acq5','ROIC乖離が2倍超で <b>acq5=no</b>（＝のれん乖離 −6 を免除中）',
-      '直近の10-Q/有報で買収が無いか確認せよ。実害: ADBEはSemrush買収$18.7億で陳腐化しΩ81.2→75.2だった');
+  /* ★ここに在った2本の検査は **v9.9.183 で撤去した**（罰そのものが消えたため）。
+     (1)「roic が算出不能なので のれん込みROIC乖離の減点 −6 が黙って外れている」（2026-08-16新設）
+     (2)「ROIC乖離が2倍超で acq5=no ＝ −6 を免除中」
+     どちらも **`乖離>15pt ∧ acq5=yes → 0〜−6` が在ることを前提にした警告**で、
+     罰を撤去した今は**存在しない罰の抜け道を警告している**ことになる。
+     ⚠ 罰と一緒にその見張りも外す、を忘れると「鳴り続けるが直しようがない警告」になる
+     （この台帳が繰り返し潰してきた型）。
+     ⚠ ただし **roic が算出不能なこと自体は依然として問題**——それは上の
+     `roic/roicg>=3 かつ roic>60`（要検算）と、端末の `night/audit_roic.py` が引き続き見ている。
+     acq5 は門の採点から完全に外れた（`fill_sht.py` が採取器側で使うだけ）。 */
   if(r.moatNA===true) add('warn','moatW','絶対MOAT指数が<b>算出不能</b>（5本のうち4本未満しか測っていない）',
     '堀のふるい（70+）を構造的に通れない＝買付の土俵に乗らない');
   const age=t=>{if(!d[t])return null;const x=new Date(d[t]);return isNaN(x)?null:Math.floor((Date.now()-x.getTime())/864e5);};
