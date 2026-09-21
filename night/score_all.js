@@ -91,7 +91,7 @@ if (typeof compute !== 'function') {
 //   関数消失を黙って飲み、**ccfAudit が消えると audE=0＝audOK=true＝第四の関門が静かに無効化**する
 //   方向に壊れた（「鳴らない警報は鳴りすぎる警報と同じ」）。抽出に失敗したら大声で止まる。
 for (const fn of ['ccfXJudge', 'ccfMoatGate', 'ccfAudit', 'ccfAllocTop', 'ccfShrinkGate', 'ccfIrr85Frame',
-  'ccfIrr85FrameLegacy', 'ccfIrr85Below', 'ccfOwnerVeto']) {
+  'ccfIrr85FrameLegacy', 'ccfIrr85Below', 'ccfOwnerVeto', 'ccfAcqBand']) {
   if (typeof global[fn] !== 'function' && typeof globalThis[fn] !== 'function') {
     console.error(`${fn}() を読み込めなかった。index.html の構造が変わった可能性がある——`
       + '関門の関数が無いまま続けると「点検が通った」という偽の結果を作るので中断する');
