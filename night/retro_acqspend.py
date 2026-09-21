@@ -41,7 +41,7 @@ def frame(url):
 def main():
     sic = json.load(open(os.path.join(BASE, "out/_sic_cache.json")))
     cik = {t: int(v["cik"]) for t, v in sic.items() if v.get("cik")}
-    out = {}
+    out, per, dirty_t = {}, {}, {}
     for v, (ff, rf, years, basey) in SETS.items():
         pay = {}   # cik -> 5年の買収支出の合計
         gwa = {}   # cik -> 同じ窓で「のれんが増えた」証拠（＝買ってはいるのに支出行が無い社の検出）
@@ -92,6 +92,9 @@ def main():
             rng = "" if i == 0 else "  支出/総資産 %.3f..%.3f" % (tert[i - 1][0][0], tert[i - 1][-1][0])
             print("   %-16s n=%3d  中央値 %.1f%%%s" % (l, len(zero) if i == 0 else len(tert[i - 1]), mm, rng))
         print("   → 最良 %s ／ 最悪 %s\n" % (lab[order[0]], lab[order[3]]))
+        # 社ごとの比も残す（他の検定が再取得せずに使えるように＝v9.9.65「二重に持たない」）
+        per[str(v)] = {r[2]: round(r[0], 6) for r in rows}
+        dirty_t[str(v)] = sorted(r[2] for r in dirty)
         out[str(v)] = {"n": n, "zero_n": len(zero), "dirty_n": len(dirty),
                        "dirty_median_cagr_pct": round(med(dirty), 1) if dirty else None, "labels": lab,
                        "median_cagr_pct": [round(x, 1) for x in ms],
@@ -99,7 +102,10 @@ def main():
     p = os.path.join(BASE, "out/retro_acqspend.json")
     json.dump({"generated": datetime.date.today().isoformat(),
                "note": "買収支出(PaymentsToAcquireBusinessesNetOfCashAcquired の5年合計)÷期初総資産。のれん残高と違い減損・売却・為替で汚れない",
-               "vintages": out}, open(p, "w"), ensure_ascii=False, indent=1)
+               "vintages": out, "per_company": per,
+               "dirty_tickers": dirty_t,
+               "dirty_note": "支出0だがのれんは増えている＝支出の行を切り出さない社（MSFT型）。0と読むと嘘になるので全検定で除外する"},
+              open(p, "w"), ensure_ascii=False, indent=1)
     print("→", p)
 
 
