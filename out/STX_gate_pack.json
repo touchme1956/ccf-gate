@@ -110,7 +110,7 @@
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2021年 10,681,000,000 → 2024年 6,551,000,000 → 2026年 12,195,000,000。A案(端点) 直近2年CAGR 36.44% − その前3年CAGR -15.04% = +51.48pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +47.74pt ／ 年次YoY {'2022': 9.2, '2023': -36.7, '2024': -11.3, '2025': 38.9, '2026': 34.1} → **採用 +51.48pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **-3.9%** / 同業（SIC357x（4桁では4社しか無く3桁へ丸めた）「Computer Storage Devices」・44社）の中央値 **3.6%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+-3.9%)÷(1+3.6%))^5 − 1 = **-31.3%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で20%以上縮んだ＝**down**",
    "intcov": "機械算出 2026年: 営業利益 ÷ 支払利息 = 14.415。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "gwg5": "のれん 2021-07-02 1237百万$ → 2026-07-03 1221百万$ ＝ -1.3%（SEC XBRL の Goodwill 系列: companyconcept／空なら companyfacts）"
+   "acqS5": "買収支出 5年ぶん合計 88百万$ ÷ 期初総資産(2021-07-02) 8675百万$ ＝ 0.010／内訳: 2025-06-27 88百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
   },
   "provenance": {
    "cagr": "machine",
@@ -129,7 +129,7 @@
    "eq": "machine",
    "cagrT": "machine",
    "sht": "machine",
-   "gwg5": "machine"
+   "acqS5": "machine"
   },
   "nulls": {
    "sht": "同業中央値との比較が要るが out/_sic_cache.json が無く night/fill_sht.py を回せなかった（2026-08-07）",
@@ -216,5 +216,5 @@
  "cagrT": 51.48,
  "sht": "down",
  "intcov": 14.415,
- "gwg5": -0.0129
+ "acqS5": 0.0101
 }

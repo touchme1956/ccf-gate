@@ -9,10 +9,10 @@ import json, os, time, datetime, urllib.request, statistics as st
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HDRS = {"User-Agent": "hachimon-gate fortis5280@gmail.com"}
-SETS = {2015: ("retro_features2_2015.json", "retro_returns_2015_q.json", range(2011, 2016), 2010),
+SETS = {2018: ("retro_features2_2018.json", "retro_returns_2018.json", range(2014, 2019), 2013),
+        2015: ("retro_features2_2015.json", "retro_returns_2015_q.json", range(2011, 2016), 2010),
         2016: ("retro_features2_2016.json", "retro_returns_2016.json", range(2012, 2017), 2011),
         2017: ("retro_features2_2017.json", "retro_returns_2017.json", range(2013, 2018), 2012),
-        2018: ("retro_features2_2018.json", "retro_returns_2018.json", range(2014, 2019), 2013),
         2019: ("retro_features2_2019.json", "retro_returns_2019.json", range(2015, 2020), 2014),
         2020: ("retro_features2_2020.json", "retro_returns_2020.json", range(2016, 2021), 2015),
         2021: ("retro_features2_2021.json", "retro_returns_2021.json", range(2017, 2022), 2016)}
@@ -44,11 +44,17 @@ def main():
     out = {}
     for v, (ff, rf, years, basey) in SETS.items():
         pay = {}   # cik -> 5年の買収支出の合計
-        seen = {}  # cik -> 支出フレームに現れた年数（＝タグ付けしている証拠）
+        gwa = {}   # cik -> 同じ窓で「のれんが増えた」証拠（＝買ってはいるのに支出行が無い社の検出）
         for y in years:
             for e in frame("https://data.sec.gov/api/xbrl/frames/us-gaap/PaymentsToAcquireBusinessesNetOfCashAcquired/USD/CY%d.json" % y):
                 pay[e["cik"]] = pay.get(e["cik"], 0) + max(0.0, e["val"])
-                seen[e["cik"]] = seen.get(e["cik"], 0) + 1
+            time.sleep(0.12)
+            # ⚠ 支出行を切り出さない社がある（実測 MSFT: PaymentsToAcquireBusinesses… は FY2011 で終わり、
+            #   Activision 690億$ は GoodwillAcquiredDuringPeriod 51,235百万$ にしか出ない）。
+            #   これを「買っていない」と読むと絶対のルール7そのもの——**別系列で汚染を数える**
+            for e in frame("https://data.sec.gov/api/xbrl/frames/us-gaap/GoodwillAcquiredDuringPeriod/USD/CY%d.json" % y):
+                if e["val"] > 0:
+                    gwa[e["cik"]] = gwa.get(e["cik"], 0) + e["val"]
             time.sleep(0.12)
         assets = {}
         for q in (1, 2, 3, 4):
@@ -65,10 +71,12 @@ def main():
             # ⚠ 支出フレームに一度も現れない社は「買っていない」か「タグ付けしていない」か
             #   区別できない。総資産は申告しているので**タグ付けはしている**＝0 と読んでよい
             #   （絶対のルール7の「上限の不等式」と同じ作法）
-            rows.append((pay.get(c, 0.0) / assets[c], R[t], t))
+            rows.append((pay.get(c, 0.0) / assets[c], R[t], t, bool(gwa.get(c))))
         rows.sort()
         n = len(rows)
         zero = [x for x in rows if x[0] <= 0]
+        dirty = [x for x in zero if x[3]]          # 支出0だが のれんは増えている＝**測れていない**社
+        zero = [x for x in zero if not x[3]]        # 本当に一円も買っていない社だけを残す
         pos = [x for x in rows if x[0] > 0]
         med = lambda s: 100 * st.median([x[1] for x in s]) if s else None
         # 買った社だけを3等分＝「買わない / 控えめ / 中 / 大きく」の4群を支出で作る
@@ -77,12 +85,15 @@ def main():
         lab = ["買収しない(支出0)", "控えめ", "中", "大きく買う"]
         ms = [med(zero)] + [med(x) for x in tert]
         order = sorted(range(4), key=lambda i: -(ms[i] or -99))
-        print("■ %d年ビンテージ  n=%d（支出0が %d社 = %.0f%%）" % (v, n, len(zero), 100 * len(zero) / n))
+        print("■ %d年ビンテージ  n=%d（真の支出0 %d社 = %.0f%% ／ 支出0だがのれん増＝測れていない %d社 中央値 %s）"
+              % (v, n, len(zero), 100 * len(zero) / n, len(dirty),
+                 ("%.1f%%" % med(dirty)) if dirty else "—"))
         for i, (l, mm) in enumerate(zip(lab, ms)):
             rng = "" if i == 0 else "  支出/総資産 %.3f..%.3f" % (tert[i - 1][0][0], tert[i - 1][-1][0])
             print("   %-16s n=%3d  中央値 %.1f%%%s" % (l, len(zero) if i == 0 else len(tert[i - 1]), mm, rng))
         print("   → 最良 %s ／ 最悪 %s\n" % (lab[order[0]], lab[order[3]]))
-        out[str(v)] = {"n": n, "zero_n": len(zero), "labels": lab,
+        out[str(v)] = {"n": n, "zero_n": len(zero), "dirty_n": len(dirty),
+                       "dirty_median_cagr_pct": round(med(dirty), 1) if dirty else None, "labels": lab,
                        "median_cagr_pct": [round(x, 1) for x in ms],
                        "best": lab[order[0]], "worst": lab[order[3]]}
     p = os.path.join(BASE, "out/retro_acqspend.json")

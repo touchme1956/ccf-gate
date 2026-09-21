@@ -116,7 +116,7 @@
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **29.8%** / 同業（SIC2834「Pharmaceutical Preparations」・131社）の中央値 **6.4%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+29.8%)÷(1+6.4%))^5 − 1 = **+170.7%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 159,742,000 → 2023年 582,022,000 → 2025年 868,453,000。A案(端点) 直近2年CAGR 22.15% − その前3年CAGR 53.88% = -31.72pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -21.20pt ／ 年次YoY {'2021': 91.2, '2022': 43.4, '2023': 32.9, '2024': 22.8, '2025': 21.5} → **採用 -21.20pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 14.231。利息タグ InterestExpenseDebt（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "gwg5": "SEC companyconcept(us-gaap/Goodwill) が 404＝のれんを一度も報告していない→5年でのれんは増えていない (gwg5=0)"
+   "acqS5": "買収支出 5年ぶん合計 37百万$ ÷ 期初総資産(2020-12-31) 427百万$ ＝ 0.087／内訳: 2023-12-31 37百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -146,7 +146,7 @@
    "sht": "machine",
    "p1": "machine",
    "cagrT": "machine",
-   "gwg5": "machine"
+   "acqS5": "machine"
   },
   "basis": {
    "roic": "through-cycle-med5(?年)",
@@ -192,5 +192,5 @@
  "sht": "up",
  "cagrT": -21.2,
  "intcov": 14.231,
- "gwg5": 0.0
+ "acqS5": 0.0866
 }

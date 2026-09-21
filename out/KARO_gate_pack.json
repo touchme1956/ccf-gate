@@ -106,7 +106,8 @@
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT 497,754,547 ÷ Δ投下資本 1,372,617,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 2,187,903,000→3,560,520,000（+62.7%）",
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 43.7% / 2022 24.4% / 2023 24.2% / 2024 26.4% / 2025 29.1% → 平均 29.6% / σ 7.3pt / **CV 24.7%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 1,941,893,000 → 2023年 3,507,067,000 → 2025年 4,567,459,000。A案(端点) 直近2年CAGR 14.12% − その前3年CAGR 21.78% = -7.66pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -5.63pt ／ 年次YoY {'2021': 18.0, '2022': 19.9, '2023': 27.7, '2024': 19.9, '2025': 8.6} → **採用 -5.63pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "intcov": "機械算出 2024年: 営業利益 ÷ 支払利息 = 12.25。利息タグ InterestCostsIncurred（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict"
+   "intcov": "機械算出 2024年: 営業利益 ÷ 支払利息 = 12.25。利息タグ InterestCostsIncurred（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
+   "acqS5": "買収支出 5年ぶん合計 72百万$ ÷ 期初総資産(2021-02-28) 2915百万$ ＝ 0.025／内訳: 2024-02-29 5百万$ / 2022-02-28 67百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -114,8 +115,7 @@
    "founder": "『they may be able to cause or prevent a change of control of our company』『The concentration of ownership could deprive other shareholders』で支配株主(創業者Zak Calisto系)存在は明示。ただしfounderフラグ定義はユーザー判定(ASR踏襲)",
    "fin": "業態フラグの定義不明。金融業ではない(SaaSテレマティクス)",
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力。ADR混線注意(財務ZAR・Nasdaq:KAROはUSD)",
-   "acq5": "【2026-07-29】旧値 0.07 は yes/no 以外の不正値で棄却。のれん残高(十億$) 2021 0.12 → 2022 0.19 → 2023 0.21 → 2024 0.23 → 2025 0.17。**新しさ =(直近 0.17 − 2021年 0.12)÷直近 = +29.0%**（今あるのれんのうち直近5年に増えた割合） → 判定不能（10〜30%の中間帯）。原本の Business Combination 注記で確認せよ",
-   "gwg5": "審査年(2026-02-28)または基準年(2021-02-28)の前後45日に のれんの instant が無い"
+   "acq5": "【2026-07-29】旧値 0.07 は yes/no 以外の不正値で棄却。のれん残高(十億$) 2021 0.12 → 2022 0.19 → 2023 0.21 → 2024 0.23 → 2025 0.17。**新しさ =(直近 0.17 − 2021年 0.12)÷直近 = +29.0%**（今あるのれんのうち直近5年に増えた割合） → 判定不能（10〜30%の中間帯）。原本の Business Combination 注記で確認せよ"
   },
   "kenshi_gm": "2026-07-20 gm/sbc監査: gm欄を仕様(営業利益率・GAAP)にXBRL機械計算で補正。sbc単位ずれ補正。 gm 70.1→28.7",
   "provenance": {
@@ -130,7 +130,8 @@
    "gpa": "machine",
    "roiic": "machine",
    "p1": "machine",
-   "cagrT": "machine"
+   "cagrT": "machine",
+   "acqS5": "machine"
   },
   "basis": {
    "roic": "single-year",
@@ -174,5 +175,6 @@
  },
  "roiic": 36.3,
  "cagrT": -5.63,
- "intcov": 12.25
+ "intcov": 12.25,
+ "acqS5": 0.0246
 }

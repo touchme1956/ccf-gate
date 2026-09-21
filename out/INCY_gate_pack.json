@@ -99,7 +99,7 @@
    "eps": "機械算出 2025年: 純利益 1,286,650,000 ÷ 株数 198,460,009（TTMではなく通期実績）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 2,666,702,000 → 2023年 3,695,649,000 → 2025年 5,141,242,000。A案(端点) 直近2年CAGR 17.95% − その前3年CAGR 11.49% = +6.46pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +6.01pt ／ 年次YoY {'2021': 12.0, '2022': 13.7, '2023': 8.9, '2024': 14.8, '2025': 21.2} → **採用 +6.46pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 623.912。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "gwg5": "のれん 2020-12-31 156百万$ → 2025-12-31 133百万$ ＝ -14.5%（SEC XBRL の Goodwill 系列: companyconcept／空なら companyfacts）"
+   "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2020-12-31) 3561百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -108,8 +108,7 @@
    "fcf": "PP&E capexタグがcompanyfacts抽出に不在→FCF清明計算不能。誤値回避で空欄・転換番犬は保留が正",
    "founder": "創業者経営フラグ非該当(CEO Hoppenotは非創業者)。hitsに支配的創業者の根拠なし・定義次第でユーザー判定",
    "fin": "金融/連続買収業態ではない。業態フラグの定義不明で空欄",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG=取込時に手入力",
-   "gwg5": "SECからのれんの系列を採取できなかった"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG=取込時に手入力"
   },
   "kenshi_gm": "2026-07-20 gm/sbc監査: gm欄を仕様(営業利益率・GAAP)にXBRL機械計算で補正。sbc単位ずれ補正。 gm None→29.5",
   "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=8.63",
@@ -120,7 +119,7 @@
    "dilNet": "machine",
    "eps": "machine",
    "cagrT": "machine",
-   "gwg5": "machine"
+   "acqS5": "machine"
   },
   "basis": {
    "roic": "single-year",
@@ -161,5 +160,5 @@
  },
  "cagrT": 6.46,
  "intcov": 623.912,
- "gwg5": -0.1452
+ "acqS5": 0.0
 }

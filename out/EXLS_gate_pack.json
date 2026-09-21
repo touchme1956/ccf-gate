@@ -112,7 +112,7 @@
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **16.8%** / 同業（SIC7389「Services-Business Services, NEC」・67社）の中央値 **11.5%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+16.8%)÷(1+11.5%))^5 − 1 = **+26.1%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 958,434,000 → 2023年 1,630,668,000 → 2025年 2,087,679,000。A案(端点) 直近2年CAGR 13.15% − その前3年CAGR 19.38% = -6.23pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -3.95pt ／ 年次YoY {'2021': 17.1, '2022': 25.8, '2023': 15.5, '2024': 12.7, '2025': 13.6} → **採用 -3.95pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 17.816。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "gwg5": "のれん 2020-12-31 349百万$ → 2025-12-31 420百万$ ＝ +20.2%（SEC XBRL の Goodwill 系列: companyconcept／空なら companyfacts）"
+   "acqS5": "買収支出 5年ぶん合計 105百万$ ÷ 期初総資産(2020-12-31) 1248百万$ ＝ 0.084／内訳: 2024-12-31 24百万$ / 2022-12-31 4百万$ / 2021-12-31 77百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -120,8 +120,7 @@
    "acq5": "事業買収累計2021-2025=105M(生値)。フィールドの単位/定義が一意でなく誤充填回避のためnull維持",
    "founder": "共同創業者Rohit Kapoorが副会長兼CEOだがhitsに創業者経営の根拠なし→定義次第でユーザー判定",
    "fin": "金融業ではない。業態フラグの定義不明のため空欄(ASRと同扱い)",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(推定禁止)",
-   "gwg5": "SECからのれんの系列を採取できなかった"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(推定禁止)"
   },
   "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=7.23",
   "provenance": {
@@ -141,7 +140,7 @@
    "sht": "machine",
    "p1": "machine",
    "cagrT": "machine",
-   "gwg5": "machine"
+   "acqS5": "machine"
   },
   "basis": {
    "roic": "through-cycle-med5(?年)",
@@ -186,5 +185,5 @@
  "sht": "up",
  "cagrT": -3.95,
  "intcov": 17.816,
- "gwg5": 0.2021
+ "acqS5": 0.0841
 }
