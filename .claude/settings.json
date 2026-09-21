@@ -44,7 +44,23 @@
       "mcp__EDINET_DB__search_companies",
       "mcp__EDINET_DB__screen_companies",
       "mcp__Alpha_Vantage_MCP_Server__GLOBAL_QUOTE",
-      "mcp__Alpha_Vantage_MCP_Server__SPLITS"
+      "mcp__Alpha_Vantage_MCP_Server__SPLITS",
+      "Bash(python3 night/peek.py *)",
+      "Bash(python3 night/ctx_report.py)",
+      "Bash(python3 night/ctx_report.py *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/ctx_guard.py\""
+          }
+        ]
+      }
     ]
   }
 }
