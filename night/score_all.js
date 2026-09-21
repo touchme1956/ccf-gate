@@ -91,7 +91,7 @@ if (typeof compute !== 'function') {
 //   関数消失を黙って飲み、**ccfAudit が消えると audE=0＝audOK=true＝第四の関門が静かに無効化**する
 //   方向に壊れた（「鳴らない警報は鳴りすぎる警報と同じ」）。抽出に失敗したら大声で止まる。
 for (const fn of ['ccfXJudge', 'ccfMoatGate', 'ccfAudit', 'ccfAllocTop', 'ccfShrinkGate', 'ccfIrr85Frame',
-  'ccfIrr85Below']) {
+  'ccfIrr85FrameLegacy', 'ccfIrr85Below']) {
   if (typeof global[fn] !== 'function' && typeof globalThis[fn] !== 'function') {
     console.error(`${fn}() を読み込めなかった。index.html の構造が変わった可能性がある——`
       + '関門の関数が無いまま続けると「点検が通った」という偽の結果を作るので中断する');
@@ -202,7 +202,8 @@ function buyGate(t, dd, s, mg, audE, audU, r) {
   const g = gates();
   // v9.9.122: 別枠は **r（compute()の結果）** を要る——二本柱の陥落を免除しないため。
   //   r を渡さない呼び出しは別枠が立たない側へ倒れる（特権は測れないときに与えない）。
-  const f85 = ccfIrr85Frame(dd, r);     // v9.9.119/122: irr=85 の別枠（Ωの線だけ免除・二本柱は免除しない）
+  // v9.9.178: 別枠85 は撤去＝f85.pass は常に false（門と同一実装。戻すときはこの1関数だけ）
+  const f85 = ccfIrr85Frame(dd, r);
   const shrink = ccfShrinkGate(dd);     // v9.9.99: 事業の収縮
   return (s >= 75 || f85.pass) && mg.pass === true && audE === 0 && audU === 0
          && !g.stale[t] && !g.vfail[t] && !g.pending[t] && !shrink.hit;
@@ -306,7 +307,7 @@ for (const f of fs.readdirSync(path.join(ROOT, 'out'))) {
     }
   } catch (e) {}
   const shrink = ccfShrinkGate(dd);   // v9.9.99: 門の単一実装（再実装しない・v9.9.65の掟）
-  const f85 = ccfIrr85Frame(dd, r);   // v9.9.119/122: irr=85 の別枠（同上・門と同一実装）
+  const f85 = ccfIrr85Frame(dd, r);   // v9.9.178: 別枠85 は撤去＝常に false（同上・門と同一実装）
   const s = parseFloat(r.evalScore);
   rows.push({ t, nm, jp, s, tier: r.tierShort,
               kills: r.kills, pfail: r.pfail, exit: r.exit && r.exit.level,
@@ -402,11 +403,11 @@ const blockers = r => {
   if (r.pending) b.push(`⛔未完了の重大事象(${r.pending.target || r.pending.kind || ''})`);
   return b.length ? b : ['—'];
 };
-// v9.9.119: irr=85 の別枠で土俵に上がった社（Ω75未満）も**この表に出す**——
-//   出さないと「なぜΩ63.9の社が🟢に居るのか」が端末から追えず、門と端末が違うことを言う（v9.9.65）
+// v9.9.178: **別枠85 を撤去した**ので frame85 は常に false＝この表はΩ75+だけになる。
+//   フィルタの `|| x.frame85` は残す——戻すときにここを直し忘れると門と端末が違うことを言う（v9.9.65）
 const q75 = rows.filter(x => x.s >= 75 || x.frame85).sort((a, b) => b.s - a.s);
 console.log('\nΩ75+（堀＝絶対MOAT指数／E[r]＝参考値・合否に不使用／点＝全件点検／買＝四関門すべて成立・v9.9.98）'
-  + '\n  ※【別枠85】＝irr=85 の別枠でΩ75+を免除して土俵に上がった社（v9.9.119）:');
+  + '\n  ※別枠85（irr=85 のΩ75+免除）は v9.9.178 で撤去した＝この表はΩ75+のみ:');
 for (const r of q75) {
   const moat = r.moatNA ? ' NA ' : (r.moat == null ? '  — ' : r.moat.toFixed(0).padStart(3) + ' ');
   const aud = r.audOK ? '  ✓' : `${r.audE ? '要' + r.audE : ''}${r.audU ? '未' + r.audU : ''}`.padStart(3) + '✗';
@@ -417,7 +418,7 @@ for (const r of q75) {
     + `  点${aud}`
     + `  ${r.buy ? '🟢投下可' : r.quali ? `🔵次点(${SEATS + 1}位以下)` : blockers(r).join('＋')}  出口=${r.exit}`);
 }
-// v9.9.91→v9.9.100: ロスターの並びは**席の順**（irr=85優先→Ω順）。当時の呼称は「合成点上位10社」と名乗りながらΩで並べていた）
+// v9.9.91→v9.9.100→v9.9.178: ロスターの並びは**席の順**（合成点順。irr=85優先は撤去）。当時の呼称は「合成点上位10社」と名乗りながらΩで並べていた）
 // v9.9.94(2026-08-06): ここに合成点を**書き写していた**のをやめ、門の単一実装 ccfAllocScore を呼ぶ。
 //   実害: v9.9.93 で配分の錨を (Ω−70)→Ω へ変えたとき、ccfAllocScore は直したのに
 //   **この写しだけが錨70のまま取り残された**——席の選定(ccfAllocTop)と表示の並びが違う式で動いていた。
@@ -427,7 +428,7 @@ const _ascore = x => ccfAllocScore(x);
 const _mech = x => (+x.irr === 85) ? 0 : 1;
 const buy = rows.filter(x => x.buy).sort((a, b) => _mech(a) - _mech(b) || _ascore(b) - _ascore(a) || b.s - a.s);
 const nextUp = rows.filter(x => x.quali && !x.buy).sort((a, b) => _mech(a) - _mech(b) || _ascore(b) - _ascore(a) || b.s - a.s);
-console.log(`\n🟢投下可(四関門∧irr=85優先→Ω順の上位${SEATS}社／半導体上限は v9.9.145 で撤去) ${buy.length}社`
+console.log(`\n🟢投下可(四関門∧合成点順の上位${SEATS}社／半導体上限は v9.9.145・別枠85と席の優先は v9.9.178 で撤去) ${buy.length}社`
   + `　日本株${buy.filter(x => x.jp).length}／米国等${buy.filter(x => !x.jp).length}`
   + `\n  ${buy.map(x => x.nm.split(/\s/)[0]).join(' ') || '(なし)'}`);
 if (nextUp.length) console.log(`🔵次点(四関門通過・席順${SEATS + 1}位以下＝買わない) ${nextUp.length}社\n  ${nextUp.map(x => x.nm.split(/\s/)[0]).join(' ')}`);
