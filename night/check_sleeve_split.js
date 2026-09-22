@@ -66,40 +66,64 @@ const srv = http.createServer((q, r) => {
 
   console.log('■ 総額の割り方（night/check_sleeve_split.js）');
 
-  // ① 既定＝正本のまま（城30 / 網70・mode target）
-  await load(null);
+  // ★検査は**正本の既定値を写さない**。mode を明示して両方の挙動を固定し、
+  //   「今どちらが選ばれているか」は portfolio.json から読んで**報告するだけ**にする。
+  //   ⚠初版は既定を 'target' と書き写していたので、2026-09-22 に正本を 'gap' へ戻した瞬間に
+  //     4件が落ちた——コードは正しいのに検査だけが古い値で鳴る、この台帳が繰り返し踏んだ型。
+  const withMode = (m) => { const o = JSON.parse(JSON.stringify(base)); o.target.sleeve_split_mode = m; return o; };
+
+  // ① mode='target' … 今の姿に関係なく常に目標比
+  await load(withMode('target'));
   let sp = await split(1000000);
   const now = sp && sp.now ? sp.now : null;
   console.log('   今の袖: ' + (now ? '城' + now.c.toFixed(1) + '% / 網' + now.n.toFixed(1) + '%' : '(読めず)')
-    + '　目標 城' + (sp && sp.cPct) + ' / 網' + (sp && sp.nPct) + '　mode=' + (sp && sp.mode));
-  ok(sp && sp.mode === 'fixed', '① mode=fixed（常に目標比）');
+    + '　目標 城' + (sp && sp.cPct) + ' / 網' + (sp && sp.nPct));
+  ok(sp && sp.mode === 'fixed', "① mode='target' → fixed（常に目標比）");
   ok(sp && sp.castle === 300000 && sp.net === 700000,
      '   100万 → 城 ' + (sp && sp.castle && sp.castle.toLocaleString()) + ' / 網 ' + (sp && sp.net && sp.net.toLocaleString()) + '（城30万/網70万が正）');
-  ok(sp && (sp.castle + sp.net) === 1000000, '② 合計が総額にぴったり一致');
-  ok(sp && sp.gCastle === 0, '③ 採らなかったほう（不足按分）も持っている＝画面に併記できる（城 ' + (sp && sp.gCastle) + '）');
-  // ⚠ 帯は renderPlan のときの localStorage を見て描かれるので、**総額を入れてから描き直す**
-  //   （split() は判定を直接呼ぶだけで画面を更新しない）。ここを飛ばすと
-  //   「総額が未入力の画面」を読んで落ちる＝道具の側の誤り。
+  ok(sp && (sp.castle + sp.net) === 1000000, '   合計が総額にぴったり一致');
   await pg.evaluate(() => ccfSetTotalAmt({ value: '1000000' }));
   await pg.waitForTimeout(1200);
-  const txt = await pg.locator('#pg5').innerText().catch(() => '');
+  let txt = await pg.locator('#pg5').innerText().catch(() => '');
   ok(/常に目標比/.test(txt), '   画面に「常に目標比」と出る');
-  ok(/足りないほうから/.test(txt), '   画面に不足按分の金額も併記される（どちらも隠さない）');
+  ok(/足りないほうから/.test(txt), '   採らなかったほう（不足按分）も併記＝どちらも隠さない');
 
-  // ④ mode='gap' へ戻すと v9.9.167 の挙動
-  const g = JSON.parse(JSON.stringify(base)); g.target.sleeve_split_mode = 'gap';
-  await load(g);
+  // ② mode='gap' … 不足側に厚く（超過側は0）
+  await load(withMode('gap'));
   sp = await split(1000000);
-  ok(sp && sp.mode === 'gap', '④ mode=gap へ戻る（1語で可逆）');
+  ok(sp && sp.mode === 'gap', "② mode='gap' → 不足側に厚く");
   ok(sp && sp.castle === 0 && sp.net === 1000000,
-     '   城が目標超過なので 城 ¥0 / 網 ¥1,000,000＝2026-09-22 に見えた挙動を再現');
+     '   城が目標超過なので 城 ¥0 / 網 ¥1,000,000（2026-09-22 に見えた挙動）');
+  ok(sp && (sp.castle + sp.net) === 1000000, '   合計が総額にぴったり一致');
+  await pg.evaluate(() => ccfSetTotalAmt({ value: '1000000' }));
+  await pg.waitForTimeout(1200);
+  txt = await pg.locator('#pg5').innerText().catch(() => '');
+  ok(/足りないほうから/.test(txt), '   画面に「足りないほうから」と出る');
+  ok(/目標比/.test(txt), '   採らなかったほう（目標比）も併記＝どちらも隠さない');
 
-  // ⑤ 比率を変えると追随する（書き写していない）
-  const h = JSON.parse(JSON.stringify(base)); h.target.shiro_castle_pct = 50; h.target.ami_net_pct = 50;
-  await load(h);
+  // ③ 城が目標を下回れば gap でも城へ配る＝恒久的に0ではない
+  const under = JSON.parse(JSON.stringify(base));
+  under.target.sleeve_split_mode = 'gap';
+  under.target.shiro_castle_pct = 80; under.target.ami_net_pct = 20;   // 城を大きく不足させる
+  await load(under);
+  sp = await split(1000000);
+  ok(sp && sp.castle > 0 && sp.net === 0,
+     '③ 城が目標を下回ると gap でも城へ配る（城 ¥' + (sp && sp.castle && sp.castle.toLocaleString()) + '）＝恒久的に0ではない');
+
+  // ④ 比率を変えると追随する（書き写していない）
+  await load(Object.assign(withMode('target'), { target: Object.assign({}, base.target, { sleeve_split_mode: 'target', shiro_castle_pct: 50, ami_net_pct: 50 }) }));
   sp = await split(1000000);
   ok(sp && sp.castle === 500000 && sp.net === 500000,
-     '⑤ 城50/網50 にすると 城¥500,000 / 網¥500,000＝比率を書き写していない');
+     '④ 城50/網50 にすると 城¥500,000 / 網¥500,000＝比率を書き写していない');
+
+  // ⑤ 正本がいまどちらを選んでいるかは**読んで報告するだけ**（期待値を書き写さない）
+  const live = String((base.target && base.target.sleeve_split_mode) || 'target').toLowerCase();
+  await load(null);
+  sp = await split(1000000);
+  const want = (live === 'gap') ? 'gap' : 'fixed';
+  ok(sp && sp.mode === want,
+     "⑤ 正本(portfolio.json)の mode='" + live + "' が門にそのまま効いている（判定 " + (sp && sp.mode) + '）'
+     + ' → 城 ¥' + (sp && sp.castle && sp.castle.toLocaleString()) + ' / 網 ¥' + (sp && sp.net && sp.net.toLocaleString()));
 
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
   await pg.evaluate(() => localStorage.removeItem('pf:monthly_total'));
