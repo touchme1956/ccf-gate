@@ -210,6 +210,17 @@ def whatif(b):
     n_map, _ = net()
     c, _, _ = castle()
     total = b["total_jpy"]
+    # ★--castle を what-if にも効かせる（2026-09-22）。今の城は MSFT 26%・ASML 12% と
+    #   **過去の買付の跡**なので、網の比率を比べるときは城を固定した方が差が読める。
+    #   指定は「総資産に対する%」＝ pick_view とまったく同じ書式（新しい書式を作らない）。
+    if CASTLE_SPEC:
+        c = {}
+        for part in CASTLE_SPEC.split(","):
+            k, _, v = part.partition("=")
+            if not k.strip() or not v.strip():
+                raise SystemExit(f"--castle の書式は 'MSFT=8.0,V=6.6' （%）。読めない: {part!r}")
+            c[k.strip().upper()] = total * float(v) / 100.0
+        print(f"   ※ 城を指定で固定: {CASTLE_SPEC}（合計 {sum(c.values())/total*100:.1f}%）")
     cases = []
 
     def run(label, net_alloc):
@@ -224,6 +235,11 @@ def whatif(b):
                       "max_pct": round(rows[0][1] / total * 100, 1) if rows and total else 0,
                       "semi_pct": round(semi / total * 100, 1) if total else 0,
                       "n_over_cap": sum(1 for t, v in m.items() if v / total * 100 > CAP),
+                      # ★件数だけでは「どれが上限を破ったか」が判らない。2026-09-22 に
+                      #   『SMH を網へ入れると NVDA が上限を超える』が件数の陰に隠れていた。
+                      "over": [f"{t} {v/total*100:.1f}%" for t, v in
+                               sorted(m.items(), key=lambda kv: -kv[1]) if v / total * 100 > CAP],
+                      "nvda_pct": round(m.get("NVDA", 0) / total * 100, 2) if total else 0,
                       # ★半導体は**幅**で出す（2026-08-19）。未取得を0として比べると、
                       #   **中身が採れていない案ほど「分散して見える」**——実測 VT は9500銘柄中41件しか
                       #   採れず未取得35%で、半導体13.8%は「薄い」ではなく「測れていない」。
@@ -571,7 +587,9 @@ def main():
         print(f"   {'案':38} {'最大の1銘柄':>16} {'半導体(下限〜上限)':>19} {'8%超':>5} {'未取得':>7}")
         for c in whatif(b):
             print(f"   {c['case']:38} {str(c['max_t'])+' '+str(c['max_pct'])+'%':>16}"
-                  f" {c['semi_pct']:8.1f}〜{c['semi_hi']:5.1f}% {c['n_over_cap']:4}件 {c['unknown_pct']:6.1f}%")
+                  f" {c['semi_pct']:8.1f}〜{c['semi_hi']:5.1f}% {c['n_over_cap']:4}件 {c['unknown_pct']:6.1f}%"
+                  f"  NVDA {c.get('nvda_pct', 0):5.2f}%"
+                  + (f"  ⛔{' / '.join(c.get('over') or [])}" if c.get('over') else ""))
         print("   ⚠ 半導体は**幅**。上限＝未取得が全部半導体だった場合。"
               "未取得の大きさが違う案は下限だけで比べられない（VTは9500銘柄中41件しか中身が採れていない）")
     return 0
