@@ -1525,7 +1525,7 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.184</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.185</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</div></details></div>
   </div>
@@ -1980,7 +1980,7 @@ function ccfMoat(d){
   //   ＝irr=85 は上側に伸びるが**左尾でも厚い**。「壊れない複利」の"壊れない"側から見ると
   //   この改定は**逆を向いている**。それでも入れるのは指示であり、二本柱・財務キル・dep のベトが
   //   左尾を別途見張っている前提に立つ。**外すならこの行の重みを戻すだけ**。
-  const W={dom:.30,irr:.35,rep:.14,dur:.084,moatW:.126};   // v9.9.184（旧 .25/.25/.20/.12/.18＝v9.9.36）
+  const W={dom:.30,irr:.45,rep:.10,dur:.06,moatW:.09};     // v9.9.185（v9.9.184は .30/.35/.14/.084/.126 ／ v9.9.36は .25/.25/.20/.12/.18）
   // ── v9.9.141（2026-08-12 ユーザー明示指示「歴史によい数値を優先して評価したい」）──────
   // **最上段(100)を一つ下の刻み(85)として採点する**。刻みの値も重みも新設していない——
   // 使うのは**既存の85**だけで、新しい定数を一つも導入していない。
@@ -2002,7 +2002,27 @@ function ccfMoat(d){
   //   Ωが動くのは38社・最大 −1.2pt。⚠HWM は 71.1→70.1 で0.1pt差で残る＝**線ぎわの変更**。
   //   影の計測は night/shadow_rung_top.py（5案を測って必ず元へ戻す）。
   const TOPCAP={irr:85,dur:85};
-  const rung=(k,v)=>(TOPCAP[k]!=null&&v===100)?TOPCAP[k]:v;
+  // ── v9.9.185（2026-09-21 ユーザー明示指示「irrの効きが弱いのでは?」→ 案3 を選択）────────
+  // **irr の記録値85 を採点では100として扱う**（cap96 が掛かるので実効は96）。
+  // 【なぜ】刻みの値そのものが上の段を圧縮していた。幾何平均は比で効くので
+  //   ln(70/50)=0.336 に対し ln(85/70)=0.194 ＝**上の段は構造的に下の段の58%**。
+  //   実測（判定圏35社の ΔΩ 中央値）も irr 50→70 が **+4.10**、70→85 は **+1.70** で2.4倍の不均衡。
+  //   ところが**歴史の段差はほぼ等しい**——プール754件の P(継続) は 50:0.162 / 70:0.366 / 85:0.579
+  //   ＝ **+0.204 と +0.213**。つまり門だけが上の段を過小評価していた。
+  //   段差を等しくする値は 70²/50 ≈ 98 で、**既存の最上段の値 100（cap96 で実効96）がちょうど合う**
+  //   ——ln(96/70)=0.316 ≒ ln(70/50)=0.336。**新しい定数を持ち込んでいない**。
+  // 【⚠ 記録値100（規制公益）は上げない】TOPCAP が先に 100→85 へ落とす規約は v9.9.141 のまま。
+  //   歴史では irr=100 が 2013/2015/2018 の**3ビンテージすべてで最下位**（P 0.056/0.091/0.000）で、
+  //   85（認証・規格ロック）とは別の機構（規制フランチャイズ）だから。
+  //   結果として **採点値は 記録85 > 記録100 になる**——見た目は奇妙だが、
+  //   これは「刻みの順序そのものに反証がある」という測定を素直に写した形。
+  //   ⚠**台帳に書く値は 50/70/85/100 のまま**（審査の刻みは1バイトも変えていない）。変わるのは指数の計算だけ。
+  // 【実測 /tmp 影の計測 → night/shadow_moat_weights.py と同じ型】
+  //   🟢投下可: CW(86.0) V MSFT **LRCX(83.1)** BR ASML ／ 出 **MCO**(82.3＝7位)。
+  //   irr=85 の社が揃って上がる: CW +1.5 / LRCX +1.9 / VRSK +1.4。堀70+ は 35→38社。
+  const IRRTOP={85:100};                              // v9.9.185: 記録85 → 採点100（cap96で実効96）
+  const rung=(k,v)=>(k==='irr'&&IRRTOP[v]!=null)?IRRTOP[v]
+                    :((TOPCAP[k]!=null&&v===100)?TOPCAP[k]:v);
   const legs=Object.keys(W).map(k=>[k,rung(k,num(d[k]))]).filter(l=>l[1]!=null&&l[1]>0);
   const miss=Object.keys(W).filter(k=>!legs.some(l=>l[0]===k));
   if(legs.length<4)return {idx:null,na:true,miss:miss,legs:legs.length};
