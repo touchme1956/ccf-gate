@@ -87,6 +87,119 @@ def underwater(ser, start=None):
     return worst, span
 
 
+# ── 混合（網の中の配合）を同じ窓で比べる（--mix・2026-09-22 ユーザーの問い「リターン効率を考えて」）
+#   ⚠ リターンだけ並べると「効率」にならない。**年率 / ボラ / 最大下落 / 毎月積立の倍率**を同じ窓で出す。
+#   ⚠ 配合は**毎月リバランス**（網の中の規約と同じ作法）。買い持ちは別物なので混ぜない。
+#   ⚠ 重みは**網の中で正規化**する（城の比率に依らない＝配合そのものの効率を見る）。
+def mix_series(cache, w):
+    """{ticker:重み} → {月: 指数}（毎月リバランス・起点1.0）。全員が持つ月だけで作る。"""
+    ms = None
+    for t in w:
+        s = set(cache.get(t) or {})
+        ms = s if ms is None else (ms & s)
+    if not ms:
+        return {}
+    ms = sorted(ms)
+    tot = sum(w.values()) or 1.0
+    out = {ms[0]: 1.0}
+    for a, b in zip(ms, ms[1:]):
+        r = sum((w[t] / tot) * (cache[t][b] / cache[t][a]) for t in w)
+        out[b] = out[a] * r
+    return out
+
+
+def stats(ser, spy, a, b):
+    """年率・年率ボラ・最大下落・毎月積立の倍率（とSPY積立との比）。"""
+    ms = sorted(m for m in ser if a <= m <= b)
+    if len(ms) < 24:
+        return None
+    n = months_between(a, b)
+    cg = (ser[b] / ser[a]) ** (12.0 / n) - 1
+    rets = [ser[y] / ser[x] - 1 for x, y in zip(ms, ms[1:])]
+    mu = sum(rets) / len(rets)
+    var = sum((r - mu) ** 2 for r in rets) / (len(rets) - 1)
+    vol = (var ** 0.5) * (12 ** 0.5)
+    pk, dd = None, 0.0
+    for m in ms:
+        v = ser[m]
+        pk = v if pk is None or v > pk else pk
+        dd = min(dd, v / pk - 1)
+    buy = sorted(m for m in ser if a <= m < b)
+    mult = sum(1.0 / ser[m] for m in buy) * ser[b] / len(buy)
+    sm = None
+    if spy and a in spy and b in spy:
+        sb = sorted(m for m in spy if a <= m < b)
+        sm = sum(1.0 / spy[m] for m in sb) * spy[b] / len(sb)
+    return {"年率": round(cg * 100, 2), "年率ボラ": round(vol * 100, 2),
+            "最大下落": round(dd * 100, 1),
+            "年率÷ボラ": round(cg / vol, 3) if vol else None,
+            "年率÷|最大下落|": round(cg / abs(dd), 3) if dd else None,
+            "積立倍率": round(mult, 3),
+            "積立倍率比SPY": round(mult / sm, 3) if sm else None}
+
+
+def mix_view(cache, end, spec):
+    spy = cache.get("SPY") or {}
+    mixes = {}
+    for part in spec.split(";"):
+        part = part.strip()
+        if not part:
+            continue
+        lab, _, body = part.partition(":")
+        if not body:
+            lab, body = part, part
+        w = {}
+        for kv in body.split(","):
+            k, _, v = kv.partition("=")
+            k = k.strip().upper()
+            if not k or not v.strip():
+                raise SystemExit(f"--mix の書式は 'ラベル:QQQM=40,XLK=30' 。読めない: {kv!r}")
+            if k not in cache or not cache[k]:
+                raise SystemExit(f"系列が無い: {k}（--fetch で取るか TICKERS へ足す）")
+            w[k] = float(v)
+        mixes[lab.strip()] = w
+    # ★共通の窓で比べる——起点が違う案どうしを並べると「設定日の罠」をここで再演する
+    start = None
+    for w in mixes.values():
+        s = mix_series(cache, w)
+        if not s:
+            continue
+        start = min(s) if start is None else max(start, min(s))
+    out = {"共通の窓": f"{start}→{end}", "⚠": "毎月リバランス・重みは網の中で正規化・共通の窓でのみ比較",
+           "案": {}}
+    print(f"\n■ 混合の効率（共通の窓 {start}→{end}・毎月リバランス）", file=sys.stderr)
+    print(f"   {'案':26} {'年率':>7} {'ボラ':>7} {'最大下落':>8} {'年率/ボラ':>9} {'年率/DD':>8} {'積立比SPY':>9}", file=sys.stderr)
+    for lab, w in mixes.items():
+        ser = mix_series(cache, w)
+        st = stats(ser, spy, start, end) if ser else None
+        out["案"][lab] = {"重み": w, "全窓": st}
+        if st:
+            print(f"   {lab:26} {st['年率']:7.2f} {st['年率ボラ']:7.2f} {st['最大下落']:8.1f} "
+                  f"{st['年率÷ボラ']:9.3f} {st['年率÷|最大下落|']:8.3f} {st['積立倍率比SPY']:9.3f}", file=sys.stderr)
+    # 転がる20年窓（毎月積立）でも比べる——全窓の1本値は起点に依存するため
+    print(f"\n   ── 転がる20年窓の毎月積立（重なる窓・独立試行ではない）", file=sys.stderr)
+    print(f"   {'案':26} {'n':>4} {'倍率比SPY 中央':>14} {'最小':>8} {'勝率':>6}", file=sys.stderr)
+    for lab, w in mixes.items():
+        ser = mix_series(cache, w)
+        rs = []
+        for a in sorted(ser):
+            b = add_months(a, 240)
+            if b > end:
+                break
+            s1 = stats(ser, spy, a, b)
+            if s1 and s1.get("積立倍率比SPY"):
+                rs.append(s1["積立倍率比SPY"])
+        if not rs:
+            continue
+        rr = sorted(rs)
+        out["案"][lab]["転がる20年_積立"] = {"n": len(rr), "倍率比_中央": rr[len(rr) // 2],
+                                        "倍率比_最小": rr[0],
+                                        "勝率": round(sum(1 for x in rr if x > 1) / len(rr), 3)}
+        print(f"   {lab:26} {len(rr):4d} {rr[len(rr)//2]:14.3f} {rr[0]:8.3f} "
+              f"{sum(1 for x in rr if x>1)/len(rr)*100:5.0f}%", file=sys.stderr)
+    return out
+
+
 def main():
     cache = load()
     if "--fetch" in sys.argv or not cache:
@@ -249,6 +362,11 @@ def main():
             if c is not None:
                 dot.setdefault(a, {})[t] = round(c * 100, 2)
 
+    mixdoc = None
+    for _i, _a in enumerate(sys.argv):
+        if _a == "--mix" and _i + 1 < len(sys.argv):
+            mixdoc = mix_view(cache, end, sys.argv[_i + 1])
+
     doc = {
         "generated": time.strftime("%Y-%m-%d"),
         "tool": "night/etf_long_windows.py",
@@ -270,6 +388,7 @@ def main():
         "★長い系列だけで揃えた勝率": aligned_long,
         "★毎月積立(DCA)": dca_tbl,
         "ドットコム天井から20年": dot,
+        "★混合の効率": mixdoc,
         "rows": rows,
     }
     json.dump(doc, open(OUT, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
