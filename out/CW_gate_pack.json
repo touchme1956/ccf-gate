@@ -128,7 +128,8 @@
    "gmt": "**flat（横ばい）で据置**。営業利益率の3年トレンド。採取器の機械判定は 'up' だが、CWは2023年に営業利益率が段階的に切り上がった後の高原（10-K FY2025 の営業利益 633,521千$ / 売上 3,498,372千$ ＝18.1%）で、直近3年の傾きは緩やか。**⚠ 採取器と食い違うので要審査**——'up' なら gmPt が上がりΩは 80.0→80.3 と微増する（実測）。判定は動かないが、原本の3年系列で確定させること。なお **v9.9.99 の事業の収縮の関門は cagr<0 ∧ gmt=down で発火する**ので、flat/up のどちらでも発火しない",
    "mcap": "発行済株式数 36,934,444株（SEC dei:EntityCommonStockSharesOutstanding・filed 2026-08-06）× px $691.52 = **25.54十億$**。2026-08-08に新規充填（それまで空欄で時価総額の比較ができなかった）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 2,391,336,000 → 2023年 2,845,373,000 → 2025年 3,498,372,000。A案(端点) 直近2年CAGR 10.88% − その前3年CAGR 5.97% = +4.92pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +6.31pt ／ 年次YoY {'2021': 4.6, '2022': 2.2, '2023': 11.3, '2024': 9.7, '2025': 12.1} → **採用 +6.31pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 14.683。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict"
+   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 14.683。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
+   "acqS5": "買収支出 5年ぶん合計 508百万$ ÷ 期初総資産(2020-12-31) 4021百万$ ＝ 0.126／内訳: 2024-12-31 226百万$ / 2022-12-31 282百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -172,7 +173,8 @@
    "roiic5": "machine",
    "p1": "machine",
    "nde": "machine",
-   "cagrT": "machine"
+   "cagrT": "machine",
+   "acqS5": "machine"
   },
   "basis": {
    "roic": "single-year",
@@ -271,5 +273,6 @@
  "dep": 10,
  "mcap": 25.54,
  "cagrT": 6.31,
- "intcov": 14.683
+ "intcov": 14.683,
+ "acqS5": 0.1263
 }

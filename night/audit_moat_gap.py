@@ -72,7 +72,7 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out")
 
 # 正は index.html の ccfMoat（v9.9.36の5本重み）
-W = {"dom": .25, "irr": .25, "rep": .20, "dur": .12, "moatW": .18}
+W = {"dom": .30, "irr": .45, "rep": .10, "dur": .06, "moatW": .09}   # v9.9.185（v9.9.184は .30/.35/.14/.084/.126）。index.html:ccfMoat の正本と同期すること
 # 正は index.html の SELECT／審査プロトコル。**規約に無い刻みは提示しない**
 GRADES = {"dom": [50, 70, 85, 100], "irr": [50, 70, 85, 100], "rep": [35, 60, 80, 100],
           "dur": [55, 75, 85, 100], "moatW": [50, 70, 85, 100]}
@@ -98,12 +98,18 @@ def num(v):
 #   ★この道具に入れないと「irr 85→100 で通る」という**実際には通らない道**を提示してしまう
 #     ——v9.9.65「同じ台帳を見る二つの検査器が違うことを言ってはいけない」の破れになる。
 TOPCAP = {"irr": 85, "dur": 85}
+# v9.9.185: index.html の IRRTOP と同じ **記録85 → 採点100**（cap96 で実効96）。
+#   歴史の段差（P継続 50:0.162 / 70:0.366 / 85:0.579 ＝ +0.204 と +0.213 でほぼ等しい）に
+#   門の段差を合わせるため。⚠ 記録値100（規制公益）は TOPCAP が先に85へ落とす＝v9.9.141のまま。
+#   ★この道具に入れないと「irr 70→85 では届かない」と嘘を言う（v9.9.65の掟）。
+IRRTOP = {85: 100}
 
 
 def moat_idx(d):
     """index.html の ccfMoat と同値（TOPCAP と cultAdj -2 まで含める）。4本未満はNA。"""
     legs = [(k, num(d.get(k))) for k in W]
-    legs = [(k, (TOPCAP[k] if (k in TOPCAP and v == 100) else v)) for k, v in legs]
+    legs = [(k, (IRRTOP[v] if (k == "irr" and v in IRRTOP)
+               else (TOPCAP[k] if (k in TOPCAP and v == 100) else v))) for k, v in legs]
     legs = [(k, v) for k, v in legs if v is not None]
     if len(legs) < 4:
         return None

@@ -126,7 +126,8 @@
    "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2025『no individual customer accounting for more than **approximately 3% of revenues** for the years ended December 31, 2025, 2024, and 2023』。(b)(c)は該当記述なし",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 2,269,400,000 → 2023年 2,681,400,000 → 2025年 3,072,700,000。A案(端点) 直近2年CAGR 7.05% − その前3年CAGR 5.72% = +1.33pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -0.34pt ／ 年次YoY {'2021': 8.5, '2022': 1.4, '2023': 7.4, '2024': 7.5, '2025': 6.6} → **採用 +1.33pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "shy": "純還元 =(自社株買い + 配当 − 株式発行) ÷ 時価総額。FY2025(期末2025-12-31) 10-K のCF計算書 実額: PaymentsForRepurchaseOfCommonStock **624百万$** ＋ PaymentsOfDividends **251** − 株式発行 0 = 875。株数 = 純利益 908.3 ÷ eps 6.56 = **138.5百万株**、時価総額 = px 191.82 × 138.5 = **26.6十億$** → shy = **3.29%**。★**2022-2024の還元を使ってはいけない**——FCF比が 237%/356%/133% と1を大きく超えており、Wood Mackenzie 等の**事業売却の代金**で買い戻していた（実額: 2022 還元1,858 / 2023 **2,959** / 2024 1,226 に対し FCFは 784/831/920）。2023年基準だと shy=11.1% と出るが繰り返せない。**2025年はFCF比73%＝平常水準**（FCF 1,192 に対し還元875）なのでこれを採る。",
-   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 7.864。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict"
+   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 7.864。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
+   "acqS5": "買収支出 5年ぶん合計 822百万$ ÷ 期初総資産(2020-12-31) 7562百万$ ＝ 0.109／内訳: 2023-12-31 83百万$ / 2022-12-31 449百万$ / 2021-12-31 290百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -165,7 +166,8 @@
    "roiic5": "machine",
    "p1": "machine",
    "px": "market",
-   "cagrT": "machine"
+   "cagrT": "machine",
+   "acqS5": "machine"
   },
   "market": {
    "date": "2026-08-02",
@@ -284,5 +286,6 @@
  "ddate": "2026-09-22",
  "dep": 3,
  "cagrT": 1.33,
- "intcov": 7.864
+ "intcov": 7.864,
+ "acqS5": 0.1087
 }
