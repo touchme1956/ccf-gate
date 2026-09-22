@@ -145,6 +145,52 @@ def check(h, f):
                          strip_tags(h[max(0, m.start() - 110):m.start() + 150])))
         return hits
 
+    # ⑬ 城/網の比率を、門の表示テキストが書き写したまま古くなっていないか（2026-09-22新設）
+    #   正本は portfolio.json の target.shiro_castle_pct / ami_net_pct。
+    #   コード（ccfSleeveTarget・CITY_TOTAL）は**そこから読んでいる**が、Ⅰ解説の配分表と
+    #   Ⅴの生涯枠の文は**人が書いた数字**なので、比率を変えると静かにずれる。
+    #   ⚠実害: 2026-09-22 に 城20→30 / 網80→70 へ変えたとき、門の表示は5箇所が 80/20 のまま残っていた。
+    #   「同じ数字を二箇所に持つと必ず割れる」（版番号・席の数・堀の線）の同族で、今回は
+    #   **片方が正本のJSON・片方が画面の文**という形。
+    #   ★**当てるのは「今日の目標はNN%」と言っている形だけ**にしてある。初版は本文中の
+    #     『城NN%』『網NN%』を全部拾ったが、**6件すべてが歴史記述**だった
+    #     （「2026-08-03の実測 城40%で総合11.7%」「経緯（40%→60%→50%）」「城40%→60%が年+1.6pt」…）。
+    #     決定の記録は消さない規約なので、過去の比率が文中に在るのは**正しい**。
+    #     v9.9.134 で audit_docs が同じ罠を踏んでいる（歴史記述を操作指示と誤検出した）。
+    #     鳴りすぎる警報は鳴らないのと同じ＝**構造で特定できる3箇所に絞る**。
+    try:
+        import json as _j
+        _t = _j.load(open('portfolio.json', encoding='utf-8')).get('target', {})
+        _c, _n = _t.get('shiro_castle_pct'), _t.get('ami_net_pct')
+    except Exception:
+        _c = _n = None
+    if isinstance(_c, (int, float)) and isinstance(_n, (int, float)):
+        stale = []
+
+        def _spot(pattern, want_groups):
+            """pattern の各グループが want_groups の目標値と一致しているか"""
+            for m in re.finditer(pattern, h):
+                for gi, want in want_groups.items():
+                    v = int(m.group(gi))
+                    if v != want:
+                        stale.append((line_of(h, m.start()),
+                                      '%s → 正本は %g%%' % (strip_tags(m.group(0))[:120], want)))
+
+        # (a) 配分パネルの見出しの帯
+        _spot(r'<span class="pass">網(\d{1,3})% / 城(\d{1,3})%', {1: _n, 2: _c})
+        # (b) 配分表の目標セル（網の行・城の行）
+        _spot(r'<td class="k">網（土台）</td>.*?<td><b>(\d{1,3})%</b></td>', {1: _n})
+        _spot(r'<td class="k">城（上乗せ）</td>.*?<td><b>(\d{1,3})%</b></td>', {1: _c})
+        # (c) 本文の「上限は城N%、網はN%を土台として残す」
+        _spot(r'上限は城<b>(\d{1,3})%</b>、網は<b>(\d{1,3})%</b>を土台として残す', {1: _c, 2: _n})
+
+        if stale:
+            out.append(('FAIL', 'sleeve_ratio_stale',
+                        '城/網の比率の**書き写し**が正本とずれている。'
+                        'portfolio.json の target は 城%g%% / 網%g%%（コードはここから読む）。'
+                        '画面の文だけが古い＝同じ台帳を見る二つが違うことを言う（v9.9.65）'
+                        % (_c, _n), stale))
+
     # ① Ωの合成式が「3本柱」のまま
     if f['omega_weights'] and len(f['omega_weights']) == 4:
         hits = prose_hits(r'Q<sup>0\.40</sup>|Q0\.40・持続0\.35')
