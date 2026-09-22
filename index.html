@@ -1525,7 +1525,7 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.185</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.186</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</div></details></div>
   </div>
@@ -5919,12 +5919,18 @@ function ccfXJudge(d,s){
 //   ならない（グローバル字句環境に入る）ので、端末側が `global.CCF_SEATS` で拾えない。
 //   ⚠ 席を変えたら **night/score_all.js の表示** と **CLAUDE.md の月次運用の節**も同じ数になっているか確かめること
 //     （ここを読むので数字の同期は要らないが、**文の言い回し**は別物）。
+// ★v9.9.186（2026-09-22 ユーザー明示指示「5社にして」）: 席を **6→5** へ。
+//   【なぜ】同日に BR を人の拒否権で外し、MCO(Ω82.3) が6席目へ繰り上がった直後の判断。
+//     席を5へ戻すと **MCO がそのまま6位として次点へ降りる**＝投下可は CW/V/MSFT/LRCX/ASML。
+//     ⚠ v9.9.179 で 5→6 に広げた理由は「LRCX が6位で落ちていたから」だったが、
+//     **いまの6位は MCO で LRCX は4位**（v9.9.184/185 の堀の是正で上がった）＝広げた理由は既に消えている。
+//   ⚠ 席の数は**リスクの取り方**であって採点ではない。Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3 は不変。
 // ★v9.9.179（2026-09-21 ユーザー明示指示「では6銘柄で」）: 席を **5→6** へ。
 //   【なぜ】v9.9.178 で irr=85 の席の優先を撤去したら LRCX(Ω78.6・四関門通過)が 6位で席の外へ出た。
 //     LRCX は**Ω順でも合成点順でも6位**＝並べ方の問題ではなく**席が5つしかないこと**で落ちていた。
 //     特権を戻して6位を1位へ持ち上げるのではなく、**席を1つ広げる**ほうを選んだ（証拠が支えない規則を復活させない）。
 //   ⚠ 席の数は**リスクの取り方**であって採点ではない。Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3 は不変。
-var CCF_SEATS=6;
+var CCF_SEATS=5;
 // 投下可 ＝ 四関門(Ω75+ ∧ 堀70+ ∧ 点検0件 ∧ 事業の収縮なし) ∧ **合成点順の上位 CCF_SEATS 社**（半導体上限は v9.9.145 / 別枠85・irr=85優先は v9.9.178 で撤去）。
 // 席の選定 = **Ω順**（v9.9.98でE[r]項を外した）。旧: 合成点 = Ω × E[r]点÷50（E[r]点は合成順の錨12%=50点・±10ptで0-100・v9.9.30＝新しい定数なし）。
 // 席から溢れた社は「🔵次点」＝買わないが投下可の資格は保持し、Ωが上がれば自動で枠入り（黙って消さない・v9.9.52）。
