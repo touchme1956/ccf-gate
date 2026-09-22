@@ -274,6 +274,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 | 15109 | 2026-09-21 | `のれん乖離>15pt ∧ acq5=yes → 0〜−6` を撤去（v9.9.183）——「roicを上げるとΩが下がる」が消えた |
 | 15170 | 2026-09-21 | 「acqS5/ROIC≤WACCを門に入れたら？」→**両方すでに在る**。roicgを足す意味は測ったら無かった |
 | 15233 | 2026-09-21 | V・IDXX の人の拒否権を解除——投下可は CW/MSFT/V/BR/MCO/IDXX、ASML と LRCX が次点へ |
+| 15284 | 2026-09-21 | 堀の重みを dom .30 / irr .35 へ（v9.9.184）——出 IDXX / 入 ASML。加点の規則は足していない |
 ## コマンド
 - 年1回（1-2月）発掘: `python run_gate0_local.py`
   - companyfacts.zip(1.4GB)が45日超なら自動で最新に更新（検証母集団=全上場が毎年更新される）
@@ -1192,6 +1193,12 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
   **のれん残高は減損・売却・為替で汚れる**——同じ661社・同じ窓でも companyfacts版とframes版で
   最下位がQ1↔Q4に入れ替わった（411社で値がずれる）
 - 配当分離の採取: `python3 night/fill_divy.py`（`--all`）→ out/divy.json。予実台帳のsnapが観測へ同梱する
+- **堀5本の重みを振る影の計測: `python3 night/shadow_moat_weights.py`（`--json`）**（2026-09-21新設）
+  → `index.html` の `const W={...}` の**1行だけ**を差し替えて score_all を回し、**必ず元へ戻す**（sha256で検算）。
+  **v9.9.184 の採用根拠**。4案（irrのみ.35／両方.30／両方.35／dom.30+irr.35）を測ると
+  **4案とも同じ入れ替え（出 IDXX／入 ASML）**＝今日の判定は案の選択に依らない。
+  ⚠ **`night/audit_moat_gap.py:75` が ccfMoat を再実装している唯一の道具**なので、
+  W を変えたら必ず両方同期する（片方だけだと「irrを85にすれば通る」という通らない道を提示する）。
 - 機械コアの疑似バックテスト: `python3 night/backtest_core.py`（`--cutoff 2015-07-01` / `--limit N`）
   → out/backtest_<year>.json。生存バイアスあり＝相対比較と成長減衰の分布にだけ使う
 

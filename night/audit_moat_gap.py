@@ -72,7 +72,7 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out")
 
 # 正は index.html の ccfMoat（v9.9.36の5本重み）
-W = {"dom": .25, "irr": .25, "rep": .20, "dur": .12, "moatW": .18}
+W = {"dom": .30, "irr": .35, "rep": .14, "dur": .084, "moatW": .126}   # v9.9.184（旧 .25/.25/.20/.12/.18）。index.html:ccfMoat の正本と同期すること
 # 正は index.html の SELECT／審査プロトコル。**規約に無い刻みは提示しない**
 GRADES = {"dom": [50, 70, 85, 100], "irr": [50, 70, 85, 100], "rep": [35, 60, 80, 100],
           "dur": [55, 75, 85, 100], "moatW": [50, 70, 85, 100]}
