@@ -92,7 +92,10 @@ for _i, _a in enumerate(sys.argv):
     if _a == "--net" and _i + 1 < len(sys.argv):
         NET_SPEC = sys.argv[_i + 1]
         WHATIF = True
-CAP = 8.0   # 門の1銘柄上限（¼ケリー・v9.9.96）。ここでは**判定に使わず物差しとして表示するだけ**
+CAP = 8.0   # ★**門の規約ではなくなった**（v9.9.188・2026-09-22 ユーザー明示指示「ケリーいらない」で
+#           1銘柄上限8%＝¼ケリーを撤廃）。ここに 8.0 を残すのは**物差しとして数字を出し続ける**ため——
+#           関門を消しても、それが守っていた事実は消さない（半導体連鎖の相関上限を撤去したときと同じ作法）。
+#           **判定には一切使わない**（元から使っていない）。
 
 # 半導体連鎖（v9.9.117 の SEMI と同じ思想＝同じ設備投資サイクルに乗るか）
 SEMI = {"NVDA", "AVGO", "AMD", "TSM", "ASML", "AMAT", "LRCX", "KLAC", "MU", "INTC", "TXN",
@@ -558,11 +561,12 @@ def main():
           + (f"　⚠未取得 ¥{b['unknown_jpy']:,}（{', '.join(b['unknown_by_etf'])}）"
              "＝**実際の集中はこれ以上**" if b["unknown_jpy"] else ""))
     print()
-    print(f"■ 1銘柄の上限 {CAP}%（¼ケリー）を超えている銘柄　{len(b['over_cap'])}件")
+    print(f"■ 参考の線 {CAP}%（旧・¼ケリー上限／v9.9.188で撤廃）を超えている銘柄　{len(b['over_cap'])}件"
+          f"　※判定ではない・物差しとして出し続けている")
     for r in b["over_cap"]:
         d = f"直接 {r['direct']/b['total_jpy']*100:.1f}%" if r["direct"] else "直接なし"
         e = f"網ごし {r['via_etf']/b['total_jpy']*100:.1f}%" if r["via_etf"] else ""
-        print(f"   {r['t']:6} {r['pct']:5.2f}%  （上限の{r['pct']/CAP:.1f}倍）  {d}"
+        print(f"   {r['t']:6} {r['pct']:5.2f}%  （参考線の{r['pct']/CAP:.1f}倍）  {d}"
               + (f" ＋ {e}" if e else ""))
     print()
     print("■ 上位10銘柄")
