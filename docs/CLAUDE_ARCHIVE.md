@@ -15703,3 +15703,98 @@ CLAUDE.md 2026-08-12 が既に警告している——
 ただし BR では4経路を尽くして空振りした（archive:15494）ので、
 **埋まらない社が残ることは前提にしたほうがよい**。
 規約の改定は絶対のルール1の領分なので、ここでは測って名指ししただけ。
+
+## MSFT と LRCX の dom を1年新しい原本で再探索した（2026-09-21・ユーザー指示「msftとlrcxのdom埋めて」）——**LRCX は空振り／MSFT は「空欄の理由」が格上げされた**
+
+**採点は1バイトも動かしていない**（両パックの採点欄18項目を前後で照合して不動を確認）。
+動かしたのは `_meta.kenshi` と `_meta.nulls.dom`（記録だけ）。投下可6社は不変（CW LRCX V MSFT BR ASML）。
+`validate_packs` FAIL 0（MSFT の warn 1件＝nrr=105 既定値は**変更前と同一**）。
+
+### なぜ再探索に意味があったか
+
+**前回の dom 監査はどちらも FY2025 10-K に対して**行われていた（MSFT 2026-08-04 / LRCX 2026-07-29）。
+パックは既に **FY2026**（MSFT 2026-06-30期・提出 2026-08-04 ／ LRCX 2026-06-28期・提出 2026-08-07）なので、
+**1年新しい原本がある**。
+
+### ★MSFT: クラウドの刻みが原本から確定した（前回は「50側かつ確定不能」）
+
+**Cloud Data Holdings Corp（CIK 0002078905）S-1（2026-02-04提出・ea0248977-07.htm）** に
+**『Market Share of Major Public Cloud Service Providers, Global (2020-2029E)』**という
+**市場全体のベンダー別シェア表**（出典 **IDC, Frost & Sullivan Analysis and Estimate**）があり、
+**Microsoft が名指しで含まれる**。
+
+| | 2020 | **2024** |
+|---|---|---|
+| AWS | 31.8% | **30.2%** |
+| **Microsoft** | 14.3% | **16.6%** |
+| Google | 9.1% | **13.4%** |
+| 上位3社合計 | | **60.2%** |
+
+⇒ 自社 **16.6% < 40%** ／ 上位3社 **60.2% < 80%**（3社寡占に未達）／ 上位2社 46.8% < 80%
+⇒ **v9.9.38 の刻み50 で確定**。**v9.9.41(5) の条件を満たす**（第三者調査の実数が SEC提出書類の中に
+市場全体の表として載り、対象会社が名指しで含まれる／どの会社のどの提出書類かを明示）。
+
+⚠ **2026-08-04 に原本外として使った Synergy Research の数字**（AWS 28 / MS 21 / Google 14・上位3社63%）
+**と母集団は違うが刻みは同じ50**＝**二つの独立した調査が同じ刻みを指した**。
+
+### FY2026 の売上構成（10-K Item 8・総額 331,839百万$）を原本で再取得
+
+| 行 | FY2026 | 比率 |
+|---|---|---|
+| **Server products and cloud services** | 129,425 | **39.0%（最大）** |
+| Microsoft 365 Commercial | 101,997 | 30.7% |
+| XBOX | 21,790 | 6.6% |
+| LinkedIn | 19,817 | 6.0% |
+| **Windows and Devices** | 17,084 | **5.1%** |
+| Search advertising | 15,176 | 4.6% |
+| M365 Consumer / Dynamics / Enterprise services | 9,175 / 9,006 / 8,260 | 2.8 / 2.7 / 2.5% |
+
+**Windows は前回の 6.1% から 5.1% へさらに縮小した。**
+
+**Windows=85 も本日 原文で再検証した**——**Perion Network Ltd. 20-F（FY2025・2026-03-16提出・CIK 0001338940）**
+『the desktop operating system market is very concentrated as well, with **Microsoft Windows accounting for
+nearly 70% of the market in 2025** and **Apple macOS accounting for nearly 15%**, based on StatCounter reports
+as of February 2026』＝自社≈70%・上位2社≈85%(≥80%)・自社首位 → **刻み85**。
+
+### ⇒ MSFT の結論: 空欄のまま。**ただし理由が格上げされた**
+
+**最大の事業(39.0%)が原本で50、Windows(5.1%)が原本で85**
+⇒ **v9.9.41(1)『違う刻みに散るときだけ空欄』に確定的に該当**。
+**前回は「散る」の片側（クラウド）が推定だったが、今回は両側が原本で確定した。**
+
+⚠ **規約に材料性（売上比の下限）の線が無い**ので、Windows 5.1% を「小さすぎるので算入しない」とは扱えない。
+**もしその線を設けるなら MSFT は全事業が50側 → dom=50 で確定**でき、実測で
+**堀 75.6 → 66.7 で関門70を割り土俵外**になる。**規約の改定＝絶対のルール1の領分**なので測って名指しに留める。
+
+なお **FY2026 10-K 自身には依然として数値が無い**——'market share' 2回（リスク文言のみ）・
+**'fragmented' 0回**・Gartner/IDC/StatCounter/Synergy **すべて0回**。Item 1A は逆に
+『**Barriers to entry in many of our businesses are low**』と自己開示するが、規約(3)の残余50の根拠には
+**ならない**（ADBEで確定した線引き＝「競争が激しい」は「市場が断片化している」ではない）。
+未探索の言い回し12本も空振り（'cloud computing market share' / 'Azure accounted for' /
+'productivity and collaboration market share' / 'share of the productivity software' ほか全て0件）
+——**生産性ソフト(M365 33.5%)のベンダー別シェア実数は依然として存在しない**。
+
+### LRCX: 4経路すべて空振り → 空欄維持
+
+| 経路 | 結果 |
+|---|---|
+| (1) FY2026 10-K 全文（374,300字） | 'market share' 8回は**すべて失う側のリスク文言**・**実数ゼロ**。**'fragmented' 0回**・Gartner/TechInsights/VLSI/IDC も**0回**。Competition は FY2025 と同構造の**寡占的名指し**（deposition=AMAT、ALD/PECVD=ASM・Wonik、etch=AMAT・Hitachi・TEL、wet clean=Screen・Semes・TEL） |
+| (2) 自社 8-K / DEF 14A の添付（2022年以降**43件を全数走査**） | 「%＋share/etch/deposition/WFE/SAM」の同時出現 **0件**＝規約(6)の自社断定の実数が無い |
+| (3) EDGAR全文検索（11本の言い回し） | 'etch market share' / 'deposition market share' / 'share of the etch market' / 'market share of Lam' / 'Lam Research accounted for' すべて **0件** |
+| (4) ★唯一の有望なヒットも実数なし | 'wafer fabrication equipment market share' **11件は全部 Applied Materials の DEF 14A**（報酬指標）。最新版（2026-01-28提出）を実読すると『**Grow wafer fabrication equipment market share (measured by VLSI Research)**』『**below target** for calendar year 2025』と**指標名と達成度だけで、AMAT自身のシェアも上位N社合計も数値が一切ない** |
+
+⇒ **欠けているのはデータであって規則ではない。** 事業別に構造が違う（etch は自社首位・deposition は AMAT 首位・
+wet clean は Screen/TEL/Semes）ので、仮に数値が出ても規約(1)で散る可能性が高い。
+
+**★副産物: LRCX の irr=85 が FY2026 の原本で裏づけられた**——Competition 節が機構を明文で述べている:
+『semiconductor manufacturers must make a **substantial investment to qualify and integrate** new capital
+equipment... once a semiconductor manufacturer has selected a particular supplier's equipment and
+**qualified it for production**, the manufacturer **generally maintains that selection** for that specific
+production application and technology node』＝**顧客側の再認定が要る型**（値は85のまま不変）。
+
+### 残り
+
+判定圏の dom 空欄は15社。今日の2社と BR（archive:15494）で**3社が「尽くして空振り」と確定**した。
+残る12社: **IDXX / VRSK / 4071 / 3923 / RMD / SAP / ADBE / 6146 / MSI / IRMD / 3922 / CW**
+（ADBE と CW と 6146 は 2026-08-04 に既に横断探索ずみ）。
+**埋まらない社が残ることは前提にしたほうがよい。**
