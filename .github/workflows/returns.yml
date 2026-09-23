@@ -1,0 +1,38 @@
+# 成績の作り直し（2026-09-23新設・ユーザー「新規で買付や売却がない。それで反映させたりしないとこれから門が更新されない」）
+#
+# 🏦保有の「＋ 買った／− 売った」で記録 → 書き出し → state.json が main に入る、までは人（と Claude）の手。
+# その先の **📈成績（out/returns.json / returns_series.json）は market.yml が平日21:30UTCにしか作り直さない**ので、
+# 金曜に反映すると月曜の夜まで古い株数のまま成績が出ていた。state.json が main に入った時点で作り直す。
+# ⚠ 表示専用——Ω・四関門・売却規律・配分のどれにも触れない（fetch_returns.py の頭注どおり）。
+name: returns on state change
+on:
+  push:
+    branches: [main]
+    paths: ['state.json']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: returns
+  cancel-in-progress: false
+jobs:
+  returns:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: トータルリターン（表示専用・円建て）
+        run: timeout 300 python3 night/fetch_returns.py | tail -20
+      - name: コミット
+        run: |
+          git config user.name  "ccf-gate bot"
+          git config user.email "noreply@github.com"
+          . night/git_add_safe.sh
+          ccf_git_add out/returns.json out/returns_series.json
+          git diff --staged --quiet || git commit -m "returns: state.json 更新に追随 $(date -u +%Y-%m-%d)"
+          . night/git_push_safe.sh
+          ccf_git_push
