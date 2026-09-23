@@ -417,6 +417,26 @@ def build_numbers(facts):
         _usedS[_y] = [x for x in _usedS[_y] if not x.startswith("LongTermDebtCurrent=")] + \
                      [f"LongTermDebtCurrent={_ltc[_y]:,.0f}は総額に含まれるため控除"]
         _fixed.append(_y)
+    # 2026-09-23是正: 同じ二重計上が **`DebtCurrent`（総額タグ）** 経由でも起きていた。上の是正は
+    #   `LongTermDebtCurrent` がある年しか見ないので、1年内返済分を DebtCurrent だけで報告する会社を素通りした。
+    #   実測 **CW**: LongTermDebt 957,884 = LongTermDebtNoncurrent 757,884 + DebtCurrent 200,000（千$）が
+    #   全年で成立（2020/2022/2024/2025 に1年内返済分）→ 負債が 200,000 過大・roic 33.7%（真値39.1%）。
+    #   同じ恒等式で総額と証明できた年だけ DebtCurrent を控除する（成り立たない年は CP 等を含みうるので触らない）。
+    _dc = series(facts, ["DebtCurrent"])[0]
+    for _y in sorted(set(_dc) & set(_ltn) & set(_ltd)):
+        if _y in _fixed or _y in _ltc:
+            continue
+        if not any("LongTermDebt(総額)" in x for x in (_usedL.get(_y) or [])):
+            continue
+        if (_usedS.get(_y) or []) != ["DebtCurrent(総額)"] or not _dc[_y]:
+            continue
+        _sum = _ltn[_y] + _dc[_y]
+        if _ltd[_y] <= 0 or abs(_ltd[_y] - _sum) / abs(_ltd[_y]) > 0.005:
+            continue
+        S["debtS"][_y] = (S["debtS"].get(_y, 0) or 0) - _dc[_y]
+        _usedS[_y] = [f"DebtCurrent={_dc[_y]:,.0f}は LongTermDebt 総額に含まれるため控除"]
+        _fixed.append(_y)
+    _fixed.sort()
     # 2026-08-03: 無形も同じく「構成要素」だった（TAGS["intan"]の頭注を見よ）。総額タグがその年に
     #   あれば総額、無ければ 確定分＋無期限分 を足す＝series_sum の total_key がそのまま使える。
     #   実測 CELH: 総額タグが2024年で終わり、2025年は二本に割れていたので series() では欠測になった。
