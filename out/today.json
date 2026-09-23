@@ -3,21 +3,20 @@
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "CW",
-  "V",
   "MSFT",
   "LRCX",
-  "ASML"
+  "ASML",
+  "MCO"
  ],
  "next": [
-  "MCO",
   "IDXX",
   "SAP"
  ],
  "counts": {
   "now": 0,
   "today": 4,
-  "month": 22,
-  "waiting": 76,
+  "month": 18,
+  "waiting": 19,
   "blind": 0,
   "src": 18
  },
@@ -57,30 +56,6 @@
   }
  ],
  "month": [
-  {
-   "k": "fresh:irr85hist:本体が44日動いていない",
-   "level": "month",
-   "title": "中身/入力が前進していない: irr=85の実績台帳",
-   "why": "本体が44日動いていない（期限40日）",
-   "how": "python3 night/check_freshness.py",
-   "src": "鮮度"
-  },
-  {
-   "k": "fresh:irr85scope:本体が42日動いていない",
-   "level": "month",
-   "title": "中身/入力が前進していない: 機構の射程と認定の寿命",
-   "why": "本体が42日動いていない（期限40日）",
-   "how": "python3 night/check_freshness.py",
-   "src": "鮮度"
-  },
-  {
-   "k": "fresh:unmeasurable",
-   "level": "month",
-   "title": "鮮度を測れない錨が 5件",
-   "why": "「測っていない」であって「測って問題なし」ではない",
-   "how": "python3 night/check_freshness.py",
-   "src": "鮮度"
-  },
   {
    "k": "kes:3092",
    "level": "month",
@@ -218,14 +193,6 @@
    "src": "四半期点検"
   },
   {
-   "k": "todoaudit",
-   "level": "month",
-   "title": "やることリストの点検で 1件",
-   "why": "解決済みなのに未完のまま／件数のずれ／重複／例外との食い違い",
-   "how": "python3 night/audit_todo.py",
-   "src": "todo点検"
-  },
-  {
    "k": "dca",
    "level": "month",
    "title": "今月の買付（DCA）",
@@ -236,28 +203,10 @@
  ],
  "waiting": [
   {
-   "k": "todo:wit_refetch",
-   "kind": "宿題",
-   "title": "WITの再採取（有利子負債の二重計上の是正取込）",
-   "due": null,
-   "owner": "審査",
-   "tickers": [
-    "WIT"
-   ]
-  },
-  {
-   "k": "todo:jp_moat",
-   "kind": "決断待ち",
-   "title": "【今日効く】日本株の堀測定不能14社（開示習慣問題）の規約をどうするか",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
    "k": "todo:g_decay",
-   "kind": "決断待ち",
+   "kind": "予約議題",
    "title": "【今日効く】成長減衰をE[r]へ入れるか",
-   "due": null,
+   "due": "2027-02",
    "owner": "人",
    "tickers": []
   },
@@ -294,139 +243,12 @@
    "tickers": []
   },
   {
-   "k": "todo:cybozu_dur",
-   "kind": "宿題",
-   "title": "サイボウズのdur再評価（55→75の可能性）",
-   "due": null,
-   "owner": "審査",
-   "tickers": [
-    "4776"
-   ]
-  },
-  {
-   "k": "todo:sixk_watch",
-   "kind": "宿題",
-   "title": "6-K提出体の監視拡張(watch_eventsの死角)",
-   "due": null,
-   "owner": "穴",
-   "tickers": []
-  },
-  {
-   "k": "todo:reg_dependence",
-   "kind": "決断待ち",
-   "title": "【今日効く】規制・制度依存の検問を設けるか(歴史の死因マップの残る穴)",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
-   "k": "todo:moat_kpi",
-   "kind": "宿題",
-   "title": "年次較正に『堀の毀損予実KPI』を追記",
-   "due": "2027-07",
-   "owner": "審査",
-   "tickers": []
-  },
-  {
-   "k": "todo:gate0_fye_rerun",
-   "kind": "宿題",
-   "title": "門0を修正版で再実行し、母集団に復活する社を取り込む",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:disrupt_blank_12",
-   "kind": "宿題",
-   "title": "irr85由来の disrupt 空欄を原本で埋める（実測4社: ENTG/MKSI/NOVT/ST）",
-   "due": null,
-   "owner": "審査",
-   "tickers": [
-    "ENTG",
-    "MKSI",
-    "NOVT",
-    "ST"
-   ]
-  },
-  {
-   "k": "todo:oled_dep",
-   "kind": "宿題",
-   "title": "OLED(Universal Display)の dep を確定させる",
-   "due": null,
-   "owner": "審査",
-   "tickers": [
-    "OLED"
-   ]
-  },
-  {
-   "k": "todo:fico_irr_fhfa",
-   "kind": "宿題",
-   "title": "FICOのirrをFHFA/GSE一次資料で再判定できるか",
-   "due": null,
-   "owner": "審査",
-   "tickers": [
-    "FICO"
-   ]
-  },
-  {
-   "k": "todo:moat_dom_blank_dep",
-   "kind": "決断待ち",
-   "title": "投下可のうち CW/MSFT/LRCX が dom 空欄の下駄（残り4本の再正規化）で堀の関門を通っている",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
    "k": "todo:dep_platform_gap",
-   "kind": "決断待ち",
+   "kind": "予約議題",
    "title": "【休眠・引き金つき】depの定義が『二つのプラットフォーム合計』型の依存を捕まえられない",
    "due": null,
    "owner": "人",
    "tickers": []
-  },
-  {
-   "k": "todo:ami_lookthrough_cov",
-   "kind": "宿題",
-   "title": "ETFの下位保有が未取得でルックスルーのカバー率が97.1%止まり",
-   "due": null,
-   "owner": "穴",
-   "tickers": []
-  },
-  {
-   "k": "todo:vfail_band_rest",
-   "kind": "宿題",
-   "title": "判定圏の残りFAIL（機械129欄／判断159欄）は道具では閉じられない",
-   "due": null,
-   "owner": "審査",
-   "tickers": []
-  },
-  {
-   "k": "todo:nvda_irr_restore",
-   "kind": "決断待ち",
-   "title": "【休眠・引き金つき】NVDAのirrを85へ戻すか（戻すとNXPI/TSM/CDNSも筋として揃える必要）",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
-   "k": "todo:single_year_25",
-   "kind": "宿題",
-   "title": "判定圏で単年ROICのまま残る社を through-cycle 化する（実測11社）",
-   "due": null,
-   "owner": "審査",
-   "tickers": []
-  },
-  {
-   "k": "todo:reaudit_fy2026_wave",
-   "kind": "宿題",
-   "title": "6月決算の新10-Kで再審査——残り3社（CTAS・BR・ADP）",
-   "due": null,
-   "owner": "審査",
-   "tickers": [
-    "CTAS",
-    "BR",
-    "ADP"
-   ]
   },
   {
    "k": "todo:packstale_jp",
@@ -437,118 +259,12 @@
    "tickers": []
   },
   {
-   "k": "todo:forward_growth_blind",
-   "kind": "宿題",
-   "title": "投下可5社の『これから伸びるか』が実質未測定（gcap空欄・perF欠落の社あり）",
-   "due": null,
-   "owner": "審査",
-   "tickers": []
-  },
-  {
-   "k": "todo:gate0_dover_ocf_seam",
-   "kind": "宿題",
-   "title": "門0の母集団から会社が消える経路が残っている（営業CFのタグ改称・実例Dover）",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:fx_exposure_unmeasured",
-   "kind": "決断待ち",
-   "title": "【今日効く】資産の100%が外貨建てなのに、門に為替の判断が一つも無い",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
-   "k": "todo:perf_fill_band",
-   "kind": "宿題",
-   "title": "判定圏の perF を埋める（gcap基準の遮断器の前提）",
-   "due": null,
-   "owner": "審査",
-   "tickers": []
-  },
-  {
-   "k": "todo:x_breaker_gcap",
-   "kind": "決断待ち",
-   "title": "【休眠・引き金つき】門Xの遮断器はもう無い——gcap を『事業の収縮』の第二の材料にするか",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
-   "k": "todo:gmt_blank_meaning",
-   "kind": "決断待ち",
-   "title": "【休眠・引き金つき】gmt の空欄が二つの意味を持つようになった（gmPtでは中間値／収縮の関門では非発火）",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
-   "k": "todo:irr70_reaudit_band",
-   "kind": "宿題",
-   "title": "判定圏の irr=70（45社）を 50/70 の線で原本検算する",
-   "due": null,
-   "owner": "審査",
-   "tickers": []
-  },
-  {
-   "k": "todo:irr50_upside",
-   "kind": "宿題",
-   "title": "irr=50 の123社を『本当は70では』の側から検算する（堀不足の復帰経路）",
-   "due": null,
-   "owner": "審査",
-   "tickers": []
-  },
-  {
-   "k": "todo:fetcher_intan_zero_rmd",
-   "kind": "宿題",
-   "title": "採取器が無形タグ不在をゼロと読む（RMDで roic 43.8→57.3 の膨張を実証）",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:price_tail_gate",
-   "kind": "宿題",
-   "title": "極端な倍率（fairPERの4倍超など）だけを押し目待ちにするか",
-   "due": null,
-   "owner": "審査",
-   "tickers": []
-  },
-  {
    "k": "todo:ledger_orphan_cleanup",
    "kind": "宿題",
    "title": "台帳(ブラウザ)の旧レコードを削除する——⛔台帳の旧レコード の節に出た行を全部",
    "due": null,
    "owner": "人",
    "tickers": []
-  },
-  {
-   "k": "todo:fetcher_cash_stale_mwa",
-   "kind": "宿題",
-   "title": "採取器の現金タグが古い年で終わる社を検出する（MWAで現金431.5百万$を0と読んでいた）",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:fetcher_stale_year_stx",
-   "kind": "宿題",
-   "title": "採取器が古い年の値を最新として返す経路（STXで roic=FY2022・gm/ni=FY2025）",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:br_roic_degenerate",
-   "kind": "宿題",
-   "title": "BR の roic を原本で確定（ICg縮退ガードが5年中4年を除外）※MSIは2026-08-16に解決",
-   "due": null,
-   "owner": "審査",
-   "tickers": [
-    "BR"
-   ]
   },
   {
    "k": "todo:ctas_unifirst",
@@ -561,85 +277,11 @@
    ]
   },
   {
-   "k": "todo:irr85_hunt_window",
-   "kind": "宿題",
-   "title": "irr=85 探索の窓と経路の穴（2025-01以前の年次報告・40-F・日本株EDINET）",
-   "due": null,
-   "owner": "審査",
-   "tickers": []
-  },
-  {
-   "k": "todo:irr70_118_unpacked",
-   "kind": "宿題",
-   "title": "探索で irr=70 と読まれた未審査118社をパック化するか",
-   "due": null,
-   "owner": "審査",
-   "tickers": []
-  },
-  {
-   "k": "todo:loar_judgment_fields",
-   "kind": "宿題",
-   "title": "LOAR の判断項目6欄（p1/f2/f3/f4/disrupt/moatdecay）と dilNet を原本で確定",
-   "due": null,
-   "owner": "審査",
-   "tickers": [
-    "LOAR"
-   ]
-  },
-  {
    "k": "todo:histval_gaps",
-   "kind": "宿題",
-   "title": "自己相対バリュエーション表示の穴3件（v9.9.118・表示専用ゆえ買付には効かない）",
+   "kind": "予約議題",
+   "title": "【休眠・引き金つき】自己相対バリュエーション表示の穴3件（v9.9.118・表示専用ゆえ買付には効かない）",
    "due": null,
    "owner": "穴",
-   "tickers": []
-  },
-  {
-   "k": "todo:rev_tag_sweep",
-   "kind": "宿題",
-   "title": "売上タグの穴の全数掃き出し（RegulatedAndUnregulatedOperatingRevenue を最上段に使う会社）",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:retro_universe_negative_equity",
-   "kind": "宿題",
-   "title": "歴史検証の母集団が「簿価資本マイナスのコンパウンダー」を丸ごと落としている（VRSKで実証）",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:cagrT_jp_gap",
-   "kind": "宿題",
-   "title": "成長の軌道 cagrT が日本株70社で測れない（SEC経路のため）",
-   "due": null,
-   "owner": "穴",
-   "tickers": []
-  },
-  {
-   "k": "todo:prereg_v3_checklist",
-   "kind": "宿題",
-   "title": "次に事前登録を書くときの検問3つを、器にして結果を見る前に回す",
-   "due": null,
-   "owner": "審査",
-   "tickers": []
-  },
-  {
-   "k": "todo:retro_base_rate_band",
-   "kind": "宿題",
-   "title": "過去の全 retro 検証のベース率は『幅』だった——率を引用する箇所に幅を添えるか",
-   "due": null,
-   "owner": "審査",
-   "tickers": []
-  },
-  {
-   "k": "todo:retro_exit_date_form15",
-   "kind": "宿題",
-   "title": "上流の exit_date が誤っている（Form 15 は証券の種類ごとに出る）——生きている会社を母集団から消していた",
-   "due": null,
-   "owner": "道具",
    "tickers": []
   },
   {
@@ -651,115 +293,12 @@
    "tickers": []
   },
   {
-   "k": "todo:moat5_residual",
-   "kind": "宿題",
-   "title": "moat5 が運んでいるものの正体は何か——rep/dur では説明できないと確定した",
-   "due": null,
-   "owner": "審査",
-   "tickers": []
-  },
-  {
-   "k": "todo:intcov_jp_hole",
-   "kind": "宿題",
-   "title": "利払カバーが日本株68社で0件——EDINETの支払利息が要る",
-   "due": null,
-   "owner": "穴",
-   "tickers": []
-  },
-  {
-   "k": "todo:intcov_basis_finance_costs",
-   "kind": "宿題",
-   "title": "FinanceCosts で作った利払カバーは利息ではない——真正の利息が採れない社の穴埋め",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:nde_netcash_false",
-   "kind": "宿題",
-   "title": "財務キルの入力 nde の誤り——12社是正済み・残り25社は作業リスト",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:pack_collector_drift",
-   "kind": "宿題",
-   "title": "採取器の是正の取り残し——判定圏17件是正・保留11件（IC縮退等）・圏外365件は作業リスト",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:irr_scope_wholeco",
-   "kind": "決断待ち",
-   "title": "【今日効く】irr に dom と同じ『全社ベース』の規則を書くか——**書くなら事前登録→15社の再読解が先**",
-   "due": null,
-   "owner": "人",
-   "tickers": [
-    "CW",
-    "LRCX",
-    "RBC",
-    "ASML"
-   ]
-  },
-  {
-   "k": "todo:gate0_queue_width",
-   "kind": "決断待ち",
-   "title": "【今日効く】門0のキューの幅——★測ったら実質的な問題ではなかった。残る本当の議題は「業態除外(金融/REIT/資源/海運/中国) 107社を開けるか」",
-   "due": "",
-   "owner": "人",
-   "tickers": []
-  },
-  {
    "k": "todo:gate_history_prereg",
    "kind": "予約議題",
    "title": "門の判定の履歴が溜まったら「通り続けている社は durable か」を事前登録して一度だけ測る",
    "due": "2027-02",
    "owner": "人",
    "tickers": []
-  },
-  {
-   "k": "todo:mcap_field_stale",
-   "kind": "決断待ち",
-   "title": "【休眠・引き金つき】パックの mcap 欄が古いまま・単位も混在（発見度negSの入力）",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
-   "k": "todo:f2_convention_sweep",
-   "kind": "宿題",
-   "title": "f2 の統一規約を判定圏外へも広げる",
-   "due": null,
-   "owner": "審査",
-   "tickers": []
-  },
-  {
-   "k": "todo:board_measures_output_not_input",
-   "kind": "宿題",
-   "title": "回転盤が『出力』だけを見て『入力』の停止を検出できない（検出器は 2026-08-17 に新設）",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:wf_never_run",
-   "kind": "宿題",
-   "title": "gate0.yml を1回実行する（ops.yml は 2026-08-17 に実行済み）",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:adv6857_impair_prior",
-   "kind": "宿題",
-   "title": "6857 の減損警報は過年度の記述——四半期点検の要審査を原本で確定させる",
-   "due": null,
-   "owner": "審査",
-   "tickers": [
-    "6857"
-   ]
   },
   {
    "k": "todo:pf_missing_bd",
@@ -786,107 +325,41 @@
    ]
   },
   {
-   "k": "todo:double_count_same_paragraph",
+   "k": "todo:gate0_ifrs_facts_gap",
    "kind": "宿題",
-   "title": "二重計上の検出を『同じ文字列』から『同じ段落・同じ結論』へ広げる",
-   "due": null,
+   "title": "【1月の門0の前に確認】IFRS 提出体198社の2026年次データが companyfacts に届いていない——今日回すと「TSM 消失」で門0が不採用になる",
+   "due": "2027-01-15",
    "owner": "人",
    "tickers": []
   },
   {
-   "k": "todo:irr70_dual_rest",
+   "k": "todo:fico_dur_mandate",
    "kind": "宿題",
-   "title": "判定圏の残りの irr=70（約200社）も、線が動く前に二重読みする",
-   "due": null,
+   "title": "FICO の dur=100 の根拠（FHFA の単一モデル要件）が 2026-09-09 に外れ始めた——erosion=emerging に具体的な出来事が付いた",
+   "due": "2026-11-30",
    "owner": "人",
    "tickers": []
   },
   {
-   "k": "todo:quote_style_verbatim",
+   "k": "todo:per_ttm_stale",
    "kind": "宿題",
-   "title": "根拠の引用の書き方を1枚に固める（逐語照合が誤検出しない形）",
-   "due": null,
+   "title": "残り: 日本株7社（3923/4071/6857/4732/6146/5038/4776）の per を最新の決算短信で TTM に（perF は会社予想可・出所を明記）",
+   "due": "2026-11-15",
    "owner": "人",
    "tickers": []
   },
   {
-   "k": "todo:irr70_sweep_lefttail",
-   "kind": "決断待ち",
-   "title": "irr=70 の改定は「壊れない」ではなく「上を狙う」側へ動かしている（堀は関門なのに）",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
-   "k": "todo:src_cache_ephemeral",
+   "k": "todo:irr70_deferred",
    "kind": "宿題",
-   "title": "逐語照合のキャッシュ out/_src_cache/ は .gitignore＝この容器の中にしか無い",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
-   "k": "todo:p1_debtfree_backfill",
-   "kind": "決断待ち",
-   "title": "無借金社の p1 が機械算出できるようになった——60社の再計算をするか",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
-   "k": "todo:gate_exception_unexecuted",
-   "kind": "宿題",
-   "title": "【休眠・引き金つき】門外例外の「買うと決めた」と「買った」の乖離を、機械が検出できない",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:irr85_verify_note_truncated",
-   "kind": "宿題",
-   "title": "irr=85 の検証記録(_meta.mech.verify_note)が 3006字で打ち切られ、反証の一覧が9社で読めない——中身が丸ごと不明なのは KRMN / WST の2社だけ（どちらも⛔）",
-   "due": null,
+   "title": "irr=70 の見送り2社を後で審査する（HON は FY2026 の10-K 後・GE は CPP 買収の完了後）",
+   "due": "2027-02-28",
    "owner": "審査",
-   "tickers": [
-    "ASML",
-    "CW",
-    "LRCX",
-    "RBC",
-    "VRSK",
-    "WST",
-    "LOAR",
-    "TDG",
-    "KRMN"
-   ]
+   "tickers": []
   },
   {
-   "k": "todo:frozen_date_dict_literal",
+   "k": "todo:roic_pair_basis_0923",
    "kind": "宿題",
-   "title": "check_frozen_dates は**変数名しか見ない**——辞書リテラルの固定日は素通りする（実測40件）",
-   "due": null,
-   "owner": "道具",
-   "tickers": []
-  },
-  {
-   "k": "todo:cdns_dom_offfiling_0921",
-   "kind": "決断待ち",
-   "title": "★CDNS の dom=70 が**提出書類の外**の調査データに依っている（規約(5)違反の疑い）——堀が動く",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
-   "k": "todo:snps_review_0921",
-   "kind": "審査",
-   "title": "SNPS（Synopsys）が台帳にも待ち行列にも無かった——採取だけ済ませた（審査待ち）",
-   "due": null,
-   "owner": "人",
-   "tickers": []
-  },
-  {
-   "k": "todo:debtcurrent_double_sweep",
-   "kind": "宿題",
-   "title": "採取器の DebtCurrent 二重計上の是正（2026-09-23）を他社のパックへ届ける",
+   "title": "roic/roicg を対で替える社（GSK・LRN・DRI・KTB・LULU・GMAB）と basis の書き換え",
    "due": null,
    "owner": "人",
    "tickers": []

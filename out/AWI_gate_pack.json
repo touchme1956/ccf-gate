@@ -30,10 +30,10 @@
  "geopol": 0,
  "nrr": 105,
  "beta": null,
- "per": null,
+ "per": 22.49,
  "perF": null,
  "evebit": null,
- "px": null,
+ "px": 164.16,
  "shy": null,
  "gr": null,
  "gcap": null,
@@ -79,7 +79,8 @@
    "2026-09-23 f2 60→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』",
    "2026-09-23 sbc 21.9→1.35（単位の是正）: 旧値は金額または根拠の無い値で、門の定義（株式報酬÷売上%）と違っていた。2025-12-31 期の株式報酬 21.9百万$ ÷ 売上 ＝ 1.35%。",
    "2026-09-23 ni 0.3087 に根拠を刻んだ（値は不変）: 10-K FY2025 の NetIncomeLoss 308.7百万$ と一致。採取器が ni を出さないのは設備投資のタグの取りこぼし（PaymentsToAcquireProductiveAssets）で、値の誤りではない",
-   "2026-09-23 per・perF は空欄のまま（todo per_ttm_stale）: 株価が無い（px 空欄・dashboard に無し）。TTM GAAP 希薄化EPS 7.3 を _meta.nulls.per に記録"
+   "2026-09-23 per・perF は空欄のまま（todo per_ttm_stale）: 株価が無い（px 空欄・dashboard に無し）。TTM GAAP 希薄化EPS 7.3 を _meta.nulls.per に記録",
+   "2026-09-23 px 空欄→164.16（2026-09-23）・per 空欄→22.49（TTM GAAP 希薄化EPS 7.3）"
   ],
   "evidence": {
    "expiry": "『Patent protection extends for varying periods according to the date of patent filing or grant and the legal term of a patent in the various countries where patent protection is obtained』=通常特許で満了型独占(コンセッション・特許束依存)ではない→no",
@@ -119,7 +120,9 @@
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 13.058。利息タグ InterestExpense（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
    "acqS5": "買収支出 5年ぶん合計 167百万$ ÷ 期初総資産(2020-12-31) 1718百万$ ＝ 0.097／内訳: 2025-12-31 14百万$ / 2024-12-31 124百万$ / 2023-12-31 26百万$ / 2022-12-31 3百万$ / 2021-12-31 1百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
    "sbc": "SBC比率＝株式報酬 21.9百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝1.35%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）",
-   "ni": "原本 10-K FY2025（accn 0001193125-26-065183・提出 2026-02-24）の XBRL NetIncomeLoss 308,700,000$ ＝ 0.3087十億$。※採取器は設備投資のタグ（PaymentsToAcquireProductiveAssets）を候補に持たないため fcf と一緒に ni も出さない（fetcher_small_gaps の型）——値はこの原本の実額で確かめた（2026-09-23）"
+   "ni": "原本 10-K FY2025（accn 0001193125-26-065183・提出 2026-02-24）の XBRL NetIncomeLoss 308,700,000$ ＝ 0.3087十億$。※採取器は設備投資のタグ（PaymentsToAcquireProductiveAssets）を候補に持たないため fcf と一緒に ni も出さない（fetcher_small_gaps の型）——値はこの原本の実額で確かめた（2026-09-23）",
+   "per": "2026-09-23 per = px $164.16（Yahoo chart 日足（2026-09-23 終値・09-22 の足は欠測））÷ TTM GAAP 希薄化EPS $7.3 = 22.49。TTM の内訳は旧 nulls.per の記録どおり（SEC XBRL の10-K・10-Q）",
+   "px": "Yahoo chart 日足（2026-09-23 終値・09-22 の足は欠測）"
   },
   "nulls": {
    "dom_irr_rep_dur": "堀セクション『(ヒットなし)』。採取器がシェア率・複製困難性・唯一供給のキーワードを取り逃し。参考: 誠sectionにMineral Fiber天井・WAVEグリッドの反復値上げ実施記載=pricing powerの傍証はあるが、シェア率・複製不能の直接証拠がhitsに無いため空欄(憶測回避)。AWIは北米ミネラルファイバー天井の事実上の首位だがhits原文に明記なし→原本再取得で充填推奨",
@@ -129,8 +132,7 @@
    "founder": "創業者経営フラグのhits根拠なし(AWIは2006年アスベスト更生後のプロ経営)→null",
    "fin": "業態フラグ定義不明・金融業ではない→null",
    "dom_reaudit_2026-07-28": "dom再監査(2026-07-28・改定刻みで再試行)でも空欄維持。FY2025 10-K Item 1は “AWI is an Americas leader...” の定性表現と競合8社の列挙のみでシェア%を一切開示せず、MD&A・Item1A・過去10-K(FY2014まで遡及確認、“often holding a leadership or significant market share position” のみ)にも数値なし。AWI投資家説明会資料(2026-05)も “Consolidated industry structure” “Large Mineral Fiber installed base (est. at ~40 Billion ft2)” 止まりで自社%・上位N社%を示さない。第三者は市場定義がばらつき(米24%/USG18%説と世界15-20%説が並存)、改定刻みが要求する『自社シェアと上位N社合計シェアの両方』を満たす信頼できる実数が得られないため、絶対のルール2に従い空欄。",
-   "per": "**2026-09-23 空欄（todo per_ttm_stale）＝株価が無い**: パックの px が空欄で out/dashboard.json にも AWI が無い（日付つきの株価の出所が無い）。per を入れるときの分母は TTM GAAP 希薄化EPS **7.3**（FY2025 7.08〔10-K accn 0001193125-26-065183〕− 1H25 3.59 ＋ 1H26 3.81〔10-Q accn 0001193125-26-318838〕・SEC XBRL）。株価を取り込んだ日にその株価で per・perF を同時に入れること",
-   "perF": "**2026-09-23 空欄（todo per_ttm_stale）＝株価が無い**: パックの px が空欄で out/dashboard.json にも AWI が無い（日付つきの株価の出所が無い）。per を入れるときの分母は TTM GAAP 希薄化EPS **7.3**（FY2025 7.08〔10-K accn 0001193125-26-065183〕− 1H25 3.59 ＋ 1H26 3.81〔10-Q accn 0001193125-26-318838〕・SEC XBRL）。perF は per と同じ日・同じ株価で「TTM の直後の4四半期」のコンセンサスから入れ、基準の検問（片側+5%）を通すこと"
+   "perF": "2026-09-23 空欄: TTM の直後の4四半期のコンセンサスを取れる出所がこの環境に無い（Alpha Vantage の日次上限・FMP はプラン外）。株価 164.16（2026-09-23）で入れるときは per と同じ株価で"
   },
   "moatW_audit": {
    "date": "2026-07-28",
@@ -155,7 +157,8 @@
    "p1": "machine",
    "cagrT": "machine",
    "acqS5": "machine",
-   "sbc": "machine"
+   "sbc": "machine",
+   "per": "kenshi"
   },
   "basis": {
    "roic": "through-cycle-med5(?年)",
@@ -181,11 +184,20 @@
    "hand": [],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
+  },
+  "px": {
+   "date": "2026-09-23",
+   "ccy": "USD",
+   "src": "Yahoo chart 日足",
+   "fields": {
+    "per": 22.49
+   }
   }
  },
  "roiic": 95.1,
  "roiic5": 145.3,
  "cagrT": 0.47,
  "intcov": 13.058,
- "acqS5": 0.0974
+ "acqS5": 0.0974,
+ "ddate": "2026-09-23"
 }

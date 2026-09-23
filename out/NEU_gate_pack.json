@@ -31,10 +31,10 @@
  "geopol": 1,
  "nrr": 105,
  "beta": null,
- "per": null,
+ "per": 19.13,
  "perF": null,
  "evebit": null,
- "px": null,
+ "px": 888.78,
  "shy": null,
  "gr": null,
  "gcap": null,
@@ -97,7 +97,8 @@
    "2026-09-23 期末後の重大事象: 2026年の 8-K は決算(2.02)・配当(8.01)・役員(5.02)・株主総会(5.07)のみで、1.01/2.01（買収・処分）は無い（SEC submissions 2026-09-23 取得）。_meta.pending なし。",
    "2026-09-23 cagrT −9.8（fill_growth_trend.py・machine）／acqS5 0.463＝大きく買う 0点（fill_acqS5.py・machine）／intcov 13.7（v11_facts.py --only の intcov_strict を写した）／acq5 yes（GoodwillGross で確定）。cagrT は罰の始まる −10pt の直前（2020→2023 の年率10.3% は原料価格転嫁の値上げ局面で、2023→2025 は 0.5%）。",
    "2026-09-23 per・perF は空欄のまま（todo per_ttm_stale）: 株価が無い（px 空欄・dashboard に無し）。TTM GAAP 希薄化EPS 46.47 を _meta.nulls.per に記録",
-   "2026-09-23 [fetcher_rev_disagree_0923] 採取器 hd770bc0634 の roicg 15.3 は不採用: 2025年単年の値。審査官の 16.2 は roic 23.6 と対で through-cycle 化した5年中央値（evidence.roicg・規約7-c）。据え置き"
+   "2026-09-23 [fetcher_rev_disagree_0923] 採取器 hd770bc0634 の roicg 15.3 は不採用: 2025年単年の値。審査官の 16.2 は roic 23.6 と対で through-cycle 化した5年中央値（evidence.roicg・規約7-c）。据え置き",
+   "2026-09-23 px 空欄→888.78（2026-09-22）・per 空欄→19.13（TTM GAAP 希薄化EPS 46.47）"
   ],
   "evidence": {
    "cagr": "機械算出: 売上 2020年 2,010,931,000 → 2025年 2,725,169,000＝5年の年率",
@@ -139,7 +140,9 @@
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 2,010,931,000 → 2023年 2,698,419,000 → 2025年 2,725,169,000。A案(端点) 直近2年CAGR 0.49% − その前3年CAGR 10.30% = -9.80pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -16.63pt ／ 年次YoY {'2021': 17.2, '2022': 17.3, '2023': -2.4, '2024': 3.3, '2025': -2.2} → **採用 -9.80pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "acqS5": "買収支出 5年ぶん合計 895百万$ ÷ 期初総資産(2020-12-31) 1934百万$ ＝ 0.463／内訳: 2025-12-31 213百万$ / 2024-12-31 681百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
    "intcov": "機械算出 2025年: 営業利益 543,725,000 ÷ 支払利息 39,693,000 = 13.698。利息タグ InterestExpense（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict（--only NEU の部分実行 out/v11_facts.partial.json・2026-09-23。正本 out/v11_facts.json は全パックの再集計で追随する）",
-   "acq5": "直近5年の大型買収あり: AMPAC（2024-01-16 取得・PaymentsToAcquireBusinessesNetOfCashAcquired 681.5百万$）と Calca（2025-10-01・213.4百万$）。のれん総額（XBRL GoodwillGross）2023 123.7 → 2025 424.1百万$＝**現のれんの70.8%が直近5年の流入**（fix_acq5.py の規則 yes≥30%）。night/fix_acq5.py は us-gaap:Goodwill 残高タグが無いため判定不能を返したので、同じ問いを GoodwillGross 系列で確定した。⚠門の採点は v9.9.183 以降 acq5 を読まない（買収の強度は acqS5 が持つ）。"
+   "acq5": "直近5年の大型買収あり: AMPAC（2024-01-16 取得・PaymentsToAcquireBusinessesNetOfCashAcquired 681.5百万$）と Calca（2025-10-01・213.4百万$）。のれん総額（XBRL GoodwillGross）2023 123.7 → 2025 424.1百万$＝**現のれんの70.8%が直近5年の流入**（fix_acq5.py の規則 yes≥30%）。night/fix_acq5.py は us-gaap:Goodwill 残高タグが無いため判定不能を返したので、同じ問いを GoodwillGross 系列で確定した。⚠門の採点は v9.9.183 以降 acq5 を読まない（買収の強度は acqS5 が持つ）。",
+   "per": "2026-09-23 per = px $888.78（Alpha Vantage GLOBAL_QUOTE（2026-09-22 終値））÷ TTM GAAP 希薄化EPS $46.47 = 19.13。TTM の内訳は旧 nulls.per の記録どおり（SEC XBRL の10-K・10-Q）",
+   "px": "Alpha Vantage GLOBAL_QUOTE（2026-09-22 終値）"
   },
   "provenance": {
    "cagr": "machine",
@@ -163,7 +166,8 @@
    "cagrT": "machine",
    "acqS5": "machine",
    "intcov": "machine",
-   "acq5": "kenshi"
+   "acq5": "kenshi",
+   "per": "kenshi"
   },
   "nulls": {
    "dom": "【2026-09-23】空欄——(2)100/85/70 に要る数値（自社シェア%＋上位N社合計%）が原本に無い。会社は『We believe we are one of the four largest manufacturers and suppliers in the petroleum additives marketplace.』と**順位**だけを述べ、潤滑油添加剤の大手3社（Lubrizol・Infineum・Chevron Oronite）を名指しするが比率は無い（規約4: 順位の自称はどの刻みの証拠にもならない）。(3)の残余刻み50も置けない——提出書類が述べる構造は fragmented ではなく**4社への集中**で、自社が40%未満だと定義上言えない。燃料添加剤は『characterized by more competitors』、特殊材料は『leading』の自称のみで、事業ごとの構造も揃わない。EDGAR 全文検索（2021-01〜2026-09・\"Afton\"/\"Lubrizol\"/\"Infineum\"/\"Oronite\" と share・percent の組合せ）で市場全体の比率表を載せた他社の提出書類は見つからなかった（ヒットは当社の 10-K/ARS の定型の将来予測文のみ）。",
@@ -171,8 +175,7 @@
    "p3": "nde 1.21 から門が機械導出（<2.5 → 70）。逸脱評価はしないので空欄。",
    "f5": "disrupt=unsettled から門が機械導出（65）。逸脱評価はしないので空欄。",
    "beta": "市場データは取込時に入れる（審査では空欄＝プロトコル）。門は β 空欄を下限0.8で扱う（WACC 8.57%）。",
-   "per": "**2026-09-23 空欄（todo per_ttm_stale）＝株価が無い**: パックの px が空欄で out/dashboard.json にも NEU が無い（日付つきの株価の出所が無い）。per を入れるときの分母は TTM GAAP 希薄化EPS **46.47**（FY2025 44.44〔10-K accn 0001282637-26-000005〕− 1H25 25.11 ＋ 1H26 27.14〔10-Q accn 0001282637-26-000016〕・SEC XBRL）。株価を取り込んだ日にその株価で per・perF を同時に入れること",
-   "perF": "**2026-09-23 空欄（todo per_ttm_stale）＝株価が無い**: パックの px が空欄で out/dashboard.json にも NEU が無い（日付つきの株価の出所が無い）。per を入れるときの分母は TTM GAAP 希薄化EPS **46.47**（FY2025 44.44〔10-K accn 0001282637-26-000005〕− 1H25 25.11 ＋ 1H26 27.14〔10-Q accn 0001282637-26-000016〕・SEC XBRL）。perF は per と同じ日・同じ株価で「TTM の直後の4四半期」のコンセンサスから入れ、基準の検問（片側+5%）を通すこと"
+   "perF": "2026-09-23 空欄: TTM の直後の4四半期のコンセンサスを取れる出所がこの環境に無い（Alpha Vantage の日次上限・FMP はプラン外）。株価 888.78（2026-09-22）で入れるときは per と同じ株価で"
   },
   "basis": {
    "roic": "through-cycle-med5(5年・FY2021–FY2025・控除は BS の「無形（償却後）とのれん」の合算行)",
@@ -204,9 +207,18 @@
     "roict"
    ],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
+  },
+  "px": {
+   "date": "2026-09-22",
+   "ccy": "USD",
+   "src": "Alpha Vantage GLOBAL_QUOTE",
+   "fields": {
+    "per": 19.13
+   }
   }
  },
  "cagrT": -9.8,
  "acqS5": 0.4628,
- "intcov": 13.698
+ "intcov": 13.698,
+ "ddate": "2026-09-22"
 }
