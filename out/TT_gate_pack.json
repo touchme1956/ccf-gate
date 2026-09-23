@@ -49,7 +49,7 @@
  "p3": null,
  "p4": 90,
  "f1": 85,
- "f2": 75,
+ "f2": 65,
  "f3": 80,
  "f4": 80,
  "f5": null,
@@ -115,7 +115,8 @@
    "2026-08-06 rep/dur を原本で確定。dur 85→75（ネットワーク効果の記述なし）",
    "2026-08-13 採取器の是正の取り残しを反映: cagr 5.8→11.4 / nde 0.54→0.82。**旧値は根拠が無く、採取器の現行版と食い違っていた**（このパックの審査は 2026-07 で、採取器はその後3回直っている）。採用の条件は3つ——(1)パックに根拠が無い (2)採取器の年がパックの会計年度と一致 (3)**採取器が示した実額から式を独立に再計算して一致**。roic/roicg/roict/dilNet は IC縮退・窓の問題があるので**保留**した。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた。測り直し: python3 night/backfill_machine_evidence.py --stamps",
    "2026-08-13 採取器との食い違いを検討したが**保留**した欄: roic roicg dilNet。理由——roic/roicg は **IC縮退**（投下資本が自己資本のごく一部まで縮んで発散する型）か、採取器自身が『有利子負債タグ不在＝0扱いのため過大』と警告している。dilNet は採取器の窓が15年で規約の窓と違う。cagr は系列に欠年がある。**もっともらしい誤値より空欄・据置**。原本で確定するのが本筋（todo pack_collector_drift）",
-   "2026-08-20 irr 70 → 50（二重読み）"
+   "2026-08-20 irr 70 → 50（二重読み）",
+   "2026-09-23 f2 75→65（規約の適用・判定圏外）: 旧値に根拠の記録が無い（evidence.f2 空欄）＝原本の TAM 浸透率・TAM 成長の数値が示されていない。2026-08-16 統一規約『数値開示なしの既定は65』"
   ],
   "evidence": {
    "dom": "10-K FY2025(tt-20251231.htm) Item1 Competitive Conditions: 『Our products and services are sold in highly competitive markets throughout the world. Due to the diversity of these products and services and the variety of markets served, we encounter a wide variety of competitors that vary by product line and services. They include well-established regional or specialized competitors, as well as larger U.S. and non-U.S. corporations or divisions of larger companies. ... We are one of the leading manufacturers in the world of HVAC systems and services and transport temperature control products and services.』 Item1A Risk Factors『The markets that we serve are highly competitive. We compete worldwide with a number of other manufacturers and distributors that produce and sell similar products. ... Due to our global footprint we are competing worldwide with large companies and with smaller, local operators who may have customer, regulatory or economic advantages in the geographies in which they are located.』。**自社シェア%の開示なし／上位N社合計シェアの開示なし／競合の実名列挙すらなし**——原本に数値が存在しないため70/85/100は主張不能(『one of the leading manufacturers』は順位の自称＝v9.9.41規約4によりどの刻みの証拠にもならない)。他方、提出書類自身が「a wide variety of competitors that vary by product line」「large companies and with smaller, local operators」「a number of other manufacturers and distributors that produce and sell **similar products**」と、同等品を多数が供給する**構造的な分散**を述べており、自社40%以上・上位2社≥80%・上位3社≥80%のいずれも原本からは成立しない → 市場構造=競争(<40%)＝刻み50。Americas/EMEA/Asia Pacificの3セグメントに区別なく同一の記述が置かれ全社が同じ刻みに落ちるため50を確定(v9.9.41規約1・3)",
@@ -136,7 +137,8 @@
    "cagr": "機械算出: 売上 2020年 12,454,700,000 → 2025年 21,321,900,000＝5年の年率",
    "nde": "機械算出 2025年: (有利子負債 5,308,100,000 − 現金同等物 1,763,300,000) ÷ (営業利益 3,967,400,000 + 減価償却 371,900,000)",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 17.501。利息タグ InterestExpense（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "acqS5": "買収支出 5年ぶん合計 1823百万$ ÷ 期初総資産(2020-12-31) 18157百万$ ＝ 0.100／内訳: 2025-12-31 276百万$ / 2024-12-31 180百万$ / 2023-12-31 863百万$ / 2022-12-31 235百万$ / 2021-12-31 269百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 1823百万$ ÷ 期初総資産(2020-12-31) 18157百万$ ＝ 0.100／内訳: 2025-12-31 276百万$ / 2024-12-31 180百万$ / 2023-12-31 863百万$ / 2022-12-31 235百万$ / 2021-12-31 269百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧値 75 には根拠の記録が無く（_meta.evidence.f2 空欄）、原本の TAM 浸透率・TAM 成長の数値が示されていない → 65。⚠原本は今回読み直していない——原本に p の数値開示が見つかれば刻み(90/80/50)を当て直すこと。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）"
   },
   "provenance": {
    "roict": "machine",

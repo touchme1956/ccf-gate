@@ -48,7 +48,7 @@
  "p3": 95,
  "p4": 75,
  "f1": 85,
- "f2": 80,
+ "f2": 65,
  "f3": 65,
  "f4": 60,
  "f5": 65,
@@ -77,7 +77,8 @@
    "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均27.5%・σ3.8pt・CV13.8%）。",
    "**v9.9.72 roic を through-cycle 化**: roic 28.9→27.9 / roicg 28.9→27.6。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央31.4% / 最悪24.1%）。比は**パックが審査した年(2025)**の採取器値 roic32.53 / roicg28.86 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
    "2026-08-20 irr 70 → 50（二重読み）",
-   "2026-08-20 単位是正: ni 196.9→0.1969 / fcf 378.7→0.3787（百万$→十億$・ちょうど1000で割った）。**値ではなく単位の札の誤り**——conv=fcf/ni は不変なのでΩは動かない。発見の経路: `ccfMcapUSD`(v9.9.146) が px×ni÷eps で絶対値を使うようになったため、pxNone×ni196.9÷eps0.67 = 0十億$ ＝ mcap欄 None の約None倍 に化けていた。⚠この単位の食い違いは backfill_machine_evidence が「門は比でしか使わない」として**知ったうえで許していた**もので、絶対値の消費者が増えた時点で前提が崩れていた。"
+   "2026-08-20 単位是正: ni 196.9→0.1969 / fcf 378.7→0.3787（百万$→十億$・ちょうど1000で割った）。**値ではなく単位の札の誤り**——conv=fcf/ni は不変なのでΩは動かない。発見の経路: `ccfMcapUSD`(v9.9.146) が px×ni÷eps で絶対値を使うようになったため、pxNone×ni196.9÷eps0.67 = 0十億$ ＝ mcap欄 None の約None倍 に化けていた。⚠この単位の食い違いは backfill_machine_evidence が「門は比でしか使わない」として**知ったうえで許していた**もので、絶対値の消費者が増えた時点で前提が崩れていた。",
+   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』"
   ],
   "evidence": {
    "dom": "『We compete with large companies, some of them with a substantially larger scale and higher investment capacity than us』→シェア開示なし・大手との競争市場(<40%)=50",
@@ -95,7 +96,7 @@
    "p3": "純現金629.8百万USD(nde−2.56〜−2.88)→95",
    "p4": "accr=−14.2%(<0)+『We have no unresolved comments from the staff of the SEC』。ただし『class action securities claims, the first of which was filed against us on February 23, 2023…in significant part a result of negative publicity by a short seller』係属+『Manual processes also increase the probability of control deficiencies and material weaknesses』の自認→90から減点し75",
    "f1": "ROIIC=ΔNOPAT/ΔIC: 2022→25=73.8/255.8=28.9%、2023→25=19.7%。新興国WACC≈13-14%としてWACC+8pt級以上→80。再投資率≈45%(ΔIC/累計NOPAT)≥30%で+5→85",
-   "f2": "TAM数値の開示はhitsに無し。『unlock opportunities for global enterprise merchants in emerging markets』+NRR144%+売上+46.6%から低浸透(一桁%相当)を推定→90でなく保守的に80",
+   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧根拠自身が『TAM数値の開示はhitsに無し』と書いている（低浸透は NRR・成長率からの推定）＝原本に TAM 浸透率・TAM 成長の数値開示が無い → 80→65。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）｜旧根拠: TAM数値の開示はhitsに無し。『unlock opportunities for global enterprise merchants in emerging markets』+NRR144%+売上+46.6%から低浸透(一桁%相当)を推定→90でなく保守的に80",
    "f3": "R&D/売上=1.9%(2023)→3.4%(2024)→2.8%(2025)で3年趨勢+。シェア趨勢は開示なし=片方+→75。顧客集中悪化(top10=60→62→61%、10%超顧客0→1→2社)で−10→65",
    "f4": "『We have also developed marketplace capabilities, having on-boarded one of the world's largest e-commerce platforms in 2018』→隣接(マーケットプレイス等)は育成中・売上5%超の独立開示なし=60",
    "f5": "disrupt=unsettled連動→65(±10調整の原本根拠なし)",

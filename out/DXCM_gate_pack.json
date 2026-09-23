@@ -49,7 +49,7 @@
  "p3": 90,
  "p4": 90,
  "f1": 90,
- "f2": 80,
+ "f2": 65,
  "f3": 75,
  "f4": 60,
  "f5": 65,
@@ -73,7 +73,8 @@
    "2026-07-29 acq5 0.03 → None。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "2026-07-29 p1 70→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均10.9%・σ4.0pt・CV36.6%）。",
    "2026-08-13 nde是正 -0.79 → 0.28。**旧値は根拠が無く、純現金と主張していたが原本(SEC XBRL)に実額の有利子負債がある**。機械算出 2025年: (有利子負債 1,240,900,000 − 現金同等物 917,700,000) ÷ (営業利益 911,800,000 + 減価償却 251,800,000) 原因はタグ改称（LongTermDebt / LongTermDebtNoncurrent 系が数年前で終わり LongTermDebtAndCapitalLeaseObligations 等へ移る）＝ECL(ルール7の8例目)・CDNS(9例目)と同じ型。発見は night/audit_intcov.py の内部矛盾検査（純現金なのに利息を払っている）。値は採取器 hachimon_fetch.py の出力そのもの（人が式を作り直していない）。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた",
-   "2026-08-20 irr 70 → 50（二重読み）"
+   "2026-08-20 irr 70 → 50（二重読み）",
+   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』"
   ],
   "evidence": {
    "gmt": "『we have experienced, and anticipate that we will continue to experience, decreasing prices for our products due to... pricing pressure from managed care organizations and other third-party payors』(蝕)+GP系列4年連続低下→down",
@@ -91,7 +92,7 @@
    "p3": "方向は純現金(nde-0.79)だが有利子負債(転換社債)・短期投資タグ未捕捉。誠hitsに『Amended Credit Agreement』『financial leverage』=負債実在→データ完全性の留保付きで90(原本の負債/有価証券で要検算)",
    "p4": "accr=-9.5%(<0・保守的会計)。誠の『material weakness』は監査手続の定型文(assessing the risk that a material weakness exists)で実指摘ではない。『ITEM 1B - UNRESOLVED STAFF COMMENTS None』→無限定+負のaccr=90",
    "f1": "ROIC 22.8(2023)→31.8%(2025)上昇=増分投下資本の高収益。WACC+15水準を大きく超過→90(IC精度は負債タグ未捕捉で留保)",
-   "f2": "『Stelo... the first over-the-counter glucose biosensor』『expands access to CGM beyond people with diabetes』=前糖尿病/2型非インスリンの低浸透TAM。ただしTAM浸透率の数値なし→保守側80",
+   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧根拠自身が『TAM浸透率の数値なし』と書いている＝原本に TAM 浸透率・TAM 成長の数値開示が無い → 80→65。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）｜旧根拠: 『Stelo... the first over-the-counter glucose biosensor』『expands access to CGM beyond people with diabetes』=前糖尿病/2型非インスリンの低浸透TAM。ただしTAM浸透率の数値なし→保守側80",
    "f3": "製品/シェア拡大(G7・G7 15 Day late 2025・Stelo)は片側+。R&D/売上の3年趨勢は原本数値なく定量不能。顧客集中(10%超顧客あり)は悪化明示なし→75",
    "f4": "『In August 2024, we launched Stelo』=OTC生体センサの隣接事業だが2024年8月ローンチで売上5%未満の育成中→60",
    "f5": "disrupt=unsettled連動→65",

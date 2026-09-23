@@ -48,7 +48,7 @@
  "p3": 95,
  "p4": 75,
  "f1": 90,
- "f2": 80,
+ "f2": 65,
  "f3": 75,
  "f4": 80,
  "f5": 65,
@@ -77,7 +77,8 @@
    "2026-07-29 p1 90→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均14.9%・σ2.6pt・CV17.3%）。",
    "2026-08-13 nde是正 -0.85 → 0.71。**旧値は根拠が無く、純現金と主張していたが原本(SEC XBRL)に実額の有利子負債がある**。機械算出 2025年: (有利子負債 731,680,000 − 現金同等物 536,260,000) ÷ (営業利益 253,468,000 + 減価償却 22,366,000) 原因はタグ改称（LongTermDebt / LongTermDebtNoncurrent 系が数年前で終わり LongTermDebtAndCapitalLeaseObligations 等へ移る）＝ECL(ルール7の8例目)・CDNS(9例目)と同じ型。発見は night/audit_intcov.py の内部矛盾検査（純現金なのに利息を払っている）。値は採取器 hachimon_fetch.py の出力そのもの（人が式を作り直していない）。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた",
    "2026-08-20 irr=70 据置（二重読み・根拠を書き直し）",
-   "2026-09-19 irr の根拠から**却下した引用の括弧を外した**（値は不変・irr=70 のまま）。《検問と反証の経緯》が旧根拠の出所を『』で引いていたが、その版は原本の「Process Equipment Manufacturers (“PEMs”)」を「PEMs」へ圧縮しており、irr85_mech_diff（--rung 70）が毎回 一致75% の⚠を出していた。全文は《反証》に逐語で在るので、経緯の側は括弧を外して解消。MSFT で 2026-08-19 に確立した『却下した引用は括弧に入れず経緯として述べる』の適用"
+   "2026-09-19 irr の根拠から**却下した引用の括弧を外した**（値は不変・irr=70 のまま）。《検問と反証の経緯》が旧根拠の出所を『』で引いていたが、その版は原本の「Process Equipment Manufacturers (“PEMs”)」を「PEMs」へ圧縮しており、irr85_mech_diff（--rung 70）が毎回 一致75% の⚠を出していた。全文は《反証》に逐語で在るので、経緯の側は括弧を外して解消。MSFT で 2026-08-19 に確立した『却下した引用は括弧に入れず経緯として述べる』の適用",
+   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』"
   ],
   "evidence": {
    "dom": "『the market for process control systems used in semiconductor manufacturing is currently concentrat[ed]』(蝕)+『Our solutions are well accepted by leading customers that allow us to gain more market share with additional process steps』(堀)→少数供給者の寡占市場でNovaは計測ニッチの有力プレイヤー。ただし『extremely competitive market, and if we fail to compete effectively, our revenues and market share will decline』=独占ではない→寡占70",
@@ -95,7 +96,7 @@
    "p3": "純現金(cash214.5+STI321.8=$536M、hits『cash reserves, net of convertible』で転換社債控除後も純現金プラスと明記)→95。ただしdebtタグ不発見でnde絶対値は負債無視の過小値(kenshi参照)。転換社債の償還/希薄化は監視",
    "p4": "accr=+0.6%(小さいプラス)。『material weakness』ヒット(誠)は『assessing the risk that a material weakness exists, testing and evaluating the design and operating effectiveness』=SOX監査手続の定型記述であり実指摘ではない。『Item 4A. Unresolved Staff Comments: None』。被取得事業のICFR監査除外(『constituted 2% of total assets...6% of revenues』)は最近取得の標準スコープ除外。無限定+accr小プラス→75",
    "f1": "ROIIC(転換社債膨張前のクリーン年2023→24)=ΔNOPAT46.4/ΔIC126.2≒36%≫WACC+15。capex売上比わずか3%(2025:27.7M/880.6M)で売上2020:269→2025:881と資本超軽量成長、opm27→29%拡大。再投資率(capex+R&D)高位→90。2024→25はconvertibleでIC歪むため除外",
-   "f2": "半導体プロセス制御計測のTAMは大きくNovaの絶対規模($881M)は総WFEの一桁%=浸透初期・追加プロセスステップ/パッケージング(Sentronics)で余地拡大。原本に明示TAM数値なし→保守側で帯の下端80(数値欠落を注記)",
+   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧根拠自身が『原本に明示TAM数値なし』と書いている＝原本に TAM 浸透率・TAM 成長の数値開示が無い → 80→65。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）｜旧根拠: 半導体プロセス制御計測のTAMは大きくNovaの絶対規模($881M)は総WFEの一桁%=浸透初期・追加プロセスステップ/パッケージング(Sentronics)で余地拡大。原本に明示TAM数値なし→保守側で帯の下端80(数値欠落を注記)",
    "f3": "2符号: R&D/売上=16%で2024と同水準(横ばい=中立)『net research and development expenses represented 16% of our revenues similar to 2024』、シェア趨勢=拡大(+)『gain more market share』。明確な+は片方→75。5大顧客集中は51%(2025)で53%(2024)から改善=悪化なしで-10不適用",
    "f4": "隣接事業: サービス売上20%『product sales accounted for approximately 80%...services accounted for approximately 20%』でeconomies of scaleにより成長(『increase in service gross margin...economies of scale resulting from higher service revenue volumes』)+先端パッケージング計測(Sentronics 2025)/材料計測(Ancosys)=売上5%超の隣接が成長→80",
    "f5": "disrupt=unsettled連動→65",

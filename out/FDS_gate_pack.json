@@ -48,7 +48,7 @@
  "p3": 70,
  "p4": 50,
  "f1": 90,
- "f2": 80,
+ "f2": 65,
  "f3": 75,
  "f4": 60,
  "f5": 65,
@@ -78,7 +78,8 @@
    "2026-07-29 p1 65→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均98.5%・σ28.3pt・CV28.7%）。",
    "2026-08-17 roiic機械算出（新設・v9.9.46）: 3年窓=na / 5年窓=11.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-08-20 irr=70 据置（二重読み・根拠を書き直し）",
-   "2026-08-20 単位是正: ni 597.0→0.597 / fcf None→None（百万$→十億$・ちょうど1000で割った）。**値ではなく単位の札の誤り**——conv=fcf/ni は不変なのでΩは動かない。発見の経路: `ccfMcapUSD`(v9.9.146) が px×ni÷eps で絶対値を使うようになったため、pxNone×ni597.0÷eps15.86 = 0十億$ ＝ mcap欄 None の約None倍 に化けていた。⚠この単位の食い違いは backfill_machine_evidence が「門は比でしか使わない」として**知ったうえで許していた**もので、絶対値の消費者が増えた時点で前提が崩れていた。"
+   "2026-08-20 単位是正: ni 597.0→0.597 / fcf None→None（百万$→十億$・ちょうど1000で割った）。**値ではなく単位の札の誤り**——conv=fcf/ni は不変なのでΩは動かない。発見の経路: `ccfMcapUSD`(v9.9.146) が px×ni÷eps で絶対値を使うようになったため、pxNone×ni597.0÷eps15.86 = 0十億$ ＝ mcap欄 None の約None倍 に化けていた。⚠この単位の食い違いは backfill_machine_evidence が「門は比でしか使わない」として**知ったうえで許していた**もので、絶対値の消費者が増えた時点で前提が崩れていた。",
+   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』"
   ],
   "evidence": {
    "dom": "『We continue to experience intense competition across all of our products and services』『compete for greater market share』→財務データはBloomberg等との寡占市場でFDS個別シェアは低位(<40%)=50",
@@ -95,7 +96,7 @@
    "p3": "nde=1.12(<2.5)=70。CUSIP買収由来の負債が残存",
    "p4": "accr=-3.0(<0・高品質)だが実在のmaterial weakness=『our internal control over financial reporting was not effective as of August 31, 2025』『because of the effect of the material weakness... the Company has not maintained effective internal control』。ITGC(revenues/AR/deferred revenues)不備・是正中・誤謬なし=50(上限)",
    "f1": "ROIIC(FY2022→FY2025)=ΔNOPAT194÷ΔIC258=約75%(FY2023→25でも約44%)。営業利益475→748(+57%)に対しIC概ね横ばい=WACC+15超=90(CUSIP買収ののれんノイズは注記)",
-   "f2": "『compete for greater market share given our ability to provide enterprise-wide solutions』=大規模な金融データ市場に対しFDSシェアは一桁%・成長余地大。明示TAM数値なく保守+注記=80",
+   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧根拠自身が『明示TAM数値なく』と書いている＝原本に TAM 浸透率・TAM 成長の数値開示が無い → 80→65。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）｜旧根拠: 『compete for greater market share given our ability to provide enterprise-wide solutions』=大規模な金融データ市場に対しFDSシェアは一桁%・成長余地大。明示TAM数値なく保守+注記=80",
    "f3": "技術/コンテンツ投資継続+売上増だがシェア趨勢は『intense competition』下で不明瞭=片方符号+=75。単一顧客<3.5%で集中悪化なし(-10不適用)",
    "f4": "『leveraging their portfolio data for multiple asset classes』『enterprise-wide solutions』=隣接領域展開ありだが売上5%超の定量ヒットなし=育成中60",
    "f5": "disrupt=unsettled連動=65",

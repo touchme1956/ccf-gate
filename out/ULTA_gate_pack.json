@@ -48,7 +48,7 @@
  "p3": 95,
  "p4": 90,
  "f1": 55,
- "f2": 75,
+ "f2": 65,
  "f3": 75,
  "f4": 60,
  "f5": 65,
@@ -70,7 +70,8 @@
    "eps=26.12採取器値維持。kenshi検算 NI1,153/加重44.8M株≈25.7(基本)〜希薄化後≈26で整合",
    "cagr=15.0はCOVID谷(FY2021売上6.2十億)起点の5年値。7年CAGR(FY2019 6.7→FY2026 12.4)は約9.2%で、成長の相当部分はコロナ回復リバウンド。かつ営業利益はFY2024 1,678→FY2026 1,533Mへ減少=増収減益(マージン圧迫)。『成長の幻影』兆候",
    "2026-07-29 acq5 0.39 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
-   "roic 43.9→47.6（2026-08-03・採取器の是正の反映）: 無形の控除が過少だった。2025年の無形を 0 → **203,288,000** へ是正し、IC 2,639,317,000 → 2,436,029,000（自己資本 2,803,451,000 + 有利子負債 62,287,000 − のれん 226,421,000 − 無形）。原因は hachimon_fetch の TAGS['intan'] に **IndefiniteLivedIntangibleAssetsExcludingGoodwill が無かった**こと、および series() が候補から1本しか選ばないため総額タグが古い年で止まると新しい年が欠測になり `.get(y,0)` で 0 と読まれていたこと（絶対のルール7(a)）。CELHの審査中に発見し、無形を series_sum で合成する形へ変更した。全317パックへの影響を実測: 差が出たのは GLXZ/NEE/ULTA の3社のみ、いずれもΩ30前後のキル済みで**判定圏外＝買付判断は1件も動かない**"
+   "roic 43.9→47.6（2026-08-03・採取器の是正の反映）: 無形の控除が過少だった。2025年の無形を 0 → **203,288,000** へ是正し、IC 2,639,317,000 → 2,436,029,000（自己資本 2,803,451,000 + 有利子負債 62,287,000 − のれん 226,421,000 − 無形）。原因は hachimon_fetch の TAGS['intan'] に **IndefiniteLivedIntangibleAssetsExcludingGoodwill が無かった**こと、および series() が候補から1本しか選ばないため総額タグが古い年で止まると新しい年が欠測になり `.get(y,0)` で 0 と読まれていたこと（絶対のルール7(a)）。CELHの審査中に発見し、無形を series_sum で合成する形へ変更した。全317パックへの影響を実測: 差が出たのは GLXZ/NEE/ULTA の3社のみ、いずれもΩ30前後のキル済みで**判定圏外＝買付判断は1件も動かない**",
+   "2026-09-23 f2 75→65（規約の適用・判定圏外）: 原本の数値は旧値の刻みを支えない（内容は evidence.f2）。2026-08-16 統一規約"
   ],
   "evidence": {
    "dom": "『The markets for beauty and wellness products and salon services are highly competitive with few barriers to entry』『we may lose market share』→米ビューティ市場は断片的・参入障壁低く、Ultaは専門小売首位でも総市場シェアは40%未満=競争的→dom50",
@@ -88,7 +89,7 @@
    "p3": "純現金(nde-0.24、有利子負債実質ゼロ・現金424M)→p3=95",
    "p4": "accr=-5.0%(<0)+『Item 1B. Unresolved Staff Comments None』。material weaknessヒットは監査手続の定型文(『assessing the risk that a material weakness exists』)で実指摘ではない→無限定相当→p4=90",
    "f1": "直近ROIIC: 営業利益FY2024 1,678→FY2026 1,533Mで ΔNOPAT負、一方でIC増加(equity2,279→2,803M+Space NK買収387M)=増分資本の税後リターンが足元マイナス→WACC未満→f1=55(下限)。新規出店・買収の回収前段階",
-   "f2": "米ビューティTAM『approximately 140 million beauty enthusiasts in the U.S.』に対し売上約12十億=シェア一桁%台と低浸透だが、成熟・低成長カテゴリで伸びは主にシェア奪取→保守化しf2=75",
+   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】75 は刻みに無い中間値。原本の『approximately 140 million beauty enthusiasts』は人数で市場規模ではなく、『シェア一桁%台』はそこから導かれていない → 65。（旧 75）（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）｜旧根拠: 米ビューティTAM『approximately 140 million beauty enthusiasts in the U.S.』に対し売上約12十億=シェア一桁%台と低浸透だが、成熟・低成長カテゴリで伸びは主にシェア奪取→保守化しf2=75",
    "f3": "R&D該当なし業態。シェア趨勢は『drive market share gains in the U.S. beauty category over the long term』=片方+。仕入先集中54→51%は微改善で-10非適用→f3=75",
    "f4": "隣接(ウェルネス・国際・Space NK買収・Ulta Beauty at Target提携)は育成段階、単独で売上5%超・成長の確証は原本に乏しい→f4=60(育成中)",
    "f5": "disrupt=unsettled連動→f5=65",

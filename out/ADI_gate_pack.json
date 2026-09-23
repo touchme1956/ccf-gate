@@ -48,7 +48,7 @@
  "p3": null,
  "p4": 90,
  "f1": 70,
- "f2": 70,
+ "f2": 65,
  "f3": 75,
  "f4": 80,
  "f5": null,
@@ -107,7 +107,8 @@
    "2026-07-29 roiic -7.1→na: 5年窓の裏付けが無い低い3年窓は書かない（複利停止キルの誤爆防止）",
    "2026-07-29 _meta.kenshi が文字列で保存されていたため配列へ正規化した（ASR様式は配列が正）。内容は改行区切りの要素へ分解しただけで一文字も捨てていない。文字列のままだと検死の追記が list.append で落ちる＝**この社だけ監査の記録が伸びなくなる**。",
    "2026-08-03 p3 60 → 空欄。nde=1.53 の導出値は 70。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ",
-   "2026-08-20 irr 70 → 50（二重読み）"
+   "2026-08-20 irr 70 → 50（二重読み）",
+   "2026-09-23 f2 70→65（規約の適用・判定圏外）: 旧値に根拠の記録が無い（evidence.f2 空欄）＝原本の TAM 浸透率・TAM 成長の数値が示されていない。2026-08-16 統一規約『数値開示なしの既定は65』"
   ],
   "evidence": {
    "roic": "機械算出 2025年: NOPAT 2,451,584,354（営業利益 2,932,496,000×(1−実効税率16.4%)） ÷ IC 7,001,826,000＝自己資本 33,815,755,000 + 有利子負債 8,145,066,000 − のれん 26,945,180,000 − 無形 8,013,815,000。**IC/自己資本=20.7%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）",
@@ -124,7 +125,8 @@
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 5,603,056,000 → 2023年 12,305,539,000 → 2025年 11,019,707,000。A案(端点) 直近2年CAGR -5.37% − その前3年CAGR 29.98% = -35.35pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -33.86pt ／ 年次YoY {'2021': 30.6, '2022': 64.2, '2023': 2.4, '2024': -23.4, '2025': 16.9} → **採用 -33.86pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 9.23。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
    "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『By using readily available, high-performance, general-purpose products in their systems, our customers can reduce the time they need to bring new products to market.』（Item 1 Business — Products）——自社製品を『すぐ手に入る汎用品』と会社が位置づける＝代替容易　『We typically do not have sales contracts with our customers that include long-term product purchase commitments.』（Item 1A Risk Factors — 見出し『Our customers typically do not make long-term product purchase commitments…』）——複数年の購買義務の明示的な否定　『As is customary in the semiconductor industry, we allow most orders to be canceled within a reasonable notification period or deliveries to be delayed by customers without significant penalty』（Item 1 Business — Seasonality／受注の記述）——解約に有意な違約が無いことを会社が明記　『We define backlog to mean firm orders from a customer or distributor with a requested delivery date within thirteen weeks.』（Item 1 Business — Seasonality）——確定受注の地平が13週＝拘束の実数が短い　『Our product portfolio includes several thousand analog ICs, many of which can have several hundred end customers.』（Item 1 Business — Products）——1品種が数百顧客に売れる標準品構成＝顧客固有の作り込みではない　『replace our products with products from another supplier that is not subject to the export restrictions』（Item 1A Risk Factors — 輸出規制）——顧客が他社品へ置き換えることを会社自身が現実の risk として書く　《反証（同じ原本に同居する）》『Our analog ICs typically have long product life cycles.』　《射程》該当なし（70を支える機構が原本に無い）　《検問と反証の経緯》★台帳の irr_evidence は**空文字**＝irr=70 の根拠が一つも記録されていない（規約を満たすか以前の問題）。FY2025 10-K（期末2025-11-01）を全文走査した結果、70 を支える文は無い。機械走査: **design win 0 / designed into 0 / design-in 0 / switching 0 / requalif 0 / installed base 0 / socket 0 / long-term agreement 0 / second source 0 / take-or-pay 0 / capacity reservation 0**。CLAUDE.md が記録する2018年版の design-win 構文は**この年の原本から消えている**（ENTG と同型）。唯一機構に近いのは『Our analog ICs typically have long product life cycles.』だが、これは**製品の寿命**であって顧客が負う費用・時間を一つも述べない（RMD の installed base と同型）。検問4の反証が会社の言葉で揃う——『By using **readily available**, high-performance, **general-purpose** products…customers can reduce the time they need to bring new products to market』＝カタログ部品／『Our customers typically do not make long-term product purchase commitments』（リスク見出し）＋『We typically do not have sales contracts with our customers that include long-term product purchase commitments.』／『we allow most orders to be canceled…**without significant penalty**』／backlog は『**thirteen weeks**』／『the customer is unwilling to make a binding commitment to purchase all, or even any, of the product』／輸出規制の文脈で『**replace our products with products from another supplier**』＝顧客の乗り換えを会社がリスクとして書く／Competition節は『markets that are **highly competitive**』＋『Some of our competitors may have **more advantageous supply or development relationships with our current and potential customers**』（ONTO側）。★反証の試み: 顧客語×摩擦語の文単位走査を全文に掛けたが該当14文で、うち摩擦の記述は**すべて当社の仕入先・供給網の話**（向きが逆）だった。application-specific 5件・sole source 1件も当社の調達側。→50。",
-   "acqS5": "買収支出 5年ぶん合計 46百万$ ÷ 期初総資産(2020-10-31) 21469百万$ ＝ 0.002／内訳: 2025-11-01 46百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 46百万$ ÷ 期初総資産(2020-10-31) 21469百万$ ＝ 0.002／内訳: 2025-11-01 46百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧値 70 には根拠の記録が無く（_meta.evidence.f2 空欄）、原本の TAM 浸透率・TAM 成長の数値が示されていない → 65。⚠原本は今回読み直していない——原本に p の数値開示が見つかれば刻み(90/80/50)を当て直すこと。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）"
   },
   "provenance": {
    "roic": "machine",

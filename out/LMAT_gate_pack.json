@@ -48,7 +48,7 @@
  "p3": null,
  "p4": 90,
  "f1": 75,
- "f2": 80,
+ "f2": 65,
  "f3": 75,
  "f4": 50,
  "f5": null,
@@ -107,7 +107,8 @@
    "2026-08-03 p3 70 → 空欄。nde=-0.36 の導出値は 95。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ",
    "**v9.9.72 roic を through-cycle 化**: roic 17.7→17.2 / roicg 13.3→11.2。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央17.2% / 最悪12.9%）。比は**パックが審査した年(2025)**の採取器値 roic17.71 / roicg13.25 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
    "2026-08-20 irr 70 → 50（二重読み）",
-   "2026-08-20 単位是正: ni 57.7→0.0577 / fcf 81.3→0.0813（百万$→十億$・ちょうど1000で割った）。**値ではなく単位の札の誤り**——conv=fcf/ni は不変なのでΩは動かない。発見の経路: `ccfMcapUSD`(v9.9.146) が px×ni÷eps で絶対値を使うようになったため、px101.89×ni57.7÷eps2.54 = 2315十億$ ＝ mcap欄 2.3362 の約990.7倍 に化けていた。⚠この単位の食い違いは backfill_machine_evidence が「門は比でしか使わない」として**知ったうえで許していた**もので、絶対値の消費者が増えた時点で前提が崩れていた。"
+   "2026-08-20 単位是正: ni 57.7→0.0577 / fcf 81.3→0.0813（百万$→十億$・ちょうど1000で割った）。**値ではなく単位の札の誤り**——conv=fcf/ni は不変なのでΩは動かない。発見の経路: `ccfMcapUSD`(v9.9.146) が px×ni÷eps で絶対値を使うようになったため、px101.89×ni57.7÷eps2.54 = 2315十億$ ＝ mcap欄 2.3362 の約990.7倍 に化けていた。⚠この単位の食い違いは backfill_machine_evidence が「門は比でしか使わない」として**知ったうえで許していた**もので、絶対値の消費者が増えた時点で前提が崩れていた。",
+   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧値に根拠の記録が無い（evidence.f2 空欄）＝原本の TAM 浸透率・TAM 成長の数値が示されていない。2026-08-16 統一規約『数値開示なしの既定は65』"
   ],
   "evidence": {
    "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 393,516,000 + 有利子負債 0)＝のれん込み。roic(除外)との差が買収規律の指標。**有利子負債タグ不在＝0扱いのため過大の可能性あり（要原本確認）**",
@@ -121,7 +122,8 @@
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 129,366,000 → 2023年 193,484,000 → 2025年 249,602,000。A案(端点) 直近2年CAGR 13.58% − その前3年CAGR 14.36% = -0.78pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -5.79pt ／ 年次YoY {'2021': 19.4, '2022': 4.7, '2023': 19.7, '2024': 13.6, '2025': 13.5} → **採用 -0.78pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 13.1。利息タグ InterestExpense（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
    "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『Although we offer training for physicians in accordance with our products' instructions for use, we do not require that physicians be trained in the use of our products, and physicians may use our products incorrectly』（Item 1A. Risk Factors — 製造物責任）——唯一ありえた移行摩擦（術者トレーニング）を会社自身が『要求しない』と否定　『The success of our products relies on effective in-person support as well as superior technology, quality, availability, reliability, ease of use, cost-effectiveness, physician familiarity, and brand recognition.』（Item 1. Business — Competition）——競争手段に移行障壁が無く、最も近いのは familiarity＝選好　『While we also compete on the basis of price, our higher prices may be justified based on the superiority of the quality of, or technology used in, our products.』（Item 1. Business — Competition）——価格競争を会社自身が認めている　『Certain competitors are able to manufacture at lower costs and may therefore offer their products at lower prices, especially polyester and ePTFE vascular grafts.』（Item 1. Business — Competition）——直接代替が安価に存在する製品ラインを名指し　『certain customers may respond to price increases by reducing or eliminating purchases with us』（Item 1A. Risk Factors — 販売価格の引き上げ）——顧客は価格で離れうると会社が明記＝移行障壁の不在　『No one company competes against all of our product lines; rather, we compete with a range of companies.』（Item 1. Business — Competition）——製品ラインごとに個別の競合が存在する　《反証（同じ原本に同居する）》『We also provide training to our vascular surgeons on specific procedures including in situ bypass, AV access, carotid endarterectomy, and interrupted anastomosis, as well as a general surgical skills training program targeting less-experienced doctors on use of our products in accordance with their instructions for use.』　《検問と反証の経緯》検問1: 採用引用は全て原本に1回ずつ逐語存在。検問2 機構の名指し=不可: switch/switching/switching cost が全文0回、installed base 0件、long-term contract 0件、multi-year 0件。材料の網が挙げた候補は全て別物だった——proprietary 8件は当社のIP・自社製造装置・内製化（rep の領分）／『工程への組込』4件は転換社債の embedded derivative（会計）／『データ移行・再教育』4件は従業員のオンボーディングと自社のクラウド導入費用／convert 132件は Convertible Notes。検問3 向き: barrier の唯一の1件は包装の sterile barrier（不良の話）。must use 2件は当社がNotified Bodyを使う義務＝型(1)自社が取得する側。検問4 反証の同居: 会社自身が『we do not require that physicians be trained in the use of our products』と明言——この社で唯一ありえた移行摩擦（術者トレーニング）を原本が正面から否定した。加えて値上げに対し顧客が購入を減らす/やめると自認、Competition節が price を競争手段に挙げ競合が低コストで安く売れると書く、GPO加入は値上げを阻む要因としてリスクに置かれる、consignment在庫$1.6Mは当社が負担する側。検問5 射程: 機構が立たず該当なし。★70への反証の試み: surgeon 35件・training 10件・prefer 9件・group purchasing 2件・consign 3件・competition節3箇所を全件読了。最も近いのはCompetition節の physician familiarity の一語だが、familiarity は選好であって顧客が負う費用・時間・義務ではない（RMD型）。トレーニングもLMATが提供する販促費用であって顧客の負担ではない。よって50。evidence_gap: 台帳のirr根拠は空。",
-   "acqS5": "買収支出 5年ぶん合計 3百万$ ÷ 期初総資産(2020-12-31) 253百万$ ＝ 0.011／内訳: 2025-12-31 2百万$ / 2023-12-31 1百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 3百万$ ÷ 期初総資産(2020-12-31) 253百万$ ＝ 0.011／内訳: 2025-12-31 2百万$ / 2023-12-31 1百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧値 80 には根拠の記録が無く（_meta.evidence.f2 空欄）、原本の TAM 浸透率・TAM 成長の数値が示されていない → 65。⚠原本は今回読み直していない——原本に p の数値開示が見つかれば刻み(90/80/50)を当て直すこと。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）"
   },
   "provenance": {
    "roicg": "machine",

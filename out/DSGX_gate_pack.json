@@ -48,7 +48,7 @@
  "p3": null,
  "p4": 90,
  "f1": 60,
- "f2": 80,
+ "f2": 65,
  "f3": 75,
  "f4": 80,
  "f5": null,
@@ -107,7 +107,8 @@
    "2026-07-29【要再審査・原本が21年前】_meta.source が 2005年1月期の20-F(form20-f_13683.txt)を指している。定性項目(dom70/irr70/rep60/dur85/p2 90/f2 75 …)は**すべて根拠が空**で、どの書類から読んだのか辿れない。機械値はXBRL経由なので現在のものだが、定性は21年前の開示から読まれた疑いがある。**原本を最新の年次報告に取り直して門2審査をやり直すこと。**（発見の経緯: validate_packs に追加した原本鮮度の検査。採取器の年検問は機械値にしか効かず、『定性をどの年の紙から読んだか』は誰も見ていなかった）",
    "2026-07-29【全面再審査・原本を2005年→2026年へ差し替え】旧パックは _meta.source が **2005年1月期の20-F** を指し、定性項目はすべて根拠が空だった。正しい原本は **40-F（2026-03-11提出・FY2026年1月期）**。**根本原因は採取器のバグ**——`_annual()` と `latest_annual_url()` が年次報告の様式を (\"10-K\",\"20-F\") でハードコードしており、**カナダMJDSの 40-F を知らなかった**。そのためDSGXは(a)全タグが「不発見」で機械値が一つも取れず、(b)原本探索が40-Fを飛ばして**同社が最後に出した20-F＝2005年**を掴んでいた。『審査日は今日なのに読んだ紙が21年前』の正体はこの2行。本日 40-F を両方に追加し、あわせて売上タグ `RevenueFromContractWithCustomerIncludingAssessedTax`（*Excluding* ではなく *Including*）も追加した（これが無くcagrが算出不能だった）。是正: {'gm': 28.8, 'cagr': None, 'nde': -1.7, 'eps': None, 'roic': 28.0, 'roicg': 10.3, 'p1': 85, 'p3': 60, 'dom': 70, 'f1': 75} → 原本の実額と引用で全項目を書き直し。roic は投下資本が自己資本の16.1%へ縮退するため算出不能とし roicg 9.8% で裁く（ルール7(b)）。nde は原本で無借金を確認して −1.22（純現金）を手入力。",
    "2026-08-20 irr 70 → 50（二重読み）",
-   "2026-08-20 単位是正: ni 163.8→0.1638 / fcf 260.5→0.2605（百万$→十億$・ちょうど1000で割った）。**値ではなく単位の札の誤り**——conv=fcf/ni は不変なのでΩは動かない。発見の経路: `ccfMcapUSD`(v9.9.146) が px×ni÷eps で絶対値を使うようになったため、px73.68×ni163.8÷eps1.91 = 6319十億$ ＝ mcap欄 6.31 の約1001.4倍 に化けていた。⚠この単位の食い違いは backfill_machine_evidence が「門は比でしか使わない」として**知ったうえで許していた**もので、絶対値の消費者が増えた時点で前提が崩れていた。"
+   "2026-08-20 単位是正: ni 163.8→0.1638 / fcf 260.5→0.2605（百万$→十億$・ちょうど1000で割った）。**値ではなく単位の札の誤り**——conv=fcf/ni は不変なのでΩは動かない。発見の経路: `ccfMcapUSD`(v9.9.146) が px×ni÷eps で絶対値を使うようになったため、px73.68×ni163.8÷eps1.91 = 6319十億$ ＝ mcap欄 6.31 の約1001.4倍 に化けていた。⚠この単位の食い違いは backfill_machine_evidence が「門は比でしか使わない」として**知ったうえで許していた**もので、絶対値の消費者が増えた時点で前提が崩れていた。",
+   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』"
   ],
   "evidence": {
    "gm": "機械算出 2026年: 営業利益 209,978,000 ÷ 売上 728,992,000（粗利ではない）",
@@ -133,7 +134,7 @@
    "p2": "【2026-07-29 原本】95=浅い。営業利益は FY2020 52.3 → FY2021 71.4 → FY2022 103.4 → FY2026 **210.0**百万$と**コロナ期を含めて単調に増加**し、直近2回の景気後退局面でドローダウンが観測できない（−20%以内どころか無し）。収益の93%が取引・購読ベースで景気連動が薄い。出典: SEC XBRL OperatingIncomeLoss系列 / 同40-F Exhibit 99.2（MD&A＋監査済連結財務諸表・FY2026）。",
    "p4": "【2026-07-29 原本】90=accr<0かつ監査無限定。アクルーアル比率 **−5.4%**（負値＝利益に現金裏付け・FCF転換159.1%）。監査意見は無限定（『fairly, in all material respects』が4箇所）。**material weakness の7件はすべてリスク要因の定型文**（『we **may** discover material weaknesses』＝将来の可能性の記述）で、実指摘ではない。going concern の記載は0件。critical audit matter は通常の監査報告事項。出典: 同40-F Exhibit 99.2（MD&A＋監査済連結財務諸表・FY2026）。",
    "f1": "【2026-07-29】60。ROIICは算出不能（roiicのnullの理由を見よ）ため、規約どおり**還元の質**で裁く。同40-F Exhibit 99.1（Annual Information Form・FY2026） 6.3 Dividend Policy: 『We have **not paid any dividends** on our common shares to date』。自社株買いも乏しく、生んだ現金は買収へ再投下されている（のれん 523.7→1,025.8百万$／5年で+95.9%）。その再投下の成績が **のれん込みROIC 9.8%** ＝WACC近傍で、資本コストを大きく超えて複利していない。還元も乏しく再投資利回りも低いので75ではなく**60**。",
-   "f2": "【2026-07-29 原本・数値なきため保守側】80。同40-F Exhibit 99.1（Annual Information Form・FY2026）: 『While the rate of adoption of newer logistics and supply chain fmanagement technologies is increasing, **a large number of organizations still have manual business fprocesses and older business systems** that need integration and extension』『We believe this presents an fopportunity for logistics technology providers to **unite this highly fragmented community**』＝浸透率は低位。ただし**TAMの数値も浸透率%も原本に無い**ので、一桁%帯の90ではなく保守側の80に置く（規約:数値なき場合は保守側+注記）。",
+   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧根拠自身が『TAMの数値も浸透率%も原本に無い』と書いている＝原本に TAM 浸透率・TAM 成長の数値開示が無い → 80→65。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）｜旧根拠: 【2026-07-29 原本・数値なきため保守側】80。同40-F Exhibit 99.1（Annual Information Form・FY2026）: 『While the rate of adoption of newer logistics and supply chain fmanagement technologies is increasing, **a large number of organizations still have manual business fprocesses and older business systems** that need integration and extension』『We believe this presents an fopportunity for logistics technology providers to **unite this highly fragmented community**』＝浸透率は低位。ただし**TAMの数値も浸透率%も原本に無い**ので、一桁%帯の90ではなく保守側の80に置く（規約:数値なき場合は保守側+注記）。",
    "f3": "【2026-07-29 原本】75=片方。R&D費は **105.3 / 95.5 / 84.1百万$**（FY2026/2025/2024）で3年で+25.2%だが、『Research and development expenses as a percentage of total revenues were **15% in each of 2026, 2025 and f2024**』＝**売上比は横ばい**（増でも減でもない）。シェア趨勢(sht)は未測定のため、2符号のうち確認できたのは1つだけ→75。出典: 同40-F Exhibit 99.2（MD&A＋監査済連結財務諸表・FY2026） Research and development / 同40-F Exhibit 99.1（Annual Information Form・FY2026） 4.6。",
    "f4": "【2026-07-29 原本】80=隣接事業が売上5%超で成長。連続買収で通関・eコマース・ルーティング・テレマティクス・貿易情報へ用途を広げており、のれんは **523.7→1,025.8百万$（5年で+95.9%）**＝今あるのれんの48.9%が直近5年に発生。同40-F Exhibit 99.1（Annual Information Form・FY2026）: 『our intention to **actively explore future business combinations** and other strategic ftransactions』。収益は単一セグメント計上だが、地域・用途の広がりは上記実数で確認できる。",
    "intcov": "機械算出 2026年: 営業利益 ÷ 支払利息 = 217.144。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",

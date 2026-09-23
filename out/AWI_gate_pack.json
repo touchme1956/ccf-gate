@@ -49,7 +49,7 @@
  "p3": 85,
  "p4": 90,
  "f1": 80,
- "f2": 60,
+ "f2": 65,
  "f3": 70,
  "f4": 80,
  "f5": 85,
@@ -75,7 +75,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=95.1 / 5年窓=145.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均41.5%・σ5.8pt・CV13.9%）。",
    "**v9.9.72 roic を through-cycle 化**: roic 50.0→41.1 / roicg 25.4→20.6。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央41.1% / 最悪35.2%）。比は**パックが審査した年(2025)**の採取器値 roic50.01 / roicg25.42 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
-   "2026-08-20 単位是正: ni 308.7→0.3087 / fcf None→None（百万$→十億$・ちょうど1000で割った）。**値ではなく単位の札の誤り**——conv=fcf/ni は不変なのでΩは動かない。発見の経路: `ccfMcapUSD`(v9.9.146) が px×ni÷eps で絶対値を使うようになったため、pxNone×ni308.7÷eps7.19 = 0十億$ ＝ mcap欄 None の約None倍 に化けていた。⚠この単位の食い違いは backfill_machine_evidence が「門は比でしか使わない」として**知ったうえで許していた**もので、絶対値の消費者が増えた時点で前提が崩れていた。"
+   "2026-08-20 単位是正: ni 308.7→0.3087 / fcf None→None（百万$→十億$・ちょうど1000で割った）。**値ではなく単位の札の誤り**——conv=fcf/ni は不変なのでΩは動かない。発見の経路: `ccfMcapUSD`(v9.9.146) が px×ni÷eps で絶対値を使うようになったため、pxNone×ni308.7÷eps7.19 = 0十億$ ＝ mcap欄 None の約None倍 に化けていた。⚠この単位の食い違いは backfill_machine_evidence が「門は比でしか使わない」として**知ったうえで許していた**もので、絶対値の消費者が増えた時点で前提が崩れていた。",
+   "2026-09-23 f2 60→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』"
   ],
   "evidence": {
    "expiry": "『Patent protection extends for varying periods according to the date of patent filing or grant and the legal term of a patent in the various countries where patent protection is obtained』=通常特許で満了型独占(コンセッション・特許束依存)ではない→no",
@@ -89,7 +90,7 @@
    "p3": "nde=0.53(<1)→85",
    "p4": "accr=-2.4(<0)+『material weakness』ヒットは監査手続の定型文(assessing the risk that a material weakness exists...)で実指摘ではない・『Unresolved Staff Comments』はItem 1BのTOC項目→無限定相当=90",
    "f1": "ΔNOPAT(2023:242.8→2025:332.2)=+37%だが書面IC(自己資本+純負債)は自社株買い・負債返済で縮小(ΔIC<0)→ROIIC計算不能→還元の質(継続自社株買い株数44.7→43.3M・負債502.6→396.4M圧縮)で上位。資産ベースROIIC≈35%は2024買収123.5M・循環AUV由来を含むため割引→総合80",
-   "f2": "TAM浸透率のhits数値なし。中核Mineral Fiber天井は成熟・高浸透(改修更新需要主体)→保守側60(注: 成熟市場は成長余地小)。Architectural Specialtiesの伸長余地はf4で計上",
+   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】60 は刻みに無い中間値。旧根拠自身が『TAM浸透率のhits数値なし』と書いている（成熟は審査官の定性判断）＝原本に TAM 浸透率・TAM 成長の数値開示が無い → 60→65。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）｜旧根拠: TAM浸透率のhits数値なし。中核Mineral Fiber天井は成熟・高浸透(改修更新需要主体)→保守側60(注: 成熟市場は成長余地小)。Architectural Specialtiesの伸長余地はf4で計上",
    "f3": "R&D非開示(低R&D建設資材)。『strong growth across most of our specialty product categories』=Specialtyシェア趨勢は+だが、R&D符号不明で2符号揃わず→70。単一顧客集中悪化の証拠なく-10非適用",
    "f4": "『The increase...driven by strong growth across most of our specialty product categories』+Architectural Specialtiesは独立成長セグメント(売上5%超・GP+26.9%)→80",
    "f5": "disrupt=settled連動→85",

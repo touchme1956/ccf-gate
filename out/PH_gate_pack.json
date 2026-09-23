@@ -49,7 +49,7 @@
  "p3": null,
  "p4": 90,
  "f1": 75,
- "f2": 75,
+ "f2": 65,
  "f3": 80,
  "f4": 60,
  "f5": null,
@@ -115,7 +115,8 @@
    "2026-08-06 dep を原本から充填（判定圏の全数充填・v9.9.85のベトは dep≥40）",
    "2026-08-06 rep/dur を原本で確定。dur 85→75（ネットワーク効果の記述なし）。**堀 70.1→69.0 で関門70を割る**",
    "2026-08-13 nde是正 -0.1 → 1.21。**旧値は根拠が無く、純現金と主張していたが原本(SEC XBRL)に実額の有利子負債がある**。機械算出 2025年: (有利子負債 7,508,000,000 − 現金同等物 467,000,000) ÷ (営業利益 4,347,000,000 + 減価償却 1,468,000,000) 原因はタグ改称（LongTermDebt / LongTermDebtNoncurrent 系が数年前で終わり LongTermDebtAndCapitalLeaseObligations 等へ移る）＝ECL(ルール7の8例目)・CDNS(9例目)と同じ型。発見は night/audit_intcov.py の内部矛盾検査（純現金なのに利息を払っている）。値は採取器 hachimon_fetch.py の出力そのもの（人が式を作り直していない）。⚠影の計測で投下可10社が不変・波及ゼロを確認してから書いた",
-   "2026-08-20 irr 70 → 50（二重読み）"
+   "2026-08-20 irr 70 → 50（二重読み）",
+   "2026-09-23 f2 75→65（規約の適用・判定圏外）: 旧値に根拠の記録が無い（evidence.f2 空欄）＝原本の TAM 浸透率・TAM 成長の数値が示されていない。2026-08-16 統一規約『数値開示なしの既定は65』"
   ],
   "evidence": {
    "dom": "10-K FY2025(ph-20250630.htm) Item1 Competition: 『Parker operates in highly competitive markets and industries. We offer our products over numerous, varied markets through our divisions operating in 43 countries. Our global scope means that we have hundreds of competitors across our various markets and product offerings. ... Although each of our segments has numerous competitors, given our market and product breadth, no single competitor competes with the Company with respect to all the products we manufacture and sell.』／DI主要競合として13社を実名列挙(Bosch Rexroth AG, Danaher, Danfoss A/S, Donaldson, Emerson Climate Technologies, Emerson/ASCO, Festo, Freudenberg-NOK, Gates, IMI/Norgren, SMC, Swagelok, Trelleborg)、Aerospace主要競合として9社(Crane Co., Eaton, Honeywell, Moog, RTX, Safran, Senior plc, Triumph, Woodward)。Item1A『Our operations are subject to competition from a wide variety of global, regional and local competitors』。**自社シェア%の開示なし／上位N社合計シェアの開示なし**——原本に数値が存在しないため70/85/100は主張不能。一方で提出書類自身が「hundreds of competitors」「no single competitor competes with all products」と**構造的に分散**を述べ、名指し競合だけで9-13社ある以上、上位2社≥80%(複占)も上位3社≥80%(3社寡占)も成立せず、自社シェア40%以上も定義上ありえない → 市場構造=競争(<40%・寡占構造非該当)＝刻み50。Diversified Industrial・Aerospace Systemsの双方が同じ記述・同じ刻みに落ちるため全社ベースで50を確定(v9.9.41規約1・3)",
@@ -138,7 +139,8 @@
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 13,695,520,000 → 2023年 19,065,000,000 → 2025年 19,850,000,000。A案(端点) 直近2年CAGR 2.04% − その前3年CAGR 11.66% = -9.62pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -8.48pt ／ 年次YoY {'2021': 4.8, '2022': 10.6, '2023': 20.2, '2024': 4.5, '2025': -0.4} → **採用 -8.48pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "nde": "機械算出 2025年: (有利子負債 7,508,000,000 − 現金同等物 467,000,000) ÷ (営業利益 4,347,000,000 + 減価償却 1,468,000,000)",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 10.628。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "acqS5": "買収支出 5年ぶん合計 7146百万$ ÷ 期初総資産(2020-06-30) 19888百万$ ＝ 0.359／内訳: 2023-06-30 7146百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 7146百万$ ÷ 期初総資産(2020-06-30) 19888百万$ ＝ 0.359／内訳: 2023-06-30 7146百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧値 75 には根拠の記録が無く（_meta.evidence.f2 空欄）、原本の TAM 浸透率・TAM 成長の数値が示されていない → 65。⚠原本は今回読み直していない——原本に p の数値開示が見つかれば刻み(90/80/50)を当て直すこと。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）"
   },
   "provenance": {
    "roict": "machine",

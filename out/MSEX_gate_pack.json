@@ -48,7 +48,7 @@
  "p3": null,
  "p4": 85,
  "f1": 55,
- "f2": 55,
+ "f2": 65,
  "f3": 60,
  "f4": 60,
  "f5": null,
@@ -108,7 +108,8 @@
    "2026-08-03 p3 80 → 空欄。nde=7.06 の導出値は 50。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ",
    "**v9.9.72 roic を through-cycle 化**: roic 5.5→3.8 / roicg 5.5→3.8。**5年の中央値**（系列[2023, 2024, 2025]・中央3.7% / 最悪3.5%）。比は**パックが審査した年(2025)**の採取器値 roic5.38 / roicg5.38 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
    "2026-08-06 irr 85→100。YORWと同じ理由（認証ロックではなく排他的フランチャイズ）",
-   "2026-08-09 機械値の再監査: cagr 1.5→6.6。**旧値は5年CAGRではなく1年の年率**で、原因は `Revenues`(FY2023〜) と `RegulatedAndUnregulatedOperatingRevenue`(FY2009-2024) の**タグ改称で系列が接がれていなかった**こと（CLAUDE.md が BR で記録している「候補タグの先頭を無条件採用」の同族）。重なる2年が完全一致するので改称と確定して接いだ。gm 27.9（54,376÷194,694）と gmt=up は検算して据置。Ω0/堀68.2は不変"
+   "2026-08-09 機械値の再監査: cagr 1.5→6.6。**旧値は5年CAGRではなく1年の年率**で、原因は `Revenues`(FY2023〜) と `RegulatedAndUnregulatedOperatingRevenue`(FY2009-2024) の**タグ改称で系列が接がれていなかった**こと（CLAUDE.md が BR で記録している「候補タグの先頭を無条件採用」の同族）。重なる2年が完全一致するので改称と確定して接いだ。gm 27.9（54,376÷194,694）と gmt=up は検算して据置。Ω0/堀68.2は不変",
+   "2026-09-23 f2 55→65（規約の適用・判定圏外）: 旧値に根拠の記録が無い（evidence.f2 空欄）＝原本の TAM 浸透率・TAM 成長の数値が示されていない。2026-08-16 統一規約『数値開示なしの既定は65』"
   ],
   "evidence": {
    "roic": "機械算出 2025年: NOPAT 48,873,687（営業利益 54,376,000×(1−実効税率10.1%)） ÷ IC 909,005,000＝自己資本 494,031,000 + 有利子負債 414,974,000 − のれん 0 − 無形 0。**IC/ICg=100.0%**（ICg=自己資本+有利子負債＝控除前の投下資本。2割未満なら分母縮退＝算出不能。絶対のルール7(b)）｜参考 IC/自己資本=184.0%｜有利子負債の内訳: LongTermDebtNoncurrent=378,874,000 + LongTermDebtCurrent=7,850,000 + NotesPayableCurrent=28,250,000｜**v9.9.72: through-cycle 化**。5年系列 3年の**中央値 3.7%** を採用（直近年 5.4% / 最悪 3.5%）。roicg も同じ年の系列の中央値 3.7% にして roic≥roicg を保つ",
@@ -123,7 +124,8 @@
    "irr": "10-K FY2025『The Company's business is substantially free from direct competition from other public utilities, municipalities and other entities』『**when a regulator grants a franchise to a public utility to serve a specific territory, that utility effectively has an exclusive right to service that territory**』『Tidewater has been granted **exclusive franchises** for its existing community water systems』＝顧客に代替供給者なし＝100(実質唯一供給)。",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 141,592,000 → 2023年 166,274,000 → 2025年 194,694,000。A案(端点) 直近2年CAGR 8.21% − その前3年CAGR 5.50% = +2.71pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +6.07pt ／ 年次YoY {'2021': 1.1, '2022': 13.5, '2023': 2.4, '2024': 15.4, '2025': 1.5} → **採用 +6.07pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 3.804。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2020-12-31) 976百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2020-12-31) 976百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧値 55 には根拠の記録が無く（_meta.evidence.f2 空欄）、原本の TAM 浸透率・TAM 成長の数値が示されていない → 65。⚠原本は今回読み直していない——原本に p の数値開示が見つかれば刻み(90/80/50)を当て直すこと。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）"
   },
   "provenance": {
    "roic": "machine",
