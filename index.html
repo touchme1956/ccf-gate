@@ -3951,6 +3951,22 @@ function ccfSetMonthAmt(el){
   if(typeof renderPlan==='function')renderPlan();
 }
 const ccfYen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+/* 金額を隠す（2026-09-23 ユーザー指示「総資産などは隠せるようにして」）。
+   鍵は Ⅶ保有(portfolio.html)の💴切替と**同じ pf:showMoney**（'0'=隠す）＝一か所で切れば盤・成績・保有がそろって隠れる。
+   隠すのは**保有の円の金額だけ**（総資産・評価額・取得額・損益額）。%・株価・Ω・買付プランの注文額は出したまま。
+   表示だけ・判定に不使用。この端末だけの設定（state.json へは同期しない）。 */
+function ccfMoneyHidden(){try{return localStorage.getItem('pf:showMoney')==='0';}catch(e){return false;}}
+const ccfYenM=n=>ccfMoneyHidden()?'¥•••••':'¥'+Math.round(n).toLocaleString('ja-JP');
+function ccfMoneyBtn(){const h=ccfMoneyHidden();
+  return `<button class="ccf-money-btn" onclick="ccfToggleMoney()" aria-pressed="${h}" title="総資産・評価額・損益の金額を隠す／出す（この端末だけ）">${h?'👁 金額を表示':'🙈 金額を隠す'}</button>`;}
+function ccfMoneyRepaint(){try{if(window.__ccfPage===6&&typeof ccfDash==='function')ccfDash();}catch(e){}
+  try{if(window.__ccfPage===12&&typeof ccfPerf==='function')ccfPerf();}catch(e){}}
+function ccfToggleMoney(){try{localStorage.setItem('pf:showMoney',ccfMoneyHidden()?'1':'0');}catch(e){}
+  ccfMoneyRepaint();
+  // Ⅶ保有の iframe は同じ鍵を読む。storage イベントは書いた文書自身には届かないので直接描き直させる
+  try{const f=document.getElementById('pfFrame');if(f&&f.contentWindow&&typeof f.contentWindow.render==='function')f.contentWindow.render();}catch(e){}}
+// Ⅶ保有の💴で切り替えたときも盤・成績を合わせる
+window.addEventListener('storage',e=>{if(e.key==='pf:showMoney')ccfMoneyRepaint();});
 // ── 今月の買付プラン（v9.9.53・2026-07-30 ユーザー明示指示で網を撤去）─────────────
 // **門は個別銘柄のための門**。指数(網)を何円積むかは門の裁きではないので、この箱からは外した。
 // 入力欄の意味は「今月の入金総額」から **「今月の個別枠」** へ変更——入れた金額は
@@ -4782,7 +4798,7 @@ function ccfPerfHTML(R,S){
     + 'market.yml（平日21:30UTC）の実行を待つ。</div>';
   const pc=n=>(n==null||!isFinite(n))?'——':(n>0?'+':'')+(n*100).toFixed(2)+'%';
   const pt=n=>(n==null||!isFinite(n))?'——':(n>0?'+':'')+(n*100).toFixed(1)+'pt';
-  const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+  const yen=ccfYenM;   // 金額を隠す切替に従う
   let out='';
   if(S&&S.days&&S.days.length>1){
     const d=S.days, inv=S.inv, tr=S.tr, val=S.val, bmk=S.bmk;
@@ -4816,7 +4832,7 @@ function ccfPerfHTML(R,S){
       + 'その銘柄の値動きが全体に効き始めたばかりなので、差の線が振れやすい。',
       ccfPerfLegend([{name:'投じた円',c:'var(--gs4,#6b3350)',val:yen(last(inv))}])
       + ccfSvgLine([{v:inv,c:'var(--gs4,#6b3350)',fill:1,w:2.2}],
-                   {h:150,pl:74,fmt:y=>'¥'+Math.round(y/10000)+'万'}) + span);
+                   {h:150,pl:74,fmt:y=>ccfMoneyHidden()?'¥•••':'¥'+Math.round(y/10000)+'万'}) + span);
   }else{
     out+=box('推移','','<div style="font-size:12px;color:#d69a3c">推移が作れない——'
       + '<b>「損益ゼロ」ではなく「測れていない」</b>。買付日が判る行が2日ぶん揃わないと線が引けない。'
@@ -4848,7 +4864,7 @@ async function ccfPerf(){
   box.innerHTML='<div style="font-size:12px;color:var(--muted,#94a0b4)">読込中…</div>';
   const j=async u=>{ try{ const r=await fetch(u+'?t='+Date.now()); return r.ok?await r.json():null; }catch(e){ return null; } };
   const [R,S]=await Promise.all([j('out/returns.json'), j('out/returns_series.json')]);
-  box.innerHTML=ccfPerfHTML(R,S);
+  box.innerHTML=`<div style="text-align:right;margin:0 0 4px">${ccfMoneyBtn()}</div>`+ccfPerfHTML(R,S);
   box.dataset.busy='0';
   try{ if(typeof ccfPaint==='function') ccfPaint(document.getElementById('pg12')); }catch(e){}
   try{ if(typeof ccfIconRepaint==='function') ccfIconRepaint(); }catch(e){}
@@ -4859,7 +4875,7 @@ function ccfReturnsHTML(R){
   if(!R) return '<div style="font-size:12.5px;color:var(--dim)">out/returns.json が読めない——'
     + '<code>python3 night/fetch_returns.py</code> で作る（鍵不要）。'
     + '<b>「読めない」と「損益ゼロ」は別物</b>なので0とは出さない。</div>';
-  const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+  const yen=ccfYenM;   // 金額を隠す切替に従う
   // ⚠ null は 0% と出さない。**「測れなかった」と「ゼロだった」は別物**（絶対のルール7の表示版）
   const pc=n=>(n==null)?'——':((n>0?'+':'')+(n*100).toFixed(2)+'%');
   const col=n=>(n==null)?'var(--dim)':(n>0?'var(--jade,#3f8f6b)':(n<0?'var(--rust,#a8442a)':'var(--dim)'));
@@ -5123,7 +5139,7 @@ async function ccfDash(btn){
   let pf=null; try{pf=JSON.parse(localStorage.getItem('pf:portfolio')||'null');}catch(e){}
   const fxAuto=mkt&&mkt.fx&&mkt.fx.USDJPY, fxMan=pf&&+pf.fx, FX=fxAuto||fxMan||0;
   const Q=(mkt&&mkt.quotes)||{}, NW=(mkt&&mkt.news)||{};
-  const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+  const yen=ccfYenM;   // 金額を隠す切替に従う
   const sign=n=>(n>0?'+':'')+n.toFixed(2);
   const col=n=>n>0?'#54b88a':n<0?'#cf5f48':'var(--dim)';
   if(btn){btn.disabled=false;btn.textContent=lab;}
@@ -5172,7 +5188,7 @@ async function ccfDash(btn){
   const rbc=n=>n>0?'rb-up':n<0?'rb-down':'rb-flat';
   const dayP=dayBase>0?dayJ/(dayBase-dayJ)*100:null;
   const head=`<div class="rb-hero">
-    <div class="k">総資産</div>
+    <div class="k">総資産${ccfMoneyBtn()}</div>
     <div class="v">${totJ?yen(totJ):'—'}</div>
     ${dayP!=null?`<div class="d ${rbc(dayJ)}">${dayJ>0?'+':dayJ<0?'−':''}${yen(Math.abs(dayJ))}（${sign(dayP)}%）<span class="t">前日比（株価のみ・為替は含まない）</span></div>`:''}
     ${plAll!=null?`<div class="d ${rbc(plAll)}">${plAll>0?'+':plAll<0?'−':''}${yen(Math.abs(plAll))}（${sign((totCostVal/totCost-1)*100)}%）<span class="t">含み損益</span></div>`:''}

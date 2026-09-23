@@ -374,6 +374,8 @@ function render(){
 }
 
 /* v9.9.86: 金額表示の切替。localStorage pf:showMoney（'0'=非表示）。既定は表示 */
+// 門(index.html)の「🙈 金額を隠す」も同じ pf:showMoney を書く。別の文書から切り替えられたら描き直す
+window.addEventListener('storage',e=>{if(e.key==='pf:showMoney')try{render();}catch(_){}});
 function toggleMoney(){const cur=(localStorage.getItem('pf:showMoney')??'1')!=='0';localStorage.setItem('pf:showMoney',cur?'0':'1');render();}
 
 /* ---------- □保有/売却スイッチ（2026-08-03新設） ----------
