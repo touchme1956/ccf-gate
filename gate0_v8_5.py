@@ -57,6 +57,16 @@
 #     5点の例外は現金椅子・のれん椅子が既に引き受けている。
 #   ・回帰追加: INTU〔谷〕とTDG〔谷・⚑〕が待ち行列に居ること。
 #
+# 【2026-09-23 の変更 — 選別の**入力**の是正（宿題 gate0_debt_input_fix・決定 retro_universe_negative_equity）】
+#   ・選別基準・閾値・椅子/棚/待ち行列の規則は**一つも変えていない**。変えたのは有利子負債の読み方だけ（ルール7）。
+#   ・debt_lt/debt_st にリース込みの負債タグ3本（night/retro_features_2018.py と同じ）を末尾に追加。
+#   ・debt_series(): 1年でも欠けると5年すべてを0と読んでいたのを、年ごとに読む形へ。欠けた年は、同じ提出書類の
+#     貸借対照表が行を持ち当期だけ空欄なら0、それ以外は**不明**＝負債0の上限で計算し CSV の debt_unknown に名指し。
+#   ・実測（companyfacts 2026-09-23・同じzipで旧新を比較）: 母集団 2,796→2,854社、待ち行列 150→146社、所属の移動34社。
+#     入: YUM・PM・HLT・LII(⚑)・EAT〔未成熟⚑〕・FTDR・UI〔種まき⚑〕
+#     出: AVGO・HEI・WM(→のれん椅子)・MELI(→現金椅子)・NJR・FISV・FELE・LDOS・SYY・KGS・ATMU(→backlog)
+#   ・回帰の期待値: MELI〔谷〕→CPRT〔谷〕へ（理由は PART C の回帰の注記）。負債の入力の回帰を3本追加。
+#
 # 前提: Drive/ccf に companyfacts.zip（無ければ自動DL 10-20分）
 # 実行: zipあり約10-12分 / 初回 25-35分
 # =====================================================================
@@ -138,9 +148,15 @@ TAGS = {
              "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsAndOtherLongtermAssets"],
  "equity":  ["StockholdersEquity","StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
              "EquityAttributableToOwnersOfParent","Equity"],
- "debt_lt": ["LongTermDebtNoncurrent","LongTermDebt","BorrowingsNoncurrent","LongtermBorrowings"],
+ # ⚠2026-09-23(決定 retro_universe_negative_equity → 宿題 gate0_debt_input_fix): リース込みの負債タグを末尾に追加。
+ #   night/retro_features_2018.py の DEBT_LT / DEBT_C が既に使っている3本。末尾に置くので、被覆が同じなら既存タグが優先。
+ #   実害: VRSK は2011年の有利子負債1,100.3百万$を LongTermDebtAndCapitalLeaseObligations にだけ持ち、
+ #   旧候補では0と読まれ IC=−92.9 で母集団から消えていた（絶対のルール7の10例目）。**選別基準は不変**——入力の是正のみ。
+ "debt_lt": ["LongTermDebtNoncurrent","LongTermDebt","BorrowingsNoncurrent","LongtermBorrowings",
+             "DebtAndCapitalLeaseObligations","LongTermDebtAndCapitalLeaseObligations"],
  "debt_st": ["LongTermDebtCurrent","DebtCurrent","ShortTermBorrowings","BorrowingsCurrent",
-             "CurrentPortionOfNoncurrentBorrowings","ShorttermBorrowings"],
+             "CurrentPortionOfNoncurrentBorrowings","ShorttermBorrowings",
+             "LongTermDebtAndCapitalLeaseObligationsCurrent"],
  "cash":    ["CashAndShortTermInvestments","CashAndCashEquivalentsAtCarryingValue","CashAndCashEquivalents"],
  "sti":     ["ShortTermInvestments","MarketableSecuritiesCurrent","CurrentInvestments",
              "AvailableForSaleSecuritiesDebtSecuritiesCurrent","AvailableForSaleSecuritiesCurrent",
@@ -179,7 +195,9 @@ def collect(facts, key):
                 if d: out.append((tag, unit, d))
     return out
 
-def pick_series(cands, yrs, unit_lock=None, fye=None, stock=False):
+def pick_series(cands, yrs, unit_lock=None, fye=None, stock=False, partial=False):
+    # partial=True（2026-09-23・負債専用）: 窓の一部の年しか埋まらなくても捨てず、欠けた年を None にした
+    #   系列を返す（1年も無ければ従来どおり None）。既定 False の呼び出しは挙動不変。
     if unit_lock: cands = [(t,u,d) for (t,u,d) in cands if u == unit_lock]
     if stock and fye:
         f2 = []
@@ -211,7 +229,48 @@ def pick_series(cands, yrs, unit_lock=None, fye=None, stock=False):
         if filled: lineage += f"+{t}"
     if all(y in merged for y in yrs):
         return [merged[y] for y in yrs], unit0, lineage
+    if partial and merged:
+        return [merged.get(y) for y in yrs], unit0, lineage
     return None, None, None
+
+def debt_series(facts, key, yrs, unit, fye):
+    """有利子負債(debt_lt/debt_st)を**年ごとに**取る（2026-09-23・宿題 gate0_debt_input_fix）。
+    旧: pick_series が5年そろわないと None → **5年すべてを0**と読んでいた。1年だけタグが無い会社
+        （返済・タグの付け替え）で、実在する残りの年の負債まで消えていた（実測1,036社・絶対のルール7）。
+    新: 返り値 (系列, 系列の出所, 不明の年のリスト)。
+      ・窓のどの年にも候補タグが無い → 従来どおり0（負債の行そのものが無い＝無借金の扱いは不変）
+      ・値のある年はその値（接ぎの規則 SEAM_TOL は pick_series と同一）
+      ・欠けた年でも、**その年の貸借対照表を載せた提出書類**（同じ accn で総資産 Assets をその期末で報告。
+        自己資本は株主資本等変動計算書で3期前の残高まで載るので目印に使えない）が
+        同じ負債タグを**別の期末では報告しているのにその期末では報告していない**＝表に行があって
+        当期が空欄（—）→ 0。原本の同じ表が示す0であって、欠測を0と読むのではない
+      ・それ以外の欠けた年は**不明**（系列には None）。呼び出し側が名指しする"""
+    v, _, lin = pick_series(collect(facts, key), yrs, unit_lock=unit, fye=fye, stock=True, partial=True)
+    if v is None:
+        return [0.0]*len(yrs), None, []
+    miss = [k for k, x in enumerate(v) if x is None]
+    if not miss:
+        return v, lin, []
+    ents, bs = {}, {y: set() for y in yrs}
+    for taxo in ("us-gaap","ifrs-full"):
+        ns = facts.get(taxo) or {}
+        for tag in TAGS[key]:
+            for e in (ns.get(tag) or {}).get("units", {}).get(unit, []):
+                if e.get("end") and not e.get("start"): ents.setdefault(tag, []).append((e["end"], e.get("accn")))
+        for e in (ns.get("Assets") or {}).get("units", {}).get(unit, []):
+            if not e.get("end") or e.get("start"): continue
+            for y in yrs:
+                if near(e["end"], fye[y]): bs[y].add(e.get("accn"))
+    unknown = []
+    for k in miss:
+        y = yrs[k]
+        # どれかの候補タグがこの期末に値を持つのに採れなかった（接ぎを拒否された）なら、0 ではなく不明
+        conflict = any(near(en, fye[y]) for es in ents.values() for en, a in es)
+        shown = (not conflict) and any(
+            bs[y] & ({a for en, a in es if not near(en, fye[y])}) for es in ents.values())
+        if shown: v[k] = 0.0
+        else: unknown.append(y)
+    return v, lin, unknown
 
 def sti_series(facts, yrs, unit, fye):
     """短期投資: タグごとに取り年別最大値(別名重複は二重計上しない/取り漏らし防止)"""
@@ -323,12 +382,21 @@ for i, name in enumerate(names, 1):
         if v is None and zero: return [0.0]*YEARS
         return v
     ni, ocf, eq = grab("ni"), grab("ocf"), grab("equity")
-    cap = grab("capex", zero=True); lt = grab("debt_lt", zero=True); st = grab("debt_st", zero=True)
+    cap = grab("capex", zero=True)
+    # 負債は年ごと（2026-09-23）。不明の年は IC の下限（負債≥0）＝ROICの上限で計算し、debt_unknown に名指しする。
+    #   入口で殺さない（v8.5 の思想）が、有利に働く空欄であることを CSV と末尾の一覧で必ず見せる。
+    #   不明の年のせいで IC≤0 になる社は invested_capital_broken と区別して隔離する（測れていないだけ）。
+    lt, lt_lin, lt_unk = debt_series(facts, "debt_lt", yrs, unit, fye)
+    st, st_lin, st_unk = debt_series(facts, "debt_st", yrs, unit, fye)
+    debt_unknown = "; ".join(f"{kk}:{','.join(map(str, u))}" for kk, u in (("debt_lt", lt_unk), ("debt_st", st_unk)) if u)
+    lt = [x if x is not None else 0.0 for x in lt]; st = [x if x is not None else 0.0 for x in st]
     op, op_src = grab("opinc"), "reported"
     if op is None:
         op = derive_opinc(facts, yrs, unit, fye); op_src = "derived"
     miss = [k for k,v in [("ni",ni),("ocf",ocf),("equity",eq),("opinc",op)] if v is None]
     if miss: QUAR["欠損:"+miss[0]] += 1; continue
+    if debt_unknown and any(eq[k]+lt[k]+st[k] <= 0 for k in range(YEARS) if yrs[k] in set(lt_unk) | set(st_unk)):
+        QUAR["負債不明でIC判定不能"] += 1; continue
     m, err = evaluate(rev, op, ni, ocf, cap, eq, lt, st)
     if err: QUAR[err] += 1; continue
     if m["warn_anomaly"] and op_src == "derived":
@@ -355,7 +423,9 @@ for i, name in enumerate(names, 1):
               "roic_gw_worst":  round(min(roic_gw),4) if not ic_gw_neg else None,
               "ic_gw_neg": ic_gw_neg,
               "cash_pct": round((ca[-1]+si[-1])/ic*100,1) if ic>0 else None,
-              "gw_pct":   round(gw[-1]/ic*100,1) if ic>0 else None})
+              "gw_pct":   round(gw[-1]/ic*100,1) if ic>0 else None,
+              "debt_unknown": debt_unknown or None,
+              "debt_src": "; ".join(x for x in (lt_lin, st_lin) if x)[:80] or None})
     RESULTS.append(m)
 print(f"    処理完了: {len(RESULTS)} 社  ({(time.time()-t0)/60:.0f}分)")
 
@@ -378,13 +448,18 @@ for r in RESULTS:
 cols = ["ticker","name","ccy","fy_latest","score","fails","roic_latest","roic_worst5",
         "opm","sales_cagr5","fcf_conv_5y","op_all_pos","fcf_all_pos","equity_neg",
         "warn_anomaly","op_src","rev_tag","roic_ex_latest","roic_ex_worst","ic_ex_neg",
-        "roic_gw_latest","roic_gw_worst","ic_gw_neg","cash_pct","gw_pct","byomei"]
+        "roic_gw_latest","roic_gw_worst","ic_gw_neg","cash_pct","gw_pct","byomei",
+        "debt_unknown","debt_src"]
 with open(f"{SAVE_DIR}/gate0_all.csv","w",newline="",encoding="utf-8-sig") as fp:
     w = csv.DictWriter(fp, fieldnames=cols, extrasaction="ignore")
     w.writeheader(); w.writerows(RESULTS)
 sc = collections.Counter(r["score"] for r in RESULTS)
 print(f"\n判定 {len(RESULTS)} 社 / 7点 {sc[7]} / 6点 {sc[6]} / 隔離上位: "
       + ", ".join(f"{k}:{v}" for k,v in QUAR.most_common(4)))
+# 2026-09-23: 負債の不明年は「有利に働く空欄」（ROICは上限で計算）なので、件数を毎回出す。
+#   6点以上の社は末尾の待ち行列の後で名指しする。
+print(f"    負債の不明年あり {sum(1 for r in RESULTS if r.get('debt_unknown'))} 社（ROICは負債0の上限で計算・CSV debt_unknown）"
+      f" / 負債不明でIC判定不能（隔離） {QUAR['負債不明でIC判定不能']} 社 / invested_capital_broken {QUAR['invested_capital_broken']} 社")
 
 # ============================ PART B: golden set ============================
 BYT = {r["ticker"]: r for r in RESULTS}
@@ -543,6 +618,10 @@ print("="*78)
 for r in stalled:
     print(f"  {r['held']} {r['ticker']:<6} pt{r['pt']:.3f} CAGR{r['sales_cagr5']*100:5.1f}% "
           f"営利{r['opm']*100:5.1f}% ROIC最低{r['roic_worst5']*100:5.1f}%  {r['name'][:24]}")
+_du = [r for r in queue + chairs + gwchairs if r.get("debt_unknown")]
+if _du:
+    print(f"\n■ 負債の不明年を含む社（待ち行列・椅子 {len(_du)}社）— ROICは負債0の上限。門2で有利子負債を原本で確かめること")
+    print("   " + ", ".join(f"{r['ticker']}〔{r['debt_unknown']}〕" for r in _du))
 print(f"\n■ 自己資本マイナス枠(⚑合流: 7点{len(neg7)}社+優先病名{len(negpri)}社, 棚行き除く残): {len(negeq)} 社 / "
       f"backlog: {len(backlog)} 社 / 成長停止棚: {len(stalled)} 社")
 
@@ -563,12 +642,34 @@ for _t in ("ROP","SPGI"):
 if not any(r["ticker"]=="AAPL" for r in stalled) or any(r["ticker"]=="AAPL" for r in queue):
     gfail += 1
     print("\n⚠ 成長停止棚回帰: AAPLが棚に居ない(または待ち行列に混入) — stalledロジックを疑うこと")
-# v8.4回帰: 病名優先並び(MELI=谷型がpt首位LLYより前に居ること)
+# v8.4回帰: 病名優先並び(谷型がpt首位LLYより前に居ること)
+#   ⚠2026-09-23 期待値を MELI → CPRT へ改めた（宿題 gate0_debt_input_fix）。
+#   MELI の「谷」は**有利子負債を読めていなかった**結果だった: 流動の負債が
+#   LongTermDebtAndCapitalLeaseObligationsCurrent にしか無く0と読まれていた。読むと
+#   ROIC 最新12.3%/最低5.5% の5点（ROIC; ROIC最低値）＝現金の椅子へ移る。並びの仕組みは壊れていない
+#   ので、谷の代表を**golden set と保有の両方に居る CPRT**（6/7・谷・入力の是正の前後で不変）へ替えた。
 _qi = {r["ticker"]: i for i, r in enumerate(queue)}
-if (BYT.get("MELI", {}).get("byomei") != "谷"
-        or "MELI" not in _qi or "LLY" not in _qi or _qi["MELI"] > _qi["LLY"]):
+if (BYT.get("CPRT", {}).get("byomei") != "谷"
+        or "CPRT" not in _qi or "LLY" not in _qi or _qi["CPRT"] > _qi["LLY"]):
     gfail += 1
-    print("\n⚠ 病名優先回帰: MELI〔谷〕がLLYより前に居ない — byomei分類か優先並びを疑うこと")
+    print("\n⚠ 病名優先回帰: CPRT〔谷〕がLLYより前に居ない — byomei分類か優先並びを疑うこと")
+# 2026-09-23回帰（宿題 gate0_debt_input_fix・負債の入力の是正を固定する）:
+#   (1) リース込みの負債タグ: AVGO の有利子負債(約660億$)は LongTermDebtAndCapitalLeaseObligations にしか無く、
+#       旧候補では0と読まれて 7/7 で待ち行列に居た。系列の出所にそのタグが載っていること。
+#   (2) 負の自己資本×借入の複利企業が母集団に居ること: YUM は同タグの負債を0と読まれ IC<0 で
+#       invested_capital_broken＝母集団から丸ごと消えていた（PM・HLT も同型）。
+#   (3) 部分欠測を5年ぶんの0と読まない: UI は FY2026 だけ長期負債の行が消え（返済）、旧コードは5年すべてを0と読み
+#       IC<0 で消えていた。今は負債の実額がある年はその値、FY2026 は不明と名指し（debt_unknown）して判定される。
+#       ⚠(3)は窓(2022-2026)に依存する——UI の FY2027 が入ったら見直すこと。
+if "CapitalLeaseObligations" not in (BYT.get("AVGO", {}).get("debt_src") or ""):
+    gfail += 1
+    print("\n⚠ 負債入力回帰: AVGO の負債がリース込みタグから読まれていない — TAGS['debt_lt'] を疑うこと")
+if "YUM" not in BYT:
+    gfail += 1
+    print("\n⚠ 負債入力回帰: YUM が母集団に居ない — リース込み負債タグか負の自己資本の扱いを疑うこと")
+if "UI" not in BYT or "debt_lt" not in (BYT["UI"].get("debt_unknown") or ""):
+    gfail += 1
+    print("\n⚠ 負債入力回帰: UI が判定されていないか不明年の名指しが無い — debt_series(部分欠測)を疑うこと")
 # v8.5回帰: 膜の開放(INTU=pt圏外の谷型WATCH銘柄、TDG=負資本6点の谷型が待ち行列に居ること)
 if "INTU" not in _qi:
     gfail += 1

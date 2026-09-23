@@ -1739,11 +1739,11 @@
   {
    "id": "gate0_debt_input_fix",
    "kind": "宿題",
-   "done": false,
+   "done": true,
    "due": "2027-01-10",
    "owner": "門0",
    "title": "門0 の選別の入力を正す（リース込み負債タグ・部分欠測の0読み）——1月の実行の前に",
-   "note": "2026-09-23 決定 retro_universe_negative_equity の実装。gate0_v8_5.py の debt_lt にリース込みの負債タグを足し、ある年だけ負債タグが無いときに5年すべてを0と読む扱いを直す。選別基準は不変。実測で待ち行列が約30社動く（入 YUM・PM・HLT・EAT・FTDR／出 AVGO・HEI・WM・NJR・MELI・FISV ほか）→ golden set の期待値も改める。"
+   "note": "2026-09-23 決定 retro_universe_negative_equity の実装。gate0_v8_5.py の debt_lt にリース込みの負債タグを足し、ある年だけ負債タグが無いときに5年すべてを0と読む扱いを直す。選別基準は不変。実測で待ち行列が約30社動く（入 YUM・PM・HLT・EAT・FTDR／出 AVGO・HEI・WM・NJR・MELI・FISV ほか）→ golden set の期待値も改める。 【2026-09-23 実施】gate0_v8_5.py: 負債タグにリース込み3本を追加・部分欠測は年ごとに判定（同じ提出書類が他期末を報告し当期だけ欠く＝0／それ以外は『不明』として上限で計算しCSV debt_unknown に名指し・IC≤0 は隔離）。同じ zip で旧新を通し比較: 母集団 2,796→2,854・待ち行列 150→146・所属が変わったのは34社（入 YUM/PM/HLT/EAT/FTDR/LII/UI・出 AVGO/HEI/WM/MELI/NJR/FISV/FELE/LDOS/SYY/KGS/ATMU）。golden: MELI谷→CPRT谷へ差し替え＋回帰3本、期待スコア不変・TSM消失は旧から（IFRS未着）。1月は実行ログの『負債の不明年あり』一覧（待ち行列・椅子に38社）を門2で原本確認。retro_cohort の grab の部分欠測は歴史コホート作り直し時に。"
   },
   {
    "id": "p1_debtfree_apply",
