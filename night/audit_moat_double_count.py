@@ -30,12 +30,23 @@ night/audit_moat_double_count.py — **堀の柱どうしが同じ事実を二�
   3. **規約の定義の重なり**——irr=100 は規約上 dom=100 の条件を**定義上満たす**ので、
      evidence が無くても構造的に重なる。**dom が空欄でも「重なりうる」として数える**
      （空欄は他4本の平均を与えるので、唯一供給の事実が dom 側にも効いている可能性が残る）
+  4. **同じ文**（2026-09-23新設・todo moat_same_sentence・下の「■ 同じ文」の節）——
+     1 の40字一致は、共有部分が20〜39字のときと『…』で割った引用を拾えない。
+     引用を省略記号で断片に割り、**20字以上の共通区間が両方の引用の端で揃う**
+     （片方がもう片方を含む／ずれて重なる＝同じ原文の抜き書きどうし）組を拾う。
+     規則は out/moat_same_sentence.json の preregistered に**結果を見る前に**固定した。
+     既存の出力（rows 等）には触れず、JSON に新しいキー "same_sentence" を足すだけ
 
 ■ 使い方
   python3 night/audit_moat_double_count.py            要約 + 作業リスト
   python3 night/audit_moat_double_count.py --all      全社の内訳
   python3 night/audit_moat_double_count.py --json     out/moat_double_count.json を書く
   python3 night/audit_moat_double_count.py --t ASML   1社の中身
+  python3 night/audit_moat_double_count.py --same-sentence
+        同じ文の検出を out/moat_same_sentence.json の "detection" へ書く
+        （preregistered / amendments / verdicts / result には触れない。--t 付きでは書かない）
+  python3 night/audit_moat_double_count.py --also-score FILE
+        判定圏(Ω≥72)を out/score_all.json と FILE（score_all.js --out の出力）の和集合で決める
 """
 import json, os, re, sys, glob, unicodedata
 
@@ -43,9 +54,16 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out")
 
 # 正は index.html の ccfMoat（v9.9.36の5本重み）
-W = {"dom": .25, "irr": .25, "rep": .20, "dur": .12, "moatW": .18}
+# ★2026-09-23: 堀の重み・最上段の読み替え・堀指数は **audit_moat_gap.py から読む**（写しを持たない）。
+#   ここに写しを持っていたため v9.9.36 の重み（.25/.25/.20/.12/.18）と v9.9.141 の読み替えのまま残り、
+#   v9.9.185 の IRRTOP（記録85→採点100）も無く、moat_idx が門と 355/356社で最大±14ずれていた
+#   （shadow_drop・weight の欄が誤っていた）。audit_moat_gap.W は index.html の ccfMoat から読む。
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import audit_moat_gap as _AMG  # noqa: E402
+W = _AMG.W
 # 正は index.html の ccfMoat（v9.9.141: 最上段は一つ下として採点）
-TOPCAP = {"irr": 85, "dur": 85}
+TOPCAP = _AMG.TOPCAP
+IRRTOP = _AMG.IRRTOP
 
 # 「唯一供給・排他」を主張する語（規約 dom=100「または実質唯一供給」／irr=100「唯一供給」の引き金）
 SOLE = [
@@ -153,27 +171,10 @@ def num(v):
 
 
 def moat_idx(d, drop=None):
-    """index.html の ccfMoat と同値（TOPCAP + cap96 + cultAdj）。drop で1本を空欄にできる。"""
-    import math
-    legs = []
-    for k in W:
-        if drop and k in drop:
-            continue
-        v = num(d.get(k))
-        if v is None:
-            continue
-        if k in TOPCAP and v == 100:
-            v = TOPCAP[k]
-        legs.append((k, v))
-    if len(legs) < 4:
-        return None
-    sw = sum(W[k] for k, _ in legs)
-    gls = num(d.get("gls"))
-    cult = -2 if (gls is not None and gls <= 3.3
-                  and (d.get("disrupt") or "settled") != "threat"
-                  and (d.get("erosion") or "none") != "active") else 0
-    g = math.exp(sum(W[k] / sw * math.log(max(min(96, v), 1)) for k, v in legs))
-    return max(0.0, min(96.0, g + cult))
+    """index.html の ccfMoat と同値（audit_moat_gap.moat_idx に委譲）。drop で1本を空欄にできる。"""
+    if drop:
+        d = {k: (None if k in drop else v) for k, v in d.items()}
+    return _AMG.moat_idx(d)
 
 
 def pillar_corr(packs):
@@ -226,15 +227,20 @@ PAIRS = [("dom", "irr"), ("irr", "dur"), ("dom", "dur"),
          ("dom", "rep"), ("irr", "rep"), ("rep", "dur")]
 
 
-def analyse(p):
+def pillar_text(p, k):
+    """柱 k の根拠文。空欄の理由にも根拠文が書かれることがある（domの再監査記録が典型）。
+    analyse() と「同じ文」の節が同じものを読む（二重実装を作らない）"""
     m = p.get("_meta") or {}
     ev = m.get("evidence") or {}
     nu = m.get("nulls") or {}
+    return str(ev.get(k) or "") + "\n" + str(nu.get(k) or "")
+
+
+def analyse(p):
     t = (p.get("nm") or "?").split(" ")[0]
 
     def text(k):
-        # 空欄の理由にも根拠文が書かれることがある（domの再監査記録が典型）
-        return str(ev.get(k) or "") + "\n" + str(nu.get(k) or "")
+        return pillar_text(p, k)
 
     val = {k: num(p.get(k)) for k in W}
     out = {"t": t, "nm": p.get("nm"), "val": val, "pairs": [], "flags": []}
@@ -289,6 +295,244 @@ def analyse(p):
         out["shadow_drop"] = {"drop": worst[0], "moat_after": round(worst[1], 2),
                               "delta": round(worst[1] - (idx0 or 0), 2)}
     return out
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# ■ 同じ文（same_sentence・2026-09-23新設・todo moat_same_sentence）
+#   ⚠ この節は上の analyse() / rows / 引用共有(40字) と**独立**。既存の出力は1バイトも変えない
+#     （JSON に新しいキー "same_sentence" を足すだけ）。判定は一つも持たない＝作業リスト。
+#   【なぜ】2026-09-23 の段落の測定（todo double_count_same_paragraph）で、原本の同じ文を
+#     2本の柱が引いている組は読んだ23組中18組が本物の二重計上だった。既存の40字一致は
+#     (a) 共有部分が20〜39字 (b) 『…』で割った引用 を構造的に拾えない
+#     （ASML: dur の『25 years of engineering』(23字) は rep の引用の一部——quotes() が
+#       40字未満の引用を最初から捨てるので、どれだけ一致しても網に掛からない）。
+#   【規則】out/moat_same_sentence.json の preregistered（結果を見る前に固定）と同一:
+#     1) 引用 = QUOTE・text = pillar_text（analyse と同じ）
+#     2) norm() の後に省略記号で断片へ割る。照合キー = irr85_mech_diff.norm(断片) の両端の記号を落としたもの
+#        （逐語照合の器と同じキー＝二重実装を作らない）。20字未満の断片は使わない
+#     3) 柱aの断片と柱bの断片の**極大な共通区間**で20字以上のものが、**両方の引用の端で揃う**
+#        ——左の余り min(ix,iy)≤3 かつ 右の余り min(残りx,残りy)≤3。片方がもう片方を含む／
+#        ずれて重なる＝同じ原文の抜き書きどうし。両方が同じ側で別の文字へ続くなら、
+#        別の文が同じ言い回しを共有しているだけなので採らない（原本なしで文を同定する方法）
+#     4) その区間が全パックの堀5柱の断片のうち3社以上に現れるなら定型句（見出し等）として採らない
+#     5) 対象は PAIRS の6組・両方の柱に値がある組。既存の40字一致(literal40)が当たる組は
+#        「新規」から外す（既に rows に載っている）
+#   ⚠ 変数名は ss_ で始める——main() の `hit` を使い回して rows を [] にした事故（2026-08-19〜09-23）を
+#     繰り返さないため、この節の集計は関数の中に閉じ、main() の名前空間に何も置かない。
+# ════════════════════════════════════════════════════════════════════════════════
+SS_REV = "ss1"
+SS_PILLARS = ["dom", "irr", "rep", "dur", "moatW"]
+SS_MIN_FRAG = 20        # 断片の最短（字・キー上）
+SS_MIN_SHARED = 20      # 共通区間の最短（字・キー上）
+SS_EDGE_SLACK = 3       # 端で揃うとみなす余り（字）
+SS_BOILER_DF = 3        # この社数以上の断片に現れる区間は定型句
+SS_BAND = 72.0          # 判定圏
+SS_SEED = 20260923      # 判定圏の外の標本の種
+SS_SAMPLE_N = 30        # 判定圏の外の標本の組数
+SS_ELL = re.compile(r"\.{2,}|‥|⋯|・{2,}|\(略\)|（略）|\[\s*\]")
+SS_EDGE = re.compile(r"^[\W_]+|[\W_]+$")
+SS_FILE = os.path.join(OUT, "moat_same_sentence.json")
+_ss_md = []
+
+
+def ss_key(s):
+    """断片の照合キー（irr85_mech_diff.norm ＝ 逐語照合の器と同じ正規化＋両端の記号を落とす）"""
+    if not _ss_md:
+        here = os.path.dirname(os.path.abspath(__file__))
+        if here not in sys.path:
+            sys.path.insert(0, here)
+        import irr85_mech_diff          # import 時に行うのは定数の定義と chdir(リポジトリ根) だけ
+        _ss_md.append(irr85_mech_diff.norm)
+    return SS_EDGE.sub("", _ss_md[0](s))
+
+
+def ss_fragments(text):
+    """[(元の引用, 断片キー)] ——引用を norm() の後に省略記号で割り、20字以上の断片だけ残す"""
+    out = []
+    for m in QUOTE.finditer(text or ""):
+        q = next(g for g in m.groups() if g)
+        for part in SS_ELL.split(norm(q)):
+            k = ss_key(part)
+            if len(k) >= SS_MIN_FRAG:
+                out.append((q, k))
+    return out
+
+
+def ss_common(x, y, minlen=SS_MIN_SHARED):
+    """x と y の**極大な**共通区間（左右どちらにも伸ばせない）で長さ minlen 以上のものを
+    (xでの開始, yでの開始, 長さ) で全部返す。minlen 字の種を突き合わせてから左右へ伸ばす
+    （全対のDPより桁違いに速く、極大区間は必ず先頭 minlen 字の種を持つので取りこぼさない）"""
+    if len(x) < minlen or len(y) < minlen:
+        return []
+    seeds = {}
+    for i in range(len(x) - minlen + 1):
+        seeds.setdefault(x[i:i + minlen], []).append(i)
+    seen, out = set(), []
+    for j in range(len(y) - minlen + 1):
+        for i in seeds.get(y[j:j + minlen], ()):
+            a, b = i, j
+            while a > 0 and b > 0 and x[a - 1] == y[b - 1]:
+                a, b = a - 1, b - 1
+            if (a, b) in seen:
+                continue
+            seen.add((a, b))
+            n = 0
+            while a + n < len(x) and b + n < len(y) and x[a + n] == y[b + n]:
+                n += 1
+            out.append((a, b, n))
+    return out
+
+
+def ss_anchored(x, y, ix, iy, n):
+    """共通区間が両方の引用の端で揃うか（＝同じ原文の抜き書きどうしの重なり）"""
+    return (min(ix, iy) <= SS_EDGE_SLACK
+            and min(len(x) - ix - n, len(y) - iy - n) <= SS_EDGE_SLACK)
+
+
+def ss_corpus(packs):
+    """定型句の判定用: 銘柄 → その社の堀5柱の断片キーを \\x00 でつないだ文字列（全パック）"""
+    c = {}
+    for p in packs:
+        t = (p.get("nm") or "?").split(" ")[0]
+        c[t] = "\x00".join(k for pk in SS_PILLARS for _, k in ss_fragments(pillar_text(p, pk)))
+    return c
+
+
+def ss_pack(p, corpus):
+    """1社の「同じ文」の組（PAIRS・両方に値）。組ごとに当たった区間を全部持つ"""
+    t = (p.get("nm") or "?").split(" ")[0]
+    val = {k: num(p.get(k)) for k in W}
+    fr = {k: ss_fragments(pillar_text(p, k)) for k in W}
+    out = []
+    for a, b in PAIRS:
+        if val[a] is None or val[b] is None:
+            continue
+        spans = {}
+        for qa, x in fr[a]:
+            for qb, y in fr[b]:
+                for ix, iy, n in ss_common(x, y):
+                    if not ss_anchored(x, y, ix, iy, n):
+                        continue
+                    s = x[ix:ix + n]
+                    df = sum(1 for v in corpus.values() if s in v)
+                    if df >= SS_BOILER_DF or s in spans:
+                        continue
+                    # 表示用: 二つの断片を重ねた「evidence から判る範囲の原文」
+                    left = x[:ix] if ix >= iy else y[:iy]
+                    right = x[ix + n:] if len(x) - ix >= len(y) - iy else y[iy + n:]
+                    spans[s] = {"shared": s, "len": n, "df": df,
+                                "frag_a": x, "frag_b": y, "host": left + s + right,
+                                "quote_a": qa[:600], "quote_b": qb[:600]}
+        if spans:
+            lit, llen = shared_quote(pillar_text(p, a), pillar_text(p, b))
+            out.append({"t": t, "a": a, "b": b, "va": val[a], "vb": val[b],
+                        "weight": round(W[a] + W[b], 4),
+                        "literal40": bool(lit), "literal_len": llen, "new": not lit,
+                        "spans": sorted(spans.values(), key=lambda z: -z["len"])})
+    return out
+
+
+def ss_omega(sc, t):
+    try:
+        return float((sc.get(t) or {}).get("s"))
+    except (TypeError, ValueError):
+        return None
+
+
+def same_sentence_section(packs, sc, sc2, only, show_all):
+    """「同じ文」の節を画面へ出し、JSON 用の dict を返す（main() の名前空間を汚さない）"""
+    corpus = ss_corpus(packs)                       # 定型句の判定は --t に関係なく全パックで
+    ss_rows = []
+    for p in packs:
+        t = (p.get("nm") or "?").split(" ")[0]
+        if only and t.upper() not in only:
+            continue
+        for r in ss_pack(p, corpus):
+            o1 = ss_omega(sc, t)
+            o2 = ss_omega(sc2, t) if sc2 else None
+            r["omega"] = o1
+            r["omega_also"] = o2
+            r["band"] = bool((o1 is not None and o1 >= SS_BAND) or (o2 is not None and o2 >= SS_BAND))
+            r["buy"] = bool((sc.get(t) or {}).get("buy"))
+            ss_rows.append(r)
+    ss_new = [r for r in ss_rows if r["new"]]
+    ss_band = [r for r in ss_new if r["band"]]
+    print(f"── ★同じ文を2本の柱が引いている組（same_sentence・{SS_REV}）──")
+    print(f"  共通区間 {SS_MIN_SHARED}字以上・両方の引用の端で揃う（余り≤{SS_EDGE_SLACK}字）・"
+          f"{SS_BOILER_DF}社以上に出る区間は定型句として除外・PAIRS の6組・両方に値")
+    print(f"  同じ文の組 {len(ss_rows)}（{len({r['t'] for r in ss_rows})}社）"
+          f" ＝ 既存の40字一致にも載る {sum(1 for r in ss_rows if r['literal40'])}"
+          f" ＋ **新規 {len(ss_new)}**（{len({r['t'] for r in ss_new})}社）")
+    print(f"  新規のうち 判定圏(Ω≥{SS_BAND:.0f}) {len(ss_band)}組（{len({r['t'] for r in ss_band})}社）"
+          f" ／ 圏外 {len(ss_new) - len(ss_band)}組")
+    shown = ss_new if show_all else ss_band
+    for r in sorted(shown, key=lambda z: (-(z["omega"] or 0), z["t"], z["a"], z["b"])):
+        mark = "🟢" if r["buy"] else ("◆" if r["band"] else "  ")
+        s0 = r["spans"][0]
+        print(f"  {mark}{r['t']:<7} Ω{(r['omega'] or 0):>5.1f}  {r['a']}={r['va'] and int(r['va'])}"
+              f" × {r['b']}={r['vb'] and int(r['vb'])}  共通 {s0['len']}字"
+              f"{'（ほか' + str(len(r['spans']) - 1) + '区間）' if len(r['spans']) > 1 else ''}")
+        print(f"        『{s0['shared'][:150]}』")
+    if not show_all and len(ss_new) > len(ss_band):
+        print(f"  （圏外 {len(ss_new) - len(ss_band)}組は --all で出る）")
+    print()
+    return {"rev": SS_REV,
+            "rule": {"min_fragment": SS_MIN_FRAG, "min_shared": SS_MIN_SHARED,
+                     "edge_slack": SS_EDGE_SLACK, "boilerplate_df": SS_BOILER_DF,
+                     "ellipsis": SS_ELL.pattern, "pairs": [f"{a}×{b}" for a, b in PAIRS],
+                     "valued_only": True, "band": SS_BAND,
+                     "spec": "out/moat_same_sentence.json の preregistered"},
+            "n_pairs": len(ss_rows), "n_literal40": sum(1 for r in ss_rows if r["literal40"]),
+            "n_new": len(ss_new), "n_new_band": len(ss_band),
+            "pairs": ss_rows}
+
+
+def ss_compact(ss):
+    """moat_double_count.json に載せる軽い形（区間の本文・断片・引用の全文は moat_same_sentence.json の detection 側）"""
+    keep = ("shared", "len", "df")
+    out = dict(ss)
+    out["pairs"] = [dict(r, spans=[{k: z[k] for k in keep} for z in r["spans"]]) for r in ss["pairs"]]
+    out["detail"] = "区間の前後（host）・断片・引用の全文は out/moat_same_sentence.json の detection（--same-sentence で書く）"
+    return out
+
+
+def ss_write_detection(ss, argv_only, score_files=()):
+    """out/moat_same_sentence.json の "detection" を書く。事前登録・読解の結果には触れない"""
+    import hashlib, random, datetime, platform
+    if argv_only:
+        print("⚠ --t 付きでは moat_same_sentence.json を書かない（部分の検出で標本が変わるため）")
+        return
+    cur = {}
+    if os.path.exists(SS_FILE):
+        cur = json.load(open(SS_FILE, encoding="utf-8"))
+        pre = cur.get("preregistered")
+        if pre is not None:
+            blob = json.dumps(pre, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            if hashlib.sha256(blob.encode("utf-8")).hexdigest() != cur.get("preregistered_sha256"):
+                print("✗✗ preregistered の sha256 が記録と合わない——事前登録が書き換えられている。書かずに止まる")
+                sys.exit(1)
+    ss_new = [r for r in ss["pairs"] if r["new"]]
+    pool = sorted((r for r in ss_new if not r["band"]), key=lambda r: (r["t"], r["a"], r["b"]))
+    samp = random.Random(SS_SEED).sample(pool, min(SS_SAMPLE_N, len(pool)))
+    h = hashlib.sha256()
+    for f in sorted(glob.glob(os.path.join(OUT, "*_gate_pack.json"))):
+        h.update(open(f, "rb").read())
+    cur["detection"] = {
+        "rev": SS_REV, "run_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "python": platform.python_version(), "packs_sha256": h.hexdigest(),
+        "score_sources": [{"file": os.path.relpath(f, BASE) if f.startswith(BASE) else f,
+                           "sha256": hashlib.sha256(open(f, "rb").read()).hexdigest()}
+                          for f in score_files if f and os.path.exists(f)],
+        "rule": ss["rule"], "n_pairs": ss["n_pairs"], "n_literal40": ss["n_literal40"],
+        "n_new": ss["n_new"], "n_new_band": ss["n_new_band"],
+        "band": [f"{r['t']} {r['a']}×{r['b']}" for r in ss_new if r["band"]],
+        "sample_pool_n": len(pool), "sample_seed": SS_SEED,
+        "sample": [f"{r['t']} {r['a']}×{r['b']}" for r in samp],
+        "pairs": ss["pairs"]}
+    with open(SS_FILE, "w", encoding="utf-8") as f:
+        json.dump(cur, f, ensure_ascii=False, indent=1)
+    print(f"→ out/moat_same_sentence.json（detection: 新規 {ss['n_new']}組・判定圏 {ss['n_new_band']}組・"
+          f"標本 {len(samp)}/{len(pool)}組）")
 
 
 def main():
@@ -397,11 +641,23 @@ def main():
             gs = sorted({g for pr in r["pairs"] for g in pr["shared_groups"]})
             ps = " ".join(f"{pr['a']}×{pr['b']}" for pr in r["pairs"])
             print(f"     {r['t']:<7} Ω{(r.get('omega') or 0):>5.1f}  {ps}  [{','.join(gs)}]")
+    print()
+
+    # ■ 同じ文（2026-09-23新設）——集計は same_sentence_section の中に閉じる（上の変数を一つも使い回さない）
+    sc_also, ss_also_path = {}, None
+    if "--also-score" in sys.argv:
+        ss_also_path = sys.argv[sys.argv.index("--also-score") + 1]
+        da = json.load(open(ss_also_path, encoding="utf-8"))
+        sc_also = {r["t"]: r for r in (da if isinstance(da, list) else da.get("rows", []))}
+    ss = same_sentence_section(load(), sc, sc_also, only, show_all)
+    if "--same-sentence" in sys.argv:
+        ss_write_detection(ss, only, (os.path.join(OUT, "score_all.json"), ss_also_path))
 
     if as_json:
         out = {"tool": "audit_moat_double_count", "rev": "r3",
                "n_packs": len(res), "n_quote_shared": len(qshare), "n_definition": len(defn),
-               "n_group_only": len(grponly), "exclusive_placement": place, "pillar_corr": corr, "rows": hit}
+               "n_group_only": len(grponly), "exclusive_placement": place, "pillar_corr": corr, "rows": hit,
+               "same_sentence": ss_compact(ss)}
         with open(os.path.join(OUT, "moat_double_count.json"), "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=1)
         print("\n→ out/moat_double_count.json")

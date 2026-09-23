@@ -36,7 +36,11 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(BASE)
 OUT = os.path.join(BASE, "out")
 SCORE = os.path.join(OUT, "score_all.json")
-W = {"dom": .25, "irr": .25, "rep": .20, "dur": .12, "moatW": .18}
+# ★2026-09-23: 重みは audit_moat_gap.py（index.html の ccfMoat から読む）から取る——写しは v9.9.36 のまま残っていた。
+#   ここでの用途は「軽いほうの柱を落とす」選択だけで、6組とも新旧どちらの重みでも同じ柱が選ばれる（実測）。
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import audit_moat_gap as _AMG  # noqa: E402
+W = _AMG.W
 
 
 def packs():

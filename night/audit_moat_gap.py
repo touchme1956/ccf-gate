@@ -66,13 +66,32 @@ audit_moat.py との違い:
 import json
 import math
 import os
+import re
 import sys
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out")
 
-# 正は index.html の ccfMoat（v9.9.36の5本重み）
-W = {"dom": .30, "irr": .45, "rep": .10, "dur": .06, "moatW": .09}   # v9.9.185（v9.9.184は .30/.35/.14/.084/.126）。index.html:ccfMoat の正本と同期すること
+# 正は index.html の ccfMoat。★2026-09-23: 手で写すのをやめ、**門の本体の `const W={dom:…}` を読む**
+#   （写しは必ず古くなる——audit_moat_double_count.py が v9.9.36 の重み .25/.25/.20/.12/.18 のまま残り、
+#    355/356社で門と最大±14ずれていた）。読めないときだけ下の既定値へ落ち、その旨を必ず表示する。
+_W_DEFAULT = {"dom": .30, "irr": .45, "rep": .10, "dur": .06, "moatW": .09}   # v9.9.185
+
+
+def _gate_weights():
+    try:
+        src = open(os.path.join(BASE, "index.html"), encoding="utf-8").read()
+        m = re.search(r"const W=\{dom:([\d.]+),irr:([\d.]+),rep:([\d.]+),dur:([\d.]+),moatW:([\d.]+)\}", src)
+        if m:
+            return dict(zip(("dom", "irr", "rep", "dur", "moatW"), map(float, m.groups()))), True
+    except OSError:
+        pass
+    print("⚠ index.html の ccfMoat の重みを読めなかった——既定値（v9.9.185）で計算する。門と食い違っていないか確かめること",
+          file=sys.stderr)
+    return dict(_W_DEFAULT), False
+
+
+W, W_FROM_GATE = _gate_weights()
 # 正は index.html の SELECT／審査プロトコル。**規約に無い刻みは提示しない**
 GRADES = {"dom": [50, 70, 85, 100], "irr": [50, 70, 85, 100], "rep": [35, 60, 80, 100],
           "dur": [55, 75, 85, 100], "moatW": [50, 70, 85, 100]}
