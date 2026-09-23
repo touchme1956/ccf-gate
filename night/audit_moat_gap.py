@@ -125,7 +125,7 @@ IRRTOP = {85: 100}
 
 
 def moat_idx(d):
-    """index.html の ccfMoat と同値（TOPCAP と cultAdj -2 まで含める）。4本未満はNA。"""
+    """index.html の ccfMoat と同値（TOPCAP まで含める）。4本未満はNA。"""
     legs = [(k, num(d.get(k))) for k in W]
     legs = [(k, (IRRTOP[v] if (k == "irr" and v in IRRTOP)
                else (TOPCAP[k] if (k in TOPCAP and v == 100) else v))) for k, v in legs]
@@ -133,12 +133,8 @@ def moat_idx(d):
     if len(legs) < 4:
         return None
     sw = sum(W[k] for k, _ in legs)
-    gls = num(d.get("gls"))
-    cult = -2 if (gls is not None and gls <= 3.3
-                  and (d.get("disrupt") or "settled") != "threat"
-                  and (d.get("erosion") or "none") != "active") else 0
     g = math.exp(sum(W[k] / sw * math.log(max(min(96, v), 1)) for k, v in legs))
-    return max(0.0, min(96.0, g + cult))
+    return max(0.0, min(96.0, g))   # 文化調整 −2 は v9.9.193 で門から撤去（同期）
 
 
 def main():

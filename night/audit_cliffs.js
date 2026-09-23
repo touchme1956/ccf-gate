@@ -28,12 +28,10 @@ const RULES = [
   { n: '粗利趨勢 gmt=down',          sz: 'gmPt−12', k: 'gmt',     on: 'down', off: 'flat', is: v => v === 'down' },
   { n: '侵食 erosion=active',        sz: '段差', k: 'erosion',    on: 'active', off: 'none', is: v => v === 'active' },
   { n: '破壊 disrupt=unsettled',     sz: 'f5段差', k: 'disrupt',  on: 'unsettled', off: 'settled', is: v => v === 'unsettled' },
-  { n: '文化 gls',                   sz: '−2',  k: 'gls',        on: 'bad',  off: 'ok',  is: v => v === 'bad' },
-  { n: '純収益維持率 nrr<100',       sz: 'pm−6', k: 'nrr',        on: 90,     off: 110,   is: v => v != null && +v < 100 },
-  { n: '大型買収 acq5=yes（乖離の罰の門）', sz: '0〜−6', k: 'acq5', on: 'yes', off: 'no', is: v => v === 'yes' },
   { n: '買収の強度 acqS5=買収しない', sz: '−1',  k: 'acqS5',      on: 0,      off: 0.05,  is: v => v != null && +v <= 0 },
   { n: '買収の強度 acqS5=大きく買う', sz: '0',   k: 'acqS5',      on: 0.5,    off: 0.05,  is: v => v != null && +v > 0.311 },
 ];
+// v9.9.193: 文化 gls・純収益維持率 nrr<100 は門から撤去／acq5 の乖離の罰の門は v9.9.183 で罰ごと撤去済み——表から外した
 
 
 // ── その崖に歴史検証があるか（出典つき。**判断を人の頭でなくここに置く**）──────────────
@@ -47,7 +45,7 @@ const TESTED = {
   '債務超過キル eq=neg':       ['none', '会計上の定義。歴史で当てたことはない'],
   '倒産圏キル Z<1.1':          ['none', "Altman Z は外部文献。この台帳のビンテージで検定した記録は0件"],
   "Z''<2.6 グレー −6":         ['none', '同上。しかも二値の崖'],
-  '価値破壊キル ROIC≤WACC':    ['none', '記録2件・いずれも検定ではない。**最大のキル（実測 −65.9pt）なのに未検定**'],
+  '価値破壊キル ROIC≤WACC':    ['pass', '2026-09-21 事前登録(4149bd0)・3ビンテージとも中央値が低く恒久毀損が1.9〜2.8倍濃い（ARCHIVE:15036）'],
   '複利停止キル ROIIC³<WACC':  ['none', '記録12件・検定なし。2026-07-29 kill_impact は「効いていない」を測っただけ'],
   'ROIIC³ WACC近傍 −8':        ['none', '同上。二値の崖'],
   '堀の減衰キル moatdecay':    ['none', '検定なし。判定圏の発火0社'],
@@ -58,10 +56,7 @@ const TESTED = {
   'シェア趨勢 sht=up':         ['none', '同上'],
   '粗利趨勢 gmt=down':         ['none', '検定なし（gm 自体は候補に入ったが、趨勢の刻みは別物）'],
   '侵食 erosion=active':      ['none', '**「dep/erosion/disrupt は歴史に無い」と台帳自身が明記**（ARCHIVE:5371）'],
-  '破壊 disrupt=unsettled':   ['none', '同上'],
-  '文化 gls':                 ['none', '検定なし。判定圏で一度も測られていない（ARCHIVE:1251）'],
-  '純収益維持率 nrr<100':      ['none', '検定なし。313/317が既定105＝ほぼ全社が空回り'],
-  '大型買収 acq5=yes（乖離の罰の門）': ['none', '**乖離>15pt という線そのものは検定していない**。v9.9.93 は崖を坂にしただけ'],
+  '破壊 disrupt=unsettled':   ['none', '2026-09-21 に検定を試みたが**検定できなかった**（歴史側に disrupt が無い・ARCHIVE:15036 ②）'],
 };
 const MARK = { pass: '✓検定済', fail: '✗落ちた', none: '**未検定**', null: '△効果なし' };
 
