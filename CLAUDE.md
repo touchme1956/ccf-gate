@@ -376,6 +376,11 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
     EDINET直配信の有報PDFから警報語（誠/限/集/指針/減損/退任の日本語版）を走査する。
     **数値抽出(売上YoY・営業利益率差)はPDFの桁分断でほぼ機能しない**ため、パックのgmを錨に自己検算し
     乖離が大きければ数値を破棄する（もっともらしい誤値より空欄）。判定は警報のみで行う
+- **日本株の原本キャッシュと成長の軌道（2026-09-23新設）**: `python3 night/rebuild_src_cache_jp.py`（`--only/--force/--dry`）
+  → パックの docID から EDINET の有報PDFを**API の鍵なしで**取得（disclosure2dl…/searchdocument/pdf/{docID}.pdf・1.2秒あけ・
+  User-Agent に**メールを載せない**）、表紙（書類の種類・事業年度・会社）を確かめて out/_src_cache/{T}.txt へ（gitignore）。
+  `python3 night/fill_growth_trend_jp.py`（既定は読むだけ／`--write`）→ 日本株の cagrT を有報の5年表から（定義は fill_growth_trend.py と同一）。
+  基準の割れ（連結/単体・会計基準・変則決算・収益認識の影響>0.5%）は空欄＋理由。⚠ 空欄が有利に働く社を毎回名指しする。有報が出たら回す
 - 監視リスト生成: `python3 make_kanshi.py`（`--dry`で差分だけ）
   - 定義は **保有 ∪ 投下可 ∪ Ω75+ ∪ 直近点検で要審査 ∪ irr=85（特別監視枠） ∪ pin**
     （2026-07-29改定・**2026-08-09に irr=85 を追加**）。
@@ -569,6 +574,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
   `_meta.basis.roicConvention`(us-unified/jp-legacy)の2軸を数える
 - 全パック検証: `node night/score_all.js` → 門の compute()／ccfXJudge／ccfMoatGate をそのまま走らせて
   Ωと**三段関門の合否（🟢投下可が何社か）**を実測。`--jp/--us/--only/--set`。出力 out/score_all.json。
+  `--out FILE` で書き先を指定（2026-09-23〜・並行作業が partial を踏み合わない／正本も partial も書かない）。
   「基準を変えたら誰がどう動くか」は推測でなくこれで出す
 - 全件点検の端末版: `node night/audit_gate.js`（`--all` / `--k acq5,per` / `--t MCO`）→ 門の `ccfAudit` を
   そのまま全パックに掛け、項目別の残数と銘柄別の内訳を出す。**✓検算済**（_metaに根拠あり＝門が_metaを
@@ -956,8 +962,9 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
   → `index.html` の `const W={...}` の**1行だけ**を差し替えて score_all を回し、**必ず元へ戻す**（sha256で検算）。
   **v9.9.184 の採用根拠**。4案（irrのみ.35／両方.30／両方.35／dom.30+irr.35）を測ると
   **4案とも同じ入れ替え（出 IDXX／入 ASML）**＝今日の判定は案の選択に依らない。
-  ⚠ **`night/audit_moat_gap.py:75` が ccfMoat を再実装している唯一の道具**なので、
-  W を変えたら必ず両方同期する（片方だけだと「irrを85にすれば通る」という通らない道を提示する）。
+  ⚠ **堀の重みは `night/audit_moat_gap.py` が index.html の ccfMoat の `const W={dom:…}` を読む**（2026-09-23〜・手で写さない）。
+  audit_moat_double_count.py と shadow_moat_dedup.py も audit_moat_gap から読む——写しを持っていた2本は v9.9.36 の重みのまま残り、
+  堀指数が門と 355/356社で最大±14ずれていた。**ccfMoat を書き換えたら audit_moat_gap の IRRTOP/TOPCAP（読み替え）だけは手で合わせること**。
   - **★v9.9.185 で分かったこと: 弱いのは重みではなく刻みの値だった**。v9.9.184 のあと irr は
     **実効 8.5%（名目5.7%）＝機械項目を除けば門で最強**になっていたのに「効きが弱い」と見えたのは、
     **上の段だけが潰れていた**から——幾何平均は比で効くので `ln(85/70)=0.194` は `ln(70/50)=0.336` の**58%**。
@@ -1261,7 +1268,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
     拒否権とは無関係。**古い数字を根拠に判断を固定しない**ための記録。
   - **★2026-09-22: BR に拒否権を立てた**（ユーザー明示指示「拒否権でBRを外して」）。**現在 `vetoes` は BR 1社**。
     実測（この時点・席6）: **投下可 CW/LRCX/V/MSFT/ASML/MCO**（MCO 82.3 が6席目へ繰り上がり）・次点 IDXX/SAP。
-    ⚠ **同日 v9.9.186 で席を5へ戻したので、MCO はその6位のまま次点へ降りた**（現在の投下可は CW/LRCX/V/MSFT/ASML）。
+    ⚠ **同日 v9.9.186 で席を5へ戻したので、MCO はその6位のまま次点へ降りた**（当時の投下可は CW/LRCX/V/MSFT/ASML。★2026-09-23 に V が irr 70→50〔V の10-K が顧客の随時の見直し・短い予告での終了を明記〕で堀の関門を割り、投下可は CW/MSFT/LRCX/ASML/MCO——席の正本は score_all）。
     BR の拒否権を外しても MCO は戻らない——席が5なら BR が6位に入るだけ。
     **採点は1行も動いていない**——BR の Ω82.6・堀74.4・キル0・柱0・点検✓・出口hold はそのまま。
     ⚠ `note` に**反証4点**を残してある——(1)SEC原本と4項目が完全一致（数字は壊れていない・roicg14.7>WACC・
