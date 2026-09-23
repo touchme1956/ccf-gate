@@ -78,6 +78,12 @@ def solve_lots(ser, fxs, bench, lots, bpx, bjpy, ds):
             return [], "内訳に円も現地通貨も無い＝日を絞る手がかりが無い", None, None
         cand = []
         for d in ds:
+            # ★2026-09-23: ロットごとの申告の範囲（そのロットが「いつ既に在ったか／いつ後から来たか」）。
+            #   推測より申告が強い——位置全体の bdAfter/bdBefore と同じ扱いをロット単位で。
+            if l.get("bdAfter") and d < l["bdAfter"]:
+                continue
+            if l.get("bdBefore") and d > l["bdBefore"]:
+                continue
             f = fr.on_or_before(fxs, d)
             if not f:
                 continue
