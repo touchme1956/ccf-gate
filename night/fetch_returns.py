@@ -87,8 +87,19 @@ def yahoo(sym, t0, t1):
         cl = res["indicators"]["quote"][0]["close"]
         aj = (res["indicators"].get("adjclose") or [{}])[0].get("adjclose") or cl
         out = {}
+        # ★2026-09-23 是正（ユーザー「成績が更新されないのはなんで？」）: Yahoo は**最新の営業日の日足の
+        #   close を None で返すことがある**（実測 MSFT: 2026-09-22 の日足 close=None、同じ応答の
+        #   meta.regularMarketPrice=498.0・regularMarketTime=09-22 20:00UTC に終値が在る）。
+        #   None を捨てるだけだと出口が1営業日前へ戻り、**前日の CI より古い成績で上書きする**（同日の実害）。
+        #   ⇒ **最後の足が None で、meta の時刻が同じ日付のときだけ** meta の終値で埋める（別の日の値は入れない）。
+        meta = res.get("meta") or {}
+        mp, mt = meta.get("regularMarketPrice"), meta.get("regularMarketTime")
+        mdate = (datetime.datetime.utcfromtimestamp(mt).strftime("%Y-%m-%d") if mt else None)
         for i, t in enumerate(ts):
             c, a = cl[i], aj[i]
+            d0 = datetime.datetime.utcfromtimestamp(t).strftime("%Y-%m-%d")
+            if c is None and i == len(ts) - 1 and mp and mdate == d0:
+                c = a = mp
             if c is None:
                 continue
             d = datetime.datetime.utcfromtimestamp(t).strftime("%Y-%m-%d")

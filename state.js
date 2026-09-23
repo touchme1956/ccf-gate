@@ -507,6 +507,81 @@
       });
   }
 
+  /* ★2026-09-23 新設（ユーザー「買ったら成績に自動で反映してよ」→選択「鍵をこの端末に置く」）:
+     **門から repo の state.json を直接保存する道**。鍵（GitHub の fine-grained token・このrepoの Contents 読み書きだけ）は
+     **この端末の localStorage `ccf:ghToken` にだけ**置く——ページにも repo にも state.json にも載らない
+     （watched() の対象外なので collect() にも入らない）。保存が main に入ると returns.yml が成績を作り直す。
+     ⚠ 安全側の約束:
+       (1) **repo のほうが新しいなら保存しない**（別セッションが保有を直した後の古い端末が、正しい repo を潰さない）。
+           その場合は「⭳ repo の保有で上書き」してから記録し直してもらう。
+       (2) repo にあって手元に無いキーは**残す**（手元の決定キーだけを上書きする）。
+       (3) 他の書き手（CI）と競合したら（409）1回だけ読み直してやり直す。 */
+  var TOKEN = 'ccf:ghToken', REPO_API = 'https://api.github.com/repos/touchme1956/ccf-gate/contents/state.json';
+  function hasToken() { try { return !!localStorage.getItem(TOKEN); } catch (e) { return false; } }
+  function setToken() {
+    var cur = hasToken();
+    var t = null;
+    try {
+      t = window.prompt((cur ? '鍵は設定済みです。新しい鍵を貼るか、空にして OK で鍵を消します。\n\n' : '') +
+        'GitHub の鍵（fine-grained personal access token）を貼ってください。\n' +
+        '作り方: github.com/settings/personal-access-tokens/new →\n' +
+        '  Repository access: Only select repositories → ccf-gate\n' +
+        '  Permissions → Repository → Contents: Read and write\n' +
+        '鍵はこの端末のブラウザにだけ保存されます。', '');
+    } catch (e) { return false; }
+    if (t === null) return cur;
+    t = String(t).trim();
+    try { if (t) localStorage.setItem(TOKEN, t); else localStorage.removeItem(TOKEN); } catch (e) {}
+    return !!t;
+  }
+  function b64utf8(str) {
+    var bytes = new TextEncoder().encode(str), bin = '';
+    for (var i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  function unb64utf8(b) { var bin = atob(String(b).replace(/\s/g, '')), u = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new TextDecoder().decode(u); }
+  function pushRepo(what) {
+    var tok = null; try { tok = localStorage.getItem(TOKEN); } catch (e) {}
+    if (!tok) return Promise.resolve({ ok: false, code: 'notoken', msg: '鍵が未設定' });
+    var H = { 'Authorization': 'Bearer ' + tok, 'Accept': 'application/vnd.github+json' };
+    function attempt(n) {
+      return fetch(REPO_API + '?ref=main&_=' + Date.now(), { headers: H, cache: 'no-store' })
+        .then(function (r) {
+          if (r.status === 401 || r.status === 403) throw { code: 'auth', msg: '鍵が無効か権限が足りません（Contents: Read and write が要る）' };
+          if (!r.ok) throw { code: 'http', msg: 'repo の state.json が読めない（' + r.status + '）' };
+          return r.json();
+        })
+        .then(function (f) {
+          var cur = JSON.parse(unb64utf8(f.content));
+          var mine = localSavedAt();
+          if (cur && cur.savedAt && (!mine || cur.savedAt > mine))
+            throw { code: 'behind', msg: 'repo の保有のほうが新しい（' + cur.savedAt.slice(0, 10) + '）——上書きしないため保存を止めました。赤い帯の「⭳ repo の保有で上書きする」で合わせてから、もう一度記録してください' };
+          var data = {}, k;
+          var old = (cur && cur.data) || {};
+          for (k in old) data[k] = old[k];
+          var loc = collect(true).data;
+          for (k in loc) data[k] = loc[k];
+          var savedAt = new Date().toISOString();
+          var body = JSON.stringify({ fmt: 'ccf-state', ver: 1, savedAt: savedAt,
+            note: (cur && cur.note) || '門の「人の決定」の正本。repo直下に置き、門が起動時に読む。',
+            data: data }, null, 1) + '\n';
+          return fetch(REPO_API, { method: 'PUT', headers: H, body: JSON.stringify({
+            message: 'state: 門から保存' + (what ? '（' + what + '）' : ''),
+            content: b64utf8(body), sha: f.sha, branch: 'main' }) })
+            .then(function (r) {
+              if (r.status === 409 && n < 1) return attempt(n + 1);
+              if (!r.ok) throw { code: 'http', msg: '保存できない（' + r.status + '）' };
+              markCommitted(savedAt); last = { verdict: 'same', savedAt: savedAt, mine: savedAt };
+              return { ok: true, savedAt: savedAt };
+            });
+        });
+    }
+    return attempt(0).catch(function (e) {
+      return { ok: false, code: (e && e.code) || 'net', msg: (e && e.msg) || ('通信できない: ' + e) };
+    });
+  }
+
   /* ④ 「入れた」。**押すのは人**＝嘘をつけば盤(ops_status)が古いままになるだけで、データは消えない。 */
   function done(btn) {
     var o = btn ? btn.textContent : '';
@@ -537,7 +612,7 @@
     });
   }
 
-  window.ccfState = { load: load, export: exportFile, banner: banner, quiet: quiet, done: done, copyBox: copyBox, adoptRepo: adoptRepo,
+  window.ccfState = { load: load, export: exportFile, banner: banner, quiet: quiet, done: done, copyBox: copyBox, adoptRepo: adoptRepo, pushRepo: pushRepo, setToken: setToken, hasToken: hasToken,
                       markCommitted: markCommitted, decide: decide, collect: collect,
                       isDirty: isDirty, keys: { exact: EXACT, prefix: PREFIX },
                       get last() { return last; } };

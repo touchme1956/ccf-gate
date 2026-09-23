@@ -618,7 +618,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <link rel="stylesheet" href="skin.css?v=20260923-7">
 <!-- v9.9.131: 人の決定(state.json)の読み書き。**両ページが同じ実装を読む**（写すと必ず割れる・v9.9.65）。
      本体より前に読むのは localStorage.setItem の包み(dirty検出)を先に効かせるため -->
-<script src="state.js?v=20260923-3"></script><script src="icon.js"></script></head><body><div id="pgBg" aria-hidden="true"></div>
+<script src="state.js?v=20260923-4"></script><script src="icon.js"></script></head><body><div id="pgBg" aria-hidden="true"></div>
 <!-- v9.9.177 息づく地（表示だけ・判定に不使用）。三つの淡い光が別々の周期で漂う＝追加ダウンロード0バイトで「裏で動く背景」を作る -->
 <!-- v9.9.171（2026-08-23 ユーザー指示「使わないタブをなくして統合」）:
      12タブ → **6つの群**へ。⚠ pgN の div と tabN の id は**一つも変えていない**——
@@ -715,8 +715,11 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
    <button onclick="ccfDash(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
    <button onclick="showPage(7)" style="padding:8px 15px;background:var(--panel);border:1px solid var(--line);border-radius:7px;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer" title="株数・買値・売却記録を入れる画面（旧 🏦保有タブ）">✎ 株数・買値を編集</button>
+   <button onclick="ccfTrade('buy')" style="padding:8px 15px;background:rgba(22,163,74,.10);border:1px solid rgba(22,163,74,.5);border-radius:7px;color:#15803d;font-size:13px;font-weight:700;cursor:pointer" title="買った株を保有へ足す（約定日・単価・取得額(円)も残す）">＋ 買った</button>
+   <button onclick="ccfTrade('sell')" style="padding:8px 15px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.45);border-radius:7px;color:#b91c1c;font-size:13px;font-weight:700;cursor:pointer" title="売った株を保有から減らし、売却記録へ残す（一部売却も可）">− 売った</button>
    <span id="dashAsof" style="font-size:11.5px;color:var(--dim)"></span>
  </div>
+ <div id="tradeBox"></div>
  <div id="dashBox"><div style="color:var(--dim);font-size:13px">「↻ 更新」で読み込む。</div></div>
 </div>
 <!-- 📈成績（v9.9.156・2026-08-18 ユーザー要望「別のタブでグラフ込みで作れる？もちろん自動更新で」）:
@@ -1396,7 +1399,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 
 <div id="pg7" class="pg">
 <div class="wrap" style="padding-top:14px">
- <div style="font-size:12.5px;color:var(--muted);margin:0 0 8px"><a href="portfolio.html" target="_blank" style="float:right;font-size:12px;margin-left:10px;color:var(--gold-bright)">新しいタブで開く ↗</a><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body">全保有を一枚で。株数・単価を入れると評価額を自動計算し、この端末に保存（門と同じ保存方式）。行頭の色丸は出口判定（S1/S2/S3/ホールド/採点待ち）。網／城のリバランスは<b>🛒買付順位の「📋 今月の注文書」</b>が正本（保有データから網/城ウェイトを計算して渡している）。「⭳ 門の保有から取込」で台帳の保有を城として取り込み、「🏛 門の台帳へ登録」で逆方向。</div></details></div> <iframe id="pfFrame" src="portfolio.html" scrolling="no" allow="clipboard-write" style="width:100%;height:1600px;border:0;background:transparent;display:block;overflow:hidden"></iframe>
+ <div style="font-size:12.5px;color:var(--muted);margin:0 0 8px"><a href="portfolio.html" target="_blank" style="float:right;font-size:12px;margin-left:10px;color:var(--gold-bright)">新しいタブで開く ↗</a><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body">全保有を一枚で。株数・単価を入れると評価額を自動計算し、この端末に保存（門と同じ保存方式）。行頭の色丸は出口判定（S1/S2/S3/ホールド/採点待ち）。網／城のリバランスは<b>🛒買付順位の「📋 今月の注文書」</b>が正本（保有データから網/城ウェイトを計算して渡している）。「⭳ 門の保有から取込」で台帳の保有を城として取り込み、「🏛 門の台帳へ登録」で逆方向。</div></details></div> <iframe id="pfFrame" src="portfolio.html?v=20260923-5" scrolling="no" allow="clipboard-write" style="width:100%;height:1600px;border:0;background:transparent;display:block;overflow:hidden"></iframe>
 </div>
 </div>
 <div id="pg8" class="pg">
@@ -1769,7 +1772,6 @@ function compute(){
   // v9.9.25: 現在門スプレッドのキル/薄氷/主柱は、任意入力の事業(現金控除)ROIC=roicEx があればそれで裁く(ユーザー明示指示2026-07-23)。
   //   ネットキャッシュ高ROIC企業(SMC/村田型)で roic に現金込み報告ROICを入れた場合、遊休現金でROICが希薄化し ROIC≤WACC の誤爆キル(=価値破壊認定)になる。
   //   事業の実力(過剰現金を除く営業ROIC)がWACCを超えていれば、それは価値破壊ではない。roicEx未入力=roicで従来通り(既存台帳280社はdiff0)。
-  const roicExV=(function(){const el=$('roicEx');if(!el||el.value==='')return null;const v=parseFloat(el.value);return isNaN(v)?null:v;})();
   const roicNow=_rj.v, spreadNow=roicNow-wacc;   // v9.9.42: 選定は ccfRoicJudge に一本化
   // ===== 提言1: 無形資産調整ROIC (Damodaran/Mauboussin: R&D・S&M費用計上によるROIC過小評価を補正) =====
   //   R&Dや顧客獲得費(S&M)を全額即時費用計上する高成長ソフト/プラットフォーム企業は、会計ROICが実態より低く出る。
@@ -1850,7 +1852,6 @@ function compute(){
   if(spreadNow<=0){
     // 提言1: 会計スプレッド負でも即キルしない。無形調整スプレッドも負 かつ 増分収益(ROIIC)も負 の二重条件でのみキル
     //   → Salesforce/ServiceNow型(R&D・S&M費用計上でROIC過小)を無差別排除しない。真の価値破壊企業のみ弾く
-    const roiicForKill=n('roiic'); // ROIIC入力(数値)
     const rescuedByIntangible = spreadAdj>0 && n('gm')>0; // v9.2: 無形調整でプラスかつ営業黒字(営業赤字は調整があっても救済しない)
     const rescuedByGrowth = (n('gm')>0 && n('cagr')>=15 && $('gmt').value==='up'); // v9.2: 営業黒字かつ二桁成長かつ収益性改善中(営業赤字は救済対象外)
     if(rescuedByIntangible || rescuedByGrowth){
@@ -2043,7 +2044,6 @@ function compute(){
   //   sustainへcagrの二本目の経路を作ることになるため（同じ信号を二度数えない、という門の作法）。
   //   **滑走路の評価は未来門が担う**: f2(滑走路6%)とF11(成長率9%)がいずれも316/316社で実測済み。
   //   採点への影響はゼロ（v9.9.44時点で既に全社がこの経路だったため）。
-  const aiSel=$('f5'); // AI handled via f5 lens; sustain AI adj from f5 relative
   let sustain=gm([pm,pr],[0.475,0.525]);
   sustain=Math.max(0,Math.min(100,sustain));
   const setp=(id,v,th)=>{$(id+'V').textContent=v.toFixed(0);$(id+'V').style.color=v>=th?'var(--ink)':'var(--rust)';$(id+'S').textContent=v>=th?'通過':'不足';$(id+'S').className='pil-st '+(v>=th?'pil-ok':'pil-ng');};
@@ -2912,7 +2912,6 @@ function uiConfirm(msg){return new Promise(res=>{try{const b=document.body;if(!b
  ov.addEventListener('click',e=>{const v=e.target&&e.target.getAttribute&&e.target.getAttribute('data-uic');if(v){try{b.removeChild(ov)}catch(_){};res(v==='yes');}});
  b.appendChild(ov);}catch(e){res(true);}});}
 // ----- v9.1: 検証済みA−以上27銘柄シード(2026-07-08確定・メモ込み) -----
-const SEED26=[]; /* 銘柄シードは2026-07-16に全撤去(ユーザー指示) */
 // ----- v9.1: storage adapter (Claude環境→localStorage→メモリの三段フォールバック) -----
 const _mem={};
 const _sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -3655,6 +3654,122 @@ function ccfBought(btn){
     out.style.color='#d69a3c'; out.textContent='🏦保有から返事がありません（Ⅶタブを一度開いてから）'; } },3000);
 }
 
+/* ── 🏦保有の「＋ 買った」「− 売った」（2026-09-23・ユーザー「新規で買付や売却がない。それで反映させたりしないとこれから門が更新されない」）
+   ＋株（買付順位）は**買付順位に出ている社**からしか記録できず、売却は Ⅶの□（**全株だけ**）しか無かった。
+   ここに一枚の記入欄を置く。**書き込みの実装は Ⅶ(portfolio.html) の pfAddShares / pfSellShares だけ**
+   （二重に持たない・v9.9.65）——ここは postMessage で頼むだけ。
+   記録した後は repo へ入れないと成績（out/returns.json）も他の端末も変わらないので、
+   **書き出しボタンをその場に出す**（ブラウザは repo へ書けない＝最後の一歩は人の手）。
+   ⚠**判定には一切効かない**——売却理由は人が選んで記録するだけで、S1/S2/S3 の規律は不変。 */
+function ccfTradeToday(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function ccfTradePf(){ try{ return JSON.parse(localStorage.getItem('pf:portfolio')||'{}')||{}; }catch(_){ return {}; } }
+function ccfTrade(kind){
+  const box=document.getElementById('tradeBox'); if(!box)return;
+  if(box.dataset.kind===kind&&box.innerHTML){ box.innerHTML=''; box.dataset.kind=''; return; }
+  box.dataset.kind=kind;
+  const P=ccfTradePf(), pos=(P.positions||[]).filter(p=>p&&p.t);
+  const buy=kind==='buy', col=buy?'#15803d':'#b91c1c';
+  const q=ccfBoughtEsc;
+  const opts=pos.map(p=>`<option value="${q(p.t)}">${q(p.t)}　${q(p.nm||'')}（${+p.sh||0}株）</option>`).join('');
+  const ist='padding:7px 9px;font-size:14px;font-family:inherit;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink);width:100%;box-sizing:border-box';
+  const lab=(t,h)=>`<label style="display:block;font-size:12.5px;color:var(--dim);margin:0 0 8px">${t}<div style="margin-top:3px">${h}</div></label>`;
+  box.innerHTML=`<div style="border:1px solid ${col};border-left:5px solid ${col};border-radius:10px;padding:12px 14px;margin:0 0 12px;background:var(--panel)">
+   <div style="font-weight:700;color:${col};margin-bottom:10px">${buy?'＋ 買った株を記録':'− 売った株を記録'}</div>
+   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 12px">
+    ${lab('銘柄',`<select id="trT" style="${ist}" onchange="ccfTradeSync()">${opts}${buy?'<option value="__new">＋ 新しい銘柄…</option>':''}</select>
+      <input id="trNew" placeholder="ティッカー（例 NVDA）" style="${ist};margin-top:5px;display:none">`)}
+    ${lab('約定日',`<input id="trD" type="date" value="${ccfTradeToday()}" style="${ist}">`)}
+    ${lab('株数',`<input id="trS" type="number" min="0" step="any" inputmode="decimal" style="${ist}" oninput="ccfTradeSync()">`)}
+    ${lab((buy?'約定単価':'売却単価')+'（ドル）',`<input id="trP" type="number" min="0" step="any" inputmode="decimal" style="${ist}" oninput="this.dataset.auto='0';ccfTradeSync()">`)}
+    ${lab(buy?'取得額（円・証券会社の画面の値）':'受取額（円・任意）',`<input id="trJ" type="number" min="0" step="1" inputmode="numeric" style="${ist}" placeholder="空欄なら 株数×単価×ドル円で見積もり">`)}
+    ${buy?'':lab('理由',`<select id="trR" style="${ist}"><option value="s1">S1 売却規律</option><option value="s2">S2 縮小</option><option value="s3">S3 記録のみ</option><option value="other" selected>その他</option></select>`)}
+   </div>
+   ${buy?'':lab('メモ（任意・なぜ売ったか）',`<input id="trM" style="${ist}">`)}
+   <div id="trHint" style="font-size:12px;color:var(--dim);margin:2px 0 10px"></div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <button onclick="ccfTradeGo('${kind}',this)" style="padding:9px 18px;border-radius:8px;border:1px solid ${col};background:${col};color:#fff;font-size:14px;font-weight:700;cursor:pointer">記録する</button>
+    <button onclick="ccfTrade('${kind}')" style="padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:13px;cursor:pointer">閉じる</button>
+    <span id="trMsg" style="font-size:12.5px"></span>
+   </div>
+   <div id="trAfter"></div>
+  </div>`;
+  ccfTradeSync(true);
+}
+function ccfTradeSync(first){
+  const sel=document.getElementById('trT'); if(!sel)return;
+  const nw=document.getElementById('trNew'); if(nw)nw.style.display=sel.value==='__new'?'':'none';
+  const P=ccfTradePf(), p=(P.positions||[]).find(x=>x.t===sel.value)||null, fx=+P.fx||0;
+  const pi=document.getElementById('trP');
+  if(pi&&(first||pi.dataset.auto==='1')&&document.activeElement!==pi){ pi.value=(p&&+p.npx>0)?p.npx:''; pi.dataset.auto='1'; }
+  const sh=+document.getElementById('trS').value||0, px=+pi.value||0, est=(sh>0&&px>0&&fx>0)?Math.round(sh*px*fx):0;
+  const ji=document.getElementById('trJ'); if(ji)ji.placeholder=est?('空欄なら ¥'+est.toLocaleString('ja-JP')+'（'+sh+'株×$'+px+'×'+fx+'円）'):'空欄なら 株数×単価×ドル円で見積もり';
+  const h=document.getElementById('trHint');
+  if(h)h.textContent=p?('いま '+(+p.sh||0)+'株'+((+p.bjpy||0)>0?'・取得額 ¥'+Math.round(+p.bjpy).toLocaleString('ja-JP'):'')+'。単価は現在値を入れてあります——約定の値に直してください。'):'';
+}
+/* 記録の後: 鍵があれば repo の state.json へ自動で保存（→ returns.yml が成績を作り直す）。
+   鍵が無ければ設定の入口と、従来の「書き出す→Claudeに貼る」を出す。 */
+function ccfTradeAfter(what){
+  const el=document.getElementById('trAfter'); if(!el)return;
+  const box=(inner,col)=>`<div style="margin-top:12px;padding:10px 12px;border:1px ${col?'solid '+col:'dashed var(--line)'};border-radius:8px;font-size:12.5px;line-height:1.7">${inner}</div>`;
+  const cs=window.ccfState;
+  if(!(cs&&cs.hasToken&&cs.hasToken())){
+    el.innerHTML=box(`この端末の保有は更新しました。<b>成績に自動で反映するには、最初に1回だけ鍵を設定</b>してください：<br>
+      <button onclick="if(ccfState.setToken())ccfTradeAfter(${JSON.stringify(what).replace(/"/g,'&quot;')})" style="margin:6px 0;padding:8px 15px;border-radius:8px;border:1px solid #15803d;background:#15803d;color:#fff;font-weight:700;cursor:pointer">🔑 鍵を設定して反映する</button>
+      <div style="font-size:12px;color:var(--dim)">鍵を置かない場合は <button onclick="ccfState.export(this,true)" style="padding:3px 9px;border-radius:6px;border:1px solid var(--line);background:transparent;cursor:pointer">📤 書き出す</button> → Claude に貼って「反映して」。</div>`);
+    return;
+  }
+  el.innerHTML=box('⏳ repo へ保存しています…');
+  cs.pushRepo(what).then(r=>{
+    if(r.ok){
+      el.innerHTML=box(`✓ <b>repo へ保存しました</b>——📈成績は<b>3〜5分ほどで自動で更新</b>されます（成績の計算と配信を待つ間）。他の端末にも次に開いたとき反映されます。`,'#15803d');
+      try{ ccfState.banner('stateBar'); }catch(_){}
+    }else{
+      el.innerHTML=box(`⚠ 自動保存できませんでした: ${r.msg}<br>`
+        +(r.code==='auth'?`<button onclick="if(ccfState.setToken())ccfTradeAfter(${JSON.stringify(what).replace(/"/g,'&quot;')})" style="margin:6px 6px 0 0;padding:6px 12px;border-radius:7px;border:1px solid var(--line);background:transparent;cursor:pointer">🔑 鍵を入れ直す</button>`:'')
+        +(r.code==='behind'?'':`<button onclick="ccfTradeAfter(${JSON.stringify(what).replace(/"/g,'&quot;')})" style="margin:6px 6px 0 0;padding:6px 12px;border-radius:7px;border:1px solid var(--line);background:transparent;cursor:pointer">↻ もう一度</button>`)
+        +`<button onclick="ccfState.export(this,true)" style="margin:6px 0 0;padding:6px 12px;border-radius:7px;border:1px solid var(--line);background:transparent;cursor:pointer">📤 書き出す（Claudeに貼る）</button>`,'#b91c1c');
+    }
+  });
+}
+function ccfTradeGo(kind,btn){
+  const msg=document.getElementById('trMsg'), bad=t=>{ msg.style.color='#b91c1c'; msg.textContent='⚠ '+t; };
+  const sel=document.getElementById('trT');
+  let t=sel?sel.value:''; if(t==='__new')t=(document.getElementById('trNew').value||'').trim().toUpperCase();
+  if(!t)return bad('銘柄を選んでください');
+  const sh=+document.getElementById('trS').value||0; if(!(sh>0))return bad('株数を入れてください');
+  const px=+document.getElementById('trP').value||0, date=document.getElementById('trD').value||'';
+  const P=ccfTradePf(), fx=+P.fx||0, p=(P.positions||[]).find(x=>x.t===t);
+  let jpy=+document.getElementById('trJ').value||0, jpyEst=false;
+  if(!(jpy>0)&&px>0&&fx>0){ jpy=Math.round(sh*px*fx); jpyEst=true; }
+  const frame=document.getElementById('pfFrame');
+  if(!frame||!frame.contentWindow)return bad('保有の画面が読み込まれていません（「✎ 株数・買値を編集」を一度開いてから）');
+  const id='t'+Date.now()+Math.random().toString(36).slice(2,6);
+  const m={type:kind==='buy'?'ccfPfBuy':'ccfPfSell',id,t,nm:(p&&p.nm)||t,sh,px,jpy,date,
+    ccy:(p&&p.ccy)||'USD',sleeve:(p&&p.sleeve)||'castle'};
+  if(kind==='sell'){ m.reason=document.getElementById('trR').value; m.memo=(document.getElementById('trM').value||'').trim()
+    +(jpyEst&&jpy?'　受取額は見積もり（株数×単価×ドル円）':''); }
+  let done=false; btn.disabled=true;
+  window.__ccfBuyWait[id]=async function(r){
+    done=true; btn.disabled=false;
+    if(!r.ok)return bad(r.msg||'記録できませんでした');
+    msg.style.color='#15803d'; msg.textContent='✓ '+(r.msg||'')+(jpyEst&&jpy?'（'+(kind==='buy'?'取得額':'受取額')+'は見積もり ¥'+jpy.toLocaleString('ja-JP')+'）':'');
+    /* 門の保有印（出口判定の対象）: 買いは ccfBought と同じく付ける・売りの全株は Ⅶ が外す。網(ETF)には付けない */
+    if(kind==='buy'&&m.sleeve!=='net')try{
+      let hs=new Set(); const hr=await store.get('g7hold:set'); if(hr&&hr.value)hs=new Set(JSON.parse(hr.value)||[]);
+      if(!hs.has(m.nm)){ hs.add(m.nm); await store.set('g7hold:set',JSON.stringify([...hs])); if(typeof renderLedger==='function')await renderLedger(); }
+    }catch(_){}
+    ccfTradeAfter((kind==='buy'?'買い ':'売り ')+t+' '+sh+'株');
+    try{ if(typeof ccfDash==='function')ccfDash(); }catch(_){}
+    try{ if(typeof renderPlan==='function')await renderPlan(); }catch(_){}
+    try{ ccfState.banner('stateBar'); }catch(_){}
+    ['trS','trJ','trM'].forEach(i=>{const e=document.getElementById(i); if(e)e.value='';});
+    ccfTradeSync();
+  };
+  frame.contentWindow.postMessage(m,'*');
+  setTimeout(()=>{ if(!done&&window.__ccfBuyWait[id]){ delete window.__ccfBuyWait[id]; btn.disabled=false;
+    bad('保有の画面から返事がありません（「✎ 株数・買値を編集」を一度開いてから）'); } },3000);
+}
+
 // v9.9.164（2026-08-21 ユーザー指示「網と城は一緒にして50%づつは維持し続けながら表示はまとめてにしたい」）:
 //   第7引数 netOrder で**網の行を注文書へ混ぜる**。**50/50 の割り方も按分の規約も一切変えていない**
 //   ——城は ccfCastleAmt()、網は ccfNetBudget() で別々に計算したものを、**一枚に並べるだけ**。
@@ -4363,6 +4478,16 @@ function ccfPerfHTML(R,S){
   const pt=n=>(n==null||!isFinite(n))?'——':(n>0?'+':'')+(n*100).toFixed(1)+'pt';
   const yen=ccfYenM;   // 金額を隠す切替に従う
   let out='';
+  /* ★2026-09-23（ユーザー「やはりおかしい」）: 推移①②③は**買付日(bd)が判る銘柄だけ**で作る（S.tickers）。
+     保有タブは全銘柄なので、黙っていると「投じた円 ¥1,403,233 ≠ 取得 ¥2,148,003」「+17% ≠ +12%」が故障に見える。
+     ⇒ 対象と除外を**先頭に常に名指し**する（v9.9.52 の作法——黙って外さない）。全銘柄の損益は④と🏦保有。 */
+  if(S&&S.tickers&&R.positions){
+    const inc=S.tickers, allT=(R.positions||[]).map(r=>r.t), exc=allT.filter(t=>inc.indexOf(t)<0);
+    if(exc.length) out+=`<div class="panel" style="margin:10px 0;border-left:4px solid var(--rb-warn,#9a5b00);font-size:12.5px;line-height:1.75">`
+      +`<b>①〜③のグラフと S&amp;P500 との比較は ${inc.length}銘柄（${inc.join('・')}）だけ</b>で計算しています。`
+      +`<br><b>${exc.join('・')}</b> は<b>買付日が記録されていない</b>ので、同じ日の S&amp;P500 と比べられず外しています。`
+      +`<br>全${allT.length}銘柄の損益は下の ④ と 🏦保有 を見てください。買付日を入れれば①〜③にも入ります。</div>`;
+  }
   if(S&&S.days&&S.days.length>1){
     const d=S.days, inv=S.inv, tr=S.tr, val=S.val, bmk=S.bmk;
     const rTr=tr.map((x,i)=>x/inv[i]-1), rPx=val.map((x,i)=>x/inv[i]-1), rBm=bmk.map((x,i)=>x/inv[i]-1);
@@ -5007,8 +5132,6 @@ async function ccfCheck(btn){
 
   const esc=t=>String(t==null?'':t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   const arr=(d,k)=>(d&&Array.isArray(d[k]))?d[k]:null;   // null=測れていない（0件と区別する）
-  const dayOf=s=>{try{const t=Date.parse(String(s).slice(0,10)+'T00:00:00Z');
-    return isNaN(t)?null:Math.max(0,Math.round((Date.now()-t)/864e5));}catch(e){return null;}};
 
   // 錨(score_all)が読めなければこの画面は何も言えない。ここで緑に倒れない
   if(!D.sa||!Array.isArray(D.sa)){
@@ -6146,7 +6269,6 @@ async function renderPlan(){
   }catch(e){ window.__ccfSleeveTarget=null; window.__ccfSleeveNow=null; }
   let __hv=null; try{const r=await fetch('out/hist_val_now.json?t='+Date.now()); if(r.ok)__hv=await r.json();}catch(e){}
   const __HV=(()=>{const m={};for(const x of ((__hv&&__hv.rows)||[]))if(x&&x.ticker)m[x.ticker]=x;return m;})();
-  const __hvAsof=(__hv&&__hv.asof)||'';
   // ── 門外の明示判断で買う社（v9.9.129・2026-08-09 ユーザー「買付順位にTDGとMKSIが、はいってない」）──
   //   【何が問題だったか】MKSI・TDG は**門が⛔にしたまま、ユーザーが門の外で買うと決めた社**。
   //   ところが門は自分が⛔にした社を一切表示しないので、Ⅵにも今月の買付プランにも現れず、
