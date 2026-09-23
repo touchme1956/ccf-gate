@@ -3,7 +3,7 @@
  "roic": 22.9,
  "roicEx": 22.9,
  "roicg": 22.9,
- "nde": -2.4,
+ "nde": -2.48,
  "z": 10.8,
  "gpa": 75.5,
  "accr": -19.1,
@@ -87,7 +87,8 @@
    "2026-09-23 f2 50→65（規約の適用・判定圏外）: 旧 50 は 2026-08-16 に廃止された『数値開示なし→保守側 50』の旧規約による値。原本は p≥60 を数値で示していない",
    "2026-09-23 単位是正: ni 1351→1.351 / fcf 2838→2.838（百万円→十億円・ちょうど1000で割った）。パック自身の unit が『JPY(百万円=fcf/ni)』と申告していた＝値ではなく単位の札の誤り。conv=fcf/ni は不変でΩは動かない。百万円のままだと `ccfMcapUSD` の px×ni÷eps が 18894.7十億円（1000倍）に化ける",
    "2026-09-23 cagrT 空欄→-36.72（EDINET 有報PDF 2冊の「主要な経営指標等の推移」から機械算出・night/fill_growth_trend.py と同じ定義＝A案(端点)と B案(中央値)の大きいほう。A案 -114.88 ／ B案 -36.72。旧 nulls『ティッカーが SEC の対応表に無い＝穴』を解消。原本の本文は night/rebuild_src_cache_jp.py で docID から再構築できる）。Ω 33.2→29.2（node night/score_all.js --only 4393 --set cagrT=-36.72 で測定）",
-   "2026-09-23 intcov は空欄のまま・理由を _meta.nulls.intcov に（支払利息が百万円未満の0表示か、その他に含まれ区分表示なし＝参考の下限 2,154 ÷ 2 ＝ 1,077倍超）。todo intcov_jp_hole"
+   "2026-09-23 intcov は空欄のまま・理由を _meta.nulls.intcov に（支払利息が百万円未満の0表示か、その他に含まれ区分表示なし＝参考の下限 2,154 ÷ 2 ＝ 1,077倍超）。todo intcov_jp_hole",
+   "2026-09-23 nde -2.4→**-2.48**（有報原本 S100XD6Y で規約の定義に揃えて再計算・todo jp_nde_definition_mix）: 現金に CF計算書の現金及び現金同等物 5,212（p.45）を使っていた（BSの現金及び預金 4,186＋流動の有価証券 1,200）。Ω 29.2→29.2（不変）（node night/score_all.js --only 4393 --set nde=-2.48 で測定）。閾値（−0.5/0/1/2.5/3/4）はまたがない。"
   ],
   "evidence": {
    "dom": "有報 事業の内容『GoogleLLC及びAppleInc.等が運営するプラットフォーム上で提供するスマートフォンアプリ』。モバイルゲーム市場での支配的シェアの開示は皆無で、リスク記載も『海外メーカーの参入により競争が激化し、企業間格差が広がっております』 → 50",
@@ -117,7 +118,7 @@
    "idx": "東証グロース市場上場(みんかぶ・有報)。日経225・TOPIX Core等の主要指数に未採用 → no",
    "evebit": "EV=4,755円×3,974千株(18,896百万)−現金及び現金同等物5,212百万＋有利子負債13百万=13,697百万。FY2025営業利益2,154百万 → 6.4倍",
    "edinet_xbrl": "EDINET_DB(E34116) 有価証券報告書 FY2025 docID S100XD6Y / https://disclosure2.edinet-fsa.go.jp/WZEK0040.aspx?S100XD6Y（前期比較はFY2024 docID S100V09K / https://disclosure2.edinet-fsa.go.jp/WZEK0040.aspx?S100V09K）。2026-07-28に全機械値をこの原本で検算。当社は財務諸表を百万円単位で開示",
-   "nde": "EDINET XBRL FY2025: 有利子負債13百万円(1年内返済長期借入金のみ)−現金及び現金同等物5,212百万円 ÷ EBITDA(営業利益2,154＋減価償却14=2,168百万円)= −2.40。docID S100XD6Y / https://disclosure2.edinet-fsa.go.jp/WZEK0040.aspx?S100XD6Y",
+   "nde": "有報原本（S100XD6Y・連結・百万円・FY2025/9）から算出（2026-09-23 原本検算・日本株 nde の定義統一）: (有利子負債 1年内返済予定の長期借入金 13（長期借入金は当期末『-』） − (現金及び預金 4,186 ＋ 流動の有価証券 1,200)) ÷ (営業利益 2,154 ＋ 減価償却費 14) = -2.478 → **-2.48**（旧値 -2.4 から是正: 現金に CF計算書の現金及び現金同等物 5,212（p.45）を使っていた（BSの現金及び預金 4,186＋流動の有価証券 1,200））。定義: 有利子負債は流動分込み・リースは入れない／現金＝現金及び預金（BS）＋流動の有価証券／EBITDA＝営業利益＋減価償却費・のれん償却は足さない。出典 p.40・p.41（連結貸借対照表）・p.42（連結損益計算書）・p.45（連結キャッシュ・フロー計算書）。https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100XD6Y.pdf（EDINET直配信PDFを pypdf で直読。EDINET_DB MCP は使っていない）",
    "eps": "EDINET XBRL 1株当たり当期純利益 FY2025 = 339.99円。docID S100XD6Y / https://disclosure2.edinet-fsa.go.jp/WZEK0040.aspx?S100XD6Y。per=4,755円÷339.99=14.0",
    "roic": "EDINET XBRL FY2025 営業利益2,154百万円×0.70=1,507.8百万円 ÷ (有利子負債13＋自己資本5,816=5,829百万円) = 25.9%。のれんタグ不在につき roic=roicEx=roicg。docID S100XD6Y / https://disclosure2.edinet-fsa.go.jp/WZEK0040.aspx?S100XD6Y。EDINET一致を確認｜**v9.9.73 米国規約へ統一**: 米国規約へ統一（v9.9.73）。NOPAT=営業利益×(1−実効税率)／IC=自己資本+有利子負債−のれん−無形。投下資本は旧JP規約値からの逆算（ICg=NOPAT_jp÷roicg・IC=NOPAT_jp÷roic）で復元し、負債には触れていない。出典 EDINET_DB compare_companies（パックの審査年）＋原本検算",
    "roicg": "**v9.9.73 米国規約へ統一**: 米国規約へ統一（v9.9.73）。NOPAT=営業利益×(1−実効税率)／IC=自己資本+有利子負債−のれん−無形。投下資本は旧JP規約値からの逆算（ICg=NOPAT_jp÷roicg・IC=NOPAT_jp÷roic）で復元し、負債には触れていない。出典 EDINET_DB compare_companies（パックの審査年）＋原本検算",
