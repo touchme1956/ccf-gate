@@ -151,6 +151,7 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  "cash":  ["CashAndCashEquivalentsAtCarryingValue","CashAndCashEquivalents",
            "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
            "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsIncludingDisposalGroupAndDiscontinuedOperations"],
+ # 短期投資の BS の行。これが無い年だけ流動の AFS・満期保有・その他の短期投資で補う（STI_* と build_numbers の (5)・2026-09-23）
  "sti":   ["ShortTermInvestments","MarketableSecuritiesCurrent"],
  # 2026-07-29: 実測で取りこぼしが3件出たのでタグを拡張した（絶対のルール7「欠測をゼロと読むな」）。
  #   IDXX: リボルビング枠 LinesOfCreditCurrent 398,000千$ を数え落とし → roic 71.1→56.4
@@ -186,6 +187,40 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  "sh":    ["CommonStockSharesOutstanding","EntityCommonStockSharesOutstanding","NumberOfSharesOutstanding"],
  "impair":["GoodwillImpairmentLoss","ImpairmentOfIntangibleAssetsIndefinitelivedExcludingGoodwill"],
 }
+# ---------- 2026-09-23（todo fetcher_debt_tags_0923）: 候補に無かった負債・短期投資のタグ ----------
+# ★TAGS に入れない理由: build_numbers は TAGS の全キーで series()（＝1本を選ぶ代替）を回すが、ここに並べるタグは
+#   **構成要素**であり、しかも「他のタグの中に入っているかもしれない明細」なので、足してよい年を個別に確かめてから足す
+#   （build_numbers の「負債タグの穴」の節）。候補ごとに「代替か構成要素か」を先に答えた（CLAUDE.md が3度記録した取り違え）:
+#   ・DEBT_NEW_L＝**非流動の明細**（構成要素）。ConvertibleDebtNoncurrent（転換社債・非流動）/ LongTermLineOfCredit（リボルバー・非流動）/
+#     LongTermLoansPayable / SeniorNotesNoncurrent / SeniorLongTermNotes / IFRS の …SecuredBankLoansReceived 等（銀行借入・非流動）。
+#     実測で**総額の中の明細**として出す社がある（PRGS: LongTermDebtNoncurrent 534.5＝Convertible 294.5＋Other 240.0／
+#     RBC 2024: LongTermDebtNoncurrent 1,188.1 ≒ LongTermLineOfCredit 695.2＋SeniorNotes 500−費用／EXLS・BRC は同額の別名）
+#     → **その年に総額系のタグ（DEBT_AGG_L）が一つも無いときだけ**足す（CAMT/LMAT/GMED の転換社債・KFRC/BCPC/UTHR のリボルバー・GOOS の担保付銀行借入）。
+#   ・DEBT_NEW_S＝**流動の明細**。SeniorNotesCurrent（GMED 2024: 443.4百万$）/ LoansPayableCurrent / WarehouseAgreementBorrowings（TOL の
+#     住宅ローン子会社の借入枠 150.0百万$・BS に独立の行）等 → 流動の総額系（DEBT_AGG_S）と流動込みの総額（LongTermDebt 等）が無い年だけ。
+#   ・DEBT_NEW_T＝**流動込みの総額**（SeniorNotes / LoansPayable は us-gaap の定義上「流動・非流動を含む」）→ 総額系が非流動にも流動にも無い年だけ
+#     （TOL: Loans payable 896.4＋Senior notes 1,741.5。その内訳の OtherLoansPayable / SecuredDebt 249.1 は**入れない**＝Loans payable の中）。
+DEBT_NEW_L = ["ConvertibleDebtNoncurrent", "LongTermLineOfCredit", "LongTermLoansPayable", "SeniorNotesNoncurrent",
+              "SeniorLongTermNotes", "NoncurrentPortionOfNoncurrentSecuredBankLoansReceived",
+              "NoncurrentPortionOfNoncurrentUnsecuredBankLoansReceived", "NoncurrentPortionOfNoncurrentLoansReceived"]
+DEBT_NEW_S = ["SeniorNotesCurrent", "LoansPayableCurrent", "WarehouseAgreementBorrowings",
+              "CurrentSecuredBankLoansReceivedAndCurrentPortionOfNoncurrentSecuredBankLoansReceived",
+              "CurrentUnsecuredBankLoansReceivedAndCurrentPortionOfNoncurrentUnsecuredBankLoansReceived"]
+DEBT_NEW_T = ["SeniorNotes", "LoansPayable", "SecuredBankLoansReceived", "UnsecuredBankLoansReceived"]
+# 総額系（その年にあれば、上の明細はその中に入っていると見なして足さない＝二重計上より取りこぼしを選ぶ。取りこぼしは旧来どおり）
+DEBT_AGG_L = ["LongTermDebtNoncurrent", "LongTermDebt", "LongTermDebtAndCapitalLeaseObligations", "DebtAndCapitalLeaseObligations",
+              "LongTermNotesPayable", "UnsecuredLongTermDebt", "NoncurrentBorrowings", "Borrowings", "LongtermBorrowings",
+              "NoncurrentPortionOfNoncurrentBondsIssued", "BondsIssued", "DebtLongtermAndShorttermCombinedAmount"]
+DEBT_AGG_S = ["LongTermDebtCurrent", "DebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent", "NotesPayableCurrent",
+              "CurrentBorrowings", "CurrentPortionOfLongtermBorrowings",
+              "CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings"]
+# 流動込みの総額（非流動の総額系のうち流動分も含むもの）: これがある年は流動の明細も足さない
+DEBT_AGG_LC = ["LongTermDebt", "DebtAndCapitalLeaseObligations", "Borrowings", "DebtLongtermAndShorttermCombinedAmount"]
+# 短期投資の追加候補（流動の AFS・満期保有・その他の短期投資）。ShortTermInvestments / MarketableSecuritiesCurrent（BS の行）が
+#   **その年に無いときだけ**使う（あるときは BS の行が正で、これらは注記の内訳のことが多い＝足すと二重計上）
+STI_AFS = ["AvailableForSaleSecuritiesDebtSecuritiesCurrent", "DebtSecuritiesAvailableForSaleExcludingAccruedInterestCurrent"]
+STI_HTM = ["HeldToMaturitySecuritiesCurrent", "DebtSecuritiesHeldToMaturityAmortizedCostAfterAllowanceForCreditLossCurrent"]
+STI_OTHER = ["OtherShortTermInvestments"]
 # ---------- 年の付け方（2026-09-23是正・todo fetcher_fy_label_mislabel） ----------
 # ★旧 `_annual()` は年次の行を **提出書類の fy ラベル** で数えていた（`out[row["fy"]] = row["val"]`）。
 #   fy は提出書類の DEI（Document Fiscal Year Focus）で**期間の年ではない**——同じ提出の比較年度の行も
@@ -255,6 +290,7 @@ def _fy_model(facts):
 
 def _build_fy_model(facts):
     acc = {}
+    filed = {}                                         # 2026-09-23: 提出日（最新の年次報告が dei だけの社の検出に使う・年の付け方には不使用）
     for ns in ("us-gaap", "ifrs-full"):
         for tag in (facts.get("facts", {}).get(ns) or {}).values():
             for rows in (tag.get("units") or {}).values():
@@ -274,6 +310,8 @@ def _build_fy_model(facts):
                         x = acc[a] = ({}, {})
                     x[0][e] = x[0].get(e, 0) + 1
                     x[1][fy] = x[1].get(fy, 0) + 1
+                    if (r.get("filed") or "") > filed.get(a, ""):
+                        filed[a] = r["filed"]
     pts = []
     for a, (cnt, fys) in acc.items():
         m = max(cnt.values())
@@ -284,7 +322,7 @@ def _build_fy_model(facts):
     pts.sort(key=lambda p: (p[0], p[2]))
     n = len(pts)
     if not n:
-        return {"acc": {}, "pts": [], "fixed": {}}
+        return {"acc": {}, "pts": [], "fixed": {}, "filed": {}}
     c = [p[1] - _decyear(p[0]) for p in pts]
     last = list(range(max(0, n - 5), n))
     sup = {i: sum(1 for j in last if abs(c[j] - c[i]) <= 0.2) for i in last}
@@ -304,7 +342,8 @@ def _build_fy_model(facts):
                 ref = c[i]
     return {"acc": {pts[i][2]: (lab[i], pts[i][0]) for i in range(n)},
             "pts": [(pts[i][0], lab[i]) for i in range(n)],
-            "fixed": fixed}
+            "fixed": fixed,
+            "filed": {pts[i][2]: filed.get(pts[i][2]) for i in range(n)}}
 
 
 def _label_for(fym, d):
@@ -503,6 +542,17 @@ DEBT_NOT = re.compile(r"AvailableForSale|DebtSecurit|TradingSecurit|HeldToMaturi
                       #   CorporateDebtInstrumentsHeld 190,568百万TWD は資産であって債務ではない）。
                       r"|InstrumentsHeld|Capacity|FaceAmount|InterestRate|StatedPercentage"
                       r"|Covenant|Guarantee|Undrawn|Available")
+# 2026-09-23追加（todo fetcher_debt_tags_0923）: **上の正規表現にも候補にも無い負債タグ**があり、古い負債タグを持たない社では
+#   「痕跡ゼロ＝実質無借金」（嘘の純現金）になっていた——ConvertibleDebtNoncurrent（転換社債・非流動）/ LongTermLineOfCredit・LineOfCredit
+#   （単数形。上の LinesOfCredit は複数形しか拾わない＝KFRC のリボルバー 66.4百万$）/ LoansPayable・SeniorNotes 系（TOL）/
+#   IFRS の …LoansReceived（GOOS の担保付銀行借入 407.7百万CAD）/ DebtLongtermAndShorttermCombinedAmount（負債総額）ほか。
+#   ⚠ これらの名前は**流量**（InterestOnConvertibleDebtNetOfTax・AdjustmentsToAdditionalPaidInCapital…ConvertibleDebt・
+#   EarlyRepaymentOfSubordinatedDebt）や**資産**（DebtIssuanceCostsLineOfCreditArrangementsNet＝繰延の発行費用）にも現れる
+#   （実測296社）。上の正規表現を広げると既存の判定まで変わるので別に置き、**時点の値（残高）だけ**を痕跡に数え、下の語を除く。
+DEBT_EVI2 = re.compile(r"ConvertibleDebt|ConvertibleSubordinatedDebt|LineOfCredit(?!Facility)|LoansPayable|SeniorNotes"
+                       r"|SeniorLongTermNotes|LoansReceived|DebtLongtermAndShorttermCombinedAmount|SecuredDebt|UnsecuredDebt"
+                       r"|SubordinatedDebt|DebenturesIssued")
+DEBT_NOT2 = re.compile(r"Issuance|Cost|Accumulated|Assumed|Interest|Adjustment|Repayment|Induced|Expense")
 
 
 def debt_evidence(facts, year, span=2):
@@ -516,15 +566,24 @@ def debt_evidence(facts, year, span=2):
     対象年から span 年以内に債務らしき残高が**一つも無い**なら、債務ゼロは事実。
 
     返り値: 生きた痕跡の "タグ名(年)=値" のリスト（空なら痕跡ゼロ＝無借金と断定してよい）
+    2026-09-23: DEBT_EVI に無かった負債タグ（転換社債・リボルバー・LoansPayable・SeniorNotes・IFRS の …LoansReceived 等）を
+      DEBT_EVI2 で拾う。こちらは**年次報告の残高（時点の値）**だけを数える（名前が同じ流量・繰延費用や、10-Q の期中の残高を除く）。
     """
     out = []
     for ns in ("us-gaap", "ifrs-full"):
         d = facts.get("facts", {}).get(ns, {})
         for k in d:
-            if not DEBT_EVI.search(k) or DEBT_NOT.search(k):
+            if DEBT_NOT.search(k):
+                continue
+            old = bool(DEBT_EVI.search(k))
+            if not old and (not DEBT_EVI2.search(k) or DEBT_NOT2.search(k)):
                 continue
             for arr in d[k]["units"].values():
                 for x in arr:
+                    if not old and (x.get("start") or not str(x.get("form", "")).startswith(("10-K", "20-F", "40-F"))):
+                        continue                      # 追加の型（DEBT_EVI2）は**年次報告の残高（時点の値）**だけを痕跡に数える
+                        #   （TTD: 2020年3月に引き出し年内に返したリボルバー 143百万$ が10-Qの LongTermLineOfCredit に残る。
+                        #   年末残高はゼロ＝2021・2022年の無借金を止める痕跡ではない）
                     try:
                         y = int(x["end"][:4]); v = float(x["val"])
                     except Exception:
@@ -538,8 +597,9 @@ def debt_evidence(facts, year, span=2):
     return sorted(set(out))
 
 
-def series_sum(facts, keys, total_key=None):
+def series_sum(facts, keys, total_key=None, meta=None):
     """**足し合わせるべきタグ**を合計する。series() は候補から1本を選ぶので有利子負債には使えない。
+    meta: dict を渡すと、選んだ名前空間と主単位を meta["ns"] / meta["unit"] に書く（2026-09-23・値は変えない）。
 
     2026-07-29修正: debtS は LongTermDebtCurrent / LinesOfCreditCurrent / CommercialPaper …
       と**同時に存在しうる別の科目**なのに、series() が優先順で1本だけ選んでいた。
@@ -575,6 +635,7 @@ def series_sum(facts, keys, total_key=None):
         total_keys = list(total_key or [])
     per, unit_of, snaps = {}, {}, {}
     fym = _fy_model(facts)
+    ns_used = None
     for ns in ("us-gaap", "ifrs-full"):
         d = facts.get("facts", {}).get(ns, {})
         found = False
@@ -593,6 +654,7 @@ def series_sum(facts, keys, total_key=None):
                 unit_of[k] = u
                 found = True
         if found:
+            ns_used = ns
             break                        # 名前空間はまたがない（series()と同じ）
     if not per and not snaps:
         return {}, {}
@@ -601,6 +663,8 @@ def series_sum(facts, keys, total_key=None):
     for u in list(unit_of.values()) + [u for _v, u in snaps.values()]:
         _cnt[u] = _cnt.get(u, 0) + 1
     main_u = max(_cnt, key=lambda u: _cnt[u])
+    if meta is not None:
+        meta["ns"], meta["unit"] = ns_used, main_u
     for k in [k for k in per if unit_of[k] != main_u]:
         del per[k]
     years = set().union(*[set(v) for v in per.values()]) if per else set()
@@ -638,6 +702,156 @@ def series_sum(facts, keys, total_key=None):
     return out, used
 
 
+# ---------- 2026-09-23（todo fetcher_debt_tags_0923）の道具 ----------
+def _tag_cur(facts, key, nss=("us-gaap", "ifrs-full")):
+    """1本のタグの**当期の値だけ**（比較年度の埋めを含まない）と単位・名前空間。無ければ ({}, None, None)"""
+    fym = _fy_model(facts)
+    for ns in nss:
+        d = facts.get("facts", {}).get(ns, {})
+        if key in d:
+            out, u = _annual(d[key]["units"], fym)
+            if out:
+                return _cur_only(out), u, ns
+    return {}, None, None
+
+
+def _tag_ev(facts, key, nss=("us-gaap", "ifrs-full")):
+    """1本のタグの**当期の値＋（当期の値が無い年は）翌年以降の提出の比較年度の値**と単位。恒等式の証拠にだけ使う（値としては使わない）。
+    実測 WSO: オペレーティングリース負債のタグは FY2022 10-K から当期の行があり、2021年末の値（非流動 187.0・流動 81.9百万$）は
+    FY2022 10-K の比較年度の列にしか無い"""
+    fym = _fy_model(facts)
+    for ns in nss:
+        d = facts.get("facts", {}).get(ns, {})
+        if key in d:
+            out, u = _annual(d[key]["units"], fym)
+            if out:
+                return dict(out.ev or out), u, ns
+    return {}, None, None
+
+
+def _filing_vals(facts, key, accn, ns, unit):
+    """1つの提出（accn）が key について報告した**年次の期間の値** {期末: 値}（当期・比較年度の列すべて）"""
+    d = facts.get("facts", {}).get(ns, {})
+    out = {}
+    for r in ((d.get(key) or {}).get("units") or {}).get(unit) or []:
+        if r.get("accn") != accn or not r.get("start"):
+            continue
+        d0, d1 = _pdate(r["start"]), _pdate(r.get("end") or "")
+        if d0 is None or d1 is None or (d1 - d0).days < 300:
+            continue
+        out[r["end"]] = r["val"]
+    return out
+
+
+def _used_vals(used):
+    """series_sum の内訳の文（"タグ=1,234"）から {タグ: 値}。総額の年（"…(総額)"）は値を持たない"""
+    out = {}
+    for x in used or []:
+        m = re.match(r"([A-Za-z0-9]+)=(-?[\d,]+)", x)
+        if m:
+            try:
+                out[m.group(1)] = float(m.group(2).replace(",", ""))
+            except ValueError:
+                pass
+    return out
+
+
+def _lease_residual(x, oll, fll, others=()):
+    """x（LongTermDebtAndCapitalLeaseObligations 系の値）が**リース負債（＋別に報告された借入の明細）と恒等式で一致**するか。
+    一致すれば (内訳の名, リース額, x の中の借入分) を返す（借入分は 0 か others のどれか）。一致しなければ None。
+    ±0.5% の一致だけを証拠にする（のれんの上限・LongTermDebt の総額判定と同じ作法）。"""
+    if not x:
+        return None
+    cands = []
+    if oll and fll:
+        cands.append(("オペレーティング＋ファイナンスリース", oll + fll))
+    if fll:
+        cands.append(("ファイナンスリース", fll))
+    if oll:
+        cands.append(("オペレーティングリース", oll))
+    tol = 0.005 * abs(x)
+    for nm, lv in cands:
+        r = x - lv
+        if abs(r) <= tol:
+            return nm, lv, 0
+        for ov in others:
+            if ov and abs(r - ov) <= tol:
+                return nm, lv, ov
+    return None
+
+
+def _dep_subtotal_fix(facts, y, T):
+    """D&A の総額タグの値 T（y 年）が**小計**だと証明できるなら、証明できる下限の最大値を返す。無ければ None。
+    証明＝T を出した提出の中で、どれかの年の列で T が構成要素（無形の償却 A・減価償却 D）より**小さい**
+    （総額は構成要素以上のはず。0.5% を超えて下回れば、その行は A か D の全部を含んでいない）。
+    置き換える値は**下限として確かなものだけ**の最大: T・D・A・他の総額タグ、そして T が A を含まないと証明できたときの T＋A。
+    ⚠ D＋A は使わない——D が総額の誤用のことがある（BBY: CF の『Depreciation and amortization』831 に DDA、注記の
+    Depreciation も 831、無形の償却 14 は別＝831 は総額。D＋A は 845 で過大）。"""
+    fym = _fy_model(facts)
+    hit = None
+    for ns in ("us-gaap", "ifrs-full"):
+        d = facts.get("facts", {}).get(ns, {})
+        for k in TAGS["dep"]:
+            for u, rows in ((d.get(k) or {}).get("units") or {}).items():
+                for r in rows:
+                    if r.get("val") != T or not r.get("start"):
+                        continue
+                    ent = fym["acc"].get(r.get("accn"))
+                    d0, d1 = _pdate(r["start"]), _pdate(r.get("end") or "")
+                    if ent is None or d0 is None or d1 is None or (d1 - d0).days < 300:
+                        continue
+                    if ent[0] == y and abs((d1 - ent[1]).days) <= 183:
+                        hit = (ns, k, u, r["accn"])       # 当期の行（旧来どおり並び順の最後）
+        if hit:
+            break
+    if not hit:
+        return None
+    ns, k, u, accn = hit
+    Tv = _filing_vals(facts, k, accn, ns, u)
+    Av = _filing_vals(facts, "AmortizationOfIntangibleAssets", accn, ns, u)
+    Dv = _filing_vals(facts, "Depreciation", accn, ns, u)
+    excA = sorted(e for e in Tv if Av.get(e) and Tv[e] < Av[e] * 0.995)
+    belowD = sorted(e for e in Tv if Dv.get(e) and Tv[e] < Dv[e] * 0.995)
+    if not (excA or belowD):
+        return None
+
+    def _v(tag):
+        v, uu, _ = _tag_cur(facts, tag, (ns,))
+        return v.get(y) if uu == u else None
+    A0, D0 = _v("AmortizationOfIntangibleAssets"), _v("Depreciation")
+    T2 = {k2: _v(k2) for k2 in TAGS["dep"] if k2 not in (k, "DepreciationAmortisationAndImpairmentLoss")}
+    cands = [("総額タグ", T)] + [(nm, x) for nm, x in (("Depreciation", D0), ("AmortizationOfIntangibleAssets", A0)) if x]
+    cands += [(k2, x) for k2, x in T2.items() if x]
+    if excA and A0:
+        cands.append((f"{k}＋AmortizationOfIntangibleAssets", T + A0))
+    nm, new = max(cands, key=lambda c: c[1])
+    if new <= T * 1.005:
+        return None
+    return new, {"tag": k, "accn": accn, "excA": excA, "belowD": belowD, "A": Av, "D": Dv, "T": Tv, "pick": nm}
+
+
+def _dei_only_annual(facts):
+    """最新の年次報告が companyfacts に**dei の事実だけ**で載っているか（財務の数字が未収載）。
+    実測: 2026年提出の20-F（TSM・CEPU・INFY ほか）は EntityCommonStockSharesOutstanding しか無く、採取器は黙って前年を使っていた。
+    訂正報告（10-K/A 等）は Part III だけのことが多く財務を持たないのが普通なので数えない。
+    返り値: [(accn, form, 提出日, DEI の年度)]（財務のある最新の年次報告より後に提出されたものだけ）"""
+    fym = _fy_model(facts)
+    filed = [v for v in (fym.get("filed") or {}).values() if v]
+    if not filed:
+        return []
+    last = max(filed)
+    out = {}
+    for tag in (facts.get("facts", {}).get("dei") or {}).values():
+        for rows in (tag.get("units") or {}).values():
+            for r in rows:
+                a = r.get("accn")
+                if r.get("form") not in ("10-K", "20-F", "40-F") or not a or a in fym["acc"]:
+                    continue
+                if (r.get("filed") or "") > last:
+                    out[a] = (r.get("form"), r.get("filed"), r.get("fy"))
+    return sorted(((a,) + v for a, v in out.items()), key=lambda x: x[2])
+
+
 def build_numbers(facts):
     S, diag = {}, {}
     for k, v in TAGS.items():
@@ -647,8 +861,11 @@ def build_numbers(facts):
     # 2026-08-04是正(A7): debtL の総額は LongTermDebt(us-gaap) と Borrowings(IFRS・流動込み総額の
     #   ことが多い) の2本。Borrowings を構成要素扱いすると内数 LongtermBorrowings と二重計上する
     #   （実測 WIT で約64B INR。詳細は series_sum の頭注）
-    S["debtS"], _usedS = series_sum(facts, TAGS["debtS"], total_key="DebtCurrent")
-    S["debtL"], _usedL = series_sum(facts, TAGS["debtL"], total_key=("LongTermDebt", "Borrowings"))
+    _dmS, _dmL = {}, {}
+    S["debtS"], _usedS = series_sum(facts, TAGS["debtS"], total_key="DebtCurrent", meta=_dmS)
+    S["debtL"], _usedL = series_sum(facts, TAGS["debtL"], total_key=("LongTermDebt", "Borrowings"), meta=_dmL)
+    # 旧来の候補タグで報告のある年（下の「負債タグの穴」の節で足す明細の年とは分けて持つ。nde の無借金判定・ROIC の欠測判定で使う）
+    _origDebtYears = set(S["debtL"]) | set(S["debtS"])
     # 2026-08-07是正: **`LongTermDebt` が総額か非流動のみかは、恒等式で機械的に判る。**
     #   旧実装は「機械では区別できない」として警告だけ出していた（下の _dbl）が、その年に
     #   `LongTermDebt ≒ LongTermDebtNoncurrent + LongTermDebtCurrent` が成り立てば
@@ -754,6 +971,175 @@ def build_numbers(facts):
             S["debtL"][_y] = _val
             _usedL[_y] = _used
             _fixedL.append(_y)
+    # ===== 2026-09-23（todo fetcher_debt_tags_0923）: 負債タグの穴 (1)〜(4) =====
+    #   nde の是正（原本との突合せ42パック）で見つかった穴。どれも「候補＝代替か構成要素か」を先に答え、
+    #   **恒等式か不等式で確かめられた年だけ**値を動かす（確かめられない年は旧来どおり＝取りこぼしは残るが二重計上は作らない）。
+    _debtNs = _dmL.get("ns") or _dmS.get("ns")
+    _debtU = _dmL.get("unit") or _dmS.get("unit")
+    _debtNotes = []
+
+    def _tc(k, nss=None):
+        """その社の負債の系列と同じ名前空間・単位での、タグ k の当期の値（違えば {}＝足さない）"""
+        v, u, _ns = _tag_cur(facts, k, nss or ((_debtNs,) if _debtNs else ("us-gaap", "ifrs-full")))
+        return v if v and (not _debtU or u == _debtU) else {}
+    # (3) IFRS の Borrowings は**流動込みの総額**のことが多いのに、流動の構成要素（ShorttermBorrowings 等）を debtS に足していた。
+    #   実測 TIMB 2025: Borrowings 2,778,723 ＝ LongtermBorrowings 1,853,097 ＋ ShorttermBorrowings 925,626（千BRL）が全年で成立
+    #   → 流動の借入 925,626 を二重計上（nde −0.23 のところ +0.01）。同じ恒等式が CPA・IHG・LOMA・TGS・TIGO・KARO 2025・
+    #   OMAB 2018-20・CEPU 2018・DLO 2021 で成立した（296社）。**恒等式が成り立つ年だけ**流動の構成要素を控除する
+    #   （GSK・NVO・PAC・SAP・AMBIQ・ASR は成り立たない＝Borrowings の中身を機械で確かめられないので触らない）。
+    _fixB = []
+    if _debtNs == "ifrs-full":
+        _bor = _tc("Borrowings")
+        _ncI = [_tc(k) for k in ("LongtermBorrowings", "NoncurrentBorrowings", "NoncurrentPortionOfNoncurrentBondsIssued")]
+        for _y in sorted(S["debtS"]):
+            _b, _cs = _bor.get(_y), S["debtS"].get(_y) or 0
+            if not _b or not _cs or S["debtL"].get(_y) != _b or "Borrowings(総額)" not in (_usedL.get(_y) or []):
+                continue
+            _nc = sum(v[_y] for v in _ncI if _y in v)
+            if abs(_b - (_nc + _cs)) <= 0.005 * abs(_b):
+                _usedS[_y] = [f"{x}は Borrowings（流動込みの総額 {_b:,.0f}＝非流動 {_nc:,.0f}＋流動 {_cs:,.0f} と恒等式で一致）に"
+                              f"含まれるため控除" for x in (_usedS.get(_y) or [])]
+                S["debtS"][_y] = 0
+                _fixB.append(_y)
+    if _fixB:
+        _debtNotes.append(f"有利子負債の二重計上を恒等式で確定して是正した（IFRS・{len(_fixB)}年: {_fixB[0]}〜{_fixB[-1]}）: "
+                          f"Borrowings＝非流動＋流動の構成要素 が成立＝Borrowings は流動込みの総額なので、流動の構成要素を控除した")
+    # (3') TSM 型: IFRS の CurrentPortionOfLongtermBorrowings（1年内返済の長期負債）が社債の1年内償還分を**含む**ことがある
+    #   （TSM の BS『Long-term liabilities - current portion』59,857.9百万TWD＝社債 57,148＋銀行借入。CurrentBondsIssued… 57,148 も
+    #   別に付くので二重）。含むかどうかは銀行借入の1年内分が別のタグで出ていないと恒等式で確かめられない→**値は動かさず注記だけ**。
+    _suspCB = []
+    for _y in sorted(S["debtS"]):
+        _pv = _used_vals(_usedS.get(_y))
+        _cb, _cp = _pv.get("CurrentBondsIssuedAndCurrentPortionOfNoncurrentBondsIssued"), _pv.get("CurrentPortionOfLongtermBorrowings")
+        if _cb and _cp and _cp >= _cb:
+            _suspCB.append((_y, _cb, _cp))
+    if _suspCB:
+        _y, _cb, _cp = _suspCB[-1]
+        _debtNotes.append(f"有利子負債の二重計上の疑い（{_y}年ほか{len(_suspCB)}年）: CurrentPortionOfLongtermBorrowings {_cp:,.0f} は"
+                          f" CurrentBondsIssuedAndCurrentPortionOfNoncurrentBondsIssued {_cb:,.0f} 以上＝社債の1年内償還分を含む"
+                          f"『1年内返済の長期負債』の総額かもしれない（TSM の BS はそう）。銀行借入の1年内分が別に出ていないので"
+                          f"**機械では確定できず両方を足している**。原本のBSで確認せよ")
+    # (2) LongTermDebtAndCapitalLeaseObligations に**リース負債だけ**（＋別に報告された借入の明細）が入っている社がある。
+    #   実測 WSO 2025: 361,635千$＝OperatingLeaseLiabilityNoncurrent 350,616＋FinanceLeaseLiabilityNoncurrent 11,019（BS『Total long-term
+    #   obligations』・借入は無い）。2023年は 304,5xx＝リース 289,1xx＋LongTermLineOfCredit 15,4xx。PLAB は FinanceLeaseLiability と同額。
+    #   規約はリース負債を入れない（ACI のように借入と同じ行で内訳の分からないファイナンスリースは込みのまま——ここは
+    #   **リース負債と恒等式で一致して分離できると確かめられた年だけ**借入分（0 か別に報告された明細の額）にする）。
+    def _te(k):
+        """リース負債のタグの値（当期、無ければ翌年以降の提出の比較年度）。恒等式の証拠にだけ使う"""
+        v, u, _ns = _tag_ev(facts, k, ("us-gaap",))
+        return v if v and (not _debtU or u == _debtU) else {}
+    _oll, _ollc = _te("OperatingLeaseLiabilityNoncurrent"), _te("OperatingLeaseLiabilityCurrent")
+    _fll, _fllc = _te("FinanceLeaseLiabilityNoncurrent"), _te("FinanceLeaseLiabilityCurrent")
+    _fllt = _te("FinanceLeaseLiability")
+
+    def _fl(y, nc):
+        a, b = (_fll, _fllc) if nc else (_fllc, _fll)
+        if y in a:
+            return a[y]
+        if y in _fllt and y in b:
+            return _fllt[y] - b[y]
+        return None
+    _newL = {k: _tc(k) for k in DEBT_NEW_L}
+    _leaseY = []
+    if _debtNs in (None, "us-gaap"):
+        _A = _tc("LongTermDebtAndCapitalLeaseObligations", ("us-gaap",))
+        for _y in sorted(S["debtL"]):
+            _hitA = [x for x in (_usedL.get(_y) or []) if re.fullmatch(r"LongTermDebtAndCapitalLeaseObligations=-?[\d,]+", x)]
+            if not _hitA or _y not in _A:
+                continue
+            _x = _A[_y]
+            _res = _lease_residual(_x, _oll.get(_y), _fl(_y, True), [v[_y] for v in _newL.values() if _y in v])
+            if _res is None:
+                continue
+            _nm, _lv, _keep = _res
+            S["debtL"][_y] -= (_x - _keep)
+            _usedL[_y] = [x for x in _usedL[_y] if x not in _hitA] + [
+                f"LongTermDebtAndCapitalLeaseObligations={_x:,.0f}は{_nm} {_lv:,.0f}"
+                + (f"＋借入の明細 {_keep:,.0f}" if _keep else "") + "と恒等式で一致＝リース負債は入れず借入分"
+                + f" {_keep:,.0f} だけ数えた"]
+            _leaseY.append(_y)
+    if _leaseY:
+        _debtNotes.append(f"LongTermDebtAndCapitalLeaseObligations がリース負債（＋別に出ている借入の明細）と恒等式で一致した年がある"
+                          f"（{_leaseY[0]}〜{_leaseY[-1]}年・{len(_leaseY)}年）: リース負債は入れず借入分だけを数えた（実測 WSO）")
+    # (1) 1年内返済分のタグ LongTermDebtAndCapitalLeaseObligationsCurrent が debtS の候補に無かった（ACI が 534.0百万$ を落とす）。
+    #   代替か構成要素か: LongTermDebtCurrent の**別名／上位集合**（＋ファイナンスリースの1年内分）で、DebtCurrent・
+    #   DebtAndCapitalLeaseObligations・LongTermDebt（流動込み）の**構成要素**。実測（296社）で LongTermDebtCurrent と同額の社
+    #   （ASML/HPQ/MTN/CHH/HEI）、LongTermDebt＝LTDACLO＋これ が恒等式で成立する社（ETN/MELI）がある
+    #   → その年に LongTermDebtCurrent・DebtCurrent・DebtAndCapitalLeaseObligations・流動込みの総額（LongTermDebt/Borrowings）が
+    #   **どれも無い年だけ**足す（ACI/APH/KO/NJR/DXC 2025-26…）。リース負債だけの年（WSO・PLAB）は (2) と同じ恒等式で 0 として数える。
+    _addC, _skipC = [], []
+    _newDebt = {}                                 # 年→今回足した負債の額（nde の無借金判定・ROIC の欠測判定で±2年の窓に使う）
+    if _debtNs in (None, "us-gaap"):
+        _Ac = _tc("LongTermDebtAndCapitalLeaseObligationsCurrent", ("us-gaap",))
+        _blkC = [_tc(k, ("us-gaap",)) for k in ("LongTermDebtCurrent", "DebtCurrent", "DebtAndCapitalLeaseObligations")]
+        # この社の LTDACLO 系の行が**どこかの年でリース負債だと証明できた**なら、恒等式で借入分を確かめられない年の
+        #   1年内分は足さない＝旧来どおり（WSO: 2019年の LTDACLOCurrent 69.4百万$ はオペレーティングリース 68.2＋ファイナンスリースの
+        #   1年内分と見られるが、ファイナンスリースの内訳が無く恒等式が閉じない。確かめられない年に足すとリースが借入に化ける）
+        _leaseCo = bool(_leaseY) or any(_lease_residual(v, _ollc.get(y), _fl(y, False)) for y, v in _Ac.items())
+        for _y, _xc in sorted(_Ac.items()):
+            if any(_y in b for b in _blkC):
+                continue
+            if any("(総額" in x or x.startswith("DebtAndCapitalLeaseObligations=") for x in (_usedL.get(_y) or [])):
+                continue
+            _pv = _used_vals(_usedS.get(_y))
+            if _xc and any(v and abs(v - _xc) <= 0.005 * abs(_xc) for v in _pv.values()):
+                continue                          # 他の流動の構成要素と同額＝同じ負債の別名
+            _res = _lease_residual(_xc, _ollc.get(_y), _fl(_y, False))
+            if _res is None and _leaseCo:
+                _skipC.append(_y)
+                continue
+            _add = _res[2] if _res else _xc
+            if _add > 0:
+                _newDebt[_y] = _newDebt.get(_y, 0) + _add
+            S["debtS"][_y] = (S["debtS"].get(_y) or 0) + _add
+            _usedS[_y] = list(_usedS.get(_y) or []) + [
+                f"LongTermDebtAndCapitalLeaseObligationsCurrent={_xc:,.0f}"
+                + (f"は{_res[0]} {_res[1]:,.0f}と恒等式で一致＝リース負債なので 0 として数えた" if _res else "")]
+            _addC.append(_y)
+    if _skipC:
+        _debtNotes.append(f"LongTermDebtAndCapitalLeaseObligationsCurrent を足さなかった年がある（{_skipC[0]}〜{_skipC[-1]}年）: この社の同じ行は"
+                          f"他の年にリース負債と恒等式で一致した（{', '.join(str(y) for y in _leaseY) or '1年内分'}）のに、この年はリースのタグが無く"
+                          f"確かめられない＝リース負債を借入として数える恐れ（旧来どおり数えない）")
+    # (4) 候補にも痕跡の正規表現にも無かった負債タグ（DEBT_NEW_* の頭注）。**総額系のタグがその年に一つも無いときだけ**足す。
+    #   流動込みの総額（SeniorNotes / LoansPayable ほか）はその家族の明細（…Noncurrent/…Current）より優先し、明細は足さない。
+    _FAM = {"SeniorNotes": ("SeniorNotesNoncurrent", "SeniorNotesCurrent", "SeniorLongTermNotes"),
+            "LoansPayable": ("LongTermLoansPayable", "LoansPayableCurrent"),
+            "SecuredBankLoansReceived": ("NoncurrentPortionOfNoncurrentSecuredBankLoansReceived",
+                                         "CurrentSecuredBankLoansReceivedAndCurrentPortionOfNoncurrentSecuredBankLoansReceived"),
+            "UnsecuredBankLoansReceived": ("NoncurrentPortionOfNoncurrentUnsecuredBankLoansReceived",
+                                           "CurrentUnsecuredBankLoansReceivedAndCurrentPortionOfNoncurrentUnsecuredBankLoansReceived")}
+    _aggL = [_tc(k) for k in DEBT_AGG_L]
+    _aggS = [_tc(k) for k in DEBT_AGG_S]
+    _aggLC = [_tc(k) for k in DEBT_AGG_LC]
+    _newS = {k: _tc(k) for k in DEBT_NEW_S}
+    _newT = {k: _tc(k) for k in DEBT_NEW_T}
+    _addN = []
+    for _side, _grp, _blk in (("T", _newT, _aggL + _aggS), ("L", _newL, _aggL), ("S", _newS, _aggS + _aggLC)):
+        for _k, _vals in _grp.items():
+            for _y, _v in sorted(_vals.items()):
+                if any(_y in b for b in _blk):
+                    continue                      # 総額系がある年＝この明細はその中にあると見なす（二重計上より取りこぼし）
+                if _side != "T" and any(_k in fam and _y in _newT.get(tot, {}) for tot, fam in _FAM.items()):
+                    continue                      # 家族の総額（流動込み）がある年は明細を足さない
+                _pv = {**_used_vals(_usedL.get(_y)), **_used_vals(_usedS.get(_y))}
+                if _v and any(v and abs(v - _v) <= 0.005 * abs(_v) for v in _pv.values()):
+                    continue                      # 他の構成要素と同額＝同じ負債の別名（NBIX 2019: 転換社債が非流動にも流動にも 408.8）
+                _tgt, _used = ("debtS", _usedS) if _side == "S" else ("debtL", _usedL)
+                S[_tgt][_y] = (S[_tgt].get(_y) or 0) + _v
+                _used[_y] = list(_used.get(_y) or []) + [f"{_k}={_v:,.0f}"]
+                _addN.append((_k, _y))
+                if _v > 0:
+                    _newDebt[_y] = _newDebt.get(_y, 0) + _v
+    if _addN:
+        _ks = sorted({k for k, _y in _addN})
+        _debtNotes.append(f"候補外だった負債タグを足した（{', '.join(_ks)}・{min(y for _k, y in _addN)}〜{max(y for _k, y in _addN)}年）: "
+                          f"その年に総額系の負債タグ（LongTermDebt・LongTermDebtNoncurrent・Borrowings 等）が一つも無いので"
+                          f"明細が総額の中に入っている恐れが無い年だけ")
+
+    def _debtHist(y):
+        """y 以外の年に負債の報告があるか。旧来の候補タグは**全年**（従来どおり）、今回足した明細は debt_evidence() と同じ±2年の窓
+        （TTD の2017年のリボルバー 27百万$ が、2018年から借入の無い今の年の無借金の判定を止めないように）"""
+        return bool(_origDebtYears) or any(abs(yy - y) <= 2 for yy, v in _newDebt.items() if v > 0)
     # （注記は note が作られた後＝下の _fixed の注記の隣で出す）
     # 2026-08-03: 無形も同じく「構成要素」だった（TAGS["intan"]の頭注を見よ）。総額タグがその年に
     #   あれば総額、無ければ 確定分＋無期限分 を足す＝series_sum の total_key がそのまま使える。
@@ -792,6 +1178,40 @@ def build_numbers(facts):
         for _y, _v in _iag.items():
             if _y not in S["intan"] and _y not in S["gw"]:
                 S["intan"][_y] = _v
+    # 2026-09-23（todo fetcher_debt_tags_0923 (5)）: **短期投資の候補が BS の行の2本だけだった**。流動の AFS
+    #   （AvailableForSaleSecuritiesDebtSecuritiesCurrent / DebtSecuritiesAvailableForSaleExcludingAccruedInterestCurrent）・
+    #   流動の満期保有・OtherShortTermInvestments だけで短期投資を出す社は現金だけで nde を出していた（機械の根拠を持つ
+    #   ASML/FTNT/GRMN/KO/SYK/SYY/VEEV/WAY が狭い基準・原本の突合せで確定）。規約（2026-09-23 の nde の是正）は
+    #   「現金＝現金＋流動の短期投資（AFS・満期保有・定期預金を含む）」。
+    #   代替か構成要素か: ShortTermInvestments / MarketableSecuritiesCurrent は **BS の行**、AFS・満期保有は多くの社で**その内訳の注記**
+    #   （ADI: ShortTermInvestments 1,152.9 ＝ AFS流動 1,152.9／CMG・LRN: MarketableSecuritiesCurrent ＝ 満期保有）→
+    #   **BS の行のタグがその年に無いときだけ**使う。AFS と満期保有は別の資産（足す）。その他の短期投資が AFS＋満期保有と
+    #   同額（または片方と同額）ならそれが総額か別名なので1本だけ。
+    _stiUsed = {}
+    _stiP = []
+    for _grp in (STI_AFS, STI_HTM, STI_OTHER):
+        _m = {}
+        for _k in _grp:
+            for _y, _v in (_tag_cur(facts, _k, ("us-gaap",))[0] or {}).items():
+                _m.setdefault(_y, (_k, _v))
+        _stiP.append(_m)
+    for _y in sorted(set().union(*[set(m) for m in _stiP])):
+        if _y in S["sti"]:
+            continue
+        _parts = [m[_y] for m in _stiP[:2] if _y in m]
+        _o = _stiP[2].get(_y)
+        if _o:
+            _tot = sum(v for _k, v in _parts)
+            if _parts and _o[1] and (abs(_o[1] - _tot) <= 0.005 * abs(_o[1])
+                                     or any(abs(_o[1] - v) <= 0.005 * abs(_o[1]) for _k, v in _parts)):
+                _parts = [_o]
+            else:
+                _parts.append(_o)
+        if len(_parts) == 2 and _parts[0][0] in STI_AFS and _parts[1][0] in STI_HTM and _parts[0][1] \
+                and abs(_parts[0][1] - _parts[1][1]) <= 0.005 * abs(_parts[0][1]):
+            _parts = _parts[:1]
+        S["sti"][_y] = sum(v for _k, v in _parts)
+        _stiUsed[_y] = _parts
     for k in ("debtS", "debtL", "intan"):
         diag[k] = f"{len(S[k])}年分(合計)" if S[k] else "タグ不発見"
     ev, note = {}, []
@@ -906,6 +1326,7 @@ def build_numbers(facts):
                     f"1年内返済分込みで報告する会社では LongTermDebtCurrent を足すと重複する。"
                     f"恒等式（総額＝非流動＋流動）が成立しないか、非流動タグが無い年なので"
                     f"**機械では確定できなかった**。原本のBSで総額を確認せよ")
+    note.extend(_debtNotes)                       # 2026-09-23 負債タグの穴 (1)〜(4) の注記
     # 2026-07-29新設: 機械項目にも根拠を刻む。
     #   実測(night/audit_evidence.py)で、機械項目の _meta.evidence 被覆率は 9.8%
     #   (ni 0.3% / cagr 1.0% / gm 4.8% / roic 16.2%)だった。「機械の出力だから正しい」
@@ -923,6 +1344,18 @@ def build_numbers(facts):
         note.append("年ラベルを期末日から付け直した提出がある（SEC の fy＝提出書類の DEI の付番が、期末の順序と"
                     "整数年ずれていた）: " + " / ".join(f"期末 {e} の年次報告 fy{o}→{n}" for e, o, n in _fx)
                     + "。系列の年はこの付け直し後のラベル（会社の直近の呼び方に揃えてある）")
+    # 2026-09-23（todo fetcher_debt_tags_0923 (7)）: **最新の年次報告の数字が companyfacts に無い**のを黙らない。
+    #   実測: 2026年提出の20-F（TSM 0001628280-26-025362・CEPU・INFY ほか CPAC/GRVY/KARO/LOMA/TGS/WIT）は dei の事実
+    #   （EntityCommonStockSharesOutstanding）しか載っておらず、採取器は一つ前の年次報告の数字を「最新」として出していた
+    #   （stale() は取れた系列の中の最新年で測るので気づけない）。値は前年のまま（その年の値としては正しい）で、ここでは注記で名指しする。
+    _dei = _dei_only_annual(facts)
+    if _dei:
+        _pts = _fy_model(facts)["pts"]
+        _lastP = max(p[0] for p in _pts).isoformat() if _pts else "?"
+        note.append("最新の年次報告の数字が companyfacts に未収載: "
+                    + " / ".join(f"{f} accn {a}（{fl} 提出・DEI の年度 {fy}）" for a, f, fl, fy in _dei)
+                    + f" は dei の事実だけ。機械値はすべて財務の数字がある最後の年次報告（期末 {_lastP}）までで、"
+                      f"**最新年の数字ではない**——原本の本文で最新年を確認せよ")
 
     def stale(y):
         return LATEST is not None and y is not None and y < LATEST - 1
@@ -1014,12 +1447,47 @@ def build_numbers(facts):
         #   実測 KLAC: OperatingIncomeLoss が2014年で途切れており（同社は売上−原価−R&D−販管費で
         #   開示）、EBITDA が減価償却394百万$だけになって **nde=9.66**（原本からの検算では約0.2-0.5）。
         #   roic側は既に年検問で落としていたが、ndeだけ素通りしていた＝同じ穴の取り残し。
+        # 2026-09-23（todo fetcher_debt_tags_0923 (5)(6)）: 短期投資の追加候補と D&A の小計を使ったときは根拠の文に書く
+        _ndeX = ""
+        if y0 in _stiUsed:
+            _ndeX += ("｜短期投資は BS の行のタグ（ShortTermInvestments / MarketableSecuritiesCurrent）が無い年なので "
+                      + " + ".join(f"{k}={v:,.0f}" for k, v in _stiUsed[y0]) + " を使った（流動の AFS・満期保有・その他の短期投資）")
         if y0 not in S["op"]:
             note.append(f"nde算出不能: {y0}年に営業利益タグが無い（EBITDAが減価償却だけになり過大に出る）。"
                         f"原本の損益計算書から営業利益を確認して手入力せよ")
             ebitda = 0
         else:
+            # (6) D&A の総額タグが**小計**のことがある: 総額は構成要素以上のはずなのに、その値を出した提出の中で
+            #   無形の償却や減価償却より小さい列がある＝その行は A か D の全部を含まない（実測 CHKP 24.8＜無形の償却 68.1 ／
+            #   RMBS 11.9＜減価償却 30.8 ／ ENTG は FY2025 10-K の2023・2024年の列で 172.7＜214.5・188.1＜190.1＝CF は
+            #   Depreciation 205.3 と Amortization 184.4 の2行）。証明できる下限の最大値へ置き換える（_dep_subtotal_fix）。
+            #   ⚠ HD（3,514＝無形の償却 607 を除く行）・LOPE・NSSC・NDSN は不等式が立たず機械では確かめられない＝触らない。
+            if y0 in S["dep"] and y0 not in _depFilled:
+                _dfx = _dep_subtotal_fix(facts, y0, S["dep"][y0])
+                if _dfx:
+                    _new, _dinfo = _dfx
+                    _why = []
+                    if _dinfo["excA"]:
+                        _e = _dinfo["excA"][0]
+                        _why.append(f"{_e[:4]}年の列で {_dinfo['tag']} {_dinfo['T'][_e]:,.0f}＜AmortizationOfIntangibleAssets {_dinfo['A'][_e]:,.0f}")
+                    if _dinfo["belowD"]:
+                        _e = _dinfo["belowD"][0]
+                        _why.append(f"{_e[:4]}年の列で {_dinfo['tag']} {_dinfo['T'][_e]:,.0f}＜Depreciation {_dinfo['D'][_e]:,.0f}")
+                    _ndeX += (f"｜減価償却: 総額タグ {_dinfo['tag']} {S['dep'][y0]:,.0f} は小計（同じ提出 {_dinfo['accn']} の"
+                              f"{'・'.join(_why)}）→ 証明できる下限の最大 {_dinfo['pick']} {_new:,.0f} を使った")
+                    note.append(f"減価償却の総額タグが小計だった（{y0}年 {_dinfo['tag']} {S['dep'][y0]:,.0f}→{_new:,.0f}）: "
+                                f"{'・'.join(_why)}（同じ提出 {_dinfo['accn']}）。総額は構成要素以上のはずなのでその行は全部を含まない。"
+                                f"小計のままだと EBITDA が過小＝nde が過大（財務キル(>4)の誤爆）。原本のCF計算書で D&A を確認せよ")
+                    S["dep"][y0] = _new
             ebitda = S["op"][y0] + (S["dep"].get(y0,0) or 0)
+            # 2026-09-23: **EBITDA が 0 以下なら nde は定義できない**（負で割ると符号が逆になり、純負債の社が純現金に見える）。
+            #   実測 CMTL 2025: 営業利益 −139,098,000。旧値 0.28 は「純現金÷負の EBITDA」（リボルバー 114,414,000 を見落として
+            #   純現金に見えていた）、見落としを直すと −0.74＝純負債が純現金の符号で出る。296社でこの型は CMTL だけ。
+            if ebitda <= 0:
+                note.append(f"nde算出不能: {y0}年の EBITDA が 0 以下（営業利益 {_u(S['op'][y0])} + 減価償却 "
+                            f"{_u(S['dep'].get(y0,0) or 0)}）＝有利子負債÷EBITDA の倍率が定義できない"
+                            f"（負の EBITDA で割ると符号が逆になり純負債が純現金に見える）")
+                ebitda = 0
             if y0 in _depFilled:
                 note.append(f"減価償却は合計タグが無く**構成要素の合計**で補った（{y0}年 {_u(S['dep'][y0])}: "
                             f"{' + '.join(_usedD.get(y0) or [])}）。合計タグしか見ないと D&A が丸ごと欠測し "
@@ -1032,11 +1500,14 @@ def build_numbers(facts):
         #   痕跡ゼロなら債務ゼロは事実で、ネットキャッシュの会社の nde が空欄のままになるのを止める。
         if _cashGap:
             pass                              # 2026-09-23: 算出不能（上で注記済み）。現金の欠測を0と読まない
-        elif not has_debt and not (S["debtL"] or S["debtS"]) and not debt_evidence(facts, y0) and ebitda:
+        elif not has_debt and not _debtHist(y0) and not debt_evidence(facts, y0) and ebitda:
             ev["nde"] = round((0-cash)/ebitda, 2)
+            _far = sorted(set(S["debtL"]) | set(S["debtS"]))
             evd["nde"] = (f"機械算出 {y0}年: (有利子負債 0 − 現金同等物 {_u(cash)})"
                           f" ÷ (営業利益 {_u(S['op'].get(y0,0) or 0)} + 減価償却 {_u(S['dep'].get(y0,0) or 0)})。"
-                          f"**有利子負債は候補タグ・独立走査とも痕跡ゼロ＝実質無借金**（欠測を0と読んだのではない）")
+                          + ("**有利子負債は候補タグ・独立走査とも痕跡ゼロ＝実質無借金**" if not _far else
+                             f"**有利子負債は候補タグの報告が±2年の外（{_far[-1]}年）だけ・独立走査も痕跡ゼロ＝実質無借金**")
+                          + "（欠測を0と読んだのではない）" + _ndeX)
         elif not has_debt:
             note.append(f"nde算出不能: {y0}年に有利子負債タグが無い。無借金なら nde=−{_u(cash)}/EBITDA "
                         f"だが、他年に報告があるか未知のタグに痕跡があるため断定できない。原本のBSで確認して手入力せよ")
@@ -1044,7 +1515,7 @@ def build_numbers(facts):
             debt = (S["debtL"].get(y0,0) or 0)+(S["debtS"].get(y0,0) or 0)
             ev["nde"] = round((debt-cash)/ebitda, 2)
             evd["nde"] = (f"機械算出 {y0}年: (有利子負債 {_u(debt)} − 現金同等物 {_u(cash)})"
-                          f" ÷ (営業利益 {_u(S['op'].get(y0,0) or 0)} + 減価償却 {_u(S['dep'].get(y0,0) or 0)})")
+                          f" ÷ (営業利益 {_u(S['op'].get(y0,0) or 0)} + 減価償却 {_u(S['dep'].get(y0,0) or 0)})" + _ndeX)
     # のれん除外ROIC 5年系列 → worst/median
     roics = []
     roic_skip = []
@@ -1088,12 +1559,15 @@ def build_numbers(facts):
             _what = "自己資本" if _eqY > 0 else "総資産（自己資本がマイナスのため）"
             has_debt = (y in S["debtL"]) or (y in S["debtS"])
             if not has_debt:
-                if S["debtL"] or S["debtS"]:
+                if _debtHist(y):                  # 2026-09-23: 今回足した明細は±2年の窓だけで数える（_debtHist の頭注）
                     # 2026-08-03: 他年に報告があっても、**その額が自己資本比で無視できるなら**
                     #   欠測年を0と読んでよい（上限の不等式）。実測 EXPD は短期銀行借入を
                     #   有る年だけ報告し最大でも自己資本の約1.5%＝ROICを動かせない。
                     #   従来はこの型で5年系列が1年も作れなかった。
+                    # 2026-09-23: 今回足した明細の額は±2年の窓の中だけ数える（_debtHist と同じ。LMAT: 2024年発行の転換社債
+                    #   168.6百万$ が2021年の「他年の最大」になると、借入の無かった年まで算出不能になる）
                     _mx = max([(S["debtL"].get(_y,0) or 0)+(S["debtS"].get(_y,0) or 0)
+                               - (_newDebt.get(_y, 0) if abs(_y - y) > 2 else 0)
                                for _y in set(S["debtL"])|set(S["debtS"])] or [0])
                     if _base > 0 and _mx >= 0.02*_base:
                         roic_skip.append(f"{y}:有利子負債タグ不在でIC算出不能（他年は報告あり＝欠測）")
@@ -1111,7 +1585,9 @@ def build_numbers(facts):
                                     f"{', '.join(_eviD[:5])}。TAGSの拡張が要る（絶対のルール7）")
                         continue
                     # 痕跡ゼロ＝実質無借金。debt=0 は欠測ではなく事実（注記は年ごとに1回だけ）
-                    _m = ("有利子負債タグが全年で不発見、かつ独立走査でも債務の痕跡ゼロ＝"
+                    _m = (("有利子負債タグが全年で不発見" if not (S["debtL"] or S["debtS"]) else
+                           f"有利子負債の報告は±2年の外（{max(set(S['debtL']) | set(S['debtS']))}年）だけ")
+                          + "、かつ独立走査でも債務の痕跡ゼロ＝"
                           "**実質無借金として debt=0 で算出**した（欠測をゼロと読んだのではない）")
                     if _m not in note: note.append(_m)
             debt = (S["debtL"].get(y,0) or 0)+(S["debtS"].get(y,0) or 0)
