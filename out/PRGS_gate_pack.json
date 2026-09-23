@@ -43,7 +43,7 @@
  "indG": "below",
  "founder": "no",
  "fin": "acq",
- "p1": 75,
+ "p1": 80,
  "p2": 80,
  "p3": null,
  "p4": 80,
@@ -106,7 +106,8 @@
    "2026-07-29 ROIC分母の検算: roic 83.6→null、IC=−14,384千$(負)＝自己資本478,349の−3.0%。のれん1,309,054+無形584,028=1,893,082が自己資本の3.96倍で、控除すると投下資本が負に沈む。直近3年(FY2023/24/25)のICが連続で負。**旧83.6はFY2022(IC=128,191)の残骸で直近年の値ではなかった**。有利子負債1,400,349(転換社債流動359,163+長期借入600,000+転換社債非流動441,186)は原本BSで確認、採取器の欠落は無し。roicg=7.3・nde=8.19は再計算一致で据置。roict=downも据置(roicgベース9.80→7.31=−2.49pt)",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=2.5 / 5年窓=3.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-08-03 f5 50 → 空欄。disrupt=unsettled の導出値は 65 で、逸脱評価なのに根拠が無かった。**disrupt は測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない（未測定なのは全317社中3社＝ADP/META/NJRのみで、そちらは値を残す）。影の計測: Ωの動きは最大+0.4/最小−0.2pt・Ω72/75の線を跨ぐ社0・投下可7社不変（f5の実効ウェイトは約4%）",
-   "2026-08-20 irr 70 → 50（二重読み）"
+   "2026-08-20 irr 70 → 50（二重読み）",
+   "2026-09-23 p1 75 → 80（todo p1_debtfree_apply・機械算出）: 旧値は根拠なし・規約の刻み(90/80/65/50)に無い中間値。のれん・無形除外ROIC 2021 37.5% / 2022 27.7% / 2023 27.6% / 2025 19.5%、CV=22.7% → 80。式と系列は _meta.evidence.p1"
   ],
   "evidence": {
    "roic": "FY2025(2025-11-30,10-K,accession 0000876167-26-000008)千$: 自己資本 478,349 / 有利子負債 1,400,349(転換社債・流動 359,163 + 長期借入金 600,000 + 転換社債・非流動 441,186。原本BSで各行を確認) / のれん 1,309,054 / 無形資産(純) 584,028。**のれん+無形=1,893,082は自己資本478,349の3.96倍** → IC=478,349+1,400,349−1,309,054−584,028=**−14,384(負)**。営業利益 153,290 / 税引前 81,628 / 法人税等 8,495 → 実効税率10.4% → NOPAT=137,337。roicg=7.31%。5年系列(FY2021-25) IC=+14,446/+128,191/−2,672/−50,693/−14,384＝**直近3年が連続で負**。計算できた2年はFY2021 659.7%(IC=自己資本の3.5%＝完全な分母縮退)・FY2022 83.6%——**現行値83.6はこのFY2022の残骸で、直近年の値ではない**。roicg=9.80/10.54/8.23/4.58/7.31%。nde=(1,400,349−現金94,807)÷(153,290+減価償却6,200)=8.19で現行値と一致。",
@@ -124,12 +125,12 @@
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 442,150,000 → 2023年 694,439,000 → 2025年 977,831,000。A案(端点) 直近2年CAGR 18.66% − その前3年CAGR 16.24% = +2.42pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +3.79pt ／ 年次YoY {'2021': 20.2, '2022': 13.3, '2023': 15.4, '2024': 8.5, '2025': 29.8} → **採用 +3.79pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 2.164。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
    "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『Our net retention rates have generally ranged between 100% and 102% for all periods presented.』（Item 7. MD&A ／ Net Retention Rate）——唯一の実数だが**純額**（expansion と attrition の相殺後）で、gross retention も churn も非開示。ほぼ横ばいを示すだけで、離脱に費用が掛かることを示さない。　『As of November 30, 2025, transaction price allocated to remaining performance obligations was $ 536.3 million. We expect to recognize approximately 74 % of the revenue within the next year and the remainder thereafter.』（Item 8. Notes ／ Revenue Recognition（Contract Balances））——売上977.8百万$に対し0.55倍・74%が12ヶ月以内＝ADBEで退けた0.94倍/65%より両軸とも弱く、複数年の購買義務としては成立しない。　『We have kept entry costs, consisting primarily of the initial purchase of development licenses, low to encourage a wide variety of ISVs to build applications.』（Item 1. Business ／ Independent Software Vendors）——当社が意図的に摩擦を下げていると述べる文。組込構造（ISV/OEM）を70の根拠にしようとすると、この文が正面から打ち消す。　《反証（同じ原本に同居する）》『Customers and partners may not renew or reduce their use of our products due to various factors, such as dissatisfaction with our products (including features, user experience, or support), pricing, no longer having a need for our products, the availability of competitive products, or the impact of macroeconomic trends or catastrophic events』 ／ 『We do not believe that there is a dominant vendor in the markets in which we compete.』 ／ 『the marketplace for new products is intensely competitive and characterized by low barriers to entry』　《検問と反証の経緯》【台帳の根拠は空欄】irr_evidence が literally 空で、原本のどの文で70としたのかが台帳から辿れない。よって原本のみで裁いた。【★反証を試みた経緯——70 を支える文を5系統で探したが無かった】(1)機構語の全数走査: switching cost 0 / migrat 0 / lock 0 / rewrite 0 / re-platform 0 / installed base 0 / customiz 0 / churn 0 / renewal rate 0 / sticky 0 / mission-critical 0。『switch』は2件ヒットするが**両方とも買収先の社名 Ipswitch**＝MA の switching(決済のルーティング)・BR の single source(ワンストップ)と同じ『同じ語が別の意味』の型で、機構の証拠ではない。(2)組込の線: OpenEdge に ISV がアプリを載せ、OEM が『embed our products into their own software products or devices』という構造は実在し、これが最有力の70候補だった。しかし原本は**乗り換え時に何が起きるかを一言も書いておらず**、逆に『We have kept entry costs, consisting primarily of the initial purchase of development licenses, low to encourage a wide variety of ISVs to build applications.』＝当社が意図的に摩擦を下げていると述べる（6146の無償テストカット・IRDMの Iridium Edge と同型）。(3)実数での検定: 台帳が MSFT/MCO/ADBE で使った RPO の物差しを当てると、**RPO 536.3百万$ ÷ 売上 977.8百万$ = 0.55倍・74%が12ヶ月以内**。ADBE(0.94倍・65%が12ヶ月以内)が『年次サブスクとして自然』として退けられた線より**両軸とも弱い**（比較: MSFT 2.0倍・12ヶ月以内30% ／ MCO 1.16倍・45%が1年超先）。よって複数年の購買義務では立たない。(4)解約率・更新率の実数: NRR 100〜102% は唯一の実数だが、原本の定義どおり**expansion を含み contraction/attrition と相殺した純額**で、gross retention も churn も非開示。台帳がサイボウズを70とした根拠（製品別 churn 0.4〜1.0%＋値上げ後も解約率1%未満という自然実験）とは強度が桁違いで、『ほぼ横ばい』以上のことを言っていない。(5)反証の同居: 会社自身が『Customers and partners may not renew or reduce their use of our products due to ... the availability of competitive products』と**競合製品の存在を非更新の理由に名指し**し、『We do not believe that there is a dominant vendor』『low barriers to entry』（Chef/オープンソース近傍）と書く。以上、規約どおり50。【evidence_gap】根拠が空欄のまま70が置かれていた。",
-   "acqS5": "買収支出 5年ぶん合計 1483百万$ ÷ 期初総資産(2020-11-30) 1042百万$ ＝ 1.424／内訳: 2025-11-30 21百万$ / 2024-11-30 853百万$ / 2023-11-30 355百万$ / 2021-11-30 254百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 1483百万$ ÷ 期初総資産(2020-11-30) 1042百万$ ＝ 1.424／内訳: 2025-11-30 21百万$ / 2024-11-30 853百万$ / 2023-11-30 355百万$ / 2021-11-30 254百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "p1": "【2026-09-23 機械算出・変動係数刻み(v9.9.50)・todo p1_debtfree_apply】ROIC安定性＝のれん・無形除外ROIC4年系列の**変動係数(σ÷平均)**。系列: 2021 37.5% / 2022 27.7% / 2023 27.6% / 2025 19.5% → 平均28.0% / σ6.4pt / **CV=22.7%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50・v9.9.50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。有利子負債タグの無い年は debt_evidence()（採取器と同じ関数）で痕跡ゼロ＝無借金を確かめた年だけ debt=0 で算入。 除外年: 2024:IC が自己資本の2割未満＝分母縮退。 旧値 75 は根拠なし（規約の刻みに無い中間値）。出典: SEC XBRL companyfacts（night/fill_derived_judgment.roic_series）。"
   },
   "nulls": {
    "roic": "IC=−14,384千$と**負**のため、のれん除外ROICは定義上算出不能。レガシーインフラソフトのロールアップという業態上、貸借対照表の資産は買収で積んだのれん(1,309,054)と取得無形(584,028)が中心で、その合計は自己資本の3.96倍。両方を控除すれば投下資本は必然的に負に沈む。直近3年(FY2023-25)が連続で負であり一過性でもない。**経済実態は roicg=7.3%(のれん込み)で評価すること**——買収に投じた金額を含む総投下資本に対する税引後営業利益のリターンであり、FY2021 9.8%→FY2025 7.3%と低下している(FY2024にShareFile買収で負債が1,526,267へ倍増した際は4.6%まで落ちた)。これは「買収で積み上げた資本が元の利益率を再現できていない」というロールアップの警報そのもの。",
    "p3": "【2026-07-29】規約どおり空欄へ戻した。p3 は門が nde=8.19 から同表で導出する（純現金→95 / <1→85 / <2.5→70 / 以上→50）。台帳にあった 50 は導出値と一致していたので、値を置いておく意味が無い——むしろ値が残っていると門はそれを『逸脱評価』として尊重し、nde を直しても p3 が追随しなくなる（陳腐化する）。審査プロトコル『ndeを埋めれば空欄可＝門が機械導出』。",
-   "p1_note": "【2026-07-29】p1の根拠を機械で刻めなかった: 門式で算出できた年が2年しかない（2021:IC が自己資本の2割未満＝分母縮退 / 2023:IC が自己資本の2割未満＝分母縮退 / 2024:IC が自己資本の2割未満＝分母縮退）",
    "f5": "【2026-08-03】f5=50 は disrupt=unsettled（未決・両刃） からの門の導出値 65 と食い違う『逸脱評価』だったが _meta.evidence.f5 に根拠が無かった。導出項目に根拠なき値を残すと門がそれを尊重し、**disruptを直しても f5 が追随しない＝陳腐化する**（night/fill_derived_judgment.py の設計思想）。空欄へ戻して門の導出に委ねる。逸脱させるなら原本根拠を付けて入れ直すこと"
   },
   "provenance": {
@@ -145,7 +146,8 @@
    "roiic5": "machine",
    "roict": "machine",
    "cagrT": "machine",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "p1": "machine"
   },
   "basis": {
    "roic": "na",

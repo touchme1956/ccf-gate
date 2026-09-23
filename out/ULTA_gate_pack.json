@@ -43,7 +43,7 @@
  "indG": null,
  "founder": null,
  "fin": null,
- "p1": 60,
+ "p1": 80,
  "p2": 50,
  "p3": 95,
  "p4": 90,
@@ -71,7 +71,8 @@
    "cagr=15.0はCOVID谷(FY2021売上6.2十億)起点の5年値。7年CAGR(FY2019 6.7→FY2026 12.4)は約9.2%で、成長の相当部分はコロナ回復リバウンド。かつ営業利益はFY2024 1,678→FY2026 1,533Mへ減少=増収減益(マージン圧迫)。『成長の幻影』兆候",
    "2026-07-29 acq5 0.39 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "roic 43.9→47.6（2026-08-03・採取器の是正の反映）: 無形の控除が過少だった。2025年の無形を 0 → **203,288,000** へ是正し、IC 2,639,317,000 → 2,436,029,000（自己資本 2,803,451,000 + 有利子負債 62,287,000 − のれん 226,421,000 − 無形）。原因は hachimon_fetch の TAGS['intan'] に **IndefiniteLivedIntangibleAssetsExcludingGoodwill が無かった**こと、および series() が候補から1本しか選ばないため総額タグが古い年で止まると新しい年が欠測になり `.get(y,0)` で 0 と読まれていたこと（絶対のルール7(a)）。CELHの審査中に発見し、無形を series_sum で合成する形へ変更した。全317パックへの影響を実測: 差が出たのは GLXZ/NEE/ULTA の3社のみ、いずれもΩ30前後のキル済みで**判定圏外＝買付判断は1件も動かない**",
-   "2026-09-23 f2 75→65（規約の適用・判定圏外）: 原本の数値は旧値の刻みを支えない（内容は evidence.f2）。2026-08-16 統一規約"
+   "2026-09-23 f2 75→65（規約の適用・判定圏外）: 原本の数値は旧値の刻みを支えない（内容は evidence.f2）。2026-08-16 統一規約",
+   "2026-09-23 p1 60 → 80（todo p1_debtfree_apply）: 旧値は刻み外の中間値。根拠欄にある審査官自身の系列を現行の変動係数刻みに当てると CV=16.2% → 80。旧根拠は _meta.evidence.p1 に保持"
   ],
   "evidence": {
    "dom": "『The markets for beauty and wellness products and salon services are highly competitive with few barriers to entry』『we may lose market share』→米ビューティ市場は断片的・参入障壁低く、Ultaは専門小売首位でも総市場シェアは40%未満=競争的→dom50",
@@ -84,7 +85,7 @@
    "geopol": "『Ulta U.S.』中心の米国内小売。国際は未収益化段階(『international operations may not become profitable on a sustained basis』)で規模僅少→地政学エクスポージャー軽微→geopol=0",
    "moatdecay": "営利率FY2023-26 16.1→12.4%・ROIC 66→43%の一貫低下+『few barriers to entry』+競争激化=堀の構造的減衰兆候→moatdecay=yes(ただしシェア自体は拡大中で両義的)",
    "concentration": "『our top ten brand partners accounted for approximately 51% and 54% of our net sales』(FY2025/FY2024)=仕入先集中高いが微改善。『There continues to be vendor consolidation』",
-   "p1": "ROIC5年σ=9.2pt(FY2022-26: 66.8/66.1/58.2/49.7/43.2%)。σ8pt級(65)と二桁(50)の境界、かつ単調な下降トレンド(ノイズでなく低下)→保守化しp1=60",
+   "p1": "【2026-09-23 刻みへ是正・todo p1_debtfree_apply】旧値 60 は規約の刻みに無い中間値（旧・絶対σ刻みの時代に置かれた）。審査官の系列 FY2022-26 66.8% / 66.1% / 58.2% / 49.7% / 43.2% → 平均56.8% / σ9.21pt / **CV=16.2%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50・v9.9.50)で **80**（標本σでも同じ刻み）。審査官の元の記述（保持）: ROIC5年σ=9.2pt(FY2022-26: 66.8/66.1/58.2/49.7/43.2%)。σ8pt級(65)と二桁(50)の境界、かつ単調な下降トレンド(ノイズでなく低下)→保守化しp1=60",
    "p2": "COVID不況時 営業利益FY2020 901.1→FY2021 236.8M(-74%)=深いDD(-60%超)→p2=50。単一不況実績(IPO2007で08-09は零細)",
    "p3": "純現金(nde-0.24、有利子負債実質ゼロ・現金424M)→p3=95",
    "p4": "accr=-5.0%(<0)+『Item 1B. Unresolved Staff Comments None』。material weaknessヒットは監査手続の定型文(『assessing the risk that a material weakness exists』)で実指摘ではない→無限定相当→p4=90",
