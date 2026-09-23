@@ -207,6 +207,9 @@ async function tabsFromDom(p) {
              night/check_navstack.js の頭注が名指ししているのと同じ罠を、この道具が踏んでいた。
              見えているかは **computed の display/visibility/opacity と実寸**で見る。 */
           const cs = getComputedStyle(box);
+          /* 2026-09-23: 章の帯は「その他」(群6)のときだけ出す仕様になった（ユーザー指示「上の表示はその他のみ」）。
+             群1〜5で隠れているのは正しい＝skip ではなく「期待どおり」として数える。群6で隠れていたら skip（警告）のまま */
+          if (cs.display === 'none' && gg !== 6) return { hiddenOk: true };
           if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0)
             return { skip: `章の帯が出ていない(${cs.display}/${cs.visibility}/${cs.opacity})` };
           const br = box.getBoundingClientRect();
@@ -223,6 +226,7 @@ async function tabsFromDom(p) {
           return { hid: out, h: Math.round(br.height) };
         }, g);
         // ★測れなかったことを黙って飲み込まない（ルール7: 「測っていない」を「異常なし」と言わない）
+        if (q && q.hiddenOk) { gok++; continue; }   // 群1〜5は章の帯を出さない仕様（隠れていることを確認した）
         if (!q || q.skip) { gskip.push(`群${g}: ${(q && q.skip) || '評価できない'}`); continue; }
         gok++;
         if (q.hid.length) gbad.push(`群${g}: ${q.hid.join(' | ')}`);
