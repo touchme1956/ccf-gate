@@ -129,10 +129,11 @@
   {
    "id": "sixk_watch",
    "kind": "宿題",
-   "title": "6-K提出体の監視拡張(watch_eventsの死角)",
+   "title": "✅ 6-K提出体の監視拡張(watch_eventsの死角)",
    "due": null,
-   "note": "投下可のASML/SAP/RELXと監視のTSM/RACEは8-Kでなく6-K提出＝現行の8-K監視に映らない。6-KにはItem番号が無いため提出一覧+警報語スキャン(kessan_check_jp型)の実装が要る。保有ASMLが死角なのが最も痛い",
-   "owner": "穴"
+   "note": "投下可のASML/SAP/RELXと監視のTSM/RACEは8-Kでなく6-K提出＝現行の8-K監視に映らない。6-KにはItem番号が無いため提出一覧+警報語スキャン(kessan_check_jp型)の実装が要る。保有ASMLが死角なのが最も痛い\n【2026-09-23 完了】watch_events.py の 6-K 経路を作り直した（2026-08-10 の経路は実質の死角だった: 取得失敗が「読んで何も無い」に化ける／提出一式の .txt を800KBで黙って切る／HTML実体参照で has&#160;resigned が当たらない）。今は: 提出の索引→主文書と EX-99.x を全部読む（社債書類とXBRLは理由つきで飛ばす）・警報語は kessan_check.ALERTS をそのまま読み _is_real で裁く（限/集は記録のみ）・決算/定期報告の 6-K は earnings へ（8-K 2.02 相当）・1回120件の上限と16MB超は「監視の穴」として errors へ（黙って消さない）・6-K 提出体は SEC submissions の年次様式（20-F/40-F）から判定（ハードコードなし→ASML/RACE/RELX/SAP）。直近30日: RELX 3件・RACE 5件・TSM 3件を全文走査して警報なし（ASML/SAP は窓内0件）、取得の穴ゼロ。実在の出来事12件中11件を捕捉（ASML 2023年の CEO 交代も当たる）。1日の走行は41リクエスト・20秒。⚠TSM は kanshi_list から外れているので日次には入っていない。",
+   "owner": "穴",
+   "done": true
   },
   {
    "id": "reg_dependence",
@@ -163,10 +164,10 @@
   {
    "id": "disrupt_blank_12",
    "kind": "宿題",
-   "title": "irr85由来の disrupt 空欄を原本で埋める（実測4社: ENTG/MKSI/NOVT/ST）",
+   "title": "✅ irr85由来の disrupt 空欄を原本で埋める（実測4社: ENTG/MKSI/NOVT/ST）",
    "due": null,
-   "note": "2026-08-05にパック化した12社（AEIS/BWXT/COHR/ENTG/IPGP/MKSI/NOVT/NXPI/OLED/RBC/ROG/WST）のうち10社で disrupt を空欄にした。10-Kの技術変化リスクが一般形で名指しの破壊要因を確認できなかったため。**門は空欄を最良ケース(settled)で裁くのでこの空欄は有利側に働く**（RELXの教訓）。12社ともΩ75未満なので買付への実害は無いが、作業リストとして残す",
-   "done": false,
+   "note": "2026-08-05にパック化した12社（AEIS/BWXT/COHR/ENTG/IPGP/MKSI/NOVT/NXPI/OLED/RBC/ROG/WST）のうち10社で disrupt を空欄にした。10-Kの技術変化リスクが一般形で名指しの破壊要因を確認できなかったため。**門は空欄を最良ケース(settled)で裁くのでこの空欄は有利側に働く**（RELXの教訓）。12社ともΩ75未満なので買付への実害は無いが、作業リストとして残す\n【2026-09-23 完了】ENTG/MKSI/NOVT/ST の disrupt を原本で確定（全社に同じ規則: 核の製品や堀を損なう構造変化を名指しし、かつ追い風にもなる→unsettled／名指しが無く構造変化は需要を強めるだけ→settled）: ENTG 空欄→settled（AI・微細化は需要の源・技術リスクは定型文）／MKSI 空欄→unsettled（『…lost business to customers who identify alternative materials or processes…』＝MSD 売上の33.7%に起きた代替）／NOVT 空欄→unsettled（FY2025 に新設の AI による製品寿命の短縮の記述が長寿命 OEM の柱と逆向き）／ST 空欄→unsettled（ICE 需要の縮小と EV 転用の両刃）。6社ともキルで Ω が頭打ちのため Ω・堀・関門は1社も動かない。",
+   "done": true,
    "owner": "審査",
    "tickers": [
     "ENTG",
@@ -178,10 +179,10 @@
   {
    "id": "oled_dep",
    "kind": "宿題",
-   "title": "OLED(Universal Display)の dep を確定させる",
+   "title": "✅ OLED(Universal Display)の dep を確定させる",
    "due": null,
-   "note": "10-Kは BOE・LG Display・SDC の3社それぞれが売上10%超・合計で過半と開示するが**個別の実数が無い**ため数値を置けず空欄。実態は40%(ベト線)を超える可能性があるので、次に確定させるべき筆頭の欄。説明会資料・第三者の市場表を当たる",
-   "done": false,
+   "note": "10-Kは BOE・LG Display・SDC の3社それぞれが売上10%超・合計で過半と開示するが**個別の実数が無い**ため数値を置けず空欄。実態は40%(ベト線)を超える可能性があるので、次に確定させるべき筆頭の欄。説明会資料・第三者の市場表を当たる\n【2026-09-23 完了】**dep 空欄→43（顧客軸・≥40 のベトが発火）**。10-K Note 19「Concentration of Risk」が匿名で 2025/2024/2023 の顧客別比率を開示していた（A 43/43/36%・B 21/23/23%・C 15/16/17%）＝旧理由「個別の実数なし」は注記を見落としていた。最新の 10-Q（2026Q2）でも最大顧客は四半期43%・上期46%。A は中国売上合計を上回るので BOE ではなく SDC か LG Display（推論・開示ではない）。供給軸も40超（材料の製造を PPG 1社に依存・材料売上は54.3%）。堀69.5で元々関門外なので買付は不変。",
+   "done": true,
    "owner": "審査",
    "tickers": [
     "OLED"
@@ -686,9 +687,9 @@
   {
    "id": "loar_judgment_fields",
    "kind": "宿題",
-   "done": false,
-   "title": "LOAR の判断項目6欄（p1/f2/f3/f4/disrupt/moatdecay）と dilNet を原本で確定",
-   "note": "2026-08-08に機械値と rep/dur/p2/p4/f1/erosion/expiry/geopol/dom/dep は原本で確定させたが、残り6欄+dilNetは根拠なし。Ω34.2＝判定圏外なので見送った。3年窓が取れる年になったらROIICも再測定（f1は1年窓5.4%で期中買収により低めに出る可能性）",
+   "done": true,
+   "title": "✅ LOAR の判断項目6欄（p1/f2/f3/f4/disrupt/moatdecay）と dilNet を原本で確定",
+   "note": "2026-08-08に機械値と rep/dur/p2/p4/f1/erosion/expiry/geopol/dom/dep は原本で確定させたが、残り6欄+dilNetは根拠なし。Ω34.2＝判定圏外なので見送った。3年窓が取れる年になったらROIICも再測定（f1は1年窓5.4%で期中買収により低めに出る可能性）\n【2026-09-23 完了】LOAR の7欄を原本で確定: p1 70→空欄（刻みに無い値・系列が FY2024/25 の2年だけ・FY2023 は上場前で税率不定）／f2 55→65（浸透率の数値開示なし）／f3 80→75（R&D/売上は上昇だがシェア獲得の主張は防衛25%のみ）／f4 60→50（唯一の隣接事業＝非航空は8%→5%・有機−10.1%）／disrupt unsettled→settled（技術リスクは定型文のみ・部品は機体の寿命まで最長50年）／moatdecay no 据置（根拠を付けた）／dilNet 1.0→空欄（上場後の年次窓は1本だけで追加募集の19日後に始まる＝単一の値は誤解を招く）。キルで Ω39.9 頭打ちのため動かず。",
    "owner": "審査",
    "tickers": [
     "LOAR"
@@ -1581,6 +1582,13 @@
    "done": false,
    "title": "FICO の dur=100 の根拠（FHFA の単一モデル要件）が 2026-09-09 に外れ始めた——erosion=emerging に具体的な出来事が付いた",
    "note": "2026-09-23 の irr 再判定の副産物。dur=100 は FHFA の「単一モデルの信用スコア要件」を根拠にしているが、同じ一次資料で 2026-09-09 に VantageScore 4.0 が全承認貸し手へ開放され、Classic FICO の将来の引退も明記された。dur と erosion を FY2026 10-K（2026-11頃）で読み直す。FICO は Ω54.7 で判定圏外。"
+  },
+  {
+   "id": "sixk_coverage_display",
+   "kind": "宿題",
+   "done": false,
+   "title": "⚙自動化タブの「監視の被覆」に 6-K 経路の行を出す（表示だけ）",
+   "note": "2026-09-23 の 6-K 監視の作り直しの残り。out/events_watch.json の fpi_6k（対象社・窓内の件数・本文走査・上限で打ち切り）を門がまだ描いていないので、6-K が0件の週に「6-K は見ていない」のか「見て何も無い」のかが画面で分からない。表示の追加だけ（判定に不使用）。あわせて「⚠ 8-K警報」「その他の8-K」などの見出しに 6-K を含むと書く。"
   }
  ]
 }

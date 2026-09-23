@@ -15,7 +15,19 @@
    "RELX": 0,
    "SAP": 0
   },
-  "note": "外国私募発行体は8-Kを出さず6-Kで重要事象を報じる。6-KにはItem番号が無いので、8-KのItemが意味するのと同じ事象を**語で**拾う（項目番号より弱いので警報の言葉も『6-K語ヒット』と弱くする）。ヒット0でも件数は出す＝『見ていない』と『見て何も無い』を区別する。"
+  "scanned": {
+   "RACE": 2
+  },
+  "partial": {},
+  "unscanned": {},
+  "fetch": {
+   "limit": 120,
+   "used": 6,
+   "capped_filings": 0,
+   "capped_docs": 0,
+   "truncated": false
+  },
+  "note": "外国私募発行体は8-Kを出さず6-Kで重要事象も決算も報じる。6-KにはItem番号が無いので、提出の索引から主文書＋EX-99.xを読み、kessan_check の警報語（誠/減損/退任/指針）とFPI_ALERT（8-K Item相当: 存続/上場）を**語で**拾う（項目番号より弱いので警報の言葉も『6-K語ヒット』と弱くする）。門番は kessan_check._is_real（否定・定型・仮定法・金額）＋表の行。限/集は毎期の常設開示なので各行の ref に記録のみ。決算・報告の6-Kは earnings へ（8-K 2.02 相当）。**本文を読めなかった6-Kは errors（監視の穴）**＝『見ていない』と『見て何も無い』を区別する。"
  },
  "alerts": [
   {
@@ -46,19 +58,31 @@
   },
   {
    "t": "RACE",
-   "form": "6-K",
+   "form": "6-K｜Ferrari N.V.: PERIODIC REPORT ON THE BUYBACK PROGRAM Maranello (Italy), Septembe",
    "date": "2026-09-21",
    "items": [],
    "flags": [],
-   "url": "https://www.sec.gov/Archives/edgar/data/1648416/000164841626000121/fnvbb210926prcov.htm"
+   "url": "https://www.sec.gov/Archives/edgar/data/1648416/000164841626000121/fnvbb210926prex.htm",
+   "scan": "ok",
+   "docs": [
+    "fnvbb210926prcov.htm",
+    "fnvbb210926prex.htm"
+   ],
+   "kind": "other"
   },
   {
    "t": "RACE",
-   "form": "6-K",
+   "form": "6-K｜FERRARI TO PARTNER WITH RAKUTEN Maranello (Italy) , September 17, 2026 – Ferrari",
    "date": "2026-09-17",
    "items": [],
    "flags": [],
-   "url": "https://www.sec.gov/Archives/edgar/data/1648416/000164841626000118/fnvrakutenset2026engprcov.htm"
+   "url": "https://www.sec.gov/Archives/edgar/data/1648416/000164841626000118/fnvrakutenset2026engprex.htm",
+   "scan": "ok",
+   "docs": [
+    "fnvrakutenset2026engprcov.htm",
+    "fnvrakutenset2026engprex.htm"
+   ],
+   "kind": "other"
   },
   {
    "t": "KRMN",
@@ -76,9 +100,8 @@
  "pending_todo_note": "判定圏(Ω72+)の Item 1.01/1.02/8.01。**警報ではなく作業リスト**——M&Aの合意・解除・判決はここに載るので、読んで該当すれば パックの _meta.pending へ書く（night/audit_pending.py が関門で読む）。8.01は雑多なので警報には格上げしない＝鳴りすぎる警報は鳴らないのと同じ",
  "errors": [],
  "cik_unresolved": [],
- "jp": {
-  "covered": true,
-  "days_scanned": 7,
+ "jp": null,
+ "not_covered_jp": {
   "tickers": [
    "3092",
    "3649",
@@ -96,8 +119,8 @@
    "7741",
    "8035",
    "8136"
-  ]
+  ],
+  "why": "EDINET_API_KEY 未設定＝日本株のイベント監視は穴のまま。鍵は https://api.edinet-fsa.go.jp/ で無料登録し、GitHub Secrets の EDINET_API_KEY に置くと臨時報告書(8-K相当)・訂正・有報/四半期の提出が自動で入る"
  },
- "not_covered_jp": null,
  "note": "判定には使わない。alertsが立った銘柄は門2再審査（依頼文）へ回す。四半期点検の隙間を埋める気づきの層であり、株価は見ない"
 }

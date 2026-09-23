@@ -23,7 +23,7 @@
  "expiry": "no",
  "moatdecay": "no",
  "erosion": "none",
- "disrupt": null,
+ "disrupt": "settled",
  "dom": null,
  "irr": 85,
  "rep": 80,
@@ -124,7 +124,8 @@
    "beta": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）",
    "shy": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(-5.0, 12.0)を通過）",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 2.282。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "acqS5": "買収支出 5年ぶん合計 4567百万$ ÷ 期初総資産(2020-12-31) 2918百万$ ＝ 1.565／内訳: 2022-12-31 4475百万$ / 2021-12-31 92百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 4567百万$ ÷ 期初総資産(2020-12-31) 2918百万$ ＝ 1.565／内訳: 2022-12-31 4475百万$ / 2021-12-31 92百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "disrupt": "**settled（決着済/影響軽微）**。FY2025 10-K の Item 1 と Item 1A を全文読んだ（2026-09-23）。①会社が名指しする構造変化（AI・微細化・3D構造・新材料）は**需要を強める側**として書かれている——『…AI workloads are fueling demand for advanced logic chips with higher transistor density and specialized architectures, as well as High Bandwidth Memory…』『These advanced technologies and architectures require more process steps, new and innovative materials and sophisticated contamination control solutions.』『We believe that the increase in process steps in lithography, deposition, CMP, etching and cleaning required to manufacture leading-edge semiconductors will increase the overall demand for our solutions.』②一つの技術が置き換わっても影響は小さい構造——『In 2025, no single product platform represented more than 3% of our net sales.』③Item 1A の技術変化のリスク要因は一般形（急速な技術変化に遅れればシェアを失う）で、唯一の具体例は**自社の450mm投資の減損**（業界が450mmへ移らなかった＝当社製品が代替されたのではない）。FY2025 で新設された AI のリスク要因は、自社が業務で AI を使うときのリスクと、競合のほうが AI を上手く使えば劣後しうるという**実行の相対リスク**で、当社製品を代替する技術や市場構造の変化を名指ししていない。④同じく FY2025 で新設された需要側の注記（後工程＝組立・検査への露出が小さいので、そちらが速く伸びれば相対成長が劣る）は「伸びない」側の話で「壊れる」ではない。⑤供給網の現地化・政府が支える現地競合は地政学（geopol=1・中国売上21%）が別枠で測るので二重に数えない。⇒ 規約の問い（AI等の構造変化が強化か破壊か）に対し原本は強化側 → settled。門は空欄を settled として採点していたので Ω・f5（導出85）は動かない（「測っていない」が「測って settled」に変わるだけ）。判定の線（ENTG/MKSI/NOVT/ST/LOAR 共通・2026-09-23）: 当社の中核製品か堀の機構に不利に働く構造変化を原本が名指しし、かつ有利にも働く＝unsettled／名指しが無く、名指しされた構造変化が需要を強める側だけ＝settled（規約の刻み: settled=決着済/影響軽微・unsettled=未決（両刃）・threat=破壊優勢）。出典: SEC EDGAR 10-K FY2025（決算期末 2025-12-31・提出 2026-02-11・accession 0001101302-26-000012）／比較 FY2024 10-K（accession 0001101302-25-000015・AI の2文はこの版に無い）"
   },
   "provenance": {
    "cagr": "machine",
@@ -161,8 +162,7 @@
    "founder": "創業者経営の事実を原本で確認していない。判定を動かさない欄なので空欄",
    "rak": "取引不可の事由なし（米国上場）",
    "gls": "文化・従業員評価の実測値が原本に無い",
-   "disrupt": "**破壊要因を今回の走査で測っていない**。10-Kの技術変化リスクは一般形で、名指しの破壊要因(RELXのAI型)を確認できなかった。憶測で settled と断定しない（門は空欄を最良ケースで扱うので、この空欄は有利側に働く＝作業リスト）",
-   "f5": "disrupt が空欄のため導出できない",
+   "f5": "規約どおり空欄（disrupt から門が機械導出する＝fill_derived_judgment の規約）。2026-09-23 に disrupt を原本で settled と確定したので門の導出値は85",
    "dom": "シェアの数値開示が無く、fragmentedの構造記述も無い→空欄",
    "dep": "ASC280の10%超顧客の開示が無い（上位10社で50%）＝最大顧客<10%と構造的に確定できるが実数が無いので数値を置かない。ベトは発火しない"
   },
@@ -173,7 +173,8 @@
    "門0では score=3・fails『FCFマイナス; ROIC; ROIC最低値; 営業利益率』",
    "2026-08-11 機構の射程と認定の寿命を原本から記録（_meta.mech）: 射程 点推定は導けない（61.7〜94.9%）／寿命 原本に開示なし。読解＋反証専門の二段（scope=confirmed／life=confirmed）。**合否には一切使わない記録**。置き場を _meta.evidence.irr でなく _meta.mech にしたのは、irr85_mech_diff が evidence の英文引用を原本と逐語照合するため（日本語の注記を混ぜると照合の断片が汚れる）。",
    "2026-08-12 irr=85 の二重読み（**据置(留保)**）。**値は動かしていない**（irr 85・Ω・堀とも不変）。検問のうち②③に穴があり留保を付けた。詳細は _meta.irr85_verify。",
-   "2026-08-18 irr再検算（ユーザー指示「次にできること全てやって」）: **85を据置。ただし根拠を差し替えた。**2026-08-12の二重読みは『switching cost 0回・顧客側の乗り換え費用を述べる文が一つも無い』として**70への降格を第一候補**としていたが、これは**語句検索の取りこぼし**だった——『switching cost』という連語で探したため、実際に本文にある『**Switching away from our products may be costly and time-consuming for our customers**』（switch は全文で1回だけ出現）を拾えていなかった。本文381,438字を機械走査して確認: qualif 22 / requalif 1 / re-qualif 2 / switch 1 / designed into 0 / change cost 0 / re-formulation 0 / sole source 0。節の位置も特定した——本文の Item 1A は**位置90,018から**始まり（47,267と82,388は『See Item 1A』の相互参照）、決定的な一文は**位置49,346＝Item 1 Business の中**。CWのように Item 1A のリスク要因に閉じてはいない。**教訓: 連語で探すと語形の違いで落ちる。機構語は単語で当たること。**"
+   "2026-08-18 irr再検算（ユーザー指示「次にできること全てやって」）: **85を据置。ただし根拠を差し替えた。**2026-08-12の二重読みは『switching cost 0回・顧客側の乗り換え費用を述べる文が一つも無い』として**70への降格を第一候補**としていたが、これは**語句検索の取りこぼし**だった——『switching cost』という連語で探したため、実際に本文にある『**Switching away from our products may be costly and time-consuming for our customers**』（switch は全文で1回だけ出現）を拾えていなかった。本文381,438字を機械走査して確認: qualif 22 / requalif 1 / re-qualif 2 / switch 1 / designed into 0 / change cost 0 / re-formulation 0 / sole source 0。節の位置も特定した——本文の Item 1A は**位置90,018から**始まり（47,267と82,388は『See Item 1A』の相互参照）、決定的な一文は**位置49,346＝Item 1 Business の中**。CWのように Item 1A のリスク要因に閉じてはいない。**教訓: 連語で探すと語形の違いで落ちる。機構語は単語で当たること。**",
+   "2026-09-23 disrupt 空欄→**settled**（門2審査・宿題 disrupt_blank_12）。FY2025 10-K の Item 1/1A を全文読み、AI・微細化・新材料は需要を強める側として書かれていること、技術変化のリスク要因は一般形（唯一の具体例は自社の450mm投資の減損）、FY2025 新設の AI リスクは実行の相対リスクで代替技術の名指しが無いことを確認した。門は空欄を settled として採点していたので Ω 22.4・堀 88.9 とも不変（キル2本で頭打ち）。根拠は _meta.evidence.disrupt"
   ],
   "auditDate": "2026-08-05",
   "model": "claude-opus-5",
