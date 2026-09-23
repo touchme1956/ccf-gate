@@ -51,7 +51,7 @@ const TESTED = {
   'アクルーアル accr>10':      ['null', '2026-09-19 の候補38本に accr が入り **lift ±0.00**（ARCHIVE:12821/1364）'],
   'シェア趨勢 sht=down':       ['none', 'Intel の実例から作った先行警報。歴史で当てたことはない'],
   'シェア趨勢 sht=up':         ['none', '同上'],
-  '粗利趨勢 gmt=down':         ['none', '検定なし（gm 自体は候補に入ったが、趨勢の刻みは別物）'],
+  '粗利趨勢 gmt=down':         ['fail', '2026-08-18 事前登録(4c6f6e3)で営業利益率の5年差 opmD5<0 を8ビンテージ検定・**H1 不合格**（8年中2年で符号が逆）／**H5 符号は5年後に持続しない**（ARCHIVE:9311）。⚠ gmt は審査官の±1pt判定で opmD5<0 と同一ではない＝代理'],
   '侵食 erosion=active':      ['none', '**「dep/erosion/disrupt は歴史に無い」と台帳自身が明記**（ARCHIVE:5371）'],
   '破壊 disrupt=unsettled':   ['none', '2026-09-21 に検定を試みたが**検定できなかった**（歴史側に disrupt が無い・ARCHIVE:15036 ②）'],
 };
