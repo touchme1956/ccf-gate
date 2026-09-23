@@ -447,7 +447,8 @@ def build_numbers(facts):
     #   → (a) 別名どうしが同額（±0.5%）なら1本だけ数える。
     #     (b) DebtAndCapitalLeaseObligations が「残りの非流動 + 流動(debtS)」と恒等式で一致する年は、それが総額だと
     #         証明できるので**足さない**（流動分は debtS に残る）。一致しない年は触らず注記だけ（機械で確定できない）。
-    _ALIAS = ("LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations")
+    _ALIAS = ("LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations", "LongTermNotesPayable",
+              "UnsecuredLongTermDebt", "NoncurrentBorrowings", "LongtermBorrowings")
     _fixedL, _suspL = [], []
     _ltcl = series(facts, ["LongTermDebtAndCapitalLeaseObligationsCurrent"])[0]
     for _y in sorted(S["debtL"]):
@@ -462,12 +463,17 @@ def build_numbers(facts):
         if len(_parts) < 2:
             continue
         _val, _used = S["debtL"][_y], list(_usedL[_y])
-        _a, _b = _parts.get(_ALIAS[0]), _parts.get(_ALIAS[1])
-        if _a and _b is not None and abs(_a - _b) / abs(_a) <= 0.005:
-            _val -= _b
-            _parts.pop(_ALIAS[1])
-            _used = [u for u in _used if not u.startswith(_ALIAS[1] + "=")] + \
-                    [f"{_ALIAS[1]}={_b:,.0f}は{_ALIAS[0]}と同額の別名＝二重に数えない"]
+        # (a) 同じ非流動負債の別名どうしが同額なら1本だけ数える。別名の組は LTDNoncurrent×LTDAndCLO だけではなかった
+        #   （2026-09-23 JKHY の再審査で LongTermDebtAndCapitalLeaseObligations×LongTermNotesPayable が FY2021-22 に同額）。
+        #   ⚠ OtherLongTermDebtNoncurrent 等「その他の負債」は構成要素なので別名の組に入れない。
+        for _i, _ka in enumerate(_ALIAS):
+            for _kb in _ALIAS[_i + 1:]:
+                _a, _b = _parts.get(_ka), _parts.get(_kb)
+                if _a and _b is not None and abs(_a - _b) / abs(_a) <= 0.005:
+                    _val -= _b
+                    _parts.pop(_kb)
+                    _used = [u for u in _used if not u.startswith(_kb + "=")] + \
+                            [f"{_kb}={_b:,.0f}は{_ka}と同額の別名＝二重に数えない"]
         _tot = _parts.get("DebtAndCapitalLeaseObligations")
         if _tot and len(_parts) >= 2:
             # DebtAndCapitalLeaseObligations は US-GAAP の定義上「流動＋非流動＋リース」の**総額**。

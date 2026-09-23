@@ -1530,9 +1530,9 @@
   {
    "id": "debtcurrent_double_sweep",
    "kind": "宿題",
-   "done": false,
-   "title": "採取器の DebtCurrent 二重計上の是正（2026-09-23）を他社のパックへ届ける",
-   "note": "CW で見つけた型（LongTermDebt が1年内返済込みの総額なのに DebtCurrent を足す）は hachimon_fetch で恒等式つきで是正済み。LongTermDebtCurrent タグを持たず DebtCurrent で報告する社は同じく負債過大＝roic 過小・nde 過大になっている可能性がある。四半期の見直しで backfill_machine_evidence.py を回し、食い違う社を作業リストで拾う（値は機械で上書きしない）。\n【2026-09-23 走査の途中で**もっと大きい同族**を見つけて是正】キャッシュ済み297社で調べると、DebtCurrent の型（CW）が効く社は10社（AME/BCPC/CW/DELL/EBAY/LDOS/SPGI/SYK/TT/WST）だったが、同じ走査で **debtL の別名・総額の二重計上**が見つかった: (a) LongTermDebtNoncurrent と LongTermDebtAndCapitalLeaseObligations が同額（同じ社債の別名）なのに両方足す（ASML は全年で 2,709百万€×2 等・IP・DXC）(b) DebtAndCapitalLeaseObligations（US-GAAP の定義で流動込みの総額）を非流動タグに足す（EBAY 2025: 5,996+6,746+流動750＝13,492＝原本 6,746 の2倍・nde 4.31）。hachimon_fetch を是正（(a)同額の別名は1本 (b)総額タグがあれば総額として採る・流動分は LongTermDebtAndCapitalLeaseObligationsCurrent も使って恒等式を確かめ根拠に残す）。297社の before/after で36社の出力が変わり、想定外に見えた ALLE/BSX/DXC/CHH/WFRD/FELE も過去の年に同じ二重計上があると原本で確認。★**パックへの実害**: HXL の nde 6.52（財務キル発火）は 993百万$×2 の二重計上＝真値 3.14／MUSA の nde 4.34（2026-08-13 の是正で入れた値・キル発火）も同じ二重計上＝真値 2.16／ACM 3.22→0.96 など。ASML（🟢投下可）の through-cycle roic も全年の二重計上で過小（パック 49.6 → 正しい5年中央値 59.9）。あわせて「有効な系列が2年でも中央値（＝2年平均）を出す」穴も塞いだ（BCPC 42.7 は 2021/2025 の平均でどちらの年の値でもない→単年 49.4。14社）。\n【2026-09-23 パックへ届けた】条件（パックの会計年度＝採取器の年・旧値に原本の根拠なし／旧値が同じ二重計上から来ている）を満たす6社を是正: MUSA roic 187.8→25.8 / roicg 89.0→21.3 / nde 4.34→2.16（キル解除）・HXL nde 6.52→3.14（キル解除）・roic 5.1→6.9・ACM roic 83.3→35.0 / roicg 30.2→9.6 / nde 3.22→0.96・WCN roicg 15.7→6.9・BBY nde 0.27→−0.25・EBAY nde 1.42→1.81。6社とも判定圏外（MUSA 19.4→38.4・HXL は他のキルで0のまま・ACM 34.3→38.7）で買付は不変。**残り: ASML（🟢投下可・through-cycle roic 49.6→59.9 / roicg 37.1→39.1）は予想PERの班が同じパックを触っているので、その後で当てる**。SYY は会計年度がずれる（パック FY2025・採取器 FY2026）ので条件外。DXC/ALLE/BSX はパックの値がこの二重計上から来ていない（旧採取器の値と一致しない）ので pack_collector_drift の作業リストのまま。"
+   "done": true,
+   "title": "✅ 採取器の DebtCurrent 二重計上の是正（2026-09-23）を他社のパックへ届ける",
+   "note": "CW で見つけた型（LongTermDebt が1年内返済込みの総額なのに DebtCurrent を足す）は hachimon_fetch で恒等式つきで是正済み。LongTermDebtCurrent タグを持たず DebtCurrent で報告する社は同じく負債過大＝roic 過小・nde 過大になっている可能性がある。四半期の見直しで backfill_machine_evidence.py を回し、食い違う社を作業リストで拾う（値は機械で上書きしない）。\n【2026-09-23 走査の途中で**もっと大きい同族**を見つけて是正】キャッシュ済み297社で調べると、DebtCurrent の型（CW）が効く社は10社（AME/BCPC/CW/DELL/EBAY/LDOS/SPGI/SYK/TT/WST）だったが、同じ走査で **debtL の別名・総額の二重計上**が見つかった: (a) LongTermDebtNoncurrent と LongTermDebtAndCapitalLeaseObligations が同額（同じ社債の別名）なのに両方足す（ASML は全年で 2,709百万€×2 等・IP・DXC）(b) DebtAndCapitalLeaseObligations（US-GAAP の定義で流動込みの総額）を非流動タグに足す（EBAY 2025: 5,996+6,746+流動750＝13,492＝原本 6,746 の2倍・nde 4.31）。hachimon_fetch を是正（(a)同額の別名は1本 (b)総額タグがあれば総額として採る・流動分は LongTermDebtAndCapitalLeaseObligationsCurrent も使って恒等式を確かめ根拠に残す）。297社の before/after で36社の出力が変わり、想定外に見えた ALLE/BSX/DXC/CHH/WFRD/FELE も過去の年に同じ二重計上があると原本で確認。★**パックへの実害**: HXL の nde 6.52（財務キル発火）は 993百万$×2 の二重計上＝真値 3.14／MUSA の nde 4.34（2026-08-13 の是正で入れた値・キル発火）も同じ二重計上＝真値 2.16／ACM 3.22→0.96 など。ASML（🟢投下可）の through-cycle roic も全年の二重計上で過小（パック 49.6 → 正しい5年中央値 59.9）。あわせて「有効な系列が2年でも中央値（＝2年平均）を出す」穴も塞いだ（BCPC 42.7 は 2021/2025 の平均でどちらの年の値でもない→単年 49.4。14社）。\n【2026-09-23 パックへ届けた】条件（パックの会計年度＝採取器の年・旧値に原本の根拠なし／旧値が同じ二重計上から来ている）を満たす6社を是正: MUSA roic 187.8→25.8 / roicg 89.0→21.3 / nde 4.34→2.16（キル解除）・HXL nde 6.52→3.14（キル解除）・roic 5.1→6.9・ACM roic 83.3→35.0 / roicg 30.2→9.6 / nde 3.22→0.96・WCN roicg 15.7→6.9・BBY nde 0.27→−0.25・EBAY nde 1.42→1.81。6社とも判定圏外（MUSA 19.4→38.4・HXL は他のキルで0のまま・ACM 34.3→38.7）で買付は不変。**残り: ASML（🟢投下可・through-cycle roic 49.6→59.9 / roicg 37.1→39.1）は予想PERの班が同じパックを触っているので、その後で当てる**。SYY は会計年度がずれる（パック FY2025・採取器 FY2026）ので条件外。DXC/ALLE/BSX はパックの値がこの二重計上から来ていない（旧採取器の値と一致しない）ので pack_collector_drift の作業リストのまま。\n【2026-09-23 別名の組を広げた】JKHY の再審査で LongTermDebtAndCapitalLeaseObligations×LongTermNotesPayable が FY2021-22 に同額の別名だと判明。別名の組を LTDNoncurrent/LTDAndCLO/LongTermNotesPayable/UnsecuredLongTermDebt/NoncurrentBorrowings/LongtermBorrowings の全ペアへ広げた（その他の負債 OtherLongTermDebtNoncurrent は構成要素なので入れない）。297社で値が変わったのは JKHY の roiic5 30.9→26.3（審査官の原本値 26.3 と一致）だけ。★ASML の roic 49.6→59.9 / roicg 37.1→39.1 もこの日に当てた（Ω 82.5 不変・ROIC の点は上で頭打ち）。\n【2026-09-23 完了】二重計上の型（DebtCurrent・別名・流動込み総額）を採取器で是正し、パックの実害（MUSA/HXL のキル誤発火・ACM/WCN/BBY/EBAY・ASML の through-cycle）を届けた。残る食い違いは pack_collector_drift の作業リストとして backfill で見る。"
   },
   {
    "id": "fetcher_fy_label_mislabel",
@@ -1610,6 +1610,13 @@
    "done": false,
    "title": "per が TTM でないパックがある（CW・MA・IDXX ほか）——per だけ TTM に直すと gr が崩れる罠つき",
    "note": "2026-09-23 perF の班の報告。CW の per は EPS 12.64 を含意するが TTM の GAAP は 14.53（MA・IDXX も同型）。market_data.json には TTM 基準の per が既にある。⚠ per だけを TTM に直して perF を「次の12ヶ月」へ動かさないと gr が崩れ（IDXX +4.3%・CW +5.3%）、gcap が誤って g を抑える——各パックの evidence.perF にこの注意を書いてある。直すなら per と perF を同じ日に同じ基準（TTM と NTM）でそろえる。"
+  },
+  {
+   "id": "fetcher_small_gaps_0923",
+   "kind": "宿題",
+   "done": false,
+   "title": "採取器の小さな取りこぼし2件（JKHY の再審査で判明）——無形タグの付け替え・D&A の構成要素",
+   "note": "2026-09-23。(1) TAGS[\"intan\"] に JKHY の無形タグ（FY2026 からソフトウェアが IntangibleAssetFiniteLivedAndCapitalizedCostSoftwareToBeSoldLeasedOrMarketed… へ移った）が無く、採取器は全年で roic を拒否する（誤値ではなく空欄なので安全側）。(2) depParts に AdjustmentForAmortization が無く、JKHY の nde が 0.04（原本 0.03）。⚠ どちらも足すと他社で構成要素の二重計上を作りうる（「候補＝代替か構成要素か」）ので、297社の before/after を見てから。"
   }
  ]
 }
