@@ -113,7 +113,7 @@ def main():
         else:
             changed.append(rec)
             stat["diff_but_ok"] += 1
-    o = {"generated": "2026-08-06", "stat": dict(stat),
+    o = {"generated": __import__("datetime").date.today().isoformat(), "first_run": "2026-08-06", "stat": dict(stat),
          "note": "錨=売上候補タグ全部のmax → 採用系列のタグのみ、へ是正した影響。ふるいの条件は不変",
          "rescued": sorted(rescued, key=lambda r: -(r.get("score") or 0)),
          "anchor_diff_but_resolved": changed[:200]}

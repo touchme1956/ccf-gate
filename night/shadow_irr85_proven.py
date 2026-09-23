@@ -119,7 +119,7 @@ def main():
             shutil.move(SCORE_BAK, SCORE)
         assert open(HTML, encoding='utf-8').read() == src0, '復元に失敗'
         print('\n（index.html と out/score_all.json を復元した）')
-    json.dump({'generated': '2026-08-09', 'proven': PROVEN, 'failed': FAILED, 'cases': out},
+    json.dump({'generated': __import__('datetime').date.today().isoformat(), 'first_run': '2026-08-09', 'proven': PROVEN, 'failed': FAILED, 'cases': out},
               open(os.path.join(ROOT, 'out', 'shadow_irr85_proven.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, indent=1)
     print('→ out/shadow_irr85_proven.json')

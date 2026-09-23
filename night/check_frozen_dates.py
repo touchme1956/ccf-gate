@@ -51,9 +51,37 @@ FROZEN = re.compile(r"""(datetime\.)?date\(\s*20\d\d\s*,|["']20\d\d-\d\d-\d\d["'
 #     asof のフォールバックで、動いたら look-ahead が入る＝固定が正しい側）
 EXEMPT_FILE = re.compile(r"(^|/)_?(retro_?|hist|v10_|v11_|v12_|omega_retro)|_prereg")
 
+# 2026-09-23 追加（todo frozen_date_dict_literal）: **辞書リテラルの固定日**も見る。
+#   上の LIVE_NAMES は左辺の変数名しか見ないので、`json.dump({"generated": "2026-08-09", …})` は一度も鳴らなかった。
+#   実測40件——大半は shadow_*/opmtrend_*/irr85_* の**一度きりの研究の記録**で、固定が正しい（その日に測ったという記録）。
+#   ⚠ だから一律には落とさない（鳴りすぎる警報は鳴らないのと同じ）。**線は「その道具が繰り返し回されるか」**に引く:
+#     (a) .github/workflows/*.yml が呼ぶ道具（ops.yml が毎月回す shadow_alloc_buckets 等＝回すたびに嘘になる）
+#     (b) 人が周期で回す道具（LIVE_MANUAL。CLAUDE.md のコマンド節や todo が「毎回出す」と書くもの）
+#   それ以外は「記録として凍結」として名前だけ出す（失敗にしない）。
+DICT_FROZEN = re.compile(r"""["'](asof|generated)["']\s*:\s*["']20\d\d-\d\d-\d\d["']""")
+LIVE_MANUAL = {
+    "night/rerank_gate0_jp.py",        # 年1回の日本株門0の並べ直し
+    "night/shadow_x_gcap_breaker.py",  # perF/gcap の被覆率と binding を「毎回出す」（todo perf_fill_band）
+    "night/audit_gate0_fye.py",        # 門0の決算日の錨の全社スキャン（年次発掘のたび）
+}
+
+
+def live_files():
+    """ワークフローが呼ぶ道具の相対パス（night/xxx.py と ルート直下の xxx.py）。"""
+    out = set(LIVE_MANUAL)
+    wf = os.path.join(BASE, ".github", "workflows")
+    if os.path.isdir(wf):
+        for fn in os.listdir(wf):
+            if fn.endswith((".yml", ".yaml")):
+                txt = open(os.path.join(wf, fn), encoding="utf-8").read()
+                out |= {m.group(0) for m in re.finditer(r"night/[\w.-]+\.py", txt)}
+                out |= {m.group(1) for m in re.finditer(r"python3?\s+([\w.-]+\.py)", txt)}
+    return out
+
 
 def scan():
-    bad, exempt = [], []
+    bad, exempt, frozen_records = [], [], []
+    LIVE = live_files()
     roots = [os.path.join(BASE, "night"), BASE]
     seen = set()
     for root in roots:
@@ -72,6 +100,15 @@ def scan():
             except Exception:
                 continue
             for i, ln in enumerate(lines, 1):
+                d = DICT_FROZEN.search(ln)
+                if d and not ln.lstrip().startswith("#"):
+                    rec = {"file": rel, "line": i, "name": d.group(1) + "(辞書)", "code": ln.strip()[:160]}
+                    if EXEMPT_FILE.search(rel):
+                        exempt.append(rec)
+                    elif rel in LIVE:
+                        bad.append(rec)
+                    else:
+                        frozen_records.append(rec)
                 m = LIVE_NAMES.match(ln)
                 if not m:
                     continue
@@ -80,16 +117,17 @@ def scan():
                     continue
                 rec = {"file": rel, "line": i, "name": name, "code": ln.strip()}
                 (exempt if EXEMPT_FILE.search(rel) else bad).append(rec)
-    return bad, exempt
+    return bad, exempt, frozen_records
 
 
 def main():
-    bad, exempt = scan()
+    bad, exempt, frozen_records = scan()
     out = {
         "generated": __import__("datetime").date.today().isoformat(),
         "note": "実行時の今日を意味する名前に固定日が入っているツール。歴史検証(retro_/hist_/*_prereg)は設計どおり固定＝除外",
         "frozen": bad,
         "exempt": exempt,
+        "frozen_records": frozen_records,
     }
     if "--json" in sys.argv:
         with open(os.path.join(BASE, "out", "frozen_dates.json"), "w", encoding="utf-8") as f:
@@ -107,6 +145,9 @@ def main():
         print("   CUTOFF/ANCHOR 等『基準時点』と判る語にし、なぜ固定かをコメントに書くこと。")
     else:
         print("✓ 固定日は無い（実行時の今日を意味する名前について）")
+    if frozen_records:
+        print(f"\n（記録として凍結＝繰り返し回されない研究の出力 {len(frozen_records)}件・失敗にしない。"
+              "繰り返し回すようにしたら LIVE_MANUAL へ足すか ワークフローから呼ぶこと）")
     if exempt:
         print(f"\n（設計どおり固定＝除外 {len(exempt)}件: " +
               ", ".join(sorted({r['file'] for r in exempt})) + "）")

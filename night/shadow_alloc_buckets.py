@@ -194,7 +194,7 @@ def main():
 
     if AS_JSON:
         p = 'out/shadow_alloc_buckets.json'
-        json.dump({'generated': '2026-08-09', 'cap': CAP, 'ami_rate': AMI,
+        json.dump({'generated': __import__('datetime').date.today().isoformat(), 'first_run': '2026-08-09', 'cap': CAP, 'ami_rate': AMI,
                    'buy': [{'t': r['t'], 'irr': r.get('irr'), 's': r['s']} for r in buy],
                    'schemes': S}, open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
         print(f'\n→ {p}')

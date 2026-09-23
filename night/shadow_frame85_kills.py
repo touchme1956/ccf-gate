@@ -81,7 +81,7 @@ def main():
         assert open(TDG, encoding='utf-8').read() == tdg_src
         run()
         print('\n（index.html・TDGのパック・score_all.json を復元した）')
-    json.dump({'generated': '2026-08-09', 'cases': out},
+    json.dump({'generated': __import__('datetime').date.today().isoformat(), 'first_run': '2026-08-09', 'cases': out},
               open('out/shadow_frame85_kills.json', 'w', encoding='utf-8'),
               ensure_ascii=False, indent=1)
     print('→ out/shadow_frame85_kills.json')

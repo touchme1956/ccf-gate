@@ -136,7 +136,7 @@ def main():
         shutil.copy2(QUEUE, QUEUE + ".prev")
     old = json.load(open(QUEUE, encoding="utf-8")) if os.path.exists(QUEUE) else {}
     out = {
-        "generated": "2026-07-29",
+        "generated": __import__("datetime").date.today().isoformat(), "first_run": "2026-07-29",
         "source": old.get("source", "EDINET_DB screen_companies"),
         "filter": old.get("filter", "roic>=15 & opm>=15 & cagr3y>=5 & equity>=50"),
         "total_passed": old.get("total_passed"),

@@ -120,7 +120,7 @@ def main():
 
     if WRITE:
         p = os.path.join(OUT, "shadow_x_gcap_breaker.json")
-        json.dump({"generated": "2026-08-07", "band": BAND,
+        json.dump({"generated": __import__("datetime").date.today().isoformat(), "first_run": "2026-08-07", "band": BAND,
                    "coverage": {"packs": cov_all, "perF": cov_perf,
                                 "band": len(band), "band_perF": pf_band, "gcap": 0},
                    "rows": rows,
