@@ -29,6 +29,11 @@ EMAIL = "fortis5280@gmail.com"
 HDRS  = {"User-Agent": f"ccf-gate-divy {EMAIL}"}
 
 DPS_TAGS = ["CommonStockDividendsPerShareDeclared", "CommonStockDividendsPerShareCashPaid"]
+# 原本で検算した年間DPS（機械値より優先）。上の分割検問は「大きすぎ」しか捕まえないので、
+# 年間の行に四半期額が入っている「小さすぎ」はここで名指しで直す（2026-09-23・V: 年間行 0.59 は四半期額）
+DPS_OVERRIDE = {
+    "V": (2.36, "FY2025 10-K v-20250930.htm 株主資本等変動計算書『at a quarterly amount of $0.59 per class A common stock』×4"),
+}
 PAY_TAGS = ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends"]
 
 
@@ -150,6 +155,11 @@ def main():
             continue
         if p[1] == "JPY":
             divY[T] = None; why[T] = "株価がJPY・DPSがUSDで通貨不一致（ADR比の確認が要る）"
+            continue
+        if T in DPS_OVERRIDE:
+            o = DPS_OVERRIDE[T]
+            divY[T] = round(o[0] / p[0] * 100, 3)
+            why[T] = f"DPS {o[0]}（原本で検算: {o[1]}）÷ px {p[0]}——機械の年間DPS {dps['dps']} は四半期額のため不採用"
             continue
         v = round(dps["dps"] / p[0] * 100, 3)
         # 分割検問: DPSは前期10-K＝分割前スケールのことがある（KLAC 10:1で実測 3.69% vs pack shy 1.29%）。
