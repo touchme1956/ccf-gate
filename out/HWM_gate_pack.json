@@ -12,7 +12,7 @@
  "cagr": 9.4,
  "fcf": 1.43,
  "ni": 1.51,
- "sbc": 0.07,
+ "sbc": 0.88,
  "dilNet": -0.86,
  "acc": "usgaap",
  "eq": "pos",
@@ -30,7 +30,7 @@
  "nrr": 105,
  "beta": 1.201,
  "per": 60.11,
- "perF": null,
+ "perF": 42.24,
  "evebit": 58.0,
  "px": 225.36,
  "shy": 0.79,
@@ -80,7 +80,9 @@
    "2026-08-07 irr=70 を50/70の線で再検算し据置（値は不変・根拠を209字→本文引用つきへ）。2026-08-06の全数検算は irr==85 だけを対象にしており、70は一度も同じ厳格さで検査されていなかった。実測でこの非対称は重い——**判定圏の70を50に落とすと45社中19社が堀の関門を割り投下可6社が落ちる**のに対し、85→70では投下可は0社しか動かない。triage(night/audit_irr70.py)で投下可のうち分類がA以外だった2社の一つ。10-K全文走査の結果、認定要件による摩擦は実在する（70）が、顧客側の再認定を断定する文は無く逆に『switch to alternative suppliers / enter into the markets themselves』と明言している（85にしない）",
    "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
    "2026-08-19 irr=70 **据置**（買付圏の irr=70 二重読み）。機構は名指しでき（approval/license/qualification requirements で**顧客も**容易に代替を見つけられない＋顧客との長期契約）、反証も同居する（乗り換え・内製化・競争条件での再値決め）＝**85ではなく70**の位置づけがそのまま成立。射程は約87%（Forged Wheels 12.6% は航空の認定要件の外）。**値は不変**",
-   "2026-08-19 逐語照合の是正（値は不変）——2026-08-07 の根拠が原本の 『including **to reduce the amount of Howmet's products they purchase,** to switch to…』から一節を**省略記号なしで落としていた**ため irr85_mech_diff が一致55%の⚠を出していた。省略箇所に … を入れて解消。**引用を縮めるときは必ず … を置く**（quotes_of はそこで断片を割る）"
+   "2026-08-19 逐語照合の是正（値は不変）——2026-08-07 の根拠が原本の 『including **to reduce the amount of Howmet's products they purchase,** to switch to…』から一節を**省略記号なしで落としていた**ため irr85_mech_diff が一致55%の⚠を出していた。省略箇所に … を入れて解消。**引用を縮めるときは必ず … を置く**（quotes_of はそこで断片を割る）",
+   "2026-09-23 perF を充填: None → 42.24（px 225.36 ÷ FY2026E 5.3346・Alpha Vantage EARNINGS_ESTIMATES 2026-09-23取得）。基準の検問 ①再構成 3.5254 vs GAAP 3.71 = -5.0% ②調整後EPSの対GAAP差 +1.6% ＝いずれも+5%以下で充填。gr=+42.3%。gcap は空欄のまま（perF に追随する）",
+   "2026-09-23 sbc 0.07→0.88（単位の是正）: 旧値は株式報酬の十億$の金額で、門の定義（株式報酬÷売上%）と単位が違っていた。2025-12-31 期の株式報酬 73.0百万$ ÷ 売上 ＝ 0.88%。"
   ],
   "evidence": {
    "expiry": "『We are not materially dependent on any single patent, trade secret, or trademark』(限)→単一特許/期限依存なし=no。特許ポートフォリオは継続更新",
@@ -128,7 +130,9 @@
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **13.5%** / 同業（SIC335x（4桁では4社しか無く3桁へ丸めた）「Rolling Drawing & Extruding of  Nonferrous Metals」・8社）の中央値 **6.0%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+13.5%)÷(1+6.0%))^5 − 1 = **+41.0%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
    "beta": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）",
    "evebit": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 300.0)を通過）",
-   "acqS5": "買収支出 5年ぶん合計 5百万$ ÷ 期初総資産(2020-12-31) 11443百万$ ＝ 0.000／内訳: 2024-12-31 5百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 5百万$ ÷ 期初総資産(2020-12-31) 11443百万$ ＝ 0.000／内訳: 2024-12-31 5百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "perF": "**フォワードPER = 株価 $225.36（Finnhub 2026-09-22 終値＝_meta.px・out/dashboard.json と同値＝per と同じ株価）÷ FY2026 コンセンサスEPS $5.3346**（Alpha Vantage EARNINGS_ESTIMATES 2026-09-23取得・fiscal year 2026-12-31・アナリスト21名・FY2026＝パックの会計年度 FY2025 の次の年度）= **42.24**。→ gr = per 60.11 ÷ 42.24 − 1 = **+42.3%**（門は gcap 空欄時にこれを実力成長の暫定代用に使う）。\n《基準の検問（片側・閾値+5%）》①パックの会計年度 FY2025 の四半期コンセンサス（決算前の値）を合算: 0.7769+0.8732+0.9093+0.966 = **3.5254** vs GAAP 希薄化EPS実績 **3.71**（Q4 2025 決算 8-K Ex.99.1（accn 0001104659-26-013832・2026-02-12）の損益計算書『Diluted earnings per share』FY2025 = 3.71）＝ **-5.0%**＝上回っていない（ビート）。②会社自身の調整後EPS **3.77** ＝ GAAP比 **+1.6%**（同 8-K『Diluted EPS excluding Special items』FY2025 = $3.77）＝+5%以下。→ **基準は揃っている**と判定して充填した。【片側検定】non-GAAPは調整の足し戻しゆえ通常GAAP以上なので、再構成がGAAP実績を+5%超えて上回るときだけ基準の相違と判定し、下回るのはビートと読む。ただしビートが調整額を隠す（MCO/IRMD/VRSK/RMDで実測）ので、会社自身の調整後EPSの対GAAP差（②）も同じ+5%で見る。閾値+5%は門の compute() が px÷eps と per の食い違いを「PER不整合」と判定する線（5%）に合わせた——10%にすると V（+9.4%）のような非GAAPコンセンサスが通り、gr が調整額の分だけ膨らむ（上限が事実上外れる＝ADBEの型）。\n《per の基準》px÷per = 3.749（GAAP FY2025 実績 3.71 比 +1.1%）。gr はこの基準から FY2026E までの1年の成長。",
+   "sbc": "SBC比率＝株式報酬 73.0百万$ ÷ 売上（2025-12-31 期・SEC XBRL ShareBasedCompensation 等 ÷ Revenues 等）＝0.88%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -168,7 +172,9 @@
    "sht": "machine",
    "beta": "market",
    "evebit": "market",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "perF": "market",
+   "sbc": "machine"
   },
   "basis": {
    "roic": "through-cycle-med5(?年)",

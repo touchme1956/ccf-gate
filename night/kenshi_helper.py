@@ -113,4 +113,11 @@ if yrs:
     sni = sum(ni.get(y,0) for y in yrs)
     sfcf = sum(ocf.get(y,0)-capex.get(y,0)-capin.get(y,0) for y in yrs if y in ocf)
     if sni>0: print(f" 5年FCF転換={sfcf/sni*100:.0f}%")
+    # 2026-09-23: **sbc 欄は「株式報酬÷売上（%）」**（門の入力欄「SBC比率」）。上の生系列は十億/百万の金額なので、
+    #   それをそのまま sbc に写すと単位が違う——実測 63パックが金額（十億$/百万$）で入っていた
+    #   （MSFT 12.0＝SBC 12.0十億$ → 真の比率 3.74% ／ GOOGL 25.0 は「12%以上で減点」を誤って −10.4pt 効かせていた）。
+    _, sbcS = pick("sbc")
+    if y in sbcS and rev.get(y):
+        print(f" sbc（門の欄・SBC比率）= 株式報酬 {sbcS[y]/1e6:,.0f}M ÷ 売上 {rev[y]/1e6:,.0f}M = {sbcS[y]/rev[y]*100:.2f}%"
+              f"   ⚠金額（十億/百万）を sbc に入れないこと")
 print("\n⚠ ユニット混在(別通貨/COP/BRL等)・IAS29(ARS)・SPAC断絶・FY年ズレは審査官が上の生系列で必ず確認すること")
