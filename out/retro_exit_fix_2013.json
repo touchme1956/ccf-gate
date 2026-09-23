@@ -1,0 +1,2512 @@
+{
+ "generated": "2026-09-23",
+ "tool": "night/retro_delisted.py（classify_exit v2）＋ night/retro_delisted_secpx.py",
+ "todo": [
+  "retro_exit_date_form15",
+  "retro_base_rate_band (b)"
+ ],
+ "what_changed": {
+  "exit_rule": "v2: 退場は『普通株を名指す Form 25/15』『合併完了8-K（item 2.01/5.01）』『普通株の定期報告の停止』で裁く。Form 15/25 の対象の種類を本文（Form 25 の XML・Form 15 の表紙）で読み、社債・優先株・権利・ワラント・従業員プランの抹消は退場に数えない（class_kind・CLASS_TESTS 24件）。提出索引は古いページまで読む（fetch_subs v2）",
+  "exit_date": "合併完了8-K の日を優先（SC 13E3/DEFM14A だけのときは抹消日）。破産は ②（抹消＋破産8-K）。定期報告が抹消の後も続く・今も普通株の記号がある・後に本当の退場がある社は退場に数えない",
+  "secpx": "Item5 の v2 の読み（横並び2年・縦積み・四半期が列・日付の札・EX-13・上付き序数）・浮動株の含意株価で検算・分割の検問（companyfacts の EPS と加重平均株数の書き直し）・非M&Aの退場を原本で戻す（破産の計画8-K・最後の気配）・記号の使い回し（退場後も Yahoo の系列が続く survivor）を原本で測り直す",
+  "not_changed": "index.html・CLAUDE.md・todo_list.json・門の規則には触れていない。hist_* の出力（out/hist_*.json）は書き換えていない（下流の数字は scratch の複製で回した）"
+ },
+ "exit_classification": {
+  "transitions": {
+   "全社": {
+    "生存 → 生存": 731,
+    "acquired → acquired": 543,
+    "deregistered → 生存": 151,
+    "going_private → going_private": 67,
+    "bankruptcy → bankruptcy": 50,
+    "listing_deficiency → 生存": 50,
+    "deregistered → acquired": 42,
+    "deregistered → deregistered": 36,
+    "acquired → 生存": 26,
+    "listing_deficiency → listing_deficiency": 18,
+    "listing_deficiency → acquired": 17,
+    "deregistered → stopped_filing": 11,
+    "deregistered → bankruptcy": 10,
+    "listing_deficiency → bankruptcy": 7,
+    "going_private → 生存": 6,
+    "acquired → bankruptcy": 6,
+    "going_private → acquired": 6,
+    "stopped_filing → stopped_filing": 5,
+    "生存 → acquired": 4,
+    "going_private → stopped_filing": 3,
+    "生存 → going_private": 2,
+    "going_private → bankruptcy": 2,
+    "listing_deficiency → stopped_filing": 2,
+    "going_private → deregistered": 2,
+    "生存 → deregistered": 2,
+    "stopped_filing → acquired": 1,
+    "going_private → listing_deficiency": 1,
+    "acquired → stopped_filing": 1,
+    "生存 → bankruptcy": 1,
+    "listing_deficiency → deregistered": 1,
+    "stopped_filing → deregistered": 1,
+    "生存 → stopped_filing": 1
+   },
+   "質実証": {
+    "生存 → 生存": 248,
+    "acquired → acquired": 130,
+    "deregistered → 生存": 81,
+    "going_private → going_private": 20,
+    "listing_deficiency → 生存": 15,
+    "deregistered → acquired": 15,
+    "acquired → 生存": 12,
+    "bankruptcy → bankruptcy": 9,
+    "deregistered → deregistered": 7,
+    "going_private → 生存": 5,
+    "deregistered → stopped_filing": 4,
+    "going_private → acquired": 4,
+    "listing_deficiency → acquired": 3,
+    "deregistered → bankruptcy": 2,
+    "listing_deficiency → listing_deficiency": 2,
+    "going_private → stopped_filing": 1,
+    "生存 → deregistered": 1,
+    "stopped_filing → stopped_filing": 1,
+    "生存 → acquired": 1,
+    "going_private → bankruptcy": 1,
+    "生存 → stopped_filing": 1
+   }
+  },
+  "date_moves": {
+   "全社": {
+    "不変": 1264,
+    "退場→生存": 233,
+    "後ろへ（退場が遅かった）": 208,
+    "前へ": 91,
+    "生存→退場": 10
+   },
+   "質実証": {
+    "不変": 367,
+    "退場→生存": 113,
+    "後ろへ（退場が遅かった）": 55,
+    "前へ": 25,
+    "生存→退場": 3
+   }
+  },
+  "exit_kinds_now": {
+   "生存/不明": 964,
+   "acquired": 613,
+   "bankruptcy": 76,
+   "going_private": 69,
+   "listing_deficiency": 19,
+   "stopped_filing": 23,
+   "deregistered": 42
+  },
+  "exit_basis_now": {
+   "な": 964,
+   "①": 665,
+   "②": 73,
+   "⑥": 31,
+   "③": 70,
+   "④": 1,
+   "⑤": 2
+  },
+  "status_changes_v1_to_v2": 0,
+  "corroboration": {
+   "v1": {
+    "continuous": 254,
+    "alive_to_horizon": 714,
+    "なし": 821,
+    "strong": 17
+   },
+   "v2": {
+    "alive_to_horizon": 934,
+    "なし": 821,
+    "continuous": 42,
+    "strong": 9
+   }
+  },
+  "reuse_guard_finding": "今の retro_delisted.py の名寄せの検問は『月次の系列の270日超の穴で切る』もので、退場日は手動の名寄せの裏取りにしか使わない。v1→v2 で status が変わった行は 0 件＝**この経路で消されていた生きている社は、今のコードでは無かった**（todo の記述は旧版の検問のもの）。誤った退場日の実害はsecpx 側に出ていた: 合併対価を探す窓が誤った日を中心に切られ、対価が採れずに打ち切りになっていた（Masimo・Kellanova・Protective Life・DST…）",
+  "named_examples": {
+   "MASIMO CORP": {
+    "v1": {
+     "status": "no_start",
+     "exit_date": "2016-02-17",
+     "exit_kind": "deregistered",
+     "secpx": "打ち切り"
+    },
+    "v2": {
+     "status": "no_start",
+     "exit_date": "2026-06-10",
+     "exit_kind": "acquired",
+     "exit_basis": "①抹消+合併完了8-K",
+     "secpx": "退場(測定)",
+     "px_cagr": 0.1763
+    }
+   },
+   "DOW CHEMICAL CO /DE/": {
+    "v1": {
+     "status": "no_start",
+     "exit_date": "2017-09-01",
+     "exit_kind": "acquired",
+     "secpx": "打ち切り"
+    },
+    "v2": {
+     "status": "no_start",
+     "exit_date": "2017-09-01",
+     "exit_kind": "acquired",
+     "exit_basis": "①抹消+合併完了8-K",
+     "secpx": "打ち切り",
+     "px_cagr": null
+    }
+   },
+   "Frontier Communications Parent, Inc.": {
+    "v1": {
+     "status": "no_price",
+     "exit_date": "2018-06-29",
+     "exit_kind": "deregistered",
+     "secpx": "打ち切り"
+    },
+    "v2": {
+     "status": "no_price",
+     "exit_date": "2020-04-29",
+     "exit_kind": "bankruptcy",
+     "exit_basis": "②普通株の抹消+破産8-K",
+     "secpx": "退場(測定)",
+     "px_cagr": -1.0
+    }
+   },
+   "Kellanova": {
+    "v1": {
+     "status": "no_price",
+     "exit_date": "2021-05-24",
+     "exit_kind": "deregistered",
+     "secpx": "打ち切り"
+    },
+    "v2": {
+     "status": "no_price",
+     "exit_date": "2025-12-11",
+     "exit_kind": "acquired",
+     "exit_basis": "①抹消+合併完了8-K",
+     "secpx": "退場(測定)",
+     "px_cagr": 0.0218
+    }
+   },
+   "Foot Locker, Inc.": {
+    "v1": {
+     "status": "no_price",
+     "exit_date": "2021-12-09",
+     "exit_kind": "deregistered",
+     "secpx": "打ち切り"
+    },
+    "v2": {
+     "status": "no_price",
+     "exit_date": "2025-09-08",
+     "exit_kind": "acquired",
+     "exit_basis": "①抹消+合併完了8-K",
+     "secpx": "打ち切り",
+     "px_cagr": null
+    }
+   }
+  }
+ },
+ "secpx_kind_transitions_v1_to_now": {
+  "質実証": {
+   "survivor → survivor": 370,
+   "退場(測定) → 退場(測定)": 43,
+   "打ち切り(終値なし) → 打ち切り(終値なし)": 30,
+   "打ち切り(始値なし) → 退場(測定)": 28,
+   "打ち切り(終値・始値なし) → 打ち切り(終値なし)": 24,
+   "対象外 → 対象外": 14,
+   "打ち切り(終値・始値なし) → 打ち切り(終値・始値なし)": 14,
+   "打ち切り(終値なし) → 退場(測定)": 10,
+   "打ち切り(終値・始値なし) → 退場(測定)": 9,
+   "打ち切り(始値なし) → 打ち切り(始値なし)": 6,
+   "survivor → 退場(測定)": 4,
+   "退場(測定) → 打ち切り(始値なし)": 2,
+   "打ち切り(始値なし) → 打ち切り(終値なし)": 2,
+   "打ち切り(退場後に10-K) → 退場(測定)": 2,
+   "打ち切り(終値なし) → 打ち切り(終値・始値なし)": 2,
+   "打ち切り(始値なし) → 対象外": 1,
+   "打ち切り(終値・始値なし) → 打ち切り(始値なし)": 1,
+   "打ち切り(退場後に10-K) → 打ち切り(終値なし)": 1
+  },
+  "全社": {
+   "survivor → survivor": 977,
+   "打ち切り(終値・始値なし) → 打ち切り(終値・始値なし)": 646,
+   "退場(測定) → 退場(測定)": 43,
+   "打ち切り(終値なし) → 打ち切り(終値なし)": 30,
+   "打ち切り(始値なし) → 退場(測定)": 28,
+   "打ち切り(終値・始値なし) → 打ち切り(終値なし)": 24,
+   "対象外 → 対象外": 18,
+   "打ち切り(終値なし) → 退場(測定)": 10,
+   "打ち切り(終値・始値なし) → 退場(測定)": 9,
+   "打ち切り(始値なし) → 打ち切り(始値なし)": 6,
+   "survivor → 退場(測定)": 4,
+   "退場(測定) → 打ち切り(始値なし)": 2,
+   "打ち切り(始値なし) → 打ち切り(終値なし)": 2,
+   "打ち切り(退場後に10-K) → 退場(測定)": 2,
+   "打ち切り(終値なし) → 打ち切り(終値・始値なし)": 2,
+   "打ち切り(始値なし) → 対象外": 1,
+   "打ち切り(終値・始値なし) → 打ち切り(始値なし)": 1,
+   "打ち切り(退場後に10-K) → 打ち切り(終値なし)": 1
+  }
+ },
+ "base_rates": {
+  "layers": {
+   "v1": "旧（2026-08-10 の出力）",
+   "A": "退場 v2 だけ（始値は v1 の読み・対価は旧）",
+   "B": "＋Item5 v2 の読み（初版）",
+   "C": "＋非M&Aを原本で戻す（初版）",
+   "D": "＋記号の使い回し（初版の最終）",
+   "E": "＋Item5 の読みの被覆（S5/S2b/EX-13/大きな提出一式）・対価の検問・GNC（分割の検問なし）",
+   "F": "＋分割の検問＝**今の out/retro_delisted_secpx_2013.json**"
+  },
+  "definitions": {
+   "N": "survivor(価格あり)＋退場(測定)＋打ち切り",
+   "毀損": "px_cagr ≤ −15%/年（price-only）",
+   "下限": "打ち切りは一つも該当しない",
+   "中間": "非M&A（acquired・going_private 以外）の打ち切りだけ該当",
+   "上限": "打ち切りが全部該当",
+   "P15": "px_cagr ≥ +15%/年（下限は打ち切りが該当しない・上限は全部該当）"
+  },
+  "tables": {
+   "v1": {
+    "質実証": {
+     "N": 549,
+     "survivor": 374,
+     "measured_exits": 45,
+     "censored": 130,
+     "censored_nonMA": 36,
+     "旧(survivorのみ)_毀損": "9/374=2.41%",
+     "毀損_下限": "11/549=2.00%",
+     "毀損_中間": "47/549=8.56%",
+     "毀損_上限": "141/549=25.68%",
+     "毀損_測定分": "11/419=2.63%",
+     "元本割れ_survivor": "95/374=25.40%",
+     "元本割れ_退場(測定)": "8/45=17.78%",
+     "元本割れ_下限": "103/549=18.76%",
+     "元本割れ_中間": "139/549=25.32%",
+     "元本割れ_上限": "233/549=42.44%",
+     "P15_測定分": "69/419=16.47%",
+     "P15_下限": "69/549=12.57%",
+     "P15_上限": "199/549=36.25%"
+    },
+    "全社": {
+     "N": 1788,
+     "survivor": 981,
+     "measured_exits": 45,
+     "censored": 762,
+     "censored_nonMA": 210,
+     "旧(survivorのみ)_毀損": "56/981=5.71%",
+     "毀損_下限": "58/1788=3.24%",
+     "毀損_中間": "268/1788=14.99%",
+     "毀損_上限": "820/1788=45.86%",
+     "毀損_測定分": "58/1026=5.65%",
+     "元本割れ_survivor": "285/981=29.05%",
+     "元本割れ_退場(測定)": "8/45=17.78%",
+     "元本割れ_下限": "293/1788=16.39%",
+     "元本割れ_中間": "503/1788=28.13%",
+     "元本割れ_上限": "1055/1788=59.00%",
+     "P15_測定分": "184/1026=17.93%",
+     "P15_下限": "184/1788=10.29%",
+     "P15_上限": "946/1788=52.91%"
+    }
+   },
+   "A": {
+    "質実証": {
+     "N": 548,
+     "survivor": 374,
+     "measured_exits": 51,
+     "censored": 123,
+     "censored_nonMA": 20,
+     "旧(survivorのみ)_毀損": "9/374=2.41%",
+     "毀損_下限": "11/548=2.01%",
+     "毀損_中間": "31/548=5.66%",
+     "毀損_上限": "134/548=24.45%",
+     "毀損_測定分": "11/425=2.59%",
+     "元本割れ_survivor": "95/374=25.40%",
+     "元本割れ_退場(測定)": "11/51=21.57%",
+     "元本割れ_下限": "106/548=19.34%",
+     "元本割れ_中間": "126/548=22.99%",
+     "元本割れ_上限": "229/548=41.79%",
+     "P15_測定分": "69/425=16.24%",
+     "P15_下限": "69/548=12.59%",
+     "P15_上限": "192/548=35.04%"
+    },
+    "全社": {
+     "N": 1787,
+     "survivor": 981,
+     "measured_exits": 51,
+     "censored": 755,
+     "censored_nonMA": 168,
+     "旧(survivorのみ)_毀損": "56/981=5.71%",
+     "毀損_下限": "58/1787=3.25%",
+     "毀損_中間": "226/1787=12.65%",
+     "毀損_上限": "813/1787=45.50%",
+     "毀損_測定分": "58/1032=5.62%",
+     "元本割れ_survivor": "285/981=29.05%",
+     "元本割れ_退場(測定)": "11/51=21.57%",
+     "元本割れ_下限": "296/1787=16.56%",
+     "元本割れ_中間": "464/1787=25.97%",
+     "元本割れ_上限": "1051/1787=58.81%",
+     "P15_測定分": "184/1032=17.83%",
+     "P15_下限": "184/1787=10.30%",
+     "P15_上限": "939/1787=52.55%"
+    }
+   },
+   "B": {
+    "質実証": {
+     "N": 548,
+     "survivor": 374,
+     "measured_exits": 50,
+     "censored": 124,
+     "censored_nonMA": 20,
+     "旧(survivorのみ)_毀損": "9/374=2.41%",
+     "毀損_下限": "11/548=2.01%",
+     "毀損_中間": "31/548=5.66%",
+     "毀損_上限": "135/548=24.64%",
+     "毀損_測定分": "11/424=2.59%",
+     "元本割れ_survivor": "95/374=25.40%",
+     "元本割れ_退場(測定)": "11/50=22.00%",
+     "元本割れ_下限": "106/548=19.34%",
+     "元本割れ_中間": "126/548=22.99%",
+     "元本割れ_上限": "230/548=41.97%",
+     "P15_測定分": "70/424=16.51%",
+     "P15_下限": "70/548=12.77%",
+     "P15_上限": "194/548=35.40%"
+    },
+    "全社": {
+     "N": 1787,
+     "survivor": 981,
+     "measured_exits": 50,
+     "censored": 756,
+     "censored_nonMA": 168,
+     "旧(survivorのみ)_毀損": "56/981=5.71%",
+     "毀損_下限": "58/1787=3.25%",
+     "毀損_中間": "226/1787=12.65%",
+     "毀損_上限": "814/1787=45.55%",
+     "毀損_測定分": "58/1031=5.63%",
+     "元本割れ_survivor": "285/981=29.05%",
+     "元本割れ_退場(測定)": "11/50=22.00%",
+     "元本割れ_下限": "296/1787=16.56%",
+     "元本割れ_中間": "464/1787=25.97%",
+     "元本割れ_上限": "1052/1787=58.87%",
+     "P15_測定分": "185/1031=17.94%",
+     "P15_下限": "185/1787=10.35%",
+     "P15_上限": "941/1787=52.66%"
+    }
+   },
+   "C": {
+    "質実証": {
+     "N": 548,
+     "survivor": 374,
+     "measured_exits": 57,
+     "censored": 117,
+     "censored_nonMA": 13,
+     "旧(survivorのみ)_毀損": "9/374=2.41%",
+     "毀損_下限": "18/548=3.28%",
+     "毀損_中間": "31/548=5.66%",
+     "毀損_上限": "135/548=24.64%",
+     "毀損_測定分": "18/431=4.18%",
+     "元本割れ_survivor": "95/374=25.40%",
+     "元本割れ_退場(測定)": "18/57=31.58%",
+     "元本割れ_下限": "113/548=20.62%",
+     "元本割れ_中間": "126/548=22.99%",
+     "元本割れ_上限": "230/548=41.97%",
+     "P15_測定分": "70/431=16.24%",
+     "P15_下限": "70/548=12.77%",
+     "P15_上限": "187/548=34.12%"
+    },
+    "全社": {
+     "N": 1787,
+     "survivor": 981,
+     "measured_exits": 57,
+     "censored": 749,
+     "censored_nonMA": 161,
+     "旧(survivorのみ)_毀損": "56/981=5.71%",
+     "毀損_下限": "65/1787=3.64%",
+     "毀損_中間": "226/1787=12.65%",
+     "毀損_上限": "814/1787=45.55%",
+     "毀損_測定分": "65/1038=6.26%",
+     "元本割れ_survivor": "285/981=29.05%",
+     "元本割れ_退場(測定)": "18/57=31.58%",
+     "元本割れ_下限": "303/1787=16.96%",
+     "元本割れ_中間": "464/1787=25.97%",
+     "元本割れ_上限": "1052/1787=58.87%",
+     "P15_測定分": "185/1038=17.82%",
+     "P15_下限": "185/1787=10.35%",
+     "P15_上限": "934/1787=52.27%"
+    }
+   },
+   "D": {
+    "質実証": {
+     "N": 548,
+     "survivor": 373,
+     "measured_exits": 58,
+     "censored": 117,
+     "censored_nonMA": 13,
+     "旧(survivorのみ)_毀損": "9/373=2.41%",
+     "毀損_下限": "19/548=3.47%",
+     "毀損_中間": "32/548=5.84%",
+     "毀損_上限": "136/548=24.82%",
+     "毀損_測定分": "19/431=4.41%",
+     "元本割れ_survivor": "94/373=25.20%",
+     "元本割れ_退場(測定)": "19/58=32.76%",
+     "元本割れ_下限": "113/548=20.62%",
+     "元本割れ_中間": "126/548=22.99%",
+     "元本割れ_上限": "230/548=41.97%",
+     "P15_測定分": "70/431=16.24%",
+     "P15_下限": "70/548=12.77%",
+     "P15_上限": "187/548=34.12%"
+    },
+    "全社": {
+     "N": 1787,
+     "survivor": 980,
+     "measured_exits": 58,
+     "censored": 749,
+     "censored_nonMA": 161,
+     "旧(survivorのみ)_毀損": "56/980=5.71%",
+     "毀損_下限": "66/1787=3.69%",
+     "毀損_中間": "227/1787=12.70%",
+     "毀損_上限": "815/1787=45.61%",
+     "毀損_測定分": "66/1038=6.36%",
+     "元本割れ_survivor": "284/980=28.98%",
+     "元本割れ_退場(測定)": "19/58=32.76%",
+     "元本割れ_下限": "303/1787=16.96%",
+     "元本割れ_中間": "464/1787=25.97%",
+     "元本割れ_上限": "1052/1787=58.87%",
+     "P15_測定分": "185/1038=17.82%",
+     "P15_下限": "185/1787=10.35%",
+     "P15_上限": "934/1787=52.27%"
+    }
+   },
+   "E": {
+    "質実証": {
+     "N": 548,
+     "survivor": 370,
+     "measured_exits": 96,
+     "censored": 82,
+     "censored_nonMA": 12,
+     "旧(survivorのみ)_毀損": "9/370=2.43%",
+     "毀損_下限": "22/548=4.01%",
+     "毀損_中間": "34/548=6.20%",
+     "毀損_上限": "104/548=18.98%",
+     "毀損_測定分": "22/466=4.72%",
+     "元本割れ_survivor": "92/370=24.86%",
+     "元本割れ_退場(測定)": "34/96=35.42%",
+     "元本割れ_下限": "126/548=22.99%",
+     "元本割れ_中間": "138/548=25.18%",
+     "元本割れ_上限": "208/548=37.96%",
+     "P15_測定分": "77/466=16.52%",
+     "P15_下限": "77/548=14.05%",
+     "P15_上限": "159/548=29.01%"
+    },
+    "全社": {
+     "N": 1787,
+     "survivor": 977,
+     "measured_exits": 96,
+     "censored": 714,
+     "censored_nonMA": 160,
+     "旧(survivorのみ)_毀損": "56/977=5.73%",
+     "毀損_下限": "69/1787=3.86%",
+     "毀損_中間": "229/1787=12.81%",
+     "毀損_上限": "783/1787=43.82%",
+     "毀損_測定分": "69/1073=6.43%",
+     "元本割れ_survivor": "282/977=28.86%",
+     "元本割れ_退場(測定)": "34/96=35.42%",
+     "元本割れ_下限": "316/1787=17.68%",
+     "元本割れ_中間": "476/1787=26.64%",
+     "元本割れ_上限": "1030/1787=57.64%",
+     "P15_測定分": "192/1073=17.89%",
+     "P15_下限": "192/1787=10.74%",
+     "P15_上限": "906/1787=50.70%"
+    }
+   },
+   "F": {
+    "質実証": {
+     "N": 548,
+     "survivor": 370,
+     "measured_exits": 96,
+     "censored": 82,
+     "censored_nonMA": 12,
+     "旧(survivorのみ)_毀損": "9/370=2.43%",
+     "毀損_下限": "23/548=4.20%",
+     "毀損_中間": "35/548=6.39%",
+     "毀損_上限": "105/548=19.16%",
+     "毀損_測定分": "23/466=4.94%",
+     "元本割れ_survivor": "92/370=24.86%",
+     "元本割れ_退場(測定)": "33/96=34.38%",
+     "元本割れ_下限": "125/548=22.81%",
+     "元本割れ_中間": "137/548=25.00%",
+     "元本割れ_上限": "207/548=37.77%",
+     "P15_測定分": "78/466=16.74%",
+     "P15_下限": "78/548=14.23%",
+     "P15_上限": "160/548=29.20%"
+    },
+    "全社": {
+     "N": 1787,
+     "survivor": 977,
+     "measured_exits": 96,
+     "censored": 714,
+     "censored_nonMA": 160,
+     "旧(survivorのみ)_毀損": "56/977=5.73%",
+     "毀損_下限": "70/1787=3.92%",
+     "毀損_中間": "230/1787=12.87%",
+     "毀損_上限": "784/1787=43.87%",
+     "毀損_測定分": "70/1073=6.52%",
+     "元本割れ_survivor": "282/977=28.86%",
+     "元本割れ_退場(測定)": "33/96=34.38%",
+     "元本割れ_下限": "315/1787=17.63%",
+     "元本割れ_中間": "475/1787=26.58%",
+     "元本割れ_上限": "1029/1787=57.58%",
+     "P15_測定分": "193/1073=17.99%",
+     "P15_下限": "193/1787=10.80%",
+     "P15_上限": "907/1787=50.76%"
+    }
+   }
+  }
+ },
+ "restored_exit_vs_survivor_質実証_F": {
+  "survivor": {
+   "n": 370,
+   "元本割れ": 92,
+   "元本割れ率": 0.2486,
+   "恒久毀損": 9,
+   "恒久毀損率": 0.0243,
+   "P15": 54
+  },
+  "退場(測定)・全部": {
+   "n": 96,
+   "元本割れ": 33,
+   "元本割れ率": 0.3438,
+   "恒久毀損": 14,
+   "恒久毀損率": 0.1458,
+   "P15": 24
+  },
+  "退場(測定)・M&A（acquired+going_private）": {
+   "n": 87,
+   "元本割れ": 24,
+   "元本割れ率": 0.2759,
+   "恒久毀損": 5,
+   "恒久毀損率": 0.0575,
+   "P15": 24
+  },
+  "退場(測定)・非M&A": {
+   "n": 9,
+   "元本割れ": 9,
+   "元本割れ率": 1.0,
+   "恒久毀損": 9,
+   "恒久毀損率": 1.0,
+   "P15": 0
+  }
+ },
+ "retro_base_rate_band_b": {
+  "v1_nonMA_censored": 36,
+  "summary": {
+   "復元(測定)／v2の種類=acquired": 10,
+   "復元(測定)／v2の種類=bankruptcy": 7,
+   "打ち切りのまま／v2の種類=acquired": 7,
+   "打ち切りのまま／v2の種類=deregistered": 5,
+   "打ち切りのまま／v2の種類=bankruptcy": 3,
+   "打ち切りのまま／v2の種類=stopped_filing": 2,
+   "復元(測定)／v2の種類=listing_deficiency": 1,
+   "打ち切りのまま／v2の種類=None": 1
+  },
+  "rows": [
+   {
+    "cik": 20520,
+    "name": "Frontier Communications Parent, Inc.",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "bankruptcy",
+    "v2_exit_date": "2020-04-29",
+    "v2_exit_basis": "②普通株の抹消+破産8-K",
+    "now": "退場(測定)",
+    "px_cagr": -1.0,
+    "why_still_censored": null
+   },
+   {
+    "cik": 55067,
+    "name": "Kellanova",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2025-12-11",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "退場(測定)",
+    "px_cagr": 0.0218,
+    "why_still_censored": null
+   },
+   {
+    "cik": 355429,
+    "name": "PROTECTIVE LIFE CORPORATION",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2015-02-03",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "退場(測定)",
+    "px_cagr": 0.4423,
+    "why_still_censored": null
+   },
+   {
+    "cik": 714603,
+    "name": "DST SYSTEMS INC",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2018-04-16",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "退場(測定)",
+    "px_cagr": 0.2067,
+    "why_still_censored": null
+   },
+   {
+    "cik": 722723,
+    "name": "Hanger, Inc.",
+    "v1_exit_kind": "listing_deficiency",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2022-10-03",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "退場(測定)",
+    "px_cagr": -0.0558,
+    "why_still_censored": null
+   },
+   {
+    "cik": 814549,
+    "name": "EBIX INC",
+    "v1_exit_kind": "bankruptcy",
+    "v2_exit_kind": "bankruptcy",
+    "v2_exit_date": "2024-02-15",
+    "v2_exit_basis": "②普通株の抹消+破産8-K",
+    "now": "退場(測定)",
+    "px_cagr": -1.0,
+    "why_still_censored": null
+   },
+   {
+    "cik": 850209,
+    "name": "Foot Locker, Inc.",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2025-09-08",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "no_price_in_doc"
+   },
+   {
+    "cik": 861878,
+    "name": "Stericycle, Inc.",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2024-11-04",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "退場(測定)",
+    "px_cagr": -0.0507,
+    "why_still_censored": null
+   },
+   {
+    "cik": 874292,
+    "name": "ADDvantage Technologies Group, Inc.",
+    "v1_exit_kind": "bankruptcy",
+    "v2_exit_kind": "bankruptcy",
+    "v2_exit_date": "2024-03-21",
+    "v2_exit_basis": "②普通株の抹消+破産8-K",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "破産: 計画の8-Kに既存の普通株の扱いが見つからない（打ち切りのまま）"
+   },
+   {
+    "cik": 874499,
+    "name": "Gulfport Energy Corporation",
+    "v1_exit_kind": "bankruptcy",
+    "v2_exit_kind": "bankruptcy",
+    "v2_exit_date": "2021-02-02",
+    "v2_exit_basis": "②普通株の抹消+破産8-K",
+    "now": "退場(測定)",
+    "px_cagr": -1.0,
+    "why_still_censored": null
+   },
+   {
+    "cik": 876779,
+    "name": "MAGIC SOFTWARE ENTERPRISES LTD.",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "deregistered",
+    "v2_exit_date": "2026-02-24",
+    "v2_exit_basis": "③抹消+定期報告の停止",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "no_last_quote"
+   },
+   {
+    "cik": 892534,
+    "name": "EZCHIP SEMICONDUCTOR LTD",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "deregistered",
+    "v2_exit_date": "2016-02-23",
+    "v2_exit_basis": "③抹消+定期報告の停止",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "no_last_quote"
+   },
+   {
+    "cik": 937556,
+    "name": "MASIMO CORP",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2026-06-10",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "退場(測定)",
+    "px_cagr": 0.1763,
+    "why_still_censored": null
+   },
+   {
+    "cik": 949039,
+    "name": "Diamond Offshore Drilling, Inc.",
+    "v1_exit_kind": "bankruptcy",
+    "v2_exit_kind": "bankruptcy",
+    "v2_exit_date": "2020-05-12",
+    "v2_exit_basis": "②普通株の抹消+破産8-K",
+    "now": "退場(測定)",
+    "px_cagr": -1.0,
+    "why_still_censored": null
+   },
+   {
+    "cik": 1008654,
+    "name": "TUPPERWARE BRANDS CORPORATION",
+    "v1_exit_kind": "bankruptcy",
+    "v2_exit_kind": "bankruptcy",
+    "v2_exit_date": "2024-10-04",
+    "v2_exit_basis": "②普通株の抹消+破産8-K",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "破産: 計画の8-Kに既存の普通株の扱いが見つからない（打ち切りのまま）"
+   },
+   {
+    "cik": 1021162,
+    "name": "Triumph Group, Inc.",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2025-07-24",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "退場(測定)",
+    "px_cagr": -0.0853,
+    "why_still_censored": null
+   },
+   {
+    "cik": 1052100,
+    "name": "WADDELL & REED FINANCIAL, INC.",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2021-04-30",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "退場(測定)",
+    "px_cagr": -0.0737,
+    "why_still_censored": null
+   },
+   {
+    "cik": 1053532,
+    "name": "LaSalle Hotel Properties",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2018-12-04",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "退場(測定)",
+    "px_cagr": 0.0708,
+    "why_still_censored": null
+   },
+   {
+    "cik": 1055294,
+    "name": "Kansas City Southern de Mexico, S.A. de ",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "stopped_filing",
+    "v2_exit_date": "2015-10-16",
+    "v2_exit_basis": "⑥提出の停止（様式も合併8-Kも無い）",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "no_last_quote"
+   },
+   {
+    "cik": 1067837,
+    "name": "AUDACY, INC.",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "bankruptcy",
+    "v2_exit_date": "2024-10-01",
+    "v2_exit_basis": "②普通株の抹消+破産8-K",
+    "now": "退場(測定)",
+    "px_cagr": -1.0,
+    "why_still_censored": null
+   },
+   {
+    "cik": 1131554,
+    "name": "Synchronoss Technologies, Inc",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2026-02-13",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "退場(測定)",
+    "px_cagr": -0.2351,
+    "why_still_censored": null
+   },
+   {
+    "cik": 1222840,
+    "name": "RETAIL PROPERTIES OF AMERICA, INC.",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2021-10-22",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "no_price_in_doc"
+   },
+   {
+    "cik": 1232241,
+    "name": "JOURNAL COMMUNICATIONS INC",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2015-04-01",
+    "v2_exit_basis": "①'普通株の抹消+取引の書類（SC 13E3/TO・DEFM14A/14D9）",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "no_price_in_doc"
+   },
+   {
+    "cik": 1271057,
+    "name": "CHINA-BIOTICS, INC",
+    "v1_exit_kind": "stopped_filing",
+    "v2_exit_kind": "stopped_filing",
+    "v2_exit_date": "2013-08-14",
+    "v2_exit_basis": "⑥提出の停止（様式も合併8-Kも無い）",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "no_last_quote"
+   },
+   {
+    "cik": 1282266,
+    "name": "WINDSTREAM HOLDINGS, INC.",
+    "v1_exit_kind": "bankruptcy",
+    "v2_exit_kind": "bankruptcy",
+    "v2_exit_date": "2019-04-02",
+    "v2_exit_basis": "②普通株の抹消+破産8-K",
+    "now": "退場(測定)",
+    "px_cagr": -1.0,
+    "why_still_censored": null
+   },
+   {
+    "cik": 1289505,
+    "name": "QC Holdings, Inc.",
+    "v1_exit_kind": "listing_deficiency",
+    "v2_exit_kind": "listing_deficiency",
+    "v2_exit_date": "2016-02-01",
+    "v2_exit_basis": "③抹消+定期報告の停止",
+    "now": "退場(測定)",
+    "px_cagr": -0.249,
+    "why_still_censored": null
+   },
+   {
+    "cik": 1294404,
+    "name": "Fang Holdings Ltd",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": null,
+    "v2_exit_date": null,
+    "v2_exit_basis": null,
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "生存（普通株の退場なし）だが価格なし"
+   },
+   {
+    "cik": 1316360,
+    "name": "IHS INC.",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2016-07-13",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "no_price_in_doc"
+   },
+   {
+    "cik": 1338749,
+    "name": "POTLATCHDELTIC CORP",
+    "v1_exit_kind": null,
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2026-02-02",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "no_price_in_doc"
+   },
+   {
+    "cik": 1351413,
+    "name": "SEADRILL LTD",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "deregistered",
+    "v2_exit_date": "2018-07-02",
+    "v2_exit_basis": "③抹消+定期報告の停止",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "no_last_quote"
+   },
+   {
+    "cik": 1396033,
+    "name": "LL Flooring Holdings, Inc.",
+    "v1_exit_kind": "bankruptcy",
+    "v2_exit_kind": "bankruptcy",
+    "v2_exit_date": "2024-08-14",
+    "v2_exit_basis": "②普通株の抹消+破産8-K",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "破産: 計画の8-Kに既存の普通株の扱いが見つからない（打ち切りのまま）"
+   },
+   {
+    "cik": 1405503,
+    "name": "China Digital TV Holding Co., Ltd.",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "deregistered",
+    "v2_exit_date": "2019-04-08",
+    "v2_exit_basis": "③抹消+定期報告の停止",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "no_last_quote"
+   },
+   {
+    "cik": 1407739,
+    "name": "DUPONT FABROS TECHNOLOGY, INC.",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2017-09-14",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "stock_merger"
+   },
+   {
+    "cik": 1447382,
+    "name": "Ocean Rig UDW Inc.",
+    "v1_exit_kind": "deregistered",
+    "v2_exit_kind": "deregistered",
+    "v2_exit_date": "2018-12-06",
+    "v2_exit_basis": "③抹消+定期報告の停止",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "no_last_quote"
+   },
+   {
+    "cik": 1469372,
+    "name": "MSG NETWORKS INC.",
+    "v1_exit_kind": "listing_deficiency",
+    "v2_exit_kind": "acquired",
+    "v2_exit_date": "2021-07-09",
+    "v2_exit_basis": "①抹消+合併完了8-K",
+    "now": "打ち切り",
+    "px_cagr": null,
+    "why_still_censored": "no_price_in_doc"
+   },
+   {
+    "cik": 1502034,
+    "name": "GNC HOLDINGS, INC.",
+    "v1_exit_kind": "bankruptcy",
+    "v2_exit_kind": "bankruptcy",
+    "v2_exit_date": "2020-07-01",
+    "v2_exit_basis": "②普通株の抹消+破産8-K",
+    "now": "退場(測定)",
+    "px_cagr": -1.0,
+    "why_still_censored": null
+   }
+  ],
+  "what_the_rest_needs": {
+   "破産で計画の文言がSECに無い 3社（ADDvantage・Tupperware・LL Flooring）": "計画の認可命令・開示書（裁判所の記録＝SEC の外）。SEC の 8-K（1.03/2.01/3.03/5.01/8.01）には既存の普通株の扱いが書かれていない（NOL命令の『worthlessness』は扱いの記述ではない）",
+   "外国私募発行体の登録抹消 5社（Magic・EZchip・Seadrill・China Digital TV・Ocean Rig）": "10-K の Item5 が無い。20-F の Item 9（Offer and Listing Details）の高安表か 6-K を読む別の読み取り器が要る（未実装）",
+   "上場株を持たない社 2社（Kansas City Southern de Mexico・United Surgical Partners）": "返り値ではなく母集団の誤り。manual_map の listed=false で母集団から外すのが筋（未実施＝分母に残っている）",
+   "China-Biotics・Fang": "asof の前後で上場が崩れている／ADR で10-K が無い",
+   "M&A で対価が採れない社（株式・混合・本文に数字なし）": "混合・株式は規約どおり打ち切り（相手の株価を混ぜない）。『本文に数字なし』は 8-K の添付（EX-99 のプレスリリース）を読む経路が未実装"
+  }
+ },
+ "splits_adjusted": [
+  {
+   "name": "DST SYSTEMS INC",
+   "cik": 714603,
+   "factor": 2.0,
+   "events": [
+    {
+     "lo": "2017-05-10",
+     "hi": "2017-08-08",
+     "ratio": 2.0,
+     "clean": true,
+     "eps_agree": 18,
+     "sh_agree": 18
+    }
+   ],
+   "px_cagr": 0.2067
+  },
+  {
+   "name": "CONTINENTAL RESOURCES, INC",
+   "cik": 732834,
+   "factor": 2.0,
+   "events": [
+    {
+     "lo": "2014-08-06",
+     "hi": "2014-11-05",
+     "ratio": 2.0,
+     "clean": true,
+     "eps_agree": 18,
+     "sh_agree": 14
+    }
+   ],
+   "px_cagr": 0.0572
+  },
+  {
+   "name": "CEDAR REALTY TRUST, INC.",
+   "cik": 761648,
+   "factor": 0.1515,
+   "events": [
+    {
+     "lo": "2020-10-29",
+     "hi": "2021-02-11",
+     "ratio": 0.1515,
+     "clean": false,
+     "eps_agree": 0,
+     "sh_agree": 7
+    }
+   ],
+   "px_cagr": -0.1363
+  },
+  {
+   "name": "ICONIX BRAND GROUP, INC.",
+   "cik": 857737,
+   "factor": 0.1,
+   "events": [
+    {
+     "lo": "2018-11-20",
+     "hi": "2019-03-28",
+     "ratio": 0.1,
+     "clean": true,
+     "eps_agree": 3,
+     "sh_agree": 12
+    }
+   ],
+   "px_cagr": -0.4313
+  },
+  {
+   "name": "SYNTEL INC",
+   "cik": 1040426,
+   "factor": 2.0,
+   "events": [
+    {
+     "lo": "2014-08-05",
+     "hi": "2014-11-07",
+     "ratio": 2.0,
+     "clean": true,
+     "eps_agree": 17,
+     "sh_agree": 17
+    }
+   ],
+   "px_cagr": 0.0427
+  },
+  {
+   "name": "Synchronoss Technologies, Inc",
+   "cik": 1131554,
+   "factor": 0.1118,
+   "events": [
+    {
+     "lo": "2023-11-08",
+     "hi": "2024-03-25",
+     "ratio": 0.1118,
+     "clean": false,
+     "eps_agree": 4,
+     "sh_agree": 20
+    }
+   ],
+   "px_cagr": -0.2351
+  },
+  {
+   "name": "AMTRUST FINANCIAL SERVICES, INC.",
+   "cik": 1365555,
+   "factor": 2.0,
+   "events": [
+    {
+     "lo": "2015-11-09",
+     "hi": "2016-02-29",
+     "ratio": 2.0,
+     "clean": true,
+     "eps_agree": 22,
+     "sh_agree": 14
+    }
+   ],
+   "px_cagr": -0.0204
+  }
+ ],
+ "v1_measured_exits_that_moved": [
+  {
+   "name": "BALLY TECHNOLOGIES, INC.",
+   "v1_px_cagr": 0.3972,
+   "px_cagr": 0.3116,
+   "v1_start": [
+    47.33,
+    57.3
+   ],
+   "start": [
+    56.52,
+    57.3
+   ],
+   "split": null
+  },
+  {
+   "name": "ESTERLINE TECHNOLOGIES CORP",
+   "v1_px_cagr": 0.0779,
+   "px_cagr": 0.087,
+   "v1_start": [
+    74.81,
+    85.3
+   ],
+   "start": [
+    69.16,
+    83.87
+   ],
+   "split": null
+  },
+  {
+   "name": "TEGNA INC.",
+   "v1_px_cagr": 0.0192,
+   "now": "打ち切り",
+   "why": "no_quarter_rows",
+   "v1_start": [
+    15.28,
+    19.53
+   ]
+  },
+  {
+   "name": "INTERNATIONAL SPEEDWAY CORP",
+   "v1_px_cagr": 0.0636,
+   "px_cagr": 0.05,
+   "v1_start": [
+    28.54,
+    32.65
+   ],
+   "start": [
+    30.61,
+    35.77
+   ],
+   "split": null
+  },
+  {
+   "name": "SIGMA ALDRICH CORP",
+   "v1_px_cagr": 0.2115,
+   "px_cagr": 0.2452,
+   "v1_start": [
+    82.9,
+    94.78
+   ],
+   "start": [
+    80.25,
+    85.91
+   ],
+   "split": null
+  },
+  {
+   "name": "ST JUDE MEDICAL INC",
+   "v1_px_cagr": 0.0764,
+   "px_cagr": 0.1879,
+   "v1_start": [
+    61.0,
+    70.59
+   ],
+   "start": [
+    45.38,
+    47.45
+   ],
+   "split": null
+  },
+  {
+   "name": "FLIR SYSTEMS INC",
+   "v1_px_cagr": 0.08,
+   "px_cagr": 0.0966,
+   "v1_start": [
+    28.17,
+    33.17
+   ],
+   "start": [
+    26.97,
+    27.25
+   ],
+   "split": null
+  },
+  {
+   "name": "CA, INC.",
+   "v1_px_cagr": 0.061,
+   "px_cagr": 0.0862,
+   "v1_start": [
+    30.53,
+    34.43
+   ],
+   "start": [
+    27.98,
+    29.23
+   ],
+   "split": null
+  },
+  {
+   "name": "Panera Bread Company",
+   "v1_px_cagr": 0.1723,
+   "px_cagr": 0.1533,
+   "v1_start": [
+    153.15,
+    178.92
+   ],
+   "start": [
+    164.02,
+    190.71
+   ],
+   "split": null
+  },
+  {
+   "name": "BEAM INC",
+   "v1_px_cagr": 0.2932,
+   "px_cagr": 0.3796,
+   "v1_start": [
+    64.43,
+    70.63
+   ],
+   "start": [
+    60.82,
+    67.21
+   ],
+   "split": null
+  },
+  {
+   "name": "ALLERGAN INC.",
+   "v1_px_cagr": 0.5895,
+   "px_cagr": 0.7066,
+   "v1_start": [
+    88.34,
+    111.45
+   ],
+   "start": [
+    82.56,
+    93.25
+   ],
+   "split": null
+  },
+  {
+   "name": "ICONIX BRAND GROUP, INC.",
+   "v1_px_cagr": -0.2441,
+   "px_cagr": -0.4313,
+   "v1_start": [
+    29.46,
+    31.22
+   ],
+   "start": [
+    29.46,
+    31.22
+   ],
+   "split": 0.1
+  },
+  {
+   "name": "CITRIX SYSTEMS INC",
+   "v1_px_cagr": 0.0601,
+   "px_cagr": 0.0498,
+   "v1_start": [
+    56.47,
+    64.99
+   ],
+   "start": [
+    60.5,
+    72.65
+   ],
+   "split": null
+  },
+  {
+   "name": "HIBBETT INC",
+   "v1_px_cagr": 0.0451,
+   "px_cagr": 0.0376,
+   "v1_start": [
+    51.0,
+    56.54
+   ],
+   "start": [
+    55.0,
+    61.5
+   ],
+   "split": null
+  },
+  {
+   "name": "SYNTEL INC",
+   "v1_px_cagr": -0.0857,
+   "px_cagr": 0.0427,
+   "v1_start": [
+    62.75,
+    68.91
+   ],
+   "start": [
+    62.75,
+    68.91
+   ],
+   "split": 2.0
+  },
+  {
+   "name": "JUNIPER NETWORKS, INC.",
+   "v1_px_cagr": 0.0477,
+   "px_cagr": 0.0632,
+   "v1_start": [
+    21.24,
+    24.6
+   ],
+   "start": [
+    18.71,
+    19.62
+   ],
+   "split": null
+  },
+  {
+   "name": "TIBCO SOFTWARE INC",
+   "v1_px_cagr": -0.0235,
+   "px_cagr": 0.0413,
+   "v1_start": [
+    22.71,
+    27.15
+   ],
+   "start": [
+    19.92,
+    25.76
+   ],
+   "split": null
+  },
+  {
+   "name": "RED HAT INC",
+   "v1_px_cagr": 0.2389,
+   "px_cagr": 0.2519,
+   "v1_start": [
+    45.45,
+    60.19
+   ],
+   "start": [
+    44.92,
+    53.72
+   ],
+   "split": null
+  },
+  {
+   "name": "OPENTABLE INC",
+   "v1_px_cagr": 0.3375,
+   "px_cagr": 0.5069,
+   "v1_start": [
+    65.38,
+    87.48
+   ],
+   "start": [
+    61.5,
+    72.18
+   ],
+   "split": null
+  },
+  {
+   "name": "Columbia Property Trust, Inc.",
+   "v1_px_cagr": 0.6157,
+   "now": "打ち切り",
+   "why": "start_window_off",
+   "v1_start": [
+    0.38,
+    0.38
+   ]
+  },
+  {
+   "name": "IPC HEALTHCARE, INC.",
+   "v1_px_cagr": 0.2613,
+   "px_cagr": 0.2257,
+   "v1_start": [
+    45.23,
+    53.7
+   ],
+   "start": [
+    45.23,
+    53.7
+   ],
+   "split": null
+  }
+ ],
+ "reused_ticker_measured": [
+  {
+   "name": "CEDAR REALTY TRUST, INC.",
+   "cik": 761648,
+   "yahoo_ticker_was": "CDR-PB",
+   "px_cagr": -0.1363,
+   "basis": "price-only（10-K Item5 の高安 ÷ 合併対価・Yahoo の系列は退場の後に別の証券）"
+  },
+  {
+   "name": "20230930-DK-BUTTERFLY-1, INC.",
+   "cik": 886158,
+   "yahoo_ticker_was": "BBBY",
+   "px_cagr": -1.0,
+   "basis": "price-only（破産で消却（破産: 既存の普通株は消却・分配なし）・Yahoo の系列は退場の後に別の証券）"
+  },
+  {
+   "name": "The Southern Company",
+   "cik": 1004155,
+   "yahoo_ticker_was": "SO",
+   "px_cagr": 0.1502,
+   "basis": "price-only（10-K Item5 の高安 ÷ 合併対価・Yahoo の系列は退場の後に別の証券）"
+  },
+  {
+   "name": "VECTREN CORP",
+   "cik": 1096385,
+   "yahoo_ticker_was": "VVC",
+   "px_cagr": 0.1392,
+   "basis": "price-only（10-K Item5 の高安 ÷ 合併対価・Yahoo の系列は退場の後に別の証券）"
+  }
+ ],
+ "downstream_key_numbers": {
+  "note": "scratch の複製（out/_delisted_cache を共有・hist_* の出力は本物の out/ に書いていない）で v1/D/E/F を回した。hist_val2_regime は sec_survival の節だけ（他の節は退場と無関係）",
+  "by_layer": {
+   "v1": {
+    "hist_val2_delisted": {
+     "pool": {
+      "N": 419,
+      "survivor": 374,
+      "restored_exits": 45
+     },
+     "base": {
+      "p_loss": 0.2458,
+      "p_perm": 0.0263,
+      "p_win": 0.1647,
+      "median": 0.0664
+     },
+     "restored_only": {
+      "n": 45,
+      "p_loss": 0.1778,
+      "p_perm": 0.0444,
+      "p_win": 0.3333,
+      "median": 0.0713
+     },
+     "survivor_only": {
+      "n": 374,
+      "p_loss": 0.254,
+      "p_perm": 0.0241,
+      "p_win": 0.1444,
+      "median": 0.0651
+     },
+     "censored": 144,
+     "dd5_cells": {
+      "-0.20": {
+       "judgeable": false,
+       "n_na": 69,
+       "lower": "不合格（濃縮 1.46倍 / 分子 18社）",
+       "upper": "不合格（濃縮 1.33倍 / 分子 39社）",
+       "same_verdict": false
+      },
+      "-0.30": {
+       "judgeable": true,
+       "n_na": 69,
+       "lower": "不合格（濃縮 1.96倍 / 分子 13社）",
+       "upper": "不合格（濃縮 1.44倍 / 分子 34社）",
+       "same_verdict": false
+      },
+      "-0.40": {
+       "judgeable": true,
+       "n_na": 69,
+       "lower": "不合格（濃縮 1.48倍 / 分子 4社）",
+       "upper": "不合格（濃縮 1.27倍 / 分子 25社）",
+       "same_verdict": false
+      },
+      "-0.50": {
+       "judgeable": false,
+       "n_na": 69,
+       "lower": "不合格（濃縮 2.03倍 / 分子 2社）",
+       "upper": "不合格（濃縮 1.28倍 / 分子 23社）",
+       "same_verdict": false
+      }
+     }
+    },
+    "hist_val2_selfrel_delisted": {
+     "pass_cells": 0,
+     "median_hit": "19.3%"
+    },
+    "hist_val2_regime.sec_survival": {
+     "base_readings": {
+      "下限(打ち切りは元本割れしない)": 0.1876,
+      "中間(非M&Aの打ち切りだけ元本割れ)": 0.2532,
+      "上限(打ち切りは全部元本割れ)": 0.4244
+     },
+     "left_tail": {
+      "survivor": {
+       "n": 374,
+       "p_loss": 0.254
+      },
+      "restored_exit": {
+       "n": 45,
+       "p_loss": 0.1778
+      }
+     },
+     "bounding": {
+      "na(72社)を全部通過させる(下端)": {
+       "ratio": 1.96,
+       "stop_numer": 13,
+       "stop_n": 27
+      },
+      "na(72社)を全部止める(上端)": {
+       "ratio": 1.44,
+       "stop_numer": 34,
+       "stop_n": 96
+      },
+      "-0.40_下端": {
+       "ratio": 1.48,
+       "stop_numer": 4,
+       "stop_n": 11
+      },
+      "-0.40_上端": {
+       "ratio": 1.27,
+       "stop_numer": 25,
+       "stop_n": 80
+      }
+     },
+     "exits_before_2019": 97,
+     "exits_from_2019": 77
+    },
+    "hist_wd_dst_path(c)": {
+     "universe": {
+      "N": 1788,
+      "survivor": 981,
+      "censored": 762,
+      "measured": 45
+     },
+     "全社": {
+      "A": 0.0571,
+      "A_frac": "56/981",
+      "B": 0.0565,
+      "bracket": [
+       0.0324,
+       0.4586
+      ],
+      "mid": 0.1376
+     },
+     "質実証": {
+      "A": 0.0241,
+      "A_frac": "9/374",
+      "B": 0.0263,
+      "bracket": [
+       0.02,
+       0.2568
+      ],
+      "mid": 0.0838
+     },
+     "groups": {
+      "全社": {
+       "債務超過(equity_neg)": {
+        "n": 21,
+        "naive": -0.0571,
+        "bracket": [
+         -0.4584,
+         0.4434
+        ],
+        "sign_fixed": "×"
+       },
+       "営業利益が全年黒字でない": {
+        "n": 714,
+        "naive": 0.0733,
+        "bracket": [
+         -0.2978,
+         0.6088
+        ],
+        "sign_fixed": "×"
+       },
+       "FCFが全年黒字でない": {
+        "n": 775,
+        "naive": 0.0603,
+        "bracket": [
+         -0.3059,
+         0.5779
+        ],
+        "sign_fixed": "×"
+       },
+       "ROIC(5年中央値) 下位1/4": {
+        "n": 447,
+        "naive": 0.1184,
+        "bracket": [
+         -0.3251,
+         0.6607
+        ],
+        "sign_fixed": "×"
+       },
+       "FCF転換(5年) 下位1/4": {
+        "n": 337,
+        "naive": -0.0039,
+        "bracket": [
+         -0.4346,
+         0.389
+        ],
+        "sign_fixed": "×"
+       },
+       "営業利益率 下位1/4": {
+        "n": 448,
+        "naive": 0.1344,
+        "bracket": [
+         -0.3136,
+         0.6949
+        ],
+        "sign_fixed": "×"
+       },
+       "売上5年CAGR 下位1/4": {
+        "n": 447,
+        "naive": 0.0272,
+        "bracket": [
+         -0.39,
+         0.5198
+        ],
+        "sign_fixed": "×"
+       }
+      },
+      "質実証": {
+       "ROIC(5年中央値) 下位1/4": {
+        "n": 138,
+        "naive": 0.0181,
+        "bracket": [
+         -0.2119,
+         0.2873
+        ],
+        "sign_fixed": "×"
+       },
+       "FCF転換(5年) 下位1/4": {
+        "n": 135,
+        "naive": 0.0027,
+        "bracket": [
+         -0.2411,
+         0.2177
+        ],
+        "sign_fixed": "×"
+       },
+       "営業利益率 下位1/4": {
+        "n": 138,
+        "naive": 0.0024,
+        "bracket": [
+         -0.2386,
+         0.2269
+        ],
+        "sign_fixed": "×"
+       },
+       "売上5年CAGR 下位1/4": {
+        "n": 138,
+        "naive": 0.0038,
+        "bracket": [
+         -0.2289,
+         0.2559
+        ],
+        "sign_fixed": "×"
+       }
+      }
+     }
+    }
+   },
+   "final": {
+    "hist_val2_delisted": {
+     "pool": {
+      "N": 431,
+      "survivor": 373,
+      "restored_exits": 58
+     },
+     "base": {
+      "p_loss": 0.2622,
+      "p_perm": 0.0441,
+      "p_win": 0.1624,
+      "median": 0.0632
+     },
+     "restored_only": {
+      "n": 58,
+      "p_loss": 0.3276,
+      "p_perm": 0.1724,
+      "p_win": 0.2759,
+      "median": 0.0566
+     },
+     "survivor_only": {
+      "n": 373,
+      "p_loss": 0.252,
+      "p_perm": 0.0241,
+      "p_win": 0.1448,
+      "median": 0.0655
+     },
+     "censored": 132,
+     "dd5_cells": {
+      "-0.20": {
+       "judgeable": false,
+       "n_na": 81,
+       "lower": "不合格（濃縮 1.37倍 / 分子 18社）",
+       "upper": "不合格（濃縮 1.43倍 / 分子 49社）",
+       "same_verdict": false
+      },
+      "-0.30": {
+       "judgeable": true,
+       "n_na": 81,
+       "lower": "不合格（濃縮 1.84倍 / 分子 13社）",
+       "upper": "不合格（濃縮 1.55倍 / 分子 44社）",
+       "same_verdict": false
+      },
+      "-0.40": {
+       "judgeable": true,
+       "n_na": 81,
+       "lower": "不合格（濃縮 1.39倍 / 分子 4社）",
+       "upper": "不合格（濃縮 1.45倍 / 分子 35社）",
+       "same_verdict": false
+      },
+      "-0.50": {
+       "judgeable": false,
+       "n_na": 81,
+       "lower": "不合格（濃縮 1.91倍 / 分子 2社）",
+       "upper": "不合格（濃縮 1.48倍 / 分子 33社）",
+       "same_verdict": false
+      }
+     }
+    },
+    "hist_val2_selfrel_delisted": {
+     "pass_cells": 0,
+     "median_hit": "19.3%"
+    },
+    "hist_val2_regime.sec_survival": {
+     "base_readings": {
+      "下限(打ち切りは元本割れしない)": 0.2062,
+      "中間(非M&Aの打ち切りだけ元本割れ)": 0.2299,
+      "上限(打ち切りは全部元本割れ)": 0.4197
+     },
+     "left_tail": {
+      "survivor": {
+       "n": 373,
+       "p_loss": 0.252
+      },
+      "restored_exit": {
+       "n": 58,
+       "p_loss": 0.3276
+      }
+     },
+     "bounding": {
+      "na(72社)を全部通過させる(下端)": {
+       "ratio": 1.84,
+       "stop_numer": 13,
+       "stop_n": 27
+      },
+      "na(72社)を全部止める(上端)": {
+       "ratio": 1.55,
+       "stop_numer": 44,
+       "stop_n": 108
+      },
+      "-0.40_下端": {
+       "ratio": 1.39,
+       "stop_numer": 4,
+       "stop_n": 11
+      },
+      "-0.40_上端": {
+       "ratio": 1.45,
+       "stop_numer": 35,
+       "stop_n": 92
+      }
+     },
+     "exits_before_2019": 86,
+     "exits_from_2019": 88
+    },
+    "hist_wd_dst_path(c)": {
+     "universe": {
+      "N": 1787,
+      "survivor": 980,
+      "censored": 749,
+      "measured": 58
+     },
+     "全社": {
+      "A": 0.0571,
+      "A_frac": "56/980",
+      "B": 0.0636,
+      "bracket": [
+       0.0369,
+       0.4561
+      ],
+      "mid": 0.113
+     },
+     "質実証": {
+      "A": 0.0241,
+      "A_frac": "9/373",
+      "B": 0.0441,
+      "bracket": [
+       0.0347,
+       0.2482
+      ],
+      "mid": 0.0566
+     },
+     "groups": {
+      "全社": {
+       "債務超過(equity_neg)": {
+        "n": 21,
+        "naive": -0.0643,
+        "bracket": [
+         -0.4564,
+         0.3912
+        ],
+        "sign_fixed": "×"
+       },
+       "営業利益が全年黒字でない": {
+        "n": 714,
+        "naive": 0.0631,
+        "bracket": [
+         -0.2935,
+         0.6014
+        ],
+        "sign_fixed": "×"
+       },
+       "FCFが全年黒字でない": {
+        "n": 775,
+        "naive": 0.0494,
+        "bracket": [
+         -0.3013,
+         0.57
+        ],
+        "sign_fixed": "×"
+       },
+       "ROIC(5年中央値) 下位1/4": {
+        "n": 447,
+        "naive": 0.1108,
+        "bracket": [
+         -0.3209,
+         0.657
+        ],
+        "sign_fixed": "×"
+       },
+       "FCF転換(5年) 下位1/4": {
+        "n": 337,
+        "naive": -0.007,
+        "bracket": [
+         -0.4285,
+         0.3841
+        ],
+        "sign_fixed": "×"
+       },
+       "営業利益率 下位1/4": {
+        "n": 448,
+        "naive": 0.1259,
+        "bracket": [
+         -0.3101,
+         0.6889
+        ],
+        "sign_fixed": "×"
+       },
+       "売上5年CAGR 下位1/4": {
+        "n": 447,
+        "naive": 0.0342,
+        "bracket": [
+         -0.3799,
+         0.516
+        ],
+        "sign_fixed": "×"
+       }
+      },
+      "質実証": {
+       "ROIC(5年中央値) 下位1/4": {
+        "n": 137,
+        "naive": 0.0186,
+        "bracket": [
+         -0.1898,
+         0.2603
+        ],
+        "sign_fixed": "×"
+       },
+       "FCF転換(5年) 下位1/4": {
+        "n": 135,
+        "naive": 0.003,
+        "bracket": [
+         -0.2148,
+         0.2031
+        ],
+        "sign_fixed": "×"
+       },
+       "営業利益率 下位1/4": {
+        "n": 138,
+        "naive": -0.0226,
+        "bracket": [
+         -0.2344,
+         0.1856
+        ],
+        "sign_fixed": "×"
+       },
+       "売上5年CAGR 下位1/4": {
+        "n": 137,
+        "naive": 0.0166,
+        "bracket": [
+         -0.1971,
+         0.2384
+        ],
+        "sign_fixed": "×"
+       }
+      }
+     }
+    }
+   },
+   "E": {
+    "hist_val2_delisted": {
+     "pool": {
+      "N": 466,
+      "survivor": 370,
+      "restored_exits": 96
+     },
+     "base": {
+      "p_loss": 0.2704,
+      "p_perm": 0.0472,
+      "p_win": 0.1652,
+      "median": 0.0614
+     },
+     "restored_only": {
+      "n": 96,
+      "p_loss": 0.3542,
+      "p_perm": 0.1354,
+      "p_win": 0.2396,
+      "median": 0.0543
+     },
+     "survivor_only": {
+      "n": 370,
+      "p_loss": 0.2486,
+      "p_perm": 0.0243,
+      "p_win": 0.1459,
+      "median": 0.0666
+     },
+     "censored": 97,
+     "dd5_cells": {
+      "-0.20": {
+       "judgeable": false,
+       "n_na": 116,
+       "lower": "不合格（濃縮 1.33倍 / 分子 18社）",
+       "upper": "不合格（濃縮 1.38倍 / 分子 62社）",
+       "same_verdict": false
+      },
+      "-0.30": {
+       "judgeable": true,
+       "n_na": 116,
+       "lower": "不合格（濃縮 1.78倍 / 分子 13社）",
+       "upper": "不合格（濃縮 1.47倍 / 分子 57社）",
+       "same_verdict": false
+      },
+      "-0.40": {
+       "judgeable": true,
+       "n_na": 116,
+       "lower": "不合格（濃縮 1.34倍 / 分子 4社）",
+       "upper": "不合格（濃縮 1.4倍 / 分子 48社）",
+       "same_verdict": false
+      },
+      "-0.50": {
+       "judgeable": false,
+       "n_na": 116,
+       "lower": "不合格（濃縮 1.85倍 / 分子 2社）",
+       "upper": "不合格（濃縮 1.42倍 / 分子 46社）",
+       "same_verdict": false
+      }
+     }
+    },
+    "hist_val2_selfrel_delisted": {
+     "pass_cells": 0,
+     "median_hit": "19.3%"
+    },
+    "hist_val2_regime.sec_survival": {
+     "base_readings": {
+      "下限(打ち切りは元本割れしない)": 0.2299,
+      "中間(非M&Aの打ち切りだけ元本割れ)": 0.2518,
+      "上限(打ち切りは全部元本割れ)": 0.3796
+     },
+     "left_tail": {
+      "survivor": {
+       "n": 370,
+       "p_loss": 0.2486
+      },
+      "restored_exit": {
+       "n": 96,
+       "p_loss": 0.3542
+      }
+     },
+     "bounding": {
+      "na(72社)を全部通過させる(下端)": {
+       "ratio": 1.78,
+       "stop_numer": 13,
+       "stop_n": 27
+      },
+      "na(72社)を全部止める(上端)": {
+       "ratio": 1.47,
+       "stop_numer": 57,
+       "stop_n": 143
+      },
+      "-0.40_下端": {
+       "ratio": 1.34,
+       "stop_numer": 4,
+       "stop_n": 11
+      },
+      "-0.40_上端": {
+       "ratio": 1.4,
+       "stop_numer": 48,
+       "stop_n": 127
+      }
+     },
+     "exits_before_2019": 87,
+     "exits_from_2019": 90
+    },
+    "hist_wd_dst_path(c)": {
+     "universe": {
+      "N": 1787,
+      "survivor": 977,
+      "censored": 714,
+      "measured": 96
+     },
+     "全社": {
+      "A": 0.0573,
+      "A_frac": "56/977",
+      "B": 0.0643,
+      "bracket": [
+       0.0386,
+       0.4382
+      ],
+      "mid": 0.1142
+     },
+     "質実証": {
+      "A": 0.0243,
+      "A_frac": "9/370",
+      "B": 0.0472,
+      "bracket": [
+       0.0401,
+       0.1898
+      ],
+      "mid": 0.0602
+     },
+     "groups": {
+      "全社": {
+       "債務超過(equity_neg)": {
+        "n": 21,
+        "naive": -0.0652,
+        "bracket": [
+         -0.4394,
+         0.2943
+        ],
+        "sign_fixed": "×"
+       },
+       "営業利益が全年黒字でない": {
+        "n": 714,
+        "naive": 0.0613,
+        "bracket": [
+         -0.2637,
+         0.5986
+        ],
+        "sign_fixed": "×"
+       },
+       "FCFが全年黒字でない": {
+        "n": 775,
+        "naive": 0.0476,
+        "bracket": [
+         -0.2697,
+         0.567
+        ],
+        "sign_fixed": "×"
+       },
+       "ROIC(5年中央値) 下位1/4": {
+        "n": 447,
+        "naive": 0.1092,
+        "bracket": [
+         -0.2971,
+         0.6547
+        ],
+        "sign_fixed": "×"
+       },
+       "FCF転換(5年) 下位1/4": {
+        "n": 337,
+        "naive": -0.0037,
+        "bracket": [
+         -0.4063,
+         0.3709
+        ],
+        "sign_fixed": "×"
+       },
+       "営業利益率 下位1/4": {
+        "n": 448,
+        "naive": 0.1244,
+        "bracket": [
+         -0.2863,
+         0.6866
+        ],
+        "sign_fixed": "×"
+       },
+       "売上5年CAGR 下位1/4": {
+        "n": 447,
+        "naive": 0.0362,
+        "bracket": [
+         -0.3568,
+         0.5056
+        ],
+        "sign_fixed": "×"
+       }
+      },
+      "質実証": {
+       "ROIC(5年中央値) 下位1/4": {
+        "n": 137,
+        "naive": 0.0109,
+        "bracket": [
+         -0.1241,
+         0.2165
+        ],
+        "sign_fixed": "×"
+       },
+       "FCF転換(5年) 下位1/4": {
+        "n": 135,
+        "naive": 0.015,
+        "bracket": [
+         -0.1467,
+         0.1266
+        ],
+        "sign_fixed": "×"
+       },
+       "営業利益率 下位1/4": {
+        "n": 138,
+        "naive": -0.0306,
+        "bracket": [
+         -0.1856,
+         0.0913
+        ],
+        "sign_fixed": "×"
+       },
+       "売上5年CAGR 下位1/4": {
+        "n": 137,
+        "naive": 0.0181,
+        "bracket": [
+         -0.1314,
+         0.1752
+        ],
+        "sign_fixed": "×"
+       }
+      }
+     }
+    }
+   },
+   "F": {
+    "hist_val2_delisted": {
+     "pool": {
+      "N": 466,
+      "survivor": 370,
+      "restored_exits": 96
+     },
+     "base": {
+      "p_loss": 0.2682,
+      "p_perm": 0.0494,
+      "p_win": 0.1674,
+      "median": 0.0621
+     },
+     "restored_only": {
+      "n": 96,
+      "p_loss": 0.3438,
+      "p_perm": 0.1458,
+      "p_win": 0.25,
+      "median": 0.0558
+     },
+     "survivor_only": {
+      "n": 370,
+      "p_loss": 0.2486,
+      "p_perm": 0.0243,
+      "p_win": 0.1459,
+      "median": 0.0666
+     },
+     "censored": 97,
+     "dd5_cells": {
+      "-0.20": {
+       "judgeable": false,
+       "n_na": 116,
+       "lower": "不合格（濃縮 1.34倍 / 分子 18社）",
+       "upper": "不合格（濃縮 1.37倍 / 分子 61社）",
+       "same_verdict": false
+      },
+      "-0.30": {
+       "judgeable": true,
+       "n_na": 116,
+       "lower": "不合格（濃縮 1.8倍 / 分子 13社）",
+       "upper": "不合格（濃縮 1.46倍 / 分子 56社）",
+       "same_verdict": false
+      },
+      "-0.40": {
+       "judgeable": true,
+       "n_na": 116,
+       "lower": "不合格（濃縮 1.36倍 / 分子 4社）",
+       "upper": "不合格（濃縮 1.38倍 / 分子 47社）",
+       "same_verdict": false
+      },
+      "-0.50": {
+       "judgeable": false,
+       "n_na": 116,
+       "lower": "不合格（濃縮 1.86倍 / 分子 2社）",
+       "upper": "不合格（濃縮 1.4倍 / 分子 45社）",
+       "same_verdict": false
+      }
+     }
+    },
+    "hist_val2_selfrel_delisted": {
+     "pass_cells": 0,
+     "median_hit": "19.3%"
+    },
+    "hist_val2_regime.sec_survival": {
+     "base_readings": {
+      "下限(打ち切りは元本割れしない)": 0.2281,
+      "中間(非M&Aの打ち切りだけ元本割れ)": 0.25,
+      "上限(打ち切りは全部元本割れ)": 0.3777
+     },
+     "left_tail": {
+      "survivor": {
+       "n": 370,
+       "p_loss": 0.2486
+      },
+      "restored_exit": {
+       "n": 96,
+       "p_loss": 0.3438
+      }
+     },
+     "bounding": {
+      "na(72社)を全部通過させる(下端)": {
+       "ratio": 1.8,
+       "stop_numer": 13,
+       "stop_n": 27
+      },
+      "na(72社)を全部止める(上端)": {
+       "ratio": 1.46,
+       "stop_numer": 56,
+       "stop_n": 143
+      },
+      "-0.40_下端": {
+       "ratio": 1.36,
+       "stop_numer": 4,
+       "stop_n": 11
+      },
+      "-0.40_上端": {
+       "ratio": 1.38,
+       "stop_numer": 47,
+       "stop_n": 127
+      }
+     },
+     "exits_before_2019": 87,
+     "exits_from_2019": 90
+    },
+    "hist_wd_dst_path(c)": {
+     "universe": {
+      "N": 1787,
+      "survivor": 977,
+      "censored": 714,
+      "measured": 96
+     },
+     "全社": {
+      "A": 0.0573,
+      "A_frac": "56/977",
+      "B": 0.0652,
+      "bracket": [
+       0.0392,
+       0.4387
+      ],
+      "mid": 0.1147
+     },
+     "質実証": {
+      "A": 0.0243,
+      "A_frac": "9/370",
+      "B": 0.0494,
+      "bracket": [
+       0.042,
+       0.1916
+      ],
+      "mid": 0.062
+     },
+     "groups": {
+      "全社": {
+       "債務超過(equity_neg)": {
+        "n": 21,
+        "naive": -0.0661,
+        "bracket": [
+         -0.44,
+         0.2937
+        ],
+        "sign_fixed": "×"
+       },
+       "営業利益が全年黒字でない": {
+        "n": 714,
+        "naive": 0.0601,
+        "bracket": [
+         -0.2646,
+         0.5976
+        ],
+        "sign_fixed": "×"
+       },
+       "FCFが全年黒字でない": {
+        "n": 775,
+        "naive": 0.0462,
+        "bracket": [
+         -0.2707,
+         0.566
+        ],
+        "sign_fixed": "×"
+       },
+       "ROIC(5年中央値) 下位1/4": {
+        "n": 447,
+        "naive": 0.1081,
+        "bracket": [
+         -0.2978,
+         0.654
+        ],
+        "sign_fixed": "×"
+       },
+       "FCF転換(5年) 下位1/4": {
+        "n": 337,
+        "naive": -0.0049,
+        "bracket": [
+         -0.4069,
+         0.3702
+        ],
+        "sign_fixed": "×"
+       },
+       "営業利益率 下位1/4": {
+        "n": 448,
+        "naive": 0.1233,
+        "bracket": [
+         -0.287,
+         0.6859
+        ],
+        "sign_fixed": "×"
+       },
+       "売上5年CAGR 下位1/4": {
+        "n": 447,
+        "naive": 0.0351,
+        "bracket": [
+         -0.3575,
+         0.5048
+        ],
+        "sign_fixed": "×"
+       }
+      },
+      "質実証": {
+       "ROIC(5年中央値) 下位1/4": {
+        "n": 137,
+        "naive": 0.0201,
+        "bracket": [
+         -0.1168,
+         0.2238
+        ],
+        "sign_fixed": "×"
+       },
+       "FCF転換(5年) 下位1/4": {
+        "n": 135,
+        "naive": 0.0121,
+        "bracket": [
+         -0.1491,
+         0.1242
+        ],
+        "sign_fixed": "×"
+       },
+       "営業利益率 下位1/4": {
+        "n": 138,
+        "naive": -0.0224,
+        "bracket": [
+         -0.1783,
+         0.0986
+        ],
+        "sign_fixed": "×"
+       },
+       "売上5年CAGR 下位1/4": {
+        "n": 137,
+        "naive": 0.0153,
+        "bracket": [
+         -0.1338,
+         0.1727
+        ],
+        "sign_fixed": "×"
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "documented_conclusions": [
+  {
+   "what": "2013 質実証の恒久毀損の幅（CLAUDE_ARCHIVE:1966・todo retro_base_rate_band・各道具の注記『左尾は 2.00〜25.68% の幅』）",
+   "before": "下限 11/549=2.00% / 中間 47/549=8.56% / 上限 141/549=25.68%（旧・survivorのみ 9/374=2.41%）",
+   "after": "下限 23/548=4.20% / 中間 35/548=6.39% / 上限 105/548=19.16%（survivorのみ 9/370=2.43%）",
+   "sign_flip": "★『2.41% は幅の下端（の少し上）だった』→ **幅の下限そのものが 4.20% で、survivor だけの 2.43% は幅の外（下）**。打ち切りが一つも毀損しなくても、生存者だけの率は恒久毀損を過小に見せている"
+  },
+  {
+   "what": "生存バイアスの向き（CLAUDE_ARCHIVE:1841/1969・hist_val2_regime.py:956 の read）",
+   "before": "復元した退場45社の元本割れ 17.8% ＜ survivor 25.4%＝『素朴な向きには効いていない』",
+   "after": "復元した退場96社の元本割れ 33/96=34.38% ＞ survivor 92/370=24.86%（M&A 退場だけでも 27.6% ＞ 24.9%）",
+   "sign_flip": "★反転。退場社のほうが左尾が厚い。反転は**標本の構成**から来ている: v1 の45社は『誤った退場日でも合併対価と始値が読めた M&A』だけで、両方の版で測れた43社の負けは 8→6 社とむしろ減った。新たに測れた53社のうち27社が負け（破産8社は −100%・M&A の負け18社: Synchronoss・NTELOS・Joy Global・Stericycle・Waddell & Reed・Triumph…）"
+  },
+  {
+   "what": "ベースの元本割れの幅（CLAUDE_ARCHIVE:1845）",
+   "before": "103/549=18.76% 〜 233/549=42.44%（中間 139/549=25.32%）",
+   "after": "125/548=22.81% 〜 207/548=37.77%（中間 137/548=25.00%）",
+   "sign_flip": "なし（幅が縮んだ）"
+  },
+  {
+   "what": "P(+15%/年)（price-only・質実証）",
+   "before": "測定分 69/419=16.47%・幅 69/549=12.57%〜199/549=36.25%",
+   "after": "測定分 78/466=16.74%・幅 78/548=14.23%〜160/548=29.20%",
+   "sign_flip": "なし"
+  },
+  {
+   "what": "dd5 の遮断器（事前登録v2・挟み込み・CLAUDE_ARCHIVE:1835）",
+   "before": "1.96（下端）/ 1.31（上端・記録）— v1 を今の器で回すと 1.96 / 1.44",
+   "after": "1.80 / 1.46（どちらも基準1 不合格）",
+   "sign_flip": "なし（結論不変）"
+  },
+  {
+   "what": "自己相対バリュエーションの退場込みの判定（hist_val2_selfrel_delisted）",
+   "before": "基準1∧2∧4 を満たすセル 0件",
+   "after": "0件",
+   "sign_flip": "なし"
+  },
+  {
+   "what": "退場の時期（2019年の前/後）",
+   "before": "97 / 77（前半への偏りなし）",
+   "after": "87 / 90（前半への偏りなし）",
+   "sign_flip": "なし"
+  },
+  {
+   "what": "hist_wd_dst_path (c) 質実証の破壊率（B と挟み込み）",
+   "before": "A 0.0241 → B 0.0263 → [0.0200, 0.2568] 中間 0.0838",
+   "after": "A 0.0243 → B 0.0494 → [0.0420, 0.1916] 中間 0.0620",
+   "sign_flip": "なし（B が A の2倍へ）"
+  },
+  {
+   "what": "hist_wd_dst_path (c) の群の差（全社7群・質実証4群）",
+   "before": "符号確定 0群",
+   "after": "符号確定 0群（質実証『営業利益率 下位1/4』の点推定は +0.0024 → −0.0224 と符号が変わったが挟み込み [−0.178, +0.099] は0を跨ぐ）",
+   "sign_flip": "点推定だけ1群（結論は不変）"
+  },
+  {
+   "what": "hist_wd_dst_uni.py:1336 の注記（全社）",
+   "before": "survivorのみ 56/981=5.71% → 退場45社を戻して 58/1026=5.65%・打ち切り762社",
+   "after": "survivorのみ 56/977=5.73% → 退場96社を戻して 70/1073=6.52%・打ち切り714社",
+   "sign_flip": "★『戻してもほぼ動かない（わずかに下がる）』→『戻すと上がる』"
+  }
+ ],
+ "stale_citations_not_edited": {
+  "note": "この作業の範囲（night/retro_*・out/retro_*）の外なので書き換えていない。旧の数字を引用している箇所",
+  "2.00〜25.68%": [
+   "docs/CLAUDE_ARCHIVE.md:12967",
+   "docs/CLAUDE_ARCHIVE.md:13098",
+   "docs/CLAUDE_ARCHIVE.md:13912",
+   "docs/CLAUDE_ARCHIVE.md:14014",
+   "docs/CLAUDE_ARCHIVE.md:14249",
+   "docs/CLAUDE_ARCHIVE.md:1967",
+   "docs/CLAUDE_ARCHIVE.md:5852",
+   "docs/CLAUDE_ARCHIVE.md:5918",
+   "docs/CLAUDE_ARCHIVE.md:9127",
+   "night/audit_neglect.py:144",
+   "night/beat_spy_rule.py:28",
+   "night/hist_wd_asym.py:639",
+   "night/opmtrend_h1.py:593",
+   "night/opmtrend_h2.py:464",
+   "night/opmtrend_h3.py:787",
+   "night/opmtrend_h4.py:457",
+   "night/opmtrend_ref_h2.py:823",
+   "night/opmtrend_ref_h3.py:673",
+   "out/hist_wd_asym.json:5594",
+   "out/hist_wd_verdict.json:3150",
+   "out/retro_mcap_prereg.json:49"
+  ],
+  "17.8% vs 25.4%": [
+   "night/hist_val2_regime.py:956"
+  ],
+  "打ち切り762社 / 56/981→58/1026": [
+   "night/hist_wd_dst_path.py:1479",
+   "night/hist_wd_dst_path.py:1501",
+   "night/hist_wd_dst_path.py:43",
+   "night/hist_wd_dst_path.py:68",
+   "night/hist_wd_dst_uni.py:1336",
+   "night/hist_wd_dst_uni.py:1337",
+   "out/hist_wd_dst_uni.json:16456"
+  ]
+ },
+ "caveats": [
+  "中間の読みの『非M&Aの打ち切り12社』には、返り値ではなく母集団の誤り（上場株を持たない2社）と外国私募発行体5社が混ざる",
+  "全社プールの退場は質実証の175社しか原本で採っていない（非質実証の632社は採取していない）＝全社の幅は広いまま",
+  "混合対価のうち St Jude（$85.00）・Allergan（$219.00）は『推定の総額』が対価として残っている（v1 から。どちらも勝ちで終わり、左尾には効かない）",
+  "survivor の close は 2026-08-10 の採取を運んだ（今採り直すと Yahoo の漂流が混ざる）。記号の使い回しの疑いで測り直せなかった社（DuPont→CTA-PB・Coca-Cola Enterprises→KO・KapStone→KS 等）は survivor のまま＝別の証券の系列の可能性",
+  "price-only（配当なし）。Cedar Realty は合併前の特別配当を含まない（含めれば −2.5%/年前後）"
+ ]
+}
