@@ -154,10 +154,10 @@
   {
    "id": "gate0_fye_rerun",
    "kind": "宿題",
-   "title": "門0を修正版で再実行し、母集団に復活する社を取り込む",
+   "title": "✅ 門0を修正版で再実行し、母集団に復活する社を取り込む",
    "due": null,
-   "note": "gate0_v8_5.py の決算日の錨のバグを2026-08-06に是正した（採用した売上系列のタグから作る）。RBC Bearingsが母集団2,902社に一行も無かったのが発端。影響範囲は night/audit_gate0_fye.py が全社スキャンで数える。次の年次発掘（1-2月）で `python run_gate0_local.py` を回せば自然に反映されるが、復活社が多ければ前倒しで回す価値がある",
-   "done": false,
+   "note": "gate0_v8_5.py の決算日の錨のバグを2026-08-06に是正した（採用した売上系列のタグから作る）。RBC Bearingsが母集団2,902社に一行も無かったのが発端。影響範囲は night/audit_gate0_fye.py が全社スキャンで数える。次の年次発掘（1-2月）で `python run_gate0_local.py` を回せば自然に反映されるが、復活社が多ければ前倒しで回す価値がある\n【2026-09-23 閉じる】前提が消えた——決算日の錨の是正後の門0は 2026-08-17 に既に回っていた（out/gate0_run.json・committed の gate0_all.csv に RBC(5)・EMR(4) が入っている）。audit_gate0_fye.py を今日の companyfacts.zip で回し直しても 4,405社走査・錨がずれた3社・救済2社（RBC 5/7・EMR 4/7）で 2026-08-06 と同一。どちらも 6/7 に届かず椅子にも入らない＝前倒しで回しても何も増えない。",
+   "done": true,
    "owner": "道具"
   },
   {
@@ -396,10 +396,10 @@
   {
    "id": "gate0_dover_ocf_seam",
    "kind": "宿題",
-   "title": "門0の母集団から会社が消える経路が残っている（営業CFのタグ改称・実例Dover）",
-   "note": "2026-08-07実測。DOVは2025-12-31の10-Kを2026-02-13に提出しているSEC提出体だが gate0_all.csv(2,902社)に**一行も無い**。原因: `NetCashProvidedByUsedInOperatingActivities` が **2023年で終わり**、以降は `...ContinuingOperations` へ移っている。pick_series は重なる年の一致を SEAM_TOL=2% で確かめてから接ぐが、実測のズレは **2022年 7.3% / 2023年 8.7%**（事業売却で総額と継続事業が本当に違う）→ 接ぎ木が拒否され、主系列2019-2023のまま最新年が欠測 → 『欠損:ocf』で母集団から丸ごと脱落。**ガードは正しく働いており、間違っているのは結果のほう**（完全で新しい継続事業の系列があるのに会社ごと消える）。⚠**今は直さない**——companyfacts.zip(1.4GB)が無く全2,902社への影響を測れないため。門0の選別ロジックの変更は影響範囲を測ってから（2026-08-06のfye錨の是正と同じ作法）。測定器は `python3 night/audit_gate0_fye.py`（companyfacts.zipが要る）｜**2026-08-07 追記: Dover自身への実害はゼロだった**。門0の7項目を手で当てると **score 5/7**（fails: 売上CAGR 3.9%<5% / FCF転換 0.69<0.70。ROIC 37.4%・最低31.1%・営利率17.0%は通る）で、5点は待ち行列(TOP_N=100・pt順)に届かない＝**母集団に居ても審査には回らなかった**。したがって急ぐのはDoverの復活ではなく、**同じ経路で消えている他社が何社いるか**の測定。companyfacts.zip があれば `night/audit_gate0_fye.py` と同型の走査で数えられる",
+   "title": "✅ 門0の母集団から会社が消える経路が残っている（営業CFのタグ改称・実例Dover）",
+   "note": "2026-08-07実測。DOVは2025-12-31の10-Kを2026-02-13に提出しているSEC提出体だが gate0_all.csv(2,902社)に**一行も無い**。原因: `NetCashProvidedByUsedInOperatingActivities` が **2023年で終わり**、以降は `...ContinuingOperations` へ移っている。pick_series は重なる年の一致を SEAM_TOL=2% で確かめてから接ぐが、実測のズレは **2022年 7.3% / 2023年 8.7%**（事業売却で総額と継続事業が本当に違う）→ 接ぎ木が拒否され、主系列2019-2023のまま最新年が欠測 → 『欠損:ocf』で母集団から丸ごと脱落。**ガードは正しく働いており、間違っているのは結果のほう**（完全で新しい継続事業の系列があるのに会社ごと消える）。⚠**今は直さない**——companyfacts.zip(1.4GB)が無く全2,902社への影響を測れないため。門0の選別ロジックの変更は影響範囲を測ってから（2026-08-06のfye錨の是正と同じ作法）。測定器は `python3 night/audit_gate0_fye.py`（companyfacts.zipが要る）｜**2026-08-07 追記: Dover自身への実害はゼロだった**。門0の7項目を手で当てると **score 5/7**（fails: 売上CAGR 3.9%<5% / FCF転換 0.69<0.70。ROIC 37.4%・最低31.1%・営利率17.0%は通る）で、5点は待ち行列(TOP_N=100・pt順)に届かない＝**母集団に居ても審査には回らなかった**。したがって急ぐのはDoverの復活ではなく、**同じ経路で消えている他社が何社いるか**の測定。companyfacts.zip があれば `night/audit_gate0_fye.py` と同型の走査で数えられる\n【2026-09-23 閉じる】測った＝**待ち行列への影響はゼロ**。2%の接ぎ木検問に弾かれて落ちる社は90社、その接ぎ木だけを認めると47社が判定に戻り（28社がDoverと同じ継続事業CFの型・19社は売上/純利益/自己資本/営業利益のタグ移行）、**6/7に届く社は0**（最高は5/7: AZZ・DLTR・PAG・ARMK・CLS）。DOV 自身は門0の採点で **3/7**（手計算の5/7は誤り: 売上CAGR 0.6%・ROIC 10.1%・転換0.65）。変種の全走行（runB）で待ち行列・椅子・棚・backlog の顔ぶれは1社も変わらない。⚠将来直すなら**許容幅を上げるのは不可**——弾かれた組は FIS 143% / FWONA 340% / TORO 1,104% / OSS 2,302% と基準の違う系列が混ざる。直すなら「継続事業CFへの移行」だけを狭く認める規則で。",
    "due": null,
-   "done": false,
+   "done": true,
    "owner": "道具"
   },
   {
@@ -747,10 +747,10 @@
   },
   {
    "id": "retro_universe_negative_equity",
-   "kind": "宿題",
-   "title": "歴史検証の母集団が「簿価資本マイナスのコンパウンダー」を丸ごと落としている（VRSKで実証）",
+   "kind": "決断待ち",
+   "title": "【1月の門0の前に】有利子負債タグの穴（リース込み負債・部分欠測の0読み）が歴史検証だけでなく**今の門0の選別**も歪めている——直すと待ち行列が30社入れ替わる",
    "due": null,
-   "note": "2026-08-09 ユーザーの問い「VRSKとLOARはなぜないの？」から発覚。VRSK は2013年ビンテージの窓(2009-2013)に必要なデータが全部あるのに、コホート1,806社に入っていない。実コードをVRSK単体に当てて理由を特定＝`invested_capital_broken`（IC=自己資本+有利子負債≤0）。自己資本は2008 −1,009.8 / 2009 −34.9 / 2010 −114.4 / 2011 −98.5 百万$（上場時の組み替えと自社株買い）。2011年の実際の有利子負債 1,100.3百万$ は `LongTermDebtAndCapitalLeaseObligations` にあり、gate0_v8_5.py の debt_lt 候補（LongTermDebtNoncurrent/LongTermDebt/BorrowingsNoncurrent/LongtermBorrowings）に**このタグが無い**→0と読み IC=−92.9 で脱落＝**絶対のルール7の10例目**（ECLの DebtAndCapitalLeaseObligations・CDNSの負債タグ不在と同型）。**門0の母集団から会社が丸ごと消える2例目**（1例目はRBCのfye錨）。⚠タグを直しても2013年ビンテージには戻らない——2009年はXBRLの残高タグが41本しかなく負債が一本も無いため。戻るのは2015年ビンテージ(窓2011-2015)。**2018年の956社は2013年の名簿そのもの**なので、2013で落ちた社は5つの窓すべてから消える＝VRSKの実績が追えない理由。より広い含意: この screen の IC=eq+debt は**借金で自社株を買って簿価資本がマイナスになった会社**を構造的に落とす。採点側は2026-08-03に「自己資本が正でなければ総資産を物差しにする」形へ是正済みだが、**歴史検証のコホートscreenはeq+debtのまま**で、しかも母集団から丸ごと消す。歴史検証には『負債で資本を薄くしたコンパウンダー』という型が最初から入っていない。作業: (1)debt_lt へ LongTermDebtAndCapitalLeaseObligations 等を追加 (2)IC の物差しを採点側と揃える(3)companyfacts.zip を再取得して retro_cohort / retro_fetch_returns を作り直す（1.4GB・数時間）。LOARは欠陥ではない——XBRL最古年2023・IPO2024年4月でどの窓にも原理的に入らない。ASMLは20-F提出体で歴史検証が『米国株・USD報告のみ』ゆえ対象外",
+   "note": "2026-08-09 ユーザーの問い「VRSKとLOARはなぜないの？」から発覚。VRSK は2013年ビンテージの窓(2009-2013)に必要なデータが全部あるのに、コホート1,806社に入っていない。実コードをVRSK単体に当てて理由を特定＝`invested_capital_broken`（IC=自己資本+有利子負債≤0）。自己資本は2008 −1,009.8 / 2009 −34.9 / 2010 −114.4 / 2011 −98.5 百万$（上場時の組み替えと自社株買い）。2011年の実際の有利子負債 1,100.3百万$ は `LongTermDebtAndCapitalLeaseObligations` にあり、gate0_v8_5.py の debt_lt 候補（LongTermDebtNoncurrent/LongTermDebt/BorrowingsNoncurrent/LongtermBorrowings）に**このタグが無い**→0と読み IC=−92.9 で脱落＝**絶対のルール7の10例目**（ECLの DebtAndCapitalLeaseObligations・CDNSの負債タグ不在と同型）。**門0の母集団から会社が丸ごと消える2例目**（1例目はRBCのfye錨）。⚠タグを直しても2013年ビンテージには戻らない——2009年はXBRLの残高タグが41本しかなく負債が一本も無いため。戻るのは2015年ビンテージ(窓2011-2015)。**2018年の956社は2013年の名簿そのもの**なので、2013で落ちた社は5つの窓すべてから消える＝VRSKの実績が追えない理由。より広い含意: この screen の IC=eq+debt は**借金で自社株を買って簿価資本がマイナスになった会社**を構造的に落とす。採点側は2026-08-03に「自己資本が正でなければ総資産を物差しにする」形へ是正済みだが、**歴史検証のコホートscreenはeq+debtのまま**で、しかも母集団から丸ごと消す。歴史検証には『負債で資本を薄くしたコンパウンダー』という型が最初から入っていない。作業: (1)debt_lt へ LongTermDebtAndCapitalLeaseObligations 等を追加 (2)IC の物差しを採点側と揃える(3)companyfacts.zip を再取得して retro_cohort / retro_fetch_returns を作り直す（1.4GB・数時間）。LOARは欠陥ではない——XBRL最古年2023・IPO2024年4月でどの窓にも原理的に入らない。ASMLは20-F提出体で歴史検証が『米国株・USD報告のみ』ゆえ対象外\n【2026-09-23 測定・宿題→決断待ちへ】companyfacts.zip（2026-09-23取得）で門0と歴史検証のコホートを門0自身の関数で再現して測った（再現は完全一致: 門0 2,796社・コホート 2013=1,806/2015=2,492）。(1)歴史検証: debt_lt に retro_features_2018.py が既に使うリース込みの負債タグを足すと、2015コホートで31社が戻る（SIRI 7・CHH 7・HLF 6・VRSK 6・PM 5・MAR 5 ほか）。2013窓は12社（CHH 7・PM 7・SBH 6・MAR 5）。VRSK は2013窓には戻らない（2009年に負債データ無し＝note どおり）。★CHH は全窓で 7/7 なのにどのコホートにも一度も居なかった。質実証プール506社のうち変わるのは約5社＝過去の結論が反転する規模ではない。(2)★**今の門0**: 負のICで落ちる434社のうち18社が戻り（YUM・PM・HLT・LII が 7/7、EAT・DPZ が 6/7）、タグを全社に当てると**顔ぶれが30社動く**——待ち行列に入る YUM・PM・HLT・EAT・FTDR／**出る AVGO（有利子負債約660億$を0と読んでいた）・HEI・WM・NJR・MELI・FISV・FELE・LDOS・SYY**（AVGO/HEI/WM はのれん椅子へ・MELI は現金椅子へ）・KO は 7→6（ROIC 33.8%→14.3%）。MELI の移動で門0自身の回帰「MELI〔谷〕が LLY より前」が壊れる。(3)さらに**部分欠測の0読みが1,036社**（ある年だけ負債タグが無いと5年すべて0になる。実例 UI: LongTermDebtNoncurrent が FY2026 に無い＝返済→全年0→負のICで落ちる）。【決めること】門0の選別の入力を正す（負債タグの追加＋部分欠測の扱い）かどうか——**選別基準そのものは変えないが、結果の顔ぶれが変わり golden set の期待値も改める必要がある**ので、1月の実行の前にユーザーの明示指示で。採るなら同じ走査（scratchpad の scan_drop_paths.py の型）で再測定してから入れ、歴史検証のコホートの作り直し（数時間）はその後に一度だけ。",
    "done": false,
    "owner": "道具"
   },
@@ -1149,10 +1149,10 @@
   {
    "id": "wf_never_run",
    "kind": "宿題",
-   "title": "gate0.yml を1回実行する（ops.yml は 2026-08-17 に実行済み）",
+   "title": "✅ gate0.yml を1回実行する（ops.yml は 2026-08-17 に実行済み）",
    "due": null,
-   "done": false,
-   "note": "2026-08-17: **ops.yml をセッションから実行した**（GitHub Actions ではなく `python3 night/run_ops.py`＝ops.yml を yaml で読んでこの場で走らせる器を新設）。\n実測 **実行27 / 失敗0 / 鍵が無くて未実行3**（AV_KEY×2・EDINET_API_KEY×1）。\n月次の錨が12本 前進（divy/profiles/hist_val_now/castle_correlation/irr85_scope_life/v11_facts/backfill_diff/sp500_pe_monthly/exception_watch/sht_report/new_listings_irr/wacc_drift）。\nパック299件が変わったが**採点欄が動いたパックは0件**（全件を機械で突合せ・_metaのみ）。投下可10社は不変。\n\n【残り】`fix.yml`（6ステップ）と `gate0.yml`（5ステップ）は依然 **実行0回**。\n同じ器で回せる: `python3 night/run_ops.py --wf fix.yml --dry-run`。\n⚠ **fix.yml のステップ8はmainへ直接push・9はPR作成**なので、セッションから回すときは必ず外すこと。\n⚠ gate0.yml は companyfacts.zip(1.4GB・実測29秒で取得可)が要り、5時間ジョブになりうる。\n\n【2026-09-23】fix.yml は削除したので対象から外した（残りは gate0.yml）。",
+   "done": true,
+   "note": "2026-08-17: **ops.yml をセッションから実行した**（GitHub Actions ではなく `python3 night/run_ops.py`＝ops.yml を yaml で読んでこの場で走らせる器を新設）。\n実測 **実行27 / 失敗0 / 鍵が無くて未実行3**（AV_KEY×2・EDINET_API_KEY×1）。\n月次の錨が12本 前進（divy/profiles/hist_val_now/castle_correlation/irr85_scope_life/v11_facts/backfill_diff/sp500_pe_monthly/exception_watch/sht_report/new_listings_irr/wacc_drift）。\nパック299件が変わったが**採点欄が動いたパックは0件**（全件を機械で突合せ・_metaのみ）。投下可10社は不変。\n\n【残り】`fix.yml`（6ステップ）と `gate0.yml`（5ステップ）は依然 **実行0回**。\n同じ器で回せる: `python3 night/run_ops.py --wf fix.yml --dry-run`。\n⚠ **fix.yml のステップ8はmainへ直接push・9はPR作成**なので、セッションから回すときは必ず外すこと。\n⚠ gate0.yml は companyfacts.zip(1.4GB・実測29秒で取得可)が要り、5時間ジョブになりうる。\n\n【2026-09-23】fix.yml は削除したので対象から外した（残りは gate0.yml）。\n【2026-09-23 完了】gate0.yml の中身は 2026-08-17 にセッションから実行済み（out/gate0_run.json・out/wfrun_gate0.json）＝実質済み。所要は約13分（5時間ではない）。★今日の測定で**安全装置の穴**が見つかったので塞いだ: (1) golden set 回帰の「不採用」は表示だけで、次のステップが不採用の待ち行列を commit/push していた→ run_gate0_local.py が不採用なら終了コード2、gate0.yml は門0のステップが成功したときだけ出力をコミット（失敗なら作業ツリーを戻す）(2) commit の一覧が gate1_queue.json だけで、同じ実行が書く椅子/棚/backlog/負資本の5本が古いまま残っていた→8本をそろえた。⚠今日回すと IFRS 提出体198社の年次データ未着で「TSM 消失→不採用」になる（gate0_ifrs_facts_gap）。",
    "owner": "道具"
   },
   {
@@ -1560,6 +1560,13 @@
    "done": false,
    "title": "CTAS の dur=75（スイッチングコスト型）に原本の引用が無い",
    "note": "2026-09-23 の再審査で判明。2026-08-20 の irr 二重読みは同じ10-Kにスイッチングの記述が無いと確認している。75 のまま／100（物理＝ユニフォームの配送網）／空欄のどれにするかは原本の読み直しで。CTAS は Ω75.7・堀55.3 で関門外なので買付には効かない。"
+  },
+  {
+   "id": "gate0_ifrs_facts_gap",
+   "kind": "宿題",
+   "done": false,
+   "title": "【1月の門0の前に確認】IFRS 提出体198社の2026年次データが companyfacts に届いていない——今日回すと「TSM 消失」で門0が不採用になる",
+   "note": "2026-09-23 の測定。TSM の 2026-04-16 提出の20-Fが companyfacts に寄与した事実は2件だけで、FY2024 のデータは 2026-08-23 に門0の鮮度上限600日を越えた。今回すと待ち行列から TSM・OMAB・PAC・ASR・GMAB・TGS・ASAIY・GRVY・AMBIQ・CPAC・ISSC・UI の12社が出て、AIT・ATMU・CNI・CTAS・EXPO・IA・STRL・WFRD の8社が入る（母集団が縮んだだけ）。**1月20日の定時実行の前に**、TSM の FY2025 の事実が companyfacts に現れたかを確認すること。現れていなければ golden set が不採用を出し、2026-09-23 に入れた安全装置で門0の出力はコミットされない（壊れはしないが、その年の門0が回らない）。対処の候補: IFRS 提出体だけ前年データの鮮度上限を緩める／20-F の XBRL を別経路で取る。"
   }
  ]
 }

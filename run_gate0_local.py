@@ -47,8 +47,21 @@ try:
     _n = len(_q if isinstance(_q, list) else (_q.get('queue') or []))
 except Exception:
     _n = None
+# ⚠2026-09-23新設: **golden set の「不採用」を終了コードにする。**
+#   gate0_v8_5.py は回帰テストの結果を最後に**表示するだけ**で、その時点で gate1_*.json / gate0_all.csv は
+#   もう書き終わっている。gate0.yml は次のステップでそれをコミットして push するので、
+#   **不採用と自分で判定した待ち行列が main に載る**経路があった（2026-09-23 の実測で、今日回すと
+#   IFRS 提出体198社の年次データが companyfacts に届いておらず「TSM 消失 → 不採用」になる）。
+_gfail = globals().get('gfail')
 _json.dump({'generated': _dt.date.today().isoformat(), 'queue_n': _n,
+            'golden_fail': _gfail, 'rejected': bool(_gfail),
             'note': '米国門0発掘の実行印。gate1_queue.json のコミット日ではなく**実行日**を残す'},
            open(os.path.join(BASE, 'out', 'gate0_run.json'), 'w', encoding='utf-8'),
            ensure_ascii=False, indent=1)
 print('■ 実行印: out/gate0_run.json')
+if _gfail:
+    print('⛔ golden set 回帰が %s 件失敗＝この実行は不採用 → 終了コード2。' % _gfail)
+    print('   gate1_*.json / gate0_all.csv は書き換わっている。採用しないなら git checkout -- で戻すこと'
+          '（gate0.yml はこの終了コードを見て門0の出力をコミットしない）')
+    import sys as _sys
+    _sys.exit(2)

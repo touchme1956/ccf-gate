@@ -53,6 +53,7 @@ jobs:
           key: companyfacts-${{ github.run_id }}
           restore-keys: companyfacts-
       - name: 米国門0発掘（1月／手動）
+        id: gate0
         if: github.event.inputs.what != 'backtest'
         continue-on-error: true
         run: timeout 17000 python run_gate0_local.py | tail -30
@@ -69,7 +70,19 @@ jobs:
           # ⚠2026-08-17: 1つでも実在しないパスがあると git add は全体が失敗する（ops.yml で実測）。
           #   `out/backtest_*.json` は cutoff 指定なしだと作られないことがある＝ここは現に危ない。
           . night/git_add_safe.sh
-          ccf_git_add gate1_queue.json gate0_all.csv out/gate0_run.json 'out/backtest_*.json' out/ops_status.json
+          # ⚠2026-09-23: 門0の出力は**門0のステップが成功したときだけ**コミットする。
+          #   run_gate0_local.py は golden set 回帰で不採用なら終了コード2で終わる（出力は書かれたまま）。
+          #   以前は continue-on-error のせいで**不採用の待ち行列がそのまま push される**経路があった。
+          #   また旧リストは gate1_queue.json だけで、同じ実行が書く椅子/棚/backlog/負資本の5本が
+          #   古いまま残っていた（make_chunks.py と門が読む）。書く8本をそろえて足す。
+          G0="gate1_queue.json gate1_backlog.json gate1_negeq.json gate1_rescue_final.json gate1_rescue_gw.json gate1_stalled.json gate0_all.csv out/gate0_run.json"
+          if [ "${{ steps.gate0.outcome }}" = "success" ]; then
+            ccf_git_add $G0
+          else
+            echo "::warning::門0の実行は不採用/失敗/未実行（outcome=${{ steps.gate0.outcome }}）→ 門0の出力はコミットしない"
+            git checkout -- $G0 2>/dev/null || true
+          fi
+          ccf_git_add 'out/backtest_*.json' out/ops_status.json
           git diff --staged --quiet || git commit -m "gate0/backtest $(date -u +%Y-%m-%d)"
           # ⚠2026-08-18: 素の `git push` は remote が進んだだけで弾かれ、
           #   **作ったコミットがまるごと捨てられる**（market.yml が2営業日連続で70ファイル失った）。
