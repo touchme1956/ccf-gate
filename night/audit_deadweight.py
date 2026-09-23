@@ -53,8 +53,7 @@ RULES = [
     ("sht='up' → pm+3 / 地味業界の勝者+2", lambda d: d.get("sht") == "up"),
     ("sht='down' → pm−10", lambda d: d.get("sht") == "down"),
     ("gmt='down' ∧ sht='down' → Intel警報・S2堀の軌道反転", lambda d: d.get("gmt") == "down" and d.get("sht") == "down"),
-    ("gls>0 かつ ≤3.3 → ccfMoat 文化調整 −2", lambda d: isinstance(d.get("gls"), (int, float)) and 0 < d["gls"] <= 3.3),
-    ("nrr<100 → pm−6", lambda d: isinstance(d.get("nrr"), (int, float)) and d["nrr"] < 100),
+    # v9.9.194: gls の文化調整・nrr<100 の pm−6 は門から撤去したので外した
     ("rak='no' → 「取引不可」", lambda d: d.get("rak") == "no"),
     ("idx='no' → 発見度 +1.5", lambda d: d.get("idx") == "no"),
     ("indG='below' → 地味業界（sht='up'との同時成立が要る）", lambda d: d.get("indG") == "below"),
