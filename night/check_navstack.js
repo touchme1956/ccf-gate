@@ -100,7 +100,7 @@ const GROUPS = [1, 2, 3, 4, 5, 6];
               return c.display !== 'none' && c.visibility !== 'hidden' && +c.opacity !== 0; };
             const chapHidden = !vis(cn);
             // ⚠ fixed の要素は offsetParent が null。**矩形**で可視を測る
-            const chaps = Array.from(cn.querySelectorAll('button')).filter(vis);
+            const chaps = chapHidden ? [] : Array.from(cn.querySelectorAll('button')).filter(vis);
             const off = chaps.filter(x => {
               const r = x.getBoundingClientRect();
               return r.width === 0 || r.top < 0 || r.bottom > window.innerHeight
@@ -133,14 +133,19 @@ const GROUPS = [1, 2, 3, 4, 5, 6];
           const why = [];
           if (r.fatal) why.push(r.fatal);
           else {
-            if (r.chapHidden) why.push('章の帯が出ていない（二段目が画面に無い＝「タブが消えた」に見える）');
-            if (r.chapN === 0) why.push('章のボタンが0本');
+            /* 2026-09-23 ユーザー指示「今日／保有／成績／買付順位／台帳／その他で作って。上の表示はその他のみ」:
+               章の帯は**群6（その他）でだけ**出す仕様になった。群1〜5では「出ていない」が正しく、
+               出ていたら仕様違反。群6では従来どおり全部の検査を掛ける。 */
+            const chapGroup = (g === 6);
+            if (!chapGroup && !r.chapHidden) why.push(`群${g}で章の帯が出ている（章の帯は「その他」だけの仕様）`);
+            if (chapGroup && r.chapHidden) why.push('章の帯が出ていない（その他の中の切替が画面に無い）');
+            if (chapGroup && r.chapN === 0) why.push('章のボタンが0本');
             // 押した群 ≠ 開いたページの群（チップは群Aに並ぶのに押すと群Bへ飛ぶ、の逆）
             if (r.landedG !== String(g))
               why.push(`群${g}を押したのに開いたのは pg${r.page}（その章は群${r.landedG || '不明'}）`);
-            if (r.shownG.length !== 1 || r.shownG[0] !== String(g))
+            if (chapGroup && (r.shownG.length !== 1 || r.shownG[0] !== String(g)))
               why.push(`並んでいる章が群${g}のものだけではない: [${r.shownG.join(',')}]`);
-            if (r.chapN !== r.wantN)
+            if (chapGroup && r.chapN !== r.wantN)
               why.push(`章の本数が合わない 見え${r.chapN} / この群の総数${r.wantN}`);
             if (r.off.length) why.push('章が画面の外: ' + r.off.join(' / '));
             if (r.gap < -1 || r.gap > 3) why.push('二段が離れている/重なっている ' + r.gap + 'px');
