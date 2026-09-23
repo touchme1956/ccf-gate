@@ -952,7 +952,18 @@ def build_numbers(facts):
             _d0 = (S["debtL"].get(y0,0) or 0)+(S["debtS"].get(y0,0) or 0)
             _icg0 = S["eq"][y0] + _d0
             _b0 = S["eq"][y0] if S["eq"][y0] > 0 else (S["assets"].get(y0) or 0)
-            if _icg0 <= 0 or (_b0 > 0 and _icg0 < 0.20*_b0):
+            # 2026-09-23是正（todo fetcher_single_roicg_debt0・絶対のルール7）: 有利子負債タグが無い年を0と読み、
+            #   根拠文に「過大の可能性あり」と書くだけで値を出していた。この単年値は through-cycle の中央値が
+            #   組めない社（系列が1年も無い／古い）でだけ表に出るので、中央値の上書きに隠れて見えなかった。
+            #   nde と同じく debt_evidence() で裁く——痕跡ゼロなら無借金は事実（値を出す）、
+            #   痕跡があるなら**出さない**（誤値より空欄。MGRC は NotesPayable 658.8百万$ があるのに0と読んでいた）。
+            _noDebtTag = not ((y0 in S["debtL"]) or (y0 in S["debtS"]))
+            _dTrace = debt_evidence(facts, y0) if _noDebtTag else []
+            if _noDebtTag and _dTrace:
+                note.append(f"roicg算出不能: {y0}年に有利子負債タグが無いのに負債の痕跡がある"
+                            f"（{', '.join(_dTrace[:3])}）。0と読むと分母が縮み roicg が過大に出るので空欄にした"
+                            f"——原本のBSで有利子負債を確認して手入力せよ")
+            elif _icg0 <= 0 or (_b0 > 0 and _icg0 < 0.20*_b0):
                 note.append(f"roicg算出不能: {y0}年ののれん込みIC={_icg0:.0f}が縮退"
                             f"（債務超過で有利子負債も薄い＝分母に実体が無い）")
             else:
@@ -964,7 +975,7 @@ def build_numbers(facts):
             evd["roicg"] = (f"機械算出 {y0}年: NOPAT ÷ (自己資本 {_u(S['eq'][y0])} + 有利子負債 {_u(_d)})"
                             f"＝のれん込み。roic(除外)との差が買収規律の指標"
                             + ("" if ((y0 in S['debtL']) or (y0 in S['debtS']))
-                               else "。**有利子負債タグ不在＝0扱いのため過大の可能性あり（要原本確認）**"))
+                               else "。有利子負債タグ不在・負債の痕跡ゼロ（debt_evidence）＝無借金と断定して0"))
     # のれん除外ROIC 直近年 roic (門のroic欄=単年・除外)
     # 5年系列そのものは古い年を含んでよい（それが系列の意味）。検問するのは**直近値の年**だけ——
     # 古い年の値を"直近ROIC"として台帳に載せないため。

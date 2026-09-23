@@ -232,7 +232,11 @@ def main():
                 ratio_ok = same(d["fcf"] / d["ni"] * 100, nf / nn_ * 100)
                 # 桁の照合（十億$の規約から1000倍ずれていないか）
                 if nn_ and d["ni"]:
-                    k = abs(d["ni"]) / abs(nn_ / 1e9)
+                    # 2026-09-23是正: calc の ni_abs は**既に十億$**（hachimon_fetch が ÷1e9 済み）。
+                    #   旧式は `nn_ / 1e9` でもう一度割っていたので k≈10^9 ＝**全パックの fcf/ni が「単位ずれ」**で
+                    #   作業リストに乗っていた（CTAS は値が同一なのに 2026-09-19 の machine_check で diff）。
+                    #   鳴りすぎる警報は鳴らないのと同じ——十億$どうしの比で見る（IRMD 型の百万$は k≈1000 で捕まる）。
+                    k = abs(d["ni"]) / abs(nn_)
                     unit_off = (k > 100) or (k < 0.01)
 
         stamped, diffs, gone = [], [], []
