@@ -12,7 +12,7 @@
  "cagr": 1.5,
  "fcf": 0.31,
  "ni": 0.25,
- "sbc": 0.02,
+ "sbc": 1.06,
  "dilNet": -4.47,
  "acc": "usgaap",
  "eq": "pos",
@@ -70,7 +70,8 @@
    "dilNet=-4.47(自社株買いで株数144.0百万(2018)→80.8百万(2025)へ縮小)。ただし高レバレッジ・循環事業での買い戻しは景気後退時リスク",
    "2026-07-29 投下資本の算定バグ検算: roic 63.1→8.0、roicg 44.3→7.5、nde null→5.49、roict up(据置・系列は再計算)。**有利子負債 5,442.5百万$(連結貸借対照表 Debt, Long-Term and Short-Term, Combined Amount)が丸ごと欠落していた**——TRNはLongTermDebtNoncurrent/DebtCurrentではなく DebtLongtermAndShorttermCombinedAmount 1行で開示しているため採取器が捕捉できず、投下資本から数十億$のリース資金債務が抜けていた。旧kenshiが警告していた過大表示がこれで解消。ndeは5.49で門の負債キル線(>4)を超える。原本(10-K accession 0000099780-26-000014)の連結貸借対照表から実額を採取して再計算。roic/roicg/roicEx/nde/roict/_meta 以外は一切変更していない。",
    "2026-07-29 acq5 0.16 → 'no'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
-   "2026-09-23 f2 50→65（規約の適用・判定圏外）: 旧 50 は審査官の定性判断（成熟・高浸透）で、原本は p≥60 を数値で示していない"
+   "2026-09-23 f2 50→65（規約の適用・判定圏外）: 旧 50 は審査官の定性判断（成熟・高浸透）で、原本は p≥60 を数値で示していない",
+   "2026-09-23 sbc 0.02→1.06（単位の是正）: 旧値は金額または根拠の無い値で、門の定義（株式報酬÷売上%）と違っていた。2025-12-31 期の株式報酬 22.9百万$ ÷ 売上 ＝ 1.06%。"
   ],
   "evidence": {
    "dom": "『a premier provider of railcar products and services. We operate industry-leading railcar leasing, manufacturing, and services businesses, providing a single source... in North America』=北米寡占の首位級。ただし『competition, which is often intense』で独占ではない→70(寡占)",
@@ -108,7 +109,8 @@
    "beta": "市場データ機械充填 2026-08-18: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）",
    "analysts": "市場データ機械充填 2026-08-18: market_fetch/market_data.json（常識帯—を通過）",
    "instOwn": "市場データ機械充填 2026-08-18: market_fetch/market_data.json（常識帯—を通過）",
-   "acqS5": "買収支出 5年ぶん合計 159百万$ ÷ 期初総資産(2020-12-31) 8702百万$ ＝ 0.018／内訳: 2023-12-31 62百万$ / 2022-12-31 80百万$ / 2021-12-31 17百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 159百万$ ÷ 期初総資産(2020-12-31) 8702百万$ ＝ 0.018／内訳: 2023-12-31 62百万$ / 2022-12-31 80百万$ / 2021-12-31 17百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "sbc": "SBC比率＝株式報酬 22.9百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝1.06%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -132,7 +134,8 @@
    "beta": "market",
    "analysts": "market",
    "instOwn": "market",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "sbc": "machine"
   },
   "basis": {
    "roic": "single-year",

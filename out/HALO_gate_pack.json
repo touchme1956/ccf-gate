@@ -12,7 +12,7 @@
  "cagr": 22.6,
  "fcf": 0.64,
  "ni": 0.32,
- "sbc": 0.05,
+ "sbc": 3.69,
  "dilNet": -4.48,
  "acc": "usgaap",
  "eq": "pos",
@@ -80,7 +80,8 @@
    "**v9.9.72 roic を through-cycle 化**: roic 50.6→40.6 / roicg 14.5→15.9。**5年の中央値**（系列[2022, 2023, 2024, 2025]・中央40.6% / 最悪9.8%）。比は**パックが審査した年(2025)**の採取器値 roic50.56 / roicg14.53 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
    "2026-08-06 irr 85→70。旧根拠は自社取得側の承認／自社サプライヤの認定＝**向きが逆**（2026-08-05 に NVDA・MSI・ASML の旧根拠で見つけたのと同型）。堀の本体は特許＝expiry欄の領分",
    "2026-08-20 irr 70 → 50（二重読み）",
-   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』"
+   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』",
+   "2026-09-23 sbc 0.05→3.69（単位の是正）: 旧値は十億$の金額で、門の定義（株式報酬÷売上%）と違っていた。2025-12-31 期の株式報酬 51.6百万$ ÷ 売上 ＝ 3.69%。"
   ],
   "evidence": {
    "expiry": "『certain proprietary drugs co-formulated with ENHANZE have been granted additional exclusivity, extending the patent life of the product beyond the patent expiry of the proprietary IV drug』+『Any such loss of patent protection or proprietary rights could lead to a reduction or loss of revenues, incentivize one or more of our key ENHANZE partners to terminate』+『biosimilars to the active drug ingredient in our ENHANZE technology』→ロイヤルティはパートナー製品特許＋ENHANZE特許束に依存=期限型→yes",
@@ -117,7 +118,8 @@
    "acq5": "【2026-07-29 機械判定】のれん残高(十億$) 2022 0.41 → 2023 0.42 → 2024 0.42 → 2025 0.58。**新しさ =(直近 0.58 − 2020年 0.00)÷直近 = +100.0%**（今あるのれんのうち直近5年に増えた割合）（起点は2020年＝当時**のれんの行が無く自己資本は報告されている**ので0と読む。のれんは金額があれば独立行の表示が要るため、行が無い＝当時のれんが無かった） → **大型買収あり=yes**（3分の1以上が直近5年＝現経営陣の買収）（出典: SEC XBRL companyfacts の Goodwill / StockholdersEquity 系列）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 267,594,000 → 2023年 829,253,000 → 2025年 1,396,611,000。A案(端点) 直近2年CAGR 29.78% − その前3年CAGR 45.79% = -16.02pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -18.91pt ／ 年次YoY {'2021': 65.7, '2022': 48.9, '2023': 25.6, '2024': 22.4, '2025': 37.6} → **採用 -16.02pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 25.875。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "acqS5": "買収支出 5年ぶん合計 1725百万$ ÷ 期初総資産(2020-12-31) 580百万$ ＝ 2.975／内訳: 2025-12-31 726百万$ / 2022-12-31 999百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 1725百万$ ÷ 期初総資産(2020-12-31) 580百万$ ＝ 2.975／内訳: 2025-12-31 726百万$ / 2022-12-31 999百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "sbc": "SBC比率＝株式報酬 51.6百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝3.69%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -145,7 +147,8 @@
    "acq5": "machine",
    "p1": "machine",
    "cagrT": "machine",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "sbc": "machine"
   },
   "basis": {
    "roic": "through-cycle-med5(?年)",

@@ -12,7 +12,7 @@
  "cagr": 21.6,
  "fcf": null,
  "ni": 20.6,
- "sbc": 0.6,
+ "sbc": 0.96,
  "dilNet": -0.24,
  "acc": "usgaap",
  "eq": "pos",
@@ -75,7 +75,8 @@
    "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
    "2026-08-06 irr 85→70。旧根拠は自社取得側の承認／自社サプライヤの認定＝**向きが逆**（2026-08-05 に NVDA・MSI・ASML の旧根拠で見つけたのと同型）。堀の本体は特許＝expiry欄の領分",
    "2026-08-20 irr 70 → 50（二重読み）",
-   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』"
+   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』",
+   "2026-09-23 sbc 0.6→0.96（単位の是正）: 旧値は十億$の金額で、門の定義（株式報酬÷売上%）と違っていた。2025-12-31 期の株式報酬 626.0百万$ ÷ 売上 ＝ 0.96%。"
   ],
   "evidence": {
    "expiry": "『Trulicity will lose significant patent and remaining data protections in the next few years』+『loss of exclusivity typically results in... a rapid and severe decline in revenues』→特許束依存の期限型独占=yes",
@@ -99,7 +100,8 @@
    "eps": "機械算出 2025年: 純利益 20,640,000,000 ÷ 株数 943,357,420（TTMではなく通期実績）",
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **23.2%** / 同業（SIC2834「Pharmaceutical Preparations」・131社）の中央値 **6.4%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+23.2%)÷(1+6.4%))^5 − 1 = **+107.9%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 24,539,800,000 → 2023年 34,124,000,000 → 2025年 65,179,000,000。A案(端点) 直近2年CAGR 38.21% − その前3年CAGR 11.62% = +26.59pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +22.95pt ／ 年次YoY {'2021': 15.4, '2022': 0.8, '2023': 19.6, '2024': 32.0, '2025': 44.7} → **採用 +26.59pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "acqS5": "買収支出 5年ぶん合計 1075百万$ ÷ 期初総資産(2020-12-31) 46633百万$ ＝ 0.023／内訳: 2022-12-31 327百万$ / 2021-12-31 747百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 1075百万$ ÷ 期初総資産(2020-12-31) 46633百万$ ＝ 0.023／内訳: 2022-12-31 327百万$ / 2021-12-31 747百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "sbc": "SBC比率＝株式報酬 626.0百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝0.96%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
   },
   "nulls": {
    "roic_roicg_roict_gm_gmt_gpa": "営業利益・粗利タグ不取得(diag op/gp=タグ不発見)。算出には原本の営利/粗利が必要",
@@ -122,7 +124,8 @@
    "eps": "machine",
    "sht": "machine",
    "cagrT": "machine",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "sbc": "machine"
   },
   "basis": {
    "roic": "single-year",

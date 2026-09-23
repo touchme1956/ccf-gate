@@ -12,7 +12,7 @@
  "cagr": 6.6,
  "fcf": 1.67,
  "ni": 1.48,
- "sbc": 0.05,
+ "sbc": 0.65,
  "dilNet": -0.16,
  "acc": "usgaap",
  "eq": "pos",
@@ -74,7 +74,8 @@
    "moatW充填(v9.9.36・2026-07-28): 絶対MOAT5本目「堀の広さ」をセグメント/製品ライン別売上の実数と顧客集中開示から判定。上記 evidence.moatW に出典付きで記載。他項目は不変。",
    "2026-07-29 堀再監査(v9.9.41): 旧dom=70→新dom=50、旧moatW=100→新moatW=100(不変)。旧70の根拠は『strong market share in a number of targeted niche markets』という数値なしの自称で、規約4により証拠不採用。Competition節が『numerous companies compete in each market』『a number of companies in each of its markets』『competition from alternative materials and processes』と構造を述べるため規約3の残余適用で50。個別ニッチで40-69%を持つ可能性は否定しないが、それを示す数値(自社シェア%＋上位N社合計%)が原本に一切ないため70には置けない。moatWは製品ライン3本(46.8/29.6/23.6%)と顧客集中(単一顧客EIG<2%・EMG<5%)を再確認して100を維持。dom/moatW/_meta 以外は不変。",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=8.8 / 5年窓=13.2。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
-   "2026-08-20 irr 70 → 50（二重読み）"
+   "2026-08-20 irr 70 → 50（二重読み）",
+   "2026-09-23 sbc 0.05→0.65（単位の是正）: 旧値は十億$の金額で、門の定義（株式報酬÷売上%）と違っていた。2025-12-31 期の株式報酬 47.8百万$ ÷ 売上 ＝ 0.65%。"
   ],
   "evidence": {
    "dom": "自社シェア%: **原本(FY2025 10-K)に開示なし**／上位N社合計%: 同じく開示なし。提出書類自身が各市場に多数の競合がいると述べているため残余の刻み50で確定(v9.9.41規約3)。原文: 『In general, AMETEK's markets are **highly competitive** with competition based on technology, performance, quality, service and price.』『In process and analytical instruments, **numerous companies compete in each market** on the basis of product quality, performance and innovation. In power and industrial and in aerospace, AMETEK competes with **a number of companies** depending on the specific market segment.』『EMG's businesses compete with **a number of companies in each of its markets**. … There also is **competition from alternative materials and processes**.』(Item 1 Competition)。※旧根拠の『AMETEK maintains strong market share in a number of targeted niche markets』および『AMETEK believes it ranks as a leader in certain analytical measurement and control instruments』は数値のない順位の自称で、v9.9.41規約4によりどの刻みの証拠にもならない。最大の製品ライン(Process and analytical instrumentation 46.8%)が『numerous companies compete』と名指しされている以上、全社ベースで40%以上の集中を主張する根拠はない＝規約1により全社50で確定。出典: https://www.sec.gov/Archives/edgar/data/1037868/000103786826000016/ame-20251231.htm",
@@ -107,7 +108,8 @@
    "roict": "機械算出: のれん除外ROIC 5年系列 49.0% / 55.7%（最古→直近の差で判定）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 4,540,029,000 → 2023年 6,596,950,000 → 2025年 7,401,116,000。A案(端点) 直近2年CAGR 5.92% − その前3年CAGR 13.26% = -7.35pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -4.97pt ／ 年次YoY {'2021': 22.2, '2022': 10.9, '2023': 7.3, '2024': 5.2, '2025': 6.6} → **採用 -4.97pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 23.51。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "acqS5": "買収支出 5年ぶん合計 5678百万$ ÷ 期初総資産(2020-12-31) 10357百万$ ＝ 0.548／内訳: 2025-12-31 933百万$ / 2024-12-31 118百万$ / 2023-12-31 2238百万$ / 2022-12-31 430百万$ / 2021-12-31 1959百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 5678百万$ ÷ 期初総資産(2020-12-31) 10357百万$ ＝ 0.548／内訳: 2025-12-31 933百万$ / 2024-12-31 118百万$ / 2023-12-31 2238百万$ / 2022-12-31 430百万$ / 2021-12-31 1959百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "sbc": "SBC比率＝株式報酬 47.8百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝0.65%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -132,7 +134,8 @@
    "roiic5": "machine",
    "roict": "machine",
    "cagrT": "machine",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "sbc": "machine"
   },
   "basis": {
    "roic": "single-year",

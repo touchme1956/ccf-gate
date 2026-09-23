@@ -12,7 +12,7 @@
  "cagr": 19.3,
  "fcf": 1.23,
  "ni": 1.55,
- "sbc": 0.04,
+ "sbc": 0.82,
  "dilNet": null,
  "acc": "usgaap",
  "eq": "pos",
@@ -76,7 +76,8 @@
    "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
    "2026-07-29 p1 80→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均23.1%・σ3.6pt・CV15.6%）。",
    "2026-08-03 p3 95 → 空欄。nde=0.0 の導出値は 85。**ndeは全109社で測定済み**なので空欄化は『未測定を最良ケースで褒美する』事故には当たらない。影の計測: Ωは最大+1.4/最小−1.2pt・投下可7社不変・線跨ぎはAFYA(71.9→73.1＝監視枠入り)の1社のみ",
-   "2026-08-20 irr 70 → 50（二重読み）"
+   "2026-08-20 irr 70 → 50（二重読み）",
+   "2026-09-23 sbc 0.04→0.82（単位の是正）: 旧値は十億$の金額で、門の定義（株式報酬÷売上%）と違っていた。2025-07-31 期の株式報酬 38.0百万$ ÷ 売上 ＝ 0.82%。"
   ],
   "evidence": {
    "dom": "『our business has grown as a result of (i) acquisitions, (ii) increases in overall volume in the salvage car market, (iii) growth in market share』+『there can be no assurance that our competitors will not gain market share at our expense』+『existing or new competitors may be significantly larger』→中古車サルベージ・オークションの寡占(Copart+IAA)でCopartは二強の一角=寡占40-69%→70",
@@ -99,7 +100,8 @@
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC4年系列の**変動係数(σ÷平均)**。系列: 2021 26.5% / 2022 26.5% / 2023 21.4% / 2024 18.0% → 平均 23.1% / σ 3.6pt / **CV 15.6%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **14.6%** / 同業（SIC5500「Retail-Auto Dealers & Gasoline Stations」・15社）の中央値 **5.1%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+14.6%)÷(1+5.1%))^5 − 1 = **+53.9%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 2,205,583,000 → 2023年 3,869,518,000 → 2025年 4,646,958,000。A案(端点) 直近2年CAGR 9.59% − その前3年CAGR 20.61% = -11.02pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -12.49pt ／ 年次YoY {'2021': 22.1, '2022': 30.0, '2023': 10.5, '2024': 9.5, '2025': 9.7} → **採用 -11.02pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "acqS5": "買収支出 5年ぶん合計 113百万$ ÷ 期初総資産(2020-07-31) 3455百万$ ＝ 0.033／内訳: 2025-07-31 1百万$ / 2022-07-31 107百万$ / 2021-07-31 5百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 113百万$ ÷ 期初総資産(2020-07-31) 3455百万$ ＝ 0.033／内訳: 2025-07-31 1百万$ / 2022-07-31 107百万$ / 2021-07-31 5百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "sbc": "SBC比率＝株式報酬 38.0百万$ ÷ 売上（2025-07-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝0.82%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
   },
   "nulls": {
    "roicg": "資産ベース/のれん込みROICは谷≈14.6%(FY2024で14.9%概算)だが、直近(FY2024-26)の自己資本/現金/負債タグがXBRL系列から欠落し精密再現不能。誤値回避でnull(谷の解釈はkenshi参照)",
@@ -125,7 +127,8 @@
    "p1": "machine",
    "sht": "machine",
    "cagrT": "machine",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "sbc": "machine"
   },
   "basis": {
    "roic": "single-year",

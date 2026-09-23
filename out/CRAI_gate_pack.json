@@ -12,7 +12,7 @@
  "cagr": 8.1,
  "fcf": 0.02,
  "ni": 0.05,
- "sbc": 0.01,
+ "sbc": 0.78,
  "dilNet": -2.89,
  "acc": "usgaap",
  "eq": "pos",
@@ -69,7 +69,8 @@
    "ROIC検算(のれん込み,直近5共通年2021-2026)=13.2/22.0/21.4/26.4/30.7%(σ=5.9pt,最低13.2%はコロナ移行期)。のれん除き=22.9/39.2/38.5/47.2/55.2%。ドラフトroic52.5/roicg27.8はタグ選択差で helper値(55.2/30.7)よりやや低いが同水準・再現可のため採取器値を維持。いずれもWACC大幅超で警報なし",
    "opm(gm欄)=GrossProfitタグは2016年で途絶(コンサル業)。gm11.1は実質営業利益率FY2026。opm趨勢6.8→9.9→9.2→10.3→11.1%で上昇=gmt/roict『up』整合",
    "cagr8.1=売上5年CAGR(2021:508.4→2026:751.6百万USD)。acq5は買収小規模(FY2022:14.4/2023:0.6/2024:1.5/2026:0百万)で正確な累計は原本要のためnull維持",
-   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』"
+   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』",
+   "2026-09-23 sbc 0.01→0.78（単位の是正）: 旧値は金額または根拠の無い値で、門の定義（株式報酬÷売上%）と違っていた。2026-01-03 期の株式報酬 5.9百万$ ÷ 売上 ＝ 0.78%。"
   ],
   "evidence": {
    "dom": "『the market for economic and management consulting services is intensely competitive, highly fragmented, and subject to rapid change』+『no single client accounting for more than 10% of our revenues』→高度に分散した競争市場でシェア<40%=50",
@@ -99,7 +100,8 @@
    "eps": "機械算出 2025年: 純利益 54,782,000 ÷ 株数 6,547,407（TTMではなく通期実績）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2021年 508,373,000 → 2024年 687,414,000 → 2026年 751,583,000。A案(端点) 直近2年CAGR 4.56% − その前3年CAGR 10.58% = -6.02pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = 算出不能pt ／ 年次YoY {} → **採用 -6.02pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2026年: 営業利益 ÷ 支払利息 = 15.514。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "acqS5": "買収支出 5年ぶん合計 16百万$ ÷ 期初総資産(2021-01-02) 559百万$ ＝ 0.029／内訳: 2024-12-28 2百万$ / 2023-12-30 1百万$ / 2022-12-31 14百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 16百万$ ÷ 期初総資産(2021-01-02) 559百万$ ＝ 0.029／内訳: 2024-12-28 2百万$ / 2023-12-30 1百万$ / 2022-12-31 14百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "sbc": "SBC比率＝株式報酬 5.9百万$ ÷ 売上（2026-01-03 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝0.78%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -117,7 +119,8 @@
    "dilNet": "machine",
    "eps": "machine",
    "cagrT": "machine",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "sbc": "machine"
   },
   "basis": {
    "roic": "single-year",

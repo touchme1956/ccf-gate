@@ -12,7 +12,7 @@
  "cagr": 6.8,
  "fcf": 0.3,
  "ni": 0.28,
- "sbc": 0.02,
+ "sbc": 0.81,
  "dilNet": -0.26,
  "acc": "usgaap",
  "eq": "pos",
@@ -73,7 +73,8 @@
    "2026-07-29 p1 50→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均23.6%・σ11.6pt・CV49.4%）。",
    "**v9.9.72 roic を through-cycle 化**: roic 30.9→30.2 / roicg 14.5→12.0。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央29.9% / 最悪4.3%）。比は**パックが審査した年(2025)**の採取器値 roic30.59 / roicg14.47 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
    "2026-08-06 irr 85→70。旧根拠(『生命危険環境向けで認証必須』)は業界全体の要件かつ自社取得側で、顧客側の再認定ではない",
-   "2026-08-20 irr 70 → 50（二重読み）"
+   "2026-08-20 irr 70 → 50（二重読み）",
+   "2026-09-23 sbc 0.02→0.81（単位の是正）: 旧値は金額または根拠の無い値で、門の定義（株式報酬÷売上%）と違っていた。2025-12-31 期の株式報酬 15.2百万$ ÷ 売上 ＝ 0.81%。"
   ],
   "evidence": {
    "expiry": "『no [patent] is of such value to us that our business would be materially affected by the expiration or termination thereof, other than the \"MSA\" trademark. Our patents expire at various times... not exceeding 20 years』→特許束依存の期限型独占ではない(商標のみ本質的)=no",
@@ -113,7 +114,8 @@
    "acq5": "【2026-07-29 機械判定】のれん残高(十億$) 2020 0.44 → 2021 0.64 → 2022 0.62 → 2023 0.63 → 2024 0.62 → 2025 0.73。**新しさ =(直近 0.73 − 2020年 0.44)÷直近 = +39.4%**（今あるのれんのうち直近5年に増えた割合） → **大型買収あり=yes**（3分の1以上が直近5年＝現経営陣の買収）（出典: SEC XBRL companyfacts の Goodwill 系列）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 1,348,223,000 → 2023年 1,787,647,000 → 2025年 1,874,814,000。A案(端点) 直近2年CAGR 2.41% − その前3年CAGR 9.86% = -7.45pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -6.71pt ／ 年次YoY {'2021': 3.9, '2022': 9.1, '2023': 17.0, '2024': 1.1, '2025': 3.7} → **採用 -6.71pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 11.693。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "acqS5": "買収支出 5年ぶん合計 582百万$ ÷ 期初総資産(2020-12-31) 1920百万$ ＝ 0.303／内訳: 2025-12-31 189百万$ / 2021-12-31 392百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 582百万$ ÷ 期初総資産(2020-12-31) 1920百万$ ＝ 0.303／内訳: 2025-12-31 189百万$ / 2021-12-31 392百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "sbc": "SBC比率＝株式報酬 15.2百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝0.81%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
   },
   "nulls": {
    "z": "Altman Zは時価総額(市場データ)が必要→市場データ手入力後に算出可",
@@ -140,7 +142,8 @@
    "acq5": "machine",
    "p1": "machine",
    "cagrT": "machine",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "sbc": "machine"
   },
   "basis": {
    "roic": "through-cycle-med5(?年)",

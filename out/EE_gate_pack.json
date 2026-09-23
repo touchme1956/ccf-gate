@@ -12,7 +12,7 @@
  "cagr": -20.8,
  "fcf": 0.46,
  "ni": 0.17,
- "sbc": 0.0,
+ "sbc": 0.98,
  "dilNet": null,
  "acc": "usgaap",
  "eq": "pos",
@@ -105,18 +105,21 @@
    "5点キュー第2陣の門2審査(β=1.0中立仮定・境界銘柄は実βで再検証)。LNG浮体再ガス化。契約型だがプロジェクト依存 roicタグ欠損→gate0実測補充(8.0/6.7)。",
    "2026-07-29 _meta.kenshi が文字列で保存されていたため配列へ正規化した（ASR様式は配列が正）。内容は改行区切りの要素へ分解しただけで一文字も捨てていない。文字列のままだと検死の追記が list.append で落ちる＝**この社だけ監査の記録が伸びなくなる**。",
    "2026-08-20 irr=70 据置（二重読み・根拠を書き直し）",
-   "2026-09-23 f2 60→65（規約の適用・判定圏外）: 旧値に根拠の記録が無い（evidence.f2 空欄）＝原本の TAM 浸透率・TAM 成長の数値が示されていない。2026-08-16 統一規約『数値開示なしの既定は65』"
+   "2026-09-23 f2 60→65（規約の適用・判定圏外）: 旧値に根拠の記録が無い（evidence.f2 空欄）＝原本の TAM 浸透率・TAM 成長の数値が示されていない。2026-08-16 統一規約『数値開示なしの既定は65』",
+   "2026-09-23 sbc 0.0→0.98（単位の是正）: 旧値は金額または根拠の無い値で、門の定義（株式報酬÷売上%）と違っていた。2025-12-31 期の株式報酬 12.0百万$ ÷ 売上 ＝ 0.98%。"
   ],
   "evidence": {
    "cagr": "機械算出: 売上 2022年 2,472,973,000 → 2025年 1,228,263,000＝3年の年率",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 430,843,000 → 2023年 1,158,963,000 → 2025年 1,228,263,000。A案(端点) 直近2年CAGR 2.95% − その前3年CAGR 39.08% = -36.13pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -97.37pt ／ 年次YoY {'2021': 106.2, '2022': 178.3, '2023': -53.1, '2024': -26.5, '2025': 44.3} → **採用 -36.13pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 1.032。利息タグ InterestCostsIncurred（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
    "irr": "**irr 70（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　《機構》複数年の購買義務——長期 take-or-pay 契約。最低契約キャッシュフローが terminal services 3,315.2百万$（加重平均残存 **5.8年**）／LNG・ガス・電力 17,031.2百万$（同 **9.3年**）で合計 20,346.4百万$ ＝ FY2025総収益 1,228.3百万$ の **16.6倍**。保有する浮体式再ガス化ターミナルは全基が契約済み　『We typically enter into long-term take-or-pay contracts with our customers for the use of our LNG infrastructure assets and the services needed to operate them.』（Item 1. Business — Our Business / LNG solutions）——複数年の購買義務の機構を名指し。take-or-pay は使わなくても顧客が払う契約　『As of December 31, 2025, the minimum contracted cash flows under our terminal services contracts were approximately $3,315.2 million with a weighted average remaining term of 5.8 years.』（Item 1. Business — Terminal Services）——義務の数量化。総収益1,228.3百万$に対し2.7倍・加重平均残存5.8年（比較: MSFTは2.0倍・加重残存2.3年で70）　『As of December 31, 2025, the minimum contracted cash flows under our LNG, gas and power contracts were approximately $17,031.2 million with a weighted average remaining term of 9.3 years.』（Item 1. Business — LNG, Gas and Power）——もう一方のセグメントの義務の数量化。加重平均残存9.3年　『As of December 31, 2025, all of our owned floating regasification terminals are contracted.』（Item 1. Business — Terminal Services）——稼働資産が全基契約済み＝空き資産で毎回入札し直す形ではない　『Our business is substantially supported by long-term, take-or-pay agreements, which provide consistent revenue and cash flow from our high-quality customer base.』（Item 1. Business — Overview）——take-or-pay が事業モデルの中核であることの当社自身の記述　《反証（同じ原本に同居する）》『Some customers may also terminate their contracts in advance upon expiration of a set period and payment of associated early termination fees.』 ／ 『The process of securing new long-term regasification contracts is highly competitive and generally involves an intensive screening process and competitive bids, often lasting for several months.』 ／ 『However, we regularly amend and extend contract expiration terms, and many of our older contracts have already been extended.』　《射程》全社。Terminal services 596.6百万$（総収益の48.6%）と LNG, gas and power 631.6百万$（51.4%）の**両方**に最低契約キャッシュフローが開示されている　《検問と反証の経緯》【検問1】台帳の旧根拠は**空欄＝引用も機構の名指しも一つも無い**。v9.9.144は『付けられないなら50』と定めているので、この状態の70は本来そのまま維持できない。原本を読んだ結果として70は支持されたが、**根拠は私が原本から新たに作った**（evidence_gap=true）。【検問2】機構は規約が列挙する『複数年の購買義務』そのもので、$と加重平均残存年数の両方で数量化されている。抽象語ではない。【検問3】向き: 『**minimum contracted cash flows under our** terminal services contracts / LNG, gas and power contracts』＝顧客から当社への最低支払コミット。take-or-pay は定義上、使わなくても顧客が払う。当社が受ける認証（ガス販売ライセンス・IMO/FuelEU等）は**根拠に使っていない**（型1）。ONTO型・願望形でもない。【自分の結論に反証を試みた経緯＝50に落とせるかを5経路で探した】(a)**契約獲得は競争入札**: 『The process of securing new long-term regasification contracts is highly competitive and generally involves … competitive bids』——ただしこれは**新規獲得時**の競争で、既契約期中の乗り換え可否とは別。DTM/MCOでも同型の競争自認と70は両立している。(b)**早期解約**: 『Some customers may also terminate their contracts in advance upon expiration of a set period and **payment of associated early termination fees**』——解約可だが**違約金つき**＝摩擦の存在の証拠であって不存在の証拠ではない。同じ段落は『we regularly amend and extend contract expiration terms, and many of our older contracts have already been extended』と更新実績も書く。(c)**契約解除事由**: material breach／change in law／extended force majeure。通常の解除事由で、任意解約ではない。(d)**顧客集中**: 『During 2025 and 2024, we had three and two customers … over 10% of our revenues』——depの領分で、irrの反証ではない。(e)**顧客の代替建設（陸上恒久ターミナルへの移行）**を疑って走査したが land-based 0件・onshore 11件はいずれも当社設備の記述で、顧客が自前の恒久設備へ移るという記述は原本に無い。以上5経路とも50へ落とせなかった。grep実数: take-or-pay 16／long-term 122／minimum 54／switch 0／barriers to entry 0／backlog 0／in-house 0。⚠**採らなかった材料**: 『specially designed offshore and near-shore receiving facilities』は物理的なロックインを示唆しうるが、**受入設備の所有者が原本から確定できない**ので引用に採っていない。【検問4】上記(a)〜(d)が同居。【検問5】射程は両セグメントで数量化済み。85にしないのは、顧客側の再認定・再試験の断定文が原本に一つも無いため。",
-   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧値 60 には根拠の記録が無く（_meta.evidence.f2 空欄）、原本の TAM 浸透率・TAM 成長の数値が示されていない → 65。⚠原本は今回読み直していない——原本に p の数値開示が見つかれば刻み(90/80/50)を当て直すこと。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）"
+   "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧値 60 には根拠の記録が無く（_meta.evidence.f2 空欄）、原本の TAM 浸透率・TAM 成長の数値が示されていない → 65。⚠原本は今回読み直していない——原本に p の数値開示が見つかれば刻み(90/80/50)を当て直すこと。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）",
+   "sbc": "SBC比率＝株式報酬 12.0百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝0.98%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
   },
   "provenance": {
    "cagr": "machine",
-   "cagrT": "machine"
+   "cagrT": "machine",
+   "sbc": "machine"
   },
   "nulls": {
    "p3": "【2026-07-29】規約どおり空欄へ戻した。p3 は門が nde=1.04 から同表で導出する（純現金→95 / <1→85 / <2.5→70 / 以上→50）。台帳にあった 70 は導出値と一致していたので、値を置いておく意味が無い——むしろ値が残っていると門はそれを『逸脱評価』として尊重し、nde を直しても p3 が追随しなくなる（陳腐化する）。審査プロトコル『ndeを埋めれば空欄可＝門が機械導出』。",

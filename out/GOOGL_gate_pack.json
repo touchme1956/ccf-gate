@@ -12,7 +12,7 @@
  "cagr": 40.0,
  "fcf": 73.27,
  "ni": 132.17,
- "sbc": 25.0,
+ "sbc": 6.19,
  "dilNet": -2.01,
  "acc": "usgaap",
  "eq": "pos",
@@ -77,7 +77,8 @@
    "2026-07-30 **全件点検(v9.9.55)の要修正**「per ≠ px÷eps」を受け per 17.24 → null。px÷通期eps=30.59 と per=17.24 が 77% 乖離し、TTM/通期の差では説明できない。基準の記録も無いため憶測で直さず空欄にした。Ω・ティアは不変。",
    "2026-07-30 **再発**: market_merge が market_data.json の古い per=17.24 を再注入し、本日理由つきでnull化した判断を上書きしていた。差し戻すとともに、market_merge に「_meta.nulls に理由がある欄は充填しない」関門を新設した（絶対のルール7(c)の構造的な塞ぎ）。併せて market_data.json 側の古い per も削除。",
    "**v9.9.72 roic を through-cycle 化**: roic 24.9→27.0 / roicg 23.2→24.4。**5年の中央値**（系列[2021, 2022, 2023, 2024, 2025]・中央26.9% / 最悪24.8%）。比は**パックが審査した年(2025)**の採取器値 roic24.8 / roicg23.03 を土台に取った（採取器とパックが別の会計年度を見ている社があるため。実測 MSFT: 採取器FY2026/パックFY2025）。roicgも同じ年の系列の中央値にして roic≥roicg の恒等式を保つ。出典: SEC",
-   "2026-08-20 irr=70 据置（二重読み・根拠を書き直し）"
+   "2026-08-20 irr=70 据置（二重読み・根拠を書き直し）",
+   "2026-09-23 sbc 25.0→6.19（単位の是正）: 旧値は十億$の金額で、門の定義（株式報酬÷売上%）と違っていた。2025-12-31 期の株式報酬 24,953.0百万$ ÷ 売上 ＝ 6.19%。"
   ],
   "evidence": {
    "expiry": "『obtaining copyright and patent protections for our important innovations, including AI innovations, may not be sufficient or effective』→堀は特許束/コンセッション等の期限型に依存せず(むしろ特許の有効性を自認で限定)=expiry no",
@@ -114,7 +115,8 @@
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 27.2% / 2022 26.2% / 2023 26.9% / 2024 30.4% / 2025 24.8% → 平均 27.1% / σ 1.9pt / **CV 6.9%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **90**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "per": "市場データ機械充填 2026-08-02: market_fetch/market_data.json（常識帯(8.0, 200.0)を通過）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 182,527,000,000 → 2023年 307,394,000,000 → 2025年 402,836,000,000。A案(端点) 直近2年CAGR 14.48% − その前3年CAGR 18.98% = -4.50pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +4.70pt ／ 年次YoY {'2021': 41.2, '2022': 9.8, '2023': 8.7, '2024': 13.9, '2025': 15.1} → **採用 +4.70pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 175.325。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict"
+   "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 175.325。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
+   "sbc": "SBC比率＝株式報酬 24,953.0百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝6.19%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
   },
   "nulls": {
    "dom": "堀セクション『ヒットなし』。原本hitsに検索/広告の市場占有率を示す直接証拠なし。むしろ『highly competitive and rapidly evolving』『increasing competition, including from...providers of AI』と競争を強調→独占/圧倒スコアの付与は憶測になるためnull。moatキーワードでのhachimon_fetch再採取を推奨",
@@ -156,7 +158,8 @@
    "roiic5": "machine",
    "p1": "machine",
    "per": "market",
-   "cagrT": "machine"
+   "cagrT": "machine",
+   "sbc": "machine"
   },
   "basis": {
    "roic": "through-cycle-med5(?年)",
