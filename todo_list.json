@@ -671,9 +671,9 @@
   {
    "id": "irr85_hunt_window",
    "kind": "宿題",
-   "done": false,
+   "done": true,
    "title": "irr=85 探索の窓と経路の穴（2025-01以前の年次報告・40-F・日本株EDINET）",
-   "note": "2026-08-08の全銘柄探索は提出日2025-01-01〜2026-08-08の10-K/20-Fだけを対象にした。それ以前にしか機構文が無い社、カナダの40-F、日本株(EDINET経路)は網に入っていない。またフレーズは確定済み85の実文から作ったので、まだ見たことのない言い回しの機構は原理的に拾えない",
+   "note": "2026-08-08の全銘柄探索は提出日2025-01-01〜2026-08-08の10-K/20-Fだけを対象にした。それ以前にしか機構文が無い社、カナダの40-F、日本株(EDINET経路)は網に入っていない。またフレーズは確定済み85の実文から作ったので、まだ見たことのない言い回しの機構は原理的に拾えない\n【2026-09-23 閉じる＝窓を広げても新しい irr=85 は無かった】out/irr85_hunt_window.json（候補138・機械で外した476）。(a) **40-F**: 195社（companyfacts 188＋EFTS で見つけた7社）・2023年以降の40-F 247件と添付 1,001文書（AIF・MD&A）を走査、産業・技術の39社は文単位で通読 → 顧客の再認定を述べる文は**0**（Silvercorp『Our customers may switch suppliers without incurring significant costs.』のように逆を明言する社はある）。(b) **2023〜24年の10-K/20-F**: 174語句で2,228社・最新の書類に当たりの無い1,024社のうち強い語句の300社を読んだ——127社は2025年より前に年次報告を止め（買収・非公開化・上場廃止・破産）、残る当たりは大半が投資信託の税の定型文。検算: 窓の中で年次報告を出していた既知の85の12/12を再発見。(c) 規約の文から作った新しい言い回し59本（36本が使える・21本は2023〜26年のどこにも無い＝それ自体が測定）→ 新しい85型の文0。最も強い候補（Arconic・Novelis・Gresham）はいずれも買えない（非公開化・債券だけの提出者・提出停止）。パック済みで読み直す価値: AMAT（irr=50・サービス部門だけで論じていた。85 ではなく 50 か 70 の問い／Ω65.2・堀58.5 なので今日の判断は動かない）。道具の穴 → 宿題 irr_tools_40f_gap。night/irr85_hunt2.py は 2026-08-19 の初回コミットから構文エラーで動かなかった（括弧の閉じ忘れ）→ 是正し selftest が回ることを確認。",
    "owner": "審査"
   },
   {
@@ -1707,6 +1707,15 @@
    "owner": "検証",
    "title": "退場日の是正で古くなった歴史検証の出力と引用を作り直す（hist_*.json・道具の脚注）",
    "note": "2026-09-23 retro_exit_date_form15 の是正の続き。(1) out/hist_*.json は作り直していない——hist_val2_delisted / hist_val2_selfrel_delisted / hist_val2_regime / hist_wd_dst_path を回し直す（作業用の写しで回した値は out/retro_exit_fix_2013.json にある）。⚠ **先に yahoo_history_vanished を片付けること**: 取り直すと QVCAQ・EQR・SALM・BBBY の過去の株価が黙って消える（dd5 の価格キャッシュも 2026-08-10 と少し違う）。(2) 古い数字を引いている道具の文面: night/hist_val2_regime.py:956（17.8% vs 25.4%）・hist_wd_dst_uni.py:1336・hist_wd_dst_path.py（762社）・『2.00〜25.68%』の脚注（hist_wd_asym.py・audit_neglect.py・beat_spy_rule.py・opmtrend_*.py 6本）。docs/CLAUDE_ARCHIVE.md の該当行（1841・1966-1969 ほか）は当時の記録なので書き換えず、必要なら注を足すだけ。out/retro_mcap_prereg.json は事前登録なので触らない。"
+  },
+  {
+   "id": "irr_tools_40f_gap",
+   "kind": "宿題",
+   "done": false,
+   "due": null,
+   "owner": "採取器",
+   "title": "irr の探索・照合の道具が 40-F の本体（添付の AIF・MD&A）を読まない——ほか語の照合の穴",
+   "note": "2026-09-23 irr85_hunt_window で判明。(1) 第2の探索（irr85_hunt2）は提出の主文書しか持たず 40-F の行が0件だった（年次の中身は EX-99.x／EX-1 の添付）。irr85_extract・irr85_section・irr85_mech_diff・hachimon_fetch.latest_annual_url も 40-F の包み紙の文書しか読まない（台帳の40-F提出者は DSGX だけ＝今日の実害は小さい）。(2) companyfacts は最新の40-F が遅れることがある（CGI・CAE）→ submissions API を使う。(3) gate0_all.csv に CGI・ATS・Stantec・GFL・Boyd が居ない。(4) irr85_section.scan は素の部分一致: ハイフン形（AMAT の DTOR/PTOR）を落とし、単語の中に当たり（prequalification ⊃ requalification）、2,400字を超える段落を読み飛ばす（RMD の当たりは2,807字の段落）——探索の班は作業用の包みで3点を回避した（scratchpad/irr85window）。"
   }
  ]
 }

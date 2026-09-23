@@ -299,7 +299,7 @@ def cmd_stats(a):
                     '取ってきて確かめたらAND検索の60件はどれも literally 含んでいなかった。'
                     'verdict の読み方: ok=完全一致で使える ／ ok_terms=完全一致0件だが語ANDが静かで近い変種を拾える ／ '
                     'flood_terms=**完全一致0件**かつ語ANDが騒がしい（＝文字列は存在しない・語は一般英語）／ '
-                    'dead=どちらも0件。**flood_terms は網の穴ではなく「その言い回しは誰も書いていない」という測定**。'
+                    'dead=どちらも0件。**flood_terms は網の穴ではなく「その言い回しは誰も書いていない」という測定**。'),
            'n': {'phrases': len(rows), 'ok': len(ok), 'ok_terms': len(okt),
                  'flood': len(fl), 'dead': len(dd), 'error': len(er)},
            'rows': sorted(rows, key=lambda r: -(r.get('total') or 0)), 'anti': an}
