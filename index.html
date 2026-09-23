@@ -1023,27 +1023,30 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
      章のチップが tabN を持ち続けるので showPage(n) の約束も、
      night/check_gate_parity.js（tab3/tab5をclick）と night/check_icon_colors.js（tab3/tab7/showPage(12)）も
      そのまま動く。**番号を振り直すとこの3本が黙って壊れる**ので、統合は「群でまとめる」形にした。 -->
+<!-- 2026-09-23 ユーザー指示「今日／保有／成績／買付順位／台帳／その他で作って。上の表示はその他のみ。台帳は台帳の中の台帳のみ」:
+     群を 今日・保有・成績・買付順位・台帳（Ⅳ台帳だけ）・その他 の6つにし、章の帯（二段目）は「その他」のときだけ出す。
+     pgN/tabN の id は変えていない（検査器が tabN を押すため）。 -->
 <nav class="pgnav" id="grpNav">
  <button id="grp1" onclick="showGroup(1)">📋 今日</button>
- <button id="grp2" onclick="showGroup(2)">💰 資産</button>
- <button id="grp3" onclick="showGroup(3)">🛒 買付</button>
- <button id="grp4" onclick="showGroup(4)">📚 台帳</button>
- <button id="grp5" onclick="showGroup(5)">🩺 検査</button>
- <button id="grp6" onclick="showGroup(6)">📖 手引き</button>
+ <button id="grp2" onclick="showGroup(2)">🏦 保有</button>
+ <button id="grp3" onclick="showGroup(3)">📈 成績</button>
+ <button id="grp4" onclick="showGroup(4)">🛒 買付順位</button>
+ <button id="grp5" onclick="showGroup(5)">📚 台帳</button>
+ <button id="grp6" onclick="showGroup(6)">☰ その他</button>
 </nav>
 <!-- 章のチップ。**常にDOMに在る**（群が閉じていても getElementById で見つかる＝検査器が壊れない）。
      ⚠ v9.9.173 で**章が1つの群でも出す**ようにした（隠すと二段目の存在が画面から消えるため）。 -->
 <div class="chapnav" id="chapNav">
  <button id="tab10" onclick="showPage(10)" data-g="1">📋 今日やること</button>
- <button id="tab6"  onclick="showPage(6)"  data-g="2">📊 盤</button>
- <button id="tab7"  onclick="showPage(7)"  data-g="2">🏦 保有</button>
- <button id="tab12" onclick="showPage(12)" data-g="2">📈 成績</button>
- <button id="tab5"  onclick="showPage(5)"  data-g="3">🛒 買付順位</button>
- <button id="tab3"  onclick="showPage(3)"  data-g="4">📚 台帳</button>
- <button id="tab2"  onclick="showPage(2)"  data-g="4">✎ 採点機</button>
- <button id="tab4"  onclick="showPage(4)"  data-g="4">🗒 検証履歴</button>
- <button id="tab11" onclick="showPage(11)" data-g="5">🩺 点検</button>
- <button id="tab9"  onclick="showPage(9)"  data-g="5">⚙ 自動化</button>
+ <button id="tab6"  onclick="showPage(6)"  data-g="2">🏦 保有</button>
+ <button id="tab7"  onclick="showPage(7)"  data-g="2" data-hide="1" title="株数・買値の編集（🏦保有の「✎ 株数・買値を編集」から開く）">✎ 株数・買値</button>
+ <button id="tab12" onclick="showPage(12)" data-g="3">📈 成績</button>
+ <button id="tab5"  onclick="showPage(5)"  data-g="4">🛒 買付順位</button>
+ <button id="tab3"  onclick="showPage(3)"  data-g="5">📚 台帳</button>
+ <button id="tab2"  onclick="showPage(2)"  data-g="6">✎ 採点機</button>
+ <button id="tab4"  onclick="showPage(4)"  data-g="6">🗒 検証履歴</button>
+ <button id="tab11" onclick="showPage(11)" data-g="6">🩺 点検</button>
+ <button id="tab9"  onclick="showPage(9)"  data-g="6">⚙ 自動化</button>
  <button id="tab1"  onclick="showPage(1)"  data-g="6">📖 解説</button>
  <button id="tab8"  onclick="showPage(8)"  data-g="6">🧭 実行手順</button>
 </div>
@@ -1105,10 +1108,11 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
  <div id="evBox"></div>
 </div>
 <div id="pg6" class="pg">
- <h1 class="serif">📊 盤</h1>
+ <h1 class="serif">🏦 保有</h1>
  <div class="intro"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body">保有と投下可の現在地を一枚で。<b>価格・前日比・含み損益は情報であって判定ではない</b>——売りは <b>S1/S2/S3</b> のみ、買いは <b>四関門（Ω75+ ∧ 堀70+ ∧ 点検の要修正0件 ∧ 事業の収縮なし（売上縮小∧営業利益率低下でない））</b>のみで動く。IPS②Ulysses契約の48時間冷却も従来どおり効く。株価は<b>合否に一切使わない</b>（遮断器を撤去）——<b>階段指値を引くため</b>だけに使う。</div></details></div>
  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
    <button onclick="ccfDash(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
+   <button onclick="showPage(7)" style="padding:8px 15px;background:var(--panel);border:1px solid var(--line);border-radius:7px;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer" title="株数・買値・売却記録を入れる画面（旧 🏦保有タブ）">✎ 株数・買値を編集</button>
    <span id="dashAsof" style="font-size:11.5px;color:var(--dim)"></span>
  </div>
  <div id="dashBox"><div style="color:var(--dim);font-size:13px">「↻ 更新」で読み込む。</div></div>
@@ -5253,7 +5257,7 @@ async function ccfDash(btn){
 
   const sec=(t,b,note)=>`<h2 class="serif" style="font-size:1.1em;margin:20px 0 6px;color:var(--gold-bright)">${t}</h2>${note?`<div style="font-size:11px;color:var(--dim);margin-bottom:5px">${note}</div>`:''}${b}`;
   box.innerHTML = ccfGateBlindHTML(dBlind) + head
-    + sec('💰 保有', (pos.length?hdr+rows:'<div style="font-size:12.5px;color:var(--dim)">Ⅶ保有に株数・買値を入れると評価額と含み損益が出る。</div>')
+    + sec('💰 銘柄', (pos.length?hdr+rows:'<div style="font-size:12.5px;color:var(--dim)">「✎ 株数・買値を編集」で株数・買値を入れると評価額と含み損益が出る。</div>')
         + (miss.length?`<div style="font-size:11px;color:#d69a3c;margin-top:6px;line-height:1.8">価格未取得: <b>${miss.join(' / ')}</b><br>
             <span style="color:var(--dim)">日本株は<b>無料で自動取得できる経路が無い</b>（2026-08-02実測: Finnhub 401／Alpha Vantage 空／stooq 404／Yahoo はCIのIPから弾かれる／J-Quants無料は12週遅延）。
             <b>Ⅳ台帳の「￥ 価格だけ更新」</b>に <code>6146 38000</code> のように「コード 現値」を行区切りで貼れば更新できる（月1回・DCAの買付時でよい）。
@@ -7905,13 +7909,14 @@ try{ // 既定は隠す。明示的に「出す」を選んだ端末だけ出す
 }catch(e){}
 /* v9.9.171: 群（6つ）と章（12）の対応。**pgN も tabN も変えていない**——
    ここは「どのチップがどの群に属すか」の表だけ。順は画面の並びと同じ。 */
-const CCF_GROUP={10:1, 6:2,7:2,12:2, 5:3, 3:4,2:4,4:4, 11:5,9:5, 1:6,8:6};
-const CCF_GROUP_HEAD={1:10, 2:6, 3:5, 4:3, 5:11, 6:1};   /* 群を押したとき最初に開く章 */
+const CCF_GROUP={10:1, 6:2,7:2, 12:3, 5:4, 3:5, 2:6,4:6,11:6,9:6,1:6,8:6};
+const CCF_GROUP_HEAD={1:10, 2:6, 3:12, 4:5, 5:3, 6:2};   /* 群を押したとき最初に開く章 */
 /* 群を押す＝その群の**先頭の章**を開く。ただし同じ群を押し直したときは今の章を保つ
    （章を選んでから群のボタンをもう一度押して、章が勝手に戻るのは使いにくい） */
 function showGroup(g){
   const cur=window.__ccfPage||0;
-  const n=(CCF_GROUP[cur]===g)?cur:(CCF_GROUP_HEAD[g]||10);
+  /* 株数・買値の編集(pg7)は帯に出ない章なので、🏦保有を押したら保有(pg6)へ戻す */
+  const n=(CCF_GROUP[cur]===g&&cur!==7)?cur:(CCF_GROUP_HEAD[g]||10);
   showPage(n);
 }
 /* 章の帯: 今の群の章だけ出す。⚠ v9.9.173 以降は**章が1つの群でも帯を出す**（下の注記） */
@@ -7922,7 +7927,8 @@ function ccfChapNav(n){
     const nav=document.getElementById('chapNav'); if(!nav)return;
     let shown=0;
     nav.querySelectorAll('button').forEach(b=>{
-      const mine=(+b.dataset.g===g);
+      /* 2026-09-23 ユーザー指示「保有をなくして盤の名前を保有に」: data-hide の章は帯に出さない（開いている間だけ出す） */
+      const mine=(+b.dataset.g===g)&&(!b.dataset.hide||b.id==='tab'+n);
       b.style.display=mine?'':'none';
       if(mine)shown++;
       b.className=(b.id==='tab'+n?'on':'');
@@ -7931,7 +7937,8 @@ function ccfChapNav(n){
        既定の📋今日（章1つ）では**二段目が存在すること自体が画面に無かった**——
        ユーザーの「成績はどこへ？」はこれ（実測: 起動直後 chapNav が display:none）。
        出したり消したりすると本文の位置も跳ねる。**常に同じ形**にする。 */
-    nav.style.display=shown?'':'none';
+    /* 2026-09-23: 章の帯は「その他」(群6)のときだけ出す（ユーザー指示「上の表示はその他のみ」） */
+    nav.style.display=(shown&&g===6)?'':'none';
     /* ★2026-08-24 是正: **章の見え方を変えたら必ず測り直す**。
        起動時は 五彩の初期化行が ccfNavFade()→ccfNavFit() を**先に**走らせるので、
        ここで11本を隠す前の「12本ぜんぶ見えている帯」を測っていた。
@@ -7982,6 +7989,7 @@ function ccfNavFit(){try{
   const fixed=getComputedStyle(n).position==='fixed';
   const r=document.documentElement.style;
   r.setProperty('--pgh',h+'px');
+  r.setProperty('--navall',(h+ch)+'px');   /* 看板を画面いっぱいにするときの差し引き（skin.css §16） */
   /* ★2026-08-24 是正: --chaph は「**上に積まれている**章の帯の高さ」。
      携帯では章の帯は画面の**下**に居るので 0 を入れる——**--navh を fixed のとき
      removeProperty しているのと同じ理由**で、片方だけ作法から漏れていた。
