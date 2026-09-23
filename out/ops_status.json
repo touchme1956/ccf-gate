@@ -2352,11 +2352,11 @@
    {
     "id": "p1_debtfree_apply",
     "kind": "宿題",
-    "done": false,
+    "done": true,
     "due": null,
     "owner": "審査",
     "title": "無借金社60社の p1 を機械で算出して入れる（先に規約外の中間値を棚卸し）",
-    "note": "2026-09-23 決定 p1_debtfree_backfill の実装。 【2026-09-23 実施】38パック: 刻みに無い/根拠なきp1を19社是正（機械CV 15社・審査官系列を刻みへ4社）、17社は再実行でも算出不能（候補外タグに債務痕跡＝0と読まない）、CDNS/MANHは算出でき台帳と一致。72/75の線をまたいだ社0・投下可/次点不変。残り: 根拠も機械値も無い刻み外23社（AME/BBW/BUD/EE/EXPD/GMED/GNTX/GRND/HPQ/KFRC/LMAT/LOMA/MPTI/QSR/RBA/RMR/ROP/ROST/RSVR/SPGI/TKO/TYL/WAY）、旧絶対σ根拠6社（ANET/DECK/MPWR/TTD/YALA/EXEL）、EMEの採取器差。"
+    "note": "2026-09-23 決定 p1_debtfree_backfill の実装。 【2026-09-23 実施】38パック: 刻みに無い/根拠なきp1を19社是正（機械CV 15社・審査官系列を刻みへ4社）、17社は再実行でも算出不能（候補外タグに債務痕跡＝0と読まない）、CDNS/MANHは算出でき台帳と一致。72/75の線をまたいだ社0・投下可/次点不変。残り: 根拠も機械値も無い刻み外23社（AME/BBW/BUD/EE/EXPD/GMED/GNTX/GRND/HPQ/KFRC/LMAT/LOMA/MPTI/QSR/RBA/RMR/ROP/ROST/RSVR/SPGI/TKO/TYL/WAY）、旧絶対σ根拠6社（ANET/DECK/MPWR/TTD/YALA/EXEL）、EMEの採取器差。 【2026-09-23 残り30社も実施】旧い絶対σの刻み6社を CV へ（ANET 80→90・DECK 80→90・MPWR 80据置〔2024/25の痕跡は保有CP＝資産〕・TTD 80→50・YALA 90→80・EXEL 65→50）／EME 80→65（旧採取器が返済済みの長期債務245.4百万$を2023年末に残していた）／刻み外23社のうち7社は原本XBRLで負債を特定して刻みへ（EXPD 90・GNTX 90・MPTI 80・LMAT 80・GMED 65・KFRC 80・RMR 80）、16社は算出不能（IC縮退11・タグ不在3・BUD・LOMA超インフレ）で空欄＋理由（空欄は再正規化）。Ω72/75をまたぐ社0・投下可/次点不変・最大 TTD −1.7。"
    },
    {
     "id": "fetcher_capsoft",
@@ -2371,24 +2371,32 @@
     "id": "v11_facts_unit_cik",
     "kind": "宿題",
     "title": "v11_facts.py: 通貨をそろえずに割る(annual)・AMBIQのCIK取り違え",
-    "done": false,
-    "note": "2026-09-23 intcov是正で判明。(1) annual() が営業利益USD÷利息INRを割りWITのintcovが0.13になった (2) ティッカー表の『AMBIQ』がAmbipar(CIK1937441)を引き、パックのAmbiq Micro(CIK1500412・AMBQ)と別会社。intcov以外のv11の値にも及ぶ。audit_intcov.py の内部矛盾欄はv11_factsを読むのでTIMBが鳴り続ける。"
+    "done": true,
+    "note": "2026-09-23 intcov是正で判明。(1) annual() が営業利益USD÷利息INRを割りWITのintcovが0.13になった (2) ティッカー表の『AMBIQ』がAmbipar(CIK1937441)を引き、パックのAmbiq Micro(CIK1500412・AMBQ)と別会社。intcov以外のv11の値にも及ぶ。audit_intcov.py の内部矛盾欄はv11_factsを読むのでTIMBが鳴り続ける。 【2026-09-23 実施】v11_facts.py: 割り算・引き算の両辺の通貨単位を検問（不一致は空欄＋unit_mismatch）・CIK はパックの原本 URL を優先。audit_intcov.py: 検算済み（provenance≠machine）は別行・逆向きの取り残し検出を追加。前後差: PAC intcov 1003.4→空欄（MXN÷USD）・WIT strict 0.13→空欄・AMBIQ を Ambiq Micro に・新たに測れた5社。全パックの CIK 食い違いは AMBIQ だけ。PAC パックの intcov=1003.376（機械の誤値）は空欄＋理由へ（MXN 同士の概算3.67・原本未確認）。残る課題: annual() の通貨選択が『USD 優先』で 20-F の便宜換算を掴むことがある（retro_features2.py と揃えた基準なので今回は検問のみ）。"
    },
    {
     "id": "ifrs_nde_rou_bias",
     "kind": "宿題",
     "title": "IFRS 企業の nde は使用権資産の減価償却を EBITDA に含む（リース負債は含めない）＝低めに出る偏りを測る",
     "due": null,
-    "done": false,
-    "note": "2026-09-23 採取器 hd770bc0634 で判明。IFRS の D&A の行は使用権資産の減価償却を含み、その割合は D&A の5〜35%（TIGO 19%・AFYA 22%・BUD 13%・INFY 35%・SAP 21%）。規約はリース負債を有利子負債に数えないので、基準が揃わず nde が低めに出る（US-GAAP はオペレーティングリースの費用が D&A に入らないので揃っている）。台帳の審査（TIMB・日本株 IFRS）も同じ扱いで一貫しているため今は規約を変えない。測ること: DepreciationRightofuseAssets を差し引いた nde で閾値 −0.5/0/1/2.5/3/4 をまたぐ社があるか。またぐ社がいれば規約（EBITDA から ROU 減価償却を除く）の変更を判断する。"
+    "done": true,
+    "note": "2026-09-23 採取器 hd770bc0634 で判明。IFRS の D&A の行は使用権資産の減価償却を含み、その割合は D&A の5〜35%（TIGO 19%・AFYA 22%・BUD 13%・INFY 35%・SAP 21%）。規約はリース負債を有利子負債に数えないので、基準が揃わず nde が低めに出る（US-GAAP はオペレーティングリースの費用が D&A に入らないので揃っている）。台帳の審査（TIMB・日本株 IFRS）も同じ扱いで一貫しているため今は規約を変えない。測ること: DepreciationRightofuseAssets を差し引いた nde で閾値 −0.5/0/1/2.5/3/4 をまたぐ社があるか。またぐ社がいれば規約（EBITDA から ROU 減価償却を除く）の変更を判断する。 【2026-09-23 計測と決定（委任）】対象40社（米国上場 IFRS 28・日本株 IFRS 12）、ROU を実測25社。ROU/D&A は 0〜39%（INFY 39・IHG 36・ASAIY 34）。案B（EBITDA から ROU 減価償却を除く）で線をまたぐのは BUD（2.91→3.02・出口は既に s1）の1社だけ、案C（リース負債を足す）は US-GAAP 約290社と基準が割れる。3案とも投下可・次点・キルは不変→**案A（現状維持）に決定**。再検討の引き金: IFRS 企業が判定圏(Ω72+)にいて案A/Bで 2.5/3/4 をまたぐとき。★計測で判明したより大きい誤り: 機械算出の IFRS 12社の nde は D&A を0と読んでいた（nde が高めに出る・TIGO の偽の S2 の原因）→ fetcher_rev_disagree_0923 で是正。ほか WIT/ASR/SAP の evidence の式とパックの値の不一致、AMBI の nde がリース込み、GRVY が FY2016 のまま、CAAP の現金0。作業は scratchpad/rou/。"
    },
    {
     "id": "fetcher_rev_disagree_0923",
     "kind": "宿題",
     "title": "採取器 hd770bc0634 で新たに出たパックとの食い違い62件を裁く",
     "due": null,
+    "done": true,
+    "note": "2026-09-23 根拠の刻み直し（一致欄だけ・値は不変）で、今回の採取器の是正で新たに食い違った62件（旧採取器では算出できずパックは審査官の値）。例: TIGO nde 3.25/1.83・BUD 3.98/2.91（ifrs_nde_rou_bias と関係）・PRGS 8.19/4.28・AMPH 2.4/1.66・KTB roic 21.8/35.8・GMAB（DKK→USD で全欄）・LOMA ni 38.48/153.6（桁を疑う）・D fcf 5.36/−7.29。一覧は out/backfill_diff.json。判定圏(Ω72+)・投下可の該当は0。 【2026-09-23 実施】64件（62＋WIT/CAAP nde）を1件ずつ裁定: 採取器採用30・原本から規約どおり組んだ5（D fcf・CPAC 単位是正・NVO nde 0.67・GMAB nde 3.13）・空欄1（CAAP nde）・据え置き28（fcf は審査官の定義＝無形の取得も控除が規約どおり／年ずれ／規約7-c の対の制約／審査官の判断）。★TIGO の出口 s2→hold（IFRS の D&A 欠落による偽の S2 が消えた）・AMPH/CHDN/KTB の Ω 上昇・CMTL の要修正 1→0。投下可・次点・キル不変。"
+   },
+   {
+    "id": "roic_pair_basis_0923",
+    "kind": "宿題",
+    "title": "roic/roicg を対で替える社（GSK・LRN・DRI・KTB・LULU・GMAB）と basis の書き換え",
+    "due": null,
     "done": false,
-    "note": "2026-09-23 根拠の刻み直し（一致欄だけ・値は不変）で、今回の採取器の是正で新たに食い違った62件（旧採取器では算出できずパックは審査官の値）。例: TIGO nde 3.25/1.83・BUD 3.98/2.91（ifrs_nde_rou_bias と関係）・PRGS 8.19/4.28・AMPH 2.4/1.66・KTB roic 21.8/35.8・GMAB（DKK→USD で全欄）・LOMA ni 38.48/153.6（桁を疑う）・D fcf 5.36/−7.29。一覧は out/backfill_diff.json。判定圏(Ω72+)・投下可の該当は0。"
+    "note": "2026-09-23 食い違い64件の裁定の残り。規約7-c（片方だけ基準を替えない）のため据え置いた: GSK（採取器 63.6/19.5 が規約どおり・旧 28.8 は無形0・負債を純額）、LRN（15.8/11.9）、DRI、KTB・LULU（今回は単年の roic を入れた＝roicg も単年なので対は保たれるが through-cycle へ揃えるのが本来）、GMAB（roic 14.2 < roicg 14.4 の恒等式違反・FY2024 原本では roicg 15.6）。あわせて CHDN・AMPH の _meta.basis.roic が 'single-year' のまま（実態は5年中央値）。採取器側: AZN の nde は D&A 0 のまま・NVO の負債の二重計上・D の capex タグ・米国 fcf が資本化ソフトを引かない（ACIW）。採用した IFRS 9社の有利子負債にリース負債が入っていないかは未確認。"
    }
   ]
  },

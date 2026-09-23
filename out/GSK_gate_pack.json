@@ -73,7 +73,9 @@
    "2026-07-29 p1 65→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均24.8%・σ5.3pt・CV21.5%）。",
    "2026-08-06 irr 85→70。旧根拠は自社取得側の承認／自社サプライヤの認定＝**向きが逆**（2026-08-05 に NVDA・MSI・ASML の旧根拠で見つけたのと同型）。堀の本体は特許＝expiry欄の領分",
    "2026-08-20 irr 70 → 50（二重読み）",
-   "2026-09-23 intcov 空欄→**12.961**（20-F FY2025 財務費用注記: 営業利益 7,932 ÷ 借入利息 612・百万GBP）。v11_facts の参考値: FinanceCosts 701 基準の 11.315。todo intcov_basis_finance_costs（FinanceCosts は利息＋為替差損・リース利息・割引の巻き戻しの上位概念）の是正。"
+   "2026-09-23 intcov 空欄→**12.961**（20-F FY2025 財務費用注記: 営業利益 7,932 ÷ 借入利息 612・百万GBP）。v11_facts の参考値: FinanceCosts 701 基準の 11.315。todo intcov_basis_finance_costs（FinanceCosts は利息＋為替差損・リース利息・割引の巻き戻しの上位概念）の是正。",
+   "2026-09-23 [fetcher_rev_disagree_0923] 採取器 hd770bc0634 の fcf 6.393 は不採用: 有形 1,348百万GBP だけを引いた値で、無形の取得 1,637百万GBP を引いていない（採取器自身も IFRS の「有形＋無形」の合算行を設備投資の代替として受ける＝無形の取得は設備投資の内）。審査官の 4.8（無形込み）を据え置き、根拠を evidence.fcf/ni に刻んだ。ni 6.3 は ProfitLoss 6,289百万GBP と一致",
+   "2026-09-23 [fetcher_rev_disagree_0923] 採取器 hd770bc0634 の roic 63.6 は規約7-b どおりで旧 28.8 は誤り（旧式は無形 16,748百万GBP を 0 とし、有利子負債に純有利子負債 Borrowings 14,453 を使い、審査官の検算も現金を控除していた）——だが roic だけを替えると roicg 22.2（同じ誤った負債で算出・本件の対象外）と基準が割れる（規約7-c）ので据え置き。roic/roicg を対で 63.6/19.5（5年中央値）か 68.0/20.0（2025年単年）へ替える宿題"
   ],
   "evidence": {
    "expiry": "『Patent expiry dates』表: Trelegy 2027-2032/Ventolin 2026 expired/Arexvy 2030/Shingrix 2029-2031。『navigate dolutegravir's loss of exclusivity towards the end of the decade』→特許束の期限型独占=yes",
@@ -110,7 +112,9 @@
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 19.0% / 2022 30.4% / 2023 28.1% / 2024 17.8% / 2025 28.8% → 平均 24.8% / σ 5.3pt / **CV 21.5%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 24,354,000,000 → 2023年 30,328,000,000 → 2025年 32,667,000,000。A案(端点) 直近2年CAGR 3.78% − その前3年CAGR 7.59% = -3.80pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +0.36pt ／ 年次YoY {'2021': 1.4, '2022': 18.7, '2023': 3.4, '2024': 3.5, '2025': 4.1} → **採用 +0.36pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "acqS5": "買収支出 5年ぶん合計 7062百万$ ÷ 期初総資産(2020-12-31) 80431百万$ ＝ 0.088／内訳: 2025-12-31 1692百万$ / 2024-12-31 805百万$ / 2023-12-31 1457百万$ / 2022-12-31 3108百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
-   "intcov": "20-F原本 FY2025（https://www.sec.gov/Archives/edgar/data/1131399/000113139926000004/gsk-20251231.htm）: 営業利益 7,932 ÷ 借入の真正の利息 612（百万GBP）= 12.961。Note 12 Finance expense: 『Financial liabilities at amortised cost ( 612 )』（『Retranslation of loans ( 338 )』『Unwinding of discounts on provisions ( 29 )』『Finance expense arising on lease liabilities ( 46 )』『Other finance expense ( 9 )』は除外）。営業利益 『Operating profit 7,932』。基準=**借入の利息だけ**（為替・リース利息・割引の巻き戻し・デリバティブ損益は除外）。2026-09-23 審査官が注記から分離"
+   "intcov": "20-F原本 FY2025（https://www.sec.gov/Archives/edgar/data/1131399/000113139926000004/gsk-20251231.htm）: 営業利益 7,932 ÷ 借入の真正の利息 612（百万GBP）= 12.961。Note 12 Finance expense: 『Financial liabilities at amortised cost ( 612 )』（『Retranslation of loans ( 338 )』『Unwinding of discounts on provisions ( 29 )』『Finance expense arising on lease liabilities ( 46 )』『Other finance expense ( 9 )』は除外）。営業利益 『Operating profit 7,932』。基準=**借入の利息だけ**（為替・リース利息・割引の巻き戻し・デリバティブ損益は除外）。2026-09-23 審査官が注記から分離",
+   "fcf": "原本検算 2025年: 営業CF 7,741 − 設備投資（有形 1,348 ＋ 無形 1,637）＝ 4,756百万GBP（十億GBP表示 4.8）。XBRL ifrs-full: CashFlowsFromUsedInOperatingActivities / PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities / PurchaseOfIntangibleAssetsClassifiedAsInvestingActivities（20-F FY2025 acc 0001131399-26-000004）",
+   "ni": "原本検算 2025年: 純利益（ProfitLoss・非支配込み）6,289百万GBP（十億GBP表示 6.3）。20-F FY2025 acc 0001131399-26-000004"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -136,7 +140,9 @@
    "p1": "machine",
    "cagrT": "machine",
    "acqS5": "machine",
-   "intcov": "kenshi"
+   "intcov": "kenshi",
+   "fcf": "kenshi",
+   "ni": "kenshi"
   },
   "basis": {
    "roic": "single-year",

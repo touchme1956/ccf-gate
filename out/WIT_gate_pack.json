@@ -2,7 +2,7 @@
  "nm": "WIT",
  "roic": 18.9,
  "roicg": 11.5,
- "nde": 0.26,
+ "nde": 0.22,
  "z": null,
  "gpa": 21.2,
  "accr": -2.9,
@@ -72,7 +72,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=0.5 / 5年窓=8.4。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 90→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均18.3%・σ1.2pt・CV6.5%）。",
    "2026-08-10 roic 17.1 → 18.9（有利子負債の二重計上の是正を取り込み）。採取器は2026-08-04に是正済みでパックだけが旧値だった。あわせて basis を `through-cycle-med5(?年)` → **single-year** へ——採取器は WIT の5年系列を作れず（_tcSeries が出ない）、**印だけが through-cycle を名乗っていた**。『?年』という年数不明のラベルは LRCX で同じ形の取り残しを見つけている。Ω25.7 で判定圏外＝買付への実害は無いが、**印が嘘をつくと基準の混在を数えられなくなる**。",
-   "2026-09-23 intcov 0.13→**28.176**（20-F FY2026 財務費用注記: 営業利益 151,251 ÷ 借入利息 5,368・百万INR）。v11_facts の参考値: 旧 0.13＝v11_facts intcov_strict の**通貨混線**（2024年 営業利益 USD 1,633百万 ÷ InterestExpense INR 12,552百万。しかも InterestExpense は FinanceCosts と同額＝利息だけでもない）。財務キル『利払カバー<3』が誤って発火していた。todo intcov_basis_finance_costs（FinanceCosts は利息＋為替差損・リース利息・割引の巻き戻しの上位概念）の是正。★誤って発火していた財務キル『利払カバー<3』が外れた（kills 2→1・Ω 28.5→35.9・ティア失格のまま＝残るキルは別。node night/score_all.js --only WIT --set intcov=28.176 で測定）"
+   "2026-09-23 intcov 0.13→**28.176**（20-F FY2026 財務費用注記: 営業利益 151,251 ÷ 借入利息 5,368・百万INR）。v11_facts の参考値: 旧 0.13＝v11_facts intcov_strict の**通貨混線**（2024年 営業利益 USD 1,633百万 ÷ InterestExpense INR 12,552百万。しかも InterestExpense は FinanceCosts と同額＝利息だけでもない）。財務キル『利払カバー<3』が誤って発火していた。todo intcov_basis_finance_costs（FinanceCosts は利息＋為替差損・リース利息・割引の巻き戻しの上位概念）の是正。★誤って発火していた財務キル『利払カバー<3』が外れた（kills 2→1・Ω 28.5→35.9・ティア失格のまま＝残るキルは別。node night/score_all.js --only WIT --set intcov=28.176 で測定）",
+   "2026-09-23 [fetcher_rev_disagree_0923] nde 0.26 → 0.22（採取器 hd770bc0634 と一致）。evidence.nde の式 (161,817−121,974)÷(151,271+29,579)＝0.2203 が保存値 0.26 を再現していなかった（backfill の一致判定の許容幅 0.15 で「一致」扱いになっていた）。式どおりに直した。規約は案A（IFRS の D&A は使用権資産の償却込み・リース負債は数えない）"
   ],
   "evidence": {
    "dom": "『reduction in market share due to competition with large global consulting firms, software and solution providers, niche service providers, in-house information tech...』『Achieving mind share and market share in a crowded marketplace requires differentiated strategies』→断片化した競争市場でシェア<40%=50。hitsに自社シェア数値なし",

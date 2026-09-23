@@ -10,8 +10,8 @@
  "gmt": "up",
  "roict": "flat",
  "cagr": 17.3,
- "fcf": 240,
- "ni": 199,
+ "fcf": 0.2403,
+ "ni": 0.1989,
  "sbc": null,
  "dilNet": -0.15,
  "acc": "ifrs",
@@ -71,7 +71,8 @@
    "p2: 営利DD 2019(270.5)→2020(176.1)=-34.9%(COVID・中)。系列で観測可能な不況はCOVIDのみ",
    "2026-07-29 投下資本の算定バグ検算: roic 21.7→7.9、roicg 21.6→7.7、nde null→2.68、roict up→flat。**有利子負債 1,412,155千PEN(流動 532,346 + 非流動 879,809)が丸ごと欠落していた**——採取器のBorrowingsタグは2018年で系列が切れており、以後 debt=0 として投下資本を自己資本のみで計算していた。原本(20-F accession 0001213900-26-048232)の連結財政状態計算書から実額を採取して再計算。roic/roicg/roicEx/nde/roict/_meta 以外は一切変更していない。",
    "2026-08-20 irr 70 → 50（二重読み）",
-   "2026-09-23 p1 70 → 65（todo p1_debtfree_apply）: 旧値は刻み外の中間値。根拠欄にある審査官自身の系列を現行の変動係数刻みに当てると CV=35.5% → 65。旧根拠は _meta.evidence.p1 に保持"
+   "2026-09-23 p1 70 → 65（todo p1_debtfree_apply）: 旧値は刻み外の中間値。根拠欄にある審査官自身の系列を現行の変動係数刻みに当てると CV=35.5% → 65。旧根拠は _meta.evidence.p1 に保持",
+   "2026-09-23 [fetcher_rev_disagree_0923] fcf 240 → 0.2403・ni 199 → 0.1989（**単位の是正**: 百万PEN のまま入っていた＝十億の規約から1000倍。値の中身は審査官の定義〔無形の取得も控除〕のまま）。採取器 hd770bc0634 の fcf 0.2568 は有形だけを引いた値なので不採用（無形の取得 16,563千PEN を引いていない）。conv は 120.8% で不変"
   ],
   "evidence": {
    "expiry": "『We have a concession with an indefinite term to extract limestone and other minerals from our Acumulación Tembladera quarry』他の採石場も全て indefinite term。年次料金/最低生産の条件付だが固定満了なし→no(空港型コンセッション満了とは異なる原材料アクセス)",
@@ -103,7 +104,9 @@
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2019年 1,392,701,000 → 2022年 2,115,746,000 → 2024年 1,978,071,000。A案(端点) 直近2年CAGR -3.31% − その前3年CAGR 14.96% = -18.27pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = 算出不能pt ／ 年次YoY {} → **採用 -18.27pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2024年: 営業利益 ÷ 支払利息 = 3.92。利息タグ InterestExpense（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
    "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2020-12-31) 3016百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
-   "gmt": "機械算出: 営業利益率 2022年 16.8% → 2024年 19.8%（±1ptでup/down）"
+   "gmt": "機械算出: 営業利益率 2022年 16.8% → 2024年 19.8%（±1ptでup/down）",
+   "fcf": "原本検算 2024年: 営業CF 321,141 − 設備投資（有形 64,318 ＋ 無形 16,563）＝ 240,260千PEN（十億PEN表示 0.2403）。XBRL ifrs-full（20-F FY2024 acc 0001213900-25-036914）。最新の 20-F FY2025 は companyfacts に財務の事実が未収載",
+   "ni": "機械算出 2024年: 純利益 198,875,000（÷1e9で十億単位表示）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -122,7 +125,9 @@
    "dilNet": "machine",
    "cagrT": "machine",
    "acqS5": "machine",
-   "gmt": "machine"
+   "gmt": "machine",
+   "fcf": "kenshi",
+   "ni": "machine"
   },
   "basis": {
    "roic": "single-year",
