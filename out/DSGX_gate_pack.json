@@ -115,12 +115,12 @@
    "gmt": "機械算出: 営業利益率 2021年 20.5% → 2026年 28.8%（±1ptでup/down）",
    "cagr": "機械算出: 売上 2019年 275,171,000 → 2026年 728,992,000＝7年の年率（系列に欠年あり: 要素4個だが実年数7年——年数は年ラベルで数える）",
    "eps": "機械算出 2026年: 純利益 163,767,000 ÷ 株数 86,022,028（TTMではなく通期実績）",
-   "roicg": "機械算出 2026年: NOPAT ÷ (自己資本 1,618,912,000 + 有利子負債 0)＝のれん込み。roic(除外)との差が買収規律の指標。**有利子負債タグ不在＝0扱いのため過大の可能性あり（要原本確認）**",
+   "roicg": "機械算出 2026年: NOPAT ÷ (自己資本 1,618,912,000 + 有利子負債 0)＝のれん込み。roic(除外)との差が買収規律の指標。有利子負債タグ不在・負債の痕跡ゼロ（debt_evidence）＝無借金と断定して0",
    "nde": "【2026-07-29 原本で確定】**無借金**。同40-F Exhibit 99.2（MD&A＋監査済連結財務諸表・FY2026） Note 12 – Long-Term Debt: 『**No amounts were drawn on the credit facility** fas of January 31, 2026 and the balance of $350.0 million is available for use』、連結BSの LONG-TERM DEBT 行は金額なし。現金 **356.5百万$**（前期236.1／+120.4は営業CFから）。EBITDAは営業利益210.0＋無形償却81.2＝**291.2**を下限として使用（減価償却タグが不発見のため保守側＝EBITDAを小さく取る）。nde = −356.5 ÷ 291.2 = **−1.22（純現金）**。採取器は『タグ不在と無借金を機械で区別できない』として算出不能にしていた（絶対のルール7）——原本で無借金を確認したので手入力する。",
    "accr": "機械算出 2026年: (純利益 163,767,000 − 営業CF 266,246,000) ÷ 総資産 1,895,665,000",
    "gpa": "機械算出 2026年: 売上総利益 561,927,000 ÷ 総資産 1,895,665,000",
-   "fcf": "機械算出 2026年: 営業CF 266,246,000 − 設備投資 5,730,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）（★2026-08-20 単位是正: **ちょうど1000で割った**（百万$→十億$）。値は正しく単位の札だけが違った＝`conv=fcf/ni` は恒等的に不変でΩは動かない。`ccfMcapUSD` が px×ni÷eps で**絶対値**を使うため、百万のままだと時価総額が1000倍に化ける）",
-   "ni": "機械算出 2026年: 純利益 163,767,000（÷1e9で十億単位表示）（★2026-08-20 単位是正: **ちょうど1000で割った**（百万$→十億$）。値は正しく単位の札だけが違った＝`conv=fcf/ni` は恒等的に不変でΩは動かない。`ccfMcapUSD` が px×ni÷eps で**絶対値**を使うため、百万のままだと時価総額が1000倍に化ける）",
+   "fcf": "機械算出 2026年: 営業CF 266,246,000 − 設備投資 5,730,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）",
+   "ni": "機械算出 2026年: 純利益 163,767,000（÷1e9で十億単位表示）",
    "dom": "【2026-07-29 原本・v9.9.41(3)の構造記述で50を確定】同40-F Exhibit 99.1（Annual Information Form・FY2026） 4.7 Competition: 『the market for our applications is fnevertheless **highly competitive** and subject to rapid technological change. As such, we **expect fcompetition to increase in the future**』。競合を**9カテゴリ・20社以上を実名で列挙**——(i)SCM実行系 fManhattan Associates / Blue Yonder / Solera / Verizon / Ortec、(ii)ERP **SAP AG / Oracle / Infor**、(iii)顧客の社内開発、(iv)ミドルウェア Software AG / SPS Commerce、(v)テレマティクス Verizon / Solera / Trimble、(vi)付加価値通信網 Kleinschmidt / OpenText GXS / CHAMP / **FourKites / Project 44**、(vii)カーゴ予約 Unisys / fWiseTech、(viii)通関 WiseTech。**シェアの数値開示は無い**（『market share』の語が0件）。自社シェア%も上位N社合計%も出てこないので100/85/70は取れず、上記の構造記述から**50=競争<40%**を確定する。なお同節冒頭の『limited competition to-date from companies with broad application suites』は数値なき順位の自称で、v9.9.41(4)によりどの刻みの証拠にもならない。",
    "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『Service contracts are generally renewable at a customer's option, and there are generally no mandatory payment obligations or obligations to license additional software or subscribe for additional services.』（Exhibit 99.2 MD&A — Risk Factors（顧客契約の更新・解約リスク）※40-F本体には無い）——『複数年の購買義務』機構を原本が明示的に否定。no obligation to renew そのもの　『Factors influencing such contract terminations and non-renewals could include … our customers selecting or building alternate technologies to replace ours』（Exhibit 99.2 MD&A — 同上リスク（…は中略））——顧客の内製・代替構築＝検問4の反証　『Many of our current and potential competitors may have one or more of the following relative advantages: … Larger installed base of customers;』（Exhibit 99.1 AIF — Competition（全文唯一の installed base。…は中略））——設置基盤は競合の側が大きいという記述＝型(5)ONTO型で70の根拠にならない　『Upon joining the GLN community, many companies find that a number of their trading partners are already members, with an existing connection to the GLN. This helps to minimize the time required to integrate Descartes' logistics management applications and to begin realizing results.』（Exhibit 99.1 AIF — Network / GLN）——ネットワークの唯一の摩擦関連記述だが向きが『参加が速い』＝離脱コストを述べていない　《反証（同じ原本に同居する）》『However, we have found that our particular expertise in solving complex logistics problems on a network basis has enabled us to remain competitive.』 ／ 『The Descartes Global Logistics Network™ is our technology foundation and manages the real-time flow of commercial, logistics, customs and product information. It spans more than 160 countries and connects hundreds of thousands of organizations』　《検問と反証の経緯》⚠**まず材料の問題**: out/_src_cache/DSGX.txt は 37,475字・83文で、中身は**40-Fの表紙とXBRLコンテキストの羅列**だった（機構語counts が全て0なのはそのため）。台帳が引用する Exhibit 99.1(Annual Information Form) の文言は**キャッシュに1件も存在しない**（Global Logistics Network 0件・160 countries 0件・network basis 0件）。ブリーフの警告どおり40-F/20-Fは本体に実体が無い型なので、SECから **ex99d1(AIF, 189,461字)と ex99d2(MD&A, 313,910字)** を取得して計505,950字を走査した。**以下の引用はこの添付書類のもので、リポジトリのキャッシュには無い**——呼び出し側が out/_src_cache/DSGX.txt で逐語照合すると全滅するので要注意。【旧根拠の評価】evidence_gap=true。引用2件は**逐語で実在した**（捏造ではない）が、いずれも摩擦を述べていない: (a)GLNの『spans more than 160 countries and connects hundreds of thousands of organizations』は**ネットワークの規模**（当社の資産）の記述で顧客が負う費用・時間・義務を一言も述べない＝RMDのinstalled base棄却と同型、(b)『on a network basis has enabled us **to remain competitive**』は**Competition節**にあり主語が当社の競争力。旧根拠の結論『取引先接続のやり直しを伴うので移行摩擦は高い』は**原本が言っていない審査官の推論**であり、旧根拠自身が末尾で『顧客側の再認定を要する…記述は無い』＝「85ではない」の型で締めている。【70を支える文を探した実数】switching cost **0** / lock-in **0** / churn **0** / multi-year **0** / long-term contract **0** / retrain **0** / barriers to entry **0** / retention 8（全部が従業員維持ボーナス・役員補償・買収時の前提で顧客維持率ではない）/ installed base **1**——その1件が『Many of our current and potential competitors may have…**Larger installed base of customers**』＝**競合の方が大きい**というONTO型(型5)。【検問4 反証——決定的】会社自身が『**Service contracts are generally renewable at a customer's option, and there are generally no mandatory payment obligations** or obligations to license additional software or subscribe for additional services.』と書く＝『複数年の購買義務』機構を原本が名指しで否定。さらに解約要因に『our customers selecting or **building alternate technologies** to replace ours』＝顧客の内製。【私が最も強い70の材料として検討し、退けたもの】GLNの多者間ネットワークは実在の経済的堀だが、原本の該当記述は『Upon joining the GLN community…**This helps to minimize the time required to integrate**』＝**参加が容易**という向きで、離脱が高コストとは述べない。また『one-off basis is too costly, complex and risky』は自前の点対点接続という代替手段の話（市場機会）。加えてネットワーク効果は台帳で既に **dur=85** として計上されており、irrで再度数えると CLAUDE.md が最多の型として記録する irr×dur の二重計上になる",
    "rep": "【2026-07-29 原本】60=困難。160超の国と数十万組織の接続網は連続買収と長年の蓄積で築かれており数年では作れないが、同40-F Exhibit 99.1（Annual Information Form・FY2026） 4.7 は**新規参入者を実名で列挙**する（FourKites・Project 44 等のネットワーク系、WiseTech の通関系）うえ『we **expect competition to increase** in the future』『subject to **rapid technological change**』と自認する。『数十年/$10B級で複製不能』(100)や『極困難』(80)を支える記述は無い→60。",
@@ -169,21 +169,20 @@
    "_note": "roic/roicg がどの基準で作られているか。v9.9.72 で through-cycle(5年中央値)へ移行したが、採取器とパックが食い違う社・系列が3年未満の社には当てていないため**台帳に二つの基準が混在する**。文字列一致で見分けるのは脆いので機械可読にした"
   },
   "machine_check": {
-   "date": "2026-09-19",
-   "rev": "h087af899d9",
+   "date": "2026-09-23",
+   "rev": "hd4358a127a",
    "ok": [
     "accr",
     "cagr",
     "eps",
+    "fcf",
     "gm",
     "gmt",
     "gpa",
+    "ni",
     "roicg"
    ],
-   "diff": [
-    "fcf",
-    "ni"
-   ],
+   "diff": [],
    "hand": [],
    "gone": [
     "nde"
