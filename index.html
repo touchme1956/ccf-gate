@@ -4807,6 +4807,16 @@ function ccfPerfHTML(R,S){
   const pt=n=>(n==null||!isFinite(n))?'——':(n>0?'+':'')+(n*100).toFixed(1)+'pt';
   const yen=ccfYenM;   // 金額を隠す切替に従う
   let out='';
+  /* ★2026-09-23（ユーザー「やはりおかしい」）: 推移①②③は**買付日(bd)が判る銘柄だけ**で作る（S.tickers）。
+     保有タブは全銘柄なので、黙っていると「投じた円 ¥1,403,233 ≠ 取得 ¥2,148,003」「+17% ≠ +12%」が故障に見える。
+     ⇒ 対象と除外を**先頭に常に名指し**する（v9.9.52 の作法——黙って外さない）。全銘柄の損益は④と🏦保有。 */
+  if(S&&S.tickers&&R.positions){
+    const inc=S.tickers, allT=(R.positions||[]).map(r=>r.t), exc=allT.filter(t=>inc.indexOf(t)<0);
+    if(exc.length) out+=`<div class="panel" style="margin:10px 0;border-left:4px solid var(--rb-warn,#9a5b00);font-size:12.5px;line-height:1.75">`
+      +`<b>①〜③のグラフと S&amp;P500 との比較は ${inc.length}銘柄（${inc.join('・')}）だけ</b>で計算しています。`
+      +`<br><b>${exc.join('・')}</b> は<b>買付日が記録されていない</b>ので、同じ日の S&amp;P500 と比べられず外しています。`
+      +`<br>全${allT.length}銘柄の損益は下の ④ と 🏦保有 を見てください。買付日を入れれば①〜③にも入ります。</div>`;
+  }
   if(S&&S.days&&S.days.length>1){
     const d=S.days, inv=S.inv, tr=S.tr, val=S.val, bmk=S.bmk;
     const rTr=tr.map((x,i)=>x/inv[i]-1), rPx=val.map((x,i)=>x/inv[i]-1), rBm=bmk.map((x,i)=>x/inv[i]-1);
