@@ -457,7 +457,54 @@
       '門は静的ページなので<b>ブラウザから repo へは書けません</b>（トークンを置かない設計）。' +
       'だから最後の一歩だけ人の手が要ります——<b>4手で終わります</b>。' +
       '<br>※<b>点灯日と目標ウェイトは機械が書く記録</b>なのでここでは数えません（鮮度は⚙自動化の回転盤が測る）。' +
-      '</div>' + stepHTML(col) + '</details>';
+      '</div>' +
+      /* 逆向き（repo が正しいとき）の道。4手より先に置く——こちらのほうが多い（別セッションが保有を直す運用） */
+      '<div style="margin:8px 0 10px;padding:9px 11px;border:1px solid ' + DIM + ';border-radius:8px">' +
+      '<b>repo の保有のほうが正しいとき</b>（Claude が証券会社の画面から保有を直した後など）は、こちら：<br>' +
+      '<button onclick="ccfState.adoptRepo(this)" style="margin-top:6px;padding:7px 13px;border-radius:8px;border:1px solid ' + col +
+      ';background:#fff;color:' + col + ';font-weight:700;cursor:pointer">⭳ repo の保有で上書きする</button>' +
+      '<div style="font-size:11.5px;opacity:.85;margin-top:4px">株数と売却記録だけを置き換えます（今月の入金額などは残す）。</div></div>' +
+      '<div style="font-size:12px;margin:4px 0">この端末の値のほうが正しいときは、下の4手で repo へ入れる：</div>' +
+      stepHTML(col) + '</details>';
+  }
+
+  /* ★2026-09-23 新設（ユーザー「総資産がまちがってる」→「やって」）: **repo の保有で手元を上書きする逆向きの道**。
+     dirty のとき decide() は repo を採用しない（手元の未書き出しを守るため）。だが**正しいのが repo 側**のとき
+     （別セッションが楽天の画面から保有を直して commit した・この端末には古い株数が残っている）、
+     旧版には手元を捨てて repo に合わせる手段が**一つも無く**、帯の4手は逆向き（手元→repo）しか案内しなかった。
+     実害: 端末の総資産が売却済みの行（RMD/IRMD 等）や二重計上（MSFT 11株）のまま計算され続けた。
+     ⇒ **人が確認ダイアログで明示に選んだときだけ**、株数(pf:portfolio)と売却記録(pf:sold)を repo の値で置き換える。
+       今月の入金額など他の決定は**触らない**（残す）。置き換える前の値は ccf:replacedBackup に1件だけ退避する＝戻せる。 */
+  var REPLACE_KEYS = ['pf:portfolio', 'pf:sold'];
+  function adoptRepo(btn) {
+    var ok = true;
+    try { ok = window.confirm('この端末の「株数」と「売却記録」を、repo（state.json）の値で置き換えます。\n' +
+      '今月の入金額などほかの値はそのまま残します。置き換える前の値は端末内に1件だけ控えを取ります。\n\n置き換えますか？'); } catch (e) {}
+    if (!ok) return;
+    var o = btn ? btn.textContent : '';
+    if (btn) btn.textContent = '読み込み中…';
+    fetch('state.json?_=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; })
+      .then(function (st) {
+        if (!st || st.fmt !== 'ccf-state' || !st.data) {
+          if (btn) { btn.textContent = 'repo の state.json が読めない'; setTimeout(function () { btn.textContent = o; }, 2500); }
+          return;
+        }
+        var d = st.data, bak = { at: new Date().toISOString(), data: {} }, n = 0;
+        REPLACE_KEYS.forEach(function (k) { try { bak.data[k] = localStorage.getItem(k); } catch (e) {} });
+        quiet(function () {
+          try { localStorage.setItem('ccf:replacedBackup', JSON.stringify(bak)); } catch (e) {}
+          REPLACE_KEYS.forEach(function (k) {
+            if (d[k] == null) return;             // repo に無いキーは触らない（空で上書きしない）
+            try { localStorage.setItem(k, d[k]); n++; } catch (e) {}
+          });
+        });
+        // repo に追いついた＝以後は repo の更新を自動で受け取れるようにする
+        try { if (st.savedAt) localStorage.setItem(SAVED_AT, st.savedAt); localStorage.removeItem(DIRTY); } catch (e) {}
+        if (btn) btn.textContent = '✓ ' + n + '件を置き換えました——再読み込みします';
+        setTimeout(function () { try { location.reload(); } catch (e) {} }, 900);
+      });
   }
 
   /* ④ 「入れた」。**押すのは人**＝嘘をつけば盤(ops_status)が古いままになるだけで、データは消えない。 */
@@ -490,7 +537,7 @@
     });
   }
 
-  window.ccfState = { load: load, export: exportFile, banner: banner, quiet: quiet, done: done, copyBox: copyBox,
+  window.ccfState = { load: load, export: exportFile, banner: banner, quiet: quiet, done: done, copyBox: copyBox, adoptRepo: adoptRepo,
                       markCommitted: markCommitted, decide: decide, collect: collect,
                       isDirty: isDirty, keys: { exact: EXACT, prefix: PREFIX },
                       get last() { return last; } };
