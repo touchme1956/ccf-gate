@@ -145,7 +145,7 @@ def check(h, f):
                          strip_tags(h[max(0, m.start() - 110):m.start() + 150])))
         return hits
 
-    # ⑬ 城/網の比率を、門の表示テキストが書き写したまま古くなっていないか（2026-09-22新設）
+    # ⑬ 城/網の比率を（2026-09-23 から画面の表記は 個別/ETF・正規表現は両方の表記を受ける）、門の表示テキストが書き写したまま古くなっていないか（2026-09-22新設）
     #   正本は portfolio.json の target.shiro_castle_pct / ami_net_pct。
     #   コード（ccfSleeveTarget・CITY_TOTAL）は**そこから読んでいる**が、Ⅰ解説の配分表と
     #   Ⅴの生涯枠の文は**人が書いた数字**なので、比率を変えると静かにずれる。
@@ -177,12 +177,12 @@ def check(h, f):
                                       '%s → 正本は %g%%' % (strip_tags(m.group(0))[:120], want)))
 
         # (a) 配分パネルの見出しの帯
-        _spot(r'<span class="pass">網(\d{1,3})% / 城(\d{1,3})%', {1: _n, 2: _c})
+        _spot(r'<span class="pass">(?:網|ETF)(\d{1,3})% / (?:城|個別)(\d{1,3})%', {1: _n, 2: _c})
         # (b) 配分表の目標セル（網の行・城の行）
-        _spot(r'<td class="k">網（土台）</td>.*?<td><b>(\d{1,3})%</b></td>', {1: _n})
-        _spot(r'<td class="k">城（上乗せ）</td>.*?<td><b>(\d{1,3})%</b></td>', {1: _c})
+        _spot(r'<td class="k">(?:網|ETF)（土台）</td>.*?<td><b>(\d{1,3})%</b></td>', {1: _n})
+        _spot(r'<td class="k">(?:城|個別)（上乗せ）</td>.*?<td><b>(\d{1,3})%</b></td>', {1: _c})
         # (c) 本文の「上限は城N%、網はN%を土台として残す」
-        _spot(r'上限は城<b>(\d{1,3})%</b>、網は<b>(\d{1,3})%</b>を土台として残す', {1: _c, 2: _n})
+        _spot(r'上限は(?:城|個別)<b>(\d{1,3})%</b>、(?:網|ETF)は<b>(\d{1,3})%</b>を土台として残す', {1: _c, 2: _n})
 
         if stale:
             out.append(('FAIL', 'sleeve_ratio_stale',

@@ -102,8 +102,8 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 /* □保有/売却スイッチ(2026-08-03)。配色は全行共通＝金主体の統一 */
 /* 2026-08-04 ユーザー指示「保有の色分けは消さないでほしい」: 出口判定の色を戻す。
    2026-08-03に「色を統一」で判定ごとの色分け(赤/黄/紫/青)と色丸を消したが、**一覧を一瞥して
-   S1/S2が居るか分かる**のが保有一覧の役目だった。統一のうち残すのは 網/城バッジの廃止
-   （ETFを扱わなくなり全行が城なので情報量が無い）と□スイッチ。色は判定にだけ戻す。 */
+   S1/S2が居るか分かる**のが保有一覧の役目だった。統一のうち残すのは ETF/個別バッジの廃止
+   （ETFを扱わなくなり全行が個別なので情報量が無い）と□スイッチ。色は判定にだけ戻す。 */
 .ind-dot{font-size:11px;margin-right:7px;vertical-align:middle;filter:drop-shadow(0 0 3px currentColor);}
 .vd{font-weight:500;}
 .hswitch{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;user-select:none;}
@@ -144,9 +144,9 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
  <div class="toolbar">
   <button class="btn" id="editBtn" onclick="toggleEdit()">✎ 編集</button>
   <button class="btn ghost" id="moneyBtn" onclick="toggleMoney()" title="評価額(株数×現在株価×ドル円)の表示/非表示。非表示にすると2026-08-03の「保有と判定だけ」の形">💴 金額</button>
-  <button class="btn ghost" id="importBtn" onclick="importFromGate()" title="門(同ドメイン)の台帳で保有登録した個別銘柄を城として取り込む">⭳ 門の保有から取込</button>
-  <button class="btn ghost" id="regBtn" onclick="registerToGate()" title="城の個別を門の台帳に保有登録する(既存の採点は上書きしない)">🏛 門の台帳へ登録</button>
-  <button class="btn ghost" id="hjBtn" onclick="pfExportHoldings(this)" title="城(個別保有)を holdings.json 形式で書き出す。run_gate0_local.py / kessan_check.py が読む＝売買したらこれで更新（watch/eliteは既存ファイルを引き継ぎ）">⬇ holdings.json</button>
+  <button class="btn ghost" id="importBtn" onclick="importFromGate()" title="門(同ドメイン)の台帳で保有登録した個別銘柄を個別として取り込む">⭳ 門の保有から取込</button>
+  <button class="btn ghost" id="regBtn" onclick="registerToGate()" title="個別の個別を門の台帳に保有登録する(既存の採点は上書きしない)">🏛 門の台帳へ登録</button>
+  <button class="btn ghost" id="hjBtn" onclick="pfExportHoldings(this)" title="個別(個別保有)を holdings.json 形式で書き出す。run_gate0_local.py / kessan_check.py が読む＝売買したらこれで更新（watch/eliteは既存ファイルを引き継ぎ）">⬇ holdings.json</button>
   <button class="btn ghost" id="bkBtn" onclick="pfBackupAll(this)" title="門と資産の全データ（台帳・保有・採点・このポートフォリオ）をJSONで保存。端末が変わっても復元で全て戻る">⬇ バックアップ</button>
   <label class="btn ghost" for="pfBkFile" style="cursor:pointer" title="バックアップJSONから全データを復元">⬆ 復元</label>
   <input id="pfBkFile" type="file" accept=".json,application/json" style="display:none" onchange="pfRestoreAll(this)">
@@ -176,16 +176,16 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
   </div>
  </div>
 
- <!-- 2026-07-29 ユーザー指示: 網/城の内訳ビューを撤去し「保有一覧」の1枚に集約した。
-      **網/城のウェイト計算そのものは残している**——sleeve は保有データ(各行)の属性で、
-      render() が pf:weights を書き出す。※2026-07-30(v9.9.53)に門から網(ETF)を撤去したため
-      網/城のリバランスを判断するときの材料として書き出している。
+ <!-- 2026-07-29 ユーザー指示: ETF/個別の内訳ビューを撤去し「保有一覧」の1枚に集約した。
+      **ETF/個別のウェイト計算そのものは残している**——sleeve は保有データ(各行)の属性で、
+      render() が pf:weights を書き出す。※2026-07-30(v9.9.53)に門からETFを撤去したため
+      ETF/個別のリバランスを判断するときの材料として書き出している。
       表示を消しても計算を消してはいけない（消すと門が netNow=60/cityNow=40 の既定値で
       「常に目標に充足」と判定し、リバランスが黙って死ぬ）。 -->
 
  <div class="card">
   <h2>保有一覧</h2>
-  <p class="sub">保有を出す（個別銘柄＋<b>網(ETF)</b>・v9.9.169）。<b>出口判定が付くのは個別銘柄だけ</b>——門Ωは指数を裁かないので網の行に S1/S2/S3 は出ない。右の<b>□スイッチ</b>がチェック＝保有中。外すと売却として記録し「売却済み」へ移る。門の出口判定（<b style="color:var(--v1)">S1売却検討</b>／<b style="color:var(--v2)">S2縮小</b>／<b style="color:var(--v3)">S3記録のみ</b>／<b style="color:var(--v4)">ホールド</b>）は各行の下に色つきで出る——判定は門（📚台帳）を開くと更新される。</p>
+  <p class="sub">保有を出す（個別銘柄＋<b>ETF</b>・v9.9.169）。<b>出口判定が付くのは個別銘柄だけ</b>——門Ωは指数を裁かないのでETFの行に S1/S2/S3 は出ない。右の<b>□スイッチ</b>がチェック＝保有中。外すと売却として記録し「売却済み」へ移る。門の出口判定（<b style="color:var(--v1)">S1売却検討</b>／<b style="color:var(--v2)">S2縮小</b>／<b style="color:var(--v3)">S3記録のみ</b>／<b style="color:var(--v4)">ホールド</b>）は各行の下に色つきで出る——判定は門（📚台帳）を開くと更新される。</p>
   <div style="margin:0 0 10px"><button class="btn" id="rescoreBtn" onclick="pfRescorePrompt(this)" style="border-color:rgba(84,184,138,.5);color:#8fc9a4;background:linear-gradient(180deg,rgba(84,184,138,.20),rgba(84,184,138,.06))" title="保有の個別銘柄を、今の門が必要とする全項目で採点し直す依頼文をコピー。Claudeに貼ると完成パックJSONが返る→✎採点機に取込">📋 個別の再採点依頼文をコピー</button> <span class="mini" style="text-align:left;display:inline">最新データで門Ω＋門Xにかけ直す。返ったJSONを門「✎採点機」の貼付欄へ。</span></div>
   <div id="holdList"></div>
  </div>
@@ -217,29 +217,29 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
 
 'use strict';
 const LS_KEY='pf:portfolio';
-// 2026-08-03 ユーザー指示「ETFはすべてを削除して欲しい」: このページは個別銘柄（城）＋現金のみを扱う。
-// ETF(網)は証券会社の自動積立で機械的に買う対象＝門にかけない(v9.9.53で門からも撤去済み)ので、ここに並べる意味が無くなった。
-// 初期値からETF行を外し、load()が保存済みデータの網行も一度だけ落とす（下の移行）。
+// 2026-08-03 ユーザー指示「ETFはすべてを削除して欲しい」: このページは個別銘柄＋現金のみを扱う。
+// ETFは証券会社の自動積立で機械的に買う対象＝門にかけない(v9.9.53で門からも撤去済み)ので、ここに並べる意味が無くなった。
+// 初期値からETF行を外し、load()が保存済みデータのETF行も一度だけ落とす（下の移行）。
 // 運用開始スナップショットは円評価額(v)のみ。株数・単価は編集で追記すると株数×現在株価で自動計算に切替わる。
 const DEFAULT={ asof:"2026-07-24", fx:150, positions:[
   {t:"MSFT", nm:"Microsoft",                     sleeve:"castle", kind:"個別",                 ccy:"USD", v:499960},
   {t:"ASML", nm:"ASMLホールディングス",          sleeve:"castle", kind:"個別",                 ccy:"USD", v:295295},
   {t:"RMD",  nm:"レスメド（ResMed）",            sleeve:"castle", kind:"個別",                 ccy:"USD", v:94283}
 ]};
-// 網/城の目標比の判断はDCA側（門の外・正本は portfolio.json の target）。門は個別銘柄だけを裁く＝v9.9.53で網を撤去した。数値の記録として残す。
+// ETF/個別の目標比の判断はDCA側（門の外・正本は portfolio.json の target）。門は個別銘柄だけを裁く＝v9.9.53でETFを撤去した。数値の記録として残す。
 const TARGET={net:60, castle:40};   // eslint-disable-line no-unused-vars
 let P = load();
 
 function load(){
  try{const s=localStorage.getItem(LS_KEY); if(s){const o=JSON.parse(s);
   if(o&&Array.isArray(o.positions)){
-   /* ★網(ETF)の行は**消さない**（v9.9.169・2026-08-23 ユーザー指示「保有に入れてほしい」）。
+   /* ★ETFの行は**消さない**（v9.9.169・2026-08-23 ユーザー指示「保有に入れてほしい」）。
       2026-08-03 の指示「ページを個別銘柄だけに」で `sleeve:'net'` を削除していたが、
       その結果 **ETFはこの端末の台帳(pf:portfolio)に一行も存在せず**、
-      🏦保有・📊盤の総資産/含み損益・📈成績が**城(個別)だけ**を出していた
+      🏦保有・📊盤の総資産/含み損益・📈成績が**個別だけ**を出していた
       （実測 2026-08-23: 総資産 ¥1.15M と表示・実勢は ¥2.31M）。
       ユーザーの新しい指示が 2026-08-03 の指示を上書きする。**移行の削除は撤去**した。
-      ⚠ただし「個別銘柄だけを裁く」という**門の思想は不変**——網の行に
+      ⚠ただし「個別銘柄だけを裁く」という**門の思想は不変**——ETFの行に
         出口判定(S1/S2/S3)は付けない（門Ωは指数を裁かない）。下の render() を見よ。 */
    return o;
   }}}catch(e){}
@@ -288,8 +288,8 @@ function render(){
  const total=pos.reduce((s,p)=>s+(+p._v||0),0);
  const wOf=p=> total>0 ? (+p._v/total*100) : 0;
  const net=pos.filter(p=>p.sleeve==='net'), castle=pos.filter(p=>p.sleeve==='castle'), cash=pos.filter(p=>p.sleeve==='cash');
- const netW=net.reduce((s,p)=>s+wOf(p),0), castleW=castle.reduce((s,p)=>s+wOf(p),0), cashW=cash.reduce((s,p)=>s+wOf(p),0); // 2026-07: 現金枠(IPS①「点灯不足の残余=現金」の現在値を可視化。網/城の%は総資産比のまま)
- // 現在の網/城ウェイトを書き出す（v9.9.53で門は読まなくなった。DCA側の判断材料として保持）
+ const netW=net.reduce((s,p)=>s+wOf(p),0), castleW=castle.reduce((s,p)=>s+wOf(p),0), cashW=cash.reduce((s,p)=>s+wOf(p),0); // 2026-07: 現金枠(IPS①「点灯不足の残余=現金」の現在値を可視化。ETF/個別の%は総資産比のまま)
+ // 現在のETF/個別ウェイトを書き出す（v9.9.53で門は読まなくなった。DCA側の判断材料として保持）
  /* v9.9.131: pf:weights は P からの導出値で render のたびに書かれる＝**機械**。
     包まないと株価が動いただけで dirty が立つ。 */
  try{ccfState.quiet(()=>localStorage.setItem('pf:weights',JSON.stringify({net:netW,city:castleW,total:total})));}catch(e){}
@@ -305,10 +305,10 @@ function render(){
  document.getElementById('asof').textContent = (P.asof? ('更新 '+P.asof) : '') + (showMoney&&shown.length?(' · '+shown.length+'銘柄'):'');
 
  // ---- 保有一覧（右側は□保有/売却スイッチ）------------------------------------------
- // 2026-08-03「保有の色を統一してほしい」で判定色・色丸・網/城バッジを全廃 →
+ // 2026-08-03「保有の色を統一してほしい」で判定色・色丸・ETF/個別バッジを全廃 →
  // 2026-08-04「保有の色分けは消さないでほしい」で**判定の色だけ戻した**。
- // 網/城バッジは戻さない（判定色は「判定」の意味に限定する）。□スイッチもそのまま。
- // v9.9.169: 網(ETF)の行が戻ったので、網であることは**info の文字**で言う（色は使わない）。
+ // ETF/個別バッジは戻さない（判定色は「判定」の意味に限定する）。□スイッチもそのまま。
+ // v9.9.169: ETFの行が戻ったので、ETFであることは**info の文字**で言う（色は使わない）。
  const vmap=(function(){try{return JSON.parse(localStorage.getItem('pf:verdicts')||'{}');}catch(e){return {};}})();
  const verdictOf=p=>{ if(p.nm&&vmap[p.nm])return vmap[p.nm];                     // 名の完全一致
    const pt=(p.t||'').toUpperCase();
@@ -324,13 +324,13 @@ function render(){
   if(!v.ts)return ' · 判定日不明（門の📚台帳で更新）';
   const d=Math.floor((Date.now()-v.ts)/864e5);
   return d>90?` · ⚠判定${d}日前（門の📚台帳で更新を）`:` · 判定${d===0?'今日':d+'日前'}`; };
- // 並び: 個別(城)→網(ETF)→現金。枠内は評価額順（金額は出さないが順序の錨には使う）
+ // 並び: 個別→ETF→現金。枠内は評価額順（金額は出さないが順序の錨には使う）
  const ord={castle:0,net:1,cash:2};
  const sorted=shown.slice().sort((a,b)=>(ord[a.sleeve]??0)-(ord[b.sleeve]??0)||(b._v||0)-(a._v||0));
  document.getElementById('holdList').innerHTML = sorted.length
    ? sorted.map(p=>{
        const idx=P.positions.indexOf(p);
-       // 出口判定は個別(城)にしか意味が無い。現金には付けない
+       // 出口判定は個別にしか意味が無い。現金には付けない
        const v = (p.sleeve==='castle') ? verdictOf(p) : null;
        const vc = (p.sleeve==='castle') ? (VCFG[(v&&v.level)||'pending']||VCFG.pending) : null;
        // 判定だけ色を持たせる（銘柄名・ティッカー・鮮度は統一配色のまま＝色は「判定」の意味に限定）
@@ -345,12 +345,12 @@ function render(){
            amtTxt=`${det}<b style="color:var(--ink,#dfe6f2)">¥${Math.round(p._v).toLocaleString()}</b>${total>0?`（${(p._v/total*100).toFixed(1)}%）`:''}`;
          } else if(p.sleeve!=='cash'){ amtTxt='<span style="color:var(--muted)">金額未入力（✎編集で株数と単価を）</span>'; }
        }
-       // v9.9.169: 網は「門の裁きではない」と行に書く——出口判定が付かない理由を画面に出す（v9.9.52）
+       // v9.9.169: ETFは「門の裁きではない」と行に書く——出口判定が付かない理由を画面に出す（v9.9.52）
        const kindTxt = p.sleeve==='cash' ? '現金'
-                     : p.sleeve==='net'  ? '網(ETF)・門の裁きではない' : '';
+                     : p.sleeve==='net'  ? 'ETF・門の裁きではない' : '';
        const info=[p.t||'', kindTxt, amtTxt, vTxt].filter(Boolean).join(' · ');
        // □スイッチ(2026-08-03 ユーザー指示): チェック=保有中。外すと売却として記録し「売却済み」へ移す
-       // v9.9.169: 網にも□スイッチを出す——出さないと**売却を記録する経路が無く行を外せない**
+       // v9.9.169: ETFにも□スイッチを出す——出さないと**売却を記録する経路が無く行を外せない**
        //   （出口判定を付けないこととは別。判定は門の仕事、記帳は台帳の仕事）
        const sw = (p.sleeve==='castle'||p.sleeve==='net')
          ? `<label class="hswitch"><input type="checkbox" checked onchange="pfSell(${idx},this)">保有</label>`
@@ -529,7 +529,7 @@ function resetDefault(){ if(!confirm('初期値（運用開始スナップショ
  P=JSON.parse(JSON.stringify(DEFAULT)); persist(); cancelEdit(); render();
 }
 
-/* ---------- 門(同ドメイン)の台帳から城を取込 ---------- */
+/* ---------- 門(同ドメイン)の台帳から個別を取込 ---------- */
 function importFromGate(){
  let held=[]; try{held=JSON.parse(localStorage.getItem('g7hold:set')||'[]');}catch(e){}
  let added=0, found=0;
@@ -547,13 +547,13 @@ function importFromGate(){
  if(found===0){ alert('門の台帳で保有登録された個別が見つかりませんでした。\n同じドメインで門を開き、📚台帳で□にチェックすると取り込めます。'); return; }
  persist(); render();
  if(!editing)openEdit();
- alert(`門の保有から城 ${added}件を取り込みました（合計${found}件検出）。株数・現在株価を編集で入れてください。`);
+ alert(`門の保有から個別 ${added}件を取り込みました（合計${found}件検出）。株数・現在株価を編集で入れてください。`);
 }
 
-/* ---------- 城の個別を門の台帳へ登録(非破壊) ---------- */
+/* ---------- 個別の個別を門の台帳へ登録(非破壊) ---------- */
 function registerToGate(){
  const castle=P.positions.filter(p=>p.sleeve==='castle'&&(p.t||p.nm));
- if(!castle.length){ alert('城（個別）が未登録です。編集で個別銘柄を足してください。'); return; }
+ if(!castle.length){ alert('個別が未登録です。編集で個別銘柄を足してください。'); return; }
  const total=P.positions.reduce((s,p)=>s+posValue(p),0);
  let holdSet=[]; try{holdSet=JSON.parse(localStorage.getItem('g7hold:set')||'[]');}catch(e){}
  let added=0, flagged=0, kept=0;
@@ -620,7 +620,7 @@ const PROTO_RESCORE=`【門2審査プロトコル v1｜厳守】各銘柄を審�
 ・シクリカルは through-cycle 値を採用（AI等のピーク益で採点しない＝g是正の規律）。`;
 function pfRescorePrompt(btn){
  const castle=P.positions.filter(p=>p.sleeve==='castle'&&(p.t||p.nm));
- if(!castle.length){ alert('城（個別）が未登録です。編集で個別銘柄を足すか、「⭳ 門の保有から取込」で読み込んでください。'); return; }
+ if(!castle.length){ alert('個別が未登録です。編集で個別銘柄を足すか、「⭳ 門の保有から取込」で読み込んでください。'); return; }
  const names=castle.map(p=>p.t||p.nm);
  const cap=8, use=castle.slice(0,cap), over=castle.length-cap;
  const lines=use.map(p=>{
@@ -629,7 +629,7 @@ function pfRescorePrompt(btn){
   const cur=[]; if(r.evalScore!=null)cur.push('前回格'+r.evalScore); if(d.roic!=null)cur.push('roic'+d.roic); if(d.cagr!=null)cur.push('cagr'+d.cagr); if(d.per!=null)cur.push('per'+d.per); const ad=(meta.audit&&meta.audit.auditDate)||meta.auditDate; if(ad)cur.push('審査日'+ad);
   return `- ${p.t||''}${p.t&&nm&&nm!==p.t?'（'+nm+'）':nm&&!p.t?'（'+nm+'）':''}: ${cur.length?cur.join(' / '):'未採点＝新規審査'}`;
  }).join('\n');
- const head=`再採点依頼（保有の個別銘柄・城）: ${use.map(p=>p.t||p.nm).join(', ')}\n\n`+
+ const head=`再採点依頼（保有の個別銘柄・個別）: ${use.map(p=>p.t||p.nm).join(', ')}\n\n`+
   `以下の保有個別を、現時点の最新データで門Ω（＋門X）にかけ直し、門の✎採点機フォーマットの完成パックJSON（${use.length>1?'配列で一括':'1件'}）で返してほしい。数字は原本(SEC/EDINET)で検算し、憶測は禁止。\n\n`+
   `【対象と現在の台帳値（＝前回審査。これを最新に更新する）】\n${lines}\n`+
   (over>0?`（※保有${castle.length}件中の上位${cap}件。1バッチ8社上限。残り${over}件は再度コピーで）\n`:'')+`\n`;
@@ -640,12 +640,12 @@ function pfRescorePrompt(btn){
    run_gate0_local.py(HOLDINGS/WATCH自動差し替え)と kessan_check.py(四半期点検の走査対象)は
    リポジトリの holdings.json を読むが、更新は手動編集だった＝Ⅶで売買してもここを直し忘れると
    四半期点検が旧保有を走査し続ける（売った銘柄を点検し、買った銘柄を見ない）。
-   城の現在保有から {holdings,watch,elite} 形式で書き出す。watch/elite はこのページの管轄外なので
+   個別の現在保有から {holdings,watch,elite} 形式で書き出す。watch/elite はこのページの管轄外なので
    既存ファイル(同一オリジン)を fetch して引き継ぐ——勝手に空にしない。 */
 async function pfExportHoldings(btn){
  const o=btn?btn.textContent:'';
  const castle=P.positions.filter(p=>p.sleeve==='castle'&&(p.t||p.nm));
- if(!castle.length){ alert('城（個別）が未登録です。書き出す保有がありません。'); return; }
+ if(!castle.length){ alert('個別が未登録です。書き出す保有がありません。'); return; }
  const holdings=castle.map(p=>((p.t||p.nm)+'').toUpperCase().trim()).filter(Boolean);
  let watch=[], elite=[], carried='取得失敗→空';
  try{ const r=await fetch('holdings.json',{cache:'no-store'});
@@ -653,7 +653,7 @@ async function pfExportHoldings(btn){
  }catch(e){}
  const d=new Date(), ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
  const payload={holdings,watch,elite,
-  note:`${ds} 🏦保有（城）から書き出し。watch/eliteは${carried}。リポジトリ直下の holdings.json と差し替える（run_gate0_local.py / kessan_check.py が読む）。ETF(網)は個別審査の対象外ゆえ含めない。`};
+  note:`${ds} 🏦保有から書き出し。watch/eliteは${carried}。リポジトリ直下の holdings.json と差し替える（run_gate0_local.py / kessan_check.py が読む）。ETFは個別審査の対象外ゆえ含めない。`};
  try{
   const blob=new Blob([JSON.stringify(payload,null,1)],{type:'application/json'});
   const url=URL.createObjectURL(blob); const a=document.createElement('a');
@@ -788,8 +788,8 @@ function pfAddShares(d){
   if(!p.ccy&&d.ccy) p.ccy=d.ccy;
   if(lot){ if(!Array.isArray(p.bdLots)) p.bdLots=[]; p.bdLots.push(lot); }
  }else{
-  /* v9.9.169: 袖(城/網)は**頼む側が言う**。言わなければ従来どおり城＝既定は変えない。
-     ⚠ 網の行に出口判定は付かない（門Ωは指数を裁かない）ので、この一語が
+  /* v9.9.169: 袖(個別/ETF)は**頼む側が言う**。言わなければ従来どおり個別＝既定は変えない。
+     ⚠ ETFの行に出口判定は付かない（門Ωは指数を裁かない）ので、この一語が
        「門が裁く対象か」を分ける唯一の印になる。 */
   const sl = (d.sleeve==='net') ? 'net' : 'castle';
   const row={t:up, nm:d.nm||up, sleeve:sl, kind:(sl==='net'?'ETF':'個別'),

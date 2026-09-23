@@ -550,12 +550,12 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
      ⚙自動化の回転盤と📌やるべきこと・📈成績のグラフ説明）／
    **"6"=v9.9.171 fold_gate_text3.py**（各タブの静的な導入文14本）／
    **"7"=v9.9.172 fold_gate_js.py**（JS描画側の説明——⛔各節の「なぜ落ちるのか」・
-     Ⅵの凡例・◈網の前置き・⚙自動化の凡例・📖解説のステップカード）。
+     Ⅵの凡例・◈ETFの前置き・⚙自動化の凡例・📖解説のステップカード）。
    ★**たたまないもの**（v9.9.52 / fail-loud）: ⚠警告 ／ ⛔◇で名指しされた銘柄の行 ／
-     停止疑い ／ 読めなかった入力 ／「今月は城へ配らない」等の状態の通知。
+     停止疑い ／ 読めなかった入力 ／「今月は個別へ配らない」等の状態の通知。
      隠すのは*説明*だけで、**落ちた社は名指しのまま**。
    ⚠版番号は二度繰り下げた——v9.9.160 と v9.9.161 は別セッションが
-   「買付順位にETFもいれて」「網の中の重み」で先に使っていた（v9.9.118→119 と同じ作法。
+   「買付順位にETFもいれて」「ETFの中の重み」で先に使っていた（v9.9.118→119 と同じ作法。
    番号は衝突したが、変更どうしは独立）。
    ★たたむ先は数えてから決める——「折り畳みの外・スクロール枠の外」の字だけを実測すると
      📖解説 9,052 / ✎採点機 5,976 / 🧭実行手順 3,701。素朴に数えるとⅡが最大に見えるが、
@@ -729,7 +729,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
      ⚠ グラフは外部ライブラリを使わない素のSVG（CSPで外部スクリプトは読めない・二重実装も作らない）。 -->
 <div id="pg12" class="pg">
  <h1 class="serif">📈 成績</h1>
- <div class="intro"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>同じ円を同じ日に S&amp;P500 へ入れていたら</b>——を毎日引き直したグラフ。<b>すべて円建て</b>で、指数も円へ直してある。<b>表示専用で判定には使わない</b>——売りは S1/S2/S3・買いは四関門のみで動く。計算は端末の <code>night/fetch_returns.py</code> が持ち、門は <code>out/returns.json</code> と <code>out/returns_series.json</code> を描くだけ（v9.9.65）。<b>毎営業日 market.yml が更新する</b>ので、開けば最新になっている。⚠ 買付日が<b>想定</b>の行があるうちは、この線そのものが置いた前提の上にある——窓のどこを取るかで差がどれだけ動くかは下の表に出してある。⚠ <b>網(ETF)も 2026-08-23 から保有に入っている</b>（v9.9.169・ユーザー指示「保有に入れてほしい」）。ただし<b>取得額が測れない行はこの合計に入らない</b>——入っている本と入っていない本は下の合計の行と ℹ の行が<b>名指しで</b>出す。「入っていない」と「ゼロ」を取り違えないよう、欠けている重み(%)まで書いてある。</div></details></div>
+ <div class="intro"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>同じ円を同じ日に S&amp;P500 へ入れていたら</b>——を毎日引き直したグラフ。<b>すべて円建て</b>で、指数も円へ直してある。<b>表示専用で判定には使わない</b>——売りは S1/S2/S3・買いは四関門のみで動く。計算は端末の <code>night/fetch_returns.py</code> が持ち、門は <code>out/returns.json</code> と <code>out/returns_series.json</code> を描くだけ（v9.9.65）。<b>毎営業日 market.yml が更新する</b>ので、開けば最新になっている。⚠ 買付日が<b>想定</b>の行があるうちは、この線そのものが置いた前提の上にある——窓のどこを取るかで差がどれだけ動くかは下の表に出してある。⚠ <b>ETFも 2026-08-23 から保有に入っている</b>（v9.9.169・ユーザー指示「保有に入れてほしい」）。ただし<b>取得額が測れない行はこの合計に入らない</b>——入っている本と入っていない本は下の合計の行と ℹ の行が<b>名指しで</b>出す。「入っていない」と「ゼロ」を取り違えないよう、欠けている重み(%)まで書いてある。</div></details></div>
  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
    <button onclick="ccfPerf()" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
  </div>
@@ -900,7 +900,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
   <div class="rows">
    <div class="row"><div class="ic">検</div><div class="tx"><b>検証（バックテスト）</b>20年前に当てて、勝者を捉え罠を避けられたかを確認。過剰最適化を避ける。例：Cisco/Intelを未来門で弾き、Mastercardを捉えられたか。</div></div>
    <div class="row"><div class="ic">規</div><div class="tx"><b>売却の規律</b>株価下落では売らない。売るのは質が崩れた時だけ（下のS1/S2/S3）。</div></div>
-   <div class="row"><div class="ic">城</div><div class="tx"><b>城と網</b>確信は個別株（城）で厚く、可能性は指数（網）で広く拾う。網は自動入替で20年に耐える。</div></div>
+   <div class="row"><div class="ic">個別</div><div class="tx"><b>個別とETF</b>確信は個別株で厚く、可能性は指数で広く拾う。ETFは自動入替で20年に耐える。</div></div>
   </div>
   <div class="fm small" style="margin-top:16px;">
    <span class="lbl">売却規律（正本＝S1/S2/S3・採点機が出口判定を自動表示）</span>
@@ -913,16 +913,16 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <div class="block" style="padding-top:10px;">
  <div class="tag">Gate I · C — Allocation &amp; Review</div>
  <div class="h2">配分と再評価</div>
- <div class="panel"><details class="why" data-fold="3"><summary><div class="panel-h"><h3>配分</h3><span class="pass">網80% / 城20%（2026-09-22 ユーザー明示指示「ケリーいらない」）</span></div></summary><div class="why-body">
+ <div class="panel"><details class="why" data-fold="3"><summary><div class="panel-h"><h3>配分</h3><span class="pass">ETF80% / 個別20%（2026-09-22 ユーザー明示指示「ケリーいらない」）</span></div></summary><div class="why-body">
   <table class="dt">
    <thead><tr><th>層</th><th>中身</th><th>比率</th><th>役割</th></tr></thead>
    <tbody>
-    <tr><td class="k">網（土台）</td><td>指数ETF（<b>QQQM・XLK・SMH</b>＋保有継続の GRID・ITA・NASA）</td><td><b>80%</b></td><td><b>網の中の重みは <code>portfolio.json</code> の <code>target.ami_weights</code></b>（2026-09-22 ユーザー決定: <b>QQQM40 / XLK30 / SMH10</b>・GRID/ITA/NASA は0%）。0%＝<b>新規資金を回さないだけ</b>で、名前と保有は残す（売らない）。0%は「測って0」であって「未指定」ではない。自動入替で20年に耐える複利の土台。毎月の積立は無条件で即買い。<b>今月いくらをどの本へ回すかは 🛒買付順位の <span style="color:var(--gold-bright)">📋 今月の注文書</span>に城と一枚で出る</b>——城とまったく同じ「目標−保有」の不足按分＝<u>売却でなく新規資金だけで寄せる</u>。⚠<b>門の裁きではない</b>——投下可の枠には入れず、Ω・四関門・堀の関門70・売却規律S1/S2/S3・城の按分はいずれも不変。</td></tr>
-    <tr><td class="k">城（上乗せ）</td><td>四関門（Ω75+ ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件 ∧ 事業の収縮なし（売上縮小∧営業利益率低下でない））を通った個別</td><td><b>20%</b></td><td><b style="color:#6fa8c9">2026-09-18 ユーザー明示指示で 50%→20%</b>（網を80%へ上げた帰結）。<u>Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3・席の選定・Tierの刻みはいずれも不変</u>で、動くのは金額の配り方だけ。目標ウェイト＝<b>城の按分枠 × 時価総額Tier（5段 8:6:4:3:2 を正規化）</b>。<b>1銘柄の上限は無し</b>（v9.9.188・2026-09-22 ユーザー明示指示「ケリーいらない」で ¼ケリー上限8%を撤廃）。城の割合は <code>target.shiro_castle_pct</code> から読む（書き写さない）。年次で再採点し、出口はS1/S2/S3の規律で。</td></tr>
+    <tr><td class="k">ETF（土台）</td><td>指数ETF（<b>QQQM・XLK・SMH</b>＋保有継続の GRID・ITA・NASA）</td><td><b>80%</b></td><td><b>ETFの中の重みは <code>portfolio.json</code> の <code>target.ami_weights</code></b>（2026-09-22 ユーザー決定: <b>QQQM40 / XLK30 / SMH10</b>・GRID/ITA/NASA は0%）。0%＝<b>新規資金を回さないだけ</b>で、名前と保有は残す（売らない）。0%は「測って0」であって「未指定」ではない。自動入替で20年に耐える複利の土台。毎月の積立は無条件で即買い。<b>今月いくらをどの本へ回すかは 🛒買付順位の <span style="color:var(--gold-bright)">📋 今月の注文書</span>に個別と一枚で出る</b>——個別とまったく同じ「目標−保有」の不足按分＝<u>売却でなく新規資金だけで寄せる</u>。⚠<b>門の裁きではない</b>——投下可の枠には入れず、Ω・四関門・堀の関門70・売却規律S1/S2/S3・個別の按分はいずれも不変。</td></tr>
+    <tr><td class="k">個別（上乗せ）</td><td>四関門（Ω75+ ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件 ∧ 事業の収縮なし（売上縮小∧営業利益率低下でない））を通った個別</td><td><b>20%</b></td><td><b style="color:#6fa8c9">2026-09-18 ユーザー明示指示で 50%→20%</b>（ETFを80%へ上げた帰結）。<u>Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3・席の選定・Tierの刻みはいずれも不変</u>で、動くのは金額の配り方だけ。目標ウェイト＝<b>個別の按分枠 × 時価総額Tier（5段 8:6:4:3:2 を正規化）</b>。<b>1銘柄の上限は無し</b>（v9.9.188・2026-09-22 ユーザー明示指示「ケリーいらない」で ¼ケリー上限8%を撤廃）。個別の割合は <code>target.shiro_castle_pct</code> から読む（書き写さない）。年次で再採点し、出口はS1/S2/S3の規律で。</td></tr>
    </tbody>
   </table>
   <div class="fm small" style="margin-top:14px;text-align:left;"><details class="why" data-fold="2"><summary><span class="lbl">目標とのずれ</span></summary><div class="why-body">
-   目標とのずれは門が毎回 測り直して 🏦保有・🛒買付順位に出す（ここに写真は置かない）。リバランスは売却でなく<b>新規資金の配分</b>で行う規約なので、城が目標を超えている間は新規資金が網だけへ回り、売りは発生しない（DCAの原則＝売却・課税なし・不足側に厚く）。
+   目標とのずれは門が毎回 測り直して 🏦保有・🛒買付順位に出す（ここに写真は置かない）。リバランスは売却でなく<b>新規資金の配分</b>で行う規約なので、個別が目標を超えている間は新規資金がETFだけへ回り、売りは発生しない（DCAの原則＝売却・課税なし・不足側に厚く）。
   </div></details></div>
  </div></details></div>
 </div>
@@ -938,7 +938,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
     <tr><td class="k">四半期ごと</td><td>1・4・7・10月の下旬<br>（米決算直後）</td><td><b>足切りチェックのみ</b>：ROIIC&lt;資本コスト／堀の明確な減衰／FCF転換&lt;65%。1銘柄5分。早期警報（FICOの1四半期−9%型を捕捉）</td><td>軽い</td></tr>
     <tr><td class="k">1年ごと</td><td>毎年7月<br>（根本の当て直し）</td><td><b>未来門の全面再採点</b>：5観点を採点し直す（門の「台帳を全再採点」ボタンでロジック更新も反映）。堅実ティア72割れ・投下閾値75割れの推移を確認、新規は75+で候補入り。成長連動の価格ゲートも当て直す。<b>売却はS1/S2/S3の規律に従う</b>（スコア割れ自体は売却条件ではない）</td><td>中</td></tr>
     <tr><td class="k">2年ごと</td><td>年次再採点の2週後</td><td><b>新規候補の発掘</b>：市場全体（S&amp;P500＋NASDAQ100）を門にかけ直す。AI革命級の構造変化があった年は臨時で実施</td><td>中</td></tr>
-    <tr><td class="k">5年ごと</td><td>7月</td><td><b>門の大改修</b>：閾値（ティア80/72・投下閾値75）・配分（網／城）・哲学そのものを点検。制度のメンテ。<b>予約議題（次回2031-07）</b>: 城の実効銘柄数／網の中身（テック集中は「広い土台」の定義と整合するか）。総合15%目標の成否は門2の精度でなくこれらが決める</td><td>重い</td></tr>
+    <tr><td class="k">5年ごと</td><td>7月</td><td><b>門の大改修</b>：閾値（ティア80/72・投下閾値75）・配分（ETF／個別）・哲学そのものを点検。制度のメンテ。<b>予約議題（次回2031-07）</b>: 個別の実効銘柄数／ETFの中身（テック集中は「広い土台」の定義と整合するか）。総合15%目標の成否は門2の精度でなくこれらが決める</td><td>重い</td></tr>
    </tbody>
   </table>
   <div class="fm small" style="margin-top:14px;text-align:left;">
@@ -1029,7 +1029,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
    ②<b>ROIC持続の保証はない</b>——高ROIC上位五分位が9年後も残る確率は41%(Mauboussin)。通過銘柄も約6割は平均回帰する。<br>
    ③<b>成長予測は原理的に不能</b>——利益成長の持続性はコイン投げと同確率(Chan-Karceski-Lakonishok)。未来門Fの成長要素は本質的に不確実。<br>
    ④<b>手入力の主観性は消えない</b>——dom/irr/rep/dur等の離散値はrubricで縮小できるが除去できず、門の精度は採点者の判断力を上限とする。Intel2015型(財務は美しく破壊が迫る)はdisrupt/moatdecayの手入力更新でしか捕捉できない。<br>
-   ⑤<b>公開情報の限界</b>——入力はすべて公開データであり、効率市場の下で超過リターンの源泉は限定的。門の真の価値は「発見」より<b>「規律」</b>——熱狂時に買わず、崩壊前に降り、質なき成長を追わない判断の一貫性——にある。<br>⑥<b>配分の算術上限</b>——総合リターンの上限を決めるのは網/城の比率と城の期待リターンで、門の精度ではない。E[r] は倍率拡大をゼロ計上し成長を20%で頭打ちにする<u>意図的に保守的な推定</u>なので、実現がこれを上回る可能性はある——それを測るのが <code>night/audit_er_realized.py</code> の予実台帳。</div></details></div>
+   ⑤<b>公開情報の限界</b>——入力はすべて公開データであり、効率市場の下で超過リターンの源泉は限定的。門の真の価値は「発見」より<b>「規律」</b>——熱狂時に買わず、崩壊前に降り、質なき成長を追わない判断の一貫性——にある。<br>⑥<b>配分の算術上限</b>——総合リターンの上限を決めるのはETF/個別の比率と個別の期待リターンで、門の精度ではない。E[r] は倍率拡大をゼロ計上し成長を20%で頭打ちにする<u>意図的に保守的な推定</u>なので、実現がこれを上回る可能性はある——それを測るのが <code>night/audit_er_realized.py</code> の予実台帳。</div></details></div>
   </div>
 
   <div class="lens" style="border-color:#587">
@@ -1042,16 +1042,16 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 
   <div class="lens" style="border-color:#779">
    <div class="lh"><span class="ln">IPS — ポートフォリオ構築と行動規律（段階1・2026-07-12制定）</span></div>
-   <div class="ld"><details class="why" data-fold="2"><summary>詳しく</summary><div class="why-body"><b>①ポジションサイジング（時価総額Tier）</b>——対象は四関門を通り、席の上位に入った社だけ。目標ウェイト: <b>時価総額Tier（T1≥1兆$:8 / T2 3千億〜1兆:6 / T3 1千億〜3千億:4 / T4 3百億〜1千億:3 / T5 &lt;3百億:2 の相対値を城の按分枠へ正規化）</b>。<b style="color:var(--gold-bright)">1銘柄の上限は無し</b>（<b>v9.9.188・2026-09-22 ユーザー明示指示「ケリーいらない」で ¼ケリー上限8% を撤廃</b>。戻すなら <code>const CAP=8</code>）。<b>席の順＝合成点順</b>。時価総額は <code>px×(ni÷eps)</code> で作り、日本株はドル円で揃える（パックの <code>mcap</code> 欄は使わない）。<u>一社でも時価総額が測れなければ等ウェイトへ倒す</u>——部分集合だけ傾けると「測れた社だけが重くなる」＝測定の穴が配分に化ける。<br><b>投下の四関門</b>——Ω75+は「持ってよい」の資格に過ぎない。<b>新規投下はΩ75+かつ絶対MOAT指数70+かつ点検の要修正0件かつ事業の収縮なし（売上縮小∧営業利益率低下でない）</b>を要し、さらに<b>合成点順で席に入った社（第五の枠）</b>だけが実際に買付枠に入る（四段は資格・第五の枠は席数。席から溢れた社は🔵次点＝資格は保つが買わない）。指値は<b>階段で置く</b>——資金の1/2を開通ライン・1/2をfair線（終着PER線=倍率の重力ゼロ）。倍率拡大は計上しない=掟六と両立。<b>掟六v2（2026-07-23・成長連動）</b>——門Xの終着PERは<b>min(現PER, clamp(8+g,16,30))</b>で成長に連動（McKinsey価値ドライバー準拠：成熟g4%は22倍が正当だが持続成長する高ROIC企業は28-30倍が正当）。<b>高成長はPERが高くても複利をもたらす</b>ため、成長産業と成熟産業を一律の終着PER22で測らない。ただしgは実証CAGR頭打ち・現PERを超えない（ハイプと倍率拡大は封じる）。<b>間（価格ゲート）も同思想</b>——実証成長×資本効率×堀無傷（cagr≥15・ROIC≥20・erosion none・disrupt≠threat＝<b>grower</b>）の銘柄は、一律の論外線（PER50・V0上限）を成長連動で緩める（PER論外62・V0上限は下限を68/52へ引き上げ・ROIC文脈EV上限×1.3）。<u>V0上限は固定値ではなく質連動</u>——<code>perCeil=clamp(質×0.75, 55, 70)</code>・<code>evCeil=clamp(質×0.56, 40, 52)</code>（v9.2最終で固定60/45から動的へ。質88→PER上限66／質80→60／質73以下→55）。これでΩ75+×門X✓を通過する高成長株（IRMD型）が一律キャップだけで押し目待ちに落ちるのを是正。<b>格＝評価スコアには一切触れず、間（act）のみ</b>。緩和はgrower4条件を全て満たす銘柄に限定し、安全弁（V0）は残す。<br>
+   <div class="ld"><details class="why" data-fold="2"><summary>詳しく</summary><div class="why-body"><b>①ポジションサイジング（時価総額Tier）</b>——対象は四関門を通り、席の上位に入った社だけ。目標ウェイト: <b>時価総額Tier（T1≥1兆$:8 / T2 3千億〜1兆:6 / T3 1千億〜3千億:4 / T4 3百億〜1千億:3 / T5 &lt;3百億:2 の相対値を個別の按分枠へ正規化）</b>。<b style="color:var(--gold-bright)">1銘柄の上限は無し</b>（<b>v9.9.188・2026-09-22 ユーザー明示指示「ケリーいらない」で ¼ケリー上限8% を撤廃</b>。戻すなら <code>const CAP=8</code>）。<b>席の順＝合成点順</b>。時価総額は <code>px×(ni÷eps)</code> で作り、日本株はドル円で揃える（パックの <code>mcap</code> 欄は使わない）。<u>一社でも時価総額が測れなければ等ウェイトへ倒す</u>——部分集合だけ傾けると「測れた社だけが重くなる」＝測定の穴が配分に化ける。<br><b>投下の四関門</b>——Ω75+は「持ってよい」の資格に過ぎない。<b>新規投下はΩ75+かつ絶対MOAT指数70+かつ点検の要修正0件かつ事業の収縮なし（売上縮小∧営業利益率低下でない）</b>を要し、さらに<b>合成点順で席に入った社（第五の枠）</b>だけが実際に買付枠に入る（四段は資格・第五の枠は席数。席から溢れた社は🔵次点＝資格は保つが買わない）。指値は<b>階段で置く</b>——資金の1/2を開通ライン・1/2をfair線（終着PER線=倍率の重力ゼロ）。倍率拡大は計上しない=掟六と両立。<b>掟六v2（2026-07-23・成長連動）</b>——門Xの終着PERは<b>min(現PER, clamp(8+g,16,30))</b>で成長に連動（McKinsey価値ドライバー準拠：成熟g4%は22倍が正当だが持続成長する高ROIC企業は28-30倍が正当）。<b>高成長はPERが高くても複利をもたらす</b>ため、成長産業と成熟産業を一律の終着PER22で測らない。ただしgは実証CAGR頭打ち・現PERを超えない（ハイプと倍率拡大は封じる）。<b>間（価格ゲート）も同思想</b>——実証成長×資本効率×堀無傷（cagr≥15・ROIC≥20・erosion none・disrupt≠threat＝<b>grower</b>）の銘柄は、一律の論外線（PER50・V0上限）を成長連動で緩める（PER論外62・V0上限は下限を68/52へ引き上げ・ROIC文脈EV上限×1.3）。<u>V0上限は固定値ではなく質連動</u>——<code>perCeil=clamp(質×0.75, 55, 70)</code>・<code>evCeil=clamp(質×0.56, 40, 52)</code>（v9.2最終で固定60/45から動的へ。質88→PER上限66／質80→60／質73以下→55）。これでΩ75+×門X✓を通過する高成長株（IRMD型）が一律キャップだけで押し目待ちに落ちるのを是正。<b>格＝評価スコアには一切触れず、間（act）のみ</b>。緩和はgrower4条件を全て満たす銘柄に限定し、安全弁（V0）は残す。<br>
    <b>①-b 器（口座）の選択——非課税枠は「配分」と同じ重さの決断</b>——
    同じ期待リターンでも、非課税なら税（20.315%）のぶん終価が増える——<u>E[r] は推定だが、税率は確定している</u>。<br>
-   <b>新NISA（2024〜）の枠と、門の網／城の対応</b>——つみたて投資枠 年120万＋成長投資枠 年240万＝
+   <b>新NISA（2024〜）の枠と、門のETF／個別の対応</b>——つみたて投資枠 年120万＋成長投資枠 年240万＝
    <b>年360万</b>、生涯非課税保有限度額 <b>1,800万</b>（うち成長投資枠は<b>1,200万</b>まで・簿価残高方式で
    売却分は翌年に復活・非課税期間は無期限）。ここで効く構造の制約は
    <b>個別株は成長投資枠にしか入らない</b>（つみたて枠は金融庁指定の投信・ETFのみ）ということ。
-   門の目標配分（比率の正本は <code>portfolio.json</code> の <code>target</code>）を生涯枠に当てると、城は成長投資枠に収まるが、<u>米国上場ETF（QQQM/XLK/SMH）はつみたて枠の対象外</u>なので、網は成長投資枠の残りまでしかNISAに入らない。差は「つみたて枠対象の投信で埋める」か「課税口座で持つ」かの選択になる（<b>門の外＝DCA側の決断</b>・ここでは決めない）。<b style="color:#c4693f">★つみたて枠でも NASDAQ100 は持てる</b>——金融庁「つみたて投資枠対象商品届出一覧」（2026-09-18版）の<u>「指定インデックス投資信託以外」</u>に <b>iFreeNEXT NASDAQ100インデックス</b>（税込0.495%）がある（一覧は3枚に分かれているので枠をまたいで数えること）。同じ指数の最安クラスより年0.2〜0.4pt重いが、20年積立の試算では課税口座の QQQM（税引後）より手取りで勝つ（1.11〜1.14倍）。一次資料は <code>out/tsumitate_lineup.json</code>。<br>
-   <b>枠が足りないときは城を先に入れる</b>——期待リターンが高い資産ほど非課税の価値が大きいので、
-   希少な枠は城へ回すのが算術の答え。<u>ただし逆向きの力が2つあり、どちらも門の思想と直結する</u>——
+   門の目標配分（比率の正本は <code>portfolio.json</code> の <code>target</code>）を生涯枠に当てると、個別は成長投資枠に収まるが、<u>米国上場ETF（QQQM/XLK/SMH）はつみたて枠の対象外</u>なので、ETFは成長投資枠の残りまでしかNISAに入らない。差は「つみたて枠対象の投信で埋める」か「課税口座で持つ」かの選択になる（<b>門の外＝DCA側の決断</b>・ここでは決めない）。<b style="color:#c4693f">★つみたて枠でも NASDAQ100 は持てる</b>——金融庁「つみたて投資枠対象商品届出一覧」（2026-09-18版）の<u>「指定インデックス投資信託以外」</u>に <b>iFreeNEXT NASDAQ100インデックス</b>（税込0.495%）がある（一覧は3枚に分かれているので枠をまたいで数えること）。同じ指数の最安クラスより年0.2〜0.4pt重いが、20年積立の試算では課税口座の QQQM（税引後）より手取りで勝つ（1.11〜1.14倍）。一次資料は <code>out/tsumitate_lineup.json</code>。<br>
+   <b>枠が足りないときは個別を先に入れる</b>——期待リターンが高い資産ほど非課税の価値が大きいので、
+   希少な枠は個別へ回すのが算術の答え。<u>ただし逆向きの力が2つあり、どちらも門の思想と直結する</u>——
    (i)<b>NISAは損益通算・繰越控除ができない</b>。歴史検証の実測では<b>通過群の6%が恒久毀損（CAGR≤−15%）</b>（⚠率は退場した社が母集団に居ない状態で測った<b>下限の側</b>。退場社を原本で戻すと2013年の質実証プールで4.2〜19.2%の幅がある——2026-09-23 に退場日の誤り〔社債の登録抹消を普通株の退場と数えていた〕を是正した後の値。是正前は2.0〜25.7%）で、
    その社がNISAに居ると損失を他の利益と相殺できない。ただし恒久毀損6%を織り込んで実測しても
    <b>NISAが23.9%有利で結論は変わらない</b>（毀損は非課税の価値を削るが、逆転はさせない）。
@@ -1102,10 +1102,10 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
  <div class="tag">Synthesis</div>
  <div class="h2">最終判定 — 四象限</div>
  <div class="quad">
-  <div class="q win"><div class="cond">Ω 75+ × 絶対MOAT指数 70+ × 点検 要修正0 × 事業の収縮なし ＋ 合成点順で席に入る（第五の枠）</div><div class="v">投下可</div><div class="d">質も値段も揃った。サイズは<b>時価総額Tier（5段 8:6:4:3:2 を城の按分枠へ正規化）・上限なし</b>（合成点按分→等ウェイト→時価総額Tier。2026-08-14 ユーザー明示指示／<b>上限8%は v9.9.188 で撤廃</b>）。</div></div>
+  <div class="q win"><div class="cond">Ω 75+ × 絶対MOAT指数 70+ × 点検 要修正0 × 事業の収縮なし ＋ 合成点順で席に入る（第五の枠）</div><div class="v">投下可</div><div class="d">質も値段も揃った。サイズは<b>時価総額Tier（5段 8:6:4:3:2 を個別の按分枠へ正規化）・上限なし</b>（合成点按分→等ウェイト→時価総額Tier。2026-08-14 ユーザー明示指示／<b>上限8%は v9.9.188 で撤廃</b>）。</div></div>
   <div class="q"><div class="cond">Ω 75+ × 門X 未達</div><div class="v">押し目待ち</div><div class="d">良い会社を高値で掴まない。指値は階段＝1/2を開通ライン・1/2をfair線（例：ASML PER54型）。</div></div>
   <div class="q"><div class="cond">Ω 72–75（堅実）</div><div class="v">監視枠</div><div class="d">保有しない。75超えで昇格。安くても投下しない＝Cisco/Intel型の罠を避ける。</div></div>
-  <div class="q"><div class="cond">Ω 72未満 ∨ キル</div><div class="v">回避</div><div class="d">伸びる力が乏しい・壊れうる。問答無用で見送り。網へ。</div></div>
+  <div class="q"><div class="cond">Ω 72未満 ∨ キル</div><div class="v">回避</div><div class="d">伸びる力が乏しい・壊れうる。問答無用で見送り。ETFへ。</div></div>
  </div>
  <div class="statement"><span class="lbl">最終判定の式（新規投下の四関門・2026-08）</span>
   <div class="big">投下可 ＝ 質Ω ≥ 75　かつ　絶対MOAT指数 ≥ 70　かつ　点検の要修正 0件　かつ　事業の収縮なし（売上縮小∧営業利益率低下でない）　／　売却はS1/S2/S3のみ（株価では売らない・堀不足は買わない理由であって売る理由ではない）</div>
@@ -1190,7 +1190,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
   <!-- ===== EVALUATION INPUTS (price-free) ===== -->
   <div class="block">
     <div class="bh"><span class="ix serif">断</span><span class="bt">足切り</span><span class="bn">罠を機械が弾く・最優先</span></div>
-    <div class="row"><div class="rl">リスクフリー金利<span class="h">米10年債。日本株も米ドル建て機会費用で統一（網がXLK/QQQMのため）</span></div><div class="rc"><input type="number" id="rfr" step="0.1" value="5.01"><span class="u">%</span></div></div>
+    <div class="row"><div class="rl">リスクフリー金利<span class="h">米10年債。日本株も米ドル建て機会費用で統一（ETFがXLK/QQQMのため）</span></div><div class="rc"><input type="number" id="rfr" step="0.1" value="5.01"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">株式リスクプレミアム<span class="h">Damodaran implied ERPの最新月次値。既定4.45（2026-07）——依頼文の指示値と同一（手入力とJSON取込でWACCが割れないよう統一）</span></div><div class="rc"><input type="number" id="erp" step="0.1" value="4.45"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">β（5年）<span class="h">WACC = RFR + clamp(β, 0.8〜1.8) × ERP。低β優良株のWACC過小推定を防ぐ下限クリップ（上限1.8は監査⑫）</span></div><div class="rc"><input type="number" id="beta" step="0.01" value="1.00"></div></div>
     <div class="row"><div class="rl">営業ROIC（のれん除外）<span class="h">過剰現金を除く投下資本ベース。事業の質を測る</span></div><div class="rc"><input type="number" id="roic" step="0.1" value="25"><span class="u">%</span></div></div>
@@ -1399,7 +1399,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 
 <div id="pg7" class="pg">
 <div class="wrap" style="padding-top:14px">
- <div style="font-size:12.5px;color:var(--muted);margin:0 0 8px"><a href="portfolio.html" target="_blank" style="float:right;font-size:12px;margin-left:10px;color:var(--gold-bright)">新しいタブで開く ↗</a><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body">全保有を一枚で。株数・単価を入れると評価額を自動計算し、この端末に保存（門と同じ保存方式）。行頭の色丸は出口判定（S1/S2/S3/ホールド/採点待ち）。網／城のリバランスは<b>🛒買付順位の「📋 今月の注文書」</b>が正本（保有データから網/城ウェイトを計算して渡している）。「⭳ 門の保有から取込」で台帳の保有を城として取り込み、「🏛 門の台帳へ登録」で逆方向。</div></details></div> <iframe id="pfFrame" src="portfolio.html?v=20260923-5" scrolling="no" allow="clipboard-write" style="width:100%;height:1600px;border:0;background:transparent;display:block;overflow:hidden"></iframe>
+ <div style="font-size:12.5px;color:var(--muted);margin:0 0 8px"><a href="portfolio.html" target="_blank" style="float:right;font-size:12px;margin-left:10px;color:var(--gold-bright)">新しいタブで開く ↗</a><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body">全保有を一枚で。株数・単価を入れると評価額を自動計算し、この端末に保存（門と同じ保存方式）。行頭の色丸は出口判定（S1/S2/S3/ホールド/採点待ち）。ETF／個別のリバランスは<b>🛒買付順位の「📋 今月の注文書」</b>が正本（保有データからETF/個別ウェイトを計算して渡している）。「⭳ 門の保有から取込」で台帳の保有を個別として取り込み、「🏛 門の台帳へ登録」で逆方向。</div></details></div> <iframe id="pfFrame" src="portfolio.html?v=20260923-5" scrolling="no" allow="clipboard-write" style="width:100%;height:1600px;border:0;background:transparent;display:block;overflow:hidden"></iframe>
 </div>
 </div>
 <div id="pg8" class="pg">
@@ -1535,7 +1535,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 
 <footer><div class="wrap">
  <div class="fb">CCF Ω Final Gate · Complete Edition</div>
- <p class="disc">Ω＝幾何平均(質Q .35・持続 .30・未来F .22・堀 .13)。第一の門〈質Q〉＝過去P(53.3%)・現在(46.7%)の加重幾何平均（FをQから外した——Fは直接項にも居て二重計上だったため。P:nowの比40:35はそのまま再正規化）。ティア＝最上位80／堅実72、投下閾値75。WACC=RFR+clamp(β,0.8〜1.8)×ERP（既定5.01%+β×4.45%〔RFR 2026-09・ERP 2026-07〕）。現在門の核心はROIC−WACCスプレッド(+10pt以上)。第二の門＝未来門F(11要素v9.2の加重幾何平均・総合の一項)。新規投下は四関門＝Ω75+ ∧ 絶対MOAT指数70+ ∧ 全件点検の要修正0件 ∧ 事業の収縮なし（売上縮小∧営業利益率低下でない）(納品前に validate_packs.py でFAILゼロ)。価格の論外線はPER50・EV/EBIT35（growerはPER62・成長連動・高値づかみ防止のみ／PERは選別に使わない）。g=再投資率b×ROIIC、妥当価格≈来期FCF/(WACC−g)。再評価は四半期(足切り)・年次(全面再採点)・2年(新規発掘)・5年(門の改修)の四層。売却はS1/S2/S3＝質の崩れのみ(株価では売らない)。配分は網(指数)＋城(個別・四関門通過のみ)で、比率の正本は <code>portfolio.json</code> の <code>target</code>。本書は個人の投資基準の整理であり投資助言ではない。スコア・数式は枠組みであり将来を保証しない。</p>
+ <p class="disc">Ω＝幾何平均(質Q .35・持続 .30・未来F .22・堀 .13)。第一の門〈質Q〉＝過去P(53.3%)・現在(46.7%)の加重幾何平均（FをQから外した——Fは直接項にも居て二重計上だったため。P:nowの比40:35はそのまま再正規化）。ティア＝最上位80／堅実72、投下閾値75。WACC=RFR+clamp(β,0.8〜1.8)×ERP（既定5.01%+β×4.45%〔RFR 2026-09・ERP 2026-07〕）。現在門の核心はROIC−WACCスプレッド(+10pt以上)。第二の門＝未来門F(11要素v9.2の加重幾何平均・総合の一項)。新規投下は四関門＝Ω75+ ∧ 絶対MOAT指数70+ ∧ 全件点検の要修正0件 ∧ 事業の収縮なし（売上縮小∧営業利益率低下でない）(納品前に validate_packs.py でFAILゼロ)。価格の論外線はPER50・EV/EBIT35（growerはPER62・成長連動・高値づかみ防止のみ／PERは選別に使わない）。g=再投資率b×ROIIC、妥当価格≈来期FCF/(WACC−g)。再評価は四半期(足切り)・年次(全面再採点)・2年(新規発掘)・5年(門の改修)の四層。売却はS1/S2/S3＝質の崩れのみ(株価では売らない)。配分はETF(指数)＋個別(個別・四関門通過のみ)で、比率の正本は <code>portfolio.json</code> の <code>target</code>。本書は個人の投資基準の整理であり投資助言ではない。スコア・数式は枠組みであり将来を保証しない。</p>
 </div></footer>
 
 <script>
@@ -2195,7 +2195,7 @@ function compute(){
     if(n('nde')<-0.5)sc+=4;
     return Math.max(30,Math.min(100,sc));
   })();
-  // F11 成長率 (目標は二層: 構造保証10-12%/上振れ13-16%——2026-07精査で20%は算術不能と確定。v9.9.68で城60%へ改定したが実効天井はウェイト規約45%): 実績cagrと実力gcapの低い方で構造的成長力を採点
+  // F11 成長率 (目標は二層: 構造保証10-12%/上振れ13-16%——2026-07精査で20%は算術不能と確定。v9.9.68で個別60%へ改定したが実効天井はウェイト規約45%): 実績cagrと実力gcapの低い方で構造的成長力を採点
   //   一時的な楽観を排除するため両者の小さい方を使用。15-20%で高得点
   //   v9.2完成版: 買収依存成長にペナルティ(オーガニック成長重視。REQ研究のprogrammatic優位はF10で別途評価)
   const F11=(()=>{
@@ -3251,9 +3251,9 @@ function ccfParseYen(s){                                    // 「17万」「17.
   if(m)return Math.round(parseFloat(m[1]));
   return 0;                                                  // 読めない入力は「未入力」と同じ＝%表示へ戻す（勝手に推測しない）
 }
-// ── 網(ETF)の行を作る（v9.9.160・2026-08-20 ユーザー指示「買付順位にETFもいれて」）───────
-// ★**判定には一切使わない**。Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3・城の按分は
-//   いずれも不変で、ここが出すのは「今月いくら網へ回すか」だけ。**網の選定と比率は門の外（DCA側）**。
+// ── ETFの行を作る（v9.9.160・2026-08-20 ユーザー指示「買付順位にETFもいれて」）───────
+// ★**判定には一切使わない**。Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3・個別の按分は
+//   いずれも不変で、ここが出すのは「今月いくらETFへ回すか」だけ。**ETFの選定と比率は門の外（DCA側）**。
 // ★**v9.9.53 の撤去を、ユーザーの明示指示で戻す**——当時は「門は個別銘柄のための門。指数を何円積むかは
 //   門の裁きではない」として箱から外した。その理屈は今も正しいが、**買う場所が二つに割れていた**
 //   （個別はここ・ETFは別のどこか）ので、**実務としては一枚で見たい**というのが今回の指示。
@@ -3261,12 +3261,12 @@ function ccfParseYen(s){                                    // 「17万」「17.
 // ★配管は out/dashboard.json と同じ「**CIで計算してJSONで配り、門は描くだけ**」——
 //   ami判定と経費率は `out/net_plan.json`（night/net_plan.py が ami.html の規約をそのまま当てたもの）、
 //   目標の5本と保有%は `portfolio.json`。**門の中で ami の規約を書き直さない**（v9.9.65の掟）。
-/* ── 網(ETF)を「買ったら記録」する（v9.9.168・2026-08-22 ユーザー指示
+/* ── ETFを「買ったら記録」する（v9.9.168・2026-08-22 ユーザー指示
      「買付順位のタブのETFに個別株と同じ+株を追加して保有に入れれるようにして」）─────────
-   ★何が欠けていたか: 網の保有%は `portfolio.json` の**静的スナップショット**なので、
+   ★何が欠けていたか: ETFの保有%は `portfolio.json` の**静的スナップショット**なので、
      買っても人が JSON を書き換えるまで動かない＝**買った直後も同じ本へ同じ円を勧め続ける**。
-     v9.9.30 が城で直したのと**同じ欠陥**（「手入力d.posは記帳凍結で陳腐化し、買付後も
-     同銘柄へ不足按分が続く」）が、網の側にだけ残っていた。
+     v9.9.30 が個別で直したのと**同じ欠陥**（「手入力d.posは記帳凍結で陳腐化し、買付後も
+     同銘柄へ不足按分が続く」）が、ETFの側にだけ残っていた。
    ★**なぜ pf:portfolio へ書かないのか**: 🏦保有は読み込み時に `sleeve:'net'` の行を**削除する**
      （2026-08-03 ユーザー明示指示「ページを個別銘柄だけに」）ので、そこへ書くと次に開いた瞬間に消える。
      だから別のキー `pf:net` を持つ。**読み手はこの門だけ**なので、Ⅶのように
@@ -3278,7 +3278,7 @@ function ccfParseYen(s){                                    // 「17万」「17.
    ★**スナップショットが新しくなったら overlay は捨てる**——`portfolio.json` の asof が
      overlay の base より新しければ、その買付は既にスナップショットへ入っている公算が高い。
      **黙って二重に数えない**（v9.9.131 の decide() と同じ「新しいほうを採る」）。捨てたことは画面に出す。
-   ★**判定には一切効かない**——Ω・四関門・堀の関門70・売却規律S1/S2/S3・城の按分・網の中の重み・
+   ★**判定には一切効かない**——Ω・四関門・堀の関門70・売却規律S1/S2/S3・個別の按分・ETFの中の重み・
      ami の判定はいずれも不変。動くのは「今月いくらをどの本へ配るか」だけ（DCA＝不足側に厚く）。
    ★`pf:net` は state.js の EXACT に入れてある＝**人の決定**なので dirty が立ち、
      state.json の書き出しを促す帯が出る（自動で守られるのではなく、書き出し忘れが見える）。
@@ -3286,11 +3286,11 @@ function ccfParseYen(s){                                    // 「17万」「17.
      ——overlay はブラウザ側の記録で、repo の正本は portfolio.json（人が書く）。 */
 function ccfNetOv(){ try{const o=JSON.parse(localStorage.getItem('pf:net')||'null');
   return (o&&o.add&&typeof o.add==='object')?o:null;}catch(e){return null;} }
-/* ★保有%の**単一実装**（v9.9.65）——◈網の節・📋今月の注文書・城/網の振り分け(__ccfSleeveNow)が
+/* ★保有%の**単一実装**（v9.9.65）——◈ETFの節・📋今月の注文書・個別/ETFの振り分け(__ccfSleeveNow)が
    これ一つを読む。二箇所で足すと「同じ台帳を見る二つが違うことを言う」。
    overlay は¥へ足し、**総資産も同じだけ増える**（新規資金で買ったので当然）＝他の行の%はそのぶん薄まる。
    基準は一つ（portfolio.json の¥ ＋ 記録した時点の¥）で、既存の行の評価は一切いじらない。 */
-/* ★台帳(pf:portfolio)を円で読む（v9.9.169）。**城も網も同じ一つの台帳**から採る。
+/* ★台帳(pf:portfolio)を円で読む（v9.9.169）。**個別もETFも同じ一つの台帳**から採る。
    評価は 🏦保有の posValue と同じ式（株数×(現値||買付単価)×ドル円）。
    ⚠**株数があるのに値段が無い行が一つでもあれば、地図ごと諦める**（ok:false）——
      その行だけ0円で数えると、その本が「持っていない」ことになり
@@ -3313,7 +3313,7 @@ function ccfLedgerMap(){
       if(!(v>0)&&sh>0){ why=t+' は株数があるのに値段が無い（🏦保有で単価を）'; break; }
     }
     if(!(v>0))continue;
-    // 袖の名は台帳が castle/net、portfolio.json が 城/網。**ここで一つに揃える**
+    // 袖の名は台帳が castle/net、portfolio.json が 個別/ETF。**ここで一つに揃える**
     const sl=(p.sleeve==='net')?'網':(p.sleeve==='castle')?'城':'';
     const e=byT[t]||(byT[t]={v:0,sleeve:sl});
     e.v+=v; if(!e.sleeve)e.sleeve=sl;
@@ -3322,10 +3322,10 @@ function ccfLedgerMap(){
   if(!Object.keys(byT).length)return {ok:false,why:'台帳に円で評価できる保有が無い'};
   return {ok:true,byT,asof:o.asof||''};
 }
-/* 保有%の**単一実装**（v9.9.65）——◈網の節・📋今月の注文書・城/網の振り分け(__ccfSleeveNow)・
-   城の pos%(livePos) が**これ一つ**を読む。二箇所で足すと「同じ台帳を見る二つが違うことを言う」。
+/* 保有%の**単一実装**（v9.9.65）——◈ETFの節・📋今月の注文書・個別/ETFの振り分け(__ccfSleeveNow)・
+   個別の pos%(livePos) が**これ一つ**を読む。二箇所で足すと「同じ台帳を見る二つが違うことを言う」。
    ★出所は ① 台帳(pf:portfolio) ② 読めなければ portfolio.json のスナップショット、の順。
-     台帳を第一にするのは v9.9.30 が城で決めた作法（記帳凍結の実額より**今の実額**）。
+     台帳を第一にするのは v9.9.30 が個別で決めた作法（記帳凍結の実額より**今の実額**）。
      どちらを使ったかは src に入れて**画面に出す**——基準を黙って切り替えない。 */
 function ccfPfLive(pf){
   const o=ccfNetOv(); let add=null, dropped=null;
@@ -3354,7 +3354,7 @@ function ccfPfLive(pf){
           hasOv:!!(add&&Object.keys(add).length)};
 }
 /* ★v9.9.169 で **pf:net への書き込みは撤去**した（2026-08-23 ユーザー指示「保有に入れてほしい」）。
-   網の行の「＋株」は個別株と**同じ ccfBought**＝🏦保有(portfolio.html)の台帳へ postMessage で足す。
+   ETFの行の「＋株」は個別株と**同じ ccfBought**＝🏦保有(portfolio.html)の台帳へ postMessage で足す。
    ⚠ 読みと取消だけ残す——**既に記録した人の決定を黙って消さない**（v9.9.52）。
      旧経路の記録は下の ccfPfLive が台帳の上に重ねて数え続け、
      portfolio.json が新しくなった時点で規約どおり捨てられる（下記 dropped）。 */
@@ -3368,7 +3368,7 @@ function ccfNetUndo(t){
   ccfToast('✓ '+k+' の記録（+'+(+a.sh||0)+'株）を取り消しました', true);
   if(typeof renderPlan==='function')renderPlan();
 }
-/* 網の行の「＋株」（v9.9.168 → v9.9.169 で書き手も個別株と同じにした）。
+/* ETFの行の「＋株」（v9.9.168 → v9.9.169 で書き手も個別株と同じにした）。
    入力欄・ボタン・書き込みのすべてを個別株と共有し、**違うのは袖(sleeve)の一語だけ**（v9.9.65）。
    旧経路(pf:net)の記録が残っている行には**累計と取消**を出す——黙って消さない。 */
 function ccfNetBoughtCtl(r,qq){
@@ -3391,7 +3391,7 @@ function ccfNetBoughtCtl(r,qq){
 function ccfNetRows(np, pf){
   const tgt = ((pf&&pf.target)||{}).ami_names || [];
   const netPct = +(((pf&&pf.target)||{}).ami_net_pct) || 0;
-  const gate = (np&&np['網の門(ami.html)の規約']) || {};
+  const gate = (np&&np['ETFの門(ami.html)の規約']) || {};
   /* ★保有%は ccfPfLive（overlay 込みの単一実装）から採る。読めなければ portfolio.json の
        静的な weight_pct へ倒す（overlay 抜き＝従来の姿。埋められないものを埋めない）。 */
   const LV = ccfPfLive(pf);
@@ -3399,13 +3399,13 @@ function ccfNetRows(np, pf){
   if(LV){ for(const t in LV.byT){ const x=LV.byT[t]; if(x.sleeve!=='網')continue;
       held[t]=x.w; addSh[t]=x.addSh; addJpy[t]=x.addJpy; noPx[t]=x.noPx; } }
   else { for(const q of ((pf&&pf.positions)||[])) if(q&&q.sleeve==='網'&&q.ticker) held[String(q.ticker).toUpperCase()]=+q.weight_pct||0; }
-  // ★網の中の重み（v9.9.161・2026-08-20 ユーザー明示指示「XLK15% / SMH10% / GRID10% / ITA10% / NASA5%でやって」）
+  // ★ETFの中の重み（v9.9.161・2026-08-20 ユーザー明示指示「XLK15% / SMH10% / GRID10% / ITA10% / NASA5%でやって」）
   //   正本は `portfolio.json` の `target.ami_weights`（**総資産に対する%**）。
   //   ⚠**一本でも重みが無ければ全体を等分へ倒し、その本を名指しする**——
   //     測れた本だけ重くすると「指定の穴が配分に化ける」（ccfMcapWeights が
   //     一社でも時価総額が測れなければ等ウェイトへ倒すのとまったく同じ作法）。
   //   ⚠**合計が ami_net_pct と食い違っても黙って正規化しない**——人の決定を機械が書き換えない。
-  //     名指しで警告し、値はそのまま使う（合計が50%でなければ網の比率がその通りになる、と正直に出す）。
+  //     名指しで警告し、値はそのまま使う（合計が50%でなければETFの比率がその通りになる、と正直に出す）。
   //   ⚠**0% は「測って0」であって「未指定」ではない**（2026-09-18 ユーザー明示指示
   //     「GRID・ITA・NASA は各0%（名前は残す・売らない）」）。旧実装は `!(+W[t]>0)` で見ていたので
   //     **0 が未指定と同じ扱いになり、GRID0 を書くと全体が等分（各13.3%）へ倒れていた**
@@ -3434,34 +3434,34 @@ function ccfNetRows(np, pf){
           live:LV, pfAsof:(pf&&pf.asof)||''};
 }
 
-// ── 今月の入金総額を城/網へ振り分ける（v9.9.163・2026-08-20 ユーザー指示
-//    「城の重み50で振り分けと網の重み50%振り分けで投資の振り分けも両方ともで振り分けるようにして」）─────
+// ── 今月の入金総額を個別/ETFへ振り分ける（v9.9.163・2026-08-20 ユーザー指示
+//    「個別の重み50で振り分けとETFの重み50%振り分けで投資の振り分けも両方ともで振り分けるようにして」）─────
 // ★v9.9.167（2026-08-21 ユーザー明示指示「違う 50%ずつになるように足りないものから順番に投資する。
 //   分けなくていい。」）: **目標比で割るのをやめ、DCAの規約そのもの＝「不足している側に厚く寄せる」へ**。
-//   ——旧実装は総額を 城50 / 網50 の**目標比**で機械的に二分していた。画面はその隣に
-//   「⚠ 規約どおり（不足側に厚く）なら 城 ¥0 ／ 網 ¥170,000」と**併記していた**（隠さなかった）。
+//   ——旧実装は総額を 個別50 / ETF50 の**目標比**で機械的に二分していた。画面はその隣に
+//   「⚠ 規約どおり（不足側に厚く）なら 個別 ¥0 ／ ETF ¥170,000」と**併記していた**（隠さなかった）。
 //   ユーザーはその併記のほうを選んだ。**併記していたからこそ選べた**（v9.9.52 の作法が効いた形）。
-// ★**「足りない」は袖（城/網）の水準で測る**——`max(0, 目標% − 今の保有%)` の比で総額を配る。
+// ★**「足りない」は袖（個別/ETF）の水準で測る**——`max(0, 目標% − 今の保有%)` の比で総額を配る。
 //   ⚠**銘柄ごとの不足の合計で測るのとは別物**（MSFT が目標7.55%に対し36.9%でも、保有ゼロの
-//   10社が自分の目標ぶんの不足を持つので、銘柄で足すと城の不足はゼロにならない）。
-//   規約の文（CLAUDE.md 月次運用「網(ETF)と城(個別)へ、目標ウェイトに対し**不足している側に厚く寄せる**」）は
-//   **袖の話**なので袖で測る。袖の中の配り方は従来どおり（城=Tierの不足按分／網=ami_weightsの不足按分）
+//   10社が自分の目標ぶんの不足を持つので、銘柄で足すと個別の不足はゼロにならない）。
+//   規約の文（CLAUDE.md 月次運用「ETFと個別へ、目標ウェイトに対し**不足している側に厚く寄せる**」）は
+//   **袖の話**なので袖で測る。袖の中の配り方は従来どおり（個別=Tierの不足按分／ETF=ami_weightsの不足按分）
 //   ＝**二段のうち上の段だけを規約へ戻した。新しい定数も新しい式も導入していない**
 //   （この式は v9.9.163 が併記のために既に書いていたものをそのまま昇格させただけ）。
 // ★**超過している側には配らない**——売却ではなく新規資金でリバランスする規約なので、
-//   目標を超えている袖は「不足0」＝今月の配分先にならない。実測(2026-08-21): 城69.2% / 網30.8% →
-//   **全額が網へ**。城は目標50%を19.2pt超過しているため。
+//   目標を超えている袖は「不足0」＝今月の配分先にならない。実測(2026-08-21): 個別69.2% / ETF30.8% →
+//   **全額がETFへ**。個別は目標50%を19.2pt超過しているため。
 // ★**両方とも目標以上のときだけ目標比へ倒す**（短い側が無く、不足で比が作れないため）。
 //   保有%が読めない（portfolio.json が無い）ときも目標比へ倒し、**「測って問題なし」ではなく
 //   「測っていない」と画面に出す**（ルール7）。
-// ★**端数は不足の大きいほうへ寄せる**（網 = 総額 − 城）ので、二つの枠は**必ず総額にぴったり一致する**。
+// ★**端数は不足の大きいほうへ寄せる**（ETF = 総額 − 個別）ので、二つの枠は**必ず総額にぴったり一致する**。
 // ★**割り方の目標は portfolio.json の target（shiro_castle_pct / ami_net_pct）から採る**——ここに 50 を
 //   書き写すと、目標を変えたとき割り方だけ古いまま残る（数字を書き写した箇所は必ず陳腐化する）。
 function ccfSleeveTarget(){
   const t=(typeof window!=='undefined'&&window.__ccfSleeveTarget)?window.__ccfSleeveTarget:null;
   const c=t&&+t.c>0?+t.c:50, n=t&&+t.n>0?+t.n:50;
-  // ★割り方（2026-09-22 ユーザー指示「常に網70%城30%になるように配れるような仕様にしてほしい」）。
-  //   'target'＝総額を常に目標比で割る（今月の姿に関係なく城も必ず買う）
+  // ★割り方（2026-09-22 ユーザー指示「常にETF70%個別30%になるように配れるような仕様にしてほしい」）。
+  //   'target'＝総額を常に目標比で割る（今月の姿に関係なく個別も必ず買う）
   //   'gap'   ＝不足している側に厚く（超過側は0）＝v9.9.167 の規約。置き換えたが消していない。
   //   正本は portfolio.json の target.sleeve_split_mode。読めなければ 'target' へ倒す。
   const mode=(t&&t.mode==='gap')?'gap':'target';
@@ -3478,7 +3478,7 @@ function ccfSleeveSplit(){
   const {c,n,src,mode:rule}=ccfSleeveTarget(); const sum=c+n;
   if(!(sum>0))return null;
   const now=(typeof window!=='undefined'&&window.__ccfSleeveNow)?window.__ccfSleeveNow:null;
-  const byTarget=()=>Math.round(T*c/sum);    // 端数は先の側へ寄せる（下で 網=総額−城 にするため）
+  const byTarget=()=>Math.round(T*c/sum);    // 端数は先の側へ寄せる（下で ETF=総額−個別 にするため）
   if(!now){                                  // 保有%が読めない＝不足を測れない（測って0ではない）
     const castle=byTarget();
     return {total:T,castle,net:T-castle,cPct:c,nPct:n,src,mode:'unknown',gc:null,gn:null,now:null,tCastle:castle};
@@ -3491,7 +3491,7 @@ function ccfSleeveSplit(){
     const castle=byTarget();
     return {total:T,castle,net:T-castle,cPct:c,nPct:n,src,mode:'fixed',gc,gn,now,tCastle:castle,gCastle:gapCastle};
   }
-  if(!(g>0)){                                // 城も網も目標以上＝短い側が無い→比が作れない
+  if(!(g>0)){                                // 個別もETFも目標以上＝短い側が無い→比が作れない
     const castle=byTarget();
     return {total:T,castle,net:T-castle,cPct:c,nPct:n,src,mode:'full',gc,gn,now,tCastle:castle,gCastle:null};
   }
@@ -3499,15 +3499,15 @@ function ccfSleeveSplit(){
   return {total:T,castle,net:T-castle,cPct:c,nPct:n,src,mode:'gap',gc,gn,now,tCastle:byTarget(),gCastle:gapCastle};
 }
 // v9.9.191（ユーザー指示「金額入力が2つあるので1つにしてほしい」）: 入力は**今月の入金総額だけ**。
-//   城も網も総額から導く（旧: 総額が空なら 個別枠 pf:monthly / 網枠 pf:monthly_net へ落ちていた）。
+//   個別もETFも総額から導く（旧: 総額が空なら 個別枠 pf:monthly / ETF枠 pf:monthly_net へ落ちていた）。
 //   旧キーは state.json の同期対象として残すが、門はもう読まない。
 function ccfCastleAmt(){const sp=ccfSleeveSplit(); return sp?sp.castle:0;}
 function ccfNetBudget(){const sp=ccfSleeveSplit(); return sp?sp.net:0;}
-// ── 網の円の按分（v9.9.164で切り出し）──────────────────────────────────────────
-// ★**城とまったく同じ B案②（目標−保有の不足で按分）**。ここを二箇所に書くと必ず割れるので
-//   📋今月の注文書 と ◈網（ETF）の節が**この一つを呼ぶ**（v9.9.65の掟）。
-//   端数は不足の先頭へ寄せて、合計を網枠にぴったり一致させる（城が1位へ寄せるのと同じ作法）。
-//   ⚠全部充足なら円を配らない（城が passGap>0 のときだけ配るのと同じ）。
+// ── ETFの円の按分（v9.9.164で切り出し）──────────────────────────────────────────
+// ★**個別とまったく同じ B案②（目標−保有の不足で按分）**。ここを二箇所に書くと必ず割れるので
+//   📋今月の注文書 と ◈ETFの節が**この一つを呼ぶ**（v9.9.65の掟）。
+//   端数は不足の先頭へ寄せて、合計をETF枠にぴったり一致させる（個別が1位へ寄せるのと同じ作法）。
+//   ⚠全部充足なら円を配らない（個別が passGap>0 のときだけ配るのと同じ）。
 function ccfNetAlloc(N, budget){
   const gapOf=r=>Math.max(0,r.tw-r.pos);
   const rows=(N&&N.rows)||[];
@@ -3540,7 +3540,7 @@ function ccfToggleMoney(){try{localStorage.setItem('pf:showMoney',ccfMoneyHidden
 // 🏦保有の💴で切り替えたときも盤・成績を合わせる
 window.addEventListener('storage',e=>{if(e.key==='pf:showMoney')ccfMoneyRepaint();});
 // ── 今月の買付プラン ─────────────
-// 入力は「今月の入金額」(pf:monthly_total) の1欄だけ（v9.9.191）。城と網の円は ccfSleeveSplit で導く。
+// 入力は「今月の入金額」(pf:monthly_total) の1欄だけ（v9.9.191）。個別とETFの円は ccfSleeveSplit で導く。
 // 配分の規約: 各社の「目標ウェイト − 現在保有%」の不足分で按分（B案②・不足上位に厚い）。端数は買付順位1位へ。
 /* ── 注文書の各行の「買った」（v9.9.138・ユーザー「買付順位から保有を入れれるようにしたい」）
    買った株数をここで記録できるようにする。**書き込みの実装は🏦保有(portfolio.html)にしか置かない**
@@ -3638,7 +3638,7 @@ function ccfBought(btn){
        買った＝保有なので、ここで保有印も付けて台帳を引き直す（表が書き直されて色が付く）。
        ⚠**外すのはここではやらない**——0株の記帳経路が無い（sh>0が必須）ので、
        解除は📚台帳の保有トグル＝人の明示操作に残す（黙って保有印を消さない）。
-       ⚠**網(ETF)には付けない**（v9.9.169）——保有印は「門が出口判定を出す対象」の印で、
+       ⚠**ETFには付けない**（v9.9.169）——保有印は「門が出口判定を出す対象」の印で、
          門Ωは指数を裁かない。付けると📚台帳が採点していない社の判定を書こうとする。 */
     if(!isNet)try{
       const key=inp.dataset.nm||inp.dataset.t;
@@ -3760,7 +3760,7 @@ function ccfTradeGo(kind,btn){
     done=true; btn.disabled=false;
     if(!r.ok)return bad(r.msg||'記録できませんでした');
     msg.style.color='#15803d'; msg.textContent='✓ '+(r.msg||'')+(jpyEst&&jpy?'（'+(kind==='buy'?'取得額':'受取額')+'は見積もり ¥'+jpy.toLocaleString('ja-JP')+'）':'');
-    /* 門の保有印（出口判定の対象）: 買いは ccfBought と同じく付ける・売りの全株は Ⅶ が外す。網(ETF)には付けない */
+    /* 門の保有印（出口判定の対象）: 買いは ccfBought と同じく付ける・売りの全株は Ⅶ が外す。ETFには付けない */
     if(kind==='buy'&&m.sleeve!=='net')try{
       let hs=new Set(); const hr=await store.get('g7hold:set'); if(hr&&hr.value)hs=new Set(JSON.parse(hr.value)||[]);
       if(!hs.has(m.nm)){ hs.add(m.nm); await store.set('g7hold:set',JSON.stringify([...hs])); if(typeof renderLedger==='function')await renderLedger(); }
@@ -3777,21 +3777,21 @@ function ccfTradeGo(kind,btn){
     bad('保有の画面から返事がありません（「✎ 株数・買値を編集」を一度開いてから）'); } },3000);
 }
 
-// v9.9.164（2026-08-21 ユーザー指示「網と城は一緒にして50%づつは維持し続けながら表示はまとめてにしたい」）:
-//   第7引数 netOrder で**網の行を注文書へ混ぜる**。**50/50 の割り方も按分の規約も一切変えていない**
-//   ——城は ccfCastleAmt()、網は ccfNetBudget() で別々に計算したものを、**一枚に並べるだけ**。
-//   ⚠**城と網は同じ行に見せてはいけない**（四関門を通っていないものを通ったように見せない・v9.9.160）ので、
-//     群の見出しで分け、網の行には「門の裁きではない」と明記する。
+// v9.9.164（2026-08-21 ユーザー指示「ETFと個別は一緒にして50%づつは維持し続けながら表示はまとめてにしたい」）:
+//   第7引数 netOrder で**ETFの行を注文書へ混ぜる**。**50/50 の割り方も按分の規約も一切変えていない**
+//   ——個別は ccfCastleAmt()、ETFは ccfNetBudget() で別々に計算したものを、**一枚に並べるだけ**。
+//   ⚠**個別とETFは同じ行に見せてはいけない**（四関門を通っていないものを通ったように見せない・v9.9.160）ので、
+//     群の見出しで分け、ETFの行には「門の裁きではない」と明記する。
 function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
   // v9.9.90（2026-08-05 ユーザー要望「何株買うかまで指示してほしい」）: 円の按分に加えて株数を出す。
   //   価格は盤(out/dashboard.json)の現値＋ドル円で円換算。取れない銘柄は株数を出さない（ルール7:
   //   推測の価格で株数を作らない——「価格未取得」と明示して手計算へ回す）。
   //   株数は現値換算の目安——指値が現値より下なら同じ円でもう1株買えることがある。正本は円の按分。
   pass=pass||[]; gap=gap||(()=>0); passGap=passGap||0; tw=tw||(()=>0);
-  // ★v9.9.167: 総額の割り方は「不足側に厚く」（ccfSleeveSplit）。城が目標を超過している月は
-  //   城の取り分が 0 になる——そのとき「個別枠が未入力」と見分けが付かないので、下で理由を名指しする。
+  // ★v9.9.167: 総額の割り方は「不足側に厚く」（ccfSleeveSplit）。個別が目標を超過している月は
+  //   個別の取り分が 0 になる——そのとき「個別枠が未入力」と見分けが付かないので、下で理由を名指しする。
   const SP=ccfSleeveSplit(), ST=ccfSleeveTarget(), TA=ccfTotalAmt();
-  const AMT=ccfCastleAmt();          // 総額が入っていれば城の取り分（不足按分）
+  const AMT=ccfCastleAmt();          // 総額が入っていれば個別の取り分（不足按分）
   const nm=[]; if(passGap>0){ pass.forEach(r=>{ const p=100*(gap(r)/passGap); if(p>=0.5)nm.push({n:r.nm,p,tw:tw(r),r}); }); }
   if(AMT>0&&nm.length){
     let s=0; nm.forEach(x=>{ x.yen=Math.floor(AMT*x.p/100/100)*100; s+=x.yen; });
@@ -3803,8 +3803,8 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
   //   ＝足し算が金額に分断されて読めなかった。数字の対（階段の2本・1株価格）は nowrap で割らせない。
   //   v9.9.109「装飾の寸法を px で書いた時点で幅は変わらないと仮定している」の同型——
   //   **一行に収まる前提で書いた行は、いつか折り返す。**
-  // ★網の行は城の注文書の**外**で組む（v9.9.164）——城に配る先が無い月（nm.length===0）でも
-  //   網は配れるので、注文書ごと消えると「今月いくら網へ回すか」が画面から丸ごと消える。
+  // ★ETFの行は個別の注文書の**外**で組む（v9.9.164）——個別に配る先が無い月（nm.length===0）でも
+  //   ETFは配れるので、注文書ごと消えると「今月いくらETFへ回すか」が画面から丸ごと消える。
   const NO=(netOrder&&netOrder.rows&&netOrder.rows.length)?netOrder:null;
   let nb='', nspent=0;
   if(NO){
@@ -3826,7 +3826,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
     const full=NO.rows.filter(r=>!(r.yen>0)).map(r=>r.t);
     if(nb&&full.length)nb+=`<div style="font-size:11px;color:var(--dim);padding:3px 7px">${full.join('・')}：目標超過のため今月なし</div>`;
   }
-  const nhead=m=>`<div style="font-size:11.5px;color:#6fa8c9;margin:${m};font-weight:600">◈ 網（ETF）</div>`;
+  const nhead=m=>`<div style="font-size:11.5px;color:#6fa8c9;margin:${m};font-weight:600">◈ ETF</div>`;
   const chip=(lbl,pct,sub,yen)=>`<div class="planrow" style="padding:7px 12px;border-radius:8px;background:#c9a64a14;border:1px solid #c9a64a44;margin-top:6px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:13.5px;color:var(--ink)">${lbl}</span><span style="white-space:nowrap">${yen!=null?`<span style="font-size:11.5px;color:var(--dim);margin-right:8px">${pct}%</span><span style="font-size:18px;font-weight:700;color:#c9a64a">${ccfYen(yen)}</span>`:`<span style="font-size:18px;font-weight:700;color:#c9a64a">${pct}%</span>`}</span></div>${sub?`<div style="font-size:10.5px;color:var(--dim);margin-top:3px;line-height:1.6">${sub}</div>`:''}</div>`;
   let body='';
   if(nm.length){
@@ -3939,16 +3939,16 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
       const spent=AMT-bud-unknown.reduce((a,b)=>a+b.need,0);
       order=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
         <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書</b></div>
-        ${nb?`<div style="font-size:11.5px;color:var(--gold-bright);margin:0 0 2px;font-weight:600">🏰 城（個別）</div>`:''}
+        ${nb?`<div style="font-size:11.5px;color:var(--gold-bright);margin:0 0 2px;font-weight:600">🏰 個別</div>`:''}
         ${ob}
         ${nb?nhead('7px 0 2px')+nb:''}
-        <div style="font-size:11px;color:var(--dim);margin-top:5px">${nb?`<b>合計 約${ccfYen(Math.round(spent+nspent))}</b>（城 ${ccfYen(Math.round(spent))}／網 ${ccfYen(nspent)}）`:`合計 約${ccfYen(Math.round(spent))}`}${bud>=100?`／残り${ccfYen(Math.floor(bud/100)*100)}`:''}</div>
+        <div style="font-size:11px;color:var(--dim);margin-top:5px">${nb?`<b>合計 約${ccfYen(Math.round(spent+nspent))}</b>（個別 ${ccfYen(Math.round(spent))}／ETF ${ccfYen(nspent)}）`:`合計 約${ccfYen(Math.round(spent))}`}${bud>=100?`／残り${ccfYen(Math.floor(bud/100)*100)}`:''}</div>
       </div>`;
     }
     body = order || chips;      // 注文書が出せるならそれだけ／出せないときは按分チップ
-    // ★v9.9.167: 総額は入っているのに城の取り分が0＝城が目標を超過しているから。
+    // ★v9.9.167: 総額は入っているのに個別の取り分が0＝個別が目標を超過しているから。
     //   ここを黙ると「個別枠が未入力だから円が出ない」と見分けが付かない（v9.9.52: 名指しで出す）。
-    if(SP&&!(AMT>0))body='';   // 総額が入っていて城の取り分が0＝城の欄は出さない（割り方の1行が「城 ¥0」を示す）
+    if(SP&&!(AMT>0))body='';   // 総額が入っていて個別の取り分が0＝個別の欄は出さない（割り方の1行が「個別 ¥0」を示す）
   }else if(!pass.length){
     body=`<div style="font-size:12px;color:var(--dim);margin-top:8px;padding:8px 10px;border:1px dashed rgba(201,166,74,.35);border-radius:8px;line-height:1.75">🟢投下可なし</div>`;
   }else{
@@ -3959,20 +3959,20 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
       :`投下可${pass.length}社とも目標到達済み<br><span style="color:var(--muted)">${rowsTxt}</span>`;
     body=`<div style="font-size:11.5px;color:var(--dim);margin-top:8px;padding:8px 10px;border:1px dashed rgba(201,166,74,.35);border-radius:8px;line-height:1.75">${why}</div>`;
   }
-  // ★城の注文書が出せない月でも、網は配れる（v9.9.164）。
-  //   注文書ごと消えると「今月いくら網へ回すか」が画面から丸ごと消える＝黙って消す形になる（v9.9.52）。
-  if(nb && body.indexOf('◈ 網（ETF）')<0){
+  // ★個別の注文書が出せない月でも、ETFは配れる（v9.9.164）。
+  //   注文書ごと消えると「今月いくらETFへ回すか」が画面から丸ごと消える＝黙って消す形になる（v9.9.52）。
+  if(nb && body.indexOf('◈ ETF')<0){
     body+=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(111,168,201,.5);border-radius:8px;background:rgba(111,168,201,.06)">`
       +nhead('0 0 4px')+nb
       +`<div style="font-size:11px;color:var(--dim);margin-top:5px">合計 ${ccfYen(nspent)}`
       +`</div></div>`;
   }
-  // ★今月の入金総額 → 城/網へ「足りないほうから」配る（v9.9.163 で新設・v9.9.167 で割り方を規約へ）
+  // ★今月の入金総額 → 個別/ETFへ「足りないほうから」配る（v9.9.163 で新設・v9.9.167 で割り方を規約へ）
   // v9.9.191（ユーザー指示「説明はすべてなくしてシンプルに」「金額入力が2つあるので1つに」）:
-  //   入力は **今月の入金総額の1欄だけ**。城/網の割り方は1行で出し、採らなかった割り方も同じ行に併記する（v9.9.52）。
+  //   入力は **今月の入金総額の1欄だけ**。個別/ETFの割り方は1行で出し、採らなかった割り方も同じ行に併記する（v9.9.52）。
   const altTxt=!SP?'':(SP.mode==='fixed'
-      ? (SP.gCastle!=null?`足りないほうからなら 城 ${ccfYen(SP.gCastle)} ／ 網 ${ccfYen(SP.total-SP.gCastle)}`:'')
-      : (SP.mode==='gap'?`目標比なら 城 ${ccfYen(SP.tCastle)} ／ 網 ${ccfYen(SP.total-SP.tCastle)}`:''));
+      ? (SP.gCastle!=null?`足りないほうからなら 個別 ${ccfYen(SP.gCastle)} ／ ETF ${ccfYen(SP.total-SP.gCastle)}`:'')
+      : (SP.mode==='gap'?`目標比なら 個別 ${ccfYen(SP.tCastle)} ／ ETF ${ccfYen(SP.total-SP.tCastle)}`:''));
   const modeTxt=!SP?'':({fixed:'常に目標比',gap:'足りないほうから',full:'どちらも目標以上→目標比',unknown:'⚠保有%が読めない→目標比'}[SP.mode]||'');
   const totRow=`<div style="display:flex;align-items:center;gap:8px;margin:10px 0 4px;flex-wrap:wrap">
     <span style="font-size:13px;color:var(--muted)">今月の入金額</span>
@@ -3982,10 +3982,10 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
     <span style="font-size:13px;color:var(--muted)">円</span>
     ${TA>0?`<button onclick="ccfSetTotalAmt({value:''})" style="padding:3px 10px;background:transparent;border:1px solid var(--dim);border-radius:999px;color:var(--dim);font-size:11.5px;cursor:pointer">消去</button>`:''}
   </div>${SP?`<div style="font-size:12.5px;color:var(--muted);margin:0 0 4px">
-    <b style="color:${SP.castle>0?'var(--ink)':'var(--dim)'}">城 ${ccfYen(SP.castle)}</b> ／ <b style="color:${SP.net>0?'var(--ink)':'var(--dim)'}">網 ${ccfYen(SP.net)}</b>
+    <b style="color:${SP.castle>0?'var(--ink)':'var(--dim)'}">個別 ${ccfYen(SP.castle)}</b> ／ <b style="color:${SP.net>0?'var(--ink)':'var(--dim)'}">ETF ${ccfYen(SP.net)}</b>
     <span style="color:var(--dim)">（${modeTxt}${altTxt?'・'+altTxt:''}）</span></div>`:''}`;
   return `<div data-keep style="border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:4px 0 20px">
-    <div style="display:flex;justify-content:space-between;align-items:center"><h2 class="serif" style="font-size:1.2em;margin:0">今月の買付プラン</h2><a href="ami.html" style="font-size:12px">◈ 網の門 ↗</a></div>
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2 class="serif" style="font-size:1.2em;margin:0">今月の買付プラン</h2><a href="ami.html" style="font-size:12px">◈ ETFの門 ↗</a></div>
     ${totRow}
     ${body}
   </div>`;
@@ -4646,7 +4646,7 @@ function ccfReturnsHTML(R){
   let sum='';
   if(P){
     const tr=(P.ret_tr!=null?P.ret_tr:P.ret);
-    /* ★「城のみ」と焼き付けてはいけない——2026-08-23 から網も台帳に入る（v9.9.169）し、
+    /* ★「個別のみ」と焼き付けてはいけない——2026-08-23 からETFも台帳に入る（v9.9.169）し、
        取得額が測れない行はこの合計に**入らない**。実測ではその行が資産の41.7%だった。
        ⚠ 文に焼き付けず実際の行から数える（数字を書き写した箇所は必ず陳腐化する）。
        ⚠「入っていない」と「ゼロ」を取り違えないよう、欠けている重みまで名指しする。 */
@@ -4751,7 +4751,7 @@ function ccfReturnsHTML(R){
         return `　<b>${r.t}</b> ${r.cmp_out}`
           +(w?`<span style="color:var(--dim)">（終値がその水準だったのは ${w.first}〜${w.last}・${w.n}日）</span>`:'');
       }).join('<br>')+`</div>`;
-  /* ★ 網(ETF)も 2026-08-23（ユーザー指示「保有に入れてほしい」）から 🏦保有の台帳に入る（v9.9.169）。
+  /* ★ ETFも 2026-08-23（ユーザー指示「保有に入れてほしい」）から 🏦保有の台帳に入る（v9.9.169）。
      ただし**取得が測れない本は依然として入らない**ので、
      「入っている本」と「入っていない本」を**名指しで**出す——「入っていない」と「ゼロ」を取り違えない。
      ⚠ 文に焼き付けず、実際の行から数える（数字を書き写した箇所は必ず陳腐化する）。 */
@@ -4761,11 +4761,11 @@ function ccfReturnsHTML(R){
     const inN=netT.filter(t=>ok.has(t)), outN=netT.filter(t=>!ok.has(t));
     if(netT.length)
       warn+=`<div style="font-size:11px;color:var(--dim);margin-top:6px;line-height:1.8">`
-        +`ℹ <b>網(ETF)も 2026-08-23 から保有に入っている</b>（v9.9.169）。`
-        +(inN.length?`この合計に入っている網: <b>${inN.join('/')}</b>。`:'')
-        +(outN.length?`<b style="color:#d69a3c">入っていない網: ${outN.join('/')}</b>`
+        +`ℹ <b>ETFも 2026-08-23 から保有に入っている</b>（v9.9.169）。`
+        +(inN.length?`この合計に入っているETF: <b>${inN.join('/')}</b>。`:'')
+        +(outN.length?`<b style="color:#d69a3c">入っていないETF: ${outN.join('/')}</b>`
           +`——取得が測れない行（上の「比較から外した」を見よ）。<b>これは資産全体のリターンではない</b>`
-          :`網はすべて入っている。`)
+          :`ETFはすべて入っている。`)
         +`</div>`;
   }
   // 想定が答えを支配している行（窓の両端で5pt以上動く）は名指しで出す
@@ -4990,7 +4990,7 @@ async function ccfDash(btn){
 //   実測(2026-08-11): pending.json のキーを items→rows に**改称するだけ**で
 //   VRSK が投下可に入り HWM が落ちる。ファイルは読めるので「壊れた」ようには見えない。
 //   ⚠**fail-closed にはしない**——読めないときに全社を止めると投下可0社になり、
-//     月次DCAが全額 網 へ流れる（それ自体が静かな事故）。判定は従来どおり眠らせ、
+//     月次DCAが全額 ETF へ流れる（それ自体が静かな事故）。判定は従来どおり眠らせ、
 //     **眠っていることを画面に必ず出す**。Ⅵと盤が同じ関数を呼ぶ（v9.9.65の掟）。
 function ccfGateInput(o,pick,label,file,blind){
   const m={};
@@ -5009,7 +5009,7 @@ function ccfGateBlindHTML(blind){
     +'<div style="font-size:12px;color:var(--ink-soft);margin-top:5px">'
     +blind.map(b=>'・'+b.label+'（'+b.file+'）… '+b.why).join('<br>')
     +'<br><b>これは「該当なし」ではなく「測っていない」</b>——下の🟢投下可はこの関門を通っていません。'
-    +'判定は止めていません（止めると投下可0社になり月次DCAが全額 網 へ流れるため）。</div></div>';
+    +'判定は止めていません（止めると投下可0社になり月次DCAが全額 ETF へ流れるため）。</div></div>';
 }
 // ── 📋 今日（v9.9.140・2026-08-11 ユーザー要望「毎日何をすればいいか分からない」）──────────
 //   **集計は端末の単一実装 night/today.py（out/today.json）**。ここは描くだけ。
@@ -5538,8 +5538,8 @@ function ccfXJudge(d,s){
   //   これは推定を甘くしているのではなく、たっちみーさんの時間軸(20-30年)に式を合わせただけ。
   //   従来の 0.1(=1/10年) は、20年保有する人が10年で降りる前提の重力を払っていた。
   // 【実測】投下可 7社→**12社**（+ASML/KLAC/MSFT/RMD/6857。いずれもΩ78-82・堀70+で、
-  //   質ではなく倍率の重力だけで落ちていた社）。城の合計45%→61%、加重E[r]15.7%→16.6%、
-  //   総合(網9%と仮定)12.0%→**13.6%**。
+  //   質ではなく倍率の重力だけで落ちていた社）。個別の合計45%→61%、加重E[r]15.7%→16.6%、
+  //   総合(ETF9%と仮定)12.0%→**13.6%**。
   // 【残る既知の弱点——ここは意図的に手を付けていない】g を20年間そのまま置く前提は、
   //   10年のときより明らかに重い（g=20%なら利益が38倍になる）。門の思想の根拠である
   //   McKinsey(高成長は3-5年で収束)・Chan-Karceski-Lakonishok(長期成長に持続性なし)とは緊張する。
@@ -5631,7 +5631,7 @@ var CCF_SEATS=5;
 //   ※**v9.9.98 でこの性質は消えた**——席の選定からE[r]項を外し、遮断器も関門から外したため。
 //     上の記述は v9.9.93 当時の経緯として残す（歴史の記述であって現行仕様ではない）。
 // 【実測】Ωは1社も動かない（配分だけの変更）。投下可10社の顔ぶれ不変。
-//   城 59.3%→59.3%・加重E[r] 15.94%→16.31%・**総合 13.12%→13.34%（+0.22pt）**。
+//   個別 59.3%→59.3%・加重E[r] 15.94%→16.31%・**総合 13.12%→13.34%（+0.22pt）**。
 //   1銘柄の幅 3.8〜8.0% → 3.3〜8.0%＝**質チルトは残しつつ、誤差の増幅だけを外した**。
 // ── v9.9.98（2026-08-07 ユーザー明示指示「全部やって」＝席の選定と遮断器の両方から E[r] を外す）──
 // 【何を変えたか】席の選定＝**Ωそのもの**。旧 `Ω × E[r]点 ÷ 50` の E[r]項を外した。
@@ -5684,7 +5684,7 @@ function ccfAllocScore(c){
 // 【何が動いたか（撤去前に実測）】動くのは**1組だけ**——
 //    **出 HWM（Ω78.0・堀70.1）／ 入 6146 ディスコ（Ω78.2・堀74.8）**。
 //    6146 は**Ωも堀も HWM より上**なのに上限で席を外れていた＝ユーザーの言う「いい銘柄が入っていない」の実体。
-//    半導体連鎖は 3社(城の18%) → **4社(24%)**。
+//    半導体連鎖は 3社(個別の18%) → **4社(24%)**。
 // 【★上限は消すが、集中の測定は残す】`s.semiN`/`s.semiPct` を返し、Ⅵと盤が**注記として**出し続ける。
 //    関門を外すことと、それが守っていた事実を消すことは**別**——v9.9.76「情報は消さない・数だけ消す」と同じ作法。
 // 【外したことで負う risk（正直に記録する）】v9.9.117 を入れた根拠は今も有効な実測だった——
@@ -5694,15 +5694,15 @@ function ccfAllocScore(c){
 //    「集中は測っていない」のではなく「測ったうえで通す」に変わった、と読むこと。
 // ── 以下は v9.9.117（2026-08-08〜2026-08-14）の記録。**規則は失効したが経緯は消さない** ──────
 // 【なぜ】門は1銘柄8%（¼ケリー）を厳密に守るが、**束では見ていなかった**。実測で投下可10社のうち
-//   4社（ASML/LRCX/KLAC/6857）が半導体連鎖＝**城の40%・総資産の24%**。しかも歴史検証は
+//   4社（ASML/LRCX/KLAC/6857）が半導体連鎖＝**個別の40%・総資産の24%**。しかも歴史検証は
 //   「irr=85 の超過は前期lift+0.13 / 後期+0.38 とほぼAI期に出た」と出しており、
 //   **この4社は同時に効き、同時に外れる**。CLAUDE.md が「決断待ち」に挙げ続けていた相関上限の最初の1本。
-// 【なぜ城の30%か】実測で線ごとの挙動を出した上でユーザーが選んだ——
+// 【なぜ個別の30%か】実測で線ごとの挙動を出した上でユーザーが選んだ——
 //   ・総資産の30%（=5席）→ 今日は26.1%で**噛まない**（上限を置いても何も起きない）
-//   ・城の30%（=3席）→ **6857 が出て IRMD が入る**。半導体 24%→18%・ルックスルー26.1%→19.6%
-//   ・城の20%（=2席）→ KLAC も落ち、**irr=85 を削り始める**＝歴史が唯一支持した機構を傷つける
+//   ・個別の30%（=3席）→ **6857 が出て IRMD が入る**。半導体 24%→18%・ルックスルー26.1%→19.6%
+//   ・個別の20%（=2席）→ KLAC も落ち、**irr=85 を削り始める**＝歴史が唯一支持した機構を傷つける
 //   3席は「irr=85 を1社も犠牲にせずに集中を下げられる」ちょうどの線（半導体4社のうち2社が85・2社が70）。
-//   実測: 城の加重E[r] は 7.27%→**7.40% と上がる**＝質を落として集中を下げているのではない。
+//   実測: 個別の加重E[r] は 7.27%→**7.40% と上がる**＝質を落として集中を下げているのではない。
 // 【何を変えていないか】Ω・採点式・刻み・重み・四関門・売却規律S1/S2/S3・等ウェイト配分・
 //   1銘柄上限8% はいずれも不変。動くのは**席の選定**だけ。落ちた社は資格を失わず🔵次点に残る
 //   （名指しで理由を出す・v9.9.52）＝**買わない理由であって売る理由ではない**。
@@ -5776,11 +5776,11 @@ const CCF_MCAP_TIERS=[
   {min:   0,rel:2,name:'T5 <3百億$'}
 ];
 function ccfMcapTier(m){ for(const t of CCF_MCAP_TIERS){ if(m>=t.min)return t; } return CCF_MCAP_TIERS[CCF_MCAP_TIERS.length-1]; }
-// 城の按分をTierの相対ウェイトで配る（上限 cap で頭打ち・はみ出した分は残りへ再配分）— v9.9.146
+// 個別の按分をTierの相対ウェイトで配る（上限 cap で頭打ち・はみ出した分は残りへ再配分）— v9.9.146
 //   list=[{t, m}]（m は同じ通貨に揃えた時価総額・十億$）。返り値 {mode, w:{t:%}, missing:[t], n, tier:{t:name}}
 // ★**固定%にはしない**。8/6/4/3/2 をそのまま%にすると合計が **51%**（3段 8/5/3 なら **70%**）になり、
 //   **合計が銘柄数に依存する**＝v9.9.70 が段差8/5/3をやめた当の欠陥が戻る。
-//   **相対ウェイトを城の按分枠へ正規化**すれば、Tierの段は保ったまま城の按分枠は定義上ちょうど埋まる。
+//   **相対ウェイトを個別の按分枠へ正規化**すれば、Tierの段は保ったまま個別の按分枠は定義上ちょうど埋まる。
 // ★**一社でも m が測れなければ等ウェイトへ倒す**。部分集合だけ傾けると
 //   「測れた社だけが重くなる」＝測定の穴が配分の決定に化ける（ルール7の同族）。
 // ★**Tierの指定(over)は「門の外の明示判断」だけに効かせる**（v9.9.159で新設）。over={t:'T5'} の形で、
@@ -5792,12 +5792,12 @@ function ccfMcapTier(m){ for(const t of CCF_MCAP_TIERS){ if(m>=t.min)return t; }
 //   次に「測った段と違う段に置く」決定が来たときに使う。
 // ★手で決めた重み（v9.9.162・2026-08-20 ユーザー指示「個別銘柄の組み合わせをしたい」→「重みを手で決める」）
 //   正本は `portfolio.json` の `target.castle_weights`（**総資産に対する%**）。
-//   **網の `ami_weights` とまったく同じ作法**にしてある（新しい規約を作らない）——
+//   **ETFの `ami_weights` とまったく同じ作法**にしてある（新しい規約を作らない）——
 //   (a)**一社でも重みが無ければ全体を Tier へ倒し、その社を名指しする**
 //      ＝指定のある社だけ手で重くすると「指定の穴が配分に化ける」。
 //      席は Ω が動けば入れ替わるので、**新しい社が席に入った瞬間に Tier へ戻って名指しする**のが正しい
 //      （黙って一部だけ手・一部だけ機械、という混成にしない）。
-//   (b)**合計が城の枠と食い違っても黙って正規化しない**——名指しで警告し値はそのまま使う。
+//   (b)**合計が個別の枠と食い違っても黙って正規化しない**——名指しで警告し値はそのまま使う。
 //   (c)**上限8%（¼ケリー）を掛けない**——8%を承知で越えると決めたのが手指定の意味そのもので、
 //      掛けると決定を黙って打ち消す（特別枠 in_castle_split:false と同じ扱い）。ただし越えた社は名指しする。
 function ccfMcapWeights(list,city,cap,over,hand){
@@ -5892,7 +5892,7 @@ function ccfAllocTop(cands,maxN){
 // 【なぜ山が70-74に溜まるか】重み上位2本（各.25）の上段が、業種によっては構造的に届かない:
 //   ・irr: 実測 70=149社 / 85=54社。85「認証・規格ロック」は*顧客側の再認定が要る型*
 //     （航空部品・医療機器・半導体材料のプロセス認定）を指すと2026-07-29に確定させた。
-//     決済網・ソフトウェア・ブランド・SaaSは定義上そこへ到達できない。
+//     決済ETF・ソフトウェア・ブランド・SaaSは定義上そこへ到達できない。
 //   ・dom: 実測 50=164社 / 70=98 / 85+=28 / 空欄27。85以上は原本内の**数値開示**を要求するので、
 //     開示習慣の静かな会社は永久に70止まり——測っているのは堀ではなく開示習慣になる。
 //   合計50%の重みが上に伸びないため幾何平均が68-73へ圧縮される。そこを75で切ると、
@@ -5997,7 +5997,7 @@ const CCF_MOAT_GATE=70;
 //   （分けられないのは「85の中の優劣」であって「85かどうか」ではない——
 //    28社の実現中央値は +19.2% で母集団の +6.7% を大きく上回る）
 // 【実測】通るのは **ASML VRSK CW LRCX RBC** の5社。投下可は HWM が抜けて RBC が入る。
-//   歴史基礎率で城 14.81%→15.18%・総合 12.09%→12.31%。**nde>4 の社は1社も入らない**。
+//   歴史基礎率で個別 14.81%→15.18%・総合 12.09%→12.31%。**nde>4 の社は1社も入らない**。
 // v9.9.124(2026-08-09 ユーザー明示指示「irr85は歴史的にみて今後も複利中央値が高いと見込めるものだけ
 //   特別にポートフォリオにいれたい」): **その社自身の実現複利がハードルを割っていると判っている社からは
 //   irr=85 の特権を取り上げる**。データは out/irr85_history.json（night/irr85_mech_test.py が出す・
@@ -6254,11 +6254,11 @@ async function renderPlan(){
   //     数字は night/hist_val_gate_test.py・hist_val_full.py・hist_val_incremental.py・hist_val_market.py。
   // 【配管】out/dashboard.json とまったく同じ作法——**CIで計算してJSONで配る**（.github/workflows/ops.yml 月次）。
   //   ブラウザから外部APIを叩かない。取れない銘柄は「未取得」と理由つきで出す（前回値やゼロで埋めない＝ルール7）。
-  // 網(ETF)の材料（v9.9.160）——ami判定と経費率は net_plan.json、目標5本と保有%は portfolio.json。
-  //   ⚠読めなければ**節そのものを出さず、読めなかったと出す**（空で描いて「網は無い」に見せない・ルール7）
+  // ETFの材料（v9.9.160）——ami判定と経費率は net_plan.json、目標5本と保有%は portfolio.json。
+  //   ⚠読めなければ**節そのものを出さず、読めなかったと出す**（空で描いて「ETFは無い」に見せない・ルール7）
   let __np=null; try{const r=await fetch('out/net_plan.json?t='+Date.now()); if(r.ok)__np=await r.json();}catch(e){}
   let __pf=null; try{const r=await fetch('portfolio.json?t='+Date.now()); if(r.ok)__pf=await r.json();}catch(e){}
-  // ★城/網の目標比と、今の実際の比率をグローバルへ（v9.9.163）。
+  // ★個別/ETFの目標比と、今の実際の比率をグローバルへ（v9.9.163）。
   //   ccfMonthPlanBox は独立した関数で __pf を持たないので、ここで一度だけ置いて共有する。
   //   ⚠**書き写さない**——目標比は portfolio.json の target が正本で、読めなければ既定 50/50 へ倒して
   //     その旨を出す（勝手に別の比を作らない）。
@@ -6271,8 +6271,8 @@ async function renderPlan(){
     const sm=(t&&String(t.sleeve_split_mode||'').toLowerCase()==='gap')?'gap':'target';
     window.__ccfSleeveTarget=(c&&n)?{c,n,src:'portfolio.json の target',mode:sm}:null;
     // 今の実際の比率（DCAの規約＝不足側に厚く、を併記するため）
-    // ★v9.9.168: ここで足し直さず **ccfPfLive の単一実装**から採る——◈網の節と別々に足すと
-    //   「同じ台帳を見る二つが違うことを言う」（網の買付を記録したのに袖の比率だけ古い、が起きる）。
+    // ★v9.9.168: ここで足し直さず **ccfPfLive の単一実装**から採る——◈ETFの節と別々に足すと
+    //   「同じ台帳を見る二つが違うことを言う」（ETFの買付を記録したのに袖の比率だけ古い、が起きる）。
     __LV=ccfPfLive(__pf);
     window.__ccfSleeveNow=__LV?{c:__LV.c,n:__LV.n,net:__LV.net,asof:__LV.asof,ov:__LV.hasOv,src:__LV.src}:null;
     // 記録の書き込みに要る（土台の asof と、株数→¥の換算レート）。renderPlan の外から呼ばれるため
@@ -6306,17 +6306,17 @@ async function renderPlan(){
                            '納品検査のFAIL','out/validate_fail.json',gBlind);
   const pendMap=ccfGateInput(await _gj('out/pending.json'),v=>v&&v.verdict!=='ok',
                              '未完了の重大事象','out/pending.json',gBlind);
-  if(!items.length){pb.innerHTML=ccfGateBlindHTML(gBlind)+ccfMonthPlanBox([])+'<div style="color:var(--dim);font-size:13px;margin-top:6px">個別の買付順位は、✎採点機で銘柄を投入すると自動生成される（投下可が出れば上の城枠に配分される）。</div>';return;}
+  if(!items.length){pb.innerHTML=ccfGateBlindHTML(gBlind)+ccfMonthPlanBox([])+'<div style="color:var(--dim);font-size:13px;margin-top:6px">個別の買付順位は、✎採点機で銘柄を投入すると自動生成される（投下可が出れば上の個別枠に配分される）。</div>';return;}
   const num=x=>parseFloat(x)||0;
   // v9.9.30: 現在保有pos%は🏦保有の実額(pf:portfolio)から都度算出——手入力d.posは記帳凍結で陳腐化し、
   //   買付後も同銘柄へ不足按分が続く欠陥があった。実額が無い銘柄のみd.posへフォールバック
   /* ★v9.9.169: **ccfPfLive の単一実装から採る**（v9.9.65）。以前はここで台帳を別に足していたが、
-     ◈網の節・袖の振り分けと**同じ量を二箇所で計算していた**＝いつか割れる形だった。
+     ◈ETFの節・袖の振り分けと**同じ量を二箇所で計算していた**＝いつか割れる形だった。
      v9.9.78 の教訓（fx欠測時に換算不能な建玉が混ざるならマップ全体を諦める）は
      ccfLedgerMap の ok:false としてそのまま引き継いでいる。
-     ⚠ 分母は**総資産**（城＋網）になった——目標ウェイト(Tier)が総資産に対する%なので、
-       城だけの分母で pos% を出していた旧実装は基準が違っていた。実測: 投下可の按分は不変
-       （持っている城はいずれも目標を大きく超えているので、どちらの分母でも不足0）。 */
+     ⚠ 分母は**総資産**（個別＋ETF）になった——目標ウェイト(Tier)が総資産に対する%なので、
+       個別だけの分母で pos% を出していた旧実装は基準が違っていた。実測: 投下可の按分は不変
+       （持っている個別はいずれも目標を大きく超えているので、どちらの分母でも不足0）。 */
   const livePos=(()=>{ if(!__LV||!__LV.byT)return null;
     const m={}; for(const t in __LV.byT)m[t]=__LV.byT[t].w; return m; })();
   const rows=items.map(it=>{
@@ -6684,11 +6684,11 @@ async function renderPlan(){
     const q=__Q[r.t], jp=/^\d{4,5}(\s|$|\.)/.test(r.nm||'');
     return ccfBoughtBtn(r.t, r.nm||r.t, (q&&q.px>0)?q.px:0, (q&&q.ccy)||(jp?'JPY':'USD')); };
   const brow=(r,i,tag,extra)=>`<div class="led" style="border-left:3px solid ${lcol[r.layer]}"><span style="font-size:16px;color:var(--gold-bright);min-width:34px"><b>${tag}${i+1}</b></span><span class="ln">${ccfIcon(r.nm)}${r.nm}${ccfBizChip(r.nm)}${r.audB||''}${pxchip(r)}${posChip(r)}${r.hold?'<span style="font-size:10px;color:#d69a3c;margin-left:6px">※保留事項あり——メモ確認</span>':''}${r.memo&&!r.hold?`<div style="font-size:10.5px;color:var(--dim)">✎ ${r.memo}</div>`:''}${r.epsOld?'<span style="font-size:10px;color:#c0894a;margin-left:6px" title="原本決算期が300日超——E[r]/PERの前提が古い。決算後にeps/perを更新せよ">⏳eps古</span>':''}</span><span class="grade" style="color:${lcol[r.layer]}">${r.s}</span>${xtag(r)}${extra||''}${reqbtns(r)}${boughtBtn(r)}</div>`;
-  // 城(総資産の50%＝特別枠を含む合計・v9.9.158)内の配分を自動表示(表示のみ・採点に不介入)。
+  // 個別(総資産の50%＝特別枠を含む合計・v9.9.158)内の配分を自動表示(表示のみ・採点に不介入)。
   //   今月=各投下可の「目標−現在保有%(pos)」の不足分で按分(B案②:不足銘柄へ厚く・合計100%)。posは保有比率入力。
-  // v9.9.68で城の目標比率を40%→60%へ改定したのに、この定数だけ40のまま取り残されていた（2026-08-03に発見）。
-  //   CITY は「城内シェア」の表示にだけ使う（城内% = tw/CITY）ので採点・按分には影響しないが、
-  //   40のままだと城内シェアが実態の1.5倍に見える＝**規則を変えたら規則を使う場所も全部直す**の取りこぼし。
+  // v9.9.68で個別の目標比率を40%→60%へ改定したのに、この定数だけ40のまま取り残されていた（2026-08-03に発見）。
+  //   CITY は「個別内シェア」の表示にだけ使う（個別内% = tw/CITY）ので採点・按分には影響しないが、
+  //   40のままだと個別内シェアが実態の1.5倍に見える＝**規則を変えたら規則を使う場所も全部直す**の取りこぼし。
   // v9.9.70（2026-08-03・ユーザー明示指示「bでいこう」）: 目標ウェイトを **段差 8/5/3 → 連続 w∝(Ω−70)** へ。
   // 【なぜ段差をやめるか——門が自分の宣言と矛盾していた】
   //   本文Ⅰは「ティア内の小数差に意味はなく、選別は『間（価格）』が行う」と書いている。
@@ -6696,7 +6696,7 @@ async function renderPlan(){
   //   資金配分が1.6倍違っていた**。境界のわずかな測定差が配分を跳ねさせるのは、
   //   堀の関門を75→70へ直したとき(v9.9.49)の「刻みの空白の中に線が落ちていた」と同じ型の欠陥。
   //   連続にすればΩの順位どおりに滑らかに配られ、崖が消える。
-  // 【なぜ (Ω−70) か——実測で選んだ】城の按分枠へ正規化したときの1銘柄の幅と総合(網9%と仮定):
+  // 【なぜ (Ω−70) か——実測で選んだ】個別の按分枠へ正規化したときの1銘柄の幅と総合(ETF9%と仮定):
   //     現行 段差8/5/3    3.0〜7.9%  総合13.56%
   //     (Ω−74)          1.8〜10.1% 総合13.35%  ← 幅が開きすぎ。Ω75.6のTSMが1.8%では関門を通した意味が薄い
   //     **(Ω−70)        3.3〜7.6%  総合13.63%**  ← 現行とほぼ同じ幅・同じ総合
@@ -6707,7 +6707,7 @@ async function renderPlan(){
   //   （等加重なら17.21%、(Ω−70)なら16.71%）。それでも質で張るのは、20年の複利では
   //   **1回の恒久的な毀損が20年ぶん複利で効く**から。期待値0.5ptは毀損確率を下げる対価。
   // 【¼ケリーの8%上限は残す】比で配ると銘柄数が減ったとき1銘柄が過大になる（投下可5社なら1社12%）。
-  //   絶対の上限8%（質80+の従来値＝¼ケリー相当）で頭打ちにし、余った分は網へ回す＝従来の安全弁を保存。
+  //   絶対の上限8%（質80+の従来値＝¼ケリー相当）で頭打ちにし、余った分はETFへ回す＝従来の安全弁を保存。
   // v9.9.87（2026-08-05 ユーザー明示指示「質の良さと加重のE[r]のバランスで得点をつけては」「ポートフォリオを10社までにしたい」）:
   //   配分の重みを (Ω−70)×E[r]点÷50 の合成へ、配分対象をirr=85優先→Ω順の上位10社（半導体上限は v9.9.145 で撤去）に制限した。
   //   E[r]点は合成順と同じ錨（12%=50点・±10ptで0-100・v9.9.30）＝**新しい定数を一つも発明していない**
@@ -6720,10 +6720,10 @@ async function renderPlan(){
   //   遮断器・Ω・堀の関門・売却規律S1/S2/S3は不変——これは配分（DCA側）の規約。
   // ★v9.9.188（2026-09-22 ユーザー明示指示「ケリーいらない」・範囲の確認で「両方やめる」）:
   //   **1銘柄の目標ウェイト上限8%（¼ケリー）を撤廃した。** CAP=Infinity ＝ Tier の比でそのまま配る。
-  //   【何が変わるか・実測】上限が当たり始めるのは **城28%以上**（MSFTのT1 rel=8 ÷ 相対の合計28 ×城%＝8 を解く）。
-  //     城30%: MSFT 8.00→**8.57** / LRCX・V・ASML 6.60→6.43 / CW 2.20→2.14
-  //     城20%: **1社も当たっていないので何も動かない**（MSFT 5.71 / LRCX・V・ASML 4.29 / CW 1.43）
-  //     ＝今日の設定（城20%）では**この撤廃は配分を1円も動かさない**。効くのは城を28%以上へ戻したときと席が減ったとき。
+  //   【何が変わるか・実測】上限が当たり始めるのは **個別28%以上**（MSFTのT1 rel=8 ÷ 相対の合計28 ×個別%＝8 を解く）。
+  //     個別30%: MSFT 8.00→**8.57** / LRCX・V・ASML 6.60→6.43 / CW 2.20→2.14
+  //     個別20%: **1社も当たっていないので何も動かない**（MSFT 5.71 / LRCX・V・ASML 4.29 / CW 1.43）
+  //     ＝今日の設定（個別20%）では**この撤廃は配分を1円も動かさない**。効くのは個別を28%以上へ戻したときと席が減ったとき。
   //   【なぜ外したか＝ユーザーの判断の領分】この台帳は上限の代金を既に測っていた——
   //     `8/5/3→総合12.0% / 12/8/5(≒⅜ケリー)→13.9% / 15/10/6(≒½ケリー)→15.0%`
   //     ＝**目標の年率15%はケリー比率を½まで上げて初めて届く**（docs/CLAUDE_ARCHIVE.md:129）。
@@ -6736,9 +6736,9 @@ async function renderPlan(){
   //     Tierの刻み(8:6:4:3:2)・門Xの遮断器。**動くのは金額の配り方だけ。**
   //   戻すなら CAP を 8 に戻す1文字（旧: `const CAP=8`）。
   const CAP=Infinity; // allocSet/passIn/passOut は pass 直後で定義済み（点灯にも使うため）
-  // ★城の合計(CITY_TOTAL)は特別枠を含む。按分の枠 CITY は exFixed を引いた残り＝下で定義する
+  // ★個別の合計(CITY_TOTAL)は特別枠を含む。按分の枠 CITY は exFixed を引いた残り＝下で定義する
   //   （旧実装は CITY=60 が**按分の枠**で、特別枠 TDG 8.8% はその上に乗っていたので
-  //    実際の城は 68.8%・網は 31.2% だった＝表の『網40/城60』と食い違っていた）
+  //    実際の個別は 68.8%・ETFは 31.2% だった＝表の『ETF40/個別60』と食い違っていた）
   // v9.9.100(2026-08-07): **erPtW を撤去した**——v9.9.98 で席の選定から E[r] 項を外した時点で
   //   参照がゼロになり、定義だけ残る死んだ関数になっていた（v9.9.74 の watchBox と同じ型）。
   //   E[r] の値そのものは ◇参考の注記と各行の表示で従来どおり出る。
@@ -6755,18 +6755,18 @@ async function renderPlan(){
   //   (2) **E[r]は歴史で順位を作らない**: 2018年コホート・その後8.1年の配当込み実現で、
   //       irrを固定するとE[r]の効果は irr85 +1.2pt / irr75 **−4.4pt** / irr50 +1.5pt ＝方向なし。
   //       質実証プール274社では五分位 Q5(E[r]17.4%)→実現4.8% vs Q1(−0.2%)→10.1% ＝ **−5.3pt**。
-  //   (3) **これまでの配分案の比較は循環していた**——全部「総合＝城%×加重E[r]」で採点しており、
+  //   (3) **これまでの配分案の比較は循環していた**——全部「総合＝個別%×加重E[r]」で採点しており、
   //       現行案は定義上E[r]を最大化するので必ず勝つ出来レースだった。歴史で測り直したのが(2)。
   //   【だから等ウェイト】傾ける信号が無いなら傾けないのが正直。v9.9.93が錨(Ω−70)を外した理由
   //   「増幅されていたのは信号ではなく測定誤差」の終着点でもある（Ωのσは2.50ptしかなく、
   //   ISRGの誤値1件でΩが12pt動いた実績がある＝順位差より測定誤差のほうが大きい帯）。
-  //   【不変】1銘柄の上限8%（¼ケリー）・第五の枠(上位10社)・四関門・Ω・売却規律（城の比率は v9.9.158 で50%へ）。
+  //   【不変】1銘柄の上限8%（¼ケリー）・第五の枠(上位10社)・四関門・Ω・売却規律（個別の比率は v9.9.158 で50%へ）。
   //   等ウェイトは 60/10=6.0% で上限8%の内側なので、集中度は上がらない（むしろ幅が縮む）。
   //   【選定は v9.9.98 以降 Ω順】（この注記が書かれた当時は合成点順）——選定の物差しを何にするかは別の決断（irr=85の席確保）。
-  // v9.9.129: 門外例外を按分に入れる。**城の按分の母集団は「席の社 ＋ in_castle_split の例外」**
+  // v9.9.129: 門外例外を按分に入れる。**個別の按分の母集団は「席の社 ＋ in_castle_split の例外」**
 //   （v9.9.146 で按分そのものは等ウェイト→時価総額比へ。母集団の作り方は不変）
   //   （ユーザーの決定「MKSIは11社目に追加」＝10席+1で 60÷11＝5.45%）。
-  //   `in_castle_split:false`（特別枠）は**城の按分の外**で、決めた weight_pct をそのまま使う。
+  //   `in_castle_split:false`（特別枠）は**個別の按分の外**で、決めた weight_pct をそのまま使う。
   //   **上限CAPは特別枠には掛けない**——8%を承知で越えると決めたのが特別枠の定義そのものだから
   //   （掛けると決定を黙って打ち消す）。⚠**v9.9.159 で特別枠は0社になった**（TDGが按分へ移った）が、
   //   経路は残す——次に「1株が上限を越えるが承知で買う」決定が来たときに使う。
@@ -6777,45 +6777,45 @@ async function renderPlan(){
   const exOf=r=>__EX[String(r.t).toUpperCase()]||null;
   const exSplitN=exRows.reduce((a,r)=>a+((exOf(r)||{}).in_castle_split?1:0),0);
   // ── v9.9.158(2026-08-19 ユーザー明示指示「ETFはこれでいく／50%ETFへ」) ──────────────
-  //   網(ETF)を **50%** にする。**城の合計を50%**とし、特別枠(in_castle_split:false)の重みは
-  //   その50%の**内側**から先に取る＝按分の枠 CITY は残り。こうしないと『網50%』が嘘になる。
+  //   ETFを **50%** にする。**個別の合計を50%**とし、特別枠(in_castle_split:false)の重みは
+  //   その50%の**内側**から先に取る＝按分の枠 CITY は残り。こうしないと『ETF50%』が嘘になる。
   //   ⚠採点式・Ω・四関門・堀の関門70・売却規律S1/S2/S3・席の選定・上限8%(¼ケリー)はいずれも不変。
-  //     動くのは**金額の配り方**だけ。網/城の比率は門の外（DCA側）の決断。
-  // ── v9.9.174(2026-09-18 ユーザー明示指示「まずは買付を5銘柄に絞りたい」→「城は30%網は70%に変更する」) ──
-  //   **席を10→5にしたら、城50%は上限8%（¼ケリー）と衝突した**。城50%÷5社＝平均10%>8% で**全社が上限に張り付き**、
-  //   時価総額Tier(8:6:4:3:2)が構造的に効かなくなる（MSFTもRBCも一律8.00%・しかも城は40%までしか埋まらない）。
+  //     動くのは**金額の配り方**だけ。ETF/個別の比率は門の外（DCA側）の決断。
+  // ── v9.9.174(2026-09-18 ユーザー明示指示「まずは買付を5銘柄に絞りたい」→「個別は30%ETFは70%に変更する」) ──
+  //   **席を10→5にしたら、個別50%は上限8%（¼ケリー）と衝突した**。個別50%÷5社＝平均10%>8% で**全社が上限に張り付き**、
+  //   時価総額Tier(8:6:4:3:2)が構造的に効かなくなる（MSFTもRBCも一律8.00%・しかも個別は40%までしか埋まらない）。
   //   ⚠ CLAUDE.md がこの状況を**予言していた**——「上限8%は維持する。比で配ると銘柄数が減ったとき1銘柄が
   //     過大になるため（**投下可5社なら1社12%**）」。＝上限8%は5社に絞ったときに必ず噛む設計。
-  //   【実測】城30%なら平均6%<8%で**Tierが生きる**: MSFT/ASML/LRCX 8.00%（上限）・CW/RBC 3.00%・合計ちょうど30%。
-  //   **ケリー上限8%は触っていない**（規約＝絶対のルール1）。動かしたのは城/網の比率（門の外＝DCA側）だけ。
-  //   ★同時に**門外例外5社(VRSK/WST/ENTG/MKSI/TDG)を城の按分から降ろした**（gate_exceptions.json の
+  //   【実測】個別30%なら平均6%<8%で**Tierが生きる**: MSFT/ASML/LRCX 8.00%（上限）・CW/RBC 3.00%・合計ちょうど30%。
+  //   **ケリー上限8%は触っていない**（規約＝絶対のルール1）。動かしたのは個別/ETFの比率（門の外＝DCA側）だけ。
+  //   ★同時に**門外例外5社(VRSK/WST/ENTG/MKSI/TDG)を個別の按分から降ろした**（gate_exceptions.json の
   //     in_castle_split:false ＋ weight_pct:0）——席だけ5にしても例外が残れば買付先は10社のままで、
   //     しかも例外の取り分は 10.4%→19.1% と**増える**（分母が小さくなるので）。
   //     実測で**5社とも保有ゼロ**だったので売却は一切発生していない。記録は◇の節に残る。
-  //   ⚠ exFixed は weight_pct:0 なので 0 のまま＝**CITY は城の合計そのもの**・母集団は**席の社だけ**
+  //   ⚠ exFixed は weight_pct:0 なので 0 のまま＝**CITY は個別の合計そのもの**・母集団は**席の社だけ**
   //     （v9.9.179 で席は6。人の拒否権で外れた社も in_castle_split:false＝按分に入らない）。
-  // ── v9.9.176(2026-09-18 ユーザー明示指示「CHANGESETをQQQM40/XLK30/SMH10に書き換えて」→城50→20%) ──
+  // ── v9.9.176(2026-09-18 ユーザー明示指示「CHANGESETをQQQM40/XLK30/SMH10に書き換えて」→個別50→20%) ──
   //   ⚠**比率を書き写さない**——`shiro_castle_pct` を変えたとき、袖の振り分け(ccfSleeveTarget) は
-  //     新しい比で配るのに城の按分枠だけ古い数字のまま残る＝同じ台帳を見る二つが違うことを言う（v9.9.65）。
+  //     新しい比で配るのに個別の按分枠だけ古い数字のまま残る＝同じ台帳を見る二つが違うことを言う（v9.9.65）。
   //     正本は portfolio.json の target で、読めなければ既定50へ倒す。
-  //     ★**この一行が無ければ、同じ日の二つの指示（09:09 城30 / 17:32 城20）を取り込んだ時点で
+  //     ★**この一行が無ければ、同じ日の二つの指示（09:09 個別30 / 17:32 個別20）を取り込んだ時点で
   //       袖は20%・按分は30%という食い違いが静かに残っていた**（30 も 20 も書き写しだから）。
-  //   【実測(v9.9.174・席5のとき)】城20%・席5社＝平均4%<8% で上限に当たる社は無く、Tierはさらに素直に効く。
-  // ── 2026-09-22 ユーザー明示指示「私は城30%…」→「40.30にして」で 城20→30% / 網80→70% ──
+  //   【実測(v9.9.174・席5のとき)】個別20%・席5社＝平均4%<8% で上限に当たる社は無く、Tierはさらに素直に効く。
+  // ── 2026-09-22 ユーザー明示指示「私は個別30%…」→「40.30にして」で 個別20→30% / ETF80→70% ──
   //   正本は portfolio.json の target（このコードは読むだけ＝書き写していない）。動くのは金額の配り方だけで、
    //  Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3・席の選定・Tierの刻み(8:6:4:3:2)・上限8% は不変。
   //   【実測(席5＝CW/LRCX/V/MSFT/ASML・時価総額は px×ni÷eps)】
-  //     城20%: CW 1.43(T5) / LRCX 4.29(T2) / V 4.29(T2) / MSFT 5.71(T1) / ASML 4.29(T2) ＝上限張り付き **0社**
-  //     城30%: CW 2.20(T5) / LRCX 6.60(T2) / V 6.60(T2) / MSFT **8.00**(T1) / ASML 6.60(T2) ＝上限張り付き **1社(MSFT)**
-  //   ⚠ portfolio.json の 09-18 の記録は「城30%だと MSFT・V・LRCX の3社が8.00%で張り付く」と書いているが、
+  //     個別20%: CW 1.43(T5) / LRCX 4.29(T2) / V 4.29(T2) / MSFT 5.71(T1) / ASML 4.29(T2) ＝上限張り付き **0社**
+  //     個別30%: CW 2.20(T5) / LRCX 6.60(T2) / V 6.60(T2) / MSFT **8.00**(T1) / ASML 6.60(T2) ＝上限張り付き **1社(MSFT)**
+  //   ⚠ portfolio.json の 09-18 の記録は「個別30%だと MSFT・V・LRCX の3社が8.00%で張り付く」と書いているが、
   //     **それは当時の席5（MSFT/V/LRCX/CW/RBC）での実測**。今の席は CW が T5・ASML が T2 に入れ替わったので
   //     張り付くのは MSFT だけ＝**Tier はほぼ素直に効いている**。古い実測を根拠に判断を固定しない。
   const CITY_TOTAL=(()=>{const v=+(((__pf&&__pf.target)||{}).shiro_castle_pct); return v>0?v:50;})();
   const exFixed=exRows.reduce((a,r)=>{const e=exOf(r);return a+((e&&!e.in_castle_split)?(+e.weight_pct||0):0);},0);
   const CITY=Math.max(0,CITY_TOTAL-exFixed);
   // ── v9.9.146(2026-08-14 ユーザー明示指示「時価総額順にウエイト上げてほしい」) ──────────
-  //   目標ウェイトを**等ウェイト → 時価総額のTier（5段 8:6:4:3:2 を城の按分枠へ正規化）**へ。
-  //   上限8%（¼ケリー）はそのまま（城は v9.9.158 で合計50%＝網50%へ）。刻みはユーザーが4案の実測を見て選んだ（B2）。
+  //   目標ウェイトを**等ウェイト → 時価総額のTier（5段 8:6:4:3:2 を個別の按分枠へ正規化）**へ。
+  //   上限8%（¼ケリー）はそのまま（個別は v9.9.158 で合計50%＝ETF50%へ）。刻みはユーザーが4案の実測を見て選んだ（B2）。
   //   【時価総額の作り方】`px × (ni ÷ eps)`（単一実装 ccfMcapUSD・頭注に検算）。
   //     ⚠**パックの `mcap` 欄は使わない**——社ごとに違う日付の株価で測った値が入っており
   //     （実測で株数の含意が 0.80〜1.02 倍にばらつく）、しかも JP株は十億**円**で米国株は十億**ドル**。
@@ -6824,12 +6824,12 @@ async function renderPlan(){
   //   【一社でも測れなければ等ウェイトへ倒す】部分集合だけ時価で傾けると「測れた社だけが重くなる」
   //     ＝測定の穴が配分の決定に化ける（ルール7の同族）。倒したことは画面で名指しする（v9.9.52）。
   // ── v9.9.159(2026-08-19 ユーザー明示指示「TDGはt5と同じ枠へ」→「t4にして」) ─────────
-  //   **特別枠(in_castle_split:false)がゼロになった**——TDGを城の按分へ入れた。
-  //   よって exFixed=0・**CITY は城の合計50%そのもの**・母集団は **15社（席10＋in_castle_split 5）**。
+  //   **特別枠(in_castle_split:false)がゼロになった**——TDGを個別の按分へ入れた。
+  //   よって exFixed=0・**CITY は個別の合計50%そのもの**・母集団は **15社（席10＋in_castle_split 5）**。
   //   ★**TDGのTierは指定せず測定どおり＝T4**（時価総額 72.5十億$）。一度 T5 を指定したが（1.89%）
   //     ユーザー指示で戻した＝**この社のTierは今、他の14社とまったく同じ測り方で決まっている**。
-  //   【実測(2026-08-19・城の按分枠50%)】15社で **7.41 / 5.56 / 3.70 / 2.78 / 1.85%・合計ちょうど50%**。
-  //     ⚠上限8%に当たる社は無い（MSFT 7.41 が最大）。旧・城60%では MSFT だけが8.00%で張り付いていた。
+  //   【実測(2026-08-19・個別の按分枠50%)】15社で **7.41 / 5.56 / 3.70 / 2.78 / 1.85%・合計ちょうど50%**。
+  //     ⚠上限8%に当たる社は無い（MSFT 7.41 が最大）。旧・個別60%では MSFT だけが8.00%で張り付いていた。
   //   【一つ前の姿(v9.9.158)】按分枠41.2%＝50%−特別枠TDG8.8%・14社で 6.46/4.85/3.23/2.42/1.62%。
   //   【不変】Ω・採点式・四関門・堀の関門70・売却規律S1/S2/S3・上限8%・席の選定。動くのは金額の配り方だけ。
   const twInfo=(()=>{
@@ -6859,18 +6859,18 @@ async function renderPlan(){
     const mcTxt=(r.mcapU>0)?`時価総額 ${r.mcapU>=1000?(r.mcapU/1000).toFixed(2)+'兆':r.mcapU.toFixed(1)+'十億'}$（px×ni÷eps・ドル円${__fxU>0?__fxU.toFixed(2):'—'}で換算）`:'時価総額 未取得';
     const tn=twInfo.tier&&twInfo.tier[r.t];
     const hMissTxt=(twInfo.handMiss&&twInfo.handMiss.length)
-      ?`⚠**手で決めた重み(castle_weights)が揃っていないので Tier へ倒している**——${twInfo.handMiss.join('・')} に重みが無い。指定のある社だけ手で重くすると「指定の穴が配分に化ける」ので全体を倒す（網の ami_weights と同じ作法）。&#10;`:'';
+      ?`⚠**手で決めた重み(castle_weights)が揃っていないので Tier へ倒している**——${twInfo.handMiss.join('・')} に重みが無い。指定のある社だけ手で重くすると「指定の穴が配分に化ける」ので全体を倒す（ETFの ami_weights と同じ作法）。&#10;`:'';
     const modeTxt=twInfo.mode==='hand'
       ?`目標${tw(r)}% = **手で決めた重み**（portfolio.json の target.castle_weights・総資産に対する%）。${mcTxt}。&#10;`
-       +`合計 ${(+((twInfo.hsum)||0).toFixed(2))}%${Math.abs((twInfo.hsum||0)-CITY)>0.05?` ⚠**城の枠 ${CITY}% と食い違っています——黙って正規化していません**（人の決定を機械が書き換えない）。値はそのまま使うので実際の城はこの合計になります。`:` ＝ 城の枠 ${CITY}% にちょうど一致。`}&#10;`
+       +`合計 ${(+((twInfo.hsum)||0).toFixed(2))}%${Math.abs((twInfo.hsum||0)-CITY)>0.05?` ⚠**個別の枠 ${CITY}% と食い違っています——黙って正規化していません**（人の決定を機械が書き換えない）。値はそのまま使うので実際の個別はこの合計になります。`:` ＝ 個別の枠 ${CITY}% にちょうど一致。`}&#10;`
        +`${(twInfo.hover&&twInfo.hover.length)?`⚠**1銘柄の上限${CAP}%を越えている社: ${twInfo.hover.join('・')}**——手指定にはCAPを掛けません（掛けると決定を黙って打ち消すため。特別枠と同じ扱い）。承知のうえで越えている前提です。&#10;`:``}`
        +`Tierの自動配分に戻すには portfolio.json の castle_weights を消してください（今日のTierなら ${tn||'—'}）。&#10;`
       :twInfo.mode==='mcap'
-      ?hMissTxt+`目標${tw(r)}% = **${tn||'—'}**（相対ウェイト 8:6:4:3:2 を城${CITY}%へ正規化${CAP===Infinity?'・**1銘柄の上限は無し**（v9.9.188 で ¼ケリー上限8% を撤廃）':'・上限'+CAP+'%で頭打ち'}）。${mcTxt}。&#10;`
+      ?hMissTxt+`目標${tw(r)}% = **${tn||'—'}**（相対ウェイト 8:6:4:3:2 を個別${CITY}%へ正規化${CAP===Infinity?'・**1銘柄の上限は無し**（v9.9.188 で ¼ケリー上限8% を撤廃）':'・上限'+CAP+'%で頭打ち'}）。${mcTxt}。&#10;`
        +`境界はディケイド（1兆/3千億/1千億/3百億$）で今日の顔ぶれに合わせた線ではない——実測で隣との比は MSFT|V 5.14倍・LRCX|6857 2.57倍・6857|IDXX 3.64倍＝**自然な隙間に落ち、同着を一つも割らない**。&#10;`
        +`Tierが変わるには時価総額が **10%〜201%** 動く必要がある（Ωの段差8/5/3〔v9.9.70で廃止〕が失敗したのは境界が測定誤差σ2.5ptの内側だったから＝ここには当たらない）。&#10;`
-       +`**固定%にしない理由**: 8/6/4/3/2 をそのまま%にすると合計51%（3段8/5/3〔v9.9.70で廃止〕なら70%）で**合計が銘柄数に依存する**＝v9.9.70が段差をやめた当の欠陥が戻る。正規化すれば城の按分枠は定義上ちょうど${CITY}%。&#10;`
-      :hMissTxt+`⚠**等ウェイトへ倒している**（城${CITY}%÷${twInfo.n}社＝席${CCF_SEATS}＋門外例外${Math.max(0,twInfo.n-CCF_SEATS)}）——${(twInfo.missing||[]).join('・')} の時価総額が測れないため。一社でも測れないときに部分集合だけ時価で傾けると「測れた社だけが重くなる」＝測定の穴が配分に化ける。${mcTxt}。&#10;`;
+       +`**固定%にしない理由**: 8/6/4/3/2 をそのまま%にすると合計51%（3段8/5/3〔v9.9.70で廃止〕なら70%）で**合計が銘柄数に依存する**＝v9.9.70が段差をやめた当の欠陥が戻る。正規化すれば個別の按分枠は定義上ちょうど${CITY}%。&#10;`
+      :hMissTxt+`⚠**等ウェイトへ倒している**（個別${CITY}%÷${twInfo.n}社＝席${CCF_SEATS}＋門外例外${Math.max(0,twInfo.n-CCF_SEATS)}）——${(twInfo.missing||[]).join('・')} の時価総額が測れないため。一社でも測れないときに部分集合だけ時価で傾けると「測れた社だけが重くなる」＝測定の穴が配分に化ける。${mcTxt}。&#10;`;
     return `<span style="font-size:11px;color:${filled?'var(--dim)':'var(--gold-bright)'};white-space:nowrap" title="${modeTxt}今月=目標−現在${(r.pos||0).toFixed(0)}%の不足分で按分(B案②)。&#10;（2026-08-14 ユーザー明示指示「時価総額順にウエイト上げてほしい」→「Tier分け」でB2を選択。Ω・E[r]では傾けない——Ωは配分の順位に寄与ゼロ、E[r]は歴史でirr層内の効果が +1.2/−4.4/+1.5pt＝方向なし）">目標${tw(r)}%${tn?'｜'+tn.split(' ')[0]:''}｜今月${filled?'充足':m.toFixed(0)+'%'}</span>`;};
   // v9.9.90: 買付プランの株数換算。盤の現値（日本株=JPY直・米国株=USD×ドル円）で円→株数。
   //   ドル円が取れない/盤に無い銘柄は null＝株数を出さない（ルール7: 推測の価格を置かない）
@@ -6880,7 +6880,7 @@ async function renderPlan(){
     if(q.ccy==='JPY')return{jpy:q.px,px:q.px,ccy:'JPY',label:`¥${q.px.toLocaleString('ja-JP')}`};
     if(fxU>0)return{jpy:q.px*fxU,px:q.px,ccy:q.ccy||'USD',label:`$${q.px.toLocaleString('ja-JP',{maximumFractionDigits:2})}≒¥${Math.round(q.px*fxU).toLocaleString('ja-JP')}`};
     return null;};
-  // v9.9.164: 網の行を注文書へ混ぜる。**ここで按分し直さない**——ccfNetRows / ccfNetAlloc の答えをそのまま運ぶ。
+  // v9.9.164: ETFの行を注文書へ混ぜる。**ここで按分し直さない**——ccfNetRows / ccfNetAlloc の答えをそのまま運ぶ。
   const __NET=ccfNetRows(__np,__pf), __NETA=ccfNetAlloc(__NET,ccfNetBudget());
   const __netOrder=(__NET.rows.length&&__NETA.yen)?{rows:__NET.rows.map(r=>{
     const x=__Q[r.t], has=x&&x.px>0;
@@ -6896,23 +6896,23 @@ async function renderPlan(){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:10px 0 6px;color:var(--gold-bright)">🟢 投下可</h2>`;
     html+=passIn.map((r,i)=>brow(r,i,'',`${histTag(r)}${objTag(r)}${scopeTag(r)}${govTag(r)}${allocTag(r)}${priceTag(r)}${hvTag(r)}<span style="font-size:11.5px;color:var(--muted);white-space:nowrap;margin-left:8px">${r.room!=null?`余地+${r.room.toFixed(0)}%`:''}</span>${ulys(r)}`)).join('');
   }
-  // ◈ 網（ETF）——v9.9.160・2026-08-20 ユーザー指示「買付順位にETFもいれて」
+  // ◈ ETF——v9.9.160・2026-08-20 ユーザー指示「買付順位にETFもいれて」
   //   ★**投下可の枠には入れない**（四関門を通っていないものを通ったように見せない）。別の節にする。
-  //   ★出すのは 目標% / 保有% / 不足 / 経費率 / 網の門(ami.html)の判定 と、網枠の入力があれば円。
+  //   ★出すのは 目標% / 保有% / 不足 / 経費率 / ETFの門(ami.html)の判定 と、ETF枠の入力があれば円。
   //   ★**株数は盤に価格があるときだけ**（推測の価格で株数を作らない・ルール7）。
   (()=>{
     if(!__np||!__pf){
-      html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:#6fa8c9">◈ 網（ETF）</h2>`;
+      html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:#6fa8c9">◈ ETF</h2>`;
       return;
     }
     // v9.9.164: 上で組んだものをそのまま使う（**ここで作り直さない**＝v9.9.65の掟）。
     //   円と株数は 📋今月の注文書 へ移した——**買う場所を一枚にまとめる**（ユーザー指示）。
-    //   この節に残すのは「この本は何か・網の門はどう裁くか」という**材料**だけ。
+    //   この節に残すのは「この本は何か・ETFの門はどう裁くか」という**材料**だけ。
     const N=__NET, NA=ccfNetBudget();
     if(!N.rows.length)return;
     const gapOf=__NETA.gapOf, yen=__NETA.yen;
     const q=t=>{const x=__Q[t]; return (x&&x.px>0)?x:null;};
-    html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:#6fa8c9">◈ 網（ETF）　`
+    html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:#6fa8c9">◈ ETF　`
       +`<span style="font-size:.62em;color:var(--dim)">目標 ${N.netPct}%・${N.rows.length}本`
       +`${N.useW?`（${N.rows.map(r=>r.t+' '+(+r.tw.toFixed(2))+'%').join(' / ')}）`:`の等分（各${N.each.toFixed(1)}%）`}</span></h2>`;
     html+=N.rows.map((r,i)=>{
@@ -6930,14 +6930,14 @@ async function renderPlan(){
                   :`<span style="font-size:11.5px;color:var(--dim);white-space:nowrap">充足</span>`)
         +(r.er!=null?`<span style="font-size:11px;color:var(--dim);white-space:nowrap" title="20年で終価に効く分＝約${(r.er*20).toFixed(1)}%。コストは唯一 確実に複利へ効く数字（リターンは推定・費用は確定）">経費率${r.er}%</span>`:'')
         +(r.eff!=null?`<span style="font-size:11px;color:var(--dim);white-space:nowrap" title="実効銘柄数=1/HHI。銘柄数ではなく重みの偏りで測る">実効${r.eff}銘柄</span>`:'')
-        +(ng?`<span style="font-size:11px;color:#d69a3c;white-space:nowrap" title="網の門(ami.html)のキル。⚠これは門の外の判断——ユーザーが承知で採った本">⛔ ${r.kill.join('／')}</span>`
-            :(r.known?`<span style="font-size:11px;color:var(--pass,#8cc091);white-space:nowrap">✓ 網の門を通る</span>`
-                     :`<span style="font-size:11px;color:#d69a3c;white-space:nowrap">網の門 未評価</span>`))
+        +(ng?`<span style="font-size:11px;color:#d69a3c;white-space:nowrap" title="ETFの門(ami.html)のキル。⚠これは門の外の判断——ユーザーが承知で採った本">⛔ ${r.kill.join('／')}</span>`
+            :(r.known?`<span style="font-size:11px;color:var(--pass,#8cc091);white-space:nowrap">✓ ETFの門を通る</span>`
+                     :`<span style="font-size:11px;color:#d69a3c;white-space:nowrap">ETFの門 未評価</span>`))
         +`</div>`
         +`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:3px;font-size:11.5px;color:var(--dim)">`
         // ★円と株数はここに出さない（v9.9.164）——**同じ数字を二箇所に置かない**。
         //   今月いくら買うかは 📋今月の注文書 の一枚に集約した（ユーザー指示「表示はまとめてに」）。
-        //   この節に残すのは「この本は何か・網の門はどう裁くか」という材料だけ。
+        //   この節に残すのは「この本は何か・ETFの門はどう裁くか」という材料だけ。
         +(y!=null&&y>0?`<span style="white-space:nowrap;color:var(--gold-bright)">今月 買う</span>`
           :(y!=null?`<span style="white-space:nowrap">今月なし</span>`
                    :(NA>0?`<span style="white-space:nowrap">今月なし</span>`
@@ -6969,7 +6969,7 @@ async function renderPlan(){
     html+=orphanOut.map((r,i)=>brow(r,i,'旧',`<span style="font-size:11.5px;white-space:nowrap;color:var(--rust);margin-left:8px">パック無し（out/${r.t}_gate_pack.json が存在しない）</span>`)).join('');
   }
   // ⛔ 事業の収縮で落ちた組（v9.9.99・ユーザー明示指示）。**黙って消さない**——落ちた社を名指しで出さないと
-  //   「なぜ買付順位から消えたか」が判らず、v9.9.52で踏んだ「城の行が理由不明で出ない」と同じ事故になる。
+  //   「なぜ買付順位から消えたか」が判らず、v9.9.52で踏んだ「個別の行が理由不明で出ない」と同じ事故になる。
   if(shrinkOut.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:var(--rust)">⛔ 事業の収縮で見送り（Ω75+・堀70+だが売上縮小 ∧ 営業利益率低下）</h2>`;
     html+=shrinkOut.map((r,i)=>brow(r,i,'縮',pchip(r)+`<span style="font-size:11.5px;white-space:nowrap;color:var(--rust);margin-left:8px">${r.shrink.why}</span>`)).join('');
@@ -6988,7 +6988,7 @@ async function renderPlan(){
   }
   // ⛔ 点検の要修正で落ちた組(v9.9.66・ユーザー明示指示)。**黙って消さない**——
   //   落ちた社を名指しで出さないと「なぜ買付順位から消えたか」が判らず、v9.9.52で踏んだ
-  //   「城の行が理由不明で出ない」と同じ事故になる。行の ⚠ バッジからそのまま直しに行ける。
+  //   「個別の行が理由不明で出ない」と同じ事故になる。行の ⚠ バッジからそのまま直しに行ける。
   if(audOut.length){
     html+=`<h2 class="serif" style="font-size:1.15em;margin:22px 0 6px;color:var(--rust)">⛔ 点検の要修正で見送り（Ω75+・堀70+だが台帳の値が壊れている）</h2>`;
     html+=audOut.map((r,i)=>brow(r,i,'検',`<span style="font-size:11.5px;white-space:nowrap;color:var(--rust);margin-left:8px">要修正 ${(r.audW||[]).filter(w=>w.lv==='err').length}件</span>`)).join('');

@@ -7,11 +7,11 @@
        pf:weights    … 目標ウェイト（配分の決定そのもの）
        pf:sold       … 売却記録
        pf:monthly_total… 今月の入金総額（v9.9.163で新設。**入っていればこれが正本**で、
-                        城枠と網枠は portfolio.json の target（shiro_castle_pct / ami_net_pct）から導かれる。
-                        ⚠**ここに比を書き写さない**——2026-09-18 に 城50/網50 → 城20/網80 へ改定された）
-       pf:monthly    … 今月の個別枠（城）
-       pf:monthly_net… 今月の網枠（ETF・v9.9.160で新設）
-       pf:net        … 網(ETF)の買付の記録（v9.9.168で新設）。**Ⅶ資産は sleeve:'net' の行を
+                        個別枠とETF枠は portfolio.json の target（shiro_castle_pct / ami_net_pct）から導かれる。
+                        ⚠**ここに比を書き写さない**——2026-09-18 に 個別50/ETF50 → 個別20/ETF80 へ改定された）
+       pf:monthly    … 今月の個別枠
+       pf:monthly_net… 今月のETF枠（ETF・v9.9.160で新設）
+       pf:net        … ETFの買付の記録（v9.9.168で新設）。**Ⅶ資産は sleeve:'net' の行を
                         読み込み時に削除する**（2026-08-03 ユーザー明示指示「個別銘柄だけに」）ので、
                         ETFの株数は pf:portfolio に置けない。門だけが読む別のキーとして持ち、
                         portfolio.json（静的スナップショット）に重ねて保有%を出す
@@ -161,7 +161,7 @@
                       ※ `sh`(株数) `v`(金額) `bpx` は**1件も動かない**＝人の決定は無傷
        pf:weights   … `city`(浮動小数の誤差) と `total`＝**全部が P からの導出値**（portfolio.html:350）
        pf:sold / pf:net / pf:monthly_total / pf:monthly / pf:monthly_net / g7ignite:map … **完全一致**
-       ※ pf:net は 2026-08-22 新設。**人しか書かない**（門の◈網の「＋株」だけが書き手で、機械の書き戻しは無い）
+       ※ pf:net は 2026-08-22 新設。**人しか書かない**（門の◈ETFの「＋株」だけが書き手で、機械の書き戻しは無い）
      ⇒ 落とすのはこの実測どおりの範囲だけにする。**広く落とすと本物の決定を隠す**ので、
         JSONとして読めなければ素の比較へ倒す（片側だけに倒れる）。 */
   /* ⚠2026-08-17 追加: `g7ignite:map`（点灯日）も**機械しか書かない**。
@@ -196,9 +196,9 @@
      旧版の帯は「手元の決定が repo に入っていません」としか言わず、**何が未書き出しかを出さなかった**
      ので、読み手には本物か誤検知かが判らなかった（実際その状態でユーザーから「そもそもいるの？」と
      問われた）。判定は nothingPending と同じ sameDecision を使う＝二つの答えが割れない。 */
-  var LABEL = { 'pf:portfolio': '株数', 'pf:net': '網(ETF)の買付記録', 'pf:sold': '売却記録',
+  var LABEL = { 'pf:portfolio': '株数', 'pf:net': 'ETFの買付記録', 'pf:sold': '売却記録',
                 'pf:weights': '目標ウェイト', 'pf:monthly_total': '今月の入金総額',
-                'pf:monthly': '今月の個別枠', 'pf:monthly_net': '今月の網枠', 'g7ignite:map': '点灯日' };
+                'pf:monthly': '今月の個別枠', 'pf:monthly_net': '今月のETF枠', 'g7ignite:map': '点灯日' };
   function pendingKeys(repoData) {
     var out = [];
     try {
@@ -362,10 +362,10 @@
     var c = collect(), core = collect(true);
     var keys = Object.keys(core.data).map(function (k) {   // 見出しに出す品目は**決定だけ**の側
       return k.indexOf('g7log:') === 0 ? '検証履歴' : ({
-        'pf:portfolio': '株数', 'pf:net': '網(ETF)の買付記録',
+        'pf:portfolio': '株数', 'pf:net': 'ETFの買付記録',
         'pf:weights': '目標ウェイト', 'pf:sold': '売却記録',
         'pf:monthly_total': '今月の入金総額',
-        'pf:monthly': '今月の個別枠', 'pf:monthly_net': '今月の網枠', 'g7ignite:map': '点灯日'
+        'pf:monthly': '今月の個別枠', 'pf:monthly_net': '今月のETF枠', 'g7ignite:map': '点灯日'
       }[k] || k);
     });
     var uniq = keys.filter(function (v, i) { return keys.indexOf(v) === i; });
