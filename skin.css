@@ -380,40 +380,8 @@ body:has(#pg10.on) .gate-hero{display:block;}
   cursor:pointer; vertical-align:middle;}
 .ccf-money-btn[aria-pressed="true"]{color:var(--rb-ink,#111); border-color:var(--rb-ink2,#555);}
 
-/* ── 13. 夜の門（ユーザー指示「これらを使って門が、おしゃれになるようにして」・2026-09-23）──────
-   看板を夜の絵へ差し替えた: 横＝円い門（assets/gate-hero-wide.jpg）／縦持ちの携帯＝二本柱の門（gate-hero-portrait.jpg）。
-   どちらの絵にも題字が無いので、題字は常に HTML の文字（.gate-hero-t）で暗い空に白と金で置く。
-   紺の光の絵（gate-bg-navy.jpg）は 📊盤の「総資産」の札の地に敷く。表示だけ・判定に不使用。
-   §10/§11 の旧看板の規則は .gate-night で上書きする（旧絵 gate-hero.jpg は戻せるよう assets に残す）。 */
-.gate-hero.gate-night{background:#07080b; overflow:hidden;}
-.gate-hero.gate-night img{max-height:min(56.3vw,620px); object-position:50% 58%; aspect-ratio:auto;}
-.gate-hero.gate-night::after{content:""; position:absolute; inset:0; height:auto; pointer-events:none;
-  background:linear-gradient(180deg,rgba(5,6,10,.55) 0%,rgba(5,6,10,0) 38%,rgba(5,6,10,0) 78%,rgba(5,6,10,.35) 100%);}
-.gate-hero.gate-night .gate-hero-t{display:block; position:absolute; z-index:1; left:6%; right:auto; top:12%; text-align:left;
-  line-height:1; font-family:Inter,"Noto Sans JP",sans-serif; color:#f4efe4;}
-.gate-hero.gate-night .gate-hero-t b{display:block; font-weight:300; font-size:clamp(2.4rem,7vw,5.6rem); letter-spacing:.24em;
-  background:linear-gradient(180deg,#fffaf0 20%,#e2c27a 100%); -webkit-background-clip:text; background-clip:text; color:transparent;
-  text-shadow:0 0 28px rgba(226,194,122,.18);}
-.gate-hero.gate-night .gate-hero-t b span{background:inherit; -webkit-background-clip:text; background-clip:text; color:transparent; transform:none;}
-.gate-hero.gate-night .gate-hero-t i{display:block; margin-top:1em; font-style:normal; font-weight:400;
-  font-size:clamp(.8rem,1.5vw,1.15rem); letter-spacing:.6em; color:rgba(244,239,228,.82);}
-.gate-hero.gate-night .gate-hero-t i::before{content:""; display:block; width:2.6em; height:1px; margin:0 0 1em;
-  background:linear-gradient(90deg,#e2c27a,rgba(226,194,122,0));}
-@media (orientation:portrait) and (max-width:700px){
-  .gate-hero.gate-night img{aspect-ratio:2/3; max-height:78vh; object-position:50% 70%;}
-  .gate-hero.gate-night::after{background:linear-gradient(180deg,rgba(5,6,10,.35) 0%,rgba(5,6,10,0) 30%,rgba(5,6,10,0) 80%,rgba(5,6,10,.45) 100%);}
-  .gate-hero.gate-night .gate-hero-t{left:0; right:0; top:8%; text-align:center;}
-  .gate-hero.gate-night .gate-hero-t b{font-size:clamp(2.6rem,15vw,4.6rem); padding-left:.24em;}
-  .gate-hero.gate-night .gate-hero-t i{font-size:clamp(.85rem,3.8vw,1.1rem); padding-left:.6em;}
-  .gate-hero.gate-night .gate-hero-t i::before{margin:0 auto 1em;}
-}
-@media (prefers-reduced-motion:no-preference){
-  .gate-hero.gate-night img{animation:gateNightIn 1.6s ease-out both;}
-  .gate-hero.gate-night .gate-hero-t{animation:gateNightT 1.4s .3s ease-out both;}
-}
-@keyframes gateNightIn{from{transform:scale(1.04); filter:brightness(.6);} to{transform:none; filter:none;}}
-@keyframes gateNightT{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;}}
-
+/* ── 13. 総資産の札（ユーザー指示「これらを使って門が、おしゃれになるようにして」→「これだけ採用して」・2026-09-23）──
+   紺の光の絵（assets/gate-bg-navy.jpg・ユーザー提供）を 📊盤の「総資産」の札の地に敷く。表示だけ・判定に不使用。 */
 /* 📊盤の「総資産」の札：紺の光の絵を地に敷き、白と金の数字にする */
 .rb-hero{position:relative; overflow:hidden; border:0 !important; border-radius:18px; padding:22px 20px 20px !important;
   color:#eef1f7; background:#06122b url('assets/gate-bg-navy.jpg') center 72%/cover no-repeat;
