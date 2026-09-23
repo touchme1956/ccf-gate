@@ -26,6 +26,10 @@
   (2) **桁の照合**: `px×ni÷eps` がパック自身の `mcap` 欄の 100倍以上に出る
   ⚠**日本株は対象外**——EDINET由来の evidence は実額を**千円**で書くので value=raw/1e6 が正しい
   （実測 6861: 値445.2 / 実額445,185千円）。ここを外さないと正しい社を壊す。
+  ★**日本株は別の証拠で裁く（2026-09-23 追加）**——16パックが `_meta.unit` に**自分で『百万円』と申告**したまま
+  ni/fcf を百万円で持っていた（実測 2477: px 2349×ni 1067÷eps 179 = 14,002十億円＝¥14兆の小型株）。
+  申告された単位そのものが演繹的な証拠なので、`_meta.unit` が『百万円』を名乗り『十億円』を名乗らない日本株パックだけを
+  ちょうど1000で割り、unit の札を十億円へ書き換える（evidence の実額が千円である社＝unit が『JPY』の社には触れない）。
 
 使い方: python3 night/fix_ni_unit.py [--write] [--only T,...] [--check]
   `--check` は**見つかったら exit 1**（CIの見張り）。是正の道具であると同時に、
@@ -71,9 +75,19 @@ def scan(only=None):
         t = nm.split()[0] if nm else os.path.basename(p)[:-16]
         if only and t not in only:
             continue
-        if JP.match(nm):
-            continue                      # 日本株は実額が千円＝この検査は当たらない
         meta = d.get('_meta') or {}
+        if JP.match(nm):
+            # 日本株は実額が千円＝下の内部矛盾の検査は当たらない。**自分で『百万円』と申告したパックだけ**を裁く
+            u = str(meta.get('unit') or '')
+            ni, fcf = d.get('ni'), d.get('fcf')
+            if '百万円' in u and '十億円' not in u and isinstance(ni, (int, float)) and ni:
+                px, eps = d.get('px'), d.get('eps')
+                mag = (px * ni / eps) if all(isinstance(x, (int, float)) for x in (px, eps)) and eps else None
+                out.append({'t': t, 'path': p, 'verdict': 'unit_million_jp', 'contra': True,
+                            'mag': round(mag, 1) if mag else None, 'ni': ni, 'fcf': fcf,
+                            'ni_new': div1000(ni), 'fcf_new': div1000(fcf) if isinstance(fcf, (int, float)) else None,
+                            'conv_old': (fcf / ni) if isinstance(fcf, (int, float)) else None, 'unit_old': u})
+            continue
         ev = meta.get('evidence') or {}
         ni, fcf = d.get('ni'), d.get('fcf')
         if not isinstance(ni, (int, float)) or not ni:
@@ -112,6 +126,25 @@ def scan(only=None):
 def write(rows):
     n = 0
     for r in rows:
+        if r['verdict'] == 'unit_million_jp':
+            d = load(r['path'])
+            d['ni'] = r['ni_new']
+            if r['fcf_new'] is not None:
+                d['fcf'] = r['fcf_new']
+            meta = d.setdefault('_meta', {})
+            meta['unit'] = ('JPY（fcf/ni 欄は十億円＝門の ccfMcapUSD の規約。2026-09-23 に百万円から1000で割って揃えた'
+                            '——旧札『%s』）' % r['unit_old'])
+            k = meta.get('kenshi')
+            k = k if isinstance(k, list) else ([] if k in (None, '') else [k])
+            k.append('2026-09-23 単位是正: ni %s→%s / fcf %s→%s（百万円→十億円・ちょうど1000で割った）。'
+                     'パック自身の unit が『%s』と申告していた＝値ではなく単位の札の誤り。conv=fcf/ni は不変でΩは動かない。'
+                     '百万円のままだと `ccfMcapUSD` の px×ni÷eps が %s十億円（1000倍）に化ける'
+                     % (r['ni'], r['ni_new'], r['fcf'], r['fcf_new'], r['unit_old'], r['mag']))
+            meta['kenshi'] = k
+            with open(r['path'], 'w', encoding='utf-8') as f:
+                json.dump(d, f, ensure_ascii=False, indent=1)
+            n += 1
+            continue
         if r['verdict'] != 'unit_million':
             continue
         d = load(r['path'])
@@ -151,13 +184,15 @@ if __name__ == '__main__':
         if a == '--only' and i + 1 < len(sys.argv):
             only = set(sys.argv[i + 1].split(','))
     rows = scan(only)
-    hit = [r for r in rows if r['verdict'] == 'unit_million']
+    hit = [r for r in rows if r['verdict'] in ('unit_million', 'unit_million_jp')]
     one = [r for r in rows if r['verdict'] == 'conflict']
-    print('■ ni/fcf の単位是正（百万$ → 十億$）  ※日本株は対象外（実額が千円のため）')
+    print('■ ni/fcf の単位是正（百万$ → 十億$ ／ 日本株は unit が『百万円』と申告したパックだけ 百万円 → 十億円）')
     for r in hit:
-        print('  %-6s ni %-8s → %-10s / fcf %-8s → %-10s  conv %-6s（不変）  桁のずれ %sx'
+        print('  %-6s ni %-8s → %-10s / fcf %-8s → %-10s  conv %-6s（不変）  %s'
               % (r['t'], r['ni'], r['ni_new'], r['fcf'], r['fcf_new'],
-                 round(r['conv_old'], 3) if r['conv_old'] is not None else '—', r['mag']))
+                 round(r['conv_old'], 3) if r['conv_old'] is not None else '—',
+                 ('px×ni÷eps = %s十億円（百万円のまま）' % r['mag']) if r['verdict'] == 'unit_million_jp'
+                 else ('桁のずれ %sx' % r['mag'])))
     if one:
         print('  ⚠内部矛盾は「単位は正しい」と言うのに桁が合わない＝**別の壊れ方。書かない**:')
         for r in one:
@@ -169,7 +204,7 @@ if __name__ == '__main__':
         if hit or one:
             print('  ✗ 単位が十億でないパックが残っている（python3 night/fix_ni_unit.py --write）')
             sys.exit(1)
-        print('  ✓ ni/fcf の単位はすべて十億$（対象 %d社を走査）' % len(
+        print('  ✓ ni/fcf の単位はすべて十億（$ / 円）（対象 %d社を走査）' % len(
             [p for p in glob.glob(os.path.join(ROOT, 'out', '*_gate_pack.json'))]))
     else:
         print('  （--write で反映。先に影の計測でΩが動かないことを確かめること）')

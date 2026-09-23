@@ -15,6 +15,7 @@
  *       知りたいときは、この結果を答えにしないこと（本来の値が高い社も低い社も一律に化ける）。
  *   node night/score_all.js --only MSFT,6920,NVDA   銘柄を絞る
  *   ※--only / --set / --jp / --us の部分実行は out/score_all.partial.json へ書く。**正本 score_all.json は上書きしない**
+ *   node night/score_all.js --only CW --out /tmp/x.json   書き先を指定（並行作業で partial を踏み合わない。正本は書かない）
  *     （部分結果で正本を潰すと、それを読む検査器〔audit_moat / audit_moat_gap / audit_kill_roiic〕が
  *      その数社を全台帳と誤認して静かに嘘をつく。2026-07-29に--onlyで実際に踏み、
  *      2026-08-04の監査(A5)で --jp/--us も同じ穴だと判った——shadow_jp_us_roic.py が毎回踏んでいた）
@@ -383,8 +384,11 @@ let ALLOC_SEMI_N = 0, ALLOC_SEMI_PCT = 0;   // v9.9.145: 上限は撤去。集�
 // 2026-08-04(A5): 当初のガードは --only/--set しか見ておらず、**--jp/--us が同じ穴のまま**だった
 //   （shadow_jp_us_roic.py が --jp を毎回踏み、正本が約40行に縮んだまま残った）。行を絞る旗は全部 partial。
 const partial = only.length || Object.keys(over).length || argv.includes('--jp') || argv.includes('--us');
-const outFile = partial ? 'score_all.partial.json' : 'score_all.json';
-fs.writeFileSync(path.join(ROOT, 'out', outFile), JSON.stringify(rows, null, 1));
+// 2026-09-23: --out FILE で書き先を変えられる（並行して走る作業どうしが partial を踏み合わないため）。
+//   --out を付けた実行は正本 score_all.json にも partial にも書かない。
+const outArg = arg('--out');
+const outFile = outArg ? outArg : (partial ? 'score_all.partial.json' : 'score_all.json');
+fs.writeFileSync(outArg ? path.resolve(outArg) : path.join(ROOT, 'out', outFile), JSON.stringify(rows, null, 1));
 
 const med = a => { const v = a.slice().sort((x, y) => x - y); return v.length ? v[Math.floor(v.length / 2)] : NaN; };
 const brief = (lab, g) => {
@@ -501,4 +505,4 @@ console.log(`   ※全${rows.length}社: 要修正 ${rows.reduce((a,x)=>a+x.audE
     for (const x of _b) console.log(`   ・${x.label}（out/${x.f}）… ${x.why}`);
     console.log('   → これは「該当なし」ではなく「測っていない」。上の🟢投下可はこの関門を通っていません。');
   } }
-console.log(`\n→ out/${outFile}（全${rows.length}件・降順）`+ (partial ? '　※部分実行なので正本 score_all.json は書き換えていない' : ''));
+console.log(`\n→ ${outArg ? outArg : 'out/' + outFile}（全${rows.length}件・降順）`+ (partial ? '　※部分実行なので正本 score_all.json は書き換えていない' : ''));
