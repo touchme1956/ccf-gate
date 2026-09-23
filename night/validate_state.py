@@ -187,10 +187,52 @@ def main():
         except Exception as e:
             warns.append(f"portfolio.json との突合せができない: {e}")
 
+    # (8) 門外例外の「買うと決めた」と「買った」が割れていないか（2026-09-23・todo gate_exception_unexecuted）
+    #   ★2026-09-18 に実際に踏んだ——TDG の特別枠（1株・8.8%）は 2026-08-09 に決まり gate_exceptions.json に
+    #   記録されていたのに**執行されていなかった**（席を5へ戻すときに保有ゼロと判って初めて気づいた）。
+    #   gate_exceptions.json は「決めた」しか持たず、「買った」は state.json(pf:portfolio) にしか無い。
+    #   ⚠ FAIL にはしない——決めた直後・買った直後は割れているのが正常で、問題は**放置**されること。
+    #     (a) 城に入れると決めた例外（weight_pct>0 か in_castle_split）が、最後の決定から30日たっても保有ゼロ
+    #     (b) 保有があるのに、例外の側では城から降ろされている（買い増しが止まる。売却規律 S1/S2/S3 とは別の話）
+    exc = {"undone": [], "held_but_dropped": []}
+    gp = os.path.join(ROOT, "gate_exceptions.json")
+    if "pf:portfolio" in data and os.path.exists(gp):
+        try:
+            import datetime as _dt
+            held = {}
+            for p in (json.loads(data["pf:portfolio"]).get("positions") or []):
+                t = str(p.get("t") or "").upper()
+                if t and p.get("sleeve") not in ("net", "cash"):
+                    held[t] = held.get(t, 0) + (p.get("sh") or 0)
+            today = _dt.date.today()
+            for it in (json.load(open(gp, encoding="utf-8")).get("items") or []):
+                t = str(it.get("t") or "").upper()
+                if not t:
+                    continue
+                on = (it.get("weight_pct") or 0) > 0 or bool(it.get("in_castle_split"))
+                dates = []
+                for x in (it.get("decided") or []):
+                    try:
+                        dates.append(_dt.date.fromisoformat(str(x)[:10]))
+                    except ValueError:
+                        pass
+                last = max(dates) if dates else None
+                sh = held.get(t, 0)
+                if on and sh <= 0 and (last is None or (today - last).days >= 30):
+                    exc["undone"].append(t)
+                    warns.append(f"{t} は門外例外で城に入れると決めた（最後の決定 {last or '日付なし'}）のに保有ゼロのまま30日以上"
+                                 "——執行し忘れか、決定を取り消すなら gate_exceptions.json を weight_pct:0 へ")
+                elif not on and sh > 0:
+                    exc["held_but_dropped"].append(t)
+                    warns.append(f"{t} は保有 {sh} 株あるのに、門外例外の側では城から降ろされている"
+                                 "（新規資金は回らない。売るかどうかは売却規律 S1/S2/S3 の話で、この警告は売れとは言っていない）")
+        except Exception as e:
+            warns.append(f"gate_exceptions.json との突合せができない: {e}")
+
     if AS_JSON:
         print(json.dumps({"ok": not fails, "savedAt": saved, "n": len(data),
                           "have": have, "missing": miss, "logs": nlog,
-                          "drift": drift, "fails": fails, "warns": warns},
+                          "drift": drift, "exceptions": exc, "fails": fails, "warns": warns},
                          ensure_ascii=False, indent=1))
         return 1 if fails else 0
 

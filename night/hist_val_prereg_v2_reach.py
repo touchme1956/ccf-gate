@@ -52,6 +52,47 @@ STOP_CAP = 0.15         # 基準4（止率の上限）。v1 と同じ＝ゴー�
 LIFT = 2.0              # 基準1（止めた群の事象率 ÷ ベース）。v1 と同じ
 MIN_NUM = 5             # 基準1（分子の下限）。v1 と同じ
 
+# ---- 検問②③（2026-08-10 の教訓を器にした・2026-09-23 追加・todo prereg_v3_checklist） ----
+#   ② **各セルで実効的に要求される倍率**——need = max(MIN_NUM, ceil(LIFT×base×K)) の MIN_NUM が小さい K で拘束すると、
+#      登録した LIFT=2.0 倍が静かに高い線へ化ける（実測: dd5≤−0.40 の2013は 2.86倍、−0.50 は 7.85/5.52倍＝到達不能）。
+#      事前登録は『到達不能』には旗を立てたが『線が変わっている』には立てなかった。
+#   ③ **登録した手続きの検出力**——真の lift が L のとき、止めた K 社の事象数を Binomial(K, min(1, L×base)) と置いて
+#      P(事象数 ≥ need) を出す（v2 は事後に測って 0.512 と判った。先に判っていれば標本設計を変えられた）。
+#   ⚠ ここも**指標と結果を突き合わせない**——使うのは K（止めた社数）・ベース率・need だけ＝周辺分布。
+POWER_LIFTS = (2.0, 3.0)
+
+
+def binom_sf(k_min, n, p):
+    """P(X >= k_min), X~Binomial(n, p)。"""
+    import math
+    if k_min <= 0:
+        return 1.0
+    if k_min > n or p <= 0:
+        return 0.0
+    if p >= 1:
+        return 1.0
+    return sum(math.comb(n, i) * p ** i * (1 - p) ** (n - i) for i in range(k_min, n + 1))
+
+
+def check23(K, n_ev, base):
+    """② 実効倍率と拘束条件 ／ ③ 真の lift ごとの検出力。"""
+    import math
+    lift_need = math.ceil(LIFT * (base or 0) * K)
+    need = max(MIN_NUM, lift_need)
+    exp_base = (base or 0) * K
+    eff = round(need / exp_base, 2) if exp_base > 0 else None
+    ceil_num = min(n_ev, K)
+    power = {}
+    for L in POWER_LIFTS:
+        pw = binom_sf(need, K, min(1.0, L * (base or 0))) if ceil_num >= need else 0.0
+        power[f"真のlift{L:.1f}倍"] = round(pw, 3)
+    return {"必要分子": need,
+            "拘束": "MIN_NUM" if MIN_NUM > lift_need else "LIFT",
+            "実効倍率": eff,
+            "登録倍率から化けた": bool(eff is not None and eff > LIFT * 1.2),
+            "検出力": power}
+
+
 DD_WIN = 60             # 5年高値
 DD_MIN_OBS = 48         # 60ヶ月中48ヶ月以上の観測を要求
 DD3_WIN, DD3_MIN_OBS = 36, 30
@@ -117,7 +158,30 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", default=os.path.join(OUT, "hist_val_prereg_v2_reach.json"))
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--augment", action="store_true",
+                    help="価格を取り直さず、既存の出力の K・ベース率から検問②③だけを足して書き戻す")
     a = ap.parse_args()
+
+    if a.augment:
+        # 価格キャッシュ(out/_histval_cache)は .gitignore＝容器の中にしか無い。取り直せない容器で全体を回すと
+        # 被覆0の出力で既存の記録を潰すので、②③に要る K とベース率だけを既存の出力から読む。
+        res = json.load(open(a.json, encoding="utf-8"))
+        n = 0
+        for y, v in res["vintages"].items():
+            for pn, p in v["pools"].items():
+                for t_key, c in p["dd5_止率"].items():
+                    for k, r in c["セル別到達可能性"].items():
+                        r["検問②③"] = check23(c["止めた社数"], p["事象"][k], p["ベース率"][k])
+                        n += 1
+                        if not a.quiet:
+                            q = r["検問②③"]
+                            print(f"{y} {pn} dd5<={t_key} {k}: K={c['止めた社数']} 必要{q['必要分子']}"
+                                  f"（拘束 {q['拘束']}）実効{q['実効倍率']}倍"
+                                  f"{' ★化けた' if q['登録倍率から化けた'] else ''} 検出力 {q['検出力']}")
+        res["検問②③_追記"] = "2026-09-23 --augment（価格は取り直していない・K とベース率は元の出力のまま）"
+        json.dump(res, open(a.json, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        print(f"\n-> {a.json}（{n}セルに検問②③を追記）")
+        return
 
     res = {"generated": "2026-08-09",
            "tool": "night/hist_val_prereg_v2_reach.py",
@@ -198,6 +262,7 @@ def main():
                         "分子の天井": ceil_num, "必要分子": need,
                         "到達可能": bool(K > 0 and ceil_num >= need),
                     }
+                    c["セル別到達可能性"][k]["検問②③"] = check23(K, n_ev, base[k])
 
             # --- 神の遮断器の上限 ---
             # 止率の上限 STOP_CAP のもとで、事象社だけを狙って止めたときの分子の天井
