@@ -360,9 +360,12 @@ def main():
         if only and t.upper() not in only:
             continue
         ev = ((pack.get("_meta") or {}).get("evidence") or {})
-        hit = [k for k in W if EXCL.search(str(ev.get(k) or ""))]
-        if hit:
-            place[t] = {"where": hit, "vals": {k: num(pack.get(k)) for k in W},
+        # ⚠ 2026-09-23: ここは以前 `hit` という名前を使い回し、上の `hit`（重なりのある社の行）を上書きしていた
+        #   ＝ out/moat_double_count.json の "rows" が 2026-08-19 以降ずっと [] だった（読む道具
+        #   moat_dc_batches / shadow_moat_dedup / shadow_moat_merge は黙って0件を受け取っていた）。
+        where = [k for k in W if EXCL.search(str(ev.get(k) or ""))]
+        if where:
+            place[t] = {"where": where, "vals": {k: num(pack.get(k)) for k in W},
                         "omega": (sc.get(t) or {}).get("s"), "buy": bool((sc.get(t) or {}).get("buy"))}
     if place:
         cnt = {}
