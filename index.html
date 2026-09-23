@@ -1138,7 +1138,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.194</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.195</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -2045,12 +2045,17 @@ function compute(){
   //   sustainへcagrの二本目の経路を作ることになるため（同じ信号を二度数えない、という門の作法）。
   //   **滑走路の評価は未来門が担う**: f2(滑走路6%)とF11(成長率9%)がいずれも316/316社で実測済み。
   //   採点への影響はゼロ（v9.9.44時点で既に全社がこの経路だったため）。
-  let sustain=gm([pm,pr],[0.475,0.525]);
+  // v9.9.195（2026-09-23 ユーザー指示「日本株のHOYAの問題を解決して」）: **堀が算出不能(5本中4本未満)のとき、堀を0点として掛けない**。
+  //   旧: moatIdx=0 → pm≈0.30×priceConfirm → sustain・Ω(幾何平均)・objDurable が0へ潰れ、MOAT柱の陥落で S1（全売却検討）まで立っていた。
+  //   実害: 審査で dom/irr が規約どおり空欄になった13社（HOYA=事業間で刻みが割れる／6861・8035・6954 ほか=有報にシェア・切替コストの開示なし）が
+  //   **全社 Ω≈0・偽の売りシグナル**。空欄は「測れない」であって「堀が無い」ではない（v9.9.193 の判断項目と同じ原則）。
+  //   → 堀の項を落として残りを再正規化する。**堀の関門(70+)は NA を通さないまま**なので買付には一切乗らない（買わない理由は残る）。
+  let sustain=moatNA?pr:gm([pm,pr],[0.475,0.525]);
   sustain=Math.max(0,Math.min(100,sustain));
   const setp=(id,v,th)=>{$(id+'V').textContent=v.toFixed(0);$(id+'V').style.color=v>=th?'var(--ink)':'var(--rust)';$(id+'S').textContent=v>=th?'通過':'不足';$(id+'S').className='pil-st '+(v>=th?'pil-ok':'pil-ng');};
   setp('pm',pm,70);setp('pr',pr,70);
   const pfail=[]; let pillarPen=0;
-  if(pm<70){pfail.push('MOAT');pillarPen+=(70-pm)*0.8;}
+  if(!moatNA&&pm<70){pfail.push('MOAT');pillarPen+=(70-pm)*0.8;}   // v9.9.195: 算出不能の堀は『陥落』ではなく『未測定』
   if(pr<70){pfail.push('ROIC');pillarPen+=(70-pr)*0.8;}
   // v9.9.45: TAM柱は廃止（penが原本から測れず全316パックで空欄だったため）。滑走路はf2/F11が担う。
   const psig=$('pillarSig');psig.innerHTML='';
@@ -2311,7 +2316,7 @@ function compute(){
   //   そのままΩの事故になる。だから night/audit_roic.py と recalc_roic.py で検問し続けること。
   // 【ほぼ効かない項（設計の帰結・実測値）】cagr 1.3% ／ nde −0.4%（財務は点でなくキル(>4)で見る）／
   //   営業利益率 5.5%（priceConfirm経由のみ）。「効かない」のは欠陥ではなく、そう設計されている。
-  let evalScore=gm([Q,sustain,F,moatIdx],[0.35,0.30,0.22,0.13]);
+  let evalScore=moatNA?gm([Q,sustain,F],[0.35/0.87,0.30/0.87,0.22/0.87]):gm([Q,sustain,F,moatIdx],[0.35,0.30,0.22,0.13]);   // v9.9.195: 堀NAは項ごと落として再正規化
   // ── v9.9.143（2026-08-14 ユーザー指示「1.2.3すべてやりたい」の③）────────────────
   // ★Ωは「壊れないか」と「複利するか」を一つの数字に潰している。分けて**表示だけ**する。
   // 【なぜ】測定が繰り返し同じことを言っている——
@@ -2335,7 +2340,7 @@ function compute(){
   const _DW=[0.35*0.5333,0.30*0.475,0.13], _CW=[0.35*0.4667,0.30*0.525,0.22];
   const _ds=_DW.reduce((a,b)=>a+b,0), _cs=_CW.reduce((a,b)=>a+b,0);
   const _rawOmega=evalScore;   // ★分解の検算用: キル・減点の**前**の値。恒等式はここでしか成立しない
-  const objDurable =gm([P,pm,moatIdx],_DW.map(w=>w/_ds));
+  const objDurable =moatNA?P:gm([P,pm,moatIdx],_DW.map(w=>w/_ds));   // v9.9.195: 堀NAなら耐久の目的は P だけで測る
   const objCompound=gm([now,pr,F],   _CW.map(w=>w/_cs));
   if(kills.length)evalScore=Math.min(evalScore,Math.max(30,60-8*(kills.length-1))); // v9.2大工事: キル数で段階化(1個60/2個52/3個44…)。「1個の綻び」と「複数の致命傷」を区別
   // ===== 提言3(監査): 地政学・単一地域集中リスクの段階ペナルティ =====
