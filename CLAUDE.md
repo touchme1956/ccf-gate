@@ -366,6 +366,8 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
 - 四半期 保有点検: `python kessan_check.py`
   - holdings.jsonの保有銘柄について、直近の10-Q/8-Kを確認し、四半期売上YoY・営業利益率の前年同期差・警報(誠/限/集/指針/減損/退任)を機械抽出
   - 出力: out/kessan/{T}_qcheck.txt と要審査フラグ。要審査は門2再審査(依頼文)へ回す。株価は判定に使わない
+  - **減損の警報は XBRL の「その四半期の実額」で裁く（2026-09-23 ユーザー指示「(b)でやって」）**: `impairment_xbrl()` が Impairment を含む流量タグの四半期ぶんと、のれんの累計減損の増分を見る。
+    測れた四半期は本文のヒット（のれん表の列見出し『Accumulated impairment charge』等）を判定に使わない。**測れない四半期は本文で判定**（0と読まない）。金額は重なるタグを足さず最大値。実測: MCO/ADBE/CELH の空振りが消え、ENTG・WST は実額つきで残り、KLAC 230.4M$ は発生四半期だけ鳴る
 - 四半期 決算カレンダー: `python kessan_calendar.py`
   - 監視リスト(保有+質80+)の次回決算日を取得(Alpha Vantage、鍵なしはSEC推定)
   - 出力: kessan_calendar.ics(Googleカレンダー取込=スケジュール連動) と out/next_earnings.json(決算日データ。門内の常時表示は撤去→Googleカレンダーで確認)

@@ -164,6 +164,66 @@ def scan(text, width=260, per=2):
         lines.extend(dropped[:12])
     return lines, hitcats
 
+
+# ── 減損は「言葉」ではなく「その四半期の実額」で裁く（2026-09-23 ユーザー指示「(b)でやって」）──
+#   本文の正規表現は のれんロールフォワード表の列見出し『Accumulated impairment charge』を拾い、
+#   MCO で2回（2026-08-20 / 09-23）人を原本へ呼び戻した（当期の減損は0）。KLAC(2026-08-12)も同型。
+#   → XBRL（us-gaap と会社独自タグ）の **Impairment を含む流量タグ** の「その四半期ぶん」と、
+#     **のれんの累計減損(GoodwillImpairedAccumulatedImpairmentLoss) の前期末からの増分** を見る。
+#   ⚠ 取れないことを0と読まない（絶対のルール7）: その四半期末の行が1本も無ければ「XBRLで測れない」として
+#     **従来どおり本文の警報で判定する**（鳴る側に倒す）。
+#   ⚠ 引当・リストラと合算したタグ（Restructuring…AndAssetImpairment 等）は減損だけを切り出せないので使わない。
+IMP_SKIP = ("Accumulated", "Restructuring", "Reversal", "Recover", "Policy", "Tax")
+
+def impairment_xbrl(facts, qend):
+    """戻り: (measured, amount_usd, detail[str])。amount はその四半期ぶんの減損の**最大のタグ**（0なら測って0）。
+       合計しないのは、AssetImpairmentCharges が ImpairmentOfLongLivedAssets… を内に含むなど
+       タグ同士が重なり、足すと二重計上になるため（実測 WST 3.9M ⊃ 0.4M）。内訳は detail に全部出す。"""
+    if not qend:
+        return False, None, []
+    measured, amt, detail = False, 0.0, []
+    for ns, tags in (facts.get("facts") or {}).items():
+        if ns in ("dei", "srt", "invest"):
+            continue
+        for k, v in tags.items():
+            if "mpairment" not in k:
+                continue
+            units = v.get("units") or {}
+            rows = [r for u, rs in units.items() if u == "USD" for r in rs
+                    if str(r.get("form", "")).startswith(("10-Q", "10-K"))]
+            if k == "GoodwillImpairedAccumulatedImpairmentLoss":
+                inst = sorted({r["end"]: r["val"] for r in rows if not r.get("start")}.items())
+                now = dict(inst).get(qend)
+                prev = [val for e, val in inst if e < qend]
+                if now is not None and prev:
+                    measured = True
+                    d = now - prev[-1]
+                    if d > 0:
+                        amt = max(amt, d); detail.append(f"のれん累計減損 +${d/1e6:,.1f}M")
+                continue
+            if any(x in k for x in IMP_SKIP):
+                continue
+            flows = [r for r in rows if r.get("start") and r["end"] == qend]
+            if not flows:
+                continue
+            q = [r for r in flows if 60 <= (date.fromisoformat(r["end"]) - date.fromisoformat(r["start"])).days <= 120]
+            if q:
+                val = max(r["val"] for r in q)
+            else:
+                # 累計(YTD)しか無い: 同じ期首で一つ前の期末の累計を引く＝この四半期ぶん
+                ytd = max(flows, key=lambda r: r["start"])
+                prev = [r["val"] for r in rows if r.get("start") == ytd["start"] and r["end"] < qend]
+                days = (date.fromisoformat(ytd["end"]) - date.fromisoformat(ytd["start"])).days
+                if not prev and days > 120:
+                    # 年次の合計しか無い＝この四半期ぶんを切り出せない。0とも実額とも読まない
+                    #   （実測 KLAC FY2025末: GoodwillAndIntangibleAssetImpairment 239.1M は前々四半期の再掲だった）
+                    continue
+                val = ytd["val"] - (max(prev) if prev else 0)
+            measured = True
+            if val and val > 0:
+                amt = max(amt, val); detail.append(f"{k} ${val/1e6:,.1f}M")
+    return measured, (amt if measured else None), detail
+
 def recent_filings(cik, since_days):
     j = json.loads(get(f"https://data.sec.gov/submissions/CIK{cik}.json"))
     r = j["filings"]["recent"]
@@ -277,10 +337,25 @@ def check(t):
             prev_cats = set(re.findall(r"^\[(誠|限|集|指針|減損|退任|吉S字|吉流通)\|", pf.read(), re.M))
     except OSError:
         pass
+    # 減損は実額で裁く（上の impairment_xbrl）。測れた四半期は本文のヒットを判定に使わない
+    imp_note = ""
+    if True:
+        m_, a_, det = impairment_xbrl(facts, latest)
+        if m_:
+            if a_ and a_ > 0:
+                if "減損" not in cats: cats.append("減損")
+                imp_note = "（XBRL実額 " + " / ".join(det) + "）"
+            elif "減損" in cats:
+                cats = [c for c in cats if c != "減損"]
+                snip.append("")
+                snip.append(f"※減損の本文ヒットは判定に使っていない——XBRLで四半期末{latest}の減損額が0と測れたため（列見出し・定型文の空振り）")
+        elif "減損" in cats:
+            imp_note = "（XBRLで測れず本文で判定）"
     for c in cats:
         if c == "集":
             if "集" not in prev_cats: flags.append("警報:集(新規出現)")
-        elif c in ("誠","限","指針","減損","退任"): flags.append(f"警報:{c}")
+        elif c == "減損": flags.append(f"警報:減損{imp_note}")
+        elif c in ("誠","限","指針","退任"): flags.append(f"警報:{c}")
     yoshi = [c for c in cats if c.startswith("吉")]
     verdict = "要審査: " + " / ".join(flags) if flags else "異常なし(機械判定)"
     if yoshi:
