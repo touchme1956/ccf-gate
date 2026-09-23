@@ -1148,10 +1148,10 @@
   {
    "id": "wf_never_run",
    "kind": "宿題",
-   "title": "fix.yml / gate0.yml を1回ずつ実行する（ops.yml は 2026-08-17 に実行済み）",
+   "title": "gate0.yml を1回実行する（ops.yml は 2026-08-17 に実行済み）",
    "due": null,
    "done": false,
-   "note": "2026-08-17: **ops.yml をセッションから実行した**（GitHub Actions ではなく `python3 night/run_ops.py`＝ops.yml を yaml で読んでこの場で走らせる器を新設）。\n実測 **実行27 / 失敗0 / 鍵が無くて未実行3**（AV_KEY×2・EDINET_API_KEY×1）。\n月次の錨が12本 前進（divy/profiles/hist_val_now/castle_correlation/irr85_scope_life/v11_facts/backfill_diff/sp500_pe_monthly/exception_watch/sht_report/new_listings_irr/wacc_drift）。\nパック299件が変わったが**採点欄が動いたパックは0件**（全件を機械で突合せ・_metaのみ）。投下可10社は不変。\n\n【残り】`fix.yml`（6ステップ）と `gate0.yml`（5ステップ）は依然 **実行0回**。\n同じ器で回せる: `python3 night/run_ops.py --wf fix.yml --dry-run`。\n⚠ **fix.yml のステップ8はmainへ直接push・9はPR作成**なので、セッションから回すときは必ず外すこと。\n⚠ gate0.yml は companyfacts.zip(1.4GB・実測29秒で取得可)が要り、5時間ジョブになりうる。",
+   "note": "2026-08-17: **ops.yml をセッションから実行した**（GitHub Actions ではなく `python3 night/run_ops.py`＝ops.yml を yaml で読んでこの場で走らせる器を新設）。\n実測 **実行27 / 失敗0 / 鍵が無くて未実行3**（AV_KEY×2・EDINET_API_KEY×1）。\n月次の錨が12本 前進（divy/profiles/hist_val_now/castle_correlation/irr85_scope_life/v11_facts/backfill_diff/sp500_pe_monthly/exception_watch/sht_report/new_listings_irr/wacc_drift）。\nパック299件が変わったが**採点欄が動いたパックは0件**（全件を機械で突合せ・_metaのみ）。投下可10社は不変。\n\n【残り】`fix.yml`（6ステップ）と `gate0.yml`（5ステップ）は依然 **実行0回**。\n同じ器で回せる: `python3 night/run_ops.py --wf fix.yml --dry-run`。\n⚠ **fix.yml のステップ8はmainへ直接push・9はPR作成**なので、セッションから回すときは必ず外すこと。\n⚠ gate0.yml は companyfacts.zip(1.4GB・実測29秒で取得可)が要り、5時間ジョブになりうる。\n\n【2026-09-23】fix.yml は削除したので対象から外した（残りは gate0.yml）。",
    "owner": "道具"
   },
   {
@@ -1383,10 +1383,10 @@
    "id": "fixyml_pr_missing",
    "kind": "宿題",
    "owner": "道具",
-   "done": false,
+   "done": true,
    "opened": "2026-08-23",
-   "title": "fix.yml が『判定が動いた』ときの PR が作られていない——枝だけが置かれる",
-   "note": "2026-08-22 の初発火で `fix.yml` は設計どおり枝 `claude/machine-fix-20260822-0442` を切ったが、**PRは1件も作られていない**（`gh pr create` のステップが落ちた公算——この環境に gh CLI が無い）。結果、枝は2日 誰の目にも触れず、2026-08-23 のマージで人が偶然見つけた。⚠**『人に断る』設計が『人に届く』までを含んでいなかった**——`notify_issues` が out/ 全消しでも「✓ 行動が要ることは無い」と出していたのと同じ **fail-open** の型で、今回は『断ったつもりで誰にも伝わっていない』側。直すなら (a)PR作成を MCP/API 経由へ替える (b)少なくとも `::error::` で赤くする (c)📋今日タブが `claude/machine-fix-*` の枝の存在を数える、のどれか。**(c)が一番安い**——枝は git から見えるので外部の鍵が要らない。 ⚠**2026-09-19に実測で確定した（推測ではなくなった）**——`ci_health` が鍵を受け取って初めて働いた最初の実行で、run 32552060449 の**failed_steps = ['判定が動く → PRにして人へ']** を名指しした。＝落ちたのはまさに PR を作るステップで、`gh` が無いという読みは当たっていた。そして**この失敗は28日間 誰にも見えていなかった**（回転盤は成果物の日付しか見ないので `fix.yml` の結末を知らない）——`ci_health` を作った理由そのものが、最初の実行で実証された形。"
+   "title": "✅対象消滅: fix.yml を削除した（2026-09-23 ユーザー「消して」）",
+   "note": "2026-08-22 の初発火で `fix.yml` は設計どおり枝 `claude/machine-fix-20260822-0442` を切ったが、**PRは1件も作られていない**（`gh pr create` のステップが落ちた公算——この環境に gh CLI が無い）。結果、枝は2日 誰の目にも触れず、2026-08-23 のマージで人が偶然見つけた。⚠**『人に断る』設計が『人に届く』までを含んでいなかった**——`notify_issues` が out/ 全消しでも「✓ 行動が要ることは無い」と出していたのと同じ **fail-open** の型で、今回は『断ったつもりで誰にも伝わっていない』側。直すなら (a)PR作成を MCP/API 経由へ替える (b)少なくとも `::error::` で赤くする (c)📋今日タブが `claude/machine-fix-*` の枝の存在を数える、のどれか。**(c)が一番安い**——枝は git から見えるので外部の鍵が要らない。 ⚠**2026-09-19に実測で確定した（推測ではなくなった）**——`ci_health` が鍵を受け取って初めて働いた最初の実行で、run 32552060449 の**failed_steps = ['判定が動く → PRにして人へ']** を名指しした。＝落ちたのはまさに PR を作るステップで、`gh` が無いという読みは当たっていた。そして**この失敗は28日間 誰にも見えていなかった**（回転盤は成果物の日付しか見ないので `fix.yml` の結末を知らない）——`ci_health` を作った理由そのものが、最初の実行で実証された形。\n\n【2026-09-23】fix.yml を削除（実行2回・8/22の枝 claude/machine-fix-20260822-0442 は古いのでマージしない）。機械項目の埋め直しは四半期の見直しでセッションから回す。旧タイトル: fix.yml が『判定が動いた』ときの PR が作られていない——枝だけが置かれる"
   },
   {
    "id": "gate_exception_unexecuted",

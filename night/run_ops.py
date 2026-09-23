@@ -87,7 +87,7 @@ def needed_keys(st):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--wf", default="ops.yml",
-                    help="走らせるワークフロー（既定 ops.yml）。fix.yml / gate0.yml も同じ器で回せる")
+                    help="走らせるワークフロー（既定 ops.yml）。gate0.yml も同じ器で回せる")
     ap.add_argument("--only", default="")
     ap.add_argument("--skip", default="")
     ap.add_argument("--timeout", type=int, default=900)
