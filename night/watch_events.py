@@ -771,6 +771,21 @@ def main():
         print("⚠ 1社も走査できていない（SEC/EDINETが落ちている等）。"
               "**out/events_watch.json を書き換えない**——空の alerts は『見て何も無い』ではない")
         return 1
+    # ★2026-09-23（ユーザー「日本株をEDINETキーで接続したい」→鍵は 2026-08-17 から Secrets に在った）:
+    #   鍵を持たない**手元のセッション**でこの道具を回すと、CI が鍵ありで作った『日本株16社を走査済み』を
+    #   『EDINET_API_KEY 未設定』で上書きしていた（実害: 0be8a197 が門に「未接続」と出させた）。
+    #   ⇒ **鍵が無く、正本が鍵ありの走査結果を持っているときは正本を書き換えない**（--out で別の場所へは書ける）。
+    if not jp_cov and jp and out_path == os.path.abspath(OUT):
+        try:
+            with open(OUT, encoding="utf-8") as f:
+                _prev_jp = (json.load(f) or {}).get("jp") or {}
+        except Exception:
+            _prev_jp = {}
+        if _prev_jp.get("covered"):
+            print("⚠ EDINET_API_KEY がこの環境に無い——正本 out/events_watch.json は CI が鍵ありで作った"
+                  "日本株の走査結果を持っているので**書き換えない**（鍵なしの結果で『未接続』に戻さない）。"
+                  "試すなら --out で別の場所へ。鍵は GitHub Secrets にあり、events.yml が毎日使う")
+            return 1
     if only and out_path == os.path.abspath(OUT):
         print("※ --only は試験用なので正本 out/events_watch.json は書き換えない（--out で別の場所へ書ける）")
         return 0
