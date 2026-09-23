@@ -812,6 +812,14 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
   検査器2本を新仕様へ: check_navstack（群1〜5は帯が**出ていないこと**を確認）・check_mobile_fit（同）。表示だけ
   ⚠ **skin.css は `?v=` 付きで読む**（同日「下が見えてる」）: GitHub Pages は max-age=600 で、新しい index.html と**古い skin.css**（ナビ2段=110px を引く版）が組み合わさり、看板の下に53px（章の帯の高さ）の隙間が出た。
   skin.css を変えたら index.html / portfolio.html の `skin.css?v=` の値も上げること。看板の差し引きの既定値も 57/59px（ナビ1段）へ。
+  **売り買いの記録（同日 ユーザー「新規で買付や売却がない。それで反映させたりしないとこれから門が更新されない」）**: 🏦保有に **＋ 買った／− 売った**。
+  銘柄・約定日・株数・単価(ドル)・円の取得額/受取額（空欄なら 株数×単価×ドル円 で見積もり）・売りは理由(s1/s2/s3/other)とメモ。
+  **書き込みは portfolio.html の `pfAddShares` / `pfSellShares` だけ**（postMessage で頼む＝二重実装なし）。買いは bdLots に1ロット足し **bjpy も足す**
+  （★旧 `pfAddShares` は bjpy を据え置き、bpx=0 の行に今回の単価を丸ごと入れていた＝買い増すと成績が過大に出た。同時に是正）。
+  売りは**一部売却も可**＝株数と bjpy を平均取得で按分して減らし、pf:sold に `sh/px/jpy/partial` つきで残す（全株なら行と保有印を外す＝□と同じ）。
+  記録後その場に **📤 書き出す** → Claude に貼る → main に入ると **`.github/workflows/returns.yml`（state.json の push で発火）が成績を作り直す**。
+  ⚠ **Claude が反映するとき**: 門で足したロットは bd が入っているが、行の `bd`（等価日）は古いまま——`python3 night/estimate_bd.py --write` を回し直すこと。
+  判定・売却規律は不変（理由は人が選んで記録するだけ）。検証は実ブラウザで 買い増し/一部売却/保有超過の拒否/新規銘柄 の4通り
   **repo の保有で上書き（同日 ユーザー「総資産がまちがってる」→「やって」）**: 端末に未書き出しの旗(dirty)があると decide() は repo を採用しないので、
   別セッションが state.json の保有を直しても（MSFT 11→8・売却済み RMD 等の削除）**端末は古い株数で総資産を出し続けた**。旧版には repo→端末へ合わせる手段が無かった。
   → 赤い帯の中に **「⭳ repo の保有で上書きする」**（`ccfState.adoptRepo`）。確認ダイアログ後に **pf:portfolio と pf:sold だけ**を repo の値へ置換し、

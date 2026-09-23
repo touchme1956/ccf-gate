@@ -763,7 +763,13 @@ setTimeout(pfReportHeight,300); setTimeout(pfReportHeight,900);
    次の persist() が黙って巻き戻す——**v9.9.131 で実際に踏んだ順序の事故**と同型。
    だから親からは「足してくれ」と頼むだけにして、実際の加算・保存・再描画はここでやる。 ---------- */
 function pfAddShares(d){
- const t=String(d.t||'').trim(), sh=+d.sh||0, px=+d.px||0;
+ const t=String(d.t||'').trim(), sh=+d.sh||0, px=+d.px||0, jpy=+d.jpy||0;
+ const bd=/^\d{4}-\d{2}-\d{2}$/.test(d.date||'')?d.date:'';
+ let warn='';
+ /* 2026-09-23: 🏦保有の「＋ 買った」は約定日・取得額(円)も渡す。ロット(bdLots)として残す＝
+    後で等価日の推定(night/estimate_bd.py)と成績の取得額が、この買付を材料にできる。 */
+ const lot=(bd||jpy>0)?Object.assign({sh:sh},px>0?{usd:px}:{},jpy>0?{jpy:Math.round(jpy)}:{},bd?{bd:bd}:{},
+   {src:'門の🏦保有で記録'+(bd?'（約定日 '+bd+'）':'')}):null;
  if(!t)   return {ok:false, msg:'銘柄コードが空'};
  if(!(sh>0)) return {ok:false, msg:'株数が0以下'};
  const up=t.toUpperCase();
@@ -780,24 +786,69 @@ function pfAddShares(d){
   p.sh = old + sh;
   /* 買付単価は**加重平均**（含み損益が静かに狂わないように）。旧単価が無ければ今回の値 */
   const ob=+p.bpx||0;
-  if(px>0) p.bpx = (ob>0&&old>0) ? Math.round(((ob*old+px*sh)/(old+sh))*1e4)/1e4 : px;
+  /* ★2026-09-23 是正: 旧単価が無い（円の取得額 bjpy だけで持っている）行に今回の単価を丸ごと入れると、
+     **既存の株まで今回の単価で買ったことになる**（MSFT 8株は bpx=0・bjpy=¥497,469）。旧株が居るなら触らない。 */
+  if(px>0 && (ob>0||old<=0)) p.bpx = (ob>0&&old>0) ? Math.round(((ob*old+px*sh)/(old+sh))*1e4)/1e4 : px;
+  /* ★取得額(円)も足す。bjpy は成績(fetch_returns)と盤の**最優先の取得額**なので、
+     株数だけ増やして bjpy を据え置くと「買い増した株をタダで得た」ことになり含み益が膨らむ。
+     旧 bjpy が無い行（bpx×為替で測っている行）には作らない——旧株の円が判らないので半端な合計になる。 */
+  if(jpy>0 && (+p.bjpy||0)>0) p.bjpy=Math.round((+p.bjpy)+jpy);
+  else if((+p.bjpy||0)>0 && !(jpy>0)) warn='取得額(円)が未入力——この行は円の取得額で測っているので、成績が買い増し分だけ過大に出ます。✎編集で取得額を足してください';
   if(!(+p.npx>0)&&px>0) p.npx=px;
   if(!p.ccy&&d.ccy) p.ccy=d.ccy;
+  if(lot){ if(!Array.isArray(p.bdLots)) p.bdLots=[]; p.bdLots.push(lot); }
  }else{
   /* v9.9.169: 袖(城/網)は**頼む側が言う**。言わなければ従来どおり城＝既定は変えない。
      ⚠ 網の行に出口判定は付かない（門Ωは指数を裁かない）ので、この一語が
        「門が裁く対象か」を分ける唯一の印になる。 */
   const sl = (d.sleeve==='net') ? 'net' : 'castle';
-  P.positions.push({t:up, nm:d.nm||up, sleeve:sl, kind:(sl==='net'?'ETF':'個別'),
-                    ccy:d.ccy||'USD', bd:'', sh:sh, bpx:px||0, npx:px||0, v:0});
+  const row={t:up, nm:d.nm||up, sleeve:sl, kind:(sl==='net'?'ETF':'個別'),
+                    ccy:d.ccy||'USD', bd:bd, sh:sh, bpx:px||0, npx:px||0, v:0};
+  if(jpy>0) row.bjpy=Math.round(jpy);
+  if(lot) row.bdLots=[lot];
+  P.positions.push(row);
  }
  persist(); render();
  const now=(P.positions.find(x=>String(x.t||'').toUpperCase()===up)||{}).sh;
- return {ok:true, msg:t+' を +'+sh+'株（保有 '+now+'株）', sh:now};
+ return {ok:true, msg:t+' を +'+sh+'株（保有 '+now+'株）'+(warn?'　⚠ '+warn:''), sh:now};
+}
+
+/* ---------- 一部売却（2026-09-23新設・ユーザー「新規で買付や売却がない」）
+   □スイッチ(pfSell)は**全株**しか記録できなかった。株数を指定して減らし、売却記録(pf:sold)へ残す。
+   取得額(円)は**平均取得で按分**して減らす（残りの株の取得単価は変わらない）。
+   全株を売ったら行を外し、門の保有印も外す（pfSell と同じ）。**売却規律 S1/S2/S3 は一切変えない**——
+   理由は人が選んで記録するだけ。 */
+function pfSellShares(d){
+ const t=String(d.t||'').trim().toUpperCase(), sh=+d.sh||0, px=+d.px||0, jpy=+d.jpy||0;
+ const date=/^\d{4}-\d{2}-\d{2}$/.test(d.date||'')?d.date:new Date().toISOString().slice(0,10);
+ const reason=SREASON[d.reason]?d.reason:'other', memo=String(d.memo||'').trim();
+ const idx=P.positions.findIndex(x=>String(x.t||'').toUpperCase()===t);
+ if(idx<0) return {ok:false, msg:t+' は保有にありません'};
+ const p=P.positions[idx], old=+p.sh||0;
+ if(!(sh>0)) return {ok:false, msg:'株数が0以下'};
+ if(!(old>0)) return {ok:false, msg:t+' は株数が未記録（金額だけの行）——✎編集で直してください'};
+ if(sh>old) return {ok:false, msg:t+' の保有は '+old+'株です（'+sh+'株は売れない）'};
+ const {_v,...raw}=p;
+ const soldPart=Object.assign({},raw,{sh:sh});
+ const bj=+p.bjpy||0;
+ if(bj>0) soldPart.bjpy=Math.round(bj*sh/old);
+ const sold=loadSold();
+ sold.push(Object.assign({t:p.t||'',nm:p.nm||'',sleeve:p.sleeve||'',date,reason,memo,sh},
+   px>0?{px}:{}, jpy>0?{jpy:Math.round(jpy)}:{}, sh<old?{partial:true}:{}, {pos:soldPart}));
+ persistSold(sold);
+ if(sh>=old){ P.positions.splice(idx,1); dropHoldFlags([{t:p.t,nm:p.nm}]); }
+ else{
+  p.sh=old-sh;
+  if(bj>0) p.bjpy=Math.round(bj*(old-sh)/old);
+  /* ⚠ bdLots は按分しない（どのロットを売ったかは画面から判らない）。note に残し、Claude が反映時に直す */
+  p.note=((p.note||'')+'　'+date+' '+sh+'株売却（門で記録）').trim();
+ }
+ persist(); render();
+ return {ok:true, msg:t+' を −'+sh+'株'+(sh>=old?'（全株・保有から外した）':'（残り '+(old-sh)+'株）'), sh:Math.max(0,old-sh)};
 }
 window.addEventListener('message',function(e){
- const d=e&&e.data; if(!d||d.type!=='ccfPfBuy')return;
- let r; try{ r=pfAddShares(d); }catch(err){ r={ok:false,msg:String(err&&err.message||err)}; }
+ const d=e&&e.data; if(!d||(d.type!=='ccfPfBuy'&&d.type!=='ccfPfSell'))return;
+ let r; try{ r=(d.type==='ccfPfSell')?pfSellShares(d):pfAddShares(d); }catch(err){ r={ok:false,msg:String(err&&err.message||err)}; }
  try{ if(window.parent&&window.parent!==window)
    window.parent.postMessage({type:'ccfPfBuyDone', id:d.id, ok:r.ok, msg:r.msg, sh:r.sh},'*'); }catch(_){}
 });

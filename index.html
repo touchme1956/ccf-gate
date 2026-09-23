@@ -1113,8 +1113,11 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
    <button onclick="ccfDash(this)" style="padding:8px 15px;background:linear-gradient(180deg,rgba(201,166,74,.28),rgba(201,166,74,.10));border:1px solid var(--gold-line);border-radius:7px;color:var(--gold-bright);font-size:13px;font-weight:600;cursor:pointer">↻ 更新</button>
    <button onclick="showPage(7)" style="padding:8px 15px;background:var(--panel);border:1px solid var(--line);border-radius:7px;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer" title="株数・買値・売却記録を入れる画面（旧 🏦保有タブ）">✎ 株数・買値を編集</button>
+   <button onclick="ccfTrade('buy')" style="padding:8px 15px;background:rgba(22,163,74,.10);border:1px solid rgba(22,163,74,.5);border-radius:7px;color:#15803d;font-size:13px;font-weight:700;cursor:pointer" title="買った株を保有へ足す（約定日・単価・取得額(円)も残す）">＋ 買った</button>
+   <button onclick="ccfTrade('sell')" style="padding:8px 15px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.45);border-radius:7px;color:#b91c1c;font-size:13px;font-weight:700;cursor:pointer" title="売った株を保有から減らし、売却記録へ残す（一部売却も可）">− 売った</button>
    <span id="dashAsof" style="font-size:11.5px;color:var(--dim)"></span>
  </div>
+ <div id="tradeBox"></div>
  <div id="dashBox"><div style="color:var(--dim);font-size:13px">「↻ 更新」で読み込む。</div></div>
 </div>
 <!-- 📈成績（v9.9.156・2026-08-18 ユーザー要望「別のタブでグラフ込みで作れる？もちろん自動更新で」）:
@@ -1807,7 +1810,7 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
 
 <div id="pg7" class="pg">
 <div class="wrap" style="padding-top:14px">
- <div style="font-size:12.5px;color:var(--muted);margin:0 0 8px"><a href="portfolio.html" target="_blank" style="float:right;font-size:12px;margin-left:10px;color:var(--gold-bright)">新しいタブで開く ↗</a><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body">全保有を一枚で。株数・単価を入れると評価額を自動計算し、この端末に保存（門と同じ保存方式）。行頭の色丸は出口判定（S1/S2/S3/ホールド/採点待ち）。<b>網／城の内訳ビューは2026-07-29に撤去した</b>——目標60/40のリバランスは<b>Ⅵ買付順位の「今月の買付プラン」</b>が正本（保有データから網/城ウェイトを計算して渡している）。「⭳ 門の保有から取込」で台帳の保有を城として取り込み、「🏛 門の台帳へ登録」で逆方向。</div></details></div> <iframe id="pfFrame" src="portfolio.html" scrolling="no" allow="clipboard-write" style="width:100%;height:1600px;border:0;background:transparent;display:block;overflow:hidden"></iframe>
+ <div style="font-size:12.5px;color:var(--muted);margin:0 0 8px"><a href="portfolio.html" target="_blank" style="float:right;font-size:12px;margin-left:10px;color:var(--gold-bright)">新しいタブで開く ↗</a><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body">全保有を一枚で。株数・単価を入れると評価額を自動計算し、この端末に保存（門と同じ保存方式）。行頭の色丸は出口判定（S1/S2/S3/ホールド/採点待ち）。<b>網／城の内訳ビューは2026-07-29に撤去した</b>——目標60/40のリバランスは<b>Ⅵ買付順位の「今月の買付プラン」</b>が正本（保有データから網/城ウェイトを計算して渡している）。「⭳ 門の保有から取込」で台帳の保有を城として取り込み、「🏛 門の台帳へ登録」で逆方向。</div></details></div> <iframe id="pfFrame" src="portfolio.html?v=20260923-4" scrolling="no" allow="clipboard-write" style="width:100%;height:1600px;border:0;background:transparent;display:block;overflow:hidden"></iframe>
 </div>
 </div>
 <div id="pg8" class="pg">
@@ -4097,6 +4100,100 @@ function ccfBought(btn){
     sh:sh,px:parseFloat(inp.dataset.px)||0,ccy:inp.dataset.ccy,sleeve:inp.dataset.sleeve},'*');
   setTimeout(()=>{ if(!done&&window.__ccfBuyWait[id]){ delete window.__ccfBuyWait[id];
     out.style.color='#d69a3c'; out.textContent='Ⅶ保有から返事がありません（Ⅶタブを一度開いてから）'; } },3000);
+}
+
+/* ── 🏦保有の「＋ 買った」「− 売った」（2026-09-23・ユーザー「新規で買付や売却がない。それで反映させたりしないとこれから門が更新されない」）
+   ＋株（買付順位）は**買付順位に出ている社**からしか記録できず、売却は Ⅶの□（**全株だけ**）しか無かった。
+   ここに一枚の記入欄を置く。**書き込みの実装は Ⅶ(portfolio.html) の pfAddShares / pfSellShares だけ**
+   （二重に持たない・v9.9.65）——ここは postMessage で頼むだけ。
+   記録した後は repo へ入れないと成績（out/returns.json）も他の端末も変わらないので、
+   **書き出しボタンをその場に出す**（ブラウザは repo へ書けない＝最後の一歩は人の手）。
+   ⚠**判定には一切効かない**——売却理由は人が選んで記録するだけで、S1/S2/S3 の規律は不変。 */
+function ccfTradeToday(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function ccfTradePf(){ try{ return JSON.parse(localStorage.getItem('pf:portfolio')||'{}')||{}; }catch(_){ return {}; } }
+function ccfTrade(kind){
+  const box=document.getElementById('tradeBox'); if(!box)return;
+  if(box.dataset.kind===kind&&box.innerHTML){ box.innerHTML=''; box.dataset.kind=''; return; }
+  box.dataset.kind=kind;
+  const P=ccfTradePf(), pos=(P.positions||[]).filter(p=>p&&p.t);
+  const buy=kind==='buy', col=buy?'#15803d':'#b91c1c';
+  const q=ccfBoughtEsc;
+  const opts=pos.map(p=>`<option value="${q(p.t)}">${q(p.t)}　${q(p.nm||'')}（${+p.sh||0}株）</option>`).join('');
+  const ist='padding:7px 9px;font-size:14px;font-family:inherit;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink);width:100%;box-sizing:border-box';
+  const lab=(t,h)=>`<label style="display:block;font-size:12.5px;color:var(--dim);margin:0 0 8px">${t}<div style="margin-top:3px">${h}</div></label>`;
+  box.innerHTML=`<div style="border:1px solid ${col};border-left:5px solid ${col};border-radius:10px;padding:12px 14px;margin:0 0 12px;background:var(--panel)">
+   <div style="font-weight:700;color:${col};margin-bottom:10px">${buy?'＋ 買った株を記録':'− 売った株を記録'}</div>
+   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 12px">
+    ${lab('銘柄',`<select id="trT" style="${ist}" onchange="ccfTradeSync()">${opts}${buy?'<option value="__new">＋ 新しい銘柄…</option>':''}</select>
+      <input id="trNew" placeholder="ティッカー（例 NVDA）" style="${ist};margin-top:5px;display:none">`)}
+    ${lab('約定日',`<input id="trD" type="date" value="${ccfTradeToday()}" style="${ist}">`)}
+    ${lab('株数',`<input id="trS" type="number" min="0" step="any" inputmode="decimal" style="${ist}" oninput="ccfTradeSync()">`)}
+    ${lab((buy?'約定単価':'売却単価')+'（ドル）',`<input id="trP" type="number" min="0" step="any" inputmode="decimal" style="${ist}" oninput="this.dataset.auto='0';ccfTradeSync()">`)}
+    ${lab(buy?'取得額（円・証券会社の画面の値）':'受取額（円・任意）',`<input id="trJ" type="number" min="0" step="1" inputmode="numeric" style="${ist}" placeholder="空欄なら 株数×単価×ドル円で見積もり">`)}
+    ${buy?'':lab('理由',`<select id="trR" style="${ist}"><option value="s1">S1 売却規律</option><option value="s2">S2 縮小</option><option value="s3">S3 記録のみ</option><option value="other" selected>その他</option></select>`)}
+   </div>
+   ${buy?'':lab('メモ（任意・なぜ売ったか）',`<input id="trM" style="${ist}">`)}
+   <div id="trHint" style="font-size:12px;color:var(--dim);margin:2px 0 10px"></div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <button onclick="ccfTradeGo('${kind}',this)" style="padding:9px 18px;border-radius:8px;border:1px solid ${col};background:${col};color:#fff;font-size:14px;font-weight:700;cursor:pointer">記録する</button>
+    <button onclick="ccfTrade('${kind}')" style="padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--ink);font-size:13px;cursor:pointer">閉じる</button>
+    <span id="trMsg" style="font-size:12.5px"></span>
+   </div>
+   <div id="trAfter"></div>
+  </div>`;
+  ccfTradeSync(true);
+}
+function ccfTradeSync(first){
+  const sel=document.getElementById('trT'); if(!sel)return;
+  const nw=document.getElementById('trNew'); if(nw)nw.style.display=sel.value==='__new'?'':'none';
+  const P=ccfTradePf(), p=(P.positions||[]).find(x=>x.t===sel.value)||null, fx=+P.fx||0;
+  const pi=document.getElementById('trP');
+  if(pi&&(first||pi.dataset.auto==='1')&&document.activeElement!==pi){ pi.value=(p&&+p.npx>0)?p.npx:''; pi.dataset.auto='1'; }
+  const sh=+document.getElementById('trS').value||0, px=+pi.value||0, est=(sh>0&&px>0&&fx>0)?Math.round(sh*px*fx):0;
+  const ji=document.getElementById('trJ'); if(ji)ji.placeholder=est?('空欄なら ¥'+est.toLocaleString('ja-JP')+'（'+sh+'株×$'+px+'×'+fx+'円）'):'空欄なら 株数×単価×ドル円で見積もり';
+  const h=document.getElementById('trHint');
+  if(h)h.textContent=p?('いま '+(+p.sh||0)+'株'+((+p.bjpy||0)>0?'・取得額 ¥'+Math.round(+p.bjpy).toLocaleString('ja-JP'):'')+'。単価は現在値を入れてあります——約定の値に直してください。'):'';
+}
+function ccfTradeGo(kind,btn){
+  const msg=document.getElementById('trMsg'), bad=t=>{ msg.style.color='#b91c1c'; msg.textContent='⚠ '+t; };
+  const sel=document.getElementById('trT');
+  let t=sel?sel.value:''; if(t==='__new')t=(document.getElementById('trNew').value||'').trim().toUpperCase();
+  if(!t)return bad('銘柄を選んでください');
+  const sh=+document.getElementById('trS').value||0; if(!(sh>0))return bad('株数を入れてください');
+  const px=+document.getElementById('trP').value||0, date=document.getElementById('trD').value||'';
+  const P=ccfTradePf(), fx=+P.fx||0, p=(P.positions||[]).find(x=>x.t===t);
+  let jpy=+document.getElementById('trJ').value||0, jpyEst=false;
+  if(!(jpy>0)&&px>0&&fx>0){ jpy=Math.round(sh*px*fx); jpyEst=true; }
+  const frame=document.getElementById('pfFrame');
+  if(!frame||!frame.contentWindow)return bad('保有の画面が読み込まれていません（「✎ 株数・買値を編集」を一度開いてから）');
+  const id='t'+Date.now()+Math.random().toString(36).slice(2,6);
+  const m={type:kind==='buy'?'ccfPfBuy':'ccfPfSell',id,t,nm:(p&&p.nm)||t,sh,px,jpy,date,
+    ccy:(p&&p.ccy)||'USD',sleeve:(p&&p.sleeve)||'castle'};
+  if(kind==='sell'){ m.reason=document.getElementById('trR').value; m.memo=(document.getElementById('trM').value||'').trim()
+    +(jpyEst&&jpy?'　受取額は見積もり（株数×単価×ドル円）':''); }
+  let done=false; btn.disabled=true;
+  window.__ccfBuyWait[id]=async function(r){
+    done=true; btn.disabled=false;
+    if(!r.ok)return bad(r.msg||'記録できませんでした');
+    msg.style.color='#15803d'; msg.textContent='✓ '+(r.msg||'')+(jpyEst&&jpy?'（'+(kind==='buy'?'取得額':'受取額')+'は見積もり ¥'+jpy.toLocaleString('ja-JP')+'）':'');
+    /* 門の保有印（出口判定の対象）: 買いは ccfBought と同じく付ける・売りの全株は Ⅶ が外す。網(ETF)には付けない */
+    if(kind==='buy'&&m.sleeve!=='net')try{
+      let hs=new Set(); const hr=await store.get('g7hold:set'); if(hr&&hr.value)hs=new Set(JSON.parse(hr.value)||[]);
+      if(!hs.has(m.nm)){ hs.add(m.nm); await store.set('g7hold:set',JSON.stringify([...hs])); if(typeof renderLedger==='function')await renderLedger(); }
+    }catch(_){}
+    document.getElementById('trAfter').innerHTML=`<div style="margin-top:12px;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;font-size:12.5px;line-height:1.7">
+      この端末の保有は更新しました。<b>成績と他の端末に反映するには repo へ入れる</b>必要があります：<br>
+      <button onclick="ccfState.export(this,true)" style="margin:6px 0;padding:8px 15px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:#fff;font-weight:700;cursor:pointer">📤 書き出す（コピー）</button><br>
+      → そのまま Claude に貼って「反映して」と送る。main に入ると成績（📈）が自動で作り直されます。</div>`;
+    try{ if(typeof ccfDash==='function')ccfDash(); }catch(_){}
+    try{ if(typeof renderPlan==='function')await renderPlan(); }catch(_){}
+    try{ ccfState.banner('stateBar'); }catch(_){}
+    ['trS','trJ','trM'].forEach(i=>{const e=document.getElementById(i); if(e)e.value='';});
+    ccfTradeSync();
+  };
+  frame.contentWindow.postMessage(m,'*');
+  setTimeout(()=>{ if(!done&&window.__ccfBuyWait[id]){ delete window.__ccfBuyWait[id]; btn.disabled=false;
+    bad('保有の画面から返事がありません（「✎ 株数・買値を編集」を一度開いてから）'); } },3000);
 }
 
 // v9.9.164（2026-08-21 ユーザー指示「網と城は一緒にして50%づつは維持し続けながら表示はまとめてにしたい」）:
