@@ -348,7 +348,26 @@ html:not([data-theme]) .rb-pill.up,html:not([data-theme]) .rb-pill.down{color:#0
 body:has(#pg10.on) .gate-hero{display:block;}
 .gate-hero img{display:block; width:100%; height:auto; max-height:min(56.3vw,560px); object-fit:cover; object-position:50% 30%;}
 
-/* ── 11. 買付順位の行（v9.9.191・ユーザー指示「買付の文字が無駄に多い…シンプルに」）──────
+/* ── 11. 看板の縦長版（ユーザー指示「スマホの縦長の画面に合うようにデザイン変えられる？」）──────
+   横長の絵(16:9)をそのまま幅いっぱいにすると、縦持ちの携帯では高さ 200px 前後の細い帯になる。
+   縦持ちでは **3:4 の縦長に切り、柱と階段の側（右 42%）を見せる**。絵の題字(左 13〜54%)は
+   この切り方では画面の外へ出るので、**同じ題字を HTML の文字で空の上に置き直す**（拡大してもにじまない）。
+   横持ち・PC は従来どおり（.gate-hero-t は出さない）。表示だけ・判定に不使用。 */
+.gate-hero{position:relative;}
+.gate-hero-t{display:none;}
+@media (orientation:portrait) and (max-width:700px){
+  .gate-hero img{aspect-ratio:3/4; height:auto; max-height:none; object-fit:cover; object-position:96% 50%;}
+  .gate-hero::after{content:""; position:absolute; inset:0 0 auto 0; height:42%; pointer-events:none;
+    background:linear-gradient(180deg,rgba(236,243,250,.55),rgba(236,243,250,0));}
+  .gate-hero-t{display:block; position:absolute; z-index:1; left:7%; right:0; top:7%; text-align:left;
+    line-height:1; color:#14203f; font-family:Inter,"Noto Sans JP",sans-serif;}
+  .gate-hero-t b{display:block; font-weight:500; font-size:clamp(2.8rem,15vw,4.8rem); letter-spacing:.16em;}
+  .gate-hero-t b span{display:inline-block; transform:scaleY(1.04);}
+  .gate-hero-t i{display:block; margin-top:.9em; font-style:normal; font-weight:500;
+    font-size:clamp(.95rem,4.6vw,1.3rem); letter-spacing:.45em; padding-left:.15em;}
+}
+
+/* ── 12. 買付順位の行（v9.9.191・ユーザー指示「買付の文字が無駄に多い…シンプルに」）──────
    行の項目が多く、銘柄名の列が 1文字幅まで潰れていた（CW / 事業 が縦に割れる）。
    名前の列に幅を確保し、入りきらない項目は次の段へ折り返す */
 #planBox .led{flex-wrap:wrap; row-gap:4px;}
