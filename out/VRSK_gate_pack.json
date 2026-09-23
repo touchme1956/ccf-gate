@@ -30,7 +30,7 @@
  "geopol": 0,
  "nrr": 105,
  "beta": null,
- "per": 26.22,
+ "per": 26.42,
  "perF": null,
  "evebit": null,
  "px": 172.02,
@@ -85,7 +85,8 @@
    "2026-08-11 機構の射程と認定の寿命を原本から記録（_meta.mech）: 射程 点推定は導けない（None〜70.9%）／寿命 1〜5年。読解＋反証専門の二段（scope=confirmed／life=confirmed）。**合否には一切使わない記録**。置き場を _meta.evidence.irr でなく _meta.mech にしたのは、irr85_mech_diff が evidence の英文引用を原本と逐語照合するため（日本語の注記を混ぜると照合の断片が汚れる）。",
    "2026-08-16 f2 55 → 50.0（規約の統一）。55 は刻み(90/80/65/50)に無い中間値だった。原本が高浸透を積極的に示す社なので 50。",
    "2026-09-23 perF の基準の検問 → **充填不可**（理由を _meta.nulls.perF へ・旧メモ『市場データ=取込時に手入力…』を置換）。gcap は空欄のまま",
-   "2026-09-23 sbc 0.05→1.76（単位の是正）: 旧値は株式報酬の十億$の金額で、門の定義（株式報酬÷売上%）と単位が違っていた。2025-12-31 期の株式報酬 54.2百万$ ÷ 売上 ＝ 1.76%。"
+   "2026-09-23 sbc 0.05→1.76（単位の是正）: 旧値は株式報酬の十億$の金額で、門の定義（株式報酬÷売上%）と単位が違っていた。2025-12-31 期の株式報酬 54.2百万$ ÷ 売上 ＝ 1.76%。",
+   "2026-09-23 per を TTM へ張り替え（todo per_ttm_stale）: per 26.22→**26.42**（px 172.02 ÷ TTM GAAP希薄化EPS 6.51）。perF は TTM の窓で基準の検問をやり直しても**空欄のまま**（①TTM窓（2025Q3〜2026Q2）の四半期コンセンサス合算 1.7037+1.6085+1.7407+1.934 …）。eps・px・日付は不変"
   ],
   "evidence": {
    "dom": "【dom=空欄】FY2025 10-K(CIK 0001442145, acc 0001437749-26-004452, vrsk20251231_10k.htm)の Item1『Our Competitors』および Item1A を全文精査したが、自社シェア%・上位N社合計%はどこにもない。■50側の構造記述: 『The breadth of markets we serve exposes us to a broad range of competitors ... We have numerous competitors in specific lines or services』『Competitors also include other statistical agents and other advisory organizations, that provide underwriting rules, prospective loss costs, and coverage language』『a customer may use its own internal resources rather than engage an outside firm』『In the P&C insurance claims and catastrophe modeling markets, products are offered by a number of companies』→ Claims(売上29.1%)およびcat modeling等は「同等品を複数社が供給」＝50側。■50を否定する構造記述: 中核のUnderwriting(売上70.9%)について同10-Kは『as a licensed or appointed statistical agent in all 50 states,Puerto Rico, and the District of Columbia, we report those statistics to insurance regulators』『We are able to capture significant economies of scale given the level of utilization of this service within the U.S. P&C insurance industry』『For most P&C insurers in most lines of business, we believe that our estimates of future costs are an essential input to rating decisions』と、業界の大半(most)が依存していると述べており、これは「自社<40%」を前提とする刻み50と両立しない。他方で同じ10-Kが『other statistical agents』の存在を明記するため『実質唯一供給』=100も成立しない。数値がないので70/85も置けない(v9.9.41 規約2)。→ 中核70.9%が測定不能(≥70側)、残余29.1%が50、と刻みが散るため規約1により空欄。出典: SEC 10-K FY2025 vrsk20251231_10k.htm Item1(Our Competitors / statistical agent節), Item1A",
@@ -122,7 +123,7 @@
    "roiic": "機械算出 2022→2025年(3年窓): ΔNOPAT -100,471,606 ÷ Δ投下資本 -295,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 6,886,400,000→6,591,400,000（-4.3%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない",
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 217,795,226 ÷ Δ投下資本 154,200,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 6,437,200,000→6,591,400,000（+2.4%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない",
    "px": "市場データ機械充填 2026-08-02: market_fetch/market_data.json（常識帯(0.0, 10000000.0)を通過）",
-   "per": "【2026-07-30 算出】per = px 194.85 ÷ eps 6.56 = **29.7**。**基準は通期実績EPS**（epsは機械算出のSEC XBRL通期値）で、門の規約が定める TTM実績 ではない。TTM実績EPSの取得元が無いため通期で代用した——成長企業では通期eps<TTM epsゆえ per は過大に出る＝**E[r]を過小に見積もる保守側**に倒れる。TTM実績が取れたら差し替えること。px は Finnhub 実測（2026-07-31）。",
+   "per": "【2026-09-23 TTM GAAP希薄化EPSへ張り替え 26.22→26.42】per = px **$172.02**（Finnhub 2026-09-22 終値＝_meta.px・out/dashboard.json と同値）÷ **TTM GAAP希薄化EPS $6.51** = **26.42**。TTM（直近4報告四半期・SEC）= FY2025 **6.48**（10-K accn 0001437749-26-004452）− 1H25 **3.45**（10-Q accn 0001437749-25-023862）＋ 1H26 **3.48**（Q2 2026 10-Q accn 0001437749-26-024749『Diluted net income per share attributable to Verisk … 3.48 … 3.45』。SEC XBRL の companyfacts はこの10-Qをまだ取り込んでいない＝本文から採取）。四半期: Q3'25 1.61 ＋ Q4'25 1.42（= 6.48 − 9M 5.06）＋ Q1'26 1.73 ＋ Q2'26 1.75 = 6.51（一致）。旧 26.22 は通期実績の eps 欄 6.56（純利益÷期末株数）基準を基準保存式で運んだ値。eps 欄（6.56）は据置——門の ccfMcapUSD が px×ni÷eps（＝期末株数）で時価総額Tierを出すため。px÷eps（26.22）と per の差は期間基準の違い（TTM vs 通期）で正常。Q2'26 の GAAP 1.75 は利払の増加（金利費用 52.8 vs 35.5百万$）で前年を下回る——一過性の益は無い。perF は空欄のまま（_meta.nulls.perF・基準の検問）。\n《以前の記録》【2026-07-30 算出】per = px 194.85 ÷ eps 6.56 = **29.7**。**基準は通期実績EPS**（epsは機械算出のSEC XBRL通期値）で、門の規約が定める TTM実績 ではない。TTM実績EPSの取得元が無いため通期で代用した——成長企業では通期eps<TTM epsゆえ per は過大に出る＝**E[r]を過小に見積もる保守側**に倒れる。TTM実績が取れたら差し替えること。px は Finnhub 実測（2026-07-31）。",
    "acq5": "【2026-08-03 機械判定】のれん残高 2020年 4,108,100,000 → 2025年 1,878,200,000。**新しさ = -118.7%** → **大型買収なし=no**",
    "roic": "｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央49.0% / 最悪23.9%・比は審査年2025）",
    "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2025『no individual customer accounting for more than **approximately 3% of revenues** for the years ended December 31, 2025, 2024, and 2023』。(b)(c)は該当記述なし",
@@ -141,7 +142,7 @@
    "gr/gcap/analysts/instOwn/gls/idx/indG": "市場・外部データ=取込時に手入力",
    "dom": "【空欄確定・2026-08-04 横断探索で格上げ】(1)FY2025 10-K: 中核Underwriting(売上70.9%)は『全50州＋PR＋DCのstatistical agent』『for most P&C insurers in most lines of business…essential input』が刻み50(<40%)を否定し、『other statistical agents』の明記が100(実質唯一供給)を否定、数値が無いので70/85も置けず、Claims(29.1%)は『products are offered by a number of companies』で50側＝刻みが散りv9.9.41規約1で空欄(2026-07-29記録どおり)。(2)自社8-K経路(KLAC型の勝ち筋)を今回点検: Investor Dayは開催する(2017-12-07/2023-03-13)が**資料をSECにfurnishしない**——2017-12-06 8-K EX-99.1は開催案内プレスリリース(2,845字・シェア記述なし)、2023-03-07の8-K2本は$2.5B ASR発表とクレジット契約でデッキ添付なし。全文検索『\"market share\"』自社34件の残りはS-1/424B4(2009年IPO・17年前かつEnergy/金融を含む旧事業構成で不採用)とDEF14A(報酬指標)のみ。(3)他社提出書類: 対抗の統計代理人AAISは非営利・非SEC filerでシェア表がEDGARに載る経路自体が無い。→ 空欄確定。中核事業の性質(業界の大半が依存する統計代理人)は≥70を示唆するが数値が構造的に存在しない＝v9.9.49『測っているのは堀ではなく開示習慣』の実例(MSFT/NVDA/RMD/6146と同格)",
    "beta": "市場データ=取込時に手入力",
-   "perF": "**充填不可（2026-09-23 基準の検問）＝コンセンサスが調整後（非GAAP）基準で、調整額 +10.5%**。①FY2025 の四半期コンセンサス合算 1.6830+1.7714+1.7037+1.6085 = **6.7666** vs GAAP 希薄化EPS **6.48** = **+4.4%**＝片側検定の閾値+5%は僅かに通過するが、②会社の **Diluted adjusted EPS $7.16**（Q4 2025 決算 8-K Ex.99 accn 0001437749-26-004451『Diluted GAAP earnings per share was $6.48』『Diluted adjusted EPS was $7.16』）＝GAAP比 **+10.5%**、コンセンサスは調整後に対し −5.5%（ビート）＝**ビートが調整額を隠している**（Q4 2025 は GAAP $1.42 vs 調整後 $1.82・債務償還費用）。→ perF を入れると gr が約10pt 膨らむ。なお per は通期実績基準（evidence.per）。閾値+5%は門の compute() が px÷eps と per の食い違いを「PER不整合」と判定する線（5%）に合わせた——10%にすると V（+9.4%）のような非GAAPコンセンサスが通り、gr が調整額の分だけ膨らむ（上限が事実上外れる＝ADBEの型）。《使える形》コンセンサス内の比 FY2027/FY2026 = 8.6963/7.7088 − 1 = **+12.8%**（基準に依らない）。コンセンサス: Alpha Vantage EARNINGS_ESTIMATES 2026-09-23取得（FY2026E 7.7088 / FY2027E 8.6963・19名）",
+   "perF": "**充填不可（2026-09-23 TTM の窓で基準の検問をやり直した）**: ①TTM窓（2025Q3〜2026Q2）の四半期コンセンサス合算 1.7037+1.6085+1.7407+1.934 = **6.9869** vs GAAP TTM **6.51** = **+7.3%**＝閾値+5%を超える（FY2025 の窓でも会社の Diluted adjusted EPS $7.16＝GAAP比 +10.5%）。→ perF を入れると gr に調整額が成長として入る（上限が事実上外れる＝ADBEの型）。【片側検定】non-GAAPは調整の足し戻しゆえ通常GAAP以上なので、再構成がGAAP実績を+5%超えて上回るときだけ基準の相違と判定し、下回るのはビートと読む。ビートが調整額を隠すので会社自身の調整後EPSの対GAAP差（②）も同じ+5%で見る（閾値は門の compute() の「PER不整合」5%線・2026-09-23 初回充填と同じ規約）。\n《以前の記録》**充填不可（2026-09-23 基準の検問）＝コンセンサスが調整後（非GAAP）基準で、調整額 +10.5%**。①FY2025 の四半期コンセンサス合算 1.6830+1.7714+1.7037+1.6085 = **6.7666** vs GAAP 希薄化EPS **6.48** = **+4.4%**＝片側検定の閾値+5%は僅かに通過するが、②会社の **Diluted adjusted EPS $7.16**（Q4 2025 決算 8-K Ex.99 accn 0001437749-26-004451『Diluted GAAP earnings per share was $6.48』『Diluted adjusted EPS was $7.16』）＝GAAP比 **+10.5%**、コンセンサスは調整後に対し −5.5%（ビート）＝**ビートが調整額を隠している**（Q4 2025 は GAAP $1.42 vs 調整後 $1.82・債務償還費用）。→ perF を入れると gr が約10pt 膨らむ。なお per は通期実績基準（evidence.per）。閾値+5%は門の compute() が px÷eps と per の食い違いを「PER不整合」と判定する線（5%）に合わせた——10%にすると V（+9.4%）のような非GAAPコンセンサスが通り、gr が調整額の分だけ膨らむ（上限が事実上外れる＝ADBEの型）。《使える形》コンセンサス内の比 FY2027/FY2026 = 8.6963/7.7088 − 1 = **+12.8%**（基準に依らない）。コンセンサス: Alpha Vantage EARNINGS_ESTIMATES 2026-09-23取得（FY2026E 7.7088 / FY2027E 8.6963・19名）",
    "evebit": "市場データ=取込時に手入力",
    "gr": "市場・外部データ=取込時に手入力",
    "gcap": "市場・外部データ=取込時に手入力",
@@ -192,10 +193,19 @@
    "px_old": 175.41,
    "px_new": 172.02,
    "pct": -1.93,
-   "conv": "基準保存式 per_new = per_old × (px_new÷px_old)／shy は 1/比率",
+   "conv": "基準保存式 per_new = per_old × (px_new÷px_old)／shy は 1/比率（2026-09-22 の価格更新）→ 2026-09-23 に per を TTM 希薄化EPS へ張り替え（同じ px）（evidence.per/perF）。shy は基準保存式のまま",
    "fields": {
-    "per": 26.22,
+    "per": 26.42,
     "shy": 3.66
+   },
+   "reanchor": {
+    "date": "2026-09-23",
+    "px": 172.02,
+    "px_date": "2026-09-22",
+    "per": [
+     26.22,
+     26.42
+    ]
    }
   },
   "pending": [
