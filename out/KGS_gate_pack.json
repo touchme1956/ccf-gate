@@ -108,7 +108,8 @@
    "beta": "市場データ機械充填 2026-09-22: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）",
    "analysts": "市場データ機械充填 2026-09-22: market_fetch/market_data.json（常識帯—を通過）",
    "instOwn": "市場データ機械充填 2026-09-22: market_fetch/market_data.json（常識帯—を通過）",
-   "sbc": "SBC比率＝株式報酬 24.5百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝1.88%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
+   "sbc": "SBC比率＝株式報酬 24.5百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝1.88%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）",
+   "roic": "機械算出 2025年: NOPAT 243,565,190（営業利益 340,010,000×(1−実効税率28.4%)） ÷ IC 3,199,886,000＝自己資本 1,207,396,000 + 有利子負債 2,555,645,000 − のれん 408,681,000 − 無形 154,474,000。**IC/ICg=85.0%**（ICg=自己資本+有利子負債＝控除前の投下資本。2割未満なら分母縮退＝算出不能。絶対のルール7(b)）｜参考 IC/自己資本=265.0%｜有利子負債の内訳: LongTermDebt(総額)｜**v9.9.72: through-cycle 化**。5年系列 3年の**中央値 5.6%** を採用（直近年 7.6% / 最悪 4.9%）。roicg も同じ年の系列の中央値 4.8% にして roic≥roicg を保つ"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -138,7 +139,8 @@
    "beta": "market",
    "analysts": "market",
    "instOwn": "market",
-   "sbc": "machine"
+   "sbc": "machine",
+   "roic": "machine"
   },
   "basis": {
    "roic": "single-year",
@@ -146,7 +148,7 @@
   },
   "machine_check": {
    "date": "2026-09-23",
-   "rev": "hd4358a127a",
+   "rev": "he2126ea51a",
    "ok": [
     "accr",
     "cagr",
@@ -156,11 +158,10 @@
     "gm",
     "gmt",
     "nde",
-    "ni"
-   ],
-   "diff": [
+    "ni",
     "roic"
    ],
+   "diff": [],
    "hand": [],
    "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
