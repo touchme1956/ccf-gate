@@ -1,8 +1,8 @@
 {
  "nm": "HWM",
- "roic": 28.9,
- "roicg": 12.2,
- "nde": 0.99,
+ "roic": 27.7,
+ "roicg": 11.9,
+ "nde": 1.41,
  "z": 4.65,
  "gpa": null,
  "accr": -3.4,
@@ -16,7 +16,7 @@
  "dilNet": -0.86,
  "acc": "usgaap",
  "eq": "pos",
- "acq5": "no",
+ "acq5": null,
  "eps": 3.75,
  "expiry": "no",
  "moatdecay": "no",
@@ -45,7 +45,7 @@
  "fin": null,
  "p1": 65,
  "p2": 75,
- "p3": 85,
+ "p3": null,
  "p4": 90,
  "f1": 80,
  "f2": 65,
@@ -54,7 +54,7 @@
  "f5": 85,
  "_meta": {
   "form": "10-K",
-  "reportDate": "2025-12-31",
+  "reportDate": "2026-06-30",
   "unit": "USD",
   "source": "https://www.sec.gov/Archives/edgar/data/4281/000000428126000012/hwm-20251231.htm",
   "auditDate": "2026-08-02",
@@ -83,7 +83,9 @@
    "2026-08-19 逐語照合の是正（値は不変）——2026-08-07 の根拠が原本の 『including **to reduce the amount of Howmet's products they purchase,** to switch to…』から一節を**省略記号なしで落としていた**ため irr85_mech_diff が一致55%の⚠を出していた。省略箇所に … を入れて解消。**引用を縮めるときは必ず … を置く**（quotes_of はそこで断片を割る）",
    "2026-09-23 perF を充填: None → 42.24（px 225.36 ÷ FY2026E 5.3346・Alpha Vantage EARNINGS_ESTIMATES 2026-09-23取得）。基準の検問 ①再構成 3.5254 vs GAAP 3.71 = -5.0% ②調整後EPSの対GAAP差 +1.6% ＝いずれも+5%以下で充填。gr=+42.3%。gcap は空欄のまま（perF に追随する）",
    "2026-09-23 sbc 0.07→0.88（単位の是正）: 旧値は株式報酬の十億$の金額で、門の定義（株式報酬÷売上%）と単位が違っていた。2025-12-31 期の株式報酬 73.0百万$ ÷ 売上 ＝ 0.88%。",
-   "2026-09-23 per・perF を同じ日・同じ基準へ張り替え（todo per_ttm_stale）: per 60.11→**48.57**（px 225.36 ÷ TTM GAAP希薄化EPS 4.64）／perF 42.24→**38.37**（÷ TTM の直後の4四半期のコンセンサス 5.874）／gr +42.3%→**+26.6%**。Alpha Vantage 2026-09-23・新規の API 呼び出しなし。eps・px・日付は不変"
+   "2026-09-23 per・perF を同じ日・同じ基準へ張り替え（todo per_ttm_stale）: per 60.11→**48.57**（px 225.36 ÷ TTM GAAP希薄化EPS 4.64）／perF 42.24→**38.37**（÷ TTM の直後の4四半期のコンセンサス 5.874）／gr +42.3%→**+26.6%**。Alpha Vantage 2026-09-23・新規の API 呼び出しなし。eps・px・日付は不変",
+   "2026-09-23 期末後の貸借対照表で再審査（🩺点検・night/audit_stale_bs.py）: reportDate 2025-12-31→2026-06-30。事象: CAM（Consolidated Aerospace Manufacturing・Stanley Black & Decker から）を 2026-04-06 に現金約 1,812百万$ で取得完了（8-K Item 2.01 accession 0001104659-26-039791）、Brunner を 2026-02-06 に約 120百万$ で取得。資金は 2026-03 の社債 1,200百万$・CP 450百万$・手元資金。2026-03-31 にディスク鍛造工場を売却。旧→新: roic 28.9→27.7 / roicg 12.2→11.9 / nde 0.99→1.41 / acq5 no→空欄 / acqS5 0.0004→0.1863。出典 10-Q 2026-06-30（accession 0000004281-26-000025・提出2026-08-06）。roic/roicg は5点中央値の最新点を10-Q時点の点へ置換（LTM単点 47.8/20.0）。",
+   "2026-09-23 p3 85→空欄（nde 0.99→1.41 で旧根拠が失効・門の導出に委ねる）"
   ],
   "evidence": {
    "expiry": "『We are not materially dependent on any single patent, trade secret, or trademark』(限)→単一特許/期限依存なし=no。特許ポートフォリオは継続更新",
@@ -97,7 +99,6 @@
    "nrr": "サブスク業態でなく非開示→既定105",
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 19.0% / 2022 22.0% / 2023 27.7% / 2024 40.2% / 2025 40.7% → 平均 29.9% / σ 9.1pt / **CV 30.2%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **65**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "p2": "COVID: rev7.1(2019)→5.0(2021)=-30%、NI470→261(2020)=-44%だが営利は再構築で579→626と防衛。航空は構造的深循環(循『the demand for our products is sensitive to, and quickly impacted by, deteriorating economic conditions』)→中DD=75",
-   "p3": "nde=0.99(<1)→85",
    "p4": "accr=-3.4%(<0)+material weaknessヒットは監査手続の定型文(『assessing the risk that a material weakness exists, and testing and evaluating...』=監査人報告の常套句)で実指摘ではない+『Unresolved Staff Comments. None』→90",
    "f1": "ΔNOPAT(2023→25)≈+734M(op1,203→2,046・税率~18-21%)に対しΔ投資資本≈0(debt3.9→3.05B減・eq4.0→4.8B増で相殺)→生ROIICは極大だが循環回復・営業レバ主導かつ再投資率~24%(<30%)のため80に抑制",
    "f2": "TAM浸透率の開示なし。商業航空のビルドレート回復＋アフターマーケットで長期余地はあるが数値未定→保守65",
@@ -106,13 +107,13 @@
    "f5": "disrupt=settled連動→85",
    "moatW": "FY2025 10-K セグメント情報注記の第三者売上(全社 $8,252百万): Engine Products $4,320百万=52.4% / Fastening Systems $1,745百万=21.1% / Engineered Structures $1,148百万=13.9% / Forged Wheels $1,039百万=12.6%。→ ≥売上15%は Engine Products と Fastening Systems の2本のみ。Engineered Structures 13.9%・Forged Wheels 12.6%はいずれも15%閾値に届かず、『独立した堀3つ以上(各≥15%)』の100は不成立＝85が該当(旧85を実数で追認)。独立性の裏取り(セグメント×主要市場別の分解表 FY2025): Engine Products=Aerospace Commercial $2,355百万＋Aerospace Defense $900百万＋Gas Turbines $944百万＋Other $121百万。ニッケル超合金の精密鋳造翼・タービン部品で顧客はエンジンOEM。Fastening Systems=Aerospace Commercial $1,202百万＋Aerospace Defense $176百万＋Commercial Transportation $209百万＋Other $158百万。機体構造用ファスナーで別工場・別の型式認定・顧客は機体メーカー/流通(競合もLisi Aerospace等 別系統)。Forged Wheels=Commercial Transportation $1,039百万(当セグメントの100%)で航空とは完全に別市場・別競合(Accuride/Ronal/Nippon Steel/Dicastal等)＝性質としては独立堀だが12.6%で本数に数えられない。顧客集中: 10-K『In 2025, RTX Corporation and GE Aerospace each represented approximately 11% of the Company's third-party sales. ... These sales were primarily from the Engine Products segment.』＝最大顧客11%。50の発動条件(最大顧客≥20% または 1製品≥80%)はいずれも不成立(最大セグメント52.4%)。なお70の目安『最大顧客<10%』は超えるが、≥15%の独立堀が2本ある以上85の判定が優先する。出典: SEC 10-K CIK0000004281 acc 0000004281-26-000012 (FY2025-12-31) セグメント情報注記(第三者売上・主要市場別の分解表)、Item1",
    "dom": "【2026-07-29 決着・v9.9.41の残余刻み規約により50を確定】FY2025 10-K Item1『Competitive Conditions』が4セグメント全てについて『The Company's segments - Engine Products, Fastening Systems, Engineered Structures, and Forged Wheels - are subject to **substantial and intense competition** in the markets they serve』とし、さらに構造そのものを述べている: 『**many** of the products Howmet makes **can be produced by competitors** using similar types of manufacturing processes as well as alternative forms of manufacturing』『Several of Howmet's largest customers **have captive superalloy furnaces**』『**Many other companies around the world also produce** superalloy investment castings』『Forged Wheels has seen an **increase in the number of** aluminum wheel suppliers from China, Taiwan, India, South Korea, and Turkey』。＝同等品を多数が製造でき、顧客が内製し、新規参入が増えている＝寡占構造の否定。実名競合も16社が網羅列挙されている(Precision Castparts/VSMPO/ATI/Lisi Aerospace/Aubert & Duval/Doncasters/CPP/Weber Metals/Forgital/Frisa、Forged Wheelsは Accuride/Speedline/Nippon Steel/Dicastal/Alux/Wheels India)。4セグメントとも同じ刻み50に落ち、散らない＝空欄にする理由がない。旧dom=70は原本無根拠だった。自称『market leader in most of its principal markets』は v9.9.38但し書きにより刻みの証拠に当たらない。出典: SEC 10-K CIK0000004281 acc 0000004281-26-000012 (FY2025-12-31) Item1 Competitive Conditions。",
-   "roic": "機械算出 2025年: NOPAT 1,676,830,435（営業利益 2,046,000,000×(1−実効税率18.0%)） ÷ IC 3,924,000,000＝自己資本 5,353,000,000 + 有利子負債 3,050,000,000 − のれん 4,022,000,000 − 無形 457,000,000。**IC/自己資本=73.3%**（2割未満なら分母縮退＝算出不能。絶対のルール7(b)）｜**v9.9.72 through-cycle**: 系列[2021, 2022, 2023, 2024, 2025]の中央値（中央27.7% / 最悪19.0%・比は審査年2025）",
-   "roicg": "機械算出 2025年: NOPAT ÷ (自己資本 5,353,000,000 + 有利子負債 3,050,000,000)＝のれん込み。roic(除外)との差が買収規律の指標",
+   "roic": "【2026-09-23 期末後BS再審査・stale_bs】**through-cycle（5点の中央値・規約7-c）= roic 27.7**。系列 roic/roicg: 2021 19.01/7.69 / 2022 22.03/9.16 / 2023 27.69/11.87 / 2024 40.23/17.32 / **LTM(2026-06-30) 47.80/19.99**。旧系列の最新点 FY2025（40.75/19.51）を、規約7-b の同じ式で測った**最新10-Q期末(2026-06-30)の点に置き換えた**（期末後の事象を映す点だけを差し替える。roic と roicg は同じ点・同じNOPATで対に替えた＝roic≥roicg は全点で成立）。FY2021-2024 は採取器 5年系列（out/tc_roic.json・SEC）。LTM点: NOPAT 2,045.6百万$＝営業利益 2,495.0×(1−実効税率 18.0%〔税 411.0÷(純利益 1,871.0＋税)〕)。LTM＝FY2025＋2026上半期−2025上半期（10-K FY2025（0000004281-26-000012） と 10-Q 2026-06-30（accession 0000004281-26-000025・提出2026-08-06））。 IC 4,280.0＝自己資本 5,732.0 ＋ 有利子負債 4,501.0〔LongTermDebtNoncurrent 4,050 + DebtCurrent 451（うち CP 450）＝DebtLongtermAndShorttermCombinedAmount 4,501〕 − のれん 5,084.0 − 無形 869.0（すべて10-Q 2026-06-30 の貸借対照表・百万$）。**IC/自己資本=74.7%**（2割未満なら算出不能・規則7(b)）。LTM単点 roic 47.8%。参考: 窓を FY2022-2025＋LTM に転がすと roic 40.23 / roicg 17.32。",
+   "roicg": "【2026-09-23 期末後BS再審査・stale_bs】**through-cycle（5点の中央値）= roicg 11.9**。同じ系列（2021 19.01/7.69 / 2022 22.03/9.16 / 2023 27.69/11.87 / 2024 40.23/17.32 / **LTM(2026-06-30) 47.80/19.99**）の roicg 側。LTM点 = NOPAT 2,045.6 ÷ (自己資本 5,732.0 ＋ 有利子負債 4,501.0) = 19.99%（のれん込み・10-Q 2026-06-30）。参考: 窓を FY2022-2025＋LTM に転がすと 17.32。",
    "roict": "機械算出: のれん除外ROIC 5年系列 19.1% / 22.0% / 29.5% / 40.3% / 42.7%（最古→直近の差で判定）",
    "gm": "機械算出 2025年: 営業利益 2,046,000,000 ÷ 売上 8,252,000,000（粗利ではない）",
    "gmt": "機械算出: 営業利益率 2023年 18.1% → 2025年 24.8%（±1ptでup/down）",
    "cagr": "機械算出: 売上 2020年 5,259,000,000 → 2025年 8,252,000,000＝5年の年率",
-   "nde": "機械算出 2025年: (有利子負債 3,050,000,000 − 現金同等物 742,000,000) ÷ (営業利益 2,046,000,000 + 減価償却 283,000,000)",
+   "nde": "【2026-09-23 期末後BS再審査・stale_bs】(有利子負債 4,501.0 − 現金等 563.0) ÷ EBITDA_LTM 2,798.0（営業利益 2,495.0 ＋ 減価償却 303.0〔DepreciationAndAmortization〕）= **1.41**。貸借対照表は 10-Q 2026-06-30（accession 0000004281-26-000025・提出2026-08-06）、損益はLTM＝FY2025＋2026上半期−2025上半期（10-K FY2025（0000004281-26-000012） と 10-Q 2026-06-30（accession 0000004281-26-000025・提出2026-08-06））。現金等の内訳: CashAndCashEquivalentsAtCarryingValue 563。",
    "fcf": "機械算出 2025年: 営業CF 1,884,000,000 − 設備投資 453,000,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）",
    "ni": "機械算出 2025年: 純利益 1,508,000,000（÷1e9で十億単位表示）",
    "accr": "機械算出 2025年: (純利益 1,508,000,000 − 営業CF 1,884,000,000) ÷ 総資産 11,179,000,000",
@@ -124,14 +125,13 @@
    "per": "【2026-09-23 TTM GAAP希薄化EPSへ張り替え 60.11→48.57】per = px **$225.36**（Finnhub 2026-09-22 終値＝_meta.px・out/dashboard.json と同値＝perF と同じ株価・同じ日）÷ **TTM GAAP希薄化EPS $4.64** = **48.57**。TTM（2025Q3〜2026Q2＝直近4報告四半期の和・SEC XBRL EarningsPerShareDiluted）= Q3'25 **0.95**（10-Q accn 0001628280-25-047584）＋ Q4'25 **0.92**（= FY2025 3.71〔10-K accn 0000004281-26-000012〕− 9M 2.79）＋ Q1'26 **1.44**（10-Q accn 0000004281-26-000019）＋ Q2'26 **1.33**（10-Q accn 0000004281-26-000025）。検算: 3.71 − 1H25 1.84 + 1H26 2.77 = 4.64（一致）。旧 60.11 は通期実績 3.75（純利益÷期末株数）基準を基準保存式で運んだ値。⚠ Q1'26 の GAAP 1.44 には Restructuring and other credits（税前 −93百万$）等の特別項目の益 0.22 が入る（調整後 1.22）が、会社の『Adjusted EPS（excluding Special items）』の TTM は 3.77 − 1.77 + 2.56 = **4.56**＝GAAP比 **−1.7%**（5%線の内側）なので GAAP のまま（CW と同じ扱い）。eps 欄（3.75）は据置——門の ccfMcapUSD が px×ni÷eps（＝期末株数）で時価総額Tierを出すため。px÷eps（60.10）と per の差は期間基準の違い（TTM vs 通期）で正常\n《以前の記録》【2026-07-29 機械算出】PER = 株価 $272.895 ÷ **原本EPS 3.75** = **72.77**。EPSは通期実績（純利益÷期末株数・SEC XBRL）で、TTMコンセンサスではない。株価の出典: Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯8-200を通過（market_merge.BANDS）。**shyとの二重検算も通っている**（shy=0.64%・帯−5〜12内）。",
    "shy": "【2026-07-29 機械算出】純還元利回り shy = (配当 + 自社株買い − 株式発行) ÷ 時価総額。2025年: 配当 0.00 + 自社株買い 0.70 − 株式発行 0.00 = 純還元 0.70十億$ ÷ 時価総額 109.60十億$（402百万株×$272.90） = **0.64%**。還元額は SEC XBRL のキャッシュフロー計算書（PaymentsOfDividendsCommonStock / PaymentsForRepurchaseOfCommonStock / ProceedsFromIssuanceOfCommonStock）、株数は dei/us-gaap の期末株数、株価は Alpha Vantage GLOBAL_QUOTE（2026-07-29取得・latest trading day 2026-07-29）。常識帯−5〜12%を通過。",
    "px_market": "【2026-08-02 市場データ自動更新】Finnhub 実測 2026-08-02 終値 282.26 USD（前回 272.89・+3.4%）。per/perF/evebit は**基準を保つ比率式**で換算（per_new = per_old × px_new/px_old）——px÷eps で計算し直すと eps欄がTTM実績か通期実績かで**期間基準が黙って切り替わる**ため。shy は還元額が不変で時価だけ動くので 1/比率。",
-   "acq5": "【2026-08-03 機械判定】のれん残高 2020年 4,102,000,000 → 2025年 4,022,000,000。**新しさ = -2.0%** → **大型買収なし=no**",
    "dep": "3軸(a顧客集中 / bチャネル・トラフィック / c仕入・製造委託)の最大値。(a)10-K FY2025 に10%超の顧客開示なし。(c)『for certain raw materials and services, we depend on a number of limited source or sole source suppliers, such as for titanium sponge』は原材料の供給リスクで売上依存ではない → **上限10**（ASC280/有報の10%開示閾値が上限を証明する。のれんの上限＝無形総額 と同じ『上限の不等式』の作法。ベトは dep≥40 の一方向なので上限で裁ける）",
    "mcap": "発行済株式数 398,801,399株（SEC dei:EntityCommonStockSharesOutstanding・filed 2026-08-06）× px $281.88 = **112.41十億$**。2026-08-08に新規充填（それまで空欄で時価総額の比較ができなかった）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 5,259,000,000 → 2023年 6,640,000,000 → 2025年 8,252,000,000。A案(端点) 直近2年CAGR 11.48% − その前3年CAGR 8.08% = +3.40pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -2.42pt ／ 年次YoY {'2021': -5.5, '2022': 13.9, '2023': 17.3, '2024': 11.9, '2025': 11.1} → **採用 +3.40pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **13.5%** / 同業（SIC335x（4桁では4社しか無く3桁へ丸めた）「Rolling Drawing & Extruding of  Nonferrous Metals」・8社）の中央値 **6.0%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+13.5%)÷(1+6.0%))^5 − 1 = **+41.0%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
    "beta": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 4.0)を通過）",
    "evebit": "市場データ機械充填 2026-08-10: market_fetch/market_data.json（常識帯(0.0, 300.0)を通過）",
-   "acqS5": "買収支出 5年ぶん合計 5百万$ ÷ 期初総資産(2020-12-31) 11443百万$ ＝ 0.000／内訳: 2024-12-31 5百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "acqS5": "【2026-09-23 期末後BS再審査・stale_bs】買収支出 直近5年（2021-07〜2026-06・10-Q期末へ揃えた転がる窓）合計 1,934.0百万$ ÷ 期初総資産(2021-06-30・10-Q) 10,379.0百万$ ＝ **0.186**（帯: 中 +1）／内訳: H2 2021 0（申告なし＝FY2021 行なし）/ FY2022 0 / FY2023 0 / FY2024 5 / FY2025 0 / H1 2026 1,929（CAM＋Brunner）（SEC XBRL PaymentsToAcquireBusinessesNetOfCashAcquired。負値は0。fill_acqS5.py と同じ分子・分母で、窓の終点だけを reportDate の10-Q期末へ合わせた）",
    "perF": "**フォワードPER（TTM の直後の4四半期）= 株価 $225.36（per と同じ株価・同じ日 2026-09-22）÷ 次の4四半期（2026Q3〜2027Q2）のコンセンサスEPS $5.874** = **38.37**。窓は **TTM の直後の4四半期**＝TTM と同じ長さ・同じ季節の組み合わせで、gr は**ちょうど1年分**の伸び。組み立て（四半期予想は Q3'26/Q4'26 までしか無いので FY の予想を窓に合わせる）: ①2026年下期 = FY2026E **5.3346** − 1H26 実績 **2.56**（コンセンサスと同じ調整後基準。GAAP は 2.77。FY2026E ≈ 2.56 + Q3'26E 1.3672 + Q4'26E 1.4152 = 5.3424 と整合）= **2.7746** ②2027年上期 = FY2027E **6.4579** × **47.99%**（＝1H26 実績 ÷ FY2026E＝直近年と同じ上期の比率）= **3.0991**。→ **5.874**（Alpha Vantage EARNINGS_ESTIMATES 2026-09-23取得・FY2026E/FY2027E とも21名）。→ gr = per 48.57 ÷ 38.37 − 1 = **+26.6%**。cagr 9.4% を大きく上回る＝gcap は binding しない。 上期比率の感度: 50% なら 6.004（gr +29.4%）／FY の単純な半々なら 5.896（+27.1%）——どれでも binding しない。\n《窓の履歴》2026-09-23 午前: FY2026E 5.3346（perF 42.24・per 60.11 は通期実績 3.75 基準＝窓の中心どうしで約1.5年・gr +42.3%）→ **TTM と直後の4四半期（38.37・ちょうど1年）**へ是正。\n《基準の検問（片側・閾値+5%）》①per の窓（TTM＝2025Q3〜2026Q2）の四半期コンセンサス（決算前の値）を合算: 0.9093+0.966+1.1063+1.2463 = **4.2279** vs GAAP TTM **4.64** ＝ **−8.9%**＝上回っていない（ビート）。②会社の Adjusted EPS の TTM **4.56**（FY2025 3.77〔8-K accn 0001104659-26-013832〕− 1H25 1.77 + 1H26 2.56〔8-K Ex.99.1 accn 0001104659-26-091610『Adjusted EPS | … 1.77 | 2.56』〕）＝ GAAP 比 **−1.7%**＝+5%以下。 → **基準は揃っている**と判定。【片側検定】non-GAAPは調整の足し戻しゆえ通常GAAP以上なので、再構成がGAAP実績を+5%超えて上回るときだけ基準の相違と判定し、下回るのはビートと読む。ビートが調整額を隠すので会社自身の調整後EPSの対GAAP差（②）も同じ+5%で見る（閾値は門の compute() の「PER不整合」5%線・2026-09-23 初回充填と同じ規約）。\n⚠ **per と perF は必ず同じ日・同じ株価・同じ基準（TTM と、その直後の4四半期）で張り替えること**——perF だけ／per だけを動かすと gr に成長でない差が入る。次の価格更新（apply_prices の基準保存式）は両方に同じ px 比を掛けるので gr は保たれる。\n《以前の記録》**フォワードPER = 株価 $225.36（Finnhub 2026-09-22 終値＝_meta.px・out/dashboard.json と同値＝per と同じ株価）÷ FY2026 コンセンサスEPS $5.3346**（Alpha Vantage EARNINGS_ESTIMATES 2026-09-23取得・fiscal year 2026-12-31・アナリスト21名・FY2026＝パックの会計年度 FY2025 の次の年度）= **42.24**。→ gr = per 60.11 ÷ 42.24 − 1 = **+42.3%**（門は gcap 空欄時にこれを実力成長の暫定代用に使う）。\n《基準の検問（片側・閾値+5%）》①パックの会計年度 FY2025 の四半期コンセンサス（決算前の値）を合算: 0.7769+0.8732+0.9093+0.966 = **3.5254** vs GAAP 希薄化EPS実績 **3.71**（Q4 2025 決算 8-K Ex.99.1（accn 0001104659-26-013832・2026-02-12）の損益計算書『Diluted earnings per share』FY2025 = 3.71）＝ **-5.0%**＝上回っていない（ビート）。②会社自身の調整後EPS **3.77** ＝ GAAP比 **+1.6%**（同 8-K『Diluted EPS excluding Special items』FY2025 = $3.77）＝+5%以下。→ **基準は揃っている**と判定して充填した。【片側検定】non-GAAPは調整の足し戻しゆえ通常GAAP以上なので、再構成がGAAP実績を+5%超えて上回るときだけ基準の相違と判定し、下回るのはビートと読む。ただしビートが調整額を隠す（MCO/IRMD/VRSK/RMDで実測）ので、会社自身の調整後EPSの対GAAP差（②）も同じ+5%で見る。閾値+5%は門の compute() が px÷eps と per の食い違いを「PER不整合」と判定する線（5%）に合わせた——10%にすると V（+9.4%）のような非GAAPコンセンサスが通り、gr が調整額の分だけ膨らむ（上限が事実上外れる＝ADBEの型）。\n《per の基準》px÷per = 3.749（GAAP FY2025 実績 3.71 比 +1.1%）。gr はこの基準から FY2026E までの1年の成長。",
    "sbc": "SBC比率＝株式報酬 73.0百万$ ÷ 売上（2025-12-31 期・SEC XBRL ShareBasedCompensation 等 ÷ Revenues 等）＝0.88%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
   },
@@ -141,7 +141,9 @@
    "founder": "創業者支配なし(Arconic分社起源)。founderフラグ定義次第のためユーザー判定→空欄",
    "fin": "業態フラグの定義不明(金融業ではない)→空欄",
    "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力",
-   "dom_2026-07-29_解消": "(空欄化していたが v9.9.41 の残余刻み規約により 50 で確定。旧記述: 2026-07-29 堀再監査で空欄化(旧dom=70)。FY2025 10-K Item1『Competitive Conditions』にシェア%は皆無——『The Company's segments - Engine Products, Fastening Systems, Engineered Structures, and Forged Wheels - are subject to substantial and intense competition in the markets they serve. Although Howmet believes its advanced technology, manufacturing processes, and experience provide advantages ... many of the products How…)"
+   "dom_2026-07-29_解消": "(空欄化していたが v9.9.41 の残余刻み規約により 50 で確定。旧記述: 2026-07-29 堀再監査で空欄化(旧dom=70)。FY2025 10-K Item1『Competitive Conditions』にシェア%は皆無——『The Company's segments - Engine Products, Fastening Systems, Engineered Structures, and Forged Wheels - are subject to substantial and intense competition in the markets they serve. Although Howmet believes its advanced technology, manufacturing processes, and experience provide advantages ... many of the products How…)",
+   "acq5": "【2026-09-23 期末後BS再審査・stale_bs】のれん 4,090.0（2021-06-30・10-Q）→ 5,084.0（2026-06-30・10-Q）。**新しさ =(直近−5年前)÷直近 = +19.6%**（今あるのれんのうち直近5年に入った割合。窓を10-Q期末へ揃えた＝fix_acq5.py と同じ問い・同じ刻み yes≥30% / no<10% / 中間は空欄） → **判定不能（10〜30%の中間帯）＝空欄**。旧 'no' は FY2020→FY2025 の窓（−2.0%）。CAM/Brunner の取得（のれん +1,006百万$・Q2）と 2026-03-31 のディスク鍛造工場売却が同じ窓に入る。acq5 は v9.9.183 以降 門の採点に効かない",
+   "p3": "2026-09-23 空欄＝門が nde から機械導出（旧 85 の根拠『nde=0.99(<1)→85』は CAM 買収後の nde 1.41 で成り立たなくなった。導出値と同じなら空欄が規約＝fill_derived_judgment と同じ作法）"
   },
   "kenshi_erosion": "2026-07-20 erosion横断再判定(一次証拠基準): emerging→none。航空エンジン部品の単独供給ポジション・営利up・roict up。hitsのpricing文言は顧客交渉力の定型",
   "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=4.65",
@@ -151,13 +153,13 @@
    "scope": "v9.9.38 dom / v9.9.36 moatW の再監査のみ。dom・moatW・_meta 以外のキーは一切変更していない"
   },
   "provenance": {
-   "roic": "machine",
-   "roicg": "machine",
+   "roic": "kenshi",
+   "roicg": "kenshi",
    "roict": "machine",
    "gm": "machine",
    "gmt": "machine",
    "cagr": "machine",
-   "nde": "machine",
+   "nde": "kenshi",
    "fcf": "machine",
    "ni": "machine",
    "accr": "machine",
@@ -173,13 +175,16 @@
    "sht": "machine",
    "beta": "market",
    "evebit": "market",
-   "acqS5": "machine",
+   "acqS5": "kenshi",
    "perF": "market",
    "sbc": "machine"
   },
   "basis": {
-   "roic": "through-cycle-med5(?年)",
-   "_note": "roic/roicg がどの基準で作られているか。v9.9.72 で through-cycle(5年中央値)へ移行したが、採取器とパックが食い違う社・系列が3年未満の社には当てていないため**台帳に二つの基準が混在する**。文字列一致で見分けるのは脆いので機械可読にした"
+   "roic": "through-cycle-med5(5点: FY2021-2024＋LTM2026-06-30)",
+   "_note": "roic/roicg がどの基準で作られているか。v9.9.72 で through-cycle(5年中央値)へ移行したが、採取器とパックが食い違う社・系列が3年未満の社には当てていないため**台帳に二つの基準が混在する**。文字列一致で見分けるのは脆いので機械可読にした",
+   "bs": "貸借対照表は 10-Q（期末 2026-06-30）",
+   "pl": "損益は TTM（2025-07-01〜2026-06-30＝FY2025＋2026上半期−2025上半期）",
+   "reportDate_note": "2026-09-23 期末後BS再審査で reportDate を 2025-12-31→2026-06-30（10-Q期末）へ更新。**定性（dom/irr/rep/dur/moatW/p1-4/f1-5）と roict/gm/cagr/fcf/ni/eps 等の機械項目は 2025-12-31 の10-K基準のまま**＝この日付で測り直したのは roic・roicg・nde・acq5・acqS5・intcov だけ。道具が reportDate の年を『審査した会計年度』に使う箇所（fill_growth_trend・v11_facts・shadow_tc_roic）は 2026 に錨がなく FY2025 へ下がる"
   },
   "px": {
    "date": "2026-09-22",
@@ -249,7 +254,21 @@
     "by": "irr=70 の二重読み（買付圏・5点検問。繰り上がりで投下可に入った3社の一つ）",
     "note": "検問1 逐語✓（irr85_mech_diff --rung 70 --buy が✓一字同文） ／ 検問2 **機構を名指しできる**（approval/license/qualification requirements → 顧客も容易に代替を見つけられない／顧客との長期契約） ／ 検問3 ONTO型ではない（顧客側を含む文） ／ 検問4 **反証が同居する**（顧客は他社へ乗り換えうる・自ら参入しうる・長期契約は競争条件で再値決め）——これが85ではなく70である理由そのもの ／ 検問5 射程 約87%（Forged Wheels 12.6% は航空の認定要件の外）。⚠ certif 17件を全数目視し、顧客が当社を認定する記述がゼロであることを確認した"
    }
-  ]
+  ],
+  "stale_bs_review": {
+   "date": "2026-09-23",
+   "from": "2025-12-31",
+   "to": "2026-06-30",
+   "source": "10-Q 2026-06-30（accession 0000004281-26-000025・提出2026-08-06）",
+   "event": "CAM（Consolidated Aerospace Manufacturing・Stanley Black & Decker から）を 2026-04-06 に現金約 1,812百万$ で取得完了（8-K Item 2.01 accession 0001104659-26-039791）、Brunner を 2026-02-06 に約 120百万$ で取得。資金は 2026-03 の社債 1,200百万$・CP 450百万$・手元資金。2026-03-31 にディスク鍛造工場を売却",
+   "changed": [
+    "roic 28.9→27.7",
+    "roicg 12.2→11.9",
+    "nde 0.99→1.41",
+    "acq5 no→空欄",
+    "acqS5 0.0004→0.1863"
+   ]
+  }
  },
  "moatW": 85,
  "roiic": 116.2,
@@ -259,5 +278,5 @@
  "mcap": 112.41,
  "cagrT": 3.4,
  "sht": "up",
- "acqS5": 0.0004
+ "acqS5": 0.1863
 }

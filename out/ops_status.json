@@ -1267,11 +1267,12 @@
     "kind": "宿題",
     "done": false,
     "title": "CTAS の UniFirst 買収（約$5.5B）完了後に acq5 と のれんを再測定",
-    "note": "2026-03-10合併契約・FY2026期末時点で未完了。完了すれば acq5 no→yes 転換確実でのれんも大きく跳ねる＝audit_stale_bs の監視対象\n【2026-09-23 確認・未完了】UniFirst 株主は 2026-06-11 に承認、同日 FTC が両社にセカンドリクエスト（CTAS 8-K 2026-06-12・0000950103-26-008890）。FY2026 10-K は「has not closed… expect… second half of calendar 2026」、2026-09-15 の委任状（0000723254-26-000040）も \"Our pending acquisition of UniFirst\"。CTAS の Item 2.01（完了）8-K も UniFirst の Form 25/15 も無い＝貸借対照表に未反映なので acq5/acqS5/のれんは再測定しない。_meta.pending は発火のまま（完了後のれんの60.8%が新規）。\n【2026-09-23】CTAS は dur の是正で Ω 74.8 と監視の線（Ω75+）を割ったので、買収の完了を見落とさないよう kanshi_list.json の pin に入れた。完了（Item 2.01 の 8-K）を確認したら acq5/acqS5/のれんを再測定し、pin を外す。",
+    "note": "2026-03-10合併契約・FY2026期末時点で未完了。完了すれば acq5 no→yes 転換確実でのれんも大きく跳ねる＝audit_stale_bs の監視対象\n【2026-09-23 確認・未完了】UniFirst 株主は 2026-06-11 に承認、同日 FTC が両社にセカンドリクエスト（CTAS 8-K 2026-06-12・0000950103-26-008890）。FY2026 10-K は「has not closed… expect… second half of calendar 2026」、2026-09-15 の委任状（0000723254-26-000040）も \"Our pending acquisition of UniFirst\"。CTAS の Item 2.01（完了）8-K も UniFirst の Form 25/15 も無い＝貸借対照表に未反映なので acq5/acqS5/のれんは再測定しない。_meta.pending は発火のまま（完了後のれんの60.8%が新規）。\n【2026-09-23】CTAS は dur の是正で Ω 74.8 と監視の線（Ω75+）を割ったので、買収の完了を見落とさないよう kanshi_list.json の pin に入れた。完了（Item 2.01 の 8-K）を確認したら acq5/acqS5/のれんを再測定し、pin を外す。 【2026-09-23 確認: 未完了】CTAS 8-K 09-23（acc 0000723254-26-000044）が『FTC の審査に対応を続けている』『calendar 2026 の年末より前』の完了見込みと記載。Item 2.01 なし・UNF の Form 25/15 なし。次は FY27 第1四半期 10-Q（10月上旬）と FTC の結論を確認。完了したら pending の status を closed にし、acq5・roic・roicg・nde・acqS5 を完了後の 10-Q で測り直す（その後は stale_bs が見る）。",
     "owner": "審査",
     "tickers": [
      "CTAS"
-    ]
+    ],
+    "due": "2026-10-15"
    },
    {
     "id": "irr85_hunt_window",
@@ -2398,6 +2399,14 @@
     "due": null,
     "done": false,
     "note": "2026-09-23 食い違い64件の裁定の残り。規約7-c（片方だけ基準を替えない）のため据え置いた: GSK（採取器 63.6/19.5 が規約どおり・旧 28.8 は無形0・負債を純額）、LRN（15.8/11.9）、DRI、KTB・LULU（今回は単年の roic を入れた＝roicg も単年なので対は保たれるが through-cycle へ揃えるのが本来）、GMAB（roic 14.2 < roicg 14.4 の恒等式違反・FY2024 原本では roicg 15.6）。あわせて CHDN・AMPH の _meta.basis.roic が 'single-year' のまま（実態は5年中央値）。採取器側: AZN の nde は D&A 0 のまま・NVO の負債の二重計上・D の capex タグ・米国 fcf が資本化ソフトを引かない（ACIW）。採用した IFRS 9社の有利子負債にリース負債が入っていないかは未確認。"
+   },
+   {
+    "id": "stalebs_10q_basis_0923",
+    "kind": "宿題",
+    "title": "GOOGL・HWM・AWI・CDNS は貸借対照表を10-Q（2026-06-30）基準で再審査した——FY2026 の10-Kが出たら年次の系列へ戻す",
+    "due": "2027-03-15",
+    "done": false,
+    "note": "2026-09-23 期末後の重大事象の再審査（Wiz/Intersect・CAM/Brunner・Eventscape・Hexagon D&E）。roic/roicg は5年中央値の最新点だけを直近12か月の点に差し替え、reportDate=2026-06-30・_meta.stale_bs_review に記録。10-K が出たら通常の年次系列で測り直す。注意: CDNS の roic 32.6→52.2 は現金と自社株で買ったのれん＋無形が IC から外れた規約7-bの帰結（FY2025 期末の IC なら 29.8%・roicg 14.3% はほぼ不変）。GOOGL は per 空欄（評価益が TTM の大半）のまま次点に入る・dilNet/shy は大規模な株式発行前の値。HWM の p3=85（旧根拠 nde<1）は nde 1.41 で失効したので空欄＝導出へ（Ω 77.2→76.5・堀不足で判定不変）。fill_acqS5.py は reportDate が期中のとき 0 を書く欠陥を是正（_misaligned で飛ばす）。"
    }
   ]
  },

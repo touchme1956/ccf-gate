@@ -183,6 +183,20 @@ def back(dt, n):
         return dt.replace(year=dt.year - n, day=28)
 
 
+def _misaligned(m, fe):
+    """窓 (fe−5年, fe] に年次期末があるのに、どの錨 fe−k年(k=0..4) の±WIN にも乗らないならその期末を返す。
+    reportDate が10-Q期末のパックでは錨がずれ、支出を0と読んでしまう（2026-09-23 実測）ので、それを見分ける。"""
+    lo = back(fe, 5) + datetime.timedelta(days=WIN)    # 5年前の錨に乗る期末（窓の外の年）は数えない（52/53週の社で数日ずれる）
+    for s in (m or {}):
+        try:
+            e = d2(s)
+        except Exception:
+            continue
+        if lo < e <= fe and not any(abs((e - back(fe, k)).days) <= WIN for k in range(5)):
+            return s
+    return None
+
+
 def main():
     write = "--write" in sys.argv
     only = None
@@ -260,6 +274,14 @@ def main():
             changed += 1 if clear(r_) else 0
             rows.append((t, None, r_)); continue
         pm = pm or {}
+        # 2026-09-23: **reportDate が会計年度末でない（10-Q期末で再審査したパック）と、錨 fe−k年 の±45日に
+        #   年次期間が一つも乗らず、支出0＝「一円も買っていない」と書いていた**（実測: GOOGL/HWM/AWI/CDNS を
+        #   2026-06-30 へ更新したら4社とも 0.000。Wiz 29.5十億$ や Hexagon 2.9十億$ を買った社で）。
+        #   窓の中に年次期末があるのに錨に乗らない＝錨がずれている＝測れていない（絶対のルール7）。書かずに飛ばす。
+        mis = _misaligned(pm, fe)
+        if mis:
+            rows.append((t, None, "reportDate %s が会計年度末でない（窓の中の年次期末 %s が錨に乗らない）＝年次の窓を組めないので書かない" % (rd, mis)))
+            continue
         tot, hits, yrs = 0.0, [], 0
         for k in range(5):
             tgt = back(fe, k)
@@ -271,6 +293,10 @@ def main():
         if tot <= 0:
             # 支出0のときだけ裏を取る（在るときは引かない＝SECへの無駄打ちをしない）
             sg, gm = grab(c, GWA, "dur")
+            mis = _misaligned(gm, fe)
+            if mis:
+                rows.append((t, None, "reportDate %s が会計年度末でない（のれん増加の年次期末 %s が錨に乗らない）＝0を確かめられないので書かない" % (rd, mis)))
+                continue
             got = 0.0
             for k in range(5):
                 e = near(gm or {}, back(fe, k))
