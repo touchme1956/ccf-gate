@@ -448,3 +448,14 @@ html[data-theme="light"] body:has(#pg10.on) #pgBg{background-image:url("assets/b
 html[data-theme="light"] .pg{text-shadow:0 0 6px rgba(255,255,255,.95),0 0 2px rgba(255,255,255,.9);}
 html[data-theme="light"] .pg .rb-hero,html[data-theme="light"] .pg .rb-hero *{text-shadow:none;}
 html[data-theme="light"] .pg .led{background:rgba(255,255,255,.80);}
+
+/* ── 16. 看板を最初の画面いっぱいに（2026-09-23 ユーザー指示「最初の画面はこの画像が一面に出るように調整して」）──────
+   携帯（縦）: 下に固定のナビ2段（章 53px＋群 57px＝110px）があるので、看板の高さ＝画面の高さ−110px。
+   PC・横持ち: 上に貼り付くナビ2段（約106px）の下を、画面の残り全部で埋める。
+   svh（ブラウザのアドレスバーが出ている状態の高さ）で測るので、スクロールしても看板の高さが揺れない。表示だけ。 */
+.gate-hero img{width:100%; height:calc(100vh - 106px) !important; height:calc(100svh - 106px) !important;
+  max-height:none !important; aspect-ratio:auto !important; object-fit:cover; object-position:50% 45%;}
+@media (orientation:portrait) and (max-width:700px){
+  .gate-hero{margin-bottom:0;}
+  .gate-hero img{height:calc(100vh - 110px) !important; height:calc(100svh - 110px) !important; object-position:88% 50%;}
+}
