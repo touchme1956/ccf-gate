@@ -287,8 +287,15 @@ def main():
         try:
             cik = EX.cik_of(t)
             fi = EX.latest_annual(cik)
-            body = ' ' + norm(EX.text_of(fi['url'])) + ' '
+            # ★40-F は包み紙で、年次の中身（AIF・MD&A）は EX-99.x／EX-1 の添付に在る（2026-09-23・
+            #   宿題 irr_tools_40f_gap）。従来は包み紙だけを読み、DSGX の引用（Exhibit 99.1 AIF / 99.2 MD&A）は
+            #   原理的に照合できなかった。latest_annual の `docs` は 40-F なら本体＋年次の添付、
+            #   10-K/20-F なら本体だけ＝従来どおり（20-F の添付は下の sibling_body が当たらないときだけ読む）。
+            docs = fi.get('docs') or [{'url': fi['url'], 'fn': fi['url'].rsplit('/', 1)[-1]}]
+            body = ' ' + norm(' '.join(EX.text_of(d['url']) for d in docs)) + ' '
             rec['body_doc'] = fi['url'].rsplit('/', 1)[-1]
+            if len(docs) > 1:
+                rec['also_read_annual'] = [f"{d.get('type')} {d.get('fn')}" for d in docs[1:]]
         except SystemExit as e:
             rec['verdict'] = '照合不能'; rec['why'] = f'原本が取れない（{e}）'
             out[t] = rec

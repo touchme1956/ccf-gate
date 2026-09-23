@@ -40,6 +40,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -97,7 +98,62 @@ def is_heading(ln):
     return True
 
 
+# ── 照合の前処理（2026-09-23・宿題 irr_tools_40f_gap の(3)）──────────────────────────
+#   素の部分一致には3つの穴があった（探索の班が scratchpad の包みで回避していたものを本体へ入れた）:
+#   (a) **ハイフン形を落とす**: EFTS はハイフンを語の区切りとして扱う（AMAT の『production-tool-of-record』に
+#       'tool of record' が当たる）が、局所の部分一致は当たらない。're-qualified' と 'requalified' も割れる
+#       ⇒ 行と語の両方で Unicode のダッシュ(Pd)を「空白」と「詰め」の2通りに畳んで照合する
+#   (b) **語の中に当たる**: 'prequalification' に 'requalification' が当たる（EFTS はトークン一致なので当たらない）
+#       ⇒ 語頭に境界を要求する（語尾は要求しない——'qualif' のような語幹の語彙が在りうるので）
+#   (c) **長い段落を読み飛ばす**: 2,400字超の行を捨てていた（表・XBRL の巨大行を除くため）が、
+#       年次報告の段落がそれを超えることがある（RMD の 'reluctant to switch' は 2,807字の段落の中）
+#       ⇒ 2,400字超の行は**文の境目で** 1,400字以下の塊に割る。文の境目の無い巨大行（表・XBRL）は割れないので従来どおり捨てる
+LONG, CHUNK = 2400, 1400
+
+
+def _dash(s, rep):
+    return ''.join(rep if unicodedata.category(c) == 'Pd' else c for c in s)
+
+
+def forms_of(s):
+    """(ダッシュ→空白, ダッシュ→詰め) の2形。小文字・空白は1つに畳む"""
+    low = s.lower()
+    sp = re.sub(r'\s+', ' ', _dash(low, ' '))
+    jn = re.sub(r'\s+', ' ', _dash(low, ''))
+    return sp, jn
+
+
+def split_long(lines, cap=LONG, chunk=CHUNK):
+    out = []
+    for ln in lines:
+        if len(ln) <= cap:
+            out.append(ln)
+            continue
+        parts = re.split(r'(?<=[.;])\s+(?=[A-Z(•“"])', ln)
+        if len(parts) == 1:
+            out.append(ln)              # 文の境目が無い巨大行＝scan が捨てる
+            continue
+        cur = ''
+        for q in parts:
+            if cur and len(cur) + len(q) + 1 > chunk:
+                out.append(cur)
+                cur = q
+            else:
+                cur = (cur + ' ' + q) if cur else q
+        if cur:
+            if len(cur) < 200 and out and len(out[-1]) + len(cur) < LONG:
+                out[-1] = out[-1] + ' ' + cur      # 短い端切れを見出しと誤認させない
+            else:
+                out.append(cur)
+    return out
+
+
+def _pat(q):
+    return re.compile(r'(?<![a-z0-9])' + re.escape(q))
+
+
 def scan(lines, phrases, maxn=60):
+    lines = split_long(lines)
     # Item の境目を先に取る
     raw = []
     for i, ln in enumerate(lines):
@@ -126,13 +182,23 @@ def scan(lines, phrases, maxn=60):
             return 'Item 1 Business（推定・本文の見出しが取れず）'
         return cur
 
-    full = '\n'.join(lines).lower()
-    counts = {p: full.count(p.lower()) for p in phrases}
+    fsp, fjn = forms_of('\n'.join(lines))
+    pats = {}
+    counts = {}
+    for p in phrases:
+        psp, pjn = forms_of(p.strip())
+        a, b = _pat(psp), _pat(pjn)
+        n = max(len(a.findall(fsp)), len(b.findall(fjn)))
+        counts[p] = n
+        if n:
+            pats[p] = (a, b)          # 文書に在る語だけ行ごとに照合する（速さのため）
 
     out = []
     for i, ln in enumerate(lines):
-        low = ln.lower()
-        hit = [p for p in phrases if p.lower() in low]
+        if not pats:
+            break
+        lsp, ljn = forms_of(ln)
+        hit = [p for p, (a, b) in pats.items() if a.search(lsp) or b.search(ljn)]
         if not hit:
             continue
         if len(ln) < 40 or len(ln) > 2400:
@@ -165,6 +231,31 @@ def scan(lines, phrases, maxn=60):
     return out, counts, [m[2] for m in body], toc_dropped
 
 
+def scan_filing(docs, phrases, maxn=60):
+    """40-F のように年次の中身が複数の文書（本体＋ EX-99.x の AIF・MD&A）に分かれる提出物を読む。
+
+    ★文書ごとに scan を掛ける（Item の境目・見出しは文書の中でしか意味を持たない）。
+      各行に `doc`（添付の種類とファイル名）を付け、出現回数は文書をまたいで合算する。
+    docs: [{'type','fn','url'}]（irr85_extract.latest_annual の `docs`）
+    返り値: (rows, counts, items, toc_dropped, n_lines, all_lines)"""
+    rows, counts, items, toc, nl, all_lines = [], {}, [], 0, 0, []
+    for d in docs:
+        lines = fetch_text(d['url'])
+        nl += len(lines)
+        all_lines += lines
+        r, c, it, td = scan(lines, phrases, max(0, maxn - len(rows)) or 1)
+        tag = f"{d.get('type') or ''} {d.get('fn') or ''}".strip()
+        for x in r:
+            x['doc'] = tag
+        if len(rows) < maxn:
+            rows += r[:maxn - len(rows)]
+        for k, v in c.items():
+            counts[k] = counts.get(k, 0) + v
+        items += [f'{tag}: {x}' for x in it] if len(docs) > 1 else it
+        toc += td
+    return rows, counts, items, toc, nl, all_lines
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('ticker', nargs='?')
@@ -187,33 +278,38 @@ def main():
         adsh, fn = a.doc.split(':', 1)
         url = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{adsh.replace('-', '')}/{fn}"
         meta = {'url': url, 'form': None, 'filed': None, 'name': None, 'sic': None}
+        docs = [{'type': None, 'fn': fn, 'url': url}]
     else:
         f = _ix.latest_annual(cik)
         if not f:
             raise SystemExit(f'{a.ticker or cik}: 年次報告が無い')
         meta, url = f, f['url']
+        docs = f['docs']          # ★40-F は本体＋年次の添付（AIF・MD&A）。10-K/20-F は本体だけ
 
-    lines = fetch_text(url)
-    rows, counts, items, toc_dropped = scan(lines, phrases + anti, a.max)
+    rows, counts, items, toc_dropped, n_lines, _ = scan_filing(docs, phrases + anti, a.max)
     for r in rows:
         r['dir'] = sorted({dirs.get(p, 'ANTI' if p in anti else 'neutral') for p in r['phrases']})
 
-    res = {'ticker': a.ticker, 'cik': cik, 'url': url, 'n_lines': len(lines),
+    res = {'ticker': a.ticker, 'cik': cik, 'url': url, 'n_lines': n_lines,
+           'docs_read': [f"{d.get('type') or ''} {d.get('fn') or ''}".strip() for d in docs],
            'items_found': items[:40], 'toc_marks_dropped': toc_dropped, 'n_hits': len(rows),
            'hit_phrases': {p: c for p, c in counts.items() if c},
-           'rows': rows, **{k: v2 for k, v2 in meta.items() if k != 'url'}}
+           'rows': rows, **{k: v2 for k, v2 in meta.items() if k not in ('url', 'docs')}}
     if a.json:
         print(json.dumps(res, ensure_ascii=False))
         return 0
     print(f"# {a.ticker or ''} {meta.get('name') or ''} CIK {cik}  SIC {meta.get('sic') or ''}")
     print(f"# {url}")
-    print(f"# 行 {len(lines)} / Item境界 {len(items)} / ヒット文 {len(rows)}")
+    for d in docs[1:]:
+        print(f"#   + {d.get('type')} {d.get('fn')}")
+    print(f"# 行 {n_lines} / Item境界 {len(items)} / ヒット文 {len(rows)}")
     print(f"# 当たった語: " + ', '.join(f'{p}×{c}' for p, c in sorted(res['hit_phrases'].items(), key=lambda kv: -kv[1])[:20]))
     print()
     for r in rows:
         mark = ('C' if r['cust'] else '-') + ('S' if r['self'] else '-') + ('W' if r['wish'] else '-')
         n1 = ' '.join(f"{p}×{c}" for p, c in r['n_in_doc'].items())
-        print(f"[{mark}] 〔{r['item'] or '?'}〕 {'/'.join(r['dir'])}  ({n1})")
+        dd = f"《{r['doc']}》" if len(docs) > 1 else ''
+        print(f"[{mark}] {dd}〔{r['item'] or '?'}〕 {'/'.join(r['dir'])}  ({n1})")
         for h in (r.get('heading_chain') or []):
             print(f"    ↑見出し: 「{h}」")
         print(f"    {r['text'][:700]}\n")

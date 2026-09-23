@@ -169,7 +169,7 @@ def fetch_src(t, pack):
                 txt, how = EX.text_of(src), 'source URL'
             else:
                 fi = EX.latest_annual(EX.cik_of(t))
-                txt, how = EX.text_of(fi['url']), f"{fi['form']} {fi['report']} filed {fi['filed']}"
+                txt, how = EX.annual_text(fi), f"{fi['form']} {fi['report']} filed {fi['filed']}"
         # ⚠ **BaseException で受ける**——irr85_extract.cik_of は `raise SystemExit` するので
         #   Exception だけだとスレッドプールを突き抜けて**全体が1社で止まる**（2026-08-20 に実測）
         except BaseException as e:

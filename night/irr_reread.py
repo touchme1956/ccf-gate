@@ -38,7 +38,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
 sys.path.insert(0, 'night')
 # **二重実装を作らない**——取得・本文化・文分割は irr85_extract のものをそのまま使う
-from irr85_extract import cik_of, latest_annual, text_of, sentences, CORE, CUST, SELF, WISH
+from irr85_extract import cik_of, latest_annual, text_of, annual_text, sentences, CORE, CUST, SELF, WISH
 
 # ── 70型（移行の摩擦。費用を払うのが当社側でも成立する）──────────────────
 FRICTION = re.compile(
@@ -65,9 +65,10 @@ def classify(s):
             '50型(逆向き)': bool(AGAINST.search(s))}
 
 
-def grab(url, maxn=60):
+def grab(f, maxn=60):
+    """f は latest_annual の返り値（40-F は添付の AIF・MD&A まで読む）"""
     out, seen = [], set()
-    for s in sentences(text_of(url)):
+    for s in sentences(annual_text(f)):
         if len(s) < 60 or len(s) > 900:
             continue
         c = classify(s)
@@ -114,7 +115,7 @@ def main():
         try:
             cik = cik_of(t)
             f = latest_annual(cik)
-            rows = grab(f['url']) if f else []
+            rows = grab(f) if f else []
         except Exception as e:
             out['items'][t] = {'error': str(e)}
             continue

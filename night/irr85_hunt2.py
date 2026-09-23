@@ -73,7 +73,7 @@ FLOOD = 1500
 #   "require additional flight testing"(AND) は1425件＝ほぼ全部が無関係
 FLOOD_TERMS = 250
 
-TOOL_REV = 'r1 (2026-08-19)'
+TOOL_REV = 'r2 (2026-09-23: 40-F の年次の添付を本文として採る／照合の3穴を irr85_section で是正)'
 
 
 def get(url, tries=5):
@@ -117,13 +117,24 @@ def hits_of(phrase, start, end, max_pages=MAX_PAGES, quoted=True):
         for h in d['hits']['hits']:
             s = h['_source']
             # ★添付書類を落とす——契約書の "qualification" は機構の証拠にならない
-            if s.get('file_type') not in ROOTSET:
-                continue
+            #   ⚠ただし **40-F は包み紙**で、年次の中身（AIF・MD&A）は EX-99.x／EX-1 の添付に在る
+            #   （2026-09-23・宿題 irr_tools_40f_gap。本体だけを採っていたので 40-F の行が0件だった）。
+            #   根の書類が 40-F のときだけ、年次の添付（irr85_extract.ANNUAL_EX の単一実装）を本文として採る
+            ft = s.get('file_type')
+            if ft not in ROOTSET:
+                root = s.get('form') or ''
+                roots = s.get('root_forms') or []
+                if not ((root == '40-F' or '40-F' in roots) and is_annual_exhibit(ft, s.get('file_description'))):
+                    continue
+                ft_root = '40-F'
+            else:
+                ft_root = ft
             ciks = s.get('ciks') or []
             rows.append({
                 'cik': (ciks[0] if ciks else '').lstrip('0').zfill(10),
                 'name': (s.get('display_names') or [''])[0],
-                'form': s.get('file_type'),
+                'form': ft_root,
+                'file_type': ft,
                 'filed': s.get('file_date'),
                 'sic': (s.get('sics') or [None])[0],
                 'doc': h['_id'],
@@ -135,6 +146,29 @@ def hits_of(phrase, start, end, max_pages=MAX_PAGES, quoted=True):
         time.sleep(0.13)
         d = fts(phrase, start, end, frm=got, quoted=quoted)
     return total, rows, (total > page * 100)
+
+
+_IX = None
+
+
+def ix():
+    """night/irr85_extract.py（年次報告の解決・40-F の添付の選び方の単一実装）を遅延で読む"""
+    global _IX
+    if _IX is None:
+        import importlib.util as _iu
+        sp = _iu.spec_from_file_location('_ix', os.path.join(HERE, 'irr85_extract.py'))
+        _IX = _iu.module_from_spec(sp)
+        sp.loader.exec_module(_IX)
+    return _IX
+
+
+def is_annual_exhibit(ft, desc=None):
+    """40-F の年次の添付か（EX-99.x / EX-1 / EX-2 / EX-13 / EX-15。同意書・証明書等は除く）"""
+    X = ix()
+    ft = (ft or '').upper()
+    if not X.ANNUAL_EX.match(ft) or re.match(r'^EX-(10|101|1\d\d)', ft):
+        return False
+    return not (desc and X.SKIP_EX_DESC.search(desc))
 
 
 def load_vocab(path):
@@ -353,6 +387,7 @@ def cmd_screen(a):
             u['ph'][p['p']] = u['ph'].get(p['p'], 0) + 1
             u.setdefault('mode', {})[p['p']] = p.get('mode', 'phrase')
             u['docs'][r['doc']] = r['filed']
+            u.setdefault('docform', {})[r['doc']] = r['form']
         if i % 10 == 0:
             print(f'  … {i}/{len(ph)}  社数 {len(uni)}', file=sys.stderr)
         time.sleep(0.13)
@@ -379,6 +414,8 @@ def cmd_screen(a):
                      'in_gate0': bool(g), 'g0_score': (g or {}).get('score'),
                      'g0_fails': (g or {}).get('fails'), 'forms': sorted(u['forms']),
                      'doc': sorted(u['docs'].items(), key=lambda kv: kv[1])[-1][0] if u['docs'] else None,
+                     'doc_form': (u.get('docform') or {}).get(
+                         sorted(u['docs'].items(), key=lambda kv: kv[1])[-1][0]) if u['docs'] else None,
                      'filed': max(u['docs'].values()) if u['docs'] else None,
                      'customer_bears': cb, 'lock_evidence': le, 'neutral': ne,
                      'mode': u.get('mode', {}),
@@ -571,8 +608,13 @@ def cmd_material(a):
         try:
             adsh, fn = r['doc'].split(':', 1)
             url = f"https://www.sec.gov/Archives/edgar/data/{int(r['cik'])}/{adsh.replace('-', '')}/{fn}"
-            lines = sec.fetch_text(url)
-            hits, counts, items, toc = sec.scan(lines, phrases + antis, maxn=40)
+            # ★40-F は本体＋年次の添付（AIF・MD&A）を全部読む（ヒットが添付でも本体でも同じ材料を配る）。
+            #   doc_form の無い古い在庫は、その社の forms に 40-F しか無いときだけ 40-F とみなす
+            dform = r.get('doc_form') or ('40-F' if (r.get('forms') or []) == ['40-F'] else None)
+            docs = (ix().annual_docs(r['cik'], adsh, '40-F', None) if dform == '40-F' else None) \
+                or [{'type': dform, 'fn': fn, 'url': url}]
+            hits, counts, items, toc, _nl, lines = sec.scan_filing(docs, phrases + antis, maxn=40)
+            lines = sec.split_long(lines)
             # ★terms モードで見つけた社は完全一致では当たらないことがある。
             #   「同じ段落に全部の語が在る」まで緩めて拾い直す（近い変種のため）。
             #   ⚠ 緩い照合は別の欄に入れる——完全一致と混ぜると証拠の強さが判らなくなる
@@ -600,7 +642,8 @@ def cmd_material(a):
                      and ('customer_bears' in h['dir'] or 'lock_evidence' in h['dir']))
             nC = sum(1 for h in hits if 'customer_bears' in h['dir'])
             res.append({**{k: r[k] for k in ('cik', 'name', 'sic', 'filed', 'doc', 'rank_score')},
-                        'url': url, 'items': items[:30], 'n_lines': len(lines),
+                        'url': url, 'docs_read': [f"{d.get('type') or ''} {d.get('fn') or ''}".strip() for d in docs],
+                        'items': items[:30], 'n_lines': len(lines),
                         'n_hits': len(hits), 'n_customer_bears': nC,
                         'n_anti': nA, 'n_anti_doc': nAdoc,
                         'counts': {p: c for p, c in counts.items() if c},
