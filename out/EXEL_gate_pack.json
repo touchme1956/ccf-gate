@@ -43,7 +43,7 @@
  "indG": null,
  "founder": null,
  "fin": null,
- "p1": 65,
+ "p1": 50,
  "p2": 70,
  "p3": null,
  "p4": 90,
@@ -70,7 +70,8 @@
    "のれん63.7Mが2019-2026固定=期間内に大型買収なし→acq5はnull維持。roic込34.6/除33.6の差が僅少なのものれん軽微が理由で整合",
    "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
    "2026-08-20 irr 70 → 50（二重読み）",
-   "2026-09-23 nde -0.54 → -1.18（原本検算・todo nde_netcash_false）: 旧値 −0.54 は現金だけの値（流動の市場性証券 576,603 を落としていた）。刻みは不変。式と実額・accn は _meta.evidence.nde。p3 95 → 空欄（旧 nde の導出値そのもの＝逸脱評価の根拠なし。新 nde からの導出は 95）。旧 p3 根拠文『純現金95。有利子負債ゼロ(2017以降)+現金482.5M+市場性証券576.6M=約1,059Mの純現金(nde実質≈-1.2)』"
+   "2026-09-23 nde -0.54 → -1.18（原本検算・todo nde_netcash_false）: 旧値 −0.54 は現金だけの値（流動の市場性証券 576,603 を落としていた）。刻みは不変。式と実額・accn は _meta.evidence.nde。p3 95 → 空欄（旧 nde の導出値そのもの＝逸脱評価の根拠なし。新 nde からの導出は 95）。旧 p3 根拠文『純現金95。有利子負債ゼロ(2017以降)+現金482.5M+市場性証券576.6M=約1,059Mの純現金(nde実質≈-1.2)』",
+   "2026-09-23 p1 65 → 50（todo p1_debtfree_apply）: 旧値は v9.9.50 以前の絶対σ刻みの根拠。機械算出の5年系列 CV=68.6% → 50。式と系列は _meta.evidence.p1"
   ],
   "evidence": {
    "expiry": "期限型IP独占で明確にyes。特許満了表『CABOMETYX 7,579,473 Composition of matter 2026 / 8,877,776 Salt and polymorphic forms 2030 / 9,724,342 Formulations 2030』。収益認識も『through the current estimated patent expiration of cabozantinib in the EU...Japan...both early 20xx』。『generic cabozantinib before our patents expire』=ジェネリック参入前提の単一分子(カボザンチニブ)依存",
@@ -83,7 +84,7 @@
    "dur": "規制/プロセス知型100。堀の実体は特許束+FDA承認+NCCN収載+規制上の独占。ただし全て特許期限に連動する期限型(expiry=yes)で、ASR式(50年コンセッションもdur100)に倣い型分類は100・時限性はexpiryで反映。特許runwayは2030=残り約5年と短い点に留意",
    "geopol": "中1。集『CMS to assert control over the prices of certain single-source drugs...(the Medicare Drug Price Negotiation Program)』『The IRA...enables CMS to assert control over the prices of certain single-source drugs』=IRA薬価交渉が単一製品会社に直撃する米政策リスク(地政学というより価格規制リスク)",
    "nrr": "開示なしのため既定105(SaaS型解約率指標は非該当業態)",
-   "p1": "ROIC5年σ大→65。営利が2020 369.5→2021 286.7→2022 201.5→2023 170.9→2025 604.6→2026 872.2Mと約5倍振幅(opm 9%→38%)。R&D投資サイクル起因の構造変動でσ8pt級。純現金でIC変動は抑制されるが利益変動が大",
+   "p1": "【2026-09-23 機械算出・変動係数刻み(v9.9.50)・todo p1_debtfree_apply】のれん・無形除外ROIC 5年系列: 2021 10.5% / 2022 6.5% / 2023 6.3% / 2024 21.2% / 2025 34.6% → 平均15.8% / σ10.8pt / **CV=68.6%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50・v9.9.50・σは母標準偏差＝fill_derived_judgment と同じ)で **50**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。 旧値は v9.9.50 以前の絶対σ刻みで置かれていた。出典: SEC XBRL companyfacts（年次報告の値）（night/fill_derived_judgment.roic_series・採取器 hd770bc0634）。 旧根拠（保持）: ROIC5年σ大→65。営利が2020 369.5→2021 286.7→2022 201.5→2023 170.9→2025 604.6→2026 872.2Mと約5倍振幅(opm 9%→38%)。R&D投資サイクル起因の構造変動でσ8pt級。純現金でIC変動は抑制されるが利益変動が大",
    "p2": "不況実績なし上限70。オンコロジー需要は非弾力(景気非依存)だが、黒字化はFY2018以降で景気後退期の営利DD実績が乏しい。2020(COVID)も営利369.5Mと健全でDDなし→70で上限",
    "p4": "無限定・accr<0→90。誠『internal control over financial reporting as of January 2, 2026 was effective. There were no material weaknesses』+『Item 1B. Unresolved Staff Comments. None』。material weaknessヒットは監査手続の定型文(risk that a material weakness exists)で実指摘ではない。accr=-3.6",
    "f1": "ROIIC高だがΔIC≈0で不安定→85。営利170.9(2023)→872.2M(2026)と急増する一方、株主資本2,263→2,161M・純現金でICほぼ横這い/減。数値上ROIICは超高だがΔIC近零で不安定なため、自社株買い(dilNet-6.77)による還元の質+利益率回復を根拠に85(WACC+8pt級)。回復歪みを注記",
@@ -135,7 +136,8 @@
    "beta": "market",
    "analysts": "market",
    "instOwn": "market",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "p1": "machine"
   },
   "basis": {
    "roic": "single-year",
