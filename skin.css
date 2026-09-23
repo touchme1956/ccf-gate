@@ -1,0 +1,342 @@
+/* ============================================================
+   skin.css — 投資アプリ風の皮（v9.9.189・2026-09-23 ユーザー指示
+   「門のデザインに不満がある。投資サイトを参考にして同じようなデザインに」
+   → 選択: 米系アプリ風〔Robinhood / Yahoo Finance US〕・配置も変える）
+
+   ■ 何をしているか
+     index.html と portfolio.html の <style> の**後ろ**で読む上書き層。
+     白地・黒文字・大きな数字・**色は騰落（緑=上/赤=下）と判定（緑=可/赤=不可）にだけ**使う。
+     和紙・金・明朝・縦書き・漂う光・行のグラデーションは画面から降ろした。
+
+   ■ 触っていないもの
+     **表示だけ**。採点・Ω・四関門・売却規律 S1/S2/S3・配分・文言・タブ構成・DOM の id は1つも変えていない
+     （night/ の検査器は id と関数を叩くので、そのまま動く）。
+     行の色(.tgrad)は JS が今までどおり塗る——ここで**見せないだけ**（check_icon_colors.js は
+     inline の background を見るので緑のまま）。ロゴのタイルには今も銘柄の色が出る。
+
+   ■ 戻し方
+     index.html / portfolio.html の <link rel="stylesheet" href="skin.css"> を1行消せば、元の門に戻る。
+
+   ■ テーマ
+     明るい(light)=白地 ／ 淡(soft)=チャコール ／ 漆黒(dark)=純黒。切替ボタンと localStorage:ccf_theme は従来どおり。
+   ============================================================ */
+
+/* ── 1. 色の札（トークン）───────────────────────────────── */
+html[data-theme="light"]{
+  --rb-bg:#ffffff; --rb-bg2:#f6f7f9; --rb-card:#ffffff; --rb-hover:#f3f4f6;
+  --rb-line:#e7e9ec; --rb-line2:#d9dce1;
+  --rb-ink:#0f1114; --rb-ink2:#3b4048; --rb-mute:#6a7079; --rb-dim:#7c828b;
+  --rb-up:#08873a; --rb-down:#d0281a; --rb-warn:#9a5b00; --rb-info:#1e5fd1; --rb-purple:#6b3fc4;
+  --rb-accent:#00c805; --rb-btn:#0f1114; --rb-btn-ink:#ffffff;
+  --rb-up-bg:rgba(0,200,5,.08); --rb-down-bg:rgba(208,40,26,.07); --rb-warn-bg:rgba(214,140,0,.09);
+  --rb-shadow:0 1px 2px rgba(16,24,40,.04);
+}
+html[data-theme="soft"]{
+  --rb-bg:#121417; --rb-bg2:#181b1f; --rb-card:#1a1d21; --rb-hover:#22262b;
+  --rb-line:#2a2e34; --rb-line2:#363b42;
+  --rb-ink:#f4f5f6; --rb-ink2:#c9ccd1; --rb-mute:#9aa0a8; --rb-dim:#8a9099;
+  --rb-up:#29d35a; --rb-down:#ff6a4d; --rb-warn:#f0a93a; --rb-info:#6ea8ff; --rb-purple:#b69cff;
+  --rb-accent:#00c805; --rb-btn:#f4f5f6; --rb-btn-ink:#0f1114;
+  --rb-up-bg:rgba(0,200,5,.10); --rb-down-bg:rgba(255,80,0,.10); --rb-warn-bg:rgba(240,169,58,.10);
+  --rb-shadow:none;
+}
+html[data-theme="dark"],html:not([data-theme]){
+  --rb-bg:#000000; --rb-bg2:#0b0c0e; --rb-card:#111315; --rb-hover:#1a1c1f;
+  --rb-line:#24272b; --rb-line2:#30343a;
+  --rb-ink:#ffffff; --rb-ink2:#cdd0d4; --rb-mute:#9aa0a8; --rb-dim:#878d96;
+  --rb-up:#00c805; --rb-down:#ff5000; --rb-warn:#f0a93a; --rb-info:#6ea8ff; --rb-purple:#b69cff;
+  --rb-accent:#00c805; --rb-btn:#ffffff; --rb-btn-ink:#000000;
+  --rb-up-bg:rgba(0,200,5,.10); --rb-down-bg:rgba(255,80,0,.10); --rb-warn-bg:rgba(240,169,58,.10);
+  --rb-shadow:none;
+}
+/* 旧い変数を新しい札へ流し込む——門の本文は var(--gold-bright) 等で書かれているので、
+   ここを差し替えるだけで数百箇所が一斉に新しい色になる（個別に書き換えない） */
+html[data-theme],html:not([data-theme]){
+  --bg:var(--rb-bg); --bg2:var(--rb-bg2); --panel:var(--rb-card); --panel2:var(--rb-bg2);
+  --line:var(--rb-line); --line2:var(--rb-line2);
+  --ink:var(--rb-ink); --ink-soft:var(--rb-ink2); --ink-bright:var(--rb-ink);
+  --muted:var(--rb-mute); --mut:var(--rb-mute); --dim:var(--rb-dim);
+  --gold:var(--rb-ink2); --gold-bright:var(--rb-ink); --gold-deep:var(--rb-ink2); --gold-d:var(--rb-ink2);
+  --gold-line:var(--rb-line2); --gold-g:var(--rb-hover);
+  --pass:var(--rb-up); --jade:var(--rb-up); --fail:var(--rb-down); --rust:var(--rb-down);
+  --blue:var(--rb-info); --steel:var(--rb-info); --amber:var(--rb-warn);
+  --jade-g:var(--rb-up-bg); --rust-g:var(--rb-down-bg); --steel-g:rgba(30,95,209,.08);
+  --codebg:var(--rb-bg2);
+  --c:var(--rb-ink); --ch:var(--rb-ink); --chnav:var(--rb-accent);
+  --gs1:var(--rb-ink); --gs2:var(--rb-ink); --gs3:var(--rb-ink); --gs4:var(--rb-ink);
+  --gs5:var(--rb-ink); --gs6:var(--rb-ink); --gs7:var(--rb-ink);
+  --mincho:var(--rb-font);
+  --rb-font:"Inter","Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --rb-num:"Inter","Noto Sans JP",system-ui,sans-serif;
+  background:var(--rb-bg) !important; background-image:none !important;
+}
+/* 採点機は自前の変数を持つ（#scorer{--bg…}）ので、同じ札をもう一度流す */
+html[data-theme] #scorer,html:not([data-theme]) #scorer{
+  --bg:var(--rb-card); --bg2:var(--rb-bg2); --panel:var(--rb-card); --panel2:var(--rb-bg2);
+  --line:var(--rb-line); --line2:var(--rb-line2);
+  --ink:var(--rb-ink); --mut:var(--rb-mute); --dim:var(--rb-dim);
+  --gold:var(--rb-ink2); --gold-bright:var(--rb-ink); --gold-d:var(--rb-ink2); --gold-g:var(--rb-hover);
+  --jade:var(--rb-up); --steel:var(--rb-info); --rust:var(--rb-down); --amber:var(--rb-warn);
+  --jade-g:var(--rb-up-bg); --rust-g:var(--rb-down-bg);
+  font-family:var(--rb-font);
+}
+
+/* ── 2. 地と文字 ───────────────────────────────────────── */
+html[data-theme] body,html:not([data-theme]) body{
+  background:var(--rb-bg) !important; color:var(--rb-ink);
+  font-family:var(--rb-font); font-weight:400; font-size:15px; line-height:1.7; letter-spacing:0;
+  font-feature-settings:"tnum" 1,"palt" 1; font-variant-numeric:tabular-nums;
+}
+html[data-theme] body::before,html[data-theme]::before{display:none !important;}
+/* 明朝・Cormorant・Marcellus は本文の CSS に40箇所以上散っているので、1本ずつ潰さず一括で黒ゴシックへ。
+   等幅（コード・JSON貼付欄・inline で monospace 指定）だけは残す */
+html[data-theme] body *:not(code):not(pre):not(kbd):not(samp):not(textarea):not([style*="monospace"]){font-family:var(--rb-font) !important;}
+html[data-theme] h1,html[data-theme] h2,html[data-theme] h3,html[data-theme] h4,
+html[data-theme] .h2,html[data-theme] .serif{
+  font-family:var(--rb-font) !important; color:var(--rb-ink) !important; font-weight:700; letter-spacing:-.01em;
+}
+html[data-theme] strong{color:var(--rb-ink); font-weight:600;}
+html[data-theme] ::selection{background:rgba(0,200,5,.22);}
+html[data-theme] a{color:var(--rb-info);}
+html[data-theme] code{font-family:ui-monospace,"SF Mono",Menlo,monospace; font-size:.9em;
+  background:var(--rb-bg2); border:1px solid var(--rb-line); border-radius:5px; padding:0 4px;}
+
+/* 飾りを降ろす: 漂う光・縦書き・章の環境光・見出しの金線・角飾り・朱印 */
+#ccfaura,.tategaki,.shuin,.rule{display:none !important;}
+html[data-theme] .pg::before{display:none !important;}
+html[data-theme] .pg h1.serif::after,html[data-theme] .panel-h h3::before{display:none !important;}
+html[data-theme] .panel::before,html[data-theme] .panel::after{display:none !important;}
+
+/* ── 3. 上のバー（アプリの見出し帯）───────────────────────── */
+html[data-theme] .pgnav{
+  background:color-mix(in srgb,var(--rb-bg) 92%,transparent) !important;
+  backdrop-filter:saturate(1.6) blur(14px); -webkit-backdrop-filter:saturate(1.6) blur(14px);
+  border-bottom:1px solid var(--rb-line) !important; box-shadow:none !important;
+  justify-content:center; gap:4px;
+}
+html[data-theme] .pgnav button{
+  background:transparent !important; border:0 !important; border-radius:999px;
+  color:var(--rb-mute) !important; font-family:var(--rb-font); font-weight:600; font-size:14px;
+  letter-spacing:0; box-shadow:none !important; transform:none !important; filter:none !important;
+}
+html[data-theme] .pgnav button:hover{color:var(--rb-ink) !important; background:var(--rb-hover) !important;}
+html[data-theme] .pgnav button.on{color:var(--rb-ink) !important; background:var(--rb-hover) !important;
+  box-shadow:inset 0 -2px 0 var(--rb-accent) !important; border-radius:10px 10px 4px 4px;}
+@media(min-width:641px){
+  /* ブランドは左端に置く（ナビの中身は中央のまま）。押せる要素ではないのでタブ数の検査には入らない */
+  html[data-theme] .pgnav::before{
+    content:"CCF Ω"; position:absolute; left:max(20px,env(safe-area-inset-left)); top:50%; transform:translateY(-50%);
+    font:800 17px/1 var(--rb-font); letter-spacing:-.02em; color:var(--rb-ink);
+    padding-left:14px; border-left:4px solid var(--rb-accent);
+  }
+}
+@media(min-width:641px) and (max-width:980px){ html[data-theme] .pgnav::before{display:none;} }
+
+/* 章のタブ（二段目）＝下線式のセグメント */
+html[data-theme] .chapnav{
+  background:var(--rb-bg) !important; border-bottom:1px solid var(--rb-line) !important;
+  box-shadow:none !important; backdrop-filter:none;
+}
+html[data-theme] .chapnav button{
+  background:transparent !important; border:0 !important; border-radius:0 !important;
+  color:var(--rb-mute) !important; font-family:var(--rb-font); font-weight:600; font-size:13px;
+  box-shadow:none !important; transform:none !important; filter:none !important;
+  padding-left:12px; padding-right:12px;
+}
+html[data-theme] .chapnav button:hover{color:var(--rb-ink) !important;}
+html[data-theme] .chapnav button.on{color:var(--rb-ink) !important; box-shadow:inset 0 -2px 0 var(--rb-ink) !important;}
+
+@media(max-width:640px){
+  /* 携帯: 下のタブバー（アプリの作法）。走っているタブは緑の文字＋上の細線 */
+  html[data-theme] .pgnav{border-top:1px solid var(--rb-line) !important; border-bottom:0 !important;
+    background:var(--rb-bg) !important; backdrop-filter:none; -webkit-backdrop-filter:none;}
+  html[data-theme] .pgnav button{font-size:11.5px; border-radius:8px;}
+  html[data-theme] .pgnav button.on{color:var(--rb-up) !important; background:transparent !important;
+    box-shadow:inset 0 2px 0 var(--rb-accent) !important; border-radius:0;}
+  html[data-theme] .chapnav{border-top:1px solid var(--rb-line) !important; border-bottom:0 !important;}
+}
+
+/* ── 4. ページと見出し ─────────────────────────────────── */
+html[data-theme] .pg h1.serif{
+  font-size:clamp(24px,4.4vw,32px) !important; border-bottom:0 !important; padding-bottom:0; margin:22px 0 6px;
+}
+html[data-theme] .pg h1.serif small,html[data-theme] .pg h1 span{color:var(--rb-mute) !important; font-weight:500;}
+html[data-theme] .intro{color:var(--rb-ink2);}
+html[data-theme] .why{border-left-color:var(--rb-line2);}
+html[data-theme] .why>summary{color:var(--rb-mute); font-size:12.5px;}
+html[data-theme] .why>summary::before{color:var(--rb-mute);}
+html[data-theme] .why>summary:hover{color:var(--rb-ink);}
+html[data-theme] .why-body{color:var(--rb-ink2); font-size:12.5px;}
+
+/* ── 5. カード ─────────────────────────────────────────── */
+html[data-theme] .panel,html[data-theme] .lens,html[data-theme] .fm,html[data-theme] .statement,
+html[data-theme] .q,html[data-theme] .row,html[data-theme] .gatebanner:not(.img1){
+  background:var(--rb-card) !important; background-image:none !important;
+  border:1px solid var(--rb-line) !important; border-radius:14px; box-shadow:var(--rb-shadow) !important;
+}
+html[data-theme] .panel{padding:24px;}
+html[data-theme] .lens.acc,html[data-theme] .q.win{background:var(--rb-up-bg) !important; border-color:color-mix(in srgb,var(--rb-up) 30%,var(--rb-line)) !important;}
+html[data-theme] .cut{background:var(--rb-down-bg) !important; border:1px solid color-mix(in srgb,var(--rb-down) 28%,var(--rb-line)) !important; border-radius:12px;}
+html[data-theme] .brake{background:var(--rb-card) !important; border:1px solid color-mix(in srgb,var(--rb-down) 40%,var(--rb-line)) !important; border-radius:14px;}
+html[data-theme] .brake-h{background:var(--rb-down-bg) !important;}
+html[data-theme] .brake .line{background:var(--rb-bg2) !important;}
+html[data-theme] .panel-h{border-bottom-color:var(--rb-line);}
+html[data-theme] .panel-h h3,html[data-theme] .lens .ln,html[data-theme] .q .v,
+html[data-theme] .brake-h h3,html[data-theme] .brake .line{color:var(--rb-ink) !important; font-family:var(--rb-font) !important;}
+html[data-theme] .lens .lw,html[data-theme] .fm b,html[data-theme] .gr.on .lt{color:var(--rb-ink) !important; font-family:var(--rb-num) !important; font-weight:700;}
+html[data-theme] .lens.acc .lw{color:var(--rb-up) !important;}
+html[data-theme] .fm,html[data-theme] .gr .lt,html[data-theme] .q .cond,html[data-theme] .tag,
+html[data-theme] .brand,html[data-theme] .latin,html[data-theme] .gatebanner .gk,
+html[data-theme] .gatebanner .badge,html[data-theme] .panel-h .pass,html[data-theme] .fb,
+html[data-theme] .temple .ts{font-family:var(--rb-font) !important; font-style:normal !important;}
+html[data-theme] .panel-h .pass,html[data-theme] .gatebanner .badge{border-color:var(--rb-line2) !important; color:var(--rb-ink2) !important; background:var(--rb-bg2) !important;}
+html[data-theme] .tag,html[data-theme] .q .cond{color:var(--rb-mute) !important; letter-spacing:.06em;}
+html[data-theme] .tag::before{background:var(--rb-accent);}
+html[data-theme] .gr{border-color:var(--rb-line);}
+html[data-theme] .gr.on{background:var(--rb-up-bg); border-color:color-mix(in srgb,var(--rb-up) 30%,var(--rb-line));}
+
+/* 表: 見出しは小さな灰色・罫は細く */
+html[data-theme] table.dt th{font-family:var(--rb-font) !important; text-transform:none; letter-spacing:0;
+  font-size:12px; color:var(--rb-mute) !important; font-weight:600; border-bottom:1px solid var(--rb-line) !important;}
+html[data-theme] table.dt td{color:var(--rb-ink2); border-bottom-color:var(--rb-line);}
+html[data-theme] table.dt td.k{font-family:var(--rb-font) !important; color:var(--rb-ink) !important; font-weight:600;}
+
+/* 解説の大きな絵は無地の見出しへ */
+html[data-theme] .hero-banner{min-height:120px !important; background:none !important;}
+html[data-theme] .hero-banner::before,html[data-theme] .hero-banner::after{display:none !important;}
+html[data-theme] .hero-inner{margin-top:-60px !important;}
+html[data-theme] .hero h1{color:var(--rb-ink) !important; text-shadow:none !important; letter-spacing:-.01em;}
+html[data-theme] .hero h1 .g{color:var(--rb-up) !important;}
+html[data-theme] .brand,html[data-theme] .hero .latin,html[data-theme] .hero .sub{color:var(--rb-mute) !important; text-shadow:none !important; letter-spacing:.04em;}
+html[data-theme] .gatebanner{border-color:var(--rb-line) !important;}
+html[data-theme] .gatebanner.img1{background:var(--rb-bg2) !important;}
+html[data-theme] .gatebanner .gt,html[data-theme] .gatebanner.img1 .gt{font-family:var(--rb-font) !important; color:var(--rb-ink) !important; letter-spacing:-.01em;}
+html[data-theme] .gatebanner .gs,html[data-theme] .gatebanner.img1 .gs,html[data-theme] .gatebanner .gk{color:var(--rb-mute) !important;}
+html[data-theme] .temple{background:var(--rb-bg2) !important; border-color:var(--rb-line);}
+html[data-theme] .temple .tt{color:var(--rb-ink) !important; text-shadow:none !important; font-family:var(--rb-font) !important;}
+
+/* 解説の銘板（金の照り返し）と採点機の地の光を止める */
+html[data-theme] .brand{background:none !important; -webkit-background-clip:border-box !important; background-clip:border-box !important;
+  color:var(--rb-mute) !important; filter:none !important; animation:none !important; text-shadow:none !important;}
+html[data-theme] #scorer{background:transparent !important;}
+html[data-theme] .tag{background:transparent !important;}
+
+/* ── 6. 銘柄の行＝一覧（Robinhood のウォッチリスト）───────────────── */
+html[data-theme] .led{
+  background:var(--rb-card) !important; border:0 !important; border-bottom:1px solid var(--rb-line) !important;
+  border-radius:0 !important; margin-bottom:0 !important; padding:13px 10px; box-shadow:none !important;
+}
+html[data-theme] .led:hover{background:var(--rb-hover) !important;}
+html[data-theme] .tgrad{display:none !important;}   /* 行の光は塗られているが見せない（上の頭注） */
+html[data-theme] .led .ln{font-family:var(--rb-font) !important; font-weight:700; letter-spacing:-.01em; color:var(--rb-ink);}
+html[data-theme] .led .grade{font-family:var(--rb-num) !important; font-weight:700;}
+html[data-theme] .led button{color:var(--rb-mute) !important;}
+html[data-theme] .led button:hover{color:var(--rb-ink) !important; background:var(--rb-hover) !important; border-color:var(--rb-line) !important;}
+html[data-theme] .tico{border-radius:50% !important; box-shadow:none !important;}
+html[data-theme] .tico img{border-radius:50%;}
+html[data-theme] .led:hover .tico,html[data-theme] .planrow:hover .tico{box-shadow:none !important;}
+html[data-theme] .planrow{background:var(--rb-card) !important; border:1px solid var(--rb-line) !important;
+  border-left:1px solid var(--rb-line) !important; border-radius:12px !important; box-shadow:none !important;}
+
+/* ── 7. ボタンと入力 ───────────────────────────────────── */
+html[data-theme] button{font-family:var(--rb-font);}
+html[data-theme] button:not([style*="background:none"]):not([style*="border:none"]):hover{
+  transform:none; filter:none; box-shadow:none;}
+html[data-theme] button:focus-visible{outline:2px solid var(--rb-accent); outline-offset:2px;}
+/* 門の「↻ 更新」など金色のグラデ地で直書きされたボタン → 黒い丸ボタン（Buy の作法） */
+html[data-theme] button[style*="rgba(201,166,74"],html[data-theme] button[style*="gold-line"]{
+  background:var(--rb-btn) !important; color:var(--rb-btn-ink) !important; border:1px solid var(--rb-btn) !important;
+  border-radius:999px !important; font-weight:600 !important; box-shadow:none !important; text-shadow:none !important;
+}
+html[data-theme] button[style*="rgba(201,166,74"]:hover,html[data-theme] button[style*="gold-line"]:hover{opacity:.86;}
+/* 採点機の主ボタン */
+html[data-theme] #scorer .btn{border-radius:999px; background:var(--rb-card); border-color:var(--rb-line2); color:var(--rb-ink);}
+html[data-theme] #scorer .btn-g{background:var(--rb-btn) !important; color:var(--rb-btn-ink) !important;
+  border-color:var(--rb-btn) !important; box-shadow:none !important; text-shadow:none !important;}
+html[data-theme] #scorer .duo{background:color-mix(in srgb,var(--rb-bg) 94%,transparent) !important;
+  border-color:var(--rb-line) !important; box-shadow:none !important;}
+html[data-theme] #scorer .duo-k .jp,html[data-theme] #scorer .bh .ix{color:var(--rb-mute) !important;}
+html[data-theme] #scorer .duo-v,html[data-theme] #scorer .pil-v,html[data-theme] #scorer .eval-big .n,
+html[data-theme] #scorer .ss .sv,html[data-theme] #scorer .led .grade,html[data-theme] #scorer input#nm{
+  font-family:var(--rb-num) !important; letter-spacing:-.02em;}
+html[data-theme] input,html[data-theme] select,html[data-theme] textarea{
+  font-family:var(--rb-font); background:var(--rb-card) !important; color:var(--rb-ink) !important;
+  border:1px solid var(--rb-line2) !important; border-radius:10px !important;}
+html[data-theme] input:focus,html[data-theme] select:focus,html[data-theme] textarea:focus{
+  border-color:var(--rb-ink) !important; outline:none; box-shadow:0 0 0 3px color-mix(in srgb,var(--rb-accent) 22%,transparent);}
+html[data-theme] input[type="checkbox"],html[data-theme] input[type="radio"]{accent-color:var(--rb-up);}
+
+/* 明暗の切替（右下の丸）——JS が inline で色を塗るので !important で揃える */
+#themeToggle{font-family:var(--rb-font) !important; background:var(--rb-card) !important; color:var(--rb-ink) !important;
+  border:1px solid var(--rb-line2) !important; box-shadow:0 4px 16px rgba(0,0,0,.12) !important; letter-spacing:0 !important;}
+
+/* 帯（state/stale）: 左の色線だけを残した通知 */
+html[data-theme] #stateBar>div,html[data-theme] #staleBar>div{border-radius:12px !important;}
+
+/* スクロールバー */
+html[data-theme] ::-webkit-scrollbar-thumb{background:var(--rb-line2) !important; background-clip:padding-box !important;}
+
+/* ── 8. 直書きの色（inline style）を新しい札へ寄せる ─────────────────
+   門の本文は JS のテンプレートに色を直書きしている。意味（緑=可/上・赤=不可/下・橙=注意・青=待ち・紫=網）は保ち、
+   金は「強調の黒」へ落とす（金＝意味のない装飾だったため）。 */
+html[data-theme] [style*="color:#54b88a"],html[data-theme] [style*="color:#8fc9a4"],html[data-theme] [style*="color:#a3d6bd"],
+html[data-theme] [style*="color:#8cc091"],html[data-theme] [style*="color:#4f8f6a"],html[data-theme] [style*="color:#3f8f6b"],
+html[data-theme] [style*="color:var(--jade)"],html[data-theme] [style*="color:var(--pass)"]{color:var(--rb-up) !important;}
+html[data-theme] [style*="color:#cf5f48"],html[data-theme] [style*="color:#e0917a"],html[data-theme] [style*="color:#e08a86"],
+html[data-theme] [style*="color:#c9534f"],html[data-theme] [style*="color:#e3a899"],html[data-theme] [style*="color:#ff9d8a"],
+html[data-theme] [style*="color:#c05a5a"],html[data-theme] [style*="color:#a8442a"],html[data-theme] [style*="color:#c4693f"],
+html[data-theme] [style*="color:var(--rust)"],html[data-theme] [style*="color:var(--fail)"]{color:var(--rb-down) !important;}
+html[data-theme] [style*="color:#d69a3c"],html[data-theme] [style*="color:#c98c3c"],html[data-theme] [style*="color:#c0894a"],
+html[data-theme] [style*="color:#d6b06c"],html[data-theme] [style*="color:#e8b95c"],html[data-theme] [style*="color:#ffcf8a"],
+html[data-theme] [style*="color:#c08a3e"]{color:var(--rb-warn) !important;}
+html[data-theme] [style*="color:#9bb0d2"],html[data-theme] [style*="color:#5d8cc2"],html[data-theme] [style*="color:#6fa8c9"],
+html[data-theme] [style*="color:#8fb4dd"],html[data-theme] [style*="color:#7f9bb5"]{color:var(--rb-info) !important;}
+html[data-theme] [style*="color:#9b7fd4"],html[data-theme] [style*="color:#b9a3e6"]{color:var(--rb-purple) !important;}
+html[data-theme] [style*="color:#c9a64a"],html[data-theme] [style*="color:#ecd494"],html[data-theme] [style*="color:#e0c88e"],
+html[data-theme] [style*="color:#f0ecdf"],html[data-theme] [style*="color:#f5efde"],html[data-theme] [style*="color:#f3ecda"],
+html[data-theme] [style*="color:#f6efda"],html[data-theme] [style*="color:var(--gold-bright)"],
+html[data-theme] [style*="color:var(--ink-bright"]{color:var(--rb-ink) !important;}
+html[data-theme] [style*="color:#d8d2c4"],html[data-theme] [style*="color:#cfc5ab"]{color:var(--rb-ink2) !important;}
+html[data-theme] [style*="color:#94a0b4"],html[data-theme] [style*="color:#9aa1ad"],html[data-theme] [style*="color:#8a8a8a"],
+html[data-theme] [style*="color:#b9bec7"]{color:var(--rb-mute) !important;}
+/* 金の淡い地・金の縁 → 灰の面・灰の罫 */
+html[data-theme] [style*="background:rgba(201,166,74"]:not(button),
+html[data-theme] [style*="background:linear-gradient(180deg,rgba(201,166,74"]:not(button){background:var(--rb-bg2) !important;}
+html[data-theme] [style*="border:1px solid rgba(201,166,74"]:not(button),
+html[data-theme] [style*="border:1px dashed rgba(201,166,74"]:not(button),
+html[data-theme] [style*="border:1px solid var(--gold-line)"]:not(button){border-color:var(--rb-line) !important;}
+
+/* ── 9. 盤の見出し（Robinhood の残高）─────────────────────── */
+.rb-hero{padding:6px 2px 18px; margin:4px 0 14px; border-bottom:1px solid var(--rb-line);}
+.rb-hero .k{font-size:13px; color:var(--rb-mute); font-weight:600;}
+.rb-hero .v{font:800 clamp(34px,7vw,46px)/1.1 var(--rb-num); letter-spacing:-.03em; color:var(--rb-ink); margin:4px 0 6px;}
+.rb-hero .d{font-size:14.5px; font-weight:600;}
+.rb-hero .d .t{color:var(--rb-mute); font-weight:500; margin-left:6px; font-size:13px;}
+.rb-hero .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;}
+.rb-hero .chip{font-size:12.5px; color:var(--rb-ink2); background:var(--rb-bg2); border:1px solid var(--rb-line);
+  border-radius:999px; padding:4px 12px;}
+.rb-hero .chip b{color:var(--rb-ink);}
+.rb-hero .chip.warn{color:var(--rb-warn); background:var(--rb-warn-bg); border-color:transparent;}
+.rb-up{color:var(--rb-up) !important;} .rb-down{color:var(--rb-down) !important;} .rb-flat{color:var(--rb-mute) !important;}
+/* 前日比の丸いピル（一覧の右端に置く作法） */
+.rb-pill{display:inline-block; min-width:74px; text-align:center; font-weight:700; font-size:12.5px;
+  padding:4px 8px; border-radius:8px; color:#fff !important;}
+.rb-pill.up{background:var(--rb-up);} .rb-pill.down{background:var(--rb-down);} .rb-pill.flat{background:var(--rb-line2); color:var(--rb-ink) !important;}
+
+/* 成績のグラフ: viewBox 720 固定なので、広い画面では目盛りの字が実寸26pxまで膨らむ。
+   携帯の読みやすさ（user unit 17〜20）は保ったまま、900px以上でだけ字を小さくする */
+@media(min-width:900px){ #perfBox svg text{font-size:12px;} }
+
+/* 📋今日・📊盤・📈成績・🩺点検・⚙自動化 は .wrap を持たないので、1280px未満では本文が画面の端に貼り付いていた。
+   他のタブ（.wrap あり）と同じ余白をつける */
+@media(max-width:1279px){ #pg10,#pg6,#pg12,#pg11,#pg9{padding-left:24px; padding-right:24px;} }
+@media(max-width:640px){ #pg10,#pg6,#pg12,#pg11,#pg9{padding-left:16px; padding-right:16px;} }
+
+@media(max-width:640px){
+  html[data-theme] .panel{padding:18px;}
+  html[data-theme] .led{padding:12px 6px;}
+}
+/* 暗いテーマの騰落ピルは地が明るい緑/橙なので、白字だとコントラストが 2:1 を割る → 黒字 */
+html[data-theme="dark"] .rb-pill.up,html[data-theme="dark"] .rb-pill.down,
+html[data-theme="soft"] .rb-pill.up,html[data-theme="soft"] .rb-pill.down,
+html:not([data-theme]) .rb-pill.up,html:not([data-theme]) .rb-pill.down{color:#000 !important;}

@@ -2,7 +2,7 @@
 <html lang="ja"><head><script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("ccf_theme")||"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}</script><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CCF Ω — 壊れない複利の門 × 未来の門（完全版・詳解）</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Zen+Kaku+Gothic+New:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Yuji+Syuku&family=Marcellus&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
  --bg:#080a0e;--bg2:#0c0f16;--panel:#121826;--panel2:#0e131d;--line:#28344a;
@@ -1009,6 +1009,8 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
   .hero-banner::before{transform:scale(1.06)}
 }
 </style>
+<!-- v9.9.189 投資アプリ風の皮（表示だけ・判定に不使用）。この1行を消せば元の和紙の門に戻る -->
+<link rel="stylesheet" href="skin.css">
 <!-- v9.9.131: 人の決定(state.json)の読み書き。**両ページが同じ実装を読む**（写すと必ず割れる・v9.9.65）。
      本体より前に読むのは localStorage.setItem の包み(dirty検出)を先に効かせるため -->
 <script src="state.js"></script><script src="icon.js"></script></head><body>
@@ -1536,7 +1538,7 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.188</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.189</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</div></details></div>
   </div>
@@ -5176,6 +5178,9 @@ async function ccfDash(btn){
 
   // ── 保有（評価額・含み損益・円換算）
   let rows='', totJ=0, totCost=0, totCostVal=0, noCost=[], miss=[];
+  // v9.9.189: 盤の見出しの「前日比」。**株価の前日比だけ**を円へ直した合計（為替の動きは含まない）。
+  //   価格が取れた行だけで作り、取れなかった行は足さない（0と読まない＝ルール7）。表示のみ・判定に不使用
+  let dayJ=0, dayBase=0;
   const pos=(pf&&Array.isArray(pf.positions))?pf.positions:[];
   pos.forEach(p=>{
     const t=String(p.t||'').toUpperCase(); if(!t)return;
@@ -5192,25 +5197,34 @@ async function ccfDash(btn){
     // ⚠ 合計の含み損益は**取得額が判っている行だけ**で作る。全部の評価額から
     //   一部の取得額を引くと、測れていない行のぶんが利益に化ける（ルール7）
     if(cost>0) totCostVal+=val; else if(val>0) noCost.push(t);
+    if(q&&q.chgPct!=null&&isFinite(q.chgPct)&&val>0){dayJ+=val-val/(1+q.chgPct/100);dayBase+=val;}
     const pl=cost>0?val-cost:null, plP=cost>0?(val/cost-1)*100:null;
     const L=led[t]||{}, R=L.r||{};
     const ex={s1:'🔴S1',s2:'🟠S2',s3:'🟡S3',hold:'—'}[(R.exit&&R.exit.level)||'hold']||'—';
     if(!q&&sh>0)miss.push(t);
     rows+=`<div class="led"><span class="ln">${ccfIcon(t)}${t}${src}</span>`
       +`<span style="font-size:12px;min-width:78px;text-align:right">${cur?((p.ccy==='JPY'?'¥':'$')+cur.toLocaleString('ja-JP',{maximumFractionDigits:2})):'—'}</span>`
-      +`<span style="font-size:12px;min-width:82px;text-align:right;color:${q?col(q.chgPct||0):'var(--dim)'}">${q&&q.chgPct!=null?sign(q.chgPct)+'%':'—'}</span>`
+      +`<span style="font-size:12px;min-width:82px;text-align:right">${q&&q.chgPct!=null?`<span class="rb-pill ${q.chgPct>0?'up':q.chgPct<0?'down':'flat'}">${sign(q.chgPct)}%</span>`:'<span style="color:var(--dim)">—</span>'}</span>`
       +`<span style="font-size:12.5px;min-width:96px;text-align:right;color:var(--ink)">${val?yen(val):'—'}</span>`
       +`<span style="font-size:12px;min-width:110px;text-align:right;color:${pl!=null?col(pl):'var(--dim)'}">${pl!=null?`${pl>0?'+':''}${yen(pl)}（${sign(plP)}%）`:'—'}</span>`
       +`<span style="font-size:12px;min-width:56px;text-align:right;color:var(--gold-bright)">${R.evalScore||'—'}</span>`
       +`<span style="font-size:11.5px;min-width:44px;text-align:right">${ex}</span></div>`;
   });
   const plAll=totCost>0?totCostVal-totCost:null;
-  const head=`<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);padding:10px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;margin-bottom:10px">
-    <span>総資産 <b style="font-size:16px;color:var(--gold-bright)">${totJ?yen(totJ):'—'}</b></span>
-    ${plAll!=null?`<span style="border-left:1px solid var(--line);padding-left:14px">含み損益 <b style="color:${col(plAll)}">${plAll>0?'+':''}${yen(plAll)}（${sign((totCostVal/totCost-1)*100)}%）</b></span>`:''}
-    ${noCost.length?`<span style="font-size:10.5px;color:#d69a3c;padding-left:10px" title="取得額(bjpy)も買付単価(bpx)も無い行。評価額は総資産に入るが、含み損益からは外してある——測れていないものを利益に数えないため">含み損益の対象外 ${noCost.join(' / ')}</span>`:''}
-    ${FX?`<span style="border-left:1px solid var(--line);padding-left:14px">$1=¥${FX}</span>`:''}
-    <span style="border-left:1px solid var(--line);padding-left:14px;color:var(--dim)">保有${pos.length}件</span></div>`;
+  // v9.9.189（ユーザー指示「投資サイトと同じようなデザインに」）: 総資産を**残高の見出し**として大きく出す
+  //   （Robinhood の作法）。数字の出どころは上の集計そのまま＝新しい計算は前日比の合計だけ。
+  const rbc=n=>n>0?'rb-up':n<0?'rb-down':'rb-flat';
+  const dayP=dayBase>0?dayJ/(dayBase-dayJ)*100:null;
+  const head=`<div class="rb-hero">
+    <div class="k">総資産</div>
+    <div class="v">${totJ?yen(totJ):'—'}</div>
+    ${dayP!=null?`<div class="d ${rbc(dayJ)}">${dayJ>0?'+':dayJ<0?'−':''}${yen(Math.abs(dayJ))}（${sign(dayP)}%）<span class="t">前日比（株価のみ・為替は含まない）</span></div>`:''}
+    ${plAll!=null?`<div class="d ${rbc(plAll)}">${plAll>0?'+':plAll<0?'−':''}${yen(Math.abs(plAll))}（${sign((totCostVal/totCost-1)*100)}%）<span class="t">含み損益</span></div>`:''}
+    <div class="chips">
+      <span class="chip">保有 <b>${pos.length}</b>件</span>
+      ${FX?`<span class="chip">$1 = <b>¥${FX}</b></span>`:''}
+      ${noCost.length?`<span class="chip warn" title="取得額(bjpy)も買付単価(bpx)も無い行。評価額は総資産に入るが、含み損益からは外してある——測れていないものを利益に数えないため">含み損益の対象外 ${noCost.join(' / ')}</span>`:''}
+    </div></div>`;
   const hdr=`<div class="led" style="opacity:.65;font-size:10.5px"><span class="ln">銘柄</span><span style="min-width:78px;text-align:right">現在値</span><span style="min-width:82px;text-align:right">前日比</span><span style="min-width:96px;text-align:right">評価額</span><span style="min-width:110px;text-align:right">含み損益</span><span style="min-width:56px;text-align:right">Ω</span><span style="min-width:44px;text-align:right">出口</span></div>`;
 
   // ── 決算が近い
