@@ -128,7 +128,8 @@
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 4.5% / 2022 13.8% / 2023 18.9% / 2024 16.0% / 2025 14.9% → 平均 13.6% / σ 4.9pt / **CV 35.8%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **65**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 801,003,000 → 2023年 3,457,004,000 → 2025年 3,617,822,000。A案(端点) 直近2年CAGR 2.30% − その前3年CAGR 62.81% = -60.51pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -86.17pt ／ 年次YoY {'2021': 88.5, '2022': 96.4, '2023': 16.6, '2024': -0.3, '2025': 5.0} → **採用 -60.51pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2020-12-31) 3853百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
-   "intcov": "20-F原本 FY2025（https://www.sec.gov/Archives/edgar/data/1345105/000134510526000019/cpa-20251231.htm）: 営業利益 818,960 ÷ 借入の真正の利息 63,246（千USD）= 12.949。Note 18: 『Interests expense on bank loans ( 63,246 )』（『Interest expense on lease liabilities ( 18,126 )』『Unwinding of discount and changes in the discount rate ( 17,021 )』は除外）。営業利益 『Operating profit 818,960』。基準=**借入の利息だけ**（為替・リース利息・割引の巻き戻し・デリバティブ損益は除外）。2026-09-23 審査官が注記から分離"
+   "intcov": "20-F原本 FY2025（https://www.sec.gov/Archives/edgar/data/1345105/000134510526000019/cpa-20251231.htm）: 営業利益 818,960 ÷ 借入の真正の利息 63,246（千USD）= 12.949。Note 18: 『Interests expense on bank loans ( 63,246 )』（『Interest expense on lease liabilities ( 18,126 )』『Unwinding of discount and changes in the discount rate ( 17,021 )』は除外）。営業利益 『Operating profit 818,960』。基準=**借入の利息だけ**（為替・リース利息・割引の巻き戻し・デリバティブ損益は除外）。2026-09-23 審査官が注記から分離",
+   "ni": "機械算出 2025年: 純利益 671,648,000（÷1e9で十億単位表示）"
   },
   "provenance": {
    "roic": "machine",
@@ -147,7 +148,8 @@
    "p1": "machine",
    "cagrT": "machine",
    "acqS5": "machine",
-   "intcov": "kenshi"
+   "intcov": "kenshi",
+   "ni": "machine"
   },
   "nulls": {
    "f5": "【2026-08-03】f5=65 は disrupt=settled（決着済/影響軽微） からの門の導出値 85 と食い違う『逸脱評価』だったが _meta.evidence.f5 に根拠が無かった。導出項目に根拠なき値を残すと門がそれを尊重し、**disruptを直しても f5 が追随しない＝陳腐化する**（night/fill_derived_judgment.py の設計思想）。空欄へ戻して門の導出に委ねる。逸脱させるなら原本根拠を付けて入れ直すこと",
@@ -159,7 +161,7 @@
   },
   "machine_check": {
    "date": "2026-09-23",
-   "rev": "hd5e914af1b",
+   "rev": "hd770bc0634",
    "ok": [
     "accr",
     "cagr",
@@ -167,16 +169,16 @@
     "eps",
     "gm",
     "gmt",
-    "nde",
+    "ni",
     "roic",
     "roicg",
     "roict"
    ],
-   "diff": [],
-   "hand": [],
-   "gone": [
-    "ni"
+   "diff": [
+    "nde"
    ],
+   "hand": [],
+   "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
   }
  },

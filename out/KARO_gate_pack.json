@@ -109,7 +109,9 @@
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC5年系列の**変動係数(σ÷平均)**。系列: 2021 43.7% / 2022 24.4% / 2023 24.2% / 2024 26.4% / 2025 29.1% → 平均 29.6% / σ 7.3pt / **CV 24.7%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 1,941,893,000 → 2023年 3,507,067,000 → 2025年 4,567,459,000。A案(端点) 直近2年CAGR 14.12% − その前3年CAGR 21.78% = -7.66pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -5.63pt ／ 年次YoY {'2021': 18.0, '2022': 19.9, '2023': 27.7, '2024': 19.9, '2025': 8.6} → **採用 -5.63pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "20-F原本 FY2026（https://www.sec.gov/Archives/edgar/data/1828102/000121390026066795/ea0293645-20f_karooooo.htm）: 営業利益 1,414,712 ÷ 借入の真正の利息 53,522（千ZAR）= 26.432。Note 22 FINANCE COSTS: 『Term loans 24,854』＋『Bank overdraft 28,668』＝53,522（『Lease liabilities 23,734』『Others 618』は除外）。営業利益 『Operating profit 1,414,712』。基準=**借入の利息だけ**（為替・リース利息・割引の巻き戻し・デリバティブ損益は除外）。2026-09-23 審査官が注記から分離",
-   "acqS5": "買収支出 5年ぶん合計 72百万$ ÷ 期初総資産(2021-02-28) 2915百万$ ＝ 0.025／内訳: 2024-02-29 5百万$ / 2022-02-28 67百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 72百万$ ÷ 期初総資産(2021-02-28) 2915百万$ ＝ 0.025／内訳: 2024-02-29 5百万$ / 2022-02-28 67百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "fcf": "機械算出 2025年: 営業CF 1,933,295,000 − 設備投資 1,022,371,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）",
+   "ni": "機械算出 2025年: 純利益 937,110,000（÷1e9で十億単位表示）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -134,7 +136,9 @@
    "p1": "machine",
    "cagrT": "machine",
    "acqS5": "machine",
-   "intcov": "kenshi"
+   "intcov": "kenshi",
+   "fcf": "machine",
+   "ni": "machine"
   },
   "basis": {
    "roic": "single-year",
@@ -142,26 +146,26 @@
   },
   "machine_check": {
    "date": "2026-09-23",
-   "rev": "hd5e914af1b",
+   "rev": "hd770bc0634",
    "ok": [
     "accr",
     "cagr",
+    "fcf",
     "gm",
     "gmt",
     "gpa",
-    "nde",
+    "ni",
     "roict"
    ],
    "diff": [
+    "nde",
     "roic",
     "roicg"
    ],
    "hand": [],
    "gone": [
     "dilNet",
-    "eps",
-    "fcf",
-    "ni"
+    "eps"
    ],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
   },

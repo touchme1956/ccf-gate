@@ -1769,6 +1769,22 @@
    "title": "v11_facts.py: 通貨をそろえずに割る(annual)・AMBIQのCIK取り違え",
    "done": false,
    "note": "2026-09-23 intcov是正で判明。(1) annual() が営業利益USD÷利息INRを割りWITのintcovが0.13になった (2) ティッカー表の『AMBIQ』がAmbipar(CIK1937441)を引き、パックのAmbiq Micro(CIK1500412・AMBQ)と別会社。intcov以外のv11の値にも及ぶ。audit_intcov.py の内部矛盾欄はv11_factsを読むのでTIMBが鳴り続ける。"
+  },
+  {
+   "id": "ifrs_nde_rou_bias",
+   "kind": "宿題",
+   "title": "IFRS 企業の nde は使用権資産の減価償却を EBITDA に含む（リース負債は含めない）＝低めに出る偏りを測る",
+   "due": null,
+   "done": false,
+   "note": "2026-09-23 採取器 hd770bc0634 で判明。IFRS の D&A の行は使用権資産の減価償却を含み、その割合は D&A の5〜35%（TIGO 19%・AFYA 22%・BUD 13%・INFY 35%・SAP 21%）。規約はリース負債を有利子負債に数えないので、基準が揃わず nde が低めに出る（US-GAAP はオペレーティングリースの費用が D&A に入らないので揃っている）。台帳の審査（TIMB・日本株 IFRS）も同じ扱いで一貫しているため今は規約を変えない。測ること: DepreciationRightofuseAssets を差し引いた nde で閾値 −0.5/0/1/2.5/3/4 をまたぐ社があるか。またぐ社がいれば規約（EBITDA から ROU 減価償却を除く）の変更を判断する。"
+  },
+  {
+   "id": "fetcher_rev_disagree_0923",
+   "kind": "宿題",
+   "title": "採取器 hd770bc0634 で新たに出たパックとの食い違い62件を裁く",
+   "due": null,
+   "done": false,
+   "note": "2026-09-23 根拠の刻み直し（一致欄だけ・値は不変）で、今回の採取器の是正で新たに食い違った62件（旧採取器では算出できずパックは審査官の値）。例: TIGO nde 3.25/1.83・BUD 3.98/2.91（ifrs_nde_rou_bias と関係）・PRGS 8.19/4.28・AMPH 2.4/1.66・KTB roic 21.8/35.8・GMAB（DKK→USD で全欄）・LOMA ni 38.48/153.6（桁を疑う）・D fcf 5.36/−7.29。一覧は out/backfill_diff.json。判定圏(Ω72+)・投下可の該当は0。"
   }
  ]
 }

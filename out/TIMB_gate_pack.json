@@ -111,7 +111,9 @@
    "roiic5": "機械算出 2020→2025年(5年窓): ΔNOPAT 3,426,878,419 ÷ Δ投下資本 1,228,337,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 25,527,777,000→26,756,114,000（+4.8%） → Δ投下資本が10%未満（または減少）＝**成熟還元型**として na。再投資が限定的で増分利回りは定義できない",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 17,267,812,000 → 2023年 23,833,893,000 → 2025年 26,624,721,000。A案(端点) 直近2年CAGR 5.69% − その前3年CAGR 11.34% = -5.65pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -5.00pt ／ 年次YoY {'2021': 4.6, '2022': 19.2, '2023': 10.7, '2024': 6.8, '2025': 4.6} → **採用 -5.00pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2020-12-31) 41654百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
-   "intcov": "20-F原本 FY2025（https://www.sec.gov/Archives/edgar/data/1826168/000129281426001915/timbform20f_2025.htm）: 営業利益 6,344,032 ÷ 借入の真正の利息 560,193（千BRL）= 11.325。Note 31 Financial expenses: 『Interest and inflation adjustment on loans and financing ( 234,735 )』＋『Swap interest ( 325,458 )』＝560,193（スワップは借入の金利交換なので保守的に利息側へ。『Interest on lease liabilities, net of cancellations ( 1,617,383 )』『Interest on taxes and rates ( 437,216 )』『Inflation adjustment ( 265,493 )』（主に訴訟引当）等は除外）。営業利益 『Profit before financial income and expenses 6,344,032』。参考: スワップを除けば 27.03。基準=**借入の利息だけ**（為替・リース利息・割引の巻き戻し・デリバティブ損益は除外）。2026-09-23 審査官が注記から分離"
+   "intcov": "20-F原本 FY2025（https://www.sec.gov/Archives/edgar/data/1826168/000129281426001915/timbform20f_2025.htm）: 営業利益 6,344,032 ÷ 借入の真正の利息 560,193（千BRL）= 11.325。Note 31 Financial expenses: 『Interest and inflation adjustment on loans and financing ( 234,735 )』＋『Swap interest ( 325,458 )』＝560,193（スワップは借入の金利交換なので保守的に利息側へ。『Interest on lease liabilities, net of cancellations ( 1,617,383 )』『Interest on taxes and rates ( 437,216 )』『Inflation adjustment ( 265,493 )』（主に訴訟引当）等は除外）。営業利益 『Profit before financial income and expenses 6,344,032』。参考: スワップを除けば 27.03。基準=**借入の利息だけ**（為替・リース利息・割引の巻き戻し・デリバティブ損益は除外）。2026-09-23 審査官が注記から分離",
+   "fcf": "機械算出 2025年: 営業CF 13,440,069,000 − 設備投資 4,541,495,000（÷1e9で十億単位表示。設備投資のみ控除＝買収は含めない）",
+   "ni": "機械算出 2025年: 純利益 4,311,984,000（÷1e9で十億単位表示）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -138,7 +140,9 @@
    "p1": "machine",
    "cagrT": "machine",
    "acqS5": "machine",
-   "intcov": "kenshi"
+   "intcov": "kenshi",
+   "fcf": "machine",
+   "ni": "machine"
   },
   "basis": {
    "roic": "single-year",
@@ -146,26 +150,27 @@
   },
   "machine_check": {
    "date": "2026-09-23",
-   "rev": "hd5e914af1b",
+   "rev": "hd770bc0634",
    "ok": [
     "accr",
     "cagr",
     "dilNet",
     "eps",
+    "fcf",
     "gm",
     "gmt",
     "gpa",
+    "ni",
     "roict"
    ],
    "diff": [
     "roic",
     "roicg"
    ],
-   "hand": [],
-   "gone": [
-    "fcf",
-    "ni"
+   "hand": [
+    "nde"
    ],
+   "gone": [],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"
   },
   "irr85_verify": [

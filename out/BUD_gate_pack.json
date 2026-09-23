@@ -120,7 +120,8 @@
    "eps": "機械算出 2025年: 純利益 8,477,000,000 ÷ 株数 2,019,000,000（TTMではなく通期実績）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 46,881,000,000 → 2023年 59,380,000,000 → 2025年 59,320,000,000。A案(端点) 直近2年CAGR -0.05% − その前3年CAGR 8.20% = -8.25pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -6.46pt ／ 年次YoY {'2021': 15.8, '2022': 6.4, '2023': 2.8, '2024': 0.7, '2025': -0.7} → **採用 -6.46pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "20-F原本 FY2025（https://www.sec.gov/Archives/edgar/data/1668717/000119312526088105/d65314d20f.htm）: 営業利益 15,405 ÷ 借入の真正の利息 3,194（百万USD）= 4.823。Note 11 Finance expense and income: 『Interest expense ( 3 194 )』（リース利息は同注記『accretion expense included … interest on lease liabilities of 144m US dollar』で Accretion expense 側に在り、Interest expense に含まれない。為替『( 386 )』・ヘッジ損『( 310 )』・銀行手数料等『( 221 )』・年金利息『( 74 )』は除外）。営業利益 『Profit from operations 15 405』。基準=**借入の利息だけ**（為替・リース利息・割引の巻き戻し・デリバティブ損益は除外）。2026-09-23 審査官が注記から分離",
-   "acqS5": "買収支出 5年ぶん合計 451百万$ ÷ 期初総資産(2020-12-31) 226410百万$ ＝ 0.002／内訳: 2021-12-31 451百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 451百万$ ÷ 期初総資産(2020-12-31) 226410百万$ ＝ 0.002／内訳: 2021-12-31 451百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "ni": "機械算出 2025年: 純利益 8,477,000,000（÷1e9で十億単位表示）"
   },
   "provenance": {
    "roic": "machine",
@@ -134,7 +135,8 @@
    "eps": "machine",
    "cagrT": "machine",
    "acqS5": "machine",
-   "intcov": "kenshi"
+   "intcov": "kenshi",
+   "ni": "machine"
   },
   "nulls": {
    "p1_note": "【2026-09-23 再実行・todo p1_debtfree_apply】依然として機械で刻めない: 門式で算出できた年が0年しかない（2021:有利子負債タグ不在（ただし痕跡あり＝未知のタグで報告の疑い） / 2022:有利子負債タグ不在（ただし痕跡あり＝未知のタグで報告の疑い） / 2023:有利子負債タグ不在（ただし痕跡あり＝未知のタグで報告の疑い） / 2024:有利子負債タグ不在（ただし痕跡あり＝未知のタグで報告の疑い） / 2025:IC が自己資本の2割未満＝分母縮退）。（痕跡あり＝候補外のタグで債務を報告している疑い。debt=0 と読まない＝ルール7） 台帳値は据置。",
@@ -147,7 +149,7 @@
   },
   "machine_check": {
    "date": "2026-09-23",
-   "rev": "hd5e914af1b",
+   "rev": "hd770bc0634",
    "ok": [
     "accr",
     "cagr",
@@ -155,15 +157,15 @@
     "eps",
     "gm",
     "gpa",
-    "nde",
+    "ni",
     "roicg"
    ],
    "diff": [
-    "gmt"
+    "gmt",
+    "nde"
    ],
    "hand": [],
    "gone": [
-    "ni",
     "roic"
    ],
    "note": "night/backfill_machine_evidence.py が採取器で再計算して突き合わせた記録。rev は hachimon_fetch.py の内容ハッシュ＝**採取器が変わればここも変わる**。ok の欄だけが『この版で検算済み』。diff は人が原因（年ずれ・単位・IC縮退・審査官の判断）を確かめる作業リスト"

@@ -101,7 +101,8 @@
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **23.2%** / 同業（SIC2834「Pharmaceutical Preparations」・131社）の中央値 **6.4%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+23.2%)÷(1+6.4%))^5 − 1 = **+107.9%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 24,539,800,000 → 2023年 34,124,000,000 → 2025年 65,179,000,000。A案(端点) 直近2年CAGR 38.21% − その前3年CAGR 11.62% = +26.59pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +22.95pt ／ 年次YoY {'2021': 15.4, '2022': 0.8, '2023': 19.6, '2024': 32.0, '2025': 44.7} → **採用 +26.59pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "acqS5": "買収支出 5年ぶん合計 1075百万$ ÷ 期初総資産(2020-12-31) 46633百万$ ＝ 0.023／内訳: 2022-12-31 327百万$ / 2021-12-31 747百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
-   "sbc": "SBC比率＝株式報酬 626.0百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝0.96%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）"
+   "sbc": "SBC比率＝株式報酬 626.0百万$ ÷ 売上（2025-12-31 期・SEC XBRL の ShareBasedCompensation 等 ÷ Revenues 等）＝0.96%。門の定義は「株式報酬÷売上（%）」（index.html の入力欄 SBC比率）",
+   "ni": "機械算出 2025年: 純利益 20,640,000,000（÷1e9で十億単位表示）"
   },
   "nulls": {
    "roic_roicg_roict_gm_gmt_gpa": "営業利益・粗利タグ不取得(diag op/gp=タグ不発見)。算出には原本の営利/粗利が必要",
@@ -125,7 +126,8 @@
    "sht": "machine",
    "cagrT": "machine",
    "acqS5": "machine",
-   "sbc": "machine"
+   "sbc": "machine",
+   "ni": "machine"
   },
   "basis": {
    "roic": "single-year",
@@ -133,12 +135,13 @@
   },
   "machine_check": {
    "date": "2026-09-23",
-   "rev": "hd5e914af1b",
+   "rev": "hd770bc0634",
    "ok": [
     "accr",
     "cagr",
     "dilNet",
-    "eps"
+    "eps",
+    "ni"
    ],
    "diff": [],
    "hand": [],
@@ -146,7 +149,6 @@
     "gm",
     "gmt",
     "nde",
-    "ni",
     "roic",
     "roicg"
    ],
