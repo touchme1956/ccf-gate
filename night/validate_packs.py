@@ -55,7 +55,9 @@ MARKET = ["per", "perF", "px", "shy", "evebit", "beta", "analysts", "instOwn"]
 
 ALIAS = {"per": ["px_per", "per"], "px": ["px_per", "px"], "perF": ["px_per", "perF"],
          "roicg": ["roicg", "roic"], "roicEx": ["roicEx", "roic"], "roict": ["roict", "roic"],
-         "gmt": ["gmt", "gm"], "nde": ["nde", "roic"]}
+         "gmt": ["gmt", "gm"]}
+# 2026-09-23: "nde": ["nde", "roic"] を外した——evidence.roic は有利子負債の内訳しか書かず、nde に要る
+#   現金・EBITDA を持たないのに nde の根拠として数えていた（HD・TSM・WSO・TYL ほかが根拠なしで素通り）。
 
 
 def has_val(v):

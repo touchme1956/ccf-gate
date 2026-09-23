@@ -63,13 +63,21 @@ MAP = {"roic": "roic", "roicg": "roicg", "roict": "roict", "gm": "gm", "gmt": "g
 TODAY = __import__("time").strftime("%Y-%m-%d")
 
 
-def same(a, b):
-    """保存値と再計算値が実質同じか。列挙値は文字列一致、数値は2%か0.15の緩い方。"""
+# 門が nde で段差を作る境目（index.html: F10 の +4 は <−0.5 ／ p3 の表 0・1・2.5 ／ キル帯接近 >3 ／ 財務キル >4）
+NDE_EDGES = (-0.5, 0.0, 1.0, 2.5, 3.0, 4.0)
+
+
+def same(a, b, fld=None):
+    """保存値と再計算値が実質同じか。列挙値は文字列一致、数値は2%か0.15の緩い方。
+    ★2026-09-23: nde だけは**門の境目をまたぐ2つを同じと見ない**——0.15 の幅は 0 の近くで緩すぎ、
+      TIMB の −0.13（純現金＝p3 95）と +0.01（p3 85）を「一致」として根拠を刻んでいた。"""
     if isinstance(a, str) or isinstance(b, str):
         return str(a) == str(b)
     try:
         x, y = float(a), float(b)
     except Exception:
+        return False
+    if fld == "nde" and any((x < e) != (y < e) for e in NDE_EDGES):
         return False
     return abs(x - y) <= max(0.15, abs(y) * 0.02)
 
@@ -265,7 +273,7 @@ def main():
                     continue
                 diffs.append((fld, stored, new, hand))
                 continue
-            if same(stored, new):
+            if same(stored, new, fld):
                 if evid.get(fld) and not hand:
                     ev_m[fld] = evid[fld]
                     pv[fld] = "machine"
