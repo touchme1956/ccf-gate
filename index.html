@@ -1138,7 +1138,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.192</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.193</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -2247,10 +2247,17 @@ function compute(){
   //   明示値が常に優先・写像自体は既存ルーブリックの実装であり採点基準の変更ではない
   const f5v=(nn('f5')!=null)?n('f5'):(disrupt==='threat'?45:disrupt==='unsettled'?65:85);
   const p3v=(nn('p3')!=null)?n('p3'):(()=>{const dv=nn('nde');if(dv==null)return 70;return dv<0?95:dv<1?85:dv<2.5?70:50;})();
+  // v9.9.193（2026-09-23 ユーザー指示「判断してほしいことはあなたが判断して」で決定）: 空欄の判断項目（p1/p2/p4/f1/f3/f4）を
+  //   0点（max(x,1)=1点）ではなく**残りの重みへ再正規化**する（dom/moatW と同じ作法）。審査の手順は『測れなければ空欄＋理由』を
+  //   指示しており、指示どおりに空欄にすると罰になっていた（BR で約−15pt）。影の計測 night/shadow_blank_judgment.py:
+  //   26社が上がり下がる社0・投下可不変・判定圏をまたぐのは 4732/4776。反対論拠（空欄＝他の欄の平均と仮定する）は承知の上。
+  const _bk=id=>{const el=$(id);return !el||el.value===''||el.value==null;};
+  const _gmN=(v,w,skip)=>{const vv=[],ww=[];let S=0,T=0;w.forEach(x=>T+=x);v.forEach((x,i)=>{if(!skip[i]){vv.push(x);ww.push(w[i]);S+=w[i];}});return S>0?gm(vv,ww.map(x=>x*T/S)):gm(v,w);};
   const F=(()=>{
-    let f=gm(
+    let f=_gmN(
       [n('f1'),F6, F11, f2eff,F9,F7,n('f3'),F10,F8,n('f4'),f5v],
-      [.14,   .12,.09, .06,  .09,.13,.09,   .12,.08,.04,   .04]
+      [.14,   .12,.09, .06,  .09,.13,.09,   .12,.08,.04,   .04],
+      [_bk('f1'),false,false,false,false,false,_bk('f3'),false,false,_bk('f4'),false]
     );
     if((!roiicNA&&roiicEff<wacc)||md)f=Math.min(f,64);
     if(disrupt==='threat')f=Math.max(0,f-10); else if(disrupt==='unsettled')f=Math.max(0,f-3); // v9.2大工事(監査⑧): unsettled=-3で段階化。f5(重み4%)任せの実質ノーペナルティを解消
@@ -2263,8 +2270,8 @@ function compute(){
   //   現収益性が本物(営業利益率>25%かつROIC≥20%)なのにp1実績安定が低い場合、減点の半分を免除(p1と75の中間へ)。
   //   「過去は荒れたが収益力は確立済み」の巨人転換(MSFT2014: 営利32%)を捕捉。Apple1997型(営業赤字)は発動せず=正しい除外を維持。
   let p1eff=n('p1');
-  if(n('gm')>25 && roic>=20 && p1eff<75) p1eff=(p1eff+75)/2;
-  const P=gm([p1eff,n('p2'),p3v,Math.max(0,p4eff)],[.30,.25,.25,.20]);
+  if(!_bk('p1') && n('gm')>25 && roic>=20 && p1eff<75) p1eff=(p1eff+75)/2;
+  const P=_gmN([p1eff,n('p2'),p3v,Math.max(0,p4eff)],[.30,.25,.25,.20],[_bk('p1'),_bk('p2'),false,_bk('p4')]);
   // v9.9.67（2026-08-03・ユーザー明示指示「採点の配分を見直したい」→「いれて」）:
   //   **Q から F を外した**（旧 gm([P,now,F],[.40,.35,.25])）。F の二重計上を解く。
   // 【何が起きていたか】F は Ω の直接項(.22) と この Q の中(.25) の両方に居た。展開すると
@@ -4019,7 +4026,7 @@ const CCF_BLANK={
   //   採取器 fill_sht.py が「買ったシェアと勝ち取ったシェアを売上高では区別できない」ために使うのは端末側。
   acq5:['ok','v9.9.183 で のれん乖離の罰を撤去したため**門の採点には効かない**（採取器 fill_sht.py が端末側で使うだけ）'],
   sht:['skew',"既定'flat'——中立ではない（up なら pm+3、Intel警報も鳴らない）"],
-  gmt:['skew',"既定'flat'"], roict:['skew',"既定'flat'"], nrr:['skew','既定105'],
+  gmt:['best',"既定'flat'＝事業の収縮の関門（cagr<0 ∧ gmt=down）を発火させない（2026-09-23 決定 gmt_blank_meaning: skew→best＝判定圏の空欄を見張る）"], roict:['skew',"既定'flat'"], nrr:['skew','既定105'],
   per:['stop','門X（四関門の第二）が評価不能になる'], px:['stop','per の検算ができない'], eps:['stop','per の検算ができない'],
   shy:['skew','門Xが bR=0.4 のフォールバックに落ちる'],
   // 2026-08-11: 堀5本の空欄を 'ok' → 'best' へ。**再正規化は「既定値に化けない」だけで「中立」ではない**——
