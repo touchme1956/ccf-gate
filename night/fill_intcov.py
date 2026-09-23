@@ -50,7 +50,7 @@ def main():
     if have == 0:
         sys.exit("✗ v11_facts に intcov_strict が1社も無い＝採取が壊れている。何も書かずに中止")
 
-    n_w = n_same = n_blank = n_jp = 0
+    n_w = n_same = n_blank = n_jp = n_kept = 0
     changed = []
     for pk in sorted(glob.glob(os.path.join(BASE, "out", "*_gate_pack.json"))):
         t = os.path.basename(pk).replace("_gate_pack.json", "")
@@ -64,6 +64,12 @@ def main():
                 n_jp += 1
             continue
         d = json.load(open(pk, encoding="utf-8"))
+        # ★審査官が原本で検算した欄は上書きしない（ルール8。2026-09-23: IFRS 19社を
+        #   財務費用の注記から直したあと、このままだと WIT が通貨混在の 0.13＝誤キルへ戻った）
+        prov = ((d.get("_meta") or {}).get("provenance") or {}).get("intcov")
+        if prov and prov != "machine":
+            n_kept += 1
+            continue
         tag = r.get("int_strict_tag") or r.get("int_tag")
         fy = r.get("int_strict_fy") or r.get("int_fy")
         per = r.get("int_strict_period") or "annual"
@@ -86,7 +92,7 @@ def main():
         n_w += 1
 
     print(f"■ 利払カバーの充填  書き{'込み' if write else '込み予定'} {n_w}社 / 変化なし {n_same}"
-          f" / 空欄のまま {n_blank}（うち日本株 {n_jp}＝SEC経路の外の構造的な穴）")
+          f" / 検算済みで据置 {n_kept} / 空欄のまま {n_blank}（うち日本株 {n_jp}＝SEC経路の外の構造的な穴）")
     if changed:
         print(f"  ⚠既存の値が変わる {len(changed)}社（採取器の年が進んだ等・原因を確かめること）:")
         for t, o, v in changed[:15]:

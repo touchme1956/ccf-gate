@@ -72,7 +72,8 @@
    "通貨: 全数値BRL建て。ADR(ASAIY)はUSD。財務BRL/株価USDの混線注意。ProfitLoss[USD]2020=1,398は補助換算開示でBRL系列と混同禁止",
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=7.5 / 5年窓=None。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 roiic 7.5→na: 5年窓の裏付けが無い低い3年窓は書かない（複利停止キルの誤爆防止）",
-   "2026-07-29 p1 85→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均17.9%・σ3.4pt・CV18.8%）。"
+   "2026-07-29 p1 85→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均17.9%・σ3.4pt・CV18.8%）。",
+   "2026-09-23 intcov 空欄→**1.958**（20-F FY2024 財務費用注記: 営業利益 3,844 ÷ 借入利息 1,963・百万BRL）。v11_facts の参考値: FinanceCosts 3,233 基準の 1.189。todo intcov_basis_finance_costs（FinanceCosts は利息＋為替差損・リース利息・割引の巻き戻しの上位概念）の是正。★財務キル『利払カバー<3』が新たに発火（kills 0→1・ティア 回避→失格）。Ω 14.4→14.4（既に低く数値は不変）・投下可に無関係（node night/score_all.js --only ASAIY --set intcov=1.958 で測定）"
   ],
   "evidence": {
    "dom": "『We operate in the cash and carry sector of the Brazilian retail industry, which is highly competitive』『Our main competitors are Atacadao, Grupo Mateus, GPA, Supermercados BH, Grupo Muffato』→有力複数競合・単独シェア<40%=競争的=50",
@@ -105,7 +106,8 @@
    "gpa": "機械算出 2024年: 売上総利益 12,221,000,000 ÷ 総資産 45,593,000,000",
    "roiic": "機械算出 2021→2024年(3年窓): ΔNOPAT 915,894,942 ÷ Δ投下資本 12,218,000,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 9,212,000,000→21,430,000,000（+132.6%） → 3年窓7.5%は低いが**5年窓が取れず門の5年窓レスキューが働けない**＝投資サイクルの谷と構造的な複利停止を区別できないため na（誤値より空欄・v9.9.46）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2019年 28,082,000,000 → 2022年 54,520,000,000 → 2024年 73,819,000,000。A案(端点) 直近2年CAGR 16.36% − その前3年CAGR 24.75% = -8.39pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -11.86pt ／ 年次YoY {'2020': 28.3, '2021': 16.2, '2022': 30.1, '2023': 22.0, '2024': 11.0} → **採用 -8.39pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2019-12-31) 35905百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2019-12-31) 35905百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "intcov": "20-F原本 FY2024（https://www.sec.gov/Archives/edgar/data/1834048/000121390025026526/ea0234548-20f_sendasdis.htm）: 営業利益 3,844 ÷ 借入の真正の利息 1,963（百万BRL）= 1.958。Note 24 Net financial result: 『Cost of debt ( 1,963 )』（別行の『Interest on leasing liabilities ( 1,041 )』『Cost and discount of receivables ( 133 )』『Mark-to-market (loss) gain ( 88 )』は除外）。営業利益 『Operating profit 3,844』。最新20-FはFY2024（パックのreportDateと一致）。基準=**借入の利息だけ**（為替・リース利息・割引の巻き戻し・デリバティブ損益は除外）。2026-09-23 審査官が注記から分離"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",
@@ -131,7 +133,8 @@
    "roiic": "machine",
    "p1": "machine",
    "cagrT": "machine",
-   "acqS5": "machine"
+   "acqS5": "machine",
+   "intcov": "kenshi"
   },
   "basis": {
    "roic": "single-year",
@@ -163,5 +166,6 @@
  },
  "roiic": "na",
  "cagrT": -8.39,
- "acqS5": 0.0
+ "acqS5": 0.0,
+ "intcov": 1.958
 }
