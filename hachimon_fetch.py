@@ -437,6 +437,61 @@ def build_numbers(facts):
         _usedS[_y] = [f"DebtCurrent={_dc[_y]:,.0f}は LongTermDebt 総額に含まれるため控除"]
         _fixed.append(_y)
     _fixed.sort()
+    # 2026-09-23是正(2): **debtL の中で「同じ負債の別名」と「流動込みの総額」を足していた**（候補＝代替か構成要素か、の5例目）。
+    #   series_sum は total_key 以外を構成要素として合計するが——
+    #   (a) LongTermDebtNoncurrent と LongTermDebtAndCapitalLeaseObligations は**同じ非流動負債の別名**（後者はリース込み）で、
+    #       両方を報告する社では同額が二度入る（実測 ASML 2025: 2,709百万€×2 ／ IP 8,839百万$×2）。
+    #   (b) DebtAndCapitalLeaseObligations は**流動分込みの総額**（リース込み）。非流動の別名と足すと非流動が二重になり、
+    #       さらに debtS の流動分とも重なる（実測 EBAY 2025: 5,996 + 6,746 + 流動750 ＝ **13,492**＝原本の総額 6,746 の2倍。
+    #       nde は 4.31＝財務キルの線を越えていた。HXL は 993百万$×2 で nde 6.52 ＝キルが誤発火）。
+    #   → (a) 別名どうしが同額（±0.5%）なら1本だけ数える。
+    #     (b) DebtAndCapitalLeaseObligations が「残りの非流動 + 流動(debtS)」と恒等式で一致する年は、それが総額だと
+    #         証明できるので**足さない**（流動分は debtS に残る）。一致しない年は触らず注記だけ（機械で確定できない）。
+    _ALIAS = ("LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations")
+    _fixedL, _suspL = [], []
+    _ltcl = series(facts, ["LongTermDebtAndCapitalLeaseObligationsCurrent"])[0]
+    for _y in sorted(S["debtL"]):
+        _parts = {}
+        for _x in (_usedL.get(_y) or []):
+            if "=" in _x and "(総額)" not in _x:
+                _k, _v = _x.split("=", 1)
+                try:
+                    _parts[_k] = float(_v.replace(",", ""))
+                except ValueError:
+                    pass
+        if len(_parts) < 2:
+            continue
+        _val, _used = S["debtL"][_y], list(_usedL[_y])
+        _a, _b = _parts.get(_ALIAS[0]), _parts.get(_ALIAS[1])
+        if _a and _b is not None and abs(_a - _b) / abs(_a) <= 0.005:
+            _val -= _b
+            _parts.pop(_ALIAS[1])
+            _used = [u for u in _used if not u.startswith(_ALIAS[1] + "=")] + \
+                    [f"{_ALIAS[1]}={_b:,.0f}は{_ALIAS[0]}と同額の別名＝二重に数えない"]
+        _tot = _parts.get("DebtAndCapitalLeaseObligations")
+        if _tot and len(_parts) >= 2:
+            # DebtAndCapitalLeaseObligations は US-GAAP の定義上「流動＋非流動＋リース」の**総額**。
+            #   非流動のタグと足すことは定義からして二重計上なので、**総額として採る**（debtL＋debtS＝総額 になるよう
+            #   debtL＝総額−debtS）。恒等式の一致は根拠の文にだけ残す——流動分は LongTermDebtAndCapitalLeaseObligationsCurrent
+            #   にあって debtS の候補に無い社が多い（実測 MUSA 19.0 / SYY 1,201 / ECL 759.4 百万$）。
+            _nonc = sum(v for k, v in _parts.items() if k != "DebtAndCapitalLeaseObligations")
+            _cur = S["debtS"].get(_y, 0) or 0
+            _curL = _ltcl.get(_y)
+            if _tot >= _nonc * 0.995:
+                _ok = any(c is not None and abs(_tot - (_nonc + c)) / abs(_tot) <= 0.005 for c in (_cur, _curL))
+                _val = max(_tot - _cur, 0)
+                _used = [u for u in _used if "=" not in u or "(総額)" in u] + \
+                        [f"DebtAndCapitalLeaseObligations={_tot:,.0f}＝流動込みの総額を採った（非流動 {_nonc:,.0f} を足さない。"
+                         + (f"非流動＋流動と恒等式で一致" if _ok else "流動分の内訳は恒等式で確かめられず") + "）"]
+                if not _ok:
+                    _suspL.append(_y)
+            else:
+                _suspL.append(_y)
+        if _val != S["debtL"][_y]:
+            S["debtL"][_y] = _val
+            _usedL[_y] = _used
+            _fixedL.append(_y)
+    # （注記は note が作られた後＝下の _fixed の注記の隣で出す）
     # 2026-08-03: 無形も同じく「構成要素」だった（TAGS["intan"]の頭注を見よ）。総額タグがその年に
     #   あれば総額、無ければ 確定分＋無期限分 を足す＝series_sum の total_key がそのまま使える。
     #   実測 CELH: 総額タグが2024年で終わり、2025年は二本に割れていたので series() では欠測になった。
@@ -546,6 +601,13 @@ def build_numbers(facts):
                     f"LongTermDebt = LongTermDebtNoncurrent + LongTermDebtCurrent が成立＝"
                     f"LongTermDebt は1年内返済分**込みの総額**なので、1年内返済分を控除した。"
                     f"控除しないと IC が過大＝ROICは**過小**に出る")
+    if _fixedL:
+        note.append(f"有利子負債の別名・総額の二重計上を是正した（{len(_fixedL)}年: {_fixedL[0]}〜{_fixedL[-1]}）: "
+                    f"LongTermDebtNoncurrent と LongTermDebtAndCapitalLeaseObligations の同額は1本、"
+                    f"DebtAndCapitalLeaseObligations は流動込みの総額と恒等式で確かめて足さない")
+    if _suspL:
+        note.append(f"有利子負債の総額タグ（DebtAndCapitalLeaseObligations）を採った年のうち、流動分の内訳が恒等式で"
+                    f"確かめられない年がある（{_suspL[-1]}年ほか{len(_suspL)}年）。総額は定義どおり採っているが、原本のBSで確認せよ")
     if _dbl:
         note.append(f"有利子負債の二重計上の疑い（{_dbl[-1]}年ほか{len(_dbl)}年）: LongTermDebt を"
                     f"1年内返済分込みで報告する会社では LongTermDebtCurrent を足すと重複する。"
@@ -999,12 +1061,22 @@ def build_numbers(facts):
     #   【roicgも同時に】中央値どうしなら系列が点ごとに roic_y≥roicg_y なので恒等式が保たれる。
     # 2026-09-23: 系列が古い（_tcStale）ときは出さない（上の「年検問」の節・実測 STX）。営業利益系列そのものが
     #   古いときは従来の注記も残す（その場合 _tcStale も必ず真——系列の年は営業利益の年の部分集合だから）。
-    if roics and not _tcStale and not stale(max(S["op"]) if S["op"] else None):
+    if roics and not _tcStale and not stale(max(S["op"]) if S["op"] else None) and len(_rSeq) >= 3:
         ev["roic"]=round(median(_rSeq),1)
         if _gSeq: ev["roicg"]=round(median(_gSeq),1)
         evd["roic"]=(evd.get("roic","")+f"｜**v9.9.72: through-cycle 化**。5年系列 {len(_rSeq)}年の"
                      f"**中央値 {median(_rSeq):.1f}%** を採用（直近年 {_rSeq[-1]:.1f}% / 最悪 {min(_rSeq):.1f}%）。"
                      f"roicg も同じ年の系列の中央値 {median(_gSeq):.1f}% にして roic≥roicg を保つ")
+    elif roics and not _tcStale and not stale(max(S["op"]) if S["op"] else None):
+        # 2026-09-23是正: **有効な年が3年未満なら中央値を出さない**（7-c の3年ガード。上の Med5/W5 には入っていたが
+        #   roic 本体には無く、2年なら**2年の平均**を through-cycle と名乗って出していた。実測 BCPC: 2021年 35.96 と
+        #   2025年 49.43 の平均 42.7 ——どちらの年の値でもない）。直近の有効年の単年値を**対で**出し、単年と明記する。
+        ev["roic"] = round(_rSeq[-1], 1)
+        ev["roicg"] = round(_gSeq[-1], 1)
+        evd["roic"] = (evd.get("roic", "") + f"｜**単年**: 有効な系列が {len(_rSeq)}年（{', '.join(str(x[2]) for x in roics)}）で"
+                       f"3年未満＝through-cycle 不可（7-c）。{roics[-1][2]}年の値を roic/roicg の対で採った")
+        evd["roicg"] = (f"機械算出 {roics[-1][2]}年（単年・roic と同じ年）: {_gSeq[-1]:.1f}%。"
+                        f"有効な系列が3年未満のため中央値にしない")
     elif roics and stale(max(S["op"]) if S["op"] else None):
         note.append(f"roic算出不能: 営業利益系列が{max(S['op'])}年で途切れ最新{LATEST}年から遅れている"
                     f"（タグ改称の疑い）。原本で確認して手入力せよ")

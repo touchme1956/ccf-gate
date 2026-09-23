@@ -1532,7 +1532,7 @@
    "kind": "宿題",
    "done": false,
    "title": "採取器の DebtCurrent 二重計上の是正（2026-09-23）を他社のパックへ届ける",
-   "note": "CW で見つけた型（LongTermDebt が1年内返済込みの総額なのに DebtCurrent を足す）は hachimon_fetch で恒等式つきで是正済み。LongTermDebtCurrent タグを持たず DebtCurrent で報告する社は同じく負債過大＝roic 過小・nde 過大になっている可能性がある。四半期の見直しで backfill_machine_evidence.py を回し、食い違う社を作業リストで拾う（値は機械で上書きしない）。"
+   "note": "CW で見つけた型（LongTermDebt が1年内返済込みの総額なのに DebtCurrent を足す）は hachimon_fetch で恒等式つきで是正済み。LongTermDebtCurrent タグを持たず DebtCurrent で報告する社は同じく負債過大＝roic 過小・nde 過大になっている可能性がある。四半期の見直しで backfill_machine_evidence.py を回し、食い違う社を作業リストで拾う（値は機械で上書きしない）。\n【2026-09-23 走査の途中で**もっと大きい同族**を見つけて是正】キャッシュ済み297社で調べると、DebtCurrent の型（CW）が効く社は10社（AME/BCPC/CW/DELL/EBAY/LDOS/SPGI/SYK/TT/WST）だったが、同じ走査で **debtL の別名・総額の二重計上**が見つかった: (a) LongTermDebtNoncurrent と LongTermDebtAndCapitalLeaseObligations が同額（同じ社債の別名）なのに両方足す（ASML は全年で 2,709百万€×2 等・IP・DXC）(b) DebtAndCapitalLeaseObligations（US-GAAP の定義で流動込みの総額）を非流動タグに足す（EBAY 2025: 5,996+6,746+流動750＝13,492＝原本 6,746 の2倍・nde 4.31）。hachimon_fetch を是正（(a)同額の別名は1本 (b)総額タグがあれば総額として採る・流動分は LongTermDebtAndCapitalLeaseObligationsCurrent も使って恒等式を確かめ根拠に残す）。297社の before/after で36社の出力が変わり、想定外に見えた ALLE/BSX/DXC/CHH/WFRD/FELE も過去の年に同じ二重計上があると原本で確認。★**パックへの実害**: HXL の nde 6.52（財務キル発火）は 993百万$×2 の二重計上＝真値 3.14／MUSA の nde 4.34（2026-08-13 の是正で入れた値・キル発火）も同じ二重計上＝真値 2.16／ACM 3.22→0.96 など。ASML（🟢投下可）の through-cycle roic も全年の二重計上で過小（パック 49.6 → 正しい5年中央値 59.9）。あわせて「有効な系列が2年でも中央値（＝2年平均）を出す」穴も塞いだ（BCPC 42.7 は 2021/2025 の平均でどちらの年の値でもない→単年 49.4。14社）。"
   },
   {
    "id": "fetcher_fy_label_mislabel",
