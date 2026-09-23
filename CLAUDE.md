@@ -820,6 +820,13 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
   記録後その場に **📤 書き出す** → Claude に貼る → main に入ると **`.github/workflows/returns.yml`（state.json の push で発火）が成績を作り直す**。
   ⚠ **Claude が反映するとき**: 門で足したロットは bd が入っているが、行の `bd`（等価日）は古いまま——`python3 night/estimate_bd.py --write` を回し直すこと。
   判定・売却規律は不変（理由は人が選んで記録するだけ）。検証は実ブラウザで 買い増し/一部売却/保有超過の拒否/新規銘柄 の4通り
+  **★自動で repo へ保存（同日 ユーザー「買ったら成績に自動で反映してよ」→選択「鍵をこの端末に置く」）**: 記録の直後に `ccfState.pushRepo`（state.js）が
+  **GitHub API で state.json を main へ直接保存**→ returns.yml が成績を作り直す（3〜5分）。鍵は fine-grained token（ccf-gate だけ・Contents: Read and write）を
+  **端末の localStorage `ccf:ghToken` にだけ**置く（watched() 対象外＝state.json にもバックアップにも載らない）。初回は「🔑 鍵を設定して反映する」で貼る。
+  安全側: **repo の savedAt が手元より新しければ保存しない**（別セッションが直した正しい保有を古い端末で潰さない→「⭳ repo の保有で上書き」してから記録し直す）／
+  repo にあって手元に無いキーは残す／409 は1回だけ読み直して再試行。鍵が無い・失敗したら従来の「📤 書き出す→Claudeに貼る」を出す。
+  ⚠ 代償（ユーザーが承知して選択）: その端末を触れる人・ページに入った悪意あるコードが repo へ書ける。鍵は GitHub でいつでも無効化できる。
+  検証: 実ブラウザで API を模擬し 正常/repoが新しい/409/鍵無効/鍵なし→設定 の5通り（state.json に鍵が載らないことも確認）
   **repo の保有で上書き（同日 ユーザー「総資産がまちがってる」→「やって」）**: 端末に未書き出しの旗(dirty)があると decide() は repo を採用しないので、
   別セッションが state.json の保有を直しても（MSFT 11→8・売却済み RMD 等の削除）**端末は古い株数で総資産を出し続けた**。旧版には repo→端末へ合わせる手段が無かった。
   → 赤い帯の中に **「⭳ repo の保有で上書きする」**（`ccfState.adoptRepo`）。確認ダイアログ後に **pf:portfolio と pf:sold だけ**を repo の値へ置換し、

@@ -1013,7 +1013,7 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
 <link rel="stylesheet" href="skin.css?v=20260923-2">
 <!-- v9.9.131: 人の決定(state.json)の読み書き。**両ページが同じ実装を読む**（写すと必ず割れる・v9.9.65）。
      本体より前に読むのは localStorage.setItem の包み(dirty検出)を先に効かせるため -->
-<script src="state.js?v=20260923-3"></script><script src="icon.js"></script></head><body><div id="pgBg" aria-hidden="true"></div>
+<script src="state.js?v=20260923-4"></script><script src="icon.js"></script></head><body><div id="pgBg" aria-hidden="true"></div>
 <!-- v9.9.177 息づく地（表示だけ・判定に不使用）。三つの淡い光が別々の周期で漂う＝追加ダウンロード0バイトで「裏で動く背景」を作る -->
 <div id="ccfaura" aria-hidden="true"><i class="a"></i><i class="b"></i><i class="c"></i></div>
 <div class="tategaki" aria-hidden="true">壊れない複利の門</div>
@@ -1810,7 +1810,7 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
 
 <div id="pg7" class="pg">
 <div class="wrap" style="padding-top:14px">
- <div style="font-size:12.5px;color:var(--muted);margin:0 0 8px"><a href="portfolio.html" target="_blank" style="float:right;font-size:12px;margin-left:10px;color:var(--gold-bright)">新しいタブで開く ↗</a><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body">全保有を一枚で。株数・単価を入れると評価額を自動計算し、この端末に保存（門と同じ保存方式）。行頭の色丸は出口判定（S1/S2/S3/ホールド/採点待ち）。<b>網／城の内訳ビューは2026-07-29に撤去した</b>——目標60/40のリバランスは<b>Ⅵ買付順位の「今月の買付プラン」</b>が正本（保有データから網/城ウェイトを計算して渡している）。「⭳ 門の保有から取込」で台帳の保有を城として取り込み、「🏛 門の台帳へ登録」で逆方向。</div></details></div> <iframe id="pfFrame" src="portfolio.html?v=20260923-4" scrolling="no" allow="clipboard-write" style="width:100%;height:1600px;border:0;background:transparent;display:block;overflow:hidden"></iframe>
+ <div style="font-size:12.5px;color:var(--muted);margin:0 0 8px"><a href="portfolio.html" target="_blank" style="float:right;font-size:12px;margin-left:10px;color:var(--gold-bright)">新しいタブで開く ↗</a><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body">全保有を一枚で。株数・単価を入れると評価額を自動計算し、この端末に保存（門と同じ保存方式）。行頭の色丸は出口判定（S1/S2/S3/ホールド/採点待ち）。<b>網／城の内訳ビューは2026-07-29に撤去した</b>——目標60/40のリバランスは<b>Ⅵ買付順位の「今月の買付プラン」</b>が正本（保有データから網/城ウェイトを計算して渡している）。「⭳ 門の保有から取込」で台帳の保有を城として取り込み、「🏛 門の台帳へ登録」で逆方向。</div></details></div> <iframe id="pfFrame" src="portfolio.html?v=20260923-5" scrolling="no" allow="clipboard-write" style="width:100%;height:1600px;border:0;background:transparent;display:block;overflow:hidden"></iframe>
 </div>
 </div>
 <div id="pg8" class="pg">
@@ -4154,6 +4154,31 @@ function ccfTradeSync(first){
   const h=document.getElementById('trHint');
   if(h)h.textContent=p?('いま '+(+p.sh||0)+'株'+((+p.bjpy||0)>0?'・取得額 ¥'+Math.round(+p.bjpy).toLocaleString('ja-JP'):'')+'。単価は現在値を入れてあります——約定の値に直してください。'):'';
 }
+/* 記録の後: 鍵があれば repo の state.json へ自動で保存（→ returns.yml が成績を作り直す）。
+   鍵が無ければ設定の入口と、従来の「書き出す→Claudeに貼る」を出す。 */
+function ccfTradeAfter(what){
+  const el=document.getElementById('trAfter'); if(!el)return;
+  const box=(inner,col)=>`<div style="margin-top:12px;padding:10px 12px;border:1px ${col?'solid '+col:'dashed var(--line)'};border-radius:8px;font-size:12.5px;line-height:1.7">${inner}</div>`;
+  const cs=window.ccfState;
+  if(!(cs&&cs.hasToken&&cs.hasToken())){
+    el.innerHTML=box(`この端末の保有は更新しました。<b>成績に自動で反映するには、最初に1回だけ鍵を設定</b>してください：<br>
+      <button onclick="if(ccfState.setToken())ccfTradeAfter(${JSON.stringify(what).replace(/"/g,'&quot;')})" style="margin:6px 0;padding:8px 15px;border-radius:8px;border:1px solid #15803d;background:#15803d;color:#fff;font-weight:700;cursor:pointer">🔑 鍵を設定して反映する</button>
+      <div style="font-size:12px;color:var(--dim)">鍵を置かない場合は <button onclick="ccfState.export(this,true)" style="padding:3px 9px;border-radius:6px;border:1px solid var(--line);background:transparent;cursor:pointer">📤 書き出す</button> → Claude に貼って「反映して」。</div>`);
+    return;
+  }
+  el.innerHTML=box('⏳ repo へ保存しています…');
+  cs.pushRepo(what).then(r=>{
+    if(r.ok){
+      el.innerHTML=box(`✓ <b>repo へ保存しました</b>——📈成績は<b>3〜5分ほどで自動で更新</b>されます（成績の計算と配信を待つ間）。他の端末にも次に開いたとき反映されます。`,'#15803d');
+      try{ ccfState.banner('stateBar'); }catch(_){}
+    }else{
+      el.innerHTML=box(`⚠ 自動保存できませんでした: ${r.msg}<br>`
+        +(r.code==='auth'?`<button onclick="if(ccfState.setToken())ccfTradeAfter(${JSON.stringify(what).replace(/"/g,'&quot;')})" style="margin:6px 6px 0 0;padding:6px 12px;border-radius:7px;border:1px solid var(--line);background:transparent;cursor:pointer">🔑 鍵を入れ直す</button>`:'')
+        +(r.code==='behind'?'':`<button onclick="ccfTradeAfter(${JSON.stringify(what).replace(/"/g,'&quot;')})" style="margin:6px 6px 0 0;padding:6px 12px;border-radius:7px;border:1px solid var(--line);background:transparent;cursor:pointer">↻ もう一度</button>`)
+        +`<button onclick="ccfState.export(this,true)" style="margin:6px 0 0;padding:6px 12px;border-radius:7px;border:1px solid var(--line);background:transparent;cursor:pointer">📤 書き出す（Claudeに貼る）</button>`,'#b91c1c');
+    }
+  });
+}
 function ccfTradeGo(kind,btn){
   const msg=document.getElementById('trMsg'), bad=t=>{ msg.style.color='#b91c1c'; msg.textContent='⚠ '+t; };
   const sel=document.getElementById('trT');
@@ -4181,10 +4206,7 @@ function ccfTradeGo(kind,btn){
       let hs=new Set(); const hr=await store.get('g7hold:set'); if(hr&&hr.value)hs=new Set(JSON.parse(hr.value)||[]);
       if(!hs.has(m.nm)){ hs.add(m.nm); await store.set('g7hold:set',JSON.stringify([...hs])); if(typeof renderLedger==='function')await renderLedger(); }
     }catch(_){}
-    document.getElementById('trAfter').innerHTML=`<div style="margin-top:12px;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;font-size:12.5px;line-height:1.7">
-      この端末の保有は更新しました。<b>成績と他の端末に反映するには repo へ入れる</b>必要があります：<br>
-      <button onclick="ccfState.export(this,true)" style="margin:6px 0;padding:8px 15px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:#fff;font-weight:700;cursor:pointer">📤 書き出す（コピー）</button><br>
-      → そのまま Claude に貼って「反映して」と送る。main に入ると成績（📈）が自動で作り直されます。</div>`;
+    ccfTradeAfter((kind==='buy'?'買い ':'売り ')+t+' '+sh+'株');
     try{ if(typeof ccfDash==='function')ccfDash(); }catch(_){}
     try{ if(typeof renderPlan==='function')await renderPlan(); }catch(_){}
     try{ ccfState.banner('stateBar'); }catch(_){}
