@@ -816,6 +816,9 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
   別セッションが state.json の保有を直しても（MSFT 11→8・売却済み RMD 等の削除）**端末は古い株数で総資産を出し続けた**。旧版には repo→端末へ合わせる手段が無かった。
   → 赤い帯の中に **「⭳ repo の保有で上書きする」**（`ccfState.adoptRepo`）。確認ダイアログ後に **pf:portfolio と pf:sold だけ**を repo の値へ置換し、
   他の決定（今月の入金額など）は残す。置換前の値は `ccf:replacedBackup` に1件退避。旗を落とし savedAt を repo に揃えて再読込。state.js も `?v=` 付きで読む。
+  **成績の出口が1営業日戻る件（同日 ユーザー「成績が更新されないのはなんで？」）**: 📈成績は端末で計算せず `out/returns.json`（`night/fetch_returns.py`・market.yml が平日21:30UTC）を読む。
+  Yahoo は**最新営業日の日足 close を None で返すことがあり**（実測 2026-09-22 の MSFT/ASML/XLK/SMH/QQQM/^SP500TR すべて）、None を捨てると出口が 09-21 へ戻り、
+  **前夜の CI（09-22）より古い成績で上書き**していた。→ `yahoo()` で**最後の足が None かつ meta.regularMarketTime が同じ日付のときだけ** meta.regularMarketPrice で埋める。
 - 〔意匠・字数の改版記録は書庫〕v9.9.139 全銘柄に＋株／138 買付順位から保有へ／137 空の段落／136 既定でたたんだ／134 無駄な文字を外した／133 クリップボード／132 手順の帯／130 五彩／111-105 行のグラデーションと色。いずれも表示のみで判定は不変。道具: night/simplify_gate_text.py・fold_gate_text.py・fix_fold_markup.py → docs/CLAUDE_ARCHIVE.md L16110
 - **アイコンの色合わせ(v9.9.104)**: `python3 night/logo_colors.py`（`--force`で再算出）→ out/logos/index.json に
   `c`(代表色)・`d`(暗い地が要る)・`x`(実質白紙で不採用) を書く。門はこれで**そのロゴ自身の色で淡く発光**させる
