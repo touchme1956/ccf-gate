@@ -631,9 +631,19 @@ def build_numbers(facts):
         has_debt = (y0 in S["debtL"]) or (y0 in S["debtS"])
         # 2026-08-10: **「他の年は報告があるのにその年だけ欠測」を0と読まない**（無形で確立した作法）。
         #   タグを足しても新しい移行先が現れれば同じことが起きるので、**構造で検出する**。
-        if S["cash"] and y0 not in S["cash"]:
-            note.append(f"nde注意: {y0}年に現金タグが無い（他の年にはある）。0と読むと**借金が多く見える側**へ"
-                        f"ずれる。原本のBSで現金を確認せよ（MWAで431.5百万$を0と読んだ実例）")
+        # 2026-09-23是正: **上の検出は注記だけで、値は0と読んで出し続けていた**（見出しの「0と読まない」と実装が逆）。
+        #   実測: MWA を08-10以前の現金候補（CashAndCashEquivalentsAtCarryingValue / CashAndCashEquivalents）で
+        #   今の採取器に通すと、この注記つきで **nde 1.47**（根拠文は「現金同等物 0」）がそのまま出る。
+        #   原本: CashAndCashEquivalentsAtCarryingValue は FY2021 10-K（2021-09-30 の 227,500,000）が最後で、
+        #   FY2022 10-K 以降は CashCashEquivalentsRestrictedCash… へ移行（FY2025 431,500,000）。真値は
+        #   (有利子負債 451,600,000 − 431,500,000) ÷ (営業利益 260,600,000 + 減価償却 46,900,000) = **0.065**。
+        #   MWA 自身は08-10の候補追加で直っているが、次の移行先が現れた社では同じ誤値が注記つきで出る。
+        #   → **欠測年は nde を出さない**（有利子負債タグが無い年と同じ作法・誤値より空欄）。
+        _cashGap = bool(S["cash"]) and y0 not in S["cash"]
+        if _cashGap:
+            note.append(f"nde算出不能: {y0}年に現金タグが無い（他の年にはある）。0と読むと**借金が多く見える側**へ"
+                        f"ずれる（MWAで現金431.5百万$を0と読み nde 1.47＝真値0.065 と出た実例）。"
+                        f"欠測を0と読まず空欄にした——原本のBSで現金を確認して手入力せよ")
         cash = (S["cash"].get(y0,0) or 0)+(S["sti"].get(y0,0) or 0)
         # 2026-07-29追加修正: EBITDAの営業利益も「タグが無い年を0」と読んでいた。
         #   実測 KLAC: OperatingIncomeLoss が2014年で途切れており（同社は売上−原価−R&D−販管費で
@@ -655,7 +665,9 @@ def build_numbers(facts):
         # 2026-08-03: 「タグ不在と無借金は機械で区別できない」——**区別できるようになった**ので
         #   debt_evidence() で裁く（ROIC側と同じ判定を使う＝同じ台帳に二つの基準を作らない）。
         #   痕跡ゼロなら債務ゼロは事実で、ネットキャッシュの会社の nde が空欄のままになるのを止める。
-        if not has_debt and not (S["debtL"] or S["debtS"]) and not debt_evidence(facts, y0) and ebitda:
+        if _cashGap:
+            pass                              # 2026-09-23: 算出不能（上で注記済み）。現金の欠測を0と読まない
+        elif not has_debt and not (S["debtL"] or S["debtS"]) and not debt_evidence(facts, y0) and ebitda:
             ev["nde"] = round((0-cash)/ebitda, 2)
             evd["nde"] = (f"機械算出 {y0}年: (有利子負債 0 − 現金同等物 {_u(cash)})"
                           f" ÷ (営業利益 {_u(S['op'].get(y0,0) or 0)} + 減価償却 {_u(S['dep'].get(y0,0) or 0)})。"
@@ -832,10 +844,13 @@ def build_numbers(facts):
     #   見ている社があるため（実測 MSFT: 採取器FY2026 / パックFY2025）。
     #   検査器側で系列を組み直すと採取器と違う判定になるので（v9.9.65の教訓）ここで出す。
     if roics: ev["_tcSeries"] = {str(x[2]): [round(x[0],2), round(x[1],2)] for x in roics}
+    # 2026-09-23: 系列の最新年が古い（stale）かどうか。判定と理由は下の「年検問」の節を見よ
+    _tcStale = bool(roics) and stale(max(x[2] for x in roics))
     # 2026-08-03: **3年未満の「中央値」は through-cycle ではない。** 従来は `if roics:` で
     #   1-2年でも med5/w5 を出していたため、在庫を数えると220社に見えたが実体は179社だった
     #   （1点の中央値はその点そのもの）。3年以上のときだけ出す。
-    if len(roics) >= 3:
+    #   2026-09-23: 系列が古い（_tcStale）ときも出さない＝古い窓の中央値を through-cycle と名乗らせない
+    if len(roics) >= 3 and not _tcStale:
         ev["roicExW5"]  = round(min(_rSeq),1)
         ev["roicExMed5"]= round(median(_rSeq),1)
         ev["roicgW5"]   = round(min(_gSeq),1)
@@ -848,14 +863,27 @@ def build_numbers(facts):
     #   **同じパックの中で3年ずれた値が並ぶ**（「取れた値＝最新の値」のBKNG型）。
     #   3年未満で med5 を出さない検問は入っているが、**古い年の単年値がそのまま roic として
     #   残る経路**は塞がっていない。ここで注記を出して審査官に見せる。
-    if roics:
+    # 2026-09-23是正: **上の注記は注記だけで、値は出し続けていた。** 今日の採取器でも STX は
+    #   roic 42.6 / roicg 33.4 を返していた＝`_tcSeries` {2022: [42.58, 33.36]} の **FY2022 の1年**
+    #   （NOPAT 1,920,068,493 ÷ IC 4,509,000,000＝自己資本 109,000,000 + 有利子負債 5,646,000,000
+    #   − のれん 1,237,000,000 − 無形 9,000,000）。2023年は IC −1,409,000,000 で負、2024/2026/2027年は
+    #   無形タグ不在で算出不能——全系列の最新 2027年から5年遅れの値が「当期の roic」として出ていた。
+    #   審査官は原本で空欄に直していた（out/STX_gate_pack.json の _meta.nulls.roic「42.6 は4年前の値」）。
+    #   ※年は SEC の fy ラベル。STX は FY2025 の10-K（0001137789-25-000157）が fy=2027 と付番されており
+    #     「2027年」の実体は FY2025（別の穴・ここでは直さない）。実体の最新 FY2026 で測っても 2022 は stale。
+    #   → 系列の最新年が **stale()**（他の欄と同じ規則＝全系列の最新年 LATEST から2年以上遅れ）に当たるなら
+    #     through-cycle の roic/roicg（中央値）・roicExW5/Med5・roict を**出さない**（誤値より空欄）。
+    #     roicg は単年値へも倒さず対で空欄にする（理由は下の中央値ブロックの 2026-09-23 の注）。
+    #     年つきの `_tcSeries` は残す（年ラベルつきの記録で「最新」を名乗らない）。
+    #   ⚠ 物差しを stale() に揃えた: 旧注記は op/eq/rev の最新年で測っていた（stale() は ni/assets/ocf も見る）。
+    if _tcStale:
         _tcLatest = max(x[2] for x in roics)
-        _allLatest = max([y for k in ("op", "eq", "rev") for y in S.get(k, {})] or [0])
-        if _allLatest and _tcLatest < _allLatest - 1:
-            note.append(f"roic注意: ROIC系列の最新は **{_tcLatest}年** だが他の欄は {_allLatest}年まである"
-                        f"（{_allLatest - _tcLatest}年の開き）。**同じパックの中で基準の違う年が並ぶ**ので、"
-                        f"原本で最新年の投下資本を確認して埋めるか、roic を空欄にすること"
-                        f"（BKNG型『取れた値＝最新の値』の同族）")
+        note.append(f"roic算出不能: ROIC系列の最新は **{_tcLatest}年**（{len(_rSeq)}年分・中央値 roic "
+                    f"{median(_rSeq):.1f}% / roicg {median(_gSeq):.1f}%）で、全系列の最新 {LATEST}年から"
+                    f"{LATEST - _tcLatest}年遅れている。**古い年の値を当期の roic として出さない**"
+                    f"（BKNG型『取れた値＝最新の値』の同族・誤値より空欄）。roic/roicg は対で空欄"
+                    f"（roicg を単年値へ倒さない）、roicExW5/Med5・roict も出さない。"
+                    f"原本で最新年の投下資本を確認して手入力せよ")
     # 純希薄化率(株数の年率変化)
     sh,_ = series(facts, TAGS["sh"], ("shares",))
     if len(sh)>=3:
@@ -958,15 +986,28 @@ def build_numbers(facts):
     #   through-cycle 乖離は 中央roic42.2 − 中央roicg16.1 = **26.1pt**（罰の線15pt）で、
     #   単年だと12.4ptと線のすぐ下に隠れる＝**単年測定が買収依存を隠していた**。
     #   【roicgも同時に】中央値どうしなら系列が点ごとに roic_y≥roicg_y なので恒等式が保たれる。
-    if roics and not stale(max(S["op"]) if S["op"] else None):
+    # 2026-09-23: 系列が古い（_tcStale）ときは出さない（上の「年検問」の節・実測 STX）。営業利益系列そのものが
+    #   古いときは従来の注記も残す（その場合 _tcStale も必ず真——系列の年は営業利益の年の部分集合だから）。
+    if roics and not _tcStale and not stale(max(S["op"]) if S["op"] else None):
         ev["roic"]=round(median(_rSeq),1)
         if _gSeq: ev["roicg"]=round(median(_gSeq),1)
         evd["roic"]=(evd.get("roic","")+f"｜**v9.9.72: through-cycle 化**。5年系列 {len(_rSeq)}年の"
                      f"**中央値 {median(_rSeq):.1f}%** を採用（直近年 {_rSeq[-1]:.1f}% / 最悪 {min(_rSeq):.1f}%）。"
                      f"roicg も同じ年の系列の中央値 {median(_gSeq):.1f}% にして roic≥roicg を保つ")
-    elif roics:
+    elif roics and stale(max(S["op"]) if S["op"] else None):
         note.append(f"roic算出不能: 営業利益系列が{max(S['op'])}年で途切れ最新{LATEST}年から遅れている"
                     f"（タグ改称の疑い）。原本で確認して手入力せよ")
+    if _tcStale:
+        # 出さない欄に機械の根拠を残さない——run() は _evid から provenance="machine" を刻むので、
+        #   空欄の roic に「機械算出 2022年: …」が付くと出所と空欄が食い違う（古い年と値は注記に残してある）
+        evd.pop("roic", None)
+        # roicg も**対で**出さない（v9.9.72 の対の作法。STX の審査官も nulls.roicg に「roic と同じ理由
+        #   （同じ系列から作られる）」と書いた）。上の単年ブロックの値を残すと、単年ブロックは有利子負債タグが
+        #   無い年を0と読む（根拠文に「過大の可能性あり」と書くだけ）ので、中央値の上書きが消えた途端に
+        #   その値が表へ出る——実測（全米国パック296社を旧版と突き合わせ）で8社が該当し、
+        #   TRN は roicg 15.3 → **44.3**（有利子負債 0 扱い。パックの原本値は有利子負債 5,442.5百万$）になった。
+        ev.pop("roicg", None)
+        evd.pop("roicg", None)
     # ===== ROIIC（増分投下資本利益率・v9.9.46 / 2026-07-29新設） =====
     #   なぜ機械で出すか: roiic は門の未来門 F6「内部複利」の入力だが、**全316パックで空欄**だった。
     #   空欄だと roiicNA=true で F6 は中身に入らず **58 の定数**を返し、
@@ -1047,7 +1088,8 @@ def build_numbers(facts):
         evd["roiic5"] = _e5
 
     # ROICトレンド roict (5年 up/flat/down): worst年 vs 直近
-    if len(_rSeq)>=2:
+    # 2026-09-23: 系列が古い（_tcStale）なら出さない——「直近」が当期でない傾きを当期の趨勢と名乗らせない
+    if len(_rSeq)>=2 and not _tcStale:
         ev["roict"]="up" if _rSeq[-1]-_rSeq[0]>2 else "down" if _rSeq[-1]-_rSeq[0]<-2 else "flat"
         evd["roict"] = (f"機械算出: のれん除外ROIC 5年系列 "
                         f"{' / '.join(f'{x:.1f}%' for x in _rSeq)}（最古→直近の差で判定）")
