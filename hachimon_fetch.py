@@ -12,7 +12,7 @@ gate_fetch v3.0 — SEC一撃採取器（壊れない複利の門 v9.6・Ⅲ採�
          series_sum の総額タグ複数対応で採取器側は是正済みだが、パック自体はここでは直さない
          （審査官の検算経路を通すこと）。
 """
-import hashlib, json, re, sys, time, urllib.request, os
+import hashlib, itertools, json, re, sys, time, urllib.request, os
 from statistics import median
 
 EMAIL   = "fortis5280@gmail.com"        # ★1. 自分のメールに書き換える(SECの必須マナー)
@@ -88,7 +88,12 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  "op":    ["OperatingIncomeLoss","ProfitLossFromOperatingActivities"],
  "ni":    ["NetIncomeLoss","ProfitLoss"],
  "tax":   ["IncomeTaxExpenseBenefit","IncomeTaxExpenseContinuingOperations"],
- "ocf":   ["NetCashProvidedByUsedInOperatingActivities","CashFlowsFromUsedInOperatingActivities"],
+ # 2026-09-23追加（todo fetcher_small_gaps_0923 (3)）: 継続事業の営業CF（…ContinuingOperations）は、営業CF の総額タグを
+ #   **出さない年の代替**（DRI: FY2024〜2026 の CF の行『Net cash provided by operating activities of continuing operations』だけ・
+ #   CHDN 2023〜2025 も同じ）。非継続事業がある年は総額より小さい別の指標なので**最後の候補**に置く＝総額タグが最新年に届く社では
+ #   主系列にならず、重なる年で2%以内に一致しない限り接がない（series() の作法）。
+ "ocf":   ["NetCashProvidedByUsedInOperatingActivities","CashFlowsFromUsedInOperatingActivities",
+           "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"],
  # 2026-09-23追加（todo fetcher_small_gaps_0923）: **設備投資の行を別のタグで出す社が296社中39社あった**
  #   （V/HD/QCOM/LRCX/MSI/NVDA/TT/SPGI/LMT/WM/AWI …）——候補に無いので fcf と ni が丸ごと None だった
  #   （ni は fcf と同じ条件の中で出す）。「候補＝代替か構成要素か」を先に確かめた:
@@ -103,15 +108,28 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  #     BCPC の PaymentsToAcquirePropertyPlantAndEquipment は2022年で止まり注記側の値）。
  #     → 最後の候補に置く＝PP&E 系のタグが最新年に届かない社でしか主系列にならない。さらに build_numbers で
  #     「PP&E 系と重なる年に半分未満だった社」（＝構成要素）では使わない（下の capex の検問）。
+ # 2026-09-23追加（todo fetcher_small_gaps_0923 (3) の残り）: IFRS の設備投資の行 PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities
+ #   （us-gaap の PaymentsToAcquirePropertyPlantAndEquipment と同じ位置＝**代替**。名前空間はまたがないので us-gaap 勢には効かない）と、
+ #   IFRS の「有形＋無形＋その他の非流動資産の取得」の合算行（us-gaap の PaymentsToAcquireProductiveAssets と同じ性質＝代替。SAP・CPA・AMBIQ）。
+ #   合算行は KARO のように**小さな構成要素**に使う社もある（KARO: PP&E 1,022.4 に対し 58.9）ので最後に置き、下の capex の検問に掛ける。
  "capex": ["PaymentsToAcquirePropertyPlantAndEquipment","PurchaseOfPropertyPlantAndEquipment",
-           "PaymentsToAcquireProductiveAssets","PaymentsToAcquireOtherProductiveAssets"],
+           "PaymentsToAcquireProductiveAssets","PaymentsToAcquireOtherProductiveAssets",
+           "PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",
+           "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsOtherThanGoodwillInvestmentPropertyAndOtherNoncurrentAssets"],
  # 2026-08-08是正: **これも「候補＝代替か構成要素か」の取り違えだった**（無形・有利子負債・販管費に続く4例目）。
  #   合計タグを一つも報告せず **減価償却と無形償却を別行で出す社**がある。series() は候補から1本しか選ばないので、
  #   そういう社では D&A が丸ごと欠測 → EBITDA が営業利益だけになり **nde が過大**に出る＝財務キル(>4)の誤爆。
  #   実測 **LOAR**: 合計タグ不在で D&A=0 と読み nde 5.94（原本は Depreciation 11.9 + AmortizationOfIntangibleAssets 38.5
  #   + FinanceLeaseRightOfUseAssetAmortization 0.3 = 50.7百万$ で **nde 4.01**）。10-Kの実額 50,999千$ と整合。
  #   ※ AmortizationOfFinancingCosts は**財務費用**なので構成要素に入れない（EBITDAの D&A ではない）。
- "dep":   ["DepreciationDepletionAndAmortization","DepreciationAndAmortization","DepreciationAmortisationAndImpairmentLoss"],
+ # 2026-09-23追加（todo fetcher_debt_residual_0923）: **IFRS 勢の D&A の総額タグが候補に無かった**（GOOS/TIGO/TIMB/SAP/WIT/GSK は D&A 0 で
+ #   EBITDA＝営業利益 → nde が過大）。「代替か構成要素か」: AdjustmentsForDepreciationAndAmortisationExpense は **CF 計算書の D&A の行**
+ #   （US-GAAP の DepreciationDepletionAndAmortization と同じ位置・総額）、DepreciationAndAmortisationExpense は損益・注記の **D&A の総額**。
+ #   どちらも総額＝代替なので series() の候補に並べる（CF の行を先: 審査官の検算も CF の D&A を使う〔TIMB 7,077,687 千BRL〕）。
+ #   減損込みの …ImpairmentLoss… は入れない（EBITDA の D&A ではない）。※IFRS の D&A は使用権資産の減価償却を含む
+ #   （リース負債を入れない規約とは基準が揃わない——TIMB の審査メモと同じ扱い）。名前空間はまたがないので us-gaap 勢には効かない。
+ "dep":   ["DepreciationDepletionAndAmortization","DepreciationAndAmortization","DepreciationAmortisationAndImpairmentLoss",
+           "AdjustmentsForDepreciationAndAmortisationExpense","DepreciationAndAmortisationExpense"],
  "depParts": ["Depreciation","AmortizationOfIntangibleAssets","FinanceLeaseRightOfUseAssetAmortization",
               "DepreciationNonproduction","AmortizationOfDeferredCharges"],
  "assets":["Assets"],
@@ -202,7 +220,8 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
 #     （TOL: Loans payable 896.4＋Senior notes 1,741.5。その内訳の OtherLoansPayable / SecuredDebt 249.1 は**入れない**＝Loans payable の中）。
 DEBT_NEW_L = ["ConvertibleDebtNoncurrent", "LongTermLineOfCredit", "LongTermLoansPayable", "SeniorNotesNoncurrent",
               "SeniorLongTermNotes", "NoncurrentPortionOfNoncurrentSecuredBankLoansReceived",
-              "NoncurrentPortionOfNoncurrentUnsecuredBankLoansReceived", "NoncurrentPortionOfNoncurrentLoansReceived"]
+              "NoncurrentPortionOfNoncurrentUnsecuredBankLoansReceived", "NoncurrentPortionOfNoncurrentLoansReceived",
+              "SubordinatedLongTermDebt"]
 DEBT_NEW_S = ["SeniorNotesCurrent", "LoansPayableCurrent", "WarehouseAgreementBorrowings",
               "CurrentSecuredBankLoansReceivedAndCurrentPortionOfNoncurrentSecuredBankLoansReceived",
               "CurrentUnsecuredBankLoansReceivedAndCurrentPortionOfNoncurrentUnsecuredBankLoansReceived"]
@@ -263,6 +282,9 @@ STI_OTHER = ["OtherShortTermInvestments"]
 from datetime import date as _date
 
 
+_CCY = re.compile(r"[A-Z]{3}")
+
+
 def _pdate(s):
     try:
         return _date.fromisoformat(s)
@@ -290,10 +312,11 @@ def _fy_model(facts):
 
 def _build_fy_model(facts):
     acc = {}
+    ccy = {}                                           # 2026-09-23: 提出ごとの通貨単位の件数（報告通貨の切り替えの検出・GMAB）
     filed = {}                                         # 2026-09-23: 提出日（最新の年次報告が dei だけの社の検出に使う・年の付け方には不使用）
     for ns in ("us-gaap", "ifrs-full"):
         for tag in (facts.get("facts", {}).get(ns) or {}).values():
-            for rows in (tag.get("units") or {}).values():
+            for u, rows in (tag.get("units") or {}).items():
                 for r in rows:
                     if not str(r.get("form", "")).startswith(("10-K", "20-F", "40-F")):
                         continue
@@ -310,6 +333,9 @@ def _build_fy_model(facts):
                         x = acc[a] = ({}, {})
                     x[0][e] = x[0].get(e, 0) + 1
                     x[1][fy] = x[1].get(fy, 0) + 1
+                    if _CCY.fullmatch(u):
+                        ccy.setdefault(a, {})
+                        ccy[a][u] = ccy[a].get(u, 0) + 1
                     if (r.get("filed") or "") > filed.get(a, ""):
                         filed[a] = r["filed"]
     pts = []
@@ -340,10 +366,14 @@ def _build_fy_model(facts):
                 ref = c[i] - k
             else:                                     # 揺れ・決算期の変更はそのまま追う
                 ref = c[i]
+    _la = pts[-1][2]
+    _lc = ccy.get(_la) or {}
     return {"acc": {pts[i][2]: (lab[i], pts[i][0]) for i in range(n)},
             "pts": [(pts[i][0], lab[i]) for i in range(n)],
             "fixed": fixed,
-            "filed": {pts[i][2]: filed.get(pts[i][2]) for i in range(n)}}
+            "filed": {pts[i][2]: filed.get(pts[i][2]) for i in range(n)},
+            "last_acc": _la,
+            "last_ccy": max(_lc, key=lambda k: _lc[k]) if _lc else None}
 
 
 def _label_for(fym, d):
@@ -374,7 +404,28 @@ def _annual(units, fym=None):
     accm = (fym or {}).get("acc") or {}
     pts = (fym or {}).get("pts") or []
     snap_only = None
-    for u in sorted(units.keys(), key=lambda x: -len(units[x])):
+    _order = sorted(units.keys(), key=lambda x: -len(units[x]))
+    # 2026-09-23（todo fetcher_small_gaps_0923 (2)・GMAB）: **報告通貨を切り替えた社**では、行数の最も多い単位（旧通貨）が
+    #   最新の年次報告の当期の行を持たず、系列が旧通貨の最後の年で止まる（GMAB: FY2025 の20-F から USD 報告・DKK の行は
+    #   2019年までの当期と 2023/2024 の比較年度だけ → 採取器は DKK を選び、2025年の数字を一つも使っていなかった）。
+    #   → 最新の年次報告の主な通貨（その提出の事実で最も多い通貨単位）が、行数最多の単位と違い、しかも**行数最多の単位には
+    #     その提出の当期の行が無く、主な通貨には有る**ときだけ、主な通貨を先に試す（系列は1つの通貨の中だけで組む＝混ぜない）。
+    _lc, _la = (fym or {}).get("last_ccy"), (fym or {}).get("last_acc")
+    if _lc and len(_order) > 1 and _order[0] != _lc and _lc in units and _la in accm:
+        _fpe = accm[_la][1]
+
+        def _hasCur(uu):
+            for r in units[uu]:
+                if r.get("accn") != _la or not r.get("end"):
+                    continue
+                d1 = _pdate(r["end"])
+                if d1 is not None and abs((d1 - _fpe).days) <= 183:
+                    return True
+            return False
+        if not _hasCur(_order[0]) and _hasCur(_lc):
+            _order.remove(_lc)
+            _order.insert(0, _lc)
+    for u in _order:
         cur, cmpv, labs = {}, {}, set()
         for row in units[u]:
             # 2026-07-29: **40-F を足した**。カナダのMJDS登録企業は年次報告が40-Fで、
@@ -830,6 +881,39 @@ def _dep_subtotal_fix(facts, y, T):
     return new, {"tag": k, "accn": accn, "excA": excA, "belowD": belowD, "A": Av, "D": Dv, "T": Tv, "pick": nm}
 
 
+def _dep_identity_fix(facts, y, T):
+    """2026-09-23（todo fetcher_debt_residual_0923・HD/NDSN/NSSC）: D&A の総額タグの値 T が小計だと**恒等式で**証明できるなら、
+    証明できた総額を返す。_dep_subtotal_fix の不等式（T＜無形の償却 または T＜減価償却）が立たない社の残り:
+      HD FY2025: DepreciationDepletionAndAmortization 3,514 に対し CostOfGoodsAndServicesSoldDepreciationAndAmortization 4,059
+        ＝DepreciationNonproduction 3,452＋AmortizationOfIntangibleAssets 607（百万$）が一致＝4,059 が減価償却と無形の償却の総額。
+      NDSN FY2025: DepreciationDepletionAndAmortization 79,3xx は無形の償却と同額（前年まではその2本の和）で、
+        CostOfGoods…DepreciationAndAmortization 150,5xx ＝Depreciation 71,3xx＋AmortizationOfIntangibleAssets 79,3xx。
+      NSSC FY2026: CostOfGoods…DepreciationAndAmortization ＝ T＋AmortizationOfIntangibleAssets（T は償却を含まない）。
+    代替か構成要素か: X（他の D&A の総額タグ・同じ年の当期の値）が「減価償却＋無形の償却」または「T＋無形の償却」と ±0.5% で一致し、
+    T より大きいときだけ X を総額とみなす（一致しなければ触らない＝LOPE は証明できないので旧来どおり）。"""
+    def cur(tag):
+        for ns in ("us-gaap",):
+            v, u, _n = _tag_cur(facts, tag, (ns,))
+            if y in v:
+                return v[y], u
+        return None, None
+    A, uA = cur("AmortizationOfIntangibleAssets")
+    if not A or A <= 0:
+        return None
+    Ds = [(k, v) for k, (v, u) in ((k, cur(k)) for k in ("Depreciation", "DepreciationNonproduction")) if v and u == uA]
+    for xk in ("CostOfGoodsAndServicesSoldDepreciationAndAmortization", "DepreciationDepletionAndAmortization",
+               "DepreciationAndAmortization"):
+        X, uX = cur(xk)
+        if not X or uX != uA or X <= T * 1.005:
+            continue
+        if abs(X - (T + A)) <= 0.005 * X:
+            return X, f"{xk} {X:,.0f}＝その値 {T:,.0f}＋AmortizationOfIntangibleAssets {A:,.0f} が一致＝その値は無形の償却を含まない"
+        for dk, D in Ds:
+            if abs(X - (D + A)) <= 0.005 * X:
+                return X, f"{xk} {X:,.0f}＝{dk} {D:,.0f}＋AmortizationOfIntangibleAssets {A:,.0f} が一致＝減価償却と無形の償却の総額"
+    return None
+
+
 def _dei_only_annual(facts):
     """最新の年次報告が companyfacts に**dei の事実だけ**で載っているか（財務の数字が未収載）。
     実測: 2026年提出の20-F（TSM・CEPU・INFY ほか）は EntityCommonStockSharesOutstanding しか無く、採取器は黙って前年を使っていた。
@@ -850,6 +934,121 @@ def _dei_only_annual(facts):
                 if (r.get("filed") or "") > last:
                     out[a] = (r.get("form"), r.get("filed"), r.get("fy"))
     return sorted(((a,) + v for a, v in out.items()), key=lambda x: x[2])
+
+
+# ---------- 2026-09-23（todo fetcher_small_gaps_0923 (1)）: 確定分の無形の後継タグ ----------
+# IntangibleAssetFiniteLivedAndCapitalizedCostSoftwareToBeSoldLeasedOrMarketedAfterAccumulatedAmortization（2025年版タクソノミの新設タグ）
+#   ＝「耐用年数の確定した無形＋販売用ソフトウェア」の純額。**代替か構成要素か**は社によって違う:
+#   SNA・FISV では FiniteLivedIntangibleAssetsNet の**代替**（同じ行を新しいタグで付けた・同額）、JKHY では BS の『Computer software』の行
+#   だけ＝**構成要素**（顧客関係・その他の無形は別の行で、companyfacts に無い）。構成要素の社で無形として足すと、無形の 91.6% だけで
+#   IC を組んだ誤値（JKHY FY2026 の単年 roic 約80.5・正しくは約89.3）が出る。
+# → FiniteLivedIntangibleAssetsNet と**重なる年（当期か比較年度）で ±0.5% に一致し、食い違う年が一つも無い**社だけ、後継として
+#   FiniteLivedIntangibleAssetsNet が無い年に同じ位置（確定分）で使う。総額タグ（IntangibleAssetsNetExcludingGoodwill）がある年は総額が勝つ
+#   ので触らない。重なる年が無い社（JKHY: 確定分は2015年で終わり、新タグは2025年から）は確かめられないので使わない。
+INTAN_SUCC = "IntangibleAssetFiniteLivedAndCapitalizedCostSoftwareToBeSoldLeasedOrMarketedAfterAccumulatedAmortization"
+
+
+def _intan_successor(facts, S, usedI):
+    newC, u1, ns1 = _tag_cur(facts, INTAN_SUCC, ("us-gaap",))
+    if not newC:
+        return []
+    newE = _tag_ev(facts, INTAN_SUCC, ("us-gaap",))[0]
+    flE, u2, _ns = _tag_ev(facts, "FiniteLivedIntangibleAssetsNet", ("us-gaap",))
+    flC = _tag_cur(facts, "FiniteLivedIntangibleAssetsNet", ("us-gaap",))[0]
+    if not flE or u1 != u2:
+        return []
+    ov = [y for y in set(newE) & set(flE) if flE[y]]
+    if not ov or any(abs(newE[y] - flE[y]) > 0.005 * abs(flE[y]) for y in ov):
+        return [f"無形の後継タグ {INTAN_SUCC} は FiniteLivedIntangibleAssetsNet と"
+                + ("重なる年が無い" if not ov else "重なる年で食い違う") + "ので使わなかった（構成要素の社がある・JKHY）"]
+    totC = _tag_cur(facts, "IntangibleAssetsNetExcludingGoodwill", ("us-gaap",))[0]
+    added = []
+    for y, v in sorted(newC.items()):
+        if y in flC or y in totC:
+            continue
+        S["intan"][y] = (S["intan"].get(y) or 0) + v
+        usedI[y] = list(usedI.get(y) or []) + [f"{INTAN_SUCC}={v:,.0f}(FiniteLivedIntangibleAssetsNet の後継)"]
+        added.append(y)
+    if added:
+        return [f"無形の確定分を後継タグで補った（{added[0]}〜{added[-1]}年）: {INTAN_SUCC} は FiniteLivedIntangibleAssetsNet と"
+                f"重なる年（{', '.join(str(y) for y in sorted(ov))}）で一致＝同じ行の付け替え"]
+    return []
+
+
+# ---------- 2026-09-23（todo fetcher_capsoft・決定 roic_capsoft_convention）: 資産計上したソフトウェア ----------
+# 決定: 資産計上したソフトウェアは無形資産（ASC 350-40）なので、規約 7-b の『−無形』に**構成要素として**含める
+#   （会社のタグの付け方＝BS の独立の行・有形固定資産の中・その他の資産の中・無形の注記の中、で結果が変わらないように揃える）。
+# 代替か構成要素か: CapitalizedComputerSoftwareNet（社内利用ソフトの純額）は無形の**構成要素**。ただし会社によって置き場所が違い、
+#   **無形の総額の中にすでに入っている社がある**（実測 SNA: FY2025 10-K 0000091440-26-000045 R72『Schedule of Other Intangible Assets by
+#   Major Class』の Internally developed software 54.3 百万$ が Other intangible assets 270.7 の内訳＝足すと二重）。一方で外にある社は
+#   BS の独立の行（TYL・NJR・GRND・LMT・PCTY）／有形固定資産の注記（CPAY・EXLS・MSA・CHE・ROG・LRN・GILD）／その他の資産（LULU・KTB・DRI）。
+#   companyfacts には次元（無形の種類の軸）が無いので「無形の注記の中か」を直接は見られない。
+# → **外にあると不等式で証明できる社だけ**足す: 無形の中に入るならソフトは償却資産＝**確定分**（FiniteLivedIntangibleAssetsNet。無ければ
+#   総額−無期限分、それも無ければ総額）の中にしか入れない。ソフトの純額が確定分を **0.5% 超えて上回る**年があれば、その社のソフトは
+#   無形の外にある（上限の不等式）。無形を一度も報告していない社（TTD）は確定分 0 で同じ判定。
+#   証明できた社は、ROIC の窓（営業利益の直近5年のうち無形のある年）の**全年**でソフトの値（当期または翌年の比較年度）がそろうときだけ全年に足す
+#   （置き場所は会計方針で年ごとに変わらない前提。1年でも欠ける社は足さない＝窓の中で基準が割れた系列を作らない）。
+#   証明できない社（TYL・CPAY・EXLS・MSA・ROG・HUBB・SNA …）は旧来どおり足さず注記する＝二重計上の危険を作らない代わりに取りこぼしは残る。
+# ⚠ CapitalizedSoftwareDevelopmentCostsForSoftwareSoldToCustomers（販売用ソフト）は使わない: 社によって無形の中（SNA・DELL で社内利用ソフトと同額）、
+#   カリキュラム開発費（LRN 183.6 百万$）など意味が割れる。JKHY の後継タグ（INTAN_SUCC）も使わない（上の _intan_successor の領分）。
+CAPSOFT = "CapitalizedComputerSoftwareNet"
+
+
+def _capsoft(facts, S, usedI):
+    ev, u, _ns = _tag_ev(facts, CAPSOFT, ("us-gaap",))
+    if not ev or not any(ev.values()):
+        return []
+    _eqU = series(facts, TAGS["eq"])[1]
+    if _eqU and u != _eqU:
+        return [f"資産計上したソフトウェア（{CAPSOFT}）の単位 {u} が自己資本の単位 {_eqU} と違うので足さなかった"]
+    base = dict(S["intan"])
+    # ROIC の窓＝営業利益の直近5年のうち、無形が「ある年」か「欠けても無視できる年」（build_numbers の上限の不等式と同じ物差し:
+    #   他年の無形の最大が自己資本〔負なら総資産〕の2%未満）。無視できない欠測の年はもともと算出不能なので触らない（JKHY）。
+    _mxI = max(base.values()) if base else 0
+    win = []
+    for y in sorted(S["op"])[-5:]:
+        if not base or y in base:
+            win.append(y)
+            continue
+        _e = S["eq"].get(y)
+        _b = _e if (_e or 0) > 0 else (S["assets"].get(y) or 0)
+        if _b > 0 and _mxI < 0.02 * _b:
+            win.append(y)
+    if not win or not any(ev.get(y) for y in win):
+        return []                                 # 窓の中にソフトの値が無い（昔だけ）＝この社の今の ROIC には関係しない
+    fl = _tag_ev(facts, "FiniteLivedIntangibleAssetsNet", ("us-gaap",))[0]
+    ind = _tag_ev(facts, "IndefiniteLivedIntangibleAssetsExcludingGoodwill", ("us-gaap",))[0]
+    tot = _tag_ev(facts, "IntangibleAssetsNetExcludingGoodwill", ("us-gaap",))[0]
+
+    def _fin(y):
+        if not base:
+            return 0
+        if y in fl:
+            return fl[y]
+        if y in tot and y in ind:
+            return tot[y] - ind[y]
+        if y in tot:
+            return tot[y]
+        return base.get(y)
+    # 証明は**窓の中の年**に限る（窓より昔の年の置き場所は今の置き場所の証拠にしない）
+    proven = [y for y in win if ev.get(y) and _fin(y) is not None and ev[y] > _fin(y) * 1.005]
+    if not proven:
+        _yy = max((y for y in win if y in ev), default=max(ev))
+        return [f"資産計上したソフトウェア（{CAPSOFT} {_yy}年 {ev[_yy]:,.0f}）を無形に足さなかった: ROIC の窓の中で無形の確定分を"
+                f"上回る年が無く、無形の注記の中に入っているかを機械で確かめられない（SNA は中にある）。原本で置き場所を確認せよ"]
+    miss = [y for y in win if y not in ev]
+    if miss:
+        return [f"資産計上したソフトウェア（{CAPSOFT}）は無形の外にある（{proven[-1]}年: {ev[proven[-1]]:,.0f} ＞ 無形の確定分"
+                f" {_fin(proven[-1]) or 0:,.0f}）が、ROIC の窓の {', '.join(str(y) for y in miss)}年に値が無いので足さなかった"
+                f"（窓の中で基準を割らない）"]
+    for y in win:
+        v = ev[y]
+        if not v:
+            continue
+        S["intan"][y] = (S["intan"].get(y) or 0) + v
+        usedI[y] = list(usedI.get(y) or []) + [f"{CAPSOFT}={v:,.0f}(資産計上したソフトウェア・無形の外)"]
+    return [f"資産計上したソフトウェア（{CAPSOFT}）を無形の構成要素として控除した（{win[0]}〜{win[-1]}年）: "
+            f"無形の外にあると不等式で確認（{proven[-1]}年: ソフト {ev[proven[-1]]:,.0f} ＞ 無形の確定分 {_fin(proven[-1]) or 0:,.0f}）"]
 
 
 def build_numbers(facts):
@@ -911,6 +1110,27 @@ def build_numbers(facts):
         _usedS[_y] = [f"DebtCurrent={_dc[_y]:,.0f}は LongTermDebt 総額に含まれるため控除"]
         _fixed.append(_y)
     _fixed.sort()
+    # 2026-09-23（todo fetcher_debt_residual_0923・PRGS）: 上で「総額に含まれる」と証明して控除した1年内返済分と**同額の別の流動タグ**が
+    #   debtS に残っていた（実測 PRGS 2025: LongTermDebt 1,400,346＝非流動 1,041,183＋LongTermDebtCurrent 359,163 が成立し
+    #   LongTermDebtCurrent は控除したが、同じ転換社債の1年内分が ConvertibleDebtCurrent 359,163 としても付いており残った＝二重）。
+    #   代替か構成要素か: 同額の2本は**同じ負債の別名**（1年内返済分がその転換社債だけ）。総額の恒等式が閉じた年だけ、
+    #   控除した額と ±0.5% で一致する流動タグも同じく総額の中にあるとして控除する。
+    _fixedA = []
+    for _y in _fixed:
+        _cv = _ltc.get(_y) if _y in _ltc else _dc.get(_y)
+        if not _cv:
+            continue
+        _keep = []
+        for _x in (_usedS.get(_y) or []):
+            _m = re.fullmatch(r"([A-Za-z0-9]+)=(-?[\d,]+)", _x)
+            if _m and abs(float(_m.group(2).replace(",", "")) - _cv) <= 0.005 * abs(_cv):
+                _v = float(_m.group(2).replace(",", ""))
+                S["debtS"][_y] = (S["debtS"].get(_y, 0) or 0) - _v
+                _keep.append(f"{_m.group(1)}={_v:,.0f}は控除した1年内返済分と同額の別名＝総額に含まれるため控除")
+                _fixedA.append(_y)
+            else:
+                _keep.append(_x)
+        _usedS[_y] = _keep
     # 2026-09-23是正(2): **debtL の中で「同じ負債の別名」と「流動込みの総額」を足していた**（候補＝代替か構成要素か、の5例目）。
     #   series_sum は total_key 以外を構成要素として合計するが——
     #   (a) LongTermDebtNoncurrent と LongTermDebtAndCapitalLeaseObligations は**同じ非流動負債の別名**（後者はリース込み）で、
@@ -987,6 +1207,168 @@ def build_numbers(facts):
     #   → 流動の借入 925,626 を二重計上（nde −0.23 のところ +0.01）。同じ恒等式が CPA・IHG・LOMA・TGS・TIGO・KARO 2025・
     #   OMAB 2018-20・CEPU 2018・DLO 2021 で成立した（296社）。**恒等式が成り立つ年だけ**流動の構成要素を控除する
     #   （GSK・NVO・PAC・SAP・AMBIQ・ASR は成り立たない＝Borrowings の中身を機械で確かめられないので触らない）。
+    # ===== 2026-09-23（todo fetcher_debt_residual_0923）: 同じ負債の二重計上の残り =====
+    #   どれも「候補＝代替か構成要素か」を先に答え、**恒等式か不等式で証明できた年だけ**動かす（証明できない年は旧来どおり）。
+    # (R1) GSK 型: IFRS の Borrowings を「流動込みの総額」として採っていたが、この社の Borrowings は**純有利子負債**（NetDebt と同額）で、
+    #   非流動の借入（LongtermBorrowings）より**小さい**年さえある（GSK 2025: Borrowings 14,453 ＜ LongtermBorrowings 14,708 百万£）。
+    #   総額はその構成要素より小さくなれない（不等式）／NetDebt と ±0.5% で一致＝純額（恒等式）→ その年は総額として使わず、
+    #   Borrowings 以外の非流動の構成要素（LongtermBorrowings 等）を数える（流動の ShorttermBorrowings は debtS に残る）。
+    _fixNB = []
+    if _debtNs == "ifrs-full":
+        _borA = _tc("Borrowings")
+        _lbA = {k: _tc(k) for k in ("LongtermBorrowings", "NoncurrentBorrowings")}
+        _curA = [_tc(k) for k in ("CurrentBorrowingsAndCurrentPortionOfNoncurrentBorrowings", "CurrentPortionOfLongtermBorrowings",
+                                  "ShorttermBorrowings", "CurrentBorrowings")]
+        _nd = _tc("NetDebt")
+        for _y in sorted(S["debtL"]):
+            if (_usedL.get(_y) or []) != ["Borrowings(総額)"] or not _borA.get(_y):
+                continue
+            _b = _borA[_y]
+            _lbs = [v[_y] for v in _lbA.values() if v.get(_y)]
+            if not _lbs or (len(_lbs) == 2 and abs(_lbs[0] - _lbs[1]) > 0.005 * abs(_lbs[0])):
+                continue                          # 非流動の借入が無い／2本が食い違う＝置き換える先が確かでない
+            _lbv = _lbs[0]
+            # Borrowings が「非流動＋流動」と恒等式で一致する年は総額と証明できている（下の (3)・TIGO）＝触らない
+            _curs = [v[_y] for v in _curA if v.get(_y)]
+            if any(abs(_b - (_lbv + c)) <= 0.005 * abs(_b) for c in _curs + [sum(_curs)]) or abs(_b - _lbv) <= 0.005 * abs(_b):
+                continue
+            _isNet = bool(_nd.get(_y)) and abs(_nd[_y] - _b) <= 0.0005 * abs(_b)
+            if not (_isNet or _b < _lbv * 0.995):
+                continue
+            _kL = next(k for k, v in _lbA.items() if v.get(_y))
+            S["debtL"][_y] = _lbv
+            _usedL[_y] = [f"{_kL}={_lbv:,.0f}",
+                          f"Borrowings={_b:,.0f}は総額ではない（" + (f"NetDebt {_nd[_y]:,.0f} と同額＝純有利子負債" if _isNet else
+                                                                   f"非流動の借入 {_lbv:,.0f} より小さい") + "）ので使わない"]
+            _fixNB.append(_y)
+    if _fixNB:
+        _debtNotes.append(f"IFRS の Borrowings を総額として使わなかった年がある（{_fixNB[0]}〜{_fixNB[-1]}年・{len(_fixNB)}年）: "
+                          f"この社の Borrowings は NetDebt と同額か非流動の借入より小さい＝流動込みの総額ではない（実測 GSK）。"
+                          f"非流動の借入（LongtermBorrowings 等）＋流動の借入で数えた")
+    # (R2) CHDN／ADP／PRGS 型: debtL の構成要素の一つ（UnsecuredLongTermDebt・OtherLongTermDebtNoncurrent 等）が、同じ年の
+    #   非流動の総額（LongTermDebtNoncurrent 等）の**内訳**だった＝総額と明細を足していた。
+    #   実測 CHDN 2025: LongTermDebtNoncurrent 5,067.1 ＝ UnsecuredLongTermDebt 3,081.2 ＋ SecuredLongTermDebt 1,985.9（百万$）が
+    #   2023〜2025 で成立（採取器は 5,067.1＋3,081.2＝8,148.3 を数え nde 8.74）／ADP: OtherLongTermDebtNoncurrent が
+    #   LongTermDebtNoncurrent と同額（2017〜2025）／PRGS 2021〜23: LongTermDebtNoncurrent 534.5 ＝ ConvertibleDebtNoncurrent 294.5 ＋
+    #   OtherLongTermDebtNoncurrent 240.0。
+    #   → 非流動の総額 A が「他の構成要素 S（1〜2本）＋候補に入れていない明細 T（0〜2本）」と ±0.5% で一致する年だけ、S を
+    #     A の内訳として数えない（一致しない年は旧来どおり足す＝BCPC の『Other long-term obligations』のような別の行は残る）。
+    _OUTER = ("LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations", "LongTermNotesPayable")
+    _DETAIL = ("SecuredLongTermDebt", "UnsecuredLongTermDebt", "OtherLongTermDebtNoncurrent", "ConvertibleDebtNoncurrent",
+               "ConvertibleLongTermNotesPayable", "LongTermLineOfCredit", "SeniorNotesNoncurrent", "SeniorLongTermNotes",
+               "LongTermLoansPayable", "NotesPayableToBankNoncurrent", "SubordinatedLongTermDebt", "LongTermNotesPayable")
+    _detV = {k: _tc(k) for k in _DETAIL}
+    _combT = _tc("DebtLongtermAndShorttermCombinedAmount")
+    _fixIn = []
+    for _y in sorted(S["debtL"]):
+        _pp = _used_vals(_usedL.get(_y))
+        _pp = {k: v for k, v in _pp.items() if any(x == f"{k}={v:,.0f}" for x in (_usedL.get(_y) or []))}
+        if len(_pp) < 2:
+            continue
+        _hit = None
+        for _A in _OUTER:
+            _av = _pp.get(_A)
+            if not _av or _av <= 0:
+                continue
+            _oth = [k for k in _pp if k != _A]
+            _pool = [(k, _detV[k][_y]) for k in _DETAIL if k not in _pp and _y in _detV[k] and _detV[k][_y]]
+            for _r in range(1, min(2, len(_oth)) + 1):
+                for _Sk in itertools.combinations(_oth, _r):
+                    _sv = sum(_pp[k] for k in _Sk)
+                    if _sv <= 0:
+                        continue
+                    for _q in range(0, min(2, len(_pool)) + 1):
+                        for _Tk in itertools.combinations(_pool, _q):
+                            if abs(_av - _sv - sum(v for _k, v in _Tk)) <= 0.005 * _av:
+                                _hit = (_A, _Sk, _Tk)
+                                break
+                        if _hit: break
+                    if _hit: break
+                if _hit: break
+            if _hit: break
+        _why = None
+        if _hit:
+            _A, _Sk, _Tk = _hit
+            _why = (f"{_A}＝{'＋'.join(list(_Sk) + [k for k, _v in _Tk])} が恒等式で一致" if _Tk or len(_Sk) > 1 else f"{_A}と同額")
+        elif len(_pp) == 2 and _combT.get(_y):
+            # 不等式の証明（IP 2018・2019）: 負債の総額（DebtLongtermAndShorttermCombinedAmount＝流動込み）が、非流動の総額 A 以上なのに
+            #   A＋もう1本 より小さい＝もう1本は A と重なっている（別の負債なら総額は A＋もう1本 以上のはず）
+            _ct = _combT[_y]
+            for _A in _OUTER:
+                if _A in _pp and _pp[_A] > 0 and _pp[_A] <= _ct * 1.005:
+                    _Sk = tuple(k for k in _pp if k != _A)
+                    if _pp[_A] + sum(_pp[k] for k in _Sk) > _ct * 1.005 and all(_pp[k] > 0 for k in _Sk):
+                        _why = (f"負債の総額 DebtLongtermAndShorttermCombinedAmount {_ct:,.0f} が {_A}＋{'＋'.join(_Sk)} より小さい"
+                                f"＝重なっている（不等式）")
+                        break
+        if not _why:
+            continue
+        _sv = sum(_pp[k] for k in _Sk)
+        S["debtL"][_y] -= _sv
+        _usedL[_y] = [x for x in _usedL[_y] if not any(x == f"{k}={_pp[k]:,.0f}" for k in _Sk)] + [
+            f"{'＋'.join(f'{k}={_pp[k]:,.0f}' for k in _Sk)}は{_A} {_pp[_A]:,.0f} の内訳（{_why}）＝二重に数えない"]
+        _fixIn.append(_y)
+    if _fixIn:
+        _debtNotes.append(f"非流動の有利子負債の総額とその内訳を足していた年を是正した（{_fixIn[0]}〜{_fixIn[-1]}年・{len(_fixIn)}年）: "
+                          f"総額（LongTermDebtNoncurrent 等）＝内訳の和 が恒等式で成立した年、または負債の総額（流動込み）が総額＋内訳より小さい"
+                          f"（不等式）年だけ内訳を数えない（実測 CHDN・ADP・PRGS・IP）")
+    # (R3) AMPH 型: LongTermDebtNoncurrent が**元本の総額（1年内返済分込み）**、LongTermDebtAndCapitalLeaseObligations が BS の
+    #   非流動の簿価（純額）で、同じ負債を2本とも数えていた（実測 AMPH 2025: 619,705＋608,749 千$。元本 619,705 は返済予定表
+    #   1,479＋5,692＋255,692＋353,538＋3,304 と一致）。→ 片方が**返済予定表の合計と ±0.5% で一致**し（＝元本の総額）、もう片方が
+    #   その 90〜100% の年だけ、元本の総額のほうを数えない（簿価の非流動＋debtS の1年内分が残る）。
+    _MAT = ["LongTermDebtMaturitiesRepaymentsOfPrincipalInNextTwelveMonths", "LongTermDebtMaturitiesRepaymentsOfPrincipalInYearTwo",
+            "LongTermDebtMaturitiesRepaymentsOfPrincipalInYearThree", "LongTermDebtMaturitiesRepaymentsOfPrincipalInYearFour",
+            "LongTermDebtMaturitiesRepaymentsOfPrincipalInYearFive", "LongTermDebtMaturitiesRepaymentsOfPrincipalAfterYearFive"]
+    _matV = [_tc(k) for k in _MAT]
+    _fixM = []
+    for _y in sorted(S["debtL"]):
+        if not all(_y in v for v in _matV[:5]):
+            continue
+        _ms = sum(v.get(_y) or 0 for v in _matV)
+        _pp = _used_vals(_usedL.get(_y))
+        _pp = {k: v for k, v in _pp.items() if k in _ALIAS and any(x == f"{k}={v:,.0f}" for x in (_usedL.get(_y) or []))}
+        for _ka, _va in list(_pp.items()):
+            if not _va or abs(_va - _ms) > 0.005 * abs(_va):
+                continue
+            if not any(_kb != _ka and 0.90 * _va <= _vb < _va for _kb, _vb in _pp.items()):
+                continue
+            S["debtL"][_y] -= _va
+            _usedL[_y] = [x for x in _usedL[_y] if x != f"{_ka}={_va:,.0f}"] + [
+                f"{_ka}={_va:,.0f}は返済予定表の合計 {_ms:,.0f} と一致＝元本の総額（1年内分込み）で、簿価の行と同じ負債＝数えない"]
+            _fixM.append(_y)
+            break
+    if _fixM:
+        _debtNotes.append(f"同じ負債の元本の総額と簿価を両方数えていた年を是正した（{_fixM[0]}〜{_fixM[-1]}年・{len(_fixM)}年）: "
+                          f"返済予定表の合計と一致する行＝元本の総額（1年内分込み）を数えず、BS の簿価の行を残した（実測 AMPH）")
+    # (R4) KRMN 型: debtS の2本が**同額**で、その社の負債の総額タグ（NotesPayable 等）が「debtL＋片方だけ」と ±0.5% で一致する
+    #   ＝同じ1年内分に2つのタグが付いている（実測 KRMN 2025: LongTermDebtCurrent 3,836＝NotesPayableCurrent 3,836、
+    #   NotesPayable 499,112＝LongTermNotesPayable 495,312＋3,836〔千$〕）。恒等式が閉じた年だけ片方を数えない。
+    _TOT = [_tc(k) for k in ("NotesPayable", "LongTermDebt", "DebtLongtermAndShorttermCombinedAmount", "DebtInstrumentCarryingAmount")]
+    _fixSS = []
+    for _y in sorted(S["debtS"]):
+        _pp = _used_vals(_usedS.get(_y))
+        _pp = {k: v for k, v in _pp.items() if any(x == f"{k}={v:,.0f}" for x in (_usedS.get(_y) or []))}
+        if len(_pp) < 2:
+            continue
+        _L, _Sv = S["debtL"].get(_y) or 0, S["debtS"].get(_y) or 0
+        for _ka, _kb in itertools.combinations(list(_pp), 2):
+            _va, _vb = _pp[_ka], _pp[_kb]
+            if not _va or abs(_va - _vb) > 0.001 * abs(_va):
+                continue
+            _ok = [t[_y] for t in _TOT if t.get(_y) and abs(t[_y] - (_L + _Sv - _vb)) <= 0.005 * abs(t[_y])
+                   and abs(t[_y] - (_L + _Sv)) > 0.005 * abs(t[_y])]
+            if not _ok:
+                continue
+            S["debtS"][_y] = _Sv - _vb
+            _usedS[_y] = [x for x in _usedS[_y] if x != f"{_kb}={_vb:,.0f}"] + [
+                f"{_kb}={_vb:,.0f}は{_ka}と同額の別名（負債の総額 {_ok[0]:,.0f}＝非流動＋この1本 が恒等式で一致）＝数えない"]
+            _fixSS.append(_y)
+            break
+    if _fixSS:
+        _debtNotes.append(f"1年内返済分に2つのタグが同額で付いていた年を是正した（{_fixSS[0]}〜{_fixSS[-1]}年・{len(_fixSS)}年）: "
+                          f"負債の総額タグ＝非流動＋片方 が恒等式で一致した年だけ片方を数えない（実測 KRMN）")
+    if _fixedA:
+        _debtNotes.append(f"総額に含まれると証明した1年内返済分と同額の別の流動タグも控除した（{_fixedA[0]}〜{_fixedA[-1]}年）: 同じ負債の別名（実測 PRGS の ConvertibleDebtCurrent）")
     _fixB = []
     if _debtNs == "ifrs-full":
         _bor = _tc("Borrowings")
@@ -1146,6 +1528,7 @@ def build_numbers(facts):
     #   実測 CELH: 総額タグが2024年で終わり、2025年は二本に割れていたので series() では欠測になった。
     S["intan"], _usedI = series_sum(facts, TAGS["intan"],
                                     total_key="IntangibleAssetsNetExcludingGoodwill")
+    _succNotes = _intan_successor(facts, S, _usedI)
     # 2026-08-08: 減価償却も同じ「構成要素」型（TAGS["depParts"] の頭注を見よ）。
     #   合計タグがその年に無い年だけ、構成要素の合計で補う（合計があるならそれを使う＝二重計上しない）。
     _depS, _usedD = series_sum(facts, TAGS["depParts"])
@@ -1178,6 +1561,7 @@ def build_numbers(facts):
         for _y, _v in _iag.items():
             if _y not in S["intan"] and _y not in S["gw"]:
                 S["intan"][_y] = _v
+    _swNotes = _capsoft(facts, S, _usedI)
     # 2026-09-23（todo fetcher_debt_tags_0923 (5)）: **短期投資の候補が BS の行の2本だけだった**。流動の AFS
     #   （AvailableForSaleSecuritiesDebtSecuritiesCurrent / DebtSecuritiesAvailableForSaleExcludingAccruedInterestCurrent）・
     #   流動の満期保有・OtherShortTermInvestments だけで短期投資を出す社は現金だけで nde を出していた（機械の根拠を持つ
@@ -1218,9 +1602,13 @@ def build_numbers(facts):
     # 2026-09-23: capex の検問（TAGS["capex"] の頭注）。PaymentsToAcquireOtherProductiveAssets は多くの社で
     #   「その他」の小さな構成要素なので、**PP&E 系のタグと重なる年に半分未満だった社**では設備投資の総額として使わない
     #   （PP&E 系のタグが途切れた年にその小さな行が設備投資に化けると FCF が過大に出る。誤値より空欄）。
-    _opa = series(facts, ["PaymentsToAcquireOtherProductiveAssets"])[0]
-    if _opa and S["capex"]:
-        _ppe = series(facts, [k for k in TAGS["capex"] if k != "PaymentsToAcquireOtherProductiveAssets"])[0]
+    # 2026-09-23: IFRS の合算行（PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsOtherThanGoodwill…）にも同じ検問を掛ける（KARO）。
+    for _lt in ("PaymentsToAcquireOtherProductiveAssets",
+                "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsOtherThanGoodwillInvestmentPropertyAndOtherNoncurrentAssets"):
+        _opa = series(facts, [_lt])[0]
+        if not (_opa and S["capex"]):
+            continue
+        _ppe = series(facts, [k for k in TAGS["capex"] if k != _lt])[0]
         _ovy = [y for y in set(_opa) & set(_ppe) if _ppe[y]]
         if any(abs(_opa[y]) < 0.5 * abs(_ppe[y]) for y in _ovy):
             _drop = sorted(y for y in S["capex"] if y not in _ppe and y in _opa and S["capex"][y] == _opa[y])
@@ -1228,8 +1616,45 @@ def build_numbers(facts):
                 del S["capex"][y]
             if _drop:
                 note.append(f"設備投資を算出不能とした年がある（{_drop[0]}〜{_drop[-1]}年）: その年の設備投資が "
-                            f"PaymentsToAcquireOtherProductiveAssets にしか無いが、この社では PP&E 系のタグと重なる年に"
+                            f"{_lt} にしか無いが、この社では PP&E 系のタグと重なる年に"
                             f"その半分未満＝『その他』の構成要素なので総額として使わない。原本の CF 計算書で確認せよ")
+    # 2026-09-23（todo fetcher_small_gaps_0923 (3) の残り）: us-gaap で設備投資の行を**候補外のタグ**で出す社（CF 計算書の原本で確認）:
+    #   PaymentsForCapitalImprovements＝IT『Additions to property, equipment and leasehold improvements』0000749251-26-000112 /
+    #   RBC『Capital expenditures』0001213900-26-057626 / SNA『Capital expenditures』/ PRDO『Purchases of property and equipment』、
+    #   PaymentsToAcquireOtherPropertyPlantAndEquipment＝LLY『Purchases of property and equipment』0000059478-26-000013 / EE / YORW / RMR / ADP。
+    #   ⚠ 代替か構成要素か: この2本は**同じ CF に並んで設備投資を分けて出す**社がある（CHDN: Capital maintenance expenditures 70.2＝
+    #   PaymentsForCapitalImprovements ＋ Capital project expenditures 204.7＝PaymentsToAcquireOtherPropertyPlantAndEquipment ／ CHH:
+    #   Investments in other property and equipment 38.9 ＋ Investments in owned hotel properties 106.9）＝**構成要素**なので合計する。
+    #   PaymentsForProceedsFromProductiveAssets（売却収入を差し引いた純額の行。LOAR『Capital expenditures』・CLMB）は上の2本が無いときだけ。
+    #   **主系列（上の capex の候補）が途切れた後の年だけ**埋める（途中の年に混ぜない）。主系列と重なる年に半分未満の社は構成要素なので使わない。
+    if not _dmL.get("ns") == "ifrs-full":
+        _cpLast = max(S["capex"]) if S["capex"] else None
+        _fb, _usedFB = series_sum(facts, ["PaymentsForCapitalImprovements", "PaymentsToAcquireOtherPropertyPlantAndEquipment"])
+        _pf = series(facts, ["PaymentsForProceedsFromProductiveAssets"])[0]
+        _addCP = []
+        for _nm, _src in (("PaymentsForCapitalImprovements／PaymentsToAcquireOtherPropertyPlantAndEquipment の合計", _fb),
+                          ("PaymentsForProceedsFromProductiveAssets", _pf)):
+            if not _src or _addCP:
+                continue
+            _ov = [y for y in set(_src) & set(S["capex"]) if S["capex"][y]]
+            if any(abs(_src[y]) < 0.5 * abs(S["capex"][y]) for y in _ov):
+                continue
+            for y in sorted(_src):
+                if (_cpLast is None or y > _cpLast) and _src[y]:
+                    S["capex"][y] = abs(_src[y])
+                    _addCP.append(y)
+            if _addCP:
+                note.append(f"設備投資を候補外のタグで補った（{_addCP[0]}〜{_addCP[-1]}年）: {_nm}"
+                            + (f"（{' + '.join(_usedFB.get(_addCP[-1]) or [])}）" if _src is _fb else "")
+                            + "。主系列のタグが途切れた後の年だけ。原本の CF 計算書の設備投資の行と照合せよ")
+    # 2026-09-23: 継続事業の営業CF（ocf の最後の候補）で**新しく埋まった年**が、会社の最新の年次報告より2年以上古いなら使わない
+    #   （GRVY: us-gaap の系列は2016年で止まり、その後は IFRS で報告＝名前空間の切り替え。旧い年の営業CF を足すと 2016年の
+    #   fcf/accr が「直近年」の値として新たに出てしまう＝BKNG型『取れた値＝最新の値』。旧来の候補で取れていた年は触らない）。
+    _ocf0 = series(facts, [k for k in TAGS["ocf"] if k != "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"])[0]
+    _pts0 = _fy_model(facts)["pts"]
+    _fyLast = max(p[1] for p in _pts0) if _pts0 else None
+    for _y in [y for y in S["ocf"] if y not in _ocf0 and _fyLast is not None and y < _fyLast - 1]:
+        del S["ocf"][_y]
     # 2026-08-03: **営業利益タグが途中で消える会社がある。** 実測 KLAC(投下可の社):
     #   `OperatingIncomeLoss` が **2015年で終了**し、TAGS["op"]の候補2つとも最新年に届かない。
     #   series() は「最新年から1年以内に届く候補」の中から選ぶが、**どの候補も届かない場合は
@@ -1327,6 +1752,7 @@ def build_numbers(facts):
                     f"恒等式（総額＝非流動＋流動）が成立しないか、非流動タグが無い年なので"
                     f"**機械では確定できなかった**。原本のBSで総額を確認せよ")
     note.extend(_debtNotes)                       # 2026-09-23 負債タグの穴 (1)〜(4) の注記
+    note.extend(_succNotes + _swNotes)            # 2026-09-23 無形の後継タグ・資産計上したソフトウェア
     # 2026-07-29新設: 機械項目にも根拠を刻む。
     #   実測(night/audit_evidence.py)で、機械項目の _meta.evidence 被覆率は 9.8%
     #   (ni 0.3% / cagr 1.0% / gm 4.8% / roic 16.2%)だった。「機械の出力だから正しい」
@@ -1479,6 +1905,14 @@ def build_numbers(facts):
                                 f"{'・'.join(_why)}（同じ提出 {_dinfo['accn']}）。総額は構成要素以上のはずなのでその行は全部を含まない。"
                                 f"小計のままだと EBITDA が過小＝nde が過大（財務キル(>4)の誤爆）。原本のCF計算書で D&A を確認せよ")
                     S["dep"][y0] = _new
+                else:
+                    _dfi = _dep_identity_fix(facts, y0, S["dep"][y0])
+                    if _dfi:
+                        _new, _why = _dfi
+                        _ndeX += (f"｜減価償却: 総額タグの値 {S['dep'][y0]:,.0f} は小計（{_why}）→ {_new:,.0f} を使った")
+                        note.append(f"減価償却の総額タグが小計だった（{y0}年 {S['dep'][y0]:,.0f}→{_new:,.0f}）: {_why}。"
+                                    f"小計のままだと EBITDA が過小＝nde が過大。原本のCF計算書で D&A を確認せよ")
+                        S["dep"][y0] = _new
             ebitda = S["op"][y0] + (S["dep"].get(y0,0) or 0)
             # 2026-09-23: **EBITDA が 0 以下なら nde は定義できない**（負で割ると符号が逆になり、純負債の社が純現金に見える）。
             #   実測 CMTL 2025: 営業利益 −139,098,000。旧値 0.28 は「純現金÷負の EBITDA」（リボルバー 114,414,000 を見落として
