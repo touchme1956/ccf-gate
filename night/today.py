@@ -45,9 +45,6 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
 sys.path.insert(0, os.path.join(ROOT, 'night'))
-import log_review_run  # noqa: E402
-#   ↑ 走行ログの**語彙(OUTCOMES)・JSTへの直し・開いたままの検出**はあの道具が正本。
-#     ここへ写すと『同じ台帳を見る二つが違うことを言う』種になる（v9.9.65）。
 
 AS_JSON = '--json' in sys.argv[1:]
 TODAY = datetime.date.today()
@@ -65,7 +62,6 @@ SRC = [
     ('promotion_ready', 'out/promotion_ready.json', '繰り上がりの作業リスト', 'rows'),
     ('events', 'out/events_watch.json', '8-K警報', 'alerts'),
     ('earnings', 'out/next_earnings.json', '次回決算', 'items'),
-    ('review_runs', 'out/review_runs.json', '門2審査の走行ログ', 'runs'),
     ('wacc', 'out/wacc_drift.json', 'WACCの乖離', 'gate'),
     ('todo_audit', 'out/todo_audit.json', 'やることリストの点検', 'checked'),
     ('exception_watch', 'out/exception_watch.json', '門外例外の監視', 'rows'),
@@ -75,7 +71,6 @@ SRC = [
     ('kessan', 'out/kessan_flags.json', '四半期点検の旗', 'items'),
     ('profiles_ja', 'out/profiles_ja_audit.json', '事業説明の日本語要約の被覆', 'counts'),
     ('freshness', 'out/freshness.json', '中身と入力の鮮度', 'rows'),
-    ('fetch_run', 'out/fetch_run.json', '機械値の採取の実行印', 'generated'),
     ('ci_health', 'out/ci_health.json', '自動化そのものの健康診断', 'rows'),
 ]
 
@@ -168,7 +163,7 @@ def build():
         now.append(item('wacc', 'now', 'WACC が更新どき',
                         '市場 %s%% vs 門 %s%%（乖離 %s > 刻み %s）'
                         % ((w.get('market') or {}).get('rfr'), g.get('html'), w.get('drift'), g.get('step')),
-                        'Ⅲ採点機の WACC 欄を更新（規約の変更ではなく入力の更新）', 'wacc_drift'))
+                        '✎採点機の WACC 欄を更新（規約の変更ではなく入力の更新）', 'wacc_drift'))
 
     # ── 自動化そのものが「走って失敗した」か（2026-08-18新設）──
     #   ⚠ 回転盤(ops_status)は**成果物の日付しか見ていない**ので、
@@ -191,95 +186,6 @@ def build():
                         detail,
                         (r.get('url') or 'GitHub Actions のログを見る')
                         + '　⚠『止まっている』ではなく『走って失敗』——直し方が違う', 'ci_health'))
-
-    # ── 門2審査の走行ログ（空振りも1行残す規約なので、行が無い＝走っていない）──
-    runs = (data.get('review_runs') or {}).get('runs') or []
-    if runs:
-        last = max((r.get('date') or '') for r in runs)
-        d = days_since(last)
-        if d is not None and d > 4:
-            now.append(item('review', 'now', '門2審査の走行ログが %d日前で止まっている' % d,
-                            '最終 %s' % last, 'Routine の発火を確認 / night/log_review_run.py --push', '審査ログ'))
-    elif data.get('review_runs') is not None:
-        now.append(item('review', 'now', '門2審査の走行ログが1件も無い',
-                        '空振りでも1行残す規約なので、0件は「走っていない」', '', '審査ログ'))
-
-    # ── ★開始したのに結末が残っていない日（2026-08-19実装）──
-    #   **「発火しなかった」（下の頻度の検査）とは別物**。混ぜてはいけない——
-    #   直し方が違う: あちらは Routine の発火を確かめる話、こちらは**セッションが途中で死んだ**話。
-    #   ⚠ 当日は出さない（走っている最中に鳴らすのは誤検出）＝open_days が除く。
-    if runs:
-        op = log_review_run.open_days(runs)
-        if op:
-            now.append(item('reviewopen', 'now',
-                            '門2審査が「開始」のまま閉じていない %d日' % len(op),
-                            '開始の1行はあるのに結末の1行が無い: ' + ' '.join(op)
-                            + '（JST）＝発火はしたが途中で力尽きた日',
-                            'その日のセッションを確認して結末を1行足す（night/log_review_run.py '
-                            '--outcome limit|error|source_down --push）', '審査ログ'))
-
-    # ── ★毎営業日と宣言した作業が、本当に毎営業日 走っているか（2026-08-17新設）──
-    #   回転盤は**最後にいつ走ったか**しか見ない。だから「5営業日のうち2日だけ走った」は
-    #   最終日が近ければ🟢に見える——**日付の死角（A/B/C）に続く4つ目、頻度の死角**。
-    #   実測(2026-08-17): ログ開始 08-11 以降の営業日5日に対しログは2日で、
-    #   盤は「最終 08-16・1日前」で🟢だった。門2審査は待ち行列を消化する**装置の心臓**なので、
-    #   飛び飛びに走っているのが見えないのは重い（在庫58社＝12日分あるので今すぐ枯れはしないが）。
-    #   ⚠ 新しい定数を作らない——窓は盤と同じ期限4日、線は「毎営業日」という**宣言そのもの**。
-    #   ⚠ 今日はまだ終わっていないので窓から外す（走っていないのが正常）。
-    #
-    #   ★★ 営業日は **JST で数える**（初版は UTC で数えて誤検出した・実測で捕まえた）。
-    #   `log_review_run.py` は `datetime.now(timezone.utc)` で date を書くが、
-    #   Routine の cron は `0 20 * * 0-4`＝**20:00 UTC ＝ 05:00 JST の月〜金**。
-    #   つまり **JST月曜の実行は UTC日曜として記録される**——実測 2026-08-16 22:55Z は
-    #   JST 2026-08-17(月) 07:55 の firing。UTC の曜日で数えると
-    #   (1) その回は「土日」として**永久に数から漏れ**、(2) 金曜は**常に抜けとして鳴る**。
-    #   ＝この repo が12回踏んだ「**基準の違う二つを割る**」型そのもの。
-    #   → `date`+`at` を JST へ直してから曜日を見る（at が無い行は date を JST 日付と読む）。
-    if runs:
-        #   ⚠ JST への直しは log_review_run.jst_date が正本（理由もそちらに書いてある）。
-        have = {x for x in (log_review_run.jst_date(r) for r in runs) if x}
-        # 「今日」も JST で（UTC の今日だと窓が1日ずれる）
-        jtoday = (datetime.datetime.now(datetime.timezone.utc)
-                  + datetime.timedelta(hours=9)).date()
-        first = min(have) if have else None
-        win, d = [], jtoday - datetime.timedelta(days=1)
-        while len(win) < 4 and (first is None or d.isoformat() >= first):
-            if d.weekday() < 5:
-                win.append(d.isoformat())
-            d -= datetime.timedelta(days=1)
-        miss = [x for x in win if x not in have]
-        if win and miss:
-            # ★2026-08-20 是正: 旧文言は「門2審査が毎営業日 **走っていない**」と断言していたが、
-            #   この器が見ているのは **走行ログ** であって発火の履歴ではない。
-            #   実測（MCP list_triggers）: Routine は enabled で last_fired_at も当日＝**発火はしている**。
-            #   それでも `out/review_runs.json` は 2026-08-16 で止まっており、
-            #   2026-08-18 に足したはずの「手順0の started 行」すら1件も無い。
-            #   ⇒ 「走らなかった」と「走ったが痕跡を残せなかった」は**この器では区別できない**。
-            #   断言すると『測っていない』を『測って問題なし』の逆向きに取り違えることになる（ルール7の親戚）。
-            #   ⚠ push の失敗説は弱い——`log_review_run.py` は4回リトライし、
-            #     全部失敗しても手元のファイルには行が残る設計。手元にも無い＝**ツールが呼ばれていない**。
-            month.append(item('reviewfreq', 'month',
-                              '門2審査の走行ログが残っていない（直近%d営業日で%d日ぶん）' % (len(win), len(win) - len(miss)),
-                              '抜け: ' + ' '.join(sorted(miss))
-                              + '（JST。ログはUTC記録なので直して数えている）'
-                              + '／⚠ これはログの話で、発火したかは repo からは判らない'
-                              '——「走らなかった」と「走ったが痕跡を残せなかった」を区別できない'
-                              '／盤は最後の日付しか見ないので🟢に見える',
-                              'claude.ai の Routines で発火履歴を見る'
-                              '（発火していればセッション側で手順0が飛ばされたか力尽きている）', '審査ログ'))
-
-    # ── 採取ずみで未審査の在庫（2026-08-17新設）──
-    #   ⚠ 線は Routine 自身の設定「5社/回」を借りる＝**新しい定数を作らない**。
-    #   ⚠ 在庫0でも門2審査は止まらない（待ち行列の大半は既存パックの再審査で、
-    #     採取ずみの機械値を要さない）。だから「止まっている」ではなく「今月」に置く。
-    fr = data.get('fetch_run') or {}
-    st = fr.get('stock_unreviewed')
-    if isinstance(st, int) and st < 5:
-        month.append(item('fetchstock', 'month',
-                          '採取ずみで未審査の在庫が %d社（Routineの1回分5社に満たない）' % st,
-                          '新規銘柄の初回審査に要る機械値が尽きかけている'
-                          '（既存パックの再審査は在庫が0でも進む）',
-                          'python hachimon_fetch.py（引数なしで待ち行列の先頭5社）', '採取の実行印'))
 
     # ── 機構文が消えた（irr の根拠そのもの）──
     #   ⚠**70 も同じ重さで見る**（2026-09-19に配線）。実測(shadow_irr_step)で
@@ -320,7 +226,6 @@ def build():
     # ── 中身と入力の鮮度（2026-08-17新設）──
     #   回転盤は**日付しか見ていない**ので「日付は動いたが中身/入力が死んでいる」は🟢に見える。
     #   ⚠ CIでは落とさない作業リストなので、ここに出さないと**CIログの中だけで完結する**
-    #     ——review_runs で塞いだ「一覧に出ない場所で完結していた」の同型を作らない。
     fr = data.get('freshness') or {}
     for r in (fr.get('rows') or []):
         for f in (r.get('flags') or []):
@@ -410,14 +315,14 @@ def build():
                           '解決済みなのに未完のまま／件数のずれ／重複／例外との食い違い',
                           'python3 night/audit_todo.py', 'todo点検'))
     month.append(item('dca', 'month', '今月の買付（DCA）',
-                      'Ⅵ買付順位の「今月の個別枠」に金額を入れると注文書が出る',
-                      'Ⅵ買付順位タブ → 📋今月の注文書', '月次'))
+                      '🛒買付順位の「今月の入金額」に金額を入れると注文書が出る',
+                      '🛒買付順位タブ → 📋今月の注文書', '月次'))
 
     # ── 待ち。**件数を減らすことは目的ではないが、誰がやるかで分けないと人が消化できない** ──
     #   2026-08-18(ユーザー「まちおおすぎない？消化しきれない」)——実測で
     #   総127→137件を2日で足しており、**足す速さが消す速さを上回っていた**。
     #   だが中身を数えると **83件のうち人がやるのは30件で、手を動かせるのは5件**だった。
-    #   残りは (a)原本読解＝**日次Routineが待ち行列から消化する** (b)採取器・検査器のバグ＝実装
+    #   残りは (a)原本読解＝**頼んだときにセッションで審査する**（日次Routineは2026-09-23に停止） (b)採取器・検査器のバグ＝実装
     #   (c)データ経路が無い＝**「終わる」ことがない立ち位置の記録**。
     #   → `owner` で割り、**人のものだけ名前を出す**。他は数だけ。**リストからは何も消していない**。
     for t in (((ops or {}).get('todos') or {}).get('items') or []):

@@ -78,9 +78,6 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 .efld input,.efld select{background:var(--field);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:6px 7px;font-size:13px;font-family:inherit;width:86px;}
 .efld.wdate input{width:120px;}
 .eprev{font-size:11.5px;color:var(--gold-bright);margin-top:8px;text-align:right;}
-.legend{display:flex;gap:16px;font-size:12px;color:var(--ink-soft);margin-top:8px;flex-wrap:wrap;}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle;}
-.tgt{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.7;}
 .row{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--hair);}
 .row:last-child{border-bottom:none;}
 /* v9.9.108: 行のグラデーション。**ここのCSSが抜けていた**——ccfIcon は v9.9.105 から
@@ -112,7 +109,6 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 .hswitch{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft);cursor:pointer;white-space:nowrap;user-select:none;}
 .hswitch input{width:16px;height:16px;accent-color:var(--gold);cursor:pointer;margin:0;}
 .vlabel{text-align:right;font-size:12.5px;white-space:nowrap;letter-spacing:.02em;}
-.vage{text-align:right;font-size:10.5px;color:var(--muted);white-space:nowrap;margin-top:2px;}
 .srow{display:grid;grid-template-columns:1fr auto 28px;gap:4px 10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--hair);}
 .srow:last-child{border-bottom:none;}
 .srow .sdel{cursor:pointer;color:var(--rust);text-align:center;font-size:13px;border:1px solid var(--line);border-radius:7px;padding:3px 0;}
@@ -120,20 +116,15 @@ strong,b{color:var(--gold-bright);font-weight:500;}
 .mini{font-size:11.5px;color:var(--muted);text-align:right;grid-column:1/3;}
 .note{font-size:12.5px;color:var(--ink-soft);background:rgba(201,166,74,.06);border:1px solid var(--gold-line);border-radius:10px;padding:12px 14px;line-height:1.85;margin:14px 0;}
 /* edit */
-.erow{display:grid;grid-template-columns:70px 1fr 62px 96px 30px;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--hair);}
-.erow input,.erow select{background:var(--field);border:1px solid var(--line);border-radius:7px;color:var(--ink);padding:7px 8px;font-size:13px;font-family:inherit;width:100%;}
-.erow input:focus,.erow select:focus{outline:none;border-color:var(--gold);}
-.erow .del{cursor:pointer;color:var(--rust);text-align:center;font-size:16px;border:1px solid var(--line);border-radius:7px;padding:5px 0;}
-.ehead{display:grid;grid-template-columns:70px 1fr 62px 96px 30px;gap:6px;font-size:10.5px;color:var(--muted);padding-bottom:4px;letter-spacing:.05em;}
 .hide{display:none;}
 .links{text-align:center;padding:8px 0 30px;font-size:13px;}
 .links a{color:var(--gold-bright);text-decoration:none;margin:0 10px;}
 footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;line-height:1.9;}
-@media(max-width:520px){.total{font-size:32px;}.hero h1{font-size:21px;}.erow,.ehead{grid-template-columns:58px 1fr 52px 82px 28px;gap:4px;}.erow input,.erow select{padding:6px 5px;font-size:12px;}}
+@media(max-width:520px){.total{font-size:32px;}.hero h1{font-size:21px;}}
 </style>
 <!-- v9.9.189 投資アプリ風の皮（門と共有・表示だけ）。この1行を消せば元に戻る -->
-<link rel="stylesheet" href="skin.css?v=20260923-2">
-<!-- v9.9.131: 門と同じ state.js を読む（Ⅶ資産は index.html の iframe だが単独でも開けるため） -->
+<link rel="stylesheet" href="skin.css?v=20260923-7">
+<!-- v9.9.131: 門と同じ state.js を読む（🏦保有は index.html の iframe だが単独でも開けるため） -->
 <script src="state.js?v=20260923-3"></script><script src="icon.js"></script>
 </head>
 <body>
@@ -160,7 +151,7 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
   <label class="btn ghost" for="pfBkFile" style="cursor:pointer" title="バックアップJSONから全データを復元">⬆ 復元</label>
   <input id="pfBkFile" type="file" accept=".json,application/json" style="display:none" onchange="pfRestoreAll(this)">
   <!-- v9.9.131: 人の決定の正本を repo へ。バックアップ(端末に落とすだけ)とは別物なので隣に並べる -->
-  <button class="btn ghost" id="stBtn" onclick="ccfState.export(this,true)" title="① 決定だけ（株数・売却記録・目標ウェイト・今月の個別枠・点灯日）を state.json として書き出す。数KBなのでそのままClaudeに貼れる。検証履歴は含まない">📤 ① 決定だけ</button>
+  <button class="btn ghost" id="stBtn" onclick="ccfState.export(this,true)" title="① 決定だけ（株数・売却記録・目標ウェイト・今月の入金額・点灯日）を state.json として書き出す。数KBなのでそのままClaudeに貼れる。検証履歴は含まない">📤 ① 決定だけ</button>
   <button class="btn ghost" id="stBtnAll" onclick="ccfState.export(this)" title="検証履歴(g7log:)も含めた完全版。数十KBあり貼り付けでは途中で切れるので、落ちたファイルを repo 直下の state.json に置いてコミットする用">📤 履歴も</button>
   <button class="btn ghost" id="stDoneBtn" onclick="ccfState.done(this)" title="④ repo に入ったことを門に伝える（未書き出しの帯が消える）。押し忘れても壊れない——帯が出続けるだけ">✓ ④ 入れた</button>
  </div>
@@ -188,15 +179,14 @@ footer{text-align:center;color:#5d6a80;font-size:11.5px;padding:10px 18px 40px;l
  <!-- 2026-07-29 ユーザー指示: 網/城の内訳ビューを撤去し「保有一覧」の1枚に集約した。
       **網/城のウェイト計算そのものは残している**——sleeve は保有データ(各行)の属性で、
       render() が pf:weights を書き出す。※2026-07-30(v9.9.53)に門から網(ETF)を撤去したため
-      **現在この値の読み手は無い**——門の今月プランは個別枠を直接入力する方式になった。
-      網/城の60/40リバランスをDCA側で判断するときの材料として書き出しだけ残している。
+      網/城のリバランスを判断するときの材料として書き出している。
       表示を消しても計算を消してはいけない（消すと門が netNow=60/cityNow=40 の既定値で
       「常に目標に充足」と判定し、リバランスが黙って死ぬ）。 -->
 
  <div class="card">
   <h2>保有一覧</h2>
-  <p class="sub">保有を出す（個別銘柄＋<b>網(ETF)</b>・v9.9.169）。<b>出口判定が付くのは個別銘柄だけ</b>——門Ωは指数を裁かないので網の行に S1/S2/S3 は出ない。右の<b>□スイッチ</b>がチェック＝保有中。外すと売却として記録し「売却済み」へ移る。門の出口判定（<b style="color:var(--v1)">S1売却検討</b>／<b style="color:var(--v2)">S2縮小</b>／<b style="color:var(--v3)">S3記録のみ</b>／<b style="color:var(--v4)">ホールド</b>）は各行の下に色つきで出る——判定は門（Ⅳ台帳）を開くと更新される。</p>
-  <div style="margin:0 0 10px"><button class="btn" id="rescoreBtn" onclick="pfRescorePrompt(this)" style="border-color:rgba(84,184,138,.5);color:#8fc9a4;background:linear-gradient(180deg,rgba(84,184,138,.20),rgba(84,184,138,.06))" title="保有の個別銘柄を、今の門が必要とする全項目で採点し直す依頼文をコピー。Claudeに貼ると完成パックJSONが返る→Ⅲ採点機に取込">📋 個別の再採点依頼文をコピー</button> <span class="mini" style="text-align:left;display:inline">最新データで門Ω＋門Xにかけ直す。返ったJSONを門「Ⅲ採点機」の貼付欄へ。</span></div>
+  <p class="sub">保有を出す（個別銘柄＋<b>網(ETF)</b>・v9.9.169）。<b>出口判定が付くのは個別銘柄だけ</b>——門Ωは指数を裁かないので網の行に S1/S2/S3 は出ない。右の<b>□スイッチ</b>がチェック＝保有中。外すと売却として記録し「売却済み」へ移る。門の出口判定（<b style="color:var(--v1)">S1売却検討</b>／<b style="color:var(--v2)">S2縮小</b>／<b style="color:var(--v3)">S3記録のみ</b>／<b style="color:var(--v4)">ホールド</b>）は各行の下に色つきで出る——判定は門（📚台帳）を開くと更新される。</p>
+  <div style="margin:0 0 10px"><button class="btn" id="rescoreBtn" onclick="pfRescorePrompt(this)" style="border-color:rgba(84,184,138,.5);color:#8fc9a4;background:linear-gradient(180deg,rgba(84,184,138,.20),rgba(84,184,138,.06))" title="保有の個別銘柄を、今の門が必要とする全項目で採点し直す依頼文をコピー。Claudeに貼ると完成パックJSONが返る→✎採点機に取込">📋 個別の再採点依頼文をコピー</button> <span class="mini" style="text-align:left;display:inline">最新データで門Ω＋門Xにかけ直す。返ったJSONを門「✎採点機」の貼付欄へ。</span></div>
   <div id="holdList"></div>
  </div>
 
@@ -236,7 +226,7 @@ const DEFAULT={ asof:"2026-07-24", fx:150, positions:[
   {t:"ASML", nm:"ASMLホールディングス",          sleeve:"castle", kind:"個別",                 ccy:"USD", v:295295},
   {t:"RMD",  nm:"レスメド（ResMed）",            sleeve:"castle", kind:"個別",                 ccy:"USD", v:94283}
 ]};
-// 目標60/40の判断はDCA側（門の外）。門は個別銘柄だけを裁く＝v9.9.53で網を撤去した。数値の記録として残す。
+// 網/城の目標比の判断はDCA側（門の外・正本は portfolio.json の target）。門は個別銘柄だけを裁く＝v9.9.53で網を撤去した。数値の記録として残す。
 const TARGET={net:60, castle:40};   // eslint-disable-line no-unused-vars
 let P = load();
 
@@ -246,7 +236,7 @@ function load(){
    /* ★網(ETF)の行は**消さない**（v9.9.169・2026-08-23 ユーザー指示「保有に入れてほしい」）。
       2026-08-03 の指示「ページを個別銘柄だけに」で `sleeve:'net'` を削除していたが、
       その結果 **ETFはこの端末の台帳(pf:portfolio)に一行も存在せず**、
-      Ⅶ資産・📊盤の総資産/含み損益・📈成績が**城(個別)だけ**を出していた
+      🏦保有・📊盤の総資産/含み損益・📈成績が**城(個別)だけ**を出していた
       （実測 2026-08-23: 総資産 ¥1.15M と表示・実勢は ¥2.31M）。
       ユーザーの新しい指示が 2026-08-03 の指示を上書きする。**移行の削除は撤去**した。
       ⚠ただし「個別銘柄だけを裁く」という**門の思想は不変**——網の行に
@@ -328,12 +318,12 @@ function render(){
  // 出口判定の表示: [文言, 色, 丸]。色は門(index.html)の出口判定の配色と揃える
  const VCFG={s1:['売却検討 (S1)','var(--v1)','●'],s2:['買い増し停止・縮小 (S2)','var(--v2)','●'],
              s3:['記録のみ (S3)','var(--v3)','●'],hold:['ホールド','var(--v4)','●'],
-             pending:['採点待ち（門Ⅲで審査）','var(--muted)','○']};
- // 判定の鮮度: 門Ⅳ台帳を開いた時のキャッシュ＝いつのものかを添える。90日超(四半期またぎ)は⚠(色は統一のまま)。
+             pending:['採点待ち（門の✎採点機で審査）','var(--muted)','○']};
+ // 判定の鮮度: 門📚台帳を開いた時のキャッシュ＝いつのものかを添える。90日超(四半期またぎ)は⚠(色は統一のまま)。
  const ageTxt=v=>{ if(!v)return '';
-  if(!v.ts)return ' · 判定日不明（門Ⅳで更新）';
+  if(!v.ts)return ' · 判定日不明（門の📚台帳で更新）';
   const d=Math.floor((Date.now()-v.ts)/864e5);
-  return d>90?` · ⚠判定${d}日前（門Ⅳで更新を）`:` · 判定${d===0?'今日':d+'日前'}`; };
+  return d>90?` · ⚠判定${d}日前（門の📚台帳で更新を）`:` · 判定${d===0?'今日':d+'日前'}`; };
  // 並び: 個別(城)→網(ETF)→現金。枠内は評価額順（金額は出さないが順序の錨には使う）
  const ord={castle:0,net:1,cash:2};
  const sorted=shown.slice().sort((a,b)=>(ord[a.sleeve]??0)-(ord[b.sleeve]??0)||(b._v||0)-(a._v||0));
@@ -370,7 +360,7 @@ function render(){
    : '<div class="mini" style="text-align:left">保有が未登録。「✎ 編集」から入れてください。</div>';
  renderSold();
  document.getElementById('foot').innerHTML=
-  `CCF Ω — 保有はこの端末に自動保存（編集で反映）。評価額＝株数×現在株価×ドル円（💴ボタンで表示/非表示・現在株価は✎編集で更新）。売り買いの判定は門＝売りはS1/S2/S3・買いはⅥ買付順位。<br>投資判断は自己責任で。`;
+  `CCF Ω — 保有はこの端末に自動保存（編集で反映）。評価額＝株数×現在株価×ドル円（💴ボタンで表示/非表示・現在株価は✎編集で更新）。売り買いの判定は門＝売りはS1/S2/S3・買いは🛒買付順位。<br>投資判断は自己責任で。`;
 }
 
 /* v9.9.86: 金額表示の切替。localStorage pf:showMoney（'0'=非表示）。既定は表示 */
@@ -554,7 +544,7 @@ function importFromGate(){
   P.positions.push({t:tkr,nm,sleeve:'castle',kind:'個別（門より）',ccy:'USD',bd:'',sh:0,bpx:0,npx:0,v:0});
   added++;
  }
- if(found===0){ alert('門の台帳で保有登録された個別が見つかりませんでした。\n同じドメインで門を開き、Ⅳ台帳で□にチェックすると取り込めます。'); return; }
+ if(found===0){ alert('門の台帳で保有登録された個別が見つかりませんでした。\n同じドメインで門を開き、📚台帳で□にチェックすると取り込めます。'); return; }
  persist(); render();
  if(!editing)openEdit();
  alert(`門の保有から城 ${added}件を取り込みました（合計${found}件検出）。株数・現在株価を編集で入れてください。`);
@@ -584,7 +574,7 @@ function registerToGate(){
  });
  try{localStorage.setItem('g7hold:set', JSON.stringify(holdSet));}catch(e){}
  alert(`門の台帳に登録しました。\n新規の台帳 ${added}件／保有フラグ ${flagged}件`+(kept?`／既存の採点は保持 ${kept}件`:'')+
-       `\n\n門の「Ⅳ 台帳」とこの資産タブで確認できます。出口判定(S1/S2/S3)を出すには、Ⅲ採点機で各銘柄を審査してください。`);
+       `\n\n門の「📚台帳」とこの資産タブで確認できます。出口判定(S1/S2/S3)を出すには、✎採点機で各銘柄を審査してください。`);
 }
 
 /* ---------- 個別保有の「再採点」依頼文（今の門が必要とする全項目を依頼） ---------- */
@@ -609,7 +599,7 @@ function pfFindRec(p){
  }
  return exact||byName||fuzzy||null;
 }
-const PROTO_RESCORE=`【門2審査プロトコル v1｜厳守】各銘柄を審査し、門のⅢ採点機フォーマットの完成パックJSON（複数なら配列）で返す。
+const PROTO_RESCORE=`【門2審査プロトコル v1｜厳守】各銘柄を審査し、門の✎採点機フォーマットの完成パックJSON（複数なら配列）で返す。
 
 1. 原本を読む
    各銘柄の {T}_gate_input.json（機械値の下書き・あれば out/ か MyDrive/hachimon_out/）と {T}_hits.txt（限/集/誠/蝕/堀/循の6砲台抜粋）。無ければ最新の10-K/10-Q/短信(SEC EDGAR / EDINET)をWebで読む。
@@ -621,7 +611,7 @@ const PROTO_RESCORE=`【門2審査プロトコル v1｜厳守】各銘柄を審�
    〈過去門 p1-4:0-100〉p1 ROIC安定=5年σ｜p2 不況耐性=後退期の営利DD/nde｜p3 財務頑健=ネットデット/EBITDA｜p4 会計健全=accr<0かつ無限定監査
    〈未来門 f1-5:0-100・固定基準〉f1 複利=ROIIC³(≥WACC+15→90/+8→80/+3→70/未満→55)｜f2 滑走路=TAM浸透p/g｜f3 堀の軌道=R&D/売上とシェアの2符号｜f4 二次曲線=隣接事業｜f5 耐陳腐化=disrupt連動
 4. 市場データ(per/perF/px/evebit/beta/shy/gr)は最新実測。grはperFから機械算出＝perF最優先。
-5. スキーマ検査: null項目を一覧化し理由を明記。Ⅲ採点機フォーマット(nm/roic/…/f1-5/_meta)に完全準拠したJSONのみ返す。
+5. スキーマ検査: null項目を一覧化し理由を明記。✎採点機フォーマット(nm/roic/…/f1-5/_meta)に完全準拠したJSONのみ返す。
 6. _meta に auditDate(本日 YYYY-MM-DD)・model・genkyo_konkyo(原本根拠)。再採点は前回evalScoreとの差分と理由も記す。
 
 【再採点で特に確認】
@@ -640,7 +630,7 @@ function pfRescorePrompt(btn){
   return `- ${p.t||''}${p.t&&nm&&nm!==p.t?'（'+nm+'）':nm&&!p.t?'（'+nm+'）':''}: ${cur.length?cur.join(' / '):'未採点＝新規審査'}`;
  }).join('\n');
  const head=`再採点依頼（保有の個別銘柄・城）: ${use.map(p=>p.t||p.nm).join(', ')}\n\n`+
-  `以下の保有個別を、現時点の最新データで門Ω（＋門X）にかけ直し、門のⅢ採点機フォーマットの完成パックJSON（${use.length>1?'配列で一括':'1件'}）で返してほしい。数字は原本(SEC/EDINET)で検算し、憶測は禁止。\n\n`+
+  `以下の保有個別を、現時点の最新データで門Ω（＋門X）にかけ直し、門の✎採点機フォーマットの完成パックJSON（${use.length>1?'配列で一括':'1件'}）で返してほしい。数字は原本(SEC/EDINET)で検算し、憶測は禁止。\n\n`+
   `【対象と現在の台帳値（＝前回審査。これを最新に更新する）】\n${lines}\n`+
   (over>0?`（※保有${castle.length}件中の上位${cap}件。1バッチ8社上限。残り${over}件は再度コピーで）\n`:'')+`\n`;
  pfCopy(head+PROTO_RESCORE, btn);
@@ -663,7 +653,7 @@ async function pfExportHoldings(btn){
  }catch(e){}
  const d=new Date(), ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
  const payload={holdings,watch,elite,
-  note:`${ds} Ⅶ保有（城）から書き出し。watch/eliteは${carried}。リポジトリ直下の holdings.json と差し替える（run_gate0_local.py / kessan_check.py が読む）。ETF(網)は個別審査の対象外ゆえ含めない。`};
+  note:`${ds} 🏦保有（城）から書き出し。watch/eliteは${carried}。リポジトリ直下の holdings.json と差し替える（run_gate0_local.py / kessan_check.py が読む）。ETF(網)は個別審査の対象外ゆえ含めない。`};
  try{
   const blob=new Blob([JSON.stringify(payload,null,1)],{type:'application/json'});
   const url=URL.createObjectURL(blob); const a=document.createElement('a');
@@ -744,7 +734,7 @@ function pfBkStat(){
   if(window.ccfState){ ccfState.load().then(boot).catch(boot); } else { boot(); }
 })();
 
-/* ---------- 親フレーム(門Ⅶ資産)へ自分の高さを通知＝iframeを中身にフィットさせ内部スクロールバーを消す（1枚のページ化） ---------- */
+/* ---------- 親フレーム(門🏦保有)へ自分の高さを通知＝iframeを中身にフィットさせ内部スクロールバーを消す（1枚のページ化） ---------- */
 function pfReportHeight(){
  try{ if(window.parent&&window.parent!==window){
    const h=Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, document.body.offsetHeight);
@@ -757,7 +747,7 @@ window.addEventListener('resize',pfReportHeight);
 try{ new ResizeObserver(pfReportHeight).observe(document.body); }catch(e){}
 setTimeout(pfReportHeight,300); setTimeout(pfReportHeight,900);
 
-/* ---------- Ⅵ買付順位から「買った株数」を受け取る（v9.9.138・ユーザー「買付順位から保有を入れれるようにしたい」）
+/* ---------- 🛒買付順位から「買った株数」を受け取る（v9.9.138・ユーザー「買付順位から保有を入れれるようにしたい」）
    **書き込みの実装はこのページにしか置かない**（v9.9.65: 二重に持たない）。
    親が localStorage を直接書くと、このページが抱えている P は古いままなので、
    次の persist() が黙って巻き戻す——**v9.9.131 で実際に踏んだ順序の事故**と同型。
@@ -776,7 +766,7 @@ function pfAddShares(d){
      黙って壊さず、Ⅶで株数を入れてからにしてもらう。 */
   if(old<=0 && (+p.v||0)>0)
    return {ok:false, msg:t+' は金額(円)で記録されています（¥'+Math.round(+p.v).toLocaleString('ja-JP')
-     +'）。株数に切り替えると既存の金額が評価から外れるので、先にⅦ保有で株数を入れてください。'};
+     +'）。株数に切り替えると既存の金額が評価から外れるので、先に🏦保有で株数を入れてください。'};
   p.sh = old + sh;
   /* 買付単価は**加重平均**（含み損益が静かに狂わないように）。旧単価が無ければ今回の値 */
   const ob=+p.bpx||0;

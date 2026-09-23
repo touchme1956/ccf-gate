@@ -55,7 +55,9 @@ def main():
     idx = [m.start() for m in re.finditer(r'<div id="pg\d+"[^>]*class="pg\b', body)]
     if not idx:
         fails.append("タブ（<div id=\"pgN\" class=\"pg\">）が見つからない")
-    idx.append(len(body))
+    # 最後のタブは本文の <script> の手前で切る（JS の文字列に入った <div> の断片を静的HTMLとして数えない）
+    tail = body.find("<script", idx[-1]) if idx else -1
+    idx.append(tail if tail > 0 else len(body))
     for k in range(len(idx) - 1):
         seg = body[idx[k]:idx[k + 1]]
         nm = re.search(r'id="(pg\d+)"', seg).group(1)
@@ -95,7 +97,8 @@ def main():
         if not os.path.exists(page):
             continue
         ps = open(page, encoding="utf-8").read()
-        srcs = re.findall(r'<script[^>]*\bsrc="([^"]+)"', ps)
+        # ?v= はキャッシュ破り（GitHub Pages の max-age=600 対策）＝ファイル名ではないので外して見る
+        srcs = [x.split("?")[0] for x in re.findall(r'<script[^>]*\bsrc="([^"]+)"', ps)]
         pool = "".join(re.findall(r"<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)</script>", ps))
         for src in srcs:
             if not os.path.exists(src):
