@@ -1015,6 +1015,10 @@ def yahoo_close(sym, t0):
             cl = ((res.get("indicators", {}).get("quote") or [{}])[0].get("close")) or []
             out = {"pts": [[datetime.date.fromtimestamp(t).isoformat(), v]
                            for t, v in zip(ts, cl) if v is not None]}
+    # ★px_guard（2026-09-23）: 台帳より遅く始まる応答はキャッシュに焼き付けない（retro_delisted.yahoo と同じ）
+    import px_guard as PXG
+    if PXG.vet(sym, out["pts"], "retro_delisted_secpx.yahoo_close", req_start=t0) is None:
+        return {"pts": [], "err": "px_guard_refused(台帳より短い)"}
     json.dump(out, open(p, "w"))
     time.sleep(0.25)
     return out

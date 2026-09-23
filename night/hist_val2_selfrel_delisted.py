@@ -12,6 +12,8 @@ v1 も night/hist_val2_outcome.py も、母集団が **「2013年に上場して
 引ける社」** だった。左尾を作る種類（買収・破産・登録抹消）はそこから丸ごと消えている。
 実測（retro_delisted.py + retro_delisted_secpx.py）——質実証プールの真の母集団は **563社**で、
 ティッカー経由で見えていたのは 374社だけ。**189社が最初から居ない。**
+（2026-09-23 退場日の是正〔out/retro_exit_fix_2013.json〕の後は、上場株を持たない提出体を除いた質実証 548社＝
+ survivor 370 ＋ 復元した退場 96 ＋ 打ち切り 82。）
 
   ⇒ 「自己相対は効かない」が、**左尾が切れた母集団の上でしか確かめられていない**。
      この器は退場社を SEC原本から戻した母集団で数え直し、戻せなかった分は**幅**で明示する。
@@ -245,7 +247,8 @@ def main():
           f"中央値 {aligned['median']:+.1%} / 等ウェイト {aligned['ew_cagr']:+.1%} / "
           f"元本割れ {aligned['p_loss']:.1%}")
 
-    out = {"generated": "2026-08-10", "tool": "night/hist_val2_selfrel_delisted.py",
+    out = {"generated": "2026-08-10", "regenerated": __import__("datetime").date.today().isoformat(),
+           "tool": "night/hist_val2_selfrel_delisted.py",
            "vintage": VINTAGE, "prereg": pre, "basis": dl["basis"],
            "sibling_tool": "night/hist_val2_delisted.py は同じ母集団に dd5 を当てる別器（並走）",
            "universe": {"n_quality": len(Q), "n_survivor": len(surv), "n_restored": len(rest),
@@ -310,7 +313,9 @@ def main():
         "n_cells": len(out["cells"]),
         "n_pass_c1_and_c2_and_c4_any_reading": n_pass,
         "measured_hit_rate_median": round(statistics.median(hits), 4),
-        "note": ("『必要な追加』は、指標が未測定の446社の中から**全部が元本割れの社ばかりを**"
+        # ★2026-09-23: 未測定の社数を数字から（旧版は 549−103=446 の固定文。退場日の是正後は N=548）
+        "note": (f"『必要な追加』は、指標が未測定の{out['universe']['n_quality'] - min(v['n'] for v in out['indicator_coverage'].values())}社"
+                 "の中から**全部が元本割れの社ばかりを**"
                  "選び取れたと仮定したときに、基準1へ届くのに要る社数。"
                  "測れた社での的中率と並べて読むこと——的中率100%を仮定して初めて届くなら、"
                  "それは仮説ではなく願望である。")}

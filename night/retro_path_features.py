@@ -153,6 +153,26 @@ def main():
             os.makedirs(os.path.dirname(CKPT), exist_ok=True)
             json.dump({"series": series, "failed": failed}, open(CKPT, "w"))
 
+    # ★px_guard（2026-09-23・todo yahoo_history_vanished）: 在庫を丸ごと書き直す前に、
+    #   **前の在庫にある系列を、今回の失敗・短い系列で消さない**（Yahoo は BBBY/EA/EQR/HLX/ISSC/LEG/
+    #   QVCAQ/SALM の 2026-07 より前の足を返さなくなった。窓 2013-07〜2018-07 は丸ごと空になる）
+    if os.path.exists(OUT_MONTHLY):
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import px_guard as PXG
+        try:
+            prev = json.load(open(OUT_MONTHLY))
+        except Exception:
+            prev = {}
+        for t, old in prev.items():
+            if t not in seen:
+                continue
+            chosen = PXG.keep_longer(t, old, series.get(t) or [], "retro_path_features")
+            if chosen is old:
+                series[t] = old
+                if t in failed_set:
+                    failed = [x for x in failed if x != t]
+                    failed_set.discard(t)
+
     # (1) 月次在庫（素のJSON・ticker→系列）
     os.makedirs(os.path.join(BASE, "out"), exist_ok=True)
     json.dump(series, open(OUT_MONTHLY, "w"))

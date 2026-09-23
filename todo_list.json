@@ -1662,7 +1662,7 @@
    "due": null,
    "owner": "採取器",
    "title": "Yahoo が8社の過去の株価を返さなくなった——取り直すと在庫の履歴が黙って消える（BBBY・EA・EQR・HLX・ISSC・LEG・QVCAQ・SALM）",
-   "note": "2026-09-23 極端な倍率の追試で発見。この8社は Yahoo が 2026-07 以降の足しか返さず、過去の範囲を頼むと HTTP 400。**retro_fetch_returns・hist_valuation など Yahoo を取り直す道具を回すと、この8社の過去の株価が在庫から黙って消える**（取得失敗を空で上書きしないかを各道具で確かめること＝ルール7(c)）。やること: (1) 取り直す道具に『既存の履歴より短い応答なら上書きしない』検問を入れる (2) 8社の履歴を別の出所（SEC の提出書類の株価欄は無い→Stooq 等の二次ソースは出所を明記）で補えるか調べる。追試の判定（FAIL）は、最悪のケース（QVCAQ 2016 を裾に置く）でも変わらないことを確認済み。"
+   "note": "2026-09-23 極端な倍率の追試で発見。この8社は Yahoo が 2026-07 以降の足しか返さず、過去の範囲を頼むと HTTP 400。**retro_fetch_returns・hist_valuation など Yahoo を取り直す道具を回すと、この8社の過去の株価が在庫から黙って消える**（取得失敗を空で上書きしないかを各道具で確かめること＝ルール7(c)）。やること: (1) 取り直す道具に『既存の履歴より短い応答なら上書きしない』検問を入れる (2) 8社の履歴を別の出所（SEC の提出書類の株価欄は無い→Stooq 等の二次ソースは出所を明記）で補えるか調べる。追試の判定（FAIL）は、最悪のケース（QVCAQ 2016 を裾に置く）でも変わらないことを確認済み。 【2026-09-23 実施】night/px_guard.py＋out/px_span_ledger.json（1,050記号の始まり）を新設し、Yahoo が200で短い系列を返す8社（BBBY/EA/EQR/HLX/ISSC/LEG/QVCAQ/SALM）を hist/retro/etf/fetch_returns/backtest 系の全経路で拒否（前の系列を残す・測れないは None）。retro_per_asof の『最初の足を asof 年7月の株価に使う』潜在誤りも塞いだ。残り(2): 8社の全履歴を別の出所で補う——この環境では AV 拒否・Stooq 遮断で不可。"
   },
   {
    "id": "irr_network_incentive",
@@ -1703,11 +1703,11 @@
   {
    "id": "retro_citations_after_exit_fix",
    "kind": "宿題",
-   "done": false,
+   "done": true,
    "due": null,
    "owner": "検証",
    "title": "退場日の是正で古くなった歴史検証の出力と引用を作り直す（hist_*.json・道具の脚注）",
-   "note": "2026-09-23 retro_exit_date_form15 の是正の続き。(1) out/hist_*.json は作り直していない——hist_val2_delisted / hist_val2_selfrel_delisted / hist_val2_regime / hist_wd_dst_path を回し直す（作業用の写しで回した値は out/retro_exit_fix_2013.json にある）。⚠ **先に yahoo_history_vanished を片付けること**: 取り直すと QVCAQ・EQR・SALM・BBBY の過去の株価が黙って消える（dd5 の価格キャッシュも 2026-08-10 と少し違う）。(2) 古い数字を引いている道具の文面: night/hist_val2_regime.py:956（17.8% vs 25.4%）・hist_wd_dst_uni.py:1336・hist_wd_dst_path.py（762社）・『2.00〜25.68%』の脚注（hist_wd_asym.py・audit_neglect.py・beat_spy_rule.py・opmtrend_*.py 6本）。docs/CLAUDE_ARCHIVE.md の該当行（1841・1966-1969 ほか）は当時の記録なので書き換えず、必要なら注を足すだけ。out/retro_mcap_prereg.json は事前登録なので触らない。"
+   "note": "2026-09-23 retro_exit_date_form15 の是正の続き。(1) out/hist_*.json は作り直していない——hist_val2_delisted / hist_val2_selfrel_delisted / hist_val2_regime / hist_wd_dst_path を回し直す（作業用の写しで回した値は out/retro_exit_fix_2013.json にある）。⚠ **先に yahoo_history_vanished を片付けること**: 取り直すと QVCAQ・EQR・SALM・BBBY の過去の株価が黙って消える（dd5 の価格キャッシュも 2026-08-10 と少し違う）。(2) 古い数字を引いている道具の文面: night/hist_val2_regime.py:956（17.8% vs 25.4%）・hist_wd_dst_uni.py:1336・hist_wd_dst_path.py（762社）・『2.00〜25.68%』の脚注（hist_wd_asym.py・audit_neglect.py・beat_spy_rule.py・opmtrend_*.py 6本）。docs/CLAUDE_ARCHIVE.md の該当行（1841・1966-1969 ほか）は当時の記録なので書き換えず、必要なら注を足すだけ。out/retro_mcap_prereg.json は事前登録なので触らない。 【2026-09-23 実施】hist_val2_delisted/selfrel/regime(survival節)/hist_wd_dst_path・uni・asym/opmtrend を再生成し引用を数字から組む形へ。★反転3件: 生存バイアスの向き（退場34.4%＞生存24.9%＝生存者だけの母集団は左尾を隠す）／dst_uni は退場社を戻すと上がる(5.73→6.52%)／左尾の幅の下限 2.00→4.20%。不変: dd5 遮断器は両端不合格・自己相対0セル。EQR/QVCAQ/SALM/BBBY の dd5 は na（挟み込みで判定不変）。"
   },
   {
    "id": "irr_tools_40f_gap",

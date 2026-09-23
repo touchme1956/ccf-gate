@@ -22,6 +22,8 @@
 # 実行: python3 night/etf_returns.py [--json]
 # 出力: out/etf_returns.json
 import json, os, sys, time, datetime, urllib.request
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import px_guard as PXG   # noqa: E402  株価履歴の検問（短い応答を採らない・2026-09-23）
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out", "etf_returns.json")
@@ -66,7 +68,7 @@ def fetch(sym):
                     continue
                 d = datetime.datetime.utcfromtimestamp(t)
                 out[f"{d.year:04d}-{d.month:02d}"] = float(v)
-            return out or None
+            return PXG.vet(sym, out, "etf_returns.fetch", req_start=t0) or None  # ★px_guard: 台帳より遅く始まる応答は採らない（2026-09-23）
         except urllib.error.HTTPError as e:
             if e.code in (404, 400):
                 return None

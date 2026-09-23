@@ -483,6 +483,44 @@ def sec_sector(invs, n_perm, seed):
 # ══════════════════════════════════════════════════════════════════════════════
 # 5 survival — 退場社込みの母集団（時期・挟み込み・基準への効き）
 # ══════════════════════════════════════════════════════════════════════════════
+def _left_tail_read(s, r):
+    """生存者と復元した退場社の元本割れを比べた読み（向きは数字で決める）。"""
+    ps, pr = s.get("p_loss"), r.get("p_loss")
+    if ps is None or pr is None:
+        return "比べられない（どちらかが空）"
+    head = (f"復元した退場{r.get('n')}社の元本割れ {pr:.1%} / 生存者{s.get('n')}社 {ps:.1%}。")
+    if pr > ps:
+        return head + ("退場社のほうが元本割れが**多い**＝生存者だけの母集団は左尾を**隠している**"
+                       "（生存バイアスは素朴な向きに効いている）")
+    if pr < ps:
+        return head + ("退場社のほうが元本割れが**少ない**＝生存バイアスは"
+                       "『左尾を隠している』という素朴な向きには効いていない")
+    return head + "同じ＝向きは決まらない"
+
+
+def survival_ledger_entry(sv):
+    """反証の帳簿『退場社を戻しても判定は変わらない』を**数字から**組む（2026-09-23）。
+
+    旧版は『1.96（下端）/ 1.31（上端）・退場45社の元本割れ 17.8% ＜ 生存者 25.4%』を固定文で持ち、
+    退場日の是正（out/retro_exit_fix_2013.json）の後も古い数字を引用し続けた。
+    """
+    b = sv["bounding_price_only"]
+    lo = b["na(72社)を全部通過させる(下端)"]
+    hi = b["na(72社)を全部止める(上端)"]
+    lt = sv["left_tail_survivor_vs_exit"]
+    ok_lo, ok_hi = (lo.get("ratio") or 0) >= 2.0, (hi.get("ratio") or 0) >= 2.0
+    verdict = ("どちらも不合格" if not (ok_lo or ok_hi) else
+               "どちらも基準1（2.0倍）に届く" if (ok_lo and ok_hi) else "片側だけ 2.0倍 に届く")
+    return {
+        "fact": {k: {"ratio": v["ratio"], "stop_numer": v["stop_numer"],
+                     "stop_rate": v["stop_rate"], "n_na": v.get("n_na")}
+                 for k, v in b.items()},
+        "read": (f"挟み込み {lo.get('ratio')}（下端・na {lo.get('n_na')}社は全部通過）/ "
+                 f"{hi.get('ratio')}（上端・na は全部止める）で{verdict}。"
+                 f"{lt['read']}"),
+    }
+
+
 def sec_survival(invs, n_perm, seed):
     p = os.path.join(OUT, "retro_delisted_secpx_2013.json")
     if not os.path.exists(p):
@@ -542,7 +580,7 @@ def sec_survival(invs, n_perm, seed):
                        "dd": dd, "survivor": r.get("status") == "survivor"})
 
     def bound(na_stopped, thr=THR):
-        """dd5 が作れない社(na)を**両極端**に振る。na は 45社の退場だけでなく、
+        """dd5 が作れない社(na)を**両極端**に振る。na は 退場社（2026-08-10 は45社・是正後は96社）だけでなく、
         survivor 側の欠測も含む——片方だけ振ると『測れない』の扱いが群で割れる。"""
         st = [x for x in pool_d if x["dd"] is not None and x["dd"] <= thr]
         pa = [x for x in pool_d if x["dd"] is not None and x["dd"] > thr]
@@ -613,8 +651,9 @@ def sec_survival(invs, n_perm, seed):
         "base_readings_price_only": readings,
         "left_tail_survivor_vs_exit": {
             "survivor": grp(sv), "restored_exit": grp(rv),
-            "read": "退場社のほうが元本割れが**少ない**なら、生存バイアスは"
-                    "『左尾を隠している』という素朴な向きには効いていない"},
+            # ★2026-09-23: 読みを**数字から組む**（旧版は『退場社のほうが少ない』を前提にした固定文で、
+            #   退場日の是正〔retro_exit_fix_2013〕で向きが反転しても古い読みが残った）
+            "read": _left_tail_read(grp(sv), grp(rv))},
         "basis": D.get("basis"),
         "note": "この節は price-only（配当なし）。**adjclose の tr_cagr と割らないこと**",
     }
@@ -855,9 +894,34 @@ def main():
     ap.add_argument("--perm", type=int, default=2000)
     ap.add_argument("--seed", type=int, default=20260810)
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--only-survival", action="store_true",
+                    help="既存の出力を読み、5 survival 節と帳簿のその1項だけを作り直す"
+                         "（退場の台帳 retro_delisted_*_2013.json を直したとき。他の節は退場と無関係で、"
+                         "全部を回すと価格キャッシュの漂流まで混ざる）")
     a = ap.parse_args()
 
     invs = load_all()
+    if a.only_survival:
+        res = json.load(open(a.json, encoding="utf-8"))
+        res["survival"] = sec_survival(invs, a.perm, a.seed)
+        res["attack_ledger"]["survived"]["退場社を戻しても判定は変わらない"] = \
+            survival_ledger_entry(res["survival"])
+        res["survival_regenerated"] = {
+            "at": __import__("datetime").date.today().isoformat(),
+            "why": "退場日の是正（out/retro_exit_fix_2013.json・todo retro_citations_after_exit_fix）の後に "
+                   "survival 節だけを作り直した。他の節は 2026-08-10 のまま",
+            "px_cache": "dd5 の月足は 2026-09-23 の採取（2026-08-10 の採取とは Yahoo の漂流ぶん違う）。"
+                        "EQR・QVCAQ・SALM・BBBY は Yahoo が 2026-07 より前の足を返さなくなったので "
+                        "px_guard が採らず dd5 は na（挟み込みの両端に振られる）"}
+        json.dump(res, open(a.json, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        sv = res["survival"]; b = sv["bounding_price_only"]
+        print(f"→ {a.json}（survival 節だけ）")
+        print(f"[5] 退場: 復元{sv['universe']['restored_exits']} / 挟み込み(-0.30) "
+              f"下端{b['na(72社)を全部通過させる(下端)']['ratio']} "
+              f"上端{b['na(72社)を全部止める(上端)']['ratio']} / 兄弟器と一致="
+              f"{sv['sibling_agreement'].get('agree')}")
+        print("   ", sv["left_tail_survivor_vs_exit"]["read"])
+        return
     res = {"generated": "2026-08-10", "tool": "night/hist_val2_regime.py",
            "role": "**反証の器**。事前登録v2の判定は hist_val2_dd5.py が一度だけ下しており"
                    "（不合格）、ここでやるのは『惜しい細胞を期間と生存で壊せるか』だけ。"
@@ -948,13 +1012,7 @@ def main():
                 "fact": [{"years": r["years"], "ratio": r["ratio"]} for r in hz],
                 "read": "2013コホートの終端を3.0〜13.09年で動かしても 2.07〜3.06。"
                         "**窓の長さでは説明できない**＝ビンテージ差の原因は入口の暦のほう"},
-            "退場社を戻しても判定は変わらない": {
-                "fact": {k: {"ratio": v["ratio"], "stop_numer": v["stop_numer"],
-                             "stop_rate": v["stop_rate"]}
-                         for k, v in res["survival"]["bounding_price_only"].items()},
-                "read": "挟み込み 1.96（下端）/ 1.31（上端）でどちらも不合格。しかも復元した退場45社の"
-                        "元本割れは 17.8% で生存者 25.4% より**低い**＝生存バイアスは"
-                        "『左尾を隠している』という素朴な向きには効いていない"},
+            "退場社を戻しても判定は変わらない": survival_ledger_entry(res["survival"]),
         },
         "verdict": "**候補は壊れた（そもそも事前登録v2では不合格）。** 反証の中心は"
                    "『2013の 2.79倍 は GFC を窓に含むアンカーと質実証プールの組合せでしか出ず、"

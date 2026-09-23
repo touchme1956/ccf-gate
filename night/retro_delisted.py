@@ -779,6 +779,12 @@ def yahoo(sym, t0):
             time.sleep(2 * (attempt + 1))
     if out is None:
         out = {"pts": [], "err": "retry-exhausted"}
+    # ★px_guard（2026-09-23・todo yahoo_history_vanished）: 台帳が「以前はもっと古い足があった」と
+    #   知っている記号で、応答が遅く始まる／空なら**キャッシュに焼き付けない**（次回また取りに行く）。
+    #   短い系列を全履歴として返すと、退場の名寄せ（系列の穴で切る）と始値を黙って誤らせる
+    import px_guard as PXG
+    if PXG.vet(sym, out["pts"], "retro_delisted.yahoo", req_start=t0) is None:
+        return {"pts": [], "err": "px_guard_refused(台帳より短い)"}
     json.dump(out, open(p, "w"))
     return out
 

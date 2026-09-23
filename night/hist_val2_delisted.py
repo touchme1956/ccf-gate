@@ -27,6 +27,12 @@
 #   どちらでも判定が同じなら、**dd5 の判定は退場社の穴に依存していない**と言い切れる。
 #   これは点推定を点推定で置き換えるより強い（幅を明示して、幅のどこでも結論が変わらないと示す）。
 #
+#   ★2026-09-23 追記（退場日の是正・out/retro_exit_fix_2013.json）: 上の「45社・419社・144社」は
+#     2026-08-10 の台帳の数字。是正後は **survivor 370 ＋ 復元した退場 96 ＝ 466社**、打ち切り 97社で、
+#     退場96社のうち dd5 が作れたのは1社だけ（95社が欠測）。挟み込みの設計はそのまま。
+#     survivor のうち EQR・QVCAQ・SALM は Yahoo が 2026-07 より前の足を返さなくなり（px_guard が採らない）
+#     dd5 が欠測＝na として両端へ振られる（2026-08-10 の採取では測れていた）。
+#
 #   さらに **144社は返り値そのものが打ち切り**（合併対価も採れない＝破産・登録抹消の類）。
 #   ここは returns が無いので挟み込みにも入らない＝**この器で埋まらない穴**として実数で書く。
 #
@@ -114,7 +120,8 @@ def main():
     surv = [r for r in pool if r["survivor"]]
     n_dd = sum(1 for r in pool if r["dd5"] is not None)
 
-    res = {"generated": "2026-08-10", "tool": "night/hist_val2_delisted.py",
+    res = {"generated": "2026-08-10", "regenerated": __import__("datetime").date.today().isoformat(),
+           "tool": "night/hist_val2_delisted.py",
            "vintage": VINTAGE, "years": years,
            "basis": "price-only（survivor=Yahoo close / 退場=10-K Item5 高安 ÷ SEC原本の合併対価）。"
                     "**adjclose の tr_cagr と割らないこと**",

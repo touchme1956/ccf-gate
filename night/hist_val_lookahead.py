@@ -282,6 +282,11 @@ def yahoo_monthly(ticker):
         splits.append({"date": d.isoformat(),
                        "ratio": float(s["numerator"]) / float(s["denominator"])})
     out = {"close": close, "splits": sorted(splits, key=lambda x: x["date"])}
+    # ★px_guard（2026-09-23）: 台帳より遅く始まる応答（Yahoo が過去の足を消した記号）はキャッシュに
+    #   焼き付けない。「測れない」を返す（短い系列を全履歴として使わない）
+    import px_guard as PXG
+    if PXG.vet(ticker, close, "hist_val_lookahead.yahoo_monthly", req_start=1104537600) is None:
+        return {"close": {}, "splits": [], "why": "px_guard_refused(台帳より短い)"}
     with gzip.open(p, "wt") as f:
         json.dump(out, f)
     return out

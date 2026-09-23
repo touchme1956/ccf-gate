@@ -21,6 +21,8 @@
 # 実行: python3 night/retro_per_asof.py --asof 2013 --sample .../retro_sample.json
 # 出力: out/retro_per_{asof}.json
 import json, os, sys, time, datetime, urllib.request, zipfile
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import px_guard as PXG   # noqa: E402  株価履歴の検問（2026-09-23）
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASOF = 2013
@@ -98,9 +100,22 @@ def fetch_raw_close(sym, y):
             if not res:
                 return None
             closes = ((res.get("indicators", {}).get("quote") or [{}])[0].get("close")) or []
-            first = next((c for c in closes if c is not None), None)
-            if first is None:
+            ts = res.get("timestamp") or []
+            first_i = next((i for i, c in enumerate(closes) if c is not None), None)
+            if first_i is None:
                 return None
+            first = closes[first_i]
+            # ★px_guard（2026-09-23・todo yahoo_history_vanished）: 旧版は「最初の足」を**日付を見ずに**
+            #   asof年7月の値として使っていた。Yahoo が過去の足を消した記号（EQR/QVCAQ/SALM…）では
+            #   2026-07 の株価を 2013-07 の株価として PER を作る＝もっともらしい誤値になる。
+            #   最初の足が要求の始まりから40日を超えて遅ければ採らない（台帳にも照らす）
+            if first_i >= len(ts) or (ts[first_i] - t0) > PXG.TOL_DAYS * 86400:
+                PXG.log_refusal(sym, "retro_per_asof.fetch_raw_close",
+                                f"最初の足が asof {y}-07 より遅い"
+                                f"（{datetime.date.fromtimestamp(ts[first_i]).isoformat() if first_i < len(ts) else '?'}）",
+                                None, None, kept="none(測れない)")
+                return None
+            PXG.vet(sym, [ts[first_i]], "retro_per_asof.fetch_raw_close", req_start=t0, record=False)
             factor = 1.0
             for sp in (res.get("events", {}).get("splits") or {}).values():
                 num, den = float(sp.get("numerator", 1)), float(sp.get("denominator", 1))
@@ -154,8 +169,27 @@ def main():
                      "fy_end": ni[0], "per": round(per, 2)})
         if i % 20 == 0:
             print(f"  {i}/{len(tickers)}  per算出:{len(rows)}")
+    # ★px_guard（2026-09-23）: 出力を丸ごと書き直す前に、**前の出力で算出できていた銘柄を今回の
+    #   「株価が取れない（eps_or_px で px=None）」で消さない**。前の行を残してログに名指しする
+    kept_old = []
+    if os.path.exists(OUT):
+        try:
+            prev = {r["ticker"]: r for r in json.load(open(OUT)).get("rows", [])}
+        except Exception:
+            prev = {}
+        have = {r["ticker"] for r in rows}
+        for t, pr in prev.items():
+            m = next((u for u in miss if u.get("ticker") == t), None)
+            if t in have or m is None or not (m.get("why") == "eps_or_px" and m.get("px") is None):
+                continue
+            PXG.log_refusal(t, "retro_per_asof", "今回は株価が取れない（Yahoo の過去の足が無い）",
+                            None, None, kept="old")
+            rows.append(dict(pr, px_guard_kept_from=os.path.relpath(OUT, BASE)))
+            miss = [u for u in miss if u is not m]
+            kept_old.append(t)
     result = {"generated": datetime.date.today().isoformat(), "asof": ASOF,
-              "cutoff_fy_end": CUTOFF, "rows": rows, "unmeasured": miss}
+              "cutoff_fy_end": CUTOFF, "rows": rows, "unmeasured": miss,
+              "px_guard_kept_old": kept_old}
     json.dump(result, open(OUT, "w"), ensure_ascii=False, indent=1)
     print(f"■ 書き出し: {OUT}  算出 {len(rows)} / 不能 {len(miss)}")
 

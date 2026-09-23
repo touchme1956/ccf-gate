@@ -41,6 +41,8 @@ import sys
 import time
 import urllib.error
 import urllib.request
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import px_guard as PXG   # noqa: E402  株価履歴の検問（短い応答を採らない・2026-09-23）
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
@@ -73,7 +75,8 @@ def fetch(sym):
                 return None
             ts = res.get('timestamp') or []
             adj = ((res.get('indicators', {}).get('adjclose') or [{}])[0].get('adjclose')) or []
-            return [(t, v) for t, v in zip(ts, adj) if v is not None] or None
+            pts = [(t, v) for t, v in zip(ts, adj) if v is not None]
+            return PXG.vet(sym, pts, 'castle_correlation.fetch', req_start=T0) or None  # ★px_guard: 台帳より遅く始まる応答は採らない（2026-09-23）
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 return None

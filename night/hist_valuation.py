@@ -79,6 +79,9 @@ import statistics
 import time
 import urllib.error
 import urllib.request
+import os as _os_pxg, sys as _sys_pxg
+_sys_pxg.path.insert(0, _os_pxg.path.dirname(_os_pxg.path.abspath(__file__)))
+import px_guard as PXG   # noqa: E402  株価履歴の検問（短い応答で在庫を上書きしない・2026-09-23）
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(BASE, "out", "_histval_cache")
@@ -291,6 +294,13 @@ def fetch_px(ticker, offline=False):
     if not res:
         out = {"ticker": ticker, "close": {}, "splits": [], "adj": {},
                "v": PX_CACHE_VERSION, "why": "yahoo_no_data"}
+        # ★px_guard（2026-09-23）: 前のキャッシュ（旧版でも）に足があれば、空の応答で上書きしない
+        if j is not None and (j.get("close") or {}):
+            PXG.log_refusal(ticker, "hist_valuation.fetch_px", "応答が空（取得失敗）",
+                            PXG.span(j.get("close")), None, kept="old")
+            return j
+        if PXG.vet(ticker, {}, "hist_valuation.fetch_px", req_start=t0, record=False) is None:
+            return dict(out, why="px_guard_refused(台帳より短い)")   # 書かない＝次回また取りに行く
         _cache_write(p, out)
         return out
     ts = res.get("timestamp") or []
@@ -317,6 +327,18 @@ def fetch_px(ticker, offline=False):
     out = {"ticker": ticker, "close": close, "adj": adj, "splits": splits,
            "v": PX_CACHE_VERSION,
            "currency": (res.get("meta") or {}).get("currency")}
+    # ★px_guard（2026-09-23・todo yahoo_history_vanished）: Yahoo が過去の足を消した記号
+    #   （EQR/QVCAQ/SALM/BBBY…は 2026-07 以降しか返さない）で、**在庫の長い履歴を短い応答で上書きしない**。
+    #   前のキャッシュがあれば前を残す（旧版でも。adj が無いだけのほうが、履歴が無いより良い）。
+    #   前が無ければ台帳 out/px_span_ledger.json と突き合わせ、短ければ「測れない」を返して書かない。
+    if j is not None and (j.get("close") or {}):
+        if PXG.shorter_reason(j.get("close"), close):
+            PXG.keep_longer(ticker, j.get("close"), close, "hist_valuation.fetch_px")
+            return j
+    elif PXG.vet(ticker, close, "hist_valuation.fetch_px", req_start=t0, record=False) is None:
+        return {"ticker": ticker, "close": {}, "splits": [], "adj": {},
+                "v": PX_CACHE_VERSION, "why": "px_guard_refused(台帳より短い)"}
+    PXG.note(ticker, close, "hist_valuation.fetch_px")
     _cache_write(p, out)
     time.sleep(0.35)
     return out

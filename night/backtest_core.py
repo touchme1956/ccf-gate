@@ -29,6 +29,8 @@ backtest_core.py — 機械コアの疑似バックテスト（2026-08-04新設�
 """
 import json, os, sys, time, urllib.request, statistics
 from datetime import date
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import px_guard as PXG   # noqa: E402  株価履歴の検問（短い応答を採らない・2026-09-23）
 
 BASE  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EMAIL = "fortis5280@gmail.com"
@@ -210,6 +212,8 @@ def total_return(t, cutoff):
         import calendar
         cut_ts = calendar.timegm(tuple(map(int, cutoff.split("-"))) + (0, 0, 0, 0, 0, 0))
         pts = [(a, b) for a, b in zip(ts, adj) if b]
+        if PXG.vet(t, pts, "backtest_core.total_return", req_start=time.time() - 12 * 365.25 * 86400) is None:
+            return None  # ★px_guard: 台帳より遅く始まる応答は採らない（2026-09-23）
         p0 = next(((a, b) for a, b in pts if a >= cut_ts), None)
         p1 = pts[-1] if pts else None
         if not p0 or not p1 or p1[0] <= p0[0]:

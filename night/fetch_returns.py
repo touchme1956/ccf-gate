@@ -62,6 +62,8 @@ import sys
 import time
 import urllib.parse
 import urllib.request
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import px_guard as PXG   # noqa: E402  株価履歴の検問（短い応答を採らない・2026-09-23）
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(BASE, "out", "returns.json")
@@ -104,7 +106,9 @@ def yahoo(sym, t0, t1):
                 continue
             d = datetime.datetime.utcfromtimestamp(t).strftime("%Y-%m-%d")
             out[d] = (float(c), float(a if a is not None else c))
-        return out or None
+        # ★px_guard（2026-09-23）: 台帳より遅く始まる応答（Yahoo が過去の足を消した記号）は採らない。
+        #   保有の買付日より前が消えた系列で成績を出すと、起点が黙ってずれる
+        return PXG.vet(sym, out, "fetch_returns.yahoo", req_start=t0, record=False) or None
     except Exception:
         return None
 
