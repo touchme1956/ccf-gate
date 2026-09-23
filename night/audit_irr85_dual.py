@@ -222,8 +222,15 @@ def trunc_all(S, rung):
             continue
         dd = d.get("data") or d
         st = S.get(t, {})
+        # 2026-09-23: 切れた記録を**再検証で置き換えた**社は印を付ける（記録そのものは歴史として残す）。
+        #   打ち切りを見つけた 2026-09-20 以後に、攻撃を分けたキー（attacks / section_b）で3000字の上限に
+        #   かからない形の検証が `_meta.irr85_verify` に入っていれば「置き換え済み」。実測 LRCX（2026-09-23）。
+        re_at = None
+        for v in ((d.get("_meta") or {}).get("irr85_verify") or []):
+            if isinstance(v, dict) and str(v.get("date") or "") >= "2026-09-20" and (v.get("attacks") or v.get("section_b")):
+                re_at = max(re_at or "", str(v.get("date"))[:10])
         out.append({"t": t, "irr": dd.get("irr"), "off_rung": str(dd.get("irr")) != rung,
-                    "buy": st.get("buy"), "omega": st.get("s"), **cut})
+                    "buy": st.get("buy"), "omega": st.get("s"), "reattacked": re_at, **cut})
     return sorted(out, key=lambda x: (0 if x["buy"] else 1, -(x["omega"] or 0)))
 
 
@@ -385,8 +392,10 @@ def main():
             tag = "🟢投下可" if r["buy"] else "⛔"
             off = f" ⚠今の刻みは irr={r['irr']}（mech は刻みが動く前の記録）" if r.get("off_rung") else ""
             hd = r.get("last_head") or "（節の見出しなし）"
+            re_at = (f" ✓{r['reattacked']} の再検証で置き換え済み（切れた記録は歴史として残す）"
+                     if r.get("reattacked") else "")
             print(f"   {r['t']:<6}{tag:<8}{'★見出しだけで中身ゼロ ' if r.get('head_only') else ''}"
-                  f"最後の節: {hd}{off}")
+                  f"最後の節: {hd}{off}{re_at}")
             print(f"          言いかけ: …{r.get('frag') or ''}")
     if todo:
         ck = CHECKS.get(rung, CHECKS["85"])
