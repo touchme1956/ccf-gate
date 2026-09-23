@@ -89,7 +89,22 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  "ni":    ["NetIncomeLoss","ProfitLoss"],
  "tax":   ["IncomeTaxExpenseBenefit","IncomeTaxExpenseContinuingOperations"],
  "ocf":   ["NetCashProvidedByUsedInOperatingActivities","CashFlowsFromUsedInOperatingActivities"],
- "capex": ["PaymentsToAcquirePropertyPlantAndEquipment","PurchaseOfPropertyPlantAndEquipment"],
+ # 2026-09-23追加（todo fetcher_small_gaps_0923）: **設備投資の行を別のタグで出す社が296社中39社あった**
+ #   （V/HD/QCOM/LRCX/MSI/NVDA/TT/SPGI/LMT/WM/AWI …）——候補に無いので fcf と ni が丸ごと None だった
+ #   （ni は fcf と同じ条件の中で出す）。「候補＝代替か構成要素か」を先に確かめた:
+ #   ・PaymentsToAcquireProductiveAssets は**代替**（設備投資の総額。有形＋ソフト・無形を含む定義）。PP&E タグと
+ #     両方ある社では同額（ALLE/ANET/FDS/LDOS/TT/UPBD 等で完全一致）か、ソフト・無形の分だけ大きい（ACI +1.7%）。
+ #     series() は keys の並びで PP&E を先に採り、食い違う年がある社（CHE/SSD/TRN/CPRT: 買収や貸出資産を含む）は
+ #     接がないので、PP&E タグが最新年まで届いている社では何も変わらない。
+ #   ・PaymentsToAcquireOtherProductiveAssets は**ほとんどの社で構成要素**（「その他」の小さな行: DRI 26.4 vs PP&E 734.0 /
+ #     PAYX 42.4 vs 234.9 / IRMD / PWR / SPGI / TRN / WCN 百万$）。だが BCPC/INCY/ROP は CF 計算書の設備投資の行そのものを
+ #     このタグで出す（BCPC『Capital expenditures and intangible assets acquired』43,489千$・0000009326-26-000007 /
+ #     INCY『Capital expenditures』58,867千$・0000879169-26-000010 / ROP『Capital expenditures』47.4百万$・0000882835-26-000009。
+ #     BCPC の PaymentsToAcquirePropertyPlantAndEquipment は2022年で止まり注記側の値）。
+ #     → 最後の候補に置く＝PP&E 系のタグが最新年に届かない社でしか主系列にならない。さらに build_numbers で
+ #     「PP&E 系と重なる年に半分未満だった社」（＝構成要素）では使わない（下の capex の検問）。
+ "capex": ["PaymentsToAcquirePropertyPlantAndEquipment","PurchaseOfPropertyPlantAndEquipment",
+           "PaymentsToAcquireProductiveAssets","PaymentsToAcquireOtherProductiveAssets"],
  # 2026-08-08是正: **これも「候補＝代替か構成要素か」の取り違えだった**（無形・有利子負債・販管費に続く4例目）。
  #   合計タグを一つも報告せず **減価償却と無形償却を別行で出す社**がある。series() は候補から1本しか選ばないので、
  #   そういう社では D&A が丸ごと欠測 → EBITDA が営業利益だけになり **nde が過大**に出る＝財務キル(>4)の誤爆。
@@ -171,10 +186,157 @@ TAGS = {  # us-gaap優先、ifrs-fullへフォールバック
  "sh":    ["CommonStockSharesOutstanding","EntityCommonStockSharesOutstanding","NumberOfSharesOutstanding"],
  "impair":["GoodwillImpairmentLoss","ImpairmentOfIntangibleAssetsIndefinitelivedExcludingGoodwill"],
 }
-def _annual(units):
-    """単位ごとのXBRL行から年次dictを組む。最多データの単位を優先。"""
+# ---------- 年の付け方（2026-09-23是正・todo fetcher_fy_label_mislabel） ----------
+# ★旧 `_annual()` は年次の行を **提出書類の fy ラベル** で数えていた（`out[row["fy"]] = row["val"]`）。
+#   fy は提出書類の DEI（Document Fiscal Year Focus）で**期間の年ではない**——同じ提出の比較年度の行も
+#   すべて同じ fy を持ち、並び（期末順）の最後＝その提出の当期の行が勝つので、普段は正しく見えていた。
+#   壊れていた型は三つ（キャッシュ済み296社・年次提出4,076件で実測）:
+#   (1) **付番そのものの誤り**: STX の FY2025 10-K（0001137789-25-000157・期末 2025-06-27）は DEI が 2027
+#       （R1.htm の Document Fiscal Year Focus も 2027）→ 実体の FY2026 より「新しい年」に見え、gm/ni が
+#       FY2025 のまま出ていた。MWA の FY2023 10-K は 2022 → FY2022 が上書きされて消える。同型の衝突・飛びが
+#       ほかに ACI/BBW/BBY/COHR/FICO/HCKT/LQDT/NVDA/PZZA/RSG/ULTA/VEEV …。1〜3月決算の社は2014年頃を境に
+#       「期末の前年」→「期末の年」へ付番が変わり（NVDA/TJX/ADSK/EXP/RBC …）、TJX は 2021 が欠番
+#       （FY2021→FY2026 の5年を「2020→2026＝6年」と数え cagr が過小だった）。
+#   (2) **その提出にそのタグの当期の行が無い**と、比較年度の行が当期のラベルで残る: XPEL の FY2021 10-K は
+#       NetIncomeLoss を 2019年分しか持たず ni[2021] に FY2019 の値、GMAB の FY2025 20-F は DKK の行が
+#       2023/2024 の比較年度だけで 2025 のラベルに 2024-12-31 期の値、ANET の FY2014 10-K は
+#       LongTermDebtCurrent を 2013-12-31 分しか持たず（2014年末は 0）debtS[2014] に前年の 98,793,000。
+#   (3) **タグの行き来で接げない**: GOOGL は売上を Revenues（2015-17/2020/2021/2025）と
+#       RevenueFromContract…（2018/2019/2022-24）で交互に付け、fy ラベルで数えた二つの dict は**重なる年が
+#       一つも無い**ので series() が接がず、cagr5 は2015→2025の10年窓（18.3%・真値は5年窓 17.2%）になっていた。
+#       CW/CHDN/OKE/CVCO は2年窓、AME/CELH は1年窓で同じことが起きていた。
+# → 年は**期間から**付ける:
+#   (a) 提出ごとの期末（FPE）＝その提出の年次の事実（300日以上の期間＋時点）の終了日のうち、件数が最大の25%以上
+#       ある最も新しい日（将来の予定額など数件だけの日付に引かれない。SEC submissions の reportDate と
+#       4,069/4,076件で一致し、残る7件は reportDate 側の誤り——事実の分布で確認済み）。
+#   (b) 提出のラベルは「直近の付番の流儀」に揃える: c＝ラベル−期末の小数年。直近5提出のうち c が最も多く
+#       揃う提出（同数なら新しい方）を錨にして前後へ歩き、**c が整数ずれた提出だけ**ラベルを整数ずらす。
+#       52/53週の揺れ（±0.02）と決算期の変更（端数のずれ）は付け替えない＝整数のずれだけが付番の誤り。
+#       直近の流儀に揃えるので最新年のラベルは会社の現在の呼び方のまま（TJX/BBY/HD/ROST の最新年は不変）。
+#       ⚠「期末日の暦年」で数える素朴な直し方は使えない——HD/ROST は2月初めに終わる年を前年の数字で、
+#       TJX/BBY は当年の数字で呼び、52/53週の社は期末が年末と年初に揺れる（固定のずらしは必ずどこかで割れる）。
+#   (c) 行は**自分の期末**で年を付ける: 提出の期末から183日以内＝当期の行（提出のラベル）、それより前＝比較年度の行
+#       （最寄りの提出の期末から整数年の位置にあるものだけ・その年数でラベル。格子から外れた時点＝買収日の取得原価配分や
+#       決算期変更の移行期末などは使わない）、183日より後＝将来の日付＝使わない。
+#   (d) 値は**当期の行を優先**（旧来どおり「その年が当期だった提出で報告された値」。同じラベルに当期の行が
+#       複数あれば旧来どおり並び順の最後＝10-K/A が後から出ていればそちら）。当期の行が一つも無いラベルは、
+#       **そのタグが出てくる提出のラベルの範囲内に限り**比較年度の値で埋める（最も早い提出の値）——
+#       最初の提出より前へは延ばさない（上場直後の社の窓を黙って変えない）。
+#   (e) 比較年度の値（格子上のもの）は**範囲の外も含めてすべて**「同じ指標か」の証拠に使う（series() の接ぎ）。
+#       値としては当期優先のまま。
+# ⚠ 旧来と同じ結果になることを確かめてある: 付け替え・比較年度の扱いを外すと296社すべてで出力が一致する。
+from datetime import date as _date
+
+
+def _pdate(s):
+    try:
+        return _date.fromisoformat(s)
+    except Exception:
+        return None
+
+
+def _decyear(d):
+    return d.year + (d.timetuple().tm_yday - 1) / 365.2425
+
+
+_FYM_CACHE = []          # [(facts, model)]。1社の build_numbers は series() を約50回呼ぶので作り直さない
+
+
+def _fy_model(facts):
+    """facts 全体から「提出→(ラベル, 期末)」を作る（上の頭注 (a)(b)）。同じ facts なら使い回す。"""
+    for f, m in _FYM_CACHE:
+        if f is facts:
+            return m
+    m = _build_fy_model(facts)
+    _FYM_CACHE.insert(0, (facts, m))
+    del _FYM_CACHE[4:]
+    return m
+
+
+def _build_fy_model(facts):
+    acc = {}
+    for ns in ("us-gaap", "ifrs-full"):
+        for tag in (facts.get("facts", {}).get(ns) or {}).values():
+            for rows in (tag.get("units") or {}).values():
+                for r in rows:
+                    if not str(r.get("form", "")).startswith(("10-K", "20-F", "40-F")):
+                        continue
+                    a, fy, e = r.get("accn"), r.get("fy"), r.get("end")
+                    if not a or fy is None or not e:
+                        continue
+                    s = r.get("start")
+                    if s:
+                        d0, d1 = _pdate(s), _pdate(e)
+                        if d0 is None or d1 is None or (d1 - d0).days < 300:
+                            continue
+                    x = acc.get(a)
+                    if x is None:
+                        x = acc[a] = ({}, {})
+                    x[0][e] = x[0].get(e, 0) + 1
+                    x[1][fy] = x[1].get(fy, 0) + 1
+    pts = []
+    for a, (cnt, fys) in acc.items():
+        m = max(cnt.values())
+        thr = max(min(2, m), 0.25 * m)
+        fpe = _pdate(max(e for e, n in cnt.items() if n >= thr))
+        if fpe is not None:
+            pts.append([fpe, max(fys, key=lambda k: fys[k]), a])
+    pts.sort(key=lambda p: (p[0], p[2]))
+    n = len(pts)
+    if not n:
+        return {"acc": {}, "pts": [], "fixed": {}}
+    c = [p[1] - _decyear(p[0]) for p in pts]
+    last = list(range(max(0, n - 5), n))
+    sup = {i: sum(1 for j in last if abs(c[j] - c[i]) <= 0.2) for i in last}
+    ai = max(i for i in last if sup[i] == max(sup.values()))
+    lab = [p[1] for p in pts]
+    fixed = {}
+    for rng in (range(ai + 1, n), range(ai - 1, -1, -1)):
+        ref = c[ai]
+        for i in rng:
+            d = c[i] - ref
+            k = round(d)
+            if k != 0 and abs(d - k) <= 0.2:          # 整数のずれ＝付番の誤り
+                lab[i] = pts[i][1] - k
+                fixed[pts[i][2]] = (pts[i][1], lab[i], pts[i][0].isoformat())
+                ref = c[i] - k
+            else:                                     # 揺れ・決算期の変更はそのまま追う
+                ref = c[i]
+    return {"acc": {pts[i][2]: (lab[i], pts[i][0]) for i in range(n)},
+            "pts": [(pts[i][0], lab[i]) for i in range(n)],
+            "fixed": fixed}
+
+
+def _label_for(fym, d):
+    """比較年度の行の期末 d のラベル＝最寄りの提出の期末からの年数（決算期の変更をまたいでも局所で数える）。
+    **期末の格子から外れた日付は None**（年次の値ではない）: 最寄りの期末から整数年±0.05年（約18日）に
+    無い時点は、買収日の取得原価配分・決算期変更の移行期末などで、どの年度の期末残高でもない
+    （実測 IRDM: FY2024 10-K の Goodwill 98,186,000 は 2024-04-01＝買収日の値。格子を見ないと 2023年末ののれんに化ける）。"""
+    p = min(fym["pts"], key=lambda q: abs((d - q[0]).days))
+    yrs = (d - p[0]).days / 365.2425
+    k = round(yrs)
+    if abs(yrs - k) > 0.05:
+        return None
+    return p[1] + k
+
+
+class _Yearly(dict):
+    """年→値の dict（当期の値＋範囲内の比較年度の埋め）。付帯情報:
+       cmp  … 比較年度の値で埋めた年（当期の行が一つも無かった年）
+       ev   … 比較年度の値をすべて含む年→値（series() の「同じ指標か」の証拠。値としては使わない）
+       snap … 会社の提出の範囲内で当期の行が無い年の (提出日|accn, 値)（series_sum の比較年度の補い）"""
+    cmp = frozenset()
+    ev = None
+    snap = None
+
+
+def _annual(units, fym=None):
+    """単位ごとのXBRL行から年次dictを組む。最多データの単位を優先。年の付け方は上の頭注。"""
+    accm = (fym or {}).get("acc") or {}
+    pts = (fym or {}).get("pts") or []
+    snap_only = None
     for u in sorted(units.keys(), key=lambda x: -len(units[x])):
-        out = {}
+        cur, cmpv, labs = {}, {}, set()
         for row in units[u]:
             # 2026-07-29: **40-F を足した**。カナダのMJDS登録企業は年次報告が40-Fで、
             #   ここに無いと全タグが「不発見」になり build_numbers が丸ごと None を返す。
@@ -185,15 +347,54 @@ def _annual(units):
             fy = row.get("fy")
             if fy is None: continue
             s, e = row.get("start"), row.get("end")
+            d1 = _pdate(e) if e else None
             if s and e:  # 損益・CF系は期間300日超のみ(四半期を排除)
-                try:
-                    from datetime import date
-                    d0 = date.fromisoformat(s); d1 = date.fromisoformat(e)
-                    if (d1 - d0).days < 300: continue
-                except Exception: pass
-            out[fy] = row["val"]
-        if out: return out, u
+                d0 = _pdate(s)
+                if d0 is not None and d1 is not None and (d1 - d0).days < 300: continue
+            ent = accm.get(row.get("accn"))
+            if ent is None or d1 is None:
+                cur[fy] = row["val"]                   # 期末が決められない提出＝旧来どおり fy ラベル
+                labs.add(fy)
+                continue
+            lab, fpe = ent
+            dd = (d1 - fpe).days
+            if dd > 183:
+                continue                               # 期末より後の日付（将来の予定額など）は年次値に使わない
+            labs.add(lab)
+            if dd >= -183:
+                cur[lab] = row["val"]                  # 当期の行: 並び順の最後が勝つ（旧来どおり）
+                continue
+            y = _label_for(fym, d1)                    # 比較年度の行: 自分の期末で年を付ける
+            if y is None:
+                continue                               # 期末の格子から外れた時点（買収日など）は使わない
+            src = (row.get("filed") or "") + "|" + (row.get("accn") or "")
+            prev = cmpv.get(y)
+            if prev is None or src <= prev[0]:         # 最も早い提出の値（同じ提出なら並び順の最後）
+                cmpv[y] = (src, row["val"])
+        if not (cur or cmpv):
+            continue
+        lo, hi = min(labs), max(labs)
+        clo, chi = (min(p[1] for p in pts), max(p[1] for p in pts)) if pts else (lo, hi)
+        fill = {y for y in cmpv if y not in cur and lo <= y <= hi}
+        out = _Yearly((y, cur[y] if y in cur else cmpv[y][1]) for y in sorted(set(cur) | fill))
+        out.cmp = frozenset(fill)
+        ev = {y: v for y, (_s, v) in cmpv.items()}
+        ev.update(cur)
+        out.ev = ev
+        out.snap = {y: cmpv[y] for y in cmpv if y not in cur and clo <= y <= chi}
+        if out:
+            return out, u
+        if out.snap and snap_only is None:
+            snap_only = (out, u)                       # 比較年度の行しか無い単位（series_sum の補いにだけ使う）
+    if snap_only is not None:
+        return snap_only
     return None, None
+
+
+def _cur_only(d):
+    """当期の行の値だけ（比較年度で埋めた年を除く）"""
+    cm = getattr(d, "cmp", None)
+    return {y: v for y, v in d.items() if y not in cm} if cm else dict(d)
 
 
 def series(facts, keys, unit_pref=("USD","EUR","JPY")):
@@ -208,13 +409,19 @@ def series(facts, keys, unit_pref=("USD","EUR","JPY")):
 
     重なる年で値が一致するタグだけを接ぐ（一致しなければ別の指標＝接がない）。
     重なりが無い場合も接がない——同一指標だと確かめる手段が無いため。主系列だけで足りる。
+    2026-09-23: 当期の値どうしに重なりが無いときは、**比較年度の値**も「同じ指標か」の証拠に使う
+      （GOOGL の売上は二つのタグを年ごとに行き来し、当期の値どうしは一年も重ならない。だが FY2020 10-K の
+      Revenues は 2018/2019 を、FY2022 10-K の RevenueFromContract… は 2020/2021 を比較年度として持ち、
+      同じ年の値が一致する）。当期の値どうしに重なりがあるときは旧来どおりその年だけで裁く。
+      接いだ系列の値は**当期の値が先**（主系列→接いだタグ）、比較年度の埋めは最後。
     """
+    fym = _fy_model(facts)
     cands = []
     for ns in ("us-gaap","ifrs-full","dei"):
         d = facts.get("facts",{}).get(ns,{})
         for i, k in enumerate(keys):
             if k not in d: continue
-            out, u = _annual(d[k]["units"])
+            out, u = _annual(d[k]["units"], fym)
             if out: cands.append((i, k, out, u))
         if cands: break            # 名前空間はまたがない(us-gaapとifrsを混ぜない)
     if not cands: return {}, None
@@ -235,16 +442,31 @@ def series(facts, keys, unit_pref=("USD","EUR","JPY")):
             cands = _pref
     newest = max(max(c[2]) for c in cands)
     elig = [c for c in cands if max(c[2]) >= newest - 1]
-    i, k0, merged, unit = min(elig, key=lambda c: (c[0], -max(c[2])))
-    merged = dict(merged)
+    i, k0, prim, unit = min(elig, key=lambda c: (c[0], -max(c[2])))
+    merged = _cur_only(prim)                       # 当期の値（旧来の突き合わせはこれだけで行う）
+    seen = dict(prim.ev or prim)                   # 比較年度も含む証拠
+    fills = [prim]
     for _, k, out, u in cands:
         if k == k0 or u != unit: continue
-        ov = set(out) & set(merged)
-        if not ov: continue                        # 重なり無し＝同一指標と確かめられない
-        if any(merged[y] and abs(out[y]-merged[y])/abs(merged[y]) > 0.02 for y in ov):
-            continue                               # 重なる年で食い違う＝別の指標
-        for y, v in out.items():
+        oc = _cur_only(out)
+        ov = set(oc) & set(merged)
+        if ov:
+            if any(merged[y] and abs(oc[y]-merged[y])/abs(merged[y]) > 0.02 for y in ov):
+                continue                           # 重なる年で食い違う＝別の指標
+        else:
+            oe = out.ev or out
+            ov = set(oe) & set(seen)
+            if not ov: continue                    # 比較年度を含めても重なり無し＝同一指標と確かめられない
+            if any(seen[y] and abs(oe[y]-seen[y])/abs(seen[y]) > 0.02 for y in ov):
+                continue
+        for y, v in oc.items():
             merged.setdefault(y, v)
+        for y, v in (out.ev or out).items():
+            seen.setdefault(y, v)
+        fills.append(out)
+    for t in fills:                                # 比較年度の埋めは最後（当期の値を上書きしない）
+        for y in sorted(t.cmp):
+            merged.setdefault(y, t[y])
     return merged, unit
 
 def last_n(d, n=6):
@@ -337,36 +559,71 @@ def series_sum(facts, keys, total_key=None):
       us-gaap/ifrs-full を独立に探し、単位も見ずに合算していた＝別名前空間・別単位の値を
       足し合わせうる（「基準の違う二つを割る」型の合算版）。名前空間はまたがず、
       主単位（最多）と違う単位のタグは合算から外す。
+    2026-09-23（年の付け方の是正と対）: **合計には当期の値だけを使う**（series() の比較年度の埋めは使わない）。
+      タグの付け替え年に「旧タグの当期の値」と「新タグの比較年度の値」を足すと二重計上になるため。
+      旧実装は比較年度の行を当期のラベルで数えていたので、返済済みの負債が翌年も残っていた
+      （実測 ANET: FY2014 10-K の LongTermDebtCurrent は 2013-12-31 の 98,793,000 だけ＝2014年末は 0。
+      MNST: FY2025 10-K の LongTermDebt は 2024-12-31 の 373,951,000 だけ）。
+      例外は**どの提出でも当期の値として出てこないタグ**（比較年度の行しか無い）: その期間を当期として報告した
+      提出がどのタグにも無い年に限り、**最も早い提出一つ分**の値で補う（別々の提出の比較値を足さない）。
+      実測 QLYS: CommercialPaperAtCarryingValue は FY2025 10-K の 2024-12-31（6,443,000）にしか無い。
+      補わないと候補タグの値が debt_evidence() に「未知のタグの痕跡」として見え、2022-25年の roic が止まる。
     """
     if isinstance(total_key, str):
         total_keys = [total_key]
     else:
         total_keys = list(total_key or [])
-    per, unit_of = {}, {}
+    per, unit_of, snaps = {}, {}, {}
+    fym = _fy_model(facts)
     for ns in ("us-gaap", "ifrs-full"):
         d = facts.get("facts", {}).get(ns, {})
         found = False
         for k in keys:
             if k not in d:
                 continue
-            out, u = _annual(d[k]["units"])
-            if out:
-                per[k] = out
+            out, u = _annual(d[k]["units"], fym)
+            if out is None:
+                continue
+            cur = _cur_only(out)
+            if not cur and out.snap:
+                snaps[k] = (out.snap, u)
+                found = True
+            if cur:
+                per[k] = cur
                 unit_of[k] = u
                 found = True
         if found:
             break                        # 名前空間はまたがない（series()と同じ）
-    if not per:
+    if not per and not snaps:
         return {}, {}
     # 単位の一致検問: 最多の単位を主単位とし、違う単位のタグは合算しない（足すと桁が壊れる）
     _cnt = {}
-    for u in unit_of.values():
+    for u in list(unit_of.values()) + [u for _v, u in snaps.values()]:
         _cnt[u] = _cnt.get(u, 0) + 1
     main_u = max(_cnt, key=lambda u: _cnt[u])
     for k in [k for k in per if unit_of[k] != main_u]:
         del per[k]
     years = set().union(*[set(v) for v in per.values()]) if per else set()
     out, used = {}, {}
+    _snapY = {}
+    for k, (sv, u) in snaps.items():
+        if u != main_u:
+            continue
+        for y, (src, v) in sv.items():
+            if y not in years:                   # その年を当期として報告した構成要素が一つも無い年だけ
+                _snapY.setdefault(y, {})[k] = (src, v)
+    for y, kv in _snapY.items():
+        src0 = min(src for src, _v in kv.values())
+        one = {k: v for k, (src, v) in kv.items() if src == src0}     # 最も早い提出一つ分
+        tk = next((k for k in total_keys if k in one), None)
+        if tk is not None:
+            out[y] = one[tk]
+            used[y] = [f"{tk}(総額・比較年度 {src0.split('|')[-1]})"]
+            continue
+        parts = [(k, one[k]) for k in keys if k not in total_keys and k in one]
+        if parts:
+            out[y] = sum(v for _, v in parts)
+            used[y] = [f"{k}={v:,.0f}(比較年度 {src0.split('|')[-1]})" for k, v in parts]
     for y in years:
         tk = next((k for k in total_keys if k in per and y in per[k]), None)
         if tk is not None:
@@ -506,6 +763,21 @@ def build_numbers(facts):
     # 2026-08-08: 減価償却も同じ「構成要素」型（TAGS["depParts"] の頭注を見よ）。
     #   合計タグがその年に無い年だけ、構成要素の合計で補う（合計があるならそれを使う＝二重計上しない）。
     _depS, _usedD = series_sum(facts, TAGS["depParts"])
+    # 2026-09-23追加（todo fetcher_small_gaps_0923）: **AdjustmentForAmortization は CF 計算書の「Amortization」行＝償却の総額**。
+    #   構成要素として depParts に並べると償却を二重に足す——実測（296社）でこのタグは AmortizationOfIntangibleAssets と
+    #   **同額**（NDSN/PH）・ほぼ同額（ECL/GILD/MRK）・それより大きい（GRMN/INTU/BMI＝ソフト等の償却も含む）。
+    #   → 合計タグ（dep）が無い年で、しかも償却の構成要素（無形・繰延費用の償却）が一つも無いときだけ、
+    #     償却の欄の**代替**として足す。実測 JKHY: FY2026 の償却 171,138千$ がこのタグだけで報告され、D&A が減価償却
+    #     42,103千$ だけになって nde 0.04（原本の EBITDA 848,274千$ で 0.03・0000779152-26-000067）。
+    _afa = series_sum(facts, ["AdjustmentForAmortization"])[0]
+    for _y, _v in (_afa or {}).items():
+        if not _v or _y in S["dep"]:
+            continue
+        _u0 = _usedD.get(_y) or []
+        if any(x.startswith(("AmortizationOfIntangibleAssets=", "AmortizationOfDeferredCharges=")) for x in _u0):
+            continue                          # 償却の構成要素がある年は足さない（二重計上になる）
+        _depS[_y] = (_depS.get(_y) or 0) + _v
+        _usedD[_y] = _u0 + [f"AdjustmentForAmortization={_v:,.0f}（償却の総額・構成要素が無い年の代替）"]
     _depFilled = []
     for _y, _v in (_depS or {}).items():
         if _y not in S["dep"] and _v:
@@ -523,6 +795,21 @@ def build_numbers(facts):
     for k in ("debtS", "debtL", "intan"):
         diag[k] = f"{len(S[k])}年分(合計)" if S[k] else "タグ不発見"
     ev, note = {}, []
+    # 2026-09-23: capex の検問（TAGS["capex"] の頭注）。PaymentsToAcquireOtherProductiveAssets は多くの社で
+    #   「その他」の小さな構成要素なので、**PP&E 系のタグと重なる年に半分未満だった社**では設備投資の総額として使わない
+    #   （PP&E 系のタグが途切れた年にその小さな行が設備投資に化けると FCF が過大に出る。誤値より空欄）。
+    _opa = series(facts, ["PaymentsToAcquireOtherProductiveAssets"])[0]
+    if _opa and S["capex"]:
+        _ppe = series(facts, [k for k in TAGS["capex"] if k != "PaymentsToAcquireOtherProductiveAssets"])[0]
+        _ovy = [y for y in set(_opa) & set(_ppe) if _ppe[y]]
+        if any(abs(_opa[y]) < 0.5 * abs(_ppe[y]) for y in _ovy):
+            _drop = sorted(y for y in S["capex"] if y not in _ppe and y in _opa and S["capex"][y] == _opa[y])
+            for y in _drop:
+                del S["capex"][y]
+            if _drop:
+                note.append(f"設備投資を算出不能とした年がある（{_drop[0]}〜{_drop[-1]}年）: その年の設備投資が "
+                            f"PaymentsToAcquireOtherProductiveAssets にしか無いが、この社では PP&E 系のタグと重なる年に"
+                            f"その半分未満＝『その他』の構成要素なので総額として使わない。原本の CF 計算書で確認せよ")
     # 2026-08-03: **営業利益タグが途中で消える会社がある。** 実測 KLAC(投下可の社):
     #   `OperatingIncomeLoss` が **2015年で終了**し、TAGS["op"]の候補2つとも最新年に届かない。
     #   series() は「最新年から1年以内に届く候補」の中から選ぶが、**どの候補も届かない場合は
@@ -629,6 +916,13 @@ def build_numbers(facts):
     # 全系列の最新年。以降の各算出は「使った年がここから2年以上遅れていないか」で検問する
     _all_years = [y for k in ("rev","op","ni","assets","eq","ocf") for y in S[k]]
     LATEST = max(_all_years) if _all_years else None
+    # 2026-09-23: 年ラベルを付け直した提出を明示する（直近の窓に掛かるものだけ。頭注「年の付け方」）
+    _fx = sorted((e, o, n) for o, n, e in _fy_model(facts)["fixed"].values()
+                 if LATEST is not None and n >= LATEST - 6)
+    if _fx:
+        note.append("年ラベルを期末日から付け直した提出がある（SEC の fy＝提出書類の DEI の付番が、期末の順序と"
+                    "整数年ずれていた）: " + " / ".join(f"期末 {e} の年次報告 fy{o}→{n}" for e, o, n in _fx)
+                    + "。系列の年はこの付け直し後のラベル（会社の直近の呼び方に揃えてある）")
 
     def stale(y):
         return LATEST is not None and y is not None and y < LATEST - 1
@@ -659,7 +953,10 @@ def build_numbers(facts):
         ys,gp = last_n(S["gp"])
         gm = {y: S["gp"][y]/S["rev"][y]*100 for y in ys if S["rev"].get(y)}
         yy = sorted(gm)[-2:]
-        if len(yy)==2:
+        # 2026-09-23: 他の欄と同じ年検問（stale）を掛ける。粗利タグは途中で止まる社が多く（EXPD 2012年・OKE 2014年・
+        #   PH 2017年で終了）、年の付け方の是正で売上の系列がその年まで届くようになると、10年以上前の粗利率の差が
+        #   「粗利トレンド」として出てしまう（旧版は売上の欠年で偶然 None だった）。
+        if len(yy)==2 and not stale(yy[1]):
             _safe(ev, note, "gmDelta", lambda: round(gm[yy[1]]-gm[yy[0]],1))
     # accr / conv (直近年)
     # 2026-07-29新設の安全網: **使っている年が古すぎないかを必ず見る。**
@@ -988,7 +1285,13 @@ def build_numbers(facts):
     # 減損履歴(配)
     # 2026-08-04是正(B12e): 「直近5年」は**年ラベルで**選ぶ。旧 `list(...values())[-5:]` は挿入順の
     #   末尾5件＝最新5年とは限らない（fcfpsのフォールバックと同じ思い込み）
-    if S["impair"] and any(S["impair"][y] > 0 for y in sorted(S["impair"])[-5:]):
+    # 2026-09-23是正: B12e の `sorted(...)[-5:]` も**「最後の5ラベル」であって「直近5年」ではなかった**。
+    #   減損の系列は計上した年にしか行が無い（まばら）ので、最後の5ラベルが10年以上前まで届く——
+    #   実測（旧採取器・296社）で 48社の acqImpair="yes" が5会計年度より前の減損だけで立っていた
+    #   （CDNS/MA は2010年、NDSN は2011年、PH は2014-16年）。年の付け方の是正で比較年度の持ち越し
+    #   （翌年・翌々年のラベルに同じ減損額が残る）が消えると系列はさらにまばらになり、AZO は2013年の
+    #   18,300,000 で新たに "yes" になりかけた。→ **全系列の最新年 LATEST から5年以内のラベル**だけを見る。
+    if S["impair"] and LATEST is not None and any(v > 0 for y, v in S["impair"].items() if y > LATEST - 5):
         ev["acqImpair"] = "yes"; note.append("のれん/無形減損の計上履歴あり(配=保S候補、原本で規模確認)")
     # 循環性の機械プロキシ: 売上の前年比が5年内にマイナス2回以上 or 振れ幅>25pt
     if len(rev)>=4 and all(rev[i] for i in range(len(rev)-1)):
