@@ -2,7 +2,7 @@
  "nm": "NBIX",
  "roic": 12.9,
  "roicg": 12.9,
- "nde": -1.15,
+ "nde": -2.28,
  "z": 5.77,
  "gpa": null,
  "accr": -6.6,
@@ -45,7 +45,7 @@
  "fin": null,
  "p1": 80,
  "p2": 70,
- "p3": 95,
+ "p3": null,
  "p4": 90,
  "f1": 90,
  "f2": 65,
@@ -73,7 +73,8 @@
    "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
    "2026-08-06 irr 85→70。旧根拠は自社取得側の承認／自社サプライヤの認定＝**向きが逆**（2026-08-05 に NVDA・MSI・ASML の旧根拠で見つけたのと同型）。堀の本体は特許＝expiry欄の領分",
    "2026-08-20 irr 70 → 50（二重読み）",
-   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 原本の数値は旧値の刻みを支えない（内容は evidence.f2）。2026-08-16 統一規約"
+   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 原本の数値は旧値の刻みを支えない（内容は evidence.f2）。2026-08-16 統一規約",
+   "2026-09-23 nde -1.15 → -2.28（原本検算・todo nde_netcash_false）: 旧値 −1.15 は根拠が無く再現できない。符号・刻みは不変。式と実額・accn は _meta.evidence.nde。p3 95 → 空欄（旧 nde の導出値そのもの＝逸脱評価の根拠なし。新 nde からの導出は 95）。旧 p3 根拠文『純現金(nde-1.15、現金のみでも-0.31)→95』"
   ],
   "evidence": {
    "expiry": "『pending patent applications, which, if issued, could expire at least as late as 2046』+『CRENESSITY has been granted seven years of orphan drug exclusivity by the FDA』+『we face the risk that our licensors could...lose patent protection...thereby impairing or extinguishing our rights under our licenses』→特許束・オーファン独占の期限型独占=yes",
@@ -88,7 +89,6 @@
    "concentration": "『INGREZZA...significant portion of our total net product sales during each of these years』vs『CRENESSITY net product sales were $301.2 million for 2025』→単剤集中度が本銘柄の主リスク(dom/expiry/f群で織込み)",
    "p1": "ROIC5年σ=5.1pt(<6pt)→80",
    "p2": "COVID時に営利は増加(72.3→163.0M)し耐性を示すが本格不況の実績なし→70上限",
-   "p3": "純現金(nde-1.15、現金のみでも-0.31)→95",
    "p4": "accr=-6.6%(<0)+『Unresolved Staff Comments None』。material weaknessヒットは監査手続の定型文(『assessing the risk that a material weakness exists』)で実指摘ではない→90",
    "f1": "ROIIC(2023→25): ΔNOPAT≈232M/ΔIC≈360M=約64%。op250.9→619.1Mを僅少な追加資本で達成、WACC(バイオ~9-10%)+15を大きく超過→90",
    "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】10-K『We estimate that TD affects approximately 800,000 people in the U.S.』は分母だけで、INGREZZA の治療患者数が無く p は測れていない → 65。（旧 80）（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）｜旧根拠: TD推定80万人(米)に対しINGREZZA浸透は低〜中位、CRENESSITY(CAH新規)・HD chorea等の未浸透市場多数→一桁〜低位浸透で高い残余余地→80",
@@ -106,7 +106,8 @@
    "sht": "【2026-07-29 機械算出】自社の売上5年CAGR **26.0%** / 同業（SIC2836「Biological Products, (No Diagnostic Substances)」・43社）の中央値 **6.5%**。シェア = 自社売上 ÷ 市場売上 なので、5年のシェア変化 = ((1+26.0%)÷(1+6.5%))^5 − 1 = **+132.4%**（相対）。出典: 売上系列=SEC XBRL / 母集団=gate0_all.csv 全上場の sales_cagr5 / 業種=SEC submissions の SIC。**これは実シェアの開示ではなく代理指標**（原本にシェアの実開示があればそちらを優先し、evidence を差し替えること）。 → 5年で25%以上伸びた＝**up**",
    "roict": "機械算出: のれん除外ROIC 5年系列 9.8% / 8.0% / 15.7%（最古→直近の差で判定）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 1,045,900,000 → 2023年 1,887,100,000 → 2025年 2,860,500,000。A案(端点) 直近2年CAGR 23.12% − その前3年CAGR 21.74% = +1.38pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -3.63pt ／ 年次YoY {'2021': 8.4, '2022': 31.3, '2023': 26.8, '2024': 24.8, '2025': 21.4} → **採用 +1.38pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "acqS5": "買収支出 5年ぶん合計 43百万$ ÷ 期初総資産(2020-12-31) 1735百万$ ＝ 0.025／内訳: 2022-12-31 43百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 43百万$ ÷ 期初総資産(2020-12-31) 1735百万$ ＝ 0.025／内訳: 2022-12-31 43百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "nde": "【2026-09-23 原本検算】FY2025（10-K accn 0000914475-26-000007・期末 2025-12-31・百万$）: (有利子負債 0 − 現金同等物 1,480.4) ÷ (営業利益 619.1 + 減価償却 30.1) = −2.28。有利子負債 0: BS に借入・社債の行が無い（転換社債は 2024 年に決済）。現金同等物＝現金 713.0 ＋ 流動の Available-for-sale debt securities 767.4。減価償却＝CF Depreciation 26.0 ＋ Amortization of acquired intangible assets 4.1。⚠採取器は他年に負債タグがあるため算出不能にし、AFS のタグは sti の候補に無い（現金だけなら −1.10）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -114,7 +115,8 @@
    "gm": "同上でGrossProfit不発見のため空欄。gmt=upは営利率趨勢(opm 9.0→21.6%)を反映",
    "founder": "hitsに創業者経営の根拠なし→フラグ定義次第でユーザー判定",
    "fin": "業態フラグの定義不明のため空欄(金融業ではない)",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG=13項目、取込時に手入力"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG=13項目、取込時に手入力",
+   "p3": "【2026-09-23】p3 は門が nde から同表で導出する（純現金→95 / <1→85 / <2.5→70 / 以上→50）。台帳の 95 は旧 nde -1.15 の導出値そのもので、根拠文も旧 nde を言い直しただけだった——値が残っていると nde を直しても p3 が追随しない（陳腐化する）ので空欄へ戻した（新 nde -2.28 からの導出は 95）。旧根拠文は kenshi に残した（todo nde_netcash_false）"
   },
   "kenshi_gm": "2026-07-20 gm/sbc監査: gm欄を仕様(営業利益率・GAAP)にXBRL機械計算で補正。sbc単位ずれ補正。 gm None→21.6; sbc 0.22→7.62",
   "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=5.77",

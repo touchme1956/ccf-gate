@@ -2,7 +2,7 @@
  "nm": "LOPE",
  "roic": 47.3,
  "roicg": 27.5,
- "nde": -0.38,
+ "nde": -0.98,
  "z": 15.48,
  "gpa": null,
  "accr": -5.8,
@@ -75,7 +75,8 @@
    "acq5=null: PaymentsToAcquireBusinessesは2019:361.2百万(Orbis買収)のみ=6年前で5年窓外。以降の買収タグなし",
    "p2=95: COVID不況(2020)で営業利益2019:265.1→2020:277.4百万(+4.5%)と逆に増加=浅いDD。ただし現事業体で観測可能な不況はCOVIDのみ(2008-09は旧統合体)",
    "2026-08-20 irr 70 → 50（二重読み）",
-   "2026-09-23 dur 75→**空欄**（門2再審査・todo moat_dur_supplier_sentence・claude-opus-5-5）。旧根拠〈GCU との長期MSA・18ヶ月の解約通知＝移行摩擦〉は 2026-08-20 の irr 二重読みが同じ原本（10-K FY2025・accession 0001104659-26-017047）で退けた機構（GCU は18ヶ月通知で解約でき継続利用の義務なし・早期解約権・最低購入義務なし）。100（規制は提携校の資産・知見は障壁として書かれず市場は highly fragmented・分割型の台頭）／85（両面市場の記述なし）／55（ブランドは提携校のもの）も原本で名指しできない→ v9.9.48 で空欄。evidence.dur を削除し、4つの刻みの当否と逐語の引用を nulls.dur へ書いた（CTAS と同じ形）。**実測（score_all --only・--out は scratch）**: 堀 52.2→51.0・Ω 56.6→55.5・tier 回避・出口 s1・buy=False は不変（下駄にならない）。"
+   "2026-09-23 dur 75→**空欄**（門2再審査・todo moat_dur_supplier_sentence・claude-opus-5-5）。旧根拠〈GCU との長期MSA・18ヶ月の解約通知＝移行摩擦〉は 2026-08-20 の irr 二重読みが同じ原本（10-K FY2025・accession 0001104659-26-017047）で退けた機構（GCU は18ヶ月通知で解約でき継続利用の義務なし・早期解約権・最低購入義務なし）。100（規制は提携校の資産・知見は障壁として書かれず市場は highly fragmented・分割型の台頭）／85（両面市場の記述なし）／55（ブランドは提携校のもの）も原本で名指しできない→ v9.9.48 で空欄。evidence.dur を削除し、4つの刻みの当否と逐語の引用を nulls.dur へ書いた（CTAS と同じ形）。**実測（score_all --only・--out は scratch）**: 堀 52.2→51.0・Ω 56.6→55.5・tier 回避・出口 s1・buy=False は不変（下駄にならない）。",
+   "2026-09-23 nde -0.38 → -0.98（原本検算・todo nde_netcash_false）: 旧値 −0.38 は現金だけ・無形償却抜きの値。短期投資 188,317 を入れると −0.98（−0.5 を跨ぐので F10 の『財務要塞』+4 が効く）。式と実額・accn は _meta.evidence.nde"
   ],
   "evidence": {
    "erosion": "『new competitors or alliances among competitors may emerge and rapidly acquire significant market share』『competition may intensify as our competitors raise additional capital』→競争激化リスクが継続的に顕在化=emerging(蝕セクション)",
@@ -94,7 +95,8 @@
    "eps": "機械算出 2025年: 純利益 216,170,000 ÷ 株数 27,393,000（TTMではなく通期実績）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 844,096,000 → 2023年 960,899,000 → 2025年 1,106,070,000。A案(端点) 直近2年CAGR 7.29% − その前3年CAGR 4.41% = +2.87pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +1.85pt ／ 年次YoY {'2021': 6.2, '2022': 1.6, '2023': 5.4, '2024': 7.5, '2025': 7.1} → **採用 +2.87pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2024年: 営業利益 ÷ 支払利息 = 68849.75。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2020-12-31) 1845百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2020-12-31) 1845百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "nde": "【2026-09-23 原本検算】FY2025（10-K accn 0001104659-26-017047・期末 2025-12-31・千$）: (有利子負債 0 − 現金同等物 300,079) ÷ (営業利益 265,910 + 減価償却 39,902) = −0.98。有利子負債 0: BS に借入・社債の行が無い（負債は買掛・未払・リース・繰延税金のみ）。現金同等物＝現金 111,762 ＋ 流動の Investments 188,317（XBRL は AvailableForSaleSecuritiesDebtSecuritiesCurrent）。減価償却＝CF『Depreciation and amortization』31,483 ＋『Amortization of intangible assets』8,419。⚠採取器の算術は現金のみ・D&A＝DepreciationDepletionAndAmortization 31,187（無形償却を含まない）で −0.38（＝旧値）"
   },
   "nulls": {
    "cagr": "ドラフト19.8は2018年GCU分離前の旧統合体売上を跨いだ非再現値。継続事業体CAGRは約4-5%。誤値回避のためnull",

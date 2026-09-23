@@ -2,7 +2,7 @@
  "nm": "INFY",
  "roic": 28.7,
  "roicg": 25.7,
- "nde": -0.7,
+ "nde": -0.8,
  "z": null,
  "gpa": 33.7,
  "accr": -6.8,
@@ -45,7 +45,7 @@
  "fin": null,
  "p1": 90,
  "p2": 80,
- "p3": 95,
+ "p3": null,
  "p4": 90,
  "f1": 75,
  "f2": 65,
@@ -73,7 +73,8 @@
    "sbc充填: 従業員株式報酬FY2025=95M USD(売上比0.5%)→sbc≈0.1B。dilNet-0.39(株数4,356M(2019)→4,055M(2026)純減=自社株買いが希薄化を上回る)と整合",
    "fcf棄却(null): capexタグ(PurchaseOfPPE...)がFY2020で途切れFY2025値なし。kenshi既定のcapex=0→FCF=OCF4,351M=NIの138%は過大で再現不能。参考: 歴史的capex$350-465M/年→FCF実勢≈3.9B・転換>110%だが原本要",
    "2026-07-19 発見度実データ: analysts=13 instOwn=12.065(AV)",
-   "2026-09-23 f2 75→65（規約の適用・判定圏外）: 原本の数値は旧値の刻みを支えない（内容は evidence.f2）。2026-08-16 統一規約"
+   "2026-09-23 f2 75→65（規約の適用・判定圏外）: 原本の数値は旧値の刻みを支えない（内容は evidence.f2）。2026-08-16 統一規約",
+   "2026-09-23 nde -0.7 → -0.8（原本検算・todo nde_netcash_false）: 旧値 −0.7 は FY2025 の現金 2,861 ÷ 営業利益 4,071（減価償却なし）と一致＝年も式もパックの会計年度（2026-03-31）と違っていた。式と実額・accn は _meta.evidence.nde。p3 95 → 空欄（旧 nde の導出値そのもの＝逸脱評価の根拠なし。新 nde からの導出は 95）。旧 p3 根拠文『純負債マイナス(nde-0.62〜-0.7)・借入ゼロ・現金2,861M+多額STI=純現金=95』"
   ],
   "evidence": {
    "dom": "『Intense competition in the market for technology services could affect our win rates and pricing, which could reduce our market share』+『Advances in cloud, AI and platform architectures have lowered barriers to entry, enabling niche providers』→世界ITサービスは断片化・Infosys世界シェア<10%=競争<40%=50",
@@ -88,7 +89,6 @@
    "nrr": "NRR非開示→既定105",
    "p1": "ROICσ(5年)=2.5pt(<3pt)=90",
    "p2": "営利FY2020 2,724M→FY2021 3,325M(COVID下+22%・ドローダウンなし)=浅い。ただし8年XBRLに景気後退1回のみ(GFC期は範囲外・ITサービス歴史的循環性未検証)につき80",
-   "p3": "純負債マイナス(nde-0.62〜-0.7)・借入ゼロ・現金2,861M+多額STI=純現金=95",
    "p4": "accr=-6.8%(<0)+『material weakness』ヒットは監査ICFR定型文(『assessing the risk that a material weakness exists』)で実指摘ではない・『Unresolved Staff Comments』は項目見出しのみ=90",
    "f1": "ΔNOPAT(FY2023→25)僅少(営利3,825→4,071M)=成長鈍化。ROIICは現金除きICで≈15-18%・総資本ベースで≈8%と幅大で再現困難。純現金・自社株買い・ROIC28%の還元の質で75",
    "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】75 は刻みに無い中間値。20-F の『incremental AI first services opportunity of USD 300-400 billion by 2030』は追加機会の規模で、当社の浸透率 p は測れていない → 65。（旧 75）（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）｜旧根拠: 『incremental AI first services opportunity of USD 300-400 billion by 2030 as per market estimates』→浸透率は低位だが『erosion of some addressable market』でTAM自体が浸食されるため保守75",
@@ -102,7 +102,8 @@
    "eps": "機械算出 2025年: 純利益 3,162,000,000 ÷ 株数 4,143,607,528（TTMではなく通期実績）",
    "roict": "機械算出: のれん除外ROIC 5年系列 25.8% / 30.8% / 34.0% / 29.2% / 29.7%（最古→直近の差で判定）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 12,780,000,000 → 2023年 18,212,000,000 → 2025年 19,277,000,000。A案(端点) 直近2年CAGR 2.88% − その前3年CAGR 12.53% = -9.65pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -8.77pt ／ 年次YoY {'2021': 6.1, '2022': 20.3, '2023': 11.7, '2024': 1.9, '2025': 3.9} → **採用 -8.77pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "acqS5": "買収支出 5年ぶん合計 490百万$ ÷ 期初総資産(2021-03-31) 14825百万$ ＝ 0.033／内訳: 2025-03-31 377百万$ / 2023-03-31 113百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 490百万$ ÷ 期初総資産(2021-03-31) 14825百万$ ＝ 0.033／内訳: 2025-03-31 377百万$ / 2023-03-31 113百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "nde": "【2026-09-23 原本検算】FY2026（20-F accn 0001193125-26-270520・期末 2026-03-31・百万$）: (有利子負債 0 − 現金同等物 3,706) ÷ (営業利益 4,085 + 減価償却 552) = −0.80。有利子負債 0: BS に借入の行が無い（リース負債 333＋634 は規約どおり入れない）。現金同等物＝現金 2,341 ＋ Current investments 1,365。営業利益＝『Operating profit』4,085、減価償却＝CF 552。⚠companyfacts にこの 20-F の IFRS 数値が未収載で採取器は FY2025（2025-03-31期）止まり"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -111,7 +112,8 @@
    "founder": "創業者(N.Murthy等)は経営退任・専門経営者(CEO)体制。創業者経営フラグ該当せず・hits内に明確証拠なし→ユーザー判定",
    "fin": "金融業ではない(ITサービス)。業態フラグの定義不明のため空欄",
    "nrr": "NRR非開示→既定105(evidence参照)",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(NYSE:INFY ADR=USD・財務もUSD建てで通貨混線なし)"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(NYSE:INFY ADR=USD・財務もUSD建てで通貨混線なし)",
+   "p3": "【2026-09-23】p3 は門が nde から同表で導出する（純現金→95 / <1→85 / <2.5→70 / 以上→50）。台帳の 95 は旧 nde -0.7 の導出値そのもので、根拠文も旧 nde を言い直しただけだった——値が残っていると nde を直しても p3 が追随しない（陳腐化する）ので空欄へ戻した（新 nde -0.8 からの導出は 95）。旧根拠文は kenshi に残した（todo nde_netcash_false）"
   },
   "kenshi_gm": "2026-07-20 gm/sbc監査: gm欄を仕様(営業利益率・GAAP)にXBRL機械計算で補正。sbc単位ずれ補正。 gm 30.6→21.1; gmt down→flat",
   "provenance": {

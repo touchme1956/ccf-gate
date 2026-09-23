@@ -2,7 +2,7 @@
  "nm": "RMBS",
  "roic": 19.9,
  "roicg": 15.6,
- "nde": -0.67,
+ "nde": -2.52,
  "z": null,
  "gpa": 36.8,
  "accr": -8.5,
@@ -74,7 +74,8 @@
    "2026-07-28 絶対MOAT欠測補充(dom/irr): dom=70は新刻み(市場構造)に基づく判定。自社約21%(10-K製品売上$246.8百万÷2024年MIC市場約$1.17十億)・上位3社93%超(Frost & Sullivan)の3社寡占。irr=70は10-Kの数ヶ月に及ぶ顧客認定工程(高摩擦)とJEDEC標準準拠ゆえの代替可能性の両睨み。rep=60/dur=100/moatW=50など既判定項目は不変",
    "2026-07-29 sht 空欄 → 'up'。**全317社でshtが空欄**でSELECT既定'flat'に化けており、shtを使う5規則（pm±3/−10・地味業界の勝者+2・Intel警報・S2の2本）が一度も働いていなかった（night/audit_deadweight.py の実測）。gmt/roict と同じトレンド項なのに採取器が出していなかったのが原因。同業比の売上成長からシェア変化を算出して充填した（判定式は night/fill_sht.py）。",
    "2026-07-29 p1 75→50（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均10.9%・σ7.7pt・CV70.9%）。",
-   "2026-08-20 irr 70 → 50（二重読み）"
+   "2026-08-20 irr 70 → 50（二重読み）",
+   "2026-09-23 nde -0.67 → -2.52（原本検算・todo nde_netcash_false）: 旧値 −0.67 は現金だけ・D&A 過小の採取器の算術と一致していた。市場性証券 579,005 と CF の D&A で −2.52。刻みは不変。式と実額・accn は _meta.evidence.nde"
   ],
   "evidence": {
    "expiry": "『Some of our license agreements may convert from royalty generating to fully paid-up licenses at the expiration of their terms or upon certain milestones, and we may not receive royalties after that time』→特許/ライセンス期限型=yes",
@@ -103,7 +104,8 @@
    "gmt": "機械算出: 営業利益率 2023年 33.3% → 2025年 36.8%（±1ptでup/down）",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 246,322,000 → 2023年 461,117,000 → 2025年 707,630,000。A案(端点) 直近2年CAGR 23.88% − その前3年CAGR 23.25% = +0.63pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -9.36pt ／ 年次YoY {'2021': 33.3, '2022': 38.5, '2023': 1.4, '2024': 20.7, '2025': 27.1} → **採用 +0.63pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 189.525。利息タグ InterestExpenseNonoperating（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "acqS5": "買収支出 5年ぶん合計 113百万$ ÷ 期初総資産(2020-12-31) 1251百万$ ＝ 0.090／内訳: 2022-12-31 16百万$ / 2021-12-31 97百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 113百万$ ÷ 期初総資産(2020-12-31) 1251百万$ ＝ 0.090／内訳: 2022-12-31 16百万$ / 2021-12-31 97百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "nde": "【2026-09-23 原本検算】FY2025（10-K accn 0001193125-26-057101・期末 2025-12-31・千$）: (有利子負債 0 − 現金同等物 761,831) ÷ (営業利益 260,218 + 減価償却 41,989) = −2.52。有利子負債 0: BS に借入・社債の行が無い（転換社債は 2023 年までに消滅）。『EDA tools software licenses liability』14,884＋20,908 はソフトウェア使用許諾の分割払い未払金で借入ではないので入れない。現金同等物＝現金 182,826 ＋ 流動の Marketable securities 579,005（XBRL は AvailableForSaleSecuritiesDebtSecuritiesCurrent）。減価償却＝CF Depreciation 35,111 ＋ Amortization of intangible assets 6,878。⚠採取器の算術は現金のみ・D&A＝DepreciationDepletionAndAmortization 11,916（CF の D&A 合計ではない）で −0.67（＝旧値）"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出)",

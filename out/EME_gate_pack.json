@@ -2,7 +2,7 @@
  "nm": "EME",
  "roic": 79.3,
  "roicg": 34.5,
- "nde": -0.65,
+ "nde": -0.58,
  "z": 4.95,
  "gpa": 35.3,
  "accr": -0.3,
@@ -45,7 +45,7 @@
  "fin": null,
  "p1": 80,
  "p2": 70,
- "p3": 95,
+ "p3": null,
  "p4": 90,
  "f1": 90,
  "f2": 65,
@@ -75,7 +75,8 @@
    "sbc/z/founder/fin/市場13項目はnull(nulls参照)",
    "2026-07-29 acq5 1.56 → 'yes'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "2026-07-29 p1 70→80（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均42.6%・σ9.8pt・CV23.0%）。",
-   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』"
+   "2026-09-23 f2 80→65（規約の適用・判定圏外）: 旧根拠は定性・審査官の推定のみで、原本に TAM 浸透率・TAM 成長の数値開示が無い。2026-08-16 統一規約『数値開示なしの既定は65』",
+   "2026-09-23 nde -0.65 → -0.58（原本検算・todo nde_netcash_false）: 旧値 −0.65 は −現金 ÷ 営業利益（減価償却を足していない）と一致していた。式と実額・accn は _meta.evidence.nde。p3 95 → 空欄（旧 nde の導出値そのもの＝逸脱評価の根拠なし。新 nde からの導出は 95）。旧 p3 根拠文『『無借金・純現金』: nde=−0.65、cash1,112百万USD、LongTermDebt実質0=純現金→95』"
   ],
   "evidence": {
    "dom": "『there are relatively few barriers to entry into the building services industry』『The market for providing industrial services includes large national providers, as well as numerous [local providers]』→断片化した競争市場・支配的シェアの主張なし=競争<40%=50",
@@ -87,7 +88,6 @@
    "expiry": "限セクションのヒットは『price concessions...changing the payment terms』=ASC606の変動対価/収益認識の契約文言であり、免許・コンセッション型独占の期限ではない=no",
    "geopol": "『approximately 97% were generated in the United States and approximately 3% in the United Kingdom』かつ『Until the sale of our United Kingdom operations on December 1, 2025』→UK売却後は実質~100%米国内=地政学的曝露軽微=0(※単一国集中だが米国=安定)",
    "moatdecay": "市場成長継続(データセンター・電化)+受注環境良好、堀の劣化を示す証拠なし=no",
-   "p3": "『無借金・純現金』: nde=−0.65、cash1,112百万USD、LongTermDebt実質0=純現金→95",
    "p4": "『material weakness』ヒットは監査手続の定型文(『assessing the risk that a material weakness exists, testing and evaluating the design and operating effectiveness』)であり実指摘ではない。『ITEM 1B. UNRESOLVED STAFF COMMENTS None』。買収先ICFR除外(『constituted 4.4% of total assets...6.4% of revenues』)は近時取得業務の標準的除外。accr=−0.3%(<0)+無限定→90",
    "f1": "ROIIC(2023→2025)=ΔNOPAT631/ΔIC882≈72%>>WACC+15。無借金・純現金・買収の増分収益高。再投資率≥30%(2025大型M&A)。上限90",
    "f2": "【2026-09-23 f2 統一規約の適用（2026-08-16 ユーザー明示指示・判定圏外）】旧根拠自身が『数値開示なし』と書いている（『数千億ドル級』は審査官の推定）＝原本に TAM 浸透率・TAM 成長の数値開示が無い → 80→65。（2026-08-16 統一規約: 刻み 90:p<20∧g>10 / 80:p<40∧g>7 / 65:p<60 / 50:p≥60 は*測った* p を前提にする。90/80 は『測って低浸透』、50 は『測って飽和(p≥60)』を主張し、65 だけが測っていない事実を主張しない）｜旧根拠: 米国非住宅建設+設備サービスTAMは数千億ドル級で断片化・EMEは『large national providers』の一角=一桁%浸透(数値開示なし・保守側)=80",
@@ -107,7 +107,8 @@
    "p1": "【2026-07-29 機械算出・変動係数刻み(v9.9.50)】ROIC安定性＝のれん・無形除外ROIC3年系列の**変動係数(σ÷平均)**。系列: 2021 30.1% / 2022 43.7% / 2023 54.0% → 平均 42.6% / σ 9.8pt / **CV 23.0%** → 刻み(CV<15→90 / <30→80 / <50→65 / 以上→50)で **80**。投下資本 = 自己資本 + 有利子負債 − のれん − 無形（門式）。出典: SEC XBRL companyfacts。",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 8,797,061,000 → 2023年 12,582,873,000 → 2025年 16,986,422,000。A案(端点) 直近2年CAGR 16.19% − その前3年CAGR 12.67% = +3.52pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = +3.61pt ／ 年次YoY {'2021': 12.6, '2022': 11.8, '2023': 13.6, '2024': 15.8, '2025': 16.6} → **採用 +3.61pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 142.547。利息タグ InterestExpense（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "acqS5": "買収支出 5年ぶん合計 1564百万$ ÷ 期初総資産(2020-12-31) 5064百万$ ＝ 0.309／内訳: 2025-12-31 1022百万$ / 2024-12-31 228百万$ / 2023-12-31 96百万$ / 2022-12-31 99百万$ / 2021-12-31 118百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 1564百万$ ÷ 期初総資産(2020-12-31) 5064百万$ ＝ 0.309／内訳: 2025-12-31 1022百万$ / 2024-12-31 228百万$ / 2023-12-31 96百万$ / 2022-12-31 99百万$ / 2021-12-31 118百万$（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "nde": "【2026-09-23 原本検算】FY2025（10-K accn 0000105634-26-000025・期末 2025-12-31・千$）: (有利子負債 0 − 現金同等物 1,111,968) ÷ (営業利益 1,713,418 + 減価償却 189,275) = −0.58。有利子負債 0: 債務注記『Excluding finance lease liabilities, we had no outstanding debt as of December 31, 2025』（ファイナンスリースは別行で規約どおり入れない）。減価償却＝採取器の構成要素の合計（Depreciation 67,368 ＋ AmortizationOfIntangibleAssets 119,052 ＋ FinanceLeaseRightOfUseAssetAmortization 2,855）。CF の2行（67,368＋119,052＝186,420）なら −0.585。⚠採取器は他年に負債タグがあるため算出不能にする"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
@@ -115,7 +116,8 @@
    "fcf_capex": "capexタグ(PaymentsToAcquirePropertyPlantEquipment等)不発見。fcf=1.3はOCF近似(資本集約度低のため実害小)",
    "founder": "創業者経営の証拠hitsになし。EMCORは職業経営型・創業者支配の記載なし=null",
    "fin": "業態フラグ定義不明(ASR様式に倣う)。金融業ではない=null",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG(13項目)は取込時手入力=null"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG(13項目)は取込時手入力=null",
+   "p3": "【2026-09-23】p3 は門が nde から同表で導出する（純現金→95 / <1→85 / <2.5→70 / 以上→50）。台帳の 95 は旧 nde -0.65 の導出値そのもので、根拠文も旧 nde を言い直しただけだった——値が残っていると nde を直しても p3 が追随しない（陳腐化する）ので空欄へ戻した（新 nde -0.58 からの導出は 95）。旧根拠文は kenshi に残した（todo nde_netcash_false）"
   },
   "kenshi_gm": "2026-07-20 gm/sbc監査: gm欄を仕様(営業利益率・GAAP)にXBRL機械計算で補正。sbc単位ずれ補正。 gm 19.3→10.1",
   "kenshi_z": "2026-07-20 監査: Z未入力を新旧一貫基準でXBRL補完 z=4.95",

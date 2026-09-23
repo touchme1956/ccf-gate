@@ -73,7 +73,8 @@
    "f1 ROIIC: 税後営利Δ(2022→2025)143M/投下資本Δ385M≈37%(2023→2025では≈55%)でWACC+15超。SBC歪みを正常化しても高水準→90",
    "2026-07-29 acq5 0 → 'no'。列挙(yes/no)の欄に数値が入っており、門は acq5==='no' でしか『のれん込みROIC乖離 −6』を免除しないため**罰が黙って効いていた**。のれん系列から機械判定した（判定規則は night/fix_acq5.py）。",
    "2026-07-29 p1 80→90（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均25.0%・σ1.1pt・CV4.4%）。",
-   "2026-08-20 irr 70 → 50（二重読み）"
+   "2026-08-20 irr 70 → 50（二重読み）",
+   "2026-09-23 nde -0.5 → -0.5（据置・原本検算・todo nde_netcash_false）: 旧値 −0.5 は原本の値と一致（据置）。式と実額・accn は _meta.evidence.nde"
   ],
   "evidence": {
    "dom": "『some of our principal competitors offer their products or services at a lower price, which has resulted in pricing pressures』+『increased competition generally could hinder our ability to attract and retain clients』→ADP/Paychex/Paylocity等との競争市場でシェア<40%=50",
@@ -99,7 +100,8 @@
    "roic": "機械算出 2023年: NOPAT 325,583,081（営業利益 451,322,000×(1−実効税率27.9%)） ÷ IC 1,230,035,000＝自己資本 1,303,036,000 + 有利子負債 29,000,000 − のれん 51,889,000 − 無形 50,112,000。**IC/ICg=92.3%**（ICg=自己資本+有利子負債＝控除前の投下資本。2割未満なら分母縮退＝算出不能。絶対のルール7(b)）｜参考 IC/自己資本=94.4%｜有利子負債の内訳: LongTermDebtNoncurrent=29,000,000｜**v9.9.72: through-cycle 化**。5年系列 3年の**中央値 24.7%** を採用（直近年 26.5% / 最悪 23.9%）。roicg も同じ年の系列の中央値 22.6% にして roic≥roicg を保つ",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2020年 841,434,000 → 2023年 1,693,700,000 → 2025年 2,051,700,000。A案(端点) 直近2年CAGR 10.06% − その前3年CAGR 26.26% = -16.20pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -15.38pt ／ 年次YoY {'2021': 25.4, '2022': 30.3, '2023': 23.2, '2024': 11.2, '2025': 8.9} → **採用 -15.38pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
    "intcov": "機械算出 2025年: 営業利益 ÷ 支払利息 = 166.824。利息タグ InterestExpense（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
-   "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2020-12-31) 2608百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
+   "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2020-12-31) 2608百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）",
+   "nde": "【2026-09-23 原本検算】FY2025（10-K accn 0001193125-26-059372・期末 2025-12-31・百万$）: (有利子負債 0 − 現金同等物 370.0) ÷ (営業利益 567.2 + 減価償却 176.3) = −0.50（−0.4977）。有利子負債 0: 債務注記『As of December 31, 2025, there was no debt outstanding under the Revolving Credit Facility』。現金＝BS 370.0（Funds held for clients 5,137.0 は顧客資金なので入れない）。減価償却＝CF 176.3。⚠採取器は他年に負債タグがあるため算出不能にする"
   },
   "nulls": {
    "z": "Altman Zは時価総額が必要(市場データ手入力後に算出可)",
