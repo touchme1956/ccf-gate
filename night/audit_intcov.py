@@ -35,6 +35,12 @@ night/audit_intcov.py — 利払カバーの**被覆と基準**を数える（20
   **これが止まると新しいパックの `intcov` が永久に空欄＝キルが眠る＝甘い側へ静かに壊れる**。
   「書けるのに書かれていない社」を数えて出す（0 が正常）。
 
+■ ★2026-09-23: 原本で検算済みのパックを内部矛盾から分ける
+  パックの `_meta.provenance.intcov` が machine 以外（審査官が原本で検算）の社は、
+  v11_facts（FinanceCosts 等の別基準）ではなく**パックの値**で内部矛盾を裁き、
+  消えたものは「✓検算済み」として別に出す（TIMB が鳴り続けて本物の矛盾を埋めていた）。
+  逆向きの取り残し（v11_facts は空欄なのにパックに機械の値が残る）も名前で出す。
+
 使い方: python3 night/audit_intcov.py [--json] [--list]
 出力: out/audit_intcov.json（--json）
 """
@@ -75,12 +81,17 @@ def main():
         d = json.load(open(pk, encoding="utf-8"))
         f = facts.get(t) or {}
         s = sc.get(t) or {}
+        prov = (((d.get("_meta") or {}).get("provenance") or {}).get("intcov"))
         rows.append({
             "t": t, "omega": s.get("s"), "buy": bool(s.get("buy")),
             "nde": d.get("nde"),
             "pack_intcov": d.get("intcov"),   # ★キルが実際に読む値（v11_facts ではなくパックの欄）
             # 2026-09-23: 日本株は有報から intcov をパックへ直接入れた（v11_facts は SEC だけ）→ 空欄の理由も見る
             "pack_intcov_null": bool(((d.get("_meta") or {}).get("nulls") or {}).get("intcov")),
+            # ★2026-09-23: パックの intcov を審査官が原本で検算した社（provenance が machine 以外）。
+            #   fill_intcov はこの欄を上書きしない＝キルが読むのは v11_facts ではなくこの検算値
+            "pack_prov": prov,
+            "pack_verified": bool(prov and prov != "machine"),
             "intcov": f.get("intcov"), "intcov_strict": f.get("intcov_strict"),
             "intcov_cash": f.get("intcov_cash"),
             "basis": f.get("int_basis"), "period": f.get("int_strict_period") or "annual",
@@ -116,6 +127,7 @@ def main():
              "stale": "利息の年次がアンカーから2年以上古い",
              "unmeasured": "負債の痕跡はあるのに利息が採れない",
              "absent": "SEC 経路にそもそも居ない",
+             "unit_mismatch": "営業利益と利息の通貨（XBRL units）がそろわない＝割らない",
              "unknown": "不明"}
     for k, c in holes.most_common():
         j = sum(1 for r in rows if r["na"] == k and r["jp"])
@@ -130,13 +142,27 @@ def main():
 
     # ── 内部矛盾: 純現金なのに利払カバーが低い ────────────────────────
     #   独立に入った二つの値が定義上ぶつかる＝もっともらしい範囲内の誤りを捕まえる唯一の検査
-    bad = [r for r in rows if r["nde"] is not None and r["nde"] <= 0
-           and r["intcov"] is not None and r["intcov"] < LINE]
-    print(f"\n■ ★内部矛盾: **純現金(nde≤0)なのに利払カバー<{LINE:g}** — {len(bad)}社")
+    #   ★2026-09-23: パックの intcov が**原本で検算済み**（provenance が machine 以外）の社は、
+    #   v11_facts の値（FinanceCosts 等の別基準）ではなく**キルが実際に読むパックの値**で裁く。
+    #   v11_facts だけを見ると、原本で直した TIMB が永久に鳴り続けて本物の矛盾が埋もれる。
+    def _cov(r):
+        return r["pack_intcov"] if r["pack_verified"] else r["intcov"]
+    cand_bad = [r for r in rows if r["nde"] is not None and r["nde"] <= 0
+                and r["intcov"] is not None and r["intcov"] < LINE]
+    bad = [r for r in cand_bad if _cov(r) is not None and _cov(r) < LINE]
+    cleared = [r for r in cand_bad if r not in bad]
+    print(f"\n■ ★内部矛盾: **純現金(nde≤0)なのに利払カバー<{LINE:g}** — {len(bad)}社"
+          + (f"（ほか ✓原本で検算済み {len(cleared)}社）" if cleared else ""))
+    if cleared:
+        print("   ✓検算済み（v11_facts は低いが、パックの intcov は審査官が原本で検算した値＝キルはこちらを読む）:")
+        for r in cleared:
+            print(f"     {r['t']:<7} nde={str(r['nde']):<7} v11 intcov={str(r['intcov']):<7}"
+                  f"（基準={r['basis']}） → パック {r['pack_intcov']}（provenance={r['pack_prov']}）")
     if bad:
         print("   （利息以外〔為替差損・リース利息・引当の割引〕を利息と読んでいる疑い）")
         for r in sorted(bad, key=lambda x: -(x["omega"] or 0)):
             st = f"strict={r['intcov_strict']}" if r["intcov_strict"] is not None else "strict=算出不能"
+            st += " ✓パックは検算済みでも<3" if r["pack_verified"] else ""
             print(f"     {'🟢' if r['buy'] else '  '}{r['t']:<7} Ω{(r['omega'] or 0):>5.1f} "
                   f"nde={str(r['nde']):<7} intcov={str(r['intcov']):<7} "
                   f"基準={str(r['basis']):<14} {st}")
@@ -186,11 +212,23 @@ def main():
 
     # ★パックが v11_facts に追随しているか＝`fill_intcov` が止まった検出（0 が正常）。
     #   止まると新しいパックの intcov が空欄のまま＝キルが眠る＝**甘い側へ静かに壊れる**。
-    behind = [r for r in rows if r["intcov_strict"] is not None
+    #   検算済みのパック（provenance が machine 以外）は fill_intcov が意図して書かないので遅れに数えない
+    behind = [r for r in rows if r["intcov_strict"] is not None and not r["pack_verified"]
               and (r["pack_intcov"] is None or abs(r["pack_intcov"] - r["intcov_strict"]) > 1e-9)]
+    # ★逆向きの取り残し: v11_facts が空欄（通貨不一致・CIK是正等）なのにパックに機械の値が残っている。
+    #   fill_intcov は空欄を書かない（消さない）ので、ここで名前を出さないと古い誤値がキルに残り続ける
+    orphan = [r for r in rows if r["intcov_strict"] is None and r["pack_intcov"] is not None
+              and not r["pack_verified"] and not r["jp"]]
     print(f"\n■ パックの追随（fill_intcov が止まった検出）: 遅れ {len(behind)}社"
           + ("（0＝正常）" if not behind else
              f"　⚠ python3 night/fill_intcov.py --write が要る: {' '.join(r['t'] for r in behind[:12])}"))
+    vfd = [r for r in rows if r["pack_verified"]]
+    print(f"  ✓原本で検算済み（fill_intcov が上書きしない）{len(vfd)}社: {' '.join(r['t'] for r in vfd)}")
+    if orphan:
+        print(f"  ⚠v11_facts は空欄なのにパックに機械の intcov が残る {len(orphan)}社"
+              "（fill_intcov は空欄を書かない＝古い値がキルに残る。原因を確かめて人が消すこと）: "
+              + " ".join(f"{r['t']}={r['pack_intcov']}({(facts.get(r['t']) or {}).get('intcov_na_reason') or '—'})"
+                         for r in orphan))
 
     cands = [r for r in rows if r["cands"]]
     if cands:
@@ -219,6 +257,9 @@ def main():
                "swap_loses_kill_unmeasured": [r["t"] for r in blind],
                "add_newly_killed": [r["t"] for r in add],
                "packs_behind_fill_intcov": [r["t"] for r in behind],
+               "contradiction_cleared_by_kenshi": [r["t"] for r in cleared],
+               "packs_verified_intcov": [r["t"] for r in rows if r["pack_verified"]],
+               "packs_orphan_machine_intcov": [r["t"] for r in orphan],
                "tag_candidates": {r["t"]: r["cands"] for r in cands},
                "rows": rows}
         json.dump(out, open(os.path.join(OUT, "audit_intcov.json"), "w", encoding="utf-8"),

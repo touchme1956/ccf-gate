@@ -1767,8 +1767,8 @@
    "id": "v11_facts_unit_cik",
    "kind": "宿題",
    "title": "v11_facts.py: 通貨をそろえずに割る(annual)・AMBIQのCIK取り違え",
-   "done": false,
-   "note": "2026-09-23 intcov是正で判明。(1) annual() が営業利益USD÷利息INRを割りWITのintcovが0.13になった (2) ティッカー表の『AMBIQ』がAmbipar(CIK1937441)を引き、パックのAmbiq Micro(CIK1500412・AMBQ)と別会社。intcov以外のv11の値にも及ぶ。audit_intcov.py の内部矛盾欄はv11_factsを読むのでTIMBが鳴り続ける。"
+   "done": true,
+   "note": "2026-09-23 intcov是正で判明。(1) annual() が営業利益USD÷利息INRを割りWITのintcovが0.13になった (2) ティッカー表の『AMBIQ』がAmbipar(CIK1937441)を引き、パックのAmbiq Micro(CIK1500412・AMBQ)と別会社。intcov以外のv11の値にも及ぶ。audit_intcov.py の内部矛盾欄はv11_factsを読むのでTIMBが鳴り続ける。 【2026-09-23 実施】v11_facts.py: 割り算・引き算の両辺の通貨単位を検問（不一致は空欄＋unit_mismatch）・CIK はパックの原本 URL を優先。audit_intcov.py: 検算済み（provenance≠machine）は別行・逆向きの取り残し検出を追加。前後差: PAC intcov 1003.4→空欄（MXN÷USD）・WIT strict 0.13→空欄・AMBIQ を Ambiq Micro に・新たに測れた5社。全パックの CIK 食い違いは AMBIQ だけ。PAC パックの intcov=1003.376（機械の誤値）は空欄＋理由へ（MXN 同士の概算3.67・原本未確認）。残る課題: annual() の通貨選択が『USD 優先』で 20-F の便宜換算を掴むことがある（retro_features2.py と揃えた基準なので今回は検問のみ）。"
   },
   {
    "id": "ifrs_nde_rou_bias",

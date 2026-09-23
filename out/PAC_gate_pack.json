@@ -72,7 +72,8 @@
    "2026-07-29 roiic機械算出（新設・v9.9.46）: 3年窓=17.2 / 5年窓=14.3。空欄のままだと門は roiicNA として F6=58 の定数を返し、『再投資率×ROIIC』も複利停止キルも一度も作動しない状態だった",
    "2026-07-29 p1 50→65（v9.9.50・目盛りを絶対σから変動係数へ）。旧刻みは絶対の百分点なのでROICが高い会社ほど機械的にσが二桁になり、**不安定さではなくROICの絶対水準を測っていた**（ROIC平均14.7%・σ4.5pt・CV30.8%）。",
    "2026-08-06 irr 85→70。コンセッション＝運営権であって認証ロックではない。空港4社(ASR/OMAB/PAC/CAAP)の刻みを同じ論拠で揃えた",
-   "2026-08-20 irr 70 → 50（二重読み）"
+   "2026-08-20 irr 70 → 50（二重読み）",
+   "2026-09-23 intcov 1003.376→空欄: 通貨混在（MXN÷USD）の誤値。理由は nulls.intcov"
   ],
   "evidence": {
    "expiry": "『All of our Mexican airport concessions have a term of 50 years commencing on November 1, 1998. Under certain circumstances, the SICT may extend these concessions』→メキシコ全空港が2048年頃満了・残り約22年。ジャマイカMBJは『the concession term was extended to 31 years...scheduled to expire in March 2034』。『Upon expiration or termination of the concession term, all airport assets...will automatically revert to the AAJ without additional』=満了時資産返還の期限型独占",
@@ -105,7 +106,6 @@
    "roiic5": "機械算出 2019→2024年(5年窓): ΔNOPAT 5,072,397,926 ÷ Δ投下資本 35,505,132,000（IC=自己資本+有利子負債＝**のれん込み**。買収に投じた資本も分母に入れる）｜IC 37,106,486,000→72,611,618,000（+95.7%）",
    "irr": "**irr 50（2026-08-20・irr=70 の二重読み。v9.9.144 の5点検問）**　『Excluding our airports servicing tourist destinations, our airports generally are natural monopolies in their geographical areas and typically do not face significant competition.』（Item 4.B 事業の概況／見出し『Competition』の冒頭）——70を支えうる最有力候補だが、述べているのは**市場構造**であって顧客の移行費用ではない。台帳は同じ事実を dom=100/dur=100 で既に数えており、irr に置くと三重計上になる　『However, the Mexican and Jamaican governments could grant additional concessions to operate existing government-managed airports, authorize the construction of airports, or allow existing privately held domestic airports to become international airports and permit them to receive regular domestic and international flights, all of which could lead to increased competition for our airports.』（Item 4.B『Competition』——上の自然独占の文の**直後の一文**）——原本自身が自然独占の主張を同じ段落で打ち消す。『引用の後半が逆を言う』型　『As of the date of this report, we are the only airport operator in the country with 100% of its airports certified in SMS.』（Item 4.B 安全管理（SMS））——原本で唯一の『only …』の主張だが**自社が取得した認証**＝検問3の型(1)。顧客の再認定ではない　《反証（同じ原本に同居する）》『One factor that may significantly increase competition from other airports is expanding the permits of existing private airports that are currently not permitted to operate regular commercial routes.』 ／ 『The Mexican and Jamaican governments could grant new concessions that compete with our airports.』　《射程》全社（20-F・メキシコ12空港＋ジャマイカ2空港＋CBX。単一の空港運営事業）　《検問と反証の経緯》【検問2 機構を名指ししているか＝×】原本(20-F FY2025・1,194,398字)を自分で全文grepし、OMAB と同じ結果——switching cost 0／lock-in 0／long-term contract 0／multi-year 0／renewal rate 0／retention rate 0／churn 0／installed base 0／barrier(s) to entry 0／re-certif 0／requalif 0／qualified by 0／**certified by 0**／workflow 0。switch は1件だがLIBOR→SOFRの金利切替。dossier の機構カウントも データ移行0／設置基盤0／工程への組込0／解約率0／乗り換えそのもの0。『消耗品の専用性2件』は**取締役会の proprietary member（常勤取締役）**の誤ヒット、『複数年の購買義務3件』は AMPからのインバウンド技術ライセンスと**自社が借主側の**非解約リース。\n\n【★70を支える文を探した反証の経緯】3本潰した——(a)only airport 1件は『we are the **only airport operator in the country with 100% of its airports certified in SMS**』＝**自社が取得したSMS認証**で検問3の型(1)。(b)catchment 1件はCBXが**自社の圏を拡げる**話で顧客の拘束ではない。(c)いちばん強く見えた『our airports generally are **natural monopolies** in their geographical areas and typically do not face significant competition』——これは 70 を支えるか？**支えない**。述べているのは市場構造（地理的自然独占）であって顧客の移行費用ではなく、台帳は同じ事実を既に **dom=100・dur=100** で数えている。しかも原本は**この文の直後に自ら反証を並べる**（政府が追加コンセッションを付与しうる／私営空港は定期便許可を5年で自動取得しうる／Los Cabos は民間空港と競合）。⇒ **3本とも落ちた。**\n\n【検問4 反証の同居＝あり】上記に加え『One factor that may significantly increase competition from other airports is expanding the permits of existing private airports』。\n\n【evidence_gap = true】台帳の旧根拠は『10-K/20-F に**顧客側の再認定の記述なし**。…顧客(航空会社・旅客)が乗り換えに再認定費用を**負う機構は無い**』と**機構の不在を明言したうえで70**を置いている。v9.9.144 の『付けられないなら 50』に真正面から反する、規約上いちばん明快な evidence_gap。原本引用も一つも付いていない。",
    "cagrT": "機械算出（night/fill_growth_trend.py・SEC XBRL companyconcept）: 売上 2019年 16,226,021,000 → 2022年 27,380,376,000 → 2024年 33,614,374,000。A案(端点) 直近2年CAGR 10.80% − その前3年CAGR 19.05% = -8.25pt ／ B案(中央値) 新2年の中央値 − 前3年の中央値 = -32.74pt ／ 年次YoY {'2020': -26.9, '2021': 60.2, '2022': 44.0, '2023': 21.3, '2024': 1.2} → **採用 -8.25pt（両案の負の側で小さいほう＝両方が同意した分だけ罰する）**。A案の定義は歴史検証 night/retro_features2.py の accel と同一（3アンカーで符号が安定した4信号の一つ）。B案との交差は端点どうしのCAGRが1年の暴落・反動に脆いため（実測: 罰を受けた82社の24%がCOVIDの反動）。候補タグは代替として扱い、重なる年が0.5%以内で一致するものだけを接いだ。",
-   "intcov": "機械算出 2024年: 営業利益 ÷ 支払利息 = 1003.376。利息タグ InterestExpense（基準=**真正の利息**。IFRSの FinanceCosts・受取利息と相殺した純額・債務消滅損を含む上位概念は使わない）。night/v11_facts.py の intcov_strict",
    "acqS5": "買収支出 5年ぶん合計 0百万$ ÷ 期初総資産(2020-12-31) 51361百万$ ＝ 0.000／**5年で買収支出の申告なし＝一円も買っていない**（総資産は申告済＝タグ付けしている社で、のれん増加・取得対価の申告も0であることを裏から確認済）（SEC XBRL: PaymentsToAcquireBusinessesNetOfCashAcquired 系。負値は0に丸め・年次期間のみ）"
   },
   "nulls": {
@@ -119,7 +119,8 @@
    "founder": "支配株主構造(旧AMP/信託系)でhitsに創業者経営の明確な根拠なし→null",
    "fin": "業態フラグ定義不明(金融業ではない)→null",
    "acc": "本銘柄はIFRS(ifrs-full)。ドラフトのusgaap値は取込時に要修正",
-   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(MXN財務 vs NYSE:PAC ADR=USD の混線注意)"
+   "市場データ": "beta/per/perF/evebit/px/shy/gr/gcap/analysts/instOwn/gls/idx/indG は取込時に手入力(MXN財務 vs NYSE:PAC ADR=USD の混線注意)",
+   "intcov": "2026-09-23: 旧値 1003.376 は営業利益（MXN）÷ 利息 InterestExpense（USD 建て15百万$）という通貨の混在（v11_facts の単位検問で判明）。MXN 同士なら概算 15,050.6÷4,104.4≈3.67（キルの線3の近く）だが、真正の利息の行を原本で確かめていないので空欄（もっともらしい誤値より空欄）。次の審査で20-Fの財務費用注記から借入利息だけで算出すること"
   },
   "provenance": {
    "roic": "machine",
@@ -175,6 +176,6 @@
  "roiic": 17.2,
  "roiic5": 14.3,
  "cagrT": -8.25,
- "intcov": 1003.376,
+ "intcov": null,
  "acqS5": 0.0
 }

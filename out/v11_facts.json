@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-19",
+ "generated": "2026-09-23",
  "tool": "night/v11_facts.py",
  "definitions": {
   "intcov": "OperatingIncomeLoss(年次)/InterestExpense(年次)＝retro_features2.py と同一定義・同一タグ順",
@@ -10,7 +10,9 @@
   "int_strict_period": "annual か quarters_sum（年次タグが無い社は同一会計年度の四半期4本を合算）",
   "op5_all_pos": "アンカーFYから5年すべて営業利益が正",
   "fcf5_all_pos": "アンカーFYから5年すべて (営業CF−設備投資) が正",
-  "no_debt_evidence": "有利子負債・利息の痕跡タグが一つも無い＝無借金（上限の不等式で結論）"
+  "no_debt_evidence": "有利子負債・利息の痕跡タグが一つも無い＝無借金（上限の不等式で結論）",
+  "unit_mismatch": "分子と分母（引き算の両辺）の XBRL units がそろわない＝算出しない。nulls に両辺のタグと単位",
+  "cik_from": "pack_source（パックの _meta.source の EDGAR URL の CIK）/ ticker_table（SEC company_tickers.json）"
  },
  "holes": {
   "jp": [
@@ -83,19 +85,32 @@
    "9697",
    "9790"
   ],
-  "no_cik": [
-   "AMBI",
-   "AXIA",
-   "CPRX",
-   "ISSC",
-   "LEG"
+  "no_cik": [],
+  "fetch_fail": [],
+  "cik_conflict": [
+   {
+    "t": "AMBIQ",
+    "cik_pack_source": "0001500412",
+    "title_pack_source": "Ambiq Micro, Inc.",
+    "cik_ticker_table": "0001937441",
+    "title_ticker_table": "Ambipar Emergency Response",
+    "used": "pack_source"
+   }
   ],
-  "fetch_fail": []
+  "unit_mismatch": {
+   "PAC": [
+    "intcov",
+    "intcov_strict"
+   ],
+   "WIT": [
+    "intcov_strict"
+   ]
+  }
  },
  "taxonomy_agreement": {
-  "n": 1031,
-  "agree_2pct": 357,
-  "rate": 0.346,
+  "n": 1036,
+  "agree_2pct": 362,
+  "rate": 0.349,
   "examples": [
    {
     "primary": "InterestExpense",
@@ -110,22 +125,22 @@
     "v2": 42000
    },
    {
-    "primary": "InterestExpenseDebt",
-    "secondary": "InterestIncomeExpenseNet",
-    "v1": 777000000,
-    "v2": -950500000
+    "primary": "InterestExpense",
+    "secondary": "InterestExpenseNonoperating",
+    "v1": 53193000,
+    "v2": 53193000
    },
    {
-    "primary": "InterestExpenseDebt",
-    "secondary": "InterestIncomeExpenseNet",
-    "v1": 764300000,
-    "v2": -1003800000
+    "primary": "InterestExpense",
+    "secondary": "InterestExpenseNonoperating",
+    "v1": 78486000,
+    "v2": 78486000
    },
    {
-    "primary": "InterestExpenseDebt",
+    "primary": "InterestExpense",
     "secondary": "InterestIncomeExpenseNet",
-    "v1": 701500000,
-    "v2": -874800000
+    "v1": 40184000,
+    "v2": -39654000
    }
   ],
   "note": "両タグがある年での一致率。低ければ「同じ概念の改称」という前提が崩れる"
@@ -134,6 +149,8 @@
   "AAON": {
    "nm": "AAON",
    "cik": "0000824142",
+   "cik_from": "pack_source",
+   "entityName": "AAON, INC.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "intcov": "支払利息の年次は 2020年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
@@ -162,6 +179,8 @@
   "ABNB": {
    "nm": "ABNB",
    "cik": "0001559720",
+   "cik_from": "pack_source",
+   "entityName": "Airbnb, Inc.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -188,9 +207,44 @@
     "us-gaap:InterestPaidNet(2025)"
    ]
   },
+  "ACIW": {
+   "nm": "ACIW",
+   "cik": "0000935036",
+   "cik_from": "pack_source",
+   "entityName": "ACI WORLDWIDE, INC.",
+   "nulls": {
+    "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
+   },
+   "debt_trace": [
+    "DebtInstrumentCarryingAmount",
+    "InterestExpense",
+    "InterestExpenseNonoperating",
+    "InterestIncomeExpenseNet",
+    "InterestPaidNet",
+    "LongTermDebt",
+    "LongTermDebtCurrent",
+    "LongTermDebtNoncurrent"
+   ],
+   "no_debt_evidence": false,
+   "fy": 2025,
+   "fy_basis": "pack",
+   "fy_end": "2025-12-31",
+   "op5_all_pos": true,
+   "fcf5_all_pos": true,
+   "int": 57847000,
+   "int_tag": "InterestExpenseNonoperating",
+   "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
+   "int_basis": "interest",
+   "intcov": 5.703,
+   "intcov_strict": 5.703
+  },
   "ACI": {
    "nm": "ACI",
    "cik": "0001646972",
+   "cik_from": "pack_source",
+   "entityName": "Albertsons Companies, Inc.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -211,6 +265,8 @@
    "int": 454600000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 1.601,
    "intcov_strict": 1.601
@@ -218,6 +274,8 @@
   "ACM": {
    "nm": "ACM",
    "cik": "0000868857",
+   "cik_from": "pack_source",
+   "entityName": "AECOM",
    "nulls": {},
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -239,6 +297,8 @@
    "int": 184304000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 5.57,
    "intcov_strict": 5.57
@@ -246,6 +306,8 @@
   "ACN": {
    "nm": "ACN",
    "cik": "0001467373",
+   "cik_from": "pack_source",
+   "entityName": "Accenture plc",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -263,6 +325,8 @@
    "int": 228555000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 44.74,
    "intcov_strict": 44.74
@@ -270,6 +334,8 @@
   "ADBE": {
    "nm": "ADBE",
    "cik": "0000796343",
+   "cik_from": "pack_source",
+   "entityName": "ADOBE INC.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -290,6 +356,8 @@
    "int": 263000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 33.103,
    "intcov_strict": 33.103
@@ -297,6 +365,8 @@
   "ADI": {
    "nm": "ADI",
    "cik": "0000006281",
+   "cik_from": "pack_source",
+   "entityName": "ANALOG DEVICES INC",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
    },
@@ -319,6 +389,8 @@
    "int": 317716000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 9.23,
    "intcov_strict": 9.23
@@ -326,6 +398,8 @@
   "ADP": {
    "nm": "ADP",
    "cik": "0000008670",
+   "cik_from": "ticker_table",
+   "entityName": "AUTOMATIC DATA PROCESSING, INC.",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -342,6 +416,8 @@
   "ADSK": {
    "nm": "ADSK",
    "cik": "0000769397",
+   "cik_from": "pack_source",
+   "entityName": "Autodesk, Inc.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -362,6 +438,8 @@
    "int": 80000000,
    "int_tag": "InterestExpense",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 19.725,
    "intcov_strict": 19.725
@@ -369,6 +447,8 @@
   "AEIS": {
    "nm": "AEIS",
    "cik": "0000927003",
+   "cik_from": "pack_source",
+   "entityName": "ADVANCED ENERGY INDUSTRIES, INC.",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
    },
@@ -391,6 +471,8 @@
    "int": 16700000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 10.06,
    "intcov_strict": 10.06
@@ -398,6 +480,8 @@
   "AFYA": {
    "nm": "AFYA",
    "cik": "0001771007",
+   "cik_from": "pack_source",
+   "entityName": "AFYA LIMITED",
    "nulls": {
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -415,12 +499,16 @@
    "int": 561024000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "BRL",
+   "op_unit": "BRL",
    "int_basis": "finance_costs",
    "intcov": 2.162
   },
   "ALLE": {
    "nm": "ALLE",
    "cik": "0001579241",
+   "cik_from": "pack_source",
+   "entityName": "Allegion plc",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
@@ -443,6 +531,8 @@
    "int": 101000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 8.51,
    "intcov_strict": 8.51
@@ -450,6 +540,8 @@
   "ALSN": {
    "nm": "ALSN",
    "cik": "0001411207",
+   "cik_from": "pack_source",
+   "entityName": "ALLISON TRANSMISSION HOLDINGS, INC.",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -480,6 +572,8 @@
   "ALV": {
    "nm": "ALV",
    "cik": "0001034670",
+   "cik_from": "pack_source",
+   "entityName": "AUTOLIV, INC.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -498,6 +592,8 @@
    "int": 103000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 10.563,
    "intcov_strict": 10.563
@@ -505,6 +601,8 @@
   "AMAT": {
    "nm": "AMAT",
    "cik": "0000006951",
+   "cik_from": "pack_source",
+   "entityName": "APPLIED MATERIALS INC /DE",
    "nulls": {
     "opm": "売上の年次が 2019年止まりでアンカー 2025年から古い"
    },
@@ -525,13 +623,35 @@
    "int": 269000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 30.814,
    "intcov_strict": 30.814
   },
   "AMBIQ": {
    "nm": "AMBIQ",
+   "cik": "0001500412",
+   "cik_from": "pack_source",
+   "entityName": "Ambiq Micro, Inc.",
+   "nulls": {
+    "op5_all_pos": "営業利益の年次が5年そろわない",
+    "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
+   },
+   "debt_trace": [],
+   "no_debt_evidence": true,
+   "fy": 2025,
+   "fy_basis": "pack",
+   "fy_end": "2025-12-31",
+   "opm": -54.53,
+   "opm_fy": 2025,
+   "intcov_na_reason": "no_debt"
+  },
+  "AMBI": {
+   "nm": "AMBI",
    "cik": "0001937441",
+   "cik_from": "pack_source",
+   "entityName": "AMBIPAR EMERGENCY RESPONSE",
    "nulls": {
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -540,7 +660,7 @@
    ],
    "no_debt_evidence": false,
    "fy": 2024,
-   "fy_basis": "latest",
+   "fy_basis": "pack",
    "fy_end": "2024-12-31",
    "op5_all_pos": true,
    "fcf5_all_pos": false,
@@ -549,12 +669,16 @@
    "int": 592899000,
    "int_tag": "FinanceCosts",
    "int_fy": 2024,
+   "int_unit": "BRL",
+   "op_unit": "BRL",
    "int_basis": "finance_costs",
    "intcov": 0.819
   },
   "AME": {
    "nm": "AME",
    "cik": "0001037868",
+   "cik_from": "pack_source",
+   "entityName": "AMETEK, Inc.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -574,6 +698,8 @@
    "int": 81254000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 23.51,
    "intcov_strict": 23.51
@@ -581,6 +707,8 @@
   "AMGN": {
    "nm": "AMGN",
    "cik": "0000318154",
+   "cik_from": "pack_source",
+   "entityName": "Amgen Inc.",
    "nulls": {
     "opm": "売上の年次が 2020年止まりでアンカー 2025年から古い"
    },
@@ -600,6 +728,8 @@
    "int": 2755000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 3.296,
    "intcov_strict": 3.296
@@ -607,6 +737,8 @@
   "AMPH": {
    "nm": "AMPH",
    "cik": "0001297184",
+   "cik_from": "pack_source",
+   "entityName": "Amphastar Pharmaceuticals, Inc.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -626,6 +758,8 @@
    "int": 25481000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 5.51,
    "intcov_strict": 5.51
@@ -633,6 +767,8 @@
   "AM": {
    "nm": "AM",
    "cik": "0001623925",
+   "cik_from": "pack_source",
+   "entityName": "ANTERO MIDSTREAM CORPORATION",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -662,6 +798,8 @@
   "ANET": {
    "nm": "ANET",
    "cik": "0001596532",
+   "cik_from": "pack_source",
+   "entityName": "Arista Networks, Inc.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "intcov": "支払利息の年次は 2018年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
@@ -679,6 +817,8 @@
   "APH": {
    "nm": "APH",
    "cik": "0000820313",
+   "cik_from": "pack_source",
+   "entityName": "AMPHENOL CORPORATION",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -697,6 +837,8 @@
    "int": 367800000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 15.956,
    "intcov_strict": 15.956
@@ -704,6 +846,8 @@
   "ASAIY": {
    "nm": "ASAIY",
    "cik": "0001834048",
+   "cik_from": "pack_source",
+   "entityName": "Sendas Distributor S.A.",
    "nulls": {
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -722,12 +866,16 @@
    "int": 3233000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2024,
+   "int_unit": "BRL",
+   "op_unit": "BRL",
    "int_basis": "finance_costs",
    "intcov": 1.189
   },
   "ASML": {
    "nm": "ASML",
    "cik": "0000937966",
+   "cik_from": "pack_source",
+   "entityName": "ASML HOLDING NV",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -748,6 +896,8 @@
    "int": 118300000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "EUR",
+   "op_unit": "EUR",
    "int_basis": "interest",
    "intcov": 95.532,
    "intcov_strict": 95.532
@@ -755,6 +905,8 @@
   "ASR": {
    "nm": "ASR",
    "cik": "0001123452",
+   "cik_from": "pack_source",
+   "entityName": "SOUTHEAST AIRPORT GROUP",
    "nulls": {
     "fcf5_note": "設備投資タグが一度も無い＝営業CFのみで判定",
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
@@ -773,12 +925,16 @@
    "int": 826708000,
    "int_tag": "FinanceCosts",
    "int_fy": 2024,
+   "int_unit": "MXN",
+   "op_unit": "MXN",
    "int_basis": "finance_costs",
    "intcov": 21.192
   },
   "ATMU": {
    "nm": "ATMU",
    "cik": "0001921963",
+   "cik_from": "pack_source",
+   "entityName": "Atmus Filtration Technologies Inc.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -798,6 +954,8 @@
    "int": 33400000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 8.952,
    "intcov_strict": 8.952
@@ -805,6 +963,8 @@
   "AVGO": {
    "nm": "AVGO",
    "cik": "0001730168",
+   "cik_from": "pack_source",
+   "entityName": "Broadcom Inc.",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
    },
@@ -827,6 +987,8 @@
    "int": 3210000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 7.939,
    "intcov_strict": 7.939
@@ -834,6 +996,8 @@
   "AWI": {
    "nm": "AWI",
    "cik": "0000007431",
+   "cik_from": "pack_source",
+   "entityName": "ARMSTRONG WORLD INDUSTRIES, INC.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -853,13 +1017,44 @@
    "int": 33000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 13.058,
    "intcov_strict": 13.058
   },
+  "AXIA": {
+   "nm": "AXIA",
+   "cik": "0001439124",
+   "cik_from": "pack_source",
+   "entityName": "AXIA Energia S.A.",
+   "nulls": {
+    "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
+   },
+   "debt_trace": [
+    "FinanceCosts"
+   ],
+   "no_debt_evidence": false,
+   "fy": 2024,
+   "fy_basis": "latest",
+   "fy_end": "2024-12-31",
+   "op5_all_pos": true,
+   "fcf5_all_pos": true,
+   "opm": 48.8,
+   "opm_fy": 2024,
+   "int": 10140093000,
+   "int_tag": "FinanceCosts",
+   "int_fy": 2024,
+   "int_unit": "BRL",
+   "op_unit": "BRL",
+   "int_basis": "finance_costs",
+   "intcov": 1.934
+  },
   "AZN": {
    "nm": "AZN",
    "cik": "0000901832",
+   "cik_from": "pack_source",
+   "entityName": "ASTRAZENECA PLC",
    "nulls": {
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -877,12 +1072,16 @@
    "int": 1694000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "finance_costs",
    "intcov": 8.113
   },
   "AZO": {
    "nm": "AZO",
    "cik": "0000866787",
+   "cik_from": "pack_source",
+   "entityName": "AUTOZONE INC",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -903,6 +1102,8 @@
    "int": 490025000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 7.367,
    "intcov_strict": 7.367
@@ -910,6 +1111,8 @@
   "BBW": {
    "nm": "BBW",
    "cik": "0001113809",
+   "cik_from": "pack_source",
+   "entityName": "BUILD-A-BEAR WORKSHOP INC",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -920,6 +1123,8 @@
   "BBY": {
    "nm": "BBY",
    "cik": "0000764478",
+   "cik_from": "pack_source",
+   "entityName": "BEST BUY CO., INC.",
    "nulls": {},
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -942,6 +1147,8 @@
    "int": 47000000,
    "int_tag": "InterestExpense",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 29.553,
    "intcov_strict": 29.553
@@ -949,6 +1156,8 @@
   "BCPC": {
    "nm": "BCPC",
    "cik": "0000009326",
+   "cik_from": "pack_source",
+   "entityName": "Balchem Corporation",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "opm": "売上の年次が 2021年止まりでアンカー 2025年から古い",
@@ -978,6 +1187,8 @@
   "BKNG": {
    "nm": "BKNG",
    "cik": "0001075531",
+   "cik_from": "pack_source",
+   "entityName": "Booking Holdings Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -999,6 +1210,8 @@
    "int": 1617000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 5.458,
    "intcov_strict": 5.458
@@ -1006,6 +1219,8 @@
   "BMI": {
    "nm": "BMI",
    "cik": "0000009092",
+   "cik_from": "pack_source",
+   "entityName": "BADGER METER, INC.",
    "nulls": {
     "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -1025,12 +1240,16 @@
    "int": 5124000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "net",
    "intcov": 35.796
   },
   "BRC": {
    "nm": "BRC",
    "cik": "0000746598",
+   "cik_from": "pack_source",
+   "entityName": "BRADY CORP",
    "nulls": {
     "opm": "売上の年次が 2021年止まりでアンカー 2025年から古い"
    },
@@ -1049,6 +1268,8 @@
    "int": 4747000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 49.85,
    "intcov_strict": 49.85
@@ -1056,6 +1277,8 @@
   "BR": {
    "nm": "BR",
    "cik": "0001383312",
+   "cik_from": "ticker_table",
+   "entityName": "BROADRIDGE FINANCIAL SOLUTIONS, INC.",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2026年から古い"
    },
@@ -1075,6 +1298,8 @@
    "int": 111800000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 11.633,
    "intcov_strict": 11.633
@@ -1082,6 +1307,8 @@
   "BSX": {
    "nm": "BSX",
    "cik": "0000885725",
+   "cik_from": "pack_source",
+   "entityName": "BOSTON SCIENTIFIC CORPORATION",
    "nulls": {
     "opm": "売上の年次が 2016年止まりでアンカー 2025年から古い"
    },
@@ -1100,6 +1327,8 @@
    "int": 349000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 10.352,
    "intcov_strict": 10.352
@@ -1107,6 +1336,8 @@
   "BSY": {
    "nm": "BSY",
    "cik": "0001031308",
+   "cik_from": "pack_source",
+   "entityName": "BENTLEY SYSTEMS, INCORPORATED",
    "nulls": {
     "opm": "売上の年次が 2019年止まりでアンカー 2025年から古い"
    },
@@ -1128,6 +1359,8 @@
    "int": 7581000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 47.833,
    "intcov_strict": 47.833
@@ -1135,6 +1368,8 @@
   "BUD": {
    "nm": "BUD",
    "cik": "0001668717",
+   "cik_from": "pack_source",
+   "entityName": "Anheuser-Busch InBev SA/NV",
    "nulls": {},
    "debt_trace": [
     "FinanceCosts",
@@ -1151,6 +1386,8 @@
    "int": 5146000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "finance_costs",
    "intcov": 2.994,
    "intcov_strict": 4.506,
@@ -1160,6 +1397,8 @@
   "BWXT": {
    "nm": "BWXT",
    "cik": "0001486957",
+   "cik_from": "pack_source",
+   "entityName": "BWX TECHNOLOGIES, INC.",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
    },
@@ -1181,6 +1420,8 @@
    "int": 4540000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 89.088,
    "intcov_strict": 89.088
@@ -1188,6 +1429,8 @@
   "CAAP": {
    "nm": "CAAP",
    "cik": "0001717393",
+   "cik_from": "pack_source",
+   "entityName": "CORPORACION AMERICA AIRPORTS S.A.",
    "nulls": {},
    "debt_trace": [
     "FinanceCosts",
@@ -1204,6 +1447,8 @@
    "int": 90827000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 5.376,
    "intcov_strict": 5.376
@@ -1211,6 +1456,8 @@
   "CAMT": {
    "nm": "CAMT",
    "cik": "0001109138",
+   "cik_from": "pack_source",
+   "entityName": "Camtek Ltd.",
    "nulls": {
     "intcov": "支払利息の年次は 2017年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
    },
@@ -1230,6 +1477,8 @@
   "CAT": {
    "nm": "CAT",
    "cik": "0000018230",
+   "cik_from": "pack_source",
+   "entityName": "CATERPILLAR INC",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -1258,6 +1507,8 @@
   "CDNS": {
    "nm": "CDNS",
    "cik": "0000813672",
+   "cik_from": "pack_source",
+   "entityName": "CADENCE DESIGN SYSTEMS, INC.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -1276,6 +1527,8 @@
    "int": 116541000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 12.803,
    "intcov_strict": 12.803
@@ -1283,6 +1536,8 @@
   "CELH": {
    "nm": "CELH",
    "cik": "0001341766",
+   "cik_from": "pack_source",
+   "entityName": "CELSIUS HOLDINGS, INC.",
    "nulls": {
     "opm": "売上の年次が 2023年止まりでアンカー 2025年から古い"
    },
@@ -1305,6 +1560,8 @@
    "int": 48977000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 2.88,
    "intcov_strict": 2.88
@@ -1312,6 +1569,8 @@
   "CEPU": {
    "nm": "CEPU",
    "cik": "0001717161",
+   "cik_from": "pack_source",
+   "entityName": "Central Puerto S.A.",
    "nulls": {
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -1329,12 +1588,16 @@
    "int": 171609857000,
    "int_tag": "FinanceCosts",
    "int_fy": 2024,
+   "int_unit": "ARS",
+   "op_unit": "ARS",
    "int_basis": "finance_costs",
    "intcov": 1.149
   },
   "CHDN": {
    "nm": "CHDN",
    "cik": "0000020212",
+   "cik_from": "pack_source",
+   "entityName": "Churchill Downs Inc",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "opm": "売上の年次が 2022年止まりでアンカー 2025年から古い"
@@ -1357,6 +1620,8 @@
    "int": 297700000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 2.297,
    "intcov_strict": 2.297
@@ -1364,6 +1629,8 @@
   "CHE": {
    "nm": "CHE",
    "cik": "0000019584",
+   "cik_from": "pack_source",
+   "entityName": "CHEMED CORPORATION",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -1383,6 +1650,8 @@
    "int": 1750000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 193.283,
    "intcov_strict": 193.283
@@ -1390,6 +1659,8 @@
   "CHH": {
    "nm": "CHH",
    "cik": "0001046311",
+   "cik_from": "pack_source",
+   "entityName": "CHOICE HOTELS INTERNATIONAL INC /DE",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -1412,6 +1683,8 @@
    "int": 91148000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 4.919,
    "intcov_strict": 4.919
@@ -1419,6 +1692,8 @@
   "CHKP": {
    "nm": "CHKP",
    "cik": "0001015922",
+   "cik_from": "pack_source",
+   "entityName": "CHECK POINT SOFTWARE TECHNOLOGIES LTD.",
    "nulls": {},
    "debt_trace": [],
    "no_debt_evidence": true,
@@ -1434,6 +1709,8 @@
   "CLMB": {
    "nm": "CLMB",
    "cik": "0000945983",
+   "cik_from": "pack_source",
+   "entityName": "Climb Global Solutions, Inc.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -1462,6 +1739,8 @@
   "CMG": {
    "nm": "CMG",
    "cik": "0001058090",
+   "cik_from": "pack_source",
+   "entityName": "CHIPOTLE MEXICAN GRILL, INC.",
    "nulls": {},
    "debt_trace": [
     "LongTermDebt"
@@ -1482,6 +1761,8 @@
   "CMTL": {
    "nm": "CMTL",
    "cik": "0000023197",
+   "cik_from": "ticker_table",
+   "entityName": "COMTECH TELECOMMUNICATIONS CORP /DE/",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -1501,6 +1782,8 @@
    "int": 45650000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": -3.047,
    "intcov_strict": -3.047
@@ -1508,6 +1791,8 @@
   "COHR": {
    "nm": "COHR",
    "cik": "0000820318",
+   "cik_from": "pack_source",
+   "entityName": "COHERENT CORP.",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2024年から古い",
     "intcov_fy": "アンカー 2024年に利息が無いので**分子・分母とも 2023年**で算出（年をまたいで割らない）"
@@ -1530,6 +1815,8 @@
    "int": 286872000,
    "int_tag": "InterestExpense",
    "int_fy": 2023,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": -0.129,
    "intcov_strict": -0.129
@@ -1537,6 +1824,8 @@
   "COKE": {
    "nm": "COKE",
    "cik": "0000317540",
+   "cik_from": "pack_source",
+   "entityName": "COCA-COLA CONSOLIDATED, INC.",
    "nulls": {
     "intcov": "支払利息の年次は 2022年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -1569,6 +1858,8 @@
   "COLL": {
    "nm": "COLL",
    "cik": "0001267565",
+   "cik_from": "pack_source",
+   "entityName": "Collegium Pharmaceutical, Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -1587,6 +1878,8 @@
    "int": 82312000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 2.182,
    "intcov_strict": 2.182
@@ -1594,6 +1887,8 @@
   "CPAC": {
    "nm": "CPAC",
    "cik": "0001221029",
+   "cik_from": "pack_source",
+   "entityName": "CEMENTOS PACASMAYO SAA",
    "nulls": {},
    "debt_trace": [
     "FinanceCosts",
@@ -1610,6 +1905,8 @@
    "int": 99752000,
    "int_tag": "InterestExpense",
    "int_fy": 2024,
+   "int_unit": "PEN",
+   "op_unit": "PEN",
    "int_basis": "interest",
    "intcov": 3.92,
    "intcov_strict": 3.92
@@ -1617,6 +1914,8 @@
   "CPAY": {
    "nm": "CPAY",
    "cik": "0001175454",
+   "cik_from": "pack_source",
+   "entityName": "Corpay, Inc",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -1637,6 +1936,8 @@
    "int": 403848000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 4.938,
    "intcov_strict": 4.938
@@ -1644,6 +1945,8 @@
   "CPA": {
    "nm": "CPA",
    "cik": "0001345105",
+   "cik_from": "pack_source",
+   "entityName": "COPA HOLDINGS, S.A.",
    "nulls": {
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -1661,12 +1964,16 @@
    "int": 18126000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "finance_costs",
    "intcov": 45.182
   },
   "CPRT": {
    "nm": "CPRT",
    "cik": "0000900075",
+   "cik_from": "pack_source",
+   "entityName": "COPART, INC.",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い",
     "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
@@ -1695,9 +2002,37 @@
     "us-gaap:InterestPaidNet(2025)"
    ]
   },
+  "CPRX": {
+   "nm": "CPRX",
+   "cik": "0001369568",
+   "cik_from": "pack_source",
+   "entityName": "CATALYST PHARMACEUTICALS, INC.",
+   "nulls": {
+    "opm": "売上の年次が 2020年止まりでアンカー 2025年から古い",
+    "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
+   },
+   "debt_trace": [
+    "InterestPaidNet"
+   ],
+   "no_debt_evidence": false,
+   "fy": 2025,
+   "fy_basis": "pack",
+   "fy_end": "2025-12-31",
+   "op5_all_pos": true,
+   "fcf5_all_pos": true,
+   "intcov_na_reason": "unmeasured",
+   "intcov_cash": 553.172,
+   "int_cash_tag": "InterestPaidNet",
+   "int_cash_fy": 2025,
+   "int_tag_candidates": [
+    "us-gaap:InterestPaidNet(2025)"
+   ]
+  },
   "CRAI": {
    "nm": "CRAI",
    "cik": "0001053706",
+   "cik_from": "pack_source",
+   "entityName": "CRA International, Inc.",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
@@ -1717,6 +2052,8 @@
    "int": 5358000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 15.514,
    "intcov_strict": 15.514
@@ -1724,6 +2061,8 @@
   "CSCO": {
    "nm": "CSCO",
    "cik": "0000858877",
+   "cik_from": "pack_source",
+   "entityName": "CISCO SYSTEMS, INC.",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
    },
@@ -1746,6 +2085,8 @@
    "int": 1593000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 7.382,
    "intcov_strict": 7.382
@@ -1753,6 +2094,8 @@
   "CSL": {
    "nm": "CSL",
    "cik": "0000790051",
+   "cik_from": "pack_source",
+   "entityName": "CARLISLE COMPANIES INCORPORATED",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -1774,6 +2117,8 @@
    "int": 78500000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 12.771,
    "intcov_strict": 12.771
@@ -1781,6 +2126,8 @@
   "CSW": {
    "nm": "CSW",
    "cik": "0001624794",
+   "cik_from": "pack_source",
+   "entityName": "CSW INDUSTRIALS, INC.",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -1811,6 +2158,8 @@
   "CTAS": {
    "nm": "CTAS",
    "cik": "0000723254",
+   "cik_from": "ticker_table",
+   "entityName": "Cintas Corporation",
    "nulls": {
     "opm": "売上の年次が 2019年止まりでアンカー 2026年から古い"
    },
@@ -1832,6 +2181,8 @@
    "int": 106285000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 24.524,
    "intcov_strict": 24.524
@@ -1839,6 +2190,8 @@
   "CVCO": {
    "nm": "CVCO",
    "cik": "0000278166",
+   "cik_from": "pack_source",
+   "entityName": "CAVCO INDUSTRIES, INC.",
    "nulls": {
     "opm": "売上の年次が 2023年止まりでアンカー 2026年から古い"
    },
@@ -1857,6 +2210,8 @@
    "int": 541000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 422.494,
    "intcov_strict": 422.494
@@ -1864,6 +2219,8 @@
   "CW": {
    "nm": "CW",
    "cik": "0000026324",
+   "cik_from": "pack_source",
+   "entityName": "CURTISS-WRIGHT CORPORATION",
    "nulls": {
     "opm": "売上の年次が 2020年止まりでアンカー 2025年から古い"
    },
@@ -1884,6 +2241,8 @@
    "int": 43148000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 14.683,
    "intcov_strict": 14.683
@@ -1891,6 +2250,8 @@
   "DCI": {
    "nm": "DCI",
    "cik": "0000029644",
+   "cik_from": "pack_source",
+   "entityName": "DONALDSON COMPANY, INC.",
    "nulls": {
     "opm": "売上の年次が 2019年止まりでアンカー 2025年から古い"
    },
@@ -1911,6 +2272,8 @@
    "int": 24200000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 20.471,
    "intcov_strict": 20.471
@@ -1918,6 +2281,8 @@
   "DDS": {
    "nm": "DDS",
    "cik": "0000028917",
+   "cik_from": "pack_source",
+   "entityName": "DILLARD’S, INC.",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -1933,6 +2298,8 @@
   "DECK": {
    "nm": "DECK",
    "cik": "0000910521",
+   "cik_from": "pack_source",
+   "entityName": "DECKERS OUTDOOR CORP",
    "nulls": {},
    "debt_trace": [
     "InterestExpenseNonoperating",
@@ -1949,6 +2316,8 @@
    "int": 2530000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 499.171,
    "intcov_strict": 499.171
@@ -1956,6 +2325,8 @@
   "DELL": {
    "nm": "DELL",
    "cik": "0001571996",
+   "cik_from": "pack_source",
+   "entityName": "Dell Technologies Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -1977,6 +2348,8 @@
    "int": 1560000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 5.224,
    "intcov_strict": 5.224
@@ -1984,6 +2357,8 @@
   "DLB": {
    "nm": "DLB",
    "cik": "0001308547",
+   "cik_from": "ticker_table",
+   "entityName": "Dolby Laboratories, Inc.",
    "nulls": {
     "opm": "売上の年次が 2021年止まりでアンカー 2025年から古い",
     "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
@@ -2001,12 +2376,16 @@
    "int": 15376000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "net",
    "intcov": 17.232
   },
   "DLO": {
    "nm": "DLO",
    "cik": "0001846832",
+   "cik_from": "pack_source",
+   "entityName": "DLocal Limited",
    "nulls": {
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -2024,12 +2403,16 @@
    "int": 27855000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "finance_costs",
    "intcov": 7.895
   },
   "DOCS": {
    "nm": "DOCS",
    "cik": "0001516513",
+   "cik_from": "pack_source",
+   "entityName": "Doximity, Inc.",
    "nulls": {},
    "debt_trace": [],
    "no_debt_evidence": true,
@@ -2045,6 +2428,8 @@
   "DRI": {
    "nm": "DRI",
    "cik": "0000940944",
+   "cik_from": "pack_source",
+   "entityName": "DARDEN RESTAURANTS, INC.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -2067,6 +2452,8 @@
    "int": 115900000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 11.754,
    "intcov_strict": 11.754
@@ -2074,6 +2461,8 @@
   "DSGX": {
    "nm": "DSGX",
    "cik": "0001050140",
+   "cik_from": "pack_source",
+   "entityName": "DESCARTES SYSTEMS GROUP INC",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2026年から古い"
    },
@@ -2090,6 +2479,8 @@
    "int": 967000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 217.144,
    "intcov_strict": 217.144
@@ -2097,6 +2488,8 @@
   "DTM": {
    "nm": "DTM",
    "cik": "0001842022",
+   "cik_from": "pack_source",
+   "entityName": "DT Midstream, Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -2119,6 +2512,8 @@
    "int": 169000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 3.633,
    "intcov_strict": 3.633
@@ -2126,6 +2521,8 @@
   "DXCM": {
    "nm": "DXCM",
    "cik": "0001093557",
+   "cik_from": "pack_source",
+   "entityName": "DEXCOM, INC.",
    "nulls": {
     "opm": "売上の年次が 2013年止まりでアンカー 2025年から古い"
    },
@@ -2144,6 +2541,8 @@
    "int": 14300000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 63.762,
    "intcov_strict": 63.762
@@ -2151,6 +2550,8 @@
   "DXC": {
    "nm": "DXC",
    "cik": "0001688568",
+   "cik_from": "pack_source",
+   "entityName": "DXC TECHNOLOGY COMPANY",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -2171,6 +2572,8 @@
    "int": 216000000,
    "int_tag": "InterestExpense",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 4.491,
    "intcov_strict": 4.491
@@ -2178,6 +2581,8 @@
   "D": {
    "nm": "D",
    "cik": "0000715957",
+   "cik_from": "pack_source",
+   "entityName": "DOMINION ENERGY, INC",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "intcov_strict": "採れた利息タグ InterestAndDebtExpense の基準は **interest_plus**＝利息＋債務消滅損等を含む上位概念。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
@@ -2203,6 +2608,8 @@
    "int": 2022000000,
    "int_tag": "InterestAndDebtExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest_plus",
    "intcov": 2.183,
    "intcov_cash": 2.454,
@@ -2212,6 +2619,8 @@
   "EBAY": {
    "nm": "EBAY",
    "cik": "0001065088",
+   "cik_from": "pack_source",
+   "entityName": "eBay Inc.",
    "nulls": {
     "opm": "売上の年次が 2014年止まりでアンカー 2025年から古い"
    },
@@ -2234,6 +2643,8 @@
    "int": 246000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 9.256,
    "intcov_strict": 9.256
@@ -2241,6 +2652,8 @@
   "ECL": {
    "nm": "ECL",
    "cik": "0000031462",
+   "cik_from": "pack_source",
+   "entityName": "ECOLAB INC.",
    "nulls": {},
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -2262,6 +2675,8 @@
    "int": 306200000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 8.941,
    "intcov_strict": 8.941
@@ -2269,6 +2684,8 @@
   "EE": {
    "nm": "EE",
    "cik": "0001888447",
+   "cik_from": "pack_source",
+   "entityName": "Excelerate Energy, Inc",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -2289,6 +2706,8 @@
    "int": 258300000,
    "int_tag": "InterestCostsIncurred",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 1.032,
    "intcov_strict": 1.032
@@ -2296,6 +2715,8 @@
   "EME": {
    "nm": "EME",
    "cik": "0000105634",
+   "cik_from": "pack_source",
+   "entityName": "EMCOR Group, Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -2316,6 +2737,8 @@
    "int": 12020000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 142.547,
    "intcov_strict": 142.547
@@ -2323,6 +2746,8 @@
   "ENB": {
    "nm": "ENB",
    "cik": "0000895728",
+   "cik_from": "pack_source",
+   "entityName": "ENBRIDGE INC",
    "nulls": {},
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -2345,6 +2770,8 @@
    "int": 5023000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "CAD",
+   "op_unit": "CAD",
    "int_basis": "interest",
    "intcov": 2.182,
    "intcov_strict": 2.182
@@ -2352,6 +2779,8 @@
   "ENSG": {
    "nm": "ENSG",
    "cik": "0001125376",
+   "cik_from": "pack_source",
+   "entityName": "ENSIGN GROUP, INC",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -2373,6 +2802,8 @@
    "int": 7988000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 53.243,
    "intcov_strict": 53.243
@@ -2380,6 +2811,8 @@
   "ENTG": {
    "nm": "ENTG",
    "cik": "0001101302",
+   "cik_from": "pack_source",
+   "entityName": "Entegris, Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -2401,6 +2834,8 @@
    "int": 199800000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 2.282,
    "intcov_strict": 2.282
@@ -2408,6 +2843,8 @@
   "EPAM": {
    "nm": "EPAM",
    "cik": "0001352010",
+   "cik_from": "pack_source",
+   "entityName": "EPAM SYSTEMS, INC.",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -2434,6 +2871,8 @@
   "ETN": {
    "nm": "ETN",
    "cik": "0001551182",
+   "cik_from": "pack_source",
+   "entityName": "EATON CORPORATION plc",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -2451,6 +2890,8 @@
   "EVTC": {
    "nm": "EVTC",
    "cik": "0001559865",
+   "cik_from": "pack_source",
+   "entityName": "EVERTEC, Inc.",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
    },
@@ -2473,6 +2914,8 @@
    "int": 68278000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 2.731,
    "intcov_strict": 2.731
@@ -2480,6 +2923,8 @@
   "EXEL": {
    "nm": "EXEL",
    "cik": "0000939767",
+   "cik_from": "pack_source",
+   "entityName": "Exelixis Inc",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
@@ -2496,6 +2941,8 @@
   "EXLS": {
    "nm": "EXLS",
    "cik": "0001297989",
+   "cik_from": "pack_source",
+   "entityName": "EXLSERVICE HOLDINGS, INC.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -2517,6 +2964,8 @@
    "int": 17611000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 17.816,
    "intcov_strict": 17.816
@@ -2524,6 +2973,8 @@
   "EXPD": {
    "nm": "EXPD",
    "cik": "0000746515",
+   "cik_from": "pack_source",
+   "entityName": "EXPEDITORS INTERNATIONAL OF WASHINGTON, INC.",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い",
     "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
@@ -2542,6 +2993,8 @@
   "EXPO": {
    "nm": "EXPO",
    "cik": "0000851520",
+   "cik_from": "pack_source",
+   "entityName": "EXPONENT, INC.",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
@@ -2558,6 +3011,8 @@
   "EXP": {
    "nm": "EXP",
    "cik": "0000918646",
+   "cik_from": "pack_source",
+   "entityName": "EAGLE MATERIALS INC",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -2576,6 +3031,8 @@
   "FAST": {
    "nm": "FAST",
    "cik": "0000815556",
+   "cik_from": "pack_source",
+   "entityName": "FASTENAL CO",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -2596,6 +3053,8 @@
    "int": 6200000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 267.048,
    "intcov_strict": 267.048
@@ -2603,6 +3062,8 @@
   "FCFS": {
    "nm": "FCFS",
    "cik": "0000840489",
+   "cik_from": "pack_source",
+   "entityName": "FIRSTCASH HOLDINGS, INC.",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -2620,6 +3081,8 @@
   "FDS": {
    "nm": "FDS",
    "cik": "0001013237",
+   "cik_from": "pack_source",
+   "entityName": "FACTSET RESEARCH SYSTEMS INC.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "opm": "売上の年次が 2019年止まりでアンカー 2025年から古い"
@@ -2642,6 +3105,8 @@
    "int": 57749000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 12.958,
    "intcov_strict": 12.958
@@ -2649,6 +3114,8 @@
   "FELE": {
    "nm": "FELE",
    "cik": "0000038725",
+   "cik_from": "pack_source",
+   "entityName": "FRANKLIN ELECTRIC CO., INC.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -2667,6 +3134,8 @@
    "int": 10641000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 25.278,
    "intcov_strict": 25.278
@@ -2674,6 +3143,8 @@
   "FICO": {
    "nm": "FICO",
    "cik": "0000814547",
+   "cik_from": "pack_source",
+   "entityName": "FAIR ISAAC CORP",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
    },
@@ -2696,6 +3167,8 @@
    "int": 133647000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 6.92,
    "intcov_strict": 6.92
@@ -2703,6 +3176,8 @@
   "FISV": {
    "nm": "FISV",
    "cik": "0000798354",
+   "cik_from": "pack_source",
+   "entityName": "FISERV, INC.",
    "nulls": {},
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -2724,6 +3199,8 @@
    "int": 1531000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 3.8,
    "intcov_strict": 3.8
@@ -2731,6 +3208,8 @@
   "FSS": {
    "nm": "FSS",
    "cik": "0000277509",
+   "cik_from": "pack_source",
+   "entityName": "FEDERAL SIGNAL CORPORATION",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -2750,6 +3229,8 @@
    "int": 14100000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 24.177,
    "intcov_strict": 24.177
@@ -2757,6 +3238,8 @@
   "FTNT": {
    "nm": "FTNT",
    "cik": "0001262039",
+   "cik_from": "pack_source",
+   "entityName": "FORTINET, INC.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -2777,6 +3260,8 @@
    "int": 20100000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 103.716,
    "intcov_strict": 103.716
@@ -2784,6 +3269,8 @@
   "GCT": {
    "nm": "GCT",
    "cik": "0001857816",
+   "cik_from": "pack_source",
+   "entityName": "GIGACLOUD TECHNOLOGY INC",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -2804,6 +3291,8 @@
    "int": 200000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 724.88,
    "intcov_strict": 724.88
@@ -2811,6 +3300,8 @@
   "GDDY": {
    "nm": "GDDY",
    "cik": "0001609711",
+   "cik_from": "pack_source",
+   "entityName": "GoDaddy Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -2832,6 +3323,8 @@
    "int": 151000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 7.466,
    "intcov_strict": 7.466
@@ -2839,6 +3332,8 @@
   "GEN": {
    "nm": "GEN",
    "cik": "0000849399",
+   "cik_from": "pack_source",
+   "entityName": "Gen Digital Inc.",
    "nulls": {
     "opm": "売上の年次が 2014年止まりでアンカー 2026年から古い",
     "intcov_strict": "採れた利息タグ InterestAndDebtExpense の基準は **interest_plus**＝利息＋債務消滅損等を含む上位概念。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
@@ -2861,6 +3356,8 @@
    "int": 569000000,
    "int_tag": "InterestAndDebtExpense",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest_plus",
    "intcov": 3.726,
    "intcov_cash": 3.387,
@@ -2870,6 +3367,8 @@
   "GILD": {
    "nm": "GILD",
    "cik": "0000882095",
+   "cik_from": "pack_source",
+   "entityName": "GILEAD SCIENCES, INC.",
    "nulls": {
     "opm": "売上の年次が 2020年止まりでアンカー 2025年から古い"
    },
@@ -2890,6 +3389,8 @@
    "int": 1024000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 9.787,
    "intcov_strict": 9.787
@@ -2897,6 +3398,8 @@
   "GLXZ": {
    "nm": "GLXZ",
    "cik": "0000013156",
+   "cik_from": "pack_source",
+   "entityName": "Galaxy Gaming, Inc.",
    "nulls": {
     "opm": "売上の年次が 2012年止まりでアンカー 2025年から古い"
    },
@@ -2918,6 +3421,8 @@
    "int": 3587921,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 2.28,
    "intcov_strict": 2.28
@@ -2925,6 +3430,8 @@
   "GMAB": {
    "nm": "GMAB",
    "cik": "0001434265",
+   "cik_from": "pack_source",
+   "entityName": "Genmab A/S",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
@@ -2942,12 +3449,16 @@
    "int": 269000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "finance_costs",
    "intcov": 3.959
   },
   "GMED": {
    "nm": "GMED",
    "cik": "0001237831",
+   "cik_from": "pack_source",
+   "entityName": "GLOBUS MEDICAL, INC.",
    "nulls": {
     "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
    },
@@ -2972,6 +3483,8 @@
   "GNTX": {
    "nm": "GNTX",
    "cik": "0000355811",
+   "cik_from": "pack_source",
+   "entityName": "GENTEX CORPORATION",
    "nulls": {
     "intcov": "支払利息の年次は 2018年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
    },
@@ -2991,6 +3504,8 @@
   "GOOGL": {
    "nm": "GOOGL",
    "cik": "0001652044",
+   "cik_from": "pack_source",
+   "entityName": "Alphabet Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -3012,6 +3527,8 @@
    "int": 736000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 175.325,
    "intcov_strict": 175.325
@@ -3019,6 +3536,8 @@
   "GOOS": {
    "nm": "GOOS",
    "cik": "0001690511",
+   "cik_from": "pack_source",
+   "entityName": "CANADA GOOSE HOLDINGS INC.",
    "nulls": {},
    "debt_trace": [],
    "no_debt_evidence": true,
@@ -3034,6 +3553,8 @@
   "GRMN": {
    "nm": "GRMN",
    "cik": "0001121788",
+   "cik_from": "pack_source",
+   "entityName": "GARMIN LTD",
    "nulls": {
     "intcov": "支払利息の年次は 2010年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
    },
@@ -3051,6 +3572,8 @@
   "GRND": {
    "nm": "GRND",
    "cik": "0001820144",
+   "cik_from": "pack_source",
+   "entityName": "Grindr Inc.",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -3081,6 +3604,8 @@
   "GRVY": {
    "nm": "GRVY",
    "cik": "0001313310",
+   "cik_from": "pack_source",
+   "entityName": "GRAVITY CO., LTD.",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -3094,6 +3619,8 @@
   "GSK": {
    "nm": "GSK",
    "cik": "0001131399",
+   "cik_from": "pack_source",
+   "entityName": "GSK plc",
    "nulls": {
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -3112,12 +3639,16 @@
    "int": 701000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "GBP",
+   "op_unit": "GBP",
    "int_basis": "finance_costs",
    "intcov": 11.315
   },
   "GWW": {
    "nm": "GWW",
    "cik": "0000277135",
+   "cik_from": "pack_source",
+   "entityName": "W.W. Grainger, Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -3139,6 +3670,8 @@
    "int": 81000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 30.802,
    "intcov_strict": 30.802
@@ -3146,6 +3679,8 @@
   "G": {
    "nm": "G",
    "cik": "0001398659",
+   "cik_from": "pack_source",
+   "entityName": "Genpact Limited",
    "nulls": {
     "opm": "売上の年次が 2014年止まりでアンカー 2025年から古い"
    },
@@ -3167,6 +3702,8 @@
    "int": 73516000,
    "int_tag": "InterestAndDebtExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest_plus",
    "intcov": 10.205,
    "intcov_strict": 8.83,
@@ -3176,6 +3713,8 @@
   "HALO": {
    "nm": "HALO",
    "cik": "0001159036",
+   "cik_from": "pack_source",
+   "entityName": "HALOZYME THERAPEUTICS, INC.",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
    },
@@ -3198,6 +3737,8 @@
    "int": 18126000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 25.875,
    "intcov_strict": 25.875
@@ -3205,6 +3746,8 @@
   "HCKT": {
    "nm": "HCKT",
    "cik": "0001057379",
+   "cik_from": "pack_source",
+   "entityName": "Hackett Group, Inc.",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
    },
@@ -3222,6 +3765,8 @@
    "int": 1716000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 13.714,
    "intcov_strict": 13.714
@@ -3229,6 +3774,8 @@
   "HD": {
    "nm": "HD",
    "cik": "0000354950",
+   "cik_from": "pack_source",
+   "entityName": "The Home Depot, Inc.",
    "nulls": {
     "opm": "売上の年次が 2010年止まりでアンカー 2026年から古い"
    },
@@ -3251,6 +3798,8 @@
    "int": 2412000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 8.661,
    "intcov_strict": 8.661
@@ -3258,6 +3807,8 @@
   "HEI": {
    "nm": "HEI",
    "cik": "0000046619",
+   "cik_from": "pack_source",
+   "entityName": "HEICO CORPORATION",
    "nulls": {},
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -3278,6 +3829,8 @@
    "int": 129877000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 7.846,
    "intcov_strict": 7.846
@@ -3285,6 +3838,8 @@
   "HPQ": {
    "nm": "HPQ",
    "cik": "0000047217",
+   "cik_from": "pack_source",
+   "entityName": "HP INC.",
    "nulls": {},
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -3306,6 +3861,8 @@
    "int": 430000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 7.381,
    "intcov_strict": 7.381
@@ -3313,6 +3870,8 @@
   "HRMY": {
    "nm": "HRMY",
    "cik": "0001802665",
+   "cik_from": "pack_source",
+   "entityName": "HARMONY BIOSCIENCES HOLDINGS, INC.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -3335,6 +3894,8 @@
    "int": 14649000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 14.231,
    "intcov_strict": 14.231
@@ -3342,6 +3903,8 @@
   "HUBB": {
    "nm": "HUBB",
    "cik": "0000048898",
+   "cik_from": "pack_source",
+   "entityName": "HUBBELL INC",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "intcov": "支払利息の年次は 2020年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
@@ -3365,6 +3928,8 @@
   "HWM": {
    "nm": "HWM",
    "cik": "0000004281",
+   "cik_from": "pack_source",
+   "entityName": "HOWMET AEROSPACE INC.",
    "nulls": {
     "intcov_strict": "採れた利息タグ InterestAndDebtExpense の基準は **interest_plus**＝利息＋債務消滅損等を含む上位概念。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -3390,6 +3955,8 @@
    "int": 176000000,
    "int_tag": "InterestAndDebtExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest_plus",
    "intcov": 11.625,
    "intcov_cash": 13.032,
@@ -3399,6 +3966,8 @@
   "HXL": {
    "nm": "HXL",
    "cik": "0000717605",
+   "cik_from": "ticker_table",
+   "entityName": "Hexcel Corporation",
    "nulls": {},
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -3418,6 +3987,8 @@
    "int": 37700000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 4.552,
    "intcov_strict": 4.552
@@ -3425,6 +3996,8 @@
   "IBP": {
    "nm": "IBP",
    "cik": "0001580905",
+   "cik_from": "pack_source",
+   "entityName": "Installed Building Products, Inc.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -3445,6 +4018,8 @@
    "int": 31700000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 12.189,
    "intcov_strict": 12.189
@@ -3452,6 +4027,8 @@
   "IDT": {
    "nm": "IDT",
    "cik": "0001005731",
+   "cik_from": "pack_source",
+   "entityName": "IDT CORP",
    "nulls": {
     "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -3471,6 +4048,8 @@
    "int": 6127000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "net",
    "intcov": 16.39,
    "intcov_cash": 912.945,
@@ -3480,6 +4059,8 @@
   "IDXX": {
    "nm": "IDXX",
    "cik": "0000874716",
+   "cik_from": "pack_source",
+   "entityName": "IDEXX LABORATORIES INC /DE",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -3501,6 +4082,8 @@
    "int": 38852000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 35.005,
    "intcov_strict": 35.005
@@ -3508,6 +4091,8 @@
   "IHG": {
    "nm": "IHG",
    "cik": "0000858446",
+   "cik_from": "pack_source",
+   "entityName": "InterContinental Hotels Group PLC",
    "nulls": {
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -3525,12 +4110,16 @@
    "int": 202000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "finance_costs",
    "intcov": 5.931
   },
   "IMXI": {
    "nm": "IMXI",
    "cik": "0001683695",
+   "cik_from": "pack_source",
+   "entityName": "INTERNATIONAL MONEY EXPRESS, INC.",
    "nulls": {
     "opm": "売上の年次が 2019年止まりでアンカー 2025年から古い"
    },
@@ -3551,6 +4140,8 @@
    "int": 11836000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 4.702,
    "intcov_strict": 4.702
@@ -3558,6 +4149,8 @@
   "INCY": {
    "nm": "INCY",
    "cik": "0000879169",
+   "cik_from": "pack_source",
+   "entityName": "INCYTE CORPORATION",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "opm": "売上の年次が 2022年止まりでアンカー 2025年から古い"
@@ -3574,6 +4167,8 @@
    "int": 2428000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 623.912,
    "intcov_strict": 623.912
@@ -3581,6 +4176,8 @@
   "INFY": {
    "nm": "INFY",
    "cik": "0001067491",
+   "cik_from": "pack_source",
+   "entityName": "INFOSYS LIMITED",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い",
@@ -3597,12 +4194,16 @@
    "int": 49000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "finance_costs",
    "intcov": 83.082
   },
   "INTU": {
    "nm": "INTU",
    "cik": "0000896878",
+   "cik_from": "pack_source",
+   "entityName": "INTUIT INC.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -3623,6 +4224,8 @@
    "int": 247000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 19.931,
    "intcov_strict": 19.931
@@ -3630,6 +4233,8 @@
   "IPAR": {
    "nm": "IPAR",
    "cik": "0000822663",
+   "cik_from": "pack_source",
+   "entityName": "INTERPARFUMS, INC.",
    "nulls": {
     "opm": "売上の年次が 2023年止まりでアンカー 2025年から古い"
    },
@@ -3651,6 +4256,8 @@
    "int": 7248000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 37.295,
    "intcov_strict": 37.295
@@ -3658,6 +4265,8 @@
   "IPGP": {
    "nm": "IPGP",
    "cik": "0001111928",
+   "cik_from": "pack_source",
+   "entityName": "IPG PHOTONICS CORP",
    "nulls": {
     "intcov": "支払利息の年次は 2011年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -3689,6 +4298,8 @@
   "IP": {
    "nm": "IP",
    "cik": "0000051434",
+   "cik_from": "pack_source",
+   "entityName": "INTERNATIONAL PAPER COMPANY",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -3708,6 +4319,8 @@
   "IRDM": {
    "nm": "IRDM",
    "cik": "0001418819",
+   "cik_from": "pack_source",
+   "entityName": "Iridium Communications Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -3730,6 +4343,8 @@
    "int": 14700000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 16.053,
    "intcov_strict": 16.053
@@ -3737,6 +4352,8 @@
   "IRMD": {
    "nm": "IRMD",
    "cik": "0001325618",
+   "cik_from": "pack_source",
+   "entityName": "IRADIMED CORPORATION",
    "nulls": {},
    "debt_trace": [],
    "no_debt_evidence": true,
@@ -3752,6 +4369,8 @@
   "ISRG": {
    "nm": "ISRG",
    "cik": "0001035267",
+   "cik_from": "pack_source",
+   "entityName": "Intuitive Surgical, Inc.",
    "nulls": {},
    "debt_trace": [],
    "no_debt_evidence": true,
@@ -3764,9 +4383,42 @@
    "opm_fy": 2025,
    "intcov_na_reason": "no_debt"
   },
+  "ISSC": {
+   "nm": "ISSC",
+   "cik": "0000836690",
+   "cik_from": "pack_source",
+   "entityName": "INNOVATIVE SOLUTIONS AND SUPPORT, INC.",
+   "nulls": {},
+   "debt_trace": [
+    "DebtInstrumentCarryingAmount",
+    "InterestExpense",
+    "InterestPaidNet",
+    "LongTermDebt",
+    "LongTermDebtCurrent",
+    "LongTermDebtNoncurrent"
+   ],
+   "no_debt_evidence": false,
+   "fy": 2025,
+   "fy_basis": "pack",
+   "fy_end": "2025-09-30",
+   "op5_all_pos": true,
+   "fcf5_all_pos": true,
+   "opm": 23.81,
+   "opm_fy": 2025,
+   "int": 1725205,
+   "int_tag": "InterestExpense",
+   "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
+   "int_basis": "interest",
+   "intcov": 11.635,
+   "intcov_strict": 11.635
+  },
   "ITRN": {
    "nm": "ITRN",
    "cik": "0001337117",
+   "cik_from": "pack_source",
+   "entityName": "Ituran Location & Control Ltd.",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -3795,6 +4447,8 @@
   "IT": {
    "nm": "IT",
    "cik": "0000749251",
+   "cik_from": "pack_source",
+   "entityName": "Gartner, Inc.",
    "nulls": {
     "opm": "売上の年次が 2014年止まりでアンカー 2025年から古い"
    },
@@ -3815,6 +4469,8 @@
    "int": 125277000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 8.188,
    "intcov_strict": 8.188
@@ -3822,8 +4478,10 @@
   "JKHY": {
    "nm": "JKHY",
    "cik": "0000779152",
+   "cik_from": "pack_source",
+   "entityName": "JACK HENRY & ASSOCIATES, INC.",
    "nulls": {
-    "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い",
+    "opm": "売上の年次が 2018年止まりでアンカー 2026年から古い",
     "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -3838,23 +4496,27 @@
     "NotesPayableCurrent"
    ],
    "no_debt_evidence": false,
-   "fy": 2025,
+   "fy": 2026,
    "fy_basis": "pack",
-   "fy_end": "2025-06-30",
+   "fy_end": "2026-06-30",
    "op5_all_pos": true,
    "fcf5_all_pos": true,
-   "int": 17321000,
+   "int": 17757000,
    "int_tag": "InterestIncomeExpenseNet",
-   "int_fy": 2025,
+   "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "net",
-   "intcov": 32.834,
-   "intcov_cash": 56.622,
+   "intcov": 35.762,
+   "intcov_cash": 137.871,
    "int_cash_tag": "InterestPaid",
-   "int_cash_fy": 2025
+   "int_cash_fy": 2026
   },
   "KALU": {
    "nm": "KALU",
    "cik": "0000811596",
+   "cik_from": "ticker_table",
+   "entityName": "KAISER ALUMINUM CORPORATION",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
    },
@@ -3873,6 +4535,8 @@
    "int": 50100000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 3.768,
    "intcov_strict": 3.768
@@ -3880,6 +4544,8 @@
   "KARO": {
    "nm": "KARO",
    "cik": "0001828102",
+   "cik_from": "pack_source",
+   "entityName": "KAROOOOO LTD.",
    "nulls": {},
    "debt_trace": [
     "FinanceCosts",
@@ -3896,6 +4562,8 @@
    "int": 50866000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "ZAR",
+   "op_unit": "ZAR",
    "int_basis": "finance_costs",
    "intcov": 25.8,
    "intcov_strict": 12.25,
@@ -3905,6 +4573,8 @@
   "KFRC": {
    "nm": "KFRC",
    "cik": "0000930420",
+   "cik_from": "pack_source",
+   "entityName": "Kforce Inc",
    "nulls": {
     "intcov": "支払利息の年次は 2015年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -3932,6 +4602,8 @@
   "KGS": {
    "nm": "KGS",
    "cik": "0001767042",
+   "cik_from": "pack_source",
+   "entityName": "Kodiak Gas Services, Inc.",
    "nulls": {
     "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -3963,6 +4635,8 @@
   "KLAC": {
    "nm": "KLAC",
    "cik": "0000319201",
+   "cik_from": "pack_source",
+   "entityName": "KLA Corporation",
    "nulls": {
     "all": "営業利益の年次が 2014年止まりでパックの 2026年から古い＝この社は導出（売上−原価−R&D−販管費）が要る。**パックの gm 41.7% × 売上 13,579,476,000 で復元**（採取器が自己検証つきで導出した値・再実装ではない）",
     "op5_all_pos": "営業利益の年次が5年そろわない"
@@ -3987,6 +4661,8 @@
    "int": 284440000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 19.908,
    "intcov_strict": 19.908
@@ -3994,6 +4670,8 @@
   "KO": {
    "nm": "KO",
    "cik": "0000021344",
+   "cik_from": "pack_source",
+   "entityName": "COCA COLA CO",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -4016,6 +4694,8 @@
    "int": 1654000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 8.32,
    "intcov_strict": 8.32
@@ -4023,6 +4703,8 @@
   "KRMN": {
    "nm": "KRMN",
    "cik": "0002040127",
+   "cik_from": "pack_source",
+   "entityName": "KARMAN HOLDINGS INC.",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
@@ -4046,6 +4728,8 @@
    "int": 45200000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 1.614,
    "intcov_strict": 1.614
@@ -4053,6 +4737,8 @@
   "KTB": {
    "nm": "KTB",
    "cik": "0001760965",
+   "cik_from": "pack_source",
+   "entityName": "KONTOOR BRANDS, INC.",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
@@ -4075,6 +4761,8 @@
    "int": 62162000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 5.418,
    "intcov_strict": 5.418
@@ -4082,6 +4770,8 @@
   "LDOS": {
    "nm": "LDOS",
    "cik": "0001336920",
+   "cik_from": "pack_source",
+   "entityName": "Leidos Holdings, Inc.",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
@@ -4112,6 +4802,8 @@
   "LECO": {
    "nm": "LECO",
    "cik": "0000059527",
+   "cik_from": "pack_source",
+   "entityName": "LINCOLN ELECTRIC HOLDINGS INC",
    "nulls": {
     "opm": "売上の年次が 2022年止まりでアンカー 2025年から古い"
    },
@@ -4133,13 +4825,34 @@
    "int": 58379000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 12.3,
    "intcov_strict": 12.3
   },
+  "LEG": {
+   "nm": "LEG",
+   "cik": "0000058492",
+   "cik_from": "pack_source",
+   "entityName": "LEGGETT & PLATT INC",
+   "nulls": {
+    "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
+   },
+   "debt_trace": [
+    "DebtAndCapitalLeaseObligations",
+    "InterestExpense",
+    "InterestPaidNet",
+    "LongTermDebtAndCapitalLeaseObligations"
+   ],
+   "no_debt_evidence": false,
+   "intcov_na_reason": "unmeasured"
+  },
   "LLY": {
    "nm": "LLY",
    "cik": "0000059478",
+   "cik_from": "pack_source",
+   "entityName": "ELI LILLY AND COMPANY",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -4157,6 +4870,8 @@
   "LMAT": {
    "nm": "LMAT",
    "cik": "0001158895",
+   "cik_from": "pack_source",
+   "entityName": "LEMAITRE VASCULAR, INC.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -4175,6 +4890,8 @@
    "int": 5184000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 13.1,
    "intcov_strict": 13.1
@@ -4182,6 +4899,8 @@
   "LMT": {
    "nm": "LMT",
    "cik": "0000936468",
+   "cik_from": "pack_source",
+   "entityName": "LOCKHEED MARTIN CORPORATION",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -4204,6 +4923,8 @@
    "int": 1118000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 6.915,
    "intcov_strict": 6.915
@@ -4211,6 +4932,8 @@
   "LOAR": {
    "nm": "LOAR",
    "cik": "0002000178",
+   "cik_from": "ticker_table",
+   "entityName": "Loar Holdings Inc.",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
@@ -4232,6 +4955,8 @@
    "int": 25665000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 4.14,
    "intcov_strict": 4.14
@@ -4239,6 +4964,8 @@
   "LOMA": {
    "nm": "LOMA",
    "cik": "0001711375",
+   "cik_from": "pack_source",
+   "entityName": "LOMA NEGRA COMPANIA INDUSTRIALARGENTINA SOCIEDAD ANONIMA",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -4252,6 +4979,8 @@
   "LOPE": {
    "nm": "LOPE",
    "cik": "0001434588",
+   "cik_from": "pack_source",
+   "entityName": "GRAND CANYON EDUCATION, INC.",
    "nulls": {
     "opm": "売上の年次が 2012年止まりでアンカー 2025年から古い",
     "intcov_fy": "アンカー 2025年に利息が無いので**分子・分母とも 2024年**で算出（年をまたいで割らない）"
@@ -4271,6 +5000,8 @@
    "int": 4000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2024,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 68849.75,
    "intcov_strict": 68849.75
@@ -4278,6 +5009,8 @@
   "LOW": {
    "nm": "LOW",
    "cik": "0000060667",
+   "cik_from": "pack_source",
+   "entityName": "LOWES COMPANIES INC",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -4311,6 +5044,8 @@
   "LQDT": {
    "nm": "LQDT",
    "cik": "0001235468",
+   "cik_from": "pack_source",
+   "entityName": "LIQUIDITY SERVICES, INC",
    "nulls": {
     "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -4328,12 +5063,16 @@
    "int": 4375000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "net",
    "intcov": 8.015
   },
   "LRCX": {
    "nm": "LRCX",
    "cik": "0000707549",
+   "cik_from": "ticker_table",
+   "entityName": "LAM RESEARCH CORPORATION",
    "nulls": {
     "opm": "売上の年次が 2011年止まりでアンカー 2026年から古い"
    },
@@ -4356,6 +5095,8 @@
    "int": 155903000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 52.595,
    "intcov_strict": 52.595
@@ -4363,6 +5104,8 @@
   "LRN": {
    "nm": "LRN",
    "cik": "0001157408",
+   "cik_from": "pack_source",
+   "entityName": "Stride, Inc.",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い",
     "intcov": "支払利息の年次は 2018年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
@@ -4391,6 +5134,8 @@
   "LSTR": {
    "nm": "LSTR",
    "cik": "0000853816",
+   "cik_from": "pack_source",
+   "entityName": "LANDSTAR SYSTEM, INC.",
    "nulls": {},
    "debt_trace": [
     "InterestAndDebtExpense",
@@ -4411,6 +5156,8 @@
    "int": 5586000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 27.135,
    "intcov_strict": 27.135
@@ -4418,6 +5165,8 @@
   "LULU": {
    "nm": "LULU",
    "cik": "0001397187",
+   "cik_from": "pack_source",
+   "entityName": "lululemon athletica inc.",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -4444,6 +5193,8 @@
   "MANH": {
    "nm": "MANH",
    "cik": "0001056696",
+   "cik_from": "pack_source",
+   "entityName": "Manhattan Associates, Inc.",
    "nulls": {
     "opm": "売上の年次が 2015年止まりでアンカー 2025年から古い",
     "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
@@ -4460,12 +5211,16 @@
    "int": 4389000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "net",
    "intcov": 63.75
   },
   "MA": {
    "nm": "MA",
    "cik": "0001141391",
+   "cik_from": "pack_source",
+   "entityName": "Mastercard Incorporated",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -4487,6 +5242,8 @@
    "int": 680000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 27.79,
    "intcov_strict": 27.79
@@ -4494,6 +5251,8 @@
   "MCO": {
    "nm": "MCO",
    "cik": "0001059556",
+   "cik_from": "pack_source",
+   "entityName": "MOODY'S CORPORATION",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
    },
@@ -4513,6 +5272,8 @@
    "int": 251000000,
    "int_tag": "InterestExpenseBorrowings",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 13.351,
    "intcov_strict": 13.351
@@ -4520,6 +5281,8 @@
   "MEDP": {
    "nm": "MEDP",
    "cik": "0001668397",
+   "cik_from": "pack_source",
+   "entityName": "Medpace Holdings, Inc.",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -4547,6 +5310,8 @@
   "MELI": {
    "nm": "MELI",
    "cik": "0001099590",
+   "cik_from": "pack_source",
+   "entityName": "MercadoLibre, Inc.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "intcov": "支払利息の年次は 2017年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
@@ -4578,6 +5343,8 @@
   "META": {
    "nm": "META",
    "cik": "0001326801",
+   "cik_from": "pack_source",
+   "entityName": "Meta Platforms, Inc.",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
    },
@@ -4599,6 +5366,8 @@
    "int": 1090000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 76.4,
    "intcov_strict": 76.4
@@ -4606,6 +5375,8 @@
   "MGRC": {
    "nm": "MGRC",
    "cik": "0000752714",
+   "cik_from": "pack_source",
+   "entityName": "McGRATH RENTCORP",
    "nulls": {},
    "debt_trace": [
     "InterestExpenseDebt",
@@ -4624,6 +5395,8 @@
    "int": 30622000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 7.956,
    "intcov_strict": 7.956
@@ -4631,6 +5404,8 @@
   "MKSI": {
    "nm": "MKSI",
    "cik": "0001049502",
+   "cik_from": "pack_source",
+   "entityName": "MKS INC.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -4650,6 +5425,8 @@
    "int": 212000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 2.491,
    "intcov_strict": 2.491
@@ -4657,6 +5434,8 @@
   "MNST": {
    "nm": "MNST",
    "cik": "0000865752",
+   "cik_from": "pack_source",
+   "entityName": "Monster Beverage Corp",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -4687,6 +5466,8 @@
   "MPTI": {
    "nm": "MPTI",
    "cik": "0001902314",
+   "cik_from": "pack_source",
+   "entityName": "M-tron Industries, Inc.",
    "nulls": {
     "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -4707,6 +5488,8 @@
    "int": 539000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "net",
    "intcov": 19.093,
    "intcov_cash": 1143.444,
@@ -4716,6 +5499,8 @@
   "MPWR": {
    "nm": "MPWR",
    "cik": "0001280452",
+   "cik_from": "pack_source",
+   "entityName": "Monolithic Power Systems, Inc.",
    "nulls": {
     "opm": "売上の年次が 2015年止まりでアンカー 2025年から古い"
    },
@@ -4731,6 +5516,8 @@
   "MRK": {
    "nm": "MRK",
    "cik": "0000310158",
+   "cik_from": "pack_source",
+   "entityName": "Merck & Co., Inc.",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -4748,6 +5535,8 @@
   "MSA": {
    "nm": "MSA",
    "cik": "0000066570",
+   "cik_from": "pack_source",
+   "entityName": "MSA SAFETY INC",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -4769,6 +5558,8 @@
    "int": 31799000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 11.693,
    "intcov_strict": 11.693
@@ -4776,6 +5567,8 @@
   "MSCI": {
    "nm": "MSCI",
    "cik": "0001408198",
+   "cik_from": "pack_source",
+   "entityName": "MSCI INC.",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
    },
@@ -4797,6 +5590,8 @@
    "int": 209889000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 8.164,
    "intcov_strict": 8.164
@@ -4804,6 +5599,8 @@
   "MSEX": {
    "nm": "MSEX",
    "cik": "0000066004",
+   "cik_from": "pack_source",
+   "entityName": "MIDDLESEX WATER COMPANY",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -4827,6 +5624,8 @@
    "int": 14295000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 3.804,
    "intcov_strict": 3.804
@@ -4834,6 +5633,8 @@
   "MSFT": {
    "nm": "MSFT",
    "cik": "0000789019",
+   "cik_from": "pack_source",
+   "entityName": "MICROSOFT CORPORATION",
    "nulls": {
     "opm": "売上の年次が 2010年止まりでアンカー 2026年から古い"
    },
@@ -4855,6 +5656,8 @@
    "int": 3051000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 50.881,
    "intcov_strict": 50.881
@@ -4862,6 +5665,8 @@
   "MSI": {
    "nm": "MSI",
    "cik": "0000068505",
+   "cik_from": "pack_source",
+   "entityName": "Motorola Solutions, Inc.",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
    },
@@ -4884,6 +5689,8 @@
    "int": 360000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 8.3,
    "intcov_strict": 8.3
@@ -4891,6 +5698,8 @@
   "MTN": {
    "nm": "MTN",
    "cik": "0000812011",
+   "cik_from": "pack_source",
+   "entityName": "Vail Resorts, Inc.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -4913,6 +5722,8 @@
    "int": 171628000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 3.263,
    "intcov_strict": 3.263
@@ -4920,6 +5731,8 @@
   "MUSA": {
    "nm": "MUSA",
    "cik": "0001573516",
+   "cik_from": "pack_source",
+   "entityName": "MURPHY USA INC.",
    "nulls": {
     "opm": "売上の年次が 2023年止まりでアンカー 2025年から古い"
    },
@@ -4939,6 +5752,8 @@
    "int": 110900000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 6.479,
    "intcov_strict": 6.479
@@ -4946,6 +5761,8 @@
   "MWA": {
    "nm": "MWA",
    "cik": "0001350593",
+   "cik_from": "ticker_table",
+   "entityName": "Mueller Water Products, Inc.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -4969,6 +5786,8 @@
    "int": 20000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 13.03,
    "intcov_strict": 13.03
@@ -4976,6 +5795,8 @@
   "NATH": {
    "nm": "NATH",
    "cik": "0000069733",
+   "cik_from": "pack_source",
+   "entityName": "NATHAN'S FAMOUS, INC.",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2026年から古い"
    },
@@ -4996,6 +5817,8 @@
    "int": 2857000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 10.536,
    "intcov_strict": 10.536
@@ -5003,6 +5826,8 @@
   "NBIX": {
    "nm": "NBIX",
    "cik": "0000914475",
+   "cik_from": "pack_source",
+   "entityName": "NEUROCRINE BIOSCIENCES INC",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い",
     "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
@@ -5031,6 +5856,8 @@
   "NDSN": {
    "nm": "NDSN",
    "cik": "0000072331",
+   "cik_from": "pack_source",
+   "entityName": "NORDSON CORPORATION",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
    },
@@ -5053,6 +5880,8 @@
    "int": 104156000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 6.833,
    "intcov_strict": 6.833
@@ -5060,6 +5889,8 @@
   "NEE": {
    "nm": "NEE",
    "cik": "0000753308",
+   "cik_from": "pack_source",
+   "entityName": "NEXTERA ENERGY INC",
    "nulls": {
     "fcf5_note": "設備投資タグが一度も無い＝営業CFのみで判定",
     "opm": "売上の年次が 2012年止まりでアンカー 2025年から古い",
@@ -5085,9 +5916,41 @@
     "us-gaap:InterestPaidNet(2025)"
    ]
   },
+  "NEU": {
+   "nm": "NEU",
+   "cik": "0001282637",
+   "cik_from": "pack_source",
+   "entityName": "NEWMARKET CORPORATION",
+   "nulls": {},
+   "debt_trace": [
+    "InterestExpense",
+    "InterestPaidNet",
+    "LongTermDebt",
+    "LongTermDebtCurrent",
+    "LongTermDebtNoncurrent"
+   ],
+   "no_debt_evidence": false,
+   "fy": 2025,
+   "fy_basis": "pack",
+   "fy_end": "2025-12-31",
+   "op5_all_pos": true,
+   "fcf5_all_pos": true,
+   "opm": 19.95,
+   "opm_fy": 2025,
+   "int": 39693000,
+   "int_tag": "InterestExpense",
+   "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
+   "int_basis": "interest",
+   "intcov": 13.698,
+   "intcov_strict": 13.698
+  },
   "NFLX": {
    "nm": "NFLX",
    "cik": "0001065280",
+   "cik_from": "pack_source",
+   "entityName": "NETFLIX INC",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -5108,6 +5971,8 @@
    "int": 776510000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 17.162,
    "intcov_strict": 17.162
@@ -5115,6 +5980,8 @@
   "NICE": {
    "nm": "NICE",
    "cik": "0001003935",
+   "cik_from": "pack_source",
+   "entityName": "NICE LTD.",
    "nulls": {
     "intcov_fy": "アンカー 2025年に利息が無いので**分子・分母とも 2024年**で算出（年をまたいで割らない）"
    },
@@ -5136,6 +6003,8 @@
    "int": 46000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2024,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 11868.565,
    "intcov_strict": 11868.565
@@ -5143,6 +6012,8 @@
   "NJR": {
    "nm": "NJR",
    "cik": "0000356309",
+   "cik_from": "pack_source",
+   "entityName": "NEW JERSEY RESOURCES CORPORATION",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -5163,6 +6034,8 @@
    "int": 128595000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 3.957,
    "intcov_strict": 3.957
@@ -5170,6 +6043,8 @@
   "NOVT": {
    "nm": "NOVT",
    "cik": "0001076930",
+   "cik_from": "pack_source",
+   "entityName": "NOVANTA INC.",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い",
     "intcov": "支払利息の年次は 2011年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
@@ -5200,6 +6075,8 @@
   "NSSC": {
    "nm": "NSSC",
    "cik": "0000069633",
+   "cik_from": "pack_source",
+   "entityName": "NAPCO SECURITY TECHNOLOGIES, INC",
    "nulls": {
     "intcov": "支払利息の年次は 2019年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -5228,6 +6105,8 @@
   "NVDA": {
    "nm": "NVDA",
    "cik": "0001045810",
+   "cik_from": "pack_source",
+   "entityName": "NVIDIA CORP",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -5249,6 +6128,8 @@
    "int": 259000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 503.425,
    "intcov_strict": 503.425
@@ -5256,6 +6137,8 @@
   "NVMI": {
    "nm": "NVMI",
    "cik": "0001109345",
+   "cik_from": "pack_source",
+   "entityName": "NOVA LTD.",
    "nulls": {},
    "debt_trace": [
     "InterestExpenseDebt",
@@ -5272,6 +6155,8 @@
    "int": 1996000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 126.988,
    "intcov_strict": 126.988
@@ -5279,6 +6164,8 @@
   "NVO": {
    "nm": "NVO",
    "cik": "0000353278",
+   "cik_from": "pack_source",
+   "entityName": "NOVO NORDISK A/S",
    "nulls": {},
    "debt_trace": [
     "FinanceCosts",
@@ -5295,6 +6182,8 @@
    "int": 4207000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "DKK",
+   "op_unit": "DKK",
    "int_basis": "interest",
    "intcov": 30.344,
    "intcov_strict": 30.344
@@ -5302,6 +6191,8 @@
   "NVT": {
    "nm": "NVT",
    "cik": "0001720635",
+   "cik_from": "pack_source",
+   "entityName": "nVent Electric plc",
    "nulls": {
     "intcov": "支払利息の年次は 2023年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -5335,6 +6226,8 @@
   "NXPI": {
    "nm": "NXPI",
    "cik": "0001413447",
+   "cik_from": "pack_source",
+   "entityName": "NXP Semiconductors N.V.",
    "nulls": {},
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -5357,6 +6250,8 @@
    "int": 466000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 6.539,
    "intcov_strict": 6.539
@@ -5364,6 +6259,8 @@
   "NYT": {
    "nm": "NYT",
    "cik": "0000071691",
+   "cik_from": "pack_source",
+   "entityName": "THE NEW YORK TIMES COMPANY",
    "nulls": {
     "opm": "売上の年次が 2020年止まりでアンカー 2025年から古い",
     "intcov_fy": "アンカー 2025年に利息が無いので**分子・分母とも 2024年**で算出（年をまたいで割らない）",
@@ -5383,6 +6280,8 @@
    "int": 36485000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2024,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "net",
    "intcov": 9.623,
    "intcov_cash": 3887.901,
@@ -5392,6 +6291,8 @@
   "ODD": {
    "nm": "ODD",
    "cik": "0001907085",
+   "cik_from": "pack_source",
+   "entityName": "Oddity Tech Ltd",
    "nulls": {},
    "debt_trace": [
     "InterestPaidNet"
@@ -5412,6 +6313,8 @@
   "OKE": {
    "nm": "OKE",
    "cik": "0001039684",
+   "cik_from": "pack_source",
+   "entityName": "ONEOK INC /NEW/",
    "nulls": {
     "opm": "売上の年次が 2022年止まりでアンカー 2025年から古い"
    },
@@ -5434,6 +6337,8 @@
    "int": 1783000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 3.22,
    "intcov_strict": 3.22
@@ -5441,6 +6346,8 @@
   "OLED": {
    "nm": "OLED",
    "cik": "0001005284",
+   "cik_from": "pack_source",
+   "entityName": "UNIVERSAL DISPLAY CORPORATION",
    "nulls": {
     "intcov": "支払利息の年次は 2015年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
    },
@@ -5458,6 +6365,8 @@
   "OMAB": {
    "nm": "OMAB",
    "cik": "0001378239",
+   "cik_from": "pack_source",
+   "entityName": "Central North Airport Group",
    "nulls": {},
    "debt_trace": [
     "InterestExpense"
@@ -5473,6 +6382,8 @@
    "int": 63933000,
    "int_tag": "InterestExpense",
    "int_fy": 2024,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 6.083,
    "intcov_strict": 6.083
@@ -5480,6 +6391,8 @@
   "ORLY": {
    "nm": "ORLY",
    "cik": "0000898173",
+   "cik_from": "pack_source",
+   "entityName": "O REILLY AUTOMOTIVE INC",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -5498,6 +6411,8 @@
    "int": 235064000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 14.722,
    "intcov_strict": 14.722
@@ -5505,6 +6420,8 @@
   "OTIS": {
    "nm": "OTIS",
    "cik": "0001781335",
+   "cik_from": "pack_source",
+   "entityName": "OTIS WORLDWIDE CORPORATION",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -5527,6 +6444,8 @@
    "int": 217000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 9.829,
    "intcov_strict": 9.829
@@ -5534,8 +6453,12 @@
   "PAC": {
    "nm": "PAC",
    "cik": "0001347557",
+   "cik_from": "pack_source",
+   "entityName": "Pacific Airport Group",
    "nulls": {
-    "fcf5_note": "設備投資タグが一度も無い＝営業CFのみで判定"
+    "fcf5_note": "設備投資タグが一度も無い＝営業CFのみで判定",
+    "intcov": "unit_mismatch: 営業利益 ProfitLossFromOperatingActivities[MXN] と 利息 InterestExpense[USD]＝通貨（XBRL の units）がそろわないので 利払カバー を算出しない（割らない）",
+    "intcov_strict": "unit_mismatch: 営業利益 ProfitLossFromOperatingActivities[MXN] と 利息 InterestExpense[USD]＝通貨（XBRL の units）がそろわないので 利払カバー を算出しない（割らない）"
    },
    "debt_trace": [
     "FinanceCosts",
@@ -5552,13 +6475,16 @@
    "int": 15000000,
    "int_tag": "InterestExpense",
    "int_fy": 2024,
+   "int_unit": "USD",
+   "op_unit": "MXN",
    "int_basis": "interest",
-   "intcov": 1003.376,
-   "intcov_strict": 1003.376
+   "intcov_na_reason": "unit_mismatch"
   },
   "PAYC": {
    "nm": "PAYC",
    "cik": "0001590955",
+   "cik_from": "pack_source",
+   "entityName": "Paycom Software, Inc.",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
    },
@@ -5580,6 +6506,8 @@
    "int": 3400000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 166.824,
    "intcov_strict": 166.824
@@ -5587,6 +6515,8 @@
   "PAYX": {
    "nm": "PAYX",
    "cik": "0000723531",
+   "cik_from": "pack_source",
+   "entityName": "Paychex, Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -5609,6 +6539,8 @@
    "int": 269500000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 9.315,
    "intcov_strict": 9.315
@@ -5616,6 +6548,8 @@
   "PCTY": {
    "nm": "PCTY",
    "cik": "0001591698",
+   "cik_from": "pack_source",
+   "entityName": "PAYLOCITY HOLDING CORPORATION",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -5642,6 +6576,8 @@
   "PH": {
    "nm": "PH",
    "cik": "0000076334",
+   "cik_from": "pack_source",
+   "entityName": "PARKER-HANNIFIN CORPORATION",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
    },
@@ -5663,6 +6599,8 @@
    "int": 409000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 10.628,
    "intcov_strict": 10.628
@@ -5670,6 +6608,8 @@
   "PKE": {
    "nm": "PKE",
    "cik": "0000076267",
+   "cik_from": "pack_source",
+   "entityName": "PARK AEROSPACE CORP.",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2026年から古い",
     "intcov": "支払利息の年次は 2018年が最新でアンカー 2026年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
@@ -5686,6 +6626,8 @@
   "PLAB": {
    "nm": "PLAB",
    "cik": "0000810136",
+   "cik_from": "pack_source",
+   "entityName": "PHOTRONICS, INC.",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い",
     "intcov": "支払利息の年次は 2019年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
@@ -5717,6 +6659,8 @@
   "PLNT": {
    "nm": "PLNT",
    "cik": "0001637207",
+   "cik_from": "pack_source",
+   "entityName": "PLANET FITNESS, INC.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -5739,6 +6683,8 @@
    "int": 108244000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 3.646,
    "intcov_strict": 3.646
@@ -5746,6 +6692,8 @@
   "PMTS": {
    "nm": "PMTS",
    "cik": "0001641614",
+   "cik_from": "pack_source",
+   "entityName": "CPI Card Group Inc.",
    "nulls": {
     "opm": "売上の年次が 2020年止まりでアンカー 2025年から古い",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -5774,6 +6722,8 @@
   "PRDO": {
    "nm": "PRDO",
    "cik": "0001046568",
+   "cik_from": "pack_source",
+   "entityName": "PERDOCEO EDUCATION CORP",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
@@ -5790,6 +6740,8 @@
    "int": 6465000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 30.317,
    "intcov_strict": 30.317
@@ -5797,6 +6749,8 @@
   "PRGS": {
    "nm": "PRGS",
    "cik": "0000876167",
+   "cik_from": "pack_source",
+   "entityName": "PROGRESS SOFTWARE CORP /MA",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
    },
@@ -5819,6 +6773,8 @@
    "int": 70850000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 2.164,
    "intcov_strict": 2.164
@@ -5826,6 +6782,8 @@
   "PTC": {
    "nm": "PTC",
    "cik": "0000857005",
+   "cik_from": "pack_source",
+   "entityName": "PTC Inc.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -5844,6 +6802,8 @@
    "int": 77019000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 12.755,
    "intcov_strict": 12.755
@@ -5851,6 +6811,8 @@
   "PWR": {
    "nm": "PWR",
    "cik": "0001050915",
+   "cik_from": "pack_source",
+   "entityName": "QUANTA SERVICES, INC.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -5871,6 +6833,8 @@
    "int": 261445000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 6.164,
    "intcov_strict": 6.164
@@ -5878,6 +6842,8 @@
   "PYPL": {
    "nm": "PYPL",
    "cik": "0001633917",
+   "cik_from": "pack_source",
+   "entityName": "PayPal Holdings, Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -5899,6 +6865,8 @@
    "int": 441000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 13.753,
    "intcov_strict": 13.753
@@ -5906,6 +6874,8 @@
   "PZZA": {
    "nm": "PZZA",
    "cik": "0000901491",
+   "cik_from": "pack_source",
+   "entityName": "PAPA JOHN’S INTERNATIONAL, INC.",
    "nulls": {
     "opm": "売上の年次が 2021年止まりでアンカー 2025年から古い",
     "intcov": "支払利息の年次は 2022年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
@@ -5939,6 +6909,8 @@
   "QCOM": {
    "nm": "QCOM",
    "cik": "0000804328",
+   "cik_from": "pack_source",
+   "entityName": "QUALCOMM INC/DE",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -5957,6 +6929,8 @@
    "int": 664000000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 18.607,
    "intcov_strict": 18.607
@@ -5964,6 +6938,8 @@
   "QLYS": {
    "nm": "QLYS",
    "cik": "0001107843",
+   "cik_from": "pack_source",
+   "entityName": "Qualys, Inc.",
    "nulls": {
     "opm": "売上の年次が 2019年止まりでアンカー 2025年から古い",
     "intcov": "支払利息の年次は 2020年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
@@ -5983,6 +6959,8 @@
   "QSR": {
    "nm": "QSR",
    "cik": "0001618756",
+   "cik_from": "pack_source",
+   "entityName": "RESTAURANT BRANDS INTERNATIONAL INC.",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -6015,6 +6993,8 @@
   "RACE": {
    "nm": "RACE",
    "cik": "0001648416",
+   "cik_from": "pack_source",
+   "entityName": "Ferrari N.V.",
    "nulls": {},
    "debt_trace": [
     "FinanceCosts",
@@ -6031,6 +7011,8 @@
    "int": 99206000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "EUR",
+   "op_unit": "EUR",
    "int_basis": "interest",
    "intcov": 21.266,
    "intcov_strict": 21.266
@@ -6038,6 +7020,8 @@
   "RBA": {
    "nm": "RBA",
    "cik": "0001046102",
+   "cik_from": "pack_source",
+   "entityName": "RB Global, Inc",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -6059,6 +7043,8 @@
    "int": 191600000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 3.723,
    "intcov_strict": 3.723
@@ -6066,6 +7052,8 @@
   "RBC": {
    "nm": "RBC",
    "cik": "0001324948",
+   "cik_from": "pack_source",
+   "entityName": "RBC BEARINGS INCORPORATED",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -6089,6 +7077,8 @@
    "int": 49800000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 8.454,
    "intcov_strict": 8.454
@@ -6096,6 +7086,8 @@
   "RELX": {
    "nm": "RELX",
    "cik": "0000929869",
+   "cik_from": "pack_source",
+   "entityName": "RELX PLC",
    "nulls": {
     "opm": "売上の年次が 2021年止まりでアンカー 2025年から古い",
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
@@ -6112,12 +7104,16 @@
    "int": 298000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "GBP",
+   "op_unit": "GBP",
    "int_basis": "finance_costs",
    "intcov": 10.158
   },
   "RL": {
    "nm": "RL",
    "cik": "0001037038",
+   "cik_from": "pack_source",
+   "entityName": "Ralph Lauren Corporation",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -6137,6 +7133,8 @@
    "int": 54200000,
    "int_tag": "InterestExpense",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 21.756,
    "intcov_strict": 21.756
@@ -6144,6 +7142,8 @@
   "RMBS": {
    "nm": "RMBS",
    "cik": "0000917273",
+   "cik_from": "pack_source",
+   "entityName": "RAMBUS INC",
    "nulls": {},
    "debt_trace": [
     "ConvertibleNotesPayable",
@@ -6162,6 +7162,8 @@
    "int": 1373000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 189.525,
    "intcov_strict": 189.525
@@ -6169,6 +7171,8 @@
   "RMD": {
    "nm": "RMD",
    "cik": "0000943819",
+   "cik_from": "pack_source",
+   "entityName": "ResMed Inc.",
    "nulls": {
     "opm": "売上の年次が 2020年止まりでアンカー 2026年から古い",
     "intcov": "支払利息の年次は 2021年が最新でアンカー 2026年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
@@ -6200,6 +7204,8 @@
   "RMR": {
    "nm": "RMR",
    "cik": "0001644378",
+   "cik_from": "pack_source",
+   "entityName": "RMR GROUP INC.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -6220,6 +7226,8 @@
    "int": 4308000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 9.699,
    "intcov_strict": 9.699
@@ -6227,6 +7235,8 @@
   "ROG": {
    "nm": "ROG",
    "cik": "0000084748",
+   "cik_from": "pack_source",
+   "entityName": "ROGERS CORP",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い",
     "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
@@ -6246,6 +7256,8 @@
    "int": 800000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "net",
    "intcov": -56.25,
    "intcov_cash": -37.5,
@@ -6255,6 +7267,8 @@
   "ROL": {
    "nm": "ROL",
    "cik": "0000084839",
+   "cik_from": "pack_source",
+   "entityName": "ROLLINS, INC.",
    "nulls": {
     "opm": "売上の年次が 2020年止まりでアンカー 2025年から古い"
    },
@@ -6277,6 +7291,8 @@
    "int": 28558000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 25.424,
    "intcov_strict": 25.424
@@ -6284,6 +7300,8 @@
   "ROP": {
    "nm": "ROP",
    "cik": "0000882835",
+   "cik_from": "pack_source",
+   "entityName": "ROPER TECHNOLOGIES, INC.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -6305,6 +7323,8 @@
    "int": 325000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 6.878,
    "intcov_strict": 6.878
@@ -6312,6 +7332,8 @@
   "ROST": {
    "nm": "ROST",
    "cik": "0000745732",
+   "cik_from": "pack_source",
+   "entityName": "Ross Stores, Inc.",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
@@ -6334,6 +7356,8 @@
    "int": 134800000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "net",
    "intcov": 20.084,
    "intcov_cash": 48.538,
@@ -6343,6 +7367,8 @@
   "RSG": {
    "nm": "RSG",
    "cik": "0001060391",
+   "cik_from": "pack_source",
+   "entityName": "REPUBLIC SERVICES, INC.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -6362,6 +7388,8 @@
    "int": 574000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 5.753,
    "intcov_strict": 5.753
@@ -6369,6 +7397,8 @@
   "RSVR": {
    "nm": "RSVR",
    "cik": "0001824403",
+   "cik_from": "pack_source",
+   "entityName": "RESERVOIR MEDIA, INC.",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -6388,6 +7418,8 @@
    "int": 26451641,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 1.445,
    "intcov_strict": 1.445
@@ -6395,6 +7427,8 @@
   "SAP": {
    "nm": "SAP",
    "cik": "0001000184",
+   "cik_from": "pack_source",
+   "entityName": "SAP SE",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -6408,6 +7442,8 @@
   "SNA": {
    "nm": "SNA",
    "cik": "0000091440",
+   "cik_from": "pack_source",
+   "entityName": "Snap-on Inc",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
@@ -6431,13 +7467,50 @@
    "int": 50500000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 26.291,
    "intcov_strict": 26.291
   },
+  "SNPS": {
+   "nm": "SNPS",
+   "cik": "0000883241",
+   "cik_from": "pack_source",
+   "entityName": "SYNOPSYS INC",
+   "nulls": {
+    "opm": "売上の年次が 2022年止まりでアンカー 2025年から古い"
+   },
+   "debt_trace": [
+    "DebtInstrumentCarryingAmount",
+    "InterestExpense",
+    "InterestExpenseNonoperating",
+    "InterestPaidNet",
+    "LongTermDebt",
+    "LongTermDebtCurrent",
+    "LongTermDebtNoncurrent",
+    "ShortTermBorrowings"
+   ],
+   "no_debt_evidence": false,
+   "fy": 2025,
+   "fy_basis": "pack",
+   "fy_end": "2025-10-31",
+   "op5_all_pos": true,
+   "fcf5_all_pos": true,
+   "int": 446729000,
+   "int_tag": "InterestExpenseNonoperating",
+   "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
+   "int_basis": "interest",
+   "intcov": 2.048,
+   "intcov_strict": 2.048
+  },
   "SPGI": {
    "nm": "SPGI",
    "cik": "0000064040",
+   "cik_from": "pack_source",
+   "entityName": "S&P Global Inc.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
@@ -6458,6 +7531,8 @@
    "int": 287000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 22.571,
    "intcov_strict": 22.571
@@ -6465,6 +7540,8 @@
   "SPSC": {
    "nm": "SPSC",
    "cik": "0001092699",
+   "cik_from": "pack_source",
+   "entityName": "SPS COMMERCE, INC.",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い",
     "intcov": "支払利息の年次は 2020年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
@@ -6481,6 +7558,8 @@
   "SSD": {
    "nm": "SSD",
    "cik": "0000920371",
+   "cik_from": "pack_source",
+   "entityName": "Simpson Manufacturing Co., Inc.",
    "nulls": {
     "intcov_fy": "アンカー 2025年に利息が無いので**分子・分母とも 2024年**で算出（年をまたいで割らない）"
    },
@@ -6503,6 +7582,8 @@
    "int": 2271000,
    "int_tag": "InterestExpense",
    "int_fy": 2024,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 189.333,
    "intcov_strict": 189.333
@@ -6510,6 +7591,8 @@
   "STRL": {
    "nm": "STRL",
    "cik": "0000874238",
+   "cik_from": "pack_source",
+   "entityName": "STERLING INFRASTRUCTURE, INC.",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -6540,6 +7623,8 @@
   "STX": {
    "nm": "STX",
    "cik": "0001137789",
+   "cik_from": "ticker_table",
+   "entityName": "Seagate Technology Holdings plc",
    "nulls": {
     "opm": "売上の年次が 2023年止まりでアンカー 2026年から古い"
    },
@@ -6560,6 +7645,8 @@
    "int": 284000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2026,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 14.415,
    "intcov_strict": 14.415
@@ -6567,6 +7654,8 @@
   "ST": {
    "nm": "ST",
    "cik": "0001477294",
+   "cik_from": "ticker_table",
+   "entityName": "Sensata Technologies Holding plc",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -6588,6 +7677,8 @@
    "int": 149100000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 1.593,
    "intcov_strict": 1.593
@@ -6595,6 +7686,8 @@
   "SYK": {
    "nm": "SYK",
    "cik": "0000310764",
+   "cik_from": "pack_source",
+   "entityName": "STRYKER CORP",
    "nulls": {},
    "debt_trace": [
     "InterestExpenseDebt",
@@ -6613,6 +7706,8 @@
    "int": 582000000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 8.4,
    "intcov_strict": 8.4
@@ -6620,6 +7715,8 @@
   "SYY": {
    "nm": "SYY",
    "cik": "0000096021",
+   "cik_from": "pack_source",
+   "entityName": "SYSCO CORP",
    "nulls": {
     "intcov": "支払利息の年次は 2013年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -6651,6 +7748,8 @@
   "TDC": {
    "nm": "TDC",
    "cik": "0000816761",
+   "cik_from": "pack_source",
+   "entityName": "TERADATA CORPORATION",
    "nulls": {
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
    },
@@ -6671,6 +7770,8 @@
    "int": 26000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 7.885,
    "intcov_strict": 7.885
@@ -6678,6 +7779,8 @@
   "TDG": {
    "nm": "TDG",
    "cik": "0001260221",
+   "cik_from": "pack_source",
+   "entityName": "TransDigm Group Incorporated",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -6709,6 +7812,8 @@
   "TDY": {
    "nm": "TDY",
    "cik": "0001094285",
+   "cik_from": "pack_source",
+   "entityName": "TELEDYNE TECHNOLOGIES INC",
    "nulls": {
     "opm": "売上の年次が 2016年止まりでアンカー 2025年から古い"
    },
@@ -6731,6 +7836,8 @@
    "int": 59600000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 19.292,
    "intcov_strict": 19.292
@@ -6738,6 +7845,8 @@
   "TGLS": {
    "nm": "TGLS",
    "cik": "0001534675",
+   "cik_from": "pack_source",
+   "entityName": "TECNOGLASS HOLDINGS INC.",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
    },
@@ -6759,6 +7868,8 @@
    "int": 5965000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 38.682,
    "intcov_strict": 38.682
@@ -6766,6 +7877,8 @@
   "TGS": {
    "nm": "TGS",
    "cik": "0000931427",
+   "cik_from": "pack_source",
+   "entityName": "GAS TRANSPORTER OF THE SOUTH INC.",
    "nulls": {},
    "debt_trace": [
     "FinanceCosts",
@@ -6782,6 +7895,8 @@
    "int": 55710108000,
    "int_tag": "InterestExpense",
    "int_fy": 2024,
+   "int_unit": "ARS",
+   "op_unit": "ARS",
    "int_basis": "interest",
    "intcov": 10.057,
    "intcov_strict": 10.057
@@ -6789,6 +7904,8 @@
   "TIGO": {
    "nm": "TIGO",
    "cik": "0000912958",
+   "cik_from": "pack_source",
+   "entityName": "MILLICOM INTERNATIONAL CELLULAR SA",
    "nulls": {
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -6806,12 +7923,16 @@
    "int": 702000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "finance_costs",
    "intcov": 2.335
   },
   "TIMB": {
    "nm": "TIMB",
    "cik": "0001826168",
+   "cik_from": "pack_source",
+   "entityName": "TIM S.A.",
    "nulls": {
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -6829,12 +7950,16 @@
    "int": 3350234000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "BRL",
+   "op_unit": "BRL",
    "int_basis": "finance_costs",
    "intcov": 1.894
   },
   "TJX": {
    "nm": "TJX",
    "cik": "0000109198",
+   "cik_from": "pack_source",
+   "entityName": "The TJX Companies, Inc.",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -6851,6 +7976,8 @@
   "TKO": {
    "nm": "TKO",
    "cik": "0001973266",
+   "cik_from": "pack_source",
+   "entityName": "TKO GROUP HOLDINGS, INC.",
    "nulls": {
     "fcf5_note": "設備投資タグが一度も無い＝営業CFのみで判定"
    },
@@ -6873,6 +8000,8 @@
    "int": 202724000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 4.119,
    "intcov_strict": 4.119
@@ -6880,6 +8009,8 @@
   "TOL": {
    "nm": "TOL",
    "cik": "0000794170",
+   "cik_from": "pack_source",
+   "entityName": "Toll Brothers, Inc.",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い",
     "intcov": "支払利息の年次は 2020年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）"
@@ -6906,6 +8037,8 @@
   "TRN": {
    "nm": "TRN",
    "cik": "0000099780",
+   "cik_from": "pack_source",
+   "entityName": "TRINITY INDUSTRIES INC",
    "nulls": {
     "intcov": "支払利息の年次は 2020年が最新でアンカー 2025年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -6938,6 +8071,8 @@
   "TSM": {
    "nm": "TSM",
    "cik": "0001046179",
+   "cik_from": "pack_source",
+   "entityName": "Taiwan Semiconductor Manufacturing Company Limited",
    "nulls": {
     "intcov_strict": "採れた利息タグ FinanceCosts の基準は **finance_costs**＝IFRSの財務費用（為替差損・リース利息・引当の割引を含む上位概念）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能"
    },
@@ -6955,12 +8090,16 @@
    "int": 320100000,
    "int_tag": "FinanceCosts",
    "int_fy": 2024,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "finance_costs",
    "intcov": 125.957
   },
   "TTD": {
    "nm": "TTD",
    "cik": "0001671933",
+   "cik_from": "pack_source",
+   "entityName": "The Trade Desk, Inc.",
    "nulls": {},
    "debt_trace": [
     "InterestExpenseNonoperating",
@@ -6978,6 +8117,8 @@
    "int": 1790000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 329.23,
    "intcov_strict": 329.23
@@ -6985,6 +8126,8 @@
   "TTEK": {
    "nm": "TTEK",
    "cik": "0000831641",
+   "cik_from": "pack_source",
+   "entityName": "TETRA TECH INC",
    "nulls": {
     "opm": "売上の年次が 2018年止まりでアンカー 2025年から古い"
    },
@@ -7006,6 +8149,8 @@
    "int": 40639000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 10.05,
    "intcov_strict": 10.05
@@ -7013,6 +8158,8 @@
   "TT": {
    "nm": "TT",
    "cik": "0001466258",
+   "cik_from": "pack_source",
+   "entityName": "TRANE TECHNOLOGIES PLC",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "opm": "売上の年次が 2011年止まりでアンカー 2025年から古い"
@@ -7031,6 +8178,8 @@
    "int": 226700000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 17.501,
    "intcov_strict": 17.501
@@ -7038,6 +8187,8 @@
   "TXN": {
    "nm": "TXN",
    "cik": "0000097476",
+   "cik_from": "pack_source",
+   "entityName": "TEXAS INSTRUMENTS INCORPORATED",
    "nulls": {
     "intcov_strict": "採れた利息タグ InterestAndDebtExpense の基準は **interest_plus**＝利息＋債務消滅損等を含む上位概念。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -7061,6 +8212,8 @@
    "int": 543000000,
    "int_tag": "InterestAndDebtExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest_plus",
    "intcov": 11.092,
    "intcov_cash": 11.113,
@@ -7070,6 +8223,8 @@
   "TYL": {
    "nm": "TYL",
    "cik": "0000860731",
+   "cik_from": "pack_source",
+   "entityName": "TYLER TECHNOLOGIES, INC.",
    "nulls": {
     "opm": "売上の年次が 2014年止まりでアンカー 2025年から古い"
    },
@@ -7092,6 +8247,8 @@
    "int": 4995000,
    "int_tag": "InterestAndDebtExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest_plus",
    "intcov": 71.607,
    "intcov_strict": 71.607,
@@ -7101,6 +8258,8 @@
   "UFPT": {
    "nm": "UFPT",
    "cik": "0000914156",
+   "cik_from": "pack_source",
+   "entityName": "UFP Technologies, Inc.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -7122,6 +8281,8 @@
    "int": 9804000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 9.418,
    "intcov_strict": 9.418
@@ -7129,6 +8290,8 @@
   "UI": {
    "nm": "UI",
    "cik": "0001511737",
+   "cik_from": "pack_source",
+   "entityName": "UBIQUITI INC.",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -7157,6 +8320,8 @@
   "ULTA": {
    "nm": "ULTA",
    "cik": "0001403568",
+   "cik_from": "pack_source",
+   "entityName": "ULTA BEAUTY, INC.",
    "nulls": {
     "intcov": "支払利息の年次は 2018年が最新でアンカー 2026年から2年以上古い＝古い利息で今日を裁かない（BKNG型の回避）",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -7186,6 +8351,8 @@
   "UPBD": {
    "nm": "UPBD",
    "cik": "0000933036",
+   "cik_from": "pack_source",
+   "entityName": "Upbound Group, Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -7203,6 +8370,8 @@
    "int": 112980000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 1.977,
    "intcov_strict": 1.977
@@ -7210,6 +8379,8 @@
   "UTHR": {
    "nm": "UTHR",
    "cik": "0001082554",
+   "cik_from": "pack_source",
+   "entityName": "United Therapeutics Corporation",
    "nulls": {
     "opm": "売上の年次が 2020年止まりでアンカー 2025年から古い"
    },
@@ -7229,6 +8400,8 @@
    "int": 19500000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 76.538,
    "intcov_strict": 76.538
@@ -7236,6 +8409,8 @@
   "VEEV": {
    "nm": "VEEV",
    "cik": "0001393052",
+   "cik_from": "pack_source",
+   "entityName": "Veeva Systems Inc.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "opm": "売上の年次が 2020年止まりでアンカー 2026年から古い"
@@ -7251,6 +8426,8 @@
   "VRRM": {
    "nm": "VRRM",
    "cik": "0001682745",
+   "cik_from": "pack_source",
+   "entityName": "VERRA MOBILITY CORPORATION",
    "nulls": {},
    "debt_trace": [
     "DebtInstrumentCarryingAmount",
@@ -7273,6 +8450,8 @@
    "int": 64600000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 3.691,
    "intcov_strict": 3.691
@@ -7280,6 +8459,8 @@
   "VRSK": {
    "nm": "VRSK",
    "cik": "0001442145",
+   "cik_from": "pack_source",
+   "entityName": "Verisk Analytics, Inc.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -7299,6 +8480,8 @@
    "int": 170900000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 7.864,
    "intcov_strict": 7.864
@@ -7306,6 +8489,8 @@
   "V": {
    "nm": "V",
    "cik": "0001403161",
+   "cik_from": "pack_source",
+   "entityName": "VISA INC.",
    "nulls": {
     "opm": "売上の年次が 2020年止まりでアンカー 2025年から古い"
    },
@@ -7326,6 +8511,8 @@
    "int": 589000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 40.737,
    "intcov_strict": 40.737
@@ -7333,6 +8520,8 @@
   "WAB": {
    "nm": "WAB",
    "cik": "0000943452",
+   "cik_from": "pack_source",
+   "entityName": "WESTINGHOUSE AIR BRAKE TECHNOLOGIES CORPORATION",
    "nulls": {
     "opm": "売上の年次が 2012年止まりでアンカー 2025年から古い"
    },
@@ -7354,6 +8543,8 @@
    "int": 225000000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 7.969,
    "intcov_strict": 7.969
@@ -7361,6 +8552,8 @@
   "WAY": {
    "nm": "WAY",
    "cik": "0001990354",
+   "cik_from": "pack_source",
+   "entityName": "Waystar Holding Corp.",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
@@ -7393,6 +8586,8 @@
   "WCN": {
    "nm": "WCN",
    "cik": "0001318220",
+   "cik_from": "pack_source",
+   "entityName": "Waste Connections, Inc.",
    "nulls": {},
    "debt_trace": [
     "DebtAndCapitalLeaseObligations",
@@ -7414,6 +8609,8 @@
    "int": 334551000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 5.112,
    "intcov_strict": 5.112
@@ -7421,6 +8618,8 @@
   "WDFC": {
    "nm": "WDFC",
    "cik": "0000105132",
+   "cik_from": "pack_source",
+   "entityName": "WD-40 COMPANY",
    "nulls": {
     "opm": "売上の年次が 2021年止まりでアンカー 2025年から古い"
    },
@@ -7441,6 +8640,8 @@
    "int": 3441000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 30.164,
    "intcov_strict": 30.164
@@ -7448,6 +8649,8 @@
   "WFRD": {
    "nm": "WFRD",
    "cik": "0001603923",
+   "cik_from": "pack_source",
+   "entityName": "Weatherford International plc",
    "nulls": {
     "opm": "売上の年次が 2022年止まりでアンカー 2025年から古い",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -7479,6 +8682,8 @@
   "WHD": {
    "nm": "WHD",
    "cik": "0001699136",
+   "cik_from": "pack_source",
+   "entityName": "Cactus, Inc.",
    "nulls": {
     "fcf5_note": "設備投資タグが一度も無い＝営業CFのみで判定"
    },
@@ -7501,6 +8706,8 @@
    "int": 695000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 360.433,
    "intcov_strict": 360.433
@@ -7508,6 +8715,8 @@
   "WING": {
    "nm": "WING",
    "cik": "0001636222",
+   "cik_from": "pack_source",
+   "entityName": "WINGSTOP INC.",
    "nulls": {
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
    },
@@ -7536,7 +8745,11 @@
   "WIT": {
    "nm": "WIT",
    "cik": "0001123799",
-   "nulls": {},
+   "cik_from": "pack_source",
+   "entityName": "WIPRO LIMITED",
+   "nulls": {
+    "intcov_strict": "unit_mismatch: 営業利益 ProfitLossFromOperatingActivities[USD] と 利息 InterestExpense[INR]＝通貨（XBRL の units）がそろわないので 真正の利息による利払カバー を算出しない（割らない）"
+   },
    "debt_trace": [
     "FinanceCosts",
     "InterestExpense"
@@ -7552,15 +8765,19 @@
    "int": 173000000,
    "int_tag": "FinanceCosts",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "finance_costs",
    "intcov": 10.237,
-   "intcov_strict": 0.13,
    "int_strict_tag": "InterestExpense",
-   "int_strict_fy": 2024
+   "int_strict_fy": 2024,
+   "int_strict_unit": "INR"
   },
   "WM": {
    "nm": "WM",
    "cik": "0000823768",
+   "cik_from": "pack_source",
+   "entityName": "WASTE MANAGEMENT INC",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "opm": "売上の年次が 2017年止まりでアンカー 2025年から古い"
@@ -7579,6 +8796,8 @@
    "int": 1000000000,
    "int_tag": "InterestCostsIncurred",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 4.308,
    "intcov_strict": 4.308
@@ -7586,6 +8805,8 @@
   "WSO": {
    "nm": "WSO",
    "cik": "0000105016",
+   "cik_from": "pack_source",
+   "entityName": "WATSCO, INC.",
    "nulls": {
     "intcov_strict": "採れた利息タグ InterestIncomeExpenseNet の基準は **net**＝受取利息と相殺した純額（符号すら逆になりうる）。真正の利息タグはこの社の facts に無い＝利払カバーは算出不能",
     "intcov_cash": "現金で払った利息（資本化利息を除く）÷営業利益。**発生ベースの利息費用ではない**＝キルの物差しにするならこの基準の違いを承知のうえで"
@@ -7608,6 +8829,8 @@
    "int": 17329000,
    "int_tag": "InterestIncomeExpenseNet",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "net",
    "intcov": 41.569,
    "intcov_cash": 1033.496,
@@ -7617,6 +8840,8 @@
   "WST": {
    "nm": "WST",
    "cik": "0000105770",
+   "cik_from": "pack_source",
+   "entityName": "WEST PHARMACEUTICAL SERVICES, INC.",
    "nulls": {
     "opm": "売上の年次が 2022年止まりでアンカー 2025年から古い"
    },
@@ -7639,6 +8864,8 @@
    "int": 15100000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 38.735,
    "intcov_strict": 38.735
@@ -7646,6 +8873,8 @@
   "WTRG": {
    "nm": "WTRG",
    "cik": "0000078128",
+   "cik_from": "pack_source",
+   "entityName": "Essential Utilities, Inc.",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -7669,6 +8898,8 @@
    "int": 329081000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 5.71,
    "intcov_strict": 5.71
@@ -7676,6 +8907,8 @@
   "WTS": {
    "nm": "WTS",
    "cik": "0000795403",
+   "cik_from": "pack_source",
+   "entityName": "WATTS WATER TECHNOLOGIES INC",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -7694,6 +8927,8 @@
    "int": 10800000,
    "int_tag": "InterestExpense",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 41.491,
    "intcov_strict": 41.491
@@ -7701,6 +8936,8 @@
   "XPEL": {
    "nm": "XPEL",
    "cik": "0001767258",
+   "cik_from": "pack_source",
+   "entityName": "XPEL, INC.",
    "nulls": {},
    "debt_trace": [
     "InterestExpense",
@@ -7723,6 +8960,8 @@
    "int": 83000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 754.807,
    "intcov_strict": 754.807
@@ -7730,6 +8969,8 @@
   "YALA": {
    "nm": "YALA",
    "cik": "0001794350",
+   "cik_from": "pack_source",
+   "entityName": "YALLA GROUP LIMITED",
    "nulls": {},
    "debt_trace": [],
    "no_debt_evidence": true,
@@ -7745,6 +8986,8 @@
   "YETI": {
    "nm": "YETI",
    "cik": "0001670592",
+   "cik_from": "pack_source",
+   "entityName": "YETI Holdings, Inc.",
    "nulls": {
     "op5_all_pos": "営業利益の年次が5年そろわない",
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
@@ -7777,6 +9020,8 @@
   "YORW": {
    "nm": "YORW",
    "cik": "0000108985",
+   "cik_from": "pack_source",
+   "entityName": "YORK WATER COMPANY",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない"
    },
@@ -7799,6 +9044,8 @@
    "int": 10262000,
    "int_tag": "InterestExpenseDebt",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 2.7,
    "intcov_strict": 2.7
@@ -7806,6 +9053,8 @@
   "ZTS": {
    "nm": "ZTS",
    "cik": "0001555280",
+   "cik_from": "pack_source",
+   "entityName": "Zoetis Inc.",
    "nulls": {
     "all": "OperatingIncomeLoss の年次が無い（小計を置かない提出体裁）"
    },
@@ -7823,6 +9072,8 @@
   "ZWS": {
    "nm": "ZWS",
    "cik": "0001439288",
+   "cik_from": "pack_source",
+   "entityName": "ZURN ELKAY WATER SOLUTIONS CORPORATION",
    "nulls": {
     "fcf5_all_pos": "営業CFまたは設備投資の年次が5年そろわない",
     "opm": "売上の年次が 2023年止まりでアンカー 2025年から古い"
@@ -7845,6 +9096,8 @@
    "int": 28600000,
    "int_tag": "InterestExpenseNonoperating",
    "int_fy": 2025,
+   "int_unit": "USD",
+   "op_unit": "USD",
    "int_basis": "interest",
    "intcov": 9.752,
    "intcov_strict": 9.752
