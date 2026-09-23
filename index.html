@@ -1138,7 +1138,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.194</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.195</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -1202,8 +1202,8 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
     <div class="row"><div class="rl">買収支出の5年合計 ÷ 期初総資産 acqS5<span class="h"><b>買収の強度</b>＝Σ(直近5会計年度の買収支出) ÷ 総資産(審査年−5)。帯で点が付く（<b>0=買収しない −1 ／ 〜0.085=控えめ <u>+2</u> ／ 〜0.311=中 +1 ／ 0.311超=大きく買う 0</b>）。境界は2015-2021の7ビンテージの三分位の切れ目の<b>中央値</b>で、7年ぶんほとんど動かない（新しい定数ではない）。<b>のれん残高ではなく支出で測る</b>——残高は減損・売却・為替で汚れ、同じ661社でも読み方次第で最下位が入れ替わった。<b>空欄は0点＝加点も減点もしない</b>。⚠買収支出の行を切り出さない社（MSFT型）は0ではなく<b>空欄</b>にする。機械充填は <code>python3 night/fill_acqS5.py --write</code></span></div><div class="rc"><input type="text" id="acqS5" value="" placeholder="空欄=未測定" style="width:90px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px;text-align:right"></div></div>
     <div class="row"><div class="rl">純有利子負債 / EBITDA<span class="h">2.5超から段階減点（(nde−2.5)×6・<b>上限なし</b>＝坂の上限 4 を撤廃）、&gt;4 で論外。<b>旧実装は 2.5〜4 でしか坂が効かず、4.00 を跨ぐとΩが+8.7pt<u>上がった</u></b>（キルは上限を掛けるだけで坂の罰から抜けるため。実測 OKE: nde3.99→Ω16.3 / 4.01→25.0 / 20→25.0）</span></div><div class="rc"><input type="number" id="nde" step="0.1" value="1.0"><span class="u">x</span></div></div>
     <div class="row"><div class="rl">利払カバー（営業利益÷支払利息）<span class="h"><b>3未満で財務キル</b>（nde&gt;4 と<b>OR</b>＝どちらかで発火。片方が測れなくても片方が効く）。★歴史の実測（2016-18ビンテージ・層0の653社）で、<b>止めた側の恒久毀損の濃縮は 11.0倍</b>（nde&gt;4 は 2.82倍）で<b>止めた群の中央値も低い＝両方向とも正しい</b>。nde が借金の<b>大きさ</b>を測るのに対し、こちらは<b>重さ（払えるか）</b>を測る——同じ4倍の借金でも金利2%と9%は別物で、nde は金利をまったく見ていない。⚠<b>必ず真正の利息だけ</b>で作ること（`intcov_strict`）——IFRSの `FinanceCosts` は為替差損・リース利息・引当の割引を含む<b>上位概念</b>で、これで作ると<b>純現金の会社が利払カバー3未満に見える</b>（実測8社）。⚠<b>空欄はキルが眠る＝未測定が有利</b>。日本株は SEC 経路の外なので<b>有報の支払利息から直接</b>入れる（2026-09-23: 68社中41社を実測・27社は理由つき空欄＝借入なし22・表示単位未満5）。測り直しは night/audit_intcov.py</span></div><div class="rc"><input type="number" id="intcov" step="0.1" value=""><span class="u">x</span></div></div>
-    <div class="row"><div class="rl">Altman Z''<span class="h">非製造業対応版：6.56X1+3.26X2+6.72X3+1.05X4。&lt;1.1論外、1.1〜2.6警戒帯</span></div><div class="rc"><input type="number" id="z" step="0.1" value=""></div></div>
-    <div class="row"><div class="rl">粗利益/総資産 GP/A<span class="h">Novy-Marx品質。&lt;15%で過去門減点</span></div><div class="rc"><input type="number" id="gpa" step="0.1" value="30"><span class="u">%</span></div></div>
+    <div class="row"><div class="rl">Altman Z''<span class="h">非製造業対応版：6.56X1+3.26X2+6.72X3+1.05X4。&lt;1.1でキル（灰色帯の減点は v9.9.195 で撤去）</span></div><div class="rc"><input type="number" id="z" step="0.1" value=""></div></div>
+    <div class="row"><div class="rl">粗利益/総資産 GP/A<span class="h">Novy-Marx品質。記録のみ（&lt;15%の減点は v9.9.195 で撤去・歴史検定で不合格）</span></div><div class="rc"><input type="number" id="gpa" step="0.1" value="30"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">アクルーアル比率<span class="h">(純利益−営業CF)÷総資産。&gt;+10%で会計警戒（利益に現金裏付けなし）</span></div><div class="rc"><input type="number" id="accr" step="0.1" value="-5"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">会計基準</div><div class="rc"><select id="acc"><option value="usgaap" selected>US-GAAP</option><option value="ifrs">IFRS</option><option value="jgaap">日本基準</option></select></div></div>
     <div class="row"><div class="rl">業態<span class="h">門が誤読する3類型は採点せず手調整へ送る／金融は20年検証で最大の負の予測因子</span></div><div class="rc"><select id="fin"><option value="no" selected>事業会社（綺麗なP&L）</option><option value="acq">連続買収（のれん歪み）</option><option value="merger">合併直後（償却・債務歪み）</option><option value="thin">薄利複合（粗利proxy誤読）</option><option value="yes">金融・レバレッジ依存</option></select></div></div>
@@ -1848,7 +1848,8 @@ function compute(){
   if(icK!==null&&icK<3)kills.push('利払カバー&lt;3（稼ぎで利息を払えていない）');
   if($('eq').value==='neg')kills.push('債務超過');
   if(zV!==null&&zV<1.1)kills.push('Altman Z\'\'&lt;1.1（倒産圏）');
-  else if(zV!==null&&zV<2.6){amberPen+=6;ambers.push(`Z'' ${zV.toFixed(1)} グレーゾーン −6`);}
+  // v9.9.195（2026-09-23 ユーザー明示指示「外して」）: Z'' 灰色帯(1.1〜2.6) −6 を撤去——事前登録の歴史検定(out/retro_kills2_test.json)で
+  //   3ビンテージとも灰色帯のほうが毀損が薄く、向きが逆だった。Z''<1.1 のキルは残す（2013/2018 で毀損2.8〜2.9倍・2015 で不合格＝弱い）
   if(spreadNow<=0){
     // 提言1: 会計スプレッド負でも即キルしない。無形調整スプレッドも負 かつ 増分収益(ROIIC)も負 の二重条件でのみキル
     //   → Salesforce/ServiceNow型(R&D・S&M費用計上でROIC過小)を無差別排除しない。真の価値破壊企業のみ弾く
@@ -1947,7 +1948,7 @@ function compute(){
   //     （v9.9.99で営業利益率低下 単独を退けたのと同じ理由）。**0から罰すると74%が該当＝減速は常態**
   //   ・**−30pt で最大**: 止めた群の**中央値が負に転じる**深さ（−0.4%・毀損0.22＝3.1倍）＝「深刻」の端
   //   ・**最大 −4**: 質実証プールの効果はリターン中央値で約3.4pt/年・毀損の増加は無し。
-  //     既存の罰と並べると gls(−2) より強く、gpa<15(−5)・roicGap満額(−6)・roicg<WACC(−8) より弱い位置
+  //     既存の罰と並べると gls(−2・撤去済) より強く、gpa<15(−5・撤去済)・roicGap満額(−6)・roicg<WACC(−8) より弱い位置
   // 【未測定は罰されない】cagrT 空欄では発火しない＝**未測定が最良ケース**なので CCF_BLANK で 'best' に分類し、
   //   Ω72+ の社では点検が鳴る。SEC対象外(日本株70社)は _meta.nulls.cagrT に理由を刻んである。
   // ⚠ n() は欠測で **0** を返すので使えない（0＝『減速なし』と『未測定』が区別できない）。
@@ -1959,7 +1960,7 @@ function compute(){
     if(_dc>0.05){amberPen+=_dc;ambers.push(`成長が減速 ${cagrTv.toFixed(1)}pt（直近2年CAGR−その前3年CAGR）−${_dc.toFixed(1)}`);}
   }
   // Novy-Marx GP/A + accrual red flags
-  if(gpa&&gpa<15){amberPen+=5;ambers.push(`GP/A ${gpa.toFixed(0)}%＜15%——資産効率低位 −5`);}
+  // v9.9.195（同上）: GP/A<15 −5 を撤去——歴史検定で 2015 の中央値が逆・補助5ビンテージでも両方向は2/5。gpa 欄は記録のみ
   const accrBad=accr>10;
   // survival screen (most robust 20yr predictor): graduated leverage + financial-sector haircut
   // v7: acq is scored normally via dual-ROIC (roll-up protocol absorbed). merger/thin remain unscoreable.
