@@ -46,6 +46,7 @@ B と C は**偽陰性**なのが質が悪い——盤が緑なので、誰も�
       --all  … 作業リストに載らないものも全部出す
 """
 import datetime
+import glob
 import hashlib
 import json
 import os
@@ -282,6 +283,32 @@ def unmapped_reason(job_id):
     return f"錨をソースから特定できなかった（式: {expr[:60]}）"
 
 
+# 2026-09-23追加（todo board_measures_output_not_input）: **ヘルパ経由・複数ファイル集約の錨も追う。**
+#   旧版は ops_status の式が json_field/git_date/file_date の直書きでないと「測れない」と出して終わっていた
+#   （4件: E[r]予実の観測封印・決算点検 米/日・疑似バックテスト）。『測れない』は『測って問題なし』ではないので、
+#   ops_status の**同じヘルパ**を呼んで盤と同じ日付を得て（検算は下の本線と同じ）、本体・入力の鮮度を見るための
+#   代表ファイル（その日付を作った一番新しいファイル）を錨にする。**ヘルパを再実装しない**（v9.9.65）。
+def _newest(pattern, field=None):
+    files = glob.glob(os.path.join(BASE, pattern))
+    if not files:
+        return None
+    if field:
+        key = lambda f: (ops_status.json_field(os.path.relpath(f, BASE), field) or "")
+    else:
+        key = lambda f: (ops_status.git_date(os.path.relpath(f, BASE)) or "")
+    return os.path.relpath(max(files, key=key), BASE)
+
+
+HELPER_ANCHORS = {
+    "er":       (lambda: "out/er_ledger.json",                      lambda: ops_status.er_last_obs()),
+    "kessanUS": (lambda: _newest("out/kessan/*_qcheck.txt"),        lambda: ops_status.kessan_last("_qcheck.txt")),
+    "kessanJP": (lambda: _newest("out/kessan/*_qcheck_jp.txt"),     lambda: ops_status.kessan_last("_qcheck_jp.txt")),
+    "backtest": (lambda: _newest("out/backtest_*.json", "generated"),
+                 lambda: max((ops_status.json_field(os.path.relpath(f, BASE), "generated") or ""
+                              for f in glob.glob(os.path.join(BASE, "out", "backtest_*.json"))), default=None) or None),
+}
+
+
 def main():
     show_all = "--all" in sys.argv
     board = ops_status.build()
@@ -291,6 +318,13 @@ def main():
     for job in board["items"]:
         jid, name, due = job["id"], job["name"], job["due_days"]
         anchor = amap.get(jid)
+        helper_date = None
+        if not anchor and jid in HELPER_ANCHORS:
+            try:
+                anchor = HELPER_ANCHORS[jid][0]()
+                helper_date = HELPER_ANCHORS[jid][1]()
+            except Exception:
+                anchor = None
         if not anchor:
             unmeasurable.append({"id": jid, "name": name, "why": unmapped_reason(jid)})
             continue
@@ -299,7 +333,7 @@ def main():
             continue
         # ★検算: 自分が錨から読んだ日付と、盤が報告した日付が一致するか。
         #   一致しなければ錨の特定が誤り＝測った顔をした嘘になるので測らない。
-        mine = ops_status.json_field(anchor, "generated", "asof", "date", "updated") \
+        mine = helper_date or ops_status.json_field(anchor, "generated", "asof", "date", "updated") \
             or ops_status.git_date(anchor)
         if job["last"] and mine and job["last"] != mine:
             unmeasurable.append({"id": jid, "name": name, "anchor": anchor,
