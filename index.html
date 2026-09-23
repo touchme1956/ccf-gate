@@ -1541,7 +1541,7 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.190</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.191</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%）。</div></details></div>
   </div>
@@ -1795,8 +1795,8 @@ html[data-theme="soft"] #ccfaura i.a{background:radial-gradient(closest-side,rgb
 </div>
 <div id="pg5" class="pg">
  <div class="pg3-head">
-  <h1 class="serif">買付順位 <span style="font-size:.5em;color:var(--mut)">3層ルール自動適用</span></h1>
-  <div style="color:var(--muted);font-size:14px;line-height:1.9"><a href="v10.html" target="_blank" style="float:right;font-size:12px;color:var(--gold-bright);border:1px solid var(--gold-line);border-radius:7px;padding:4px 10px;text-decoration:none" title="v10「系列の門」影スコア——正本の合否には不使用。2027-07の較正で新旧を答え合わせ">✦ v10影スコア ↗</a><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body">台帳から自動生成。目標ウェイトは<b style="color:var(--gold-bright)">時価総額Tier（5段 8:6:4:3:2 を城の按分枠（城の合計−特別枠）へ正規化）・上限なし（v9.9.188 で撤廃）</b>（2026-08-14 ユーザー明示指示「時価総額順にウエイト上げてほしい」→「Tier分け」）。<b style="color:var(--gold-bright)">Ω順（E[r]項を外した）</b> は<b>席の選定にのみ</b>使う（E[r]点は錨12%=50点。<u>質だけでなく期待リターンとの積</u>。E[r]≤2%は自動でウェイト0）（段差8/5/3→連続へ・E[r]との積へ）／<b style="color:var(--dim)">72–75＝監視枠（保有せず・75超えで昇格）</b>。<b>🟢投下可・🔵次点の並びはΩ順＝繰り上がりの順と一致する（配分は時価総額Tierなので並び順とは別）</b>。<b style="color:#d69a3c">半導体連鎖の相関上限は2026-08-14に撤去した（v9.9.145・ユーザー明示指示）</b>——Ωも堀も上の社が上限だけで席を外れていたため（実測: 出 HWM Ω78.0/堀70.1 ／ 入 6146 Ω78.2/堀74.8）。<b>集中そのものは下の◇注記で測って出し続ける</b>（関門を消しても、それが守っていた事実は消さない）。⚠1銘柄8%は守られるが<b>束としての相関は今日から誰も止めない</b>＝承知のうえの交換。堀不足・点検・期末後の群は投下可の資格を持たないので、従来の合成順位（格×0.6＋E[r]点×0.4）で並ぶ。<b>門は「買ってよい」まで——買うかは君の判断。</b></div></details></div>
+  <h1 class="serif">買付順位</h1>
+  <div style="text-align:right;margin-top:-6px"><a href="v10.html" target="_blank" style="font-size:12px;text-decoration:none">✦ v10影スコア ↗</a></div>
  </div>
  <div class="wrap"><div id="planBox"></div></div>
 </div>
@@ -3908,8 +3908,11 @@ function ccfSleeveSplit(){
   const castle=gapCastle;                    // ★不足の比で配る（超過側は 0）
   return {total:T,castle,net:T-castle,cPct:c,nPct:n,src,mode:'gap',gc,gn,now,tCastle:byTarget(),gCastle:gapCastle};
 }
-function ccfCastleAmt(){const sp=ccfSleeveSplit(); return sp?sp.castle:ccfMonthAmt();}
-function ccfNetBudget(){const sp=ccfSleeveSplit(); return sp?sp.net:ccfNetAmt();}
+// v9.9.191（ユーザー指示「金額入力が2つあるので1つにしてほしい」）: 入力は**今月の入金総額だけ**。
+//   城も網も総額から導く（旧: 総額が空なら 個別枠 pf:monthly / 網枠 pf:monthly_net へ落ちていた）。
+//   旧キーは state.json の同期対象として残すが、門はもう読まない。
+function ccfCastleAmt(){const sp=ccfSleeveSplit(); return sp?sp.castle:0;}
+function ccfNetBudget(){const sp=ccfSleeveSplit(); return sp?sp.net:0;}
 // ── 網の円の按分（v9.9.164で切り出し）──────────────────────────────────────────
 // ★**城とまったく同じ B案②（目標−保有の不足で按分）**。ここを二箇所に書くと必ず割れるので
 //   📋今月の注文書 と ◈網（ETF）の節が**この一つを呼ぶ**（v9.9.65の掟）。
@@ -4120,9 +4123,9 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
         +`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(r,(r.px>0?{px:r.px,ccy:r.ccy}:null))}</span>`);
     });
     const full=NO.rows.filter(r=>!(r.yen>0)).map(r=>r.t);
-    if(nb&&full.length)nb+=`<div style="font-size:11px;color:var(--dim);padding:3px 7px">${full.join('・')} は<b>目標を超えている</b>ので今月は配らない（DCA＝不足側に厚く・売却なし）</div>`;
+    if(nb&&full.length)nb+=`<div style="font-size:11px;color:var(--dim);padding:3px 7px">${full.join('・')}：目標超過のため今月なし</div>`;
   }
-  const nhead=m=>`<div style="font-size:11.5px;color:#6fa8c9;margin:${m};font-weight:600">◈ 網（ETF）<span style="font-size:10.5px;color:var(--dim);font-weight:400;margin-left:7px"><b>門の裁きではない</b>——指数は門Ωにかけない（常に買ってよい対象）。円は「目標−保有」の不足按分</span></div>`;
+  const nhead=m=>`<div style="font-size:11.5px;color:#6fa8c9;margin:${m};font-weight:600">◈ 網（ETF）</div>`;
   const chip=(lbl,pct,sub,yen)=>`<div class="planrow" style="padding:7px 12px;border-radius:8px;background:#c9a64a14;border:1px solid #c9a64a44;margin-top:6px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:13.5px;color:var(--ink)">${lbl}</span><span style="white-space:nowrap">${yen!=null?`<span style="font-size:11.5px;color:var(--dim);margin-right:8px">${pct}%</span><span style="font-size:18px;font-weight:700;color:#c9a64a">${ccfYen(yen)}</span>`:`<span style="font-size:18px;font-weight:700;color:#c9a64a">${pct}%</span>`}</span></div>${sub?`<div style="font-size:10.5px;color:var(--dim);margin-top:3px;line-height:1.6">${sub}</div>`:''}</div>`;
   let body='';
   if(nm.length){
@@ -4229,38 +4232,31 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
           `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(cost)}</span>　<span style="white-space:nowrap">${b.sh===1?'指値1本＝深い側(fair線寄り)':`階段 ${s1}株＋${s2}株`}</span>${alloc(b)}　<span style="white-space:nowrap">1株 ${b.pi.label}</span></span>`
           +ccfBoughtCtl(b),'var(--ink)'); });
       skipL.forEach(b=>{ ob+=orow(b.x.n,`<span style="color:#d69a3c;font-size:11.5px">今月見送り</span>`,
-        `<span style="color:#d69a3c"><span style="white-space:nowrap">1株 ${b.pi.label}</span>が残枠に届かない→翌月の枠と合算${alloc(b)}</span>`,'var(--muted)'); });
+        `<span style="color:#d69a3c"><span style="white-space:nowrap">1株 ${b.pi.label}</span>・残枠不足で翌月へ${alloc(b)}</span>`,'var(--muted)'); });
       unknown.forEach(b=>{ ob+=orow(b.x.n,`<span style="color:var(--dim);font-size:11.5px">価格未取得</span>`,
-        `<span style="color:var(--dim)"><span style="white-space:nowrap">${ccfYen(b.need)}</span>を証券会社の現値で手計算（円÷株価）${alloc(b)}</span>`,'var(--muted)'); });
+        `<span style="color:var(--dim)"><span style="white-space:nowrap">${ccfYen(b.need)}</span>（株価未取得）${alloc(b)}</span>`,'var(--muted)'); });
       const spent=AMT-bud-unknown.reduce((a,b)=>a+b.need,0);
       order=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
-        <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書（株数・現値換算）</b><span style="font-size:10.5px;color:var(--dim);margin-left:8px">円の按分が正本——丸株で最も近づける執行案。<b>①まだ1株も無い社へ安い順に1株ずつ（行き渡らせる）→②残枠は按分の残りに対していちばん無理のない1株から→③社数を減らさない範囲で<u>枠を使い切る</u>組合せへ</b></span></div>
-        ${nb?`<div style="font-size:11.5px;color:var(--gold-bright);margin:0 0 2px;font-weight:600">🏰 城（個別）<span style="font-size:10.5px;color:var(--dim);font-weight:400;margin-left:7px">四関門を通った銘柄＝門の裁き</span></div>`:''}
+        <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書</b></div>
+        ${nb?`<div style="font-size:11.5px;color:var(--gold-bright);margin:0 0 2px;font-weight:600">🏰 城（個別）</div>`:''}
         ${ob}
         ${nb?nhead('7px 0 2px')+nb:''}
-        <div style="font-size:11px;color:var(--dim);margin-top:5px">${nb?`<b>合計 約${ccfYen(Math.round(spent+nspent))}</b>（城 ${ccfYen(Math.round(spent))}／網 ${ccfYen(nspent)}）`:`合計 約${ccfYen(Math.round(spent))}`}${bud>=100?`／城の残り${ccfYen(Math.floor(bud/100)*100)}は<b>網へ</b>（または翌月へ繰越して見送り銘柄に充てる）`:''}</div>
+        <div style="font-size:11px;color:var(--dim);margin-top:5px">${nb?`<b>合計 約${ccfYen(Math.round(spent+nspent))}</b>（城 ${ccfYen(Math.round(spent))}／網 ${ccfYen(nspent)}）`:`合計 約${ccfYen(Math.round(spent))}`}${bud>=100?`／残り${ccfYen(Math.floor(bud/100)*100)}`:''}</div>
       </div>`;
     }
     body = order || chips;      // 注文書が出せるならそれだけ／出せないときは按分チップ
     // ★v9.9.167: 総額は入っているのに城の取り分が0＝城が目標を超過しているから。
     //   ここを黙ると「個別枠が未入力だから円が出ない」と見分けが付かない（v9.9.52: 名指しで出す）。
-    if(SP&&!(AMT>0)&&SP.mode==='gap'&&SP.gc<=0&&SP.now){
-      body=`<div style="font-size:11.5px;color:var(--muted);margin-top:8px;padding:8px 10px;border:1px dashed rgba(111,168,201,.5);border-radius:8px;line-height:1.8">`
-        +`<b style="color:#6fa8c9">今月は城へ配らない</b>——城は目標${ST.c}%に対し<b>${SP.now.c.toFixed(1)}%（${(SP.now.c-ST.c).toFixed(1)}pt 超過）</b>で、`
-        +`網が<b>${SP.gn.toFixed(1)}pt 不足</b>している。<b>足りないほうから順に投資する</b>規約なので、`
-        +`総額 ${ccfYen(SP.total)} は<b>全額が網へ</b>（売却ではなく新規資金で寄せるため、超過側には配らない）。`
-        +`<br><span style="color:var(--dim)">下の按分%は<b>城へ枠が回る月の配り方</b>——城の保有が目標へ近づく（または総資産が増える）と、この枠が復活する。`
-        +`今月ぶんを城へ入れたいときは<b>総額を消して「今月の個別枠」に直接</b>入れてください（手動へ戻る）。</span></div>`+body;
-    }
+    if(SP&&!(AMT>0))body='';   // 総額が入っていて城の取り分が0＝城の欄は出さない（割り方の1行が「城 ¥0」を示す）
   }else if(!pass.length){
-    body=`<div style="font-size:12px;color:var(--dim);margin-top:8px;padding:8px 10px;border:1px dashed rgba(201,166,74,.35);border-radius:8px;line-height:1.75"><b>🟢投下可がゼロ＝今月は個別を建てない。</b>四関門（Ω75+ ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件 ∧ 事業の収縮なし（売上縮小∧営業利益率低下でない））を同時に満たす銘柄が現時点で無い。押し目待ちが開通したらここに出る。</div>`;
+    body=`<div style="font-size:12px;color:var(--dim);margin-top:8px;padding:8px 10px;border:1px dashed rgba(201,166,74,.35);border-radius:8px;line-height:1.75">🟢投下可なし</div>`;
   }else{
     // 投下可はいるのに配れない＝不足按分の分母がゼロ。原因を名指しで出す（v9.9.52の診断を維持）
     const rowsTxt=pass.map(r=>`${r.nm} 保有${(r.pos||0).toFixed(1)}%${(r.pos||0)>=tw(r)?'≧':'&lt;'}目標${tw(r)}%`).join('／');
     const why=(passGap>0)
       ?`按分後の各行が0.5%未満のため表示から落ちた（不足合計${passGap.toFixed(1)}%）。`
-      :`<b>投下可${pass.length}社が全て目標ウェイトに到達済み</b>——個別枠は「目標−現在保有」の不足分で按分する規約（B案②）なので、不足がゼロなら配る先が無い。<br><span style="color:var(--muted)">${rowsTxt}</span><br>現在保有%は<b>Ⅶ保有の実額</b>から自動算出（無い銘柄のみⅢ採点機の手入力pos）。<b>保有していないのに到達済みと出るならpos欄が実態と違う</b>——Ⅶ保有を実額で入れ直すか採点機のposを直せば行が出る。`;
-    body=`<div style="font-size:11.5px;color:var(--dim);margin-top:8px;padding:8px 10px;border:1px dashed rgba(201,166,74,.35);border-radius:8px;line-height:1.75">今月は配分先が無い理由：${why}</div>`;
+      :`投下可${pass.length}社とも目標到達済み<br><span style="color:var(--muted)">${rowsTxt}</span>`;
+    body=`<div style="font-size:11.5px;color:var(--dim);margin-top:8px;padding:8px 10px;border:1px dashed rgba(201,166,74,.35);border-radius:8px;line-height:1.75">${why}</div>`;
   }
   // ★城の注文書が出せない月でも、網は配れる（v9.9.164）。
   //   注文書ごと消えると「今月いくら網へ回すか」が画面から丸ごと消える＝黙って消す形になる（v9.9.52）。
@@ -4268,72 +4264,29 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
     body+=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(111,168,201,.5);border-radius:8px;background:rgba(111,168,201,.06)">`
       +nhead('0 0 4px')+nb
       +`<div style="font-size:11px;color:var(--dim);margin-top:5px">合計 ${ccfYen(nspent)}`
-      +`<span style="color:var(--dim)">（城は今月 配る先が無いので、この注文書は網だけ）</span></div></div>`;
+      +`</div></div>`;
   }
   // ★今月の入金総額 → 城/網へ「足りないほうから」配る（v9.9.163 で新設・v9.9.167 で割り方を規約へ）
-  const totRow=(()=>{
-    const now=SP?SP.now:null;
-    // ★v9.9.167: 割り方そのものが「不足側に厚く」になった。ここでは**採らなかったほう（目標比）**を併記する
-    //   ——どちらの数字も隠さない（v9.9.52 の作法。旧版はこの逆向きで併記していた）。
-    let dca='';
-    if(SP){
-      if(SP.mode==='fixed'){
-        // ★2026-09-22 ユーザー指示「常に網70%城30%になるように配れるような仕様にしてほしい」
-        dca=`今 <b>城${now.c.toFixed(1)}% / 網${now.n.toFixed(1)}%</b>${now.asof?'・'+now.asof+'時点':''}`
-          +`　→ <b>総額を常に目標比 ${ST.c}:${ST.n} で割る</b>（今の姿に関係なく城も必ず買う）`
-          +(SP.gCastle!=null&&SP.gCastle!==SP.castle
-             ? `。参考: <b>足りないほうから</b>配るなら 城 ${ccfYen(SP.gCastle)} ／ 網 ${ccfYen(SP.total-SP.gCastle)}`
-               +`（不足 城${SP.gc.toFixed(1)}pt / 網${SP.gn.toFixed(1)}pt）＝<b>そちらのほうが目標へ速く寄る</b>`
-             : '')
-          +(now.c>ST.c ? `。⚠ <b>城は目標を${(now.c-ST.c).toFixed(1)}pt超過</b>しているので、この割り方は超過側にも配り続ける——`
-                        +`目標へは寄るが<u>遅くなる</u>（戻すなら portfolio.json の <code>target.sleeve_split_mode</code> を <code>gap</code> へ）` : '');
-      }else if(SP.mode==='gap'){
-        dca=`今 <b>城${now.c.toFixed(1)}% / 網${now.n.toFixed(1)}%</b>${now.asof?'・'+now.asof+'時点':''}`
-          +`　→ 不足は <b>城${SP.gc.toFixed(1)}pt / 網${SP.gn.toFixed(1)}pt</b>`
-          +(SP.gc<=0?`（<b>城は目標を${(now.c-ST.c).toFixed(1)}pt超過</b>しているので今月は配らない——売却でなく新規資金で寄せる規約）`:'')
-          +(SP.gn<=0?`（<b>網は目標を${(now.n-ST.n).toFixed(1)}pt超過</b>しているので今月は配らない——売却でなく新規資金で寄せる規約）`:'')
-          +`。参考: 目標比 ${ST.c}:${ST.n} で割るなら 城 ${ccfYen(SP.tCastle)} ／ 網 ${ccfYen(SP.total-SP.tCastle)}`;
-      }else if(SP.mode==='full'){
-        dca=`今 <b>城${now.c.toFixed(1)}% / 網${now.n.toFixed(1)}%</b> で<b>どちらも目標以上</b>`
-          +`——短い側が無く不足で比が作れないので、ここだけ目標比 ${ST.c}:${ST.n} へ倒している`;
-      }else{
-        dca=`⚠ <b>保有%が読めない</b>（<code>portfolio.json</code>）ので<b>不足を測れない</b>——目標比 ${ST.c}:${ST.n} へ倒している。`
-          +`これは「測って問題なし」ではなく<b>「測っていない」</b>（ルール7）`;
-      }
-    }
-    return `<div style="display:flex;align-items:center;gap:7px;margin:9px 0 3px;flex-wrap:wrap">
-    <span style="font-size:12px;color:var(--muted)">今月の入金総額</span>
-    <input id="ccfTotalAmtIn" type="text" inputmode="numeric" autocomplete="off" value="${TA>0?TA.toLocaleString('ja-JP'):''}" placeholder="タップして入力"
+  // v9.9.191（ユーザー指示「説明はすべてなくしてシンプルに」「金額入力が2つあるので1つに」）:
+  //   入力は **今月の入金総額の1欄だけ**。城/網の割り方は1行で出し、採らなかった割り方も同じ行に併記する（v9.9.52）。
+  const altTxt=!SP?'':(SP.mode==='fixed'
+      ? (SP.gCastle!=null?`足りないほうからなら 城 ${ccfYen(SP.gCastle)} ／ 網 ${ccfYen(SP.total-SP.gCastle)}`:'')
+      : (SP.mode==='gap'?`目標比なら 城 ${ccfYen(SP.tCastle)} ／ 網 ${ccfYen(SP.total-SP.tCastle)}`:''));
+  const modeTxt=!SP?'':({fixed:'常に目標比',gap:'足りないほうから',full:'どちらも目標以上→目標比',unknown:'⚠保有%が読めない→目標比'}[SP.mode]||'');
+  const totRow=`<div style="display:flex;align-items:center;gap:8px;margin:10px 0 4px;flex-wrap:wrap">
+    <span style="font-size:13px;color:var(--muted)">今月の入金額</span>
+    <input id="ccfTotalAmtIn" type="text" inputmode="numeric" autocomplete="off" value="${TA>0?TA.toLocaleString('ja-JP'):''}" placeholder="例: 17万"
       onchange="ccfSetTotalAmt(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
-      style="width:150px;padding:6px 9px;background:${TA>0?'rgba(0,0,0,.28)':'rgba(155,127,212,.10)'};border:${TA>0?'1px solid rgba(155,127,212,.55)':'1px dashed #9b7fd4'};border-radius:6px;color:#b9a3e6;font-size:14.5px;font-weight:${TA>0?'600':'400'};text-align:${TA>0?'right':'center'};font-family:inherit">
-    <span style="font-size:12px;color:var(--muted)">円</span>
-    ${TA>0?`<button onclick="ccfSetTotalAmt({value:''})" title="総額を消して、城と網を個別に入れる形に戻す" style="padding:3px 9px;background:transparent;border:1px solid var(--dim);border-radius:6px;color:var(--dim);font-size:11px;cursor:pointer">消去</button>`
-           :`<span style="font-size:11.5px;color:#9b7fd4">← ここに入れると <b>${ST.mode==='gap'?'足りないほうから順に':'目標比で'}</b>配られる（<b>城${ST.c}% / 網${ST.n}%</b> へ寄せる向き・分けない）</span>`}
-  </div>${SP?`<div style="font-size:11.5px;color:var(--muted);margin:0 0 6px;padding:8px 11px;border-radius:8px;border:1px solid rgba(155,127,212,.4);background:rgba(155,127,212,.07);line-height:1.8">
-    <b style="color:#9b7fd4">${ccfYen(SP.total)}</b> を${SP.mode==='gap'?'<b>足りないほうから</b>配った':(SP.mode==='fixed'?`<b>目標比 ${SP.cPct}:${SP.nPct}</b> で割った`:'目標比で割った')}：
-    <b style="color:${SP.castle>0?'var(--gold-bright)':'var(--dim)'}">城 ${ccfYen(SP.castle)}</b> ／
-    <b style="color:${SP.net>0?'#6fa8c9':'var(--dim)'}">網 ${ccfYen(SP.net)}</b>
-    <span style="color:var(--dim)">（合計 ${ccfYen(SP.castle+SP.net)}＝端数を寄せるので総額にぴったり一致。目標は 城${SP.cPct}% / 網${SP.nPct}%・出所は ${SP.src}）</span><br>
-    ${dca?`<span style="color:${SP.mode==='unknown'?'#d69a3c':'var(--muted)'}">${dca}</span><br>`:''}
-    <span style="color:var(--dim)">袖の中の配り方は従来どおり——城は 目標ウェイト−保有 の不足按分で各社へ、網は ami_weights の不足按分で各本へ。<b>どちらの円も下の <span style="color:var(--gold-bright)">📋 今月の注文書</span>に一枚で出る</b>（v9.9.164）。
-    <b>総額が入っているあいだは総額が正本</b>——下の「今月の個別枠」と網枠は<u>ここから導かれた値</u>を表示します（個別に手で入れたいときは総額を消してください）。</span>
-  </div>`:''}`;})();
-  const amtRow=`<div style="display:flex;align-items:center;gap:7px;margin:9px 0 3px;flex-wrap:wrap">
-    <span style="font-size:12px;color:var(--muted)">今月の個別枠${SP?'<span style="color:#9b7fd4">（総額から導出）</span>':''}</span>
-    <input id="ccfMonthAmtIn" type="text" inputmode="numeric" autocomplete="off" value="${AMT>0?AMT.toLocaleString('ja-JP'):''}" placeholder="タップして入力"
-      onchange="ccfSetMonthAmt(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
-      style="width:150px;padding:6px 9px;background:${AMT>0?'rgba(0,0,0,.28)':'rgba(214,154,60,.10)'};border:${AMT>0?'1px solid var(--gold-line)':'1px dashed #d69a3c'};border-radius:6px;color:var(--gold-bright);font-size:14.5px;font-weight:${AMT>0?'600':'400'};text-align:${AMT>0?'right':'center'};font-family:inherit">
-    <span style="font-size:12px;color:var(--muted)">円</span>
-    ${SP?`<span style="font-size:11.5px;color:#9b7fd4">← 総額 ${ccfYen(SP.total)} のうち<b>城の取り分</b>（${SP.mode==='gap'?`不足 城${SP.gc.toFixed(1)}pt : 網${SP.gn.toFixed(1)}pt で配分`:(SP.mode==='fixed'?`常に目標比 ${SP.cPct}:${SP.nPct} で割る規約`:(SP.mode==='full'?'両方とも目標以上なので目標比':'不足が測れないので目標比'))}）。<b>ここを手で直すと総額の指定は解除され</b>、城と網を個別に入れる形へ戻ります</span>`
-        :(AMT>0?`<button onclick="ccfSetMonthAmt({value:''})" title="金額を消して%表示に戻す" style="padding:3px 9px;background:transparent;border:1px solid var(--dim);border-radius:6px;color:var(--dim);font-size:11px;cursor:pointer">消去</button>`:`<span style="font-size:11.5px;color:#d69a3c">← <b>未入力</b>。ここに <b>17万</b> と打つと下が円になる</span>`)}
-  </div>`;
-  return `<div style="background:linear-gradient(180deg,rgba(201,166,74,.10),rgba(201,166,74,.03));border:1px solid var(--gold-line);border-radius:12px;padding:14px 16px;margin:4px 0 20px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><h2 class="serif" style="font-size:1.2em;color:var(--gold-bright);margin:0">今月の買付プラン</h2><span style="font-size:11px;color:var(--dim)">${AMT>0?`${ccfYen(AMT)} を全額 投下可へ按分`:(SP&&SP.castle<=0&&SP.net>0?`今月は<b style="color:#6fa8c9">全額が網へ</b>（城は目標超過）`:'投下可へ按分・合計100%')}</span></div>
-    <div style="font-size:11.5px;color:var(--muted);margin-bottom:4px"><details class="why plain" data-fold="7"><summary>ℹ この一覧の読み方（按分と番号）</summary><div class="why-body">🟢投下可の各社へ、<b>目標ウェイト−現在保有%</b>の不足分で按分（不足の大きい銘柄に厚い）。<b>個別枠を入れると📋注文書（何株買うか）だけになる</b>——按分の円は各行に「按分¥○○」として残る（円が正本・株数は執行案）。未入力なら按分%の一覧が出て、番号は<b>買う順</b>（pc順位）。</div></details></div>
+      style="width:160px;padding:7px 10px;border-radius:8px;font-size:15px;font-weight:600;text-align:right;font-family:inherit">
+    <span style="font-size:13px;color:var(--muted)">円</span>
+    ${TA>0?`<button onclick="ccfSetTotalAmt({value:''})" style="padding:3px 10px;background:transparent;border:1px solid var(--dim);border-radius:999px;color:var(--dim);font-size:11.5px;cursor:pointer">消去</button>`:''}
+  </div>${SP?`<div style="font-size:12.5px;color:var(--muted);margin:0 0 4px">
+    <b style="color:${SP.castle>0?'var(--ink)':'var(--dim)'}">城 ${ccfYen(SP.castle)}</b> ／ <b style="color:${SP.net>0?'var(--ink)':'var(--dim)'}">網 ${ccfYen(SP.net)}</b>
+    <span style="color:var(--dim)">（${modeTxt}${altTxt?'・'+altTxt:''}）</span></div>`:''}`;
+  return `<div data-keep style="border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:4px 0 20px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h2 class="serif" style="font-size:1.2em;margin:0">今月の買付プラン</h2><a href="ami.html" style="font-size:12px">◈ 網の門 ↗</a></div>
     ${totRow}
-    ${amtRow}
     ${body}
-    <div style="font-size:10.5px;color:var(--dim);margin-top:8px;line-height:1.7"><a href="ami.html" style="float:right;font-size:12px;margin-left:10px;color:var(--gold-bright)">◈ 網の門（ETFの審査）↗</a><details class="why plain" data-fold="7"><summary>ℹ 指値の置き方・目標ウェイトの決め方</summary><div class="why-body">指値は階段で置く——1/2を現値近傍〜開通ライン・1/2をfair線（PER clamp(8+g,16,30)）。投下可は現値で門X成立済みゆえ開通線は現値以上にある。${AMT>0?'100円単位で丸め、<b>端数は買付順位1位へ寄せて合計を個別枠に一致させる</b>。<b>株数は盤の現値＋ドル円で換算した目安</b>（正本は円の按分。指値が現値より下に約定すれば同じ円で1株多く買えることがある）。日本株は<b>単元未満株（S株・かぶミニ等）で1株から</b>買う。0株の月は無理に買わない——翌月に合算するか網へ。':''}1銘柄の目標ウェイトは<b>時価総額Tier（5段 8:6:4:3:2 を城の按分枠（城の合計−特別枠）へ正規化）・<b style="color:var(--gold-bright)">上限なし（v9.9.188 で ¼ケリー上限8% を撤廃）</b></b>（2026-08-14 ユーザー明示指示。時価総額＝px×ni÷eps・日本株はドル円で換算。境界はディケイド＝1兆/3千億/1千億/3百億$。一社でも測れなければ等ウェイトへ倒し、その旨を各行の目標%に出す）。<b>1銘柄の上限は無し</b>（v9.9.188 で撤廃。⚠城20%では元々誰にも当たっていなかった＝当たり始めるのは城28%以上）。<b>売りは株価では動かさない（S1/S2/S3のみ）。</b><br>※<b>指数（ETF）の積立は門の外</b>——門は「どれを・買うか否か」を裁く場で、指数は常に買ってよい対象ゆえ門にかけない。毎月いくら指数へ回すかはDCA側で決める（正本はCLAUDE.md 月次運用）。<b>2026-08-20（ユーザー指示「買付順位にETFもいれて」）からその円を画面に出し、<b>2026-08-21（「網と城は一緒にして…表示はまとめてにしたい」）でこの注文書へ合流させた</b>（v9.9.164。城と網は<u>群の見出しで分けて</u>並べる——四関門を通っていないものを通ったように見せない）</b>——<u>買う場所が二つに割れていたのを一枚に戻しただけ</u>で、門の裁きに入れたのではない（投下可の枠には入れない・Ω・四関門・堀の関門70・売却規律S1/S2/S3・城の按分はいずれも不変）。<b>ただし「どのETFを土台にするか」は別の問い</b>——網の門がコスト・土台の広さ・存続性・器で裁き、<b>城とのルックスルー重複</b>を実測する。（別枠であって正本ではない。門Ωの採点・売却規律・四関門は一切上書きしない）</div></details></div>
   </div>`;
 }
 // ── 台帳の健全性検査（v9.9.54・2026-07-30 ユーザー要望）───────────────────────
@@ -7440,10 +7393,10 @@ async function renderPlan(){
         // ★円と株数はここに出さない（v9.9.164）——**同じ数字を二箇所に置かない**。
         //   今月いくら買うかは 📋今月の注文書 の一枚に集約した（ユーザー指示「表示はまとめてに」）。
         //   この節に残すのは「この本は何か・網の門はどう裁くか」という材料だけ。
-        +(y!=null&&y>0?`<span style="white-space:nowrap;color:var(--gold-bright)">今月 買う → <b>📋 今月の注文書</b>に円と株数</span>`
-          :(y!=null?`<span style="white-space:nowrap">今月は配らない（目標を超えている）</span>`
-                   :(NA>0?`<span style="white-space:nowrap">全て充足——今月は網へ配らない</span>`
-                         :`<span style="white-space:nowrap">網枠が未入力（金額を入れると注文書に円が出る）</span>`)))
+        +(y!=null&&y>0?`<span style="white-space:nowrap;color:var(--gold-bright)">今月 買う</span>`
+          :(y!=null?`<span style="white-space:nowrap">今月なし</span>`
+                   :(NA>0?`<span style="white-space:nowrap">今月なし</span>`
+                         :`<span style="white-space:nowrap">入金額が未入力</span>`)))
         +`<span style="white-space:nowrap">${pxT}</span>`
         +ccfNetBoughtCtl(r,qq)
         +`</div></div>`;}).join('');
@@ -7596,7 +7549,16 @@ async function renderPlan(){
     html+=watch.map(r=>`<div class="led" style="border-left:3px solid ${lcol[2]};opacity:.6"><span class="ln">${ccfIcon(r.nm)}${r.nm}</span><span class="grade" style="color:var(--steel)">${r.s}</span>${xtag(r)}${reqbtns(r)}${boughtBtn(r)}</div>`).join('');
   }
   html+=`<div style="font-size:11px;color:var(--dim);margin-top:18px;line-height:1.8"><details class="why plain" data-fold="7"><summary>ℹ 四関門と各群の凡例</summary><div class="why-body"><b>四関門</b>：<b>🟢投下可＝格75+ ∧ 絶対MOAT指数70+ ∧ 点検の要修正0件</b>／<b>🟡押し目待ち＝格75+・堀70+だがE[r]&lt;0</b>／<b>⛔堀不足＝格75+だが堀&lt;70</b>／<b>⛔点検要修正＝台帳の値が壊れている（買わない理由であって売る理由ではない）</b>。堀を第三の関門にしたのは<u>採点で罰すると三重罰になる</u>ため——moatIdxは既にΩへ pm→sustain と直接項(.13)の二経路で入っているので、ここでさらに減点せず「買う対象から外す」だけにした（採点式・Ω・売却規律S1/S2/S3はいずれも不変）。<br><details class="why"><summary>価格・E[r]の扱い（なぜ合否に使わないのか）</summary><div class="why-body"><b>価格の関門は門X 1本</b>：旧「間（今買える）」の粗いPERブレーキは買付判定から外した（「今買える」なのに「監視」の矛盾を解消）。各群内の順位＝<b>合成順（格×0.6 ＋ E[r]%×0.4）</b>。実効レンジではE[r]+1%≈格+3.3点で<b>E[r]が主・格は安全下限（75+の合否）とタイブレーク</b>（宣言を数学に一致させた——15%目標に整合するのはE[r]主の序列）。<b>群の境界（投下可の合否）は不変</b>。E[r]%は12%＝50点として点数化（±10ptで0-100・<b>順位付けのみ＝合否には使わない</b>）、欠損はerPt=0＝群内末尾（——中立50に擬制すると実測E[r]8%の銘柄より上位に来る逆転が生じるため）。🟡の<b>開通＝PER○○（あと−○%）</b>はE[r]が0に転じる入口PER（**合否ではなく指値の目安**）と現値からの必要下落（遮断器方式に同期）。fair線＝階段指値の上段（倍率の重力ゼロ・約定時E[r]=earned）。※保留マークは順位に影響しない——判断材料としてのみ表示。75未満は表示しない（台帳には残存）。<br><b>E[r]（門X期待リターン）</b>＝門X裁きⅠの現値期待リターン：還元shy + 成長g（<b>高ROIC(≥15%)×堀無傷は実証CAGRを信じる</b>／それ以外は再投資式b×ROIICを実証CAGRで頭打ち・20%上限＝証拠の上限。：資本を返しながら伸びる資本軽量コンパウンダーを再投資式が過小評価する欠陥を是正・価格規律は不変） − 倍率の重力（<b>終着PER=min(現PER, clamp(8+g,16,30))＝成長連動</b>・<b>20年</b>（10年→20年）。McKinsey価値ドライバーの理論フェアは成熟g4%≈22倍／持続成長高ROIC≈28-30倍だが、門は保守側に8+g〔下限16〕で頭を抑える＝理論値より安全余白を取る設計。成長産業と成熟産業を同じ終着PERで測らない。掟六の精神＝現PERを超えない＝拡大は見込まない、は維持）。<b>成長gの上限（2026-07-29 ユーザー明示指示）</b>：gは<b>min(実績cagr, 実力g_cap, 20%)</b>。g_capが空欄のときはΩ側と同じ暫定規約<b>「gr（=per/perF−1・1年フォワード）で代用」</b>を門Xにも通す。従来は門Xだけがこの代用を持たず、<u>実力の推定が無いまま過去のcagrで10年先を描いていた</u>（実測：全316パックのg_capが空欄＝の安全弁 min(実績,実力) は一度も作動していなかった。6920レーザーテックは会社予想が前年比−18.8%の減益なのに実績cagr42.7%由来のg=20%でE[r]16.2%✓と表示されていた）。併せて<code>gcap&gt;0</code>のガードを外した——0や負値の実力成長が「上限なし」として素通りし、減速局面を抑えるための機構がまさに減速している銘柄で無効だった。E[r]の横の<span style="color:#d69a3c">⌄</span>印は「gが実績ではなく実力側で抑えられた」の意。<br><span style="color:var(--jade)">✓＝遮断器成立（E[r]≥0——旧4条件〔E[r]≥12／投資R≥10／倍率寄与≤30%／ストレス≥7〕は歴史検証で選別力が無いと実測され廃止。歴史の勝者13社中10社を旧線が弾いていた）＝🟢投下可</span>／<span style="color:var(--rust)">✗＝E[r]マイナス→🟡押し目待ち（指値は✦門Xの監視表）</span>。順位・採点には一切影響しない。PER/ROIC欠損時はE[r]判定不能と表示。</div></details>各行の <span style="color:#8fc9a4">審査</span>＝門2審査プロトコル全文（この銘柄を門にかけ直す）／<span style="color:#d6b06c">決算</span>＝決算点検依頼文（S1-S3照合・6警報・門X前提の再計算）を、その銘柄名つきでコピー→Claudeに貼る。台帳のティア（Ⅳ）に依る。</div></details></div>`;
-  pb.innerHTML=ccfGateBlindHTML(gBlind)+planBox+html;
+  pb.innerHTML=ccfGateBlindHTML(gBlind).replace('<div ','<div data-keep ')+planBox+html;
+  // v9.9.191（ユーザー指示「買付の文字が無駄に多い。説明はすべてなくしてシンプルに」）:
+  //   各節の**説明の段落と「ℹ」の折り畳み**を描いた後で外す。残すのは 見出し(h2)・銘柄の行(.led)・
+  //   今月の買付プラン（data-keep）・眠っている関門の警告（data-keep）だけ。
+  //   ⚠判断は1つも変えていない——__ccfBuyList・席・配分は上で計算済みで、ここは表示の後始末だけ。
+  //   各節の文章は html の組み立てにそのまま残してある（戻すならこの数行を消す）。
+  [...pb.children].forEach(el=>{
+    if(el.tagName==='DIV'&&!el.classList.contains('led')&&!el.hasAttribute('data-keep'))el.remove();
+  });
+  pb.querySelectorAll('details.why').forEach(d=>d.remove());
 }
 // ========== v9.1: .icsカレンダー書き出し ==========
 let _qrows=[];

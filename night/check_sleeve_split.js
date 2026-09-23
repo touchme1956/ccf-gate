@@ -79,8 +79,11 @@ const srv = http.createServer((q, r) => {
   console.log('   今の袖: ' + (now ? '城' + now.c.toFixed(1) + '% / 網' + now.n.toFixed(1) + '%' : '(読めず)')
     + '　目標 城' + (sp && sp.cPct) + ' / 網' + (sp && sp.nPct));
   ok(sp && sp.mode === 'fixed', "① mode='target' → fixed（常に目標比）");
-  ok(sp && sp.castle === 300000 && sp.net === 700000,
-     '   100万 → 城 ' + (sp && sp.castle && sp.castle.toLocaleString()) + ' / 網 ' + (sp && sp.net && sp.net.toLocaleString()) + '（城30万/網70万が正）');
+  // ⚠ 期待値も**正本の比率から作る**（初版は 30/70 を書き写しており、v9.9.188 で 20/80 へ変えた瞬間に鳴った）
+  const wantC = sp ? Math.round(1000000 * sp.cPct / (sp.cPct + sp.nPct)) : NaN;
+  ok(sp && sp.castle === wantC && sp.net === 1000000 - wantC,
+     '   100万 → 城 ' + (sp && sp.castle && sp.castle.toLocaleString()) + ' / 網 ' + (sp && sp.net && sp.net.toLocaleString())
+     + '（目標比 ' + (sp && sp.cPct) + ':' + (sp && sp.nPct) + ' なら 城' + (isFinite(wantC) ? wantC.toLocaleString() : '?') + 'が正）');
   ok(sp && (sp.castle + sp.net) === 1000000, '   合計が総額にぴったり一致');
   await pg.evaluate(() => ccfSetTotalAmt({ value: '1000000' }));
   await pg.waitForTimeout(1200);
