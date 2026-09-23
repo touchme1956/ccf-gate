@@ -399,3 +399,50 @@ body:has(#pg10.on) .gate-hero{display:block;}
 .rb-hero .chip.warn{color:#ffd28a !important; background:rgba(240,169,58,.14) !important; border-color:transparent !important;}
 .rb-hero .ccf-money-btn{color:#f4efe4; background:rgba(255,255,255,.10); border-color:rgba(226,194,122,.45);}
 .rb-hero .ccf-money-btn[aria-pressed="true"]{color:#e2c27a; border-color:#e2c27a;}
+
+/* ── 14. 文字を見やすく（2026-09-23 ユーザー指示「もっと文字を見やすくできない？」）──────
+   実測（390px・全12ページ）: 12px未満の文字が 今日57% / 成績51% / 点検61%、コントラスト4.5:1未満が 13〜60%。
+   最大の原因は薄い灰 --rb-dim #7c828b（白地で3.87:1）が約1.4万字に使われていたこと。
+   (1) 明るいテーマの灰2色を濃くする（どちらも白地で 6:1 以上）
+   (2) インラインで 9〜11.5px に指定された文字を 12.5px に、12px を 13px に底上げ（本文の等幅・コードは除く）
+   (3) 白地で読めない淡い橙・生成りの直書き色を濃い同系色へ。表示だけ・判定に不使用。 */
+html[data-theme="light"]{ --rb-mute:#50565f; --rb-dim:#555b64; }
+html[data-theme] .pg [style*="font-size:9px"],html[data-theme] .pg [style*="font-size:9.5px"],
+html[data-theme] .pg [style*="font-size:10px"],html[data-theme] .pg [style*="font-size:10.5px"],
+html[data-theme] .pg [style*="font-size:11px"],html[data-theme] .pg [style*="font-size:11.5px"]{font-size:12.5px !important;}
+html[data-theme] .pg [style*="font-size:12px"]{font-size:13px !important;}
+html[data-theme] .pg{line-height:1.75;}
+html[data-theme] [style*="color:#e0a23c"]{color:var(--rb-warn) !important;}
+html[data-theme] [style*="color:#7f93ad"]{color:var(--rb-info) !important;}
+html[data-theme] [style*="color:#8a8f98"],html[data-theme] [style*="color:#c9c2b2"],html[data-theme] [style*="color:#8a8578"]{color:var(--rb-mute) !important;}
+/* ── 15. タブごとの背景（ユーザー提供の10枚・2026-09-23「これを背景画像に採用するとどうなる？」）──────
+   ①資産(盤/保有/成績) ②買付 ③台帳 ④採点機 ⑤検証履歴 ⑥点検 ⑦自動化 ⑧解説 ⑨実行手順 ⑩今日。
+   明るいテーマでだけ敷く（暗いテーマは従来どおり黒地）。画面に固定した一枚（#pgBg）を下に置き、
+   上半分の空を白で少し薄めて本文を読みやすくする。カード類は白の半透明＋ぼかし。表示だけ・判定に不使用。 */
+#pgBg{display:none;}
+html[data-theme="light"] #pgBg{display:block; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:#f4f8fc center bottom/cover no-repeat;}
+html[data-theme="light"] #pgBg::after{content:""; position:absolute; inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.62) 0%,rgba(255,255,255,.55) 55%,rgba(255,255,255,.50) 100%);}
+@media (min-width:900px){ html[data-theme="light"] #pgBg{left:auto; width:min(62vw,70vh); background-size:cover; background-position:center bottom;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 45%); mask-image:linear-gradient(90deg,transparent 0%,#000 45%);} }
+html[data-theme="light"] body{background:transparent !important;}
+html[data-theme="light"]{background:#f4f8fc !important;}
+html[data-theme="light"] .panel,html[data-theme="light"] .lens,html[data-theme="light"] .fm,html[data-theme="light"] .statement{
+  background:rgba(255,255,255,.86) !important; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);}
+html[data-theme="light"] body:has(#pg6.on) #pgBg{background-image:url("assets/bg/bg01.jpg");}
+html[data-theme="light"] body:has(#pg7.on) #pgBg{background-image:url("assets/bg/bg01.jpg");}
+html[data-theme="light"] body:has(#pg12.on) #pgBg{background-image:url("assets/bg/bg01.jpg");}
+html[data-theme="light"] body:has(#pg5.on) #pgBg{background-image:url("assets/bg/bg02.jpg");}
+html[data-theme="light"] body:has(#pg3.on) #pgBg{background-image:url("assets/bg/bg03.jpg");}
+html[data-theme="light"] body:has(#pg2.on) #pgBg{background-image:url("assets/bg/bg04.jpg");}
+html[data-theme="light"] body:has(#pg4.on) #pgBg{background-image:url("assets/bg/bg05.jpg");}
+html[data-theme="light"] body:has(#pg11.on) #pgBg{background-image:url("assets/bg/bg06.jpg");}
+html[data-theme="light"] body:has(#pg9.on) #pgBg{background-image:url("assets/bg/bg07.jpg");}
+html[data-theme="light"] body:has(#pg1.on) #pgBg{background-image:url("assets/bg/bg08.jpg");}
+html[data-theme="light"] body:has(#pg8.on) #pgBg{background-image:url("assets/bg/bg09.jpg");}
+html[data-theme="light"] body:has(#pg10.on) #pgBg{background-image:url("assets/bg/bg10.jpg");}
+/* 背景の上の本文（カードの外の段落）にも白いにじみの縁取りを付け、絵の模様の上でも字が沈まないようにする */
+html[data-theme="light"] .pg{text-shadow:0 0 6px rgba(255,255,255,.95),0 0 2px rgba(255,255,255,.9);}
+html[data-theme="light"] .pg .rb-hero,html[data-theme="light"] .pg .rb-hero *{text-shadow:none;}
+html[data-theme="light"] .pg .led{background:rgba(255,255,255,.80);}
