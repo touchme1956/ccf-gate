@@ -134,7 +134,7 @@ def moat_idx(d):
         return None
     sw = sum(W[k] for k, _ in legs)
     g = math.exp(sum(W[k] / sw * math.log(max(min(96, v), 1)) for k, v in legs))
-    return max(0.0, min(96.0, g))   # 文化調整 −2 は v9.9.193 で門から撤去（同期）
+    return max(0.0, min(96.0, g))   # 文化調整 −2 は v9.9.194 で門から撤去（同期）
 
 
 def main():
