@@ -79,6 +79,8 @@ def main():
             "t": t, "omega": s.get("s"), "buy": bool(s.get("buy")),
             "nde": d.get("nde"),
             "pack_intcov": d.get("intcov"),   # ★キルが実際に読む値（v11_facts ではなくパックの欄）
+            # 2026-09-23: 日本株は有報から intcov をパックへ直接入れた（v11_facts は SEC だけ）→ 空欄の理由も見る
+            "pack_intcov_null": bool(((d.get("_meta") or {}).get("nulls") or {}).get("intcov")),
             "intcov": f.get("intcov"), "intcov_strict": f.get("intcov_strict"),
             "intcov_cash": f.get("intcov_cash"),
             "basis": f.get("int_basis"), "period": f.get("int_strict_period") or "annual",
@@ -119,8 +121,12 @@ def main():
         j = sum(1 for r in rows if r["na"] == k and r["jp"])
         print(f"  {k:<12}{c:>5}社  {NAMES.get(k,'')}" + (f"  ⚠うち日本株 {j}社" if j else ""))
     jpn = [r for r in rows if r["jp"]]
-    print(f"  ⚠**日本株 {len(jpn)}社は SEC 経路の外＝構造的な穴**（intcov 取得 {cov(jpn,'intcov')}社）。"
-          "EDINET の支払利息が要る")
+    jp_pack = sum(1 for r in jpn if r["pack_intcov"] is not None)
+    jp_null = sum(1 for r in jpn if r["pack_intcov"] is None and r["pack_intcov_null"])
+    jp_hole = len(jpn) - jp_pack - jp_null
+    print(f"  日本株 {len(jpn)}社は SEC 経路の外（v11_facts の intcov は {cov(jpn,'intcov')}社）——"
+          f"**有報からパックへ直接: 実測 {jp_pack}社 ／ 理由つき空欄 {jp_null}社 ／ 理由の無い空欄 {jp_hole}社**"
+          "（2026-09-23〜・更新は有報が出たら。上の穴の理由の集計は v11_facts 基準なので日本株を穴と数える）")
 
     # ── 内部矛盾: 純現金なのに利払カバーが低い ────────────────────────
     #   独立に入った二つの値が定義上ぶつかる＝もっともらしい範囲内の誤りを捕まえる唯一の検査

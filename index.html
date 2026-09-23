@@ -1201,7 +1201,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
     <div class="row"><div class="rl">直近5年に大型買収<span class="h">⚠ <b>この欄は v9.9.183 以降、門の採点に一切効かない</b>。免除の相手だった「のれん乖離>15pt→0〜−6」を撤去したため（歴史で7ビンテージ全FAIL・恒久毀損は7年すべて逆向き。乖離＝のれんの重み×収益性で、罰の大部分が収益性を罰していた）。相棒の roicg&lt;WACC の−8 も v9.9.182 で撤去済み。欄は残す——採取器 <code>fill_sht.py</code> が「買ったシェアと勝ち取ったシェアを売上高では区別できない」ために端末側で読む</span></div><div class="rc"><select id="acq5"><option value="yes" selected>あり</option><option value="no">なし</option></select></div></div>
     <div class="row"><div class="rl">買収支出の5年合計 ÷ 期初総資産 acqS5<span class="h"><b>買収の強度</b>＝Σ(直近5会計年度の買収支出) ÷ 総資産(審査年−5)。帯で点が付く（<b>0=買収しない −1 ／ 〜0.085=控えめ <u>+2</u> ／ 〜0.311=中 +1 ／ 0.311超=大きく買う 0</b>）。境界は2015-2021の7ビンテージの三分位の切れ目の<b>中央値</b>で、7年ぶんほとんど動かない（新しい定数ではない）。<b>のれん残高ではなく支出で測る</b>——残高は減損・売却・為替で汚れ、同じ661社でも読み方次第で最下位が入れ替わった。<b>空欄は0点＝加点も減点もしない</b>。⚠買収支出の行を切り出さない社（MSFT型）は0ではなく<b>空欄</b>にする。機械充填は <code>python3 night/fill_acqS5.py --write</code></span></div><div class="rc"><input type="text" id="acqS5" value="" placeholder="空欄=未測定" style="width:90px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px;text-align:right"></div></div>
     <div class="row"><div class="rl">純有利子負債 / EBITDA<span class="h">2.5超から段階減点（(nde−2.5)×6・<b>上限なし</b>＝坂の上限 4 を撤廃）、&gt;4 で論外。<b>旧実装は 2.5〜4 でしか坂が効かず、4.00 を跨ぐとΩが+8.7pt<u>上がった</u></b>（キルは上限を掛けるだけで坂の罰から抜けるため。実測 OKE: nde3.99→Ω16.3 / 4.01→25.0 / 20→25.0）</span></div><div class="rc"><input type="number" id="nde" step="0.1" value="1.0"><span class="u">x</span></div></div>
-    <div class="row"><div class="rl">利払カバー（営業利益÷支払利息）<span class="h"><b>3未満で財務キル</b>（nde&gt;4 と<b>OR</b>＝どちらかで発火。片方が測れなくても片方が効く）。★歴史の実測（2016-18ビンテージ・層0の653社）で、<b>止めた側の恒久毀損の濃縮は 11.0倍</b>（nde&gt;4 は 2.82倍）で<b>止めた群の中央値も低い＝両方向とも正しい</b>。nde が借金の<b>大きさ</b>を測るのに対し、こちらは<b>重さ（払えるか）</b>を測る——同じ4倍の借金でも金利2%と9%は別物で、nde は金利をまったく見ていない。⚠<b>必ず真正の利息だけ</b>で作ること（`intcov_strict`）——IFRSの `FinanceCosts` は為替差損・リース利息・引当の割引を含む<b>上位概念</b>で、これで作ると<b>純現金の会社が利払カバー3未満に見える</b>（実測8社）。⚠<b>空欄はキルが眠る＝未測定が有利</b>。日本株は SEC 経路の外で<b>68社すべて空欄</b>（EDINET の支払利息が要る）。測り直しは night/audit_intcov.py</span></div><div class="rc"><input type="number" id="intcov" step="0.1" value=""><span class="u">x</span></div></div>
+    <div class="row"><div class="rl">利払カバー（営業利益÷支払利息）<span class="h"><b>3未満で財務キル</b>（nde&gt;4 と<b>OR</b>＝どちらかで発火。片方が測れなくても片方が効く）。★歴史の実測（2016-18ビンテージ・層0の653社）で、<b>止めた側の恒久毀損の濃縮は 11.0倍</b>（nde&gt;4 は 2.82倍）で<b>止めた群の中央値も低い＝両方向とも正しい</b>。nde が借金の<b>大きさ</b>を測るのに対し、こちらは<b>重さ（払えるか）</b>を測る——同じ4倍の借金でも金利2%と9%は別物で、nde は金利をまったく見ていない。⚠<b>必ず真正の利息だけ</b>で作ること（`intcov_strict`）——IFRSの `FinanceCosts` は為替差損・リース利息・引当の割引を含む<b>上位概念</b>で、これで作ると<b>純現金の会社が利払カバー3未満に見える</b>（実測8社）。⚠<b>空欄はキルが眠る＝未測定が有利</b>。日本株は SEC 経路の外なので<b>有報の支払利息から直接</b>入れる（2026-09-23: 68社中41社を実測・27社は理由つき空欄＝借入なし22・表示単位未満5）。測り直しは night/audit_intcov.py</span></div><div class="rc"><input type="number" id="intcov" step="0.1" value=""><span class="u">x</span></div></div>
     <div class="row"><div class="rl">Altman Z''<span class="h">非製造業対応版：6.56X1+3.26X2+6.72X3+1.05X4。&lt;1.1論外、1.1〜2.6警戒帯</span></div><div class="rc"><input type="number" id="z" step="0.1" value=""></div></div>
     <div class="row"><div class="rl">粗利益/総資産 GP/A<span class="h">Novy-Marx品質。&lt;15%で過去門減点</span></div><div class="rc"><input type="number" id="gpa" step="0.1" value="30"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">アクルーアル比率<span class="h">(純利益−営業CF)÷総資産。&gt;+10%で会計警戒（利益に現金裏付けなし）</span></div><div class="rc"><input type="number" id="accr" step="0.1" value="-5"><span class="u">%</span></div></div>
@@ -1843,7 +1843,7 @@ function compute(){
   //   ⚠**売却規律 S1 は触っていない**。nde>4 は買いにも売りにも残るので、増えるのは
   //     「買わないが売りもしない」社だけ＝堀不足・点検と同じ、この門が既に持つ非対称。
   const icK=nn('intcov');
-  if(icK===null)ambers.push('利払カバー 未入力——利払キルは保留（日本株は SEC 経路の外で構造的に空欄）');
+  if(icK===null)ambers.push('利払カバー 未入力——利払キルは保留（日本株は有報の支払利息から直接・2026-09-23 に41/68を実測）');
   if(ndeK!==null&&ndeK>4)kills.push('負債/EBITDA&gt;4');
   if(icK!==null&&icK<3)kills.push('利払カバー&lt;3（稼ぎで利息を払えていない）');
   if($('eq').value==='neg')kills.push('債務超過');
@@ -4051,11 +4051,11 @@ const CCF_BLANK={
     +'穴は night/fill_acqS5.py --list が名指しする'],
   depGov:['ok','dep の相手が主権政府かの印。空欄=「政府ではない」＝ベトが通常どおり立つ側なので、未測定が有利にならない'],
   // 2026-08-13: 利払カバー。**空欄はキルが眠る＝未測定が有利**なので本来 'best' だが、
-  //   被覆が 184/369（**日本株は SEC 経路の外で 68社すべて空欄**・投下可10社中3社も空欄）で、
+  //   被覆が 184/369（当時は**日本株 68社すべて空欄**——2026-09-23 に有報から41社を実測・27社は理由つき空欄）・投下可10社中3社も空欄）で、
   //   'best' にすると Ω72+ の25社が一斉に warn へ上がり、**端末の第四の関門（未解決warn）が
   //   判定圏の買付を止める**——dep・rak と同じ理由で 'ok' に置く。
   //   ⚠これは「空欄が安全」という意味ではない。穴は night/audit_intcov.py が名前で出し続ける。
-  intcov:['ok','利払キルは実測<3のみ発火（空欄=未測定で眠る。被覆184/369・日本株0/68＝構造的な穴で、'
+  intcov:['ok','利払キルは実測<3のみ発火（空欄=未測定で眠る。被覆184/369＋日本株41/68（2026-09-23 に有報から）で、'
     +'全数warnにすると端末の第四関門が買付を一斉停止させるため dep/rak 前例で ok 扱い。穴は audit_intcov が名指しする）'],
   dep:['ok','存続級依存のベトは実測≥40のみ発火（空欄=未測定で眠る。全数空欄の初期にwarnで鳴らすと判定圏の買付を一斉停止させるためrak前例でok扱い。審査での充填はテンプレが強制）']};
 function ccfAudit(d,r,coerced,okKeys){
