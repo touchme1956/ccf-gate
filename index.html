@@ -3959,6 +3959,9 @@ const ccfYen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
    鍵は Ⅶ保有(portfolio.html)の💴切替と**同じ pf:showMoney**（'0'=隠す）＝一か所で切れば盤・成績・保有がそろって隠れる。
    隠すのは**保有の円の金額だけ**（総資産・評価額・取得額・損益額）。%・株価・Ω・買付プランの注文額は出したまま。
    表示だけ・判定に不使用。この端末だけの設定（state.json へは同期しない）。 */
+/* 門を開いた時は必ず隠した状態から始める（2026-09-23 ユーザー指示「門を開いた時総資産は非表示になるようにして」）。
+   読み込みのたびに '0' へ戻すので、👁で出しても次に開けばまた隠れている。Ⅶ保有(iframe)も同じ鍵なのでそろう。表示だけ。 */
+try{localStorage.setItem('pf:showMoney','0');}catch(e){}
 function ccfMoneyHidden(){try{return localStorage.getItem('pf:showMoney')==='0';}catch(e){return false;}}
 const ccfYenM=n=>ccfMoneyHidden()?'¥•••••':'¥'+Math.round(n).toLocaleString('ja-JP');
 function ccfMoneyBtn(){const h=ccfMoneyHidden();
