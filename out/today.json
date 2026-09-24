@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-23",
+ "generated": "2026-09-24",
  "note": "「今日、何をすればいいか」だけを集めた表示専用の在庫。**判定には一切使わない**——Ω・四関門・売却規律・配分のどれにも触れない。期限の判定は ops_status.build() をそのまま呼ぶ（二重実装を作らない）。**blind（読めなかった入力）を必ず出す**のがこの道具の本体で、盲目のときに「異常なし」へ倒れる fail-open を画面の側で塞ぐためにある。",
  "buy": [
   "CW",
@@ -15,8 +15,8 @@
  ],
  "counts": {
   "now": 0,
-  "today": 4,
-  "month": 18,
+  "today": 3,
+  "month": 20,
   "waiting": 21,
   "blind": 0,
   "src": 18
@@ -32,18 +32,10 @@
    "src": "8-K監視"
   },
   {
-   "k": "earn:CTAS",
-   "level": "today",
-   "title": "決算: CTAS（2026-09-23）",
-   "why": "本日",
-   "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
-   "src": "決算カレンダー"
-  },
-  {
    "k": "earn:ADBE",
    "level": "today",
    "title": "決算: ADBE（2026-09-24）",
-   "why": "1日後",
+   "why": "本日",
    "how": "発表後に python3 kessan_check.py（判定は警報のみ・株価は使わない）",
    "src": "決算カレンダー"
   },
@@ -57,6 +49,22 @@
   }
  ],
  "month": [
+  {
+   "k": "fresh:irr85hist:本体が46日動いていない",
+   "level": "month",
+   "title": "中身/入力が前進していない: irr=85の実績台帳",
+   "why": "本体が46日動いていない（期限40日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
+  {
+   "k": "fresh:irr85scope:本体が44日動いていない",
+   "level": "month",
+   "title": "中身/入力が前進していない: 機構の射程と認定の寿命",
+   "why": "本体が44日動いていない（期限40日）",
+   "how": "python3 night/check_freshness.py",
+   "src": "鮮度"
+  },
   {
    "k": "kes:3092",
    "level": "month",
