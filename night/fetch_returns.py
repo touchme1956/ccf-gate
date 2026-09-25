@@ -73,6 +73,9 @@ OUT_SERIES = os.path.join(BASE, "out", "returns_series.json")
 MAX_POINTS = 600          # これを超えたら間引く（両端は必ず残す）
 UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"}
 BENCH = "^SP500TR"      # S&P500 トータルリターン指数（配当再投資込み）
+BENCH2 = "QQQM"         # 2つ目の比較相手（2026-09-25 ユーザー指示）。adjclose＝配当再投資込みで ^SP500TR と同じ基準。
+                         # ★意味があるのは『個別株(castle)だけ』との比較——個別株に回したお金を ETF の本体(QQQM)に
+                         #   入れていたらどうだったか、に答える。ETF の行どうしを比べても自明なので主役にしない
 FX = "JPY=X"            # USDJPY
 ANNUALIZE_MIN_DAYS = 180
 
@@ -265,11 +268,14 @@ def main():
 
     fx = yahoo(FX, t0, t1)
     bench = yahoo(BENCH, t0, t1)
+    bench2 = yahoo(BENCH2, t0, t1)
     blind = []
     if not fx:
         blind.append(f"{FX}（ドル円）が取れない")
     if not bench:
         blind.append(f"{BENCH}（S&P500トータルリターン指数）が取れない")
+    if not bench2:
+        blind.append(f"{BENCH2}（QQQM・配当込み）が取れない")
 
     rows, notes = [], []
     sers = {}                 # 推移を組むために銘柄ごとの系列を持ち回す
@@ -277,6 +283,9 @@ def main():
     bench_cost = bench_val = 0.0
     cmp_cost = cmp_val = cmp_val_tr = 0.0
     bench_ends = [0.0, 0.0]   # 想定日の窓の両端で指数がどうなるか
+    q_val = 0.0               # 同じ円・同じ日を QQQM へ
+    cs_cost = cs_val_tr = cs_spy = cs_q = 0.0   # 個別株(castle)だけの同じ比較
+    q_miss = []
 
     for p in positions:
         t = p["t"]
@@ -286,7 +295,7 @@ def main():
         bd = p.get("bd")
         ser = yahoo(sym, t0, t1)
         r = {"t": t, "nm": p.get("nm") or t, "ccy": "JPY" if jp else "USD",
-             "sh": sh, "bd": bd}
+             "sh": sh, "bd": bd, "sleeve": p.get("sleeve")}
         sers[t] = ser
         if sh <= 0:
             # 金額だけの記録＝株数が判らない。評価額は台帳の v をそのまま使う
@@ -499,6 +508,14 @@ def main():
                 #   価格ベースの保有を配当込みの指数と引き算すると、配当のぶんだけ
                 #   保有が構造的に低く出る（「基準の違う二つを割る」型）
                 cmp_val_tr += (r.get("val_tr_jpy") or r["val_jpy"])
+                spv0 = r["cost_jpy"] * (b1 / b0[1]) * (k / k0)
+                q0 = on_or_before(bench2, r["bd"]) if bench2 else None
+                qv = r["cost_jpy"] * (last(bench2)[1][1] / q0[1]) * (k / k0) if q0 else None
+                if qv is None: q_miss.append(r["t"])
+                else: q_val += qv; r["qqqm_val_jpy"] = round(qv)
+                if r.get("sleeve") == "castle" and qv is not None:
+                    cs_cost += r["cost_jpy"]; cs_val_tr += (r.get("val_tr_jpy") or r["val_jpy"])
+                    cs_spy += spv0; cs_q += qv
                 # ★想定日なら、窓の両端でも同じ計算をして**答えがどれだけ動くか**を出す。
                 #   1点だけ出すと「測った数字」に見えてしまう——動く幅こそがこの行の情報。
                 w = r.get("bd_win")
@@ -548,7 +565,7 @@ def main():
         "generated": datetime.date.today().isoformat(),
         "tool": "night/fetch_returns.py",
         "base_ccy": "JPY",
-        "source": "Yahoo Finance（close / adjclose）・^SP500TR・JPY=X。鍵不要",
+        "source": "Yahoo Finance（close / adjclose）・^SP500TR・QQQM(adjclose)・JPY=X。鍵不要",
         "note": ("表示専用。Ω・四関門・売却規律・配分のどれにも触れない。"
                  "**すべて円建てに揃えてある**——ドル建てのリターンと円建ての資産を並べると"
                  "「基準の違う二つを割る」型になるため。為替の寄与は別に出している。"),
@@ -572,6 +589,14 @@ def main():
         "positions": rows,
         "portfolio": pack(tot_cost, tot_val, tot_cost_tr, tot_val_tr),
         "benchmark": pack(bench_cost, bench_val),
+        # QQQM は同じ集合で作れたときだけ（1行でも欠けたら比較が別の集合になるので出さない）
+        "benchmark_qqqm": pack(bench_cost, q_val) if (bench2 and not q_miss) else None,
+        "benchmark_qqqm_missing": q_miss,
+        # ★個別株だけ: 個別株に回したお金を同じ日に S&P500 / QQQM へ入れていたら（保有側は配当込み）
+        "castle": ({"compared_tr": pack(cs_cost, cs_val_tr), "spy": pack(cs_cost, cs_spy),
+                    "qqqm": pack(cs_cost, cs_q),
+                    "tickers": sorted(r["t"] for r in rows if r.get("sleeve") == "castle" and r.get("qqqm_val_jpy") is not None)}
+                   if cs_cost > 0 else None),
         "notes": notes,
         "blind": blind,
     }

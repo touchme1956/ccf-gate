@@ -4705,9 +4705,19 @@ function ccfReturnsHTML(R){
         +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(B.pl_jpy)}">${B.pl_jpy>0?'+':''}${yen(B.pl_jpy)}</span>`
         +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(B.ret)}"><b>${pc(B.ret)}</b></span>`
         +`<span style="min-width:66px"></span><span style="min-width:62px"></span></div>`
+        // ★2つ目の比較相手 QQQM（配当込み・2026-09-25 ユーザー指示）。同じ集合で作れたときだけ出る
+        +(R.benchmark_qqqm?`<div class="led"><span class="ln">QQQM（配当込み・円建て）</span>`
+        +`<span style="min-width:74px"></span>`
+        +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(R.benchmark_qqqm.cost_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(R.benchmark_qqqm.val_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(R.benchmark_qqqm.pl_jpy)}">${R.benchmark_qqqm.pl_jpy>0?'+':''}${yen(R.benchmark_qqqm.pl_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(R.benchmark_qqqm.ret)}"><b>${pc(R.benchmark_qqqm.ret)}</b></span>`
+        +`<span style="min-width:66px"></span><span style="min-width:62px"></span></div>`:'')
         +`<div style="font-size:12.5px;padding:8px 12px;margin-top:6px;background:var(--panel2);border:1px solid var(--line);border-radius:8px">`
         +`S&amp;P500 との差（円建て）: <b style="color:${col(dTr)};font-size:15px">${(dTr>0?'+':'')+(dTr*100).toFixed(2)}pt</b>`
         +` <span style="color:var(--dim)">——同じ円を同じ日に S&amp;P500 へ入れていたらどうだったか</span>`
+        +(R.benchmark_qqqm?(()=>{const dQ=(R.compared_tr?R.compared_tr.ret:C.ret)-R.benchmark_qqqm.ret;
+          return `<br>QQQM との差（円建て）: <b style="color:${col(dQ)};font-size:15px">${(dQ>0?'+':'')+(dQ*100).toFixed(2)}pt</b>`;})():'')
         // ★差は**同じ基準どうし**（保有の配当込 vs ^SP500TR）で出す。価格ベースの保有を
         //   配当込みの指数と引くと、配当のぶんだけ保有が構造的に低く出る（基準の違う二つ）
         +(R.compared_tr?`<div style="font-size:11px;color:var(--dim);margin-top:3px">`
@@ -4726,6 +4736,19 @@ function ccfReturnsHTML(R){
             +`<br><span style="color:var(--dim)">＝この一つの数字は「測った」ではなく<b>置いた前提の上の数字</b>。`
             +`🏦保有の「✎ 株数・買値を編集」→買付日に取引履歴の日付を入れれば確定する</span></div>`;
         })()+`</div>`;
+      // ★個別株だけ（2026-09-25 ユーザー指示「個別株がETFに勝っているか」）: 個別株に回した円を
+      //   同じ日に QQQM / S&P500 へ入れていたらどうだったか。保有側は配当込みで揃えてある
+      const K=R.castle;
+      if(K&&K.compared_tr&&K.qqqm){
+        const dq=K.compared_tr.ret-K.qqqm.ret, ds=K.spy?K.compared_tr.ret-K.spy.ret:null;
+        sum+=`<div style="font-size:12.5px;padding:8px 12px;margin-top:8px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;line-height:1.85">`
+          +`<b>個別株だけ</b>（${(K.tickers||[]).join('・')}）: 保有 <b style="color:${col(K.compared_tr.ret)}">${pc(K.compared_tr.ret)}</b>`
+          +` ／ 同じ円を QQQM へ <b>${pc(K.qqqm.ret)}</b>`+(K.spy?` ／ S&amp;P500 へ <b>${pc(K.spy.ret)}</b>`:'')
+          +`<br>QQQM との差: <b style="color:${col(dq)};font-size:15px">${(dq>0?'+':'')+(dq*100).toFixed(2)}pt</b>`
+          +(ds!=null?` <span style="color:var(--dim)">（S&amp;P500 との差 ${(ds>0?'+':'')+(ds*100).toFixed(2)}pt）</span>`:'')
+          +`<br><span style="color:var(--dim);font-size:11px">＝個別株に回したお金を ETF の本体（QQQM）に入れていたらどうだったか。`
+          +`個別株が指数に勝つ証拠は過去の検証には無いので、この差を<b>実績で積み上げる</b>のが目的（数ヶ月の差は偶然と区別できない）</span></div>`;
+      }
     }else{
       sum+=`<div style="font-size:12.5px;padding:8px 12px;margin-top:8px;background:var(--panel2);`
         +`border:1px solid var(--rust,#a8442a);border-radius:8px;line-height:1.85">`
