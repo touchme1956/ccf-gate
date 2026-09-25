@@ -1088,6 +1088,7 @@ awk '/^## /{p=0} /^## .*キーワード/{p=1} p' docs/CLAUDE_ARCHIVE.md  # 節�
     ⇒ SMH20 を採るなら **QQQM50 / XLK10 / SMH20**。
   - ⚠ **弱める事実**: 20年窓の終点が全部2018-2026＝独立試行ではない／**SMHは15年窓では積立でも負けた**
     （最悪0.822倍）＝厚くするほどその性質も濃くなる。全文 docs/CLAUDE_ARCHIVE.md:17196
+- **構造だけの並び（門を無視）: `python3 night/structure_rank.py`**（2026-09-25新設・読むだけ）→ `out/structure_rank.json`。主=irr（歴史で唯一再現）・従=dom（未検定）で5群に分け、**合計点は作らない**。dom空欄は0点にせず別の段。層(chain_layers)はAIの供給網用で分類が88社しか無く自己循環になるので**参考表示のみ**。irr=100（規制独占・歴史で負）は対象外
 - 機械コアの疑似バックテスト: `python3 night/backtest_core.py`（`--cutoff 2015-07-01` / `--limit N`）
   → out/backtest_<year>.json。生存バイアスあり＝相対比較と成長減衰の分布にだけ使う
 
