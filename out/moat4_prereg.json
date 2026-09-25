@@ -1,0 +1,107 @@
+{
+  "generated": "2026-09-25",
+  "question": "まだ検証していない堀の指標4本（受注残の倍率・粗利率の安定性・値上げの記述・顧客維持率の開示）は、将来のリターンを分けるか",
+  "asked_by": "ユーザー「まだ検証されていない候補を全てやって」",
+  "stance": "測定器。門・採点・四関門・席には入れない（規約の改定は絶対のルール1の領分）。合格しても『門に入れる』ではなく『候補になる』まで",
+  "registered_before_measuring": true,
+  "pool": "月次パネル out/retro_monthly_2013_2018.json + out/retro_monthly_2018_2026.json（956社・月次adjclose）。アンカー月に価格があり 2026-08 まで残る社",
+  "known_limits_before_results": [
+    "生存バイアス: パネルの956社は全員が2026年まで上場している。倒産・上場廃止した会社は最初から居ない＝左尾は過小に出る",
+    "終点が全部 2026-08: 窓はすべて AI 相場を含む（この台帳の既知の限界）",
+    "RPO は ASC606 で 2018年度から開示が始まった＝アンカーは 2019/2020/2021 だけ・窓は 5.1〜7.1年",
+    "値上げの記述は機械の語数であって原本の読解ではない。『仕入れ先の値上げ』と『自社の値上げ』を語だけでは完全には分けられない",
+    "看板の指標ごとに4本を検定するので、家族の多重性を Bonferroni で払う（p < 0.05/4 = 0.0125）"
+  ],
+  "candidates": {
+    "C1_rpo": {
+      "definition": "rpo_r = RevenueRemainingPerformanceObligation（アンカー会計年度末の残高）÷ アンカー会計年度の売上",
+      "source": "companyfacts.zip・filed <= アンカー年-07-01 のエントリだけ（retro_features2.py と同じ look-ahead の防ぎ方）",
+      "anchors": [
+        "2019-07",
+        "2020-07",
+        "2021-07"
+      ],
+      "missing": "タグが無い社は欠測（0と読まない）。群は開示した社の中だけで作る",
+      "group": "開示した社の中で rpo_r 上位1/4",
+      "direction": "高いほど良い（顧客が何年先まで約束しているか）"
+    },
+    "C2_gm_stability": {
+      "definition": "gm_sd = アンカー会計年度から遡る10会計年度の粗利率の標準偏差（8年以上そろう社だけ）",
+      "gm": "GrossProfit ÷ 売上。GrossProfit が無ければ (売上 − CostOfRevenue/CostOfGoodsAndServicesSold) ÷ 売上",
+      "anchors": [
+        "2013-07",
+        "2016-07",
+        "2017-07",
+        "2018-07"
+      ],
+      "missing": "粗利を出さない社（銀行・保険・一部のサービス業）は欠測",
+      "group": "gm_sd 下位1/4（最も安定している）",
+      "direction": "低いほど良い（不況でも値下げしない＝価格支配力）",
+      "secondary_control": "粗利率の水準は5年後の自分をよく当てることが既知（ρ0.56-0.68）なので、粗利率の水準の三分位の中で同じ比較もする（主判定には使わない・報告だけ）"
+    },
+    "C3_pricing_text": {
+      "definition": "price_r = アンカー時点で最新の10-K（filed <= アンカー年-07-01）本文の、自社の値上げを述べる句の出現数 ÷ 本文語数 × 100,000",
+      "phrases_regex_case_insensitive": [
+        "\\b(we|company)\\s+(have\\s+|has\\s+)?(increased|raised|implemented|announced)\\s+(our\\s+|its\\s+)?(selling\\s+|list\\s+|sales\\s+)?prices?\\b",
+        "\\bpricing\\s+actions?\\b",
+        "\\bprice\\s+increases?\\s+(on|for|across|to)\\s+(our|its|certain\\s+of\\s+our)\\b",
+        "\\b(ability|able)\\s+to\\s+(raise|increase)\\s+(our\\s+|its\\s+)?prices?\\b",
+        "\\bfavorable\\s+pric(e|ing)\\b",
+        "\\bhigher\\s+(average\\s+)?selling\\s+prices?\\b"
+      ],
+      "anchors": [
+        "2013-07",
+        "2018-07"
+      ],
+      "missing": "10-K が取れない社（20-F・40-F の外国会社を含む）は欠測",
+      "group": "price_r 上位1/4",
+      "direction": "多いほど良い（値上げが通っている）",
+      "caveat": "語は向きを持たない場合がある（例: 値上げが通らなかったと述べる文にも句が現れる）。これは結果を見る前に承知した限界"
+    },
+    "C4_nrr": {
+      "definition": "nrr = 10-K 本文の net revenue retention / dollar-based net retention / net dollar retention / net expansion rate に続く百分率（同じ文の中の最初の 100〜200% の数値）",
+      "source": "C3 と同じ10-K本文",
+      "anchors": [
+        "2013-07",
+        "2018-07"
+      ],
+      "feasibility_gate": "開示した社（数値が取れた社）が各アンカーで20社未満なら『検定不能』と書いて終わる（結果を見て線を緩めない）",
+      "group": "開示した社の中で nrr 上位1/2（開示社が少ないため中央値で割る）",
+      "direction": "高いほど良い"
+    }
+  },
+  "outcome": {
+    "primary": "差 = 群の等ウェイト買い持ちCAGR − 同じ土俵の残り（群以外）の等ウェイト買い持ちCAGR。アンカー月 → 2026-08",
+    "why_same_pool": "開示の有無そのものが業種に偏る（RPO・NRR はソフトウェアに偏る）ので、SPY ではなく同じ土俵の残りと比べる",
+    "reported_not_graded": [
+      "SPY に対する超過CAGR",
+      "P(年率15%以上) の差（lift）",
+      "左尾 P(年率 <= -15%) の差",
+      "群の上位1社が群の利益に占める割合（1社頼みの検問）"
+    ]
+  },
+  "null": {
+    "method": "会社単位の置換——ティッカー→前方リターンの対応を1回シャッフルし、全アンカーに同じシャッフルを当てる（同じ会社が複数アンカーに出るので、アンカーごとに独立に混ぜると偽陽性を最大33倍過小に見積もる＝この台帳の実測）",
+    "B": 2000,
+    "seed": 20260925,
+    "statistic": "評価できた全アンカーの差の平均"
+  },
+  "adoption_criteria_frozen_before_results": [
+    "1. 評価できた全アンカーで 差 > 0（符号がそろう）",
+    "2. 置換 p < 0.0125（4本の家族を Bonferroni で払った線）",
+    "3. 全アンカーで 群の社数 n >= 20",
+    "4. 群の上位1社が群の利益の50%未満（1社頼みでない）",
+    "合格＝4つすべて。1つでも欠けたら不合格。C4 は feasibility_gate を先に通すこと"
+  ],
+  "what_passing_would_mean": "堀の指標の『候補』になる。門に入れるかは別の問い（irr との重なり・out-of-sample・原本の読解での裏取りが要る）",
+  "what_failing_would_mean": "この物差し・この窓・この母集団では分けられなかった。『効かない』と『測れなかった』を区別して書く",
+  "amendments_before_results": [
+    {
+      "date": "2026-09-25",
+      "seen_before_amending": "3社（ADBE/CW/HD）の句の数だけ（すべて0）。リターンは1件も見ていない",
+      "A1_tie_rule": "C3 で上位1/4の線が0に落ちる（0の社が75%以上）場合、群は price_r > 0 の社全部とする。群の社数を必ず報告する",
+      "A2_exhibit13": "10-K の MD&A を別紙 EX-13（年次報告書）に載せる社があるので、同じ提出物の中の ex13 を含む名前のファイルも本文に足す。C3 と C4 の両方に効く",
+      "why": "どちらも測定の妥当性の問題（本文の取りこぼし・同点の扱い）で、結果の向きを見て決めたものではない"
+    }
+  ]
+}
