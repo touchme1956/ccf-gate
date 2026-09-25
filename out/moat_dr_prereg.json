@@ -1,0 +1,41 @@
+{
+  "generated": "2026-09-25",
+  "question": "前受収益の倍率（顧客が先払いしてくれる度合い）は、将来のリターンを分けるか",
+  "asked_by": "ユーザー「前受収益の倍率を同じ手順（事前登録つき）で…2つともやって」",
+  "stance": "測定器。門・採点・四関門・席には入れない。合格しても『候補になる』まで",
+  "registered_before_measuring": true,
+  "why_this_one": "C1 受注残の倍率（out/moat4_prereg.json）は ASC606 以後の開示で窓が5〜7年しかなく1社頼みになった。前受収益は XBRL に2009年からあり、同じ考え方を13年の窓で確かめ直せる",
+
+  "definition": {
+    "dr_r": "前受収益の残高（アンカー会計年度末）÷ アンカー会計年度の売上",
+    "totals_first": ["ContractWithCustomerLiability", "DeferredRevenue"],
+    "components_if_no_total": "総額タグが無い年は Current と Noncurrent を足す（ContractWithCustomerLiabilityCurrent + …Noncurrent ／ DeferredRevenueCurrent + DeferredRevenueNoncurrent）。Noncurrent が無ければ Current だけ（構成要素＝和で使う・代替ではない）",
+    "source": "companyfacts.zip・filed <= アンカー年-07-01 のエントリだけ。インスタント項目はアンカー会計年度末±10日で照合（retro_features2.inst_at をそのまま使う）",
+    "missing": "どのタグも無い社は欠測（0と読まない）。群は開示した社の中だけで作る"
+  },
+  "anchors": ["2013-07", "2016-07", "2017-07", "2018-07"],
+  "group": "開示した社の中で dr_r 上位1/4",
+  "direction": "高いほど良い",
+  "pool": "月次パネル（956社・月次adjclose）。アンカー月に価格があり 2026-08 まで残る社",
+
+  "outcome": {
+    "primary": "差 = 群の等ウェイト買い持ちCAGR − 同じ土俵の残りの等ウェイト買い持ちCAGR（アンカー月 → 2026-08）",
+    "reported_not_graded": ["SPYに対する超過", "lift15", "左尾 tail15", "上位1社の利益シェア", "上位1社を抜いた差", "半導体連鎖を抜いた差"]
+  },
+  "null": {
+    "method": "会社単位の置換（ティッカー→前方リターンの対応を1回シャッフルし全アンカーに同じシャッフル）＝out/moat4_prereg.json と同一",
+    "B": 2000, "seed": 20260926, "statistic": "評価できた全アンカーの差の平均"
+  },
+  "adoption_criteria_frozen_before_results": [
+    "1. 評価できた全アンカーで 差 > 0",
+    "2. 置換 p < 0.01（moat4 の4本に続く5本目として家族を Bonferroni で払う＝0.05/5）",
+    "3. 全アンカーで 群の社数 n >= 20",
+    "4. 全アンカーで 群の上位1社が群の利益の50%未満",
+    "合格＝4つすべて"
+  ],
+  "known_limits_before_results": [
+    "生存バイアス（956社は全員2026年まで上場）",
+    "終点が全部2026-08（AI相場を含む）",
+    "前受収益はソフトウェア・サブスク・会員制・航空・教育に偏る＝業種の差を拾う可能性がある。業種で調整した差は報告するが判定には使わない"
+  ]
+}
