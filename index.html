@@ -3470,7 +3470,8 @@ function ccfSleeveTarget(){
   //   'target'＝総額を常に目標比で割る（今月の姿に関係なく個別も必ず買う）
   //   'gap'   ＝不足している側に厚く（超過側は0）＝v9.9.167 の規約。置き換えたが消していない。
   //   正本は portfolio.json の target.sleeve_split_mode。読めなければ 'target' へ倒す。
-  const mode=(t&&t.mode==='gap')?'gap':'target';
+  //   'name'  ＝**銘柄ごとの不足**の合計で割る（2026-09-25 ユーザー指示「比率の足りていない銘柄も優先できるように。個別株も含めて」）
+  const mode=(t&&(t.mode==='gap'||t.mode==='name'))?t.mode:'target';
   return {c,n,mode,src:(t&&t.src)||'既定 50/50（portfolio.json の target が読めない）'};
 }
 function ccfTotalAmt(){let v=0;try{v=ccfParseYen(localStorage.getItem('pf:monthly_total')||'');}catch(e){}return v>0?v:0;}
@@ -3501,8 +3502,20 @@ function ccfSleeveSplit(){
     const castle=byTarget();
     return {total:T,castle,net:T-castle,cPct:c,nPct:n,src,mode:'full',gc,gn,now,tCastle:castle,gCastle:null};
   }
+  // ★'name'（2026-09-25）: 袖の合計ではなく**銘柄ごとの不足**（目標ウェイト−保有%・正の分だけ）の合計で割る。
+  //   袖の中は従来どおり不足按分なので、結果として**全銘柄が自分の不足に比例して受け取る**。
+  //   ＝袖全体が目標を超えていても（例: 個別が MSFT 1社で超過）、保有ゼロの投下可には配られる。
+  //   材料は renderPlan が置く window.__ccfNameGap（個別=passGap / ETF=ETFの不足の合計）。無ければ 'gap' へ倒して名指しする。
+  if(rule==='name'){
+    const ng=(typeof window!=='undefined'&&window.__ccfNameGap)?window.__ccfNameGap:null;
+    const nc=ng?Math.max(0,+ng.c||0):0, nn=ng?Math.max(0,+ng.n||0):0;
+    if(ng&&(nc+nn)>0){
+      const castle=Math.round(T*nc/(nc+nn));
+      return {total:T,castle,net:T-castle,cPct:c,nPct:n,src,mode:'name',gc,gn,now,tCastle:byTarget(),gCastle:gapCastle,nc,nn};
+    }
+  }
   const castle=gapCastle;                    // ★不足の比で配る（超過側は 0）
-  return {total:T,castle,net:T-castle,cPct:c,nPct:n,src,mode:'gap',gc,gn,now,tCastle:byTarget(),gCastle:gapCastle};
+  return {total:T,castle,net:T-castle,cPct:c,nPct:n,src,mode:(rule==='name'?'gap_fallback':'gap'),gc,gn,now,tCastle:byTarget(),gCastle:gapCastle};
 }
 // v9.9.191（ユーザー指示「金額入力が2つあるので1つにしてほしい」）: 入力は**今月の入金総額だけ**。
 //   個別もETFも総額から導く（旧: 総額が空なら 個別枠 pf:monthly / ETF枠 pf:monthly_net へ落ちていた）。
@@ -3981,8 +3994,10 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
   //   入力は **今月の入金総額の1欄だけ**。個別/ETFの割り方は1行で出し、採らなかった割り方も同じ行に併記する（v9.9.52）。
   const altTxt=!SP?'':(SP.mode==='fixed'
       ? (SP.gCastle!=null?`足りないほうからなら 個別 ${ccfYen(SP.gCastle)} ／ ETF ${ccfYen(SP.total-SP.gCastle)}`:'')
-      : (SP.mode==='gap'?`目標比なら 個別 ${ccfYen(SP.tCastle)} ／ ETF ${ccfYen(SP.total-SP.tCastle)}`:''));
-  const modeTxt=!SP?'':({fixed:'常に目標比',gap:'足りないほうから',full:'どちらも目標以上→目標比',unknown:'⚠保有%が読めない→目標比'}[SP.mode]||'');
+      : SP.mode==='name'
+      ? (SP.gCastle!=null?`袖の合計で測るなら 個別 ${ccfYen(SP.gCastle)} ／ ETF ${ccfYen(SP.total-SP.gCastle)}`:'')
+      : (SP.mode==='gap'||SP.mode==='gap_fallback'?`目標比なら 個別 ${ccfYen(SP.tCastle)} ／ ETF ${ccfYen(SP.total-SP.tCastle)}`:''));
+  const modeTxt=!SP?'':({fixed:'常に目標比',gap:'足りないほうから',name:'銘柄ごとの不足から',gap_fallback:'⚠銘柄の不足が読めない→足りないほうから',full:'どちらも目標以上→目標比',unknown:'⚠保有%が読めない→目標比'}[SP.mode]||'');
   const totRow=`<div style="display:flex;align-items:center;gap:8px;margin:10px 0 4px;flex-wrap:wrap">
     <span style="font-size:13px;color:var(--muted)">今月の入金額</span>
     <input id="ccfTotalAmtIn" type="text" inputmode="numeric" autocomplete="off" value="${TA>0?TA.toLocaleString('ja-JP'):''}" placeholder="例: 17万"
@@ -6300,7 +6315,7 @@ async function renderPlan(){
     const c=t&&+t.shiro_castle_pct>0?+t.shiro_castle_pct:null, n=t&&+t.ami_net_pct>0?+t.ami_net_pct:null;
     // ★2026-09-22: 総額の割り方も portfolio.json が正本（'target'=常に目標比 / 'gap'=不足側に厚く）。
     //   ⚠ここに既定を書き写さない——読めなければ 'target' へ倒し、その旨を画面に出す。
-    const sm=(t&&String(t.sleeve_split_mode||'').toLowerCase()==='gap')?'gap':'target';
+    const sm0=String((t&&t.sleeve_split_mode)||'').toLowerCase(), sm=(sm0==='gap'||sm0==='name')?sm0:'target';
     window.__ccfSleeveTarget=(c&&n)?{c,n,src:'portfolio.json の target',mode:sm}:null;
     // 今の実際の比率（DCAの規約＝不足側に厚く、を併記するため）
     // ★v9.9.168: ここで足し直さず **ccfPfLive の単一実装**から採る——◈ETFの節と別々に足すと
@@ -6913,7 +6928,10 @@ async function renderPlan(){
     if(fxU>0)return{jpy:q.px*fxU,px:q.px,ccy:q.ccy||'USD',label:`$${q.px.toLocaleString('ja-JP',{maximumFractionDigits:2})}≒¥${Math.round(q.px*fxU).toLocaleString('ja-JP')}`};
     return null;};
   // v9.9.164: ETFの行を注文書へ混ぜる。**ここで按分し直さない**——ccfNetRows / ccfNetAlloc の答えをそのまま運ぶ。
-  const __NET=ccfNetRows(__np,__pf), __NETA=ccfNetAlloc(__NET,ccfNetBudget());
+  const __NET=ccfNetRows(__np,__pf);
+  // ★割り方 'name'（銘柄ごとの不足）の材料: 個別=passGap（投下可・例外の各行の 目標−保有 の正の分の合計）／ETF=同じ式の合計
+  window.__ccfNameGap={c:passGap, n:(__NET.rows||[]).reduce((a,r)=>a+Math.max(0,(+r.tw||0)-(+r.pos||0)),0)};
+  const __NETA=ccfNetAlloc(__NET,ccfNetBudget());
   const __netOrder=(__NET.rows.length&&__NETA.yen)?{rows:__NET.rows.map(r=>{
     const x=__Q[r.t], has=x&&x.px>0;
     const u1=/-USD$/.test(r.t)?('1 '+r.t.replace(/-USD$/,'')):'1株';   // 暗号資産は「1 BTC」（株ではない）
