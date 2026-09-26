@@ -123,10 +123,20 @@ const srv = http.createServer((q, r) => {
   const live = String((base.target && base.target.sleeve_split_mode) || 'target').toLowerCase();
   await load(null);
   sp = await split(1000000);
-  const want = (live === 'gap') ? 'gap' : 'fixed';
-  ok(sp && sp.mode === want,
+  // ★'name'（2026-09-25 新設・銘柄ごとの不足から）は台帳が空のこの検査では材料（銘柄の不足）が無いので
+  //   門は 'gap_fallback' と**名乗って** gap へ倒す＝どちらも「正本の name が効いている」の正しい姿
+  const want = (live === 'gap') ? ['gap'] : (live === 'name') ? ['name', 'gap_fallback'] : ['fixed'];
+  ok(sp && want.includes(sp.mode),
      "⑤ 正本(portfolio.json)の mode='" + live + "' が門にそのまま効いている（判定 " + (sp && sp.mode) + '）'
      + ' → 城 ¥' + (sp && sp.castle && sp.castle.toLocaleString()) + ' / 網 ¥' + (sp && sp.net && sp.net.toLocaleString()));
+
+  // ⑥ mode='name' … 銘柄ごとの不足の合計の比で割る（材料を与えて判定そのものを見る）
+  await load(withMode('name'));
+  sp = await pg.evaluate(() => { window.__ccfNameGap = { c: 1, n: 3 }; localStorage.setItem('pf:monthly_total', '1000000'); return ccfSleeveSplit(); });
+  ok(sp && sp.mode === 'name' && sp.castle === 250000 && sp.net === 750000,
+     "⑥ mode='name' → 銘柄の不足 個別1:ETF3 なら 城¥250,000 / 網¥750,000（判定 " + (sp && sp.mode) + ' / 城 ¥' + (sp && sp.castle && sp.castle.toLocaleString()) + '）');
+  sp = await pg.evaluate(() => { window.__ccfNameGap = undefined; return ccfSleeveSplit(); });
+  ok(sp && sp.mode === 'gap_fallback', "   材料が無ければ 'gap_fallback' と名乗って gap へ倒す（黙って別の割り方にしない）");
 
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
   await pg.evaluate(() => localStorage.removeItem('pf:monthly_total'));
