@@ -65,7 +65,7 @@ def main():
                'results': res}, open(os.path.join(BASE, 'out', 'longonly_test.json'), 'w'), ensure_ascii=False, indent=1)
     for k, r in res.items():
         f = lambda v: f"{v['超過%/年']:+5.2f}(t{v['t']:+.1f})" if v else '—'
-        print(f"■ {k:13} {r.get('verdict','（報告のみ）'):6} {r['良い側']}  {r['始まり']//100}〜 全 {f(r['全期間'])}  〜2006 {f(r['〜2006'])}  2007〜 {f(r['2007〜'])}"
+        print(f"■ {k:13} {r.get('verdict','（報告のみ）'):6} {r.get('良い側', '5本を等分')}  {r['始まり']//100}〜 全 {f(r['全期間'])}  〜2006 {f(r['〜2006'])}  2007〜 {f(r['2007〜'])}"
               f"  20年窓 {r['転がる20年']['勝ち']}/{r['転がる20年']['窓']} 最悪{r['転がる20年']['最悪']}  10年窓 {r['転がる10年']['勝ち']}/{r['転がる10年']['窓']}")
 
 if __name__ == '__main__':
