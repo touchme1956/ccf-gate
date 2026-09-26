@@ -171,6 +171,7 @@ TODAY = datetime.date.today()
 
 def collect(facts, key):
     out = []
+    ANN = {}
     flow = key in FLOW
     for taxo in ("us-gaap","ifrs-full"):
         ns = facts.get(taxo)
@@ -188,7 +189,13 @@ def collect(facts, key):
                         st = e.get("start")
                         if not st or not (330 <= (d2(en)-d2(st)).days <= 400): continue
                         y = int(en[:4])
-                        if y not in d or fl > d[y][2]: d[y] = (en, float(e["val"]), fl)
+                        # 同じ年に12ヶ月の値が複数あるときは**年次報告書（10-K/20-F/40-F）の値を先に採る**（2026-09-26）。
+                        #   Amazon は10-Qに『直近12ヶ月』を載せるので、提出日だけで選ぶと FY2025（12月末）が
+                        #   2025-06末の直近12ヶ月（翌年の10-Qの比較欄・提出日が新しい）に上書きされ、決算期末と合わずに
+                        #   「欠損:ni」で**母集団から丸ごと落ちていた**（RBC の錨ずれと同じ型のデータ整合の修正・閾値は不変）
+                        ann = (e.get("form") or "").split("/")[0] in ("10-K", "10-KT", "20-F", "40-F")
+                        if y not in d or (ann, fl) > (ANN.get((tag, unit, y), False), d[y][2]):
+                            d[y] = (en, float(e["val"]), fl); ANN[(tag, unit, y)] = ann
                     else:
                         if e.get("start"): continue
                         if en not in d or fl > d[en][1]: d[en] = (float(e["val"]), fl)
