@@ -61,9 +61,31 @@ def main():
             crit = {'1_全期間 正かつt≥2.64': full['超過%/年'] > 0 and full['t'] >= T_LINE, '2_2007〜 正': post['超過%/年'] > 0,
                     '3_20年窓の勝率≥80%': (r20['勝率'] or 0) >= .8}
             r['criteria'] = crit; r['verdict'] = '合格' if all(crit.values()) else '不合格'
+    # ── 事後（事前登録の外・結果を見た後に足した）: 相手を『上限なしの時価加重の市場』（Ken French の Mkt-RF＝S&P500 に近い）に替える。
+    #   理由: 実在の質ETF（QUAL/MOAT/SPHQ/DGRW/VIG…）がほぼ全部 SPY に負けていたのに、ここでは 2007年以降も勝っていた。
+    #   JKP の vw_cap 市場は最大級の会社の重みを上限で抑える＝巨大テックの時代に純粋な時価加重より弱い相手だった
+    ff = {}
+    zf = zipfile.ZipFile(io.BytesIO(urllib.request.urlopen(
+        'https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors_CSV.zip', timeout=90).read()))
+    for l in zf.read(zf.namelist()[0]).decode('latin-1').split('\n'):
+        q = [x.strip() for x in l.split(',')]
+        if len(q) == 5 and q[0].isdigit() and len(q[0]) == 6: ff[int(q[0])] = float(q[1]) / 100
+    post_hoc = {}
+    for k in list(PRE['primary_signals']) + list(PRE['reported_only']):
+        g = good[k]; ex = {m: g[m] - ff[m] for m in g if m in ff}
+        post_hoc[k] = {'全期間': st(ex), '〜2006': st(ex, 0, 200612), '2007〜': st(ex, 200701), '2013-07〜': st(ex, 201307),
+                       '転がる20年': roll(g, ff, 20)}
+    for k in ('JKP市場(上限つき)',):
+        ex = {m: mk[m] - ff[m] for m in mk if m in ff}
+        post_hoc[k] = {'全期間': st(ex), '〜2006': st(ex, 0, 200612), '2007〜': st(ex, 200701), '2013-07〜': st(ex, 201307)}
+    res['事後_相手を純粋な時価加重の市場に替えると'] = post_hoc
     json.dump({'generated': datetime.date.today().isoformat(), 'tool': 'night/longonly_test.py', 'prereg': 'out/longonly_prereg.json',
                'results': res}, open(os.path.join(BASE, 'out', 'longonly_test.json'), 'w'), ensure_ascii=False, indent=1)
+    for k, r in post_hoc.items():
+        f = lambda v: f"{v['超過%/年']:+5.2f}(t{v['t']:+.1f})" if v else '—'
+        print(f"  事後 対French市場 {k:16} 全 {f(r['全期間'])}  〜2006 {f(r['〜2006'])}  2007〜 {f(r['2007〜'])}  2013-07〜 {f(r['2013-07〜'])}")
     for k, r in res.items():
+        if k.startswith('事後'): continue
         f = lambda v: f"{v['超過%/年']:+5.2f}(t{v['t']:+.1f})" if v else '—'
         print(f"■ {k:13} {r.get('verdict','（報告のみ）'):6} {r.get('良い側', '5本を等分')}  {r['始まり']//100}〜 全 {f(r['全期間'])}  〜2006 {f(r['〜2006'])}  2007〜 {f(r['2007〜'])}"
               f"  20年窓 {r['転がる20年']['勝ち']}/{r['転がる20年']['窓']} 最悪{r['転がる20年']['最悪']}  10年窓 {r['転がる10年']['勝ち']}/{r['転がる10年']['窓']}")
