@@ -1,0 +1,81 @@
+{
+ "generated": "2026-09-26",
+ "question": "ジェレミー・シーゲル『株式投資の未来』の主張（高配当・高い株主還元・低PER は報われ、高成長に高値を払うのは罠）は、この台帳の歴史パネルで再現するか",
+ "asked_by": "ユーザー「株式投資の未来ジェレミー・シーゲルの本の内容を読解して門に入れたい」→「1.2をやって」（2＝門の歴史データで検定）",
+ "stance": "測定器。門・採点・四関門・席・配分には入れない（規約の改定は絶対のルール1の領分）。合格しても『門に入れる』ではなく『候補になる』まで",
+ "registered_before_measuring": true,
+ "source_of_claims": "Siegel & Schwartz (2006) 'Long-Term Returns on the Original S&P 500 Companies', Financial Analysts Journal 62(1)（原本を読解済み・要約は out/siegel_reading.json）。配当・国際分散の主張は書籍（2005）の論旨として一般に知られているもの＝頁の引用は持っていない",
+ "pool": "月次パネル out/retro_monthly_2013_2018.json + out/retro_monthly_2018_2026.json（combo_spy.panel・調整後終値）。アンカー月（Y年7月）に価格があり 2026-08 まで残る社。さらに as-of の PER が算出できた社（out/retro_per_{2013,2018}_all.json＝直近FYの純利益>0・PER 2〜200 の帯を通った社）に限る",
+ "anchors": [
+  "2013-07",
+  "2018-07"
+ ],
+ "why_these_anchors": "as-of の株価（当時の板の値へ分割を戻したもの）と as-reported の株数がそろう在庫が 2013 と 2018 にしか無い。調整後終値を当時の株数で割ると分割した社ほど利回りが高く出る（retro_per_asof.py 頭注の事故）ので、ほかのアンカーは作らない",
+ "known_limits_before_results": [
+  "生存バイアス: パネルの956社は全員が2026年まで上場している。配当を切って倒産した社は最初から居ない",
+  "★逆風の窓（結果を見る前から知っている）: 2013→2026 は一般にグロース優位・バリュー劣後の時代として知られ、終点は AI 相場の中。シーゲルの主張には不利な窓であることを承知で測る。落ちても『この窓では』までしか言えない",
+  "赤字の社は PER が作れないので土俵に居ない（S1〜S4 すべて黒字の社の中の比較）",
+  "配当・自社株買い・発行は XBRL の年次CF（filed ≤ Y-07-01）。PaymentsOfDividends は優先株配当を含む社がある",
+  "アンカーは2つだけ。多重性は候補4本で Bonferroni（p < 0.05/4 = 0.0125）"
+ ],
+ "definitions": {
+  "mcap": "px（retro_per の as-of 株価・分割を戻した当時の板の値）× 株数（retro_per と同じ規約: 希薄化後加重平均株数・filed 最古・FY末 ≤ Y-03-01）",
+  "div": "直近FY（retro_per の fy_end と同じ年）の PaymentsOfDividendsCommonStock → PaymentsOfDividends。三値読み（年次値=値／その年に触れる報告なし=0／触れるのに年次が無い=欠測）",
+  "buy": "同 PaymentsForRepurchaseOfCommonStock → PaymentsForRepurchaseOfEquity（三値読み）",
+  "iss": "同 ProceedsFromIssuanceOfCommonStock → ProceedsFromIssuanceOrSaleOfEquity（三値読み）",
+  "dy": "div ÷ mcap",
+  "shy": "(div + buy − iss) ÷ mcap",
+  "per": "retro_per の per（px ÷ 直近FY EPS）",
+  "cagr5": "out/retro_features2_{Y}.json の cagr5（5年の売上CAGR・filed ≤ Y-07-01）"
+ },
+ "candidates": {
+  "S1_dividend_yield": {
+   "claim": "高配当の株は報われる（配当は弱気相場の守り・再投資が複利を作る）",
+   "group": "dy 上位1/4（無配の社は dy=0 で土俵に入る）",
+   "direction": "高いほど良い"
+  },
+  "S2_shareholder_yield": {
+   "claim": "配当＋自社株買い−発行＝株主への純還元が高い株は報われる（シーゲルの D-I-V の D を還元全体へ広げたもの）",
+   "group": "shy 上位1/4",
+   "direction": "高いほど良い"
+  },
+  "S3_low_pe": {
+   "claim": "低PERの株は報われる（原本: 元の S&P500 社が指数に勝った理由は値付けの低さ。Basu 1977 を引用）",
+   "group": "per 下位1/4",
+   "direction": "低いほど良い"
+  },
+  "S4_growth_trap": {
+   "claim": "成長の罠: 高成長に高値を払うと報われない（原本: 1999/2000年に追加されたテック株は部門に年4%/12%負けた）",
+   "group": "cagr5 上位1/4 かつ per 上位1/4（両方が測れた社の中）",
+   "direction": "群が残りより悪い（差 < 0 が主張どおり）"
+  }
+ },
+ "outcome": {
+  "primary": "差 = 群の等ウェイト買い持ちCAGR − 同じ土俵の残りの等ウェイト買い持ちCAGR。アンカー月 → 2026-08",
+  "reported_not_graded": [
+   "SPY に対する超過CAGR",
+   "P(年率15%以上) の差",
+   "左尾 P(年率 <= -15%) の差（配当は守りという主張の側）",
+   "上位1社が群の利益に占める割合",
+   "半導体連鎖を除いた差（combo_spy.semi_set）"
+  ]
+ },
+ "criteria": {
+  "1": "両アンカーで差が主張の向き（S1〜S3 は >0・S4 は <0）",
+  "2": "会社ラベルの置換（B=2000・seed 20260926）で片側 p < 0.0125（S4 は差が小さい側）",
+  "3": "両アンカーで群 n ≥ 20",
+  "4": "群の上位1社が群の利益の50%未満（S4 は報告のみ・負の向きなので適用しない）",
+  "verdict": "4つすべてで『合格』。1つでも欠ければ『不合格』。線は結果を見て動かさない"
+ },
+ "null": {
+  "B": 2000,
+  "seed": 20260926,
+  "how": "アンカーごとに会社ラベルを土俵全体で入れ替え、群と残りの差の平均の分布を作る（moat4_test と同じ）"
+ },
+ "S5_international": {
+  "claim": "国際分散（新興国を含む）は米国だけより良い（書籍の D-I-V の I）",
+  "how": "night/etf_long_windows.py の mix_series/stats をそのまま使う。毎月リバランス・共通窓。現行の ETF 側（QQQ56/XLK22/SMH12 相当を 100 に正規化）の 20pt を VEIEX（新興国・1994〜）/ VGTSX（先進国＋新興国除く米国・1996〜）へ置き換える",
+  "criteria": "『合格』= 年率÷ボラ が上がる かつ 最大下落が浅くなる かつ 毎月積立の転がる20年窓の倍率（中央値）が下がらない。3つとも満たさなければ『不合格』",
+  "known_limits": "ドル建て・税なし。共通窓は 1996/1994 以降でドットコム天井を含む。新興国が米国に負けた2010年代を含むことは結果を見る前から知っている"
+ }
+}
