@@ -4801,11 +4801,23 @@ function ccfReturnsHTML(R){
         +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(R.benchmark_qqqm.pl_jpy)}">${R.benchmark_qqqm.pl_jpy>0?'+':''}${yen(R.benchmark_qqqm.pl_jpy)}</span>`
         +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(R.benchmark_qqqm.ret)}"><b>${pc(R.benchmark_qqqm.ret)}</b></span>`
         +`<span style="min-width:66px"></span><span style="min-width:62px"></span></div>`:'')
+        // ★3つ目の比較相手 irr=85 のかご（2026-09-26 ユーザー指示「QQQと同じようにirr85の比較も入れたい」）。
+        //   同じ円を同じ日に irr=85 の全社へ等分（配当込み）。一覧は out/irr85_basket.json で固定
+        +(R.benchmark_irr85?`<div class="led"><span class="ln">irr=85 の${(R.irr85_basket&&R.irr85_basket.tickers||[]).length}社（等分・配当込み・円建て）</span>`
+        +`<span style="min-width:74px"></span>`
+        +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink-soft)">${yen(R.benchmark_irr85.cost_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:92px;text-align:right;color:var(--ink)">${yen(R.benchmark_irr85.val_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:96px;text-align:right;color:${col(R.benchmark_irr85.pl_jpy)}">${R.benchmark_irr85.pl_jpy>0?'+':''}${yen(R.benchmark_irr85.pl_jpy)}</span>`
+        +`<span style="font-size:12px;min-width:66px;text-align:right;color:${col(R.benchmark_irr85.ret)}"><b>${pc(R.benchmark_irr85.ret)}</b></span>`
+        +`<span style="min-width:66px"></span><span style="min-width:62px"></span></div>`:'')
         +`<div style="font-size:12.5px;padding:8px 12px;margin-top:6px;background:var(--panel2);border:1px solid var(--line);border-radius:8px">`
         +`S&amp;P500 との差（円建て）: <b style="color:${col(dTr)};font-size:15px">${(dTr>0?'+':'')+(dTr*100).toFixed(2)}pt</b>`
         +` <span style="color:var(--dim)">——同じ円を同じ日に S&amp;P500 へ入れていたらどうだったか</span>`
         +(R.benchmark_qqqm?(()=>{const dQ=(R.compared_tr?R.compared_tr.ret:C.ret)-R.benchmark_qqqm.ret;
           return `<br>QQQM との差（円建て）: <b style="color:${col(dQ)};font-size:15px">${(dQ>0?'+':'')+(dQ*100).toFixed(2)}pt</b>`;})():'')
+        +(R.benchmark_irr85?(()=>{const dI=(R.compared_tr?R.compared_tr.ret:C.ret)-R.benchmark_irr85.ret;
+          return `<br>irr=85 のかごとの差（円建て）: <b style="color:${col(dI)};font-size:15px">${(dI>0?'+':'')+(dI*100).toFixed(2)}pt</b>`
+            +` <span style="color:var(--dim);font-size:11px">（${(R.irr85_basket.tickers||[]).join('・')}・${R.irr85_basket.asof||''}の一覧で固定。それより前の買付に当てた分は後知恵を含む）</span>`;})():'')
         // ★差は**同じ基準どうし**（保有の配当込 vs ^SP500TR）で出す。価格ベースの保有を
         //   配当込みの指数と引くと、配当のぶんだけ保有が構造的に低く出る（基準の違う二つ）
         +(R.compared_tr?`<div style="font-size:11px;color:var(--dim);margin-top:3px">`
@@ -4834,6 +4846,7 @@ function ccfReturnsHTML(R){
           +` ／ 同じ円を QQQM へ <b>${pc(K.qqqm.ret)}</b>`+(K.spy?` ／ S&amp;P500 へ <b>${pc(K.spy.ret)}</b>`:'')
           +`<br>QQQM との差: <b style="color:${col(dq)};font-size:15px">${(dq>0?'+':'')+(dq*100).toFixed(2)}pt</b>`
           +(ds!=null?` <span style="color:var(--dim)">（S&amp;P500 との差 ${(ds>0?'+':'')+(ds*100).toFixed(2)}pt）</span>`:'')
+          +(K.irr85?`<br>同じ円を irr=85 のかごへ <b>${pc(K.irr85.ret)}</b> ／ 差 <b style="color:${col(K.compared_tr.ret-K.irr85.ret)}">${((K.compared_tr.ret-K.irr85.ret)>0?'+':'')+((K.compared_tr.ret-K.irr85.ret)*100).toFixed(2)}pt</b>`:'')
           +`<br><span style="color:var(--dim);font-size:11px">＝個別株に回したお金を ETF の本体（QQQM）に入れていたらどうだったか。`
           +`個別株が指数に勝つ証拠は過去の検証には無いので、この差を<b>実績で積み上げる</b>のが目的（数ヶ月の差は偶然と区別できない）</span></div>`;
       }
