@@ -3379,7 +3379,7 @@ function ccfNetUndo(t){
    旧経路(pf:net)の記録が残っている行には**累計と取消**を出す——黙って消さない。 */
 function ccfNetBoughtCtl(r,qq){
   const px=(qq&&qq.px>0)?qq.px:0, ccy=(qq&&qq.ccy)||'USD';
-  let h=ccfBoughtBtn(r.t,(r.nm||r.t),px,ccy,'net');
+  let h=ccfBoughtBtn(r.t,(r.nm||r.t),px,ccy,'net',!!r.fund);
   if((r.addSh||0)>0){
     h+=`<span style="white-space:nowrap;margin-left:6px;font-size:10.5px;color:#6fa8c9"`
       +` title="旧経路(pf:net)でこのブラウザに記録した買付。台帳(🏦保有)の上に重ねて保有%を出しています。`
@@ -3582,13 +3582,15 @@ window.addEventListener('storage',e=>{if(e.key==='pf:showMoney')ccfMoneyRepaint(
    **判定には一切効かない**——保有%は配分（今月いくら買うか）にだけ使い、Ω・四関門・売却規律は不変。 */
 function ccfBoughtEsc(s){ return String(s).replace(/"/g,'&quot;'); }
 /* 入力欄＋ボタンの中身（注文書の行も、銘柄の行も**これ一つ**を使う＝二重実装を作らない・v9.9.65） */
-function ccfBoughtFields(t,nm,px,ccy,sh,sleeve){
-  const q=ccfBoughtEsc, sl=(sleeve==='net')?'net':'castle';
+function ccfBoughtFields(t,nm,px,ccy,sh,sleeve,fund){
+  const q=ccfBoughtEsc, sl=(sleeve==='net')?'net':'castle', fd=fund?'1':'';
+  // ★投資信託（2026-09-26 ユーザー「iFREENEXTは積立NISAで円で入れるよ」）は**買った円**を入れる。
+  //   口数＝円÷1口あたりの基準価額（盤の値＝目安。正確な口数は約定後に🏦保有で直せる）・取得額(円)はそのまま記録。
   return `<input type="number" min="0" step="any" value="${sh||''}" data-t="${q(t)}" data-nm="${q(nm)}"`
-   +` data-px="${px||0}" data-ccy="${q(ccy||'USD')}" data-sleeve="${sl}"`
-   +` style="width:62px;padding:2px 6px;font-size:11.5px;font-family:inherit;background:var(--panel);`
+   +` data-px="${px||0}" data-ccy="${q(ccy||'USD')}" data-sleeve="${sl}" data-fund="${fd}"`
+   +` style="width:${fd?'92':'62'}px;padding:2px 6px;font-size:11.5px;font-family:inherit;background:var(--panel);`
    +`border:1px solid var(--line);border-radius:5px;color:var(--ink)">`
-   +`<span style="font-size:10.5px;color:var(--dim)">株</span>`
+   +`<span style="font-size:10.5px;color:var(--dim)">${fd?'円':'株'}</span>`
    +`<button onclick="ccfBought(this)" style="padding:2px 10px;font-size:11px;font-family:inherit;cursor:pointer;`
    +`background:rgba(143,201,164,.16);border:1px solid rgba(143,201,164,.5);border-radius:5px;color:var(--jade)"`
    +` title="🏦保有の株数へ足す（加算）。買付単価は加重平均で更新。判定には使わない">✓ 保有へ</button>`
@@ -3607,18 +3609,18 @@ function ccfBoughtCtl(b){
    直前の版で「無駄な文字を減らす」ことをやったので、40行ぶんの入力欄を常時出すのは自分で打ち消す。
    ⚠**価格が無くても記録できる**（日本株はFinnhub無料枠外で盤に現値が無い）。ただし
    **推測の単価は入れない**（絶対のルール7）——株数だけ足し、🏦保有は「金額未入力」と出す。 */
-function ccfBoughtBtn(t,nm,px,ccy,sleeve){
+function ccfBoughtBtn(t,nm,px,ccy,sleeve,fund){
   if(!t)return '';
   const q=ccfBoughtEsc;
   return `<span class="bctl" style="white-space:nowrap;margin-left:6px;display:inline-flex;align-items:center;gap:5px"`
-   +` data-t="${q(t)}" data-nm="${q(nm)}" data-px="${px||0}" data-ccy="${q(ccy||'USD')}" data-sleeve="${(sleeve==='net')?'net':'castle'}">`
-   +`<button onclick="ccfBoughtOpen(this)" title="買った株数を🏦保有へ足す（加算）。判定には使わない"`
+   +` data-t="${q(t)}" data-nm="${q(nm)}" data-px="${px||0}" data-ccy="${q(ccy||'USD')}" data-sleeve="${(sleeve==='net')?'net':'castle'}" data-fund="${fund?'1':''}">`
+   +`<button onclick="ccfBoughtOpen(this)" title="${fund?'買った金額(円)を🏦保有へ足す（口数は基準価額から換算）':'買った株数を🏦保有へ足す（加算）'}。判定には使わない"`
    +` style="padding:4px 8px;font-size:11px;font-family:inherit;cursor:pointer;background:rgba(143,201,164,.10);`
-   +`border:1px solid rgba(143,201,164,.35);border-radius:6px;color:#8fc9a4">＋株</button></span>`;
+   +`border:1px solid rgba(143,201,164,.35);border-radius:6px;color:#8fc9a4">${fund?'＋円':'＋株'}</button></span>`;
 }
 function ccfBoughtOpen(btn){
   const w=btn.parentElement, d=w.dataset, px=parseFloat(d.px)||0;
-  w.innerHTML=ccfBoughtFields(d.t,d.nm,px,d.ccy,'',d.sleeve)
+  w.innerHTML=ccfBoughtFields(d.t,d.nm,px,d.ccy,'',d.sleeve,d.fund==='1')
    +(px>0?'':`<span style="font-size:10px;color:#c0894a" title="盤(out/dashboard.json)に現在価格が無い（日本株はFinnhub無料枠外）。推測の単価は入れないので、株数だけ記録して🏦保有で単価を入れる">単価未取得</span>`);
   const i=w.querySelector('input'); if(i)i.focus();
 }
@@ -3646,7 +3648,13 @@ window.addEventListener('message',function(e){
 });
 function ccfBought(btn){
   const wrap=btn.parentElement, inp=wrap.querySelector('input'), out=wrap.querySelector('.bought-msg');
-  const sh=parseFloat(inp.value)||0;
+  const isFund=(inp.dataset.fund==='1'), fpx=parseFloat(inp.dataset.px)||0;
+  let sh=parseFloat(inp.value)||0, fJpy=0;
+  if(isFund){   // 投資信託: 入れたのは円。口数は 円÷1口あたりの基準価額（基準価額が無ければ記録しない＝推測の口数を作らない）
+    if(!(sh>0)){ out.style.color='#d69a3c'; out.textContent='買った金額(円)を入れてください'; return; }
+    if(!(fpx>0)){ out.style.color='#d69a3c'; out.textContent='基準価額が未取得なので口数を出せません（🏦保有で口数を直接入れてください）'; return; }
+    fJpy=Math.round(sh); sh=Math.floor(fJpy/fpx);
+  }
   if(!(sh>0)){ out.style.color='#d69a3c'; out.textContent='株数を入れてください'; return; }
   const frame=document.getElementById('pfFrame');
   if(!frame||!frame.contentWindow){ out.style.color='#d69a3c'; out.textContent='🏦保有が読み込まれていません（Ⅶを一度開いてから）'; return; }
@@ -3689,7 +3697,7 @@ function ccfBought(btn){
          if(typeof ccfDash==='function'&&db&&db.innerHTML.trim())ccfDash(); }catch(_){}
   };
   frame.contentWindow.postMessage({type:'ccfPfBuy',id:id,t:inp.dataset.t,nm:inp.dataset.nm,
-    sh:sh,px:parseFloat(inp.dataset.px)||0,ccy:inp.dataset.ccy,sleeve:inp.dataset.sleeve},'*');
+    sh:sh,px:parseFloat(inp.dataset.px)||0,ccy:inp.dataset.ccy,sleeve:inp.dataset.sleeve,...(fJpy>0?{jpy:fJpy}:{})},'*');
   setTimeout(()=>{ if(!done&&window.__ccfBuyWait[id]){ delete window.__ccfBuyWait[id];
     out.style.color='#d69a3c'; out.textContent='🏦保有から返事がありません（Ⅶタブを一度開いてから）'; } },3000);
 }
@@ -3855,7 +3863,8 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
         nb+=nrow(r.nm,`<b style="color:#6fa8c9">${ccfYen(y)} 金額で買う</b>`,
           `<span style="color:var(--dim)"><span style="white-space:nowrap">目標${r.tw.toFixed(1)}% / 保有${r.pos.toFixed(1)}%${(r.alias&&r.alias.length)?`（うち ${r.alias.join('・')} ${r.alPos.toFixed(1)}%＝同じ指数）`:''}</span>`
           +`　<span style="white-space:nowrap">${nav>0?`基準価額 ¥${Math.round(nav).toLocaleString('ja-JP')}/1万口・約${Math.floor(y/r.jpy).toLocaleString('ja-JP')}口`:'基準価額 未取得'}</span>`
-          +`　<span style="white-space:nowrap">投資信託（約定は翌営業日の基準価額）</span></span>`
+          +`　<span style="white-space:nowrap">投資信託（約定は翌営業日の基準価額）</span>`
+          +`　<span style="white-space:nowrap;color:#d69a3c">つみたて投資枠は年120万円まで（超える分は成長投資枠か課税口座）</span></span>`
           +`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(r,(r.px>0?{px:r.px,ccy:r.ccy}:null))}</span>`);
         return;
       }
