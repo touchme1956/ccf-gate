@@ -3847,20 +3847,33 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
   // ★ETFの行は個別の注文書の**外**で組む（v9.9.164）——個別に配る先が無い月（nm.length===0）でも
   //   ETFは配れるので、注文書ごと消えると「今月いくらETFへ回すか」が画面から丸ごと消える。
   const NO=(netOrder&&netOrder.rows&&netOrder.rows.length)?netOrder:null;
-  let nb='', nspent=0;
+  let nb='', nspent=0, fundAbs=0;
+  // ★投資信託は金額を自由に選べる（2026-09-26 ユーザー「買付プランでiFREENEXTNASDAQ100は金額を自由に選択して算出してもいいことになってない」）
+  //   ＝丸株の制約が無い。だから**丸株で買えずに余った円（ETFの端数・個別の残枠）を投資信託の行へ寄せる**。
+  //   寄せた分は fundAbs に持ち、合計・残りの表示に使う。按分の比率そのものは変えない（配った後の端数だけ）。
+  const mkNb=(extra)=>{ nb=''; nspent=0; fundAbs=0;
   if(NO){
+    const hasFund=NO.rows.some(r=>r.fund&&(r.yen||0)>0);
+    let etfLeft=0;
+    if(hasFund) NO.rows.forEach(r=>{ const y=r.yen||0; if(!(y>0)||r.fund)return;
+      if(!(r.jpy>0)||/-USD$/.test(r.t))return;                 // 単価未取得・小数で買える本は端数が出ない
+      etfLeft+=y-Math.floor(y/r.jpy)*r.jpy; });
+    const absorb=hasFund?Math.max(0,Math.floor((etfLeft+(extra||0))/100)*100):0;
     const nrow=(name,right,sub)=>`<div class="planrow" style="padding:5px 7px;border-radius:7px;border-bottom:1px dashed rgba(111,168,201,.22)">`
       +`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:12.5px;color:var(--ink)">${ccfIcon(name)}${name}</span>${right?`<span style="white-space:nowrap;font-size:12.5px">${right}</span>`:''}</div>`
       +(sub?`<div style="font-size:11px;margin-top:1px;line-height:1.55">${sub}</div>`:'')+`</div>`;
     NO.rows.forEach(r=>{
-      const y=r.yen||0; if(!(y>0))return; nspent+=y;
+      let y=r.yen||0; if(!(y>0))return;
+      if(r.fund&&absorb>0){ fundAbs=absorb; y+=absorb; }
+      else if(hasFund&&!r.fund&&r.jpy>0&&!/-USD$/.test(r.t)) y=Math.floor(y/r.jpy)*r.jpy;   // 端数は投資信託へ移した
+      nspent+=y;
       // ★暗号資産（BTC-USD 等・2026-09-25 ユーザー明示指示「BTCを5%いれる」）は1単位が高く小数で買うので、
       //   株数を整数に切り捨てず小数5桁の数量で出す（切り捨てると毎月「1株に届かない」になる）
       // ★投資信託（target.ami_funds・2026-09-26〜 iFreeNEXT NASDAQ100）は**金額で買う**——株数を作らない。
       //   口数は基準価額（1万口あたり）から出す目安だけ（約定は翌営業日の基準価額で決まる）。
       if(r.fund){
         const per=+r.fund.navPer||10000, nav=(r.jpy>0)?r.jpy*per:0;
-        nb+=nrow(r.nm,`<b style="color:#6fa8c9">${ccfYen(y)} 金額で買う</b>`,
+        nb+=nrow(r.nm,`<b style="color:#6fa8c9">${ccfYen(y)} 金額で買う</b>`+(fundAbs>0?`<div style="font-size:10.5px;color:var(--dim);text-align:right">按分 ${ccfYen(r.yen)}＋端数 ${ccfYen(fundAbs)}</div>`:''),
           `<span style="color:var(--dim)"><span style="white-space:nowrap">目標${r.tw.toFixed(1)}% / 保有${r.pos.toFixed(1)}%${(r.alias&&r.alias.length)?`（うち ${r.alias.join('・')} ${r.alPos.toFixed(1)}%＝同じ指数）`:''}</span>`
           +`　<span style="white-space:nowrap">${nav>0?`基準価額 ¥${Math.round(nav).toLocaleString('ja-JP')}/1万口・約${Math.floor(y/r.jpy).toLocaleString('ja-JP')}口`:'基準価額 未取得'}</span>`
           +`　<span style="white-space:nowrap">投資信託（約定は翌営業日の基準価額）</span>`
@@ -3881,7 +3894,8 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
     });
     const full=NO.rows.filter(r=>!(r.yen>0)).map(r=>r.t);
     if(nb&&full.length)nb+=`<div style="font-size:11px;color:var(--dim);padding:3px 7px">${full.join('・')}：目標超過のため今月なし</div>`;
-  }
+  }};
+  mkNb(0);
   const nhead=m=>`<div style="font-size:11.5px;color:#6fa8c9;margin:${m};font-weight:600">◈ ETF</div>`;
   const chip=(lbl,pct,sub,yen)=>`<div class="planrow" style="padding:7px 12px;border-radius:8px;background:#c9a64a14;border:1px solid #c9a64a44;margin-top:6px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:13.5px;color:var(--ink)">${lbl}</span><span style="white-space:nowrap">${yen!=null?`<span style="font-size:11.5px;color:var(--dim);margin-right:8px">${pct}%</span><span style="font-size:18px;font-weight:700;color:#c9a64a">${ccfYen(yen)}</span>`:`<span style="font-size:18px;font-weight:700;color:#c9a64a">${pct}%</span>`}</span></div>${sub?`<div style="font-size:10.5px;color:var(--dim);margin-top:3px;line-height:1.6">${sub}</div>`:''}</div>`;
   let body='';
@@ -3993,6 +4007,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
       unknown.forEach(b=>{ ob+=orow(b.x.n,`<span style="color:var(--dim);font-size:11.5px">価格未取得</span>`,
         `<span style="color:var(--dim)"><span style="white-space:nowrap">${ccfYen(b.need)}</span>（株価未取得）${alloc(b)}</span>`,'var(--muted)'); });
       const spent=AMT-bud-unknown.reduce((a,b)=>a+b.need,0);
+      mkNb(bud>0?bud:0); if(fundAbs>0)bud=0;   // 個別の残枠も投資信託へ（金額で買えるので端数が出ない）
       order=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
         <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書</b></div>
         ${nb?`<div style="font-size:11.5px;color:var(--gold-bright);margin:0 0 2px;font-weight:600">🏰 個別</div>`:''}
