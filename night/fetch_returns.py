@@ -77,6 +77,9 @@ BENCH2 = "QQQM"         # 2つ目の比較相手（2026-09-25 ユーザー指示
                          # ★意味があるのは『個別株(castle)だけ』との比較——個別株に回したお金を ETF の本体(QQQM)に
                          #   入れていたらどうだったか、に答える。ETF の行どうしを比べても自明なので主役にしない
 FX = "JPY=X"            # USDJPY
+# 3つ目の比較相手（2026-09-26 ユーザー指示「QQQと同じようにirr85の比較も入れたい」）: irr=85 の全社へ等分（配当込み）。
+#   一覧は out/irr85_basket.json で固定（その日の score_all から作った）。買付日に系列の無い社は除いて残りで等分
+BASKET = os.path.join(BASE, "out", "irr85_basket.json")
 ANNUALIZE_MIN_DAYS = 180
 
 
@@ -269,7 +272,18 @@ def main():
     fx = yahoo(FX, t0, t1)
     bench = yahoo(BENCH, t0, t1)
     bench2 = yahoo(BENCH2, t0, t1)
+    basket = []
+    try:
+        basket = json.load(open(BASKET, encoding="utf-8")).get("tickers") or []
+    except Exception:
+        pass
+    bsers = {}
+    for bt in basket:
+        sx = yahoo(bt, t0, t1)
+        if sx: bsers[bt] = sx
     blind = []
+    if basket and len(bsers) < len(basket):
+        blind.append("irr=85 のかご: 株価が取れない社 " + ",".join(b for b in basket if b not in bsers))
     if not fx:
         blind.append(f"{FX}（ドル円）が取れない")
     if not bench:
@@ -286,6 +300,18 @@ def main():
     q_val = 0.0               # 同じ円・同じ日を QQQM へ
     cs_cost = cs_val_tr = cs_spy = cs_q = 0.0   # 個別株(castle)だけの同じ比較
     q_miss = []
+    i_val = cs_i = 0.0          # 同じ円・同じ日を irr=85 のかごへ（等分・配当込み）
+    i_miss = []
+
+    def basket_mult(day):
+        ms = []
+        for bt, sx in bsers.items():
+            if min(sx) > day:               # まだ上場していない
+                continue
+            a0 = on_or_before(sx, day)
+            if a0:
+                ms.append(last(sx)[1][1] / a0[1])
+        return (sum(ms) / len(ms), len(ms)) if ms else (None, 0)
 
     for p in positions:
         t = p["t"]
@@ -513,9 +539,14 @@ def main():
                 qv = r["cost_jpy"] * (last(bench2)[1][1] / q0[1]) * (k / k0) if q0 else None
                 if qv is None: q_miss.append(r["t"])
                 else: q_val += qv; r["qqqm_val_jpy"] = round(qv)
+                im, inn = basket_mult(r["bd"]) if bsers else (None, 0)
+                iv = r["cost_jpy"] * im * (k / k0) if im else None
+                if iv is None: i_miss.append(r["t"])
+                else: i_val += iv; r["irr85_val_jpy"] = round(iv); r["irr85_n"] = inn
                 if r.get("sleeve") == "castle" and qv is not None:
                     cs_cost += r["cost_jpy"]; cs_val_tr += (r.get("val_tr_jpy") or r["val_jpy"])
                     cs_spy += spv0; cs_q += qv
+                    if iv is not None: cs_i += iv
                 # ★想定日なら、窓の両端でも同じ計算をして**答えがどれだけ動くか**を出す。
                 #   1点だけ出すと「測った数字」に見えてしまう——動く幅こそがこの行の情報。
                 w = r.get("bd_win")
@@ -565,7 +596,7 @@ def main():
         "generated": datetime.date.today().isoformat(),
         "tool": "night/fetch_returns.py",
         "base_ccy": "JPY",
-        "source": "Yahoo Finance（close / adjclose）・^SP500TR・QQQM(adjclose)・JPY=X。鍵不要",
+        "source": "Yahoo Finance（close / adjclose）・^SP500TR・QQQM(adjclose)・irr=85のかご(adjclose・等分)・JPY=X。鍵不要",
         "note": ("表示専用。Ω・四関門・売却規律・配分のどれにも触れない。"
                  "**すべて円建てに揃えてある**——ドル建てのリターンと円建ての資産を並べると"
                  "「基準の違う二つを割る」型になるため。為替の寄与は別に出している。"),
@@ -592,9 +623,14 @@ def main():
         # QQQM は同じ集合で作れたときだけ（1行でも欠けたら比較が別の集合になるので出さない）
         "benchmark_qqqm": pack(bench_cost, q_val) if (bench2 and not q_miss) else None,
         "benchmark_qqqm_missing": q_miss,
+        # irr=85 のかご（同じ集合で作れたときだけ）
+        "benchmark_irr85": pack(bench_cost, i_val) if (bsers and not i_miss) else None,
+        "benchmark_irr85_missing": i_miss,
+        "irr85_basket": {"tickers": sorted(bsers), "asof": (json.load(open(BASKET, encoding="utf-8")).get("asof") if os.path.exists(BASKET) else None)} if bsers else None,
         # ★個別株だけ: 個別株に回したお金を同じ日に S&P500 / QQQM へ入れていたら（保有側は配当込み）
         "castle": ({"compared_tr": pack(cs_cost, cs_val_tr), "spy": pack(cs_cost, cs_spy),
                     "qqqm": pack(cs_cost, cs_q),
+                    "irr85": pack(cs_cost, cs_i) if (bsers and not i_miss) else None,
                     "tickers": sorted(r["t"] for r in rows if r.get("sleeve") == "castle" and r.get("qqqm_val_jpy") is not None)}
                    if cs_cost > 0 else None),
         "notes": notes,
