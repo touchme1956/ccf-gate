@@ -758,7 +758,7 @@ function pfAddShares(d){
  let warn='';
  /* 2026-09-23: 🏦保有の「＋ 買った」は約定日・取得額(円)も渡す。ロット(bdLots)として残す＝
     後で等価日の推定(night/estimate_bd.py)と成績の取得額が、この買付を材料にできる。 */
- const lot=(bd||jpy>0)?Object.assign({sh:sh},px>0?{usd:px}:{},jpy>0?{jpy:Math.round(jpy)}:{},bd?{bd:bd}:{},
+ const lot=(bd||jpy>0)?Object.assign({sh:sh},(px>0&&d.ccy!=='JPY')?{usd:px}:{},(px>0&&d.ccy==='JPY')?{px_jpy:px}:{},jpy>0?{jpy:Math.round(jpy)}:{},bd?{bd:bd}:{},
    {src:'門の🏦保有で記録'+(bd?'（約定日 '+bd+'）':'')}):null;
  if(!t)   return {ok:false, msg:'銘柄コードが空'};
  if(!(sh>0)) return {ok:false, msg:'株数が0以下'};
