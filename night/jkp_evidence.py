@@ -34,6 +34,11 @@ def fetch(r, k):
         d.setdefault(x['name'], {})[m] = float(x['ret'])
     return d
 
+DIRN = {}
+def fetch_dir():
+    z = zipfile.ZipFile(io.BytesIO(urllib.request.urlopen(S3.format(r='usa', k='all_factors'), timeout=120).read()))
+    return {x['name']: int(x['direction']) for x in csv.DictReader(io.StringIO(z.read(z.namelist()[0]).decode()))}
+
 def summ(s, a=0, b=999999):
     x = [v for m, v in sorted(s.items()) if a <= m <= b]
     if len(x) < 36: return None
@@ -49,6 +54,7 @@ def main():
         th = fetch(r, 'all_themes')
         out['themes'][lab] = {k: three(s) for k, s in th.items()}
         fa = fetch(r, 'all_factors')
+        if r == 'usa': DIRN.update(fetch_dir())
         out['factors'][lab] = {k: dict(three(fa[k]), 意味=GATE[k][0], 門=GATE[k][1]) for k in GATE if k in fa}
         # 153因子の棚卸し: 2006年までに t≥2 だった因子は、2007年以降も正か
         pre = {k: summ(s, 0, 200612) for k, s in fa.items()}; post = {k: summ(s, 200701) for k, s in fa.items()}
@@ -58,6 +64,22 @@ def main():
                               'そのうち2007〜もt≥2': sum(1 for k in sig if post.get(k) and post[k]['t'] >= 2),
                               '2007〜の平均の縮み率(中央)': round(S.median(post[k]['年平均%'] / pre[k]['年平均%'] for k in sig if post.get(k)), 2) if sig else None}
         print(lab, out['census'][lab])
+    # 大型株だけ（門の対象に近い）: JKP の規模別（mega＝NYSE 80%点超・large＝50-80%点）。銘柄数が10未満の月は捨てる
+    # ⚠ 規模別のファイルは**予言の向きが掛かっていない**（向き−1の因子だけが全部符号反転して見えた）ので direction を掛ける。
+    #   規模別は米国しか公開されていない（availability.json の factor_sizes が ['usa']）
+    out['by_size'] = {}
+    for r in ('usa',):
+        for sz in ('mega', 'large'):
+            for k in GATE:
+                try:
+                    z = zipfile.ZipFile(io.BytesIO(urllib.request.urlopen(
+                        f'https://jkpfactors-data.s3.amazonaws.com/public/factor/%5B{r}%5D_%5B{k}%5D_%5B{sz}%5D.zip', timeout=60).read()))
+                except Exception:
+                    continue
+                s = {}
+                for x in csv.DictReader(io.StringIO(z.read(z.namelist()[0]).decode())):
+                    if int(x['n']) >= 10: s[int(x['date'][:4]) * 100 + int(x['date'][5:7])] = float(x['ret']) * DIRN[k]
+                if s: out['by_size'].setdefault(f'{REG[r]}・{sz}', {})[k] = dict(three(s), 意味=GATE[k][0])
     json.dump(out, open(os.path.join(BASE, 'out', 'jkp_evidence.json'), 'w'), ensure_ascii=False, indent=1)
     f = lambda v: '   —     ' if not v else f"{v['年平均%']:+5.1f}({v['t']:+4.1f})"
     print('\n■ テーマ（年平均%(t)）  全期間 / 〜2006 / 2007〜')
@@ -70,6 +92,14 @@ def main():
         for lab in ('米国', '日本', '世界'):
             v = out['factors'][lab].get(k)
             if v: print(f"     {lab:4} {v['始まり']//100}〜 全 {f(v['全期間'])}  〜2006 {f(v['〜2006'])}  2007〜 {f(v['2007〜'])}")
+
+    print('\n■ 米国の大型株だけ（mega / large）')
+    for k in GATE:
+        line = f"  {GATE[k][0][:14]:14}"
+        for lab in ('米国・mega', '米国・large'):
+            v = out['by_size'].get(lab, {}).get(k)
+            line += f"  {lab[:2]} 全 {f(v['全期間']) if v else '—':11} 07〜 {f(v['2007〜']) if v else '—':11}"
+        print(line)
 
 if __name__ == '__main__':
     main()
