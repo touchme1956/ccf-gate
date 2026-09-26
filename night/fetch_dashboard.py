@@ -236,6 +236,43 @@ def fetch_fx():
     return None
 
 
+def fund_quotes():
+    """投資信託の基準価額（2026-09-26 ユーザー明示指示「買付候補をQQQMからIFEENEXTNASDAQ100に変えてほしい」）。
+    対象は portfolio.json の target.ami_funds。出所は投資信託協会 投信総合検索ライブラリー
+    （night/fetch_tsumitate_funds.py の Lib をそのまま使う＝再実装しない）。
+    quotes には **1口あたりの円**（基準価額 ÷ navPer）を px に入れ、ccy=JPY とする——
+    台帳(🏦保有)は 口数×px で評価するので株と同じ式で円になる。基準価額そのものは nav に残す。
+    ⚠ ISIN で一意に定まらなければ入れない（推測の価格は置かない＝ルール7）。"""
+    out = {}
+    try:
+        funds = (json.load(open("portfolio.json", encoding="utf-8")).get("target") or {}).get("ami_funds") or {}
+    except Exception:
+        funds = {}
+    if not funds:
+        return out
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from fetch_tsumitate_funds import Lib
+        lib = Lib()
+    except Exception as e:
+        print(f"  ※投信の基準価額: 投資信託協会に接続できない（{e}）")
+        return out
+    for key, fd in funds.items():
+        try:
+            hits = lib.search(fd.get("name") or key, limit=40)
+            h = [x for x in hits if x.get("isinCd") == fd.get("isin")]
+            if len(h) != 1 or not h[0].get("standardPrice"):
+                print(f"  ※{key}: ISIN {fd.get('isin')} で一意に定まらない（{len(h)}件）→ 入れない")
+                continue
+            nav = float(h[0]["standardPrice"]); per = float(fd.get("navPer") or 10000)
+            out[str(key).upper()] = {"px": round(nav / per, 6), "nav": nav, "navPer": per, "ccy": "JPY",
+                                     "day": str(h[0].get("standardDate") or "")[:10], "src": "toushin-lib",
+                                     "name": fd.get("name")}
+        except Exception as e:
+            print(f"  ※{key}: 基準価額を引けない（{e}）")
+    return out
+
+
 def main():
     if not KEY:
         # ★2026-08-18 の是正（ユーザーの問い「為替を自動更新できるようにしたほうがよい?」で発覚）——
@@ -272,6 +309,7 @@ def main():
             yq.update(jp_quotes(JP))
         print(f"  Yahoo で {len(yq)}/{len(ALL)}社 取得")
         if yq:
+            yq.update(fund_quotes())
             nw = cur.get("news") or {}
             out2 = {"asof": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                     "quotes": yq, "news": nw, "fx": fxo or (cur.get("fx") or {}),
@@ -383,6 +421,7 @@ def main():
     #   旧実装は米国側の失敗を `if q and q.get("c")` で黙って捨てており、diag も missing も
     #   一切書いていなかった——だから**網の5本が消えていることがどこからも見えなかった**。
     #   「測れなかった」と「無い」を取り違えないために、要求したのに取れなかった銘柄を名前で書く。
+    out["quotes"].update(fund_quotes())
     got = set(out["quotes"])
     out["missing"] = sorted(t for t in ALL if t not in got)
     if out["missing"]:
