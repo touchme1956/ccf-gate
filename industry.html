@@ -53,7 +53,7 @@ tr.x td{background:var(--hl);white-space:normal;text-align:left}
 const P=v=>v==null?'—':(v*100).toFixed(1)+'%', PP=v=>v==null?'—':(v>0?'+':'')+(v*100).toFixed(1);
 const cls=v=>v==null?'':(v>0?'p':(v<0?'n':''));
 const COLS=[
- ['ja','業種',r=>r.ja,null],
+ ['ja','業種',r=>r.ja+(r['社数が少ない']?'<span class="tag">社数少</span>':'')+(r['金融']?'<span class="tag">金融</span>':''),null],
  ['勢い','勢い',r=>r['勢い']==null?'—':r['勢い'].toFixed(2)+'<span class="bar" style="width:'+Math.round((r['勢い']||0)*40)+'px"></span>',0],
  ['成長3年','売上 3年',r=>`<span class="${cls(r['成長3年'])}">${P(r['成長3年'])}</span>`,1],
  ['加速','加速',r=>`<span class="${cls(r['加速'])}">${PP(r['加速'])}</span>`,1],

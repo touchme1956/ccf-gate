@@ -17,7 +17,17 @@ from collections import defaultdict
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE, 'night'))
-from tech_persist import block, cagr as rcagr, spear  # 同じ French の読み方・順位相関を使う（二重実装を作らない）
+from tech_persist import block as _block, cagr as rcagr, spear  # 同じ French の読み方・順位相関を使う（二重実装を作らない）
+
+
+def block(*a):
+    for i in range(4):   # French のサーバーは時々接続を切る（実測 2026-09-28）
+        try:
+            return _block(*a)
+        except Exception:
+            if i == 3:
+                raise
+            time.sleep(5 * (i + 1))
 
 EMAIL = "fortis5280@gmail.com"
 HDRS = {"User-Agent": f"hachimon-gate research {EMAIL}"}
@@ -189,6 +199,14 @@ def main():
         A = agg[k].get(y)
         return A[a] / A[b] if A and A[b] > 0 else None
 
+    def cratio(k, y, a, b):
+        # 表示用: その欄を報告している社が業種の売上の半分未満なら出さない（銀行の営業利益・研究開発費など）。
+        # 答え合わせ（事前登録の勢い）は ratio をそのまま使う＝測った後で物差しを変えない
+        A = agg[k].get(y)
+        if not A or A['rev'] <= 0 or (b != 'eq' and A[b] < 0.5 * A['rev']):
+            return None
+        return ratio(k, y, a, b)
+
     def g(k, y):
         return ratio(k, y, 'g1', 'g0') - 1 if ratio(k, y, 'g1', 'g0') else None
 
@@ -274,14 +292,15 @@ def main():
         rows.append({
             'k': k, 'ja': JA.get(k, k), '社数': int(A['n']), '売上合計(十億$)': round(A['rev'] / 1e9, 1),
             '成長1年': g(k, last), '成長3年': gN(k, last, 3), '成長5年': gN(k, last, 5), '成長10年': gN(k, last, 10),
-            '加速': comp['acc'][k], '営業利益率': opm(k, last), '利益率の3年変化': comp['opmd'][k],
-            'FCF率': ratio(k, last, 'fcf', 'rev_fcf'), 'ROE': ratio(k, last, 'ni', 'eq'),
-            '設備投資率': ratio(k, last, 'capex', 'rev_cx'),
-            '設備投資率の3年変化': (ratio(k, last, 'capex', 'rev_cx') - ratio(k, last - 3, 'capex', 'rev_cx'))
-            if ratio(k, last, 'capex', 'rev_cx') is not None and ratio(k, last - 3, 'capex', 'rev_cx') is not None else None,
-            '研究開発率': ratio(k, last, 'rd', 'rev_rd'), '広がり': breadth(k, last), '勢い': mom.get(k),
+            '加速': comp['acc'][k], '営業利益率': cratio(k, last, 'oi', 'rev_oi'), '利益率の3年変化': comp['opmd'][k] if cratio(k, last, 'oi', 'rev_oi') is not None else None,
+            '社数が少ない': A['n'] < 10, '金融': k in ('Banks', 'Insur', 'Fin', 'RlEst'),
+            'FCF率': cratio(k, last, 'fcf', 'rev_fcf'), 'ROE': ratio(k, last, 'ni', 'eq'),
+            '設備投資率': cratio(k, last, 'capex', 'rev_cx'),
+            '設備投資率の3年変化': (cratio(k, last, 'capex', 'rev_cx') - cratio(k, last - 3, 'capex', 'rev_cx'))
+            if cratio(k, last, 'capex', 'rev_cx') is not None and cratio(k, last - 3, 'capex', 'rev_cx') is not None else None,
+            '研究開発率': cratio(k, last, 'rd', 'rev_rd'), '広がり': breadth(k, last), '勢い': mom.get(k),
             '年ごとの売上成長': {y: g(k, y) for y in years if g(k, y) is not None},
-            '年ごとの営業利益率': {y: opm(k, y) for y in years if opm(k, y) is not None},
+            '年ごとの営業利益率': {y: cratio(k, y, 'oi', 'rev_oi') for y in years if cratio(k, y, 'oi', 'rev_oi') is not None},
             '超過リターン1年': xs(k, mshift(endm, 11), endm),
             '超過リターン3年': xs(k, mshift(endm, 35), endm),
             '超過リターン5年': xs(k, mshift(endm, 59), endm),
@@ -302,7 +321,9 @@ def main():
         '外した対の数': dropped,
         '読み方': ['勢い＝3年の売上成長・加速・利益率の変化・広がりの業種内順位の平均（0〜1）',
                  '成長は同じ社の2年を比べた率（会社の出入りで伸びたように見えない）',
-                 '超過リターン＝その業種の株価（時価加重・配当込み）− 市場 の年率'],
+                 '超過リターン＝その業種の株価（時価加重・配当込み）− 市場 の年率',
+                 '営業利益率・研究開発率・設備投資率は、報告している社が業種の売上の半分未満なら「—」',
+                 '金融（銀行・保険・金融・不動産）の「売上」は利息や保険料を含み、他の業種と同じ意味ではない'],
         '答え合わせ': {'起点ごと': bt, '問い1_売上の伸びは続くか': summ('問い1_順位相関(次の3年の売上成長)'),
                      '問い2_株価は上がったか': summ('問い2_順位相関(次の3年の超過リターン)'),
                      '勢いの上位5_次の3年の超過(年率%)': {'中央': sorted(top5)[len(top5) // 2] if top5 else None,
