@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja"><head><script>try{document.documentElement.setAttribute("data-theme",localStorage.getItem("ccf_theme")||"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}</script>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>業種の伸び</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--line:#e3e6ea;--ink:#0f1114;--ink2:#2b3038;--mute:#50565f;--up:#08873a;--down:#c62a1a;--info:#1e5fd1;--warn:#9a5b00;--hl:#f0f3f7}
+html[data-theme="dark"],html[data-theme="soft"]{--bg:#121417;--card:#1a1d21;--line:#2a2e34;--ink:#f4f5f6;--ink2:#c9ccd1;--mute:#9aa0a8;--up:#29d35a;--down:#ff6a4d;--info:#6ea8ff;--warn:#f0a93a;--hl:#22262b}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{margin:0;color:var(--ink);font:15px/1.7 "Inter","Noto Sans JP","Hiragino Kaku Gothic ProN",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding:18px 16px 60px}
+a{color:var(--info)}
+h1{font-size:22px;margin:4px 0 2px}
+.sub{color:var(--mute);font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:14px 0}
+.card h2{font-size:15px;margin:0 0 8px}
+.kpis{display:flex;flex-wrap:wrap;gap:10px}
+.kpi{flex:1 1 220px;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi b{display:block;font-size:13px;color:var(--mute);font-weight:500}
+.kpi span{font-size:18px;font-weight:600}
+.note{font-size:12.5px;color:var(--mute);margin:6px 0 0}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th{position:sticky;top:0;background:var(--card);color:var(--mute);font-weight:500;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card)}
+th.on{color:var(--ink)}
+td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+tr.r{cursor:pointer}
+tr.r:hover td{background:var(--hl)}
+.p{color:var(--up)}.n{color:var(--down)}
+.bar{display:inline-block;height:6px;border-radius:3px;background:var(--info);vertical-align:middle;margin-left:6px}
+tr.x td{background:var(--hl);white-space:normal;text-align:left}
+.mini{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.mini svg{max-width:100%}
+.mem{font-size:12.5px;line-height:1.7}
+.tag{display:inline-block;font-size:11.5px;padding:1px 7px;border-radius:9px;border:1px solid var(--line);color:var(--mute);margin-left:6px}
+.warn{border-left:3px solid var(--warn)}
+</style></head><body><div class="wrap">
+<div class="sub"><a href="index.html">← 門へ戻る</a></div>
+<h1>業種の伸び</h1>
+<div class="sub" id="meta">読み込み中…</div>
+
+<div class="card warn" id="check"></div>
+
+<div class="card">
+  <h2>業種の一覧 <span class="tag">見出しを押すと並べ替え・行を押すと推移と主な会社</span></h2>
+  <div class="tw"><table id="t"></table></div>
+  <p class="note" id="how"></p>
+</div>
+<div class="card"><h2>限界</h2><ul class="note" id="lim" style="padding-left:18px;margin:0"></ul></div>
+</div>
+<script>
+const P=v=>v==null?'—':(v*100).toFixed(1)+'%', PP=v=>v==null?'—':(v>0?'+':'')+(v*100).toFixed(1);
+const cls=v=>v==null?'':(v>0?'p':(v<0?'n':''));
+const COLS=[
+ ['ja','業種',r=>r.ja,null],
+ ['勢い','勢い',r=>r['勢い']==null?'—':r['勢い'].toFixed(2)+'<span class="bar" style="width:'+Math.round((r['勢い']||0)*40)+'px"></span>',0],
+ ['成長3年','売上 3年',r=>`<span class="${cls(r['成長3年'])}">${P(r['成長3年'])}</span>`,1],
+ ['加速','加速',r=>`<span class="${cls(r['加速'])}">${PP(r['加速'])}</span>`,1],
+ ['成長1年','売上 1年',r=>`<span class="${cls(r['成長1年'])}">${P(r['成長1年'])}</span>`,1],
+ ['成長10年','売上 10年',r=>P(r['成長10年']),1],
+ ['営業利益率','営業利益率',r=>P(r['営業利益率']),1],
+ ['利益率の3年変化','利益率 3年差',r=>`<span class="${cls(r['利益率の3年変化'])}">${PP(r['利益率の3年変化'])}</span>`,1],
+ ['ROE','ROE',r=>P(r['ROE']),1],
+ ['設備投資率の3年変化','設備投資率 3年差',r=>`<span class="${cls(r['設備投資率の3年変化'])}">${PP(r['設備投資率の3年変化'])}</span>`,1],
+ ['研究開発率','研究開発率',r=>P(r['研究開発率']),1],
+ ['広がり','伸びた社の割合',r=>P(r['広がり']),1],
+ ['超過リターン3年','株価 3年 対市場',r=>`<span class="${cls(r['超過リターン3年'])}">${PP(r['超過リターン3年'])}</span>`,1],
+ ['超過リターン10年','株価 10年 対市場',r=>`<span class="${cls(r['超過リターン10年'])}">${PP(r['超過リターン10年'])}</span>`,1],
+ ['社数','社数',r=>r['社数'],1]];
+let D,sortK='勢い',asc=false,open=null;
+function spark(obj,w,h,lab){const ks=Object.keys(obj).sort(),v=ks.map(k=>obj[k]);if(!v.length)return'';
+ const lo=Math.min(0,...v),hi=Math.max(0,...v),sx=i=>6+i*(w-12)/Math.max(1,v.length-1),sy=x=>h-14-(x-lo)/(hi-lo||1)*(h-24);
+ const pts=v.map((x,i)=>sx(i).toFixed(1)+','+sy(x).toFixed(1)).join(' ');
+ return `<svg width="${w}" height="${h}" role="img" aria-label="${lab}"><line x1="6" x2="${w-6}" y1="${sy(0)}" y2="${sy(0)}" stroke="currentColor" opacity=".25"/>
+ <polyline fill="none" stroke="var(--info)" stroke-width="2" points="${pts}"/>
+ ${v.map((x,i)=>`<circle cx="${sx(i)}" cy="${sy(x)}" r="2.5" fill="${x<0?'var(--down)':'var(--info)'}"><title>${ks[i]}: ${P(x)}</title></circle>`).join('')}
+ <text x="6" y="${h-2}" font-size="10" fill="currentColor" opacity=".6">${ks[0]}</text><text x="${w-6}" y="${h-2}" font-size="10" text-anchor="end" fill="currentColor" opacity=".6">${ks[ks.length-1]}</text></svg>`;}
+function render(){
+ const rows=D.rows.slice().sort((a,b)=>{const x=a[sortK],y=b[sortK];if(x==null)return 1;if(y==null)return -1;return (typeof x==='string'?x.localeCompare(y):x-y)*(asc?1:-1);});
+ let h='<thead><tr>'+COLS.map(c=>`<th data-k="${c[0]}" class="${c[0]===sortK?'on':''}">${c[1]}${c[0]===sortK?(asc?' ▲':' ▼'):''}</th>`).join('')+'</tr></thead><tbody>';
+ for(const r of rows){h+=`<tr class="r" data-k="${r.k}">`+COLS.map(c=>`<td>${c[2](r)}</td>`).join('')+'</tr>';
+  if(open===r.k){h+=`<tr class="x"><td colspan="${COLS.length}"><div class="mini">
+   <div><div class="note">売上成長（同じ社・年ごと）</div>${spark(r['年ごとの売上成長'],300,110,'売上成長の推移')}</div>
+   <div><div class="note">営業利益率（年ごと）</div>${spark(r['年ごとの営業利益率'],300,110,'営業利益率の推移')}</div>
+   <div class="mem"><div class="note">売上の大きい社（${D['最新の年']}年・十億$・前年比）</div>${r['大きい社'].map(m=>`${m.name}　${m.rev}　<span class="${cls(m.g)}">${P(m.g)}</span>`).join('<br>')}</div>
+   </div></td></tr>`;}}
+ document.getElementById('t').innerHTML=h+'</tbody>';
+ document.querySelectorAll('#t th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;if(k===sortK)asc=!asc;else{sortK=k;asc=k==='ja';}render();});
+ document.querySelectorAll('#t tr.r').forEach(tr=>tr.onclick=()=>{open=open===tr.dataset.k?null:tr.dataset.k;render();});
+}
+fetch('out/industry_trends.json',{cache:'no-cache'}).then(r=>r.json()).then(d=>{D=d;
+ document.getElementById('meta').textContent=`${d['最新の年']}年までの決算（SEC）・株価は${String(d['リターンの最終月']).replace(/(\d{4})(\d\d)/,'$1-$2')}まで・${d['母集団']}・更新 ${d.generated}`;
+ const a=d['答え合わせ'],q1=a['問い1_売上の伸びは続くか']||{},q2=a['問い2_株価は上がったか']||{},t5=a['勢いの上位5_次の3年の超過(年率%)']||{};
+ document.getElementById('check').innerHTML=`<h2>この物差しは先を当てたか（${(a['起点ごと']||[]).length}起点の答え合わせ）</h2>
+ <div class="kpis"><div class="kpi"><b>「勢い」上位は、次の3年も売上が伸びたか</b><span>${q1['判定']||'—'}</span><div class="note">順位相関 平均 ${q1['平均']??'—'} ・正の起点 ${q1['正の起点']||'—'}</div></div>
+ <div class="kpi"><b>「勢い」上位の業種の株価は、次の3年に市場に勝ったか</b><span>${q2['判定']||'—'}</span><div class="note">順位相関 平均 ${q2['平均']??'—'} ・正の起点 ${q2['正の起点']||'—'}</div></div>
+ <div class="kpi"><b>勢いの上位5業種を買っていたら（次の3年・対市場）</b><span>${t5['中央']==null?'—':(t5['中央']>0?'+':'')+t5['中央']+'%/年'}</span><div class="note">勝った起点 ${t5['勝った起点']||'—'}</div></div></div>
+ <p class="note">売上の伸びが続くことと、株価が上がることは別の話です。伸びていることが知られている業種は、株価にすでに織り込まれていることが多いです。</p>`;
+ document.getElementById('how').innerHTML=d['読み方'].join('<br>');
+ document.getElementById('lim').innerHTML=d['⚠限界'].map(x=>`<li>${x}</li>`).join('');
+ render();}).catch(e=>{document.getElementById('meta').textContent='out/industry_trends.json を読めませんでした: '+e;});
+</script></body></html>
