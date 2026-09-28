@@ -733,7 +733,290 @@ def r10_working():
     return out
 
 
-# ═════════════════════════ 7. 本体 ═════════════════════════
+# ═════════════════════════ 7. 事後（結果を見た後に足した診断・格付けに使わない） ═════════════════════════
+def coh_ind(R, months, r, skip, side='top', exclude=()):
+    """D.build_ind_topk / build_ind_multi と同じ選び方（同点は名前の順）で、上位（top）か下位（bottom）の組だけを返す"""
+    names = [n for n in R if n not in exclude]
+    lr = {n: [math.log1p(R[n][m]) if m in R[n] else None for m in months] for n in names}
+    coh = {}
+    sg = -1 if side == 'top' else 1
+    for f in range(len(months)):
+        if r['kind'] == 'ind_topk':
+            lo, hi = f - skip - r['L'] + 1, f - skip
+            if lo < 0:
+                continue
+            sc = []
+            for n in names:
+                seg = lr[n][lo:hi + 1]
+                if any(v is None for v in seg):
+                    continue
+                sc.append((sg * math.fsum(seg), str(n), n))
+            N = len(sc)
+            k = r['K'] if r.get('K') is not None else max(2, D.round_half_up(r['frac'] * N))
+            if N < r['minN'] or N < k:
+                continue
+            sc.sort()
+            coh[f] = [n for _, _, n in sc[:k]]
+        else:  # ind_multi
+            hi = f - skip
+            Lmax = max(r['windows'])
+            if hi - Lmax + 1 < 0:
+                continue
+            ok = [n for n in names if all(v is not None for v in lr[n][hi - Lmax + 1:hi + 1])]
+            if len(ok) < r['minN'] or len(ok) < r['K']:
+                continue
+            avg = collections.defaultdict(float)
+            for L in r['windows']:
+                pr = D._pct_ranks({n: math.fsum(lr[n][hi - L + 1:hi + 1]) for n in ok})
+                for n in ok:
+                    avg[n] += pr[n] / len(r['windows'])
+            coh[f] = [n for _, _, n in sorted((sg * avg[n], str(n), n) for n in ok)[:r['K']]]
+    return coh
+
+
+def coh_stk(R, months, r, side='top', exclude=()):
+    """D.build_stk_mom / build_stk_seas と同じ選び方で上位か下位の組"""
+    names = [n for n in R if n not in exclude]
+    coh = {}
+    sg = -1 if side == 'top' else 1
+    for f in range(len(months) - (1 if r['kind'] == 'stk_seas' else 0)):
+        if r['kind'] == 'stk_mom':
+            lo, hi = f - r['skip'] - r['L'] + 1, f - r['skip']
+            if lo < 0 or hi < lo:
+                continue
+            need = months[min(lo, f):f + 1]
+            sc = []
+            for n in names:
+                d = R[n]
+                if any(m not in d for m in need):
+                    continue
+                sc.append((sg * math.fsum(math.log1p(d[m]) for m in months[lo:hi + 1]), str(n), n))
+        else:
+            nxt = months[f + 1]
+            lags = [D.madd(nxt, -12 * y) for y in r['years']]
+            if lags[-1] < months[0]:
+                continue
+            sc = []
+            for n in names:
+                d = R[n]
+                if months[f] not in d or any(m not in d for m in lags):
+                    continue
+                sc.append((sg * math.fsum(d[m] for m in lags) / len(lags), str(n), n))
+        k = D.round_half_up(r['frac'] * len(sc))
+        if k < r['min_port']:
+            continue
+        sc.sort()
+        coh[f] = [n for _, _, n in sc[:k]]
+    return coh
+
+
+def hold_side(r, R_form, R_hold, side, skip=None):
+    """組を R_form で選び R_hold で持つ（区間ごと）→ {'s','net','w'}"""
+    segs = DATA_SEGS[r['data']]
+    out = {'s': {}, 'net': {}, 'w': {}}
+    for ms in segs:
+        if r['kind'] in ('ind_topk', 'ind_multi'):
+            coh = coh_ind(R_form, ms, r, r['skip'] if skip is None else skip, side)
+            s, net, _, W = D._hold(ms, coh, r.get('H', 1), R_hold, tuple(r['cost']))
+        else:
+            coh = coh_stk(R_form, ms, r, side)
+            x = D._hold_stk(ms, coh, R_hold, tuple(r['cost']), 'ew', None)
+            s, net, W = x['s'], x['net'], x['w']
+        out['s'].update(s); out['net'].update(net); out['w'].update(W)
+    return out
+
+
+def geo_ew(R, segs):
+    """対数の平均（幾何）で束ねた等分（ノイズの分散による算術平均の上振れ〔Blume-Stambaugh 1983〕を除く診断用・投資できる形ではない）"""
+    out = {}
+    for ms in segs:
+        for m in ms:
+            v = [math.log1p(R[n][m]) for n in R if m in R[n]]
+            if v:
+                out[m] = math.expm1(math.fsum(v) / len(v))
+    return out
+
+
+def lse_industries_geo(R, sect, min_members=3):
+    acc = collections.defaultdict(lambda: collections.defaultdict(list))
+    for i, r in R.items():
+        sr = sect.get(i, [])
+        for k, v in r.items():
+            s = D.sector_at(sr, k)
+            if s and s not in D.LSE_NOT_SELECTABLE:
+                acc[s][k].append(math.log1p(v))
+    return {s: {k: math.expm1(math.fsum(v) / len(v)) for k, v in d.items() if len(v) >= min_members} for s, d in acc.items()}
+
+
+def yearly(net, b):
+    ys = collections.defaultdict(lambda: [1.0, 1.0, 0])
+    for k in set(net) & set(b):
+        y = k // 100
+        ys[y][0] *= 1 + net[k]; ys[y][1] *= 1 + b[k]; ys[y][2] += 1
+    v = {y: round((a - bb) * 100, 2) for y, (a, bb, n) in ys.items() if n >= 6}
+    return {'years': len(v), 'positive': sum(1 for x in v.values() if x > 0), 'worst3': sorted(v.items(), key=lambda kv: kv[1])[:3],
+            'best3': sorted(v.items(), key=lambda kv: -kv[1])[:3]}
+
+
+def es(a, b):
+    e = C.excess_stats(a, b)
+    return None if e is None else {k: e[k] for k in ('from', 'to', 'years', 'ex_ann', 't', 'cagr_diff', 'beta', 'vol_s', 'vol_b')}
+
+
+def post_hoc(units):
+    ph = {'note': '★すべて事後（格付けを見た後に足した診断）。格付けには使わない'}
+    # (1) 相手どうしの形の点検で止まる条件に触れた件の調べ
+    lew = BENCH['lse_ew']
+    inv = {}
+    for lag in (-1, 0, 1):
+        ks = [k for k in sorted(lew) if 187101 <= k <= 191406 and D.madd(k, lag) in UK_IDX]
+        inv[f'corr_lse_ew_t_boe_t{lag:+d}'] = round(C.corr([lew[k] for k in ks], [UK_IDX[D.madd(k, lag)] for k in ks]), 3)
+    ks = [k for k in sorted(lew) if k <= 187012 and k in UK_IDX]
+    inv['corr_lse_ew_vs_smith_horne_1869_1870'] = {'corr': round(C.corr([lew[k] for k in ks], [UK_IDX[k] for k in ks]), 3), 'n': len(ks)}
+    zeros = sum(1 for d in LSE_RET.values() for v in d.values() if v == 0.0)
+    inv['share_of_zero_stock_month_returns_lse'] = round(zeros / sum(len(d) for d in LSE_RET.values()), 3)
+    geo = geo_ew(LSE_RET, LSE_SEG_M)
+    for a, z in ((186902, 188712), (188801, 190712), (191502, 192912)):
+        inv[f'cagr_{a}_{z}'] = {'lse_ew_arith': round(C.cagr(C.window(lew, a, z)) * 100, 2), 'lse_ew_geo': round(C.cagr(C.window(geo, a, z)) * 100, 2),
+                                'boe_index': round(C.cagr(C.window(UK_IDX, a, z)) * 100, 2)}
+    inv['reading'] = ('LSE の読み込みは内部で整合する（同じ業種の大手の本線鉄道どうしの月次の相関 0.56〜0.67・1869〜1870 は Smith-Horne と 0.79）。'
+                      '1871〜1914 の相関が低いのは、(i) LSE の株の月の 43% が値動き0（古い気配）で等分の相手が前後の月へにじむ（t−1・t・t+1 の相関の和 ≈0.85）、'
+                      '(ii) 等分の算術平均が株ごとのノイズで上振れる（1869〜1887 の年率 算術 +8.8% に対し 対数の平均 −3% 前後・イングランド銀行 −0.1%）ため。'
+                      '読み込みの誤りではなく、データのノイズと薄商い。だが事前登録の線（0.6）は下回った＝止まる条件に触れた')
+    ph['sanity_stop_investigation'] = inv
+    # (2) 勝者−敗者（同じ作り方の上位−下位）: 相手に共通の上振れ（ノイズ・等分）を消す
+    ls = {}
+    for uid in UNIT_IDS:
+        r = RULES[uid]
+        if r['kind'] in ('ind_trend', 'halloween'):
+            continue
+        R = DATA_R[r['data']]
+        top = hold_side(r, R, R, 'top')
+        same = all(abs(top['net'][m] - units[uid]['x']['net'][m]) < 1e-12 for m in units[uid]['x']['net'])
+        bot = hold_side(r, R, R, 'bottom')
+        b = units[uid]['x']['b']
+        ls[uid] = {'top_reproduces_registered': same and len(top['net']) == len(units[uid]['x']['net']),
+                   'top_minus_bottom_gross': es(top['s'], bot['s']),
+                   'top_minus_bottom_net_both_legs': es(top['net'], bot['net']),
+                   'bottom_net_vs_bench': es(bot['net'], b)}
+    ph['winners_minus_losers'] = {'rows': ls, 'note': '上位の組と同じ作り方で下位の組を作り、差を取った（両方とも等分・同じ母集団）。等分の算術平均のノイズの上振れや古い気配は両側に同じようにかかるので、差は勢いそのものに近い'}
+    log('post-hoc LS done')
+    # (3) 形成の窓と保有のあいだを 2・3 か月あける（古い気配・月平均のにじみへの備えを強めた版）
+    sk = {}
+    for uid in UNIT_IDS:
+        r = RULES[uid]
+        if r['kind'] not in ('ind_topk', 'ind_multi', 'ind_trend'):
+            continue
+        row = {}
+        for s in (2, 3):
+            x = build(r, skip=s)
+            row[f'skip{s}'] = es(x['net'], x['b'])
+        sk[uid] = row
+    ph['longer_gap'] = {'rows': sk, 'note': '業種の規則の窓の終わりを保有の月から 2・3 か月前にした（登録の版は 1 か月）'}
+    log('post-hoc skip done')
+    # (4) 対数の平均で束ねた版（ノイズの上振れを両側から除く）: LSE の業種・相手を幾何の等分で作り直す
+    LIg = lse_industries_geo(LSE_RET, LSE_SECT)
+    geo_rows = {}
+    for uid in D.FAMILIES['D']:
+        r = RULES[uid]
+        x = build(r, R=LIg)
+        b = x['b'] if r['kind'] == 'ind_trend' else geo
+        geo_rows[uid] = es(x['net'], b)
+    for uid in D.FAMILIES['B']:
+        r = RULES[uid]
+        segs = DATA_SEGS[r['data']]
+        out = {}
+        for ms in segs:
+            coh = coh_stk(LSE_RET, ms, r, 'top')
+            for j in range(1, len(ms)):
+                f = j - 1
+                if f not in coh:
+                    continue
+                m = ms[j]
+                mem = [n for n in coh[f] if m in LSE_RET[n]]
+                if mem:
+                    out[m] = math.expm1(math.fsum(math.log1p(LSE_RET[n][m]) for n in mem) / len(mem))
+        geo_rows[uid] = es(out, geo)
+    ph['geometric_aggregation'] = {'rows': geo_rows, 'note': '業種の指数・株の組・相手をすべて対数の平均（幾何）で束ねた（投資できる形ではない・費用前は B、D は業種の費用後）。算術の等分の上振れ（株ごとのノイズの分散）を両側から除いた比較'}
+    # (5) 株ごとの月の値動き |対数| > ln2（+100% 超・−50% 未満）を欠測にした版（両側）
+    Rt = {i: {m: v for m, v in d.items() if abs(math.log1p(v)) <= math.log(2)} for i, d in LSE_RET.items()}
+    Rt = {i: d for i, d in Rt.items() if d}
+    LIt, _ = D.lse_industries({'ret': Rt, 'sect': LSE_SECT})
+    bt = ew(Rt, LSE_SEG_M)
+    trim_rows = {'dropped_stock_months': sum(len(d) for d in LSE_RET.values()) - sum(len(d) for d in Rt.values())}
+    for uid in D.FAMILIES['D']:
+        r = RULES[uid]
+        x = build(r, R=LIt)
+        trim_rows[uid] = es(x['net'], x['b'] if r['kind'] == 'ind_trend' else bt)
+    for uid in D.FAMILIES['B']:
+        x = build(RULES[uid], R=Rt, bench_R=Rt)
+        trim_rows[uid] = es(x['net'], x['b'])
+    trim_rows['lse_ew_trimmed_cagr_1869_1887'] = round(C.cagr(C.window(bt, 186902, 188712)) * 100, 2)
+    ph['trimmed_extremes'] = {'rows': trim_rows, 'note': '株の月の値動きで |log(1+r)| > ln2 を両側で欠測にした（業種も作り直した）。本物の大きな値動きも落とす粗い版'}
+    log('post-hoc geo/trim done')
+    # (6) R7(c) の作り直し: 形成は価格だけ（登録の信号）・保有の月だけ配当の近似を両側に足す。年 30% 超の利回りは欠測扱い
+    Rd = {i: {m: v + (LSE_DY[i][m] if m in LSE_DY.get(i, {}) and LSE_DY[i][m] * 12 <= 0.30 else 0.0) for m, v in d.items()} for i, d in LSE_RET.items()}
+    dv = {}
+    for uid in D.FAMILIES['B']:
+        r = RULES[uid]
+        x = hold_side(r, LSE_RET, Rd, 'top')
+        dv[uid] = es(x['net'], ew(Rd, LSE_SEG_M))
+    dys = sorted(v * 12 for d in LSE_DY.values() for v in d.values())
+    ph['dividend_holding_only'] = {'rows': dv, 'dy_annual_quantiles_pct': {q: round(dys[int(q * (len(dys) - 1))] * 100, 2) for q in (0.5, 0.9, 0.99, 1.0)},
+                                   'note': 'R7(c) の登録の実装は配当を足した R で形成もしたため、配当の近似の外れ値（年 100% 超が 1% ほど・最大 1万%）を持つ株が勝者に選ばれ続け、差が +14%/年まで膨らんだ（R7 の値は信頼できない）。ここでは形成は価格だけ・保有の月だけ配当（年30%超は足さない）'}
+    # (7) 年ごとの勝ち数
+    ph['calendar_years'] = {uid: yearly(units[uid]['x']['net'], units[uid]['x']['b']) for uid in UNIT_IDS}
+    # (8) 保有の組の『ノイズの上振れ』（算術−幾何の月の差）: B は株、D は業種の中の株
+    nb = {}
+    uni_gap = []
+    for m in lew:
+        v = [LSE_RET[n][m] for n in LSE_RET if m in LSE_RET[n]]
+        uni_gap.append(math.fsum(v) / len(v) - math.expm1(math.fsum(math.log1p(x) for x in v) / len(v)))
+    nb['universe_arith_minus_geo_ann_pct'] = round(_stat.mean(uni_gap) * 1200, 2)
+    for uid in D.FAMILIES['B']:
+        g = []
+        for m, w in units[uid]['x']['w'].items():
+            g.append(math.fsum(wt * LSE_RET[n][m] for n, wt in w.items()) - math.expm1(math.fsum(wt * math.log1p(LSE_RET[n][m]) for n, wt in w.items())))
+        nb[uid] = round(_stat.mean(g) * 1200, 2)
+    ind_gap = {}
+    for s in LSE_IND:
+        ind_gap[s] = {m: LSE_IND[s][m] - LIg[s][m] for m in LSE_IND[s] if m in LIg.get(s, {})}
+    for uid in D.FAMILIES['D']:
+        if RULES[uid]['kind'] == 'ind_trend':
+            continue
+        g = [math.fsum(wt * ind_gap[n].get(m, 0.0) for n, wt in w.items()) for m, w in units[uid]['x']['w'].items()]
+        nb[uid] = round(_stat.mean(g) * 1200, 2)
+    allg = [v for d in ind_gap.values() for v in d.values()]
+    nb['lse_industries_mean_gap_ann_pct'] = round(_stat.mean(allg) * 1200, 2)
+    ph['noise_uplift'] = {'ann_pct': nb, 'note': '月ごとの（算術の平均 − 対数の平均）×12。保有の組が相手より大きければ、その分の超過はノイズの上振れで説明されうる'}
+    log('post-hoc done')
+    return ph
+
+
+DEVIATIONS = [
+    {'what': '健全性の点検の順番と、止まる条件に触れたのに止まらなかったこと',
+     'detail': '事前登録は sanity_checks_before_results（成績の前の点検）と書いたが、この道具は同じ実行の中で 22 単位の成績を計算して画面に出した後に点検した（私は点検の前に A〜H の超過・t を見た）。'
+               'その点検で LSE の等分とイングランド銀行の指数（Smith-Horne 1871〜1914）の相関が 0.483 で線 0.6 を下回り、登録の『読み込みを疑って止まる』に当たった。止まらずに調べた（post_hoc.sanity_stop_investigation）: '
+               '読み込みの誤りの形跡は無い（同じ業種の大手の本線鉄道どうしの相関 0.56〜0.67・1869〜1870 は Smith-Horne と 0.79）が、LSE の株の月の 43% が値動き0（古い気配）で、等分の算術平均は株ごとのノイズで大きく上振れる（1869〜1887 年率 +8.8% 対 イングランド銀行 −0.1%）。',
+     'affects_grade': True,
+     'how': 'B（LSE の株）と D（LSE の業種）の格付けは登録どおりのまま出し、tested の各行に grade_flag を付けた。止まる条件に触れた暫定の格付けとして読むこと。事後の診断（勝者−敗者・幾何で束ねた版・極端値を落とした版・窓を2〜3か月あけた版）を post_hoc に並べた'},
+    {'what': '組を作れる月数の点検（±1）で、4 単位が 2〜4 か月ずれた',
+     'detail': 'A_S3 L2/L3 659（事前登録『約 657』）・D_F1b 578（580）・D_S3 L2/L3 642（『約 646』）。事前登録の数は形成の窓のリターンの有無だけで数えた近似（S3 は『約』と明記）で、組み立ては保有の月にリターンのある構成要素が1つ以上あること（F1b は6つの組すべて）と現金の金利を足して要る。データも規則も変えていない',
+     'affects_grade': False},
+    {'what': 'R3 の『単価を片道 0.50%・1.00%』の読み方',
+     'detail': '各規則の費用の式の形（two＝両側 Σ|Δw|×単価・one＝片道 ½Σ|Δw|×単価・moved・dL）はそのままで単価だけを替えた（業種の G3・G4・P9 は two なので、同じ単価でも one の規則の2倍の費用になる）', 'affects_grade': False},
+    {'what': 'R7 の作り方の選び',
+     'detail': '(a) 時価加重は 1869-02〜1887-12・形成は全株・持つのは株数の分かる株、相手も株数の分かる株の時価加重 (b) p_{t−1}<£1 の月のリターンを両側の R から落とした（形成の窓にも効く）(c) 登録の実装は配当を足した R で形成もした→ 配当の近似の外れ値（年 100% 超が約 1%・最大 1万%）の株が勝者に選ばれ続けて差が +14%/年に膨らんだ＝信頼できない。事後に『形成は価格だけ・保有の月だけ配当（年30%超は足さない）』を post_hoc.dividend_holding_only に置いた',
+     'affects_grade': False},
+    {'what': 'R8 の D（業種）', 'detail': '途切れた翌月の −30% をその株の最後の区切りの業種に入れて LSE の業種を作り直した（近似）。B・C は株のまま', 'affects_grade': False},
+    {'what': 'R4 の F16g', 'detail': 'eknzbh mw_momentum_prereg5 の F16 の作り方（翌月と同じ暦月の a〜b 年前の平均・上位 K=max(2,四捨五入(割合×N))・1か月持つ・正確な回転×0.05%）。候補の下限は元に無いので、この角度の F3g と同じ 5 にした。窓は区間の中だけ（LSE の区間2 は 15 年なので 11〜15・16〜20・1〜20 年は区間1 だけ）', 'affects_grade': False},
+    {'what': '全体の C1〜C8', 'detail': 'この角度の格付けは事前登録どおり criteria_independent_era（E1〜E7・grade_era）。まとめ役の依頼にある C1〜C8 は、前半を『訓練』・後半を『保有』に読み替えた参考の値（C1_C8_reference）だけで、格付けではない（C1・C2・C3・C7 は費用前、C4・C6・C8 は費用後＝mw の約束）', 'affects_grade': False},
+    {'what': 'シャープの現金', 'detail': 'E5 はその単位の rf（A_S3 は us_cash・D_S3 は uk_cash・H は uk_hal）。timing でない B・C のシャープ（報告だけ）は英国 uk_cash・米国 us_cash', 'affects_grade': False},
+    {'what': '実装の直し（規則は不変）', 'detail': '初回の実行は季節性の規則（stk_seas）に skip の欄が無いため KeyError で止まった（B_ret_12_1 まで計算・保存なし）。欄が無いときは None を渡すように直して最初から実行し直した。excess_stats の β の計算を速くする細工（nx_stack.py と同じ・数値は同一）を入れた', 'affects_grade': False},
+]
+
+
+# ═════════════════════════ 8. 本体 ═════════════════════════
 def main():
     t0 = datetime.datetime.now()
     units = run_main()
@@ -799,6 +1082,13 @@ def main():
     rep['R11_program_holm'] = {'holm_p_one': prog_holm, 'pass_0.05': [u for u, p in prog_holm.items() if p < 0.05]}
     rep['R12_turnover'] = {u: units[u]['turnover_ann'] for u in UNIT_IDS}
     grades = collections.Counter(G[u]['grade'] for u in UNIT_IDS)
+    log('post-hoc...')
+    ph = post_hoc(units)
+    stop_hit = bool(san['stop_on_shape'])
+    for t in tested:
+        if stop_hit and t['id'][:2] in ('B_', 'D_'):
+            t['grade_flag'] = ('⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。'
+                               '格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと')
     out = {
         'angle': 'nx_pre1926x', 'prereg': 'out/nx_pre1926x_prereg.json', 'generated': datetime.date.today().isoformat(),
         'frozen_check': FROZEN,
@@ -808,8 +1098,8 @@ def main():
         'rule_level_verdicts': verdicts,
         'sanity_checks': san,
         'reports_not_graded': rep,
-        'deviations_from_prereg': [],
-        'post_hoc': {},
+        'deviations_from_prereg': DEVIATIONS,
+        'post_hoc': ph,
         'runtime_sec': None,
     }
     out['runtime_sec'] = (datetime.datetime.now() - t0).total_seconds()

@@ -21,6 +21,9 @@
     同じ更新式・同じ順番・同じ停止則を C で書いて ctypes で呼ぶ（numpy だけだと 49業種で1か月30秒かかると計測したため）。
     起動時に numpy の参照実装と合成データで一致すること、λ→0 で OLS、λ≥λ_max で全て0 を確かめる（リターンのデータでは確かめない）。
   - 費用は片道100%あたり 0.10%（感度 0.30%）。E19・E20 は 0.30%（感度 0.50%）。回転 = ½Σ|新しい重み − 流した前月の重み|（最初の月は1）。
+  - 転がる20年窓と20年積立の勝ちは丸める前の差で数える（rolling_exact／dca_exact。nx_common は丸めてから数える＝検査役の指摘 2026-09-28）。
+  - 感度（格付けに使わない）: LASSO の解を KKT 条件で確かめた厳密解に置き換えた版（certify_path → sensitivity_lasso_tol）。
+    予言は out/_nx_cache/nx_leadlag_fc_*exact_*.npz。先に並べて作るなら python3 night/nx_leadlag.py --prewarm-tight P5 E21 など。
 
 使い方: python3 night/nx_leadlag.py            → out/nx_leadlag.json
         （LASSO の予言は out/_nx_cache/nx_leadlag_fc_*.npz にためる。入力と手順の指紋が同じなら読み直すだけ）
@@ -223,6 +226,13 @@ def lasso_sanity():
     cm_np = cd_path_numpy(G, C, lm, mask=mask)
     out['mask_c_vs_numpy_max_abs_diff'] = float(np.abs(cm - cm_np).max())
     out['mask_respected'] = bool(np.all(cm[:, 0, 0] == 0) and np.all(cm[:, 1, 1] == 0))
+    # 感度用の厳密解（certify_path）: 停止則 1e-13 の座標降下と組・係数が一致するか（格付けの本番には使わない＝ok に入れない）
+    ex = certify_path(G, C, lams, cf)
+    t13, _ = cd_path(G, C, lams, tol=1e-13, maxit=100000)
+    exm = certify_path(G, C, lm, cm, mask=mask)
+    t13m, _ = cd_path(G, C, lm, mask=mask, tol=1e-13, maxit=100000)
+    out['certify_vs_cd1e-13'] = {'max_abs_diff': float(max(np.abs(ex - t13).max(), np.abs(exm - t13m).max())),
+                                 'support_mismatch': int(((ex != 0) != (t13 != 0)).sum() + ((exm != 0) != (t13m != 0)).sum())}
     ok = (out['c_vs_numpy_max_abs_diff'] < 1e-10 and out['c_vs_numpy_active_set_mismatch'] == 0 and out['zero_at_lambda_max']
           and out['lambda_to_0_vs_ols_max_abs_diff'] < 1e-8 and out['enet_zero_at_lambda_max'] and out['enet_c_vs_numpy_max_abs_diff'] < 1e-10
           and out['mask_c_vs_numpy_max_abs_diff'] < 1e-10 and out['mask_respected'])
@@ -236,6 +246,7 @@ EXACT_STATS = {'lambda_fits': 0, 'certified_from_1e-8': 0, 'columns_refit_tight'
 def certify_path(G, C, lams, coef, alpha=1.0, mask=None, tol=1e-13, maxit=100000):
     """座標降下の解（停止則 1e-8）の組 A と符号 s から、厳密な解 b_A = (G_AA + λ(1−α)I)^{-1}(C_A − λα s) を解き直し、
     KKT 条件（符号が s のまま・|b| > 1e-12、組の外の |C_j − G_jA b_A| ≤ λα(1−1e-9)）で確かめる。
+    （組が空の点だけは |C_j| ≤ λα(1+1e-12)＝λ_max の等号を許す）。
     確かめられた点は厳密解に置き換え、1点でも確かめられない業種（列）は停止則 1e-13・100,000 周で経路ごと解き直し、
     その解をもう一度確かめる（確かめられない点は締めた座標降下の解をそのまま使い、数を数える）。
     LASSO は G が正定値なら解が一つなので、確かめられた点の組は厳密な LASSO の組と同じ"""
@@ -259,6 +270,9 @@ def certify_path(G, C, lams, coef, alpha=1.0, mask=None, tol=1e-13, maxit=100000
             e[A] = bA
         g = C[:, col] - G @ e
         ina = free.copy(); ina[A] = False
+        if not len(A):
+            # 組が空: λα ≥ max|C_j| なら 0 が厳密解（λ の格子の最初の点 λ_max は等号で、ここだけ余白を取らない）
+            return e if not ina.any() or np.all(np.abs(g[ina]) <= thr * (1 + 1e-12)) else None
         if ina.any() and np.any(np.abs(g[ina]) > thr * (1 - 1e-9)):
             return None
         return e
@@ -810,12 +824,13 @@ def kkt_probe(spec, t, col, names, months):
 
 
 def lasso_tol_sensitivity(P30, P49, mkt, rf, mktrf, rules, entries, exact_p, repl_of, c5_registered, g11):
-    """感度（事前登録の外・格付けに使わない）: 座標降下の停止則を max|Δβ|<1e-13・100,000 周に締めて、
-    LASSO／elastic net の予言を作り直し、同じ規則・同じ評価・同じ格付けの式を当てる。格付けは事前登録の停止則（1e-8）のまま"""
+    """感度（事前登録の外・格付けに使わない）: LASSO／elastic net の解を、事前登録の停止則（1e-8）の座標降下の解から
+    KKT 条件で確かめた厳密解（certify_path。確かめられない業種は停止則 1e-13・100,000 周で解き直す）に置き換えて予言を作り直し、
+    同じ規則・同じ評価・同じ格付けの式を当てる。格付けは事前登録の停止則（1e-8）のまま"""
     specs = rstz_specs(P30, P49, rf, mktrf)
     FT, DT, FR_ = {}, {}, {}
     for nm in TIGHT_NAMES:
-        log(f'感度: {nm} の予言（停止則 {TIGHT_TOL:g}・{TIGHT_MAXIT} 周）')
+        log(f'感度: {nm} の予言（KKT で確かめた厳密解）')
         FT[nm], DT[nm] = tight_forecast(nm, specs)
         months, Xex, Yex, a, b, c, method, mask, roll = specs[nm]
         FR_[nm], _ = rstz_forecasts(nm, months, Xex, Yex, a, b, c, method, mask=mask, rolling=roll)   # 本番（既定の停止則）のキャッシュ
@@ -885,13 +900,16 @@ def lasso_tol_sensitivity(P30, P49, mkt, rf, mktrf, rules, entries, exact_p, rep
         hp = N.holm(ps).get(name)
         repl = replT if name in ('P4_RSTZ_lasso_ff30_vw', 'P5_RSTZ_lasso_ff49_vw') else (repl_of.get(name) if fam == 'primary' else None)
         grade_entry(e, hp, repl, timing=bool(rules[name].get('timing')))
-        out_rules[name] = {'registered_tol_1e-8': compact(entries[name]), 'tight_tol_1e-13': compact(e),
+        out_rules[name] = {'registered_tol_1e-8': compact(entries[name]), 'exact_kkt': compact(e),
                            'hold_months_with_different_holdings': sel_diff[name],
                            'grade_changes': entries[name]['grade'] != e['grade']}
-    return {'label': '感度（事前登録の外・格付けに使わない）: LASSO／elastic net の座標降下の停止則を締めた版',
-            'why': '検査役の指摘（2026-09-28）: 事前登録の停止則 max|Δβ|<1e-8 では、λ の格子の境目の1点で、厳密な LASSO の解なら0になる係数が 1e-10〜1e-8 だけ残り（KKT の食い違い 1e-8 程度）、AICc がその組を選ぶ月がある。格付けは事前登録どおり 1e-8 のまま。ここは 1e-13・100,000 周（合成データで OLS に一致させた検査と同じ停止則）で作り直した数字',
+    return {'label': '感度（事前登録の外・格付けに使わない）: LASSO／elastic net の解を KKT 条件で確かめた厳密解に置き換えた版',
+            'why': '検査役の指摘（2026-09-28）: 事前登録の停止則 max|Δβ|<1e-8 では、λ の格子の境目の1点で、厳密な LASSO の解なら0になる係数が 1e-10〜1e-8 だけ残り（KKT の食い違い 1e-8 程度）、AICc がその組を選ぶ月がある。格付けは事前登録どおり 1e-8 のまま。ここは厳密解で作り直した数字',
+            'method': ('1e-8 の座標降下の解の組 A と符号 s から b_A = (G_AA + λ(1−α)I)^{-1}(C_A − λα s) を解き、KKT 条件（符号が s のまま・|b|>1e-12・組の外は |C_j − G_jA b_A| ≤ λα(1−1e-9)、組が空なら ≤ λα(1+1e-12)）で確かめる。'
+                       '1点でも確かめられない業種はその月の経路を停止則 1e-13・100,000 周で解き直して確かめ直す。G が正定値なら LASSO の解は一つなので、確かめられた点は厳密解。'
+                       '合成データでは停止則 1e-13 の座標降下と組が一致（sanity.lasso_synthetic.certify_vs_cd1e-13）、実データでは指摘の3か月を含む9つの月・手法で予言が 1e-13 の座標降下と一致（elastic net だけ 1.8e-12 の差）'),
             'forecast_comparison': fc_cmp, 'kkt_probe': probe,
-            'kkt_probe_spec': '予言が違う月（各手法で最初の12組まで）の、その業種の λ の格子100点を停止則 1e-8 と 1e-13 で解き直し、有効な説明変数の組が違う格子の点・1e-8 の解に残る係数（→ 締めた解の値）・その点での KKT 条件の最大の食い違い・AICc が選ぶ説明変数の数',
+            'kkt_probe_spec': '予言が違う月（各手法で最初の12組まで）の、その業種の λ の格子100点を 1e-8 の座標降下・厳密解・停止則 1e-13 の座標降下で解き、有効な説明変数の組が違う格子の点・1e-8 の解に残る係数（→ 厳密解の値）・その点での KKT 条件の最大の食い違い・1e-13 の座標降下の組が厳密解と全点で一致するか・AICc が選ぶ説明変数の数',
             'rules': out_rules,
             'c5_P4_P5_tight': {'countries': c5T, 'positive': posT, 'regions': len(COUNTRIES), 'pass(>=5/7)': posT >= 5},
             'E21_share_months_in_market_tight': share_T,
@@ -947,7 +965,8 @@ def main():
         '前の実装者の作りかけ（セッションの上限で E18 の途中で止まった・out/nx_leadlag.json は未作成）を読み直し、事前登録と一行ずつ突き合わせてから走らせた',
         '直した点1: partner_signal は E5（J=3）・E6（J=12）で『自分の J か月の複利が有限』を順位に入る条件にしていた。事前登録の universe は「その月に French の VW リターンがあり、その信号が作れる業種」＝自分は t 月のリターンの有無だけで決まる。自分の側の条件を t 月のリターンに直した（J=1 の P1〜P3・E1〜E4・E7〜E11 は元と同じ）。影響は E6 の 1970-01〜1970-05 の Hlth（1969-07 開始）だけ',
         '直した点2: C7 の Holm を丸める前の p にした（上の deviations）。CTRL_ew49 を他の規則と同じ報告の形（期間別・費用後・20年窓・積立・最大下落）にした（報告のみ）',
-        'LASSO の予言のキャッシュ（P4・P5・E12〜E15）は、入力データ・手順・C のソースの指紋が同じなら読み直すだけ。指紋は rstz_forecasts の fp（名前・手法・窓・データの bytes・C_SRC）']
+        'LASSO の予言のキャッシュ（P4・P5・E12〜E15）は、入力データ・手順・C のソースの指紋が同じなら読み直すだけ。指紋は rstz_forecasts の fp（名前・手法・窓・データの bytes・C_SRC）',
+        '検査役の指摘（2026-09-28）への対応は fixes 欄: (1) LASSO の停止則 1e-8 が一部の月で厳密解と違う組を返す＝本当。格付けは事前登録のまま、厳密解の版を sensitivity_lasso_tol に併記 (2) 転がる20年窓の勝ちを丸めてから数えていた＝本当。この角度は丸める前の差で数え直して格付けし直した（nx_common.py はまとめ役が直す）']
 
     # ── LASSO の自前実装の検査（合成データだけ）
     sc = lasso_sanity()
@@ -1380,19 +1399,19 @@ def make_fixes(res, entries, controls, real_chk):
     fc5 = sen['forecast_comparison']['P5']
     p5 = sen['rules']['P5_RSTZ_lasso_ff49_vw']
     keys = ('train_ex_ann', 'train_t', 'hold_ex_ann', 'hold_t', 'hold_cagr_diff', 'hold_net010_cagr_diff', 'full_t', 'roll20_net_win_rate', 'grade')
-    rows = {n: {'registered_tol_1e-8': {k: v['registered_tol_1e-8'][k] for k in keys}, 'tight_tol_1e-13': {k: v['tight_tol_1e-13'][k] for k in keys},
+    rows = {n: {'registered_tol_1e-8': {k: v['registered_tol_1e-8'][k] for k in keys}, 'exact_kkt': {k: v['exact_kkt'][k] for k in keys},
                 'hold_months_with_different_holdings': v['hold_months_with_different_holdings']} for n, v in sen['rules'].items()}
     kp = sen.get('kkt_probe', {}).get('P5', [])
-    kp_txt = '・'.join(f"信号の月 {x['signal_month']} {x['industry']}（格子 {x['grid_points_support_differs']}・1e-8 の解に残る係数 {x['coef_left_at_1e-8']}・KKT の食い違い 1e-8 {x['kkt_violation_1e-8']} / 1e-13 {x['kkt_violation_1e-13']}・AICc の選ぶ数 {x['n_selected_1e-8']}→{x['n_selected_1e-13']}）" for x in kp)
+    kp_txt = '・'.join(f"信号の月 {x['signal_month']} {x['industry']}（格子 {x['grid_points_support_differs']}・1e-8 の解に残る係数 {x['coef_left_at_1e-8(→exact)']}・KKT の食い違い 1e-8 {x['kkt_violation_1e-8']} / 厳密 {x['kkt_violation_exact']}・AICc の選ぶ数 {x['n_selected_1e-8']}→{x['n_selected_exact']}）" for x in kp)
     fixes.append({
         'finding': 'P5（と同じ予言を使う E17、および E13）の LASSO は、事前登録の停止則 max|Δβ|<1e-8 で止めた座標降下が、一部の月で厳密な LASSO の解と違う説明変数の組を返し、AICc がその組を選んで予言が変わる',
         'verdict': '本当（再現した）。書き間違いではなく事前登録の停止則の許容誤差の副作用',
         'evidence': (f"P5 で予言が 1e-12 より大きく違う信号の月は {fc5['n_months_diff']}/{fc5['of_months']}（{fc5['signal_months_with_forecast_diff_gt_1e-12']}）。"
-                     f"その月の λ の格子100点の解を停止則 1e-8 と 1e-13 で比べると（sensitivity_lasso_tol.kkt_probe）: {kp_txt}。"
+                     f"その月の λ の格子100点の解を 1e-8 の座標降下と KKT で確かめた厳密解で比べると（sensitivity_lasso_tol.kkt_probe・停止則 1e-13 の座標降下も厳密解と同じ組）: {kp_txt}。"
                      f"持ち物が変わった保有月は P5 {p5['hold_months_with_different_holdings']}"),
-        'action': ('格付けは事前登録の停止則（1e-8）のまま＝変えない（事前登録の規則そのもの）。停止則を 1e-13・100,000 周に締めた版を sensitivity_lasso_tol に並べた（P4・P5・E12・E13・E16・E17・E18・E21 と C5 の P4_P5）。'
-                   f"P5 の保有期間の超過 {p5['registered_tol_1e-8']['hold_ex_ann']} → 締めた版 {p5['tight_tol_1e-13']['hold_ex_ann']}（幾何差 {p5['registered_tol_1e-8']['hold_cagr_diff']} → {p5['tight_tol_1e-13']['hold_cagr_diff']}・"
-                   f"費用後 {p5['registered_tol_1e-8']['hold_net010_cagr_diff']} → {p5['tight_tol_1e-13']['hold_net010_cagr_diff']}・全期間 t {p5['registered_tol_1e-8']['full_t']} → {p5['tight_tol_1e-13']['full_t']}）。"
+        'action': ('格付けは事前登録の停止則（1e-8）のまま＝変えない（事前登録の規則そのもの）。KKT 条件で確かめた厳密解の版を sensitivity_lasso_tol に並べた（P4・P5・E12・E13・E16・E17・E18・E21 と C5 の P4_P5）。'
+                   f"P5 の保有期間の超過 {p5['registered_tol_1e-8']['hold_ex_ann']} → 厳密 {p5['exact_kkt']['hold_ex_ann']}（幾何差 {p5['registered_tol_1e-8']['hold_cagr_diff']} → {p5['exact_kkt']['hold_cagr_diff']}・"
+                   f"費用後 {p5['registered_tol_1e-8']['hold_net010_cagr_diff']} → {p5['exact_kkt']['hold_net010_cagr_diff']}・全期間 t {p5['registered_tol_1e-8']['full_t']} → {p5['exact_kkt']['full_t']}）。"
                    f"格付けの変化: {'あり' if sen['any_grade_changes'] else 'なし（どれも C のまま）'}"),
         'changes_grade': sen['any_grade_changes'], 'deviation_from_prereg': '無し（格付けは事前登録のまま・締めた版は報告だけ）',
         'before_after': rows})
@@ -1506,6 +1525,18 @@ def make_summary(res, entries):
     both = [n.split('_')[0] for n, e in entries.items() if e['criteria']['C1_train'] and e['criteria']['C2_hold_sign'] and e['criteria']['C6_net_cost']]
     lines.append(f"結論: 訓練期間（〜2006）の C1（超過が正・t≥2）を通ったのは {c1}、そのうち保有期間（2007〜）の C2 と費用後の C6 も通ったのは {both if both else 'なし'}。"
                  '他の業種の過去で業種を選ぶ規則は、論文の標本と重なる期間では一部が効いたが、2007年以降と費用の後まで市場に勝ち続けた規則は無かった。線は動かしていない。')
+    sen = res.get('sensitivity_lasso_tol')
+    if sen:
+        p5 = sen['rules']['P5_RSTZ_lasso_ff49_vw']
+        fc5 = sen['forecast_comparison']['P5']
+        lines.append(f"LASSO の停止則（検査役の指摘・格付けは事前登録の 1e-8 のまま）: 1e-8 の座標降下は P5 で {fc5['n_months_diff']}/{fc5['of_months']} か月だけ厳密解と違う説明変数の組を返す。"
+                     f"KKT で確かめた厳密解なら P5 の保有期間の超過 {p5['registered_tol_1e-8']['hold_ex_ann']} → {p5['exact_kkt']['hold_ex_ann']}・幾何差 {p5['registered_tol_1e-8']['hold_cagr_diff']} → {p5['exact_kkt']['hold_cagr_diff']}"
+                     f"（格付けの変化 {'あり' if sen['any_grade_changes'] else 'なし'}。E13・E17 ほかは sensitivity_lasso_tol）。")
+    fx = [f for f in res.get('fixes', []) if 'changed' in f]
+    if fx:
+        ch = [f"{x['rule']} {x['series']} {x['before_nx_common_rounded']}→{x['after_exact']}" for x in fx[0]['changed'] if x['series'].startswith('roll20')]
+        lines.append('転がる20年窓の勝ちを丸める前の差で数え直した（nx_common は小数2桁に丸めてから数えていた）: '
+                     + ('・'.join(ch) if ch else '変わった規則なし') + f"（格付けの変化 {'あり' if fx[0]['changes_grade'] else 'なし'}）。")
     return head, lines
 
 
