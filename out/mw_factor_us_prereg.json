@@ -1,0 +1,2290 @@
+{
+ "generated": "2026-09-28",
+ "angle": "factor_us",
+ "registered_before_measuring": true,
+ "global_prereg": "out/mw_prereg.json（線 C1〜C8・格付け S/A/B/C をそのまま使う。ここでは動かさない）",
+ "tool": "night/mw_factor_us.py → out/mw_factor_us.json",
+ "question": "米国株で『一つの特性で良い側だけを買う（買いだけ）』ことは、純粋な時価加重の市場（French Mkt＝S&P500 に近い）に、2007年以降も含めて勝てるか。153特性（JKP）＋ French の単一ソート＋大型株だけで実行できる版＋訓練期間だけで選んだ合成、を事前に決めた線で裁く",
+ "what_was_checked_before_registering": "データの有無・期間・列名・銘柄数だけ（JKP usa all_factors の特性名153・各ファイルの始まりと終わり・French の各ファイルの列名と欠測の月数・JKP の地域 developed=22か国（米国を含まない）/emerging=24か国・JKP Factor Details の出典年）。戦略と市場の比較の数字は一つも見ていない",
+ "benchmark": {
+  "primary": "French Mkt-RF（超過）。JKP の三分位は超過リターン（米国T-bill を引いた値）なので超過どうしで比べる。French のポートフォリオは総リターンなので French の RF を引いて超過にしてから比べる",
+  "rolling_and_dca": "転がる20年窓と20年積立は総リターンどうし（JKP 超過＋French RF 対 French Mkt、French 総リターン 対 French Mkt）",
+  "secondary_report_only": "JKP usa mkt vw（上限なし時価加重・超過）にも同じ数字を出す（判定には使わない）"
+ },
+ "periods": {
+  "train": "各系列の始まり〜2006-12（15年未満なら C1 は評価不能＝不合格側）",
+  "hold": "2007-01〜データの終わり（JKP 2025-12・French 2026-08）",
+  "recent": "2013-07〜（報告のみ）",
+  "post_publication": "出典の論文の公表年の翌年1月〜（報告のみ・判定に使わない）"
+ },
+ "families": {
+  "a_jkp_tercile_vw": {
+   "primary": true,
+   "rule": "JKP usa の153特性それぞれで、上限なし時価加重（vw）の三分位のうち『良い側』の1つを毎月そのまま持つ（JKP が毎月末の値で翌月の構成を決めている＝後知恵なし）",
+   "good_side": "mw_common.jkp_good_side(\"usa\", 特性, \"vw\", upto=200612)＝訓練期間（〜2006-12）だけの (第3−第1) と JKP の符号つき因子の相関の符号で決める（実質は原論文の予言の向き）。訓練データが24ヶ月未満なら評価しない（tested に理由つきで残す）",
+   "data_filter": "良い側の三分位の銘柄数 n が10未満の月は除く（0で埋めない）。地域でも同じ",
+   "turnover": "特性ごとの片道売買回転率（年%）を下の list に明記。区分: 1ヶ月の信号（*_21d・ret_1_0・seas_*）800 / ret_3_1 350 / 四半期の変化・驚き 250 / 価格の勢い6-12ヶ月・残差の勢い 200 / 52週高値比・mispricing_perf 150 / 四半期の水準 100 / 年次の伸び・変化・合成 80 / 流動性126日・長期反転 60 / 長窓のベータ・相関 40 / 規模・株価・上場年数 20 / その他（年次の水準・比率）50。費用は片道100%あたり 0.30%（market_equity の小型側だけ 0.60%）",
+   "replication_C5": "同じ良い側（米国の訓練で決めた側）を JKP の developed（米国を除く先進22か国）と emerging に当て、各地域の JKP mkt vw（超過）との差の算術平均（その地域のデータ全期間）が正なら『正』。2地域中2つ正で合格（2/3以上）。データが無い地域は『正でない』に数える（空欄を合格にしない）。日本（jpn）は参考として出すだけ",
+   "holm_family": "153特性の保有期間の p（両側）で Holm",
+   "list": [
+    {
+     "key": "age",
+     "cluster": "Low Leverage",
+     "jkp_direction": -1,
+     "cite": "Jiang Lee and Zhang (2005)",
+     "pub_year": 2005,
+     "turnover_pct": 20,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "aliq_at",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Ortiz-Molina and Phillips (2014)",
+     "pub_year": 2014,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "aliq_mat",
+     "cluster": "Low Leverage",
+     "jkp_direction": -1,
+     "cite": "Ortiz-Molina and Phillips (2014)",
+     "pub_year": 2014,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ami_126d",
+     "cluster": "Size",
+     "jkp_direction": 1,
+     "cite": "Amihud (2002)",
+     "pub_year": 2002,
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "at_be",
+     "cluster": "Low Leverage",
+     "jkp_direction": -1,
+     "cite": "Fama and French (1992)",
+     "pub_year": 1992,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "at_gr1",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Cooper Gulen and Schill (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "at_me",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Fama and French (1992)",
+     "pub_year": 1992,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "at_turnover",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Haugen and Baker (1996)",
+     "pub_year": 1996,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "be_gr1a",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Richardson et al. (2005)",
+     "pub_year": 2005,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "be_me",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Rosenberg Reid and Lanstein (1985)",
+     "pub_year": 1985,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "beta_60m",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": "Fama and MacBeth (1973)",
+     "pub_year": 1973,
+     "turnover_pct": 40,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "beta_dimson_21d",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": "Dimson (1979)",
+     "pub_year": 1979,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "betabab_1260d",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": "Frazzini and Pedersen (2014)",
+     "pub_year": 2014,
+     "turnover_pct": 40,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "betadown_252d",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": "Ang Chen and Xing (2006)",
+     "pub_year": 2006,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "bev_mev",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Penman Richardson and Tuna (2007)",
+     "pub_year": 2007,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "bidaskhl_21d",
+     "cluster": "Low Leverage",
+     "jkp_direction": 1,
+     "cite": "Corwin and Schultz (2012)",
+     "pub_year": 2012,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "capex_abn",
+     "cluster": "Debt Issuance",
+     "jkp_direction": -1,
+     "cite": "Titman Wei and Xie (2004)",
+     "pub_year": 2004,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "capx_gr1",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Xie (2001)",
+     "pub_year": 2001,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "capx_gr2",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Anderson and Garcia-Feijoo (2006)",
+     "pub_year": 2006,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "capx_gr3",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Anderson and Garcia-Feijoo (2006)",
+     "pub_year": 2006,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "cash_at",
+     "cluster": "Low Leverage",
+     "jkp_direction": 1,
+     "cite": "Palazzo (2012)",
+     "pub_year": 2012,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "chcsho_12m",
+     "cluster": "Value",
+     "jkp_direction": -1,
+     "cite": "Pontiff and Woodgate (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "coa_gr1a",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Richardson et al. (2005)",
+     "pub_year": 2005,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "col_gr1a",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Richardson et al. (2005)",
+     "pub_year": 2005,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "cop_at",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": null,
+     "pub_year": null,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "cop_atl1",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Ball et al. (2016)",
+     "pub_year": 2016,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "corr_1260d",
+     "cluster": "Seasonality",
+     "jkp_direction": -1,
+     "cite": "Assness, Frazzini, Gormsen, Pedersen (2020)",
+     "pub_year": 2020,
+     "turnover_pct": 40,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "coskew_21d",
+     "cluster": "Seasonality",
+     "jkp_direction": -1,
+     "cite": "Harvey and Siddique (2000)",
+     "pub_year": 2000,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "cowc_gr1a",
+     "cluster": "Accruals",
+     "jkp_direction": -1,
+     "cite": "Richardson et al. (2005)",
+     "pub_year": 2005,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "dbnetis_at",
+     "cluster": "Seasonality",
+     "jkp_direction": -1,
+     "cite": "Bradshaw Richardson and Sloan (2006)",
+     "pub_year": 2006,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "debt_gr3",
+     "cluster": "Debt Issuance",
+     "jkp_direction": -1,
+     "cite": "Lyandres Sun and Zhang (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "debt_me",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Bhandari (1988)",
+     "pub_year": 1988,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "dgp_dsale",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Abarbanell and Bushee (1998)",
+     "pub_year": 1998,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "div12m_me",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Litzenberger and Ramaswamy (1979)",
+     "pub_year": 1979,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "dolvol_126d",
+     "cluster": "Size",
+     "jkp_direction": -1,
+     "cite": "Brennan Chordia and Subrahmanyam (1998)",
+     "pub_year": 1998,
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "dolvol_var_126d",
+     "cluster": "Profitability",
+     "jkp_direction": -1,
+     "cite": "Chordia Subrahmanyam and Anshuman (2001)",
+     "pub_year": 2001,
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "dsale_dinv",
+     "cluster": "Profit Growth",
+     "jkp_direction": 1,
+     "cite": "Abarbanell and Bushee (1998)",
+     "pub_year": 1998,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "dsale_drec",
+     "cluster": "Profit Growth",
+     "jkp_direction": -1,
+     "cite": "Abarbanell and Bushee (1998)",
+     "pub_year": 1998,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "dsale_dsga",
+     "cluster": "Profit Growth",
+     "jkp_direction": 1,
+     "cite": "Abarbanell and Bushee (1998)",
+     "pub_year": 1998,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "earnings_variability",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": "Francis et al. (2004)",
+     "pub_year": 2004,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ebit_bev",
+     "cluster": "Profitability",
+     "jkp_direction": 1,
+     "cite": "Soliman (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ebit_sale",
+     "cluster": "Profitability",
+     "jkp_direction": 1,
+     "cite": "Soliman (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ebitda_mev",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Loughran and Wellman (2011)",
+     "pub_year": 2011,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "emp_gr1",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Belo Lin and Bazdresch (2014)",
+     "pub_year": 2014,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "eq_dur",
+     "cluster": "Value",
+     "jkp_direction": -1,
+     "cite": "Dechow Sloan and Soliman (2004)",
+     "pub_year": 2004,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "eqnetis_at",
+     "cluster": "Value",
+     "jkp_direction": -1,
+     "cite": "Bradshaw Richardson and Sloan (2006)",
+     "pub_year": 2006,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "eqnpo_12m",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Daniel and Titman (2006)",
+     "pub_year": 2006,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "eqnpo_me",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Boudoukh et al. (2007)",
+     "pub_year": 2007,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "eqpo_me",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Boudoukh et al. (2007)",
+     "pub_year": 2007,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "f_score",
+     "cluster": "Profitability",
+     "jkp_direction": 1,
+     "cite": "Piotroski (2000)",
+     "pub_year": 2000,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "fcf_me",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Lakonishok Shleifer and Vishny (1994)",
+     "pub_year": 1994,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "fnl_gr1a",
+     "cluster": "Debt Issuance",
+     "jkp_direction": -1,
+     "cite": "Richardson et al. (2005)",
+     "pub_year": 2005,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "gp_at",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Novy-Marx (2013)",
+     "pub_year": 2013,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "gp_atl1",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": null,
+     "pub_year": null,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "inv_gr1",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Belo and Lin (2011)",
+     "pub_year": 2011,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "inv_gr1a",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Thomas and Zhang (2002)",
+     "pub_year": 2002,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "iskew_capm_21d",
+     "cluster": "Short-Term Reversal",
+     "jkp_direction": -1,
+     "cite": null,
+     "pub_year": null,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "iskew_ff3_21d",
+     "cluster": "Short-Term Reversal",
+     "jkp_direction": -1,
+     "cite": "Bali Engle and Murray (2016)",
+     "pub_year": 2016,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "iskew_hxz4_21d",
+     "cluster": "Short-Term Reversal",
+     "jkp_direction": -1,
+     "cite": null,
+     "pub_year": null,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ival_me",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Frankel and Lee (1998)",
+     "pub_year": 1998,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ivol_capm_21d",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": null,
+     "pub_year": null,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ivol_capm_252d",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": "Ali Hwang and Trombley (2003)",
+     "pub_year": 2003,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ivol_ff3_21d",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": "Ang et al. (2006)",
+     "pub_year": 2006,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ivol_hxz4_21d",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": null,
+     "pub_year": null,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "kz_index",
+     "cluster": "Seasonality",
+     "jkp_direction": 1,
+     "cite": "Lamont Polk and Saa-Requejo (2001)",
+     "pub_year": 2001,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "lnoa_gr1a",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Fairfield Whisenant and Yohn (2003)",
+     "pub_year": 2003,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "lti_gr1a",
+     "cluster": "Seasonality",
+     "jkp_direction": -1,
+     "cite": "Richardson et al. (2005)",
+     "pub_year": 2005,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "market_equity",
+     "cluster": "Size",
+     "jkp_direction": -1,
+     "cite": "Banz (1981)",
+     "pub_year": 1981,
+     "turnover_pct": 20,
+     "cost_per_100pct": 0.006
+    },
+    {
+     "key": "mispricing_mgmt",
+     "cluster": "Investment",
+     "jkp_direction": 1,
+     "cite": "Stambaugh and Yuan (2016)",
+     "pub_year": 2016,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "mispricing_perf",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Stambaugh and Yuan (2016)",
+     "pub_year": 2016,
+     "turnover_pct": 150,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ncoa_gr1a",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Richardson et al. (2005)",
+     "pub_year": 2005,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ncol_gr1a",
+     "cluster": "Debt Issuance",
+     "jkp_direction": -1,
+     "cite": "Richardson et al. (2005)",
+     "pub_year": 2005,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "netdebt_me",
+     "cluster": "Low Leverage",
+     "jkp_direction": -1,
+     "cite": "Penman Richardson and Tuna (2007)",
+     "pub_year": 2007,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "netis_at",
+     "cluster": "Value",
+     "jkp_direction": -1,
+     "cite": "Bradshaw Richardson and Sloan (2006)",
+     "pub_year": 2006,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "nfna_gr1a",
+     "cluster": "Debt Issuance",
+     "jkp_direction": 1,
+     "cite": "Richardson et al. (2005)",
+     "pub_year": 2005,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ni_ar1",
+     "cluster": "Debt Issuance",
+     "jkp_direction": 1,
+     "cite": "Francis et al. (2004)",
+     "pub_year": 2004,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ni_be",
+     "cluster": "Profitability",
+     "jkp_direction": 1,
+     "cite": "Haugen and Baker (1996)",
+     "pub_year": 1996,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ni_inc8q",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Barth Elliott and Finn (1999)",
+     "pub_year": 1999,
+     "turnover_pct": 250,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ni_ivol",
+     "cluster": "Low Leverage",
+     "jkp_direction": 1,
+     "cite": "Francis et al. (2004)",
+     "pub_year": 2004,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ni_me",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Basu (1983)",
+     "pub_year": 1983,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "niq_at",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Balakrishnan Bartov and Faurel (2010)",
+     "pub_year": 2010,
+     "turnover_pct": 100,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "niq_at_chg1",
+     "cluster": "Profit Growth",
+     "jkp_direction": 1,
+     "cite": null,
+     "pub_year": null,
+     "turnover_pct": 250,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "niq_be",
+     "cluster": "Profitability",
+     "jkp_direction": 1,
+     "cite": "Hou Xue and Zhang (2015)",
+     "pub_year": 2015,
+     "turnover_pct": 100,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "niq_be_chg1",
+     "cluster": "Profit Growth",
+     "jkp_direction": 1,
+     "cite": null,
+     "pub_year": null,
+     "turnover_pct": 250,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "niq_su",
+     "cluster": "Profit Growth",
+     "jkp_direction": 1,
+     "cite": "Foster Olsen and Shevlin (1984)",
+     "pub_year": 1984,
+     "turnover_pct": 250,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "nncoa_gr1a",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Richardson et al. (2005)",
+     "pub_year": 2005,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "noa_at",
+     "cluster": "Debt Issuance",
+     "jkp_direction": -1,
+     "cite": "Hirshleifer et al. (2004)",
+     "pub_year": 2004,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "noa_gr1a",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Hirshleifer et al. (2004)",
+     "pub_year": 2004,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "o_score",
+     "cluster": "Profitability",
+     "jkp_direction": -1,
+     "cite": "Dichev (1998)",
+     "pub_year": 1998,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "oaccruals_at",
+     "cluster": "Accruals",
+     "jkp_direction": -1,
+     "cite": "Sloan (1996)",
+     "pub_year": 1996,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "oaccruals_ni",
+     "cluster": "Accruals",
+     "jkp_direction": -1,
+     "cite": "Hafzalla Lundholm and Van Winkle (2011)",
+     "pub_year": 2011,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ocf_at",
+     "cluster": "Profitability",
+     "jkp_direction": 1,
+     "cite": "Bouchard, Krüger, Landier and Thesmar (2019)",
+     "pub_year": 2019,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ocf_at_chg1",
+     "cluster": "Profit Growth",
+     "jkp_direction": 1,
+     "cite": "Bouchard, Krüger, Landier and Thesmar (2019)",
+     "pub_year": 2019,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ocf_me",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Desai Rajgopal and Venkatachalam (2004)",
+     "pub_year": 2004,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ocfq_saleq_std",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": "Huang (2009)",
+     "pub_year": 2009,
+     "turnover_pct": 100,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "op_at",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": null,
+     "pub_year": null,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "op_atl1",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Ball et al. (2016)",
+     "pub_year": 2016,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ope_be",
+     "cluster": "Profitability",
+     "jkp_direction": 1,
+     "cite": "Fama and French (2015)",
+     "pub_year": 2015,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ope_bel1",
+     "cluster": "Profitability",
+     "jkp_direction": 1,
+     "cite": null,
+     "pub_year": null,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "opex_at",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Novy-Marx (2011)",
+     "pub_year": 2011,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "pi_nix",
+     "cluster": "Seasonality",
+     "jkp_direction": 1,
+     "cite": "Lev and Nissim (2004)",
+     "pub_year": 2004,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ppeinv_gr1a",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Lyandres Sun and Zhang (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "prc",
+     "cluster": "Size",
+     "jkp_direction": -1,
+     "cite": "Miller and Scholes (1982)",
+     "pub_year": 1982,
+     "turnover_pct": 20,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "prc_highprc_252d",
+     "cluster": "Momentum",
+     "jkp_direction": 1,
+     "cite": "George and Hwang (2004)",
+     "pub_year": 2004,
+     "turnover_pct": 150,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "qmj",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Assness, Frazzini and Pedersen (2018)",
+     "pub_year": 2018,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "qmj_growth",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Assness, Frazzini and Pedersen (2018)",
+     "pub_year": 2018,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "qmj_prof",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Assness, Frazzini and Pedersen (2018)",
+     "pub_year": 2018,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "qmj_safety",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Assness, Frazzini and Pedersen (2018)",
+     "pub_year": 2018,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "rd5_at",
+     "cluster": "Low Leverage",
+     "jkp_direction": 1,
+     "cite": "Li (2011)",
+     "pub_year": 2011,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "rd_me",
+     "cluster": "Size",
+     "jkp_direction": 1,
+     "cite": "Chan Lakonishok and Sougiannis (2001)",
+     "pub_year": 2001,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "rd_sale",
+     "cluster": "Low Leverage",
+     "jkp_direction": 1,
+     "cite": "Chan Lakonishok and Sougiannis (2001)",
+     "pub_year": 2001,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "resff3_12_1",
+     "cluster": "Momentum",
+     "jkp_direction": 1,
+     "cite": "Blitz Huij and Martens (2011)",
+     "pub_year": 2011,
+     "turnover_pct": 200,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "resff3_6_1",
+     "cluster": "Momentum",
+     "jkp_direction": 1,
+     "cite": "Blitz Huij and Martens (2011)",
+     "pub_year": 2011,
+     "turnover_pct": 200,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ret_12_1",
+     "cluster": "Momentum",
+     "jkp_direction": 1,
+     "cite": "Jegadeesh and Titman (1993)",
+     "pub_year": 1993,
+     "turnover_pct": 200,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ret_12_7",
+     "cluster": "Profit Growth",
+     "jkp_direction": 1,
+     "cite": "Novy-Marx (2012)",
+     "pub_year": 2012,
+     "turnover_pct": 200,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ret_1_0",
+     "cluster": "Short-Term Reversal",
+     "jkp_direction": -1,
+     "cite": "Jegadeesh (1990)",
+     "pub_year": 1990,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ret_3_1",
+     "cluster": "Momentum",
+     "jkp_direction": 1,
+     "cite": "Jegedeesh and Titman (1993)",
+     "pub_year": 1993,
+     "turnover_pct": 350,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ret_60_12",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "De Bondt and Thaler (1985)",
+     "pub_year": 1985,
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ret_6_1",
+     "cluster": "Momentum",
+     "jkp_direction": 1,
+     "cite": "Jegadeesh and Titman (1993)",
+     "pub_year": 1993,
+     "turnover_pct": 200,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "ret_9_1",
+     "cluster": "Momentum",
+     "jkp_direction": 1,
+     "cite": "Jegedeesh and Titman (1993)",
+     "pub_year": 1993,
+     "turnover_pct": 200,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "rmax1_21d",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": "Bali Cakici and Whitelaw (2011)",
+     "pub_year": 2011,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "rmax5_21d",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": "Bali, Brown, Murray and Tang (2017)",
+     "pub_year": 2017,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "rmax5_rvol_21d",
+     "cluster": "Short-Term Reversal",
+     "jkp_direction": -1,
+     "cite": "Assness, Frazzini, Gormsen, Pedersen (2020)",
+     "pub_year": 2020,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "rskew_21d",
+     "cluster": "Short-Term Reversal",
+     "jkp_direction": -1,
+     "cite": "Bali Engle and Murray (2016)",
+     "pub_year": 2016,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "rvol_21d",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": "Ang et al. (2006)",
+     "pub_year": 2006,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "sale_bev",
+     "cluster": "Quality",
+     "jkp_direction": 1,
+     "cite": "Soliman (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "sale_emp_gr1",
+     "cluster": "Profit Growth",
+     "jkp_direction": 1,
+     "cite": "Abarbanell and Bushee (1998)",
+     "pub_year": 1998,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "sale_gr1",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Lakonishok Shleifer and Vishny (1994)",
+     "pub_year": 1994,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "sale_gr3",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Lakonishok Shleifer and Vishny (1994)",
+     "pub_year": 1994,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "sale_me",
+     "cluster": "Value",
+     "jkp_direction": 1,
+     "cite": "Barbee Mukherji and Raines (1996)",
+     "pub_year": 1996,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "saleq_gr1",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": null,
+     "pub_year": null,
+     "turnover_pct": 250,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "saleq_su",
+     "cluster": "Profit Growth",
+     "jkp_direction": 1,
+     "cite": "Jegadeesh and Livnat (2006)",
+     "pub_year": 2006,
+     "turnover_pct": 250,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "seas_11_15an",
+     "cluster": "Seasonality",
+     "jkp_direction": 1,
+     "cite": "Heston and Sadka (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "seas_11_15na",
+     "cluster": "Seasonality",
+     "jkp_direction": -1,
+     "cite": "Heston and Sadka (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "seas_16_20an",
+     "cluster": "Seasonality",
+     "jkp_direction": 1,
+     "cite": "Heston and Sadka (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "seas_16_20na",
+     "cluster": "Accruals",
+     "jkp_direction": -1,
+     "cite": "Heston and Sadka (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "seas_1_1an",
+     "cluster": "Profit Growth",
+     "jkp_direction": 1,
+     "cite": "Heston and Sadka (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "seas_1_1na",
+     "cluster": "Momentum",
+     "jkp_direction": 1,
+     "cite": "Heston and Sadka (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "seas_2_5an",
+     "cluster": "Seasonality",
+     "jkp_direction": 1,
+     "cite": "Heston and Sadka (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "seas_2_5na",
+     "cluster": "Investment",
+     "jkp_direction": -1,
+     "cite": "Heston and Sadka (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "seas_6_10an",
+     "cluster": "Seasonality",
+     "jkp_direction": 1,
+     "cite": "Heston and Sadka (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "seas_6_10na",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": "Heston and Sadka (2008)",
+     "pub_year": 2008,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "sti_gr1a",
+     "cluster": "Seasonality",
+     "jkp_direction": 1,
+     "cite": "Richardson et al. (2005)",
+     "pub_year": 2005,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "taccruals_at",
+     "cluster": "Accruals",
+     "jkp_direction": -1,
+     "cite": "Richardson et al. (2005)",
+     "pub_year": 2005,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "taccruals_ni",
+     "cluster": "Accruals",
+     "jkp_direction": -1,
+     "cite": "Hafzalla Lundholm and Van Winkle (2011)",
+     "pub_year": 2011,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "tangibility",
+     "cluster": "Low Leverage",
+     "jkp_direction": 1,
+     "cite": "Hahn and Lee (2009)",
+     "pub_year": 2009,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "tax_gr1a",
+     "cluster": "Profit Growth",
+     "jkp_direction": 1,
+     "cite": "Thomas and Zhang (2011)",
+     "pub_year": 2011,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "turnover_126d",
+     "cluster": "Low Risk",
+     "jkp_direction": -1,
+     "cite": "Datar Naik and Radcliffe (1998)",
+     "pub_year": 1998,
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "turnover_var_126d",
+     "cluster": "Profitability",
+     "jkp_direction": -1,
+     "cite": "Chordia Subrahmanyam and Anshuman (2001)",
+     "pub_year": 2001,
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "z_score",
+     "cluster": "Low Leverage",
+     "jkp_direction": 1,
+     "cite": "Dichev (1998)",
+     "pub_year": 1998,
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "zero_trades_126d",
+     "cluster": "Low Risk",
+     "jkp_direction": 1,
+     "cite": "Liu (2006)",
+     "pub_year": 2006,
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "zero_trades_21d",
+     "cluster": "Low Risk",
+     "jkp_direction": 1,
+     "cite": "Liu (2006)",
+     "pub_year": 2006,
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003
+    },
+    {
+     "key": "zero_trades_252d",
+     "cluster": "Low Risk",
+     "jkp_direction": 1,
+     "cite": "Liu (2006)",
+     "pub_year": 2006,
+     "turnover_pct": 80,
+     "cost_per_100pct": 0.003
+    }
+   ]
+  },
+  "b_french_single_sort_vw": {
+   "primary": true,
+   "rule": "French の単一ソート（時価加重・NYSE の分位点）で、理論が言う良い側の十分位と上位30%（30/40/30 の表が無いファイルは五分位）を持つ。モメンタム系は十分位しか無いので上位（下位）3十分位の等分も試す（上位30%の近似）",
+   "good_side": "理論（原論文）で固定: BE-ME 高・E-P 高・CF-P 高・D-P 高・OP 高・INV 低・ME 小・BETA 低・VAR 低・RESVAR 低・AC 低・NI 純減（と低い側）・Prior_12_2 高・Prior_1_0 低・Prior_60_13 低",
+   "replication_C5": "近似: 対応する JKP 特性（repl_jkp_counterpart）の、米国の訓練で決めた良い側の三分位を developed・emerging に当てる（2/2 正で合格・無い地域は正でない）。French の地域ファイルにこの単一ソートは無いため",
+   "cost": "片道100%あたり 0.30%（ME の小型側 0.60%）",
+   "holm_family": "b の31本で Holm",
+   "list": [
+    {
+     "name": "b_BE-ME_Hi10",
+     "file": "Portfolios_Formed_on_BE-ME",
+     "cols": [
+      "Hi 10"
+     ],
+     "agg": "single",
+     "good_side": "高い側・十分位",
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1992,
+     "cite": "Fama and French (1992)",
+     "repl_jkp_counterpart": "be_me"
+    },
+    {
+     "name": "b_BE-ME_Hi30",
+     "file": "Portfolios_Formed_on_BE-ME",
+     "cols": [
+      "Hi 30"
+     ],
+     "agg": "single",
+     "good_side": "高い側・上位30%",
+     "turnover_pct": 40,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1992,
+     "cite": "Fama and French (1992)",
+     "repl_jkp_counterpart": "be_me"
+    },
+    {
+     "name": "b_E-P_Hi10",
+     "file": "Portfolios_Formed_on_E-P",
+     "cols": [
+      "Hi 10"
+     ],
+     "agg": "single",
+     "good_side": "高い側・十分位",
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1977,
+     "cite": "Basu (1977)",
+     "repl_jkp_counterpart": "ni_me"
+    },
+    {
+     "name": "b_E-P_Hi30",
+     "file": "Portfolios_Formed_on_E-P",
+     "cols": [
+      "Hi 30"
+     ],
+     "agg": "single",
+     "good_side": "高い側・上位30%",
+     "turnover_pct": 40,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1977,
+     "cite": "Basu (1977)",
+     "repl_jkp_counterpart": "ni_me"
+    },
+    {
+     "name": "b_CF-P_Hi10",
+     "file": "Portfolios_Formed_on_CF-P",
+     "cols": [
+      "Hi 10"
+     ],
+     "agg": "single",
+     "good_side": "高い側・十分位",
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1994,
+     "cite": "Lakonishok Shleifer Vishny (1994)",
+     "repl_jkp_counterpart": "ocf_me"
+    },
+    {
+     "name": "b_CF-P_Hi30",
+     "file": "Portfolios_Formed_on_CF-P",
+     "cols": [
+      "Hi 30"
+     ],
+     "agg": "single",
+     "good_side": "高い側・上位30%",
+     "turnover_pct": 40,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1994,
+     "cite": "Lakonishok Shleifer Vishny (1994)",
+     "repl_jkp_counterpart": "ocf_me"
+    },
+    {
+     "name": "b_D-P_Hi10",
+     "file": "Portfolios_Formed_on_D-P",
+     "cols": [
+      "Hi 10"
+     ],
+     "agg": "single",
+     "good_side": "高い側・十分位",
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1979,
+     "cite": "Litzenberger and Ramaswamy (1979)",
+     "repl_jkp_counterpart": "div12m_me"
+    },
+    {
+     "name": "b_D-P_Hi30",
+     "file": "Portfolios_Formed_on_D-P",
+     "cols": [
+      "Hi 30"
+     ],
+     "agg": "single",
+     "good_side": "高い側・上位30%",
+     "turnover_pct": 40,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1979,
+     "cite": "Litzenberger and Ramaswamy (1979)",
+     "repl_jkp_counterpart": "div12m_me"
+    },
+    {
+     "name": "b_OP_Hi10",
+     "file": "Portfolios_Formed_on_OP",
+     "cols": [
+      "Hi 10"
+     ],
+     "agg": "single",
+     "good_side": "高い側・十分位",
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003,
+     "pub_year": 2013,
+     "cite": "Novy-Marx (2013) / Fama-French (2015)",
+     "repl_jkp_counterpart": "ope_be"
+    },
+    {
+     "name": "b_OP_Hi30",
+     "file": "Portfolios_Formed_on_OP",
+     "cols": [
+      "Hi 30"
+     ],
+     "agg": "single",
+     "good_side": "高い側・上位30%",
+     "turnover_pct": 40,
+     "cost_per_100pct": 0.003,
+     "pub_year": 2013,
+     "cite": "Novy-Marx (2013) / Fama-French (2015)",
+     "repl_jkp_counterpart": "ope_be"
+    },
+    {
+     "name": "b_INV_Lo10",
+     "file": "Portfolios_Formed_on_INV",
+     "cols": [
+      "Lo 10"
+     ],
+     "agg": "single",
+     "good_side": "低い側・十分位",
+     "turnover_pct": 90,
+     "cost_per_100pct": 0.003,
+     "pub_year": 2004,
+     "cite": "Titman Wei Xie (2004)",
+     "repl_jkp_counterpart": "at_gr1"
+    },
+    {
+     "name": "b_INV_Lo30",
+     "file": "Portfolios_Formed_on_INV",
+     "cols": [
+      "Lo 30"
+     ],
+     "agg": "single",
+     "good_side": "低い側・上位30%",
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003,
+     "pub_year": 2004,
+     "cite": "Titman Wei Xie (2004)",
+     "repl_jkp_counterpart": "at_gr1"
+    },
+    {
+     "name": "b_ME_Lo10",
+     "file": "Portfolios_Formed_on_ME",
+     "cols": [
+      "Lo 10"
+     ],
+     "agg": "single",
+     "good_side": "小さい側・十分位",
+     "turnover_pct": 30,
+     "cost_per_100pct": 0.006,
+     "pub_year": 1981,
+     "cite": "Banz (1981)",
+     "repl_jkp_counterpart": "market_equity"
+    },
+    {
+     "name": "b_ME_Lo30",
+     "file": "Portfolios_Formed_on_ME",
+     "cols": [
+      "Lo 30"
+     ],
+     "agg": "single",
+     "good_side": "小さい側・下位30%",
+     "turnover_pct": 20,
+     "cost_per_100pct": 0.006,
+     "pub_year": 1981,
+     "cite": "Banz (1981)",
+     "repl_jkp_counterpart": "market_equity"
+    },
+    {
+     "name": "b_BETA_Lo10",
+     "file": "Portfolios_Formed_on_BETA",
+     "cols": [
+      "Lo 10"
+     ],
+     "agg": "single",
+     "good_side": "低い側・十分位",
+     "turnover_pct": 90,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1972,
+     "cite": "Black Jensen Scholes (1972) / Frazzini-Pedersen (2014)",
+     "repl_jkp_counterpart": "beta_60m"
+    },
+    {
+     "name": "b_BETA_Lo20",
+     "file": "Portfolios_Formed_on_BETA",
+     "cols": [
+      "Lo 20"
+     ],
+     "agg": "single",
+     "good_side": "低い側・五分位",
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1972,
+     "cite": "Black Jensen Scholes (1972) / Frazzini-Pedersen (2014)",
+     "repl_jkp_counterpart": "beta_60m"
+    },
+    {
+     "name": "b_VAR_Lo10",
+     "file": "Portfolios_Formed_on_VAR",
+     "cols": [
+      "Lo 10"
+     ],
+     "agg": "single",
+     "good_side": "低い側・十分位",
+     "turnover_pct": 225,
+     "cost_per_100pct": 0.003,
+     "pub_year": 2006,
+     "cite": "Ang Hodrick Xing Zhang (2006)",
+     "repl_jkp_counterpart": "rvol_21d"
+    },
+    {
+     "name": "b_VAR_Lo20",
+     "file": "Portfolios_Formed_on_VAR",
+     "cols": [
+      "Lo 20"
+     ],
+     "agg": "single",
+     "good_side": "低い側・五分位",
+     "turnover_pct": 150,
+     "cost_per_100pct": 0.003,
+     "pub_year": 2006,
+     "cite": "Ang Hodrick Xing Zhang (2006)",
+     "repl_jkp_counterpart": "rvol_21d"
+    },
+    {
+     "name": "b_RESVAR_Lo10",
+     "file": "Portfolios_Formed_on_RESVAR",
+     "cols": [
+      "Lo 10"
+     ],
+     "agg": "single",
+     "good_side": "低い側・十分位",
+     "turnover_pct": 225,
+     "cost_per_100pct": 0.003,
+     "pub_year": 2006,
+     "cite": "Ang Hodrick Xing Zhang (2006)",
+     "repl_jkp_counterpart": "ivol_ff3_21d"
+    },
+    {
+     "name": "b_RESVAR_Lo20",
+     "file": "Portfolios_Formed_on_RESVAR",
+     "cols": [
+      "Lo 20"
+     ],
+     "agg": "single",
+     "good_side": "低い側・五分位",
+     "turnover_pct": 150,
+     "cost_per_100pct": 0.003,
+     "pub_year": 2006,
+     "cite": "Ang Hodrick Xing Zhang (2006)",
+     "repl_jkp_counterpart": "ivol_ff3_21d"
+    },
+    {
+     "name": "b_AC_Lo10",
+     "file": "Portfolios_Formed_on_AC",
+     "cols": [
+      "Lo 10"
+     ],
+     "agg": "single",
+     "good_side": "低い側・十分位",
+     "turnover_pct": 105,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1996,
+     "cite": "Sloan (1996)",
+     "repl_jkp_counterpart": "oaccruals_at"
+    },
+    {
+     "name": "b_AC_Lo20",
+     "file": "Portfolios_Formed_on_AC",
+     "cols": [
+      "Lo 20"
+     ],
+     "agg": "single",
+     "good_side": "低い側・五分位",
+     "turnover_pct": 70,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1996,
+     "cite": "Sloan (1996)",
+     "repl_jkp_counterpart": "oaccruals_at"
+    },
+    {
+     "name": "b_NI_Neg",
+     "file": "Portfolios_Formed_on_NI",
+     "cols": [
+      "< 0"
+     ],
+     "agg": "single",
+     "good_side": "株数が純減（買戻し超）の群",
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.003,
+     "pub_year": 2008,
+     "cite": "Pontiff and Woodgate (2008) / Ikenberry et al. (1995)",
+     "repl_jkp_counterpart": "chcsho_12m"
+    },
+    {
+     "name": "b_NI_Lo10",
+     "file": "Portfolios_Formed_on_NI",
+     "cols": [
+      "Lo 10"
+     ],
+     "agg": "single",
+     "good_side": "純発行が正の社の中で最も少ない十分位",
+     "turnover_pct": 100,
+     "cost_per_100pct": 0.003,
+     "pub_year": 2008,
+     "cite": "Pontiff and Woodgate (2008)",
+     "repl_jkp_counterpart": "chcsho_12m"
+    },
+    {
+     "name": "b_NI_Lo20",
+     "file": "Portfolios_Formed_on_NI",
+     "cols": [
+      "Lo 20"
+     ],
+     "agg": "single",
+     "good_side": "純発行が正の社の中で最も少ない五分位",
+     "turnover_pct": 70,
+     "cost_per_100pct": 0.003,
+     "pub_year": 2008,
+     "cite": "Pontiff and Woodgate (2008)",
+     "repl_jkp_counterpart": "chcsho_12m"
+    },
+    {
+     "name": "b_MOM_Hi10",
+     "file": "10_Portfolios_Prior_12_2",
+     "cols": [
+      "Hi PRIOR"
+     ],
+     "agg": "single",
+     "good_side": "過去12-2ヶ月の上昇率が最高の十分位",
+     "turnover_pct": 300,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1993,
+     "cite": "Jegadeesh and Titman (1993)",
+     "repl_jkp_counterpart": "ret_12_1"
+    },
+    {
+     "name": "b_MOM_Top3",
+     "file": "10_Portfolios_Prior_12_2",
+     "cols": [
+      "PRIOR 8",
+      "PRIOR 9",
+      "Hi PRIOR"
+     ],
+     "agg": "ew_of_cols",
+     "good_side": "上位3十分位の等分（上位30%の近似）",
+     "turnover_pct": 200,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1993,
+     "cite": "Jegadeesh and Titman (1993)",
+     "repl_jkp_counterpart": "ret_12_1"
+    },
+    {
+     "name": "b_STR_Lo10",
+     "file": "10_Portfolios_Prior_1_0",
+     "cols": [
+      "Lo PRIOR"
+     ],
+     "agg": "single",
+     "good_side": "前月の下落が最大の十分位",
+     "turnover_pct": 1000,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1990,
+     "cite": "Jegadeesh (1990)",
+     "repl_jkp_counterpart": "ret_1_0"
+    },
+    {
+     "name": "b_STR_Bot3",
+     "file": "10_Portfolios_Prior_1_0",
+     "cols": [
+      "Lo PRIOR",
+      "PRIOR 2",
+      "PRIOR 3"
+     ],
+     "agg": "ew_of_cols",
+     "good_side": "下位3十分位の等分",
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1990,
+     "cite": "Jegadeesh (1990)",
+     "repl_jkp_counterpart": "ret_1_0"
+    },
+    {
+     "name": "b_LTR_Lo10",
+     "file": "10_Portfolios_Prior_60_13",
+     "cols": [
+      "Lo PRIOR"
+     ],
+     "agg": "single",
+     "good_side": "過去60-13ヶ月の下落が最大の十分位",
+     "turnover_pct": 100,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1985,
+     "cite": "De Bondt and Thaler (1985)",
+     "repl_jkp_counterpart": "ret_60_12"
+    },
+    {
+     "name": "b_LTR_Bot3",
+     "file": "10_Portfolios_Prior_60_13",
+     "cols": [
+      "Lo PRIOR",
+      "PRIOR 2",
+      "PRIOR 3"
+     ],
+     "agg": "ew_of_cols",
+     "good_side": "下位3十分位の等分",
+     "turnover_pct": 70,
+     "cost_per_100pct": 0.003,
+     "pub_year": 1985,
+     "cite": "De Bondt and Thaler (1985)",
+     "repl_jkp_counterpart": "ret_60_12"
+    }
+   ]
+  },
+  "c_french_largecap": {
+   "primary": true,
+   "rule": "大型株だけで実行できる版: (1) 25分割（5×5）の最大五分位（ME5・NYSE 80%点超）の良い側五分位 (2) 6分割（2×3）の大（NYSE 中央値超）の良い側30% (3) 32分割（2×4×4）の大で二特性ともに良い側の四分位 (4) 100分割（10×10）の最大十分位の良い側十分位。良い側は b と同じ理論",
+   "replication_C5": "French の地域ファイルに同じ作り方があるものだけ: 25分割は Europe・Japan・Asia_Pacific_ex_Japan（3地域中2以上で合格）、6分割は それに Emerging_Markets を足した4地域（3以上で合格）、32分割（BE-ME×OP）は3地域。各地域の <地域>_3_Factors（新興国は Emerging_5_Factors）の Mkt-RF と、地域ポートフォリオ総リターン−同じファイルの RF の差の算術平均（全期間 1990〜）が正なら『正』。作り方が無いものは N/A",
+   "cost": "片道100%あたり 0.10%（大型株）",
+   "holm_family": "c の26本で Holm",
+   "list": [
+    {
+     "name": "c_me5_bm",
+     "file": "25_Portfolios_5x5",
+     "cols": [
+      "BIG HiBM"
+     ],
+     "desc": "NYSE 最大五分位 × 簿価時価比 最高五分位",
+     "turnover_pct": 30,
+     "cost_per_100pct": 0.001,
+     "repl": {
+      "file_suffix": "25_Portfolios_ME_BE-ME",
+      "regions": [
+       "Europe",
+       "Japan",
+       "Asia_Pacific_ex_Japan"
+      ],
+      "col": "BIG HiBM"
+     },
+     "pub_year": 1992
+    },
+    {
+     "name": "c_me5_op",
+     "file": "25_Portfolios_ME_OP_5x5",
+     "cols": [
+      "BIG HiOP"
+     ],
+     "desc": "最大五分位 × 営業収益性 最高五分位",
+     "turnover_pct": 30,
+     "cost_per_100pct": 0.001,
+     "repl": {
+      "file_suffix": "25_Portfolios_ME_OP",
+      "regions": [
+       "Europe",
+       "Japan",
+       "Asia_Pacific_ex_Japan"
+      ],
+      "col": "BIG HiOP"
+     },
+     "pub_year": 2013
+    },
+    {
+     "name": "c_me5_inv",
+     "file": "25_Portfolios_ME_INV_5x5",
+     "cols": [
+      "BIG LoINV"
+     ],
+     "desc": "最大五分位 × 投資（資産成長）最低五分位",
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.001,
+     "repl": {
+      "file_suffix": "25_Portfolios_ME_INV",
+      "regions": [
+       "Europe",
+       "Japan",
+       "Asia_Pacific_ex_Japan"
+      ],
+      "col": "BIG LoINV"
+     },
+     "pub_year": 2004
+    },
+    {
+     "name": "c_me5_mom",
+     "file": "25_Portfolios_ME_Prior_12_2",
+     "cols": [
+      "BIG HiPRIOR"
+     ],
+     "desc": "最大五分位 × 過去12-2ヶ月 最高五分位",
+     "turnover_pct": 150,
+     "cost_per_100pct": 0.001,
+     "repl": {
+      "file_suffix": "25_Portfolios_ME_Prior_12_2",
+      "regions": [
+       "Europe",
+       "Japan",
+       "Asia_Pacific_ex_Japan"
+      ],
+      "col": "BIG HiPRIOR"
+     },
+     "pub_year": 1993
+    },
+    {
+     "name": "c_me5_str",
+     "file": "25_Portfolios_ME_Prior_1_0",
+     "cols": [
+      "BIG LoPRIOR"
+     ],
+     "desc": "最大五分位 × 前月 最低五分位（短期反転）",
+     "turnover_pct": 800,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 1990
+    },
+    {
+     "name": "c_me5_ltr",
+     "file": "25_Portfolios_ME_Prior_60_13",
+     "cols": [
+      "BIG LoPRIOR"
+     ],
+     "desc": "最大五分位 × 過去60-13ヶ月 最低五分位（長期反転）",
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 1985
+    },
+    {
+     "name": "c_me5_ac",
+     "file": "25_Portfolios_ME_AC_5x5",
+     "cols": [
+      "BIG LoAC"
+     ],
+     "desc": "最大五分位 × 発生高 最低五分位",
+     "turnover_pct": 60,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 1996
+    },
+    {
+     "name": "c_me5_beta",
+     "file": "25_Portfolios_ME_BETA_5x5",
+     "cols": [
+      "BIG LoBETA"
+     ],
+     "desc": "最大五分位 × ベータ 最低五分位",
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 1972
+    },
+    {
+     "name": "c_me5_ni",
+     "file": "25_Portfolios_ME_NI_5x5",
+     "cols": [
+      "BIG NegNI"
+     ],
+     "desc": "最大五分位 × 株数の純減（買戻し超）",
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 2008
+    },
+    {
+     "name": "c_me5_var",
+     "file": "25_Portfolios_ME_VAR_5x5",
+     "cols": [
+      "BIG LoVAR"
+     ],
+     "desc": "最大五分位 × 分散 最低五分位",
+     "turnover_pct": 120,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 2006
+    },
+    {
+     "name": "c_me5_resvar",
+     "file": "25_Portfolios_ME_RESVAR_5x5",
+     "cols": [
+      "BIG LoVAR"
+     ],
+     "desc": "最大五分位 × 残差分散 最低五分位",
+     "turnover_pct": 120,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 2006
+    },
+    {
+     "name": "c_big_bm",
+     "file": "6_Portfolios_2x3",
+     "cols": [
+      "BIG HiBM"
+     ],
+     "desc": "NYSE 中央値より大 × 簿価時価比 上位30%",
+     "turnover_pct": 25,
+     "cost_per_100pct": 0.001,
+     "repl": {
+      "file_suffix": "6_Portfolios_ME_BE-ME",
+      "regions": [
+       "Europe",
+       "Japan",
+       "Asia_Pacific_ex_Japan",
+       "Emerging_Markets"
+      ],
+      "col": "BIG HiBM"
+     },
+     "pub_year": 1992
+    },
+    {
+     "name": "c_big_op",
+     "file": "6_Portfolios_ME_OP_2x3",
+     "cols": [
+      "BIG HiOP"
+     ],
+     "desc": "大 × 営業収益性 上位30%",
+     "turnover_pct": 25,
+     "cost_per_100pct": 0.001,
+     "repl": {
+      "file_suffix": "6_Portfolios_ME_OP",
+      "regions": [
+       "Europe",
+       "Japan",
+       "Asia_Pacific_ex_Japan",
+       "Emerging_Markets"
+      ],
+      "col": "BIG HiOP"
+     },
+     "pub_year": 2013
+    },
+    {
+     "name": "c_big_inv",
+     "file": "6_Portfolios_ME_INV_2x3",
+     "cols": [
+      "BIG LoINV"
+     ],
+     "desc": "大 × 投資 下位30%",
+     "turnover_pct": 40,
+     "cost_per_100pct": 0.001,
+     "repl": {
+      "file_suffix": "6_Portfolios_ME_INV",
+      "regions": [
+       "Europe",
+       "Japan",
+       "Asia_Pacific_ex_Japan",
+       "Emerging_Markets"
+      ],
+      "col": "BIG LoINV"
+     },
+     "pub_year": 2004
+    },
+    {
+     "name": "c_big_mom",
+     "file": "6_Portfolios_ME_Prior_12_2",
+     "cols": [
+      "BIG HiPRIOR"
+     ],
+     "desc": "大 × 過去12-2ヶ月 上位30%",
+     "turnover_pct": 120,
+     "cost_per_100pct": 0.001,
+     "repl": {
+      "file_suffix": "6_Portfolios_ME_Prior_12_2",
+      "regions": [
+       "Europe",
+       "Japan",
+       "Asia_Pacific_ex_Japan",
+       "Emerging_Markets"
+      ],
+      "col": "BIG HiPRIOR"
+     },
+     "pub_year": 1993
+    },
+    {
+     "name": "c_big_str",
+     "file": "6_Portfolios_ME_Prior_1_0",
+     "cols": [
+      "BIG LoPRIOR"
+     ],
+     "desc": "大 × 前月 下位30%（短期反転）",
+     "turnover_pct": 700,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 1990
+    },
+    {
+     "name": "c_big_ltr",
+     "file": "6_Portfolios_ME_Prior_60_13",
+     "cols": [
+      "BIG LoPRIOR"
+     ],
+     "desc": "大 × 過去60-13ヶ月 下位30%（長期反転）",
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 1985
+    },
+    {
+     "name": "c_big_ep",
+     "file": "6_Portfolios_ME_EP_2x3",
+     "cols": [
+      "BIG HiEP"
+     ],
+     "desc": "大 × 益回り 上位30%",
+     "turnover_pct": 25,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 1977
+    },
+    {
+     "name": "c_big_cfp",
+     "file": "6_Portfolios_ME_CFP_2x3",
+     "cols": [
+      "BIG HiCFP"
+     ],
+     "desc": "大 × キャッシュフロー利回り 上位30%",
+     "turnover_pct": 25,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 1994
+    },
+    {
+     "name": "c_big_dp",
+     "file": "6_Portfolios_ME_DP_2x3",
+     "cols": [
+      "BIG HiDP"
+     ],
+     "desc": "大 × 配当利回り 上位30%",
+     "turnover_pct": 20,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 1979
+    },
+    {
+     "name": "c_big_bm_op",
+     "file": "32_Portfolios_ME_BEME_OP_2x4x4",
+     "cols": [
+      "BIG HiBM HiOP"
+     ],
+     "desc": "大 × 簿価時価比 最高四分位 × 営業収益性 最高四分位（二特性）",
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.001,
+     "repl": {
+      "file_suffix": "32_Portfolios_ME_BE-ME_OP_2x4x4",
+      "regions": [
+       "Europe",
+       "Japan",
+       "Asia_Pacific_ex_Japan"
+      ],
+      "col": "BIG HiBM HiOP"
+     },
+     "pub_year": null
+    },
+    {
+     "name": "c_big_bm_inv",
+     "file": "32_Portfolios_ME_BEME_INV_2x4x4",
+     "cols": [
+      "BIG HiBM LoINV"
+     ],
+     "desc": "大 × 簿価時価比 最高四分位 × 投資 最低四分位（二特性）",
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": null
+    },
+    {
+     "name": "c_big_op_inv",
+     "file": "32_Portfolios_ME_OP_INV_2x4x4",
+     "cols": [
+      "BIG HiOP LoINV"
+     ],
+     "desc": "大 × 営業収益性 最高四分位 × 投資 最低四分位（二特性）",
+     "turnover_pct": 50,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": null
+    },
+    {
+     "name": "c_me10_bm",
+     "file": "100_Portfolios_10x10",
+     "cols": [
+      "BIG HiBM"
+     ],
+     "desc": "NYSE 最大十分位 × 簿価時価比 最高十分位（空の月が多い＝空の月は比較から除く）",
+     "turnover_pct": 45,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 1992
+    },
+    {
+     "name": "c_me10_op",
+     "file": "100_Portfolios_ME_OP_10x10",
+     "cols": [
+      "BIG HiOP"
+     ],
+     "desc": "最大十分位 × 営業収益性 最高十分位",
+     "turnover_pct": 45,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 2013
+    },
+    {
+     "name": "c_me10_inv",
+     "file": "100_Portfolios_ME_INV_10x10",
+     "cols": [
+      "BIG LoINV"
+     ],
+     "desc": "最大十分位 × 投資 最低十分位",
+     "turnover_pct": 75,
+     "cost_per_100pct": 0.001,
+     "repl": null,
+     "pub_year": 2004
+    }
+   ]
+  },
+  "d_train_selected_composite": {
+   "primary": true,
+   "rule": "d1: a の153本のうち訓練期間（〜2006-12）の対 French Mkt-RF 超過が正かつ NW t≥2.0（C1 合格・訓練15年以上）の良い側三分位を、毎月等分に混ぜる（その月にデータがある構成要素の平均・構成要素が5本未満の月は使わない）。d2: c のうち単一特性の大型株版（25分割 ME5 行と 6分割 BIG 行の20本・32分割と100分割は除く）で C1 合格のものを毎月等分に混ぜる（同じく5本未満の月は使わない）。選ぶのに使うのは訓練期間の数字だけ",
+   "turnover": "構成要素の回転率の平均（相殺を見込まない＝保守的）。費用 d1 0.30%・d2 0.10%",
+   "replication_C5": "d1: 同じ構成要素・同じ良い側で developed・emerging の合成を作り、地域 mkt vw との差（全期間）が正なら正（2/2 で合格）。d2: N/A",
+   "holm_family": "d の2本で Holm"
+  }
+ },
+ "grading": "mw_common.grade(full, train, hold, roll20, cost_hold, repl, family_holm_p) をそのまま使う。family_holm_p は上の族ごとの Holm。角度全体（全族まとめて）の Holm も参考として出し、族の Holm でだけ合格したものは明記する。タイミング・レバレッジではないので C8 は N/A",
+ "metrics_reported": [
+  "全期間・訓練・保有・直近（2013-07〜）の excess_stats（算術超過・NW t・幾何の差・追従のぶれ・β）",
+  "費用控除後の保有期間と全期間",
+  "転がる20年窓（毎年7月起点）",
+  "20年積立（12ヶ月ずつ起点をずらす）",
+  "公表後（報告のみ）",
+  "対 JKP mkt vw（報告のみ）",
+  "地域の再現"
+ ],
+ "sanity_checks": [
+  "French Mkt の CAGR 1926〜 ≈10.4%・2007〜 ≈11.1%（mw_common の検算と一致するか）",
+  "JKP usa mkt vw と French Mkt-RF の差（全期間 ≈−0.03・2007〜 ≈−0.41%/年）",
+  "a の良い側が JKP の direction と一致するか",
+  "French の列が見つかるか・欠測の月数（0で埋めない）",
+  "合成の選択に保有期間の数字が入っていないこと（選択は train の数字だけで行い、選ばれた一覧を先に出力）"
+ ],
+ "known_limits": [
+  "JKP の vw 三分位は数百社の分散した集合（門の4〜5社の集中とは別物）",
+  "JKP の市場と French の市場は宇宙が少し違い、JKP の三分位は保有期間で約 −0.4%/年 の不利を最初から背負う（JKP mkt vw 自体が French Mkt に 2007〜 −0.41%/年）→ 対 JKP mkt も報告する",
+  "回転率は概算（区分ごとの目安）で、費用は税を含まない",
+  "良い側は実質的に原論文の向き＝原論文の標本期間（多くは 2006 年以前）を知っている。訓練の結果は論文の発見そのものを含むので、保有期間・地域・公表後を独立の答え合わせにする",
+  "153本を試すので、族の Holm か全期間 t≥3 でしか C7 を通らない",
+  "French の100分割の最大十分位×最高 BM は空の月が多い（282ヶ月）。空の月は比較から除く（0で埋めない）＝その月は実際には持てない"
+ ],
+ "exploratory": "この族で A・S が出なければ、探索の族を out/mw_factor_us_prereg2.json 以降に測る前に登録してから足す（線は下げない）"
+}
