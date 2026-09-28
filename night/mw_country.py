@@ -39,11 +39,14 @@ ALL47 = DEV23 + EM24
 ETF = {'EWJ': 'jpn', 'EWG': 'deu', 'EWU': 'gbr', 'EWC': 'can', 'EWA': 'aus', 'EWQ': 'fra', 'EWL': 'che', 'EWN': 'nld',
        'EWD': 'swe', 'EWP': 'esp', 'EWI': 'ita', 'EWH': 'hkg', 'EWS': 'sgp', 'EWK': 'bel', 'EWO': 'aut', 'SPY': 'usa'}
 NMIN = 20
+EM_ETF = 'EWZ EWT EWY EWW EWM EZA FXI ECH TUR THD EPOL EIDO EPHE EPU INDA'.split()
+DEV_ETF_X = {'ENZL': 'nzl', 'EIRL': 'irl', 'ENOR': 'nor', 'EFNL': 'fin', 'EDEN': 'dnk'}
 YAHOO_LAST = 202608  # 2026-09 は月の途中
 
 # 費用（事前登録どおり）: 片道100%あたりの売買費用・信託報酬の差（年率）
 COST = {'dev': (0.0015, 0.0040), 'em': (0.0030, 0.0050), 'fr': (0.0050, 0.0070), 'broad': (0.0005, 0.0),
-        'etf': (0.0015, 0.0), 'etf_broad': (0.0005, 0.0)}
+        'etf': (0.0015, 0.0), 'etf_broad': (0.0005, 0.0), 'etf_em': (0.0030, 0.0),
+        'ind49': (0.0010, 0.0030), 'ind12': (0.0010, 0.0005)}
 
 
 def ym_add(ym, k):
@@ -232,6 +235,27 @@ def us_data():
     return _US
 
 
+def etf_raw(tk):
+    """Yahoo のキャッシュ済み月次 JSON → (月末の終値〔分割調整・配当未調整〕{ym}, その月の分配金の合計 {ym})"""
+    import datetime, glob
+    M.yahoo(tk)  # キャッシュを作る
+    f = os.path.join(M.CACHE, f'yh_{tk}_1mo.json')
+    j = json.load(open(f))['chart']['result'][0]
+    cl = {}
+    for t, c in zip(j['timestamp'], j['indicators']['quote'][0]['close']):
+        if c is None:
+            continue
+        d = datetime.datetime.utcfromtimestamp(t)
+        cl[d.year * 100 + d.month] = c
+    dv = {}
+    for e in (j.get('events', {}).get('dividends', {}) or {}).values():
+        d = datetime.datetime.utcfromtimestamp(e['date'])
+        k = d.year * 100 + d.month
+        dv[k] = dv.get(k, 0.0) + e['amount']
+    cl = {k: v for k, v in cl.items() if k <= YAHOO_LAST}
+    return cl, dv
+
+
 def price_index(ex):
     """配当抜きの月次 → 価格指数 {ym: 月末の水準}（最初の月の前月末を1）"""
     p, lv = {}, 1.0
@@ -277,6 +301,21 @@ class World:
                 self.lab[k][c] = self.fr[c][k]
         for k in ('bm', 'ep', 'cep'):
             self.lab[k]['usa'] = self.us[k]
+        self.lab['yld'] = {c: self.fr[c]['yld'] for c in F20}  # 事前登録3 の D2（年次表の Yld）
+        # 実在ETF（R 族と D5）: 2026-09 は月の途中なので切る
+        self.etf = {}
+        for tk in list(ETF) + ['EFA', 'ACWI', 'EEM'] + EM_ETF + list(DEV_ETF_X):
+            self.etf[tk] = {k: v for k, v in M.yahoo(tk).items() if k <= YAHOO_LAST}
+        # 事前登録4 の J: ETF の分配金と未調整の終値
+        self.etf_close, self.etf_div = {}, {}
+        for tk in list(ETF) + EM_ETF + list(DEV_ETF_X):
+            self.etf_close[tk], self.etf_div[tk] = etf_raw(tk)
+        # 事前登録4 の I: French の業種（配当込み・配当抜き）
+        self.ind = {}
+        for n in (49, 12):
+            tot = M.french_series(f'{n}_Industry_Portfolios', 'Value Weight', 'monthly')
+            ex = M.french_series(f'{n}_Industry_Portfolios_Wout_Div', 'Value Weight', 'monthly')
+            self.ind[n] = (tot, ex)
         # French の地域
         self.freg = {}
         for name, key in (('Developed_3_Factors', 'dev'), ('Developed_ex_US_3_Factors', 'dxus'), ('North_America_3_Factors', 'NA'),
@@ -328,6 +367,42 @@ class World:
         if b is None or p0 is None or p1 is None or p1 <= 0:
             return None
         return b * p0 / p1
+
+    def etf_dp(self, tk, Y):
+        """J: 過去12か月（Y−1年1〜12月）の分配金 ÷ Y−1年12月末の終値。12か月の履歴がそろう ETF だけ"""
+        cl = self.etf_close.get(tk, {})
+        if not cl or min(cl) > (Y - 1) * 100 + 1:
+            return None
+        p = cl.get((Y - 1) * 100 + 12)
+        if not p:
+            return None
+        return sum(self.etf_div[tk].get((Y - 1) * 100 + m, 0.0) for m in range(1, 13)) / p
+
+    def ind_dp(self, n, col, t):
+        tot, ex = self.ind[n]
+        v = []
+        for k in range(12):
+            m = ym_add(t, -k)
+            a, b = tot[col].get(m), ex[col].get(m)
+            if a is None or b is None:
+                return None
+            v.append(a - b)
+        return sum(v)
+
+    def cape(self, c, Y):
+        """事前登録3 の K 族: CAPE_Y = P(Y−1年12月末) ÷ 10年平均の名目利益（E_y = E/P_y × P(y−1年12月末)）"""
+        p = self.px.get(c, {})
+        es = []
+        for y in range(Y - 9, Y + 1):
+            ep, py = self.lab['ep'].get(c, {}).get(y), p.get((y - 1) * 100 + 12)
+            if ep is None or py is None:
+                return None
+            es.append(ep * py)
+        m = S.mean(es)
+        p0 = p.get((Y - 1) * 100 + 12)
+        if m <= 0 or p0 is None:
+            return None
+        return p0 / m
 
     def relval(self, c, Y):
         rels = []
@@ -438,7 +513,7 @@ def make_strategies(W):
                 if v is not None:
                     sc[c] = v
             k = K if K > 0 else math.ceil(len(sc) / (-K))  # K=-3 → 上位1/3、K=-4 → 上位1/4
-            if len(sc) < 2 * k:
+            if k <= 0 or len(sc) < 2 * k:
                 return None
             sel = top_k(sc, k, reverse)
             return {c: 1 / k for c in sel}
@@ -465,7 +540,14 @@ def make_strategies(W):
                         sc[c] = S.mean(got)
             else:
                 for c in el:
-                    v = W.relval(cmap.get(c, c), Y) if key == 'relval' else W.label(key, cmap.get(c, c), Y)
+                    cc = cmap.get(c, c)
+                    if key == 'relval':
+                        v = W.relval(cc, Y)
+                    elif key == 'cape':  # 低いほど割安 → 逆数（E10/P）で高い順
+                        v = W.cape(cc, Y)
+                        v = None if v is None else 1 / v
+                    else:
+                        v = W.label(key, cc, Y)
                     if v is not None:
                         sc[c] = v
             if len(sc) < 2 * K:
@@ -645,6 +727,107 @@ def make_strategies(W):
         return ch
     add('E7_reg4_K1', 'E7', False, 'REG4', reg_choose(1), gret, 'fr_dev', 'broad', extra={'pub': 1998})
     add('E7_reg4_K2', 'E7', False, 'REG4', reg_choose(2), gret, 'fr_dev', 'broad', extra={'pub': 1998})
+    # ── 事前登録3（0d292fa）: D 族（配当利回り・結果を見た後）と K 族（CAPE） ──
+    def dpM_choose(univ, K):
+        def ch(t):
+            sc = {c: W.dp_at(c, t) for c in univ if W.elig(c, t)}
+            sc = {c: v for c, v in sc.items() if v is not None}
+            if len(sc) < 2 * K:
+                return None
+            return {c: 1 / K for c in top_k(sc, K)}
+        return ch
+
+    def eret(a, t):
+        if a == 'RF':
+            return rfd.get(t)
+        return W.etf[a].get(t)
+    ex_tks = [tk for tk in ETF if tk != 'SPY']
+    for K in (3, 5):
+        add(f'D1_f20_dp_K{K}', 'D', False, 'F20', val_choose(F20, K, 'dp'), jret, 'fr_dxus', 'dev', rebal=6, extra={'ew': 'C_ew_dxus22', 'pub': 1992})
+    for K in (3, 5):
+        add(f'D2_f20_yld_K{K}', 'D', False, 'F20', val_choose(F20, K, 'yld'), jret, 'fr_dxus', 'dev', rebal=6, extra={'ew': 'C_ew_dxus22', 'pub': 1992})
+    for K in (3, 5):
+        add(f'D3_f20_dpM_K{K}', 'D', False, 'F20', dpM_choose(F20, K), jret, 'fr_dxus', 'dev', extra={'ew': 'C_ew_dxus22', 'pub': 1992})
+    for K in (3, 5):
+        add(f'D4_eafe_dp_K{K}', 'D', False, 'EAFE19', val_choose(EAFE19, K, 'dp', src='fr'), fret, 'fr_eafe', 'dev', rebal=6, extra={'ew': 'C_ew_eafe19', 'pub': 1992})
+    for K in (3, 5):
+        add(f'D5_etf_dp_K{K}', 'D', False, 'ETF15（米国外の iShares 国別）', val_choose(ex_tks, K, 'dp', src='etf', cmap=ETF), eret, 'fr_dxus', 'etf',
+            rebal=6, extra={'vend': 202512, 'also': ['etf_efa'], 'pub': 1992, 'note': '訓練は ETF の 1997-07〜2006-12（15年に満たない＝C1 は参考）。信託報酬は ETF の値動きに含まれる'})
+    for K in (2, 4, 6):
+        add(f'D6_f20_dp_K{K}', 'D', False, 'F20', val_choose(F20, K, 'dp'), jret, 'fr_dxus', 'dev', rebal=6, extra={'ew': 'C_ew_dxus22', 'pub': 1992})
+    for K in (3, 5):
+        add(f'K1_f20_cape_K{K}', 'K', False, 'F20', val_choose(F20, K, 'cape'), jret, 'fr_dxus', 'dev', rebal=6, extra={'ew': 'C_ew_dxus22'})
+    for K in (3, 5):
+        add(f'K2_v21_cape_K{K}', 'K', False, 'V21', val_choose(V21, K, 'cape'), jret, 'fr_dev', 'dev', rebal=6, extra={'ew': 'C_ew_v21'})
+    # ── 事前登録4（18288ce）: I 族（米国の業種の配当利回り）と J 族（実在ETFの分配金） ──
+    def ind_choose(n, K):
+        tot = W.ind[n][0]
+
+        def ch(t):
+            Y = t // 100
+            sc = {}
+            for col in tot:
+                if tot[col].get(t) is None:
+                    continue
+                v = W.ind_dp(n, col, (Y - 1) * 100 + 12)
+                if v is not None:
+                    sc[col] = v
+            if len(sc) < 2 * K:
+                return None
+            return {c: 1 / K for c in top_k(sc, K)}
+        return ch
+
+    def iret(n):
+        tot = W.ind[n][0]
+        return lambda a, t: tot[a].get(t)
+    add('I1_ind49_dp_K5', 'I', False, 'French 49業種', ind_choose(49, 5), iret(49), 'fr_mkt', 'ind49', rebal=6, extra={'pub': 1992})
+    add('I1_ind49_dp_K10', 'I', False, 'French 49業種', ind_choose(49, 10), iret(49), 'fr_mkt', 'ind49', rebal=6, extra={'pub': 1992})
+    add('I2_ind12_dp_K3', 'I', False, 'French 12業種', ind_choose(12, 3), iret(12), 'fr_mkt', 'ind12', rebal=6, extra={'pub': 1992})
+
+    def etfdp_choose(tks, K, fr_signal=False, cmap=None):
+        cmap = cmap or {}
+
+        def ch(t):
+            Y = t // 100
+            sc = {}
+            for tk in tks:
+                if W.etf.get(tk, {}).get(t) is None:  # その月にリターンがある（上場している）ETF だけ
+                    continue
+                v = W.dp_at(cmap[tk], (Y - 1) * 100 + 12) if fr_signal else W.etf_dp(tk, Y)
+                if v is not None:
+                    sc[tk] = v
+            if len(sc) < 2 * K:
+                return None
+            return {c: 1 / K for c in top_k(sc, K)}
+        return ch
+    dev_etf = ex_tks + list(DEV_ETF_X)
+    dmap = dict(ETF); dmap.update(DEV_ETF_X)
+    jn = '報告（訓練が短いので格付けは参考）'
+    for K in (3, 5):
+        add(f'J1_em_etf_dp_K{K}', 'J', False, '新興国 iShares 国別ETF', etfdp_choose(EM_ETF, K), eret, 'etf_eem', 'etf_em', rebal=6, extra={'note': jn})
+    for K in (3, 5):
+        add(f'J2_dev_etf_dp_K{K}', 'J', False, '先進国（米国外）iShares 国別ETF 20本', etfdp_choose(dev_etf, K), eret, 'etf_efa', 'etf', rebal=6, extra={'note': jn, 'also': ['fr_dxus']})
+    add('J3_dev_etf_frdp_K3', 'J', False, '先進国（米国外）iShares 国別ETF 20本・信号は French', etfdp_choose(dev_etf, 3, fr_signal=True, cmap=dmap), eret, 'etf_efa', 'etf',
+        rebal=6, extra={'note': jn, 'vend': 202512, 'also': ['fr_dxus']})
+    # ── 事前登録5（4e35f52）: G 族（配当利回り＋勢い） ──
+    def dpmom_choose(univ, K):
+        def ch(t):
+            mo, dp = {}, {}
+            for c in univ:
+                if not W.elig(c, t):
+                    continue
+                m = W.cum(R.get(c, {}), t, 11, 1)
+                v = W.dp_at(c, t)
+                if m is not None and v is not None:
+                    mo[c], dp[c] = m, v
+            if len(mo) < 2 * K:
+                return None
+            pm, pv = pct_ranks(mo), pct_ranks(dp)
+            ks = sorted(mo, key=lambda c: (-(pm[c] + pv[c]) / 2, -pm[c], c))
+            return {c: 1 / K for c in ks[:K]}
+        return ch
+    for K in (3, 5):
+        add(f'G1_f20_dpmom_K{K}', 'G', False, 'F20', dpmom_choose(F20, K), jret, 'fr_dxus', 'dev', extra={'ew': 'C_ew_dxus22'})
     # 対照
     add('C_ew_dev23', 'CONTROL', False, 'DEV23', ew_choose(DEV23), jret, 'jkp_dev', 'dev')
     add('C_ew_v21', 'CONTROL', False, 'V21', ew_choose(V21), jret, 'jkp_dev', 'dev')
@@ -653,13 +836,19 @@ def make_strategies(W):
     add('C_ew_eafe19', 'CONTROL', False, 'EAFE19', ew_choose(EAFE19, src='fr', retd=frr), fret, 'fr_eafe', 'dev')
     add('C_usa', 'CONTROL', False, 'usa', lambda t: {'usa': 1.0}, jret, 'jkp_dev', 'broad')
     make_strategies.helpers = {'mom': mom_choose, 'val': val_choose, 'vm': vm_choose, 'usrow': usrow_choose, 'ew': ew_choose}
+    # 事前登録2（c7d616e）: JKP の developed は米国抜きだった → 相手（ii）を French Developed へ。
+    # 第1回の相手（JKP developed＝先進国・米国抜き）の結果は as_registered として残す
+    for d in ST:
+        if d['bench'] == 'jkp_dev':
+            d['asreg'] = 'jkp_dev'
+            d['bench'] = 'fr_dev'
     return ST
 
 
 def benches(W):
     return {'jkp_dev': W.reg['developed'], 'jkp_world': W.reg['world'], 'jkp_em': W.reg['emerging'], 'jkp_fr': W.reg['frontier'],
             'jkp_usa': W.ret['usa'], 'fr_dxus': W.freg['dxus'], 'fr_dev': W.freg['dev'], 'fr_eafe': W.fr['_eafe'],
-            'fr_mkt': M.ff_factors()['mkt']}
+            'fr_mkt': M.ff_factors()['mkt'], 'etf_efa': W.etf['EFA'], 'etf_eem': W.etf['EEM']}
 
 
 def month_grid(W):
@@ -776,6 +965,11 @@ def evaluate_one(s, r, turn, hold, ren, b, B, series, rfd):
         out['vs_ew'] = {'full': M.excess_stats(r, e), 'hold': M.excess_stats(r, e, a=M.HOLD_START)}
     us = B['jkp_usa']
     out['vs_us'] = {'full': M.excess_stats(r, us), 'hold': M.excess_stats(r, us, a=M.HOLD_START)}
+    for bk in s.get('also', []):
+        out.setdefault('vs_other', {})[bk] = {'full': M.excess_stats(r, B[bk]), 'hold': M.excess_stats(r, B[bk], a=M.HOLD_START),
+                                              'recent': M.excess_stats(r, B[bk], a=M.RECENT_START)}
+    if s.get('note'):
+        out['note'] = s['note']
     if s.get('also_world'):
         out['vs_world'] = {'full': M.excess_stats(r, B['jkp_world']), 'hold': M.excess_stats(r, B['jkp_world'], a=M.HOLD_START)}
     out['hold_summary'] = hold_summary(hold)
@@ -786,9 +980,7 @@ def evaluate_one(s, r, turn, hold, ren, b, B, series, rfd):
 
 def run_etf(W, B, rfd):
     """R 族: iShares 国別ETF で同じ規則を再生（報告のみ）"""
-    er = {}
-    for tk in list(ETF) + ['EFA', 'ACWI']:
-        er[tk] = {k: v for k, v in M.yahoo(tk).items() if k <= YAHOO_LAST}
+    er = W.etf
     tks = list(ETF)
     h = make_strategies.helpers
 
@@ -819,20 +1011,20 @@ def run_etf(W, B, rfd):
         net = M.apply_cost(r, ann_turn, cpu)
         d = {'id': id_, 'family': 'R', 'primary': False, 'first': ms[0] if ms else None, 'last': ms[-1] if ms else None,
              'cost': {'annual_oneway_turnover': round(ann_turn, 3), 'cost_per_unit': cpu, 'note': '信託報酬は ETF の値動きに含まれる'}}
-        bs = {'jkp_dev': B['jkp_dev'], 'acwi': er['ACWI'], 'spy': er['SPY']}
+        bs = {'fr_dev': B['fr_dev'], 'jkp_dev_exUS': B['jkp_dev'], 'acwi': er['ACWI'], 'spy': er['SPY']}
         d['vs'] = {}
         for bn, b in bs.items():
             d['vs'][bn] = {'pre_1997_2006': M.excess_stats(r, b, z=M.TRAIN_END), 'hold': M.excess_stats(r, b, a=M.HOLD_START),
                            'hold_net': M.excess_stats(net, b, a=M.HOLD_START), 'recent': M.excess_stats(r, b, a=M.RECENT_START)}
         d['vs']['ew16'] = {'hold': M.excess_stats(r, ser.get('R_etf_ew16', {}), a=M.HOLD_START)} if 'R_etf_ew16' in ser else None
-        dv = d['vs']['jkp_dev']
-        g, c = M.grade(M.excess_stats(r, B['jkp_dev']), dv['pre_1997_2006'], dv['hold'], M.rolling(r, B['jkp_dev'], 20),
+        dv = d['vs']['fr_dev']
+        g, c = M.grade(M.excess_stats(r, B['fr_dev']), dv['pre_1997_2006'], dv['hold'], M.rolling(r, B['fr_dev'], 20),
                        cost_hold=dv['hold_net'])
         d['grade_reference_only'] = g
         d['criteria'] = c
         d['note'] = '報告のみ: 訓練は ETF の最初の10年（1997〜2006）で15年に満たない。格付けは参考'
         d['hold_summary'] = hold_summary(hold)
-        d['cal_years_vs_jkp_dev'] = cal_years(r, B['jkp_dev'])
+        d['cal_years_vs_fr_dev'] = cal_years(r, B['fr_dev'])
         out.append(d)
     # 等分との差（ew16 が最後に計算されるので後から）
     for d in out:
@@ -872,9 +1064,172 @@ def sanity(W, B, er):
     out['SPY_vs_french_mkt'] = {'from': ks[0], 'to': ks[-1], 'cagr_spy': round(M.cagr([er['SPY'][k] for k in ks]) * 100, 2),
                                 'cagr_mkt': round(M.cagr([mk[k] for k in ks]) * 100, 2)}
     dv = B['jkp_dev']
+    out['jkp_developed_is_ex_us'] = {'french_dev_cagr_2007_2025': round(M.cagr([B['fr_dev'][k] for k in B['fr_dev'] if 200701 <= k <= 202512]) * 100, 2),
+                                     'french_dxus_cagr_2007_2025': round(M.cagr([B['fr_dxus'][k] for k in B['fr_dxus'] if 200701 <= k <= 202512]) * 100, 2),
+                                     'jkp_dev_cagr_2007_2025': round(M.cagr([dv[k] for k in dv if 200701 <= k <= 202512]) * 100, 2),
+                                     'jkp_usa_cagr_2007_2025': round(M.cagr([B['jkp_usa'][k] for k in B['jkp_usa'] if 200701 <= k <= 202512]) * 100, 2),
+                                     'note': 'JKP の地域 developed は米国を含まない（n_countries 20〜22）。事前登録2 で相手（ii）を French Developed へ訂正'}
     out['jkp_developed_2008'] = round((math.prod(1 + dv[k] for k in dv if k // 100 == 2008) - 1) * 100, 1)
     out['jkp_developed_cagr_1986_2025'] = round(M.cagr(dv) * 100, 2)
     out['look_ahead'] = '信号は choose(t) の中で ym_add(t, -k)（k≥0）の値と、年 Y の表（Y−1年12月末）を Y年6月末以降にだけ使う。リターンは backtest が t+1 の月を当てる'
+    return out
+
+
+def post_hoc_reports(W, B, series, runs, rfd):
+    """事前登録3 の X1〜X4（事後・格付けしない）"""
+    out = {}
+    dev, na, dx = B['fr_dev'], W.freg['NA'], W.freg['dxus']
+    usa = B['jkp_usa']
+    dp3 = series.get('D1_f20_dp_K3', {})
+    # X1: 米国の重み w(t) を過去36か月の回帰で推定（月末 t まで）→ t+1 に w·米国 + (1−w)·dp3
+    x1, ws = {}, {}
+    ks = sorted(set(dev) & set(na) & set(dx))
+    for i, t in enumerate(ks):
+        win = ks[max(0, i - 35):i + 1]
+        if len(win) < 36:
+            continue
+        num = sum((dev[k] - dx[k]) * (na[k] - dx[k]) for k in win)
+        den = sum((na[k] - dx[k]) ** 2 for k in win)
+        if den <= 0:
+            continue
+        w = min(1.0, max(0.0, num / den))
+        t1 = ym_add(t, 1)
+        if t1 in usa and t1 in dp3:
+            x1[t1] = w * usa[t1] + (1 - w) * dp3[t1]
+            ws[t1] = w
+    def pack(r, b, label):
+        return {'label': label, 'full': M.excess_stats(r, b), 'train': M.excess_stats(r, b, z=M.TRAIN_END),
+                'hold': M.excess_stats(r, b, a=M.HOLD_START), 'recent': M.excess_stats(r, b, a=M.RECENT_START),
+                'roll20': M.rolling(r, b, 20), 'dca20': M.dca(r, b, 20)}
+    out['X1_us_anchor_dp3'] = pack(x1, dev, '米国は推定した市場の重みのまま・米国外だけ D1_f20_dp_K3 vs French Developed（事後・格付けなし）')
+    if ws:
+        wv = [ws[k] for k in sorted(ws)]
+        out['X1_us_anchor_dp3']['us_weight'] = {'first': [min(ws), round(wv[0], 3)], 'median': round(S.median(wv), 3),
+                                                'last': [max(ws), round(wv[-1], 3)], 'min': round(min(wv), 3), 'max': round(max(wv), 3)}
+        # 同じ重みで米国外を French Developed_ex_US のまま持った姿（重みの推定の誤差を見る）
+        base = {k: ws[k] * usa[k] + (1 - ws[k]) * dx[k] for k in ws if k in dx}
+        out['X1_us_anchor_dp3']['same_weight_with_index_vs_dev'] = M.excess_stats(base, dev)
+    # X2: 切替（P7）で米国外の月だけ dp3
+    p7 = runs.get('P7_usrow_12')
+    if p7:
+        x2 = {}
+        for k, h in p7[2].items():
+            if 'usa' in h:
+                x2[k] = usa.get(k)
+            elif k in dp3:
+                x2[k] = dp3[k]
+        x2 = {k: v for k, v in x2.items() if v is not None}
+        out['X2_usrow_dp3'] = pack(x2, dev, '米国と米国外の切替（12-0）で米国外の月だけ D1_f20_dp_K3 vs French Developed（事後・格付けなし）')
+        out['X2_usrow_dp3']['months_in_dp3_hold'] = sum(1 for k in x2 if k >= M.HOLD_START and 'usa' not in p7[2].get(k, {}))
+    # X3: フロンティアからジンバブエを除く
+    R = W.ret
+    fr_ex = [c for c in FRONTIER if c != 'zwe']
+    months = months_between(197501, 202608)
+    for K in (3, 5):
+        def ch(t, K=K):
+            sc = {c: W.cum(R.get(c, {}), t, 11, 1) for c in fr_ex if W.elig(c, t)}
+            sc = {c: v for c, v in sc.items() if v is not None}
+            if len(sc) < 2 * K:
+                return None
+            return {c: 1 / K for c in top_k(sc, K)}
+        r, turn, hold, ren = backtest(lambda a, t: R[a].get(t), ch, months)
+        out[f'X3_frontier_ex_zwe_K{K}'] = pack(r, B['jkp_fr'], f'フロンティアの勢い上位{K}（ジンバブエ除外）vs JKP frontier vw（相手にはジンバブエが入っている可能性）（事後・格付けなし）')
+        out[f'X3_frontier_ex_zwe_K{K}']['annual_oneway_turnover'] = round(S.mean([turn.get(k, 0) for k in r]) * 12, 2) if r else None
+    # X4: dp3 と米国
+    out['X4_dp3_vs_us'] = pack(dp3, usa, 'D1_f20_dp_K3 vs 米国（JKP usa）（事後・格付けなし）')
+    out['X4b_dp3_vs_dev'] = pack(dp3, dev, 'D1_f20_dp_K3 vs French Developed（米国込み）（事後・格付けなし）')
+    return out
+
+
+def diagnostics(W, B, series, runs, rfd, ST):
+    """事前登録4 の Q1〜Q5（事後・格付けしない）"""
+    out = {}
+    b = B['fr_dxus']
+    r, turn, hold, ren = runs['D1_f20_dp_K3']
+    ms = [k for k in sorted(r) if k >= M.HOLD_START and k in b]
+    con = {}
+    for k in ms:
+        for c, w in hold[k].items():
+            con[c] = con.get(c, 0.0) + w * (W.ret[c][k] - b[k])
+    out['Q1_contribution_hold'] = {'label': 'D1_f20_dp_K3 の保有期間の超過（算術・年率%）の国ごとの寄与（対 French Developed_ex_US）',
+                                   'by_country': {c: round(v / len(ms) * 12 * 100, 2) for c, v in sorted(con.items(), key=lambda x: -x[1])},
+                                   'total': round(sum(con.values()) / len(ms) * 12 * 100, 2)}
+    h = make_strategies.helpers
+    months = months_between(197501, 202608)
+    jret = lambda a, t: W.ret[a].get(t) if a in W.ret else None
+    loo = {}
+    for x in ('nzl', 'aus', 'nor', 'fin', 'ita'):
+        rr, *_ = backtest(jret, h['val']([c for c in F20 if c != x], 3, 'dp'), months, 6)
+        st = M.excess_stats(rr, b, a=M.HOLD_START)
+        sf = M.excess_stats(rr, b)
+        loo[x] = {'hold_ex': st and st['ex_ann'], 'hold_t': st and st['t'], 'full_ex': sf and sf['ex_ann'], 'full_t': sf and sf['t']}
+    out['Q2_leave_one_out'] = {'label': 'D1_f20_dp_K3 から一か国を除いた版（対 French Developed_ex_US）', 'by_excluded': loo}
+    e15 = [ETF[tk] for tk in ETF if tk != 'SPY']
+    rr, *_ = backtest(jret, h['val'](e15, 3, 'dp'), months, 6)
+    out['Q3_etf15_universe_index'] = {'label': 'D5 と同じ15か国に限った D1 の規則（JKP の指数リターン）',
+                                      'hold': M.excess_stats(rr, b, a=M.HOLD_START), 'full': M.excess_stats(rr, b), 'train': M.excess_stats(rr, b, z=M.TRAIN_END)}
+    # Q4: 現地通貨建て
+    zi = zipfile.ZipFile(io.BytesIO(M.get('https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_International_Indices.zip',
+                                          name='fr_F-F_International_Indices.zip')))
+    a = parse_fr_dat(zi.read('Ind_all.Dat').decode('latin-1'))
+    sec = a[('LOC', 'NR', 'm')]
+    eafe_loc = {k: v[sec['cols'].index('Mkt')] / 100 for k, v in sec['data'].items() if v[sec['cols'].index('Mkt')] is not None}
+    floc = lambda a_, t: W.fr[a_]['loc'].get(t)
+    rl, *_ = backtest(floc, h['val'](EAFE19, 3, 'dp', src='fr'), months, 6)
+    ru = series['D4_eafe_dp_K3']
+    out['Q4_currency'] = {'label': 'D4_eafe_dp_K3 を現地通貨建てで（相手 Ind_all 現地通貨）。ドル建てとの差＝通貨の寄与',
+                          'local_hold': M.excess_stats(rl, eafe_loc, a=M.HOLD_START), 'local_full': M.excess_stats(rl, eafe_loc),
+                          'usd_hold': M.excess_stats(ru, B['fr_eafe'], a=M.HOLD_START), 'usd_full': M.excess_stats(ru, B['fr_eafe'])}
+    # Q5: CAPM α
+    def capm(s_, b_, a_=None, z_=None):
+        ks = sorted(k for k in set(s_) & set(b_) & set(rfd) if (a_ is None or k >= a_) and (z_ is None or k <= z_))
+        y = [s_[k] - rfd[k] for k in ks]; x = [b_[k] - rfd[k] for k in ks]
+        mx, my = S.mean(x), S.mean(y)
+        beta = sum((xi - mx) * (yi - my) for xi, yi in zip(x, y)) / sum((xi - mx) ** 2 for xi in x)
+        al = [yi - beta * xi for xi, yi in zip(x, y)]
+        t = M.nw_t(al)
+        return {'from': ks[0], 'to': ks[-1], 'alpha_ann': round(S.mean(al) * 12 * 100, 2), 't': round(t, 2) if t else None, 'beta': round(beta, 2)}
+    d1 = series['D1_f20_dp_K3']
+    out['Q5_capm_alpha'] = {'label': 'D1_f20_dp_K3 の β を除いた α（対 French Developed_ex_US）',
+                            'full': capm(d1, b), 'train': capm(d1, b, z_=M.TRAIN_END), 'hold': capm(d1, b, a_=M.HOLD_START),
+                            'vs_fr_dev_hold': capm(d1, B['fr_dev'], a_=M.HOLD_START), 'vs_us_hold': capm(d1, B['jkp_usa'], a_=M.HOLD_START)}
+    # 事前登録5 の Q6〜Q8
+    terc = {'top': {}, 'mid': {}, 'bot': {}}
+    for Y in range(1986, 2026):
+        t0 = Y * 100 + 6
+        el = [c for c in F20 if W.elig(c, t0)]
+        sc = {c: W.label('dp', c, Y) for c in el}
+        sc = {c: v for c, v in sc.items() if v is not None}
+        if len(sc) < 6:
+            continue
+        ks = sorted(sc, key=lambda c: (-sc[c], c))
+        n = len(ks)
+        grp = {'top': ks[:round(n / 3)], 'mid': ks[round(n / 3):round(2 * n / 3)], 'bot': ks[round(2 * n / 3):]}
+        for g, cs in grp.items():
+            for m in months_between(ym_add(t0, 1), ym_add(t0, 12)):
+                xs = [W.ret[c].get(m) for c in cs if W.ret[c].get(m) is not None]
+                if xs:
+                    terc[g][m] = S.mean(xs)  # 各月等分（簡便・報告のみ）
+    tq = {}
+    for g, r_ in terc.items():
+        tq[g] = {'full': M.excess_stats(r_, b), 'train': M.excess_stats(r_, b, z=M.TRAIN_END), 'hold': M.excess_stats(r_, b, a=M.HOLD_START)}
+    ls = {k: terc['top'][k] - terc['bot'][k] for k in terc['top'] if k in terc['bot']}
+    zero = {k: 0.0 for k in ls}
+    tq['top_minus_bot'] = {'full': M.excess_stats(ls, zero), 'train': M.excess_stats(ls, zero, z=M.TRAIN_END), 'hold': M.excess_stats(ls, zero, a=M.HOLD_START)}
+    out['Q6_terciles'] = {'label': 'F20 を配当利回りで三分位（毎月等分に戻す簡便版）・対 French Developed_ex_US。上−下は相手なしの差', 'groups': tq}
+    sub = {}
+    for sid, bk in (('D1_f20_dp_K3', 'fr_dxus'), ('D4_eafe_dp_K3', 'fr_eafe')):
+        rr, bb = series[sid], B[bk]
+        sub[sid] = {}
+        for a_ in range(1976, 2026, 5):
+            st = M.excess_stats(rr, bb, a=a_ * 100 + 1, z=(a_ + 4) * 100 + 12)
+            if st:
+                sub[sid][f'{a_}-{a_ + 4}'] = [st['ex_ann'], st['t'], st['cagr_diff']]
+    out['Q7_subperiods'] = {'label': '5年ごとの超過 [算術%/年, t, 幾何差]', 'by': sub}
+    rr = series['D1_f20_dp_K3']
+    r_ex = {k: v for k, v in rr.items() if k // 100 != 2025}
+    out['Q8_ex_2025'] = {'label': 'D1_f20_dp_K3 の保有期間（2025年を除く）', 'hold_ex_2025': M.excess_stats(r_ex, b, a=M.HOLD_START),
+                         'hold_all': M.excess_stats(rr, b, a=M.HOLD_START)}
     return out
 
 
@@ -889,6 +1244,9 @@ def main():
     order = [s for s in ST if s['family'] == 'CONTROL'] + [s for s in ST if s['family'] != 'CONTROL']
     for s in order:
         r, turn, hold, ren = backtest(s['retf'], s['choose'], months, s['rebal'])
+        if s.get('vend'):
+            r = {k: v for k, v in r.items() if k <= s['vend']}
+            hold = {k: v for k, v in hold.items() if k <= s['vend']}
         runs[s['id']] = (r, turn, hold, ren)
         series[s['id']] = r
         print(s['id'], len(r), min(r) if r else None, max(r) if r else None, flush=True)
@@ -916,6 +1274,35 @@ def main():
         p = h['p'] if h and h['t'] is not None and h['t'] > 0 else 1.0
         fams.setdefault(s['family'], {})[s['id']] = p
     holm = {f: M.holm(v) for f, v in fams.items()}
+    # 4b) 第1回の相手（JKP developed＝先進国・米国抜き）でも測って残す（事前登録2）
+    ar, ar_p = {}, {}
+    for s in ST:
+        if not s.get('asreg'):
+            continue
+        r, turn, hold, ren = runs[s['id']]
+        ar[s['id']] = evaluate_one(s, r, turn, hold, ren, B[s['asreg']], B, series, rfd)
+        if s['family'] != 'CONTROL':
+            h = ar[s['id']].get('stats', {}).get('hold')
+            ar_p.setdefault(s['family'], {})[s['id']] = h['p'] if h and h['t'] is not None and h['t'] > 0 else 1.0
+    ar_holm = {f: M.holm(v) for f, v in ar_p.items()}
+    for sid, d in ar.items():
+        st = d.get('stats')
+        if not st:
+            continue
+        fam = res[sid]['family']
+        hp = ar_holm.get(fam, {}).get(sid)
+        sp = None
+        sdef = next(x for x in ST if x['id'] == sid)
+        if sdef.get('timing'):
+            sp = {'train': tuple(d['sharpe']['train']), 'hold': tuple(d['sharpe']['hold'])}
+        g, c = M.grade(st['full'], st['train'], st['hold'], d['roll20'], cost_hold=st['hold_net'], repl=res[sid].get('repl'),
+                       family_holm_p=hp, sharpe_pair=sp, leveraged_or_timing=bool(sdef.get('timing')))
+        res[sid]['as_registered_vs_dev_exUS'] = {
+            'benchmark': 'JKP developed vw ＝ 先進国（米国抜き・22か国）＋RF。第1回の相手（事前登録 15ef00b）。主の格付けではない',
+            'full': st['full'], 'train': st['train'], 'hold': st['hold'], 'hold_net': st['hold_net'], 'roll20': d['roll20'],
+            'family_holm_p': hp, 'grade': g, 'criteria': c}
+        wd = B['jkp_world']
+        res[sid]['vs_jkp_world'] = {'full': M.excess_stats(series[sid], wd), 'hold': M.excess_stats(series[sid], wd, a=M.HOLD_START)}
     # 5) 判定
     for s in ST:
         d = res[s['id']]
@@ -932,11 +1319,25 @@ def main():
                        family_holm_p=hp, sharpe_pair=sp, leveraged_or_timing=bool(s.get('timing')))
         d['grade'] = g
         d['criteria'] = c
-        d['grade_label'] = {'P': '主', 'CONTROL': '対照（候補ではない）'}.get(s['family'], '探索')
+        d['grade_label'] = {'P': '主', 'CONTROL': '対照（候補ではない）',
+                            'D': '探索（結果を見た後・保有期間は新しい証拠ではない）', 'K': '探索（結果を見た後に足した物差し）',
+                            'I': '探索（結果を見た後・独立の単位での再現）', 'J': '報告（実在ETF・訓練が短いので格付けは参考）',
+                            'G': '探索（結果を見た後）'}.get(s['family'], '探索')
         if s['family'] == 'P' or g in ('S', 'A', 'B'):
             d['cal_years_hold'] = cal_years(series[s['id']], B[s['bench']])
     for d in res.values():
         d.pop('_net', None)
+    # 5b) 事前登録3 の X（事後・格付けしない）
+    xr = post_hoc_reports(W, B, series, runs, rfd)
+    xr.update(diagnostics(W, B, series, runs, rfd, ST))
+    # C5 の単位のうちフロンティアはジンバブエ（公定レートのハイパーインフレ）で汚れている → 除いた版でも符号を確かめて記録（判定は登録どおり）
+    for sid, K in (('P1_mom12_K3', 3), ('P2_mom12_K5', 5)):
+        x3 = xr.get(f'X3_frontier_ex_zwe_K{K}', {}).get('full')
+        res[sid]['repl_note'] = ('フロンティアの単位（E4_fr）はジンバブエの非現実的なドル建てリターン（月+100%超）で汚れている。'
+                                 f'ジンバブエを除いた版の全期間の超過 {x3 and x3["ex_ann"]}%/年（正負は同じ）')
+    res['E4_fr_mom12_K3']['invalid_note'] = res['E4_fr_mom12_K5']['invalid_note'] = (
+        '無効: 勝ちのほぼ全部がジンバブエ（2006〜2008・2020〜2024 のハイパーインフレを公定レートでドルに直した月+100〜180%）。'
+        '実際には買えない。ジンバブエ抜きは post_hoc_reports_not_graded の X3')
     # 6) ETF の再生（報告）
     etf, er = run_etf(W, B, rfd)
     # 7) 点検
@@ -946,7 +1347,7 @@ def main():
     for d in tested:
         st = d.get('stats') or {}
         g = d.get('grade', d.get('grade_reference_only'))
-        h = st.get('hold') or (d.get('vs', {}).get('jkp_dev', {}) or {}).get('hold')
+        h = st.get('hold') or (d.get('vs', {}).get('fr_dev', {}) or {}).get('hold')
         f = st.get('full')
         summ.append({'id': d['id'], 'family': d['family'], 'grade': g, 'full_ex': f and f['ex_ann'], 'full_t': f and f['t'],
                      'train_ex': st.get('train') and st['train']['ex_ann'], 'train_t': st.get('train') and st['train']['t'],
@@ -954,8 +1355,21 @@ def main():
                      'hold_net_ex': st.get('hold_net') and st['hold_net']['ex_ann'],
                      'roll20_win': d.get('roll20') and d['roll20']['win_rate'], 'holm_p': d.get('family_holm_p')})
     obj = {'angle': 'country', 'prereg': PREREG, 'prereg_commit': git_sha(PREREG),
-           'global_criteria': 'out/mw_prereg.json', 'benchmark_primary': 'JKP developed mkt vw + French RF（総リターン）',
-           'n_tested': len(tested), 'families_holm': holm, 'summary_table': summ, 'tested': tested, 'sanity': san}
+           'prereg2': 'out/mw_country_prereg2.json', 'prereg2_commit': git_sha('out/mw_country_prereg2.json'),
+           'deviation_note': '第1回の相手 JKP developed は先進国（米国抜き）だった。事前登録2 で相手（ii）を French Developed（米国込み・1990-07〜）へ訂正。第1回の数字は各戦略の as_registered_vs_dev_exUS に残した',
+           'global_criteria': 'out/mw_prereg.json', 'benchmark_primary': 'French Developed Mkt（Mkt-RF＋RF・米国込み）＝P・E1・E2・E5・対照。E3=French Developed_ex_US・E4=JKP emerging/frontier/world・E6=French EAFE・E7=French Developed',
+           'prereg3': 'out/mw_country_prereg3.json', 'prereg3_commit': git_sha('out/mw_country_prereg3.json'),
+           'prereg4': 'out/mw_country_prereg4.json', 'prereg4_commit': git_sha('out/mw_country_prereg4.json'),
+           'prereg5': 'out/mw_country_prereg5.json', 'prereg5_commit': git_sha('out/mw_country_prereg5.json'),
+           'conclusion_ja': [
+               '主の問い（米国込みの時価加重の先進国市場 French Developed に勝つか）: 主の7本で A・S は無し。国を選ぶ規則（勢い・割安・両方）は 2007〜2025 に年 −1〜−3% 負け、米国と米国外の切替（P7）だけが +0.42%/年（t0.40・B）',
+               '負けの主因は規則の中身より『米国を少なく持つこと』: 同じ23か国の等分でも French Developed に −1.53%/年、米国だけなら +2.07%/年（t3.24）',
+               '米国抜きの先進国（事前登録した系列 JKP developed の正体）に対しては勝っていた: 配当利回りの上位3か国（E2_dp_K3）が S（+3.76%/年・t2.81・費用後 +3.31%/年）、勢い上位5（P2）が A',
+               '配当利回りの国選びは French の1976年からのデータでも S（D4・+3.49%/年・t2.75）、実在ETF 20本でも EFA に +3.36%/年（t2.26）。ただし上位3という一点に依存（K=5 で +1.2、NZ か豪州を除くと約 +1.7・t1）、三分位の上−下は保有期間で +0.1%/年（t0.07）、米国の業種・新興国ETFでは再現せず、米国込みの市場に対する α は 0.0、米国には −1.0%/年',
+               '事後（格付けなし）: 米国は市場の重みのまま持ち、米国外の部分だけ配当利回り上位3か国に替える形は French Developed に +1.58%/年（t2.32・2007〜2025）',
+               'データの訂正: JKP の地域 developed は米国を含まない（事前登録2 で相手を French Developed に訂正・第1回の数字は as_registered に残した）'],
+           'n_tested': len(tested), 'families_holm': holm, 'summary_table': summ, 'tested': tested,
+           'post_hoc_reports_not_graded': xr, 'sanity': san}
     p = M.save(OUT, obj)
     print('書いた', p)
     for x in summ:
