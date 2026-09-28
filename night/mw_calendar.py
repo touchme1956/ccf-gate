@@ -1,0 +1,721 @@
+#!/usr/bin/env python3
+"""night/mw_calendar.py — 暦のアノマリーで市場に勝てるか（mw の角度 calendar・読むだけ・門の判定には不使用）
+
+2026-09-28 ユーザー指示「市場に勝てる歴史検証が出るまでいろんな角度から調べて」の一角。
+事前登録: out/mw_calendar_prereg.json（測る前にコミット）。線は out/mw_prereg.json（C1〜C8）。出力: out/mw_calendar.json
+
+規則（詳しくは事前登録）
+- ハロウィーン（11〜4月）・月替わり（最終立会日＋最初の3立会日）・祝日前・1月の小型株・FOMC 発表日
+- 切替（株↔短期金利）と上乗せ（1.5倍↔1倍）。暦は前もって分かるので、持ち方は当日の暦だけで決まる
+- 相手: French Mkt（上限なしの時価加重）を買って持つだけ。日次の規則は同じ日次 Mkt を月次へ直したものと比べる
+- 国別（C5）: JKP の国別 mkt（vw・超過・米ドル建て）46か国
+
+使い方: python3 night/mw_calendar.py
+"""
+import sys, os, re, json, math, datetime, subprocess, statistics as S
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import mw_common as M
+
+PREREG = 'mw_calendar_prereg.json'
+COST, COST_LO = 0.001, 0.0005          # 持ち替え 片道100%あたり（判定 / 報告）
+SPREAD, SPREAD_HI = 0.005, 0.015        # 借入の上乗せ（年）
+TAX = 0.20315
+DEV = 'aus aut bel can che deu dnk esp fin fra gbr hkg irl isr ita jpn nld nor nzl prt sgp swe'.split()
+EM = 'are bra chl chn col cze egy grc hun idn ind kor kwt mex mys per phl pol qat sau tha tur twn zaf'.split()
+TR_END, HO_START, RE_START = M.TRAIN_END, M.HOLD_START, M.RECENT_START
+
+
+def log(*a):
+    print(*a, file=sys.stderr, flush=True)
+
+
+# ───────────────────────── 暦 ─────────────────────────
+def ymd(k):
+    return datetime.date(k // 10000, k // 100 % 100, k % 100)
+
+
+def dkey(d):
+    return d.year * 10000 + d.month * 100 + d.day
+
+
+def month_groups(dates):
+    g = {}
+    for k in dates:
+        g.setdefault(k // 100, []).append(k)
+    return g
+
+
+def edges_ok(dates):
+    """最初の月が途中から始まるか・最後の月が途中で終わるか（事前登録 data_edges）"""
+    first_partial = ymd(dates[0]).day >= 8
+    last_partial = ymd(dates[-1]).day < 25
+    return first_partial, last_partial
+
+
+def tom_set(dates, before=1, after=3):
+    g = month_groups(dates)
+    yms = sorted(g)
+    fp, lp = edges_ok(dates)
+    s = set()
+    for i, ym in enumerate(yms):
+        ds = g[ym]
+        if not (i == len(yms) - 1 and lp):
+            s.update(ds[-before:])
+        if not (i == 0 and fp):
+            s.update(ds[:after])
+    return s
+
+
+def ariel_set(dates):
+    """前月の最終立会日＋暦の1〜15日の立会日"""
+    g = month_groups(dates)
+    yms = sorted(g)
+    fp, lp = edges_ok(dates)
+    s = set(k for k in dates if k % 100 <= 15)
+    for i, ym in enumerate(yms):
+        if not (i == len(yms) - 1 and lp):
+            s.add(g[ym][-1])
+    if fp:  # 途中から始まる最初の月の前半は、始まる前の日を持てないだけで、暦の前半の日は分かる
+        pass
+    return s
+
+
+def santa_set(dates):
+    g = month_groups(dates)
+    yms = sorted(g)
+    fp, lp = edges_ok(dates)
+    s = set()
+    for i, ym in enumerate(yms):
+        if ym % 100 == 12 and not (i == len(yms) - 1 and lp):
+            s.update(g[ym][-5:])
+        if ym % 100 == 1 and not (i == 0 and fp):
+            s.update(g[ym][:2])
+    return s
+
+
+def easter(y):
+    a = y % 19; b = y // 100; c = y % 100; d = b // 4; e = b % 4
+    f = (b + 8) // 25; g = (b - f + 1) // 3; h = (19 * a + b - d - g + 15) % 30
+    i = c // 4; k = c % 4; l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    mo = (h + l - 7 * m + 114) // 31; da = ((h + l - 7 * m + 114) % 31) + 1
+    return datetime.date(y, mo, da)
+
+
+_EASTER = {}
+
+
+def scheduled_holiday(d):
+    """定例の祝日の窓（事前登録 preholiday_US_primary）。d は平日"""
+    m, dd, wd = d.month, d.day, d.weekday()  # 月曜=0
+    if (m == 12 and dd == 31) or (m == 1 and dd <= 3):
+        return 'newyear'
+    if m == 1 and 15 <= dd <= 21 and wd == 0:
+        return 'mlk'
+    if m == 2 and 11 <= dd <= 13:
+        return 'lincoln'
+    if m == 2 and (21 <= dd <= 23 or (15 <= dd <= 21 and wd == 0)):
+        return 'washington'
+    if d.year not in _EASTER:
+        _EASTER[d.year] = easter(d.year) - datetime.timedelta(days=2)
+    if d == _EASTER[d.year]:
+        return 'goodfriday'
+    if m == 5 and (29 <= dd <= 31 or (25 <= dd <= 31 and wd == 0)):
+        return 'memorial'
+    if m == 6 and 18 <= dd <= 20:
+        return 'juneteenth'
+    if m == 7 and 3 <= dd <= 5:
+        return 'independence'
+    if m == 9 and 1 <= dd <= 7 and wd == 0:
+        return 'labor'
+    if m == 10 and 11 <= dd <= 13:
+        return 'columbus'
+    if m == 11 and 2 <= dd <= 8 and wd == 1:
+        return 'election'
+    if m == 11 and 10 <= dd <= 12:
+        return 'veterans'
+    if m == 11 and 20 <= dd <= 30 and wd == 3:
+        return 'thanksgiving'
+    if m == 12 and 24 <= dd <= 26:
+        return 'christmas'
+    return None
+
+
+def preholiday_set(dates, mode='scheduled', maxgap=None):
+    """次の立会日までに平日が欠けている立会日。mode='scheduled' は定例の祝日の窓に入る平日があるときだけ"""
+    s, gaps = set(), []
+    for a, b in zip(dates, dates[1:]):
+        da, db = ymd(a), ymd(b)
+        wk = [da + datetime.timedelta(i) for i in range(1, (db - da).days)]
+        wk = [x for x in wk if x.weekday() < 5]
+        if not wk:
+            continue
+        if maxgap is not None and len(wk) > maxgap:
+            continue
+        if mode == 'scheduled' and not any(scheduled_holiday(x) for x in wk):
+            gaps.append((a, [dkey(x) for x in wk], False))
+            continue
+        gaps.append((a, [dkey(x) for x in wk], True))
+        s.add(a)
+    return s, gaps
+
+
+SYN = 29.530588853
+REF = datetime.datetime(2000, 1, 6, 18, 14)
+
+
+def lunar_set(dates):
+    s = set()
+    for k in dates:
+        d = ymd(k)
+        age = ((datetime.datetime(d.year, d.month, d.day, 12) - REF).total_seconds() / 86400) % SYN
+        if age <= 7 or age >= SYN - 7:
+            s.add(k)
+    return s
+
+
+# ───────────────────────── FOMC ─────────────────────────
+MON = {m: i + 1 for i, m in enumerate('jan feb mar apr may jun jul aug sep oct nov dec'.split())}
+
+
+def fomc_dates():
+    """定例 FOMC の発表日（会合の最終日）。1994〜2020 は fomchistorical、2021〜 は fomccalendars"""
+    out, bad = set(), []
+    for y in range(1994, 2021):
+        t = M.get(f'https://www.federalreserve.gov/monetarypolicy/fomchistorical{y}.htm', name=f'fomc_hist_{y}.htm', max_age_days=3650).decode('utf-8', 'ignore')
+        for h in re.findall(r'<h5[^>]*>([^<]*)</h5>', t):
+            h = ' '.join(h.replace('&nbsp;', ' ').split())
+            if 'Meeting' not in h or re.search(r'(?i)conference call|unscheduled|cancel|notation', h):
+                continue
+            m = re.match(r'([A-Za-z]+)(?:/([A-Za-z]+))?\s+(\d+)(?:\s*-\s*(\d+))?\b.*?Meeting\s*-\s*(\d{4})', h)
+            if not m:
+                bad.append(h); continue
+            mon = (m.group(2) or m.group(1))[:3].lower()
+            day = int(m.group(4) or m.group(3))
+            out.add(datetime.date(int(m.group(5)), MON[mon], day))
+    t = M.get('https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm', name='fomc_calendars.htm', max_age_days=30).decode('utf-8', 'ignore')
+    panels = sorted((m.start(), int(m.group(1))) for m in re.finditer(r'(\d{4}) FOMC Meetings', t))
+    for m in re.finditer(r'fomc-meeting__month[^>]*>\s*<strong>([^<]*)</strong>.*?fomc-meeting__date[^>]*>([^<]*)<', t, re.S):
+        yr = [y for p, y in panels if p <= m.start()]
+        if not yr:
+            continue
+        yr = yr[-1]
+        if yr < 2021:
+            continue
+        mo, dt = m.group(1).strip(), m.group(2).strip()
+        if re.search(r'(?i)notation|unscheduled|cancel', mo + ' ' + dt):
+            continue
+        mon = mo.split('/')[-1][:3].lower()
+        day = int(re.findall(r'\d+', dt)[-1])
+        out.add(datetime.date(yr, MON[mon], day))
+    ds = sorted(d for d in out if d <= datetime.date(2026, 8, 31))
+    merged = [d for i, d in enumerate(ds) if not (i + 1 < len(ds) and (ds[i + 1] - d).days <= 3)]  # 3日以内の2つは後の日（発表日）に寄せる
+    return merged, bad
+
+
+# ───────────────────────── 計算 ─────────────────────────
+def simulate(keys, r, rf, expo, cost, spread, per):
+    """倍率 e（株）・1−e（現金 RF、負なら借入 RF+spread）。持ち替え |e − 漂った倍率| × cost。
+    戻り値: 費用前・費用後のリターン、年あたりの売買（片道100%の回数）、平均の倍率"""
+    g, n, drift, turn, es = {}, {}, None, 0.0, []
+    for k in keys:
+        e = expo(k)
+        p = e * r[k] + (1 - e) * rf[k] - max(e - 1, 0.0) * spread / per
+        tr = 0.0 if drift is None else abs(e - drift)
+        g[k], n[k] = p, p - tr * cost
+        turn += tr; es.append(e)
+        drift = e * (1 + r[k]) / (1 + p) if 1 + p > 0 else e
+    yrs = len(keys) / per
+    return g, n, turn / yrs, S.mean(es)
+
+
+def simulate_ex(keys, rx, expo, cost, spread, per):
+    """超過どうし（国別・JKP）: 株の倍率 e・現金の超過0・借入は (e−1)×spread"""
+    g, n, drift = {}, {}, None
+    for k in keys:
+        e = expo(k)
+        p = e * rx[k] - max(e - 1, 0.0) * spread / per
+        tr = 0.0 if drift is None else abs(e - drift)
+        g[k], n[k] = p, p - tr * cost
+        drift = e * (1 + rx[k]) / (1 + p) if 1 + p > 0 else e
+    return g, n
+
+
+def rotation(keys, r_a, r_b, in_b, cost_switch):
+    """1月の小型株: in_b(k) の月は r_b、ほかは r_a。持ち替えのたびに cost_switch"""
+    g, n, prev, sw = {}, {}, None, 0
+    for k in keys:
+        b = in_b(k)
+        g[k] = r_b[k] if b else r_a[k]
+        c = cost_switch if (prev is not None and b != prev) else 0.0
+        sw += 1 if c else 0
+        n[k] = g[k] - c
+        prev = b
+    return g, n, sw / (len(keys) / 12)
+
+
+# ───────────────────────── 税（報告のみ） ─────────────────────────
+def tax_sim(keys, rets, rf, weights, cost, spread, per, yearf):
+    """日本の課税口座の近似。rets={資産: {k: r}}、weights(k)={資産: 倍率}、cost={資産: 片道費用}。
+    売るたびに平均取得単価で実現益・年ごとに通算して20.315%・赤字は3年繰越・現金の利息は受取時に課税・借入の利息は経費。最後に全部売る"""
+    H, C = {}, 1.0
+    st = {'realized': 0.0, 'ded': 0.0, 'carry': []}
+
+    def close_year(y):
+        net = st['realized'] - st['ded']
+        st['carry'] = [(yy, l) for yy, l in st['carry'] if y - yy <= 3]
+        tax = 0.0
+        if net > 0:
+            for i, (yy, l) in enumerate(st['carry']):
+                use = min(l, net); net -= use; st['carry'][i] = (yy, l - use)
+                if net <= 0:
+                    break
+            st['carry'] = [(yy, l) for yy, l in st['carry'] if l > 1e-15]
+            if net > 0:
+                tax = net * TAX
+        elif net < 0:
+            st['carry'].append((y, -net))
+        st['realized'] = st['ded'] = 0.0
+        return tax
+
+    year, first = None, True
+    for k in keys:
+        y = yearf(k)
+        if year is not None and y != year:
+            C -= close_year(year)
+        year = y
+        nav = C + sum(v for v, b in H.values())
+        w = weights(k)
+        for a in sorted(set(H) | set(w)):
+            v, b = H.get(a, (0.0, 0.0))
+            d = w.get(a, 0.0) * nav - v
+            if d < -1e-15:
+                s = -d
+                st['realized'] += s * (1 - b / v) if v > 0 else 0.0
+                b = b * (1 - s / v) if v > 0 else 0.0
+                v -= s; C += s
+            elif d > 1e-15:
+                v += d; b += d; C -= d
+            if not first:
+                C -= abs(d) * cost.get(a, COST)
+            H[a] = (v, b)
+        first = False
+        for a in H:
+            v, b = H[a]
+            H[a] = (v * (1 + rets[a][k]), b)
+        if C >= 0:
+            C += C * rf[k] * (1 - TAX)
+        else:
+            i = C * (rf[k] + spread / per)
+            C += i; st['ded'] += -i
+    for a, (v, b) in H.items():
+        st['realized'] += v - b; C += v
+    C -= close_year(year)
+    return C
+
+
+def tax_report(keys, rets, rf, weights, cost, spread, per, yearf):
+    out = {}
+    for nm, a, z in (('full', None, None), ('train', None, TR_END), ('hold', HO_START, None)):
+        ks = [k for k in keys if (a is None or (k // 100 if per == 252 else k) >= a) and (z is None or (k // 100 if per == 252 else k) <= z)]
+        if len(ks) < per * 5:
+            continue
+        ws = tax_sim(ks, rets, rf, weights, cost, spread, per, yearf)
+        wb = tax_sim(ks, rets, rf, lambda k: {'m': 1.0}, cost, spread, per, yearf)
+        yrs = len(ks) / per
+        out[nm] = {'years': round(yrs, 1), 'after_tax_cagr_s': round((ws ** (1 / yrs) - 1) * 100, 2),
+                   'after_tax_cagr_b': round((wb ** (1 / yrs) - 1) * 100, 2),
+                   'diff': round(((ws ** (1 / yrs)) - (wb ** (1 / yrs))) * 100, 2)}
+    return out
+
+
+# ───────────────────────── 評価 ─────────────────────────
+def evaluate(g, n, b, rf, post_pubs, extra=None):
+    """g・n・b・rf は月次。g=費用前、n=費用後（0.10%）"""
+    ev = {
+        'full': M.excess_stats(g, b), 'train': M.excess_stats(g, b, z=TR_END), 'hold': M.excess_stats(g, b, a=HO_START),
+        'recent': M.excess_stats(g, b, a=RE_START),
+        'net_full': M.excess_stats(n, b), 'net_train': M.excess_stats(n, b, z=TR_END), 'net_hold': M.excess_stats(n, b, a=HO_START),
+        'roll20_net': M.rolling(n, b, 20), 'dca20_net': M.dca(n, b, 20),
+        'sharpe': {'train': (M.sharpe(n, rf, z=TR_END), M.sharpe(b, rf, z=TR_END)),
+                   'hold': (M.sharpe(n, rf, a=HO_START), M.sharpe(b, rf, a=HO_START)),
+                   'full': (M.sharpe(n, rf), M.sharpe(b, rf))},
+        'maxdd': {'s_net': round(M.maxdd(n) * 100, 1), 'b': round(M.maxdd({k: b[k] for k in n if k in b}) * 100, 1)},
+        'postpub': {},
+    }
+    for lab, a in post_pubs:
+        ev['postpub'][lab] = {'gross': M.excess_stats(g, b, a=a), 'net': M.excess_stats(n, b, a=a)}
+    if extra:
+        ev.update(extra)
+    return ev
+
+
+def compact(st):
+    if not st:
+        return None
+    return {k: st[k] for k in ('from', 'to', 'years', 'ex_ann', 't', 'p', 'cagr_s', 'cagr_b', 'cagr_diff', 'te', 'ir', 'beta', 'vol_s', 'vol_b')}
+
+
+# ───────────────────────── データ ─────────────────────────
+def fr_region_daily(name):
+    for t, v in M.french_tables(name).items():
+        if v['freq'] == 'daily':
+            cols = [c.lower().replace('-', '') for c in v['cols']]
+            im, ir = cols.index('mktrf'), cols.index('rf')
+            mk, rf = {}, {}
+            for d, row in v['data'].items():
+                if row[im] is not None and row[ir] is not None:
+                    mk[d] = (row[im] + row[ir]) / 100; rf[d] = row[ir] / 100
+            return mk, rf
+    raise KeyError(name)
+
+
+def jkp_daily(c):
+    rows = M.jkp_rows(c, 'mkt', 'factor', 'vw', 'daily')
+    return {int(x['date'].replace('-', '')): float(x['ret']) for x in rows if x['ret'] not in ('', 'NA', 'na')}
+
+
+def load():
+    ffd, ffm = M.ff_factors('daily'), M.ff_factors('monthly')
+    me = M.french_series('Portfolios_Formed_on_ME', 'Value Weight', 'monthly')
+    D = sorted(k for k in ffd['mkt'] if k in ffd['rf'])
+    fomc, bad = fomc_dates()
+    return {'ffd': ffd, 'ffm': ffm, 'me': me, 'D': D, 'fomc': fomc, 'fomc_bad': bad}
+
+
+# ───────────────────────── 規則 ─────────────────────────
+def hal(ym):
+    return ym % 100 in (11, 12, 1, 2, 3, 4)
+
+
+def daily_rule_sets(dates, fomc_keys, us=True):
+    """日次の規則が使う暦の集合（その市場の暦で）"""
+    ds = sorted(dates)
+    if us:
+        ph, gaps = preholiday_set(ds, 'scheduled')
+        ph_all, _ = preholiday_set(ds, 'all')
+    else:
+        ph, gaps = preholiday_set(ds, 'all', maxgap=5)
+        ph_all = ph
+    dset = set(ds)
+    fom = set(k for k in fomc_keys if k in dset)
+    prev = {b: a for a, b in zip(ds, ds[1:])}
+    fom2 = fom | set(prev[k] for k in fom if k in prev)
+    return {'tom': tom_set(ds), 'ph': ph, 'ph_all': ph_all, 'fomc': fom, 'fomc2': fom2, 'santa': santa_set(ds),
+            'ariel': ariel_set(ds), 'lunar': lunar_set(ds), 'gaps': gaps}
+
+
+# 各戦略: (id, 族, 説明, 種類, 規則)。種類: 'd'=日次の倍率、'm'=月次の倍率、'rot'=1月の小型株
+def specs():
+    L = []
+    P, E = 'primary', 'exploratory'
+    L.append(('P1_HAL_SW', P, 'ハロウィーンの切替（11〜4月 Mkt・5〜10月 RF）', 'm', lambda ym, c: 1.0 if hal(ym) else 0.0, 'hal'))
+    L.append(('P2_HAL_OV15', P, 'ハロウィーンの上乗せ（11〜4月1.5倍・5〜10月1倍）', 'm', lambda ym, c: 1.5 if hal(ym) else 1.0, 'hal'))
+    L.append(('P3_TOM_SW', P, '月替わりの切替（TOM の日だけ Mkt）', 'd', lambda k, c: 1.0 if k in c['tom'] else 0.0, 'tom'))
+    L.append(('P4_TOM_OV15', P, '月替わりの上乗せ（TOM 1.5倍）', 'd', lambda k, c: 1.5 if k in c['tom'] else 1.0, 'tom'))
+    L.append(('P5_PH_SW', P, '祝日前の切替（定例の祝日の前日だけ Mkt）', 'd', lambda k, c: 1.0 if k in c['ph'] else 0.0, 'ph'))
+    L.append(('P6_PH_OV15', P, '祝日前の上乗せ（1.5倍）', 'd', lambda k, c: 1.5 if k in c['ph'] else 1.0, 'ph'))
+    L.append(('P7_JAN_SC10', P, '1月の小型株（1月は Lo 10・ほかは Mkt）', 'rot', 'Lo 10', 'jan'))
+    L.append(('P8_FOMC_SW', P, 'FOMC 発表日の切替（1994-02〜）', 'd', lambda k, c: 1.0 if k in c['fomc'] else 0.0, 'fomc'))
+    L.append(('P9_FOMC_OV15', P, 'FOMC 発表日の上乗せ（1.5倍・1994-02〜）', 'd', lambda k, c: 1.5 if k in c['fomc'] else 1.0, 'fomc'))
+    L.append(('E01_HAL_TILT', E, 'ハロウィーンの傾け（11〜4月1.5倍・5〜10月0.5倍＝平均1.0）', 'm', lambda ym, c: 1.5 if hal(ym) else 0.5, 'hal'))
+    L.append(('E02_HAL_OV20', E, 'ハロウィーンの上乗せ2倍', 'm', lambda ym, c: 2.0 if hal(ym) else 1.0, 'hal'))
+    L.append(('E03_TOM_OV20', E, '月替わりの上乗せ2倍', 'd', lambda k, c: 2.0 if k in c['tom'] else 1.0, 'tom'))
+    L.append(('E04_TOM_TILT', E, '月替わりの傾け（TOM 1.5倍・ほか0.88倍）', 'd', lambda k, c: 1.5 if k in c['tom'] else 0.88, 'tom'))
+    L.append(('E05_ARIEL_OV15', E, 'Ariel 型の月の前半1.5倍', 'd', lambda k, c: 1.5 if k in c['ariel'] else 1.0, 'tom'))
+    L.append(('E06_SANTA_OV15', E, 'サンタクロース・ラリー1.5倍', 'd', lambda k, c: 1.5 if k in c['santa'] else 1.0, 'santa'))
+    L.append(('E07_CALCOMBO_OV15', E, 'TOM∨祝日前∨FOMC∨サンタ 1.5倍', 'd',
+              lambda k, c: 1.5 if (k in c['tom'] or k in c['ph'] or k in c['fomc'] or k in c['santa']) else 1.0, 'tom'))
+    L.append(('E08_HALTOM_OV15', E, '11〜4月∨TOM 1.5倍', 'd', lambda k, c: 1.5 if (hal(k // 100) or k in c['tom']) else 1.0, 'hal'))
+    L.append(('E09_LUNAR_OV15', E, '新月の前後±7日 1.5倍', 'd', lambda k, c: 1.5 if k in c['lunar'] else 1.0, 'lunar'))
+    L.append(('E10_JAN_BAROMETER', E, '1月のバロメーター（1月が負なら2〜12月は RF）', 'jb', None, 'hirsch'))
+    L.append(('E11_PRES_OV15', E, '大統領選挙の前年は通年1.5倍', 'm', lambda ym, c: 1.5 if (ym // 100) % 4 == 3 else 1.0, 'hirsch'))
+    L.append(('E12_JAN_SC20', E, '1月の小型株（Lo 20）', 'rot', 'Lo 20', 'jan'))
+    L.append(('E13_JAN_SC30', E, '1月の小型株（Lo 30）', 'rot', 'Lo 30', 'jan'))
+    L.append(('E14_SEPT_AVOID', E, '9月を避ける（9月は RF）', 'm', lambda ym, c: 0.0 if ym % 100 == 9 else 1.0, 'none'))
+    L.append(('E15_FOMC2D_OV15', E, 'FOMC の前日と発表日 1.5倍', 'd', lambda k, c: 1.5 if k in c['fomc2'] else 1.0, 'fomc'))
+    L.append(('S_PH_ALLGAP_SW', 'sensitivity', '祝日前の切替（平日の欠けすべて・後知恵を含む）', 'd', lambda k, c: 1.0 if k in c['ph_all'] else 0.0, 'ph'))
+    L.append(('S_PH_ALLGAP_OV15', 'sensitivity', '祝日前の上乗せ（平日の欠けすべて・後知恵を含む）', 'd', lambda k, c: 1.5 if k in c['ph_all'] else 1.0, 'ph'))
+    return L
+
+
+POSTPUB = {'hal': [('post2003', 200301)], 'tom': [('post1988', 198801)], 'ph': [('post1991', 199101)],
+           'jan': [('post1984', 198401)], 'fomc': [('post2012', 201201), ('post2016', 201601)],
+           'hirsch': [('post1973', 197301)], 'santa': [('post1973', 197301)], 'lunar': [('post2007', 200701)], 'none': []}
+
+
+# ───────────────────────── 国別（C5） ─────────────────────────
+def country_data():
+    cm, cd, cs, miss = {}, {}, {}, {'monthly': [], 'daily': [], 'size': []}
+    for c in DEV + EM:
+        try:
+            cm[c] = M.jkp_mkt(c, 'vw')
+        except Exception as e:  # noqa
+            miss['monthly'].append(c); log('monthly miss', c, e)
+        try:
+            cd[c] = jkp_daily(c)
+        except Exception as e:  # noqa
+            miss['daily'].append(c); log('daily miss', c, e)
+        try:
+            p = M.jkp_portfolios(c, 'market_equity', 'vw')
+            cs[c] = p.get('1.0')
+            if not cs[c]:
+                miss['size'].append(c)
+        except Exception as e:  # noqa
+            miss['size'].append(c); log('size miss', c, e)
+    return cm, cd, cs, miss
+
+
+def country_eval(spec, CD, fomc_keys, rf_m):
+    sid, fam, desc, kind, rule, tag = spec
+    cm, cd, cs, miss = CD
+    res = []
+    for c in DEV + EM:
+        cost = COST if c in DEV else 0.003
+        try:
+            if kind == 'm':
+                rx = cm.get(c)
+                if not rx:
+                    continue
+                ks = sorted(rx)
+                g, n = simulate_ex(ks, rx, lambda ym: rule(ym, None), cost, SPREAD, 12)
+                b = {k: rx[k] for k in ks}
+            elif kind == 'jb':
+                rx = cm.get(c)
+                if not rx:
+                    continue
+                ks = [k for k in sorted(rx) if k in rf_m]
+                jan = {k // 100: (rx[k] + rf_m[k]) for k in ks if k % 100 == 1}
+                g, n = jb_ex(ks, rx, jan, cost)
+                b = {k: rx[k] for k in g}
+            elif kind == 'rot':
+                rx, sm = cm.get(c), cs.get(c)
+                if not rx or not sm:
+                    continue
+                ks = sorted(set(rx) & set(sm))
+                g, n, _ = rotation(ks, rx, sm, lambda ym: ym % 100 == 1, 0.004 if c in DEV else 0.006)
+                b = {k: rx[k] for k in ks}
+            else:
+                rx = cd.get(c)
+                if not rx:
+                    continue
+                ks = sorted(rx)
+                cal = CAL_CACHE.setdefault(c, daily_rule_sets(ks, fomc_keys, us=False))
+                if tag == 'fomc':
+                    ks = [k for k in ks if k >= 19940201]
+                gd, nd = simulate_ex(ks, rx, lambda k: rule(k, cal), cost, SPREAD, 252)
+                g, n = M.to_monthly(gd), M.to_monthly(nd)
+                b = M.to_monthly({k: rx[k] for k in ks})
+            st = M.excess_stats(n, b)
+            sh = M.excess_stats(n, b, a=HO_START)
+            if not st:
+                continue
+            res.append([c, st['ex_ann'], st['cagr_diff'], st['t'], sh['ex_ann'] if sh else None, sh['cagr_diff'] if sh else None, st['years']])
+        except Exception as e:  # noqa
+            log('country err', sid, c, repr(e))
+    pos = sum(1 for x in res if x[1] > 0 and x[2] > 0)
+    pos_h = sum(1 for x in res if x[4] is not None and x[4] > 0 and x[5] > 0)
+    nh = sum(1 for x in res if x[4] is not None)
+    dev = [x for x in res if x[0] in DEV]
+    return {'regions': len(res), 'positive': pos, 'share': round(pos / len(res), 3) if res else None,
+            'hold_positive': pos_h, 'hold_regions': nh,
+            'dev_positive': sum(1 for x in dev if x[1] > 0 and x[2] > 0), 'dev_regions': len(dev),
+            'median_ex_ann': round(S.median(x[1] for x in res), 2) if res else None,
+            'jpn': next((x for x in res if x[0] == 'jpn'), None),
+            'detail_cols': ['国', '全期間の超過(費用後)', '幾何の年率差', 't', '保有の超過', '保有の幾何差', '年数'], 'detail': res}
+
+
+def jb_ex(ks, rx, jan, cost):
+    g, n, prev = {}, {}, None
+    for k in ks:
+        y, m = k // 100, k % 100
+        if m == 1:
+            e = 1.0
+        elif y in jan:
+            e = 1.0 if jan[y] > 0 else 0.0
+        else:
+            e = 1.0  # その年の1月のデータが無い＝規則が決まらない→市場のまま（空欄を0と読まない）
+        p = e * rx[k]
+        c = cost * abs(e - prev) if prev is not None else 0.0
+        g[k], n[k] = p, p - c
+        prev = e
+    return g, n
+
+
+CAL_CACHE = {}
+
+
+# ───────────────────────── 本体 ─────────────────────────
+def run():
+    c = load()
+    ffd, ffm, me, D = c['ffd'], c['ffm'], c['me'], c['D']
+    r, rf = ffd['mkt'], ffd['rf']
+    bm_d = M.to_monthly({k: r[k] for k in D})
+    rf_dm = M.to_monthly({k: rf[k] for k in D})
+    fomc_keys = [dkey(d) for d in c['fomc']]
+    cal = daily_rule_sets(D, fomc_keys, us=True)
+    Dset = set(D)
+    sanity = {
+        'mkt_cagr_full_monthly_file': round(M.cagr(ffm['mkt']) * 100, 2),
+        'mkt_cagr_2007_monthly_file': round(M.cagr(M.window(ffm['mkt'], HO_START)) * 100, 2),
+        'mkt_cagr_full_daily_to_monthly': round(M.cagr(bm_d) * 100, 2),
+        'daily_vs_monthly_mean_abs_diff_pct': round(S.mean(abs(bm_d[k] - ffm['mkt'][k]) for k in bm_d if k in ffm['mkt']) * 100, 4),
+        'daily_days': len(D), 'daily_from': D[0], 'daily_to': D[-1],
+        'fomc_n': len(c['fomc']), 'fomc_bad_headings': c['fomc_bad'][:20],
+        'fomc_by_year': {y: sum(1 for d in c['fomc'] if d.year == y) for y in range(1994, 2027)},
+        'fomc_not_trading_day': [k for k in fomc_keys if k not in Dset],
+        'n_tom_days_per_year': round(len(cal['tom']) / (len(D) / 252), 2),
+        'n_ph_days_per_year': round(len(cal['ph']) / (len(D) / 252), 2),
+        'n_ph_all_days_per_year': round(len(cal['ph_all']) / (len(D) / 252), 2),
+        'ph_excluded_gaps_unscheduled': [(a, w) for a, w, ok in cal['gaps'] if not ok][:80],
+        'n_ph_excluded': sum(1 for a, w, ok in cal['gaps'] if not ok),
+    }
+    # 文献との突き合わせ（日次の平均・%）
+    def dm(sel, a=None, z=None):
+        xs = [r[k] for k in D if sel(k) and (a is None or k >= a) and (z is None or k <= z)]
+        return {'n': len(xs), 'mean_pct': round(S.mean(xs) * 100, 4)} if xs else None
+    lit = {
+        'TOM_vs_other_1926_2005': [dm(lambda k: k in cal['tom'], z=20051231), dm(lambda k: k not in cal['tom'], z=20051231)],
+        'TOM_vs_other_2007_': [dm(lambda k: k in cal['tom'], a=20070101), dm(lambda k: k not in cal['tom'], a=20070101)],
+        'PH_vs_other_1963_1982': [dm(lambda k: k in cal['ph'], 19630101, 19821231), dm(lambda k: k not in cal['ph'], 19630101, 19821231)],
+        'PH_vs_other_2007_': [dm(lambda k: k in cal['ph'], a=20070101), dm(lambda k: k not in cal['ph'], a=20070101)],
+        'FOMC_vs_other_1994_2011': [dm(lambda k: k in cal['fomc'], 19940201, 20111231), dm(lambda k: k not in cal['fomc'], 19940201, 20111231)],
+        'FOMC_vs_other_2012_': [dm(lambda k: k in cal['fomc'], a=20120101), dm(lambda k: k not in cal['fomc'], a=20120101)],
+        'HAL_monthly_excess_NovApr_vs_MayOct_1926_2006': [round(S.mean(ffm['mktrf'][k] for k in ffm['mktrf'] if hal(k) and k <= TR_END) * 100, 3),
+                                                          round(S.mean(ffm['mktrf'][k] for k in ffm['mktrf'] if not hal(k) and k <= TR_END) * 100, 3)],
+        'HAL_monthly_excess_NovApr_vs_MayOct_2007_': [round(S.mean(ffm['mktrf'][k] for k in ffm['mktrf'] if hal(k) and k >= HO_START) * 100, 3),
+                                                      round(S.mean(ffm['mktrf'][k] for k in ffm['mktrf'] if not hal(k) and k >= HO_START) * 100, 3)],
+        'JAN_Lo10_minus_Mkt_Jan_vs_other_1926_2006': [round(S.mean(me['Lo 10'][k] - ffm['mkt'][k] for k in me['Lo 10'] if k % 100 == 1 and k <= TR_END and k in ffm['mkt']) * 100, 3),
+                                                      round(S.mean(me['Lo 10'][k] - ffm['mkt'][k] for k in me['Lo 10'] if k % 100 != 1 and k <= TR_END and k in ffm['mkt']) * 100, 3)],
+        'JAN_Lo10_minus_Mkt_Jan_vs_other_2007_': [round(S.mean(me['Lo 10'][k] - ffm['mkt'][k] for k in me['Lo 10'] if k % 100 == 1 and k >= HO_START and k in ffm['mkt']) * 100, 3),
+                                                  round(S.mean(me['Lo 10'][k] - ffm['mkt'][k] for k in me['Lo 10'] if k % 100 != 1 and k >= HO_START and k in ffm['mkt']) * 100, 3)],
+    }
+    log('US calendars ready', sanity['n_tom_days_per_year'], sanity['n_ph_days_per_year'], sanity['fomc_n'])
+
+    # 検算: 倍率1で一度も持ち替えない＝相手と一致
+    g1, n1, _, _ = simulate(D, r, rf, lambda k: 1.0, COST, SPREAD, 252)
+    sanity['identity_L1_maxabs'] = max(abs(M.to_monthly(n1)[k] - bm_d[k]) for k in bm_d)
+
+    CD = country_data()
+    log('countries', {k: len(v) for k, v in zip(('m', 'd', 's'), CD[:3])}, CD[3])
+    rf_m = ffm['rf']
+    tested = []
+    for sp in specs():
+        sid, fam, desc, kind, rule, tag = sp
+        log('run', sid)
+        if kind == 'd':
+            ks = [k for k in D if k >= 19940201] if tag == 'fomc' else D
+            gd, nd, turn, avg = simulate(ks, r, rf, lambda k: rule(k, cal), COST, SPREAD, 252)
+            _, nd5, _, _ = simulate(ks, r, rf, lambda k: rule(k, cal), COST_LO, SPREAD, 252)
+            _, ndh, _, _ = simulate(ks, r, rf, lambda k: rule(k, cal), COST, SPREAD_HI, 252)
+            g, n, n5, nh = M.to_monthly(gd), M.to_monthly(nd), M.to_monthly(nd5), M.to_monthly(ndh)
+            b = {k: bm_d[k] for k in g}; rfx = rf_dm
+            const = None
+            if avg > 1.0001 or 'TILT' in sid:
+                _, ndc, _, _ = simulate(ks, r, rf, lambda k: avg, COST, SPREAD, 252)
+                const = M.to_monthly(ndc)
+            taxw = lambda k: {'m': rule(k, cal)}
+            tax = tax_report(ks, {'m': r}, rf, taxw, {'m': COST}, SPREAD, 252, lambda k: k // 10000) if fam == 'primary' else None
+        elif kind == 'm':
+            ks = sorted(k for k in ffm['mkt'] if k in ffm['rf'])
+            g, n, turn, avg = simulate(ks, ffm['mkt'], ffm['rf'], lambda ym: rule(ym, None), COST, SPREAD, 12)
+            _, n5, _, _ = simulate(ks, ffm['mkt'], ffm['rf'], lambda ym: rule(ym, None), COST_LO, SPREAD, 12)
+            _, nh, _, _ = simulate(ks, ffm['mkt'], ffm['rf'], lambda ym: rule(ym, None), COST, SPREAD_HI, 12)
+            b = {k: ffm['mkt'][k] for k in ks}; rfx = ffm['rf']
+            const = None
+            if avg > 1.0001 or 'TILT' in sid:
+                _, const, _, _ = simulate(ks, ffm['mkt'], ffm['rf'], lambda ym: avg, COST, SPREAD, 12)
+            tax = tax_report(ks, {'m': ffm['mkt']}, ffm['rf'], lambda ym: {'m': rule(ym, None)}, {'m': COST}, SPREAD, 12, lambda k: k // 100) if fam == 'primary' else None
+        elif kind == 'jb':
+            ks = sorted(k for k in ffm['mkt'] if k in ffm['rf'])
+            jan = {k // 100: ffm['mkt'][k] for k in ks if k % 100 == 1}
+            rule_jb = lambda ym: 1.0 if (ym % 100 == 1 or jan.get(ym // 100, 1) > 0) else 0.0
+            g, n, turn, avg = simulate(ks, ffm['mkt'], ffm['rf'], rule_jb, COST, SPREAD, 12)
+            _, n5, _, _ = simulate(ks, ffm['mkt'], ffm['rf'], rule_jb, COST_LO, SPREAD, 12)
+            nh = n
+            b = {k: ffm['mkt'][k] for k in ks}; rfx = ffm['rf']; const = None; tax = None
+        elif kind == 'rot':
+            ks = sorted(k for k in ffm['mkt'] if k in me[rule])
+            g, n, turn = rotation(ks, ffm['mkt'], me[rule], lambda ym: ym % 100 == 1, 0.004)
+            _, n5, _ = rotation(ks, ffm['mkt'], me[rule], lambda ym: ym % 100 == 1, 0.003)
+            _, nh, _ = rotation(ks, ffm['mkt'], me[rule], lambda ym: ym % 100 == 1, 0.011)  # 小型の側1.0%
+            avg = 1.0
+            b = {k: ffm['mkt'][k] for k in ks}; rfx = ffm['rf']; const = None
+            tax = tax_report(ks, {'m': ffm['mkt'], 's': me[rule]}, ffm['rf'], lambda ym: {'s': 1.0} if ym % 100 == 1 else {'m': 1.0},
+                             {'m': 0.001, 's': 0.003}, SPREAD, 12, lambda k: k // 100) if fam == 'primary' else None
+        ev = evaluate(g, n, b, rfx, POSTPUB.get(tag, []))
+        ev['net_hold_cost005'] = M.excess_stats(n5, b, a=HO_START)
+        ev['net_hold_spread15_or_smallcost1pct'] = M.excess_stats(nh, b, a=HO_START)
+        ev['avg_exposure'] = round(avg, 3)
+        ev['turnover_oneway_per_year'] = round(turn, 2)
+        if const:
+            ev['vs_constant_exposure'] = {'const_L': round(avg, 3), 'full': compact(M.excess_stats(n, const)),
+                                          'train': compact(M.excess_stats(n, const, z=TR_END)), 'hold': compact(M.excess_stats(n, const, a=HO_START))}
+        ev['tax_japan'] = tax
+        # 国別（C5）
+        repl = country_eval(sp, CD, fomc_keys, rf_m)
+        ev['repl'] = repl
+        tested.append({'id': sid, 'family': fam, 'desc': desc, 'kind': kind, 'ev': ev})
+
+    # Holm と判定
+    prim = {t['id']: (t['ev']['hold'] or {}).get('p') for t in tested if t['family'] == 'primary'}
+    allg = {t['id']: (t['ev']['hold'] or {}).get('p') for t in tested if t['family'] in ('primary', 'exploratory')}
+    hp, ha = M.holm(prim), M.holm(allg)
+    for t in tested:
+        ev = t['ev']
+        fam = t['family']
+        hpv = hp.get(t['id']) if fam == 'primary' else ha.get(t['id'])
+        repl = ev['repl']
+        g_, crit = M.grade(ev['full'], ev['train'], ev['hold'], ev['roll20_net'], cost_hold=ev['net_hold'],
+                           repl={'regions': repl['regions'], 'positive': repl['positive']} if repl['regions'] else None,
+                           family_holm_p=hpv, sharpe_pair={'train': ev['sharpe']['train'], 'hold': ev['sharpe']['hold']},
+                           leveraged_or_timing=True)
+        t['holm_p'] = hpv
+        t['holm_family'] = 'primary(9)' if fam == 'primary' else ('all_graded(24)' if fam == 'exploratory' else None)
+        t['grade'] = g_ if fam in ('primary', 'exploratory') else f'（判定しない）{g_}'
+        t['criteria'] = crit
+    return {'sanity': sanity, 'literature_check': lit, 'tested': tested, 'holm_primary': hp, 'holm_all_graded': ha}
+
+
+def shrink(ev):
+    out = {}
+    for k, v in ev.items():
+        if isinstance(v, dict) and 'ex_ann' in v:
+            out[k] = compact(v)
+        elif k == 'postpub':
+            out[k] = {lab: {'gross': compact(x['gross']), 'net': compact(x['net'])} for lab, x in v.items()}
+        else:
+            out[k] = v
+    return out
+
+
+def main():
+    res = run()
+    try:
+        sha = subprocess.run(['git', 'log', '-1', '--format=%H', '--', f'out/{PREREG}'], cwd=M.BASE, capture_output=True, text=True).stdout.strip()
+    except Exception:  # noqa
+        sha = None
+    tested = []
+    for t in res['tested']:
+        tested.append({'id': t['id'], 'family': t['family'], 'desc': t['desc'], 'grade': t['grade'], 'criteria': t['criteria'],
+                       'holm_p_hold': t['holm_p'], 'holm_family': t['holm_family'], **shrink(t['ev'])})
+    summary = [{'id': t['id'], 'family': t['family'], 'grade': t['grade'],
+                'full_ex': (t['full'] or {}).get('ex_ann'), 'full_t': (t['full'] or {}).get('t'),
+                'train_ex': (t['train'] or {}).get('ex_ann'), 'train_t': (t['train'] or {}).get('t'),
+                'hold_ex': (t['hold'] or {}).get('ex_ann'), 'hold_t': (t['hold'] or {}).get('t'), 'hold_cagr_diff': (t['hold'] or {}).get('cagr_diff'),
+                'net_hold_ex': (t['net_hold'] or {}).get('ex_ann'), 'net_hold_cagr_diff': (t['net_hold'] or {}).get('cagr_diff'),
+                'roll20_win': (t['roll20_net'] or {}).get('win_rate'), 'sharpe_train': t['sharpe']['train'], 'sharpe_hold': t['sharpe']['hold'],
+                'repl': f"{t['repl']['positive']}/{t['repl']['regions']}", 'avg_exposure': t['avg_exposure']} for t in tested]
+    out = {'angle': 'calendar', 'prereg': f'out/{PREREG}', 'prereg_commit': sha, 'global_prereg': 'out/mw_prereg.json',
+           'benchmark': 'French Mkt（Mkt-RF + RF・上限なしの時価加重）。日次の規則は同じ日次 Mkt を月次へ直したもの。国別は JKP の国の mkt（超過どうし）',
+           'sanity': res['sanity'], 'literature_check': res['literature_check'],
+           'holm_primary': res['holm_primary'], 'holm_all_graded': res['holm_all_graded'],
+           'summary': summary, 'tested': tested}
+    p = M.save('mw_calendar.json', out)
+    log('saved', p, os.path.getsize(p))
+    for s in summary:
+        print(s)
+
+
+if __name__ == '__main__':
+    main()
