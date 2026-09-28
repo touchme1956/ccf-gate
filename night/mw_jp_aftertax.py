@@ -260,8 +260,9 @@ def ndx_series(D):
 # ───────────────────────── 税と NISA の模型 ─────────────────────────
 class Regime:
     """mode: 'free'（非課税・枠なし）/'taxable'（課税口座だけ）/'real'（NISA から入れて溢れは課税口座）"""
-    def __init__(self, name, mode, tax=TAX, wh=WH, scale=CONTRIB, tsumi_index=False):
+    def __init__(self, name, mode, tax=TAX, wh=WH, scale=CONTRIB, tsumi_index=False, location=None):
         self.name, self.mode, self.tax, self.wh, self.scale, self.tsumi_index = name, mode, tax, wh, scale, tsumi_index
+        self.location = location           # 事前登録2 X1: 'L1'＝NISA は指数だけ・上乗せは課税口座だけ
 
 
 REG = {
@@ -274,6 +275,11 @@ REG = {
     'R2_real_100k': Regime('R2_real_100k', 'real', scale=SCALES[0]),
     'R2_real_300k': Regime('R2_real_300k', 'real', scale=SCALES[1]),
     'R2t_real_tsumi_index': Regime('R2t_real_tsumi_index', 'real', tsumi_index=True),
+    # 事前登録2（探索）X1: 置き場所を分ける
+    'L1_real': Regime('L1_real', 'real', location='L1'),
+    'L1_real_tax25': Regime('L1_real_tax25', 'real', tax=TAX_STRESS, location='L1'),
+    'L1_real_100k': Regime('L1_real_100k', 'real', scale=SCALES[0], location='L1'),
+    'L1_real_300k': Regime('L1_real_300k', 'real', scale=SCALES[1], location='L1'),
 }
 
 
@@ -311,6 +317,8 @@ class Arm:
         mode = self.reg.mode
         if mode == 'free':
             self._add('F', a, x); return
+        if self.reg.location == 'L1' and a != 'IDX':
+            force_taxable = True
         if mode == 'taxable' or force_taxable:
             self._add('T', a, x); return
         k = self.idx(m)
@@ -465,6 +473,22 @@ class Arm:
         st = self.st
         if self.hv:
             self.harvest_step(m)
+        # 事前登録2 X1（L1）: 積立はまず指数ファンドを NISA へ（入りきらない分だけ上乗せを課税口座で）
+        if self.reg.location == 'L1' and self.reg.mode == 'real' and contrib > 0 and st.get('asset') != 'IDX':
+            x = min(contrib, self.cash)
+            k = self.idx(m)
+            for fr in self.A['IDX']['frames']:
+                cap_y = (Q_TSUMI if fr == 'NT' else Q_GROWTH) * k - self.qu[fr]
+                cap_l = LIFE * k - self.life
+                if fr == 'NG':
+                    cap_l = min(cap_l, LIFE_G * k - self.life_g)
+                y = min(x, max(0.0, cap_y), max(0.0, cap_l))
+                if y > 1e-12:
+                    self._add(fr, 'IDX', y)
+                    self.qu[fr] += y; self.life += y
+                    if fr == 'NG':
+                        self.life_g += y
+                    x -= y; self.cash -= y
         # R2t: 戦略の側でも、つみたて枠はまず指数ファンドへ
         if self.reg.tsumi_index and self.reg.mode == 'real' and contrib > 0 and st.get('asset') != 'IDX':
             k = self.idx(m)
@@ -1070,6 +1094,176 @@ def run_all(D, ed, t0):
     log('書いた', p, os.path.getsize(p), 'bytes', f'{time.time() - t0:.0f}s')
 
 
+
+# ───────────────────────── 事前登録2（探索）: X1 置き場所・X2 帯 ─────────────────────────
+X1_REGIMES = ['L1_real', 'L1_real_tax25', 'L1_real_100k', 'L1_real_300k']
+
+
+def mk_buffer(E, names, K, exit_rank, score):
+    """帯つきの上位 K: 持っているものは順位が exit_rank より下がるまで持つ。続けて持つものは値動きのまま、
+    出たものの重みを入ったものへ等分。t 月末までのデータだけ（H.get は t を超えると止まる）"""
+    state = {'w': None, 't': None}
+
+    def f(H):
+        sc = (lambda s: H.cum(s, 12)) if score == 'r12' else H.blend
+        avail = [s for s in names if H.R.get(s) and E.alive_next(H, s) and sc(s) is not None]
+        if len(avail) < 20:
+            return None
+        ranked = [n for _, _, n in sorted((-sc(s), i, s) for i, s in enumerate(avail))]
+        rank = {s: i + 1 for i, s in enumerate(ranked)}
+        prev = state['w']
+        if prev is None or state['t'] != madd(H.t, -1):
+            w = {s: 1 / K for s in ranked[:K]}
+        else:
+            g = {s: prev[s] * (1 + H.get(s, H.t)) for s in prev}
+            tot = sum(g.values())
+            g = {s: v / tot for s, v in g.items()}
+            keep = {s: v for s, v in g.items() if rank.get(s, 10 ** 9) <= exit_rank}
+            freed = 1 - sum(keep.values())
+            need = K - len(keep)
+            ent = [s for s in ranked if s not in keep][:need] if need > 0 else []
+            w = dict(keep)
+            for s in ent:
+                w[s] = freed / len(ent)
+            if not ent and freed > 1e-12:
+                t2 = sum(w.values())
+                w = {s: v / t2 for s, v in w.items()}
+        state['w'], state['t'] = w, H.t
+        return w
+    return f
+
+
+def build_x2(D):
+    E = D['E']
+    src, rf = D['src'], D['rf']
+    fseld = list(E.FSEL) + ['AV_' + t for t in E.DEAD]
+    R4 = {'TBILL': rf}
+    R4.update({s: src[s] for s in fseld if src.get(s)})
+    RK = {'TBILL': rf}
+    RK.update({s: src[s] for s in E.RAKU if src.get(s)})
+    ed = {}
+    for nm, R, names, sc, base in (('X2_fsel_bl_buf', R4, fseld, 'blend', 'E4_fsel_top3'), ('X2_fsel_r12_buf', R4, fseld, 'r12', 'E4r_fsel_r12'),
+                                   ('X2_raku_r12_buf', RK, list(E.RAKU), 'r12', 'E3k_raku_r12'), ('X2_raku_bl_buf', RK, list(E.RAKU), 'blend', 'E4k_raku_bl')):
+        g, n, ns, wp, tr = E.run(R, mk_buffer(E, names, 3, 6, sc), dynamic=True)
+        ed[nm] = dict(kind='multi', primary=False, vehicle='direct', fee=0.0, R=R, wpath=wp, gross=g, trades=tr, cs=E.C_SIDE,
+                      start=min(g), end=max(g), base=base,
+                      desc=f'探索 X2 {nm}: {base} の帯版（上位3を持ち、6位より下がるまで売らない・続けて持つものはドリフト）',
+                      src_ref=('mw_etf_tactical', None))
+    return ed
+
+
+def eval_block(RN, name, e, mkt, fx, regimes, jpy_regimes, lump_regimes, tested, fam):
+    spec = arm_spec(e, mkt)
+    spec_j = spec_jpy(spec, fx)
+    bspec = bench_spec(mkt)
+    bspec_j = spec_jpy(bspec, fx)
+    first, last = e['start'], min(e['end'], FR_END)
+    rec = {'description': e['desc'], 'from': first, 'to': last,
+           'turnover_or_realization': e.get('T') if e['kind'] == 'single' else round(S.mean(e['trades'][k] for k in e['trades']) / 2 * 12, 2),
+           'dca': {}, 'dca_jpy': {}, 'lump': {}}
+    for rg in regimes:
+        blk = dca_block(RN, REG[rg], spec, bspec, first, last, keep_windows=rg in ('R2_real', 'L1_real', 'R3_taxable'))
+        rec['dca'][rg] = blk
+        tested.append({'name': f'{name}__dca__{rg}', 'family': fam, 'edge': name, 'regime': rg, 'kind': 'dca20_ratio',
+                       'roll20': blk.get('roll20'), 'hold_2007': (blk.get('hold_2007') or {}).get('ratio'),
+                       'hold_10y_median': (blk.get('hold_10y') or {}).get('median')})
+        r = blk.get('roll20') or {}
+        log(f'{name:16s} {rg:22s} 20年窓 n={r.get("n")} 勝率={r.get("win_share")} 中央={r.get("median")} 最悪={r.get("worst")} 2007〜={(blk.get("hold_2007") or {}).get("ratio")}')
+    for rg in jpy_regimes:
+        if first <= 200701:
+            blk = dca_block(RN, REG[rg], spec_j, bspec_j, max(first, 200701), last, cur='JPY')
+            rec['dca_jpy'][rg] = {k: blk.get(k) for k in ('hold_2007', 'hold_10y')}
+            tested.append({'name': f'{name}__dca_jpy__{rg}', 'family': fam + '_jpy', 'edge': name, 'regime': rg, 'kind': 'dca_ratio_jpy',
+                           'hold_2007': (blk.get('hold_2007') or {}).get('ratio'), 'hold_10y_median': (blk.get('hold_10y') or {}).get('median')})
+            log(f'{name:16s} 円 {rg:18s} 2007〜={(blk.get("hold_2007") or {}).get("ratio")}')
+    for rg in lump_regimes:
+        rec['lump'][rg] = lump_grade(RN, REG[rg], spec, bspec, first, last)
+    return rec
+
+
+def run_part2(D, ed, t0):
+    RN = Runner(D)
+    mkt, fx = D['mkt'], D['fx']
+    p = os.path.join(M.BASE, 'out', OUT)
+    out = json.load(open(p))
+    tested = out['tested']
+    n0 = len(tested)
+    p2 = {'prereg2': 'mw_jp_aftertax_prereg2.json', 'prereg2_commit': git_sha('out/mw_jp_aftertax_prereg2.json')}
+    x2 = build_x2(D)
+    p2['x2_turnover_oneway_per_year'] = {k: round(S.mean(v['trades'][m] for m in v['trades']) / 2 * 12, 2) for k, v in x2.items()}
+    p2['x2_pretax_hold_vs_mkt_gross'] = {k: M.excess_stats(v['gross'], mkt, a=M.HOLD_START) for k, v in x2.items()}
+    allE = dict(ed)
+    allE.update(x2)
+    # X1: 置き場所（主と副の8本＋X2 の4本）
+    x1 = {}
+    for name in PRIMARY + SECONDARY + list(x2):
+        if name == 'E3e_spdr_mom' and False:
+            continue
+        x1[name] = eval_block(RN, name, allE[name], mkt, fx, X1_REGIMES, ['L1_real'], [], tested, 'X1_location')
+    # X2: 帯（主の族と同じ全部）
+    x2r = {}
+    for name in x2:
+        x2r[name] = eval_block(RN, name, x2[name], mkt, fx, DCA_REGIMES, JPY_REGIMES, LUMP_REGIMES, tested, 'X2_buffer')
+    for rg in LUMP_REGIMES:
+        ps = {n: (x2r[n]['lump'][rg].get('hold') or {}).get('p') for n in x2r}
+        hp = M.holm({k: v for k, v in ps.items() if v is not None})
+        for n in x2r:
+            L = x2r[n]['lump'][rg]
+            g, c = M.grade(L.get('full'), L.get('train'), L.get('hold'), L.get('roll20'), cost_hold=L.get('hold'), repl=None,
+                           family_holm_p=hp.get(n), leveraged_or_timing=False)
+            L['holm_p_hold'], L['grade'], L['criteria'] = hp.get(n), g, c
+            tested.append({'name': f'{n}__lump__{rg}', 'family': f'X2_lump_{rg}', 'edge': n, 'regime': rg, 'kind': 'lump_grade',
+                           'exploratory': True, 'grade': g, 'criteria': c, 'full': L.get('full'), 'train': L.get('train'),
+                           'hold': L.get('hold'), 'recent': L.get('recent'), 'roll20': L.get('roll20'), 'holm_p_hold': hp.get(n)})
+            log(f'格付け(探索) {n:16s} {rg:18s} {g}  保有 {(L.get("hold") or {}).get("ex_ann")} t={(L.get("hold") or {}).get("t")}')
+    # 判定
+    fresh_map = dict(FRESH_OF)
+    v1 = {}
+    for name, rec in x1.items():
+        fr = fresh_map.get(name, name)
+        frec = x1.get(fr, rec)
+        fratio = (frec['dca']['L1_real'].get('hold_2007') or {}).get('ratio')
+        ok = passes(rec['dca']['L1_real'], fratio)
+        jr = (frec['dca_jpy'].get('L1_real', {}).get('hold_2007') or {}).get('ratio')
+        if ok is None:
+            v = '判定不能（20年窓が10本未満）'
+        elif ok and jr is not None and jr > 1:
+            v = '置き場所を分ければ残る'
+        else:
+            v = '置き場所を分けても残らない'
+        v1[name] = {'verdict': v, 'L1_roll20': rec['dca']['L1_real'].get('roll20'), 'L1_2007': fratio, 'L1_jpy_2007': jr,
+                    'pass_by_regime': {rg: passes(rec['dca'][rg], (frec['dca'][rg].get('hold_2007') or {}).get('ratio')) for rg in X1_REGIMES},
+                    'hold_10y': rec['dca']['L1_real'].get('hold_10y')}
+        log('X1 判定', name, v)
+    v2 = {}
+    for name, rec in x2r.items():
+        fr_ = lambda rg: (rec['dca'][rg].get('hold_2007') or {}).get('ratio')
+        pp = {rg: passes(rec['dca'][rg], fr_(rg)) for rg in DCA_REGIMES}
+        jr = (rec['dca_jpy'].get('R2_real', {}).get('hold_2007') or {}).get('ratio')
+        if pp['R2_real'] is None:
+            v = '判定不能（20年窓が10本未満）'
+        elif pp['R2_real'] and jr is not None and jr > 1:
+            v = '残る'
+        elif pp['R1_nisa_unlimited']:
+            v = 'NISA の中だけなら残る'
+        else:
+            v = '残らない'
+        v2[name] = {'verdict': v, 'pass_by_regime': pp, 'jpy_R2_2007_ratio': jr, 'R2_roll20': rec['dca']['R2_real'].get('roll20'),
+                    'R0_roll20': rec['dca']['R0_pretax'].get('roll20'), 'R1_roll20': rec['dca']['R1_nisa_unlimited'].get('roll20'),
+                    'R3_roll20': rec['dca']['R3_taxable'].get('roll20'), 'R2_2007': fr_('R2_real'), 'R0_2007': fr_('R0_pretax')}
+        log('X2 判定', name, v)
+    p2['x1'] = x1
+    p2['x2'] = x2r
+    p2['x1_verdicts'] = v1
+    p2['x2_verdicts'] = v2
+    p2['n_tested_added'] = len(tested) - n0
+    out['part2'] = p2
+    out['n_tested'] = len(tested)
+    out['log_tail_part2'] = LOG[-80:]
+    M.save(OUT, out)
+    log('書いた part2', p, os.path.getsize(p), f'{time.time() - t0:.0f}s')
+
+
 # ───────────────────────── 本番 ─────────────────────────
 def main():
     if '--selftest' in sys.argv:
@@ -1087,6 +1281,9 @@ def main():
         info['fx'] = [min(D['fx']), max(D['fx'])]
         info['cpi'] = [min(D['cpi']), max(D['cpi'])]
         print(json.dumps(info, ensure_ascii=False, indent=1))
+        return
+    if '--part2' in sys.argv:
+        run_part2(D, ed, t0)
         return
     run_all(D, ed, t0)
 
