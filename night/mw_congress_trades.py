@@ -1431,6 +1431,15 @@ def run():
     cov = coverage_table(ev, info)
     out = {'angle': 'congress_trades', 'prereg': PRE, 'prereg_commit': sha, 'prereg2': PRE2 if sha2 else None, 'prereg2_commit': sha2,
            'prereg3': PRE3 if sha3 else None, 'prereg3_commit': sha3, 'grid_prereg3': grid,
+           'n_graded': sum(1 for r in tested if r.get('grade') in ('S', 'A', 'B', 'C')),
+           'notes_ja': [
+               '格はすべて C: 電子開示は 2014 年からで訓練期間（〜2006）が無い＝C1 は原理的に不合格、20年窓も無い＝C4 も不合格（結果を見る前から決まっていた）',
+               '担当の交代: 最初の担当はデータ集めの途中で止まった。引き継いだ担当が、戦略と市場を比べた数字が一度も出ていない（合成データの空運転のみ）ことを記録で確かめてから事前登録1をコミットした（leak なし）',
+               '事前登録2・3は、それぞれ前の結果を見た後に作った族（leak を各事前登録に明記）＝独立の確かめではない',
+               'mw_common.yahoo の弱点（編集せず自前の読み方で回避）: (1) キャッシュが3日より古いと取り直し、失敗は例外——旧 yh_load はそれを黙って未観測に化けさせていた (2) 調整後終値が 0 以下の系列（VHI・SAFE・AOZOF・AEXAY・AEM 等 12 本）で 0 割り・負の価格のリターンを出す',
+               '事後の直し（報告のみ・格に不使用）: 金額で加重する X5 の寄与の上位5社と巨大株の割合を、等加重ではなく金額の重みで出すようにした',
+               '突き合わせ: Alpha Vantage の CONGRESS_TRADES は1日25回の上限、FMP の senate/house は契約外で使えず、第三者の件数とは突き合わせていない。紙の PTR（スキャン）は OCR が無く読めない',
+               '委員会（所管の業種）で絞る案 (c) は、2014〜2026 の各時点の委員会の名簿を無料で再現できないので行っていない'],
            'x5_dollar_concentration_report_only': dollar_concentration(P),
            'generated': datetime.date.today().isoformat(),
            'question': pre.get('question'), 'data_end': END, 'start': START, 'n_tested': len([t for t in tested]),
