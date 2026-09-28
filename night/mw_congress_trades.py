@@ -940,9 +940,15 @@ def regressions(r, fac, a=None, z=None):
     return out
 
 
-def contributions(events, H, yh, mkt, a, z):
-    """S（観測のみ）等加重の、記号ごとの超過への寄与（Σ_月 (r_i − Mkt)/n）"""
-    act = defaultdict(set)
+def ev_weight(e, weight):
+    if weight == 'amt':
+        return ((e['lo'] or 0) + (e['hi'] or e['lo'] or 0)) / 2 or 1000.0
+    return 1.0
+
+
+def holdings_w(events, H, yh, weight='ew'):
+    """S（観測のみ）の月ごとの持ち高 {月: {記号: 重みの素}}（calendar_pf の S と同じ積み方）と、打ち切り後の系列"""
+    act = defaultdict(dict)
     cl = {}
     for e in events:
         if not e['obs']:
@@ -950,36 +956,42 @@ def contributions(events, H, yh, mkt, a, z):
         t = e['ticker']
         if t not in cl:
             cl[t] = clean_series(yh[t])[0]
+        w = ev_weight(e, weight)
         for k in range(1, H + 1):
             m = madd(e['s'], k)
             if m > END or not cl[t] or m not in cl[t]:
                 break
-            act[m].add(t)
+            act[m][t] = act[m].get(t, 0) + w
+    return act, cl
+
+
+def contributions(events, H, yh, mkt, a, z, weight='ew'):
+    """S（観測のみ）の、記号ごとの超過への寄与（Σ_月 w_i/W × (r_i − Mkt)・年率 %）。
+    ★ 2026-09-28 事後の直し（報告のみ・格に不使用）: 旧版は X5（金額で加重）でも等加重の寄与を出していた→加重を合わせた"""
+    act, cl = holdings_w(events, H, yh, weight)
     c = Counter()
     nmon = max(1, len([m for m in months(max(a, START), z) if m in mkt]))
-    for m, ts in act.items():
-        if m not in mkt or len(ts) < MIN_HOLD or m < a or m > z:
+    for m, ws in act.items():
+        if m not in mkt or len(ws) < MIN_HOLD or m < a or m > z:
             continue
-        for t in ts:
-            c[t] += (cl[t][m] - mkt[m]) / len(ts) * 12 * 100 / nmon
+        W = sum(ws.values()) if weight == 'amt' else len(ws)
+        for t, w in ws.items():
+            c[t] += (cl[t][m] - mkt[m]) * ((w if weight == 'amt' else 1.0) / W) * 12 * 100 / nmon
     return c
 
 
 MEGA = {'AAPL', 'MSFT', 'NVDA', 'AMZN', 'GOOGL', 'GOOG', 'META', 'FB', 'TSLA', 'AVGO'}
 
 
-def mega_share(events, H, yh):
-    act = defaultdict(set)
-    for e in events:
-        if not e['obs']:
+def mega_share(events, H, yh, weight='ew'):
+    """巨大株が持ち高に占める割合（月の平均）。weight='amt' は金額の重みで（事後の直し・報告のみ）"""
+    act, _ = holdings_w(events, H, yh, weight)
+    sh = []
+    for m, ws in act.items():
+        if len(ws) < MIN_HOLD:
             continue
-        r = yh[e['ticker']]
-        for k in range(1, H + 1):
-            m = madd(e['s'], k)
-            if m > END or not r or m not in r:
-                break
-            act[m].add(e['ticker'])
-    sh = [len(ts & MEGA) / len(ts) for m, ts in act.items() if len(ts) >= MIN_HOLD]
+        W = sum(ws.values()) if weight == 'amt' else len(ws)
+        sh.append(sum((ws[t] if weight == 'amt' else 1.0) for t in ws if t in MEGA) / W)
     return round(S.mean(sh), 3) if sh else None
 
 
@@ -1068,10 +1080,10 @@ def run():
                'n_events': len(es), 'n_events_observed': sum(1 for e in es if e['obs']),
                'observed_share': round(sum(1 for e in es if e['obs']) / len(es), 3) if es else None,
                'n_tickers': len({e['ticker'] for e in es}), 'portfolio': meta_pf, 'bounds': b,
-               'mega7_share_of_holdings': mega_share(es, H, yh),
+               'mega7_share_of_holdings': mega_share(es, H, yh, wt),
                'regressions_S_hold': regressions(rS, fac, M.HOLD_START, END)}
         if sid in ('A6_all_buys_h6', 'A12_all_buys_h12', 'D6_consensus2_h6', 'D12_consensus2_h12') or fam == 'exploratory':
-            c = contributions(es, H, yh, mkt, M.HOLD_START, END)
+            c = contributions(es, H, yh, mkt, M.HOLD_START, END, weight=wt)
             top = [t for t, _ in c.most_common(5)]
             r5, _ = calendar_pf(es, H, yh, mkt, bound='S', weight=wt, drop_tickers=set(top))
             rec['top5_contributors'] = [{'ticker': t, 'contrib_pp_per_year': round(c[t], 2)} for t in top]
