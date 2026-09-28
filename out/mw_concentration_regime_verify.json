@@ -1,0 +1,3719 @@
+{
+ "angle": "concentration_regime",
+ "verifier": "night/mw_concentration_regime_verify.py",
+ "target": "out/mw_concentration_regime.json",
+ "independence": "取得は mw_common の取得器（M.get・M.jkp_rows・M.ff_factors）だけ。国の市場と三分位の読み込み・良い側（2通り）・信号（R_cap・上限の効き・自国の80%点・米国の閾値）・X（割安＋勢い・等加重・門の写し P1〔定義は mw_gate_proxy.MEASURES と一致を確かめるだけ〕）・切替と費用・国の等分・超過・NW t・幾何の年率差・20年窓・積立・プラセボは自前。線（C1〜C8→格）だけ M.grade",
+ "selection": "課題の指定: S/A 全部（F1b_valmom・E1_equal・E1_valmom・F1c_valmom の S 4本・A なし）＋保有の超過で上位の B（B は E3_P1 の1本だけ）",
+ "rules_of_this_verification": [
+  "再現: 研究側の数字（全期間・訓練・保有・費用後の超過と t）を自前のコードで作り直して突き合わせる",
+  "全体の事前登録（out/mw_prereg.json）の誠実さの規則『保有期間の結果を見て規則を変えたら事後と明記し、判定には使わない』を当てる: 事前登録2（E1・E3）は F1・F1b・F2 の結果（保有期間を含む）を見た後の着想＝判定の外（C）",
+  "局面の効き: 国ごとに在X の印を無作為に回した偽の時期（割合と持続を保つ・1000回）と、在X の月と外の月の (X−vw) の差で測る。偽の時期と区別できなければ、規則の勝ちは X そのものの既知の上乗せ",
+  "割安＋勢い（米国外・国の中の三分位）の 2007〜 の勝ちは mw_intl（検証で S 確定）で知られていた＝この角度の保有期間は X にとって独立の答え合わせではない。局面の効きも無ければ C3 を新しい証拠として数えない（C5 が合格なら A）",
+  "費用は研究側の単価に加え、現実的な回転率（割安＋勢い 1.3/年＝mw_intl の検証の勢い 2.2/年 を半分）と単価2倍・3倍で C6 を見直す",
+  "線（C1〜C8）は M.grade そのまま"
+ ],
+ "no_issue_found": {
+  "lookahead": "信号は月 t の末までの値（R は t までの60か月・分位は t までの履歴・上限の効きも t まで）で作り、保有は t+1。自前で作り直して研究側と全項目一致",
+  "good_side": {
+   "be_me": {
+    "direction_col": "1",
+    "corr_to_2006": 1.0,
+    "months": 674,
+    "good_by_corr": "3.0",
+    "good_by_dir": "3.0"
+   },
+   "ni_me": {
+    "direction_col": "1",
+    "corr_to_2006": 1.0,
+    "months": 674,
+    "good_by_corr": "3.0",
+    "good_by_dir": "3.0"
+   },
+   "ocf_me": {
+    "direction_col": "1",
+    "corr_to_2006": 1.0,
+    "months": 674,
+    "good_by_corr": "3.0",
+    "good_by_dir": "3.0"
+   },
+   "div12m_me": {
+    "direction_col": "1",
+    "corr_to_2006": 1.0,
+    "months": 961,
+    "good_by_corr": "3.0",
+    "good_by_dir": "3.0"
+   },
+   "ret_12_1": {
+    "direction_col": "1",
+    "corr_to_2006": 1.0,
+    "months": 960,
+    "good_by_corr": "3.0",
+    "good_by_dir": "3.0"
+   },
+   "cop_at": {
+    "direction_col": "1",
+    "corr_to_2006": 1.0,
+    "months": 662,
+    "good_by_corr": "3.0",
+    "good_by_dir": "3.0"
+   },
+   "qmj": {
+    "direction_col": "1",
+    "corr_to_2006": 1.0,
+    "months": 614,
+    "good_by_corr": "3.0",
+    "good_by_dir": "3.0"
+   }
+  },
+  "good_side_note": "7特性すべて、JKP の文献の向き（direction 列）と米国 ≤2006 の相関の両方で第3分位＝保有期間のデータで選んでいない",
+  "benchmark": "国ごとの相手は JKP の上限なしの時価加重（vw）。米国は French Mkt（研究側の点検で JKP usa vw と全期間 −0.03%/年）。上限つき・等加重は相手に使っていない",
+  "excess_vs_total": "JKP の超過・French Mkt-RF の両方に French RF を足して総リターンどうしで比べている",
+  "survivorship": "JKP・French は CRSP/上場廃止込み",
+  "thrB": {
+   "mine": 0.051,
+   "claimed": 0.051
+  },
+  "data_gap": "bgr（ブルガリア）の三分位は JKP が 403 で取れない（研究側も同じ・その国は X が無い月として両側から外れる＝0で埋めていない）"
+ },
+ "caveats_common": [
+  "相手は各国の純粋な時価加重を国の等分で混ぜたもの＝地域の時価加重（world ex US）でも S&P500 でもない。等分は新興国・小国を重くする（銘柄数の重みで混ぜた版も details に）",
+  "X の三分位（米国外の約30か国）は ETF が無く、個人が持てる形ではない。mw_intl の検証では実在の割安＋勢いの ETF の組み合わせは紙の半分〜3分の1で有意でない",
+  "2006年までに始まった状態A の局面 18 のうち 12 は 1998-06〜2001-12（IT バブルの天井＝ほぼ一つの世界的な出来事）。訓練の独立な局面は実質少ない"
+ ],
+ "training_episodes": {
+  "episodes_starting_by_2006": 18,
+  "of_which_1998_06_to_2001_12": 14,
+  "list": [
+   [
+    "can",
+    199806
+   ],
+   [
+    "fin",
+    200011
+   ],
+   [
+    "fra",
+    200011
+   ],
+   [
+    "hkg",
+    200011
+   ],
+   [
+    "nld",
+    200011
+   ],
+   [
+    "sgp",
+    200011
+   ],
+   [
+    "swe",
+    200011
+   ],
+   [
+    "esp",
+    200012
+   ],
+   [
+    "kor",
+    200012
+   ],
+   [
+    "mys",
+    200012
+   ],
+   [
+    "zaf",
+    200102
+   ],
+   [
+    "deu",
+    200106
+   ],
+   [
+    "dnk",
+    200109
+   ],
+   [
+    "gbr",
+    200109
+   ],
+   [
+    "nor",
+    200209
+   ],
+   [
+    "twn",
+    200309
+   ],
+   [
+    "grc",
+    200407
+   ],
+   [
+    "chn",
+    200512
+   ]
+  ]
+ },
+ "multiple_testing": {
+  "angle_tested": 141,
+  "angle_graded": 49,
+  "program_bonferroni_t": 4.35,
+  "angle_bonferroni_t_graded": 3.28,
+  "hold_t_rank_among_graded": [
+   [
+    4.79,
+    "F1b_valmom"
+   ],
+   [
+    4.22,
+    "E1_valmom"
+   ],
+   [
+    3.75,
+    "F1c_valmom"
+   ],
+   [
+    3.57,
+    "F1d_valmom"
+   ],
+   [
+    3.43,
+    "F1_valmom"
+   ],
+   [
+    3.35,
+    "E1_qmj"
+   ],
+   [
+    3.1,
+    "E1_equal"
+   ],
+   [
+    2.92,
+    "F1b_qmj"
+   ]
+  ]
+ },
+ "verdicts": [
+  {
+   "name": "F1b_valmom",
+   "claimed_grade": "S",
+   "verified_grade": "A",
+   "reproduced": true,
+   "verdict": "downgraded to A",
+   "key_numbers": "再現 全+1.84%/年 t3.73・訓+2.76%/年 t2.17・保+1.36%/年 t4.79・CAGR差 保+1.45・費後+1.14%/年 t4.03・20年一括 1.0（9窓）・積立中央 1.18・国 {'regions': 38, 'positive': 38}（研究側と一致=True）",
+   "issues": [
+    "局面（独走の後60か月）には時期の情報が無い: 在X の印を国ごとに無作為に回した偽の時期 1000回で 保有の上乗せ 平均 +1.27%/年・95%点 +1.42、実際 +1.36（偽≥実 0.167）。訓練も 偽 +2.81 ≥ 実 +2.76（0.59）。在X の月 − 外の月の (X−vw) は 保有 +0.33%/年 t0.81＝角度の新しい中身（局面）は反証",
+    "勝ちの中身は既知の割安＋勢い（米国外・国の中）を約半分の月（在X 0.478）持っただけ: 同じ国×月で常に持つと 保有 +2.73%/年 t6.32・訓練 +5.21%/年 t3.44 ＞ 規則。割安＋勢いの 2007〜 の勝ちは mw_intl（検証で S 確定・同じ保有期間・同じ地域）で設計前に知られていた＝保有の t は新しい証拠ではない（C3 を数えず、C5 38/38 で A）。プログラムの台帳で mw_intl の S と二重に数えないこと",
+    "訓練は 9.9 年（1997-02〜・全体の事前登録の最低15年に届かない）で、1か月の国数は平均 15.9・最小 1。訓練の局面 18 のうち 14 が 1998-06〜2001-12 の IT バブルの天井＝実質一つの出来事。近い母数で C1 が落ちる: ['pct90 +1.59%/年 t1.69', 'win120 +0.02%/年 t1.05', 'hist180 +0.09%/年 t1.39', 'H36 +2.42%/年 t1.88']（16通り中 4）",
+    "紙の上では頑丈: 訓練から 1998-2000 を外して +4.10%/年 t3.86・1998-2002 を外して +2.30%/年 t5.32・既知の top dogs（fin can swe nld）抜き 訓練 +3.34%/年 t4.73／保有の前半 +0.77%/年 t2.62・後半 +1.94%/年 t4.77・2020-21 抜き +1.37%/年 t4.6／先進国だけ 保有 +1.17%/年 t3.44・銘柄数の重み +1.29%/年 t3.79／一国外しの最小 bra +1.27",
+    "費用: 研究側 +1.14%/年 t4.03・現実的な回転（1.3/年）+1.07%/年 t3.82・単価2倍 +0.91%/年 t3.26・両方 +0.78%/年 t2.82・単価3倍 +0.69%/年 t2.48（C6 は保つ）。保有の前半の費用後は +0.58%/年 t1.96",
+    "多重検定: 保有 t 4.79 はプログラム全体の Bonferroni 線 t≈4.35 を越える（角度で唯一）。全期間 t 3.73。ただし越えているのは X（割安＋勢い）の上乗せで、局面ではない",
+    "相手は各国の純粋な時価加重の国の等分（S&P500 ではない）。X は JKP の国の中の三分位で個人は持てない（mw_intl の検証: 実在の ETF の組み合わせは紙の半分〜3分の1・有意でない）"
+   ]
+  },
+  {
+   "name": "E1_equal",
+   "claimed_grade": "S",
+   "verified_grade": "C",
+   "reproduced": true,
+   "verdict": "downgraded to C",
+   "key_numbers": "再現 全+2.02%/年 t3.64・訓+3.76%/年 t2.97・保+1.11%/年 t3.1・CAGR差 保+1.20・費後+0.50%/年 t1.42・20年一括 1.0（9窓）・積立中央 1.227・国 {'regions': 36, 'positive': 29}（研究側と一致=True）",
+   "issues": [
+    "事後の規則: 事前登録2（09e60f1）の着想は F1・F1b・F2 の結果（2007〜の保有期間を含む・次の60か月の差）を見た後と研究側自身が明記。全体の事前登録の誠実さの規則『保有期間の結果を見て規則を変えたら事後と明記し、判定には使わない』により判定の外（族の中の Holm では選択の偏りは消えない）",
+    "費用後が単価に弱い: 研究側 +0.50%/年 t1.42（C6 は正だが t1.42）・単価2倍 -0.11%/年 t-0.3・現実的な回転0.8＋単価2倍 -0.22%/年 t-0.61・3倍 -0.72%/年 t-2.0。切替 601 回。新興国の等加重は極小型株を含み、片道100%あたり 1.0% は楽観的＝現実的な費用で C6 が落ちる",
+    "先進国だけ 保有 +1.04%/年 t1.96・費用後 +0.65%/年 t1.24／新興国 費用後 +0.38%/年 t1.1／保有の前半 費用後 +0.34%/年 t0.84・後半 +0.67%/年 t1.16／2018〜 +1.23%/年 t1.89",
+    "局面の効きはこの角度でいちばん本物に近い（偽の時期 p=0.02・訓練 p=0.02・在X − 外 保有 +2.06%/年 t1.77）が、事後の規則なので新しい事前登録で前向きに確かめる材料にとどまる",
+    "多重検定: 保有 t 3.1 は角度の Bonferroni（判定49本）t≈3.28 にもプログラムの t≈4.35 にも届かない",
+    "常に等加重を持つ（同じ国×月）と 保有 +3.04%/年 t2.13。近い母数で C1 が落ちる: ['win120 +0.00%/年 tNone', 'hist180 +0.01%/年 t0.5']"
+   ]
+  },
+  {
+   "name": "E1_valmom",
+   "claimed_grade": "S",
+   "verified_grade": "C",
+   "reproduced": true,
+   "verdict": "downgraded to C",
+   "key_numbers": "再現 全+1.30%/年 t3.26・訓+2.15%/年 t2.08・保+0.86%/年 t4.22・CAGR差 保+0.92・費後+0.49%/年 t2.58・20年一括 1.0（9窓）・積立中央 1.121・国 {'regions': 36, 'positive': 35}（研究側と一致=True）",
+   "issues": [
+    "事後の規則（E1_equal と同じ）: 事前登録2 は保有期間を含む結果を見た後の着想＝全体の事前登録の規則で判定の外",
+    "C1 がフィンランド1国（Nokia・設計時に既知の後知恵）に乗っている: フィンランドを外すと訓練 t 1.99（<2.0）。近い母数でも C1 が落ちる: ['pct90 +1.17%/年 t1.77', 'win84 +3.75%/年 t1.57', 'win120 +0.00%/年 tNone', 'hist180 +0.06%/年 t1.34', 'H36 +1.95%/年 t1.87']（16通り中 5）",
+    "費用: 研究側 +0.49%/年 t2.58・単価2倍 +0.12%/年 t0.68・現実的な回転1.3＋単価2倍 +0.06%/年 t0.31・3倍 -0.24%/年 t-1.41＝費用後の上乗せは現実的な費用でほぼ0。保有の前半の費用後 +0.21%/年 t0.92",
+    "局面の効きは弱い: 偽の時期 p=0.055（保有）・0.222（訓練）・在X − 外 保有 +0.86 t1.77。常に割安＋勢いを持つと 保有 +2.73%/年 t6.32＝規則の +0.86%/年 t4.22 を大きく上回る",
+    "多重検定: 保有 t 4.22 はプログラムの Bonferroni t≈4.35 に届かない。割安＋勢いの保有期間の勝ちは mw_intl で既知"
+   ]
+  },
+  {
+   "name": "F1c_valmom",
+   "claimed_grade": "S",
+   "verified_grade": "A",
+   "reproduced": true,
+   "verdict": "downgraded to A",
+   "key_numbers": "再現 全+0.68%/年 t3.57・訓+0.99%/年 t2.65・保+0.41%/年 t3.75・CAGR差 保+0.43・費後+0.23%/年 t2.18・20年一括 1.0（16窓）・積立中央 1.069・国 {'regions': 29, 'positive': 28}（研究側と一致=True）",
+   "issues": [
+    "保有期間で局面の効きはゼロ: 在X の月 − 外の月の (X−vw) +0.00%/年 t0.01・偽の時期 p=0.174（訓練だけ p=0.021）。同じ国×月で常に割安＋勢いを持つと 保有 +2.87%/年 t6.89・規則はその 14% を在X 0.151 の月で取っただけ＝比例",
+    "F1b と同じ理由で保有の t は X（mw_intl で既知の割安＋勢い）の上乗せで新しい証拠ではない（C3 を数えず、C5 28/29・C7 全期間 t3.57 で A）",
+    "経済的にはごく小さく、費用に弱い: 研究側 +0.23%/年 t2.18・単価2倍 +0.05%/年 t0.48・現実的な回転＋単価2倍 +0.02%/年 t0.16・3倍 -0.13%/年 t-1.19。保有の前半の費用後 +0.09%/年 t0.91・銘柄数の重みの費用後 +0.09%/年 t0.89・新興国の費用後 +0.10%/年 t1.05",
+    "紙の上の粗の上乗せは母数に頑丈（近い母数10通りすべて S）・訓練は 16.5 年で本物・1998-2000 抜き 訓練 +1.06%/年 t3.0",
+    "多重検定: 保有 t 3.75 はプログラムの Bonferroni t≈4.35 に届かない"
+   ]
+  },
+  {
+   "name": "E3_P1",
+   "claimed_grade": "B",
+   "verified_grade": "C",
+   "reproduced": true,
+   "verdict": "downgraded to C",
+   "key_numbers": "再現 全+0.65%/年 t2.98・訓+0.63%/年 t2.19・保+0.70%/年 t2.46・CAGR差 保+0.75・費後+0.64%/年 t2.31・20年一括 0.953（43窓）・積立中央 1.067・国 N/A（研究側と一致=True）",
+   "issues": [
+    "事後の規則: 事前登録2 の探索（米国の H60）は F3 の結果（保有期間を含む）を見た後＝全体の事前登録の規則で判定の外",
+    "C1 が 1998-2000（IT バブルの崩壊・既知の歴史）に乗っている: 訓練から外すと +0.39%/年 t1.43・1963-84 は +0.35%/年 t0.96。近い母数で C1 が落ちる: ['pct85 +0.54%/年 t1.9', 'pct90 +0.41%/年 t1.44', 'win84 +0.40%/年 t1.38', 'H36 +0.42%/年 t1.49', 'H48 +0.53%/年 t1.85']（14通り中 5）",
+    "時期に情報が無い: 偽の時期 p=0.416（実 +0.70 vs 偽の平均 +0.65）。訓練では在X の月 +0.87%/年 ＜ 外の月 +1.64（逆向き）。常に P1 を持つと 保有 +0.98%/年 t2.36・訓練 +1.09%/年 t3.17 ＞ 規則",
+    "保有の前半 -0.12%/年 t-0.97・後半 +1.51%/年 t3.54＝勝ちは 2016 年以降だけ。2020-21 を外すと +0.51%/年 t1.82",
+    "費用には強い（単価3倍 +0.54%/年 t1.98）が、C7 は研究側どおり不合格（全期間 t 2.98・Holm 0.083）"
+   ]
+  }
+ ],
+ "details": {
+  "F1b_valmom": {
+   "reproduced": {
+    "full": {
+     "from": 199702,
+     "to": 202512,
+     "months": 347,
+     "ex_ann": 1.84,
+     "t": 3.73,
+     "p": 0.0002,
+     "cagr_diff": 2.16,
+     "te": 4.22
+    },
+    "train": {
+     "from": 199702,
+     "to": 200612,
+     "months": 119,
+     "ex_ann": 2.76,
+     "t": 2.17,
+     "p": 0.0299,
+     "cagr_diff": 3.64,
+     "te": 7.11
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 1.36,
+     "t": 4.79,
+     "p": 0.0,
+     "cagr_diff": 1.45,
+     "te": 0.86
+    },
+    "hold_net": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 1.14,
+     "t": 4.03,
+     "p": 0.0001,
+     "cagr_diff": 1.21,
+     "te": 0.86
+    },
+    "roll20": {
+     "windows": 9,
+     "win_rate": 1.0,
+     "median": 2.09,
+     "worst": [
+      2003,
+      1.44
+     ]
+    },
+    "dca20": {
+     "windows": 9,
+     "win_rate": 1.0,
+     "median": 1.18
+    },
+    "sharpe": {
+     "train": [
+      0.823,
+      0.593
+     ],
+     "hold": [
+      0.45,
+      0.372
+     ]
+    },
+    "grade_mech": "S",
+    "criteria": {
+     "C1_train": true,
+     "C2_hold_sign": true,
+     "C3_hold_t": true,
+     "C4_roll20": true,
+     "C5_repl": true,
+     "C6_net_cost": true,
+     "C7_multi": true,
+     "C8_sharpe": true
+    }
+   },
+   "match_claim": {
+    "full": true,
+    "train": true,
+    "hold": true,
+    "hold_net": true
+   },
+   "repl": {
+    "regions": 38,
+    "positive": 38
+   },
+   "in_X_share": 0.478,
+   "train_composition": {
+    "avg_countries_per_month": 15.9,
+    "min_countries": 1,
+    "in_X_country_months_by_country": {
+     "can": 91,
+     "fin": 73,
+     "nld": 73,
+     "mys": 72,
+     "fra": 71,
+     "hkg": 63,
+     "sgp": 63,
+     "swe": 62,
+     "deu": 61,
+     "dnk": 60,
+     "esp": 60,
+     "gbr": 60
+    },
+    "in_X_countries": 18
+   },
+   "train_contrib_ann_by_country": {
+    "fin": 0.47,
+    "swe": 0.3,
+    "hkg": 0.24,
+    "fra": 0.23,
+    "nld": 0.21,
+    "sgp": 0.2,
+    "deu": 0.18,
+    "esp": 0.16
+   },
+   "train_without_known_topdogs": {
+    "dropped": [
+     "can",
+     "fin",
+     "nld",
+     "swe"
+    ],
+    "train": {
+     "from": 200010,
+     "to": 200612,
+     "months": 75,
+     "ex_ann": 3.34,
+     "t": 4.73,
+     "p": 0.0,
+     "cagr_diff": 4.05,
+     "te": 1.56
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 1.44,
+     "t": 4.82,
+     "p": 0.0,
+     "cagr_diff": 1.54,
+     "te": 0.89
+    }
+   },
+   "subperiods": {
+    "train_drop_1998_2000": {
+     "from": 199702,
+     "to": 200612,
+     "months": 83,
+     "ex_ann": 4.1,
+     "t": 3.86,
+     "p": 0.0001,
+     "cagr_diff": 4.9,
+     "te": 2.49
+    },
+    "train_drop_1998_2002": {
+     "from": 199702,
+     "to": 200612,
+     "months": 59,
+     "ex_ann": 2.3,
+     "t": 5.32,
+     "p": 0.0,
+     "cagr_diff": 2.9,
+     "te": 1.01
+    },
+    "full_drop_1998_2000_2020_2021": {
+     "from": 199702,
+     "to": 202512,
+     "months": 287,
+     "ex_ann": 2.16,
+     "t": 4.65,
+     "p": 0.0,
+     "cagr_diff": 2.4,
+     "te": 1.55
+    },
+    "hold_drop_2020_2021": {
+     "from": 200701,
+     "to": 202512,
+     "months": 204,
+     "ex_ann": 1.37,
+     "t": 4.6,
+     "p": 0.0,
+     "cagr_diff": 1.47,
+     "te": 0.85
+    },
+    "hold_first_2007_2016H1": {
+     "from": 200701,
+     "to": 201606,
+     "months": 114,
+     "ex_ann": 0.77,
+     "t": 2.62,
+     "p": 0.0089,
+     "cagr_diff": 0.83,
+     "te": 0.74
+    },
+    "hold_second_2016H2_2025": {
+     "from": 201607,
+     "to": 202512,
+     "months": 114,
+     "ex_ann": 1.94,
+     "t": 4.77,
+     "p": 0.0,
+     "cagr_diff": 2.11,
+     "te": 0.95
+    },
+    "hold_net_first": {
+     "from": 200701,
+     "to": 201606,
+     "months": 114,
+     "ex_ann": 0.58,
+     "t": 1.96,
+     "p": 0.05,
+     "cagr_diff": 0.63,
+     "te": 0.74
+    },
+    "hold_net_second": {
+     "from": 201607,
+     "to": 202512,
+     "months": 114,
+     "ex_ann": 1.69,
+     "t": 4.12,
+     "p": 0.0,
+     "cagr_diff": 1.82,
+     "te": 0.95
+    },
+    "post2018": {
+     "from": 201801,
+     "to": 202512,
+     "months": 96,
+     "ex_ann": 1.93,
+     "t": 4.08,
+     "p": 0.0,
+     "cagr_diff": 2.06,
+     "te": 0.99
+    },
+    "hold_drop_2009": {
+     "from": 200701,
+     "to": 202512,
+     "months": 216,
+     "ex_ann": 1.46,
+     "t": 5.51,
+     "p": 0.0,
+     "cagr_diff": 1.52,
+     "te": 0.82
+    }
+   },
+   "always_X_same_country_months": {
+    "full": {
+     "from": 199702,
+     "to": 202512,
+     "months": 347,
+     "ex_ann": 3.58,
+     "t": 5.67,
+     "p": 0.0,
+     "cagr_diff": 4.09,
+     "te": 4.49
+    },
+    "train": {
+     "from": 199702,
+     "to": 200612,
+     "months": 119,
+     "ex_ann": 5.21,
+     "t": 3.44,
+     "p": 0.0006,
+     "cagr_diff": 6.54,
+     "te": 7.42
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 2.73,
+     "t": 6.32,
+     "p": 0.0,
+     "cagr_diff": 2.91,
+     "te": 1.38
+    }
+   },
+   "conditioning": {
+    "hold_in_minus_out_ann": 0.33,
+    "hold_t": 0.81,
+    "train_in_minus_out_ann": 3.53,
+    "train_t": 2.64,
+    "hold_mean_X_minus_vw_in_X_ann": 3.06,
+    "hold_mean_X_minus_vw_out_X_ann": 2.54,
+    "months_both_hold": 228
+   },
+   "placebo_circular_shift": {
+    "draws": 1000,
+    "actual_hold_ann": 1.36,
+    "placebo_hold_mean": 1.27,
+    "placebo_hold_p95": 1.42,
+    "p_placebo_ge_actual_hold": 0.167,
+    "actual_train_ann": 2.76,
+    "placebo_train_mean": 2.81,
+    "p_placebo_ge_actual_train": 0.59
+   },
+   "neighbors": {
+    "pct70": {
+     "train": "+2.88%/年 t2.28",
+     "hold": "+1.43%/年 t4.62",
+     "hold_net": "+1.19%/年 t3.84",
+     "full": "+1.93%/年 t3.87",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "pct75": {
+     "train": "+2.86%/年 t2.28",
+     "hold": "+1.41%/年 t4.76",
+     "hold_net": "+1.18%/年 t4.01",
+     "full": "+1.91%/年 t3.87",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "pct85": {
+     "train": "+2.62%/年 t2.12",
+     "hold": "+1.28%/年 t4.85",
+     "hold_net": "+1.06%/年 t4.05",
+     "full": "+1.74%/年 t3.64",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "pct90": {
+     "train": "+1.59%/年 t1.69",
+     "hold": "+1.16%/年 t5.12",
+     "hold_net": "+0.97%/年 t4.25",
+     "full": "+1.31%/年 t3.66",
+     "grade_without_holm": "C",
+     "C1": false,
+     "C3": true,
+     "C6": true
+    },
+    "win36": {
+     "train": "+2.96%/年 t2.65",
+     "hold": "+1.76%/年 t5.78",
+     "hold_net": "+1.48%/年 t4.85",
+     "full": "+2.22%/年 t4.59",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "win48": {
+     "train": "+2.71%/年 t2.27",
+     "hold": "+1.51%/年 t5.19",
+     "hold_net": "+1.25%/年 t4.31",
+     "full": "+1.95%/年 t3.99",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "win84": {
+     "train": "+6.74%/年 t2.35",
+     "hold": "+1.15%/年 t4.86",
+     "hold_net": "+0.97%/年 t4.19",
+     "full": "+2.80%/年 t2.89",
+     "grade_without_holm": "B",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "win120": {
+     "train": "+0.02%/年 t1.05",
+     "hold": "+1.06%/年 t4.82",
+     "hold_net": "+0.92%/年 t4.39",
+     "full": "+0.85%/年 t4.34",
+     "grade_without_holm": "C",
+     "C1": false,
+     "C3": true,
+     "C6": true
+    },
+    "hist60": {
+     "train": "+3.47%/年 t3.52",
+     "hold": "+1.44%/年 t5.39",
+     "hold_net": "+1.22%/年 t4.54",
+     "full": "+2.33%/年 t4.73",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "hist180": {
+     "train": "+0.09%/年 t1.39",
+     "hold": "+1.25%/年 t4.38",
+     "hold_net": "+1.06%/年 t3.77",
+     "full": "+1.01%/年 t4.08",
+     "grade_without_holm": "C",
+     "C1": false,
+     "C3": true,
+     "C6": true
+    },
+    "bind36": {
+     "train": "+2.76%/年 t2.17",
+     "hold": "+1.43%/年 t5.02",
+     "hold_net": "+1.20%/年 t4.23",
+     "full": "+1.88%/年 t3.83",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "bind54": {
+     "train": "+2.76%/年 t2.17",
+     "hold": "+1.29%/年 t4.7",
+     "hold_net": "+1.07%/年 t3.92",
+     "full": "+1.79%/年 t3.65",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "H36": {
+     "train": "+2.42%/年 t1.88",
+     "hold": "+1.16%/年 t5.0",
+     "hold_net": "+0.96%/年 t4.17",
+     "full": "+1.59%/年 t3.29",
+     "grade_without_holm": "C",
+     "C1": false,
+     "C3": true,
+     "C6": true
+    },
+    "H48": {
+     "train": "+2.65%/年 t2.08",
+     "hold": "+1.27%/年 t4.77",
+     "hold_net": "+1.06%/年 t4.01",
+     "full": "+1.74%/年 t3.56",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "H84": {
+     "train": "+2.85%/年 t2.25",
+     "hold": "+1.47%/年 t4.84",
+     "hold_net": "+1.22%/年 t3.99",
+     "full": "+1.94%/年 t3.92",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "H120": {
+     "train": "+2.85%/年 t2.25",
+     "hold": "+1.74%/年 t5.22",
+     "hold_net": "+1.46%/年 t4.36",
+     "full": "+2.12%/年 t4.26",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    }
+   },
+   "country_sets": {
+    "developed": {
+     "train": {
+      "from": 199702,
+      "to": 200612,
+      "months": 119,
+      "ex_ann": 3.2,
+      "t": 2.26,
+      "p": 0.0235,
+      "cagr_diff": 4.15,
+      "te": 7.28
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.17,
+      "t": 3.44,
+      "p": 0.0006,
+      "cagr_diff": 1.24,
+      "te": 1.08
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.03,
+      "t": 3.08,
+      "p": 0.0021,
+      "cagr_diff": 1.09,
+      "te": 1.08
+     }
+    },
+    "emerging": {
+     "train": {
+      "from": 200012,
+      "to": 200612,
+      "months": 73,
+      "ex_ann": 2.41,
+      "t": 4.91,
+      "p": 0.0,
+      "cagr_diff": 2.99,
+      "te": 1.59
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.59,
+      "t": 4.89,
+      "p": 0.0,
+      "cagr_diff": 1.71,
+      "te": 1.11
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.29,
+      "t": 3.93,
+      "p": 0.0001,
+      "cagr_diff": 1.39,
+      "te": 1.11
+     }
+    },
+    "big_markets": {
+     "train": {
+      "from": 199702,
+      "to": 200612,
+      "months": 119,
+      "ex_ann": 2.91,
+      "t": 2.1,
+      "p": 0.0355,
+      "cagr_diff": 3.83,
+      "te": 7.13
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.5,
+      "t": 3.94,
+      "p": 0.0001,
+      "cagr_diff": 1.63,
+      "te": 1.22
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.29,
+      "t": 3.46,
+      "p": 0.0005,
+      "cagr_diff": 1.4,
+      "te": 1.22
+     }
+    },
+    "developed_ex_jpn": {
+     "train": {
+      "from": 199702,
+      "to": 200612,
+      "months": 119,
+      "ex_ann": 3.41,
+      "t": 2.31,
+      "p": 0.021,
+      "cagr_diff": 4.42,
+      "te": 7.34
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.19,
+      "t": 3.38,
+      "p": 0.0007,
+      "cagr_diff": 1.26,
+      "te": 1.11
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.05,
+      "t": 3.01,
+      "p": 0.0026,
+      "cagr_diff": 1.1,
+      "te": 1.11
+     }
+    },
+    "weighted_by_n_stocks": {
+     "train": {
+      "from": 199702,
+      "to": 200612,
+      "months": 119,
+      "ex_ann": 2.26,
+      "t": 2.03,
+      "p": 0.042,
+      "cagr_diff": 2.97,
+      "te": 6.95
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.29,
+      "t": 3.79,
+      "p": 0.0002,
+      "cagr_diff": 1.39,
+      "te": 1.13
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.05,
+      "t": 3.12,
+      "p": 0.0018,
+      "cagr_diff": 1.13,
+      "te": 1.13
+     }
+    }
+   },
+   "leave_one_out": {
+    "hold_min": [
+     "bra",
+     1.27,
+     4.46,
+     2.17
+    ],
+    "hold_t_min": [
+     "bra",
+     1.27,
+     4.46,
+     2.17
+    ],
+    "train_t_min": [
+     "fin",
+     1.4,
+     4.8,
+     2.04
+    ],
+    "train_t_below_2": []
+   },
+   "costs": {
+    "as_claimed": {
+     "turnover": 0.95,
+     "unit_mult": 1.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.14,
+      "t": 4.03,
+      "p": 0.0001,
+      "cagr_diff": 1.21,
+      "te": 0.86
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 1.6,
+      "t": 3.25,
+      "p": 0.0011,
+      "cagr_diff": 1.9,
+      "te": 4.22
+     }
+    },
+    "realistic_turnover": {
+     "turnover": 1.3,
+     "unit_mult": 1.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.07,
+      "t": 3.82,
+      "p": 0.0001,
+      "cagr_diff": 1.14,
+      "te": 0.86
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 1.54,
+      "t": 3.13,
+      "p": 0.0018,
+      "cagr_diff": 1.83,
+      "te": 4.22
+     }
+    },
+    "unit_x2": {
+     "turnover": 0.95,
+     "unit_mult": 2.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.91,
+      "t": 3.26,
+      "p": 0.0011,
+      "cagr_diff": 0.97,
+      "te": 0.86
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 1.37,
+      "t": 2.78,
+      "p": 0.0055,
+      "cagr_diff": 1.64,
+      "te": 4.22
+     }
+    },
+    "realistic_turnover_unit_x2": {
+     "turnover": 1.3,
+     "unit_mult": 2.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.78,
+      "t": 2.82,
+      "p": 0.0048,
+      "cagr_diff": 0.83,
+      "te": 0.86
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 1.24,
+      "t": 2.52,
+      "p": 0.0119,
+      "cagr_diff": 1.5,
+      "te": 4.22
+     }
+    },
+    "unit_x3": {
+     "turnover": 0.95,
+     "unit_mult": 3.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.69,
+      "t": 2.48,
+      "p": 0.0133,
+      "cagr_diff": 0.74,
+      "te": 0.87
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 1.13,
+      "t": 2.3,
+      "p": 0.0215,
+      "cagr_diff": 1.38,
+      "te": 4.22
+     }
+    }
+   },
+   "switches": 86
+  },
+  "E1_equal": {
+   "reproduced": {
+    "full": {
+     "from": 199702,
+     "to": 202512,
+     "months": 347,
+     "ex_ann": 2.02,
+     "t": 3.64,
+     "p": 0.0003,
+     "cagr_diff": 2.17,
+     "te": 3.99
+    },
+    "train": {
+     "from": 199702,
+     "to": 200612,
+     "months": 119,
+     "ex_ann": 3.76,
+     "t": 2.97,
+     "p": 0.003,
+     "cagr_diff": 4.2,
+     "te": 6.63
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 1.11,
+     "t": 3.1,
+     "p": 0.0019,
+     "cagr_diff": 1.2,
+     "te": 1.12
+    },
+    "hold_net": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.5,
+     "t": 1.42,
+     "p": 0.1547,
+     "cagr_diff": 0.55,
+     "te": 1.11
+    },
+    "roll20": {
+     "windows": 9,
+     "win_rate": 1.0,
+     "median": 2.07,
+     "worst": [
+      2005,
+      1.22
+     ]
+    },
+    "dca20": {
+     "windows": 9,
+     "win_rate": 1.0,
+     "median": 1.227
+    },
+    "sharpe": {
+     "train": [
+      0.781,
+      0.619
+     ],
+     "hold": [
+      0.448,
+      0.381
+     ]
+    },
+    "grade_mech": "S",
+    "criteria": {
+     "C1_train": true,
+     "C2_hold_sign": true,
+     "C3_hold_t": true,
+     "C4_roll20": true,
+     "C5_repl": true,
+     "C6_net_cost": true,
+     "C7_multi": true,
+     "C8_sharpe": true
+    }
+   },
+   "match_claim": {
+    "full": true,
+    "train": true,
+    "hold": true,
+    "hold_net": true
+   },
+   "repl": {
+    "regions": 36,
+    "positive": 29
+   },
+   "in_X_share": 0.251,
+   "train_composition": {
+    "avg_countries_per_month": 16.6,
+    "min_countries": 1,
+    "in_X_country_months_by_country": {
+     "fra": 63,
+     "can": 62,
+     "swe": 62,
+     "fin": 60,
+     "hkg": 57,
+     "deu": 54,
+     "esp": 54,
+     "nld": 53,
+     "dnk": 46,
+     "kor": 42,
+     "sgp": 40,
+     "zaf": 39
+    },
+    "in_X_countries": 18
+   },
+   "train_contrib_ann_by_country": {
+    "can": 1.67,
+    "fin": 0.33,
+    "zaf": 0.33,
+    "esp": 0.22,
+    "fra": 0.19,
+    "dnk": 0.19,
+    "nld": 0.17,
+    "swe": 0.16
+   },
+   "train_without_known_topdogs": {
+    "dropped": [
+     "can",
+     "fin",
+     "nld",
+     "swe"
+    ],
+    "train": {
+     "from": 200010,
+     "to": 200612,
+     "months": 75,
+     "ex_ann": 2.71,
+     "t": 3.35,
+     "p": 0.0008,
+     "cagr_diff": 3.23,
+     "te": 2.58
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 1.16,
+     "t": 3.46,
+     "p": 0.0005,
+     "cagr_diff": 1.26,
+     "te": 1.14
+    }
+   },
+   "subperiods": {
+    "train_drop_1998_2000": {
+     "from": 199702,
+     "to": 200612,
+     "months": 83,
+     "ex_ann": 3.69,
+     "t": 3.31,
+     "p": 0.0009,
+     "cagr_diff": 4.34,
+     "te": 3.25
+    },
+    "train_drop_1998_2002": {
+     "from": 199702,
+     "to": 200612,
+     "months": 59,
+     "ex_ann": 3.12,
+     "t": 2.15,
+     "p": 0.0312,
+     "cagr_diff": 3.94,
+     "te": 2.54
+    },
+    "full_drop_1998_2000_2020_2021": {
+     "from": 199702,
+     "to": 202512,
+     "months": 287,
+     "ex_ann": 1.61,
+     "t": 3.33,
+     "p": 0.0009,
+     "cagr_diff": 1.78,
+     "te": 1.99
+    },
+    "hold_drop_2020_2021": {
+     "from": 200701,
+     "to": 202512,
+     "months": 204,
+     "ex_ann": 0.77,
+     "t": 2.58,
+     "p": 0.01,
+     "cagr_diff": 0.84,
+     "te": 1.06
+    },
+    "hold_first_2007_2016H1": {
+     "from": 200701,
+     "to": 201606,
+     "months": 114,
+     "ex_ann": 0.82,
+     "t": 1.99,
+     "p": 0.0467,
+     "cagr_diff": 0.89,
+     "te": 1.07
+    },
+    "hold_second_2016H2_2025": {
+     "from": 201607,
+     "to": 202512,
+     "months": 114,
+     "ex_ann": 1.4,
+     "t": 2.45,
+     "p": 0.0144,
+     "cagr_diff": 1.52,
+     "te": 1.15
+    },
+    "hold_net_first": {
+     "from": 200701,
+     "to": 201606,
+     "months": 114,
+     "ex_ann": 0.34,
+     "t": 0.84,
+     "p": 0.3996,
+     "cagr_diff": 0.38,
+     "te": 1.06
+    },
+    "hold_net_second": {
+     "from": 201607,
+     "to": 202512,
+     "months": 114,
+     "ex_ann": 0.67,
+     "t": 1.16,
+     "p": 0.2461,
+     "cagr_diff": 0.72,
+     "te": 1.17
+    },
+    "post2018": {
+     "from": 201801,
+     "to": 202512,
+     "months": 96,
+     "ex_ann": 1.23,
+     "t": 1.89,
+     "p": 0.0588,
+     "cagr_diff": 1.32,
+     "te": 1.16
+    },
+    "hold_drop_2009": {
+     "from": 200701,
+     "to": 202512,
+     "months": 216,
+     "ex_ann": 1.07,
+     "t": 2.93,
+     "p": 0.0034,
+     "cagr_diff": 1.13,
+     "te": 1.1
+    }
+   },
+   "always_X_same_country_months": {
+    "full": {
+     "from": 199702,
+     "to": 202512,
+     "months": 347,
+     "ex_ann": 2.91,
+     "t": 2.12,
+     "p": 0.0342,
+     "cagr_diff": 3.24,
+     "te": 8.17
+    },
+    "train": {
+     "from": 199702,
+     "to": 200612,
+     "months": 119,
+     "ex_ann": 2.67,
+     "t": 0.9,
+     "p": 0.3677,
+     "cagr_diff": 3.23,
+     "te": 12.83
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 3.04,
+     "t": 2.13,
+     "p": 0.0331,
+     "cagr_diff": 3.24,
+     "te": 4.03
+    }
+   },
+   "conditioning": {
+    "hold_in_minus_out_ann": 2.06,
+    "hold_t": 1.77,
+    "train_in_minus_out_ann": 5.78,
+    "train_t": 2.67,
+    "hold_mean_X_minus_vw_in_X_ann": 5.07,
+    "hold_mean_X_minus_vw_out_X_ann": 2.32,
+    "months_both_hold": 228
+   },
+   "placebo_circular_shift": {
+    "draws": 1000,
+    "actual_hold_ann": 1.11,
+    "placebo_hold_mean": 0.67,
+    "placebo_hold_p95": 1.02,
+    "p_placebo_ge_actual_hold": 0.02,
+    "actual_train_ann": 3.76,
+    "placebo_train_mean": 0.69,
+    "p_placebo_ge_actual_train": 0.02
+   },
+   "neighbors": {
+    "pct70": {
+     "train": "+3.69%/年 t2.91",
+     "hold": "+1.20%/年 t3.09",
+     "hold_net": "+0.54%/年 t1.42",
+     "full": "+2.05%/年 t3.68",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "pct75": {
+     "train": "+3.69%/年 t2.91",
+     "hold": "+1.10%/年 t3.04",
+     "hold_net": "+0.48%/年 t1.33",
+     "full": "+1.99%/年 t3.59",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "pct85": {
+     "train": "+3.79%/年 t3.08",
+     "hold": "+1.12%/年 t3.08",
+     "hold_net": "+0.53%/年 t1.49",
+     "full": "+2.04%/年 t3.72",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "pct90": {
+     "train": "+2.96%/年 t2.56",
+     "hold": "+1.00%/年 t3.42",
+     "hold_net": "+0.47%/年 t1.62",
+     "full": "+1.67%/年 t3.5",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "win36": {
+     "train": "+1.64%/年 t2.24",
+     "hold": "+1.12%/年 t2.49",
+     "hold_net": "+0.34%/年 t0.77",
+     "full": "+1.32%/年 t3.32",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "win48": {
+     "train": "+1.77%/年 t2.74",
+     "hold": "+0.98%/年 t2.45",
+     "hold_net": "+0.31%/年 t0.78",
+     "full": "+1.27%/年 t3.57",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "win84": {
+     "train": "+8.43%/年 t2.29",
+     "hold": "+0.90%/年 t2.91",
+     "hold_net": "+0.41%/年 t1.41",
+     "full": "+3.12%/年 t2.38",
+     "grade_without_holm": "B",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "win120": {
+     "train": "+0.00%/年 tNone",
+     "hold": "+0.73%/年 t3.14",
+     "hold_net": "+0.39%/年 t1.79",
+     "full": "+0.58%/年 t2.98",
+     "grade_without_holm": "C",
+     "C1": false,
+     "C3": true,
+     "C6": true
+    },
+    "hist60": {
+     "train": "+3.41%/年 t2.64",
+     "hold": "+1.11%/年 t3.17",
+     "hold_net": "+0.50%/年 t1.43",
+     "full": "+2.12%/年 t3.33",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "hist180": {
+     "train": "+0.01%/年 t0.5",
+     "hold": "+1.06%/年 t2.65",
+     "hold_net": "+0.55%/年 t1.4",
+     "full": "+0.85%/年 t2.56",
+     "grade_without_holm": "C",
+     "C1": false,
+     "C3": true,
+     "C6": true
+    },
+    "bind36": {
+     "train": "+3.76%/年 t2.97",
+     "hold": "+1.18%/年 t3.29",
+     "hold_net": "+0.54%/年 t1.54",
+     "full": "+2.06%/年 t3.74",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "bind54": {
+     "train": "+3.76%/年 t2.97",
+     "hold": "+1.13%/年 t3.14",
+     "hold_net": "+0.53%/年 t1.49",
+     "full": "+2.03%/年 t3.66",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "H36": {
+     "train": "+3.57%/年 t2.72",
+     "hold": "+1.07%/年 t3.38",
+     "hold_net": "+0.57%/年 t1.81",
+     "full": "+1.92%/年 t3.5",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "H48": {
+     "train": "+3.73%/年 t2.94",
+     "hold": "+1.08%/年 t3.2",
+     "hold_net": "+0.52%/年 t1.57",
+     "full": "+1.99%/年 t3.61",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "H84": {
+     "train": "+3.74%/年 t2.94",
+     "hold": "+1.21%/年 t3.32",
+     "hold_net": "+0.53%/年 t1.47",
+     "full": "+2.08%/年 t3.76",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "H120": {
+     "train": "+3.74%/年 t2.94",
+     "hold": "+1.31%/年 t3.33",
+     "hold_net": "+0.51%/年 t1.31",
+     "full": "+2.15%/年 t3.85",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    }
+   },
+   "country_sets": {
+    "developed": {
+     "train": {
+      "from": 199702,
+      "to": 200612,
+      "months": 119,
+      "ex_ann": 4.13,
+      "t": 2.8,
+      "p": 0.0052,
+      "cagr_diff": 4.59,
+      "te": 6.92
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.04,
+      "t": 1.96,
+      "p": 0.0502,
+      "cagr_diff": 1.11,
+      "te": 1.54
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.65,
+      "t": 1.24,
+      "p": 0.2161,
+      "cagr_diff": 0.7,
+      "te": 1.54
+     }
+    },
+    "emerging": {
+     "train": {
+      "from": 200012,
+      "to": 200612,
+      "months": 73,
+      "ex_ann": 2.55,
+      "t": 2.99,
+      "p": 0.0028,
+      "cagr_diff": 3.15,
+      "te": 2.85
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.2,
+      "t": 3.34,
+      "p": 0.0008,
+      "cagr_diff": 1.3,
+      "te": 1.4
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.38,
+      "t": 1.1,
+      "p": 0.2719,
+      "cagr_diff": 0.42,
+      "te": 1.38
+     }
+    },
+    "big_markets": {
+     "train": {
+      "from": 199702,
+      "to": 200612,
+      "months": 119,
+      "ex_ann": 3.97,
+      "t": 3.1,
+      "p": 0.0019,
+      "cagr_diff": 4.41,
+      "te": 6.8
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.29,
+      "t": 2.4,
+      "p": 0.0165,
+      "cagr_diff": 1.37,
+      "te": 1.68
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.68,
+      "t": 1.24,
+      "p": 0.2162,
+      "cagr_diff": 0.72,
+      "te": 1.69
+     }
+    },
+    "developed_ex_jpn": {
+     "train": {
+      "from": 199702,
+      "to": 200612,
+      "months": 119,
+      "ex_ann": 4.31,
+      "t": 2.82,
+      "p": 0.0049,
+      "cagr_diff": 4.83,
+      "te": 7.03
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.11,
+      "t": 1.99,
+      "p": 0.0464,
+      "cagr_diff": 1.19,
+      "te": 1.62
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.72,
+      "t": 1.29,
+      "p": 0.1964,
+      "cagr_diff": 0.77,
+      "te": 1.62
+     }
+    },
+    "weighted_by_n_stocks": {
+     "train": {
+      "from": 199702,
+      "to": 200612,
+      "months": 119,
+      "ex_ann": 3.24,
+      "t": 2.57,
+      "p": 0.0101,
+      "cagr_diff": 3.47,
+      "te": 6.54
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.84,
+      "t": 2.76,
+      "p": 0.0057,
+      "cagr_diff": 1.96,
+      "te": 1.86
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.09,
+      "t": 1.61,
+      "p": 0.1068,
+      "cagr_diff": 1.15,
+      "te": 1.87
+     }
+    }
+   },
+   "leave_one_out": {
+    "hold_min": [
+     "ind",
+     0.98,
+     2.8,
+     2.98
+    ],
+    "hold_t_min": [
+     "ind",
+     0.98,
+     2.8,
+     2.98
+    ],
+    "train_t_min": [
+     "kor",
+     1.19,
+     3.3,
+     2.81
+    ],
+    "train_t_below_2": []
+   },
+   "costs": {
+    "as_claimed": {
+     "turnover": 0.5,
+     "unit_mult": 1.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.5,
+      "t": 1.42,
+      "p": 0.1547,
+      "cagr_diff": 0.55,
+      "te": 1.11
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 1.39,
+      "t": 2.63,
+      "p": 0.0085,
+      "cagr_diff": 1.48,
+      "te": 3.91
+     }
+    },
+    "realistic_turnover": {
+     "turnover": 0.8,
+     "unit_mult": 1.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.45,
+      "t": 1.27,
+      "p": 0.2032,
+      "cagr_diff": 0.49,
+      "te": 1.11
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 1.33,
+      "t": 2.53,
+      "p": 0.0113,
+      "cagr_diff": 1.42,
+      "te": 3.91
+     }
+    },
+    "unit_x2": {
+     "turnover": 0.5,
+     "unit_mult": 2.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": -0.11,
+      "t": -0.3,
+      "p": 0.7612,
+      "cagr_diff": -0.1,
+      "te": 1.12
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 0.76,
+      "t": 1.49,
+      "p": 0.1373,
+      "cagr_diff": 0.79,
+      "te": 3.84
+     }
+    },
+    "realistic_turnover_unit_x2": {
+     "turnover": 0.8,
+     "unit_mult": 2.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": -0.22,
+      "t": -0.61,
+      "p": 0.5391,
+      "cagr_diff": -0.22,
+      "te": 1.12
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 0.64,
+      "t": 1.27,
+      "p": 0.2029,
+      "cagr_diff": 0.67,
+      "te": 3.84
+     }
+    },
+    "unit_x3": {
+     "turnover": 0.5,
+     "unit_mult": 3.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": -0.72,
+      "t": -2.0,
+      "p": 0.046,
+      "cagr_diff": -0.75,
+      "te": 1.14
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 0.12,
+      "t": 0.25,
+      "p": 0.8045,
+      "cagr_diff": 0.11,
+      "te": 3.79
+     }
+    }
+   },
+   "switches": 601
+  },
+  "E1_valmom": {
+   "reproduced": {
+    "full": {
+     "from": 199702,
+     "to": 202512,
+     "months": 347,
+     "ex_ann": 1.3,
+     "t": 3.26,
+     "p": 0.0011,
+     "cagr_diff": 1.45,
+     "te": 1.49
+    },
+    "train": {
+     "from": 199702,
+     "to": 200612,
+     "months": 119,
+     "ex_ann": 2.15,
+     "t": 2.08,
+     "p": 0.0373,
+     "cagr_diff": 2.57,
+     "te": 2.41
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.86,
+     "t": 4.22,
+     "p": 0.0,
+     "cagr_diff": 0.92,
+     "te": 0.56
+    },
+    "hold_net": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.49,
+     "t": 2.58,
+     "p": 0.0098,
+     "cagr_diff": 0.52,
+     "te": 0.56
+    },
+    "roll20": {
+     "windows": 9,
+     "win_rate": 1.0,
+     "median": 1.55,
+     "worst": [
+      2004,
+      0.9
+     ]
+    },
+    "dca20": {
+     "windows": 9,
+     "win_rate": 1.0,
+     "median": 1.121
+    },
+    "sharpe": {
+     "train": [
+      0.717,
+      0.593
+     ],
+     "hold": [
+      0.422,
+      0.372
+     ]
+    },
+    "grade_mech": "S",
+    "criteria": {
+     "C1_train": true,
+     "C2_hold_sign": true,
+     "C3_hold_t": true,
+     "C4_roll20": true,
+     "C5_repl": true,
+     "C6_net_cost": true,
+     "C7_multi": true,
+     "C8_sharpe": true
+    }
+   },
+   "match_claim": {
+    "full": true,
+    "train": true,
+    "hold": true,
+    "hold_net": true
+   },
+   "repl": {
+    "regions": 36,
+    "positive": 35
+   },
+   "in_X_share": 0.264,
+   "train_composition": {
+    "avg_countries_per_month": 15.9,
+    "min_countries": 1,
+    "in_X_country_months_by_country": {
+     "fra": 63,
+     "can": 62,
+     "swe": 62,
+     "fin": 60,
+     "hkg": 57,
+     "deu": 54,
+     "esp": 54,
+     "nld": 53,
+     "dnk": 46,
+     "sgp": 40,
+     "zaf": 39,
+     "mys": 38
+    },
+    "in_X_countries": 18
+   },
+   "train_contrib_ann_by_country": {
+    "fin": 0.4,
+    "swe": 0.3,
+    "hkg": 0.23,
+    "fra": 0.19,
+    "deu": 0.17,
+    "esp": 0.16,
+    "zaf": 0.14,
+    "nld": 0.14
+   },
+   "train_without_known_topdogs": {
+    "dropped": [
+     "can",
+     "fin",
+     "nld",
+     "swe"
+    ],
+    "train": {
+     "from": 200010,
+     "to": 200612,
+     "months": 75,
+     "ex_ann": 2.68,
+     "t": 3.94,
+     "p": 0.0001,
+     "cagr_diff": 3.23,
+     "te": 1.33
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.92,
+     "t": 4.23,
+     "p": 0.0,
+     "cagr_diff": 0.99,
+     "te": 0.58
+    }
+   },
+   "subperiods": {
+    "train_drop_1998_2000": {
+     "from": 199702,
+     "to": 200612,
+     "months": 83,
+     "ex_ann": 3.41,
+     "t": 3.32,
+     "p": 0.0009,
+     "cagr_diff": 4.08,
+     "te": 2.34
+    },
+    "train_drop_1998_2002": {
+     "from": 199702,
+     "to": 200612,
+     "months": 59,
+     "ex_ann": 1.76,
+     "t": 4.23,
+     "p": 0.0,
+     "cagr_diff": 2.22,
+     "te": 0.87
+    },
+    "full_drop_1998_2000_2020_2021": {
+     "from": 199702,
+     "to": 202512,
+     "months": 287,
+     "ex_ann": 1.6,
+     "t": 3.78,
+     "p": 0.0002,
+     "cagr_diff": 1.78,
+     "te": 1.38
+    },
+    "hold_drop_2020_2021": {
+     "from": 200701,
+     "to": 202512,
+     "months": 204,
+     "ex_ann": 0.86,
+     "t": 3.95,
+     "p": 0.0001,
+     "cagr_diff": 0.92,
+     "te": 0.55
+    },
+    "hold_first_2007_2016H1": {
+     "from": 200701,
+     "to": 201606,
+     "months": 114,
+     "ex_ann": 0.5,
+     "t": 2.25,
+     "p": 0.0243,
+     "cagr_diff": 0.53,
+     "te": 0.47
+    },
+    "hold_second_2016H2_2025": {
+     "from": 201607,
+     "to": 202512,
+     "months": 114,
+     "ex_ann": 1.21,
+     "t": 4.03,
+     "p": 0.0001,
+     "cagr_diff": 1.33,
+     "te": 0.62
+    },
+    "hold_net_first": {
+     "from": 200701,
+     "to": 201606,
+     "months": 114,
+     "ex_ann": 0.21,
+     "t": 0.92,
+     "p": 0.3594,
+     "cagr_diff": 0.22,
+     "te": 0.47
+    },
+    "hold_net_second": {
+     "from": 201607,
+     "to": 202512,
+     "months": 114,
+     "ex_ann": 0.77,
+     "t": 2.79,
+     "p": 0.0053,
+     "cagr_diff": 0.85,
+     "te": 0.62
+    },
+    "post2018": {
+     "from": 201801,
+     "to": 202512,
+     "months": 96,
+     "ex_ann": 1.19,
+     "t": 3.37,
+     "p": 0.0008,
+     "cagr_diff": 1.28,
+     "te": 0.64
+    },
+    "hold_drop_2009": {
+     "from": 200701,
+     "to": 202512,
+     "months": 216,
+     "ex_ann": 0.94,
+     "t": 5.09,
+     "p": 0.0,
+     "cagr_diff": 0.98,
+     "te": 0.53
+    }
+   },
+   "always_X_same_country_months": {
+    "full": {
+     "from": 199702,
+     "to": 202512,
+     "months": 347,
+     "ex_ann": 3.58,
+     "t": 5.67,
+     "p": 0.0,
+     "cagr_diff": 4.09,
+     "te": 4.49
+    },
+    "train": {
+     "from": 199702,
+     "to": 200612,
+     "months": 119,
+     "ex_ann": 5.21,
+     "t": 3.44,
+     "p": 0.0006,
+     "cagr_diff": 6.54,
+     "te": 7.42
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 2.73,
+     "t": 6.32,
+     "p": 0.0,
+     "cagr_diff": 2.91,
+     "te": 1.38
+    }
+   },
+   "conditioning": {
+    "hold_in_minus_out_ann": 0.86,
+    "hold_t": 1.77,
+    "train_in_minus_out_ann": 3.9,
+    "train_t": 2.19,
+    "hold_mean_X_minus_vw_in_X_ann": 3.8,
+    "hold_mean_X_minus_vw_out_X_ann": 2.46,
+    "months_both_hold": 228
+   },
+   "placebo_circular_shift": {
+    "draws": 1000,
+    "actual_hold_ann": 0.86,
+    "placebo_hold_mean": 0.7,
+    "placebo_hold_p95": 0.86,
+    "p_placebo_ge_actual_hold": 0.055,
+    "actual_train_ann": 2.15,
+    "placebo_train_mean": 1.7,
+    "p_placebo_ge_actual_train": 0.222
+   },
+   "neighbors": {
+    "pct70": {
+     "train": "+2.20%/年 t2.1",
+     "hold": "+0.94%/年 t4.44",
+     "hold_net": "+0.55%/年 t2.73",
+     "full": "+1.37%/年 t3.4",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "pct75": {
+     "train": "+2.18%/年 t2.1",
+     "hold": "+0.88%/年 t4.26",
+     "hold_net": "+0.51%/年 t2.61",
+     "full": "+1.33%/年 t3.3",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "pct85": {
+     "train": "+2.09%/年 t2.06",
+     "hold": "+0.83%/年 t4.24",
+     "hold_net": "+0.48%/年 t2.6",
+     "full": "+1.26%/年 t3.23",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "pct90": {
+     "train": "+1.17%/年 t1.77",
+     "hold": "+0.74%/年 t4.34",
+     "hold_net": "+0.42%/年 t2.6",
+     "full": "+0.89%/年 t3.46",
+     "grade_without_holm": "C",
+     "C1": false,
+     "C3": true,
+     "C6": true
+    },
+    "win36": {
+     "train": "+2.19%/年 t2.44",
+     "hold": "+0.95%/年 t4.73",
+     "hold_net": "+0.49%/年 t2.51",
+     "full": "+1.43%/年 t3.71",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "win48": {
+     "train": "+2.16%/年 t2.53",
+     "hold": "+0.76%/年 t3.81",
+     "hold_net": "+0.35%/年 t1.81",
+     "full": "+1.27%/年 t3.51",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "win84": {
+     "train": "+3.75%/年 t1.57",
+     "hold": "+0.70%/年 t4.05",
+     "hold_net": "+0.41%/年 t2.6",
+     "full": "+1.60%/年 t2.07",
+     "grade_without_holm": "C",
+     "C1": false,
+     "C3": true,
+     "C6": true
+    },
+    "win120": {
+     "train": "+0.00%/年 tNone",
+     "hold": "+0.56%/年 t4.14",
+     "hold_net": "+0.36%/年 t3.06",
+     "full": "+0.44%/年 t3.79",
+     "grade_without_holm": "C",
+     "C1": false,
+     "C3": true,
+     "C6": true
+    },
+    "hist60": {
+     "train": "+2.58%/年 t2.97",
+     "hold": "+0.91%/年 t4.5",
+     "hold_net": "+0.54%/年 t2.83",
+     "full": "+1.64%/年 t3.85",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "hist180": {
+     "train": "+0.06%/年 t1.34",
+     "hold": "+0.82%/年 t4.0",
+     "hold_net": "+0.51%/年 t2.82",
+     "full": "+0.66%/年 t3.79",
+     "grade_without_holm": "C",
+     "C1": false,
+     "C3": true,
+     "C6": true
+    },
+    "bind36": {
+     "train": "+2.15%/年 t2.08",
+     "hold": "+0.92%/年 t4.49",
+     "hold_net": "+0.54%/年 t2.82",
+     "full": "+1.34%/年 t3.38",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "bind54": {
+     "train": "+2.15%/年 t2.08",
+     "hold": "+0.84%/年 t4.23",
+     "hold_net": "+0.48%/年 t2.55",
+     "full": "+1.29%/年 t3.23",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "H36": {
+     "train": "+1.95%/年 t1.87",
+     "hold": "+0.70%/年 t4.18",
+     "hold_net": "+0.40%/年 t2.57",
+     "full": "+1.13%/年 t2.87",
+     "grade_without_holm": "C",
+     "C1": false,
+     "C3": true,
+     "C6": true
+    },
+    "H48": {
+     "train": "+2.11%/年 t2.05",
+     "hold": "+0.78%/年 t4.06",
+     "hold_net": "+0.45%/年 t2.51",
+     "full": "+1.24%/年 t3.12",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "H84": {
+     "train": "+2.20%/年 t2.14",
+     "hold": "+0.86%/年 t4.07",
+     "hold_net": "+0.46%/年 t2.26",
+     "full": "+1.32%/年 t3.3",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "H120": {
+     "train": "+2.20%/年 t2.14",
+     "hold": "+0.98%/年 t4.46",
+     "hold_net": "+0.50%/年 t2.4",
+     "full": "+1.40%/年 t3.51",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    }
+   },
+   "country_sets": {
+    "developed": {
+     "train": {
+      "from": 199702,
+      "to": 200612,
+      "months": 119,
+      "ex_ann": 2.61,
+      "t": 2.2,
+      "p": 0.0278,
+      "cagr_diff": 3.1,
+      "te": 2.81
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.69,
+      "t": 2.85,
+      "p": 0.0043,
+      "cagr_diff": 0.74,
+      "te": 0.73
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.47,
+      "t": 2.1,
+      "p": 0.0354,
+      "cagr_diff": 0.5,
+      "te": 0.72
+     }
+    },
+    "emerging": {
+     "train": {
+      "from": 200012,
+      "to": 200612,
+      "months": 73,
+      "ex_ann": 1.6,
+      "t": 3.47,
+      "p": 0.0005,
+      "cagr_diff": 1.93,
+      "te": 1.04
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 1.04,
+      "t": 4.21,
+      "p": 0.0,
+      "cagr_diff": 1.12,
+      "te": 0.75
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.52,
+      "t": 2.17,
+      "p": 0.0303,
+      "cagr_diff": 0.56,
+      "te": 0.77
+     }
+    },
+    "big_markets": {
+     "train": {
+      "from": 199702,
+      "to": 200612,
+      "months": 119,
+      "ex_ann": 2.34,
+      "t": 2.01,
+      "p": 0.044,
+      "cagr_diff": 2.81,
+      "te": 2.46
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.94,
+      "t": 3.49,
+      "p": 0.0005,
+      "cagr_diff": 1.02,
+      "te": 0.8
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.6,
+      "t": 2.41,
+      "p": 0.0159,
+      "cagr_diff": 0.65,
+      "te": 0.79
+     }
+    },
+    "developed_ex_jpn": {
+     "train": {
+      "from": 199702,
+      "to": 200612,
+      "months": 119,
+      "ex_ann": 2.78,
+      "t": 2.23,
+      "p": 0.0257,
+      "cagr_diff": 3.32,
+      "te": 2.95
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.72,
+      "t": 2.82,
+      "p": 0.0048,
+      "cagr_diff": 0.76,
+      "te": 0.77
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.49,
+      "t": 2.08,
+      "p": 0.0372,
+      "cagr_diff": 0.53,
+      "te": 0.76
+     }
+    },
+    "weighted_by_n_stocks": {
+     "train": {
+      "from": 199702,
+      "to": 200612,
+      "months": 119,
+      "ex_ann": 1.57,
+      "t": 1.9,
+      "p": 0.0568,
+      "cagr_diff": 1.83,
+      "te": 1.88
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.87,
+      "t": 3.89,
+      "p": 0.0001,
+      "cagr_diff": 0.92,
+      "te": 0.73
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.44,
+      "t": 2.17,
+      "p": 0.0298,
+      "cagr_diff": 0.46,
+      "te": 0.73
+     }
+    }
+   },
+   "leave_one_out": {
+    "hold_min": [
+     "dnk",
+     0.8,
+     4.39,
+     2.05
+    ],
+    "hold_t_min": [
+     "hkg",
+     0.83,
+     4.0,
+     2.07
+    ],
+    "train_t_min": [
+     "fin",
+     0.88,
+     4.23,
+     1.99
+    ],
+    "train_t_below_2": [
+     "fin"
+    ]
+   },
+   "costs": {
+    "as_claimed": {
+     "turnover": 0.95,
+     "unit_mult": 1.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.49,
+      "t": 2.58,
+      "p": 0.0098,
+      "cagr_diff": 0.52,
+      "te": 0.56
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 0.93,
+      "t": 2.3,
+      "p": 0.0215,
+      "cagr_diff": 1.05,
+      "te": 1.51
+     }
+    },
+    "realistic_turnover": {
+     "turnover": 1.3,
+     "unit_mult": 1.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.46,
+      "t": 2.43,
+      "p": 0.0152,
+      "cagr_diff": 0.49,
+      "te": 0.56
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 0.89,
+      "t": 2.22,
+      "p": 0.0262,
+      "cagr_diff": 1.01,
+      "te": 1.51
+     }
+    },
+    "unit_x2": {
+     "turnover": 0.95,
+     "unit_mult": 2.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.12,
+      "t": 0.68,
+      "p": 0.4955,
+      "cagr_diff": 0.13,
+      "te": 0.56
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 0.55,
+      "t": 1.35,
+      "p": 0.1774,
+      "cagr_diff": 0.64,
+      "te": 1.54
+     }
+    },
+    "realistic_turnover_unit_x2": {
+     "turnover": 1.3,
+     "unit_mult": 2.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.06,
+      "t": 0.31,
+      "p": 0.7549,
+      "cagr_diff": 0.06,
+      "te": 0.56
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 0.49,
+      "t": 1.19,
+      "p": 0.2335,
+      "cagr_diff": 0.57,
+      "te": 1.53
+     }
+    },
+    "unit_x3": {
+     "turnover": 0.95,
+     "unit_mult": 3.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": -0.24,
+      "t": -1.41,
+      "p": 0.1585,
+      "cagr_diff": -0.26,
+      "te": 0.57
+     },
+     "full_net": {
+      "from": 199702,
+      "to": 202512,
+      "months": 347,
+      "ex_ann": 0.18,
+      "t": 0.43,
+      "p": 0.6675,
+      "cagr_diff": 0.23,
+      "te": 1.57
+     }
+    }
+   },
+   "switches": 592
+  },
+  "F1c_valmom": {
+   "reproduced": {
+    "full": {
+     "from": 199007,
+     "to": 202512,
+     "months": 426,
+     "ex_ann": 0.68,
+     "t": 3.57,
+     "p": 0.0004,
+     "cagr_diff": 0.75,
+     "te": 0.83
+    },
+    "train": {
+     "from": 199007,
+     "to": 200612,
+     "months": 198,
+     "ex_ann": 0.99,
+     "t": 2.65,
+     "p": 0.0081,
+     "cagr_diff": 1.14,
+     "te": 1.14
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.41,
+     "t": 3.75,
+     "p": 0.0002,
+     "cagr_diff": 0.43,
+     "te": 0.36
+    },
+    "hold_net": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.23,
+     "t": 2.18,
+     "p": 0.0292,
+     "cagr_diff": 0.23,
+     "te": 0.36
+    },
+    "roll20": {
+     "windows": 16,
+     "win_rate": 1.0,
+     "median": 0.79,
+     "worst": [
+      2003,
+      0.32
+     ]
+    },
+    "dca20": {
+     "windows": 16,
+     "win_rate": 1.0,
+     "median": 1.069
+    },
+    "sharpe": {
+     "train": [
+      0.629,
+      0.556
+     ],
+     "hold": [
+      0.385,
+      0.362
+     ]
+    },
+    "grade_mech": "S",
+    "criteria": {
+     "C1_train": true,
+     "C2_hold_sign": true,
+     "C3_hold_t": true,
+     "C4_roll20": true,
+     "C5_repl": true,
+     "C6_net_cost": true,
+     "C7_multi": true,
+     "C8_sharpe": true
+    }
+   },
+   "match_claim": {
+    "full": true,
+    "train": true,
+    "hold": true,
+    "hold_net": true
+   },
+   "repl": {
+    "regions": 29,
+    "positive": 28
+   },
+   "in_X_share": 0.151,
+   "train_composition": {
+    "avg_countries_per_month": 21.1,
+    "min_countries": 1,
+    "in_X_country_months_by_country": {
+     "esp": 91,
+     "deu": 82,
+     "hkg": 78,
+     "nld": 76,
+     "che": 75,
+     "jpn": 64,
+     "gbr": 56,
+     "fin": 53,
+     "ita": 51,
+     "swe": 46,
+     "aus": 41,
+     "nor": 38
+    },
+    "in_X_countries": 19
+   },
+   "train_contrib_ann_by_country": {
+    "hkg": 0.13,
+    "swe": 0.1,
+    "nld": 0.1,
+    "deu": 0.09,
+    "fin": 0.09,
+    "jpn": 0.08,
+    "gbr": 0.07,
+    "esp": 0.07
+   },
+   "train_without_known_topdogs": {
+    "dropped": [
+     "can",
+     "fin",
+     "nld",
+     "swe"
+    ],
+    "train": {
+     "from": 199011,
+     "to": 200612,
+     "months": 194,
+     "ex_ann": 0.79,
+     "t": 3.36,
+     "p": 0.0008,
+     "cagr_diff": 0.89,
+     "te": 0.71
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.43,
+     "t": 3.61,
+     "p": 0.0003,
+     "cagr_diff": 0.44,
+     "te": 0.37
+    }
+   },
+   "subperiods": {
+    "train_drop_1998_2000": {
+     "from": 199007,
+     "to": 200612,
+     "months": 162,
+     "ex_ann": 1.06,
+     "t": 3.0,
+     "p": 0.0027,
+     "cagr_diff": 1.23,
+     "te": 1.1
+    },
+    "train_drop_1998_2002": {
+     "from": 199007,
+     "to": 200612,
+     "months": 138,
+     "ex_ann": 0.64,
+     "t": 3.1,
+     "p": 0.0019,
+     "cagr_diff": 0.76,
+     "te": 0.51
+    },
+    "full_drop_1998_2000_2020_2021": {
+     "from": 199007,
+     "to": 202512,
+     "months": 366,
+     "ex_ann": 0.71,
+     "t": 3.94,
+     "p": 0.0001,
+     "cagr_diff": 0.78,
+     "te": 0.78
+    },
+    "hold_drop_2020_2021": {
+     "from": 200701,
+     "to": 202512,
+     "months": 204,
+     "ex_ann": 0.43,
+     "t": 3.78,
+     "p": 0.0002,
+     "cagr_diff": 0.45,
+     "te": 0.35
+    },
+    "hold_first_2007_2016H1": {
+     "from": 200701,
+     "to": 201606,
+     "months": 114,
+     "ex_ann": 0.22,
+     "t": 2.26,
+     "p": 0.0238,
+     "cagr_diff": 0.22,
+     "te": 0.22
+    },
+    "hold_second_2016H2_2025": {
+     "from": 201607,
+     "to": 202512,
+     "months": 114,
+     "ex_ann": 0.61,
+     "t": 3.4,
+     "p": 0.0007,
+     "cagr_diff": 0.65,
+     "te": 0.46
+    },
+    "hold_net_first": {
+     "from": 200701,
+     "to": 201606,
+     "months": 114,
+     "ex_ann": 0.09,
+     "t": 0.91,
+     "p": 0.3645,
+     "cagr_diff": 0.08,
+     "te": 0.22
+    },
+    "hold_net_second": {
+     "from": 201607,
+     "to": 202512,
+     "months": 114,
+     "ex_ann": 0.38,
+     "t": 2.1,
+     "p": 0.0357,
+     "cagr_diff": 0.4,
+     "te": 0.45
+    },
+    "post2018": {
+     "from": 201801,
+     "to": 202512,
+     "months": 96,
+     "ex_ann": 0.65,
+     "t": 3.24,
+     "p": 0.0012,
+     "cagr_diff": 0.68,
+     "te": 0.49
+    },
+    "hold_drop_2009": {
+     "from": 200701,
+     "to": 202512,
+     "months": 216,
+     "ex_ann": 0.43,
+     "t": 3.7,
+     "p": 0.0002,
+     "cagr_diff": 0.43,
+     "te": 0.37
+    }
+   },
+   "always_X_same_country_months": {
+    "full": {
+     "from": 199007,
+     "to": 202512,
+     "months": 426,
+     "ex_ann": 3.33,
+     "t": 7.66,
+     "p": 0.0,
+     "cagr_diff": 3.67,
+     "te": 1.76
+    },
+    "train": {
+     "from": 199007,
+     "to": 200612,
+     "months": 198,
+     "ex_ann": 3.86,
+     "t": 4.95,
+     "p": 0.0,
+     "cagr_diff": 4.43,
+     "te": 2.15
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 2.87,
+     "t": 6.89,
+     "p": 0.0,
+     "cagr_diff": 3.04,
+     "te": 1.33
+    }
+   },
+   "conditioning": {
+    "hold_in_minus_out_ann": 0.0,
+    "hold_t": 0.01,
+    "train_in_minus_out_ann": 2.08,
+    "train_t": 1.43,
+    "hold_mean_X_minus_vw_in_X_ann": 3.37,
+    "hold_mean_X_minus_vw_out_X_ann": 2.8,
+    "months_both_hold": 216
+   },
+   "placebo_circular_shift": {
+    "draws": 1000,
+    "actual_hold_ann": 0.41,
+    "placebo_hold_mean": 0.35,
+    "placebo_hold_p95": 0.47,
+    "p_placebo_ge_actual_hold": 0.174,
+    "actual_train_ann": 0.99,
+    "placebo_train_mean": 0.68,
+    "p_placebo_ge_actual_train": 0.021
+   },
+   "neighbors": {
+    "usthr_pct70": {
+     "train": "+1.17%/年 t2.81",
+     "hold": "+0.56%/年 t3.9",
+     "hold_net": "+0.34%/年 t2.45",
+     "full": "+0.84%/年 t3.92",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "usthr_pct75": {
+     "train": "+1.02%/年 t2.62",
+     "hold": "+0.50%/年 t3.89",
+     "hold_net": "+0.28%/年 t2.26",
+     "full": "+0.74%/年 t3.7",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "usthr_pct85": {
+     "train": "+0.88%/年 t2.63",
+     "hold": "+0.35%/年 t3.54",
+     "hold_net": "+0.19%/年 t2.0",
+     "full": "+0.60%/年 t3.49",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "usthr_pct90": {
+     "train": "+0.74%/年 t2.62",
+     "hold": "+0.17%/年 t2.8",
+     "hold_net": "+0.09%/年 t1.48",
+     "full": "+0.44%/年 t3.03",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "win36": {
+     "train": "+0.54%/年 t2.33",
+     "hold": "+0.32%/年 t3.41",
+     "hold_net": "+0.15%/年 t1.63",
+     "full": "+0.42%/年 t3.49",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "win48": {
+     "train": "+0.70%/年 t2.04",
+     "hold": "+0.40%/年 t3.43",
+     "hold_net": "+0.22%/年 t1.93",
+     "full": "+0.54%/年 t3.1",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "win84": {
+     "train": "+1.02%/年 t2.7",
+     "hold": "+0.45%/年 t3.51",
+     "hold_net": "+0.32%/年 t2.55",
+     "full": "+0.72%/年 t3.66",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "win120": {
+     "train": "+1.27%/年 t3.8",
+     "hold": "+0.49%/年 t4.43",
+     "hold_net": "+0.33%/年 t3.17",
+     "full": "+0.83%/年 t4.76",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "bind36": {
+     "train": "+1.01%/年 t2.73",
+     "hold": "+0.41%/年 t3.75",
+     "hold_net": "+0.23%/年 t2.18",
+     "full": "+0.69%/年 t3.64",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    },
+    "bind54": {
+     "train": "+0.98%/年 t2.63",
+     "hold": "+0.41%/年 t3.75",
+     "hold_net": "+0.23%/年 t2.18",
+     "full": "+0.68%/年 t3.56",
+     "grade_without_holm": "S",
+     "C1": true,
+     "C3": true,
+     "C6": true
+    }
+   },
+   "country_sets": {
+    "developed": {
+     "train": {
+      "from": 199007,
+      "to": 200612,
+      "months": 198,
+      "ex_ann": 1.29,
+      "t": 2.37,
+      "p": 0.0178,
+      "cagr_diff": 1.51,
+      "te": 1.66
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.55,
+      "t": 2.81,
+      "p": 0.005,
+      "cagr_diff": 0.59,
+      "te": 0.66
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.39,
+      "t": 2.13,
+      "p": 0.0331,
+      "cagr_diff": 0.42,
+      "te": 0.66
+     }
+    },
+    "emerging": {
+     "train": {
+      "from": 199101,
+      "to": 200612,
+      "months": 181,
+      "ex_ann": 0.15,
+      "t": 2.11,
+      "p": 0.0344,
+      "cagr_diff": 0.16,
+      "te": 0.24
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.3,
+      "t": 3.16,
+      "p": 0.0016,
+      "cagr_diff": 0.3,
+      "te": 0.36
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.1,
+      "t": 1.05,
+      "p": 0.2934,
+      "cagr_diff": 0.08,
+      "te": 0.35
+     }
+    },
+    "big_markets": {
+     "train": {
+      "from": 199007,
+      "to": 200612,
+      "months": 198,
+      "ex_ann": 1.4,
+      "t": 2.52,
+      "p": 0.0119,
+      "cagr_diff": 1.64,
+      "te": 1.5
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.58,
+      "t": 2.97,
+      "p": 0.003,
+      "cagr_diff": 0.62,
+      "te": 0.68
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.36,
+      "t": 1.96,
+      "p": 0.0495,
+      "cagr_diff": 0.39,
+      "te": 0.67
+     }
+    },
+    "developed_ex_jpn": {
+     "train": {
+      "from": 199007,
+      "to": 200612,
+      "months": 198,
+      "ex_ann": 1.26,
+      "t": 2.31,
+      "p": 0.0207,
+      "cagr_diff": 1.49,
+      "te": 1.7
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.57,
+      "t": 2.79,
+      "p": 0.0053,
+      "cagr_diff": 0.6,
+      "te": 0.69
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.4,
+      "t": 2.1,
+      "p": 0.0358,
+      "cagr_diff": 0.43,
+      "te": 0.69
+     }
+    },
+    "weighted_by_n_stocks": {
+     "train": {
+      "from": 199007,
+      "to": 200612,
+      "months": 198,
+      "ex_ann": 1.35,
+      "t": 2.76,
+      "p": 0.0058,
+      "cagr_diff": 1.5,
+      "te": 1.39
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.33,
+      "t": 3.19,
+      "p": 0.0014,
+      "cagr_diff": 0.34,
+      "te": 0.42
+     },
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.09,
+      "t": 0.89,
+      "p": 0.3758,
+      "cagr_diff": 0.09,
+      "te": 0.41
+     }
+    }
+   },
+   "leave_one_out": {
+    "hold_min": [
+     "dnk",
+     0.34,
+     4.11,
+     2.64
+    ],
+    "hold_t_min": [
+     "esp",
+     0.39,
+     3.46,
+     2.68
+    ],
+    "train_t_min": [
+     "nor",
+     0.41,
+     3.7,
+     2.49
+    ],
+    "train_t_below_2": []
+   },
+   "costs": {
+    "as_claimed": {
+     "turnover": 0.95,
+     "unit_mult": 1.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.23,
+      "t": 2.18,
+      "p": 0.0292,
+      "cagr_diff": 0.23,
+      "te": 0.36
+     },
+     "full_net": {
+      "from": 199007,
+      "to": 202512,
+      "months": 426,
+      "ex_ann": 0.48,
+      "t": 2.52,
+      "p": 0.0117,
+      "cagr_diff": 0.53,
+      "te": 0.83
+     }
+    },
+    "realistic_turnover": {
+     "turnover": 1.3,
+     "unit_mult": 1.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.22,
+      "t": 2.04,
+      "p": 0.0416,
+      "cagr_diff": 0.22,
+      "te": 0.36
+     },
+     "full_net": {
+      "from": 199007,
+      "to": 202512,
+      "months": 426,
+      "ex_ann": 0.46,
+      "t": 2.42,
+      "p": 0.0156,
+      "cagr_diff": 0.5,
+      "te": 0.83
+     }
+    },
+    "unit_x2": {
+     "turnover": 0.95,
+     "unit_mult": 2.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.05,
+      "t": 0.48,
+      "p": 0.6338,
+      "cagr_diff": 0.04,
+      "te": 0.36
+     },
+     "full_net": {
+      "from": 199007,
+      "to": 202512,
+      "months": 426,
+      "ex_ann": 0.27,
+      "t": 1.45,
+      "p": 0.1478,
+      "cagr_diff": 0.31,
+      "te": 0.83
+     }
+    },
+    "realistic_turnover_unit_x2": {
+     "turnover": 1.3,
+     "unit_mult": 2.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": 0.02,
+      "t": 0.16,
+      "p": 0.8709,
+      "cagr_diff": 0.01,
+      "te": 0.36
+     },
+     "full_net": {
+      "from": 199007,
+      "to": 202512,
+      "months": 426,
+      "ex_ann": 0.23,
+      "t": 1.24,
+      "p": 0.2168,
+      "cagr_diff": 0.26,
+      "te": 0.83
+     }
+    },
+    "unit_x3": {
+     "turnover": 0.95,
+     "unit_mult": 3.0,
+     "hold_net": {
+      "from": 200701,
+      "to": 202512,
+      "months": 228,
+      "ex_ann": -0.13,
+      "t": -1.19,
+      "p": 0.2328,
+      "cagr_diff": -0.15,
+      "te": 0.36
+     },
+     "full_net": {
+      "from": 199007,
+      "to": 202512,
+      "months": 426,
+      "ex_ann": 0.07,
+      "t": 0.37,
+      "p": 0.7082,
+      "cagr_diff": 0.08,
+      "te": 0.84
+     }
+    }
+   },
+   "switches": 407
+  },
+  "E3_P1": {
+   "reproduced": {
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "months": 750,
+     "ex_ann": 0.65,
+     "t": 2.98,
+     "p": 0.0029,
+     "cagr_diff": 0.72,
+     "te": 1.79
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "months": 522,
+     "ex_ann": 0.63,
+     "t": 2.19,
+     "p": 0.0285,
+     "cagr_diff": 0.7,
+     "te": 2.03
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.7,
+     "t": 2.46,
+     "p": 0.0138,
+     "cagr_diff": 0.75,
+     "te": 1.07
+    },
+    "hold_net": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.64,
+     "t": 2.31,
+     "p": 0.021,
+     "cagr_diff": 0.69,
+     "te": 1.07
+    },
+    "roll20": {
+     "windows": 43,
+     "win_rate": 0.953,
+     "median": 0.59,
+     "worst": [
+      1974,
+      -0.04
+     ]
+    },
+    "dca20": {
+     "windows": 43,
+     "win_rate": 0.977,
+     "median": 1.067
+    },
+    "sharpe": {
+     "train": [
+      0.423,
+      0.381
+     ],
+     "hold": [
+      0.678,
+      0.639
+     ]
+    },
+    "grade_mech": "B",
+    "criteria": {
+     "C1_train": true,
+     "C2_hold_sign": true,
+     "C3_hold_t": true,
+     "C4_roll20": true,
+     "C5_repl": null,
+     "C6_net_cost": true,
+     "C7_multi": false,
+     "C8_sharpe": true
+    }
+   },
+   "match_claim": {
+    "full": true,
+    "train": true,
+    "hold": true,
+    "hold_net": true
+   },
+   "turnover_P1": 0.891,
+   "in_X_share": 0.667,
+   "always_P1_same_months": {
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "months": 750,
+     "ex_ann": 1.05,
+     "t": 3.91,
+     "p": 0.0001,
+     "cagr_diff": 1.17,
+     "te": 2.08
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "months": 522,
+     "ex_ann": 1.09,
+     "t": 3.17,
+     "p": 0.0015,
+     "cagr_diff": 1.22,
+     "te": 2.26
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.98,
+     "t": 2.36,
+     "p": 0.0181,
+     "cagr_diff": 1.07,
+     "te": 1.57
+    }
+   },
+   "subperiods": {
+    "train_drop_1998_2000": {
+     "from": 196307,
+     "to": 200612,
+     "months": 486,
+     "ex_ann": 0.39,
+     "t": 1.43,
+     "p": 0.1515,
+     "cagr_diff": 0.44,
+     "te": 2.0
+    },
+    "full_drop_1998_2000_2020_2021": {
+     "from": 196307,
+     "to": 202512,
+     "months": 690,
+     "ex_ann": 0.42,
+     "t": 2.04,
+     "p": 0.0416,
+     "cagr_diff": 0.46,
+     "te": 1.75
+    },
+    "hold_drop_2020_2021": {
+     "from": 200701,
+     "to": 202512,
+     "months": 204,
+     "ex_ann": 0.51,
+     "t": 1.82,
+     "p": 0.0687,
+     "cagr_diff": 0.53,
+     "te": 0.93
+    },
+    "hold_first_2007_2016H1": {
+     "from": 200701,
+     "to": 201606,
+     "months": 114,
+     "ex_ann": -0.12,
+     "t": -0.97,
+     "p": 0.3313,
+     "cagr_diff": -0.13,
+     "te": 0.34
+    },
+    "hold_second_2016H2_2025": {
+     "from": 201607,
+     "to": 202512,
+     "months": 114,
+     "ex_ann": 1.51,
+     "t": 3.54,
+     "p": 0.0004,
+     "cagr_diff": 1.7,
+     "te": 1.44
+    },
+    "train_1963_1984": {
+     "from": 196307,
+     "to": 198412,
+     "months": 258,
+     "ex_ann": 0.35,
+     "t": 0.96,
+     "p": 0.3387,
+     "cagr_diff": 0.45,
+     "te": 2.43
+    },
+    "train_1985_2006": {
+     "from": 198501,
+     "to": 200612,
+     "months": 264,
+     "ex_ann": 0.9,
+     "t": 2.09,
+     "p": 0.0365,
+     "cagr_diff": 0.96,
+     "te": 1.53
+    }
+   },
+   "conditioning": {
+    "hold_in_ann": 1.29,
+    "hold_out_ann": 0.61,
+    "train_in_ann": 0.87,
+    "train_out_ann": 1.64,
+    "hold_out_months": 105
+   },
+   "placebo_circular_shift": {
+    "actual_hold_ann": 0.7,
+    "placebo_mean": 0.65,
+    "p95": 1.0,
+    "p_ge_actual": 0.416
+   },
+   "neighbors": {
+    "pct70": {
+     "train": "+0.74%/年 t2.51",
+     "hold": "+0.71%/年 t2.51",
+     "hold_net": "+0.65%/年 t2.36",
+     "grade_without_holm": "S",
+     "C1": true
+    },
+    "pct75": {
+     "train": "+0.66%/年 t2.25",
+     "hold": "+0.70%/年 t2.46",
+     "hold_net": "+0.64%/年 t2.31",
+     "grade_without_holm": "S",
+     "C1": true
+    },
+    "pct85": {
+     "train": "+0.54%/年 t1.9",
+     "hold": "+0.70%/年 t2.46",
+     "hold_net": "+0.64%/年 t2.31",
+     "grade_without_holm": "C",
+     "C1": false
+    },
+    "pct90": {
+     "train": "+0.41%/年 t1.44",
+     "hold": "+0.68%/年 t2.39",
+     "hold_net": "+0.63%/年 t2.24",
+     "grade_without_holm": "C",
+     "C1": false
+    },
+    "win36": {
+     "train": "+0.83%/年 t2.73",
+     "hold": "+0.69%/年 t1.9",
+     "hold_net": "+0.59%/年 t1.63",
+     "grade_without_holm": "S",
+     "C1": true
+    },
+    "win48": {
+     "train": "+0.87%/年 t2.62",
+     "hold": "+0.72%/年 t2.55",
+     "hold_net": "+0.66%/年 t2.38",
+     "grade_without_holm": "S",
+     "C1": true
+    },
+    "win84": {
+     "train": "+0.40%/年 t1.38",
+     "hold": "+0.85%/年 t3.02",
+     "hold_net": "+0.79%/年 t2.9",
+     "grade_without_holm": "C",
+     "C1": false
+    },
+    "win120": {
+     "train": "+0.78%/年 t2.89",
+     "hold": "+0.68%/年 t2.37",
+     "hold_net": "+0.62%/年 t2.2",
+     "grade_without_holm": "S",
+     "C1": true
+    },
+    "H36": {
+     "train": "+0.42%/年 t1.49",
+     "hold": "+0.70%/年 t2.46",
+     "hold_net": "+0.64%/年 t2.31",
+     "grade_without_holm": "C",
+     "C1": false
+    },
+    "H48": {
+     "train": "+0.53%/年 t1.85",
+     "hold": "+0.70%/年 t2.46",
+     "hold_net": "+0.64%/年 t2.31",
+     "grade_without_holm": "C",
+     "C1": false
+    },
+    "H84": {
+     "train": "+0.85%/年 t2.57",
+     "hold": "+0.94%/年 t2.68",
+     "hold_net": "+0.88%/年 t2.51",
+     "grade_without_holm": "S",
+     "C1": true
+    },
+    "H120": {
+     "train": "+1.00%/年 t2.92",
+     "hold": "+1.13%/年 t3.2",
+     "hold_net": "+1.05%/年 t2.98",
+     "grade_without_holm": "S",
+     "C1": true
+    },
+    "hist60": {
+     "train": "+0.63%/年 t2.19",
+     "hold": "+0.70%/年 t2.46",
+     "hold_net": "+0.64%/年 t2.31",
+     "grade_without_holm": "B",
+     "C1": true
+    },
+    "hist180": {
+     "train": "+0.63%/年 t2.19",
+     "hold": "+0.70%/年 t2.46",
+     "hold_net": "+0.64%/年 t2.31",
+     "grade_without_holm": "B",
+     "C1": true
+    }
+   },
+   "costs": {
+    "as_claimed": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.64,
+     "t": 2.31,
+     "p": 0.021,
+     "cagr_diff": 0.69,
+     "te": 1.07
+    },
+    "unit_x2": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.59,
+     "t": 2.15,
+     "p": 0.0318,
+     "cagr_diff": 0.63,
+     "te": 1.07
+    },
+    "unit_x3": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.54,
+     "t": 1.98,
+     "p": 0.0479,
+     "cagr_diff": 0.57,
+     "te": 1.07
+    },
+    "turnover_x1.5_unit_x2": {
+     "from": 200701,
+     "to": 202512,
+     "months": 228,
+     "ex_ann": 0.54,
+     "t": 2.01,
+     "p": 0.0448,
+     "cagr_diff": 0.58,
+     "te": 1.07
+    }
+   }
+  }
+ },
+ "summary_ja": [
+  "再現: 5本とも研究側の数字（全期間・訓練・保有・費用後の超過と t）を自前のコードで小数2桁まで再現。先読み・相手（各国の純粋な時価加重・米国は French Mkt）・良い側（2006年までの米国で第3）に不正は無い。",
+  "しかし角度の新しい中身（巨大株の独走という局面）は、割安＋勢いの規則では時期の情報を持たない: 在X の印を無作為に回した偽の時期と区別できない（F1b 保有 実 +1.36 vs 偽 +1.27・p=0.167／F1c 在X − 外 +0.00%/年）。",
+  "F1b・F1c の S は、mw_intl で既に S の割安＋勢い（米国外・同じ 2007〜）を一部の月だけ持った形で、常に持つほうが大きい（保有 +2.73〜2.87 t6.3〜6.9）。保有の t は新しい証拠ではないので C3 を数えず A に下げる（F1b=A・F1c=A）。F1c は費用後 +0.23・単価2倍で +0.05 と経済的にはほぼ0。",
+  "E1_equal・E1_valmom・E3_P1 は事前登録2＝保有期間を含む結果を見た後の着想で、全体の事前登録の規則により判定の外（C）。加えて E1_equal は単価2倍で費用後 -0.11%/年、E1_valmom は訓練の C1 がフィンランド（Nokia）1国に乗り、E3_P1 は訓練から 1998-2000 を外すと t1.43。",
+  "ただし独走が折り返した後の等加重には時期の情報がありそう（偽の時期 p=0.02・在X − 外 +2.06%/年 t1.77）で、前向きの事前登録の材料にはなる。",
+  "多重検定: 角度 141本（判定 49本）。プログラム全体の線 t≈4.35 を保有で越えるのは F1b_valmom だけで、越えているのは既知の割安＋勢いの上乗せ。相手は国の等分・X は個人が持てない三分位＝S&P500 に対する個人の勝ちにはなっていない。"
+ ],
+ "log": [
+  "データ読み込み",
+  "良い側の検査 {'be_me': {'direction_col': '1', 'corr_to_2006': 1.0, 'months': 674, 'good_by_corr': '3.0', 'good_by_dir': '3.0'}, 'ni_me': {'direction_col': '1', 'corr_to_2006': 1.0, 'months': 674, 'good_by_corr': '3.0', 'good_by_dir': '3.0'}, 'ocf_me': {'direction_col': '1', 'corr_to_2006': 1.0, 'months': 674, 'good_by_corr': '3.0', 'good_by_dir': '3.0'}, 'div12m_me': {'direction_col': '1', 'corr_to_2006': 1.0, 'months': 961, 'good_by_corr': '3.0', 'good_by_dir': '3.0'}, 'ret_12_1': {'direction_col': '1', 'corr_to_2006': 1.0, 'months': 960, 'good_by_corr': '3.0', 'good_by_dir': '3.0'}, 'cop_at': {'direction_col': '1', 'corr_to_2006': 1.0, 'months': 662, 'good_by_corr': '3.0', 'good_by_dir': '3.0'}, 'qmj': {'direction_col': '1', 'corr_to_2006': 1.0, 'months': 614, 'good_by_corr': '3.0', 'good_by_dir': '3.0'}}",
+  "米国外の国 51",
+  "三分位の取得失敗 bgr 取得失敗 https://jkpfactors-data.s3.amazonaws.com/public/portfolios/%5Bbgr%5D_%5Ball_factors%5D_%5Bmonthly%5D_%5Bvw%5D.zip: HTTP Error 403: Forbidden",
+  "米国の閾値B 0.051 研究側 0.051",
+  "━━ F1b_valmom",
+  "再現 {'full': '+1.84%/年 t3.73', 'train': '+2.76%/年 t2.17', 'hold': '+1.36%/年 t4.79', 'hold_net': '+1.14%/年 t4.03'} 一致 {'full': True, 'train': True, 'hold': True, 'hold_net': True} 国 {'regions': 38, 'positive': 38} 格 S",
+  "部分期間 {'train_drop_1998_2000': '+4.10%/年 t3.86', 'train_drop_1998_2002': '+2.30%/年 t5.32', 'full_drop_1998_2000_2020_2021': '+2.16%/年 t4.65', 'hold_drop_2020_2021': '+1.37%/年 t4.6', 'hold_first_2007_2016H1': '+0.77%/年 t2.62', 'hold_second_2016H2_2025': '+1.94%/年 t4.77', 'hold_net_first': '+0.58%/年 t1.96', 'hold_net_second': '+1.69%/年 t4.12', 'post2018': '+1.93%/年 t4.08', 'hold_drop_2009': '+1.46%/年 t5.51'}",
+  "訓練の中身 {'avg_countries_per_month': 15.9, 'min_countries': 1, 'in_X_country_months_by_country': {'can': 91, 'fin': 73, 'nld': 73, 'mys': 72, 'fra': 71, 'hkg': 63, 'sgp': 63, 'swe': 62, 'deu': 61, 'dnk': 60, 'esp': 60, 'gbr': 60}, 'in_X_countries': 18} {'fin': 0.47, 'swe': 0.3, 'hkg': 0.24, 'fra': 0.23, 'nld': 0.21, 'sgp': 0.2, 'deu': 0.18, 'esp': 0.16}",
+  "既知の top dogs（fin can swe nld）抜き {'train': '+3.34%/年 t4.73', 'hold': '+1.44%/年 t4.82'}",
+  "局面の効き（在X − 外の X−vw） {'hold_in_minus_out_ann': 0.33, 'hold_t': 0.81, 'train_in_minus_out_ann': 3.53, 'train_t': 2.64, 'hold_mean_X_minus_vw_in_X_ann': 3.06, 'hold_mean_X_minus_vw_out_X_ann': 2.54, 'months_both_hold': 228}",
+  "プラセボ {'draws': 1000, 'actual_hold_ann': 1.36, 'placebo_hold_mean': 1.27, 'placebo_hold_p95': 1.42, 'p_placebo_ge_actual_hold': 0.167, 'actual_train_ann': 2.76, 'placebo_train_mean': 2.81, 'p_placebo_ge_actual_train': 0.59}",
+  "近い母数 {'pct70': ('+2.88%/年 t2.28', '+1.43%/年 t4.62', 'S'), 'pct75': ('+2.86%/年 t2.28', '+1.41%/年 t4.76', 'S'), 'pct85': ('+2.62%/年 t2.12', '+1.28%/年 t4.85', 'S'), 'pct90': ('+1.59%/年 t1.69', '+1.16%/年 t5.12', 'C'), 'win36': ('+2.96%/年 t2.65', '+1.76%/年 t5.78', 'S'), 'win48': ('+2.71%/年 t2.27', '+1.51%/年 t5.19', 'S'), 'win84': ('+6.74%/年 t2.35', '+1.15%/年 t4.86', 'B'), 'win120': ('+0.02%/年 t1.05', '+1.06%/年 t4.82', 'C'), 'hist60': ('+3.47%/年 t3.52', '+1.44%/年 t5.39', 'S'), 'hist180': ('+0.09%/年 t1.39', '+1.25%/年 t4.38', 'C'), 'bind36': ('+2.76%/年 t2.17', '+1.43%/年 t5.02', 'S'), 'bind54': ('+2.76%/年 t2.17', '+1.29%/年 t4.7', 'S'), 'H36': ('+2.42%/年 t1.88', '+1.16%/年 t5.0', 'C'), 'H48': ('+2.65%/年 t2.08', '+1.27%/年 t4.77', 'S'), 'H84': ('+2.85%/年 t2.25', '+1.47%/年 t4.84', 'S'), 'H120': ('+2.85%/年 t2.25', '+1.74%/年 t5.22', 'S')}",
+  "国の集合 {'developed': ('+3.20%/年 t2.26', '+1.17%/年 t3.44', '+1.03%/年 t3.08'), 'emerging': ('+2.41%/年 t4.91', '+1.59%/年 t4.89', '+1.29%/年 t3.93'), 'big_markets': ('+2.91%/年 t2.1', '+1.50%/年 t3.94', '+1.29%/年 t3.46'), 'developed_ex_jpn': ('+3.41%/年 t2.31', '+1.19%/年 t3.38', '+1.05%/年 t3.01'), 'weighted_by_n_stocks': ('+2.26%/年 t2.03', '+1.29%/年 t3.79', '+1.05%/年 t3.12')}",
+  "一国外し {'hold_min': ('bra', 1.27, 4.46, 2.17), 'hold_t_min': ('bra', 1.27, 4.46, 2.17), 'train_t_min': ('fin', 1.4, 4.8, 2.04), 'train_t_below_2': []}",
+  "費用 {'as_claimed': '+1.14%/年 t4.03', 'realistic_turnover': '+1.07%/年 t3.82', 'unit_x2': '+0.91%/年 t3.26', 'realistic_turnover_unit_x2': '+0.78%/年 t2.82', 'unit_x3': '+0.69%/年 t2.48'} 切替 86",
+  "━━ E1_equal",
+  "再現 {'full': '+2.02%/年 t3.64', 'train': '+3.76%/年 t2.97', 'hold': '+1.11%/年 t3.1', 'hold_net': '+0.50%/年 t1.42'} 一致 {'full': True, 'train': True, 'hold': True, 'hold_net': True} 国 {'regions': 36, 'positive': 29} 格 S",
+  "部分期間 {'train_drop_1998_2000': '+3.69%/年 t3.31', 'train_drop_1998_2002': '+3.12%/年 t2.15', 'full_drop_1998_2000_2020_2021': '+1.61%/年 t3.33', 'hold_drop_2020_2021': '+0.77%/年 t2.58', 'hold_first_2007_2016H1': '+0.82%/年 t1.99', 'hold_second_2016H2_2025': '+1.40%/年 t2.45', 'hold_net_first': '+0.34%/年 t0.84', 'hold_net_second': '+0.67%/年 t1.16', 'post2018': '+1.23%/年 t1.89', 'hold_drop_2009': '+1.07%/年 t2.93'}",
+  "訓練の中身 {'avg_countries_per_month': 16.6, 'min_countries': 1, 'in_X_country_months_by_country': {'fra': 63, 'can': 62, 'swe': 62, 'fin': 60, 'hkg': 57, 'deu': 54, 'esp': 54, 'nld': 53, 'dnk': 46, 'kor': 42, 'sgp': 40, 'zaf': 39}, 'in_X_countries': 18} {'can': 1.67, 'fin': 0.33, 'zaf': 0.33, 'esp': 0.22, 'fra': 0.19, 'dnk': 0.19, 'nld': 0.17, 'swe': 0.16}",
+  "既知の top dogs（fin can swe nld）抜き {'train': '+2.71%/年 t3.35', 'hold': '+1.16%/年 t3.46'}",
+  "局面の効き（在X − 外の X−vw） {'hold_in_minus_out_ann': 2.06, 'hold_t': 1.77, 'train_in_minus_out_ann': 5.78, 'train_t': 2.67, 'hold_mean_X_minus_vw_in_X_ann': 5.07, 'hold_mean_X_minus_vw_out_X_ann': 2.32, 'months_both_hold': 228}",
+  "プラセボ {'draws': 1000, 'actual_hold_ann': 1.11, 'placebo_hold_mean': 0.67, 'placebo_hold_p95': 1.02, 'p_placebo_ge_actual_hold': 0.02, 'actual_train_ann': 3.76, 'placebo_train_mean': 0.69, 'p_placebo_ge_actual_train': 0.02}",
+  "近い母数 {'pct70': ('+3.69%/年 t2.91', '+1.20%/年 t3.09', 'S'), 'pct75': ('+3.69%/年 t2.91', '+1.10%/年 t3.04', 'S'), 'pct85': ('+3.79%/年 t3.08', '+1.12%/年 t3.08', 'S'), 'pct90': ('+2.96%/年 t2.56', '+1.00%/年 t3.42', 'S'), 'win36': ('+1.64%/年 t2.24', '+1.12%/年 t2.49', 'S'), 'win48': ('+1.77%/年 t2.74', '+0.98%/年 t2.45', 'S'), 'win84': ('+8.43%/年 t2.29', '+0.90%/年 t2.91', 'B'), 'win120': ('+0.00%/年 tNone', '+0.73%/年 t3.14', 'C'), 'hist60': ('+3.41%/年 t2.64', '+1.11%/年 t3.17', 'S'), 'hist180': ('+0.01%/年 t0.5', '+1.06%/年 t2.65', 'C'), 'bind36': ('+3.76%/年 t2.97', '+1.18%/年 t3.29', 'S'), 'bind54': ('+3.76%/年 t2.97', '+1.13%/年 t3.14', 'S'), 'H36': ('+3.57%/年 t2.72', '+1.07%/年 t3.38', 'S'), 'H48': ('+3.73%/年 t2.94', '+1.08%/年 t3.2', 'S'), 'H84': ('+3.74%/年 t2.94', '+1.21%/年 t3.32', 'S'), 'H120': ('+3.74%/年 t2.94', '+1.31%/年 t3.33', 'S')}",
+  "国の集合 {'developed': ('+4.13%/年 t2.8', '+1.04%/年 t1.96', '+0.65%/年 t1.24'), 'emerging': ('+2.55%/年 t2.99', '+1.20%/年 t3.34', '+0.38%/年 t1.1'), 'big_markets': ('+3.97%/年 t3.1', '+1.29%/年 t2.4', '+0.68%/年 t1.24'), 'developed_ex_jpn': ('+4.31%/年 t2.82', '+1.11%/年 t1.99', '+0.72%/年 t1.29'), 'weighted_by_n_stocks': ('+3.24%/年 t2.57', '+1.84%/年 t2.76', '+1.09%/年 t1.61')}",
+  "一国外し {'hold_min': ('ind', 0.98, 2.8, 2.98), 'hold_t_min': ('ind', 0.98, 2.8, 2.98), 'train_t_min': ('kor', 1.19, 3.3, 2.81), 'train_t_below_2': []}",
+  "費用 {'as_claimed': '+0.50%/年 t1.42', 'realistic_turnover': '+0.45%/年 t1.27', 'unit_x2': '-0.11%/年 t-0.3', 'realistic_turnover_unit_x2': '-0.22%/年 t-0.61', 'unit_x3': '-0.72%/年 t-2.0'} 切替 601",
+  "━━ E1_valmom",
+  "再現 {'full': '+1.30%/年 t3.26', 'train': '+2.15%/年 t2.08', 'hold': '+0.86%/年 t4.22', 'hold_net': '+0.49%/年 t2.58'} 一致 {'full': True, 'train': True, 'hold': True, 'hold_net': True} 国 {'regions': 36, 'positive': 35} 格 S",
+  "部分期間 {'train_drop_1998_2000': '+3.41%/年 t3.32', 'train_drop_1998_2002': '+1.76%/年 t4.23', 'full_drop_1998_2000_2020_2021': '+1.60%/年 t3.78', 'hold_drop_2020_2021': '+0.86%/年 t3.95', 'hold_first_2007_2016H1': '+0.50%/年 t2.25', 'hold_second_2016H2_2025': '+1.21%/年 t4.03', 'hold_net_first': '+0.21%/年 t0.92', 'hold_net_second': '+0.77%/年 t2.79', 'post2018': '+1.19%/年 t3.37', 'hold_drop_2009': '+0.94%/年 t5.09'}",
+  "訓練の中身 {'avg_countries_per_month': 15.9, 'min_countries': 1, 'in_X_country_months_by_country': {'fra': 63, 'can': 62, 'swe': 62, 'fin': 60, 'hkg': 57, 'deu': 54, 'esp': 54, 'nld': 53, 'dnk': 46, 'sgp': 40, 'zaf': 39, 'mys': 38}, 'in_X_countries': 18} {'fin': 0.4, 'swe': 0.3, 'hkg': 0.23, 'fra': 0.19, 'deu': 0.17, 'esp': 0.16, 'zaf': 0.14, 'nld': 0.14}",
+  "既知の top dogs（fin can swe nld）抜き {'train': '+2.68%/年 t3.94', 'hold': '+0.92%/年 t4.23'}",
+  "局面の効き（在X − 外の X−vw） {'hold_in_minus_out_ann': 0.86, 'hold_t': 1.77, 'train_in_minus_out_ann': 3.9, 'train_t': 2.19, 'hold_mean_X_minus_vw_in_X_ann': 3.8, 'hold_mean_X_minus_vw_out_X_ann': 2.46, 'months_both_hold': 228}",
+  "プラセボ {'draws': 1000, 'actual_hold_ann': 0.86, 'placebo_hold_mean': 0.7, 'placebo_hold_p95': 0.86, 'p_placebo_ge_actual_hold': 0.055, 'actual_train_ann': 2.15, 'placebo_train_mean': 1.7, 'p_placebo_ge_actual_train': 0.222}",
+  "近い母数 {'pct70': ('+2.20%/年 t2.1', '+0.94%/年 t4.44', 'S'), 'pct75': ('+2.18%/年 t2.1', '+0.88%/年 t4.26', 'S'), 'pct85': ('+2.09%/年 t2.06', '+0.83%/年 t4.24', 'S'), 'pct90': ('+1.17%/年 t1.77', '+0.74%/年 t4.34', 'C'), 'win36': ('+2.19%/年 t2.44', '+0.95%/年 t4.73', 'S'), 'win48': ('+2.16%/年 t2.53', '+0.76%/年 t3.81', 'S'), 'win84': ('+3.75%/年 t1.57', '+0.70%/年 t4.05', 'C'), 'win120': ('+0.00%/年 tNone', '+0.56%/年 t4.14', 'C'), 'hist60': ('+2.58%/年 t2.97', '+0.91%/年 t4.5', 'S'), 'hist180': ('+0.06%/年 t1.34', '+0.82%/年 t4.0', 'C'), 'bind36': ('+2.15%/年 t2.08', '+0.92%/年 t4.49', 'S'), 'bind54': ('+2.15%/年 t2.08', '+0.84%/年 t4.23', 'S'), 'H36': ('+1.95%/年 t1.87', '+0.70%/年 t4.18', 'C'), 'H48': ('+2.11%/年 t2.05', '+0.78%/年 t4.06', 'S'), 'H84': ('+2.20%/年 t2.14', '+0.86%/年 t4.07', 'S'), 'H120': ('+2.20%/年 t2.14', '+0.98%/年 t4.46', 'S')}",
+  "国の集合 {'developed': ('+2.61%/年 t2.2', '+0.69%/年 t2.85', '+0.47%/年 t2.1'), 'emerging': ('+1.60%/年 t3.47', '+1.04%/年 t4.21', '+0.52%/年 t2.17'), 'big_markets': ('+2.34%/年 t2.01', '+0.94%/年 t3.49', '+0.60%/年 t2.41'), 'developed_ex_jpn': ('+2.78%/年 t2.23', '+0.72%/年 t2.82', '+0.49%/年 t2.08'), 'weighted_by_n_stocks': ('+1.57%/年 t1.9', '+0.87%/年 t3.89', '+0.44%/年 t2.17')}",
+  "一国外し {'hold_min': ('dnk', 0.8, 4.39, 2.05), 'hold_t_min': ('hkg', 0.83, 4.0, 2.07), 'train_t_min': ('fin', 0.88, 4.23, 1.99), 'train_t_below_2': ['fin']}",
+  "費用 {'as_claimed': '+0.49%/年 t2.58', 'realistic_turnover': '+0.46%/年 t2.43', 'unit_x2': '+0.12%/年 t0.68', 'realistic_turnover_unit_x2': '+0.06%/年 t0.31', 'unit_x3': '-0.24%/年 t-1.41'} 切替 592",
+  "━━ F1c_valmom",
+  "再現 {'full': '+0.68%/年 t3.57', 'train': '+0.99%/年 t2.65', 'hold': '+0.41%/年 t3.75', 'hold_net': '+0.23%/年 t2.18'} 一致 {'full': True, 'train': True, 'hold': True, 'hold_net': True} 国 {'regions': 29, 'positive': 28} 格 S",
+  "部分期間 {'train_drop_1998_2000': '+1.06%/年 t3.0', 'train_drop_1998_2002': '+0.64%/年 t3.1', 'full_drop_1998_2000_2020_2021': '+0.71%/年 t3.94', 'hold_drop_2020_2021': '+0.43%/年 t3.78', 'hold_first_2007_2016H1': '+0.22%/年 t2.26', 'hold_second_2016H2_2025': '+0.61%/年 t3.4', 'hold_net_first': '+0.09%/年 t0.91', 'hold_net_second': '+0.38%/年 t2.1', 'post2018': '+0.65%/年 t3.24', 'hold_drop_2009': '+0.43%/年 t3.7'}",
+  "訓練の中身 {'avg_countries_per_month': 21.1, 'min_countries': 1, 'in_X_country_months_by_country': {'esp': 91, 'deu': 82, 'hkg': 78, 'nld': 76, 'che': 75, 'jpn': 64, 'gbr': 56, 'fin': 53, 'ita': 51, 'swe': 46, 'aus': 41, 'nor': 38}, 'in_X_countries': 19} {'hkg': 0.13, 'swe': 0.1, 'nld': 0.1, 'deu': 0.09, 'fin': 0.09, 'jpn': 0.08, 'gbr': 0.07, 'esp': 0.07}",
+  "既知の top dogs（fin can swe nld）抜き {'train': '+0.79%/年 t3.36', 'hold': '+0.43%/年 t3.61'}",
+  "局面の効き（在X − 外の X−vw） {'hold_in_minus_out_ann': 0.0, 'hold_t': 0.01, 'train_in_minus_out_ann': 2.08, 'train_t': 1.43, 'hold_mean_X_minus_vw_in_X_ann': 3.37, 'hold_mean_X_minus_vw_out_X_ann': 2.8, 'months_both_hold': 216}",
+  "プラセボ {'draws': 1000, 'actual_hold_ann': 0.41, 'placebo_hold_mean': 0.35, 'placebo_hold_p95': 0.47, 'p_placebo_ge_actual_hold': 0.174, 'actual_train_ann': 0.99, 'placebo_train_mean': 0.68, 'p_placebo_ge_actual_train': 0.021}",
+  "近い母数 {'usthr_pct70': ('+1.17%/年 t2.81', '+0.56%/年 t3.9', 'S'), 'usthr_pct75': ('+1.02%/年 t2.62', '+0.50%/年 t3.89', 'S'), 'usthr_pct85': ('+0.88%/年 t2.63', '+0.35%/年 t3.54', 'S'), 'usthr_pct90': ('+0.74%/年 t2.62', '+0.17%/年 t2.8', 'S'), 'win36': ('+0.54%/年 t2.33', '+0.32%/年 t3.41', 'S'), 'win48': ('+0.70%/年 t2.04', '+0.40%/年 t3.43', 'S'), 'win84': ('+1.02%/年 t2.7', '+0.45%/年 t3.51', 'S'), 'win120': ('+1.27%/年 t3.8', '+0.49%/年 t4.43', 'S'), 'bind36': ('+1.01%/年 t2.73', '+0.41%/年 t3.75', 'S'), 'bind54': ('+0.98%/年 t2.63', '+0.41%/年 t3.75', 'S')}",
+  "国の集合 {'developed': ('+1.29%/年 t2.37', '+0.55%/年 t2.81', '+0.39%/年 t2.13'), 'emerging': ('+0.15%/年 t2.11', '+0.30%/年 t3.16', '+0.10%/年 t1.05'), 'big_markets': ('+1.40%/年 t2.52', '+0.58%/年 t2.97', '+0.36%/年 t1.96'), 'developed_ex_jpn': ('+1.26%/年 t2.31', '+0.57%/年 t2.79', '+0.40%/年 t2.1'), 'weighted_by_n_stocks': ('+1.35%/年 t2.76', '+0.33%/年 t3.19', '+0.09%/年 t0.89')}",
+  "一国外し {'hold_min': ('dnk', 0.34, 4.11, 2.64), 'hold_t_min': ('esp', 0.39, 3.46, 2.68), 'train_t_min': ('nor', 0.41, 3.7, 2.49), 'train_t_below_2': []}",
+  "費用 {'as_claimed': '+0.23%/年 t2.18', 'realistic_turnover': '+0.22%/年 t2.04', 'unit_x2': '+0.05%/年 t0.48', 'realistic_turnover_unit_x2': '+0.02%/年 t0.16', 'unit_x3': '-0.13%/年 t-1.19'} 切替 407",
+  "━━ E3_P1（米国）",
+  "E3_P1 再現 {'full': '+0.65%/年 t2.98', 'train': '+0.63%/年 t2.19', 'hold': '+0.70%/年 t2.46', 'hold_net': '+0.64%/年 t2.31'} 一致 {'full': True, 'train': True, 'hold': True, 'hold_net': True} B",
+  "E3_P1 部分期間 {'train_drop_1998_2000': '+0.39%/年 t1.43', 'full_drop_1998_2000_2020_2021': '+0.42%/年 t2.04', 'hold_drop_2020_2021': '+0.51%/年 t1.82', 'hold_first_2007_2016H1': '-0.12%/年 t-0.97', 'hold_second_2016H2_2025': '+1.51%/年 t3.54', 'train_1963_1984': '+0.35%/年 t0.96', 'train_1985_2006': '+0.90%/年 t2.09'}",
+  "E3_P1 局面の効き {'hold_in_ann': 1.29, 'hold_out_ann': 0.61, 'train_in_ann': 0.87, 'train_out_ann': 1.64, 'hold_out_months': 105}",
+  "E3_P1 プラセボ {'actual_hold_ann': 0.7, 'placebo_mean': 0.65, 'p95': 1.0, 'p_ge_actual': 0.416}",
+  "E3_P1 近い母数 {'pct70': ('+0.74%/年 t2.51', '+0.71%/年 t2.51', 'S'), 'pct75': ('+0.66%/年 t2.25', '+0.70%/年 t2.46', 'S'), 'pct85': ('+0.54%/年 t1.9', '+0.70%/年 t2.46', 'C'), 'pct90': ('+0.41%/年 t1.44', '+0.68%/年 t2.39', 'C'), 'win36': ('+0.83%/年 t2.73', '+0.69%/年 t1.9', 'S'), 'win48': ('+0.87%/年 t2.62', '+0.72%/年 t2.55', 'S'), 'win84': ('+0.40%/年 t1.38', '+0.85%/年 t3.02', 'C'), 'win120': ('+0.78%/年 t2.89', '+0.68%/年 t2.37', 'S'), 'H36': ('+0.42%/年 t1.49', '+0.70%/年 t2.46', 'C'), 'H48': ('+0.53%/年 t1.85', '+0.70%/年 t2.46', 'C'), 'H84': ('+0.85%/年 t2.57', '+0.94%/年 t2.68', 'S'), 'H120': ('+1.00%/年 t2.92', '+1.13%/年 t3.2', 'S'), 'hist60': ('+0.63%/年 t2.19', '+0.70%/年 t2.46', 'B'), 'hist180': ('+0.63%/年 t2.19', '+0.70%/年 t2.46', 'B')}",
+  "E3_P1 費用 {'as_claimed': '+0.64%/年 t2.31', 'unit_x2': '+0.59%/年 t2.15', 'unit_x3': '+0.54%/年 t1.98', 'turnover_x1.5_unit_x2': '+0.54%/年 t2.01'}",
+  "多重検定 {'angle_tested': 141, 'angle_graded': 49, 'program_bonferroni_t': 4.35, 'angle_bonferroni_t_graded': 3.28, 'hold_t_rank_among_graded': [(4.79, 'F1b_valmom'), (4.22, 'E1_valmom'), (3.75, 'F1c_valmom'), (3.57, 'F1d_valmom'), (3.43, 'F1_valmom'), (3.35, 'E1_qmj'), (3.1, 'E1_equal'), (2.92, 'F1b_qmj')]}",
+  "訓練の局面 {'episodes_starting_by_2006': 18, 'of_which_1998_06_to_2001_12': 14, 'list': [('can', 199806), ('fin', 200011), ('fra', 200011), ('hkg', 200011), ('nld', 200011), ('sgp', 200011), ('swe', 200011), ('esp', 200012), ('kor', 200012), ('mys', 200012), ('zaf', 200102), ('deu', 200106), ('dnk', 200109), ('gbr', 200109), ('nor', 200209), ('twn', 200309), ('grc', 200407), ('chn', 200512)]}",
+  "再現: 5本とも研究側の数字（全期間・訓練・保有・費用後の超過と t）を自前のコードで小数2桁まで再現。先読み・相手（各国の純粋な時価加重・米国は French Mkt）・良い側（2006年までの米国で第3）に不正は無い。",
+  "しかし角度の新しい中身（巨大株の独走という局面）は、割安＋勢いの規則では時期の情報を持たない: 在X の印を無作為に回した偽の時期と区別できない（F1b 保有 実 +1.36 vs 偽 +1.27・p=0.167／F1c 在X − 外 +0.00%/年）。",
+  "F1b・F1c の S は、mw_intl で既に S の割安＋勢い（米国外・同じ 2007〜）を一部の月だけ持った形で、常に持つほうが大きい（保有 +2.73〜2.87 t6.3〜6.9）。保有の t は新しい証拠ではないので C3 を数えず A に下げる（F1b=A・F1c=A）。F1c は費用後 +0.23・単価2倍で +0.05 と経済的にはほぼ0。",
+  "E1_equal・E1_valmom・E3_P1 は事前登録2＝保有期間を含む結果を見た後の着想で、全体の事前登録の規則により判定の外（C）。加えて E1_equal は単価2倍で費用後 -0.11%/年、E1_valmom は訓練の C1 がフィンランド（Nokia）1国に乗り、E3_P1 は訓練から 1998-2000 を外すと t1.43。",
+  "ただし独走が折り返した後の等加重には時期の情報がありそう（偽の時期 p=0.02・在X − 外 +2.06%/年 t1.77）で、前向きの事前登録の材料にはなる。",
+  "多重検定: 角度 141本（判定 49本）。プログラム全体の線 t≈4.35 を保有で越えるのは F1b_valmom だけで、越えているのは既知の割安＋勢いの上乗せ。相手は国の等分・X は個人が持てない三分位＝S&P500 に対する個人の勝ちにはなっていない。"
+ ],
+ "runtime_sec": 100,
+ "generated": "2026-09-28"
+}
