@@ -1,0 +1,697 @@
+{
+ "generated": "2026-09-28",
+ "angle": "nx_osap_intang",
+ "title": "無形資産・革新・利益の質: OSAP（Chen-Zimmermann）の、JKP 153 に無い予言変数の良い側を時価加重で買って持つ",
+ "question": "Chen & Zimmermann の Open Source Asset Pricing（CRSP/Compustat から作った予言変数ごとのポートフォリオ・上場廃止を含む）のうち、他セッションが使った JKP 153 特性に無い『無形資産・革新・利益の質』の変数——組織資本・広告費・ブランド投資・研究開発の腕・研究開発の増加・業界の集中度・成長株の中の G スコア・年金の積立状況——について、論文の向きの良い側の五分位（離散の変数は論文の良い側の組）だけを時価加重で買って持つと、French Mkt（上限なしの時価加重・S&P500 に近い）に、訓練期間（各変数の始まり〜2006-12）でも保有期間（2007-01〜2024-12）でも費用後に勝つか",
+ "asked_by": "ユーザー「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して。限界までやって途中報告を入れながら結果が出るまで分析を止めずに。トークンの限界までやってほしい。今まではそんなものはないという報告で終わってたけどそれはなしで探し続ける努力をしてほしい。今別のSessionでこの内容を2つ回してる。別のSessionで検証していない新たな分析を同じ内容でしてほしい」（2026-09-28）。全体の事前登録 out/nx_prereg.json の追加の角度（斥候 out/nx_scout.json の rank 1・nx_osap_intang）",
+ "registered_before_measuring": true,
+ "global_prereg": "out/nx_prereg.json（C1〜C8・格付け S/A/B/C・誠実さの約束）。統計と格付けは night/nx_common.py（mw_common.py と同一の定義）の excess_stats / rolling / dca / holm / apply_cost / grade をそのまま使う",
+ "grading_call": "nx_common.grade(full=費用前の全期間〔評価の開始〜2024-12〕, train=費用前の訓練〔開始〜2006-12〕, hold=費用前の保有〔2007-01〜2024-12〕, roll20=費用後の転がる20年窓〔nx_common.rolling・毎年7月起点・一括〕, cost_hold=費用後の保有, repl=None〔C5 は N/A〕, family_holm_p=族の中の Holm 補正後 p〔保有・費用前・両側・nx_common.holm〕, leveraged_or_timing=False〔C8 は N/A〕)",
+ "tools": {
+  "data": "night/nx_osap_intang_data.py（取得と整形だけ・成績は計算しない）→ out/_nx_cache/nx_osap_intang_ports.json（gitignore）。規則の台帳 RULES もこのファイルにあり、測る道具は import する（写さない）",
+  "extract_sha256": "a63d2757148d84b33756bf8b7d9e4463e3938332fadbdb2ccdab32ae172222ec（nx_osap_intang_ports.json の 'signals' を sort_keys・区切り詰めで直列化した sha256。測る道具は最初にこの値を確かめ、違えば止まる）",
+  "rules_sha256": "35979462368b476e5808ae41053afaaedb49d225ff591e48b8f0c5b578ec75be（RULES を sort_keys・区切り詰めで直列化した sha256。測った後に RULES を変えたら『事後』）",
+  "measure_next": "night/nx_osap_intang.py → out/nx_osap_intang.json（この事前登録の後に書く。tested に下の全規則を1本残らず残す）"
+ },
+ "stance_before_results": "測定器。門・採点・四関門・席・配分・売却規律には入れない。線（C1〜C8）は結果を見て動かさない。原論文の多くは等加重・買い−売り・小型株込みの結果で、時価加重・買いだけ・上限なしの市場（巨大テックの重みを抑えない相手）と比べると大きく縮む見込み。予想（測る前）: 主の8本は C が6〜8本、B が0〜2本、A と S は0本。訓練の C1（t≥2.0）を通るのは多くて2〜3本。保有期間では、研究開発を増やし続けた巨大テックが入る SurpriseRD と、販管費の厚い会社が上に来る OrgCap が正に出やすいと予想する——これは2007年以降の歴史を知っていることによる後知恵で、予想そのものが汚れている（contamination）。Herf の良い側は『競争の激しい業界』で、門の dom（支配シェア）の思想と逆向き。勝っても負けても思想への証拠として記録する",
+ "why_new": {
+  "difference": "並走中の3セッションの銘柄の特徴は、すべて JKP 153（jkpfactors.com）か French か Yahoo/SEC の自作だった（eknzbh の factor_us は JKP 153 を全部、q07leu は JKP の研究開発〔rd_me・rd_sale・rd5_at〕・発生主義・収益性・純還元・利益の勢いなど、hbm38n は 13F・スピンオフ・指数の除外・働きがい）。OSAP のデータそのものは誰も使っていない（eknzbh の mw_postpub は OSAP の SignalDoc.csv から公表年を読んだだけ）。2026-09-28 に origin の3枝の night/mw_*・night/edge/*・night/ev5*・out/mw_*・out/edge/*・out/ev5* を openassetpricing・Zimmermann・PatentsRD・CitationsRD・OrgCap・BrandInvest・RDAbility・Herfindahl・Hou and Robinson・AdExp・Mohanram・Franzoni・Eisfeldt・advertis・pension・xsga・organization capital・G-score・industry concentration・SurpriseRD・ExclExp で git grep し、該当なし（Belo・Hirshleifer は別の論文の引用だけ）を確かめた",
+  "overlap_check_per_signal": {
+   "PatentsRD・CitationsRD": "特許は JKP に無い。★ただし OSAP の特許は NBER 1976〜2006 まで＝保有期間に信号が無い→主から外し、訓練期間だけの報告（R1）",
+   "OrgCap": "組織資本は JKP に無い。近いのは JKP の opex_at（Novy-Marx 2011 の営業費用÷総資産＝営業レバレッジ）だが、OrgCap は販管費の積み上げ（年15%減価）÷総資産を業種の中で標準化したもので別物→主（重なりの近さは報告で opex_at 側は測らない）",
+   "AdExp": "広告費÷時価は JKP に無い。同じ論文（Chan-Lakonishok-Sougiannis 2001）の研究開発費÷時価（rd_me）・÷売上（rd_sale）は JKP と q07leu の rd にあるので測らない→主",
+   "BrandInvest": "JKP に無い（JKP の emp_gr1 は Belo-Lin-Bazdresch 2014 の雇用の伸びで別の論文）→主",
+   "RDAbility": "JKP に無い。q07leu の rd は研究開発の『量』（rd_me・rd_sale・rd5_at）で、RDAbility は研究開発が売上の伸びに効いた『腕』→主",
+   "SurpriseRD": "研究開発の増加（Eberhart-Maxwell-Siddique 2004）は JKP にも q07leu にも無い（斥候の下書きには無く、ここで足した）→主",
+   "Herf・HerfBE・HerfAsset": "業界の集中度は JKP に無い→ Herf を主、HerfBE・HerfAsset を探索 X4",
+   "MS": "Mohanram の G スコアは JKP に無い（JKP の f_score は Piotroski 2000 で別。G スコアは低い簿価時価比の中だけで作る成長株用）→主",
+   "FR": "年金の積立状況は JKP に無い→主",
+   "Tax": "★JKP の pi_nix（Lev and Nissim 2004・課税所得÷会計利益）と同じ論文・同じ定義→外した",
+   "NumEarnIncrease": "★JKP の ni_inc8q（Barth-Elliott-Finn 1999・利益が連続で増えた四半期の数・最大8）と同じ→外した",
+   "ShareRepurchase": "★JKP の eqpo_me・eqnpo_me（Boudoukh ほか 2007）・chcsho_12m（Pontiff-Woodgate 2008）と q07leu の payout（純還元）と同じ経済の信号（自社株買いの有無）→外した",
+   "ExclExp": "★JKP に無いが、同じ枝の兄弟の角度 nx_osap_info（night/nx_osap_info_data.py の XL12_ExclExp_q5vw）が同じ規則を探索に登録済み→二重に数えないよう、この角度では測らない",
+   "GrAdExp・EarningsConsistency・RDS": "JKP に無い→探索 X4",
+   "other_OSAP_excluded": "RD（=rd_me）・RDcap（=rd5_at・Li 2011）・RDIPO（q07leu old_firms・mw_index_events）・Accruals/PctAcc/AbnormalAccruals（JKP の発生主義・q07leu accruals）・IntanBM/IntanSP/IntanCFP/IntanEP（Daniel-Titman の『無形のリターン』は長期の逆張りで JKP の eqnpo_12m と同じ論文・q07leu lt_reversal）・OPLeverage（=opex_at）・ChTax（=tax_gr1a）・OrderBacklog・DelDRC（main の moat4・moat_dr で測った受注残・前受収益）・Governance（1990〜2006 で保有期間が無い）・分析者と空売りとオプションの変数（兄弟の nx_osap_info）・CustomerMomentum・iomom（nx_leadlag）・Spinoff（ev5）・sinAlgo（q07leu sin）"
+  },
+  "vs_nx_brand": "nx_brand は外部の一覧（Interbrand など）に載った会社を買う。ここは会計の広告費から作る信号で、データも規則も別",
+  "vs_nx_osap_info": "同じ OSAP のファイルを使う兄弟の角度だが、変数は重ならない（ExclExp はあちらに任せた）"
+ },
+ "data": {
+  "source": "Open Source Asset Pricing（Andrew Y. Chen・Tom Zimmermann）2025.10 版（https://www.openassetpricing.com/data/ ・FAQ のお知らせ「2025-10-22: Data update (October 2025)・Signals translated to Python」）。Google Drive から鍵なしで取得（drive.usercontent.google.com/download?id=<ID>&export=download&confirm=t）",
+  "files": {
+   "SignalDoc": {
+    "drive_id": "1Sev9s6cPFUGgxp1pFiej0lGzpsMqJCI2",
+    "cache": "osap_SignalDoc.csv",
+    "bytes": 181581,
+    "sha256": "590a308e40483fa87c0cbb95f73c010d09a61e22a3e2059627d2b3de9b77e0d9"
+   },
+   "QuintilesVW": {
+    "drive_id": "1ef905SSlCDyh1KU9W1tJs5sfBFz0HPUt",
+    "cache": "osap_PredictorAltPorts_QuintilesVW.zip",
+    "bytes": 18947238,
+    "sha256": "03c2358f223670b6ce21853f2f9d86404012f6cea9a14e76d116ca05f20d5070",
+    "missing_signals": []
+   },
+   "DecilesVW": {
+    "drive_id": "1_1WWZqilrt1gleeyAFwjv5aobd0QRbS3",
+    "cache": "osap_PredictorAltPorts_DecilesVW.zip",
+    "bytes": 34654393,
+    "sha256": "d1790e831b621069379d5584d3114292ac52e8cdc36e44e302e880bd0c972b7c",
+    "missing_signals": []
+   },
+   "VWforce": {
+    "drive_id": "1KZE3FgBxFPaNOyxoRw63ubZHOlkR9kZW",
+    "cache": "osap_PredictorAltPorts_LiqScreen_VWforce.zip",
+    "bytes": 25962554,
+    "sha256": "53d3ae1f3de7a17d051de0125da2c42e4d4cf664faf6e4f6cfdd3b4994675a2a",
+    "missing_signals": []
+   },
+   "FF93style": {
+    "drive_id": "1pDRMNTOvRfvooAzYOmG9sBBz74mUO80Q",
+    "cache": "osap_PredictorAltPorts_FF93style.zip",
+    "bytes": 22036534,
+    "sha256": "4b1e9333687368004de2a14ff759b6794fcc5f629403012e396a722fc36ae0e1",
+    "missing_signals": []
+   },
+   "PortsFull": {
+    "drive_id": "1g7w-yQ6Cg2qbMEkER9Q3vgns4JszXQo6",
+    "cache": "osap_PredictorPortsFull.csv",
+    "bytes": 77651932,
+    "sha256": "6cdaf0ff051222b813e6f8404d7a30b94e146b421625f202bd04473fe97a1817",
+    "missing_signals": []
+   },
+   "French_F-F_Research_Data_Factors": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors_CSV.zip",
+    "cache": "fr_F-F_Research_Data_Factors.zip",
+    "bytes": 13065,
+    "sha256": "593f4fbef03181bc0b22ff6292f217689dd1fb79355049ca905d95b262040a66"
+   },
+   "French_Portfolios_Formed_on_ME": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Portfolios_Formed_on_ME_CSV.zip",
+    "cache": "fr_Portfolios_Formed_on_ME.zip",
+    "bytes": 200765,
+    "sha256": "f6c4c440b4c6f26f1f01365e84ccae5338ae52e65057034d2ef3d3c0c1843020"
+   }
+  },
+  "construction_verified_in_code": {
+   "read_at": "2026-09-28（raw.githubusercontent.com・cdn.jsdelivr.net/gh の OpenSourceAP/CrossSection master。GitHub の API は使えなかった）",
+   "returns": "Portfolios/Code/11_ProcessCRSP.R: CRSP 月次の ret に上場廃止のリターン dlret を掛け合わせ（dlret が欠けた業績由来の上場廃止〔dlstcd 500・520〜584〕は NYSE/AMEX −35%・NASDAQ −55%、−100%より下は −100%）、100 倍して % にする＝配当込みの総リターン（超過ではない）。→ここでは /100 して小数にし、French Mkt（総リターン）と比べる",
+   "universe": "Signals/pyCode/SignalMasterTable.py: shrcd 10・11・12、exchcd 1・2・3（NYSE・AMEX・NASDAQ）。French Mkt は shrcd 10・11（差は外国籍の普通株 12 だけ）",
+   "sorting": "Portfolios/Code/01_PortfolioFunction.R: 変数に SignalDoc の Sign を掛けてから並べる。五分位の切れ目は全銘柄（SignalDoc の Quantile Filter が NYSE の変数〔FR〕だけ NYSE）、端の組は同点を含める（<=・>=）。離散の変数は値の小さい順に組 01, 02, …。LS＝最大の組−最小の組＝最大の組が論文の買いの側",
+   "alt_ports": "Portfolios/Code/30_PredictorAltPorts.R: QuintilesVW・DecilesVW は SignalDoc の作り方（Sign・組み直しの月・保有期間・Quantile Filter・Filter）のまま q_cut と重みだけ差し替え、VWforce は論文の組のまま重みだけ時価加重",
+   "weights": "時価加重の重み＝前月末の時価（melag = |prc|×shrout の1か月前）",
+   "lag": "変数の月 t の値は月 t の末に使える値（FAQ「Data are always end-of-month, i.e. you are able to trade on a signal by the end of the month」）。組は月 t の値で決め、月 t+1 のリターンに当てる（01_PortfolioFunction.R で signallag を1か月ずらす）。年次の会計値は決算期末の6か月後の月から使う（DataDownloads/CompustatAnnual.py「6-month reporting lag」・FAQ も Fama-French の慣行と明記）。四半期の会計値は期末の3か月後か公表日 rdq の月の遅いほうから（CompustatQuarterly.py）。保有期間 12 の変数（OrgCap・AdExp・BrandInvest・FR）は6月の値で組み7月〜翌6月持つ。保有期間 1 の変数（RDAbility・SurpriseRD・Herf・MS）は毎月組み直すが信号は年次の会計値で年1回しか変わらない（MS は決算期末の6か月後の月の値を1年固定）",
+   "ff93style": "Portfolios/Code/32_Predictor2x3Ports.R: 6月の値で、NYSE・shrcd 10/11 の銘柄から変数の 30/70% と時価の中央値の切れ目を作り、NYSE/AMEX/NASDAQ・shrcd 10/11 を6組に。7月〜翌6月持つ・時価加重。連続の変数だけ",
+   "patents": "Signals/pyCode/DataDownloads/PatentCitations.py: NBER の特許（pat76_06_assg・cite76_06・dynass）＝付与年 1976〜2006。PatentsRD.py は付与年 t−1 の件数を t 年6月に使う（6か月ずらし）。2007年以降は欠け→0",
+   "signal_code_read": "Predictors/ZZ1_OrgCap_OrgCapNoAdj.py・AdExp.py・BrandInvest.py・RDAbility.py・SurpriseRD.py・Herf.py・HerfBE.py・HerfAsset.py・MS.py・ZZ1_FR_FRbook.py・GrAdExp.py・EarningsConsistency.py・RDS.py・PatentsRD.py・CitationsRD.py・Tax.py・NumEarnIncrease.py・ShareRepurchase.py・ExclExp.py"
+  },
+  "period": "OSAP の組は変数ごとに 1951〜1981 に始まり 2024-12 で終わる（French Mkt は 1926-07〜2026-08。比べるのは両方ある月だけ＝保有期間は 2007-01〜2024-12 の216か月）",
+  "evaluation_start": "各規則の評価は、良い側の組の銘柄数 Nlong が初めて20以上になった月から（形だけで決まる）。その後に20未満の月は s と b の両方から落とす（0で埋めない・前後をつながない）。実測の開始（形）: P1 1951-07・P2 1972-07・P3 1973-07・P4 1977-07（開始後に20未満で落ちる月6）・P5 1953-07（同39・1950〜60年代）・P6 1951-02・P7 1984-12・P8 1981-07。訓練期間の使える月: P1 666・P2 414・P3 402・P4 348・P5 603・P6 671・P7 265・P8 306（どれも15年=180か月以上）。保有期間は全規則216か月",
+  "survivor_bias": "無し（CRSP の上場廃止した会社とそのリターンを含む・Compustat）。ただし Compustat の後からの埋め戻し（会社が加わった時に過去の年も入る）はありうる（PatentsRD・CitationsRD は Compustat の最初の2年を落とす）",
+  "units": "OSAP の ret は %。1951-07 の AM の組01 が 7.66 のように % 表記であることを形で確かめた（AM はこの角度の変数ではない）。/100 して小数",
+  "sha_policy": "測る道具は nx_osap_intang_ports.json の extract_sha256 と rules_sha256 が上の tools の値と一致することを最初に確かめる。OSAP・French が更新されて sha が変わったら、両方の版で測って報告する（格付けは登録時の版）"
+ },
+ "criteria": {
+  "which": "criteria_long_history（訓練＝評価の開始〜2006-12・保有＝2007-01〜2024-12・C1〜C8）。全規則の訓練が15年以上（最短 P7 22.1年）なので criteria_short_sample は使わない",
+  "series_used_per_criterion": {
+   "s_gross": "s = 良い側の組の総リターン（費用前）、b = French Mkt（Mkt-RF + RF・総リターン）",
+   "s_net": "s_net = nx_common.apply_cost(s, 回転の置き値, 0.003)（毎月 回転×0.30%/12 を引く）",
+   "C1_C2_C3_C7": "費用前（s_gross 対 b）。nx_stack・mw と同じ約束",
+   "C4_roll20": "費用後（s_net 対 b）の転がる20年窓（一括・毎年7月起点・評価の開始〜2024-12・窓の97%以上の月がある窓だけ・nx_common.rolling）",
+   "C6_net_cost": "費用後の保有期間（s_net 対 b）で C2 が成り立つか",
+   "C7_multi": "全期間の NW t ≥ 3.0（費用前）または 族の中の Holm 補正後 p（保有期間・費用前・両側）< 0.05",
+   "C8_sharpe": "N/A（買いだけ・借入なし・時期選びなし）"
+  },
+  "C5_independent_unit": "N/A（格付けでは使わない）。OSAP は米国の CRSP/Compustat だけで、米国外の同じ作り方のデータが無い。考えた代わりの単位と外した理由: (a) 大型株だけの版（FF93 型の BH・ME>NYSE20% の版）は時価加重の主の組と中身の大半が同じで独立ではない、(b) 小型株の半分（FF93 型の SH）は銘柄は重ならないが、同じ国・同じ期間・同じ因子の動きで、他の国ほど独立ではなく、全期間の平均が正かどうかだけで C3（保有の t≥1.65）の代わりに A へ上がる道を作ると線が緩む、(c) 原論文の標本の外の時代は訓練・保有と重なる。→ C5 は N/A とし、A には C3 が要る（線を緩めない側）。(a)(b)(c) は報告 R2・R3 に準独立の再現として並べる",
+  "cost_assumption": "OSAP は回転を出さないので置き値を先に決めた: 片道の売買回転（年）× 片道100%あたり 0.30%（eknzbh の mw_factor_us と同じ単価）。回転: 6月に年1回組み直す遅い水準の変数 OrgCap 0.5・Herf 0.4（業界の3年平均）／時価で割る年次の変数 AdExp 0.8・FR 0.8／投資率・増加・二値の年次の変数 BrandInvest 1.0・SurpriseRD 1.0・RDAbility 1.0（小さい組・株価5ドルの足切り）／MS 1.5（成長株の五分位への出入りが毎月ある）。十分位は五分位の1.3倍、BH は五分位と同じ、合成は脚の平均＋0.10。感度は R6（0.10%・0.60%・回転×0.5・×2）。税は入れない",
+  "holm": "族ごとに Holm（両側・保有期間・費用前）: P 8本・X1 5本・X2 5本・X3 4本・X4 5本。探索族の格付けには『探索』と明記し、主の族の結論には使わない",
+  "missing_rules": "良い側の銘柄数が20未満の月・OSAP の ret が欠けた月は落とす（0で埋めない）。French と OSAP の両方がある月だけ比べる。OSAP は 2024-12 で終わる（2025-01〜2026-08 は測れない）",
+  "post_publication": "公表年の翌年1月から（原論文の雑誌の年＝SignalDoc の Year）。報告のみ"
+ },
+ "families": {
+  "P_primary": {
+   "role": "主の族（格付けする・Holm はこの8本で）",
+   "common": "各変数の『良い側』＝原論文の向き（OSAP は並べる前に signal×Sign を掛けるので、最大の組がいつも原論文の買いの側。手で選ばない・データで選ばない）の組を、OSAP の作り方のまま毎月持つ（時価加重・重み＝前月末の時価）。s = その組の月次の総リターン、b = French Mkt（Mkt-RF + RF）。s_net = s − 回転×0.30%/12（毎月）",
+   "rules": {
+    "P1_OrgCap_q5vw": {
+     "signal": "OrgCap",
+     "file": "QuintilesVW",
+     "port": "05",
+     "turn": 0.5,
+     "pub": 2013,
+     "op": [
+      1970,
+      2008
+     ],
+     "what": "組織資本（販管費を毎年15%ずつ減価して積んだもの÷総資産・FF17業種の中で標準化）の高い五分位",
+     "series": "OSAP QuintilesVW の OrgCap の組 '05'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.15,
+     "post_publication_from": 201401,
+     "op_sample_outside_report": "原論文の標本（1970〜2008）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "P2_AdExp_q5vw": {
+     "signal": "AdExp",
+     "file": "QuintilesVW",
+     "port": "05",
+     "turn": 0.8,
+     "pub": 2001,
+     "op": [
+      1975,
+      1996
+     ],
+     "what": "広告費÷時価総額の高い五分位",
+     "series": "OSAP QuintilesVW の AdExp の組 '05'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.24,
+     "post_publication_from": 200201,
+     "op_sample_outside_report": "原論文の標本（1975〜1996）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "P3_BrandInvest_q5vw": {
+     "signal": "BrandInvest",
+     "file": "QuintilesVW",
+     "port": "05",
+     "turn": 1.0,
+     "pub": 2014,
+     "op": [
+      1975,
+      2010
+     ],
+     "what": "ブランド投資率（広告費÷ブランド資本〔広告費を年50%で減価して積んだもの〕）の低い五分位",
+     "series": "OSAP QuintilesVW の BrandInvest の組 '05'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.3,
+     "post_publication_from": 201501,
+     "op_sample_outside_report": "原論文の標本（1975〜2010）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "P4_RDAbility_q5vw": {
+     "signal": "RDAbility",
+     "file": "QuintilesVW",
+     "port": "05",
+     "turn": 1.0,
+     "pub": 2013,
+     "op": [
+      1980,
+      2009
+     ],
+     "what": "研究開発の腕（過去の研究開発費÷売上が売上の伸びに効いた傾きの平均・研究開発費÷売上が上位1/3の会社の中・株価5ドル超）の高い五分位",
+     "series": "OSAP QuintilesVW の RDAbility の組 '05'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.3,
+     "post_publication_from": 201401,
+     "op_sample_outside_report": "原論文の標本（1980〜2009）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "P5_SurpriseRD_vwf": {
+     "signal": "SurpriseRD",
+     "file": "VWforce",
+     "port": "02",
+     "turn": 1.0,
+     "pub": 2004,
+     "op": [
+      1974,
+      2001
+     ],
+     "what": "研究開発費が前年から5%超増え、総資産比でも5%超増えた会社（二値の1の側）",
+     "series": "OSAP VWforce の SurpriseRD の組 '02'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.3,
+     "post_publication_from": 200501,
+     "op_sample_outside_report": "原論文の標本（1974〜2001）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "P6_Herf_q5vw": {
+     "signal": "Herf",
+     "file": "QuintilesVW",
+     "port": "05",
+     "turn": 0.4,
+     "pub": 2006,
+     "op": [
+      1963,
+      2001
+     ],
+     "what": "業界（SIC 3桁）の売上のハーフィンダール指数（3年平均）の低い五分位＝競争の激しい業界",
+     "series": "OSAP QuintilesVW の Herf の組 '05'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.12,
+     "post_publication_from": 200701,
+     "op_sample_outside_report": "原論文の標本（1963〜2001）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "P7_MS_vwf": {
+     "signal": "MS",
+     "file": "VWforce",
+     "port": "06",
+     "turn": 1.5,
+     "pub": 2005,
+     "op": [
+      1978,
+      2001
+     ],
+     "what": "簿価時価比の最も低い五分位（成長株）の中の Mohanram の G スコア 6以上の組",
+     "series": "OSAP VWforce の MS の組 '06'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.45,
+     "post_publication_from": 200601,
+     "op_sample_outside_report": "原論文の標本（1978〜2001）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "P8_FR_q5vw": {
+     "signal": "FR",
+     "file": "QuintilesVW",
+     "port": "05",
+     "turn": 0.8,
+     "pub": 2006,
+     "op": [
+      1980,
+      2002
+     ],
+     "what": "年金の積立状況（年金資産−予測給付債務）÷時価総額の高い五分位（NYSE の切れ目）",
+     "series": "OSAP QuintilesVW の FR の組 '05'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.24,
+     "post_publication_from": 200701,
+     "op_sample_outside_report": "原論文の標本（1980〜2002）の前と、標本の後〜公表年まで（報告のみ）"
+    }
+   }
+  },
+  "X1_deciles": {
+   "role": "探索（格付けするが『探索』と明記・族の中で別に Holm 5本）。より深い端（十分位の第10）",
+   "inclusion": "主の連続の変数のうち、その組の銘柄数の全期間の中央値が40以上のもの（形だけで決めた線）。RDAbility は十分位の良い側の中央値が15社で外した",
+   "rules": {
+    "X1_OrgCap_d10vw": {
+     "signal": "OrgCap",
+     "file": "DecilesVW",
+     "port": "10",
+     "turn": 0.65,
+     "pub": 2013,
+     "op": [
+      1970,
+      2008
+     ],
+     "series": "OSAP DecilesVW の OrgCap の組 '10'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.195,
+     "post_publication_from": 201401,
+     "op_sample_outside_report": "原論文の標本（1970〜2008）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "X1_AdExp_d10vw": {
+     "signal": "AdExp",
+     "file": "DecilesVW",
+     "port": "10",
+     "turn": 1.04,
+     "pub": 2001,
+     "op": [
+      1975,
+      1996
+     ],
+     "series": "OSAP DecilesVW の AdExp の組 '10'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.312,
+     "post_publication_from": 200201,
+     "op_sample_outside_report": "原論文の標本（1975〜1996）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "X1_BrandInvest_d10vw": {
+     "signal": "BrandInvest",
+     "file": "DecilesVW",
+     "port": "10",
+     "turn": 1.3,
+     "pub": 2014,
+     "op": [
+      1975,
+      2010
+     ],
+     "series": "OSAP DecilesVW の BrandInvest の組 '10'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.39,
+     "post_publication_from": 201501,
+     "op_sample_outside_report": "原論文の標本（1975〜2010）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "X1_Herf_d10vw": {
+     "signal": "Herf",
+     "file": "DecilesVW",
+     "port": "10",
+     "turn": 0.52,
+     "pub": 2006,
+     "op": [
+      1963,
+      2001
+     ],
+     "series": "OSAP DecilesVW の Herf の組 '10'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.156,
+     "post_publication_from": 200701,
+     "op_sample_outside_report": "原論文の標本（1963〜2001）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "X1_FR_d10vw": {
+     "signal": "FR",
+     "file": "DecilesVW",
+     "port": "10",
+     "turn": 1.04,
+     "pub": 2006,
+     "op": [
+      1980,
+      2002
+     ],
+     "series": "OSAP DecilesVW の FR の組 '10'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.312,
+     "post_publication_from": 200701,
+     "op_sample_outside_report": "原論文の標本（1980〜2002）の前と、標本の後〜公表年まで（報告のみ）"
+    }
+   }
+  },
+  "X2_bigcap": {
+   "role": "探索（別に Holm 5本）。大型株だけ: OSAP の FF93 型の BH（NYSE の時価の中央値より大きい会社 × 変数の NYSE 30/70% の良い側の3分位・6月の値で組み7月〜翌6月持つ・時価加重）を French Mkt と比べる",
+   "inclusion": "X1 と同じ線（BH の銘柄数の中央値40以上）。RDAbility の BH は中央値22社で外した。離散の変数（MS・SurpriseRD）は OSAP に FF93 型が無い",
+   "rules": {
+    "X2_OrgCap_BH": {
+     "signal": "OrgCap",
+     "file": "FF93style",
+     "port": "BH",
+     "turn": 0.5,
+     "pub": 2013,
+     "op": [
+      1970,
+      2008
+     ],
+     "series": "OSAP FF93style の OrgCap の組 'BH'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.15,
+     "post_publication_from": 201401,
+     "op_sample_outside_report": "原論文の標本（1970〜2008）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "X2_AdExp_BH": {
+     "signal": "AdExp",
+     "file": "FF93style",
+     "port": "BH",
+     "turn": 0.8,
+     "pub": 2001,
+     "op": [
+      1975,
+      1996
+     ],
+     "series": "OSAP FF93style の AdExp の組 'BH'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.24,
+     "post_publication_from": 200201,
+     "op_sample_outside_report": "原論文の標本（1975〜1996）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "X2_BrandInvest_BH": {
+     "signal": "BrandInvest",
+     "file": "FF93style",
+     "port": "BH",
+     "turn": 1.0,
+     "pub": 2014,
+     "op": [
+      1975,
+      2010
+     ],
+     "series": "OSAP FF93style の BrandInvest の組 'BH'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.3,
+     "post_publication_from": 201501,
+     "op_sample_outside_report": "原論文の標本（1975〜2010）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "X2_Herf_BH": {
+     "signal": "Herf",
+     "file": "FF93style",
+     "port": "BH",
+     "turn": 0.4,
+     "pub": 2006,
+     "op": [
+      1963,
+      2001
+     ],
+     "series": "OSAP FF93style の Herf の組 'BH'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.12,
+     "post_publication_from": 200701,
+     "op_sample_outside_report": "原論文の標本（1963〜2001）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "X2_FR_BH": {
+     "signal": "FR",
+     "file": "FF93style",
+     "port": "BH",
+     "turn": 0.8,
+     "pub": 2006,
+     "op": [
+      1980,
+      2002
+     ],
+     "series": "OSAP FF93style の FR の組 'BH'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.24,
+     "post_publication_from": 200701,
+     "op_sample_outside_report": "原論文の標本（1980〜2002）の前と、標本の後〜公表年まで（報告のみ）"
+    }
+   }
+  },
+  "X3_composites": {
+   "role": "探索（別に Holm 4本）。主の脚の等分の合成",
+   "definition": "月 m に使える脚（その脚の評価の開始月以降で、その月の良い側の銘柄数が20以上）だけを等分（毎月もとの等分へ戻す）。使える脚が min_legs 本に満たない月は落とす（0で埋めない）。費用＝使った脚の置き値の回転の平均＋0.10（等分へ戻す売買）× 0.30%",
+   "rules": {
+    "X3a_MIX8": {
+     "parts": [
+      "P1_OrgCap_q5vw",
+      "P2_AdExp_q5vw",
+      "P3_BrandInvest_q5vw",
+      "P4_RDAbility_q5vw",
+      "P5_SurpriseRD_vwf",
+      "P6_Herf_q5vw",
+      "P7_MS_vwf",
+      "P8_FR_q5vw"
+     ],
+     "min_legs": 3,
+     "turn_add": 0.1,
+     "what": "主の8本の良い側を等分"
+    },
+    "X3b_INTANGCAP": {
+     "parts": [
+      "P1_OrgCap_q5vw",
+      "P2_AdExp_q5vw",
+      "P3_BrandInvest_q5vw"
+     ],
+     "min_legs": 2,
+     "turn_add": 0.1,
+     "what": "無形資本（組織資本・広告・ブランド）"
+    },
+    "X3c_INNOV": {
+     "parts": [
+      "P4_RDAbility_q5vw",
+      "P5_SurpriseRD_vwf"
+     ],
+     "min_legs": 2,
+     "turn_add": 0.1,
+     "what": "革新（研究開発の腕・増加）"
+    },
+    "X3d_QUALITY": {
+     "parts": [
+      "P7_MS_vwf",
+      "P8_FR_q5vw"
+     ],
+     "min_legs": 2,
+     "turn_add": 0.1,
+     "what": "利益・財務の質（G スコア・年金）"
+    }
+   }
+  },
+  "X4_same_theme_other_signals": {
+   "role": "探索（別に Holm 5本）。同じ主題で主に入れなかった変数（五分位・時価加重・良い側）",
+   "why_not_main": "GrAdExp は BrandInvest・AdExp と同じ広告費から作る近い信号、EarningsConsistency は利益の伸び（質より勢いに近い）、RDS は会計の質だが原論文の組が3分位で主題の中心から遠い、HerfBE・HerfAsset は Herf の別の物差し",
+   "rules": {
+    "X4_GrAdExp_q5vw": {
+     "signal": "GrAdExp",
+     "file": "QuintilesVW",
+     "port": "05",
+     "turn": 1.5,
+     "pub": 2014,
+     "op": [
+      1974,
+      2010
+     ],
+     "what": "広告費の伸びの低い五分位（株価5ドル超・広告費0.1超・時価の最下位十分位を除く）",
+     "series": "OSAP QuintilesVW の GrAdExp の組 '05'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.45,
+     "post_publication_from": 201501,
+     "op_sample_outside_report": "原論文の標本（1974〜2010）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "X4_EarningsConsistency_q5vw": {
+     "signal": "EarningsConsistency",
+     "file": "QuintilesVW",
+     "port": "05",
+     "turn": 0.8,
+     "pub": 2009,
+     "op": [
+      1971,
+      2002
+     ],
+     "what": "1株利益の伸びの5年平均（符号の反転などの例外は除外）の高い五分位",
+     "series": "OSAP QuintilesVW の EarningsConsistency の組 '05'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.24,
+     "post_publication_from": 201001,
+     "op_sample_outside_report": "原論文の標本（1971〜2002）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "X4_RDS_q5vw": {
+     "signal": "RDS",
+     "file": "QuintilesVW",
+     "port": "05",
+     "turn": 1.0,
+     "pub": 2011,
+     "op": [
+      1976,
+      2003
+     ],
+     "what": "実質のダーティ・サープラス（株式の発行・買戻しで既存株主が得た/失った分）の高い五分位",
+     "series": "OSAP QuintilesVW の RDS の組 '05'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.3,
+     "post_publication_from": 201201,
+     "op_sample_outside_report": "原論文の標本（1976〜2003）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "X4_HerfBE_q5vw": {
+     "signal": "HerfBE",
+     "file": "QuintilesVW",
+     "port": "05",
+     "turn": 0.4,
+     "pub": 2006,
+     "op": [
+      1963,
+      2001
+     ],
+     "what": "業界の自己資本のハーフィンダール指数の低い五分位",
+     "series": "OSAP QuintilesVW の HerfBE の組 '05'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.12,
+     "post_publication_from": 200701,
+     "op_sample_outside_report": "原論文の標本（1963〜2001）の前と、標本の後〜公表年まで（報告のみ）"
+    },
+    "X4_HerfAsset_q5vw": {
+     "signal": "HerfAsset",
+     "file": "QuintilesVW",
+     "port": "05",
+     "turn": 0.4,
+     "pub": 2006,
+     "op": [
+      1963,
+      2001
+     ],
+     "what": "業界の総資産のハーフィンダール指数の低い五分位",
+     "series": "OSAP QuintilesVW の HerfAsset の組 '05'（ret/100・総リターン）",
+     "cost_pct_per_year": 0.12,
+     "post_publication_from": 200701,
+     "op_sample_outside_report": "原論文の標本（1963〜2001）の前と、標本の後〜公表年まで（報告のみ）"
+    }
+   }
+  },
+  "R_report_only": {
+   "role": "格付けしない報告",
+   "R1_patents_train_only": {
+    "rules": {
+     "R1_PatentsRD_op": {
+      "signal": "PatentsRD",
+      "file": "PortsFull",
+      "port": "02",
+      "turn": 1.0,
+      "pub": 2013,
+      "op": [
+       1982,
+       2008
+      ],
+      "train_only": true,
+      "what": "小型株（NYSE の時価の中央値以下）の中の 特許数÷研究開発資本 の上位1/3（時価加重）。NBER の特許は 1976〜2006 まで＝訓練期間だけ",
+      "series": "OSAP PortsFull の PatentsRD の組 '02'（ret/100・総リターン）",
+      "cost_pct_per_year": 0.3,
+      "post_publication_from": 201401,
+      "op_sample_outside_report": "原論文の標本（1982〜2008）の前と、標本の後〜公表年まで（報告のみ）"
+     },
+     "R1_CitationsRD_op": {
+      "signal": "CitationsRD",
+      "file": "PortsFull",
+      "port": "02",
+      "turn": 1.0,
+      "pub": 2013,
+      "op": [
+       1982,
+       2008
+      ],
+      "train_only": true,
+      "what": "小型株の中の 引用÷研究開発費 の上位1/3（時価加重）。訓練期間だけ",
+      "series": "OSAP PortsFull の CitationsRD の組 '02'（ret/100・総リターン）",
+      "cost_pct_per_year": 0.3,
+      "post_publication_from": 201401,
+      "op_sample_outside_report": "原論文の標本（1982〜2008）の前と、標本の後〜公表年まで（報告のみ）"
+     }
+    },
+    "why_not_graded": "OSAP の特許のデータは NBER の特許データ（付与年 1976〜2006・Signals/pyCode/DataDownloads/PatentCitations.py）だけで、2007年以降の特許は無い（欠けは0で埋められる）。PatentsRD の良い側（組02）は 2008-07 以降の75か月で銘柄数の中央値2社、CitationsRD は 2012-07 以降も中央値56社残るが信号はすべて0の同点から作られた意味の無い組。＝保有期間（2007〜）に信号が無く C2・C3 を測れない。訓練期間（1977-07〜2006-12）の excess_stats だけを報告する。引用は付与後5年以内の数なので 2002〜2006 年の付与分は引用の窓が 2006 年末で切れる（訓練の終わりほど値が小さくなる）"
+   },
+   "R2_size_halves": "X2 の BH と FF93 型の SH（小型の半分の良い側）を、同じ大きさの半分の市場と比べる: 大型の半分＝French の Portfolios_Formed_on_ME の6〜10十分位（NYSE の切れ目）を、小型の半分＝1〜5十分位を、同じファイルの Number of Firms × Average Firm Size の重みで時価加重に合わせたもの。主の連続の6変数（OrgCap・AdExp・BrandInvest・RDAbility〔SH のみ〕・Herf・FR）で、両方の半分で超過が正かを数える＝準独立の再現（C5 には使わない）",
+   "R3_subperiods": "直近（2013-07〜2024-12）・公表後（公表年の翌年1月〜）・原論文の標本の外（標本の前・標本の後〜公表年）の excess_stats を各規則で",
+   "R4_other_side": "悪い側（組01）と OSAP の LS（最大の組−最小の組）、中の組（03）の対 French Mkt を並べる（買いだけで良い側の上乗せがどれだけ取れるか・母集団の効果の見当）",
+   "R5_base_rate": "偶然の基礎率: OSAP QuintilesVW の連続の予言変数 179 本すべての組05（論文の向きの良い側）に、同じ期間の切り方・同じ Nlong≥20・同じ費用（一律 回転0.8・0.30%）・同じ grade() を当て、S/A/B/C の本数を数える（Holm は179本の中）。主の8本がこの基礎率より良いかを報告する。179本の中の JKP と重なる変数には印を付ける（重なりは格付けに関係しない）",
+   "R6_cost_sensitivity": "費用 片道100%あたり 0.10%・0.60%、回転の置き値 ×0.5・×2 の4通りで C6 と C4 を再計算（格付けは既定の 0.30%・×1 だけ）",
+   "R7_other_metrics": "シャープ（French RF を引く）・最大下落・β・追従のぶれ・情報比・20年積立の最終額の比（nx_common.dca）・訓練と保有の相関",
+   "R8_real_instruments": "下の real_instrument_check"
+  }
+ },
+ "benchmark": {
+  "main": "French Mkt（Mkt-RF + RF）＝上限なしの時価加重・CRSP の shrcd 10/11・NYSE/AMEX/NASDAQ（S&P500 にほぼ等しい）。s と b はどちらも総リターン",
+  "why_not_universe_average": "OSAP の各変数の母集団（研究開発をする会社・12月決算・金融以外など）の時価加重の平均は OSAP から作れない（組の時価の合計が無い）。R4 で悪い側・中の組を並べて母集団の効果の見当をつける",
+  "size_halves_report": "R2 だけ French の ME 十分位（NYSE の切れ目）を時価で合わせた大型の半分・小型の半分",
+  "reported_not_graded": "シャープ・最大下落・β・追従のぶれ・20年積立の比・直近・公表後・原論文の標本の外・費用の感度"
+ },
+ "timing": {
+  "what_is_known_when": "OSAP の組の月 m のリターンは、月 m−1 の末に使える値で決めた組（上の data.construction_verified_in_code.lag）。年次の会計値は決算期末から6か月以上、四半期は3か月以上（か公表日の後）遅らせてあり、さらに1か月ずらして組み入れる。こちらでは信号を作り直さず、先読みを足さない（OSAP の組のリターンをそのまま使う）",
+  "our_estimation": "この角度はデータから何も推定しない（良い側・重み・回転・費用はすべてこの登録の定数）。X3 の合成も固定の等分",
+  "known_look_ahead_risks": [
+   "OSAP は版ごとに全履歴を作り直す＝過去の月の値が当時実際に知られていた Compustat の値と同じ保証は無い（修正・埋め戻し）",
+   "OrgCap は販管費を GNP デフレーターで割る。デフレーターは月 t の値を使うので、公表の遅れの分だけ（全社に共通の数字だが）わずかに先の値を使う可能性。業種の中で標準化するので順位への影響は小さい",
+   "特許（R1）は付与年で数える（出願年ではない）ので、付与が分かった後の年に使っている＝この点の先読みは無い。NBER のデータの会社の対応表（dynass）は後から作られたもの",
+   "MS の簿価時価比の五分位と業種の中央値は同じ月の横断で作る（先読みではない）"
+  ],
+  "yahoo_partial_month": "R8 の Yahoo の月足は途中の今月（2026-09）を落とす（eknzbh の mw_common.yahoo の修正と同じ）"
+ },
+ "real_instrument_check": {
+  "role": "格付けに入れない報告",
+  "direct_instrument": "無い。OSAP の組は数百銘柄の時価加重（P6 は保有期間の中央値で772社、P4 は38社）で、同じ規則の ETF・投信は無い",
+  "related_etfs_rakuten": "out/broker_lineup.json（楽天の海外ETF 742本）にあるのは MOAT（VanEck Morningstar Wide Moat・2012-05〜・経費0.46%・堀の評価と割安で選ぶ＝別の規則）と KOMP（SPDR S&P Kensho New Economies Composite・2018-11〜・経費0.20%・新しい技術の主題）。QUAL・SPHQ・KLDW・PKW は楽天の一覧に無い。MOAT・KOMP の対 SPY と対 French Mkt（2024-12 まで）を、同じ月の X3a（合成）・P1・P5 と並べる（Yahoo の配当込み・途中の今月は落とす）",
+  "implementability": "個人が同じ規則を持つには数百の米国株を年1回（または毎月）入れ替える必要があり、楽天の米国株の手数料（約定代金の0.495%・上限22ドル）と、毎月の積立額では現実的でない。上位の数十社だけで近似する規則はこの登録に無い（作るなら事後・別の登録）。NISA の成長投資枠でも個別の米国株は買えるが、売っても年間の投資枠は戻らない（生涯の枠が戻るのは翌年）ので、年1回数百銘柄を入れ替える規則は非課税枠と相性が悪い"
+ },
+ "prior": {
+  "Chen_Zimmermann_2022": "『Open Source Cross-Sectional Asset Pricing』Critical Finance Review 11(2): 原論文の結果の大半を再現。明確な予言変数の再現の t の中央値は原論文とほぼ同じ",
+  "McLean_Pontiff_2016": "『Does Academic Research Destroy Stock Return Predictability?』JF 2016: 買い−売りの利益は標本の外で約26%、公表後で約58%小さい",
+  "Chen_Velikov_2023": "『Zeroing in on the Expected Returns of Anomalies』JFQA 2023: 売買費用と公表後の減衰を引くと、2005年以降の異常の平均の利益はごく小さい",
+  "Jensen_Kelly_Pedersen_2023": "『Is There a Replication Crisis in Finance?』JF 2023: 因子の大半は再現し国をまたいでも出るが、この角度の変数の多くは JKP に入っていない",
+  "op_reported_from_SignalDoc": {
+   "OrgCap": "Eisfeldt-Papanikolaou 2013 JF・買い−売り 0.39%/月 t2.85・時価加重・業種の中で標準化（1970〜2008）",
+   "AdExp": "Chan-Lakonishok-Sougiannis 2001 JF・0.53%/月（t なし）・等加重（1975〜1996）。OSAP の注記『論文の大半は研究開発で広告費は付け足し』",
+   "BrandInvest": "Belo-Lin-Vitorino 2014 RED・0.44%/月 t2.01・符号−（低い側が良い）・原論文は1社の上限10%つきの時価加重、OSAP は等加重（1975〜2010）",
+   "RDAbility": "Cohen-Diether-Malloy 2013 RFS・1.35%/月 t2.61・等加重（1980〜2009）。OSAP の注記『等加重でも時価加重でも効く』",
+   "SurpriseRD": "Eberhart-Maxwell-Siddique 2004 JF・0.29%/月 t3.54・等加重（1974〜2001）",
+   "Herf": "Hou-Robinson 2006 JF・0.26%/月 t2.14・符号−（集中の低い業界が良い）・等加重（1963〜2001）",
+   "MS": "Mohanram 2005 RAS・1.58%/月 t9.14・等加重・成長株だけ（1978〜2001）。OSAP の注記『再現の t は約6』",
+   "FR": "Franzoni-Marin 2006 JF・0.49%/月（t なし）・等加重（1980〜2002）。★OSAP の注記『時価加重はとても弱いので等加重に絞った』",
+   "X4": "GrAdExp（Lou 2014 RFS）0.58%/月 t3.54・EarningsConsistency（Alwathainani 2009）0.36 t2.67・RDS（Landsman ほか 2011）0.33 t5.84・HerfBE 0.24 t2.52・HerfAsset 0.20 t2.12（いずれも等加重）",
+   "R1": "PatentsRD 0.41%/月 t4.13・CitationsRD 0.26 t2.6（Hirshleifer-Hsu-Li 2013 JFE・小型株の中・時価加重。OSAP の注記『大型株では予言が弱い（原論文の表8）』）"
+  },
+  "this_ledger_known_before": "CLAUDE.md に書かれた同じ台帳の結果（読んだ）: JKP の因子は 2007年以降に平均で半分前後へ縮む（米国の縮み率の中央0.44）、買いだけの質の選別（JKP の三分位の混合）は上限なしの時価加重の市場に 2007〜 +0.43%/年 t0.5・2013-07〜 −1.13%/年、JKP の大型株では収益性・質は 2007年以降も効き配当・低PER は消えた、業種の勢い・堀の指標（受注残・前受収益・粗利の安定・値上げの記述）は不合格",
+  "expected_size": "原論文の買い−売り（多くは等加重）から、時価加重・買いだけ・対 上限なしの市場へ移すと、上乗せは原論文の1/4〜1/2（公表後はさらに半分）と見込む＝年0.5〜2%。保有期間の t≥1.65 には年3%前後が要る（追従のぶれ 6〜10% として）"
+ },
+ "contamination": {
+  "what_i_looked_at": "この事前登録を書く前に見たのは: OSAP の SignalDoc.csv（原論文の標本の年・符号・原論文の買い−売りの月次リターンと t＝公表された数字）、OSAP のコード（上の construction_verified_in_code）、各ファイルの変数ごとの組の番号・日付の範囲・月数・途中の欠け・銘柄数 Nlong（最小・中央・最大・20未満の月数）。規則の成績（平均・t・シャープ・累積・勝率・市場との差）は、どの規則についても計算していない・表示していない",
+  "accidental": "⚠ PredictorPortsFull.csv の先頭を表示したとき、AM（資産÷時価・この角度ではない JKP と重なる変数）の組01 の 1951-07〜1952-04 の月次リターン10個ほどが画面に出た。平均などは計算していない",
+  "shape_based_choices": "形を見た後に決めたもの（リターンは見ていない）: 銘柄数の下限20と『初めて20以上になった月から評価』の規則、探索 X1・X2 に入れる線（銘柄数の中央値40以上）で RDAbility を外したこと、PatentsRD・CitationsRD を主から外したこと（データの終わりを原本のコードで確かめ、2008-07 以降の組の形で裏を取った）",
+  "other_sessions_results_read": "⚠ 他セッションのコミットの見出しを読んだ: eknzbh d05859ec「29角度・3,613本・反証後に全体の線を越えたのは3本」、q07leu 02d3aa54「lmtext 不合格（−0.72%/年 t−1.18）・charmom153 不合格（+1.40 t1.18）・mvopt153 不合格（+0.69 t2.52）」。q07leu の fam_rd・fam_accruals・fam_profit・fam_fundmom・fam_payout の説明文（定義）を読み、その中の一文『saleq_gr1 は JKP の向きが選定期間の米国で外れていた（三分位の平均は 3.0 のほうが高い・因子の平均は負）』を見た。eknzbh の mw_factor_us_prereg.json は JKP 153 の名前・引用・回転の置き値だけを読み、結果（mw_factor_us.json）は読んでいない。兄弟の nx_osap_info_data.py は規則の台帳（定義）だけを読んだ。作業ツリーの out/nx_stack.json・nx_jst.json・nx_activist.json は開いていない",
+  "claude_md": "CLAUDE.md（会話の最初に読み込まれる）に同じ台帳の関連結果が書かれており読んだ（上の prior.this_ledger_known_before）",
+  "world_knowledge": "私（Claude）は2007〜2024年の米国株の大まかな歴史を知っている: 巨大テック（Apple・Microsoft・Alphabet・Amazon・Meta・NVIDIA）が指数の上昇の大半を占め、どれも研究開発費を大きく伸ばした（SurpriseRD の良い側に入りやすい）・販管費も厚い（OrgCap の上に来やすい）／確定給付の年金を持つ古い産業（自動車・重工業・通信）は弱かった／広告に厚い消費財は市場に負けた年が多かったと記憶している／2008・2020・2022年の下落。論文の結果の向き（上の prior）と、公表後に異常が縮むことも知っている。この知識は消せないので、線（C1 の訓練の t・C3 の保有の t・C7 の多重検定）と報告の R3（原論文の標本の外・公表後）・R5（179本の基礎率）で答え合わせをする。規則の中身（良い側・五分位・時価加重・回転・費用）は論文と OSAP の既定で先に決め、結果を見て動かさない"
+ },
+ "sanity_checks_before_results": [
+  "extract_sha256・rules_sha256 が tools の値と一致すること（違えば止まる）",
+  "恒等式: 各変数の OSAP の LS ＝ 最大の組 − 最小の組（全月・誤差 1e-6 未満）＝最大の組が論文の買いの側であることの確認。合わなければ止まる",
+  "ret の単位: /100 した後の |月次| > 1.0（±100%）の月の数を数え、0 でなければ報告して止まる",
+  "French Mkt ＝ Mkt-RF + RF を全月で確かめる。OSAP の最後の月（2024-12）より後の月が比較に入っていないこと",
+  "Nlong<20 で落ちた月の数が data.evaluation_start の形と一致すること（P4 6・P5 39・他 0）",
+  "PatentsRD の組02 が 2008-07 以降に銘柄数の中央値2（信号が無い）であること＝R1 を訓練だけにした理由の再確認",
+  "X3 の合成で、各月の脚の数が min_legs 以上であること・脚の重みの合計が1であること",
+  "R5 の基礎率で、主の8本のうち QuintilesVW の6本の組05 が基礎率の計算の中の同じ系列と一致すること",
+  "Yahoo の月足の途中の今月（2026-09）を落としたこと"
+ ],
+ "known_limits": [
+  "OSAP は 2024-12 で終わる＝保有期間は約18年（216か月）。直近20か月は測れない",
+  "米国だけで独立の地域が無い（C5 は N/A）→ A には C3（保有の t≥1.65）が要る",
+  "8本の中にも似た信号がある（AdExp と BrandInvest は同じ広告費から・X3・X4 の多くは主の脚の組み合わせか近い変数）＝独立の試行の数は本数より少ない",
+  "良い側の組の母集団は変数ごとに違う（研究開発をする会社だけ・12月決算だけ・金融以外・成長株だけ・確定給付の年金がある会社だけ）。French Mkt との差には『その母集団に居ること』の効果も入る（R4 で見当をつける）",
+  "RDAbility の良い側は保有期間の中央値38社、MS は110社と少なく、1社の寄与が大きくなりうる（銘柄ごとのデータが無いので『最大寄与の1銘柄を抜く』は測れない）",
+  "回転と費用は置き値（OSAP は回転を出さない）。R6 で感度を出す",
+  "OSAP の五分位の切れ目は全銘柄（FR だけ NYSE）で、小型株の数に引っ張られる。時価加重なので中身は大型株が支配するが、NYSE の切れ目の版とは違う",
+  "紙の上のポートフォリオで、個人が同じものを持つ手段は無い（real_instrument_check）",
+  "私たちは2007年以降の歴史と各論文の結果を知っている（contamination）",
+  "Compustat の修正・埋め戻しと、OSAP が版ごとに全履歴を作り直すことによる、当時は知られていなかった値の混入の可能性"
+ ],
+ "test_count": {
+  "P": 8,
+  "X1": 5,
+  "X2": 5,
+  "X3": 4,
+  "X4": 5,
+  "total_graded": 27,
+  "report_only": "R1 2本（訓練だけ）・R2 大型/小型の半分 11系列（主の連続6変数の BH 5〔RDAbility は外す〕＋ SH 6）・R3 期間の切り方・R4 悪い側/LS/中の組・R5 基礎率179本・R6 費用の感度4通り・R7 その他の指標・R8 ETF 2本",
+  "note": "これで全部。測った後に規則を足したら『事後』と明記し、格付けに使わない"
+ }
+}
