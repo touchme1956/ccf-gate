@@ -497,6 +497,8 @@ def raw_candidates(panel, t, tk):
         seen.add(key)
         if _prev_ok(panel, c, t, f['float']) is False or not _sane(f['float'], f):
             continue
+        if not f.get('assets'):   # ★データ修正（結果を見た後・d766ffa）: 総資産（USD）が無い社は規模の桁を検問できないので入れない
+            continue
         out.append((c, f['float']))
     return sorted(out, key=lambda x: -x[1])
 
@@ -803,6 +805,7 @@ def random_draws(sets, rets, bench, R=2000, k=5, seed=20260928):
 
 
 # ───────────────────────── 集計 ─────────────────────────
+BEFORE_FIX = {}   # データ修正の前の主な数字（d766ffa の JSON から run() の最初で読む）
 PRE_NAME = 'mw_sec_replication_prereg.json'
 OUT_NAME = 'mw_sec_replication.json'
 FORMS = ['T3VW', 'T50EW', 'T20EW', 'T5EW']
@@ -840,8 +843,29 @@ def stats_block(sr, b, turn=None):
     return d
 
 
+def _before_fix():
+    """d766ffa（修正前）の JSON から主な数字（相手に対する全期間の超過・t）を抜く"""
+    try:
+        raw = subprocess.run(['git', '-C', M.BASE, 'show', 'd766ffa:out/mw_sec_replication.json'], capture_output=True, text=True).stdout
+        d = json.loads(raw)
+    except Exception:  # noqa
+        return {}
+    out = {}
+    for nm, r in d['strategies'].items():
+        v = r['vs']['U_all']['full']; w = r['vs']['SPY']['full']
+        out[nm] = {'vs_U_all': [v['ex_ann'], v['t']], 'vs_SPY': [w['ex_ann'], w['t']]}
+    for key in ('exploratory_prereg2', 'exploratory_prereg3'):
+        for nm, r in d.get(key, {}).get('strategies', {}).items():
+            pb = r['primary_benchmark']; v = r['vs'][pb]['full']; w = r['vs']['SPY']['full']
+            out[nm] = {'vs_' + pb: [v['ex_ann'], v['t']], 'vs_SPY': [w['ex_ann'], w['t']]}
+    ua = d['benchmark_refs']['U_all_vs_SPY']['full']
+    out['U_all_vs_SPY'] = [ua['ex_ann'], ua['t']]
+    return out
+
+
 def run():
     t0 = time.time()
+    BEFORE_FIX.update(_before_fix())
     panel = build_panel()
     uni, price, diag, sic, tick = build_universe(panel)
     rets = {x: v[0] for x, v in price.items() if v}
@@ -965,7 +989,21 @@ def run():
         tested.append({'name': f'random5_{k}', 'role': 'report_distribution', 'grade': None})
     for k in jk:
         tested.append({'name': f'JKP_{k}_vw_T3', 'role': 'reference_replication', 'grade': None})
-    out = {'angle': 'sec_replication', 'prereg': PRE_NAME, 'prereg_commit': sha_of(f'out/{PRE_NAME}'),
+    fix = {'what': ('結果を見た後に見つけたデータの穴を直した（規則の変更ではなく採取の誤りの除去）: 2011年に Tanger（SKT・REIT）の10-Kの表紙の浮動株と株数が'
+                    'どちらも1000倍（浮動株1.66兆ドル・株数812億株）で、互いに整合するので株数の検算を通り、総資産のタグが無いので総資産の200倍の検問も素通りし、'
+                    '2.1兆ドル（その年の XOM の5倍）の幽霊として相手 U_all・M100 に13%前後の重みで入っていた。同じ穴で 2019〜2020年に Biglari（BH-A・実際は約3億ドル）が'
+                    '1,440億/870億ドルで入っていた。直し方: 総資産（USD・t−1年の決算）が無い社は規模の桁を検問できないので候補に入れない（毎年1〜8社。Enbridge・Canadian Pacific'
+                    'のように CAD で報告する社も外れる＝S&P500 の構成にも入らない社）'),
+           'found_by': '事後の寄与分解（prereg3）で上位100社の相手の中の SKT の寄与 −0.33%/年を見て調べた',
+           'before_fix_commits': ['07ccc18（主の族）', '679eb70（探索 prereg2）', 'd766ffa（探索 prereg3）'],
+           'before_fix_summary': BEFORE_FIX}
+    devs = ['課題文の SEC frames API ではなく同じ SEC XBRL の一括ファイル（companyfacts.zip・提出日つき）を使った。frames は各期間の『最後に提出された値』（後の年の比較欄の組替え後）を返し、6月30日時点で知り得た値にならないため',
+            '規模は 株数×株価 ではなく 浮動株時価（EntityPublicFloat を価格の比で換算）。分割の基準の違い（生の株数×分割調整済みの株価）と複数クラスの株数の欠けを避けるため。S&P500 の浮動株調整に近い',
+            'SEC への User-Agent は mw_common.UA では 403 で拒否されたので、リポジトリの SEC 用の設定（CLAUDE.md 絶対のルール5）どおり連絡先つきを使った',
+            '結果を見た後のデータ修正1件（data_fix_after_results）: 総資産の無い社を候補から外した（Tanger 2011 の2.1兆ドルの幽霊ほか）。修正前の数字は before_fix_summary と git（07ccc18・679eb70・d766ffa）に残した。主な結論は変わらない',
+            '訓練期間（〜2006）が無いので C1 と C4（転がる20年窓）は構造的に不合格＝格は全部 C。10年窓・10年積立は報告のみ',
+            'mw_common.yahoo のキャッシュ名は start 引数を含まない（別の start で取ると同じ名前に短い履歴が残りうる）。この道具は period1=0 だけを使い、キャッシュの最初の月が 1985-01 から揃っていることを確かめた（実害なし・潜在的な穴として報告）']
+    out = {'angle': 'sec_replication', 'prereg': PRE_NAME, 'prereg_commit': sha_of(f'out/{PRE_NAME}'), 'data_fix_after_results': fix, 'deviations': devs,
            'period': [START, END], 'train': None, 'train_note': 'XBRL は2009年から＝2006年以前の訓練期間は作れない（C1・C4 は構造的に不合格＝格は最高でも C）',
            'primary_benchmark': 'U_all（同じ母集団・浮動株時価加重・生き残りの偏りをおおむね相殺）',
            'tested': tested, 'n_tested': len(tested), 'strategies': res, 'benchmark_refs': refs, 'random5': rnd, 'jkp_replication': jk,
@@ -1305,6 +1343,37 @@ def run3():
     print('→', p)
 
 
+
+def finalize():
+    """JSON の数字から見出し（日本語の要約用の主な数字）を作って足す。新しい計算はしない"""
+    p = os.path.join(M.BASE, 'out', OUT_NAME)
+    d = json.load(open(p))
+    g = lambda st, b, per='full': (st['vs'][b][per] or {})
+    S_ = d['strategies']; E2 = d['exploratory_prereg2']['strategies']; E3 = d['exploratory_prereg3']['strategies']
+    def row(st, b):
+        x = g(st, b); y = g(st, 'SPY')
+        return {'vs': b, 'ex_ann': x.get('ex_ann'), 't': x.get('t'), 'cagr_diff': x.get('cagr_diff'), 'vs_SPY_ex': y.get('ex_ann'), 'vs_SPY_t': y.get('t'),
+                'recent_ex': g(st, b, 'recent').get('ex_ann'), 'h1_ex': g(st, b, 'first_half_2010_2017').get('ex_ann'), 'h2_ex': g(st, b, 'second_half_2018_2026').get('ex_ann'),
+                'net_ex': g(st, b, 'net_cost_full').get('ex_ann'), 'grade': st['grade'], 'holm_p': st.get('holm_p')}
+    head = {k: row(S_[k], 'U_all') for k in ('cop_at_T3VW', 'cop_at_T50EW', 'gp_at_T3VW', 'ope_be_T3VW', 'comp_T3VW', 'comp_T5EW', 'cop_at_T5EW', 'cop_at_IN_T3SM', 'comp_IN_T3SM')}
+    head.update({k: row(E2[k], E2[k]['primary_benchmark']) for k in ('cop_at_M100_T3VW', 'cop_at_T3VW_exBusEq', 'cop_at_U1000_T3VW')})
+    head.update({k: row(E3[k], E3[k]['primary_benchmark']) for k in ('cop_at_M50_T3VW', 'cop_at_M100_T3VW_exBusEq', 'cop_at_M100_IN_T3SM')})
+    grades = {}
+    for sect in (S_, E2, E3):
+        for st in sect.values():
+            grades[st['grade']] = grades.get(st['grade'], 0) + 1
+    d['headline'] = {'numbers': head, 'grade_counts_all_graded': grades,
+                     'jkp_same_window': {k: {'jkp': (v.get('same_window_2010_07_2025_12') or {}).get('ex_ann'), 'jkp_t': (v.get('same_window_2010_07_2025_12') or {}).get('t'),
+                                             'mine': (v.get('mine_same_window') or {}).get('ex_ann'), 'mine_t': (v.get('mine_same_window') or {}).get('t'),
+                                             'corr': v.get('corr_active_with_mine')} for k, v in d['jkp_replication'].items()},
+                     'survivorship_bias_U_all_vs_SPY': g({'vs': {'x': d['benchmark_refs']['U_all_vs_SPY']}}, 'x'),
+                     'random5': {'top_third_cop_at_vs_U_all': d['random5']['top_third_cop_at']['U_all'], 'universe_exfin_vs_U_all': d['random5']['universe_exfin']['U_all'],
+                                 'M100_top_third_cop_at_vs_SPY': d['exploratory_prereg2']['random5']['random5_M100_top_third_cop_at']['SPY']},
+                     'post_hoc_M100': {k: v for k, v in d['exploratory_prereg3']['post_hoc_事後'].items() if k != 'brinson_vs_M100_exfin'}}
+    M.save(OUT_NAME, d)
+    print('→ headline', grades)
+
+
 if __name__ == '__main__':
     stage = sys.argv[1] if len(sys.argv) > 1 else 'run'
     if stage == 'extract':
@@ -1317,3 +1386,7 @@ if __name__ == '__main__':
         run2()
     elif stage == 'run3':
         run3()
+    elif stage == 'finalize':
+        finalize()
+    elif stage == 'all':
+        run(); run2(); run3(); finalize()
