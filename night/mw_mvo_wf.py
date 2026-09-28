@@ -4,6 +4,7 @@
 
 2026-09-28 ユーザー指示「市場に勝てる歴史検証が出るまでいろんな角度から調べて」。
 事前登録 out/mw_mvo_wf_prereg.json（規則・窓・縮小推定・費用・C5 の単位・Holm の族）を**測る前に**コミットしてから回す。
+探索の族（E1 テーマの材料・E2 費用を平均から引く）は out/mw_mvo_wf_prereg2.json（主の族の結果を見た後・測る前にコミット）。
 線は out/mw_prereg.json（C1〜C8）を night/mw_common.grade でそのまま当てる。線は結果を見て動かさない。
 
   python3 night/mw_mvo_wf.py             → out/mw_mvo_wf.json（全系列は out/_mw_cache/mw_mvo_wf_series.json）
@@ -12,7 +13,7 @@
 約束（mw_common と同じ）: 月次リターンは小数・キーは yyyymm。欠測は0と読まない（ルール7）。
 JKP の三分位は超過（米国T-bill を引いた値）＝French の Mkt-RF と超過どうしで比べる。総リターンは＋French RF。
 """
-import sys, os, json, math, subprocess, statistics as S, time, random
+import sys, os, json, math, subprocess, statistics as S, time, random, csv, io
 for _v in ('OPENBLAS_NUM_THREADS', 'OMP_NUM_THREADS', 'MKL_NUM_THREADS'):
     os.environ.setdefault(_v, '1')   # 4つの子で BLAS の糸が取り合うと桁違いに遅くなる（2026-09-28 実測）
 import numpy as np
@@ -22,7 +23,7 @@ import mw_common as M
 BASE = M.BASE
 OUT = 'mw_mvo_wf.json'
 SERIES_CACHE = os.path.join(M.CACHE, 'mw_mvo_wf_series.json')
-PRE_FILES = ['mw_mvo_wf_prereg.json']
+PRE_FILES = ['mw_mvo_wf_prereg.json', 'mw_mvo_wf_prereg2.json']
 REGIONS = ['usa', 'world_ex_us', 'developed', 'emerging', 'jpn']
 NMIN = 10          # 三分位の銘柄数がこれ未満の月は欠測
 MINC_START = 100   # 始まりに要る材料（三分位）の数
@@ -65,6 +66,12 @@ AV = json.load(open(os.path.join(BASE, 'out', '_mw_cache', 'jkp_availability.jso
 CHARS = [k for k in AV['portfolios']['usa'] if k != 'all_factors']
 _FUS = json.load(open(os.path.join(BASE, 'out', 'mw_factor_us_prereg.json')))['families']['a_jkp_tercile_vw']['list']
 TURN = {x['key']: (float(x['turnover_pct']), float(x['cost_per_100pct'])) for x in _FUS}
+CLUSTER = {}   # 事前登録2（E1）: JKP のテーマ
+for _row in csv.DictReader(io.StringIO(M.get('https://raw.githubusercontent.com/bkelly-lab/ReplicationCrisis/master/GlobalFactors/Cluster%20Labels.csv',
+                                               name='jkp_cluster_labels.csv', max_age_days=3650).decode())):
+    CLUSTER[_row['characteristic']] = _row['cluster']
+assert all(k in CLUSTER for k in CHARS)
+THEME_MIN_MEMBERS, THEME_MIN = 2, 5
 DIRECTION = {}
 for _k in CHARS:
     _d = {x['direction'] for x in M.jkp_rows('usa', _k, 'factor', 'vw')}
@@ -489,15 +496,27 @@ def erc(Sig, maxit=100):
 
 # ───────────────────────── 目標の重み ─────────────────────────
 RULES_T = ['MS_E', 'MS_R', 'MSraw_R', 'TE2_E', 'TE2_R', 'TE4_E', 'TE4_R', 'MV', 'RP', 'POS10', 'EW']
+RULES_NC = ['MS_E', 'MS_R', 'MSraw_R', 'TE2_E', 'TE2_R', 'TE4_E', 'TE4_R', 'POS10']   # 事前登録2（E2）: 平均を使う規則だけ
+MKT_C = MKT_TURN / 100.0 / 12 * MKT_COST
+
+
+def month_cost(bid):
+    """材料の三分位の中の入れ替えの費用（月・小数）。事前登録2（E2）で平均から引く"""
+    if bid == 'MKT':
+        return MKT_C
+    tp, c = within_cost(bid[0], bid[1])
+    return tp / 12 * c
 
 
 class Targets:
-    """地域ごとに、月末 i の目標の重み（材料の id → 重み）を規則ごとに作る"""
+    """地域ごとに、月末 i の目標の重み（材料の id → 重み）を規則ごとに作る。
+    mode='tercile'（主の族・E2）: 材料＝良い側の三分位＋市場。mode='theme'（E1）: 材料＝13テーマ（メンバー三分位の等分）＋市場。
+    netcost=True（E2）: 平均から三分位の中の入れ替えの費用を引いてから最適化"""
 
-    def __init__(self, R):
+    def __init__(self, R, mode='tercile', netcost=False, rules=RULES_T):
         self.R = R
+        self.mode, self.netcost, self.rules = mode, netcost, rules
         self.prev = {}      # 規則 → (ids, w, λ) の温め
-        self.diag = {}      # i → 診断
 
     def blocks(self, i):
         R = self.R
@@ -505,7 +524,8 @@ class Targets:
         mk_ok = (R.cumVM[i + 1] - R.cumVM[i + 1 - WIN] == WIN) and R.VM[i + 1]
         return ks, s3, mk_ok
 
-    def compute(self, i, rules=RULES_T):
+    def compute(self, i, rules=None):
+        rules = rules or self.rules
         R = self.R
         ks, s3, mk_ok = self.blocks(i)
         ids = [(R.chars[k], 3 if s3[k] else 1) for k in ks]
@@ -515,30 +535,51 @@ class Targets:
             return {r: {'MKT': 1.0} for r in rules}, {'n_blocks': len(ks), 'fallback_market': True}
         lo_ = i + 1 - WIN
         cols = [R.P3[lo_:i + 1, k] if s3[k] else R.P1[lo_:i + 1, k] for k in ks]
-        X = np.column_stack(cols + [R.mkt[lo_:i + 1]])
-        assert np.isfinite(X).all()
-        ids_all = ids + ['MKT']
-        N = X.shape[1]
-        Sig, delta = lw_cc(X)
-        muR = X.mean(0)
+        mcol = R.mkt[lo_:i + 1]
         # 拡大窓の平均（原点から i まで・値のある月だけ）
         o = max(R.origin, 0)
         cnt = np.array([(R.cumV3[i + 1, k] - R.cumV3[o, k]) if s3[k] else (R.cumV1[i + 1, k] - R.cumV1[o, k]) for k in ks]
                        + [R.cumVM[i + 1] - R.cumVM[o]], dtype=float)
         sm = np.array([(R.cumP3[i + 1, k] - R.cumP3[o, k]) if s3[k] else (R.cumP1[i + 1, k] - R.cumP1[o, k]) for k in ks]
                       + [R.cumM[i + 1] - R.cumM[o]])
-        muE = sm / cnt
+        muE_t = sm / cnt
         TE_js = float(np.median(cnt))
+        cvec_t = np.array([month_cost(x) for x in ids] + [MKT_C])
+        dg = {'n_blocks': len(ks)}
+        if self.mode == 'theme':
+            groups = {}
+            for pos, x in enumerate(ids):
+                groups.setdefault(CLUSTER[x[0]], []).append(pos)
+            themes = sorted(c for c, v in groups.items() if len(v) >= THEME_MIN_MEMBERS)
+            dg['n_themes'] = len(themes)
+            if len(themes) < THEME_MIN:
+                return {r: {'MKT': 1.0} for r in rules}, dict(dg, fallback_market=True)
+            X = np.column_stack([np.mean([cols[p_] for p_ in groups[c]], axis=0) for c in themes] + [mcol])
+            muE = np.array([float(np.mean(muE_t[groups[c]])) for c in themes] + [muE_t[-1]])
+            cvec = np.array([float(np.mean(cvec_t[groups[c]])) for c in themes] + [MKT_C])
+            ids_all = [('TH', c) for c in themes] + ['MKT']
+            members = {('TH', c): [ids[p_] for p_ in groups[c]] for c in themes}
+        else:
+            X = np.column_stack(cols + [mcol])
+            muE, cvec = muE_t, cvec_t
+            ids_all = ids + ['MKT']
+            members = None
+        assert np.isfinite(X).all()
+        N = X.shape[1]
+        Sig, delta = lw_cc(X)
+        muR = X.mean(0)
         up = np.full(N, CAP); up[-1] = 1.0
         lo = np.zeros(N)
         b = np.zeros(N); b[-1] = 1.0
-        out, dg = {}, {'n_blocks': len(ks), 'lw_delta': round(delta, 4)}
+        out = {}
+        dg['lw_delta'] = round(delta, 4)
         mus = {}
         if any(r.endswith('_R') and not r.startswith('MSraw') for r in rules):
             mus['R'], dg['js_phi_R'] = js_shrink(muR, Sig, WIN)
         if any(r.endswith('_E') for r in rules):
             mus['E'], dg['js_phi_E'] = js_shrink(muE, Sig, TE_js)
             dg['T_js_E'] = TE_js
+        cadj = cvec if self.netcost else np.zeros(N)
 
         def warm(rule):
             p = self.prev.get(rule)
@@ -553,14 +594,14 @@ class Targets:
 
         for rule in rules:
             if rule in ('MS_E', 'MS_R', 'MSraw_R'):
-                mu = muR if rule == 'MSraw_R' else mus[rule[-1]]
+                mu = (muR if rule == 'MSraw_R' else mus[rule[-1]]) - cadj
                 w0, lam0 = warm(rule)
                 w, lam = max_sharpe(mu, Sig, lo, up, w0, lam0)
                 if w is None:
                     w, lam = b.copy(), None
                     dg.setdefault('ms_fallback', []).append(rule)
             elif rule.startswith('TE'):
-                mu = mus[rule[-1]]
+                mu = mus[rule[-1]] - cadj
                 w0, lam0 = warm(rule)
                 te_m = TE_BUDGET[rule[:3]] / math.sqrt(12)
                 w, lam = te_opt(mu, Sig, b, lo, up, te_m, w0, lam0)
@@ -572,7 +613,7 @@ class Targets:
             elif rule == 'RP':
                 w, lam = erc(Sig), None
             elif rule == 'POS10':
-                act = X[:, :-1].mean(0) - X[:, -1].mean()
+                act = (X[:, :-1].mean(0) - cadj[:-1]) - (X[:, -1].mean() - cadj[-1])
                 sel = act > 0
                 w = np.zeros(N)
                 if sel.any():
@@ -587,7 +628,20 @@ class Targets:
             w = np.where(w < 1e-10, 0.0, w)
             w = w / w.sum()
             self.prev[rule] = (ids_all, w, lam)
-            out[rule] = {x: float(v) for x, v in zip(ids_all, w) if v > 0}
+            if members is None:
+                out[rule] = {x: float(v) for x, v in zip(ids_all, w) if v > 0}
+            else:   # テーマの重みをメンバー三分位へ等分に配る
+                o_ = {}
+                for x, v in zip(ids_all, w):
+                    if v <= 0:
+                        continue
+                    if x == 'MKT':
+                        o_['MKT'] = float(v)
+                    else:
+                        for t_ in members[x]:
+                            o_[t_] = float(v) / len(members[x])
+                out[rule] = o_
+                dg.setdefault('theme_w', {})[rule] = {x[1] if x != 'MKT' else 'MKT': round(float(v), 4) for x, v in zip(ids_all, w) if v > 0}
         return out, dg
 
 
@@ -654,29 +708,65 @@ def simulate(R, targets, freq):
 
 
 # ───────────────────────── 地域ごとの計算 ─────────────────────────
+FAMS = [  # 族の記号・材料・費用を平均から引くか・規則・名前の接頭辞
+    ('P_primary_110', 'tercile', False, RULES_T, ''),
+    ('E1_theme_110', 'theme', False, RULES_T, 'TH_'),
+    ('E2_netcost_80', 'tercile', True, RULES_NC, 'NC_'),
+]
+
+
+def all3_series(region):
+    """（事後の点検・判定に使わない）153特性の第1〜第3三分位の単純平均（n≥10・その月に30特性以上）＝良し悪しを選ばない同じ宇宙の混合"""
+    d = {'1.0': {}, '2.0': {}, '3.0': {}}
+    for k in CHARS:
+        if k not in AV['portfolios'].get(region, []):
+            continue
+        for x in M.jkp_rows(region, k, 'portfolios', 'vw'):
+            if x['ret'] in ('', 'NA', 'na') or x['pf'] not in d:
+                continue
+            n = x.get('n')
+            if n not in (None, '', 'NA', 'na') and float(n) < NMIN:
+                continue
+            d[x['pf']].setdefault(k, {})[M._ym(x['date'])] = float(x['ret'])
+    months = sorted(set(m for p_ in d.values() for s_ in p_.values() for m in s_))
+    out = {}
+    for m in months:
+        v = []
+        for k in CHARS:
+            r3 = [d[p_].get(k, {}).get(m) for p_ in ('1.0', '2.0', '3.0')]
+            if None not in r3:
+                v.append(sum(r3) / 3)
+        if len(v) >= 30:
+            out[m] = S.mean(v)
+    return out
+
+
 def run_region(region):
     t0 = time.time()
     R = Region(region)
     log(f'{region}: 特性 {len(R.chars)}・暦 {R.cal[0]}〜{R.cal[-1]}・最初の組み入れ {R.cal[R.i0]}・原点 {R.cal[R.origin]}')
-    TG = Targets(R)
-    tg = {r: {} for r in RULES_T}
-    diag = {}
-    for i in range(R.i0, R.T - 1):
-        out, dg = TG.compute(i)
-        for r in RULES_T:
-            tg[r][i] = out[r]
-        diag[R.cal[i]] = dg
-        if R.cal[i] % 100 == 12 and (R.cal[i] // 100) % 5 == 0:
-            log(f'  {region} {R.cal[i]} 材料 {dg["n_blocks"]} δ={dg["lw_delta"]} φR={dg.get("js_phi_R")} φE={dg.get("js_phi_E")} '
-                f'{time.time() - t0:.0f}s QP {QP_STATS}')
-    res = {}
-    for r in RULES_T:
-        for f in ('M', 'A'):
-            res[f'{r}_{f}'] = simulate(R, tg[r], f)
+    res, diag = {}, {}
+    for fam, mode, nc, rules, pre in FAMS:
+        TG = Targets(R, mode=mode, netcost=nc, rules=rules)
+        tg = {r: {} for r in rules}
+        dgf = {}
+        for i in range(R.i0, R.T - 1):
+            out, dg = TG.compute(i)
+            for r in rules:
+                tg[r][i] = out[r]
+            dgf[R.cal[i]] = dg
+            if R.cal[i] % 100 == 12 and (R.cal[i] // 100) % 10 == 0:
+                log(f'  {region} {fam} {R.cal[i]} 材料 {dg["n_blocks"]} テーマ {dg.get("n_themes")} δ={dg.get("lw_delta")} '
+                    f'φR={dg.get("js_phi_R")} φE={dg.get("js_phi_E")} {time.time() - t0:.0f}s QP {QP_STATS}')
+        for r in rules:
+            for f in ('M', 'A'):
+                res[f'{pre}{r}_{f}'] = simulate(R, tg[r], f)
+        diag[fam] = dgf
     bm = {R.cal[j]: float(R.mkt[j]) for j in range(R.T) if np.isfinite(R.mkt[j])}
     rf = {R.cal[j]: float(R.rf[j]) for j in range(R.T) if np.isfinite(R.rf[j])}
+    a3 = all3_series(region)
     log(f'{region}: 完了 {time.time() - t0:.0f}s QP {QP_STATS}')
-    return region, {'res': res, 'diag': diag, 'bm': bm, 'rf': rf, 'start': R.cal[R.i0 + 1], 'first_rebal': R.cal[R.i0],
+    return region, {'res': res, 'diag': diag, 'bm': bm, 'rf': rf, 'all3': a3, 'start': R.cal[R.i0 + 1], 'first_rebal': R.cal[R.i0],
                     'origin': R.cal[R.origin], 'qp': dict(QP_STATS)}
 
 
@@ -692,7 +782,7 @@ def total(ex, rf):
     return {k: v + rf[k] for k, v in ex.items() if k in rf}
 
 
-def summarize(region, key, sim, bm, rf, ew_gross=None, jkp_us=None):
+def summarize(region, key, sim, bm, rf, ew_gross=None, jkp_us=None, all3=None):
     g, n = sim['gross'], sim['net']
     E = M.excess_stats
     st = {'region': region, 'rule': key, 'name': f'{region}:{key}', 'start': min(g), 'end': max(g)}
@@ -739,6 +829,9 @@ def summarize(region, key, sim, bm, rf, ew_gross=None, jkp_us=None):
     if jkp_us is not None:
         st['vs_jkp_usa_mkt_vw_hold'] = E(g, jkp_us, a=HS)
         st['vs_jkp_usa_mkt_vw_full'] = E(g, jkp_us)
+    if all3 is not None:   # 事後の点検（判定に使わない）: 同じ宇宙の選ばない混合との差
+        st['posthoc_vs_all3'] = {'note': '事後・判定に使わない', 'full': E(g, all3), 'train': E(g, all3, z=TR), 'hold': E(g, all3, a=HS),
+                                 'net_hold': E(n, all3, a=HS)}
     return st
 
 
@@ -746,13 +839,29 @@ def window_(d, a=None, z=None):
     return {k: v for k, v in d.items() if (a is None or k >= a) and (z is None or k <= z)}
 
 
+def fam_of(key):
+    for fam, mode, nc, rules, pre in FAMS:
+        if pre and key.startswith(pre):
+            return fam
+    return FAMS[0][0]
+
+
+def rule_of(key):
+    for fam, mode, nc, rules, pre in FAMS:
+        if pre and key.startswith(pre):
+            return key[len(pre):]
+    return key
+
+
 def main():
     t0 = time.time()
-    pre = os.path.join('out', PRE_FILES[0])
-    prereg_sha = sha_of(pre)
-    if not prereg_sha:
-        log('⚠ 事前登録がコミットされていない。測る前にコミットすること')
-        sys.exit(1)
+    pres = {}
+    for f in PRE_FILES:
+        sha = sha_of(os.path.join('out', f))
+        if not sha:
+            log(f'⚠ {f} がコミットされていない。測る前にコミットすること')
+            sys.exit(1)
+        pres[f] = sha
     # 健全性
     ff = M.ff_factors()
     m = ff['mkt']
@@ -773,6 +882,7 @@ def main():
            for reg in REGIONS}
     for reg in REGIONS:
         ser[reg]['_benchmark_excess'] = {str(a): b for a, b in got[reg]['bm'].items()}
+        ser[reg]['_all3_excess_posthoc'] = {str(a): b for a, b in got[reg]['all3'].items()}
     json.dump(ser, open(SERIES_CACHE, 'w'))
     tested = []
     for reg in REGIONS:
@@ -780,67 +890,102 @@ def main():
         ew = G['res']['EW_M']['gross']
         for key, sim in G['res'].items():
             st = summarize(reg, key, sim, G['bm'], G['rf'], ew_gross=(ew if key != 'EW_M' else None),
-                           jkp_us=(jus if reg == 'usa' else None))
+                           jkp_us=(jus if reg == 'usa' else None), all3=G['all3'])
+            st['family'] = fam_of(key)
+            st['base_rule'] = rule_of(key)
             tested.append(st)
-    # Holm（主の族 110 本・保有期間の費用前 p）
-    pv = {s['name']: (s['hold']['p'] if s['hold'] else None) for s in tested}
-    holm_all = M.holm(pv)
-    holm_reg = {}
-    for reg in REGIONS:
-        holm_reg.update(M.holm({k: v for k, v in pv.items() if k.startswith(reg + ':')}))
     byname = {s['name']: s for s in tested}
-    for s in tested:
-        others = [r for r in REGIONS if r != s['region']]
-        pos, detail = 0, {}
-        for r in others:
-            o = byname.get(f'{r}:{s["rule"]}')
-            v = o['net_full']['ex_ann'] if o and o.get('net_full') else None
-            detail[r] = v
-            if v is not None and v > 0:
-                pos += 1
-        s['repl'] = {'regions': len(others), 'positive': pos, 'net_full_ex_ann': detail}
-        s['holm_p_family110'] = holm_all.get(s['name'])
-        s['holm_p_region22_reference'] = holm_reg.get(s['name'])
-        g, c = M.grade(s['full'], s['train'], s['hold'], s['roll20'], cost_hold=s['net_hold'], repl=s['repl'],
-                       family_holm_p=s['holm_p_family110'])
-        s['grade'], s['criteria'] = g, c
-        s['primary'] = True
-        s['family'] = 'P_primary_110'
+    fam_info = {}
+    for fam, mode, nc, rules, pre in FAMS:
+        rows = [s for s in tested if s['family'] == fam]
+        pv = {s['name']: (s['hold']['p'] if s['hold'] else None) for s in rows}
+        holm_f = M.holm(pv)
+        holm_reg = {}
+        for reg in REGIONS:
+            holm_reg.update(M.holm({k: v for k, v in pv.items() if k.startswith(reg + ':')}))
+        for s in rows:
+            others = [r for r in REGIONS if r != s['region']]
+            pos, detail = 0, {}
+            for r in others:
+                o = byname.get(f'{r}:{s["rule"]}')
+                v = o['net_full']['ex_ann'] if o and o.get('net_full') else None
+                detail[r] = v
+                if v is not None and v > 0:
+                    pos += 1
+            s['repl'] = {'regions': len(others), 'positive': pos, 'net_full_ex_ann': detail}
+            s['holm_p_family'] = holm_f.get(s['name'])
+            s['holm_family_size'] = len(rows)
+            s['holm_p_region_reference'] = holm_reg.get(s['name'])
+            g, c = M.grade(s['full'], s['train'], s['hold'], s['roll20'], cost_hold=s['net_hold'], repl=s['repl'],
+                           family_holm_p=s['holm_p_family'])
+            s['grade'], s['criteria'] = g, c
+            s['primary'] = (fam == FAMS[0][0])
+            s['label'] = '主の族（事前登録 8f87abe）' if s['primary'] else '探索（事前登録2）'
+        cnt = {gg: sum(1 for s in rows if s['grade'] == gg) for gg in 'SABC'}
+        fam_info[fam] = {'primary': fam == FAMS[0][0], 'n': len(rows), 'grade_counts': cnt,
+                         'prereg': PRE_FILES[0] if fam == FAMS[0][0] else PRE_FILES[1],
+                         'holm': f'この族の{len(rows)}本の保有期間の費用前 p で Holm'}
+        log('格付け', fam, cnt)
+        for s in sorted(rows, key=lambda s: -(s['net_hold']['ex_ann'] if s['net_hold'] else -99))[:12]:
+            log(f"  {s['name']:30s} {s['grade']} 保有 {s['hold']['ex_ann']:+.2f} t{s['hold']['t']} 費用後 {s['net_hold']['ex_ann']:+.2f} "
+                f"訓練 {s['train']['ex_ann'] if s['train'] else None} t{s['train']['t'] if s['train'] else None} 全 t{s['full']['t']} "
+                f"20年勝率 {s['roll20']['win_rate'] if s['roll20'] else None} C5 {s['repl']['positive']}/4 "
+                f"対all3保有 {((s.get('posthoc_vs_all3') or {}).get('hold') or {}).get('ex_ann')}")
+        for reg in ('usa',):
+            for s in sorted([x for x in rows if x['region'] == reg], key=lambda s: -(s['net_hold']['ex_ann'] if s['net_hold'] else -99))[:5]:
+                log(f"  [米国] {s['name']:30s} {s['grade']} 保有 {s['hold']['ex_ann']:+.2f} t{s['hold']['t']} 費用後 {s['net_hold']['ex_ann']:+.2f}")
     counts = {gg: sum(1 for s in tested if s['grade'] == gg) for gg in 'SABC'}
-    log('格付け', counts)
-    for s in sorted(tested, key=lambda s: -(s['net_hold']['ex_ann'] if s['net_hold'] else -99))[:15]:
-        log(f"  {s['name']:28s} {s['grade']} 保有 {s['hold']['ex_ann']:+.2f} t{s['hold']['t']} 費用後 {s['net_hold']['ex_ann']:+.2f} "
-            f"訓練 {s['train']['ex_ann'] if s['train'] else None} t{s['train']['t'] if s['train'] else None} 全 t{s['full']['t']} "
-            f"20年勝率 {s['roll20']['win_rate'] if s['roll20'] else None} C5 {s['repl']['positive']}/4")
     diag_summary = {}
     for reg in REGIONS:
-        dg = got[reg]['diag']
-        vals = lambda k, a=None, z=None: [v[k] for m_, v in dg.items() if k in v and (a is None or m_ >= a) and (z is None or m_ <= z)]
-        diag_summary[reg] = {'first_rebalance': got[reg]['first_rebal'], 'first_holding_month': got[reg]['start'], 'estimation_origin': got[reg]['origin'],
-                             'n_blocks_first': dg[min(dg)]['n_blocks'], 'n_blocks_last': dg[max(dg)]['n_blocks'],
-                             'lw_delta_mean': round(S.mean(vals('lw_delta')), 3),
-                             'js_phi_R_mean_train': round(S.mean(vals('js_phi_R', z=TR)), 3) if vals('js_phi_R', z=TR) else None,
-                             'js_phi_R_mean_hold': round(S.mean(vals('js_phi_R', a=HS - 1)), 3),
-                             'js_phi_E_mean_train': round(S.mean(vals('js_phi_E', z=TR)), 3) if vals('js_phi_E', z=TR) else None,
-                             'js_phi_E_mean_hold': round(S.mean(vals('js_phi_E', a=HS - 1)), 3),
-                             'te_exante_mean': {r: round(S.mean(vals(f'te_exante_{r}')), 4) for r in ('TE2_E', 'TE2_R', 'TE4_E', 'TE4_R')},
-                             'ms_fallback_months': sum(1 for v in dg.values() if v.get('ms_fallback')),
-                             'market_fallback_months': sum(1 for v in dg.values() if v.get('fallback_market')),
-                             'qp': got[reg]['qp']}
+        diag_summary[reg] = {}
+        for fam, mode, nc, rules, pre in FAMS:
+            dg = got[reg]['diag'][fam]
+            vals = lambda k, a=None, z=None: [v[k] for m_, v in dg.items() if k in v and (a is None or m_ >= a) and (z is None or m_ <= z)]
+            mn = lambda xs: round(S.mean(xs), 3) if xs else None
+            ds = {'first_rebalance': got[reg]['first_rebal'], 'first_holding_month': got[reg]['start'], 'estimation_origin': got[reg]['origin'],
+                  'n_blocks_first': dg[min(dg)]['n_blocks'], 'n_blocks_last': dg[max(dg)]['n_blocks'],
+                  'lw_delta_mean': mn(vals('lw_delta')),
+                  'js_phi_R_mean_train': mn(vals('js_phi_R', z=TR)), 'js_phi_R_mean_hold': mn(vals('js_phi_R', a=HS - 1)),
+                  'js_phi_E_mean_train': mn(vals('js_phi_E', z=TR)), 'js_phi_E_mean_hold': mn(vals('js_phi_E', a=HS - 1)),
+                  'te_exante_mean': {r: mn(vals(f'te_exante_{r}')) for r in ('TE2_E', 'TE2_R', 'TE4_E', 'TE4_R')},
+                  'ms_fallback_months': sum(1 for v in dg.values() if v.get('ms_fallback')),
+                  'market_fallback_months': sum(1 for v in dg.values() if v.get('fallback_market'))}
+            if mode == 'theme':
+                ds['n_themes_first_last'] = [dg[min(dg)].get('n_themes'), dg[max(dg)].get('n_themes')]
+                tw = {}
+                hm = [v for m_, v in dg.items() if m_ >= HS - 1 and 'theme_w' in v]
+                for v in hm:
+                    for r, ww in v['theme_w'].items():
+                        for t_, x in ww.items():
+                            tw.setdefault(r, {}).setdefault(t_, 0.0)
+                            tw[r][t_] += x / len(hm)
+                ds['avg_theme_weight_hold'] = {r: dict(sorted(((t_, round(x, 3)) for t_, x in ww.items()), key=lambda z: -z[1])) for r, ww in tw.items()}
+            diag_summary[reg][fam] = ds
+        diag_summary[reg]['qp'] = got[reg]['qp']
+    # 事後の点検: all3（選ばない同じ宇宙の混合）と市場の差
+    comp = {}
+    for reg in REGIONS:
+        a3 = got[reg]['all3']
+        comp[reg] = {'note': '事後・判定に使わない（宇宙の食い違い＋三分位を等分に持つことの寄与）',
+                     'full': M.excess_stats(a3, got[reg]['bm']), 'train': M.excess_stats(a3, got[reg]['bm'], z=TR),
+                     'hold': M.excess_stats(a3, got[reg]['bm'], a=HS),
+                     'strategy_train_window': M.excess_stats(a3, got[reg]['bm'], a=got[reg]['start'], z=TR)}
     # emerging の費用2倍（報告のみ）
     sens = []
     for key, sim in got['emerging']['res'].items():
         n2 = {k: sim['gross'][k] - 2 * sim['cost'][k] for k in sim['gross']}
         e = M.excess_stats(n2, got['emerging']['bm'], a=HS)
         sens.append({'name': f'emerging:{key}', 'net_hold_cost2x': e})
-    obj = {'angle': 'mvo_wf', 'prereg': {'file': f'out/{PRE_FILES[0]}', 'commit': prereg_sha},
+    obj = {'angle': 'mvo_wf',
+           'prereg': {'file': f'out/{PRE_FILES[0]}', 'commit': pres[PRE_FILES[0]]},
+           'prereg2': {'file': f'out/{PRE_FILES[1]}', 'commit': pres[PRE_FILES[1]], 'families': ['E1_theme_110', 'E2_netcost_80'], 'exploratory': True},
            'global_prereg': 'out/mw_prereg.json', 'sanity': sanity,
            'benchmark': {'usa': 'French Mkt-RF（超過・上限なしの時価加重）', 'others': 'その地域の JKP mkt vw（超過）'},
-           'n_tested': len(tested), 'grade_counts': counts,
-           'families': {'P_primary_110': {'primary': True, 'n': len(tested), 'holm': '110本の保有期間の費用前 p で Holm'}},
+           'n_tested': len(tested), 'grade_counts': counts, 'families': fam_info,
+           'posthoc_all3_vs_market': comp,
            'diagnostics': diag_summary, 'emerging_cost2x_report_only': sens,
            'tested': tested, 'series_cache': os.path.relpath(SERIES_CACHE, BASE),
-           'runtime_sec': round(time.time() - t0), 'log_tail': LOG[-80:]}
+           'runtime_sec': round(time.time() - t0), 'log_tail': LOG[-120:]}
     p = M.save(OUT, obj)
     log('保存', p, f'{os.path.getsize(p) / 1e6:.2f} MB', f'{time.time() - t0:.0f}s')
 
@@ -904,7 +1049,6 @@ def selftest():
     R = Region('jpn')
     checks = 0
     for i in [R.i0, R.i0 + 37, R.i0 + 150, R.T - 2]:
-        a, _ = Targets(R).compute(i)
         P1, P3, mk = R.P1.copy(), R.P3.copy(), R.mkt.copy()
         fut = slice(i + 1, None)
         P1[fut] = np.where(np.isfinite(P1[fut]), rng.normal(0, 0.1, P1[fut].shape), np.nan)
@@ -912,14 +1056,36 @@ def selftest():
         mk[fut] = np.where(np.isfinite(mk[fut]), rng.normal(0, 0.1, mk[fut].shape), np.nan)
         R2 = Region('jpn', P1, P3, mk, R.rf.copy(), R.cal, R.chars)
         assert R2.i0 == R.i0
-        b_, _ = Targets(R2).compute(i)
-        for r in RULES_T:
-            ka, kb = set(a[r]), set(b_[r])
-            if ka != kb or max(abs(a[r][x] - b_[r][x]) for x in ka) != 0.0:
+        for fam, mode, nc, rules, pre in FAMS:
+            a, _ = Targets(R, mode=mode, netcost=nc, rules=rules).compute(i)
+            b_, _ = Targets(R2, mode=mode, netcost=nc, rules=rules).compute(i)
+            for r in rules:
+                ka, kb = set(a[r]), set(b_[r])
+                if ka != kb or max(abs(a[r][x] - b_[r][x]) for x in ka) != 0.0:
+                    ok = False
+                    print('先読みの疑い', fam, R.cal[i], r)
+                if abs(sum(a[r].values()) - 1) > 1e-9 or min(a[r].values()) < 0:
+                    ok = False
+                    print('重みの合計が1でない', fam, R.cal[i], r)
+            checks += 1
+    print('先読みなし（jpn の4か月・3族の全規則）', 'OK' if ok else 'NG', checks)
+    # テーマの材料: EW はテーマと市場の等分＝各メンバー三分位はテーマの重み÷メンバー数
+    i = R.i0 + 150
+    ot, dg = Targets(R, mode='theme').compute(i)
+    ks, s3 = R.eligible(i)
+    grp = {}
+    for k in ks:
+        grp.setdefault(CLUSTER[R.chars[k]], []).append((R.chars[k], 3 if s3[k] else 1))
+    th = [c for c, v in grp.items() if len(v) >= THEME_MIN_MEMBERS]
+    for c in th:
+        for x in grp[c]:
+            if abs(ot['EW'][x] - 1.0 / (len(th) + 1) / len(grp[c])) > 1e-12:
                 ok = False
-                print('先読みの疑い', R.cal[i], r)
-        checks += 1
-    print('先読みなし（jpn の4か月・11規則）', 'OK' if ok else 'NG', checks)
+                print('テーマの配り方が違う', c, x)
+    if abs(ot['EW']['MKT'] - 1.0 / (len(th) + 1)) > 1e-12 or dg['n_themes'] != len(th):
+        ok = False
+        print('テーマの EW の市場の重みが違う')
+    print('テーマの配り方', 'OK' if ok else 'NG', len(th), 'テーマ')
     # (5) EW の月のリターン = 材料の単純平均
     out, _ = Targets(R).compute(R.i0)
     ew = out['EW']
