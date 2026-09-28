@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
 import numpy as np
 
-PRE_NAMES = ['mw_volmanaged_prereg.json']
+PRE_NAMES = ['mw_volmanaged_prereg.json', 'mw_volmanaged_prereg2.json']
 OUT_NAME = 'mw_volmanaged.json'
 COST = 0.001       # 判定用: 片道売買100%あたり0.10%（全体の事前登録の既定）
 COST_LO = 0.0005   # 報告: 指示書の0.05%
@@ -272,12 +272,45 @@ def solve_c(mk, X, cap, trend, end, spread=SPREAD, min_pairs=24):
                'sd_at_c_ann': round(float(sd(c)) * math.sqrt(12) * 100, 3)}
 
 
-def c_expanding(mk, X, cap, trend):
+def solve_c_beta(mk, X, cap, trend, end, spread=SPREAD, min_pairs=24, target_beta=1.0):
+    """第2族: 訓練（t1 ≤ end）で『戦略の超過を相手の超過に回帰した傾き β = 1』になる c（上限・トレンドを掛けた後の規則そのもの）。二分法（対数）"""
+    P = pairs(mk, X, trend, end=end)
+    if len(P) < min_pairs:
+        return None, None
+    xs = np.array([p[2] for p in P]); on = np.array([p[3] for p in P], dtype=float)
+    ex = np.array([mk.m[p[1]] - mk.rf[p[1]] for p in P])
+    exd = ex - ex.mean(); vx = (exd ** 2).sum()
+
+    def beta(c):
+        if c == math.inf:
+            w = np.full(len(xs), cap)
+        else:
+            w = np.where(xs > 0, np.minimum(cap, c / np.where(xs > 0, xs, 1.0)), cap)
+        w = w * on
+        s = w * ex - np.maximum(w - 1, 0) * spread / 12
+        return float(((s - s.mean()) * exd).sum() / vx)
+
+    if cap != math.inf and beta(math.inf) < target_beta:
+        return math.inf, {'pairs': len(P), 'beta_at_c': beta(math.inf), 'note': '上限いっぱいでも β が1に届かない → c=∞'}
+    med = float(np.median(xs[xs > 0])) if (xs > 0).any() else 1.0
+    lo, hi = math.log(med * 1e-8), math.log(med * 1e8)
+    for _ in range(80):
+        mid = (lo + hi) / 2
+        if beta(math.exp(mid)) < target_beta:
+            lo = mid
+        else:
+            hi = mid
+    c = math.exp((lo + hi) / 2)
+    return c, {'pairs': len(P), 'from': P[0][1], 'to': P[-1][1], 'beta_at_c': round(beta(c), 4)}
+
+
+def c_expanding(mk, X, cap, trend, solver=None):
     """毎年12月末に、その時点までの全データで c を解き、12月末〜翌年11月末に決める倍率に使う（60か月そろってから）"""
+    solver = solver or solve_c
     out = {}
     decs = [k for k in mk.months if k % 100 == 12]
     for T in decs:
-        c, _ = solve_c(mk, X, cap, trend, end=T, min_pairs=EXP_MIN)
+        c, _ = solver(mk, X, cap, trend, end=T, min_pairs=EXP_MIN)
         if c is None:
             continue
         t = T
@@ -647,6 +680,8 @@ def load_jkp(c):
 
 
 # ───────────────────────── 戦略の定義 ─────────────────────────
+LABELS = {'exploratory': '探索（第1族の事前登録に含めて結果を見る前に固定）',
+          'exploratory2': '探索（第2族・第1族の結果を見た後に登録）'}
 SIG = {'VAR1': ('VAR1', False), 'VOL1': ('VOL1', False), 'VAR6': ('VAR6', False), 'VAR1T': ('VAR1', True),
        'EWMA': ('EWMA', False), 'DOWN': ('DOWN', False), 'VOL1T': ('VOL1', True)}
 
@@ -669,6 +704,20 @@ def specs():
     for idx in ('US', 'NDX'):
         for cap in CAPS:
             out.append({'id': f'E5_{idx}_VAR1_LAG1_cap{cap:g}', 'family': 'exploratory', 'idx': idx, 'sig': 'VAR1', 'cap': cap, 'cmode': 'train', 'lag': 1})
+    # 第2族（prereg2）: c を β=1 で解く
+    base = [p for p in out if p['family'] == 'primary']
+    j = 0
+    for p in base:
+        j += 1
+        out.append({**p, 'id': f"Q{j:02d}_{p['idx']}_{p['sig']}_cap{p['cap']:g}_B1", 'family': 'exploratory2', 'cmode': 'train_b1'})
+    for p in base:
+        j += 1
+        out.append({**p, 'id': f"Q{j:02d}_{p['idx']}_{p['sig']}_cap{p['cap']:g}_B1EXP", 'family': 'exploratory2', 'cmode': 'expanding_b1'})
+    for idx in ('US', 'NDX'):
+        for sg in ('DOWN', 'VOL1T'):
+            for cap in CAPS:
+                j += 1
+                out.append({'id': f'Q{j:02d}_{idx}_{sg}_cap{cap:g}_B1', 'family': 'exploratory2', 'idx': idx, 'sig': sg, 'cap': cap, 'cmode': 'train_b1', 'lag': 0})
     return out
 
 
@@ -676,8 +725,8 @@ def run_rule(mk, sg, cap, cmode, lag=0):
     kind, trend = SIG[sg]
     X = mk.X(kind)
     info = {}
-    if cmode == 'train':
-        c, ci = solve_c(mk, X, cap, trend, end=mk.train_end)
+    if cmode in ('train', 'train_b1'):
+        c, ci = (solve_c if cmode == 'train' else solve_c_beta)(mk, X, cap, trend, end=mk.train_end)
         if c is None:
             return None, {'note': '訓練期間が短すぎる'}
         info['c'] = c if c != math.inf else 'inf'; info['c_solve'] = ci
@@ -685,8 +734,8 @@ def run_rule(mk, sg, cap, cmode, lag=0):
             run = run_daily_lag(mk, X, cap, c, trend)
         else:
             run = run_monthly(mk, X, cap, c, trend)
-    elif cmode == 'expanding':
-        cb = c_expanding(mk, X, cap, trend)
+    elif cmode in ('expanding', 'expanding_b1'):
+        cb = c_expanding(mk, X, cap, trend, solver=solve_c if cmode == 'expanding' else solve_c_beta)
         if not cb:
             return None, {'note': '60か月そろわない'}
         vals = sorted(set(v for v in cb.values() if v != math.inf))
@@ -737,10 +786,10 @@ def run_one(c, sp):
     ent = {'id': sp['id'], 'family': sp['family'], 'graded': True, 'rule': {k: sp[k] for k in ('idx', 'sig', 'cap', 'cmode', 'lag')}, **info,
            'window': [min(run['net']), max(run['net'])], 'gaps': run['gaps'], **e}
     ent['repl'] = region_repl(c, sp)
-    if sp['family'] == 'primary':
+    if sp['family'] == 'primary' or (sp['family'] == 'exploratory2' and sp['cmode'] == 'train_b1' and sp['sig'] in ('VAR1', 'VOL1', 'VAR6', 'VAR1T')):
         ent['tax_japan'] = tax_report(mk, run)
     if sp['family'] != 'primary':
-        ent['label'] = '探索（第1族の事前登録に含めて結果を見る前に固定）'
+        ent['label'] = LABELS[sp['family']]
     h, t = e['hold'], e['train']
     log(f"{sp['id']:34s} 訓練 {t['ex_ann'] if t else None:>6} t{t['t'] if t else None} 保有 {h['ex_ann'] if h else None:>6} t{h['t'] if h else None} 幾何差 {h['cagr_diff'] if h else None} "
         f"費用後保有 {e['cost_hold']['ex_ann'] if e['cost_hold'] else None} 20年勝率 {e['roll20']['win_rate'] if e['roll20'] else None} "
@@ -774,8 +823,10 @@ def report_only(c):
     return out
 
 
-def jkp_breadth(c):
-    J = load_jkp(c)
+def jkp_breadth(c, cmode='train'):
+    if not hasattr(c, 'jkp'):
+        c.jkp = load_jkp(c)
+    J = c.jkp
     res = {}
     for sg in ('VAR1', 'VOL1', 'VAR6', 'VAR1T'):
         for cap in CAPS:
@@ -787,7 +838,7 @@ def jkp_breadth(c):
                 ntrain = len([p for p in pairs(mk, X, trend, end=M.TRAIN_END)])
                 if ntrain < 120:
                     rows[cc] = {'note': f'訓練の月が {ntrain} < 120'}; continue
-                run, info = run_rule(mk, sg, cap, 'train')
+                run, info = run_rule(mk, sg, cap, cmode)
                 if run is None:
                     rows[cc] = {'note': info.get('note')}; continue
                 f = M.excess_stats(run['net'], mk.m); h = M.excess_stats(run['net'], mk.m, a=M.HOLD_START)
@@ -805,7 +856,7 @@ def jkp_breadth(c):
             res[key] = {'countries': len(ok), 'positive_full': pf, 'positive_hold': ph, 'sharpe_up_full': sf, 'sharpe_up_hold': shh_,
                         'median_full_ex': med([v['full_ex'] for v in ok.values()]), 'median_hold_ex': med([v['hold_ex'] for v in ok.values() if v['hold_ex'] is not None]),
                         'detail': rows}
-            log(f'JKP {key}: 国 {len(ok)} 全期間で正 {pf} 保有で正 {ph} シャープ上 全期間 {sf} 保有 {shh_} 中央 全期間 {res[key]["median_full_ex"]} 保有 {res[key]["median_hold_ex"]}')
+            log(f'JKP {cmode} {key}: 国 {len(ok)} 全期間で正 {pf} 保有で正 {ph} シャープ上 全期間 {sf} 保有 {shh_} 中央 全期間 {res[key]["median_full_ex"]} 保有 {res[key]["median_hold_ex"]}')
     return res
 
 
@@ -853,6 +904,7 @@ def main():
         x['grade'] = g; x['criteria'] = cr
     tested += report_only(c)
     res['jkp_breadth_report'] = jkp_breadth(c)
+    res['jkp_breadth_b1_report'] = jkp_breadth(c, 'train_b1')
     res['sanity'] = c.sanity
     res['n_tested'] = len(tested)
     res['n_graded'] = len(allg)
