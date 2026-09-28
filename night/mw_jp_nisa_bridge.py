@@ -31,7 +31,17 @@ FRESH = 202304
 TAX = 0.20315
 US_WH = 0.10
 LOG = []
-DEVIATIONS = []
+DEVIATIONS = [
+    '【データの修正・第1回の実行の後】mw_common.yahoo は月足の時刻を UTC で月に切るので、東証銘柄（JST の月初 00:00＝前日 15:00 UTC）が1か月前の月に付き、'
+    '途中の今月（2026-09）の足が 2026-08 として残っていた（照合: 1698.T の Yahoo と投信協会の基準価額の月次の相関 0.03・1577.T −0.02・1478.T −0.06）。'
+    'この道具の中だけ meta.gmtoffset で現地時刻の月に直した（mw_common は編集していない＝他の角度の東証銘柄〔mw_japan の E5 など〕も同じずれを持つ。'
+    'mw_japan の E5 は相手も東証銘柄なので上乗せの平均はほぼ保たれるが、最後の月が途中の値）。規則は変えていない。第1回の P2 の東証ETF の数字と載り（capture）は無効',
+    '【データの修正・第1回の実行の後】信託報酬の取得で、検索語が複数の ETF に当たった5本（1489・1651・1494・2564・1399）が空欄になり、前向きの器の規則 (c) で自動的に外れていた。'
+    '検索結果に出た正しい名前の ISIN に固定して取り直した（取り方の誤りの修正・規則は同じ）。第1回の選択（両方の誤りの下で）は 1698.T',
+    'BE1 の『対 S&P500』の g* は、混ぜた側の 80% が NASDAQ100・SMH なので、ほぼその2本が S&P500 に勝った分を映す（日本の袖の評価には使えない）。登録どおり出すが読みは『今の側と並ぶ g*』で行う（事後の注記）',
+    '前向きの模擬に S3（事後・格付けに使わない）を足した: 平均を『算術平均が同じ』ではなく『対数の成長率が同じ』にそろえる（S1/S2 は揺れの小さい側が自動的に有利になる置き方だったため）',
+    'out/mw_forward_prereg.json と night/mw_forward.py は別の角度の持ち物なので書き換えていない。前向きの登録は forward_registration_request に仕様だけ置いた',
+]
 
 
 def log(*a):
@@ -300,8 +310,29 @@ def ita_fee(isin=None, kw=None):
 YJUMPS = {}
 
 
+def yahoo_local(t):
+    """mw_common.yahoo と同じ URL・同じキャッシュを読むが、月を取引所の現地時刻（meta.gmtoffset）で切る。
+    2026-09-28 この角度で判明: mw_common.yahoo は UTC で月を切るので、東証銘柄の月足（JST の月初 00:00＝前日 15:00 UTC）が
+    1か月前に付き、途中の今月の足が『先月』として残る（1698.T の Yahoo と投信協会の基準価額の月次の相関 0.03）。米国銘柄は影響なし"""
+    import urllib.parse
+    u = f'https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(t)}?period1=0&period2={int(time.time())}&interval=1mo&events=div%2Csplit'
+    j = json.loads(M.get(u, name=f'yh_{t.replace("^", "IDX_").replace("=", "_")}_1mo.json', max_age_days=3))
+    r = j['chart']['result'][0]
+    off = r['meta'].get('gmtoffset') or 0
+    adj = r['indicators'].get('adjclose', [{}])[0].get('adjclose') or r['indicators']['quote'][0]['close']
+    px = {}
+    for ts, a in zip(r['timestamp'], adj):
+        if a is None:
+            continue
+        d = datetime.datetime.utcfromtimestamp(ts + off)
+        px[d.year * 100 + d.month] = a  # 同じ月の後の点（途中の今月の現値）が上書きし、下で今月ごと落とす
+    px = {k: v for k, v in px.items() if k < NOW_YM}
+    ks = sorted(px)
+    return {k: px[k] / px[p] - 1 for p, k in zip(ks, ks[1:]) if add_months(p, 1) == k}
+
+
 def yh(t):
-    r = {k: v for k, v in M.yahoo(t).items() if k < NOW_YM}
+    r = yahoo_local(t)
     j = [(k, round(v * 100, 1)) for k, v in sorted(r.items()) if abs(v) > 0.40]
     if j:
         YJUMPS[t] = j
@@ -487,7 +518,10 @@ MSCI_FEE = {'MSCI_JP_HDY': 0.209}  # 対応する東証ETF（1478）の信託報
 ETF_FEE_KW = {'1489.T': '日経平均高配当株５０', '1577.T': '野村日本株高配当７０', '1651.T': 'ＴＯＰＩＸ高配当４０', '1478.T': 'ジャパン高配当利回り',
               '1698.T': '東証配当フォーカス', '2529.T': '野村株主還元７０', '1494.T': '高配当日本株', '2564.T': 'スーパーディビィデンド',
               '1399.T': '高配当低ボラティリティ'}
-ETF_ISIN = {'1698.T': 'JP3047170000', '1577.T': 'JP3047560002', '1478.T': 'JP3048150001'}
+ETF_ISIN = {'1698.T': 'JP3047170000', '1577.T': 'JP3047560002', '1478.T': 'JP3048150001',
+            # 2026-09-28 第1回の実行で検索語が複数の ETF に当たり信託報酬が空欄になった5本を、検索結果の名前で ISIN に固定（取り方の誤りの修正）
+            '1489.T': 'JP3048390003', '1651.T': 'JP3048490001', '1494.T': 'JP3048440006', '2564.T': 'JP3049050002', '1399.T': 'JP3048170009',
+            '2529.T': 'JP3048890002'}
 US_ETF_ER = {'FJP': 0.81, 'DFJ': 0.58, 'DXJ': 0.48}
 FUND_KW = {'FUND_SMT_DIVARISTO': '日本株配当貴族', 'FUND_NIKKEI_HDY': '日経平均高配当利回り株ファンド', 'FUND_DC_ACTIVE_VALUE': 'ＤＣつみたて　アクティブ',
            'FUND_ONE_HDY_JAPAN': '高配当利回り厳選ジャパン', 'FUND_OOBUNE_JAPAN': 'おおぶねＪＡＰＡＮ', 'FUND_EMAXIS_QUAL150': 'ＪＡＰＡＮクオリティ'}
@@ -820,15 +854,22 @@ def forward(CUR, SPX, JMKT, A, beta, alpha_m, fee_m, nsim=5000, years=20, seed=2
     Zs = Z[idx]  # nsim × T × 5
     out = {'months_used': [ms[0], ms[-1], n], 'hist_means_ann_pct': {k: r2(v * 1200) for k, v in zip(['NDX', 'SMH', 'SPX', 'JMKT', 'A'], mu)},
            'beta': r2(beta, 3), 'alpha_ann': r2(alpha_m * 1200), 'fee_ann': r2(fee_m * 1200, 3), 'scenarios': {}}
-    for sc in ('S0', 'S1', 'S2'):
+    var = Z.var(axis=0)
+    var_jsl = float(np.var(Z[:, 3] + beta * Z[:, 4]))
+    g_spx = mu[2] - var[2] / 2
+    for sc in ('S0', 'S1', 'S2', 'S3_事後'):
         if sc == 'S0':
             m_ndx, m_smh, m_spx, m_j, m_act = mu[0], mu[1], mu[2], mu[3], alpha_m + beta * mu[4]
         elif sc == 'S1':
             m_ndx = m_smh = m_spx = m_j = mu[2]
             m_act = 0.5 * beta * mu[4] - fee_m
-        else:
+        elif sc == 'S2':
             m_ndx = m_smh = m_spx = m_j = mu[2]
             m_act = -fee_m
+        else:  # 事後: 対数の成長率を S&P500 にそろえる（算術平均 = g + σ²/2）＋袖は紙の上乗せの半分×β − 費用
+            m_ndx, m_smh, m_spx = g_spx + var[0] / 2, g_spx + var[1] / 2, mu[2]
+            m_j = g_spx + var_jsl / 2
+            m_act = 0.5 * beta * mu[4] - fee_m
         ndx = Zs[:, :, 0] + m_ndx; smh = Zs[:, :, 1] + m_smh
         jsl = Zs[:, :, 3] + m_j + beta * Zs[:, :, 4] + m_act
         dn = [YLD['NDX'] / 12 * US_WH, YLD['SMH'] / 12 * US_WH, 0.0]
@@ -996,6 +1037,40 @@ def main():
             rows.append((w[0], mx / c))
         P3_common['by_sleeve_x20_T0'][jn] = ratio_block(rows)
 
+    # ── 事後（格付けに使わない・登録の外）: 実在の器の10年の積立／ETF 側が S&P500 だった場合
+    post = {'note': '事後（第2回の実行で足した・登録の外・格付けに使わない）'}
+    rv = {}
+    mjf = {m: v - 0.001 / 12 for m, v in mj_g.items()}
+    for t in ('1698.T', '1577.T', '1478.T'):
+        V = s_p2.get(t) or {}
+        rec = {}
+        for nm, J in ((t, V), ('MSCI_Japan_gross_same_windows', mjf)):
+            base = set(CUR['NDX']) & set(CUR['SMH']) & set(SPX) & set(V) & set(J)
+            wins = windows(base, 120)
+            rows_c, rows_s = [], []
+            for w in wins:
+                c, _, _ = sim_gap([CUR['NDX'], CUR['SMH']], [0.75, 0.25], w, [True, True], [YLD['NDX'], YLD['SMH']])
+                sp, _, _ = sim_gap([SPX], [1.0], w, [True], [YLD['SPX']])
+                mx, _, _ = sim_gap([CUR['NDX'], CUR['SMH'], J], [0.6, 0.2, 0.2], w, [True, True, False], [YLD['NDX'], YLD['SMH'], YLD['JTILT']])
+                rows_c.append((w[0], mx / c)); rows_s.append((w[0], mx / sp))
+            rec[nm] = {'x20_vs_current': ratio_block(rows_c), 'x20_vs_sp500': ratio_block(rows_s)}
+        rv[t] = rec
+        d_ = (rec[t]['x20_vs_current'] or {})
+        log(f"  [事後] 実在 {t} 10年 x20: 窓 {d_.get('windows')} 勝率 {d_.get('win_rate')} 中央 {(d_.get('dist') or {}).get('median')} | 同じ窓の MSCI Japan 中央 {((rec['MSCI_Japan_gross_same_windows']['x20_vs_current'] or {}).get('dist') or {}).get('median')}")
+    post['real_vehicles_10y_x20_T0'] = rv
+    sb = {}
+    for jn in ('J0_MKT_FR', 'J1_P1VM', 'J2_DIV', 'J4_HDY_IDX'):
+        J = JS[jn]
+        base = set(SPX) & set(J)
+        rows = []
+        for w in windows(base, 240):
+            sp, _, _ = sim_gap([SPX], [1.0], w, [True], [YLD['SPX']])
+            mx, _, _ = sim_gap([SPX, J], [0.8, 0.2], w, [True, False], [YLD['SPX'], yield_of(jn)])
+            rows.append((w[0], mx / sp))
+        sb[jn] = ratio_block(rows)
+        log(f"  [事後] S&P500 80＋{jn} 20 対 S&P500 100（20年・T0）: 勝率 {(sb[jn] or {}).get('win_rate')} 中央 {((sb[jn] or {}).get('dist') or {}).get('median')} 最悪 {(sb[jn] or {}).get('worst')}")
+    post['sp500_side_plus_japan20_vs_sp500_20y_T0'] = sb
+
     # ── B
     log('== B（損益分岐・基礎率）')
     BE1 = break_even(CUR, SPX, JS, yield_of, [k for k in ('J0_MKT_FR', 'J1_P1VM', 'J2_DIV', 'J3_CAPT', 'J4_HDY_IDX') if k in JS])
@@ -1030,10 +1105,49 @@ def main():
         'families': {'P1': [r['id'] for r in P1], 'X1': [r['id'] for r in X1], 'X2': [r['id'] for r in X2], 'P2': [r['id'] for r in P2]},
         'tested': tested, 'n_tested': len(tested), 'n_graded_non_report': len(P1) + len(X1) + len(X2),
         'grade_counts': {f: {g: sum(1 for r in rows if r.get('grade') == g) for g in ('S', 'A', 'B', 'C')} for f, rows in (('P1', P1), ('X1', X1), ('X2', X2), ('P2', P2))},
-        'investor_P3': P3, 'investor_P3_common_windows': P3_common, 'break_even_BE1': BE1, 'base_rates_BE2': BE2, 'forward_F': F,
+        'investor_P3': P3, 'investor_P3_common_windows': P3_common, 'investor_post_hoc': post, 'break_even_BE1': BE1, 'base_rates_BE2': BE2, 'forward_F': F,
         'yields_assumed': YLD, 'deviations': DEVIATIONS, 'log_tail': LOG[-80:], 'runtime_sec': round(time.time() - t0, 1)})
+    out['summary_ja'], out['caveats'] = summarize(out)
+    for ln in out['summary_ja']:
+        log(' ', ln)
     p = M.save(OUT_NAME, out)
     log('saved', p, os.path.getsize(p))
+
+
+def summarize(o):
+    T = {r['id']: r for r in o['tested']}
+    g = lambda i, k, f='ex_ann': ((T[i].get(k) or {}).get(f))
+    P3 = o['investor_P3']
+    by = lambda jn: P3[jn]['by_years'].get(20) or P3[jn]['by_years'].get('20')
+    d20 = lambda jn, x='x20', tx='T0': (by(jn)[tx]['by_x'][x]['vs_current'] or {})
+    B1, B2, F = o['break_even_BE1'], o['base_rates_BE2'], o['forward_F'] or {}
+    cap = lambda i: (T[i].get('capture') or {})
+    pk = (o['forward_registration_request'].get('selected') or {}).get('id')
+    post = o['investor_post_hoc']
+    lines = [
+        f"主の族 P1（日本の大型株＝French の ME5 の角・円・相手は日本の時価加重の市場）: 割安＋質（P1_VQ）が B＝訓練 +{g('P1_VQ','train')}%/年 t{g('P1_VQ','train','t')}・2007〜 +{g('P1_VQ','hold')}%/年 t{g('P1_VQ','hold','t')}（費用後も正・統計は弱い）。"
+        f"割安＋勢い（P1_VM）は訓練 t{g('P1_VM','train','t')} で C（2007〜 +{g('P1_VM','hold')}%/年 t{g('P1_VM','hold','t')}）、割安＋質＋勢いも C。A・S は無し。",
+        f"再現（X2・JKP 日本 vw・円）: 割安＋勢い X2_VM は S（訓練 +{g('X2_VM','train')} t{g('X2_VM','train','t')}・2007〜2025 +{g('X2_VM','hold')} t{g('X2_VM','hold','t')}・全期間 t{g('X2_VM','full','t')}・先進国21/21で正）＝mw_japan の S を円でも確認。"
+        f"配当利回り X2_DIV は 2007〜 +{g('X2_DIV','hold')}%/年 t{g('X2_DIV','hold','t')} と強いが訓練 t{g('X2_DIV','train','t')} で C（mw_japan の上限なし vw 版と同じ）。",
+        f"器（報告のみ・構造的に C）: 東証の高配当ETF は紙の配当の上乗せに強く載る（1489 β{cap('1489.T').get('one_factor',{}).get('beta')}・載り{cap('1489.T').get('capture_ratio')}／1651 β{cap('1651.T').get('one_factor',{}).get('beta')}・載り{cap('1651.T').get('capture_ratio')}）が、"
+        f"古い器は取れていない（1698 載り{cap('1698.T').get('capture_ratio')}・1478 {cap('1478.T').get('capture_ratio')}）。MSCI Japan 比: 1489 +{g('1489.T','full')}%/年 t{g('1489.T','full','t')}（2017〜）・1651 +{g('1651.T','full')} t{g('1651.T','full','t')}・1698 {g('1698.T','full')}（2010〜）・MSCI 高配当指数 2001〜 +{g('MSCI_JP_HDY','full')} t{g('MSCI_JP_HDY','full','t')}（公表後 +{(T['MSCI_JP_HDY'].get('post_launch') or {}).get('ex_ann')}）。米国外の器 PXF の載り16%よりずっと良い。",
+        f"PBR 改革の後（2023-04〜・報告のみ）: 紙の P1_VM +{g('P1_VM','fresh_2023_04')}%/年 t{g('P1_VM','fresh_2023_04','t')}・配当 X2_DIV +{g('X2_DIV','fresh_2023_04')} t{g('X2_DIV','fresh_2023_04','t')}・1651 +{g('1651.T','fresh_2023_04')} t{g('1651.T','fresh_2023_04','t')}・1577 +{g('1577.T','fresh_2023_04')} t{g('1577.T','fresh_2023_04','t')}（40か月だけ）。",
+        f"円の毎月積立（20年・ETF 側の20%を日本へ・NISA）: 今の ETF 側（NASDAQ100 75 : SMH 25）に対して、日本の市場の袖は勝率 {d20('J0_MKT_FR').get('win_rate')}（最終資産の比の中央 {(d20('J0_MKT_FR').get('dist') or {}).get('median')}・最悪 {d20('J0_MKT_FR').get('worst')}）、"
+        f"大型の割安＋勢いの紙 {d20('J1_P1VM').get('win_rate')}（中央 {(d20('J1_P1VM').get('dist') or {}).get('median')}）、配当の紙 {d20('J2_DIV').get('win_rate')}（中央 {(d20('J2_DIV').get('dist') or {}).get('median')}・勝ったのは起点1989〜1996年だけ）、"
+        f"1489 の載りで作った器もどき {d20('J3_CAPT').get('win_rate')}（中央 {(d20('J3_CAPT').get('dist') or {}).get('median')}）、MSCI 高配当指数 {d20('J4_HDY_IDX').get('win_rate')}（1997〜2006年起点・中央 {(d20('J4_HDY_IDX').get('dist') or {}).get('median')}）。10%・30%でも向きは同じ。課税口座（T1・T2）でもほぼ同じ。",
+        f"事後: 実在の 1698 を20%入れた10年の積立は今の側に {((post['real_vehicles_10y_x20_T0']['1698.T']['1698.T']['x20_vs_current'] or {}).get('windows'))}窓すべて負け（中央 {(((post['real_vehicles_10y_x20_T0']['1698.T']['1698.T']['x20_vs_current'] or {}).get('dist') or {}).get('median'))}）。"
+        f"ETF 側が S&P500 だった場合でも、日本20%を足すと配当の紙以外は20年窓で全敗（配当の紙は勝率 {(post['sp500_side_plus_japan20_vs_sp500_20y_T0']['J2_DIV'] or {}).get('win_rate')}）。",
+        f"損益分岐: 20年の窓ごとに今の側と並ぶには、日本の市場の袖に年 +{(B1['J0_MKT_FR']['vs_current']['g_star_pct_per_year'] or {}).get('median')}%（中央）、配当の紙でも +{(B1['J2_DIV']['vs_current']['g_star_pct_per_year'] or {}).get('median')}% の上乗せがさらに要った。"
+        f"日本 − 米国（円）の20年の差: 1975〜 の French では日本が勝った窓 {B2['French_1975_monthly']['share_gap_ge_minus_e']['0']}（中央 {B2['French_1975_monthly']['gap_pct_dist']['median']}%/年）、"
+        f"JST 1886〜2020 では {B2['JST_annual_1886_2020']['share_gap_ge_minus_e']['0']}（中央 +{B2['JST_annual_1886_2020']['gap_pct_dist']['median']}）＝長い歴史では五分五分、最近50年は米国の一方勝ち。日本の市場 − 今の ETF 側は 1985〜 の全窓で負（中央 {B2['Japan_mkt_minus_current_side_1985']['gap_pct_dist']['median']}%/年）。",
+        f"前向きの模擬（1489 の載り）: 歴史の平均のまま（S0）なら20%の日本が勝つ確率 {F.get('scenarios',{}).get('S0',{}).get('x20',{}).get('p_win')}。"
+        f"米国テックと日本の期待を同じと置くと（S1: 紙の上乗せの半分×β）{F.get('scenarios',{}).get('S1',{}).get('x20',{}).get('p_win')}、上乗せ0の分散だけ（S2）でも {F.get('scenarios',{}).get('S2',{}).get('x20',{}).get('p_win')}＝答えは『米国テックの上乗せが続くか』の仮定でほぼ決まる。",
+        f"前向きの登録（規則で選択）: {pk}（1306＝TOPIX の基準価額比・2026-10〜）と紙の P1_VM。mw_forward への統合は親に委ねた。道具の不具合: mw_common.yahoo は東証銘柄の月を1か月前にずらす（この道具の中だけ直した）。"]
+    cav = ['2007年以降の格付けで A・S は無い（S は既知の結果の円での再現だけ）。紙の上乗せはこの投資家の円の積立の結果をほぼ動かさず、結果を決めたのは日本の市場と米国テックの差（年約8%）',
+           '東証の高配当ETF の載りの良さ（1489・1651）は 2017 年以降の約9年だけの推定で、β>1 は集中した銘柄数（40〜50社）のせい。後ろへ延ばした器もどき J3 は後知恵を含む',
+           '1990〜2026 は日本のバブル天井の直後から始まる窓で、日本に最も不利な時代。JST の長い歴史（1886〜2020）では日本と米国は五分五分',
+           '前向きの模擬の勝つ確率は平均の置き方でほぼ決まる（19%〜79%）。算術平均をそろえる置き方は揺れの小さい側に有利（S3 事後で確認: 70%）']
+    return lines, cav
 
 
 if __name__ == '__main__':
