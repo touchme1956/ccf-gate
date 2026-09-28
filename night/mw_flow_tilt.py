@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
 
 PREREG = 'out/mw_flow_tilt_prereg.json'
+PREREG2 = 'out/mw_flow_tilt_prereg2.json'
 OUT = 'mw_flow_tilt.json'
 FR_URL = 'https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{}.zip'
 MSCI_URL = ('https://app2.msci.com/products/service/index/indexmaster/getLevelDataForGraph?currency_symbol=USD&index_variant={v}'
@@ -496,6 +497,69 @@ def r_region(D, reg):
     return res
 
 
+_CBM = {}
+
+
+def country_bm_monthly(c):
+    """国の B/M の月次（年次の B/M(Y)〔×100 を小数へ〕を Y 年7月から・現地の配当抜きの価格で動かす）"""
+    if c not in _CBM:
+        zt, zx = fr_zip('F-F_International_Countries'), fr_zip('F-F_International_Countries_Wout_Div')
+        f = FR_FILES[c]
+        rt = parse_fr_dat(zt.read(f + '.Dat').decode('latin-1'))[('RATIO', 'NR', 'a')]
+        i = rt['cols'].index('B/M')
+        bm = {y: v[i] / 100 for y, v in rt['data'].items() if v[i] is not None}
+        px = price_index(col(parse_fr_dat(zx.read(f + '.Dat').decode('latin-1'))[('LOC', 'NR', 'm')]))
+        _CBM[c] = bm_monthly(bm, px, 197501, END)
+    return _CBM[c]
+
+
+def r_region2(D, reg, rule):
+    """事前登録2の C5: 同じ仕組みを地域の中の国で（米ドル・費用なし・相手は地域の時価加重）"""
+    cs, bench = REG[reg]
+    rel = {c: rel_series(dy_series(D.c_div[c])) for c in cs}
+    mom = {c: mom_series(D.c_usd[c]) for c in cs}
+    rbm = {c: rel_series(country_bm_monthly(c)) for c in cs} if rule == 'bm_top1' else None
+    decide = months(ym_add(START, -1), ym_add(END, -1))
+    ch, fb = {}, 0
+    for t in decide:
+        Y = t // 100
+        base = [c for c in cs if (D.c_firms[c].get(Y) or 0) >= 20 and ym_add(t, 1) in D.c_usd[c]]
+        w = None
+        if rule in ('top1', 'top3'):
+            el = sorted([c for c in base if t in rel[c]], key=lambda c: (-rel[c][t], c))
+            K = 1 if rule == 'top1' else 3
+            if len(el) >= K:
+                w = {c: 1 / K for c in el[:K]}
+        elif rule == 'mom_top1':
+            el = [c for c in base if t in mom[c]]
+            if el:
+                w = {max(el, key=lambda c: (mom[c][t], c)): 1.0}
+        elif rule == 'vm_top1':
+            el = [c for c in base if t in rel[c] and t in mom[c]]
+            if el:
+                pr, pm = pct_rank({c: rel[c][t] for c in el}), pct_rank({c: mom[c][t] for c in el})
+                w = {max(el, key=lambda c: ((pr[c] + pm[c]) / 2, rel[c][t])): 1.0}
+        elif rule == 'agree':
+            el = [c for c in base if t in rel[c] and t in mom[c]]
+            if el:
+                a = max(el, key=lambda c: (rel[c][t], c)); b = max(el, key=lambda c: (mom[c][t], c))
+                w = {a: 1.0} if a == b else {'B': 1.0}
+        elif rule == 'bm_top1':
+            el = [c for c in base if t in rbm[c]]
+            if el:
+                w = {max(el, key=lambda c: (rbm[c][t], c)): 1.0}
+        if w is None:
+            w = {'B': 1.0}; fb += 1
+        ch[t] = w
+    B = D.ind_usd[bench]
+
+    def retf(b, m):
+        return B.get(m) if b == 'B' else D.c_usd[b].get(m)
+    twr, H, flows = simulate(ch, retf, START, END, move_to='B')
+    return {'full': M.excess_stats(twr, B, START, END), 'hold': M.excess_stats(twr, B, HOLD_START, END), 'fallback_months': fb,
+            'dca20': dca_windows(ch, retf, 'B', START, END, move_to='B')}
+
+
 # ───────────────────────── JST（年次・長い歴史） ─────────────────────────
 C16 = 'AUS BEL CHE DEU DNK ESP FIN FRA GBR ITA JPN NLD NOR PRT SWE USA'.split()
 
@@ -707,6 +771,389 @@ def summ_ratios(lst):
             'worst': [min(lst, key=lambda x: x[1])[0], round(min(v), 4)], 'best': [max(lst, key=lambda x: x[1])[0], round(max(v), 4)]}
 
 
+# ───────────────────────── 探索の第2族（事前登録2） ─────────────────────────
+X_FEE_COUNTRY, X_WH_COUNTRY = 0.50, 0.15
+
+
+def price_index(ex):
+    """配当抜きの月次 → 水準 {ym}（最初の月の前月末を1・月が抜けたら以後を切る＝0 と読まない）"""
+    p, lv = {}, 1.0
+    ks = sorted(ex)
+    if not ks:
+        return p
+    prev = ym_add(ks[0], -1)
+    p[prev] = 1.0
+    for k in ks:
+        if k != ym_add(prev, 1):
+            break
+        lv *= 1 + ex[k]; p[k] = lv; prev = k
+    return p
+
+
+def us_ex_div():
+    """US の配当抜きの月次（規模別の時価加重・us_div と同じ重み）"""
+    def tab(name, want):
+        for t, v in M.french_tables(name).items():
+            if t.lower().startswith(want.lower()) and v['freq'] == 'monthly':
+                return v
+        raise KeyError(want)
+    G = ['Lo 30', 'Med 40', 'Hi 30']
+    ex = tab('Portfolios_Formed_on_ME_Wout_Div', 'Average Value Weight Returns')
+    nf, sz = tab('Portfolios_Formed_on_ME', 'Number of Firms'), tab('Portfolios_Formed_on_ME', 'Average Firm Size')
+    out = {}
+    for m in sorted(ex['data']):
+        if m not in nf['data'] or m not in sz['data']:
+            continue
+        ws = sx = 0.0
+        ok = True
+        for g in G:
+            n, a, b1 = nf['data'][m][nf['cols'].index(g)], sz['data'][m][sz['cols'].index(g)], ex['data'][m][ex['cols'].index(g)]
+            if None in (n, a, b1):
+                ok = False; break
+            ws += n * a; sx += n * a * b1 / 100
+        if ok and ws > 0:
+            out[m] = sx / ws
+    return out
+
+
+def us_bm_annual():
+    """US の B/M(Y) = Σ_g (Sum of BE / Sum of ME)_g × 重み_g（Y 年7月の社数×平均規模）"""
+    tabs = M.french_tables('Portfolios_Formed_on_BE-ME')
+    ratio = next(v for t, v in tabs.items() if t.lower().startswith('sum of be') and v['freq'] == 'annual')
+    nf = next(v for t, v in tabs.items() if t.lower().startswith('number of firms') and v['freq'] == 'monthly')
+    sz = next(v for t, v in tabs.items() if t.lower().startswith('average firm size') and v['freq'] == 'monthly')
+    out = {}
+    for y, row in ratio['data'].items():
+        m = y * 100 + 7
+        if m not in nf['data'] or m not in sz['data']:
+            continue
+        num = den = 0.0
+        ok = False
+        for g in ['<= 0', 'Lo 30', 'Med 40', 'Hi 30']:
+            s = row[ratio['cols'].index(g)]
+            n, a = nf['data'][m][nf['cols'].index(g)], sz['data'][m][sz['cols'].index(g)]
+            if s is None or n is None or a is None or n <= 0:
+                continue
+            num += s * n * a; den += n * a
+            if g != '<= 0':
+                ok = True
+        if ok and den > 0:
+            out[y] = num / den
+    return out
+
+
+def bm_monthly(bm_y, px, t0, t1):
+    """B/M(t) = B/M(Y) × P(Y−1年12月) ÷ P(t)。B/M(Y) は Y 年7月末から（それまでは Y−1）"""
+    out = {}
+    for t in months(t0, t1):
+        Y = t // 100 if t % 100 >= 7 else t // 100 - 1
+        b, p0, p1 = bm_y.get(Y), px.get((Y - 1) * 100 + 12), px.get(t)
+        if b is None or p0 is None or p1 is None or p1 <= 0 or b <= 0:
+            continue
+        out[t] = b * p0 / p1
+    return out
+
+
+def pct_rank(vals):
+    items = sorted(vals.items(), key=lambda x: (x[1], x[0]))
+    n = len(items)
+    out, i = {}, 0
+    while i < n:
+        j = i
+        while j + 1 < n and items[j + 1][1] == items[i][1]:
+            j += 1
+        for k in range(i, j + 1):
+            out[items[k][0]] = ((i + j) / 2) / (n - 1) if n > 1 else 0.5
+        i = j + 1
+    return out
+
+
+def dca_two(chA, chB, retf, start, n, move_to=None):
+    """二つの入金の道の最終額の比（A ÷ B）"""
+    wa, _, c = dca_ratio(chA, retf, 'W', start, n, move_to)
+    wb, _, _ = dca_ratio(chB, retf, 'W', start, n, move_to)
+    return wa / wb, after_tax(wa, c) / after_tax(wb, c)
+
+
+def dca_two_windows(chA, chB, retf, first, last_end, years=20, step=12, move_to=None):
+    n = years * 12
+    lst, s = [], first
+    while ym_add(s, n - 1) <= last_end:
+        a, b = dca_two(chA, chB, retf, s, n, move_to)
+        lst.append((s, a, b))
+        s = ym_add(s, step)
+    if not lst:
+        return None
+    return {'nisa': summ_ratios([(x[0], x[1]) for x in lst]), 'taxable_exit': summ_ratios([(x[0], x[2]) for x in lst])}
+
+
+def hold_worse(a, b):
+    """二つの道の保有期間の要約から、小さい方（厳しい側）を grade に渡す形へ"""
+    if not a or not b:
+        return None
+    return {'ex_ann': min(a['ex_ann'], b['ex_ann']), 'cagr_diff': min(a['cagr_diff'], b['cagr_diff']),
+            't': min(a['t'] if a['t'] is not None else -99, b['t'] if b['t'] is not None else -99),
+            'p': max(a['p'] if a.get('p') is not None else 1, b['p'] if b.get('p') is not None else 1), 'from_paths': ['1986〜の道の2007〜', '2007〜新しく始めた道']}
+
+
+def jst_dca_two(chA, chB, ret, y0, years):
+    def run(ch):
+        H = {}
+        for Y in range(y0, y0 + years):
+            for b, x in ch[Y - 1].items():
+                H[b] = H.get(b, 0.0) + x
+            for b in H:
+                r = ret[b].get(Y)
+                if r is None:
+                    r = ret['XUS'][Y]
+                H[b] *= 1 + r
+        return sum(H.values())
+    return run(chA) / run(chB)
+
+
+def run_part2(D, dy, rel, mom, chP, gross, net, Wg, Wn, SPn, decide, ret, dp, chA_J, chB_J):
+    log('── 事前登録2（探索） ──')
+    P2 = json.load(open(os.path.join(M.BASE, PREREG2)))
+    # --- 追加の信号 ---
+    mom = dict(mom)
+    mom['XUS'] = mom_series(D.usd['XUS'])
+    # B/M（US・JP・EU）
+    zt, zx = fr_zip('F-F_International_Indices'), fr_zip('F-F_International_Indices_Wout_Div')
+    eu_rt = parse_fr_dat(zt.read('Ind_Eur_With_UK.Dat').decode('latin-1'))[('RATIO', 'NR', 'a')]
+    eu_bm = {y: v[0] for y, v in eu_rt['data'].items() if v and v[0] is not None}
+    eu_px = price_index(col(parse_fr_dat(zx.read('Ind_Eur_With_UK.Dat').decode('latin-1'))[('LOC', 'NR', 'm')]))
+    zc, zcx = fr_zip('F-F_International_Countries'), fr_zip('F-F_International_Countries_Wout_Div')
+    jp_rt = parse_fr_dat(zc.read('Japan.Dat').decode('latin-1'))[('RATIO', 'NR', 'a')]
+    i = jp_rt['cols'].index('B/M')
+    jp_bm = {y: v[i] / 100 for y, v in jp_rt['data'].items() if v[i] is not None}
+    jp_px = price_index(col(parse_fr_dat(zcx.read('Japan.Dat').decode('latin-1'))[('LOC', 'NR', 'm')]))
+    us_px = price_index(us_ex_div())
+    us_bm = us_bm_annual()
+    bmm = {'US': bm_monthly(us_bm, us_px, 192701, END), 'JP': bm_monthly(jp_bm, jp_px, 197501, END), 'EU': bm_monthly(eu_bm, eu_px, 197501, END)}
+    relbm = {b: rel_series(v) for b, v in bmm.items()}
+    sanity2 = {'bm_levels': {b: {str(k): r2(v.get(k), 3) for k in (198612, 198912, 200003, 200902, 202512)} for b, v in bmm.items()},
+               'relbm_first': {b: min(v) if v else None for b, v in relbm.items()}}
+    # 国（米国外先進国・French）
+    ctry = [c for c in FR_FILES]
+    cdy = {c: dy_series(D.c_div[c]) for c in ctry}
+    crel = {c: rel_series(cdy[c]) for c in ctry}
+    for c in ctry:
+        k = 'c_' + c
+        D.usd[k] = D.c_usd[c]; D.div[k] = D.c_div[c]; FEE[k] = X_FEE_COUNTRY; WH[k] = X_WH_COUNTRY
+    # --- 選び方 ---
+    X = {k: {} for k in P2['families']['X_monthly']['strategies']}
+    fb = {k: 0 for k in X}
+    N = {}
+    for t in decide:
+        wu = D.w_us[ym_add(t, 1)]
+        N[t] = {'US': wu, 'XUS': 1 - wu}
+        # X1
+        cands = [c for c in ORDER3 if t in rel.get(c, {}) and t in mom.get(c, {})]
+        if cands:
+            pr, pm = pct_rank({c: rel[c][t] for c in cands}), pct_rank({c: mom[c][t] for c in cands})
+            best = max(cands, key=lambda c: ((pr[c] + pm[c]) / 2, rel[c][t]))
+            X['X1_VM4_top1'][t] = {best: 1.0}
+        else:
+            X['X1_VM4_top1'][t] = {'W': 1.0}; fb['X1_VM4_top1'] += 1
+        # X2・X3
+        v = pick_top(rel, ORDER1, t, ORDER1) if all(t in rel[b] for b in ORDER1) else None
+        mm = max(ORDER1, key=lambda b: mom[b][t]) if all(t in mom[b] for b in ORDER1) else None
+        if v is not None and mm is not None and v == mm:
+            X['X2_agree_US_XUS'][t] = {v: 1.0}
+        else:
+            X['X2_agree_US_XUS'][t] = {'W': 1.0}
+            if v is None or mm is None:
+                fb['X2_agree_US_XUS'] += 1
+        if mm is None:
+            X['X3_mom_US_XUS'][t] = {'W': 1.0}; fb['X3_mom_US_XUS'] += 1
+        else:
+            X['X3_mom_US_XUS'][t] = {mm: 1.0}
+        # X4
+        p4 = pick_top(relbm, ['US', 'JP', 'EU'], t, ['US', 'JP', 'EU'])
+        if p4 is None:
+            X['X4_relBM3_top1'][t] = {'W': 1.0}; fb['X4_relBM3_top1'] += 1
+        else:
+            X['X4_relBM3_top1'][t] = {p4: 1.0}
+        # X5・X6（米国は時価の重み、米国外は国で）
+        Y = t // 100
+        el = [c for c in ctry if (D.c_firms[c].get(Y) or 0) >= 20 and t in crel[c] and ym_add(t, 1) in D.c_usd[c]]
+        order = sorted(el, key=lambda c: (-crel[c][t], c))
+        for name, K in (('X5_UScap_XUScountry_top3', 3), ('X6_UScap_XUScountry_top1', 1)):
+            if len(order) >= K:
+                w = {'US': wu}
+                for c in order[:K]:
+                    w['c_' + c] = (1 - wu) / K
+                X[name][t] = w
+            else:
+                X[name][t] = {'US': wu, 'XUS': 1 - wu}; fb[name] += 1
+        # X7
+        if t in rel['US'] and t in rel['XUS']:
+            a, b = wu * rel['US'][t], (1 - wu) * rel['XUS'][t]
+            X['X7_prop_US_XUS'][t] = {'US': a / (a + b), 'XUS': b / (a + b)}
+        else:
+            X['X7_prop_US_XUS'][t] = {'W': 1.0}; fb['X7_prop_US_XUS'] += 1
+
+    # 先進国の時価加重（X5・X6 の報告の相手・gross）
+    D.usd['DEV'] = {k: v + D.rf[k] for k, v in M.jkp_mkt('developed', 'vw').items() if k in D.rf}
+    # --- 中立の道 N ---
+    twNg, _, _ = simulate(N, gross, START, END)
+    twNn, _, _ = simulate(N, net, START, END)
+    rep = {'N_neutral_flow_vs_W': {'gross_full': M.excess_stats(twNg, Wg, START, END), 'net_full': M.excess_stats(twNn, Wn, START, END),
+                                   'net_hold': M.excess_stats(twNn, Wn, HOLD_START, END), 'dca20_vs_W': dca_windows(N, net, 'W', START, END)},
+           'P_vs_neutral_flow_dca20_posthoc': {}}
+    for name, c in chP.items():
+        rep['P_vs_neutral_flow_dca20_posthoc'][name] = dca_two_windows(c, N, net, START, END)
+    log('N vs W', rep['N_neutral_flow_vs_W']['net_full']['ex_ann'], rep['N_neutral_flow_vs_W']['dca20_vs_W']['nisa'])
+    log('P vs N（事後）', {k: v['nisa']['median_ratio'] for k, v in rep['P_vs_neutral_flow_dca20_posthoc'].items()})
+    # --- X を測る ---
+    DEVg = {m: gross('DEV', m) for m in months(START, END)}
+    tested, pv = [], {}
+    XR = {}
+    for name, c in X.items():
+        mt = 'XUS' if name.startswith(('X5', 'X6')) else None
+        ev = []
+        twg, _, flows = simulate(c, gross, START, END, move_to=mt, events=ev)
+        twn, Hn, _ = simulate(c, net, START, END, move_to=mt)
+        fr_g, _, _ = simulate(c, gross, HOLD_START, END, move_to=mt)
+        fr_n, _, _ = simulate(c, net, HOLD_START, END, move_to=mt)
+        e = {'gross': {k: M.excess_stats(twg, Wg, a, z) for k, (a, z) in (('full', (START, END)), ('train', (START, TRAIN_END)), ('hold', (HOLD_START, END)), ('recent', (RECENT_START, END)))},
+             'net': {k: M.excess_stats(twn, Wn, a, z) for k, (a, z) in (('full', (START, END)), ('train', (START, TRAIN_END)), ('hold', (HOLD_START, END)), ('recent', (RECENT_START, END)))},
+             'fresh2007_gross': M.excess_stats(fr_g, Wg, HOLD_START, END), 'fresh2007_net': M.excess_stats(fr_n, Wn, HOLD_START, END),
+             'fresh2007_net_vs_sp500': M.excess_stats(fr_n, SPn, HOLD_START, END)}
+        tot = sum(flows.values()); totH = sum(Hn.values())
+        x = {'name': name, 'family': 'X（探索・事前登録2）', 'primary': False, 'exploratory': True, 'graded': True,
+             'description': P2['families']['X_monthly']['strategies'][name], **e,
+             'roll20_lump_net': M.rolling(twn, Wn, 20),
+             'dca20_world': dca_windows(c, net, 'W', START, END, 20, 12, move_to=mt),
+             'dca20_world_step1': dca_windows(c, net, 'W', START, END, 20, 1, move_to=mt),
+             'dca20_sp500': dca_windows(c, net, 'SP', START, END, 20, 12, move_to=mt),
+             'dca15_world_step1': dca_windows(c, net, 'W', START, END, 15, 1, move_to=mt),
+             'dca10_world_step1': dca_windows(c, net, 'W', START, END, 10, 1, move_to=mt),
+             'dca20_vs_neutral_flow': dca_two_windows(c, N, net, START, END, move_to=mt),
+             'flow_share': {b: round(v / tot, 3) for b, v in sorted(flows.items(), key=lambda x: -x[1])[:10]},
+             'final_holding_share': {b: round(v / totH, 3) for b, v in sorted(Hn.items(), key=lambda x: -x[1])[:10]},
+             'fallback_months': fb[name], 'data_end_moves': ev[:20]}
+        if not name.startswith(('X5', 'X6')):
+            x['choice_runs'] = runs(c, decide)
+        else:
+            x['vs_developed_gross'] = {'full': M.excess_stats(twg, DEVg, START, END), 'hold': M.excess_stats(twg, DEVg, HOLD_START, END),
+                                       'dca20': dca_windows(c, gross, 'DEV', START, END, 20, 12, move_to=mt)['nisa']}
+            cnt = {}
+            for t in decide:
+                for b in c[t]:
+                    if b.startswith('c_'):
+                        cnt[b[2:]] = cnt.get(b[2:], 0) + 1
+            x['country_months_chosen'] = dict(sorted(cnt.items(), key=lambda z: -z[1]))
+        XR[name] = x
+        pv[name] = max(e['net']['hold']['p'] or 1, e['fresh2007_net']['p'] or 1)
+        log(name, 'train', e['gross']['train']['ex_ann'], e['gross']['train']['t'], '| hold', e['gross']['hold']['ex_ann'], e['gross']['hold']['t'],
+            '| fresh', e['fresh2007_net']['ex_ann'], e['fresh2007_net']['t'], '| DCA20 W', x['dca20_world']['nisa']['median_ratio'], x['dca20_world']['nisa']['win_rate'],
+            '| vsN', x['dca20_vs_neutral_flow']['nisa']['median_ratio'])
+    # R の再現（C5・事前登録2の mapping）。X7 は N/A
+    xmap = {'X1_VM4_top1': 'vm_top1', 'X2_agree_US_XUS': 'agree', 'X3_mom_US_XUS': 'mom_top1', 'X4_relBM3_top1': 'bm_top1',
+            'X5_UScap_XUScountry_top3': 'top3', 'X6_UScap_XUScountry_top1': 'top1'}
+    R2 = {reg: {rule: r_region2(D, reg, rule) for rule in sorted(set(xmap.values()))} for reg in C5_REGIONS}
+    rep['R2_replication'] = {reg: {rule: {'full': v['full'], 'hold': v['hold'], 'dca20': v['dca20']['nisa'] if v['dca20'] else None, 'fallback_months': v['fallback_months']}
+                                   for rule, v in rr.items()} for reg, rr in R2.items()}
+    log('R2', {reg: {rule: (v['full']['ex_ann'], v['full']['t']) for rule, v in rr.items()} for reg, rr in R2.items()})
+    holm = M.holm(pv)
+    for name, x in XR.items():
+        hw = hold_worse(x['gross']['hold'], x['fresh2007_gross'])
+        cw = hold_worse(x['net']['hold'], x['fresh2007_net'])
+        lump, dcaw = x['roll20_lump_net'], x['dca20_world']['nisa']
+        roll_for_grade = {'win_rate': min(lump['win_rate'] if lump else 0.0, dcaw['win_rate'] if dcaw else 0.0),
+                          'lump_win_rate': lump['win_rate'] if lump else None, 'dca_win_rate': dcaw['win_rate'] if dcaw else None}
+        repl = None
+        if name in xmap:
+            rule = xmap[name]
+            det = {reg: R2[reg][rule]['full']['ex_ann'] for reg in C5_REGIONS}
+            repl = {'regions': len(C5_REGIONS), 'positive': sum(1 for v in det.values() if v > 0), 'rule': rule, 'detail': det}
+        g, crit = M.grade(x['gross']['full'], x['gross']['train'], hw, roll_for_grade, cost_hold=cw, repl=repl, family_holm_p=holm.get(name))
+        x.update({'hold_for_grade': hw, 'cost_hold_for_grade': cw, 'roll20_for_grade': roll_for_grade, 'repl': repl,
+                  'family_holm_p': holm.get(name), 'holm_input_p': pv[name], 'grade': g, 'criteria': crit})
+        tested.append(x)
+        log(name, 'grade', g, crit)
+
+    # --- Y（JST） ---
+    def y_choices(y_from, y_to):
+        out = {'Y1_country_VM_top3': {}, 'Y2_agree_US_XUS15': {}}
+        for Y in range(y_from - 1, y_to):
+            sc = {c: (dp[c][Y], ret[c][Y]) for c in C16 if Y in ret[c] and Y in dp[c]}
+            if len(sc) >= 3:
+                pd_, pm_ = pct_rank({c: v[0] for c, v in sc.items()}), pct_rank({c: v[1] for c, v in sc.items()})
+                top = sorted(sc, key=lambda c: (-(pd_[c] + pm_[c]) / 2, -pd_[c], c))[:3]
+                out['Y1_country_VM_top3'][Y] = {c: 1 / 3 for c in top}
+            else:
+                out['Y1_country_VM_top3'][Y] = {'B': 1.0}
+            j1 = chB_J['J1_US_vs_XUS15'].get(Y) or chA_J['J1_US_vs_XUS15'].get(Y)
+            v = list(j1)[0]
+            ru, rx = ret['USA'].get(Y), ret['XUS'].get(Y)
+            mm = None if ru is None or rx is None else ('USA' if ru >= rx else 'XUS')
+            out['Y2_agree_US_XUS15'][Y] = {v: 1.0} if (mm is not None and v == mm) else {'B': 1.0}
+        return out
+    yA, yB = y_choices(1881, 1925), y_choices(1926, 2020)
+    # 中立の道（GDP の重みで入金・売らない）
+    def ngdp(y_from, y_to):
+        out = {}
+        for Y in range(y_from - 1, y_to):
+            ws = {c: JST_GW[c][Y] for c in C16 if Y in JST_GW[c]}
+            tot = sum(ws.values())
+            out[Y] = {c: w / tot for c, w in ws.items()}
+        return out
+    NA, NB = ngdp(1881, 1925), ngdp(1926, 2020)
+    Bb = ret['B']
+    twNB, _, _ = jst_simulate(NB, ret, 1926, 2020)
+    twNA, _, _ = jst_simulate(NA, ret, 1881, 1925)
+    rep['N_gdp_flow_vs_B'] = {'B_1926_2020': M.excess_stats(twNB, Bb, 1926, 2020, per_year=1, lag=2), 'A_1881_1925': M.excess_stats(twNA, Bb, 1881, 1925, per_year=1, lag=2),
+                              'dca20_B': summ_ratios([(y0, jst_dca_two(NB, {Y: {'B': 1.0} for Y in range(1925, 2020)}, ret, y0, 20)) for y0 in range(1926, 2002)])}
+    rep['J_vs_N_gdp_dca20_posthoc'] = {name: {'B': summ_ratios([(y0, jst_dca_two(chB_J[name], NB, ret, y0, 20)) for y0 in range(1926, 2002)]),
+                                              'A': summ_ratios([(y0, jst_dca_two(chA_J[name], NA, ret, y0, 20)) for y0 in range(1881, 1907)])} for name in chB_J}
+    log('N_gdp vs B', rep['N_gdp_flow_vs_B']['B_1926_2020']['ex_ann'], rep['N_gdp_flow_vs_B']['dca20_B'])
+    log('J vs N_gdp（事後）', {k: (v['B']['median_ratio'], v['B']['win_rate'], v['A']['median_ratio']) for k, v in rep['J_vs_N_gdp_dca20_posthoc'].items()})
+    YR, ypv = {}, {}
+    for name in yA:
+        twA, _, evA = jst_simulate(yA[name], ret, 1881, 1925)
+        twB, _, evB = jst_simulate(yB[name], ret, 1926, 2020)
+        twBn, _, _ = jst_simulate(yB[name], ret, 1926, 2020, fee=0.0005)
+        fr, _, _ = jst_simulate(yB[name], ret, 2007, 2020)
+        frn, _, _ = jst_simulate(yB[name], ret, 2007, 2020, fee=0.0005)
+        e = {'A_1881_1925': M.excess_stats(twA, Bb, 1881, 1925, per_year=1, lag=2), 'full_1926_2020': M.excess_stats(twB, Bb, 1926, 2020, per_year=1, lag=2),
+             'train_1926_2006': M.excess_stats(twB, Bb, 1926, 2006, per_year=1, lag=2), 'hold_2007_2020': short_stats(twB, Bb, 2007, 2020),
+             'hold_2007_2020_net': short_stats(twBn, Bb, 2007, 2020), 'fresh2007': short_stats(fr, Bb, 2007, 2020), 'fresh2007_net': short_stats(frn, Bb, 2007, 2020)}
+        dcaB = [(y0, jst_dca(yB[name], ret, 'B', y0, 20)) for y0 in range(1926, 2002)]
+        x = {'name': name, 'family': 'Y（探索・JST・事前登録2）', 'primary': False, 'exploratory': True, 'graded': True,
+             'description': P2['families']['Y_JST']['strategies'][name], **e, 'roll20_lump_B': roll_annual(twB, Bb, 20),
+             'dca20_B_path': summ_ratios(dcaB), 'dca20_A_path': summ_ratios([(y0, jst_dca(yA[name], ret, 'B', y0, 20)) for y0 in range(1881, 1907)]),
+             'dca20_vs_N_gdp_B': summ_ratios([(y0, jst_dca_two(yB[name], NB, ret, y0, 20)) for y0 in range(1926, 2002)]),
+             'dca20_vs_N_gdp_A': summ_ratios([(y0, jst_dca_two(yA[name], NA, ret, y0, 20)) for y0 in range(1881, 1907)]),
+             'imputation_A': evA, 'imputation_B': evB}
+        YR[name] = x
+        ypv[name] = max(e['hold_2007_2020_net']['p'] or 1, e['fresh2007_net']['p'] or 1)
+        log(name, 'A', e['A_1881_1925']['ex_ann'], e['A_1881_1925']['t'], '| train', e['train_1926_2006']['ex_ann'], e['train_1926_2006']['t'],
+            '| hold', e['hold_2007_2020']['ex_ann'], '| fresh', e['fresh2007']['ex_ann'], '| DCA B', x['dca20_B_path']['median_ratio'], x['dca20_B_path']['win_rate'],
+            '| vsN', x['dca20_vs_N_gdp_B']['median_ratio'])
+    yholm = M.holm(ypv)
+    for name, x in YR.items():
+        hw = hold_worse(x['hold_2007_2020'], x['fresh2007'])
+        cw = hold_worse(x['hold_2007_2020_net'], x['fresh2007_net'])
+        lump, dcab = x['roll20_lump_B'], x['dca20_B_path']
+        roll_for_grade = {'win_rate': min(lump['win_rate'] if lump else 0.0, dcab['win_rate'] if dcab else 0.0)}
+        repl = {'regions': 1, 'positive': 1 if x['A_1881_1925']['ex_ann'] > 0 else 0, 'what': '道 A（1881〜1925）'}
+        g, crit = M.grade(x['full_1926_2020'], x['train_1926_2006'], hw, roll_for_grade, cost_hold=cw, repl=repl, family_holm_p=yholm.get(name))
+        x.update({'hold_for_grade': hw, 'cost_hold_for_grade': cw, 'roll20_for_grade': roll_for_grade, 'repl': repl, 'family_holm_p': yholm.get(name), 'grade': g, 'criteria': crit})
+        tested.append(x)
+        log(name, 'grade', g, crit)
+    last = decide[-1]
+    rep['_now'] = {k: X[k][last] for k in X if not k.startswith(('X5', 'X6'))}
+    rep['_now'].update({k: {b: round(v, 3) for b, v in X[k][last].items()} for k in X if k.startswith(('X5', 'X6'))})
+    rep['sanity2'] = sanity2
+    rep['prereg2_commit'] = git_sha(PREREG2)
+    return tested, rep
+
+
+JST_GW = {}
+
+
 # ───────────────────────── 点検（--check） ─────────────────────────
 def check():
     D = Data()
@@ -845,6 +1292,8 @@ def main():
     # ── J（JST） ──
     Jd = JST(jst_load())
     ret, dp = jst_build(Jd)
+    for c in C16:  # 事前登録2の中立の道（GDP の重みで入金）用: 年 Y に GDP の重みがあり年 Y のリターンが有効な国
+        JST_GW[c] = {Y: Jd.gw(c, Y) for Y in range(1869, 2021) if Jd.gw(c, Y) and Y in ret[c]}
     chA = jst_choices(ret, dp, 1881, 1925)
     chB = jst_choices(ret, dp, 1926, 2020)
     Jres, jp = {}, {}
@@ -915,11 +1364,19 @@ def main():
     except Exception as e:  # noqa
         now['F5_tech_share_state'] = {'error': str(e)[:200]}
 
+    # ── 探索の第2族（事前登録2）: X・Y と、売らない積立の中立の道 N ──
+    part2 = None
+    if os.path.exists(os.path.join(M.BASE, PREREG2)):
+        tested2, part2 = run_part2(D, dy, rel, mom, ch, gross, net, Wg, Wn, SPn, decide, ret, dp, chA, chB)
+        tested += tested2
+        now['part2_choices'] = part2.pop('_now', None)
+
     out = {'angle': 'flow_tilt', 'prereg': PREREG, 'prereg_commit': git_sha(PREREG),
+           'prereg2': PREREG2 if part2 else None, 'prereg2_commit': git_sha(PREREG2) if part2 else None,
            'global_prereg': 'out/mw_prereg.json', 'global_prereg_commit': git_sha('out/mw_prereg.json'),
            'n_tested': len(tested), 'n_graded': sum(1 for x in tested if x.get('graded')),
            'grades': {x['name']: x.get('grade', '格付け外') for x in tested},
-           'sanity': sanity, 'current_signal': now, 'tested': tested, 'log': LOG[-80:], 'runtime_s': round(time.time() - t0, 1)}
+           'sanity': sanity, 'current_signal': now, 'part2': part2, 'tested': tested, 'log': LOG[-120:], 'runtime_s': round(time.time() - t0, 1)}
     p = M.save(OUT, out)
     log('書いた', p, round(os.path.getsize(p) / 1e6, 2), 'MB')
 
