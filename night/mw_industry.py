@@ -16,8 +16,9 @@ import mw_common as M
 
 BASE = M.BASE
 PREREG = 'mw_industry_prereg.json'
-PREREG_FILES = ['mw_industry_prereg.json', 'mw_industry_prereg2.json']
+PREREG_FILES = ['mw_industry_prereg.json', 'mw_industry_prereg2.json', 'mw_industry_prereg3.json']
 PREREG2 = 'mw_industry_prereg2.json'
+PREREG3 = 'mw_industry_prereg3.json'
 OUT = 'mw_industry.json'
 COST = 0.0005          # 両側の売買 100% あたり 0.05%
 ETF_FEE = 0.0030       # 参考: 業種ETFの信託報酬の目安（判定に使わない）
@@ -347,8 +348,25 @@ def jkp_industry(country):
     return out
 
 
-def repl_targets(R):
-    """GICS 11セクター版の規則（11のうち3）。R: {sector: {m: 超過}}"""
+def resid_mom(r, mk, m):
+    """Blitz-Huij-Martens: m−36〜m−1 で市場に回帰し、m−12〜m−2 の残差の平均÷標準偏差"""
+    est = [madd(m, -k) for k in range(1, 37)]
+    if not all(k in r and k in mk for k in est):
+        return None
+    x = [mk[k] for k in est]; y = [r[k] for k in est]
+    mx, my = S.mean(x), S.mean(y)
+    vx = math.fsum((a - mx) ** 2 for a in x)
+    if vx <= 0:
+        return None
+    beta = math.fsum((a - mx) * (b - my) for a, b in zip(x, y)) / vx
+    alpha = my - beta * mx
+    e = [r[k] - alpha - beta * mk[k] for k in (madd(m, -j) for j in range(2, 13))]
+    sd = S.stdev(e)
+    return S.mean(e) / sd if sd > 0 else None
+
+
+def repl_targets(R, mk=None):
+    """GICS 11セクター版の規則（11のうち3）。R: {sector: {m: 超過}}・mk: 国の市場（超過）"""
     secs = sorted(R)
     has = lambda c, m: c in R and m in R[c]
 
@@ -395,7 +413,60 @@ def repl_targets(R):
             return {c: 1.0 for c in a} if len(a) == len(cs) else None
         return f
 
+    def cum_skip(c, m, a, b):
+        ks = [madd(m, -k) for k in range(a, b + 1)]
+        if not all(k in R[c] for k in ks):
+            return None
+        return math.exp(math.fsum(math.log1p(R[c][k]) for k in ks)) - 1
+
+    def resmom(c, m):
+        return resid_mom(R[c], mk, m) if mk else None
+
+    def invvol(m):
+        sc = {c: cum(c, m, 12) for c in secs if has(c, m)}
+        sel = pick(sc, 3)
+        if len(sel) < 3:
+            return None
+        w = {}
+        for c in sel:
+            v = vol(c, m, 12)
+            if not v:
+                return None
+            w[c] = 1 / v
+        return w
+
+    def multi(m):
+        cand = [c for c in secs if has(c, m)]
+        pr = {c: [] for c in cand}
+        for L in (1, 3, 6, 12):
+            v = {c: cum(c, m, L) for c in cand}
+            v = {c: x for c, x in v.items() if x is not None}
+            if len(v) < 2:
+                return None
+            order = sorted(v, key=lambda c: (v[c], c))
+            for i, c in enumerate(order):
+                pr[c].append(i / (len(order) - 1))
+        sel = pick({c: S.mean(x) for c, x in pr.items() if len(x) == 4}, 3)
+        return {c: 1.0 for c in sel} if len(sel) == 3 else None
+
+    def quarterly(score):
+        st = {}
+
+        def f(m):
+            if m % 100 in (1, 4, 7, 10):
+                sc = {c: score(c, m) for c in secs if has(c, m)}
+                sel = pick(sc, 3)
+                return {c: 1.0 for c in sel} if len(sel) == 3 else None
+            return None
+        return f
+
     return {
+        'mom1': rank_monthly(lambda c, m: cum(c, m, 1)),
+        'mom12_7': rank_monthly(lambda c, m: cum_skip(c, m, 7, 12)),
+        'resmom': rank_monthly(resmom),
+        'invvol': invvol,
+        'multi': multi,
+        'mom12q': quarterly(lambda c, m: cum(c, m, 12)),
         'def': static(['30', '35', '55']),
         'siegel': static(['30', '35']),
         'lowvol': rank_annual(lambda c, m: vol(c, m), top=False),
@@ -414,6 +485,9 @@ REPL_MAP = {'A3_def_vw': 'def', 'A4_def_ew': 'def', 'A6_siegel_vw': 'siegel', 'C
             'H1_seas5': 'seas', 'H2_seas10': 'seas', 'X5_mom12_annual5': 'mom12a', 'X6_mom12_annual10': 'mom12a'}
 
 
+RAW = {}
+
+
 def replication():
     res = {}
     for ctry in REPL_COUNTRIES:
@@ -425,8 +499,18 @@ def replication():
             continue
         months = sorted(set().union(*[set(v) for v in R.values()]))
         base = {}
-        for key, tg in list(repl_targets(R).items()) + [('mom6_state', None), ('mom12_state', None)]:
-            if tg is None:
+        for key, tg in list(repl_targets(R, mk).items()) + [('mom6_state', None), ('mom12_state', None), ('dual', 'dual')]:
+            if tg == 'dual':
+                r = {}
+                for m in months:
+                    if m not in mk:
+                        continue
+                    sc = {c: cum_g(R, c, m, 12) for c in R if m in R[c]}
+                    sel = pick(sc, 3)
+                    if len(sel) < 3:
+                        continue
+                    r[m] = S.mean([R[c][m] if sc[c] > 0 else mk[m] for c in sel])
+            elif tg is None:
                 src = base[key.replace('_state', '')]
                 r = {}
                 for m, v in src.items():
@@ -443,6 +527,7 @@ def replication():
                 res.setdefault(key, {})[ctry] = {'months': len(ks), 'counted': False}
                 continue
             ex = [r[k] - mk[k] for k in ks]
+            RAW.setdefault(key, {})[ctry] = {k: r[k] - mk[k] for k in ks}
             res.setdefault(key, {})[ctry] = {'from': ks[0], 'to': ks[-1], 'months': len(ks), 'counted': True,
                                               'ex_ann': round(S.mean(ex) * 1200, 2), 't': (lambda t: None if t is None else round(t, 2))(M.nw_t(ex)),
                                               'cagr_diff': round((M.cagr([r[k] for k in ks]) - M.cagr([mk[k] for k in ks])) * 100, 2)}
@@ -686,6 +771,171 @@ def diagnostics(D):
     return out
 
 
+# ───────────────────────── 第3の族（prereg3・探索） ─────────────────────────
+def daily_counts(D):
+    """49業種の日次（時価加重）→ {業種: {yyyymm: (上げた日, 下げた日, 日数)}}"""
+    T = M.french_tables('49_Industry_Portfolios_daily')
+    t = T['Average Value Weighted Returns -- Daily']
+    cols = [c.strip() for c in t['cols']]
+    assert cols == D.cols
+    out = {c: {} for c in cols}
+    for d, row in t['data'].items():
+        ym = d // 100
+        for c, x in zip(cols, row):
+            if x is None:
+                continue
+            a = out[c].get(ym, (0, 0, 0))
+            out[c][ym] = (a[0] + (x > 0), a[1] + (x < 0), a[2] + 1)
+    return out
+
+
+def part3_targets(D, sig):
+    dc = daily_counts(D)
+    R = D.R
+    allvw = lambda m: {c: D.ME[c][m] for c in D.cols if D.has(c, m) and m in D.ME[c]}
+    cand = lambda m: [c for c in D.selectable if D.has(c, m)]
+
+    def rank_m(score, K):
+        def f(m):
+            sel = pick({c: score(c, m) for c in cand(m)}, K)
+            return {c: 1.0 for c in sel} if len(sel) == K else None
+        return f
+
+    def cum_skip(c, m, a, b):
+        ks = [madd(m, -k) for k in range(a, b + 1)]
+        if not all(k in R[c] for k in ks):
+            return None
+        return math.exp(math.fsum(math.log1p(R[c][k]) for k in ks)) - 1
+
+    def fip(Kpre, K):
+        def f(m):
+            sc = {c: sig.cum(c, m, 12) for c in cand(m)}
+            pre = pick(sc, Kpre)
+            if len(pre) < Kpre:
+                return None
+            ids = {}
+            for c in pre:
+                ms = [madd(m, -k) for k in range(1, 13)]
+                if not all(k in dc[c] for k in ms):
+                    continue
+                npos = sum(dc[c][k][0] for k in ms); nneg = sum(dc[c][k][1] for k in ms); n = sum(dc[c][k][2] for k in ms)
+                ids[c] = (1 if sc[c] > 0 else -1 if sc[c] < 0 else 0) * (nneg - npos) / n
+            sel = pick(ids, K, top=False)
+            return {c: 1.0 for c in sel} if len(sel) == K else None
+        return f
+
+    def dual(m):
+        sc = {c: sig.cum(c, m, 12) for c in cand(m)}
+        sel = pick(sc, 5)
+        ks = [madd(m, -k) for k in range(1, 13)]
+        if len(sel) < 5 or not all(k in D.rf for k in ks):
+            return None
+        rf12 = math.exp(math.fsum(math.log1p(D.rf[k]) for k in ks)) - 1
+        w = {}
+        mw = allvw(m); tot = sum(mw.values())
+        for c in sel:
+            if sc[c] > rf12:
+                w[c] = w.get(c, 0.0) + 0.2
+            else:
+                for cc, v in mw.items():
+                    w[cc] = w.get(cc, 0.0) + 0.2 * v / tot
+        return w
+
+    def invvol(m):
+        sel = pick({c: sig.cum(c, m, 12) for c in cand(m)}, 5)
+        if len(sel) < 5:
+            return None
+        w = {}
+        for c in sel:
+            v = sig.vol(c, m, 12)
+            if not v:
+                return None
+            w[c] = 1 / v
+        return w
+
+    def multi(m):
+        cs = cand(m)
+        pr = {c: [] for c in cs}
+        for L in (1, 3, 6, 12):
+            v = {c: sig.cum(c, m, L) for c in cs}
+            v = {c: x for c, x in v.items() if x is not None}
+            if len(v) < 2:
+                return None
+            order = sorted(v, key=lambda c: (v[c], c))
+            for i, c in enumerate(order):
+                pr[c].append(i / (len(order) - 1))
+        sel = pick({c: S.mean(x) for c, x in pr.items() if len(x) == 4}, 5)
+        return {c: 1.0 for c in sel} if len(sel) == 5 else None
+
+    g3 = rank_m(lambda c, m: sig.cum(c, m, 12), 5)
+    return {
+        'P1_mom1_5': rank_m(lambda c, m: sig.cum(c, m, 1), 5),
+        'P2_mom12_7_5': rank_m(lambda c, m: cum_skip(c, m, 7, 12), 5),
+        'P3_resmom_5': rank_m(lambda c, m: resid_mom(R[c], D.mkt, m), 5),
+        'P4_resmom_10': rank_m(lambda c, m: resid_mom(R[c], D.mkt, m), 10),
+        'P5_fip_5': fip(10, 5),
+        'P6_fip_10': fip(20, 10),
+        'P7_dual_5': dual,
+        'P8_invvol_5': invvol,
+        'P9_multi_5': multi,
+        'P10_mom12_5_q': lambda m: g3(m) if m % 100 in (1, 4, 7, 10) else None,
+    }
+
+
+def part3(D, sig, rep):
+    pre = json.load(open(os.path.join(BASE, 'out', PREREG3)))
+    specs = {s['id']: s for s in pre['strategies']}
+    T = part3_targets(D, sig)
+    assert set(T) == set(specs), set(T) ^ set(specs)
+    rows = []
+    for sid, spec in specs.items():
+        r, turn, hold = run(T[sid], D.R, D.months)
+        ev = evaluate(sid, r, turn, D.mkt, spec.get('pub_year'))
+        ev.update({'primary': False, 'prereg': PREREG3, 'family': 'prereg3_momentum_refinements', 'rule': spec['rule']})
+        key = spec.get('repl')
+        key = key.split(':')[0] if key else None
+        ev['repl_key'] = key
+        ev['repl'] = repl_summary(rep, key) if key else None
+        ev['repl_detail'] = rep.get(key) if key else None
+        last = max(hold)
+        ev['holding_last'] = {'month': last, 'industries': hold[last] if len(hold[last]) <= 12 else f'{len(hold[last])}業種'}
+        rows.append(ev)
+    return rows
+
+
+def pooled_repl(rep_raw_series):
+    """国を月ごとに平均した超過の t（参考・判定しない）"""
+    out = {}
+    for key, per in rep_raw_series.items():
+        ms = sorted(set().union(*[set(v) for v in per.values()])) if per else []
+        avg = {m: S.mean([v[m] for v in per.values() if m in v]) for m in ms if sum(m in v for v in per.values()) == len(per)}
+        if len(avg) < 60:
+            continue
+        x = [avg[m] for m in sorted(avg)]
+        t = M.nw_t(x)
+        out[key] = {'countries': len(per), 'from': min(avg), 'to': max(avg), 'ex_ann': round(S.mean(x) * 1200, 2), 't': None if t is None else round(t, 2)}
+    return out
+
+
+def us_gics_check():
+    """米国の GICS 11（JKP usa・1999〜2025）で上位3の規則（参考・判定しない・実在のセクターETFに近い形）"""
+    R = jkp_industry('usa')
+    mk = M.jkp_mkt('usa', 'vw')
+    months = sorted(set().union(*[set(v) for v in R.values()]))
+    out = {}
+    for key, tg in repl_targets(R, mk).items():
+        if key in ('def', 'siegel'):
+            continue
+        r, _, _ = run(tg, R, months)
+        ks = sorted(k for k in r if k in mk)
+        if len(ks) < 60:
+            continue
+        rr = {k: r[k] for k in ks}
+        out[key] = {p: (lambda st: None if st is None else {x: st[x] for x in ('from', 'to', 'ex_ann', 't', 'cagr_diff', 'te')})(M.excess_stats(rr, mk, a=a, z=z))
+                    for p, a, z in (('full', None, None), ('train', None, M.TRAIN_END), ('hold', M.HOLD_START, None))}
+    return out
+
+
 def main():
     D = Data()
     sig = Sig(D)
@@ -719,14 +969,16 @@ def main():
         e['holm_p_hold'] = hp.get(e['id']) if e['primary'] else ha.get(e['id'])
         e['holm_family'] = 'primary(27)' if e['primary'] else 'primary+exploratory(36)'
     rows2 = part2(D, sig, rep) if os.path.exists(os.path.join(BASE, 'out', PREREG2)) else []
-    p2 = M.holm({e['id']: e['hold']['p'] for e in rows2 if e['hold']})
-    pall = M.holm({e['id']: e['hold']['p'] for e in rows + rows2 if e['hold']})
-    for e in rows2:
-        e['holm_p_hold'] = p2.get(e['id'])
-        e['holm_family'] = f'prereg2({len(rows2)})'
-    for e in rows + rows2:
+    rows3 = part3(D, sig, rep) if os.path.exists(os.path.join(BASE, 'out', PREREG3)) else []
+    for fam, rr in ((PREREG2, rows2), (PREREG3, rows3)):
+        pf = M.holm({e['id']: e['hold']['p'] for e in rr if e['hold']})
+        for e in rr:
+            e['holm_p_hold'] = pf.get(e['id'])
+            e['holm_family'] = f'{fam}({len(rr)})'
+    pall = M.holm({e['id']: e['hold']['p'] for e in rows + rows2 + rows3 if e['hold']})
+    for e in rows + rows2 + rows3:
         e['holm_p_hold_all'] = pall.get(e['id'])
-    rows = rows + rows2
+    rows = rows + rows2 + rows3
     for e in rows:
         g, c = M.grade(e['full'], e['train'], e['hold'], e['roll20'], cost_hold=e['cost_hold'], repl=e['repl'],
                        family_holm_p=e['holm_p_hold'])
@@ -738,12 +990,13 @@ def main():
            'sanity': sanity(D, sig), 'n_tested': len(rows),
            'grades': {g: [e['id'] for e in rows if e['grade'] == g] for g in 'SABC'},
            'tested': rows, 'replication_raw': rep,
-           'diagnostics_post_hoc_not_graded': diagnostics(D) if '--nodiag' not in sys.argv else None}
+           'diagnostics_post_hoc_not_graded': dict(diagnostics(D) if '--nodiag' not in sys.argv else {},
+                                                   pooled_international=pooled_repl(RAW), us_gics_jkp=us_gics_check())}
     p = M.save(OUT, out)
     print('→', p)
     for e in rows:
         h, f, t = e['hold'], e['full'], e['train']
-        print(f"{e['id']:<20} {'主' if e['primary'] else ('探' if e['prereg'] == PREREG else '探2')} 全{f['ex_ann']:+6.2f}(t{f['t']:+.2f}) 訓{t['ex_ann']:+6.2f}(t{t['t']:+.2f}) "
+        print(f"{e['id']:<20} {'主' if e['primary'] else {PREREG: '探', PREREG2: '探2', PREREG3: '探3'}[e['prereg']]} 全{f['ex_ann']:+6.2f}(t{f['t']:+.2f}) 訓{t['ex_ann']:+6.2f}(t{t['t']:+.2f}) "
               f"保{h['ex_ann']:+6.2f}(t{h['t']:+.2f} g{h['cagr_diff']:+.2f}) 費後{e['cost_hold']['ex_ann']:+6.2f} "
               f"roll{e['roll20']['win_rate'] if e['roll20'] else None} repl{e['repl']} holm{e['holm_p_hold']} → {e['grade']}")
 
