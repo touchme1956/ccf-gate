@@ -409,6 +409,13 @@ def main():
         t2, rep2 = part2(D, P, G, mktrf, rf, RP, RG, RM)
         tested += t2
         out['post_hoc_regional_adopter'] = rep2
+    # ── 事後の診断（結果1・2を見た後に計算・判定に使わない） ──
+    out['post_hoc_diagnostics'] = diagnostics(D, P, G, mktrf, rf, RP, RM, tested)
+    # ── 探索3（事前登録3）: 米国外での確かめ・標本後の確かめ ──
+    if os.path.exists(os.path.join(M.BASE, 'out', PREREG3)):
+        out['prereg3'] = PREREG3
+        out['prereg3_commit'] = git_sha(os.path.join('out', PREREG3))
+        tested += part3(D, P, G, mktrf, rf, RP, RG, RM)
 
     out['tested'] = tested
     out['n_tested'] = len(tested)
@@ -458,13 +465,19 @@ class Hist:
         return j - i, self.cs[a][j] - self.cs[a][i], self.cq[a][j] - self.cq[a][i]
 
 
-def run_rule(rule, D, P, G, mkt, start, adopt):
-    """rule(t) → {スロット: 重み}（スロット＝(特徴, 三分位) か 'MKT'）。当月のリターンと回転率（選び直し＋構成）"""
+def run_rule(rule, D, P, G, mkt, start, adopt, wait_min=0):
+    """rule(t) → {スロット: 重み}（スロット＝(特徴, 三分位) か 'MKT'）。当月のリターンと回転率（選び直し＋構成）。
+    wait_min>0 なら、市場以外のスロットが wait_min 以上になった最初の月から始める（探索3）"""
     months = sorted(k for k in mkt if k >= start and k <= DATA_END)
     ret, trn, sel_m, nh = {}, {}, {}, {}
     prev = None
+    started = wait_min == 0
     for t in months:
         w = rule(t)
+        if not started:
+            if not w or sum(1 for k in w if k != 'MKT') < wait_min:
+                continue
+            started = True
         if not w:
             w = {'MKT': 1.0}
         r = 0.0
@@ -631,6 +644,165 @@ def part2(D, P, G, mktrf, rf, RP, RG, RM):
                                           'cost_hold': M.excess_stats(M.apply_cost(s_, mean_turn(rt), COST), b_, a=M.HOLD_START),
                                           'roll20': M.rolling(s_, b_, 20), 'dca20': M.dca(s_, b_, 20)}
     return list(res.values()), rep2
+
+
+# ───────────────────────── 事後の診断 ─────────────────────────
+def tilt_series(P, D):
+    """特徴の傾き＝良い側 − 3つの三分位の等分平均（3つとも値がある月だけ）。
+    地域の三分位の等分平均は地域の vw 市場より構造的に高い（小型寄り）ので、市場ではなくこれを中立の基準にする"""
+    T = {}
+    for a in D:
+        if a not in P or not all(pf in P[a] for pf in ('1.0', '2.0', '3.0')):
+            continue
+        g = P[a][D[a]['good_pf']]
+        ks = set(P[a]['1.0']) & set(P[a]['2.0']) & set(P[a]['3.0'])
+        T[a] = {k: g[k] - (P[a]['1.0'][k] + P[a]['2.0'][k] + P[a]['3.0'][k]) / 3 for k in ks}
+    return T
+
+
+def diagnostics(D, P, G, mktrf, rf, RP, RM, tested):
+    out = {'label': '事後（結果1・2を見た後に計算した診断・判定には使わない）'}
+    known = [a for a, d in D.items() if d['pub']]
+    ad0 = adopt_dates(D, 0)
+    # (1) 三分位の等分平均 vs 市場（構造の偏り）: 良い側・悪い側・真ん中の採用者
+    rows = {}
+    for reg, PP_, mk in [('usa', P, mktrf)] + [(r, RP[r], RM[r]) for r in REGIONS]:
+        rr = {}
+        for lab in ('good', 'bad', 'mid'):
+            sel = (lambda a: D[a]['good_pf']) if lab == 'good' else (lambda a: '1.0' if D[a]['good_pf'] == '3.0' else '3.0') if lab == 'bad' else (lambda a: '2.0')
+            Gx = {a: PP_[a][sel(a)] for a in known if a in PP_ and sel(a) in PP_[a]}
+            r, c, t = adopter(Gx, D, known, ad0, False, start_min=REG_START)
+            f = M.excess_stats(to_total(r, rf), to_total(mk, rf), a=REG_START)
+            h = M.excess_stats(to_total(r, rf), to_total(mk, rf), a=M.HOLD_START)
+            rr[lab] = {'full_ex': f['ex_ann'], 'full_t': f['t'], 'hold_ex': h['ex_ann'], 'hold_t': h['t']}
+        rows[reg] = rr
+    out['tercile_side_adopters_1990on'] = {'note': '同じ採用の規則で、良い側・悪い側・真ん中の三分位を持った場合の対 地域vw市場（1990-01〜）。地域では真ん中・3つの平均も市場に勝つ＝三分位を等分に持つこと自体が小型寄りの傾きを生む（米国外は小型が大型に勝った）。地域の C5 の超過はこの分だけ甘い', 'rows': rows}
+    # (2) census: 公表2006以前（83本）の保有期間の分布と、訓練期間の t が保有期間を当てるか
+    cen = [v for v in tested if v['family'] == 'census' and v['clean_holdout'] and v['eval']['hold']]
+    h = [v['eval']['hold']['ex_ann'] for v in cen]
+    tr = [v['eval']['train']['t'] for v in cen]
+    out['census_clean'] = {'n': len(cen), 'hold_mean': round(S.mean(h), 2), 'hold_median': round(S.median(h), 2),
+                           'hold_positive': sum(1 for x in h if x > 0), 'hold_t_ge_1_65': sum(1 for v in cen if (v['eval']['hold']['t'] or 0) >= 1.65),
+                           'expected_t_ge_1_65_if_null': round(0.05 * len(cen), 1),
+                           'corr_train_t_vs_hold_ex': round(M.corr(tr, h), 3),
+                           'hold_mean_train_t_ge3': round(S.mean([v['eval']['hold']['ex_ann'] for v in cen if v['eval']['train']['t'] >= 3]), 2),
+                           'n_train_t_ge3': sum(1 for v in cen if v['eval']['train']['t'] >= 3)}
+    # (3) census の S/A を、地域の傾き（良い側−3つの平均）で数え直した C5
+    RT = {reg: tilt_series(RP[reg], D) for reg in REGIONS}
+    c5 = {}
+    for v in tested:
+        if v['family'] != 'census' or v['grade'] not in ('S', 'A'):
+            continue
+        a = v['name'][2:]
+        row = {}
+        for reg in REGIONS:
+            x = [RT[reg][a][k] for k in sorted(RT[reg].get(a, {})) if k >= REG_START]
+            row[reg] = [round(S.mean(x) * 1200, 2), round(M.nw_t(x), 2)] if len(x) >= 24 else None
+        c5[a] = {'grade': v['grade'], 'clean': v['clean_holdout'], 'tilt_vs_avg3': row,
+                 'positive': sum(1 for r in row.values() if r and r[0] > 0)}
+    out['census_SA_C5_tilt_check'] = c5
+    return out
+
+
+# ───────────────────────── 探索3: 米国外での確かめ・標本後の確かめ（out/mw_postpub_prereg3.json）─────────────────────────
+PREREG3 = 'mw_postpub_prereg3.json'
+
+
+class HistX:
+    def __init__(self, X):
+        # Hist は g−mkt を取るので、全月が 0 の辞書を渡して X そのものの履歴にする
+        z = {}
+        for a, x in X.items():
+            for k in x:
+                z[k] = 0.0
+        self.h = Hist(X, z)
+
+    def t_before(self, a, t, minm=60):
+        n, s1, s2 = self.h.before(a, t)
+        if n < minm:
+            return None
+        m = s1 / n
+        var = (s2 - n * m * m) / (n - 1)
+        return m / math.sqrt(var / n) if var > 0 else None
+
+
+def make_rules3(D, G, mkt, adopt, T_home, T_other, US_G, US_mkt):
+    """T_home: その地域の傾き系列・T_other: 確かめに使う別の地域の傾き系列（米国なら world_ex_us、地域なら米国）"""
+    gp = {a: D[a]['good_pf'] for a in G}
+    adopted = lambda t: [a for a in G if adopt.get(a) is not None and adopt[a] <= t and t in G[a]]
+    Ho, Hh = HistX(T_other), HistX(T_home)
+
+    def intl(thr):
+        def rule(t):
+            keep = []
+            for a in adopted(t):
+                x = Ho.t_before(a, t)
+                if x is not None and x >= thr:
+                    keep.append((a, gp[a]))
+            return eq(keep)
+        return rule
+
+    # 標本後〜公表の窓（米国の論文の標本の後・公表の前＝採用の時点で閉じている窓）の米国の（良い側−市場）
+    ps_ok = {}
+    for a, d in D.items():
+        if not (d['pub'] and d['is_end']) or a not in US_G:
+            continue
+        xs = [US_G[a][k] - US_mkt[k] for k in US_G[a] if k in US_mkt and d['is_end'] < k // 100 <= d['pub']]
+        ps_ok[a] = True if len(xs) < 12 else (math.fsum(xs) > 0)
+
+    def postsample():
+        def rule(t):
+            return eq((a, gp[a]) for a in adopted(t) if ps_ok.get(a, True))
+        return rule
+
+    def double(thr):
+        def rule(t):
+            keep = []
+            for a in adopted(t):
+                x, y = Ho.t_before(a, t), Hh.t_before(a, t)
+                if x is not None and y is not None and x >= thr and y >= thr:
+                    keep.append((a, gp[a]))
+            return eq(keep)
+        return rule
+
+    return [
+        ('Y1_INTL_RT2', '採用済みの特徴のうち、別の地域（米国なら world_ex_us）での傾き（良い側−3つの三分位の平均）の t（前月まで・60か月以上）が2以上のものだけ', intl(2.0)),
+        ('Y3_POSTSAMPLE', '公表年の翌年に採用するとき、論文の標本の後〜公表までの米国の（良い側−市場）の和が負なら採用しない（窓が12か月未満なら採用）', postsample()),
+        ('Y4_DOUBLE2', '自分の地域の傾きの t≥2 と別の地域の傾きの t≥2 の両方（前月まで・60か月以上）', double(2.0)),
+    ]
+
+
+def part3(D, P, G, mktrf, rf, RP, RG, RM):
+    ad0 = adopt_dates(D, 0)
+    TU = tilt_series(P, D)
+    RT = {reg: tilt_series(RP[reg], D) for reg in REGIONS}
+    rules = make_rules3(D, G, mktrf, ad0, TU, RT['world_ex_us'], G, mktrf)
+    reg_rules = {reg: dict((n, f) for n, _, f in make_rules3(D, RG[reg], RM[reg], ad0, RT[reg], TU, G, mktrf)) for reg in REGIONS}
+    res = {}
+    for name, desc, rule in rules:
+        r, trn, nh = run_rule(rule, D, P, G, mktrf, P2_START_US, ad0, wait_min=MIN_ADOPTED)
+        e = evaluate(r, mktrf, rf, mean_turn(trn))
+        rep = {}
+        for reg in REGIONS:
+            rr, rt, rn = run_rule(reg_rules[reg][name], D, RP[reg], RG[reg], RM[reg], REG_START, ad0, wait_min=MIN_ADOPTED)
+            if not rr:
+                rep[reg] = {'full': None, 'hold': None}
+                continue
+            b = to_total(RM[reg], rf)
+            # 基準は地域の vw 市場（事前登録どおり）。三分位の等分の偏りを除いた参考として『真ん中の三分位の採用者』との差も
+            rep[reg] = {'full': M.excess_stats(to_total(rr, rf), b), 'hold': M.excess_stats(to_total(rr, rf), b, a=M.HOLD_START),
+                        'start': min(rr), 'mkt_months': sum(1 for k in rn if rn[k] == 0)}
+        pos = sum(1 for v in rep.values() if v['full'] and v['full']['ex_ann'] > 0)
+        nreg = sum(1 for v in rep.values() if v['full'])
+        res[name] = {'name': name, 'family': 'explore3', 'primary': False, 'description': desc, 'start': min(r) if r else None,
+                     'months_all_market': sum(1 for k in nh if nh[k] == 0), 'held_avg': round(S.mean(nh.values()), 1) if nh else None,
+                     'held_2006': nh.get(200612), 'held_2025': nh.get(202512),
+                     'eval': e, 'repl': {'regions': nreg, 'positive': pos, 'detail': rep}, 'annual': annual_table(r, mktrf)}
+    hp = M.holm({k: (v['eval']['hold'] or {}).get('p') for k, v in res.items()})
+    for k, v in res.items():
+        v['holm_p_hold'] = hp.get(k)
+        finalize(v)
+    return list(res.values())
 
 
 def annual_table(r, mktrf):
