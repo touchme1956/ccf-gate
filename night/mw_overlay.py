@@ -517,6 +517,15 @@ def main():
     multi = ['QSPIX', 'QRPIX', 'LFMIX']
     direct = ['RSST', 'NTSX', 'BLNDX']
     dead_try = ['MHFIX', 'MHFAX', 'FUTS', 'WFIIX', 'PFFTX', 'RTSIX', 'WAVEX']
+    DEAD_STATUS = {
+        'MHFIX': 'AV 月次の調整後終値 2011-06〜2022-07（清算）を手で写した。分配の無い月の 調整後÷終値 が前月と同じことを確認（崩れ0）',
+        'MHFAX': '試さず: MHFIX と同じファンドの別の株式クラス（AV の1日25回の枠を節約）',
+        'FUTS': '不採用: AV の FUTS は無関係の店頭の低位株（値 0.0001〜0.15 ドル）を返した＝同じ記号の別の銘柄。ProShares の ETF ではない',
+        'WFIIX': 'AV が『Invalid API call』＝記号を持っていない',
+        'PFFTX': 'AV 月次の調整後終値 2012-02〜2017-03（清算）を手で写した。分配の無い月の 調整後÷終値 が前月と同じことを確認（崩れ0）',
+        'RTSIX': 'AV の1日25回の上限（他の角度と共有の鍵）に当たって取れず',
+        'WAVEX': 'AV の1日25回の上限に当たって試せず',
+    }
     live = {}
     for t in trend + multi + direct:
         try:
@@ -564,7 +573,9 @@ def main():
     for t in multi:
         funds[t] = fund_entry(t, live.get(t), paper_M, 'multi-style/macro')
     for t in dead_try:
-        funds['DEAD_' + t] = fund_entry(t, dead.get(t), paper_T, 'trend(dead・AV)') if dead.get(t) else {'ticker': t, 'status': 'AV で取れず（欠測のまま・埋めない）'}
+        funds['DEAD_' + t] = fund_entry(t, dead.get(t), paper_T, 'trend(dead・AV)') if dead.get(t) else {'ticker': t, 'status': 'AV で取れず（欠測のまま・埋めない）: ' + DEAD_STATUS.get(t, '')}
+        if dead.get(t):
+            funds['DEAD_' + t]['av_note'] = DEAD_STATUS.get(t, '')
     for t in direct:
         r = live.get(t)
         if r and len(r) >= 24:
@@ -619,8 +630,87 @@ def main():
     bl = json.load(open(os.path.join(M.BASE, 'out', 'broker_lineup.json')))
     bl_check = {t: (t in bl['etfs']) for t in ['DBMF', 'KMLM', 'CTA', 'RSST', 'RSBT', 'NTSX', 'WTMF', 'FMF', 'ASMF', 'BLNDX']}
 
+    # ═════════ 探索2（out/mw_overlay_prereg2.json）═════════
+    res2 = {}
+    for nm, key in [('X1_CEN_USss_v10_k50', 'US Stock Selection Multi-style'), ('X2_CEN_INTLss_v10_k50', 'Intl Stock Selection Multi-style')]:
+        c = cc(CEN[key])
+        sp = {'fam': 'explore2', 'a': {t: c * v for t, v in CEN[key].items()}, 'ov': key, 'k': 0.5, 'c': c, 'T': 10, 'perf': True,
+              'mgmt_base': 0.01, 'mgmt_stress': 0.02, 'desc': f'Mkt + 0.5×（Century {key} をぶれ10%に）'}
+        res2[nm] = evaluate(nm, sp, m, rf, {}, 'explore2')
+    jkp_regions = ['jpn', 'gbr', 'deu', 'fra', 'can', 'aus', 'che', 'emerging', 'usa']
+    jkp_info = {}
+    for reg in jkp_regions:
+        fs = {k: M.jkp_factor(reg, k, 'vw_cap') for k in ['be_me', 'ret_12_1', 'betabab_1260d']}
+        mk = M.jkp_mkt(reg, 'vw')
+        ms = {t: (fs['be_me'][t] + fs['ret_12_1'][t] + fs['betabab_1260d'][t]) / 3 for t in set.intersection(*[set(v) for v in fs.values()])}
+        c = cc(ms)
+        m_reg = {t: mk[t] + rf[t] for t in mk if t in rf}   # 米ドル建ての総リターン（JKP は米国短期国債を引いた超過）
+        nm = f'X4_JKP_usa_MS_v10_k50' if reg == 'usa' else f'X3_JKP_{reg}_MS_v10_k50'
+        sp = {'fam': 'explore2', 'a': {t: c * v for t, v in ms.items()}, 'ov': f'JKP {reg} (be_me+ret_12_1+betabab_1260d)/3', 'k': 0.5, 'c': c, 'T': 10,
+              'perf': True, 'mgmt_base': 0.01, 'mgmt_stress': 0.02, 'desc': f'JKP {reg} の mkt(vw) + 0.5×（JKP {reg} のマルチスタイル買い−売り をぶれ10%に）'}
+        res2[nm] = evaluate(nm, sp, m_reg, rf, {}, 'explore2')
+        jkp_info[reg] = {'ms_range': [min(ms), max(ms), len(ms)], 'mkt_range': [min(mk), max(mk), len(mk)], 'c': round(c, 3)}
+    allp38 = {**{n: res[n]['hold']['p'] for n in res}, **{n: res2[n]['hold']['p'] for n in res2}}
+    h38 = M.holm(allp38)
+    for n, e in res2.items():
+        e['family_holm_p'] = h38[n]
+        g, crit = M.grade(e['full'], e['train'], e['hold'], e['roll20'], cost_hold=e['cost_hold_stress'], repl=None,
+                          family_holm_p=h38[n], sharpe_pair=e['sharpe_pair'], leveraged_or_timing=True)
+        e['grade'], e['criteria'] = g, crit
+        log(f"  P2 {n:28s} c={e['c']} tr {e['train'] and (e['train']['ex_ann'], e['train']['t'])} ho {e['hold'] and (e['hold']['ex_ann'], e['hold']['t'], e['hold']['cagr_diff'])} "
+            f"SR {e['sharpe_pair']} grade {g} c8sig={e['c8_significant_hold']}")
+    x3 = [n for n in res2 if n.startswith('X3_')]
+    x3_ok = [n for n in x3 if res2[n]['hold'] and res2[n]['hold']['ex_ann'] > 0 and res2[n]['sharpe_pair']['hold']
+             and res2[n]['sharpe_pair']['hold'][0] > res2[n]['sharpe_pair']['hold'][1]]
+    repl_summary = {'regions': len(x3), 'hold_ex_pos_and_sharpe_higher': len(x3_ok), 'which': x3_ok,
+                    'verdict': '国をまたいで再現' if len(x3_ok) >= 6 else '米国（Century）だけ'}
+    log('探索2 国の再現', repl_summary)
+    # B1 借株料
+    e2 = specs['E2_SSms_v10_k50']
+    borrow = {}
+    for b in (0.005, 0.01):
+        slb = sleeve(e2['a'], 0.5, 0.01 + b * e2['c'], 10 * e2['c'] * 0.0005)
+        sb = stack(m, slb)
+        borrow[f'borrow_{b * 100:.1f}pct'] = {'full': M.excess_stats(sb, m), 'train': M.excess_stats(sb, m, z=TE), 'hold': M.excess_stats(sb, m, a=HS),
+                                             'sharpe_hold': (M.sharpe(sb, rf, a=HS), M.sharpe(m, rf, a=HS)), 'jk_hold': jk_memmel(sb, m, rf, a=HS)}
+    # L1 実在のマーケット・ニュートラル
+    paper_SS = sleeve(e2['a'], 1.0, 0.01, 10 * e2['c'] * 0.0005)
+    mn = ['QMNIX', 'VMNFX', 'BDMIX', 'JMNSX']
+    live_mn = {}
+    for t in mn + ['QLEIX']:
+        try:
+            live_mn[t] = {k: v for k, v in M.yahoo(t).items() if k in rf}
+        except Exception as ex:  # noqa
+            live_mn[t] = None
+    funds_mn = {t: fund_entry(t, live_mn.get(t), paper_SS, 'equity market neutral' if t != 'QLEIX' else 'equity long-short (net long)') for t in mn + ['QLEIX']}
+    comp_mn, cnt_mn = composite(mn, live_mn)
+    ce = fund_entry('composite_mn', comp_mn, paper_SS, 'composite')
+    ce['funds_per_month'] = {'first': [min(cnt_mn), cnt_mn[min(cnt_mn)]], 'last': [max(cnt_mn), cnt_mn[max(cnt_mn)]], 'max': max(cnt_mn.values())}
+    ce['hold_2007'] = {}
+    for k in (0.5, 1.0):
+        s = {u: m[u] + k * (comp_mn[u] - rf[u]) - DRAG / 12 for u in comp_mn if u in m}
+        ce['hold_2007'][f'k{int(k * 100)}'] = {'ex_hold': M.excess_stats(s, m, a=HS), 'sharpe_hold': (M.sharpe(s, rf, a=HS), M.sharpe(m, rf, a=HS))}
+    funds_mn['composite_mn'] = ce
+    # L2 日本
+    try:
+        jp_mn = toushin_search(['マーケット・ニュートラル', 'マーケットニュートラル', 'ロング・ショート', 'ロングショート'])
+    except Exception as ex:  # noqa
+        jp_mn = {'error': str(ex)[:200]}
+    part2 = {'prereg': 'out/mw_overlay_prereg2.json', 'prereg_commit': git_sha('out/mw_overlay_prereg2.json'),
+             'holm_family_size': len(allp38), 'strategies': {n: {k: v for k, v in e.items() if not k.startswith('_')} for n, e in res2.items()},
+             'jkp_info': jkp_info, 'replication_summary': repl_summary, 'B1_borrow_cost_E2_SSms': borrow,
+             'L1_live_market_neutral': funds_mn, 'L2_japan_market_neutral': jp_mn}
+
     # ── 保存
     tested = []
+    for n, e in res2.items():
+        tested.append({'name': n, 'family': 'explore2', 'graded': True, 'grade': e['grade'], 'leak': False,
+                       'hold_ex': e['hold']['ex_ann'] if e['hold'] else None, 'hold_t': e['hold']['t'] if e['hold'] else None,
+                       'hold_cagr_diff': e['hold']['cagr_diff'] if e['hold'] else None})
+    for b in borrow:
+        tested.append({'name': 'B1_E2_SSms_' + b, 'family': 'report2', 'graded': False})
+    for t in funds_mn:
+        tested.append({'name': 'L1_' + t, 'family': 'reality_gap2', 'graded': False})
     for n, e in res.items():
         tested.append({'name': n, 'family': e['family'], 'graded': True, 'grade': e['grade'], 'leak': e['leak'],
                        'hold_ex': e['hold']['ex_ann'], 'hold_t': e['hold']['t'], 'hold_cagr_diff': e['hold']['cagr_diff']})
@@ -643,11 +733,12 @@ def main():
                    'century_range': {k: [min(CEN[k]), max(CEN[k]), len(CEN[k])] for k in ['All asset classes Momentum', 'All asset classes Multi-style', 'Fixed income Market']},
                    'brief_reproduction': rep, 'vol_target_c': {n: res[n]['c'] for n in res},
                    'live_fund_monthly_abs_gt_30pct': anomalies},
-        'n_graded': len(res), 'tested': tested,
+        'n_graded': len(res) + len(res2), 'n_graded_part1': len(res), 'tested': tested,
         'strategies': {n: strip(e) for n, e in res.items()},
         'jp_tax': jp_tax, 'vrp': vrp,
         'reality_gap': {'funds': funds, 'composite': comps, 'paper_same_window_as_composite': paper_same},
         'japan_investability': {'toushin_lib': jp, 'tsumitate_lineup_hits': tl_hits, 'rakuten_us_etf_lineup': bl_check},
+        'part2': part2,
         'runtime_sec': round(time.time() - t0, 1), 'log_tail': LOG[-80:],
     }
     p = M.save(OUT, out)
