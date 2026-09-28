@@ -754,7 +754,12 @@
   "JKP の ivol_hxz4_21d の3本と ni_inc8q の三分位2 は月が途切れている。順位づけの窓（196307〜200612）が欠ける候補は順位から外し、評価は連続した最長の区間だけで行う（欠測を0で埋めない）",
   "seas_6_10na（6〜10年前の同じでない月のリターン）は JKP のクラスタ表で Low Risk に入っているので、登録どおり低リスク群として扱った（中身は季節性の信号）",
   "シャープレシオ（C8）は mw_common.sharpe ではなく、戦略と市場を同じ月だけで比べる sharpe_same で計算した（mw_common.sharpe を市場に使うと市場だけ1926年からの月で測ってしまうため）",
-  "第1族の結果を見た後で事前登録2（X2・X3・X4・S2）を登録した。事前登録2の族はすべて探索"
+  "第1族の結果を見た後で事前登録2（X2・X3・X4・S2）を登録した。事前登録2の族はすべて探索",
+  "2回目の実行で numpy の真偽値（np.bool_）が JSON に書けず途中で止まり、壊れたファイルが残った。混合の重みを Python の float に直し、書く前に JSON にできるかを確かめる1行を足して再実行した（第1族の数字は1回目と同じ）",
+  "事前登録4の本数の書き間違い（27→36）は、測る前・コミット前に直した",
+  "mw_common.yahoo は取得した日の月（2026-09・途中まで）も1か月として返す。現実の答え合わせでは French の RF の最後の月（2026-08）で切った（mw_common は変えていない）",
+  "scratchpad は他のエージェントと共有で、最初の実行ログ（run2.log）が別の角度の出力で上書きされた。結果には影響なし（以後は riskmatched_*.log の名前で書いた）",
+  "事後（判定に使わない）: X2 の FR_VAR[Dec 2]（S）は、倍率1で隣の十分位が保有期間に負けていた（Lo 10 −2.0・Dec 3 −0.9%/年）。この十分位だけの運の疑いが強い。X2 は X1 の結果（Dec 2 が保有期間で最大・C1 不合格）を見た後に登録した族"
  ],
  "x3_weights": {
   "X3a_EW10": [
@@ -85057,5 +85062,25 @@
   "zero_trades_126d": "3.0",
   "zero_trades_21d": "3.0",
   "zero_trades_252d": "3.0"
+ },
+ "headline": {
+  "primary_S": [
+   "P_JKP_ocf_at[3]_static",
+   "P_JKP_ocf_at[3]_dynamic"
+  ],
+  "true_risk_matching_S": [
+   "X5_X5_QLR_ALL_static",
+   "X5_X5_QLR_ALL_dynamic",
+   "X5_X5_QLR_ALL_beta_static",
+   "X5_X5_QLR_ALL_beta_dynamic",
+   "X2_JKP_rmax5_21d[1]_beta_static",
+   "X2_JKP_rmax5_21d[1]_beta_dynamic",
+   "X2_JKP_rvol_21d[1]_beta_static",
+   "X2_JKP_rmax1_21d[1]_beta_static",
+   "X1_JKP_rmax5_21d[1]_static",
+   "X1_JKP_rmax5_21d[1]_dynamic"
+  ],
+  "reality": "実在の低ボラ・質のETF 12本 × 3規則 = 36本はすべて C（2014〜2026 に SPY へ −0.5〜−6%/年・紙の対応との差 1〜6%/年）",
+  "strongest_caveat": "質の勝ちは巨大株を満額持つことが源（上限つき vw_cap で作ると保有期間 −0.1〜−0.8%/年）。低リスクを借入で持ち上げる勝ちは最良の12か月を除くとほぼ0。どちらも実在のETFでは取れていない"
  }
 }
