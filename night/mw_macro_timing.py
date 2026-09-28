@@ -35,7 +35,12 @@ POST = {'P': {'post_GW_CT_2008': 200901, 'post_RSZ_2010': 201101}, 'I': {'post_G
         'G': {'post_GrowthTrend_2016': 201701, 'post_Faber_2007': 200801}, 'R': {'post_GW_CT_2008': 200901, 'post_Faber_2007': 200801},
         'X1': {'post_GW_CT_2008': 200901, 'post_RSZ_2010': 201101}, 'X2': {'post_GrowthTrend_2016': 201701, 'post_Faber_2007': 200801}}
 PREREG2 = 'mw_macro_timing_prereg2.json'
-EXPLORATORY = {'X1': PREREG2, 'X2': PREREG2}
+PREREG3 = 'mw_macro_timing_prereg3.json'
+EXPLORATORY = {'X1': PREREG2, 'X2': PREREG2, 'X3': PREREG3}
+POST['X3'] = {'post_JMJ_1996': 199701, 'post_GrowthTrend_2016': 201701}
+POLICY_CC = {'GB': ['GB'], 'AU': ['AU'], 'CA': ['CA'], 'JP': ['JP'], 'DE': ['DE', 'EZ'], 'IT': ['IT', 'EZ'], 'ES': ['ES', 'EZ'],
+             'FR': ['EZ'], 'NL': ['EZ'], 'BE': ['EZ'], 'AT': ['EZ'], 'FI': ['EZ'], 'IE': ['EZ']}
+EURO = {'DE', 'IT', 'ES', 'FR', 'NL', 'BE', 'AT', 'FI', 'IE'}
 LOG = []
 
 
@@ -582,6 +587,77 @@ def country_block(fc_all, use_unemp, volmatch=False):
     return {'regions': reg, 'positive': pos, 'detail': det}
 
 
+# ───────────────────────── 金融政策の向き（探索3） ─────────────────────────
+def policy_regime(parts):
+    """parts: [(系列 {yyyymm: 金利}, 始め, 終わり)] を順につなぐ。変更は同じ系列の中の前の値との差だけ（つなぎ目は数えない）。
+    → {yyyymm: +1（最後の変更が引き下げ＝緩和）/ −1（引き上げ＝引き締め）}。最初の変更より前と、系列の無い月は作らない"""
+    reg, cur = {}, None
+    for s, a, z in parts:
+        prev = None
+        for k in sorted(k for k in s if (a is None or k >= a) and (z is None or k <= z)):
+            if prev is not None:
+                dv = s[k] - s[prev]
+                if dv < -1e-9:
+                    cur = 1
+                elif dv > 1e-9:
+                    cur = -1
+            if cur is not None:
+                reg[k] = cur
+            prev = k
+    return reg
+
+
+def country_policy_block(fc_all, volmatch):
+    det, pos, reg_n = {}, 0, 0
+    ser = {}
+    for cc in set(x for v in POLICY_CC.values() for x in v):
+        try:
+            ser[cc] = fred(f'INTDSR{cc}M193N')
+        except RuntimeError:
+            ser[cc] = None
+    for fn, (cc, jp) in COUNTRIES.items():
+        if cc not in POLICY_CC or fn not in fc_all:
+            continue
+        parts = []
+        for src in POLICY_CC[cc]:
+            if ser.get(src) is None:
+                continue
+            if src == 'EZ':
+                parts.append((ser[src], 199901, None))
+            else:
+                parts.append((ser[src], None, 199812 if cc in EURO else None))
+        rg = policy_regime(parts)
+        try:
+            r3 = fred(f'IR3TIB01{cc}M156N')
+            rc = fred(f'IRSTCI01{cc}M156N')
+        except RuntimeError:
+            det[cc] = 'N/A（現金の金利が取れない）'
+            continue
+        rate = dict(rc); rate.update(r3)
+        loc = fc_all[fn]
+        cash = {k: rate[ym_add(k, -1)] / 1200 for k in loc if ym_add(k, -1) in rate}
+        W = {m: (1.0 if rg[ym_add(m, -1)] == 1 else 0.0) for m in loc if m in cash and ym_add(m, -1) in rg}
+        g, n, TO = run_w(W, loc, cash)
+        if volmatch:
+            tk = [k for k in g if k <= M.TRAIN_END]
+            if len(tk) < 60:
+                det[cc] = f'N/A（訓練期間が {len(tk)} か月）'
+                continue
+            L = min(WMAX, S.stdev([loc[k] for k in tk]) / S.stdev([g[k] for k in tk]))
+            W = {m: (0.0 if w == 0 else L) for m, w in W.items()}
+            g, n, TO = run_w(W, loc, cash)
+        if len(n) < 120:
+            det[cc] = f'N/A（評価できる月が {len(n)}）'
+            continue
+        b = {k: loc[k] for k in n}
+        xs = M.excess_stats(n, b)
+        reg_n += 1
+        ok = xs['ex_ann'] > 0 and xs['cagr_diff'] > 0
+        pos += ok
+        det[cc] = {'name': jp, 'window': [min(n), max(n)], 'net': xs, 'positive': ok, 'pct_restrictive': round(sum(1 for w in W.values() if w == 0) / len(W), 3)}
+    return {'regions': reg_n, 'positive': pos, 'detail': det}
+
+
 # ───────────────────────── 評価 ─────────────────────────
 def evaluate(name, fam, W, r, c, mkt, rf, dy, er=None, fc=None, base=None):
     gross, net, TO = run_w(W, r, c)
@@ -764,6 +840,38 @@ def main():
         e['L_train_window'] = [tk[0], tk[-1]]
         e['repl'] = country_block(fc_all, True, volmatch=True) if src == 'G1' else None
         tested.append(e)
+    # ── 探索3（prereg3）: 信用スプレッドの拡大 × トレンド／金融政策の向き
+    def c_credit(d):
+        w = [ym_add(d, -i) for i in range(12)]
+        return gy['dfy'][d] > S.mean(gy['dfy'][x] for x in w) if all(x in gy['dfy'] for x in w) else None
+
+    def volmatch_w(W0):
+        g0, _, _ = run_w(W0, r, c)
+        tk = [k for k in g0 if FRENCH_START <= k <= M.TRAIN_END and k in mkt]
+        L = min(WMAX, S.stdev([mkt[k] for k in tk]) / S.stdev([g0[k] for k in tk]))
+        return {m: (0.0 if w == 0 else L) for m, w in W0.items()}, L, [tk[0], tk[-1]]
+
+    W0 = g_w(c_credit)
+    e = evaluate('X3a_GT_CREDIT', 'X3', W0, r, c, mkt, rf, dy)
+    e['repl'] = None
+    tested.append(e)
+    W, L, tw = volmatch_w(W0)
+    e = evaluate('X3b_GT_CREDIT_volmatch', 'X3', W, r, c, mkt, rf, dy)
+    e['L_from_train'], e['L_train_window'], e['repl'] = round(L, 4), tw, None
+    tested.append(e)
+    pol = policy_regime([(fred('M13009USM156NNBR'), None, 196907), (fred('INTDSRUSM193N'), 196908, 200212), (fred('DPCREDIT'), 200301, None)])
+    months_all = sorted(k for k in r if k >= 187103)
+    W0 = {m: (1.0 if pol[dtime(m)] == 1 else 0.0) for m in months_all if dtime(m) in pol}
+    e = evaluate('X3c_MONPOL', 'X3', W0, r, c, mkt, rf, dy)
+    e['pct_restrictive'] = round(sum(1 for m, w in W0.items() if w == 0 and m >= FRENCH_START) / sum(1 for m in W0 if m >= FRENCH_START), 3)
+    e['repl'] = country_policy_block(fc_all, False)
+    tested.append(e)
+    W, L, tw = volmatch_w(W0)
+    e = evaluate('X3d_MONPOL_volmatch', 'X3', W, r, c, mkt, rf, dy)
+    e['L_from_train'], e['L_train_window'] = round(L, 4), tw
+    e['repl'] = country_policy_block(fc_all, True)
+    tested.append(e)
+
     for e in tested:
         e['exploratory'] = e['family'] in EXPLORATORY
         if e['exploratory']:
@@ -788,7 +896,8 @@ def main():
             f"  シャープ {pair}  再現 {rpg}")
 
     out = {'angle': 'macro_timing', 'prereg': PREREG, 'prereg_commit': pre_sha,
-           'prereg2': PREREG2, 'prereg2_commit': git_sha('out/' + PREREG2), 'sanity': san,
+           'prereg2': PREREG2, 'prereg2_commit': git_sha('out/' + PREREG2),
+           'prereg3': PREREG3, 'prereg3_commit': git_sha('out/' + PREREG3), 'sanity': san,
            'participation': {str(y): round(S.mean(npart[m] for m in npart if m // 100 == y), 1) for y in range(1891, 2026, 5) if any(m // 100 == y for m in npart)},
            'n_tested': len(tested), 'tested': tested, 'log': LOG}
     p = M.save(OUT, out)
