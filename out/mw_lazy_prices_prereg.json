@@ -49,13 +49,23 @@
   },
   "families": {
    "primary": {
-    "holm_family": ["P1_cos", "P2_cos", "P3_cos"],
+    "holm_family": [
+     "P1_cos",
+     "P2_cos",
+     "P3_cos"
+    ],
     "P1_cos": "最も似ている五分位（Q5・余弦・全文）を時価加重で買って持つ（毎月作り替え）。相手＝French Mkt",
     "P3_cos": "業種中立: French 49業種の中で余弦の百分位（(順位−0.5)÷社数）を付け（その月その業種に5社以上いるときだけ・5社未満の業種の社はその月の対象から外す）、百分位で全体を5等分した Q5 を時価加重。相手＝French Mkt",
     "P2_cos": "質の良い側（毎年7月に名簿の社のうち cop_at の上位1/3・翌年6月まで）から、その月の Q1（最も似ていない五分位・P1 と同じ切り方）を外したものを時価加重。相手＝外さない質の良い側（同じ時価加重・同じ生き残りの扱い）。French Mkt との差も報告。期間は 1997-07〜2002-06（EX-27 の代理）と 2010-07〜2026-08"
    },
    "secondary": {
-    "holm_family": ["P1_jac", "P1_minedit", "P1_simple", "P1_cos_item7", "P1_cos_item1a"],
+    "holm_family": [
+     "P1_jac",
+     "P1_minedit",
+     "P1_simple",
+     "P1_cos_item7",
+     "P1_cos_item1a"
+    ],
     "rule": "P1 と同じ作り方で、並べる類似度だけを替える（Item 7・1A は節のある社だけが対象・到達の検問は同じ）"
    },
    "exploratory_robustness": {
@@ -103,5 +113,13 @@
   "1990年代の名簿の記号の CIK 対応は moat_text の6ビンテージの間を最も近いビンテージで埋めるので、ビンテージの間に出入りした社の一部は対応なしになる",
   "CIK が変わった年（持株会社化・合併の存続会社の入れ替え）はその年の類似度が欠測",
   "P2 の 1997-2002 の質は EX-27 からの代理で、2010〜 の cop_at とは定義が違う"
- ]
+ ],
+ "addendum_before_returns": {
+  "committed": "2026-09-28（リターン・株価はまだ一度も読んでいない。原本は 72b0978）",
+  "changes": [
+   "節の切り出し: moat_text の規則は本文中の参照（例: Apple FY2008 の Item 1 の中の『Item 7 of this Form 10-K』）を見出しと読み、Item 7 が文書の大半に伸びていた。見出しの行の残りが小文字で始まるもの（参照）を見出しから外し、始まりの見出しは題の語（Item 7＝management・1A＝risk・1＝business）を含むものだけにした。選び方（目次を避けて最長）は同じ。影響するのは副の族の cos_item7・cos_item1a だけ（主の全文の余弦は節を使わない）",
+   "記号→CIK の対応: 事前登録の候補（moat_text の6ビンテージ ∪ 今日の SEC 一覧）だけでは、2013年以降に入って後に買収・改名で消えた社（FB→META・ATVI・WBA・HOLX・ANSS 等）が付かず、2015〜2022 の対応が約93%に落ちた。(1)(2) で付かない記号だけ EDGAR 全文検索（10-K の本文の『symbol T』）の CIK を候補に足し、その年の前後1年の件数が多い順に提出が生きている CIK を採る (2b) を足した。社名で別の社と分かった6件（GGP→Boomerang Systems・PCS→iPCS / Liberty Media・PALM→Centura Software・FI→Expro・H→Anywhere Real Estate）は候補から外した（道具の EFTS_REJECT）。対応の割合は各年 94〜100%（1997 年 94%・2015〜2022 年 98%台）",
+   "到達の検問・類似度・持ち方・判定の規則は変えていない"
+  ]
+ }
 }
