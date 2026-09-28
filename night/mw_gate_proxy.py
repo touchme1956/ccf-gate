@@ -496,6 +496,154 @@ def verifier_repro(DU):
             'expected': 'train +1.13 t2.86 ・ hold +0.82 t2.09（out/mw_combo_us_verify.json H3）'}
 
 
+# ───────────────────────── 事後の検算（結果を見た後・格付けしない） ─────────────────────────
+POSTHOC_NOTE = ('事後（結果を見た後に足した検算・格付けしない）: 主の P1・P2 が S になったので『良すぎる結果はまず道具を疑う』に従い、'
+                '(1) 重みづけを揃えた比較 (2) 三分位の混合という作り方そのものの偏り（中立＝3つの三分位の等分）を国ごとに引く '
+                '(3) JKP の地域の市場と French の地域の市場の一致 (4) 日本で門のどの物差しが効いたか、を足した')
+
+
+def posthoc(DU, PRIMARY, tested):
+    o = {'label': POSTHOC_NOTE}
+    # (1) 重みづけを揃えた比較: 同じ重みづけの JKP 米国市場を相手に
+    ll = {}
+    for wt in ('vw', 'vw_cap', 'ew'):
+        DW = DU if wt == 'vw' else load('usa', wt, keep=set(CHARS))
+        mk = total(M.jkp_mkt('usa', wt))
+        ll[wt] = {'jkp_mkt_vs_french_full': brief(M.excess_stats(win(mk, START_US), MKT)),
+                  'jkp_mkt_vs_french_hold': brief(M.excess_stats(mk, MKT, a=M.HOLD_START))}
+        for nm, (meas, mode) in PRIMARY.items():
+            ex, _ = composite(DW, meas, mode)
+            s = win(total(ex), START_US, END_JKP)
+            f, tr, h = M.excess_stats(s, mk), M.excess_stats(s, mk, z=M.TRAIN_END), M.excess_stats(s, mk, a=M.HOLD_START)
+            ll[wt][nm] = {'full': brief(f), 'train': brief(tr), 'hold': brief(h)}
+            tested.append({'name': f'{nm}@{wt}_vs_same_weighting_mkt', 'family': 'D_posthoc', 'graded': False, 'region': 'usa',
+                           'hold_ex': h['ex_ann'], 'hold_t': h['t']})
+        log(f"事後(1) {wt}: 市場 vs French 保有 {ll[wt]['jkp_mkt_vs_french_hold']['ex_ann']} ／ " +
+            ' '.join(f"{nm[:2]} 全{ll[wt][nm]['full']['ex_ann']:+.2f}(t{ll[wt][nm]['full']['t']}) 保{ll[wt][nm]['hold']['ex_ann']:+.2f}(t{ll[wt][nm]['hold']['t']})" for nm in PRIMARY))
+    o['same_weighting_benchmark'] = ll
+    # (2) 国パネル: 良い側 − 中立（3つの三分位の等分）・良い側 − 悪い側
+    adj = {}
+    for lab, meas in (('P1_GATE_ALL', MEASURES), ('P2_GATE_CORE', CORE)):
+        rows_n, rows_b, byc = {}, {}, {}
+        for cc in country_list():
+            key = (cc, 'vw', tuple(sorted(set(CHARS))))
+            if key not in _CACHE:
+                continue
+            D = _CACHE[key]
+            g, _ = composite(D, meas, 'good'); n_, _ = composite(D, meas, 'neutral'); b_, _ = composite(D, meas, 'bad')
+            ks = sorted(k for k in g if k in n_ and k in b_)
+            if len(ks) < 240:
+                continue
+            gn = {k: g[k] - n_[k] for k in ks}; gb = {k: g[k] - b_[k] for k in ks}
+            r = {}
+            for nm_, ser in (('good_minus_neutral', gn), ('good_minus_bad', gb)):
+                for per, a, z in (('full', None, None), ('pre2007', None, M.TRAIN_END), ('post2007', M.HOLD_START, None)):
+                    x = [ser[k] for k in ks if (a is None or k >= a) and (z is None or k <= z)]
+                    if len(x) >= 60:
+                        t = M.nw_t(x)
+                        r[f'{nm_}_{per}'] = {'ex_ann': round(st.mean(x) * 1200, 2), 't': round(t, 2) if t is not None else None, 'months': len(x)}
+            byc[cc] = r
+            for k in ks:
+                rows_n.setdefault(k, []).append(gn[k]); rows_b.setdefault(k, []).append(gb[k])
+        summ = {'countries': len(byc)}
+        for nm_ in ('good_minus_neutral', 'good_minus_bad'):
+            for per in ('full', 'pre2007', 'post2007'):
+                vals = [v[f'{nm_}_{per}']['ex_ann'] for v in byc.values() if f'{nm_}_{per}' in v]
+                summ[f'{nm_}_{per}_positive'] = f"{sum(1 for x in vals if x > 0)}/{len(vals)}"
+            pooled = {k: st.mean(v) for k, v in (rows_n if nm_ == 'good_minus_neutral' else rows_b).items()}
+            for per, a, z in (('full', None, None), ('pre2007', None, M.TRAIN_END), ('post2007', M.HOLD_START, None)):
+                x = [pooled[k] for k in sorted(pooled) if (a is None or k >= a) and (z is None or k <= z)]
+                t = M.nw_t(x)
+                summ[f'{nm_}_{per}_pooled'] = {'ex_ann': round(st.mean(x) * 1200, 2), 't': round(t, 2) if t is not None else None}
+        adj[lab] = {'summary': summ, 'by_country': byc}
+        tested.append({'name': f'{lab}:country_good_minus_neutral', 'family': 'D_posthoc', 'graded': False, 'region': 'countries',
+                       'hold_ex': summ['good_minus_neutral_post2007_pooled']['ex_ann'], 'hold_t': summ['good_minus_neutral_post2007_pooled']['t']})
+        log('事後(2)', lab, json.dumps(summ, ensure_ascii=False))
+    o['country_construction_adjusted'] = adj
+    # 米国も同じ物差しで
+    us = {}
+    for lab, meas in (('P1_GATE_ALL', MEASURES), ('P2_GATE_CORE', CORE)):
+        g, _ = composite(DU, meas, 'good'); n_, _ = composite(DU, meas, 'neutral')
+        ks = [k for k in g if k in n_ and START_US <= k <= END_JKP]
+        gn = {k: g[k] - n_[k] for k in ks}
+        us[lab] = {per: (lambda x: {'ex_ann': round(st.mean(x) * 1200, 2), 't': round(M.nw_t(x), 2)})([gn[k] for k in sorted(gn) if (a is None or k >= a) and (z is None or k <= z)])
+                   for per, a, z in (('full', None, None), ('train', None, M.TRAIN_END), ('hold', M.HOLD_START, None))}
+    o['us_good_minus_neutral'] = us
+    log('事後(2) 米国 良−中立', us)
+    # (3) JKP の地域の市場 vs French の地域の市場（米ドル・超過どうし）
+    reg = {}
+    for fr, jk in (('Japan_3_Factors', 'jpn'), ('Developed_ex_US_3_Factors', 'developed'), ('Emerging_5_Factors', 'emerging')):
+        try:
+            t = [v for k, v in M.french_tables(fr).items() if v['freq'] == 'monthly'][0]
+            i = t['cols'].index('Mkt-RF')
+            fm = {d: r[i] / 100 for d, r in t['data'].items() if r[i] is not None}
+            jm = M.jkp_mkt(jk, 'vw')
+            ks = sorted(set(fm) & set(jm))
+            reg[jk] = {'french_file': fr, 'from': ks[0], 'to': ks[-1], 'corr': round(M.corr([fm[k] for k in ks], [jm[k] for k in ks]), 4),
+                       'jkp_minus_french_full': M.excess_stats(jm, fm)['ex_ann'], 'jkp_minus_french_hold': M.excess_stats(jm, fm, a=M.HOLD_START)['ex_ann']}
+        except Exception as e:  # noqa
+            reg[jk] = {'error': str(e)}
+    o['regional_market_check'] = reg
+    log('事後(3)', reg)
+    # (4) 日本: 物差しごとの良い側（門の向き）対 日本の市場・良い側−悪い側
+    DJ = _CACHE.get(('jpn', 'vw', tuple(sorted(set(CHARS))))) or load('jpn', 'vw', keep=set(CHARS))
+    mj = total(M.jkp_mkt('jpn', 'vw'))
+    jp = {}
+    for m, px in MEASURES.items():
+        s = total(sleeve(DJ, px, 'good')); b_ = total(sleeve(DJ, px, 'bad'))
+        f = M.excess_stats(s, mj); h = M.excess_stats(s, mj, a=M.HOLD_START)
+        ks = sorted(set(s) & set(b_))
+        x = [s[k] - b_[k] for k in ks]
+        jp[m] = {'good_vs_mkt_full': brief(f), 'good_vs_mkt_hold': brief(h),
+                 'good_minus_bad_full': {'ex_ann': round(st.mean(x) * 1200, 2), 't': round(M.nw_t(x), 2) if len(x) >= 24 else None} if x else None}
+        tested.append({'name': f'jpn_sleeve:{m}', 'family': 'D_posthoc', 'graded': False, 'region': 'jpn',
+                       'hold_ex': h and h['ex_ann'], 'hold_t': h and h['t']})
+    o['japan_single_sleeves'] = jp
+    log('事後(4) 日本', {m: (v['good_vs_mkt_full'] and v['good_vs_mkt_full']['ex_ann'], v['good_minus_bad_full']) for m, v in jp.items()})
+    return o
+
+
+# ───────────────────────── 要約 ─────────────────────────
+DEVIATIONS = [
+    '事後の検算 posthoc（同じ重みの市場との比較・国ごとの『良い側−中立』『良い側−悪い側』・JKP と French の地域の市場の一致・日本の物差しごと）は結果を見た後に足した。格付けには使っていない',
+    '地域の族 B: 初回の実行では frontier（20年に届かない）を120か月の線で入れてしまっていた（全部 C）。事前登録の『20年あれば』に合わせて240か月の線へ直して再実行した（B 族の Holm の本数が25→20へ。格付けは変わらない側の修正）',
+    'mw_common に誤りは見つからなかった（P1 を zip の CSV から numpy で独立に作り直し、全期間 +1.05 t3.91・訓練 +1.09 t3.17・保有 +0.98 t2.36 が一致。JKP 米国市場と French Mkt-RF の相関は同じ月 0.997・前後の月 0.09〜0.10）',
+]
+
+
+def add_summary(out):
+    r = out['results_us']
+    P1, P2, P5 = r['P1_GATE_ALL'], r['P2_GATE_CORE'], r['P5_FILTER_KILLS']
+    pan1 = out['country_panel']['P1_GATE_ALL']
+    adj = out['posthoc']['country_construction_adjusted']['P1_GATE_ALL']['summary']
+    ll = out['posthoc']['same_weighting_benchmark']
+    rob = out['robustness']
+    jp = out['regions']['jpn']['P1_GATE_ALL']
+    jpa = out['posthoc']['country_construction_adjusted']['P1_GATE_ALL']['by_country'].get('jpn', {})
+    jps = out['posthoc']['japan_single_sleeves']['M13_shy']['good_minus_bad_full']
+    hs = out.get('honest_selection', {}).get('random16', {})
+    cn = out.get('castle_noise', {})
+    cases = {(c['portfolio'], c['alpha_assumed']): c for c in cn.get('cases', [])}
+    a1 = P1['hold']['ex_ann']
+    c5 = cases.get(('castle5', a1)) or {}
+    cb = cases.get(('gate_all_broad', a1)) or {}
+    ia1 = rob['industry_alpha']['P1_GATE_ALL']['full_insample']
+    ia5 = rob['industry_alpha']['P5_FILTER_KILLS']['full_insample']
+    f = lambda x: f"{x:+.2f}"
+    L = [
+        f"門の『数字で測れる質』16本（ROIC・利益率・粗利/総資産・利益の現金の裏付け・発生主義・借金・アルトマンZ・倒産しにくさ・利益の安定・株主還元・株数を増やさない 等）を、上場廃止も含む公開データ（JKP）の『良い側の1/3』で写して等分に持つ（P1）と、米国で 1963〜2025年に市場（S&P500 相当）へ年{f(P1['full']['ex_ann'])}%（t{P1['full']['t']}）、2007年以降も年{f(a1)}%（t{P1['hold']['t']}・費用後{f(P1['net_hold']['ex_ann'])}）。20年の転がる窓は{P1['roll20']['wins']}/{P1['roll20']['windows']}で全勝。事前登録の線で格付け {P1['grade']}。",
+        f"重い柱5本だけ（P2: ROIC・粗利/総資産・財務の安全・株数・発生主義）は 年{f(P2['full']['ex_ann'])}%（t{P2['full']['t']}）・2007〜 {f(P2['hold']['ex_ann'])}%（t{P2['hold']['t']}・費用後{f(P2['net_hold']['ex_ann'])}）で格付け {P2['grade']}。",
+        f"新しい答え合わせ（米国外）: 20年以上ある{pan1['countries_counted']}か国のうち全期間で市場に勝ったのは{pan1['positive_full']}か国、2007年以降は{pan1['positive_post2007']}/{pan1['n_post2007']}、国の平均で 2007〜 年{f(pan1['pooled_post2007']['ex_ann'])}%（t{pan1['pooled_post2007']['t']}）。三分位を等分する作り方の偏りを引いた『良い側−中立』でも{adj['good_minus_neutral_full_positive']}か国で正・平均 年{f(adj['good_minus_neutral_full_pooled']['ex_ann'])}%（t{adj['good_minus_neutral_full_pooled']['t']}）。米国の1990年より前（多くの物差しが論文になる前）も 年{f(P1['pre1990']['ex_ann'])}%（t{P1['pre1990']['t']}）。",
+        f"日本は弱い: P1 は全期間 年{f(jp['full']['ex_ann'])}%（t{jp['full']['t']}）・2007〜 {f(jp['hold']['ex_ann'])}%（t{jp['hold']['t']}）で格付け {jp.get('grade')}。作り方の偏りを引くと 年{f(jpa.get('good_minus_neutral_full', {}).get('ex_ann', float('nan')))}%（t{jpa.get('good_minus_neutral_full', {}).get('t')}）でほぼ0。日本で目立ったのは株主還元（良い側−悪い側 年{f(jps['ex_ann'])}% t{jps['t']}）くらい。",
+        f"『壊れる会社を避ける』だけ（キル4本の悪い側を抜く P5）は 年{f(P5['full']['ex_ann'])}%（t{P5['full']['t']}）・12業種で揃えると {f(ia5['alpha_ann'])} で格付け {P5['grade']}。上乗せはキルではなく『良い側を持つ』ことから来た（キルの役目は平均ではなく大損の回避で、ここでは測っていない）。",
+        f"弱点: 米国で S&P500 に勝つのは『上限なしの時価加重』で持つときだけ（上限つき・等加重だと 2007〜 {f(rob['vw_cap']['P1_GATE_ALL']['hold']['ex_ann'])}・{f(rob['ew']['P1_GATE_ALL']['hold']['ex_ann'])}%/年）。同じ重みの市場と比べれば選別そのものは {f(ll['vw_cap']['P1_GATE_ALL']['hold']['ex_ann'])}〜{f(ll['ew']['P1_GATE_ALL']['hold']['ex_ann'])} で勝っており、負けは重みの付け方の分（実在の質ETFが2013年以降に負けたのも主に上限をかけた分＝mw_reality_gap）。12業種で揃えると米国の上乗せは 年{f(ia1['alpha_ann'])}%（t{ia1['t']}）に縮む。米国の2006年までは無作為の16本の混合の下位{round(hs.get('P1_GATE_ALL_train_percentile', 0) * 100)}%（2007〜 は上位{round((1 - hs.get('P1_GATE_ALL_hold_percentile', 0)) * 100, 1)}%）＝『質が報われた時代』に当たった面がある。",
+        f"城4〜5社への意味: 今の城5社の対SPY の追従のぶれは年{cn.get('te_castle_vs_spy')}%。本物の上乗せが年{f(a1)}%でも t=2 に約{round(c5.get('years_for_t2', 0))}年、20年で市場に負ける確率は約{round(c5.get('prob_lose_to_market_20y', 0) * 100)}%。同じ思想を数百社に広げた P1 のぶれは年{cb.get('te')}%で、20年で負ける確率は約{round(cb.get('prob_lose_to_market_20y', 0) * 100, 1)}%。＝門の考え方は歴史で報われたが、それを確実に受け取れるのは広い質のポートフォリオで、4〜5社では運のぶれに埋もれる。",
+    ]
+    out['summary_ja'] = L
+    out['deviations'] = DEVIATIONS
+    return out
+
+
 # ───────────────────────── 本体 ─────────────────────────
 def main():
     sha = subprocess.run(['git', 'log', '-1', '--format=%H', '--', PREREG], cwd=BASE, capture_output=True, text=True).stdout.strip()
@@ -560,8 +708,8 @@ def main():
         regions[rg] = {}
         for nm, (meas, mode) in PRIMARY.items():
             ex, info = composite(DR, meas, mode)
-            if len(set(ex) & set(mk)) < 120:
-                regions[rg][nm] = {'months': len(set(ex) & set(mk)), 'skipped': '120か月未満'}
+            if len(set(ex) & set(mk)) < 240:  # 事前登録: 地域も20年（240か月）あるものだけ（frontier は20年に届かない）
+                regions[rg][nm] = {'months': len(set(ex) & set(mk)), 'skipped': '240か月（20年）未満＝事前登録どおり対象外'}
                 continue
             o, s, b = eval_region(ex, mk, turnover(meas, mode))
             o['availability'] = info
@@ -637,13 +785,26 @@ def main():
     except Exception as e:  # noqa
         out['castle_noise'] = {'error': str(e)}
 
+    out['posthoc'] = posthoc(DU, PRIMARY, tested)
     out['results_us'] = res
     out['tested'] = tested
     out['n_tested'] = len(tested)
+    out['n_tested_by_family'] = {fam: sum(1 for t in tested if t['family'] == fam) for fam in sorted({t['family'] for t in tested})}
+    out['grade_counts'] = {f"{t['family']}:{t['grade']}": sum(1 for u in tested if u['family'] == t['family'] and u.get('grade') == t['grade'])
+                           for t in tested if t.get('graded')}
     out['log'] = LOG
+    add_summary(out)
+    for line in out['summary_ja']:
+        log(line)
     p = M.save('mw_gate_proxy.json', out)
     log('書いた', p, os.path.getsize(p))
 
 
 if __name__ == '__main__':
-    main()
+    if '--summary' in sys.argv:  # 計算し直さずに要約だけ作り直す
+        pth = os.path.join(BASE, 'out', 'mw_gate_proxy.json')
+        o = add_summary(json.load(open(pth)))
+        print('\n'.join(o['summary_ja']))
+        M.save('mw_gate_proxy.json', o)
+    else:
+        main()
