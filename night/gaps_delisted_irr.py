@@ -12,7 +12,7 @@ irr の歴史検証（retro_moat_2013*.json）は2026年まで生き残った会
   final  … 2人の採点を合わせて刻みを決め、P15・恒久毀損を刻みごとに出す
 出力: out/gaps_delisted_irr/（束・読み・採点）と out/gaps_delisted_irr.json
 """
-import hashlib, html, json, os, re, sys, time, urllib.request
+import collections, hashlib, html, json, os, re, sys, time, urllib.request
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(BASE, 'night'))
@@ -257,8 +257,25 @@ def final():
         tot = sum(r['w'] for r in s_) + len(d_)
         by_rung[str(lab)] = {'上場廃止の割合（重み付き）': round(len(d_) / tot, 3) if tot else None, '上場廃止の社数': len(d_),
                              '上場廃止の内訳': {k: sum(1 for r in d_ if r['exit'] == k) for k in sorted({r['exit'] for r in d_})}}
+    # ★事後の点検（結果を見た後に足した）: 較正で『新しい読みは今日の刻みより上に読みがち』（今日50の 8/36 を70以上）と分かったので、
+    #   生き残りも上場廃止も**同じ手順の読み**でそろえて比べ直す。生き残りは較正の48社を層（元の刻み 85以上/70/50）の抽出率で重み付けし
+    #   読んだ163社（→370社）を代表させる
+    def stratum(o):
+        return 'hi' if o >= 85 else ('70' if o in (70, 75) else '50')
+    NS = collections.Counter(stratum(v) for v in surv_read.values())
+    nS = collections.Counter(stratum(c['orig']) for c in cal)
+    S2 = [{'rung': c['new'], 'px': sp[t2r[c['t']]['cik']]['px_cagr'], 'w': NS[stratum(c['orig'])] / nS[stratum(c['orig'])] * w_s}
+          for c in cal if c['new'] is not None]
+    same = {}
+    for nm, rows in (('生き残りだけ（較正の48社・層の重み）', S2), ('上場廃止を戻す', S2 + D), ('上場廃止だけ', D)):
+        same[nm] = {'50': stats(rows, 50, 50), '70以上': stats(rows, 70, 100), 'lift_70以上−50': lift(rows, 70)}
+    for lab in (50, 70):
+        s_ = sum(r['w'] for r in S2 if r['rung'] is not None and (r['rung'] >= 70 if lab == 70 else r['rung'] == 50))
+        d_ = sum(1 for r in D if r['rung'] is not None and (r['rung'] >= 70 if lab == 70 else r['rung'] == 50))
+        same[f'上場廃止の割合_{lab}{"以上" if lab == 70 else ""}'] = round(d_ / (s_ + d_), 3) if (s_ + d_) else None
     doc = {'generated': time.strftime('%Y-%m-%d'), 'tool': 'night/gaps_delisted_irr.py', 'prereg': 'out/gaps7_prereg.json Q7_survivor（9c28f6c）',
            '判定': verdict, '結果': res, '刻みごとの上場廃止': by_rung, '較正（生き残りを同じ手順で読み直した）': calib,
+           '★事後の点検_同じ手順の読みでそろえる（結果を見た後に足した）': same,
            '上場廃止の社（85以上と70）': [dict(name=r['name'], exit=r['exit'], rung=r['rung'], px=round(r['px'], 3), quote=(r['quote'] or '')[:300])
                                   for r in sorted(D, key=lambda r: -(r['rung'] or 0)) if (r['rung'] or 0) >= 70],
            '読めなかった上場廃止': [r['name'] for r in D if r['rung'] is None],
