@@ -72,6 +72,8 @@ RULES = {
         'not_etf': "isinCd が 'JP3' で始まらない かつ fundCategory != '10'（上場投信を除く）",
         'dc_only_excluded': "dcFundFlg == '1'（確定拠出年金の専用）は主の母集団から除く（この投資家は買えない）。'2'（DC と一般の両方）と '9'（一般）は入れる",
         'wrap_only_regex': r'(SMA|ラップ|EW向け|ファンドラップ|適格機関|私募)',
+        'dc_name_regex': r'(DC|確定拠出|年金)',
+        'dc_name_note': 'dc_name_regex は fundNm（愛称は含めない）だけに当て、当たれば DC 専用とみなして除く（dcFundFlg の印が無いか 2/9 でも、年金積立・野村DC・(確定拠出年金向け)・(個人型年金向け) のような器は NISA・課税口座で買えない）',
         'special_regex': r'(ブル(?!ー)|ベア(?!リング)|レバレッジ|インバース|[2-9]倍|ダブル|トリプル|ブースト|価格変動抑制|リスク抑制|マーケット・ニュートラル|マーケットニュートラル|プライムニュートラル|ロング・ショート|ロングショート|絶対収益)',
         'hedged_regex': r'(ヘッジあり|ヘッジ有|為替ヘッジ付|円ヘッジ|ヘッジ型|\(H\)|ヘッジコース|米ドル売り円買い|為替ヘッジ\))',
         'currency_course_regex': r'(レアル|リラ|豪ドル|南アフリカ|ランドコース|ペソ|ルピー|ルピア|ルーブル|アジア通貨|資源国通貨|バスケット通貨|通貨コース|米ドルコース|ユーロコース|人民元|中国元|ドル投資型)',
@@ -277,6 +279,7 @@ def load_universe():
 
 # ═════════════════════════ 分類 ═════════════════════════
 _RX = {k: re.compile(RULES['universe_filter'][k]) for k in ('wrap_only_regex', 'special_regex', 'hedged_regex', 'currency_course_regex')}
+_DCNAME = re.compile(RULES['universe_filter']['dc_name_regex'])
 
 
 def name_of(r):
@@ -307,7 +310,7 @@ def flags(r):
     return {
         'open_end': r.get('unitOpenDiv') == '2',
         'etf': (r.get('isinCd') or '').startswith('JP3') or r.get('fundCategory') == '10',
-        'dc_only': r.get('dcFundFlg') == '1',
+        'dc_only': r.get('dcFundFlg') == '1' or bool(_DCNAME.search(nfkc(r.get('fundNm')))),
         'wrap_only': bool(_RX['wrap_only_regex'].search(nm)),
         'special_name': bool(_RX['special_regex'].search(nm)),
         'hedged': bool(_RX['hedged_regex'].search(nm)) or ('円コース' in nm and category(r) != 'JP'),
