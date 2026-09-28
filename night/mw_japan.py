@@ -96,6 +96,49 @@ def jkp_strat(region, keys, w='vw', sides=None, start=None):
     return {m: sum(c[m] for c in comps) / len(comps) for m in sorted(ms) if start is None or m >= start}
 
 
+_PFN = {}
+
+
+def pfn(region, key, w='vw'):
+    """JKP 三分位の銘柄数 n → {pf: {yyyymm: n}}（取れなければ None）"""
+    k = (region, key, w)
+    if k not in _PFN:
+        if pf(region, key, w) is None:
+            _PFN[k] = None
+        else:
+            d = {}
+            for x in M.jkp_rows(region, key, 'portfolios', w):
+                if x['n'] not in ('', 'NA'):
+                    d.setdefault(x['pf'], {})[M._ym(x['date'])] = int(float(x['n']))
+            _PFN[k] = d
+    return _PFN[k]
+
+
+def comp_n(region, key, side, w='vw', nmin=30):
+    """選んだ分位のリターン（超過）を、その分位の銘柄数が nmin 以上の月だけ"""
+    p, n = pf(region, key, w), pfn(region, key, w)
+    if p is None or n is None or side not in p:
+        return {}
+    nn = n.get(side, {})
+    return {m: v for m, v in p[side].items() if nn.get(m, 0) >= nmin}
+
+
+def composite(region, comps, w='vw', nmin=30, need='half', start=None):
+    """comps=[(特徴, 側)]。その月に使える構成要素の等分平均。need='half'＝半分以上・'all'＝全部そろう月だけ"""
+    series = [comp_n(region, k, sd, w, nmin) for k, sd in comps]
+    ms = set()
+    for s in series:
+        ms |= set(s)
+    out = {}
+    for m in sorted(ms):
+        if start is not None and m < start:
+            continue
+        v = [s[m] for s in series if m in s]
+        if (need == 'all' and len(v) == len(series)) or (need == 'half' and len(v) * 2 >= len(series) and v):
+            out[m] = sum(v) / len(v)
+    return out
+
+
 def tot(ex):
     """超過 + RF → 米ドルの総リターン（RF が無い月は落とす）"""
     return {k: v + RF[k] for k, v in ex.items() if k in RF}
@@ -204,7 +247,14 @@ def finish_family(rows, fam_name):
         if r.get('error'):
             r['grade'], r['criteria'] = 'C', {'error': r['error']}
             continue
-        g, c = M.grade(r['full'], r['train'], r['hold'], r['roll20'], r['cost_hold'], r.get('repl'), r['holm_p'])
+        # 是正（第2の事前登録）: 全体の事前登録の『訓練期間は最低15年』を当てる（mw_common.grade は見ていない）
+        tr = r['train']
+        if tr and tr['years'] < 15:
+            r['train_short'] = f"訓練期間 {tr['years']}年 < 15年 → C1 不合格"
+            tr = None
+        # E6_jpsel: 訓練期間で選んだので C7 は保有期間の Holm だけ（全期間 t を使わない＝より厳しく）
+        full = None if r.get('c7_holm_only') else r['full']
+        g, c = M.grade(full, tr, r['hold'], r['roll20'], r['cost_hold'], r.get('repl'), r['holm_p'])
         r['grade'], r['criteria'] = g, c
     return rows
 
@@ -278,12 +328,12 @@ def run_P(bj_tot):
     for k in P_SINGLES:
         s = jkp_strat('jpn', [k], 'vw', start=JKP_START)
         r = evaluate(f'P_JKP_{k}', 'P', PRE['families']['P（主・格付け・Holm は P の20本で）']['JKP_singles（jpn・vw・論文の向きの良い側1/3 vs jpn vw 市場）'][k],
-                     tot(s), bj_tot, turn_of(k), pub=PUB.get(k), meta={'source': 'JKP jpn vw', 'side': good_side(k), 'n_last': n_last('jpn', k)})
+                     tot(s), bj_tot, turn_of(k), pub=PUB.get(k), meta={'source': 'JKP jpn vw', 'side': good_side(k), 'n_last': n_last('jpn', k), 'comps': [[k, good_side(k), 'vw']]})
         r['repl'] = repl_jkp([k])
         rows.append(r)
     for bid, ks in P_BLENDS.items():
         s = jkp_strat('jpn', ks, 'vw', start=JKP_START)
-        r = evaluate(f'P_JKP_{bid}', 'P', '＋'.join(ks), tot(s), bj_tot, S.mean(turn_of(k) for k in ks), meta={'source': 'JKP jpn vw'})
+        r = evaluate(f'P_JKP_{bid}', 'P', '＋'.join(ks), tot(s), bj_tot, S.mean(turn_of(k) for k in ks), meta={'source': 'JKP jpn vw', 'comps': [[k, good_side(k), 'vw'] for k in ks]})
         r['repl'] = repl_jkp(ks)
         rows.append(r)
     fj = fr_intl('Japan', 'Local')
@@ -349,13 +399,13 @@ def run_E2(bj_tot):
     rows = []
     for k in P_SINGLES:
         s = jkp_strat('jpn', [k], 'vw_cap', start=JKP_START)
-        r = evaluate(f'E2_JKPcap_{k}', 'E2', k + '（vw_cap）', tot(s) if s else None, bj_tot, turn_of(k), meta={'source': 'JKP jpn vw_cap', 'side': good_side(k)})
+        r = evaluate(f'E2_JKPcap_{k}', 'E2', k + '（vw_cap）', tot(s) if s else None, bj_tot, turn_of(k), meta={'source': 'JKP jpn vw_cap', 'side': good_side(k), 'comps': [[k, good_side(k), 'vw_cap']]})
         r['repl'] = repl_jkp([k], 'vw_cap')
         rows.append(r)
     for bid, ks in P_BLENDS.items():
         s = jkp_strat('jpn', ks, 'vw_cap', start=JKP_START)
         r = evaluate(f'E2_JKPcap_{bid}', 'E2', '＋'.join(ks) + '（vw_cap）', tot(s) if s else None, bj_tot, S.mean(turn_of(k) for k in ks),
-                     meta={'source': 'JKP jpn vw_cap'})
+                     meta={'source': 'JKP jpn vw_cap', 'comps': [[k, good_side(k), 'vw_cap'] for k in ks]})
         r['repl'] = repl_jkp(ks, 'vw_cap')
         rows.append(r)
     return finish_family(rows, 'E2')
@@ -378,7 +428,7 @@ def run_E3(bj_tot):
                 continue
             s = {m: v for m, v in p[side].items() if m >= JKP_START}
             r = evaluate(f'E3_{k}' + ('' if tag == 'paper' else '_jpside'), 'E3', k, tot(s), bj_tot, census_turn(k),
-                         meta={'source': 'JKP jpn vw', 'side': side, 'side_rule': tag, 'paper_dir': DIRS[k], 'jp_train_ls_mean_ann': round(S.mean(tr) * 1200, 2) if tr else None})
+                         meta={'source': 'JKP jpn vw', 'side': side, 'side_rule': tag, 'paper_dir': DIRS[k], 'jp_train_ls_mean_ann': round(S.mean(tr) * 1200, 2) if tr else None, 'comps': [[k, side, 'vw']]})
             r['_keys'] = (k, side)
             rows.append(r)
     # C5 は C1・C2・C6 が合格したものだけ（事前登録どおり）
@@ -401,7 +451,7 @@ def run_E4(bj_tot):
     rows = []
     for bid, ks in E4.items():
         s = jkp_strat('jpn', ks, 'vw', start=JKP_START)
-        r = evaluate(bid, 'E4', '＋'.join(ks), tot(s) if s else None, bj_tot, S.mean(turn_of(k) for k in ks), meta={'source': 'JKP jpn vw'})
+        r = evaluate(bid, 'E4', '＋'.join(ks), tot(s) if s else None, bj_tot, S.mean(turn_of(k) for k in ks), meta={'source': 'JKP jpn vw', 'comps': [[k, good_side(k), 'vw'] for k in ks]})
         prefetch([(c, k) for c in JKP_REPL for k in ks])
         r['repl'] = repl_jkp(ks)
         rows.append(r)
@@ -411,21 +461,182 @@ def run_E4(bj_tot):
 ETFS = ['1489.T', '1577.T', '1698.T', '2529.T', '1478.T', '1399.T', '1651.T', '1494.T', '2564.T']
 
 
+def etf_ok(s):
+    """ひと月に ±40% を超える月がある ETF 系列は壊れている（TOPIX がそこまで動いた月はない）"""
+    return bool(s) and not any(v < -0.4 or v > 0.4 for v in s.values())
+
+
+def etf_row(sid, fam, label, s, b):
+    ks = set(s) & set(b)
+    st = M.excess_stats(s, b)
+    return {'id': sid, 'family': fam, 'label': label, 'full': st,
+            'dca_all': M.dca(s, b, max(1, (len(ks) // 12) - 1), step=12) if st else None,
+            'maxdd': {'s': round(M.maxdd({k: s[k] for k in ks}) * 100, 1), 'b': round(M.maxdd({k: b[k] for k in ks}) * 100, 1)} if ks else None,
+            'grade': '報告のみ（格付けしない）'}
+
+
 def run_E5():
-    b = M.yahoo('1306.T')
-    out = []
+    """第2の事前登録で是正: 相手は 1305.T（1306.T の Yahoo 系列は分割未調整で壊れている）。照合に 1348.T"""
+    bench = {}
+    for t in ('1305.T', '1348.T', '1306.T'):
+        try:
+            x = M.yahoo(t)
+        except Exception:  # noqa
+            x = None
+        bench[t] = x if etf_ok(x) else None
+    out = [{'id': 'E5_bench_check', 'family': 'E5', 'label': '相手の TOPIX ETF の系列の健全性',
+            'grade': '報告のみ（格付けしない）', 'ok': {t: v is not None for t, v in bench.items()}}]
     for t in ETFS:
         try:
             s = M.yahoo(t)
         except Exception as e:  # noqa
-            out.append({'id': f'E5_{t}', 'family': 'E5', 'error': str(e)[:100]})
+            out.append({'id': f'E5_{t}', 'family': 'E5', 'error': str(e)[:100], 'grade': '報告のみ（格付けしない）'})
+            continue
+        if not etf_ok(s):
+            out.append({'id': f'E5_{t}', 'family': 'E5', 'error': '系列が壊れている（±40%超の月）', 'grade': '報告のみ（格付けしない）'})
+            continue
+        r = etf_row(f'E5_{t}', 'E5', PRE['data']['ETF']['tickers'][t] + ' vs 1305.T', s, bench['1305.T'])
+        if bench.get('1348.T'):
+            st2 = M.excess_stats(s, bench['1348.T'])
+            r['vs_1348'] = {k: st2[k] for k in ('from', 'to', 'ex_ann', 't', 'cagr_diff')} if st2 else None
+        out.append(r)
+    return out
+
+
+def run_E8():
+    out = []
+    try:
+        s, b = M.yahoo('EWJV'), M.yahoo('EWJ')
+        out.append(etf_row('E8_EWJV_vs_EWJ', 'E8', 'iShares MSCI Japan Value vs iShares MSCI Japan（米ドル）', s, b)
+                   if etf_ok(s) and etf_ok(b) else {'id': 'E8_EWJV_vs_EWJ', 'family': 'E8', 'error': '系列が壊れている', 'grade': '報告のみ（格付けしない）'})
+    except Exception as e:  # noqa
+        out.append({'id': 'E8_EWJV_vs_EWJ', 'family': 'E8', 'error': str(e)[:100], 'grade': '報告のみ（格付けしない）'})
+    return out
+
+
+# ───────────────────────── 第2の事前登録: E6・E7 ─────────────────────────
+PRE2 = 'mw_japan_prereg2.json'
+CLUSTERS = None
+
+
+def clusters():
+    global CLUSTERS
+    if CLUSTERS is None:
+        b = M.get('https://raw.githubusercontent.com/bkelly-lab/ReplicationCrisis/master/GlobalFactors/Cluster%20Labels.csv', name='jkp_cluster_labels.csv')
+        CLUSTERS = {}
+        for x in csv.DictReader(io.StringIO(b.decode())):
+            CLUSTERS.setdefault(x['cluster'], []).append(x['characteristic'])
+    return CLUSTERS
+
+
+def select_by_train(region, keys, a, z, nmin=30):
+    """訓練期間 [a, z] だけで各特徴の側（第1 or 第3分位）を選び、NW t≥2.0・15年以上のものを返す"""
+    b = mkt(region, 'vw')
+    bt = tot(b)
+    sel, log = [], {}
+    for k in keys:
+        best = None
+        for side in ('1.0', '3.0'):
+            s = {m: v for m, v in comp_n(region, k, side, 'vw', nmin).items() if a <= m <= z}
+            st = M.excess_stats(tot(s), bt, a, z) if s else None
+            if st and st['years'] >= 15 and (best is None or st['ex_ann'] > best[1]['ex_ann']):
+                best = (side, st)
+        if best:
+            log[k] = {'side': best[0], 'ex_ann': best[1]['ex_ann'], 't': best[1]['t'], 'years': best[1]['years']}
+            if (best[1]['t'] or 0) >= 2.0:
+                sel.append((k, best[0]))
+    return sel, log
+
+
+def repl_comp(comps, nmin=10, min_years=10):
+    det = {}
+    for c in JKP_REPL:
+        use = [(k, sd) for k, sd in comps if k in AVAIL.get(c, [])]
+        if len(use) * 2 < len(comps):
+            continue
+        prefetch([(c, k) for k, _ in use])
+        # その国で使えない構成要素は『そろわない』側に数える（半分の条件は全体の本数に対して）
+        series = [comp_n(c, k, sd, 'vw', nmin) for k, sd in use]
+        ms = set().union(*[set(x) for x in series]) if series else set()
+        s = {}
+        for m in sorted(ms):
+            v = [x[m] for x in series if m in x]
+            if len(v) * 2 >= len(comps):
+                s[m] = sum(v) / len(v)
+        b = mkt(c, 'vw')
+        if not s or not b:
             continue
         st = M.excess_stats(s, b)
-        out.append({'id': f'E5_{t}', 'family': 'E5', 'label': PRE['data']['ETF']['tickers'][t], 'full': st,
-                    'dca_all': M.dca(s, b, max(1, (len(set(s) & set(b)) // 12) - 1), step=12) if st else None,
-                    'maxdd': {'s': round(M.maxdd({k: s[k] for k in set(s) & set(b)}) * 100, 1), 'b': round(M.maxdd({k: b[k] for k in set(s) & set(b)}) * 100, 1)},
-                    'grade': '報告のみ（格付けしない）'})
-    return out
+        if st and st['years'] >= min_years:
+            det[c] = {'ex_ann': st['ex_ann'], 't': st['t'], 'years': st['years']}
+    return {'regions': len(det), 'positive': sum(1 for v in det.values() if v['ex_ann'] > 0), 'detail': det}
+
+
+def run_E6(bj_tot):
+    keys = sorted(k for k in AVAIL['jpn'] if k != 'all_factors' and k in DIRS)
+    prefetch([('jpn', k) for k in keys])
+    ukeys = sorted(k for k in AVAIL['usa'] if k != 'all_factors' and k in DIRS)
+    prefetch([('usa', k) for k in ukeys])
+    specs = {}
+    jsel, jlog = select_by_train('jpn', keys, JKP_START, TRAIN_END)
+    specs['E6_jpsel_t2'] = (jsel, '日本の訓練期間で選んだ特徴（NW t≥2）を等分', {'c7_holm_only': True, 'selection_log': jlog})
+    usel, ulog = select_by_train('usa', ukeys, 196307, TRAIN_END)
+    usel = [(k, sd) for k, sd in usel if k in keys]
+    specs['E6_ussel_t2'] = (usel, '米国の訓練期間（1963-07〜2006-12）で選んだ特徴を日本に当てる', {'selection_log': ulog})
+    specs['E6_all153'] = ([(k, good_side(k)) for k in keys], '全特徴の論文の向きの良い側を等分', {})
+    for cl, members in sorted(clusters().items()):
+        comps = [(k, good_side(k)) for k in members if k in keys]
+        specs['E6_theme_' + cl.replace(' ', '_').replace('-', '_')] = (comps, f'JKP クラスタ「{cl}」の良い側を等分', {})
+    rows = []
+    for sid, (comps, label, extra) in specs.items():
+        s = composite('jpn', comps, 'vw', 30, 'half', start=JKP_START)
+        to = S.mean(census_turn(k) for k, _ in comps) if comps else 0
+        meta = {'source': 'JKP jpn vw（n≥30 の月・半分以上そろう月）', 'comps': [[k, sd, 'vw'] for k, sd in comps], 'n_comps': len(comps)}
+        meta.update({k: v for k, v in extra.items() if k != 'selection_log'})
+        r = evaluate(sid, 'E6', label, tot(s) if s else None, bj_tot, to, meta=meta)
+        if 'selection_log' in extra:
+            r['selected'] = [[k, sd] for k, sd in comps]
+        rows.append(r)
+    for r in rows:
+        if r.get('error'):
+            continue
+        c1 = bool(r['train'] and r['train']['years'] >= 15 and r['train']['ex_ann'] > 0 and (r['train']['t'] or 0) >= 2.0)
+        c2 = bool(r['hold'] and r['hold']['ex_ann'] > 0 and r['hold']['cagr_diff'] > 0)
+        c6 = bool(r['cost_hold'] and r['cost_hold']['ex_ann'] > 0 and r['cost_hold']['cagr_diff'] > 0)
+        if c1 and c2 and c6:
+            r['repl'] = repl_comp([tuple(x[:2]) for x in r['comps']])
+    return finish_family(rows, 'E6'), {'jp_selection': jlog, 'us_selection': ulog}
+
+
+def run_E7():
+    jm = fr_mkt('Japan')
+    cells = {'E7_ME5_BM5': ['BIG HiBM'], 'E7_ME5_BM45': ['ME5 BM4', 'BIG HiBM'], 'E7_ME45_BM5': ['ME4 BM5', 'BIG HiBM'],
+             'E7_ME45_BM45': ['ME4 BM4', 'ME4 BM5', 'ME5 BM4', 'BIG HiBM']}
+    d = {reg: fr_vw(f'{reg}_25_Portfolios_ME_BE-ME') for reg in ('Japan', 'Asia_Pacific_ex_Japan', 'Europe')}
+    rows = []
+    for sid, cs in cells.items():
+        s = fr_blend(d['Japan'], cs)
+        r = evaluate(sid, 'E7', '＋'.join(cs) + '（French Japan 25分割・米ドル）', s, jm, 0.5, meta={'source': 'French Japan_25_Portfolios_ME_BE-ME'})
+        det = {}
+        for reg in ('Asia_Pacific_ex_Japan', 'Europe'):
+            st = M.excess_stats(fr_blend(d[reg], cs), fr_mkt(reg))
+            if st:
+                det[reg] = {'ex_ann': st['ex_ann'], 't': st['t'], 'years': st['years']}
+        r['repl'] = {'regions': len(det), 'positive': sum(1 for v in det.values() if v['ex_ann'] > 0), 'detail': det}
+        rows.append(r)
+    return finish_family(rows, 'E7')
+
+
+def robust_n30(r, bj_tot):
+    """事後の頑健性（格付けに使わない）: 構成する分位が30銘柄以上の月だけで訓練期間を測り直す"""
+    comps = r.get('comps')
+    if not comps:
+        return None
+    w = comps[0][2]
+    need = 'half' if r['family'] == 'E6' else 'all'
+    s = composite('jpn', [(k, sd) for k, sd, _ in comps], w, 30, need, start=JKP_START)
+    st = M.excess_stats(tot(s), bj_tot, z=TRAIN_END) if s else None
+    return {'train_n30': st, 'note': '事後（格付けに使わない）'}
 
 
 def sanity():
@@ -476,6 +687,7 @@ def main():
     prefetch([('jpn', k) for k in P_SINGLES], 'vw_cap')
     prefetch([(c, k) for c in JKP_REPL for k in P_SINGLES])
     out = {'angle': 'japan', 'prereg': 'out/' + PREREG, 'prereg_commit': git_sha('out/' + PREREG),
+           'prereg2': 'out/' + PRE2, 'prereg2_commit': git_sha('out/' + PRE2),
            'benchmark': 'JKP jpn mkt vw（上限なし）＋RF（米ドル総リターン）／French Intl は同じ表の Mkt（円）／French 6/32 は Japan_3_Factors の Mkt',
            'cost_unit': COST, 'sanity': sanity()}
     print('sanity', json.dumps(out['sanity'], ensure_ascii=False)[:800])
@@ -486,14 +698,22 @@ def main():
     fams['E4'] = run_E4(bj_tot)
     fams['E3'] = run_E3(bj_tot)
     fams['E5'] = run_E5()
+    fams['E6'], sel = run_E6(bj_tot)
+    fams['E7'] = run_E7()
+    fams['E8'] = run_E8()
+    out['selection_logs'] = sel
+    for f, rows in fams.items():
+        for r in rows:
+            if r.get('grade') in ('S', 'A', 'B') and r.get('comps'):
+                r['robust'] = robust_n30(r, bj_tot)
     tested = []
     for f, rows in fams.items():
         for r in rows:
-            tested.append(compact(r) if f == 'E3' else r)
+            tested.append(compact(r) if f in ('E3',) else r)
     out['tested'] = tested
-    out['n_tested'] = sum(1 for r in tested if r['family'] != 'E5')
+    out['n_tested'] = sum(1 for r in tested if r['family'] not in ('E5', 'E8'))
     out['n_tested_incl_etf'] = len(tested)
-    out['grade_counts'] = {f: {g: sum(1 for r in rows if r.get('grade') == g) for g in ('S', 'A', 'B', 'C')} for f, rows in fams.items() if f != 'E5'}
+    out['grade_counts'] = {f: {g: sum(1 for r in rows if r.get('grade') == g) for g in ('S', 'A', 'B', 'C')} for f, rows in fams.items() if f not in ('E5', 'E8')}
     p = M.save('mw_japan.json', out)
     print('saved', p, os.path.getsize(p))
     for f, rows in fams.items():
