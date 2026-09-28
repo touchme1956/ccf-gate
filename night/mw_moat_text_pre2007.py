@@ -12,7 +12,9 @@
   extract  : 事前登録で凍結した正規表現で候補段落を拾う・F1（機械の族）の旗・自動 no85 の数え上げ
   mask     : 社名・旧社名・子会社名・ティッカー・固有の製品名を伏せる → 順番を無作為化・不透明な id
   batches  : 読み手への束（約60件ずつ）と指示書 READER_INSTRUCTIONS.md
-  （第3段で run＝リターン・判定を足す）
+  labels   : 第3段（読みの後）。鍵を開け、A・B（割れた単位だけ C）の読みから最終ラベル（irr≥85 の多数決・rep/dur・F1）→ labels.json（gitignore）
+  prices   : 第3段。記号の選び方（事前登録の returns の a/b/c）→ Yahoo の月次（mw_common.yahoo）
+  run      : 第3段。H1〜H7（S/L・Holm）と報告のみの対照 → out/mw_moat_text_pre2007.json
 
 事前登録: out/mw_moat_text_pre2007_prereg.json（抽出の前にコミット）。線は out/mw_prereg.json（C1〜C8）。
 キャッシュ: out/_mw_cache/moat_text/（gitignore）。ex27 のキャッシュは読むだけ（書かない・消さない）。
@@ -1893,6 +1895,755 @@ def load_manual():
     return {tuple(k.split('|')): tuple(x) for k, x in d.items()}
 
 
+# ═════════════════════════ 第3段（読みの後）: ラベル・株価・判定 ═════════════════════════
+# 2026-09-28 第3段。読み手（A・B・割れた単位だけ C）が読み終えた後に、鍵（KEY_do_not_open.json）を初めて開いてラベルを付け、
+# 株価を初めて取得してリターン・判定を出す。規則は事前登録（out/mw_moat_text_pre2007_prereg.json・905a0d2＋追記 21fa7a5）のまま。
+# 事前登録に無い扱いは『事後』と印を付け、判定には使わない。
+READS = os.path.join(MT, 'reads')
+LABELS = os.path.join(MT, 'labels.json')            # gitignore（鍵を含む）
+YH404 = os.path.join(MT, 'yh404')
+RESULT = 'mw_moat_text_pre2007.json'
+FIRST_M, END_M, TRAIN_Z, HOLD_A, RECENT_A = 199707, 202608, 200612, 200701, 201307
+SPIKE = 3.0
+F2_VINTAGES = [1997, 2000, 2003, 2006, 2009]        # 2012 は予算で読まなかった（事前登録の予算の段の1）
+F1_VINTAGES = VINTAGES                              # F1 は全ビンテージ（予算は効かない）
+AERO = lambda s: s is not None and (3720 <= s <= 3729 or 3760 <= s <= 3769 or s == 3812)
+SEMI_SIC = {3674, 3559}
+
+
+def ge85(v):
+    return v is not None and v >= 85
+
+
+def load_reads():
+    R = {'A': {}, 'B': {}, 'C': {}}
+    for f in sorted(os.listdir(READS)):
+        m = re.match(r'batch_(\d+)_([ABC])\.json$', f)
+        if m:
+            for x in json.load(open(os.path.join(READS, f))):
+                R[m.group(2)][x['id']] = x
+    return R
+
+
+def kappa(pairs):
+    """Cohen の κ（重みなし）。null も一つの刻みとして数える → (κ, 一致率, n)"""
+    n = len(pairs)
+    po = sum(1 for a, b in pairs if a == b) / n
+    ca, cb = Counter(a for a, _ in pairs), Counter(b for _, b in pairs)
+    pe = sum(ca[c] * cb[c] for c in set(ca) | set(cb)) / n / n
+    return (round((po - pe) / (1 - pe), 3) if pe < 1 else None), round(po, 3), n
+
+
+def lower(a, b):
+    """2人の低い方（null は最も低い＝手がかりなし）"""
+    return None if a is None or b is None else min(a, b)
+
+
+def final_scale(a, b, c, c_read):
+    """刻みの最終値: 2人一致ならその値・割れて3人目が読んだら3人目・3人目が読んでいなければ2人の低い方"""
+    if a == b:
+        return a, 'agree'
+    if c_read:
+        return c, 'third'
+    return lower(a, b), 'lower_of_two'
+
+
+def cmd_labels():
+    """最終ラベル（F2＝irr≥85 の多数決・rep/dur の上位・F1）を社×ビンテージの表にする → labels.json（gitignore）と要約"""
+    K = json.load(open(KEYF))
+    R = load_reads()
+    rows, bad = [], []
+    for uid, u in K['units'].items():
+        a, b, c = R['A'].get(uid), R['B'].get(uid), R['C'].get(uid)
+        if a is None or b is None:
+            bad.append(uid); continue
+        votes = [ge85(a['irr']), ge85(b['irr'])] + ([ge85(c['irr'])] if c else [])
+        if votes[0] != votes[1] and c is None:
+            bad.append(uid); continue
+        lock = sum(votes) * 2 > len(votes)
+        irr_v, irr_how = final_scale(a['irr'], b['irr'], c['irr'] if c else None, c is not None)
+        rep_v, rep_how = final_scale(a.get('rep'), b.get('rep'), c.get('rep') if c else None, c is not None)
+        dur_v, dur_how = final_scale(a.get('dur'), b.get('dur'), c.get('dur') if c else None, c is not None)
+        rows.append({'id': uid, 'vintage': u['vintage'], 'ticker': u['ticker'], 'cik': u['cik'], 'name': u['name'], 'sic': u['sic'],
+                     'sic_src': u['sic_src'], 'float': u['float'], 'f1': bool(u['f1']), 'src': 'read', 'via': u['via'],
+                     'irr_A': a['irr'], 'irr_B': b['irr'], 'irr_C': c['irr'] if c else None, 'third_read': c is not None,
+                     'lock': lock, 'irr_final': irr_v, 'irr_final_how': irr_how, 'ab_agree85': votes[0] == votes[1],
+                     'rec_A': a.get('recognised'), 'rec_B': b.get('recognised'), 'rec_C': c.get('recognised') if c else None,
+                     'rec_neither': a.get('recognised') is False and b.get('recognised') is False,
+                     'rep_A': a.get('rep'), 'rep_B': b.get('rep'), 'rep_final': rep_v, 'rep_how': rep_how, 'rep_top': rep_v in (100, 80),
+                     'dur_A': a.get('dur'), 'dur_B': b.get('dur'), 'dur_final': dur_v, 'dur_how': dur_how, 'dur_top': dur_v in (100, 85),
+                     'quote': (a.get('irr_quote') if ge85(a['irr']) else None) or (b.get('irr_quote') if ge85(b['irr']) else None)})
+    if bad:
+        raise SystemExit(f'読みの欠け・3人目の欠け: {bad[:20]}')
+    for x in K['auto_no85']:
+        lab = bool(x.get('f2_labelled'))
+        rows.append({'id': None, 'vintage': x['vintage'], 'ticker': x['ticker'], 'cik': x['cik'], 'name': x['name'], 'sic': x['sic'],
+                     'sic_src': x['sic_src'], 'float': x['float'], 'f1': bool(x['f1']), 'src': 'auto_no85' if lab else 'auto_no85_unlabelled_2012',
+                     'lock': False if lab else None, 'rep_top': False if lab else None, 'dur_top': False if lab else None,
+                     'ab_agree85': None, 'rec_neither': None})
+    for x in K['not_read_budget']:
+        rows.append({'id': None, 'vintage': x['vintage'], 'ticker': x['ticker'], 'cik': x['cik'], 'name': x['name'], 'sic': x['sic'],
+                     'sic_src': None, 'float': x['float'], 'f1': bool(x['f1']), 'src': x['reason'],
+                     'lock': None, 'rep_top': None, 'dur_top': None, 'ab_agree85': None, 'rec_neither': None})
+    # 要約
+    rd = [r for r in rows if r['src'] == 'read']
+    ir = [(R['A'][r['id']]['irr'], R['B'][r['id']]['irr']) for r in rd]
+    summ = {'n_read_units': len(rd), 'n_third_reads': sum(r['third_read'] for r in rd),
+            'kappa_irr_full_scale': dict(zip(('kappa', 'agree_rate', 'n'), kappa(ir))),
+            'kappa_irr_ge85': dict(zip(('kappa', 'agree_rate', 'n'), kappa([(ge85(a), ge85(b)) for a, b in ir]))),
+            'kappa_rep': dict(zip(('kappa', 'agree_rate', 'n'), kappa([(r['rep_A'], r['rep_B']) for r in rd]))),
+            'kappa_dur': dict(zip(('kappa', 'agree_rate', 'n'), kappa([(r['dur_A'], r['dur_B']) for r in rd]))),
+            'kappa_rep_top': dict(zip(('kappa', 'agree_rate', 'n'), kappa([(r['rep_A'] in (100, 80), r['rep_B'] in (100, 80)) for r in rd]))),
+            'kappa_dur_top': dict(zip(('kappa', 'agree_rate', 'n'), kappa([(r['dur_A'] in (100, 85), r['dur_B'] in (100, 85)) for r in rd]))),
+            'irr_dist': {w: {str(k): v for k, v in sorted(Counter(str(R[w][r['id']]['irr']) for r in rd if r['id'] in R[w]).items())} for w in 'ABC'},
+            'irr_ge85_by_reader': {w: sum(1 for r in rd if r['id'] in R[w] and ge85(R[w][r['id']]['irr'])) for w in 'ABC'},
+            'third_reader_all_split_units_to': dict(Counter(str(r['irr_C']) for r in rd if r['third_read'])),
+            'recognised_rate': {w: round(sum(1 for r in rd if R[w][r['id']].get('recognised') is True) / len(rd), 3) for w in 'AB'},
+            'recognised_by_neither_units': sum(1 for r in rd if r['rec_neither']),
+            'by_vintage': {}}
+    for v in VINTAGES:
+        g = [r for r in rows if r['vintage'] == v]
+        lab = [r for r in g if r['lock'] is not None]
+        lk = [r for r in lab if r['lock']]
+        summ['by_vintage'][str(v)] = {
+            'text_ok_units': len(g), 'f2_labelled': len(lab), 'read': sum(1 for r in g if r['src'] == 'read'),
+            'auto_no85': sum(1 for r in g if r['src'] == 'auto_no85'), 'unlabelled_budget_or_2012_auto': len(g) - len(lab),
+            'lock': len(lk), 'lock_names': [f"{r['ticker']}（{r['name']}・irr A{r['irr_A']}/B{r['irr_B']}"
+                                            + (f"/C{r['irr_C']}" if r['third_read'] else '') + '）' for r in lk],
+            'lock_both_readers_agree': sum(1 for r in lk if r['ab_agree85']),
+            'lock_recognised_by_neither': sum(1 for r in lk if r['rec_neither']),
+            'split_units_third_read': sum(1 for r in g if r.get('third_read')),
+            'rep_top': sum(1 for r in lab if r['rep_top']), 'dur_top': sum(1 for r in lab if r['dur_top']),
+            'f1': sum(1 for r in g if r['f1']),
+            'thin_lt10': (len(lk) < 10) if lab else None}
+    json.dump({'_warning': '鍵を含む（gitignore）。読み手はもう読み終えた', 'rows': rows, 'summary': summ}, open(LABELS, 'w'), ensure_ascii=False, indent=0)
+    print(json.dumps(summ, ensure_ascii=False, indent=1)[:6000])
+    return rows, summ
+
+
+# ───────────────────────── 株価の系列（CIK と同じ会社の系列だけ） ─────────────────────────
+def cont_name(a, b):
+    """同じ会社の続き（持株会社への組み替え・改名）か: 正規化した社名の先頭語が一致 or 一方が他方の前方一致で5字以上・一般語でない"""
+    x, y = nname(a), nname(b)
+    if not x or not y:
+        return False
+    w1, w2 = x[0], y[0]
+    if w1 in NAME_GENERIC or w2 in NAME_GENERIC:
+        return False
+    if w1 == w2:
+        return True
+    return min(len(w1), len(w2)) >= 5 and (w1.startswith(w2) or w2.startswith(w1))
+
+
+def sec_maps():
+    d = json.load(open(os.path.join(CACHE, 'sec_company_tickers.json')))
+    by_cik, holder = defaultdict(list), {}
+    for k in sorted(d, key=int):          # 一覧の順（時価の大きい順・普通株が先）
+        v = d[k]
+        c, t = str(v['cik_str']), v['ticker'].upper()
+        by_cik[c].append((t, v['title']))
+        holder.setdefault(t, (c, v['title']))
+    return by_cik, holder
+
+
+def resolve_ticker(rec, by_cik, holder, filers_in_window):
+    """事前登録の returns の (a)(b)(c) → (Yahoo の記号 or None, 経路)"""
+    T, c = rec['ticker'].upper(), str(rec['cik'])
+    if by_cik.get(c):                                             # (a)
+        ts = [t for t, _ in by_cik[c]]
+        tv = [x for x in tvariants(T) if x in ts]
+        return (tv[0] if tv else ts[0]), 'a_cik_has_ticker_today'
+    h = holder.get(T) or holder.get(T.replace('.', '-'))
+    if h:                                                         # (b)
+        hc, ht = h
+        if hc in filers_in_window:
+            return None, 'b_holder_is_other_filer_in_window'
+        if cont_name(rec.get('name') or '', ht):
+            return T, 'b_continuation'
+        return None, 'b_other_company'
+    return T, 'c_nobody_holds_T'                                  # (c)
+
+
+def ysym(t):
+    return t.replace('.', '-').replace('/', '-').upper()
+
+
+def yh_prefetch(y):
+    """Yahoo の生 JSON を mw_common.yahoo と同じ置き場・名前に置く（3日以内なら取り直さない）。404 は印を置いて None"""
+    os.makedirs(YH404, exist_ok=True)
+    if os.path.exists(os.path.join(YH404, y)):
+        return None
+    p = os.path.join(CACHE, f'yh_{y.replace("^", "IDX_").replace("=", "_")}_1mo.json')
+    if os.path.exists(p) and time.time() - os.path.getmtime(p) < 3 * 86400 and os.path.getsize(p) > 0:
+        return y
+    u = f'https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(y)}?period1=0&period2={int(time.time())}&interval=1mo&events=div%2Csplit'
+    for i in range(5):
+        try:
+            b = urllib.request.urlopen(urllib.request.Request(u, headers=M.UA), timeout=60).read()
+            tmp = f'{p}.{os.getpid()}.{threading.get_ident()}.tmp'
+            open(tmp, 'wb').write(b); os.replace(tmp, p)
+            return y
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                open(os.path.join(YH404, y), 'w').write('404'); return None
+            time.sleep(2 * (i + 1) + random.random())
+        except Exception:  # noqa
+            time.sleep(2 * (i + 1) + random.random())
+    return None
+
+
+_SER = {}
+
+
+def series(y):
+    """{'ret','first','type','spike'} or None。リターンは mw_common.yahoo そのもの（取引所の現地時刻で月を切る・抜けた月をまたがない・今月を落とす）"""
+    if y in _SER:
+        return _SER[y]
+    out = None
+    p = os.path.join(CACHE, f'yh_{y.replace("^", "IDX_").replace("=", "_")}_1mo.json')
+    if os.path.exists(p) and not os.path.exists(os.path.join(YH404, y)):
+        try:
+            j = json.load(open(p))
+            res = (j.get('chart') or {}).get('result')
+        except Exception:  # noqa
+            res = None
+        if res:
+            r = res[0]
+            ts = r.get('timestamp') or []
+            adj = ((r['indicators'].get('adjclose') or [{}])[0].get('adjclose')) or ((r['indicators'].get('quote') or [{}])[0].get('close')) or []
+            off = (r.get('meta') or {}).get('gmtoffset') or 0
+            pm = [datetime.datetime.utcfromtimestamp(t + off) for t, a in zip(ts, adj) if a is not None]
+            if pm:
+                ret = M.yahoo(y)
+                spike = next((k for k in sorted(ret) if ret[k] > SPIKE), None)
+                out = {'ret': ret, 'first': min(d.year * 100 + d.month for d in pm), 'type': (r.get('meta') or {}).get('instrumentType'),
+                       'spike': spike, 'name': (r.get('meta') or {}).get('longName') or (r.get('meta') or {}).get('shortName')}
+    _SER[y] = out
+    return out
+
+
+def status(s, m, formed):
+    """('ok', r) / ('missing', None) / ('spike', None)。系列の最初の月が形成月より後・株式でない → 観測なし（mw_index_events.obs と同じ検問）"""
+    if s is None or s['first'] > formed or (s['type'] or 'EQUITY') != 'EQUITY':
+        return 'missing', None
+    if s['spike'] and m >= s['spike']:
+        return 'spike', None
+    r = s['ret'].get(m)
+    return ('ok', r) if r is not None else ('missing', None)
+
+
+def madd(m, k):
+    y, mo = divmod(m // 100 * 12 + m % 100 - 1 + k, 12)
+    return y * 100 + mo + 1
+
+
+def mrange(a, z):
+    out, m = [], a
+    while m <= z:
+        out.append(m); m = madd(m, 1)
+    return out
+
+
+def cmd_prices(rows=None):
+    """記号の選び方（a/b/c）→ Yahoo を取る。結果は labels.json の行に yahoo・経路・系列の情報を足す"""
+    L = json.load(open(LABELS))
+    rows = L['rows']
+    by_cik, holder = sec_maps()
+    filers = {v: set(filings_in(*window(v))) for v in VINTAGES}
+    for r in rows:
+        y, via = resolve_ticker(r, by_cik, holder, filers[r['vintage']])
+        r['yahoo'], r['yahoo_via'] = (ysym(y) if y else None), via
+    todo = sorted({r['yahoo'] for r in rows if r['yahoo']})
+    print('Yahoo の記号', len(todo), flush=True)
+    import concurrent.futures as cf
+    lock_ = threading.Lock(); nxt = [0.0]
+
+    def one(y):
+        with lock_:
+            t = max(time.time(), nxt[0]); nxt[0] = t + 0.25     # 毎秒4件以下
+        d = t - time.time()
+        if d > 0:
+            time.sleep(d)
+        return y, yh_prefetch(y)
+    got = {}
+    with cf.ThreadPoolExecutor(4) as ex:
+        for i, (y, ok) in enumerate(ex.map(one, todo)):
+            got[y] = ok
+            if (i + 1) % 200 == 0:
+                print(' ', i + 1, '/', len(todo), flush=True)
+    for r in rows:
+        s = series(r['yahoo']) if r['yahoo'] and got.get(r['yahoo']) else None
+        f = r['vintage'] * 100 + 7
+        r['y_first'] = s['first'] if s else None
+        r['y_type'] = s['type'] if s else None
+        r['y_spike'] = s['spike'] if s else None
+        r['y_name'] = s['name'] if s else None
+        r['obs_at_formation'] = bool(s) and status(s, f, f)[0] == 'ok'
+    L['rows'] = rows
+    json.dump(L, open(LABELS, 'w'), ensure_ascii=False, indent=0)
+    c = Counter((r['vintage'], r['yahoo_via'], r['obs_at_formation']) for r in rows)
+    for k in sorted(c):
+        print(k, c[k])
+
+
+# ───────────────────────── ポートフォリオ ─────────────────────────
+def book(names, w, a, z, bound, st, mkt, weighting='vw'):
+    """一つのビンテージの持ち物を a〜z の月で持つ。
+    vw＝本文の 10-K の表紙の時価の比で買い、リターンで漂わせる（買って持つ）／ew＝毎月等分に戻す（観測できる社の平均）。
+    S＝観測できない月が来たらその社を外す（最後の値で売り、残りへ時価の比で按分）／L＝'missing' はその月 −100% として外す。
+    'spike'（月 +300% 超の後）は両方で最後の値で売る。持ち物が空の月は French Mkt で埋める（mw_index_events.calendar_ew と同じ）。
+    返り値: ({月: r}, 期末の重み（空なら {'__MKT__': 1}）, 形成時に買った重み, 統計)"""
+    ms = mrange(a, z)
+    unobs = [k for k in names if st(k, a)[0] != 'ok']
+    obs0 = [k for k in names if k not in set(unobs)]
+    stt = {'n': len(names), 'obs_start': len(obs0), 'unobs_start': sorted(unobs), 'dropped_later': [], 'spike_later': [],
+           'empty_months': 0, 'lost_L_start_weight': 0.0, 'ew_rebal_turnover': 0.0}
+    out = {}
+    if not names:
+        for m in ms:
+            if m in mkt:
+                out[m] = mkt[m]; stt['empty_months'] += 1
+        return out, {'__MKT__': 1.0}, {'__MKT__': 1.0}, stt
+    if weighting == 'vw':
+        tot = sum(w[k] for k in names)
+        pos = {k: w[k] / tot for k in obs0}
+        lost0 = sum(w[k] for k in unobs) / tot if bound == 'L' else 0.0
+        stt['lost_L_start_weight'] = round(lost0, 4)
+        if bound == 'S' and pos:
+            s_ = sum(pos.values()); pos = {k: v / s_ for k, v in pos.items()}
+        bought = dict(pos)
+        if bound == 'L':
+            bought.update({k: w[k] / tot for k in unobs})
+        for i, m in enumerate(ms):
+            v0 = sum(pos.values()) + (lost0 if i == 0 else 0.0)
+            if v0 <= 0:
+                if m in mkt:
+                    out[m] = mkt[m]; stt['empty_months'] += 1
+                continue
+            vo = v1 = cash = 0.0
+            for k in list(pos):
+                s_, r = st(k, m)
+                if s_ == 'ok':
+                    vo += pos[k]; pos[k] *= 1 + r; v1 += pos[k]
+                else:
+                    (stt['spike_later'] if s_ == 'spike' else stt['dropped_later']).append((k, m))
+                    if bound == 'S' or s_ == 'spike':
+                        cash += pos[k]
+                    del pos[k]
+            if vo > 0:
+                kf = 1 + cash / vo
+                for kk in pos:
+                    pos[kk] *= kf
+                out[m] = v1 * kf / v0 - 1
+            else:            # 残る社が無い: 売った分（S・spike）はこの月から市場に置く
+                out[m] = cash * (1 + mkt.get(m, 0.0)) / v0 - 1
+                stt['empty_months'] += 1
+        s_ = sum(pos.values())
+        endw = {k: v / s_ for k, v in pos.items()} if s_ > 0 else {'__MKT__': 1.0}
+        return out, endw, (bought or {'__MKT__': 1.0}), stt
+    # 等加重
+    live = list(obs0)
+    bought = {k: 1 / len(names if bound == 'L' else (obs0 or names)) for k in (names if bound == 'L' else obs0)} or {'__MKT__': 1.0}
+    for i, m in enumerate(ms):
+        rs, ok = [], []
+        if i == 0 and bound == 'L':
+            rs += [-1.0] * len(unobs)
+        for k in list(live):
+            s_, r = st(k, m)
+            if s_ == 'ok':
+                rs.append(r); ok.append(r)
+            else:
+                live.remove(k)
+                (stt['spike_later'] if s_ == 'spike' else stt['dropped_later']).append((k, m))
+                if s_ == 'missing' and bound == 'L':
+                    rs.append(-1.0)
+        if rs and (ok or bound == 'L'):
+            p = sum(rs) / len(rs)
+            out[m] = p
+            if ok and p > -1:            # 事後の報告だけ: 毎月等分に戻す売買の量
+                n_ = len(ok)
+                stt['ew_rebal_turnover'] += 0.5 * sum(abs((1 + x) / n_ / (1 + sum(ok) / n_) - 1 / n_) for x in ok)
+        elif m in mkt:
+            out[m] = mkt[m]; stt['empty_months'] += 1
+    endw = {k: 1 / len(live) for k in live} if live else {'__MKT__': 1.0}
+    return out, endw, bought, stt
+
+
+def weights_for(recs, med):
+    """表紙の時価（5,000万〜1兆ドルの外は読み違い＝欠測）。欠測はそのビンテージの中央値"""
+    w, nfill = {}, 0
+    for r in recs:
+        f = r.get('float')
+        if f is None or not (5e7 <= f <= 1e12):
+            f = med; nfill += 1
+        w[r['cik']] = f
+    return w, nfill
+
+
+class Panel:
+    def __init__(self, rows, mkt):
+        self.rows, self.mkt = rows, mkt
+        self.med = {}
+        for v in VINTAGES:
+            fs = sorted(r['float'] for r in rows if r['vintage'] == v and r.get('float') and 5e7 <= r['float'] <= 1e12)
+            self.med[v] = fs[len(fs) // 2] if len(fs) % 2 else (fs[len(fs) // 2 - 1] + fs[len(fs) // 2]) / 2
+        self.yt = {(r['vintage'], r['cik']): r.get('yahoo') for r in rows}
+
+    def st_fn(self, v):
+        formed = v * 100 + 7
+
+        def st(k, m):
+            y = self.yt.get((v, k))
+            return status(series(y) if y else None, m, formed)
+        return st
+
+    def chain(self, pick, vintages, weighting='vw', bound='S', end=END_M, a_first=None):
+        """pick(r) → bool。各ビンテージの7月に作り、次のビンテージの6月まで（最後のビンテージは end まで）持つ。
+        返り値: 系列, 年あたり片道回転率（形成と作り替えだけ・事前登録の費用の規則）, ビンテージごとの統計"""
+        out, turn, prev, det = {}, 0.0, None, {}
+        for i, v in enumerate(vintages):
+            a = v * 100 + 7
+            z = vintages[i + 1] * 100 + 6 if i + 1 < len(vintages) else end
+            recs = [r for r in self.rows if r['vintage'] == v and pick(r)]
+            w, nfill = weights_for(recs, self.med[v])
+            r_, endw, bought, stt = book([r['cik'] for r in recs], w, a, z, bound, self.st_fn(v), self.mkt, weighting)
+            turn += 1.0 if prev is None else 0.5 * sum(abs(bought.get(k, 0.0) - prev.get(k, 0.0)) for k in set(bought) | set(prev))
+            prev = endw
+            out.update(r_)
+            nm = {r['cik']: r['ticker'] for r in recs}
+            det[str(v)] = {'n': stt['n'], 'obs_at_formation': stt['obs_start'], 'float_filled_median': nfill,
+                           'unobserved_at_formation': [nm[k] for k in stt['unobs_start']][:40],
+                           'dropped_later': [f'{nm[k]}@{m}' for k, m in stt['dropped_later']][:40],
+                           'spike_later': [f'{nm[k]}@{m}' for k, m in stt['spike_later']],
+                           'months_filled_with_mkt': stt['empty_months'], 'L_weight_lost_at_formation': stt['lost_L_start_weight'],
+                           'ew_monthly_rebal_turnover_posthoc': round(stt['ew_rebal_turnover'], 2) if weighting == 'ew' else None}
+        yrs = len(out) / 12
+        return out, (turn / yrs if yrs else None), det
+
+
+def safe(s):
+    """−100% の月（L で持ち物が全部消えた月）があると幾何の計算が log(0) で落ちる。その月だけ −99.9999% に置く（向きは変わらない・印を付ける）"""
+    bad = [m for m, v in s.items() if v <= -1]
+    return ({m: (max(v, -0.999999)) for m, v in s.items()}, bad) if bad else (s, [])
+
+
+def ev(s, b, turnover=None, windows=()):
+    s2, wiped = safe(s)
+    b2, _ = safe(b)
+    sub = lambda d, a, z: {k: v for k, v in d.items() if a <= k <= z}
+    d = {'full': M.excess_stats(s2, b2, FIRST_M, END_M), 'train': M.excess_stats(s2, b2, FIRST_M, TRAIN_Z),
+         'hold': M.excess_stats(s2, b2, HOLD_A, END_M), 'recent_2013_07': M.excess_stats(s2, b2, RECENT_A, END_M),
+         'roll20': M.rolling(sub(s2, FIRST_M, END_M), sub(b2, FIRST_M, END_M), 20, 7),
+         'dca20': M.dca(sub(s2, FIRST_M, END_M), sub(b2, FIRST_M, END_M), 20, 12),
+         'maxdd_s': round(M.maxdd(sub(s2, FIRST_M, END_M)) * 100, 1), 'maxdd_b': round(M.maxdd(sub(b2, FIRST_M, END_M)) * 100, 1)}
+    for nm, a, z in windows:
+        d[nm] = M.excess_stats(s2, b2, a, z)
+    if turnover is not None:
+        d['annual_oneway_turnover'] = round(turnover, 3)
+        d['cost_hold'] = M.excess_stats(safe(M.apply_cost(s, turnover, 0.001))[0], b2, HOLD_A, END_M)
+    if wiped:
+        d['wiped_months_L'] = wiped
+    return d
+
+
+GRADE_ORDER = {'S': 3, 'A': 2, 'B': 1, 'C': 0}
+
+
+def sgn(x):
+    return 0 if x is None or x == 0 else (1 if x > 0 else -1)
+
+
+def cmd_run():
+    t0 = time.time()
+    L = json.load(open(LABELS))
+    rows, summ = L['rows'], L['summary']
+    if not any('yahoo_via' in r for r in rows):
+        raise SystemExit('先に prices')
+    ff = M.ff_factors()
+    mkt = {k: v for k, v in ff['mkt'].items() if FIRST_M <= k <= END_M}
+    P = Panel(rows, mkt)
+    f2lab = lambda r: r['lock'] is not None
+    fams = {
+        'H1': ('F2 lock 時価加重 − French Mkt（主）', lambda r: r['lock'] is True, F2_VINTAGES, 'vw', 'mkt', None),
+        'H2': ('F2 lock 等加重 − French Mkt', lambda r: r['lock'] is True, F2_VINTAGES, 'ew', 'mkt', None),
+        'H3': ('F2 lock 時価加重 − 同じ母集団の時価加重', lambda r: r['lock'] is True, F2_VINTAGES, 'vw', 'pop', f2lab),
+        'H4': ('F1 時価加重 − French Mkt', lambda r: r['f1'], F1_VINTAGES, 'vw', 'mkt', None),
+        'H5': ('F1 時価加重 − 同じ母集団の時価加重', lambda r: r['f1'], F1_VINTAGES, 'vw', 'pop', lambda r: True),
+        'H6': ('rep 上位 時価加重 − French Mkt', lambda r: r['rep_top'] is True, F2_VINTAGES, 'vw', 'mkt', None),
+        'H7': ('dur 上位 時価加重 − French Mkt', lambda r: r['dur_top'] is True, F2_VINTAGES, 'vw', 'mkt', None),
+    }
+    fresh = {'F2': (HOLD_A, 201206), 'F1': (HOLD_A, 201506)}
+    res, series_keep = {}, {}
+    for H, (lab, pick, vins, wt, bench, popick) in fams.items():
+        fam = 'F1' if H in ('H4', 'H5') else 'F2'
+        wins = (('fresh_labels_2007_01_' + str(fresh[fam][1]), *fresh[fam]), ('spill_2006_vintage_2007_01_2009_06', HOLD_A, 200906),
+                ('old_labels_carried_' + str(madd(fresh[fam][1], 1)) + '_2026_08', madd(fresh[fam][1], 1), END_M))
+        res[H] = {'label': lab, 'family': fam, 'weighting': wt, 'benchmark': 'French Mkt' if bench == 'mkt' else '同じ母集団の時価加重（同じ S/L）',
+                  'vintages': vins}
+        for bd in ('S', 'L'):
+            s, turn, det = P.chain(pick, vins, wt, bd)
+            if bench == 'mkt':
+                b = mkt; bdet = None
+            else:
+                b, _, bdet = P.chain(popick, vins, 'vw', bd)
+            series_keep[(H, bd)] = (s, b)
+            e = ev(s, b, turn, wins)
+            res[H][bd] = {'stats': e, 'per_vintage': det, 'benchmark_per_vintage': ({v: {k: x[k] for k in ('n', 'obs_at_formation', 'months_filled_with_mkt')}
+                                                                                      for v, x in bdet.items()} if bdet else None)}
+            print(H, bd, 'hold', e['hold'] and e['hold']['ex_ann'], e['hold'] and e['hold']['t'], 'train', e['train'] and e['train']['ex_ann'],
+                  e['train'] and e['train']['t'], flush=True)
+    # Holm（保有期間の NW t の両側 p・S と L で別々）
+    holm = {}
+    for bd in ('S', 'L'):
+        ps = {H: (res[H][bd]['stats']['hold'] or {}).get('p') for H in fams}
+        holm[bd] = {'raw_p': ps, 'holm_p': M.holm(ps)}
+    tested = []
+    for H in fams:
+        gb = {}
+        for bd in ('S', 'L'):
+            e = res[H][bd]['stats']
+            g, crit = M.grade(e['full'], e['train'], e['hold'], e['roll20'], e.get('cost_hold'), None, holm[bd]['holm_p'].get(H), None, False)
+            gb[bd] = (g, crit)
+            res[H][bd]['grade'], res[H][bd]['criteria'] = g, crit
+            res[H][bd]['holm_p_hold'] = holm[bd]['holm_p'].get(H)
+        sS = sgn((res[H]['S']['stats']['hold'] or {}).get('ex_ann'))
+        sL = sgn((res[H]['L']['stats']['hold'] or {}).get('ex_ann'))
+        if sS != sL or sS == 0:
+            g, why = 'C', 'S と L で保有期間の超過の符号が割れた（または測れない）→ C（事前登録）'
+        else:
+            g = min(gb['S'][0], gb['L'][0], key=lambda x: GRADE_ORDER[x])
+            why = 'S と L の符号が一致 → 低い方'
+        res[H]['grade'], res[H]['grade_rule'] = g, why
+        hs, hl = res[H]['S']['stats']['hold'] or {}, res[H]['L']['stats']['hold'] or {}
+        ts, tl = res[H]['S']['stats']['train'] or {}, res[H]['L']['stats']['train'] or {}
+        tested.append({'name': H, 'label': lab if False else fams[H][0], 'family': 'registered_holm_H1_H7', 'graded': True, 'grade': g,
+                       'grade_S': gb['S'][0], 'grade_L': gb['L'][0], 'grade_rule': why,
+                       'train_ex_S': ts.get('ex_ann'), 'train_t_S': ts.get('t'), 'hold_ex_S': hs.get('ex_ann'), 'hold_t_S': hs.get('t'),
+                       'train_ex_L': tl.get('ex_ann'), 'train_t_L': tl.get('t'), 'hold_ex_L': hl.get('ex_ann'), 'hold_t_L': hl.get('t'),
+                       'holm_p_S': holm['S']['holm_p'].get(H), 'holm_p_L': holm['L']['holm_p'].get(H),
+                       'criteria_S': gb['S'][1], 'criteria_L': gb['L'][1]})
+    # ───── 報告のみ（事前登録の report_only）─────
+    rep = {}
+
+    def simple(name, pick, vins=F2_VINTAGES, wt='vw', bench='mkt', note=''):
+        o = {'note': note}
+        for bd in ('S', 'L'):
+            s, turn, det = P.chain(pick, vins, wt, bd)
+            b = mkt if bench == 'mkt' else P.chain(bench, vins, 'vw', bd)[0]
+            e = ev(s, b, turn, (('fresh_labels_2007_01_2012_06', HOLD_A, 201206),))
+            o[bd] = {'train': e['train'], 'hold': e['hold'], 'full': e['full'], 'recent_2013_07': e['recent_2013_07'],
+                     'fresh_labels_2007_01_2012_06': e['fresh_labels_2007_01_2012_06'], 'roll20': e['roll20'], 'cost_hold': e.get('cost_hold'),
+                     'per_vintage_n': {v: [x['n'], x['obs_at_formation']] for v, x in det.items()}}
+        rep[name] = o
+        tested.append({'name': name, 'family': 'report_only', 'graded': False, 'grade': None,
+                       'hold_ex_S': (o['S']['hold'] or {}).get('ex_ann'), 'hold_t_S': (o['S']['hold'] or {}).get('t'),
+                       'hold_ex_L': (o['L']['hold'] or {}).get('ex_ann'), 'hold_t_L': (o['L']['hold'] or {}).get('t'),
+                       'train_ex_S': (o['S']['train'] or {}).get('ex_ann'), 'train_t_S': (o['S']['train'] or {}).get('t'),
+                       'train_ex_L': (o['L']['train'] or {}).get('ex_ann'), 'train_t_L': (o['L']['train'] or {}).get('t')})
+        print(name, 'S hold', (o['S']['hold'] or {}).get('ex_ann'), 'L hold', (o['L']['hold'] or {}).get('ex_ann'), flush=True)
+
+    sic_i = lambda r: int(r['sic']) if r.get('sic') and str(r['sic']).isdigit() else None
+    semi = lambda r: (sic_i(r) in SEMI_SIC) or r['ticker'].upper() in SEMI_NAMED or (r.get('yahoo') or '') in SEMI_NAMED
+    simple('R_ex_semis_chain', lambda r: r['lock'] is True and not semi(r), note='半導体の連鎖（SIC 3674・3559・名指しの装置・材料）を除いた lock 時価加重 − French Mkt')
+    simple('R_ex_aero_defence', lambda r: r['lock'] is True and not AERO(sic_i(r)), note='航空・防衛（SIC 3720-3729・3760-3769・3812）を除いた lock 時価加重 − French Mkt')
+    simple('R_both_readers_agree', lambda r: r['lock'] is True and r['ab_agree85'] is True, note='A と B が irr≥85 で一致した lock だけ − French Mkt')
+    simple('R_recognised_by_neither', lambda r: r['lock'] is True and r['rec_neither'] is True, note='A も B も会社が分からなかった（recognised=false）lock だけ − French Mkt')
+    simple('R_F1_ew', lambda r: r['f1'], F1_VINTAGES, 'ew', note='F1 等加重 − French Mkt（副の族の参考）')
+    simple('R_population_vw', lambda r: r['lock'] is not None, note='F2 の母集団（lock＋非 lock＋自動 no85）時価加重 − French Mkt（相手の生き残りの偏りの大きさ）')
+    simple('R_nonlock_vw', lambda r: r['lock'] is False, note='F2 非 lock 時価加重 − French Mkt')
+    # 業種そろえ（SIC2）: lock の各社 − 同じビンテージ・同じ SIC 上2桁の非 lock の時価加重、を lock の重みで平均
+    ctl = {}
+    for bd in ('S', 'L'):
+        cs, excl = {}, {}
+        for i, v in enumerate(F2_VINTAGES):
+            a = v * 100 + 7
+            z = F2_VINTAGES[i + 1] * 100 + 6 if i + 1 < len(F2_VINTAGES) else END_M
+            lk = [r for r in rows if r['vintage'] == v and r['lock'] is True]
+            nl = [r for r in rows if r['vintage'] == v and r['lock'] is False]
+            groups = defaultdict(list)
+            for r in lk:
+                groups[str(r.get('sic') or '')[:2]].append(r)
+            gser, ex_ = [], []
+            for g2, lr in groups.items():
+                nr = [r for r in nl if str(r.get('sic') or '')[:2] == g2 and g2]
+                if not nr:
+                    ex_ += [r['ticker'] for r in lr]; continue
+                wl, _ = weights_for(lr, P.med[v]); wn, _ = weights_for(nr, P.med[v])
+                sl, _, _, stl = book([r['cik'] for r in lr], wl, a, z, bd, P.st_fn(v), {}, 'vw')
+                sn, _, _, stn = book([r['cik'] for r in nr], wn, a, z, bd, P.st_fn(v), {}, 'vw')
+                if stl['obs_start'] == 0 and bd == 'S':
+                    ex_ += [r['ticker'] for r in lr]; continue
+                gser.append((sum(wl.values()), sl, sn, g2, [r['ticker'] for r in lr], len(nr)))
+            V = {id(x): x[0] for x in gser}
+            for m in mrange(a, z):
+                num = den = 0.0
+                for x in gser:
+                    if m in x[1] and m in x[2] and V[id(x)] > 0:
+                        num += V[id(x)] * (x[1][m] - x[2][m]); den += V[id(x)]
+                for x in gser:
+                    if m in x[1]:
+                        V[id(x)] *= 1 + max(x[1][m], -1.0)
+                if den > 0:
+                    cs[m] = num / den
+            excl[str(v)] = {'excluded_no_nonlock_same_sic2': ex_, 'groups': [(x[3], x[4], x[5]) for x in gser]}
+        zero = {m: 0.0 for m in mkt}
+        ctl[bd] = {'train': M.excess_stats(cs, zero, FIRST_M, TRAIN_Z), 'hold': M.excess_stats(cs, zero, HOLD_A, END_M),
+                   'full': M.excess_stats(cs, zero, FIRST_M, END_M), 'months': len(cs), 'per_vintage': excl}
+    rep['R_within_sic2'] = {'note': 'lock の各社 − 同じビンテージ・同じ SIC 上2桁の非 lock の時価加重（lock の重みで平均）。ex_ann・t は差の系列そのもの（0 と比べる）', **ctl}
+    tested.append({'name': 'R_within_sic2', 'family': 'report_only', 'graded': False, 'grade': None,
+                   'hold_ex_S': (ctl['S']['hold'] or {}).get('ex_ann'), 'hold_t_S': (ctl['S']['hold'] or {}).get('t'),
+                   'hold_ex_L': (ctl['L']['hold'] or {}).get('ex_ann'), 'hold_t_L': (ctl['L']['hold'] or {}).get('t'),
+                   'train_ex_S': (ctl['S']['train'] or {}).get('ex_ann'), 'train_t_S': (ctl['S']['train'] or {}).get('t'),
+                   'train_ex_L': (ctl['L']['train'] or {}).get('ex_ann'), 'train_t_L': (ctl['L']['train'] or {}).get('t')})
+    # 5年と 2026-08 までの手を触れない持ち方（各ビンテージの lock・時価加重）
+    coh = {}
+    for v in F2_VINTAGES:
+        recs = [r for r in rows if r['vintage'] == v and r['lock'] is True]
+        w, _ = weights_for(recs, P.med[v])
+        o = {'names': [r['ticker'] for r in recs]}
+        for bd in ('S', 'L'):
+            for tag, z in (('5y', madd(v * 100 + 7, 59)), ('to_2026_08', END_M)):
+                s, _, _, stt = book([r['cik'] for r in recs], w, v * 100 + 7, z, bd, P.st_fn(v), mkt, 'vw')
+                ks = [k for k in sorted(s) if k in mkt]
+                ws = wb = 1.0
+                for k in ks:
+                    ws *= 1 + max(s[k], -1.0); wb *= 1 + mkt[k]
+                yrs = len(ks) / 12
+                o[f'{bd}_{tag}'] = {'months': len(ks), 'wealth_ratio_vs_mkt': round(ws / wb, 3),
+                                    'cagr_s': round((ws ** (1 / yrs) - 1) * 100, 2) if ws > 0 and yrs else -100.0,
+                                    'cagr_mkt': round((wb ** (1 / yrs) - 1) * 100, 2) if yrs else None,
+                                    'obs_at_formation': stt['obs_start'], 'n': stt['n'], 'months_filled_with_mkt': stt['empty_months']}
+        coh[str(v)] = o
+    rep['R_cohort_buy_and_hold'] = coh
+    tested.append({'name': 'R_cohort_buy_and_hold', 'family': 'report_only', 'graded': False, 'grade': None,
+                   'note': '各ビンテージの lock を5年・2026-08 まで（数値は report_only.R_cohort_buy_and_hold）'})
+    # 門の今日の irr=85 の顔ぶれとの重なり（文脈だけ・主張なし）
+    import glob
+    g85, g100 = [], []
+    for f in glob.glob(os.path.join(BASE, 'out', '*_gate_pack.json')):
+        try:
+            d = json.load(open(f))
+        except Exception:  # noqa
+            continue
+        t = os.path.basename(f).replace('_gate_pack.json', '')
+        if d.get('irr') in (85, '85'):
+            g85.append(t)
+        if d.get('irr') in (100, '100'):
+            g100.append(t)
+    lk_all = [r for r in rows if r['lock'] is True]
+    ids = lambda r: {r['ticker'].upper(), (r.get('yahoo') or '').upper()} - {''}
+    overlap = {'gate_irr85_today': sorted(g85), 'gate_irr100_today': sorted(g100),
+               'pre2007_and_2009_lock_firms': sorted({f"{r['ticker']}（{r['name']}）" for r in lk_all}),
+               'lock_in_gate_irr85': sorted({f"{r['vintage']}:{r['ticker']}" for r in lk_all if ids(r) & set(g85)}),
+               'lock_in_gate_irr100': sorted({f"{r['vintage']}:{r['ticker']}" for r in lk_all if ids(r) & set(g100)}),
+               'gate_irr85_in_universe_by_vintage': {str(v): sorted({r['ticker'] for r in rows if r['vintage'] == v and ids(r) & set(g85)}) for v in VINTAGES},
+               'gate_irr85_labels_in_universe': sorted({f"{r['vintage']}:{r['ticker']}={'lock' if r['lock'] else ('nonlock' if r['lock'] is False else 'unlabelled')}"
+                                                         f"{'' if r['src'] != 'read' else ' (A' + str(r.get('irr_A')) + '/B' + str(r.get('irr_B')) + ')'}"
+                                                         for r in rows if ids(r) & set(g85)})}
+    return res, holm, tested, rep, overlap, P, rows, summ, time.time() - t0
+
+
+def cmd_result():
+    """第3段の本体: 判定を出して out/mw_moat_text_pre2007.json に書く"""
+    res, holm, tested, rep, overlap, P, rows, summ, secs = cmd_run()
+    pre = json.load(open(os.path.join(BASE, 'out', 'mw_prereg.json')))
+    bv = summ['by_vintage']
+    # 窓の報告（事前登録の report_only のうち H1 の窓）を tested にも1行ずつ残す
+    for key, lab in (('fresh_labels_2007_01_201206', '新しいラベルだけの保有期間 2007-01〜2012-06（H1 の窓）'),
+                     ('spill_2006_vintage_2007_01_2009_06', '2006 ビンテージのはみ出し 2007-01〜2009-06（H1 の窓）'),
+                     ('recent_2013_07', '2013-07〜（H1 の窓）'),
+                     ('old_labels_carried_201207_2026_08', '2009 のラベルのまま持ち続けた 2012-07〜2026-08（H1 の窓）')):
+        eS, eL = res['H1']['S']['stats'].get(key) or {}, res['H1']['L']['stats'].get(key) or {}
+        tested.append({'name': 'R_H1_window_' + key, 'label': lab, 'family': 'report_only', 'graded': False, 'grade': None,
+                       'ex_S': eS.get('ex_ann'), 't_S': eS.get('t'), 'cagr_diff_S': eS.get('cagr_diff'),
+                       'ex_L': eL.get('ex_ann'), 't_L': eL.get('t'), 'cagr_diff_L': eL.get('cagr_diff')})
+    posthoc = {'R_F1_ew', 'R_population_vw', 'R_nonlock_vw'}
+    for t in tested:
+        if t['name'] in posthoc:
+            t['family'] = '事後_diagnostic'
+        if t['name'] in rep and isinstance(rep[t['name']], dict) and rep[t['name']].get('note'):
+            t['label'] = rep[t['name']]['note']
+    # 観測できた lock（S の形成時）
+    obs_lock = {v: [r['ticker'] for r in rows if r['vintage'] == v and r['lock'] is True and r.get('obs_at_formation')] for v in F2_VINTAGES}
+    reach = {str(v): {'lock': bv[str(v)]['lock'], 'thin_lt10': bv[str(v)]['thin_lt10'], 'lock_observed_on_yahoo_at_formation': obs_lock[v],
+                      'f1': bv[str(v)]['f1'], 'rep_top': bv[str(v)]['rep_top'], 'dur_top': bv[str(v)]['dur_top']} for v in F2_VINTAGES}
+    reach['2012'] = {'lock': None, 'note': '予算で読まなかった（F2・rep・dur は無ラベル）', 'f1': bv['2012']['f1']}
+    mapc = Counter((r['vintage'], r['yahoo_via'], bool(r.get('obs_at_formation'))) for r in rows)
+    mapping = {str(v): {f'{via}|{"obs" if o else "unobs"}': n for (vv, via, o), n in sorted(mapc.items()) if vv == v} for v in VINTAGES}
+    cov = {str(v): {'text_ok_units': sum(1 for r in rows if r['vintage'] == v),
+                    'observed_at_formation': sum(1 for r in rows if r['vintage'] == v and r.get('obs_at_formation'))} for v in VINTAGES}
+    for v in cov:
+        cov[v]['rate'] = round(cov[v]['observed_at_formation'] / cov[v]['text_ok_units'], 3)
+    g = {t['name']: t for t in tested}
+    h1s, h1l = res['H1']['S']['stats'], res['H1']['L']['stats']
+    h4s = res['H4']['S']['stats']
+    n_lock = sum(bv[str(v)]['lock'] for v in F2_VINTAGES)
+    n_obs = sum(len(obs_lock[v]) for v in F2_VINTAGES)
+    f = lambda x, k='ex_ann': (x or {}).get(k)
+    summary_ja = '\n'.join([
+        f"1997〜2009 の5ビンテージの S&P500 の 10-K（候補段落のある {summ['n_read_units']} 単位）を2人が伏せたまま読み、irr≥85 で割れた {summ['n_third_reads']} 単位を3人目が読んだ（3人目は全部 70）。読み手の一致 κ は irr≥85 で {summ['kappa_irr_ge85']['kappa']}・刻み全体で {summ['kappa_irr_full_scale']['kappa']}。",
+        f"最終の lock（irr≥85）は 1997 {bv['1997']['lock']}社・2000 {bv['2000']['lock']}社・2003 {bv['2003']['lock']}社・2006 {bv['2006']['lock']}社・2009 {bv['2009']['lock']}社（延べ {n_lock}）。全ビンテージが事前登録の『薄い（10社未満）』で、格は規則どおり変えていない。",
+        f"lock は D・MDR／MIL／MIL・CNP／UTX・HON・VRSN・MIL・GD／VRSN・MIL・SIAL（公益の区域の独占＝D・CNP／国防の単独調達＝MDR・GD・UTX／機体に認証された部品＝HON／医薬品の承認に書き込まれた材料＝MIL・SIAL／.com の登録簿＝VRSN）。Yahoo で株価があったのは延べ {n_obs} 社だけ（MIL・SIAL・MDR は上場廃止で系列なし）。",
+        f"主の H1（lock 時価加重 − French Mkt）: 訓練 1997-07〜2006-12 は S {f(h1s['train'])}%/年（t {f(h1s['train'], 't')}）・L {f(h1l['train'])}%、保有 2007-01〜2026-08 は S +{f(h1s['hold'])}%/年（t {f(h1s['hold'], 't')}）・L +{f(h1l['hold'])}%（t {f(h1l['hold'], 't')}）→ 格 C（訓練の t≥2 を満たさない）。",
+        f"登録した7本（H1〜H7）はすべて C。いちばん強いのは機械の F1（H4）の保有 S +{f(h4s['hold'])}%/年（t {f(h4s['hold'], 't')}・Holm 後 p {holm['S']['holm_p'].get('H4')}）だが、訓練は t {f(h4s['train'], 't')} で、L（消えた社を −100%）では訓練 {f(res['H4']['L']['stats']['train'])}%/年。",
+        f"業種をそろえた比較（同じ SIC 上2桁の非 lock との差）は保有 S {f(rep['R_within_sic2']['S']['hold'])}%/年（t {f(rep['R_within_sic2']['S']['hold'], 't')}）。2人一致の部分集合は主と同じ（lock は全部2人一致）、どちらも会社が分からなかった lock は SIAL 1社だけ（系列なし）。",
+        f"門の今日の irr=85（{len(overlap['gate_irr85_today'])}社）と重なる lock はゼロ（今日の顔ぶれで当時の名簿に居たのは 2012 の LRCX だけで、予算で読まず無ラベル）。1997 の lock の D（Dominion）は今日の門で irr=100。",
+        f"最大の注意は標本の小ささ: lock は延べ {n_lock} 社・株価が観測できたのは延べ {n_obs} 社で、保有期間の S の成績の大半は VeriSign 1社（2009-07〜2026-08）。S と L の囲みも広い。『2007年より前の本文でも irr≥85 が市場に勝った』という証拠にはならない（逆の証拠でもない）。",
+        '門・採点・配分・売却規律は何も変えていない。',
+    ])
+    caveats = [
+        f"lock は全ビンテージで10社未満（{', '.join(str(bv[str(v)]['lock']) for v in F2_VINTAGES)}）＝事前登録の『薄い』。株価が形成時に観測できた lock は延べ {n_obs} 社（2000 は0社→S では市場で埋めた36か月）",
+        '保有期間の S の成績の大半は VeriSign 1社（2009 ビンテージは MIL・SIAL が系列なしで VRSN だけが残った）。1社の成績であって規則の成績ではない',
+        'L（観測できない月を −100%）は買収で消えた社（MIL は 2010・SIAL は 2015 に Merck KGaA がプレミアムで買収）を全損に数えるので、極端な下限。S と L の幅が格を付けられないほど広い',
+        '語の網は 1,138 単位のうち irr≥85 をほとんど拾わなかった（A・B とも17件）。網に掛からない機構は自動で非 lock（事前登録の限界）',
+        '読み手は半数以上の単位で会社が分かったと答えた（A 52.5%・B 54.0%）。lock のうち誰も分からなかったのは SIAL だけ',
+        'Yahoo は上場廃止の社を持たない: 形成時に観測できた社の割合は 1997 年で約4割（CRSP 由来の French Mkt と比べるので生き残りの偏りが残る）',
+        '2012 ビンテージは予算で読まなかった（事前登録の段1）＝F2 は 2009 のラベルのまま 2026-08 まで',
+    ]
+    posthoc_notes = [
+        '持ち物が空の月（S で lock が1社も観測できない 2000 ビンテージ等）は French Mkt で埋めた（mw_index_events.calendar_ew と同じ扱い・事前登録に明記なし）',
+        'L で持ち物が全部消えた月（2000-07 の MIL だけの lock）は −100%。幾何の計算が log(0) で落ちるので、その月だけ −99.9999% に置いた（向きは変わらない・wiped_months_L に印）',
+        'S と L の『保有期間の超過の符号』は算術平均の超過（ex_ann）で比べた。H1 の L は ex_ann +1.03 だが幾何の年率差は −3.16（どちらでも格は C で変わらない）',
+        'CIK が今日の SEC 一覧で複数の記号を持つときは名簿の記号に一致するもの、無ければ一覧の先頭（普通株）を使った',
+        '系列の検問は mw_index_events.obs と同じく instrumentType が EQUITY でないもの（記号の使い回しで ETF・投信になったもの）も観測なしにした',
+        '月 +300% 超の検問は mw_index_events と同じく系列全体で最初の月から先を捨てた（NBR は 1985 年代の跳ねで全期間が観測なし）',
+        '費用は戦略の側だけに引いた（H3・H5 の相手の母集団には引いていない＝戦略に厳しい向き）。等加重の毎月の戻しの売買は事前登録の費用の規則（作り替えと最初の買いだけ）の外なので引いていない（量は per_vintage に事後の報告）',
+        'rep/dur の『2人の低い方』で null は最も低い（手がかりなし）と扱った',
+        '『どちらの読み手も recognised=false』は A と B で判定した（3人目は8単位しか読んでいない）',
+        '業種そろえの対照は SIC 上2桁の群ごとに lock と非 lock を別々に持ち（S の売りは群の中で按分）、lock の重みで平均した',
+        'R_F1_ew・R_population_vw・R_nonlock_vw は事前登録に無い診断（判定に使わない）',
+    ]
+    obj = {
+        'angle': 'moat_text_pre2007',
+        'prereg': 'out/mw_moat_text_pre2007_prereg.json', 'prereg_commits': ['905a0d2', '21fa7a5'],
+        'question': json.load(open(PREREG))['question'],
+        'stage': '第3段（読みの後に鍵を開け、株価を初めて取得してリターン・判定）。規則は事前登録のまま',
+        'periods': {'train': '1997-07〜2006-12', 'hold': '2007-01〜2026-08', 'full': '1997-07〜2026-08', 'fresh_F2': '2007-01〜2012-06', 'fresh_F1': '2007-01〜2015-06', 'recent': '2013-07〜'},
+        'benchmark': 'French Mkt（Mkt-RF + RF）・H3/H5 は同じ母集団の時価加重（同じ Yahoo・同じ S/L・同じ重み）',
+        'criteria': pre['criteria'], 'grades_def': pre['grades'],
+        'grading_rule': 'mw_common.grade を S と L で別々に当て、保有期間の超過の符号が S と L で一致したときだけ低い方の格。割れたら C。C5 は N/A・C8 は該当なし',
+        'labels': summ,
+        'lock_counts': {str(v): {'lock': bv[str(v)]['lock'], 'names': bv[str(v)]['lock_names'], 'both_readers_agree': bv[str(v)]['lock_both_readers_agree'],
+                                 'recognised_by_neither': bv[str(v)]['lock_recognised_by_neither'], 'thin_lt10': bv[str(v)]['thin_lt10']} for v in F2_VINTAGES},
+        'reachability': reach,
+        'reachability_rule': '事前登録: lock が10社未満のビンテージは『薄い』と印を付けて報告する（格は変えない）。全ビンテージが薄い',
+        'price_coverage': cov, 'ticker_mapping_counts': mapping,
+        'tests': res, 'holm': holm,
+        'tested': tested, 'n_tested': len(tested),
+        'n_graded': sum(1 for t in tested if t.get('graded')),
+        'report_only': rep,
+        'gate_overlap_context_only': overlap,
+        'caveats': caveats, 'posthoc_implementation_notes': posthoc_notes,
+        'summary_ja': summary_ja,
+        'runtime_s': round(secs, 1),
+    }
+    p = M.save(RESULT, obj)
+    print('書いた', p)
+    print(summary_ja)
+    for t in tested:
+        print(t['name'], t.get('grade'), t.get('family'))
+
+
 if __name__ == '__main__':
     os.makedirs(MT, exist_ok=True)
     cmd = sys.argv[1] if len(sys.argv) > 1 else ''
@@ -1912,5 +2663,11 @@ if __name__ == '__main__':
         cmd_mask()
     elif cmd == 'instructions':
         cmd_instructions()
+    elif cmd == 'labels':
+        cmd_labels()
+    elif cmd == 'prices':
+        cmd_prices()
+    elif cmd == 'run':
+        cmd_result()
     else:
         print(__doc__)
