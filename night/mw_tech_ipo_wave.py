@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M  # noqa: E402
 
 PREREG = 'mw_tech_ipo_wave_prereg.json'
+PREREG2 = 'mw_tech_ipo_wave_prereg2.json'   # 探索の族 X（上場の波 × 相対トレンド）
 OUT = 'mw_tech_ipo_wave.json'
 END = 202608                  # French の終わり
 INT_SIG_END = 202112          # Internet の印を使う最後の月（Ritter が近年更新していない）
@@ -569,6 +570,38 @@ def main():
         r = eval_timing(f'E{j}_R1_{sig}_Q5', '探索（T3）', f'R1 全部を市場へ・信号 {sig}・Q5・器 T3', t3, mkt, rf, s, 0.0, sig_meta[f'{sig}_Q5'])
         r['primary'] = False
         strats['E'].append(r)
+    # ── 探索族 X（事前登録2）: 上場の波 × ハイテクの相対トレンドの崩れ
+    def rel_trend(tech):
+        ks = sorted(k for k in tech if k in mkt)
+        assert all(ym_add(a, 1) == b for a, b in zip(ks, ks[1:])), '相対指数の月が連続していない'
+        ri, v = {}, 1.0
+        for k in ks:
+            v *= (1 + tech[k]) / (1 + mkt[k]); ri[k] = v
+        return {k: ri[k] < sum(ri[ks[j]] for j in range(i - 9, i + 1)) / 10 for i, k in enumerate(ks) if i >= 9}
+    td = {'T3': rel_trend(t3), 'NDX': rel_trend(ndx)}
+
+    def xstate(sig, tn, t0):
+        s = st(sig) if sig else None
+        out = {}
+        for t in months(t0, END):
+            p_ = ym_add(t, -1)
+            if p_ not in td[tn] or (s is not None and t not in s):
+                continue
+            out[t] = (s[t] and td[tn][p_]) if s is not None else td[tn][p_]
+        return out
+    xspec = [('X1_R1_VC_Q5_TD_T3', 'VC_Q5', 'T3', 198012), ('X2_R1_TD_T3', None, 'T3', 196512), ('X3_R1_GROSS_Q5_TD_T3', 'GROSS_Q5', 'T3', 196512),
+             ('X4_R1_TNL_Q5_TD_T3', 'TNL_Q5', 'T3', 197907), ('X5_R1_VC_Q5_TD_NDX', 'VC_Q5', 'NDX', 198609), ('X6_R1_TD_NDX', None, 'NDX', 198609)]
+    strats['X'] = []
+    xstates = {}
+    for nm, sig, tn, t0 in xspec:
+        tech = t3 if tn == 'T3' else ndx
+        s = xstate(sig, tn, t0)
+        assert min(s) == t0, (nm, min(s), t0)
+        xstates[nm] = s
+        r = eval_timing(nm, '探索 X（上場の波×相対トレンド・事前登録2）', f'R1・{"信号 " + sig + " かつ " if sig else "【対照】"}ハイテクの相対指数が10か月平均の下・器 {tn}',
+                        tech, mkt, rf, s, 0.0, sig_meta[sig] if sig else {'trend_only': True})
+        r['primary'] = False
+        strats['X'].append(r)
     for fam in strats:
         for comp in ('tech', 'mkt'):
             grade_family(strats[fam], comp)
@@ -591,6 +624,11 @@ def main():
     for j, sig in enumerate(('TECHY', 'NET', 'GROSS', 'FDR', 'TNL'), 1):
         s = st(f'{sig}_Q5'); s = {t: v for t, v in s.items() if t in t3}
         dres.append(eval_dca(f'E{j}D_R3_{sig}_Q5', '探索の積立（D判定）', f'R3・信号 {sig}・Q5・器 T3', t3, mkt, s, END, sig_meta[f'{sig}_Q5']))
+    for (nm, sig, tn, t0) in xspec:
+        tech = t3 if tn == 'T3' else ndx
+        nmd = nm.replace('_R1_', 'D_R3_', 1)
+        dres.append(eval_dca(nmd, '探索 X の積立（D判定・事前登録2）', f'R3・{"信号 " + sig + " かつ " if sig else "【対照】"}相対トレンドの下・器 {tn}', tech, mkt, xstates[nm], END,
+                             sig_meta[sig] if sig else {'trend_only': True}))
     for d in dres:
         log(d['name'], d['windows'], 'vsTech', d['judgement_vs_tech'], d['cmp']['tech']['train_windows'], d['cmp']['tech']['hold_windows'],
             'vsMkt', d['judgement_vs_mkt'], d['cmp']['mkt']['hold_windows'])
@@ -707,8 +745,23 @@ def main():
         tx[nm] = tax_sim(tech, mkt, s, 0.0 if parts[1] == 'R1' else 0.5, z=INT_POS_END if parts[2] == 'INT' else END)
     reports['tax_taxable_account_2007+'] = tx
 
+    # 事前登録2の報告: IPO の信号が対照に足した分・基準の積立・持ち替え
+    xs = {r['name']: r for r in strats['X']}
+    av = {}
+    for a_, b_ in (('X1_R1_VC_Q5_TD_T3', 'X2_R1_TD_T3'), ('X3_R1_GROSS_Q5_TD_T3', 'X2_R1_TD_T3'), ('X4_R1_TNL_Q5_TD_T3', 'X2_R1_TD_T3'), ('X5_R1_VC_Q5_TD_NDX', 'X6_R1_TD_NDX')):
+        na = xs[a_]['_series'][1]; nb = sub(xs[b_]['_series'][1], na)
+        av[f'{a_} − {b_}'] = {'full': M.excess_stats(na, nb), 'train': M.excess_stats(na, nb, z=M.TRAIN_END), 'hold': M.excess_stats(na, nb, a=M.HOLD_START)}
+    reports['X_ipo_added_value'] = av
+    base = {}
+    for tn, tech, t0 in (('T3', t3, 198012), ('NDX', ndx, 198511)):
+        s0_ = {t: False for t in months(t0, END) if t in tech}
+        bd = eval_dca(f'BASE_{tn}', '基準', f'今の規則: 毎月 1 を {tn} へ（vs 市場へ）', tech, mkt, s0_, END, {})
+        base[tn] = bd['cmp']['mkt']
+    reports['X_baseline_dca_tech_vs_mkt'] = base
+    reports['X_switches'] = {r['name']: {'switches_per_year': r['switches_per_year'], 'hot_share(=市場にいた割合)': r['hot_share']} for r in strats['X']}
+
     # ── 出力
-    all_timing = strats['P'] + strats['N'] + strats['E']
+    all_timing = strats['P'] + strats['N'] + strats['E'] + strats['X']
     for r in all_timing:
         r.pop('_series', None)
     for r in all_timing:
@@ -718,10 +771,11 @@ def main():
         tested.append({'name': d['name'], 'family': d['family'], 'kind': 'dca_D', 'judgement_vs_tech': d['judgement_vs_tech'], 'judgement_vs_mkt': d['judgement_vs_mkt']})
     tested.append({'name': 'SR_a_R1_LIFEY_Drugs', 'family': '再現の報告', 'kind': 'report'})
     tested.append({'name': f'SR_b_net_listings_x{len(ind)}', 'family': '再現の報告', 'kind': 'report', 'count': len(ind)})
-    out = {'angle': 'tech_ipo_wave', 'prereg': [PREREG], 'prereg_commit': {PREREG: git_sha(f'out/{PREREG}')},
+    tested.append({'name': 'BASE_T3・BASE_NDX（今の規則の積立 vs 市場の積立）', 'family': '基準の報告（事前登録2）', 'kind': 'report'})
+    out = {'angle': 'tech_ipo_wave', 'prereg': [PREREG, PREREG2], 'prereg_commit': {PREREG: git_sha(f'out/{PREREG}'), PREREG2: git_sha(f'out/{PREREG2}')},
            'benchmark_note': 'grade_vs_tech = 同じハイテクの器を買って持つだけ（全体の事前登録のタイミング型の相手）／grade_vs_mkt = French Mkt（市場に勝つか）',
            'tested_count': len(tested), 'tested': tested,
-           'families': {'P': strats['P'], 'N': strats['N'], 'E': strats['E'], 'D': dres},
+           'families': {'P': strats['P'], 'N': strats['N'], 'E': strats['E'], 'X': strats['X'], 'D': dres},
            'signals': sig_meta, 'reports': reports, 'sanity': sanity, 'log': LOG}
     p = M.save(OUT, out)
     log('saved', p, os.path.getsize(p))
