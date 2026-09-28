@@ -18,7 +18,7 @@ import mw_common as M
 
 BASE = M.BASE
 OUT = 'mw_fmom_wf.json'
-PRE_FILES = ['mw_fmom_wf_prereg.json']
+PRE_FILES = ['mw_fmom_wf_prereg.json', 'mw_fmom_wf_prereg2.json']
 NMIN = 10            # 三分位の銘柄数がこれ未満の月は欠測（事前登録）
 MINC = 30            # 候補が30本未満の月は戦略を作らない（事前登録）
 JKP_END = 202512
@@ -77,8 +77,10 @@ MKTRF, RF, MKT = FF['mktrf'], FF['rf'], FF['mkt']
 class Data:
     """地域のデータ。asset = ('g', k) 良い側 / ('b', k) 悪い側 / ('t1', k)・('t3', k) 第1・第3 / ('m', None) 市場"""
 
-    def __init__(self, region, raw=None, mkt=None, rf=None, cal_=None):
+    def __init__(self, region, raw=None, mkt=None, rf=None, cal_=None, minc=MINC, end=JKP_END, turn=None):
         self.region = region
+        self.minc = minc
+        self.turn = turn or TURN
         self.pf = {}          # (k, '1.0'|'3.0') -> {ym: ex}
         if raw is None:
             for k in CHARS:
@@ -97,7 +99,7 @@ class Data:
             self.pf, self.mkt, self.rf = raw, mkt, rf
         self.chars = sorted({k for k, _ in self.pf})
         allm = [m for s in self.pf.values() for m in s]
-        self.cal = cal_ or cal(min(allm), min(max(allm), JKP_END))
+        self.cal = cal_ or cal(min(allm), min(max(allm), end))
         self.idx = {m: i for i, m in enumerate(self.cal)}
         self._pre = {}
         self._ser = {}
@@ -135,6 +137,11 @@ class Data:
             return {m: math.log1p(self.mkt[m] + self.rf[m]) for m in self.mkt if m in self.rf}
         raise KeyError(a)
 
+    def asset_cost(self, a):
+        if a[0] == 'm':
+            return MKT_TURN, MKT_COST
+        return self.turn[a[1]]
+
     def ret(self, a, m):
         if a[0] == 'm':
             return self.mkt.get(m)
@@ -146,28 +153,39 @@ class Data:
         if key not in self._pre:
             s = self.ser(a)
             n = len(self.cal)
-            cs, cn = [0.0] * (n + 1), [0] * (n + 1)
+            cs, cn, cneg, czero = [0.0] * (n + 1), [0] * (n + 1), [0] * (n + 1), [0] * (n + 1)
             for i, m in enumerate(self.cal):
                 v = s.get(m)
                 ok = v is not None
+                neg = zero = 0
                 if ok:
                     if how == 'log':
-                        assert v > -1, (a, m, v)
-                        v = math.log1p(v)
+                        # 複利 Π(1+v) を符号つきでそのまま扱う（1+v≤0 の月が地域の初期データにある）
+                        if 1 + v == 0:
+                            zero, v = 1, 0.0
+                        else:
+                            neg = 1 if 1 + v < 0 else 0
+                            v = math.log(abs(1 + v))
                     elif how == 'sq':
                         v = v * v
                 cs[i + 1] = cs[i] + (v if ok else 0.0)
                 cn[i + 1] = cn[i] + (1 if ok else 0)
-            self._pre[key] = (cs, cn)
+                cneg[i + 1] = cneg[i] + neg
+                czero[i + 1] = czero[i] + zero
+            self._pre[key] = (cs, cn, cneg, czero)
         return self._pre[key]
 
     def win(self, a, i, L, how='sum'):
         """暦の添字 i（月末 t）で終わる L か月の和。L か月すべて値が無ければ None（0で埋めない）"""
         if i - L + 1 < 0:
             return None
-        cs, cn = self.pre(a, how)
+        cs, cn, cneg, czero = self.pre(a, how)
         if cn[i + 1] - cn[i - L + 1] != L:
             return None
+        if how == 'log':
+            # 戻り値 > 0 ⇔ Π(1+v) − 1 > 0（積が0か負なら −inf）
+            if czero[i + 1] - czero[i - L + 1] > 0 or (cneg[i + 1] - cneg[i - L + 1]) % 2 == 1:
+                return float('-inf')
         return cs[i + 1] - cs[i - L + 1]
 
 
@@ -176,12 +194,16 @@ def _nxt(D, i):
     return D.cal[i + 1] if i + 1 < len(D.cal) else None
 
 
-def sel_cs(L, K, pool='good', score='sum'):
-    def f(D, i):
+def sel_cs(L, K, pool='good', score='sum', uni=None, buf=None):
+    """K='q' は ceil(特性数/4)。buf=2 なら上位 K で買い、順位が 2K より下がるまで持つ（緩衝帯）"""
+    def f(D, i, prev=None):
         nxt = _nxt(D, i)
+        Kk = math.ceil(len(D.chars) / 4) if K == 'q' else K
         cands = []
         chars_ok = set()
         for k in D.chars:
+            if uni is not None and k not in uni:
+                continue
             kinds = ['g'] if pool == 'good' else ['t1', 't3']
             for kd in kinds:
                 a = (kd, k)
@@ -203,23 +225,35 @@ def sel_cs(L, K, pool='good', score='sum'):
                     sc = mu / math.sqrt(var)
                 cands.append((-sc, k, kd))
                 chars_ok.add(k)
-        if len(chars_ok) < MINC:
+        if len(chars_ok) < D.minc:
             return None
         cands.sort()
-        top = cands[:K]
-        return {(kd, k): 1.0 / len(top) for _, k, kd in top}
+        if not buf:
+            top = [(kd, k) for _, k, kd in cands[:Kk]]
+        else:
+            rank = {(kd, k): r for r, (_, k, kd) in enumerate(cands)}
+            keep = sorted((a for a in (prev or {}) if a in rank and rank[a] < buf * Kk), key=lambda a: rank[a])[:Kk]
+            for _, k, kd in cands:
+                if len(keep) >= Kk:
+                    break
+                if (kd, k) not in keep:
+                    keep.append((kd, k))
+            top = keep
+        return {a: 1.0 / len(top) for a in top}
     return f
 
 
-def sel_ts(L, kind='ls'):
+def sel_ts(L, kind='ls', uni=None):
     """kind: ls=良い側の F の複利>0 / side=第3−第1 の符号で側を選ぶ / lo=良い側の総リターンの複利>市場"""
-    def f(D, i):
+    def f(D, i, prev=None):
         nxt = _nxt(D, i)
         n_ok, pick = 0, []
         lm = D.win(('LM', None), i, L) if kind == 'lo' else None
         if kind == 'lo' and lm is None:
             return None
         for k in D.chars:
+            if uni is not None and k not in uni:
+                continue
             if kind == 'ls':
                 if D.ret(('g', k), nxt) is None:
                     continue
@@ -247,7 +281,7 @@ def sel_ts(L, kind='ls'):
                 n_ok += 1
                 if s > lm:
                     pick.append(('g', k))
-        if n_ok < MINC:
+        if n_ok < D.minc:
             return None
         if not pick:
             return {('m', None): 1.0}
@@ -255,18 +289,18 @@ def sel_ts(L, kind='ls'):
     return f
 
 
-def sel_ew():
-    def f(D, i):
+def sel_ew(uni=None):
+    def f(D, i, prev=None):
         nxt = _nxt(D, i)
-        pick = [('g', k) for k in D.chars if D.ret(('g', k), nxt) is not None]
-        if len(pick) < MINC:
+        pick = [('g', k) for k in D.chars if (uni is None or k in uni) and D.ret(('g', k), nxt) is not None]
+        if len(pick) < D.minc:
             return None
         return {a: 1.0 / len(pick) for a in pick}
     return f
 
 
 def sel_cluster(L, K=None, ts=False):
-    def f(D, i):
+    def f(D, i, prev=None):
         nxt = _nxt(D, i)
         by = collections.defaultdict(list)
         n = 0
@@ -282,7 +316,7 @@ def sel_cluster(L, K=None, ts=False):
             by[CLUSTER.get(k, '?')].append(k)
             n += 1
         cl = {c: ks for c, ks in by.items() if len(ks) >= 2}
-        if n < MINC or len(cl) < 10:
+        if n < D.minc or len(cl) < 10:
             return None
         if not ts:
             sc = sorted((-S.mean(D.win(('g', k), i, L) for k in ks), c) for c, ks in cl.items())
@@ -290,12 +324,12 @@ def sel_cluster(L, K=None, ts=False):
         else:
             chosen = []
             for c, ks in sorted(cl.items()):
-                lg = 0.0
+                pr = 1.0
                 for j in range(i - L + 1, i + 1):
                     m = D.cal[j]
                     v = S.mean(D.ser(('F', k))[m] for k in ks)
-                    lg += math.log1p(v)
-                if lg > 0:
+                    pr *= 1 + v
+                if pr - 1 > 0:
                     chosen.append(c)
             if not chosen:
                 return {('m', None): 1.0}
@@ -308,12 +342,6 @@ def sel_cluster(L, K=None, ts=False):
 
 
 # ───────────────────────── 走らせる ─────────────────────────
-def asset_cost(a):
-    if a[0] == 'm':
-        return MKT_TURN, MKT_COST
-    return TURN[a[1]] if a[0] == 'g' or a[0] in ('t1', 't3', 'b') else (50.0, 0.003)
-
-
 def simulate(D, select, H):
     """戻り値: ret（超過・費用前）, cost（月の費用・小数）, turnover（月の片道・組み直し分と中身分）, held（月→資産）"""
     w = None
@@ -330,7 +358,7 @@ def simulate(D, select, H):
             continue
         sw_to, sw_cost = 0.0, 0.0
         if reb:
-            tgt = select(D, i)
+            tgt = select(D, i, w)
             if tgt is None:
                 if not started:
                     continue
@@ -341,7 +369,7 @@ def simulate(D, select, H):
                     for a in keys:
                         dw = abs(tgt.get(a, 0.0) - w.get(a, 0.0))
                         sw_to += 0.5 * dw
-                        sw_cost += 0.5 * dw * asset_cost(a)[1]
+                        sw_cost += 0.5 * dw * D.asset_cost(a)[1]
                 w = dict(tgt)
                 started = True
         rr = {}
@@ -358,8 +386,8 @@ def simulate(D, select, H):
             else:
                 w = {a: w[a] / tot_w for a in rr}
         ex = math.fsum(w[a] * rr[a] for a in rr)
-        inner_to = math.fsum(w[a] * asset_cost(a)[0] / 100 / 12 for a in w)
-        inner_cost = math.fsum(w[a] * asset_cost(a)[0] / 100 / 12 * asset_cost(a)[1] for a in w)
+        inner_to = math.fsum(w[a] * D.asset_cost(a)[0] / 100 / 12 for a in w)
+        inner_cost = math.fsum(w[a] * D.asset_cost(a)[0] / 100 / 12 * D.asset_cost(a)[1] for a in w)
         ret[nxt] = ex
         cost[nxt] = sw_cost + inner_cost
         to_sw[nxt] = sw_to
@@ -395,35 +423,43 @@ def top_held(sim, a, z=None, n=12):
             'top': [(nm, round(v / len(ks), 3)) for nm, v in c.most_common(n)] if ks else []}
 
 
-def eval_us(sim, jkpmkt):
+def eval_gen(sim, mktrf, rf, label_end=None):
+    """一般の評価（超過どうし）。転がる20年窓・積立・シャープは総リターン（超過＋RF 対 市場の超過＋RF）"""
     ex = sim['ret']
     net = {k: ex[k] - sim['cost'][k] for k in ex}
-    tot, tot_net = total(ex, RF), total(net, RF)
+    tot, tot_net = total(ex, rf), total(net, rf)
+    mkt_tot = total(mktrf, rf)
     r = {}
     r['start'], r['end'] = min(ex), max(ex)
-    r['full'] = M.excess_stats(ex, MKTRF)
-    r['train'] = M.excess_stats(ex, MKTRF, z=TR)
-    r['hold'] = M.excess_stats(ex, MKTRF, a=HS)
-    r['recent'] = M.excess_stats(ex, MKTRF, a=RS)
-    r['postpub_2020'] = M.excess_stats(ex, MKTRF, a=POSTPUB)
-    r['net_full'] = M.excess_stats(net, MKTRF)
-    r['net_train'] = M.excess_stats(net, MKTRF, z=TR)
-    r['net_hold'] = M.excess_stats(net, MKTRF, a=HS)
+    r['full'] = M.excess_stats(ex, mktrf)
+    r['train'] = M.excess_stats(ex, mktrf, z=TR)
+    r['hold'] = M.excess_stats(ex, mktrf, a=HS)
+    r['recent'] = M.excess_stats(ex, mktrf, a=RS)
+    r['postpub_2020'] = M.excess_stats(ex, mktrf, a=POSTPUB)
+    r['net_full'] = M.excess_stats(net, mktrf)
+    r['net_train'] = M.excess_stats(net, mktrf, z=TR)
+    r['net_hold'] = M.excess_stats(net, mktrf, a=HS)
     r['turnover_hold'] = ann_turn(sim, HS)
     r['turnover_full'] = ann_turn(sim)
-    r['roll20'] = M.rolling(tot, MKT, 20)
-    r['roll20_net'] = M.rolling(tot_net, MKT, 20)
-    r['dca20'] = M.dca(tot, MKT, 20)
-    r['dca20_net'] = M.dca(tot_net, MKT, 20)
-    r['sharpe'] = {'train': (M.sharpe(tot, RF, z=TR), M.sharpe(MKT, RF, a=min(ex), z=TR)),
-                   'hold': (M.sharpe(tot, RF, a=HS), M.sharpe(MKT, RF, a=HS, z=JKP_END))}
-    r['maxdd'] = {'strategy': round(M.maxdd(tot) * 100, 1), 'market_same_span': round(M.maxdd(M.window(MKT, min(ex), max(ex))) * 100, 1)}
-    r['vs_jkp_mkt_vw_hold'] = M.excess_stats(ex, jkpmkt, a=HS)
-    r['vs_jkp_mkt_vw_full'] = M.excess_stats(ex, jkpmkt)
+    r['roll20'] = M.rolling(tot, mkt_tot, 20)
+    r['roll20_net'] = M.rolling(tot_net, mkt_tot, 20)
+    r['dca20'] = M.dca(tot, mkt_tot, 20)
+    r['dca20_net'] = M.dca(tot_net, mkt_tot, 20)
+    r['sharpe'] = {'train': (M.sharpe(tot, rf, z=TR), M.sharpe(mkt_tot, rf, a=min(ex), z=TR)),
+                   'hold': (M.sharpe(tot, rf, a=HS), M.sharpe(mkt_tot, rf, a=HS, z=max(ex)))}
+    r['maxdd'] = {'strategy': round(M.maxdd(tot) * 100, 1), 'market_same_span': round(M.maxdd(M.window(mkt_tot, min(ex), max(ex))) * 100, 1)}
     r['held_hold'] = top_held(sim, HS)
     r['held_train_last10y'] = top_held(sim, 199701, TR)
     r['missing_in_hold_count'] = sim['nmiss']
     r['select_fail_after_start'] = sim['nfail']
+    return r
+
+
+def eval_us(sim, jkpmkt):
+    r = eval_gen(sim, MKTRF, RF)
+    ex = sim['ret']
+    r['vs_jkp_mkt_vw_hold'] = M.excess_stats(ex, jkpmkt, a=HS)
+    r['vs_jkp_mkt_vw_full'] = M.excess_stats(ex, jkpmkt)
     return r
 
 
@@ -466,6 +502,204 @@ def families():
 
 
 PRIMARY_FAMILIES = {'P_primary'}
+
+# ───────────────────────── 第2次（out/mw_fmom_wf_prereg2.json） ─────────────────────────
+LOWTO = frozenset(k for k in CHARS if TURN[k][0] <= 100)
+
+
+def families2():
+    F = collections.OrderedDict()
+    F['Q1_us_cost_aware'] = [
+        ('Q1a_cs_L12_K10_H1_lowTO', sel_cs(12, 10, uni=LOWTO), 1, '回転の少ない112特性で上位10本・毎月'),
+        ('Q1b_cs_L12_K10_H1_lowTO_buf20', sel_cs(12, 10, uni=LOWTO, buf=2), 1, '回転の少ない112特性で上位10本・20位まで持つ緩衝帯'),
+        ('Q1c_ts12_lowTO', sel_ts(12, 'ls', uni=LOWTO), 1, '回転の少ない112特性で過去12か月の F がプラスの良い側（無ければ市場）'),
+        ('Q1d_ew_lowTO', sel_ew(uni=LOWTO), 1, '回転の少ない112特性の良い側をすべて等分'),
+        ('Q1e_cs_L12_K10_H1_buf20', sel_cs(12, 10, buf=2), 1, '全153特性で上位10本・20位まで持つ緩衝帯')]
+    return F
+
+
+def rules_q2():
+    return [('ts12', sel_ts(12, 'ls'), 1, '過去12か月の F がプラスの良い側をすべて等分（無ければ市場）'),
+            ('cs_L12_Kq', sel_cs(12, 'q'), 1, '過去12か月の超過の和で上位 ceil(特性数/4) 本'),
+            ('ew', sel_ew(), 1, '良い側をすべて等分'),
+            ('ts_lo12', sel_ts(12, 'lo'), 1, '過去12か月に市場に勝った良い側をすべて等分（無ければ市場）'),
+            ('ts1', sel_ts(1, 'ls'), 1, '過去1か月の F がプラスの良い側をすべて等分（無ければ市場）')]
+
+
+FR_US = [('fr_bm', '25_Portfolios_5x5', 'BIG HiBM', 'BIG LoBM', 30),
+         ('fr_op', '25_Portfolios_ME_OP_5x5', 'BIG HiOP', 'BIG LoOP', 30),
+         ('fr_inv', '25_Portfolios_ME_INV_5x5', 'BIG LoINV', 'BIG HiINV', 50),
+         ('fr_mom', '25_Portfolios_ME_Prior_12_2', 'BIG HiPRIOR', 'BIG LoPRIOR', 150),
+         ('fr_str', '25_Portfolios_ME_Prior_1_0', 'BIG LoPRIOR', 'BIG HiPRIOR', 800),
+         ('fr_ltr', '25_Portfolios_ME_Prior_60_13', 'BIG LoPRIOR', 'BIG HiPRIOR', 60),
+         ('fr_ac', '25_Portfolios_ME_AC_5x5', 'BIG LoAC', 'BIG HiAC', 60),
+         ('fr_beta', '25_Portfolios_ME_BETA_5x5', 'BIG LoBETA', 'BIG HiBETA', 50),
+         ('fr_ni', '25_Portfolios_ME_NI_5x5', 'BIG NegNI', 'BIG HiNI', 50),
+         ('fr_var', '25_Portfolios_ME_VAR_5x5', 'BIG LoVAR', 'BIG HiVAR', 120),
+         ('fr_resvar', '25_Portfolios_ME_RESVAR_5x5', 'BIG LoVAR', 'BIG HiVAR', 120)]
+FR_REG = [('fr_bm', '25_Portfolios_ME_BE-ME', 'BIG HiBM', 'BIG LoBM', 30),
+          ('fr_op', '25_Portfolios_ME_OP', 'BIG HiOP', 'BIG LoOP', 30),
+          ('fr_inv', '25_Portfolios_ME_INV', 'BIG LoINV', 'BIG HiINV', 50),
+          ('fr_mom', '25_Portfolios_ME_Prior_12_2', 'BIG HiPRIOR', 'BIG LoPRIOR', 150)]
+FR_EM = [('fr_bm', '6_Portfolios_ME_BE-ME', 'BIG HiBM', 'BIG LoBM', 25),
+         ('fr_op', '6_Portfolios_ME_OP', 'BIG HiOP', 'BIG LoOP', 25),
+         ('fr_inv', '6_Portfolios_ME_INV', 'BIG LoINV', 'BIG HiINV', 40),
+         ('fr_mom', '6_Portfolios_ME_Prior_12_2', 'BIG HiPRIOR', 'BIG LoPRIOR', 120)]
+FR_REGIONS = ['Europe', 'Japan', 'Asia_Pacific_ex_Japan', 'Developed_ex_US', 'Emerging']
+FR_INDEP = {'Europe': ['Japan', 'Asia_Pacific_ex_Japan', 'Emerging', 'US'],
+            'Japan': ['Europe', 'Asia_Pacific_ex_Japan', 'Emerging', 'US'],
+            'Asia_Pacific_ex_Japan': ['Europe', 'Japan', 'Emerging', 'US'],
+            'Developed_ex_US': ['Emerging', 'US'],
+            'Emerging': ['Europe', 'Japan', 'Asia_Pacific_ex_Japan', 'US']}
+for _k, *_ in FR_US:
+    GOOD[_k], BAD[_k] = '3.0', '1.0'
+
+
+def fr_region_factors(region):
+    name = 'Emerging_5_Factors' if region == 'Emerging' else f'{region}_3_Factors'
+    for t, v in M.french_tables(name).items():
+        if v['freq'] == 'monthly':
+            cols = v['cols']
+            i_m, i_rf = cols.index('Mkt-RF'), cols.index('RF')
+            mk, rf = {}, {}
+            for d, row in v['data'].items():
+                if row[i_m] is not None and row[i_rf] is not None:
+                    mk[d] = row[i_m] / 100
+                    rf[d] = row[i_rf] / 100
+            return mk, rf
+    raise KeyError(name)
+
+
+def french_data(region):
+    """French の巨大株（BIG 行）の良い側・悪い側 → Data。総リターンから同じ地域の RF を引いて超過"""
+    if region == 'US':
+        spec, mk, rf, minc, cost, prefix = FR_US, MKTRF, RF, 8, 0.001, ''
+    elif region == 'Emerging':
+        spec, minc, cost, prefix = FR_EM, 3, 0.003, 'Emerging_Markets_'
+        mk, rf = fr_region_factors(region)
+    else:
+        spec, minc, cost, prefix = FR_REG, 3, 0.001, f'{region}_'
+        mk, rf = fr_region_factors(region)
+    raw, turn, info = {}, {}, {}
+    for k, f, gc, bc, to in spec:
+        cols = M.french_series(prefix + f, 'Value Weight')
+        g, b = cols[gc], cols[bc]
+        raw[(k, '3.0')] = {m: v - rf[m] for m, v in g.items() if m in rf}
+        raw[(k, '1.0')] = {m: v - rf[m] for m, v in b.items() if m in rf}
+        turn[k] = (float(to), cost)
+        info[k] = {'file': prefix + f, 'good': gc, 'bad': bc, 'from': min(g), 'to': max(g), 'turnover_pct': to, 'cost': cost}
+    D = Data('fr_' + region, raw, dict(mk), dict(rf), None, minc=minc, end=202608, turn=turn)
+    D.info = info
+    return D
+
+
+def eval_region_gen(sim, D):
+    ex = sim['ret']
+    if not ex:
+        return {'error': '系列が作れない'}
+    net = {k: ex[k] - sim['cost'][k] for k in ex}
+    return {'start': min(ex), 'end': max(ex),
+            'full': M.excess_stats(ex, D.mkt), 'hold': M.excess_stats(ex, D.mkt, a=HS),
+            'net_full': M.excess_stats(net, D.mkt), 'net_hold': M.excess_stats(net, D.mkt, a=HS),
+            'turnover_full': ann_turn(sim)}
+
+
+DEV21 = ['aus', 'aut', 'bel', 'can', 'che', 'deu', 'dnk', 'esp', 'fin', 'fra', 'gbr', 'hkg', 'irl', 'isr', 'ita', 'nld', 'nor', 'nzl', 'prt', 'sgp', 'swe']
+PANEL_EXCL = {'all_countries', 'all_regions', 'developed', 'emerging', 'frontier', 'world', 'world_ex_us', 'usa', 'jpn'}
+
+
+def sign_p(k, n):
+    """片側の符号検定 P(X ≥ k | n, 1/2)"""
+    if n == 0:
+        return None
+    return round(sum(math.comb(n, j) for j in range(k, n + 1)) / 2 ** n, 5)
+
+
+def panel(sims, mkts, cost_mult=1.0):
+    """国々の等分パネル → (戦略の総リターン, 市場の総リターン, 費用後の戦略の総リターン)"""
+    s, b, sn = {}, {}, {}
+    months = sorted(set().union(*[set(x['ret']) for x in sims.values()])) if sims else []
+    for m in months:
+        cs = [c for c in sims if m in sims[c]['ret'] and m in mkts[c] and m in RF]
+        if not cs:
+            continue
+        s[m] = S.mean(sims[c]['ret'][m] + RF[m] for c in cs)
+        b[m] = S.mean(mkts[c][m] + RF[m] for c in cs)
+        sn[m] = S.mean(sims[c]['ret'][m] - cost_mult * sims[c]['cost'][m] + RF[m] for c in cs)
+    return s, b, sn
+
+
+def run_q3(rules):
+    """JKP 各国パネル（米国・日本を除く）。rules = [(name, sel, H, desc)]"""
+    countries = [c for c in AV['portfolios'] if c not in PANEL_EXCL]
+    out = collections.OrderedDict()
+    datas = {}
+    for c in countries:
+        try:
+            datas[c] = Data(c)
+        except Exception as e:  # noqa
+            log('country load fail', c, e)
+    for name, sel, H, desc in rules:
+        sims, mkts, per = {}, {}, {}
+        for c, D in datas.items():
+            if not D.pf:
+                continue
+            sim = simulate(D, sel, H)
+            nh = sum(1 for m in sim['ret'] if HS <= m <= JKP_END)
+            if nh < 120:
+                continue
+            sims[c], mkts[c] = sim, D.mkt
+            net = {k: sim['ret'][k] - sim['cost'][k] for k in sim['ret']}
+            net2 = {k: sim['ret'][k] - 2 * sim['cost'][k] for k in sim['ret']}
+            h, hn, hn2 = M.excess_stats(sim['ret'], D.mkt, a=HS), M.excess_stats(net, D.mkt, a=HS), M.excess_stats(net2, D.mkt, a=HS)
+            fu = M.excess_stats(sim['ret'], D.mkt)
+            per[c] = {'start': min(sim['ret']), 'hold_months': nh,
+                      'full_ex': fu and fu['ex_ann'], 'hold_ex': h and h['ex_ann'], 'hold_t': h and h['t'],
+                      'net_hold_ex': hn and hn['ex_ann'], 'net2x_hold_ex': hn2 and hn2['ex_ann'],
+                      'turn_cost_pct': ann_turn(sim, HS)['cost_pct_per_year'], 'dev': c in DEV21}
+        res = {'name': f'Q3_panel_{name}', 'family': 'Q3_jkp_country_panel', 'primary': False, 'H': H,
+               'description': f'JKP 各国パネル（米国・日本を除く）: {desc}', 'n_countries': len(sims), 'by_country': per}
+        def signs(keys, fld):
+            v = [per[c][fld] for c in keys if per[c][fld] is not None]
+            k = sum(1 for x in v if x > 0)
+            return {'n': len(v), 'positive': k, 'share': round(k / len(v), 3) if v else None, 'sign_p_one_sided': sign_p(k, len(v)),
+                    'median': round(S.median(v), 2) if v else None}
+        allc = list(per)
+        dev = [c for c in allc if per[c]['dev']]
+        em = [c for c in allc if not per[c]['dev']]
+        res['panel_sign'] = {grp: {fld: signs(ks, fld) for fld in ('hold_ex', 'net_hold_ex', 'net2x_hold_ex', 'full_ex')}
+                             for grp, ks in (('all', allc), ('developed21', dev), ('others', em))}
+        s_tot, b_tot, sn_tot = panel(sims, mkts)
+        _, _, sn2_tot = panel(sims, mkts, 2.0)
+        s_ex = {m: v - RF[m] for m, v in s_tot.items()}
+        b_ex = {m: v - RF[m] for m, v in b_tot.items()}
+        sn_ex = {m: v - RF[m] for m, v in sn_tot.items()}
+        sn2_ex = {m: v - RF[m] for m, v in sn2_tot.items()}
+        res['start'], res['end'] = min(s_ex), max(s_ex)
+        res['full'] = M.excess_stats(s_ex, b_ex)
+        res['train'] = M.excess_stats(s_ex, b_ex, z=TR)
+        res['hold'] = M.excess_stats(s_ex, b_ex, a=HS)
+        res['recent'] = M.excess_stats(s_ex, b_ex, a=RS)
+        res['postpub_2020'] = M.excess_stats(s_ex, b_ex, a=POSTPUB)
+        res['net_full'] = M.excess_stats(sn_ex, b_ex)
+        res['net_hold'] = M.excess_stats(sn_ex, b_ex, a=HS)
+        res['net2x_hold'] = M.excess_stats(sn2_ex, b_ex, a=HS)
+        res['roll20'] = M.rolling(s_tot, b_tot, 20)
+        res['roll20_net'] = M.rolling(sn_tot, b_tot, 20)
+        res['dca20'] = M.dca(s_tot, b_tot, 20)
+        res['countries_per_month'] = {'train_median': S.median([sum(1 for c in sims if m in sims[c]['ret']) for m in s_ex if m <= TR]) if any(m <= TR for m in s_ex) else None,
+                                      'hold_median': S.median([sum(1 for c in sims if m in sims[c]['ret']) for m in s_ex if m >= HS])}
+        for grp, ks in (('developed21', dev), ('others', em)):
+            ss, bb, snn = panel({c: sims[c] for c in ks}, {c: mkts[c] for c in ks})
+            se = {m: v - RF[m] for m, v in ss.items()}; be = {m: v - RF[m] for m, v in bb.items()}; sne = {m: v - RF[m] for m, v in snn.items()}
+            res[f'split_{grp}'] = {'full': M.excess_stats(se, be), 'train': M.excess_stats(se, be, z=TR), 'hold': M.excess_stats(se, be, a=HS),
+                                   'net_hold': M.excess_stats(sne, be, a=HS)} if se else None
+        res['repl'] = None
+        out[res['name']] = res
+        h = res['hold'] or {}
+        log(f"{res['name']:28s} n{len(sims)} full {res['full']['ex_ann']} t{res['full']['t']} train {res['train'] and res['train']['ex_ann']} t{res['train'] and res['train']['t']}"
+            f" hold {h.get('ex_ann')} t{h.get('t')} net {res['net_hold']['ex_ann']} net2x {res['net2x_hold']['ex_ann']} sign {res['panel_sign']['all']['hold_ex']}")
+    return out
 
 
 # ───────────────────────── 検算 ─────────────────────────
@@ -526,18 +760,7 @@ def sanity(DUS, jkpmkt):
 
 
 # ───────────────────────── 本体 ─────────────────────────
-def main():
-    if not selftest():
-        raise SystemExit('selftest NG')
-    pre = [{'file': f'out/{p}', 'commit': sha_of(f'out/{p}')} for p in PRE_FILES]
-    log('prereg', pre)
-    DUS = Data('usa')
-    jkpmkt = M.jkp_mkt('usa', 'vw')
-    san = sanity(DUS, jkpmkt)
-    log('sanity', san)
-    DR = {r: Data(r) for r in REGIONS}
-    FAM = families()
-    res = collections.OrderedDict()
+def run_family_us(FAM, DUS, DR, jkpmkt, res):
     for fam, lst in FAM.items():
         for name, sel, H, desc in lst:
             sim = simulate(DUS, sel, H)
@@ -554,30 +777,115 @@ def main():
             h = r['hold'] or {}
             log(f"{name:28s} full {r['full']['ex_ann']:+.2f} t{r['full']['t']}  train {r['train']['ex_ann'] if r['train'] else None} t{r['train']['t'] if r['train'] else None}"
                 f"  hold {h.get('ex_ann')} t{h.get('t')} cagr{h.get('cagr_diff')}  net_hold {r['net_hold']['ex_ann']}  repl {npos}/4  turn {r['turnover_hold']}")
-    # Holm（族ごと・角度全体）
+
+
+def run_q2(res):
+    """Q2（米国 French 巨大株）と Q2R（French の地域）"""
+    FD = {'US': french_data('US')}
+    for rg in FR_REGIONS:
+        FD[rg] = french_data(rg)
+    src = {rg: D.info for rg, D in FD.items()}
+    reg_res = collections.defaultdict(dict)   # rule -> region -> 評価
+    for rname, sel, H, desc in rules_q2():
+        for rg, D in FD.items():
+            sim = simulate(D, sel, H)
+            r = eval_gen(sim, D.mkt, D.rf)
+            r['n_chars'] = len(D.chars)
+            reg_res[rname][rg] = r
+    # 米国（Q2）
+    for rname, sel, H, desc in rules_q2():
+        r = dict(reg_res[rname]['US'])
+        indep = ['Europe', 'Japan', 'Asia_Pacific_ex_Japan']
+        byr = {rg: {k: reg_res[rname][rg][k] for k in ('start', 'end', 'full', 'hold', 'net_full', 'net_hold')} for rg in indep}
+        npos = sum(1 for rg in indep if reg_res[rname][rg]['full'] and reg_res[rname][rg]['full']['ex_ann'] > 0)
+        r['repl'] = {'regions': len(indep), 'positive': npos, 'by_region': byr}
+        nm = {'ts12': 'Q2a_ts12_me5', 'cs_L12_Kq': 'Q2b_cs_L12_Kq_me5', 'ew': 'Q2c_ew_me5', 'ts_lo12': 'Q2d_ts_lo12_me5', 'ts1': 'Q2e_ts1_me5'}[rname]
+        r.update({'name': nm, 'family': 'Q2_us_french_megacap', 'primary': False, 'H': H, 'description': 'French 米国 最大五分位の11特性: ' + desc})
+        res[nm] = r
+        h = r['hold'] or {}
+        log(f"{nm:28s} full {r['full']['ex_ann']:+.2f} t{r['full']['t']} train {r['train']['ex_ann']} t{r['train']['t']} hold {h.get('ex_ann')} t{h.get('t')} cagr{h.get('cagr_diff')} net_hold {r['net_hold']['ex_ann']} repl {npos}/3 turn {r['turnover_hold']}")
+    # 地域（Q2R）
+    for rname, sel, H, desc in rules_q2():
+        for rg in FR_REGIONS:
+            r = dict(reg_res[rname][rg])
+            others = FR_INDEP[rg]
+            npos = sum(1 for o in others if reg_res[rname][o]['full'] and reg_res[rname][o]['full']['ex_ann'] > 0)
+            r['repl'] = {'regions': len(others), 'positive': npos,
+                         'by_region': {o: (reg_res[rname][o]['full'] or {}).get('ex_ann') for o in others}}
+            nm = f'Q2R_{rg}_{rname}'
+            r.update({'name': nm, 'family': 'Q2R_french_regions', 'primary': False, 'H': H,
+                      'description': f'French {rg} の BIG 行 {len(FD[rg].chars)}特性: {desc}'})
+            res[nm] = r
+            h = r['hold'] or {}
+            log(f"{nm:34s} full {r['full']['ex_ann']:+.2f} t{r['full']['t']} train {r['train'] and r['train']['ex_ann']} t{r['train'] and r['train']['t']} hold {h.get('ex_ann')} t{h.get('t')} cagr{h.get('cagr_diff')} net_hold {r['net_hold']['ex_ann']} repl {npos}/{len(others)}")
+    return src
+
+
+def run_posthoc_regions(DR):
+    out = {}
+    FAM = families()
+    for name, sel, H, desc in FAM['P_primary']:
+        for rg in REGIONS:
+            D = DR[rg]
+            sim = simulate(D, sel, H)
+            r = eval_gen(sim, D.mkt, D.rf)
+            g, c = M.grade(r['full'], r['train'], r['hold'], r['roll20'], cost_hold=r['net_hold'], repl=None, family_holm_p=None)
+            keep = {k: r[k] for k in ('start', 'end', 'full', 'train', 'hold', 'recent', 'net_hold', 'roll20', 'dca20', 'turnover_hold', 'sharpe', 'maxdd')}
+            keep['criteria_for_reference_only'] = c
+            keep['note'] = '事後（格付けしない）: 第1次で C5 の答え合わせとして既に見た数字を一つの戦略として並べ直しただけ'
+            out[f'X_{rg}_{name}'] = keep
+            log(f"X_{rg}_{name:22s} train {r['train'] and r['train']['ex_ann']} t{r['train'] and r['train']['t']} hold {r['hold']['ex_ann']} t{r['hold']['t']} net {r['net_hold']['ex_ann']} roll {r['roll20'] and r['roll20']['win_rate']}")
+    return out
+
+
+def finalize(res, fam_of):
+    """族ごとの Holm と角度全体の Holm → 格付け"""
+    fams = collections.defaultdict(list)
+    for n, r in res.items():
+        fams[r['family']].append(n)
     allp = {}
-    for fam, lst in FAM.items():
-        ps = {n: (res[n]['hold'] or {}).get('p') for n, _, _, _ in lst}
+    for fam, ns in fams.items():
+        ps = {n: (res[n]['hold'] or {}).get('p') for n in ns}
         hm = M.holm(ps)
-        for n in ps:
+        for n in ns:
             res[n]['holm_p_family'] = hm.get(n)
         allp.update(ps)
     hall = M.holm(allp)
-    for n in res:
-        res[n]['holm_p_all24'] = hall.get(n)
-    # 判定
     for n, r in res.items():
-        g, c = M.grade(r['full'], r['train'], r['hold'], r['roll20'], cost_hold=r['net_hold'], repl=r['repl'],
+        r['holm_p_all'] = hall.get(n)
+        g, c = M.grade(r['full'], r['train'], r['hold'], r['roll20'], cost_hold=r['net_hold'], repl=r.get('repl'),
                        family_holm_p=r['holm_p_family'], leveraged_or_timing=False)
         r['grade'], r['criteria'] = g, c
-        g2, _ = M.grade(r['full'], r['train'], r['hold'], r['roll20'], cost_hold=r['net_hold'], repl=r['repl'],
-                        family_holm_p=r['holm_p_all24'], leveraged_or_timing=False)
-        r['grade_if_holm_all24'] = g2
-        log(f"{n:28s} grade {g} {c}")
+        g2, _ = M.grade(r['full'], r['train'], r['hold'], r['roll20'], cost_hold=r['net_hold'], repl=r.get('repl'),
+                        family_holm_p=r['holm_p_all'], leveraged_or_timing=False)
+        r['grade_if_holm_all'] = g2
+        log(f"{n:34s} grade {g} (Holm全体なら {g2}) {c}")
+    return {f: ns for f, ns in fams.items()}
+
+
+def main():
+    if not selftest():
+        raise SystemExit('selftest NG')
+    pre = [{'file': f'out/{p}', 'commit': sha_of(f'out/{p}')} for p in PRE_FILES]
+    log('prereg', pre)
+    DUS = Data('usa')
+    jkpmkt = M.jkp_mkt('usa', 'vw')
+    san = sanity(DUS, jkpmkt)
+    log('sanity', san)
+    DR = {r: Data(r) for r in REGIONS}
+    res = collections.OrderedDict()
+    run_family_us(families(), DUS, DR, jkpmkt, res)          # 第1次
+    run_family_us(families2(), DUS, DR, jkpmkt, res)         # 第2次 Q1
+    fr_src = run_q2(res)                                     # 第2次 Q2・Q2R
+    q3 = run_q3(families()['P_primary'])                     # 第2次 Q3
+    res.update(q3)
+    posthoc = run_posthoc_regions(DR)                        # 事後
+    fams = finalize(res, None)
+    san['lowTO_n_chars'] = len(LOWTO)
     out = {'angle': 'fmom_wf', 'prereg': pre, 'global_prereg': 'out/mw_prereg.json', 'sanity': san,
-           'benchmark': 'French Mkt-RF（超過どうし）。転がる20年窓・積立は総リターン（戦略超過＋French RF 対 French Mkt）',
-           'n_tested': len(res), 'families': {f: [x[0] for x in l] for f, l in FAM.items()},
-           'tested': list(res.values()), 'log_tail': LOG[-80:]}
+           'benchmark': 'French Mkt-RF（超過どうし）。転がる20年窓・積立は総リターン（戦略超過＋French RF 対 French Mkt）。地域はその地域の市場（JKP mkt vw／French 地域 Mkt）。Q3 は国々の市場の等分',
+           'n_tested': len(res), 'families': fams, 'french_sources': fr_src,
+           'tested': list(res.values()), 'posthoc_not_graded': posthoc, 'log_tail': LOG[-200:]}
     p = M.save(OUT, out)
     log('saved', p, os.path.getsize(p))
 
