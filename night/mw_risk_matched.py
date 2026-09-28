@@ -961,10 +961,168 @@ def reality_main():
     print('saved reality', len(recs))
 
 
+# ───────────────────────── 選び出しをしない混合（事前登録5） ─────────────────────────
+PREREG5 = 'mw_risk_matched_prereg5.json'
+
+
+def ew_available(series_list, min_share=0.5):
+    """毎月、そろう系列だけを等分。そろう数が全体の min_share 未満の月は使わない（欠測を0で埋めない）"""
+    months = sorted(set().union(*[set(x) for x in series_list]))
+    need = math.ceil(len(series_list) * min_share)
+    out = {}
+    for k in months:
+        v = [x[k] for x in series_list if k in x]
+        if len(v) >= need and len(v) > 0:
+            out[k] = S.mean(v)
+    return out
+
+
+def contiguous_tail(d):
+    """最後の連続した区間だけ（途中で抜けた月をまたがない）"""
+    ks = sorted(d)
+    if not ks:
+        return {}
+    runs, cur = [], [ks[0]]
+    for a, b in zip(ks, ks[1:]):
+        if next_m(a) == b:
+            cur.append(b)
+        else:
+            runs.append(cur); cur = [b]
+    runs.append(cur)
+    best = max(runs, key=len)
+    return {k: d[k] for k in best}
+
+
+def x5_main():
+    ff = M.ff_factors()
+    MKT, MKTRF, RF = ff['mkt'], ff['mktrf'], ff['rf']
+    d = json.load(open(os.path.join(BASE, 'out', 'mw_risk_matched.json')))
+    sides = {}
+    for k in QUALITY + LOW_RISK:
+        side, _ = M.jkp_good_side('usa', k, 'vw', upto=M.TRAIN_END)
+        sides[k] = side
+    print('良い側', sides)
+
+    def build(region, keys, weighting='vw', nmin=None):
+        ser = []
+        for k in keys:
+            if sides.get(k) is None:
+                continue
+            try:
+                if region == 'usa':
+                    p = M.jkp_portfolios('usa', k, weighting).get(sides[k])
+                else:
+                    p = reg_series(region, k, sides[k]) if weighting == 'vw' else None
+            except Exception:  # noqa
+                p = None
+            if p:
+                ser.append(p)
+        return contiguous_tail(ew_available(ser)), len(ser)
+
+    groups = {'X5_Q_ALL': QUALITY, 'X5_LR_ALL': LOW_RISK}
+    to_g = {g: S.mean([JKP_TO[k] for k in keys]) + 0.1 for g, keys in groups.items()}
+    us = {}
+    for g, keys in groups.items():
+        us[g], n = build('usa', keys)
+        print(g, '構成', n, min(us[g]), max(us[g]))
+    ks = sorted(set(us['X5_Q_ALL']) & set(us['X5_LR_ALL']))
+    us['X5_QLR_ALL'] = {k: 0.5 * us['X5_Q_ALL'][k] + 0.5 * us['X5_LR_ALL'][k] for k in ks}
+    to_g['X5_QLR_ALL'] = 0.5 * to_g['X5_Q_ALL'] + 0.5 * to_g['X5_LR_ALL'] + 0.1
+    # 地域
+    reg = {}
+    for r_ in REGIONS:
+        q, _ = build(r_, QUALITY)
+        l, _ = build(r_, LOW_RISK)
+        kk = sorted(set(q) & set(l))
+        reg[r_] = {'X5_Q_ALL': q, 'X5_LR_ALL': l, 'X5_QLR_ALL': contiguous_tail({k: 0.5 * q[k] + 0.5 * l[k] for k in kk})}
+    desc = {'X5_Q_ALL': '質群28特徴の良い側の三分位（JKP 米国 vw）の等分', 'X5_LR_ALL': '低リスク群18特徴の良い側の三分位の等分',
+            'X5_QLR_ALL': '上の2つの 50/50'}
+    recs = []
+    for g in ('X5_Q_ALL', 'X5_LR_ALL', 'X5_QLR_ALL'):
+        c = {'name': g, 'kind': 'blend', 'source': g, 'group': '混合（選び出しなし）', 'pub': None, 'to': to_g[g],
+             'r': {k: v + RF[k] for k, v in us[g].items() if k in RF}, 'desc': desc[g]}
+        c['train_sharpe'] = train_sharpe(c['r'], RF)
+        for rule in ('static', 'dynamic', 'beta_static', 'beta_dynamic', 'unlevered'):
+            e, gser, nser = evaluate(c, rule, MKT, MKTRF, RF)
+            rec = {'name': f'X5_{g}_{rule}', 'family': 'X5', 'primary': False, 'rule': rule, 'candidate': g, 'source': g,
+                   'group': c['group'], 'description': f"{desc[g]} を {RULE_JA[rule]}",
+                   'train_sharpe_unlevered_196307_200612': round(c['train_sharpe'], 3) if c['train_sharpe'] else None,
+                   'turnover_ann': round(c['to'], 3), 'pub_year': None}
+            rec.update(e)
+            # C5
+            per = {}
+            for r_ in REGIONS:
+                r_ex = reg[r_][g]
+                m_ex = reg_mkt(r_)
+                if len(set(r_ex) & set(m_ex)) < 60:
+                    per[r_] = None
+                    continue
+                cost = 0.003 if r_ == 'emerging' else COST
+                L = static_L(r_ex, m_ex) if rule == 'static' else (static_beta_L(r_ex, m_ex) if rule == 'beta_static' else None)
+                if rule in ('static', 'beta_static') and L is None:
+                    per[r_] = None
+                    continue
+                _, nn, info = lever(r_ex, m_ex, RF, rule, L_static=L, to=c['to'], cost=cost)
+                full = M.excess_stats(nn, m_ex)
+                hold = M.excess_stats(nn, m_ex, a=M.HOLD_START)
+                per[r_] = None if not full else {'from': full['from'], 'to': full['to'], 'years': full['years'], 'L': round(L, 3) if L else info['L_mean'],
+                                                 'net_ex_ann': full['ex_ann'], 't': full['t'], 'cagr_diff': full['cagr_diff'], 'positive': full['ex_ann'] > 0,
+                                                 'hold_net_ex_ann': hold['ex_ann'] if hold else None, 'hold_t': hold['t'] if hold else None}
+            got = [x for x in REGIONS if per.get(x)]
+            nonus = [x for x in NONUS if per.get(x)]
+            rec['repl'] = {'regions': len(got), 'positive': sum(1 for x in got if per[x]['positive']), 'nonus_regions': len(nonus),
+                           'nonus_positive': sum(1 for x in nonus if per[x]['positive']), 'per_region': per}
+            rec['_n'] = nser
+            rec['_c'] = c
+            recs.append(rec)
+    hp = M.holm({r['name']: (r['hold']['p'] if r['hold'] else None) for r in recs})
+    checks = {}
+    for r in recs:
+        r['family_holm_p'] = hp.get(r['name'])
+        lev = r['rule'] != 'unlevered'
+        g, crit = M.grade(r['full'], r['train'], r['hold'], r['roll20_net'], cost_hold=r['net_cost_hold'],
+                          repl={'regions': r['repl']['regions'], 'positive': r['repl']['positive']},
+                          family_holm_p=r['family_holm_p'], sharpe_pair=r['sharpe_pair'] if lev else None, leveraged_or_timing=lev)
+        r['grade'], r['criteria'] = g, crit
+        n, c = r.pop('_n'), r.pop('_c')
+        if g in ('S', 'A'):
+            k1 = []
+            for a, z in [(200701, 201212), (201301, 201912), (202001, None)]:
+                st = M.excess_stats(n, MKT, a=a, z=z)
+                k1.append({'from': a, 'net_ex_ann': st['ex_ann'] if st else None, 't': st['t'] if st else None})
+            ks = sorted(k for k in set(n) & set(MKT) if k >= M.HOLD_START)
+            diff = sorted((n[k] - MKT[k] for k in ks), reverse=True)
+            capped, _ = build('usa', QUALITY if 'Q_ALL' in c['name'] else LOW_RISK, weighting='vw_cap') if c['name'] != 'X5_QLR_ALL' else (None, 0)
+            if c['name'] == 'X5_QLR_ALL':
+                qc, _ = build('usa', QUALITY, 'vw_cap'); lc, _ = build('usa', LOW_RISK, 'vw_cap')
+                kk = sorted(set(qc) & set(lc)); capped = {k: 0.5 * qc[k] + 0.5 * lc[k] for k in kk}
+            cc = dict(c); cc['r'] = {k: v + RF[k] for k, v in capped.items() if k in RF}
+            e5, _, _ = evaluate(cc, r['rule'], MKT, MKTRF, RF)
+            checks[r['name']] = {'K1_subperiods': {'periods': k1, 'positive': sum(1 for x in k1 if x['net_ex_ann'] and x['net_ex_ann'] > 0)},
+                                 'K4_drop_best12': {'without_best12': round(S.mean(diff[12:]) * 1200, 2)},
+                                 'K5_capped': {'hold_net_ex_ann': e5['net_cost_hold']['ex_ann'], 't': e5['net_cost_hold']['t']}}
+        h, f = r['net_cost_hold'], r['full']
+        print(f"{r['name']:32s} {g} L={r['L_static'] or r['lever_info']['L_mean']} full {f['ex_ann']:+.2f} t{f['t']} ({f['from']}) tr t{r['train']['t']} | hold net {h['ex_ann']:+.2f} t{h['t']} | roll {r['roll20_net']['win_rate'] if r['roll20_net'] else None} | C5 {r['repl']['positive']}/{r['repl']['regions']} | SR {r['sharpe_pair']} | {checks.get(r['name'])}")
+    d['tested'] = [r for r in d['tested'] if r['family'] != 'X5'] + recs
+    d['prereg5'] = PREREG5
+    d['prereg5_commit'] = sha_of(f'out/{PREREG5}')
+    d['x5_good_sides'] = sides
+    d['n_tested'] = len(d['tested'])
+    d['n_graded'] = sum(1 for r in d['tested'] if r['grade'])
+    d['grade_counts']['X5'] = {g: sum(1 for r in recs if r['grade'] == g) for g in 'SABC'}
+    d.setdefault('family_labels', {})['X5'] = '探索（事前登録5）選び出しをしない混合'
+    d.setdefault('robustness_checks', {}).update(checks)
+    json.dumps(d, ensure_ascii=False)
+    M.save('mw_risk_matched.json', d)
+    print('saved x5', len(recs))
+
+
 if __name__ == '__main__':
     if '--checks' in sys.argv:
         checks_main()
     elif '--reality' in sys.argv:
         reality_main()
+    elif '--x5' in sys.argv:
+        x5_main()
     else:
         main()
