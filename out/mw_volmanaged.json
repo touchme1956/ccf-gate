@@ -3,12 +3,14 @@
  "prereg": [
   "mw_volmanaged_prereg.json",
   "mw_volmanaged_prereg2.json",
-  "mw_volmanaged_prereg3.json"
+  "mw_volmanaged_prereg3.json",
+  "mw_volmanaged_prereg4.json"
  ],
  "prereg_commit": {
   "mw_volmanaged_prereg.json": "c1d911595e52ea2e999ff63dd34ed774e48e5e05",
   "mw_volmanaged_prereg2.json": "c8086becd2f7875678be316d3093e93ccfc6ea81",
-  "mw_volmanaged_prereg3.json": "bdf0ac22f319855c1217717042fcd48248f1d8a0"
+  "mw_volmanaged_prereg3.json": "bdf0ac22f319855c1217717042fcd48248f1d8a0",
+  "mw_volmanaged_prereg4.json": "4dcedcdccdb027ca5d40de98fcb510008236a7a6"
  },
  "jkp_breadth_report": {
   "VAR1_cap1.5": {
@@ -17652,237 +17654,404 @@
    }
   }
  },
- "sanity": {
-  "us_mkt_cagr_full_monthly_file": 10.38,
-  "us_mkt_cagr_2007_monthly_file": 11.13,
-  "us_daily_to_monthly_vs_file": {
-   "months": 1202,
-   "max_abs_diff_pct": 0.4,
-   "mean_abs_diff_pct": 0.047,
-   "corr": 0.99994
-  },
-  "us_months": [
-   192607,
-   202608,
-   1202,
-   "gaps",
-   0
-  ],
-  "ndx_splice": {
-   "days_not_in_french_rf": 0,
-   "corr_ndx_price_vs_qqq_daily_after_splice": 0.98033,
-   "cagr_ndx_price_after_splice": 10.23,
-   "cagr_qqq_after_splice": 10.8,
-   "splice_day": 19990310,
-   "returns_around_splice": {
-    "19990305": 1.908,
-    "19990308": 3.26,
-    "19990309": -0.267,
-    "19990310": 0.492,
-    "19990311": 0.49,
-    "19990312": -2.436,
-    "19990315": 2.871,
-    "19990316": 0.85
+ "robustness_grid_report": {
+  "note": "報告のみ（格付けしない・勝ちの主張に使わない・Holm の数に入れない）。結果を見た後の頑健性の確認。値は費用後（net）と訓練の費用前",
+  "H06_HiTec_DOWN_B1EXP": {
+   "cap1.25": {
+    "train_ex": 2.51,
+    "train_t": 3.26,
+    "hold_net_ex": 3.73,
+    "hold_net_t": 3.0,
+    "hold_net_cagr_diff": 3.67,
+    "full_t": 4.18,
+    "roll20_win": 0.813,
+    "sharpe_train": [
+     0.461,
+     0.407
+    ],
+    "sharpe_hold": [
+     0.87,
+     0.805
+    ],
+    "avg_w": 1.2
    },
-   "months": [
-    198511,
-    202608,
-    490
-   ]
+   "cap1.5": {
+    "train_ex": 4.36,
+    "train_t": 3.44,
+    "hold_net_ex": 6.24,
+    "hold_net_t": 4.17,
+    "hold_net_cagr_diff": 6.15,
+    "full_t": 4.55,
+    "roll20_win": 0.8,
+    "sharpe_train": [
+     0.469,
+     0.407
+    ],
+    "sharpe_hold": [
+     0.907,
+     0.805
+    ],
+    "avg_w": 1.378
+   },
+   "roll_variants_cap1.5": {
+    "roll20_jan": {
+     "windows": 75,
+     "wins": 62,
+     "win_rate": 0.827,
+     "median": 3.33,
+     "worst": [
+      1971,
+      -2.79
+     ],
+     "best": [
+      1942,
+      8.59
+     ]
+    },
+    "roll15_jul": {
+     "windows": 80,
+     "wins": 60,
+     "win_rate": 0.75,
+     "median": 4.46,
+     "worst": [
+      1967,
+      -2.75
+     ],
+     "best": [
+      1949,
+      9.48
+     ]
+    },
+    "roll25_jul": {
+     "windows": 70,
+     "wins": 54,
+     "win_rate": 0.771,
+     "median": 3.56,
+     "worst": [
+      1967,
+      -2.01
+     ],
+     "best": [
+      1942,
+      7.79
+     ]
+    },
+    "roll10_jul": {
+     "windows": 85,
+     "wins": 62,
+     "win_rate": 0.729,
+     "median": 4.27,
+     "worst": [
+      1932,
+      -5.06
+     ],
+     "best": [
+      1949,
+      14.14
+     ]
+    }
+   },
+   "cap1.75": {
+    "train_ex": 5.2,
+    "train_t": 2.94,
+    "hold_net_ex": 6.3,
+    "hold_net_t": 3.36,
+    "hold_net_cagr_diff": 5.87,
+    "full_t": 3.78,
+    "roll20_win": 0.707,
+    "sharpe_train": [
+     0.453,
+     0.407
+    ],
+    "sharpe_hold": [
+     0.872,
+     0.805
+    ],
+    "avg_w": 1.523
+   },
+   "cap2": {
+    "train_ex": 5.99,
+    "train_t": 2.65,
+    "hold_net_ex": 6.26,
+    "hold_net_t": 2.64,
+    "hold_net_cagr_diff": 5.54,
+    "full_t": 3.32,
+    "roll20_win": 0.693,
+    "sharpe_train": [
+     0.442,
+     0.407
+    ],
+    "sharpe_hold": [
+     0.841,
+     0.805
+    ],
+    "avg_w": 1.642
+   }
   },
-  "region_Europe": [
-   199007,
-   202608,
-   434,
-   "gaps",
-   0
-  ],
-  "region_Japan": [
-   199007,
-   202608,
-   434,
-   "gaps",
-   0
-  ],
-  "region_Asia_Pacific_ex_Japan": [
-   199007,
-   202608,
-   434,
-   "gaps",
-   0
-  ],
-  "region_Developed_ex_US": [
-   199007,
-   202608,
-   434,
-   "gaps",
-   0
-  ],
-  "region_North_America": [
-   199007,
-   202608,
-   434,
-   "gaps",
-   0
-  ],
-  "hitec": [
-   192607,
-   202608,
-   1202,
-   "gaps",
-   0,
-   "cagr",
-   11.58,
-   "cagr_2007",
-   16.31
-  ],
-  "ixic": [
-   197103,
-   202608,
-   666,
-   "gaps",
-   0,
-   "days_not_in_french",
-   0,
-   "cagr",
-   11.65
-  ],
-  "lookahead_index_check_P01": {
-   "months": 1201,
-   "mismatch": 0,
-   "rule": "w[t1] == min(1.5, c/RV1[t1 の前月])"
+  "Q09_NDX_VAR1_B1": {
+   "cap1.25": {
+    "train_ex": 4.49,
+    "train_t": 3.21,
+    "hold_net_ex": 3.41,
+    "hold_net_t": 3.39,
+    "hold_net_cagr_diff": 3.18,
+    "full_t": 4.57,
+    "roll20_win": 1.0,
+    "sharpe_train": [
+     0.571,
+     0.445
+    ],
+    "sharpe_hold": [
+     0.853,
+     0.823
+    ],
+    "avg_w": 1.195
+   },
+   "cap1.5": {
+    "train_ex": 6.75,
+    "train_t": 3.09,
+    "hold_net_ex": 7.16,
+    "hold_net_t": 4.43,
+    "hold_net_cagr_diff": 6.93,
+    "full_t": 5.12,
+    "roll20_win": 1.0,
+    "sharpe_train": [
+     0.61,
+     0.445
+    ],
+    "sharpe_hold": [
+     0.915,
+     0.823
+    ],
+    "avg_w": 1.342
+   },
+   "roll_variants_cap1.5": {
+    "roll20_jan": {
+     "windows": 21,
+     "wins": 21,
+     "win_rate": 1.0,
+     "median": 7.38,
+     "worst": [
+      2003,
+      5.6
+     ],
+     "best": [
+      1995,
+      9.29
+     ]
+    },
+    "roll15_jul": {
+     "windows": 27,
+     "wins": 27,
+     "win_rate": 1.0,
+     "median": 7.53,
+     "worst": [
+      1985,
+      3.09
+     ],
+     "best": [
+      1999,
+      10.52
+     ]
+    },
+    "roll25_jul": {
+     "windows": 17,
+     "wins": 17,
+     "win_rate": 1.0,
+     "median": 7.84,
+     "worst": [
+      1985,
+      5.97
+     ],
+     "best": [
+      1999,
+      8.9
+     ]
+    },
+    "roll10_jul": {
+     "windows": 31,
+     "wins": 31,
+     "win_rate": 1.0,
+     "median": 7.28,
+     "worst": [
+      1989,
+      3.0
+     ],
+     "best": [
+      1994,
+      12.31
+     ]
+    }
+   },
+   "cap1.75": {
+    "train_ex": 7.22,
+    "train_t": 2.55,
+    "hold_net_ex": 9.63,
+    "hold_net_t": 4.42,
+    "hold_net_cagr_diff": 9.31,
+    "full_t": 4.7,
+    "roll20_win": 1.0,
+    "sharpe_train": [
+     0.593,
+     0.445
+    ],
+    "sharpe_hold": [
+     0.939,
+     0.823
+    ],
+    "avg_w": 1.458
+   },
+   "cap2": {
+    "train_ex": 6.24,
+    "train_t": 1.83,
+    "hold_net_ex": 10.93,
+    "hold_net_t": 4.14,
+    "hold_net_cagr_diff": 10.55,
+    "full_t": 3.93,
+    "roll20_win": 1.0,
+    "sharpe_train": [
+     0.535,
+     0.445
+    ],
+    "sharpe_hold": [
+     0.948,
+     0.823
+    ],
+    "avg_w": 1.541
+   }
   },
-  "c_solve_P01": {
-   "pairs": 965,
-   "from": 192608,
-   "to": 200612,
-   "target_sd_ann": 18.935,
-   "sd_at_c_ann": 18.935
-  },
-  "excess_stats_fast_equals_mw_common": true
- },
- "n_tested": 114,
- "n_graded": 111,
- "grades": {
-  "S": [
-   "H06_HiTec_DOWN_cap1.5_B1EXP"
-  ],
-  "A": [
-   "Q09_NDX_VAR1_cap1.5_B1",
-   "Q11_NDX_VOL1_cap1.5_B1",
-   "Q37_NDX_DOWN_cap1.5_B1",
-   "H13_NDX_VAR1_cap1.5_B1_LAG1",
-   "H14_NDX_VOL1_cap1.5_B1_LAG1",
-   "H15_NDX_DOWN_cap1.5_B1_LAG1",
-   "H20_NDX_ENS_cap1.5_B1"
-  ],
-  "B": [
-   "Q02_US_VAR1_cap2_B1",
-   "Q04_US_VOL1_cap2_B1",
-   "Q08_US_VAR1T_cap2_B1",
-   "Q17_US_VAR1_cap1.5_B1EXP",
-   "Q19_US_VOL1_cap1.5_B1EXP",
-   "Q20_US_VOL1_cap2_B1EXP",
-   "Q33_US_DOWN_cap1.5_B1",
-   "Q34_US_DOWN_cap2_B1",
-   "Q36_US_VOL1T_cap2_B1",
-   "H01_HiTec_VAR1_cap1.5_B1",
-   "H02_HiTec_VAR1_cap1.5_B1EXP",
-   "H03_HiTec_VOL1_cap1.5_B1",
-   "H04_HiTec_VOL1_cap1.5_B1EXP",
-   "H05_HiTec_DOWN_cap1.5_B1",
-   "H17_US_ENS_cap1.5_B1EXP",
-   "H18_US_ENS_cap2_B1",
-   "H19_US_ENS_cap2_B1EXP"
-  ],
-  "C": [
-   "P01_US_VAR1_cap1.5",
-   "P02_US_VAR1_cap2",
-   "P03_US_VOL1_cap1.5",
-   "P04_US_VOL1_cap2",
-   "P05_US_VAR6_cap1.5",
-   "P06_US_VAR6_cap2",
-   "P07_US_VAR1T_cap1.5",
-   "P08_US_VAR1T_cap2",
-   "P09_NDX_VAR1_cap1.5",
-   "P10_NDX_VAR1_cap2",
-   "P11_NDX_VOL1_cap1.5",
-   "P12_NDX_VOL1_cap2",
-   "P13_NDX_VAR6_cap1.5",
-   "P14_NDX_VAR6_cap2",
-   "P15_NDX_VAR1T_cap1.5",
-   "P16_NDX_VAR1T_cap2",
-   "E1_P01_US_VAR1_cap1.5_EXP",
-   "E1_P02_US_VAR1_cap2_EXP",
-   "E1_P03_US_VOL1_cap1.5_EXP",
-   "E1_P04_US_VOL1_cap2_EXP",
-   "E1_P05_US_VAR6_cap1.5_EXP",
-   "E1_P06_US_VAR6_cap2_EXP",
-   "E1_P07_US_VAR1T_cap1.5_EXP",
-   "E1_P08_US_VAR1T_cap2_EXP",
-   "E1_P09_NDX_VAR1_cap1.5_EXP",
-   "E1_P10_NDX_VAR1_cap2_EXP",
-   "E1_P11_NDX_VOL1_cap1.5_EXP",
-   "E1_P12_NDX_VOL1_cap2_EXP",
-   "E1_P13_NDX_VAR6_cap1.5_EXP",
-   "E1_P14_NDX_VAR6_cap2_EXP",
-   "E1_P15_NDX_VAR1T_cap1.5_EXP",
-   "E1_P16_NDX_VAR1T_cap2_EXP",
-   "E3_US_EWMA_cap1.5",
-   "E3_US_EWMA_cap2",
-   "E3_NDX_EWMA_cap1.5",
-   "E3_NDX_EWMA_cap2",
-   "E4_US_DOWN_cap1.5",
-   "E4_US_DOWN_cap2",
-   "E4_NDX_DOWN_cap1.5",
-   "E4_NDX_DOWN_cap2",
-   "E6_US_VOL1T_cap1.5",
-   "E6_US_VOL1T_cap2",
-   "E6_NDX_VOL1T_cap1.5",
-   "E6_NDX_VOL1T_cap2",
-   "E5_US_VAR1_LAG1_cap1.5",
-   "E5_US_VAR1_LAG1_cap2",
-   "E5_NDX_VAR1_LAG1_cap1.5",
-   "E5_NDX_VAR1_LAG1_cap2",
-   "Q01_US_VAR1_cap1.5_B1",
-   "Q03_US_VOL1_cap1.5_B1",
-   "Q05_US_VAR6_cap1.5_B1",
-   "Q06_US_VAR6_cap2_B1",
-   "Q07_US_VAR1T_cap1.5_B1",
-   "Q10_NDX_VAR1_cap2_B1",
-   "Q12_NDX_VOL1_cap2_B1",
-   "Q13_NDX_VAR6_cap1.5_B1",
-   "Q14_NDX_VAR6_cap2_B1",
-   "Q15_NDX_VAR1T_cap1.5_B1",
-   "Q16_NDX_VAR1T_cap2_B1",
-   "Q18_US_VAR1_cap2_B1EXP",
-   "Q21_US_VAR6_cap1.5_B1EXP",
-   "Q22_US_VAR6_cap2_B1EXP",
-   "Q23_US_VAR1T_cap1.5_B1EXP",
-   "Q24_US_VAR1T_cap2_B1EXP",
-   "Q25_NDX_VAR1_cap1.5_B1EXP",
-   "Q26_NDX_VAR1_cap2_B1EXP",
-   "Q27_NDX_VOL1_cap1.5_B1EXP",
-   "Q28_NDX_VOL1_cap2_B1EXP",
-   "Q29_NDX_VAR6_cap1.5_B1EXP",
-   "Q30_NDX_VAR6_cap2_B1EXP",
-   "Q31_NDX_VAR1T_cap1.5_B1EXP",
-   "Q32_NDX_VAR1T_cap2_B1EXP",
-   "Q35_US_VOL1T_cap1.5_B1",
-   "Q38_NDX_DOWN_cap2_B1",
-   "Q39_NDX_VOL1T_cap1.5_B1",
-   "Q40_NDX_VOL1T_cap2_B1",
-   "H07_IXIC_VAR1_cap1.5_B1",
-   "H08_IXIC_VAR1_cap1.5_B1EXP",
-   "H09_IXIC_VOL1_cap1.5_B1",
-   "H10_IXIC_VOL1_cap1.5_B1EXP",
-   "H11_IXIC_DOWN_cap1.5_B1",
-   "H12_IXIC_DOWN_cap1.5_B1EXP",
-   "H16_US_ENS_cap1.5_B1",
-   "H21_NDX_ENS_cap1.5_B1EXP",
-   "H22_NDX_ENS_cap2_B1",
-   "H23_NDX_ENS_cap2_B1EXP"
-  ]
+  "Q37_NDX_DOWN_B1": {
+   "cap1.25": {
+    "train_ex": 4.3,
+    "train_t": 3.01,
+    "hold_net_ex": 3.88,
+    "hold_net_t": 3.45,
+    "hold_net_cagr_diff": 3.73,
+    "full_t": 4.5,
+    "roll20_win": 1.0,
+    "sharpe_train": [
+     0.566,
+     0.445
+    ],
+    "sharpe_hold": [
+     0.873,
+     0.823
+    ],
+    "avg_w": 1.196
+   },
+   "cap1.5": {
+    "train_ex": 6.05,
+    "train_t": 2.67,
+    "hold_net_ex": 7.1,
+    "hold_net_t": 4.36,
+    "hold_net_cagr_diff": 6.89,
+    "full_t": 4.71,
+    "roll20_win": 1.0,
+    "sharpe_train": [
+     0.58,
+     0.445
+    ],
+    "sharpe_hold": [
+     0.918,
+     0.823
+    ],
+    "avg_w": 1.333
+   },
+   "roll_variants_cap1.5": {
+    "roll20_jan": {
+     "windows": 21,
+     "wins": 21,
+     "win_rate": 1.0,
+     "median": 7.55,
+     "worst": [
+      2003,
+      5.62
+     ],
+     "best": [
+      1999,
+      9.34
+     ]
+    },
+    "roll15_jul": {
+     "windows": 27,
+     "wins": 27,
+     "win_rate": 1.0,
+     "median": 7.53,
+     "worst": [
+      1985,
+      2.57
+     ],
+     "best": [
+      1999,
+      10.49
+     ]
+    },
+    "roll25_jul": {
+     "windows": 17,
+     "wins": 17,
+     "win_rate": 1.0,
+     "median": 7.72,
+     "worst": [
+      1985,
+      5.73
+     ],
+     "best": [
+      1993,
+      8.77
+     ]
+    },
+    "roll10_jul": {
+     "windows": 31,
+     "wins": 31,
+     "win_rate": 1.0,
+     "median": 7.45,
+     "worst": [
+      1986,
+      1.6
+     ],
+     "best": [
+      2008,
+      11.42
+     ]
+    }
+   },
+   "cap1.75": {
+    "train_ex": 5.71,
+    "train_t": 2.08,
+    "hold_net_ex": 8.12,
+    "hold_net_t": 4.05,
+    "hold_net_cagr_diff": 7.61,
+    "full_t": 4.07,
+    "roll20_win": 1.0,
+    "sharpe_train": [
+     0.537,
+     0.445
+    ],
+    "sharpe_hold": [
+     0.901,
+     0.823
+    ],
+    "avg_w": 1.44
+   },
+   "cap2": {
+    "train_ex": 5.14,
+    "train_t": 1.53,
+    "hold_net_ex": 8.69,
+    "hold_net_t": 3.78,
+    "hold_net_cagr_diff": 7.94,
+    "full_t": 3.41,
+    "roll20_win": 1.0,
+    "sharpe_train": [
+     0.495,
+     0.445
+    ],
+    "sharpe_hold": [
+     0.887,
+     0.823
+    ],
+    "avg_w": 1.524
+   }
+  }
  },
  "tested": [
   {
@@ -17894,7 +18063,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0021149411082371145,
    "c_solve": {
@@ -18654,7 +18824,8 @@
     "sig": "VAR1",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0013187896969472058,
    "c_solve": {
@@ -19414,7 +19585,8 @@
     "sig": "VOL1",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.04508478853342878,
    "c_solve": {
@@ -20174,7 +20346,8 @@
     "sig": "VOL1",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.04000125759664045,
    "c_solve": {
@@ -20934,7 +21107,8 @@
     "sig": "VAR6",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0022661099220289125,
    "c_solve": {
@@ -21694,7 +21868,8 @@
     "sig": "VAR6",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.001504138860882483,
    "c_solve": {
@@ -22454,7 +22629,8 @@
     "sig": "VAR1T",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.023069398708277906,
    "c_solve": {
@@ -23214,7 +23390,8 @@
     "sig": "VAR1T",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0018030407098309717,
    "c_solve": {
@@ -23974,7 +24151,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.005443324995976512,
    "c_solve": {
@@ -24728,7 +24906,8 @@
     "sig": "VAR1",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0034515707082154144,
    "c_solve": {
@@ -25482,7 +25661,8 @@
     "sig": "VOL1",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.07144755978709014,
    "c_solve": {
@@ -26236,7 +26416,8 @@
     "sig": "VOL1",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.06426987436958917,
    "c_solve": {
@@ -26990,7 +27171,8 @@
     "sig": "VAR6",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.006173746116325214,
    "c_solve": {
@@ -27744,7 +27926,8 @@
     "sig": "VAR6",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0037523449172378073,
    "c_solve": {
@@ -28498,7 +28681,8 @@
     "sig": "VAR1T",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.010057466275723076,
    "c_solve": {
@@ -29252,7 +29436,8 @@
     "sig": "VAR1T",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.004874337542768016,
    "c_solve": {
@@ -30006,7 +30191,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -30710,7 +30896,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -30733,7 +30919,8 @@
     "sig": "VAR1",
     "cap": 2.0,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -31437,7 +31624,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -31460,7 +31647,8 @@
     "sig": "VOL1",
     "cap": 1.5,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -32164,7 +32352,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -32187,7 +32375,8 @@
     "sig": "VOL1",
     "cap": 2.0,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -32891,7 +33080,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -32914,7 +33103,8 @@
     "sig": "VAR6",
     "cap": 1.5,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -33618,7 +33808,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -33641,7 +33831,8 @@
     "sig": "VAR6",
     "cap": 2.0,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -34345,7 +34536,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -34368,7 +34559,8 @@
     "sig": "VAR1T",
     "cap": 1.5,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193212,
@@ -35072,7 +35264,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -35095,7 +35287,8 @@
     "sig": "VAR1T",
     "cap": 2.0,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193212,
@@ -35799,7 +35992,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -35822,7 +36015,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199012,
@@ -36520,8 +36714,8 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
-   "holm_p": 0.2754,
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.2788,
    "grade": "C",
    "criteria": {
     "C1_train": false,
@@ -36543,7 +36737,8 @@
     "sig": "VAR1",
     "cap": 2.0,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199012,
@@ -37241,7 +37436,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -37264,7 +37459,8 @@
     "sig": "VOL1",
     "cap": 1.5,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199012,
@@ -37962,8 +38158,8 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
-   "holm_p": 0.119,
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.1204,
    "grade": "C",
    "criteria": {
     "C1_train": false,
@@ -37985,7 +38181,8 @@
     "sig": "VOL1",
     "cap": 2.0,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199012,
@@ -38683,8 +38880,8 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
-   "holm_p": 0.64,
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.648,
    "grade": "C",
    "criteria": {
     "C1_train": false,
@@ -38706,7 +38903,8 @@
     "sig": "VAR6",
     "cap": 1.5,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199112,
@@ -39404,7 +39602,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -39427,7 +39625,8 @@
     "sig": "VAR6",
     "cap": 2.0,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199112,
@@ -40125,7 +40324,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -40148,7 +40347,8 @@
     "sig": "VAR1T",
     "cap": 1.5,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199112,
@@ -40846,7 +41046,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -40869,7 +41069,8 @@
     "sig": "VAR1T",
     "cap": 2.0,
     "cmode": "expanding",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199112,
@@ -41567,7 +41768,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -41590,7 +41791,8 @@
     "sig": "EWMA",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0020599132765826917,
    "c_solve": {
@@ -42296,7 +42498,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -42319,7 +42521,8 @@
     "sig": "EWMA",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0013388630221432365,
    "c_solve": {
@@ -43025,7 +43228,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -43048,7 +43251,8 @@
     "sig": "EWMA",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.005988708784605274,
    "c_solve": {
@@ -43748,8 +43952,8 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
-   "holm_p": 0.249,
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.252,
    "grade": "C",
    "criteria": {
     "C1_train": false,
@@ -43771,7 +43975,8 @@
     "sig": "EWMA",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0035933503459221103,
    "c_solve": {
@@ -44471,7 +44676,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -44494,7 +44699,8 @@
     "sig": "DOWN",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.001132934983317814,
    "c_solve": {
@@ -45200,7 +45406,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -45223,7 +45429,8 @@
     "sig": "DOWN",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0006733725608640979,
    "c_solve": {
@@ -45929,7 +46136,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -45952,7 +46159,8 @@
     "sig": "DOWN",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0025320648323823875,
    "c_solve": {
@@ -46652,8 +46860,8 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
-   "holm_p": 0.1932,
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.1955,
    "grade": "C",
    "criteria": {
     "C1_train": false,
@@ -46675,7 +46883,8 @@
     "sig": "DOWN",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0017283056582473037,
    "c_solve": {
@@ -47375,7 +47584,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -47398,7 +47607,8 @@
     "sig": "VOL1T",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.15837190755476807,
    "c_solve": {
@@ -48104,7 +48314,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -48127,7 +48337,8 @@
     "sig": "VOL1T",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.050554714770067,
    "c_solve": {
@@ -48833,7 +49044,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -48856,7 +49067,8 @@
     "sig": "VOL1T",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.11031255013520166,
    "c_solve": {
@@ -49556,7 +49768,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -49579,7 +49791,8 @@
     "sig": "VOL1T",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.08293665706041066,
    "c_solve": {
@@ -50279,7 +50492,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -50302,7 +50515,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 1
+    "lag": 1,
+    "impl": "margin"
    },
    "c": 0.0021149411082371145,
    "c_solve": {
@@ -50934,7 +51148,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -50957,7 +51171,8 @@
     "sig": "VAR1",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 1
+    "lag": 1,
+    "impl": "margin"
    },
    "c": 0.0013187896969472058,
    "c_solve": {
@@ -51589,7 +51804,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -51612,7 +51827,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "train",
-    "lag": 1
+    "lag": 1,
+    "impl": "margin"
    },
    "c": 0.005443324995976512,
    "c_solve": {
@@ -52238,8 +52454,8 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
-   "holm_p": 0.0184,
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.0186,
    "grade": "C",
    "criteria": {
     "C1_train": false,
@@ -52261,7 +52477,8 @@
     "sig": "VAR1",
     "cap": 2.0,
     "cmode": "train",
-    "lag": 1
+    "lag": 1,
+    "impl": "margin"
    },
    "c": 0.0034515707082154144,
    "c_solve": {
@@ -52887,7 +53104,7 @@
     }
    },
    "label": "探索（第1族の事前登録に含めて結果を見る前に固定）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -52910,7 +53127,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0036449035369970884,
    "c_solve": {
@@ -53647,7 +53865,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -53670,7 +53888,8 @@
     "sig": "VAR1",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0023093365059589643,
    "c_solve": {
@@ -54407,7 +54626,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "B",
    "criteria": {
@@ -54430,7 +54649,8 @@
     "sig": "VOL1",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.054358341285824764,
    "c_solve": {
@@ -55167,7 +55387,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -55190,7 +55410,8 @@
     "sig": "VOL1",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.047564622790491916,
    "c_solve": {
@@ -55927,7 +56148,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "B",
    "criteria": {
@@ -55950,7 +56171,8 @@
     "sig": "VAR6",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.004087555016497955,
    "c_solve": {
@@ -56687,7 +56909,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -56710,7 +56932,8 @@
     "sig": "VAR6",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.002524159066913977,
    "c_solve": {
@@ -57447,7 +57670,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -57470,7 +57693,8 @@
     "sig": "VAR1T",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": "inf",
    "c_solve": {
@@ -58206,7 +58430,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -58229,7 +58453,8 @@
     "sig": "VAR1T",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": "inf",
    "c_solve": {
@@ -58965,7 +59190,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "B",
    "criteria": {
@@ -58988,7 +59213,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.008334733889479955,
    "c_solve": {
@@ -59719,7 +59945,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "A",
    "criteria": {
@@ -59742,7 +59968,8 @@
     "sig": "VAR1",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.005684424977108651,
    "c_solve": {
@@ -60473,7 +60700,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "C",
    "criteria": {
@@ -60496,7 +60723,8 @@
     "sig": "VOL1",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.08334386137311255,
    "c_solve": {
@@ -61227,7 +61455,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "A",
    "criteria": {
@@ -61250,7 +61478,8 @@
     "sig": "VOL1",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.07432270192883714,
    "c_solve": {
@@ -61981,7 +62210,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "C",
    "criteria": {
@@ -62004,7 +62233,8 @@
     "sig": "VAR6",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.009445212297807893,
    "c_solve": {
@@ -62735,7 +62965,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -62758,7 +62988,8 @@
     "sig": "VAR6",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0064744492495012575,
    "c_solve": {
@@ -63489,7 +63720,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -63512,7 +63743,8 @@
     "sig": "VAR1T",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": "inf",
    "c_solve": {
@@ -64242,7 +64474,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -64265,7 +64497,8 @@
     "sig": "VAR1T",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0414181928352318,
    "c_solve": {
@@ -64996,7 +65229,7 @@
     "note": "近似: 倍率を下げる月の売却益に課税（年ごとに通算・損失3年繰越）・最後に全部売る。配当の課税と信用の金利の経費算入は入れない"
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -65019,7 +65252,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -65723,7 +65957,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "B",
    "criteria": {
@@ -65746,7 +65980,8 @@
     "sig": "VAR1",
     "cap": 2.0,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -66450,7 +66685,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -66473,7 +66708,8 @@
     "sig": "VOL1",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -67177,7 +67413,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "B",
    "criteria": {
@@ -67200,7 +67436,8 @@
     "sig": "VOL1",
     "cap": 2.0,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -67904,7 +68141,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "B",
    "criteria": {
@@ -67927,7 +68164,8 @@
     "sig": "VAR6",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -68631,7 +68869,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -68654,7 +68892,8 @@
     "sig": "VAR6",
     "cap": 2.0,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -69358,7 +69597,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -69381,7 +69620,8 @@
     "sig": "VAR1T",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193212,
@@ -70085,7 +70325,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -70108,7 +70348,8 @@
     "sig": "VAR1T",
     "cap": 2.0,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193212,
@@ -70812,7 +71053,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -70835,7 +71076,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199012,
@@ -71533,7 +71775,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "C",
    "criteria": {
@@ -71556,7 +71798,8 @@
     "sig": "VAR1",
     "cap": 2.0,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199012,
@@ -72254,8 +72497,8 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
-   "holm_p": 0.0184,
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.0186,
    "grade": "C",
    "criteria": {
     "C1_train": false,
@@ -72277,7 +72520,8 @@
     "sig": "VOL1",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199012,
@@ -72975,8 +73219,8 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
-   "holm_p": 0.0094,
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.0098,
    "grade": "C",
    "criteria": {
     "C1_train": false,
@@ -72998,7 +73242,8 @@
     "sig": "VOL1",
     "cap": 2.0,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199012,
@@ -73696,8 +73941,8 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
-   "holm_p": 0.0184,
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.0186,
    "grade": "C",
    "criteria": {
     "C1_train": false,
@@ -73719,7 +73964,8 @@
     "sig": "VAR6",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199112,
@@ -74417,7 +74663,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -74440,7 +74686,8 @@
     "sig": "VAR6",
     "cap": 2.0,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199112,
@@ -75138,7 +75385,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -75161,7 +75408,8 @@
     "sig": "VAR1T",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199112,
@@ -75859,7 +76107,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -75882,7 +76130,8 @@
     "sig": "VAR1T",
     "cap": 2.0,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 199112,
@@ -76580,7 +76829,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -76603,7 +76852,8 @@
     "sig": "DOWN",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.001720977804706859,
    "c_solve": {
@@ -77308,7 +77558,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "B",
    "criteria": {
@@ -77331,7 +77581,8 @@
     "sig": "DOWN",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0011691732818473618,
    "c_solve": {
@@ -78036,7 +78287,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "B",
    "criteria": {
@@ -78059,7 +78310,8 @@
     "sig": "VOL1T",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": "inf",
    "c_solve": {
@@ -78763,7 +79015,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -78786,7 +79038,8 @@
     "sig": "VOL1T",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": "inf",
    "c_solve": {
@@ -79490,7 +79743,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "B",
    "criteria": {
@@ -79513,7 +79766,8 @@
     "sig": "DOWN",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.004239424828056204,
    "c_solve": {
@@ -80212,7 +80466,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "A",
    "criteria": {
@@ -80235,7 +80489,8 @@
     "sig": "DOWN",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.002767414785177939,
    "c_solve": {
@@ -80934,7 +81189,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "C",
    "criteria": {
@@ -80957,7 +81212,8 @@
     "sig": "VOL1T",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": "inf",
    "c_solve": {
@@ -81655,7 +81911,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -81678,7 +81934,8 @@
     "sig": "VOL1T",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.238003472944498,
    "c_solve": {
@@ -82377,7 +82634,7 @@
     }
    },
    "label": "探索（第2族・第1族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -82400,7 +82657,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.008292122249228363,
    "c_solve": {
@@ -83105,7 +83363,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "B",
    "criteria": {
@@ -83128,7 +83386,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -83832,7 +84091,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "B",
    "criteria": {
@@ -83855,7 +84114,8 @@
     "sig": "VOL1",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.08069965183450285,
    "c_solve": {
@@ -84560,8 +84820,8 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
-   "holm_p": 0.0264,
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.0267,
    "grade": "B",
    "criteria": {
     "C1_train": true,
@@ -84583,7 +84843,8 @@
     "sig": "VOL1",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -85287,8 +85548,8 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
-   "holm_p": 0.043,
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.0435,
    "grade": "B",
    "criteria": {
     "C1_train": true,
@@ -85310,7 +85571,8 @@
     "sig": "DOWN",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0036865422736464763,
    "c_solve": {
@@ -86015,7 +86277,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "B",
    "criteria": {
@@ -86038,7 +86300,8 @@
     "sig": "DOWN",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 193112,
@@ -86742,7 +87005,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "S",
    "criteria": {
@@ -86765,7 +87028,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0034610989778610015,
    "c_solve": {
@@ -87465,7 +87729,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -87488,7 +87752,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 197612,
@@ -88188,7 +88453,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -88211,7 +88476,8 @@
     "sig": "VOL1",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.05144166556352095,
    "c_solve": {
@@ -88911,7 +89177,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -88934,7 +89200,8 @@
     "sig": "VOL1",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 197612,
@@ -89634,7 +89901,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -89657,7 +89924,8 @@
     "sig": "DOWN",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c": 0.0018450952137411434,
    "c_solve": {
@@ -90357,7 +90625,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -90380,7 +90648,8 @@
     "sig": "DOWN",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "c_expanding": {
     "first_month": 197612,
@@ -91080,7 +91349,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -91103,7 +91372,8 @@
     "sig": "VAR1",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 1
+    "lag": 1,
+    "impl": "margin"
    },
    "c": 0.008334733889479955,
    "c_solve": {
@@ -91728,7 +91998,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "A",
    "criteria": {
@@ -91751,7 +92021,8 @@
     "sig": "VOL1",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 1
+    "lag": 1,
+    "impl": "margin"
    },
    "c": 0.08334386137311255,
    "c_solve": {
@@ -92376,7 +92647,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "A",
    "criteria": {
@@ -92399,7 +92670,8 @@
     "sig": "DOWN",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 1
+    "lag": 1,
+    "impl": "margin"
    },
    "c": 0.004239424828056204,
    "c_solve": {
@@ -93024,7 +93296,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "A",
    "criteria": {
@@ -93047,7 +93319,8 @@
     "sig": "ENS",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "ens": "VAR1・VOL1・DOWN の倍率の平均（各自 β=1 の c）",
    "cmode": "train_b1",
@@ -93747,7 +94020,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "C",
    "criteria": {
@@ -93770,7 +94043,8 @@
     "sig": "ENS",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "ens": "VAR1・VOL1・DOWN の倍率の平均（各自 β=1 の c）",
    "cmode": "expanding_b1",
@@ -94469,7 +94743,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "B",
    "criteria": {
@@ -94492,7 +94766,8 @@
     "sig": "ENS",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "ens": "VAR1・VOL1・DOWN の倍率の平均（各自 β=1 の c）",
    "cmode": "train_b1",
@@ -95192,7 +95467,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "B",
    "criteria": {
@@ -95215,7 +95490,8 @@
     "sig": "ENS",
     "cap": 2.0,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "ens": "VAR1・VOL1・DOWN の倍率の平均（各自 β=1 の c）",
    "cmode": "expanding_b1",
@@ -95914,7 +96190,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 1.0,
    "grade": "B",
    "criteria": {
@@ -95937,7 +96213,8 @@
     "sig": "ENS",
     "cap": 1.5,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "ens": "VAR1・VOL1・DOWN の倍率の平均（各自 β=1 の c）",
    "cmode": "train_b1",
@@ -96631,7 +96908,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "A",
    "criteria": {
@@ -96654,7 +96931,8 @@
     "sig": "ENS",
     "cap": 1.5,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "ens": "VAR1・VOL1・DOWN の倍率の平均（各自 β=1 の c）",
    "cmode": "expanding_b1",
@@ -97347,7 +97625,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "C",
    "criteria": {
@@ -97370,7 +97648,8 @@
     "sig": "ENS",
     "cap": 2.0,
     "cmode": "train_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "ens": "VAR1・VOL1・DOWN の倍率の平均（各自 β=1 の c）",
    "cmode": "train_b1",
@@ -98064,7 +98343,7 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
+   "holm_family": "all_graded(116)",
    "holm_p": 0.0,
    "grade": "C",
    "criteria": {
@@ -98087,7 +98366,8 @@
     "sig": "ENS",
     "cap": 2.0,
     "cmode": "expanding_b1",
-    "lag": 0
+    "lag": 0,
+    "impl": "margin"
    },
    "ens": "VAR1・VOL1・DOWN の倍率の平均（各自 β=1 の c）",
    "cmode": "expanding_b1",
@@ -98780,8 +99060,8 @@
     }
    },
    "label": "探索（第3族・第2族の結果を見た後に登録）",
-   "holm_family": "all_graded(111)",
-   "holm_p": 0.0094,
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.0098,
    "grade": "C",
    "criteria": {
     "C1_train": false,
@@ -98791,6 +99071,3471 @@
     "C5_repl": false,
     "C6_net_cost": true,
     "C7_multi": true,
+    "C8_sharpe": true
+   }
+  },
+  {
+   "id": "I01_NDX_VAR1_cap1.5_B1_FUND",
+   "family": "exploratory4",
+   "graded": true,
+   "rule": {
+    "idx": "NDX",
+    "sig": "VAR1",
+    "cap": 1.5,
+    "cmode": "train_b1",
+    "lag": 0,
+    "impl": "fund"
+   },
+   "c": 0.008334733889479955,
+   "c_solve": {
+    "pairs": 253,
+    "from": 198512,
+    "to": 200612,
+    "beta_at_c": 1.0
+   },
+   "window": [
+    198512,
+    202608
+   ],
+   "gaps": 0,
+   "full": {
+    "from": 198512,
+    "to": 202608,
+    "years": 40.8,
+    "ex_ann": 6.61,
+    "t": 4.74,
+    "p": 0.0,
+    "cagr_s": 21.25,
+    "cagr_b": 14.91,
+    "cagr_diff": 6.34,
+    "te": 12.15,
+    "ir": 0.54,
+    "beta": 1.08,
+    "vol_s": 28.0,
+    "vol_b": 23.4
+   },
+   "train": {
+    "from": 198512,
+    "to": 200612,
+    "years": 21.1,
+    "ex_ann": 6.63,
+    "t": 3.04,
+    "p": 0.0023,
+    "cagr_s": 20.15,
+    "cagr_b": 13.65,
+    "cagr_diff": 6.5,
+    "te": 14.26,
+    "ir": 0.47,
+    "beta": 1.01,
+    "vol_s": 30.7,
+    "vol_b": 27.1
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 6.59,
+    "t": 3.88,
+    "p": 0.0001,
+    "cagr_s": 22.45,
+    "cagr_b": 16.27,
+    "cagr_diff": 6.18,
+    "te": 9.41,
+    "ir": 0.7,
+    "beta": 1.26,
+    "vol_s": 24.9,
+    "vol_b": 18.7
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 6.11,
+    "t": 2.8,
+    "p": 0.0051,
+    "cagr_s": 25.93,
+    "cagr_b": 20.13,
+    "cagr_diff": 5.8,
+    "te": 9.12,
+    "ir": 0.67,
+    "beta": 1.29,
+    "vol_s": 24.3,
+    "vol_b": 17.9
+   },
+   "post_pub_2017": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.7,
+    "ex_ann": 5.45,
+    "t": 1.94,
+    "p": 0.0522,
+    "cagr_s": 26.21,
+    "cagr_b": 21.26,
+    "cagr_diff": 4.95,
+    "te": 9.79,
+    "ir": 0.56,
+    "beta": 1.25,
+    "vol_s": 25.6,
+    "vol_b": 19.3
+   },
+   "net_full": {
+    "from": 198512,
+    "to": 202608,
+    "years": 40.8,
+    "ex_ann": 6.31,
+    "t": 4.52,
+    "p": 0.0,
+    "cagr_s": 20.89,
+    "cagr_b": 14.91,
+    "cagr_diff": 5.99,
+    "te": 12.16,
+    "ir": 0.52,
+    "beta": 1.08,
+    "vol_s": 28.0,
+    "vol_b": 23.4
+   },
+   "net_train": {
+    "from": 198512,
+    "to": 200612,
+    "years": 21.1,
+    "ex_ann": 6.31,
+    "t": 2.91,
+    "p": 0.0037,
+    "cagr_s": 19.77,
+    "cagr_b": 13.65,
+    "cagr_diff": 6.12,
+    "te": 14.27,
+    "ir": 0.44,
+    "beta": 1.0,
+    "vol_s": 30.7,
+    "vol_b": 27.1
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 6.31,
+    "t": 3.67,
+    "p": 0.0002,
+    "cagr_s": 22.11,
+    "cagr_b": 16.27,
+    "cagr_diff": 5.84,
+    "te": 9.41,
+    "ir": 0.67,
+    "beta": 1.26,
+    "vol_s": 24.9,
+    "vol_b": 18.7
+   },
+   "net_recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 5.85,
+    "t": 2.64,
+    "p": 0.0083,
+    "cagr_s": 25.61,
+    "cagr_b": 20.13,
+    "cagr_diff": 5.48,
+    "te": 9.15,
+    "ir": 0.64,
+    "beta": 1.29,
+    "vol_s": 24.3,
+    "vol_b": 17.9
+   },
+   "net_post_pub_2017": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.7,
+    "ex_ann": 5.13,
+    "t": 1.8,
+    "p": 0.0715,
+    "cagr_s": 25.82,
+    "cagr_b": 21.26,
+    "cagr_diff": 4.55,
+    "te": 9.83,
+    "ir": 0.52,
+    "beta": 1.25,
+    "vol_s": 25.6,
+    "vol_b": 19.3
+   },
+   "cost_hold_005": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 6.45,
+    "t": 3.78,
+    "p": 0.0002,
+    "cagr_s": 22.28,
+    "cagr_b": 16.27,
+    "cagr_diff": 6.01,
+    "te": 9.41,
+    "ir": 0.69,
+    "beta": 1.26,
+    "vol_s": 24.9,
+    "vol_b": 18.7
+   },
+   "roll20": {
+    "windows": 22,
+    "wins": 22,
+    "win_rate": 1.0,
+    "median": 6.39,
+    "worst": [
+     2005,
+     5.11
+    ],
+    "best": [
+     1999,
+     8.83
+    ]
+   },
+   "roll20_gross": {
+    "windows": 22,
+    "wins": 22,
+    "win_rate": 1.0,
+    "median": 6.82,
+    "worst": [
+     2005,
+     5.42
+    ],
+    "best": [
+     1999,
+     9.18
+    ]
+   },
+   "dca20": {
+    "windows": 21,
+    "win_rate": 1.0,
+    "median_ratio": 2.439,
+    "worst": [
+     200212,
+     1.721
+    ],
+    "best": [
+     199312,
+     2.671
+    ]
+   },
+   "sharpe": {
+    "full": [
+     0.713,
+     0.584
+    ],
+    "train": [
+     0.598,
+     0.445
+    ],
+    "hold": [
+     0.872,
+     0.823
+    ],
+    "recent": [
+     0.995,
+     1.022
+    ],
+    "post_pub_2017": [
+     0.939,
+     0.979
+    ]
+   },
+   "sharpe_test": {
+    "train": {
+     "sr_s_ann": 0.598,
+     "sr_b_ann": 0.445,
+     "rho": 0.886,
+     "z": 1.45,
+     "p_two": 0.1479,
+     "months": 253
+    },
+    "hold": {
+     "sr_s_ann": 0.872,
+     "sr_b_ann": 0.823,
+     "rho": 0.946,
+     "z": 0.65,
+     "p_two": 0.5159,
+     "months": 236
+    }
+   },
+   "capm_alpha_net": {
+    "full": {
+     "from": 198512,
+     "to": 202608,
+     "alpha_ann": 5.18,
+     "t": 3.54,
+     "beta": 1.082,
+     "r2": 0.817,
+     "appraisal": 0.432
+    },
+    "train": {
+     "from": 198512,
+     "to": 200612,
+     "alpha_ann": 6.25,
+     "t": 2.87,
+     "beta": 1.005,
+     "r2": 0.784,
+     "appraisal": 0.438
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "alpha_ann": 2.35,
+     "t": 1.47,
+     "beta": 1.257,
+     "r2": 0.895,
+     "appraisal": 0.29
+    }
+   },
+   "maxdd": {
+    "s_monthly": -58.6,
+    "b_monthly": -81.1
+   },
+   "exposure": {
+    "full": {
+     "avg_w": 1.342,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.12,
+     "share_over1": 0.849,
+     "share_at_max": 0.759,
+     "share_zero": 0.0,
+     "turnover_per_year": 3.02
+    },
+    "train": {
+     "avg_w": 1.287,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.12,
+     "share_over1": 0.791,
+     "share_at_max": 0.704,
+     "share_zero": 0.0,
+     "turnover_per_year": 3.23
+    },
+    "hold": {
+     "avg_w": 1.401,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.127,
+     "share_over1": 0.911,
+     "share_at_max": 0.818,
+     "share_zero": 0.0,
+     "turnover_per_year": 2.79
+    }
+   },
+   "by_decade_net_cagr_diff": {
+    "1980s": 2.73,
+    "1990s": 4.17,
+    "2000s": 8.04,
+    "2010s": 8.33,
+    "2020s": 2.89
+   },
+   "repl": {
+    "regions": 3,
+    "positive": 0,
+    "positive_hold_report": 0,
+    "counted": [
+     "Europe",
+     "Japan",
+     "Asia_Pacific_ex_Japan"
+    ],
+    "rule_positive": "ex_ann>0 かつ cagr_diff>0（費用後・地域の全期間）",
+    "detail": {
+     "Europe": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -1.51,
+       "t": -1.0,
+       "p": 0.3163,
+       "cagr_s": 6.28,
+       "cagr_b": 7.66,
+       "cagr_diff": -1.38,
+       "te": 9.73,
+       "ir": -0.16,
+       "beta": 0.77,
+       "vol_s": 15.8,
+       "vol_b": 17.0
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -4.11,
+       "t": -1.83,
+       "p": 0.0674,
+       "cagr_s": 1.95,
+       "cagr_b": 5.54,
+       "cagr_diff": -3.59,
+       "te": 11.19,
+       "ir": -0.37,
+       "beta": 0.64,
+       "vol_s": 14.9,
+       "vol_b": 18.7
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -0.8,
+       "t": -0.54,
+       "p": 0.5912,
+       "cagr_s": 7.04,
+       "cagr_b": 7.66,
+       "cagr_diff": -0.62,
+       "te": 9.73,
+       "ir": -0.08,
+       "beta": 0.76,
+       "vol_s": 15.7,
+       "vol_b": 17.0
+      },
+      "sharpe_full": [
+       0.301,
+       0.367
+      ],
+      "sharpe_hold": [
+       0.104,
+       0.303
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": 0.0016786052626002166,
+      "avg_w": 1.034
+     },
+     "Japan": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -2.55,
+       "t": -2.04,
+       "p": 0.0417,
+       "cagr_s": 0.11,
+       "cagr_b": 3.26,
+       "cagr_diff": -3.15,
+       "te": 8.55,
+       "ir": -0.3,
+       "beta": 1.05,
+       "vol_s": 21.5,
+       "vol_b": 18.8
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -1.06,
+       "t": -0.81,
+       "p": 0.4205,
+       "cagr_s": 3.95,
+       "cagr_b": 5.62,
+       "cagr_diff": -1.67,
+       "te": 6.83,
+       "ir": -0.16,
+       "beta": 1.14,
+       "vol_s": 17.9,
+       "vol_b": 14.6
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -1.91,
+       "t": -1.54,
+       "p": 0.1224,
+       "cagr_s": 0.76,
+       "cagr_b": 3.26,
+       "cagr_diff": -2.5,
+       "te": 8.53,
+       "ir": -0.22,
+       "beta": 1.05,
+       "vol_s": 21.5,
+       "vol_b": 18.8
+      },
+      "sharpe_full": [
+       -0.009,
+       0.124
+      ],
+      "sharpe_hold": [
+       0.222,
+       0.346
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": 0.004177000513672694,
+      "avg_w": 1.221
+     },
+     "Asia_Pacific_ex_Japan": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -0.12,
+       "t": -0.07,
+       "p": 0.943,
+       "cagr_s": 8.35,
+       "cagr_b": 8.62,
+       "cagr_diff": -0.27,
+       "te": 10.19,
+       "ir": -0.01,
+       "beta": 0.9,
+       "vol_s": 20.3,
+       "vol_b": 19.6
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -3.51,
+       "t": -1.56,
+       "p": 0.1183,
+       "cagr_s": 2.58,
+       "cagr_b": 6.09,
+       "cagr_diff": -3.51,
+       "te": 10.79,
+       "ir": -0.33,
+       "beta": 0.82,
+       "vol_s": 19.2,
+       "vol_b": 19.8
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": 0.48,
+       "t": 0.29,
+       "p": 0.7681,
+       "cagr_s": 9.0,
+       "cagr_b": 8.62,
+       "cagr_diff": 0.38,
+       "te": 10.19,
+       "ir": 0.05,
+       "beta": 0.9,
+       "vol_s": 20.3,
+       "vol_b": 19.6
+      },
+      "sharpe_full": [
+       0.369,
+       0.388
+      ],
+      "sharpe_hold": [
+       0.152,
+       0.324
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": 0.001938691755142737,
+      "avg_w": 1.191
+     },
+     "Developed_ex_US": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -2.21,
+       "t": -1.76,
+       "p": 0.0784,
+       "cagr_s": 3.95,
+       "cagr_b": 6.32,
+       "cagr_diff": -2.36,
+       "te": 8.12,
+       "ir": -0.27,
+       "beta": 0.89,
+       "vol_s": 16.6,
+       "vol_b": 16.3
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -2.7,
+       "t": -1.5,
+       "p": 0.1337,
+       "cagr_s": 3.11,
+       "cagr_b": 5.77,
+       "cagr_diff": -2.66,
+       "te": 8.78,
+       "ir": -0.31,
+       "beta": 0.82,
+       "vol_s": 16.0,
+       "vol_b": 16.9
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -1.55,
+       "t": -1.25,
+       "p": 0.2106,
+       "cagr_s": 4.65,
+       "cagr_b": 6.32,
+       "cagr_diff": -1.67,
+       "te": 8.11,
+       "ir": -0.19,
+       "beta": 0.89,
+       "vol_s": 16.6,
+       "vol_b": 16.3
+      },
+      "sharpe_full": [
+       0.16,
+       0.298
+      ],
+      "sharpe_hold": [
+       0.178,
+       0.329
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": 0.0016443325405793951,
+      "avg_w": 1.146
+     },
+     "North_America": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": 0.05,
+       "t": 0.04,
+       "p": 0.9701,
+       "cagr_s": 11.11,
+       "cagr_b": 11.05,
+       "cagr_diff": 0.06,
+       "te": 8.14,
+       "ir": 0.01,
+       "beta": 0.85,
+       "vol_s": 15.1,
+       "vol_b": 15.1
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -0.41,
+       "t": -0.21,
+       "p": 0.8363,
+       "cagr_s": 10.48,
+       "cagr_b": 10.72,
+       "cagr_diff": -0.24,
+       "te": 9.29,
+       "ir": -0.04,
+       "beta": 0.76,
+       "vol_s": 14.8,
+       "vol_b": 16.0
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": 0.61,
+       "t": 0.49,
+       "p": 0.6235,
+       "cagr_s": 11.73,
+       "cagr_b": 11.05,
+       "cagr_diff": 0.68,
+       "te": 8.14,
+       "ir": 0.07,
+       "beta": 0.85,
+       "vol_s": 15.1,
+       "vol_b": 15.1
+      },
+      "sharpe_full": [
+       0.603,
+       0.599
+      ],
+      "sharpe_hold": [
+       0.648,
+       0.624
+      ],
+      "positive": true,
+      "positive_hold": false,
+      "c": 0.0021377143754235635,
+      "avg_w": 1.171
+     }
+    }
+   },
+   "label": "探索（第4族・第3族の結果を見た後に登録）",
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.0098,
+   "grade": "A",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": true,
+    "C4_roll20": true,
+    "C5_repl": false,
+    "C6_net_cost": true,
+    "C7_multi": true,
+    "C8_sharpe": true
+   }
+  },
+  {
+   "id": "I02_NDX_VOL1_cap1.5_B1_FUND",
+   "family": "exploratory4",
+   "graded": true,
+   "rule": {
+    "idx": "NDX",
+    "sig": "VOL1",
+    "cap": 1.5,
+    "cmode": "train_b1",
+    "lag": 0,
+    "impl": "fund"
+   },
+   "c": 0.08334386137311255,
+   "c_solve": {
+    "pairs": 253,
+    "from": 198512,
+    "to": 200612,
+    "beta_at_c": 1.0
+   },
+   "window": [
+    198512,
+    202608
+   ],
+   "gaps": 0,
+   "full": {
+    "from": 198512,
+    "to": 202608,
+    "years": 40.8,
+    "ex_ann": 4.96,
+    "t": 4.3,
+    "p": 0.0,
+    "cagr_s": 19.71,
+    "cagr_b": 14.91,
+    "cagr_diff": 4.81,
+    "te": 9.67,
+    "ir": 0.51,
+    "beta": 1.06,
+    "vol_s": 26.7,
+    "vol_b": 23.4
+   },
+   "train": {
+    "from": 198512,
+    "to": 200612,
+    "years": 21.1,
+    "ex_ann": 4.36,
+    "t": 2.45,
+    "p": 0.0142,
+    "cagr_s": 17.92,
+    "cagr_b": 13.65,
+    "cagr_diff": 4.26,
+    "te": 11.16,
+    "ir": 0.39,
+    "beta": 1.0,
+    "vol_s": 29.3,
+    "vol_b": 27.1
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 5.61,
+    "t": 3.92,
+    "p": 0.0001,
+    "cagr_s": 21.67,
+    "cagr_b": 16.27,
+    "cagr_diff": 5.4,
+    "te": 7.78,
+    "ir": 0.72,
+    "beta": 1.2,
+    "vol_s": 23.5,
+    "vol_b": 18.7
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 5.61,
+    "t": 3.15,
+    "p": 0.0016,
+    "cagr_s": 25.78,
+    "cagr_b": 20.13,
+    "cagr_diff": 5.65,
+    "te": 7.4,
+    "ir": 0.76,
+    "beta": 1.21,
+    "vol_s": 22.6,
+    "vol_b": 17.9
+   },
+   "post_pub_2017": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.7,
+    "ex_ann": 5.42,
+    "t": 2.48,
+    "p": 0.013,
+    "cagr_s": 26.73,
+    "cagr_b": 21.26,
+    "cagr_diff": 5.46,
+    "te": 7.88,
+    "ir": 0.69,
+    "beta": 1.18,
+    "vol_s": 23.8,
+    "vol_b": 19.3
+   },
+   "net_full": {
+    "from": 198512,
+    "to": 202608,
+    "years": 40.8,
+    "ex_ann": 4.64,
+    "t": 3.98,
+    "p": 0.0001,
+    "cagr_s": 19.33,
+    "cagr_b": 14.91,
+    "cagr_diff": 4.42,
+    "te": 9.67,
+    "ir": 0.48,
+    "beta": 1.06,
+    "vol_s": 26.7,
+    "vol_b": 23.4
+   },
+   "net_train": {
+    "from": 198512,
+    "to": 200612,
+    "years": 21.1,
+    "ex_ann": 4.02,
+    "t": 2.26,
+    "p": 0.0238,
+    "cagr_s": 17.53,
+    "cagr_b": 13.65,
+    "cagr_diff": 3.88,
+    "te": 11.16,
+    "ir": 0.36,
+    "beta": 1.0,
+    "vol_s": 29.3,
+    "vol_b": 27.1
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 5.3,
+    "t": 3.63,
+    "p": 0.0003,
+    "cagr_s": 21.3,
+    "cagr_b": 16.27,
+    "cagr_diff": 5.03,
+    "te": 7.79,
+    "ir": 0.68,
+    "beta": 1.2,
+    "vol_s": 23.5,
+    "vol_b": 18.7
+   },
+   "net_recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 5.31,
+    "t": 2.92,
+    "p": 0.0035,
+    "cagr_s": 25.42,
+    "cagr_b": 20.13,
+    "cagr_diff": 5.29,
+    "te": 7.41,
+    "ir": 0.72,
+    "beta": 1.21,
+    "vol_s": 22.6,
+    "vol_b": 17.9
+   },
+   "net_post_pub_2017": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.7,
+    "ex_ann": 5.09,
+    "t": 2.28,
+    "p": 0.0226,
+    "cagr_s": 26.31,
+    "cagr_b": 21.26,
+    "cagr_diff": 5.04,
+    "te": 7.9,
+    "ir": 0.64,
+    "beta": 1.18,
+    "vol_s": 23.8,
+    "vol_b": 19.3
+   },
+   "cost_hold_005": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 5.46,
+    "t": 3.77,
+    "p": 0.0002,
+    "cagr_s": 21.48,
+    "cagr_b": 16.27,
+    "cagr_diff": 5.21,
+    "te": 7.79,
+    "ir": 0.7,
+    "beta": 1.2,
+    "vol_s": 23.5,
+    "vol_b": 18.7
+   },
+   "roll20": {
+    "windows": 22,
+    "wins": 22,
+    "win_rate": 1.0,
+    "median": 5.01,
+    "worst": [
+     1986,
+     3.2
+    ],
+    "best": [
+     1999,
+     6.46
+    ]
+   },
+   "roll20_gross": {
+    "windows": 22,
+    "wins": 22,
+    "win_rate": 1.0,
+    "median": 5.42,
+    "worst": [
+     1986,
+     3.59
+    ],
+    "best": [
+     1994,
+     6.84
+    ]
+   },
+   "dca20": {
+    "windows": 21,
+    "win_rate": 1.0,
+    "median_ratio": 1.883,
+    "worst": [
+     200012,
+     1.656
+    ],
+    "best": [
+     199412,
+     2.063
+    ]
+   },
+   "sharpe": {
+    "full": [
+     0.687,
+     0.584
+    ],
+    "train": [
+     0.548,
+     0.445
+    ],
+    "hold": [
+     0.88,
+     0.823
+    ],
+    "recent": [
+     1.045,
+     1.022
+    ],
+    "post_pub_2017": [
+     1.009,
+     0.979
+    ]
+   },
+   "sharpe_test": {
+    "train": {
+     "sr_s_ann": 0.548,
+     "sr_b_ann": 0.445,
+     "rho": 0.925,
+     "z": 1.2,
+     "p_two": 0.2283,
+     "months": 253
+    },
+    "hold": {
+     "sr_s_ann": 0.88,
+     "sr_b_ann": 0.823,
+     "rho": 0.957,
+     "z": 0.85,
+     "p_two": 0.3969,
+     "months": 236
+    }
+   },
+   "capm_alpha_net": {
+    "full": {
+     "from": 198512,
+     "to": 202608,
+     "alpha_ann": 3.77,
+     "t": 3.08,
+     "beta": 1.064,
+     "r2": 0.872,
+     "appraisal": 0.394
+    },
+    "train": {
+     "from": 198512,
+     "to": 200612,
+     "alpha_ann": 4.0,
+     "t": 2.25,
+     "beta": 1.002,
+     "r2": 0.855,
+     "appraisal": 0.358
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "alpha_ann": 2.18,
+     "t": 1.6,
+     "beta": 1.203,
+     "r2": 0.916,
+     "appraisal": 0.32
+    }
+   },
+   "maxdd": {
+    "s_monthly": -63.6,
+    "b_monthly": -81.1
+   },
+   "exposure": {
+    "full": {
+     "avg_w": 1.298,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.316,
+     "share_over1": 0.814,
+     "share_at_max": 0.554,
+     "share_zero": 0.0,
+     "turnover_per_year": 3.24
+    },
+    "train": {
+     "avg_w": 1.248,
+     "median_w": 1.47,
+     "max_w": 1.5,
+     "min_w": 0.316,
+     "share_over1": 0.751,
+     "share_at_max": 0.49,
+     "share_zero": 0.0,
+     "turnover_per_year": 3.38
+    },
+    "hold": {
+     "avg_w": 1.352,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.325,
+     "share_over1": 0.881,
+     "share_at_max": 0.623,
+     "share_zero": 0.0,
+     "turnover_per_year": 3.1
+    }
+   },
+   "by_decade_net_cagr_diff": {
+    "1980s": 1.03,
+    "1990s": 1.67,
+    "2000s": 5.87,
+    "2010s": 7.18,
+    "2020s": 3.28
+   },
+   "repl": {
+    "regions": 3,
+    "positive": 0,
+    "positive_hold_report": 0,
+    "counted": [
+     "Europe",
+     "Japan",
+     "Asia_Pacific_ex_Japan"
+    ],
+    "rule_positive": "ex_ann>0 かつ cagr_diff>0（費用後・地域の全期間）",
+    "detail": {
+     "Europe": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -1.02,
+       "t": -0.91,
+       "p": 0.3625,
+       "cagr_s": 6.83,
+       "cagr_b": 7.66,
+       "cagr_diff": -0.83,
+       "te": 7.03,
+       "ir": -0.15,
+       "beta": 0.83,
+       "vol_s": 15.6,
+       "vol_b": 17.0
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -2.91,
+       "t": -1.7,
+       "p": 0.0896,
+       "cagr_s": 3.12,
+       "cagr_b": 5.54,
+       "cagr_diff": -2.43,
+       "te": 8.12,
+       "ir": -0.36,
+       "beta": 0.74,
+       "vol_s": 15.3,
+       "vol_b": 18.7
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -0.45,
+       "t": -0.4,
+       "p": 0.6885,
+       "cagr_s": 7.45,
+       "cagr_b": 7.66,
+       "cagr_diff": -0.22,
+       "te": 7.04,
+       "ir": -0.06,
+       "beta": 0.83,
+       "vol_s": 15.6,
+       "vol_b": 17.0
+      },
+      "sharpe_full": [
+       0.335,
+       0.367
+      ],
+      "sharpe_hold": [
+       0.179,
+       0.303
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": 0.03954859921969363,
+      "avg_w": 1.023
+     },
+     "Japan": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -1.93,
+       "t": -2.15,
+       "p": 0.0319,
+       "cagr_s": 0.95,
+       "cagr_b": 3.26,
+       "cagr_diff": -2.31,
+       "te": 6.24,
+       "ir": -0.31,
+       "beta": 1.04,
+       "vol_s": 20.5,
+       "vol_b": 18.8
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -0.93,
+       "t": -0.94,
+       "p": 0.3497,
+       "cagr_s": 4.27,
+       "cagr_b": 5.62,
+       "cagr_diff": -1.35,
+       "te": 5.17,
+       "ir": -0.18,
+       "beta": 1.11,
+       "vol_s": 16.9,
+       "vol_b": 14.6
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -1.38,
+       "t": -1.55,
+       "p": 0.1219,
+       "cagr_s": 1.51,
+       "cagr_b": 3.26,
+       "cagr_diff": -1.75,
+       "te": 6.23,
+       "ir": -0.22,
+       "beta": 1.04,
+       "vol_s": 20.5,
+       "vol_b": 18.8
+      },
+      "sharpe_full": [
+       0.021,
+       0.124
+      ],
+      "sharpe_hold": [
+       0.243,
+       0.346
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": 0.061758247632299035,
+      "avg_w": 1.17
+     },
+     "Asia_Pacific_ex_Japan": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -0.16,
+       "t": -0.12,
+       "p": 0.9011,
+       "cagr_s": 8.52,
+       "cagr_b": 8.62,
+       "cagr_diff": -0.1,
+       "te": 7.56,
+       "ir": -0.02,
+       "beta": 0.91,
+       "vol_s": 19.4,
+       "vol_b": 19.6
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -2.48,
+       "t": -1.45,
+       "p": 0.147,
+       "cagr_s": 3.84,
+       "cagr_b": 6.09,
+       "cagr_diff": -2.25,
+       "te": 7.87,
+       "ir": -0.32,
+       "beta": 0.84,
+       "vol_s": 18.2,
+       "vol_b": 19.8
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": 0.39,
+       "t": 0.31,
+       "p": 0.7534,
+       "cagr_s": 9.11,
+       "cagr_b": 8.62,
+       "cagr_diff": 0.5,
+       "te": 7.57,
+       "ir": 0.05,
+       "beta": 0.91,
+       "vol_s": 19.3,
+       "vol_b": 19.6
+      },
+      "sharpe_full": [
+       0.385,
+       0.388
+      ],
+      "sharpe_hold": [
+       0.217,
+       0.324
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": 0.041072535467148896,
+      "avg_w": 1.128
+     },
+     "Developed_ex_US": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -1.36,
+       "t": -1.45,
+       "p": 0.1475,
+       "cagr_s": 4.92,
+       "cagr_b": 6.32,
+       "cagr_diff": -1.39,
+       "te": 5.96,
+       "ir": -0.23,
+       "beta": 0.92,
+       "vol_s": 16.1,
+       "vol_b": 16.3
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -1.87,
+       "t": -1.36,
+       "p": 0.1754,
+       "cagr_s": 4.01,
+       "cagr_b": 5.77,
+       "cagr_diff": -1.75,
+       "te": 6.47,
+       "ir": -0.29,
+       "beta": 0.86,
+       "vol_s": 15.8,
+       "vol_b": 16.9
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -0.82,
+       "t": -0.88,
+       "p": 0.3804,
+       "cagr_s": 5.5,
+       "cagr_b": 6.32,
+       "cagr_diff": -0.82,
+       "te": 5.96,
+       "ir": -0.14,
+       "beta": 0.92,
+       "vol_s": 16.1,
+       "vol_b": 16.3
+      },
+      "sharpe_full": [
+       0.217,
+       0.298
+      ],
+      "sharpe_hold": [
+       0.234,
+       0.329
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": 0.03868862463352576,
+      "avg_w": 1.107
+     },
+     "North_America": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -0.07,
+       "t": -0.08,
+       "p": 0.9399,
+       "cagr_s": 11.06,
+       "cagr_b": 11.05,
+       "cagr_diff": 0.01,
+       "te": 6.07,
+       "ir": -0.01,
+       "beta": 0.89,
+       "vol_s": 14.6,
+       "vol_b": 15.1
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -0.55,
+       "t": -0.35,
+       "p": 0.7292,
+       "cagr_s": 10.39,
+       "cagr_b": 10.72,
+       "cagr_diff": -0.33,
+       "te": 6.93,
+       "ir": -0.08,
+       "beta": 0.81,
+       "vol_s": 14.4,
+       "vol_b": 16.0
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": 0.45,
+       "t": 0.46,
+       "p": 0.6431,
+       "cagr_s": 11.64,
+       "cagr_b": 11.05,
+       "cagr_diff": 0.59,
+       "te": 6.07,
+       "ir": 0.07,
+       "beta": 0.89,
+       "vol_s": 14.6,
+       "vol_b": 15.1
+      },
+      "sharpe_full": [
+       0.616,
+       0.599
+      ],
+      "sharpe_hold": [
+       0.656,
+       0.624
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": 0.04403805859295469,
+      "avg_w": 1.147
+     }
+    }
+   },
+   "label": "探索（第4族・第3族の結果を見た後に登録）",
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.0098,
+   "grade": "A",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": true,
+    "C4_roll20": true,
+    "C5_repl": false,
+    "C6_net_cost": true,
+    "C7_multi": true,
+    "C8_sharpe": true
+   }
+  },
+  {
+   "id": "I03_NDX_DOWN_cap1.5_B1_FUND",
+   "family": "exploratory4",
+   "graded": true,
+   "rule": {
+    "idx": "NDX",
+    "sig": "DOWN",
+    "cap": 1.5,
+    "cmode": "train_b1",
+    "lag": 0,
+    "impl": "fund"
+   },
+   "c": 0.004239424828056204,
+   "c_solve": {
+    "pairs": 253,
+    "from": 198512,
+    "to": 200612,
+    "beta_at_c": 1.0
+   },
+   "window": [
+    198512,
+    202608
+   ],
+   "gaps": 0,
+   "full": {
+    "from": 198512,
+    "to": 202608,
+    "years": 40.8,
+    "ex_ann": 6.29,
+    "t": 4.43,
+    "p": 0.0,
+    "cagr_s": 20.83,
+    "cagr_b": 14.91,
+    "cagr_diff": 5.92,
+    "te": 12.5,
+    "ir": 0.5,
+    "beta": 1.08,
+    "vol_s": 28.1,
+    "vol_b": 23.4
+   },
+   "train": {
+    "from": 198512,
+    "to": 200612,
+    "years": 21.1,
+    "ex_ann": 5.84,
+    "t": 2.57,
+    "p": 0.0103,
+    "cagr_s": 19.1,
+    "cagr_b": 13.65,
+    "cagr_diff": 5.45,
+    "te": 14.9,
+    "ir": 0.39,
+    "beta": 1.01,
+    "vol_s": 31.1,
+    "vol_b": 27.1
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 6.76,
+    "t": 4.15,
+    "p": 0.0,
+    "cagr_s": 22.72,
+    "cagr_b": 16.27,
+    "cagr_diff": 6.45,
+    "te": 9.3,
+    "ir": 0.73,
+    "beta": 1.24,
+    "vol_s": 24.7,
+    "vol_b": 18.7
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 5.8,
+    "t": 2.74,
+    "p": 0.0062,
+    "cagr_s": 25.59,
+    "cagr_b": 20.13,
+    "cagr_diff": 5.47,
+    "te": 8.97,
+    "ir": 0.65,
+    "beta": 1.28,
+    "vol_s": 24.1,
+    "vol_b": 17.9
+   },
+   "post_pub_2017": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.7,
+    "ex_ann": 4.92,
+    "t": 1.82,
+    "p": 0.0686,
+    "cagr_s": 25.61,
+    "cagr_b": 21.26,
+    "cagr_diff": 4.35,
+    "te": 9.6,
+    "ir": 0.51,
+    "beta": 1.24,
+    "vol_s": 25.3,
+    "vol_b": 19.3
+   },
+   "net_full": {
+    "from": 198512,
+    "to": 202608,
+    "years": 40.8,
+    "ex_ann": 5.91,
+    "t": 4.14,
+    "p": 0.0,
+    "cagr_s": 20.39,
+    "cagr_b": 14.91,
+    "cagr_diff": 5.48,
+    "te": 12.51,
+    "ir": 0.47,
+    "beta": 1.08,
+    "vol_s": 28.1,
+    "vol_b": 23.4
+   },
+   "net_train": {
+    "from": 198512,
+    "to": 200612,
+    "years": 21.1,
+    "ex_ann": 5.43,
+    "t": 2.38,
+    "p": 0.0172,
+    "cagr_s": 18.62,
+    "cagr_b": 13.65,
+    "cagr_diff": 4.97,
+    "te": 14.92,
+    "ir": 0.36,
+    "beta": 1.01,
+    "vol_s": 31.0,
+    "vol_b": 27.1
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 6.43,
+    "t": 3.87,
+    "p": 0.0001,
+    "cagr_s": 22.31,
+    "cagr_b": 16.27,
+    "cagr_diff": 6.04,
+    "te": 9.3,
+    "ir": 0.69,
+    "beta": 1.25,
+    "vol_s": 24.7,
+    "vol_b": 18.7
+   },
+   "net_recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 5.47,
+    "t": 2.52,
+    "p": 0.0116,
+    "cagr_s": 25.19,
+    "cagr_b": 20.13,
+    "cagr_diff": 5.06,
+    "te": 8.99,
+    "ir": 0.61,
+    "beta": 1.28,
+    "vol_s": 24.1,
+    "vol_b": 17.9
+   },
+   "net_post_pub_2017": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.7,
+    "ex_ann": 4.52,
+    "t": 1.64,
+    "p": 0.101,
+    "cagr_s": 25.12,
+    "cagr_b": 21.26,
+    "cagr_diff": 3.86,
+    "te": 9.63,
+    "ir": 0.47,
+    "beta": 1.24,
+    "vol_s": 25.4,
+    "vol_b": 19.3
+   },
+   "cost_hold_005": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 6.6,
+    "t": 4.01,
+    "p": 0.0001,
+    "cagr_s": 22.51,
+    "cagr_b": 16.27,
+    "cagr_diff": 6.24,
+    "te": 9.3,
+    "ir": 0.71,
+    "beta": 1.25,
+    "vol_s": 24.7,
+    "vol_b": 18.7
+   },
+   "roll20": {
+    "windows": 22,
+    "wins": 22,
+    "win_rate": 1.0,
+    "median": 6.53,
+    "worst": [
+     1986,
+     4.4
+    ],
+    "best": [
+     1999,
+     8.8
+    ]
+   },
+   "roll20_gross": {
+    "windows": 22,
+    "wins": 22,
+    "win_rate": 1.0,
+    "median": 6.95,
+    "worst": [
+     1986,
+     4.89
+    ],
+    "best": [
+     1999,
+     9.19
+    ]
+   },
+   "dca20": {
+    "windows": 21,
+    "win_rate": 1.0,
+    "median_ratio": 2.318,
+    "worst": [
+     200212,
+     1.833
+    ],
+    "best": [
+     199412,
+     2.681
+    ]
+   },
+   "sharpe": {
+    "full": [
+     0.696,
+     0.584
+    ],
+    "train": [
+     0.563,
+     0.445
+    ],
+    "hold": [
+     0.884,
+     0.823
+    ],
+    "recent": [
+     0.987,
+     1.022
+    ],
+    "post_pub_2017": [
+     0.923,
+     0.979
+    ]
+   },
+   "sharpe_test": {
+    "train": {
+     "sr_s_ann": 0.563,
+     "sr_b_ann": 0.445,
+     "rho": 0.877,
+     "z": 1.08,
+     "p_two": 0.2794,
+     "months": 253
+    },
+    "hold": {
+     "sr_s_ann": 0.884,
+     "sr_b_ann": 0.823,
+     "rho": 0.945,
+     "z": 0.8,
+     "p_two": 0.4239,
+     "months": 236
+    }
+   },
+   "capm_alpha_net": {
+    "full": {
+     "from": 198512,
+     "to": 202608,
+     "alpha_ann": 4.82,
+     "t": 3.27,
+     "beta": 1.08,
+     "r2": 0.807,
+     "appraisal": 0.39
+    },
+    "train": {
+     "from": 198512,
+     "to": 200612,
+     "alpha_ann": 5.37,
+     "t": 2.35,
+     "beta": 1.005,
+     "r2": 0.769,
+     "appraisal": 0.36
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "alpha_ann": 2.64,
+     "t": 1.69,
+     "beta": 1.246,
+     "r2": 0.893,
+     "appraisal": 0.327
+    }
+   },
+   "maxdd": {
+    "s_monthly": -61.8,
+    "b_monthly": -81.1
+   },
+   "exposure": {
+    "full": {
+     "avg_w": 1.333,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.083,
+     "share_over1": 0.849,
+     "share_at_max": 0.757,
+     "share_zero": 0.0,
+     "turnover_per_year": 3.71
+    },
+    "train": {
+     "avg_w": 1.289,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.083,
+     "share_over1": 0.814,
+     "share_at_max": 0.711,
+     "share_zero": 0.0,
+     "turnover_per_year": 4.07
+    },
+    "hold": {
+     "avg_w": 1.38,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.119,
+     "share_over1": 0.886,
+     "share_at_max": 0.805,
+     "share_zero": 0.0,
+     "turnover_per_year": 3.33
+    }
+   },
+   "by_decade_net_cagr_diff": {
+    "1980s": 0.33,
+    "1990s": 4.26,
+    "2000s": 8.03,
+    "2010s": 7.74,
+    "2020s": 2.05
+   },
+   "repl": {
+    "regions": 3,
+    "positive": 1,
+    "positive_hold_report": 0,
+    "counted": [
+     "Europe",
+     "Japan",
+     "Asia_Pacific_ex_Japan"
+    ],
+    "rule_positive": "ex_ann>0 かつ cagr_diff>0（費用後・地域の全期間）",
+    "detail": {
+     "Europe": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -1.04,
+       "t": -0.66,
+       "p": 0.5091,
+       "cagr_s": 6.77,
+       "cagr_b": 7.66,
+       "cagr_diff": -0.89,
+       "te": 10.19,
+       "ir": -0.1,
+       "beta": 0.76,
+       "vol_s": 15.9,
+       "vol_b": 17.0
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -3.53,
+       "t": -1.48,
+       "p": 0.1396,
+       "cagr_s": 2.55,
+       "cagr_b": 5.54,
+       "cagr_diff": -2.99,
+       "te": 11.69,
+       "ir": -0.3,
+       "beta": 0.62,
+       "vol_s": 14.9,
+       "vol_b": 18.7
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -0.18,
+       "t": -0.12,
+       "p": 0.9059,
+       "cagr_s": 7.69,
+       "cagr_b": 7.66,
+       "cagr_diff": 0.02,
+       "te": 10.19,
+       "ir": -0.02,
+       "beta": 0.75,
+       "vol_s": 15.8,
+       "vol_b": 17.0
+      },
+      "sharpe_full": [
+       0.329,
+       0.367
+      ],
+      "sharpe_hold": [
+       0.143,
+       0.303
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": 0.0008952163204353953,
+      "avg_w": 1.071
+     },
+     "Japan": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -1.7,
+       "t": -1.32,
+       "p": 0.1861,
+       "cagr_s": 0.94,
+       "cagr_b": 3.26,
+       "cagr_diff": -2.32,
+       "te": 8.99,
+       "ir": -0.19,
+       "beta": 1.05,
+       "vol_s": 21.6,
+       "vol_b": 18.8
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -0.77,
+       "t": -0.59,
+       "p": 0.5532,
+       "cagr_s": 4.26,
+       "cagr_b": 5.62,
+       "cagr_diff": -1.36,
+       "te": 7.09,
+       "ir": -0.11,
+       "beta": 1.13,
+       "vol_s": 17.9,
+       "vol_b": 14.6
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -0.97,
+       "t": -0.77,
+       "p": 0.4428,
+       "cagr_s": 1.68,
+       "cagr_b": 3.26,
+       "cagr_diff": -1.58,
+       "te": 8.99,
+       "ir": -0.11,
+       "beta": 1.04,
+       "vol_s": 21.6,
+       "vol_b": 18.8
+      },
+      "sharpe_full": [
+       0.03,
+       0.124
+      ],
+      "sharpe_hold": [
+       0.239,
+       0.346
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": 0.00209834125231206,
+      "avg_w": 1.206
+     },
+     "Asia_Pacific_ex_Japan": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": 0.37,
+       "t": 0.22,
+       "p": 0.8279,
+       "cagr_s": 8.9,
+       "cagr_b": 8.62,
+       "cagr_diff": 0.28,
+       "te": 10.64,
+       "ir": 0.03,
+       "beta": 0.89,
+       "vol_s": 20.3,
+       "vol_b": 19.6
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -2.63,
+       "t": -1.09,
+       "p": 0.2753,
+       "cagr_s": 3.53,
+       "cagr_b": 6.09,
+       "cagr_diff": -2.56,
+       "te": 11.38,
+       "ir": -0.23,
+       "beta": 0.8,
+       "vol_s": 19.0,
+       "vol_b": 19.8
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": 1.14,
+       "t": 0.68,
+       "p": 0.4979,
+       "cagr_s": 9.73,
+       "cagr_b": 8.62,
+       "cagr_diff": 1.11,
+       "te": 10.64,
+       "ir": 0.11,
+       "beta": 0.89,
+       "vol_s": 20.3,
+       "vol_b": 19.6
+      },
+      "sharpe_full": [
+       0.393,
+       0.388
+      ],
+      "sharpe_hold": [
+       0.199,
+       0.324
+      ],
+      "positive": true,
+      "positive_hold": false,
+      "c": 0.0009695503805296879,
+      "avg_w": 1.166
+     },
+     "Developed_ex_US": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -1.68,
+       "t": -1.23,
+       "p": 0.22,
+       "cagr_s": 4.57,
+       "cagr_b": 6.32,
+       "cagr_diff": -1.75,
+       "te": 8.7,
+       "ir": -0.19,
+       "beta": 0.86,
+       "vol_s": 16.3,
+       "vol_b": 16.3
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -2.23,
+       "t": -1.16,
+       "p": 0.2463,
+       "cagr_s": 3.73,
+       "cagr_b": 5.77,
+       "cagr_diff": -2.04,
+       "te": 9.31,
+       "ir": -0.24,
+       "beta": 0.75,
+       "vol_s": 15.2,
+       "vol_b": 16.9
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -0.87,
+       "t": -0.66,
+       "p": 0.5122,
+       "cagr_s": 5.41,
+       "cagr_b": 6.32,
+       "cagr_diff": -0.91,
+       "te": 8.7,
+       "ir": -0.1,
+       "beta": 0.86,
+       "vol_s": 16.3,
+       "vol_b": 16.3
+      },
+      "sharpe_full": [
+       0.195,
+       0.298
+      ],
+      "sharpe_hold": [
+       0.218,
+       0.329
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": 0.0008293739531186338,
+      "avg_w": 1.136
+     },
+     "North_America": {
+      "net_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": -0.01,
+       "t": -0.01,
+       "p": 0.9927,
+       "cagr_s": 11.03,
+       "cagr_b": 11.05,
+       "cagr_diff": -0.02,
+       "te": 8.23,
+       "ir": -0.0,
+       "beta": 0.86,
+       "vol_s": 15.2,
+       "vol_b": 15.1
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -0.91,
+       "t": -0.5,
+       "p": 0.6141,
+       "cagr_s": 9.89,
+       "cagr_b": 10.72,
+       "cagr_diff": -0.82,
+       "te": 9.49,
+       "ir": -0.1,
+       "beta": 0.77,
+       "vol_s": 15.0,
+       "vol_b": 16.0
+      },
+      "gross_full": {
+       "from": 199008,
+       "to": 202608,
+       "years": 36.1,
+       "ex_ann": 0.61,
+       "t": 0.53,
+       "p": 0.593,
+       "cagr_s": 11.71,
+       "cagr_b": 11.05,
+       "cagr_diff": 0.66,
+       "te": 8.24,
+       "ir": 0.07,
+       "beta": 0.86,
+       "vol_s": 15.2,
+       "vol_b": 15.1
+      },
+      "sharpe_full": [
+       0.595,
+       0.599
+      ],
+      "sharpe_hold": [
+       0.604,
+       0.624
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": 0.0012162369819776792,
+      "avg_w": 1.196
+     }
+    }
+   },
+   "label": "探索（第4族・第3族の結果を見た後に登録）",
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.0,
+   "grade": "A",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": true,
+    "C4_roll20": true,
+    "C5_repl": false,
+    "C6_net_cost": true,
+    "C7_multi": true,
+    "C8_sharpe": true
+   }
+  },
+  {
+   "id": "I04_HiTec_DOWN_cap1.5_B1EXP_FUND",
+   "family": "exploratory4",
+   "graded": true,
+   "rule": {
+    "idx": "HiTec",
+    "sig": "DOWN",
+    "cap": 1.5,
+    "cmode": "expanding_b1",
+    "lag": 0,
+    "impl": "fund"
+   },
+   "c_expanding": {
+    "first_month": 193112,
+    "n_years": 95,
+    "min": 0.003107829769365504,
+    "max": 0.0077794560800567986,
+    "n_inf_years": 0
+   },
+   "window": [
+    193201,
+    202608
+   ],
+   "gaps": 0,
+   "full": {
+    "from": 193201,
+    "to": 202608,
+    "years": 94.7,
+    "ex_ann": 4.69,
+    "t": 4.45,
+    "p": 0.0,
+    "cagr_s": 15.99,
+    "cagr_b": 12.37,
+    "cagr_diff": 3.62,
+    "te": 12.31,
+    "ir": 0.38,
+    "beta": 1.13,
+    "vol_s": 29.4,
+    "vol_b": 23.7
+   },
+   "train": {
+    "from": 193201,
+    "to": 200612,
+    "years": 75.0,
+    "ex_ann": 4.37,
+    "t": 3.45,
+    "p": 0.0006,
+    "cagr_s": 14.47,
+    "cagr_b": 11.36,
+    "cagr_diff": 3.1,
+    "te": 12.92,
+    "ir": 0.34,
+    "beta": 1.13,
+    "vol_s": 30.6,
+    "vol_b": 24.7
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 5.9,
+    "t": 3.92,
+    "p": 0.0001,
+    "cagr_s": 22.0,
+    "cagr_b": 16.31,
+    "cagr_diff": 5.69,
+    "te": 9.66,
+    "ir": 0.61,
+    "beta": 1.16,
+    "vol_s": 24.2,
+    "vol_b": 19.3
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 5.57,
+    "t": 2.89,
+    "p": 0.0038,
+    "cagr_s": 27.08,
+    "cagr_b": 21.57,
+    "cagr_diff": 5.51,
+    "te": 9.09,
+    "ir": 0.61,
+    "beta": 1.19,
+    "vol_s": 23.7,
+    "vol_b": 18.6
+   },
+   "post_pub_2017": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.7,
+    "ex_ann": 5.03,
+    "t": 2.05,
+    "p": 0.0407,
+    "cagr_s": 28.52,
+    "cagr_b": 23.62,
+    "cagr_diff": 4.9,
+    "te": 9.83,
+    "ir": 0.51,
+    "beta": 1.15,
+    "vol_s": 25.1,
+    "vol_b": 20.3
+   },
+   "net_full": {
+    "from": 193201,
+    "to": 202608,
+    "years": 94.7,
+    "ex_ann": 4.4,
+    "t": 4.14,
+    "p": 0.0,
+    "cagr_s": 15.66,
+    "cagr_b": 12.37,
+    "cagr_diff": 3.29,
+    "te": 12.32,
+    "ir": 0.36,
+    "beta": 1.13,
+    "vol_s": 29.4,
+    "vol_b": 23.7
+   },
+   "net_train": {
+    "from": 193201,
+    "to": 200612,
+    "years": 75.0,
+    "ex_ann": 4.12,
+    "t": 3.22,
+    "p": 0.0013,
+    "cagr_s": 14.17,
+    "cagr_b": 11.36,
+    "cagr_diff": 2.81,
+    "te": 12.93,
+    "ir": 0.32,
+    "beta": 1.13,
+    "vol_s": 30.6,
+    "vol_b": 24.7
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 5.49,
+    "t": 3.57,
+    "p": 0.0004,
+    "cagr_s": 21.51,
+    "cagr_b": 16.31,
+    "cagr_diff": 5.2,
+    "te": 9.64,
+    "ir": 0.57,
+    "beta": 1.16,
+    "vol_s": 24.2,
+    "vol_b": 19.3
+   },
+   "net_recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 5.16,
+    "t": 2.59,
+    "p": 0.0095,
+    "cagr_s": 26.57,
+    "cagr_b": 21.57,
+    "cagr_diff": 5.0,
+    "te": 9.08,
+    "ir": 0.57,
+    "beta": 1.19,
+    "vol_s": 23.7,
+    "vol_b": 18.6
+   },
+   "net_post_pub_2017": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.7,
+    "ex_ann": 4.53,
+    "t": 1.79,
+    "p": 0.0739,
+    "cagr_s": 27.89,
+    "cagr_b": 23.62,
+    "cagr_diff": 4.27,
+    "te": 9.84,
+    "ir": 0.46,
+    "beta": 1.15,
+    "vol_s": 25.1,
+    "vol_b": 20.3
+   },
+   "cost_hold_005": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 5.69,
+    "t": 3.74,
+    "p": 0.0002,
+    "cagr_s": 21.75,
+    "cagr_b": 16.31,
+    "cagr_diff": 5.44,
+    "te": 9.65,
+    "ir": 0.59,
+    "beta": 1.16,
+    "vol_s": 24.2,
+    "vol_b": 19.3
+   },
+   "roll20": {
+    "windows": 75,
+    "wins": 58,
+    "win_rate": 0.773,
+    "median": 3.79,
+    "worst": [
+     1972,
+     -2.95
+    ],
+    "best": [
+     1949,
+     8.33
+    ]
+   },
+   "roll20_gross": {
+    "windows": 75,
+    "wins": 60,
+    "win_rate": 0.8,
+    "median": 3.98,
+    "worst": [
+     1972,
+     -2.75
+    ],
+    "best": [
+     1949,
+     8.44
+    ]
+   },
+   "dca20": {
+    "windows": 75,
+    "win_rate": 0.747,
+    "median_ratio": 1.704,
+    "worst": [
+     197101,
+     0.727
+    ],
+    "best": [
+     194801,
+     3.015
+    ]
+   },
+   "sharpe": {
+    "full": [
+     0.531,
+     0.472
+    ],
+    "train": [
+     0.464,
+     0.407
+    ],
+    "hold": [
+     0.869,
+     0.805
+    ],
+    "recent": [
+     1.045,
+     1.056
+    ],
+    "post_pub_2017": [
+     1.019,
+     1.039
+    ]
+   },
+   "sharpe_test": {
+    "train": {
+     "sr_s_ann": 0.464,
+     "sr_b_ann": 0.407,
+     "rho": 0.913,
+     "z": 1.16,
+     "p_two": 0.2458,
+     "months": 900
+    },
+    "hold": {
+     "sr_s_ann": 0.869,
+     "sr_b_ann": 0.805,
+     "rho": 0.926,
+     "z": 0.72,
+     "p_two": 0.4743,
+     "months": 236
+    }
+   },
+   "capm_alpha_net": {
+    "full": {
+     "from": 193201,
+     "to": 202608,
+     "alpha_ann": 2.91,
+     "t": 3.01,
+     "beta": 1.133,
+     "r2": 0.837,
+     "appraisal": 0.244
+    },
+    "train": {
+     "from": 193201,
+     "to": 200612,
+     "alpha_ann": 2.82,
+     "t": 2.45,
+     "beta": 1.128,
+     "r2": 0.833,
+     "appraisal": 0.225
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "alpha_ann": 2.98,
+     "t": 1.92,
+     "beta": 1.162,
+     "r2": 0.858,
+     "appraisal": 0.326
+    }
+   },
+   "maxdd": {
+    "s_monthly": -70.7,
+    "b_monthly": -79.5
+   },
+   "exposure": {
+    "full": {
+     "avg_w": 1.378,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.061,
+     "share_over1": 0.885,
+     "share_at_max": 0.82,
+     "share_zero": 0.0,
+     "turnover_per_year": 2.86
+    },
+    "train": {
+     "avg_w": 1.389,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.061,
+     "share_over1": 0.902,
+     "share_at_max": 0.836,
+     "share_zero": 0.0,
+     "turnover_per_year": 2.55
+    },
+    "hold": {
+     "avg_w": 1.336,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.084,
+     "share_over1": 0.818,
+     "share_at_max": 0.763,
+     "share_zero": 0.0,
+     "turnover_per_year": 4.05
+    }
+   },
+   "by_decade_net_cagr_diff": {
+    "1930s": 4.96,
+    "1940s": 1.78,
+    "1950s": 12.68,
+    "1960s": 2.76,
+    "1970s": -2.54,
+    "1980s": -2.71,
+    "1990s": 3.0,
+    "2000s": 6.49,
+    "2010s": 6.3,
+    "2020s": 1.74
+   },
+   "repl": {
+    "regions": 3,
+    "positive": 2,
+    "positive_hold_report": 1,
+    "counted": [
+     "Europe",
+     "Japan",
+     "Asia_Pacific_ex_Japan"
+    ],
+    "rule_positive": "ex_ann>0 かつ cagr_diff>0（費用後・地域の全期間）",
+    "detail": {
+     "Europe": {
+      "net_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": 0.71,
+       "t": 0.45,
+       "p": 0.6496,
+       "cagr_s": 8.81,
+       "cagr_b": 8.0,
+       "cagr_diff": 0.81,
+       "te": 9.48,
+       "ir": 0.07,
+       "beta": 0.85,
+       "vol_s": 17.3,
+       "vol_b": 17.4
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -0.44,
+       "t": -0.2,
+       "p": 0.8411,
+       "cagr_s": 5.12,
+       "cagr_b": 5.54,
+       "cagr_diff": -0.42,
+       "te": 10.01,
+       "ir": -0.04,
+       "beta": 0.85,
+       "vol_s": 18.6,
+       "vol_b": 18.7
+      },
+      "gross_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": 1.33,
+       "t": 0.86,
+       "p": 0.3876,
+       "cagr_s": 9.48,
+       "cagr_b": 8.0,
+       "cagr_diff": 1.48,
+       "te": 9.48,
+       "ir": 0.14,
+       "beta": 0.85,
+       "vol_s": 17.3,
+       "vol_b": 17.4
+      },
+      "sharpe_full": [
+       0.444,
+       0.4
+      ],
+      "sharpe_hold": [
+       0.281,
+       0.303
+      ],
+      "positive": true,
+      "positive_hold": false,
+      "c": null,
+      "avg_w": 1.141
+     },
+     "Japan": {
+      "net_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": -0.76,
+       "t": -0.58,
+       "p": 0.5605,
+       "cagr_s": 2.34,
+       "cagr_b": 3.85,
+       "cagr_diff": -1.5,
+       "te": 7.89,
+       "ir": -0.1,
+       "beta": 1.14,
+       "vol_s": 20.6,
+       "vol_b": 16.8
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -0.81,
+       "t": -0.62,
+       "p": 0.5334,
+       "cagr_s": 4.21,
+       "cagr_b": 5.62,
+       "cagr_diff": -1.41,
+       "te": 7.11,
+       "ir": -0.11,
+       "beta": 1.13,
+       "vol_s": 17.9,
+       "vol_b": 14.6
+      },
+      "gross_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": -0.04,
+       "t": -0.03,
+       "p": 0.9731,
+       "cagr_s": 3.08,
+       "cagr_b": 3.85,
+       "cagr_diff": -0.77,
+       "te": 7.88,
+       "ir": -0.01,
+       "beta": 1.14,
+       "vol_s": 20.6,
+       "vol_b": 16.8
+      },
+      "sharpe_full": [
+       0.103,
+       0.172
+      ],
+      "sharpe_hold": [
+       0.236,
+       0.346
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": null,
+      "avg_w": 1.235
+     },
+     "Asia_Pacific_ex_Japan": {
+      "net_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": 1.48,
+       "t": 0.92,
+       "p": 0.3594,
+       "cagr_s": 8.78,
+       "cagr_b": 7.5,
+       "cagr_diff": 1.28,
+       "te": 10.53,
+       "ir": 0.14,
+       "beta": 0.94,
+       "vol_s": 21.4,
+       "vol_b": 19.8
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": 0.51,
+       "t": 0.26,
+       "p": 0.794,
+       "cagr_s": 6.44,
+       "cagr_b": 6.09,
+       "cagr_diff": 0.35,
+       "te": 10.71,
+       "ir": 0.05,
+       "beta": 0.91,
+       "vol_s": 20.9,
+       "vol_b": 19.8
+      },
+      "gross_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": 2.1,
+       "t": 1.31,
+       "p": 0.1897,
+       "cagr_s": 9.44,
+       "cagr_b": 7.5,
+       "cagr_diff": 1.95,
+       "te": 10.55,
+       "ir": 0.2,
+       "beta": 0.94,
+       "vol_s": 21.5,
+       "vol_b": 19.8
+      },
+      "sharpe_full": [
+       0.394,
+       0.351
+      ],
+      "sharpe_hold": [
+       0.331,
+       0.324
+      ],
+      "positive": true,
+      "positive_hold": true,
+      "c": null,
+      "avg_w": 1.233
+     },
+     "Developed_ex_US": {
+      "net_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": 0.0,
+       "t": 0.0,
+       "p": 0.997,
+       "cagr_s": 6.7,
+       "cagr_b": 6.84,
+       "cagr_diff": -0.14,
+       "te": 7.9,
+       "ir": 0.0,
+       "beta": 0.94,
+       "vol_s": 16.9,
+       "vol_b": 15.9
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -0.46,
+       "t": -0.27,
+       "p": 0.7882,
+       "cagr_s": 5.23,
+       "cagr_b": 5.77,
+       "cagr_diff": -0.54,
+       "te": 8.63,
+       "ir": -0.05,
+       "beta": 0.89,
+       "vol_s": 17.3,
+       "vol_b": 16.9
+      },
+      "gross_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": 0.64,
+       "t": 0.5,
+       "p": 0.6172,
+       "cagr_s": 7.38,
+       "cagr_b": 6.84,
+       "cagr_diff": 0.54,
+       "te": 7.89,
+       "ir": 0.08,
+       "beta": 0.94,
+       "vol_s": 16.9,
+       "vol_b": 15.9
+      },
+      "sharpe_full": [
+       0.334,
+       0.353
+      ],
+      "sharpe_hold": [
+       0.295,
+       0.329
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": null,
+      "avg_w": 1.211
+     },
+     "North_America": {
+      "net_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": 0.17,
+       "t": 0.12,
+       "p": 0.9023,
+       "cagr_s": 10.77,
+       "cagr_b": 10.54,
+       "cagr_diff": 0.23,
+       "te": 8.88,
+       "ir": 0.02,
+       "beta": 0.83,
+       "vol_s": 15.6,
+       "vol_b": 15.8
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": 0.89,
+       "t": 0.49,
+       "p": 0.6225,
+       "cagr_s": 11.58,
+       "cagr_b": 10.72,
+       "cagr_diff": 0.87,
+       "te": 9.21,
+       "ir": 0.1,
+       "beta": 0.88,
+       "vol_s": 16.7,
+       "vol_b": 16.0
+      },
+      "gross_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": 0.78,
+       "t": 0.59,
+       "p": 0.5585,
+       "cagr_s": 11.44,
+       "cagr_b": 10.54,
+       "cagr_diff": 0.9,
+       "te": 8.9,
+       "ir": 0.09,
+       "beta": 0.83,
+       "vol_s": 15.6,
+       "vol_b": 15.8
+      },
+      "sharpe_full": [
+       0.59,
+       0.573
+      ],
+      "sharpe_hold": [
+       0.652,
+       0.624
+      ],
+      "positive": true,
+      "positive_hold": true,
+      "c": null,
+      "avg_w": 1.158
+     }
+    }
+   },
+   "label": "探索（第4族・第3族の結果を見た後に登録）",
+   "holm_family": "all_graded(116)",
+   "holm_p": 0.0098,
+   "grade": "B",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": true,
+    "C4_roll20": false,
+    "C5_repl": true,
+    "C6_net_cost": true,
+    "C7_multi": true,
+    "C8_sharpe": true
+   }
+  },
+  {
+   "id": "I05_US_VAR1_cap1.5_B1EXP_FUND",
+   "family": "exploratory4",
+   "graded": true,
+   "rule": {
+    "idx": "US",
+    "sig": "VAR1",
+    "cap": 1.5,
+    "cmode": "expanding_b1",
+    "lag": 0,
+    "impl": "fund"
+   },
+   "c_expanding": {
+    "first_month": 193112,
+    "n_years": 95,
+    "min": 0.0036297326170143013,
+    "max": 0.012292228967353625,
+    "n_inf_years": 0
+   },
+   "window": [
+    193201,
+    202608
+   ],
+   "gaps": 0,
+   "full": {
+    "from": 193201,
+    "to": 202608,
+    "years": 94.7,
+    "ex_ann": 2.65,
+    "t": 2.56,
+    "p": 0.0105,
+    "cagr_s": 13.45,
+    "cagr_b": 11.45,
+    "cagr_diff": 2.0,
+    "te": 9.68,
+    "ir": 0.27,
+    "beta": 1.1,
+    "vol_s": 21.7,
+    "vol_b": 17.7
+   },
+   "train": {
+    "from": 193201,
+    "to": 200612,
+    "years": 75.0,
+    "ex_ann": 2.57,
+    "t": 2.09,
+    "p": 0.037,
+    "cagr_s": 13.3,
+    "cagr_b": 11.53,
+    "cagr_diff": 1.77,
+    "te": 9.98,
+    "ir": 0.26,
+    "beta": 1.13,
+    "vol_s": 22.6,
+    "vol_b": 18.1
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.94,
+    "t": 1.79,
+    "p": 0.0734,
+    "cagr_s": 14.04,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.91,
+    "te": 8.46,
+    "ir": 0.35,
+    "beta": 0.99,
+    "vol_s": 17.9,
+    "vol_b": 15.9
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 2.46,
+    "t": 1.3,
+    "p": 0.1924,
+    "cagr_s": 16.6,
+    "cagr_b": 14.39,
+    "cagr_diff": 2.22,
+    "te": 7.27,
+    "ir": 0.34,
+    "beta": 1.11,
+    "vol_s": 18.0,
+    "vol_b": 14.9
+   },
+   "post_pub_2017": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.7,
+    "ex_ann": 1.88,
+    "t": 0.8,
+    "p": 0.4256,
+    "cagr_s": 16.77,
+    "cagr_b": 15.17,
+    "cagr_diff": 1.6,
+    "te": 7.96,
+    "ir": 0.24,
+    "beta": 1.07,
+    "vol_s": 18.9,
+    "vol_b": 16.1
+   },
+   "net_full": {
+    "from": 193201,
+    "to": 202608,
+    "years": 94.7,
+    "ex_ann": 2.43,
+    "t": 2.32,
+    "p": 0.0204,
+    "cagr_s": 13.2,
+    "cagr_b": 11.45,
+    "cagr_diff": 1.76,
+    "te": 9.68,
+    "ir": 0.25,
+    "beta": 1.1,
+    "vol_s": 21.7,
+    "vol_b": 17.7
+   },
+   "net_train": {
+    "from": 193201,
+    "to": 200612,
+    "years": 75.0,
+    "ex_ann": 2.4,
+    "t": 1.93,
+    "p": 0.0541,
+    "cagr_s": 13.11,
+    "cagr_b": 11.53,
+    "cagr_diff": 1.57,
+    "te": 9.98,
+    "ir": 0.24,
+    "beta": 1.13,
+    "vol_s": 22.6,
+    "vol_b": 18.1
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.53,
+    "t": 1.51,
+    "p": 0.1318,
+    "cagr_s": 13.58,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.45,
+    "te": 8.45,
+    "ir": 0.3,
+    "beta": 0.99,
+    "vol_s": 17.9,
+    "vol_b": 15.9
+   },
+   "net_recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 2.09,
+    "t": 1.08,
+    "p": 0.2814,
+    "cagr_s": 16.19,
+    "cagr_b": 14.39,
+    "cagr_diff": 1.8,
+    "te": 7.28,
+    "ir": 0.29,
+    "beta": 1.11,
+    "vol_s": 18.0,
+    "vol_b": 14.9
+   },
+   "net_post_pub_2017": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.7,
+    "ex_ann": 1.47,
+    "t": 0.61,
+    "p": 0.5449,
+    "cagr_s": 16.3,
+    "cagr_b": 15.17,
+    "cagr_diff": 1.13,
+    "te": 7.98,
+    "ir": 0.18,
+    "beta": 1.07,
+    "vol_s": 18.9,
+    "vol_b": 16.1
+   },
+   "cost_hold_005": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.74,
+    "t": 1.65,
+    "p": 0.0995,
+    "cagr_s": 13.81,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.68,
+    "te": 8.46,
+    "ir": 0.32,
+    "beta": 0.99,
+    "vol_s": 17.9,
+    "vol_b": 15.9
+   },
+   "roll20": {
+    "windows": 75,
+    "wins": 67,
+    "win_rate": 0.893,
+    "median": 1.72,
+    "worst": [
+     1964,
+     -0.77
+    ],
+    "best": [
+     1942,
+     6.44
+    ]
+   },
+   "roll20_gross": {
+    "windows": 75,
+    "wins": 70,
+    "win_rate": 0.933,
+    "median": 1.98,
+    "worst": [
+     1964,
+     -0.67
+    ],
+    "best": [
+     1942,
+     6.5
+    ]
+   },
+   "dca20": {
+    "windows": 75,
+    "win_rate": 0.88,
+    "median_ratio": 1.301,
+    "worst": [
+     195501,
+     0.892
+    ],
+    "best": [
+     194201,
+     2.263
+    ]
+   },
+   "sharpe": {
+    "full": [
+     0.533,
+     0.517
+    ],
+    "train": [
+     0.497,
+     0.487
+    ],
+    "hold": [
+     0.72,
+     0.652
+    ],
+    "recent": [
+     0.829,
+     0.862
+    ],
+    "post_pub_2017": [
+     0.773,
+     0.814
+    ]
+   },
+   "sharpe_test": {
+    "train": {
+     "sr_s_ann": 0.497,
+     "sr_b_ann": 0.487,
+     "rho": 0.904,
+     "z": 0.19,
+     "p_two": 0.8528,
+     "months": 900
+    },
+    "hold": {
+     "sr_s_ann": 0.72,
+     "sr_b_ann": 0.652,
+     "rho": 0.882,
+     "z": 0.61,
+     "p_two": 0.543,
+     "months": 236
+    }
+   },
+   "capm_alpha_net": {
+    "full": {
+     "from": 193201,
+     "to": 202608,
+     "alpha_ann": 1.47,
+     "t": 1.45,
+     "beta": 1.104,
+     "r2": 0.809,
+     "appraisal": 0.155
+    },
+    "train": {
+     "from": 193201,
+     "to": 200612,
+     "alpha_ann": 1.28,
+     "t": 1.07,
+     "beta": 1.127,
+     "r2": 0.816,
+     "appraisal": 0.132
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "alpha_ann": 2.6,
+     "t": 1.55,
+     "beta": 0.994,
+     "r2": 0.777,
+     "appraisal": 0.308
+    }
+   },
+   "maxdd": {
+    "s_monthly": -62.1,
+    "b_monthly": -50.3
+   },
+   "exposure": {
+    "full": {
+     "avg_w": 1.396,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.051,
+     "share_over1": 0.906,
+     "share_at_max": 0.841,
+     "share_zero": 0.0,
+     "turnover_per_year": 2.22
+    },
+    "train": {
+     "avg_w": 1.423,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.082,
+     "share_over1": 0.93,
+     "share_at_max": 0.878,
+     "share_zero": 0.0,
+     "turnover_per_year": 1.73
+    },
+    "hold": {
+     "avg_w": 1.292,
+     "median_w": 1.5,
+     "max_w": 1.5,
+     "min_w": 0.051,
+     "share_over1": 0.814,
+     "share_at_max": 0.699,
+     "share_zero": 0.0,
+     "turnover_per_year": 4.11
+    }
+   },
+   "by_decade_net_cagr_diff": {
+    "1930s": -2.19,
+    "1940s": 2.34,
+    "1950s": 7.72,
+    "1960s": 1.77,
+    "1970s": -0.99,
+    "1980s": 1.66,
+    "1990s": 2.51,
+    "2000s": 0.15,
+    "2010s": 4.06,
+    "2020s": 0.14
+   },
+   "repl": {
+    "regions": 3,
+    "positive": 1,
+    "positive_hold_report": 0,
+    "counted": [
+     "Europe",
+     "Japan",
+     "Asia_Pacific_ex_Japan"
+    ],
+    "rule_positive": "ex_ann>0 かつ cagr_diff>0（費用後・地域の全期間）",
+    "detail": {
+     "Europe": {
+      "net_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": -0.34,
+       "t": -0.22,
+       "p": 0.8291,
+       "cagr_s": 7.71,
+       "cagr_b": 8.0,
+       "cagr_diff": -0.3,
+       "te": 9.19,
+       "ir": -0.04,
+       "beta": 0.84,
+       "vol_s": 17.1,
+       "vol_b": 17.4
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -1.53,
+       "t": -0.68,
+       "p": 0.4983,
+       "cagr_s": 3.92,
+       "cagr_b": 5.54,
+       "cagr_diff": -1.63,
+       "te": 9.84,
+       "ir": -0.16,
+       "beta": 0.87,
+       "vol_s": 18.9,
+       "vol_b": 18.7
+      },
+      "gross_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": 0.19,
+       "t": 0.12,
+       "p": 0.9018,
+       "cagr_s": 8.29,
+       "cagr_b": 8.0,
+       "cagr_diff": 0.29,
+       "te": 9.19,
+       "ir": 0.02,
+       "beta": 0.84,
+       "vol_s": 17.1,
+       "vol_b": 17.4
+      },
+      "sharpe_full": [
+       0.388,
+       0.4
+      ],
+      "sharpe_hold": [
+       0.219,
+       0.303
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": null,
+      "avg_w": 1.104
+     },
+     "Japan": {
+      "net_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": -1.56,
+       "t": -1.2,
+       "p": 0.2305,
+       "cagr_s": 1.52,
+       "cagr_b": 3.85,
+       "cagr_diff": -2.33,
+       "te": 7.57,
+       "ir": -0.21,
+       "beta": 1.15,
+       "vol_s": 20.6,
+       "vol_b": 16.8
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -1.12,
+       "t": -0.86,
+       "p": 0.3922,
+       "cagr_s": 3.91,
+       "cagr_b": 5.62,
+       "cagr_diff": -1.71,
+       "te": 6.78,
+       "ir": -0.17,
+       "beta": 1.14,
+       "vol_s": 17.8,
+       "vol_b": 14.6
+      },
+      "gross_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": -0.95,
+       "t": -0.74,
+       "p": 0.4583,
+       "cagr_s": 2.14,
+       "cagr_b": 3.85,
+       "cagr_diff": -1.7,
+       "te": 7.54,
+       "ir": -0.13,
+       "beta": 1.15,
+       "vol_s": 20.6,
+       "vol_b": 16.8
+      },
+      "sharpe_full": [
+       0.064,
+       0.172
+      ],
+      "sharpe_hold": [
+       0.22,
+       0.346
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": null,
+      "avg_w": 1.254
+     },
+     "Asia_Pacific_ex_Japan": {
+      "net_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": 0.62,
+       "t": 0.37,
+       "p": 0.7122,
+       "cagr_s": 7.72,
+       "cagr_b": 7.5,
+       "cagr_diff": 0.22,
+       "te": 10.54,
+       "ir": 0.06,
+       "beta": 0.97,
+       "vol_s": 21.9,
+       "vol_b": 19.8
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -1.04,
+       "t": -0.53,
+       "p": 0.5987,
+       "cagr_s": 4.71,
+       "cagr_b": 6.09,
+       "cagr_diff": -1.38,
+       "te": 10.53,
+       "ir": -0.1,
+       "beta": 0.93,
+       "vol_s": 21.2,
+       "vol_b": 19.8
+      },
+      "gross_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": 1.12,
+       "t": 0.67,
+       "p": 0.5035,
+       "cagr_s": 8.26,
+       "cagr_b": 7.5,
+       "cagr_diff": 0.76,
+       "te": 10.54,
+       "ir": 0.11,
+       "beta": 0.97,
+       "vol_s": 21.9,
+       "vol_b": 19.8
+      },
+      "sharpe_full": [
+       0.346,
+       0.351
+      ],
+      "sharpe_hold": [
+       0.254,
+       0.324
+      ],
+      "positive": true,
+      "positive_hold": false,
+      "c": null,
+      "avg_w": 1.254
+     },
+     "Developed_ex_US": {
+      "net_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": -1.09,
+       "t": -0.79,
+       "p": 0.4296,
+       "cagr_s": 5.43,
+       "cagr_b": 6.84,
+       "cagr_diff": -1.41,
+       "te": 7.77,
+       "ir": -0.14,
+       "beta": 0.98,
+       "vol_s": 17.4,
+       "vol_b": 15.9
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": -1.6,
+       "t": -0.92,
+       "p": 0.3568,
+       "cagr_s": 3.91,
+       "cagr_b": 5.77,
+       "cagr_diff": -1.86,
+       "te": 8.54,
+       "ir": -0.19,
+       "beta": 0.93,
+       "vol_s": 17.9,
+       "vol_b": 16.9
+      },
+      "gross_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": -0.52,
+       "t": -0.39,
+       "p": 0.7001,
+       "cagr_s": 6.03,
+       "cagr_b": 6.84,
+       "cagr_diff": -0.81,
+       "te": 7.77,
+       "ir": -0.07,
+       "beta": 0.98,
+       "vol_s": 17.4,
+       "vol_b": 15.9
+      },
+      "sharpe_full": [
+       0.261,
+       0.353
+      ],
+      "sharpe_hold": [
+       0.221,
+       0.329
+      ],
+      "positive": false,
+      "positive_hold": false,
+      "c": null,
+      "avg_w": 1.218
+     },
+     "North_America": {
+      "net_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": 0.23,
+       "t": 0.17,
+       "p": 0.8657,
+       "cagr_s": 10.92,
+       "cagr_b": 10.54,
+       "cagr_diff": 0.38,
+       "te": 8.65,
+       "ir": 0.03,
+       "beta": 0.81,
+       "vol_s": 15.1,
+       "vol_b": 15.8
+      },
+      "net_hold": {
+       "from": 200701,
+       "to": 202608,
+       "years": 19.7,
+       "ex_ann": 1.37,
+       "t": 0.75,
+       "p": 0.4524,
+       "cagr_s": 12.15,
+       "cagr_b": 10.72,
+       "cagr_diff": 1.44,
+       "te": 8.97,
+       "ir": 0.15,
+       "beta": 0.87,
+       "vol_s": 16.5,
+       "vol_b": 16.0
+      },
+      "gross_full": {
+       "from": 199601,
+       "to": 202608,
+       "years": 30.7,
+       "ex_ann": 0.76,
+       "t": 0.56,
+       "p": 0.5761,
+       "cagr_s": 11.5,
+       "cagr_b": 10.54,
+       "cagr_diff": 0.96,
+       "te": 8.65,
+       "ir": 0.09,
+       "beta": 0.81,
+       "vol_s": 15.1,
+       "vol_b": 15.8
+      },
+      "sharpe_full": [
+       0.612,
+       0.573
+      ],
+      "sharpe_hold": [
+       0.689,
+       0.624
+      ],
+      "positive": true,
+      "positive_hold": true,
+      "c": null,
+      "avg_w": 1.119
+     }
+    }
+   },
+   "label": "探索（第4族・第3族の結果を見た後に登録）",
+   "holm_family": "all_graded(116)",
+   "holm_p": 1.0,
+   "grade": "B",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": true,
+    "C4_roll20": true,
+    "C5_repl": false,
+    "C6_net_cost": true,
+    "C7_multi": false,
     "C8_sharpe": true
    }
   },
@@ -99592,185 +103337,6 @@
    "paper_table1_mkt_from_memory": "α≈4.86%/年・β≈0.61・R²≈0.37（記憶による・原本と照合していない）"
   }
  ],
- "log": [
-  "事前登録の commit {'mw_volmanaged_prereg.json': 'c1d911595e52ea2e999ff63dd34ed774e48e5e05', 'mw_volmanaged_prereg2.json': 'c8086becd2f7875678be316d3093e93ccfc6ea81', 'mw_volmanaged_prereg3.json': 'bdf0ac22f319855c1217717042fcd48248f1d8a0'}",
-  "検算 US {'us_mkt_cagr_full_monthly_file': 10.38, 'us_mkt_cagr_2007_monthly_file': 11.13, 'us_daily_to_monthly_vs_file': {'months': 1202, 'max_abs_diff_pct': 0.4, 'mean_abs_diff_pct': 0.047, 'corr': 0.99994}, 'us_months': [192607, 202608, 1202, 'gaps', 0]}",
-  "検算 NDX {'days_not_in_french_rf': 0, 'corr_ndx_price_vs_qqq_daily_after_splice': 0.98033, 'cagr_ndx_price_after_splice': 10.23, 'cagr_qqq_after_splice': 10.8, 'splice_day': 19990310, 'returns_around_splice': {'19990305': 1.908, '19990308': 3.26, '19990309': -0.267, '19990310': 0.492, '19990311': 0.49, '19990312': -2.436, '19990315': 2.871, '19990316': 0.85}, 'months': [198511, 202608, 490]}",
-  "検算 HiTec/IXIC [192607, 202608, 1202, 'gaps', 0, 'cagr', 11.58, 'cagr_2007', 16.31] [197103, 202608, 666, 'gaps', 0, 'days_not_in_french', 0, 'cagr', 11.65]",
-  "P01_US_VAR1_cap1.5                 訓練   1.33 t0.98 保有   0.82 t0.41 幾何差 1.12 費用後保有 0.48 20年勝率 0.716 Sharpe訓練 [0.472, 0.414] 保有 [0.742, 0.652] 地域 0/3 平均倍率 1.217",
-  "P02_US_VAR1_cap2                   訓練   1.84 t1.1 保有  -1.17 t-0.43 幾何差 -0.81 費用後保有 -1.79 20年勝率 0.63 Sharpe訓練 [0.486, 0.414] 保有 [0.665, 0.652] 地域 0/3 平均倍率 1.23",
-  "P03_US_VOL1_cap1.5                 訓練   1.38 t1.3 保有   0.76 t0.48 幾何差 1.08 費用後保有 0.45 20年勝率 0.765 Sharpe訓練 [0.475, 0.414] 保有 [0.745, 0.652] 地域 0/3 平均倍率 1.212",
-  "P04_US_VOL1_cap2                   訓練   1.84 t1.5 保有   0.19 t0.1 幾何差 0.5 費用後保有 -0.25 20年勝率 0.765 Sharpe訓練 [0.491, 0.414] 保有 [0.715, 0.652] 地域 0/3 平均倍率 1.247",
-  "P05_US_VAR6_cap1.5                 訓練   1.69 t1.24 保有  -1.54 t-0.56 幾何差 -1.64 費用後保有 -1.66 20年勝率 0.6 Sharpe訓練 [0.497, 0.412] 保有 [0.559, 0.652] 地域 0/3 平均倍率 1.198",
-  "P06_US_VAR6_cap2                   訓練   1.71 t0.98 保有  -2.85 t-0.97 幾何差 -2.55 費用後保有 -3.0 20年勝率 0.6 Sharpe訓練 [0.495, 0.412] 保有 [0.598, 0.652] 地域 1/3 平均倍率 1.177",
-  "P07_US_VAR1T_cap1.5                訓練   1.96 t1.09 保有   1.76 t0.59 幾何差 1.91 費用後保有 1.51 20年勝率 0.738 Sharpe訓練 [0.5, 0.409] 保有 [0.731, 0.652] 地域 1/3 平均倍率 1.093",
-  "P08_US_VAR1T_cap2                  訓練   2.05 t0.98 保有   0.09 t0.03 幾何差 0.35 費用後保有 -0.54 20年勝率 0.6 Sharpe訓練 [0.493, 0.409] 保有 [0.682, 0.652] 地域 1/3 平均倍率 1.158",
-  "P09_NDX_VAR1_cap1.5                訓練   4.12 t1.37 保有   6.11 t3.71 幾何差 6.27 費用後保有 5.89 20年勝率 1.0 Sharpe訓練 [0.589, 0.445] 保有 [0.944, 0.823] 地域 0/3 平均倍率 1.236",
-  "P10_NDX_VAR1_cap2                  訓練   0.09 t0.02 保有    6.3 t2.42 幾何差 6.6 費用後保有 5.79 20年勝率 0.864 Sharpe訓練 [0.431, 0.445] 保有 [0.956, 0.823] 地域 0/3 平均倍率 1.269",
-  "P11_NDX_VOL1_cap1.5                訓練   2.42 t1.11 保有    5.0 t3.62 幾何差 5.21 費用後保有 4.78 20年勝率 1.0 Sharpe訓練 [0.526, 0.445] 保有 [0.939, 0.823] 地域 0/3 平均倍率 1.221",
-  "P12_NDX_VOL1_cap2                  訓練   1.93 t0.73 保有    5.6 t2.97 幾何差 5.86 費用後保有 5.17 20年勝率 1.0 Sharpe訓練 [0.503, 0.445] 保有 [0.945, 0.823] 地域 0/3 平均倍率 1.268",
-  "P13_NDX_VAR6_cap1.5                訓練   3.47 t0.97 保有   2.61 t1.27 幾何差 1.93 費用後保有 2.53 20年勝率 1.0 Sharpe訓練 [0.547, 0.423] 保有 [0.773, 0.823] 地域 0/3 平均倍率 1.247",
-  "P14_NDX_VAR6_cap2                  訓練  -1.13 t-0.23 保有   2.01 t0.59 幾何差 1.59 費用後保有 1.82 20年勝率 0.905 Sharpe訓練 [0.376, 0.423] 保有 [0.786, 0.823] 地域 1/3 平均倍率 1.22",
-  "P15_NDX_VAR1T_cap1.5               訓練   0.19 t0.04 保有    1.7 t0.59 幾何差 1.57 費用後保有 1.4 20年勝率 0.952 Sharpe訓練 [0.424, 0.429] 保有 [0.82, 0.823] 地域 1/3 平均倍率 1.085",
-  "P16_NDX_VAR1T_cap2                 訓練  -5.28 t-0.97 保有   4.63 t1.38 幾何差 4.2 費用後保有 4.08 20年勝率 0.81 Sharpe訓練 [0.217, 0.429] 保有 [0.825, 0.823] 地域 1/3 平均倍率 1.219",
-  "E1_P01_US_VAR1_cap1.5_EXP          訓練    1.8 t1.4 保有   1.06 t0.54 幾何差 1.36 費用後保有 0.74 20年勝率 0.8 Sharpe訓練 [0.496, 0.487] 保有 [0.749, 0.652] 地域 0/3 平均倍率 1.302",
-  "E1_P02_US_VAR1_cap2_EXP            訓練   2.74 t1.49 保有  -0.88 t-0.33 幾何差 -0.53 費用後保有 -1.51 20年勝率 0.68 Sharpe訓練 [0.493, 0.487] 保有 [0.675, 0.652] 地域 0/3 平均倍率 1.406",
-  "E1_P03_US_VOL1_cap1.5_EXP          訓練    1.8 t1.74 保有   0.98 t0.62 幾何差 1.29 費用後保有 0.68 20年勝率 0.787 Sharpe訓練 [0.504, 0.487] 保有 [0.75, 0.652] 地域 0/3 平均倍率 1.293",
-  "E1_P04_US_VOL1_cap2_EXP            訓練    2.7 t1.85 保有   0.38 t0.19 幾何差 0.68 費用後保有 -0.07 20年勝率 0.8 Sharpe訓練 [0.507, 0.487] 保有 [0.719, 0.652] 地域 0/3 平均倍率 1.392",
-  "E1_P05_US_VAR6_cap1.5_EXP          訓練   2.06 t1.76 保有   -1.4 t-0.51 幾何差 -1.51 費用後保有 -1.52 20年勝率 0.627 Sharpe訓練 [0.508, 0.487] 保有 [0.563, 0.652] 地域 2/3 平均倍率 1.308",
-  "E1_P06_US_VAR6_cap2_EXP            訓練   3.08 t1.7 保有  -2.57 t-0.87 幾何差 -2.31 費用後保有 -2.73 20年勝率 0.6 Sharpe訓練 [0.517, 0.487] 保有 [0.599, 0.652] 地域 1/3 平均倍率 1.381",
-  "E1_P07_US_VAR1T_cap1.5_EXP         訓練   1.03 t0.7 保有   1.76 t0.59 幾何差 1.91 費用後保有 1.51 20年勝率 0.743 Sharpe訓練 [0.508, 0.526] 保有 [0.731, 0.652] 地域 3/3 平均倍率 1.117",
-  "E1_P08_US_VAR1T_cap2_EXP           訓練   2.48 t1.25 保有   0.43 t0.13 幾何差 0.67 費用後保有 -0.2 20年勝率 0.73 Sharpe訓練 [0.471, 0.526] 保有 [0.689, 0.652] 地域 2/3 平均倍率 1.304",
-  "E1_P09_NDX_VAR1_cap1.5_EXP         訓練   -3.2 t-0.56 保有   5.28 t2.93 幾何差 5.48 費用後保有 5.03 20年勝率 1.0 Sharpe訓練 [0.652, 0.501] 保有 [0.94, 0.823] 地域 0/3 平均倍率 1.045",
-  "E1_P10_NDX_VAR1_cap2_EXP           訓練  -5.23 t-0.86 保有   5.69 t2.16 幾何差 6.03 費用後保有 5.16 20年勝率 0.938 Sharpe訓練 [0.557, 0.501] 保有 [0.956, 0.823] 地域 0/3 平均倍率 1.072",
-  "E1_P11_NDX_VOL1_cap1.5_EXP         訓練   -2.0 t-0.52 保有    4.6 t3.19 幾何差 4.85 費用後保有 4.37 20年勝率 1.0 Sharpe訓練 [0.619, 0.501] 保有 [0.94, 0.823] 地域 0/3 平均倍率 1.085",
-  "E1_P12_NDX_VOL1_cap2_EXP           訓練  -2.63 t-0.65 保有   5.09 t2.65 幾何差 5.37 費用後保有 4.66 20年勝率 1.0 Sharpe訓練 [0.588, 0.501] 保有 [0.943, 0.823] 地域 0/3 平均倍率 1.127",
-  "E1_P13_NDX_VAR6_cap1.5_EXP         訓練  -2.03 t-0.32 保有   1.73 t0.78 幾何差 1.09 費用後保有 1.64 20年勝率 0.933 Sharpe訓練 [0.627, 0.415] 保有 [0.757, 0.823] 地域 2/3 平均倍率 1.062",
-  "E1_P14_NDX_VAR6_cap2_EXP           訓練  -2.82 t-0.43 保有   1.76 t0.51 幾何差 1.44 費用後保有 1.58 20年勝率 0.933 Sharpe訓練 [0.562, 0.415] 保有 [0.796, 0.823] 地域 1/3 平均倍率 1.071",
-  "E1_P15_NDX_VAR1T_cap1.5_EXP        訓練  -1.91 t-0.29 保有   1.62 t0.57 幾何差 1.52 費用後保有 1.31 20年勝率 1.0 Sharpe訓練 [0.57, 0.415] 保有 [0.823, 0.823] 地域 3/3 平均倍率 0.979",
-  "E1_P16_NDX_VAR1T_cap2_EXP          訓練  -4.06 t-0.6 保有   4.14 t1.23 幾何差 3.8 費用後保有 3.57 20年勝率 0.867 Sharpe訓練 [0.44, 0.415] 保有 [0.827, 0.823] 地域 2/3 平均倍率 1.103",
-  "E3_US_EWMA_cap1.5                  訓練   1.04 t0.78 保有  -0.06 t-0.03 幾何差 0.24 費用後保有 -0.33 20年勝率 0.654 Sharpe訓練 [0.457, 0.412] 保有 [0.712, 0.652] 地域 0/3 平均倍率 1.203",
-  "E3_US_EWMA_cap2                    訓練   1.32 t0.8 保有  -2.17 t-0.8 幾何差 -1.79 費用後保有 -2.58 20年勝率 0.531 Sharpe訓練 [0.464, 0.412] 保有 [0.643, 0.652] 地域 1/3 平均倍率 1.197",
-  "E3_NDX_EWMA_cap1.5                 訓練   4.23 t1.32 保有   5.15 t2.97 幾何差 5.04 費用後保有 4.98 20年勝率 1.0 Sharpe訓練 [0.596, 0.445] 保有 [0.896, 0.823] 地域 0/3 平均倍率 1.251",
-  "E3_NDX_EWMA_cap2                   訓練  -0.58 t-0.13 保有   4.67 t1.67 幾何差 4.8 費用後保有 4.27 20年勝率 0.864 Sharpe訓練 [0.412, 0.445] 保有 [0.915, 0.823] 地域 1/3 平均倍率 1.252",
-  "E4_US_DOWN_cap1.5                  訓練   1.92 t1.49 保有   0.33 t0.18 幾何差 0.59 費用後保有 -0.07 20年勝率 0.815 Sharpe訓練 [0.501, 0.414] 保有 [0.707, 0.652] 地域 0/3 平均倍率 1.219",
-  "E4_US_DOWN_cap2                    訓練   2.03 t1.21 保有  -0.13 t-0.05 幾何差 0.23 費用後保有 -0.88 20年勝率 0.519 Sharpe訓練 [0.488, 0.414] 保有 [0.699, 0.652] 地域 0/3 平均倍率 1.26",
-  "E4_NDX_DOWN_cap1.5                 訓練    2.4 t0.82 保有   4.43 t3.05 幾何差 4.42 費用後保有 4.14 20年勝率 1.0 Sharpe訓練 [0.522, 0.445] 保有 [0.894, 0.823] 地域 0/3 平均倍率 1.208",
-  "E4_NDX_DOWN_cap2                   訓練   1.09 t0.26 保有   5.28 t2.26 幾何差 5.26 費用後保有 4.67 20年勝率 0.955 Sharpe訓練 [0.463, 0.445] 保有 [0.892, 0.823] 地域 0/3 平均倍率 1.29",
-  "E6_US_VOL1T_cap1.5                 訓練   1.93 t1.07 保有   1.76 t0.59 幾何差 1.91 費用後保有 1.51 20年勝率 0.738 Sharpe訓練 [0.498, 0.409] 保有 [0.731, 0.652] 地域 2/3 平均倍率 1.093",
-  "E6_US_VOL1T_cap2                   訓練   2.39 t1.19 保有   0.82 t0.27 幾何差 1.07 費用後保有 0.28 20年勝率 0.713 Sharpe訓練 [0.512, 0.409] 保有 [0.71, 0.652] 地域 2/3 平均倍率 1.171",
-  "E6_NDX_VOL1T_cap1.5                訓練   0.25 t0.05 保有    1.7 t0.6 幾何差 1.59 費用後保有 1.41 20年勝率 0.952 Sharpe訓練 [0.426, 0.429] 保有 [0.822, 0.823] 地域 2/3 平均倍率 1.087",
-  "E6_NDX_VOL1T_cap2                  訓練  -3.24 t-0.64 保有    4.3 t1.34 幾何差 3.94 費用後保有 3.77 20年勝率 0.857 Sharpe訓練 [0.293, 0.429] 保有 [0.829, 0.823] 地域 2/3 平均倍率 1.225",
-  "E5_US_VAR1_LAG1_cap1.5             訓練   1.42 t1.07 保有   0.55 t0.27 幾何差 0.83 費用後保有 0.21 20年勝率 0.778 Sharpe訓練 [0.469, 0.407] 保有 [0.728, 0.655] 地域 0/3 平均倍率 1.217",
-  "E5_US_VAR1_LAG1_cap2               訓練   2.08 t1.27 保有  -1.51 t-0.59 幾何差 -1.2 費用後保有 -2.15 20年勝率 0.63 Sharpe訓練 [0.49, 0.407] 保有 [0.639, 0.655] 地域 0/3 平均倍率 1.23",
-  "E5_NDX_VAR1_LAG1_cap1.5            訓練   4.47 t1.54 保有   6.01 t3.79 幾何差 6.14 費用後保有 5.78 20年勝率 1.0 Sharpe訓練 [0.612, 0.458] 保有 [0.938, 0.823] 地域 0/3 平均倍率 1.237",
-  "E5_NDX_VAR1_LAG1_cap2              訓練   1.08 t0.26 保有   5.91 t2.31 幾何差 6.09 費用後保有 5.39 20年勝率 0.955 Sharpe訓練 [0.478, 0.458] 保有 [0.932, 0.823] 地域 0/3 平均倍率 1.27",
-  "Q01_US_VAR1_cap1.5_B1              訓練    2.2 t1.68 保有   3.34 t2.02 幾何差 3.4 費用後保有 3.12 20年勝率 0.84 Sharpe訓練 [0.457, 0.414] 保有 [0.761, 0.652] 地域 1/3 平均倍率 1.345",
-  "Q02_US_VAR1_cap2_B1                訓練    3.6 t2.02 保有   2.99 t1.24 幾何差 3.0 費用後保有 2.46 20年勝率 0.753 Sharpe訓練 [0.467, 0.414] 保有 [0.726, 0.652] 地域 0/3 平均倍率 1.536",
-  "Q03_US_VOL1_cap1.5_B1              訓練   1.99 t1.88 保有   2.22 t1.56 幾何差 2.36 費用後保有 1.98 20年勝率 0.79 Sharpe訓練 [0.466, 0.414] 保有 [0.746, 0.652] 地域 1/3 平均倍率 1.301",
-  "Q04_US_VOL1_cap2_B1                訓練   3.12 t2.31 保有   1.92 t1.04 幾何差 2.07 費用後保有 1.45 20年勝率 0.827 Sharpe訓練 [0.488, 0.414] 保有 [0.727, 0.652] 地域 1/3 平均倍率 1.416",
-  "Q05_US_VAR6_cap1.5_B1              訓練   2.72 t2.17 保有   0.87 t0.42 幾何差 0.4 費用後保有 0.78 20年勝率 0.75 Sharpe訓練 [0.484, 0.412] 保有 [0.595, 0.652] 地域 2/3 平均倍率 1.346",
-  "Q06_US_VAR6_cap2_B1                訓練   4.06 t2.24 保有   0.57 t0.17 幾何差 0.09 費用後保有 0.39 20年勝率 0.75 Sharpe訓練 [0.494, 0.412] 保有 [0.575, 0.652] 地域 2/3 平均倍率 1.507",
-  "Q07_US_VAR1T_cap1.5_B1             訓練    2.0 t1.11 保有   1.76 t0.59 幾何差 1.91 費用後保有 1.51 20年勝率 0.738 Sharpe訓練 [0.492, 0.409] 保有 [0.731, 0.652] 地域 3/3 平均倍率 1.096",
-  "Q08_US_VAR1T_cap2_B1               訓練   5.14 t2.23 保有   5.66 t1.55 幾何差 5.17 費用後保有 5.3 20年勝率 0.875 Sharpe訓練 [0.486, 0.409] 保有 [0.723, 0.652] 地域 3/3 平均倍率 1.461",
-  "Q09_NDX_VAR1_cap1.5_B1             訓練   6.75 t3.09 保有   7.32 t4.56 幾何差 7.13 費用後保有 7.16 20年勝率 1.0 Sharpe訓練 [0.61, 0.445] 保有 [0.915, 0.823] 地域 1/3 平均倍率 1.342",
-  "Q10_NDX_VAR1_cap2_B1               訓練   6.24 t1.83 保有  11.31 t4.34 幾何差 11.03 費用後保有 10.93 20年勝率 1.0 Sharpe訓練 [0.535, 0.445] 保有 [0.948, 0.823] 地域 0/3 平均倍率 1.541",
-  "Q11_NDX_VOL1_cap1.5_B1             訓練   4.45 t2.5 保有   6.15 t4.41 幾何差 6.09 費用後保有 5.97 20年勝率 1.0 Sharpe訓練 [0.558, 0.445] 保有 [0.916, 0.823] 地域 1/3 平均倍率 1.298",
-  "Q12_NDX_VOL1_cap2_B1               訓練   3.52 t1.47 保有   7.89 t4.13 幾何差 7.91 費用後保有 7.48 20年勝率 1.0 Sharpe訓練 [0.497, 0.445] 保有 [0.941, 0.823] 地域 1/3 平均倍率 1.414",
-  "Q13_NDX_VAR6_cap1.5_B1             訓練   7.17 t2.66 保有   4.68 t2.38 幾何差 3.65 費用後保有 4.61 20年勝率 1.0 Sharpe訓練 [0.612, 0.423] 保有 [0.784, 0.823] 地域 2/3 平均倍率 1.35",
-  "Q14_NDX_VAR6_cap2_B1               訓練    5.5 t1.33 保有   6.75 t2.2 幾何差 5.2 費用後保有 6.6 20年勝率 1.0 Sharpe訓練 [0.505, 0.423] 保有 [0.771, 0.823] 地域 2/3 平均倍率 1.554",
-  "Q15_NDX_VAR1T_cap1.5_B1            訓練   1.58 t0.35 保有   1.66 t0.57 幾何差 1.47 費用後保有 1.38 20年勝率 1.0 Sharpe訓練 [0.44, 0.429] 保有 [0.809, 0.823] 地域 3/3 平均倍率 1.119",
-  "Q16_NDX_VAR1T_cap2_B1              訓練   5.66 t0.96 保有   7.22 t1.86 幾何差 6.06 費用後保有 6.8 20年勝率 1.0 Sharpe訓練 [0.44, 0.429] 保有 [0.803, 0.823] 地域 3/3 平均倍率 1.487",
-  "Q17_US_VAR1_cap1.5_B1EXP           訓練    2.8 t2.24 保有   3.45 t2.08 幾何差 3.5 費用後保有 3.23 20年勝率 0.92 Sharpe訓練 [0.509, 0.487] 保有 [0.763, 0.652] 地域 2/3 平均倍率 1.396",
-  "Q18_US_VAR1_cap2_B1EXP             訓練   4.37 t2.26 保有   3.34 t1.38 幾何差 3.34 費用後保有 2.82 20年勝率 0.8 Sharpe訓練 [0.483, 0.487] 保有 [0.735, 0.652] 地域 1/3 平均倍率 1.667",
-  "Q19_US_VOL1_cap1.5_B1EXP           訓練   2.43 t2.33 保有   2.36 t1.66 幾何差 2.49 費用後保有 2.13 20年勝率 0.853 Sharpe訓練 [0.508, 0.487] 保有 [0.749, 0.652] 地域 1/3 平均倍率 1.359",
-  "Q20_US_VOL1_cap2_B1EXP             訓練   3.96 t2.48 保有   2.13 t1.15 幾何差 2.27 費用後保有 1.66 20年勝率 0.827 Sharpe訓練 [0.509, 0.487] 保有 [0.731, 0.652] 地域 1/3 平均倍率 1.554",
-  "Q21_US_VAR6_cap1.5_B1EXP           訓練   3.17 t2.97 保有   0.92 t0.44 幾何差 0.46 費用後保有 0.83 20年勝率 0.84 Sharpe訓練 [0.53, 0.487] 保有 [0.597, 0.652] 地域 3/3 平均倍率 1.4",
-  "Q22_US_VAR6_cap2_B1EXP             訓練   4.77 t2.5 保有   0.74 t0.22 幾何差 0.21 費用後保有 0.56 20年勝率 0.733 Sharpe訓練 [0.495, 0.487] 保有 [0.576, 0.652] 地域 1/3 平均倍率 1.674",
-  "Q23_US_VAR1T_cap1.5_B1EXP          訓練   1.03 t0.7 保有   1.76 t0.59 幾何差 1.91 費用後保有 1.51 20年勝率 0.743 Sharpe訓練 [0.508, 0.526] 保有 [0.731, 0.652] 地域 3/3 平均倍率 1.117",
-  "Q24_US_VAR1T_cap2_B1EXP            訓練   4.22 t2.05 保有   5.66 t1.55 幾何差 5.17 費用後保有 5.3 20年勝率 0.878 Sharpe訓練 [0.502, 0.526] 保有 [0.723, 0.652] 地域 3/3 平均倍率 1.489",
-  "Q25_NDX_VAR1_cap1.5_B1EXP          訓練   -2.0 t-0.39 保有   7.41 t4.63 幾何差 7.39 費用後保有 7.24 20年勝率 1.0 Sharpe訓練 [0.619, 0.501] 保有 [0.937, 0.823] 地域 2/3 平均倍率 1.146",
-  "Q26_NDX_VAR1_cap2_B1EXP            訓練  -2.29 t-0.41 保有  10.15 t3.77 幾何差 9.92 費用後保有 9.73 20年勝率 1.0 Sharpe訓練 [0.612, 0.501] 保有 [0.94, 0.823] 地域 1/3 平均倍率 1.279",
-  "Q27_NDX_VOL1_cap1.5_B1EXP          訓練  -1.21 t-0.34 保有   5.61 t3.89 幾何差 5.59 費用後保有 5.42 20年勝率 1.0 Sharpe訓練 [0.611, 0.501] 保有 [0.914, 0.823] 地域 1/3 平均倍率 1.148",
-  "Q28_NDX_VOL1_cap2_B1EXP            訓練  -1.84 t-0.49 保有   7.26 t3.78 幾何差 7.32 費用後保有 6.84 20年勝率 1.0 Sharpe訓練 [0.577, 0.501] 保有 [0.939, 0.823] 地域 1/3 平均倍率 1.237",
-  "Q29_NDX_VAR6_cap1.5_B1EXP          訓練  -1.27 t-0.21 保有   3.67 t1.8 幾何差 2.67 費用後保有 3.61 20年勝率 1.0 Sharpe訓練 [0.601, 0.415] 保有 [0.764, 0.823] 地域 3/3 平均倍率 1.148",
-  "Q30_NDX_VAR6_cap2_B1EXP            訓練   -1.1 t-0.18 保有   5.44 t1.71 幾何差 3.99 費用後保有 5.27 20年勝率 1.0 Sharpe訓練 [0.581, 0.415] 保有 [0.752, 0.823] 地域 1/3 平均倍率 1.297",
-  "Q31_NDX_VAR1T_cap1.5_B1EXP         訓練    3.5 t0.61 保有   1.66 t0.57 幾何差 1.47 費用後保有 1.38 20年勝率 1.0 Sharpe訓練 [0.674, 0.415] 保有 [0.809, 0.823] 地域 3/3 平均倍率 1.071",
-  "Q32_NDX_VAR1T_cap2_B1EXP           訓練   0.56 t0.08 保有   7.22 t1.86 幾何差 6.06 費用後保有 6.8 20年勝率 1.0 Sharpe訓練 [0.563, 0.415] 保有 [0.803, 0.823] 地域 3/3 平均倍率 1.302",
-  "Q33_US_DOWN_cap1.5_B1              訓練    2.4 t2.05 保有   2.19 t1.34 幾何差 2.24 費用後保有 1.9 20年勝率 0.84 Sharpe訓練 [0.472, 0.414] 保有 [0.724, 0.652] 地域 1/3 平均倍率 1.318",
-  "Q34_US_DOWN_cap2_B1                訓練    4.4 t2.53 保有    2.8 t1.27 幾何差 2.86 費用後保有 2.17 20年勝率 0.84 Sharpe訓練 [0.503, 0.414] 保有 [0.724, 0.652] 地域 1/3 平均倍率 1.526",
-  "Q35_US_VOL1T_cap1.5_B1             訓練    2.0 t1.11 保有   1.76 t0.59 幾何差 1.91 費用後保有 1.51 20年勝率 0.738 Sharpe訓練 [0.492, 0.409] 保有 [0.731, 0.652] 地域 3/3 平均倍率 1.096",
-  "Q36_US_VOL1T_cap2_B1               訓練   5.14 t2.23 保有   5.66 t1.55 幾何差 5.17 費用後保有 5.3 20年勝率 0.875 Sharpe訓練 [0.486, 0.409] 保有 [0.723, 0.652] 地域 3/3 平均倍率 1.461",
-  "Q37_NDX_DOWN_cap1.5_B1             訓練   6.05 t2.67 保有   7.29 t4.52 幾何差 7.12 費用後保有 7.1 20年勝率 1.0 Sharpe訓練 [0.58, 0.445] 保有 [0.918, 0.823] 地域 1/3 平均倍率 1.333",
-  "Q38_NDX_DOWN_cap2_B1               訓練   5.14 t1.53 保有   9.18 t4.06 幾何差 8.54 費用後保有 8.69 20年勝率 1.0 Sharpe訓練 [0.495, 0.445] 保有 [0.887, 0.823] 地域 1/3 平均倍率 1.524",
-  "Q39_NDX_VOL1T_cap1.5_B1            訓練   1.58 t0.35 保有   1.66 t0.57 幾何差 1.47 費用後保有 1.38 20年勝率 1.0 Sharpe訓練 [0.44, 0.429] 保有 [0.809, 0.823] 地域 3/3 平均倍率 1.119",
-  "Q40_NDX_VOL1T_cap2_B1              訓練   5.75 t0.98 保有   7.22 t1.86 幾何差 6.06 費用後保有 6.8 20年勝率 1.0 Sharpe訓練 [0.444, 0.429] 保有 [0.803, 0.823] 地域 3/3 平均倍率 1.486",
-  "H01_HiTec_VAR1_cap1.5_B1           訓練   3.53 t2.11 保有   7.21 t4.44 幾何差 6.97 費用後保有 7.05 20年勝率 0.765 Sharpe訓練 [0.441, 0.371] 保有 [0.895, 0.805] 地域 1/3 平均倍率 1.371",
-  "H02_HiTec_VAR1_cap1.5_B1EXP        訓練   3.67 t2.38 保有   7.13 t4.48 幾何差 6.96 費用後保有 6.96 20年勝率 0.787 Sharpe訓練 [0.459, 0.407] 保有 [0.902, 0.805] 地域 2/3 平均倍率 1.403",
-  "H03_HiTec_VOL1_cap1.5_B1           訓練   3.05 t2.25 保有   5.19 t3.66 幾何差 5.03 費用後保有 4.99 20年勝率 0.716 Sharpe訓練 [0.442, 0.371] 保有 [0.874, 0.805] 地域 1/3 平均倍率 1.323",
-  "H04_HiTec_VOL1_cap1.5_B1EXP        訓練   2.87 t2.17 保有   4.99 t3.48 幾何差 4.85 費用後保有 4.79 20年勝率 0.693 Sharpe訓練 [0.441, 0.407] 保有 [0.873, 0.805] 地域 1/3 平均倍率 1.366",
-  "H05_HiTec_DOWN_cap1.5_B1           訓練   3.91 t2.53 保有   6.55 t4.4 幾何差 6.48 費用後保有 6.33 20年勝率 0.79 Sharpe訓練 [0.456, 0.371] 保有 [0.905, 0.805] 地域 1/3 平均倍率 1.346",
-  "H06_HiTec_DOWN_cap1.5_B1EXP        訓練   4.36 t3.44 保有   6.47 t4.37 幾何差 6.42 費用後保有 6.24 20年勝率 0.8 Sharpe訓練 [0.469, 0.407] 保有 [0.907, 0.805] 地域 2/3 平均倍率 1.378",
-  "H07_IXIC_VAR1_cap1.5_B1            訓練    1.5 t0.77 保有    2.9 t1.41 幾何差 3.31 費用後保有 2.61 20年勝率 0.833 Sharpe訓練 [0.308, 0.291] 保有 [0.867, 0.729] 地域 1/3 平均倍率 1.253",
-  "H08_IXIC_VAR1_cap1.5_B1EXP         訓練  -1.81 t-0.69 保有   3.37 t1.66 幾何差 3.74 費用後保有 3.09 20年勝率 0.6 Sharpe訓練 [0.322, 0.376] 保有 [0.869, 0.729] 地域 2/3 平均倍率 1.07",
-  "H09_IXIC_VOL1_cap1.5_B1            訓練   0.22 t0.14 保有   0.92 t0.53 幾何差 1.4 費用後保有 0.62 20年勝率 0.694 Sharpe訓練 [0.266, 0.291] 保有 [0.843, 0.729] 地域 1/3 平均倍率 1.188",
-  "H10_IXIC_VOL1_cap1.5_B1EXP         訓練   -1.0 t-0.51 保有   1.63 t0.95 幾何差 2.07 費用後保有 1.34 20年勝率 0.6 Sharpe訓練 [0.372, 0.376] 保有 [0.849, 0.729] 地域 1/3 平均倍率 1.052",
-  "H11_IXIC_DOWN_cap1.5_B1            訓練   2.03 t1.19 保有   2.13 t1.27 幾何差 2.39 費用後保有 1.78 20年勝率 0.861 Sharpe訓練 [0.325, 0.291] 保有 [0.819, 0.729] 地域 1/3 平均倍率 1.248",
-  "H12_IXIC_DOWN_cap1.5_B1EXP         訓練   0.73 t0.3 保有   2.59 t1.58 幾何差 2.81 費用後保有 2.25 20年勝率 0.867 Sharpe訓練 [0.423, 0.376] 保有 [0.822, 0.729] 地域 2/3 平均倍率 1.121",
-  "H13_NDX_VAR1_cap1.5_B1_LAG1        訓練   6.96 t3.52 保有   7.16 t4.19 幾何差 6.87 費用後保有 6.99 20年勝率 1.0 Sharpe訓練 [0.626, 0.458] 保有 [0.9, 0.823] 地域 1/3 平均倍率 1.342",
-  "H14_NDX_VOL1_cap1.5_B1_LAG1        訓練   4.81 t2.85 保有    6.1 t4.46 幾何差 6.02 費用後保有 5.92 20年勝率 1.0 Sharpe訓練 [0.579, 0.458] 保有 [0.911, 0.823] 地域 1/3 平均倍率 1.298",
-  "H15_NDX_DOWN_cap1.5_B1_LAG1        訓練   6.62 t3.27 保有   7.42 t4.86 幾何差 7.26 費用後保有 7.23 20年勝率 1.0 Sharpe訓練 [0.604, 0.458] 保有 [0.921, 0.823] 地域 1/3 平均倍率 1.333",
-  "H16_US_ENS_cap1.5_B1               訓練    2.2 t1.9 保有   2.58 t1.68 幾何差 2.68 費用後保有 2.34 20年勝率 0.815 Sharpe訓練 [0.468, 0.414] 保有 [0.748, 0.652] 地域 1/3 平均倍率 1.322",
-  "H17_US_ENS_cap1.5_B1EXP            訓練   2.63 t2.5 保有   2.75 t1.78 幾何差 2.84 費用後保有 2.51 20年勝率 0.867 Sharpe訓練 [0.509, 0.487] 保有 [0.752, 0.652] 地域 2/3 平均倍率 1.373",
-  "H18_US_ENS_cap2_B1                 訓練   3.71 t2.33 保有   2.57 t1.22 幾何差 2.68 費用後保有 2.04 20年勝率 0.802 Sharpe訓練 [0.49, 0.414] 保有 [0.734, 0.652] 地域 1/3 平均倍率 1.493",
-  "H19_US_ENS_cap2_B1EXP              訓練    4.4 t2.56 保有   2.83 t1.34 幾何差 2.92 費用後保有 2.31 20年勝率 0.813 Sharpe訓練 [0.502, 0.487] 保有 [0.738, 0.652] 地域 1/3 平均倍率 1.621",
-  "H20_NDX_ENS_cap1.5_B1              訓練   5.75 t2.84 保有   6.92 t4.74 幾何差 6.8 費用後保有 6.75 20年勝率 1.0 Sharpe訓練 [0.586, 0.445] 保有 [0.919, 0.823] 地域 1/3 平均倍率 1.324",
-  "H21_NDX_ENS_cap1.5_B1EXP           訓練  -1.57 t-0.35 保有    6.7 t4.59 幾何差 6.7 費用後保有 6.52 20年勝率 1.0 Sharpe訓練 [0.612, 0.501] 保有 [0.931, 0.823] 地域 2/3 平均倍率 1.157",
-  "H22_NDX_ENS_cap2_B1                訓練   4.96 t1.66 保有   9.46 t4.33 幾何差 9.22 費用後保有 9.05 20年勝率 1.0 Sharpe訓練 [0.514, 0.445] 保有 [0.931, 0.823] 地域 1/3 平均倍率 1.493",
-  "H23_NDX_ENS_cap2_B1EXP             訓練  -1.64 t-0.34 保有   8.59 t3.86 幾何差 8.42 費用後保有 8.16 20年勝率 1.0 Sharpe訓練 [0.609, 0.501] 保有 [0.927, 0.823] 地域 1/3 平均倍率 1.277",
-  "R01_US_VAR1_nocap                  保有 -3.17 訓練 1.64 最大倍率 16.421",
-  "R02_NDX_VAR1_nocap                 保有 10.7 訓練 -0.24 最大倍率 17.132",
-  "R03 論文の再現 {'from': 192608, 'to': 201512, 'alpha_ann': np.float64(4.88), 't': np.float64(2.76), 'beta': np.float64(0.601), 'r2': np.float64(0.362), 'appraisal': np.float64(0.327)} 0.511 0.415 16.85",
-  "JKP train VAR1_cap1.5: 国 41 全期間で正 19 保有で正 10 シャープ上 全期間 22 保有 10 中央 全期間 0.02 保有 -0.82",
-  "JKP train VAR1_cap2: 国 41 全期間で正 19 保有で正 9 シャープ上 全期間 24 保有 9 中央 全期間 -0.33 保有 -1.94",
-  "JKP train VOL1_cap1.5: 国 41 全期間で正 22 保有で正 10 シャープ上 全期間 26 保有 9 中央 全期間 0.34 保有 -0.51",
-  "JKP train VOL1_cap2: 国 41 全期間で正 22 保有で正 9 シャープ上 全期間 26 保有 7 中央 全期間 0.24 保有 -1.05",
-  "JKP train VAR6_cap1.5: 国 41 全期間で正 20 保有で正 8 シャープ上 全期間 25 保有 6 中央 全期間 0.06 保有 -1.14",
-  "JKP train VAR6_cap2: 国 41 全期間で正 20 保有で正 6 シャープ上 全期間 26 保有 6 中央 全期間 0.24 保有 -1.3",
-  "JKP train VAR1T_cap1.5: 国 41 全期間で正 27 保有で正 18 シャープ上 全期間 31 保有 22 中央 全期間 0.76 保有 -0.45",
-  "JKP train VAR1T_cap2: 国 41 全期間で正 27 保有で正 13 シャープ上 全期間 30 保有 16 中央 全期間 1.08 保有 -0.92",
-  "JKP train_b1 VAR1_cap1.5: 国 41 全期間で正 19 保有で正 12 シャープ上 全期間 22 保有 12 中央 全期間 0.83 保有 -0.34",
-  "JKP train_b1 VAR1_cap2: 国 41 全期間で正 22 保有で正 9 シャープ上 全期間 22 保有 9 中央 全期間 1.31 保有 -0.3",
-  "JKP train_b1 VOL1_cap1.5: 国 41 全期間で正 23 保有で正 11 シャープ上 全期間 26 保有 9 中央 全期間 0.72 保有 -0.17",
-  "JKP train_b1 VOL1_cap2: 国 41 全期間で正 26 保有で正 10 シャープ上 全期間 27 保有 8 中央 全期間 1.03 保有 -0.46",
-  "JKP train_b1 VAR6_cap1.5: 国 41 全期間で正 21 保有で正 7 シャープ上 全期間 26 保有 5 中央 全期間 0.65 保有 -0.67",
-  "JKP train_b1 VAR6_cap2: 国 41 全期間で正 20 保有で正 8 シャープ上 全期間 25 保有 6 中央 全期間 1.37 保有 -0.58",
-  "JKP train_b1 VAR1T_cap1.5: 国 41 全期間で正 33 保有で正 27 シャープ上 全期間 33 保有 27 中央 全期間 2.36 保有 0.77",
-  "JKP train_b1 VAR1T_cap2: 国 41 全期間で正 30 保有で正 22 シャープ上 全期間 30 保有 22 中央 全期間 3.88 保有 1.39",
-  "業種 ind10_VAR1_cap1.5_train_b1: n 10 全期間で正 9 訓練 t≥2 2 保有で正 7 シャープ上 全期間 8 保有 5 中央 全期間 2.02 保有 2.29",
-  "業種 ind10_VAR1_cap1.5_expanding_b1: n 10 全期間で正 10 訓練 t≥2 4 保有で正 8 シャープ上 全期間 7 保有 5 中央 全期間 2.27 保有 2.18",
-  "業種 ind10_VOL1_cap1.5_train_b1: n 10 全期間で正 10 訓練 t≥2 2 保有で正 7 シャープ上 全期間 9 保有 6 中央 全期間 1.63 保有 1.49",
-  "業種 ind10_VOL1_cap1.5_expanding_b1: n 10 全期間で正 10 訓練 t≥2 6 保有で正 7 シャープ上 全期間 9 保有 6 中央 全期間 2.03 保有 1.48",
-  "業種 ind10_DOWN_cap1.5_train_b1: n 10 全期間で正 10 訓練 t≥2 5 保有で正 6 シャープ上 全期間 9 保有 5 中央 全期間 2.06 保有 2.05",
-  "業種 ind10_DOWN_cap1.5_expanding_b1: n 10 全期間で正 10 訓練 t≥2 9 保有で正 6 シャープ上 全期間 8 保有 5 中央 全期間 2.56 保有 2.02",
-  "業種 ind49_VAR1_cap1.5_train_b1: n 40 全期間で正 27 訓練 t≥2 5 保有で正 28 シャープ上 全期間 24 保有 19 中央 全期間 1.63 保有 2.1",
-  "業種 ind49_VAR1_cap1.5_expanding_b1: n 40 全期間で正 31 訓練 t≥2 13 保有で正 28 シャープ上 全期間 21 保有 19 中央 全期間 2.6 保有 2.06",
-  "検算 US {'us_mkt_cagr_full_monthly_file': 10.38, 'us_mkt_cagr_2007_monthly_file': 11.13, 'us_daily_to_monthly_vs_file': {'months': 1202, 'max_abs_diff_pct': 0.4, 'mean_abs_diff_pct': 0.047, 'corr': 0.99994}, 'us_months': [192607, 202608, 1202, 'gaps', 0]}",
-  "検算 NDX {'days_not_in_french_rf': 0, 'corr_ndx_price_vs_qqq_daily_after_splice': 0.98033, 'cagr_ndx_price_after_splice': 10.23, 'cagr_qqq_after_splice': 10.8, 'splice_day': 19990310, 'returns_around_splice': {'19990305': 1.908, '19990308': 3.26, '19990309': -0.267, '19990310': 0.492, '19990311': 0.49, '19990312': -2.436, '19990315': 2.871, '19990316': 0.85}, 'months': [198511, 202608, 490]}",
-  "検算 HiTec/IXIC [192607, 202608, 1202, 'gaps', 0, 'cagr', 11.58, 'cagr_2007', 16.31] [197103, 202608, 666, 'gaps', 0, 'days_not_in_french', 0, 'cagr', 11.65]",
-  "事後 Q09_NDX_VAR1_cap1.5_B1 L 1.287 保有 戦略 7.16 一定倍率 4.26 並べ替え p 0.1279 全期間 p 0.018",
-  "事後 Q11_NDX_VOL1_cap1.5_B1 L 1.248 保有 戦略 5.97 一定倍率 3.68 並べ替え p 0.2038 全期間 p 0.1089",
-  "事後 Q37_NDX_DOWN_cap1.5_B1 L 1.289 保有 戦略 7.1 一定倍率 4.29 並べ替え p 0.0919 全期間 p 0.042",
-  "事後 H06_HiTec_DOWN_cap1.5_B1EXP L 1.389 保有 戦略 6.24 一定倍率 5.84 並べ替え p 0.1558 全期間 p 0.1419",
-  "事後 H13_NDX_VAR1_cap1.5_B1_LAG1 L 1.288 保有 戦略 6.99 一定倍率 4.27 並べ替え p None 全期間 p None",
-  "事後 H14_NDX_VOL1_cap1.5_B1_LAG1 L 1.249 保有 戦略 5.92 一定倍率 3.69 並べ替え p None 全期間 p None",
-  "事後 H15_NDX_DOWN_cap1.5_B1_LAG1 L 1.29 保有 戦略 7.23 一定倍率 4.3 並べ替え p None 全期間 p None",
-  "事後 H20_NDX_ENS_cap1.5_B1 L 1.274 保有 戦略 6.75 一定倍率 4.07 並べ替え p 0.1209 全期間 p 0.041",
-  "事後 H01_HiTec_VAR1_cap1.5_B1 L 1.367 保有 戦略 7.05 一定倍率 5.5 並べ替え p 0.1249 全期間 p 0.2767",
-  "事後 H02_HiTec_VAR1_cap1.5_B1EXP L 1.41 保有 戦略 6.96 一定倍率 6.14 並べ替え p 0.1229 全期間 p 0.4625",
-  "事後 H05_HiTec_DOWN_cap1.5_B1 L 1.347 保有 戦略 6.33 一定倍率 5.21 並べ替え p 0.1558 全期間 p 0.1449",
-  "事後 Q08_US_VAR1T_cap2_B1 L 1.435 保有 戦略 5.3 一定倍率 4.26 並べ替え p 0.4775 全期間 p 0.1429",
-  "事後 Q36_US_VOL1T_cap2_B1 L 1.435 保有 戦略 5.3 一定倍率 4.26 並べ替え p 0.4775 全期間 p 0.1429",
-  "事後 H03_HiTec_VOL1_cap1.5_B1 L 1.324 保有 戦略 4.99 一定倍率 4.85 並べ替え p 0.3956 全期間 p 0.4106",
-  "検算 US {'us_mkt_cagr_full_monthly_file': 10.38, 'us_mkt_cagr_2007_monthly_file': 11.13, 'us_daily_to_monthly_vs_file': {'months': 1202, 'max_abs_diff_pct': 0.4, 'mean_abs_diff_pct': 0.047, 'corr': 0.99994}, 'us_months': [192607, 202608, 1202, 'gaps', 0]}",
-  "検算 NDX {'days_not_in_french_rf': 0, 'corr_ndx_price_vs_qqq_daily_after_splice': 0.98033, 'cagr_ndx_price_after_splice': 10.23, 'cagr_qqq_after_splice': 10.8, 'splice_day': 19990310, 'returns_around_splice': {'19990305': 1.908, '19990308': 3.26, '19990309': -0.267, '19990310': 0.492, '19990311': 0.49, '19990312': -2.436, '19990315': 2.871, '19990316': 0.85}, 'months': [198511, 202608, 490]}",
-  "検算 HiTec/IXIC [192607, 202608, 1202, 'gaps', 0, 'cagr', 11.58, 'cagr_2007', 16.31] [197103, 202608, 666, 'gaps', 0, 'days_not_in_french', 0, 'cagr', 11.65]",
-  "事後 Q09_NDX_VAR1_cap1.5_B1 L 1.287 保有 戦略 7.16 一定倍率 4.26 並べ替え p 0.1279 全期間 p 0.018 シャープ並べ替え p 保有 0.008 全期間 0.001 最大下落 全期間 {'strategy': -58.4, 'const_lev': -89.8, 'bench': -81.1}",
-  "事後 Q11_NDX_VOL1_cap1.5_B1 L 1.248 保有 戦略 5.97 一定倍率 3.68 並べ替え p 0.2038 全期間 p 0.1089 シャープ並べ替え p 保有 0.01 全期間 0.001 最大下落 全期間 {'strategy': -63.4, 'const_lev': -88.9, 'bench': -81.1}",
-  "事後 Q37_NDX_DOWN_cap1.5_B1 L 1.289 保有 戦略 7.1 一定倍率 4.29 並べ替え p 0.0919 全期間 p 0.042 シャープ並べ替え p 保有 0.007 全期間 0.001 最大下落 全期間 {'strategy': -61.5, 'const_lev': -89.9, 'bench': -81.1}",
-  "事後 H06_HiTec_DOWN_cap1.5_B1EXP L 1.389 保有 戦略 6.24 一定倍率 5.84 並べ替え p 0.1558 全期間 p 0.1419 シャープ並べ替え p 保有 0.012 全期間 0.001 最大下落 全期間 {'strategy': -72.3, 'const_lev': -91.0, 'bench': -79.5}",
-  "事後 H13_NDX_VAR1_cap1.5_B1_LAG1 L 1.288 保有 戦略 6.99 一定倍率 4.27 並べ替え p None 全期間 p None シャープ並べ替え p 保有 None 全期間 None 最大下落 全期間 None",
-  "事後 H14_NDX_VOL1_cap1.5_B1_LAG1 L 1.249 保有 戦略 5.92 一定倍率 3.69 並べ替え p None 全期間 p None シャープ並べ替え p 保有 None 全期間 None 最大下落 全期間 None",
-  "事後 H15_NDX_DOWN_cap1.5_B1_LAG1 L 1.29 保有 戦略 7.23 一定倍率 4.3 並べ替え p None 全期間 p None シャープ並べ替え p 保有 None 全期間 None 最大下落 全期間 None",
-  "事後 H20_NDX_ENS_cap1.5_B1 L 1.274 保有 戦略 6.75 一定倍率 4.07 並べ替え p 0.1209 全期間 p 0.041 シャープ並べ替え p 保有 0.005 全期間 0.001 最大下落 全期間 {'strategy': -60.8, 'const_lev': -89.6, 'bench': -81.1}",
-  "事後 H01_HiTec_VAR1_cap1.5_B1 L 1.367 保有 戦略 7.05 一定倍率 5.5 並べ替え p 0.1249 全期間 p 0.2767 シャープ並べ替え p 保有 0.011 全期間 0.001 最大下落 全期間 {'strategy': -83.5, 'const_lev': -97.3, 'bench': -91.2}",
-  "事後 H02_HiTec_VAR1_cap1.5_B1EXP L 1.41 保有 戦略 6.96 一定倍率 6.14 並べ替え p 0.1229 全期間 p 0.4625 シャープ並べ替え p 保有 0.008 全期間 0.001 最大下落 全期間 {'strategy': -69.7, 'const_lev': -91.4, 'bench': -79.5}",
-  "事後 H05_HiTec_DOWN_cap1.5_B1 L 1.347 保有 戦略 6.33 一定倍率 5.21 並べ替え p 0.1558 全期間 p 0.1449 シャープ並べ替え p 保有 0.01 全期間 0.001 最大下落 全期間 {'strategy': -79.6, 'const_lev': -97.1, 'bench': -91.2}",
-  "事後 Q08_US_VAR1T_cap2_B1 L 1.435 保有 戦略 5.3 一定倍率 4.26 並べ替え p 0.4775 全期間 p 0.1429 シャープ並べ替え p 保有 0.0749 全期間 0.003 最大下落 全期間 {'strategy': -73.4, 'const_lev': -93.9, 'bench': -83.7}",
-  "事後 Q36_US_VOL1T_cap2_B1 L 1.435 保有 戦略 5.3 一定倍率 4.26 並べ替え p 0.4775 全期間 p 0.1429 シャープ並べ替え p 保有 0.0749 全期間 0.003 最大下落 全期間 {'strategy': -73.4, 'const_lev': -93.9, 'bench': -83.7}",
-  "事後 H03_HiTec_VOL1_cap1.5_B1 L 1.324 保有 戦略 4.99 一定倍率 4.85 並べ替え p 0.3956 全期間 p 0.4106 シャープ並べ替え p 保有 0.034 全期間 0.001 最大下落 全期間 {'strategy': -79.0, 'const_lev': -96.9, 'bench': -91.2}"
- ],
- "generated": "2026-09-28",
  "posthoc_diagnostics": {
   "note": "事後（結果を見た後の診断）・判定には使わない。const_lev = 訓練期間の平均倍率で一定に持つ（毎月その倍率に戻す・同じ借入と費用の作り）。perm = 倍率の系列を月の間で入れ替えた（同じ期間の中だけ・1000回・種0）ときの費用前の超過の分布の中で、実際の値以上になった割合（平均の差）。perm_sharpe = 同じ入れ替えでシャープレシオ（費用前）が実際以上になった割合（ボラ管理の理屈はシャープを上げることなので、こちらが本来の検定）",
   "rows": {
@@ -100352,6 +103918,159 @@
      }
     }
    },
+   "I01_NDX_VAR1_cap1.5_B1_FUND": {
+    "avg_w_train": 1.287,
+    "hold": {
+     "strategy_net_ex": 6.31,
+     "const_lev_net_ex": 3.65,
+     "timing_value_net": 2.66,
+     "strategy_vs_const_lev": {
+      "from": 200701,
+      "to": 202608,
+      "years": 19.7,
+      "ex_ann": 2.66,
+      "t": 1.68,
+      "p": 0.0921,
+      "cagr_s": 22.11,
+      "cagr_b": 19.11,
+      "cagr_diff": 3.0,
+      "te": 8.09,
+      "ir": 0.33,
+      "beta": 0.97,
+      "vol_s": 24.9,
+      "vol_b": 24.3
+     },
+     "sharpe_strategy": 0.872,
+     "sharpe_const_lev": 0.785,
+     "sharpe_bench": 0.823
+    },
+    "full": {
+     "strategy_net_ex": 6.31,
+     "const_lev_net_ex": 3.27,
+     "timing_value_net": 3.04,
+     "strategy_vs_const_lev": {
+      "from": 198512,
+      "to": 202608,
+      "years": 40.8,
+      "ex_ann": 3.04,
+      "t": 1.61,
+      "p": 0.107,
+      "cagr_s": 20.89,
+      "cagr_b": 16.54,
+      "cagr_diff": 4.36,
+      "te": 12.72,
+      "ir": 0.24,
+      "beta": 0.84,
+      "vol_s": 28.0,
+      "vol_b": 30.2
+     },
+     "sharpe_strategy": 0.713,
+     "sharpe_const_lev": 0.562,
+     "sharpe_bench": 0.584
+    }
+   },
+   "I02_NDX_VOL1_cap1.5_B1_FUND": {
+    "avg_w_train": 1.248,
+    "hold": {
+     "strategy_net_ex": 5.3,
+     "const_lev_net_ex": 3.15,
+     "timing_value_net": 2.15,
+     "strategy_vs_const_lev": {
+      "from": 200701,
+      "to": 202608,
+      "years": 19.7,
+      "ex_ann": 2.15,
+      "t": 1.58,
+      "p": 0.1149,
+      "cagr_s": 21.3,
+      "cagr_b": 18.74,
+      "cagr_diff": 2.55,
+      "te": 6.88,
+      "ir": 0.31,
+      "beta": 0.96,
+      "vol_s": 23.5,
+      "vol_b": 23.5
+     },
+     "sharpe_strategy": 0.88,
+     "sharpe_const_lev": 0.789,
+     "sharpe_bench": 0.823
+    },
+    "full": {
+     "strategy_net_ex": 4.64,
+     "const_lev_net_ex": 2.82,
+     "timing_value_net": 1.82,
+     "strategy_vs_const_lev": {
+      "from": 198512,
+      "to": 202608,
+      "years": 40.8,
+      "ex_ann": 1.81,
+      "t": 1.12,
+      "p": 0.262,
+      "cagr_s": 19.33,
+      "cagr_b": 16.34,
+      "cagr_diff": 2.99,
+      "te": 10.35,
+      "ir": 0.18,
+      "beta": 0.85,
+      "vol_s": 26.7,
+      "vol_b": 29.2
+     },
+     "sharpe_strategy": 0.687,
+     "sharpe_const_lev": 0.564,
+     "sharpe_bench": 0.584
+    }
+   },
+   "I03_NDX_DOWN_cap1.5_B1_FUND": {
+    "avg_w_train": 1.289,
+    "hold": {
+     "strategy_net_ex": 6.43,
+     "const_lev_net_ex": 3.67,
+     "timing_value_net": 2.76,
+     "strategy_vs_const_lev": {
+      "from": 200701,
+      "to": 202608,
+      "years": 19.7,
+      "ex_ann": 2.76,
+      "t": 1.73,
+      "p": 0.083,
+      "cagr_s": 22.31,
+      "cagr_b": 19.13,
+      "cagr_diff": 3.18,
+      "te": 8.18,
+      "ir": 0.34,
+      "beta": 0.96,
+      "vol_s": 24.7,
+      "vol_b": 24.3
+     },
+     "sharpe_strategy": 0.884,
+     "sharpe_const_lev": 0.784,
+     "sharpe_bench": 0.823
+    },
+    "full": {
+     "strategy_net_ex": 5.91,
+     "const_lev_net_ex": 3.29,
+     "timing_value_net": 2.62,
+     "strategy_vs_const_lev": {
+      "from": 198512,
+      "to": 202608,
+      "years": 40.8,
+      "ex_ann": 2.62,
+      "t": 1.4,
+      "p": 0.1605,
+      "cagr_s": 20.39,
+      "cagr_b": 16.54,
+      "cagr_diff": 3.84,
+      "te": 13.14,
+      "ir": 0.2,
+      "beta": 0.84,
+      "vol_s": 28.1,
+      "vol_b": 30.2
+     },
+     "sharpe_strategy": 0.696,
+     "sharpe_const_lev": 0.561,
+     "sharpe_bench": 0.584
+    }
+   },
    "H01_HiTec_VAR1_cap1.5_B1": {
     "avg_w_train": 1.367,
     "hold": {
@@ -100607,6 +104326,57 @@
      }
     }
    },
+   "I04_HiTec_DOWN_cap1.5_B1EXP_FUND": {
+    "avg_w_train": 1.389,
+    "hold": {
+     "strategy_net_ex": 5.49,
+     "const_lev_net_ex": 4.94,
+     "timing_value_net": 0.55,
+     "strategy_vs_const_lev": {
+      "from": 200701,
+      "to": 202608,
+      "years": 19.7,
+      "ex_ann": 0.55,
+      "t": 0.27,
+      "p": 0.7858,
+      "cagr_s": 21.51,
+      "cagr_b": 19.95,
+      "cagr_diff": 1.56,
+      "te": 10.27,
+      "ir": 0.05,
+      "beta": 0.83,
+      "vol_s": 24.2,
+      "vol_b": 27.1
+     },
+     "sharpe_strategy": 0.869,
+     "sharpe_const_lev": 0.756,
+     "sharpe_bench": 0.805
+    },
+    "full": {
+     "strategy_net_ex": 4.4,
+     "const_lev_net_ex": 3.94,
+     "timing_value_net": 0.46,
+     "strategy_vs_const_lev": {
+      "from": 193201,
+      "to": 202608,
+      "years": 94.7,
+      "ex_ann": 0.46,
+      "t": 0.42,
+      "p": 0.6723,
+      "cagr_s": 15.66,
+      "cagr_b": 13.84,
+      "cagr_diff": 1.83,
+      "te": 13.54,
+      "ir": 0.03,
+      "beta": 0.81,
+      "vol_s": 29.4,
+      "vol_b": 33.3
+     },
+     "sharpe_strategy": 0.531,
+     "sharpe_const_lev": 0.455,
+     "sharpe_bench": 0.472
+    }
+   },
    "Q08_US_VAR1T_cap2_B1": {
     "avg_w_train": 1.435,
     "hold": {
@@ -100776,92 +104546,426 @@
       "bench": -83.7
      }
     }
-   },
-   "H03_HiTec_VOL1_cap1.5_B1": {
-    "avg_w_train": 1.324,
-    "hold": {
-     "strategy_net_ex": 4.99,
-     "const_lev_net_ex": 4.85,
-     "timing_value_net": 0.14,
-     "strategy_vs_const_lev": {
-      "from": 200701,
-      "to": 202608,
-      "years": 19.7,
-      "ex_ann": 0.14,
-      "t": 0.08,
-      "p": 0.9338,
-      "cagr_s": 21.1,
-      "cagr_b": 20.32,
-      "cagr_diff": 0.78,
-      "te": 7.84,
-      "ir": 0.02,
-      "beta": 0.88,
-      "vol_s": 23.5,
-      "vol_b": 25.6
-     },
-     "sharpe_strategy": 0.874,
-     "sharpe_const_lev": 0.798,
-     "sharpe_bench": 0.805,
-     "perm": {
-      "actual_gross_ex": 5.19,
-      "perm_median": 4.86,
-      "perm_p95": 6.88,
-      "p_one_sided": 0.3956
-     },
-     "perm_sharpe": {
-      "actual_gross_sr": 0.883,
-      "perm_median": 0.778,
-      "perm_p95": 0.874,
-      "p_one_sided": 0.034
-     },
-     "maxdd": {
-      "strategy": -51.9,
-      "const_lev": -61.6,
-      "bench": -50.1
-     }
-    },
-    "full": {
-     "strategy_net_ex": 3.31,
-     "const_lev_net_ex": 3.31,
-     "timing_value_net": 0.0,
-     "strategy_vs_const_lev": {
-      "from": 192608,
-      "to": 202608,
-      "years": 100.1,
-      "ex_ann": 0.0,
-      "t": 0.0,
-      "p": 0.9976,
-      "cagr_s": 14.42,
-      "cagr_b": 12.63,
-      "cagr_diff": 1.79,
-      "te": 13.22,
-      "ir": 0.0,
-      "beta": 0.77,
-      "vol_s": 27.4,
-      "vol_b": 32.8
-     },
-     "sharpe_strategy": 0.513,
-     "sharpe_const_lev": 0.43,
-     "sharpe_bench": 0.436,
-     "perm": {
-      "actual_gross_ex": 3.47,
-      "perm_median": 3.3,
-      "perm_p95": 4.52,
-      "p_one_sided": 0.4106
-     },
-     "perm_sharpe": {
-      "actual_gross_sr": 0.519,
-      "perm_median": 0.42,
-      "perm_p95": 0.453,
-      "p_one_sided": 0.001
-     },
-     "maxdd": {
-      "strategy": -79.0,
-      "const_lev": -96.9,
-      "bench": -91.2
-     }
-    }
    }
   }
- }
+ },
+ "sanity": {
+  "us_mkt_cagr_full_monthly_file": 10.38,
+  "us_mkt_cagr_2007_monthly_file": 11.13,
+  "us_daily_to_monthly_vs_file": {
+   "months": 1202,
+   "max_abs_diff_pct": 0.4,
+   "mean_abs_diff_pct": 0.047,
+   "corr": 0.99994
+  },
+  "us_months": [
+   192607,
+   202608,
+   1202,
+   "gaps",
+   0
+  ],
+  "ndx_splice": {
+   "days_not_in_french_rf": 0,
+   "corr_ndx_price_vs_qqq_daily_after_splice": 0.98033,
+   "cagr_ndx_price_after_splice": 10.23,
+   "cagr_qqq_after_splice": 10.8,
+   "splice_day": 19990310,
+   "returns_around_splice": {
+    "19990305": 1.908,
+    "19990308": 3.26,
+    "19990309": -0.267,
+    "19990310": 0.492,
+    "19990311": 0.49,
+    "19990312": -2.436,
+    "19990315": 2.871,
+    "19990316": 0.85
+   },
+   "months": [
+    198511,
+    202608,
+    490
+   ]
+  },
+  "region_Europe": [
+   199007,
+   202608,
+   434,
+   "gaps",
+   0
+  ],
+  "region_Japan": [
+   199007,
+   202608,
+   434,
+   "gaps",
+   0
+  ],
+  "region_Asia_Pacific_ex_Japan": [
+   199007,
+   202608,
+   434,
+   "gaps",
+   0
+  ],
+  "region_Developed_ex_US": [
+   199007,
+   202608,
+   434,
+   "gaps",
+   0
+  ],
+  "region_North_America": [
+   199007,
+   202608,
+   434,
+   "gaps",
+   0
+  ],
+  "hitec": [
+   192607,
+   202608,
+   1202,
+   "gaps",
+   0,
+   "cagr",
+   11.58,
+   "cagr_2007",
+   16.31
+  ],
+  "ixic": [
+   197103,
+   202608,
+   666,
+   "gaps",
+   0,
+   "days_not_in_french",
+   0,
+   "cagr",
+   11.65
+  ],
+  "lookahead_index_check_P01": {
+   "months": 1201,
+   "mismatch": 0,
+   "rule": "w[t1] == min(1.5, c/RV1[t1 の前月])"
+  },
+  "c_solve_P01": {
+   "pairs": 965,
+   "from": 192608,
+   "to": 200612,
+   "target_sd_ann": 18.935,
+   "sd_at_c_ann": 18.935
+  },
+  "excess_stats_fast_equals_mw_common": true
+ },
+ "n_tested": 119,
+ "n_graded": 116,
+ "grades": {
+  "S": [
+   "H06_HiTec_DOWN_cap1.5_B1EXP"
+  ],
+  "A": [
+   "Q09_NDX_VAR1_cap1.5_B1",
+   "Q11_NDX_VOL1_cap1.5_B1",
+   "Q37_NDX_DOWN_cap1.5_B1",
+   "H13_NDX_VAR1_cap1.5_B1_LAG1",
+   "H14_NDX_VOL1_cap1.5_B1_LAG1",
+   "H15_NDX_DOWN_cap1.5_B1_LAG1",
+   "H20_NDX_ENS_cap1.5_B1",
+   "I01_NDX_VAR1_cap1.5_B1_FUND",
+   "I02_NDX_VOL1_cap1.5_B1_FUND",
+   "I03_NDX_DOWN_cap1.5_B1_FUND"
+  ],
+  "B": [
+   "Q02_US_VAR1_cap2_B1",
+   "Q04_US_VOL1_cap2_B1",
+   "Q08_US_VAR1T_cap2_B1",
+   "Q17_US_VAR1_cap1.5_B1EXP",
+   "Q19_US_VOL1_cap1.5_B1EXP",
+   "Q20_US_VOL1_cap2_B1EXP",
+   "Q33_US_DOWN_cap1.5_B1",
+   "Q34_US_DOWN_cap2_B1",
+   "Q36_US_VOL1T_cap2_B1",
+   "H01_HiTec_VAR1_cap1.5_B1",
+   "H02_HiTec_VAR1_cap1.5_B1EXP",
+   "H03_HiTec_VOL1_cap1.5_B1",
+   "H04_HiTec_VOL1_cap1.5_B1EXP",
+   "H05_HiTec_DOWN_cap1.5_B1",
+   "H17_US_ENS_cap1.5_B1EXP",
+   "H18_US_ENS_cap2_B1",
+   "H19_US_ENS_cap2_B1EXP",
+   "I04_HiTec_DOWN_cap1.5_B1EXP_FUND",
+   "I05_US_VAR1_cap1.5_B1EXP_FUND"
+  ],
+  "C": [
+   "P01_US_VAR1_cap1.5",
+   "P02_US_VAR1_cap2",
+   "P03_US_VOL1_cap1.5",
+   "P04_US_VOL1_cap2",
+   "P05_US_VAR6_cap1.5",
+   "P06_US_VAR6_cap2",
+   "P07_US_VAR1T_cap1.5",
+   "P08_US_VAR1T_cap2",
+   "P09_NDX_VAR1_cap1.5",
+   "P10_NDX_VAR1_cap2",
+   "P11_NDX_VOL1_cap1.5",
+   "P12_NDX_VOL1_cap2",
+   "P13_NDX_VAR6_cap1.5",
+   "P14_NDX_VAR6_cap2",
+   "P15_NDX_VAR1T_cap1.5",
+   "P16_NDX_VAR1T_cap2",
+   "E1_P01_US_VAR1_cap1.5_EXP",
+   "E1_P02_US_VAR1_cap2_EXP",
+   "E1_P03_US_VOL1_cap1.5_EXP",
+   "E1_P04_US_VOL1_cap2_EXP",
+   "E1_P05_US_VAR6_cap1.5_EXP",
+   "E1_P06_US_VAR6_cap2_EXP",
+   "E1_P07_US_VAR1T_cap1.5_EXP",
+   "E1_P08_US_VAR1T_cap2_EXP",
+   "E1_P09_NDX_VAR1_cap1.5_EXP",
+   "E1_P10_NDX_VAR1_cap2_EXP",
+   "E1_P11_NDX_VOL1_cap1.5_EXP",
+   "E1_P12_NDX_VOL1_cap2_EXP",
+   "E1_P13_NDX_VAR6_cap1.5_EXP",
+   "E1_P14_NDX_VAR6_cap2_EXP",
+   "E1_P15_NDX_VAR1T_cap1.5_EXP",
+   "E1_P16_NDX_VAR1T_cap2_EXP",
+   "E3_US_EWMA_cap1.5",
+   "E3_US_EWMA_cap2",
+   "E3_NDX_EWMA_cap1.5",
+   "E3_NDX_EWMA_cap2",
+   "E4_US_DOWN_cap1.5",
+   "E4_US_DOWN_cap2",
+   "E4_NDX_DOWN_cap1.5",
+   "E4_NDX_DOWN_cap2",
+   "E6_US_VOL1T_cap1.5",
+   "E6_US_VOL1T_cap2",
+   "E6_NDX_VOL1T_cap1.5",
+   "E6_NDX_VOL1T_cap2",
+   "E5_US_VAR1_LAG1_cap1.5",
+   "E5_US_VAR1_LAG1_cap2",
+   "E5_NDX_VAR1_LAG1_cap1.5",
+   "E5_NDX_VAR1_LAG1_cap2",
+   "Q01_US_VAR1_cap1.5_B1",
+   "Q03_US_VOL1_cap1.5_B1",
+   "Q05_US_VAR6_cap1.5_B1",
+   "Q06_US_VAR6_cap2_B1",
+   "Q07_US_VAR1T_cap1.5_B1",
+   "Q10_NDX_VAR1_cap2_B1",
+   "Q12_NDX_VOL1_cap2_B1",
+   "Q13_NDX_VAR6_cap1.5_B1",
+   "Q14_NDX_VAR6_cap2_B1",
+   "Q15_NDX_VAR1T_cap1.5_B1",
+   "Q16_NDX_VAR1T_cap2_B1",
+   "Q18_US_VAR1_cap2_B1EXP",
+   "Q21_US_VAR6_cap1.5_B1EXP",
+   "Q22_US_VAR6_cap2_B1EXP",
+   "Q23_US_VAR1T_cap1.5_B1EXP",
+   "Q24_US_VAR1T_cap2_B1EXP",
+   "Q25_NDX_VAR1_cap1.5_B1EXP",
+   "Q26_NDX_VAR1_cap2_B1EXP",
+   "Q27_NDX_VOL1_cap1.5_B1EXP",
+   "Q28_NDX_VOL1_cap2_B1EXP",
+   "Q29_NDX_VAR6_cap1.5_B1EXP",
+   "Q30_NDX_VAR6_cap2_B1EXP",
+   "Q31_NDX_VAR1T_cap1.5_B1EXP",
+   "Q32_NDX_VAR1T_cap2_B1EXP",
+   "Q35_US_VOL1T_cap1.5_B1",
+   "Q38_NDX_DOWN_cap2_B1",
+   "Q39_NDX_VOL1T_cap1.5_B1",
+   "Q40_NDX_VOL1T_cap2_B1",
+   "H07_IXIC_VAR1_cap1.5_B1",
+   "H08_IXIC_VAR1_cap1.5_B1EXP",
+   "H09_IXIC_VOL1_cap1.5_B1",
+   "H10_IXIC_VOL1_cap1.5_B1EXP",
+   "H11_IXIC_DOWN_cap1.5_B1",
+   "H12_IXIC_DOWN_cap1.5_B1EXP",
+   "H16_US_ENS_cap1.5_B1",
+   "H21_NDX_ENS_cap1.5_B1EXP",
+   "H22_NDX_ENS_cap2_B1",
+   "H23_NDX_ENS_cap2_B1EXP"
+  ]
+ },
+ "log": [
+  "事前登録の commit {'mw_volmanaged_prereg.json': 'c1d911595e52ea2e999ff63dd34ed774e48e5e05', 'mw_volmanaged_prereg2.json': 'c8086becd2f7875678be316d3093e93ccfc6ea81', 'mw_volmanaged_prereg3.json': 'bdf0ac22f319855c1217717042fcd48248f1d8a0', 'mw_volmanaged_prereg4.json': '4dcedcdccdb027ca5d40de98fcb510008236a7a6'}",
+  "検算 US {'us_mkt_cagr_full_monthly_file': 10.38, 'us_mkt_cagr_2007_monthly_file': 11.13, 'us_daily_to_monthly_vs_file': {'months': 1202, 'max_abs_diff_pct': 0.4, 'mean_abs_diff_pct': 0.047, 'corr': 0.99994}, 'us_months': [192607, 202608, 1202, 'gaps', 0]}",
+  "検算 NDX {'days_not_in_french_rf': 0, 'corr_ndx_price_vs_qqq_daily_after_splice': 0.98033, 'cagr_ndx_price_after_splice': 10.23, 'cagr_qqq_after_splice': 10.8, 'splice_day': 19990310, 'returns_around_splice': {'19990305': 1.908, '19990308': 3.26, '19990309': -0.267, '19990310': 0.492, '19990311': 0.49, '19990312': -2.436, '19990315': 2.871, '19990316': 0.85}, 'months': [198511, 202608, 490]}",
+  "検算 HiTec/IXIC [192607, 202608, 1202, 'gaps', 0, 'cagr', 11.58, 'cagr_2007', 16.31] [197103, 202608, 666, 'gaps', 0, 'days_not_in_french', 0, 'cagr', 11.65]",
+  "P01_US_VAR1_cap1.5                 訓練   1.33 t0.98 保有   0.82 t0.41 幾何差 1.12 費用後保有 0.48 20年勝率 0.716 Sharpe訓練 [0.472, 0.414] 保有 [0.742, 0.652] 地域 0/3 平均倍率 1.217",
+  "P02_US_VAR1_cap2                   訓練   1.84 t1.1 保有  -1.17 t-0.43 幾何差 -0.81 費用後保有 -1.79 20年勝率 0.63 Sharpe訓練 [0.486, 0.414] 保有 [0.665, 0.652] 地域 0/3 平均倍率 1.23",
+  "P03_US_VOL1_cap1.5                 訓練   1.38 t1.3 保有   0.76 t0.48 幾何差 1.08 費用後保有 0.45 20年勝率 0.765 Sharpe訓練 [0.475, 0.414] 保有 [0.745, 0.652] 地域 0/3 平均倍率 1.212",
+  "P04_US_VOL1_cap2                   訓練   1.84 t1.5 保有   0.19 t0.1 幾何差 0.5 費用後保有 -0.25 20年勝率 0.765 Sharpe訓練 [0.491, 0.414] 保有 [0.715, 0.652] 地域 0/3 平均倍率 1.247",
+  "P05_US_VAR6_cap1.5                 訓練   1.69 t1.24 保有  -1.54 t-0.56 幾何差 -1.64 費用後保有 -1.66 20年勝率 0.6 Sharpe訓練 [0.497, 0.412] 保有 [0.559, 0.652] 地域 0/3 平均倍率 1.198",
+  "P06_US_VAR6_cap2                   訓練   1.71 t0.98 保有  -2.85 t-0.97 幾何差 -2.55 費用後保有 -3.0 20年勝率 0.6 Sharpe訓練 [0.495, 0.412] 保有 [0.598, 0.652] 地域 1/3 平均倍率 1.177",
+  "P07_US_VAR1T_cap1.5                訓練   1.96 t1.09 保有   1.76 t0.59 幾何差 1.91 費用後保有 1.51 20年勝率 0.738 Sharpe訓練 [0.5, 0.409] 保有 [0.731, 0.652] 地域 1/3 平均倍率 1.093",
+  "P08_US_VAR1T_cap2                  訓練   2.05 t0.98 保有   0.09 t0.03 幾何差 0.35 費用後保有 -0.54 20年勝率 0.6 Sharpe訓練 [0.493, 0.409] 保有 [0.682, 0.652] 地域 1/3 平均倍率 1.158",
+  "P09_NDX_VAR1_cap1.5                訓練   4.12 t1.37 保有   6.11 t3.71 幾何差 6.27 費用後保有 5.89 20年勝率 1.0 Sharpe訓練 [0.589, 0.445] 保有 [0.944, 0.823] 地域 0/3 平均倍率 1.236",
+  "P10_NDX_VAR1_cap2                  訓練   0.09 t0.02 保有    6.3 t2.42 幾何差 6.6 費用後保有 5.79 20年勝率 0.864 Sharpe訓練 [0.431, 0.445] 保有 [0.956, 0.823] 地域 0/3 平均倍率 1.269",
+  "P11_NDX_VOL1_cap1.5                訓練   2.42 t1.11 保有    5.0 t3.62 幾何差 5.21 費用後保有 4.78 20年勝率 1.0 Sharpe訓練 [0.526, 0.445] 保有 [0.939, 0.823] 地域 0/3 平均倍率 1.221",
+  "P12_NDX_VOL1_cap2                  訓練   1.93 t0.73 保有    5.6 t2.97 幾何差 5.86 費用後保有 5.17 20年勝率 1.0 Sharpe訓練 [0.503, 0.445] 保有 [0.945, 0.823] 地域 0/3 平均倍率 1.268",
+  "P13_NDX_VAR6_cap1.5                訓練   3.47 t0.97 保有   2.61 t1.27 幾何差 1.93 費用後保有 2.53 20年勝率 1.0 Sharpe訓練 [0.547, 0.423] 保有 [0.773, 0.823] 地域 0/3 平均倍率 1.247",
+  "P14_NDX_VAR6_cap2                  訓練  -1.13 t-0.23 保有   2.01 t0.59 幾何差 1.59 費用後保有 1.82 20年勝率 0.905 Sharpe訓練 [0.376, 0.423] 保有 [0.786, 0.823] 地域 1/3 平均倍率 1.22",
+  "P15_NDX_VAR1T_cap1.5               訓練   0.19 t0.04 保有    1.7 t0.59 幾何差 1.57 費用後保有 1.4 20年勝率 0.952 Sharpe訓練 [0.424, 0.429] 保有 [0.82, 0.823] 地域 1/3 平均倍率 1.085",
+  "P16_NDX_VAR1T_cap2                 訓練  -5.28 t-0.97 保有   4.63 t1.38 幾何差 4.2 費用後保有 4.08 20年勝率 0.81 Sharpe訓練 [0.217, 0.429] 保有 [0.825, 0.823] 地域 1/3 平均倍率 1.219",
+  "E1_P01_US_VAR1_cap1.5_EXP          訓練    1.8 t1.4 保有   1.06 t0.54 幾何差 1.36 費用後保有 0.74 20年勝率 0.8 Sharpe訓練 [0.496, 0.487] 保有 [0.749, 0.652] 地域 0/3 平均倍率 1.302",
+  "E1_P02_US_VAR1_cap2_EXP            訓練   2.74 t1.49 保有  -0.88 t-0.33 幾何差 -0.53 費用後保有 -1.51 20年勝率 0.68 Sharpe訓練 [0.493, 0.487] 保有 [0.675, 0.652] 地域 0/3 平均倍率 1.406",
+  "E1_P03_US_VOL1_cap1.5_EXP          訓練    1.8 t1.74 保有   0.98 t0.62 幾何差 1.29 費用後保有 0.68 20年勝率 0.787 Sharpe訓練 [0.504, 0.487] 保有 [0.75, 0.652] 地域 0/3 平均倍率 1.293",
+  "E1_P04_US_VOL1_cap2_EXP            訓練    2.7 t1.85 保有   0.38 t0.19 幾何差 0.68 費用後保有 -0.07 20年勝率 0.8 Sharpe訓練 [0.507, 0.487] 保有 [0.719, 0.652] 地域 0/3 平均倍率 1.392",
+  "E1_P05_US_VAR6_cap1.5_EXP          訓練   2.06 t1.76 保有   -1.4 t-0.51 幾何差 -1.51 費用後保有 -1.52 20年勝率 0.627 Sharpe訓練 [0.508, 0.487] 保有 [0.563, 0.652] 地域 2/3 平均倍率 1.308",
+  "E1_P06_US_VAR6_cap2_EXP            訓練   3.08 t1.7 保有  -2.57 t-0.87 幾何差 -2.31 費用後保有 -2.73 20年勝率 0.6 Sharpe訓練 [0.517, 0.487] 保有 [0.599, 0.652] 地域 1/3 平均倍率 1.381",
+  "E1_P07_US_VAR1T_cap1.5_EXP         訓練   1.03 t0.7 保有   1.76 t0.59 幾何差 1.91 費用後保有 1.51 20年勝率 0.743 Sharpe訓練 [0.508, 0.526] 保有 [0.731, 0.652] 地域 3/3 平均倍率 1.117",
+  "E1_P08_US_VAR1T_cap2_EXP           訓練   2.48 t1.25 保有   0.43 t0.13 幾何差 0.67 費用後保有 -0.2 20年勝率 0.73 Sharpe訓練 [0.471, 0.526] 保有 [0.689, 0.652] 地域 2/3 平均倍率 1.304",
+  "E1_P09_NDX_VAR1_cap1.5_EXP         訓練   -3.2 t-0.56 保有   5.28 t2.93 幾何差 5.48 費用後保有 5.03 20年勝率 1.0 Sharpe訓練 [0.652, 0.501] 保有 [0.94, 0.823] 地域 0/3 平均倍率 1.045",
+  "E1_P10_NDX_VAR1_cap2_EXP           訓練  -5.23 t-0.86 保有   5.69 t2.16 幾何差 6.03 費用後保有 5.16 20年勝率 0.938 Sharpe訓練 [0.557, 0.501] 保有 [0.956, 0.823] 地域 0/3 平均倍率 1.072",
+  "E1_P11_NDX_VOL1_cap1.5_EXP         訓練   -2.0 t-0.52 保有    4.6 t3.19 幾何差 4.85 費用後保有 4.37 20年勝率 1.0 Sharpe訓練 [0.619, 0.501] 保有 [0.94, 0.823] 地域 0/3 平均倍率 1.085",
+  "E1_P12_NDX_VOL1_cap2_EXP           訓練  -2.63 t-0.65 保有   5.09 t2.65 幾何差 5.37 費用後保有 4.66 20年勝率 1.0 Sharpe訓練 [0.588, 0.501] 保有 [0.943, 0.823] 地域 0/3 平均倍率 1.127",
+  "E1_P13_NDX_VAR6_cap1.5_EXP         訓練  -2.03 t-0.32 保有   1.73 t0.78 幾何差 1.09 費用後保有 1.64 20年勝率 0.933 Sharpe訓練 [0.627, 0.415] 保有 [0.757, 0.823] 地域 2/3 平均倍率 1.062",
+  "E1_P14_NDX_VAR6_cap2_EXP           訓練  -2.82 t-0.43 保有   1.76 t0.51 幾何差 1.44 費用後保有 1.58 20年勝率 0.933 Sharpe訓練 [0.562, 0.415] 保有 [0.796, 0.823] 地域 1/3 平均倍率 1.071",
+  "E1_P15_NDX_VAR1T_cap1.5_EXP        訓練  -1.91 t-0.29 保有   1.62 t0.57 幾何差 1.52 費用後保有 1.31 20年勝率 1.0 Sharpe訓練 [0.57, 0.415] 保有 [0.823, 0.823] 地域 3/3 平均倍率 0.979",
+  "E1_P16_NDX_VAR1T_cap2_EXP          訓練  -4.06 t-0.6 保有   4.14 t1.23 幾何差 3.8 費用後保有 3.57 20年勝率 0.867 Sharpe訓練 [0.44, 0.415] 保有 [0.827, 0.823] 地域 2/3 平均倍率 1.103",
+  "E3_US_EWMA_cap1.5                  訓練   1.04 t0.78 保有  -0.06 t-0.03 幾何差 0.24 費用後保有 -0.33 20年勝率 0.654 Sharpe訓練 [0.457, 0.412] 保有 [0.712, 0.652] 地域 0/3 平均倍率 1.203",
+  "E3_US_EWMA_cap2                    訓練   1.32 t0.8 保有  -2.17 t-0.8 幾何差 -1.79 費用後保有 -2.58 20年勝率 0.531 Sharpe訓練 [0.464, 0.412] 保有 [0.643, 0.652] 地域 1/3 平均倍率 1.197",
+  "E3_NDX_EWMA_cap1.5                 訓練   4.23 t1.32 保有   5.15 t2.97 幾何差 5.04 費用後保有 4.98 20年勝率 1.0 Sharpe訓練 [0.596, 0.445] 保有 [0.896, 0.823] 地域 0/3 平均倍率 1.251",
+  "E3_NDX_EWMA_cap2                   訓練  -0.58 t-0.13 保有   4.67 t1.67 幾何差 4.8 費用後保有 4.27 20年勝率 0.864 Sharpe訓練 [0.412, 0.445] 保有 [0.915, 0.823] 地域 1/3 平均倍率 1.252",
+  "E4_US_DOWN_cap1.5                  訓練   1.92 t1.49 保有   0.33 t0.18 幾何差 0.59 費用後保有 -0.07 20年勝率 0.815 Sharpe訓練 [0.501, 0.414] 保有 [0.707, 0.652] 地域 0/3 平均倍率 1.219",
+  "E4_US_DOWN_cap2                    訓練   2.03 t1.21 保有  -0.13 t-0.05 幾何差 0.23 費用後保有 -0.88 20年勝率 0.519 Sharpe訓練 [0.488, 0.414] 保有 [0.699, 0.652] 地域 0/3 平均倍率 1.26",
+  "E4_NDX_DOWN_cap1.5                 訓練    2.4 t0.82 保有   4.43 t3.05 幾何差 4.42 費用後保有 4.14 20年勝率 1.0 Sharpe訓練 [0.522, 0.445] 保有 [0.894, 0.823] 地域 0/3 平均倍率 1.208",
+  "E4_NDX_DOWN_cap2                   訓練   1.09 t0.26 保有   5.28 t2.26 幾何差 5.26 費用後保有 4.67 20年勝率 0.955 Sharpe訓練 [0.463, 0.445] 保有 [0.892, 0.823] 地域 0/3 平均倍率 1.29",
+  "E6_US_VOL1T_cap1.5                 訓練   1.93 t1.07 保有   1.76 t0.59 幾何差 1.91 費用後保有 1.51 20年勝率 0.738 Sharpe訓練 [0.498, 0.409] 保有 [0.731, 0.652] 地域 2/3 平均倍率 1.093",
+  "E6_US_VOL1T_cap2                   訓練   2.39 t1.19 保有   0.82 t0.27 幾何差 1.07 費用後保有 0.28 20年勝率 0.713 Sharpe訓練 [0.512, 0.409] 保有 [0.71, 0.652] 地域 2/3 平均倍率 1.171",
+  "E6_NDX_VOL1T_cap1.5                訓練   0.25 t0.05 保有    1.7 t0.6 幾何差 1.59 費用後保有 1.41 20年勝率 0.952 Sharpe訓練 [0.426, 0.429] 保有 [0.822, 0.823] 地域 2/3 平均倍率 1.087",
+  "E6_NDX_VOL1T_cap2                  訓練  -3.24 t-0.64 保有    4.3 t1.34 幾何差 3.94 費用後保有 3.77 20年勝率 0.857 Sharpe訓練 [0.293, 0.429] 保有 [0.829, 0.823] 地域 2/3 平均倍率 1.225",
+  "E5_US_VAR1_LAG1_cap1.5             訓練   1.42 t1.07 保有   0.55 t0.27 幾何差 0.83 費用後保有 0.21 20年勝率 0.778 Sharpe訓練 [0.469, 0.407] 保有 [0.728, 0.655] 地域 0/3 平均倍率 1.217",
+  "E5_US_VAR1_LAG1_cap2               訓練   2.08 t1.27 保有  -1.51 t-0.59 幾何差 -1.2 費用後保有 -2.15 20年勝率 0.63 Sharpe訓練 [0.49, 0.407] 保有 [0.639, 0.655] 地域 0/3 平均倍率 1.23",
+  "E5_NDX_VAR1_LAG1_cap1.5            訓練   4.47 t1.54 保有   6.01 t3.79 幾何差 6.14 費用後保有 5.78 20年勝率 1.0 Sharpe訓練 [0.612, 0.458] 保有 [0.938, 0.823] 地域 0/3 平均倍率 1.237",
+  "E5_NDX_VAR1_LAG1_cap2              訓練   1.08 t0.26 保有   5.91 t2.31 幾何差 6.09 費用後保有 5.39 20年勝率 0.955 Sharpe訓練 [0.478, 0.458] 保有 [0.932, 0.823] 地域 0/3 平均倍率 1.27",
+  "Q01_US_VAR1_cap1.5_B1              訓練    2.2 t1.68 保有   3.34 t2.02 幾何差 3.4 費用後保有 3.12 20年勝率 0.84 Sharpe訓練 [0.457, 0.414] 保有 [0.761, 0.652] 地域 1/3 平均倍率 1.345",
+  "Q02_US_VAR1_cap2_B1                訓練    3.6 t2.02 保有   2.99 t1.24 幾何差 3.0 費用後保有 2.46 20年勝率 0.753 Sharpe訓練 [0.467, 0.414] 保有 [0.726, 0.652] 地域 0/3 平均倍率 1.536",
+  "Q03_US_VOL1_cap1.5_B1              訓練   1.99 t1.88 保有   2.22 t1.56 幾何差 2.36 費用後保有 1.98 20年勝率 0.79 Sharpe訓練 [0.466, 0.414] 保有 [0.746, 0.652] 地域 1/3 平均倍率 1.301",
+  "Q04_US_VOL1_cap2_B1                訓練   3.12 t2.31 保有   1.92 t1.04 幾何差 2.07 費用後保有 1.45 20年勝率 0.827 Sharpe訓練 [0.488, 0.414] 保有 [0.727, 0.652] 地域 1/3 平均倍率 1.416",
+  "Q05_US_VAR6_cap1.5_B1              訓練   2.72 t2.17 保有   0.87 t0.42 幾何差 0.4 費用後保有 0.78 20年勝率 0.75 Sharpe訓練 [0.484, 0.412] 保有 [0.595, 0.652] 地域 2/3 平均倍率 1.346",
+  "Q06_US_VAR6_cap2_B1                訓練   4.06 t2.24 保有   0.57 t0.17 幾何差 0.09 費用後保有 0.39 20年勝率 0.75 Sharpe訓練 [0.494, 0.412] 保有 [0.575, 0.652] 地域 2/3 平均倍率 1.507",
+  "Q07_US_VAR1T_cap1.5_B1             訓練    2.0 t1.11 保有   1.76 t0.59 幾何差 1.91 費用後保有 1.51 20年勝率 0.738 Sharpe訓練 [0.492, 0.409] 保有 [0.731, 0.652] 地域 3/3 平均倍率 1.096",
+  "Q08_US_VAR1T_cap2_B1               訓練   5.14 t2.23 保有   5.66 t1.55 幾何差 5.17 費用後保有 5.3 20年勝率 0.875 Sharpe訓練 [0.486, 0.409] 保有 [0.723, 0.652] 地域 3/3 平均倍率 1.461",
+  "Q09_NDX_VAR1_cap1.5_B1             訓練   6.75 t3.09 保有   7.32 t4.56 幾何差 7.13 費用後保有 7.16 20年勝率 1.0 Sharpe訓練 [0.61, 0.445] 保有 [0.915, 0.823] 地域 1/3 平均倍率 1.342",
+  "Q10_NDX_VAR1_cap2_B1               訓練   6.24 t1.83 保有  11.31 t4.34 幾何差 11.03 費用後保有 10.93 20年勝率 1.0 Sharpe訓練 [0.535, 0.445] 保有 [0.948, 0.823] 地域 0/3 平均倍率 1.541",
+  "Q11_NDX_VOL1_cap1.5_B1             訓練   4.45 t2.5 保有   6.15 t4.41 幾何差 6.09 費用後保有 5.97 20年勝率 1.0 Sharpe訓練 [0.558, 0.445] 保有 [0.916, 0.823] 地域 1/3 平均倍率 1.298",
+  "Q12_NDX_VOL1_cap2_B1               訓練   3.52 t1.47 保有   7.89 t4.13 幾何差 7.91 費用後保有 7.48 20年勝率 1.0 Sharpe訓練 [0.497, 0.445] 保有 [0.941, 0.823] 地域 1/3 平均倍率 1.414",
+  "Q13_NDX_VAR6_cap1.5_B1             訓練   7.17 t2.66 保有   4.68 t2.38 幾何差 3.65 費用後保有 4.61 20年勝率 1.0 Sharpe訓練 [0.612, 0.423] 保有 [0.784, 0.823] 地域 2/3 平均倍率 1.35",
+  "Q14_NDX_VAR6_cap2_B1               訓練    5.5 t1.33 保有   6.75 t2.2 幾何差 5.2 費用後保有 6.6 20年勝率 1.0 Sharpe訓練 [0.505, 0.423] 保有 [0.771, 0.823] 地域 2/3 平均倍率 1.554",
+  "Q15_NDX_VAR1T_cap1.5_B1            訓練   1.58 t0.35 保有   1.66 t0.57 幾何差 1.47 費用後保有 1.38 20年勝率 1.0 Sharpe訓練 [0.44, 0.429] 保有 [0.809, 0.823] 地域 3/3 平均倍率 1.119",
+  "Q16_NDX_VAR1T_cap2_B1              訓練   5.66 t0.96 保有   7.22 t1.86 幾何差 6.06 費用後保有 6.8 20年勝率 1.0 Sharpe訓練 [0.44, 0.429] 保有 [0.803, 0.823] 地域 3/3 平均倍率 1.487",
+  "Q17_US_VAR1_cap1.5_B1EXP           訓練    2.8 t2.24 保有   3.45 t2.08 幾何差 3.5 費用後保有 3.23 20年勝率 0.92 Sharpe訓練 [0.509, 0.487] 保有 [0.763, 0.652] 地域 2/3 平均倍率 1.396",
+  "Q18_US_VAR1_cap2_B1EXP             訓練   4.37 t2.26 保有   3.34 t1.38 幾何差 3.34 費用後保有 2.82 20年勝率 0.8 Sharpe訓練 [0.483, 0.487] 保有 [0.735, 0.652] 地域 1/3 平均倍率 1.667",
+  "Q19_US_VOL1_cap1.5_B1EXP           訓練   2.43 t2.33 保有   2.36 t1.66 幾何差 2.49 費用後保有 2.13 20年勝率 0.853 Sharpe訓練 [0.508, 0.487] 保有 [0.749, 0.652] 地域 1/3 平均倍率 1.359",
+  "Q20_US_VOL1_cap2_B1EXP             訓練   3.96 t2.48 保有   2.13 t1.15 幾何差 2.27 費用後保有 1.66 20年勝率 0.827 Sharpe訓練 [0.509, 0.487] 保有 [0.731, 0.652] 地域 1/3 平均倍率 1.554",
+  "Q21_US_VAR6_cap1.5_B1EXP           訓練   3.17 t2.97 保有   0.92 t0.44 幾何差 0.46 費用後保有 0.83 20年勝率 0.84 Sharpe訓練 [0.53, 0.487] 保有 [0.597, 0.652] 地域 3/3 平均倍率 1.4",
+  "Q22_US_VAR6_cap2_B1EXP             訓練   4.77 t2.5 保有   0.74 t0.22 幾何差 0.21 費用後保有 0.56 20年勝率 0.733 Sharpe訓練 [0.495, 0.487] 保有 [0.576, 0.652] 地域 1/3 平均倍率 1.674",
+  "Q23_US_VAR1T_cap1.5_B1EXP          訓練   1.03 t0.7 保有   1.76 t0.59 幾何差 1.91 費用後保有 1.51 20年勝率 0.743 Sharpe訓練 [0.508, 0.526] 保有 [0.731, 0.652] 地域 3/3 平均倍率 1.117",
+  "Q24_US_VAR1T_cap2_B1EXP            訓練   4.22 t2.05 保有   5.66 t1.55 幾何差 5.17 費用後保有 5.3 20年勝率 0.878 Sharpe訓練 [0.502, 0.526] 保有 [0.723, 0.652] 地域 3/3 平均倍率 1.489",
+  "Q25_NDX_VAR1_cap1.5_B1EXP          訓練   -2.0 t-0.39 保有   7.41 t4.63 幾何差 7.39 費用後保有 7.24 20年勝率 1.0 Sharpe訓練 [0.619, 0.501] 保有 [0.937, 0.823] 地域 2/3 平均倍率 1.146",
+  "Q26_NDX_VAR1_cap2_B1EXP            訓練  -2.29 t-0.41 保有  10.15 t3.77 幾何差 9.92 費用後保有 9.73 20年勝率 1.0 Sharpe訓練 [0.612, 0.501] 保有 [0.94, 0.823] 地域 1/3 平均倍率 1.279",
+  "Q27_NDX_VOL1_cap1.5_B1EXP          訓練  -1.21 t-0.34 保有   5.61 t3.89 幾何差 5.59 費用後保有 5.42 20年勝率 1.0 Sharpe訓練 [0.611, 0.501] 保有 [0.914, 0.823] 地域 1/3 平均倍率 1.148",
+  "Q28_NDX_VOL1_cap2_B1EXP            訓練  -1.84 t-0.49 保有   7.26 t3.78 幾何差 7.32 費用後保有 6.84 20年勝率 1.0 Sharpe訓練 [0.577, 0.501] 保有 [0.939, 0.823] 地域 1/3 平均倍率 1.237",
+  "Q29_NDX_VAR6_cap1.5_B1EXP          訓練  -1.27 t-0.21 保有   3.67 t1.8 幾何差 2.67 費用後保有 3.61 20年勝率 1.0 Sharpe訓練 [0.601, 0.415] 保有 [0.764, 0.823] 地域 3/3 平均倍率 1.148",
+  "Q30_NDX_VAR6_cap2_B1EXP            訓練   -1.1 t-0.18 保有   5.44 t1.71 幾何差 3.99 費用後保有 5.27 20年勝率 1.0 Sharpe訓練 [0.581, 0.415] 保有 [0.752, 0.823] 地域 1/3 平均倍率 1.297",
+  "Q31_NDX_VAR1T_cap1.5_B1EXP         訓練    3.5 t0.61 保有   1.66 t0.57 幾何差 1.47 費用後保有 1.38 20年勝率 1.0 Sharpe訓練 [0.674, 0.415] 保有 [0.809, 0.823] 地域 3/3 平均倍率 1.071",
+  "Q32_NDX_VAR1T_cap2_B1EXP           訓練   0.56 t0.08 保有   7.22 t1.86 幾何差 6.06 費用後保有 6.8 20年勝率 1.0 Sharpe訓練 [0.563, 0.415] 保有 [0.803, 0.823] 地域 3/3 平均倍率 1.302",
+  "Q33_US_DOWN_cap1.5_B1              訓練    2.4 t2.05 保有   2.19 t1.34 幾何差 2.24 費用後保有 1.9 20年勝率 0.84 Sharpe訓練 [0.472, 0.414] 保有 [0.724, 0.652] 地域 1/3 平均倍率 1.318",
+  "Q34_US_DOWN_cap2_B1                訓練    4.4 t2.53 保有    2.8 t1.27 幾何差 2.86 費用後保有 2.17 20年勝率 0.84 Sharpe訓練 [0.503, 0.414] 保有 [0.724, 0.652] 地域 1/3 平均倍率 1.526",
+  "Q35_US_VOL1T_cap1.5_B1             訓練    2.0 t1.11 保有   1.76 t0.59 幾何差 1.91 費用後保有 1.51 20年勝率 0.738 Sharpe訓練 [0.492, 0.409] 保有 [0.731, 0.652] 地域 3/3 平均倍率 1.096",
+  "Q36_US_VOL1T_cap2_B1               訓練   5.14 t2.23 保有   5.66 t1.55 幾何差 5.17 費用後保有 5.3 20年勝率 0.875 Sharpe訓練 [0.486, 0.409] 保有 [0.723, 0.652] 地域 3/3 平均倍率 1.461",
+  "Q37_NDX_DOWN_cap1.5_B1             訓練   6.05 t2.67 保有   7.29 t4.52 幾何差 7.12 費用後保有 7.1 20年勝率 1.0 Sharpe訓練 [0.58, 0.445] 保有 [0.918, 0.823] 地域 1/3 平均倍率 1.333",
+  "Q38_NDX_DOWN_cap2_B1               訓練   5.14 t1.53 保有   9.18 t4.06 幾何差 8.54 費用後保有 8.69 20年勝率 1.0 Sharpe訓練 [0.495, 0.445] 保有 [0.887, 0.823] 地域 1/3 平均倍率 1.524",
+  "Q39_NDX_VOL1T_cap1.5_B1            訓練   1.58 t0.35 保有   1.66 t0.57 幾何差 1.47 費用後保有 1.38 20年勝率 1.0 Sharpe訓練 [0.44, 0.429] 保有 [0.809, 0.823] 地域 3/3 平均倍率 1.119",
+  "Q40_NDX_VOL1T_cap2_B1              訓練   5.75 t0.98 保有   7.22 t1.86 幾何差 6.06 費用後保有 6.8 20年勝率 1.0 Sharpe訓練 [0.444, 0.429] 保有 [0.803, 0.823] 地域 3/3 平均倍率 1.486",
+  "H01_HiTec_VAR1_cap1.5_B1           訓練   3.53 t2.11 保有   7.21 t4.44 幾何差 6.97 費用後保有 7.05 20年勝率 0.765 Sharpe訓練 [0.441, 0.371] 保有 [0.895, 0.805] 地域 1/3 平均倍率 1.371",
+  "H02_HiTec_VAR1_cap1.5_B1EXP        訓練   3.67 t2.38 保有   7.13 t4.48 幾何差 6.96 費用後保有 6.96 20年勝率 0.787 Sharpe訓練 [0.459, 0.407] 保有 [0.902, 0.805] 地域 2/3 平均倍率 1.403",
+  "H03_HiTec_VOL1_cap1.5_B1           訓練   3.05 t2.25 保有   5.19 t3.66 幾何差 5.03 費用後保有 4.99 20年勝率 0.716 Sharpe訓練 [0.442, 0.371] 保有 [0.874, 0.805] 地域 1/3 平均倍率 1.323",
+  "H04_HiTec_VOL1_cap1.5_B1EXP        訓練   2.87 t2.17 保有   4.99 t3.48 幾何差 4.85 費用後保有 4.79 20年勝率 0.693 Sharpe訓練 [0.441, 0.407] 保有 [0.873, 0.805] 地域 1/3 平均倍率 1.366",
+  "H05_HiTec_DOWN_cap1.5_B1           訓練   3.91 t2.53 保有   6.55 t4.4 幾何差 6.48 費用後保有 6.33 20年勝率 0.79 Sharpe訓練 [0.456, 0.371] 保有 [0.905, 0.805] 地域 1/3 平均倍率 1.346",
+  "H06_HiTec_DOWN_cap1.5_B1EXP        訓練   4.36 t3.44 保有   6.47 t4.37 幾何差 6.42 費用後保有 6.24 20年勝率 0.8 Sharpe訓練 [0.469, 0.407] 保有 [0.907, 0.805] 地域 2/3 平均倍率 1.378",
+  "H07_IXIC_VAR1_cap1.5_B1            訓練    1.5 t0.77 保有    2.9 t1.41 幾何差 3.31 費用後保有 2.61 20年勝率 0.833 Sharpe訓練 [0.308, 0.291] 保有 [0.867, 0.729] 地域 1/3 平均倍率 1.253",
+  "H08_IXIC_VAR1_cap1.5_B1EXP         訓練  -1.81 t-0.69 保有   3.37 t1.66 幾何差 3.74 費用後保有 3.09 20年勝率 0.6 Sharpe訓練 [0.322, 0.376] 保有 [0.869, 0.729] 地域 2/3 平均倍率 1.07",
+  "H09_IXIC_VOL1_cap1.5_B1            訓練   0.22 t0.14 保有   0.92 t0.53 幾何差 1.4 費用後保有 0.62 20年勝率 0.694 Sharpe訓練 [0.266, 0.291] 保有 [0.843, 0.729] 地域 1/3 平均倍率 1.188",
+  "H10_IXIC_VOL1_cap1.5_B1EXP         訓練   -1.0 t-0.51 保有   1.63 t0.95 幾何差 2.07 費用後保有 1.34 20年勝率 0.6 Sharpe訓練 [0.372, 0.376] 保有 [0.849, 0.729] 地域 1/3 平均倍率 1.052",
+  "H11_IXIC_DOWN_cap1.5_B1            訓練   2.03 t1.19 保有   2.13 t1.27 幾何差 2.39 費用後保有 1.78 20年勝率 0.861 Sharpe訓練 [0.325, 0.291] 保有 [0.819, 0.729] 地域 1/3 平均倍率 1.248",
+  "H12_IXIC_DOWN_cap1.5_B1EXP         訓練   0.73 t0.3 保有   2.59 t1.58 幾何差 2.81 費用後保有 2.25 20年勝率 0.867 Sharpe訓練 [0.423, 0.376] 保有 [0.822, 0.729] 地域 2/3 平均倍率 1.121",
+  "H13_NDX_VAR1_cap1.5_B1_LAG1        訓練   6.96 t3.52 保有   7.16 t4.19 幾何差 6.87 費用後保有 6.99 20年勝率 1.0 Sharpe訓練 [0.626, 0.458] 保有 [0.9, 0.823] 地域 1/3 平均倍率 1.342",
+  "H14_NDX_VOL1_cap1.5_B1_LAG1        訓練   4.81 t2.85 保有    6.1 t4.46 幾何差 6.02 費用後保有 5.92 20年勝率 1.0 Sharpe訓練 [0.579, 0.458] 保有 [0.911, 0.823] 地域 1/3 平均倍率 1.298",
+  "H15_NDX_DOWN_cap1.5_B1_LAG1        訓練   6.62 t3.27 保有   7.42 t4.86 幾何差 7.26 費用後保有 7.23 20年勝率 1.0 Sharpe訓練 [0.604, 0.458] 保有 [0.921, 0.823] 地域 1/3 平均倍率 1.333",
+  "H16_US_ENS_cap1.5_B1               訓練    2.2 t1.9 保有   2.58 t1.68 幾何差 2.68 費用後保有 2.34 20年勝率 0.815 Sharpe訓練 [0.468, 0.414] 保有 [0.748, 0.652] 地域 1/3 平均倍率 1.322",
+  "H17_US_ENS_cap1.5_B1EXP            訓練   2.63 t2.5 保有   2.75 t1.78 幾何差 2.84 費用後保有 2.51 20年勝率 0.867 Sharpe訓練 [0.509, 0.487] 保有 [0.752, 0.652] 地域 2/3 平均倍率 1.373",
+  "H18_US_ENS_cap2_B1                 訓練   3.71 t2.33 保有   2.57 t1.22 幾何差 2.68 費用後保有 2.04 20年勝率 0.802 Sharpe訓練 [0.49, 0.414] 保有 [0.734, 0.652] 地域 1/3 平均倍率 1.493",
+  "H19_US_ENS_cap2_B1EXP              訓練    4.4 t2.56 保有   2.83 t1.34 幾何差 2.92 費用後保有 2.31 20年勝率 0.813 Sharpe訓練 [0.502, 0.487] 保有 [0.738, 0.652] 地域 1/3 平均倍率 1.621",
+  "H20_NDX_ENS_cap1.5_B1              訓練   5.75 t2.84 保有   6.92 t4.74 幾何差 6.8 費用後保有 6.75 20年勝率 1.0 Sharpe訓練 [0.586, 0.445] 保有 [0.919, 0.823] 地域 1/3 平均倍率 1.324",
+  "H21_NDX_ENS_cap1.5_B1EXP           訓練  -1.57 t-0.35 保有    6.7 t4.59 幾何差 6.7 費用後保有 6.52 20年勝率 1.0 Sharpe訓練 [0.612, 0.501] 保有 [0.931, 0.823] 地域 2/3 平均倍率 1.157",
+  "H22_NDX_ENS_cap2_B1                訓練   4.96 t1.66 保有   9.46 t4.33 幾何差 9.22 費用後保有 9.05 20年勝率 1.0 Sharpe訓練 [0.514, 0.445] 保有 [0.931, 0.823] 地域 1/3 平均倍率 1.493",
+  "H23_NDX_ENS_cap2_B1EXP             訓練  -1.64 t-0.34 保有   8.59 t3.86 幾何差 8.42 費用後保有 8.16 20年勝率 1.0 Sharpe訓練 [0.609, 0.501] 保有 [0.927, 0.823] 地域 1/3 平均倍率 1.277",
+  "I01_NDX_VAR1_cap1.5_B1_FUND        訓練   6.63 t3.04 保有   6.59 t3.88 幾何差 6.18 費用後保有 6.31 20年勝率 1.0 Sharpe訓練 [0.598, 0.445] 保有 [0.872, 0.823] 地域 0/3 平均倍率 1.342",
+  "I02_NDX_VOL1_cap1.5_B1_FUND        訓練   4.36 t2.45 保有   5.61 t3.92 幾何差 5.4 費用後保有 5.3 20年勝率 1.0 Sharpe訓練 [0.548, 0.445] 保有 [0.88, 0.823] 地域 0/3 平均倍率 1.298",
+  "I03_NDX_DOWN_cap1.5_B1_FUND        訓練   5.84 t2.57 保有   6.76 t4.15 幾何差 6.45 費用後保有 6.43 20年勝率 1.0 Sharpe訓練 [0.563, 0.445] 保有 [0.884, 0.823] 地域 1/3 平均倍率 1.333",
+  "I04_HiTec_DOWN_cap1.5_B1EXP_FUND   訓練   4.37 t3.45 保有    5.9 t3.92 幾何差 5.69 費用後保有 5.49 20年勝率 0.773 Sharpe訓練 [0.464, 0.407] 保有 [0.869, 0.805] 地域 2/3 平均倍率 1.378",
+  "I05_US_VAR1_cap1.5_B1EXP_FUND      訓練   2.57 t2.09 保有   2.94 t1.79 幾何差 2.91 費用後保有 2.53 20年勝率 0.893 Sharpe訓練 [0.497, 0.487] 保有 [0.72, 0.652] 地域 1/3 平均倍率 1.396",
+  "R01_US_VAR1_nocap                  保有 -3.17 訓練 1.64 最大倍率 16.421",
+  "R02_NDX_VAR1_nocap                 保有 10.7 訓練 -0.24 最大倍率 17.132",
+  "R03 論文の再現 {'from': 192608, 'to': 201512, 'alpha_ann': np.float64(4.88), 't': np.float64(2.76), 'beta': np.float64(0.601), 'r2': np.float64(0.362), 'appraisal': np.float64(0.327)} 0.511 0.415 16.85",
+  "JKP train VAR1_cap1.5: 国 41 全期間で正 19 保有で正 10 シャープ上 全期間 22 保有 10 中央 全期間 0.02 保有 -0.82",
+  "JKP train VAR1_cap2: 国 41 全期間で正 19 保有で正 9 シャープ上 全期間 24 保有 9 中央 全期間 -0.33 保有 -1.94",
+  "JKP train VOL1_cap1.5: 国 41 全期間で正 22 保有で正 10 シャープ上 全期間 26 保有 9 中央 全期間 0.34 保有 -0.51",
+  "JKP train VOL1_cap2: 国 41 全期間で正 22 保有で正 9 シャープ上 全期間 26 保有 7 中央 全期間 0.24 保有 -1.05",
+  "JKP train VAR6_cap1.5: 国 41 全期間で正 20 保有で正 8 シャープ上 全期間 25 保有 6 中央 全期間 0.06 保有 -1.14",
+  "JKP train VAR6_cap2: 国 41 全期間で正 20 保有で正 6 シャープ上 全期間 26 保有 6 中央 全期間 0.24 保有 -1.3",
+  "JKP train VAR1T_cap1.5: 国 41 全期間で正 27 保有で正 18 シャープ上 全期間 31 保有 22 中央 全期間 0.76 保有 -0.45",
+  "JKP train VAR1T_cap2: 国 41 全期間で正 27 保有で正 13 シャープ上 全期間 30 保有 16 中央 全期間 1.08 保有 -0.92",
+  "JKP train_b1 VAR1_cap1.5: 国 41 全期間で正 19 保有で正 12 シャープ上 全期間 22 保有 12 中央 全期間 0.83 保有 -0.34",
+  "JKP train_b1 VAR1_cap2: 国 41 全期間で正 22 保有で正 9 シャープ上 全期間 22 保有 9 中央 全期間 1.31 保有 -0.3",
+  "JKP train_b1 VOL1_cap1.5: 国 41 全期間で正 23 保有で正 11 シャープ上 全期間 26 保有 9 中央 全期間 0.72 保有 -0.17",
+  "JKP train_b1 VOL1_cap2: 国 41 全期間で正 26 保有で正 10 シャープ上 全期間 27 保有 8 中央 全期間 1.03 保有 -0.46",
+  "JKP train_b1 VAR6_cap1.5: 国 41 全期間で正 21 保有で正 7 シャープ上 全期間 26 保有 5 中央 全期間 0.65 保有 -0.67",
+  "JKP train_b1 VAR6_cap2: 国 41 全期間で正 20 保有で正 8 シャープ上 全期間 25 保有 6 中央 全期間 1.37 保有 -0.58",
+  "JKP train_b1 VAR1T_cap1.5: 国 41 全期間で正 33 保有で正 27 シャープ上 全期間 33 保有 27 中央 全期間 2.36 保有 0.77",
+  "JKP train_b1 VAR1T_cap2: 国 41 全期間で正 30 保有で正 22 シャープ上 全期間 30 保有 22 中央 全期間 3.88 保有 1.39",
+  "業種 ind10_VAR1_cap1.5_train_b1: n 10 全期間で正 9 訓練 t≥2 2 保有で正 7 シャープ上 全期間 8 保有 5 中央 全期間 2.02 保有 2.29",
+  "業種 ind10_VAR1_cap1.5_expanding_b1: n 10 全期間で正 10 訓練 t≥2 4 保有で正 8 シャープ上 全期間 7 保有 5 中央 全期間 2.27 保有 2.18",
+  "業種 ind10_VOL1_cap1.5_train_b1: n 10 全期間で正 10 訓練 t≥2 2 保有で正 7 シャープ上 全期間 9 保有 6 中央 全期間 1.63 保有 1.49",
+  "業種 ind10_VOL1_cap1.5_expanding_b1: n 10 全期間で正 10 訓練 t≥2 6 保有で正 7 シャープ上 全期間 9 保有 6 中央 全期間 2.03 保有 1.48",
+  "業種 ind10_DOWN_cap1.5_train_b1: n 10 全期間で正 10 訓練 t≥2 5 保有で正 6 シャープ上 全期間 9 保有 5 中央 全期間 2.06 保有 2.05",
+  "業種 ind10_DOWN_cap1.5_expanding_b1: n 10 全期間で正 10 訓練 t≥2 9 保有で正 6 シャープ上 全期間 8 保有 5 中央 全期間 2.56 保有 2.02",
+  "業種 ind49_VAR1_cap1.5_train_b1: n 40 全期間で正 27 訓練 t≥2 5 保有で正 28 シャープ上 全期間 24 保有 19 中央 全期間 1.63 保有 2.1",
+  "業種 ind49_VAR1_cap1.5_expanding_b1: n 40 全期間で正 31 訓練 t≥2 13 保有で正 28 シャープ上 全期間 21 保有 19 中央 全期間 2.6 保有 2.06",
+  "格子 H06_HiTec_DOWN_B1EXP cap1.25 {'train_ex': 2.51, 'train_t': 3.26, 'hold_net_ex': 3.73, 'hold_net_t': 3.0, 'hold_net_cagr_diff': 3.67, 'full_t': 4.18, 'roll20_win': 0.813, 'sharpe_train': [0.461, 0.407], 'sharpe_hold': [0.87, 0.805], 'avg_w': 1.2}",
+  "格子 H06_HiTec_DOWN_B1EXP cap1.5 {'train_ex': 4.36, 'train_t': 3.44, 'hold_net_ex': 6.24, 'hold_net_t': 4.17, 'hold_net_cagr_diff': 6.15, 'full_t': 4.55, 'roll20_win': 0.8, 'sharpe_train': [0.469, 0.407], 'sharpe_hold': [0.907, 0.805], 'avg_w': 1.378}",
+  "格子 H06_HiTec_DOWN_B1EXP cap1.75 {'train_ex': 5.2, 'train_t': 2.94, 'hold_net_ex': 6.3, 'hold_net_t': 3.36, 'hold_net_cagr_diff': 5.87, 'full_t': 3.78, 'roll20_win': 0.707, 'sharpe_train': [0.453, 0.407], 'sharpe_hold': [0.872, 0.805], 'avg_w': 1.523}",
+  "格子 H06_HiTec_DOWN_B1EXP cap2 {'train_ex': 5.99, 'train_t': 2.65, 'hold_net_ex': 6.26, 'hold_net_t': 2.64, 'hold_net_cagr_diff': 5.54, 'full_t': 3.32, 'roll20_win': 0.693, 'sharpe_train': [0.442, 0.407], 'sharpe_hold': [0.841, 0.805], 'avg_w': 1.642}",
+  "格子 窓 H06_HiTec_DOWN_B1EXP {'roll20_jan': 0.827, 'roll15_jul': 0.75, 'roll25_jul': 0.771, 'roll10_jul': 0.729}",
+  "格子 Q09_NDX_VAR1_B1 cap1.25 {'train_ex': 4.49, 'train_t': 3.21, 'hold_net_ex': 3.41, 'hold_net_t': 3.39, 'hold_net_cagr_diff': 3.18, 'full_t': 4.57, 'roll20_win': 1.0, 'sharpe_train': [0.571, 0.445], 'sharpe_hold': [0.853, 0.823], 'avg_w': 1.195}",
+  "格子 Q09_NDX_VAR1_B1 cap1.5 {'train_ex': 6.75, 'train_t': 3.09, 'hold_net_ex': 7.16, 'hold_net_t': 4.43, 'hold_net_cagr_diff': 6.93, 'full_t': 5.12, 'roll20_win': 1.0, 'sharpe_train': [0.61, 0.445], 'sharpe_hold': [0.915, 0.823], 'avg_w': 1.342}",
+  "格子 Q09_NDX_VAR1_B1 cap1.75 {'train_ex': 7.22, 'train_t': 2.55, 'hold_net_ex': 9.63, 'hold_net_t': 4.42, 'hold_net_cagr_diff': 9.31, 'full_t': 4.7, 'roll20_win': 1.0, 'sharpe_train': [0.593, 0.445], 'sharpe_hold': [0.939, 0.823], 'avg_w': 1.458}",
+  "格子 Q09_NDX_VAR1_B1 cap2 {'train_ex': 6.24, 'train_t': 1.83, 'hold_net_ex': 10.93, 'hold_net_t': 4.14, 'hold_net_cagr_diff': 10.55, 'full_t': 3.93, 'roll20_win': 1.0, 'sharpe_train': [0.535, 0.445], 'sharpe_hold': [0.948, 0.823], 'avg_w': 1.541}",
+  "格子 窓 Q09_NDX_VAR1_B1 {'roll20_jan': 1.0, 'roll15_jul': 1.0, 'roll25_jul': 1.0, 'roll10_jul': 1.0}",
+  "格子 Q37_NDX_DOWN_B1 cap1.25 {'train_ex': 4.3, 'train_t': 3.01, 'hold_net_ex': 3.88, 'hold_net_t': 3.45, 'hold_net_cagr_diff': 3.73, 'full_t': 4.5, 'roll20_win': 1.0, 'sharpe_train': [0.566, 0.445], 'sharpe_hold': [0.873, 0.823], 'avg_w': 1.196}",
+  "格子 Q37_NDX_DOWN_B1 cap1.5 {'train_ex': 6.05, 'train_t': 2.67, 'hold_net_ex': 7.1, 'hold_net_t': 4.36, 'hold_net_cagr_diff': 6.89, 'full_t': 4.71, 'roll20_win': 1.0, 'sharpe_train': [0.58, 0.445], 'sharpe_hold': [0.918, 0.823], 'avg_w': 1.333}",
+  "格子 Q37_NDX_DOWN_B1 cap1.75 {'train_ex': 5.71, 'train_t': 2.08, 'hold_net_ex': 8.12, 'hold_net_t': 4.05, 'hold_net_cagr_diff': 7.61, 'full_t': 4.07, 'roll20_win': 1.0, 'sharpe_train': [0.537, 0.445], 'sharpe_hold': [0.901, 0.823], 'avg_w': 1.44}",
+  "格子 Q37_NDX_DOWN_B1 cap2 {'train_ex': 5.14, 'train_t': 1.53, 'hold_net_ex': 8.69, 'hold_net_t': 3.78, 'hold_net_cagr_diff': 7.94, 'full_t': 3.41, 'roll20_win': 1.0, 'sharpe_train': [0.495, 0.445], 'sharpe_hold': [0.887, 0.823], 'avg_w': 1.524}",
+  "格子 窓 Q37_NDX_DOWN_B1 {'roll20_jan': 1.0, 'roll15_jul': 1.0, 'roll25_jul': 1.0, 'roll10_jul': 1.0}",
+  "事後 Q09_NDX_VAR1_cap1.5_B1 L 1.287 保有 戦略 7.16 一定倍率 4.26 並べ替え p 0.1279 全期間 p 0.018 シャープ並べ替え p 保有 0.008 全期間 0.001 最大下落 全期間 {'strategy': -58.4, 'const_lev': -89.8, 'bench': -81.1}",
+  "事後 Q11_NDX_VOL1_cap1.5_B1 L 1.248 保有 戦略 5.97 一定倍率 3.68 並べ替え p 0.2038 全期間 p 0.1089 シャープ並べ替え p 保有 0.01 全期間 0.001 最大下落 全期間 {'strategy': -63.4, 'const_lev': -88.9, 'bench': -81.1}",
+  "事後 Q37_NDX_DOWN_cap1.5_B1 L 1.289 保有 戦略 7.1 一定倍率 4.29 並べ替え p 0.0919 全期間 p 0.042 シャープ並べ替え p 保有 0.007 全期間 0.001 最大下落 全期間 {'strategy': -61.5, 'const_lev': -89.9, 'bench': -81.1}",
+  "事後 H06_HiTec_DOWN_cap1.5_B1EXP L 1.389 保有 戦略 6.24 一定倍率 5.84 並べ替え p 0.1558 全期間 p 0.1419 シャープ並べ替え p 保有 0.012 全期間 0.001 最大下落 全期間 {'strategy': -72.3, 'const_lev': -91.0, 'bench': -79.5}",
+  "事後 H13_NDX_VAR1_cap1.5_B1_LAG1 L 1.288 保有 戦略 6.99 一定倍率 4.27 並べ替え p None 全期間 p None シャープ並べ替え p 保有 None 全期間 None 最大下落 全期間 None",
+  "事後 H14_NDX_VOL1_cap1.5_B1_LAG1 L 1.249 保有 戦略 5.92 一定倍率 3.69 並べ替え p None 全期間 p None シャープ並べ替え p 保有 None 全期間 None 最大下落 全期間 None",
+  "事後 H15_NDX_DOWN_cap1.5_B1_LAG1 L 1.29 保有 戦略 7.23 一定倍率 4.3 並べ替え p None 全期間 p None シャープ並べ替え p 保有 None 全期間 None 最大下落 全期間 None",
+  "事後 H20_NDX_ENS_cap1.5_B1 L 1.274 保有 戦略 6.75 一定倍率 4.07 並べ替え p 0.1209 全期間 p 0.041 シャープ並べ替え p 保有 0.005 全期間 0.001 最大下落 全期間 {'strategy': -60.8, 'const_lev': -89.6, 'bench': -81.1}",
+  "事後 I01_NDX_VAR1_cap1.5_B1_FUND L 1.287 保有 戦略 6.31 一定倍率 3.65 並べ替え p None 全期間 p None シャープ並べ替え p 保有 None 全期間 None 最大下落 全期間 None",
+  "事後 I02_NDX_VOL1_cap1.5_B1_FUND L 1.248 保有 戦略 5.3 一定倍率 3.15 並べ替え p None 全期間 p None シャープ並べ替え p 保有 None 全期間 None 最大下落 全期間 None",
+  "事後 I03_NDX_DOWN_cap1.5_B1_FUND L 1.289 保有 戦略 6.43 一定倍率 3.67 並べ替え p None 全期間 p None シャープ並べ替え p 保有 None 全期間 None 最大下落 全期間 None",
+  "事後 H01_HiTec_VAR1_cap1.5_B1 L 1.367 保有 戦略 7.05 一定倍率 5.5 並べ替え p 0.1249 全期間 p 0.2767 シャープ並べ替え p 保有 0.011 全期間 0.001 最大下落 全期間 {'strategy': -83.5, 'const_lev': -97.3, 'bench': -91.2}",
+  "事後 H02_HiTec_VAR1_cap1.5_B1EXP L 1.41 保有 戦略 6.96 一定倍率 6.14 並べ替え p 0.1229 全期間 p 0.4625 シャープ並べ替え p 保有 0.008 全期間 0.001 最大下落 全期間 {'strategy': -69.7, 'const_lev': -91.4, 'bench': -79.5}",
+  "事後 H05_HiTec_DOWN_cap1.5_B1 L 1.347 保有 戦略 6.33 一定倍率 5.21 並べ替え p 0.1558 全期間 p 0.1449 シャープ並べ替え p 保有 0.01 全期間 0.001 最大下落 全期間 {'strategy': -79.6, 'const_lev': -97.1, 'bench': -91.2}",
+  "事後 I04_HiTec_DOWN_cap1.5_B1EXP_FUND L 1.389 保有 戦略 5.49 一定倍率 4.94 並べ替え p None 全期間 p None シャープ並べ替え p 保有 None 全期間 None 最大下落 全期間 None",
+  "事後 Q08_US_VAR1T_cap2_B1 L 1.435 保有 戦略 5.3 一定倍率 4.26 並べ替え p 0.4775 全期間 p 0.1429 シャープ並べ替え p 保有 0.0749 全期間 0.003 最大下落 全期間 {'strategy': -73.4, 'const_lev': -93.9, 'bench': -83.7}",
+  "事後 Q36_US_VOL1T_cap2_B1 L 1.435 保有 戦略 5.3 一定倍率 4.26 並べ替え p 0.4775 全期間 p 0.1429 シャープ並べ替え p 保有 0.0749 全期間 0.003 最大下落 全期間 {'strategy': -73.4, 'const_lev': -93.9, 'bench': -83.7}"
+ ],
+ "generated": "2026-09-28"
 }
