@@ -476,6 +476,35 @@ def tax_sim(tech, mkt, state, wh, a=M.HOLD_START, z=END):
             'ratio_after_tax': round(post / hpost, 3)}
 
 
+# 結果を見た後に書いた読み（規則・線は変えていない）
+HEADLINE = [
+    '格付けした切替の規則31本（主8・NDX 8・探索 E 5・探索 X 6・探索 Y 4）は、市場（French Mkt）に対しても同じハイテクの器を買って持つだけに対しても、すべて C。S・A・B は0本',
+    '市場に対する保有期間（2007〜）の超過は大きく正（最良 E1 +6.2%/年 t3.5・主 P1 +5.0%/年 t2.9）だが、これはハイテクの器そのものの勝ち（T3 − 市場: 2007〜 +5.6%/年 t3.1）で、訓練期間（〜2006）の超過は −0.8〜+3.8%/年・t は最大 1.4 と、C1（t≥2）に届いたものは0本。T3 − 市場は 1981〜2006 に +1.4%/年（t0.4・幾何では −1.3%/年）',
+    '問いの本体（上場の波が熱い間ハイテクから降りると今の規則〔ハイテクを持ち続ける〕より良くなるか）は否: 主 P1（VC・上位5分の1・全部）は同じ器に対して 訓練 −0.8%/年（t−0.3・幾何では +1.2%/年）、保有 −0.7%/年（t−1.1）。VC の熱い波は6回で、市場が勝ったのは3回（1981-85・1986-88・1999-2002）、ハイテクが勝ったのも3回（1991-98 は対数で +60%・2014-16・2021-23）。二項 p=0.66',
+    '積立 R3（新規資金だけ市場へ・売らない）は今の規則（ハイテクへ積立）に D判定で勝ったものが23本中0本（主 D1: 20年窓の最終額の比の中央値 訓練 0.935・保有 0.973）。いちばん近いのは E4D（初日のリターンが熱い間だけ市場へ）で中央値は訓練 1.033・保有 1.018 だが、勝った割合が 73%・67% で 80% に届かない。市場への積立には15本が D判定で勝つが、それはハイテクの積立そのものが市場の積立に勝っていた分（基準: T3 の積立 ÷ 市場の積立の中央値 訓練 1.156・保有 1.208、NDX 1.249・1.359）を受け継いだもの',
+    '集中の頂点（ハイテクの比率が過去最大を更新した月）の後60か月はハイテクが市場に年 −4.7〜−5.7% 負けたが、上場の波が熱いかどうかで差は出なかった（VC: 熱い −4.7%/年 n14・熱くない −5.7%/年 n5）＝上場の信号は反転を見分けていない',
+    '探索 X（波×相対トレンド）は同じ器に対して訓練・保有とも小さな正（X4 訓練 +1.1%/年 t0.6・保有 +0.02%/年）で C。IPO の信号がトレンドだけの対照に足した分は保有で +1.7〜2.4%/年（t2.3〜3.0）だが、中身は対照のトレンドの空振り（同じ器に対し保有 −1.9〜−2.3%/年）を減らしただけ。探索 Y（日照りの後だけハイテク・ふだん市場）は Y4 が市場に 訓練 +2.1%/年（t1.1）・保有 +2.9%/年（t2.0）で最も素直だが C1 に届かず C',
+]
+DEVIATIONS = [
+    '業種の IPO 件数（CUSIP→SIC）を作れないので、業種での再現は Ritter Table 4b のライフサイエンスの年の件数（French Drugs のみ・MedEq は入れない）と French の銘柄数の12か月の伸び（上場の純増）で代えた。エネルギーの IPO 件数は無い',
+    'C5（地域での再現）は N/A（米国外の IPO とハイテク業種のデータが無い）',
+    'Internet の印は Ritter が近年更新していないので 2021-12 で打ち切り、INT の規則の保有期間は 2007-01〜2022-01（15年）',
+    'T3 は『前月の銘柄数が5以上の業種を等分』→ 1973-07 まで Softw を含まない（Hardw・Chips の2業種）。1965〜1973 を使う E3・E4・X2・X3・Y3 だけに効く',
+    'R3（積立）は一本の月次系列を持たないので C1〜C8 ではなく mw_valdca の K 族と同じ D判定（格付け外）',
+    '費用は指示書どおり『持ち替え1回で資産の 0.10%』（全体の事前登録の『片道 100% あたり 0.10%』を売り＋買いで 0.20% と読む場合は報告の hold_net_cost0.20 を見る。結論は変わらない）',
+    '事前登録2の X 族を初めて回したとき、T3 の 1957 年以前の欠けで相対指数の連続の検査が止まった（結果は一つも出ていない）→ 最後の連続した区間だけで相対指数を作るように直してから測った',
+    'mw_common.py に不具合は見つからなかった（編集していない）',
+]
+CAVEATS = [
+    '独立の波は訓練に4〜6・保有に1〜3しかない（二項の p はどれも 0.06 以上）。t 値は Newey-West でも楽観側に出うる',
+    '2007年以降はハイテクが市場に大勝ちした一つの時代。市場に対する保有期間の勝ちは、この時代にハイテクを多く持った分がほぼすべて',
+    '私たちは 1983-84・2000-02・2009・2022-23 の結果を知っている。探索 X・Y はこの知識が混ざりうる族で、線は下げていないが割り引いて読む',
+    'Ritter の一覧（VC・Internet の印）は後から整えられたもの。Internet の印は 2005〜2007 に不明が計35件ある',
+    'French の業種は SIC の分類で、今日のプラットフォーム企業（Amazon・Alphabet・Meta など）は T3 に入らない。NDX は 1985年から',
+    '課税口座では R1 の保有期間の税引後の最終額はハイテクを持ち続けた場合の 0.79倍（P1）',
+]
+
+
 def main():
     pre = json.load(open(os.path.join(M.BASE, 'out', PREREG)))
     sanity = {}
@@ -805,19 +834,35 @@ def main():
     for r in all_timing:
         r.pop('_series', None)
     for r in all_timing:
+        hm = r['cmp']['mkt']; ht = r['cmp']['tech']
         tested.append({'name': r['name'], 'family': r['family'], 'kind': 'timing', 'primary': r.get('primary', False),
-                       'grade_vs_tech': r['grade_vs_tech'], 'grade_vs_mkt': r['grade_vs_mkt']})
+                       # grade = 市場（French Mkt）に対する格付け（プログラムの問い『市場に勝つか』）。同じ器を買って持つだけに対する格付けは grade_vs_tech
+                       'grade': r['grade_vs_mkt'], 'grade_vs_tech': r['grade_vs_tech'], 'grade_vs_mkt': r['grade_vs_mkt'],
+                       'hold_net_ex_vs_mkt': (hm['hold_net'] or {}).get('ex_ann'), 'hold_net_t_vs_mkt': (hm['hold_net'] or {}).get('t'),
+                       'train_ex_vs_mkt': (hm['train'] or {}).get('ex_ann'), 'train_t_vs_mkt': (hm['train'] or {}).get('t'),
+                       'hold_net_ex_vs_tech': (ht['hold_net'] or {}).get('ex_ann'), 'train_ex_vs_tech': (ht['train'] or {}).get('ex_ann'),
+                       'train_t_vs_tech': (ht['train'] or {}).get('t')})
     for d in dres:
-        tested.append({'name': d['name'], 'family': d['family'], 'kind': 'dca_D', 'judgement_vs_tech': d['judgement_vs_tech'], 'judgement_vs_mkt': d['judgement_vs_mkt']})
+        tested.append({'name': d['name'], 'family': d['family'], 'kind': 'dca_D', 'grade': 'D判定（格付け外）',
+                       'judgement_vs_tech': d['judgement_vs_tech'], 'judgement_vs_mkt': d['judgement_vs_mkt'],
+                       'hold_windows_median_vs_tech': (d['cmp']['tech']['hold_windows'] or {}).get('median_ratio'),
+                       'hold_windows_median_vs_mkt': (d['cmp']['mkt']['hold_windows'] or {}).get('median_ratio')})
     tested.append({'name': 'SR_a_R1_LIFEY_Drugs', 'family': '再現の報告', 'kind': 'report'})
     tested.append({'name': f'SR_b_net_listings_x{len(ind)}', 'family': '再現の報告', 'kind': 'report', 'count': len(ind)})
     tested.append({'name': 'BASE_T3・BASE_NDX（今の規則の積立 vs 市場の積立）', 'family': '基準の報告（事前登録2）', 'kind': 'report'})
     out = {'angle': 'tech_ipo_wave', 'prereg': [PREREG, PREREG2, PREREG3],
            'prereg_commit': {PREREG: git_sha(f'out/{PREREG}'), PREREG2: git_sha(f'out/{PREREG2}'), PREREG3: git_sha(f'out/{PREREG3}')},
            'benchmark_note': 'grade_vs_tech = 同じハイテクの器を買って持つだけ（全体の事前登録のタイミング型の相手）／grade_vs_mkt = French Mkt（市場に勝つか）',
+           'n_tested': sum(1 for x in tested if x['kind'] in ('timing', 'dca_D')), 'n_graded_timing': len(all_timing), 'n_dca_D': len(dres),
+           'n_note': '格付けした切替の規則 31本（各2つの相手）＋積立の D判定 23本。報告（業種での再現: ライフサイエンス1本・49業種）は数に入れない',
+           'grade_counts': {cmp_: {g_: sum(1 for r in all_timing if r['grade_vs_' + cmp_] == g_) for g_ in 'SABC'} for cmp_ in ('mkt', 'tech')},
+           'dca_D_pass_counts': {cmp_: sum(1 for d in dres if d['judgement_vs_' + cmp_].startswith('積立で勝ち')) for cmp_ in ('mkt', 'tech')},
            'tested_count': len(tested), 'tested': tested,
            'families': {'P': strats['P'], 'N': strats['N'], 'E': strats['E'], 'X': strats['X'], 'Y': strats['Y'], 'D': dres},
            'signals': sig_meta, 'reports': reports, 'sanity': sanity, 'log': LOG}
+    out['headline'] = HEADLINE
+    out['deviations'] = DEVIATIONS
+    out['caveats'] = CAVEATS
     p = M.save(OUT, out)
     log('saved', p, os.path.getsize(p))
 
