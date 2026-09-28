@@ -1003,7 +1003,7 @@ def contributions2(shares, mkt, a, z):
     return c
 
 
-def dollar_topn(P, SL, n=20, window=6, net=False):
+def dollar_topn(P, SL, n=20, window=6, net=False, exclude=()):
     """事前登録2 Y1/Y2: 月 s の末に、公開月が s−window+1〜s の買いの金額（下限と上限の中点・上限なしは下限）を記号ごとに足し
     （net=True なら売りの金額を引いて正のものだけ）、上位 n 記号を選ぶ。続けて選ばれた月は1つの事象（保有月数 H=続いた月数）に畳む。
     観測は、窓の中の事象のどれかが観測済みならその記号を観測とする（consensus と同じ）"""
@@ -1022,7 +1022,7 @@ def dollar_topn(P, SL, n=20, window=6, net=False):
                 amt[e['ticker']] += sg * ev_weight(e, 'amt')
                 if sg > 0 and (e['ticker'] not in rep or (e['obs'] and not rep[e['ticker']]['obs'])):
                     rep[e['ticker']] = e
-        cand = sorted((t for t, v in amt.items() if v > 0 and t in rep), key=lambda t: (-amt[t], t))[:n]
+        cand = sorted((t for t, v in amt.items() if v > 0 and t in rep and t not in exclude), key=lambda t: (-amt[t], t))[:n]
         sel[s] = {t: rep[t] for t in cand}
     out, run = [], {}
     for s in ms:
@@ -1338,10 +1338,58 @@ def run():
                          'top5_contributors': [{'ticker': t, 'contrib_pp_per_year': round(c[t], 2)} for t in top],
                          'drop_top5_S_hold': M.excess_stats(r5, mkt, M.HOLD_START, END),
                          'drop_top5_S_hold_net_cost': M.excess_stats(M.apply_cost(r5, turn, 0.003), mkt, M.HOLD_START, END)}
+    # ── 事前登録3（探索3・頑丈さの格子）: 事前登録2の結果を見た後に作った族（out/mw_congress_trades_prereg3.json）──
+    PRE3 = 'mw_congress_trades_prereg3.json'
+    sha3, grid = None, None
+    if os.path.exists(os.path.join(M.BASE, 'out', PRE3)):
+        try:
+            sha3 = subprocess.run(['git', 'log', '-1', '--format=%h', '--', f'out/{PRE3}'], cwd=M.BASE, capture_output=True, text=True).stdout.strip() or None
+        except Exception:  # noqa
+            sha3 = None
+        strat3 = {}
+        for N in (10, 20, 50):
+            for W in (3, 6, 12):
+                if (N, W) == (20, 6):
+                    continue
+                strat3[f'Z_N{N}_W{W}'] = (N, W, ())
+        strat3['Z_N20_W6_ex_mega'] = (20, 6, MEGA)
+        for sid, (N, W, exc) in strat3.items():
+            es, turn, _ = dollar_topn(P, SL, N, W, net=False, exclude=exc)
+            b, meta_pf = {}, {}
+            for bd, loss in (('S', None), ('L30', -0.30), ('L100', -1.0), ('M_neutral_report_only', None)):
+                sh = {} if bd == 'S' else None
+                r, mp = calendar_pf2(es, 1, yh, mkt, bound={'S': 'S', 'M_neutral_report_only': 'M'}.get(bd, 'L'), weight='ew', loss=loss, shares_out=sh, min_hold=N // 2)
+                b[bd] = block(r, mkt, spy, qqq, turn, 0.003)
+                meta_pf[bd] = mp
+                if bd == 'S':
+                    series_out[sid] = {k: round(v, 5) for k, v in sorted(r.items())}
+                    rS, shS = r, sh
+            c = contributions2(shS, mkt, M.HOLD_START, END)
+            top = [t for t, _ in c.most_common(5)]
+            r5, _ = calendar_pf2(es, 1, yh, mkt, bound='S', weight='ew', drop_tickers=set(top), min_hold=N // 2)
+            msh = [sum(x for t, x in v.items() if t in MEGA) for m, v in shS.items() if m != '_cleaned']
+            recs[sid] = {'id': sid, 'family': 'exploratory3', 'prereg': PRE3, 'min_hold': N // 2,
+                         'description': f'直近{W}か月に公開された買いの金額の上位{N}社を等加重（毎月選び直し）' + ('・巨大株10社を除く' if exc else ''),
+                         'hold_months': '毎月選び直し（続く限り持つ）', 'weighting': 'ew', 'N': N, 'window_months': W,
+                         'turnover_oneway_per_year': turn, 'cost_per_unit': 0.003,
+                         'n_events': len(es), 'n_events_observed': sum(1 for e in es if e['obs']),
+                         'observed_share': round(sum(1 for e in es if e['obs']) / len(es), 3) if es else None,
+                         'n_tickers': len({e['ticker'] for e in es}), 'portfolio': meta_pf, 'bounds': b,
+                         'mega7_share_of_holdings': round(S.mean(msh), 3) if msh else None,
+                         'regressions_S_hold': regressions(rS, fac, M.HOLD_START, END),
+                         'top5_contributors': [{'ticker': t, 'contrib_pp_per_year': round(c[t], 2)} for t in top],
+                         'drop_top5_S_hold': M.excess_stats(r5, mkt, M.HOLD_START, END)}
+        gids = [k for k in recs if k.startswith('Z_N') and not k.endswith('ex_mega')] + (['Y1_top20_dollar_buys_6m'] if 'Y1_top20_dollar_buys_6m' in recs else [])
+        g = {bd: [recs[k]['bounds'][bd]['hold'] for k in gids] for bd in ('S', 'M_neutral_report_only', 'L30')}
+        grid = {'members': gids,
+                **{bd: {'n': len(v), 'n_positive': sum(1 for x in v if x['ex_ann'] > 0), 'median_ex_ann': S.median(x['ex_ann'] for x in v),
+                        'median_t': S.median(x['t'] for x in v), 'min_ex_ann': min(x['ex_ann'] for x in v), 'max_ex_ann': max(x['ex_ann'] for x in v)} for bd, v in g.items()}}
+        grid['robust_by_prereg3_rule'] = bool(grid['S']['n_positive'] == grid['S']['n'] and grid['M_neutral_report_only']['n_positive'] == grid['M_neutral_report_only']['n']
+                                             and grid['S']['median_t'] >= 1.65)
     # 判定（Holm は族ごと・p は S と L30 の悪いほう）
     fams = defaultdict(dict)
     for sid, rec in recs.items():
-        if rec['family'] in ('primary', 'exploratory', 'real', 'exploratory2'):
+        if rec['family'] in ('primary', 'exploratory', 'real', 'exploratory2', 'exploratory3'):
             ps = [rec['bounds'][bd]['hold']['p'] for bd in ('S', 'L30') if bd in rec['bounds'] and rec['bounds'][bd]['hold']]
             fams[rec['family']][sid] = max(ps) if ps else None
     holm = {f: M.holm(v) for f, v in fams.items()}
@@ -1372,6 +1420,8 @@ def run():
             rec['grade_note'] += '（探索の族）'
         if rec['family'] == 'exploratory2':
             rec['grade_note'] += '（探索2＝事前登録1の結果を見た後に作った族。独立の確かめではない）'
+        if rec['family'] == 'exploratory3':
+            rec['grade_note'] += '（探索3＝事前登録2の結果を見た後に作った頑丈さの格子。独立の確かめではない）'
         tested.append(rec)
     # 検算
     sanity = {'french_mkt_cagr_full': round(M.cagr(mkt) * 100, 2), 'french_mkt_cagr_2007': round(M.cagr(M.window(mkt, M.HOLD_START)) * 100, 2),
@@ -1380,6 +1430,7 @@ def run():
               'note': '総リターン（Yahoo 調整後終値）どうし・French Mkt も Mkt-RF + RF の総リターン。事象は公開月 s の末に買い s+1 から持つ（提出日＋5日で s を決める）'}
     cov = coverage_table(ev, info)
     out = {'angle': 'congress_trades', 'prereg': PRE, 'prereg_commit': sha, 'prereg2': PRE2 if sha2 else None, 'prereg2_commit': sha2,
+           'prereg3': PRE3 if sha3 else None, 'prereg3_commit': sha3, 'grid_prereg3': grid,
            'x5_dollar_concentration_report_only': dollar_concentration(P),
            'generated': datetime.date.today().isoformat(),
            'question': pre.get('question'), 'data_end': END, 'start': START, 'n_tested': len([t for t in tested]),
