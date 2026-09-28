@@ -19,6 +19,7 @@ import numpy as np  # noqa: E402
 BASE = M.BASE
 ANGLE = 'concentration_regime'
 PREREG = 'mw_concentration_regime_prereg.json'
+PREREG2 = 'mw_concentration_regime_prereg2.json'
 S3 = 'https://jkpfactors-data.s3.amazonaws.com/public/'
 DEVELOPED = {'aus', 'aut', 'bel', 'can', 'che', 'deu', 'dnk', 'esp', 'fin', 'fra', 'gbr', 'hkg', 'irl', 'isr', 'ita', 'jpn',
              'nld', 'nor', 'nzl', 'prt', 'sgp', 'swe'}
@@ -202,8 +203,9 @@ def unit_cost(c, x):
     return 2 * u if x == 'equal' else u
 
 
-def run_country(state, Xs, vw, nst_ok, unit, turn, rule='H0'):
-    """→ {m: (戦略の超過, 市場の超過, 上乗せ, 費用, X を持ったか)}。state は信号の月 t → bool/None。m = t+1"""
+def run_country(state, Xs, vw, nst_ok, unit, turn, rule='H0', R=None):
+    """→ {m: (戦略の超過, 市場の超過, 上乗せ, 費用, X を持ったか)}。state は信号の月 t → bool/None。m = t+1
+    rule: H0＝状態の月だけ／H60＝過去60か月に状態があれば／PP（事前登録2）＝H60 ∧ R(t) < R(t−12)"""
     rows, prev_hold, prev_m = {}, None, None
     for t in sorted(state):
         if state[t] is None:
@@ -215,8 +217,14 @@ def run_country(state, Xs, vw, nst_ok, unit, turn, rule='H0'):
             continue
         if rule == 'H0':
             inx = bool(state[t])
-        else:
+        elif rule == 'H60':
             inx = any(state.get(addm(t, -i)) is True for i in range(WIN))
+        elif rule == 'PP':
+            t12 = addm(t, -12)
+            inx = (any(state.get(addm(t, -i)) is True for i in range(WIN))
+                   and t in R and t12 in R and R[t] < R[t12])
+        else:
+            raise ValueError(rule)
         r = Xs[m] if inx else vw[m]
         cost = unit * turn / 12 if inx else 0.0
         hold = 'X' if inx else 'M'
@@ -431,7 +439,7 @@ def main(check=False):
         for x in XS:
             crow = {}
             for c in countries:
-                rows = run_country(SIG[sg][c], XX[c][x], mk['vw'][c], nst_ok[c], unit_cost(c, x), TURN[x], rule)
+                rows = run_country(SIG[sg][c], XX[c][x], mk['vw'][c], nst_ok[c], unit_cost(c, x), TURN[x], rule, R=RR['A'][c])
                 if rows:
                     crow[c] = rows
             CROW[(fam, x)] = crow
@@ -446,6 +454,7 @@ def main(check=False):
             g, cr = M.grade(ev['full'], ev['train'], ev['hold'], ev['roll20'], cost_hold=ev['hold_net'], repl=ev['repl'],
                             family_holm_p=ph.get(x), sharpe_pair=ev['sharpe_pair'], leveraged_or_timing=True)
             ent = {'name': f'{fam}_{x}', 'family': fam, 'graded': graded, 'label': label or ('主' if fam == 'F1' else '副'),
+                   'prereg': PREREG2 if fam.startswith('E') else PREREG,
                    'signal': sg, 'rule': rule, 'X': x,
                    'description': f'{DESC_SIG[sg]}のとき X＝{DESC_X[x]}、それ以外はその国の純粋な時価加重（vw）。米国外の国を等分（{rule}）',
                    'holm_p': ph.get(x), 'grade': g, 'criteria': cr}
@@ -464,6 +473,8 @@ def main(check=False):
     fam_eval('F1c', 'B', 'H0')
     log('── F1d 状態C（vw−ew）・H0')
     fam_eval('F1d', 'C', 'H0')
+    log('── E1（探索・事前登録2）状態A の後に R が折り返した月だけ')
+    fam_eval('E1', 'A', 'PP', label='探索')
 
     # F0（文脈・判定しない）: 同じ国×月の集合で X を持ち続けた場合
     ctx = {}
@@ -481,6 +492,16 @@ def main(check=False):
         tested.append({'name': f'F0_always_{x}', 'family': 'F0_context', 'graded': False, 'label': '文脈（既知の上乗せ）',
                        'description': f'状態Aが定義される国×月で、常に X＝{DESC_X[x]} を持つ（局面の条件なし）', **ev})
         log(f'F0 常に{x}: 全期間 {(ev["full"] or {}).get("ex_ann")} t{(ev["full"] or {}).get("t")}・保有 {(ev["hold"] or {}).get("ex_ann")} t{(ev["hold"] or {}).get("t")}')
+
+    # 事後（事前登録2に明記・判定に使わない）: X を持った国×月だけの (X−vw) の年率
+    inx_ph = {}
+    for (fam, x), crow in CROW.items():
+        v_all = [v[2] for r in crow.values() for m, v in r.items() if v[4]]
+        v_h = [v[2] for r in crow.values() for m, v in r.items() if v[4] and m >= M.HOLD_START]
+        inx_ph[f'{fam}_{x}'] = {'full_inX_ann': round(S.mean(v_all) * 1200, 2) if v_all else None, 'n_full': len(v_all),
+                                'hold_inX_ann': round(S.mean(v_h) * 1200, 2) if v_h else None, 'n_hold': len(v_h),
+                                'F0_always_hold': ctx[x]['hold']['ex_ann'] if ctx[x]['hold'] else None,
+                                'F0_always_full': ctx[x]['full']['ex_ann'] if ctx[x]['full'] else None}
 
     # 一国ずつ外す・新しい答え合わせ・先進国/新興国
     loo, fresh, split, cost2 = {}, {}, {}, {}
@@ -534,11 +555,15 @@ def main(check=False):
                 key = f'F2_{sg}_{x}_h{h}'
                 f2[key] = {'reg': reg, 'countries_with_both': len(per), 'countries_in_gt_out': sum(1 for v in per.values() if v > 0),
                            'per_country_diff': per if h == 60 else None}
+                if h == 60:  # 事後（事前登録2 に明記・判定に使わない）
+                    f2[key]['posthoc_era'] = {'t_le_200112': dk_reg([r for r in allrows if r[0] <= 200112], L),
+                                              't_ge_200701': dk_reg([r for r in allrows if r[0] >= M.HOLD_START], L)}
                 tested.append({'name': key, 'family': 'F2_report', 'graded': False, 'label': '報告（条件つきの差）',
                                'description': f'{DESC_SIG[sg]}の月とそれ以外で、次の{h}か月の (X−vw) の平均（年率%）を比べる・X＝{DESC_X[x]}・DK ラグ{L}',
                                **f2[key]})
                 if h == 60:
                     log(f'{key}: {reg}・国 {f2[key]["countries_in_gt_out"]}/{f2[key]["countries_with_both"]}')
+                    log(f'   事後 時代別: {f2[key]["posthoc_era"]}')
     # 当月の上乗せ（t+1 の X−vw）: 状態の月 vs それ以外（国をまたいで月ごとに平均→差の系列）
     contemp = {}
     for sg in ('A', 'B', 'C'):
@@ -603,13 +628,14 @@ def main(check=False):
     stD_us, pvD_us = own_pct_state(share)
     us_sig = {'A': stA_us, 'D': stD_us}
     us_res = {}
-    for fam, sg in (('F3', 'A'), ('F3b', 'D')):
+    REPL_FROM = {'F3': 'F1', 'E2': 'E1', 'E3': 'F1b'}
+    for fam, sg, rule in (('F3', 'A', 'H0'), ('F3b', 'D', 'H0'), ('E2', 'A', 'PP'), ('E3', 'A', 'H60')):
         res = {}
         for x in XS + ['P1']:
-            rows = run_country(us_sig[sg], XU[x], FR_MKTRF, None, unit_cost('usa', x), TURN_US[x], 'H0')
+            rows = run_country(us_sig[sg], XU[x], FR_MKTRF, None, unit_cost('usa', x), TURN_US[x], rule, R=R_us)
             s, b, sn, _ = pool({'usa': rows})
-            if fam == 'F3' and x in XS:
-                repl = next(t for t in tested if t['name'] == f'F1_{x}')['repl']
+            if fam in REPL_FROM and x in XS:
+                repl = next(t for t in tested if t['name'] == f'{REPL_FROM[fam]}_{x}')['repl']
             else:
                 repl = None
             res[x] = evaluate(s, b, sn, {'repl': repl, 'activity': activity({'usa': rows})})
@@ -618,9 +644,12 @@ def main(check=False):
         for x, ev in res.items():
             g, cr = M.grade(ev['full'], ev['train'], ev['hold'], ev['roll20'], cost_hold=ev['hold_net'], repl=ev['repl'],
                             family_holm_p=ph.get(x), sharpe_pair=ev['sharpe_pair'], leveraged_or_timing=True)
-            ent = {'name': f'{fam}_{x}', 'family': fam, 'graded': True, 'label': '主（米国）' if fam == 'F3' else '副（米国・水準）',
-                   'signal': sg, 'rule': 'H0', 'X': x,
-                   'description': f'米国: {DESC_SIG[sg]}のとき X＝{DESC_X[x]}、それ以外は French Mkt',
+            lab = {'F3': '主（米国）', 'F3b': '副（米国・水準）', 'E2': '探索（米国・折り返し後）', 'E3': '探索（米国・独走の後60か月）'}[fam]
+            rdesc = {'H0': 'のとき', 'PP': 'の後60か月以内で R が12か月前より下がった月に', 'H60': 'の後60か月以内に'}[rule]
+            ent = {'name': f'{fam}_{x}', 'family': fam, 'graded': True, 'label': lab,
+                   'prereg': PREREG2 if fam.startswith('E') else PREREG,
+                   'signal': sg, 'rule': rule, 'X': x,
+                   'description': f'米国: {DESC_SIG[sg]}{rdesc} X＝{DESC_X[x]}、それ以外は French Mkt',
                    'holm_p': ph.get(x), 'grade': g, 'criteria': cr}
             ent.update(ev)
             tested.append(ent)
@@ -681,11 +710,12 @@ def main(check=False):
 
     graded = [t for t in tested if t.get('graded')]
     cnt = collections.Counter(t['grade'] for t in graded)
-    out = {'angle': ANGLE, 'prereg': PREREG, 'prereg_commit': sha_first(f'out/{PREREG}'), 'global_prereg': 'mw_prereg.json',
+    out = {'angle': ANGLE, 'prereg': PREREG, 'prereg_commit': sha_first(f'out/{PREREG}'),
+           'prereg2': PREREG2, 'prereg2_commit': sha_first(f'out/{PREREG2}'), 'global_prereg': 'mw_prereg.json',
            'global_prereg_commit': sha_first('out/mw_prereg.json'),
            'n_tested': len(tested), 'n_graded': len(graded), 'grade_counts': dict(cnt),
            'tested': tested, 'loo': loo, 'fresh_late_runup_countries': sorted(late), 'first_state_A': first_on,
-           'cost_x2_hold_F1': cost2, 'F2_contemporaneous': contemp, 'episodes': eps_all, 'us_episodes': us_eps, 'us_now': now,
+           'cost_x2_hold_F1': cost2, 'posthoc_inX_mean': inx_ph, 'F2_contemporaneous': contemp, 'episodes': eps_all, 'us_episodes': us_eps, 'us_now': now,
            'vendor_check': vendor, 'sanity': sanity, 'log': LOG}
     p = M.save('mw_concentration_regime.json', out)
     log('書いた', p, os.path.getsize(p))
