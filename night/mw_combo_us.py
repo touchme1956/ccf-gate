@@ -400,7 +400,48 @@ def run(families=None):
                                 'grades': {r['id']: r['grade'] for r in rows}}
         res['tested'].extend(rows)
     res['n_tested'] = len(res['tested'])
+    res['diagnostics_posthoc'] = {'C6_QUAL5': diagnostics_c6()}
     return res
+
+
+def diagnostics_c6():
+    """事後の診断（判定に使わない）: C6_QUAL5 が S になったので、壊れていないかと中身を確かめる。
+    (1) 同じ5袖を vw_cap（上限つき）・ew で作ると？（2026-09-26 の longonly は vw_cap で 2007〜 +0.43 t0.5 だった＝再現できるか）
+    (2) 袖ごと (3) 暦年ごとの超過 (4) 1袖ずつ抜いた版 (5) 年代ごと"""
+    keys = fam_C_spec()['C6_QUAL5'][0]
+    o = {'note': '事後の診断。判定には使わない（C6_QUAL5 の格付けは事前登録どおりの主の族の結果）'}
+
+    def mixw(ks, w):
+        return C_since(mix([M.jkp_portfolios('usa', k, w)[good_side(k)] for k in ks]))
+
+    def C_since(x):
+        return since(x, 196307)
+    o['weighting'] = {}
+    for w in ('vw', 'vw_cap', 'ew'):
+        tot = to_total(mixw(keys, w))
+        o['weighting'][w] = {'train': M.excess_stats(tot, MKT, z=M.TRAIN_END), 'hold': M.excess_stats(tot, MKT, a=M.HOLD_START),
+                             'recent': M.excess_stats(tot, MKT, a=M.RECENT_START)}
+    o['sleeves_vw'] = {}
+    for k in list(JKP_TO):
+        tot = to_total(C_since(M.jkp_portfolios('usa', k, 'vw')[good_side(k)]))
+        o['sleeves_vw'][k] = {'side': good_side(k), 'train': M.excess_stats(tot, MKT, z=M.TRAIN_END), 'hold': M.excess_stats(tot, MKT, a=M.HOLD_START)}
+    tot = to_total(mixw(keys, 'vw'))
+    yrs = {}
+    for k in sorted(tot):
+        a = yrs.setdefault(k // 100, [1.0, 1.0, 0]); a[0] *= 1 + tot[k]; a[1] *= 1 + MKT[k]; a[2] += 1
+    o['calendar_year_excess_pct'] = {y: round((a - b) * 100, 2) for y, (a, b, n) in yrs.items() if n == 12}
+    hy = [v for y, v in o['calendar_year_excess_pct'].items() if y >= 2007]
+    o['hold_years_positive'] = f'{sum(1 for v in hy if v > 0)}/{len(hy)}'
+    o['leave_one_out'] = {}
+    for k in keys:
+        t2 = to_total(mixw([x for x in keys if x != k], 'vw'))
+        o['leave_one_out']['without_' + k] = {'train': M.excess_stats(t2, MKT, z=M.TRAIN_END), 'hold': M.excess_stats(t2, MKT, a=M.HOLD_START)}
+    o['decades'] = {}
+    for a in range(1960, 2030, 10):
+        st = M.excess_stats(tot, MKT, a=max(a * 100 + 1, 196307), z=a * 100 + 912)
+        if st:
+            o['decades'][f'{a}s'] = st
+    return o
 
 
 def brief(res):
