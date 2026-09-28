@@ -16,9 +16,10 @@ import mw_common as M
 
 BASE = M.BASE
 PREREG = 'mw_industry_prereg.json'
-PREREG_FILES = ['mw_industry_prereg.json', 'mw_industry_prereg2.json', 'mw_industry_prereg3.json']
+PREREG_FILES = ['mw_industry_prereg.json', 'mw_industry_prereg2.json', 'mw_industry_prereg3.json', 'mw_industry_prereg4.json']
 PREREG2 = 'mw_industry_prereg2.json'
 PREREG3 = 'mw_industry_prereg3.json'
+PREREG4 = 'mw_industry_prereg4.json'
 OUT = 'mw_industry.json'
 COST = 0.0005          # 両側の売買 100% あたり 0.05%
 ETF_FEE = 0.0030       # 参考: 業種ETFの信託報酬の目安（判定に使わない）
@@ -936,9 +937,71 @@ def us_gics_check():
     return out
 
 
+# ───────────────────────── prereg4: まだ見ていない国の再現パネル ─────────────────────────
+def unseen_panel():
+    pre = json.load(open(os.path.join(BASE, 'out', PREREG4)))
+    series = {}
+    for ctry in pre['countries']:
+        R = jkp_industry(ctry)
+        mk = M.jkp_mkt(ctry, 'vw')
+        months = sorted(set().union(*[set(v) for v in R.values()]))
+        tg = repl_targets(R, mk)
+        rs = {}
+        rs['mom12'], _, _ = run(tg['mom12'], R, months)
+        rs['mom6'], _, _ = run(tg['mom6'], R, months)
+        st = {}
+        for m, v in rs['mom12'].items():
+            ks36 = [madd(m, -k) for k in range(1, 37)]
+            if m in mk and all(k in mk for k in ks36):
+                st[m] = mk[m] if math.fsum(math.log1p(mk[k]) for k in ks36) < 0 else v
+        rs['mom12_state'] = st
+        rs['ew_sectors'], _, _ = run(lambda m: {c: 1.0 for c in R if m in R[c]} or None, R, months)
+        for key, r in rs.items():
+            series.setdefault(key, {})[ctry] = {m: r[m] - mk[m] for m in r if m in mk}
+    for key in ('mom12', 'mom6', 'mom12_state'):
+        series[key + '_minus_ew'] = {c: {m: series[key][c][m] - series['ew_sectors'][c][m] for m in series[key][c] if m in series['ew_sectors'][c]}
+                                     for c in series[key]}
+    out = {'prereg': PREREG4, 'prereg_commit': git_sha(f'out/{PREREG4}'), 'results': {}}
+
+    def pooled(per):
+        ms = sorted(set().union(*[set(v) for v in per.values()]))
+        avg = {m: S.mean([v[m] for v in per.values() if m in v]) for m in ms if any(m in v for v in per.values())}
+        x = [avg[m] for m in sorted(avg)]
+        t = M.nw_t(x)
+        return {'from': min(avg), 'to': max(avg), 'ex_ann': round(S.mean(x) * 1200, 2), 't': None if t is None else round(t, 2),
+                'hold_2007_ex_ann': round(S.mean([avg[m] for m in avg if m >= M.HOLD_START]) * 1200, 2),
+                'hold_2007_t': (lambda t: None if t is None else round(t, 2))(M.nw_t([avg[m] for m in sorted(avg) if m >= M.HOLD_START]))}
+    for key, per in series.items():
+        pc = {}
+        for c, d in per.items():
+            ks = sorted(d)
+            if len(ks) < 60:
+                pc[c] = {'months': len(ks), 'counted': False}
+                continue
+            x = [d[k] for k in ks]
+            t = M.nw_t(x)
+            pc[c] = {'from': ks[0], 'to': ks[-1], 'months': len(ks), 'counted': True, 'ex_ann': round(S.mean(x) * 1200, 2), 't': None if t is None else round(t, 2)}
+        cnt = {c: v for c, v in pc.items() if v.get('counted')}
+        res = {'per_country': pc, 'counted': len(cnt), 'positive': sum(v['ex_ann'] > 0 for v in cnt.values()),
+               'pooled_all': pooled({c: per[c] for c in cnt})}
+        for g, cs in pre['groups'].items():
+            sub = {c: per[c] for c in cs if c in cnt}
+            if sub:
+                res['pooled_' + g] = pooled(sub)
+                res['positive_' + g] = f"{sum(cnt[c]['ex_ann'] > 0 for c in sub)}/{len(sub)}"
+        if not key.startswith('ew'):
+            pa = res['pooled_all']
+            res['pass_line'] = bool(res['counted'] and res['positive'] / res['counted'] >= 2 / 3 and pa['ex_ann'] > 0 and (pa['t'] or 0) >= 2.0)
+        out['results'][key] = res
+    return out
+
+
 def main():
     D = Data()
     sig = Sig(D)
+    if '--panel' in sys.argv:
+        print(json.dumps(unseen_panel(), ensure_ascii=False, indent=1)[:20000])
+        return
     if '--sanity' in sys.argv:
         print(json.dumps(sanity(D, sig), ensure_ascii=False, indent=1))
         return
@@ -991,7 +1054,8 @@ def main():
            'grades': {g: [e['id'] for e in rows if e['grade'] == g] for g in 'SABC'},
            'tested': rows, 'replication_raw': rep,
            'diagnostics_post_hoc_not_graded': dict(diagnostics(D) if '--nodiag' not in sys.argv else {},
-                                                   pooled_international=pooled_repl(RAW), us_gics_jkp=us_gics_check())}
+                                                   pooled_international=pooled_repl(RAW), us_gics_jkp=us_gics_check()),
+           'unseen_panel_prereg4': unseen_panel() if os.path.exists(os.path.join(BASE, 'out', PREREG4)) else None}
     p = M.save(OUT, out)
     print('→', p)
     for e in rows:
