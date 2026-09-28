@@ -286,6 +286,7 @@ def kof(frac, N):
 
 # ───────────────────────── 評価 ─────────────────────────
 TESTED = []
+SERIES = {}  # id → (s, b)（メモリの中だけ・診断用）
 
 
 def evaluate(sid, fam, label, s, b, *, rule='', cost=None, turnover=None, unit=None, rf=None, repl=None, pub=None,
@@ -293,6 +294,7 @@ def evaluate(sid, fam, label, s, b, *, rule='', cost=None, turnover=None, unit=N
     """s・b は総リターン（同じ基準）。cost は {月: 費用}（正確な回転から）か、turnover/unit（年の片道回転×単価）"""
     ks = sorted(set(s) & set(b))
     s = {k: s[k] for k in ks}; b = {k: b[k] for k in ks}
+    SERIES[sid] = (s, b)
     if cost is not None:
         net = {k: s[k] - cost.get(k, 0.0) for k in ks}
         stress = {k: s[k] - 3.0 * cost.get(k, 0.0) for k in ks}
@@ -705,7 +707,7 @@ def main():
                 CMKT[c] = None
         return CMKT[c]
 
-    def panel(fid, label, series_by_c, cost_turnover=None, cost_unit=None, cost_by_c=None):
+    def panel(fid, label, series_by_c, cost_turnover=None, cost_unit=None, cost_by_c=None, pub=1993):
         units, sv, bv, cst = {}, {}, {}, {}
         for c, s_ in series_by_c.items():
             b_ = mkt_of(c)
@@ -738,9 +740,9 @@ def main():
         extra = {'panel': res, 'units': units, 'panel_countries_per_month_median': S.median(len(sv[k]) for k in ms) if ms else None}
         if cost_by_c:
             cmap = {k: S.mean(cst[k]) for k in ms}
-            evaluate(fid, fid.split('_')[0], label, s_ew, b_ew, rule=label, cost=cmap, pub=1993, extra=extra)
+            evaluate(fid, fid.split('_')[0], label, s_ew, b_ew, rule=label, cost=cmap, pub=pub, extra=extra)
         else:
-            evaluate(fid, fid.split('_')[0], label, s_ew, b_ew, rule=label, turnover=cost_turnover, unit=cost_unit, pub=1993, extra=extra)
+            evaluate(fid, fid.split('_')[0], label, s_ew, b_ew, rule=label, turnover=cost_turnover, unit=cost_unit, pub=pub, extra=extra)
         log(fid, res)
 
     # F9 株の勢いのパネル
@@ -798,8 +800,47 @@ def main():
             log(fam, key, 'done')
     log('phase3 done')
 
-    fams = ['F1', 'F2', 'F3g', 'F3s', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14']
+    # ═════════ 第4次（out/mw_momentum_prereg4.json）═════════
+    for key, (to, pub) in {'seas_6_10an': (12.0, 2008), 'seas_11_15an': (12.0, 2008), 'seas_2_5an': (12.0, 2008), 'ocf_at_chg1': (1.5, 1996),
+                           'niq_su': (3.0, 1996), 'niq_be_chg1': (3.0, 1996), 'niq_at_chg1': (3.0, 1996), 'saleq_su': (3.0, 1996)}.items():
+        side_us, _ = M.jkp_good_side('usa', key, 'vw', upto=TR)
+        ser = {}
+        for c in cands9:
+            try:
+                ser[c] = add_rf(jkp_rows_filtered(c, key, side_us), RF)
+            except Exception as ex:  # noqa
+                log('F15 取得失敗', c, key, ex); ser[c] = None
+        panel(f'F15_panel_{key}_ew', f'まだ見ていない国々の JKP {key} 三分位（{side_us}）の等分 vs 同じ国々の市場の等分', ser, to, 0.003, pub=pub)
+    log('phase4 panels done')
+
+    fams = ['F1', 'F2', 'F3g', 'F3s', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14', 'F15']
     fam_holm = finalize(fams)
+    # ─ 診断（第4次・報告のみ）─
+    diag = {}
+    win = {'MTUM': 201305, 'IMTM': 201502, 'EEMO': 201203}
+    etf = {t: M_ for t, M_ in (('MTUM', excess_stats(yh('MTUM'), spy)), ('IMTM', excess_stats(yh('IMTM'), efa)), ('EEMO', excess_stats(yh('EEMO'), yh('EEM'))))}
+    diag['D1_paper_vs_real'] = {
+        'MTUM': {'etf_vs_SPY': etf['MTUM'], 'paper_US_BIG_HiPRIOR': excess_stats(d6['BIG HiPRIOR'], MKT, a=win['MTUM']), 'paper_US_top_decile': excess_stats(d10['Hi PRIOR'], MKT, a=win['MTUM'])},
+        'IMTM': {'etf_vs_EFA': etf['IMTM'], 'paper_DevExUS_BIG_HiPRIOR': excess_stats(r6['Developed_ex_US']['BIG HiPRIOR'], rmk['Developed_ex_US'], a=win['IMTM'])},
+        'EEMO': {'etf_vs_EEM': etf['EEMO'], 'paper_EM_BIG_HiPRIOR': excess_stats(r6['Emerging']['BIG HiPRIOR'], rmk['Emerging'], a=win['EEMO'])}}
+    blocks = [(200701, 201112), (201201, 201612), (201701, 202112), (202201, 202612)]
+    diag['D2_blocks'], diag['D3_capm'], diag['D4_breakeven'] = {}, {}, {}
+    for e in TESTED:
+        if e['grade'] not in ('S', 'A') or e['family'] == 'F3g':
+            continue
+        s_, b_ = SERIES[e['id']]
+        diag['D2_blocks'][e['id']] = {f'{a // 100}-{z // 100}': (round(S.mean(s_[k] - b_[k] for k in s_ if a <= k <= z) * 1200, 2) if any(a <= k <= z for k in s_) else None) for a, z in blocks}
+        ks = [k for k in sorted(s_) if k >= HS and k in RF]
+        y = [s_[k] - RF[k] for k in ks]; x = [b_[k] - RF[k] for k in ks]
+        mx, my = S.mean(x), S.mean(y)
+        beta = sum((xi - mx) * (yi - my) for xi, yi in zip(x, y)) / sum((xi - mx) ** 2 for xi in x)
+        res = [yi - beta * xi for xi, yi in zip(x, y)]
+        ta = M.nw_t(res)
+        diag['D3_capm'][e['id']] = {'alpha_ann': round(S.mean(res) * 1200, 2), 'alpha_t': round(ta, 2) if ta is not None else None, 'beta': round(beta, 3)}
+        h = e['hold']
+        diag['D4_breakeven'][e['id']] = {'hold_gross_ex_ann': h['ex_ann'], 'assumed_annual_cost_pct': e['annual_cost_pct'],
+                                         'cost_margin_x': round(h['ex_ann'] / e['annual_cost_pct'], 2) if e['annual_cost_pct'] else None}
+    log('diagnostics done')
     all_holm = M.holm({e['id']: e['hold_p_for_holm'] for e in TESTED})
     for e in TESTED:
         e['holm_all_tested'] = all_holm.get(e['id'])
@@ -815,12 +856,15 @@ def main():
     top = sorted([e for e in TESTED if e['cost_hold']], key=lambda e: -e['cost_hold']['ex_ann'])[:15]
     summary['top_by_net_hold_ex'] = [(e['id'], e['grade'], e['cost_hold']['ex_ann'], e['cost_hold']['t']) for e in top]
     sha2 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg2.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
+    sha4 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg4.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
     sha3 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg3.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
     out = {'angle': 'momentum', 'prereg': f'out/{PRE}', 'prereg_commit': sha, 'prereg2': 'out/mw_momentum_prereg2.json', 'prereg2_commit': sha2,
-           'prereg3': 'out/mw_momentum_prereg3.json', 'prereg3_commit': sha3, 'global_prereg': 'out/mw_prereg.json',
+           'prereg3': 'out/mw_momentum_prereg3.json', 'prereg3_commit': sha3,
+           'prereg4': 'out/mw_momentum_prereg4.json', 'prereg4_commit': sha4, 'global_prereg': 'out/mw_prereg.json',
            'generated': datetime.date.today().isoformat(), 'sanity': sanity, 'family_holm': fam_holm, 'summary': summary,
-           'deviations': DEVIATIONS, 'tested': TESTED, 'log': LOG[-80:]}
-    p = M.save(OUT, out)
+           'deviations': DEVIATIONS, 'diagnostics': diag, 'tested': TESTED, 'log': LOG[-80:]}
+    p = os.path.join(BASE, 'out', OUT)
+    json.dump(out, open(p, 'w'), ensure_ascii=False, separators=(',', ':'))
     log('saved', p, os.path.getsize(p))
     for g in ('S', 'A', 'B'):
         for e in TESTED:
