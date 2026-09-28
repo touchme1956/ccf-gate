@@ -18,7 +18,7 @@ import sys, os, json, math, datetime, subprocess, statistics as S
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
 
-PRE_NAMES = ['mw_trend_prereg.json', 'mw_trend_prereg2.json', 'mw_trend_prereg3.json', 'mw_trend_prereg4.json', 'mw_trend_prereg5.json']
+PRE_NAMES = ['mw_trend_prereg.json', 'mw_trend_prereg2.json', 'mw_trend_prereg3.json', 'mw_trend_prereg4.json', 'mw_trend_prereg5.json', 'mw_trend_prereg6.json']
 OUT_NAME = 'mw_trend.json'
 COST = 0.001      # 判定用: 持ち替え1回あたり資産の0.10%（全体の事前登録の既定）
 COST_LO = 0.0005  # 報告: 指示書の0.05%
@@ -1013,7 +1013,7 @@ def ind_signals_monthly(cols, R, N=10):
     return sig
 
 
-def run_ind_monthly(ms, cols, R, C, rf, L, sig, start=None):
+def run_ind_monthly(ms, cols, R, C, rf, L, sig, start=None, cost=None, etf_fee=None):
     """月 m: 重み = 月 m−1 の表の時価総額、信号 = 月 m−1 の月末。株の割合 E = L×Σ_上 w。費用 = 出入りした業種の重み×L×0.10%"""
     keys, gross, net, net05, pos = [], {}, {}, {}, []
     bh = {}
@@ -1031,14 +1031,18 @@ def run_ind_monthly(ms, cols, R, C, rf, L, sig, start=None):
         f = sum(w[c] for c in inc if on[c])
         E = L * f
         eq = sum(w[c] * R[c][m] for c in inc if on[c])
-        g = L * eq + (1 - E) * rf[m] - (((E - 1) * SPREAD + FEE) / 12 if E > 1 else 0.0)
+        if etf_fee is None:
+            g = L * eq + (1 - E) * rf[m] - (((E - 1) * SPREAD + FEE) / 12 if E > 1 else 0.0)
+        else:  # 実在の L 倍の業種ETFで持つ式（元本 f にだけ借入と経費）
+            g = L * eq + (1 - E) * rf[m] - (f * ((L - 1) * SPREAD + etf_fee) / 12 if L > 1 else 0.0)
         g = max(g, -1.0)
         tv = 0.0
         if prev_on is not None:
             for c in inc:
                 if c in prev_on and prev_on[c] != on[c]:
                     tv += w[c] * L; flips += 1
-        keys.append(m); gross[m] = g; net[m] = (1 + g) * (1 - COST * tv) - 1; net05[m] = (1 + g) * (1 - COST_LO * tv) - 1
+        cu = COST if cost is None else cost
+        keys.append(m); gross[m] = g; net[m] = (1 + g) * (1 - cu * tv) - 1; net05[m] = (1 + g) * (1 - COST_LO * tv) - 1
         pos.append(1 if f > 0 else 0); esum += E
         bh[m] = sum(w[c] * R[c][m] for c in inc)
         prev_on = on
@@ -1191,6 +1195,287 @@ def family5(c):
     return out
 
 
+# ───────────────────────── 第5族の頑健性の点検（prereg6・判定は変えない） ─────────────────────────
+MSCI_DEV = ['aus', 'aut', 'bel', 'can', 'che', 'deu', 'dnk', 'esp', 'fin', 'fra', 'gbr', 'hkg', 'irl', 'isr', 'ita', 'jpn', 'nld', 'nor', 'nzl', 'prt', 'sgp', 'swe']
+
+
+def capm_alpha(s, b, rf, a=None, z=None):
+    ks = sorted(k for k in set(s) & set(b) & set(rf) if (a is None or k >= a) and (z is None or k <= z))
+    if len(ks) < 36:
+        return None
+    y = [s[k] - rf[k] for k in ks]; x = [b[k] - rf[k] for k in ks]
+    mx, my = S.mean(x), S.mean(y)
+    beta = sum((xi - mx) * (yi - my) for xi, yi in zip(x, y)) / sum((xi - mx) ** 2 for xi in x)
+    e = [yi - beta * xi for xi, yi in zip(x, y)]
+    t = M.nw_t(e, 12)
+    return {'from': ks[0], 'to': ks[-1], 'alpha_ann': round(S.mean(e) * 1200, 2), 't': round(t, 2) if t is not None else None, 'beta': round(beta, 2)}
+
+
+def sharpe_test(s, b, rf, a=None, z=None):
+    """Jobson-Korkie（Memmel 2003 の補正）: 月次のシャープレシオの差の z"""
+    ks = sorted(k for k in set(s) & set(b) & set(rf) if (a is None or k >= a) and (z is None or k <= z))
+    if len(ks) < 36:
+        return None
+    y1 = [s[k] - rf[k] for k in ks]; y2 = [b[k] - rf[k] for k in ks]
+    s1, s2 = S.mean(y1) / S.stdev(y1), S.mean(y2) / S.stdev(y2)
+    rho = M.corr(y1, y2); T = len(ks)
+    var = (2 - 2 * rho + 0.5 * (s1 ** 2 + s2 ** 2 - 2 * s1 * s2 * rho ** 2)) / T
+    zz = (s1 - s2) / math.sqrt(var) if var > 0 else None
+    return {'sr_s_ann': round(s1 * math.sqrt(12), 3), 'sr_b_ann': round(s2 * math.sqrt(12), 3), 'rho': round(rho, 3), 'z': round(zz, 2) if zz is not None else None,
+            'p_two': round(M.p_two(zz), 4) if zz is not None else None, 'months': T}
+
+
+def jkp_ind_run(ctry, L, rf):
+    Rx = jkp_ind(ctry)
+    cols = sorted(Rx)
+    R = {g: {m: v + rf[m] for m, v in Rx[g].items() if m in rf} for g in cols}
+    sig = ind_signals_monthly(cols, R, 10)
+    ms = sorted(set().union(*[set(R[g]) for g in cols]))
+    net, bh = {}, {}; prev_on = None
+    for i in range(1, len(ms)):
+        m, mp = ms[i], ms[i - 1]
+        inc = [g for g in cols if m in R[g] and mp in sig[g]]
+        if len(inc) < 3:
+            continue
+        w = 1 / len(inc)
+        on = {g: sig[g][mp] for g in inc}
+        f = sum(w for g in inc if on[g]); E = L * f
+        eq = sum(w * R[g][m] for g in inc if on[g])
+        gr = L * eq + (1 - E) * rf[m] - (((E - 1) * SPREAD + FEE) / 12 if E > 1 else 0.0)
+        tv = sum(w * L for g in inc if prev_on is not None and g in prev_on and prev_on[g] != on[g])
+        net[m] = (1 + gr) * (1 - COST * tv) - 1
+        bh[m] = sum(w * R[g][m] for g in inc)
+        prev_on = on
+    return net, bh
+
+
+def tax_ind_monthly(ms, cols, R, C, rf, L, sig, start, a=None, z=None, t=TAX, fee=0.0095):
+    """K7: 業種ごとの元本（L 倍の業種ETF）の簿価を持ち、売るたび（全部でも一部でも）に実現益へ課税。同じ年は通算・3年繰越。
+    現金の利息も課税。窓の終わりに全部売って課税。費用は出入り・調整の売買額×0.10%"""
+    V_cash = 1.0; P = {}; B = {}
+    st = {'ytd': 0.0, 'paid': 0.0, 'cf': [], 'year': None}
+
+    def avail(y):
+        return sum(l for yy, l in st['cf'] if y - 3 <= yy <= y - 1)
+
+    def realize(G):
+        nonlocal V_cash
+        st['ytd'] += G
+        owed = t * max(0.0, st['ytd'] - avail(st['year']))
+        V_cash -= owed - st['paid']; st['paid'] = owed
+
+    def close_year():
+        y = st['year']
+        if st['ytd'] < 0:
+            st['cf'].append([y, -st['ytd']])
+        elif st['ytd'] > 0:
+            need = st['ytd']
+            for e in st['cf']:
+                if y - 3 <= e[0] <= y - 1 and need > 0:
+                    u = min(e[1], need); e[1] -= u; need -= u
+        st['cf'] = [e for e in st['cf'] if e[1] > 1e-15 and e[0] >= y - 2]
+        st['ytd'] = 0.0; st['paid'] = 0.0
+
+    n = 0; first = None; last = None
+    for i in range(2, len(ms)):
+        m, mp = ms[i], ms[i - 1]
+        if m < start or (a is not None and m < a) or (z is not None and m > z):
+            continue
+        inc = [c for c in cols if m in R[c] and mp in C[c]]
+        if not inc:
+            continue
+        y = m // 100
+        if st['year'] is None:
+            st['year'] = y
+        elif y != st['year']:
+            close_year(); st['year'] = y
+        V = V_cash + sum(P.values())
+        W = sum(C[c][mp] for c in inc)
+        tgt = {c: V * C[c][mp] / W for c in inc if sig[c].get(mp, 1)}
+        # 売り（全部・一部）
+        for c in list(P):
+            want = tgt.get(c, 0.0)
+            if P[c] > want + 1e-12:
+                sell = P[c] - want
+                g = sell * (1 - B[c] / P[c]) if P[c] > 0 else 0.0
+                B[c] -= B[c] * sell / P[c]
+                P[c] = want; V_cash += sell * (1 - COST)
+                realize(g)
+                if P[c] <= 1e-12:
+                    del P[c]; del B[c]
+        # 買い
+        for c, want in tgt.items():
+            cur = P.get(c, 0.0)
+            if want > cur + 1e-12:
+                buy = min(want - cur, max(V_cash, 0.0))
+                if buy <= 0:
+                    continue
+                V_cash -= buy
+                P[c] = cur + buy * (1 - COST); B[c] = B.get(c, 0.0) + buy * (1 - COST)
+        # 1か月のリターン
+        for c in P:
+            P[c] *= 1 + max(L * R[c][m] - (L - 1) * (rf[m] + SPREAD / 12) - (fee / 12 if L > 1 else 0.0), -1.0)
+        it = V_cash * rf[m]
+        V_cash += it * (1 - t) if it > 0 else it
+        n += 1; first = first or m; last = m
+    for c in list(P):
+        realize(P[c] - B[c]); V_cash += P[c]
+    close_year()
+    return V_cash, n, first, last
+
+
+def checks6(c, tested):
+    out = {'note': '事後の点検（out/mw_trend_prereg6.json・13e0aca で事前登録）。格付けは変えない'}
+    cols10, R10, C10 = fr_ind('10_Industry_Portfolios')
+    cols49, R49, C49 = fr_ind('49_Industry_Portfolios')
+    s10 = ind_signals_monthly(cols10, R10); s49 = ind_signals_monthly(cols49, R49)
+    ms = c.ms_us; rf = c.rf_usm; mk = c.r_usm; start = 192705
+    runs = {}
+    for L in (1, 2, 3):
+        runs[f'S1_L{L}'] = run_ind_monthly(ms, cols10, R10, C10, rf, L, s10, start)
+        runs[f'S3_L{L}'] = run_ind_monthly(ms, cols49, R49, C49, rf, L, s49, start)
+    # K1・K2
+    k1, k2 = {}, {}
+    for nm, run in runs.items():
+        s = run['net']
+        k1[nm] = {w: capm_alpha(s, mk, rf, a, z) for w, (a, z) in {'full': (None, None), 'train': (None, M.TRAIN_END), 'hold': (M.HOLD_START, None)}.items()}
+        k2[nm] = {w: sharpe_test(s, mk, rf, a, z) for w, (a, z) in {'full': (None, None), 'train': (None, M.TRAIN_END), 'hold': (M.HOLD_START, None)}.items()}
+    out['K1_capm_alpha_net'] = k1
+    out['K2_sharpe_diff_test_net'] = k2
+    log('K1', {k: (v['train']['alpha_ann'], v['train']['t'], v['hold']['alpha_ann'], v['hold']['t']) for k, v in k1.items()})
+    log('K2', {k: (v['train']['z'], v['hold']['z']) for k, v in k2.items()})
+    # K3 国際
+    k3 = {}
+    for ctry in MSCI_DEV:
+        try:
+            n1, b1 = jkp_ind_run(ctry, 1, rf)
+            n2, b2 = jkp_ind_run(ctry, 2, rf)
+        except Exception as ex:  # noqa
+            k3[ctry] = {'error': str(ex)[:200]}; continue
+        if len(n1) < 240:
+            k3[ctry] = {'months': len(n1), 'skipped': '20年未満'}; continue
+        e2 = M.excess_stats(n2, b2)
+        k3[ctry] = {'from': min(n1), 'months': len(n1),
+                    'sharpe_L1_full': [M.sharpe(n1, rf), M.sharpe(b1, rf)], 'sharpe_L1_2007': [M.sharpe(n1, rf, M.HOLD_START), M.sharpe(b1, rf, M.HOLD_START)],
+                    'L2_net_full': {'ex_ann': e2['ex_ann'], 'cagr_diff': e2['cagr_diff'], 't': e2['t']} if e2 else None,
+                    'L2_net_hold': (lambda h: {'ex_ann': h['ex_ann'], 'cagr_diff': h['cagr_diff']} if h else None)(M.excess_stats(n2, b2, a=M.HOLD_START)),
+                    'sharpe_L2_full': [M.sharpe(n2, rf), M.sharpe(b2, rf)]}
+    ok = [k for k, v in k3.items() if 'sharpe_L1_full' in v]
+    up_full = [k for k in ok if None not in k3[k]['sharpe_L1_full'] and k3[k]['sharpe_L1_full'][0] > k3[k]['sharpe_L1_full'][1]]
+    up_hold = [k for k in ok if None not in k3[k]['sharpe_L1_2007'] and k3[k]['sharpe_L1_2007'][0] > k3[k]['sharpe_L1_2007'][1]]
+    pos2 = [k for k in ok if k3[k]['L2_net_full'] and k3[k]['L2_net_full']['ex_ann'] > 0 and k3[k]['L2_net_full']['cagr_diff'] > 0]
+    out['K3_intl'] = {'countries_20y': ok, 'sharpe_up_full': f'{len(up_full)}/{len(ok)}', 'sharpe_up_2007': f'{len(up_hold)}/{len(ok)}',
+                      'L2_positive_full': f'{len(pos2)}/{len(ok)}', 'verdict_rule': '上がった国が半分未満なら米国に固有の結果の疑いが強い',
+                      'verdict': ('米国に固有の疑いが強い' if len(up_full) < len(ok) / 2 else '米国外でもシャープレシオが上がる国が半分以上'), 'detail': k3}
+    log('K3', out['K3_intl']['sharpe_up_full'], out['K3_intl']['sharpe_up_2007'], out['K3_intl']['L2_positive_full'])
+    # K4 部分期間
+    k4 = {}
+    for nm, run in runs.items():
+        s = run['net']; row = {}
+        for w, a in {'2008': 200801, '2010': 201001, '2016': 201601}.items():
+            e = M.excess_stats(s, mk, a=a)
+            row[w] = {'cagr_diff': e['cagr_diff'], 'ex_ann': e['ex_ann'], 't': e['t'], 'sharpe': [M.sharpe(s, rf, a), M.sharpe(mk, rf, a)]} if e else None
+        row['by_decade'] = by_decade(s, mk)
+        k4[nm] = row
+    out['K4_subperiods_net'] = k4
+    # K5 費用
+    k5 = {}
+    for nm, (cols, R, Cc, sg) in {'S1': (cols10, R10, C10, s10), 'S3': (cols49, R49, C49, s49)}.items():
+        for L in (2, 3):
+            ra = run_ind_monthly(ms, cols, R, Cc, rf, L, sg, start, cost=0.003)
+            rb = run_ind_monthly(ms, cols, R, Cc, rf, L, sg, start, etf_fee=0.0095)
+            row = {}
+            for tag, rr in (('cost_0.30pct', ra), ('etf_fee_0.95pct', rb)):
+                h = M.excess_stats(rr['net'], mk, a=M.HOLD_START); tr = M.excess_stats(rr['net'], mk, z=M.TRAIN_END)
+                row[tag] = {'hold_ex': h['ex_ann'], 'hold_cagr_diff': h['cagr_diff'], 'train_ex': tr['ex_ann'], 'train_t': tr['t'],
+                            'sharpe_train': [M.sharpe(rr['net'], rf, None, M.TRAIN_END), M.sharpe(mk, rf, None, M.TRAIN_END)],
+                            'sharpe_hold': [M.sharpe(rr['net'], rf, M.HOLD_START), M.sharpe(mk, rf, M.HOLD_START)]}
+            k5[f'{nm}_L{L}'] = row
+    out['K5_costs'] = k5
+    log('K5', {k: {t2: (v2['hold_cagr_diff'], v2['sharpe_hold']) for t2, v2 in v.items()} for k, v in k5.items()})
+    # K6 下落
+    k6 = {}
+    for nm, run in runs.items():
+        s = run['net']
+        def dd_info(r):
+            w, pk, pkm, dd, tr, trm = 1.0, 1.0, None, 0.0, None, None
+            for k in sorted(r):
+                w *= 1 + r[k]
+                if w > pk:
+                    pk, pkm = w, k
+                if w / pk - 1 < dd:
+                    dd, tr, trm = w / pk - 1, pkm, k
+            return {'maxdd': round(dd * 100, 1), 'peak': tr, 'trough': trm}
+        yrs = {}
+        for k in sorted(s):
+            if k >= M.HOLD_START:
+                yrs[k // 100] = yrs.get(k // 100, 1.0) * (1 + s[k])
+        myrs = {}
+        for k in sorted(mk):
+            if k >= M.HOLD_START:
+                myrs[k // 100] = myrs.get(k // 100, 1.0) * (1 + mk[k])
+        worst = sorted(((round((v - 1) * 100, 1), y) for y, v in yrs.items()))[:3]
+        k6[nm] = {'full': dd_info(s), 'hold': dd_info({k: v for k, v in s.items() if k >= M.HOLD_START}),
+                  'market_hold': dd_info({k: v for k, v in mk.items() if k >= M.HOLD_START}),
+                  'worst_years_hold': worst, 'market_same_years': {y: round((myrs.get(y, 1) - 1) * 100, 1) for _, y in worst}}
+    out['K6_drawdown_net'] = k6
+    # K7 税
+    k7 = {}
+    for nm, (cols, R, Cc, sg) in {'S1': (cols10, R10, C10, s10)}.items():
+        for L in (1, 2, 3):
+            row = {}
+            for w, (a, z) in {'full': (None, None), 'hold': (M.HOLD_START, None), '2016': (201601, None)}.items():
+                Vt, n, f0, f1 = tax_ind_monthly(ms, cols, R, Cc, rf, L, sg, start, a, z)
+                Vn, _, _, _ = tax_ind_monthly(ms, cols, R, Cc, rf, L, sg, start, a, z, t=0.0)
+                ks = [k for k in ms if f0 <= k <= f1]
+                Wb = 1.0
+                for k in ks:
+                    Wb *= 1 + mk[k]
+                Wbt = Wb - TAX * max(0.0, Wb - 1)
+                an = lambda x: round(((x) ** (12 / n) - 1) * 100, 2)
+                row[w] = {'from': f0, 'to': f1, 'taxable_cagr': an(Vt), 'nisa_like_cagr': an(Vn), 'bh_taxable_cagr': an(Wbt), 'bh_nisa_cagr': an(Wb),
+                          'taxable_diff': round(an(Vt) - an(Wbt), 2)}
+            k7[f'{nm}_L{L}'] = row
+    out['K7_tax_japan_approx'] = {'note': '業種ETF（L倍・経費0.95%）で持つ近似。売るたび（一部も）に課税（prereg6 は一部売却を課税しない近似と書いたが、保守側＝全部の売りを課税にした）', 'detail': k7}
+    log('K7', {k: {w: v2['taxable_diff'] for w, v2 in v.items()} for k, v in k7.items()})
+    # K8 業種の数
+    k8 = {}
+    for nn in (5, 12, 17, 30, 38, 48):
+        cc, Rn, Cn = fr_ind(f'{nn}_Industry_Portfolios')
+        sn = ind_signals_monthly(cc, Rn)
+        row = {}
+        for L in (1, 2):
+            rr = run_ind_monthly(ms, cc, Rn, Cn, rf, L, sn, start)
+            h = M.excess_stats(rr['net'], mk, a=M.HOLD_START); tr = M.excess_stats(rr['net'], mk, z=M.TRAIN_END)
+            row[f'L{L}'] = {'hold_cagr_diff': h['cagr_diff'], 'train_ex': tr['ex_ann'], 'train_t': tr['t'],
+                            'sharpe_train': [M.sharpe(rr['net'], rf, None, M.TRAIN_END), M.sharpe(mk, rf, None, M.TRAIN_END)],
+                            'sharpe_hold': [M.sharpe(rr['net'], rf, M.HOLD_START), M.sharpe(mk, rf, M.HOLD_START)]}
+        k8[f'{nn}_industries'] = row
+    out['K8_granularity_net'] = k8
+    log('K8', {k: (v['L2']['hold_cagr_diff'], v['L1']['sharpe_train'], v['L1']['sharpe_hold']) for k, v in k8.items()})
+    # K10【事後・事前登録の外】借入が RF+2%（日本の個人の信用取引に近い保守側）なら
+    k10 = {}
+    global SPREAD
+    sp0 = SPREAD
+    try:
+        SPREAD = 0.02
+        for nm, (cols, R, Cc, sg) in {'S1': (cols10, R10, C10, s10), 'S3': (cols49, R49, C49, s49)}.items():
+            for L in (2, 3):
+                rr = run_ind_monthly(ms, cols, R, Cc, rf, L, sg, start)
+                h = M.excess_stats(rr['net'], mk, a=M.HOLD_START); tr = M.excess_stats(rr['net'], mk, z=M.TRAIN_END)
+                k10[f'{nm}_L{L}'] = {'hold_ex': h['ex_ann'], 'hold_cagr_diff': h['cagr_diff'], 'train_ex': tr['ex_ann'], 'train_t': tr['t'],
+                                     'sharpe_train': [M.sharpe(rr['net'], rf, None, M.TRAIN_END), M.sharpe(mk, rf, None, M.TRAIN_END)],
+                                     'sharpe_hold': [M.sharpe(rr['net'], rf, M.HOLD_START), M.sharpe(mk, rf, M.HOLD_START)]}
+    finally:
+        SPREAD = sp0
+    out['K10_posthoc_borrow_rf_plus_2pct'] = {'label': '事後・事前登録の外（判定しない）', 'detail': k10}
+    log('K10', {k: (v['hold_cagr_diff'], v['sharpe_train'], v['sharpe_hold']) for k, v in k10.items()})
+    graded = [x for x in tested if x.get('graded')]
+    out['K9_context'] = {'n_graded_total': len(graded), 'n_tested_total': len(tested), 'family5_is_the_5th_family': True,
+                         'note': '第1〜4族（判定94本）が全部 C だった後に登録した第5族で S が出た。C7 は全期間 t≥3.0（Harvey-Liu-Zhu）の側で通っていて、試した全部での Holm 補正後 p（保有期間）では1本も 0.05 を下回っていない'}
+    return out
+
+
 # ───────────────────────── 本体 ─────────────────────────
 def bench_for(c, kind, run):
     """相手（月次）・RF（月次）・日次の原資産・（原資産, RF の源）"""
@@ -1305,7 +1590,8 @@ def main():
         prev = json.load(open(os.path.join(M.BASE, 'out', OUT_NAME)))
         specs = []
         for k in only.split(','):
-            specs += fams[k](c)
+            if k in fams:  # 'none' なら測り直さない（点検だけ）
+                specs += fams[k](c)
         ids = {st['id'] for st in specs}
         keep = [x for x in prev['tested'] if x['id'] not in ids]
         for k, v in (prev.get('sanity') or {}).items():
@@ -1336,6 +1622,11 @@ def main():
         x['grade'] = g; x['criteria'] = cr
         if x['family'] != 'primary' and 'label' not in x:
             x['label'] = {'exploratory': '探索（第1族）', 'exploratory2': '探索（第2族・第1族の結果を見た後に登録）', 'exploratory3': '探索（第3族・第1族の結果を見た後に登録）', 'exploratory4': '探索（第4族・第1族の結果を見た後に登録）', 'exploratory5': '探索（第5族・第1〜4族の結果を見た後に登録）', 'grid': '頑健性の格子（勝ちの主張には使わない）'}[x['family']]
+    if os.environ.get('MW_TREND_CHECKS'):
+        res['posthoc_checks_family5'] = checks6(c, tested)
+    elif only:
+        if prev.get('posthoc_checks_family5'):
+            res['posthoc_checks_family5'] = prev['posthoc_checks_family5']
     res['sanity'] = c.sanity
     res['train_selection'] = getattr(c, 'train_selection', None)
     res['n_tested'] = len(tested)
