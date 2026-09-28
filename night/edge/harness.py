@@ -29,7 +29,7 @@ import csv, io, json, math, os, statistics as S, sys, time, urllib.request, zipf
 BASE = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 CACHE = os.path.join(BASE, 'out', '_edge_cache')
 PHASE = os.environ.get('EDGE_PHASE', 'select')
-SEL_END = 200012            # 選定に使ってよい最後の月
+SEL_END = int(os.environ.get('EDGE_SEL_END', '200012'))   # 選定に使ってよい最後の月（EDGE_SEL_END は night/edge/prefix_check.py の先読み検査だけが前へずらす）
 HOLD_START = 200101         # 検定（ホールドアウト）の最初の月
 FR = 'https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{}_CSV.zip'
 UA = {'User-Agent': 'Mozilla/5.0 (ccf-gate research)'}
