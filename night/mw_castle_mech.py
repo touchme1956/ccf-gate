@@ -247,6 +247,7 @@ class Book:
     def __init__(self, regime, kc, kk):
         self.reg, self.kc, self.kk = regime, kc, kk
         self.pos = {}                    # (口座, 資産) -> [USD 時価, 円の取得費]
+        self.cb = {}
         self.cash = 0.0                  # 城の現金（USD）
         self.ytd = self.withheld = 0.0
         self.carry = []
@@ -259,6 +260,7 @@ class Book:
         return self.reg in ('taxable', 'nisa_q')
 
     def _add(self, acct, a, usd, jpy, kap):
+        self.cb[a] = self.cb.get(a, 0.0) + jpy          # 報告用: 社ごとに買った円の合計（売った代金の入れ直しを含む）
         p = self.pos.setdefault((acct, a), [0.0, 0.0])
         p[0] += usd * (1 - kap); p[1] += jpy
         self.st['cost_usd'] += usd * kap
@@ -488,12 +490,16 @@ def simulate(cfg):
     nh = len([a for a in bk.assets() if a != 'CORE'])
     avgc = S.mean(cval.values()) if cval else None
     turn = (bk.st['sales_usd'] / len(months) * 12 / avgc) if avgc else None
+    endpos = {a: bk.held(a) * fxe for a in bk.assets() if a != 'CORE'}
     liq = bk.liquidate(fxe, months[-1] // 100)
     res = {'held_jpy': held, 'liquidated_jpy': liq, 'castle_held_jpy': held_castle, 'contrib_jpy': contrib_jpy,
            'n_castle_names_end': nh, 'forced_sales': forced, 'universe_exit_sales': uni_exit, 'turnover_oneway_ann': turn,
            'stats': bk.st}
     if cfg.get('record'):
         res['twr_castle'] = twr_c; res['twr_whole'] = twr_w
+    if cfg.get('pos'):
+        res['castle_end_jpy'] = endpos
+        res['bought_jpy'] = {a: v for a, v in bk.cb.items() if a != 'CORE'}
     return res
 
 
@@ -805,6 +811,209 @@ def main():
     log('保存', p, round(os.path.getsize(p) / 1e6, 2), 'MB')
 
 
+# ───────────────────────── 探索の族（prereg2） ─────────────────────────
+PRE2 = 'mw_castle_mech_prereg2.json'
+MEGA6 = {'AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'META', 'NVDA'}
+
+
+def filt(uni, keep):
+    return {t: {c: r for c, r in uni[t].items() if keep(r)} for t in uni}
+
+
+def aged_of(Fform, R, lo=2, hi=5):
+    """組ごとに買って持つ → k 年目の系列 → lo〜hi 年目の暦の合成（part1 と同じ作り方）"""
+    paths = {}
+    for t in COH:
+        ms = mrange(t * 100 + 7, min((t + KMAX) * 100 + 6, END))
+        paths[t], _ = bh(Fform[t], R, ms)
+    aged = {}
+    for m in mrange(START, END):
+        v = []
+        for k in range(lo, hi + 1):
+            t = jyear(m) - k + 1
+            if t in paths and m in paths[t]:
+                v.append(paths[t][m])
+        if v:
+            aged[m] = sum(v) / len(v)
+    return aged
+
+
+def sub2(s, b):
+    return {'2010_07_2018_06': M.excess_stats(s, b, START, 201806), '2018_07_2026_08': M.excess_stats(s, b, 201807, END)}
+
+
+def run2():
+    global D
+    t0 = time.time()
+    outp = os.path.join(M.BASE, 'out', OUT)
+    main_ = json.load(open(outp))
+    D = load()
+    uni = D['uni']
+    F, B, UT, pools = forms(uni)
+    D['UT'] = UT
+    R = D['R']
+    fm = {k: v for k, v in D['ff']['mkt'].items() if START <= k <= END}
+    spy = D['cores']['SPX'][0]; ndx = D['cores']['NDX'][0]
+    bench0 = {nm: SR.simulate(B[nm], R)[0] for nm in B}
+    base = {'cf': CF, 'contrib': CONTRIB, 'kc': COST, 'kk': COST, 'start': START, 'end': END}
+    PB = {'T3VW': 'U_all', 'M100_T3VW': 'M100', 'M100_T5': 'M100'}
+    SELK = {'N5': 'M100_T5', 'N10': 'M100_T10', 'T3': 'M100_T3VW'}
+    # 主の系列（小分け用）
+    prim = {}
+    for form in PB:
+        prim['decay_aged25_' + form] = aged_of(F[form], R)
+    cfgs, keys = [], []
+    for sv, fk in SELK.items():
+        for rule in ('mech', 'annual'):
+            keys.append(f'castle_{rule}_{sv}'); cfgs.append(dict(base, rule=rule, sel={J: F[fk][J] for J in SR.YEARS}, core='SPX', regime='pretax', record=True))
+    for k, r in zip(keys, run_many(cfgs)):
+        prim[k] = r['twr_castle']
+    # E2
+    E2, E2ser, E2bench, E2wealth = {}, {}, {}, {}
+    exF = {}
+    for tag, keep in (('exMega6', lambda r: r['ticker'] not in MEGA6), ('exBusEq', lambda r: r.get('ff12') != 'BusEq')):
+        u2 = filt(uni, keep)
+        F2, B2, UT2, pools2 = forms(u2)
+        exF[tag] = F2
+        b2 = {nm: SR.simulate(B2[nm], R)[0] for nm in B2}
+        for form, pb in PB.items():
+            nm = f'decay_aged25_{form}_{tag}'
+            E2ser[nm] = aged_of(F2[form], R)
+            E2bench[nm] = {'own_' + pb + '_' + tag: b2[pb], 'orig_' + pb: bench0[pb]}
+    cfgs, keys = [], []
+    for tag in exF:
+        for sv, fk in SELK.items():
+            sel = {J: exF[tag][fk][J] for J in SR.YEARS}
+            keys.append((f'castle_mech_{sv}_{tag}', 'SPX', 'pretax', True)); cfgs.append(dict(base, rule='mech', sel=sel, core='SPX', regime='pretax', record=True))
+            for core in ('SPX', 'NDX'):
+                for reg in ('pretax', 'taxable', 'nisa_q'):
+                    if (core, reg) == ('SPX', 'pretax'):
+                        continue
+                    keys.append((f'castle_mech_{sv}_{tag}', core, reg, False)); cfgs.append(dict(base, rule='mech', sel=sel, core=core, regime=reg))
+    # 質で選ばない巨大株の城（仕組みだけの対照）
+    capsel = {}
+    for J in SR.YEARS:
+        u = uni[J]
+        m100 = {c: u[c] for c in sorted(u, key=lambda c: -u[c]['fcap'])[:100]}
+        Rm, _sc = SR.scores(m100)
+        capsel[J] = {m100[c]['ticker']: m100[c]['fcap'] for c in Rm}
+    for core in ('SPX', 'NDX'):
+        for reg in ('pretax', 'taxable', 'nisa_q'):
+            keys.append(('megacap_index_castle', core, reg, False)); cfgs.append(dict(base, rule='mech', sel=capsel, core=core, regime=reg))
+            keys.append(('core_only', core, reg, False)); cfgs.append(dict(base, cf=0.0, rule='none', core=core, regime=reg))
+    keys.append(('castle_mech_N5', 'SPX', 'pretax', 'pos')); cfgs.append(dict(base, rule='mech', sel={J: F['M100_T5'][J] for J in SR.YEARS}, core='SPX', regime='pretax', pos=True))
+    RES = dict(zip(keys, run_many(cfgs)))
+    for (nm, core, reg, rec), r in RES.items():
+        if rec is True:
+            E2ser[nm] = r['twr_castle']
+    core_w = {(c, g): RES[('core_only', c, g, False)] for c in ('SPX', 'NDX') for g in ('pretax', 'taxable', 'nisa_q')}
+    for (nm, core, reg, rec), r in RES.items():
+        if nm in ('core_only',) or rec == 'pos':
+            continue
+        fld = 'held_jpy' if reg == 'pretax' else 'liquidated_jpy'
+        E2wealth.setdefault(nm, {}).setdefault(core, {})[reg] = {'ratio_vs_core': round(r[fld] / core_w[(core, reg)][fld], 4),
+                                                                   'n_castle_names_end': r['n_castle_names_end'], 'universe_exit_sales': r['universe_exit_sales']}
+    # 格付け（E2）
+    MEM = json.load(open(os.path.join(M.BASE, 'out', PRE2)))['family_E2_graded_exploratory']['members']
+    pv = {}
+    for nm in MEM:
+        h = M.excess_stats(E2ser[nm], fm, M.HOLD_START); pv[nm] = h['p'] if h else None
+    hp = M.holm(pv)
+    graded = {}
+    for nm in MEM:
+        s_ = E2ser[nm]
+        turn = DECAY_TURN if nm.startswith('decay') else None
+        if turn is None:
+            k = (nm, 'SPX', 'pretax', True)
+            turn = RES[k]['turnover_oneway_ann'] or 0.0
+        fl = M.excess_stats(s_, fm); hd = M.excess_stats(s_, fm, M.HOLD_START)
+        ch = M.excess_stats(M.apply_cost(s_, turn, COST), fm, M.HOLD_START)
+        r20 = M.rolling(s_, fm, 20)
+        g, c = M.grade(fl, None, hd, r20, cost_hold=ch, repl=None, family_holm_p=hp.get(nm))
+        rec = {'name': nm, 'primary': False, 'exploratory': 'prereg2', 'benchmark': 'French Mkt', 'full': fl, 'train': None, 'hold': hd,
+               'recent': M.excess_stats(s_, fm, M.RECENT_START), 'net_cost_hold': ch, 'turnover_oneway_ann': round(turn, 3), 'roll20': r20,
+               'dca20': M.dca(s_, fm, 20), 'vs_SPY': M.excess_stats(s_, spy), 'vs_NDX_QQQM': M.excess_stats(s_, ndx),
+               'holm_p_E2': hp.get(nm), 'grade': g, 'criteria': c, 'subperiods_vs_FF_Mkt': sub2(s_, fm)}
+        if nm in E2bench:
+            for bn, b in E2bench[nm].items():
+                st = M.excess_stats(s_, b)
+                rec['vs_' + bn] = st
+                rec['persistence_pass_vs_' + bn] = bool(st and st['ex_ann'] > 0 and (st['t'] or 0) >= 1.65)
+        graded[nm] = rec
+    # 小分け（主）
+    subs = {}
+    for nm, s_ in prim.items():
+        d_ = {'vs_FF_Mkt': sub2(s_, fm)}
+        if nm.startswith('decay'):
+            form = nm[len('decay_aged25_'):]
+            d_['vs_' + PB[form]] = sub2(s_, bench0[PB[form]])
+        subs[nm] = d_
+    # 組の中央値
+    cm = {}
+    p1 = main_['part1_event_time_decay']
+    for form in PB:
+        cm[form] = {}
+        for k in range(1, KMAX + 1):
+            v = list(p1[form]['by_event_year'][str(k)]['cohort_annual_excess_pct'].values())
+            cm[form][k] = {'n': len(v), 'median': round(S.median(v), 2) if v else None, 'mean': round(S.mean(v), 2) if v else None}
+        v25 = [x for k in (2, 3, 4, 5) for x in p1[form]['by_event_year'][str(k)]['cohort_annual_excess_pct'].values()]
+        cm[form]['years_2_5_pooled'] = {'n': len(v25), 'median': round(S.median(v25), 2), 'mean': round(S.mean(v25), 2),
+                                        'share_positive': round(sum(1 for x in v25 if x > 0) / len(v25), 3)}
+    log('E2 済', round(time.time() - t0, 1))
+    # 1社ずつ除く
+    names = sorted({x for J in SR.YEARS for x in F['M100_T5'][J]})
+    loo = {'decay_aged25_M100_T5': {}, 'castle_mech_N5': {}}
+    cfgs, keys = [], []
+    Bx_all = {}
+    for x in names:
+        ux = filt(uni, lambda r, x=x: r['ticker'] != x)
+        Fx, Bx, _u, _p = forms(ux)
+        bx = SR.simulate(Bx['M100'], R)[0]
+        Bx_all[x] = bx
+        ag = aged_of(Fx['M100_T5'], R)
+        a1 = M.excess_stats(ag, bx); a2 = M.excess_stats(ag, fm)
+        loo['decay_aged25_M100_T5'][x] = {'vs_M100_rebuilt': [a1['ex_ann'], a1['t']], 'vs_FF_Mkt': [a2['ex_ann'], a2['t']]}
+        keys.append(x); cfgs.append(dict(base, rule='mech', sel={J: Fx['M100_T5'][J] for J in SR.YEARS}, core='SPX', regime='pretax', record=True))
+    cb_core = RES[('core_only', 'SPX', 'pretax', False)]['held_jpy']
+    for x, r in zip(keys, run_many(cfgs)):
+        s_ = r['twr_castle']
+        a1 = M.excess_stats(s_, Bx_all[x]); a2 = M.excess_stats(s_, fm)
+        loo['castle_mech_N5'][x] = {'vs_M100_rebuilt': [a1['ex_ann'], a1['t']], 'vs_FF_Mkt': [a2['ex_ann'], a2['t']],
+                                    'wealth_ratio_vs_SPX_core_pretax': round(r['held_jpy'] / cb_core, 4)}
+    loo_sum = {}
+    for k, v in loo.items():
+        ff_ = sorted((vv['vs_FF_Mkt'][0], x) for x, vv in v.items())
+        mb = sorted((vv['vs_M100_rebuilt'][0], x) for x, vv in v.items())
+        loo_sum[k] = {'n_names': len(v), 'min_vs_FF_Mkt': ff_[0], 'median_vs_FF_Mkt': ff_[len(ff_) // 2][0], 'max_vs_FF_Mkt': ff_[-1],
+                      'min_vs_M100': mb[0], 'median_vs_M100': mb[len(mb) // 2][0], 'min_t_vs_FF_Mkt': min(((vv['vs_FF_Mkt'][1], x) for x, vv in v.items()))}
+    log('1社ずつ 済', round(time.time() - t0, 1))
+    # 城の中身（mech_N5・終わり）
+    rp = RES[('castle_mech_N5', 'SPX', 'pretax', 'pos')]
+    tot = sum(rp['castle_end_jpy'].values())
+    top = sorted(rp['castle_end_jpy'].items(), key=lambda z: -z[1])
+    contrib = {'castle_end_total_jpy': round(tot), 'n_names': len(top),
+               'top10': [{'ticker': a, 'end_jpy': round(v), 'share': round(v / tot, 3), 'bought_jpy': round(rp['bought_jpy'].get(a, 0.0)),
+                          'multiple': round(v / rp['bought_jpy'][a], 2) if rp['bought_jpy'].get(a) else None} for a, v in top[:10]],
+               'mega6_share_of_end_value': round(sum(v for a, v in top if a in MEGA6) / tot, 3),
+               'bought_total_jpy': round(sum(rp['bought_jpy'].values()))}
+    mic = {core: {reg: None for reg in ('pretax', 'taxable', 'nisa_q')} for core in ('SPX', 'NDX')}
+    for core in ('SPX', 'NDX'):
+        for reg in ('pretax', 'taxable', 'nisa_q'):
+            fld = 'held_jpy' if reg == 'pretax' else 'liquidated_jpy'
+            mic[core][reg] = round(RES[('megacap_index_castle', core, reg, False)][fld] / core_w[(core, reg)][fld], 4)
+    tested2 = [{'name': nm, 'role': 'exploratory_prereg2', 'grade': graded[nm]['grade']} for nm in MEM]
+    tested2 += [{'name': f'loo_{k}_{x}', 'role': 'report_leave_one_out_prereg2', 'grade': None} for k in loo for x in loo[k]]
+    tested2 += [{'name': 'megacap_index_castle', 'role': 'report_control_prereg2', 'grade': None}]
+    main_['exploratory_prereg2'] = {'prereg': PRE2, 'prereg_commit': git_sha(f'out/{PRE2}'), 'graded_E2': graded, 'holm_E2': hp,
+                                    'wealth_E2': E2wealth, 'subperiods_primary': subs, 'cohort_median_primary': cm,
+                                    'leave_one_name_out': loo, 'leave_one_name_out_summary': loo_sum, 'castle_mech_N5_contributors': contrib,
+                                    'megacap_index_castle_wealth_ratio': mic, 'runtime_s': round(time.time() - t0, 1)}
+    main_['tested'] = [x for x in main_['tested'] if not str(x.get('role', '')).endswith('prereg2')] + tested2
+    main_['n_tested'] = len(main_['tested'])
+    p_ = M.save(OUT, main_)
+    log('保存', p_, round(os.path.getsize(p_) / 1e6, 2), 'MB')
+
+
 def check():
     global D
     D = load()
@@ -817,6 +1026,8 @@ def check():
 if __name__ == '__main__':
     if '--selftest' in sys.argv:
         selftest()
+    elif '--prereg2' in sys.argv:
+        run2()
     elif '--check' in sys.argv:
         check()
     else:
