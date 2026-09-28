@@ -145,6 +145,30 @@ def yh(t):
     return {k: v for k, v in M.yahoo(t).items() if k <= YH_END}
 
 
+# ───────────────────────── mw_common.excess_stats の高速版（出力は同一）─────────────────────────
+def excess_stats(s, b, a=None, z=None, per_year=12, lag=12):
+    """mw_common.excess_stats と同じ式・同じ丸め。違いは β の計算で S.mean を生成式の中で毎回呼ばない（元は O(n²) で1回3秒）だけ。
+    mw_common は他の角度と共有なので触らず、ここで置き換える（deviations に記録）。自己検算は --selftest の equal_check"""
+    ks = sorted(k for k in set(s) & set(b) if (a is None or k >= a) and (z is None or k <= z))
+    if len(ks) < max(24, per_year * 2):
+        return None
+    ex = [s[k] - b[k] for k in ks]
+    sv, bv = [s[k] for k in ks], [b[k] for k in ks]
+    te = S.stdev(ex) * math.sqrt(per_year)
+    vb = S.pvariance(bv)
+    ms, mb = S.mean(sv), S.mean(bv)
+    beta = sum((x - ms) * (y - mb) for x, y in zip(sv, bv)) / len(ks) / vb if vb else None
+    t = M.nw_t(ex, lag)
+    g_s, g_b = M.cagr(sv, per_year), M.cagr(bv, per_year)
+    return {'from': ks[0], 'to': ks[-1], 'years': round(len(ks) / per_year, 1),
+            'ex_ann': round(S.mean(ex) * per_year * 100, 2), 't': round(t, 2) if t is not None else None,
+            'p': round(M.p_two(t), 4) if t is not None else None,
+            'cagr_s': round(g_s * 100, 2), 'cagr_b': round(g_b * 100, 2), 'cagr_diff': round((g_s - g_b) * 100, 2),
+            'te': round(te * 100, 2), 'ir': round(S.mean(ex) * per_year / te, 2) if te else None,
+            'beta': round(beta, 2) if beta is not None else None,
+            'vol_s': round(S.stdev(sv) * math.sqrt(per_year) * 100, 1), 'vol_b': round(S.stdev(bv) * math.sqrt(per_year) * 100, 1)}
+
+
 # ───────────────────────── 重ね持ち（Jegadeesh-Titman）─────────────────────────
 def jt(R, L, skip, H, K, unit):
     """R: {名前: {yyyymm: 総リターン}}。月末 i に months[i-skip-L+1 .. i-skip] の累積で並べ上位 K を等分（組）、
@@ -161,6 +185,7 @@ def jt(R, L, skip, H, K, unit):
             s.append(s[-1] + (v or 0.0)); c.append(c[-1] + (0 if v is None else 1))
         ps[nm] = (s, c)
     coh = {}
+    elig = []
     for i in range(n):
         lo, hi = i - skip - L + 1, i - skip
         if lo < 0:
@@ -173,6 +198,7 @@ def jt(R, L, skip, H, K, unit):
         if len(sc) >= K:
             sc.sort()
             coh[i] = [nm for _, nm in sc[:K]]
+            elig.append(len(sc))
     ret, cost, turn = {}, {}, {}
     prev_w, prev_r = None, None
     miss = 0
@@ -209,7 +235,8 @@ def jt(R, L, skip, H, K, unit):
         prev_r = {nm: R[nm][m] for nm in w2}; prev_r['_p'] = rp
     yrs = len(turn) / 12 if turn else 0
     return ret, cost, {'months': len(ret), 'from': min(ret) if ret else None, 'to': max(ret) if ret else None,
-                       'oneway_turnover_per_year': round(sum(turn.values()) / yrs, 3) if yrs else None, 'missing_member_months': miss}
+                       'oneway_turnover_per_year': round(sum(turn.values()) / yrs, 3) if yrs else None, 'missing_member_months': miss,
+                       'eligible_median': S.median(elig) if elig else None}
 
 
 def ew_rank_portfolio(R, L, skip, frac, unit, ceil_frac=True):
@@ -275,17 +302,17 @@ def evaluate(sid, fam, label, s, b, *, rule='', cost=None, turnover=None, unit=N
         stress = M.apply_cost(s, turnover * 1.5, unit * 2)
         ann_cost = round(turnover * unit * 100, 3)
     e = {'id': sid, 'family': fam, 'label': label, 'primary': primary, 'rule': rule, 'annual_cost_pct': ann_cost}
-    e['full'] = M.excess_stats(s, b)
-    e['train'] = M.excess_stats(s, b, z=TR)
-    e['hold'] = M.excess_stats(s, b, a=HS)
-    e['recent'] = M.excess_stats(s, b, a=RS)
-    e['cost_hold'] = M.excess_stats(net, b, a=HS)
-    e['cost_full'] = M.excess_stats(net, b)
-    e['stress_cost_hold'] = M.excess_stats(stress, b, a=HS)
+    e['full'] = excess_stats(s, b)
+    e['train'] = excess_stats(s, b, z=TR)
+    e['hold'] = excess_stats(s, b, a=HS)
+    e['recent'] = excess_stats(s, b, a=RS)
+    e['cost_hold'] = excess_stats(net, b, a=HS)
+    e['cost_full'] = excess_stats(net, b)
+    e['stress_cost_hold'] = excess_stats(stress, b, a=HS)
     e['roll20'] = M.rolling(s, b, 20)
     e['dca20'] = M.dca(s, b, 20)
     if not compact:
-        e['cost_train'] = M.excess_stats(net, b, z=TR)
+        e['cost_train'] = excess_stats(net, b, z=TR)
         e['roll20_net'] = M.rolling(net, b, 20)
         e['roll10'] = M.rolling(s, b, 10)
         e['dca20_net'] = M.dca(net, b, 20)
@@ -294,7 +321,7 @@ def evaluate(sid, fam, label, s, b, *, rule='', cost=None, turnover=None, unit=N
         e['maxdd_s_hold'] = round(M.maxdd(M.window(s, HS)) * 100, 1) if M.window(s, HS) else None
         e['maxdd_b_hold'] = round(M.maxdd(M.window(b, HS)) * 100, 1) if M.window(b, HS) else None
     if pub:
-        e['postpub'] = {'from_year': pub + 1, 'stats': M.excess_stats(s, b, a=(pub + 1) * 100 + 1)}
+        e['postpub'] = {'from_year': pub + 1, 'stats': excess_stats(s, b, a=(pub + 1) * 100 + 1)}
     e['repl'] = repl
     if timing:
         e['sharpe_pair'] = {'train': (M.sharpe(net, rf, z=TR), M.sharpe(b, rf, z=TR)),
@@ -320,9 +347,9 @@ def repl_summary(units):
 
 
 def unit_stats(s, b):
-    f = M.excess_stats(s, b)
+    f = excess_stats(s, b)
     if f:
-        f = dict(f); f['_hold'] = M.excess_stats(s, b, a=HS)
+        f = dict(f); f['_hold'] = excess_stats(s, b, a=HS)
     return f
 
 
@@ -340,6 +367,8 @@ def finalize(families):
         g, c = M.grade(e['full'], e['train'], e['hold'], e['roll20'], cost_hold=e['cost_hold'], repl=e['repl'],
                        family_holm_p=hp, sharpe_pair=e.get('sharpe_pair'), leveraged_or_timing=e['timing'])
         e['grade'], e['criteria'] = g, c
+        if e.get('posthoc'):
+            e['grade'], e['criteria_info_only'], e['criteria'] = '事後（格付けなし）', c, None
     return fam_holm
 
 
@@ -368,6 +397,8 @@ def selftest():
     # H=2 の重ね持ち: 各月の重みの合計が1
     r4, c4, i4 = jt(R, 3, 0, 2, 2, 0.0005)
     assert i4['months'] > 0
+    xs = {m: random.gauss(0.01, 0.05) for m in months}; ys = {m: random.gauss(0.008, 0.04) for m in months}
+    assert excess_stats(xs, ys) == M.excess_stats(xs, ys) and excess_stats(xs, ys, a=200201) == M.excess_stats(xs, ys, a=200201), 'excess_stats の高速版が mw_common と一致しない'
     print('selftest OK', info, i2, i4)
 
 
@@ -416,15 +447,21 @@ def main():
         g = jkp_industry(c)
         GICS[c] = {k: add_rf(v, RF) for k, v in g.items()}
     CMKT = {c: add_rf(M.jkp_mkt(c, 'vw'), RF) for c in set(GICS_UNITS + DEV23 + EM14 + ['emerging', 'developed', 'world', 'world_ex_us', 'usa'])}
-    # sanity: JKP ff49 と French 49 業種の同じ業種（1=Agric）の差（JKP が超過なら ≈ −RF）
+    # sanity: JKP ff49 と French 49 業種（1963〜・同じ番号の業種）の差の中央値（JKP が超過なら ≈ −RF）
     try:
         jf = jkp_industry('usa', 'ff49')
-        a = jf.get('1.0') or jf.get('1')
-        fa = IND[49]['Agric']
-        ks = sorted(k for k in set(a) & set(fa) & set(RF))
-        sanity['jkp_ff49_agric_minus_french_agric_ann'] = round(S.mean(a[k] - fa[k] for k in ks) * 1200, 3)
-        sanity['french_rf_ann_same_months'] = round(S.mean(RF[k] for k in ks) * 1200, 3)
-        log('sanity JKP ff49 Agric − French Agric', sanity['jkp_ff49_agric_minus_french_agric_ann'], 'RF', sanity['french_rf_ann_same_months'])
+        diffs, cors = [], []
+        for i, c in enumerate(IND[49]):
+            a, fa = jf.get(f'{i + 1}.0'), IND[49][c]
+            if not a:
+                continue
+            ks = sorted(k for k in set(a) & set(fa) & set(RF) if k >= 196301)
+            diffs.append(S.mean(a[k] - fa[k] for k in ks) * 1200)
+            cors.append(M.corr([a[k] for k in ks], [fa[k] for k in ks]))
+        sanity['jkp_ff49_minus_french49_median_ann'] = round(S.median(diffs), 3)
+        sanity['jkp_ff49_vs_french49_median_corr'] = round(S.median(cors), 3)
+        sanity['french_rf_ann_1963'] = round(S.mean(RF[k] for k in RF if k >= 196301) * 1200, 3)
+        log('sanity JKP ff49 − French 49 (中央値・年率%)', sanity['jkp_ff49_minus_french49_median_ann'], 'RF', sanity['french_rf_ann_1963'], 'corr', sanity['jkp_ff49_vs_french49_median_corr'])
     except Exception as ex:  # noqa
         sanity['jkp_ff49_check_error'] = str(ex)
 
@@ -473,7 +510,7 @@ def main():
     def train_t(gid):
         N, fk, H, frac, K, r, cst, info = grid[gid]
         net = {k: v - cst.get(k, 0.0) for k, v in r.items()}
-        st = M.excess_stats(net, MKT, z=TR)
+        st = excess_stats(net, MKT, z=TR)
         return (st['t'] if st and st['t'] is not None else -99)
     sel = {}
     for N in (49, 30, 17, 12, 10):
@@ -573,7 +610,7 @@ def main():
         if sid == 'F4v3_volmanaged_market_control':
             cst = {k: v for k, v in cst.items()}  # 市場は回転0（露出の変化だけ）
         wl = list(ws.values())
-        base_cmp = M.excess_stats(r, mr)  # 元の（管理なし）との比較
+        base_cmp = excess_stats(r, mr)  # 元の（管理なし）との比較
         evaluate(sid, 'F4', lab, r, MKT, rule=lab, cost=cst, rf=RF, pub=2015, timing=True,
                  extra={'weight_mean': round(S.mean(wl), 3), 'weight_share_at_cap': round(sum(1 for x in wl if x >= 1.5 - 1e-9) / len(wl), 3),
                         'weight_share_below_1': round(sum(1 for x in wl if x < 1) / len(wl), 3), 'vs_unmanaged_underlying': base_cmp,
@@ -632,7 +669,7 @@ def main():
         if len(xs) >= 10:
             ewdev[m] = sum(xs) / len(xs)
     evaluate('F7c1_developed_12_1_top_third', 'F7', '先進23か国の国の勢い 12-1・上位1/3 等分 vs JKP developed mkt vw', r, CMKT['developed'], rule='国 12-1 上位1/3', cost=cst, pub=1997,
-             extra={'info': info, 'vs_ew_countries_control': {'full': M.excess_stats(r, ewdev), 'hold': M.excess_stats(r, ewdev, a=HS)}})
+             extra={'info': info, 'vs_ew_countries_control': {'full': excess_stats(r, ewdev), 'hold': excess_stats(r, ewdev, a=HS)}})
     allc = {c: CMKT[c] for c in DEV23 + EM14 if c in CMKT}
     r, cst, info = ew_rank_portfolio(allc, 11, 1, 1 / 4, 0.002)
     evaluate('F7c2_allcountries_12_1_top_quarter', 'F7', '先進23＋新興14か国の国の勢い 12-1・上位1/4 等分 vs JKP world mkt vw', r, CMKT['world'], rule='国 12-1 上位1/4', cost=cst, pub=1997, extra={'info': info})
@@ -644,7 +681,103 @@ def main():
         evaluate(f'F8_{t}_vs_{bn}', 'F8', f'実在ETF {t} vs {bn}（Yahoo・生き残りの偏りあり）', yh(t), bm, rule='実在ETF（費用は信託報酬込みの実績）', turnover=0.0, unit=0.0)
     log('F8 done')
 
-    fams = ['F1', 'F2', 'F3g', 'F3s', 'F4', 'F5', 'F6', 'F7', 'F8']
+    # ═════════ 第2次（out/mw_momentum_prereg2.json）═════════
+    REGIONS = {'all_countries', 'all_regions', 'developed', 'emerging', 'frontier', 'world', 'world_ex_us'}
+    SEEN8 = {'usa', 'jpn', 'gbr', 'deu', 'fra', 'can', 'aus', 'che'}
+    avail = json.load(open(os.path.join(M.CACHE, 'jkp_availability.json')))
+    us_side, _ = M.jkp_good_side('usa', 'ret_12_1', 'vw', upto=TR)
+
+    def binom_p(k, n):
+        return sum(math.comb(n, i) for i in range(k, n + 1)) / 2 ** n if n else None
+
+    def mkt_of(c):
+        if c not in CMKT:
+            try:
+                CMKT[c] = add_rf(M.jkp_mkt(c, 'vw'), RF)
+            except Exception as ex:  # noqa
+                log('mkt 取得失敗', c, ex)
+                CMKT[c] = None
+        return CMKT[c]
+
+    def panel(fid, label, series_by_c, cost_turnover=None, cost_unit=None, cost_by_c=None):
+        units, sv, bv, cst = {}, {}, {}, {}
+        for c, s_ in series_by_c.items():
+            b_ = mkt_of(c)
+            if not s_ or not b_:
+                units[c] = {'status': 'データ無し'}
+                continue
+            hold_n = sum(1 for k in s_ if HS <= k <= 202512 and k in b_)
+            if hold_n < 120:
+                units[c] = {'status': f'保有期間 {hold_n}か月 < 120'}
+                continue
+            full = excess_stats(s_, b_); hold = excess_stats(s_, b_, a=HS)
+            units[c] = {'status': 'ok', 'dev': c in DEV23, 'full_ex': full and full['ex_ann'], 'full_t': full and full['t'], 'from': full and full['from'],
+                        'hold_ex': hold and hold['ex_ann'], 'hold_t': hold and hold['t'], 'hold_cagr_diff': hold and hold['cagr_diff']}
+            for k in s_:
+                if k in b_:
+                    sv.setdefault(k, []).append(s_[k]); bv.setdefault(k, []).append(b_[k])
+                    if cost_by_c:
+                        cst.setdefault(k, []).append(cost_by_c[c].get(k, 0.0))
+        ok = {c: u for c, u in units.items() if u['status'] == 'ok'}
+
+        def sign(sub):
+            n = len(sub); k = sum(1 for u in sub.values() if (u['hold_ex'] or 0) > 0)
+            return {'n': n, 'positive': k, 'share': round(k / n, 3) if n else None, 'sign_p_one_sided': round(binom_p(k, n), 4) if n else None,
+                    'mean_hold_ex': round(S.mean(u['hold_ex'] for u in sub.values()), 2) if n else None,
+                    'median_hold_ex': round(S.median(u['hold_ex'] for u in sub.values()), 2) if n else None}
+        res = {'all': sign(ok), 'developed': sign({c: u for c, u in ok.items() if u['dev']}), 'emerging_other': sign({c: u for c, u in ok.items() if not u['dev']})}
+        res['pass_rule'] = bool(res['all']['n'] and res['all']['share'] >= 2 / 3 and res['all']['sign_p_one_sided'] < 0.05)
+        ms = sorted(k for k in sv if len(sv[k]) >= 3)
+        s_ew = {k: S.mean(sv[k]) for k in ms}; b_ew = {k: S.mean(bv[k]) for k in ms}
+        extra = {'panel': res, 'units': units, 'panel_countries_per_month_median': S.median(len(sv[k]) for k in ms) if ms else None}
+        if cost_by_c:
+            cmap = {k: S.mean(cst[k]) for k in ms}
+            evaluate(fid, fid.split('_')[0], label, s_ew, b_ew, rule=label, cost=cmap, pub=1993, extra=extra)
+        else:
+            evaluate(fid, fid.split('_')[0], label, s_ew, b_ew, rule=label, turnover=cost_turnover, unit=cost_unit, pub=1993, extra=extra)
+        log(fid, res)
+
+    # F9 株の勢いのパネル
+    cands9 = [c for c in sorted(avail['portfolios']) if c not in REGIONS | SEEN8]
+    ser9 = {}
+    for c in cands9:
+        try:
+            ser9[c] = add_rf(jkp_rows_filtered(c, 'ret_12_1', us_side), RF)
+        except Exception as ex:  # noqa
+            log('F9 取得失敗', c, ex); ser9[c] = None
+    panel('F9_panel_stock_momentum_ew', f'まだ見ていない国々の JKP ret_12_1 三分位（{us_side}）の等分 vs 同じ国々の市場の等分', ser9, 2.0, 0.003)
+    # F10 業種の勢いのパネル
+    cands10 = [c for c in sorted(avail['industry']) if c not in REGIONS | SEEN8]
+    ser10, cost10 = {}, {}
+    for c in cands10:
+        try:
+            g = {k: add_rf(v, RF) for k, v in jkp_industry(c).items()}
+            r, cst_, info = jt(g, 6, 0, 6, 2, 0.0005)
+            if info.get('eligible_median') is None or info['eligible_median'] < 8:
+                ser10[c] = None; log('F10 業種が少ない', c, info.get('eligible_median'))
+                continue
+            ser10[c], cost10[c] = r, cst_
+        except Exception as ex:  # noqa
+            log('F10 取得失敗', c, ex); ser10[c] = None
+    panel('F10_panel_industry_momentum_ew', 'まだ見ていない国々の GICS 業種 MG6-6 上位2 の等分 vs 同じ国々の市場の等分', ser10, cost_by_c=cost10)
+    # F11 実在の新興国の勢いETF
+    evaluate('F11_EEMO_vs_EEM', 'F11', '実在ETF EEMO vs EEM（Yahoo・生き残りの偏りあり）', yh('EEMO'), yh('EEM'), rule='実在ETF', turnover=0.0, unit=0.0)
+    # F12 事後の混合（格付けしない）
+    parts = {'F1a1_us_top_decile': (d10['Hi PRIOR'], {k: 4.0 * 0.002 / 12 for k in d10['Hi PRIOR']}),
+             'F1a3_us_me5_prior5': (d25[col25(5, 5)], {k: 3.0 * 0.001 / 12 for k in d25[col25(5, 5)]})}
+    for N in (49, 30, 17, 12, 10):
+        (_, _, _, _, K, r, cst, info) = grid[f'F3g_ind{N}_6-0_H6_K15']
+        parts[f'F1b_ind{N}'] = (r, cst)
+    def blend(ids):
+        ms = sorted(set.intersection(*[set(parts[i][0]) for i in ids]))
+        return ({k: S.mean(parts[i][0][k] for i in ids) for k in ms}, {k: S.mean(parts[i][1].get(k, 0.0) for i in ids) for k in ms})
+    a7 = ['F1a1_us_top_decile', 'F1a3_us_me5_prior5', 'F1b_ind49', 'F1b_ind30', 'F1b_ind17', 'F1b_ind12', 'F1b_ind10']  # 第1次で A だった7本（prereg2 に記載）
+    for sid, ids in (('F12_blend_top_decile_ind49', ['F1a1_us_top_decile', 'F1b_ind49']), ('F12_blend_F1_A7', a7)):
+        r, cst = blend(ids)
+        evaluate(sid, 'F12', f'事後の混合（格付けしない）: {" + ".join(ids)} の等分', r, MKT, rule='事後', cost=cst, extra={'posthoc': True, 'parts': ids})
+    log('phase2 done')
+
+    fams = ['F1', 'F2', 'F3g', 'F3s', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12']
     fam_holm = finalize(fams)
     all_holm = M.holm({e['id']: e['hold_p_for_holm'] for e in TESTED})
     for e in TESTED:
@@ -652,9 +785,16 @@ def main():
     from collections import Counter
     summary = {'n_tested': len(TESTED), 'grades': dict(Counter(e['grade'] for e in TESTED)),
                'grades_by_family': {f: dict(Counter(e['grade'] for e in TESTED if e['family'] == f)) for f in fams}}
+    g3 = [e for e in TESTED if e['family'] == 'F3g']
+    summary['F3_grid'] = {'n': len(g3), 'hold_net_positive': sum(1 for e in g3 if e['cost_hold'] and e['cost_hold']['ex_ann'] > 0 and e['cost_hold']['cagr_diff'] > 0),
+                          'hold_t_ge_1_65': sum(1 for e in g3 if e['hold'] and (e['hold']['t'] or 0) >= 1.65),
+                          'median_hold_ex': S.median(e['hold']['ex_ann'] for e in g3 if e['hold']),
+                          'median_train_ex': S.median(e['train']['ex_ann'] for e in g3 if e['train']),
+                          'by_N_median_hold_ex': {N: S.median(e['hold']['ex_ann'] for e in g3 if e['hold'] and e['id'].startswith(f'F3g_ind{N}_')) for N in (49, 30, 17, 12, 10)}}
     top = sorted([e for e in TESTED if e['cost_hold']], key=lambda e: -e['cost_hold']['ex_ann'])[:15]
     summary['top_by_net_hold_ex'] = [(e['id'], e['grade'], e['cost_hold']['ex_ann'], e['cost_hold']['t']) for e in top]
-    out = {'angle': 'momentum', 'prereg': f'out/{PRE}', 'prereg_commit': sha, 'global_prereg': 'out/mw_prereg.json',
+    sha2 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg2.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
+    out = {'angle': 'momentum', 'prereg': f'out/{PRE}', 'prereg_commit': sha, 'prereg2': 'out/mw_momentum_prereg2.json', 'prereg2_commit': sha2, 'global_prereg': 'out/mw_prereg.json',
            'generated': datetime.date.today().isoformat(), 'sanity': sanity, 'family_holm': fam_holm, 'summary': summary,
            'deviations': DEVIATIONS, 'tested': TESTED, 'log': LOG[-80:]}
     p = M.save(OUT, out)
@@ -665,7 +805,9 @@ def main():
                 log(g, e['id'], 'hold', e['hold'] and (e['hold']['ex_ann'], e['hold']['t']), 'net', e['cost_hold'] and e['cost_hold']['ex_ann'])
 
 
-DEVIATIONS = []
+DEVIATIONS = [
+    'mw_common.excess_stats の β の計算が S.mean を生成式の中で毎回呼ぶため O(n²)（1200か月で1回約3秒・約300戦略×9回で数時間）。mw_common は共有なので触らず、同じ式・同じ丸めの高速版を本スクリプト内に置いた（--selftest で出力の一致を検算）',
+]
 
 if __name__ == '__main__':
     if '--selftest' in sys.argv:
