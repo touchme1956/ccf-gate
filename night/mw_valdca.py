@@ -25,6 +25,7 @@ COST_UNIT = 0.001                  # 片道 100% あたり 0.10%（大型株・�
 SPREAD_MARGIN = 0.015              # 借入 = 短期金利 + 1.5%/年
 E_LAG = 3                          # 利益は3か月遅れで使う
 LOG = []
+POOL = {}   # 国ごとの費用後の超過（R1 の束ね用・JSON には書かない）
 
 
 def log(*a):
@@ -1066,6 +1067,61 @@ def post_pub_for(rule):
     return d
 
 
+def ndx_total_daily():
+    """NASDAQ-100 の総リターン推定（日次）: ^NDX 価格＋配当 0.30%/年（〜1999-03-10）、以降 QQQ 調整後終値＋信託報酬 0.20%/年（mw_levdca と同じ作り方）"""
+    nd = M.yahoo('^NDX', '1d')
+    q = M.yahoo('QQQ', '1d')
+    out = {}
+    for k, v in nd.items():
+        if k <= 19990310:
+            out[k] = v + 0.003 / 252
+    for k, v in q.items():
+        if 19990311 <= k <= 20260831:
+            out[k] = v + 0.002 / 252
+    return out
+
+
+def run_states(keys, wfun, series_by_w, cost_unit=COST_UNIT):
+    """状態ごとに1つの資産を100%持つ型（F1・F2）。w = wfun(t)、その月のリターン = series_by_w[w][t]。費用 |Δw|×cost_unit"""
+    gross, net, W = {}, {}, {}
+    prev = None
+    for t in keys:
+        w = wfun(t)
+        r = series_by_w[w][t]
+        to = 0.0 if prev is None else abs(w - prev)
+        gross[t] = r
+        net[t] = r - to * cost_unit
+        W[t] = w
+        prev = w
+    return gross, net, W
+
+
+def tax_switch(keys, W, series_by_w, bench, rate=0.20315, c=COST_UNIT):
+    """状態が変わるたびに全部売って買い直す（利益に年末課税・年内通算・繰越なし）。最後に売る。相手は買って持って最後に売る（報告のみ）"""
+    v, basis, yr = 1.0, 1.0, {}
+    prev = None
+    for t in keys:
+        w = W[t]
+        if prev is not None and w != prev:
+            yr[t // 100] = yr.get(t // 100, 0.0) + (v - basis)
+            v *= 1 - c
+            basis = v
+        v *= 1 + series_by_w[w][t]
+        if t % 100 == 12:
+            g = yr.pop(t // 100, 0.0)
+            if g > 0:
+                v -= g * rate
+                basis = min(basis, v)
+        prev = w
+    g = sum(yr.values()) + (v - basis)
+    tv = v - max(0.0, g) * rate
+    bh = 1.0
+    for t in keys:
+        bh *= 1 + bench[t]
+    bh_tax = bh - max(0.0, bh - 1) * rate
+    return {'after_tax_ratio': round(tv / bh_tax, 4), 'years': round(len(keys) / 12, 1)}
+
+
 # ───────────────────────── 本体 ─────────────────────────
 def main():
     pre = json.load(open(os.path.join(M.BASE, 'out', PREREG)))
@@ -1168,6 +1224,7 @@ def main():
                 det[cd['name']] = f'N/A（評価できる期間が {len(kc)} か月）'
                 continue
             gc, nc, Wc, _ = run_alloc(kc, cd['mkt'], altc, cd['cash'], wfc)
+            POOL.setdefault(rule, {})[cd['name']] = {t: nc[t] - cd['mkt'][t] for t in nc}
             xs = M.excess_stats(nc, cd['mkt'])
             xh = M.excess_stats(nc, cd['mkt'], a=M.HOLD_START)
             reg += 1
@@ -1255,7 +1312,105 @@ def main():
                                       'maxdd_hold': [round(M.maxdd(M.window(nm, M.HOLD_START)) * 100, 1), round(M.maxdd(M.window(mkt, M.HOLD_START)) * 100, 1)]}
             log(f"事後の点検 倍率{lev} {vn:22s} 訓練 {tr_['ex_ann']:+.2f}(t{tr_['t']}) 保有 {h['ex_ann']:+.2f}(t{h['t']}) 幾何 {h['cagr_diff']:+.2f} "
                 f"2010〜 {h10['cagr_diff']:+.2f} 全期間t {f_['t']}")
-    posthoc = {'agree_robustness_grid_US': grid,
+    # ── 第3族 F（探索・格付け）: 持てる形（日次レバレッジ投信/ETF）と NASDAQ-100
+    ffd = M.ff_factors('daily')
+    mkt_d = {k: v for k, v in ffd['mkt'].items() if k <= 20260831}
+    rf_d = {k: v for k, v in ffd['rf'].items() if k <= 20260831}
+    lev_m = {L: {k: v for k, v in M.to_monthly(M.lever_daily(mkt_d, L, rf_d)).items() if k <= END_M} for L in (1.5, 2.0)}
+    chk_m = M.to_monthly(mkt_d)
+    sanity['french_daily_to_monthly_max_abs_diff'] = round(max(abs(chk_m[k] - mkt[k]) for k in chk_m if k in mkt) * 100, 3)
+    ndx_d = ndx_total_daily()
+    ndx_m = {k: v for k, v in M.to_monthly(ndx_d).items() if k <= END_M}
+    ndx_keys = sorted(ndx_m)
+    sanity['ndx_months'] = [ndx_keys[0], ndx_keys[-1], len(ndx_keys), 'gaps', sum(1 for a, b in zip(ndx_keys, ndx_keys[1:]) if ym_add(a, 1) != b)]
+    # 最初の月（1985-10）は月の途中から始まるので外す
+    ndx_m = {k: v for k, v in ndx_m.items() if k >= 198511}
+    idx_ndx = tr_index(ndx_m, sorted(ndx_m))
+    up_ndx = sma_state(idx_ndx)
+
+    def agree_state(t, trend, lev):
+        k = ym_add(t, -1)
+        e, u = sig['ECY'].get(k), trend.get(k)
+        if e is None or u is None:
+            return None
+        if e > th['ECY_median'] and u:
+            return lev
+        if e < th['ECY_median'] and not u:
+            return 0.0
+        return 1.0
+
+    F = []
+    for name, L in (('F1_SP_ETF2x_agree', 2.0), ('F2_SP_ETF15x_agree', 1.5)):
+        wf = lambda t, L=L: agree_state(t, up, L)
+        ser = {L: lev_m[L], 1.0: mkt, 0.0: bond}
+        keys = [t for t in months(192607, END_M) if wf(t) is not None and all(t in ser[w] for w in ser)]
+        keys = longest_run_to_end(keys)
+        gm, nm, W = run_states(keys, wf, ser)
+        TO = {t: 0.0 for t in keys}
+        e = eval_alloc(gm, nm, mkt, rf, W, TO, {'post_Faber2007': 200801})
+        e['turnover_per_year'] = round(sum(abs(W[b] - W[a]) for a, b in zip(keys, keys[1:])) / len(keys) * 12, 3)
+        e['report_tax_hold'] = tax_switch([k for k in keys if k >= M.HOLD_START], W, ser, mkt)
+        e['repl'] = {'regions': 0, 'positive': 0, 'detail': 'N/A（事前登録3: 国の日次データが無い。信用取引版の国の結果は E2c・E3c にある）'}
+        F.append({'name': name, 'family': 'F（探索3・持てる形）', 'description': f'探索3: 一致の型を日次{L:g}倍のレバレッジ投信/ETFで（信託報酬0.9%・借入RF+0.5%）', 'graded': True, **e})
+    for name, L in (('F3_NDX_agree_lev2', 2.0), ('F4_NDX_agree_lev15', 1.5)):
+        wf = lambda t, L=L: agree_state(t, up_ndx, L)
+        keys = alloc_keys(ndx_m, bond, rf, wf, 198511, END_M, need_alt=True, need_cash=True)
+        gm, nm, W, TO = run_alloc(keys, ndx_m, bond, rf, wf)
+        e = eval_alloc(gm, nm, ndx_m, rf, W, TO, {'post_Faber2007': 200801})
+        e['repl'] = {'regions': 0, 'positive': 0, 'detail': 'N/A（事前登録3）'}
+        e['vs_french_mkt'] = {'full': M.excess_stats(gm, mkt), 'hold': M.excess_stats(gm, mkt, a=M.HOLD_START)}
+        F.append({'name': name, 'family': 'F（探索3・NASDAQ-100）', 'description': f'探索3: S&P の ECY × NASDAQ-100 の10か月線の一致で NASDAQ-100 を{L:g}倍（信用取引 RF+1.5%）／割高∧下は10年国債', 'graded': True, **e})
+    hp = M.holm({x['name']: x['hold']['p'] for x in F})
+    for x in F:
+        x['holm_p'] = hp.get(x['name'])
+        sp = {'train': tuple(x['sharpe']['train']), 'hold': tuple(x['sharpe']['hold'])}
+        gr, cr = M.grade(x['full'], x['train'], x['hold'], x['roll20'], cost_hold=x['cost_hold'], repl=None,
+                         family_holm_p=x['holm_p'], sharpe_pair=sp, leveraged_or_timing=True)
+        x['grade'], x['criteria'] = gr, cr
+        log(f"{x['name']:22s} {gr} 訓練 {x['train']['ex_ann']:+.2f}(t{x['train']['t']}) 保有 {x['hold']['ex_ann']:+.2f}(t{x['hold']['t']}) "
+            f"幾何差 {x['hold']['cagr_diff']:+.2f} 費用後 {x['cost_hold']['cagr_diff']:+.2f} 全期間t {x['full']['t']} 20年勝率 {x['roll20']['win_rate'] if x['roll20'] else None} "
+            f"シャープ 訓練 {x['sharpe']['train']} 保有 {x['sharpe']['hold']}")
+    tested += F
+
+    # ── 報告（格付けしない）
+    rep = {}
+    # R1: 18か国を束ねた超過
+    for rule in ('E2c_agree_lev', 'E3b_ECY_agree_lev_cash', 'E3c_ECY_agree_lev2', 'E3d_ECY_agree_tsmom'):
+        per = POOL.get(rule, {})
+        allm = sorted(set().union(*[set(v) for v in per.values()])) if per else []
+        pooled = {}
+        for t in allm:
+            v = [d[t] for d in per.values() if t in d]
+            if len(v) >= 5:
+                pooled[t] = S.mean(v)
+        zero = {t: 0.0 for t in pooled}
+        rep.setdefault('R1_pooled_countries', {})[rule] = {
+            'n_countries': len(per), 'full': M.excess_stats(pooled, zero), 'train': M.excess_stats(pooled, zero, z=M.TRAIN_END),
+            'hold': M.excess_stats(pooled, zero, a=M.HOLD_START), 'recent': M.excess_stats(pooled, zero, a=M.RECENT_START)}
+        h = rep['R1_pooled_countries'][rule]['hold']
+        log(f"R1 束ね {rule:24s} 国 {len(per)} 保有 {h['ex_ann'] if h else None}%/年 t{h['t'] if h else None}")
+    # R2: 分解（倍率2）
+    dec = {}
+    for nm_, fun in (('trend_only', lambda t: None if up.get(ym_add(t, -1)) is None else (2.0 if up[ym_add(t, -1)] else 0.0)),
+                     ('value_only', lambda t: None if sig['ECY'].get(ym_add(t, -1)) is None else (2.0 if sig['ECY'][ym_add(t, -1)] > th['ECY_median'] else 0.0)),
+                     ('both_E3c', lambda t: agree_state(t, up, 2.0))):
+        keys = alloc_keys(mkt, bond, rf, fun, 192607, END_M, need_alt=True, need_cash=True)
+        gm, nm, W, TO = run_alloc(keys, mkt, bond, rf, fun)
+        dec[nm_] = {'train_net': M.excess_stats(nm, mkt, z=M.TRAIN_END), 'hold_net': M.excess_stats(nm, mkt, a=M.HOLD_START),
+                    'sharpe_train': sharpe_net(nm, mkt, rf, None, M.TRAIN_END), 'sharpe_hold': sharpe_net(nm, mkt, rf, M.HOLD_START, None),
+                    'maxdd_full': round(M.maxdd(nm) * 100, 1), 'avg_w': round(S.mean(W.values()), 3)}
+        log(f"R2 分解 {nm_:10s} 訓練 {dec[nm_]['train_net']['ex_ann']:+.2f}(t{dec[nm_]['train_net']['t']}) 保有 {dec[nm_]['hold_net']['ex_ann']:+.2f}(t{dec[nm_]['hold_net']['t']}) "
+            f"シャープ保有 {dec[nm_]['sharpe_hold']} 最大下落 {dec[nm_]['maxdd_full']}")
+    rep['R2_decomposition_US_lev2'] = dec
+    # R3: いまの信号
+    last = max(k for k in sig['ECY'] if k <= END_M)
+    rep['R3_current_state'] = {'month_end': last, 'ECY': round(sig['ECY'][last], 4), 'ECY_line': th['ECY_median'], 'CAPE': round(sig['CAPE'][last], 2),
+                               'SP_above_10m_avg': up.get(last), 'NDX_above_10m_avg': up_ndx.get(last),
+                               'E2c_next_month_w': agree_state(ym_add(last, 1), up, 1.5), 'E3c_next_month_w': agree_state(ym_add(last, 1), up, 2.0),
+                               'F3_next_month_w': agree_state(ym_add(last, 1), up_ndx, 2.0),
+                               'last_month_cheap': max((k for k in sig['ECY'] if sig['ECY'][k] > th['ECY_median']), default=None)}
+    log('R3 いまの信号', rep['R3_current_state'])
+    posthoc = {'agree_robustness_grid_US': grid, 'reports_prereg3': rep,
                'note': '事後（第1・2族の結果を見た後）の点検。格付けしない。どれか一つが良くても採用の根拠にしない（選び直しになる）。全部の向きがそろうかだけを見る'}
 
     # ── E1（割安な国を選ぶ）
@@ -1495,7 +1650,7 @@ def main():
 
     n_tested = len(tested)
     out = {'angle': 'valdca', 'prereg': PREREG, 'prereg_commit': sha,
-           'prereg_parts': {PREREG: sha, 'mw_valdca_prereg2.json': git_sha('out/mw_valdca_prereg2.json')}, 'sanity': sanity,
+           'prereg_parts': {PREREG: sha, 'mw_valdca_prereg2.json': git_sha('out/mw_valdca_prereg2.json'), 'mw_valdca_prereg3.json': git_sha('out/mw_valdca_prereg3.json')}, 'sanity': sanity,
            'train_only_parameters_used': dict(th, DBL_h=tp['DBL_h'], VA_g_monthly=tp['VA_g_monthly']),
            'posthoc': posthoc,
            'n_tested': n_tested, 'grades': {x['name']: x['grade'] for x in tested},
