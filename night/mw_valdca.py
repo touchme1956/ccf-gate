@@ -461,6 +461,21 @@ def sma_state(idx, n=10):
     return out
 
 
+def tsmom_state(s, cash, n=12):
+    """月末 t に、直近 n か月（t−n+1〜t）の株の累積 > 短期金利の累積 か → {t: True/False}"""
+    ks = sorted(k for k in s if k in cash)
+    out = {}
+    for i in range(n - 1, len(ks)):
+        w = ks[i - n + 1:i + 1]
+        if ym_add(w[0], n - 1) != w[-1]:
+            continue
+        a = b = 1.0
+        for k in w:
+            a *= 1 + s[k]; b *= 1 + cash[k]
+        out[ks[i]] = a > b
+    return out
+
+
 def dd_from_high(idx):
     """月末 t の指数の、それまでの最高値からの下落率（0以下）"""
     out, hi = {}, None
@@ -585,8 +600,8 @@ def rt_weight(fc, T, cap=1.5):
     return min(cap, max(0.0, mu / ybar))
 
 
-def p_rule_wfun(rule, sig, th, idxup=None, fc=None):
-    """規則 → wfun(t)（t−1 月末の信号）。th = 閾値の辞書"""
+def p_rule_wfun(rule, sig, th, idxup=None, fc=None, tsm=None):
+    """規則 → wfun(t)（t−1 月末の信号）。th = 閾値の辞書。idxup = 指数が10か月平均以上か、tsm = 12か月の超過が正か"""
     def g(name, t):
         return sig.get(name, {}).get(ym_add(t, -1))
     if rule == 'P1_CAPE_med_bond':
@@ -612,14 +627,26 @@ def p_rule_wfun(rule, sig, th, idxup=None, fc=None):
         return lambda t: None if (g('CAPE', t) is None or idxup.get(ym_add(t, -1)) is None) else (0.0 if (g('CAPE', t) > th['CAPE_median'] and not idxup[ym_add(t, -1)]) else 1.0)
     if rule == 'E2b_ECYlow_and_down':
         return lambda t: None if (g('ECY', t) is None or idxup.get(ym_add(t, -1)) is None) else (0.0 if (g('ECY', t) < th['ECY_median'] and not idxup[ym_add(t, -1)]) else 1.0)
-    if rule == 'E2c_agree_lev':
+    if rule in ('E2c_agree_lev', 'E3b_ECY_agree_lev_cash', 'E3c_ECY_agree_lev2', 'E3d_ECY_agree_tsmom', 'E3a_CAPE_agree_lev'):
+        lev = 2.0 if rule == 'E3c_ECY_agree_lev2' else 1.5
+        trend = tsm if rule == 'E3d_ECY_agree_tsmom' else idxup
+        use_cape = rule == 'E3a_CAPE_agree_lev'
+
         def f(t):
-            e, u = g('ECY', t), idxup.get(ym_add(t, -1))
-            if e is None or u is None:
-                return None
-            if e > th['ECY_median'] and u:
-                return 1.5
-            if e < th['ECY_median'] and not u:
+            u = trend.get(ym_add(t, -1))
+            if use_cape:
+                c_ = g('CAPE', t)
+                if c_ is None or u is None:
+                    return None
+                cheap, dear = c_ <= th['CAPE_median'], c_ > th['CAPE_median']
+            else:
+                e = g('ECY', t)
+                if e is None or u is None:
+                    return None
+                cheap, dear = e > th['ECY_median'], e < th['ECY_median']
+            if cheap and u:
+                return lev
+            if dear and not u:
                 return 0.0
             return 1.0
         return f
@@ -630,8 +657,9 @@ P_RULES = ['P1_CAPE_med_bond', 'P2_CAPE_q75_bond', 'P3_CAPE_q75_cash', 'P4_ECY_z
            'P7_ECY_prop_1.0', 'P8_ECY_prop_1.5', 'P9_ECY_prop_2.0', 'P10_CAPE_prop_1.5', 'P11_FedModel_bond',
            'P12_RT_logCAPE_cash', 'P13_RT_ECY_cash']
 E2_RULES = ['E2a_CAPEhigh_and_down', 'E2b_ECYlow_and_down', 'E2c_agree_lev']
-CASH_ALT = {'P3_CAPE_q75_cash', 'P12_RT_logCAPE_cash', 'P13_RT_ECY_cash'}
-LEVER = {'P8_ECY_prop_1.5', 'P9_ECY_prop_2.0', 'P10_CAPE_prop_1.5', 'P12_RT_logCAPE_cash', 'P13_RT_ECY_cash', 'E2c_agree_lev'}
+E3_RULES = ['E3a_CAPE_agree_lev', 'E3b_ECY_agree_lev_cash', 'E3c_ECY_agree_lev2', 'E3d_ECY_agree_tsmom']
+CASH_ALT = {'P3_CAPE_q75_cash', 'P12_RT_logCAPE_cash', 'P13_RT_ECY_cash', 'E3b_ECY_agree_lev_cash'}
+LEVER = {'P8_ECY_prop_1.5', 'P9_ECY_prop_2.0', 'P10_CAPE_prop_1.5', 'P12_RT_logCAPE_cash', 'P13_RT_ECY_cash', 'E2c_agree_lev'} | set(E3_RULES)
 DESC = {
     'P1_CAPE_med_bond': 'CAPE ≤ 訓練の中央値なら株100%、超えたら10年国債',
     'P2_CAPE_q75_bond': 'CAPE > 訓練の75%点の月だけ10年国債',
@@ -649,6 +677,10 @@ DESC = {
     'E2a_CAPEhigh_and_down': '探索: CAPE 高い かつ 10か月線の下の月だけ10年国債',
     'E2b_ECYlow_and_down': '探索: ECY 低い かつ 10か月線の下の月だけ10年国債',
     'E2c_agree_lev': '探索: ECY 高い∧線の上→株150%／ECY 低い∧線の下→10年国債／ほか株100%',
+    'E3a_CAPE_agree_lev': '探索2: CAPE 低い∧線の上→株150%／CAPE 高い∧線の下→10年国債／ほか株100%',
+    'E3b_ECY_agree_lev_cash': '探索2: E2c で降りる先を短期金利にしたもの',
+    'E3c_ECY_agree_lev2': '探索2: E2c で割安∧上の月を株200%にしたもの',
+    'E3d_ECY_agree_tsmom': '探索2: E2c のトレンドを12か月の時系列モメンタムにしたもの',
 }
 
 
@@ -664,11 +696,11 @@ def thresholds_from(sig, upto=M.TRAIN_END, lo=None):
 
 
 def rule_needs(rule, th):
-    if rule in ('P1_CAPE_med_bond', 'P10_CAPE_prop_1.5', 'E2a_CAPEhigh_and_down'):
+    if rule in ('P1_CAPE_med_bond', 'P10_CAPE_prop_1.5', 'E2a_CAPEhigh_and_down', 'E3a_CAPE_agree_lev'):
         return 'CAPE_median' in th
     if rule in ('P2_CAPE_q75_bond', 'P3_CAPE_q75_cash'):
         return 'CAPE_q75' in th
-    if rule in ('P5_ECY_med_bond', 'E2b_ECYlow_and_down', 'E2c_agree_lev'):
+    if rule in ('P5_ECY_med_bond', 'E2b_ECYlow_and_down', 'E2c_agree_lev', 'E3b_ECY_agree_lev_cash', 'E3c_ECY_agree_lev2', 'E3d_ECY_agree_tsmom'):
         return 'ECY_median' in th
     if rule == 'P6_ECY_q25_bond':
         return 'ECY_q25' in th
@@ -721,7 +753,11 @@ K_DESC = {
     'K13_LUMP_annual': '年初一括（1年分を12か月ごとにまとめて株へ）vs 毎月分割（残りは現金）',
     'K14_LUMP_12m': '一括 vs 12か月の分割（手元のまとまったお金）',
 }
-K_NEEDS = {'K9_VSC_CAPE': ('CAPE',), 'K10_VSC_ECY': ('ECY',), 'K11_VSW_CAPE': ('CAPE', 'bond'), 'K12_VSW_ECY': ('ECY', 'bond')}
+K_NEEDS = {'K9_VSC_CAPE': ('CAPE',), 'K10_VSC_ECY': ('ECY',), 'K11_VSW_CAPE': ('CAPE', 'bond'), 'K12_VSW_ECY': ('ECY', 'bond'),
+           'K15_VSW_agree': ('ECY', 'bond'), 'K16_VSW_ECY_q25': ('ECY', 'bond')}
+K_RULES2 = ['K15_VSW_agree', 'K16_VSW_ECY_q25']
+K_DESC.update({'K15_VSW_agree': '探索2: ECY 低い∧10か月線の下の月だけ積立を10年国債へ、ほかは積立と国債を全部株へ',
+               'K16_VSW_ECY_q25': '探索2: ECY < 訓練の25%点の月だけ積立を10年国債へ、ほかは積立と国債を全部株へ'})
 
 
 def fv_equal(r, n):
@@ -811,8 +847,19 @@ def k_window(rule, w, s, cash, bond, sig, up, dd, prm, tax=False):
                     return None
                 m = min(2.0, max(0.0, v / prm['ECY_mean']))
             buy = min(m * inflow, Cc)
-        elif rule in ('K11_VSW_CAPE', 'K12_VSW_ECY'):
-            if rule == 'K11_VSW_CAPE':
+        elif rule in ('K11_VSW_CAPE', 'K12_VSW_ECY', 'K15_VSW_agree', 'K16_VSW_ECY_q25'):
+            if rule == 'K15_VSW_agree':
+                v = sig['ECY'].get(prev)
+                u = up.get(prev)
+                if v is None or u is None:
+                    return None
+                cheap = not (v < prm['ECY_median'] and not u)
+            elif rule == 'K16_VSW_ECY_q25':
+                v = sig['ECY'].get(prev)
+                if v is None:
+                    return None
+                cheap = not (v < prm['ECY_q25'])
+            elif rule == 'K11_VSW_CAPE':
                 v = sig['CAPE'].get(prev)
                 if v is None:
                     return None
@@ -1005,7 +1052,9 @@ def git_sha(path):
 
 
 def post_pub_for(rule):
-    if rule.startswith('E2'):
+    if rule == 'E3d_ECY_agree_tsmom':
+        return {'post_MOP2012': 201301}
+    if rule.startswith('E2') or rule.startswith('E3'):
         return {'post_Faber2007': 200801}
     if rule == 'P11_FedModel_bond':
         return {'post_Yardeni1997': 199801}
@@ -1039,6 +1088,7 @@ def main():
     idx = tr_index(mkt, sorted(mkt))
     up = sma_state(idx)
     dd = dd_from_high(idx)
+    tsm_us = tsmom_state(mkt, rf)
     tr_up = [up[k] for k in up if k <= M.TRAIN_END]
     p_below = sum(1 for u in tr_up if not u) / len(tr_up)
     g_va = (1 + M.cagr(M.window(mkt, None, M.TRAIN_END))) ** (1 / 12) - 1
@@ -1089,6 +1139,7 @@ def main():
         cd['idx'] = tr_index(cd['mkt'], ksc)
         cd['up'] = sma_state(cd['idx'])
         cd['dd'] = dd_from_high(cd['idx'])
+        cd['tsm'] = tsmom_state(cd['mkt'], cd['cash'])
         exc = exlog_series(cd['mkt'], cd['cash'])
         cd['fc'] = {'P12_RT_logCAPE_cash': rt_forecasts({t: math.log(v) for t, v in cd['sig']['CAPE'].items()}, exc, sign=-1),
                     'P13_RT_ECY_cash': rt_forecasts(cd['sig']['ECY'], exc, sign=+1)}
@@ -1099,7 +1150,7 @@ def main():
 
     # ── P 族と E2 族（米国＋18か国の再現）
     def p_eval(rule, fam):
-        wf = p_rule_wfun(rule, sig, th, idxup=up, fc=FC.get(rule))
+        wf = p_rule_wfun(rule, sig, th, idxup=up, fc=FC.get(rule), tsm=tsm_us)
         alt = rf if rule in CASH_ALT else bond
         keys = alloc_keys(mkt, alt, rf, wf, 192607, END_M, need_alt=True, need_cash=rule in LEVER)
         gm, nm, W, TO = run_alloc(keys, mkt, alt, rf, wf)
@@ -1110,7 +1161,7 @@ def main():
             if not rule_needs(rule, cd['th']):
                 det[cd['name']] = 'N/A（訓練期間の信号が60か月未満）'
                 continue
-            wfc = p_rule_wfun(rule, cd['sig'], cd['th'], idxup=cd['up'], fc=cd['fc'].get(rule))
+            wfc = p_rule_wfun(rule, cd['sig'], cd['th'], idxup=cd['up'], fc=cd['fc'].get(rule), tsm=cd['tsm'])
             altc = cd['cash'] if rule in CASH_ALT else cd['bond']
             kc = alloc_keys(cd['mkt'], altc, cd['cash'], wfc, 197501, 202512, need_alt=True, need_cash=rule in LEVER)
             if len(kc) < 120:
@@ -1132,7 +1183,7 @@ def main():
             shb = {k: sh['BOND'][ym_add(k, -1)] - 1 for k in sh_tr if ym_add(k, -1) in sh['BOND']}
             shc = {k: gy['Rfree'][k] for k in sh_tr if k in gy['Rfree']}
             idx_sh = tr_index(sh_tr, sorted(sh_tr))
-            wfs = p_rule_wfun(rule, sig, th, idxup=sma_state(idx_sh), fc=FC.get(rule))
+            wfs = p_rule_wfun(rule, sig, th, idxup=sma_state(idx_sh), fc=FC.get(rule), tsm=tsmom_state(sh_tr, shc))
             alt_s = shc if rule in CASH_ALT else shb
             ksh = [k for k in alloc_keys(sh_tr, alt_s, shc, wfs, 187102, 192606, need_alt=True, need_cash=rule in LEVER)]
             if len(ksh) >= 120:
@@ -1150,7 +1201,8 @@ def main():
 
     P = [p_eval(r, 'P（主）') for r in P_RULES]
     E2 = [p_eval(r, 'E2（探索）') for r in E2_RULES]
-    for fam in (P, E2):
+    E3 = [p_eval(r, 'E3（探索2・第1族の結果を見た後に登録）') for r in E3_RULES]
+    for fam in (P, E2, E3):
         hp = M.holm({x['name']: x['hold']['p'] for x in fam})
         for x in fam:
             x['holm_p'] = hp.get(x['name'])
@@ -1161,7 +1213,50 @@ def main():
             log(f"{x['name']:24s} {gr} 訓練 {x['train']['ex_ann']:+.2f}(t{x['train']['t']}) 保有 {x['hold']['ex_ann']:+.2f}(t{x['hold']['t']}) "
                 f"幾何差 {x['hold']['cagr_diff']:+.2f} 費用後 {x['cost_hold']['cagr_diff']:+.2f} 20年勝率 {x['roll20']['win_rate'] if x['roll20'] else None} "
                 f"再現 {x['repl']['positive']}/{x['repl']['regions']} シャープ保有 {x['sharpe']['hold']} 株平均 {x['avg_stock_weight']}")
-    tested += P + E2
+    tested += P + E2 + E3
+
+    # ── 事後の点検（第1・2族の結果を見た後・格付けしない）: 一致の型の頑健さ（米国）
+    def agree_w(thr, trend, lev, lag=1):
+        def f(t):
+            k = ym_add(t, -lag)
+            e, u = sig['ECY'].get(k), trend.get(k)
+            if e is None or u is None:
+                return None
+            if e > thr and u:
+                return lev
+            if e < thr and not u:
+                return 0.0
+            return 1.0
+        return f
+    ecy_tr = [v for k, v in sig['ECY'].items() if k <= M.TRAIN_END]
+    up8, up12 = sma_state(idx, 8), sma_state(idx, 12)
+    grid = {}
+    for lev in (1.5, 2.0):
+        vs = {'基準': (th['ECY_median'], up, 1, COST_UNIT, SPREAD_MARGIN, bond),
+              '信号をさらに1か月遅らせる': (th['ECY_median'], up, 2, COST_UNIT, SPREAD_MARGIN, bond),
+              '8か月線': (th['ECY_median'], up8, 1, COST_UNIT, SPREAD_MARGIN, bond),
+              '12か月線': (th['ECY_median'], up12, 1, COST_UNIT, SPREAD_MARGIN, bond),
+              'ECY の線を訓練の40%点': (qtile(ecy_tr, .40), up, 1, COST_UNIT, SPREAD_MARGIN, bond),
+              'ECY の線を訓練の60%点': (qtile(ecy_tr, .60), up, 1, COST_UNIT, SPREAD_MARGIN, bond),
+              '借入 RF+3%': (th['ECY_median'], up, 1, COST_UNIT, 0.03, bond),
+              '売買費用 0.30%': (th['ECY_median'], up, 1, 0.003, SPREAD_MARGIN, bond),
+              '降りる先を短期金利': (th['ECY_median'], up, 1, COST_UNIT, SPREAD_MARGIN, rf)}
+        for vn, (thr, trend, lag, cu, sp, alt) in vs.items():
+            wf = agree_w(thr, trend, lev, lag)
+            keys = alloc_keys(mkt, alt, rf, wf, 192607, END_M, need_alt=True, need_cash=True)
+            gm, nm, W, TO = run_alloc(keys, mkt, alt, rf, wf, spread=sp, cost_unit=cu)
+            h = M.excess_stats(nm, mkt, a=M.HOLD_START)
+            h10 = M.excess_stats(nm, mkt, a=201001)
+            f_ = M.excess_stats(nm, mkt)
+            tr_ = M.excess_stats(nm, mkt, z=M.TRAIN_END)
+            grid[f'倍率{lev}・{vn}'] = {'train_net': [tr_['ex_ann'], tr_['t']], 'hold_net': [h['ex_ann'], h['t'], h['cagr_diff']],
+                                      'from_2010_net': [h10['ex_ann'], h10['t'], h10['cagr_diff']], 'full_net_t': f_['t'],
+                                      'sharpe_hold': sharpe_net(nm, mkt, rf, M.HOLD_START, None),
+                                      'maxdd_hold': [round(M.maxdd(M.window(nm, M.HOLD_START)) * 100, 1), round(M.maxdd(M.window(mkt, M.HOLD_START)) * 100, 1)]}
+            log(f"事後の点検 倍率{lev} {vn:22s} 訓練 {tr_['ex_ann']:+.2f}(t{tr_['t']}) 保有 {h['ex_ann']:+.2f}(t{h['t']}) 幾何 {h['cagr_diff']:+.2f} "
+                f"2010〜 {h10['cagr_diff']:+.2f} 全期間t {f_['t']}")
+    posthoc = {'agree_robustness_grid_US': grid,
+               'note': '事後（第1・2族の結果を見た後）の点検。格付けしない。どれか一つが良くても採用の根拠にしない（選び直しになる）。全部の向きがそろうかだけを見る'}
 
     # ── E1（割安な国を選ぶ）
     jd = M.jkp_mkt('developed', 'vw')
@@ -1205,60 +1300,140 @@ def main():
             rs.append(r if better == 'low' else 1 - r)
         return S.mean(rs) if rs else None
 
-    E1 = []
+    # 勢い（12-1）: 月末 T の値 = T−11〜T−1 月の米ドル建て累積リターン
+    mom = {}
+    for c, r in uni.items():
+        out = {}
+        for T in r:
+            ks_ = [ym_add(T, -j) for j in range(1, 12)]
+            if all(k in r for k in ks_):
+                v = 1.0
+                for k in ks_:
+                    v *= 1 + r[k]
+                out[T] = v - 1
+        mom[c] = out
+
+    def sig_any(name):
+        if name == 'MOM':
+            return lambda c, t: mom[c].get(t)
+        return sig_get(name)
+
+    def combo_of(parts, require_all):
+        def f(c, t):
+            rs = []
+            for name, better in parts:
+                fget = sig_any(name)
+                me = fget(c, t)
+                if me is None:
+                    if require_all:
+                        return None
+                    continue
+                vals = [fget(cc, t) for cc in uni]
+                v = sorted(x for x in vals if x is not None)
+                if len(v) < 6:
+                    if require_all:
+                        return None
+                    continue
+                r = sum(1 for x in v if x < me) / (len(v) - 1)
+                rs.append(r if better == 'low' else 1 - r)
+            return S.mean(rs) if rs else None
+        return f
+
     kE = [t for t in months(198601, 202512) if t in bench_w]
-    e1_specs = [('E1a_CAPE_abs', sig_get('CAPE'), 'low', '国の CAPE の低い1/3（19か国・等分・米ドル）'),
-                ('E1b_CAPE_rel', sig_get('CAPE_rel'), 'low', '国の CAPE ÷ その国のそれまでの中央値 の低い1/3'),
-                ('E1c_BM', sig_get('BM'), 'high', '国の B/M の高い1/3（米国を除く18か国）'),
-                ('E1d_DY', sig_get('DY'), 'high', '国の配当利回りの高い1/3'),
-                ('E1e_combo', combo, 'low', 'CAPE・B/M・配当利回りの順位の平均が良い1/3')]
     ew_all = {}
     for t in kE:
         v = [uni[c][t] for c in uni if t in uni[c]]
         if len(v) >= 10:
             ew_all[t] = S.mean(v)
-    for name, fget, better, desc in e1_specs:
-        gm, nm, held, TO = rotate(uni, fget, better, kE)
-        _, nm3, _, _ = rotate(uni, fget, better, kE, cost_unit=0.003)
-        e = {'full': M.excess_stats(gm, bench_w), 'train': M.excess_stats(gm, bench_w, z=M.TRAIN_END), 'hold': M.excess_stats(gm, bench_w, a=M.HOLD_START),
-             'recent': M.excess_stats(gm, bench_w, a=M.RECENT_START), 'cost_hold': M.excess_stats(nm, bench_w, a=M.HOLD_START),
-             'cost_hold_0.30': M.excess_stats(nm3, bench_w, a=M.HOLD_START), 'post_pub': {'post_Faber2012': M.excess_stats(gm, bench_w, a=201301)},
-             'roll20': M.rolling(nm, bench_w, 20), 'dca20': dca_split(nm, bench_w, 240),
-             'vs_equal_weight_19': {'full': M.excess_stats(gm, ew_all), 'hold': M.excess_stats(gm, ew_all, a=M.HOLD_START)},
-             'vs_us_market': {'full': M.excess_stats(gm, mkt), 'hold': M.excess_stats(gm, mkt, a=M.HOLD_START)},
-             'turnover_per_year': round(S.mean(TO.values()) * 12, 3), 'window': [min(gm), max(gm)],
-             'sharpe': {'train': sharpe_net(nm, bench_w, rf, None, M.TRAIN_END), 'hold': sharpe_net(nm, bench_w, rf, M.HOLD_START, None)},
-             'us_held_share': round(sum(1 for t in held if 'US' in held[t]) / len(held), 3),
-             'held_last': [C[c]['name'] if c in C else '米国' for c in held[max(held)]],
-             'maxdd': {'s': round(M.maxdd(nm) * 100, 1), 'b': round(M.maxdd({k: bench_w[k] for k in nm}) * 100, 1)}}
-        cnt = {}
-        for t in held:
-            for c in held[t]:
-                cnt[c] = cnt.get(c, 0) + 1
-        e['held_share_by_country'] = {C[c]['name'] if c in C else '米国': round(v / len(held), 3) for c, v in sorted(cnt.items(), key=lambda x: -x[1])}
-        E1.append({'name': name, 'family': 'E1（探索・国の選択）', 'description': desc, 'graded': True, 'repl': None, **e})
-    hp = M.holm({x['name']: x['hold']['p'] for x in E1})
-    for x in E1:
-        x['holm_p'] = hp.get(x['name'])
-        gr, cr = M.grade(x['full'], x['train'], x['hold'], x['roll20'], cost_hold=x['cost_hold'], repl=None, family_holm_p=x['holm_p'], leveraged_or_timing=False)
-        x['grade'], x['criteria'] = gr, cr
-        log(f"{x['name']:16s} {gr} 訓練 {x['train']['ex_ann']:+.2f}(t{x['train']['t']}) 保有 {x['hold']['ex_ann']:+.2f}(t{x['hold']['t']}) "
-            f"幾何差 {x['hold']['cagr_diff']:+.2f} 費用後 {x['cost_hold']['cagr_diff']:+.2f} 20年勝率 {x['roll20']['win_rate'] if x['roll20'] else None} 米国を持った割合 {x['us_held_share']}")
-    tested += E1
+
+    # ★相手の訂正（事前登録の誤り）: JKP の 'developed' は『米国を除く先進国』だった
+    #   （検算: 2007〜2025 の年率 5.13% ≒ French Developed_ex_US 5.27%、JKP usa 10.34%）。
+    #   米国を含む19か国の型の公式の相手は、全体の事前登録の『同じ地域の時価加重の市場』に従い
+    #   French Developed（米国を含む先進国・1990-07〜）に替える（米国が強かった期間なので厳しい側への訂正）。
+    #   米国を除く18か国の型（E1c・E4b）は JKP developed（＝米国を除く）がそのまま正しい相手。
+    dev_incl = {}
+    for tt, v in M.french_tables('Developed_3_Factors').items():
+        if v['freq'] == 'monthly':
+            i, irf = v['cols'].index('Mkt-RF'), v['cols'].index('RF')
+            dev_incl = {k: (row[i] + row[irf]) / 100 for k, row in v['data'].items() if row[i] is not None and row[irf] is not None}
+            break
+    sanity['jkp_developed_is_ex_us'] = {'jkp_developed_cagr_2007_2025': round(M.cagr(M.window(bench_w, 200701, 202512)) * 100, 2),
+                                        'french_developed_incl_us_cagr_2007_2025': round(M.cagr(M.window(dev_incl, 200701, 202512)) * 100, 2),
+                                        'us_cagr_2007_2025': round(M.cagr(M.window(mkt, 200701, 202512)) * 100, 2)}
+
+    def rot_stats(gm, nm, nm3, b):
+        return {'full': M.excess_stats(gm, b), 'train': M.excess_stats(gm, b, z=M.TRAIN_END), 'hold': M.excess_stats(gm, b, a=M.HOLD_START),
+                'recent': M.excess_stats(gm, b, a=M.RECENT_START), 'cost_hold': M.excess_stats(nm, b, a=M.HOLD_START),
+                'cost_hold_0.30': M.excess_stats(nm3, b, a=M.HOLD_START),
+                'post_pub': {'post_Faber2012': M.excess_stats(gm, b, a=201301), 'post_AMP2013': M.excess_stats(gm, b, a=201401)},
+                'roll20': M.rolling(nm, b, 20), 'dca20': dca_split(nm, b, 240),
+                'sharpe': {'train': sharpe_net(nm, b, rf, None, M.TRAIN_END), 'hold': sharpe_net(nm, b, rf, M.HOLD_START, None)},
+                'by_decade_net_cagr_diff': by_decade(nm, b),
+                'maxdd': {'s': round(M.maxdd(nm) * 100, 1), 'b': round(M.maxdd({k: b[k] for k in nm if k in b}) * 100, 1)}}
+
+    def rot_family(specs, famname):
+        out = []
+        for name, fget, better, desc in specs:
+            gm, nm, held, TO = rotate(uni, fget, better, kE)
+            _, nm3, _, _ = rotate(uni, fget, better, kE, cost_unit=0.003)
+            incl_us = any('US' in held[t] for t in held) or name in ('E1a_CAPE_abs', 'E1b_CAPE_rel', 'E1d_DY', 'E1e_combo', 'E4a_CAPE_MOM')
+            if incl_us:
+                e = rot_stats(gm, nm, nm3, dev_incl)
+                e['benchmark'] = 'French Developed（米国を含む先進国・時価加重・1990-07〜）＝訂正後の公式の相手'
+                e['vs_prereg_benchmark_jkp_developed_exUS'] = rot_stats(gm, nm, nm3, bench_w)
+            else:
+                e = rot_stats(gm, nm, nm3, bench_w)
+                e['benchmark'] = 'JKP developed vw（＝米国を除く先進国・時価加重）＋French RF'
+                e['vs_french_developed_incl_us'] = {'full': M.excess_stats(gm, dev_incl), 'hold': M.excess_stats(gm, dev_incl, a=M.HOLD_START)}
+            e.update({'vs_equal_weight_19': {'full': M.excess_stats(gm, ew_all), 'hold': M.excess_stats(gm, ew_all, a=M.HOLD_START)},
+                      'vs_us_market': {'full': M.excess_stats(gm, mkt), 'hold': M.excess_stats(gm, mkt, a=M.HOLD_START)},
+                      'turnover_per_year': round(S.mean(TO.values()) * 12, 3), 'window': [min(gm), max(gm)],
+                      'us_held_share': round(sum(1 for t in held if 'US' in held[t]) / len(held), 3),
+                      'held_last': [C[c]['name'] if c in C else '米国' for c in held[max(held)]]})
+            cnt = {}
+            for t in held:
+                for c in held[t]:
+                    cnt[c] = cnt.get(c, 0) + 1
+            e['held_share_by_country'] = {C[c]['name'] if c in C else '米国': round(v / len(held), 3) for c, v in sorted(cnt.items(), key=lambda x: -x[1])}
+            out.append({'name': name, 'family': famname, 'description': desc, 'graded': True, 'repl': None, **e})
+        hp = M.holm({x['name']: x['hold']['p'] for x in out})
+        for x in out:
+            x['holm_p'] = hp.get(x['name'])
+            gr, cr = M.grade(x['full'], x['train'], x['hold'], x['roll20'], cost_hold=x['cost_hold'], repl=None, family_holm_p=x['holm_p'], leveraged_or_timing=False)
+            x['grade'], x['criteria'] = gr, cr
+            if 'vs_prereg_benchmark_jkp_developed_exUS' in x:
+                v = x['vs_prereg_benchmark_jkp_developed_exUS']
+                g2, c2 = M.grade(v['full'], v['train'], v['hold'], v['roll20'], cost_hold=v['cost_hold'], repl=None, family_holm_p=None, leveraged_or_timing=False)
+                v['grade_if_prereg_benchmark'] = g2
+            log(f"{x['name']:16s} {gr} 訓練 {x['train']['ex_ann']:+.2f}(t{x['train']['t']}) 保有 {x['hold']['ex_ann']:+.2f}(t{x['hold']['t']}) "
+                f"幾何差 {x['hold']['cagr_diff']:+.2f} 費用後 {x['cost_hold']['cagr_diff']:+.2f} 全期間 t{x['full']['t']} 20年勝率 {x['roll20']['win_rate'] if x['roll20'] else None} "
+                f"米国を持った割合 {x['us_held_share']} 相手 {x['benchmark'][:22]}")
+        return out
+
+    e1_specs = [('E1a_CAPE_abs', sig_get('CAPE'), 'low', '国の CAPE の低い1/3（19か国・等分・米ドル）'),
+                ('E1b_CAPE_rel', sig_get('CAPE_rel'), 'low', '国の CAPE ÷ その国のそれまでの中央値 の低い1/3'),
+                ('E1c_BM', sig_get('BM'), 'high', '国の B/M の高い1/3（米国を除く18か国）'),
+                ('E1d_DY', sig_get('DY'), 'high', '国の配当利回りの高い1/3'),
+                ('E1e_combo', combo, 'low', 'CAPE・B/M・配当利回りの順位の平均が良い1/3')]
+    E1 = rot_family(e1_specs, 'E1（探索・国の選択）')
+    e4_specs = [('E4a_CAPE_MOM', combo_of([('CAPE', 'low'), ('MOM', 'high')], True), 'low', '探索2: 国の CAPE の順位と勢い（12-1）の順位の平均が良い1/3（19か国）'),
+                ('E4b_BM_MOM', combo_of([('BM', 'high'), ('MOM', 'high')], True), 'low', '探索2: 国の B/M の順位と勢いの順位の平均が良い1/3（米国を除く18か国）')]
+    E4 = rot_family(e4_specs, 'E4（探索2・国の割安×勢い・第1族の結果を見た後に登録）')
+    tested += E1 + E4
 
     # ── K 族（積立の工夫）
     K = []
     keys_us = months(192607, END_M)
-    prm_us = {'CAPE_median': th['CAPE_median'], 'ECY_mean': th['ECY_mean'], 'ECY_median': th['ECY_median'], 'g': tp['VA_g_monthly']}
+    prm_us = {'CAPE_median': th['CAPE_median'], 'ECY_mean': th['ECY_mean'], 'ECY_median': th['ECY_median'], 'ECY_q25': th['ECY_q25'], 'g': tp['VA_g_monthly']}
     kparam = {'K1_BTD_h1_X10': {'h': 1.0, 'X': 0.10}, 'K2_BTD_h1_X20': {'h': 1.0, 'X': 0.20}, 'K3_BTD_h05_X10': {'h': 0.5, 'X': 0.10},
               'K4_BTD_h05_X20': {'h': 0.5, 'X': 0.20}, 'K5_DBL_SMA_2x': {'h': tp['DBL_h']}, 'K6_DBL_SMA_all': {'h': tp['DBL_h']}}
     # 検算: 規則 = 単純積立 → 比 1
     chk = k_run('K0_DCA', keys_us[:300], mkt, rf, bond, sig, up, dd, {})
     sanity['k0_ratio_is_one'] = all(abs(x[2] - 1) < 1e-12 for x in chk)
     post = {'K7_VA_sell': 199201, 'K8_VA_nosell': 199201, 'K13_LUMP_annual': 201301, 'K14_LUMP_12m': 201301}
-    for rule in K_RULES:
+    for rule in K_RULES + K_RULES2:
         prm = dict(prm_us, **kparam.get(rule, {}))
-        need_bond = rule in ('K11_VSW_CAPE', 'K12_VSW_ECY')
+        need_bond = 'bond' in K_NEEDS.get(rule, ())
         res = k_run(rule, keys_us, mkt, rf, bond, sig, up, dd, prm, need_bond=need_bond)
         sm = k_summary(res, post_start=post.get(rule))
         # 10年窓（起点 2007-01 以降だけ・報告）
@@ -1282,10 +1457,14 @@ def main():
                 if 'ECY_mean' not in cth:
                     det[cd['name']] = 'N/A（訓練の ECY が60か月未満）'; continue
                 prm_c['ECY_mean'] = cth['ECY_mean']
-            if rule == 'K12_VSW_ECY':
+            if rule in ('K12_VSW_ECY', 'K15_VSW_agree'):
                 if 'ECY_median' not in cth:
                     det[cd['name']] = 'N/A（訓練の ECY が60か月未満）'; continue
                 prm_c['ECY_median'] = cth['ECY_median']
+            if rule == 'K16_VSW_ECY_q25':
+                if 'ECY_q25' not in cth:
+                    det[cd['name']] = 'N/A（訓練の ECY が60か月未満）'; continue
+                prm_c['ECY_q25'] = cth['ECY_q25']
             if rule in ('K5_DBL_SMA_2x', 'K6_DBL_SMA_all'):
                 tu = [cd['up'][k] for k in cd['up'] if k <= M.TRAIN_END and k in kc]
                 pc = sum(1 for u in tu if not u) / len(tu)
@@ -1307,7 +1486,7 @@ def main():
                                'params': {k: round(v, 5) for k, v in prm_c.items()}}
         repl = {'regions': reg, 'positive': pos, 'detail': det}
         j, dcrit = d_judge(sm, repl)
-        K.append({'name': rule, 'family': 'K（積立の工夫・格付け外）', 'description': K_DESC[rule], 'graded': False, 'grade': j,
+        K.append({'name': rule, 'family': 'K（積立の工夫・格付け外）' if rule in K_RULES else 'K2（積立の工夫・探索2・格付け外）', 'description': K_DESC[rule], 'graded': False, 'grade': j,
                   'D_criteria': dcrit, 'summary': sm, 'repl': repl, 'params': prm if rule not in ('K13_LUMP_annual', 'K14_LUMP_12m') else {}})
         a, t_, h_ = sm['all'], sm['train'], sm['hold']
         log(f"{rule:18s} {j} 訓練の窓 中央 {t_['median_ratio'] if t_ else None} 勝率 {t_['win_rate'] if t_ else None} ／ 保有の窓 中央 {h_['median_ratio'] if h_ else None} "
@@ -1315,8 +1494,10 @@ def main():
     tested += K
 
     n_tested = len(tested)
-    out = {'angle': 'valdca', 'prereg': PREREG, 'prereg_commit': sha, 'sanity': sanity,
+    out = {'angle': 'valdca', 'prereg': PREREG, 'prereg_commit': sha,
+           'prereg_parts': {PREREG: sha, 'mw_valdca_prereg2.json': git_sha('out/mw_valdca_prereg2.json')}, 'sanity': sanity,
            'train_only_parameters_used': dict(th, DBL_h=tp['DBL_h'], VA_g_monthly=tp['VA_g_monthly']),
+           'posthoc': posthoc,
            'n_tested': n_tested, 'grades': {x['name']: x['grade'] for x in tested},
            'tested': tested, 'log': LOG}
     p = M.save(OUT, out)
