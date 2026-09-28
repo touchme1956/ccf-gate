@@ -756,7 +756,8 @@ VERDICT_RULES = {
 
 
 def _t(v):
-    return (v or {}).get('t') or -9.0
+    x = (v or {}).get('t')
+    return x if x is not None else -9.0
 
 
 def _ex(v):
