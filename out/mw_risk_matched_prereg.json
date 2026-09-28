@@ -1,0 +1,95 @@
+{
+ "angle": "risk_matched",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "global_prereg": "out/mw_prereg.json（線 C1〜C8・格付け S/A/B/C をそのまま使う。ここでは動かさない。判定は night/mw_common.grade）",
+ "question": "同じリスクで市場に勝てたか——市場よりシャープレシオの高い『買いだけ』のポートフォリオ（低ベータ・低ボラ・質・収益性）を、市場と同じぶれ（標準偏差）になるまで借入でふくらませる（ぶれが大きいものは現金で薄める）と、S&P500 型の純粋な市場（French Mkt）に 2007年以降も勝てたか",
+ "theory": "Black (1972)・Frazzini-Pedersen (2014)『レバレッジ回避』: 借入を嫌う投資家は高ベータ株を買いすぎるので、低リスク株はリスクの割に報われる。個人が借入（信用取引・証拠金）を使えば、その差をリスクをそろえたまま取りに行ける。Asness-Frazzini-Pedersen (2012) のリスクパリティと同じ考え方",
+ "measured_before_registration": "データの有無だけ（French の表題・列名・期間 196307〜202608、JKP 米国 'vw' 三分位の期間〔価格系 1926〜・会計系 1950〜〕、JKP 地域 'vw' の期間〔mkt 198601〜・各特徴 1982〜1993 開始〕、JKP の pf 列が '1.0','2.0','3.0' であること、Factor Details の cite 列）。戦略と市場を比べた数字は1つも計算していない",
+ "known_before_registration_leak": [
+  "CLAUDE.md（2026-09-26 の longonly 節）: 質の上位三分位（買いだけ・レバレッジなし）は 2007〜 の純粋な時価加重市場に +0.43%/年 t0.5、実在の質ETF（SPHQ −1.1 / QUAL −0.5 / USMV 系は未記載）は SPY に負けた。低リスク・質の『買いだけ』は 2007年以降の S&P500 にほぼ勝っていないことを知っている",
+  "CLAUDE.md（2026-09-26 の jkp_evidence 節）: 財務の安全（質の安全性 −0.6）・利益の安定（p1 +0.9 t1.3）は報われていない。収益性（GP/A・営業利益÷自己資本）・質(qmj) は大型株でも 2007〜 に効いた（ただし買い−売りの形）",
+  "一般知識: 低ボラETF（USMV・SPLV）は 2011年設定以降 SPY にほぼ負けた（とくに 2020〜2025 の巨大テック相場）。2008年は低リスクが勝った。2022年は金利上昇で借入の費用が上がった。これらを知ったうえで登録している（後知恵の漏れ）。消せないので、米国外の地域（C5）と公表後の期間を独立の答え合わせとして重く見る",
+  "同じ日の別の角度（mw_mega_tilt）: 大型株の質・収益性の『傾け』（市場＋0.2×買い−売り）が 2007〜 も市場に勝ったと中間報告がある（cop_at +1.50%/年 t3.3）。形は違う（ここは買いだけ＋借入）"
+ ],
+ "benchmark": "French の Mkt（Mkt-RF + RF・CRSP 全上場・上限なしの時価加重）の総リターン。戦略も総リターン（French のポートフォリオは総リターン／JKP 米国の三分位は超過なので French の RF を足して総リターンにする）＝総リターンどうしで比べる。米国外（C5）は同じ地域の JKP 'vw' 市場（超過）に対して、戦略も超過どうしで比べる",
+ "rules": {
+  "static（固定倍率）": "L = min(2, σ(市場の月次超過, 訓練期間) ÷ σ(候補の月次超過, 訓練期間))。訓練期間 = 候補の始まり〜2006-12（市場と重なる月）。この L を全期間で固定し、毎月初に L 倍へ戻す",
+  "dynamic（動く倍率）": "毎月 t の倍率 L_t = min(2, σ(市場の月次超過, t−36〜t−1) ÷ σ(候補の月次超過, t−36〜t−1))。t の前月までに分かる値だけを使う（後知恵なし）。最初の36か月は準備期間で持たない（成績に入れない）",
+  "unlevered（倍率1・参照）": "L = 1（候補をそのまま持つ）",
+  "levered_return": "総リターン R = L×r + (1−L)×rf − max(L−1, 0)×1%/12。借りた部分（L>1）は RF+1%/年で借りる。L<1 のときの現金は RF で運用（上乗せなし）。超過どうし（地域）は R_ex = L×r_ex − max(L−1,0)×1%/12",
+  "no_floor": "L に下限は置かない（ぶれが市場より大きい候補は現金で薄める）。上限は 2倍"
+ },
+ "costs": {
+  "underlying": "毎月 L_t × (年間回転率 ÷ 12) × 0.10%（片道売買100%あたり 0.10%＝大型株の既定。新興国は 0.30%）",
+  "leverage_rebalance": "毎月初、前月末に漂った重み w' = L_{t−1}(1+r_{t−1})/(1+R_{t−1}) から L_t へ戻す売買 |L_t − w'| × 0.10%",
+  "financing": "借入の上乗せ 1%/年は『費用前』の成績にも常に入れる（費用ではなく資金調達の条件）。C6 の費用後はさらに上の2つを引く",
+  "turnover_assumptions（片道・年率・倍率1のとき）": {
+   "French BETA（6月に60か月ベータで年1回組替え）": 0.4,
+   "French VAR・RESVAR（60日の分散で毎月組替え）": 1.5,
+   "French OP（年1回）": 0.4,
+   "French INV（年1回）": 0.6,
+   "French BIG 行: BM 0.3 / OP 0.4 / INV 0.6 / Prior_12_2 1.5": null,
+   "JKP 60か月・1260日・252日のリスク（beta_60m, betabab_1260d, betadown_252d, ivol_capm_252d）": 0.4,
+   "JKP 21日のリスク（rvol_21d, ivol_*_21d, rmax*_21d, beta_dimson_21d, zero_trades_21d）": 1.5,
+   "JKP 126〜252日の売買（turnover_126d, zero_trades_126d, zero_trades_252d, dolvol_var_126d, turnover_var_126d）": 0.6,
+   "JKP 利益のぶれ（earnings_variability, ocfq_saleq_std）": 0.3,
+   "JKP seas_6_10na": 1.0,
+   "JKP 年次の会計（gp_at, gp_atl1, cop_at, cop_atl1, op_at, op_atl1, ope_be, ope_bel1, ebit_bev, ebit_sale, ocf_at, sale_bev, at_turnover, f_score, o_score, opex_at, dgp_dsale, ni_be）": 0.4,
+   "JKP 四半期の会計（niq_at, niq_be, ni_inc8q）": 0.8,
+   "JKP 質の合成（qmj, qmj_prof, qmj_safety, qmj_growth, mispricing_perf）": 0.6,
+   "混合（blend）": "構成要素の平均＋10%（構成要素どうしの戻し）"
+  },
+  "stress（報告のみ・判定に使わない）": "借入 RF+2% ／ 費用 3倍（0.30%）"
+ },
+ "candidate_pool": {
+  "_note": "候補は『倍率1のときの買いだけのポートフォリオ』。順位づけは訓練期間のシャープレシオだけで行う（後知恵なし）。順位づけの窓はすべての候補がそろう 196307〜200612（522か月）に固定し、1か月でも欠ける候補は順位づけから外す（欠測を0で埋めない）",
+  "French（総リターン・時価加重・196307〜）": {
+   "BETA": "Portfolios_Formed_on_BETA の Value Weighted 15列（五分位5・十分位10）",
+   "VAR": "Portfolios_Formed_on_VAR の同15列",
+   "RESVAR": "Portfolios_Formed_on_RESVAR の同15列",
+   "OP": "Portfolios_Formed_on_OP の Value Weight 18列（三分位3・五分位5・十分位10）",
+   "INV": "Portfolios_Formed_on_INV の同18列",
+   "BIG_BM": "6_Portfolios_2x3 の BIG 行3列（BIG LoBM, ME2 BM2, BIG HiBM）",
+   "BIG_OP": "6_Portfolios_ME_OP_2x3 の BIG 行3列",
+   "BIG_INV": "6_Portfolios_ME_INV_2x3 の BIG 行3列",
+   "BIG_PRIOR": "6_Portfolios_ME_Prior_12_2 の BIG 行3列"
+  },
+  "JKP 米国（'vw'＝上限なしの時価加重・三分位 '1.0','2.0','3.0'・超過→RF を足して総リターン）": {
+   "低リスク群（JKP の Low Risk クラスタ18本）": ["beta_60m", "beta_dimson_21d", "betabab_1260d", "betadown_252d", "earnings_variability", "ivol_capm_21d", "ivol_capm_252d", "ivol_ff3_21d", "ivol_hxz4_21d", "ocfq_saleq_std", "rmax1_21d", "rmax5_21d", "rvol_21d", "seas_6_10na", "turnover_126d", "zero_trades_126d", "zero_trades_21d", "zero_trades_252d"],
+   "質群（JKP の Quality 17本＋Profitability 11本）": ["at_turnover", "cop_at", "cop_atl1", "dgp_dsale", "gp_at", "gp_atl1", "mispricing_perf", "ni_inc8q", "niq_at", "op_at", "op_atl1", "opex_at", "qmj", "qmj_growth", "qmj_prof", "qmj_safety", "sale_bev", "dolvol_var_126d", "ebit_bev", "ebit_sale", "f_score", "ni_be", "niq_be", "o_score", "ocf_at", "ope_be", "ope_bel1", "turnover_var_126d"]
+  },
+  "source_groups": {
+   "低リスク": "French BETA・VAR・RESVAR ＋ JKP 低リスク群18本 ＝ 21 源",
+   "質": "French OP・INV・BIG_OP・BIG_INV ＋ JKP 質群28本 ＝ 32 源",
+   "その他": "French BIG_BM・BIG_PRIOR ＝ 2 源"
+  },
+  "source_best": "各『源』（French の1ファイル、または JKP の1特徴）の中で、訓練のシャープレシオが最も高い列（三分位・五分位・十分位のどれか）を1本だけ、その源の代表にする"
+ },
+ "selection": {
+  "P（主の族）": "低リスク群の源の代表を訓練シャープの高い順に上位3本 ＋ 質群の源の代表を訓練シャープの高い順に上位3本 ＋ その6本の等分混合（毎月戻す・全部そろう月だけ）＝7候補 × {static, dynamic} ＝ 14本。Holm はこの14本の保有期間の p（両側）に掛ける",
+  "U（参照）": "P の7候補の倍率1（借入なし）。7本・独自の Holm。判定は leveraged_or_timing=False",
+  "X1（探索）": "P に入らなかった残り全部の源（55−6＝49 源）の代表 × {static, dynamic} ＝ 98本・独自の Holm。『探索』と明記",
+  "XU（探索・参照）": "X1 の49本の倍率1。独自の Holm",
+  "stress（報告のみ）": "P の14本を 借入 RF+2% と 費用3倍 で。判定しない（tested には入れる）"
+ },
+ "evaluation": {
+  "periods": "full＝候補の始まり（dynamic は準備36か月の後）〜データの終わり（French 202608・JKP 202512）／train＝〜200612／hold＝200701〜／recent＝201307〜",
+  "stats": "mw_common.excess_stats（費用前＝借入の上乗せ込み・売買費用なし）。C6 は費用後の hold。転がる20年窓（C4）と毎月積立20年は費用後の系列で",
+  "C5": "P と X1 の各候補について、対応する JKP の特徴（下の map）の同じ三分位（French の列は中心の分位点で三分位へ: 下位1/3→'1.0'・中央→'2.0'・上位1/3→'3.0'）を 'developed', 'world_ex_us', 'jpn', 'emerging' の4地域に当て、各地域の訓練（始まり〜200612）で決めた static 倍率／36か月の dynamic 倍率・同じ費用（新興国は0.30%）で、地域の 'vw' 市場（超過）に対する『全期間の費用後の超過の算術平均 > 0』の地域を数える。4地域中3以上（2/3 以上）で合格。混合は4地域それぞれで構成要素を同じ重みで混ぜる。★developed は米国を含むので独立ではない——米国外3地域（world_ex_us, jpn, emerging）だけの数も併記する（判定は4地域の数＝厳しい側。4地域で3以上なら米国外3地域でも2以上になる）",
+  "C5_map（French の源 → JKP の特徴）": {"BETA": "beta_60m", "VAR": "rvol_21d", "RESVAR": "ivol_ff3_21d", "OP": "ope_be", "INV": "at_gr1", "BIG_OP": "ope_be", "BIG_INV": "at_gr1", "BIG_BM": "be_me", "BIG_PRIOR": "ret_12_1", "JKP の源": "同じ特徴・同じ三分位"},
+  "C8": "費用後の系列のシャープレシオが、同じ月の市場のシャープレシオを訓練と保有の両方で上回る（leveraged_or_timing=True）",
+  "C7": "全期間 t ≥ 3.0 または族の中の Holm 補正後 p < 0.05",
+  "post_publication": "元論文の公表年の翌年から（JKP は Factor Details の cite の年。French: BETA→2014（Frazzini-Pedersen の BAB）、VAR・RESVAR→2006（Ang ほか）、OP・BIG_OP→2015（FF5）、INV・BIG_INV→2008（Cooper-Gulen-Schill）、BIG_BM→1992、BIG_PRIOR→1993）。報告のみ"
+ },
+ "reference_only": "AQR の BAB 因子（米国・月次）の超過の平均と t を参考に出す（判定しない・取れなければ省く）",
+ "sanity_checks": ["French Mkt の CAGR 1926〜 ≈10.4%・2007〜 ≈11.1% を再現", "static の倍率をかけた系列の訓練期間のぶれが市場とほぼ等しい（借入の上乗せのぶんだけずれる）", "JKP の三分位の順序（'1.0' が低い側）を、ベータ・ボラの三分位のぶれの大小で確かめる", "月が連続していること（dynamic の36か月窓が抜けを飛び越えない）", "JKP 米国 'vw' 市場と French Mkt-RF の相関"],
+ "known_limits": [
+  "French・JKP のポートフォリオは数百〜数千社の分散した集合で、個人が実際に持てるのは ETF（USMV・SPLV・QUAL 等）か自作の数十銘柄。ETF の信託報酬（0.15〜0.25%/年）は入れていない",
+  "借入 RF+1%/年は楽観的（日本の信用取引の買い方金利は約2.8%/年、米国の証券会社でも RF+0.5〜1.5%）。stress で RF+2% を併記する",
+  "借入には追証（強制決済）の危険があり、2008年・2020年3月のような急落では 2倍近い倍率は維持できない場合がある。月次のモデルはそれを表さない",
+  "日本の課税口座では倍率の戻しの売買のたびに売却益課税がかかる（NISA は信用取引不可）",
+  "訓練期間でシャープレシオが最大のものを選ぶので、訓練の成績（C1）は選抜の偏りで楽観側に出る。本当の検証は保有期間（2007〜）と米国外",
+  "独立の試行は少ない（20年窓は重なる）"
+ ]
+}
