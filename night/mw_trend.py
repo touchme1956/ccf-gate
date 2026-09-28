@@ -18,7 +18,7 @@ import sys, os, json, math, datetime, subprocess, statistics as S
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
 
-PRE_NAMES = ['mw_trend_prereg.json', 'mw_trend_prereg2.json', 'mw_trend_prereg3.json']
+PRE_NAMES = ['mw_trend_prereg.json', 'mw_trend_prereg2.json', 'mw_trend_prereg3.json', 'mw_trend_prereg4.json']
 OUT_NAME = 'mw_trend.json'
 COST = 0.001      # 判定用: 持ち替え1回あたり資産の0.10%（全体の事前登録の既定）
 COST_LO = 0.0005  # 報告: 指示書の0.05%
@@ -881,6 +881,84 @@ def family3(c):
     return out
 
 
+# ───────────────────────── 第4族: 信号の平均で持つ割合を段階的に ─────────────────────────
+ENS_N = (50, 100, 150, 200, 250, 300)
+ENS_M = (2, 5, 7, 10, 12, 14)
+
+
+def hop_frac(ex_idx, hs=(1, 3, 12)):
+    """月末に h か月の超過が正の数 ÷ 3 → {月末の日付/月: 割合}（日次の超過指数でも月次の超過指数でも）"""
+    ks = sorted(ex_idx)
+    me = month_ends(ks) if ks[0] > 10 ** 7 else ks
+    out = {}
+    for i in range(max(hs), len(me)):
+        out[me[i]] = sum(1 for h in hs if ex_idx[me[i]] / ex_idx[me[i - h]] > 1) / len(hs)
+    return out
+
+
+def ens_frac(px, Ns=ENS_N):
+    """価格 > N 日線 の本数 ÷ 本数（全部の線がそろう日から）"""
+    sigs = [sma_sig(px, N) for N in Ns]
+    common = set(sigs[0])
+    for x in sigs[1:]:
+        common &= set(x)
+    return {k: sum(x[k] for x in sigs) / len(Ns) for k in common}
+
+
+def run_monthly_frac(ms, r, rf, e_by_m, lag=1):
+    keys, gross, net, net05 = [], {}, {}, {}
+    pe = None
+    for i in range(lag, len(ms)):
+        e = e_by_m.get(ms[i - lag])
+        if e is None:
+            continue
+        k = ms[i]
+        if k not in r or k not in rf:
+            raise RuntimeError(f'月 {k} のデータ欠け（0で埋めない）')
+        g = e * r[k] - (e - 1) * rf[k] - (((e - 1) * SPREAD + FEE) / 12 if e > 1 else 0.0)
+        g = max(g, -1.0)
+        cst = abs(e - pe) if pe is not None else 0.0
+        keys.append(k); gross[k] = g; net[k] = (1 + g) * (1 - COST * cst) - 1; net05[k] = (1 + g) * (1 - COST_LO * cst) - 1
+        pe = e
+    return {'keys': keys, 'gross': gross, 'net': net, 'net05': net05}
+
+
+def region_eval_frac(c, kind, L):
+    det = {}
+    for nm in c.REG_D:
+        g = c.regd[nm]; D = g['D']
+        f = hop_frac(g['ex_idx']) if kind == 'hop' else ens_frac(g['idx'])
+        ed = [None if x is None else L * x for x in map_sig(D, f)]
+        run = run_daily_vt(D, g['r'], g['rf'], [1] * len(D), ed)
+        det[nm] = pack_region(M.to_monthly(run['gross']), M.to_monthly(run['net']), M.to_monthly({d: g['r'][d] for d in run['keys']}))
+    ms, r, rf = c.ms_em, c.em_mkt, c.em_rf
+    if kind == 'hop':
+        f = hop_frac(cum_index({k: r[k] - rf[k] for k in ms}))
+    else:
+        idx = cum_index({k: r[k] for k in ms})
+        f = ens_frac({k: idx[k] for k in ms}, ENS_M)
+    run = run_monthly_frac(ms, r, rf, {k: L * v for k, v in f.items()})
+    det['Emerging'] = pack_region(run['gross'], run['net'], {k: r[k] for k in run['keys']})
+    return {'regions': len(c.COUNTED), 'positive': sum(1 for nm in c.COUNTED if det[nm]['positive']), 'counted': c.COUNTED,
+            'rule_positive': 'ex_ann>0 かつ cagr_diff>0（費用後・地域の全期間）', 'detail': det}
+
+
+def family4(c):
+    out = []
+    ndx_ex = cum_index({d: c.ndx_r[d] - c.rf_us[d] for d in c.D_ndx})
+    fr = {'US_HOP': (c.D_us, c.r_us, hop_frac(c.us_ex_idx), 'us_d', 'hop', PP_MOP),
+          'NDX_HOP': (c.D_ndx, c.ndx_r, hop_frac(ndx_ex), 'ndx_d', 'hop', PP_MOP),
+          'US_ENS': (c.D_us, c.r_us, ens_frac(c.gspc), 'us_d', 'ens', PP_GAYED),
+          'NDX_ENS': (c.D_ndx, c.ndx_r, ens_frac(c.ndx_px), 'ndx_d', 'ens', PP_GAYED)}
+    for j, (nm, (D, r, f, bench, kind, pp)) in enumerate(fr.items()):
+        fD = map_sig(D, f)
+        for L in (1, 2, 3):
+            eD = [None if x is None else L * x for x in fD]
+            out.append(spec(f'T{j + 1}_{nm}_L{L}', 'exploratory4', f'{nm}（信号の平均で割合を段階的に）・{L}倍',
+                            (lambda D=D, r=r, eD=eD: run_daily_vt(D, r, c.rf_us, [1] * len(D), eD)), bench, None, True, pp, {'kind': 'frac', 'frac': kind, 'L': L}))
+    return out
+
+
 # ───────────────────────── 本体 ─────────────────────────
 def bench_for(c, kind, run):
     """相手（月次）・RF（月次）・日次の原資産・（原資産, RF の源）"""
@@ -922,7 +1000,9 @@ def run_specs(c, specs):
         if 'avg_exposure_when_in' in run:
             ent['avg_exposure_when_in'] = run['avg_exposure_when_in']
         if st['rule'] is not None and st['graded']:
-            ent['repl'] = region_eval_vt(c, st['rule']['trend'], st['rule']['L']) if st['rule']['kind'] == 'vt' else region_eval(c, st['rule'])
+            k = st['rule']['kind']
+            ent['repl'] = (region_eval_vt(c, st['rule']['trend'], st['rule']['L']) if k == 'vt' else
+                           region_eval_frac(c, st['rule']['frac'], st['rule']['L']) if k == 'frac' else region_eval(c, st['rule']))
         if st['tax']:
             per = 252 if st['per_daily'] else 12
             yearf = (lambda k: k // 10000) if st['per_daily'] else (lambda k: k // 100)
@@ -954,7 +1034,7 @@ def main():
     res['prereg_commit'] = shas
     log('事前登録の commit', shas)
     c = load()
-    specs = family1(c) + family2(c) + family3(c)
+    specs = family1(c) + family2(c) + family3(c) + family4(c)
     tested = run_specs(c, specs)
     lv1 = M.lever_daily({d: c.r_us[d] for d in c.D_us[:1000]}, 1, {d: c.rf_us[d] for d in c.D_us[:1000]}, spread=SPREAD, fee=0.0)
     c.sanity['lever1_equals_bh'] = max(abs(lv1[d] - c.r_us[d]) for d in c.D_us[:1000]) < 1e-12
@@ -974,7 +1054,7 @@ def main():
                         family_holm_p=x['holm_p'], sharpe_pair=sp, leveraged_or_timing=True)
         x['grade'] = g; x['criteria'] = cr
         if x['family'] != 'primary' and 'label' not in x:
-            x['label'] = {'exploratory': '探索（第1族）', 'exploratory2': '探索（第2族・第1族の結果を見た後に登録）', 'exploratory3': '探索（第3族・第1族の結果を見た後に登録）', 'grid': '頑健性の格子（勝ちの主張には使わない）'}[x['family']]
+            x['label'] = {'exploratory': '探索（第1族）', 'exploratory2': '探索（第2族・第1族の結果を見た後に登録）', 'exploratory3': '探索（第3族・第1族の結果を見た後に登録）', 'exploratory4': '探索（第4族・第1族の結果を見た後に登録）', 'grid': '頑健性の格子（勝ちの主張には使わない）'}[x['family']]
     res['sanity'] = c.sanity
     res['train_selection'] = getattr(c, 'train_selection', None)
     res['n_tested'] = len(tested)
