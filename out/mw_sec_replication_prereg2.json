@@ -1,0 +1,35 @@
+{
+ "angle": "sec_replication",
+ "stage": "prereg2（探索の族・主の族の結果を見た後に登録）",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "global_prereg": "out/mw_prereg.json（線はそのまま。訓練期間が無いので格は最高でも C のまま）",
+ "why": "主の族（out/mw_sec_replication.json・07ccc18）は20本とも C（構造上）。いちばん強かったのは cop_at の上位1/3・時価加重（同じ母集団に +1.76%/年 t1.37）で、JKP の同じ窓（+2.77 t3.16）の約7割・月次の相関0.87。技術（FF12 BusEq）の比重が46%（母集団は金融を除いて31%）で、業種中立にすると +0.64 に縮んだ。ここでは『なぜ JKP より弱いか』『投資家が実際に組む形（大型株だけ・10社）ではどうか』『技術を除いても残るか』を、測る前に規則を決めて調べる",
+ "leak": "主の族の結果（cop_at が最も強く、gp_at の等分・ope_be・合成は弱い、業種中立で縮む）を見た後の登録。ここの族は探索（exploratory）で、結果は『勝ちの証拠』ではなく『どこに上乗せがあるかの地図』として読む。規則は下のとおり固定し、結果を見て変えない",
+ "measured_before_registration": "主の族の結果だけ。この族の戦略のリターンは1つも計算していない",
+ "data_and_rules": "主の事前登録（out/mw_sec_replication_prereg.json）と同じデータ・母集団・信号・保有・費用・統計。違うところだけ下に書く",
+ "family": {
+  "cop_at_T10EW": "cop_at の上位10社・等分（5社と20社の間）。相手 U_all",
+  "comp_T10EW": "合成の上位10社・等分。相手 U_all",
+  "cop_at_M100_T3VW": "毎年の母集団の浮動株時価の上位100社（金融も含めて数える）のうち、金融を除いた社を cop_at で並べた上位1/3・浮動株時価加重。相手 M100（その100社の時価加重）",
+  "cop_at_M100_T10EW": "同じ100社の中の cop_at 上位10社・等分。相手 M100",
+  "comp_M100_T3VW": "同じ100社の中の合成の上位1/3・時価加重。相手 M100",
+  "cop_at_T3VW_exBusEq": "技術（FF12 BusEq）を除いた、金融以外の社の cop_at 上位1/3・時価加重。相手 U_exfin_exBusEq（金融と技術を除いた母集団の時価加重）",
+  "comp_T3VW_exBusEq": "同じく合成で。相手 U_exfin_exBusEq",
+  "lowiss_T3VW": "発行の少なさ（−log 加重平均株数の前年比）だけの上位1/3・時価加重。相手 U_all",
+  "lowiss_T50EW": "発行の少なさの上位50社・等分。相手 U_all",
+  "copiss_T3VW": "cop_at と発行の少なさの順位 z の平均（両方ある社）の上位1/3・時価加重。相手 U_all。★主の族を見た後の組み合わせ（ope_be・gp_at を落とした）＝後知恵が最も強い1本",
+  "qv_T3VW": "質＋割安: cop_at と 簿価時価比（自己資本_E ÷ 6月末の浮動株時価、自己資本 ≤ 0 は欠測）の順位 z の平均（両方ある社）の上位1/3・時価加重。相手 U_all",
+  "cop_at_U1000_T3VW": "母集団を浮動株時価の上位1000社に広げた版（候補は浮動株そのままの上位2200社）の cop_at 上位1/3・時価加重。相手 U1000（その1000社の時価加重）。JKP（全上場）との差が母集団の狭さのせいかを見る",
+  "comp_U1000_T3VW": "同じく合成で。相手 U1000"
+ },
+ "n": 13,
+ "holm": "13本の全期間の p（それぞれの相手に対して）を mw_common.holm で補正",
+ "grade": "mw_common.grade（それぞれの相手で・train=None なので C が上限）。U_all・SPY・French Mkt に対する数字も報告",
+ "reports_not_graded": {
+  "random5_M100_top_third_cop_at": "上位100社の中の cop_at 上位1/3から毎年5社を無作為に引く（2000本・種 20260928）。相手 M100・SPY",
+  "random5_top10_cop_at": "cop_at 上位10社から毎年5社を無作為に引く（同上）。相手 U_all・SPY"
+ },
+ "post_hoc_事後": "主の族の cop_at_T3VW・gp_at_T3VW・comp_T3VW について、U_exfin を相手にした業種（FF12）の配分効果と選択効果の分解（Brinson: 配分 = Σ(w_p,k − w_b,k)(R_b,k − R_b)、選択 = Σ w_p,k (R_p,k − R_b,k)、月ごと・年率）。結果を見た後に足した説明の道具で、格付けしない",
+ "honesty": "13本と報告2本・事後1本はすべて out/mw_sec_replication.json の exploratory_prereg2 に残す"
+}

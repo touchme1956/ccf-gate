@@ -145,7 +145,7 @@ PP_SUB = ['IncreaseDecreaseInPrepaidDeferredExpenseAndOtherAssets', 'IncreaseDec
 DR_SUB = ['IncreaseDecreaseInContractWithCustomerLiability', 'IncreaseDecreaseInDeferredRevenue']
 AP_SUB = ['IncreaseDecreaseInAccountsPayable', 'IncreaseDecreaseInAccountsPayableTrade']
 ACC_SUB = ['IncreaseDecreaseInAccruedLiabilities', 'IncreaseDecreaseInOtherCurrentLiabilities']
-FEAT_VERSION = 'v3'   # 特性の作り方を変えたら上げる（パネルのキャッシュ名）
+FEAT_VERSION = 'v4'   # 特性の作り方を変えたら上げる（パネルのキャッシュ名）
 BOUNDS = {'cop_at': (-1.0, 2.0), 'gp_at': (-0.5, 3.0), 'nsi': (-2.0, 2.0)}   # 外は採取の誤り（桁違い等）として欠測（事前登録）
 
 
@@ -249,6 +249,8 @@ def year_features(rec, t):
             cop = op - dar - dinv - dpp + ddr + apacc
             f['cop_at'] = cop / A
             f['op_at'] = op / A
+    if SE is not None and SE > 0:
+        f['be'] = SE                                         # 簿価時価比（探索の族 qv）用
     if SE is not None and SE > 0 and oi is not None and da is not None:
         f['ope_be'] = (oi + da - (it or 0.0)) / SE          # Fama-French 2015 の OP ≈ 営業利益＋償却−利払い（研究開発費は引いたまま）
     # 発行の少なさ: 同じ10-Kの中の加重平均株数（基本）の今期÷前期（分割は同じ提出書類の中で遡って調整済み）
@@ -499,7 +501,7 @@ def raw_candidates(panel, t, tk):
     return sorted(out, key=lambda x: -x[1])
 
 
-def build_universe(panel, fetch=True, verbose=True):
+def build_universe(panel, fetch=True, verbose=True, N=500, topraw=None):
     """毎年6月末の母集団。返り値: (uni {t: {cik: {...}}}, price {ticker: (ret, close, first, splits)}, diag, sic, tick)
     浮動株の値の検算（事前登録）: 同じ10-Kの表紙の株数×生の株価（分割を戻す）で出した時価 cap と比べ、浮動株÷cap が
     0.02〜4 の外なら浮動株の誤り（桁違い）として cap を大きさに使う。株数が無ければ前年の浮動株と比べ、20倍を超える違いは除く"""
@@ -510,7 +512,7 @@ def build_universe(panel, fetch=True, verbose=True):
     ff12 = ff12_fn()
     top = {}
     for t in YEARS:
-        top[t] = raw_candidates(panel, t, tk)[:TOPRAW]
+        top[t] = raw_candidates(panel, t, tk)[:(topraw or TOPRAW)]
     need = sorted({c for t in YEARS for c, _ in top[t]}, key=int)
     sic = sic_codes(need) if fetch else json.load(open(os.path.join(CACHE, 'mw_sec_sic.json')))
     # ティッカー（名前の一致による後継の当て方は事前登録どおり: 正規化した社名（空白も除く）が現在の一覧の1社とだけ一致する場合）
@@ -611,13 +613,13 @@ def build_universe(panel, fetch=True, verbose=True):
         miss['float_share_missing'] = round(miss_float / tot_float, 4) if tot_float else None
         rows.sort(key=lambda r: -r['fcap'])
         u = {}
-        for r in rows[:500]:
+        for r in rows[:N]:
             f = panel[r['cik']]['y'][str(t)]
-            r.update({k: f.get(k) for k in ('cop_at', 'gp_at', 'ope_be', 'nsi', 'op_at', 'fy_end', 'float_date', 'oi_from_pretax')})
+            r.update({k: f.get(k) for k in ('cop_at', 'gp_at', 'ope_be', 'nsi', 'op_at', 'fy_end', 'float_date', 'oi_from_pretax', 'be')})
             r['name'] = panel[r['cik']]['name']
             u[r['cik']] = r
         uni[t] = u
-        diag[t] = {'top500_by_raw_float': miss, 'universe_n': len(u), 'fcap_500th': round(rows[499]['fcap'] / 1e9, 2) if len(rows) >= 500 else None,
+        diag[t] = {'top500_by_raw_float': miss, 'universe_n': len(u), 'fcap_500th': round(rows[N - 1]['fcap'] / 1e9, 2) if len(rows) >= N else None,
                    'size_validation_all_priced': val,
                    'size_how_in_universe': {k: sum(1 for r in u.values() if r['size_how'] == k) for k in val}}
         diag[t]['priced'] = [r['cik'] for r in rows]
@@ -1009,6 +1011,172 @@ def check():
         print(t, 'missing examples', [(panel[c]['name'][:28], round(panel[c]['y'][str(t)]['float'] / 1e9)) for c in ms[:25]])
 
 
+
+# ───────────────────────── 探索の族（prereg2） ─────────────────────────
+PRE2_NAME = 'mw_sec_replication_prereg2.json'
+FAM2 = ['cop_at_T10EW', 'comp_T10EW', 'cop_at_M100_T3VW', 'cop_at_M100_T10EW', 'comp_M100_T3VW', 'cop_at_T3VW_exBusEq',
+        'comp_T3VW_exBusEq', 'lowiss_T3VW', 'lowiss_T50EW', 'copiss_T3VW', 'qv_T3VW', 'cop_at_U1000_T3VW', 'comp_U1000_T3VW']
+PRIM_B2 = {'cop_at_M100_T3VW': 'M100', 'cop_at_M100_T10EW': 'M100', 'comp_M100_T3VW': 'M100', 'cop_at_T3VW_exBusEq': 'U_exfin_exBusEq',
+           'comp_T3VW_exBusEq': 'U_exfin_exBusEq', 'cop_at_U1000_T3VW': 'U1000', 'comp_U1000_T3VW': 'U1000'}
+
+
+def _w(u, sel, vw):
+    return {u[c]['ticker']: (u[c]['fcap'] if vw else 1.0) for c in sel}
+
+
+def _pair_score(za, zb):
+    return {c: (za[c] + zb[c]) / 2 for c in za if c in zb}
+
+
+def simulate_detail(coh, rets):
+    """simulate と同じ動き。月ごとの月初の重み {m: {ticker: w}} も返す（事後の分解用）"""
+    out, wts = {}, {}
+    for t in sorted(coh):
+        w0 = coh[t]; tot = sum(w0.values())
+        cur = {k: v / tot for k, v in w0.items()}
+        for m in hold_months(t):
+            av = {k: v for k, v in cur.items() if m in rets.get(k, {})}
+            if not av:
+                break
+            tv = sum(av.values())
+            wts[m] = {k: v / tv for k, v in av.items()}
+            out[m] = sum(v * rets[k][m] for k, v in av.items()) / tv
+            cur = {k: v * (1 + rets[k][m]) for k, v in av.items()}
+    return out, wts
+
+
+def brinson(pw, bw, rets, ind):
+    """配分効果・選択効果（月ごとの算術・年率）。ind(m, ticker) → 業種"""
+    alloc = sel = 0.0; n = 0; by = {}
+    for m in sorted(set(pw) & set(bw)):
+        P, B = pw[m], bw[m]
+        rb = sum(v * rets[k][m] for k, v in B.items())
+        agg = {}
+        for side, W in (('p', P), ('b', B)):
+            for k, v in W.items():
+                g = ind(m, k)
+                a = agg.setdefault(g, {'p': [0.0, 0.0], 'b': [0.0, 0.0]})
+                a[side][0] += v; a[side][1] += v * rets[k][m]
+        for g, a in agg.items():
+            wp, wb = a['p'][0], a['b'][0]
+            Rb = a['b'][1] / wb if wb else rb
+            Rp = a['p'][1] / wp if wp else 0.0
+            al = (wp - wb) * (Rb - rb)
+            se = wp * (Rp - Rb) if wp else 0.0
+            alloc += al; sel += se
+            d = by.setdefault(g, [0.0, 0.0, 0.0, 0.0]); d[0] += al; d[1] += se; d[2] += wp; d[3] += wb
+        n += 1
+    k = 12 / n * 100
+    return {'months': n, 'allocation_ann': round(alloc * k, 2), 'selection_ann': round(sel * k, 2),
+            'by_industry': {g: {'alloc': round(v[0] * k, 2), 'select': round(v[1] * k, 2), 'avg_w_port': round(v[2] / n, 3), 'avg_w_bench': round(v[3] / n, 3)}
+                            for g, v in sorted(by.items(), key=lambda x: -abs(x[1][0] + x[1][1]))}}
+
+
+def run2():
+    t0 = time.time()
+    out_p = os.path.join(M.BASE, 'out', OUT_NAME)
+    main = json.load(open(out_p))
+    panel = build_panel()
+    uni, price, diag, sic, tick = build_universe(panel)
+    uni1k, price1k, diag1k, _s, _t = build_universe(panel, N=1000, topraw=2200)
+    rets = {x: v[0] for x, v in list(price.items()) + list(price1k.items()) if v}
+    C = {}
+    for t in YEARS:
+        u = uni[t]
+        R, sc = scores(u)
+        z = sc['_z']
+        C.setdefault('cop_at_T10EW', {})[t] = _w(u, top_by(sc['cop_at'], u, n=10), False)
+        C.setdefault('comp_T10EW', {})[t] = _w(u, top_by(sc['comp'], u, n=10), False)
+        C.setdefault('lowiss_T3VW', {})[t] = _w(u, top_by(z['lowiss'], u, frac=1 / 3), True)
+        C.setdefault('lowiss_T50EW', {})[t] = _w(u, top_by(z['lowiss'], u, n=50), False)
+        C.setdefault('copiss_T3VW', {})[t] = _w(u, top_by(_pair_score(z['cop_at'], z['lowiss']), u, frac=1 / 3), True)
+        bm = rank_z({c: R[c]['be'] / R[c]['fcap'] for c in R if R[c].get('be')})
+        C.setdefault('qv_T3VW', {})[t] = _w(u, top_by(_pair_score(z['cop_at'], bm), u, frac=1 / 3), True)
+        # 上位100社
+        m100 = {c: u[c] for c in sorted(u, key=lambda c: -u[c]['fcap'])[:100]}
+        Rm, scm = scores(m100)
+        C.setdefault('cop_at_M100_T3VW', {})[t] = _w(m100, top_by(scm['cop_at'], m100, frac=1 / 3), True)
+        C.setdefault('cop_at_M100_T10EW', {})[t] = _w(m100, top_by(scm['cop_at'], m100, n=10), False)
+        C.setdefault('comp_M100_T3VW', {})[t] = _w(m100, top_by(scm['comp'], m100, frac=1 / 3), True)
+        C.setdefault('M100', {})[t] = _w(m100, list(m100), True)
+        # 技術を除く
+        ux = {c: r for c, r in u.items() if r.get('ff12') and r['ff12'] not in ('Money', 'BusEq')}
+        Rx, scx = scores(ux)
+        C.setdefault('cop_at_T3VW_exBusEq', {})[t] = _w(ux, top_by(scx['cop_at'], ux, frac=1 / 3), True)
+        C.setdefault('comp_T3VW_exBusEq', {})[t] = _w(ux, top_by(scx['comp'], ux, frac=1 / 3), True)
+        C.setdefault('U_exfin_exBusEq', {})[t] = _w(ux, list(ux), True)
+        # 上位1000社
+        uk = uni1k[t]
+        Rk, sck = scores(uk)
+        C.setdefault('cop_at_U1000_T3VW', {})[t] = _w(uk, top_by(sck['cop_at'], uk, frac=1 / 3), True)
+        C.setdefault('comp_U1000_T3VW', {})[t] = _w(uk, top_by(sck['comp'], uk, frac=1 / 3), True)
+        C.setdefault('U1000', {})[t] = _w(uk, list(uk), True)
+        C.setdefault('U_all', {})[t] = _w(u, list(u), True)
+    ser, turn, drops = {}, {}, {}
+    for nm, coh in C.items():
+        ser[nm], turn[nm], drops[nm] = simulate(coh, rets)
+    spy = yahoo_series('SPY')[0]
+    ff = M.ff_factors()
+    mkt = {k: v for k, v in ff['mkt'].items() if START <= k <= END}
+    res, pv = {}, {}
+    for nm in FAM2:
+        pb = PRIM_B2.get(nm, 'U_all')
+        B = {pb: ser[pb], 'U_all': ser['U_all'], 'SPY': spy, 'FF_Mkt': mkt}
+        r = {'name': nm, 'primary': False, 'exploratory': 'prereg2', 'primary_benchmark': pb,
+             'turnover_oneway_ann': round(turn[nm], 3) if turn[nm] else None, 'cagr': round(M.cagr(ser[nm]) * 100, 2),
+             'maxdd': round(M.maxdd(ser[nm]) * 100, 1), 'dropped_stock_months': drops[nm], 'vs': {}}
+        for bn, b in B.items():
+            r['vs'][bn] = stats_block(ser[nm], b, turn[nm] or 0.0)
+        pv[nm] = r['vs'][pb]['full']['p'] if r['vs'][pb]['full'] else None
+        res[nm] = r
+    hm = M.holm(pv)
+    for nm, r in res.items():
+        v = r['vs'][r['primary_benchmark']]
+        g, c = M.grade(v['full'], None, v['full'], v['roll20'], cost_hold=v['net_cost_full'], repl=None, family_holm_p=hm.get(nm))
+        r['grade'] = g; r['criteria'] = c; r['holm_p'] = hm.get(nm)
+    refs = {'M100_vs_U_all': stats_block(ser['M100'], ser['U_all']), 'U1000_vs_U_all': stats_block(ser['U1000'], ser['U_all']),
+            'U1000_vs_SPY': stats_block(ser['U1000'], spy), 'U_exfin_exBusEq_vs_U_all': stats_block(ser['U_exfin_exBusEq'], ser['U_all'])}
+    # 報告: 無作為の5社
+    sets_m, sets_10 = {}, {}
+    for t in YEARS:
+        u = uni[t]
+        m100 = {c: u[c] for c in sorted(u, key=lambda c: -u[c]['fcap'])[:100]}
+        Rm, scm = scores(m100)
+        sets_m[t] = [m100[c]['ticker'] for c in top_by(scm['cop_at'], m100, frac=1 / 3)]
+        R, sc = scores(u)
+        sets_10[t] = [u[c]['ticker'] for c in top_by(sc['cop_at'], u, n=10)]
+    rnd = {'random5_M100_top_third_cop_at': random_draws(sets_m, rets, {'M100': ser['M100'], 'SPY': spy}),
+           'random5_top10_cop_at': random_draws(sets_10, rets, {'U_all': ser['U_all'], 'SPY': spy})}
+    # 事後: 業種の配分と選択の分解（主の族の3本・相手 U_exfin）
+    ind_map = {}
+    for t in YEARS:
+        for c, r in uni[t].items():
+            ind_map[(t, r['ticker'])] = r.get('ff12') or '?'
+    def ind(m, k):
+        t = m // 100 if m % 100 >= 7 else m // 100 - 1
+        return ind_map.get((t, k), '?')
+    Cp = {}
+    for t in YEARS:
+        u = uni[t]; R, sc = scores(u)
+        for k in ('cop_at', 'gp_at', 'comp'):
+            Cp.setdefault(k + '_T3VW', {})[t] = _w(u, top_by(sc[k], u, frac=1 / 3), True)
+        Cp.setdefault('U_exfin', {})[t] = _w(u, list(R), True)
+    det = {nm: simulate_detail(coh, rets) for nm, coh in Cp.items()}
+    post = {nm: brinson(det[nm][1], det['U_exfin'][1], rets, ind) for nm in ('cop_at_T3VW', 'gp_at_T3VW', 'comp_T3VW')}
+    tested2 = [{'name': nm, 'role': 'exploratory_prereg2', 'grade': res[nm]['grade']} for nm in FAM2] + \
+              [{'name': k, 'role': 'report_distribution_prereg2', 'grade': None} for k in rnd] + \
+              [{'name': 'brinson_' + k, 'role': 'post_hoc_事後', 'grade': None} for k in post]
+    main['exploratory_prereg2'] = {'prereg': PRE2_NAME, 'prereg_commit': sha_of(f'out/{PRE2_NAME}'), 'strategies': res, 'refs': refs,
+                                   'random5': rnd, 'post_hoc_事後_brinson_vs_U_exfin': post, 'tested': tested2,
+                                   'u1000_diag': {t: {'universe_n': diag1k[t]['universe_n'], 'fcap_1000th_bn': diag1k[t]['fcap_500th']} for t in YEARS},
+                                   'runtime_s': round(time.time() - t0)}
+    tn = [x for x in main['tested'] if x.get('role') not in ('exploratory_prereg2', 'report_distribution_prereg2', 'post_hoc_事後')]
+    main['tested'] = tn + tested2
+    main['n_tested'] = len(main['tested'])
+    p = M.save(OUT_NAME, main)
+    print('→', p)
+
+
 if __name__ == '__main__':
     stage = sys.argv[1] if len(sys.argv) > 1 else 'run'
     if stage == 'extract':
@@ -1017,3 +1185,5 @@ if __name__ == '__main__':
         check()
     elif stage == 'run':
         run()
+    elif stage == 'run2':
+        run2()
