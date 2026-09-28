@@ -1411,7 +1411,11 @@ def make_fixes(res, entries, controls, real_chk):
         'verdict': '本当（再現した）。書き間違いではなく事前登録の停止則の許容誤差の副作用',
         'evidence': (f"P5 で予言が 1e-12 より大きく違う信号の月は {fc5['n_months_diff']}/{fc5['of_months']}（{fc5['signal_months_with_forecast_diff_gt_1e-12']}）。"
                      f"その月の λ の格子100点の解を 1e-8 の座標降下と KKT で確かめた厳密解で比べると（sensitivity_lasso_tol.kkt_probe・停止則 1e-13 の座標降下も厳密解と同じ組）: {kp_txt}。"
-                     f"持ち物が変わった保有月は P5 {p5['hold_months_with_different_holdings']}"),
+                     f"持ち物が変わった保有月は P5 {p5['hold_months_with_different_holdings']}。"
+                     '他の手法（予言が違う信号の月／持ち物が変わった保有月）: '
+                     + '・'.join(f"{nm} {v['n_months_diff']}/{v['of_months']}"
+                                 + (f"（最大の差 {v['max_abs_forecast_diff']:.2g}）" if nm == 'E12' else '') for nm, v in sen['forecast_comparison'].items() if nm != 'P5')
+                     + '／' + '・'.join(f"{n.split('_')[0]} {v['hold_months_with_different_holdings']}" for n, v in sen['rules'].items())),
         'action': ('格付けは事前登録の停止則（1e-8）のまま＝変えない（事前登録の規則そのもの）。KKT 条件で確かめた厳密解の版を sensitivity_lasso_tol に並べた（P4・P5・E12・E13・E16・E17・E18・E21 と C5 の P4_P5）。'
                    f"P5 の保有期間の超過 {p5['registered_tol_1e-8']['hold_ex_ann']} → 厳密 {p5['exact_kkt']['hold_ex_ann']}（幾何差 {p5['registered_tol_1e-8']['hold_cagr_diff']} → {p5['exact_kkt']['hold_cagr_diff']}・"
                    f"費用後 {p5['registered_tol_1e-8']['hold_net010_cagr_diff']} → {p5['exact_kkt']['hold_net010_cagr_diff']}・全期間 t {p5['registered_tol_1e-8']['full_t']} → {p5['exact_kkt']['full_t']}）。"
