@@ -1,0 +1,130 @@
+{
+ "angle": "congress_trades",
+ "title": "米国の議員（上院・下院）が公開した株の売買を、公開の翌月からまねて持つと、純粋な時価加重の米国株（French Mkt ≒ S&P500）に勝つか——STOCK Act 後・論文の公表後の答え合わせ",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "asked_by": "ユーザー（2026-09-28）「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して。限界までやって…」→ 角度 congress_trades を担当",
+ "what_was_looked_at_before_registering": [
+  "データの有無・期間・件数・記号が Yahoo にあるか（系列の最初と最後の月・種類・社名）だけ。戦略と市場を比べた数字は一つも計算していない",
+  "kadoa-org/congress-trading-monitor（MIT・commit ef9e1cf 2026-09-27 の Daily refresh に固定）の filer 別 JSON 447本（議員364＋行政府83）。議員分は下院 45,275 行・上院 9,196 行。★この JSON には kadoa 自身の成績欄（ret_since・excess_since・ret_30d・ret_1y）と alpha-index.json があるが、読んでいない（道具は読み込み時に成績欄を捨てる）。stats.json は件数・遅れの分布だけを見た",
+  "下院 Clerk の索引（{年}FD.zip・2012-2026）: PTR の提出は 2015 年 728 件〜2026 年 403 件。電子（DocID 2xxxxxxx）と紙（スキャン）に分かれ、kadoa は 2019 年以降の電子 PTR の 99% を持つが、2015-2018 の電子は 51〜79%・紙は 0%。kadoa に無い電子 PTR 534 件を自前で PDF から読んだ（pypdf）。読めた行のない 150 件は私募ファンド・債券・貸付など記号の無い資産だけの書類だった（目で数件確認）",
+  "上院 eFD（efdsearch.senate.gov）の PTR 一覧: 2012-2013 は全部が紙（スキャン）＝読めない。電子は 2014 年 93 件〜2025 年 146 件。各電子 PTR の表を自前で採った。senate-stock-watcher-data（2012〜2021-03）と kadoa の上院分は突き合わせ用（eFD に無い書類だけ補う）",
+  "Alpha Vantage の CONGRESS_TRADES は1日25回の上限に達していて使えず、FMP の senate/house 取引は今の契約で拒否（house-latest の直近5行だけ見た）＝第三者の件数との突き合わせはできない",
+  "Yahoo の月次（記号ごと）: 系列があるか・種類（EQUITY/ETF/MUTUALFUND）・最初と最後の月・社名。リターンの値と市場との比較は見ていない",
+  "論文の結論（Ziobrowski ほか 2004/2011 は勝ち、Eggers & Hainmueller 2013 は負け、Belmont ほか 2022 は STOCK Act 後に勝ちなし）と、NANC・KRUZ という ETF があること（成績は見ていない）は知っている",
+  "書類の件数（年ごと）: 下院 PTR は電子 5,653 件・紙 2,028 件（2015 年は電子 390／紙 338、2020 年 597／136、2025 年 449／66。2012-2014 の索引には PTR がほぼ無いが、kadoa は 2014 年の電子 PTR 132 件を持つ）。上院 PTR は電子 1,825 件（全部採った）・紙 605 件（2012-13 は全部紙）",
+  "自前の PDF の読み取りの一致率（kadoa が持つ電子 PTR 144 件の見本で照合）: kadoa の株の行 1,298 のうち 1,225（94.4%）が自前でも同じ記号・売買・取引日で読めた。記号の単位では 980 のうち 952（97.1%）。kadoa に無い電子 PTR 852 件のうち 638 件から 3,848 行を読んだ（行の無い 214 件は私募ファンド・債券・貸付だけの書類）",
+  "事象の件数（株と明記＋種類の記載なし・重複を落とす前）: 下院の買い 2014 年 411〜2020 年 2,980・2025 年 3,205、上院の買い 2014 年 312・2016 年 767・2022 年 227・2026 年（9月まで）946。記号 3,859",
+  "Yahoo: 記号 3,859 のうち 1,026 が 404（取り直しても 404＝上場廃止・記号の変更。BK→BNY・MMC→MRSH のような最近の変更も含む）。58 記号は系列が 12 本以下で、うち EA・AVB・EQR・WBS・LEG・HLX・TWO 等は 2026-07 に Yahoo の履歴が消えていた（取り直しても 3 本）＝未観測になる",
+  "道具の空運転: Yahoo のリターンを乱数に差し替えた合成データで、計算の流れが最後まで通ることだけ確かめた（本物のリターンでは一度も計算していない）",
+  "★ 担当の交代（2026-09-28 18:1x UTC）: 最初の担当はデータ集めの途中でセッションの利用上限に達して止まった（事前登録は未コミット）。引き継いだ担当は、最初の担当の記録（作業ログ）を読み、戦略と市場を比べた数字が一度も計算・表示されていないことを確かめてから続けた（見たのは合成データの空運転の数字だけ＝本物のリターンではない）。leak: なし",
+  "引き継いだ担当が測る前に見たもの: 書類の社名と Yahoo の今の社名（語が合わない 177 記号・647 事象の一覧）と、社名の無い事象の記号の Yahoo の社名・系列の始まり（747 記号）。ここから『記号の再利用』14 記号（GOLD・WTW・BBT・PARA・COR・DOC・CCC・RPT・CNR・VIVO・NTRP・SUNE・P・AMTD）を見つけ、期間で付け替え先か未観測を決めた。リターンの値は見ていない",
+  "引き継いだ担当が直した道具の誤り（測る前）: (1) 実績で選ぶ X7 の振り返り36か月が yyyymm の整数から36を引く計算で、実質数か月しか見ていなかった→月の足し引きに直した (2) Yahoo の読み込みが mw_common.yahoo 経由で、キャッシュが古いと取り直し・失敗を『系列なし』に黙って化けさせる作りだった→キャッシュを直接読み、読めなければ止める (3) 調整後終値が 0 以下の系列（VHI・SAFE・AOZOF・AEXAY・AEM など 12 本）で割り算が壊れる→下の yahoo_clean の規則 (4) 手の改名表の BBT→TFC が、今の BBT（Beacon Financial・2000年〜の系列）に負けて使われていなかった→改名表の記号は、新しい記号の系列が公開月の翌月を含めば常に新しい記号を使う",
+  "事象の数（重複を落とした後・この登録の規則で）: 買い 23,825（観測 21,164＝88.8%）・売り 22,535。買いの観測の割合は 2014 年 78%・2018 年 84%・2020 年 87%・2025 年 98%。院と年: 下院の買い 2014 年 341〜2020 年 2,796・2025 年 3,159、上院の買い 2014 年 210〜2020 年 538・2024 年 116・2026 年 445。政党: 共和 12,437・民主 11,354・無所属 34"
+ ],
+ "global_criteria": "out/mw_prereg.json（C1〜C8・格付け S/A/B/C）をそのまま使う。判定は night/mw_common.grade()。線は動かさない",
+ "question": "議員の株の売買の公開（STOCK Act の定期取引報告 PTR）を、公開日（提出日）の翌月からまねて持つ規則——(A) 公開された買いを全部、6か月／12か月持つ（等加重の暦月ポートフォリオ＝Jaffe/Mandelker の方法）、(D) 90日以内に2人以上の議員が買いを公開した株（合意）——と、実在の ETF（NANC・KRUZ）は、純粋な時価加重の米国株（French Mkt）に費用後に勝つか",
+ "sources": {
+  "Ziobrowski_2004": "Ziobrowski, Cheng, Boyd & Ziobrowski (2004) 'Abnormal Returns from the Common Stock Investments of the U.S. Senate', Journal of Financial and Quantitative Analysis 39(4)。上院 1993-1998 の買いが市場に大きく勝った（公表 2004）",
+  "Ziobrowski_2011": "Ziobrowski, Boyd, Cheng & Ziobrowski (2011) 'Abnormal Returns From the Common Stock Investments of Members of the U.S. House of Representatives', Business and Politics 13(1)。下院 1985-2001 の買いが勝った（公表 2011）",
+  "Eggers_Hainmueller_2013": "Eggers & Hainmueller (2013) 'Capitol Losses: The Mediocre Performance of Congressional Stock Portfolios', Journal of Politics 75(2)。2004-2008 の議員の持ち株は市場に負けた",
+  "Belmont_2022": "Belmont, Sacerdote, Sehgal & Van Hoek (2022) 'Do Senators and House Members Beat the Stock Market? Evidence from the STOCK Act', Journal of Public Economics。STOCK Act 後（2012〜2020）の議員の売買に市場を上回る成績は無い",
+  "STOCK_Act": "Stop Trading on Congressional Knowledge Act（2012-04）。取引から30日以内の通知・45日以内の報告、電子公開"
+ },
+ "post_publication": "データは全部 2014 年以降＝Ziobrowski (2004/2011) の公表後で、STOCK Act の後。本角度そのものが『公表後の答え合わせ』",
+ "benchmark": {
+  "main": "French Mkt（Mkt-RF + RF）＝総リターン。Yahoo の調整後終値（配当込みの総リターン）と総リターンどうしで比べる（超過と総リターンを混ぜない）",
+  "secondary_report_only": "SPY（Yahoo 調整後終値）。判定には使わない",
+  "tech_tilt_report_only": "QQQ（NASDAQ-100・Yahoo 調整後終値）との差と、(r−RF) を (Mkt−RF) と (QQQ−Mkt) に回帰した α。『巨大テックに寄っていただけか』を見る"
+ },
+ "periods": {
+  "full": "2014-01〜2026-08（French の終わり。Yahoo の 2026-09 の途中の月は mw_common.yahoo が捨てる）",
+  "train": "〜2006-12 のデータは存在しない（電子開示は上院 2014・下院 2014〜）＝C1 は原理的に測れず不合格。C4（転がる20年窓）も窓が無く不合格＝格は構造的に C が上限。これは結果を見る前から決まっている",
+  "hold": "2007-01〜2026-08＝実際は 2014-01〜（full と同じ）",
+  "recent": "2013-07〜（full と同じ）",
+  "sub_report_only": "2014-01〜2019-12 と 2020-01〜2026-08 の二つに分けて報告（時代による違いを見る）"
+ },
+ "timing_rule": "公開日＝提出日（House Clerk の FilingDate・上院 eFD の提出日）＋5日（掲示の遅れの安全幅）。その日が入る月 s の末に買い、月 s+1〜s+H を持つ（後知恵なし）。取引日は使わない（診断 T12 だけは取引日を使うが、実行できないので格付けしない）",
+ "events": {
+  "what": "議員本人・配偶者・扶養の子の口座の、株（普通株・ADR）の買い（Purchase）と売り（Sale (Full)/(Partial)）。交換（Exchange）・オプション・債券・投信・ETF は除く",
+  "stock_or_not": "書類が株と明記（下院 [ST]・上院 Stock）→ 株。株以外と明記 → 除く。種類の記載なし → Yahoo の種類が EQUITY なら株・ETF/投信なら除く・Yahoo に無ければ『未観測』（L の囲みに入れる）。株と明記でも Yahoo が ETF/投信なら除く（記載の誤り）",
+  "dedupe": "同じ院・議員・記号・種類・取引日・金額の下限の行は同じ取引（修正の再提出・二つの元）とみなし、公開の早いものだけ残す。議員の名寄せ: 自前 PDF の提出者は Clerk の区と姓で kadoa の filer へ、上院の補いは姓が一意なら eFD の名前へ",
+  "ticker": "大文字・'.'→'-'（BRK.B→BRK-B）。形が [A-Z]{1,5}(-[A-Z]{1,2})? でなければ記号なし＝除く"
+ },
+ "observed_rule": "事象が『観測済み』= Yahoo に系列があり・種類が EQUITY・系列の最初の月が公開月 s 以前（s の末の値がある）。系列が s より後に始まる（記号の再利用か後の上場）・今の記号が ETF/投信で当時は別の証券・Yahoo に無い → 未観測。系列が s より前に終わっている（公開の時点で買えない）→ 事象から外す（数える）。月 +300% 超はデータの誤りとして、その前の月で系列を打ち切る。★社名の照合（書類の社名と Yahoo の今の社名の語が一つも合わなければ未観測）は主の規則に入れない——測る前に目で見たところ、合わない例の大半が改名（GE→GE Aerospace・Schlumberger→SLB・Raytheon Technologies→RTX・Wal-Mart→Walmart）か社名欄の化けで、本物の記号の再利用（Weight Watchers の WTW→今の Willis Towers Watson 等）は少数だった。照合する版は S_namecheck として報告のみ",
+ "renames": "記号だけ変えた同じ会社は、Yahoo の新しい記号の系列を使う（系列が公開月 s を含むときだけ）。(1) 手の表 RENAME（38件・FB→META・SQ→XYZ・UTX→RTX・ANTM→ELV・BLL→BALL・DISCA→WBD・RDS-A/B→SHEL・TOT→TTE・PCLN→BKNG・SNE→SONY・CTL→LUMN・PKI→RVTY・FLT→CPAY・COH→TPR など。道具の頭に全部書いてある）。(2) 未観測の記号の多い順 300 件を書類の社名で Yahoo の検索にかけ、社名の語の集合が完全に一致し（改名は拾わない）、系列がその記号の最初の公開月より前から続く米国上場の EQUITY だけを採る（BK→BNY・MMC→MRSH など）→ out/_mw_cache/ct/rename_auto.json。どちらもリターンを見ずに決め、事前登録の時点で固定する。買収・合併で消えた社（TWTR・ATVI・CELG・XLNX 等）は買った側に付け替えない＝未観測のまま。★自動の探し（300 記号を検索・13 件を採った）のうち、目で3件を退けた: SIX→FUN（今の FUN の系列は Cedar Fair の 1987〜）・NGD→GOLD（今の GOLD は Gold.com）・TWO→TWO-PC（優先株）。手の表に HCP→DOC・ABX→B・CBS→PSKY・VIAC→PSKY（旧 VIAC→PARA は、今の PARA が Banzai International なので PSKY＝CBS からの系列へ）を足した。改名表の記号は、新しい記号の系列が公開月の翌月を含めば、古い記号に系列があっても新しい記号を使う",
+ "reuse": "記号の再利用（その期間の事象は、今その記号を持つ会社とは別の会社）: 公開月で期間を決め、付け替え先（同じ会社の今の記号）か未観測にする。GOLD（〜2018-12 Randgold＝未観測／2019-01〜2025-04 Barrick→B／2025-05〜 未観測）・WTW（〜2021-12 Weight Watchers＝未観測）・BBT（〜2025-08 BB&T→TFC／以降 未観測）・PARA（〜2025-07 Paramount→PSKY）・COR（〜2023-07 CoreSite＝未観測）・DOC（〜2024-02 Physicians Realty＝未観測）・CCC（〜2021-07 Clarivate→CLVT）・RPT（〜2024-12 RPT Realty）・CNR（〜2024-12 Cornerstone Building Brands）・VIVO（〜2023-12 Meridian Bioscience）・NTRP（〜2023-12 Neurotrope）・SUNE（〜2023-12 SunEdison）・P（〜2024-12 Pandora）・AMTD（〜2020-11 TD Ameritrade）。見つけ方: 書類の社名と Yahoo の今の社名の語が合わない記号の一覧（177）と、社名の無い事象の記号の Yahoo の社名（747）を目で見た。見つからなかった再利用は残りうる（known_limits）",
+ "not_common": "記号の '-' の後ろが株の種類（A・B・C）でないもの（優先株 -PA・-PJ 等、新株予約権 -W、発行日取引 -WI、単位 -U 等）は普通株でないので除く（96 事象）",
+ "yahoo_clean": "Yahoo の読み方は mw_common.yahoo と同じ（調整後終値・今月の途中の本を落とす）をキャッシュに直接当てる。調整後終値が 0 以下の本: 1本だけなら欠けとして飛ばし、2本以上なら最後の壊れた本までを捨ててその後だけ使う（大きな特別配当で調整の係数が負になる壊れ方）",
+ "bounds": {
+  "S_observed_only": "観測できる事象だけで等加重（途中で系列が切れた社は最後の値で売って残りへ按分）＝生き残りの偏りで上に出やすい側",
+  "L30": "未観測の事象は公開の翌月に −30%、途中で系列が切れた社は切れた翌月に −30% を一度だけ当てて外す",
+  "L100": "同じで −100%（最悪の下限・報告のみ）",
+  "M_neutral_report_only": "未観測の事象と途中で消えた社を、持つはずだった月のあいだ French Mkt のリターンで持つ（中立の埋め＝超過 0 に薄める・報告のみ）",
+  "S_namecheck_report_only": "主の事象のうち、社名が合わない事象も未観測にした S（報告のみ・主の4本だけ）",
+  "grading": "S と L30 の両方で mw_common.grade() を当て、悪いほうの格を採る。保有期間の超過の符号が S と L30 で割れたら C（判定不能）。Holm の p は S と L30 の大きいほう"
+ },
+ "portfolio_rule": "暦月ポートフォリオ: 月 t に持つのは、s+1 ≤ t ≤ s+H を満たす事象の記号（同じ記号は1つ）。毎月、記号ごとに等加重（X5 だけ金額の中央値の合計で加重）。持つ記号が 10 未満の月は French Mkt を持つ（その月の超過は 0・月数を数えて報告）。計算は 2014-01〜2026-08",
+ "families": {
+  "primary": {
+   "A6_all_buys_h6": "公開された買い全部・6か月",
+   "A12_all_buys_h12": "公開された買い全部・12か月",
+   "D6_consensus2_h6": "合意: 月 s の末から見て直近90日（公開日＝提出日＋5日）に買いを公開した異なる議員が2人以上いる記号を、月 s の事象として6か月",
+   "D12_consensus2_h12": "同じで12か月",
+   "holm": "この4本で Holm（保有期間の p）"
+  },
+  "exploratory": {
+   "label": "探索（事前登録はするが主ではない。格は付けるが『探索』と明記。Holm はこの10本で別に）",
+   "X1_house_buys_h12": "下院の買いだけ・12か月",
+   "X2_senate_buys_h12": "上院の買いだけ・12か月（Ziobrowski 2004 の対象）",
+   "X3_large_buys_h12": "金額の下限が $50,001 以上の買いだけ・12か月（大きな取引ほど確信があるという仮説）",
+   "X4_prompt_buys_h12": "取引日から公開まで30日以内の買いだけ・12か月（情報が古くなる前）",
+   "X5_amount_weighted_h12": "買い全部・12か月・金額の中央値（下限と上限の平均。上限なしは下限）で加重",
+   "X6_consensus3_h12": "合意を3人以上に・12か月",
+   "X8_dem_buys_h12": "民主党の議員の買いだけ・12か月（NANC の考え方を事象の単位で）。政党は unitedstates/congress-legislators の任期（提出日を含む任期・終わりの後120日まで）で、上院は姓（＋名の頭文字）、下院は州・区・姓で合わせる。kadoa の下院の事象は kadoa の党。合わなければ除く",
+   "X9_rep_buys_h12": "共和党の議員の買いだけ・12か月（KRUZ/GOP の考え方を事象の単位で）。政党の付け方は X8 と同じ",
+   "X10_all_buys_h3": "すべての買いの公開をまね、3か月持つ（短い保有・回転率 430%/年）",
+   "X7_track_record_top_third_h12": "実績で選んだ議員の買いだけ・12か月。月 s の末に、各議員の過去の買い（公開月 s′ が s−36〜s−6 の観測できた事象）について『公開の翌月から6か月の買って持つリターン − 同じ6か月の French Mkt』の平均を出し（5件以上ある議員だけ）、上位1/3の議員が月 s に公開した買いだけをまねる。使う値は月 s の末までに分かるものだけ（有名な『うまい議員をまねる』の後知恵なしの版）"
+  },
+  "diagnostic": {
+   "label": "報告のみ（格付けしない）",
+   "B6_all_sales_h6": "売りの公開（売った株を6か月持つ）＝空売りの診断。市場より下なら売りに情報がある",
+   "B12_all_sales_h12": "同じで12か月",
+   "LS12_buys_minus_sales": "A12 − B12（S の囲み・相手は 0）",
+   "T12_buys_trade_date_h12": "買いを取引月の末から12か月（公開前の情報＝まねる人には実行できない。議員自身に情報があったかの診断）"
+  },
+  "real": {
+   "label": "実在の器（生き残りの偏りなし・中の費用は基準価額に入っている）。Holm はこの2本で",
+   "R1_NANC": "NANC（Unusual Whales Subversive Democratic Trading ETF・2023-02 上場）を買って持つ",
+   "R2_KRUZ": "KRUZ（Unusual Whales Subversive Republican Trading ETF・2023-02 上場）を買って持つ。★KRUZ は 2025-03-21 に記号を GOP へ変えた（Yahoo の KRUZ は 404・GOP に履歴）＝Yahoo の GOP を使う"
+  },
+  "skipped": {
+   "C_committee": "委員会（所管の業種）で絞る案は行わない。委員会の名簿は unitedstates/congress-legislators に『今』の分しかなく、2014〜2026 の各時点の所属を無料で再現できない（今の名簿を過去に当てると後知恵になる）"
+  }
+ },
+ "turnover_cost": {
+  "rule": "片道の年回転率 × 0.30%（等加重で中小型も含むので mw_prereg の中小型の単価）。H=6 は 230%／年（12/H＝200% ＋ 等加重のつけ直し30%）、H=12 は 130%／年、H=3 は 430%／年。合意も同じ。NANC/KRUZ は 0（ファンドの中の費用は基準価額に入っている）",
+  "tax": "課税口座では売買のたびに譲渡益課税（20.315%）がかかる＝報告の注記のみ"
+ },
+ "extra_reports": [
+  "CAPM と FF5＋Mom の α（NW t・ラグ12・保有期間）",
+  "(r−RF) = α + b1 (Mkt−RF) + b2 (QQQ−Mkt) の α（巨大テック寄りを除いた残り）",
+  "超過への寄与の上位5記号を外して計算し直す（数社頼みかどうか）",
+  "巨大株（AAPL・MSFT・NVDA・AMZN・GOOGL/GOOG・META/FB・TSLA・AVGO）が持ち高の記号に占める割合",
+  "転がる5年窓・5年積立（20年窓は測れないので参考）",
+  "年×院の件数と、観測できた割合"
+ ],
+ "expectation_before_results": "Eggers & Hainmueller (2013) と Belmont ほか (2022) から、A（全部の買い）の超過はおおむね 0 前後と予想する。合意（D）と大きな取引（X3）に上乗せがあるかは事前の見当がない。どれも訓練期間が無いので格は C が上限",
+ "known_limits": [
+  "訓練期間（〜2006）が無い＝線 C1 は原理的に不合格。20年窓も無い＝C4 も不合格。格は構造的に C が上限（B 以上は付かない）",
+  "紙の PTR（スキャン）は読めない: 下院は年 15〜45% の書類が紙、上院も年 10〜40 件。紙で出す議員は偏っている可能性がある",
+  "kadoa の記号の当て方（自由記述の社名→記号）と自前の PDF の読み取り（大小文字が化ける文字列から記号を拾う）には誤りが残る。自前の読み取りは kadoa の書類の見本で一致率を測って報告する",
+  "Yahoo は上場廃止した社の系列を消す＝生き残りの偏り。未観測を −30%／−100% で囲むが、買収で消えた社の実際のリターンは正のことが多い（L は悲観的）",
+  "金額は幅（$1,001〜$15,000 など）でしか分からない。配偶者の取引は本人の情報とは限らない",
+  "2014〜2026 は巨大テックが市場を率いた時代。議員が大型テックを多く持つだけで勝って見えうる（QQQ との比較と回帰で見る）",
+  "私たちは 2014 年以降の歴史を知っている。規則は論文の既定（6/12か月・等加重・合意は2人以上）から決め、結果を見て変えない",
+  "独立の年は 12.7 年しかない。t 値は NW で補正するが、保有の重なりがあるので楽観側に出うる",
+  "記号の再利用は、社名で見つけた 14 記号しか直していない。社名の無い事象（自前の PDF・kadoa の古い行＝買いの約 1/4）の記号が、今は別の会社の長い系列を持っている例は残りうる",
+  "政党は今の名簿の任期から付ける（任期中の党替え——Sinema・Manchin の無所属化など——は任期の記録どおり。取引の時点の党と1年ほどずれる例はありうる）"
+ ]
+}
