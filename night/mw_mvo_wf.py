@@ -782,9 +782,15 @@ def total(ex, rf):
     return {k: v + rf[k] for k, v in ex.items() if k in rf}
 
 
+def compact(e):
+    """報告だけの比較は主な数字だけ残す（出力を 2MB 未満に保つ）"""
+    return {k: e[k] for k in ('from', 'ex_ann', 't', 'p', 'cagr_diff', 'te')} if e else None
+
+
 def summarize(region, key, sim, bm, rf, ew_gross=None, jkp_us=None, all3=None):
     g, n = sim['gross'], sim['net']
     E = M.excess_stats
+    C = lambda *a, **k: compact(E(*a, **k))
     st = {'region': region, 'rule': key, 'name': f'{region}:{key}', 'start': min(g), 'end': max(g)}
     st['full'] = E(g, bm); st['train'] = E(g, bm, z=TR); st['hold'] = E(g, bm, a=HS)
     st['recent'] = E(g, bm, a=RS); st['postpub_2010'] = E(g, bm, a=PP)
@@ -808,7 +814,7 @@ def summarize(region, key, sim, bm, rf, ew_gross=None, jkp_us=None, all3=None):
     th = st['turnover_hold']
     if th:  # 検算: apply_cost に平均の回転率を入れた版（三分位の中の費用も 0.30% で近似）
         ac = M.apply_cost(window_(g, HS), (th['switch_pct'] + th['within_pct']) / 100, COST_SWITCH)
-        st['net_hold_apply_cost_check'] = E(ac, bm, a=HS)
+        st['net_hold_apply_cost_check'] = C(ac, bm, a=HS)
     st['missing_in_hold'] = sim['missing']
     wh = [x for x in sim['w'] if x[0] >= HS]
     if wh:
@@ -818,20 +824,19 @@ def summarize(region, key, sim, bm, rf, ew_gross=None, jkp_us=None, all3=None):
         for _, _, _, hw in wh:
             for b_, v in hw.items():
                 agg[b_] = agg.get(b_, 0.0) + v / len(wh)
-        top = sorted(agg.items(), key=lambda x: -x[1])[:10]
+        top = sorted(agg.items(), key=lambda x: -x[1])[:6]
         st['top_blocks_hold'] = [[('MKT' if b_ == 'MKT' else f'{b_[0]}:{"高" if b_[1] == 3 else "低"}'), round(v, 3)] for b_, v in top]
     wa = [x for x in sim['w'] if x[0] <= TR]
     if wa:
         st['avg_market_weight_train'] = round(S.mean(x[1] for x in wa), 3)
     if ew_gross is not None:
-        st['vs_EW_M_hold'] = E(g, ew_gross, a=HS)
-        st['vs_EW_M_full'] = E(g, ew_gross)
+        st['vs_EW_M_hold'] = C(g, ew_gross, a=HS)
     if jkp_us is not None:
-        st['vs_jkp_usa_mkt_vw_hold'] = E(g, jkp_us, a=HS)
-        st['vs_jkp_usa_mkt_vw_full'] = E(g, jkp_us)
+        st['vs_jkp_usa_mkt_vw_hold'] = C(g, jkp_us, a=HS)
+        st['vs_jkp_usa_mkt_vw_full'] = C(g, jkp_us)
     if all3 is not None:   # 事後の点検（判定に使わない）: 同じ宇宙の選ばない混合との差
-        st['posthoc_vs_all3'] = {'note': '事後・判定に使わない', 'full': E(g, all3), 'train': E(g, all3, z=TR), 'hold': E(g, all3, a=HS),
-                                 'net_hold': E(n, all3, a=HS)}
+        st['posthoc_vs_all3'] = {'note': '事後・判定に使わない', 'train': C(g, all3, z=TR), 'hold': C(g, all3, a=HS),
+                                 'net_hold': C(n, all3, a=HS)}
     return st
 
 
