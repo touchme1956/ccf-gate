@@ -180,6 +180,14 @@ def load_all():
     src['LBMA_GOLD'] = lbma_gold()
     # XLI の投信代理: FSDAX と FSRFX の 50/50（毎月リバランス）
     src['FSDAX_FSRFX'] = {k: 0.5 * src['FSDAX'][k] + 0.5 * src['FSRFX'][k] for k in src['FSDAX'] if k in src['FSRFX']}
+    # 第2族: Fidelity Select 業種ファンド（事前登録2）と French 30業種（Other を除く29）
+    for t in FSEL:
+        if t not in src:
+            src[t] = yh(t)
+    ind30 = M.french_series('30_Industry_Portfolios', 'Value Weight')
+    for c in ind30:
+        if c.strip().lower() != 'other':
+            src['FR30_' + c.strip()] = cut(ind30[c])
     # French 10業種（Other を除く9）
     ind = M.french_series('10_Industry_Portfolios', 'Value Weight')
     for c in ['NoDur', 'Durbl', 'Manuf', 'Enrgy', 'HiTec', 'Telcm', 'Shops', 'Hlth', 'Utils']:
@@ -217,6 +225,9 @@ SLOTS = {
     'XLI': (['XLI'], ['FSDAX_FSRFX'], None), 'XLK': (['XLK'], ['FSPTX'], None), 'XLP': (['XLP'], ['FDFAX'], None),
     'XLU': (['XLU'], ['FSUTX'], None), 'XLV': (['XLV'], ['FSPHX'], None), 'XLY': (['XLY'], ['FSCPX'], None),
 }
+FSEL = ['FSPTX', 'FSENX', 'FIDSX', 'FSUTX', 'FSPHX', 'FSDAX', 'FDLSX', 'FSLBX', 'FSCHX', 'FDFAX', 'FSELX', 'FSTCX', 'FSCSX', 'FDCPX',
+        'FSAGX', 'FBIOX', 'FSVLX', 'FSPCX', 'FSRPX', 'FSAVX', 'FSHCX', 'FBMPX', 'FSRBX', 'FSHOX', 'FSDPX', 'FSRFX', 'FSLEX', 'FSCPX',
+        'FNARX', 'FBSOX', 'FSMEX', 'FWRLX', 'FPHAX']
 SECT_EF = ['XLB', 'XLE', 'XLF', 'XLI', 'XLK', 'XLP', 'XLU', 'XLV', 'XLY']
 SECT_L = ['FR10_' + c for c in ['NoDur', 'Durbl', 'Manuf', 'Enrgy', 'HiTec', 'Telcm', 'Shops', 'Hlth', 'Utils']]
 
@@ -246,7 +257,7 @@ def build_version(src, rf, ver, slots):
     for s in slots:
         if s == 'TBILL':
             continue
-        if s.startswith('FR10_') or s == 'FF_MKT':
+        if s.startswith('FR10_') or s.startswith('FR30_') or s == 'FF_MKT' or s in FSEL:
             R[s] = src[s]
             seg[s] = {s: [min(src[s]), max(src[s])]}
             continue
@@ -397,6 +408,27 @@ def mk_sector(names, k=3, score='r12', absf=False):
                 key = 'TBILL'
             w[key] = w.get(key, 0) + 1 / k
         return w
+    return f
+
+
+def mk_sector_dyn(names, k, score='r12', min_n=20):
+    """その月に12か月の窓がそろったものだけから上位 k（対象が min_n 未満の月は作らない＝始まらない）"""
+    def f(H):
+        sc = (lambda s: H.cum(s, 12)) if score == 'r12' else H.blend
+        avail = [s for s in names if H.R.get(s) and sc(s) is not None]
+        if len(avail) < min_n:
+            return None
+        top = topk(H, avail, sc, k)
+        return None if top is None else {s: 1 / k for s in top}
+    return f
+
+
+def mk_ew_dyn(names, min_n=20):
+    def f(H):
+        avail = [s for s in names if H.R.get(s) and H.cum(s, 12) is not None]
+        if len(avail) < min_n:
+            return None
+        return {s: 1 / len(avail) for s in avail}
     return f
 
 
@@ -622,7 +654,8 @@ def run_loose(R, rule, z):
 
 
 # ───────────────────────── 仕様 ─────────────────────────
-POSTPUB = {'P1': 201501, 'P2': 200801, 'P3': 201801, 'P4': 201901, 'P5': 201101, 'X3': 201101, 'X4': 201101,
+SRC_NAMES = []
+POSTPUB = {'G1': 201101, 'G2': 201101, 'G3': 201101, 'G4': 201101, 'G6': 201101, 'G7': 201101, 'P1': 201501, 'P2': 200801, 'P3': 201801, 'P4': 201901, 'P5': 201101, 'X3': 201101, 'X4': 201101,
            'X5': 201501, 'X7': 201101}
 
 
@@ -667,6 +700,21 @@ def specs():
     for k in (1, 2, 4):
         add(f'X7_SECTK{k}', 'exploratory', f'探索（感度）: セクター上位{k}（r12・等分）', lambda v, k=k: mk_sector(sec(v), k), sec, False,
             repl=(k, 'r12', False))
+    # 第2族（事前登録2）: Fidelity Select 業種ファンド・French 30 の紙の上の類似
+    fr30 = lambda: [n for n in SRC_NAMES if n.startswith('FR30_')]
+    one = lambda **kw: out.append(dict(timing=False, alloc=False, **kw))
+    for k, kg in ((3, 1), (6, 2)):
+        for sc, lab in (('r12', 'R12'), ('blend', 'BL')):
+            gid = {('r12', 3): 'G1', ('r12', 6): 'G2', ('blend', 3): 'G3', ('blend', 6): 'G4'}[(sc, k)]
+            one(id=f'{gid}_FSEL_K{k}_{lab}', rule=gid, family='exploratory2', version='F',
+                description=f'探索2: Fidelity Select 業種ファンド（実在・約32本）の{"12か月" if sc == "r12" else "(r1+r3+r6+r12)/4"}上位{k}本を等分',
+                rule_fn=mk_sector_dyn(FSEL, k, sc, 20), slots=list(FSEL), repl=(kg, sc, False))
+        gid = {3: 'G6', 6: 'G7'}[k]
+        one(id=f'{gid}_FR30_K{k}_R12', rule=gid, family='exploratory2', version='L',
+            description=f'探索2（紙の上の類似）: French 30業種（Other 除く29）の12か月上位{k}を、Fidelity と同じ月から',
+            rule_fn=mk_sector_dyn(fr30(), k, 'r12', 29), slots=fr30(), repl=(kg, 'r12', False), align_to='G1_FSEL_K3_R12')
+    one(id='G5_FSEL_EW', rule='G5', family='reference2', version='F', description='参照2: Fidelity Select を全部等分',
+        rule_fn=mk_ew_dyn(FSEL, 20), slots=list(FSEL), repl=None)
     return out
 
 
@@ -723,6 +771,47 @@ def summarize_alloc(wpath, a=None):
     return {s: round(v / n, 3) for s, v in sorted(cnt.items(), key=lambda x: -x[1])} if n else {}
 
 
+def diag_post_hoc(src, rf, mkt, runs):
+    """事後（判定に使わない）: 紙の上（French 9業種）と実物（SPDR）のセクターの勢いの差はどこから来たか"""
+    out = {'label': '事後の診断（結果を見た後に作った・判定には使わない）'}
+    def contrib(rid, a=M.HOLD_START):
+        if rid not in runs:
+            return None
+        R, wpath, g, n = runs[rid]
+        c, cnt, nmo = {}, {}, 0
+        for t, w in wpath.items():
+            m = madd(t, 1)
+            if m < a or m not in mkt:
+                continue
+            nmo += 1
+            for s_, x in w.items():
+                c[s_] = c.get(s_, 0) + x * (R[s_][m] - mkt[m])
+                cnt[s_] = cnt.get(s_, 0) + x
+        return {s_: {'avg_weight': round(cnt[s_] / nmo, 3), 'contrib_ex_ann_pct': round(c[s_] / nmo * 12 * 100, 2)}
+                for s_ in sorted(c, key=lambda z: -c[z])}
+    for rid in ('P5_SECT3_L', 'P5_SECT3_E', 'X3_SECT3BL_L', 'X3_SECT3BL_E', 'X7_SECTK1_L', 'G1_FSEL_K3_R12', 'G6_FR30_K3_R12'):
+        out[f'hold_contrib_{rid}'] = contrib(rid)
+    for rid in ('P5_SECT3_L', 'P5_SECT3_E', 'X3_SECT3BL_L', 'X3_SECT3BL_E'):
+        if rid in runs:
+            g = runs[rid][2]
+            out[f'subperiods_{rid}'] = {'2007-2016': M.excess_stats(g, mkt, a=200701, z=201612),
+                                        '2017-2026': M.excess_stats(g, mkt, a=201701)}
+    # French 9業種から Durbl（Tesla を含む耐久財）を除いた8業種で同じ規則（事後）
+    R = {'TBILL': rf}
+    names = [x for x in SECT_L if x != 'FR10_Durbl']
+    for x in names:
+        R[x] = src[x]
+    g, n, _, _, _ = run(R, mk_sector(names, 3))
+    out['P5_L_without_Durbl'] = {'hold': M.excess_stats(g, mkt, a=M.HOLD_START), 'full': M.excess_stats(g, mkt)}
+    # 同じ月（2000-01〜）で紙の上と実物の月次の超過の相関
+    if 'P5_SECT3_L' in runs and 'P5_SECT3_E' in runs:
+        gl, ge = runs['P5_SECT3_L'][2], runs['P5_SECT3_E'][2]
+        ks = sorted(k for k in set(gl) & set(ge) if k in mkt)
+        out['P5_L_vs_E_monthly_excess_corr'] = round(M.corr([gl[k] - mkt[k] for k in ks], [ge[k] - mkt[k] for k in ks]), 3)
+        out['P5_L_minus_E_same_months'] = M.excess_stats(gl, ge, a=ks[0])
+    return out
+
+
 def main():
     dry = '--dry' in sys.argv
     src, rf, mkt, meta = load_all()
@@ -733,8 +822,10 @@ def main():
         return
     sanity = dry_checks(src, meta, with_cagr=True)
     sanity['french_mkt_cagr'] = {'full': round(M.cagr(mkt) * 100, 2), 'from_2007': round(M.cagr(M.window(mkt, M.HOLD_START)) * 100, 2)}
+    SRC_NAMES[:] = sorted(src)
     rows = []
-    cache_ver = {}
+    starts = {}
+    runs = {}
     gcache = {}
     ref6040 = {}
     spy = {}
@@ -752,11 +843,21 @@ def main():
             log('  ✗', sp['id'], e)
             rows.append({'id': sp['id'], 'error': str(e)})
             continue
+        unaligned = None
+        if sp.get('align_to'):
+            a0 = starts[sp['align_to']]
+            unaligned = {'from': min(g), 'full': M.excess_stats(g, mkt), 'train': M.excess_stats(g, mkt, z=M.TRAIN_END),
+                         'hold': M.excess_stats(g, mkt, a=M.HOLD_START), 'roll20': M.rolling(n, mkt, 20)}
+            g, n, ns = ({k: v for k, v in d.items() if k >= a0} for d in (g, n, ns))
+            trades = {k: v for k, v in trades.items() if k >= a0}
+            wpath = {k: v for k, v in wpath.items() if madd(k, 1) >= a0}
         if len(g) < 24:
             log('  ✗', sp['id'], '月が足りない', len(g))
             rows.append({'id': sp['id'], 'family': sp['family'], 'version': v, 'error': f'月が足りない {len(g)}'})
             continue
         ks = sorted(g)
+        starts[sp['id']] = ks[0]
+        runs[sp['id']] = (R, wpath, g, n)
         full = M.excess_stats(g, mkt)
         train = M.excess_stats(g, mkt, z=M.TRAIN_END)
         hold = M.excess_stats(g, mkt, a=M.HOLD_START)
@@ -796,6 +897,12 @@ def main():
                'alloc_avg_full': summarize_alloc(wpath), 'alloc_avg_hold': summarize_alloc(wpath, M.HOLD_START),
                'last_signal': {'month': max(wpath), 'weights': {s: round(x, 3) for s, x in wpath[max(wpath)].items()}},
                'tax_jp_hold': taxr, 'repl': rep}
+        if sp['family'] in ('exploratory2', 'reference2'):
+            nf = {k: g[k] - 0.0075 * trades[k] / 2 for k in g}   # 売りのたびに 0.75%（短期解約手数料の最悪ケース）
+            row['cost_hold_fidelity075'] = M.excess_stats(nf, mkt, a=M.HOLD_START)
+            row['hold_share_by_fund'] = summarize_alloc(wpath, M.HOLD_START)
+        if unaligned:
+            row['unaligned_full_history_not_graded'] = unaligned
         rows.append(row)
         h = hold or {}
         ch = cost_hold or {}
@@ -820,7 +927,7 @@ def main():
         sp_pair = r['sharpe'] if r['timing_or_alloc'] else None
         g, c = M.grade(r['full'], r['train'], r['hold'], r['roll20'], r['cost_hold'], repl, r['holm_p'], sp_pair, r['timing_or_alloc'])
         r['grade'], r['criteria'] = g, c
-        if r['family'] != 'reference':
+        if not r['family'].startswith('reference'):
             grades[g] += 1
         log(f"  {r['id']:14s} → {g}  {''.join(k[:2] + ('✓' if v else ('-' if v is None else '✗')) + ' ' for k, v in c.items())}")
     res = {'angle': 'etf_tactical', 'prereg': PREREG, 'prereg_commit': git_sha(os.path.join('out', PREREG)),
@@ -828,7 +935,8 @@ def main():
            'benchmark': 'French Mkt（Mkt-RF+RF・総リターン）。報告: VFINX→SPY のつないだ US 枠、60/40（R1 の同じ版）',
            'cost': '売り・買いそれぞれ 0.05%（片道100%あたり 0.10%）を各月の実際の売買量に掛けてその月に引く。stress は片道 0.30%',
            'sanity': sanity, 'n_tested': len(rows), 'grades_excluding_reference': grades,
-           'tested': rows, 'log': LOG}
+           'prereg2': 'mw_etf_tactical_prereg2.json', 'prereg2_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg2.json')),
+           'tested': rows, 'diagnostics_post_hoc_not_graded': diag_post_hoc(src, rf, mkt, runs), 'log': LOG}
     p = M.save(OUT, res)
     print('saved', p, os.path.getsize(p))
 
