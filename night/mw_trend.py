@@ -18,7 +18,7 @@ import sys, os, json, math, datetime, subprocess, statistics as S
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
 
-PRE_NAMES = ['mw_trend_prereg.json', 'mw_trend_prereg2.json']
+PRE_NAMES = ['mw_trend_prereg.json', 'mw_trend_prereg2.json', 'mw_trend_prereg3.json']
 OUT_NAME = 'mw_trend.json'
 COST = 0.001      # 判定用: 持ち替え1回あたり資産の0.10%（全体の事前登録の既定）
 COST_LO = 0.0005  # 報告: 指示書の0.05%
@@ -790,6 +790,97 @@ def family2(c):
     return out
 
 
+# ───────────────────────── 第3族: トレンド＋ボラ目標の倍率 ─────────────────────────
+def sigma_rms(D, r, a=None, z=None):
+    x = [r[d] for d in D if (a is None or d >= a) and (z is None or d <= z)]
+    return math.sqrt(252 * sum(v * v for v in x) / len(x))
+
+
+def vt_exposure(D, r, sigma_star, Lmax, win=21):
+    """月末に倍率 e = min(Lmax, σ*/σ̂) を決める（σ̂ = 直近21営業日の二乗平均の平方根×√252）→ {月末の日付: e}"""
+    out = {}
+    for i, d in enumerate(D):
+        if (i == len(D) - 1 or D[i + 1] // 100 != d // 100) and i >= win - 1:
+            w = [r[D[j]] for j in range(i - win + 1, i + 1)]
+            sh = math.sqrt(252 * sum(x * x for x in w) / win)
+            out[d] = min(Lmax, sigma_star / sh) if sh > 0 else Lmax
+    return out
+
+
+def run_daily_vt(D, r, rf, sig_on_D, e_on_D, lag=2):
+    """日次。信号と倍率はどちらも i-lag の値。持つ日 = e×r − (e−1)×RF − [e>1: (e−1)×0.5%/252 + 0.9%/252]"""
+    for d in D:
+        if d not in rf or d not in r:
+            raise RuntimeError(f'RF かリターンが無い日 {d}（0で埋めない）')
+    idx = [i for i in range(lag, len(D)) if sig_on_D[i - lag] is not None and e_on_D[i - lag] is not None]
+    if not idx:
+        return None
+    first_m = D[idx[0]] // 100
+    if D[idx[0] - 1] // 100 == first_m:
+        idx = [i for i in idx if D[i] // 100 != first_m]
+    keys, inv, cash, pos, gross, net, net05 = [], [], [], [], {}, {}, {}
+    sw, ps, pe, esum, ein = 0, None, None, 0.0, 0
+    for i in idx:
+        d = D[i]; s = sig_on_D[i - lag]; e = e_on_D[i - lag]; v = r[d]; f = rf[d]
+        ir = e * v - (e - 1) * f - (((e - 1) * SPREAD + FEE) / 252 if e > 1 else 0.0)
+        ir = max(ir, -1.0)
+        g = ir if s else f
+        c = 0.0
+        if ps is not None and s != ps:
+            c = 1.0; sw += 1
+        elif s and ps and pe is not None and e != pe:
+            c = abs(e - pe)
+        keys.append(d); inv.append(ir); cash.append(f); pos.append(s)
+        gross[d] = g; net[d] = (1 + g) * (1 - COST * c) - 1; net05[d] = (1 + g) * (1 - COST_LO * c) - 1
+        if s:
+            esum += e; ein += 1
+        ps, pe = s, e
+    return {'keys': keys, 'inv': inv, 'cash': cash, 'pos': pos, 'gross': gross, 'net': net, 'net05': net05, 'switches': sw,
+            'avg_exposure_when_in': round(esum / ein, 3) if ein else None}
+
+
+def region_eval_vt(c, trend, Lmax):
+    """第3族の C5: Europe・Japan・Asia_Pacific_ex_Japan（日次）で同じ規則。σ* は地域の 1990-07〜2006-12"""
+    det = {}
+    for nm in c.REG_D:
+        g = c.regd[nm]; D = g['D']
+        ss = sigma_rms(D, g['r'], z=20061231)
+        ed = map_sig(D, vt_exposure(D, g['r'], ss, Lmax))
+        sd = map_sig(D, sma_sig(g['idx'], 200)) if trend == 'sma' else map_sig(D, month_end_sig_sma(g['idx'], 10))
+        run = run_daily_vt(D, g['r'], g['rf'], sd, ed)
+        det[nm] = pack_region(M.to_monthly(run['gross']), M.to_monthly(run['net']), M.to_monthly({d: g['r'][d] for d in run['keys']}))
+        det[nm]['sigma_star'] = round(ss * 100, 2)
+    counted = ['Europe', 'Japan', 'Asia_Pacific_ex_Japan']
+    return {'regions': len(counted), 'positive': sum(1 for nm in counted if det[nm]['positive']), 'counted': counted,
+            'rule_positive': 'ex_ann>0 かつ cagr_diff>0（費用後・地域の全期間）・Emerging は日次が無くボラが測れないので数えない', 'detail': det}
+
+
+def family3(c):
+    out = []
+    s_us = sigma_rms(c.D_us, c.r_us, z=20061231)
+    s_ndx = sigma_rms(c.D_ndx, c.ndx_r, z=20061231)
+    c.sanity['vt_sigma_star'] = {'US_1926_2006': round(s_us * 100, 2), 'NDX_1985_2006': round(s_ndx * 100, 2)}
+    log('ボラ目標 σ*', c.sanity['vt_sigma_star'])
+    ones_us = [1] * len(c.D_us); ones_ndx = [1] * len(c.D_ndx)
+    for L in (1, 2, 3):
+        e_us = map_sig(c.D_us, vt_exposure(c.D_us, c.r_us, s_us, L))
+        e_ndx = map_sig(c.D_ndx, vt_exposure(c.D_ndx, c.ndx_r, s_ndx, L))
+        out.append(spec(f'V1_US_SMA200_VT_L{L}', 'exploratory3', f'US ^GSPC 200日線＋ボラ目標（σ*={s_us * 100:.1f}%・上限{L}倍）',
+                        (lambda e=e_us: run_daily_vt(c.D_us, c.r_us, c.rf_us, c.sig_gspc[200], e)), 'us_d', None, True, PP_GAYED, {'kind': 'vt', 'trend': 'sma', 'L': L}))
+        out.append(spec(f'V2_NDX_SMA200_VT_L{L}', 'exploratory3', f'NDX ^NDX 200日線＋ボラ目標（σ*={s_ndx * 100:.1f}%・上限{L}倍）',
+                        (lambda e=e_ndx: run_daily_vt(c.D_ndx, c.ndx_r, c.rf_us, c.ndx_sig[200], e)), 'ndx_d', None, True, PP_GAYED, {'kind': 'vt', 'trend': 'sma', 'L': L}))
+        out.append(spec(f'V3_US_FABER10D_VT_L{L}', 'exploratory3', f'US 10か月線（日次・1日遅れ）＋ボラ目標（上限{L}倍）',
+                        (lambda e=e_us: run_daily_vt(c.D_us, c.r_us, c.rf_us, c.us_faberD, e)), 'us_d', None, True, PP_FABER, {'kind': 'vt', 'trend': 'faber_d', 'L': L}))
+        if L in (1, 2):
+            out.append(spec(f'R_US_VTONLY_L{L}', 'report', f'US トレンドなし・ボラ目標だけ（上限{L}倍）【報告のみ】',
+                            (lambda e=e_us: run_daily_vt(c.D_us, c.r_us, c.rf_us, ones_us, e)), 'us_d', None, True, PP_GAYED, None, graded=False,
+                            label='報告のみ（トレンドが何を足したかの比較・ボラ管理は別の角度の領分）'))
+            out.append(spec(f'R_NDX_VTONLY_L{L}', 'report', f'NDX トレンドなし・ボラ目標だけ（上限{L}倍）【報告のみ】',
+                            (lambda e=e_ndx: run_daily_vt(c.D_ndx, c.ndx_r, c.rf_us, ones_ndx, e)), 'ndx_d', None, True, PP_GAYED, None, graded=False,
+                            label='報告のみ（トレンドが何を足したかの比較・ボラ管理は別の角度の領分）'))
+    return out
+
+
 # ───────────────────────── 本体 ─────────────────────────
 def bench_for(c, kind, run):
     """相手（月次）・RF（月次）・日次の原資産・（原資産, RF の源）"""
@@ -828,8 +919,10 @@ def run_specs(c, specs):
             c.sanity['lag_check_us_sma200'] = lag_check(c.D_us, c.sig_gspc[200], run)
         if st['id'].startswith('P08'):
             c.sanity['lag_check_ndx_sma200'] = lag_check(c.D_ndx, c.ndx_sig[200], run)
+        if 'avg_exposure_when_in' in run:
+            ent['avg_exposure_when_in'] = run['avg_exposure_when_in']
         if st['rule'] is not None and st['graded']:
-            ent['repl'] = region_eval(c, st['rule'])
+            ent['repl'] = region_eval_vt(c, st['rule']['trend'], st['rule']['L']) if st['rule']['kind'] == 'vt' else region_eval(c, st['rule'])
         if st['tax']:
             per = 252 if st['per_daily'] else 12
             yearf = (lambda k: k // 10000) if st['per_daily'] else (lambda k: k // 100)
@@ -861,7 +954,7 @@ def main():
     res['prereg_commit'] = shas
     log('事前登録の commit', shas)
     c = load()
-    specs = family1(c) + family2(c)
+    specs = family1(c) + family2(c) + family3(c)
     tested = run_specs(c, specs)
     lv1 = M.lever_daily({d: c.r_us[d] for d in c.D_us[:1000]}, 1, {d: c.rf_us[d] for d in c.D_us[:1000]}, spread=SPREAD, fee=0.0)
     c.sanity['lever1_equals_bh'] = max(abs(lv1[d] - c.r_us[d]) for d in c.D_us[:1000]) < 1e-12
@@ -881,7 +974,7 @@ def main():
                         family_holm_p=x['holm_p'], sharpe_pair=sp, leveraged_or_timing=True)
         x['grade'] = g; x['criteria'] = cr
         if x['family'] != 'primary' and 'label' not in x:
-            x['label'] = {'exploratory': '探索（第1族）', 'exploratory2': '探索（第2族・第1族の結果を見た後に登録）', 'grid': '頑健性の格子（勝ちの主張には使わない）'}[x['family']]
+            x['label'] = {'exploratory': '探索（第1族）', 'exploratory2': '探索（第2族・第1族の結果を見た後に登録）', 'exploratory3': '探索（第3族・第1族の結果を見た後に登録）', 'grid': '頑健性の格子（勝ちの主張には使わない）'}[x['family']]
     res['sanity'] = c.sanity
     res['train_selection'] = getattr(c, 'train_selection', None)
     res['n_tested'] = len(tested)
