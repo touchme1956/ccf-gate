@@ -374,6 +374,7 @@ def main():
 
     p3 = prereg3(dict(rf=rf, rmk=rmk, PF=PF, side=side, all_hold_p=p2.pop('_all_hold_p')))
     p4 = prereg4(dict(all_hold_p=p3.pop('_all_hold_p')))
+    p5 = prereg5(dict(all_hold_p=p4.pop('_all_hold_p')))
 
     ph = post_hoc(dict(rf=rf, rmk=rmk, PF=PF, side=side, cm=cm, cand=cand), p2, p3)
 
@@ -381,9 +382,8 @@ def main():
            'global_prereg': 'out/mw_prereg.json', 'representative': REP, 'good_side': side,
            'n_tested': len(tested), 'tested': tested, 'graded': graded, 'holm_family': hol,
            'regional': {loc: {k: v for k, v in d.items()} for loc, d in regional.items()},
-           'country_summary': summary, 'per_country': per_country, 'sanity': sanity, 'prereg2': p2, 'prereg3': p3, 'prereg4': p4, 'post_hoc_diagnostics': ph}
-    p4.pop('_all_hold_p', None)
-    out['n_tested_all'] = len(tested) + len(p2['tested']) + len(p3['tested']) + len(p4['tested'])
+           'country_summary': summary, 'per_country': per_country, 'sanity': sanity, 'prereg2': p2, 'prereg3': p3, 'prereg4': p4, 'prereg5': p5, 'post_hoc_diagnostics': ph}
+    out['n_tested_all'] = len(tested) + len(p2['tested']) + len(p3['tested']) + len(p4['tested']) + len(p5['tested'])
     p = M.save('mw_intl.json', out)
     # 画面
     print('prereg', out['prereg_commit'])
@@ -398,6 +398,7 @@ def main():
     print_prereg2(p2)
     print_prereg3(p3)
     print_prereg4(p4)
+    print_prereg5(p5)
     print('事後の診断', json.dumps({k: (v if not isinstance(v, dict) else {kk: (vv if not isinstance(vv, dict) or 'ex_ann' not in vv else (vv['ex_ann'], vv['t'], vv['te'])) for kk, vv in v.items()}) for k, v in ph.items()}, ensure_ascii=False, default=str)[:4000])
     print('→', p)
 
@@ -886,6 +887,65 @@ def print_prereg4(p4):
         print(' ', c, ' '.join(f"{k}:{d[k]['full']['ex_ann']:+.1f}/{d[k]['hold']['ex_ann']:+.1f}(t{d[k]['hold']['t']:+.1f})" for k in d if d[k].get('full')))
     ah = p4['angle_wide_holm_reference']
     print('  angle-wide holm <0.05 (n=%d):' % p4['n_graded_angle'], {k: v for k, v in sorted(ah.items(), key=lambda x: x[1]) if v < 0.05})
+
+
+# ───────────────────────── 事前登録5（out/mw_intl_prereg5.json） ─────────────────────────
+PRE5_NAME = 'mw_intl_prereg5.json'
+F5_PAIRS = {'dfa_intl_value': ('DFIVX', 'DFALX'), 'dfa_em_value': ('DFEVX', 'DFEMX'), 'dfa_intl_small_value': ('DISVX', 'DFISX'), 'dfa_intl_core': ('DFIEX', 'DFALX')}
+
+
+def prereg5(ctx):
+    cur = int(datetime_today().strftime('%Y%m'))
+    Y = {}
+
+    def y(t):
+        if t not in Y:
+            Y[t] = {k: v for k, v in M.yahoo(t).items() if k < cur}
+        return Y[t]
+    recs = {}
+    for k, (a, b) in F5_PAIRS.items():
+        ra, rb = y(a), y(b)
+        ks = sorted(set(ra) & set(rb))
+        s_, b_ = {m: ra[m] for m in ks}, {m: rb[m] for m in ks}
+        f = four(s_, b_)
+        recs[k] = {'pair': f'{a} vs {b}', 'months': len(ks), 'start': ks[0], 'end': ks[-1], **f, 'hold_net': f['hold'],
+                   'roll20': M.rolling(s_, b_, 20), 'dca20': M.dca(s_, b_, 20)}
+    hp = {k: (r.get('hold') or {}).get('p') for k, r in recs.items() if r.get('hold')}
+    hol = M.holm(hp)
+    vals = ['dfa_intl_value', 'dfa_em_value', 'dfa_intl_small_value']
+    repl = {'regions': sum(1 for k in vals if recs[k].get('full')), 'positive': sum(1 for k in vals if (recs[k].get('full') or {}).get('ex_ann', -1) > 0)}
+    tested, all_p = [], dict(ctx['all_hold_p'])
+    for k, r in recs.items():
+        g, crit = M.grade(r.get('full'), r.get('train'), r.get('hold'), r.get('roll20'), cost_hold=r.get('hold_net'), repl=repl, family_holm_p=hol.get(k))
+        r.update(grade=g, criteria=crit, holm_p=hol.get(k), repl=repl)
+        if r.get('hold') and r['hold'].get('p') is not None:
+            all_p[f'F5a_dfa_funds:{k}'] = r['hold']['p']
+        tested.append({'name': f'F5a_dfa_funds:{k}', 'family': 'F5a_dfa_funds', 'series': r['pair'] + '（Yahoo・費用後・生き残りの偏りあり）', 'grade': g, 'criteria': crit})
+    rep = {}
+    for a, b in (('DFALX', 'EFA'), ('DFIVX', 'EFA')):
+        ra, rb = y(a), y(b); ks = sorted(set(ra) & set(rb))
+        st = M.excess_stats({m: ra[m] for m in ks}, {m: rb[m] for m in ks})
+        rep[f'{a} vs {b}'] = dict(st or {}, corr=round(M.corr([ra[m] for m in ks], [rb[m] for m in ks]), 4))
+        tested.append({'name': f'f5_reported:{a} vs {b}', 'family': 'reported', 'series': 'Yahoo', 'grade': None})
+    return {'prereg': f'out/{PRE5_NAME}', 'prereg_commit': git_sha(f'out/{PRE5_NAME}'), 'families': {'F5a_dfa_funds': {'members': recs, 'holm': hol}},
+            'reported': rep, 'angle_wide_holm_reference': M.holm(all_p), 'n_graded_angle': len(all_p), 'tested': tested}
+
+
+def datetime_today():
+    import datetime as _d
+    return _d.date.today()
+
+
+def print_prereg5(p5):
+    f = lambda v: f"{v['ex_ann']:+5.2f}(t{v['t']:+.1f})" if v else '    —     '
+    print('== F5a_dfa_funds')
+    for k, r in p5['families']['F5a_dfa_funds']['members'].items():
+        print(f"{k:22} {r['grade']} {r['pair']} {r['start']} 全{f(r.get('full'))} 訓{f(r.get('train'))} 保{f(r.get('hold'))} 近{f(r.get('recent'))} "
+              f"cagr差 全{(r.get('full') or {}).get('cagr_diff')} 保{(r.get('hold') or {}).get('cagr_diff')} 20年{(r.get('roll20') or {}).get('wins')}/{(r.get('roll20') or {}).get('windows')} holm {r['holm_p']}")
+    for k, v in p5['reported'].items():
+        print('  ', k, f(v if 'ex_ann' in v else None), 'cagr', v.get('cagr_s'), v.get('cagr_b'), 'corr', v.get('corr'))
+    ah = p5['angle_wide_holm_reference']
+    print('  angle-wide holm <0.05 (n=%d):' % p5['n_graded_angle'], {k: v for k, v in sorted(ah.items(), key=lambda x: x[1]) if v < 0.05})
 
 
 
