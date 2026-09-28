@@ -92,6 +92,18 @@ def country_mkts():
     return dict(out)
 
 
+def country_nstocks():
+    """国ごとの市場の銘柄数 {国: {ym: n_stocks}}（被覆率の分母・事前登録2）"""
+    b = M.get(S3 + '%5Ball_countries%5D_%5Bmkt%5D_%5Bmonthly%5D_%5Bvw%5D.zip', name='jkp_factor_all_countries_mkt_vw_monthly.zip')
+    z = zipfile.ZipFile(io.BytesIO(b))
+    out = collections.defaultdict(dict)
+    for x in csv.DictReader(io.StringIO(z.read(z.namelist()[0]).decode())):
+        if x['n_stocks'] in ('', 'NA', 'na'):
+            continue
+        out[x['location']][M._ym(x['date'])] = int(float(x['n_stocks']))
+    return dict(out)
+
+
 def pf_with_n(loc, key):
     """三分位 → {'1.0': {ym: (ret, n)}, ...}。取れなければ None（0で埋めない）"""
     try:
@@ -358,11 +370,14 @@ def main():
     sanity['fast_excess_stats_selftest'] = fast_ok
     sanity['candidate_countries'] = cand
 
+    p2 = prereg2(dict(av=av, rf=rf, cm=cm, rmk=rmk, PF=PF, side=side, cand=cand, primary_hold_p=hp, primary_tested=tested))
+
     out = {'tool': 'night/mw_intl.py', 'prereg': f'out/{PRE_NAME}', 'prereg_commit': git_sha(f'out/{PRE_NAME}'),
            'global_prereg': 'out/mw_prereg.json', 'representative': REP, 'good_side': side,
            'n_tested': len(tested), 'tested': tested, 'graded': graded, 'holm_family': hol,
            'regional': {loc: {k: v for k, v in d.items()} for loc, d in regional.items()},
-           'country_summary': summary, 'per_country': per_country, 'sanity': sanity}
+           'country_summary': summary, 'per_country': per_country, 'sanity': sanity, 'prereg2': p2}
+    out['n_tested_all'] = len(tested) + len(p2['tested'])
     p = M.save('mw_intl.json', out)
     # 画面
     print('prereg', out['prereg_commit'])
@@ -374,7 +389,226 @@ def main():
               f"費後{f(r.get('hold_net'))} 20年{(r.get('roll20') or {}).get('wins')}/{(r.get('roll20') or {}).get('windows')} "
               f"国 全{sm['positive_full'][0]}/{sm['positive_full'][1]} 保{sm['positive_hold'][0]}/{sm['positive_hold'][1]} "
               f"平均 保{(sm['pooled_equal_weight_countries']['hold'] or {}).get('ex')} holm {gg['holm_p']}")
+    print_prereg2(p2)
     print('→', p)
+
+# ───────────────────────── 事前登録2（out/mw_intl_prereg2.json） ─────────────────────────
+PRE2_NAME = 'mw_intl_prereg2.json'
+START2, RTHR, RTHR_HI = 199007, 0.4, 0.6
+VALUE4 = ['be_me', 'ni_me', 'ocf_me', 'div12m_me']
+COMBOS = ['value_composite', 'val_mom', 'val_qual', 'qual_mom', 'val_mom_qual', 'all20']
+TURN2 = {'value_composite': 0.40, 'val_mom': 0.95, 'val_qual': 0.40, 'qual_mom': 0.95, 'val_mom_qual': 0.767}
+PUB2 = {'value_composite': 2004, 'val_mom': 2013, 'val_qual': 2013, 'qual_mom': 2019, 'val_mom_qual': 2019, 'all20': 2023}
+FAM27 = CHARS + ['blend_quality'] + COMBOS
+DESC2 = {'blend_quality': '質の型5本（ope_be・gp_at・qmj・qmj_prof・cop_at）の良い側を等分',
+         'value_composite': '割安4本（be_me・ni_me・ocf_me・div12m_me）の良い側を等分',
+         'val_mom': '割安4本の平均50%＋勢い(ret_12_1)50%', 'val_qual': '割安4本の平均50%＋質5本の平均50%',
+         'qual_mom': '質5本の平均50%＋勢い50%', 'val_mom_qual': '割安・勢い・質を1/3ずつ', 'all20': '20特性の良い側を等分'}
+
+
+def prereg2(ctx):
+    rf, cm, rmk, PF, side, cand = ctx['rf'], ctx['cm'], ctx['rmk'], ctx['PF'], ctx['side'], ctx['cand']
+    cn = country_nstocks()
+    turn = dict(TURN); turn.update(TURN2); turn['all20'] = round(S.mean(TURN[k] for k in CHARS), 3)
+
+    def den_sum(pred):
+        c = collections.Counter()
+        for loc, d in cn.items():
+            if pred(loc):
+                for m, n in d.items():
+                    c[m] += n
+        return dict(c)
+    DEN = {'world_ex_us': den_sum(lambda l: l != 'usa'), 'world': den_sum(lambda l: True),
+           'developed': den_sum(lambda l: l in DEVELOPED), 'emerging': den_sum(lambda l: l not in DEVELOPED)}
+
+    def cov(loc, k, m):
+        pf = PF.get((loc, k)); d = (DEN.get(loc) or cn.get(loc, {})).get(m)
+        if not pf or not d:
+            return None
+        return sum(pf[q][m][1] for q in pf if m in pf[q]) / d
+
+    def screened(loc, k, rthr=RTHR, use_R=True):
+        pf = PF.get((loc, k))
+        if not pf or side[k] not in pf:
+            return {}
+        out = {}
+        for m, (r, n) in pf[side[k]].items():
+            if n < N_MIN or m < START2:
+                continue
+            if use_R:
+                rr = cov(loc, k, m)
+                if rr is None or rr < rthr:
+                    continue
+            out[m] = r
+        return out
+
+    def mix(parts):
+        if not parts or not all(parts):
+            return {}
+        ms = set.intersection(*[set(q) for q in parts])
+        return {m: S.mean(q[m] for q in parts) for m in ms}
+
+    def region_strats(loc, rthr=RTHR, use_R=True):
+        base = {k: screened(loc, k, rthr, use_R) for k in CHARS}
+        out = dict(base)
+        out['blend_quality'] = mix([base[k] for k in QUALITY])
+        vc = mix([base[k] for k in VALUE4]); bq = out['blend_quality']; mo = base['ret_12_1']
+        out['value_composite'] = vc
+        out['val_mom'] = mix([vc, mo]); out['val_qual'] = mix([vc, bq]); out['qual_mom'] = mix([bq, mo]); out['val_mom_qual'] = mix([vc, mo, bq])
+        out['all20'] = mix([base[k] for k in CHARS])
+        return out
+
+    def country_strats(c):
+        base = {k: screened(c, k) for k in CHARS if PF.get((c, k))}
+        out = dict(base)
+        nq = lambda v: len(set(v) & set(cm[c]) & set(rf))
+        comps = [k for k in QUALITY if k in base and nq(base[k]) >= MIN_MONTHS]
+        if len(comps) >= 3:  # F2a の blend は主の族と同じ規則（構成要素が個別に資格・月に3本以上）
+            g = {}
+            for m in set().union(*[set(base[k]) for k in comps]):
+                v = [base[k][m] for k in comps if m in base[k]]
+                if len(v) >= 3:
+                    g[m] = S.mean(v)
+            out['blend_quality'] = g
+
+        def grp(keys, need):
+            ks = [k for k in keys if k in base and base[k]]
+            g = {}
+            for m in (set().union(*[set(base[k]) for k in ks]) if ks else set()):
+                v = [base[k][m] for k in ks if m in base[k]]
+                if len(v) >= need:
+                    g[m] = S.mean(v)
+            return g
+        vc, bqm, mo = grp(VALUE4, 2), grp(QUALITY, 3), base.get('ret_12_1', {})
+        out['value_composite'] = vc
+        out['val_mom'] = mix([vc, mo]); out['val_qual'] = mix([vc, bqm]); out['qual_mom'] = mix([bqm, mo]); out['val_mom_qual'] = mix([vc, mo, bqm])
+        out['all20'] = grp(CHARS, 12)
+        return out
+
+    def diag(loc, k, g, mk):
+        """被覆の偏りの診断: 三分位3つの単純平均 − 市場（年率%）。良い側と同じ月で"""
+        pf = PF.get((loc, k))
+        if not pf or k not in CHARS:
+            return None
+        res = {}
+        for w, a, z in (('train', None, M.TRAIN_END), ('hold', M.HOLD_START, None)):
+            v = [S.mean(pf[q][m][0] for q in ('1.0', '2.0', '3.0')) - mk[m] for m in sorted(g)
+                 if m in mk and all(m in pf.get(q, {}) for q in ('1.0', '2.0', '3.0')) and (a is None or m >= a) and (z is None or m <= z)]
+            res[w] = round(S.mean(v) * 1200, 2) if len(v) >= 24 else None
+        return res
+
+    def evaluate(g, mk, k, loc):
+        ms = sorted(set(g) & set(mk) & set(rf))
+        if len(ms) < 60:
+            return {'months': len(ms), 'note': 'データ不足（被覆の規則で測れる月が60未満）'}
+        s = to_total({m: g[m] for m in ms}, rf); b = to_total({m: mk[m] for m in ms}, rf)
+        f = four(s, b); uc = unit_cost(loc)
+        pub = PUB.get(k) or PUB2.get(k) or (max(PUB[q] for q in QUALITY) if k == 'blend_quality' else None)
+        post = M.excess_stats(s, b, a=(pub + 1) * 100 + 1) if pub and pub + 1 <= 2023 else None
+        return {'months': len(ms), 'start': ms[0], 'end': ms[-1], **f,
+                'hold_net': M.excess_stats(M.apply_cost(s, turn[k], uc), b, a=M.HOLD_START),
+                'hold_net_2x': M.excess_stats(M.apply_cost(s, turn[k], uc * 2), b, a=M.HOLD_START),
+                'roll20': M.rolling(s, b, 20), 'dca20': M.dca(s, b, 20),
+                'post_pub': {'from': (pub + 1) * 100 + 1 if pub else None, 'stats': post}, 'unit_cost': uc, 'turnover': turn[k]}
+
+    # ── 国ごと（被覆の規則つき）
+    CS = {c: country_strats(c) for c in cand}
+    per = {k: {} for k in FAM27}
+    pooled_src = {k: collections.defaultdict(list) for k in FAM27}
+    for c in cand:
+        for k in FAM27:
+            g = CS[c].get(k) or {}
+            ms = sorted(set(g) & set(cm[c]) & set(rf))
+            if len(ms) < MIN_MONTHS:
+                continue
+            s = to_total({m: g[m] for m in ms}, rf); b = to_total({m: cm[c][m] for m in ms}, rf)
+            full, hold = M.excess_stats(s, b), M.excess_stats(s, b, a=M.HOLD_START)
+            net = M.excess_stats(M.apply_cost(s, turn[k], unit_cost(c)), b, a=M.HOLD_START)
+            per[k][c] = {'m': len(ms), 'start': ms[0], 'full': compact(full), 'hold': compact(hold),
+                         'hold_net_ok': bool(net and net['ex_ann'] > 0 and net['cagr_diff'] > 0)}
+            for m in ms:
+                pooled_src[k][m].append(g[m] - cm[c][m])
+
+    def counts(k, exclude=()):
+        q = {c: r for c, r in per[k].items() if c not in exclude}
+        pf_ = sum(1 for r in q.values() if r['full'] and r['full']['ex'] > 0)
+        ph = sum(1 for r in q.values() if r['hold'] and r['hold']['ex'] > 0)
+        return {'countries': len(q), 'positive_full': [pf_, sum(1 for r in q.values() if r['full'])],
+                'positive_hold': [ph, sum(1 for r in q.values() if r['hold'])],
+                'positive_hold_net_of_cost': [sum(1 for r in q.values() if r['hold_net_ok']), sum(1 for r in q.values() if r['hold'])],
+                'developed_positive_hold': [sum(1 for c, r in q.items() if c in DEVELOPED and r['hold'] and r['hold']['ex'] > 0), sum(1 for c in q if c in DEVELOPED)],
+                'emerging_positive_hold': [sum(1 for c, r in q.items() if c not in DEVELOPED and r['hold'] and r['hold']['ex'] > 0), sum(1 for c in q if c not in DEVELOPED)],
+                'median_country_ex_hold': round(S.median(r['hold']['ex'] for r in q.values() if r['hold']), 2) if q else None}
+
+    pooled = {}
+    for k in FAM27:
+        pm = {m: S.mean(v) for m, v in pooled_src[k].items()}
+        pooled[k] = {'full': ts_stats(pm), 'train': ts_stats(pm, z=M.TRAIN_END), 'hold': ts_stats(pm, a=M.HOLD_START), 'recent': ts_stats(pm, a=M.RECENT_START)}
+
+    # ── 地域・日本の系列
+    RS = {loc: region_strats(loc) for loc in ('world_ex_us', 'world', 'developed', 'emerging')}
+    RS['jpn'] = {k: CS['jpn'].get(k, {}) for k in FAM27}
+    MK = {'world_ex_us': rmk['world_ex_us'], 'world': rmk['world'], 'developed': rmk['developed'], 'emerging': rmk['emerging'], 'jpn': cm['jpn']}
+
+    fams = {'F2a_screened': ('world_ex_us', CHARS + ['blend_quality'], ()),
+            'F2b_combos': ('world_ex_us', COMBOS, ()),
+            'F2c_japan': ('jpn', FAM27, ('jpn',)),
+            'F2d_world': ('world', FAM27, ())}
+    families, tested, all_hold_p = {}, [], {f'primary:{k}': v for k, v in ctx['primary_hold_p'].items()}
+    for fam, (loc, members, excl) in fams.items():
+        recs = {k: evaluate(RS[loc].get(k, {}), MK[loc], k, loc) for k in members}
+        hp = {k: (r.get('hold') or {}).get('p') for k, r in recs.items() if r.get('hold')}
+        hol = M.holm(hp)
+        for k, r in recs.items():
+            cc = counts(k, excl)
+            repl = {'regions': cc['positive_full'][1], 'positive': cc['positive_full'][0]}
+            g, crit = M.grade(r.get('full'), r.get('train'), r.get('hold'), r.get('roll20'), cost_hold=r.get('hold_net'),
+                              repl=repl, family_holm_p=hol.get(k))
+            r.update({'grade': g, 'criteria': crit, 'holm_p': hol.get(k), 'repl': repl, 'countries': cc,
+                      'pooled_countries': pooled[k] if not excl else None, 'coverage_diag': diag(loc, k, RS[loc].get(k, {}), MK[loc])})
+            if r.get('hold') and r['hold'].get('p') is not None:
+                all_hold_p[f'{fam}:{k}'] = r['hold']['p']
+            tested.append({'name': f'{fam}:{k}', 'family': fam, 'series': f'{loc} の良い側 vs {loc} の vw 市場（被覆の規則つき）',
+                           'description': DESC.get(k) or DESC2.get(k), 'grade': g, 'criteria': crit})
+        families[fam] = {'series': loc, 'members': recs, 'holm': hol}
+
+    reported = {}
+    for loc in ('developed', 'emerging'):
+        reported[loc] = {}
+        for k in FAM27:
+            r = evaluate(RS[loc].get(k, {}), MK[loc], k, loc)
+            r['coverage_diag'] = diag(loc, k, RS[loc].get(k, {}), MK[loc])
+            reported[loc][k] = r
+            tested.append({'name': f'reported:{loc}:{k}', 'family': 'reported', 'series': f'{loc}（被覆の規則つき）', 'grade': None})
+    sens = {}
+    for lab, kw in (('start_1990_07_only', dict(use_R=False)), ('R_ge_0.6', dict(rthr=RTHR_HI))):
+        rs = region_strats('world_ex_us', **kw)
+        sens[lab] = {}
+        for k in FAM27:
+            r = evaluate(rs.get(k, {}), rmk['world_ex_us'], k, 'world_ex_us')
+            sens[lab][k] = {w: r.get(w) for w in ('months', 'start', 'full', 'train', 'hold', 'hold_net', 'roll20', 'note') if w in r}
+            tested.append({'name': f'sensitivity:{lab}:{k}', 'family': 'sensitivity', 'series': 'world_ex_us', 'grade': None})
+    for k in FAM27:
+        tested.append({'name': f'countries_screened:{k}', 'family': 'reported', 'series': f'米国外 {len(per[k])} か国それぞれ（被覆の規則つき）', 'grade': None})
+
+    return {'prereg': f'out/{PRE2_NAME}', 'prereg_commit': git_sha(f'out/{PRE2_NAME}'), 'rule': {'start': START2, 'R_min': RTHR, 'n_min': N_MIN},
+            'turnover': turn, 'families': families, 'reported': reported, 'sensitivity': sens,
+            'countries': {k: {'counts_ex_us': counts(k), 'per_country': per[k]} for k in FAM27},
+            'angle_wide_holm_reference': M.holm(all_hold_p), 'n_graded_angle': len(all_hold_p), 'tested': tested}
+
+
+def print_prereg2(p2):
+    f = lambda v: f"{v['ex_ann']:+5.2f}(t{v['t']:+.1f})" if v else '    —     '
+    for fam, d in p2['families'].items():
+        print(f"== {fam}（{d['series']}）")
+        for k, r in d['members'].items():
+            if 'full' not in r:
+                print(f"{k:15} {r.get('grade')} {r.get('note')}"); continue
+            cc = r['countries']; dg = r.get('coverage_diag') or {}
+            print(f"{k:15} {r['grade']} {r['start']} 全{f(r['full'])} 訓{f(r['train'])} 保{f(r['hold'])} 近{f(r['recent'])} 費後{f(r['hold_net'])} "
+                  f"20年{(r['roll20'] or {}).get('wins')}/{(r['roll20'] or {}).get('windows')} 国 全{cc['positive_full'][0]}/{cc['positive_full'][1]} "
+                  f"保{cc['positive_hold'][0]}/{cc['positive_hold'][1]} holm {r['holm_p']} 診断 訓{dg.get('train')} 保{dg.get('hold')}")
+
 
 
 if __name__ == '__main__':
