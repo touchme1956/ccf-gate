@@ -230,14 +230,11 @@ def cn_weights(u, members, score, indf):
     return w, (round(wsum / tot_all, 4) if tot_all else None)
 
 
-def sec_build(verbose=False):
-    panel = SR.build_panel()
-    uni, price, diag, sic, tick = SR.build_universe(panel, fetch=False, verbose=verbose)
-    rets = {x: v[0] for x, v in price.items() if v}
-    f49 = sic_map(49)
+def cohorts(uni, f49, drop=frozenset()):
+    """母集団 uni → 組の重み {名前: {t: {ticker: w}}}。drop のティッカーは組と相手の両方から毎年除く（prereg2 E1）"""
     C, info = {}, {'n': {}, 'cn_coverage': {}, 'ind12': {}, 'ind49': {}}
     for t in SR.YEARS:
-        u = uni[t]
+        u = {c: r for c, r in uni[t].items() if r['ticker'] not in drop}
         R, sc = SR.scores(u)
         for c in R:
             R[c]['ff49'] = f49(R[c]['sic'])
@@ -272,8 +269,22 @@ def sec_build(verbose=False):
                         'exBusEq': len(RX), 'exBusEq_with_cop': len(copX),
                         'ff49_inds_exfin': len({R[c]['ff49'] for c in R}), 'ff49_inds_exBusEq': len({R[c]['ff49'] for c in RX}),
                         'picks_CN12': len(w12), 'picks_CN49': len(w49), 'picks_CN49_exB': len(wx49),
-                        'picks_T3VW': len(C['T3VW'].get(t, {})), 'picks_BusEq_T3VW': len(C['BusEq_T3VW'].get(t, {}))}
+                        'picks_T3VW': len(C['T3VW'].get(t, {})), 'picks_BusEq_T3VW': len(C['BusEq_T3VW'].get(t, {})),
+                        'no_sic_or_ff12': sum(1 for c, r in u.items() if not r.get('ff12'))}
         info['cn_coverage'][t] = {'CN12': cv12, 'CN49': cv49, 'CN49_exB': cvx49, 'CN12_exB': cvx12}
+    return C, info
+
+
+def sec_universe(verbose=False, N=500, topraw=None):
+    panel = SR.build_panel()
+    uni, price, diag, sic, tick = SR.build_universe(panel, fetch=False, verbose=verbose, N=N, topraw=topraw)
+    rets = {x: v[0] for x, v in price.items() if v}
+    return uni, rets
+
+
+def sec_build(verbose=False):
+    uni, rets = sec_universe(verbose)
+    C, info = cohorts(uni, sic_map(49))
     return uni, rets, C, info
 
 
@@ -624,6 +635,184 @@ def run():
     return res
 
 
+# ───────────────────────── 探索の診断（prereg2） ─────────────────────────
+PRE2_NAME = 'mw_where_edge_prereg2.json'
+
+
+def sec_series(C, rets):
+    ser, turn = {}, {}
+    for nm, coh in C.items():
+        ser[nm], turn[nm], _d = SR.simulate(coh, rets)
+    return ser, turn
+
+
+def sec_core(ser, X12, X49, a, z):
+    """SEC の主の数字を窓 a〜z で（回帰α・組み方中立・H2・H3・T3VW の生の差）"""
+    B = ser['U_exfin']
+    yT = diff(ser['T3VW'], B)
+    f = lambda v: {k: v.get(k) for k in ('ex_ann', 't', 'cagr_diff', 'from', 'to')} if v else None
+    g = lambda v: {k: v.get(k) for k in ('raw_ann', 'alpha_ann', 't', 'industry_part_ann', 'tech_part_ann', 'from', 'to')} if v else None
+    return {'T3VW_raw': f(M.excess_stats(ser['T3VW'], B, a, z)),
+            'reg12': g(reg(yT, X12, a, z, tech=(TECH12,))), 'reg49': g(reg(yT, X49, a, z, tech=TECH49)),
+            'CN12': f(M.excess_stats(ser['CN12'], B, a, z)), 'CN49': f(M.excess_stats(ser['CN49'], B, a, z)),
+            'H2_within_BusEq': f(M.excess_stats(ser['BusEq_T3VW'], ser['BusEq_all'], a, z)),
+            'H2_exBusEq_version': f(M.excess_stats(ser['exB_T3VW'], ser['U_exfin_exBusEq'], a, z)),
+            'H3_CN49_exB': f(M.excess_stats(ser['CN49_exB'], ser['U_exfin_exBusEq'], a, z))}
+
+
+def run2():
+    t0 = time.time()
+    out_p = os.path.join(M.BASE, 'out', OUT_NAME)
+    main = json.load(open(out_p))
+    c12, i12, W12 = fr_ind('12_Industry_Portfolios')
+    c49, i49, W49 = fr_ind('49_Industry_Portfolios')
+    rel12 = [(c, {k: v - MKT[k] for k, v in i12[c].items() if k in MKT}) for c in c12]
+    rel49 = [(c, {k: v - MKT[k] for k, v in i49[c].items() if k in MKT}) for c in c49]
+    X12 = [('mktrf', MKTRF)] + rel12
+    X49 = [('mktrf', MKTRF)] + rel49
+    f49 = sic_map(49)
+    res = {'prereg': PRE2_NAME, 'prereg_commit': sha_of(f'out/{PRE2_NAME}'), 'label': '探索・記述の診断（格付けなし・Holm なし・主の結論を上書きしない）'}
+    tested = []
+    FULL = (SEC_START, SEC_END)
+
+    # 上位500社（主と同じ）
+    uni, rets = sec_universe()
+    C0, info0 = cohorts(uni, f49)
+    s0, tu0 = sec_series(C0, rets)
+    base_full = sec_core(s0, X12, X49, *FULL)
+    base_common = sec_core(s0, X12, X49, *COMMON)
+
+    # E1 巨大6社を除く
+    C1, info1 = cohorts(uni, f49, drop=frozenset(SR.MEGA6))
+    s1, tu1 = sec_series(C1, rets)
+    e1 = {'dropped': sorted(SR.MEGA6), 'full': sec_core(s1, X12, X49, *FULL), 'common_2010_07_2025_12': sec_core(s1, X12, X49, *COMMON),
+          'base_full_for_reference': base_full}
+    d1 = {nm: SR.simulate_detail(C1[nm], rets) for nm in ('T3VW', 'U_exfin')}
+    b1 = SR.brinson(d1['T3VW'][1], d1['U_exfin'][1], rets, ind_fn(info1, 'ind12'))
+    tot = b1['allocation_ann'] + b1['selection_ann']
+    e1['brinson_FF12'] = {'allocation_ann': b1['allocation_ann'], 'selection_ann': b1['selection_ann'],
+                          'allocation_share': round(b1['allocation_ann'] / tot, 3) if tot > 0 else None,
+                          'BusEq': b1['by_industry'].get(TECH12)}
+    w = e1['full']['H2_within_BusEq']
+    e1['reading'] = {'rule': '巨大6社を除いた BusEq の中の超過 ≤ +0.965（全社版 +1.93 の半分）なら『技術の中の選別は巨大6社に依存』',
+                     'ex_mega6_within_BusEq': w['ex_ann'] if w else None,
+                     'depends_on_mega6': bool(w and w['ex_ann'] <= 0.965)}
+    res['E1_leave_out_mega6'] = e1
+
+    # E2 H2 の銘柄ごとの寄与
+    dp = SR.simulate_detail(C0['BusEq_T3VW'], rets)[1]
+    db = SR.simulate_detail(C0['BusEq_all'], rets)[1]
+    ms = sorted(set(dp) & set(db))
+    con = {}
+    for m in ms:
+        for k in set(dp[m]) | set(db[m]):
+            con[k] = con.get(k, 0.0) + (dp[m].get(k, 0.0) - db[m].get(k, 0.0)) * rets[k][m]
+    cs = sorted(((round(v * 12 / len(ms) * 100, 2), k) for k, v in con.items()), reverse=True)
+    yrs = {}
+    for t in SR.YEARS:
+        yrs[t] = sorted(C0['BusEq_T3VW'].get(t, {}), key=lambda x: -C0['BusEq_T3VW'][t][x])[:8]
+    res['E2_attribution_H2'] = {'months': len(ms), 'active_sum_ann': round(sum(v for v, _ in cs), 2), 'top10': cs[:10], 'bottom5': cs[-5:],
+                                'top10_share_of_sum': round(sum(v for v, _ in cs[:10]) / sum(v for v, _ in cs), 3) if sum(v for v, _ in cs) else None,
+                                'largest_holdings_by_year': yrs}
+
+    # E3 上位1000社
+    uk, rk = sec_universe(N=1000, topraw=2200)
+    Ck, infok = cohorts(uk, f49)
+    sk, tuk = sec_series(Ck, rk)
+    jk_common = main['jkp']['reg12']['common_2010_07_2025_12']['alpha_ann']
+    e3 = {'full': sec_core(sk, X12, X49, *FULL), 'common_2010_07_2025_12': sec_core(sk, X12, X49, *COMMON),
+          'n_by_year': {t: {k: infok['n'][t][k] for k in ('universe', 'exfin', 'BusEq', 'no_sic_or_ff12')} for t in SR.YEARS}}
+    a1000 = e3['common_2010_07_2025_12']['reg12']['alpha_ann']
+    a500 = base_common['reg12']['alpha_ann']
+    e3['reading'] = {'rule': '(上位1000の FF12 回帰α − 上位500) ≥ 0.5 × (JKP − 上位500)（共通窓）なら『データの差の半分以上は母集団の広さ』',
+                     'jkp_common': jk_common, 'sec500_common': a500, 'sec1000_common': a1000,
+                     'closes_half_or_more': bool(a1000 - a500 >= 0.5 * (jk_common - a500)) if jk_common > a500 else None}
+    res['E3_breadth_top1000'] = e3
+
+    # E4 窓の分割
+    side, pp = M.jkp_good_side('usa', 'cop_at', 'vw', upto=M.TRAIN_END)
+    P = {k: v for k, v in pp[side].items() if JKP_START <= k <= JKP_END}
+    PA = diff(P, MKTRF)
+    SN120 = sn_rolling(PA, X12, 120)
+    e4 = {}
+    for lab, a, z in (('2010-07〜2016-12', 201007, 201612), ('2017-01〜2025-12', 201701, 202512)):
+        jr = M.excess_stats(P, MKTRF, a, z)
+        r12 = reg(PA, X12, a, z, tech=(TECH12,)); r49 = reg(PA, X49, a, z, tech=TECH49)
+        e4[lab] = {'JKP_raw': {k: jr[k] for k in ('ex_ann', 't')},
+                   'JKP_reg12': {k: r12[k] for k in ('alpha_ann', 't', 'tech_part_ann', 'tech_share_of_raw')},
+                   'JKP_reg49': {k: r49[k] for k in ('alpha_ann', 't', 'tech_part_ann', 'tech_share_of_raw')},
+                   'JKP_SN120': mean_t(SN120, a, z), 'SEC500': sec_core(s0, X12, X49, a, z)}
+    res['E4_subwindows'] = e4
+
+    # E5 JKP の GICS
+    G = jkp_gics('usa')
+    JM = M.jkp_mkt('usa', 'vw')
+    e5 = {}
+    for lab, (a, z) in (('hold', HOLD), ('common_2010_07_2025_12', COMMON), ('train', (min(min(v) for v in G.values()), M.TRAIN_END))):
+        ks = [k for k in PA if a <= k <= z and k in JM]
+        sect = [g for g, v in G.items() if ks and sum(1 for k in ks if k in v) >= 0.95 * len(ks)]
+        xs = [('mktrf', MKTRF)] + [('G' + g, diff(G[g], JM)) for g in sorted(sect)]
+        r = reg(PA, xs, a, z, tech=('G45',))
+        e5[lab] = ({k: r.get(k) for k in ('from', 'to', 'n', 'raw_ann', 'alpha_ann', 't', 'industry_part_ann', 'tech_part_ann', 'tech_share_of_raw', 'r2')} | {'sectors': sorted(sect)}) if r else None
+    res['E5_jkp_gics'] = e5
+    res['runtime_s'] = round(time.time() - t0)
+    tested = [{'name': 'E1_leave_out_mega6（H2・CN12・CN49・reg12/49・H3・Brinson）', 'role': 'exploratory_prereg2（記述）'},
+              {'name': 'E2_attribution_H2', 'role': 'exploratory_prereg2（記述）'},
+              {'name': 'E3_breadth_top1000（reg12/49・CN12/49・H2・H3）', 'role': 'exploratory_prereg2（記述）'},
+              {'name': 'E4_subwindows（JKP と SEC を 2010-2016／2017-2025 で）', 'role': 'exploratory_prereg2（記述）'},
+              {'name': 'E5_jkp_gics（hold・共通窓・訓練）', 'role': 'exploratory_prereg2（記述）'}]
+    main['exploratory_prereg2'] = res
+    main['tested'] = [x for x in main['tested'] if not str(x.get('role', '')).startswith('exploratory_prereg2')] + tested
+    main['n_tested'] = len(main['tested'])
+    M.save(OUT_NAME, main)
+    print(json.dumps({k: v for k, v in res.items() if k not in ('E2_attribution_H2',)}, ensure_ascii=False, indent=1)[:9000])
+    print(json.dumps(res['E2_attribution_H2'], ensure_ascii=False)[:1500])
+
+
+def finalize():
+    """JSON の数字から見出し・参考の格・注意を足す（新しい計算はしない）"""
+    p = os.path.join(M.BASE, 'out', OUT_NAME)
+    d = json.load(open(p))
+    fam, hyp, sec, jk = d['family'], d['hypotheses'], d['sec'], d['jkp']
+    e = d.get('exploratory_prereg2', {})
+    ref = {}
+    fam_key = {'CN12': 'SEC_CN12', 'CN49': 'SEC_CN49', 'BusEq_T3VW': 'H2_within_BusEq', 'CN49_exB': 'H3_CN49_exBusEq'}
+    for nm, pr in sec['portfolios'].items():
+        v = pr['vs'][pr['benchmark']]
+        g, c = M.grade(v['full'], None, v['full'], v['roll20'], cost_hold=v['net_cost_full'], repl=None,
+                       family_holm_p=(fam.get(fam_key.get(nm, '')) or {}).get('holm_p'))
+        ref[nm] = {'benchmark': pr['benchmark'], 'grade_mw_common': g, 'criteria': c,
+                   'note': '参考のみ（この角度は格付けしない）。SEC は 2010-07〜 で訓練期間が無く C1・C4 は構造的に不合格＝C が上限'}
+    d['reference_grades'] = ref
+    rj = lambda w, k='reg12': (jk[k][w]['alpha_ann'], jk[k][w]['t'])
+    head = {
+        'JKP_raw_hold（P3−Mkt-RF）': (jk['raw']['hold']['ex_ann'], jk['raw']['hold']['t']),
+        'JKP_reg12': {'hold': rj('hold'), 'common_2010_07_2025_12': rj('common_2010_07_2025_12'), 'train': rj('train'), 'recent': rj('recent')},
+        'JKP_reg49': {'hold': rj('hold', 'reg49'), 'common_2010_07_2025_12': rj('common_2010_07_2025_12', 'reg49')},
+        'JKP_gics（E5）': {k: (v['alpha_ann'], v['t']) for k, v in (e.get('E5_jkp_gics') or {}).items() if v},
+        'JKP_SN120（組み方中立の代理）': {w: (jk['cn_proxy_SN']['SN120'][w]['mean_ann'], jk['cn_proxy_SN']['SN120'][w]['t']) for w in ('hold', 'common_2010_07_2025_12')},
+        'JKP_decade_alpha_FF12': {k: (v['alpha_ann'], v['t'], v['tech_share_FF12']) for k, v in jk['decade_decomposition'].items()},
+        'SEC500': {k: (v['estimate_ann'], v['t'], v['holm_p']) for k, v in fam.items() if not k.startswith('JKP')},
+        'SEC500_T3VW_raw_vs_U_exfin': (sec['portfolios']['T3VW']['vs']['U_exfin']['full']['ex_ann'], sec['portfolios']['T3VW']['vs']['U_exfin']['full']['t']),
+        'SEC500_brinson_FF12': {'allocation': sec['brinson']['T3VW_vs_U_exfin_FF12']['allocation_ann'], 'selection': sec['brinson']['T3VW_vs_U_exfin_FF12']['selection_ann'],
+                                'allocation_share': sec['brinson_allocation_share_FF12']},
+        'E1_ex_mega6': {k: (v.get('alpha_ann', v.get('ex_ann')), v.get('t')) for k, v in (e.get('E1_leave_out_mega6', {}).get('full') or {}).items() if v},
+        'E3_top1000_common': {k: (v.get('alpha_ann', v.get('ex_ann')), v.get('t')) for k, v in (e.get('E3_breadth_top1000', {}).get('common_2010_07_2025_12') or {}).items() if v},
+        'regional': {k: d['regional_oos'][k] for k in ('n_measured', 'n_alpha_pos', 'median_alpha', 'n_t_ge_1_65', 'n_raw_pos')},
+        'outcome_registered': hyp['outcome'], 'H1': hyp['H1_regression_inflation']['holds'], 'H2': hyp['H2_selection_within_tech']['holds'],
+        'H3': hyp['H3_edge_outside_tech']['holds'], 'tech_share_jumped_after_2007_registered_rule': jk['tech_share_jumped_after_2007']['jumped']}
+    d['headline'] = head
+    d['caveats'] = [
+        '課題文の「批評」の数字 +0.87 t3.03（FF12）/ +0.80 t2.27（FF49）は reality_gap の QUAL5（5特徴の混合）のもので、cop_at そのものは +1.39 t4.23 / +1.31 t2.82（reality_gap の JSON と一致を確認）',
+        'SEC の窓は16年・1回。E4 の半分の窓（78か月）で FF49（説明変数50本）の回帰は識別が弱い（2010-2016 の SEC は FF12 −1.60・FF49 +1.21 と分類で符号が変わる）',
+        'JKP の組み方中立の代理 SN は過去の係数で業種を引くので、技術の比重が上がった 2017年以降は技術の賭けの一部を残す（回帰α +0.47 に対し SN120 +1.03）',
+        'SEC の母集団は Yahoo の現存銘柄から作る＝生き残りの偏り。技術の中の選別（H2）は巨大6社を除くと −0.01 で消える（E1）＝「選別」の中身は AAPL・MSFT・NVDA を持ったこと',
+        '米国外は国ごと（地域の業種リターンが無い）。国の小さい三分位は社数が少なく、6/20 か国しか t≥1.65 に届かない',
+        'EX-27（1996〜2001）の答え合わせは実行時に別の角度の結果が無く未実施']
+    M.save(OUT_NAME, d)
+    print(json.dumps(head, ensure_ascii=False, indent=1))
+
+
 if __name__ == '__main__':
     stage = sys.argv[1] if len(sys.argv) > 1 else 'run'
-    {'check': check, 'run': run}[stage]()
+    {'check': check, 'run': run, 'run2': run2, 'finalize': finalize}[stage]()
