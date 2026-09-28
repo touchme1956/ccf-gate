@@ -636,6 +636,16 @@ def run():
         st = M.excess_stats(Ru, Rh, a, END_M)
         sc[f'unhedged_minus_hedged_{a}'] = {'ex_ann': st['ex_ann'], 't': st['t']}
     sc['critic_other'] = '評論: 2007〜 +3.35 t1.44 / 2013-07〜 +5.74 t2.42'
+    # 符号の違いの説明の点検: ドルの金利を FF 金利ではなく T-bill（French RF）にすると、ヘッジの費用が小さくなる側に動く
+    tb = {k: v * 1200 for k, v in D['rf'].items()}
+    Ru_tb, Rh_tb, _ = returns(D['mkt'], J['S'], J['r'], {ym_add(k, 0): v for k, v in tb.items()})
+    st = M.excess_stats(Ru_tb, Rh_tb, 198508, M.TRAIN_END)
+    sc['critic_repro_with_tbill_as_usd_rate'] = {'ex_ann': st['ex_ann'], 't': st['t'],
+                                                 'note': 'French RF は月 t のリターン＝月初に分かっている T-bill。ここでは前月の値として使うので1か月ずれる（点検のためだけ）'}
+    sc['hand_check_198510'] = {'R_usd': round(m[198510], 5), 'S_prev': J['S'][198509], 'S': J['S'][198510], 'r_jpy_prev': J['r'][198509],
+                               'r_usd_prev': D['usd_rate'][198509], 'Ru': round(Ru[198510], 5), 'Rh': round(Rh[198510], 5),
+                               'Rh_by_hand': round(m[198510] + m[198510] * (J['S'][198510] / J['S'][198509] - 1)
+                                                   + (1 + J['r'][198509] / 1200) / (1 + D['usd_rate'][198509] / 1200) - 1, 5)}
     # 日本の物価: e-Stat（2020年基準）と FRED/OECD（2015年基準・2021-06 まで）の前年比の最大差
     fr = fred_monthly('JPNCPIALLMINMEI')
     es = J['cpi']
@@ -848,6 +858,18 @@ def run():
     out['summary'] = sorted(summ, key=lambda x: -(x['hold_ex'] or -99))
     out['counts'] = {'n_tested': len(out['tested']), 'graded': sum(1 for x in out['tested'] if x['family'] in ('P', 'E1', 'E2', 'E3')),
                      'grades': {g: sum(1 for x in summ if x['grade'] == g) for g in 'SABC'}}
+    out['deviations'] = [
+        'FLOW の C4 は一括の窓ではなく、毎年7月起点で新しく積み立て始める20年窓の最終額の比（FLOW は一括を持たないため・事前登録に明記）',
+        '米国の物価 2025-10 は政府閉鎖で公表されなかった → 月末 t の物価は『その時点で公表済みの最新（t−1、無ければ t−2・t−3）』とした（事前登録の段階で決めた・測る前）',
+        'DEM の日次（FRED DEXGEUS）は 404 で取れず、C5 の DEM/EUR は EUR（1999-01〜・V がそろう 2004-01 から）だけ',
+        'ドルの金利は FF 金利（翌日物）。評論の走り書き（T-bill を使ったとみられる）とは符号が逆に出たが、T-bill に替えると −0.22 t−0.07 で一致（sanity の critic_repro_with_tbill_as_usd_rate）',
+        '税の欄の名前の是正: 旧 pre_tax_ratio → before_final_tax_ratio、no_tax_ratio を追加（第2回の登録に記録・数字と判定は不変）',
+        'E2・E3 は第1回の結果を見た後の登録（事前登録2・3に明記）。BACK（1974-1980 へ延ばした M・MAMP）は事後で格付けしない',
+    ]
+    out['conclusion_ja'] = ('格付けした16本（主 P 8・探索 E1 4・E2 3・E3 1）はすべて C。訓練期間（1981〜2006）で t ≥ 2 に届いた規則は一つも無い'
+                            '（最大は E3_OLS3 の +3.15%/年 t1.75 で、保有期間は −2.15 t−1.07 に反転）。保有期間で費用後も正だったのは P_M_STOCK（+0.23）・'
+                            'E1_MAMP_STOCK（+0.35）・E1_RISK12_STOCK（+0.19）の3本だけで、t はどれも0.5以下。FLOW（新しいお金だけ切り替える）は4本とも保有期間で負。'
+                            '常に100%ヘッジは保有期間 −3.76%/年 t−1.63。『為替はヘッジしない』は、この検証の範囲では変える理由が見つからない')
     p = M.save(OUT, out)
     log('書いた', p)
 
