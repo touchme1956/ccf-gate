@@ -518,7 +518,7 @@ def main():
     top10 = [cands[best[s]] for s in all_src[:10]]
 
     def mk_blend(name, comps, ws, desc):
-        ws = [w / sum(ws) for w in ws]
+        ws = [float(w) / float(sum(ws)) for w in ws]  # numpy の型を JSON に出さない
         ks = sorted(set.intersection(*[set(p['r']) for p in comps]))
         b = {'name': name, 'kind': 'blend', 'source': name, 'col': '+'.join(p['name'] for p in comps), 'group': '混合',
              'pub': None, 'to': sum(w * p['to'] for w, p in zip(ws, comps)) + 0.1,
@@ -689,6 +689,7 @@ def main():
         'grade_counts': {f: {g: sum(1 for r in fams[f] if r['grade'] == g) for g in 'SABC'} for f in GRADED},
         'tested': all_rec,
     }
+    json.dumps(out, ensure_ascii=False)  # 書く前に全部が JSON にできるか確かめる（途中で壊れたファイルを残さない）
     p = M.save('mw_risk_matched.json', out)
     print('saved', p, 'n_tested', len(all_rec))
     for f in ('P', 'U', 'X2', 'X3', 'X3U', 'X4', 'X4U'):
@@ -697,5 +698,188 @@ def main():
             print(f"{r['name'][:60]:60s} {r['grade']} L={r['L_static'] or r['lever_info']['L_mean']} full {fu['ex_ann']:+.2f} t{fu['t']} | hold {h['ex_ann']:+.2f} t{h['t']} cagrΔ{h['cagr_diff']:+.2f} net {hn['ex_ann']:+.2f} | roll {r['roll20_net']['win_rate'] if r['roll20_net'] else None} | C5 {r['repl']['positive']}/{r['repl']['regions']} | SR {r['sharpe_pair']}")
 
 
+# ───────────────────────── 頑健性の点検（事前登録3・格付けは変えない） ─────────────────────────
+PREREG3 = 'mw_risk_matched_prereg3.json'
+K2_DEV = ['gbr', 'deu', 'fra', 'che', 'aus', 'can', 'swe', 'nld', 'dnk', 'hkg', 'sgp', 'ita', 'esp', 'bel', 'nor', 'fin', 'isr', 'nzl', 'aut', 'irl', 'prt']
+K2_EM = ['kor', 'twn', 'ind', 'chn', 'bra', 'zaf', 'mex', 'mys', 'tha', 'idn', 'tur', 'pol', 'chl', 'phl']
+K3_QUAL = ['ocf_at', 'cop_at', 'cop_atl1', 'gp_at', 'gp_atl1', 'op_at', 'op_atl1', 'ope_be', 'ope_bel1', 'ebit_bev', 'ebit_sale', 'ni_be',
+           'niq_at', 'niq_be', 'qmj', 'qmj_prof', 'qmj_growth', 'qmj_safety', 'sale_bev', 'at_turnover', 'f_score', 'mispricing_perf', 'o_score']
+K3_VAR = ['rvol_21d', 'rmax1_21d', 'rmax5_21d', 'earnings_variability', 'ocfq_saleq_std', 'turnover_126d', 'zero_trades_21d', 'zero_trades_126d', 'zero_trades_252d']
+K3_RESVAR = ['ivol_capm_21d', 'ivol_capm_252d', 'ivol_ff3_21d', 'ivol_hxz4_21d']
+K3_BETA = ['beta_60m', 'betabab_1260d', 'betadown_252d', 'beta_dimson_21d']
+_CTRY = {}
+
+
+def ctry_series(ctry, key, pf, nmin=10):
+    if (ctry, key) not in _CTRY:
+        try:
+            d = {}
+            for x in M.jkp_rows(ctry, key, 'portfolios', 'vw'):
+                if x['ret'] in ('', 'NA', 'na') or x['n'] in ('', 'NA') or float(x['n']) < nmin:
+                    continue
+                d.setdefault(x['pf'], {})[M._ym(x['date'])] = float(x['ret'])
+            _CTRY[(ctry, key)] = d
+        except Exception as e:  # noqa
+            _CTRY[(ctry, key)] = None
+    p = _CTRY[(ctry, key)]
+    return None if p is None else p.get(pf)
+
+
+def country_check(maps, weights, rule, RF, to):
+    per = {}
+    w_all = weights or [1 / len(maps)] * len(maps)
+    for ctry in K2_DEV + K2_EM:
+        parts = [(ctry_series(ctry, k, pf), w) for (k, pf), w in zip(maps, w_all)]
+        miss = sum(w for p, w in parts if not p)
+        if miss > 0.5 * sum(w_all):
+            continue
+        parts = [(p, w) for p, w in parts if p]
+        ws = sum(w for _, w in parts)
+        try:
+            m_ex = M.jkp_mkt(ctry, 'vw')
+        except Exception:  # noqa
+            continue
+        ks = sorted(set.intersection(*[set(p) for p, _ in parts]) & set(m_ex) & set(RF))
+        if len(ks) < 120:
+            continue
+        r_ex = {k: sum(p[k] * w for p, w in parts) / ws for k in ks}
+        cost = 0.003 if ctry in K2_EM else COST
+        L = None
+        if rule in ('static', 'beta_static'):
+            L = static_L(r_ex, m_ex) if rule == 'static' else static_beta_L(r_ex, m_ex)
+            if L is None:
+                continue
+        g, n, info = lever(r_ex, m_ex, RF, rule, L_static=L, to=to, cost=cost)
+        if len(n) < 120:
+            continue
+        full = M.excess_stats(n, m_ex)
+        hold = M.excess_stats(n, m_ex, a=M.HOLD_START)
+        if not full:
+            continue
+        per[ctry] = {'from': full['from'], 'years': full['years'], 'net_ex_ann': full['ex_ann'], 't': full['t'],
+                     'hold_net_ex_ann': hold['ex_ann'] if hold else None}
+    k = len(per)
+    pos = sum(1 for v in per.values() if v['net_ex_ann'] > 0)
+    hk = [v for v in per.values() if v['hold_net_ex_ann'] is not None]
+    # 片側の符号検定（正が多い向き）
+    p = sum(math.comb(k, i) for i in range(pos, k + 1)) / 2 ** k if k else None
+    return {'countries': k, 'positive': pos, 'share': round(pos / k, 3) if k else None, 'sign_p_one_sided': round(p, 4) if p is not None else None,
+            'hold_countries': len(hk), 'hold_positive': sum(1 for v in hk if v['hold_net_ex_ann'] > 0),
+            'robust': bool(k and pos / k >= 2 / 3 and p < 0.05), 'per_country': per}
+
+
+def french_analog(key, pf, RF):
+    """K3: JKP の特徴・三分位 → French の作り方の違うポートフォリオ（総リターン）のリスト [(名前, 系列)]"""
+    t = int(float(pf))
+    out = []
+    if key in K3_QUAL:
+        if key == 'o_score':
+            t = 4 - t
+        op = M.french_series('Portfolios_Formed_on_OP', 'Value Weight')
+        out.append((f"FR OP {['Lo 30', 'Med 40', 'Hi 30'][t - 1]}", op[['Lo 30', 'Med 40', 'Hi 30'][t - 1]]))
+        b = M.french_series('6_Portfolios_ME_OP_2x3', 'Value Weight')
+        out.append((f"FR {['BIG LoOP', 'ME2 OP2', 'BIG HiOP'][t - 1]}", b[['BIG LoOP', 'ME2 OP2', 'BIG HiOP'][t - 1]]))
+        return out
+    fname = 'Portfolios_Formed_on_VAR' if key in K3_VAR else ('Portfolios_Formed_on_RESVAR' if key in K3_RESVAR else ('Portfolios_Formed_on_BETA' if key in K3_BETA else None))
+    if not fname:
+        return out
+    s = M.french_series(fname, 'Value Weight')
+    cols = [['Lo 20', 'Qnt 2'], ['Qnt 3'], ['Qnt 4', 'Hi 20']][t - 1]
+    ks = sorted(set.intersection(*[set(s[c]) for c in cols]))
+    out.append((f"FR {fname.split('_')[-1]} {'+'.join(cols)}", {k: S.mean([s[c][k] for c in cols]) for k in ks}))
+    return out
+
+
+def checks_main():
+    ff = M.ff_factors()
+    MKT, MKTRF, RF = ff['mkt'], ff['mktrf'], ff['rf']
+    d = json.load(open(os.path.join(BASE, 'out', 'mw_risk_matched.json')))
+    cands = load_candidates(RF)
+    c5x = load_x4(RF)
+    cands.update(c5x)
+    sel = d['selection']
+    P6 = [cands[sel['source_best'][s]] for s in sel['P_sources']]
+    jm = M.jkp_mkt('usa', 'vw')
+
+    def blend_of(name, comp):
+        comps = [cands[n] for n, _ in comp]
+        ws = [w for _, w in comp]
+        ks = sorted(set.intersection(*[set(p['r']) for p in comps]))
+        return {'name': name, 'kind': 'blend', 'source': name, 'group': '混合', 'pub': None,
+                'to': sum(w * p['to'] for w, p in zip(ws, comps)) + 0.1, 'r': {k: sum(w * p['r'][k] for w, p in zip(ws, comps)) for k in ks},
+                'maps': [p['map'] for p in comps], 'weights': ws, 'desc': name}
+
+    targets = [r for r in d['tested'] if r['grade'] in ('S', 'A')]
+    print('点検の対象', len(targets))
+    res = {}
+    for r in targets:
+        nm = r['candidate']
+        if nm == 'BLEND6[P]':
+            c = blend_of(nm, [(p['name'], 1 / 6) for p in P6])
+        elif r.get('composition'):
+            c = blend_of(nm, r['composition'])
+        else:
+            c = cands[nm]
+        rule = r['rule']
+        e, g, n = evaluate(c, rule, MKT, MKTRF, RF)
+        assert abs(e['net_cost_hold']['ex_ann'] - r['net_cost_hold']['ex_ann']) < 0.02, ('再現できない', r['name'])
+        out = {}
+        # K1
+        subs = [(200701, 201212), (201301, 201912), (202001, None)]
+        k1 = []
+        for a, z in subs:
+            st = M.excess_stats(n, MKT, a=a, z=z)
+            k1.append({'from': a, 'to': z or (st['to'] if st else None), 'net_ex_ann': st['ex_ann'] if st else None, 't': st['t'] if st else None})
+        out['K1_subperiods'] = {'periods': k1, 'positive': sum(1 for x in k1 if x['net_ex_ann'] and x['net_ex_ann'] > 0),
+                                'robust': sum(1 for x in k1 if x['net_ex_ann'] and x['net_ex_ann'] > 0) >= 2}
+        # K4
+        ks = sorted(k for k in set(n) & set(MKT) if k >= M.HOLD_START)
+        diff = sorted((n[k] - MKT[k] for k in ks), reverse=True)
+        rest = diff[12:]
+        v = S.mean(rest) * 12 * 100
+        out['K4_drop_best12'] = {'hold_net_ex_ann_all': round(S.mean(diff) * 1200, 2), 'without_best12': round(v, 2), 'robust': v > 0}
+        # K2
+        maps = c['maps'] if c['kind'] == 'blend' else [c['map']]
+        out['K2_unseen_countries'] = country_check(maps, c.get('weights'), rule, RF, c['to'])
+        # K3・K5・K6（JKP 米国の単独の候補だけ）
+        if c['kind'] == 'jkp':
+            key, pf = c['map']
+            k3 = []
+            for lab, ser in french_analog(key, pf, RF):
+                cc = {'name': lab, 'kind': 'french', 'r': ser, 'to': c['to'], 'pub': None}
+                e3, g3, n3 = evaluate(cc, rule, MKT, MKTRF, RF)
+                h3 = e3['net_cost_hold']
+                k3.append({'analog': lab, 'hold_net_ex_ann': h3['ex_ann'], 't': h3['t'], 'full_net_ex_ann': e3['net_cost_full']['ex_ann'], 'full_t': e3['net_cost_full']['t']})
+            out['K3_independent_data'] = {'analogs': k3, 'robust': bool(k3) and all(x['hold_net_ex_ann'] > 0 for x in k3)} if k3 else {'analogs': [], 'robust': None, 'note': '対応なし（N/A）'}
+            try:
+                pc = M.jkp_portfolios('usa', key, 'vw_cap')[pf]
+                cc = {'name': nm + '_cap', 'kind': 'jkp', 'r': {k: v + RF[k] for k, v in pc.items() if k in RF}, 'to': c['to'], 'pub': None}
+                e5, _, _ = evaluate(cc, rule, MKT, MKTRF, RF)
+                out['K5_capped'] = {'hold_net_ex_ann': e5['net_cost_hold']['ex_ann'], 't': e5['net_cost_hold']['t'],
+                                    'full_net_ex_ann': e5['net_cost_full']['ex_ann'], 'full_t': e5['net_cost_full']['t']}
+            except Exception as ex:  # noqa
+                out['K5_capped'] = {'error': str(ex)[:120]}
+            n_ex = {k: v - RF[k] for k, v in n.items() if k in RF}
+            st = M.excess_stats(n_ex, jm, a=M.HOLD_START)
+            out['K6_same_universe'] = {'hold_net_ex_ann': st['ex_ann'], 't': st['t']} if st else None
+        else:
+            out['K3_independent_data'] = {'robust': None, 'note': 'French の源・混合は対象外（すでに French または混合）'}
+        res[r['name']] = out
+        k2 = out['K2_unseen_countries']
+        print(f"{r['name'][:55]:55s} {r['grade']} K1 {out['K1_subperiods']['positive']}/3 K4 {out['K4_drop_best12']['without_best12']:+.2f} "
+              f"K2 {k2['positive']}/{k2['countries']} p{k2['sign_p_one_sided']} hold {k2['hold_positive']}/{k2['hold_countries']} "
+              f"K3 {[(x['analog'], x['hold_net_ex_ann'], x['t']) for x in out['K3_independent_data'].get('analogs', [])]} "
+              f"K5 {out.get('K5_capped', {}).get('hold_net_ex_ann')} K6 {(out.get('K6_same_universe') or {}).get('hold_net_ex_ann')}")
+    d['prereg3'] = PREREG3
+    d['prereg3_commit'] = sha_of(f'out/{PREREG3}')
+    d['robustness_checks'] = res
+    json.dumps(d, ensure_ascii=False)
+    M.save('mw_risk_matched.json', d)
+    print('saved checks', len(res))
+
+
 if __name__ == '__main__':
-    main()
+    if '--checks' in sys.argv:
+        checks_main()
+    else:
+        main()
