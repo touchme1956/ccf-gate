@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M  # noqa: E402
 
 PREREG = 'mw_gold_jpy_prereg.json'
+PREREG2 = 'mw_gold_jpy_prereg2.json'   # 探索2（L: G4 を長い代理で・M: 金と S&P500 の相対の勢い）
 OUT = 'mw_gold_jpy.json'
 END_M = 202608                 # French の終わり
 FEE = 0.0044                   # 金の器の信託報酬（主）
@@ -38,6 +39,8 @@ WB_CMO = 'https://thedocs.worldbank.org/en/doc/5d903e848db1d1b83e0ec8f744e55570-
 JST_URL = 'https://www.macrohistory.net/app/download/9834512569/JSTdatasetR6.xlsx?t=1763503850'
 BOJ = 'https://www.stat-search.boj.or.jp/api/v1/getDataCode?format=json&lang=en&db=FM02&code={}&startDate={}&endDate=202612'
 JST_ALL = 'AUS BEL CAN CHE DEU DNK ESP FIN FRA GBR IRL ITA JPN NLD NOR PRT SWE USA'.split()
+C16 = 'AUS BEL CHE DEU DNK ESP FIN FRA GBR ITA JPN NLD NOR PRT SWE USA'.split()
+WB_API = 'https://api.worldbank.org/v2/country/all/indicator/{}?format=json&per_page=20000&date={}'
 
 
 def log(*a):
@@ -526,6 +529,159 @@ def annual_constmix_excess(rg, re, w, y0, y1, fee=FEE):
     return (S.mean(ex) if ex else None), len(ys)
 
 
+# ───────────────────────── 探索2（out/mw_gold_jpy_prereg2.json） ─────────────────────────
+def wb_ind(ind, name, dates):
+    j = json.loads(M.get(WB_API.format(ind, dates), name, max_age_days=3650))
+    return {(r['countryiso3code'], int(r['date'])): float(r['value']) for r in j[1] if r['value'] is not None}
+
+
+def world_proxy(J, wmap, y0, y1):
+    """年次のドル建ての世界の株。重み＝wmap[(国, y−1)]。株・為替・重みのどれかが無い国はその年だけ外す。USA と JPN が両方そろう年だけ"""
+    out, used = {}, {}
+    for y in range(y0, y1 + 1):
+        num = den = 0.0
+        got = []
+        for iso in C16:
+            d = J.get(iso, {})
+            a, b = d.get(y, {}), d.get(y - 1, {})
+            eq, x1, x0 = a.get('eq_tr'), a.get('xrusd'), b.get('xrusd')
+            wgt = wmap.get((iso, y - 1))
+            if eq is None or not x1 or not x0 or wgt is None:
+                continue
+            num += wgt * ((1 + eq) * x0 / x1 - 1); den += wgt; got.append(iso)
+        if den > 0 and 'USA' in got and 'JPN' in got:
+            out[y] = num / den; used[y] = len(got)
+    return out, used
+
+
+def annual_from_monthly(r, y0, y1):
+    out = {}
+    for y in range(y0, y1 + 1):
+        ks = [y * 100 + m for m in range(1, 13)]
+        if all(k in r for k in ks):
+            v = 1.0
+            for k in ks:
+                v *= 1 + r[k]
+            out[y] = v - 1
+    return out
+
+
+def part2(D, tested, J, gy):
+    """探索2: L（G4 を長い代理で・角度の判定のみ）と M（相対の勢い・世界の線で格付け）"""
+    res = {'prereg2': PREREG2, 'prereg2_commit': git_sha(os.path.join('out', PREREG2))}
+    # ── L ──
+    L = {}
+    fxd = {y: D['fx'][y * 100 + 12] for y in range(1971, 2026) if y * 100 + 12 in D['fx']}
+    cpd = {y: D['cpi'][y * 100 + 12] for y in range(1970, 2026) if y * 100 + 12 in D['cpi']}
+    wa = annual_from_monthly(D['world_usd'], 1986, 2025)
+    re = {y: (1 + wa[y]) * fxd[y] / fxd[y - 1] - 1 for y in wa if y in fxd and y - 1 in fxd}
+    rg = {y: gy[y] / gy[y - 1] * fxd[y] / fxd[y - 1] - 1 for y in re if y in gy and y - 1 in gy}
+    L['annual_world_cagr_check'] = {'annual': round((math.prod(1 + v for v in wa.values()) ** (1 / len(wa)) - 1) * 100, 2),
+                                    'monthly': round(M.cagr({k: v for k, v in D['world_usd'].items() if 198601 <= k <= 202512}) * 100, 2)}
+    xj = {y: J['JPN'][y]['xrusd'] for y in range(1970, 2021) if J['JPN'].get(y, {}).get('xrusd')}
+    cj = {y: J['JPN'][y]['cpi'] for y in range(1970, 2021) if J['JPN'].get(y, {}).get('cpi')}
+    gdp = wb_ind('NY.GDP.MKTP.CD', 'wb_gdp_all.json', '1960:2025')
+    cap = wb_ind('CM.MKT.LCAP.CD', 'wb_mktcap_all.json', '1970:2025')
+    wg, ng = world_proxy(J, gdp, 1971, 2020)
+    wc, nc = world_proxy(J, cap, 1976, 2020)
+    ov = sorted(set(wg) & set(wa))
+    L['gdp_vs_jkp_corr_1986_2020'] = round(M.corr([wg[y] for y in ov], [wa[y] for y in ov]), 3)
+    ov2 = sorted(set(wc) & set(wa))
+    L['cap_vs_jkp_corr_1986_2020'] = round(M.corr([wc[y] for y in ov2], [wa[y] for y in ov2]), 3)
+    L['countries_used_gdp'] = {str(y): ng[y] for y in sorted(ng)}
+    L['countries_used_cap'] = {str(y): nc[y] for y in sorted(nc)}
+    series = {
+        'G4A': (re, rg, cpd, 'JKP world vw の暦年×DEXJPUS 12月末（1986〜2025）'),
+    }
+    for nm, wu in (('G4L_gdp', wg), ('G4L_cap', wc)):
+        rj = {y: (1 + wu[y]) * xj[y] / xj[y - 1] - 1 for y in wu if y in xj and y - 1 in xj}
+        gj = {y: gy[y] / gy[y - 1] * xj[y] / xj[y - 1] - 1 for y in rj if y in gy and y - 1 in gy}
+        series[nm] = (rj, gj, cj, {'G4L_gdp': 'GDP 加重の世界（JST 16か国・World Bank GDP）1971〜2020', 'G4L_cap': '時価総額加重の世界（JST 16か国・World Bank 時価総額）1976〜2020'}[nm])
+    for nm, (rj, gj, cc, desc) in series.items():
+        for w in (0.10, 0.20):
+            sm, rows = run_annual(gj, rj, cc, w)
+            sub = {'all': sm,
+                   'le1990': summarize([r for r in rows if r[0] <= 1990]),
+                   'ge1991': summarize([r for r in rows if r[0] >= 1991]),
+                   'train_start_le1986': summarize([r for r in rows if r[0] <= 1986]),
+                   'hold_end_ge2007': summarize([r for r in rows if r[1] >= 2007])}
+            sub['pass'] = sm.get('pass', False)
+            sub['robust'] = bool(sub['le1990'].get('pass') and sub['ge1991'].get('pass'))
+            sub['by_start_year'] = [[r[0], round(r[3], 3), round(r[2], 3), round(r[2] / r[3], 4), r[1]] for r in rows]
+            name = f'{nm}_w{int(w * 100)}'
+            L[name] = sub
+            e = {'name': name, 'family': 'L_long_world', 'description': f'探索2: 金{int(w * 100)}%・gap（年次の積立）＋{desc} vs 同じ世界100%（円建て）',
+                 'graded_global': False, 'exploratory': True, 'angle': {'H20': sub}, 'angle_pass_H20': sub['pass'], 'angle_robust_H20': sub['robust']}
+            tested.append(e)
+            log(f"{name}: n={sm.get('n')} 裾の比={sm.get('tail_ratio_q10')} 対の比の中央={sm.get('paired_median')} 勝率={sm.get('paired_win_rate')} "
+                f"相手の最悪={sm.get('bench_worst_window')} 合格={sub['pass']} 頑丈={sub['robust']} ≤1990 {sub['le1990'].get('pass')} ≥1991 {sub['ge1991'].get('pass')}")
+    res['L'] = L
+    # ── M ──
+    sp, g = D['sp_jpy'], D['gold_jpy']
+    ks = sorted(set(sp) & set(g))
+    Mres = {}
+    sig = {}
+    for L_ in (12, 6):
+        s_ = {}
+        for i in range(L_ - 1, len(ks)):
+            win = ks[i - L_ + 1:i + 1]
+            if mdiff(win[0], win[-1]) != L_ - 1:
+                continue
+            rs = math.prod(1 + sp[k] for k in win) - 1
+            rgm = math.prod(1 + g[k] for k in win) - 1
+            s_[ym_add(ks[i], 1)] = 'g' if rgm > rs else 's'
+        sig[L_] = s_
+    XMG = {}
+    for L_ in (12, 6):
+        s_ = sig[L_]
+        gross, net = {}, {}
+        prev = None
+        sw = 0
+        for k in ks:
+            if k not in s_:
+                continue
+            h = s_[k]
+            gross[k] = g[k] if h == 'g' else sp[k]
+            n_ = g[k] - FEE / 12 if h == 'g' else sp[k]
+            if prev is not None and h != prev:
+                n_ -= COST_UNIT; sw += 1
+            net[k] = n_
+            prev = h
+        x = global_eval(gross, net, sp, repl=None, rf=D['rf_jpy'], timing=True)
+        yrs = len(gross) / 12
+        x['switches'] = sw; x['switches_per_year'] = round(sw / yrs, 2)
+        x['gold_share_of_months'] = round(sum(1 for k in gross if s_[k] == 'g') / len(gross), 3)
+        x['gold_share_hold'] = round(sum(1 for k in gross if s_[k] == 'g' and k >= M.HOLD_START) / max(1, sum(1 for k in gross if k >= M.HOLD_START)), 3)
+        XMG[f'XM{L_}_sw'] = x
+    hx = M.holm({nm: (XMG[nm]['hold'] or {}).get('p') for nm in XMG})
+    for nm, x in XMG.items():
+        x['holm_p'] = hx.get(nm)
+        g_, c_ = M.grade(x['full'], x['train'], x['hold'], x['roll20'], cost_hold=x['cost_hold'], repl=None, family_holm_p=x['holm_p'],
+                         sharpe_pair=x['sharpe'], leveraged_or_timing=True)
+        x['grade'], x['criteria'] = g_, c_
+        L_ = int(nm[2:-3])
+        tested.append({'name': nm, 'family': 'M_momentum', 'description': f'探索2: 円建ての S&P500 と金の直近{L_}か月の総リターンを比べ、高いほうへ翌月の持ち分100%',
+                       'graded_global': True, 'exploratory': True, 'global': x, 'grade': g_, 'criteria': c_})
+        log(f"[格付け・探索2] {nm} {g_} 訓練 {x['train']['ex_ann']}%/年 t={x['train']['t']} 保有 {x['hold']['ex_ann']} t={x['hold']['t']} "
+            f"費用後保有 {x['cost_hold']['ex_ann']} CAGR差 {x['cost_hold']['cagr_diff']} 最近 {x['recent']['ex_ann']} 転がる20年 {x['roll20']['win_rate'] if x['roll20'] else None} "
+            f"シャープ {x['sharpe']} 切替/年 {x['switches_per_year']} 金の月の割合 {x['gold_share_of_months']} {c_}")
+    Mres['switch'] = XMG
+    s12 = sig[12]
+    t20 = {k: (0.20 if v == 'g' else 0.0) for k, v in s12.items()}
+    t100 = {k: (1.0 if v == 'g' else 0.0) for k, v in s12.items()}
+    for nm, tm, desc in (('XM12_flow20', t20, '金の12か月が S&P500 を上回った翌月だけ金の目標20%（gap・売らない）'),
+                         ('XM12_flow100', t100, '入金の全額を12か月の勝者へ（売らない）')):
+        r_ = run_dca(D, 'sp_jpy', tgt_map=tm, detail=True)
+        h = r_['H20']
+        tested.append({'name': nm, 'family': 'M_momentum', 'description': '探索2: ' + desc, 'graded_global': False, 'exploratory': True,
+                       'angle': r_, 'angle_pass_H20': h.get('pass'), 'angle_robust_H20': h.get('robust')})
+        a = h['all']
+        log(f"{nm}: H20 n={a.get('n')} 裾の比={a.get('tail_ratio_q10')} 対の比の中央={a.get('paired_median')} 勝率={a.get('paired_win_rate')} "
+            f"悪い10%での対の比={a.get('bad10_paired_median')} 合格={h.get('pass')} 頑丈={h.get('robust')}")
+    res['M'] = Mres
+    return res
+
+
 # ───────────────────────── 本体 ─────────────────────────
 def check():
     D = load_all()
@@ -751,6 +907,10 @@ def main():
         e['global_series'] = '持ち分の切り替え版（信号の翌月は金20%/株80%・それ以外は株100%・毎月リバランス）'
         e['global'] = x; e['grade'] = g; e['criteria'] = c
         log(f"[格付け・探索] {nm} {g} 訓練 {x['train']['ex_ann']} t={x['train']['t']} 保有 {x['hold']['ex_ann']} t={x['hold']['t']} シャープ {sp} {c}")
+
+    # ── 探索2（事前登録2） ──
+    if os.path.exists(os.path.join(M.BASE, 'out', PREREG2)):
+        out['part2'] = part2(D, tested, J, gy)
 
     out['n_tested'] = len(tested)
     out['n_graded_global'] = sum(1 for t in tested if t.get('graded_global'))
