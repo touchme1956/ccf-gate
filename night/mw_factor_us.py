@@ -352,7 +352,7 @@ def post_hoc():
     ph['ex_fin_market_check'] = {'rebuilt_all_vs_french_mkt': M.excess_stats(all_mkt, MKT), 'ex_fin_vs_french_mkt_hold': M.excess_stats(xf_mkt, MKT, a=M.HOLD_START)}
     mkt_rows = {M._ym(x['date']): float(x['n_stocks']) for x in M.jkp_rows('usa', 'mkt', 'factor', 'vw') if x.get('n_stocks') not in (None, '', 'NA')}
     subs = [('2007-2012', 200701, 201212), ('2013-2019', 201301, 201912), ('2020-', 202001, None), ('2007-2019', 200701, 201912)]
-    targets = [e for e in j['tested'] if e.get('grade') in ('S', 'A', 'B')]
+    targets = [e for e in j['tested'] if e.get('grade') in ('S', 'A', 'B') and e['family'] in ('a', 'b', 'c')]
     res = {}
     hold_series = {}
     for e in targets:
@@ -384,6 +384,17 @@ def post_hoc():
             tot = cols[spec['cols'][0]] if len(spec['cols']) == 1 else ew([cols[c] for c in spec['cols']], len(spec['cols']))
             s = to_excess(tot)
         tot = {k2: v + RF[k2] for k2, v in s.items() if k2 in RF}
+        mk_same = {k2: MKT[k2] for k2 in tot if k2 in MKT}
+        r['maxdd'] = {'full': [round(M.maxdd(tot) * 100, 1), round(M.maxdd(mk_same) * 100, 1)],
+                      'hold': [round(M.maxdd(M.window(tot, M.HOLD_START)) * 100, 1), round(M.maxdd(M.window(mk_same, M.HOLD_START)) * 100, 1)],
+                      'note': '[戦略, 同じ月の市場]（%）'}
+        if e['family'] == 'a':
+            try:  # 上限つき同士（上限つき良い側 対 JKP 上限つき市場）＝上限の有無で『良い側の上乗せ』自体が変わるか
+                capm = M.jkp_mkt('usa', 'vw_cap')
+                swc = {M._ym(x['date']): float(x['ret']) for x in M.jkp_rows('usa', e['key'], 'portfolios', 'vw_cap') if x['pf'] == e['good_side'] and x['ret'] not in ('', 'NA', 'na')}
+                r['vw_cap_vs_capped_market_hold'] = M.excess_stats(swc, capm, a=M.HOLD_START)
+            except Exception as ex:  # noqa
+                r['vw_cap_vs_capped_market_error'] = str(ex)[:100]
         r['vs_ex_fin_market_hold'] = M.excess_stats(tot, xf_mkt, a=M.HOLD_START)
         r['vs_ex_fin_market_full'] = M.excess_stats(tot, xf_mkt)
         r['subperiods'] = {lab: M.excess_stats(s, MKTRF, a=a, z=z) for lab, a, z in subs}
@@ -402,9 +413,38 @@ def post_hoc():
         ph['S_overlap'] = {'names': names, 'months': len(ks), 'mean_offdiag_corr': round(float((C.sum() - len(names)) / (len(names) ** 2 - len(names))), 3),
                            'effective_n_bets': round(float(lam.sum() ** 2 / (lam ** 2).sum()), 2),
                            'corr': {a: {b: round(float(C[i, jx]), 2) for jx, b in enumerate(names)} for i, a in enumerate(names)}}
+    # 実在の質・収益性系 ETF（生き残りの偏りあり・作り方は別物）と、同じ窓での JKP の規則の比較
+    etf = {}
+    comp = {}
+    for n in ('a_cop_at', 'a_qmj_prof', 'a_ope_be', 'a_sale_bev'):
+        e = next((x for x in j['tested'] if x['name'] == n), None)
+        if e:
+            comp[n] = {k2: v + RF[k2] for k2, v in jkp_tercile('usa', e['key'], e['good_side']).items() if k2 in RF}
+    qe = next((x for x in j['tested'] if x['name'] == 'e2_cluster_Quality'), None)
+    if qe:
+        a_side = {x['key']: x['good_side'] for x in j['tested'] if x.get('family') == 'a' and x.get('good_side')}
+        qs = ew([jkp_tercile('usa', k2, a_side[k2]) for k2 in qe['constituents']], 3)
+        comp['e2_cluster_Quality'] = {k2: v + RF[k2] for k2, v in qs.items() if k2 in RF}
+    for t in ('QUAL', 'SPHQ', 'JQUA', 'FQAL', 'OUSA', 'DGRW', 'MOAT', 'COWZ', 'VIG', 'QDF', 'QUS', 'USMV', 'SPY'):
+        try:
+            r_etf = M.yahoo(t)
+        except Exception as ex:  # noqa
+            etf[t] = {'error': str(ex)[:80]}; continue
+        a0 = min(r_etf)
+        row = {'etf_vs_french_mkt': M.excess_stats(r_etf, MKT, a=a0), 'same_window_to_2025_12': {}}
+        row['etf_vs_french_mkt_to_2025_12'] = M.excess_stats(r_etf, MKT, a=a0, z=202512)
+        for n, cs in comp.items():
+            row['same_window_to_2025_12'][n] = M.excess_stats(cs, MKT, a=a0, z=202512)
+        etf[t] = row
+    ph['etf_reality_check'] = {'note': '事後・Yahoo の調整後終値（配当込み）・生き残った ETF だけ（生き残りの偏り）・信託報酬込み。ETF の作り方（業種中立・上限・スコア加重）は JKP の三分位と別物', 'rows': etf}
     j['post_hoc_事後'] = ph
     M.save(OUT_NAME, j)
     f = lambda v: f"{v['ex_ann']:+5.2f}(t{v['t']:+.1f})" if v and v.get('t') is not None else '    —     '
+    for t, row in etf.items():
+        if 'error' in row:
+            print(t, row['error']); continue
+        sw = row['same_window_to_2025_12']
+        print(f"ETF {t:5} {f(row['etf_vs_french_mkt'])} 〜2025-12 {f(row['etf_vs_french_mkt_to_2025_12'])} | 同窓 cop_at {f(sw.get('a_cop_at'))} Quality合成 {f(sw.get('e2_cluster_Quality'))}")
     print('ex-fin check', ph['ex_fin_market_check'])
     for n, r in res.items():
         sp = r['subperiods']
