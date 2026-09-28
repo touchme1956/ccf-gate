@@ -21,6 +21,7 @@ import numpy as np  # noqa: E402
 
 PREREG = 'mw_levdca_prereg.json'
 PREREG2 = 'mw_levdca_prereg2.json'
+PREREG3 = 'mw_levdca_prereg3.json'
 OUT = 'mw_levdca.json'
 TAX = 0.20315
 FEE_ETF, SPREAD_ETF = 0.009, 0.005      # レバレッジETF型（mw_common.lever_daily の既定と同じ）
@@ -732,6 +733,7 @@ def main():
     ctx = dict(mkt_d=mkt_d, rf_d=rf_d, mkt_m=mkt_m, rf_m=rf_m, mkt_dm=mkt_dm, ndx_d=ndx_d, ndx_m=ndx_m,
                s_m=s_m, b_m=b_m, rf_e=rf_e, sh=sh, sh_rf=sh_rf, reg_m=reg_m, lev_cache=lev_cache, fam_P=fam_P, fam_E=fam_E)
     r2 = round2(ctx)
+    r3 = round3(ctx)
 
     # ── まとめ
     all_graded = fam_P + fam_E + r2['E2']
@@ -741,6 +743,7 @@ def main():
         'n_tested': len(all_graded) + len(lc) + len(shiller_rep) + len(r2['LCR']),
         'sanity': sanity, 'kelly': kel, 'e1_params_train_only': e1_params, 'etf_model_check': etf_check,
         'round2_verdict_LC2': r2['verdict'],
+        'prereg3': PREREG3, 'prereg3_commit': r3['prereg3_commit'], 'round3_bootstrap': r3['result'],
         'tested': all_graded + lc + shiller_rep + r2['LCR'],
         'log': LOG,
     }
@@ -998,6 +1001,98 @@ def round2(ctx):
     for e in E2:
         finish_grade(e, hp.get(e['name']), None)
     return {'LCR': LCR, 'E2': E2, 'verdict': v, 'prereg2_commit': sha2}
+
+
+# ───────────────────────── 探索3: ブロック・ブートストラップ ─────────────────────────
+def stationary_idx(rng, N, n, paths, mean_block=24):
+    p = 1.0 / mean_block
+    idx = np.empty((paths, n), dtype=np.int64)
+    idx[:, 0] = rng.integers(0, N, paths)
+    for t in range(1, n):
+        new = rng.random(paths) < p
+        idx[:, t] = np.where(new, rng.integers(0, N, paths), (idx[:, t - 1] + 1) % N)
+    return idx
+
+
+def boot_dca(n, step):
+    """step(t, V) → 1+その月の口座リターン（全パスの配列）。戻り値: 最終額, 口座の最大下落"""
+    V = None; pk = None; dd = None
+    for t in range(n):
+        V = (np.zeros_like(step.shape_ref) if V is None else V) + 1
+        f = step(t, V)
+        V = np.maximum(V * f, 0.0)
+        pk = V.copy() if pk is None else np.maximum(pk, V)
+        dd = np.zeros_like(V) if dd is None else dd
+        dd = np.minimum(dd, np.where(pk > 0, V / np.where(pk > 0, pk, 1) - 1, 0))
+    return V, dd
+
+
+def round3(ctx):
+    sha3 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', f'out/{PREREG3}'], cwd=M.BASE, capture_output=True, text=True).stdout.strip()
+    log('prereg3 commit', sha3)
+    mkt_m, rf_m, mkt_dm = ctx['mkt_m'], ctx['rf_m'], ctx['mkt_dm']
+    r2x_m = ctx['lev_cache']('french', 2.0)
+    keys = sorted(set(mkt_m) & set(rf_m) & set(mkt_dm) & set(r2x_m))
+    check_contiguous_months(keys, 'boot')
+    A = {'m': arr(mkt_m, keys), 'rf': arr(rf_m, keys), 'dm': arr(mkt_dm, keys), 'r2': arr(r2x_m, keys)}
+    N, n, PATHS = len(keys), 240, 10000
+    rng = np.random.default_rng(20260928)
+    idx = stationary_idx(rng, N, n, PATHS, 24)
+    res = {'paths': PATHS, 'months': n, 'mean_block': 24, 'seed': 20260928, 'data': f'{keys[0]}〜{keys[-1]}', 'scenarios': {}}
+    for sc in ('hist', 'erp_minus3', 'borrow_rf3'):
+        cut = 0.0025 if sc == 'erp_minus3' else 0.0
+        spread = (0.03 if sc == 'borrow_rf3' else SPREAD_MARGIN) / 12
+        m = A['m'][idx] - cut; rf = A['rf'][idx]; dm = A['dm'][idx] - cut; r2 = A['r2'][idx] - 2 * cut
+        rb = rf + spread
+
+        def run(fn):
+            fn.shape_ref = np.zeros(PATHS)
+            return boot_dca(n, fn)
+
+        def margin_step(policy):
+            def f(t, V):
+                L = policy(t, V, n)
+                return 1 + np.where(L > 1, L * m[:, t] - (L - 1) * rb[:, t], L * m[:, t] + (1 - L) * rf[:, t])
+            return f
+
+        def mix_step(policy):
+            def f(t, V):
+                L = policy(t, V, n)
+                a, b = r2[:, t], dm[:, t]
+                g = (L - 1) * a + (2 - L) * b
+                return 1 + g - COST_UNIT * ((L - 1) * np.abs(a - g) + (2 - L) * np.abs(b - g))
+            return f
+
+        base_m, dd_bm = run(lambda t, V: 1 + m[:, t])
+        base_d, dd_bd = run(lambda t, V: 1 + dm[:, t])
+        strat = {'LC2': (margin_step(pol_target_gen()), 'm'), 'LC2_cap1.5': (margin_step(pol_target_gen(cap=1.5)), 'm'),
+                 'const_margin_1.25': (margin_step(pol_const(1.25)), 'm'), 'const_margin_1.5': (margin_step(pol_const(1.5)), 'm')}
+        if sc != 'borrow_rf3':
+            strat['P1_daily_2x'] = (lambda t, V: 1 + r2[:, t], 'd')
+            strat['LCR2_etfmix'] = (mix_step(pol_target_gen()), 'd')
+        out = {}
+        for name, (fn, bk) in strat.items():
+            V, dd = run(fn)
+            Vb, ddb = (base_m, dd_bm) if bk == 'm' else (base_d, dd_bd)
+            ratio = V / Vb
+            aft = V - TAX * np.maximum(V - n, 0)
+            out[name] = {'win_vs_unlevered': round(float(np.mean(V > Vb)), 4), 'ratio_median': round(pct(ratio, 50), 3), 'ratio_p05': round(pct(ratio, 5), 3),
+                         'below_contrib_s': round(float(np.mean(V < n)), 4), 'below_contrib_b': round(float(np.mean(Vb < n)), 4),
+                         'mult_p05_s': round(pct(V / n, 5), 3), 'mult_p05_b': round(pct(Vb / n, 5), 3),
+                         'mult_median_s': round(pct(V / n, 50), 3), 'mult_median_b': round(pct(Vb / n, 50), 3),
+                         'acct_dd_median_s': round(pct(dd, 50) * 100, 1), 'acct_dd_median_b': round(pct(ddb, 50) * 100, 1),
+                         'aftertax_win_vs_unlevered_nisa': round(float(np.mean(aft > Vb)), 4),
+                         'aftertax_ratio_median_vs_nisa': round(pct(aft / Vb, 50), 3)}
+        res['scenarios'][sc] = out
+        log('boot', sc, {k: (v['win_vs_unlevered'], v['mult_p05_s'], v['mult_p05_b'], v['aftertax_win_vs_unlevered_nisa']) for k, v in out.items()})
+    h, e3 = res['scenarios']['hist']['LC2'], res['scenarios']['erp_minus3']['LC2']
+    res['reading'] = {
+        'LC2_survives_bootstrap': bool(h['win_vs_unlevered'] >= 0.8 and h['mult_p05_s'] >= h['mult_p05_b']),
+        'LC2_vanishes_if_erp_minus3': bool(e3['win_vs_unlevered'] < 0.5),
+        'tax_eats_win_hist': bool(h['aftertax_win_vs_unlevered_nisa'] < 0.5),
+        'tax_eats_win_erp_minus3': bool(e3['aftertax_win_vs_unlevered_nisa'] < 0.5)}
+    log('round3 reading', res['reading'])
+    return {'result': res, 'prereg3_commit': sha3}
 
 
 if __name__ == '__main__':
