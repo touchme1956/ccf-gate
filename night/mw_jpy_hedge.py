@@ -58,6 +58,8 @@ USD_RATE = 'IRSTCI01USM156N'   # 米国の翌日物（FF金利の月平均）
 PRIMARY_SIGS = ['V', 'M', 'C', 'VM']
 E1_SIGS = ['VOTE2', 'VAMP', 'MAMP', 'RISK12']
 E2_SIGS = ['TREND3', 'DIFF12', 'MRISK']       # 第2回の登録（out/mw_jpy_hedge_prereg2.json）
+E3_SIGS = ['OLS3']                            # 第3回の登録（out/mw_jpy_hedge_prereg3.json）
+PREREG3 = 'mw_jpy_hedge_prereg3.json'
 
 
 def log(*a):
@@ -207,7 +209,7 @@ def signals(D, c, S_=None, r_c=None, cpi_c=None, cpi_freq=None, r_other=None, cp
         a, b = cpi_known(cpi_o, other_freq, t), cpi_known(cpi_c, cpi_freq, t)
         if a is not None and b is not None:
             q[t] = S_[t] * a / b          # 実質の外貨の値段（高い＝外貨が実質で割高）
-    sig = {k: {} for k in PRIMARY_SIGS + E1_SIGS + E2_SIGS}
+    sig = {k: {} for k in PRIMARY_SIGS + E1_SIGS + E2_SIGS + E3_SIGS}
     mkt_ex = D['mktrf']
     for t in ks:
         # V: 実質の値段が過去60か月（当月を含む）の平均より上ならヘッジ
@@ -267,7 +269,50 @@ def signals(D, c, S_=None, r_c=None, cpi_c=None, cpi_freq=None, r_other=None, cp
             sig['VOTE2'][t] = (sig['V'][t] + sig['M'][t] + sig['C'][t]) >= 2
         if t in sig['M'] and t in sig['RISK12']:
             sig['MRISK'][t] = sig['M'][t] or sig['RISK12'][t]
+    # E3_OLS3: V・M・C の強さで翌月のドルを持つ超過の対数リターンを予想（拡大窓の最小二乗・月末 t までに実現した組だけ）
+    xs, ys = {}, {}
+    for t in ks:
+        w = [q.get(ym_add(t, -i)) for i in range(60)]
+        p = S_.get(ym_add(t, -12))
+        if None not in w and p and t in r_c and t in r_o:
+            xs[t] = (1.0, math.log(q[t] / (sum(w) / 60)), math.log(S_[t] / p), (r_o[t] - r_c[t]) / 1200)
+        s0 = ym_add(t, -1)
+        if s0 in S_ and s0 in r_c and s0 in r_o:
+            ys[t] = math.log(S_[t] / S_[s0] * (1 + r_o[s0] / 1200) / (1 + r_c[s0] / 1200))
+    XtX = [[0.0] * 4 for _ in range(4)]; Xty = [0.0] * 4; n = 0
+    for t in ks:
+        s0 = ym_add(t, -1)
+        if s0 in xs and t in ys:                       # 組 (x_{t−1}, y_t) は月末 t に実現している
+            x = xs[s0]
+            for i in range(4):
+                Xty[i] += x[i] * ys[t]
+                for j in range(4):
+                    XtX[i][j] += x[i] * x[j]
+            n += 1
+        if n >= 60 and t in xs:
+            b = _solve(XtX, Xty)
+            if b is not None:
+                f = sum(bi * xi for bi, xi in zip(b, xs[t]))
+                bas = BASIS if ym_add(t, 1) >= BASIS_FROM else 0.0
+                sig['OLS3'][t] = f < -bas / 12
     return sig
+
+
+def _solve(A, y):
+    """4×4 の連立一次方程式（部分ピボットのガウス消去）。特異なら None"""
+    n = len(y)
+    M_ = [list(A[i]) + [y[i]] for i in range(n)]
+    for c in range(n):
+        piv = max(range(c, n), key=lambda r: abs(M_[r][c]))
+        if abs(M_[piv][c]) < 1e-18:
+            return None
+        M_[c], M_[piv] = M_[piv], M_[c]
+        for r in range(n):
+            if r != c:
+                fct = M_[r][c] / M_[c][c]
+                for k in range(c, n + 1):
+                    M_[r][k] -= fct * M_[c][k]
+    return [M_[i][n] / M_[i][i] for i in range(n)]
 
 
 # ───────────────────────── リターン ─────────────────────────
@@ -566,7 +611,8 @@ def check():
 def run():
     D = load()
     out = {'angle': 'jpy_hedge', 'prereg': PREREG, 'prereg_commit': git_sha(os.path.join('out', PREREG)),
-           'prereg2': PREREG2, 'prereg2_commit': git_sha(os.path.join('out', PREREG2)), 'tested': [], 'log': LOG}
+           'prereg2': PREREG2, 'prereg2_commit': git_sha(os.path.join('out', PREREG2)),
+           'prereg3': PREREG3, 'prereg3_commit': git_sha(os.path.join('out', PREREG3)), 'tested': [], 'log': LOG}
     J = D['cur']['JPY']
     Ru, Rh, rfj, sig = build_currency(D, 'JPY')
     avail = avail_for(PRIMARY_SIGS + E1_SIGS, sig, Ru, START_JP, END_M)
@@ -613,15 +659,18 @@ def run():
         cur_data[c] = (cRu, cRh, crf, csig, st_)
 
     res = {}
-    fam = {'P': {}, 'E1': {}, 'E2': {}}
-    NEED = {'P': PRIMARY_SIGS, 'E1': PRIMARY_SIGS + E1_SIGS, 'E2': PRIMARY_SIGS + E2_SIGS}
+    fam = {'P': {}, 'E1': {}, 'E2': {}, 'E3': {}}
+    NEED = {'P': PRIMARY_SIGS, 'E1': PRIMARY_SIGS + E1_SIGS, 'E2': PRIMARY_SIGS + E2_SIGS, 'E3': E3_SIGS}
 
     def run_one(sid, sname, impl, family):
+        avail = avail_for(NEED[family], sig, Ru, START_JP, END_M)    # P・E1・E2 は 1981-01〜、E3 は予想が作れる月から
+        A = set(avail)
         if impl == 'STOCK':
             s, h, sw = stock_series(sig[sname], Ru, Rh, avail)
-            r = eval_stock(sid, s, h, Ru, rfj, A, START_JP, END_M, sw)
+            r = eval_stock(sid, s, h, Ru, rfj, A, avail[0], END_M, sw)
         else:
-            r = eval_flow(sid, sig[sname], Ru, Rh, rfj, avail, START_JP, END_M)
+            r = eval_flow(sid, sig[sname], Ru, Rh, rfj, avail, avail[0], END_M)
+        r['eval_from'] = avail[0]
         r['family'] = family
         r['signal'] = sname
         r['latest_signal'] = {'month_end': avail[-1], 'hedge': sig[sname].get(avail[-1])}
@@ -685,6 +734,8 @@ def run():
     # 第2回の登録（out/mw_jpy_hedge_prereg2.json）: E2 は第1回の結果を見た後の探索の族
     for sname in E2_SIGS:
         run_one(f'E2_{sname}_STOCK', sname, 'STOCK', 'E2')
+    # 第3回の登録（out/mw_jpy_hedge_prereg3.json）: E3 は回帰で一つの予想にまとめる
+    run_one('E3_OLS3_STOCK', 'OLS3', 'STOCK', 'E3')
 
     # ── 事後の参考（格付けしない）: M と MAMP を資本規制の時代（1974-03〜1980-12）へ後ろに延ばす
     back = {}
@@ -795,7 +846,7 @@ def run():
                      'dca20_median': (r['dca20'] or {}).get('median_ratio'), 'holm_p': r.get('holm_p'),
                      'repl': r.get('repl'), 'latest_signal': r.get('latest_signal')})
     out['summary'] = sorted(summ, key=lambda x: -(x['hold_ex'] or -99))
-    out['counts'] = {'n_tested': len(out['tested']), 'graded': sum(1 for x in out['tested'] if x['family'] in ('P', 'E1', 'E2')),
+    out['counts'] = {'n_tested': len(out['tested']), 'graded': sum(1 for x in out['tested'] if x['family'] in ('P', 'E1', 'E2', 'E3')),
                      'grades': {g: sum(1 for x in summ if x['grade'] == g) for g in 'SABC'}}
     p = M.save(OUT, out)
     log('書いた', p)
