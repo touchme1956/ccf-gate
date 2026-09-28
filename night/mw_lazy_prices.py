@@ -1081,6 +1081,7 @@ def cmd_run():
     indc = {c: ind(U['sic'].get(c)) for c in U['span']}
     # 提出（類似度の記録）を CIK ごとに提出日の順
     rows = {c: sorted(v, key=lambda r: r['filed']) for c, v in P.items()}
+    ntok = {r['acc']: r.get('n_tok') for v in P.values() for r in v}
     # 先読みの検査のための記録
     look_viol = 0
 
@@ -1155,7 +1156,9 @@ def cmd_run():
                 if el:
                     avg_sim[m // 100].append(sorted(el.values())[len(el) // 2])
             if not ok:
-                for nm in [f'Q5_{x}', f'U_{x}'] + ([f'Q1_{x}', 'Q5_cos_ew', 'Q45_cos', 'Q5_cos_ex6', 'Q5_cos_ind', 'U_cos_ind', 'U_cos_ex6'] if x == 'cos' else []):
+                for nm in [f'Q5_{x}', f'U_{x}'] + ([f'Q1_{x}', 'Q5_cos_ew', 'Q45_cos', 'Q5_cos_ex6', 'Q5_cos_ind', 'U_cos_ind', 'U_cos_ex6',
+                                                    'X1_avoid_Q1', 'X3_composite', 'X5_length', 'X7_top100_Q5', 'X_U_top100'] if x == 'cos' else []) + \
+                          (['X6_avoid_Q1_item1a'] if x == 'cos_item1a' else []):
                     B(nm).step(m, None, st, mm)
                 if x == 'cos':
                     qs = quality_at(qsets, m)
@@ -1170,8 +1173,39 @@ def cmd_run():
             w5 = {c: cap_all[c] for c in order if q[c] == 5}
             B(f'Q5_{x}').step(m, w5, st, mm)
             B(f'U_{x}').step(m, {c: cap_all[c] for c in order}, st, mm)
+            if x == 'cos_item1a':
+                B('X6_avoid_Q1_item1a').step(m, {c: cap_all[c] for c in order if q[c] != 1}, st, mm)
             if x != 'cos':
                 continue
+            # 探索の族 X（事前登録2）
+            B('X1_avoid_Q1').step(m, {c: cap_all[c] for c in order if q[c] != 1}, st, mm)
+            comp_el = [c for c in order if all(L_[c].get(k) is not None for k in ('cos', 'jac', 'minedit', 'simple'))]
+            if len(comp_el) // 5 >= MIN_PER_Q:
+                pr = defaultdict(float)
+                for k in ('cos', 'jac', 'minedit', 'simple'):
+                    ok_ = sorted(comp_el, key=lambda c: (L_[c][k], int(c)))
+                    for i, c in enumerate(ok_):
+                        pr[c] += (i + 1) / len(ok_) / 4
+                oc = sorted(comp_el, key=lambda c: (pr[c], int(c)))
+                B('X3_composite').step(m, {c: cap_all[c] for i, c in enumerate(oc) if 5 * i // len(oc) + 1 == 5}, st, mm)
+            else:
+                B('X3_composite').step(m, None, st, mm)
+            ln = {}
+            for c in order:
+                r = L_[c]; pn_ = ntok.get(r.get('prev_acc'))
+                if r.get('n_tok') and pn_:
+                    ln[c] = -abs(_m.log(r['n_tok'] / pn_))
+            if len(ln) // 5 >= MIN_PER_Q:
+                ol = sorted(ln, key=lambda c: (ln[c], int(c)))
+                B('X5_length').step(m, {c: cap_all[c] for i, c in enumerate(ol) if 5 * i // len(ol) + 1 == 5}, st, mm)
+            else:
+                B('X5_length').step(m, None, st, mm)
+            if len(order) >= 100:
+                t100 = sorted(sorted(order, key=lambda c: -cap_all[c])[:100], key=lambda c: (el[c], int(c)))
+                B('X7_top100_Q5').step(m, {c: cap_all[c] for i, c in enumerate(t100) if 5 * i // 100 + 1 == 5}, st, mm)
+                B('X_U_top100').step(m, {c: cap_all[c] for c in t100}, st, mm)
+            else:
+                B('X7_top100_Q5').step(m, None, st, mm); B('X_U_top100').step(m, None, st, mm)
             B('Q1_cos').step(m, {c: cap_all[c] for c in order if q[c] == 1}, st, mm)
             B('Q5_cos_ew').step(m, {c: 1.0 for c in order if q[c] == 5}, st, mm)
             B('Q45_cos').step(m, {c: cap_all[c] for c in order if q[c] >= 4}, st, mm)
@@ -1261,11 +1295,17 @@ def cmd_result():
         ('P1_cos_ew', 'Q5_cos_ew', 'MKT', 'exploratory', 'P1 の等加重 − French Mkt'),
         ('P1_cos_ex6', 'Q5_cos_ex6', 'MKT', 'exploratory', '上位6社を外してから作った P1 − French Mkt'),
         ('P1_cos_top2', 'Q45_cos', 'MKT', 'exploratory', '上位2五分位（Q4+Q5）の時価加重 − French Mkt'),
+        ('X1_avoid_Q1', 'X1_avoid_Q1', 'MKT', 'X', '【事前登録2】対象から最も似ていない五分位だけを外した残りの時価加重 − French Mkt'),
+        ('X3_composite', 'X3_composite', 'MKT', 'X', '【事前登録2】4つの類似度の百分位の平均の Q5 − French Mkt'),
+        ('X5_length', 'X5_length', 'MKT', 'X', '【事前登録2】本文の長さが最も変わらなかった五分位 − French Mkt'),
+        ('X6_avoid_Q1_item1a', 'X6_avoid_Q1_item1a', 'MKT', 'X', '【事前登録2】Item 1A の Q1 を外した残り − French Mkt（2007〜だけ）'),
+        ('X7_top100_Q5', 'X7_top100_Q5', 'MKT', 'X', '【事前登録2】時価の上位100社の中の余弦の Q5（20社）− French Mkt'),
     ]
     diag = [('Q5_minus_Q1_cos', 'Q5_cos', 'Q1_cos'), ('Q1_cos_vs_U', 'Q1_cos', 'U_cos'), ('U_cos_vs_MKT', 'U_cos', 'MKT'),
             ('P2_cos_vs_MKT', 'P2_cos', 'MKT'), ('QUAL_vs_MKT', 'QUAL', 'MKT')]
     rel = {'P1_cos': 'U_cos', 'P3_cos': 'U_cos_ind', 'P1_jac': 'U_jac', 'P1_minedit': 'U_minedit', 'P1_simple': 'U_simple',
-           'P1_cos_item7': 'U_cos_item7', 'P1_cos_item1a': 'U_cos_item1a', 'P1_cos_ew': 'U_cos', 'P1_cos_ex6': 'U_cos_ex6', 'P1_cos_top2': 'U_cos'}
+           'P1_cos_item7': 'U_cos_item7', 'P1_cos_item1a': 'U_cos_item1a', 'P1_cos_ew': 'U_cos', 'P1_cos_ex6': 'U_cos_ex6', 'P1_cos_top2': 'U_cos',
+           'X1_avoid_Q1': 'U_cos', 'X3_composite': 'U_cos', 'X5_length': 'U_cos', 'X6_avoid_Q1_item1a': 'U_cos_item1a', 'X7_top100_Q5': 'X_U_top100'}
 
     def span(bk):
         ks = sorted(k for k in books[bk].r['S'])
@@ -1295,7 +1335,8 @@ def cmd_result():
             xs = [w for m, (_, _, w) in bk.nobs.items() if lo <= m <= hi]
             res[nm][f'observed_weight_share_{per}'] = round(sum(xs) / len(xs), 3) if xs else None
     # 族ごとの Holm（生き残りの扱いごと）
-    fams = {'primary': ['P1_cos', 'P2_cos', 'P3_cos'], 'secondary': ['P1_jac', 'P1_minedit', 'P1_simple', 'P1_cos_item7', 'P1_cos_item1a']}
+    fams = {'primary': ['P1_cos', 'P2_cos', 'P3_cos'], 'secondary': ['P1_jac', 'P1_minedit', 'P1_simple', 'P1_cos_item7', 'P1_cos_item1a'],
+            'X': ['X1_avoid_Q1', 'X3_composite', 'X5_length', 'X6_avoid_Q1_item1a', 'X7_top100_Q5']}
     holm = {}
     for b in ('S', 'L'):
         for f, names in fams.items():
