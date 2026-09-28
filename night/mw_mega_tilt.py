@@ -773,14 +773,17 @@ def show(out):
 
 
 def main():
-    if '--part3-only' in sys.argv:
+    if '--part3-only' in sys.argv or '--part4-only' in sys.argv:
         out = json.load(open(os.path.join(BASE, 'out', 'mw_mega_tilt.json')))
-        part3(out)
+        if '--part3-only' in sys.argv:
+            part3(out)
+        part4(out)
     else:
         out, ctx = part1()
         if '--part1-only' not in sys.argv:
             part2(out, ctx)
             part3(out)
+            part4(out)
     p = M.save('mw_mega_tilt.json', out)
     show(out)
     print('書いた', p, '試した数', out['n_tested'])
@@ -904,11 +907,108 @@ def part3(out):
         X5.append(rec)
         ls_of[rec['name']] = (ls, lam)
     X5 = finish_family(X5)
+    if not out['feasibility']['x5b_method_check_french_OP']['method_ok']:
+        for r in X5:
+            if r['name'].startswith('X5b_'):
+                r['warning'] = '方法の検算に落ちた（French OP で回帰の係数が実際の時価総額の割合と 0.05 超ずれた）ので λ_char は信用できない（prereg3 の規則）'
     for r in X5:
         if r.get('grade') in ('S', 'A') and r['name'] in ls_of:
             ls, lam = ls_of[r['name']]
             r['diagnostics'] = diagnostics(mkt, mktrf, ls, lam)
     out['tested'].extend(X5)
+    out['n_tested'] = len(out['tested'])
+    fams = {}
+    for r in out['tested']:
+        fams.setdefault(r['family'], []).append(r)
+    out['families'] = {f: {'n': len(r), 'grades': {g: sum(1 for x in r if x.get('grade') == g) for g in 'SABC'}} for f, r in fams.items()}
+
+
+# ═════════════════════════ prereg4（2006年に知り得た特徴だけ） ═════════════════════════
+PREREG4 = 'mw_mega_tilt_prereg4.json'
+
+
+def pub_years():
+    import openpyxl
+    import re
+    wb = openpyxl.load_workbook(os.path.join(M.CACHE, 'jkp_factor_details.xlsx'), read_only=True)
+    rows = list(wb['details'].iter_rows(values_only=True))
+    h = rows[0]
+    ia, ic = h.index('abr_jkp'), h.index('cite')
+    out = {}
+    for r in rows[1:]:
+        if r[ia]:
+            m = re.findall(r'(19\d\d|20\d\d)', str(r[ic] or ''))
+            if m:
+                out[r[ia]] = int(m[-1])
+    return out
+
+
+def part4(out):
+    out['prereg4'] = PREREG4
+    out['prereg4_commit'] = sha_of(f'out/{PREREG4}')
+    out['tested'] = [r for r in out['tested'] if r.get('family') != 'X6']
+    ff = M.ff_factors()
+    mkt, mktrf = ff['mkt'], ff['mktrf']
+    dx = directions_from_xlsx()
+    py = pub_years()
+    avail = json.load(open(os.path.join(M.CACHE, 'jkp_availability.json')))['factor_sizes']['usa']
+    cl = cluster_labels()
+    pre = sorted(k for k in avail if py.get(k) is not None and py[k] <= 2006 and dx.get(k) in (1, -1))
+    mega_all = {}
+    for k in pre:
+        r, _ = mega_raw(k)
+        mega_all[k] = {ym: v * dx[k] for ym, v in r.items()}
+    vw_every = {k: v for k, v in vw_all_every('usa').items() if k in pre}
+    reg_every = {r: vw_all_every(r) for r in REGIONS}
+    reg_mkt = {r: M.jkp_mkt(r, 'vw') for r in REGIONS}
+    out['x6_inputs'] = {'pub_le_2006': len(pre), 'mega': len(mega_all), 'vw': len(vw_every)}
+
+    def select(sd, thr):
+        sel = []
+        for k, s in sd.items():
+            x = [v for m, v in sorted(s.items()) if m <= M.TRAIN_END]
+            if len(x) < 180:
+                continue
+            t = M.nw_t(x)
+            if S.mean(x) > 0 and t is not None and t >= thr:
+                sel.append(k)
+        return sorted(sel)
+    X6, ls_of = [], {}
+    out['x6_selected'] = {}
+    qual06 = sorted(k for k in pre if cl.get(k) in ('quality', 'profitability'))
+    out['x6_selected']['quality_profitability_pub_le_2006'] = qual06
+    specs = []
+    for src, sd in (('mega', mega_all), ('vw', vw_every)):
+        for thr in (3.0, 2.0):
+            sel = select(sd, thr)
+            out['x6_selected'][f'{src}_t{thr}'] = sel
+            specs.append((f'X6a_{src}_pre2006_trainsel_t{thr:.0f}', sd, sel, 0.8, f'{src}: 2006年以前に公表された特徴から訓練期間で t≥{thr} の {len(sel)} 本を等分'))
+        specs.append((f'X6b_{src}_quality_pre2006', sd, qual06, 0.6, f'{src}: 2006年以前に公表された質・収益性の {len(qual06)} 本を選ばずに等分'))
+        specs.append((f'X6c_{src}_all_pre2006', sd, sorted(sd), 1.0, f'{src}: 2006年以前に公表された {len(sd)} 本すべてを等分'))
+    for name, sd, sel, to, desc in specs:
+        ls = composite(sd, sel)
+        regls = {r: composite(reg_every[r], sel) for r in REGIONS}
+        rp = repl_test({r: v for r, v in regls.items() if v}, LAM, to, reg_mkt)
+        rec = evaluate(name, 'X6', desc, mkt, ls, LAM, to, None, rp, extra={'n_selected': len(sel)})
+        X6.append(rec)
+        ls_of[name] = (ls, LAM)
+    X6 = finish_family(X6)
+    for r in X6:
+        if r.get('grade') in ('S', 'A') and r['name'] in ls_of:
+            ls, lam = ls_of[r['name']]
+            r['diagnostics'] = diagnostics(mkt, mktrf, ls, lam)
+    # D5 期間をそろえた訓練（判定に使わない）
+    mg, _ = mega_raw('ope_be')
+    vwu = vw_all('usa')
+    d5 = {}
+    for nm, ls in (('PA_mega_ope_be', {k: v * CH['ope_be']['direction'] for k, v in mg.items()}), ('PB_vw_ope_be', vwu['ope_be']),
+                   ('F2_ope_be', fr_ls('6_Portfolios_ME_OP_2x3', 'BIG HiOP', 'BIG LoOP'))):
+        s = {k: mkt[k] + LAM * ls[k] for k in ls if k in mkt and k <= JKP_END}
+        b = {k: mkt[k] for k in s}
+        d5[nm] = {'1963-07_2006-12': M.excess_stats(s, b, a=196307, z=M.TRAIN_END), 'start_1962-12': M.excess_stats(s, b, z=196212)}
+    out['diagnostic_D5_train_aligned'] = d5
+    print('D5', json.dumps({k: {kk: (vv['ex_ann'], vv['t']) if vv else None for kk, vv in v.items()} for k, v in d5.items()}, ensure_ascii=False))
+    out['tested'].extend(X6)
     out['n_tested'] = len(out['tested'])
     fams = {}
     for r in out['tested']:
