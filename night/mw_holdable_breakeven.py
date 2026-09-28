@@ -19,6 +19,14 @@ import mw_common as M  # noqa: E402
 BASE = M.BASE
 ANGLE = 'holdable_breakeven'
 PRE = 'out/mw_holdable_breakeven_prereg.json'
+PRE2 = 'out/mw_holdable_breakeven_prereg2.json'
+DEVIATIONS = [
+    '【データの直し・主の初回の実行の後】1306.T（TOPIX ETF）の Yahoo 月足に分割の未反映（2015-01 −90%・2015-07 +17%）があり、JMKT の袖のずれの sd が 22.5%/年（平均 −5.0%/年・相関 0.57）になっていた。|器 − 日本の市場（円）| > 8% の月を欠測として外した（2か月・prereg2 に記録してから出し直した）。直す前の数字は fits.JMKT.before_fix。効くのは JPN のクラスの JMKT の袖だけ（JHD の ε は jp_nisa_bridge の te を読むので無関係）',
+    '事前登録の sleeves.JMKT は『2009-03〜』と書いたが、直した後の sd も同じ窓で測った（欠測の2か月を除く）',
+    'EAFE・日本・新興国のクラスの late のプールは French の国別・地域の表が 2025-12 で終わるため 2007-01〜2025-12（228か月）。US・金は 2026-08 まで',
+    'MOAT の載り k（qmj の良い側への回帰の傾き）は −0.60 と負になった。登録どおりそのまま使った（前向きの上乗せ −0.33%/年）。平均の載り（capture 0.15）の感度は BR_kmean',
+    'mw_common.py は変更していない',
+]
 OUT = 'mw_holdable_breakeven.json'
 END = 202608
 TAX = 0.20315
@@ -156,7 +164,14 @@ def fits(S, fx):
     out['VEA'] = sd_diff(y['VEA'], S['EAFE'], 200709, END)
     out['VWO'] = sd_diff(y['VWO'], S['EM'], 200701, END)
     jpy_jpn = {m: (1 + S['JPN'][m]) * (1 + fx[m]) - 1 for m in S['JPN'] if m in fx}
-    out['JMKT'] = sd_diff(y['1306.T'], jpy_jpn, 200903, END)
+    # データの直し（prereg2 に記録）: 1306.T の Yahoo 月足は 2015 年の分割が未反映（−90%・+17%）。
+    # |器 − 市場（円）| > 8% の月を欠測として外す（0 と読まない・ルール7）
+    raw = sd_diff(y['1306.T'], jpy_jpn, 200903, END)
+    bad = sorted(m for m in y['1306.T'] if m in jpy_jpn and 200903 <= m <= END and abs(y['1306.T'][m] - jpy_jpn[m]) > 0.08)
+    y1306 = {m: v for m, v in y['1306.T'].items() if m not in bad}
+    out['JMKT'] = sd_diff(y1306, jpy_jpn, 200903, END)
+    out['JMKT']['excluded_months'] = bad
+    out['JMKT']['before_fix'] = raw
     # MOAT: JKP 米国 qmj の良い側（2006-12 までで決める）
     side, p = M.jkp_good_side('usa', 'qmj', 'vw', upto=200612)
     q = {m: p[side][m] + S['RF'][m] for m in p[side] if m in S['RF']}
@@ -326,9 +341,19 @@ def sb_indices(n, L, N, rng, TT=T):
 
 
 # ───────────────────────── 場面 ─────────────────────────
-def shifted_pool(P, piT, piUS):
-    """P: {系列: np.array（プールの月）}。piT/piUS が None ならずらさない。年率の対数の差で平均をそろえる"""
+def shifted_pool(P, piT, piUS, conv='log'):
+    """P: {系列: np.array（プールの月）}。piT/piUS が None ならずらさない。年率の対数の差で平均をそろえる
+    （conv='arith' は探索 X2: 算術の平均の差でそろえる）"""
     Q = dict(P)
+    if conv == 'arith':
+        if piT is not None:
+            for k in ('TECH3', 'CHIPS'):
+                Q[k] = P[k] - (P[k] - P['MKT']).mean() + piT / 1200
+        if piUS is not None:
+            for k in EXUS_SERIES:
+                if k in P:
+                    Q[k] = P[k] - (P[k] - P['MKT']).mean() - piUS / 1200
+        return Q
     lm = np.log1p(P['MKT'])
     if piT is not None:
         for k in ('TECH3', 'CHIPS'):
@@ -402,6 +427,114 @@ def crossing(grid, ps):
     return f'<{grid[0]}' if ps[0] <= ps[-1] else f'>{grid[-1]}'
 
 
+X5_MIXES = ['SPX_w20', 'SPX_ONLY', 'RSP_w20', 'MOAT_w20', 'GOLD_w20', 'DEV_w20', 'PXF_w20', 'EMM_w20', 'EMR_w20', 'JMKT_w20', 'JHD_w20', 'ALL_EDGE_w20']
+
+
+def logit_fit(x, y, iters=50):
+    """ロジスティック回帰 y ~ 1/(1+exp(-(a+bx)))（ニュートン法）。戻り値 (a, b)"""
+    x = np.asarray(x, float); y = np.asarray(y, float)
+    if y.min() == y.max():
+        return (float('inf') if y[0] > 0 else float('-inf')), 0.0
+    X = np.column_stack([np.ones_like(x), x])
+    beta = np.zeros(2)
+    for _ in range(iters):
+        p = 1 / (1 + np.exp(-(X @ beta)))
+        W = p * (1 - p) + 1e-12
+        g = X.T @ (y - p)
+        Hm = (X * W[:, None]).T @ X + 1e-9 * np.eye(2)
+        step = np.linalg.solve(Hm, g)
+        beta = beta + step
+        if np.abs(step).max() < 1e-10:
+            break
+    return float(beta[0]), float(beta[1])
+
+
+def fit_castle_noise(S):
+    """探索 X3: 実際の5社（等分・毎月）と個別の代理の差の sd（2012-06〜2026-08）。中身の平均は使わない"""
+    ys = {t: M.yahoo(t) for t in ('CW', 'MSFT', 'LRCX', 'ASML', 'TDG')}
+    px = {m: 0.2 * S['TECH3'][m] + 0.4 * S['CHIPS'][m] + 0.4 * S['AERO'][m] for m in S['MKT'] if all(m in S[k] for k in ('TECH3', 'CHIPS', 'AERO'))}
+    ms = [m for m in mrange(201206, END) if m in px and all(m in ys[t] for t in ys)]
+    c5 = {m: sum(ys[t][m] for t in ys) / 5 for m in ms}
+    d = np.array([c5[m] - px[m] for m in ms])
+    big = [m for m in ms if abs(c5[m] - px[m]) > 0.25]
+    return {'sd_ann': float(d.std(ddof=1) * math.sqrt(12) * 100), 'n': len(ms), 'from': ms[0], 'to': ms[-1],
+            'corr': float(np.corrcoef([c5[m] for m in ms], [px[m] for m in ms])[0, 1]), 'months_gt_25pct': big}
+
+
+X3_MIXES = {'C2SPX': {'SPX': 0.2, 'NDX': 0.6, 'SMH': 0.2}, 'C2NDX': {'NDX': 0.8, 'SMH': 0.2}}
+CUR_N = {'CASTLE_N': 0.2, 'NDX': 0.6, 'SMH': 0.2}
+X4_MIXES = {'N70S10': {'CASTLE': 0.2, 'NDX': 0.7, 'SMH': 0.1}, 'N50S30': {'CASTLE': 0.2, 'NDX': 0.5, 'SMH': 0.3}, 'N40S40': {'CASTLE': 0.2, 'NDX': 0.4, 'SMH': 0.4}}
+
+
+def cell_x(args):
+    """探索の族（prereg2）: X1（full のプール）・X2（算術のそろえ方）・X3（個別を器に）・X4（テックの中の比率）"""
+    cls_name, era, L, S, FX, SL, MX, n_main, n_grid = args
+    t0 = time.time()
+    need = CLASS_SERIES[cls_name]
+    lo, hi = {'early': (192607, 200612), 'late': (200701, END), 'full': (192607, END)}[era]
+    ms = [m for m in mrange(lo, hi) if all(m in S[k] for k in need) and m in FX]
+    gaps = [(a, b) for a, b in zip(ms, ms[1:]) if madd(a, 1) != b]
+    if gaps:
+        ms = [m for m in ms if m >= gaps[-1][1]]
+    P = {k: np.array([S[k][m] for m in ms]) for k in need}
+    fxp = np.array([FX[m] for m in ms])
+    ci = {'US': 0, 'GOLD': 1, 'EAFE': 2, 'JPN': 3, 'EM': 4}[cls_name]
+    eo = {'early': 0, 'late': 10, 'full': 20}[era]
+    rng = np.random.default_rng(SEED + 100 * ci + eo + (0 if L == 60 else 1))
+    idx = sb_indices(len(ms), L, n_main, rng)
+    sleeves = sorted({s for mx in MX.values() for s in mx['w']} | set(CUR_W))
+    zr = np.random.default_rng(SEED + 7 + 100 * ci + eo + (0 if L == 60 else 1))
+    Z = {s: zr.standard_normal((n_main, T)) for s in sleeves}   # 主の升と同じ乱数（early/late）
+    Z['CASTLE_N'] = np.random.default_rng(SEED + 99 + 100 * ci + eo + (0 if L == 60 else 1)).standard_normal((n_main, T))
+    FXp = fxp[idx]
+    res = {'class': cls_name, 'era': era, 'L': L, 'pool': [ms[0], ms[-1], len(ms)], 'X1': {}, 'X2': {}, 'X3': {}, 'X4': {}}
+
+    def block(scname, sc, conv, mixset, base_w):
+        Q = shifted_pool(P, sc['piT'], sc['piUS'], conv)
+        Wc, mc, _ = run_mix(base_w, SL, Q, idx, Z, FXp, sc)
+        out = {'CUR': {'mult_med': round(q(Wc, 0.5) / (CONTRIB * T), 3), 'mdd_med': round(q(mc, 0.5) * 100, 1)}}
+        for mn, w in mixset.items():
+            Wm, mm, _ = run_mix(w, SL, Q, idx, Z, FXp, sc)
+            out[mn] = compare(Wm, Wc, mm, mc)
+        return out
+    prim = {k: v['w'] for k, v in MX.items()}
+    if era == 'full':
+        for sn in ('H', 'BR'):
+            res['X1'][sn] = block(sn, SCEN[sn], 'log', prim, CUR_W)
+    else:
+        sc = dict(SCEN['BR'])
+        res['X2']['BR_arith'] = block('BR_arith', sc, 'arith', prim, CUR_W)
+        ig = idx[:n_grid]; FXg = FXp[:n_grid]
+        gT = {}
+        for g in GRID_T:
+            scg = dict(sc, piT=g)
+            Q = shifted_pool(P, g, sc['piUS'], 'arith')
+            Wc, _, _ = run_mix(CUR_W, SL, Q, ig, Z, FXg, scg)
+            for mn, w in prim.items():
+                if mn == 'SPX100':
+                    continue
+                Wm, _, _ = run_mix(w, SL, Q, ig, Z, FXg, scg)
+                gT.setdefault(mn, []).append(round(float((Wm > Wc).mean()), 4))
+        res['X2']['grid_T_arith'] = gT
+    if cls_name == 'US':
+        for sn in ('H', 'BR'):
+            res['X3'][sn] = block(sn, SCEN[sn], 'log', X3_MIXES, CUR_N)
+            res['X4'][sn] = block(sn, SCEN[sn], 'log', X4_MIXES, CUR_W)
+        if era != 'full':
+            ig = idx[:n_grid]; FXg = FXp[:n_grid]
+            gT = {}
+            for g in GRID_T:
+                scg = dict(SCEN['BR'], piT=g)
+                Q = shifted_pool(P, g, 0.0)
+                Wc, _, _ = run_mix(CUR_N, SL, Q, ig, Z, FXg, scg)
+                for mn, w in X3_MIXES.items():
+                    Wm, _, _ = run_mix(w, SL, Q, ig, Z, FXg, scg)
+                    gT.setdefault(mn, []).append(round(float((Wm > Wc).mean()), 4))
+            res['X3']['grid_T'] = gT
+    res['sec'] = round(time.time() - t0, 1)
+    return res
+
+
 # ───────────────────────── 1升（クラス×時代×L）─────────────────────────
 def cell(args):
     cls_name, era, L, S, FX, SL, MX, n_main, n_grid, fx_alt = args
@@ -423,16 +556,22 @@ def cell(args):
     zr = np.random.default_rng(SEED + 7 + 100 * ci + (0 if era == 'early' else 10) + (0 if L == 60 else 1))
     Z = {s: zr.standard_normal((n_main, T)) for s in sleeves}
     FXp = fxp[idx]
-    res = {'class': cls_name, 'era': era, 'L': L, 'pool': [ms[0], ms[-1], len(ms)], 'scen': {}, 'grid_T': {}, 'grid_US': {}}
+    res = {'class': cls_name, 'era': era, 'L': L, 'pool': [ms[0], ms[-1], len(ms)], 'scen': {}, 'grid_T': {}, 'grid_US': {}, 'X5': {}}
     # 主の場面
     for sn, sc in SCEN.items():
         Q = shifted_pool(P, sc['piT'], sc['piUS'])
         Wc, mc, fc = run_mix(CUR_W, SL, Q, idx, Z, FXp, sc)
         rs = {'CUR': {'mult_med': round(q(Wc, 0.5) / (CONTRIB * T), 3), 'mult_p5': round(q(Wc, 0.05) / (CONTRIB * T), 3),
                       'mdd_med': round(q(mc, 0.5) * 100, 1), 'nisa_filled_month_med': float(np.median(fc))}}
+        if sn == 'BR':  # 探索 X5（prereg2）: 道ごとの実現したテックの上乗せ
+            rT = (np.log1p(Q['TECH3'])[idx] - np.log1p(Q['MKT'])[idx]).sum(1) / (T / 12) * 100
         for mn, mx in MX.items():
             Wm, mm, _ = run_mix(mx['w'], SL, Q, idx, Z, FXp, sc)
             rs[mn] = compare(Wm, Wc, mm, mc)
+            if sn == 'BR' and mn in X5_MIXES:
+                a_, b_ = logit_fit(rT, (Wm > Wc).astype(float))
+                res['X5'][mn] = {'a': a_, 'b': b_, 'r_star': round(-a_ / b_, 3) if b_ else None,
+                                 'r_path_quantiles': [round(q(rT, p), 2) for p in (0.1, 0.5, 0.9)], 'p_beat': round(float((Wm > Wc).mean()), 4)}
             if mn == 'SPX100':
                 rs['CUR_vs_SPX100'] = {'p_cur_beats': round(float((Wc > Wm).mean()), 4), 'ratio_med': round(q(Wc / Wm, 0.5), 4),
                                        'ratio_p5': round(q(Wc / Wm, 0.05), 4), 'ratio_p95': round(q(Wc / Wm, 0.95), 4)}
@@ -694,33 +833,39 @@ def main():
     F, Y = fits(S, FX)
     INP = inputs_from_files()
     SL = build_sleeves(F, INP)
+    CN = fit_castle_noise(S)
+    F['CASTLE_noise_X3'] = CN
+    SL['CASTLE_N'] = dict(SL['CASTLE'], sd=CN['sd_ann'] / 100)
     MX = mixes()
     fx_alt = load_fx_jst()
     n_main, n_grid = (400, 200) if a.quick else (4000, 2000)
-    tasks = []
+    tasks, xtasks = [], []
     for cls_name in ('US', 'GOLD', 'EAFE', 'JPN', 'EM'):
         mxc = {k: v for k, v in MX.items() if v['class'] == cls_name}
         for era in ('early', 'late'):
             for L in (60, 120):
                 tasks.append((cls_name, era, L, S, FX, SL, mxc, n_main, n_grid, fx_alt))
+        for era in ('early', 'late', 'full'):
+            for L in (60, 120):
+                xtasks.append((cls_name, era, L, S, FX, SL, mxc, n_main, n_grid))
     if a.procs > 1:
         import multiprocessing as mp
         with mp.get_context('fork').Pool(a.procs) as pool:
             cells = pool.map(cell, tasks)
+            xcells = pool.map(cell_x, xtasks)
     else:
         cells = [cell(t) for t in tasks]
+        xcells = [cell_x(t) for t in xtasks]
+    for c in xcells:
+        print('X', c['class'], c['era'], c['L'], c['pool'], c['sec'], 's')
     for c in cells:
         print(c['class'], c['era'], c['L'], c['pool'], c['sec'], 's')
-    if a.quick:
-        for c in cells:
-            for sn in ('H', 'BR'):
-                print(c['class'], c['era'], c['L'], sn, {k: v.get('p_beat') for k, v in c['scen'][sn].items() if isinstance(v, dict) and 'p_beat' in v})
-        return
-    json.dump({'cells': cells}, open(os.path.join(M.CACHE, 'mw_holdable_breakeven_cells.json'), 'w'))
-    finish(S, FX, fx_me, F, Y, INP, SL, MX, cells, st, t0)
+    if not a.quick:
+        json.dump({'cells': cells, 'xcells': xcells}, open(os.path.join(M.CACHE, 'mw_holdable_breakeven_cells.json'), 'w'))
+    finish(S, FX, fx_me, F, Y, INP, SL, MX, cells, xcells, st, t0, quick=a.quick)
 
 
-def finish(S, FX, fx_me, F, Y, INP, SL, MX, cells, st, t0):
+def finish(S, FX, fx_me, F, Y, INP, SL, MX, cells, xcells, st, t0, quick=False):
     # ── 升ごとの結果を配合ごとにまとめる
     CELLS = [(e, L) for e in ('early', 'late') for L in (60, 120)]
     by = {}
@@ -800,7 +945,15 @@ def finish(S, FX, fx_me, F, Y, INP, SL, MX, cells, st, t0):
         px = {m: sum(c * S[k][m] for k, c in leg.items()) for m in ms}
         san[f'proxy_vs_real_{nm}'] = {'from': ms[0], 'to': ms[-1], 'cagr_real': round(M.cagr({m: Y[tk][m] for m in ms}) * 100, 2),
                                       'cagr_proxy': round(M.cagr(px) * 100, 2), 'corr': round(M.corr([Y[tk][m] for m in ms], [px[m] for m in ms]), 3)}
+    EX = exploratory(xcells, cells, MX, S)
+    for fam in ('X1', 'X3', 'X4'):
+        for mn, v in EX[fam]['by_mix'].items():
+            tested.append({'name': f'{fam}:{mn}', 'family': f'{fam}_exploratory', 'grade': None, 'report_only': True, 'exploratory': True,
+                           'p_beat': v})
+    for mn, v in EX['X2']['by_mix'].items():
+        tested.append({'name': f'X2:{mn}', 'family': 'X2_exploratory', 'grade': None, 'report_only': True, 'exploratory': True, 'p_beat': v})
     summary = build_summary(by, cur, verdict, cross, BRt, AW, G, INP, SL, F)
+    summary['exploratory_lines'] = EX.get('lines', [])
     obj = {'angle': ANGLE, 'tool': 'night/mw_holdable_breakeven.py', 'prereg': PRE, 'prereg_commit': pre_sha, 'global_prereg': 'out/mw_prereg.json',
            'kind': '総合（意思決定の分析）。器の載り・公表後の目減りは入力で、上乗せ探しではない',
            'inputs': INP, 'fits': {k: v for k, v in F.items() if not k.startswith('_')}, 'yahoo_ranges': F.get('_yahoo_ranges'),
@@ -810,13 +963,103 @@ def finish(S, FX, fx_me, F, Y, INP, SL, MX, cells, st, t0):
            'mixes': {k: {'w': v['w'], 'class': v['class'], 'primary': v['primary'], 'buyable': v['buyable']} for k, v in MX.items()},
            'pools': pools, 'current': cur, 'results': by, 'verdict': verdict, 'break_even': cross,
            'base_rates': BRt, 'actual_windows_H': AW, 'grading': {k: {kk: v[kk] for kk in ('grade', 'criteria', 'holm_p', 'from')} for k, v in G.items()},
+           'exploratory': EX, 'preregs': {'1': {'file': PRE, 'commit': pre_sha}, '2': {'file': PRE2, 'commit': git_sha(PRE2), 'exploratory': True}},
            'sanity': san, 'tested': tested, 'n_tested': len(tested), 'n_graded': len(G),
            'grade_counts': {g: sum(1 for v in G.values() if v['grade'] == g) for g in 'SABC'},
-           'deviations': [], 'summary': summary, 'runtime_sec': round(time.time() - t0, 1)}
-    p = M.save(OUT, obj)
+           'deviations': DEVIATIONS, 'summary': summary, 'runtime_sec': round(time.time() - t0, 1)}
+    if quick:
+        p = os.path.join(M.CACHE, 'mw_holdable_breakeven_quick.json')
+        json.dump(obj, open(p, 'w'), ensure_ascii=False, indent=1)
+    else:
+        p = M.save(OUT, obj)
     print('wrote', p, os.path.getsize(p))
-    for line in summary.get('lines', []):
+    for line in summary.get('lines', []) + summary.get('exploratory_lines', []):
         print(line)
+
+
+def exploratory(xcells, cells, MX, S):
+    """prereg2 の探索の族をまとめる（格付けには使わない）"""
+    EX = {'label': '探索（prereg2・格付けに使わない）', 'X1': {'by_mix': {}}, 'X2': {'by_mix': {}}, 'X3': {'by_mix': {}}, 'X4': {'by_mix': {}}, 'X5': {}}
+    for c in xcells:
+        key = f"{c['era']}_L{c['L']}"
+        for sn, rs in c['X1'].items():
+            for mn, v in rs.items():
+                if mn != 'CUR':
+                    EX['X1']['by_mix'].setdefault(mn, {}).setdefault(sn, {})[key] = v['p_beat']
+                    EX['X1'].setdefault('detail', {}).setdefault(mn, {}).setdefault(sn, {})[key] = v
+                else:
+                    EX['X1'].setdefault('CUR', {}).setdefault(c['class'], {}).setdefault(sn, {})[key] = v
+        if c['X2']:
+            for mn, v in c['X2']['BR_arith'].items():
+                if mn != 'CUR':
+                    EX['X2']['by_mix'].setdefault(mn, {}).setdefault('BR_arith', {})[key] = v['p_beat']
+            for mn, ps in c['X2']['grid_T_arith'].items():
+                EX['X2'].setdefault('grid', {}).setdefault(mn, {})[key] = ps
+        for fam in ('X3', 'X4'):
+            for sn, rs in c[fam].items():
+                if sn == 'grid_T':
+                    for mn, ps in rs.items():
+                        EX[fam].setdefault('grid', {}).setdefault(mn, {})[key] = ps
+                    continue
+                for mn, v in rs.items():
+                    if mn != 'CUR':
+                        EX[fam]['by_mix'].setdefault(mn, {}).setdefault(sn, {})[key] = v['p_beat']
+                        EX[fam].setdefault('detail', {}).setdefault(mn, {}).setdefault(sn, {})[key] = v
+                    else:
+                        EX[fam].setdefault('CUR', {}).setdefault(sn, {})[key] = v
+    # 損益分岐
+    for fam in ('X2', 'X3'):
+        be = {}
+        for mn, per in EX[fam].get('grid', {}).items():
+            cr = {k: crossing(GRID_T, v) for k, v in per.items()}
+            nums = [x for x in cr.values() if isinstance(x, (int, float))]
+            be[mn] = {'per_cell': cr, 'median': round(float(np.median(nums)), 2) if len(nums) == len(cr) else None}
+        EX[fam]['break_even_piT'] = be
+    # X1 の判定
+    prim = [mn for mn, mx in MX.items() if mx['primary']]
+    for sn in ('H', 'BR'):
+        gt, ge = [], []
+        for mn in prim:
+            ps = [EX['X1']['by_mix'][mn][sn][k] for k in ('full_L60', 'full_L120')]
+            if min(ps) > 0.5:
+                gt.append(mn)
+            if min(ps) >= 0.6:
+                ge.append(mn)
+        EX['X1'][f'verdict_{sn}'] = {'beat_gt_0.5_both_L': gt, 'robust_ge_0.6_both_L': ge}
+    for sn in ('H', 'BR'):
+        EX['X3'][f'verdict_{sn}'] = {mn: min(EX['X3']['by_mix'][mn][sn][f'{e}_L{L}'] for e in ('early', 'late') for L in (60, 120)) > 0.5 for mn in X3_MIXES}
+    # X5
+    fr = [x for _, x in rolling_log_diff(S['TECH3'], S['MKT'])]
+    fr = np.array(fr)
+    for c in cells:
+        key = f"{c['era']}_L{c['L']}"
+        for mn, v in c.get('X5', {}).items():
+            a_, b_ = v['a'], v['b']
+            ok = b_ != 0 and math.isfinite(a_)
+            v2 = dict(v)
+            if ok:
+                v2['p_hist_french_windows'] = round(float(np.mean(1 / (1 + np.exp(-(a_ + b_ * fr))))), 4)
+                v2['p_at_record_weight_20y_median_-1.01'] = round(float(1 / (1 + math.exp(-(a_ + b_ * -1.01)))), 4)
+                v2['share_french_windows_ge_r_star'] = round(float((fr >= -a_ / b_).mean()), 3)
+            EX['X5'].setdefault(mn, {})[key] = v2
+    EX['X5_summary'] = {}
+    for mn, per in EX['X5'].items():
+        rs = [v['r_star'] for v in per.values() if v.get('r_star') is not None]
+        ph = [v.get('p_hist_french_windows') for v in per.values() if v.get('p_hist_french_windows') is not None]
+        pr = [v.get('p_at_record_weight_20y_median_-1.01') for v in per.values() if v.get('p_at_record_weight_20y_median_-1.01') is not None]
+        EX['X5_summary'][mn] = {'r_star_median': round(float(np.median(rs)), 2) if rs else None,
+                                'p_mix_beats_if_future_tech_like_1926_2006_windows_median': round(float(np.median(ph)), 3) if ph else None,
+                                'p_mix_beats_at_record_weight_base_rate_median': round(float(np.median(pr)), 3) if pr else None}
+    EX['french_tech3_20y_windows'] = {'n': len(fr), 'median': round(float(np.median(fr)), 2), 'share_gt_0': round(float((fr > 0).mean()), 3)}
+    EX['lines'] = [
+        f"X1（100年ひとつのプール・H）: P>0.5 の配合 {EX['X1']['verdict_H']['beat_gt_0.5_both_L']}・≥0.6 {EX['X1']['verdict_H']['robust_ge_0.6_both_L']}",
+        f"X1（BR）: P>0.5 {len(EX['X1']['verdict_BR']['beat_gt_0.5_both_L'])} 本・≥0.6 {EX['X1']['verdict_BR']['robust_ge_0.6_both_L']}",
+        f"X2 算術のそろえ方の π_T*: {json.dumps({k: v['median'] for k, v in EX['X2']['break_even_piT'].items()}, ensure_ascii=False)}",
+        f"X3 個別→器: {json.dumps(EX['X3']['by_mix'], ensure_ascii=False)} 損益分岐 {json.dumps({k: v['median'] for k, v in EX['X3']['break_even_piT'].items()}, ensure_ascii=False)}",
+        f"X4 テックの中の比率: {json.dumps(EX['X4']['by_mix'], ensure_ascii=False)}",
+        f"X5 実現の損益分岐 r*: {json.dumps(EX['X5_summary'], ensure_ascii=False)}",
+    ]
+    return EX
 
 
 def build_summary(by, cur, verdict, cross, BRt, AW, G, INP, SL, F):
