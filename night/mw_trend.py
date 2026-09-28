@@ -978,12 +978,41 @@ def lag_check(D, sigD, run):
     return {'checked': min(4000, len(run['keys'])), 'mismatch': bad}
 
 
+_G = {}
+
+
+def _one(i):
+    c, st = _G['c'], _G['specs'][i]
+    return run_one(c, st)
+
+
 def run_specs(c, specs):
+    """並列（fork）で1本ずつ測る。MW_TREND_PROCS=1 なら直列"""
+    n = int(os.environ.get('MW_TREND_PROCS', '3'))
+    _G['c'], _G['specs'] = c, specs
+    if n > 1:
+        import multiprocessing as mp
+        with mp.get_context('fork').Pool(n) as pool:
+            res = pool.map(_one, range(len(specs)), chunksize=1)
+    else:
+        res = [_one(i) for i in range(len(specs))]
     tested = []
-    for st in specs:
+    for ent in res:
+        if ent is None:
+            continue
+        for k, v in ent.pop('_sanity', {}).items():
+            c.sanity[k] = v
+        for line in ent.pop('_log', []):
+            LOG.append(line)
+        tested.append(ent)
+    return tested
+
+
+def run_one(c, st):
+    if True:
         run = st['runner']()
         if run is None:
-            log('実行不能', st['id']); continue
+            log('実行不能', st['id']); return None
         b_m, rf_m, rr_d, (rsrc, rfsrc) = bench_for(c, st['bench'], run)
         blev_m = None
         if st['per_daily'] and st['blev'] is not None and st['blev'] != 1:
@@ -994,9 +1023,9 @@ def run_specs(c, specs):
         if st['label']:
             ent['label'] = st['label']
         if st['id'].startswith('P03'):
-            c.sanity['lag_check_us_sma200'] = lag_check(c.D_us, c.sig_gspc[200], run)
+            ent.setdefault('_sanity', {})['lag_check_us_sma200'] = lag_check(c.D_us, c.sig_gspc[200], run)
         if st['id'].startswith('P08'):
-            c.sanity['lag_check_ndx_sma200'] = lag_check(c.D_ndx, c.ndx_sig[200], run)
+            ent.setdefault('_sanity', {})['lag_check_ndx_sma200'] = lag_check(c.D_ndx, c.ndx_sig[200], run)
         if 'avg_exposure_when_in' in run:
             ent['avg_exposure_when_in'] = run['avg_exposure_when_in']
         if st['rule'] is not None and st['graded']:
@@ -1015,12 +1044,12 @@ def run_specs(c, specs):
                 if st['blev'] not in (None, 1):
                     bl = {'keys': run['keys'], 'inv': [lev_ret(rsrc[k], rfsrc[k], st['blev'], 252) for k in run['keys']], 'cash': [rfsrc[k] for k in run['keys']]}
                     ent['tax_japan']['vs_levered_bh_windows'] = tax_report(run, bl, per, yearf, win)
-        tested.append(ent)
         h = e['hold']; t = e['train']
         log(f"{st['id']:34s} 訓練 {t['ex_ann'] if t else None:>7} t{t['t'] if t else None} 保有 {h['ex_ann'] if h else None:>7} t{h['t'] if h else None} 幾何差 {h['cagr_diff'] if h else None} "
             f"費用後保有 {e['cost_hold']['ex_ann'] if e['cost_hold'] else None} 20年勝率 {e['roll20']['win_rate'] if e['roll20'] else None} "
             f"Sharpe訓練 {e['sharpe']['train']} 保有 {e['sharpe']['hold']} 地域 {ent.get('repl', {}).get('positive')}/{ent.get('repl', {}).get('regions')}")
-    return tested
+        ent['_log'] = [LOG[-1]]
+        return ent
 
 
 def main():
