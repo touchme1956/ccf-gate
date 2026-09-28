@@ -773,12 +773,147 @@ def show(out):
 
 
 def main():
-    out, ctx = part1()
-    if '--part1-only' not in sys.argv:
-        part2(out, ctx)
+    if '--part3-only' in sys.argv:
+        out = json.load(open(os.path.join(BASE, 'out', 'mw_mega_tilt.json')))
+        part3(out)
+    else:
+        out, ctx = part1()
+        if '--part1-only' not in sys.argv:
+            part2(out, ctx)
+            part3(out)
     p = M.save('mw_mega_tilt.json', out)
     show(out)
     print('書いた', p, '試した数', out['n_tested'])
+
+
+# ═════════════════════════ prereg3（頑丈さ） ═════════════════════════
+PREREG3 = 'mw_mega_tilt_prereg3.json'
+
+
+def ols_noint(y, X):
+    """定数項なしの最小二乗（列は少数）→ 係数のリスト"""
+    k = len(X[0])
+    A = [[sum(r[i] * r[j] for r in X) for j in range(k)] for i in range(k)]
+    b = [sum(r[i] * yy for r, yy in zip(X, y)) for i in range(k)]
+    # ガウスの消去
+    M_ = [A[i] + [b[i]] for i in range(k)]
+    for c in range(k):
+        piv = max(range(c, k), key=lambda r: abs(M_[r][c]))
+        M_[c], M_[piv] = M_[piv], M_[c]
+        for r in range(k):
+            if r != c:
+                f = M_[r][c] / M_[c][c]
+                M_[r] = [a - f * bb for a, bb in zip(M_[r], M_[c])]
+    return [M_[i][k] / M_[i][i] for i in range(k)]
+
+
+def part3(out):
+    out['prereg3'] = PREREG3
+    out['prereg3_commit'] = sha_of(f'out/{PREREG3}')
+    out['tested'] = [r for r in out['tested'] if r.get('family') != 'X5']
+    ff = M.ff_factors()
+    mkt, mktrf, rf = ff['mkt'], ff['mktrf'], ff['rf']
+    names = list(CH) + ['Q5', 'QM', 'QMV']
+
+    def to_of(nm):
+        if nm in CH:
+            return CH[nm]['turnover']
+        c, w = blend_def(nm)
+        return turnover_of(c, w)
+
+    def pub_of(nm):
+        if nm in CH:
+            return CH[nm]['pub']
+        c, _ = blend_def(nm)
+        return max(CH[x]['pub'] for x in c)
+    reg_vw = {r: vw_all(r) for r in REGIONS}
+    reg_every = {r: vw_all_every(r) for r in REGIONS}
+    reg_mkt = {r: M.jkp_mkt(r, 'vw') for r in REGIONS}
+    vwu = vw_all('usa')
+    dx = directions_from_xlsx()
+    X5, ls_of = [], {}
+    # ── X5a large
+    large = {}
+    for k in CH:
+        r, _ = mega_raw(k, 'large')
+        large[k] = {ym: v * CH[k]['direction'] for ym, v in r.items()}
+    for nm in names:
+        regls = {r: build(reg_vw[r], nm) for r in REGIONS}
+        rp = repl_test({r: v for r, v in regls.items() if v}, LAM, to_of(nm), reg_mkt)
+        desc = CH[nm]['意味'] if nm in CH else PR['blends'][nm]
+        ls = build(large, nm)
+        rec = evaluate(f'X5a_large_{nm}', 'X5', f'米国 large（NYSE 50〜80%点）の順位加重 LS: {desc}', mkt, ls, LAM, to_of(nm), pub_of(nm), rp)
+        X5.append(rec)
+        ls_of[rec['name']] = (ls, LAM)
+    large_all = {}
+    for key in ('mega_t3.0', 'vw_t3.0'):
+        sel = out['x4_selected'][key]
+        for k in sel:
+            if k not in large_all:
+                r, _ = mega_raw(k, 'large')
+                large_all[k] = {ym: v * dx[k] for ym, v in r.items()}
+        ls = composite(large_all, sel)
+        regls = {r: composite(reg_every[r], sel) for r in REGIONS}
+        rp = repl_test({r: v for r, v in regls.items() if v}, LAM, 0.8, reg_mkt)
+        rec = evaluate(f'X5a_large_trainsel_{key}', 'X5', f'prereg2 で {key} から選んだ {len(sel)} 特徴を選び直さずに large に当てた合成', mkt, ls, LAM, 0.8, None, rp,
+                       extra={'n_selected': len(sel)})
+        X5.append(rec)
+        ls_of[rec['name']] = (ls, LAM)
+    # ── X5b 方法の検算（French 単変量 OP 三分位）
+    fv = M.french_series('Portfolios_Formed_on_OP', 'Value Weight')
+    ks = sorted(k for k in fv['Lo 30'] if k in fv['Med 40'] and k in fv['Hi 30'] and k in mktrf and k in rf and k <= M.TRAIN_END)
+    co = ols_noint([mktrf[k] for k in ks], [[fv[c][k] - rf[k] for c in ('Lo 30', 'Med 40', 'Hi 30')] for k in ks])
+    capd = fr_capshare('Portfolios_Formed_on_OP', ['Lo 30'])
+    capall = fr_capshare('Portfolios_Formed_on_OP', ['Lo 30', 'Med 40', 'Hi 30'])
+    tot = total_cap()
+    act_in = S.mean(capd[k] / capall[k] for k in ks if k in capd and k in capall)
+    act_tot = S.mean(capd[k] / tot[k] for k in ks if k in capd and k in tot)
+    out['feasibility']['x5b_method_check_french_OP'] = {
+        'months': len(ks), 'coef_lo30_med40_hi30': [round(c, 3) for c in co], 'coef_sum': round(sum(co), 3),
+        'actual_capshare_lo30_within_op_universe': round(act_in, 3), 'actual_capshare_lo30_of_total_market': round(act_tot, 3),
+        'abs_diff_vs_total': round(abs(co[0] - act_tot), 3), 'method_ok': abs(co[0] - act_tot) <= 0.05}
+    print('X5b 方法の検算', out['feasibility']['x5b_method_check_french_OP'])
+    jm = M.jkp_mkt('usa', 'vw')
+    lam_char, lam_info = {}, {}
+    for k in CH:
+        p = M.jkp_portfolios('usa', k, 'vw')
+        ks = sorted(m for m in set(p.get('1.0', {})) & set(p.get('2.0', {})) & set(p.get('3.0', {})) & set(jm) if m <= M.TRAIN_END)
+        co = ols_noint([jm[m] for m in ks], [[p['1.0'][m], p['2.0'][m], p['3.0'][m]] for m in ks])
+        badw = co[0] if CH[k]['direction'] == 1 else co[2]
+        ok = 0.9 <= sum(co) <= 1.1 and badw > 0
+        lam_info[k] = {'coef_p1_p2_p3': [round(c, 3) for c in co], 'sum': round(sum(co), 3), 'bad_side_weight': round(badw, 3), 'months': len(ks), 'ok': ok}
+        if ok:
+            lam_char[k] = max(0.01, math.floor(0.8 * badw * 100) / 100)
+            lam_info[k]['lambda_char'] = lam_char[k]
+    for nm in ('Q5', 'QM', 'QMV'):
+        comps, _ = blend_def(nm)
+        if all(c in lam_char for c in comps):
+            lam_char[nm] = min(lam_char[c] for c in comps)
+    out['feasibility']['x5b_lambda_char'] = lam_info
+    out['feasibility']['x5b_lambda_char_blends'] = {nm: lam_char.get(nm) for nm in ('Q5', 'QM', 'QMV')}
+    print('X5b λ_char', {k: v.get('lambda_char') for k, v in lam_info.items()}, out['feasibility']['x5b_lambda_char_blends'])
+    for nm in names:
+        if nm not in lam_char:
+            X5.append({'name': f'X5b_vw_{nm}_lamchar', 'family': 'X5', 'description': 'λ_char 推定不能（係数の和が0.9〜1.1の外）', 'error': 'λ_char 推定不能', 'grade': 'C'})
+            continue
+        lam = lam_char[nm]
+        regls = {r: build(reg_vw[r], nm) for r in REGIONS}
+        rp = repl_test({r: v for r, v in regls.items() if v}, lam, to_of(nm), reg_mkt)
+        ls = build(vwu, nm)
+        rec = evaluate(f'X5b_vw_{nm}_lamchar', 'X5', f'P-B と同じ・λ_char={lam}（悪い側の時価総額の推定×0.8＝買いだけに収まる見込みの大きさ）', mkt, ls, lam, to_of(nm), pub_of(nm), rp)
+        X5.append(rec)
+        ls_of[rec['name']] = (ls, lam)
+    X5 = finish_family(X5)
+    for r in X5:
+        if r.get('grade') in ('S', 'A') and r['name'] in ls_of:
+            ls, lam = ls_of[r['name']]
+            r['diagnostics'] = diagnostics(mkt, mktrf, ls, lam)
+    out['tested'].extend(X5)
+    out['n_tested'] = len(out['tested'])
+    fams = {}
+    for r in out['tested']:
+        fams.setdefault(r['family'], []).append(r)
+    out['families'] = {f: {'n': len(r), 'grades': {g: sum(1 for x in r if x.get('grade') == g) for g in 'SABC'}} for f, r in fams.items()}
 
 
 if __name__ == '__main__':
