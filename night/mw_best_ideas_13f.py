@@ -408,12 +408,13 @@ def _parse_q_one(p):
 
 
 def parse_q():
+    """道 Q の株価は、どれかの戦略の組み入れに入る CUSIP だけ（--map の後に回す）"""
     P = all_periods_data()
+    W, _, _ = build_weights(P, load_figi(), load_ftd())
     U = set()
-    for d in P.values():
-        for m in d['managers']:
-            U.update(x[0] for x in m['tilt'] + m['topw'])
-        U.update(cu for cu, v in d['sec'].items() if v['rank'] <= INVEST_N)
+    for k, wp in W.items():
+        for w0 in wp.values():
+            U.update(w0)
     json.dump(sorted(U), open(os.path.join(C, 'universe.json'), 'w'))
     print('四半期末の株価を取る CUSIP', len(U), flush=True)
     import multiprocessing as mp
@@ -442,7 +443,7 @@ def candidate_cusips(P):
     for d in P.values():
         for m in d['managers']:
             cs.update(x[0] for x in m['tilt']); cs.update(x[0] for x in m['topw'])
-        cs.update(cu for cu, v in d['sec'].items() if v['rank'] <= LARGE_N)
+        cs.update(cu for cu, v in d['sec'].items() if v['rank'] <= INVEST_N)
     return cs
 
 
@@ -570,7 +571,7 @@ def eligible(m):
     return not BANK_RE.search(m['name'] or '')
 
 
-def pick_best(P, figi, ftd, key='tilt'):
+def pick_best(P, figi, ftd, key='tilt', n=1):
     """運用者ごとの best idea（傾き上位から、株でないと分かったもの・持ち手が3社未満のものを飛ばした最初の1つ）。
     分類できない（OpenFIGI も FTD も知らない）ものは株として残す（価格が取れなければ未観測として囲む）"""
     out = {}
@@ -579,6 +580,7 @@ def pick_best(P, figi, ftd, key='tilt'):
         for m in d['managers']:
             if not eligible(m):
                 continue
+            k_ = 0
             for x in m[key]:
                 cu = x[0]
                 if ((d['sec'].get(cu) or {}).get('holders') or 0) < MIN_HOLDERS:
@@ -587,7 +589,9 @@ def pick_best(P, figi, ftd, key='tilt'):
                 if is_nonstock(cu, figi, desc, d['sec'].get(cu)):
                     continue
                 bi.append((m['cik'], cu, x[1], x[2] if key == 'tilt' else None))
-                break
+                k_ += 1
+                if k_ >= n:
+                    break
         out[p] = bi
     return out
 
@@ -600,11 +604,12 @@ def do_map():
     # 反復: 暫定の best idea を OpenFIGI で分類 → 株でないものを飛ばして次の候補 → 新しく出た CUSIP も分類
     for it in range(4):
         need = set()
-        for key in ('tilt', 'topw'):
-            for p, bi in pick_best(P, figi, ftd, key).items():
-                need.update(cu for _, cu, _, _ in bi)
+        W, _, _ = build_weights(P, figi, ftd)
+        for wp in W.values():
+            for w0 in wp.values():
+                need.update(w0)
         for d in P.values():
-            need.update(cu for cu, v in d['sec'].items() if v['rank'] <= LARGE_N)
+            need.update(cu for cu, v in d['sec'].items() if v['rank'] <= INVEST_N)
         need -= set(figi)
         print('反復', it, '新しく分類する CUSIP', len(need), flush=True)
         if not need:
@@ -765,13 +770,13 @@ def resolve(tasks, P, ftd, figi, fetch=True, rounds=8, threads=4):
 
 
 def all_tasks(P, ftd, figi):
-    """価格が要る (CUSIP, 期間) と照合の株価"""
+    """価格が要る (CUSIP, 期間) と照合の株価（どれかの戦略の組み入れに入るもの全部）"""
     tasks = {}
-    for key in ('tilt', 'topw'):
-        for p, bi in pick_best(P, figi, ftd, key).items():
-            for cik, cu, w, t in bi:
-                if (cu, p) not in tasks:
-                    tasks[(cu, p)] = None
+    W, _, _ = build_weights(P, figi, ftd)
+    for wp in W.values():
+        for p, w0 in wp.items():
+            for cu in w0:
+                tasks[(cu, p)] = None
     ipx = {}
     for p, d in P.items():
         for m in d['managers']:
@@ -805,6 +810,8 @@ PRIMARY = ['P1_A_ew_all', 'P2_B_vw_all', 'P3_C_consensus2_all', 'P4_D_top20_larg
 EXPLOR = ['X1_A_ew_invest', 'X2_C_consensus2_invest', 'X3_E_topweight_ew', 'X4_F_concentrated_ew', 'X5_H_annual_ew_invest',
           'X6_D_top20_large_vw']
 SANITY = ['S1_all_large500_vw', 'S2_all_large500_ew']
+EXP2 = ['E1_new_best_ew', 'E2_persistent_best_ew', 'E3_nonmega_best_ew', 'E4_tilt_weighted', 'E5_top5tilt_ew',
+        'E6_breadth_up_d10']      # 事前登録3（探索の族・結果を見る前）
 VERSIONS = {'O': None, 'P30': MISS_P30, 'P100': MISS_P100}
 REAL = {'R1_GURU': 'GURU', 'R2_GVIP': 'GVIP', 'R3_ALFA': 'ALFA', 'R4_DDDIX': 'DDDIX'}
 DESC = {
@@ -820,6 +827,12 @@ DESC = {
     'X6_D_top20_large_vw': 'P4 を集計保有額で加重',
     'S1_all_large500_vw': '検算: 大型株上位500を集計保有額で加重（≒S&P500。市場とほぼ同じになるはず）',
     'S2_all_large500_ew': '検算: 大型株上位500を等しく（≒RSP）',
+    'E1_new_best_ew': '探索: 新しく best idea になった株（同じ運用者の前の四半期の傾き上位5に無かった）を等しく',
+    'E2_persistent_best_ew': '探索: 前の四半期も同じ運用者の best idea だった株を等しく',
+    'E3_nonmega_best_ew': '探索: P1 から集計保有額の上位50を除いて等しく',
+    'E4_tilt_weighted': '探索: P1 の集合を、選んだ運用者の傾きの合計で加重',
+    'E5_top5tilt_ew': '探索: 各運用者の傾き上位5（株でない・持ち手3社未満を除く）の和集合を等しく',
+    'E6_breadth_up_d10': '探索（関連の信号）: 上位1000のうち持ち手の割合の増加が上位10%の株を等しく（Chen-Hong-Stein 2002）',
 }
 
 
@@ -827,8 +840,11 @@ def build_weights(P, figi, ftd):
     """戦略 → {期間 p: {CUSIP: 組む時の比重（合計1・未観測も含む）}}"""
     bt = pick_best(P, figi, ftd, 'tilt')
     bw = pick_best(P, figi, ftd, 'topw')
-    W = {k: {} for k in PRIMARY + EXPLOR + SANITY}
+    b5 = pick_best(P, figi, ftd, 'tilt', n=NCAND)
+    W = {k: {} for k in PRIMARY + EXPLOR + SANITY + EXP2}
     nmgr = {p: {m['cik']: m['n'] for m in d['managers']} for p, d in P.items()}
+    prevtop5 = {p: {m['cik']: {x[0] for x in m['tilt']} for m in d['managers']} for p, d in P.items()}
+    prevbest = {p: {cik: cu for cik, cu, _, _ in bt[p]} for p in P}
     for p, d in P.items():
         sec = d['sec']
         rk = lambda cu: (sec.get(cu) or {}).get('rank', 10 ** 9)
@@ -855,6 +871,24 @@ def build_weights(P, figi, ftd):
         l500 = [cu for cu, v in sec.items() if v['rank'] <= LARGE_N]
         W['S1_all_large500_vw'][p] = vw(l500)
         W['S2_all_large500_ew'][p] = ew(l500)
+        # ── 探索の族 E（事前登録3） ──
+        q = madd(p, -3)
+        if q in P:
+            W['E1_new_best_ew'][p] = ew(sorted({cu for cik, cu, _, _ in bt[p] if cik in prevtop5[q] and cu not in prevtop5[q][cik]}))
+            W['E2_persistent_best_ew'][p] = ew(sorted({cu for cik, cu, _, _ in bt[p] if prevbest[q].get(cik) == cu}))
+            sq, nq, n_ = P[q]['sec'], P[q]['n_filings'], d['n_filings']
+            dl = [((v['holders'] / n_) - (sq[cu]['holders'] / nq), cu) for cu, v in sec.items()
+                  if v['rank'] <= INVEST_N and cu in sq and sq[cu].get('holders')
+                  and not is_nonstock(cu, figi, ftd_symbols(ftd, cu, p)[1], v)]
+            dl.sort(reverse=True)
+            W['E6_breadth_up_d10'][p] = ew(sorted(cu for _, cu in dl[:max(1, len(dl) // 10)])) if dl else {}
+        W['E3_nonmega_best_ew'][p] = ew([cu for cu in uniq if rk(cu) > 50])
+        ts = defaultdict(float)
+        for _, cu, _, t in bt[p]:
+            ts[cu] += max(t or 0.0, 0.0)
+        tt = sum(ts.values())
+        W['E4_tilt_weighted'][p] = {cu: v / tt for cu, v in ts.items() if v > 0} if tt > 0 else {}
+        W['E5_top5tilt_ew'][p] = ew(sorted({cu for _, cu, _, _ in b5[p]}))
     return W, {p: len(bt[p]) for p in bt}, {p: Counter(cu for _, cu, _, _ in bt[p]) for p in bt}
 
 
@@ -1190,7 +1224,7 @@ def coverage():
     res = load_resolved() if os.path.exists(os.path.join(C, 'resolved.json')) else {}
     W, nbi, cnt = build_weights(P, figi, ftd)
     rep = {}
-    for k in PRIMARY + EXPLOR + SANITY:
+    for k in PRIMARY + EXPLOR + SANITY + EXP2:
         tot = Counter(); wun = []
         for p, w0 in W[k].items():
             for cu in w0:
@@ -1213,7 +1247,7 @@ def main():
     spy = M.yahoo('SPY')
     W, nbi, cnt = build_weights(P, figi, ftd)
     series, covs, turns = {}, {}, {}
-    for k in PRIMARY + EXPLOR + SANITY:
+    for k in PRIMARY + EXPLOR + SANITY + EXP2:
         for ver, L in VERSIONS.items():
             if k in SANITY and ver != 'O':
                 continue
@@ -1221,18 +1255,21 @@ def main():
             series[(k, ver)] = r; covs[(k, ver)] = cv; turns[(k, ver)] = tn
     cost_of = lambda k: COST_LARGE if (k.startswith('P4') or k.startswith('X6') or k.startswith('S')) else COST_SMALL
     tested = []
-    holm = {}
+    holm, holmE = {}, {}
     for ver in VERSIONS:
-        pv = {}
-        for k in PRIMARY:
-            h = M.excess_stats(series[(k, ver)], b, a=M.HOLD_START)
-            pv[k] = h['p'] if h else None
-        holm[ver] = M.holm(pv)
-    for k in PRIMARY + EXPLOR:
+        for fam_, H in ((PRIMARY, holm), (EXP2, holmE)):
+            pv = {}
+            for k in fam_:
+                h = M.excess_stats(series[(k, ver)], b, a=M.HOLD_START)
+                pv[k] = h['p'] if h else None
+            H[ver] = M.holm(pv)
+    for k in PRIMARY + EXPLOR + EXP2:
         for ver in VERSIONS:
-            fam = 'primary' if k in PRIMARY else 'exploratory（事前登録済み・Holm の族の外）'
+            fam = ('primary' if k in PRIMARY else 'exploratory_E（事前登録3・探索の族・Holm は族の中）' if k in EXP2
+                   else 'exploratory（事前登録済み・Holm の族の外）')
+            hp = holm[ver].get(k) if k in PRIMARY else holmE[ver].get(k) if k in EXP2 else None
             e = evaluate(f'{k}__{ver}', fam, DESC[k] + f'（未観測の扱い {ver}）', series[(k, ver)], b, spy, rf, facs,
-                         turns[(k, 'O')], cost_of(k), holm[ver].get(k) if k in PRIMARY else None)
+                         turns[(k, 'O')], cost_of(k), hp)
             e['survivorship_version'] = ver
             cv = covs[(k, ver)]
             e['coverage'] = {'quarters': len(cv), 'mean_names': round(S.mean(c['n'] for c in cv), 1) if cv else None,
@@ -1282,27 +1319,28 @@ def main():
     bq = to_quarters(exdiv, qkeys)
     bq_div = to_quarters(b, qkeys)
     seriesQ, covQ = {}, {}
-    for k in PRIMARY + EXPLOR + SANITY:
-        for ver, L in VERSIONS.items():
-            if k in SANITY and ver != 'O':
-                continue
-            r, cv = port_returns_q(W, k, L)
+    qver = lambda k: ['O'] if k in SANITY else ['O', 'P30'] if k in EXP2 else list(VERSIONS)
+    for k in PRIMARY + EXPLOR + SANITY + EXP2:
+        for ver in qver(k):
+            r, cv = port_returns_q(W, k, VERSIONS[ver])
             seriesQ[(k, ver)] = r; covQ[(k, ver)] = cv
-    holmQ = {}
+    holmQ, holmQE = {}, {}
     for ver in VERSIONS:
-        pv = {}
-        for k in PRIMARY:
-            h = M.excess_stats(seriesQ[(k, ver)], bq, a=M.HOLD_START, per_year=4, lag=4)
-            pv[k] = h['p'] if h else None
-        holmQ[ver] = M.holm(pv)
-    for k in PRIMARY + EXPLOR + SANITY:
-        for ver in VERSIONS:
-            if k in SANITY and ver != 'O':
-                continue
-            fam = ('Q_primary（道 Q・頑健性の族）' if k in PRIMARY else
-                   'Q_sanity（検算）' if k in SANITY else 'Q_exploratory（道 Q・事前登録済み・Holm の族の外）')
+        for fam_, H in ((PRIMARY, holmQ), (EXP2, holmQE)):
+            pv = {}
+            for k in fam_:
+                if (k, ver) not in seriesQ:
+                    continue
+                h = M.excess_stats(seriesQ[(k, ver)], bq, a=M.HOLD_START, per_year=4, lag=4)
+                pv[k] = h['p'] if h else None
+            H[ver] = M.holm(pv)
+    for k in PRIMARY + EXPLOR + SANITY + EXP2:
+        for ver in qver(k):
+            fam = ('Q_primary（道 Q・頑健性の族）' if k in PRIMARY else 'Q_sanity（検算）' if k in SANITY else
+                   'Q_exploratory_E（道 Q・事前登録3）' if k in EXP2 else 'Q_exploratory（道 Q・事前登録済み・Holm の族の外）')
+            hp = holmQ[ver].get(k) if k in PRIMARY else holmQE[ver].get(k) if k in EXP2 else None
             e = evaluate_q(f'Q_{k}__{ver}', fam, DESC[k] + f'（道 Q: 13F の四半期末の株価・配当なし／未観測の扱い {ver}）',
-                           seriesQ[(k, ver)], bq, turns[(k, 'O')], cost_of(k), holmQ[ver].get(k) if k in PRIMARY else None)
+                           seriesQ[(k, ver)], bq, turns[(k, 'O')], cost_of(k), hp)
             e['survivorship_version'] = ver
             cv = covQ[(k, ver)]
             e['coverage'] = {'quarters': len(cv), 'mean_names': round(S.mean(c['n'] for c in cv), 1) if cv else None,
@@ -1318,7 +1356,8 @@ def main():
     res_stats = Counter('ok' if v else 'none' for v in res.values())
     out = {'angle': 'best_ideas_13f', 'prereg': 'out/' + PREREG, 'prereg_commit': git_sha(os.path.join('out', PREREG)),
            'tool': 'night/mw_best_ideas_13f.py', 'benchmark': 'French Mkt（Mkt-RF+RF・総リターン）', 'end': END,
-           'n_tested': len(tested), 'holm_primary': holm, 'holm_primary_Q': holmQ, 'holm_real': rholm,
+           'n_tested': len(tested), 'holm_primary': holm, 'holm_primary_Q': holmQ, 'holm_E': holmE, 'holm_E_Q': holmQE,
+           'holm_real': rholm,
            'sanity': sanity, 'periods': per, 'top_best_ideas_by_period': top_bi,
            'price_resolution': {'pairs': len(res), **res_stats},
            'series_monthly': {f'{k}__{v}': {str(m): round(x, 6) for m, x in sorted(r.items())} for (k, v), r in series.items() if v == 'O' or k in PRIMARY},
