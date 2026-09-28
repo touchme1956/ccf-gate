@@ -416,6 +416,13 @@ def main():
         out['prereg3'] = PREREG3
         out['prereg3_commit'] = git_sha(os.path.join('out', PREREG3))
         tested += part3(D, P, G, mktrf, rf, RP, RG, RM)
+    # ── 探索4（事前登録4）: 国ごとの実時間の採用者（まだ見ていない国のデータ） ──
+    if os.path.exists(os.path.join(M.BASE, 'out', PREREG4)):
+        out['prereg4'] = PREREG4
+        out['prereg4_commit'] = git_sha(os.path.join('out', PREREG4))
+        t4, rep4 = part4(D, P, G, mktrf, rf)
+        tested += t4
+        out['countries'] = rep4
 
     out['tested'] = tested
     out['n_tested'] = len(tested)
@@ -803,6 +810,83 @@ def part3(D, P, G, mktrf, rf, RP, RG, RM):
         v['holm_p_hold'] = hp.get(k)
         finalize(v)
     return list(res.values())
+
+
+# ───────────────────────── 探索4: 国ごとの実時間の採用者（out/mw_postpub_prereg4.json）─────────────────────────
+PREREG4 = 'mw_postpub_prereg4.json'
+COUNTRIES = ['gbr', 'deu', 'fra', 'can', 'aus', 'che', 'ita', 'esp', 'nld', 'swe', 'hkg', 'sgp', 'kor', 'twn', 'ind', 'chn',
+             'bel', 'dnk', 'nor', 'fin', 'aut', 'nzl', 'zaf', 'mex', 'mys', 'tha', 'idn', 'phl', 'tur', 'pol', 'chl', 'grc']
+MATURE_CHARS = 50
+
+
+def tilt_market(mkt, T, D, chars, adopt, start):
+    """市場 + 採用済み特徴の傾き（良い側−3つの平均）の等分平均。傾きが3つ以上ある月から"""
+    out, cnt = {}, {}
+    started = False
+    for m in sorted(k for k in mkt if k >= start and k <= DATA_END):
+        act = [a for a in chars if a in T and adopt.get(a) is not None and adopt[a] <= m and m in T[a]]
+        if not started:
+            if len(act) < MIN_ADOPTED:
+                continue
+            started = True
+        out[m] = mkt[m] + (math.fsum(T[a][m] for a in act) / len(act) if act else 0.0)
+        cnt[m] = len(act)
+    return out, cnt
+
+
+def part4(D, P, G, mktrf, rf):
+    known = [a for a, d in D.items() if d['pub']]
+    ad0 = adopt_dates(D, 0)
+    fam = {'Z': {}, 'ZT': {}}
+    info = {}
+    for c in COUNTRIES:
+        Pc = load_terciles(c)
+        Gc = good_series(Pc, D)
+        mk = M.jkp_mkt(c, 'vw')
+        cnt = collections.Counter(k for a in Pc for k in Pc[a].get('3.0', {}))  # 第3三分位に値のある特徴の数（銘柄数20以上）
+        mature = min([k for k, v in cnt.items() if v >= MATURE_CHARS], default=None)
+        if mature is None or mature > 199912:
+            info[c] = {'excluded': f'成熟（{MATURE_CHARS}特徴）が2000年以降: {mature}'}
+            continue
+        start = max(REG_START, mature)
+        r, rc, rt = adopter(Gc, D, known, ad0, False, start_min=start)
+        th = mean_turn(rt)
+        # 構造の偏りの目安: 真ん中の三分位の採用者
+        Gm = {a: Pc[a]['2.0'] for a in known if a in Pc and '2.0' in Pc[a]}
+        rm, _, _ = adopter(Gm, D, known, ad0, False, start_min=start)
+        Tc = tilt_series(Pc, D)
+        zt, ztc = tilt_market(mk, Tc, D, known, ad0, start)
+        for fk, series, desc in (('Z', r, f'{c}: 実時間の採用者（米国の公表日・良い側の三分位を等分）対 {c} の vw 市場'),
+                                 ('ZT', zt, f'{c}: 市場＋採用済み特徴の傾き（良い側−3つの三分位の平均）の等分平均（三分位の等分の小型寄りを除いた版・ほぼ買いだけ）')):
+            e = evaluate(series, mk, rf, th)
+            fam[fk][c] = {'name': f'{fk}_{c}', 'family': 'explore4_' + fk, 'primary': False, 'description': desc, 'country': c,
+                          'start': min(series) if series else None, 'eval': e, 'annual': annual_table(series, mk)}
+        fm = M.excess_stats(to_total(rm, rf), to_total(mk, rf))
+        hm = M.excess_stats(to_total(rm, rf), to_total(mk, rf), a=M.HOLD_START)
+        info[c] = {'start': start, 'mature': mature, 'n_adopted_2006': rc.get(200612), 'n_adopted_2025': rc.get(202512),
+                   'mid_adopter_vs_mkt': {'full_ex': fm['ex_ann'] if fm else None, 'hold_ex': hm['ex_ann'] if hm else None}}
+    tested = []
+    for fk, rows in fam.items():
+        # C5 = 同じ族の他の国のうち、全期間の算術平均の超過が正の国の割合
+        full_pos = {c: bool(v['eval']['full'] and v['eval']['full']['ex_ann'] > 0) for c, v in rows.items()}
+        hp = M.holm({c: (v['eval']['hold'] or {}).get('p') for c, v in rows.items()})
+        for c, v in rows.items():
+            others = [full_pos[o] for o in rows if o != c]
+            v['repl'] = {'regions': len(others), 'positive': sum(others), 'detail': '同じ族の他の国（全期間の超過が正か）'}
+            v['holm_p_hold'] = hp.get(c)
+            finalize(v)
+            tested.append(v)
+    # 要約
+    for fk, rows in fam.items():
+        hs = [v['eval']['hold'] for v in rows.values() if v['eval']['hold']]
+        fs = [v['eval']['full'] for v in rows.values() if v['eval']['full']]
+        info[f'summary_{fk}'] = {'countries': len(rows), 'full_positive': sum(1 for f in fs if f['ex_ann'] > 0),
+                                 'hold_positive': sum(1 for h in hs if h['ex_ann'] > 0),
+                                 'hold_t_ge_1_65': sum(1 for h in hs if (h['t'] or 0) >= 1.65),
+                                 'hold_mean_ex': round(S.mean(h['ex_ann'] for h in hs), 2) if hs else None,
+                                 'hold_median_ex': round(S.median(h['ex_ann'] for h in hs), 2) if hs else None,
+                                 'grades': dict(collections.Counter(v['grade'] for v in rows.values()))}
+    return tested, info
 
 
 def annual_table(r, mktrf):
