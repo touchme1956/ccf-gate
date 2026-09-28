@@ -661,6 +661,29 @@ def run():
            'prereg3': 'mw_inside_tech_prereg3.json', 'prereg3_commit': sha_of(os.path.join('out', 'mw_inside_tech_prereg3.json')),
            'prereg2': 'mw_inside_tech_prereg2.json', 'prereg2_commit': sha_of(os.path.join('out', 'mw_inside_tech_prereg2.json')),
            'tested': tested, 'n_tested': len(tested), 'runtime_s': round(time.time() - t0, 1)}
+    f2 = lambda x: None if not x else {'ex_ann': x['ex_ann'], 't': x['t'], 'cagr_diff': x['cagr_diff']}
+    graded = {**{r: L[r] for r in L_RULES}, **{r: X[r] for r in X_RULES}, **Y}
+    obj['grade_counts'] = {g: sum(1 for v in graded.values() if v['grade'] == g) for g in 'SABC'}
+    obj['headline'] = {
+        'tech_cluster_vs_mkt': {k: f2(L['cluster_vs_mkt'][k]) for k in ('full', 'train', 'hold', 'recent')},
+        'best_primary': {r: {'full': f2(L[r]['full']), 'train': f2(L[r]['train']), 'hold': f2(L[r]['hold']), 'cost_hold': f2(L[r]['cost_hold']),
+                             'roll20_win': (L[r]['roll20'] or {}).get('win_rate'), 'repl': f"{L[r]['repl']['positive']}/{L[r]['repl']['regions']}", 'grade': L[r]['grade']}
+                         for r in ('L_mom_T1', 'L_combo_T1', 'L_EW', 'L_val_T1')},
+        'pre1966_L_mom_T1': f2(P['L_mom_T1']['stats']),
+        'etf_hold': {k: f2(v['hold']) for k, v in Ef.items()},
+    }
+    obj['deviations'] = [
+        'E の族の cost_hold は保有期間の超過そのもの（Yahoo の調整後終値は信託報酬と器の中の売買費用を引いた後なので、上乗せの費用は引いていない）',
+        'Y_ITcap の C5: bel・dnk・isr・nzl は vw_cap と vw が同じ（NYSE 80%点を超える銘柄が無い）＝差 0.0 を『正でない』と数えた（事前登録どおり・厳しい側）',
+        'S の族の E/P は浮動株時価（fcap）で割った（持ち合い・創業者持分の多い社の E/P を大きく見せる）。事前登録どおり',
+        'mw_common に不具合は見つからなかった（French Mkt の CAGR 1926〜 10.38%・2007〜 11.13% を再現、4業種の塊は French 12業種 BusEq と相関 0.9998）',
+    ]
+    obj['caveats'] = [
+        '選べる業種は4つ（1966〜1973年は3つ）＝幅が狭い。上位1業種の規則は追従のぶれが大きく、年+4%の上乗せでも t が2に届かない',
+        'French の業種は SIC の分類で、Apple・NVIDIA などは Chips に入る。実在の器（SMH・XLK・QQQ）とは中身が違う',
+        'E の族は今も在る器だけ（生き残りの偏り）で、始まりは2003年以降＝訓練期間が無く構造的に C',
+        'I の族の French 版の振り向け（特に割安）は、1970〜90年代に Softw・Chips に入れた積立が長く複利で育った効果が大きい（期末の山: 割安の振り向けで Chips 63.5%・Softw 28.8%、Softw への積立は5%だけ）',
+    ]
     p = M.save(OUT_NAME, obj)
     print('saved', p, 'n_tested', len(tested), 'runtime', obj['runtime_s'])
     for r in L_RULES + X_RULES:
