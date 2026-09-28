@@ -75,6 +75,11 @@ class FR:
         bm = T['Sum of BE / Sum of ME']
         self.BM = {c: {y: row[j] for y, row in bm['data'].items() if row[j] is not None} for j, c in enumerate(self.cols)}
         self.months = sorted(set().union(*[set(self.R[c]) for c in self.cols]))
+        # prereg2（探索 X）用: 配当なしの価格リターンと無リスク金利
+        W = M.french_tables('49_Industry_Portfolios_Wout_Div')['Average Value Weighted Returns -- Monthly']
+        assert [c.strip() for c in W['cols']] == self.cols, '配当なしファイルの列が違う'
+        self.RX = monthly(W, 0.01)
+        self.RF = M.ff_factors()['rf']
 
     def mom(self, c, m):
         ks = [madd(m, -k) for k in range(2, 13)]           # m−2 … m−12（11か月・1か月飛ばす）
@@ -91,6 +96,40 @@ class FR:
 
     def eligible(self, c, m):
         return self.N[c].get(m, 0) >= MIN_FIRMS and m in self.ME[c] and m in self.R[c]
+
+    # ── prereg2 の信号（m より前の月だけ） ──
+    def mom6(self, c, m):
+        ks = [madd(m, -k) for k in range(1, 7)]
+        r = self.R[c]
+        if not all(k in r for k in ks):
+            return None
+        return math.exp(math.fsum(math.log1p(r[k]) for k in ks)) - 1
+
+    def mom1(self, c, m):
+        return self.R[c].get(madd(m, -1))
+
+    def hi52(self, c, m):
+        rx = self.RX[c]
+        ks = [madd(m, -k) for k in range(12, 0, -1)]      # m−12 … m−1
+        if not all(k in rx for k in ks):
+            return None
+        p, px = 1.0, []
+        for k in ks:
+            p *= 1 + rx[k]; px.append(p)
+        return px[-1] / max(px)
+
+    def seas(self, c, m, years=20, need=10):
+        r = self.R[c]
+        v = [r[madd(m, -12 * k)] for k in range(1, years + 1) if madd(m, -12 * k) in r]
+        return S.mean(v) if len(v) >= need else None
+
+    def ts_pass(self, c, m):
+        ks = [madd(m, -k) for k in range(1, 13)]
+        r = self.R[c]
+        if not all(k in r and k in self.RF for k in ks):
+            return None
+        g = math.fsum(math.log1p(r[k]) for k in ks); gf = math.fsum(math.log1p(self.RF[k]) for k in ks)
+        return g > gf
 
 
 def rank_desc(vals):
@@ -134,14 +173,61 @@ def weights(F, cols, rule, m):
     return {c: me[c] / tot for c in pick}
 
 
-def run_rule(F, cols, rule, start=START, end=None):
+X_RULES = ['X_mom6_T1', 'X_mom6_T2', 'X_mom1_T1', 'X_mom1_T2', 'X_hi52_T1', 'X_hi52_T2', 'X_seas_T1', 'X_seas_T2',
+           'X_mom_T3', 'X_tsmom_excl', 'X_tsmom_mom_T1']
+DESC.update({
+    'X_mom6_T1': '6か月の勢い（m−6〜m−1）の最上位1業種', 'X_mom6_T2': '6か月の勢いの上位2業種',
+    'X_mom1_T1': '先月のリターンの最上位1業種', 'X_mom1_T2': '先月のリターンの上位2業種',
+    'X_hi52_T1': '52週高値への近さの最上位1業種', 'X_hi52_T2': '52週高値への近さの上位2業種',
+    'X_seas_T1': '同じ暦月の過去20年平均の最上位1業種', 'X_seas_T2': '同じ暦月の過去20年平均の上位2業種',
+    'X_mom_T3': '12-1 の最悪1業種だけ外す（上位3を時価加重）',
+    'X_tsmom_excl': '12か月の総リターンが無リスク金利を上回る業種だけ時価加重（無ければ全部）',
+    'X_tsmom_mom_T1': '無リスク金利を上回る業種の中の 12-1 最上位1業種',
+})
+
+
+def xweights(F, cols, rule, m):
+    """prereg2 の探索の規則の重み（m より前に分かる値だけ）"""
+    el = [c for c in cols if F.eligible(c, m)]
+    me = {c: F.ME[c][m] for c in el}
+
+    def top(sc, K):
+        sc = {c: v for c, v in sc.items() if v is not None}
+        order = sorted(sc, key=lambda c: (-sc[c], -me[c]))[:K]
+        if not order:
+            return None
+        tot = sum(me[c] for c in order)
+        return {c: me[c] / tot for c in order}
+    if rule == 'X_mom_T3':
+        return top({c: F.mom(c, m) for c in el}, 3)
+    if rule in ('X_tsmom_excl', 'X_tsmom_mom_T1'):
+        tp = {c: F.ts_pass(c, m) for c in el}
+        ok = [c for c in el if tp[c]]
+        if rule == 'X_tsmom_excl':
+            cs = ok or [c for c in el if tp[c] is not None]
+            if not cs:
+                return None
+            tot = sum(me[c] for c in cs)
+            return {c: me[c] / tot for c in cs}
+        cand = ok or el
+        return top({c: F.mom(c, m) for c in cand}, 1)
+    sig, K = rule.split('_')[1], int(rule[-1])
+    fn = {'mom6': F.mom6, 'mom1': F.mom1, 'hi52': F.hi52, 'seas': F.seas}[sig]
+    return top({c: fn(c, m) for c in el}, K)
+
+
+def run_rule(F, cols, rule, start=START, end=None, min_elig=1):
     """→ (月次総リターン {m: r}, 年率の片道入れ替え, 保有の記録 {m: [業種]})"""
     out, held, turns = {}, {}, []
     prev = None
+    wfn = xweights if rule.startswith('X_') else weights
     for m in F.months:
         if m < start or (end and m > end):
             continue
-        w = weights(F, cols, rule, m)
+        if min_elig > 1 and sum(1 for c in cols if F.eligible(c, m)) < min_elig:
+            prev = None
+            continue
+        w = wfn(F, cols, rule, m)
         if not w:
             prev = None
             continue
@@ -183,7 +269,8 @@ def block(s, b, turn, mkt=None, postpub=False):
     return e
 
 
-def L_family(F, mkt):
+def L_family(F, mkt, rules=None):
+    rules = rules or L_RULES
     res, series = {}, {}
     bench, bturn, _ = run_rule(F, CLUSTERS['tech'], 'cap')
     series['cap'] = bench
@@ -193,10 +280,10 @@ def L_family(F, mkt):
     rb = {}
     for cl in REPL:
         rb[cl] = run_rule(F, CLUSTERS[cl], 'cap')[0]
-    for rule in L_RULES:
+    for rule in rules:
         s, turn, held = run_rule(F, CLUSTERS['tech'], rule)
         series[rule] = s
-        e = block(s, bench, turn, mkt, postpub=('mom' in rule or 'combo' in rule))
+        e = block(s, bench, turn, mkt, postpub=('mom' in rule or 'combo' in rule or rule.startswith('X_')))
         # 何を持っていたか（業種ごとの月数・期間別）
         cnt = {}
         for m, cs in held.items():
@@ -213,14 +300,29 @@ def L_family(F, mkt):
         pos = sum(1 for cl in REPL if rep[cl]['full'] and rep[cl]['full']['ex_ann'] > 0)
         e['repl'] = {'regions': len(REPL), 'positive': pos, 'detail': rep, 'rule': '全期間の算術平均の超過が正の塊の数'}
         res[rule] = e
-    hp = {r: (res[r]['hold'] or {}).get('p') for r in L_RULES}
+    hp = {r: (res[r]['hold'] or {}).get('p') for r in rules}
     hh = M.holm(hp)
-    for r in L_RULES:
+    for r in rules:
         e = res[r]
         e['family_holm_p_hold'] = hh.get(r)
         g, c = M.grade(e['full'], e['train'], e['hold'], e['roll20'], cost_hold=e['cost_hold'], repl=e['repl'], family_holm_p=hh.get(r))
         e['grade'], e['criteria'] = g, c
     return res, series
+
+
+def P_pre1966(F):
+    """prereg2 の報告: 1946-07〜1966-06 の月（選べる業種が2つ以上の月だけ）に同じ規則を当てる"""
+    cols = CLUSTERS['tech']
+    bench = run_rule(F, cols, 'cap', start=194607, end=196606, min_elig=2)[0]
+    out = {'bench_months': [min(bench), max(bench), len(bench)] if bench else None}
+    for rule in L_RULES + X_RULES:
+        s, turn, held = run_rule(F, cols, rule, start=194607, end=196606, min_elig=2)
+        cnt = {}
+        for m, cs in held.items():
+            for c in cs:
+                cnt[c] = cnt.get(c, 0) + 1
+        out[rule] = {'stats': M.excess_stats(s, bench), 'months': len(s), 'months_held': cnt}
+    return out
 
 
 # ───────────────────────── S（SEC 2010〜） ─────────────────────────
@@ -347,14 +449,15 @@ def E_family(legs):
 
 
 # ───────────────────────── I（新規資金の振り向け） ─────────────────────────
-def dca_steer(choose, fixed, rets, months):
+def dca_steer(choose, fixed, rets, months, detail=False):
     """毎月1単位。choose(m) → 資産名（振り向け）、fixed = {資産: 割合}（相手）。売らない。→ 最終額 (steer, fixed)"""
-    hs, hf = {}, {}
+    hs, hf, cnt = {}, {}, {}
     for m in months:
         a = choose(m)
         if a is None:
             return None
         hs[a] = hs.get(a, 0.0) + 1.0
+        cnt[a] = cnt.get(a, 0) + 1
         for x, w in fixed.items():
             hf[x] = hf.get(x, 0.0) + w
         for x in list(hs):
@@ -365,6 +468,10 @@ def dca_steer(choose, fixed, rets, months):
             if m not in rets[x]:
                 return None
             hf[x] *= 1 + rets[x][m]
+    if detail:
+        tot = sum(hs.values()); n = sum(cnt.values())
+        return {'share_of_contributions': {k: round(v / n, 3) for k, v in sorted(cnt.items())},
+                'final_pot_share': {k: round(v / tot, 3) for k, v in sorted(hs.items())}}
     return sum(hs.values()), sum(hf.values())
 
 
@@ -384,6 +491,11 @@ def steer_windows(choose, fixed, rets, months, years_list=(10, 15, 20), step=12)
                             'worst': min(res, key=lambda x: x[1]), 'best': max(res, key=lambda x: x[1])}
     v = dca_steer(choose, fixed, rets, months)
     out['all_span'] = {'from': months[0], 'to': months[-1], 'ratio': round(v[0] / v[1], 3) if v else None}
+    out['diag_prereg2'] = {'all_span': dca_steer(choose, fixed, rets, months, detail=True)}
+    for a0 in (200001, 200607):   # 20年積立の起点の例（診断）
+        w = [m for m in months if m >= a0][:240]
+        if len(w) == 240:
+            out['diag_prereg2'][f'20y_from_{a0}'] = dca_steer(choose, fixed, rets, w, detail=True)
     return out
 
 
@@ -451,6 +563,12 @@ def run():
     Ef = E_family(legs)
     Sf, Sinfo = S_family()
     If = I_family(F)
+    # prereg2: 探索の族 X と報告 P
+    X, xseries = L_family(F, mkt, rules=X_RULES)
+    X.pop('cluster_vs_mkt', None)
+    for r in X_RULES:
+        X[r]['role'] = 'exploratory_prereg2（探索・主の族の格付けを置き換えない）'
+    P = P_pre1966(F)
     tested = []
     for r in L_RULES:
         tested.append({'name': r, 'family': 'L', 'role': 'primary', 'grade': L[r]['grade'], 'desc': DESC[r]})
@@ -464,15 +582,22 @@ def run():
         tested.append({'name': k, 'family': 'E', 'role': 'report', 'grade': v['grade'], 'holdable_rakuten': v['holdable_rakuten']})
     for k in If:
         tested.append({'name': k, 'family': 'I', 'role': 'report（格付けしない）'})
+    for r in X_RULES:
+        tested.append({'name': r, 'family': 'X', 'role': 'exploratory_prereg2', 'grade': X[r]['grade'], 'desc': DESC[r]})
+        for cl in REPL:
+            tested.append({'name': f'{r}@{cl}', 'family': 'X_repl', 'role': 'C5 の再現（格付けしない）'})
+    for r in L_RULES + X_RULES:
+        tested.append({'name': f'{r}@pre1966', 'family': 'P', 'role': 'report_prereg2（1946-07〜1966-06・格付けしない）'})
     obj = {'angle': 'inside_tech', 'tool': 'night/mw_inside_tech.py', 'prereg': PRE_NAME, 'prereg_commit': sha_of(os.path.join('out', PRE_NAME)),
-           'global_prereg': 'out/mw_prereg.json', 'checks': checks, 'L': L, 'S': Sf, 'S_info': Sinfo, 'E': Ef, 'I': If,
+           'global_prereg': 'out/mw_prereg.json', 'checks': checks, 'L': L, 'S': Sf, 'S_info': Sinfo, 'E': Ef, 'I': If, 'X': X, 'P_pre1966': P,
+           'prereg2': 'mw_inside_tech_prereg2.json', 'prereg2_commit': sha_of(os.path.join('out', 'mw_inside_tech_prereg2.json')),
            'tested': tested, 'n_tested': len(tested), 'runtime_s': round(time.time() - t0, 1)}
     p = M.save(OUT_NAME, obj)
     print('saved', p, 'n_tested', len(tested), 'runtime', obj['runtime_s'])
-    for r in L_RULES:
-        e = L[r]
+    for r in L_RULES + X_RULES:
+        e = L[r] if r in L else X[r]
         f = lambda x: (x['ex_ann'], x['t']) if x else None
-        print(r, L[r]['grade'], 'full', f(e['full']), 'train', f(e['train']), 'hold', f(e['hold']), 'cost', f(e['cost_hold']),
+        print(r, e['grade'], 'full', f(e['full']), 'train', f(e['train']), 'hold', f(e['hold']), 'cost', f(e['cost_hold']),
               'roll', (e['roll20'] or {}).get('win_rate'), 'repl', e['repl']['positive'], 'holm', e['family_holm_p_hold'])
 
 
