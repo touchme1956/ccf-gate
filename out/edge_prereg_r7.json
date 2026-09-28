@@ -1,0 +1,23 @@
+{
+ "title": "市場に勝てる規則の探索（事前登録・第7回＝凍結した規則を新興国で確かめる）",
+ "asof": "2026-09-28",
+ "why": "第5〜6回で、米国で候補になった規則（profit・payout）と、米国では不合格だが先進国22か国では強かった規則（resmom・rd・hi52・old_firms）がある。先進国と米国の2001年以降はもう使った。規則は変えずに、選定にも検定にも一度も使っていない JKP の新興国へ当てる。第4回（C1〜C6）と同じ作り・同じ線",
+ "rules_frozen": "out/edge/spec_{key}.json（コミット済み）と night/edge/fam_{key}.py をそのまま使う。国へ写すときは、同じ特徴・同じ側・同じ重み（spec の w）・spec の min_n_repl（20社）",
+ "tests": {
+  "C7_profit_em": "profit（cop_at の '3.0'・vw_cap）",
+  "C8_payout_em": "payout（chcsho_12m の '1.0'・vw_cap）",
+  "C9_resmom_em": "resmom（resff3_12_1 の '3.0'・vw_cap）",
+  "C10_rd_em": "rd（rd_me の '3.0'・vw_cap）",
+  "C11_hi52_em": "hi52（prc_highprc_252d の '3.0'・vw_cap）",
+  "C12_old_firms_em": "old_firms（age の '3.0'・vw_cap）"
+ },
+ "markets": "第4回と同じ MSCI の新興国24か国（bra chl chn col cze egy grc hun ind idn kor kwt mys mex per phl pol qat sau zaf twn tha tur are）のうち、JKP にその特徴の系列がある国。各月、持つ三分位が20社以上の国だけを数える。2001年以降に24か月以上数えられた国を『国ごとの正』の分母に入れる",
+ "bench": "その国の JKP mkt（vw）＋米国の短期金利（米ドル建ての総リターン。JKP の ret は米国の短期金利を引いた超過なので両方に rf を足す）",
+ "costs": "新興国の個別株の組は片道の回転1あたり 0.5%。回転は各 spec の置き値（profit・payout・rd 50%/年、resmom・hi52 200%/年、old_firms 50%/年）",
+ "period": "2001-01〜データの最新月。2001年より前は報告だけ",
+ "verdict": {
+  "再現した": "国をならした月次超過（費用後・evaluate.pooled と同じ式）が正で t ≥ 2.0、かつ6割以上の国で超過が正、かつ6つの確認の中の Holm（片側・α=0.05）を通る",
+  "再現しなかった": "それ以外"
+ },
+ "note": "確認は新しい系統の探索ではない（第1〜6回の累積 K=37 には足さない・6本の中で Holm）。ここで再現しても米国での判定（候補・不合格）は変わらない"
+}
