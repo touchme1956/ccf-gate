@@ -4,6 +4,9 @@
 問い: S&P500 のオプションを売る戦略（ボラティリティ・リスク・プレミアム）は、同じ揺れまで借りてそろえたとき、
 S&P500 配当込みにリターンで勝つか。規則は CBOE の公表済みの指数定義そのもの＋指示書の借り方（36か月のぶれの比・上限2倍）。
 事前登録: out/mw_options_vrp_prereg.json（測る前にコミット）。線は out/mw_prereg.json（mw_common.grade）。
+第2部（探索）: out/mw_options_vrp_prereg2.json（第1部の結果を見た後・第2部を測る前にコミット）＝
+  F 族: VRP（VIX²/12 − 日次の実現分散）で S&P500 の持ち高を変える（BTZ 2009・CT 2008・w∈[0,1.5]）と米国外4地域での答え合わせ（C5）、
+  G 族: オプション売りの株の向きを過去36か月の β で消した保険料を S&P500 に1倍重ねる（Israelov・Nielsen 2015）。
 
 使い方: python3 night/mw_options_vrp.py            → out/mw_options_vrp.json
         python3 night/mw_options_vrp.py --data-only → データの取得と指数どうしの照合だけ（戦略と市場は比べない）
@@ -323,12 +326,13 @@ def evaluate(name, s, net, b, rf, L=None, meta=None, postpub=None):
     return e
 
 
-def finish(e, holm_p=None):
+def finish(e, holm_p=None, repl=None):
     if e.get('status') == 'データ不足':
         e['grade'], e['criteria'] = 'C', {'note': 'データ不足'}
         return e
     sp = e['sharpe']
-    g, c = M.grade(e['full'], e['train'], e['hold'], e['roll20'], cost_hold=e['cost_hold'], repl=None,
+    e['repl'] = repl
+    g, c = M.grade(e['full'], e['train'], e['hold'], e['roll20'], cost_hold=e['cost_hold'], repl=repl,
                    family_holm_p=holm_p, sharpe_pair={'train': sp['train'], 'hold': sp['hold']}, leveraged_or_timing=True)
     e['family_holm_p'] = holm_p
     e['grade'], e['criteria'] = g, c
@@ -380,6 +384,393 @@ def jp_after_tax(r, y, rb, yb, tau_div, bench_wht=0.10, cg=0.20315, taxable=True
     g, gb = w ** (1 / n) - 1, wb ** (1 / n) - 1
     return {'from': ks[0], 'to': ks[-1], 'years': round(n, 1), 'cagr_after_tax': round(g * 100, 2), 'bench_after_tax': round(gb * 100, 2),
             'diff': round((g - gb) * 100, 2)}
+
+
+# ───────────────────────── 第2部（prereg2・探索） ─────────────────────────
+PRE2 = 'mw_options_vrp_prereg2.json'
+GAMMA, WMAX, BURN, VARWIN, TCOST = 3.0, 1.5, 60, 60, 0.001
+F_START = 199504
+
+
+def madd(m, n):
+    y, mm = divmod(m // 100 * 12 + m % 100 - 1 + n, 12)
+    return y * 100 + mm + 1
+
+
+def month_end_level(d):
+    """各月の最後の観測（20日以降の月だけ）の水準"""
+    last = {}
+    for k in sorted(d):
+        last[k // 100] = (k, d[k])
+    return {m: v for m, (k, v) in last.items() if k % 100 >= 20 and m <= END}
+
+
+def rv_monthly(px):
+    """日次の水準 → その月の日次の対数リターンの二乗の和（前月末から）。15日未満・7日を超える空白をまたぐ対は使わない"""
+    ks = sorted(px)
+    out, cnt = {}, collections.Counter()
+    for p, k in zip(ks, ks[1:]):
+        dp = datetime.date(p // 10000, p // 100 % 100, p % 100); dk = datetime.date(k // 10000, k // 100 % 100, k % 100)
+        if (dk - dp).days > 7:
+            continue
+        r = math.log(px[k] / px[p])
+        out[k // 100] = out.get(k // 100, 0.0) + r * r
+        cnt[k // 100] += 1
+    ends = month_end_level(px)
+    return {m: v for m, v in out.items() if cnt[m] >= 15 and m in ends}
+
+
+def vrp_series(vol, px):
+    iv, rv = month_end_level(vol), rv_monthly(px)
+    return {m: (iv[m] / 100) ** 2 / 12 - rv[m] for m in sorted(iv) if m in rv}
+
+
+def monthly_from_levels(px):
+    e = month_end_level(px)
+    ks = sorted(e)
+    return {k: e[k] / e[p] - 1 for p, k in zip(ks, ks[1:]) if madd(p, 1) == k}
+
+
+def ols(x, y):
+    mx, my = S.mean(x), S.mean(y)
+    sxx = sum((a - mx) ** 2 for a in x)
+    b = sum((a - mx) * (c - my) for a, c in zip(x, y)) / sxx if sxx > 0 else 0.0
+    return my - b * mx, b
+
+
+def fc_regress(vrp, ex, h=1, burn=BURN):
+    """t 月末の予測（t+1 月に使う・月あたりの超過）。対 (VRP_s, ex_{s+1..s+h} の平均) のうち s+h ≤ t のものだけ（後知恵なし）"""
+    months = sorted(vrp)
+    out, info = {}, {}
+    for t in months:
+        xs, ys = [], []
+        for s_ in months:
+            if madd(s_, h) > t:
+                break
+            fut = [ex.get(madd(s_, j)) for j in range(1, h + 1)]
+            if None in fut:
+                continue
+            xs.append(vrp[s_]); ys.append(sum(fut) / h)
+        if len(xs) < burn:
+            continue
+        a, b = ols(xs, ys)
+        f = (a + b * vrp[t]) if b > 0 else S.mean(ys)  # CT: 傾きの符号が逆なら標本の平均
+        out[madd(t, 1)] = max(f, 0.0)
+        info[madd(t, 1)] = {'b': b, 'pm': S.mean(ys), 'raw': a + b * vrp[t]}
+    return out, info
+
+
+def fc_median(vrp, lo, hi, burn=BURN):
+    """VRP_t ≥ 1990-01〜t の中央値 なら hi、下なら lo（t+1 月に使う）"""
+    out, hist = {}, []
+    for t in sorted(vrp):
+        hist.append(vrp[t])
+        if len(hist) < burn:
+            continue
+        out[madd(t, 1)] = hi if vrp[t] >= S.median(hist) else lo
+    return out
+
+
+def trailing_var(ex, win=VARWIN):
+    """t+1 月に使う = ex の t−win+1〜t の分散（連続した win か月がそろうときだけ）"""
+    out = {}
+    for t in sorted(ex):
+        w = [madd(t, -j) for j in range(win)]
+        if all(u in ex for u in w):
+            out[madd(t, 1)] = S.variance([ex[u] for u in w])
+    return out
+
+
+def weights_from(fc, var):
+    return {m: min(WMAX, max(0.0, f / (GAMMA * var[m]))) for m, f in fc.items() if m in var and var[m] > 0}
+
+
+def run_w(W, r, c, spread=SPREAD, cost=TCOST, start=None):
+    """W: {m: 株の割合} → 総・費用後・回転。回転 = |w − 前月の w が値動きで変わった後の割合|"""
+    ks = sorted(m for m in W if m in r and m in c and m <= END and (start is None or m >= start))
+    gross, net, TO = {}, {}, {}
+    for m in ks:
+        w = W[m]
+        g = c[m] + w * (r[m] - c[m]) - max(w - 1.0, 0.0) * spread / 12
+        p = madd(m, -1)
+        if p in gross and (1 + gross[p]) > 0:
+            prev = W[p] * (1 + r[p]) / (1 + gross[p])
+        else:
+            prev = w
+        TO[m] = abs(w - prev)
+        gross[m] = g
+        net[m] = g - TO[m] * cost
+    return gross, net, TO
+
+
+def slope(x, y):
+    return ols(x, y)[1]
+
+
+def hedged_overlay(X, sp, rf, cost_ann, kind, win=36, cond=None, start=None):
+    """G 族: 成分 Y（kind='excess' → X − RF、'vs_sp' → X − S&P500）の株の向きを過去 win か月の β で消して S&P500 に重ねる"""
+    ks = sorted(k for k in X if k in sp and k in rf and k <= END)
+    Y = {k: (X[k] - rf[k]) if kind == 'excess' else (X[k] - sp[k]) for k in ks}
+    E = {k: sp[k] - rf[k] for k in ks}
+    s, net, B, parts = {}, {}, {}, {'Y': [], 'bE': []}
+    prev = None
+    for i, k in enumerate(ks):
+        if i < win or (start is not None and k < start):
+            continue
+        w = ks[i - win:i]
+        assert w[-1] < k
+        if not consecutive(w + [k]):
+            prev = None
+            continue
+        on = True
+        if cond is not None:
+            if k not in cond:
+                continue
+            on = cond[k]
+        b = slope([E[u] for u in w], [Y[u] for u in w])
+        if on:
+            r = sp[k] + Y[k] - b * E[k] - SPREAD / 12
+            n = r - cost_ann / 100 / 12 - (abs(b - prev) * DL_COST if prev is not None else 0)
+            parts['Y'].append(Y[k]); parts['bE'].append(b * E[k])
+        else:
+            r = n = sp[k]
+        s[k], net[k], B[k] = r, n, (b if on else None)
+        prev = b
+    return s, net, B, parts
+
+
+def yahoo_levels(t):
+    """日次の水準（調整後終値・無ければ終値）。mw_common.yahoo のキャッシュを読む"""
+    M.yahoo(t, '1d')
+    p = os.path.join(M.CACHE, f'yh_{t.replace("^", "IDX_").replace("=", "_")}_1d.json')
+    r = json.load(open(p))['chart']['result'][0]
+    adj = r['indicators'].get('adjclose', [{}])[0].get('adjclose') or r['indicators']['quote'][0]['close']
+    off = (r.get('meta') or {}).get('gmtoffset') or 0  # 取引所の現地の日付に付け直す（豪州は UTC だと前日になる）
+    out = {}
+    for tt, a in zip(r['timestamp'], adj):
+        if a is None or a <= 0:
+            continue
+        d = datetime.datetime.utcfromtimestamp(tt + off)
+        out[d.year * 10000 + d.month * 100 + d.day] = a
+    return out
+
+
+def stoxx_levels(sym):
+    b = M.get(f'https://www.stoxx.com/document/Indices/Current/HistoricalData/h_{sym.lower()}.txt', name=f'stoxx_h_{sym.lower()}.txt',
+              max_age_days=30).decode('latin-1').splitlines()
+    out = {}
+    for line in b[1:]:
+        c = line.split(';')
+        try:
+            dd, mm, yy = c[0].split('.')
+            v = float(c[2])
+        except (ValueError, IndexError):
+            continue
+        if v > 0:
+            out[int(yy) * 10000 + int(mm) * 100 + int(dd)] = v
+    return out
+
+
+def fred_monthly_rate(sid):
+    c = M.get(f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}', name=f'fred_{sid}.csv', max_age_days=30).decode()
+    out = {}
+    for line in c.strip().splitlines()[1:]:
+        d, v = line.split(',')
+        if v in ('', '.'):
+            continue
+        out[int(d[:4]) * 100 + int(d[5:7])] = float(v) / 100 / 12
+    return out
+
+
+def f_family(vrp, r, c, start=None, spread=SPREAD):
+    """F1〜F4 の持ち高と成績。start が None なら4本がそろう最初の月"""
+    ex = {k: r[k] - c[k] for k in r if k in c}
+    var = trailing_var(ex)
+    f1, i1 = fc_regress(vrp, ex, 1)
+    f2, i2 = fc_regress(vrp, ex, 3)
+    Ws = {'F1': weights_from(f1, var), 'F2': weights_from(f2, var), 'F3': fc_median(vrp, 0.5, 1.0), 'F4': fc_median(vrp, 1.0, 1.5)}
+    if start is None:
+        start = max(min(m for m in W if m in r and m in c) for W in Ws.values())
+    out = {}
+    for k, W in Ws.items():
+        g, n, TO = run_w(W, r, c, spread=spread, start=start)
+        out[k] = (g, n, TO, {m: W[m] for m in g})
+    return out, {'F1': (f1, i1), 'F2': (f2, i2)}, start, ex
+
+
+def oos_r2(fc, info, ex, h, a=None, z=None):
+    """CT 型の標本外 R²: 1 − Σ(y − f)² ÷ Σ(y − 標本の平均)²。y は h か月平均（t+1 から）"""
+    num = den = 0.0
+    n = 0
+    for m in sorted(fc):
+        if (a is not None and m < a) or (z is not None and m > z):
+            continue
+        fut = [ex.get(madd(m, j)) for j in range(h)]
+        if None in fut:
+            continue
+        y = sum(fut) / h
+        num += (y - fc[m]) ** 2
+        den += (y - info[m]['pm']) ** 2
+        n += 1
+    return {'n': n, 'r2_pct': round((1 - num / den) * 100, 2) if den > 0 else None}
+
+
+def wstats(W, TO):
+    v = list(W.values())
+    return {'mean_w': round(S.mean(v), 3), 'share_at_0': round(sum(1 for x in v if x <= 1e-9) / len(v), 3),
+            'share_at_cap': round(sum(1 for x in v if x >= WMAX - 1e-9) / len(v), 3),
+            'mean_w_train': round(S.mean([W[m] for m in W if m <= TE]), 3) if any(m <= TE for m in W) else None,
+            'mean_w_hold': round(S.mean([W[m] for m in W if m >= HS]), 3) if any(m >= HS for m in W) else None,
+            'turnover_per_year': round(S.mean(TO.values()) * 12, 3)}
+
+
+def btz_check(vrp, ex):
+    """BTZ の照合（標本内・1990-01〜2007-12）"""
+    out = {}
+    for h in (1, 3):
+        xs, ys = [], []
+        for t in sorted(vrp):
+            if not (199001 <= t <= 200712):
+                continue
+            fut = [ex.get(madd(t, j)) for j in range(1, h + 1)]
+            if None in fut:
+                continue
+            xs.append(vrp[t]); ys.append(sum(fut) / h)
+        a, b = ols(xs, ys)
+        res = [y - a - b * x for x, y in zip(xs, ys)]
+        mx = S.mean(xs)
+        u = [(x - mx) * e for x, e in zip(xs, res)]
+        sxx = sum((x - mx) ** 2 for x in xs)
+        # NW（ラグ h+2）の傾きの標準誤差
+        L = h + 2
+        g0 = sum(v * v for v in u)
+        for j in range(1, L + 1):
+            g0 += 2 * (1 - j / (L + 1)) * sum(u[i] * u[i - j] for i in range(j, len(u)))
+        se = math.sqrt(g0) / sxx
+        r2 = 1 - sum(e * e for e in res) / sum((y - S.mean(ys)) ** 2 for y in ys)
+        out[f'h{h}'] = {'n': len(xs), 'slope': round(b, 3), 'nw_t': round(b / se, 2), 'r2_pct': round(r2 * 100, 2)}
+    return out
+
+
+def part2(D, res, add_fn, log_fn):
+    """第2部の戦略を res に足し、報告の辞書を返す"""
+    rf, sp, mkt = D['rf'], D['sp'], D['mkt']
+    rep = {'prereg2': PRE2, 'prereg2_commit': git_sha(os.path.join('out', PRE2))}
+    spx, vix = cboe_daily('SPX'), cboe_daily('VIX')
+    vrp = vrp_series(vix, spx)
+    vk = sorted(vrp)
+    rep['vrp_summary'] = {'from': vk[0], 'to': vk[-1], 'months': len(vk), 'mean_pct2_m': round(S.mean(vrp.values()) * 1e4, 3),
+                          'sd_pct2_m': round(S.stdev(vrp.values()) * 1e4, 3), 'share_negative': round(sum(1 for v in vrp.values() if v < 0) / len(vk), 3),
+                          'min': [min(vrp, key=vrp.get), round(min(vrp.values()) * 1e4, 2)], 'max': [max(vrp, key=vrp.get), round(max(vrp.values()) * 1e4, 2)],
+                          'unit': '%²/月（VIX²/12 と同じ単位）', 'gaps': not consecutive(vk)}
+    exu = {k: sp[k] - rf[k] for k in sp if k in rf}
+    rep['btz_check_in_sample_1990_2007'] = btz_check(vrp, exu)
+    # F 族（米国）
+    F, fcs, st, ex = f_family(vrp, sp, rf, start=F_START)
+    rep['F_start'] = st
+    names = {'F1': 'F1-BTZ1m', 'F2': 'F2-BTZ3m', 'F3': 'F3-med0.5/1', 'F4': 'F4-med1/1.5'}
+    desc = {'F1': 'BTZ 1か月先の回帰＋CT・w∈[0,1.5]', 'F2': 'BTZ 3か月先の回帰＋CT・w∈[0,1.5]', 'F3': 'VRP ≥ 中央値なら1・下なら0.5',
+            'F4': 'VRP ≥ 中央値なら1.5・下なら1'}
+    rep['F_weights'] = {}
+    for k, (g, n, TO, W) in F.items():
+        e = add_fn(names[k], 'F', g, n, None, sp, 'VRP', RS, desc[k])
+        e['weights'] = wstats(W, TO)
+        rep['F_weights'][names[k]] = e['weights']
+        rep.setdefault('F_w_series', {})[names[k]] = {str(m): round(W[m], 3) for m in sorted(W)}
+    for k, h in [('F1', 1), ('F2', 3)]:
+        fc, info = fcs[k]
+        fcs_st = {m: v for m, v in fc.items() if m >= st}
+        rep.setdefault('oos_r2', {})[names[k]] = {'train': oos_r2(fcs_st, info, ex, h, z=TE), 'hold': oos_r2(fcs_st, info, ex, h, a=HS),
+                                                  'share_slope_negative': round(sum(1 for m in fcs_st if info[m]['b'] <= 0) / len(fcs_st), 3)}
+    # 頑健性: 借入 +1.5%
+    Fb, _, _, _ = f_family(vrp, sp, rf, start=F_START, spread=0.015)
+    g, n, TO, W = Fb['F1']
+    add_fn('F1-BTZ1m(借入+1.5%)', 'robust2', g, n, None, sp, 'VRP', RS, '借入 RF+1.5%')
+    # G 族
+    med = fc_median(vrp, False, True)
+    cfg = [('G1-PUTh', 'PUT', 'excess', None), ('G2-BXMh', 'BXM', 'vs_sp', None), ('G3-BXMDh', 'BXMD', 'vs_sp', None),
+           ('G4-CNDRh', 'CNDR', 'excess', None), ('G5-PUTh|VRP高', 'PUT', 'excess', med)]
+    rep['G_parts'] = {}
+    Gser = {}
+    for nm, x, kind, cond in cfg:
+        g, n, B, parts = hedged_overlay(D[x], sp, rf, COST[x], kind, cond=cond, start=F_START if cond is not None else None)
+        e = add_fn(nm, 'G', g, n, None, sp, x, PP_G.get(x, RS), 'β で株の向きを消した保険料を S&P500 に1倍重ねる' + ('（VRP が中央値以上の月だけ）' if cond else ''))
+        bv = [b for b in B.values() if b is not None]
+        rep['G_parts'][nm] = {'beta_mean': round(S.mean(bv), 3), 'Y_ann_pct': round(S.mean(parts['Y']) * 1200, 2),
+                              'betaE_ann_pct': round(S.mean(parts['bE']) * 1200, 2), 'months_on': len(bv), 'months': len(B)}
+        Gser[nm] = (g, n)
+    # French Mkt を相手に（頑健性）
+    for k, (g, n, TO, W) in F.items():
+        add_fn(names[k] + '[vs French Mkt]', 'robust2_frenchmkt', g, n, None, mkt, 'VRP', RS, '作り方は S&P500・相手だけ French Mkt')
+    for nm, (g, n) in Gser.items():
+        add_fn(nm + '[vs French Mkt]', 'robust2_frenchmkt', g, n, None, mkt, nm, RS, '作り方は S&P500・相手だけ French Mkt')
+    # C5: 米国外
+    regions = {}
+    specs = [('欧州(ドイツ)', lambda: stoxx_levels('V1X'), lambda: yahoo_levels('^GDAXI'), lambda: fred_monthly_rate('IR3TIB01DEM156N'), True),
+             ('インド', lambda: yahoo_levels('^INDIAVIX'), lambda: yahoo_levels('^NSEI'), lambda: fred_monthly_rate('IRSTCI01INM156N'), True),
+             ('オーストラリア', lambda: yahoo_levels('^AXVI'), lambda: yahoo_levels('^AXJO'), lambda: fred_monthly_rate('IR3TIB01AUM156N'), True),
+             ('ブラジル(EWZ)', lambda: fred_daily('VXEWZCLS'), lambda: yahoo_levels('EWZ'), lambda: dict(rf), True),
+             ('ユーロ圏(報告のみ)', lambda: stoxx_levels('V2TX'), lambda: yahoo_levels('^STOXX50E'), lambda: fred_monthly_rate('IR3TIB01DEM156N'), False)]
+    for reg, fv, fp, fr, counts in specs:
+        try:
+            vol, px, lr = fv(), fp(), fr()
+        except Exception as ex_:  # noqa
+            regions[reg] = {'status': f'取れず: {str(ex_)[:100]}', 'counts_for_C5': counts}
+            log_fn('C5 取れず', reg, ex_)
+            continue
+        v2 = vrp_series(vol, px)
+        r2 = monthly_from_levels(px)
+        if len(v2) < BURN + 24:
+            regions[reg] = {'status': f'VRP が {len(v2)} か月しかない', 'counts_for_C5': counts}
+            continue
+        FF, _, st2, _ = f_family(v2, r2, lr)
+        rr = {'vrp_from': min(v2), 'vrp_to': max(v2), 'vrp_months': len(v2), 'start': st2, 'counts_for_C5': counts,
+              'vrp_mean_pct2_m': round(S.mean(v2.values()) * 1e4, 3), 'vrp_share_negative': round(sum(1 for v in v2.values() if v < 0) / len(v2), 3)}
+        for k, (g, n, TO, W) in FF.items():
+            s_, b_ = same(g, r2)
+            n_ = {m: n[m] for m in s_}
+            lr_ = {m: lr[m] for m in s_ if m in lr}
+            rr[names[k]] = {'gross': M.excess_stats(s_, b_), 'net': M.excess_stats(n_, b_), 'sharpe': (M.sharpe(s_, lr_), M.sharpe(b_, lr_)),
+                            'weights': wstats(W, TO), 'maxdd': (round(M.maxdd(s_) * 100, 1), round(M.maxdd(b_) * 100, 1))}
+        regions[reg] = rr
+    rep['C5_regions'] = regions
+    repl = {}
+    for k in names.values():
+        cnt = [r_ for r_, v in regions.items() if v.get('counts_for_C5') and k in v and v[k]['gross']]
+        pos = [r_ for r_ in cnt if regions[r_][k]['gross']['ex_ann'] > 0]
+        repl[k] = {'regions': len(cnt), 'positive': len(pos), 'positive_list': pos}
+    rep['C5_repl'] = repl
+    return rep
+
+
+PP_G = {'PUT': 200801, 'BXM': 200301}
+
+
+def post_hoc(D):
+    """事後（判定に使わない）: O-RXM の β と α。RXM は名前どおりのリスク・リバーサル（デルタ約0.5）と判断した根拠"""
+    rf, sp, mkt = D['rf'], D['sp'], D['mkt']
+    out = {'label': '事後（第1部の結果を見た後・判定に使わない）'}
+    x = D['RXM']
+    ks = sorted(k for k in x if k in sp and k in rf)
+    xs, ss = [x[k] - rf[k] for k in ks], [sp[k] - rf[k] for k in ks]
+    b = slope(ss, xs)
+    up = [(k, round(x[k] * 100, 1), round(sp[k] * 100, 1)) for k in ks if sp[k] > 0.08]
+    out['RXM_index'] = {'beta_vs_sp': round(b, 3), 'corr': round(M.corr(xs, ss), 3), 'months_sp_up_8pct': up,
+                        'note': 'CBOE の説明文は『25デルタのストラングルを売り5デルタを買う』だが、名前は Risk Reversal で、S&P500 の大きな上げの月に大きく上がる（ストラングルの売りなら上値は保険料で頭打ち）＝ 25デルタのコールを買いプットを売るリスク・リバーサルと判断'}
+    s, n, L = overlay(x, sp, rf, COST['RXM'])
+    for bn, bb in [('sp500tr', sp), ('french_mkt', mkt)]:
+        s2, b2 = same(s, bb)
+        o = {}
+        for lab, a, z in [('full', None, None), ('train', None, TE), ('hold', HS, None)]:
+            kk = [k for k in sorted(s2) if (a is None or k >= a) and (z is None or k <= z)]
+            xs = [s2[k] - rf[k] for k in kk]; ys = [b2[k] - rf[k] for k in kk]
+            be = slope(ys, xs)
+            al = [p - be * q for p, q in zip(xs, ys)]
+            sh = lambda v: S.mean(v) / S.stdev(v) * math.sqrt(12)
+            o[lab] = {'beta': round(be, 3), 'alpha_ann_pct': round(S.mean(al) * 1200, 2), 'alpha_nw_t': round(M.nw_t(al), 2),
+                      'sharpe_unrounded': [round(sh(xs), 4), round(sh(ys), 4)]}
+        out[f'O-RXM_vs_{bn}'] = o
+    return out
 
 
 # ───────────────────────── 本体 ─────────────────────────
@@ -507,6 +898,29 @@ def main():
         finish(e, hk)
     log('判定', ' '.join(f"{k}:{e['grade']}" for k, e in res.items()))
 
+    # 第2部（prereg2 がコミットされているときだけ測る）
+    p2 = None
+    if git_sha(os.path.join('out', PRE2)):
+        n1 = set(res)
+        p2 = part2(D, res, add, log)
+        new = [k for k in res if k not in n1]
+        famAll = [k for k, e in res.items() if e['family'] in ('A', 'B', 'C', 'E', 'F', 'G')]
+        hpAll = M.holm({k: (res[k].get('hold') or {}).get('p') for k in famAll})
+        famFG = [k for k in new if res[k]['family'] in ('F', 'G')]
+        hpFG = M.holm({k: (res[k].get('hold') or {}).get('p') for k in famFG})
+        p2['holm'] = {'angle_wide_n': len(famAll), 'part2_only_n': len(famFG),
+                      'part2_only': {k: hpFG.get(k) for k in famFG}, 'angle_wide': {k: hpAll.get(k) for k in famFG}}
+        for k in new:
+            e = res[k]
+            base = k.split('[')[0].split('(')[0]
+            rp = p2['C5_repl'].get(base) if e['family'] in ('F',) else None
+            finish(e, hpAll.get(k) if e['family'] in ('F', 'G') else None, repl=rp)
+            if e['family'] in ('F', 'G'):
+                e['family_holm_p_part2_only'] = hpFG.get(k)
+        log('第2部の判定', ' '.join(f"{k}:{res[k]['grade']}" for k in new))
+    else:
+        log('第2部: prereg2 がコミットされていないので測らない')
+
     # 既知の数字の照合
     known = {}
     for nm, x, a, z in [('Whaley2002_BXM_1988-07..2001-12', 'BXM', 198807, 200112), ('Bondarenko2019_PUT_1988-07..2018-12', 'PUT', 198807, 201812)]:
@@ -577,9 +991,10 @@ def main():
                        'sharpe_train': e.get('sharpe', {}).get('train'), 'sharpe_hold': e.get('sharpe', {}).get('hold'),
                        'roll20_win': (e.get('roll20') or {}).get('win_rate'), 'family_holm_p': e.get('family_holm_p')})
     obj = {'angle': ANGLE, 'prereg': PRE, 'prereg_commit': git_sha(os.path.join('out', PRE)),
+           'prereg2': PRE2, 'prereg2_commit': git_sha(os.path.join('out', PRE2)),
            'question': pre['question'], 'end': END, 'sanity': san, 'known_numbers': known,
            'n_tested': len(res), 'n_holm_family_ABC': len(famA), 'n_holm_family_E': len(famE),
-           'tested': tested, 'strategies': res, 'real_vehicles': real,
+           'tested': tested, 'strategies': res, 'real_vehicles': real, 'part2': p2, 'post_hoc_notes': post_hoc(D),
            'runtime_sec': round(time.time() - t0, 1), 'log_tail': LOG[-40:]}
     p = M.save(OUT, obj)
     log('書いた', p, round(os.path.getsize(p) / 1e6, 2), 'MB')
