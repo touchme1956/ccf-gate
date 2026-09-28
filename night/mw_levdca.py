@@ -20,6 +20,7 @@ import mw_common as M  # noqa: E402
 import numpy as np  # noqa: E402
 
 PREREG = 'mw_levdca_prereg.json'
+PREREG2 = 'mw_levdca_prereg2.json'
 OUT = 'mw_levdca.json'
 TAX = 0.20315
 FEE_ETF, SPREAD_ETF = 0.009, 0.005      # レバレッジETF型（mw_common.lever_daily の既定と同じ）
@@ -727,17 +728,276 @@ def main():
     except Exception as ex:  # noqa
         etf_check['error'] = str(ex)[:200]
 
+    # ── 探索2（out/mw_levdca_prereg2.json）
+    ctx = dict(mkt_d=mkt_d, rf_d=rf_d, mkt_m=mkt_m, rf_m=rf_m, mkt_dm=mkt_dm, ndx_d=ndx_d, ndx_m=ndx_m,
+               s_m=s_m, b_m=b_m, rf_e=rf_e, sh=sh, sh_rf=sh_rf, reg_m=reg_m, lev_cache=lev_cache, fam_P=fam_P, fam_E=fam_E)
+    r2 = round2(ctx)
+
     # ── まとめ
-    all_graded = fam_P + fam_E
+    all_graded = fam_P + fam_E + r2['E2']
     out = {
         'angle': 'levdca', 'prereg': PREREG, 'prereg_commit': prereg_sha,
-        'n_tested': len(all_graded) + len(lc) + len(shiller_rep),
+        'prereg2': PREREG2, 'prereg2_commit': r2['prereg2_commit'],
+        'n_tested': len(all_graded) + len(lc) + len(shiller_rep) + len(r2['LCR']),
         'sanity': sanity, 'kelly': kel, 'e1_params_train_only': e1_params, 'etf_model_check': etf_check,
-        'tested': all_graded + lc + shiller_rep,
+        'round2_verdict_LC2': r2['verdict'],
+        'tested': all_graded + lc + shiller_rep + r2['LCR'],
         'log': LOG,
     }
     p = M.save(OUT, out)
     log('saved', p)
+
+
+# ───────────────────────── 探索2 ─────────────────────────
+def pv_rem(t, n, rate=0.03):
+    m = n - 1 - t
+    i = (1 + rate) ** (1 / 12) - 1
+    return (1 - (1 + i) ** (-m)) / i if m > 0 else 0.0
+
+
+def pol_target_gen(cap=2.0, rate=0.03):
+    return lambda t, V, n: np.minimum(cap, 1.0 + pv_rem(t, n, rate) / np.maximum(V, 1e-12))
+
+
+def pol_const(L):
+    return lambda t, V, n: np.full_like(V, L)
+
+
+def sim_general(Nm, n, factor_fn, policy):
+    """窓をまとめて積立。factor_fn(L配列, 月の添字配列) → 1+その月の口座リターン（0 以下は破産）"""
+    W = Nm - n + 1
+    base = np.arange(W)
+    V = np.zeros(W); pk = np.zeros(W); dd = np.zeros(W); ruin = np.zeros(W, bool)
+    for t in range(n):
+        V = V + 1
+        L = policy(t, V, n)
+        f = factor_fn(L, base + t)
+        ruin |= f <= 0
+        V = np.maximum(V * f, 0.0)
+        pk = np.maximum(pk, V)
+        dd = np.minimum(dd, np.where(pk > 0, V / np.where(pk > 0, pk, 1) - 1, 0))
+    return V, dd, ruin
+
+
+def lc_generic(name, desc, keys, factor_fn, base_r, policy, twin=True, horizons=HORIZONS, tax=False, extra_masks=None):
+    Nm = len(keys)
+    res = {'name': name, 'family': 'LCR', 'description': desc, 'grade': 'N/A（月次系列なし・LC判定を見る）', 'horizons': {}}
+    for H in horizons:
+        n = H * 12
+        if Nm < n:
+            continue
+        V, dd, ru = sim_general(Nm, n, factor_fn, policy)
+        Vb, ddb, _ = sim_const(base_r, n)
+        d = dca_summary(keys, n, V, Vb, dd, ddb, ru)
+        ends = np.array([keys[i + n - 1] for i in range(len(V))])
+        trm, hom = ends <= M.TRAIN_END, ends >= M.HOLD_START
+        if twin:
+            tw = None
+            if trm.any():
+                med = np.median(V[trm] / n)
+                for L in LGRID_TWIN:
+                    Vt, _, _ = sim_general(Nm, n, factor_fn, pol_const(L))
+                    if np.median(Vt[trm] / n) >= med:
+                        tw = (L, Vt)
+                        break
+            if tw:
+                L, Vt = tw
+                d['twin'] = {'L': L, 'p05_lc_train': round(pct(V[trm] / n, 5), 3), 'p05_twin_train': round(pct(Vt[trm] / n, 5), 3),
+                             'p05_lc_hold': round(pct(V[hom] / n, 5), 3) if hom.any() else None,
+                             'p05_twin_hold': round(pct(Vt[hom] / n, 5), 3) if hom.any() else None,
+                             'win_vs_twin_all': round(float(np.mean(V > Vt)), 3)}
+            else:
+                d['twin'] = {'L': None, 'note': '双子なし（訓練の窓が無いか、1.00〜2.00 で届かない）'}
+        if tax:
+            aft = V - TAX * np.maximum(V - n, 0)
+            d['tax_japan_all_windows'] = {'win_vs_unlevered_nisa': round(float(np.mean(aft > Vb)), 3),
+                                          'ratio_median_vs_nisa': round(pct(aft / Vb, 50), 3),
+                                          'note': '最後に口座全体の利益へ課税（毎月の戻しの実現益は無視＝楽観側）'}
+        if extra_masks:
+            for lab, fn in extra_masks.items():
+                mm = np.array([fn(keys[i], keys[i + n - 1]) for i in range(len(V))])
+                if mm.any():
+                    d[lab] = region_rule(V[mm], Vb[mm], n)
+        res['horizons'][f'{H}y'] = d
+    res['LC_judgement'] = lc_judge_generic(res)
+    return res
+
+
+def lc_judge_generic(res):
+    d = res['horizons'].get('20y')
+    if not d:
+        return None
+    tw, hw, aw = d['train_windows'], d['hold_windows'], d['all_windows']
+    W1 = bool(tw and tw['win_rate'] >= 0.8)
+    W2 = bool(hw and hw['win_rate'] >= 0.8)
+    W3 = bool(aw and aw['mult_min_s'] >= aw['mult_min_b'])
+    t = d.get('twin') or {}
+    W4 = bool(t.get('L') and t.get('p05_lc_hold') is not None and t['p05_lc_train'] >= t['p05_twin_train'] and t['p05_lc_hold'] >= t['p05_twin_hold'])
+    return {'W1': W1, 'W2': W2, 'W3': W3, 'W4_efficiency': W4, 'LC_pass': W1 and W2 and W3, 'LC_efficient': W1 and W2 and W3 and W4,
+            'W1_train_windows': tw['windows'] if tw else 0}
+
+
+def region_rule(V, Vb, n):
+    r = V / Vb
+    out = {'windows': int(len(V)), 'win_rate': round(float(np.mean(V > Vb)), 3), 'ratio_median': round(pct(r, 50), 3),
+           'ratio_worst': round(float(r.min()), 3), 'mult_min_s': round(float(V.min() / n), 3), 'mult_min_b': round(float(Vb.min() / n), 3)}
+    out['positive'] = bool(out['win_rate'] >= 0.5 and out['ratio_median'] > 1 and out['mult_min_s'] >= out['mult_min_b'])
+    return out
+
+
+def margin_factor(r, rb, rf):
+    def f(L, idx):
+        rr, bb, ff = r[idx], rb[idx], rf[idx]
+        return 1 + np.where(L > 1, L * rr - (L - 1) * bb, L * rr + (1 - L) * ff)
+    return f
+
+
+def round2(ctx):
+    sha2 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', f'out/{PREREG2}'], cwd=M.BASE, capture_output=True, text=True).stdout.strip()
+    log('prereg2 commit', sha2)
+    mkt_d, rf_d, mkt_m, rf_m, mkt_dm = ctx['mkt_d'], ctx['rf_d'], ctx['mkt_m'], ctx['rf_m'], ctx['mkt_dm']
+    ndx_d, ndx_m, lev_cache = ctx['ndx_d'], ctx['ndx_m'], ctx['lev_cache']
+    LCR = []
+    pol = pol_target_gen()
+
+    # LCR1: 月中の追証（維持率30%）
+    days_by_m = {}
+    for k in sorted(mkt_d):
+        days_by_m.setdefault(k // 100, []).append(k)
+    keys1 = sorted(days_by_m)
+    check_contiguous_months(keys1, 'LCR1')
+    Pd, Bd = [], []
+    for ym in keys1:
+        ds = days_by_m[ym]
+        Pd.append(np.cumprod([1 + mkt_d[d] for d in ds]))
+        Bd.append(np.cumprod([1 + rf_d[d] + SPREAD_MARGIN / 252 for d in ds]))
+    Pend = np.array([p[-1] for p in Pd]); Bend = np.array([b[-1] for b in Bd])
+    X = np.array([float(np.max(b / p)) for p, b in zip(Pd, Bd)])
+    rf1 = np.array([float(np.prod([1 + rf_d[d] for d in days_by_m[ym]]) - 1) for ym in keys1])
+    MAINT = 0.30
+    trig_log = {}
+
+    def mc_factor(L, idx):
+        f = np.where(L > 1, L * Pend[idx] - (L - 1) * Bend[idx], L * Pend[idx] + (1 - L) * (1 + rf1[idx]))
+        trig = (L > 1) & ((L - 1) / np.where(L > 1, L, 1) * X[idx] > 1 - MAINT)
+        for w in np.nonzero(trig)[0]:
+            m, l = idx[w], L[w]
+            P, B = Pd[m], Bd[m]
+            thr = (1 - MAINT) * l / (l - 1)
+            tau = int(np.argmax(B / P > thr))
+            E = l * P[tau] - (l - 1) * B[tau]
+            f[w] = E * P[-1] / P[tau] if E > 0 else 0.0
+            trig_log[keys1[m]] = trig_log.get(keys1[m], 0) + 1
+        return f
+
+    base1 = arr(mkt_dm, keys1)
+    e = lc_generic('LCR1_margincall_daily', 'LC2（French 日次）・月中に持ち分比率が30%を割った日の終値で全部返して1倍へ', keys1, mc_factor, base1, pol)
+    e['margin_call_months_hit'] = sorted(trig_log)[:40]
+    e['margin_call_months_count'] = len(trig_log)
+    LCR.append(e)
+
+    # LCR2 / LCR4: 2倍日次型＋無レバの組み合わせ
+    def mix_factor(r2, r1):
+        def f(L, idx):
+            a, b = r2[idx], r1[idx]
+            g = (L - 1) * a + (2 - L) * b
+            turn = (L - 1) * np.abs(a - g) + (2 - L) * np.abs(b - g)
+            return 1 + g - COST_UNIT * turn
+        return f
+
+    for name, under, base_m in (('LCR2_etfmix_french', 'french', mkt_dm), ('LCR4_etfmix_ndx', 'ndx', ndx_m)):
+        l2 = lev_cache(under, 2.0)
+        keys = sorted(set(l2) & set(base_m))
+        check_contiguous_months(keys, name)
+        r2, r1 = arr(l2, keys), arr(base_m, keys)
+        LCR.append(lc_generic(name, f'LC2（{under}）を 2倍日次型 (L−1) ＋ 無レバ (2−L) の組み合わせで作る（追証なし）', keys,
+                              mix_factor(r2, r1), r1, pol, tax=True))
+
+    # LCR3: NASDAQ-100 の信用取引型
+    keys3 = sorted(k for k in ndx_m if k in rf_m)
+    check_contiguous_months(keys3, 'LCR3')
+    r3, rf3 = arr(ndx_m, keys3), arr(rf_m, keys3)
+    LCR.append(lc_generic('LCR3_margin_ndx', 'LC2（NASDAQ-100 月次・信用 RF+1.5%）', keys3, margin_factor(r3, rf3 + SPREAD_MARGIN / 12, rf3), r3, pol))
+
+    # LCR5: 地域
+    reg_res = {}
+    for rn, (tot, rf, skip) in ctx['reg_m'].items():
+        keys = sorted(tot)
+        check_contiguous_months(keys, rn)
+        rr, rff = arr(tot, keys), arr(rf, keys)
+        n = 240
+        V, dd, ru = sim_general(len(keys), n, margin_factor(rr, rff + SPREAD_MARGIN / 12, rff), pol)
+        Vb, ddb, _ = sim_const(rr, n)
+        rule = region_rule(V, Vb, n)
+        rule['first_start'], rule['last_start'] = keys[0], keys[len(V) - 1]
+        rule['acct_dd_worst_s'] = round(float(dd.min()) * 100, 1); rule['acct_dd_worst_b'] = round(float(ddb.min()) * 100, 1)
+        rule['ruined_windows'] = int(ru.sum())
+        reg_res[rn] = rule
+    LCR.append({'name': 'LCR5_regions', 'family': 'LCR', 'description': 'LC2（信用 RF+1.5%）を French 地域の月次（米ドル）に当てた 20年窓',
+                'grade': 'N/A（再現の点検）', 'regions': reg_res, 'positive': sum(1 for v in reg_res.values() if v['positive']), 'n_regions': len(reg_res)})
+
+    # LCR9: Shiller の 1926年以前に終わる窓
+    sh, sh_rf = ctx['sh'], ctx['sh_rf']
+    shk = sorted(sh)
+    rs, rfs = arr(sh, shk), arr(sh_rf, shk)
+    n = 240
+    V, dd, ru = sim_general(len(shk), n, margin_factor(rs, rfs + SPREAD_MARGIN / 12, rfs), pol)
+    Vb, ddb, _ = sim_const(rs, n)
+    ends = np.array([shk[i + n - 1] for i in range(len(V))])
+    m = ends <= 192606
+    pre = region_rule(V[m], Vb[m], n)
+    pre['first_start'], pre['last_start'] = shk[0], shk[int(np.nonzero(m)[0][-1])]
+    LCR.append({'name': 'LCR9_shiller_pre1926', 'family': 'LCR', 'description': 'LC2（Shiller・Goyal Rfree+1.5%）のうち終点が 1926-06 以前の 20年窓（独立の時代）',
+                'grade': 'N/A（再現の点検）', 'result': pre})
+
+    # 報告のみ: LCR6（上限1.5）・LCR7（RF+3%）・LCR8（割引率）
+    keysm = sorted(mkt_m)
+    rm, rfm = arr(mkt_m, keysm), arr(rf_m, keysm)
+    LCR.append(lc_generic('LCR6_cap1.5', '報告のみ: LC2 の上限 1.5 倍（French 月次・信用 RF+1.5%）', keysm,
+                          margin_factor(rm, rfm + SPREAD_MARGIN / 12, rfm), rm, pol_target_gen(cap=1.5), horizons=(20,)))
+    LCR.append(lc_generic('LCR7_borrow_rf3', '報告のみ: LC2 の借入 RF+3.0%（French 月次）', keysm,
+                          margin_factor(rm, rfm + 0.03 / 12, rfm), rm, pol, horizons=(20,)))
+    for rate in (0.01, 0.05):
+        LCR.append(lc_generic(f'LCR8_discount{int(rate * 100)}', f'報告のみ: LC2 の割引率 {rate:.0%}（French 月次・信用 RF+1.5%）', keysm,
+                              margin_factor(rm, rfm + SPREAD_MARGIN / 12, rfm), rm, pol_target_gen(rate=rate), horizons=(20,)))
+    for e in LCR:
+        if e['name'].startswith(('LCR6', 'LCR7', 'LCR8')):
+            e['report_only'] = True
+
+    # 判定（事前登録2の verdict）
+    j = {e['name']: e for e in LCR}
+    v = {'LCR1_LC_pass': bool(j['LCR1_margincall_daily']['LC_judgement']['LC_pass']),
+         'LCR2_LC_pass': bool(j['LCR2_etfmix_french']['LC_judgement']['LC_pass']),
+         'regions_positive': f"{j['LCR5_regions']['positive']}/{j['LCR5_regions']['n_regions']}",
+         'regions_ok': j['LCR5_regions']['positive'] >= 3,
+         'pre1926_positive': bool(j['LCR9_shiller_pre1926']['result']['positive'])}
+    v['LC2_robust'] = v['LCR1_LC_pass'] and v['LCR2_LC_pass'] and v['regions_ok'] and v['pre1926_positive']
+    v['missing'] = [k for k in ('LCR1_LC_pass', 'LCR2_LC_pass', 'regions_ok', 'pre1926_positive') if not v[k]]
+    log('round2 verdict', v)
+
+    # E2: 積み重ね（格付け）
+    s_m, b_m, rf_e = ctx['s_m'], ctx['b_m'], ctx['rf_e']
+    E2 = []
+    for name, wb in (('E2a_stack_100_50', 0.5), ('E2b_stack_100_100', 1.0)):
+        def stack(cost):
+            out, tv = {}, {}
+            for k in sorted(set(s_m) & set(b_m) & set(rf_e)):
+                rb = rf_e[k] + 0.005 / 12
+                g = s_m[k] + wb * (b_m[k] - rb)
+                t = abs(s_m[k] - g) + wb * abs(b_m[k] - g)
+                out[k], tv[k] = g - cost * t, t
+            return out, tv
+        s, tv = stack(0.0)
+        sn, _ = stack(COST_UNIT)
+        e = evaluate(name, 'E2', f'株100%＋長期国債{wb:.0%}を借入（RF+0.5%）で積み重ね・毎月末に戻す', s, s_m, rf_e, s_net=sn,
+                     extra={'L': 1 + wb, 'kind': 'stack', 'underlying': 'french+ltr',
+                            'turnover_ann_hold': round(S.mean(v for k, v in tv.items() if k >= M.HOLD_START) * 12, 3)})
+        e['dca'] = dca_block(sn, s_m)
+        E2.append(e)
+    hp = M.holm({e['name']: (e['hold'] or {}).get('p') for e in ctx['fam_P'] + ctx['fam_E'] + E2})
+    for e in E2:
+        finish_grade(e, hp.get(e['name']), None)
+    return {'LCR': LCR, 'E2': E2, 'verdict': v, 'prereg2_commit': sha2}
 
 
 if __name__ == '__main__':
