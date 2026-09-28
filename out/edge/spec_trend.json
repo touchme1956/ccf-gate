@@ -1,0 +1,422 @@
+{
+ "key": "trend",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "kind": "volcond",
+  "trend": {
+   "kind": "mom",
+   "n": 12,
+   "vs": "rf"
+  },
+  "src": "daily",
+  "win": 63
+ },
+ "rationale": "【規則】月末に判定し翌月に適用。米国市場（French・配当込み）の過去12か月のリターンが同じ12か月の短期金利の累積を下回り（時系列の勢いが負）、かつ直近63営業日の日次のぶれ（年率）が、それまでの全ての月末のぶれの中央値より高いときだけ、翌月を短期金利で過ごす。それ以外は市場を全額持つ。\n【なぜ】トレンドで降りる規則（Faber 2007 の10か月平均・時系列の勢い＝Moskowitz・Ooi・Pedersen 2012、古くは Brock・Lakonishok・LeBaron 1992／Siegel の200日線）は、大きな下げ相場の大半を避ける代わりに、上げ相場の中の一時的な下げで降りて戻る「往復びんた」で年率を失う。往復びんたの多くはぶれの小さい落ち着いた相場で起き、避けたい下げ相場（1929-32・1937・1973-74）はぶれが高い局面で起きる。ぶれが高い時期は期待リターンがぶれに見合って上がらない（French・Schwert・Stambaugh 1987、Moreira・Muir 2017）ので、「勢いが負 かつ ぶれが高い」ときだけ降りれば、下げを避ける効き目を残して往復びんたの費用を減らせる、という筋。閾値は中央値・窓は3か月（63営業日）という既定の値で、振っていない。\n【選定期間の結果（1927-07〜2000-12・費用後）】年率 11.26% vs 市場 10.59%＝超過 +0.68%/年（幾何）。ただし月次の算術の超過は −0.27%/年で t=−0.17（NW −0.18）＝市場との差は偶然と区別できない。ぶれ 13.8% vs 19.3%・最大下落 −53.4% vs −83.7%・シャープ 0.57 vs 0.42・持つ割合80%・回転 年0.69。時代別: 1927-49 +2.70・1950-74 +1.74・1975-2000 −2.27（t −1.63）。\n★事前登録の線（選定期間の超過 +1%/年以上）に届いた月末判定の変種は一つも無かった（月末判定の28変種の超過は −1.96〜+0.68%/年、t は全部負）。そこで事前登録の指標（費用後の超過の t）が最大で、かつ選定期間の超過が正（判定の条件3を満たし得る）の変種を「いちばん筋の良い一つ」として選んだ。Faber の10か月平均そのものは超過 −0.82%/年（t −1.04）で、選定期間で既に市場に負けている（条件3で必ず不合格になる）。\n★+1%/年を超えたのは日次で判定して翌営業日に入れ替える規則だけ（100/150/200/250日線 +1.45〜+1.99%/年・t 0.20〜0.47）。これは選ばなかった。理由は二つ: (1) この系統の定義は「月末に判定・翌月に適用」で、日次の入れ替えは系統の外（レバレッジ系統 levtrend の Gayed・Bilello が日次の200日線を扱う）。(2) 選定期間の中の検査で、その上乗せは指数の日次の見かけの自己相関（小型株の値の付かない日＝非同期取引。1966-75年の1日の自己相関 0.31）から来ていた: 200日線の実行を1営業日遅らせると +1.79→+0.41、2営業日で −0.07。上乗せは1975年以前に集中し、1975-2000 は −2.0%/年。Bessembinder・Chan（1998）が BLL の日次の規則について同じ指摘をしている（2001年より前の文献）。試した数には数えてある。",
+ "n_variants_tried": 39,
+ "selection_stats": {
+  "from": 192707,
+  "to": 200012,
+  "years": 73.5,
+  "cagr": 11.26,
+  "bench_cagr": 10.59,
+  "excess": 0.68,
+  "ex_arith": -0.27,
+  "t": -0.17,
+  "t_nw": -0.18,
+  "vol": 13.8,
+  "bench_vol": 19.3,
+  "maxdd": -53.4,
+  "bench_maxdd": -83.7,
+  "sharpe": 0.57,
+  "bench_sharpe": 0.42,
+  "roll10_win": "25/64",
+  "subperiods": {
+   "192707-194912": {
+    "excess": 2.7,
+    "t": 0.07,
+    "maxdd": -53.4,
+    "bench_maxdd": -83.7
+   },
+   "195001-197412": {
+    "excess": 1.74,
+    "t": 0.68,
+    "maxdd": -19.6,
+    "bench_maxdd": -46.5
+   },
+   "197501-200012": {
+    "excess": -2.27,
+    "t": -1.63,
+    "maxdd": -24.2,
+    "bench_maxdd": -29.9
+   }
+  },
+  "markets_in_selection": {
+   "region:Developed_ex_US": {
+    "from": 199107,
+    "to": 200012,
+    "excess": 0.61,
+    "t": 0.17,
+    "maxdd": -15.2,
+    "bench_maxdd": -18.3
+   },
+   "region:Japan": {
+    "from": 199107,
+    "to": 200012,
+    "excess": 2.07,
+    "t": 0.32,
+    "maxdd": -37.2,
+    "bench_maxdd": -53.8
+   },
+   "region:Europe": {
+    "from": 199107,
+    "to": 200012,
+    "excess": 0.55,
+    "t": 0.29,
+    "maxdd": -15.5,
+    "bench_maxdd": -15.5
+   },
+   "region:Asia_Pacific_ex_Japan": {
+    "from": 199107,
+    "to": 200012,
+    "excess": -0.62,
+    "t": -0.33,
+    "maxdd": -25.2,
+    "bench_maxdd": -50.0
+   }
+  }
+ },
+ "implement": "月末に一度だけ判定し、翌月の頭に入れ替える（凍結した規則 spec_trend.json: 12か月の勢い × ぶれの条件）。①米国株全体の過去12か月の配当込みリターンが同じ12か月の短期金利（米国債1か月）の累積を下回り、かつ②直近63営業日の日次リターンのぶれ（年率）が、それまでの全ての月末のぶれの中央値（1926〜2000年で約11%）より高いときだけ、全額を短期の米国債 ETF（BIL・SGOV・SHV）かドル MMF へ移す。それ以外は米国株全体の ETF（VTI、または S&P500 の VOO/IVV）を全額持つ。楽天証券の米国株口座（特定口座）で実行できる（ぶれは日足の終値から計算。Yahoo の日足で足りる）。NISA 成長投資枠でも VTI/VOO と SGOV/BIL は買えるが、NISA は売った枠が翌年まで戻らないので、入れ替えのあるこの規則は実質的に課税口座向け。課税口座では降りるたびに含み益に約20%の税がかかる（主の判定には入れていない）。円の投資信託（eMAXIS Slim 米国株式 等）とドル MMF でも形は作れるが、投信は約定が翌営業日以降で「月末判定→翌月適用」の近似になる",
+ "lookahead_test": "fam_trend.lookahead_test(spec) を実行し 全 32044 件一致・食い違い0: (1) 月次・日次・短期金利を k 月末で切って計算し直しても k+1 月までの持ち高が同じ（40の k）(2) k 月以降（日次は k 月の全営業日以降）のリターンを乱数に置き換えても k 月までの持ち高が同じ＝同じ月の先読みなし (3) 持ち高 m は m−1 月末の信号そのもの (4) run の成績も k 月で切った計算と全データの計算が k 月まで一致。さらに EDGE_SEL_END=199012 と 200012 で run を回し、1990-12 までの規則・相手・回転の762か月が1ビットも違わない（他の市場は 199512 と 200012 で54か月×4地域が一致）",
+ "variants_table": [
+  {
+   "name": "SMA6",
+   "excess": -1.36,
+   "t": -1.36,
+   "turnover_per_yr": 2.24,
+   "maxdd": -46.3,
+   "eligible": true
+  },
+  {
+   "name": "SMA8",
+   "excess": -1.93,
+   "t": -1.65,
+   "turnover_per_yr": 1.81,
+   "maxdd": -54.1,
+   "eligible": true
+  },
+  {
+   "name": "SMA10",
+   "excess": -0.82,
+   "t": -1.04,
+   "turnover_per_yr": 1.48,
+   "maxdd": -43.1,
+   "eligible": true
+  },
+  {
+   "name": "SMA12",
+   "excess": -0.46,
+   "t": -0.84,
+   "turnover_per_yr": 1.35,
+   "maxdd": -45.6,
+   "eligible": true
+  },
+  {
+   "name": "SMA10_band1",
+   "excess": -0.48,
+   "t": -0.85,
+   "turnover_per_yr": 1.13,
+   "maxdd": -46.2,
+   "eligible": true
+  },
+  {
+   "name": "SMA10_band2",
+   "excess": -0.23,
+   "t": -0.71,
+   "turnover_per_yr": 0.94,
+   "maxdd": -43.2,
+   "eligible": true
+  },
+  {
+   "name": "MOM6_rf",
+   "excess": -1.96,
+   "t": -1.66,
+   "turnover_per_yr": 1.78,
+   "maxdd": -55.6,
+   "eligible": true
+  },
+  {
+   "name": "MOM9_rf",
+   "excess": -0.12,
+   "t": -0.65,
+   "turnover_per_yr": 1.21,
+   "maxdd": -47.4,
+   "eligible": true
+  },
+  {
+   "name": "MOM12_rf",
+   "excess": -0.46,
+   "t": -0.85,
+   "turnover_per_yr": 0.94,
+   "maxdd": -44.5,
+   "eligible": true
+  },
+  {
+   "name": "MOM12_zero",
+   "excess": -0.02,
+   "t": -0.58,
+   "turnover_per_yr": 0.8,
+   "maxdd": -44.5,
+   "eligible": true
+  },
+  {
+   "name": "XOVER3_12",
+   "excess": -1.18,
+   "t": -1.24,
+   "turnover_per_yr": 0.91,
+   "maxdd": -48.9,
+   "eligible": true
+  },
+  {
+   "name": "D100",
+   "excess": -1.85,
+   "t": -1.63,
+   "turnover_per_yr": 2.63,
+   "maxdd": -58.3,
+   "eligible": true
+  },
+  {
+   "name": "D200",
+   "excess": -1.07,
+   "t": -1.17,
+   "turnover_per_yr": 1.54,
+   "maxdd": -52.3,
+   "eligible": true
+  },
+  {
+   "name": "D200_band1",
+   "excess": -0.78,
+   "t": -1.01,
+   "turnover_per_yr": 1.18,
+   "maxdd": -52.3,
+   "eligible": true
+  },
+  {
+   "name": "SMA10&MOM12",
+   "excess": -1.19,
+   "t": -1.25,
+   "turnover_per_yr": 1.29,
+   "maxdd": -44.9,
+   "eligible": true
+  },
+  {
+   "name": "SMA10|MOM12",
+   "excess": -0.07,
+   "t": -0.6,
+   "turnover_per_yr": 1.1,
+   "maxdd": -50.4,
+   "eligible": true
+  },
+  {
+   "name": "avg(SMA10,MOM12)",
+   "excess": -0.57,
+   "t": -0.97,
+   "turnover_per_yr": 1.2,
+   "maxdd": -41.3,
+   "eligible": true
+  },
+  {
+   "name": "avg(SMA6,8,10,12)",
+   "excess": -1.08,
+   "t": -1.26,
+   "turnover_per_yr": 1.72,
+   "maxdd": -45.2,
+   "eligible": true
+  },
+  {
+   "name": "avg(MOM3,6,9,12)",
+   "excess": -1.1,
+   "t": -1.42,
+   "turnover_per_yr": 1.57,
+   "maxdd": -44.7,
+   "eligible": true
+  },
+  {
+   "name": "avg(SMA6-12,MOM6-12)",
+   "excess": -0.9,
+   "t": -1.21,
+   "turnover_per_yr": 1.48,
+   "maxdd": -43.5,
+   "eligible": true
+  },
+  {
+   "name": "D200&MOM12",
+   "excess": -1.54,
+   "t": -1.43,
+   "turnover_per_yr": 1.35,
+   "maxdd": -44.9,
+   "eligible": true
+  },
+  {
+   "name": "avg(D200,SMA10,MOM12)",
+   "excess": -0.71,
+   "t": -1.05,
+   "turnover_per_yr": 1.31,
+   "maxdd": -41.9,
+   "eligible": true
+  },
+  {
+   "name": "D200_daily",
+   "excess": 1.79,
+   "t": 0.38,
+   "turnover_per_yr": 5.27,
+   "maxdd": -27.8,
+   "eligible": false,
+   "note": "系統外（日次で判定・翌営業日に適用）＝選定の対象外"
+  },
+  {
+   "name": "D200_daily_band1",
+   "excess": 1.06,
+   "t": -0.04,
+   "turnover_per_yr": 2.41,
+   "maxdd": -30.4,
+   "eligible": false,
+   "note": "系統外（日次で判定・翌営業日に適用）＝選定の対象外"
+  },
+  {
+   "name": "asym(exit SMA12,entry SMA6)",
+   "excess": 0.16,
+   "t": -0.47,
+   "turnover_per_yr": 1.7,
+   "maxdd": -40.7,
+   "eligible": true
+  },
+  {
+   "name": "volcond(SMA10,d63)",
+   "excess": 0.37,
+   "t": -0.33,
+   "turnover_per_yr": 0.97,
+   "maxdd": -49.6,
+   "eligible": true
+  },
+  {
+   "name": "volcond(MOM12,d63)",
+   "excess": 0.68,
+   "t": -0.17,
+   "turnover_per_yr": 0.69,
+   "maxdd": -53.4,
+   "eligible": true
+  },
+  {
+   "name": "volcond(SMA10,m12)",
+   "excess": 0.39,
+   "t": -0.29,
+   "turnover_per_yr": 0.72,
+   "maxdd": -50.7,
+   "eligible": true
+  },
+  {
+   "name": "SMA10_xs",
+   "excess": -0.77,
+   "t": -1.02,
+   "turnover_per_yr": 1.67,
+   "maxdd": -43.1,
+   "eligible": true
+  },
+  {
+   "name": "volcond(MOM12,m12)",
+   "excess": -0.09,
+   "t": -0.59,
+   "turnover_per_yr": 0.48,
+   "maxdd": -55.0,
+   "eligible": true
+  },
+  {
+   "name": "D100_daily",
+   "excess": 1.74,
+   "t": 0.36,
+   "turnover_per_yr": 9.51,
+   "maxdd": -33.5,
+   "eligible": false,
+   "note": "系統外（日次で判定・翌営業日に適用）＝選定の対象外"
+  },
+  {
+   "name": "D150_daily",
+   "excess": 1.99,
+   "t": 0.47,
+   "turnover_per_yr": 6.68,
+   "maxdd": -27.8,
+   "eligible": false,
+   "note": "系統外（日次で判定・翌営業日に適用）＝選定の対象外"
+  },
+  {
+   "name": "D250_daily",
+   "excess": 1.45,
+   "t": 0.2,
+   "turnover_per_yr": 4.37,
+   "maxdd": -44.0,
+   "eligible": false,
+   "note": "系統外（日次で判定・翌営業日に適用）＝選定の対象外"
+  },
+  {
+   "name": "D200_daily_lag1d",
+   "excess": 0.41,
+   "t": -0.42,
+   "eligible": false,
+   "note": "日次の規則の実行を1/2/5営業日遅らせた検査（系統外）"
+  },
+  {
+   "name": "D200_daily_lag2d",
+   "excess": -0.07,
+   "t": -0.66,
+   "eligible": false,
+   "note": "日次の規則の実行を1/2/5営業日遅らせた検査（系統外）"
+  },
+  {
+   "name": "D200_daily_lag5d",
+   "excess": -0.75,
+   "t": -1.05,
+   "eligible": false,
+   "note": "日次の規則の実行を1/2/5営業日遅らせた検査（系統外）"
+  },
+  {
+   "name": "D200_daily_band1_lag1d",
+   "excess": 0.24,
+   "t": -0.5,
+   "eligible": false,
+   "note": "日次の規則の実行を1/2/5営業日遅らせた検査（系統外）"
+  },
+  {
+   "name": "D200_daily_band1_lag2d",
+   "excess": 0.05,
+   "t": -0.6,
+   "eligible": false,
+   "note": "日次の規則の実行を1/2/5営業日遅らせた検査（系統外）"
+  },
+  {
+   "name": "D200_daily_band1_lag5d",
+   "excess": -0.28,
+   "t": -0.76,
+   "eligible": false,
+   "note": "日次の規則の実行を1/2/5営業日遅らせた検査（系統外）"
+  }
+ ],
+ "markets": [
+  "region:Asia_Pacific_ex_Japan",
+  "region:Developed_ex_US",
+  "region:Europe",
+  "region:Japan"
+ ],
+ "chosen_by": "fallback: +1%/年に届いた月末判定の変種なし → 費用後の超過の t が最大（−0.17）かつ選定期間の超過が正の変種",
+ "formal_top_if_daily_allowed": {
+  "name": "D150_daily",
+  "spec": {
+   "kind": "dsma_d",
+   "n": 150
+  },
+  "excess": 1.99,
+  "t": 0.47,
+  "why_not": "系統の定義（月末判定・翌月適用）の外。上乗せの大半は日次指数の見かけの自己相関（1営業日遅らせると +0.41 前後へ）"
+ }
+}

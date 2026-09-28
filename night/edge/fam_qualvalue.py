@@ -30,7 +30,10 @@ VW, EW = 'Average Value Weighted Returns -- Monthly', 'Average Equal Weighted Re
 NF, CAP = 'Number of Firms in Portfolios', 'Average Market Cap'
 
 # 米国のファイル名 → 国際版の接尾辞（同じ升目の定義）
-INTL_NAME = {'32_Portfolios_ME_BEME_OP_2x4x4': '32_Portfolios_ME_BE-ME_OP_2x4x4'}
+INTL_NAME = {'32_Portfolios_ME_BEME_OP_2x4x4': '32_Portfolios_ME_BE-ME_OP_2x4x4',
+             '32_Portfolios_ME_BEME_INV_2x4x4': '32_Portfolios_ME_BE-ME_INV(TA)_2x4x4',
+             '32_Portfolios_ME_OP_INV_2x4x4': '32_Portfolios_ME_INV(TA)_OP_2x4x4'}   # 国際版の列の並びも 規模×OP×INV（ファイル名の順と違う・列名で確かめた）
+# 5x5（全規模）には国際版が無い → 5x5 を使う規則は markets を持たない
 REGIONS = ['Europe', 'Japan', 'Asia_Pacific_ex_Japan']          # 米国を含まない・互いに重ならない地域
 
 
@@ -50,27 +53,58 @@ def _find(d, key):
     raise KeyError(key)
 
 
+def _level(tok, top):
+    """'LoBM'→1 / 'HiOP'→top / 'BM3'→3 / 'INV2'→2"""
+    if tok.startswith('Lo'):
+        return tok[2:], 1
+    if tok.startswith('Hi'):
+        return tok[2:], top
+    i = len(tok.rstrip('0123456789'))
+    return tok[:i], int(tok[i:])
+
+
 def _cells(cols, leg):
-    """升目の列名を位置で選ぶ。2x4x4: 位置=(規模−1)*16+(a−1)*4+(b−1)／5x5: (a−1)*5+(b−1)"""
+    """升目の列名を位置で選ぶ。2x4x4: 位置=(規模−1)*16+(a−1)*4+(b−1)／5x5: (a−1)*5+(b−1)。
+    選んだ列名を読み直して、規模・a・b の段が意図どおりかを必ず確かめる（並びの取り違えを黙って通さない）"""
     n = len(cols)
+    ax = leg.get('axes')
     out = []
     for a in leg['a']:
         for b in leg['b']:
             if n == 32:
-                out.append(cols[(leg.get('size', 2) - 1) * 16 + (a - 1) * 4 + (b - 1)])
+                c = cols[(leg.get('size', 2) - 1) * 16 + (a - 1) * 4 + (b - 1)]
+                tk = c.split()
+                sz = 1 if tk[0] in ('SMALL', 'ME1') else 2 if tk[0] in ('BIG', 'ME2') else None
+                (na, la), (nb, lb) = _level(tk[1], 4), _level(tk[2], 4)
+                assert sz == leg.get('size', 2) and la == a and lb == b, (c, leg)
             elif n == 25:
-                out.append(cols[(a - 1) * 5 + (b - 1)])
+                c = cols[(a - 1) * 5 + (b - 1)]
+                tk = c.split()
+                (na, la), (nb, lb) = _level(tk[0], 5), _level(tk[1], 5)
+                assert la == a and lb == b, (c, leg)
             else:
                 raise ValueError(f'列の数が想定外: {n}')
+            if ax:
+                assert (na, nb) == tuple(ax), (c, ax)
+            out.append(c)
     return out
 
 
+def leg_firms(d, leg):
+    """脚の社数（升目の合計）{月: 社数}——少数の会社への賭けになっていないかを見る"""
+    nf = _find(d, NF)
+    sel = _cells(list(_find(d, VW)), leg)
+    ms = sorted(set.union(*[set(nf[c]) for c in sel]))
+    return {m: sum(nf[c].get(m, 0) for c in sel) for m in ms if m > 99999}
+
+
 def leg_ret(d, leg, within='vw', combine='cap'):
-    """一つの脚（升目の集合）の月次リターン（小数）。combine='cap' は m−1 月の時価総額で重みづけ、'equal' は升目を等分"""
+    """一つの脚（升目の集合）の月次リターン（小数）。combine='cap' は m−1 月の時価総額で重みづけ、'firms' は m−1 月の社数、'equal' は升目を等分"""
     R = _find(d, VW if within == 'vw' else EW)
     cols = list(R)
     sel = _cells(cols, leg)
-    nf, cap = (_find(d, NF), _find(d, CAP)) if combine == 'cap' else (None, None)
+    nf = _find(d, NF) if combine in ('cap', 'firms') else None
+    cap = _find(d, CAP) if combine == 'cap' else None
     months = sorted(set.union(*[set(R[c]) for c in sel]))
     out = {}
     for m in months:
@@ -82,11 +116,15 @@ def leg_ret(d, leg, within='vw', combine='cap'):
             r = R[c].get(m)
             if r is None:
                 continue
-            if combine == 'cap':
+            if combine == 'cap':            # 升目の時価総額（m−1 月）＝升目をまとめた時価加重
                 n_, cp = nf[c].get(pm), cap[c].get(pm)
                 if n_ is None or cp is None:
                     continue
                 w = n_ * cp
+            elif combine == 'firms':        # 升目の社数（m−1 月）＝within='ew' と組めば、全升目の会社を1社ずつ等しく持つ
+                w = nf[c].get(pm)
+                if w is None:
+                    continue
             else:
                 w = 1.0
             if w <= 0:

@@ -90,7 +90,9 @@ def _month_of(k):
     return (k // 100) % 100 if k > 999999 else k % 100
 
 
-def _expo(spec, keys=None):
+def _expo(spec, data=None):
+    """規則の持ち高 L を返す関数を作る。data（その時点までのリターンの dict）を受け取るが、使うのは**日付（キー）だけ**＝
+    先読みの自己検査は data を切ったり乱数に替えたりして、持ち高が変わらないことを確かめる"""
     t = spec['type']
     if t == 'halloween':
         w, s = float(spec['winter']), float(spec['summer'])
@@ -99,7 +101,7 @@ def _expo(spec, keys=None):
         L = float(spec['L'])
         return lambda k: L
     if t == 'tom':
-        days = _tom_days(keys)
+        days = _tom_days(data.keys())
         a, b = float(spec['tom']), float(spec['base'])
         return lambda k: a if k in days else b
     raise ValueError(t)
@@ -108,7 +110,7 @@ def _expo(spec, keys=None):
 # ───────────────────────── 米国（主） ─────────────────────────
 def _us_daily_rule(spec):
     d, drf = h.us_market_daily()
-    ret_d, tv = _apply(d, drf, _expo(spec, d.keys()), 252)
+    ret_d, tv = _apply(d, drf, _expo(spec, d), 252)
     # 相手・短期金利も同じ日次のファイルから（French の日次と月次は作り方が違い、日次を複利した市場は月次より年0.14%低い＝
     # 規則だけ日次で作って月次の市場と比べると、規則が作り方の差だけで不利になる）
     return h.to_monthly(ret_d), h.to_monthly(d), h.to_monthly(drf), tv
@@ -147,7 +149,7 @@ def _rep_countries(spec, cost):
         if len(r) < 24:
             continue
         rr = {m: v for m, v in r.items() if m in usrf}
-        ret, tv = _apply(rr, usrf, _expo(spec), 12)
+        ret, tv = _apply(rr, usrf, _expo(spec, rr), 12)
         out[nm] = {'ret': ret, 'bench': rr, 'rf': {m: usrf[m] for m in rr}, 'turnover': tv, 'cost': cost}
     return out
 
@@ -158,7 +160,7 @@ def _rep_regions_daily(spec, cost):
         d, drf = h.french_region(reg, daily=True)
         if len(d) < 500:
             continue
-        ret_d, tv = _apply(d, drf, _expo(spec, d.keys()), 252)
+        ret_d, tv = _apply(d, drf, _expo(spec, d), 252)
         out[reg] = {'ret': h.to_monthly(ret_d), 'bench': h.to_monthly(d), 'rf': h.to_monthly(drf), 'turnover': tv, 'cost': cost}
     return out
 
@@ -238,19 +240,25 @@ def lookahead_test(spec, cuts=None, seed=7):
                 n += 1
                 if abs(r2[m] - full[m]) > 1e-12:
                     fails.append(('perturb', cut, m))
+        # ③ すべての月の値を乱数に替えても、持ち替えの月（回転の付く月）が変わらない（同じ月の値で持ち物を決めていない）
+        _, t3 = _jan_core({m: rnd.gauss(0, 0.05) for m in mk}, {m: rnd.gauss(0, 0.08) for m in sm})
+        for m in ms:
+            n += 1
+            if abs(t3.get(m, 0.0) - ftv.get(m, 0.0)) > 1e-12:
+                fails.append(('pos_shuffle', m))
         return {'ok': not fails, 'checks': n, 'fails': fails[:10]}
     d, drf = h.us_market_daily()
     ks = sorted(d)
     months = sorted({k // 100 for k in ks})
-    full_ret, _ = _apply(d, drf, _expo(spec, ks), 252)
-    full_pos = {k: _expo(spec, ks)(k) for k in ks}
+    full_ret, _ = _apply(d, drf, _expo(spec, d), 252)
+    full_pos = {k: _expo(spec, d)(k) for k in ks}
     full_m = h.to_monthly(full_ret)
     for cut in (cuts or months[12::7]):
         nxt = h.add_months(cut, 1)
         for c in (cut, nxt):                                        # ①
             kk = [k for k in ks if k // 100 <= c]
             dd = {k: d[k] for k in kk}
-            e = _expo(spec, kk)
+            e = _expo(spec, dd)
             rr, _ = _apply(dd, drf, e, 252)
             mm = h.to_monthly(rr)
             for m in months:
@@ -266,7 +274,7 @@ def lookahead_test(spec, cuts=None, seed=7):
                         fails.append(('pos_trunc', c, k))
         # ② cut より後のリターンを乱数へ
         dp = {k: (d[k] if k // 100 <= cut else rnd.gauss(0, 0.02)) for k in ks}
-        e2 = _expo(spec, ks)
+        e2 = _expo(spec, dp)
         rr2, _ = _apply(dp, drf, e2, 252)
         mm2 = h.to_monthly(rr2)
         for m in months:
@@ -288,7 +296,7 @@ def lookahead_test(spec, cuts=None, seed=7):
         vals = [d[k] for k in dsl]
         rnd.shuffle(vals)
         dsh.update(zip(dsl, vals))
-    e3 = _expo(spec, list(dsh))
+    e3 = _expo(spec, dsh)
     for k in ks:
         n += 1
         if e3(k) != full_pos[k]:
