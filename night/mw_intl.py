@@ -384,7 +384,10 @@ def main():
            'regional': {loc: {k: v for k, v in d.items()} for loc, d in regional.items()},
            'country_summary': summary, 'per_country': per_country, 'sanity': sanity, 'prereg2': p2, 'prereg3': p3, 'prereg4': p4, 'prereg5': p5, 'post_hoc_diagnostics': ph}
     out['n_tested_all'] = len(tested) + len(p2['tested']) + len(p3['tested']) + len(p4['tested']) + len(p5['tested'])
-    p = M.save('mw_intl.json', out)
+    out.setdefault('generated', __import__('datetime').date.today().isoformat())
+    p = os.path.join(M.BASE, 'out', 'mw_intl.json')
+    with open(p, 'w') as fh:  # 2MB 未満に収めるため字下げなし（共通部品の save は indent=1 で 2.2MB になった）
+        json.dump(out, fh, ensure_ascii=False, separators=(',', ':'))
     # 画面
     print('prereg', out['prereg_commit'])
     print('sanity', json.dumps({k: v for k, v in sanity.items() if k not in ('good_side_vs_jkp_direction', 'candidate_countries')}, ensure_ascii=False))
