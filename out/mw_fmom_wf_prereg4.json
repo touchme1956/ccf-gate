@@ -1,0 +1,47 @@
+{
+ "generated": "2026-09-28",
+ "angle": "fmom_wf・第4次の事前登録",
+ "registered_before_measuring": true,
+ "global_prereg": "out/mw_prereg.json（線 C1〜C8・格付けは変えない）",
+ "tool": "night/mw_fmom_wf.py（第4次の族と点検を足す）→ out/mw_fmom_wf.json",
+ "what_i_have_seen": "第3次（out/mw_fmom_wf_prereg3.json・2137db9）の結果を見た後の登録。R2b（French 米国 最大五分位・回転の目安100%/年以下の7特性 bm op inv ltr ac beta ni・過去12か月で上位2本・毎月）が S: 保有 +3.40%/年 t1.83・費用後 +3.16・全期間 t3.67・転がる20年窓 43/43・直近1か月を飛ばしても +2.16・費用2倍 +2.92・1本ずつ抜いても最小 +1.12（ac を抜いたとき）。一方 11特性の Q2b は 1か月飛ばすと +0.33 に落ち、緩衝帯の R2a は +0.71（B）。R2b の改善は費用ではなく候補の中身（短期反転・勢い・分散2本を除いた）から来ている＝候補の選び方に結果が敏感。R1a・R1b（米国で勝った JKP の Q1b・Q1c の規則を52・49か国へ）はどちらも S。米国 JKP の Q1a〜c は費用1.5倍・2016年以降で費用後が負け。実在の ETF（9本）で上位3本は SPY に +0.73%/年 t0.75。事前に数えたのは French の BIG ポートフォリオの銘柄数だけ（2007年以降の平均: 最大五分位の良い側 21〜192社、2×3 の BIG は 139〜331社）。下の F1・F2・D2 の数字はまだ一度も計算していない",
+ "why": "R2b は第2次の勝ち（Q2b）の手直しなので、同じデータの中での『たまたま』を疑う。(1) 同じ規則を、別の作り方の米国大型株（French 2×3 の BIG＝NYSE 中央値より大きい株・銘柄数が多い）に当てる。(2) 『候補から短期反転・勢い・分散を除く』が他の規則（時系列の勢い）でも効くか。(3) R2b の周りのパラメータ（形成期間・本数）でも勝つか＝刃の上の結果かどうか（報告のみ）",
+ "families": {
+  "F1_us_large_2x3": {
+   "primary": false,
+   "label": "探索: R2b と Q2b の規則を French 2×3 の BIG（米国・NYSE 中央値超・時価加重・30/40/30 の良い側）に当てる",
+   "universe_all9": "6_Portfolios_2x3（BIG HiBM／悪い側 BIG LoBM）・ME_OP_2x3（BIG HiOP／BIG LoOP）・ME_INV_2x3（BIG LoINV／BIG HiINV）・ME_Prior_12_2（BIG HiPRIOR／BIG LoPRIOR）・ME_Prior_1_0（BIG LoPRIOR／BIG HiPRIOR）・ME_Prior_60_13（BIG LoPRIOR／BIG HiPRIOR）・ME_EP_2x3（BIG HiEP／BIG LoEP）・ME_CFP_2x3（BIG HiCFP／BIG LoCFP）・ME_DP_2x3（BIG HiDP／BIG LoDP）の9特性",
+   "turnover": "mw_factor_us の事前登録の族 c の BIG 行（bm 25・op 25・inv 40・mom 120・str 700・ltr 50・ep 25・cfp 25・dp 20 %/年）・片道0.10%",
+   "list": {
+    "F1a_cs_L12_Kq_big_lowTO": "回転の目安100%/年以下の7特性（bm op inv ltr ep cfp dp）で過去12か月の超過の和の上位 ceil(7/4)＝2本・毎月（R2b と同じ規則）",
+    "F1b_cs_L12_Kq_big_all9": "9特性すべてで上位 ceil(9/4)＝3本・毎月（Q2b と同じ規則）"
+   },
+   "min_candidates": "F1a は7特性のうち6以上、F1b は9特性のうち7以上（第2次の 11中8 と同じ割合を切り上げ）",
+   "C5": "同じ規則を French の Europe・Japan・Asia_Pacific_ex_Japan の 6_Portfolios（2×3 の BIG・BE-ME・OP・INV・Prior 12-2 の4特性）に当てる。F1a は回転の少ない3特性（bm op inv）で K＝1、F1b は4特性で K＝1。相手は各地域の Mkt。全期間の費用前の超過が正の地域が2以上で合格",
+   "holm_family": "F1 の2本で Holm"
+  },
+  "F2_me5_lowTO_other_rules": {
+   "primary": false,
+   "label": "探索: R2b と同じ7特性の巨大株（最大五分位）で、時系列の勢いの規則",
+   "list": {
+    "F2a_ts12_me5_lowTO": "7特性で過去12か月の F（良い側−悪い側）の複利がプラスの良い側をすべて等分（無ければ市場）・毎月",
+    "F2b_ts_lo12_me5_lowTO": "7特性で過去12か月に市場に勝った良い側をすべて等分（無ければ市場）・毎月"
+   },
+   "min_candidates": "7特性のうち6以上（地域は3特性のうち3）",
+   "C5": "R2b と同じ（地域は bm op inv の3特性）",
+   "holm_family": "F2 の2本で Holm"
+  },
+  "D2_parameter_neighborhood": {
+   "primary": false,
+   "label": "点検（報告のみ・判定に使わない）: R2b と F1a の規則の周りのパラメータ",
+   "grid": "形成期間 L ∈ {3, 6, 9, 12, 18, 24, 36} × 本数 K ∈ {1, 2, 3}・毎月。保有期間の費用前・費用後の算術の超過と t、全期間の t、訓練の超過を表にする。あわせて毎四半期（3・6・9・12月末）に組み直す版（L=12・K=2）も"
+  }
+ },
+ "unchanged": "線（C1〜C8）・第1〜3次の規則・費用・期間・Holm の作法は変えない",
+ "counting": "第4次で新しく格付けするのは F1 2本・F2 2本＝4本（第1〜4次で70本）。D2 は報告のみ（本数に数えないが、表は全部出す）",
+ "known_limits": [
+  "第4次は R2b が S になった後に作った。F1 の 2×3 の BIG は最大五分位と銘柄が大きく重なる（同じ株の上位）ので独立の答え合わせではない",
+  "2×3 の BIG は銘柄数が多いぶん、市場との差は小さく出るはず",
+  "D2 の表の中から一番良い組み合わせを選んで勝ちと言うことはしない（刃の上かどうかを見るだけ）"
+ ]
+}
