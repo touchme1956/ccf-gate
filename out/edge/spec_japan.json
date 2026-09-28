@@ -1,0 +1,490 @@
+{
+ "key": "japan",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "name": "F_val4",
+  "src": "F",
+  "legs": [
+   "BM_H",
+   "EP_H",
+   "CEP_H",
+   "Y_H"
+  ],
+  "ccy": "Dollar",
+  "bench": "French International Countries の同じ国の Mkt（Value-Weight・All 4 Data Items Not Reqd・米ドル・配当込み）",
+  "cost_per_turnover": 0.0025,
+  "turnover_placed": "会計の信号 50%/年・価格の信号 200%/年（事前登録の置き値）＋合成の等分への戻し",
+  "replicate": [
+   "UK",
+   "Austria",
+   "Australia",
+   "Belgium",
+   "Canada",
+   "Denmark",
+   "Finland",
+   "France",
+   "Germany",
+   "HongKong",
+   "Ireland",
+   "Italy",
+   "Malaysia",
+   "Netherlands",
+   "NewZealand",
+   "Norway",
+   "Singapore",
+   "Spain",
+   "Sweden",
+   "Switzerland"
+  ]
+ },
+ "rationale": "規則: 日本株（French 国別＝MSCI 由来の大型〜中型）を毎年12月末に 簿価時価・益回り・キャッシュ益回り・配当利回り の四つで並べ、それぞれの上位30%（時価加重）を等分に持つ（月ごとに等分へ戻す）。相手は同じファイルの日本の市場（時価加重）。\nなぜ: 日本の割安の上乗せは Chan・Hamao・Lakonishok（1991・1971-88 の東証で B/M と CF/P が強い）、Fama-French（1998・国際の割安）、Asness・Moskowitz・Pedersen（2013）が報告している。経済的な理由は (1) 割安な株は将来の利益の伸びを悲観しすぎた価格で買える（行動の説明）(2) 苦境のリスクへの報酬（リスクの説明）。一つの比率には会計の癖（日本は持ち合い株で簿価が歪む・配当性向が低く配当利回りのばらつきが小さい）があるので、四つを等分にして癖を薄める——このため t が単独の指標より高く出た。\n選定期間（197501〜200012・26.0年）の結果: 費用後 年率 16.73% vs 市場 11.8%＝超過 +4.93%/年（t 2.47・NW 2.64）、ぶれ 23.3/23.3%、最大下落 -44.0/-55.2%、β 0.93・α +4.88%/年（t 2.81）＝下げ相場でβが低かっただけではない。転がる10年 17/17。前半（〜1987）+3.03%（t 1.02）／後半（1988〜2000）+6.4%（t 2.45）＝前半は弱い。円建てでも超過 +4.75%（t 2.5）。\n選び方: 事前登録どおり、試した 23 変種のうち選定期間の超過が +1%/年以上で費用後の超過の t が最大のもの（次点は F_cep t2.37・F_bm t2.21。JKP 日本の変種は被覆が 1987/88〜 と短く t はどれも 2.2 未満）。\n選ぶのに使っていない参考（どれも 2000-12 まで）: 同じ規則を米国に当てると 1951-2000 で 超過 3.65%/年（t 3.54）。同じ規則を他の20か国に当てると選定期間で 16/20 が正・ならして +1.81%/年（t 2.33）。",
+ "n_variants_tried": 23,
+ "selection_stats": {
+  "from": 197501,
+  "to": 200012,
+  "years": 26.0,
+  "cagr": 16.73,
+  "bench_cagr": 11.8,
+  "excess": 4.93,
+  "ex_arith": 4.37,
+  "t": 2.47,
+  "t_nw": 2.64,
+  "vol": 23.3,
+  "bench_vol": 23.3,
+  "maxdd": -44.0,
+  "bench_maxdd": -55.2,
+  "sharpe": 0.5,
+  "bench_sharpe": 0.31,
+  "roll10_win": "17/17"
+ },
+ "implement": "楽天証券で東証上場の日本株ETFを買う（NISA 成長投資枠の対象・レバレッジ型ではない）。高配当なら 1489 NEXT FUNDS 日経平均高配当株50・1478 iシェアーズ MSCI ジャパン高配当利回り・1577 NEXT FUNDS 野村日本株高配当70、割安なら 1473 系ではなく MSCI Japan Value に連動する投信・ETF（例: 米国上場 EWJV〔iShares MSCI Japan Value〕は楽天の米国株口座・NISA 成長投資枠で可）。⚠ これらの ETF は規則そのもの（French の上位30%の時価加重・年1回の入れ替え）とは銘柄数・重み・入れ替えの規則が違う近似。個別株で自分で組むなら、毎年12月末に TOPIX 大型〜中型のうち指標の上位30%を時価加重で持ち、翌年12月末に入れ替える（数十〜百数十銘柄）",
+ "lookahead_test": "(1) 接頭辞の検査: データを 1990-12・1995-12 で切って run(spec) を回した日本と他の20か国の月次の成績が、2000-12 まで読んだ成績と切った月まで一致（3192・4476 点・不一致0）。(2) 日付の揃い: 組と相手の同じ月の相関 0.925・組と前月の相手 0.045・組と翌月の相手 0.007＝組のリターンは月がずれていない。(3) コードを読む検査: 月 m の持ち高は French が前年12月末に組んだ上位30%（データの作り手の組入れ）で、合成の重みはその月に組が存在するかだけで決まる（その月のリターンを使わない）。月ごとの等分への戻しの回転は m−1 月末までの値動きで決まる。⚠ French の国別の組は12月末に比率で並べる。比率の会計年度の時点はページに書かれていない——日本は3月決算が多く6月までに公表されるので12月の組入れには先読みにならないが、12月決算の国（再現の側）では数か月の先読みがありうる（データの作り手の側の問題）",
+ "variants_table": [
+  {
+   "name": "F_bm",
+   "excess": 5.72,
+   "t": 2.21,
+   "t_nw": 2.78,
+   "from": 197501,
+   "beta": 0.94,
+   "alpha": 5.91
+  },
+  {
+   "name": "F_ep",
+   "excess": 5.0,
+   "t": 2.15,
+   "t_nw": 2.16,
+   "from": 197501,
+   "beta": 0.87,
+   "alpha": 5.16
+  },
+  {
+   "name": "F_cep",
+   "excess": 5.43,
+   "t": 2.37,
+   "t_nw": 2.37,
+   "from": 197501,
+   "beta": 0.94,
+   "alpha": 5.44
+  },
+  {
+   "name": "F_yld",
+   "excess": 2.75,
+   "t": 1.31,
+   "t_nw": 1.26,
+   "from": 197501,
+   "beta": 0.96,
+   "alpha": 3.08
+  },
+  {
+   "name": "F_val4",
+   "excess": 4.93,
+   "t": 2.47,
+   "t_nw": 2.64,
+   "from": 197501,
+   "beta": 0.93,
+   "alpha": 4.88
+  },
+  {
+   "name": "J_div",
+   "excess": 3.61,
+   "t": 1.23,
+   "t_nw": 0.93,
+   "from": 198612,
+   "beta": 0.94,
+   "alpha": 3.66
+  },
+  {
+   "name": "J_bm",
+   "excess": 5.4,
+   "t": 1.72,
+   "t_nw": 1.91,
+   "from": 198804,
+   "beta": 0.99,
+   "alpha": 6.04
+  },
+  {
+   "name": "J_ep",
+   "excess": 4.9,
+   "t": 1.79,
+   "t_nw": 1.83,
+   "from": 198804,
+   "beta": 0.87,
+   "alpha": 3.91
+  },
+  {
+   "name": "J_cfp",
+   "excess": -2.17,
+   "t": -0.94,
+   "t_nw": -1.43,
+   "from": 198905,
+   "beta": 1.0,
+   "alpha": -2.01
+  },
+  {
+   "name": "J_sp",
+   "excess": 4.04,
+   "t": 1.45,
+   "t_nw": 1.18,
+   "from": 198804,
+   "beta": 0.99,
+   "alpha": 4.57
+  },
+  {
+   "name": "J_ebev",
+   "excess": 3.04,
+   "t": 1.01,
+   "t_nw": 0.92,
+   "from": 198804,
+   "beta": 0.86,
+   "alpha": 1.91
+  },
+  {
+   "name": "J_mom",
+   "excess": 1.7,
+   "t": 0.76,
+   "t_nw": 0.69,
+   "from": 198701,
+   "beta": 0.95,
+   "alpha": 1.75
+  },
+  {
+   "name": "J_gpa",
+   "excess": 2.42,
+   "t": 1.1,
+   "t_nw": 1.28,
+   "from": 198804,
+   "beta": 0.93,
+   "alpha": 1.93
+  },
+  {
+   "name": "J_ope",
+   "excess": 0.5,
+   "t": 0.15,
+   "t_nw": 0.15,
+   "from": 198804,
+   "beta": 0.93,
+   "alpha": -0.06
+  },
+  {
+   "name": "J_prof",
+   "excess": 1.31,
+   "t": 0.61,
+   "t_nw": 0.46,
+   "from": 198804,
+   "beta": 0.94,
+   "alpha": 0.96
+  },
+  {
+   "name": "J_val",
+   "excess": 3.68,
+   "t": 1.45,
+   "t_nw": 1.36,
+   "from": 198612,
+   "beta": 0.91,
+   "alpha": 3.37
+  },
+  {
+   "name": "J_valmom",
+   "excess": 2.88,
+   "t": 2.15,
+   "t_nw": 1.83,
+   "from": 198612,
+   "beta": 0.93,
+   "alpha": 2.48
+  },
+  {
+   "name": "J_valprof",
+   "excess": 2.86,
+   "t": 1.41,
+   "t_nw": 1.6,
+   "from": 198612,
+   "beta": 0.91,
+   "alpha": 2.4
+  },
+  {
+   "name": "J_vmp",
+   "excess": 2.34,
+   "t": 1.69,
+   "t_nw": 1.6,
+   "from": 198612,
+   "beta": 0.93,
+   "alpha": 1.94
+  },
+  {
+   "name": "J_div_cap",
+   "excess": 5.17,
+   "t": 1.66,
+   "t_nw": 1.32,
+   "from": 198612,
+   "beta": 0.99,
+   "alpha": 5.6
+  },
+  {
+   "name": "J_bm_cap",
+   "excess": 5.16,
+   "t": 1.72,
+   "t_nw": 1.64,
+   "from": 198804,
+   "beta": 1.06,
+   "alpha": 6.56
+  },
+  {
+   "name": "J_val_cap",
+   "excess": 5.01,
+   "t": 1.74,
+   "t_nw": 1.51,
+   "from": 198612,
+   "beta": 0.96,
+   "alpha": 5.12
+  },
+  {
+   "name": "J_valmom_cap",
+   "excess": 3.45,
+   "t": 1.78,
+   "t_nw": 1.52,
+   "from": 198612,
+   "beta": 0.95,
+   "alpha": 3.23
+  }
+ ],
+ "markets": [
+  "UK",
+  "Austria",
+  "Australia",
+  "Belgium",
+  "Canada",
+  "Denmark",
+  "Finland",
+  "France",
+  "Germany",
+  "HongKong",
+  "Ireland",
+  "Italy",
+  "Malaysia",
+  "Netherlands",
+  "NewZealand",
+  "Norway",
+  "Singapore",
+  "Spain",
+  "Sweden",
+  "Switzerland"
+ ],
+ "asia_pacific_subset": [
+  "HongKong",
+  "Singapore",
+  "Malaysia",
+  "Australia",
+  "NewZealand"
+ ],
+ "reference_selection_period": {
+  "us_same_rule_1951_2000": {
+   "from": 195107,
+   "to": 200012,
+   "years": 49.5,
+   "cagr": 16.18,
+   "bench_cagr": 12.53,
+   "excess": 3.65,
+   "ex_arith": 3.17,
+   "t": 3.54,
+   "t_nw": 2.89,
+   "vol": 14.3,
+   "bench_vol": 14.6,
+   "maxdd": -33.8,
+   "bench_maxdd": -46.5,
+   "sharpe": 0.76,
+   "bench_sharpe": 0.53,
+   "roll10_win": "38/40"
+  },
+  "other20_selection_period": {
+   "positive": "16/20",
+   "pooled_excess": 1.81,
+   "pooled_t": 2.33,
+   "by_country": {
+    "UK": {
+     "from": 197501,
+     "excess": 2.17,
+     "t": 1.43
+    },
+    "Austria": {
+     "from": 198701,
+     "excess": 5.69,
+     "t": 2.26
+    },
+    "Australia": {
+     "from": 197501,
+     "excess": 6.09,
+     "t": 2.88
+    },
+    "Belgium": {
+     "from": 197501,
+     "excess": 2.76,
+     "t": 2.06
+    },
+    "Canada": {
+     "from": 197701,
+     "excess": 1.8,
+     "t": 0.82
+    },
+    "Denmark": {
+     "from": 198901,
+     "excess": -0.56,
+     "t": -0.02
+    },
+    "Finland": {
+     "from": 198801,
+     "excess": -9.36,
+     "t": -1.78
+    },
+    "France": {
+     "from": 197501,
+     "excess": 3.6,
+     "t": 2.09
+    },
+    "Germany": {
+     "from": 197501,
+     "excess": 2.81,
+     "t": 1.69
+    },
+    "HongKong": {
+     "from": 197501,
+     "excess": 2.83,
+     "t": 1.3
+    },
+    "Ireland": {
+     "from": 199101,
+     "excess": 0.92,
+     "t": 0.35
+    },
+    "Italy": {
+     "from": 197501,
+     "excess": 0.87,
+     "t": 0.65
+    },
+    "Malaysia": {
+     "from": 199401,
+     "excess": 7.73,
+     "t": 1.46
+    },
+    "Netherlands": {
+     "from": 197501,
+     "excess": -1.19,
+     "t": -0.3
+    },
+    "NewZealand": {
+     "from": 198801,
+     "excess": -5.82,
+     "t": -1.06
+    },
+    "Norway": {
+     "from": 197501,
+     "excess": 3.29,
+     "t": 0.87
+    },
+    "Singapore": {
+     "from": 197501,
+     "excess": 1.32,
+     "t": 0.87
+    },
+    "Spain": {
+     "from": 197501,
+     "excess": 1.15,
+     "t": 0.51
+    },
+    "Sweden": {
+     "from": 197501,
+     "excess": 2.54,
+     "t": 1.18
+    },
+    "Switzerland": {
+     "from": 197501,
+     "excess": 1.37,
+     "t": 0.92
+    }
+   }
+  }
+ },
+ "selection_diag": {
+  "beta": 0.93,
+  "alpha": 4.88,
+  "alpha_t": 2.81,
+  "first_half": {
+   "from": 197501,
+   "to": 198712,
+   "years": 13.0,
+   "cagr": 28.91,
+   "bench_cagr": 25.88,
+   "excess": 3.03,
+   "ex_arith": 2.51,
+   "t": 1.02,
+   "t_nw": 1.24,
+   "vol": 20.9,
+   "bench_vol": 20.6,
+   "maxdd": -32.5,
+   "bench_maxdd": -25.7,
+   "sharpe": 0.95,
+   "bench_sharpe": 0.84,
+   "roll10_win": "4/4"
+  },
+  "second_half": {
+   "from": 198801,
+   "to": 200012,
+   "years": 13.0,
+   "cagr": 5.71,
+   "bench_cagr": -0.69,
+   "excess": 6.4,
+   "ex_arith": 6.22,
+   "t": 2.45,
+   "t_nw": 2.55,
+   "vol": 25.3,
+   "bench_vol": 25.3,
+   "maxdd": -44.0,
+   "bench_maxdd": -55.2,
+   "sharpe": 0.13,
+   "bench_sharpe": -0.11,
+   "roll10_win": "4/4"
+  },
+  "yen": {
+   "from": 197501,
+   "to": 200012,
+   "years": 26.0,
+   "cagr": 12.46,
+   "bench_cagr": 7.72,
+   "excess": 4.75,
+   "ex_arith": 4.39,
+   "t": 2.5,
+   "t_nw": 2.67,
+   "vol": 18.7,
+   "bench_vol": 18.4,
+   "maxdd": -50.4,
+   "bench_maxdd": -57.6,
+   "sharpe": 0.37,
+   "bench_sharpe": 0.14,
+   "roll10_win": "17/17"
+  }
+ },
+ "excluded_before_selection": "低ぶれ・低ベータ（ivol・betabab・qmj_safety）＝下げ相場の選定期間でβの低さだけで勝って見えるため／eqnpo_me・fcf_me＝JKP 日本で 2000-08 まで被覆が無く選定期間で測れないため",
+ "chose_by_rule": true
+}

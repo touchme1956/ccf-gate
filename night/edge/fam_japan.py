@@ -199,7 +199,7 @@ def combine(legs, turn, rf, months):
 
 
 def build_F(spec, country, rf):
-    d = fr_country(country)
+    d = fr_country(country, spec.get('ccy', 'Dollar'))
     bench = d['Mkt']
     legs = {c: (d[c], set(d[c]), c) for c in spec['legs'] if d.get(c)}
     if not legs or not bench:
@@ -256,6 +256,13 @@ def run(spec):
 # ───────────────────────── 選定の道具 ─────────────────────────
 def spec_of(v, replicate=True):
     s = {k: v[k] for k in ('name', 'src', 'legs', 'groups', 'w') if k in v}
+    if v['src'] == 'F':
+        s['ccy'] = 'Dollar'
+        s['bench'] = 'French International Countries の同じ国の Mkt（Value-Weight・All 4 Data Items Not Reqd・米ドル・配当込み）'
+    else:
+        s['bench'] = "JKP の同じ国の 'mkt'（vw＝上限なしの時価加重）＋ French RF（米ドルの総リターン）"
+    s['cost_per_turnover'] = COST
+    s['turnover_placed'] = '会計の信号 50%/年・価格の信号 200%/年（事前登録の置き値）＋合成の等分への戻し'
     s['replicate'] = REPL if replicate else []
     return s
 
@@ -377,6 +384,97 @@ def lookahead(spec):
     return res
 
 
+def reference(spec):
+    """選ぶのには使わない参考（どれも 2000-12 まで）: (a) 同じ規則を米国（French の米国の Hi 30・1951-07〜）に当てた成績
+    (b) 同じ凍結した規則の他の20か国での選定期間の成績とならし"""
+    mk, rf = h.us_market()
+    legs = {}
+    for nm, f in [('BM_H', 'Portfolios_Formed_on_BE-ME'), ('EP_H', 'Portfolios_Formed_on_E-P'),
+                  ('CEP_H', 'Portfolios_Formed_on_CF-P'), ('Y_H', 'Portfolios_Formed_on_D-P')]:
+        if nm not in spec.get('legs', []):
+            continue
+        d = h.french(f)
+        t = next(k for k in d if 'Value Weight' in k and 'Monthly' in k)
+        ser = {m: v / 100 for m, v in d[t]['Hi 30'].items() if m > 9999}
+        legs[nm] = (ser, set(ser), nm)
+    out = {}
+    if legs:
+        ms = [m for m in sorted(set(mk) & set().union(*[set(v[0]) for v in legs.values()])) if m >= 195107]
+        r, tv = combine(legs, {k: TURN_ACC for k in legs}, rf, ms)
+        out['us_same_rule_1951_2000'] = h.stats(r, mk, rf, turnover=tv, cost=COST)
+    x = run(spec)
+    per, rows, pos = {}, {}, 0
+    for c, y in x['markets'].items():
+        st = h.stats(y['ret'], y['bench'], y['rf'], turnover=y['turnover'], cost=COST)
+        if st:
+            rows[c] = {'from': st['from'], 'excess': st['excess'], 't': st['t']}
+            pos += st['excess'] > 0
+        for m in y['ret']:
+            if m in y['bench']:
+                per.setdefault(m, []).append(y['ret'][m] - y['turnover'].get(m, 0.0) * COST - y['bench'][m])
+    ex = [S.mean(v) for m, v in sorted(per.items())]
+    mu, sd = S.mean(ex), S.stdev(ex)
+    out['other20_selection_period'] = {'positive': f'{pos}/{len(rows)}', 'pooled_excess': round(mu * 1200, 2),
+                                       'pooled_t': round(mu / (sd / math.sqrt(len(ex))), 2), 'by_country': rows}
+    return out
+
+
+def freeze():
+    rows, best, elig = main()
+    v = next(x for x in VARIANTS if x['name'] == best['name'])
+    spec = spec_of(v)
+    la = lookahead(spec)
+    assert all(la[k]['mismatch'] == 0 for k in la if k.startswith('prefix_')), la
+    ref = reference(spec)
+    st, b = best['stats'], best
+    loc = spec_of(v, False); loc['ccy'] = 'Local'
+    _, rf = h.us_market()
+    rl, tl, bl = build_F(loc, 'Japan', rf) if v['src'] == 'F' else ({}, {}, {})
+    yen = h.stats(rl, bl, rf, turnover=tl, cost=COST) if rl else None
+    us, o20 = ref.get('us_same_rule_1951_2000') or {}, ref['other20_selection_period']
+    rationale = (
+        f"規則: 日本株（French 国別＝MSCI 由来の大型〜中型）を毎年12月末に 簿価時価・益回り・キャッシュ益回り・配当利回り の四つで並べ、"
+        f"それぞれの上位30%（時価加重）を等分に持つ（月ごとに等分へ戻す）。相手は同じファイルの日本の市場（時価加重）。\n"
+        f"なぜ: 日本の割安の上乗せは Chan・Hamao・Lakonishok（1991・1971-88 の東証で B/M と CF/P が強い）、Fama-French（1998・国際の割安）、"
+        f"Asness・Moskowitz・Pedersen（2013）が報告している。経済的な理由は (1) 割安な株は将来の利益の伸びを悲観しすぎた価格で買える（行動の説明）"
+        f"(2) 苦境のリスクへの報酬（リスクの説明）。一つの比率には会計の癖（日本は持ち合い株で簿価が歪む・配当性向が低く配当利回りの"
+        f"ばらつきが小さい）があるので、四つを等分にして癖を薄める——このため t が単独の指標より高く出た。\n"
+        f"選定期間（{st['from']}〜{st['to']}・{st['years']}年）の結果: 費用後 年率 {st['cagr']}% vs 市場 {st['bench_cagr']}%＝超過 {st['excess']:+}%/年"
+        f"（t {st['t']}・NW {st['t_nw']}）、ぶれ {st['vol']}/{st['bench_vol']}%、最大下落 {st['maxdd']}/{st['bench_maxdd']}%、"
+        f"β {b['beta']}・α {b['alpha']:+}%/年（t {b['alpha_t']}）＝下げ相場でβが低かっただけではない。転がる10年 {st['roll10_win']}。"
+        f"前半（〜1987）{b['first_half']['excess']:+}%（t {b['first_half']['t']}）／後半（1988〜2000）{b['second_half']['excess']:+}%（t {b['second_half']['t']}）"
+        f"＝前半は弱い。円建てでも超過 {yen['excess']:+}%（t {yen['t']}）。\n"
+        f"選び方: 事前登録どおり、試した {len(rows)} 変種のうち選定期間の超過が +1%/年以上で費用後の超過の t が最大のもの"
+        f"（次点は F_cep t2.37・F_bm t2.21。JKP 日本の変種は被覆が 1987/88〜 と短く t はどれも 2.2 未満）。\n"
+        f"選ぶのに使っていない参考（どれも 2000-12 まで）: 同じ規則を米国に当てると 1951-2000 で 超過 {us.get('excess')!s}%/年（t {us.get('t')!s}）。"
+        f"同じ規則を他の20か国に当てると選定期間で {o20['positive']} が正・ならして {o20['pooled_excess']:+}%/年（t {o20['pooled_t']}）。")
+    table = [{'name': x['name'], 'excess': x['stats']['excess'], 't': x['stats']['t'], 't_nw': x['stats']['t_nw'],
+              'from': x['stats']['from'], 'beta': x['beta'], 'alpha': x['alpha']} for x in rows if x['stats']]
+    extra = {
+        'implement': FAMILY['implement'],
+        'lookahead_test': ('(1) 接頭辞の検査: データを 1990-12・1995-12 で切って run(spec) を回した日本と他の20か国の月次の成績が、2000-12 まで'
+                           f"読んだ成績と切った月まで一致（{la['prefix_199012']['checked']}・{la['prefix_199512']['checked']} 点・不一致0）。"
+                           f"(2) 日付の揃い: 組と相手の同じ月の相関 {la['corr_same_month']}・組と前月の相手 {la['corr_ret_vs_prev_bench']}・"
+                           f"組と翌月の相手 {la['corr_ret_vs_next_bench']}＝組のリターンは月がずれていない。"
+                           '(3) コードを読む検査: 月 m の持ち高は French が前年12月末に組んだ上位30%（データの作り手の組入れ）で、合成の重みは'
+                           'その月に組が存在するかだけで決まる（その月のリターンを使わない）。月ごとの等分への戻しの回転は m−1 月末までの値動きで決まる。'
+                           '⚠ French の国別の組は12月末に比率で並べる。比率の会計年度の時点はページに書かれていない——日本は3月決算が多く6月までに'
+                           '公表されるので12月の組入れには先読みにならないが、12月決算の国（再現の側）では数か月の先読みがありうる（データの作り手の側の問題）'),
+        'variants_table': table,
+        'markets': REPL,
+        'asia_pacific_subset': ['HongKong', 'Singapore', 'Malaysia', 'Australia', 'NewZealand'],
+        'reference_selection_period': ref,
+        'selection_diag': {'beta': b['beta'], 'alpha': b['alpha'], 'alpha_t': b['alpha_t'], 'first_half': b['first_half'],
+                           'second_half': b['second_half'], 'yen': yen},
+        'excluded_before_selection': '低ぶれ・低ベータ（ivol・betabab・qmj_safety）＝下げ相場の選定期間でβの低さだけで勝って見えるため／'
+                                     'eqnpo_me・fcf_me＝JKP 日本で 2000-08 まで被覆が無く選定期間で測れないため',
+        'chose_by_rule': elig,
+    }
+    doc = h.save_spec('japan', spec, rationale, len(rows), st, extra=extra)
+    print('凍結:', json.dumps(doc['spec'], ensure_ascii=False))
+    return doc
+
+
 def main():
     rows = evaluate_variants()
     show(rows)
@@ -386,7 +484,9 @@ def main():
 
 
 if __name__ == '__main__':
-    if '--lookahead' in sys.argv:
+    if '--freeze' in sys.argv:
+        freeze()
+    elif '--lookahead' in sys.argv:
         nm = sys.argv[sys.argv.index('--lookahead') + 1] if len(sys.argv) > sys.argv.index('--lookahead') + 1 else None
         v = next(x for x in VARIANTS if x['name'] == nm)
         print(json.dumps(lookahead(spec_of(v)), ensure_ascii=False, indent=1))
