@@ -231,6 +231,22 @@ def fwd(px, a, h):
     return None
 
 
+def identity_fix(P):
+    """★事後の点検（結果を見た後に足した）: 自己資本≦0 なのに 資産−負債 が資産の5%を超えて正の社年は、
+    提出の XBRL の誤り（例: TDY 2014 は StockholdersEquity −323.2百万$・資産−負債 +1,468.5百万$）と見て、自己資本を 資産−負債 に置き換えた写しを返す"""
+    Q, n = {}, []
+    for c, ys in P.items():
+        for y, d in ys.items():
+            se = first(d, ['StockholdersEquity', 'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'])
+            A, L = d.get('Assets'), d.get('Liabilities')
+            if se is not None and se <= 0 and A and L is not None and (A - L) > 0.05 * A:
+                d = dict(d)
+                d['StockholdersEquity'] = A - L
+                n.append((c, y))
+            Q.setdefault(c, {})[y] = d
+    return Q, n
+
+
 def run(F, tick, PX, spy, last, wacc):
     """一つの WACC で引き金の社と比較群を作り、先の年率の差をまとめる → (引き金ごとの結果, 判定, 比較群の社年)"""
     events = {k: [] for k in ('S1', 'S2', 'S1a', 'S1b', 'S1c', 'S2a', 'S2b', 'S2c')}
@@ -315,11 +331,27 @@ def main():
         out, vd, nc = run(F, tick, PX, spy, last, wacc)
         res[f'WACC{wacc:g}%'] = {'判定': vd, '引き金': out, '比較群の社年': nc}
     out0, vd0, nc0 = run(F0, tick0, PX, spy, last, WACC)
+    P2, fixed = identity_fix(P)
+    F2 = features(P2)
+    ever2 = {c for c in F2 if any(held(F2, c, y) for y in F2[c])}
+    tick2 = {c: sorted(c2t[c], key=len)[0] for c in ever2 if c in c2t}
+    PX.update(prices(set(tick2.values()) - set(PX)))
+    out2, vd2, nc2 = run(F2, tick2, PX, spy, last, WACC)
+    rob = {nm: [o['S1']['結果'].get('36か月', {}).get('比較群との差の中央値(%/年)'), o['S1']['結果'].get('36か月', {}).get('比較群に勝った割合')]
+           for nm, o in (('主 WACC9%', res['WACC9%']['引き金']), ('WACC8%', res['WACC8%']['引き金']), ('WACC10%', res['WACC10%']['引き金']),
+                         ('負債タグ無し=0', out0), ('自己資本の恒等式で直す', out2))}
+    fixed_held = sorted({f"{tick.get(c) or tick2.get(c) or c} FY{y}" for c, y in fixed if held(F, c, y - 1) or held(F2, c, y - 1)})
     doc = {'generated': time.strftime('%Y-%m-%d'), 'tool': 'night/gaps_sell.py', 'prereg': 'out/gaps7_prereg.json Q3_sell（9c28f6c）',
            '判定（主＝WACC9%・36か月）': res['WACC9%']['判定'], '結果': res,
            '結果を見る前の修正': '負債・自己資本・D&A・利息・現金の候補タグを採取器 hachimon_fetch に寄せて広げ、負債のタグが一つも無い社年は負債0ではなく『測れない』にした（初版は HD 2016 の ROIC を 389.6% と出していた）。検定を一度も走らせ終える前に見つけた',
            '★事前登録の外の感度_負債のタグが無い社年を負債0と読む（初版の読み方・WACC9%・結果を見る前に足した）': {'判定': vd0, '引き金': {k: v for k, v in out0.items() if k in ('S1', 'S2')},
                                                                   '比較群の社年': nc0, '一度でも保有の条件を満たした社': len(ever0)},
+           '★事後の点検_貸借の恒等式と食い違う自己資本≦0を直す（WACC9%・結果を見た後に足した）': {
+               '直した社年（全体）': len(fixed), 'うち前年に保有の条件を満たしていた社年': fixed_held,
+               '判定': vd2, '引き金': {k: v for k, v in out2.items() if k in ('S1', 'S2', 'S1a')}, '比較群の社年': nc2},
+           '判定の頑健さ（S1）': {'主 WACC9%': res['WACC9%']['判定']['S1'], 'WACC8%': res['WACC8%']['判定']['S1'], 'WACC10%': res['WACC10%']['判定']['S1'],
+                               '負債タグ無し=0': vd0['S1'], '自己資本の恒等式で直す': vd2['S1'],
+                               '36か月の差の中央値と勝った割合（版ごと）': rob},
            '母集団': {'一度でも保有の条件を満たした社': len(ever), 'うち今ティッカーが無く外れた社（生存バイアス）': len(no_ticker),
                     '株価が取れた社': sum(1 for c in tick if PX.get(tick[c]))},
            '注': 'frames は暦年にそろえる（6月決算の社は損益と貸借の時点がずれる）。負債のタグが一つも無い社年は測れない（無借金でタグを出さない社も抜ける）。定性の部分（堀の減衰・disrupt・erosion・質スコアの連続低下）は測れない。今ティッカーが無い社は入らない＝倒産した社が抜ける（引き金の社を良く見せる向き）'}
