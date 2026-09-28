@@ -176,18 +176,26 @@ def yahoo(ticker, interval='1mo', start=None):
     r = j['chart']['result'][0]
     ts = r['timestamp']
     adj = r['indicators'].get('adjclose', [{}])[0].get('adjclose') or r['indicators']['quote'][0]['close']
+    # 2026-09-28 mw_jp_nisa_bridge で判明: 月・日は取引所の現地時刻で切る。UTC で切ると東証の月足
+    # （JST の月初 00:00＝前日 15:00 UTC）が1か月前に付いていた（1698.T と基準価額の月次の相関 0.03→直して 0.98）。
+    # 米国銘柄は現地 00:00〜09:30 が同じ日なので結果は変わらない
+    off = r.get('meta', {}).get('gmtoffset') or 0
     px = {}
     for t, a in zip(ts, adj):
         if a is None:
             continue
-        d = datetime.datetime.utcfromtimestamp(t)
+        d = datetime.datetime.utcfromtimestamp(t + off)
         k = d.year * 100 + d.month if interval == '1mo' else d.year * 10000 + d.month * 100 + d.day
         px[k] = a
     if interval == '1mo':
         # 2026-09-28 mw_forward の点検で判明: 月足の最後の本は『まだ終わっていない今月』（途中の値）。
         # 途中の月を1か月として混ぜないよう、今月以降の本を落とす
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.utcfromtimestamp(time.time() + off)
         px = {k: v for k, v in px.items() if k < now.year * 100 + now.month}
+        ks = sorted(px)
+        # 抜けた月をまたぐ変化を1か月のリターンとして付けない（欠測を0や1か月分と読まない・ルール7）
+        return {k: px[k] / px[p] - 1 for p, k in zip(ks, ks[1:])
+                if (k // 100 * 12 + k % 100) - (p // 100 * 12 + p % 100) == 1}
     ks = sorted(px)
     return {k: px[k] / px[p] - 1 for p, k in zip(ks, ks[1:])}
 
