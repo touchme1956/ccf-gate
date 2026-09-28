@@ -211,6 +211,22 @@ def select():
     return D, rows
 
 
+def factor_loadings(ret, tv, rf):
+    """選定期間の French 3因子＋勢い（UMD）への回帰（費用後・月次%）→ 切片（%/年）と係数と t。説明のためだけ（選び方に使わない）"""
+    import numpy as np
+    d = h.french('F-F_Research_Data_Factors'); t0 = next(iter(d))
+    u = h.french('F-F_Momentum_Factor'); u0 = next(iter(u)); mom = next(iter(u[u0].values()))
+    ms = [m for m in sorted(ret) if m in d[t0]['HML'] and m in mom and m <= h.SEL_END]
+    y = np.array([(ret[m] - tv[m] * COST - rf[m]) * 100 for m in ms])
+    X = np.column_stack([np.ones(len(ms))] + [np.array([d[t0][k][m] for m in ms]) for k in ('Mkt-RF', 'SMB', 'HML')] + [np.array([mom[m] for m in ms])])
+    b = np.linalg.lstsq(X, y, rcond=None)[0]
+    e = y - X @ b
+    se = np.sqrt(np.diag((e @ e / (len(y) - X.shape[1])) * np.linalg.inv(X.T @ X)))
+    nm = ['alpha_pct_yr', 'mkt', 'smb', 'hml', 'umd']
+    return {'window': f'{ms[0]}-{ms[-1]}', **{k: {'coef': round(float(bb) * (12 if k == 'alpha_pct_yr' else 1), 3), 't': round(float(bb / ss), 2)}
+                                             for k, bb, ss in zip(nm, b, se)}}
+
+
 def lookahead_test(spec):
     """(1) 切り詰め: JKP の脚・銘柄数・RF を月 X で切って作り直しても、X までの規則のリターンと回転が完全一致
        (2) 未来の毒: X より後の JKP の値を1か月ずらし、銘柄数と RF を乱数に置き換えて壊しても、X までは不変（後は変わる＝空回りしていない）
@@ -294,6 +310,8 @@ def main(freeze=False):
         if s2:
             mkt_sel[c] = {'from': s2['from'], 'years': s2['years'], 'excess': s2['excess'], 't': s2['t']}
     print('他の市場（選定期間・参考）:', mkt_sel)
+    fl = factor_loadings(r['ret'], r['turnover'], r['rf'])
+    print('因子への回帰（選定期間）:', fl)
     tbl = [{'name': x['name'], 'eligible': x['eligible'], 'from': x['stats']['from'], 'excess': x['stats']['excess'], 't': x['stats']['t'],
             't_nw': x['stats']['t_nw'], 'vol': x['stats']['vol'], 'maxdd': x['stats']['maxdd'],
             'from_1975': {'excess': x['common']['excess'], 't': x['common']['t']}, 'beta': x['beta'], 'alpha_capm': x['alpha_capm'],
@@ -317,12 +335,16 @@ def main(freeze=False):
         f"年率 {st['cagr']}% 対 {st['bench_cagr']}%、超過 {st['excess']:+}%/年、t {st['t']}（Newey-West {st['t_nw']}）、"
         f"ぶれ {st['vol']}% 対 {st['bench_vol']}%、最大下落 {st['maxdd']}% 対 {st['bench_maxdd']}%、転がる10年の勝ち {st['roll10_win']}。"
         f"β {best['beta']}・CAPM のα {best['alpha_capm']:+}%/年。"
-        f"部分期間: 〜1974（FAS 2 の前・任意の開示の会社だけ） {sub['〜1974']['excess'] if sub['〜1974'] else '—'}%/年"
+        f"French 3因子＋勢いへの回帰（選定期間）: 切片 {fl['alpha_pct_yr']['coef']:+}%/年（t {fl['alpha_pct_yr']['t']}）・市場 {fl['mkt']['coef']}・"
+        f"小型（SMB）{fl['smb']['coef']}（t {fl['smb']['t']}）・割安（HML）{fl['hml']['coef']}（t {fl['hml']['t']}）・勢い（UMD）{fl['umd']['coef']}（t {fl['umd']['t']}）"
+        '＝割安の賭けではなく、小型への傾きと市場より大きいβを含む（上限つきの時価加重でも研究開発の厚い三分位は小型に寄る）。'
+        f"部分期間: 〜1974（FAS 2 の前・任意の開示の会社だけ） {sub['〜1974']['excess'] if sub['〜1974'] else '—':+}%/年"
         f"（t {sub['〜1974']['t'] if sub['〜1974'] else '—'}）・1975-1987 {sub['1975-1987']['excess']:+}（t {sub['1975-1987']['t']}）・"
         f"1988-2000 {sub['1988-2000']['excess']:+}（t {sub['1988-2000']['t']}）。1975〜2000（CLS の標本に近い窓）では {cm['excess']:+}%/年・t {cm['t']}。"
         f"次点: " + '／'.join(f"{x['name']} {x['stats']['excess']:+}・t {x['stats']['t']}" for x in others) + '。'
         f"【選び方】{how}。試した変種は{len(rows)}本（選べる14本＝3本の単独と等分4組 × vw_cap/vw、参考3本＝薄い側の向きの確認・選ばない）。"
-        f"【他の市場（選定期間・参考）】22か国のうち三分位が20社以上そろう月が24か月以上ある国は {len(mkt_sel)}、そのうち超過が正は {pos}。"
+        f"【他の市場】凍結した規則を先進国22か国すべてに同じ形で当てる（三分位が20社以上の月だけ・24か月以上そろう国だけが数に入る＝機械の規則）。"
+        f"選定期間にその条件を満たしたのは {len(mkt_sel)}か国（{'・'.join(mkt_sel)}）で、そのうち超過が正は {pos}。"
         '米国外は研究開発の開示が薄く（国際会計基準では開発費の資産計上もある）、選定期間の国の比較は短く雑音が大きい。'
         '【予想（後知恵を含む）】研究開発の厚い会社は技術・医薬に傾くので、2001年以降の米国（大型テックの優位）では勝つかもしれないが、'
         '研究開発費÷時価総額の高い側は『研究開発に対して割安』な会社で、2000年のITバブルの崩壊の直後はむしろ効く向き。大型テックの勝ちを拾うとは限らない。'
@@ -344,10 +366,13 @@ def main(freeze=False):
         'selection_window_note': '選び方は各変種のデータの始まり（三分位が50社以上そろう最初の月）〜2000-12 の t。from_1975 は FAS 2 の後の共通の窓（参考）',
         'subperiods': sub,
         'from_1975': {'excess': cm['excess'], 't': cm['t'], 'from': cm['from']},
-        'markets': list(r['markets']),
+        'markets': list(DEV),
+        'markets_qualified_in_selection': list(r['markets']),
         'markets_selection_period': mkt_sel,
+        'factor_loadings_selection': fl,
         'markets_note': ('国は JKP の3文字で run() の markets のキーと同じ。相手はその国の JKP mkt(vw)+米国RF（米ドル）。三分位の銘柄数が20未満の月は落とす。'
-                         '24か月そろわない国は markets に入らない（研究開発の開示が薄い国）'),
+                         '三分位20社以上の月が24か月そろわない国は run() の markets に入らない（研究開発の開示が薄い国）。'
+                         'markets は当てる22か国の全部、markets_qualified_in_selection は選定期間（〜2000-12）に条件を満たした国'),
         'benchmark': 'French 米国市場（Mkt-RF＋RF・CRSP 全上場の上限なし時価加重）',
         'cost_note': '片道の回転100%につき0.25%。回転は 50%/年（事前登録 r6 の会計の信号の置き値）＋等分の組の毎月の戻し',
         'eligible_variants': sum(1 for x in rows if x['eligible']), 'reference_variants': sum(1 for x in rows if not x['eligible']),
