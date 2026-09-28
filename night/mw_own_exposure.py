@@ -210,6 +210,93 @@ def ifree_nav():
     return {k: v for k, v in ret.items() if k <= FR_END}, me, rows
 
 
+# ───────────────────────── 事後（結果を見た後に足した記述・格付けなし） ─────────────────────────
+def posthoc(V, attr, IND12, IND12X, ME10a, CH49, raw, X_MKT):
+    o = {'label': '事後（結果を見た後に足した記述。事前登録の外・判断の材料にだけ使う）'}
+    # (1) 業種の長期平均は算術。ぶれの大きい業種は算術の超過が年率の差（CAGR）より大きく出る
+    lr = {}
+    I12tot = {c: {k: v + MKT[k] for k, v in s.items() if k in MKT} for c, s in IND12.items()}
+    for c in list(I12tot) + ['Hardw', 'Softw', 'Chips', 'LabEq']:
+        tot = I12tot[c] if c in I12tot else CH49[c]
+        for wn, (a, z) in {'1926-07..2006-12': (LONG_A, LONG_Z), '1965-01..2006-12': (196501, LONG_Z), '1926-07..2026-08': (LONG_A, FR_END)}.items():
+            es = M.excess_stats(tot, MKT, a, z)
+            lr.setdefault(c, {})[wn] = {'arith_ex_ann': es['ex_ann'], 'cagr_diff': es['cagr_diff'], 't': es['t']}
+    o['industry_longrun_arith_vs_cagr'] = lr
+    o['industry_longrun_note'] = ('(b) の「業種の長期平均×載り」は算術の平均で数えた。ぶれの大きい業種（BusEq・Chips）は算術の超過が年率の差より'
+                                  '大きく出る（分散の差の半分ほど）。複利で効くのは年率の差のほう')
+    # (2) 2026 の業種だけの予測を 49業種の技術4本（IND12x）で
+    xs = X_MKT + [(c, s) for c, s in IND12X.items()] + [('ME10a', ME10a)]
+    ind26x = {}
+    for vn in ['NDX_TR', 'SEMI', 'NET', 'MIX', 'CASTLE5']:
+        y = active(V[vn], MKT)
+        r = reg(y, xs, HOLD_A, HOLD_Z)
+        rows = [(k, y[k], math.fsum(b * x[k] for b, (_, x) in zip(r['_b'][1:], xs))) for k in sorted(y)
+                if k > HOLD_Z and all(k in x for _, x in xs)]
+        if rows:
+            ind26x[vn] = {'hold_r2': r['r2'], 'realized_sum_pct': round(sum(v for _, v, _ in rows) * 100, 2),
+                          'pred_no_alpha_sum_pct': round(sum(p for _, _, p in rows) * 100, 2),
+                          'corr_month': round(M.corr([v for _, v, _ in rows], [p for _, _, p in rows]), 3)}
+    o['ind2026_with_IND12x'] = ind26x
+    # (3) 城の追従のぶれの床: CASTLE5 を Mkt・NDX_TR・SEMI の総リターンへ回帰した残差（手元の ETF で作れる最良の線形の相手）
+    c5 = V['CASTLE5']
+    parts = [('Mkt', MKT), ('NDX_TR', V['NDX_TR']), ('SEMI', V['SEMI'])]
+    def fit(a, z):
+        ks = [k for k in sorted(c5) if a <= k <= z and all(k in s for _, s in parts)]
+        Y = np.array([c5[k] for k in ks]); X = np.column_stack([np.array([s[k] for k in ks]) for _, s in parts])
+        b = np.linalg.lstsq(X, Y, rcond=None)[0]
+        return b, ks
+    b_all, ks = fit(200604, FR_END)
+    res = [c5[k] - sum(float(bb) * s[k] for bb, (_, s) in zip(b_all, parts)) for k in ks]
+    o['castle_te_floor_in_sample'] = {'weights': {nm: round(float(bb), 3) for bb, (nm, _) in zip(b_all, parts)}, 'from': ks[0], 'to': ks[-1],
+                                      'te': round(S.stdev(res) * math.sqrt(12) * 100, 2),
+                                      'years_for_t2_at_3pt': round((2 * S.stdev(res) * math.sqrt(12) * 100 / 3) ** 2, 1),
+                                      'note': '同じ期間で推定した重み（後知恵の当てはめ）＝どの相手を選んでもぶれはこれより下がらない目安'}
+    b1, _ = fit(200604, 201512)
+    ks2 = [k for k in sorted(c5) if 201601 <= k <= FR_END and all(k in s for _, s in parts)]
+    res2 = [c5[k] - sum(float(bb) * s[k] for bb, (_, s) in zip(b1, parts)) for k in ks2]
+    o['castle_te_floor_out_of_sample'] = {'weights_2006_2015': {nm: round(float(bb), 3) for bb, (nm, _) in zip(b1, parts)},
+                                          'applied': [ks2[0], ks2[-1]], 'te': round(S.stdev(res2) * math.sqrt(12) * 100, 2)}
+    # 同じ 2016〜 の NET の TE（比較）
+    d3 = [c5[k] - V['NET'][k] for k in ks2 if k in V['NET']]
+    o['castle_te_vs_NET_2016_on'] = round(S.stdev(d3) * math.sqrt(12) * 100, 2)
+    return o
+
+
+def summary(o):
+    A, B, C, D = o['attribution'], o['b_expected'], o['c_castle_incremental'], o['d_castle_benchmark']
+    pr, P, J, I = o['b_premia'], o['post_hoc_事後'], o['jpy'], o['oos']['ifree_nav']
+    net_h, net_t = A['NET']['A4_ind']['hold'], A['NET']['A4_ind']['train']
+    q5n = o['a_stability']['NET']['A5q']['Q']; q5x = o['a_stability']['NDX_TR']['A5q']['Q']
+    bn = B['NET']['hold']
+    cq = C['CASTLE5']['C_NETq']['hold']['coef']['Q']; cg = C['CASTLE5']['C_NETg']['hold']['coef']['G']
+    c4 = A['CASTLE5']['A4_ind']['hold']
+    te = D['decision']['te_usd_all']; nt = D['USD']['all_200604_202608']['NET']
+    L = []
+    L.append(f"ETF側（iFreeNEXT NASDAQ100 60 / SMH 20＝NASDAQ100 75%・半導体25%）は 2007〜2025 に市場（French の時価加重≒S&P500）より年 {net_h['y_mean_ann']:+.1f}%（算術）上だった。"
+             f"そのうち業種（ほぼ技術=BusEq）だけで {net_h['contrib_group_ann']['industry']:+.1f}%／年を説明できる（R² {net_h['r2']}）。1994〜2006 は超過 {net_t['y_mean_ann']:+.1f}%／年・t {o['vehicles_vs_market']['NET']['train']['t']} で、2000〜02年の崩れを挟み統計的には0と区別できない")
+    L.append(f"質の上乗せ（cop_at の良い側−市場）への載りは、β だけ除くと ETF側 {bn['b1_A2_bq'][0]}（t {bn['b1_A2_bq'][1]}）、業種を除くと {q5n['hold']}。"
+             f"業種を除いた載りは 1994〜2006 {q5n['train']} → 2007〜2025 {q5n['hold']}（差の t {q5n['t_diff']}）、NASDAQ100 は {q5x['train']}→{q5x['hold']} と安定していた")
+    L.append(f"検証済みの割増から期待できる上乗せ（載り×1963〜2006 の割増 {pr['E_Q_1963_2006']}%×公表後の割り引き 0.44〜0.56）は ETF側で年 "
+             f"{bn['b2_A5q_expected']['0.44']}〜{bn['b2_A5q_expected']['0.56']}%（業種を除いた載り）、上限でも {bn['b1_A2_expected_Q']['0.44']}〜{bn['b1_A2_expected_Q']['0.56']}%。"
+             f"純粋な質の三分位（載り1）なら {pr['pure_quality_expected（b_q=1）']['0.44']}〜{pr['pure_quality_expected（b_q=1）']['0.56']}%。つまり ETF側はすでに質を 0.3〜1.4 単位持っている")
+    bl = P['industry_longrun_arith_vs_cagr']['BusEq']
+    L.append(f"残り（2007年以降の実現の大半）は割増の検証されていない業種の賭け。技術（BusEq）の対市場の年率の差は 1926〜2006 で {bl['1926-07..2006-12']['cagr_diff']:+.2f}%・"
+             f"1965〜2006 で {bl['1965-01..2006-12']['cagr_diff']:+.2f}%＝長い目ではほぼ0で、2007年以降の +4〜5%／年を将来の期待に数える根拠は無い")
+    L.append(f"城5社は NASDAQ100 と SMH を持った上で質を足していない: 質への載り {cq[0]}（t {cq[1]}）・門の写しへの載り {cg[0]}（t {cg[1]}）。"
+             f"城の 2007〜2025 の超過 {c4['y_mean_ann']:+.1f}%／年のうち {c4['alpha_ann']:+.1f}% は説明できない部分＝今日の知識で選んだ5社の後知恵（参考の格付け S は無効）")
+    L.append(f"castle_rule の相手: 城の超過と ETF側の超過は相関 {D['orthogonality']['corr_castle_active_vs_NET_active']}（独立ではない）。追従のぶれは 市場 {te['Mkt']}%・QQQM {te['NDX_TR']}%・ETF側の配合 {te['NET']}% "
+             f"→ 事前の規則で『ETF側の配合（NASDAQ100 75 / SMH 25）』を推奨。ただし差は小さく、後知恵で最良の組み合わせでも {P['castle_te_floor_in_sample']['te']}%")
+    L.append(f"このぶれでは +3pt／年を t=2 で見分けるのに約 {nt['years_for_t2_at_3pt']:.0f} 年かかる。上乗せが本当は0でも 3年で +3pt 以上に見える確率 {nt['P_obs_ge_3pt_if_true0（=P_obs_lt_0_if_true3）'][3]:.0%}・5年で {nt['P_obs_ge_3pt_if_true0（=P_obs_lt_0_if_true3）'][5]:.0%}（castle_rule はほぼ運で動く）")
+    L.append(f"円建て（2007-01〜2026-08）: ETF側 年 {J['NET']['hold']['cagr_jpy']}%（米ドル {J['NET']['hold']['cagr_usd']}%）・市場 {J['Mkt']['hold']['cagr_jpy']}%（{J['Mkt']['hold']['cagr_usd']}%）。超過の構造は円でも同じ（為替は両方に掛かる）")
+    if 'lag_aligned_vs_QQQ_jpy' in I:
+        la = I['lag_aligned_vs_QQQ_jpy']
+        L.append(f"iFreeNEXT の実物（2018-09〜2026-08・基準価額）は前営業日の QQQ（円）と差 {la['mean_diff_ann']:+.2f}%／年・ぶれ {la['te']}%・β {la['beta']}＝NASDAQ100 の分析がそのまま当てはまる（信託報酬の差の分だけ低い）")
+    i26, x26 = o['oos']['ind2026'].get('NET'), P['ind2026_with_IND12x'].get('NET')
+    if i26 and x26:
+        L.append(f"2026年1〜8月の答え合わせ: ETF側の対市場 {i26['realized_sum_pct']:+.1f}%（8か月の和）に対し、12業種の載りの予測 {i26['pred_no_alpha_sum_pct']:+.1f}%・技術を4つに割った事後の版 {x26['pred_no_alpha_sum_pct']:+.1f}%＝今年も業種（とくに半導体）の賭けが動かしている")
+    return L
+
+
 # ───────────────────────── 本体 ─────────────────────────
 def main():
     out = {'angle': ANGLE, 'prereg': PREREG, 'prereg_commit': sha_of(PREREG), 'global_prereg': 'out/mw_prereg.json',
@@ -304,7 +391,7 @@ def main():
     out['sanity'] = san
     log('検算', json.dumps({k: san[k] for k in ('french_mkt_cagr_full', 'french_mkt_cagr_2007', 'yahoo_month_alignment_corr_GSPC_vs_FrenchMkt')}, ensure_ascii=False))
     log('Q', san['Q_full_196307_202512'], san['Q_train_196307_200612'], san['Q_hold'], '| G hold', san['G_hold'], '| corr QG', san['corr_Q_G'])
-    log('QQQ hold', {k: san['QQQ_hold_vs_Mkt_200701_202608'][k] for k in ('ex_ann', 't')}, 'QQQ−NDX価格', san['QQQ_minus_NDXprice_199904_202608'])
+    log('QQQ hold', {k: san['QQQ_hold_vs_Mkt_200701_202608'][k] for k in ('ex_ann', 't')}, 'QQQ−NDX価格', san['QQQ_minus_NDXprice_199904_202608（配当−信託報酬の目安）'])
 
     # ── 窓 ──
     def windows_for(s):
@@ -323,6 +410,9 @@ def main():
             for wn, (a, z) in W.items():
                 if vn == 'CASTLE5' and wn == 'train':
                     continue
+                if vn == 'SEMI_CHIPS' and mn == 'A6_full_x':
+                    attr[vn][mn][wn] = None  # 被説明変数（Chips−Mkt）が説明変数に入っている＝R²=1 の恒等式（意味なし）
+                    continue
                 attr[vn][mn][wn] = reg(y, xs, a, z, grp)
         a5 = attr[vn]['A5_full']
         log(f"{vn:10s} A5 train", a5.get('train') and {k: a5['train']['coef'][k][:2] for k in ('MktRF', 'Q', 'G', 'BusEq', 'ME10a')},
@@ -340,8 +430,8 @@ def main():
                 b1, _, s1 = tr['coef'][nm]; b2, _, s2 = ho['coef'][nm]
                 se = math.sqrt(s1 * s1 + s2 * s2)
                 d[nm] = {'train': b1, 'hold': b2, 'diff': round(b2 - b1, 3), 't_diff': round((b2 - b1) / se, 2) if se > 0 else None}
-            d['_alpha'] = {'train': tr['alpha_ann'], 'hold': ho['alpha_ann']}
-            d['_r2'] = {'train': tr['r2'], 'hold': ho['r2']}
+            d['alpha_ann（train・hold）'] = {'train': tr['alpha_ann'], 'hold': ho['alpha_ann']}
+            d['r2（train・hold）'] = {'train': tr['r2'], 'hold': ho['r2']}
             stab[vn][mn] = d
     out['a_stability'] = stab
 
@@ -484,6 +574,8 @@ def main():
         if vn in COST:
             g, c = M.grade(o['full'], o['train'], o['hold'], o['roll20'], cost_hold=o['cost_hold'], repl=None, family_holm_p=hp.get(vn))
             o['holm_p_hold'] = hp.get(vn); o['grade_reference'] = g; o['criteria'] = c
+            if vn in ('CASTLE', 'CASTLE5'):
+                o['grade_reference_invalid'] = '2026年に門が選んだ5社（事後に勝者と分かっている生き残り）を過去へ当てた＝後知恵の選択。格付けは勝ちの証拠にならない'
             rec_.update({'grade_reference': g, 'criteria': c})
         for k in ('full', 'train', 'hold', 'recent'):
             if o[k]:
@@ -583,7 +675,9 @@ def main():
                 lag[k] = b_[0] / a_[0] - 1
         ks2 = [k for k in sorted(ifr) if k in lag]
         d2 = [ifr[k] - lag[k] for k in ks2]
+        _vb = S.pvariance([lag[k] for k in ks2]); _mi = S.mean([ifr[k] for k in ks2]); _ml = S.mean([lag[k] for k in ks2])
         ino['lag_aligned_vs_QQQ_jpy'] = {'from': ks2[0], 'to': ks2[-1], 'n': len(ks2), 'mean_diff_ann': round(S.mean(d2) * 1200, 2),
+                                         'beta': round(sum((ifr[k] - _mi) * (lag[k] - _ml) for k in ks2) / len(ks2) / _vb, 3),
                                          'te': round(S.stdev(d2) * math.sqrt(12) * 100, 2),
                                          'corr': round(M.corr([ifr[k] for k in ks2], [lag[k] for k in ks2]), 4)}
         yi, yq = active(ifr, mj), active(qj, mj)
@@ -598,14 +692,20 @@ def main():
         oos['ifree_nav'] = {'error': repr(e)}
         dev.append(f'iFreeNEXT の基準価額を取得できなかった: {e!r}')
     out['oos'] = oos
+    out['post_hoc_事後'] = posthoc(V, attr, IND12, IND12X, ME10a, CH49, raw, X_MKT)
 
     out['attribution'] = attr
+    dev += ['2026 の業種だけの予測は、事前登録が α を足すか書いていなかったので、α を足さない版（業種・β・超大型だけ）を主にし、足した版も並べた',
+            'SEMI_CHIPS の A6（49業種の Chips を説明変数に入れる式）は被説明変数そのものが説明変数に入る恒等式（R²=1）なので出さない',
+            'iFreeNEXT の同じ暦月の回帰（A5・A2）は、基準価額が前営業日の米国の終値で決まる1営業日のずれで載りが薄まる（中身の違いではない）。答え合わせの主は前営業日に合わせた QQQ との比較',
+            '事後の記述（業種の算術と年率の差・2026 を 49業種の技術4本で・城の追従のぶれの床）を post_hoc_事後 に足した。格付けなし']
     out['tested'] = tested
     out['n_tested'] = len(tested)
     out['n_regressions'] = sum(1 for v in attr.values() for m in v.values() for w in m.values() if w) + \
         sum(1 for v in cinc.values() for m in v.values() for w in m.values() if w)
     out['deviations'] = dev
     out['log'] = LOG
+    out['summary_ja'] = summary(out)
     p = M.save(OUT, strip(out))
     print('saved', p, os.path.getsize(p))
 
