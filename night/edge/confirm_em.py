@@ -119,12 +119,14 @@ def mkt_total(c, rf):
 
 
 # ───────────────────────── C1 ─────────────────────────
-def c1_country(c, rf):
+def c1_country(c, rf, chars=None):
+    """chars を渡すのは事後の参考（特徴ごと）のときだけ。判定は既定の C1_CHARS"""
+    chars = chars or C1_CHARS
     bench, mk_ex = mkt_total(c, rf)
     if not bench:
         return None
     L, used = {}, []
-    for ch in C1_CHARS:
+    for ch in chars:
         r, n = JM.leg(c, ch, '3.0', 'vw')
         use = ch
         if ch == 'ocf_me' and not r:
@@ -135,7 +137,7 @@ def c1_country(c, rf):
             L[use] = (r, n)
     real = list(L)
     L['MKT'] = (mk_ex, {m: 10 ** 9 for m in mk_ex})         # 市場の代わりの分（銘柄数の関門は掛けない）
-    K = len(C1_CHARS)
+    K = len(chars)
 
     def wfn(m, act):
         if 'MKT' not in act:
@@ -389,5 +391,67 @@ def main():
     print('→', OUT)
 
 
+# ───────────────────────── 事後の参考（判定を見た後に足した。判定には使わない） ─────────────────────────
+def turnover_yr(markets):
+    """2001年以降の国ごとの年あたりの回転（片道）の中央値と、費用 0.5% での年あたりの費用"""
+    t = []
+    for x in markets.values():
+        v = [x['turnover'].get(m, 0.0) for m in x['ret'] if m >= h.HOLD_START]
+        if len(v) >= 24:
+            t.append(S.mean(v) * 12)
+    if not t:
+        return None
+    md = S.median(t)
+    return {'median_turnover_per_year': round(md, 2), 'median_cost_per_year_pct': round(md * COST_EM * 100, 2), 'countries': len(t)}
+
+
+def posthoc():
+    doc = json.load(open(OUT, encoding='utf-8'))
+    prim = doc['countries_primary']
+    spec_lb = json.load(open(os.path.join(BASE, 'out', 'edge', 'spec_lowbeta_lev.json'), encoding='utf-8'))['spec']
+    spec_jm = json.load(open(os.path.join(BASE, 'out', 'edge', 'spec_jkpmulti.json'), encoding='utf-8'))['spec']
+    _, rf = h.us_market()
+    C1, C3, _, C4 = run_set(prim, rf, spec_lb, spec_jm)
+    out = {'note': '判定を見た後に足した参考（事後）。判定・線は変えていない'}
+    out['turnover'] = {'C1': turnover_yr(C1), 'C3': turnover_yr(C3), 'C4': turnover_yr(C4)}
+    # 費用の前（参考）
+    g = lambda mk: pooled({c: {**x, 'cost': 0.0} for c, x in mk.items()})
+    out['gross_of_cost_pooled'] = {k: dict(zip(('excess', 't'), g(v))) for k, v in (('C1', C1), ('C3', C3), ('C4', C4))}
+    # 先進国と同じ費用 0.25%/回転（参考）
+    q = lambda mk: pooled({c: {**x, 'cost': 0.0025} for c, x in mk.items()})
+    out['cost_0.25pct_pooled'] = {k: dict(zip(('excess', 't'), q(v))) for k, v in (('C1', C1), ('C3', C3), ('C4', C4))}
+    # C4 の脚は vw_cap（上限つき）→ 相手を JKP mkt の vw_cap にしたら（上限つきの重みの分を相手にも持たせる）
+    mk4 = {}
+    for c, x in C4.items():
+        f = safe(h.jkp, c, 'mkt', 'factor', 'vw_cap') or {}
+        b = {m: f[m] + rf[m] for m in x['ret'] if m in f and m in rf}
+        if b:
+            mk4[c] = {**x, 'ret': {m: x['ret'][m] for m in b}, 'bench': b}
+    s4 = summarize(mk4, 'C4 vs JKP mkt vw_cap（参考）') if mk4 else None
+    out['C4_vs_mkt_vw_cap'] = {k: s4[k] for k in ('positive', 'pooled_excess', 'pooled_t')} if s4 else None
+    # C1 の特徴を一つずつ（同じ 20社の下限・市場で代える扱い）
+    per = {}
+    for ch in C1_CHARS:
+        mk = {}
+        for c in prim:
+            x = c1_country(c, rf, [ch])
+            if x and x['ret']:
+                mk[c] = x
+        sm = summarize(mk, ch) if mk else None
+        if sm:
+            per[ch] = {k: sm[k] for k in ('positive', 'pooled_excess', 'pooled_t')}
+    out['C1_single_characteristic'] = per
+    # 大きい4国（中国・韓国・台湾・インド）を抜く／湾岸4国（UAE・クウェート・カタール・サウジ）を抜く
+    for nm, drop in (('C1_without_chn_kor_twn_ind', {'chn', 'kor', 'twn', 'ind'}), ('C1_without_gulf', {'are', 'kwt', 'qat', 'sau'})):
+        p_ex, p_t = pooled({c: x for c, x in C1.items() if c not in drop})
+        out[nm] = {'excess': p_ex, 't': p_t}
+    for nm, drop in (('C4_without_chn_kor_twn_ind', {'chn', 'kor', 'twn', 'ind'}), ('C4_without_gulf', {'are', 'kwt', 'qat', 'sau'})):
+        p_ex, p_t = pooled({c: x for c, x in C4.items() if c not in drop})
+        out[nm] = {'excess': p_ex, 't': p_t}
+    doc['post_hoc_reference'] = out
+    json.dump(doc, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+    print(json.dumps(out, ensure_ascii=False, indent=1))
+
+
 if __name__ == '__main__':
-    main()
+    posthoc() if '--posthoc' in sys.argv else main()
