@@ -27,6 +27,47 @@ COST = {'dev': 0.003, 'em': 0.005, 'usa': 0.001}
 S3 = 'https://jkpfactors-data.s3.amazonaws.com/public/'
 
 
+def _fast_excess_stats(s, b, a=None, z=None, per_year=12, lag=12):
+    """mw_common.excess_stats と同じ式・同じ丸め。違いは β の中で平均を毎回計算し直さないことだけ
+    （共通部品は sum((x - S.mean(sv)) ...) で平均を要素ごとに再計算し O(n²)・480か月で0.5秒/回。
+    この角度は約1万回呼ぶので、共通部品は触らずここで差し替える。一致は起動時に自己検査する）"""
+    ks = sorted(k for k in set(s) & set(b) if (a is None or k >= a) and (z is None or k <= z))
+    if len(ks) < max(24, per_year * 2):
+        return None
+    ex = [s[k] - b[k] for k in ks]
+    sv, bv = [s[k] for k in ks], [b[k] for k in ks]
+    n = len(ks)
+    mex, ms, mb = math.fsum(ex) / n, math.fsum(sv) / n, math.fsum(bv) / n
+    te = math.sqrt(math.fsum((v - mex) ** 2 for v in ex) / (n - 1)) * math.sqrt(per_year)
+    vb = math.fsum((v - mb) ** 2 for v in bv) / n
+    beta = math.fsum((x - ms) * (y - mb) for x, y in zip(sv, bv)) / n / vb if vb else None
+    t = M.nw_t(ex, lag)
+    g_s, g_b = M.cagr(sv, per_year), M.cagr(bv, per_year)
+    sd_s = math.sqrt(math.fsum((v - ms) ** 2 for v in sv) / (n - 1)); sd_b = math.sqrt(math.fsum((v - mb) ** 2 for v in bv) / (n - 1))
+    return {'from': ks[0], 'to': ks[-1], 'years': round(n / per_year, 1),
+            'ex_ann': round(mex * per_year * 100, 2), 't': round(t, 2) if t is not None else None,
+            'p': round(M.p_two(t), 4) if t is not None else None,
+            'cagr_s': round(g_s * 100, 2), 'cagr_b': round(g_b * 100, 2), 'cagr_diff': round((g_s - g_b) * 100, 2),
+            'te': round(te * 100, 2), 'ir': round(mex * per_year / te, 2) if te else None,
+            'beta': round(beta, 2) if beta is not None else None,
+            'vol_s': round(sd_s * math.sqrt(per_year) * 100, 1), 'vol_b': round(sd_b * math.sqrt(per_year) * 100, 1)}
+
+
+def _selftest_fast():
+    import random
+    rnd = random.Random(7)
+    for n in (30, 240, 480):
+        s = {190001 + i: rnd.gauss(0.01, 0.05) for i in range(n)}
+        b = {k: v * 0.9 + rnd.gauss(0, 0.02) for k, v in s.items()}
+        slow, fast = _ORIG_EXCESS_STATS(s, b), _fast_excess_stats(s, b)
+        assert slow == fast, (slow, fast)
+    return True
+
+
+_ORIG_EXCESS_STATS = M.excess_stats
+M.excess_stats = _fast_excess_stats
+
+
 def unit_cost(loc):
     if loc == 'usa':
         return COST['usa']
@@ -113,6 +154,7 @@ def git_sha(path):
 
 # ───────────────────────── 本体 ─────────────────────────
 def main():
+    fast_ok = _selftest_fast()
     av = availability()
     ff = M.ff_factors()
     rf = ff['rf']
@@ -313,6 +355,7 @@ def main():
         sanity['jkp_world_ex_us_vs_french_developed_ex_us'] = {'error': str(e)}
     sanity['good_side_vs_jkp_direction'] = side_check
     sanity['fetch_failed'] = fetch_failed
+    sanity['fast_excess_stats_selftest'] = fast_ok
     sanity['candidate_countries'] = cand
 
     out = {'tool': 'night/mw_intl.py', 'prereg': f'out/{PRE_NAME}', 'prereg_commit': git_sha(f'out/{PRE_NAME}'),
