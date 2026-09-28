@@ -1,0 +1,51 @@
+{
+ "angle": "intl",
+ "prereg_no": 3,
+ "title": "探索の族（事前登録3）: 別のデータ源（Ken French の国際ポートフォリオ・Bloomberg 由来）で同じ規則を再現する／実在のETFでの現実の確認／米国での組み合わせ",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "global_criteria": "out/mw_prereg.json（C1〜C8・格付け）。線は動かさない",
+ "why_this_exists": "事前登録2（a55e6b2）の結果、米国外（JKP world_ex_us）で『割安4本＋勢い』の 50/50（val_mom）が S（保有期間 +2.18%/年・t4.6・米国外40か国すべてで保有期間も正）など、S が複数出た。強すぎる結果はまず道具とデータを疑う。JKP（Compustat Global 系）とは別の業者・別の作り方の Ken French の国際データ（Bloomberg 由来・2x3 の大型株の30%）で、同じ向きの規則が同じ相手（同じ地域の時価加重の市場）に勝つかを見る。French のデータは 2026-08 まであり、JKP より8か月長い",
+ "what_i_have_already_seen": "事前登録2までのすべての JKP の結果（米国外・日本・世界・国ごと）。French の国際ポートフォリオと市場の比較の数字はまだ一つも計算していない（表の列名・始まり・終わりだけ確認）",
+ "data": {
+  "portfolios": "Ken French の {地域}_6_Portfolios_ME_BE-ME / _ME_Prior_12_2 / _ME_OP / _ME_INV の 'Average Value Weighted Returns -- Monthly'（米ドル・配当込み・総リターン）。新興国は Emerging_Markets_6_Portfolios_…",
+  "market": "同じ地域の {地域}_3_Factors（新興国は Emerging_5_Factors）の Mkt-RF + RF（総リターン）",
+  "regions": {"representative": "Developed_ex_US（1990-07〜）", "C5_regions": ["Europe", "Japan", "Asia_Pacific_ex_Japan", "Emerging_Markets"], "reported_only": ["Developed（米国を含む）", "North_America（米国を含む）"]},
+  "construction_note": "French の説明: 大型株＝地域の時価の上位90%。B/M・OP・INV は毎年6月末、勢いは毎月末に組む。区切りは大型株の30%・70%点。大型株の上位30%（BIG HiBM など）は JKP の三分位より絞った集合"
+ },
+ "families": {
+  "F3a_french_dev_ex_us": {
+   "series": "Developed_ex_US の大型株の良い側 vs Developed_ex_US の市場",
+   "members": {
+    "fr_value": "BIG HiBM（割安）",
+    "fr_mom": "BIG HiPRIOR（勢い 12-2）",
+    "fr_prof": "BIG HiOP（収益性が高い）",
+    "fr_inv": "BIG LoINV（投資が控えめ）",
+    "fr_val_mom": "BIG HiBM 50% ＋ BIG HiPRIOR 50%（毎月戻す）",
+    "fr_val_prof": "BIG HiBM 50% ＋ BIG HiOP 50%",
+    "fr_val_mom_prof": "BIG HiBM・BIG HiPRIOR・BIG HiOP を1/3ずつ"
+   },
+   "good_side": "米国の2006年までで決めた向き（事前登録1の jkp_good_side の結果: be_me 高・ret_12_1 高・ope_be 高・at_gr1 低）と同じ向き。French の中で選び直さない",
+   "holm": "7本の保有期間 p",
+   "C5": "Europe・Japan・Asia_Pacific_ex_Japan・Emerging_Markets の4地域のうち、全期間の超過（算術）が正の地域 ≥ 2/3（4地域なら3以上）",
+   "periods": "訓練 1990-07〜2006-12（勢いは French の始まり 1990-11〜）・保有 2007-01〜2026-08・近年 2013-07〜",
+   "cost": "片道100%あたり 0.30%（新興国 0.50%）。年間片道回転率: fr_value 0.3・fr_prof 0.3・fr_inv 0.4・fr_mom 1.5・組み合わせは構成要素の平均"
+  }
+ },
+ "reported_not_graded": {
+  "french_other_regions": "Europe・Japan・Asia_Pacific_ex_Japan・Emerging_Markets・Developed・North_America の7本（C5 の中身と参考）",
+  "etf_reality_check": {
+   "why": "学術のポートフォリオ（費用前・理想の売買）と、実際に買える商品の差を見る。期間が短く（20年未満）、生き残りの偏りがあり、訓練期間が無いので判定しない",
+   "pairs": [["EFV", "EFA", "iShares MSCI EAFE Value vs EAFE"], ["EFG", "EFA", "EAFE Growth vs EAFE（反対側）"], ["IMTM", "EFA", "iShares MSCI Intl Momentum vs EAFE"], ["IQLT", "EFA", "iShares MSCI Intl Quality vs EAFE"], ["IVLU", "EFA", "iShares MSCI Intl Value Factor vs EAFE"], ["INTF", "EFA", "iShares Intl Equity Factor（多因子）vs EAFE"], ["EFV+IMTM", "EFA", "EAFE Value 50% ＋ Intl Momentum 50%（毎月戻す）vs EAFE"], ["IVLU+IMTM", "EFA", "Intl Value Factor 50% ＋ Intl Momentum 50% vs EAFE"], ["EWJV", "EWJ", "iShares MSCI Japan Value vs MSCI Japan"]],
+   "source": "Yahoo の調整後終値（配当込み・信託報酬込み）・mw_common.yahoo・両方がある月だけ"
+  },
+  "us_combos": "JKP 米国（usa・vw）で事前登録2の組み合わせ6本（value_composite・val_mom・val_qual・qual_mom・val_mom_qual・all20）を米国の vw 市場と比べる。米国は良い側を決めた国なので訓練期間は標本内、2007年以降は時間の標本外。米国では割安が2007年以降に負けたことを主の族で既に見ている",
+  "angle_wide_holm": "角度全体（主の族21＋事前登録2の79＋この族7）の保有期間 p の Holm（参考）"
+ },
+ "limits": [
+  "French と JKP は同じ国・同じ期間の株を見ているので、リターンは独立ではない。独立なのはデータの業者と作り方（区切り・大型株の定義・入れ替えの時期）だけ",
+  "French の大型株の上位30%は JKP の三分位より絞ってあり、追従のぶれが大きい",
+  "ETF の確認は 2005年以降（多くは2015年以降）だけで、生き残った商品しか無い",
+  "組み合わせの比率（50/50・1/3）は論文の既定で、事前登録2の結果から選び直していない"
+ ]
+}

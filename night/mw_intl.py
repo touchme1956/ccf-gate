@@ -372,12 +372,14 @@ def main():
 
     p2 = prereg2(dict(av=av, rf=rf, cm=cm, rmk=rmk, PF=PF, side=side, cand=cand, primary_hold_p=hp, primary_tested=tested))
 
+    p3 = prereg3(dict(rf=rf, rmk=rmk, PF=PF, side=side, all_hold_p=p2.pop('_all_hold_p')))
+
     out = {'tool': 'night/mw_intl.py', 'prereg': f'out/{PRE_NAME}', 'prereg_commit': git_sha(f'out/{PRE_NAME}'),
            'global_prereg': 'out/mw_prereg.json', 'representative': REP, 'good_side': side,
            'n_tested': len(tested), 'tested': tested, 'graded': graded, 'holm_family': hol,
            'regional': {loc: {k: v for k, v in d.items()} for loc, d in regional.items()},
-           'country_summary': summary, 'per_country': per_country, 'sanity': sanity, 'prereg2': p2}
-    out['n_tested_all'] = len(tested) + len(p2['tested'])
+           'country_summary': summary, 'per_country': per_country, 'sanity': sanity, 'prereg2': p2, 'prereg3': p3}
+    out['n_tested_all'] = len(tested) + len(p2['tested']) + len(p3['tested'])
     p = M.save('mw_intl.json', out)
     # 画面
     print('prereg', out['prereg_commit'])
@@ -390,6 +392,7 @@ def main():
               f"国 全{sm['positive_full'][0]}/{sm['positive_full'][1]} 保{sm['positive_hold'][0]}/{sm['positive_hold'][1]} "
               f"平均 保{(sm['pooled_equal_weight_countries']['hold'] or {}).get('ex')} holm {gg['holm_p']}")
     print_prereg2(p2)
+    print_prereg3(p3)
     print('→', p)
 
 # ───────────────────────── 事前登録2（out/mw_intl_prereg2.json） ─────────────────────────
@@ -594,7 +597,7 @@ def prereg2(ctx):
     return {'prereg': f'out/{PRE2_NAME}', 'prereg_commit': git_sha(f'out/{PRE2_NAME}'), 'rule': {'start': START2, 'R_min': RTHR, 'n_min': N_MIN},
             'turnover': turn, 'families': families, 'reported': reported, 'sensitivity': sens,
             'countries': {k: {'counts_ex_us': counts(k), 'per_country': per[k]} for k in FAM27},
-            'angle_wide_holm_reference': M.holm(all_hold_p), 'n_graded_angle': len(all_hold_p), 'tested': tested}
+            'angle_wide_holm_reference': M.holm(all_hold_p), 'n_graded_angle': len(all_hold_p), 'tested': tested, '_all_hold_p': all_hold_p}
 
 
 def print_prereg2(p2):
@@ -608,6 +611,171 @@ def print_prereg2(p2):
             print(f"{k:15} {r['grade']} {r['start']} 全{f(r['full'])} 訓{f(r['train'])} 保{f(r['hold'])} 近{f(r['recent'])} 費後{f(r['hold_net'])} "
                   f"20年{(r['roll20'] or {}).get('wins')}/{(r['roll20'] or {}).get('windows')} 国 全{cc['positive_full'][0]}/{cc['positive_full'][1]} "
                   f"保{cc['positive_hold'][0]}/{cc['positive_hold'][1]} holm {r['holm_p']} 診断 訓{dg.get('train')} 保{dg.get('hold')}")
+
+
+# ───────────────────────── 事前登録3（out/mw_intl_prereg3.json） ─────────────────────────
+PRE3_NAME = 'mw_intl_prereg3.json'
+FR_REG = {'Developed_ex_US': ('Developed_ex_US', 'Developed_ex_US_3_Factors'), 'Europe': ('Europe', 'Europe_3_Factors'),
+          'Japan': ('Japan', 'Japan_3_Factors'), 'Asia_Pacific_ex_Japan': ('Asia_Pacific_ex_Japan', 'Asia_Pacific_ex_Japan_3_Factors'),
+          'Emerging_Markets': ('Emerging_Markets', 'Emerging_5_Factors'), 'Developed': ('Developed', 'Developed_3_Factors'),
+          'North_America': ('North_America', 'North_America_3_Factors')}
+FR_LEG = {'fr_value': ('ME_BE-ME', 'BIG HiBM'), 'fr_mom': ('ME_Prior_12_2', 'BIG HiPRIOR'), 'fr_prof': ('ME_OP', 'BIG HiOP'), 'fr_inv': ('ME_INV', 'BIG LoINV')}
+FR_COMBO = {'fr_val_mom': ['fr_value', 'fr_mom'], 'fr_val_prof': ['fr_value', 'fr_prof'], 'fr_val_mom_prof': ['fr_value', 'fr_mom', 'fr_prof']}
+FR_TURN = {'fr_value': 0.3, 'fr_mom': 1.5, 'fr_prof': 0.3, 'fr_inv': 0.4}
+FR_DESC = {'fr_value': 'BIG HiBM（割安・大型株の上位30%）', 'fr_mom': 'BIG HiPRIOR（勢い）', 'fr_prof': 'BIG HiOP（収益性）', 'fr_inv': 'BIG LoINV（投資が控えめ）',
+           'fr_val_mom': 'BIG HiBM 50%＋BIG HiPRIOR 50%', 'fr_val_prof': 'BIG HiBM 50%＋BIG HiOP 50%', 'fr_val_mom_prof': 'BIG HiBM・HiPRIOR・HiOP を1/3ずつ'}
+ETF_PAIRS = [('EFV', 'EFA'), ('EFG', 'EFA'), ('IMTM', 'EFA'), ('IQLT', 'EFA'), ('IVLU', 'EFA'), ('INTF', 'EFA'), ('EFV+IMTM', 'EFA'), ('IVLU+IMTM', 'EFA'), ('EWJV', 'EWJ')]
+
+
+def _fr_vw(name):
+    return M.french_series(name, want='Average Value Weighted Returns -- Monthly')
+
+
+def _fr_mkt(name):
+    for t, v in M.french_tables(name).items():
+        if v['freq'] == 'monthly' and 'Mkt-RF' in v['cols'] and 'RF' in v['cols']:
+            i, j = v['cols'].index('Mkt-RF'), v['cols'].index('RF')
+            return {d: (row[i] + row[j]) / 100 for d, row in v['data'].items() if row[i] is not None and row[j] is not None}
+    raise KeyError(name)
+
+
+def prereg3(ctx):
+    rf, rmk, PF, side = ctx['rf'], ctx['rmk'], ctx['PF'], ctx['side']
+    turn = dict(FR_TURN)
+    for k, parts in FR_COMBO.items():
+        turn[k] = round(S.mean(FR_TURN[q] for q in parts), 3)
+    unit = lambda reg: 0.005 if reg == 'Emerging_Markets' else 0.003
+
+    def series(reg):
+        pre, fac = FR_REG[reg]
+        mk = _fr_mkt(fac)
+        legs = {}
+        for k, (suf, col) in FR_LEG.items():
+            try:
+                legs[k] = _fr_vw(f'{pre}_6_Portfolios_{suf}')[col]
+            except Exception as e:  # noqa
+                legs[k] = {}
+        for k, parts in FR_COMBO.items():
+            if all(legs[q] for q in parts):
+                ms = set.intersection(*[set(legs[q]) for q in parts])
+                legs[k] = {m: S.mean(legs[q][m] for q in parts) for m in ms}
+            else:
+                legs[k] = {}
+        return legs, mk
+
+    def ev(g, mk, k, reg):
+        ms = sorted(set(g) & set(mk))
+        if len(ms) < 60:
+            return {'months': len(ms), 'note': 'データ不足'}
+        s = {m: g[m] for m in ms}; b = {m: mk[m] for m in ms}
+        f = four(s, b)
+        return {'months': len(ms), 'start': ms[0], 'end': ms[-1], **f,
+                'hold_net': M.excess_stats(M.apply_cost(s, turn[k], unit(reg)), b, a=M.HOLD_START),
+                'hold_net_2x': M.excess_stats(M.apply_cost(s, turn[k], unit(reg) * 2), b, a=M.HOLD_START),
+                'roll20': M.rolling(s, b, 20), 'dca20': M.dca(s, b, 20), 'turnover': turn[k], 'unit_cost': unit(reg)}
+
+    members = list(FR_LEG) + list(FR_COMBO)
+    allreg = {}
+    for reg in FR_REG:
+        legs, mk = series(reg)
+        allreg[reg] = {k: ev(legs[k], mk, k, reg) for k in members}
+    # 検算: French の Developed_ex_US の市場と JKP world_ex_us の市場（総リターン）
+    fx = _fr_mkt('Developed_ex_US_3_Factors'); jw = to_total(rmk['world_ex_us'], rf)
+    ks = sorted(set(fx) & set(jw))
+    check = {'french_dev_ex_us_vs_jkp_world_ex_us_mkt_corr': round(M.corr([fx[k] for k in ks], [jw[k] for k in ks]), 4),
+             'french_mean': round(S.mean(fx[k] for k in ks) * 1200, 2), 'jkp_mean': round(S.mean(jw[k] for k in ks) * 1200, 2), 'from': ks[0], 'to': ks[-1]}
+
+    rep = allreg['Developed_ex_US']
+    hp = {k: (r.get('hold') or {}).get('p') for k, r in rep.items() if r.get('hold')}
+    hol = M.holm(hp)
+    tested, graded = [], {}
+    C5R = ['Europe', 'Japan', 'Asia_Pacific_ex_Japan', 'Emerging_Markets']
+    for k in members:
+        r = rep[k]
+        pos = sum(1 for reg in C5R if (allreg[reg][k].get('full') or {}).get('ex_ann', -1) > 0)
+        nreg = sum(1 for reg in C5R if allreg[reg][k].get('full'))
+        repl = {'regions': nreg, 'positive': pos}
+        posh = sum(1 for reg in C5R if (allreg[reg][k].get('hold') or {}).get('ex_ann', -1) > 0)
+        g, crit = M.grade(r.get('full'), r.get('train'), r.get('hold'), r.get('roll20'), cost_hold=r.get('hold_net'), repl=repl, family_holm_p=hol.get(k))
+        graded[k] = {'grade': g, 'criteria': crit, 'holm_p': hol.get(k), 'repl': repl, 'repl_hold_reported': {'regions': nreg, 'positive': posh}}
+        tested.append({'name': f'F3a_french_dev_ex_us:{k}', 'family': 'F3a_french_dev_ex_us', 'series': 'French Developed ex US 大型株 vs 同地域の市場',
+                       'description': FR_DESC[k], 'grade': g, 'criteria': crit})
+    for reg in FR_REG:
+        if reg == 'Developed_ex_US':
+            continue
+        for k in members:
+            tested.append({'name': f'french_reported:{reg}:{k}', 'family': 'reported', 'series': f'French {reg}', 'grade': None})
+
+    # ETF の現実の確認（判定しない）
+    etf = {}
+    for a, b in ETF_PAIRS:
+        try:
+            if '+' in a:
+                x, y = a.split('+'); rx, ry = M.yahoo(x), M.yahoo(y)
+                ms = set(rx) & set(ry)
+                ra = {m: (rx[m] + ry[m]) / 2 for m in ms}
+            else:
+                ra = M.yahoo(a)
+            rb = M.yahoo(b)
+            ks = sorted(set(ra) & set(rb))
+            ks = [k for k in ks if k < int(__import__('datetime').date.today().strftime('%Y%m'))]  # 途中の月を除く
+            sa, sb = {k: ra[k] for k in ks}, {k: rb[k] for k in ks}
+            etf[f'{a} vs {b}'] = {'full': M.excess_stats(sa, sb), 'hold_2013_07': M.excess_stats(sa, sb, a=M.RECENT_START)}
+        except Exception as e:  # noqa
+            etf[f'{a} vs {b}'] = {'error': str(e)[:200]}
+        tested.append({'name': f'etf:{a} vs {b}', 'family': 'reported_etf', 'series': 'Yahoo 調整後終値（生き残りの偏りあり）', 'grade': None})
+
+    # 米国の組み合わせ（JKP usa・vw・判定しない）
+    def gs(k):
+        pf = PF.get(('usa', k))
+        return {m: r for m, (r, n) in pf[side[k]].items() if n >= N_MIN} if pf else {}
+    base = {k: gs(k) for k in CHARS}
+
+    def mix(parts):
+        if not all(parts):
+            return {}
+        ms = set.intersection(*[set(q) for q in parts])
+        return {m: S.mean(q[m] for q in parts) for m in ms}
+    bq = mix([base[k] for k in QUALITY]); vc = mix([base[k] for k in VALUE4]); mo = base['ret_12_1']
+    usc = {'value_composite': vc, 'val_mom': mix([vc, mo]), 'val_qual': mix([vc, bq]), 'qual_mom': mix([bq, mo]),
+           'val_mom_qual': mix([vc, mo, bq]), 'all20': mix([base[k] for k in CHARS])}
+    us = {}
+    mk = rmk['usa']
+    for k, g in usc.items():
+        ms = sorted(set(g) & set(mk) & set(rf))
+        if len(ms) < 60:
+            us[k] = {'months': len(ms)}; continue
+        sa = to_total({m: g[m] for m in ms}, rf); sb = to_total({m: mk[m] for m in ms}, rf)
+        us[k] = {'start': ms[0], **four(sa, sb), 'roll20': M.rolling(sa, sb, 20)}
+        tested.append({'name': f'us_combo:{k}', 'family': 'reported_us', 'series': 'JKP usa vw（良い側を決めた国）', 'grade': None})
+
+    all_p = dict(ctx['all_hold_p'])
+    for k, r in rep.items():
+        if r.get('hold') and r['hold'].get('p') is not None:
+            all_p[f'F3a_french_dev_ex_us:{k}'] = r['hold']['p']
+    return {'prereg': f'out/{PRE3_NAME}', 'prereg_commit': git_sha(f'out/{PRE3_NAME}'), 'check': check,
+            'families': {'F3a_french_dev_ex_us': {'members': {k: dict(rep[k], **graded[k]) for k in members}, 'holm': hol}},
+            'french_regions': {reg: d for reg, d in allreg.items() if reg != 'Developed_ex_US'},
+            'etf_reality_check': etf, 'us_combos': us, 'angle_wide_holm_reference': M.holm(all_p), 'n_graded_angle': len(all_p), 'tested': tested}
+
+
+def print_prereg3(p3):
+    f = lambda v: f"{v['ex_ann']:+5.2f}(t{v['t']:+.1f})" if v else '    —     '
+    print('== F3a（French Developed ex US）', p3['check'])
+    for k, r in p3['families']['F3a_french_dev_ex_us']['members'].items():
+        if 'full' not in r:
+            print(k, r.get('grade'), r.get('note')); continue
+        print(f"{k:16} {r['grade']} {r['start']} 全{f(r['full'])} 訓{f(r['train'])} 保{f(r['hold'])} 近{f(r['recent'])} 費後{f(r['hold_net'])} "
+              f"20年{(r['roll20'] or {}).get('wins')}/{(r['roll20'] or {}).get('windows')} 地域 全{r['repl']['positive']}/{r['repl']['regions']} "
+              f"保{r['repl_hold_reported']['positive']}/{r['repl_hold_reported']['regions']} holm {r['holm_p']} te {r['hold']['te']}")
+    for reg, d in p3['french_regions'].items():
+        print(' ', reg, ' '.join(f"{k}:{d[k]['full']['ex_ann']:+.1f}/{d[k]['hold']['ex_ann']:+.1f}(t{d[k]['hold']['t']:+.1f})" for k in d if d[k].get('full') and d[k].get('hold')))
+    for k, v in p3['etf_reality_check'].items():
+        print('  ETF', k, f(v.get('full')), v.get('full') and (v['full']['from'], v['full']['cagr_diff']), 'error' in v and v['error'])
+    for k, v in p3['us_combos'].items():
+        print('  US', k, v.get('start'), '全', f(v.get('full')), '訓', f(v.get('train')), '保', f(v.get('hold')), '20年', (v.get('roll20') or {}).get('wins'), (v.get('roll20') or {}).get('windows'))
+    ah = p3['angle_wide_holm_reference']
+    print('  angle-wide holm <0.05 (n=%d):' % p3['n_graded_angle'], {k: v for k, v in sorted(ah.items(), key=lambda x: x[1]) if v < 0.05})
 
 
 
