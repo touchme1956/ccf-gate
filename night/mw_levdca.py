@@ -432,6 +432,14 @@ def main():
                      extra={'L': L, 'kind': 'daily', 'underlying': 'ndx'})
         e['dca'] = dca_block(s, ndx_m, tax_etf=True)
         fam_P.append(e)
+    # 事前登録1の感度（報告のみ）: NASDAQ-100 の 1999-03 以前の配当推定 0.0% / 0.6%
+    ndx_sens = {}
+    for dv in (0.0, 0.006):
+        nd2 = ndx_total(div=dv); nm2 = M.to_monthly(nd2)
+        ndx_sens[f'div{dv:.1%}'] = {f'L{L:g}': {'full': M.excess_stats(M.to_monthly(lev_daily(nd2, L, rf_d)), nm2),
+                                              'train': M.excess_stats(M.to_monthly(lev_daily(nd2, L, rf_d)), nm2, z=M.TRAIN_END)}
+                                    for L in (1.5, 2.0)}
+    sanity['ndx_dividend_sensitivity_report_only'] = ndx_sens
     # ── P4: ケリー（訓練だけで L を決める）
     kel = {}
     Lk, Lh, tab = kelly_pick(lambda L: M.to_monthly(lev_daily(mkt_d, L, rf_d)))
