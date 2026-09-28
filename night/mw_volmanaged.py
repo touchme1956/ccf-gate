@@ -19,7 +19,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
 import numpy as np
 
-PRE_NAMES = ['mw_volmanaged_prereg.json', 'mw_volmanaged_prereg2.json', 'mw_volmanaged_prereg3.json']
+PRE_NAMES = ['mw_volmanaged_prereg.json', 'mw_volmanaged_prereg2.json', 'mw_volmanaged_prereg3.json', 'mw_volmanaged_prereg4.json']
+FUND_FEE = 0.0095
 IXIC_DIV = 0.010
 OUT_NAME = 'mw_volmanaged.json'
 COST = 0.001       # 判定用: 片道売買100%あたり0.10%（全体の事前登録の既定）
@@ -321,12 +322,23 @@ def c_expanding(mk, X, cap, trend, solver=None):
     return out
 
 
-def run_monthly(mk, X, cap, c, trend, c_by=None, w_by=None):
+def fund2(mk):
+    """第4族: 同じ指数の2倍・日々リセット型（借入 RF+0.5%/年・経費0.95%/年）の月次リターン"""
+    if getattr(mk, '_m2', None) is None:
+        D = sorted(d for d in mk.dtot if d in mk.drf)
+        lv = M.lever_daily({d: mk.dtot[d] for d in D}, 2, {d: mk.drf[d] for d in D}, spread=SPREAD, fee=FUND_FEE)
+        mk._m2 = M.to_monthly(lv)
+        mk._m2.pop(D[0] // 100, None)  # 最初の月は途中から
+    return mk._m2
+
+
+def run_monthly(mk, X, cap, c, trend, c_by=None, w_by=None, impl='margin'):
     """月次: w_t（t の月末に決定）を t+1 に使う。gross / net / net05 / net_sp2 と倍率・売買額。
     w_by を渡すと、その倍率（キーは決めた月末 t0）をそのまま使う（第3族の3信号の平均）"""
     g, n, n5, ns2, W, TR = {}, {}, {}, {}, {}, {}
     prev_w = prev_t1 = None
     prev_s = None
+    prev_drift = 1.0
     gaps = 0
     for t0, t1 in zip(mk.months, mk.months[1:]):
         if w_by is not None:
@@ -347,6 +359,28 @@ def run_monthly(mk, X, cap, c, trend, c_by=None, w_by=None):
                 continue
             w = weight(x, cc, cap, on)
         m, rf = mk.m[t1], mk.rf[t1]
+        if impl == 'fund':
+            # 第4族: w>1 なら (2−w) を1倍・(w−1) を2倍の日々リセット型、w≤1 なら w を1倍・残りを RF
+            m2 = fund2(mk).get(t1)
+            if m2 is None:
+                if prev_w is not None:
+                    gaps += 1
+                prev_w = None
+                continue
+            drift = prev_drift if (prev_w is not None and prev_t1 == t0) else 1.0
+            trade = 2 * abs(w - drift)
+            if w > 1:
+                sg = (2 - w) * m + (w - 1) * m2
+                prev_drift = ((2 - w) * (1 + m) + 2 * (w - 1) * (1 + m2)) / (1 + sg)
+            else:
+                sg = w * m + (1 - w) * rf
+                prev_drift = w * (1 + m) / (1 + sg)
+            g[t1] = sg
+            n[t1] = sg - trade * COST
+            n5[t1] = sg - trade * COST_LO
+            W[t1] = w; TR[t1] = trade
+            prev_w, prev_t1, prev_s = w, t1, sg
+            continue
         if prev_w is not None and prev_t1 == t0:
             drift = prev_w * (1 + mk.m[t0]) / (1 + prev_s) if (1 + prev_s) != 0 else prev_w
         else:
@@ -360,7 +394,7 @@ def run_monthly(mk, X, cap, c, trend, c_by=None, w_by=None):
         ns2[t1] = s2 - trade * COST
         W[t1] = w; TR[t1] = trade
         prev_w, prev_t1, prev_s = w, t1, sg
-    return {'gross': g, 'net': n, 'net05': n5, 'net_sp2': ns2, 'w': W, 'trade': TR, 'gaps': gaps}
+    return {'gross': g, 'net': n, 'net05': n5, 'net_sp2': ns2 if impl == 'margin' else None, 'w': W, 'trade': TR, 'gaps': gaps, 'impl': impl}
 
 
 def run_daily_lag(mk, X, cap, c, trend):
@@ -758,7 +792,8 @@ def load_jkp(c):
 # ───────────────────────── 戦略の定義 ─────────────────────────
 LABELS = {'exploratory': '探索（第1族の事前登録に含めて結果を見る前に固定）',
           'exploratory2': '探索（第2族・第1族の結果を見た後に登録）',
-          'exploratory3': '探索（第3族・第2族の結果を見た後に登録）'}
+          'exploratory3': '探索（第3族・第2族の結果を見た後に登録）',
+          'exploratory4': '探索（第4族・第3族の結果を見た後に登録）'}
 SIG = {'VAR1': ('VAR1', False), 'VOL1': ('VOL1', False), 'VAR6': ('VAR6', False), 'VAR1T': ('VAR1', True),
        'EWMA': ('EWMA', False), 'DOWN': ('DOWN', False), 'VOL1T': ('VOL1', True)}
 
@@ -810,6 +845,11 @@ def specs():
             for cm in ('train_b1', 'expanding_b1'):
                 h += 1
                 out.append({'id': f"H{h:02d}_{idx}_ENS_cap{cap:g}_{'B1' if cm == 'train_b1' else 'B1EXP'}", 'family': 'exploratory3', 'idx': idx, 'sig': 'ENS', 'cap': cap, 'cmode': cm, 'lag': 0})
+    # 第4族（prereg4）: 同じ倍率を 1倍＋2倍の日々リセット型で実行
+    for k, (idx, sg, cm) in enumerate((('NDX', 'VAR1', 'train_b1'), ('NDX', 'VOL1', 'train_b1'), ('NDX', 'DOWN', 'train_b1'),
+                                       ('HiTec', 'DOWN', 'expanding_b1'), ('US', 'VAR1', 'expanding_b1')), 1):
+        out.append({'id': f"I{k:02d}_{idx}_{sg}_cap1.5_{'B1' if cm == 'train_b1' else 'B1EXP'}_FUND", 'family': 'exploratory4', 'idx': idx, 'sig': sg,
+                    'cap': 1.5, 'cmode': cm, 'lag': 0, 'impl': 'fund'})
     return out
 
 
@@ -844,7 +884,7 @@ def run_ens(mk, cap, cmode):
     return run_monthly(mk, None, cap, None, False, w_by=wb), {'ens': 'VAR1・VOL1・DOWN の倍率の平均（各自 β=1 の c）', 'cmode': cmode}
 
 
-def run_rule(mk, sg, cap, cmode, lag=0):
+def run_rule(mk, sg, cap, cmode, lag=0, impl='margin'):
     if sg == 'ENS':
         return run_ens(mk, cap, cmode)
     kind, trend = SIG[sg]
@@ -858,7 +898,7 @@ def run_rule(mk, sg, cap, cmode, lag=0):
         if lag:
             run = run_daily_lag(mk, X, cap, c, trend)
         else:
-            run = run_monthly(mk, X, cap, c, trend)
+            run = run_monthly(mk, X, cap, c, trend, impl=impl)
     elif cmode in ('expanding', 'expanding_b1'):
         cb = c_expanding(mk, X, cap, trend, solver=solve_c if cmode == 'expanding' else solve_c_beta)
         if not cb:
@@ -866,14 +906,14 @@ def run_rule(mk, sg, cap, cmode, lag=0):
         vals = sorted(set(v for v in cb.values() if v != math.inf))
         info['c_expanding'] = {'first_month': min(cb), 'n_years': len(cb) // 12, 'min': min(vals) if vals else None, 'max': max(vals) if vals else None,
                                'n_inf_years': sum(1 for v in cb.values() if v == math.inf) // 12}
-        run = run_monthly(mk, X, cap, None, trend, c_by=cb)
+        run = run_monthly(mk, X, cap, None, trend, c_by=cb, impl=impl)
     else:
         raise KeyError(cmode)
     return run, info
 
 
 def region_repl(c, sp):
-    key = (sp['sig'], sp['cap'], sp['cmode'], sp['lag'])
+    key = (sp['sig'], sp['cap'], sp['cmode'], sp['lag'], sp.get('impl', 'margin'))
     if not hasattr(c, 'repl_cache'):
         c.repl_cache = {}
     if key not in c.repl_cache:
@@ -884,7 +924,7 @@ def region_repl(c, sp):
 def _region_repl(c, sp):
     det = {}
     for nm, mk in c.reg.items():
-        run, info = run_rule(mk, sp['sig'], sp['cap'], sp['cmode'], sp['lag'])
+        run, info = run_rule(mk, sp['sig'], sp['cap'], sp['cmode'], sp['lag'], sp.get('impl', 'margin'))
         if run is None:
             det[nm] = {'note': info.get('note')}; continue
         b = run.get('bench') or mk.m
@@ -902,13 +942,13 @@ def _region_repl(c, sp):
 
 def run_one(c, sp):
     mk = {'US': c.us, 'NDX': c.ndx, 'HiTec': getattr(c, 'hitec', None), 'IXIC': getattr(c, 'ixic', None)}[sp['idx']]
-    run, info = run_rule(mk, sp['sig'], sp['cap'], sp['cmode'], sp['lag'])
+    run, info = run_rule(mk, sp['sig'], sp['cap'], sp['cmode'], sp['lag'], sp.get('impl', 'margin'))
     if run is None:
         log('実行不能', sp['id'], info); return None
     b = run.get('bench') or mk.m
     rf = mk.rf
     e = evaluate(run, b, rf)
-    ent = {'id': sp['id'], 'family': sp['family'], 'graded': True, 'rule': {k: sp[k] for k in ('idx', 'sig', 'cap', 'cmode', 'lag')}, **info,
+    ent = {'id': sp['id'], 'family': sp['family'], 'graded': True, 'rule': {**{k: sp[k] for k in ('idx', 'sig', 'cap', 'cmode', 'lag')}, 'impl': sp.get('impl', 'margin')}, **info,
            'window': [min(run['net']), max(run['net'])], 'gaps': run['gaps'], **e}
     ent['repl'] = region_repl(c, sp)
     if sp['family'] == 'primary' or (sp['family'] == 'exploratory2' and sp['cmode'] == 'train_b1' and sp['sig'] in ('VAR1', 'VOL1', 'VAR6', 'VAR1T')):
@@ -1015,13 +1055,13 @@ def posthoc(c, J):
         if sp is None:
             continue
         mk = {'US': c.us, 'NDX': c.ndx, 'HiTec': c.hitec, 'IXIC': c.ixic}[sp['idx']]
-        run, info = run_rule(mk, sp['sig'], sp['cap'], sp['cmode'], sp['lag'])
+        run, info = run_rule(mk, sp['sig'], sp['cap'], sp['cmode'], sp['lag'], sp.get('impl', 'margin'))
         b = run.get('bench') or mk.m
         W = run['w']
         tr = [w for k, w in W.items() if k <= M.TRAIN_END]
         L = S.mean(tr) if tr else S.mean(W.values())
         wb = {prv(k): L for k in W}  # 同じ月に一定の倍率 L
-        crun = run_monthly(mk, None, L, None, False, w_by=wb)
+        crun = run_monthly(mk, None, L, None, False, w_by=wb, impl=sp.get('impl', 'margin'))
         row = {'avg_w_train': round(L, 3)}
         for nm, a in (('hold', M.HOLD_START), ('full', None)):
             st = M.excess_stats(run['gross'], b, a=a); cs = M.excess_stats(crun['net'], b, a=a); ss = M.excess_stats(run['net'], b, a=a)
@@ -1029,8 +1069,8 @@ def posthoc(c, J):
                        'strategy_vs_const_lev': M.excess_stats(run['net'], crun['net'], a=a),
                        'sharpe_strategy': M.sharpe(run['net'], mk.rf, a=a), 'sharpe_const_lev': M.sharpe(crun['net'], mk.rf, a=a),
                        'sharpe_bench': M.sharpe({k: b[k] for k in run['net'] if k in b}, mk.rf, a=a)}
-            if sp['lag']:
-                continue
+            if sp['lag'] or sp.get('impl', 'margin') != 'margin':
+                continue  # 並べ替えは月次・借入の作りでだけ
             ks = sorted(k for k in W if (a is None or k >= a) and k in b)
             ws = [W[k] for k in ks]
             act = st['ex_ann']
@@ -1067,6 +1107,30 @@ def posthoc(c, J):
             '並べ替え p', row['hold'].get('perm', {}).get('p_one_sided'), '全期間 p', row['full'].get('perm', {}).get('p_one_sided'),
             'シャープ並べ替え p 保有', row['hold'].get('perm_sharpe', {}).get('p_one_sided'), '全期間', row['full'].get('perm_sharpe', {}).get('p_one_sided'),
             '最大下落 全期間', row['full'].get('maxdd'))
+    return out
+
+
+def robust_grid(c):
+    """【報告のみ・事後の頑健性】H06・Q09・Q37 の上限を替える／転がる窓の起点・長さを替える"""
+    out = {'note': '報告のみ（格付けしない・勝ちの主張に使わない・Holm の数に入れない）。結果を見た後の頑健性の確認。値は費用後（net）と訓練の費用前'}
+    cases = [('H06_HiTec_DOWN_B1EXP', c.hitec, 'DOWN', 'expanding_b1'), ('Q09_NDX_VAR1_B1', c.ndx, 'VAR1', 'train_b1'), ('Q37_NDX_DOWN_B1', c.ndx, 'DOWN', 'train_b1')]
+    for nm, mk, sg, cm in cases:
+        rows = {}
+        for cap in (1.25, 1.5, 1.75, 2.0):
+            run, info = run_rule(mk, sg, cap, cm)
+            tr = M.excess_stats(run['gross'], mk.m, z=M.TRAIN_END); h = M.excess_stats(run['net'], mk.m, a=M.HOLD_START)
+            f = M.excess_stats(run['gross'], mk.m); r20 = M.rolling(run['net'], mk.m, 20)
+            rows[f'cap{cap:g}'] = {'train_ex': tr['ex_ann'], 'train_t': tr['t'], 'hold_net_ex': h['ex_ann'], 'hold_net_t': h['t'], 'hold_net_cagr_diff': h['cagr_diff'],
+                                   'full_t': f['t'], 'roll20_win': r20['win_rate'] if r20 else None,
+                                   'sharpe_train': [M.sharpe(run['net'], mk.rf, z=M.TRAIN_END), M.sharpe({k: mk.m[k] for k in run['net']}, mk.rf, z=M.TRAIN_END)],
+                                   'sharpe_hold': [M.sharpe(run['net'], mk.rf, a=M.HOLD_START), M.sharpe({k: mk.m[k] for k in run['net']}, mk.rf, a=M.HOLD_START)],
+                                   'avg_w': round(S.mean(run['w'].values()), 3)}
+            if cap == 1.5:
+                rows['roll_variants_cap1.5'] = {'roll20_jan': M.rolling(run['net'], mk.m, 20, start_month=1), 'roll15_jul': M.rolling(run['net'], mk.m, 15),
+                                                'roll25_jul': M.rolling(run['net'], mk.m, 25), 'roll10_jul': M.rolling(run['net'], mk.m, 10)}
+            log('格子', nm, f'cap{cap:g}', rows[f'cap{cap:g}'])
+        log('格子 窓', nm, {k: (v['win_rate'] if v else None) for k, v in rows['roll_variants_cap1.5'].items()})
+        out[nm] = rows
     return out
 
 
@@ -1123,6 +1187,9 @@ def main():
     res['jkp_breadth_report'] = jkp_breadth(c)
     res['jkp_breadth_b1_report'] = jkp_breadth(c, 'train_b1')
     res['industry_breadth_report'] = ind_breadth(c)
+    res['robustness_grid_report'] = robust_grid(c)
+    res['tested'] = tested
+    res['posthoc_diagnostics'] = posthoc(c, res)
     res['sanity'] = c.sanity
     res['n_tested'] = len(tested)
     res['n_graded'] = len(allg)
