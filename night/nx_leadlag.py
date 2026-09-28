@@ -468,15 +468,19 @@ def net_of(r, to, c):
     return {k: r[k] - to[k] * c for k in r}
 
 
-def partner_signal(W, r):
-    """W: 行ごとの相手の重み（自分は0）、r: t 月のリターン（欠けは NaN）→ 相手の加重平均（その月にリターンのある相手だけで割り直す）。
-    自分に t 月のリターンが無い業種・相手が1つも無い業種は NaN"""
+def partner_signal(W, r, self_ok=None):
+    """W: 行ごとの相手の重み（自分は0）、r: 相手の側に使うリターン（欠けは NaN）→ 相手の加重平均（値のある相手だけで割り直す）。
+    self_ok: 自分が順位に入れる業種（t 月のリターンがある業種）。省略時は r が有限の業種（J=1 ではこれと同じ）。
+    J>1（E5・E6）では相手の側は J か月の複利、自分の側は t 月のリターンの有無だけで決める（事前登録の universe の定義）。
+    自分が順位に入れない業種・相手が1つも無い業種は NaN"""
     mask = np.isfinite(r)
+    if self_ok is None:
+        self_ok = mask
     rr = np.where(mask, r, 0.0)
     den = W @ mask.astype(float)
     num = W @ rr
     sig = np.full(len(r), np.nan)
-    ok = (den > 0) & mask
+    ok = (den > 0) & self_ok
     sig[ok] = num[ok] / den[ok]
     return sig
 
@@ -597,6 +601,15 @@ def main():
                 'why': 'French の EW ポートフォリオの中身の回転は公開データに無い。費用 0.30% の判定はこの過小な回転に掛かる', 'affects_grade': 'E19・E20 の C6（費用が過小に出る向き）'})
     dev.append({'what': '公表後の報告の起点（格付けに使わない）: 探索の MO 系 2011-01・RSTZ 系（E12〜E18）2020-01・Hou／Hong-Torous-Valkanov（E19〜E21）2008-01',
                 'why': '事前登録は P1〜P5 の起点だけ書いている', 'affects_grade': False})
+    dev.append({'what': 'E19・E20 の C4（転がる20年窓）と C6 は、判定の費用 0.30%（事前登録 cost_assumption の「E19・E20 は 0.30% を判定」）の後で測った。series_used_per_criterion の C4 は「費用後（0.10%）」と書いているが、E19・E20 には cost_assumption の 0.30% を当てた（厳しい側）',
+                'why': '事前登録の中の二つの記述がこの2本で食い違う。判定の費用を一つにそろえた', 'affects_grade': 'E19・E20 だけ（探索）。どちらも C6（費用後の保有期間）が 0.30% で不合格なので、C4 の費用をどちらにしても格付けは C のまま'})
+    dev.append({'what': 'C7 の Holm は丸める前の両側 p（nx_common.p_two(NW t)）で計算した（excess_stats の p は小数4桁に丸めてある）。丸めた p の Holm も各規則に併記し、線をまたぐ規則があれば sanity.rounding_boundary_check に名指しする。t の線（C1 2.0・C3 1.65・C7 3.0）は nx_common.grade のまま丸めた t で当てた（他の角度と同じ）',
+                'why': '事前登録 C7_family は「両側 p＝nx_common.p_two(NW t)」と書いている＝丸める前の値が文字どおり', 'affects_grade': '丸めの境界にある規則だけ（sanity.rounding_boundary_check を見よ）'})
+    res['implementation_notes_vs_previous_draft'] = [
+        '前の実装者の作りかけ（セッションの上限で E18 の途中で止まった・out/nx_leadlag.json は未作成）を読み直し、事前登録と一行ずつ突き合わせてから走らせた',
+        '直した点1: partner_signal は E5（J=3）・E6（J=12）で『自分の J か月の複利が有限』を順位に入る条件にしていた。事前登録の universe は「その月に French の VW リターンがあり、その信号が作れる業種」＝自分は t 月のリターンの有無だけで決まる。自分の側の条件を t 月のリターンに直した（J=1 の P1〜P3・E1〜E4・E7〜E11 は元と同じ）。影響は E6 の 1970-01〜1970-05 の Hlth（1969-07 開始）だけ',
+        '直した点2: C7 の Holm を丸める前の p にした（上の deviations）。CTRL_ew49 を他の規則と同じ報告の形（期間別・費用後・20年窓・積立・最大下落）にした（報告のみ）',
+        'LASSO の予言のキャッシュ（P4・P5・E12〜E15）は、入力データ・手順・C のソースの指紋が同じなら読み直すだけ。指紋は rstz_forecasts の fp（名前・手法・窓・データの bytes・C_SRC）']
 
     # ── LASSO の自前実装の検査（合成データだけ）
     sc = lasso_sanity()
@@ -666,11 +679,9 @@ def main():
                 Cw, Sw = Cw[np.ix_(perm, perm)], Sw[np.ix_(perm, perm)]
             mask_self = np.isfinite(r_self)
             if kind in ('cus', 'comp'):
-                cus = partner_signal(Cw, r_p)
-                cus[~mask_self] = np.nan
+                cus = partner_signal(Cw, r_p, mask_self)
             if kind in ('sup', 'comp'):
-                sup = partner_signal(Sw, r_p)
-                sup[~mask_self] = np.nan
+                sup = partner_signal(Sw, r_p, mask_self)
             if kind == 'cus':
                 return cus
             if kind == 'sup':
@@ -707,6 +718,10 @@ def main():
     add('P4_RSTZ_lasso_ff30_vw', 'primary', 'FF30 の全30業種の前月の超過で LASSO（AICc・post-LASSO OLS・拡大窓）→ 予言の上位 K=6 を時価加重',
         run_rule(P30, fsig(F4), mrange(196912, 202607), K5, 'vw', record=True), PP_RSTZ)
     add('P5_RSTZ_lasso_ff49_vw', 'primary', 'FF49 で同じ手法 → 上位 K=10 を時価加重', run_rule(P49, fsig(F5), mrange(197907, 202607), K5, 'vw', record=True), PP_RSTZ)
+    # 事後の診断（業種を1つ抜いて組み直す）に使うため、主の族の信号・土俵・信号の月を控える（格付けには使わない）
+    primary_sig = {'P1_MO_customer_vw': (P49, mo_sig('cus'), t_mo), 'P2_MO_supplier_vw': (P49, mo_sig('sup'), t_mo),
+                   'P3_MO_composite_vw': (P49, mo_sig('comp'), t_mo), 'P4_RSTZ_lasso_ff30_vw': (P30, fsig(F4), mrange(196912, 202607)),
+                   'P5_RSTZ_lasso_ff49_vw': (P49, fsig(F5), mrange(197907, 202607))}
 
     # ── 探索の族
     add('E1_MO_customer_ew', 'exploratory', 'P1 を業種の等分で', run_rule(P49, mo_sig('cus'), t_mo, K5, 'ew'), PP_MO)
@@ -786,11 +801,15 @@ def main():
     # ── 対照（報告のみ）
     own = lambda t: P49.R[P49.idx[t]].copy()  # noqa: E731
     ctrl = run_rule(P49, own, t_mo, K5, 'vw')
-    ew49 = {}
+    ew49, ew49_to, prev_w = {}, {}, None
     for t in t_mo:
         h = nxt(t)
         v = P49.R[P49.idx[h]]
+        ok = np.isfinite(v)
+        w = np.where(ok, 1.0 / ok.sum(), 0.0)
         ew49[h] = float(np.nanmean(v))
+        ew49_to[h] = 1.0 if prev_w is None else 0.5 * float(np.abs(w - prev_w).sum())
+        prev_w = w * (1 + np.where(ok, v, 0.0)) / (1 + ew49[h])
     hind = run_rule(P49, mo_sig('comp', fixed='2017'), t_mo, K5, 'vw')
     stale = run_rule(P49, mo_sig('comp', fixed='1963'), t_mo, K5, 'vw')
 
@@ -810,7 +829,17 @@ def main():
                                                   'hold': N.excess_stats(R_['gross'], ewavg, a=N.HOLD_START)}
         entries[name] = e
         R_['net'] = net
-    fam_p = {f: N.holm({n: e['stats_gross']['hold']['p'] for n, e in entries.items() if e['family'] == f}) for f in ('primary', 'exploratory')}
+    # Holm は丸める前の p（p_two(NW t)）で（事前登録 C7_family の文字どおり）。excess_stats の p は4桁に丸めてあるので、丸めた版も併記し、
+    # 丸めで格付けの線（t 2.0／1.65／3.0・Holm 0.05）をまたぐ規則が無いかを下で確かめる
+    def exact_t(g, b, a=None, z=None):
+        ks = sorted(k for k in set(g) & set(b) if (a is None or k >= a) and (z is None or k <= z))
+        return N.nw_t([g[k] - b[k] for k in ks]) if len(ks) >= 24 else None
+    for name, e in entries.items():
+        g = rules[name]['gross']
+        e['exact_t'] = {'full': exact_t(g, mkt), 'train': exact_t(g, mkt, z=N.TRAIN_END), 'hold': exact_t(g, mkt, a=N.HOLD_START)}
+        e['exact_hold_p_two'] = N.p_two(e['exact_t']['hold'])
+    fam_p = {f: N.holm({n: e['exact_hold_p_two'] for n, e in entries.items() if e['family'] == f}) for f in ('primary', 'exploratory')}
+    fam_p_rounded = {f: N.holm({n: e['stats_gross']['hold']['p'] for n, e in entries.items() if e['family'] == f}) for f in ('primary', 'exploratory')}
 
     # ── C5（米国外7か国）
     log('C5: 米国外7か国')
@@ -854,16 +883,30 @@ def main():
     for name, e in entries.items():
         grade_entry(e, fam_p[e['family']].get(name), repl_of.get(name) if e['family'] == 'primary' else None,
                     timing=bool(rules[name].get('timing')))
+        e['holm_p_in_family_rounded_p'] = fam_p_rounded[e['family']].get(name)
         if e['family'] == 'exploratory':
             e['grade_label'] = f"{e['grade']}（探索）"
+    # 丸めの境界の検査: 格付けは excess_stats の丸めた t（小数2桁）で線を当てる（nx_common.grade・他の角度と同じ）。
+    # 丸める前の t や丸めた p の Holm で線の判定が変わる規則があれば名指しする（格付けは変えない＝記録だけ）
+    rb = []
+    for name, e in entries.items():
+        st, xt = e['stats_gross'], e['exact_t']
+        for crit, part, thr in (('C1_train', 'train', 2.0), ('C3_hold_t', 'hold', 1.65), ('C7_multi(full t)', 'full', 3.0)):
+            if st[part] and xt[part] is not None and ((st[part]['t'] or 0) >= thr) != (xt[part] >= thr):
+                rb.append({'rule': name, 'criterion': crit, 'rounded_t': st[part]['t'], 'exact_t': xt[part]})
+        a, b = e['holm_p_in_family'], e['holm_p_in_family_rounded_p']
+        if a is not None and b is not None and (a < 0.05) != (b < 0.05):
+            rb.append({'rule': name, 'criterion': 'C7_multi(Holm)', 'holm_exact_p': a, 'holm_rounded_p': b})
+    res['sanity']['rounding_boundary_check'] = {'spec': '格付けの線（t 2.0／1.65／3.0・Holm 0.05）が、丸めた t と丸める前の t、丸めた p と丸める前の p の Holm で食い違う規則', 'crossings': rb,
+                                                'note': '空なら丸めは格付けに影響しない。格付けは Holm を丸める前の p で、t は excess_stats の丸めた値（nx_common.grade のまま）で当てた'}
 
     # ── 対照・偽の規則・後知恵・古い表（報告のみ）
     log('対照・偽の規則')
     controls = {}
     ce, _ = evaluate('CTRL_own1m_vw', ctrl[0], ctrl[1], mkt, rf)
     controls['CTRL_own1m_vw'] = {**ce, 'spec': '自分の前月のリターンの上位 K を時価加重（1か月の業種の勢い）', 'meta': ctrl[2]}
-    controls['CTRL_ew49'] = {'spec': '49業種（VW リターン）の等分平均・毎月等分に戻す', 'stats_gross': {
-        'full': N.excess_stats(ew49, mkt), 'train': N.excess_stats(ew49, mkt, z=N.TRAIN_END), 'hold': N.excess_stats(ew49, mkt, a=N.HOLD_START)}}
+    ce, _ = evaluate('CTRL_ew49', ew49, ew49_to, mkt, rf)
+    controls['CTRL_ew49'] = {**ce, 'spec': '49業種（VW リターン）の等分平均・毎月等分に戻す（回転＝等分へ戻す売買）'}
     for nm, o in (('HINDSIGHT_fixed2017', hind), ('STALE_fixed1963', stale)):
         ce, _ = evaluate(nm, o[0], o[1], mkt, rf, PP_MO)
         controls[nm] = {**ce, 'spec': 'P3 を2017年表で全期間（後知恵）' if nm.startswith('HIND') else 'P3 を1963年表で最後まで（表を更新しない）', 'meta': o[2]}
@@ -952,7 +995,7 @@ def main():
     # ── tested（1本残らず）
     tested = []
     for name, e in entries.items():
-        tested.append({k: e[k] for k in ('name', 'family', 'spec', 'grade', 'criteria', 'holm_p_in_family', 'span', 'stats_gross', 'cost',
+        tested.append({k: e[k] for k in ('name', 'family', 'spec', 'grade', 'criteria', 'holm_p_in_family', 'holm_p_in_family_rounded_p', 'exact_t', 'exact_hold_p_two', 'span', 'stats_gross', 'cost',
                                         'roll20_net', 'roll20_gross', 'dca20_net_ratio', 'dca20_gross_ratio', 'maxdd', 'sharpe', 'meta',
                                         'vs_ew_industry_average_report') if k in e}
                       | ({'grade_label': e['grade_label']} if 'grade_label' in e else {})
@@ -974,13 +1017,80 @@ def main():
     res['grades'] = {n: e['grade'] for n, e in entries.items()}
     # 事後の診断に使う系列を手元にためる（JSON には入れない）
     np.save(os.path.join(N.CACHE, 'nx_leadlag_series.npy'), {n: {'gross': r['gross'], 'to': r['to'], 'W': r['W']} for n, r in rules.items()} | {'CTRL_own1m_vw': {'gross': ctrl[0], 'to': ctrl[1]}}, allow_pickle=True)
-    return res, rules, entries, P49, P30, mkt, rf, mktrf, ctrl
+    return res, rules, entries, P49, P30, mkt, rf, mktrf, ctrl, primary_sig
+
+
+def grade_summary(entries):
+    """格付けの一覧（数字は excess_stats のまま・丸め直さない）"""
+    out = []
+    for n, e in entries.items():
+        st = e['stats_gross']
+        nh = e['cost']['net_main']['hold']
+        out.append({'rule': n, 'family': e['family'], 'grade': e['grade'],
+                    'train_ex_ann': st['train']['ex_ann'] if st['train'] else None, 'train_t': st['train']['t'] if st['train'] else None,
+                    'hold_ex_ann': st['hold']['ex_ann'], 'hold_t': st['hold']['t'], 'hold_cagr_diff': st['hold']['cagr_diff'],
+                    'hold_net_cagr_diff': nh['cagr_diff'] if nh else None, 'full_t': st['full']['t'],
+                    'roll20_net_win_rate': e['roll20_net']['win_rate'] if e['roll20_net'] else None,
+                    'dca20_net_median_ratio': e['dca20_net_ratio']['median_ratio'] if e['dca20_net_ratio'] else None,
+                    'holm_p_in_family': e['holm_p_in_family'],
+                    'failed': [c for c, v in e['criteria'].items() if v is False]})
+    return out
+
+
+def make_summary(res, entries):
+    """結果の数字から要約を組む（数字はすべて JSON の中の値をそのまま引用・丸め直さない）。事後の診断は『事後』と明記"""
+    from collections import Counter
+    gc = Counter(e['grade'] for e in entries.values())
+    win = [n for n, e in entries.items() if e['grade'] in ('S', 'A')]
+    head = {'grades': dict(gc), 'wins_S_or_A': win, 'primary': {}, 'exploratory_best_hold': None}
+    lines = []
+    lines.append(f"業種どうしの先行・遅行（nx_leadlag）: 主の族5本・探索21本の格付けは {dict(gc)}。S・A は {'なし' if not win else win}。")
+    for n, e in entries.items():
+        if e['family'] != 'primary':
+            continue
+        st, nh = e['stats_gross'], e['cost']['net_main']['hold']
+        failed = [c for c, v in e['criteria'].items() if v is False]
+        head['primary'][n] = {'grade': e['grade'], 'train_ex_ann': st['train']['ex_ann'], 'train_t': st['train']['t'], 'hold_ex_ann': st['hold']['ex_ann'],
+                              'hold_t': st['hold']['t'], 'hold_cagr_diff': st['hold']['cagr_diff'], 'hold_net010_cagr_diff': nh['cagr_diff'], 'failed': failed}
+        lines.append(f"{n}: 訓練 {st['train']['ex_ann']}%/年（t {st['train']['t']}）→ 保有（2007〜）{st['hold']['ex_ann']}%/年（t {st['hold']['t']}・幾何差 {st['hold']['cagr_diff']}・費用0.10%後 {nh['cagr_diff']}）＝{e['grade']}（不合格 {failed}）。")
+    c5 = res['c5']['summary']
+    lines.append('C5（米国外7か国・1999-08〜2025-12）の正の国: ' + '・'.join(f"{k} {v['positive']}/7" for k, v in c5.items())
+                 + '（5/7 以上で C5 合格）。')
+    ex = [(n, e) for n, e in entries.items() if e['family'] == 'exploratory']
+    best = max(ex, key=lambda x: x[1]['stats_gross']['hold']['cagr_diff'])
+    b = best[1]['stats_gross']
+    head['exploratory_best_hold'] = {'rule': best[0], 'hold_cagr_diff': b['hold']['cagr_diff'], 'hold_t': b['hold']['t'], 'train_t': b['train']['t'], 'grade': best[1]['grade']}
+    lines.append(f"探索で保有期間の幾何差が最大は {best[0]}（{b['hold']['cagr_diff']}%/年・t {b['hold']['t']}）だが訓練の t は {b['train']['t']}（C1 不合格）＝C。")
+    e19 = entries['E19_HOU_big2small_ew']
+    lines.append(f"訓練で最も強いのは E19（Hou 型・業種の大型の前月→小型を等分）: 訓練 {e19['stats_gross']['train']['ex_ann']}%/年（t {e19['stats_gross']['train']['t']}）・全期間 t {e19['stats_gross']['full']['t']} だが、"
+                 f"保有期間は費用前 {e19['stats_gross']['hold']['cagr_diff']}・費用0.30%後 {e19['cost']['net_main']['hold']['cagr_diff']}（しかも回転は業種の段だけで数えた過小な値）＝C。")
+    e21 = entries['E21_HTV_timing']
+    lines.append(f"E21（業種→市場の時期選び）は保有期間 {e21['stats_gross']['hold']['cagr_diff']}%/年（t {e21['stats_gross']['hold']['t']}）で市場に負け、C8（シャープ）も不合格。")
+    ph = res.get('post_hoc', {}).get('items', {})
+    oj = ph.get('own_industry_momentum_J', {}).get('rows', {}).get('E6_MO_composite_vw_J12')
+    if oj:
+        lines.append(f"事後（格付けに使わない）: E6（相手の業種の12か月）を自分の業種の12か月の勢いと市場で回帰すると、保有期間の切片 {oj['hold']['alpha_ann_pct']}%/年（NW t {oj['hold']['alpha_nw_t']}）・全期間 {oj['full']['alpha_ann_pct']}%/年（t {oj['full']['alpha_nw_t']}）。"
+                     "結果を見た後に選んだ回帰で、訓練期間では規則そのものの t が C1 に届かない＝勝ちとは扱わない。")
+    rb = res['sanity'].get('rounding_boundary_check', {}).get('crossings', [])
+    if rb:
+        lines.append('丸めの境界: ' + '・'.join(f"{x['rule']} {x['criterion']}" for x in rb) + '（格付けはどれも C のままで影響なし）。')
+    pl = res['controls_report_only']['PLACEBO_P3']
+    lines.append(f"偽の規則（P3 の業種の名札を並べ替えた200回）の中で本物の P3 の全期間の超過は {pl['real_percentile_ex_ann']} 分位（並べ替えの {pl['share_placebo_ge_real_ex_ann']} が本物以上）。")
+    r1 = res['real_instrument_check_report_only'].get('R1_etf_P3_gics')
+    r2 = res['real_instrument_check_report_only'].get('R2_etf_P5_gics')
+    if r1 and r2:
+        lines.append(f"実在のセクター ETF（報告のみ）: P3 の GICS 版は 1999-02〜 SPY に幾何差 {r1['stats_gross']['full']['cagr_diff']}（2007〜 {r1['stats_gross']['hold']['cagr_diff']}）、P5 の GICS 版は 2009-02〜 {r2['stats_gross']['full']['cagr_diff']}。")
+    c1 = [n.split('_')[0] for n, e in entries.items() if e['criteria']['C1_train']]
+    both = [n.split('_')[0] for n, e in entries.items() if e['criteria']['C1_train'] and e['criteria']['C2_hold_sign'] and e['criteria']['C6_net_cost']]
+    lines.append(f"結論: 訓練期間（〜2006）の C1（超過が正・t≥2）を通ったのは {c1}、そのうち保有期間（2007〜）の C2 と費用後の C6 も通ったのは {both if both else 'なし'}。"
+                 '他の業種の過去で業種を選ぶ規則は、論文の標本と重なる期間では一部が効いたが、2007年以降と費用の後まで市場に勝ち続けた規則は無かった。線は動かしていない。')
+    return head, lines
 
 
 NBER = [(196912, 197011), (197311, 197503), (198001, 198007), (198107, 198211), (199007, 199103), (200103, 200111), (200712, 200906), (202002, 202004)]
 
 
-def post_hoc(res, rules, entries, P49, P30, mkt, rf, mktrf, ctrl):
+def post_hoc(res, rules, entries, P49, P30, mkt, rf, mktrf, ctrl, primary_sig):
     """事後（結果を見た後）の診断。格付けには使わない"""
     out = {'label': '事後（結果を見た後の診断・格付けに使わない）', 'items': {}}
     it = out['items']
@@ -1035,12 +1145,101 @@ def post_hoc(res, rules, entries, P49, P30, mkt, rf, mktrf, ctrl):
         if len(ks) > 24:
             cr[n] = round(N.corr([R_['gross'][k] - mkt[k] for k in ks], [ctrl[0][k] - mkt[k] for k in ks]), 3)
     it['corr_excess_with_CTRL_own1m'] = cr
+    # (e) 因子への回帰: (規則−RF) を [Mkt−RF, SMB, HML, RMW, CMA, Mom, ST_Rev]（French・1963-07〜）に回帰した切片（年率%・NW t）
+    try:
+        f5 = N.french_series('F-F_Research_Data_5_Factors_2x3', want='')
+    except KeyError:
+        f5 = None
+    fac = {}
+    if f5 is None:
+        T5 = N.french_tables('F-F_Research_Data_5_Factors_2x3')
+        for tt, v in T5.items():
+            if v['freq'] == 'monthly':
+                f5 = {c: {d: row[i] / 100 for d, row in v['data'].items() if row[i] is not None} for i, c in enumerate(v['cols'])}
+                break
+    mom = N.french_series('F-F_Momentum_Factor', want='')
+    strev = N.french_series('F-F_ST_Reversal_Factor', want='')
+    F = {'Mkt-RF': f5['Mkt-RF'], 'SMB': f5['SMB'], 'HML': f5['HML'], 'RMW': f5['RMW'], 'CMA': f5['CMA'],
+         'Mom': mom[list(mom)[0]], 'ST_Rev': strev[list(strev)[0]]}
+    fn = list(F)
+    for n, R_ in rules.items():
+        g = R_['gross']
+        row = {}
+        for lab, a in (('from_1963_07', 196307), ('hold', N.HOLD_START)):
+            ks = [k for k in sorted(g) if k >= a and all(k in F[c] for c in fn) and k in rf]
+            if len(ks) < 60:
+                continue
+            y = [g[k] - rf[k] for k in ks]
+            X = [[F[c][k] for c in fn] for k in ks]
+            b, se = nw_ols(y, X)
+            row[lab] = {'months': len(ks), 'alpha_ann_pct': round(b[0] * 1200, 2), 'alpha_nw_t': round(b[0] / se[0], 2),
+                        'loadings': {c: round(float(b[i + 1]), 3) for i, c in enumerate(fn)},
+                        'loading_t': {c: round(float(b[i + 1] / se[i + 1]), 2) for i, c in enumerate(fn)}}
+        fac[n] = row
+    it['factor_regression_ff5_mom_strev'] = {'spec': '(規則−RF) を French の5因子＋勢い（Mom）＋短期の逆張り（ST_Rev）に回帰。切片は年率%・NW t（ラグ12）。株の因子への傾きを除いた後に残るものがあるか', 'rows': fac}
+    # (f) 保有期間の暦年ごとの幾何の超過（主の族と、格付けが B 以上の規則）
+    yr = {}
+    for n, R_ in rules.items():
+        if not (entries[n]['family'] == 'primary' or entries[n]['grade'] in ('S', 'A', 'B')):
+            continue
+        g = R_['gross']
+        row = {}
+        for y in range(2007, 2027):
+            ks = [k for k in g if y * 100 < k <= y * 100 + 12 and k in mkt]
+            if len(ks) >= 6:
+                row[str(y)] = round((math.exp(sum(math.log1p(g[k]) for k in ks)) - math.exp(sum(math.log1p(mkt[k]) for k in ks))) * 100, 2)
+        yr[n] = row
+    it['hold_calendar_year_excess'] = {'spec': '保有期間の暦年ごとの（規則の累積−Mkt の累積）%・費用前（2026 は 1〜8月）', 'rows': yr}
+    # (g) 主の族で、訓練・保有それぞれの寄与が最大の業種を土俵から抜いて組み直す（次の業種が繰り上がる）
+    loo = {}
+    for n, (P, sfn, tl) in primary_sig.items():
+        W = rules[n]['W']
+        row = {}
+        for lab, a, z in (('train', 0, N.TRAIN_END), ('hold', N.HOLD_START, 999999)):
+            ks = [h for h in sorted(W) if a <= h <= z]
+            c = np.zeros(P.n)
+            for h in ks:
+                c += W[h] * (np.nan_to_num(P.R[P.idx[h]]) - mkt[h])
+            top = int(np.argmax(c))
+
+            def sfn2(t, sfn=sfn, top=top):
+                s = np.array(sfn(t), dtype=float).copy()
+                s[top] = np.nan
+                return s
+            r2, to2, _, _ = run_rule(P, sfn2, tl, K5, 'vw')
+            row[f'drop_top_{lab}_contributor'] = {'dropped': P.names[top], 'train': N.excess_stats(r2, mkt, z=N.TRAIN_END),
+                                                   'hold': N.excess_stats(r2, mkt, a=N.HOLD_START),
+                                                   'hold_net010': N.excess_stats(net_of(r2, to2, COST), mkt, a=N.HOLD_START)}
+        loo[n] = row
+    # (h) 自分の業種の J か月の勢いとの切り分け（E5＝相手の3か月・E6＝相手の12か月は、自分の3・12か月の勢いと重なりうる）
+    tmo = mrange(197001, 202607)
+    own = {}
+    for J in (3, 12):
+        oJ = run_rule(P49, lambda t, J=J: compound(P49, t, J), tmo, K5, 'vw')
+        own[J] = oJ
+    reg2 = {}
+    for n, J in (('E5_MO_composite_vw_J3', 3), ('E6_MO_composite_vw_J12', 12), ('P1_MO_customer_vw', 12), ('P3_MO_composite_vw', 12)):
+        g = rules[n]['gross']
+        o = own[J][0]
+        row = {'control': f'自分の業種の {J}か月の複利の上位 K を時価加重（業種の勢い）',
+               'control_stats': {'full': N.excess_stats(o, mkt), 'train': N.excess_stats(o, mkt, z=N.TRAIN_END), 'hold': N.excess_stats(o, mkt, a=N.HOLD_START)}}
+        for lab, a in (('full', 0), ('hold', N.HOLD_START)):
+            ks = sorted(k for k in g if k in o and k in mkt and k >= a)
+            b, se = nw_ols([g[k] - mkt[k] for k in ks], [[o[k] - mkt[k], mktrf[k]] for k in ks])
+            row[lab] = {'months': len(ks), 'alpha_ann_pct': round(b[0] * 1200, 2), 'alpha_nw_t': round(b[0] / se[0], 2),
+                        'beta_own_mom': round(b[1], 3), 'beta_own_mom_t': round(b[1] / se[1], 2), 'beta_mktrf': round(b[2], 3),
+                        'corr_excess': round(N.corr([g[k] - mkt[k] for k in ks], [o[k] - mkt[k] for k in ks]), 3)}
+        reg2[n] = row
+    it['own_industry_momentum_J'] = {'spec': '(規則−Mkt) を [1, (自分の業種の J か月の勢い−Mkt), (Mkt−RF)] に回帰した切片（年率%・NW t）。相手の業種の信号が、自分の業種の勢いと別のものを持っているか', 'rows': reg2}
+    it['drop_top_industry_rebuild'] = {'spec': '主の族: 訓練（または保有）の寄与が最大の業種を毎月の順位から外して規則を組み直した（次の業種が繰り上がる）。勝ちが1業種に乗っているかの確かめ', 'rows': loo}
     return out
 
 
 if __name__ == '__main__':
-    res, rules, entries, P49, P30, mkt, rf, mktrf, ctrl = main()
-    res['post_hoc'] = post_hoc(res, rules, entries, P49, P30, mkt, rf, mktrf, ctrl)
+    res, rules, entries, P49, P30, mkt, rf, mktrf, ctrl, primary_sig = main()
+    res['post_hoc'] = post_hoc(res, rules, entries, P49, P30, mkt, rf, mktrf, ctrl, primary_sig)
+    res['grade_summary'] = grade_summary(entries)
+    res['headline'], res['summary_ja'] = make_summary(res, entries)
     res['seconds'] = round(time.time() - T0, 1)
     p = N.save(OUTNAME, res)
     log('書いた', p)

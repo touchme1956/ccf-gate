@@ -555,9 +555,12 @@ def roll_annual(s, b, years=20, raw=False):
         return None
     v = sorted(c for _, c in out)
     wr = sum(1 for _, c in out if c > 0) / len(out)
-    return {'windows': len(out), 'skipped_incomplete_starts': skipped, 'wins': sum(1 for _, c in out if c > 0),
-            'win_rate': wr if raw else round(wr, 3), 'median': v[len(v) // 2],
-            'worst': min(out, key=lambda x: x[1]), 'best': max(out, key=lambda x: x[1]), 'first_start': out[0][0], 'last_start': out[-1][0]}
+    res = {'windows': len(out), 'skipped_incomplete_starts': skipped, 'wins': sum(1 for _, c in out if c > 0),
+           'win_rate': wr if raw else round(wr, 3), 'median': v[len(v) // 2],
+           'worst': min(out, key=lambda x: x[1]), 'best': max(out, key=lambda x: x[1]), 'first_start': out[0][0], 'last_start': out[-1][0]}
+    if raw:  # 丸めると 0.00 になって負けに数えられる窓（nx_common.rolling と同じ物差しの性質・報告だけ）
+        res['positive_but_rounds_to_zero'] = [(y0, round(c, 4)) for y0, c in out if c > 0 and not round(c, 2) > 0]
+    return res
 
 
 def dca_annual(s, b, years=20):
@@ -774,8 +777,30 @@ def sanity(raw_json, data):
         for c in h['held']:
             if W.missing(c, y):
                 viol.append(('held', c, y))
+    # PRT 2016〜2020（単位の誤り → 欠測）: 規則にも相手にも入っていない
+    prt_masked = [y for y in PRT_FLAW_YEARS if W.v('PRT', y, 'eq_tr') is None]
+    for y in PRT_FLAW_YEARS:
+        if FIX['prt_mask'] and W.ret('eq', 'real', 'PRT', y) is not None:
+            viol.append(('PRT_flaw', y))
+        if FIX['prt_mask'] and y in sim['hold'] and 'PRT' in sim['hold'][y]['held']:
+            viol.append(('held_PRT_flaw', y))
     out['missing_flagged_country_years'] = [f'{c} {y}' for c, y in flagged]
+    out['data_flaw_masked_country_years'] = [f'PRT {y}' for y in prt_masked]
     out['missing_dropped_from_rule_and_bench'] = not viol
+    # GDP 加重の重み: 年 t+1 のリターンの重みが年 t 以降の GDP・為替に依存しない（gdp_{t−1}/xrusd_{t−1}）
+    gok = True
+    for t in (1905, 1938, 1972, 1999, 2015):
+        d3 = copy.deepcopy(data)
+        for c in d3:
+            for y in d3[c]:
+                if y >= t:
+                    for col in ('gdp', 'xrusd'):
+                        if fnum(d3[c][y].get(col)) is not None:
+                            d3[c][y][col] = d3[c][y][col] * rng.uniform(0.5, 1.5)
+        b1, b2 = bench(W, UNIVERSE, 'real', 'gdp'), bench(World(d3), UNIVERSE, 'real', 'gdp')
+        if abs(b1[t + 1] - b2[t + 1]) > 1e-12:
+            gok = False
+    out['gdp_weights_use_t_minus_1_only'] = gok
     out['hyperinflation_over_100pct'] = [f'{c} {y}' for c in UNIVERSE for y in range(Y_FIRST + 1, Y_LAST + 1) if W.hyper(c, y)]
     # (4) 相手（等分）= その年にリターンのある国の単純平均
     ok = all(abs(b[y] - S.mean([W.ret('eq', 'real', c, y) for c in UNIVERSE if W.ret('eq', 'real', c, y) is not None])) < 1e-12 for y in b)
@@ -869,8 +894,11 @@ def etf_check():
                 continue
             if nm.startswith('P4'):
                 o1 = sorted(sig, key=lambda c: (-sig[c][0], c)); o2 = sorted(sig, key=lambda c: (-sig[c][1], c))
-                sc = {c: (1 - o1.index(c) / (n - 1)) + (1 - o2.index(c) / (n - 1)) for c in sig}
-                sel = sorted(sig, key=lambda c: (-sc[c], c))[:math.ceil(n / 3)]
+                if FIX['tie_int']:  # 整数の位置の和・同点は ISO 順（choose と同じ是正）
+                    sel = sorted(sig, key=lambda c: (o1.index(c) + o2.index(c), c))[:math.ceil(n / 3)]
+                else:
+                    sc = {c: (1 - o1.index(c) / (n - 1)) + (1 - o2.index(c) / (n - 1)) for c in sig}
+                    sel = sorted(sig, key=lambda c: (-sc[c], c))[:math.ceil(n / 3)]
             else:
                 d = -1 if nm.startswith('P3') else 1
                 sel = sorted(sig, key=lambda c: (-d * sig[c], c))[:math.ceil(n / 3)]
@@ -916,19 +944,8 @@ def posthoc(W, data):
     for k in ('top', 'middle', 'last'):
         ter[k].pop('_s')
     out['B_dy_tercile_monotonicity'] = ter
-    # C) 見つけたデータの欠陥: PRT の 2016〜2020 は配当利回りが 0.03〜0.05%（それ以前は 2.6〜4.7%）＝桁の誤りとみられ、総リターンから配当が抜けている疑い。
-    #    PRT の 2016〜2020 を欠測にして回し直す
-    d2 = copy.deepcopy(data)
-    for y in range(2016, 2021):
-        for col in ('eq_tr', 'eq_dp', 'eq_capgain', 'eq_div_rtn'):
-            d2['PRT'][y][col] = None
-    W2 = World(d2)
-    prt = {'observed_PRT_eq_dp_pct_2012_2020': {y: round(data['PRT'][y]['eq_dp'] * 100, 3) for y in range(2012, 2021)}}
-    for nm in main_rules:
-        sim, b = run(W2, SEL[nm])
-        sn = net(sim['s'], sim['cost'])
-        prt[nm] = {'hold_gross': short(sim['s'], b, HOLD_A, HOLD_Z), 'hold_net': short(sn, b, HOLD_A, HOLD_Z), 'p2007_2020_net': short(sn, b, 2007, 2020)}
-    out['C_PRT_2016_2020_dividend_data_flaw'] = prt
+    # C) PRT 2016〜2020 の株の4列の単位の誤り（v1 の注釈『総リターンから配当が抜けている疑い』は誤り）: 本計算は欠測にした（FIX['prt_mask']）。
+    #    壊れた値のまま（v1 と同じ）と 100倍に直した仮の値で全32規則を回した感度は main() が C_PRT_2016_2020_equity_unit_flaw に書く
     # D) 現代の器と同じ窓（1997〜2020）で JST の規則を見る（器の答え合わせとの比較のため）
     same = {}
     for nm in ('P1_dy_top3rd', 'P2_mom_top3rd', 'P3_rev_bottom3rd', 'P4_vm_top3rd'):
@@ -986,12 +1003,45 @@ GRADE_ORDER = 'SABC'
 
 
 def grade_strict_of(ev, holm_p_strict, timing):
-    """同じ線（nx_common.grade）を丸めない値に当てる。excess_stats は t を小数2桁に丸めるので、t=2.9986 が 3.00 として C7 を通りうる"""
+    """同じ線（nx_common.grade）を丸めない値だけに当てる（報告用。格付けには grade_conservative_of を使う）"""
     st = ev['_strict']
     sp = st.get('sharpe') or {}
     pair = {'train': sp.get('train'), 'hold': sp.get('hold')} if timing else None
     return N.grade(full=st['full_gross'], train=st['train_gross'], hold=st['hold_gross'], roll20=st['roll20_net'],
                    cost_hold=st['hold_net'], repl=st.get('repl'), family_holm_p=holm_p_strict, sharpe_pair=pair, leveraged_or_timing=timing)
+
+
+def _mn(a, b):
+    return None if a is None or b is None else min(a, b)
+
+
+def _worse_es(r, u):
+    """excess_stats の丸めた値 r と丸めない値 u から、grade が見る欄（ex_ann・cagr_diff・t）ごとに不利なほう（小さいほう）"""
+    if not r or not u:
+        return None
+    return {'ex_ann': _mn(r['ex_ann'], u['ex_ann']), 'cagr_diff': _mn(r['cagr_diff'], u['cagr_diff']), 't': _mn(r['t'], u['t'])}
+
+
+def grade_conservative_of(ev, repl, holm_p, holm_p_strict, timing):
+    """格付け: 線（nx_common.grade）はそのまま。入力の欄ごとに、登録どおりの丸めた値（他の角度と同じ物差し）と丸めない値の不利なほうを入れる。
+    丸めで線を越えることを許さない（t=2.9986 を 3.00 として C7 に通さない）。転がる20年窓は丸めた勝率がつねに丸めない勝率以下なので、
+    結果として nx_common.rolling と同じ丸めた物差しがそのまま使われる（検査役の指摘 (4)・変えない）"""
+    st = ev['_strict']
+    rr, ru = ev['roll20_net'], st['roll20_net']
+    roll = {'win_rate': _mn(rr['win_rate'], ru['win_rate'])} if rr and ru else None
+    rs = st.get('repl')
+    rep = {'regions': repl['regions'], 'positive': min(repl['positive'], rs['positive'])} if repl and rs else None
+    hp = max(holm_p, holm_p_strict) if holm_p is not None and holm_p_strict is not None else None
+    pair = None
+    if timing:
+        sr, su = ev.get('sharpe') or {}, st.get('sharpe') or {}
+        pair = {}
+        for per in ('train', 'hold'):
+            a, b = sr.get(per), su.get(per)
+            pair[per] = (_mn(a[0], b[0]), None if a[1] is None or b[1] is None else max(a[1], b[1])) if a and b else None
+    return N.grade(full=_worse_es(ev['full_gross'], st['full_gross']), train=_worse_es(ev['train_gross'], st['train_gross']),
+                   hold=_worse_es(ev['hold_gross'], st['hold_gross']), roll20=roll, cost_hold=_worse_es(ev['hold_net'], st['hold_net']),
+                   repl=rep, family_holm_p=hp, sharpe_pair=pair, leveraged_or_timing=timing)
 
 
 def run_all(W):
@@ -1045,14 +1095,15 @@ def run_all(W):
     for name, t in tested.items():
         for v, x in t['views'].items():
             timing = t['kind'] == 'timing'
-            g1, c1 = grade_of(x['ev'], x['repl'], x['holm_p'], timing)
-            g2, c2_ = grade_strict_of(x['ev'], x['holm_p_strict'], timing)
-            worse = GRADE_ORDER.index(g2) > GRADE_ORDER.index(g1)
-            x['grade'], x['criteria'] = (g2, c2_) if worse else (g1, c1)
-            x['grade_tool_rounded'], x['grade_strict_unrounded'] = g1, g2
-            x['rounding_boundary'] = g1 != g2
-            if g1 != g2:
-                x['criteria_tool_rounded'], x['criteria_strict_unrounded'] = c1, c2_
+            g1, c1 = grade_of(x['ev'], x['repl'], x['holm_p'], timing)  # 他の角度と同じ（excess_stats の丸めた値）
+            g2, c2_ = grade_strict_of(x['ev'], x['holm_p_strict'], timing)  # 丸めない値だけ（報告）
+            g3, c3 = grade_conservative_of(x['ev'], x['repl'], x['holm_p'], x['holm_p_strict'], timing)  # 格付け
+            assert GRADE_ORDER.index(g3) >= max(GRADE_ORDER.index(g1), GRADE_ORDER.index(g2)), (name, v, g1, g2, g3)
+            x['grade'], x['criteria'] = g3, c3
+            x['grade_tool_rounded'], x['grade_unrounded_only'] = g1, g2
+            x['rounding_boundary'] = g1 != g3
+            if g1 != g3:
+                x['criteria_tool_rounded'] = c1
     return tested, holm_sets
 
 
@@ -1066,6 +1117,7 @@ def compact(tested):
             g = lambda k, f: (ev.get(k) or {}).get(f)
             st = ev['_strict']['full_gross'] or {}
             out[f'{name}|{v}'] = {'grade': x['grade'], 'grade_tool_rounded': x['grade_tool_rounded'],
+                                  'C': ''.join(('1' if c is True else ('-' if c is None else '0')) for c in x['criteria'].values()),
                                   'train_ex': g('train_gross', 'ex_ann'), 'train_t': g('train_gross', 't'),
                                   'hold_ex': g('hold_gross', 'ex_ann'), 'hold_t': g('hold_gross', 't'),
                                   'full_t': g('full_gross', 't'), 'full_t_unrounded': round(st['t'], 4) if st.get('t') is not None else None,
@@ -1073,6 +1125,17 @@ def compact(tested):
                                   'C5': x['repl'], 'holm_p': x['holm_p'],
                                   'p2007_2020_net_cagr_diff': (ev['periods_reported'].get('p2007_2020_net') or {}).get('cagr_diff')}
     return out
+
+
+def unrounded_view(x):
+    """格付けの境目を確かめるための丸めない値（出力用・小数4桁）"""
+    st = x['ev']['_strict']
+    r4 = lambda d, f: round(d[f], 4) if d and d.get(f) is not None else None
+    ro = st['roll20_net']
+    return {'train_t': r4(st['train_gross'], 't'), 'hold_t': r4(st['hold_gross'], 't'), 'full_t': r4(st['full_gross'], 't'),
+            'hold_net_ex_ann': r4(st['hold_net'], 'ex_ann'), 'hold_net_cagr_diff': r4(st['hold_net'], 'cagr_diff'),
+            'roll20_net_win_rate_unrounded_diffs': round(ro['win_rate'], 4) if ro else None,
+            'repl_C5': st.get('repl'), 'holm_p_from_unrounded_t': x.get('holm_p_strict')}
 
 
 def diff_compact(before, after):
@@ -1086,9 +1149,205 @@ def diff_compact(before, after):
     return out
 
 
+def run_variant(data, fixes):
+    """FIX を一時的に差し替えて全規則を回す（是正の前後・感度の比較用）"""
+    saved = dict(FIX)
+    FIX.update(fixes)
+    try:
+        return run_all(World(data, 1.0))[0]
+    finally:
+        FIX.update(saved)
+
+
+def tie_years(W):
+    """複数の信号の規則で、初版（浮動小数点の端数）と是正後（整数の位置の和・ISO 順）で選ぶ国の集合が違う年"""
+    out, saved = {}, FIX['tie_int']
+    try:
+        for name, sp in SEL.items():
+            if len(sp['sig']) < 2:
+                continue
+            lst = []
+            for t in range(Y_FIRST, Y_LAST):
+                FIX['tie_int'] = False
+                a, _ = choose(W, sp, UNIVERSE, t, MIN_SEL)
+                FIX['tie_int'] = True
+                b, _ = choose(W, sp, UNIVERSE, t, MIN_SEL)
+                if b is not None and set(a) != set(b):
+                    lst.append({'formation_year_t': t, 'v1_picked': sorted(set(a) - set(b)), 'fixed_picks': sorted(set(b) - set(a))})
+            out[name] = lst
+    finally:
+        FIX['tie_int'] = saved
+    return out
+
+
+def tie_example(W, name='P4_vm_top3rd', t=1886):
+    """同点の実例: 浮動小数点の百分位の和と、整数の位置の和"""
+    sp = SEL[name]
+    elig = [c for c in UNIVERSE if all(W.sig(nm, c, t) is not None for nm, _ in sp['sig'])]
+    n = len(elig)
+    ps, fl = {c: 0 for c in elig}, {c: 0.0 for c in elig}
+    for nm, d in sp['sig']:
+        for p, c in enumerate(sorted(elig, key=lambda c: (-d * W.sig(nm, c, t), c))):
+            ps[c] += p
+            fl[c] += 1 - p / (n - 1)
+    k = kcount(sp['k'], n)
+    return {'rule': name, 'formation_year_t': t, 'n_eligible': n, 'k': k,
+            'integer_position_sums': dict(sorted(ps.items(), key=lambda z: (z[1], z[0]))),
+            'float_scores_repr': {c: repr(fl[c]) for c in sorted(elig, key=lambda c: (ps[c], c))[:k + 2]}}
+
+
+FIX_KEYS = ('grade', 'grade_tool_rounded', 'C', 'train_ex', 'train_t', 'hold_ex', 'hold_t', 'full_t', 'full_t_unrounded',
+            'hold_net_cagr_diff', 'roll20_win_net', 'C5', 'holm_p', 'p2007_2020_net_cagr_diff')
+
+
+def pick(cmp, keys):
+    return {k: {f: cmp[k].get(f) for f in FIX_KEYS} for k in keys if k in cmp}
+
+
+def grades_line(cmp):
+    return {k: v['grade'] for k, v in cmp.items()}
+
+
+def build_fixes(data0, data, W, tested, prev):
+    """検査役3人の指摘（changes_numbers）を確かめて直した記録。v1（初版）の数字・是正ごとの単独の効き・PRT の扱いの感度"""
+    OFF = {k: False for k in FIX}
+    now = compact(tested)
+    v1 = compact(run_variant(data0, OFF))
+    alone = {'prt_mask': compact(run_variant(mask_prt(data0), {**OFF, 'prt_mask': True})),
+             'tie_int': compact(run_variant(data0, {**OFF, 'tie_int': True})),
+             'gdp_lag': compact(run_variant(data0, {**OFF, 'gdp_lag': True}))}
+    prt_raw = compact(run_variant(data0, {**FIX, 'prt_mask': False}))
+    prt_x100 = compact(run_variant(mask_prt(data0, 'x100'), {**FIX, 'prt_mask': False}))
+
+    # v1 の公表の要約表を再現できたか（初版の格付けの仕方＝丸めた値の grade_tool_rounded と数字で突き合わせる）
+    v1_pub = None
+    if prev:
+        v1_pub = prev['summary_table'] if 'fixes' not in prev else (prev.get('v1_published') or {}).get('summary_table')
+    repro = None
+    if v1_pub:
+        mism = []
+        for r in v1_pub:
+            k = f"{r['rule']}|{r['view']}"
+            m = v1.get(k)
+            pairs = {'grade': (r['grade'], m['grade_tool_rounded']), 'train_ex': (r['train_ex_gross'], m['train_ex']), 'train_t': (r['train_t'], m['train_t']),
+                     'hold_ex': (r['hold_ex_gross'], m['hold_ex']), 'hold_t': (r['hold_t'], m['hold_t']), 'hold_net_cagr_diff': (r['hold_cagr_diff_net'], m['hold_net_cagr_diff']),
+                     'full_t': (r['full_t'], m['full_t']), 'roll20': (r['roll20_win_net'], m['roll20_win_net']), 'holm_p': (r['holm_p'], m['holm_p']), 'C': (r['C'], m['C'])}
+            bad = {f: p for f, p in pairs.items() if p[0] != p[1] and f != 'C'}
+            if bad:
+                mism.append({k: bad})
+        repro = {'rows': len(v1_pub), 'mismatches': mism,
+                 'note': 'NXJST_FIXES=none と同じ（3つの是正を外した）実行で、v1 の要約表の全行（格付けは初版の丸めた値の格付け）を小数2桁まで再現できたか。'
+                         '格付けの基準の文字列 C は丸めない値の保守的な読み（F5）で変わりうるので突き合わせから外した'}
+
+    # PRT の値（原本のまま）
+    prt_vals = {y: {col: data0['PRT'][y].get(col) for col in PRT_FLAW_COLS} for y in range(2012, 2021)}
+    runs = []
+    for c in UNIVERSE:
+        run = 0
+        for y in range(Y_FIRST, Y_LAST + 1):
+            v = W.v(c, y, 'eq_tr') if c != 'PRT' else fnum(data0['PRT'].get(y, {}).get('eq_tr'))
+            if v is not None and abs(v) < 0.003:
+                run += 1
+            else:
+                if run >= 3:
+                    runs.append((c, y - run, y - 1))
+                run = 0
+        if run >= 3:
+            runs.append((c, Y_LAST - run + 1, Y_LAST))
+
+    # 格付けが PRT の扱いで割れる規則×相手
+    split = {k: {'v1_broken_values_as_is': prt_raw[k]['grade'], 'missing_adopted': now[k]['grade'], 'x100_guess': prt_x100[k]['grade'],
+                 'full_t_unrounded': [prt_raw[k]['full_t_unrounded'], now[k]['full_t_unrounded'], prt_x100[k]['full_t_unrounded']]}
+             for k in now if len({prt_raw[k]['grade'], now[k]['grade'], prt_x100[k]['grade']}) > 1
+             or len({prt_raw[k]['grade_tool_rounded'], now[k]['grade_tool_rounded'], prt_x100[k]['grade_tool_rounded']}) > 1}
+
+    # 転がる20年窓の丸め（変えない）: 丸めると負けに数える窓
+    rr = {}
+    for name in ORDER:
+        for v, x in tested[name]['views'].items():
+            ro, ru = x['ev']['roll20_net'], x['ev']['_strict']['roll20_net']
+            if ro and ru and ro['wins'] != ru['wins']:
+                rr[f'{name}|{v}'] = {'wins_rounded_reported': f"{ro['wins']}/{ro['windows']} = {ro['win_rate']}",
+                                     'wins_unrounded': f"{ru['wins']}/{ru['windows']} = {round(ru['win_rate'], 3)}",
+                                     'windows_positive_but_rounded_to_0': ru['positive_but_rounds_to_zero'],
+                                     'C4_rounded': ro['win_rate'] >= 0.8, 'C4_unrounded': ru['win_rate'] >= 0.8}
+    rb = {k: {'grade': now[k]['grade'], 'grade_tool_rounded': now[k]['grade_tool_rounded'], 'full_t': now[k]['full_t'], 'full_t_unrounded': now[k]['full_t_unrounded']}
+          for k in now if now[k]['grade'] != now[k]['grade_tool_rounded']}
+    etf_v1 = ((prev or {}).get('real_instrument_check') or {}).get('result') if prev and 'fixes' not in prev else ((prev or {}).get('v1_published') or {}).get('real_instrument_check_result')
+
+    fixes = [
+        {'id': 'F1_PRT_2016_2020_equity_unit_flaw', 'severity_reported': 'changes_numbers', 'reported_by': ['事前登録との一致と先読み', '独立の再計算', '悪魔の代弁者'],
+         'what': 'PRT（ポルトガル）2016〜2020 の株の4列（eq_tr・eq_capgain・eq_div_rtn・eq_dp）がすべて約1/100 の大きさで入っている（単位の誤り）。'
+                 'v1 はこれを本物の値として、主の計算（規則・相手の両方と信号）で使っていた＝ポルトガルの株の名目リターンを5年間ほぼ0%として読んでいた。'
+                 'v1 の注釈『配当利回りの桁の誤り・総リターンから配当が抜けている疑い』は壊れ方の取り違え。v1 の事後 C は勝った9規則だけを欠測にして回し直していた',
+         'verified': {'verdict': '本当（原本のキャッシュで確かめた）', 'PRT_values_2012_2020': prt_vals,
+                      'note': '2015年以前の eq_tr は −23%〜+19%、eq_div_rtn は 2〜5%。2016〜2020 は4列とも 1/100 の桁（2017 の値上がり +0.136% は、PSI-20 の実際の約 +15% の 1/100 に近い）',
+                      'runs_of_abs_eq_tr_below_0.3pct_3y_or_more_all_16_countries': runs},
+         'fix': '事前登録 missing_and_exclusions.principle（欠測を0と読まない・欠けた国・年はその年の規則と相手の両方から落として残りで等分し直す）に従い、'
+                'PRT 2016〜2020 の4列を欠測（None）にしてから全規則・全相手・全信号を回した（FIX["prt_mask"]・night/nx_jst.py の mask_prt）。'
+                '信号も欠けになる（PRT の配当利回り・勢い・逆張り・平滑配当・X3 の超過は、その年か、その年を窓に含む年で欠け）。'
+                '年初に選んだ PRT がその年に欠けたら held_but_missing のとおり残りで等分し直す（下限版だけ −50%）',
+         'effect_of_this_fix_alone_vs_v1': diff_compact(v1, alone['prt_mask']),
+         'sensitivity_grades_that_depend_on_PRT_treatment': split,
+         'P3_note': 'P3（主）は全期間の t が 壊れた値のまま 2.984 ／ 欠測（採用）2.9986 ／ 100倍 3.03。欠測では excess_stats が t を 3.00 に丸めるので、'
+                    '他の角度と同じ丸めた値だけで格付けすると C7 を通って A になる。線（t≥3.0）は丸めない値では越えていないので、F5 のとおり B とした（線を丸めで下げない）'},
+        {'id': 'F2_ties_multi_signal_rank_sum', 'severity_reported': 'changes_numbers', 'reported_by': ['独立の再計算'],
+         'what': '複数の信号の順位を混ぜる規則（P4・X1i・X3d。現代の器の答え合わせの P4 も）で、順位の和がちょうど同じ国の並びを、1 − p/(n−1) を浮動小数点で足した最後の桁の端数で決めていた。'
+                 '事前登録 signals.ties は『同点は国の ISO 符号のアルファベット順』',
+         'verified': {'verdict': '本当（確かめた）', 'example': tie_example(W),
+                      'formation_years_where_selected_set_differs_now': tie_years(W),
+                      'count_note': 'この一覧は PRT 2016〜2020 を欠測にした後のデータ。v1 のデータ（壊れた値のまま）では X1i が 2018・2019 を足して11年（検査役は12年と数えた）。単独の効きの数字は検査役の値と小数2桁まで一致した'},
+         'fix': '各信号の中の整数の位置 p（0 が最良・信号の中の同点は ISO 順）を足した和で比べ、和が同じ国は ISO 順（sorted(key=(Σp, ISO))）。'
+                '百分位の順位の平均 Σ(1 − p/(n−1))/m は Σp の単調減少（n は全信号で同じ）なので、同点でない国の順位は初版と同じ。現代の器の答え合わせの P4 も同じに直した',
+         'effect_of_this_fix_alone_vs_v1': diff_compact(v1, alone['tie_int']),
+         'real_instrument_P4_before_after': {'v1': (etf_v1 or {}).get('P4_vm_top3rd') if isinstance(etf_v1, dict) else None, 'fixed': 'real_instrument_check.result.P4_vm_top3rd を見よ'}},
+        {'id': 'F3_gdp_weights_year', 'severity_reported': 'changes_numbers', 'reported_by': ['事前登録との一致と先読み'],
+         'what': 'GDP 加重の相手（副1）と X4a・切替の規則の副1の重みに、組み替えの年 t の GDP・為替（年 t+1 のリターンに gdp_t/xrusd_t）を使っていた',
+         'prereg_text': {'gdp_weights': 'GDP 加重の重みは gdp_{t−1}/xrusd_{t−1}（ドル建て・1年前）。欠けていたら直近5年以内の最後の値を使う（後の値は使わない）',
+                         'timing.formation': '年 t の末に分かる値だけで年 t+1 の持ち高を決める',
+                         'timing.credit_lag': '銀行貸出と GDP は公表に時間がかかるので1年遅らせる（年 t+1 の持ち高は t−1 までの値で決める）'},
+         'verified': {'verdict': '本当（事前登録の文言と照合した）',
+                      'reading': 'この事前登録の t は組み替えの年（年 t の末に年 t+1 の持ち高を決める）。年 t の GDP（年の流量）は年 t の末にはまだ出ておらず、'
+                                 'credit_lag は GDP を1年遅らせると明記している。したがって年 t+1 の重みは gdp_{t−1}/xrusd_{t−1}。v1 の gdp_t は先読みになる読み方'},
+         'fix': '年 t+1 のリターン（持ち高）の重みを gdp_{t−1}/xrusd_{t−1} にした（bench: W.gdp_w(c, y−2)・sim_tim: W.gdp_w(c, t−1)）。欠けは t−1 から5年前（t−6）までの過去の値で埋め、それより古ければその国を GDP 加重の相手から落とす。'
+                '検算 sanity_checks.gdp_weights_use_t_minus_1_only（年 t 以降の GDP・為替を乱しても年 t+1 の重みが変わらない）を足した',
+         'effect_of_this_fix_alone_vs_v1': diff_compact(v1, alone['gdp_lag'])},
+        {'id': 'F4_roll20_rounding_not_changed', 'severity_reported': 'cosmetic', 'reported_by': ['独立の再計算'],
+         'what': '転がる20年窓の勝ちを、幾何の年率差を小数2桁に丸めた後の値 > 0 で数えている（+0.004pt の窓が負けに数えられる）',
+         'decision': '変えない。nx_common.rolling と同じ丸めの物差し（事前登録 tools.measure_next が『年次の転がる20年窓は nx_jst.py の中に同じ考え方で書く』とした）で、他の角度の C4 と同じ物差しにそろえるため。'
+                     '丸めは勝ちを減らす向き（負けを勝ちにしない）なので線を下げる方向の誤りではない。F5 の保守的な格付けでも、転がる窓は丸めた勝率がつねに丸めない勝率以下なので、この物差しがそのまま使われる',
+         'rules_where_rounding_changes_win_count': rr,
+         'C4_changed_by_rounding': sorted(k for k, v in rr.items() if v['C4_rounded'] != v['C4_unrounded'])},
+        {'id': 'F5_grade_not_passed_by_rounding', 'severity_reported': '（検査役2人が注意に書いた点・丸めた t が線を越える）', 'reported_by': ['事前登録との一致と先読み（注意4）', '独立の再計算（注意）'],
+         'what': 'nx_common.excess_stats は t を小数2桁に丸め、nx_common.grade はその丸めた t を線（C1 t≥2.0・C3 t≥1.65・C7 t≥3.0）と比べる。丸める前の t が [2.995, 3.0) なら C7 を通ってしまう',
+         'fix': '線（nx_common.grade）はそのまま。入力の欄ごとに、丸めた値（他の角度と同じ物差し）と丸めない値の不利なほうを入れて当てる（grade_conservative_of）。'
+                '丸めで線を越えることを許さない＝線を下げて勝ちを作らない。他の角度の格付けの仕方（丸めた値だけ）での格付けは grade_tool_rounded に並べた',
+         'rule_views_where_grade_differs_from_tool_rounded': rb},
+        {'id': 'F6_cosmetic_not_changed', 'severity_reported': 'cosmetic', 'reported_by': ['事前登録との一致と先読み', '独立の再計算（注意）', '悪魔の代弁者'],
+         'items': ['現代の器の答え合わせ（報告だけ）の選べる条件に『翌年 y にリターンがあること』が入っている件: 器は全部今も在り、最後の年は12月の値がある暦年だけなので、選ばれる器は変わらない（数字は同じ）。直していない',
+                   '1996年設定の器の1996年の分配は1年に満たない（EWJ は0）のに1997年の配当利回りの信号に使っている件: 報告だけの器の答え合わせの1997年の組成だけに効く。直していない（既知の限界として記録）',
+                   '要約の『日本を抜いても費用後 +2.16%/年』が算術平均で、ほかの幾何の年率差と基準が混ざっていた件: summary_ja では幾何（算術を括弧）で書いた']},
+    ]
+    v1_block = {'note': 'v1（2026-09-28 17:20 の初版の出力）の数字。是正の前。格付けは初版の仕方（丸めた値だけ）',
+                'summary_table': v1_pub,
+                'headline_wins_main_S_or_A': (prev or {}).get('headline_wins_main_S_or_A') if prev and 'fixes' not in prev else ((prev or {}).get('v1_published') or {}).get('headline_wins_main_S_or_A'),
+                'real_instrument_check_result': etf_v1,
+                'post_hoc_C_v1': ((prev or {}).get('post_hoc') or {}).get('C_PRT_2016_2020_dividend_data_flaw') if prev and 'fixes' not in prev else ((prev or {}).get('v1_published') or {}).get('post_hoc_C_v1'),
+                'reproduced_by_this_code_with_fixes_off': repro,
+                'grades_v1_recomputed_tool_rounded': {k: v['grade_tool_rounded'] for k, v in v1.items()}}
+    prt_block = {'label': '事後（感度）。本計算は PRT 2016〜2020 を欠測にした（F1）。ここは他の2つの是正を入れたうえで、PRT の4列を (a) v1 と同じ壊れた値のまま (b) 100倍に直した仮の値 にした全32規則×相手',
+                 'grades': {k: {'v1_broken_values_as_is': prt_raw[k]['grade'], 'missing_adopted': now[k]['grade'], 'x100_guess': prt_x100[k]['grade']} for k in now},
+                 'key_numbers_broken_as_is': pick(prt_raw, [k for k in now if now[k]['grade'] != 'C' or prt_raw[k]['grade'] != 'C' or prt_x100[k]['grade'] != 'C']),
+                 'key_numbers_x100_guess': pick(prt_x100, [k for k in now if now[k]['grade'] != 'C' or prt_raw[k]['grade'] != 'C' or prt_x100[k]['grade'] != 'C'])}
+    all_diff = diff_compact(v1, now)
+    return fixes, v1_block, prt_block, all_diff
+
+
 def main():
     raw, data0 = load_raw()
     pre = json.load(open(PRE))
+    outp = os.path.join(N.BASE, 'out', 'nx_jst.json')
+    prev = json.load(open(outp)) if os.path.exists(outp) else None
     data = mask_prt(data0) if FIX['prt_mask'] else data0
     W = World(data, 1.0)
     W50, WNONE = World(data, 0.5), World(data, None)
@@ -1169,9 +1428,13 @@ def main():
         fam_def = pre['families'][{'P': 'P_primary', 'X1': 'X1_selection_variants', 'X2': 'X2_timing_variants', 'X3': 'X3_hedged_basis', 'X4': 'X4_equal_country'}[t['family']]]['rules'][name]
         row = {'rule': name, 'family': t['family'], 'kind': t['kind'], 'definition_prereg': fam_def, 'views': {}}
         for v, x in t['views'].items():
-            vv = {'grade': x['grade'], 'criteria': x['criteria'], 'p_hold_two_sided': x['p_hold_two_sided'], 'holm_p': x['holm_p'],
+            vv = {'grade': x['grade'], 'criteria': x['criteria'], 'grade_tool_rounded': x['grade_tool_rounded'],
+                  'rounding_boundary': x['rounding_boundary'], 'p_hold_two_sided': x['p_hold_two_sided'], 'holm_p': x['holm_p'],
                   'repl_C5': x['repl'], 'repl_detail': x['repl_detail']}
-            vv.update(x['ev'])
+            if x['rounding_boundary']:
+                vv['criteria_tool_rounded'] = x['criteria_tool_rounded']
+            vv['unrounded'] = unrounded_view(x)
+            vv.update({k: val for k, val in x['ev'].items() if k != '_strict'})
             if 'flags' in x:
                 vv['flags'] = x['flags']
             if 'reported' in x:
@@ -1179,7 +1442,7 @@ def main():
             row['views'][v] = vv
         out_tested.append(row)
     heads = [f"{r['rule']}（{r['views']['main']['grade']}）" for r in out_tested if r['views']['main']['grade'] in ('S', 'A')]
-    summ = [{'rule': r['rule'], 'family': r['family'], 'view': v, 'grade': r['views'][v]['grade'],
+    summ = [{'rule': r['rule'], 'family': r['family'], 'view': v, 'grade': r['views'][v]['grade'], 'grade_tool_rounded': r['views'][v]['grade_tool_rounded'],
              'train_ex_gross': (r['views'][v]['train_gross'] or {}).get('ex_ann'), 'train_t': (r['views'][v]['train_gross'] or {}).get('t'),
              'hold_ex_gross': (r['views'][v]['hold_gross'] or {}).get('ex_ann'), 'hold_t': (r['views'][v]['hold_gross'] or {}).get('t'),
              'hold_cagr_diff_net': (r['views'][v]['hold_net'] or {}).get('cagr_diff'), 'full_t': (r['views'][v]['full_gross'] or {}).get('t'),
@@ -1211,14 +1474,99 @@ def main():
                           'skip_one_year_hold_gross': (post['A_skip_one_year_signal'].get(r['rule']) or {}).get('hold_gross')}
     post['H_winners_modern_era'] = mod
     obj['post_hoc'] = post
-    p = N.save('nx_jst.json', obj)
+    if all(FIX.values()):
+        fixes, v1_block, prt_block, all_diff = build_fixes(data0, data, W, tested, prev)
+        post['C_PRT_2016_2020_equity_unit_flaw'] = prt_block
+        post['I_exact_zero_eq_tr_sensitivity'] = zero_sensitivity(data, tested)
+        obj['version'] = 'v1.1（検査役3人の指摘の是正後）'
+        obj['fixes'] = fixes
+        obj['fixes_all_changes_v1_to_now'] = all_diff
+        obj['v1_published'] = v1_block
+        obj['summary_ja'] = summary_ja(obj)
+        p = N.save('nx_jst.json', obj)
+    else:  # 是正を外した実行（前後を数えるためだけ）は本番の出力を上書きしない
+        p = os.path.join(N.CACHE, f'nx_jst_fixes_{_fx.replace(",", "+")}.json')
+        json.dump(obj, open(p, 'w'), ensure_ascii=False, indent=1)
     print('→', p)
     for r in summ:
-        print(f"{r['rule']:26s} {r['view']:9s} {r['grade']}  C={r['C']}  train {r['train_ex_gross']}(t{r['train_t']})  hold {r['hold_ex_gross']}(t{r['hold_t']}) "
+        print(f"{r['rule']:26s} {r['view']:9s} {r['grade']}({r['grade_tool_rounded']})  C={r['C']}  train {r['train_ex_gross']}(t{r['train_t']})  hold {r['hold_ex_gross']}(t{r['hold_t']}) "
               f"net幾何 {r['hold_cagr_diff_net']}  full t{r['full_t']}  roll {r['roll20_win_net']}  holm {r['holm_p']}")
     print('sanity', json.dumps(san, ensure_ascii=False)[:1500])
     print('etf', json.dumps(etf, ensure_ascii=False)[:1500])
     return obj
+
+
+ZERO_SUSPECTS = [('FIN', 1901), ('SWE', 1878)]  # eq_tr がちょうど 0 なのに内訳が空（FIN）・内訳の和 −4.0%（SWE）
+ZERO_CAPGAIN = [('BEL', 1915), ('GBR', 1915), ('DNK', 1948), ('DNK', 1961), ('DEU', 1980), ('NOR', 2014)]  # 値上がりがちょうど 0
+
+
+def mask_cells(data, cells):
+    d2 = copy.deepcopy(data)
+    for c, y in cells:
+        d2[c][y]['eq_tr'] = None
+    return d2
+
+
+def zero_sensitivity(data, tested):
+    """事後（感度）: 検査役1の注意2『ちょうど0の値が欠測の代わりに入っているように見える』。本計算は変えない（事前登録の欠測扱いの一覧に無い）"""
+    now = compact(tested)
+    a = compact(run_variant(mask_cells(data, ZERO_SUSPECTS), dict(FIX)))
+    b = compact(run_variant(mask_cells(data, ZERO_SUSPECTS + ZERO_CAPGAIN), dict(FIX)))
+    keys = [k for k in now if now[k]['grade'] != 'C' or a[k]['grade'] != 'C' or b[k]['grade'] != 'C']
+    return {'label': '事後（感度・格付けに使わない）。本計算は原本のまま（事前登録の欠測扱いの一覧に無いので）',
+            'a_cells_eq_tr_to_missing': [f'{c} {y}' for c, y in ZERO_SUSPECTS],
+            'b_cells_eq_tr_to_missing': [f'{c} {y}' for c, y in ZERO_SUSPECTS + ZERO_CAPGAIN],
+            'grades_changed': {k: {'now': now[k]['grade'], 'a': a[k]['grade'], 'b': b[k]['grade']} for k in now
+                               if len({now[k]['grade'], a[k]['grade'], b[k]['grade']}) > 1},
+            'key_numbers_a': pick(a, keys), 'key_numbers_b': pick(b, keys)}
+
+
+def summary_ja(obj):
+    """結果の要約（数字は obj の各欄から写す）"""
+    row = {r['rule']: r for r in obj['tested']}
+    g = lambda nm, v='main': row[nm]['views'][v]['grade']
+    by = {}
+    for r in obj['summary_table']:
+        by.setdefault((r['view'], r['grade']), []).append(r['rule'])
+    m = row['P1_dy_top3rd']['views']['main']
+    tr, ho, hn, fu = m['train_gross'], m['hold_gross'], m['hold_net'], m['full_gross']
+    p07, pub = m['periods_reported']['p2007_2020_net'], m['periods_reported']['post_publication_net']
+    dj = m['reported']['drop_top_contributor']
+    etf = ((obj.get('real_instrument_check') or {}).get('result') or {}).get('P1_dy_top3rd', {}).get('gross_vs_equal_etfs') or {}
+    p3 = row['P3_rev_bottom3rd']['views']['main']
+    v1g = {f"{r['rule']}|{r['view']}": r['grade'] for r in ((obj.get('v1_published') or {}).get('summary_table') or [])}
+    changed = [(f"{r['rule']}|{r['view']}", v1g.get(f"{r['rule']}|{r['view']}"), r['grade']) for r in obj['summary_table']
+               if v1g.get(f"{r['rule']}|{r['view']}") not in (None, r['grade'])]
+    pc = obj['post_hoc'].get('C_PRT_2016_2020_equity_unit_flaw') or {}
+    x100 = (pc.get('key_numbers_x100_guess') or {}).get('P3_rev_bottom3rd|main') or {}
+    x100_t3, x100_g3 = x100.get('full_t_unrounded'), x100.get('grade')
+    last10 = obj['post_hoc']['E_rolling_by_start_year_net']['P1_dy_top3rd']['20y']['last_10_starts']
+    tim_grades = sorted({r['grade'] for r in obj['summary_table'] if r['rule'] in TIM})
+    zg = (obj['post_hoc'].get('I_exact_zero_eq_tr_sensitivity') or {}).get('grades_changed') or {}
+    lines = [
+        '版 v1.1（検査役3人の指摘を確かめて直した後）。線・規則・期間・相手は事前登録のまま。直したのは3点: '
+        'F1 PRT 2016〜2020 の株の4列の単位の誤り（約1/100）を欠測に、F2 複数の信号の同点を ISO 順に、F3 GDP 加重の重みを gdp_{t−1}/xrusd_{t−1} に。'
+        'あわせて F5 丸めた t が線を越えることを許さない読み（丸めた値と丸めない値の不利なほう）を入れた。転がる20年窓の丸めは他の角度と同じ物差しなので変えていない（F4）。',
+        '格付け（主の相手＝16か国の等分・実質）: S ' + '・'.join(by.get(('main', 'S'), [])) + '／A ' + '・'.join(by.get(('main', 'A'), [])) +
+        '／B ' + '・'.join(by.get(('main', 'B'), [])) + '／C はそれ以外の ' + str(len(by.get(('main', 'C'), []))) + '本。'
+        f"副1（GDP 加重）で S/A は {'・'.join(by.get(('sub1_gdp', 'S'), []) + by.get(('sub1_gdp', 'A'), [])) or 'なし'}、"
+        f"副2（ドル建て）で S/A は {'・'.join(by.get(('sub2_usd', 'S'), []) + by.get(('sub2_usd', 'A'), [])) or 'なし'}。"
+        + ('v1 から格付けの変わった規則×相手は無い。' if not changed else 'v1 から格付けの変わった規則×相手: ' + '・'.join(f'{k} {a}→{b}' for k, a, b in changed) + '。'),
+        (f"P3（5年の逆張り）は PRT を欠測にすると全期間の t が {p3['unrounded']['full_t']} で、他の角度と同じ丸めた値だけなら {p3['full_gross']['t']:.2f} として C7 を通り {p3['grade_tool_rounded']} になるが、"
+         f"線 3.0 に届いていないので {p3['grade']}（F5）。PRT を100倍に直した仮の値なら t {x100_t3} で {x100_g3}（感度・post_hoc.C）。" if p3['rounding_boundary'] else
+         f"P3（5年の逆張り）は {p3['grade']}（全期間の t {p3['unrounded']['full_t']}）。"),
+        ('原本でちょうど0の株の総リターン（FIN 1901・SWE 1878、さらに値上がりがちょうど0の6つの国・年）を欠測にした感度（post_hoc.I）: '
+         + ('格付けの動く規則×相手は無い。' if not zg else '格付けが動くのは ' + '・'.join(f"{k}（今 {v['now']}／a {v['a']}／b {v['b']}）" for k, v in zg.items())
+            + (' だけで、今 S/A の規則は動かない。' if all(v['now'] not in ('S', 'A') for v in zg.values()) else '。'))
+         + ' P3 は PRT の扱いやちょうど0の値の扱いという小さなデータの選び方で格付けが動く、境目の結果。'),
+        f"最良の P1（配当利回りの上位1/3）: 訓練（〜1949）費用前 +{tr['ex_ann']}%/年 t{tr['t']}・保有（1950〜2020）+{ho['ex_ann']}%/年 t{ho['t']}・"
+        f"保有の費用後 幾何 +{hn['cagr_diff']}%/年（算術 +{hn['ex_ann']}）・全期間 t{fu['t']}・転がる20年窓（費用後）{m['roll20_net']['wins']}/{m['roll20_net']['windows']}。",
+        f"ただし勝ちはほぼ1990年代までのもの: 2007〜2020 の費用後 幾何 {p07['cagr_diff']}%/年（算術 {p07['ex_ann']}）、公表後（{pub['from']}〜）{pub['cagr_diff']}%/年、"
+        f"転がる20年窓の直近10本（起点{last10[0][0]}〜{last10[-1][0]}）は{sum(1 for _, v in last10 if v <= 0)}本が負け。実在の国別 ETF（1997〜2025・費用前）では P1 は 幾何 {etf.get('cagr_diff')}%/年（算術 {etf.get('ex_ann')}）。"
+        f"最大の寄与の {dj['dropped']} を抜くと保有の費用後 幾何 +{dj['hold_net']['cagr_diff']}%/年（算術 +{dj['hold_net']['ex_ann']}）。",
+        '16か国から1/3を選ぶ規則は楽天の海外 ETF では組めない（EWJ・EWG・SPY だけ）。信用の膨張などで株を降りる切替の規則（P6・P7・X2 の全相手）の格付けは ' + '・'.join(tim_grades) + '。',
+    ]
+    return '\n'.join(lines)
 
 
 DEVIATIONS = [
@@ -1228,8 +1576,11 @@ DEVIATIONS = [
     '分位（P6・P7・X2b・X2c・X2e の閾値、X2f の中央値）は線形補間（numpy の既定と同じ）。『超えたら』は厳密に大きい。パネルは信号の値 Δ3(c,s)（s ≤ t＝データは t−1 まで）の全16か国の拡大窓で、年 t の横断の値そのものも含む（t−1 までのデータだけなので後知恵ではない）。P7 の株の3年の閾値のパネルも50件以上を要件にした（事前登録は信用のパネルにだけ50件と書いている）',
     '費用の片道の売買は、年 t+1 に実際にリターンのあった国（held）を等分した重みで数えた（選んだ国が欠けた年はその国を除いて等分し直す＝事前登録のリターンの数え方と一致させた）。最初の年と、組めなかった年の後の再開は現金からの買い（片道 0.5）とした。時代別の費用の率は保有する年（年 t+1）で決めた（1949年末の組み替えは 1950年の率 0.5%）',
     '切替の規則の費用: 前年に組に居なかった国の前年の持ち高は株100%（買い持ちと同じ）とみなした。切替の規則の組は、事前登録の bill_missing のとおり、降りる先が国債の規則（X2a・X2d・X2f）と三資産の X2h でも短期金利の欠けた国・年を落とした（シャープの無リスク金利に使うため）。降りる先の国債が欠けた年も落とした',
-    '副1（GDP 加重）と副2（ドル建て）の切替の規則（P6・P7）: 副1は国ごとの（規則・買い持ち）を GDP の重み（年 t の値）で平均、副2は株・短期金利ともドル建てにして等分平均した（事前登録は相手ごとの見方を切替の規則について具体的に書いていない）',
-    'GDP の重みの欠けは年 t から5年前（t−5）までの過去の値で埋めた',
+    '副1（GDP 加重）と副2（ドル建て）の切替の規則（P6・P7）: 副1は国ごとの（規則・買い持ち）を GDP の重み（年 t+1 の持ち高に gdp_{t−1}/xrusd_{t−1}・v1.1 で是正＝fixes F3）で平均、副2は株・短期金利ともドル建てにして等分平均した（事前登録は相手ごとの見方を切替の規則について具体的に書いていない）',
+    'GDP の重みは事前登録 gdp_weights どおり年 t+1 に gdp_{t−1}/xrusd_{t−1}（t＝組み替えの年。v1 は年 t の値で、先読みになる読み方だった＝fixes F3）。欠けは t−1 から5年前（t−6）までの過去の値で埋めた（『直近5年以内』を t−1 から数えた）',
+    'PRT 2016〜2020 の株の4列（eq_tr・eq_capgain・eq_div_rtn・eq_dp）は原本（JST R6）で約1/100 の単位の誤りなので、事前登録の欠測の原則（欠測を0と読まない・欠けた国・年は規則と相手の両方から落とす）で欠測にした（v1.1・fixes F1）。事前登録の欠測扱いの一覧（超インフレ・取引所の閉鎖）には入っていない国・年で、v1 を回した後に見つかった。壊れた値のまま・100倍に直した仮の値の感度は post_hoc.C_PRT_2016_2020_equity_unit_flaw',
+    '複数の信号の順位を混ぜる規則（P4・X1i・X3d）は、整数の位置の和で比べ、同点は ISO 順（事前登録 signals.ties。v1 は浮動小数点の端数で割れていた＝fixes F2）',
+    '格付けは nx_common.grade（線は不変）に、欄ごとに丸めた値（excess_stats・他の角度と同じ物差し）と丸めない値の不利なほうを入れた（丸めで線を越えさせない＝fixes F5）。他の角度と同じ丸めた値だけの格付けは grade_tool_rounded。転がる20年窓は nx_common.rolling と同じく丸めた年率差 > 0 で勝ちを数える（fixes F4・変えない）',
     'X4a（16か国を等分）は、年 t に実質のリターンのある国が6か国以上になった年の翌年から組み、年 t+1 にリターンのある全ての国を等分（＝主の相手そのもの）。費用は選択と同じ（毎年の等分への組み戻しの片道の売買 × 時代別の率 ＋ 器の差 年0.3%）。C5 は各地域の等分と地域の GDP 加重の比較',
     'X1a（上位3か国）は地域の C5 でも固定の3か国（4か国の地域では4か国中3か国）',
     '下限版（欠け依存の印）: 切替の規則にも当てた——組の国の株のリターンが欠けた年は、持っていた資産のうち欠けたもの（株。超インフレの年は短期金利・国債も欠けるのでそれも）を −50% として規則にだけ入れた（相手からは落としたまま）。下限版は費用前で保有期間の C2 を見た',
