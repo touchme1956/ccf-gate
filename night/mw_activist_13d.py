@@ -704,6 +704,44 @@ def obs(t, m):
     return ('ok', r) if r is not None else ('missing', None)
 
 
+# ───────────────────────── 探索2: Alpha Vantage で未観測を埋める（out/mw_activist_13d_prereg2.json）─────────────────────────
+AVD = os.path.join(C, 'av')
+
+
+def load_av():
+    """activist_13d/av/{記号}.json → (採用した記号 → {'ret': {yyyymm: r}, 'last': yyyymm}, 状況の一覧)"""
+    r13, r10 = load_idx()
+    last10 = {}
+    for f, n, c, d, p_ in r10:
+        if f in ('10-K', '10-K405', '10-KT'):
+            last10[c] = max(last10.get(c, ''), d)
+    need = json.load(open(os.path.join(C, 'av_need.json')))
+    ok, status = {}, {}
+    for fn in sorted(os.listdir(AVD)) if os.path.isdir(AVD) else []:
+        j = json.load(open(os.path.join(AVD, fn)))
+        t = j['ticker']
+        if j.get('status') != 'ok':
+            status[t] = j.get('status'); continue
+        first, last = ym(j['first']), ym(j['last'])
+        rows = {int(k): v for k, v in j['rows'].items()}
+        w = need[t]['windows']
+        entry_pre = min(a for a, z in w)
+        # (a) 入る月の前の月と入る月に値 (b) 系列が 2026-06 より前に終わる (c) 報告が止まった会社で系列が最後の 10-K の 24 か月後より後まで続かない
+        l10 = last10.get(need[t]['cik'])
+        a_ok = first <= entry_pre and entry_pre in rows and madd(entry_pre, 1) in rows
+        b_ok = last < 202606
+        c_ok = True
+        if l10 and l10 < '2025-01-01':
+            c_ok = last <= madd(ym(l10), 24)
+        if not (a_ok and b_ok and c_ok):
+            status[t] = f"rejected(a={a_ok},b={b_ok},c={c_ok},first={first},last={last},last10k={l10})"; continue
+        ks = sorted(rows)
+        ret = {k: rows[k] / rows[p0] - 1 for p0, k in zip(ks, ks[1:]) if madd(p0, 1) == k}
+        ok[t] = {'ret': ret, 'last': last}
+        status[t] = f'accepted(first={first},last={last},last10k={l10})'
+    return ok, status
+
+
 def fetch_yh():
     """出来事の対象会社と名簿の全 CIK の『今の記号』の Yahoo 月次を揃える（ie_yh に無いものだけ取る）"""
     tn = ticker_now()
@@ -856,7 +894,7 @@ def unadj_close(d, m):
     return c * f
 
 
-def build_positions(events, H, tick_now):
+def build_positions(events, H, tick_now, av=None):
     """出来事 → 会社ごとの保有区間（重なる区間はつなぐ）。各区間: {'cik','t','entry','exit','events':[...],'mcap','sic'}"""
     by = {}
     for e in sorted(events, key=lambda z: z['date']):
@@ -877,10 +915,25 @@ def build_positions(events, H, tick_now):
         mc = x['shares_out'] * px if (px and x['shares_out']) else None
         x['mcap'] = mc if (mc and 3e8 <= mc <= 6e12) else None
         x['observed_entry'] = obs(x['t'], x['entry'])[0] == 'ok'
+        x['member_t'] = next((e.get('subject_member') for e in events if e['acc'] == x['events'][0]), None)
+        x['src'] = 'yahoo'
+        if av is not None and not x['observed_entry'] and x['member_t'] in av and av[x['member_t']]['ret'].get(x['entry']) is not None:
+            x['src'] = 'av'; x['observed_entry'] = True
     return pos
 
 
-def portfolio(pos, bound, weighting, mkt, ind=None, indf=None, a=199607, z=END):
+def obs_pos(x, m, av=None):
+    """区間 x の月 m: Yahoo か Alpha Vantage（探索2）。AV の系列が終わった後は 'ended'（上場廃止＝最後の値で売る・全ての上下限で同じ）"""
+    if x.get('src') == 'av':
+        a = av[x['member_t']]
+        if m > a['last']:
+            return 'ended', None
+        r = a['ret'].get(m)
+        return ('ok', r) if r is not None else ('missing', None)
+    return obs(x['t'], m)
+
+
+def portfolio(pos, bound, weighting, mkt, ind=None, indf=None, a=199607, z=END, av=None):
     """暦月のポートフォリオ。bound: 'S'（観測できない社は持たない・途中で消えたら最後の値で売る）/
     'M'（観測できない月は 0%＝最後の値のまま据え置く）/ 'L'（観測できない社は −100%）。
     weighting: 'EW'（毎月等加重）/ 'VW'（入った月の時価 × その後の値動き＝買って持つ時価加重。時価が取れない社はその年の中央値の時価）。
@@ -906,8 +959,10 @@ def portfolio(pos, bound, weighting, mkt, ind=None, indf=None, a=199607, z=END):
             if k not in val:
                 val[k] = (x['mcap'] or med.get(x['entry'] // 100, gmed)) if weighting == 'VW' else 1.0
             w = val[k] if weighting == 'VW' else 1.0
-            stt, r = obs(x['t'], m)
+            stt, r = obs_pos(x, m, av)
             st['pos_months'] += 1
+            if stt == 'ended':
+                st['av_ended'] = st.get('av_ended', 0) + 1; dead.add(k); continue
             if k in frozen:
                 stt, r = 'frozen', 0.0
             if stt == 'ok':
@@ -961,6 +1016,9 @@ EXPLORATORY = {
     'X1_strong_VW_H12': ('X1_strong', 12, 'VW', False), 'X1_strong_VW_H24': ('X1_strong', 24, 'VW', False),
     'X2_known_EW_H12': ('X2_known', 12, 'EW', False), 'X2_known_EW_H24': ('X2_known', 24, 'EW', False),
     'X3_F1_EW_H36': ('F1_activist', 36, 'EW', False), 'X3_F1_VW_H36': ('F1_activist', 36, 'VW', False)}
+AV_FAMILY = {'AV_' + k: v for k, v in PRIMARY.items()}
+AV_FAMILY.update({'AV_X1_strong_EW_H12': ('X1_strong', 12, 'EW', False), 'AV_X1_strong_EW_H24': ('X1_strong', 24, 'EW', False),
+                  'AV_X2_known_EW_H12': ('X2_known', 12, 'EW', False), 'AV_X2_known_EW_H24': ('X2_known', 24, 'EW', False)})
 # 片道の年間回転率（事前登録）: EW は区間の出入り＋毎月の等加重の戻し、VW は出入りだけ
 TURN = {('EW', 12): 1.5, ('EW', 24): 1.0, ('EW', 36): 0.8, ('VW', 12): 1.0, ('VW', 24): 0.5, ('VW', 36): 0.35}
 COST = 0.001                       # 片道 100% あたり 0.10%（大型株・ブリーフどおり）
@@ -984,7 +1042,7 @@ def stats_block(s, b, turn):
     blk['rolling20'] = M.rolling(s, b, 20)
     blk['dca20'] = M.dca(s, b, 20)
     blk['maxdd'] = round(M.maxdd(s) * 100, 1)
-    blk['maxdd_bench'] = round(M.maxdd(b) * 100, 1)
+    blk['maxdd_bench'] = round(M.maxdd({k: b[k] for k in s if k in b}) * 100, 1)   # 同じ月だけで比べる
     blk['cost'] = {'turnover_oneway_per_year': turn, 'cost_per_100pct': COST}
     return blk
 
@@ -1032,19 +1090,33 @@ def run():
     mkt = {k: v for k, v in ff['mkt'].items() if k <= END}
     indf, ind = ff49()
     sanity = {'french_mkt_cagr_full': round(M.cagr(mkt) * 100, 2), 'french_mkt_cagr_2007': round(M.cagr(M.window(mkt, M.HOLD_START)) * 100, 2)}
+    spy = (yh('SPY') or {}).get('ret') or {}
+    ks_ = sorted(k for k in spy if k in mkt and k >= 199302)
+    if ks_:
+        sanity['spy_vs_mkt_corr_same_month'] = round(M.corr([spy[k] for k in ks_], [mkt[k] for k in ks_]), 4)
+        ks1 = [k for k in ks_ if madd(k, -1) in mkt]
+        sanity['spy_vs_mkt_corr_lag1'] = round(M.corr([spy[k] for k in ks1], [mkt[madd(k, -1)] for k in ks1]), 4)
+        st_ = M.excess_stats(spy, mkt, a=199302)
+        sanity['spy_vs_mkt_cagr_diff_1993'] = st_['cagr_diff'] if st_ else None
     tested, series, info = [], {}, {}
-    allspec = [(n, v, True) for n, v in PRIMARY.items()] + [(n, v, False) for n, v in EXPLORATORY.items()]
-    for name, (flag, H, W, is_f3), prim in allspec:
+    avmap, av_status = load_av()
+    allspec = [(n, v, True, None) for n, v in PRIMARY.items()] + [(n, v, False, None) for n, v in EXPLORATORY.items()] + \
+              [(n, v, False, 'av') for n, v in AV_FAMILY.items()]
+    for name, (flag, H, W, is_f3), prim, fam2 in allspec:
         evs = [e for e in ev if e[flag]]
-        pos = build_positions(evs, H, tn)
+        avx = avmap if fam2 == 'av' else None
+        pos = build_positions(evs, H, tn, avx)
         info[name] = {'events': len(evs), 'positions': len(pos), 'observed_at_entry': sum(x['observed_entry'] for x in pos),
-                      'with_mcap': sum(1 for x in pos if x['mcap'])}
+                      'with_mcap': sum(1 for x in pos if x['mcap']), 'filled_by_av': sum(1 for x in pos if x.get('src') == 'av'),
+                      'positions_train': sum(1 for x in pos if x['entry'] <= M.TRAIN_END),
+                      'observed_train': sum(1 for x in pos if x['entry'] <= M.TRAIN_END and x['observed_entry'])}
         per = {}
         for bnd in ('S', 'M', 'L', 'N'):
-            s_, b_, st = portfolio(pos, bnd, W, mkt, ind if is_f3 else None, indf)
+            s_, b_, st = portfolio(pos, bnd, W, mkt, ind if is_f3 else None, indf, av=avx)
             bench = b_ if is_f3 else mkt
             blk = stats_block(s_, bench, TURN[(W, H)])
-            blk.update({'name': f'{name}__{bnd}', 'base': name, 'bound': bnd, 'family': ('primary_' + name[:2]) if prim else 'exploratory_' + name[:2],
+            blk.update({'name': f'{name}__{bnd}', 'base': name, 'bound': bnd,
+                        'family': ('primary_' + name[:2]) if prim else ('exploratory2_AV' if fam2 == 'av' else 'exploratory_' + name[:2]),
                         'primary': prim, 'flag': flag, 'H': H, 'weighting': W, 'benchmark': 'industry49_same_weights' if is_f3 else 'French_Mkt',
                         'coverage': st, 'counts': info[name]})
             if not is_f3:
@@ -1063,12 +1135,20 @@ def run():
             if p is not None:
                 pv[t['base']] = max(pv.get(t['base'], 0), p)
     hp = M.holm(pv)
+    # 探索2（AV）の C7: この角度で試した全部（主・探索・AV の38本）の保有期間の p に Holm（最も厳しい数え方・事前登録2どおり）
+    pv_all = {}
     for t in tested:
-        fam_p = hp.get(t['base']) if t['primary'] else None
+        if t['bound'] in ('S', 'L'):
+            p_ = (t['hold'] or {}).get('p')
+            if p_ is not None:
+                pv_all[t['base']] = max(pv_all.get(t['base'], 0), p_)
+    hp_all = M.holm(pv_all)
+    for t in tested:
+        fam_p = hp.get(t['base']) if t['primary'] else (hp_all.get(t['base']) if t['family'] == 'exploratory2_AV' else None)
         g, c = M.grade(t['full'], t['train'], t['hold'], t['rolling20'], t['net_hold'], repl=None, family_holm_p=fam_p)
         t['grade'], t['criteria'], t['family_holm_p'] = g, c, fam_p
     cands = []
-    for name in list(PRIMARY) + list(EXPLORATORY):
+    for name in list(PRIMARY) + list(EXPLORATORY) + list(AV_FAMILY):
         S_ = next(t for t in tested if t['name'] == f'{name}__S')
         L_ = next(t for t in tested if t['name'] == f'{name}__L')
         M_ = next(t for t in tested if t['name'] == f'{name}__M')
@@ -1077,7 +1157,7 @@ def run():
         agree_t = S_['train'] and L_['train'] and sgn(S_['train']['ex_ann']) == sgn(L_['train']['ex_ann'])
         fg = max(S_['grade'], L_['grade'], key=lambda x: GORD[x]) if (agree_h and agree_t) else '判定不能'
         g = lambda t, k, f='ex_ann': (t.get(k) or {}).get(f)
-        cands.append({'name': name, 'primary': name in PRIMARY, 'final_grade': fg, 'grade_S': S_['grade'], 'grade_M': M_['grade'], 'grade_L': L_['grade'],
+        cands.append({'name': name, 'primary': name in PRIMARY, 'family': S_['family'], 'final_grade': fg, 'grade_S': S_['grade'], 'grade_M': M_['grade'], 'grade_L': L_['grade'],
                       'hold_ex_S': g(S_, 'hold'), 'hold_ex_M': g(M_, 'hold'), 'hold_ex_L': g(L_, 'hold'), 'hold_ex_N': g(N_, 'hold'),
                       'hold_t_N': g(N_, 'hold', 't'), 'train_ex_N': g(N_, 'train'), 'full_ex_N': g(N_, 'full'), 'full_t_N': g(N_, 'full', 't'),
                       'hold_t_S': g(S_, 'hold', 't'), 'hold_t_L': g(L_, 'hold', 't'),
@@ -1087,7 +1167,8 @@ def run():
                       'recent_ex_S': g(S_, 'recent'), 'fresh2009_ex_S': g(S_, 'fresh2009'), 'fresh2009_ex_L': g(L_, 'fresh2009'),
                       'net_hold_ex_S': g(S_, 'net_hold'), 'hold_cagr_diff_S': g(S_, 'hold', 'cagr_diff'), 'hold_cagr_diff_L': g(L_, 'hold', 'cagr_diff'),
                       'roll20_win_S': (S_['rolling20'] or {}).get('win_rate'), 'dca20_win_S': (S_['dca20'] or {}).get('win_rate'),
-                      'dca20_median_S': (S_['dca20'] or {}).get('median_ratio'), 'family_holm_p': hp.get(name), 'counts': info[name]})
+                      'dca20_median_S': (S_['dca20'] or {}).get('median_ratio'),
+                      'family_holm_p': S_['family_holm_p'], 'counts': info[name]})
     # 報告のみ: 同じ観測の規則で作った Yahoo の S&P500 等加重（生き残りの偏りの物差し）
     mp = json.load(open(os.path.join(C, 'spell_cik.json')))
     rows = load_membership()
@@ -1114,12 +1195,66 @@ def run():
         s_ = series[f'{name}__S']
         diag[f'{name}__S_vs_control'] = {k: M.excess_stats(s_, ctrl, a=a, z=z) for k, (a, z) in
                                          {'full': (None, None), 'train': (None, M.TRAIN_END), 'hold': (M.HOLD_START, None), 'fresh2009': (FRESH_START, None)}.items()}
-    out = {'angle': 'activist_13d', 'prereg': PREREG, 'prereg_commit': pre_sha, 'sanity': sanity,
-           'event_counts_by_year': counts_by_year(ev, tn), 'holm_primary': hp, 'candidates': cands, 'diagnostics': diag,
+    # ── 事後（判定なし）: F1_EW_H12 の S を作った区間の寄与・CAPM のα・上位3区間を抜いた版 ──
+    post = {'label': '事後（結果を見た後の分析・判定には使わない）'}
+    evs = [e for e in ev if e['F1_activist']]
+    pos = build_positions(evs, 12, tn)
+    contrib = []
+    for x in pos:
+        if not x['observed_entry']:
+            continue
+        g_s = g_m = 1.0; n = 0
+        for m in months(x['entry'], min(x['exit'], END)):
+            stt, r = obs(x['t'], m)
+            if stt != 'ok' or m not in mkt:
+                break
+            g_s *= 1 + r; g_m *= 1 + mkt[m]; n += 1
+        contrib.append({'t': x['t'], 'name': (x['name'] or '')[:40], 'entry': x['entry'], 'months': n,
+                        'ret_pct': round((g_s - 1) * 100, 1), 'mkt_pct': round((g_m - 1) * 100, 1), 'excess_pct': round((g_s - g_m) * 100, 1)})
+    contrib.sort(key=lambda z: -z['excess_pct'])
+    post['F1_EW_H12_S_positions'] = {'n': len(contrib), 'top10': contrib[:10], 'bottom10': contrib[-10:],
+                                     'median_excess_pct': sorted(c['excess_pct'] for c in contrib)[len(contrib) // 2] if contrib else None,
+                                     'share_positive': round(sum(c['excess_pct'] > 0 for c in contrib) / len(contrib), 3) if contrib else None,
+                                     'hold_n': sum(1 for c in contrib if c['entry'] >= M.HOLD_START),
+                                     'hold_median_excess_pct': (lambda v: v[len(v) // 2] if v else None)(sorted(c['excess_pct'] for c in contrib if c['entry'] >= M.HOLD_START)),
+                                     'hold_share_positive': (lambda v: round(sum(x > 0 for x in v) / len(v), 3) if v else None)([c['excess_pct'] for c in contrib if c['entry'] >= M.HOLD_START])}
+    drop = {c['t'] + str(c['entry']) for c in contrib[:3]}
+    pos_d = [x for x in pos if (str(x['t']) + str(x['entry'])) not in drop]
+    s_d, _, _ = portfolio(pos_d, 'S', 'EW', mkt)
+    post['F1_EW_H12_S_drop_top3'] = {'dropped': [c['t'] + ' ' + str(c['entry']) for c in contrib[:3]],
+                                     'hold': M.excess_stats(s_d, mkt, a=M.HOLD_START), 'full': M.excess_stats(s_d, mkt)}
+    rf = ff['rf']
+
+    def capm(sr, a=None):
+        ks = sorted(k for k in sr if k in mkt and k in rf and (a is None or k >= a))
+        y = [sr[k] - rf[k] for k in ks]; x_ = [mkt[k] - rf[k] for k in ks]
+        mx, my = S.mean(x_), S.mean(y)
+        b = sum((u - mx) * (v - my) for u, v in zip(x_, y)) / sum((u - mx) ** 2 for u in x_)
+        res = {k: (sr[k] - rf[k]) - b * (mkt[k] - rf[k]) for k in ks}
+        t_ = M.nw_t(list(res.values()))
+        return {'beta': round(b, 2), 'alpha_ann': round(S.mean(res.values()) * 1200, 2), 't': round(t_, 2) if t_ else None, 'months': len(ks)}
+    post['capm_alpha'] = {n_: {'full': capm(series[n_ + '__S']), 'hold': capm(series[n_ + '__S'], M.HOLD_START)}
+                          for n_ in ('F1_EW_H12', 'F1_VW_H12', 'F2_EW_H12', 'F1_EW_H24')}
+    out = {'angle': 'activist_13d', 'prereg': PREREG, 'prereg_commit': pre_sha, 'sanity': sanity, 'post_hoc': post,
+           'prereg2': 'mw_activist_13d_prereg2.json', 'prereg2_commit': os.popen(f'git -C {BASE} log -n1 --format=%h -- out/mw_activist_13d_prereg2.json').read().strip(),
+           'av_status': av_status,
+           'event_counts_by_year': counts_by_year(ev, tn), 'holm_primary': hp, 'holm_all_for_av_family': hp_all, 'candidates': cands, 'diagnostics': diag,
            'n_tested': len(tested), 'tested': tested,
            'series': {k: {str(m): round(v, 5) for m, v in sorted(s_.items())} for k, s_ in series.items()
                       if k.split('__')[0] in ('F1_EW_H12', 'F1_VW_H12', 'F2_EW_H12', 'F3_EW_H12')},
            'runtime_s': round(time.time() - t0, 1)}
+    out['deviations'] = [
+        'ブリーフは『訓練期間に年5件以上』を要求したが、F1 は平均 3.0 件/年（2001〜2003 は 0 件）で満たさない。事前登録にそう書いたうえで計算した（訓練期間の F1 の区間 28・入る月に観測できるのは 8）',
+        '株価は mw_common.yahoo ではなく index_events が取った Yahoo 月次の生の JSON（ie_yh）を読む自前の読み手で作った（取引所の時差 gmtoffset・欠けた月をまたがない・2026-08 で切る は mw_common と同じ）。無い記号だけ activist_13d/yh/ に取った',
+        '探索2（Alpha Vantage）は 1日25回の上限で 56 記号中 12 記号しか問い合わせられなかった（採用 4: WFM・PETM・ARG・CTXS／不採用 2: AGN〔別会社の履歴＝検問 c で除外〕・ARNC〔系列が 2020 年から〕／AV に無い 5: BDK・BMC・BMET・BOL・CBS／応答エラー 1: CA）。残り 44 記号（上限 39＋AV の月次が 1999-12 からなので窓が合わない 5）は未観測のまま。事前登録2の『上限が来たらそこで止める』どおり',
+        'AV に無かった 5 記号はどれも 2013 年以前に上場廃止した社＝AV の上場廃止銘柄の履歴はおおむね 2014 年以降の退場に限られるらしい（訓練期間の穴はこの方法でも埋まらない）',
+        'mw_common に誤りは見つけていない']
+    out['honest_reading'] = [
+        '主の族12本はすべて判定不能: S（観測できる社だけ）は保有期間 +1〜+8%/年（t 最大 1.83）、L（未観測を −100%）は −31〜−60%/年',
+        'S の上乗せは少数の大当たりが作っている（事後）: 区間ごとの超過の中央値は −1.1%・勝った区間は 49%。上位3区間（NFLX 2012・DVN 2021・NACCO 1996）を抜くと保有期間 +3.6%/年・t 0.79・CAGR 差 +0.1%',
+        'S は β 1.2〜1.3（CAPM のα 保有期間 EW +4.4%/年 t 0.84）＝上乗せの一部は市場の感応度',
+        '未観測の多くは買収で退場した社で、AV で埋められた5区間（Airgas・Citrix・PetSmart・Whole Foods×2）を足すと S は上がった（F1_EW_H12 保有 +7.85 → +8.36）＝本当の値は S より上の可能性もある。L の −100% はこの角度では極端に悲観的',
+        '訓練期間（1996〜2006）の出来事は 33 件・観測できる区間 8 で、C1（訓練 t≥2）は構造的に満たせない＝どの族も A・S には原理的に届かない']
     M.save(OUT, out)
     print('書いた', OUT, round(time.time() - t0, 1), '秒')
     for c in cands:
