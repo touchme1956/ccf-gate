@@ -331,7 +331,13 @@ def shiller_price_changes():
     return out
 
 
-def sanity(units):
+STOP_MAP = {'cowles_ew_ind_vs_C1': ('cowles_ind',), 'lse_ew_vs_boe_1871_1914': ('lse_ind', 'lse_stk'), 'nyse_ew_vs_gip_pw2020': ('nyse_stk',)}
+
+
+def sanity_shape():
+    """事前登録の sanity_checks_before_results の (2)〜(4)＝相手どうしの形（成績ではない）。
+    ★検査役の指摘（2026-09-28）で順番を直した: 事前登録どおり run_main（成績）より前に回し、止まる条件に触れたデータの単位は
+    主の格付けに入れない（'PENDING_stop'）。(5) 以降（先読みなし・月数・族の数・欠測）は組み立てた系列が要るので後で回す"""
     res = {}
     # (2) Cowles C-1 − P-1 の月の差
     ks = sorted(k for k in set(COW_MKT) & set(COW_MKT_P) if k not in (191412,))
@@ -356,6 +362,14 @@ def sanity(units):
     res['nyse_ew_vs_gip_pw2020']['ok'] = (res['nyse_ew_vs_gip_pw2020']['corr'] or 0) >= 0.8
     stop = [k for k in ('cowles_ew_ind_vs_C1', 'lse_ew_vs_boe_1871_1914', 'nyse_ew_vs_gip_pw2020') if not res[k]['ok']]
     res['stop_on_shape'] = stop
+    res['stopped_data'] = sorted({d for k in stop for d in STOP_MAP[k]})
+    res['stopped_units'] = [u for u in UNIT_IDS if RULES[u].get('data') in res['stopped_data']]
+    res['order'] = 'この点検は成績（run_main）より前に回した（検査役の指摘で直した順番）。止まる条件に触れたデータの単位は主の格付けに入れない'
+    return res
+
+
+def sanity(units, shape):
+    res = dict(shape)
     # (5) 実データでも先読みなし
     la = {}
     rnd = random.Random(11)
@@ -508,6 +522,18 @@ def r3_costs(units):
             (a1, z1), (a2, z2) = D.halves(ks)
             h1, h2 = C.excess_stats(x['net'], x['b'], a1, z1), C.excess_stats(x['net'], x['b'], a2, z2)
             row[f'unit_{u}'] = {'full': e, 'h1_cagr_diff': h1 and h1['cagr_diff'], 'h2_cagr_diff': h2 and h2['cagr_diff']}
+            # ★検査役の指摘（2026-09-28）: one の式（½Σ|Δw|×u）は u を『売りと買いの1回ずつ』に u/2 ずつ掛けるのと同じ。
+            # Jones 2002 の『片道』（売買1回ごとの費用）として u を読むなら、two の式と同じ Σ|Δw|×u にそろえる（事後・格付けに使わない）
+            if r['cost'][0] == 'one':
+                x = build(r, cost=('two', u))
+                e = C.excess_stats(x['net'], x['b'])
+                h1, h2 = C.excess_stats(x['net'], x['b'], a1, z1), C.excess_stats(x['net'], x['b'], a2, z2)
+                row[f'per_side_unit_{u}'] = {'full': e, 'h1_cagr_diff': h1 and h1['cagr_diff'], 'h2_cagr_diff': h2 and h2['cagr_diff'],
+                                             'formula': f'Σ|Δw| × {u}（売買の各側に {u}）'}
+            elif r['cost'][0] == 'two':
+                row[f'per_side_unit_{u}'] = {'same_as': f'unit_{u}', 'formula': f'Σ|Δw| × {u}（two の式はもともと売買の各側に u）'}
+            else:
+                row[f'per_side_unit_{u}'] = {'same_as': f'unit_{u}', 'formula': 'moved・dL の式は出入り・倍率の変化の各回に u（もともと各側）'}
         if r['key'] in plc:
             x = units[uid]['x']
             s2 = C.apply_cost(x['s'], plc[r['key']], r['cost'][1])
@@ -519,8 +545,25 @@ def r3_costs(units):
             x = build(r, spread=0.01)
             row['spread_1pct'] = {'full': C.excess_stats(x['net'], x['b'])}
         out[uid] = row
-    return {'rows': out, 'note': '各規則の費用の式の形（two＝両側 Σ|Δw|×単価・one＝片道 ½Σ|Δw|×単価・moved＝出入り×L×単価・dL＝|ΔL|×単価）はそのままで単価だけ 0.50%・1.00% に替えた。'
-                                 '置き値の版は mw_momentum の F1a1 年400%・mw_intl の ret_12_1 年150%・mw_momentum_prereg3 の seas_6_10an 年1200% × この角度の単価（英国 0.30%・米国 0.10%）を月割りで費用前の系列から引いた'}
+    per_side = {}
+    for uid in UNIT_IDS:
+        if RULES[uid]['kind'] in ('halloween',):
+            continue
+        row = out[uid].get('per_side_unit_0.01') or {}
+        e = row.get('full') if 'full' in row else (out[uid]['unit_0.01']['full'] if row.get('same_as') else None)
+        per_side[uid] = e and {'ex_ann': e['ex_ann'], 't': e['t'], 'cagr_diff': e['cagr_diff']}
+    dd = {u: v for u, v in per_side.items() if u.startswith('D_') and v}
+    summ = ('売買の各側に 1%（当時の現実に近い単価・Σ|Δw|×1%・S3 は出入りの各回 1%×L）でそろえると、LSE の業種 D は 8本のうち正 '
+            + str(sum(1 for v in dd.values() if v['ex_ann'] > 0 and v['cagr_diff'] > 0)) + '・t≥2 '
+            + str(sum(1 for v in dd.values() if (v['t'] or 0) >= 2)) + '（' + '・'.join(f"{u[2:]} {v['ex_ann']:+.2f} t{v['t']}" for u, v in dd.items()) + '）。'
+            + '業種の勢いの6本だけなら 正 ' + str(sum(1 for u, v in dd.items() if 'S3' not in u and v['ex_ann'] > 0 and v['cagr_diff'] > 0))
+            + '・t≥2 ' + str(sum(1 for u, v in dd.items() if 'S3' not in u and (v['t'] or 0) >= 2)) + '。★D は止まる条件に触れたデータ（主の格付けは PENDING_stop）')
+    return {'rows': out, 'per_side_1pct': per_side, 'summary_per_side_1pct': summ,
+            'note': '各規則の費用の式の形（two＝両側 Σ|Δw|×単価・one＝片道 ½Σ|Δw|×単価・moved＝出入り×L×単価・dL＝|ΔL|×単価）はそのままで単価だけ 0.50%・1.00% に替えた（unit_*・事前登録の文言どおり）。'
+                    '★one と two では単価の意味が違う: one の u は『片道の回転 ½Σ|Δw| あたり』＝売りと買いの各側に u/2、two の u は各側に u。'
+                    'そのため unit_* の one の規則（F1b・F3g・株）は two の規則（G3・G4・P9）の半分の費用しか引いていない。'
+                    '当時の売買1回ごとの費用（Jones 2002 の片道）として読むなら per_side_unit_*（Σ|Δw|×u にそろえた版・事後・検査役の指摘 2026-09-28）を使うこと。'
+                    '置き値の版は mw_momentum の F1a1 年400%・mw_intl の ret_12_1 年150%・mw_momentum_prereg3 の seas_6_10an 年1200% × この角度の単価（英国 0.30%・米国 0.10%）を月割りで費用前の系列から引いた'}
 
 
 def r1_asis(units):
