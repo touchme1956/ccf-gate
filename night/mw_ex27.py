@@ -1395,6 +1395,172 @@ def run():
     return out
 
 
+# ───────────────────────── 探索の族 Y（事前登録2: 生き残りを含む年次の近似で M100・等分の形） ─────────────────────────
+PRE2_NAME = 'mw_ex27_prereg2.json'
+FAMILY_Y = ['gp_at_M100_T3_proxy', 'op_at_M100_T3_proxy', 'gp_at_T20EW_proxy', 'op_at_T20EW_proxy', 'gp_at_T5EW_proxy', 'op_at_T5EW_proxy']
+
+
+def _yahoo_span(x, span, price, kind):
+    """価格のある社の、近似と同じ期間（表紙の基準月の間）の Yahoo の株価（px）か総リターン（tr）の変化。無ければ None"""
+    if x is None or span is None or price.get(x) is None:
+        return None
+    ret, cl, first, spl = price[x]
+    m0, m1 = SR._float_month(span[0]), SR._float_month(span[1])
+    if kind == 'px':
+        return cl[m1] / cl[m0] - 1 if (m0 in cl and m1 in cl) else None
+    ms, m = [], SR._nextm(m0)
+    while m <= m1:
+        if m not in ret:
+            return None
+        ms.append(ret[m]); m = SR._nextm(m)
+    return math.prod(1 + v for v in ms) - 1 if ms else None
+
+
+def _select_y(form, k, rows, ff12):
+    """rows（浮動株の大きい順）→ (選んだ社 {cik: 重み}, 相手の社 {cik: 重み})。重みは按分前（浮動株か1）"""
+    if form == 'M100_T3':
+        base = rows[:100]
+        nonfin = [(c, r) for c, r in base if r.get('_sic') and ff12(r['_sic']) != 'Money' and r['sig'].get(k) is not None]
+        nonfin.sort(key=lambda z: (-z[1]['sig'][k], -z[1]['float']))
+        sel = {c: r['float'] for c, r in nonfin[:len(nonfin) // 3]}
+        return sel, {c: r['float'] for c, r in base}
+    n = {'T20EW': 20, 'T5EW': 5}[form]
+    nonfin = [(c, r) for c, r in rows if r.get('_sic') and ff12(r['_sic']) != 'Money' and r['sig'].get(k) is not None]
+    nonfin.sort(key=lambda z: (-z[1]['sig'][k], -z[1]['float']))
+    return {c: 1.0 for c, _ in nonfin[:n]}, {c: r['float'] for c, r in rows}
+
+
+def _spread_y(sel, bench, val):
+    """選んだ側 − 相手（それぞれ測れる社だけで重みを按分し直す）。どちらかが空なら None"""
+    def avg(w):
+        num = den = 0.0
+        for c, x in w.items():
+            v = val(c)
+            if v is None:
+                continue
+            num += x * v; den += x
+        return num / den if den else None
+    a, b = avg(sel), avg(bench)
+    return (a - b) if (a is not None and b is not None) else None
+
+
+def family_y(top, price):
+    ff12 = SR.ff12_fn()
+    res = {}
+    for nm in FAMILY_Y:
+        k = nm.split('_')[0] + '_' + nm.split('_')[1]
+        form = nm[len(k) + 1:].replace('_proxy', '')
+        per = {}
+        for t in YEARS_X:
+            rows = [(c, r) for c, r in top[t] if r.get('_sic', '') not in SR.EXCL_SIC][:500]
+            R = dict(rows)
+            pr = {c: proxy_return(r) for c, r in rows}
+            sel, bench = _select_y(form, k, rows, ff12)
+            gone = {c for c, r in rows if not r.get('next')}
+            d = {'main': _spread_y(sel, bench, lambda c: pr[c][0])}
+            # 下限: 選んだ側の消えた社 −100%・相手側だけの消えた社 +50%（選んだ社は相手にも入るので、相手の中の選んだ社も −100%）
+            def bound(v_sel, v_other):
+                val = lambda c: (v_sel if c in sel else v_other) if c in gone else pr[c][0]
+                return _spread_y(sel, bench, val)
+            d['bound_low'] = bound(-1.0, 0.5)
+            d['bound_high'] = bound(0.5, -1.0)
+            # 価格のある社だけで同じ形を作り直す（生き残りの偏り）・同じ社を Yahoo の株価／総リターンで（近似の誤差）
+            prow = [(c, r) for c, r in rows if r.get('_status') == 'ok' and r.get('_ticker')]
+            psel, pbench = _select_y(form, k, prow, ff12)
+            tick = {c: r['_ticker'] for c, r in prow}
+            both = lambda c: pr[c][0] is not None and _yahoo_span(tick.get(c), pr[c][1], price, 'px') is not None
+            d['priced_proxy'] = _spread_y(psel, pbench, lambda c: pr[c][0] if both(c) else None)
+            d['priced_yahoo_price'] = _spread_y(psel, pbench, lambda c: _yahoo_span(tick.get(c), pr[c][1], price, 'px') if both(c) else None)
+            d['priced_yahoo_total'] = _spread_y(psel, pbench, lambda c: _yahoo_span(tick.get(c), pr[c][1], price, 'tr') if both(c) else None)
+            d['n'] = {'selected': len(sel), 'selected_with_proxy': sum(1 for c in sel if pr[c][0] is not None),
+                      'selected_gone_no_next_10k': sum(1 for c in sel if c in gone), 'selected_priced': sum(1 for c in sel if R[c].get('_status') == 'ok'),
+                      'bench': len(bench), 'bench_with_proxy': sum(1 for c in bench if pr[c][0] is not None), 'priced_selected': len(psel)}
+            d['selected_names'] = [R[c]['name'][:28] for c in sorted(sel, key=lambda c: -sel[c])][:8] if form != 'M100_T3' else None
+            per[t] = {kk: (round(v * 100, 2) if isinstance(v, float) else v) for kk, v in d.items()}
+        summ = {}
+        for kk in ('main', 'bound_low', 'bound_high', 'priced_proxy', 'priced_yahoo_price', 'priced_yahoo_total'):
+            xs = [per[t][kk] for t in YEARS_X if per[t].get(kk) is not None]
+            if xs:
+                m_ = S.mean(xs); sd = S.stdev(xs) if len(xs) > 1 else None
+                summ[kk] = {'mean_pct_per_year': round(m_, 2), 't_across_years': round(m_ / (sd / math.sqrt(len(xs))), 2) if sd else None,
+                            'years': len(xs), 'positive_years': sum(1 for x in xs if x > 0)}
+        res[nm] = {'family': 'exploratory_Y（事前登録2・格付けしない）', 'per_year': per, 'summary': summ}
+    return res
+
+
+def run2():
+    t0 = time.time()
+    out_p = os.path.join(M.BASE, 'out', OUT_NAME)
+    main = json.load(open(out_p))
+    panel, recs = build_panel_ex27()
+    uni, diag, F, top, price, cands = build_universe_x(panel, verbose=False)
+    y = family_y(top, price)
+    main['exploratory_prereg2'] = {'prereg': PRE2_NAME, 'prereg_commit': sha_of('out/' + PRE2_NAME), 'graded': False,
+                                   'strategies': y, 'runtime_s': round(time.time() - t0)}
+    for nm in FAMILY_Y:
+        main['tested'].append({'name': nm, 'family': 'exploratory_Y', 'graded': False})
+    main['n_tested'] = len(main['tested'])
+    M.save(OUT_NAME, main)
+    for nm, v in y.items():
+        print(nm, json.dumps(v['summary'], ensure_ascii=False))
+    return y
+
+
+# ───────────────────────── 事後の感度（格付けしない）と見出し ─────────────────────────
+def summarize():
+    """結果を見た後の『事後』の感度（XOM・エネルギーの寄与・EX-27 の原価の定義の注意書きの大きさ）と、見出し・逸脱を JSON に足す"""
+    out_p = os.path.join(M.BASE, 'out', OUT_NAME)
+    d = json.load(open(out_p))
+    panel, recs = build_panel_ex27()
+    uni, diag, F, top, price, cands = build_universe_x(panel, verbose=False)
+    rets = {x: v[0] for x, v in price.items() if v}
+    C, info = cohorts_x(uni)
+    bser = {nm: SR.simulate(C[nm], rets)[0] for nm in ('M100', 'U_all')}
+    post = {}
+    for nm, pb in (('gp_at_M100_T3VW', 'M100'), ('gp_at_T3VW', 'U_all'), ('gp_at_IN_T3SM', 'U_all')):
+        for tag, drop in (('ex_XOM', lambda x, t: x == 'XOM'),
+                          ('ex_energy', lambda x, t: (lambda z: z and z.get('ff12') == 'Enrgy')(next((u for u in uni[t].values() if u['ticker'] == x), None)))):
+            coh = {t: {x: v for x, v in w.items() if not drop(x, t)} for t, w in C[nm].items()}
+            sr = SR.simulate(coh, rets)[0]
+            post[f'{nm}_{tag}'] = {'vs': pb, 'full': M.excess_stats(sr, bser[pb], START_X, END_X)}
+    d['post_hoc_sensitivity'] = {'label': '事後（結果を見た後に足した・格付けしない）',
+                                 'why': 'gp_at の M100 形で XOM が最大の保有（12〜19%）。EX-27 の TOTAL-COSTS が石油大手では仕入れ原価だけらしく gp_at が高く出る（事前登録の known_limits に書いた注意）。その注意がどれだけ結果を動かすかを見る（相手はそのまま）',
+                                 'results': post}
+    S_ = d['strategies']
+    pooled = {nm: {'pair': r['pooled']['pair_2010_2026'], 'ex27_ex_ann': r['pooled']['ex27_window']['ex_ann'], 'ex27_t': r['pooled']['ex27_window']['t'],
+                   'xbrl_ex_ann': r['pooled']['xbrl_2010_2026']['ex_ann'], 'xbrl_t': r['pooled']['xbrl_2010_2026']['t'],
+                   'concat_t': r['pooled']['concatenated']['t'], 'stouffer': r['pooled']['stouffer_z_equal_weight'],
+                   'holm_p_concat': r['pooled'].get('holm_p_concatenated'), 'pass': r['pooled']['pass_prereg'], 'family': r['family']}
+              for nm, r in S_.items() if 'pooled' in r}
+    Y = d.get('exploratory_prereg2', {}).get('strategies', {})
+    d['headline'] = {
+        'grades': {nm: r['grade'] for nm, r in S_.items()},
+        'grade_counts': {g: sum(1 for r in S_.values() if r['grade'] == g) for g in 'SABC'},
+        'window_vs_primary_benchmark': {nm: {'bench': r['primary_benchmark'], 'ex_ann': r['vs'][r['primary_benchmark']]['full']['ex_ann'],
+                                             't': r['vs'][r['primary_benchmark']]['full']['t'], 'cagr_diff': r['vs'][r['primary_benchmark']]['full']['cagr_diff'],
+                                             'holm_p_window': r['holm_p_window']} for nm, r in S_.items()},
+        'pooled_test_fixed_in_advance': pooled,
+        'pooled_pass_primary': [nm for nm, v in pooled.items() if v['pass'] and v['family'] == 'primary'],
+        'pooled_pass_exploratory': [nm for nm, v in pooled.items() if v['pass'] and v['family'] != 'primary'],
+        'survivorship_U_all_vs_FF_Mkt': d['benchmark_refs']['U_all_vs_FF_Mkt']['full'],
+        'survivor_inclusive_proxy_T3': {k: v['summary'] for k, v in d['survivor_inclusive_proxy'].items()},
+        'family_Y_summary': {k: v['summary'] for k, v in Y.items()},
+        'jkp_same_window': {k: {'ex_ann': v['full']['ex_ann'], 't': v['full']['t'], 'corr_active_with_mine_T3VW': v.get('corr_active_with_mine_T3VW')} for k, v in d['jkp_same_window'].items()},
+        'post_hoc': {k: (v['full']['ex_ann'], v['full']['t']) for k, v in post.items()}}
+    d['deviations'] = [
+        '前の担当が利用上限で止まり（2026-09-28 18時ごろ UTC）、事前登録はコミット前だった。記録を読み、この窓のリターンが1つも計算されていないことを確かめてから被覆の数え上げを足してコミットした（be70b34）。JKP の同じ窓の数字は課題文の求めで事前に見ている（leak に記載）',
+        'EX-27 は FY2000 の 10-K に付いていない（2001年に廃止）ので、2001年7月の形成の信号は多くの社で FY1999（約18か月古い）。事前登録どおり',
+        '母集団は『価格のある社の上位500』のため浮動株の順位 2,000〜2,500位まで下る（最小 2〜6億ドル）。mw_sec_replication の上位500より小型寄り',
+        'この窓は訓練期間の中で、2007年以降の保有期間は XBRL の窓（2010-07〜2026-08）を使う。2002-07〜2010-06 が空くので転がる20年窓・20年積立は作れない（C4 は構造的に不合格＝つないでも最高 B）',
+        '上場廃止した会社の月次株価は取れなかった（stooq は接続が切られる・Alpha Vantage は1日25回・FMP は契約外・Nasdaq Data Link は 403）。代わりに表紙の株価の近似（年次・配当なし）で生き残りを含む版を作った（survivor_inclusive_proxy と探索の族 Y・格付けしない）',
+        'mw_sec_replication.yahoo_raw は一時的な失敗が5回続くと『欠測』の印を14日残す（404 と同じ扱い）。今回の取得で失敗は無かったが、再実行で価格が欠ける原因になりうる（mw_common ではなく mw_sec_replication の性質・書き換えていない）',
+        '探索の族 Y（事前登録2・0128efe）は主の族・探索の族 X・生き残りの診断を見た後の登録。格付けしない',
+        'post_hoc_sensitivity（XOM・エネルギーを除く）は事後で格付けしない']
+    M.save(OUT_NAME, d)
+    print(json.dumps(d['headline']['post_hoc'], ensure_ascii=False))
+    print(json.dumps(d['headline']['grade_counts'], ensure_ascii=False), d['headline']['pooled_pass_primary'], d['headline']['pooled_pass_exploratory'])
+
+
 if __name__ == '__main__':
     cmd = sys.argv[1] if len(sys.argv) > 1 else 'pilot'
     globals()[cmd]()
