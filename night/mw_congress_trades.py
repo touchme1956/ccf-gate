@@ -851,6 +851,197 @@ def calendar_pf(events, H, yh, mkt, bound='S', weight='ew', loss=None, drop_tick
                  'min_holdings': min(n_hold.values()) if n_hold else None, 'max_holdings': max(n_hold.values()) if n_hold else None}
 
 
+def cap_shares(w, cap):
+    """{鍵: 重み} を比率にして、各比率を cap 以下に抑え、あふれた分を残りへ比例で配り直す（反復）"""
+    tot = sum(w.values())
+    if tot <= 0:
+        return {}
+    sh = {k: v / tot for k, v in w.items()}
+    if cap is None or cap * len(sh) < 1:
+        return sh                          # 名が少なすぎて上限を守れない月は上限なし（数える側で報告）
+    fixed = {}
+    while True:
+        over = {k for k, v in sh.items() if k not in fixed and v > cap + 1e-12}
+        if not over:
+            return {**sh, **fixed}
+        for k in over:
+            fixed[k] = cap
+        rest = {k: v for k, v in sh.items() if k not in fixed}
+        left = 1 - cap * len(fixed)
+        rt = sum(rest.values())
+        sh = {k: v / rt * left for k, v in rest.items()} if rt > 0 else {}
+        sh.update(fixed)
+
+
+def calendar_pf2(events, H, yh, mkt, bound='S', weight='ew', loss=None, drop_tickers=(), cap_ticker=None, cap_member=None, min_hold=None, shares_out=None):
+    """calendar_pf の一般化（事前登録2・2026-09-28）: 事象ごとの保有月数 e['H']、金額の重みの記号ごとの上限 cap_ticker、
+    議員ごとの上限 cap_member（その月の重みの合計に対する比率）。それ以外は calendar_pf と同じ（同じ入力で同じ答えになることを検算する）"""
+    ms = months(START, END)
+    act = defaultdict(lambda: defaultdict(float))     # 月 → {(議員鍵, 記号): 重みの素}
+    phantom = defaultdict(dict)                       # 月 → {(議員鍵, 記号 or ('U', 記号)): 重みの素}
+    cleaned = {}
+    for e in events:
+        if e['ticker'] in drop_tickers:
+            continue
+        HH = e.get('H', H)
+        w = ev_weight(e, weight)
+        mk = e['member'] if cap_member else None
+        if e['obs']:
+            t = e['ticker']
+            if t not in cleaned:
+                cleaned[t] = clean_series(yh[t])[0]
+            r = cleaned[t]
+            last = max(r) if r else None
+            for k in range(1, HH + 1):
+                m = madd(e['s'], k)
+                if m > END:
+                    break
+                if r and m in r:
+                    act[m][(mk, t)] += w
+                elif bound == 'L' and last is not None and m > last:
+                    pm = max(madd(last, 1), madd(e['s'], 1))
+                    phantom[pm][(mk, t)] = max(phantom[pm].get((mk, t), 0), w)
+                    break
+                elif bound == 'M' and last is not None and m > last:
+                    for k2 in range(k, HH + 1):
+                        m2 = madd(e['s'], k2)
+                        if m2 <= END:
+                            phantom[m2][(mk, t)] = max(phantom[m2].get((mk, t), 0), w)
+                    break
+                else:
+                    break
+        elif bound == 'L':
+            m = madd(e['s'], 1)
+            if m <= END:
+                kk = (mk, ('U', e['ticker']))
+                phantom[m][kk] = max(phantom[m].get(kk, 0), w)
+        elif bound == 'M':
+            for k in range(1, HH + 1):
+                m = madd(e['s'], k)
+                if m <= END:
+                    kk = (mk, ('U', e['ticker']))
+                    phantom[m][kk] = max(phantom[m].get(kk, 0), w)
+    out, n_hold, fallback, capfail = {}, {}, 0, 0
+    for m in ms:
+        if m not in mkt:
+            continue
+        a = act.get(m, {})
+        held = {t for _, t in a}
+        # 消えた記号の空の持ち高は、同じ記号を別の事象でまだ持っていれば数えない（calendar_pf と同じ）。
+        # 議員の鍵なし（cap_member=None）では calendar_pf と同じく記号ごとに1つ（重みは最大）に畳む
+        ph = {}
+        for (mk, t), w in phantom.get(m, {}).items():
+            if isinstance(t, str) and t in held:
+                continue
+            key = (mk if cap_member else None, t)
+            ph[key] = max(ph.get(key, 0), w)
+        n_hold[m] = len(held)
+        if len(held) < (MIN_HOLD if min_hold is None else min_hold) or (sum(a.values()) + sum(ph.values())) <= 0:
+            out[m] = mkt[m]; fallback += 1
+            continue
+        lv = mkt[m] if bound == 'M' else loss
+        val = lambda t: cleaned[t][m] if isinstance(t, str) and t in held else lv   # 空の持ち高（消えた記号・未観測）は loss / Mkt
+        if weight == 'ew':
+            names = list(held) + [k for k in ph]
+            out[m] = (sum(cleaned[t][m] for t in held) + sum(lv for _ in ph)) / len(names)
+            if shares_out is not None:
+                shares_out[m] = {t: 1 / len(names) for t in held}
+            continue
+        items = defaultdict(float)
+        for (mk, t), w in a.items():
+            items[(mk, t)] += w
+        for (mk, t), w in ph.items():
+            items[(mk, ('P', t))] += w                # 空の持ち高は持っている記号とは別の名として数える
+        if cap_member:
+            memw = defaultdict(float)
+            for (mk, _), w in items.items():
+                memw[mk] += w
+            msh = cap_shares(memw, cap_member)
+            if cap_member * len(memw) < 1:
+                capfail += 1
+            items = {k: w / memw[k[0]] * msh[k[0]] for k, w in items.items() if memw[k[0]] > 0}
+        tw = defaultdict(float)
+        for (mk, t), w in items.items():
+            tw[t] += w
+        tsh = cap_shares(tw, cap_ticker)
+        if cap_ticker and cap_ticker * len(tw) < 1:
+            capfail += 1
+        out[m] = sum(sh * (val(t[1]) if isinstance(t, tuple) and t and t[0] == 'P' else val(t)) for t, sh in tsh.items())
+        if shares_out is not None:
+            shares_out[m] = {t: sh for t, sh in tsh.items() if isinstance(t, str) and t in held}
+    if shares_out is not None:
+        shares_out['_cleaned'] = cleaned
+    return out, {'months': len(out), 'fallback_mkt_months': fallback, 'cap_unenforceable_months': capfail,
+                 'median_holdings': (S.median(n_hold.values()) if n_hold else None),
+                 'min_holdings': min(n_hold.values()) if n_hold else None, 'max_holdings': max(n_hold.values()) if n_hold else None}
+
+
+def dollar_concentration(P, k=10):
+    """X5 の金額の重みの出どころ（観測済みの買いの金額の中点の合計に占める割合・議員別と記号別）。リターンは使わない（報告のみ）"""
+    Po = [e for e in P if e['obs']]
+    tot = sum(ev_weight(e, 'amt') for e in Po)
+    bm, bt = Counter(), Counter()
+    for e in Po:
+        bm[e['member']] += ev_weight(e, 'amt'); bt[e['ticker']] += ev_weight(e, 'amt')
+    return {'total_midpoint_usd_millions': round(tot / 1e6, 1),
+            'top_members_pct': [(m, round(v / tot * 100, 1)) for m, v in bm.most_common(k)],
+            'top_tickers_pct': [(t, round(v / tot * 100, 1)) for t, v in bt.most_common(k)],
+            'largest_events': [{'member': e['member'], 'ticker': e['ticker'], 'filed': e['filed'].isoformat(), 'lo': e['lo'], 'hi': e['hi'], 'owner': e['owner']}
+                               for e in sorted(Po, key=lambda e: -ev_weight(e, 'amt'))[:12]]}
+
+
+def contributions2(shares, mkt, a, z):
+    """calendar_pf2 の shares_out（S の囲み）から、記号ごとの超過への寄与（%/年）"""
+    cl = shares['_cleaned']
+    c = Counter()
+    nmon = max(1, len([m for m in months(max(a, START), z) if m in mkt]))
+    for m, sh in shares.items():
+        if m == '_cleaned' or m < a or m > z or m not in mkt:
+            continue
+        for t, x in sh.items():
+            c[t] += x * (cl[t][m] - mkt[m]) * 12 * 100 / nmon
+    return c
+
+
+def dollar_topn(P, SL, n=20, window=6, net=False):
+    """事前登録2 Y1/Y2: 月 s の末に、公開月が s−window+1〜s の買いの金額（下限と上限の中点・上限なしは下限）を記号ごとに足し
+    （net=True なら売りの金額を引いて正のものだけ）、上位 n 記号を選ぶ。続けて選ばれた月は1つの事象（保有月数 H=続いた月数）に畳む。
+    観測は、窓の中の事象のどれかが観測済みならその記号を観測とする（consensus と同じ）"""
+    by_s = defaultdict(list)
+    for e in P:
+        by_s[e['s']].append((e, 1))
+    if net:
+        for e in SL:
+            by_s[e['s']].append((e, -1))
+    ms = months(START - 100, END - 1)
+    sel = {}
+    for s in ms:
+        amt, rep = defaultdict(float), {}
+        for k in range(window):
+            for e, sg in by_s.get(madd(s, -k), []):
+                amt[e['ticker']] += sg * ev_weight(e, 'amt')
+                if sg > 0 and (e['ticker'] not in rep or (e['obs'] and not rep[e['ticker']]['obs'])):
+                    rep[e['ticker']] = e
+        cand = sorted((t for t, v in amt.items() if v > 0 and t in rep), key=lambda t: (-amt[t], t))[:n]
+        sel[s] = {t: rep[t] for t in cand}
+    out, run = [], {}
+    for s in ms:
+        cur = sel[s]
+        for t in list(run):
+            if t not in cur:
+                out.append(run.pop(t))
+        for t, e in cur.items():
+            if t in run:
+                run[t]['H'] += 1
+            else:
+                run[t] = {**e, 's': s, 'H': 1}
+    out += list(run.values())
+    # 実際の片道の回転率（名の入れ替わり×12 ＋ 等加重のつけ直し30%）
+    ch = [len(set(sel[s]) - set(sel[madd(s, -1)])) / max(1, len(sel[s])) for s in ms[1:] if sel[s] and sel.get(madd(s, -1))]
+    turn = round((S.mean(ch) * 12 if ch else 0) + 0.3, 2)
+    return out, turn, sel
+
+
 def track_filter(P, yh, mkt, top_frac=1 / 3, lookback=36, min_n=5, h=6):
     """月 s の末に分かる議員の実績（過去の買いの h か月の買って持つ超過の平均）で上位 top_frac の議員の、月 s の買いだけを残す"""
     recs = defaultdict(list)       # 議員 → [(s′, g)]
@@ -1104,15 +1295,58 @@ def run():
                      'bounds': {'S': block(r, mkt, spy, qqq, 0.0, 0.0)}, 'regressions_hold': regressions(r, fac, M.HOLD_START, END),
                      'first_month': min(r), 'n_months': len(r)}
         series_out[sid] = {k: round(v, 5) for k, v in sorted(r.items())}
+    # ── 事前登録2（探索2・診断2）: 事前登録1の結果を見た後に作った族（out/mw_congress_trades_prereg2.json）──
+    PRE2 = 'mw_congress_trades_prereg2.json'
+    sha2 = None
+    if os.path.exists(os.path.join(M.BASE, 'out', PRE2)):
+        try:
+            sha2 = subprocess.run(['git', 'log', '-1', '--format=%h', '--', f'out/{PRE2}'], cwd=M.BASE, capture_output=True, text=True).stdout.strip() or None
+        except Exception:  # noqa
+            sha2 = None
+        y1, t1, _ = dollar_topn(P, SL, 20, 6, net=False)
+        y2, t2, _ = dollar_topn(P, SL, 20, 6, net=True)
+        strat2 = {
+            'Y1_top20_dollar_buys_6m': ('exploratory2', '直近6か月に公開された買いの金額の上位20社を等加重（毎月選び直し）', y1, 1, 'ew', t1, {}),
+            'Y2_top20_net_dollar_6m': ('exploratory2', '直近6か月の（買い−売り）の金額の上位20社を等加重（毎月選び直し）', y2, 1, 'ew', t2, {}),
+            'Y3_X5_cap5pct': ('exploratory2', 'X5（買い全部・12か月・金額で加重）に1社5%の上限', P, 12, 'amt', 1.3, {'cap_ticker': 0.05}),
+            'Y4_X5_ex_mega': ('exploratory2', 'X5 から巨大株10社を除く', [e for e in P if e['ticker'] not in MEGA], 12, 'amt', 1.3, {}),
+            'Y5_X5_member_cap10pct': ('exploratory2', 'X5 に1議員10%の上限', P, 12, 'amt', 1.3, {'cap_member': 0.10}),
+            'Y6_pelosi_buys_h12': ('diagnostic2', '★後知恵の名指し: Pelosi（配偶者）の株の買いを12か月・等加重（持つ社の最低数1）',
+                                   [e for e in P if e['member'] == 'house_nancy_pelosi'], 12, 'ew', 1.3, {'min_hold': 1}),
+        }
+        for sid, (fam, desc, es, H, wt, turn, kw) in strat2.items():
+            b, meta_pf = {}, {}
+            for bd, loss in (('S', None), ('L30', -0.30), ('L100', -1.0), ('M_neutral_report_only', None)):
+                sh = {} if bd == 'S' else None
+                r, mp = calendar_pf2(es, H, yh, mkt, bound={'S': 'S', 'M_neutral_report_only': 'M'}.get(bd, 'L'), weight=wt, loss=loss, shares_out=sh, **kw)
+                b[bd] = block(r, mkt, spy, qqq, turn, 0.003)
+                meta_pf[bd] = mp
+                if bd == 'S':
+                    series_out[sid] = {k: round(v, 5) for k, v in sorted(r.items())}
+                    rS, shS = r, sh
+            c = contributions2(shS, mkt, M.HOLD_START, END)
+            top = [t for t, _ in c.most_common(5)]
+            r5, _ = calendar_pf2(es, H, yh, mkt, bound='S', weight=wt, drop_tickers=set(top), **kw)
+            msh = [sum(x for t, x in v.items() if t in MEGA) for m, v in shS.items() if m != '_cleaned']
+            recs[sid] = {'id': sid, 'family': fam, 'prereg': PRE2, 'description': desc, 'hold_months': H if not sid.startswith(('Y1', 'Y2')) else '毎月選び直し（続く限り持つ）',
+                         'weighting': wt, 'caps': kw, 'turnover_oneway_per_year': turn, 'cost_per_unit': 0.003,
+                         'n_events': len(es), 'n_events_observed': sum(1 for e in es if e['obs']),
+                         'observed_share': round(sum(1 for e in es if e['obs']) / len(es), 3) if es else None,
+                         'n_tickers': len({e['ticker'] for e in es}), 'portfolio': meta_pf, 'bounds': b,
+                         'mega7_share_of_holdings': round(S.mean(msh), 3) if msh else None,
+                         'regressions_S_hold': regressions(rS, fac, M.HOLD_START, END),
+                         'top5_contributors': [{'ticker': t, 'contrib_pp_per_year': round(c[t], 2)} for t in top],
+                         'drop_top5_S_hold': M.excess_stats(r5, mkt, M.HOLD_START, END),
+                         'drop_top5_S_hold_net_cost': M.excess_stats(M.apply_cost(r5, turn, 0.003), mkt, M.HOLD_START, END)}
     # 判定（Holm は族ごと・p は S と L30 の悪いほう）
     fams = defaultdict(dict)
     for sid, rec in recs.items():
-        if rec['family'] in ('primary', 'exploratory', 'real'):
+        if rec['family'] in ('primary', 'exploratory', 'real', 'exploratory2'):
             ps = [rec['bounds'][bd]['hold']['p'] for bd in ('S', 'L30') if bd in rec['bounds'] and rec['bounds'][bd]['hold']]
             fams[rec['family']][sid] = max(ps) if ps else None
     holm = {f: M.holm(v) for f, v in fams.items()}
     for sid, rec in recs.items():
-        if rec['family'] == 'diagnostic':
+        if rec['family'] in ('diagnostic', 'diagnostic2'):
             rec['grade'] = '診断（格付けなし）'
             tested.append(rec); continue
         gs, cs = {}, {}
@@ -1136,6 +1370,8 @@ def run():
         rec['grade_note'] = rec.get('grade_note', '') + ' 訓練期間（〜2006）のデータが無い＝C1 は原理的に不合格。20年窓も無い＝C4 も不合格。格は構造的に C が上限'
         if rec['family'] == 'exploratory':
             rec['grade_note'] += '（探索の族）'
+        if rec['family'] == 'exploratory2':
+            rec['grade_note'] += '（探索2＝事前登録1の結果を見た後に作った族。独立の確かめではない）'
         tested.append(rec)
     # 検算
     sanity = {'french_mkt_cagr_full': round(M.cagr(mkt) * 100, 2), 'french_mkt_cagr_2007': round(M.cagr(M.window(mkt, M.HOLD_START)) * 100, 2),
@@ -1143,7 +1379,9 @@ def run():
               'spike_truncated_tickers': spikes,
               'note': '総リターン（Yahoo 調整後終値）どうし・French Mkt も Mkt-RF + RF の総リターン。事象は公開月 s の末に買い s+1 から持つ（提出日＋5日で s を決める）'}
     cov = coverage_table(ev, info)
-    out = {'angle': 'congress_trades', 'prereg': PRE, 'prereg_commit': sha, 'generated': datetime.date.today().isoformat(),
+    out = {'angle': 'congress_trades', 'prereg': PRE, 'prereg_commit': sha, 'prereg2': PRE2 if sha2 else None, 'prereg2_commit': sha2,
+           'x5_dollar_concentration_report_only': dollar_concentration(P),
+           'generated': datetime.date.today().isoformat(),
            'question': pre.get('question'), 'data_end': END, 'start': START, 'n_tested': len([t for t in tested]),
            'tested': tested, 'universe': info, 'coverage': cov, 'sanity': sanity, 'series_S_monthly': series_out}
     p = M.save(OUT, out)
