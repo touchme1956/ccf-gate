@@ -136,7 +136,7 @@ def pillar(roic_tc, wacc):
     return 0.6 * roic_pt(roic_tc) + 0.4 * min(100, 50 + (roic_tc - wacc) * 2)
 
 
-def features(P):
+def features(P, zero_debt=False):
     F = {}
     for cik, ys in P.items():
         out = {}
@@ -150,6 +150,8 @@ def features(P):
             tax = d.get('IncomeTaxExpenseBenefit')
             t = min(0.5, max(0.0, tax / pre)) if (pre and pre > 0 and tax is not None) else (0.35 if y <= 2017 else 0.21)
             debt = debt_of(d)
+            if debt is None and zero_debt:
+                debt = 0.0                                    # 感度（事前登録の外）だけ: 初版の読み方
             if debt is not None:
                 ic = eq + debt - (d.get('Goodwill') or 0) - (d.get('IntangibleAssetsNetExcludingGoodwill') or 0)
                 roic = (oi * (1 - t) / ic * 100) if (eq > 0 and ic > 0 and ic >= 0.2 * eq) else None
@@ -229,87 +231,98 @@ def fwd(px, a, h):
     return None
 
 
+def run(F, tick, PX, spy, last, wacc):
+    """一つの WACC で引き金の社と比較群を作り、先の年率の差をまとめる → (引き金ごとの結果, 判定, 比較群の社年)"""
+    events = {k: [] for k in ('S1', 'S2', 'S1a', 'S1b', 'S1c', 'S2a', 'S2b', 'S2c')}
+    controls = {}
+    done = {k: set() for k in events}
+    for y in range(2014, 2023):
+        for c in tick:
+            if not held(F, c, y - 1) or y not in F[c] or not F[c][y].get('end'):
+                continue
+            t = triggers(F, c, y, wacc)
+            if t is None:
+                continue
+            a = asof(F[c][y]['end'])
+            if a not in PX[tick[c]]:
+                continue
+            if not any(t[k] for k in ('S1a', 'S1b', 'S1c', 'S2a', 'S2b', 'S2c')):
+                controls.setdefault(y, []).append(c)
+                continue
+            for k in events:
+                if t[k] and c not in done[k]:
+                    done[k].add(c)
+                    events[k].append((c, y, a))
+    out = {}
+    for k, evs in events.items():
+        rows = []
+        for c, y, a in evs:
+            px = PX[tick[c]]
+            row = {'t': tick[c], 'fy': y, 'asof': a}
+            for h in (12, 36, 60):
+                if add_months(a, h) > last:
+                    continue
+                r = fwd(px, a, h)
+                cs = [fwd(PX[tick[cc]], a, h) for cc in controls.get(y, []) if cc != c]
+                cs = [x for x in cs if x is not None]
+                s = fwd(spy, a, h)
+                if r is None or not cs:
+                    continue
+                row[f'差{h}'] = (r - S.mean(cs)) * 100
+                row[f'対SPY{h}'] = (r - s) * 100 if s is not None else None
+            rows.append(row)
+        summ = {}
+        for h in (12, 36, 60):
+            v = [r[f'差{h}'] for r in rows if f'差{h}' in r]
+            vs = [r[f'対SPY{h}'] for r in rows if r.get(f'対SPY{h}') is not None]
+            if v:
+                summ[f'{h}か月'] = {'社数': len(v), '比較群との差の中央値(%/年)': round(S.median(v), 2), '平均': round(S.mean(v), 2),
+                                  '比較群に勝った割合': round(sum(x > 0 for x in v) / len(v), 3),
+                                  'SPYとの差の中央値': round(S.median(vs), 2) if vs else None,
+                                  'SPYに勝った割合': round(sum(x > 0 for x in vs) / len(vs), 3) if vs else None}
+        out[k] = {'引き金の社': len(evs), '結果': summ, '例': [f"{r['t']} FY{r['fy']}" for r in rows[:12]]}
+    vd = {}
+    for k in ('S1', 'S2'):
+        s36 = out[k]['結果'].get('36か月')
+        if not s36 or s36['社数'] < 30:
+            vd[k] = '判定不能'
+        elif s36['比較群との差の中央値(%/年)'] <= -2 and s36['比較群に勝った割合'] <= 0.40:
+            vd[k] = '売るのが良い（支持）'
+        elif s36['比較群との差の中央値(%/年)'] >= 2:
+            vd[k] = '売るのは害'
+        else:
+            vd[k] = '弱い'
+    return out, vd, sum(len(v) for v in controls.values())
+
+
 def main():
     P = load_panel()
     F = features(P)
+    F0 = features(P, zero_debt=True)          # 感度（事前登録の外・結果を見る前に足した）: 負債のタグが無い社年を負債0と読む＝初版の読み方
     c2t = {}
     for t, c in json.load(open(os.path.join(BASE, 'out', '_cik_tickers.json'))).items():
         c2t.setdefault(int(c), []).append(t)
     ever = {c for c in F if any(held(F, c, y) for y in F[c])}
+    ever0 = {c for c in F0 if any(held(F0, c, y) for y in F0[c])}
     no_ticker = [c for c in ever if c not in c2t]
     tick = {c: sorted(c2t[c], key=len)[0] for c in ever if c in c2t}
-    PX = prices(set(tick.values()) | {'SPY'})
+    tick0 = {c: sorted(c2t[c], key=len)[0] for c in ever0 if c in c2t}
+    PX = prices(set(tick.values()) | set(tick0.values()) | {'SPY'})
     spy = PX['SPY']
     last = max(spy)
     res = {}
     for wacc in (WACC, 8.0, 10.0):
-        events = {k: [] for k in ('S1', 'S2', 'S1a', 'S1b', 'S1c', 'S2a', 'S2b', 'S2c')}
-        controls = {}
-        done = {k: set() for k in events}
-        for y in range(2014, 2023):
-            for c in tick:
-                if not held(F, c, y - 1) or y not in F[c] or not F[c][y].get('end'):
-                    continue
-                t = triggers(F, c, y, wacc)
-                if t is None:
-                    continue
-                a = asof(F[c][y]['end'])
-                if a not in PX[tick[c]]:
-                    continue
-                if not any(t[k] for k in ('S1a', 'S1b', 'S1c', 'S2a', 'S2b', 'S2c')):
-                    controls.setdefault(y, []).append(c)
-                    continue
-                for k in events:
-                    if t[k] and c not in done[k]:
-                        done[k].add(c)
-                        events[k].append((c, y, a))
-        out = {}
-        for k, evs in events.items():
-            rows = []
-            for c, y, a in evs:
-                px = PX[tick[c]]
-                row = {'t': tick[c], 'fy': y, 'asof': a}
-                for h in (12, 36, 60):
-                    if add_months(a, h) > last:
-                        continue
-                    r = fwd(px, a, h)
-                    cs = [fwd(PX[tick[cc]], a, h) for cc in controls.get(y, []) if cc != c]
-                    cs = [x for x in cs if x is not None]
-                    s = fwd(spy, a, h)
-                    if r is None or not cs:
-                        continue
-                    row[f'差{h}'] = (r - S.mean(cs)) * 100
-                    row[f'対SPY{h}'] = (r - s) * 100 if s is not None else None
-                rows.append(row)
-            summ = {}
-            for h in (12, 36, 60):
-                v = [r[f'差{h}'] for r in rows if f'差{h}' in r]
-                vs = [r[f'対SPY{h}'] for r in rows if r.get(f'対SPY{h}') is not None]
-                if v:
-                    summ[f'{h}か月'] = {'社数': len(v), '比較群との差の中央値(%/年)': round(S.median(v), 2), '平均': round(S.mean(v), 2),
-                                      '比較群に勝った割合': round(sum(x > 0 for x in v) / len(v), 3),
-                                      'SPYとの差の中央値': round(S.median(vs), 2) if vs else None,
-                                      'SPYに勝った割合': round(sum(x > 0 for x in vs) / len(vs), 3) if vs else None}
-            out[k] = {'引き金の社': len(evs), '結果': summ, '例': [f"{r['t']} FY{r['fy']}" for r in rows[:12]]}
-        vd = {}
-        for k in ('S1', 'S2'):
-            s36 = out[k]['結果'].get('36か月')
-            if not s36 or s36['社数'] < 30:
-                vd[k] = '判定不能'
-            elif s36['比較群との差の中央値(%/年)'] <= -2 and s36['比較群に勝った割合'] <= 0.40:
-                vd[k] = '売るのが良い（支持）'
-            elif s36['比較群との差の中央値(%/年)'] >= 2:
-                vd[k] = '売るのは害'
-            else:
-                vd[k] = '弱い'
-        res[f'WACC{wacc:g}%'] = {'判定': vd, '引き金': out,
-                                 '比較群の社年': sum(len(v) for v in controls.values())}
+        out, vd, nc = run(F, tick, PX, spy, last, wacc)
+        res[f'WACC{wacc:g}%'] = {'判定': vd, '引き金': out, '比較群の社年': nc}
+    out0, vd0, nc0 = run(F0, tick0, PX, spy, last, WACC)
     doc = {'generated': time.strftime('%Y-%m-%d'), 'tool': 'night/gaps_sell.py', 'prereg': 'out/gaps7_prereg.json Q3_sell（9c28f6c）',
            '判定（主＝WACC9%・36か月）': res['WACC9%']['判定'], '結果': res,
            '結果を見る前の修正': '負債・自己資本・D&A・利息・現金の候補タグを採取器 hachimon_fetch に寄せて広げ、負債のタグが一つも無い社年は負債0ではなく『測れない』にした（初版は HD 2016 の ROIC を 389.6% と出していた）。検定を一度も走らせ終える前に見つけた',
+           '★事前登録の外の感度_負債のタグが無い社年を負債0と読む（初版の読み方・WACC9%・結果を見る前に足した）': {'判定': vd0, '引き金': {k: v for k, v in out0.items() if k in ('S1', 'S2')},
+                                                                  '比較群の社年': nc0, '一度でも保有の条件を満たした社': len(ever0)},
            '母集団': {'一度でも保有の条件を満たした社': len(ever), 'うち今ティッカーが無く外れた社（生存バイアス）': len(no_ticker),
                     '株価が取れた社': sum(1 for c in tick if PX.get(tick[c]))},
-           '注': 'frames は暦年にそろえる（6月決算の社は損益と貸借の時点がずれる）。定性の部分（堀の減衰・disrupt・erosion・質スコアの連続低下）は測れない。今ティッカーが無い社は入らない＝倒産した社が抜ける（引き金の社を良く見せる向き）'}
+           '注': 'frames は暦年にそろえる（6月決算の社は損益と貸借の時点がずれる）。負債のタグが一つも無い社年は測れない（無借金でタグを出さない社も抜ける）。定性の部分（堀の減衰・disrupt・erosion・質スコアの連続低下）は測れない。今ティッカーが無い社は入らない＝倒産した社が抜ける（引き金の社を良く見せる向き）'}
     json.dump(doc, open(OUT, 'w'), ensure_ascii=False, indent=1)
     print('判定', doc['判定（主＝WACC9%・36か月）'], doc['母集団'])
     for w, r in res.items():
@@ -317,6 +330,9 @@ def main():
         for k, v in r['引き金'].items():
             print('  ', k, v['引き金の社'], v['結果'].get('36か月'), '| 12:', v['結果'].get('12か月', {}).get('比較群との差の中央値(%/年)'),
                   '60:', v['結果'].get('60か月', {}).get('比較群との差の中央値(%/年)'))
+    print('== 感度（負債タグ無し=0）', vd0, '比較群', nc0)
+    for k in ('S1', 'S2'):
+        print('  ', k, out0[k]['引き金の社'], out0[k]['結果'].get('36か月'))
 
 
 if __name__ == '__main__':
