@@ -1,0 +1,220 @@
+{
+ "generated": "2026-09-28",
+ "angle": "nx_leadlag",
+ "title": "業種どうしの先行・遅行（取引先の業種の値動きが遅れて届くか）",
+ "question": "ある業種の値動きが、その取引先（顧客・仕入れ先）の業種や、つながりの強い業種へ遅れて届くなら、『先月動いた業種の取引先の業種』を今月買うと、買いだけで市場（French Mkt ≒ S&P500）に勝てるか。『業種自身の過去』ではなく『他の業種の過去』で業種を選ぶ規則を、測る前に固定して米国の約56年（1970〜2026）と米国外7か国で確かめる",
+ "asked_by": "ユーザー「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して。限界までやって途中報告を入れながら結果が出るまで分析を止めずに。トークンの限界までやってほしい。今まではそんなものはないという報告で終わってたけどそれはなしで探し続ける努力をしてほしい。今別のSessionでこの内容を2つ回してる。別のSessionで検証していない新たな分析を同じ内容でしてほしい」（2026-09-28）。全体の事前登録 out/nx_prereg.json の wave1 の一つ",
+ "registered_before_measuring": true,
+ "global_prereg": "out/nx_prereg.json（C1〜C8・格付け S/A/B/C・誠実さの約束）。統計と格付けは night/nx_common.py（mw_common.py と同一の定義）の excess_stats / rolling / dca / holm / grade をそのまま使う",
+ "tools": {
+  "data": "night/nx_leadlag_data.py（取得と整形だけ・成績は計算しない）→ out/_nx_cache/nx_leadlag_io.json（gitignore）。BEA の産業連関表から French 49業種の中間財の流れ X[売り手][買い手] と Menzly-Ozbas の仕入れ先・顧客の重みを、公表された表ごとに作る",
+  "io_tables_sha256": "98af5dbb898cdfee560055417b1d54d9f8cf81133a9b15d465e8a3afe0c34dd5（nx_leadlag_io.json の 'tables' を sort_keys・区切り詰めで直列化した sha256。測る道具はこの値と一致するかを最初に確かめ、違えば止まる＝重みを結果を見てから作り直していないことの証明）",
+  "measure": "night/nx_leadlag.py（これから書く）→ out/nx_leadlag.json。試したものは全部 tested に残す"
+ },
+ "stance_before_results": "測定器。門・採点・四関門・席・配分・売却規律には入れない。線（C1〜C8）は結果を見て動かさない。主の族の定義・重み行列・表の公表日・K・費用はこの登録で固定し、測った後に変えたらそれは『事後』と明記して格付けに使わない",
+ "why_new": {
+  "difference": "並走中の他セッションの業種の規則（eknzbh の mw_industry：業種の勢い・季節性・逆張り・比重・守りの業種／q07leu の fam_indmom・fam_minvar_ind・fam_season・fam_tech_switch など）は、すべて『その業種自身の過去のリターン』で選ぶ。ここは『他の業種の過去のリターン』で選ぶ（産業連関表の取引先の業種、または全業種の前月から機械学習で選んだ予言の組み合わせ）。origin の eknzbh・hbm38n・q07leu の枝を 2026-09-28 に grep して、Menzly・Rapach・Hou・Hong-Torous-Valkanov・input-output・cross-predict・supplier・customer momentum の語が1件も無いことを確かめた",
+  "overlap_left": "予言の組み合わせ（P4・P5）は自分の前月も説明変数に入る（論文どおり）。自分の1か月の勢いと重なる分は、対照 CTRL_own1m（自分の前月で選ぶ）と探索 E13（自分を除く）・E9（自分の前月で直交化）で切り分けて報告する"
+ },
+ "data": {
+  "industry_returns_us": {
+   "source": "Kenneth R. French Data Library: 49_Industry_Portfolios_CSV.zip（Average Value Weighted Returns -- Monthly／Average Equal Weighted Returns -- Monthly／Number of Firms in Portfolios／Average Firm Size）と 30_Industry_Portfolios_CSV.zip（同じ表）。https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{名前}_CSV.zip",
+   "span": "1926-07〜2026-08（49業種は 44業種が1926〜1930年から、Soda・FabPr・Guns・Gold が 1963-07、Softw 1965-07、Hlth 1969-07 から。1969-07 以降は49業種すべてが欠け無し。Rubbr だけ 1943-07〜1944-06 に12か月の欠け。30業種は 1926-07 から30業種とも欠け無し）",
+   "survivorship": "CRSP 由来で上場廃止した会社も入る（生き残りの偏り無し）。1962年以前は NYSE だけ、1962年から AMEX、1972年から NASDAQ が加わる",
+   "industry_definition": "French の SIC 定義（Siccodes49.zip・毎年6月末の CRSP の SIC で会社を業種に割り当てる）"
+  },
+  "market_and_rf": "French F-F_Research_Data_Factors（Mkt-RF＋RF＝総リターンの市場、RF）。1926-07〜2026-08",
+  "input_output_tables": {
+   "source": "BEA（米商務省 経済分析局）の Historical Benchmark Input-Output Tables（https://www.bea.gov/industry/historical-benchmark-input-output-tables）と現行のベンチマーク表。取った原本は nx_leadlag_data.py の FILES（apps.bea.gov/industry/zip/… と xls/io-annual/…）",
+   "tables_used": "1963（367部門）・1967（484部門・1977年6月の改訂版）・1972（496）・1977（537）・1982（6桁）・1987（6桁）・1992（6桁）・1997・2002（2008-04-24 改訂版）・2007（2014-11-13 改訂版）・2017（2024-05-20 版の中の 2017）の Use 表（生産者価格・中間財）。探索の早い延長だけが 1947・1958 の85部門表を使う",
+   "not_used": "2012年表: 当初版（2018年ごろ公表）が手元に無く、2017年ファイル内の 2012 は2024年の改訂版＝版の後知恵なので時点の表に入れない（2007年表を 2024-06 の信号まで使い続ける）。測る前にもこの決定は変えない",
+   "concordances": "部門→SIC は各年の Sectoring Plan / SIC-IO 対照（1963・1967 は1957・1967年版の SIC、1972・1977 は1972・1977年版、1987・1992 は1987年版）。1982年は対照が手元に無い（io_histsic.htm は消えている）ので1977年の対照→無ければ1987年の対照（使ったのは3部門・流れの3.3%）。NAICS 時代は BEA の表に付いた関連 NAICS → 国勢調査局の NAICS 版の対照表（1997→2002→2007→2012→2017）→ 1997年 NAICS→1987年 SIC（https://www.census.gov/naics/concordances/）。BEA 部門の中の NAICS 6桁どうしは1997年経済センサスの全国の売上（https://www2.census.gov/econ1997/EC/sector00/E9700A1.zip・秘匿と0は『分からない』として同じ部門の中央値）で割り、NAICS→SIC の1対多は等分",
+   "mapping_to_french49": "SIC 4桁 → French 49 の範囲。1部門が複数の French 業種にまたがるときは 1987年 SIC の有効な4桁コードの数で等分（有効リストに無い古い番号の4桁はその数字のまま French に当てる・どこにも入らなければ2桁の親の辞書 IO_SIC へ倒す。親の辞書は Menzly & Ozbas 2010 Internet Appendix Table IA.VIII の BEA 部門→SIC 辞書を土台にした）。建設の詳細部門は SIC が書かれていないので建設（1500-1799）、油井・ガス井の掘削と補修だけ石油（1381-1389）",
+   "exclusions": "持ち家（帰属家賃）・政府・政府企業（78・79）・輸入・スクラップ・家計・最終需要・付加価値は入れない。同じ部門どうしの取引（表の対角・流れの 7.6〜13%）は写す前に除く（部門が複数の French 業種にまたがると見かけの業種間の結びつきになるため）。French の段の自分との取引も重みでは除く（Menzly & Ozbas と同じ）",
+   "coverage_checked_before_results": "SIC 時代の詳細表は写せた部門 351〜526（1つの French 業種に丸ごと収まる部門 320〜497）、親の辞書へ倒した流れは 0.5〜3.9%、複数業種へ割った部門の流れは 4〜13%。NAICS 時代は 380〜483部門（丸ごと1業種は 229〜337）、複数業種へ割った部門の流れは 26〜33%（NAICS→SIC の等分が主因）。すべての年で49業種すべてに仕入れ先の重みがある。顧客の重みは Smoke（たばこ）が 1977・1982・1987・1992・2002・2017 表で空（中間財をほとんど売らない）＝その期間 Smoke は顧客の信号の順位に入らない",
+   "structure_facts_checked_before_results": "産業連関の事実だけ（リターンは見ていない）: 隣り合う表の仕入れ先の重みの相関 0.81〜0.98・顧客の重み 0.72〜0.96、1963年表と2017年表では 0.64・0.57＝つながりは時代で変わる（1つの年の表を全期間に使うと後知恵になる根拠）。1業種あたりの実効の相手の数は仕入れ先 6.6〜8.3・顧客 3.6〜6.6。割り振りを最大の業種へ丸ごと寄せた版（modal）との相関は 0.87〜0.97"
+  },
+  "c5_countries": {
+   "source": "JKP（Jensen-Kelly-Pedersen）の国別の業種リターン（GICS 11セクター・vw）https://jkpfactors-data.s3.amazonaws.com/public/industry/%5B{国}%5D_%5Bgics%5D_%5Bmonthly%5D_%5Bvw%5D.zip と国の市場（nx_common.jkp_mkt(国,'vw')）",
+   "countries": "jpn・gbr・can・fra・deu・aus・che（eknzbh の mw_industry の再現と同じ7か国＝国の選び方で結果を選ばない）",
+   "span": "1999-07〜2025-12。セクターは10社未満の月が欠ける（例: deu のエネルギーは 2007-08〜2013-01 だけ・che は8セクター・不動産は 2016-10 から）",
+   "basis": "JKP の業種と市場は同じ出所・USD・米国T-bill超過（ドキュメントの ret_exc の定義。1981-06 の米国 ff49 の3業種を French と1か月だけ並べて、JKP ≈ French − RF を確かめた）",
+   "survivorship": "CRSP・Compustat 由来で上場廃止を含む"
+  },
+  "real_etf": {
+   "source": "Yahoo の配当込み月次（nx_common.yahoo）: XLB・XLE・XLF・XLI・XLK・XLP・XLU・XLV・XLY（1999-01〜）、XLRE（2015-11〜）、XLC（2018-07〜）、SPY",
+   "note": "2026-09 は月の途中なので使わない（2026-08 まで）。11本とも現存（途中で消えた Select Sector SPDR は無い）"
+  }
+ },
+ "criteria": {
+  "which": "criteria_long_history（訓練〜2006-12・保有 2007-01〜2026-08・C1〜C8）。主の族の訓練期間は P1〜P3 が 1970-02〜2006-12（36.9年）、P4 が 1970-01〜2006-12（37年）、P5 が 1979-08〜2006-12（27.4年）で、どれも15年以上",
+  "series_used_per_criterion": {
+   "C1_C2_C3_C7": "費用前の規則のリターン 対 French Mkt（どちらも総リターン）",
+   "C4_roll20": "費用後（0.10%）の転がる20年窓（一括・毎年7月起点・nx_common.rolling）",
+   "C6_net_cost": "費用後（片道100%あたり0.10%）の保有期間で C2 が成り立つか",
+   "C8_sharpe": "主の族は業種の入れ替え（常に株100%・借入なし・時期選びなし）なので N/A。探索の E21（市場の時期選び）だけ必須"
+  },
+  "C5_independent_unit": {
+   "unit": "米国外の7か国（jpn・gbr・can・fra・deu・aus・che）。各国の JKP GICS 11セクターで、同じ手法を当てる",
+   "P1_P2_P3": "米国の、その月に使える表の流れを GICS 11 へ畳んだ重み（nx_leadlag_io.json の gics_customer_w / gics_supplier_w・French 49 → GICS の対応は FR2GICS で固定）を各国のセクターのリターンに当てる（供給網の形は国をまたいで似ているという仮定）。上位 K=max(1,round(N/5)) セクターを等分（JKP の業種ファイルに時価が無いため）。期間 1999-08〜2025-12",
+   "P4_P5": "各国のセクターのリターンだけで同じ LASSO（AICc・OLS post-LASSO・拡大窓）を推定（説明変数11本）。初期窓120組 → 最初の予言 2009-08。上位 K=max(1,round(N/5)) を等分。P4 と P5 は GICS では同じ手法になるので同じ C5 の結果を共有する",
+   "positive": "その国の評価期間の全体で、費用前の規則の超過（対その国の JKP 市場 vw・超過どうし）の幾何の年率差が正",
+   "pass": "7か国のうち5以上（2/3 以上）が正",
+   "missing": "欠けたセクターは信号にも順位にも入れない。持っているセクターの翌月が欠けたら 0（超過0＝T-bill と同じ）と置く（消えることを前もって知らないため）"
+  },
+  "cost_assumption": "片道の売買100%あたり 0.10%（大型株・業種ETF の目安）を判定に使い、0.30% を感度として報告。片道の回転 = ½Σ|新しい重み − 前月の重みを当月のリターンで流した重み|（最初の月は1）。毎月その月の回転×費用を引く。探索 E19・E20（小型株の等分）は 0.30% を判定・0.50% を感度",
+  "C7_family": "主の族5本（P1〜P5）で Holm（保有期間・費用前・両側 p＝nx_common.p_two(NW t)）。探索の族21本は探索の中で別に Holm（格付けはするが『探索』と明記）",
+  "grading_call": "nx_common.grade(full, train, hold, roll20, cost_hold, repl, family_holm_p, sharpe_pair=None, leveraged_or_timing=False)。探索の族は repl=None（C5 は測らない＝N/A。したがって探索の A には C3 が要る）"
+ },
+ "families": {
+  "common": {
+   "timing": "月末 t に分かる値（t 月の業種リターン・t 月の行の社数×平均時価・t 月末に公表済みの表）だけで t+1 月の持ち物を決め、t+1 月の1か月持つ。毎月入れ替え",
+   "table_in_force": "信号の月 t に使う表 = schedule の signal ≤ t のうち最も新しい表。schedule（公表月の翌月末から使う。公表が年しか分からない詳細表はその年の12月公表とみなす）: 1963→信号 1970-01／1967改訂→1977-07／1972→1980-01／1977→1985-01／1982→1991-11／1987→1994-05／1992→1997-12／1997→2003-01／2002改訂→2008-05／2007改訂→2014-12／2017→2024-06",
+   "universe": "その月に French の VW リターンがあり、その信号が作れる業種（Other を含む49業種。信号の計算に使う相手の業種は t 月のリターンがある業種だけで重みを割り直す）",
+   "K": "K = round(N/5)（N＝その月に順位に入った業種の数。49なら10、30なら6。Python の round ではなく floor(N/5+0.5)）＝論文の既定（Menzly-Ozbas・Rapach ほかの五分位）の上の五分位。同順位は業種の並び順",
+   "weights_vw": "選ばれた業種の中を時価加重。重み ∝ French の t 月の行の Number of Firms × Average Firm Size（French の約束ではこの行は t−1 月末の時価＝1か月古いが、どちらの約束でも先読みにならない）",
+   "returns": "持つ月のリターンは French の業種の VW 総リターン（等分の変形は業種を等分）",
+   "missing_hold": "持っている業種の t+1 月が欠けたら 0（1969-07 以降は起きない）"
+  },
+  "P_primary": {
+   "role": "主の族（格付けする・Holm はこの5本で）",
+   "P1_MO_customer_vw": {
+    "paper": "Menzly & Ozbas (2010) の customer 信号（J=1・K=1）",
+    "signal": "CUS_F(t) = Σ_G c[F][G]·r_G(t) / Σ_G c[F][G]（c[F][G] = 業種 F が売る中間財のうち業種 G へ行く割合・自分は除く・その月の表）＝顧客の業種の前月のリターンの加重平均",
+    "select": "CUS の上位 K（49業種で10）を時価加重・毎月",
+    "span": "持つのは 1970-02〜2026-08（訓練 1970-02〜2006-12・保有 2007-01〜）",
+    "post_publication_from": "2011-01（JF 2010年8月号）"
+   },
+   "P2_MO_supplier_vw": {
+    "paper": "Menzly & Ozbas (2010) の supplier 信号",
+    "signal": "SUP_G(t) = Σ_F s[G][F]·r_F(t) / Σ_F s[G][F]（s[G][F] = 業種 G が買う中間財のうち F から来る割合・自分は除く）＝仕入れ先の業種の前月のリターンの加重平均",
+    "select": "SUP の上位 K を時価加重",
+    "span": "1970-02〜2026-08",
+    "post_publication_from": "2011-01"
+   },
+   "P3_MO_composite_vw": {
+    "paper": "Menzly & Ozbas (2010) の composite",
+    "signal": "COMP = (CUS + SUP)/2（両方作れる業種だけ）",
+    "select": "COMP の上位 K を時価加重",
+    "span": "1970-02〜2026-08",
+    "post_publication_from": "2011-01"
+   },
+   "P4_RSTZ_lasso_ff30_vw": {
+    "paper": "Rapach, Strauss, Tu & Zhou (2019)（French 30業種・1960年からの拡大窓・初期窓10年・LASSO で選んで OLS post-LASSO・AICc で調整）の型を論文の既定の業種数（30）で",
+    "model": "各業種 i ごとに y_s = r_i,s − RF_s を x_{s−1} = (r_j,s−1 − RF_s−1)_{j=1..30}（自分を含む全30業種の前月の超過）で回帰。推定に使う月 s は 1960-01 から t まで（説明変数は 1959-12 から）の拡大窓。x の列はその窓で標準化、y は中心化（切片は罰しない）",
+    "lasso": "目的関数 (1/2n)‖y−Xβ‖² + λ‖β‖₁ を座標降下法（numpy 自前・前の λ の解から温めて始める・収束 max|Δβ|<1e-8 か 10,000 周）。λ は λ_max=max|X'y|/n から λ_max×1e-4 まで対数等間隔の100点",
+    "aicc": "各 λ の選ばれた説明変数 A(λ) で OLS をやり直し（post-LASSO）、その RSS で AICc = n·ln(RSS/n) + 2k + 2k(k+1)/(n−k−1)（k=|A|+1）。最小の λ を採る（同点なら大きい λ＝少ない変数）。どの λ でも A が空なら予言 = 窓の y の平均",
+    "forecast": "f_i,t+1 = post-LASSO OLS の切片 + 係数·x_t。毎月推定し直す",
+    "select": "f の上位 K=6 を時価加重（FF30 の t 月の行の社数×平均時価）",
+    "span": "予言 1970-01〜2026-08（初期窓 1960-01〜1969-12 の120組）",
+    "post_publication_from": "2020-01（JFDS 2019年夏号・SSRN 2018-02）"
+   },
+   "P5_RSTZ_lasso_ff49_vw": {
+    "paper": "同じ手法を49業種で（この角度の共通の土俵）",
+    "model": "P4 と同じ。説明変数は49業種の前月の超過。推定に使う月 s は 1969-08 から（説明変数は Hlth が始まる 1969-07 から＝49業種がそろう最初の月）",
+    "select": "f の上位 K=10 を時価加重",
+    "span": "予言 1979-08〜2026-08（初期窓 1969-08〜1979-07 の120組）",
+    "post_publication_from": "2020-01"
+   }
+  },
+  "X_exploratory": {
+   "role": "探索の族（格付けはするが『探索』と明記。Holm は探索の21本の中で。C5 は測らない）",
+   "E1_MO_customer_ew": "P1 を業種の等分で",
+   "E2_MO_supplier_ew": "P2 を等分で",
+   "E3_MO_composite_ew": "P3 を等分で",
+   "E4_MO_composite_vw_K3": "P3 の形成を毎月行い、直近3か月の形成の持ち物を1/3ずつ重ねて持つ（Jegadeesh-Titman 型の重なり。M-O 付録 Table IA.VI の K=3）。最初の2か月はある分だけ",
+   "E5_MO_composite_vw_J3": "相手の業種のリターンを t−2〜t の3か月の複利にして COMP を作る（M-O 付録の J=3）",
+   "E6_MO_composite_vw_J12": "相手の業種の t−11〜t の12か月の複利（M-O 付録の J=12）",
+   "E7_MO_composite_vw_modal": "部門を最大の割合の French 業種へ丸ごと寄せた重み（nx_leadlag_io.json の *_modal）で P3＝割り振りの雑音への頑健性",
+   "E8_MO_composite_vw_2nd": "直接＋2段目のつながり: W2 = 対角を除いて行を割り直した (W + W·W)（顧客・仕入れ先それぞれ）で P3",
+   "E9_MO_composite_vw_ortho": "毎月、業種の横断で COMP_i(t) を [1, r_i(t)]（自分の前月）で OLS 回帰した残差で順位＝自分の1か月の勢いを抜いた他業種の信号",
+   "E10_MO_composite_vw_early": "1952-02 から持つ早い延長: 1947年85部門表（1952-01 の信号から・BLS の当初版は1951年だが手元の並べ直しは1970年ごろ＝様式の後知恵あり）→ 1958年85部門表（1965-10 の信号から）→ 主の schedule。85部門表は2桁の親の辞書 IO_SIC で写す（1947・1958 は 74＝研究開発・飲食は 69 の中）",
+   "E11_MO_composite_vw_K5": "K = round(N/10)（49業種で5）",
+   "E12_RSTZ_enet_ff49_vw": "P5 の LASSO を elastic net（罰 λ[α‖β‖₁ + (1−α)/2‖β‖²]・α=0.5）に。AICc は elastic net の当てはめの RSS と k=|A|+1、OLS のやり直しはしない",
+   "E13_RSTZ_lasso_ff49_vw_others": "P5 から自分の前月を説明変数から除く（他の業種の過去だけ）",
+   "E14_RSTZ_combo_ff49_vw": "予言の組み合わせ（Rapach-Strauss-Zhou 2010 型）: 各業種 i について49本の単回帰（切片＋業種 j の前月）の予言を単純平均",
+   "E15_RSTZ_ols_ff49_vw": "49本すべての OLS（罰なし・台所の流し）",
+   "E16_RSTZ_lasso_ff30_ew": "P4 を等分で",
+   "E17_RSTZ_lasso_ff49_ew": "P5 を等分で",
+   "E18_RSTZ_lasso_ff49_vw_roll120": "P5 の拡大窓を直近120組の転がる窓に（つながりの変化に追随する版）",
+   "E19_HOU_big2small_ew": "Hou (2007) 型の同じ業種の中の大→小: 業種の VW リターン（大型が主）の前月 r^VW_i(t) で順位を付け、上位 K=round(N/5) 業種の EW リターン（小型が主）を業種の等分で持つ。1926-08 から（44業種で開始）。費用 0.30%（感度 0.50%）。判定の相手は Mkt、報告として『49業種の EW の等分平均』とも比べる（小型への傾きだけの勝ちを見分けるため）",
+   "E20_HOU_gap_ew": "E19 の順位を r^VW_i(t) − r^EW_i(t)（大型がまだ小型に届いていない差）で",
+   "E21_HTV_timing": "Hong-Torous-Valkanov (2007) 型の業種→市場: 翌月の市場の超過を49業種の前月の超過＋市場の前月の超過で LASSO（AICc・post-LASSO・拡大窓・推定は 1969-08 から・初期120組）で予言し、予言>0 なら市場（French Mkt）、≦0 なら RF を持つ。予言 1979-08〜。C8（訓練・保有の両方でシャープが市場を上回る）が必須。費用 0.10%（切替1回＝片道100%）"
+  },
+  "controls_report_only": {
+   "CTRL_own1m_vw": "自分の前月のリターンの上位 K を時価加重（1か月の業種の勢い）。P1〜P5 がこれと何が違うかを見る。P3・P5 の超過をこの対照の超過と市場の超過に回帰した切片（NW t）も報告",
+   "CTRL_ew49": "49業種の等分平均（小型の業種への傾きの基準）",
+   "PLACEBO_P3": "P3 の重み行列の業種の名札を並べ替えた（行と列に同じ並べ替え・つながりの形は保つ・時間を通じて固定）200回の偽の規則の全期間の超過の分布の中で、本物がどこにいるか（乱数の種 20260928）",
+   "HINDSIGHT_fixed2017": "2017年表を全期間に使った版（後知恵。格付けしない＝後知恵がどれだけ効くかの目安）",
+   "STALE_fixed1963": "1963年表を 1970-02 から最後まで使い続けた版（先読み無し・表を更新しない。格付けしない参考）"
+  },
+  "reported_for_every_rule": "全期間・訓練・保有・2013-07〜・公表後・1970-1989・1990-2006 の超過（算術・NW t・幾何の差・追従のぶれ・β）、最大下落、年あたりの片道回転、費用 0.10%／0.30% 後、20年積立の倍率（nx_common.dca）"
+ },
+ "benchmark": {
+  "graded": "French Mkt（Mkt-RF＋RF・上限なしの時価加重・CRSP 全上場＝S&P500 にほぼ等しい）。規則は French 業種の総リターンなので総リターンどうし",
+  "C5": "各国の JKP 市場（vw・USD・超過）。規則も JKP の超過なので超過どうし",
+  "real_etf": "SPY（配当込み）"
+ },
+ "timing": {
+  "returns": "t 月末の業種・市場のリターン（French・JKP は月次）で信号を作り、t+1 月を持つ。t+1 月の値は一切使わない",
+  "weights": "時価の重みは French の t 月の行（t−1 月末の時価）",
+  "io_tables": "表は公表月の翌月末の信号から（公表日が年しか分からない詳細表は12月公表とみなす）。改訂版しか手元に無い表（1967・2002・2007）は改訂版の日付から。2017 は手元のファイルの版の日付 2024-05-20 から。2012 は使わない",
+  "estimation": "RSTZ・HTV の推定は t 月までのデータだけの拡大窓（E18 は直近120組）。標準化もその窓の中だけ",
+  "etf": "ETF の答え合わせも同じ（月末の値で翌月）"
+ },
+ "real_instrument_check": {
+  "industries_49": "49業種そのものを持つ ETF は楽天の海外ETF 742本（out/broker_lineup.json）にほとんど無い（あるのは SMH・IBB・ITA・OIH・GDX・COPX・LIT・TAN・MOO・WOOD・PAVE ほか少数。XSD・SOXX・XBI・KRE・XHB・XME・XOP・IYT・IGV などは無い）＝49業種の規則は楽天の ETF では実装できない。個別株で各業種の大型株を毎月入れ替えることは課税口座なら可能だが現実的でない",
+  "gics11": "GICS 11セクター版は楽天で持てる（XLB・XLE・XLF・XLI・XLK・XLP・XLU・XLV・XLY・XLRE・XLC がすべて broker_lineup にある）。答え合わせ（報告のみ・格付けしない）: R1 = P3 の GICS 版（米国の表の gics 重み・上位 K=round(N/5) を等分）を Select Sector SPDR の実際のリターンに当てる（1999-02〜2026-08・XLRE は 2015-12 から・XLC は 2018-08 から順位に入る）。R2 = P5 の GICS 版（ETF 自身の超過〔French RF を引く〕で推定・初期窓120組・予言 2009-02〜）。相手 SPY・費用 0.10%（信託報酬は ETF の価格に入っている）。あわせて JKP の米国 GICS セクター（1999-07〜2025-12）でも同じ2本を報告",
+  "nisa": "毎月の入れ替えは NISA の成長投資枠を買うたびに消費し売った枠は翌年まで戻らないので NISA では続けられない＝課税口座（売るたびに利益の20.315%）。税は格付けに入れない（報告で触れる）"
+ },
+ "prior": {
+  "menzly_ozbas_2010": "Menzly, L. & Ozbas, O. (2010) Market Segmentation and Cross-predictability of Returns, Journal of Finance 65(4), 1555-1580（SSRN 2007）。仕入れ先・顧客の業種は互いのリターンを予言し、その強さはアナリストの数・機関投資家の保有が少ないほど強い。Internet Appendix（afajof.org）で読んだ数字: Table IA.VI（時価加重の業種ポートフォリオ・NYSE 20% 点未満の小型を除く・五分位の上−下の買い−売り・年率）J=1・K=1 で supplier 7.3%（t 4.27）・customer 7.0%（t 3.37）・composite 8.7%（t 4.26）、J・K を伸ばすと小さくなるがおおむね正。Table IA.V に五分位の平均（ある段で年率 1.2%〜9.0%・上−下 7.8%）。部門は1987年の2桁表（Table IA.VII）と SIC 辞書（Table IA.VIII）。標本期間は付録の本文からは確かめていない",
+  "cohen_frazzini_2008": "Cohen, L. & Frazzini, A. (2008) Economic Links and Predictable Returns, Journal of Finance 63(4)。会社単位の顧客の勢い（顧客の前月のリターンで仕入れ先を買う）。会社単位の顧客データ（Compustat の区分）が要るのでここでは使わない（業種単位の Menzly-Ozbas が代わり）",
+  "rapach_strauss_tu_zhou_2019": "Rapach, D., Strauss, J., Tu, J. & Zhou, G. (2019) Industry Return Predictability: A Machine Learning Approach, Journal of Financial Data Science 1(3), 9-28（SSRN 3120110・2018）。※課題文は JFQA と書いていたが、著者の業績ページと雑誌のページで JFDS と確かめた。要旨: 全業種の前月のリターンを LASSO で選んで OLS post-LASSO（AICc で調整）、金融と商品・素材の業種の前月が広く予言力を持つ、予言の上位を買い下位を売る業種の入れ替えは主要な多因子モデルに対して年率8%超のアルファ、景気後退期（大不況を含む）で大きく勝つ。French 30業種・1960年代からの標本（本文の細部は取得できず、要旨と検索の抜粋で確かめた範囲）",
+  "hou_2007": "Hou, K. (2007) Industry Information Diffusion and the Lead-lag Effect in Stock Returns, Review of Financial Studies 20(4)。同じ業種の中で大型株が小型株に先行する",
+  "hong_torous_valkanov_2007": "Hong, H., Torous, W. & Valkanov, R. (2007) Do Industries Lead Stock Markets?, Journal of Financial Economics 83(2)。一部の業種（金属・石油・小売・金融など）の前月が市場の翌月を予言する",
+  "aobdia_caskey_ozel_2014": "Aobdia, D., Caskey, J. & Ozel, N.B. (2014) Inter-industry Network Structure and the Cross-predictability of Earnings and Stock Returns, Review of Accounting Studies（2013年10月の working paper を読んだ）。産業連関の中心にある業種のショックほどつながった業種へ強く伝わる",
+  "shahrur_becker_rosenfeld_2010": "Shahrur, H., Becker, Y. & Rosenfeld, D. (2010) Return Predictability Along the Supply Chain: The International Evidence, Financial Analysts Journal（書誌は記憶・本文未確認）。顧客→仕入れ先の予言が先進国でも見られたとする＝C5 の方向の先行研究",
+  "decay": "McLean & Pontiff (2016, JF): 公表後に上乗せは平均で約半分に。このリポジトリの JKP 153因子の実測でも 2007年以降は中央値で 0.44 倍（米国）に縮んだ（CLAUDE.md の記録）",
+  "expectation_before_measuring": "買いだけの上の五分位は、論文の買い−売りの半分より小さいのが普通（売りの側が無い）。訓練期間（1970〜2006）は M-O・RSTZ の標本と重なるので C1 は通りやすいと予想。保有期間（2007〜）は公表後の縮みと大型テック主導の相場で超過は0前後、C3（NW t≥1.65）は通りにくいと予想。P1〜P5 のどれかが A 以上になる確率を測る前に 15〜20% 程度と見積もる。予想は判定に使わない"
+ },
+ "contamination": [
+  "Menzly-Ozbas の Internet Appendix の表 IA.V・IA.VI の数字（上の prior）を読んだ。本文（標本期間・重みの細部）は取得できなかった",
+  "Rapach ほか（2019）の要旨と検索の抜粋（買い−売りのアルファ年率8%超・金融と素材の業種の予言力・大不況で勝つ）を読んだ。論文の PDF・コードは取得できなかった（SMU の書庫は接続が切られ、著者のデータ zip は Google のログインが要る）",
+  "Aobdia-Caskey-Ozel の working paper（2013年10月）の要旨と一部を読んだ",
+  "並走セッションの重なりを確かめる途中で、eknzbh 枝の night/mw_industry.py の NOTES の見出し（業種の勢い〔自分の過去6〜12か月〕が格付け A・実在のセクターETFでは2008年以降は市場に勝っていない）を見た。自分の過去で選ぶ規則の結果であって、この角度の規則の成績ではないが、業種の規則の期待に影響しうるので書いておく",
+  "JKP の業種リターンの基準（超過かどうか）を確かめるため、1981-06 の米国 ff49 の Food・Oil・Util の3つの値を French と RF と並べた（JKP ≈ French − RF）。規則の成績ではない",
+  "産業連関の事実（表どうしの重みの相関・集中度・主な仕入れ先と顧客）を計算して見た。リターンは使っていない",
+  "French 49・30業種の開始月と欠け、JKP の国別 GICS の期間と欠け、ETF の開始月（形だけ）を見た",
+  "一般的な知識として、2007年以降の米国市場が大型テックに主導されたこと、2009年の勢いの崩れ、2020年の急落と回復、2022年の下落を知っている。消せない漏れとして保有期間・米国外・公表後で答え合わせする",
+  "規則の成績（平均・t・シャープ・累積・勝率）は一度も計算・表示していない"
+ ],
+ "sanity_checks_before_results": [
+  "測る道具は最初に nx_leadlag_io.json の sha256(tables) がこの登録の値と一致するかを確かめ、違えば止まる",
+  "各月の信号に使う表の年を記録し、どの月も『signal ≤ t』を満たすことを assert する（先読みの検査）",
+  "LASSO の自前実装は、λ→0 で OLS に一致すること・λ≥λ_max で係数がすべて0になることを、乱数の合成データで確かめてから本番に使う（リターンのデータでは確かめない）",
+  "VW の重みは各月で和が1、回転は0〜1、選ばれた業種の数は K であることを assert",
+  "JKP と French の基準（超過・総）を取り違えない: 米国の規則は総リターン対総リターン、C5 は超過対超過"
+ ],
+ "known_limits": [
+  "産業連関表は『事業所』単位の業種、French の業種は『会社』単位の主たる SIC＝多角化した会社は片方の業種にしか入らない。部門→SIC→French の写しは等分の割り振り（NAICS 時代は流れの26〜33%、SIC 時代は4〜13%が複数業種へ割れる）で、規模を無視した割り振りの雑音が入る（向きは信号を薄める側＝偽の合格ではなく偽の不合格の側）。E7（丸ごと寄せる版）で頑健性を報告",
+  "NAICS 時代（保有期間の全体）の写しは NAICS→SIC の対照表を4段つないでいる。会社の業種（French）は SIC のままなので、新しい業種（クラウド・ネット広告など）は古い SIC の器（BusSv・Softw・Books など）に入る",
+  "改訂版しか手元に無い表（1967・2002・2007）はその改訂の日付から使うので先読みは無いが、当初版の公表から改訂版までの間は古い表を使い続ける（その間の信号は実際の投資家より古い情報）。2012年表は使わない",
+  "1982年表の3部門（流れの3.3%）は1987年の対照（1994年公表）で写した＝写しの小さな後知恵",
+  "1963・1967年の対照は1957・1967年版の SIC の番号で、1987年版に無い番号はその数字のまま French の範囲に当てた（例: 1957年版の兵器 19xx は親の辞書で Guns へ倒した）",
+  "French の業種は SIC で、毎年6月に会社を割り当て直す（業種の中身が時代で変わる）",
+  "49業種の規則は楽天の ETF では実装できない。GICS 11 の答え合わせは 1999年以降・11本だけ",
+  "C5 の7か国は米国の供給網の形を当てている（各国の産業連関表は使っていない）。米国外は 1999年からで、RSTZ の C5 は 2009年からの約16年",
+  "買いだけの上の五分位で、論文の買い−売りの数字とは比べられない",
+  "独立の試行は少ない（20年窓は重なる・保有期間は約20年の1本）",
+  "RSTZ の論文の細部（重み付け・AICc の k の数え方・予言の組み合わせの有無）は要旨と抜粋でしか確かめられず、足りないところは理論で決めた（この登録に全部書いた）。論文と違う点があっても、この登録の定義が正",
+  "費用は片道0.10%の近似。業種の中の個別株を実際に売買する費用、ETF の売買スプレッド、税は入れていない"
+ ],
+ "test_count": {
+  "primary": 5,
+  "exploratory": 21,
+  "c5_units": "7か国 × 2手法（MO の GICS 版は customer・supplier・composite の3信号、RSTZ の GICS 版は1つ）",
+  "report_only": "対照2本・偽の規則200回・後知恵1本・古い表1本・実在の ETF 2本×2（ETF と JKP 米国 GICS）",
+  "note": "試したものは全部 out/nx_leadlag.json の tested に残す（負けも落とさない）"
+ }
+}

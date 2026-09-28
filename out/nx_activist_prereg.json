@@ -1,0 +1,2418 @@
+{
+ "generated": "2026-09-28",
+ "angle": "nx_activist",
+ "title": "物言う株主（ヘッジファンドの活動家）が 13D を出した会社を、提出の後に買う",
+ "question": "物言う株主が 13D（5% 超の保有・経営に関与する目的）を EDGAR に出した会社の株を、提出が公開された後の最初の月末に買い、12か月（または24か月）持つと、S&P500（SPY・配当込み）に勝てるか。中小型の効果と生き残りの偏りを分けるため、IWM（Russell 2000）と「今も上場している会社の等分の平均」とも比べる。物言う株主の一覧・事象の拾い方・対象会社の対応・保有・重み・相手・費用・欠けの扱い・格付けを、株価を1本も取る前にここで固定する",
+ "asked_by": "ユーザー「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して。限界までやって途中報告を入れながら結果が出るまで分析を止めずに。トークンの限界までやってほしい。今まではそんなものはないという報告で終わってたけどそれはなしで探し続ける努力をしてほしい。今別のSessionでこの内容を2つ回してる。別のSessionで検証していない新たな分析を同じ内容でしてほしい」（2026-09-28）。全体の事前登録 out/nx_prereg.json の wave2 の nx_activist",
+ "registered_before_measuring": true,
+ "global_prereg": "out/nx_prereg.json（criteria_short_sample・誠実さの約束）。統計と格付けは night/nx_common.py の excess_stats（NW ラグ12）/ p_one / holm / grade_short / apply_cost をそのまま使う",
+ "tools": {
+  "data": "night/nx_activist_data.py（EDGAR の full-index と 13D の見出しから事象の一覧と対象会社→今のティッカーの対応を作るだけ・株価は取らない）。段: index → families → headers → mech → events → status → audit。出力 out/_nx_cache/nx_activist/events.json・audit_sample.json（gitignore）。再現: python3 night/nx_activist_data.py index && … families && … headers && … mech && … events && … audit（SEC へ約5,000回・既定 5 req/s）",
+  "events_sha256": "7ae1b1740dd88ddb6202a22e3e2433b335a4db27a14a7a911d785625eb5837cc",
+  "events_sha256_how": "nx_activist_data.events_sha(): 規則の定数（EVENT_START・MECH_START・MECH_LOOKBACK_DAYS・MECH_MIN_TARGETS・REPEAT_DAYS・除外の SIC・白地小切手の名前の規則）と家ごとの CIK と、各事象の（受付番号・日付・対象 CIK・家・一覧・除外・24か月の重複・ティッカー・L_MECH の常連の提出者）をsort_keys・区切り詰めで直列化した sha256。測る道具は最初にこの値と一致するかを確かめ、違えば止まる（一覧・対応表・除外を結果を見てから作り直していないことの証明）",
+  "events_sha256_events_only": "dff57bb6db171591e9713f1eb1c7d72d8d856afda09f9e5783fbf3e6d77ec5b8",
+  "events_sha256_events_only_how": "同じ直列化からティッカーの欄（ticker・ticker_via_successor_cik）を抜いた指紋。SEC の今のティッカー表は日々変わるので、キャッシュ（gitignore）を失って作り直したときは、こちらが一致すること（事象・家・除外・重複が同じ）を確かめ、ティッカーが変わった事象の数を記録して進める",
+  "tickers_file": "SEC の company_tickers_exchange.json（2026-09-28 に取得・今の上場会社だけ。out/_nx_cache/nx_activist/ に保存）",
+  "measure": "night/nx_activist.py（これから書く）→ out/nx_activist.json。試したものは全部 tested に残す"
+ },
+ "stance_before_results": "測定器。門・採点・四関門・席・配分・売却規律には入れない。線（criteria_short_sample）は結果を見て動かさない。一覧・事象・対応表・保有・重み・相手・費用・欠けの扱いはこの登録で固定し、測った後に変えたらそれは『事後』と明記して格付けに使わない。負けも全部記録する",
+ "why_new": {
+  "difference": "並走中の他セッションは、因子・時期選び・配分（eknzbh の mw_*）、出来事と売買の主体（hbm38n の ev5_*: Berkshire の 13F のまね・13F の最良の考え・スピンオフ・S&P500 から外された会社・働きがいのある会社100）、41系統の因子と配分（q07leu）を扱う。『物言う株主の 13D（経営に関与する目的の大量保有）の後に対象を買う』は誰も扱っていない。2026-09-28 に origin の eknzbh・hbm38n・q07leu の枝の night/*.py・out/*prereg*・out/*.json を 13D・activist・物言う・schedule 13・icahn・pershing・starboard・trian で grep した。規則の入力として 13D を使っているのは main から引き継いだ filing_behavior の d13d（下）だけで、ほかの当たり（dashboard.json のニュース・irr85 の候補の会社の説明・angles_13f）は文中の語だった",
+  "relation_to_main_filing_behavior": "main の 2026-08-12『提出書類の振る舞い』(night/filing_behavior.py・out/filing_behavior_prereg.json) に指標 d13d（過去5年に**誰かが**その会社に出した SC 13D 系の件数・0 か 1以上）がある。違い: (1) あちらは2つのビンテージ（2013・2018）の生き残り956社の断面で『15%超の複利になる確率』を見る。こちらは提出日の後に買って持つ**事象の時系列**で、市場に対する月次の超過を測る。(2) あちらは提出者を問わない（創業家・事業会社の買収・PE を含む）。こちらは物言う株主の一覧（名前）と、一覧に依らない機械の定義（13F を出す機関で、過去3年に3社以上に 13D を出した常連）。(3) あちらの母集団は今も残る956社だけ。こちらは当時の 13D の対象すべて（消えた会社も一覧に残り、被覆率と下限版で扱う）。★その d13d の結果（out/filing_behavior_test.json・CLAUDE_ARCHIVE の該当節）は、この登録を書き終えるまで開いていない",
+  "relation_to_main_13f": "13F の注目度（out/angles_13f.json・保有機関数の残差）は受け身の保有の多さで、13D の活動とは別物",
+  "relation_to_hbm38n": "hbm38n の E1（Berkshire の 13F のまね）は一人の投資家の受け身の保有、E2 は 13F の最良の考え。どちらも 13D（経営に関与する目的の宣言）を使わない"
+ },
+ "data": {
+  "edgar_full_index": {
+   "what": "EDGAR の full-index（https://www.sec.gov/Archives/edgar/full-index/{年}/QTR{n}/master.gz・1993Q1〜2026Q3 の135四半期）。1行 = (CIK, 名前, 様式, 提出日, ファイル名)。同じ受付番号の行に提出者と対象会社の両方の CIK が並ぶ",
+   "forms": "初回の 13D = SC 13D、2024-12-18 以後は様式名 SCHEDULE 13D（XML の新様式）。修正 SC 13D/A・SCHEDULE 13D/A は事象にしない（初回だけ）。13G は受け身なので使わない。委任状の様式（PREN14A・DEFN14A・DFAN14A・PREC14A・DEFC14A）は探索 E11 だけ",
+   "kept": "13D/13G・委任状の様式の行と、定期報告（事業会社: 10-K 系・10-Q 系・20-F・40-F／投資会社: N-CSR 系・N-Q・N-30D・NPORT-P）と 13F（13F-HR・13F-NT）を出した CIK の初出と最終の日付だけ（原本の索引は残さない）",
+   "survivor_bias": "EDGAR の索引は当時の提出の全部＝事象の一覧に生き残りの偏りは無い（後に消えた会社への 13D も入る）",
+   "electronic_start": "EDGAR の電子提出は1993〜1996年に段階的に義務化（全登録会社は 1996-05）。それより前の 13D は紙が混じる＝事象は 1996-07-01 以後だけを使う（EVENT_START）"
+  },
+  "headers": {
+   "what": "一覧の家が提出者に入っている受付番号ごとに EDGAR の見出し（https://www.sec.gov/Archives/edgar/data/{CIK}/{受付番号の数字}/{受付番号}.hdr.sgml）を取り、SUBJECT-COMPANY（対象会社）の CIK・名前・SIC・設立州、FILED-BY、GROUP-MEMBERS、FILING-DATE、ACCEPTANCE-DATETIME を読む",
+   "fetched": {
+    "accessions": 4847,
+    "errors": 0,
+    "note": "見出しは 4,847 の受付番号（家が提出者に並ぶ初回 13D と委任状の様式）で全部取れた（取れなかった 0）"
+   },
+   "role_rule": "家の CIK が対象会社の側にだけいる受付番号（誰かが家の運用の器に 13D を出した）は事象にしない。家の CIK が提出者にいれば事象"
+  },
+  "user_agent": "SEC の User-Agent は hachimon_fetch.py の HDRS と同じ形（中の EMAIL をそのまま読む）。既定 5 req/s 以下（並走する nx_lazy と合わせて 10 req/s を超えないよう、実際は 3 req/s で回した）",
+  "tickers": {
+   "source": "SEC の company_tickers_exchange.json（2026-09-28 取得・10,428 行・8,004 CIK）。今上場している会社だけ",
+   "rule": "対象会社の CIK の今のティッカーを、取引所の順（NYSE・Nasdaq → CBOE → OTC → 不明）→『-』の無い記号（優先株・ワラント・ユニットを避ける）→ SEC の表の並び順 で1つ選ぶ（pick_ticker）。CIK は会社の番号で社名や記号が変わっても同じ＝改名した会社は今の記号で当時まで遡れる（Yahoo の系列が当時まであるかは測る道具が確かめる）",
+   "successor_rule": "今のティッカーが無い CIK は、持株会社への組み替え・本拠地の移転で CIK だけが変わった会社を保守的な規則で1回だけ探す（successor_finder）: (a) 会社の名前が接尾語（Inc・Corp・Group・Holdings・Ltd・International ほか）を除いて完全に一致、(b) 新しい CIK の最初の事業会社の定期報告が古い CIK の最後の定期報告の180日前〜400日後、(c) 新しい CIK に今のティッカー、(d) 候補がちょうど1つ。全一覧で 33 事象（L_NOW では 8 事象: Mercer・Rocky Mountain Chocolate・Owens Corning・Ashland・Delek・Marvell・Enviri）。破綻から出直した会社（Owens Corning 2006）は新しい株の系列が買う月を持たない＝測る道具で自然に欠けになる",
+   "missing": "今のティッカーが無い対象会社（買収・破綻・非上場化・上場廃止で消えた会社）は株価が取れない＝被覆率として報告し、下の欠けの約束（base・下限版・中立版）で扱う。Alpha Vantage には上場廃止した銘柄の株価があるが1回が重く、数百社には使えない＝使わない"
+  },
+  "prices_at_measurement": {
+   "source": "Yahoo の月次の調整後終値（配当込み・nx_common.yahoo(記号, \"1mo\")）と、E10 だけ日次（\"1d\"）。SPY・IWM も同じ",
+   "end": "2026-08（最後の完全な月。2026-09 は月の途中で使わない）",
+   "survivor_bias": "★株価は今の記号だけ＝生き残りの偏りがある（当時の対象のうち、今も上場している会社だけに値が付く）。偏りは早い年ほど大きい（下の coverage の年ごとの割合）"
+  },
+  "coverage": {
+   "L_NOW": {
+    "window": "1996-07-01〜2026-07-31",
+    "initial_13d_by_list": 1115,
+    "excluded": {
+     "投資会社（N-CSR 等だけを出す）": 8,
+     "対象会社が家の CIK（自分の運用の器）": 6,
+     "SIC 6770": 5
+    },
+    "repeat_24m_dropped": 81,
+    "events_used": 1015,
+    "distinct_targets": 888,
+    "with_current_ticker": 347,
+    "ticker_share": 0.342,
+    "by_era_events_ticker_share": {
+     "1996-2006": [
+      328,
+      34,
+      0.104
+     ],
+     "2007-2016": [
+      444,
+      154,
+      0.347
+     ],
+     "2017-2026": [
+      243,
+      159,
+      0.654
+     ]
+    },
+    "by_year_events_ticker": {
+     "1996": [
+      4,
+      0
+     ],
+     "1997": [
+      25,
+      1
+     ],
+     "1998": [
+      25,
+      1
+     ],
+     "1999": [
+      21,
+      1
+     ],
+     "2000": [
+      16,
+      1
+     ],
+     "2001": [
+      32,
+      2
+     ],
+     "2002": [
+      17,
+      0
+     ],
+     "2003": [
+      32,
+      4
+     ],
+     "2004": [
+      36,
+      4
+     ],
+     "2005": [
+      59,
+      8
+     ],
+     "2006": [
+      61,
+      12
+     ],
+     "2007": [
+      77,
+      21
+     ],
+     "2008": [
+      54,
+      18
+     ],
+     "2009": [
+      17,
+      5
+     ],
+     "2010": [
+      35,
+      10
+     ],
+     "2011": [
+      42,
+      14
+     ],
+     "2012": [
+      35,
+      17
+     ],
+     "2013": [
+      47,
+      17
+     ],
+     "2014": [
+      52,
+      22
+     ],
+     "2015": [
+      49,
+      20
+     ],
+     "2016": [
+      36,
+      10
+     ],
+     "2017": [
+      41,
+      23
+     ],
+     "2018": [
+      37,
+      17
+     ],
+     "2019": [
+      30,
+      13
+     ],
+     "2020": [
+      28,
+      21
+     ],
+     "2021": [
+      22,
+      16
+     ],
+     "2022": [
+      27,
+      17
+     ],
+     "2023": [
+      19,
+      17
+     ],
+     "2024": [
+      18,
+      16
+     ],
+     "2025": [
+      19,
+      17
+     ],
+     "2026": [
+      2,
+      2
+     ]
+    },
+    "subject_kind": {
+     "operating": 1002,
+     "unknown": 13
+    },
+    "current_exchange_of_mapped": {
+     "Nasdaq": 125,
+     "NYSE": 210,
+     "OTC": 12
+    },
+    "events_by_family": {
+     "icahn": 125,
+     "starboard": 121,
+     "valueact": 94,
+     "elliott": 86,
+     "steel_partners": 84,
+     "third_point": 56,
+     "jana": 53,
+     "ancora": 37,
+     "harbinger": 35,
+     "de_shaw": 29,
+     "pershing": 28,
+     "clinton": 27,
+     "relational": 25,
+     "engaged": 25,
+     "barington": 24,
+     "greenlight": 20,
+     "legion": 20,
+     "corvex": 18,
+     "sarissa": 14,
+     "engine": 13,
+     "glenview": 12,
+     "trian": 12,
+     "marcato": 10,
+     "impactive": 10,
+     "sachem_head": 8,
+     "voce": 6,
+     "cevian": 5,
+     "tci": 4,
+     "macellum": 3,
+     "land_buildings": 3,
+     "blackwells": 2,
+     "mantle_ridge": 2,
+     "politan": 2,
+     "irenic": 2
+    }
+   },
+   "L_PRE_all": {
+    "window": "1996-07-01〜2026-07-31",
+    "initial_13d_by_list": 763,
+    "excluded": {
+     "SIC 6770": 5,
+     "対象会社が家の CIK（自分の運用の器）": 2
+    },
+    "repeat_24m_dropped": 66,
+    "events_used": 690,
+    "distinct_targets": 624,
+    "with_current_ticker": 162,
+    "ticker_share": 0.235,
+    "by_era_events_ticker_share": {
+     "1996-2006": [
+      407,
+      46,
+      0.113
+     ],
+     "2007-2016": [
+      201,
+      65,
+      0.323
+     ],
+     "2017-2026": [
+      82,
+      51,
+      0.622
+     ]
+    },
+    "by_year_events_ticker": {
+     "1996": [
+      8,
+      2
+     ],
+     "1997": [
+      38,
+      6
+     ],
+     "1998": [
+      39,
+      3
+     ],
+     "1999": [
+      35,
+      2
+     ],
+     "2000": [
+      32,
+      2
+     ],
+     "2001": [
+      38,
+      3
+     ],
+     "2002": [
+      33,
+      4
+     ],
+     "2003": [
+      39,
+      3
+     ],
+     "2004": [
+      34,
+      3
+     ],
+     "2005": [
+      58,
+      8
+     ],
+     "2006": [
+      53,
+      10
+     ],
+     "2007": [
+      51,
+      12
+     ],
+     "2008": [
+      37,
+      11
+     ],
+     "2009": [
+      6,
+      1
+     ],
+     "2010": [
+      17,
+      8
+     ],
+     "2011": [
+      18,
+      9
+     ],
+     "2012": [
+      13,
+      7
+     ],
+     "2013": [
+      17,
+      4
+     ],
+     "2014": [
+      13,
+      5
+     ],
+     "2015": [
+      17,
+      4
+     ],
+     "2016": [
+      12,
+      4
+     ],
+     "2017": [
+      17,
+      9
+     ],
+     "2018": [
+      14,
+      9
+     ],
+     "2019": [
+      4,
+      2
+     ],
+     "2020": [
+      7,
+      3
+     ],
+     "2021": [
+      7,
+      5
+     ],
+     "2022": [
+      9,
+      6
+     ],
+     "2023": [
+      3,
+      1
+     ],
+     "2024": [
+      8,
+      6
+     ],
+     "2025": [
+      11,
+      9
+     ],
+     "2026": [
+      2,
+      1
+     ]
+    },
+    "subject_kind": {
+     "operating": 675,
+     "unknown": 15
+    },
+    "current_exchange_of_mapped": {
+     "Nasdaq": 61,
+     "NYSE": 96,
+     "OTC": 5
+    },
+    "events_by_family": {
+     "icahn": 125,
+     "valueact": 94,
+     "farallon": 87,
+     "steel_partners": 84,
+     "wynnefield": 74,
+     "third_point": 56,
+     "jana": 53,
+     "blum": 51,
+     "chapman": 27,
+     "pirate": 20,
+     "newcastle": 19
+    }
+   },
+   "L_PRE_2007": {
+    "window": "2007-01-01〜2026-07-31",
+    "initial_13d_by_list": 310,
+    "excluded": {
+     "SIC 6770": 2,
+     "対象会社が家の CIK（自分の運用の器）": 2
+    },
+    "repeat_24m_dropped": 23,
+    "events_used": 283,
+    "distinct_targets": 269,
+    "with_current_ticker": 116,
+    "ticker_share": 0.41,
+    "by_era_events_ticker_share": {
+     "2007-2016": [
+      201,
+      65,
+      0.323
+     ],
+     "2017-2026": [
+      82,
+      51,
+      0.622
+     ]
+    },
+    "by_year_events_ticker": {
+     "2007": [
+      51,
+      12
+     ],
+     "2008": [
+      37,
+      11
+     ],
+     "2009": [
+      6,
+      1
+     ],
+     "2010": [
+      17,
+      8
+     ],
+     "2011": [
+      18,
+      9
+     ],
+     "2012": [
+      13,
+      7
+     ],
+     "2013": [
+      17,
+      4
+     ],
+     "2014": [
+      13,
+      5
+     ],
+     "2015": [
+      17,
+      4
+     ],
+     "2016": [
+      12,
+      4
+     ],
+     "2017": [
+      17,
+      9
+     ],
+     "2018": [
+      14,
+      9
+     ],
+     "2019": [
+      4,
+      2
+     ],
+     "2020": [
+      7,
+      3
+     ],
+     "2021": [
+      7,
+      5
+     ],
+     "2022": [
+      9,
+      6
+     ],
+     "2023": [
+      3,
+      1
+     ],
+     "2024": [
+      8,
+      6
+     ],
+     "2025": [
+      11,
+      9
+     ],
+     "2026": [
+      2,
+      1
+     ]
+    },
+    "subject_kind": {
+     "operating": 280,
+     "unknown": 3
+    },
+    "current_exchange_of_mapped": {
+     "NYSE": 72,
+     "Nasdaq": 40,
+     "OTC": 4
+    },
+    "events_by_family": {
+     "icahn": 72,
+     "valueact": 56,
+     "jana": 37,
+     "wynnefield": 33,
+     "third_point": 30,
+     "farallon": 23,
+     "steel_partners": 15,
+     "blum": 9,
+     "chapman": 6,
+     "newcastle": 2
+    }
+   },
+   "L_MECH": {
+    "window": "2000-07-01〜2026-07-31",
+    "initial_13d_by_list": 3898,
+    "excluded": {
+     "投資会社（N-CSR 等だけを出す）": 430,
+     "名前が白地小切手会社（… Acquisition Corp）": 29
+    },
+    "repeat_24m_dropped": 444,
+    "events_used": 2995,
+    "distinct_targets": 2666,
+    "with_current_ticker": 858,
+    "ticker_share": 0.286,
+    "by_era_events_ticker_share": {
+     "1996-2006": [
+      778,
+      121,
+      0.156
+     ],
+     "2007-2016": [
+      1403,
+      320,
+      0.228
+     ],
+     "2017-2026": [
+      814,
+      417,
+      0.512
+     ]
+    },
+    "by_year_events_ticker": {
+     "2000": [
+      64,
+      10
+     ],
+     "2001": [
+      94,
+      9
+     ],
+     "2002": [
+      111,
+      20
+     ],
+     "2003": [
+      79,
+      11
+     ],
+     "2004": [
+      104,
+      18
+     ],
+     "2005": [
+      139,
+      24
+     ],
+     "2006": [
+      187,
+      29
+     ],
+     "2007": [
+      256,
+      36
+     ],
+     "2008": [
+      191,
+      35
+     ],
+     "2009": [
+      107,
+      30
+     ],
+     "2010": [
+      142,
+      27
+     ],
+     "2011": [
+      130,
+      33
+     ],
+     "2012": [
+      111,
+      28
+     ],
+     "2013": [
+      123,
+      33
+     ],
+     "2014": [
+      124,
+      25
+     ],
+     "2015": [
+      117,
+      40
+     ],
+     "2016": [
+      102,
+      33
+     ],
+     "2017": [
+      118,
+      42
+     ],
+     "2018": [
+      110,
+      52
+     ],
+     "2019": [
+      83,
+      28
+     ],
+     "2020": [
+      89,
+      52
+     ],
+     "2021": [
+      129,
+      63
+     ],
+     "2022": [
+      73,
+      37
+     ],
+     "2023": [
+      60,
+      31
+     ],
+     "2024": [
+      67,
+      46
+     ],
+     "2025": [
+      61,
+      42
+     ],
+     "2026": [
+      24,
+      24
+     ]
+    },
+    "subject_kind": {
+     "operating": 2995
+    },
+    "current_exchange_of_mapped": {
+     "NYSE": 386,
+     "Nasdaq": 436,
+     "OTC": 36
+    },
+    "events_by_family": {}
+   },
+   "L_NOW_only_not_PRE": {
+    "window": "1996-07-01〜2026-07-31",
+    "initial_13d_by_list": 665,
+    "excluded": {
+     "投資会社（N-CSR 等だけを出す）": 8,
+     "対象会社が家の CIK（自分の運用の器）": 4,
+     "SIC 6770": 4
+    },
+    "repeat_24m_dropped": 46,
+    "events_used": 603,
+    "distinct_targets": 550,
+    "with_current_ticker": 223,
+    "ticker_share": 0.37,
+    "by_era_events_ticker_share": {
+     "1996-2006": [
+      126,
+      14,
+      0.111
+     ],
+     "2007-2016": [
+      300,
+      96,
+      0.32
+     ],
+     "2017-2026": [
+      177,
+      113,
+      0.638
+     ]
+    },
+    "by_year_events_ticker": {
+     "1996": [
+      1,
+      0
+     ],
+     "1997": [
+      14,
+      1
+     ],
+     "1998": [
+      10,
+      0
+     ],
+     "1999": [
+      6,
+      0
+     ],
+     "2000": [
+      3,
+      0
+     ],
+     "2001": [
+      6,
+      0
+     ],
+     "2002": [
+      4,
+      0
+     ],
+     "2003": [
+      9,
+      1
+     ],
+     "2004": [
+      14,
+      3
+     ],
+     "2005": [
+      21,
+      2
+     ],
+     "2006": [
+      38,
+      7
+     ],
+     "2007": [
+      47,
+      12
+     ],
+     "2008": [
+      31,
+      9
+     ],
+     "2009": [
+      14,
+      4
+     ],
+     "2010": [
+      19,
+      3
+     ],
+     "2011": [
+      25,
+      5
+     ],
+     "2012": [
+      26,
+      11
+     ],
+     "2013": [
+      33,
+      13
+     ],
+     "2014": [
+      39,
+      17
+     ],
+     "2015": [
+      38,
+      16
+     ],
+     "2016": [
+      28,
+      6
+     ],
+     "2017": [
+      30,
+      15
+     ],
+     "2018": [
+      24,
+      8
+     ],
+     "2019": [
+      26,
+      11
+     ],
+     "2020": [
+      22,
+      19
+     ],
+     "2021": [
+      15,
+      11
+     ],
+     "2022": [
+      19,
+      11
+     ],
+     "2023": [
+      19,
+      17
+     ],
+     "2024": [
+      12,
+      11
+     ],
+     "2025": [
+      9,
+      9
+     ],
+     "2026": [
+      1,
+      1
+     ]
+    },
+    "subject_kind": {
+     "operating": 595,
+     "unknown": 8
+    },
+    "current_exchange_of_mapped": {
+     "Nasdaq": 87,
+     "OTC": 9,
+     "NYSE": 127
+    },
+    "events_by_family": {
+     "starboard": 121,
+     "elliott": 86,
+     "ancora": 37,
+     "harbinger": 35,
+     "de_shaw": 29,
+     "pershing": 28,
+     "clinton": 27,
+     "relational": 25,
+     "engaged": 25,
+     "barington": 24,
+     "greenlight": 20,
+     "legion": 20,
+     "corvex": 18,
+     "sarissa": 14,
+     "engine": 13,
+     "glenview": 12,
+     "trian": 12,
+     "marcato": 10,
+     "impactive": 10,
+     "sachem_head": 8,
+     "voce": 6,
+     "cevian": 5,
+     "tci": 4,
+     "macellum": 3,
+     "land_buildings": 3,
+     "blackwells": 2,
+     "mantle_ridge": 2,
+     "politan": 2,
+     "irenic": 2
+    }
+   },
+   "L_MECH_anonymous": {
+    "window": "2000-07-01〜2026-07-31",
+    "initial_13d_by_list": 3106,
+    "excluded": {
+     "投資会社（N-CSR 等だけを出す）": 424,
+     "名前が白地小切手会社（… Acquisition Corp）": 26
+    },
+    "repeat_24m_dropped": 325,
+    "events_used": 2331,
+    "distinct_targets": 2126,
+    "with_current_ticker": 622,
+    "ticker_share": 0.267,
+    "by_era_events_ticker_share": {
+     "1996-2006": [
+      595,
+      94,
+      0.158
+     ],
+     "2007-2016": [
+      1078,
+      210,
+      0.195
+     ],
+     "2017-2026": [
+      658,
+      318,
+      0.483
+     ]
+    },
+    "by_year_events_ticker": {
+     "2000": [
+      60,
+      10
+     ],
+     "2001": [
+      80,
+      8
+     ],
+     "2002": [
+      91,
+      17
+     ],
+     "2003": [
+      60,
+      10
+     ],
+     "2004": [
+      80,
+      15
+     ],
+     "2005": [
+      88,
+      15
+     ],
+     "2006": [
+      136,
+      19
+     ],
+     "2007": [
+      193,
+      23
+     ],
+     "2008": [
+      147,
+      23
+     ],
+     "2009": [
+      94,
+      26
+     ],
+     "2010": [
+      119,
+      18
+     ],
+     "2011": [
+      98,
+      21
+     ],
+     "2012": [
+      86,
+      17
+     ],
+     "2013": [
+      86,
+      18
+     ],
+     "2014": [
+      89,
+      11
+     ],
+     "2015": [
+      86,
+      28
+     ],
+     "2016": [
+      80,
+      25
+     ],
+     "2017": [
+      84,
+      25
+     ],
+     "2018": [
+      80,
+      38
+     ],
+     "2019": [
+      69,
+      21
+     ],
+     "2020": [
+      73,
+      40
+     ],
+     "2021": [
+      116,
+      54
+     ],
+     "2022": [
+      52,
+      22
+     ],
+     "2023": [
+      50,
+      23
+     ],
+     "2024": [
+      57,
+      36
+     ],
+     "2025": [
+      54,
+      36
+     ],
+     "2026": [
+      23,
+      23
+     ]
+    },
+    "subject_kind": {
+     "operating": 2331
+    },
+    "current_exchange_of_mapped": {
+     "NYSE": 248,
+     "Nasdaq": 345,
+     "OTC": 29
+    },
+    "events_by_family": {}
+   },
+   "CONTEST_NOW": {
+    "window": "1996-07-01〜2026-07-31",
+    "initial_13d_by_list": 3219,
+    "excluded": {
+     "投資会社（N-CSR 等だけを出す）": 21
+    },
+    "repeat_24m_dropped": 2908,
+    "events_used": 290,
+    "distinct_targets": 273,
+    "with_current_ticker": 131,
+    "ticker_share": 0.452,
+    "by_era_events_ticker_share": {
+     "1996-2006": [
+      49,
+      9,
+      0.184
+     ],
+     "2007-2016": [
+      123,
+      40,
+      0.325
+     ],
+     "2017-2026": [
+      118,
+      82,
+      0.695
+     ]
+    },
+    "by_year_events_ticker": {
+     "1997": [
+      2,
+      0
+     ],
+     "1998": [
+      1,
+      0
+     ],
+     "1999": [
+      3,
+      1
+     ],
+     "2000": [
+      1,
+      0
+     ],
+     "2001": [
+      4,
+      0
+     ],
+     "2002": [
+      1,
+      0
+     ],
+     "2003": [
+      6,
+      1
+     ],
+     "2004": [
+      7,
+      2
+     ],
+     "2005": [
+      10,
+      2
+     ],
+     "2006": [
+      14,
+      3
+     ],
+     "2007": [
+      14,
+      3
+     ],
+     "2008": [
+      13,
+      6
+     ],
+     "2009": [
+      5,
+      1
+     ],
+     "2010": [
+      5,
+      2
+     ],
+     "2011": [
+      10,
+      6
+     ],
+     "2012": [
+      12,
+      4
+     ],
+     "2013": [
+      20,
+      3
+     ],
+     "2014": [
+      18,
+      5
+     ],
+     "2015": [
+      16,
+      8
+     ],
+     "2016": [
+      10,
+      2
+     ],
+     "2017": [
+      14,
+      11
+     ],
+     "2018": [
+      15,
+      9
+     ],
+     "2019": [
+      10,
+      6
+     ],
+     "2020": [
+      11,
+      8
+     ],
+     "2021": [
+      16,
+      12
+     ],
+     "2022": [
+      15,
+      7
+     ],
+     "2023": [
+      9,
+      5
+     ],
+     "2024": [
+      12,
+      10
+     ],
+     "2025": [
+      10,
+      9
+     ],
+     "2026": [
+      6,
+      5
+     ]
+    },
+    "subject_kind": {
+     "operating": 290
+    },
+    "current_exchange_of_mapped": {
+     "NYSE": 78,
+     "Nasdaq": 52,
+     "OTC": 1
+    },
+    "events_by_family": {
+     "starboard": 55,
+     "icahn": 44,
+     "steel_partners": 18,
+     "barington": 17,
+     "land_buildings": 15,
+     "clinton": 13,
+     "elliott": 10,
+     "engaged": 10,
+     "third_point": 9,
+     "voce": 9,
+     "engine": 9,
+     "ancora": 8,
+     "legion": 8,
+     "blackwells": 8,
+     "jana": 7,
+     "harbinger": 6,
+     "trian": 5,
+     "macellum": 5,
+     "pershing": 4,
+     "corvex": 4,
+     "sarissa": 4,
+     "greenlight": 3,
+     "marcato": 3,
+     "mantle_ridge": 3,
+     "valueact": 2,
+     "relational": 2,
+     "glenview": 2,
+     "sachem_head": 2,
+     "impactive": 2,
+     "tci": 1,
+     "politan": 1,
+     "irenic": 1
+    }
+   },
+   "overlap": {
+    "NOW_in_MECH": 660,
+    "NOW": 1133,
+    "MECH": 3910
+   },
+   "note": "数は測る道具の株価の確認の前＝「今のティッカーがある」割合。実際に使えるのは、そのうち Yahoo の系列が買う月の終値を持つもの（測る道具が数えて報告する）。事象の終わりは 2026-07-31（それより後に出た 13D は買う月が 2026-08 以後で、保有の月が無い）",
+   "summary": "L_NOW: 1996-07〜2026-07 の初回 13D 1,115件 → 除外 19・24か月の重複 81 を除いて 1,015件（対象会社 888社）。今のティッカーが付いたのは 347件（34%）。時代別 1996-2006 10%・2007-2016 35%・2017-2026 65%。L_PRE（2007-01〜）: 283件・ティッカー 41%。L_MECH（2000-07〜）: 2,995件・ティッカー 29%（常連の提出者に Gabelli/GAMCO がいる事象が 623件＝21%）。委任状（L_NOW の家）: 290件・ティッカー 45%。★今のティッカーが付くのは全体の3分の1で、早い年ほど少ない＝この角度のいちばん大きな弱点（base は生き残りに寄り、下限版は早い年の欠けで大きく負に振れる）"
+  },
+  "build_stats": {
+   "13D: 家は対象会社の側にだけいた（事象ではない）": 8,
+   "後継の CIK でティッカーを付けた": 33
+  }
+ },
+ "lists": {
+  "L_NOW": {
+   "what": "依頼に名前の挙がった物言う株主（Icahn・Elliott・Pershing Square・Trian・Starboard・Third Point・ValueAct・JANA・Relational・Sachem Head・Corvex・Engaged・Legion・Land & Buildings・Barington・Clinton Group・Marcato・Mantle Ridge・D.E. Shaw）と、「ほか」として 2026-09 の今に広く知られた米国の物言う株主（Greenlight・Steel Partners・Ancora・Blackwells・Politan・Irenic・Impactive・Engine・Macellum・Sarissa・Voce・Glenview・Harbinger・TCI・Cevian）の34家",
+   "hindsight": "★今の知名度で選んだ＝後知恵の偏りがある（有名になった家は、対象の株価が上がった運動をした家に寄る）。これを L_PRE と L_MECH で挟む",
+   "families": {
+    "icahn": {
+     "name_rule": "\\bICAHN\\b|HIGH RIVER|BARBERRY CORP|BECKTON CORP|\\bIPH GP\\b",
+     "ciks": [
+      921669,
+      813762,
+      928464,
+      860850,
+      1412093,
+      1034563
+     ]
+    },
+    "elliott": {
+     "name_rule": "ELLIOTT ASSOCIATES|ELLIOTT INTERNATIONAL|ELLIOTT INVESTMENT MANAGEMENT|ELLIOTT MANAGEMENT|ELLIOTT CAPITAL ADVISORS|ELLIOTT INTERNATIONAL CAPITAL ADVISORS|\\bSINGER PAUL\\b|\\bPAUL E\\.? SINGER\\b|ELLIOTT ADVISORS",
+     "ciks": [
+      904495,
+      1791786,
+      937611
+     ]
+    },
+    "pershing": {
+     "name_rule": "PERSHING SQUARE|\\bACKMAN WILLIAM\\b|\\bWILLIAM A\\.? ACKMAN\\b|\\bPS MANAGEMENT GP\\b",
+     "ciks": [
+      1336528,
+      1275323,
+      1056513,
+      2002660,
+      2026053
+     ]
+    },
+    "trian": {
+     "name_rule": "\\bTRIAN FUND|\\bTRIAN PARTNERS|\\bTRIAN STAR|\\bPELTZ NELSON\\b|\\bNELSON PELTZ\\b",
+     "ciks": [
+      1345471,
+      928265
+     ]
+    },
+    "starboard": {
+     "name_rule": "STARBOARD VALUE|RCG STARBOARD|STARBOARD LEADERS|\\bRAMIUS\\b",
+     "ciks": [
+      1517137,
+      1050154,
+      1475770,
+      1329988,
+      1502512
+     ]
+    },
+    "third_point": {
+     "name_rule": "THIRD POINT|\\bLOEB DANIEL\\b|\\bDANIEL S\\.? LOEB\\b",
+     "ciks": [
+      1040273,
+      1300345,
+      2025369
+     ]
+    },
+    "valueact": {
+     "name_rule": "VALUEACT|\\bVA PARTNERS\\b|\\bUBBEN JEFFREY\\b|\\bJEFFREY W\\.? UBBEN\\b",
+     "ciks": [
+      1418812,
+      1129787,
+      1375350,
+      1464912,
+      1464910
+     ]
+    },
+    "jana": {
+     "name_rule": "\\bJANA PARTNERS\\b|\\bJANA MASTER\\b|\\bJANA NIRVANA\\b|\\bROSENSTEIN BARRY\\b|\\bBARRY ROSENSTEIN\\b",
+     "ciks": [
+      1159159,
+      1998597
+     ]
+    },
+    "relational": {
+     "name_rule": "RELATIONAL INVESTORS|\\bWHITWORTH RALPH\\b|\\bRALPH V\\.? WHITWORTH\\b",
+     "ciks": [
+      1047644
+     ]
+    },
+    "sachem_head": {
+     "name_rule": "SACHEM HEAD",
+     "ciks": [
+      1582090
+     ]
+    },
+    "corvex": {
+     "name_rule": "\\bCORVEX\\b|\\bMEISTER KEITH\\b|\\bKEITH A\\.? MEISTER\\b",
+     "ciks": [
+      1535472,
+      1734750
+     ]
+    },
+    "engaged": {
+     "name_rule": "ENGAGED CAPITAL|\\bWELLING GLENN\\b|\\bGLENN W\\.? WELLING\\b",
+     "ciks": [
+      1559771,
+      1559851
+     ]
+    },
+    "legion": {
+     "name_rule": "LEGION PARTNERS",
+     "ciks": [
+      1560207
+     ]
+    },
+    "land_buildings": {
+     "name_rule": "LAND (&|AND) BUILDINGS|\\bLITT JONATHAN\\b|\\bJONATHAN LITT\\b",
+     "ciks": [
+      1536520
+     ]
+    },
+    "barington": {
+     "name_rule": "\\bBARINGTON\\b|\\bMITAROTONDA\\b",
+     "ciks": [
+      1107149,
+      887762,
+      1622175,
+      1324906
+     ]
+    },
+    "clinton": {
+     "name_rule": "CLINTON GROUP|CLINTON RELATIONAL|CLINTON SPECIAL OPPORTUNITIES|CLINTON MAGNOLIA",
+     "ciks": [
+      1134119
+     ]
+    },
+    "marcato": {
+     "name_rule": "\\bMARCATO\\b|\\bMCGUIRE RICHARD T\\b",
+     "ciks": [
+      1541996
+     ]
+    },
+    "mantle_ridge": {
+     "name_rule": "MANTLE RIDGE|\\bHILAL PAUL\\b|\\bPAUL C\\.? HILAL\\b",
+     "ciks": [
+      1695459
+     ]
+    },
+    "de_shaw": {
+     "name_rule": "\\bD\\.? ?E\\.? SHAW\\b|\\bSHAW DAVID E\\b|\\bDAVID E\\.? SHAW\\b",
+     "ciks": [
+      1263972,
+      1009268,
+      1294704,
+      1666484,
+      1414101,
+      1638706,
+      1600099,
+      1391112,
+      1023870,
+      1638707
+     ]
+    },
+    "greenlight": {
+     "name_rule": "GREENLIGHT CAPITAL|\\bEINHORN DAVID\\b|\\bDAVID EINHORN\\b",
+     "ciks": [
+      1040272,
+      1079114,
+      1240451,
+      1385613
+     ]
+    },
+    "steel_partners": {
+     "name_rule": "STEEL PARTNERS|\\bLICHTENSTEIN WARREN\\b|\\bWARREN G\\.? LICHTENSTEIN\\b",
+     "ciks": [
+      915653,
+      1452857,
+      1504325,
+      940500,
+      946946,
+      1005784
+     ]
+    },
+    "ancora": {
+     "name_rule": "\\bANCORA (ADVISORS|CAPITAL|GROUP|HOLDINGS|CATALYST|MERLIN|ALTERNATIVES)\\b",
+     "ciks": [
+      1446114,
+      1305642,
+      1492701,
+      1836192
+     ]
+    },
+    "blackwells": {
+     "name_rule": "BLACKWELLS",
+     "ciks": [
+      1720183
+     ]
+    },
+    "politan": {
+     "name_rule": "\\bPOLITAN CAPITAL|\\bPOLITAN INTERMEDIATE|\\bKOFFEY QUENTIN\\b",
+     "ciks": [
+      1885245
+     ]
+    },
+    "irenic": {
+     "name_rule": "IRENIC CAPITAL",
+     "ciks": [
+      1929389
+     ]
+    },
+    "impactive": {
+     "name_rule": "IMPACTIVE CAPITAL",
+     "ciks": [
+      1786767
+     ]
+    },
+    "engine": {
+     "name_rule": "\\bENGINE CAPITAL\\b|\\bENGINE JET CAPITAL\\b|\\bENGINE INVESTMENTS\\b",
+     "ciks": [
+      1580320
+     ]
+    },
+    "macellum": {
+     "name_rule": "MACELLUM",
+     "ciks": [
+      1607223,
+      1640326
+     ]
+    },
+    "sarissa": {
+     "name_rule": "SARISSA CAPITAL",
+     "ciks": [
+      1577524
+     ]
+    },
+    "voce": {
+     "name_rule": "VOCE CAPITAL|VOCE CATALYST",
+     "ciks": [
+      1563530
+     ]
+    },
+    "glenview": {
+     "name_rule": "GLENVIEW CAPITAL",
+     "ciks": [
+      1138995
+     ]
+    },
+    "harbinger": {
+     "name_rule": "HARBINGER CAPITAL PARTNERS|HARBINGER GROUP|\\bFALCONE PHILIP\\b|\\bPHILIP A\\.? FALCONE\\b",
+     "ciks": [
+      1233563,
+      109177,
+      1233569
+     ]
+    },
+    "tci": {
+     "name_rule": "CHILDREN'?S INVESTMENT FUND|\\bTCI FUND MANAGEMENT\\b",
+     "ciks": [
+      1362598,
+      1647251
+     ]
+    },
+    "cevian": {
+     "name_rule": "\\bCEVIAN\\b",
+     "ciks": [
+      1365341
+     ]
+    }
+   }
+  },
+  "L_PRE": {
+   "what": "Greenwood & Schor (2007-11 の working paper『Hedge Fund Investor Activism and Takeovers』p.11・JFE 2009『Investor activism and takeovers』) が、1994〜2006 の 13D の標本で「ヘッジファンドの事象の2/3超を占める」と名指しした11の家: Farallon Capital・Steel Partners・VA Partners（ValueAct）・Wynnefield・Blum Capital・Carl Icahn・Chapman Capital・Newcastle Partners・JANA・Third Point・Pirate Capital",
+   "why": "2006年までの提出の多さで選ばれた一覧＝2007年以後の結果や知名度と独立。主 P4 は 2007-01-01 以後の事象だけを使う（名前の後知恵の無い外れ標本）",
+   "source_read": "https://corpgov.law.harvard.edu/wp-content/uploads/2007/12/20071211-hedge-fund-investor-activism.pdf（PDF 作成 2007-11-18）の p.11 の本文の名前だけを読んだ。付録の表（Appendix A2・カレンダー時間のポートフォリオの成績）は開いていない",
+   "families": {
+    "icahn": {
+     "name_rule": "\\bICAHN\\b|HIGH RIVER|BARBERRY CORP|BECKTON CORP|\\bIPH GP\\b",
+     "ciks": [
+      921669,
+      813762,
+      928464,
+      860850,
+      1412093,
+      1034563
+     ]
+    },
+    "third_point": {
+     "name_rule": "THIRD POINT|\\bLOEB DANIEL\\b|\\bDANIEL S\\.? LOEB\\b",
+     "ciks": [
+      1040273,
+      1300345,
+      2025369
+     ]
+    },
+    "valueact": {
+     "name_rule": "VALUEACT|\\bVA PARTNERS\\b|\\bUBBEN JEFFREY\\b|\\bJEFFREY W\\.? UBBEN\\b",
+     "ciks": [
+      1418812,
+      1129787,
+      1375350,
+      1464912,
+      1464910
+     ]
+    },
+    "jana": {
+     "name_rule": "\\bJANA PARTNERS\\b|\\bJANA MASTER\\b|\\bJANA NIRVANA\\b|\\bROSENSTEIN BARRY\\b|\\bBARRY ROSENSTEIN\\b",
+     "ciks": [
+      1159159,
+      1998597
+     ]
+    },
+    "steel_partners": {
+     "name_rule": "STEEL PARTNERS|\\bLICHTENSTEIN WARREN\\b|\\bWARREN G\\.? LICHTENSTEIN\\b",
+     "ciks": [
+      915653,
+      1452857,
+      1504325,
+      940500,
+      946946,
+      1005784
+     ]
+    },
+    "farallon": {
+     "name_rule": "FARALLON",
+     "ciks": [
+      909661,
+      1012168,
+      1040153,
+      1175707,
+      940315,
+      1262665,
+      1268470
+     ]
+    },
+    "wynnefield": {
+     "name_rule": "WYNNEFIELD|\\bOBUS NELSON\\b|\\bNELSON OBUS\\b",
+     "ciks": [
+      899083,
+      1251565,
+      1017043,
+      1056835,
+      1251567
+     ]
+    },
+    "blum": {
+     "name_rule": "BLUM CAPITAL|BLUM STRATEGIC|\\bBLUM RICHARD C\\b|\\bRICHARD C\\.? BLUM\\b",
+     "ciks": [
+      938775,
+      847243,
+      1420349
+     ]
+    },
+    "chapman": {
+     "name_rule": "CHAPMAN CAPITAL|\\bCHAP CAP\\b|\\bCHAP-CAP\\b|\\bCHAPMAN ROBERT L\\b|\\bROBERT L\\.? CHAPMAN\\b",
+     "ciks": [
+      1365418,
+      1017766,
+      1370422,
+      836875,
+      1365417
+     ]
+    },
+    "newcastle": {
+     "name_rule": "NEWCASTLE PARTNERS|NEWCASTLE CAPITAL|\\bSCHWARZ MARK E\\b|\\bMARK E\\.? SCHWARZ\\b",
+     "ciks": [
+      932334,
+      1208889
+     ]
+    },
+    "pirate": {
+     "name_rule": "PIRATE CAPITAL|JOLLY ROGER|\\bHUDSON THOMAS R\\b|\\bTHOMAS R\\.? HUDSON\\b",
+     "ciks": [
+      1295984
+     ]
+    }
+   }
+  },
+  "L_MECH": {
+   "what": "名前を使わない機械の定義: 初回 13D の受付番号ごとに、同じ受付番号に並ぶ CIK を「事象の日の前後400日に定期報告を出した登録会社（対象の候補）」と「それ以外（提出者）」に分け、対象が1社に決まるものだけを使う（見出しは取らない）。そのうち、提出者の中に次を満たす CIK が1つでもいるもの: (a) 事象の日より前に 13F（13F-HR・13F-NT）を出したことがある（＝機関投資家）、(b) 事象の日の前400日に事業会社の定期報告を出していない（事業会社の買収・持ち合いを除く）、(c) 事象の日の前3年に、ほかの3社以上に初回 13D を出した（常連の 13D の提出者）。どれも事象の日に分かる値だけ",
+   "window": "2000-07-01 以後（13F の電子提出が 1999Q2 に始まった1年後。それより前は (a) が決められない）",
+   "what_it_catches": "物言うヘッジファンドのほか、Gabelli のような小型の価値株の運用者、PE の運用者、クローズドエンド型の投信に 13D を出す運用者（除外の規則で投資会社の対象は落ちる）も入る＝「常連の機関の 13D」。名前の後知恵が無い代わりに、物言う株主だけではない",
+   "resolution": {
+    "登録会社の候補が 2以上": 6063,
+    "対象が1社に決まった": 54465,
+    "CIK が1つだけ（提出者か対象かが分からない）": 2353,
+    "登録会社の候補が 0": 871
+   },
+   "filers_note": "常連の提出者に多い名前（形）: GAMCO/Gabelli・Saba・OrbiMed・Karpus・Magnetar・Stilwell・Millennium（Millenco）・Discovery Group・Bulldog・Cannell・Baker Bros・RA Capital・TPG・Deutsche Bank・ABP（年金）ほか＝物言うヘッジファンドだけでなく、小型の価値株・生命科学の専門の運用者・PE・銀行・年金を含む"
+  },
+  "name_rules_frozen": "家は EDGAR の提出者の行の名前（大文字）に当てる正規表現で決め、誤って当たった CIK は EXCLUDE に理由つきで固定した（ICAHN SCHOOL OF MEDICINE AT MOUNT SINAI・DE SHAW PAUL・Ramius Archview Credit & Distressed Fund）。判断: Starboard に RAMIUS（2011年の独立まで Starboard の班は Ramius の中にいた）を入れ、Trian は PELTZ NELSON だけ（Triarc Companies は事業会社）、Chapman に CHAP CAP、Politan は METROPOLITAN を拾わないよう語の頭で。名前と CIK と 13D の件数だけを見て決めた（対象会社の株価・成績は見ていない）"
+ },
+ "event_rules": {
+  "event": "一覧の家の CIK が提出者に入っている初回 13D（SC 13D / SCHEDULE 13D）の受付番号＝1事象。同じ受付番号に複数の家がいれば1事象（家は全部記録）",
+  "date": "EDGAR の提出日（full-index の Date Filed）",
+  "window": "1996-07-01〜2026-07-31（L_MECH は 2000-07-01〜）",
+  "repeat": "同じ家が同じ対象会社に24か月以内に出した初回 13D（5% を割って出直した等）は新しい事象にしない（REPEAT_DAYS=730）",
+  "exclusions": "対象会社が (a) 見出しの SIC が 6770（白地小切手会社＝SPAC）か 6726（投資会社）、(b) 名前が白地小切手会社の形（… Acquisition Corp/Co/Ltd/Holdings/Inc）、(c) 事象の日の前後400日に投資会社の定期報告（N-CSR 等）だけを出していた（クローズドエンド型の投信など）、(d) 対象会社の CIK が家の CIK（自分の運用の器・上場した運用会社）のものは除く。理由: 事業会社への経営の関与という仕組みを測るため。クローズドエンド型の投信への 13D は割引の解消という別の仕組み、SPAC は信託の器",
+  "target_unit": "ポートフォリオの単位は対象会社（CIK）。ある会社を持っている間に来た別の家・別の一覧の事象は無視する（保有を延ばさない・二重に持たない）。保有が終わった後に来た（24か月の重複でない）事象は新しい保有を開く"
+ },
+ "timing": {
+  "rule": "D* = max(EDGAR の提出日, 見出しの受付の日〔ACCEPTANCE-DATETIME の日付・あれば〕)。D* の翌取引日（D* より後の最初の NYSE の取引日＝SPY の日次の日付で決める）が入っている月 M の月末の終値で買い、M+1 月から M+H 月までの月次リターンを持つ。例: 2014-10-07（火）の提出 → 翌取引日 10-08 → 2014-10 末に買う。月末の最終取引日の提出 → 翌月末に買う。L_MECH は見出しを取らないので D* = 提出日",
+  "why_safe": "13D は受付の時刻（ACCEPTANCE-DATETIME）に公開される。17:30（ET）以後の受付は翌営業日の提出日になる（Regulation S-T 13(a)(4)）ので、ほとんどは受付の日 ≤ 提出日（L_NOW で逆は1件だけ）。D* = max(提出日, 受付の日) の翌取引日が入る月の月末に買えば、公開から少なくとも1取引日あく＝先読みにならない",
+  "lag_reality": "13D の提出期限は 5% を超えてから10日（2024-02-05 以後は5営業日）。発表のときの値上がり（Brav ほか 2008 の約+7%）の多くは提出の前後数日に起きる＝月末に買う規則はそれを取らない。取れるのは提出の後の値動きだけ（探索 E10 は翌取引日の終値で買い、月末までの分を取る）",
+  "acceptance_time": {
+   "L_NOW_used_with_acceptance": 888,
+   "L_NOW_used": 1016,
+   "first_event_with_acceptance": "2002-06-06",
+   "accepted_at_or_after_16h": 547,
+   "acceptance_date_later_than_filing_date": 1,
+   "acceptance_date_earlier_than_filing_date": 86,
+   "hdr_vs_index_filing_date_mismatch": 0
+  }
+ },
+ "portfolio": {
+  "weights": "毎月末に、その時点で持っている対象会社（株価のあるもの）n 社を等分に戻す。1社の重み = 1/max(n, 10)。n<10 の月は残り（1 − n/10）を相手（比べる指数）そのものに置く＝超過は Σ_i w_i (r_i − r_b) で、少ない月に1〜2社の値動きが全体を振り回さない",
+  "eval_window": "評価の最初の月 = 前の月末に持つ会社（base で株価のあるもの）が初めて10社以上になった月（その月から保有のリターンが入る）。終わりは 2026-08。途中で n<10 になった月も上の重みで含める。同じ規則の下限版・中立版・費用後・1社抜き・半分は base と同じ評価の月で測る。IWM が相手の規則は 2000-07 より前を使わない",
+  "delist_in_holding": "base: 保有の途中で系列が途切れたら、最後の値で現金化（以後その会社の分は 0%＝相手に負ける側）。下限版・中立版は下の missing",
+  "outliers": "対象会社の月次リターンが +300% 超か −90% 未満の月は一覧にして日次（\"1d\"）と突き合わせ、データの誤り（分割の取り違え等）と確かめられたときだけその月を値の無い月として扱う（結果を見て規則を変えるのではなく、データの誤りの訂正）",
+  "returns": "単位は月次の小数リターン（配当込み）。超過 = 規則 − 相手（同じ月だけ）"
+ },
+ "missing": {
+  "base": "今のティッカーが無い、または Yahoo の系列が買う月の終値を持たない事象は入れない（被覆率を報告）",
+  "lower_bound": "入れなかった事象も持ったことにし（重みの n にも数える）、保有の最初の月に −30%・以後 0%（現金）とする。保有の途中で系列が途切れたら、途切れた月に −30%・以後 0%（hbm38n の ev5・nx_brand と同じ・Shumway 1997 の業績による上場廃止の平均）。★早い年は被覆が低いので下限版は大きく負に振れる（S の条件の一つ）",
+  "neutral": "入れなかった事象も持ったことにし（重みの n にも数える）、その事象と途切れた後の月は相手と同じリターン（超過 0）とする（報告のみ）",
+  "why_both": "物言う株主の対象は買収で消えることが多い（Greenwood & Schor 2009 の主張＝上乗せの多くは買収の上乗せ）。買収で消えた会社は base では落ち（上乗せを取りこぼす）、下限版では −30%（逆向き）になる。どちらも正しくない＝両側から挟む"
+ },
+ "benchmark": {
+  "SPY": "SPY（Yahoo の調整後終値・配当込み・1993-02〜）。ユーザーの実際の相手（S&P500）",
+  "IWM": "IWM（Russell 2000・2000-05〜）。対象は中小型が多い＝小型株の効果を上乗せと読まないため。IWM の窓は 2000-07〜",
+  "SURV_EW": "生き残りを揃えた相手: SEC の company_tickers_exchange.json の今の上場会社のうち NYSE・Nasdaq で、事業会社の定期報告を最後の400日に出した CIK（1 CIK に pick_ticker で1記号）の、その月に Yahoo の値がある全部の等分の平均。月次 +300% 超の値は落とす（数千社を日次で確かめられないため・落とした数を報告）。out/nx_prereg.json の stock_level_survivor（今の銘柄で組む規則は同じ生き残りの母集団の平均を相手にする）に従う。★対象と同じ「今も上場」の偏りを持つので、SPY に勝っても SURV_EW に勝てなければ生き残りの偏りで説明できる",
+  "report_only": "French の Mkt（CRSP 全上場・生き残りの偏り無し）・French の小型株（ME 下位30%の時価加重）・QQQ"
+ },
+ "costs": {
+  "turnover": "毎月の片道の回転 = ½Σ|新しい重み − 前の月の重みを当月のリターンで流した重み|（入る・出る・等分への戻しを全部含む。相手の指数に置いた分は回転に数えない）",
+  "primary": "片道の回転 100% あたり 0.30%（中小型株の手数料＋スプレッドの目安・nx_common.apply_cost の中小型の既定）",
+  "sensitivity": "0.50%（楽天証券の米国株の手数料 0.495%・上限22ドル）と 1.00%（小型株の広いスプレッド）も報告",
+  "tax": "税は入れない（課税口座なら売った利益の 20.315%。12か月で全部入れ替わる規則は NISA に向かない）"
+ },
+ "criteria": {
+  "which": "criteria_short_sample（out/nx_prereg.json）。13D の事象は EDGAR の電子提出（1996〜）からで、criteria_long_history の訓練（〜2006・15年以上）を取れない。依頼どおり",
+  "grade_call": "nx_common.grade_short(full, first_half, second_half, drop_top, cost_full, lower_bound, family_holm_p_one)",
+  "definitions": {
+   "full": "費用前の規則の月次リターン − 相手の月次リターン（同じ月だけ）を、評価の全期間で excess_stats（Newey-West ラグ12）。片側 p = p_one(t)",
+   "first_half_second_half": "評価の月を数で半分に分ける（奇数なら後半に1か月多く）。それぞれの幾何の年率差（cagr_diff）が正か",
+   "drop_top": "評価の全期間での寄与 Σ_t w_{i,t}·(r_{i,t} − r_{b,t}) が最大の1社（対象会社の CIK。同じ会社の複数の保有はまとめて）を全期間から除き（残りで重みを割り直す）、cagr_diff が正か",
+   "cost_full": "費用後（0.30%）の全期間の cagr_diff が正か",
+   "lower_bound": "欠けの下限版（上の missing）の全期間の cagr_diff が正か",
+   "holm": "主の族6本の片側 p で Holm（α=0.05）。探索の族13本は探索の中で別に Holm（格付けはするが『探索』と明記）"
+  },
+  "c5_independent_unit": "短い標本の格付けに C5 は無い（依頼どおり先に書く）。代わりに報告として、独立の単位を次の3つにする（格付けには使わない）: (1) 家ごとのポートフォリオ（使える事象が20以上の家・P1 と同じ規則・相手 SPY）で、幾何の超過が正の家の割合（2/3 以上なら「家をまたいで再現」）、(2) 互いに重ならない家の集合 L_NOW だけの家（PRE に無い・探索 E12）と L_PRE だけの家（NOW に無い: Farallon・Wynnefield・Blum・Chapman・Newcastle・Pirate）の両方で正か、(3) 時代（1996-2006・2007-2016・2017-2026 に事象の日で分ける）の3つのうち2つ以上で正か。米国外の 13D は EDGAR に無い（Becht ほか 2017 の国際標本は文献としてだけ）",
+  "no_threshold_moves": "線・窓・保有・費用・欠けの扱いは結果を見て変えない。変えたら『事後』として格付けに使わない"
+ },
+ "families": {
+  "common": {
+   "rule": "上の event_rules・timing・portfolio・missing・costs を全部に当てる。H = 保有の月数",
+   "survivor_note": "株価は今の記号だけ（生き残りの偏りあり）。どの規則にも base・下限版・中立版を並べる"
+  },
+  "primary": {
+   "role": "主の族（格付けする・Holm はこの6本で・片側 α=0.05）",
+   "P1_NOW_H12_SPY": {
+    "list": "L_NOW",
+    "hold": 12,
+    "benchmark": "SPY",
+    "window": "事象 1996-07-01〜2026-07-31・評価〜2026-08",
+    "paper": "Brav, Jiang, Partnoy & Thomas (2008) の「提出の後の1年は戻らない」を、提出後の月末に買う形で"
+   },
+   "P2_NOW_H24_SPY": {
+    "list": "L_NOW",
+    "hold": 24,
+    "benchmark": "SPY",
+    "window": "同上",
+    "paper": "Bebchuk, Brav & Jiang (2015) の長い期間（買収や経営の改善が株価に出るまで）"
+   },
+   "P3_NOW_H12_IWM": {
+    "list": "L_NOW",
+    "hold": 12,
+    "benchmark": "IWM",
+    "window": "評価 2000-07〜2026-08（IWM の設定の後）",
+    "note": "小型株の効果を上乗せと読まないため"
+   },
+   "P4_PRE2007_H12_SPY": {
+    "list": "L_PRE",
+    "hold": 12,
+    "benchmark": "SPY",
+    "window": "事象 2007-01-01〜2026-07-31（名前の後知恵の無い外れ標本）",
+    "note": "2006年までの提出の多さで選ばれた11の家が、その後も効いたか"
+   },
+   "P5_MECH_H12_SPY": {
+    "list": "L_MECH",
+    "hold": 12,
+    "benchmark": "SPY",
+    "window": "事象 2000-07-01〜2026-07-31",
+    "note": "名前を使わない常連の機関の 13D"
+   },
+   "P6_NOW_H12_SURV": {
+    "list": "L_NOW",
+    "hold": 12,
+    "benchmark": "SURV_EW（今も上場している会社の等分）",
+    "window": "事象 1996-07-01〜・評価〜2026-08",
+    "note": "生き残りの偏りを揃えた相手。P1 が勝って P6 が負けたら、勝ちは生き残りの偏りで説明できる"
+   }
+  },
+  "exploratory": {
+   "role": "探索の族（格付けはするが『探索』と明記。Holm は探索の13本の中で）",
+   "E1_NOW_H6_SPY": "P1 を保有6か月で",
+   "E2_NOW_H36_SPY": "P1 を保有36か月で",
+   "E3_NOW_H24_IWM": "P2 を相手 IWM で",
+   "E4_NOW_H12_recent10_SPY": "実装できる形: 毎月末に、持っている対象会社のうち買った月が新しい順に10社だけ（同じ月は受付番号の順）を 10% ずつ持つ（足りなければ残りを SPY）。保有は最長12か月。楽天の個人の口座で持てる数",
+   "E5_PRE_all_H12_SPY": "L_PRE を全期間（1996-07〜）で。★1996〜2006 は Greenwood & Schor の標本の中＝再現であって外れ標本ではない",
+   "E6_PRE2007_H12_IWM": "P4 を相手 IWM で",
+   "E7_PRE2007_H24_SPY": "P4 を保有24か月で",
+   "E8_MECH_H12_IWM": "P5 を相手 IWM で",
+   "E9_MECH_H12_SURV": "P5 を相手 SURV_EW で",
+   "E10_NOW_daily_T1_H252_SPY": "提出日の翌取引日の終値で買い、252取引日後の終値で売る（日次の調整後終値）。月ごとに、その月に持っていた日の各社の複利のリターン − 同じ日の SPY の複利のリターン を 1/max(n,10) で足す（n = その月に1日でも持っていた会社の数）。月末まで待たずに提出の後の数週間を取る。費用は入る・出るの売買だけ（等分への戻しを入れない近似・その分だけ甘い）",
+   "E11_NOW_contest_H12_SPY": "家が非経営側の委任状の様式（PREN14A・DEFN14A・DFAN14A・PREC14A・DEFC14A）を提出者として初めて出した日（同じ家・同じ会社の24か月以内の重複は除く）を事象にして P1 と同じ規則で。委任状の争い（取締役の差し替え）まで進んだ運動＝Brav ほか (2008) の敵対的な運動",
+   "E12_NOWonly_H12_SPY": "L_NOW のうち L_PRE に無い家（2007年以後に名を上げた家が多い）だけで P1 と同じ規則。P4（PRE）と互いに重ならない",
+   "E13_MECH_anonymous_H12_SPY": "L_MECH のうち、提出者に L_NOW・L_PRE の家が1つもいない事象だけ（無名の常連の機関）"
+  },
+  "report_only": {
+   "R1_by_family": "使える事象が20以上の家ごとに P1 の規則（相手 SPY）で。幾何の超過が正の家の割合（C5 の代わりの (1)）",
+   "R2_by_era": "P1・P4・P5 を事象の日で 1996-2006・2007-2016・2017-2026 に分けて（C5 の代わりの (3)）",
+   "R3_factor_alpha": "P1・P4・P5 の超過（相手 SPY）と規則の超過リターン（規則 − RF）を French の5因子＋勢い（Mkt-RF・SMB・HML・RMW・CMA・Mom）に回帰した切片（小型・割安の傾きで説明できるか）",
+   "R4_neutral": "主の族の全部を欠けの中立版で",
+   "R5_coverage": "年ごと・一覧ごとの事象の数・今のティッカーがある割合・Yahoo の買う月の値がある割合・欠けの理由",
+   "R6_real_instruments": "物言う株主に乗る実在の器と SPY の比較（同じ月だけ）: IEP（Icahn Enterprises・Nasdaq）、PSH（Pershing Square Holdings・Euronext Amsterdam/London・2014-10〜・Yahoo に値があれば）、ACTX（Global X Guru Activist Index ETF・2015-04-28 設定・13F と 13D から50社の等分・経費 0.75%。記号が後に別のファンドに再利用された可能性があるので、Yahoo の系列が 2015-04 に始まり終わりが閉鎖の時期と合うときだけ使う）",
+   "R7_windows": "主の族を 2009-01〜（Brav ほか 2008 の公表の翌年＝公表後）と 2013-07〜（全体の約束の recent）でも",
+   "R8_costs": "主の族を 0.50%・1.00% の費用で",
+   "R9_lag": "提出日から買う月末までの日数の分布と、発表の月の SPY に対する値動きのうち規則が取らない部分（提出の月の月初〜買う日）の大きさ（形の報告・格付けに使わない）",
+   "R10_missing_audit": {
+    "what": "欠けの抜き取り検査: L_NOW の使う事象のうち今のティッカーが無いもの（提出日 2005-01-01〜2019-12-31・母集団 449件）から、種 20260928 で無作為に40件を選んで**いま固定した**（nx_activist_data.audit_sample()・out/_nx_cache/nx_activist/audit_sample.json）。測る道具が上場廃止した銘柄の株価（FMP の historical-price-eod-dividend-adjusted・Alpha Vantage の TIME_SERIES_MONTHLY_ADJUSTED など。当時の記号は FMP の CIK の検索・社名で探し、会社の同一性は上場廃止の日と EDGAR の最後の提出で確かめる）を当たれるなら、この40件だけで「買う月末から12か月（途中で消えたら最後の値で現金）の SPY に対する超過」の平均を出し、同じ年の範囲の base の事象の平均と並べる＝base の欠けの向きの見積もり（報告のみ・格付けに使わない）",
+    "sample": [
+     [
+      "2005-01-14",
+      "0000919574-05-000086",
+      1040570,
+      "ORBIMAGE INC",
+      [
+       "harbinger"
+      ]
+     ],
+     [
+      "2005-04-13",
+      "0000921895-05-000483",
+      1060824,
+      "COSINE COMMUNICATIONS INC",
+      [
+       "steel_partners"
+      ]
+     ],
+     [
+      "2005-06-06",
+      "0000922423-05-000945",
+      87565,
+      "SCHULMAN A INC",
+      [
+       "barington"
+      ]
+     ],
+     [
+      "2005-06-17",
+      "0001104659-05-028757",
+      812482,
+      "ARCHON CORP",
+      [
+       "de_shaw"
+      ]
+     ],
+     [
+      "2005-09-06",
+      "0001013594-05-000384",
+      878314,
+      "SHOPKO STORES INC",
+      [
+       "elliott"
+      ]
+     ],
+     [
+      "2005-10-07",
+      "0001129787-05-000130",
+      909413,
+      "HANOVER COMPRESSOR CO /",
+      [
+       "valueact"
+      ]
+     ],
+     [
+      "2006-01-31",
+      "0000928475-06-000029",
+      1344596,
+      "American Railcar Industries, Inc./DE",
+      [
+       "icahn"
+      ]
+     ],
+     [
+      "2006-04-07",
+      "0001013594-06-000242",
+      1013606,
+      "ENDOLOGIX INC /DE/",
+      [
+       "elliott"
+      ]
+     ],
+     [
+      "2006-05-05",
+      "0001129787-06-000055",
+      1293243,
+      "PRA International",
+      [
+       "valueact"
+      ]
+     ],
+     [
+      "2006-12-28",
+      "0000919574-06-005048",
+      1082506,
+      "OPENWAVE SYSTEMS INC",
+      [
+       "harbinger"
+      ]
+     ],
+     [
+      "2007-02-09",
+      "0001129787-07-000021",
+      1056084,
+      "REUTERS GROUP PLC   /ADR/",
+      [
+       "valueact"
+      ]
+     ],
+     [
+      "2007-02-20",
+      "0000921895-07-000379",
+      1090908,
+      "SELECTICA INC",
+      [
+       "steel_partners"
+      ]
+     ],
+     [
+      "2007-02-22",
+      "0001129787-07-000037",
+      1323854,
+      "Warner Chilcott Ltd",
+      [
+       "valueact"
+      ]
+     ],
+     [
+      "2007-02-22",
+      "0000899140-07-000438",
+      1008848,
+      "ACORDA THERAPEUTICS INC",
+      [
+       "third_point"
+      ]
+     ],
+     [
+      "2007-05-03",
+      "0000899140-07-000879",
+      808918,
+      "GLENAYRE TECHNOLOGIES INC",
+      [
+       "third_point"
+      ]
+     ],
+     [
+      "2007-06-08",
+      "0000921895-07-001292",
+      856465,
+      "GIANT INDUSTRIES INC",
+      [
+       "starboard"
+      ]
+     ],
+     [
+      "2007-06-22",
+      "0000902664-07-002068",
+      1260625,
+      "CHINA SECURITY & SURVEILLANCE TECHNOLOGY, INC.",
+      [
+       "clinton"
+      ]
+     ],
+     [
+      "2007-07-12",
+      "0000899140-07-001288",
+      872448,
+      "ATMEL CORP",
+      [
+       "third_point"
+      ]
+     ],
+     [
+      "2007-07-30",
+      "0001193805-07-001929",
+      16099,
+      "LUBYS INC",
+      [
+       "starboard"
+      ]
+     ],
+     [
+      "2007-08-14",
+      "0000921895-07-001811",
+      1045769,
+      "HYPERCOM CORP",
+      [
+       "starboard"
+      ]
+     ],
+     [
+      "2007-09-07",
+      "0000902664-07-002770",
+      809248,
+      "CARROLS RESTAURANT GROUP, INC.",
+      [
+       "clinton"
+      ]
+     ],
+     [
+      "2008-01-24",
+      "0000928475-08-000019",
+      1406081,
+      "Guaranty Financial Group Inc.",
+      [
+       "icahn"
+      ]
+     ],
+     [
+      "2008-02-13",
+      "0001359824-08-000007",
+      1115836,
+      "ORIENT EXPRESS HOTELS LTD",
+      [
+       "de_shaw"
+      ]
+     ],
+     [
+      "2008-03-03",
+      "0000950142-08-000556",
+      1028985,
+      "Spectrum Brands, Inc.",
+      [
+       "harbinger"
+      ]
+     ],
+     [
+      "2008-10-16",
+      "0001418812-08-000102",
+      1316656,
+      "Dresser-Rand Group Inc.",
+      [
+       "valueact"
+      ]
+     ],
+     [
+      "2009-01-02",
+      "0001193805-09-000007",
+      1357838,
+      "Woozyfly Inc.",
+      [
+       "starboard"
+      ]
+     ],
+     [
+      "2010-05-27",
+      "0000910627-10-000099",
+      701811,
+      "MENTOR GRAPHICS CORP",
+      [
+       "icahn"
+      ]
+     ],
+     [
+      "2010-10-08",
+      "0000950123-10-092199",
+      1166126,
+      "J C PENNEY CO INC",
+      [
+       "pershing"
+      ]
+     ],
+     [
+      "2011-08-08",
+      "0001013594-11-000395",
+      1347815,
+      "Flagstone Reinsurance Holdings, S.A.",
+      [
+       "elliott"
+      ]
+     ],
+     [
+      "2012-07-06",
+      "0001418812-12-000046",
+      916459,
+      "GARDNER DENVER INC",
+      [
+       "valueact"
+      ]
+     ],
+     [
+      "2012-09-17",
+      "0000921895-12-001864",
+      800240,
+      "OFFICE DEPOT INC",
+      [
+       "starboard"
+      ]
+     ],
+     [
+      "2013-02-26",
+      "0001193125-13-075277",
+      803649,
+      "CommonWealth REIT",
+      [
+       "corvex"
+      ]
+     ],
+     [
+      "2014-01-13",
+      "0001013594-14-000026",
+      1043604,
+      "JUNIPER NETWORKS INC",
+      [
+       "elliott"
+      ]
+     ],
+     [
+      "2014-05-30",
+      "0001104659-14-042666",
+      1335190,
+      "MAGNUM HUNTER RESOURCES CORP",
+      [
+       "relational"
+      ]
+     ],
+     [
+      "2014-08-07",
+      "0000921895-14-001695",
+      932111,
+      "MICREL INC",
+      [
+       "starboard"
+      ]
+     ],
+     [
+      "2015-05-11",
+      "0001144204-15-029281",
+      813781,
+      "EXIDE TECHNOLOGIES",
+      [
+       "de_shaw"
+      ]
+     ],
+     [
+      "2016-02-03",
+      "0001415889-16-004597",
+      1058057,
+      "MARVELL TECHNOLOGY GROUP LTD",
+      [
+       "starboard"
+      ]
+     ],
+     [
+      "2016-12-02",
+      "0000899140-16-001710",
+      1067947,
+      "QLT INC",
+      [
+       "sarissa"
+      ]
+     ],
+     [
+      "2017-05-18",
+      "0001013594-17-000394",
+      1131096,
+      "ATHENAHEALTH INC",
+      [
+       "elliott"
+      ]
+     ],
+     [
+      "2018-05-17",
+      "0000928464-18-000057",
+      1365555,
+      "Amtrust Financial Services, Inc.",
+      [
+       "icahn"
+      ]
+     ]
+    ],
+    "pool": 449,
+    "seed": 20260928
+   },
+   "R11_missing_fate": "今のティッカーが無い事象の対象会社の EDGAR の提出一覧（submissions JSON）から、保有の窓の中とその後の運命を様式で分ける（報告のみ）: 買収・非公開化（DEFM14A・PREM14A・SC 14D9・SC TO-T の対象・SC 13E3・S-4 の対象・25-NSE）／破綻（8-K の Item 1.03・Chapter 11 の語）／届け出の終了（15-12B・15-12G）／その他。欠けの多くが買収（上乗せ側）か破綻（負け側）かで、base と下限版のどちらが真に近いかを読む。運命は事象の後に分かる情報なので、事象の選び方・重みには使わない"
+  }
+ },
+ "real_instrument_check": {
+  "stocks": "対象会社の多くは NYSE・Nasdaq の株＝楽天証券の米国株で買える見込み（楽天の米国株の取扱一覧は out/broker_lineup.json に無い＝ETF だけ。個別の確認は測る道具では出来ない）。今 OTC にある会社（事象の後に落ちた会社も含む）は楽天では買えないことが多い。手数料 0.495%（上限22ドル）。P1 は常に数十〜百社を持つ＝個人には重い。実装できる形は E4（新しい順の10社）",
+  "etfs": "物言う株主の対象を持つ ETF は楽天の海外ETF 742本（out/broker_lineup.json）に無い。過去には ACTX（Global X Guru Activist・2015-04〜・後に閉鎖したと記憶）があった＝R6 で答え合わせ",
+  "vehicles": "IEP（Icahn Enterprises）は米国上場の LP（K-1）。Pershing Square Holdings はロンドン・アムステルダム上場（楽天では買えない見込み）。どれも「対象を買う」ではなく「物言う株主に預ける」形＝R6 は報告だけ",
+  "japan_investor": "円で持つ人の為替は規則と相手（SPY）に同じようにかかる＝超過の比較には効かない"
+ },
+ "prior": {
+  "brav_jiang_partnoy_thomas_2008": "Brav, A., Jiang, W., Partnoy, F. & Thomas, R. (2008) Hedge Fund Activism, Corporate Governance, and Firm Performance. Journal of Finance 63(4), 1729-1775（ECGI WP 139/2006・SSRN 948907）。2001〜2006 の手で集めた物言うヘッジファンドの 13D。発表の前後（−20〜+20日）の異常リターン約 +7%、その後の1年に戻らない（要旨で確認）。2/3 の運動で成功か一部成功",
+  "klein_zur_2009": "Klein, A. & Zur, E. (2009) Entrepreneurial Shareholder Activism: Hedge Funds and Other Private Investors. Journal of Finance 64(1), 187-229。ヘッジファンドの 13D の発表の前後に大きな正の異常リターン、その後の1年にも正（数字は記憶・未確認）",
+  "greenwood_schor_2009": "Greenwood, R. & Schor, M. (2009) Investor activism and takeovers. Journal of Financial Economics 92(3), 362-375。1994〜2006 の 13D（990事象・139のヘッジファンド）。長い期間の上乗せは、対象が後に買収された場合に集中し、買収されなかった対象では小さい（記憶。この登録のために読んだのは p.10-11 の標本の作り方だけ）",
+  "clifford_2008": "Clifford, C.P. (2008) Value creation or destruction? Hedge funds as shareholder activists. Journal of Corporate Finance 14(4), 323-336。同じヘッジファンドの 13D（活動）は 13G（受け身）より大きな異常リターン（記憶）",
+  "bebchuk_brav_jiang_2015": "Bebchuk, L., Brav, A. & Jiang, W. (2015) The Long-Term Effects of Hedge Fund Activism. Columbia Law Review 115(5)（NBER w21227）。1994〜2007 の事象で5年の間に負の長期リターンは出ない・営業成績は改善（記憶）",
+  "dehaan_larcker_mcclure_2019": "deHaan, E., Larcker, D. & McClure, C. (2019) Long-term economic consequences of hedge fund activist interventions. Review of Accounting Studies 24。時価で加重すると長期の株主のリターンの改善は有意でなく、改善は小さい会社に偏る（記憶）",
+  "becht_franks_grant_wagner_2017": "Becht, M., Franks, J., Grant, J. & Wagner, H. (2017) Returns to Hedge Fund Activism: An International Study. Review of Financial Studies 30(9)。国際（欧州・アジア・北米）でも発表の前後に正、上乗せは運動の結果（買収・経営の変更）に依る（記憶）",
+  "bebchuk_brav_jackson_jiang_2013": "Bebchuk, Brav, Jackson & Jiang (2013) Pre-Disclosure Accumulations by Activist Investors. Journal of Corporation Law 38。10日の提出期限の間に買い進め、発表の前に値の多くが動く（記憶）＝月末に買う規則は発表の上乗せを取らない",
+  "denes_karpoff_mcwilliams_2017": "Denes, M., Karpoff, J. & McWilliams, V. (2017) Thirty years of shareholder activism: A survey of empirical research. Journal of Corporate Finance 44。ヘッジファンドの活動は発表の前後に正、長期は研究によって割れる（記憶）",
+  "actx": "Global X Guru Activist Index ETF（ACTX・2015-04-28 設定・経費 0.75%・13F と 13D から50社の等分・四半期の入れ替えと月次の 13D の追加。設定と仕組みは検索の要約と SEC の 497K で確認）。後に閉鎖したと記憶（未確認・成績は見ていない）",
+  "decay": "McLean & Pontiff (2016, JF): 公表後に上乗せは平均で約半分。このリポジトリの JKP の実測でも 2007年以後は中央値で 0.44 倍（米国）",
+  "expectation_before_measuring": "文献の多くは「発表の前後の数日」に上乗せがあり、その後の1年は「戻らない（0前後）」か小さな正。月末に買う規則は発表の上乗せを取らないので、P1 の超過は 0 前後〜小さな正、t は 2 未満の見込み。中小型の効果（2007年以後の米国は小型株が大型株に負けた）で SPY に対しては不利、IWM に対しては相対的に有利の見込み。base は生き残りの偏りで上に、下限版は被覆の低い早い年のせいで大きく下に振れる見込み。この見込みは線を決めるのに使っていない"
+ },
+ "contamination": [
+  "EDGAR の full-index（13D/13G・委任状の様式の行と、定期報告・13F の CIK の初出と最終）、13D の見出し（対象会社・提出者・SIC・受付の時刻）、SEC の今のティッカー表の形（件数・取引所）を見た。株価・リターンは一度も取っていない・見ていない",
+  "家の名前の規則を決めるため、13D の提出者の名前・CIK・件数・最初と最後の提出日を見た（結果の数字ではない）",
+  "Greenwood & Schor (2007 WP) の p.10-11（標本の作り方と名指しの11の家）を読んだ。grep の途中で Appendix A2 の見出しの行（「カレンダー時間のポートフォリオの成績の表がある」という文の頭）が画面に出たが、数字は見ていない。Brav ほか (2008) の PDF（FDIC の掲載・2008-05）は家の名前の表が無いことを確かめるために本文を grep した（Pirate Capital と James River Coal の事例の段落の見出しが出た）。要旨の「発表の前後で約+7%・その後の1年に戻らない」は検索の要約でも見た（前から知っていた）",
+  "ACTX の設定・仕組み・経費は検索の要約で見た（成績は見ていない）",
+  "main の filing_behavior の事前登録（指標 d13d の定義）は読んだ。その結果（out/filing_behavior_test.json）と、CLAUDE_ARCHIVE の該当節は開いていない",
+  "一般の知識として、有名な運動（Pershing の Chipotle・Canadian Pacific・Allergan、JANA の Whole Foods、Icahn の Herbalife、Third Point の Yahoo、Starboard の Darden など）とその後の株価のおおまかな行方、2008年の金融危機・2020年の急落、2007年以後に米国の小型株が大型株に負けたことを知っている。★L_NOW は今の知名度で選んだので、この知識が一覧の選び方に入っている（だから L_PRE・L_MECH を主に入れた）",
+  "事象の一覧の中の有名な事象の有無を形として確かめた（sanity_checks）。そのとき対象会社の名前と「今のティッカーがあるか」（Allergan・Whole Foods・Yahoo・Heinz・AOL は無い＝後に買収された・消えた）を見た。株価は見ていない",
+  "欠けの抜き取り検査の40件（R10）の会社の名前と、後継の CIK の規則で付いた8件の名前を画面で見た。その中には一般の知識で行方を知っている会社（J.C. Penney の破綻・Juniper・Athenahealth・Dresser-Rand・Mentor Graphics の買収など）がある。標本は種で機械的に選び、見た後に入れ替えていない",
+  "規則の成績（平均・t・シャープ・累積・勝率）は一度も計算・表示していない"
+ ],
+ "sanity_checks_before_results": {
+  "famous_events": [
+   {
+    "family": "pershing",
+    "name": "CHIPOTLE",
+    "found": [
+     [
+      "2016-09-06",
+      "CHIPOTLE MEXICAN GRILL INC"
+     ]
+    ]
+   },
+   {
+    "family": "pershing",
+    "name": "CANADIAN PACIFIC",
+    "found": [
+     [
+      "2011-10-28",
+      "CANADIAN PACIFIC RAILWAY LTD/CN"
+     ]
+    ]
+   },
+   {
+    "family": "pershing",
+    "name": "ALLERGAN",
+    "found": [
+     [
+      "2014-04-21",
+      "ALLERGAN INC"
+     ]
+    ]
+   },
+   {
+    "family": "pershing",
+    "name": "AIR PRODUCTS",
+    "found": [
+     [
+      "2013-07-31",
+      "AIR PRODUCTS & CHEMICALS INC /DE/"
+     ]
+    ]
+   },
+   {
+    "family": "pershing",
+    "name": "ZOETIS",
+    "found": [
+     [
+      "2014-11-12",
+      "Zoetis Inc."
+     ]
+    ]
+   },
+   {
+    "family": "pershing",
+    "name": "WENDY",
+    "found": [
+     [
+      "2005-04-26",
+      "WENDYS INTERNATIONAL INC"
+     ],
+     [
+      "2005-06-10",
+      "WENDYS INTERNATIONAL INC"
+     ]
+    ]
+   },
+   {
+    "family": "jana",
+    "name": "WHOLE FOODS",
+    "found": [
+     [
+      "2017-04-10",
+      "WHOLE FOODS MARKET INC"
+     ]
+    ]
+   },
+   {
+    "family": "icahn",
+    "name": "HERBALIFE",
+    "found": [
+     [
+      "2013-02-14",
+      "HERBALIFE LTD."
+     ]
+    ]
+   },
+   {
+    "family": "icahn",
+    "name": "NETFLIX",
+    "found": [
+     [
+      "2012-10-31",
+      "NETFLIX INC"
+     ]
+    ]
+   },
+   {
+    "family": "third_point",
+    "name": "YAHOO",
+    "found": [
+     [
+      "2011-09-08",
+      "YAHOO INC"
+     ]
+    ]
+   },
+   {
+    "family": "starboard",
+    "name": "DARDEN",
+    "found": [
+     [
+      "2013-12-23",
+      "DARDEN RESTAURANTS INC"
+     ]
+    ]
+   },
+   {
+    "family": "elliott",
+    "name": "ARCONIC",
+    "found": []
+   },
+   {
+    "family": "trian",
+    "name": "HEINZ",
+    "found": [
+     [
+      "2006-04-24",
+      "HEINZ H J CO"
+     ]
+    ]
+   },
+   {
+    "family": "trian",
+    "name": "WENDY",
+    "found": [
+     [
+      "2005-12-13",
+      "WENDYS INTERNATIONAL INC"
+     ]
+    ]
+   },
+   {
+    "family": "valueact",
+    "name": "MICROSOFT",
+    "found": []
+   },
+   {
+    "family": "icahn",
+    "name": "MOTOROLA",
+    "found": [
+     [
+      "2008-02-06",
+      "MOTOROLA INC"
+     ],
+     [
+      "2011-01-12",
+      "Motorola Mobility Holdings, Inc"
+     ]
+    ]
+   },
+   {
+    "family": "icahn",
+    "name": "TIME WARNER",
+    "found": []
+   },
+   {
+    "family": "relational",
+    "name": "HOME DEPOT",
+    "found": []
+   },
+   {
+    "family": "pirate",
+    "name": "JAMES RIVER COAL",
+    "found": [
+     [
+      "2005-11-17",
+      "James River Coal CO"
+     ]
+    ]
+   },
+   {
+    "family": "starboard",
+    "name": "AOL",
+    "found": [
+     [
+      "2012-02-16",
+      "AOL Inc."
+     ]
+    ]
+   }
+  ],
+  "reading": "有名な運動の初回 13D が一覧にあるかを確かめた（成績は見ていない）: Pershing の Chipotle 2016-09-06・Canadian Pacific 2011-10-28・Allergan 2014-04-21・Air Products 2013-07-31・Zoetis 2014-11-12・Wendy's 2005-04-26、JANA の Whole Foods 2017-04-10、Icahn の Herbalife 2013-02-14・Netflix 2012-10-31・Motorola 2008-02-06、Third Point の Yahoo 2011-09-08、Starboard の Darden 2013-12-23・AOL 2012-02-16、Trian の Heinz 2006-04-24・Wendy's 2005-12-13、Pirate の James River Coal 2005-11-17（Brav ほか 2008 の事例と同じ日）、Elliott の Alcoa（後の Arconic）2015-11-23 は全部あった。ValueAct の Microsoft・Icahn の Time Warner・Relational の Home Depot は 13D が無い＝5% 未満の保有の運動で、一覧に無いのが正しい",
+  "headers": {
+   "accessions": 4847,
+   "errors": 0,
+   "note": "見出しは 4,847 の受付番号（家が提出者に並ぶ初回 13D と委任状の様式）で全部取れた（取れなかった 0）"
+  },
+  "l_mech_resolution": {
+   "登録会社の候補が 2以上": 6063,
+   "対象が1社に決まった": 54465,
+   "CIK が1つだけ（提出者か対象かが分からない）": 2353,
+   "登録会社の候補が 0": 871
+  },
+  "acceptance_time_shape": {
+   "L_NOW_used_with_acceptance": 888,
+   "L_NOW_used": 1016,
+   "first_event_with_acceptance": "2002-06-06",
+   "accepted_at_or_after_16h": 547,
+   "acceptance_date_later_than_filing_date": 1,
+   "acceptance_date_earlier_than_filing_date": 86,
+   "hdr_vs_index_filing_date_mismatch": 0
+  },
+  "acceptance_note": "L_NOW の使う事象 1,016件のうち見出しに受付の時刻があるのは 888件（2002-06 以後）。そのうち 547件は 16:00（ET）以後の受付＝市場の反応は翌取引日。受付の日が提出日より前が 86件（17:30 以後の受付で提出日が翌営業日）、後が1件＝D* = max(提出日, 受付の日) にした理由"
+ },
+ "known_limits": [
+  "★株価は今の記号だけ（生き残りの偏り）。今のティッカーがある割合は早い年ほど低い（coverage を見よ）。買収で消えた対象（多くは上乗せ）も破綻で消えた対象（多くは大きな負け）も base では落ちる＝base・下限版（−30%）・中立版と SURV_EW（同じ偏りを持つ相手）で挟む。上場廃止した会社の株価（CRSP）は無料では取れない",
+  "L_NOW は今の知名度で選んだ（後知恵）。L_PRE は2007年の文書に名指しされた11の家で後知恵は無いが、2007年以後に活動を減らした家（Pirate は 2008 年ごろに閉じた・Chapman・Blum）がある＝事象は少なくなる",
+  "L_MECH は物言う株主だけではない（小型の価値株の運用者・PE の運用者・事業会社の子会社の運用を含む。常連の提出者に Gabelli/GAMCO がいる事象が約2割）。見出しを取らないので SIC が無く、SPAC は名前の規則だけで落とす。対象の同定は見出しを取らずに「定期報告を出す登録会社が1社だけ」で決めたので、決まらない受付番号（登録会社が2社以上・CIK が1つだけ）は落ちる（mech の数え方を見よ）",
+  "家の同定は EDGAR の提出者の行の名前の正規表現。グループの一員が EDGAR の提出者として並ばない提出（名前だけのグループ）は拾えない。名前が同じ別人・別の会社は目で見て除いた（EXCLUDE）が、見落としがあり得る",
+  "初回 13D は運動の宣言とは限らない（13G から 13D への切り替え・受け取った株・自分が支配する会社）。論文（Brav ほか）は Item 4 を読んで物言う目的のものだけを選んだ。ここでは機械的に全部を使う＝上乗せは薄まる向き",
+  "提出の前の10日（2024年以後は5営業日）に株価の多くが動く。月末に買う規則はそれを取らない（E10 で一部を見る）",
+  "対象は中小型が多い＝1社の重みを 1/max(n,10) にしても、小型株の値の誤り（分割の取り違え）に弱い。+300%/−90% の月は日次で確かめる",
+  "独立の試行は少ない（どの家も同じ時代の米国株。1996〜2026 の約30年）。家どうしは同じ対象に群がる（wolf pack）ので互いに独立ではない",
+  "費用は近似（中小型の売買スプレッドは会社ごとに大きく違う）。税は入れていない",
+  "Yahoo の月次の値は月の最終取引日の調整後終値。配当の扱いは Yahoo の調整に依る"
+ ],
+ "test_count": {
+  "primary": 6,
+  "exploratory": 13,
+  "report_only": 11,
+  "note": "主の6本と探索の13本を全部 out/nx_activist.json の tested に残す。多重検定の数は主 6・探索 13（報告の11本は格付けしない）"
+ }
+}
