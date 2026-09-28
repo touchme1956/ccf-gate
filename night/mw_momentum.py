@@ -366,6 +366,12 @@ def finalize(families):
         hp = e['holm_by_family'].get(fams[0])
         g, c = M.grade(e['full'], e['train'], e['hold'], e['roll20'], cost_hold=e['cost_hold'], repl=e['repl'],
                        family_holm_p=hp, sharpe_pair=e.get('sharpe_pair'), leveraged_or_timing=e['timing'])
+        # 全体の事前登録の『訓練期間は最低15年』を当てる（第3次の事前登録で明記・厳しくする方向のみ）
+        if not e['train'] or e['train']['years'] < 15:
+            e['grade_without_15y_rule'] = g
+            g, c = M.grade(e['full'], None, e['hold'], e['roll20'], cost_hold=e['cost_hold'], repl=e['repl'],
+                           family_holm_p=hp, sharpe_pair=e.get('sharpe_pair'), leveraged_or_timing=e['timing'])
+            c['C1_note'] = '訓練期間が15年未満（または無い）ので C1 は不合格'
         e['grade'], e['criteria'] = g, c
         if e.get('posthoc'):
             e['grade'], e['criteria_info_only'], e['criteria'] = '事後（格付けなし）', c, None
@@ -777,7 +783,22 @@ def main():
         evaluate(sid, 'F12', f'事後の混合（格付けしない）: {" + ".join(ids)} の等分', r, MKT, rule='事後', cost=cst, extra={'posthoc': True, 'parts': ids})
     log('phase2 done')
 
-    fams = ['F1', 'F2', 'F3g', 'F3s', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12']
+    # ═════════ 第3次（out/mw_momentum_prereg3.json）═════════
+    for fam, sigs, pub in (('F13', {'niq_su': 3.0, 'saleq_su': 3.0, 'ni_inc8q': 1.5, 'niq_at_chg1': 3.0, 'niq_be_chg1': 3.0, 'ocf_at_chg1': 1.5}, 1996),
+                           ('F14', {'seas_2_5an': 12.0, 'seas_6_10an': 12.0, 'seas_11_15an': 12.0, 'seas_16_20an': 12.0}, 2008)):
+        for key, to in sigs.items():
+            try:
+                side, s_ = jkp_good('usa', key)
+                rp = jkp_repl(key)
+            except Exception as ex:  # noqa
+                log(fam, key, '取得失敗', ex)
+                continue
+            evaluate(f'{fam}_usa_{key}', fam, f'JKP 米国 {key} の良い側の三分位（vw）vs 米国 mkt vw', s_, CMKT['usa'],
+                     rule=f'JKP {key} 三分位 {side}', turnover=to, unit=0.001, repl=rp, pub=pub, extra={'good_side': side})
+            log(fam, key, 'done')
+    log('phase3 done')
+
+    fams = ['F1', 'F2', 'F3g', 'F3s', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14']
     fam_holm = finalize(fams)
     all_holm = M.holm({e['id']: e['hold_p_for_holm'] for e in TESTED})
     for e in TESTED:
@@ -794,7 +815,9 @@ def main():
     top = sorted([e for e in TESTED if e['cost_hold']], key=lambda e: -e['cost_hold']['ex_ann'])[:15]
     summary['top_by_net_hold_ex'] = [(e['id'], e['grade'], e['cost_hold']['ex_ann'], e['cost_hold']['t']) for e in top]
     sha2 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg2.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
-    out = {'angle': 'momentum', 'prereg': f'out/{PRE}', 'prereg_commit': sha, 'prereg2': 'out/mw_momentum_prereg2.json', 'prereg2_commit': sha2, 'global_prereg': 'out/mw_prereg.json',
+    sha3 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg3.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
+    out = {'angle': 'momentum', 'prereg': f'out/{PRE}', 'prereg_commit': sha, 'prereg2': 'out/mw_momentum_prereg2.json', 'prereg2_commit': sha2,
+           'prereg3': 'out/mw_momentum_prereg3.json', 'prereg3_commit': sha3, 'global_prereg': 'out/mw_prereg.json',
            'generated': datetime.date.today().isoformat(), 'sanity': sanity, 'family_holm': fam_holm, 'summary': summary,
            'deviations': DEVIATIONS, 'tested': TESTED, 'log': LOG[-80:]}
     p = M.save(OUT, out)
@@ -806,6 +829,8 @@ def main():
 
 
 DEVIATIONS = [
+    '全体の事前登録の『訓練期間は最低15年』を第1次・第2次では格付けに当てていなかった（mw_common.grade は長さを見ない）。第3次の事前登録で明記し、全戦略に一律に当てた（厳しくする方向のみ）。影響は 1999 年以降のデータの戦略（F6・F8・F10・F11）で、旧格付けは grade_without_15y_rule に残す',
+    'F3s_all_trainbest は F3s_ind30_trainbest と同じ規則（30業種・9-0・H6・15%）が選ばれた。族 F3s の Holm では2回数えている（保守側）',
     'mw_common.excess_stats の β の計算が S.mean を生成式の中で毎回呼ぶため O(n²)（1200か月で1回約3秒・約300戦略×9回で数時間）。mw_common は共有なので触らず、同じ式・同じ丸めの高速版を本スクリプト内に置いた（--selftest で出力の一致を検算）',
 ]
 
