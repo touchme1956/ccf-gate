@@ -48,6 +48,9 @@ EXPLORATORY.update({'X4': PREREG4, 'X5': PREREG4})
 POST['X4'] = {'post_GW_CT_2008': 200901, 'post_RSZ_2010': 201101}
 POST['X5'] = {'post_GW_CT_2008': 200901}
 POST['PH'] = POST['X3']
+PREREG5 = 'mw_macro_timing_prereg5.json'
+EXPLORATORY['X6'] = PREREG5
+POST['X6'] = {'post_GW_CT_2008': 200901, 'post_RSZ_2010': 201101, 'post_GrowthTrend_2016': 201701}
 LOG = []
 
 
@@ -911,6 +914,15 @@ def main():
         e = evaluate('X5_' + pn, 'X5', W, r, c, mkt, rf, dy, er, fct, base_i)
         e['repl'] = None
         tested.append(e)
+    # ── 探索5（prereg5）: 予測で傾ける × 悪い状態の時だけ降りる
+    tilt = {m: min(WMAX, max(0.0, f1[m] / PM[m])) for m in f1 if m in PM and PM[m] > 0}
+    for nm, cond in (('X6a_tilt_x_G1', c_unrate), ('X6b_tilt_x_G2', c_ip), ('X6c_tilt_x_G3', c_earn)):
+        Wg = g_w(cond)
+        W = {m: (0.0 if Wg[m] == 0 else tilt[m]) for m in Wg if m in tilt}
+        e = evaluate(nm, 'X6', W, r, c, mkt, rf, dy)
+        e['repl'] = None
+        tested.append(e)
+
     # 事後（格付けしない）: X3c の 2003 年以降を FF 金利の誘導目標に替えた版
     pol2 = policy_regime([(fred('M13009USM156NNBR'), None, 196907), (fred('INTDSRUSM193N'), 196908, 200212),
                           (fred('DFEDTAR'), 200301, 200812), (fred('DFEDTARU'), 200901, None)])
@@ -951,10 +963,37 @@ def main():
         log(f"{e['name']:22s} {g}  保有 {h.get('ex_ann')} t{h.get('t')}  訓練 {(e.get('train') or {}).get('ex_ann')} t{(e.get('train') or {}).get('t')}"
             f"  シャープ {pair}  再現 {rpg}")
 
-    out = {'angle': 'macro_timing', 'prereg': PREREG, 'prereg_commit': pre_sha,
+    # 検算（報告）: RSZ 2010 の標本期間に近い 1965-01〜2005-12 の OOS R²（RSZ は四半期で mean の R²_OS 3.58%。月次なので小さく出るのが普通）
+    san['oos_r2_1965_2005'] = {'P2_mean_raw': oos_r2(er, comb['mean_raw'], PM, a=196501, z=200512),
+                               'P1_mean_CT': oos_r2(er, comb['mean_ct'], PM, a=196501, z=200512)}
+    # 報告: JST の国ごとのシャープ（戦略 > 相手 の国の数）
+    for e in tested:
+        rp = e.get('repl')
+        if rp and isinstance(rp.get('detail'), dict):
+            sb = [v.get('sharpe_net_vs_bench_report') for k, v in rp['detail'].items() if isinstance(v, dict) and k != 'USA' and v.get('sharpe_net_vs_bench_report')]
+            if sb:
+                rp['sharpe_better_countries_report'] = f"{sum(1 for a, b in sb if a > b)}/{len(sb)}"
+    graded = [e for e in tested if not e.get('post_hoc')]
+    cnt = {}
+    for e in graded:
+        cnt[e['grade']] = cnt.get(e['grade'], 0) + 1
+    near = []
+    for e in graded:
+        cr = e.get('criteria') or {}
+        base_fail = [k for k in ('C1_train', 'C2_hold_sign', 'C6_net_cost', 'C8_sharpe') if cr.get(k) is False]
+        if len(base_fail) <= 1:
+            near.append({'name': e['name'], 'family': e['family'], 'exploratory': e['exploratory'], 'fails_for_B': base_fail,
+                         'hold_ex': (e.get('hold') or {}).get('ex_ann'), 'hold_t': (e.get('hold') or {}).get('t'),
+                         'train_ex': (e.get('train') or {}).get('ex_ann'), 'train_t': (e.get('train') or {}).get('t'),
+                         'sharpe': {k: (e.get('sharpe') or {}).get(k) for k in ('train', 'hold')}})
+    summary = {'n_graded': len(graded), 'n_post_hoc': len(tested) - len(graded), 'grades': cnt, 'near_misses_one_short_of_B': near}
+    log('格付けの数', cnt, '一歩手前', [x['name'] for x in near])
+
+    out = {'angle': 'macro_timing', 'prereg': PREREG, 'prereg_commit': pre_sha, 'summary': summary,
            'prereg2': PREREG2, 'prereg2_commit': git_sha('out/' + PREREG2),
            'prereg3': PREREG3, 'prereg3_commit': git_sha('out/' + PREREG3),
-           'prereg4': PREREG4, 'prereg4_commit': git_sha('out/' + PREREG4), 'sanity': san,
+           'prereg4': PREREG4, 'prereg4_commit': git_sha('out/' + PREREG4),
+           'prereg5': PREREG5, 'prereg5_commit': git_sha('out/' + PREREG5), 'sanity': san,
            'participation': {str(y): round(S.mean(npart[m] for m in npart if m // 100 == y), 1) for y in range(1891, 2026, 5) if any(m // 100 == y for m in npart)},
            'n_tested': len(tested), 'tested': tested, 'log': LOG}
     p = M.save(OUT, out)
