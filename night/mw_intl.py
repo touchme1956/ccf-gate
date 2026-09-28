@@ -375,6 +375,8 @@ def main():
     p3 = prereg3(dict(rf=rf, rmk=rmk, PF=PF, side=side, all_hold_p=p2.pop('_all_hold_p')))
     p4 = prereg4(dict(all_hold_p=p3.pop('_all_hold_p')))
     p5 = prereg5(dict(all_hold_p=p4.pop('_all_hold_p')))
+    p6 = prereg6(dict(rf=rf, all_hold_p=p5.pop('_all_hold_p')))
+    p6.pop('_all_hold_p', None)
 
     ph = post_hoc(dict(rf=rf, rmk=rmk, PF=PF, side=side, cm=cm, cand=cand), p2, p3)
 
@@ -382,8 +384,8 @@ def main():
            'global_prereg': 'out/mw_prereg.json', 'representative': REP, 'good_side': side,
            'n_tested': len(tested), 'tested': tested, 'graded': graded, 'holm_family': hol,
            'regional': {loc: {k: v for k, v in d.items()} for loc, d in regional.items()},
-           'country_summary': summary, 'per_country': per_country, 'sanity': sanity, 'prereg2': p2, 'prereg3': p3, 'prereg4': p4, 'prereg5': p5, 'post_hoc_diagnostics': ph}
-    out['n_tested_all'] = len(tested) + len(p2['tested']) + len(p3['tested']) + len(p4['tested']) + len(p5['tested'])
+           'country_summary': summary, 'per_country': per_country, 'sanity': sanity, 'prereg2': p2, 'prereg3': p3, 'prereg4': p4, 'prereg5': p5, 'prereg6': p6, 'post_hoc_diagnostics': ph}
+    out['n_tested_all'] = len(tested) + len(p2['tested']) + len(p3['tested']) + len(p4['tested']) + len(p5['tested']) + len(p6['tested'])
     out.setdefault('generated', __import__('datetime').date.today().isoformat())
     p = os.path.join(M.BASE, 'out', 'mw_intl.json')
     with open(p, 'w') as fh:  # 2MB 未満に収めるため字下げなし（共通部品の save は indent=1 で 2.2MB になった）
@@ -402,6 +404,7 @@ def main():
     print_prereg3(p3)
     print_prereg4(p4)
     print_prereg5(p5)
+    print_prereg6(p6)
     print('事後の診断', json.dumps({k: (v if not isinstance(v, dict) else {kk: (vv if not isinstance(vv, dict) or 'ex_ann' not in vv else (vv['ex_ann'], vv['t'], vv['te'])) for kk, vv in v.items()}) for k, v in ph.items()}, ensure_ascii=False, default=str)[:4000])
     print('→', p)
 
@@ -931,7 +934,7 @@ def prereg5(ctx):
         rep[f'{a} vs {b}'] = dict(st or {}, corr=round(M.corr([ra[m] for m in ks], [rb[m] for m in ks]), 4))
         tested.append({'name': f'f5_reported:{a} vs {b}', 'family': 'reported', 'series': 'Yahoo', 'grade': None})
     return {'prereg': f'out/{PRE5_NAME}', 'prereg_commit': git_sha(f'out/{PRE5_NAME}'), 'families': {'F5a_dfa_funds': {'members': recs, 'holm': hol}},
-            'reported': rep, 'angle_wide_holm_reference': M.holm(all_p), 'n_graded_angle': len(all_p), 'tested': tested}
+            'reported': rep, 'angle_wide_holm_reference': M.holm(all_p), 'n_graded_angle': len(all_p), 'tested': tested, '_all_hold_p': all_p}
 
 
 def datetime_today():
@@ -949,6 +952,118 @@ def print_prereg5(p5):
         print('  ', k, f(v if 'ex_ann' in v else None), 'cagr', v.get('cagr_s'), v.get('cagr_b'), 'corr', v.get('corr'))
     ah = p5['angle_wide_holm_reference']
     print('  angle-wide holm <0.05 (n=%d):' % p5['n_graded_angle'], {k: v for k, v in sorted(ah.items(), key=lambda x: x[1]) if v < 0.05})
+
+
+# ───────────────────────── 事前登録6（out/mw_intl_prereg6.json） ─────────────────────────
+PRE6_NAME = 'mw_intl_prereg6.json'
+AQR_URL = 'https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Value-and-Momentum-Everywhere-Portfolios-Monthly.xlsx'
+
+
+def _aqr_vme():
+    import openpyxl, datetime as _d
+    b = M.get(AQR_URL, name='aqr_vme_portfolios_monthly.xlsx')
+    wb = openpyxl.load_workbook(io.BytesIO(b), read_only=True, data_only=True)
+    rows = list(wb['VME Portfolios'].iter_rows(values_only=True))
+    hi = [i for i, r in enumerate(rows) if r and r[0] == 'Date'][0]
+    hdr = rows[hi]
+    out = {h: {} for h in hdr if h and h != 'Date'}
+    for r in rows[hi + 1:]:
+        if not r or not r[0]:
+            continue
+        d = r[0]
+        if isinstance(d, str):
+            mm, dd, yy = d.split('/'); ym = int(yy) * 100 + int(mm)
+        elif isinstance(d, (_d.date, _d.datetime)):
+            ym = d.year * 100 + d.month
+        else:
+            continue
+        for h, v in zip(hdr, r):
+            if h and h != 'Date' and v not in (None, ''):
+                try:
+                    out[h][ym] = float(v)
+                except (TypeError, ValueError):
+                    pass
+    return out
+
+
+def prereg6(ctx):
+    rf = ctx['rf']
+    A = _aqr_vme()
+    C = _f4_read('F-F_International_Countries'); I_ = _f4_read('F-F_International_Indices')
+    MK = {'UK': C['UK']['Mkt'], 'EU': I_['Ind_Eur_WOut_UK']['Mkt'], 'JP': C['Japan']['Mkt']}
+    MKUS = M.ff_factors()['mkt']
+    turn = {'aqr_value': 0.3, 'aqr_mom': 1.5, 'aqr_val_mom': 0.9}
+
+    def leg(k, r):
+        tot = lambda h: to_total(A.get(h, {}), rf)
+        if k == 'aqr_value':
+            return tot(f'VAL3{r}')
+        if k == 'aqr_mom':
+            return tot(f'MOM3{r}')
+        v, m = tot(f'VAL3{r}'), tot(f'MOM3{r}')
+        return {x: (v[x] + m[x]) / 2 for x in set(v) & set(m)}
+
+    def ev(g, mk, k):
+        ms = sorted(set(g) & set(mk))
+        if len(ms) < 60:
+            return {'months': len(ms), 'note': 'データ不足'}
+        s_, b_ = {m: g[m] for m in ms}, {m: mk[m] for m in ms}
+        return {'months': len(ms), 'start': ms[0], 'end': ms[-1], **four(s_, b_),
+                'hold_net': M.excess_stats(M.apply_cost(s_, turn[k], 0.003), b_, a=M.HOLD_START),
+                'hold_net_2x': M.excess_stats(M.apply_cost(s_, turn[k], 0.006), b_, a=M.HOLD_START),
+                'roll20': M.rolling(s_, b_, 20), 'dca20': M.dca(s_, b_, 20),
+                'post_pub_2014': M.excess_stats(s_, b_, a=201401)}
+    regs = ['UK', 'EU', 'JP']
+    per = {r: {k: ev(leg(k, r), MK[r], k) for k in turn} for r in regs}
+    rep = {}
+    for k in turn:
+        legs = [leg(k, r) for r in regs]
+        ms = set.intersection(*[set(l) for l in legs]) & set.intersection(*[set(MK[r]) for r in regs])
+        g = {m: S.mean(l[m] for l in legs) for m in ms}
+        mk = {m: S.mean(MK[r][m] for r in regs) for m in ms}
+        rep[k] = ev(g, mk, k)
+    hp = {k: (r.get('hold') or {}).get('p') for k, r in rep.items() if r.get('hold')}
+    hol = M.holm(hp)
+    tested, all_p = [], dict(ctx['all_hold_p'])
+    for k, r in rep.items():
+        repl = {'regions': sum(1 for x in regs if per[x][k].get('full')), 'positive': sum(1 for x in regs if (per[x][k].get('full') or {}).get('ex_ann', -1) > 0)}
+        repl_h = {'regions': sum(1 for x in regs if per[x][k].get('hold')), 'positive': sum(1 for x in regs if (per[x][k].get('hold') or {}).get('ex_ann', -1) > 0)}
+        g, crit = M.grade(r.get('full'), r.get('train'), r.get('hold'), r.get('roll20'), cost_hold=r.get('hold_net'), repl=repl, family_holm_p=hol.get(k))
+        r.update(grade=g, criteria=crit, holm_p=hol.get(k), repl=repl, repl_hold_reported=repl_h)
+        if r.get('hold') and r['hold'].get('p') is not None:
+            all_p[f'F6a_aqr_eafe3:{k}'] = r['hold']['p']
+        tested.append({'name': f'F6a_aqr_eafe3:{k}', 'family': 'F6a_aqr_eafe3', 'series': 'AQR 三分位（英国・欧州・日本の等分）vs French/MSCI の3市場の等分',
+                       'description': {'aqr_value': '割安の上位1/3', 'aqr_mom': '勢いの上位1/3', 'aqr_val_mom': '割安50%＋勢い50%'}[k], 'grade': g, 'criteria': crit})
+    for r_ in regs:
+        for k in turn:
+            tested.append({'name': f'aqr_region:{r_}:{k}', 'family': 'reported', 'series': f'AQR {r_}', 'grade': None})
+    us = {}
+    for k in turn:
+        g = leg(k, 'US'); us[k] = ev(g, MKUS, k)
+        tested.append({'name': f'aqr_us:{k}', 'family': 'reported', 'series': 'AQR 米国 vs French Mkt', 'grade': None})
+    sanity = {}
+    for r_ in regs + ['US']:
+        avg = {m: S.mean(A[f'VAL{i}{r_}'][m] for i in (1, 2, 3)) for m in set.intersection(*[set(A[f'VAL{i}{r_}']) for i in (1, 2, 3)])}
+        avg = to_total(avg, rf); mk = MK.get(r_) or MKUS
+        ks = sorted(set(avg) & set(mk))
+        sanity[r_] = {'corr_avg3_vs_mkt': round(M.corr([avg[k] for k in ks], [mk[k] for k in ks]), 4),
+                      'avg3_minus_mkt_ann': round(S.mean(avg[k] - mk[k] for k in ks) * 1200, 2), 'from': ks[0], 'to': ks[-1]}
+    return {'prereg': f'out/{PRE6_NAME}', 'prereg_commit': git_sha(f'out/{PRE6_NAME}'), 'families': {'F6a_aqr_eafe3': {'members': rep, 'holm': hol}},
+            'regions': per, 'us_reference': us, 'sanity': sanity,
+            'angle_wide_holm_reference': M.holm(all_p), 'n_graded_angle': len(all_p), 'tested': tested, '_all_hold_p': all_p}
+
+
+def print_prereg6(p6):
+    f = lambda v: f"{v['ex_ann']:+5.2f}(t{v['t']:+.1f})" if v else '    —     '
+    print('== F6a_aqr_eafe3', p6['sanity'])
+    for k, r in p6['families']['F6a_aqr_eafe3']['members'].items():
+        print(f"{k:12} {r['grade']} {r['start']} 全{f(r.get('full'))} 訓{f(r.get('train'))} 保{f(r.get('hold'))} 近{f(r.get('recent'))} 公表後{f(r.get('post_pub_2014'))} 費後{f(r.get('hold_net'))} "
+              f"20年{(r.get('roll20') or {}).get('wins')}/{(r.get('roll20') or {}).get('windows')} 地域 全{r['repl']['positive']}/{r['repl']['regions']} 保{r['repl_hold_reported']['positive']}/{r['repl_hold_reported']['regions']} holm {r['holm_p']} te {(r.get('hold') or {}).get('te')}")
+    for reg, d in p6['regions'].items():
+        print(' ', reg, ' '.join(f"{k}:{d[k]['full']['ex_ann']:+.1f}/{d[k]['hold']['ex_ann']:+.1f}(t{d[k]['hold']['t']:+.1f})" for k in d if d[k].get('full')))
+    print('  US', ' '.join(f"{k}:全{v['full']['ex_ann']:+.1f}/訓{v['train']['ex_ann']:+.1f}/保{v['hold']['ex_ann']:+.1f}(t{v['hold']['t']:+.1f})" for k, v in p6['us_reference'].items() if v.get('full')))
+    ah = p6['angle_wide_holm_reference']
+    print('  angle-wide holm <0.05 (n=%d):' % p6['n_graded_angle'], {k: v for k, v in sorted(ah.items(), key=lambda x: x[1]) if v < 0.05})
 
 
 
