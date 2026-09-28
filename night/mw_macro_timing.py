@@ -32,7 +32,10 @@ SIGN = {'dp': 1, 'ep': 1, 'dfy': 1, 'dfr': 1, 'tms': 1, 'tbl': -1, 'lty': -1, 'n
 JST_PREDS = ['dp', 'tbl', 'lty', 'tms', 'infl']
 JST_C5 = ['AUS', 'BEL', 'CHE', 'DEU', 'DNK', 'ESP', 'FIN', 'FRA', 'GBR', 'ITA', 'JPN', 'NLD', 'NOR', 'PRT', 'SWE']
 POST = {'P': {'post_GW_CT_2008': 200901, 'post_RSZ_2010': 201101}, 'I': {'post_GW_CT_2008': 200901},
-        'G': {'post_GrowthTrend_2016': 201701, 'post_Faber_2007': 200801}, 'R': {'post_GW_CT_2008': 200901, 'post_Faber_2007': 200801}}
+        'G': {'post_GrowthTrend_2016': 201701, 'post_Faber_2007': 200801}, 'R': {'post_GW_CT_2008': 200901, 'post_Faber_2007': 200801},
+        'X1': {'post_GW_CT_2008': 200901, 'post_RSZ_2010': 201101}, 'X2': {'post_GrowthTrend_2016': 201701, 'post_Faber_2007': 200801}}
+PREREG2 = 'mw_macro_timing_prereg2.json'
+EXPLORATORY = {'X1': PREREG2, 'X2': PREREG2}
 LOG = []
 
 
@@ -230,11 +233,11 @@ def aligned(s, b, rf, a=None, z=None):
     return ks, [s[k] - rf[k] for k in ks], [b[k] - rf[k] for k in ks]
 
 
-def sharpe_pair(s, b, rf, a=None, z=None):
+def sharpe_pair(s, b, rf, a=None, z=None, per_year=12):
     ks, xs, xb = aligned(s, b, rf, a, z)
     if len(ks) < 24:
         return None
-    f = lambda x: S.mean(x) / S.stdev(x) * math.sqrt(12) if S.stdev(x) > 0 else None
+    f = lambda x: S.mean(x) / S.stdev(x) * math.sqrt(per_year) if S.stdev(x) > 0 else None
     return (round(f(xs), 3), round(f(xb), 3))
 
 
@@ -355,8 +358,8 @@ def jst_data():
     return out
 
 
-def jst_country(dat, preds, mode, cap):
-    """mode: 'mean_ct' / 'mean_raw' / 'median_ct' / 'pm'。→ (戦略 net {年}, 相手 {年}, 除外した年)"""
+def jst_country(dat, preds, mode, cap, return_w=False):
+    """mode: 'mean_ct' / 'mean_raw' / 'median_ct' / 'pm' / 'tilt_ratio' / 'tilt_dev'（探索2）。→ (戦略 net {年}, 相手 {年}, 除外した年)"""
     ys = sorted(dat)
     excl = set()
     for Y in ys:
@@ -408,7 +411,12 @@ def jst_country(dat, preds, mode, cap):
             vals.append(f['raw'] if mode == 'mean_raw' else ct_value(f, SIGN[pn]))
         if vals:
             fc[Y] = S.median(vals) if mode == 'median_ct' else S.mean(vals)
-    W = weights_from(fc, var, cap)
+    if mode == 'tilt_ratio':
+        W = {Y: min(cap, max(0.0, fc[Y] / pm[Y])) for Y in fc if Y in pm and pm[Y] > 0}
+    elif mode == 'tilt_dev':
+        W = {Y: min(cap, max(0.0, 1 + (fc[Y] - pm[Y]) / (GAMMA * var[Y]))) for Y in fc if Y in pm and Y in var and var[Y] > 0}
+    else:
+        W = weights_from(fc, var, cap)
     strat, bench = {}, {}
     wprev_drift = None
     prevY = None
@@ -428,6 +436,8 @@ def jst_country(dat, preds, mode, cap):
         strat[Y] = net
         wprev_drift = w * (1 + d['eq_tr']) / (1 + R) if 1 + R > 0 else None
         prevY = Y
+    if return_w:
+        return strat, bench, sorted(excl), {Y: W[Y] for Y in strat}
     return strat, bench, sorted(excl)
 
 
@@ -436,9 +446,13 @@ def jst_block(jst, preds, mode, cap):
     for iso in JST_C5 + ['USA']:
         if iso not in jst:
             continue
-        st, bm, excl = jst_country(jst[iso], preds, mode, cap)
+        st, bm, excl, Wj = jst_country(jst[iso], preds, mode, cap, return_w=True)
         xs = M.excess_stats(st, bm, per_year=1, lag=2) if len(st) >= 24 else None
-        row = {'years': len(st), 'first': min(st) if st else None, 'excluded_hyperinflation': excl, 'net': xs}
+        row = {'years': len(st), 'first': min(st) if st else None, 'excluded_hyperinflation': excl, 'net': xs,
+               'avg_w': round(S.mean(Wj.values()), 3) if Wj else None}
+        bill = {Y: jst[iso][Y]['bill_rate'] for Y in st}
+        if len(st) >= 24:
+            row['sharpe_net_vs_bench_report'] = sharpe_pair(st, bm, bill, per_year=1)
         if iso != 'USA':
             if xs and len(st) >= 30:
                 reg += 1
@@ -498,8 +512,8 @@ def french_countries():
     return out
 
 
-def country_gt(loc, cash, unemp, use_unemp):
-    """国の G1（use_unemp=True）/ R2 → (net, 相手)"""
+def country_gt(loc, cash, unemp, use_unemp, volmatch=False):
+    """国の G1（use_unemp=True）/ R2 → (net, 相手)。volmatch=True は探索2の X2a（L をその国の訓練期間で決める）"""
     ks = sorted(k for k in loc if k in cash)
     tri, lv = {}, 1.0
     allk = sorted(loc)
@@ -522,10 +536,17 @@ def country_gt(loc, cash, unemp, use_unemp):
         else:
             W[m] = 0.0 if down else 1.0
     g, n, TO = run_w(W, loc, cash)
+    if volmatch:
+        tk = [k for k in g if k <= M.TRAIN_END]
+        if len(tk) < 60:
+            return {}, {}
+        L = min(WMAX, S.stdev([loc[k] for k in tk]) / S.stdev([g[k] for k in tk]))
+        W = {m: (0.0 if w == 0 else L) for m, w in W.items()}
+        g, n, TO = run_w(W, loc, cash)
     return n, {k: loc[k] for k in n}
 
 
-def country_block(fc_all, use_unemp):
+def country_block(fc_all, use_unemp, volmatch=False):
     det, pos, reg = {}, 0, 0
     for fn, (cc, jp) in COUNTRIES.items():
         if fn not in fc_all:
@@ -548,7 +569,7 @@ def country_block(fc_all, use_unemp):
             except RuntimeError:
                 det[cc] = 'N/A（失業率が取れない）'
                 continue
-        n, b = country_gt(loc, cash, un, use_unemp)
+        n, b = country_gt(loc, cash, un, use_unemp, volmatch)
         if len(n) < 120:
             det[cc] = f'N/A（評価できる月が {len(n)}）'
             continue
@@ -722,6 +743,32 @@ def main():
     e['repl'] = country_block(fc_all, False)
     tested.append(e)
 
+    # ── 探索2（prereg2）: X1 予測だけで傾ける／X2 トレンド×成長を市場のぶれまで持ち上げる
+    f1 = comb['mean_ct']
+    W = {m: min(WMAX, max(0.0, f1[m] / PM[m])) for m in f1 if m in PM and PM[m] > 0}
+    e = evaluate('X1a_tilt_ratio', 'X1', W, r, c, mkt, rf, dy)
+    e['repl'] = jst_block(jst, JST_PREDS, 'tilt_ratio', WMAX)
+    tested.append(e)
+    W = {m: min(WMAX, max(0.0, 1 + (f1[m] - PM[m]) / (GAMMA * VAR[m]))) for m in f1 if m in PM and m in VAR and VAR[m] > 0}
+    e = evaluate('X1b_tilt_dev', 'X1', W, r, c, mkt, rf, dy)
+    e['repl'] = jst_block(jst, JST_PREDS, 'tilt_dev', WMAX)
+    tested.append(e)
+    for nm, cond, src in (('X2a_G1_volmatch', c_unrate, 'G1'), ('X2b_G2_volmatch', c_ip, 'G2')):
+        W0 = g_w(cond)
+        g0, _, _ = run_w(W0, r, c)
+        tk = [k for k in g0 if FRENCH_START <= k <= M.TRAIN_END and k in mkt]
+        L = min(WMAX, S.stdev([mkt[k] for k in tk]) / S.stdev([g0[k] for k in tk]))
+        W = {m: (0.0 if w == 0 else L) for m, w in W0.items()}
+        e = evaluate(nm, 'X2', W, r, c, mkt, rf, dy)
+        e['L_from_train'] = round(L, 4)
+        e['L_train_window'] = [tk[0], tk[-1]]
+        e['repl'] = country_block(fc_all, True, volmatch=True) if src == 'G1' else None
+        tested.append(e)
+    for e in tested:
+        e['exploratory'] = e['family'] in EXPLORATORY
+        if e['exploratory']:
+            e['prereg_file'] = EXPLORATORY[e['family']]
+
     # Holm と格付け
     fams = {}
     for e in tested:
@@ -740,7 +787,8 @@ def main():
         log(f"{e['name']:22s} {g}  保有 {h.get('ex_ann')} t{h.get('t')}  訓練 {(e.get('train') or {}).get('ex_ann')} t{(e.get('train') or {}).get('t')}"
             f"  シャープ {pair}  再現 {rpg}")
 
-    out = {'angle': 'macro_timing', 'prereg': PREREG, 'prereg_commit': pre_sha, 'sanity': san,
+    out = {'angle': 'macro_timing', 'prereg': PREREG, 'prereg_commit': pre_sha,
+           'prereg2': PREREG2, 'prereg2_commit': git_sha('out/' + PREREG2), 'sanity': san,
            'participation': {str(y): round(S.mean(npart[m] for m in npart if m // 100 == y), 1) for y in range(1891, 2026, 5) if any(m // 100 == y for m in npart)},
            'n_tested': len(tested), 'tested': tested, 'log': LOG}
     p = M.save(OUT, out)
