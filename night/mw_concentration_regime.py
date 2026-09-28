@@ -685,7 +685,11 @@ def main(check=False):
     # 米国の今（判定に使わない）
     lastA = max(t for t in stA_us)
     lastD = max(t for t in stD_us)
+    l12 = addm(lastA, -12)
     now = {'A_at': lastA, 'A_R': round(R_us[lastA], 4), 'A_p80': round(pvA_us[lastA], 4), 'A_state': stA_us[lastA],
+           'A_R_12m_before': round(R_us[l12], 4) if l12 in R_us else None,
+           'PP_postpeak_state': bool(any(stA_us.get(addm(lastA, -i)) is True for i in range(WIN)) and l12 in R_us and R_us[lastA] < R_us[l12]),
+           'A_state_since': max(e['start'] for e in episodes(stA_us, R_us, None)),
            'D_at': lastD, 'D_share': round(share[lastD], 4), 'D_p80': round(pvD_us[lastD], 4), 'D_state': stD_us[lastD]}
     try:
         spy, rsp = M.yahoo('SPY'), M.yahoo('RSP')
@@ -717,8 +721,31 @@ def main(check=False):
            'tested': tested, 'loo': loo, 'fresh_late_runup_countries': sorted(late), 'first_state_A': first_on,
            'cost_x2_hold_F1': cost2, 'posthoc_inX_mean': inx_ph, 'F2_contemporaneous': contemp, 'episodes': eps_all, 'us_episodes': us_eps, 'us_now': now,
            'vendor_check': vendor, 'sanity': sanity, 'log': LOG}
+    add_summary(out)
+    for line in out['summary_ja']:
+        log(line)
     p = M.save('mw_concentration_regime.json', out)
     log('書いた', p, os.path.getsize(p))
+
+
+def add_summary(out):
+    T = {t['name']: t for t in out['tested']}
+    g = lambda n, k='hold': (T[n].get(k) or {})
+    SA = [t['name'] for t in out['tested'] if t.get('graded') and t.get('grade') in ('S', 'A')]
+    ph = out['posthoc_inX_mean']
+    f2 = {t['name']: t for t in out['tested'] if t['family'] == 'F2_report'}
+    now = out['us_now']
+    L = [
+        f"判定した{out['n_graded']}本（試したのは全{out['n_tested']}本）: {out['grade_counts']}。S/A は {SA}。",
+        f"主の族 F1（独走の最中だけ X・米国外の国を等分）は5本とも C。割安＋勢いは保有 {g('F1_valmom')['ex_ann']}%/年 t{g('F1_valmom')['t']} だが訓練 t{g('F1_valmom','train')['t']}（9.9年）で C1 不合格。",
+        f"S は副・探索の族の割安＋勢い（F1b 独走の後60か月 保有 {g('F1b_valmom')['ex_ann']} t{g('F1b_valmom')['t']}・F1c 米国の目盛り {g('F1c_valmom')['ex_ann']} t{g('F1c_valmom')['t']}・E1 折り返し後 {g('E1_valmom')['ex_ann']} t{g('E1_valmom')['t']}）と E1 の等加重（{g('E1_equal')['ex_ann']} t{g('E1_equal')['t']}・費用後 {g('E1_equal','hold_net')['ex_ann']}）。",
+        f"ただし常に割安＋勢いを持つ（F0）ほうが保有期間の上乗せは大きい（{g('F0_always_valmom')['ex_ann']} t{g('F0_always_valmom')['t']}）＝S は既知の上乗せを一部の月だけ持った形。局面の効きは『X を持った月の上乗せ』で見る: 割安＋勢い 保有 常に {ph['F1_valmom']['F0_always_hold']} → 折り返し後 {ph['E1_valmom']['hold_inX_ann']}・等加重 常に {ph['E1_equal']['F0_always_hold']} → 折り返し後 {ph['E1_equal']['hold_inX_ann']}（事後の見方）。",
+        f"条件つきの差（F2・次の60か月・米国外）: 独走の後は 上限つき +{f2['F2_A_capped_h60']['reg']['diff']}（{f2['F2_A_capped_h60']['countries_in_gt_out']}/{f2['F2_A_capped_h60']['countries_with_both']}か国）・割安＋勢い +{f2['F2_A_valmom_h60']['reg']['diff']}（{f2['F2_A_valmom_h60']['countries_in_gt_out']}/{f2['F2_A_valmom_h60']['countries_with_both']}）・等加重 +{f2['F2_A_equal_h60']['reg']['diff']}（{f2['F2_A_equal_h60']['countries_in_gt_out']}/{f2['F2_A_equal_h60']['countries_with_both']}）%/年。cop_at は {f2['F2_A_cop_at_h60']['reg']['diff']}。独立な局面は状態Aで {out['episodes']['A']['n']}（{out['episodes']['A']['n_countries']}か国）。",
+        f"米国（F3・1941〜）では独走の最中の X は 2007〜 で負け: 上限つき {g('F3_capped')['ex_ann']} t{g('F3_capped')['t']}・等加重 {g('F3_equal')['ex_ann']}・割安＋勢い {g('F3_valmom')['ex_ann']}。質の側（cop_at {g('F3_cop_at')['ex_ann']}・P1 {g('F3_P1')['ex_ann']}）は勝ったが常に持った場合より小さい。",
+        f"米国の今: 状態A は {now.get('A_state_since')} から続き（{now['A_at']} の R {now['A_R']} ＞ 80%点 {now['A_p80']}）、最上位十分位の割合 {now['D_share']}（80%点 {now['D_p80']}）。規則は『X を持て』と言うが、米国自身の2007年以降の答えは逆。折り返し（12か月前より R が低い）は {now['PP_postpeak_state']}。",
+    ]
+    out['summary_ja'] = L
+    return out
 
 
 def tested_by(tested, name):
