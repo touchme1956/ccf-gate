@@ -1176,6 +1176,29 @@ def main():
            'prereg6': PREREG6, 'prereg6_commit': git_sha('out/' + PREREG6), 'verification_X6a': ver, 'sanity': san,
            'participation': {str(y): round(S.mean(npart[m] for m in npart if m // 100 == y), 1) for y in range(1891, 2026, 5) if any(m // 100 == y for m in npart)},
            'n_tested': len(tested), 'tested': tested, 'log': LOG}
+    # 数えた本数・正直に書く逸脱
+    out['n_graded'] = summary['n_graded']
+    out['n_evaluated_including_reports'] = len(tested) + (len(ver['V2_sensitivity_post_hoc']) - 1) + 3 * sum(
+        1 for v in ver['V1_international']['detail'].values() if isinstance(v, dict))
+    out['deviations'] = [
+        'ブリーフは予言変数の終わりを 2024-12 と書いていたが、GW 2025年版の月次は 2025-12 まであった。保有期間は 2007-01〜2026-01（2025-12 に決めた 2026-01 まで）。French の 2026-02〜08 は予言変数が無いので使っていない（引き延ばさない）',
+        'FRED の UNRATE は 2025-10 が欠測（政府閉鎖で未公表）。0 や補間で埋めず、その値が要る 2025-12・2026-01 の G1・X2a・X6a の判断は作らなかった（窓は 2025-11 まで）',
+        'X3c・X3d（公定歩合）は GW の変数を使わないので 2026-08 まで',
+        'JST（C5）の P 族は、年次の分散で割ると株の割合の平均が 0.3〜0.5 に縮み、15か国すべて負けた＝登録どおりの規則の結果だが、C5 としては予測の力より『株を持たない』ことを測っている',
+        '1981-10 の G1 の判断は、失業率がちょうど12か月平均と同じ（丸めの同点）で、計算の仕方で入れ替わる。登録どおり厳密な平均（statistics.mean）を使った',
+        'mw_common.py に誤りは見つからなかった（French の CAGR 10.38%・2007〜 11.13% を再現）',
+    ]
+    x6 = next(e for e in tested if e['name'] == 'X6a_tilt_x_G1')
+    v1s = ver['V1_international']['summary']['X6a']
+    v3 = ver['V3_concentration']
+    pp = x6['post_pub']['post_GrowthTrend_2016']['net']
+    out['headline_ja'] = (
+        f"登録どおりの主の族（予言変数の組み合わせ P・単独 I・成長×トレンド G・参照 R の21本）はすべて C。"
+        f"探索を5回足して計 {summary['n_graded']} 本を格付けし、S は1本だけ: X6a（失業率が上向き かつ 10か月線の下なら現金、ほかは予測÷過去の平均で 0〜1.5倍）"
+        f"＝訓練 +{x6['train']['ex_ann']}%/年 t{x6['train']['t']}・保有 +{x6['hold']['ex_ann']}%/年 t{x6['hold']['t']}・全期間 t{x6['full']['t']}・"
+        f"シャープ 訓練 {x6['sharpe']['train'][0]} vs {x6['sharpe']['train'][1]}／保有 {x6['sharpe']['hold'][0]} vs {x6['sharpe']['hold'][1]}。"
+        f"ただし二つの部品を結果を見た後に組み合わせた事後に近い設計で、保有の上乗せは 2008年に集中（2008〜09年を除くと +{v3['hold_ex_2008_09_gross']['ex_ann']}%/年 t{v3['hold_ex_2008_09_gross']['t']}）、"
+        f"公表後（2017〜）は {pp['ex_ann']}%/年、米国以外16か国では正が {v1s['positive']}/{v1s['regions']}（2/3 に届かない）。独立の答え合わせでは再現しない＝信用できる勝ちではない")
     p = M.save(OUT, out)
     log('保存', p)
 
