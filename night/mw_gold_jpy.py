@@ -22,6 +22,7 @@ import mw_common as M  # noqa: E402
 
 PREREG = 'mw_gold_jpy_prereg.json'
 PREREG2 = 'mw_gold_jpy_prereg2.json'   # 探索2（L: G4 を長い代理で・M: 金と S&P500 の相対の勢い）
+PREREG3 = 'mw_gold_jpy_prereg3.json'   # 探索3（D: 金を弾薬に・弱気相場で株へ）
 OUT = 'mw_gold_jpy.json'
 END_M = 202608                 # French の終わり
 FEE = 0.0044                   # 金の器の信託報酬（主）
@@ -214,7 +215,8 @@ def targets_x2(D, w=0.20, L=10):
 
 
 # ───────────────────────── 積立の模擬 ─────────────────────────
-def sim(K, RE, RG, C, i0, n, w=0.0, fee=FEE, mode='gap', tgt=None, tax_annual=False, tax_end_gold=False, per_year=12, check=None):
+def sim(K, RE, RG, C, i0, n, w=0.0, fee=FEE, mode='gap', tgt=None, tax_annual=False, tax_end_gold=False, per_year=12, check=None,
+        deploy=None, buy=BUY, sell=SELL):
     """1つの窓の最終資産（名目）。K=月（または年）の並び、RE/RG=株と金のリターンの並び、C=入金の並び（窓の頭で1に揃えたもの）。
     mode: 'gap'（不足按分・売らない）/ 'annual'（gap＋毎年1月にリバランス）/ 'monthly'（毎回リバランス）"""
     E = G = bE = bG = 0.0
@@ -222,6 +224,9 @@ def sim(K, RE, RG, C, i0, n, w=0.0, fee=FEE, mode='gap', tgt=None, tax_annual=Fa
     for j in range(i0, i0 + n):
         wt = w if tgt is None else tgt[j]
         c = C[j]
+        if deploy is not None and deploy[j] and G > 0:      # 探索3: 予備を全部売って株へ（NISA・税なし）
+            E += G * (1 - sell); bE += G * (1 - sell)
+            G = bG = 0.0
         if mode == 'annual' and j > i0 and (per_year == 1 or K[j] % 100 == 1) and E + G > 0:
             T0 = E + G
             gs = wt * T0
@@ -230,33 +235,33 @@ def sim(K, RE, RG, C, i0, n, w=0.0, fee=FEE, mode='gap', tgt=None, tax_annual=Fa
                 gain = y * (1 - bG / G) if G > 0 else 0.0
                 tax = TAX * max(0.0, gain) if tax_annual else 0.0
                 bG *= (1 - y / G); G -= y
-                net = y * (1 - SELL) - tax
+                net = y * (1 - sell) - tax
                 E += net; bE += net
             elif G < gs - 1e-12 and E > 0:
                 y = min(E, gs - G)
                 gain = y * (1 - bE / E)
                 tax = TAX * max(0.0, gain) if tax_annual else 0.0
                 bE *= (1 - y / E); E -= y
-                net = y * (1 - SELL) - tax
-                G += net * (1 - BUY); bG += net
+                net = y * (1 - sell) - tax
+                G += net * (1 - buy); bG += net
         if mode == 'monthly':
             T = E + G + c
             gs = wt * T
             if gs >= G:                      # 金を買い足す（入金と株の売りで。株の売りに費用なし）
                 x = gs - G
-                G += x * (1 - BUY); bG += x
+                G += x * (1 - buy); bG += x
                 E = T - gs
             else:                            # 金を売って株へ
                 y = G - gs
                 G = gs
-                E = T - gs - y * SELL
+                E = T - gs - y * sell
         else:
             T = E + G + c
             need = wt * T - G
             x = min(max(need, 0.0), c)
             if check is not None:
                 check.append(0.0 <= x <= c + 1e-12)
-            G += x * (1 - BUY); bG += x
+            G += x * (1 - buy); bG += x
             E += c - x; bE += c - x
         E *= 1 + RE[j]
         G *= (1 + RG[j]) * (1 - fper)
@@ -327,7 +332,8 @@ def decades(rows):
 
 
 def run_dca(D, bench_key, gold_key='gold_jpy', w=0.1, fee=FEE, mode='gap', tgt_map=None, tax_annual=False, tax_end_gold=False,
-            contrib='real', horizons=(20, 25, 30), start_min=None, cpi_key='cpi', detail=False, check=None):
+            contrib='real', horizons=(20, 25, 30), start_min=None, cpi_key='cpi', detail=False, check=None,
+            deploy_map=None, buy=BUY, sell=SELL):
     """月次の積立の全ての窓 → 角度の判定。倍率は実質（CPI がある場合）"""
     RE_d, RG_d = D[bench_key], D[gold_key]
     cpi = D.get(cpi_key) if cpi_key else None
@@ -341,6 +347,7 @@ def run_dca(D, bench_key, gold_key='gold_jpy', w=0.1, fee=FEE, mode='gap', tgt_m
     K = K_all
     RE = [RE_d[k] for k in K]; RG = [RG_d[k] for k in K]
     tgt = [tgt_map[k] for k in K] if tgt_map is not None else None
+    dep = [bool(deploy_map.get(k)) for k in K] if deploy_map is not None else None
     res = {}
     for H in horizons:
         n = H * 12
@@ -361,7 +368,8 @@ def run_dca(D, bench_key, gold_key='gold_jpy', w=0.1, fee=FEE, mode='gap', tgt_m
             Cl = [0.0] * len(K)
             for j, v in C.items():
                 Cl[j] = v
-            ws, _ = sim(K, RE, RG, Cl, i0, n, w=w, fee=fee, mode=mode, tgt=tgt, tax_annual=tax_annual, tax_end_gold=tax_end_gold, check=check)
+            ws, _ = sim(K, RE, RG, Cl, i0, n, w=w, fee=fee, mode=mode, tgt=tgt, tax_annual=tax_annual, tax_end_gold=tax_end_gold, check=check,
+                        deploy=dep, buy=buy, sell=sell)
             wb, _ = sim(K, RE, RG, Cl, i0, n, w=0.0, fee=fee, mode='gap')
             rows.append((a, z, ws / defl / real_contrib, wb / defl / real_contrib))
         sub = {
@@ -682,6 +690,82 @@ def part2(D, tested, J, gy):
     return res
 
 
+# ───────────────────────── 探索3（out/mw_gold_jpy_prereg3.json） ─────────────────────────
+def bear_maps(D, dd=0.20):
+    """円建て S&P500 の指数（1971-01=1）の最高値から dd 以上の下げで発火（まだその下げで発火していなければ）。
+    戻り値: deploy{実行する月: True}・bear{金の目標0%の月: True}・episodes。
+    読み方（事前登録3の文言どおり）: 発火は月末 t の信号 → t+1 月に実行。0% の期間は t+1 から『新高値の月の翌月』まで（その月を含む）"""
+    sp = D['sp_jpy']
+    ks = sorted(k for k in sp if k >= 197102)
+    I = P = 1.0
+    in_ep = False
+    deploy, bear, eps = {}, {}, []
+    cur = None
+    for k in ks:
+        I *= 1 + sp[k]
+        newhigh = I > P
+        if newhigh:
+            P = I
+        nx = ym_add(k, 1)
+        if in_ep:
+            bear[nx] = True
+            if newhigh:
+                in_ep = False
+                cur['recovered_newhigh'] = k
+                eps.append(cur); cur = None
+            continue
+        if I <= (1 - dd) * P:
+            in_ep = True
+            deploy[nx] = True
+            bear[nx] = True
+            cur = {'trigger_signal': k, 'executed': nx, 'drawdown_at_signal': round(I / P - 1, 3)}
+    if cur:
+        cur['recovered_newhigh'] = None
+        eps.append(cur)
+    return deploy, bear, eps
+
+
+def part3(D, tested):
+    res = {'prereg3': PREREG3, 'prereg3_commit': git_sha(os.path.join('out', PREREG3))}
+    deploy, bear, eps = bear_maps(D)
+    res['episodes'] = eps
+    res['bear_share_of_months'] = round(sum(1 for k in D['sp_jpy'] if k >= 197102 and bear.get(k)) / sum(1 for k in D['sp_jpy'] if k >= 197102), 3)
+    log('探索3 下げの期間', len(eps), '件・0%の月の割合', res['bear_share_of_months'], [(e['executed'], e['recovered_newhigh']) for e in eps])
+    ks = sorted(k for k in D['sp_jpy'] if k >= 197102)
+    Dc = dict(D)
+    Dc['cash_jpy'] = {k: D['rf_jpy'][k] for k in ks if k in D['rf_jpy']}
+    for nm, w, gk, fee, bs, desc in (('D1', 0.10, 'gold_jpy', FEE, (BUY, SELL), '金10%・gap。弱気相場（高値から−20%）で金を全部株へ、新高値まで金0%'),
+                                     ('D2', 0.20, 'gold_jpy', FEE, (BUY, SELL), '金20%・同じ規則'),
+                                     ('D1c', 0.10, 'cash_jpy', 0.0, (0.0, 0.0), '対照: 予備を円の現金（日銀コール）で10%・同じ規則')):
+        tm = {k: (0.0 if bear.get(k) else w) for k in ks}
+        r_ = run_dca(Dc, 'sp_jpy', gold_key=gk, fee=fee, tgt_map=tm, deploy_map=deploy, buy=bs[0], sell=bs[1], detail=True)
+        h = r_['H20']
+        tested.append({'name': nm, 'family': 'D_dry_powder', 'description': '探索3: ' + desc, 'graded_global': False, 'exploratory': True,
+                       'angle': r_, 'angle_pass_H20': h.get('pass'), 'angle_robust_H20': h.get('robust')})
+        a = h['all']
+        log(f"{nm}: H20 n={a.get('n')} 裾の比={a.get('tail_ratio_q10')} 対の比の中央={a.get('paired_median')} 勝率={a.get('paired_win_rate')} "
+            f"悪い10%での対の比={a.get('bad10_paired_median')} 合格={h.get('pass')} 頑丈={h.get('robust')} ≤1990 {h['le1990'].get('pass')} {h['le1990'].get('paired_median')} ≥1991 {h['ge1991'].get('pass')} {h['ge1991'].get('paired_median')}")
+    sp, g = D['sp_jpy'], D['gold_jpy']
+    DG = {}
+    for nm, w in (('D1s', 0.10), ('D2s', 0.20)):
+        wmap = {k: (0.0 if bear.get(k) else w) for k in ks if k in g}
+        gs, ns, tpy = constmix(sp, g, wmap, fee=FEE)
+        x = global_eval(gs, ns, sp, repl=None, rf=D['rf_jpy'], timing=True)
+        x['turnover_per_year'] = tpy
+        DG[nm] = x
+    hx = M.holm({nm: (DG[nm]['hold'] or {}).get('p') for nm in DG})
+    for nm, x in DG.items():
+        x['holm_p'] = hx.get(nm)
+        g_, c_ = M.grade(x['full'], x['train'], x['hold'], x['roll20'], cost_hold=x['cost_hold'], repl=None, family_holm_p=x['holm_p'],
+                         sharpe_pair=x['sharpe'], leveraged_or_timing=True)
+        x['grade'], x['criteria'] = g_, c_
+        tested.append({'name': nm, 'family': 'D_dry_powder', 'description': f'探索3: 定率 金{int(nm[1]) * 10}%・弱気相場の期間だけ金0%（毎月リバランス・格付け用）',
+                       'graded_global': True, 'exploratory': True, 'global': x, 'grade': g_, 'criteria': c_})
+        log(f"[格付け・探索3] {nm} {g_} 訓練 {x['train']['ex_ann']} t={x['train']['t']} 保有 {x['hold']['ex_ann']} t={x['hold']['t']} 費用後保有 {x['cost_hold']['ex_ann']} "
+            f"CAGR差 {x['cost_hold']['cagr_diff']} シャープ {x['sharpe']} {c_}")
+    return res
+
+
 # ───────────────────────── 本体 ─────────────────────────
 def check():
     D = load_all()
@@ -911,6 +995,9 @@ def main():
     # ── 探索2（事前登録2） ──
     if os.path.exists(os.path.join(M.BASE, 'out', PREREG2)):
         out['part2'] = part2(D, tested, J, gy)
+
+    if os.path.exists(os.path.join(M.BASE, 'out', PREREG3)):
+        out['part3'] = part3(D, tested)
 
     out['n_tested'] = len(tested)
     out['n_graded_global'] = sum(1 for t in tested if t.get('graded_global'))
