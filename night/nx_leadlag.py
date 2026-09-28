@@ -230,9 +230,73 @@ def lasso_sanity():
     return out
 
 
-def fit_forecast(X, Y, x_t, method, mask=None):
+EXACT_STATS = {'lambda_fits': 0, 'certified_from_1e-8': 0, 'columns_refit_tight': 0, 'certified_after_tight': 0, 'uncertified_tight_used': 0}
+
+
+def certify_path(G, C, lams, coef, alpha=1.0, mask=None, tol=1e-13, maxit=100000):
+    """座標降下の解（停止則 1e-8）の組 A と符号 s から、厳密な解 b_A = (G_AA + λ(1−α)I)^{-1}(C_A − λα s) を解き直し、
+    KKT 条件（符号が s のまま・|b| > 1e-12、組の外の |C_j − G_jA b_A| ≤ λα(1−1e-9)）で確かめる。
+    確かめられた点は厳密解に置き換え、1点でも確かめられない業種（列）は停止則 1e-13・100,000 周で経路ごと解き直し、
+    その解をもう一度確かめる（確かめられない点は締めた座標降下の解をそのまま使い、数を数える）。
+    LASSO は G が正定値なら解が一つなので、確かめられた点の組は厳密な LASSO の組と同じ"""
+    nlam, p, m = coef.shape
+    out = np.zeros_like(coef)
+
+    def cert(b, lam, col):
+        A = np.flatnonzero(b != 0)
+        thr, ridge = lam * alpha, lam * (1 - alpha)
+        free = np.ones(p, bool) if mask is None else mask[:, col].astype(bool)
+        e = np.zeros(p)
+        if len(A):
+            sg = np.sign(b[A])
+            M = G[np.ix_(A, A)] + ridge * np.eye(len(A))
+            try:
+                bA = np.linalg.solve(M, C[A, col] - thr * sg)
+            except np.linalg.LinAlgError:
+                return None
+            if np.any(np.sign(bA) != sg) or np.any(np.abs(bA) <= 1e-12):
+                return None
+            e[A] = bA
+        g = C[:, col] - G @ e
+        ina = free.copy(); ina[A] = False
+        if ina.any() and np.any(np.abs(g[ina]) > thr * (1 - 1e-9)):
+            return None
+        return e
+    for col in range(m):
+        ok = True
+        for k in range(nlam):
+            EXACT_STATS['lambda_fits'] += 1
+            e = cert(coef[k, :, col], lams[k, col], col)
+            if e is None:
+                ok = False
+                break
+            out[k, :, col] = e
+        if ok:
+            EXACT_STATS['certified_from_1e-8'] += nlam
+            continue
+        EXACT_STATS['columns_refit_tight'] += 1
+        mk = None if mask is None else np.ascontiguousarray(mask[:, [col]])
+        ct, _ = cd_path(G, np.ascontiguousarray(C[:, [col]]), np.ascontiguousarray(lams[:, [col]]), alpha=alpha, mask=mk, tol=tol, maxit=maxit)
+        for k in range(nlam):
+            bt = ct[k, :, 0]
+            e = cert(bt, lams[k, col], col)
+            if e is None:
+                EXACT_STATS['uncertified_tight_used'] += 1
+                out[k, :, col] = bt
+            else:
+                EXACT_STATS['certified_after_tight'] += 1
+                out[k, :, col] = e
+    return out
+
+
+import inspect as _inspect  # noqa: E402
+CERT_SRC_HASH = hashlib.sha1(_inspect.getsource(certify_path).encode()).hexdigest()[:10]   # 厳密版のキャッシュの指紋に入れる
+
+
+def fit_forecast(X, Y, x_t, method, mask=None, tol=1e-8, maxit=10000, exact=False):
     """1か月ぶんの推定と予言。X: n×p（説明変数＝前月の超過）、Y: n×m（被説明＝当月の超過）、x_t: p（t 月の超過）。
     method: 'lasso'（AICc・OLS post-LASSO）/'enet'（α=0.5・AICc は enet の当てはめの RSS）/'ols'/'combo'。
+    exact=True（感度・事前登録の外）: 座標降下の解を certify_path で KKT を確かめた厳密解に置き換えてから AICc を当てる。
     返り: 予言 (m,)、選ばれた説明変数の数 (m,)、最大の周回数、10,000 周に達した数"""
     n, p = X.shape
     m = Y.shape[1]
@@ -252,7 +316,9 @@ def fit_forecast(X, Y, x_t, method, mask=None):
         return ybar + (xs_t[:, None] * Cc / np.diag(G)[:, None]).mean(0), np.full(m, p), 0, 0
     alpha = 0.5 if method == 'enet' else 1.0
     lams, _ = lam_grid(Cc, alpha=alpha, mask=mask)
-    coef, sw = cd_path(G, Cc, lams, alpha=alpha, mask=mask)
+    coef, sw = cd_path(G, Cc, lams, alpha=alpha, mask=mask, tol=tol, maxit=maxit)
+    if exact:
+        coef = certify_path(G, Cc, lams, coef, alpha=alpha, mask=mask)
     act = coef != 0
     fc = np.empty(m); nsel = np.empty(m, dtype=int)
     inv_cache = {}
@@ -290,13 +356,19 @@ def fit_forecast(X, Y, x_t, method, mask=None):
             if best is None or val[0] < best[0]:   # 同点なら大きい λ（先に見た方）を残す
                 best = val
         fc[col], nsel[col] = best[1], best[2]
-    return fc, nsel, int(sw.max()), int((sw >= 10000).sum())
+    return fc, nsel, int(sw.max()), int((sw >= maxit).sum())
 
 
-def rstz_forecasts(name, months, Xex, Yex, s_first, t_first, t_last, method, mask=None, rolling=None, fp_extra=''):
+def rstz_forecasts(name, months, Xex, Yex, s_first, t_first, t_last, method, mask=None, rolling=None, fp_extra='', tol=1e-8, maxit=10000, exact=False):
     """完全な（欠けの無い）パネルの拡大窓（rolling なら直近 rolling 組）の予言。
     months: 月の並び、Xex: T×p（説明変数の元＝超過）、Yex: T×m。窓の月 s は s_first〜t（x は s−1）。予言は t_first〜t_last の信号の月 t → t+1 を持つ。
+    tol・maxit は座標降下の停止則（既定＝事前登録の max|Δβ|<1e-8 か 10,000 周）。既定と違うときだけ指紋に入れる（既定のキャッシュを保つ）。
     返り: {t: 予言 (m,)}、診断"""
+    if tol != 1e-8 or maxit != 10000:
+        fp_extra = fp_extra + f'|tol={tol!r}|maxit={maxit}'
+    if exact:
+        fp_extra = fp_extra + '|exact_kkt|' + CERT_SRC_HASH
+    st0 = dict(EXACT_STATS)
     idx = {mm: i for i, mm in enumerate(months)}
     si, t0i, t1i = idx[s_first], idx[t_first], idx[t_last]
     assert t0i - si + 1 >= 120, '初期窓が120組に満たない'
@@ -316,7 +388,7 @@ def rstz_forecasts(name, months, Xex, Yex, s_first, t_first, t_last, method, mas
         s = np.arange(a, ti + 1)
         assert s.max() == ti and s.min() >= si   # 先読みの検査: 窓は t まで
         X, Y, x_t = Xex[s - 1], Yex[s], Xex[ti]
-        fc, nsel, sw, nc = fit_forecast(X, Y, x_t, method, mask)
+        fc, nsel, sw, nc = fit_forecast(X, Y, x_t, method, mask, tol=tol, maxit=maxit, exact=exact)
         F[months[ti]] = fc
         nsel_all.append(nsel); maxsw = max(maxsw, sw); nonconv += nc
         if (ti - t0i) % 60 == 0:
@@ -325,12 +397,15 @@ def rstz_forecasts(name, months, Xex, Yex, s_first, t_first, t_last, method, mas
     diag = {'months': len(F), 'first_signal': months[t0i], 'last_signal': months[t1i],
             'mean_selected_regressors': round(float(ns.mean()), 2), 'median_selected': float(np.median(ns)),
             'share_forecast_equal_to_mean(no regressor)': round(float((ns == 0).mean()), 3),
-            'max_sweeps_one_lambda': maxsw, 'lambda_fits_hit_10000_sweeps': nonconv, 'seconds': round(time.time() - tt, 1)}
+            'max_sweeps_one_lambda': maxsw, f'lambda_fits_hit_{maxit}_sweeps': nonconv, 'stop_rule': f'max|Δβ|<{tol:g} か {maxit} 周',
+            'seconds': round(time.time() - tt, 1)}
+    if exact:
+        diag['exact_kkt'] = {k: EXACT_STATS[k] - st0[k] for k in EXACT_STATS}
     np.savez(cp, t=np.array(sorted(F)), F=np.array([F[t] for t in sorted(F)]), diag=json.dumps(diag))
     return F, diag
 
 
-def rstz_forecasts_missing(months, R, s_first_i, method='lasso', min_obs=120):
+def rstz_forecasts_missing(months, R, s_first_i, method='lasso', min_obs=120, exact=False):
     """欠けのあるパネル（米国外の GICS・実在の ETF）の拡大窓の予言。
     説明変数 = 窓の始まり（x の最初の月＝s_first−1）から t まで欠けの無い列。被説明 = t にリターンがあり、
     窓の中で y がそろう月が min_obs 以上の列（欠けた月は飛ばす）。同じ月の組の列はまとめて推定する。
@@ -356,10 +431,54 @@ def rstz_forecasts_missing(months, R, s_first_i, method='lasso', min_obs=120):
         for ok, cols in groups.values():
             assert ok.max() <= ti
             X, Y, x_t = R[np.ix_(ok - 1, J)], R[np.ix_(ok, cols)], R[ti, J]
-            f, _, _, _ = fit_forecast(X, Y, x_t, method)
+            f, _, _, _ = fit_forecast(X, Y, x_t, method, exact=exact)
             fc[cols] = f
         F[months[ti]] = fc
     return F
+
+
+# 感度（事前登録の外・格付けに使わない）: 座標降下の停止則を締めた版。事前登録の max|Δβ|<1e-8 では、境目の λ で
+# 厳密な LASSO の解なら0の係数が 1e-10〜1e-8 だけ残り、AICc がその組を選ぶ月がある（検査役の指摘・2026-09-28）。
+TIGHT_TOL, TIGHT_MAXIT = 1e-13, 100000
+TIGHT_NAMES = ('P4', 'P5', 'E12', 'E13', 'E18', 'E21')
+
+
+def rstz_specs(P30, P49, rf, mktrf):
+    """P4・P5・E12・E13・E18・E21 の予言の入力（main の本番の呼び出しと同じ配列・同じ窓）。
+    返り: {名前: (months, Xex, Yex, s_first, t_first, t_last, method, mask, rolling)}"""
+    def ex_panel(P):
+        rfa = np.array([rf[m] for m in P.months])
+        return P.R - rfa[:, None]
+    X30, X49 = ex_panel(P30), ex_panel(P49)
+    nI = P49.n
+    own_mask = (1 - np.eye(nI)).astype(np.uint8)
+    mk_ex = np.array([mktrf[m] for m in P49.months])
+    X21 = np.column_stack([X49, mk_ex])
+    return {'P4': (P30.months, X30, X30, 196001, 196912, 202607, 'lasso', None, None),
+            'P5': (P49.months, X49, X49, 196908, 197907, 202607, 'lasso', None, None),
+            'E12': (P49.months, X49, X49, 196908, 197907, 202607, 'enet', None, None),
+            'E13': (P49.months, X49, X49, 196908, 197907, 202607, 'lasso', own_mask, None),
+            'E18': (P49.months, X49, X49, 196908, 197907, 202607, 'lasso', None, 120),
+            'E21': (P49.months, X21, mk_ex[:, None], 196908, 197907, 202607, 'lasso', None, None)}
+
+
+def e21_series(F21, mkt, rf):
+    """E21: 予言>0 なら翌月 Mkt、≦0 なら RF。切替1回＝片道100%"""
+    r21, to21, prev = {}, {}, None
+    tl = mrange(197907, 202607)
+    for t in tl:
+        h = nxt(t)
+        pos = 'mkt' if F21[t][0] > 0 else 'rf'
+        r21[h] = mkt[h] if pos == 'mkt' else rf[h]
+        to21[h] = 1.0 if prev is None else (1.0 if pos != prev else 0.0)
+        prev = pos
+    return r21, to21, round(sum(1 for t in tl if F21[t][0] > 0) / len(tl), 3)
+
+
+def tight_forecast(name, specs):
+    """感度の予言: 事前登録の停止則（1e-8）の座標降下の解を certify_path で KKT を確かめた厳密解に置き換えた版"""
+    months, Xex, Yex, a, b, c, method, mask, roll = specs[name]
+    return rstz_forecasts(name + 'exact', months, Xex, Yex, a, b, c, method, mask=mask, rolling=roll, exact=True)
 
 
 # ───────────────────────── データ ─────────────────────────
@@ -522,6 +641,65 @@ def nw_ols(y, X, lag=12):
     return b, se
 
 
+def rolling_exact(s, b, years=20, start_month=7, per_year=12):
+    """nx_common.rolling と同じ窓・同じ出力の形。違うのは勝ちの数え方だけ: nx_common は窓ごとの年率差を小数2桁の%に
+    丸めてから c>0 を数えるので、0〜0.005%/年の小さな勝ちが負けに数えられる（検査役の指摘・2026-09-28）。
+    ここでは丸める前の gs−gb で勝ちを数え、丸めは表示（median・worst・best）だけにする。nx_common の数え方の結果も
+    wins_nx_common_rounded に併記する（nx_common 自体の是正はまとめ役が全角度でやる）"""
+    ks = sorted(set(s) & set(b))
+    if not ks:
+        return None
+    raw = []
+    y0 = ks[0] // 100 if per_year == 12 else ks[0] // 10000
+    last = ks[-1]
+    for y in range(y0, 2100):
+        if per_year == 12:
+            a, z = y * 100 + start_month, (y + years) * 100 + start_month - 1 if start_month > 1 else (y + years - 1) * 100 + 12
+        else:
+            a, z = y * 10000 + start_month * 100, (y + years) * 10000 + start_month * 100 - 1
+        if z > last:
+            break
+        w = [k for k in ks if a <= k <= z]
+        if len(w) < years * per_year * 0.97:
+            continue
+        gs = math.exp(math.fsum(math.log1p(s[k]) for k in w) / years) - 1
+        gb = math.exp(math.fsum(math.log1p(b[k]) for k in w) / years) - 1
+        raw.append((y, gs - gb))
+    if not raw:
+        return None
+    wins = sum(1 for _, c in raw if c > 0)
+    wins_r = sum(1 for _, c in raw if round(c * 100, 2) > 0)
+    v = sorted(c for _, c in raw)
+    wy, wc = min(raw, key=lambda x: x[1])
+    by, bc = max(raw, key=lambda x: x[1])
+    return {'windows': len(raw), 'wins': wins, 'win_rate': round(wins / len(raw), 3),
+            'median': round(v[len(v) // 2] * 100, 2), 'worst': (wy, round(wc * 100, 2)), 'best': (by, round(bc * 100, 2)),
+            'wins_nx_common_rounded': wins_r, 'win_rate_nx_common_rounded': round(wins_r / len(raw), 3)}
+
+
+def dca_exact(s, b, years=20, step=12):
+    """nx_common.dca と同じ窓・同じ出力の形。勝ち（倍率>1）は丸める前の倍率で数える（nx_common は小数3桁に丸めてから r>1）。
+    倍率の表示（median・worst・best）は小数3桁のまま"""
+    ks = sorted(set(s) & set(b))
+    n = years * 12
+    raw = []
+    for i in range(0, len(ks) - n + 1, step):
+        w = ks[i:i + n]
+        ws = wb = 0.0
+        for k in w:
+            ws = (ws + 1) * (1 + s[k]); wb = (wb + 1) * (1 + b[k])
+        raw.append((w[0], ws / wb))
+    if not raw:
+        return None
+    v = sorted(r for _, r in raw)
+    wy, wr = min(raw, key=lambda x: x[1])
+    by, br = max(raw, key=lambda x: x[1])
+    wins = sum(1 for r in v if r > 1)
+    wins_r = sum(1 for r in v if round(r, 3) > 1)
+    return {'windows': len(raw), 'win_rate': round(wins / len(raw), 3), 'median_ratio': round(v[len(v) // 2], 3),
+            'worst': (wy, round(wr, 3)), 'best': (by, round(br, 3)), 'win_rate_nx_common_rounded': round(wins_r / len(raw), 3)}
+
+
 def evaluate(name, gross, to, bench, rf, post_pub=None, cost=COST, cost_sens=COST_SENS, extra_spans=None):
     net, net_s = net_of(gross, to, cost), net_of(gross, to, cost_sens)
     es = N.excess_stats
@@ -540,8 +718,8 @@ def evaluate(name, gross, to, bench, rf, post_pub=None, cost=COST, cost_sens=COS
            'net_sensitivity': {'full': es(net_s, bench), 'train': es(net_s, bench, z=N.TRAIN_END), 'hold': es(net_s, bench, a=N.HOLD_START)}}
     bw = {k: bench[k] for k in ks if k in bench}
     out = {'span': [ks[0], ks[-1]], 'stats_gross': st, 'cost': cst,
-           'roll20_net': N.rolling(net, bench), 'roll20_gross': N.rolling(gross, bench),
-           'dca20_net_ratio': N.dca(net, bench, 20), 'dca20_gross_ratio': N.dca(gross, bench, 20),
+           'roll20_net': rolling_exact(net, bench), 'roll20_gross': rolling_exact(gross, bench),
+           'dca20_net_ratio': dca_exact(net, bench, 20), 'dca20_gross_ratio': dca_exact(gross, bench, 20),
            'maxdd': {'rule_gross': round(N.maxdd(gross) * 100, 1), 'rule_net': round(N.maxdd(net) * 100, 1), 'bench_same_span': round(N.maxdd(bw) * 100, 1)},
            'sharpe': {'train': [N.sharpe(gross, rf, z=N.TRAIN_END), N.sharpe(bench, rf, a=ks[0], z=N.TRAIN_END)],
                       'hold': [N.sharpe(gross, rf, a=N.HOLD_START), N.sharpe(bench, rf, a=N.HOLD_START, z=ks[-1])],
@@ -551,6 +729,7 @@ def evaluate(name, gross, to, bench, rf, post_pub=None, cost=COST, cost_sens=COS
 
 
 def grade_entry(e, holm_p, repl=None, timing=False):
+    e['c5_repl_used'] = repl
     st = e['stats_gross']
     sp = {'train': tuple(e['sharpe']['train']), 'hold': tuple(e['sharpe']['hold'])} if timing else None
     g, c = N.grade(st['full'], st['train'], st['hold'], e['roll20_net'], e['cost']['net_main']['hold'], repl, holm_p, sp, timing)
@@ -558,6 +737,165 @@ def grade_entry(e, holm_p, repl=None, timing=False):
     e['grade'] = g
     e['holm_p_in_family'] = holm_p
     return g
+
+
+def exact_t_of(g, b, a=None, z=None):
+    """丸める前の NW t（excess_stats の t は小数2桁に丸めてある）"""
+    ks = sorted(k for k in set(g) & set(b) if (a is None or k >= a) and (z is None or k <= z))
+    return N.nw_t([g[k] - b[k] for k in ks]) if len(ks) >= 24 else None
+
+
+def exact_signs(g, b, a=None, z=None):
+    """丸める前の（算術平均の差×12・幾何の年率差）。excess_stats の ex_ann・cagr_diff は小数2桁の%に丸めてある"""
+    ks = sorted(k for k in set(g) & set(b) if (a is None or k >= a) and (z is None or k <= z))
+    if len(ks) < 24:
+        return None
+    ex = math.fsum(g[k] - b[k] for k in ks) / len(ks) * 12
+    return ex, N.cagr([g[k] for k in ks]) - N.cagr([b[k] for k in ks])
+
+
+def compact(e):
+    st, nh = e['stats_gross'], e['cost']['net_main']['hold']
+    return {'train_ex_ann': st['train']['ex_ann'] if st['train'] else None, 'train_t': st['train']['t'] if st['train'] else None,
+            'hold_ex_ann': st['hold']['ex_ann'], 'hold_t': st['hold']['t'], 'hold_cagr_diff': st['hold']['cagr_diff'],
+            'hold_net010_ex_ann': nh['ex_ann'] if nh else None, 'hold_net010_cagr_diff': nh['cagr_diff'] if nh else None,
+            'full_ex_ann': st['full']['ex_ann'], 'full_t': st['full']['t'], 'full_cagr_diff': st['full']['cagr_diff'],
+            'roll20_net_win_rate': e['roll20_net']['win_rate'] if e.get('roll20_net') else None,
+            'grade': e.get('grade'), 'holm_p_in_family': e.get('holm_p_in_family'),
+            'failed': [c for c, v in e.get('criteria', {}).items() if v is False]}
+
+
+def kkt_probe(spec, t, col, names, months):
+    """1つの信号の月・1つの業種で、λ の格子100点の解を停止則 1e-8 と締めた停止則で比べる（LASSO のみ）"""
+    mths, Xex, Yex, s_first, _, _, method, mask, roll = spec
+    idx = {mm: i for i, mm in enumerate(mths)}
+    si, ti = idx[s_first], idx[t]
+    a = si if roll is None else max(si, ti - roll + 1)
+    ss = np.arange(a, ti + 1)
+    X, Y, x_t = Xex[ss - 1], Yex[ss][:, [col]], Xex[ti]
+    mk = None if mask is None else np.ascontiguousarray(mask[:, [col]])
+    n = len(ss)
+    mu, sd = X.mean(0), X.std(0)
+    Xs = (X - mu) / sd
+    Yc = Y - Y.mean(0)
+    G = Xs.T @ Xs / n; C = Xs.T @ Yc / n
+    lams, _ = lam_grid(C, mask=mk)
+    c8, _ = cd_path(G, C, lams, mask=mk)
+    cE = certify_path(G, C, lams, c8, mask=mk)
+    cT, _ = cd_path(G, C, lams, mask=mk, tol=TIGHT_TOL, maxit=TIGHT_MAXIT)
+    free = np.ones(X.shape[1], bool) if mk is None else mk[:, 0].astype(bool)
+
+    def viol(b, lam):
+        g = C[:, 0] - G @ b
+        act = b != 0
+        vin = float(np.abs(g[act] - lam * np.sign(b[act])).max()) if act.any() else 0.0
+        oth = (~act) & free
+        vout = float(max(0.0, (np.abs(g[oth]) - lam).max())) if oth.any() else 0.0
+        return max(vin, vout)
+    ks = [k for k in range(lams.shape[0]) if ((c8[k, :, 0] != 0) != (cE[k, :, 0] != 0)).any()]
+    left = []
+    for k in ks:
+        for j in np.flatnonzero((c8[k, :, 0] != 0) != (cE[k, :, 0] != 0)):
+            left.append(f"{names[j] if j < len(names) else 'Mkt'} {c8[k, j, 0]:.3g}→{cE[k, j, 0]:.3g}")
+    _, n8, _, _ = fit_forecast(X, Y, x_t, method, mk)
+    _, nE, _, _ = fit_forecast(X, Y, x_t, method, mk, exact=True)
+    f = lambda v: float(f"{v:.3g}")  # noqa: E731
+    return {'signal_month': t, 'industry': names[col] if Yex.shape[1] > 1 else 'Mkt', 'grid_points_support_differs': ks,
+            'coef_left_at_1e-8(→exact)': left,
+            'kkt_violation_1e-8': f(max(viol(c8[k, :, 0], lams[k, 0]) for k in ks)) if ks else None,
+            'kkt_violation_exact': f(max(viol(cE[k, :, 0], lams[k, 0]) for k in ks)) if ks else None,
+            'kkt_violation_cd_1e-13': f(max(viol(cT[k, :, 0], lams[k, 0]) for k in ks)) if ks else None,
+            'cd_1e-13_support_equals_exact_all_grid': bool(all(((cT[k, :, 0] != 0) == (cE[k, :, 0] != 0)).all() for k in range(lams.shape[0]))),
+            'n_selected_1e-8': int(n8[0]), 'n_selected_exact': int(nE[0])}
+
+
+def lasso_tol_sensitivity(P30, P49, mkt, rf, mktrf, rules, entries, exact_p, repl_of, c5_registered, g11):
+    """感度（事前登録の外・格付けに使わない）: 座標降下の停止則を max|Δβ|<1e-13・100,000 周に締めて、
+    LASSO／elastic net の予言を作り直し、同じ規則・同じ評価・同じ格付けの式を当てる。格付けは事前登録の停止則（1e-8）のまま"""
+    specs = rstz_specs(P30, P49, rf, mktrf)
+    FT, DT, FR_ = {}, {}, {}
+    for nm in TIGHT_NAMES:
+        log(f'感度: {nm} の予言（停止則 {TIGHT_TOL:g}・{TIGHT_MAXIT} 周）')
+        FT[nm], DT[nm] = tight_forecast(nm, specs)
+        months, Xex, Yex, a, b, c, method, mask, roll = specs[nm]
+        FR_[nm], _ = rstz_forecasts(nm, months, Xex, Yex, a, b, c, method, mask=mask, rolling=roll)   # 本番（既定の停止則）のキャッシュ
+    fc_cmp = {}
+    for nm in TIGHT_NAMES:
+        d = {t: float(np.abs(FR_[nm][t] - FT[nm][t]).max()) for t in FR_[nm]}
+        big = [t for t in sorted(d) if d[t] > 1e-12]
+        fc_cmp[nm] = {'signal_months_with_forecast_diff_gt_1e-12': big if len(big) <= 60 else f'{len(big)} か月（elastic net は OLS をやり直さないので係数の小さな差がそのまま予言に出る）',
+                      'n_months_diff': len(big), 'of_months': len(d), 'max_abs_forecast_diff': max(d.values()), 'tight_diag': DT[nm]}
+    probe = {}
+    for nm in ('P4', 'P5', 'E13', 'E18', 'E21'):
+        spec = specs[nm]
+        nms = P30.names if nm == 'P4' else P49.names
+        rows_ = []
+        for t in sorted(FR_[nm]):
+            dcol = np.flatnonzero(np.abs(FR_[nm][t] - FT[nm][t]) > 1e-12)
+            for col in dcol:
+                if len(rows_) < 12:
+                    rows_.append(kkt_probe(spec, t, int(col), nms, spec[0]))
+        probe[nm] = rows_
+    ruledefs = {'P4_RSTZ_lasso_ff30_vw': ('P4', P30, mrange(196912, 202607), 'vw'),
+                'P5_RSTZ_lasso_ff49_vw': ('P5', P49, mrange(197907, 202607), 'vw'),
+                'E12_RSTZ_enet_ff49_vw': ('E12', P49, mrange(197907, 202607), 'vw'),
+                'E13_RSTZ_lasso_ff49_vw_others': ('E13', P49, mrange(197907, 202607), 'vw'),
+                'E16_RSTZ_lasso_ff30_ew': ('P4', P30, mrange(196912, 202607), 'ew'),
+                'E17_RSTZ_lasso_ff49_ew': ('P5', P49, mrange(197907, 202607), 'ew'),
+                'E18_RSTZ_lasso_ff49_vw_roll120': ('E18', P49, mrange(197907, 202607), 'vw')}
+    tight, sel_diff = {}, {}
+    for name, (key, P, tl, wt) in ruledefs.items():
+        rT = run_rule(P, lambda t, F=FT[key]: F[t], tl, K5, wt, record=True)
+        rR = run_rule(P, lambda t, F=FR_[key]: F[t], tl, K5, wt, record=True)
+        assert rR[0] == rules[name]['gross'], f'{name}: 本番のキャッシュから組み直した系列が本番と違う'
+        sel_diff[name] = [h for h in sorted(rT[3]) if set(np.flatnonzero(rT[3][h] > 0)) != set(np.flatnonzero(rR[3][h] > 0))]
+        tight[name] = (rT[0], rT[1])
+    r21T, to21T, share_T = e21_series(FT['E21'], mkt, rf)
+    tight['E21_HTV_timing'] = (r21T, to21T)
+    r21R, _, _ = e21_series(FR_['E21'], mkt, rf)
+    assert r21R == rules['E21_HTV_timing']['gross']
+    sel_diff['E21_HTV_timing'] = [nxt(t) for t in mrange(197907, 202607) if (FT['E21'][t][0] > 0) != (FR_['E21'][t][0] > 0)]
+    # C5 の P4_P5（各国 GICS の LASSO）も同じ停止則で
+    c5T, posT = {}, 0
+    for c in COUNTRIES:
+        d = jkp_gics(c)
+        Pc = dict_to_panel(d, g11)
+        mk = N.jkp_mkt(c, 'vw')
+        Fc = rstz_forecasts_missing(Pc.months, Pc.R, Pc.idx[199908], exact=True)
+        r, to, meta, _ = run_rule(Pc, lambda t, F=Fc: F[t], sorted(Fc), K5min1, 'ew', missing_hold=0.0)
+        ex = N.excess_stats(r, mk)
+        pos = bool(ex and ex['cagr_diff'] > 0)
+        posT += pos
+        reg = c5_registered['countries'][c]['P4_P5']
+        c5T[c] = {'cagr_diff_tight': ex['cagr_diff'] if ex else None, 'cagr_diff_registered': reg['excess']['cagr_diff'] if reg['excess'] else None,
+                  'positive_tight': pos, 'positive_registered': reg['positive']}
+    replT = {'regions': len(COUNTRIES), 'positive': posT}
+    # 評価と格付け（Holm は族の中でこの規則の p だけを差し替えて計算し直す）
+    ev = {}
+    pT = {}
+    for name, (g, to) in tight.items():
+        R_ = rules[name]
+        e, _ = evaluate(name, g, to, mkt, rf, R_['post_pub'], R_['cost'], R_['cost_sens'])
+        ev[name] = e
+        pT[name] = N.p_two(exact_t_of(g, mkt, a=N.HOLD_START))
+    out_rules = {}
+    for name, e in ev.items():
+        fam = entries[name]['family']
+        ps = {n: (pT[n] if n in pT else exact_p[n]) for n, x in entries.items() if x['family'] == fam}
+        hp = N.holm(ps).get(name)
+        repl = replT if name in ('P4_RSTZ_lasso_ff30_vw', 'P5_RSTZ_lasso_ff49_vw') else (repl_of.get(name) if fam == 'primary' else None)
+        grade_entry(e, hp, repl, timing=bool(rules[name].get('timing')))
+        out_rules[name] = {'registered_tol_1e-8': compact(entries[name]), 'tight_tol_1e-13': compact(e),
+                           'hold_months_with_different_holdings': sel_diff[name],
+                           'grade_changes': entries[name]['grade'] != e['grade']}
+    return {'label': '感度（事前登録の外・格付けに使わない）: LASSO／elastic net の座標降下の停止則を締めた版',
+            'why': '検査役の指摘（2026-09-28）: 事前登録の停止則 max|Δβ|<1e-8 では、λ の格子の境目の1点で、厳密な LASSO の解なら0になる係数が 1e-10〜1e-8 だけ残り（KKT の食い違い 1e-8 程度）、AICc がその組を選ぶ月がある。格付けは事前登録どおり 1e-8 のまま。ここは 1e-13・100,000 周（合成データで OLS に一致させた検査と同じ停止則）で作り直した数字',
+            'forecast_comparison': fc_cmp, 'kkt_probe': probe,
+            'kkt_probe_spec': '予言が違う月（各手法で最初の12組まで）の、その業種の λ の格子100点を停止則 1e-8 と 1e-13 で解き直し、有効な説明変数の組が違う格子の点・1e-8 の解に残る係数（→ 締めた解の値）・その点での KKT 条件の最大の食い違い・AICc が選ぶ説明変数の数',
+            'rules': out_rules,
+            'c5_P4_P5_tight': {'countries': c5T, 'positive': posT, 'regions': len(COUNTRIES), 'pass(>=5/7)': posT >= 5},
+            'E21_share_months_in_market_tight': share_T,
+            'any_grade_changes': any(v['grade_changes'] for v in out_rules.values())}
 
 
 def pct_rank(x, arr):
@@ -785,14 +1123,7 @@ def main():
     mk_ex = np.array([mktrf[m] for m in P49.months])
     X21 = np.column_stack([X49, mk_ex])
     F21, fcd['E21'] = rstz_forecasts('E21', P49.months, X21, mk_ex[:, None], 196908, 197907, 202607, 'lasso')
-    r21, to21, prev = {}, {}, None
-    for t in mrange(197907, 202607):
-        h = nxt(t)
-        pos = 'mkt' if F21[t][0] > 0 else 'rf'
-        r21[h] = mkt[h] if pos == 'mkt' else rf[h]
-        to21[h] = 1.0 if prev is None else (1.0 if pos != prev else 0.0)
-        prev = pos
-    share_in = round(sum(1 for t in mrange(197907, 202607) if F21[t][0] > 0) / len(mrange(197907, 202607)), 3)
+    r21, to21, share_in = e21_series(F21, mkt, rf)
     rules['E21_HTV_timing'] = {'gross': r21, 'to': to21, 'meta': {'hold_from': 197908, 'hold_to': 202608, 'months': len(r21), 'share_months_in_market': share_in},
                                'family': 'exploratory', 'spec': '市場の翌月の超過を49業種＋市場の前月の超過で LASSO 予言し、>0 なら Mkt、≦0 なら RF', 'post_pub': PP_2007PAPERS,
                                'cost': COST, 'cost_sens': COST_SENS, 'W': {}, 'timing': True}
@@ -831,9 +1162,7 @@ def main():
         R_['net'] = net
     # Holm は丸める前の p（p_two(NW t)）で（事前登録 C7_family の文字どおり）。excess_stats の p は4桁に丸めてあるので、丸めた版も併記し、
     # 丸めで格付けの線（t 2.0／1.65／3.0・Holm 0.05）をまたぐ規則が無いかを下で確かめる
-    def exact_t(g, b, a=None, z=None):
-        ks = sorted(k for k in set(g) & set(b) if (a is None or k >= a) and (z is None or k <= z))
-        return N.nw_t([g[k] - b[k] for k in ks]) if len(ks) >= 24 else None
+    exact_t = exact_t_of
     for name, e in entries.items():
         g = rules[name]['gross']
         e['exact_t'] = {'full': exact_t(g, mkt), 'train': exact_t(g, mkt, z=N.TRAIN_END), 'hold': exact_t(g, mkt, a=N.HOLD_START)}
@@ -897,8 +1226,30 @@ def main():
         a, b = e['holm_p_in_family'], e['holm_p_in_family_rounded_p']
         if a is not None and b is not None and (a < 0.05) != (b < 0.05):
             rb.append({'rule': name, 'criterion': 'C7_multi(Holm)', 'holm_exact_p': a, 'holm_rounded_p': b})
-    res['sanity']['rounding_boundary_check'] = {'spec': '格付けの線（t 2.0／1.65／3.0・Holm 0.05）が、丸めた t と丸める前の t、丸めた p と丸める前の p の Holm で食い違う規則', 'crossings': rb,
-                                                'note': '空なら丸めは格付けに影響しない。格付けは Holm を丸める前の p で、t は excess_stats の丸めた値（nx_common.grade のまま）で当てた'}
+        # 符号の線（C1 の超過>0・C2・C6）: excess_stats の ex_ann・cagr_diff は小数2桁の%に丸めてあるので、0〜0.005 の正が 0.0 に落ちる
+        g = rules[name]['gross']
+        for crit, ser, part, a_, z_ in (('C1_train(sign)', g, 'train', None, N.TRAIN_END), ('C2_hold_sign', g, 'hold', N.HOLD_START, None),
+                                        ('C6_net_cost', rules[name]['net'], 'hold', N.HOLD_START, None)):
+            sx = exact_signs(ser, mkt, a_, z_)
+            stp = st[part] if crit != 'C6_net_cost' else e['cost']['net_main']['hold']
+            if sx is None or stp is None:
+                continue
+            if crit.startswith('C1'):
+                r_ok, x_ok = stp['ex_ann'] > 0, sx[0] > 0
+            else:
+                r_ok, x_ok = stp['ex_ann'] > 0 and stp['cagr_diff'] > 0, sx[0] > 0 and sx[1] > 0
+            if r_ok != x_ok:
+                rb.append({'rule': name, 'criterion': crit, 'rounded': [stp['ex_ann'], stp['cagr_diff']], 'exact_pct': [sx[0] * 100, sx[1] * 100]})
+        # C4: 勝ちの数え方（丸める前＝この道具／丸めた後＝nx_common.rolling）で 0.8 の線をまたぐか
+        r20 = e['roll20_net']
+        if r20 and (r20['win_rate'] >= 0.8) != (r20['win_rate_nx_common_rounded'] >= 0.8):
+            rb.append({'rule': name, 'criterion': 'C4_roll20', 'win_rate_exact': r20['win_rate'], 'win_rate_nx_common_rounded': r20['win_rate_nx_common_rounded']})
+    res['sanity']['rounding_boundary_check'] = {'spec': '格付けの線（t 2.0／1.65／3.0・Holm 0.05・超過と幾何差の符号・転がる20年窓の勝率 0.8）が、丸めた値と丸める前の値で食い違う規則', 'crossings': rb,
+                                                'note': '空なら丸めは格付けに影響しない。格付けは Holm を丸める前の p で、C4 の勝ちは丸める前の差で数え（rolling_exact）、t と符号は excess_stats の丸めた値（nx_common.grade のまま）で当てた'}
+
+    # ── 感度（事前登録の外・格付けに使わない）: LASSO の停止則を締めた版
+    res['sensitivity_lasso_tol'] = lasso_tol_sensitivity(P30, P49, mkt, rf, mktrf, rules, entries,
+                                                         {n: e['exact_hold_p_two'] for n, e in entries.items()}, repl_of, res['c5'], g11)
 
     # ── 対照・偽の規則・後知恵・古い表（報告のみ）
     log('対照・偽の規則')
@@ -1015,9 +1366,80 @@ def main():
                          'c5_units': 7 * 4, 'placebo_runs': 200, 'controls': len(controls), 'real_instrument': len([v for v in real_chk.values() if isinstance(v, dict)])}
     res['holm'] = fam_p
     res['grades'] = {n: e['grade'] for n, e in entries.items()}
+    res['fixes'] = make_fixes(res, entries, controls, real_chk)
     # 事後の診断に使う系列を手元にためる（JSON には入れない）
     np.save(os.path.join(N.CACHE, 'nx_leadlag_series.npy'), {n: {'gross': r['gross'], 'to': r['to'], 'W': r['W']} for n, r in rules.items()} | {'CTRL_own1m_vw': {'gross': ctrl[0], 'to': ctrl[1]}}, allow_pickle=True)
     return res, rules, entries, P49, P30, mkt, rf, mktrf, ctrl, primary_sig
+
+
+def make_fixes(res, entries, controls, real_chk):
+    """検査役の指摘（2026-09-28）ごとに、確かめた結果・直したか・前後の数字を残す（数字はこの実行の値をそのまま引く）"""
+    fixes = []
+    # (1) LASSO の停止則
+    sen = res['sensitivity_lasso_tol']
+    fc5 = sen['forecast_comparison']['P5']
+    p5 = sen['rules']['P5_RSTZ_lasso_ff49_vw']
+    keys = ('train_ex_ann', 'train_t', 'hold_ex_ann', 'hold_t', 'hold_cagr_diff', 'hold_net010_cagr_diff', 'full_t', 'roll20_net_win_rate', 'grade')
+    rows = {n: {'registered_tol_1e-8': {k: v['registered_tol_1e-8'][k] for k in keys}, 'tight_tol_1e-13': {k: v['tight_tol_1e-13'][k] for k in keys},
+                'hold_months_with_different_holdings': v['hold_months_with_different_holdings']} for n, v in sen['rules'].items()}
+    kp = sen.get('kkt_probe', {}).get('P5', [])
+    kp_txt = '・'.join(f"信号の月 {x['signal_month']} {x['industry']}（格子 {x['grid_points_support_differs']}・1e-8 の解に残る係数 {x['coef_left_at_1e-8']}・KKT の食い違い 1e-8 {x['kkt_violation_1e-8']} / 1e-13 {x['kkt_violation_1e-13']}・AICc の選ぶ数 {x['n_selected_1e-8']}→{x['n_selected_1e-13']}）" for x in kp)
+    fixes.append({
+        'finding': 'P5（と同じ予言を使う E17、および E13）の LASSO は、事前登録の停止則 max|Δβ|<1e-8 で止めた座標降下が、一部の月で厳密な LASSO の解と違う説明変数の組を返し、AICc がその組を選んで予言が変わる',
+        'verdict': '本当（再現した）。書き間違いではなく事前登録の停止則の許容誤差の副作用',
+        'evidence': (f"P5 で予言が 1e-12 より大きく違う信号の月は {fc5['n_months_diff']}/{fc5['of_months']}（{fc5['signal_months_with_forecast_diff_gt_1e-12']}）。"
+                     f"その月の λ の格子100点の解を停止則 1e-8 と 1e-13 で比べると（sensitivity_lasso_tol.kkt_probe）: {kp_txt}。"
+                     f"持ち物が変わった保有月は P5 {p5['hold_months_with_different_holdings']}"),
+        'action': ('格付けは事前登録の停止則（1e-8）のまま＝変えない（事前登録の規則そのもの）。停止則を 1e-13・100,000 周に締めた版を sensitivity_lasso_tol に並べた（P4・P5・E12・E13・E16・E17・E18・E21 と C5 の P4_P5）。'
+                   f"P5 の保有期間の超過 {p5['registered_tol_1e-8']['hold_ex_ann']} → 締めた版 {p5['tight_tol_1e-13']['hold_ex_ann']}（幾何差 {p5['registered_tol_1e-8']['hold_cagr_diff']} → {p5['tight_tol_1e-13']['hold_cagr_diff']}・"
+                   f"費用後 {p5['registered_tol_1e-8']['hold_net010_cagr_diff']} → {p5['tight_tol_1e-13']['hold_net010_cagr_diff']}・全期間 t {p5['registered_tol_1e-8']['full_t']} → {p5['tight_tol_1e-13']['full_t']}）。"
+                   f"格付けの変化: {'あり' if sen['any_grade_changes'] else 'なし（どれも C のまま）'}"),
+        'changes_grade': sen['any_grade_changes'], 'deviation_from_prereg': '無し（格付けは事前登録のまま・締めた版は報告だけ）',
+        'before_after': rows})
+    # (2) 転がる20年窓の勝ちの数え方
+    changed = []
+
+    def chk(label, e):
+        for key in ('roll20_net', 'roll20_gross'):
+            r = e.get(key)
+            if r and r['wins'] != r['wins_nx_common_rounded']:
+                changed.append({'rule': label, 'series': key, 'before_nx_common_rounded': f"{r['wins_nx_common_rounded']}/{r['windows']}={r['win_rate_nx_common_rounded']}",
+                                'after_exact': f"{r['wins']}/{r['windows']}={r['win_rate']}",
+                                'C4_before': r['win_rate_nx_common_rounded'] >= 0.8, 'C4_after': r['win_rate'] >= 0.8})
+        for key in ('dca20_net_ratio', 'dca20_gross_ratio'):
+            d = e.get(key)
+            if d and d['win_rate'] != d['win_rate_nx_common_rounded']:
+                changed.append({'rule': label, 'series': key, 'before_nx_common_rounded': d['win_rate_nx_common_rounded'], 'after_exact': d['win_rate'], 'used_in_grade': False})
+    for n, e in entries.items():
+        chk(n, e)
+    for n, e in controls.items():
+        if isinstance(e, dict) and 'roll20_net' in e:
+            chk(n, e)
+    for n, e in real_chk.items():
+        if isinstance(e, dict) and 'roll20_net' in e:
+            chk(n, e)
+    c4flip = [x for x in changed if x.get('C4_before') is not None and x['C4_before'] != x['C4_after'] and x['series'] == 'roll20_net']
+    # 丸めた数え方なら格付けがどうだったか（同じ入力で C4 の勝率だけ nx_common の数え方に戻す）
+    regrade = []
+    for n, e in entries.items():
+        r = e['roll20_net']
+        if not r or r['wins'] == r['wins_nx_common_rounded']:
+            continue
+        st = e['stats_gross']
+        sp = {'train': tuple(e['sharpe']['train']), 'hold': tuple(e['sharpe']['hold'])} if n == 'E21_HTV_timing' else None
+        g0, _ = N.grade(st['full'], st['train'], st['hold'], dict(r, win_rate=r['win_rate_nx_common_rounded']), e['cost']['net_main']['hold'],
+                        e.get('c5_repl_used'), e['holm_p_in_family'], sp, n == 'E21_HTV_timing')
+        regrade.append({'rule': n, 'grade_with_nx_common_rounded_wins': g0, 'grade_now': e['grade']})
+    fixes.append({
+        'finding': 'nx_common.rolling は窓ごとの年率差を小数2桁の%に丸めてから勝ち（>0）を数えるので、0〜0.005%/年の小さな勝ちが負けに数えられる（dca も倍率を小数3桁に丸めてから >1 を数える）',
+        'verdict': '本当。事前登録 C4 は「市場に勝った割合」なので、丸めた後の 0.0 を負けに数えるのは線の当て方の誤り（線そのものは動かさない）',
+        'action': ('この角度の evaluate を rolling_exact／dca_exact（nx_common と同じ窓・同じ出力の形・勝ちだけ丸める前の差で数える）に替えて走らせ直した。'
+                   'nx_common の数え方の結果も各規則の roll20_*.wins_nx_common_rounded／dca20_*.win_rate_nx_common_rounded に併記。'
+                   'nx_common.py 自体は触っていない（共通部品なので、まとめ役が全角度で直して格付けし直す）'),
+        'changed': changed,
+        'C4_flips': c4flip, 'regrade': regrade, 'changes_grade': any(x['grade_with_nx_common_rounded_wins'] != x['grade_now'] for x in regrade),
+        'note': '格付けは C4 だけでは上がらない（どの規則も C1・C2・C6 のどれかで不合格）。変わった規則と前後は changed に全部'})
+    return fixes
 
 
 def grade_summary(entries):
@@ -1236,6 +1658,16 @@ def post_hoc(res, rules, entries, P49, P30, mkt, rf, mktrf, ctrl, primary_sig):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == '--prewarm-tight':
+        # 感度の予言（停止則を締めた版）だけを先に作ってキャッシュへ置く（並べて走らせるため）。本番の main と同じ入力
+        LOG = os.path.join(N.CACHE, f'nx_leadlag_prewarm_{"_".join(sys.argv[2:])}.log')
+        ff_ = N.ff_factors()
+        P49_, P30_ = french_panel('49_Industry_Portfolios'), french_panel('30_Industry_Portfolios')
+        sp_ = rstz_specs(P30_, P49_, ff_['rf'], ff_['mktrf'])
+        for nm in sys.argv[2:]:
+            _, dg = tight_forecast(nm, sp_)
+            log('prewarm', nm, dg)
+        sys.exit(0)
     res, rules, entries, P49, P30, mkt, rf, mktrf, ctrl, primary_sig = main()
     res['post_hoc'] = post_hoc(res, rules, entries, P49, P30, mkt, rf, mktrf, ctrl, primary_sig)
     res['grade_summary'] = grade_summary(entries)
