@@ -338,7 +338,63 @@ def main(save=False):
             'gross_excess': x['gross_excess'], 't': x['stats']['t'], 't_nw': x['stats']['t_nw'], 'vol': x['stats']['vol'],
             'maxdd': x['stats']['maxdd'], 'beta': x['beta'], 'alpha_capm': x['alpha_capm'],
             'ex_vs_jkp_capped_mkt': x['ex_vs_jkp_capped_mkt'], 'sub_periods': x['sub'], 'turnover_yr': x['turnover_yr']} for x in rows]
-    return best, st, spec, la, pc, r, mkt_sel, tbl, how, rows, D
+    sub = best['sub']
+    vw_same = next(x for x in rows if x['spec']['w'] == 'vw' and x['spec']['legs'] == best['spec']['legs'])
+    bad = next(x for x in rows if x['name'].startswith('利益の驚きの悪い側'))
+    both = next(x for x in rows if x['name'] == '利益＋売上の良い側を等分・vw_cap')
+    sale = next(x for x in rows if x['name'] == '売上の驚き(saleq_su)の良い側・vw_cap')
+    dm = D['niq_su']['vw_cap']['mean_excess_ann_pct']
+    rationale = (
+        '【規則】米国上場株のうち、標準化した利益の驚き（JKP niq_su＝四半期の純利益の前年同期差 ÷ その差の過去8四半期のばらつき）が'
+        '大きい三分位（JKP の \'3.0\'・境目は非超小型株で引く）を、上限つきの時価加重（JKP vw_cap＝NYSE の80%点で重みに上限）で'
+        '買いだけで持つ。組は JKP が毎月 m−1 月末に組んだもの（会計値は公表の遅れを置いて使う）をそのまま使い、月 m のリターンを取る。'
+        '三分位の銘柄数が50社未満の月（1964-11〜1965-07）は使わない。'
+        '【なぜ】(1) 決算発表後の値動きの持続（Ball & Brown 1968・Foster, Olsen & Shevlin 1984・Bernard & Thomas 1989/1990）: '
+        '市場は利益の季節的な時系列の性質（前年同期差に正の自己相関がある）を十分に織り込まず、良い驚きの後の数四半期にわたって'
+        '株価が上へ漂う——2001年より前に公表された、会計の異常の中で最も古く頑丈とされた一つ。(2) 買いだけの組なので、'
+        '空売りの制約で残りやすい悪い側の漂い（下へ）は取れず、良い側の上乗せだけを取る。(3) 売上の驚き（Jegadeesh & Livnat 2006 は2001年以降の公表）は'
+        '同じ系統の参考として並べた。'
+        f'【向き】選定期間の米国で JKP 因子と \'3.0\'−\'1.0\' の相関は +1.000（vw_cap・vw とも）＝JKP の direction は +1・良い側は \'3.0\'。'
+        f'三分位の平均の超過（年率・費用前）も 1.0 {dm["1.0"]}% < 2.0 {dm["2.0"]}% < 3.0 {dm["3.0"]}% と単調。'
+        f'【選定期間 {st["from"]}〜{st["to"]}（{st["years"]}年）】費用後の年率 {st["cagr"]}% 対 French 米国市場 {st["bench_cagr"]}%、'
+        f'超過 {st["excess"]:+}%/年（費用前 {best["gross_excess"]:+}）、t {st["t"]}（Newey-West {st["t_nw"]}）、ぶれ {st["vol"]}% 対 {st["bench_vol"]}%、'
+        f'最大下落 {st["maxdd"]}% 対 {st["bench_maxdd"]}%、転がる10年で勝った窓 {st["roll10_win"]}。'
+        f'市場に対するβ {best["beta"]}・CAPM のα {best["alpha_capm"]:+}%/年。'
+        f'JKP の上限つき市場（vw_cap）に対しては {best["ex_vs_jkp_capped_mkt"]:+}%/年＝超過の一部（約{st["excess"] - best["ex_vs_jkp_capped_mkt"]:.1f}pt）は上限つきの重み（中型寄り）の分。'
+        f'⚠ 部分期間: 1965-1980 {sub["1964-1980"]["excess"]:+}%/年（t {sub["1964-1980"]["t"]}）・1981-1990 {sub["1981-1990"]["excess"]:+}（t {sub["1981-1990"]["t"]}）・'
+        f'1991-2000 {sub["1991-2000"]["excess"]:+}（t {sub["1991-2000"]["t"]}）＝上乗せはほぼ1980年までに集中し、Bernard & Thomas の公表（1989）の前後から小さい。'
+        f'参考: 同じ側の vw（上限なし）は {vw_same["stats"]["excess"]:+}%/年（t {vw_same["stats"]["t"]}）、売上の驚きの良い側 vw_cap は {sale["stats"]["excess"]:+}（t {sale["stats"]["t"]}）、'
+        f'利益＋売上の等分 vw_cap は {both["stats"]["excess"]:+}（t {both["stats"]["t"]}）、利益の驚きの悪い側 vw_cap は {bad["stats"]["excess"]:+}（t {bad["stats"]["t"]}）＝'
+        '向きは系統の前提どおり（悪い側のほうが大きく負ける＝買いだけでは取れない側が大きい）。'
+        f'【選び方】{how}。試した変種は10（選べる6・参考4〔悪い側2・中＋良2＝定義の外〕）。'
+        '【予想】事前登録 r6 どおり「公表から時間が経ち米国では弱い」。選定期間の後半20年で上乗せはほぼ0なので、ホールドアウトで +1%/年・t≥2 を満たす見込みは低い。'
+    )
+    lookahead_doc = (
+        'fam_pead.lookahead_test と prefix_subprocess で確かめた（すべて食い違い0）: '
+        '(1) 切り詰め: 脚のリターン・銘柄数・RF を 1975-12/1985-12/1990-12/1995-12/1999-12 で切って作り直しても、切った月までの規則のリターンと回転が完全一致。'
+        '(2) 未来の毒: 切った月より後の脚のリターン・銘柄数・RF を乱数に置き換えても、それより前のリターンと回転は1か月も変わらない（後ろは変わる＝毒は効いている）。'
+        '(3) 1か月ずらし: 切った月より後の脚の値を1か月ずらして壊しても前は不変（後ろは変わる）。'
+        f'(4) 月合わせ: 月 m の総リターン − 月 m の RF = JKP の月 m の脚の超過（差の最大 {la["month_align_maxdiff"]:.1e}）。'
+        '脚の月 m の値は同じ月の米国市場と相関 0.972・次の月とは 0.054・前の月とは 0.045＝JKP の月 m はその月のリターン（m−1 月末に組んだ組）。'
+        f'(5) 別プロセス: EDGE_SEL_END=199012 と 200012 で run(spec) を走らせ、1990-12 までの規則・相手・回転 {pc["us_values_compared"]} 値と'
+        f'他の市場（{",".join(pc["markets_in_1990cut"]) or "なし"}）の {pc["markets_values_compared"]} 値が 1e-12 で一致・1990-12 で切った側に後の月は0。'
+        '(6) 側（信号）は spec の定数で、データから再推定しない。月 m に持つかは月 m の組（m−1 月末に組まれた）の銘柄数 n だけで決め、'
+        'この module は全期間の平均・分位・標準化を一切使わない（標準化は JKP が各社の過去8四半期で行う）'
+    )
+    extra = {'implement': FAMILY['implement'], 'family_name': FAMILY['name'], 'lookahead_test': lookahead_doc,
+             'lookahead_result': la, 'prefix_result': pc, 'directions': D,
+             'variants_table': tbl, 'markets': list(REPL),
+             'markets_note': ('国は JKP の3文字で run() の markets のキーと同じ。相手はその国の JKP mkt(vw)+米国RF（米ドル）。脚の銘柄数が20未満の月は落とし、24か月未満の国は markets に入らない。'
+                              '⚠ 四半期の会計値は米国外では1990年代後半まで薄く、選定期間（〜2000-12）に20社以上そろう国はカナダ（1987-02〜・13年）だけ'
+                              '＝他の21か国の再現は選定期間では一度も見ていない（見られない）'),
+             'markets_selection_period': mkt_sel, 'selection_note': how,
+             'benchmark': 'French 米国市場（Mkt-RF＋RF・CRSP 全上場の上限なし時価加重）。他の国は JKP の国の mkt（vw＝上限なし・米ドル超過）＋French RF',
+             'cost_note': '片道の回転100%につき0.25%。回転は 300%/年（事前登録 r6 の置き値・四半期の決算の信号）＋等分の組の戻し（選んだ規則は1脚なので戻し無し）',
+             'subperiods': sub, 'eligible_variants': sum(1 for x in rows if x['eligible']),
+             'reference_variants': sum(1 for x in rows if not x['eligible'])}
+    doc = h.save_spec('pead', spec, rationale, len(rows), st, extra)
+    print('凍結:', best['name'], doc['n_variants_tried'])
+    return doc
 
 
 if __name__ == '__main__':
@@ -348,4 +404,4 @@ if __name__ == '__main__':
         print(lookahead_test(sp))
         print(prefix_subprocess(sp))
     else:
-        main(save=False)
+        main(save='--save' in sys.argv)
