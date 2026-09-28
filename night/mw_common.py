@@ -11,6 +11,9 @@
   （2026-09-28 検算: JKP mkt 8.86%/年・French Mkt-RF 8.30%/年・RF 3.24%/年 → JKP は超過で確定）
 - 相手（市場）は**上限なしの時価加重**＝French の Mkt（S&P500 に近い）。JKP の vw_cap 市場は最大級の会社の重みを
   NYSE 80%点で抑える＝2007年以降の巨大テック時代に弱い相手だった（docs/CLAUDE_ARCHIVE の longonly 節）。
+- JKP の weighting は 'vw'（上限なしの時価加重＝米国では French Mkt とほぼ同じ: 全期間 −0.03%/年・2007〜 −0.41%/年）・
+  'vw_cap'・'ew' がある。**買いだけの三分位を純粋な市場と比べるときは 'vw'**。地域: 'usa','jpn',…(ISO3)・
+  'developed','emerging','frontier','world','world_ex_us'。
 - キャッシュは out/_mw_cache/（gitignore）。
 """
 import csv, io, json, math, os, statistics as S, time, urllib.request, zipfile, datetime, hashlib
@@ -35,7 +38,9 @@ def get(url, name=None, max_age_days=30, tries=5):
     for i in range(tries):
         try:
             b = urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=180).read()
-            open(p, 'wb').write(b)
+            tmp = f'{p}.{os.getpid()}.tmp'
+            open(tmp, 'wb').write(b)
+            os.replace(tmp, p)  # 原子的に置く（並行して読む道具が書きかけを掴まないように）
             return b
         except Exception as e:  # noqa
             err = e
