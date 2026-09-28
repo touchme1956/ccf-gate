@@ -424,6 +424,16 @@ def main():
         tested += t4
         out['countries'] = rep4
         out['post_hoc_tilt_market_regions'] = post_hoc_tilt_regions(D, P, G, mktrf, rf, RP, RG, RM, t4)
+        # 費用の感度（報告のみ）: 国の族を片道0.60%で
+        sens = {}
+        for fam in ('explore4_Z', 'explore4_ZT'):
+            rows = [v for v in t4 if v['family'] == fam]
+            net2 = [v['eval']['hold']['ex_ann'] - 0.6 * v['eval']['turnover_hold'] for v in rows]
+            sens[fam] = {'cost_per_100pct': 0.006, 'hold_net_mean_approx': round(S.mean(net2), 2), 'hold_net_positive': sum(1 for x in net2 if x > 0), 'n': len(rows),
+                         'note': '算術の超過から 回転率×0.6% を引いた近似（報告のみ）'}
+        out['cost_sensitivity_countries'] = sens
+    # 公表からの年数ごとの超過（報告のみ・事後の記述）
+    out['event_time'] = event_time_report(D, G, mktrf, RP, RM)
 
     out['tested'] = tested
     out['n_tested'] = len(tested)
@@ -914,6 +924,32 @@ def post_hoc_tilt_regions(D, P, G, mktrf, rf, RP, RG, RM, t4):
                          'full': e['full'], 'train': e['train'], 'hold': e['hold'], 'cost_hold': e['cost_hold'],
                          'roll20': e['roll20'], 'dca20': e['dca20']}
         out['rows'][reg] = rows
+    return out
+
+
+def event_time_report(D, G, mktrf, RP, RM):
+    """公表年を0年として、年数ごとに良い側の超過（米国は対 Mkt-RF、world_ex_us は傾き＝良い側−3つの平均）を束ねる（報告のみ）"""
+    out = {'label': '記述（報告のみ・判定に使わない）。年数＝暦年−公表年。月ごとに該当する特徴を等分に束ねた系列の平均と NW t'}
+    TW = tilt_series(RP['world_ex_us'], D)
+    for lab, src, base in (('usa_vs_mkt', G, mktrf), ('world_ex_us_tilt', TW, None)):
+        buckets = collections.defaultdict(lambda: collections.defaultdict(list))
+        for a, d in D.items():
+            if not d['pub'] or a not in src:
+                continue
+            for k, x in src[a].items():
+                if base is not None:
+                    if k not in base:
+                        continue
+                    x = x - base[k]
+                et = k // 100 - d['pub']
+                b = '<=-10' if et <= -10 else '-9..-5' if et <= -5 else '-4..0' if et <= 0 else '1..3' if et <= 3 else '4..6' if et <= 6 else '7..10' if et <= 10 else '11..15' if et <= 15 else '>15'
+                buckets[b][k].append(x)
+        res = {}
+        for b in ('<=-10', '-9..-5', '-4..0', '1..3', '4..6', '7..10', '11..15', '>15'):
+            ser = [S.mean(v) for k, v in sorted(buckets[b].items())]
+            t = M.nw_t(ser) if len(ser) >= 24 else None
+            res[b] = {'months': len(ser), 'ex_ann': round(S.mean(ser) * 1200, 2) if ser else None, 'nw_t': round(t, 2) if t else None}
+        out[lab] = res
     return out
 
 
