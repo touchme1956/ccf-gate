@@ -334,7 +334,7 @@ def to_text(s):
     return s
 
 
-ITEM_RE = re.compile(r'(?im)^[ \t>*]*(?:PART\s+I{1,3}\s*[,.\-–—:]?\s*)?I\s{0,2}TEMS?\s+(\d{1,2})\s*(\(?[AaBbCc]\)?)?\s*(?:(?:AND|&|,)\s*(\d{1,2})\s*)?[.:\-–—]?\s*([^\n]{0,80})')
+ITEM_RE = re.compile(r'(?im)^[ \t>*]*(?:PART\s+I{1,3}\s*[,.\-–—:]?\s*)?I\s{0,2}TEMS?\s+(\d{1,2})\s*(\(?[AaBbCc]\)?(?![A-Za-z]))?\s*(?:(?:AND|&|,)\s*(\d{1,2})\s*)?[.:\-–—]?\s*([^\n]{0,80})')
 
 
 def items(t):
@@ -399,6 +399,25 @@ def parse_filing(txt, main_only_text=None):
             'sic_desc': sic.group(1).strip() if sic else None, 'period': hv(h, 'CONFORMED PERIOD OF REPORT'),
             'symbols': dict(symbols_fast(txt).most_common(12)), 'sections': sec, 'ex21': ex21[:400],
             'float': cover_float(mt), 'main_len': len(main), 'headings': [k for _, k, _ in its][:80], 'main_text': mt}
+
+
+def cmd_reparse():
+    """保存した本体の平文（main_text）から節を切り直す（取り直さない）。2026-09-28: 『ITEM 1 BUSINESS』を 1B と読む見出しの不具合の是正"""
+    import glob
+    n = 0
+    for f in glob.glob(os.path.join(DOCS, '*', '*.json.gz')):
+        d = json.loads(gzip.open(f).read())
+        if d.get('missing') or not d.get('main_text'):
+            continue
+        sec, its = sections_of(d['main_text'])
+        d['sections'] = sec
+        d['headings'] = [k for _, k, _ in its][:80]
+        tmp = f + '.tmp'
+        with gzip.open(tmp, 'wt', compresslevel=3) as g:
+            json.dump(d, g)
+        os.replace(tmp, f)
+        n += 1
+    print('切り直した', n)
 
 
 def doc_path(acc):
@@ -1007,11 +1026,22 @@ def cmd_prereg(stage='freeze'):
         '記号→CIK の対応は機械の規則だけでは小型株・子会社を拾う誤りが残ったので、全ビンテージを目で見て手で直した（MANUAL_MAP・理由つき）',
     ]
     if stage == 'coverage':
+        P['deviations_from_task_text'] += [
+            '【第1コミットの後・読む前・株価を見る前の是正 1】見出しの正規表現が『ITEM 1 BUSINESS』（句点なし）を Item 1B と読み、Item 1 を取り損ねていた。'
+            '接尾の A/B/C の後に英字が続かないことを条件に加え、保存した本体の平文から節を切り直した（取り直しなし）。本文の取れた単位 +16（候補段落のある単位 1,453→1,460）。語の網・順位・上限は一字も変えていない',
+            '【是正 2】別名の検出が括弧の中の引用語をすべて拾い、一般の略語（HTML・ERISA・HMOs）や競合の社名（Oracle・Microsoft）まで [COMPANY] にしていた。'
+            '事前登録の文言どおり、会社自身の定義の括弧（Company/Registrant/we/us/our/subsidiaries/collectively の語を含む括弧）の中の引用語だけに絞った',
+            '【是正 3】社名の固有の語は小文字の形が本文に一度でもあると伏せなかったため、URL（cisco.com 等）や一般語（southwest）のせいで社名が残っていた。'
+            'URL を除いて判定し、小文字の形がある語も大文字始まり・全大文字の形だけは伏せるようにした。是正後、社名の固有の語が残る単位は 1,138 中 0（機械の点検）',
+        ]
+    if stage == 'coverage':
         P['coverage_after_extraction'] = json.load(open(COVER))
         k = json.load(open(KEYF))
         P['budget_applied'] = k['budget']
         P['reading_units'] = len(k['units'])
-        P['auto_no85'] = len(k['auto_no85'])
+        P['auto_no85'] = {'all_vintages': len(k['auto_no85']), 'f2_labelled_vintages': sum(1 for x in k['auto_no85'] if x.get('f2_labelled')),
+                          'by_vintage': dict(Counter(str(x['vintage']) for x in k['auto_no85']))}
+        P['f2_labelled_firm_vintages'] = len(k['units']) + P['auto_no85']['f2_labelled_vintages']
         P['f1_counts'] = {v: c.get('f1') for v, c in P['coverage_after_extraction'].items()}
         P['units_by_vintage'] = dict(Counter(str(x['vintage']) for x in k['units'].values()))
         P['batches'] = sorted(os.path.relpath(os.path.join(BATCH, f), BASE) for f in os.listdir(BATCH))
@@ -1235,9 +1265,9 @@ def doc_fulltext(doc):
 
 
 def name_regexes(names, fulltxt):
-    """社名 → 句の正規表現と、単独で伏せる固有の語"""
-    low = set(re.findall(r'\b[a-z][a-z0-9]+\b', fulltxt))
-    pats, words = [], set()
+    """社名 → 句の正規表現・大小を問わず伏せる語（小文字の形が本文に無い）・大文字の形だけ伏せる語（社名の固有の語すべて）"""
+    low = set(re.findall(r'\b[a-z][a-z0-9]+\b', re.sub(r'\S*(?:www\.|\.com|\.net|\.org|@)\S*', ' ', fulltxt)))
+    pats, words, cs = [], set(), set()
     for nm in names:
         ws = nname(nm)
         if not ws:
@@ -1246,24 +1276,39 @@ def name_regexes(names, fulltxt):
         if len(ws) > 1:
             pats.append(re.escape(''.join(ws)))
         for w in ws:
-            if len(w) >= 4 and w not in NAME_GENERIC and w.lower() not in low and not w.isdigit():
-                words.add(w)
-    return pats, words
+            if len(w) >= 4 and w not in NAME_GENERIC and not w.isdigit():
+                (words if w.lower() not in low else cs).add(w)
+    return pats, words, cs
 
 
 ALIAS_RE = re.compile(r'\(\s*(?:(?:collectively|together)\s+with\s+its\s+(?:consolidated\s+)?subsidiaries[,;]?\s*)?(?:the\s+|or\s+|and\s+)?["“]([^"”]{1,40})["”]'
                       r'|(?:hereinafter|herein)\s+(?:referred\s+to\s+as\s+|called\s+)?(?:the\s+)?["“]([^"”]{1,40})["”]', re.I)
 
 
+PAREN = re.compile(r'\(([^()]{2,240})\)')
+SELF_WORDS = re.compile(r'(?i)\b(?:company|registrant|corporation|we|us|our|subsidiaries|collectively|hereinafter)\b')
+
+
+def company_aliases(full):
+    """会社自身の定義の括弧（『("XYZ" or the "Company")』『(together with its subsidiaries, "XYZ")』の類）の中の引用語だけを別名にする。
+    括弧に Company/Registrant/we/us/our/subsidiaries/collectively の語が無い引用（"OEMs" や他社名）は別名にしない"""
+    out = set()
+    for m in PAREN.finditer(full[:60000]):
+        inner = m.group(1)
+        if not SELF_WORDS.search(inner) or not re.search(r'["“]', inner):
+            continue
+        for q in re.findall(r'["“]([^"”]{1,40})["”]', inner):
+            q = q.strip().strip(',').strip()
+            if len(q) >= 2 and q[:1].isupper() and q.upper() not in GEN_ALIAS and q.lower() not in ('we', 'us', 'our', 'the company'):
+                out.add(q)
+    return out
+
+
 def mask_unit(rec, doc, df_share):
     full = doc_fulltext(doc)
     names = [rec.get('name') or ''] + list(rec.get('former') or []) + [t for _, t in rec.get('sec_now') or []]
-    pats, words = name_regexes([x for x in names if x], full)
-    aliases = set()
-    for m in ALIAS_RE.finditer(full[:60000]):
-        a_ = (m.group(1) or m.group(2) or '').strip()
-        if a_ and a_.upper() not in GEN_ALIAS and a_[0].isupper() and len(a_) >= 2:
-            aliases.add(a_)
+    pats, words, cs = name_regexes([x for x in names if x], full)
+    aliases = company_aliases(full)
     ticks = {rec['t']} | set(rec.get('symbols') or []) | {t for t, _ in rec.get('sec_now') or []}
     ex21 = []
     for sname in doc.get('ex21') or []:
@@ -1274,6 +1319,9 @@ def mask_unit(rec, doc, df_share):
     comp = [re.compile(r'\b(?:' + '|'.join(sorted(set(pats + ex21), key=len, reverse=True)) + r')' + suffix, re.I)] if (pats or ex21) else []
     if words:
         comp.append(re.compile(r'\b(?:' + '|'.join(sorted((re.escape(w) for w in words), key=len, reverse=True)) + r")\b(?:'s|’s)?", re.I))
+    if cs:       # 社名の固有の語で小文字の形も本文にあるもの（例: Southwest・Countrywide）は大文字始まり・全大文字の形だけ伏せる
+        forms = sorted({f for w in cs for f in (w.title(), w)}, key=len, reverse=True)
+        comp.append(re.compile(r'\b(?:' + '|'.join(re.escape(f) for f in forms) + r")\b(?:'s|’s)?"))
     if aliases:
         comp.append(re.compile(r'(?<![A-Za-z])(?:' + '|'.join(sorted((re.escape(a_) for a_ in aliases), key=len, reverse=True)) + r")(?![A-Za-z])(?:'s|’s)?"))
     tk = [t for t in ticks if t and len(t) >= 2]
@@ -1358,7 +1406,8 @@ def cmd_mask():
                     'acc': r['acc'], 'filed': r['filed'], 'form': r['form'], 'via': r['via'], 'f1': r['f1'], 'n_cand': r['n_cand'],
                     'float': r['float'], 'words': r['words']}
     auto = [{'vintage': r['vintage'], 'ticker': r['t'], 'cik': r['cik'], 'sic': r['sic'], 'sic_src': r['sic_src'], 'name': r['name'],
-             'acc': r['acc'], 'f1': r['f1'], 'float': r['float'], 'label': 'no85_auto'} for r in recs if r['n_cand'] == 0]
+             'acc': r['acc'], 'f1': r['f1'], 'float': r['float'], 'label': 'no85_auto',
+             'f2_labelled': r['vintage'] not in blog['dropped_vintages']} for r in recs if r['n_cand'] == 0]
     notread = [{'vintage': r['vintage'], 'ticker': r['t'], 'cik': r['cik'], 'sic': r['sic'], 'name': r['name'], 'acc': r['acc'], 'f1': r['f1'],
                 'float': r['float'], 'reason': ('budget_vintage_dropped' if r['vintage'] in blog['dropped_vintages'] else 'budget_sampled_out')}
                for r in recs if r['n_cand'] > 0 and (r['vintage'] in blog['dropped_vintages'] or (r['vintage'], r['cik'], r['t']) in sampled_out)]
@@ -1855,6 +1904,8 @@ if __name__ == '__main__':
         cmd_fetch_cands(part=int(sys.argv[2]) if len(sys.argv) > 2 else 0, nparts=int(sys.argv[3]) if len(sys.argv) > 3 else 1)
     elif cmd == 'universe':
         cmd_universe()
+    elif cmd == 'reparse':
+        cmd_reparse()
     elif cmd == 'extract':
         cmd_extract()
     elif cmd == 'mask':

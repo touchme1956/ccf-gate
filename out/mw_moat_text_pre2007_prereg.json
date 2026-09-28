@@ -1,7 +1,7 @@
 {
  "angle": "moat_text_pre2007",
  "title_ja": "irr=85（顧客側の再認定ロック）を2007年より前の10-K本文で初めて検定する——堀の読みは逆風の時代にも純粋な時価加重の市場に勝つか",
- "stage": "第1段（準備）で凍結。本文を抽出する前・読み手に渡す前・株価を一度も取得・参照していない時点",
+ "stage": "第1段（準備）で凍結。本文を抽出する前・読み手に渡す前・株価を一度も取得・参照していない時点。第2コミットで被覆・予算の適用・F1 の数を足した（株価はまだ取得も参照もしていない）",
  "global_prereg": "out/mw_prereg.json（線 C1〜C8・格 S/A/B/C は mw_common.grade をそのまま当てる。線は結果を見て動かさない）",
  "question": "自社の 10-K が『顧客の側の再認定・認証のロック』（門の irr=85 の機構＝顧客自身の工程・製品が当社の部品・仕様で認定・認証されていて、乗り換えるには顧客が再認定をやり直す——FAA/OEM 承認の航空部品・FDA 下の医療機器の部材・ファブに認定された半導体の材料と装置・国防総省の単独調達）を述べている S&P500 の会社は、訓練期間 1997-07〜2006-12（irr85 の既存の証拠がすべて生まれた AI・半導体の相場より前で、ハードウェアと半導体に逆風だった独立の時代）と、新しく読んだビンテージでの 2007-01 以降に、純粋な時価加重の米国市場（French Mkt）に勝ったか",
  "universe": {
@@ -286,7 +286,27 @@
   ]
  },
  "masking": "社名（ヘッダの COMPANY CONFORMED NAME・FORMER CONFORMED NAME・今日の SEC 名）と、本文の定義の中の別名（(\"XYZ\" or the \"Company\") の類）、EX-21 の子会社名（本文に現れるもの）、記号（名簿の記号・本文が名乗る記号）→ [COMPANY]。固有の製品・ブランド・相手先の名＝その社の抽出本文（Item 1/1A/7 全体）の中で大文字で始まる語のうち、3回以上現れ（文頭を含む）・文頭でない所に一度は現れ・小文字の形では一度も現れず・同じビンテージの文書の3%未満にしか現れず・保持語（規制当局・相手先の略語・月・地名の一般語など）でないもの → [PRODUCT_n]（単位ごとに初出順の番号）。業種の語は残す。単位の順番は種 20260928 で無作為に並べ、不透明な id（u0001…）を振る。id → CIK・記号・ビンテージ・SIC の鍵は out/_mw_cache/moat_text/KEY_do_not_open.json（読み手は開かない）",
- "batches": "約60単位ずつ out/_mw_cache/moat_text/batches/batch_XX.json。各単位は {id, vintage_year, passages:[...]}（時代の文脈のため年は渡す。SIC・社名は渡さない）",
+ "batches": [
+  "out/_mw_cache/moat_text/batches/batch_01.json",
+  "out/_mw_cache/moat_text/batches/batch_02.json",
+  "out/_mw_cache/moat_text/batches/batch_03.json",
+  "out/_mw_cache/moat_text/batches/batch_04.json",
+  "out/_mw_cache/moat_text/batches/batch_05.json",
+  "out/_mw_cache/moat_text/batches/batch_06.json",
+  "out/_mw_cache/moat_text/batches/batch_07.json",
+  "out/_mw_cache/moat_text/batches/batch_08.json",
+  "out/_mw_cache/moat_text/batches/batch_09.json",
+  "out/_mw_cache/moat_text/batches/batch_10.json",
+  "out/_mw_cache/moat_text/batches/batch_11.json",
+  "out/_mw_cache/moat_text/batches/batch_12.json",
+  "out/_mw_cache/moat_text/batches/batch_13.json",
+  "out/_mw_cache/moat_text/batches/batch_14.json",
+  "out/_mw_cache/moat_text/batches/batch_15.json",
+  "out/_mw_cache/moat_text/batches/batch_16.json",
+  "out/_mw_cache/moat_text/batches/batch_17.json",
+  "out/_mw_cache/moat_text/batches/batch_18.json",
+  "out/_mw_cache/moat_text/batches/batch_19.json"
+ ],
  "labels_to_portfolios": {
   "lock": "最終ラベル irr ∈ {85, 100}（門と同じく 100 も 85 と数える）",
   "nonlock": "最終ラベル irr ∈ {70, 50, null} と自動 no85",
@@ -580,6 +600,121 @@
   "night/irr85_criteria.py は読みの規約の文を持たない（別枠85 の下限を歴史で調べる道具）。指示書には index.html の刻み・審査プロトコル（ccfAskText）の irr/rep/dur の節と out/irr_regrade/RUBRIC.md を逐語で写した",
   "ex27 のキャッシュは raw/{受付番号の先頭10桁}/{受付番号}.json.gz の形（raw/{CIK}/ ではない）。読むだけ",
   "語の網: fab* を fab/fabs/wafer fab/fabrication facility に限った（fabric を拾わないため）。switch_any に switching cost と time-consuming、counterparty に NRC を足した",
-  "記号→CIK の対応は機械の規則だけでは小型株・子会社を拾う誤りが残ったので、全ビンテージを目で見て手で直した（MANUAL_MAP・理由つき）"
- ]
+  "記号→CIK の対応は機械の規則だけでは小型株・子会社を拾う誤りが残ったので、全ビンテージを目で見て手で直した（MANUAL_MAP・理由つき）",
+  "【第1コミットの後・読む前・株価を見る前の是正 1】見出しの正規表現が『ITEM 1 BUSINESS』（句点なし）を Item 1B と読み、Item 1 を取り損ねていた。接尾の A/B/C の後に英字が続かないことを条件に加え、保存した本体の平文から節を切り直した（取り直しなし）。本文の取れた単位 +16（候補段落のある単位 1,453→1,460）。語の網・順位・上限は一字も変えていない",
+  "【是正 2】別名の検出が括弧の中の引用語をすべて拾い、一般の略語（HTML・ERISA・HMOs）や競合の社名（Oracle・Microsoft）まで [COMPANY] にしていた。事前登録の文言どおり、会社自身の定義の括弧（Company/Registrant/we/us/our/subsidiaries/collectively の語を含む括弧）の中の引用語だけに絞った",
+  "【是正 3】社名の固有の語は小文字の形が本文に一度でもあると伏せなかったため、URL（cisco.com 等）や一般語（southwest）のせいで社名が残っていた。URL を除いて判定し、小文字の形がある語も大文字始まり・全大文字の形だけは伏せるようにした。是正後、社名の固有の語が残る単位は 1,138 中 0（機械の点検）"
+ ],
+ "coverage_after_extraction": {
+  "1997": {
+   "members": 488,
+   "mapped_10k": 471,
+   "text_ok": 458,
+   "f1": 13,
+   "cand": 142,
+   "auto_no85": 316,
+   "unmapped_or_no10k": 17,
+   "no_sections": 13
+  },
+  "2000": {
+   "members": 492,
+   "mapped_10k": 479,
+   "text_ok": 470,
+   "f1": 16,
+   "cand": 174,
+   "auto_no85": 296,
+   "unmapped_or_no10k": 13,
+   "no_sections": 9
+  },
+  "2003": {
+   "members": 494,
+   "mapped_10k": 489,
+   "text_ok": 478,
+   "f1": 25,
+   "cand": 224,
+   "auto_no85": 254,
+   "no_sections": 11,
+   "unmapped_or_no10k": 5
+  },
+  "2006": {
+   "members": 497,
+   "mapped_10k": 491,
+   "text_ok": 484,
+   "f1": 36,
+   "cand": 280,
+   "auto_no85": 204,
+   "no_sections": 7,
+   "unmapped_or_no10k": 6
+  },
+  "2009": {
+   "members": 499,
+   "mapped_10k": 499,
+   "text_ok": 499,
+   "f1": 42,
+   "cand": 318,
+   "auto_no85": 181
+  },
+  "2012": {
+   "members": 497,
+   "mapped_10k": 496,
+   "text_ok": 495,
+   "f1": 40,
+   "cand": 322,
+   "auto_no85": 173,
+   "no_sections": 1,
+   "unmapped_or_no10k": 1
+  }
+ },
+ "budget_applied": {
+  "units_with_candidates": 1460,
+  "by_vintage": {
+   "1997": 142,
+   "2000": 174,
+   "2003": 224,
+   "2006": 280,
+   "2009": 318,
+   "2012": 322
+  },
+  "dropped_vintages": [
+   2012
+  ],
+  "n_sampled_out": 0,
+  "n_read": 1138,
+  "read_by_vintage": {
+   "1997": 142,
+   "2000": 174,
+   "2003": 224,
+   "2006": 280,
+   "2009": 318
+  }
+ },
+ "reading_units": 1138,
+ "auto_no85": {
+  "all_vintages": 1424,
+  "f2_labelled_vintages": 1251,
+  "by_vintage": {
+   "1997": 316,
+   "2000": 296,
+   "2003": 254,
+   "2006": 204,
+   "2009": 181,
+   "2012": 173
+  }
+ },
+ "f2_labelled_firm_vintages": 2389,
+ "f1_counts": {
+  "1997": 13,
+  "2000": 16,
+  "2003": 25,
+  "2006": 36,
+  "2009": 42,
+  "2012": 40
+ },
+ "units_by_vintage": {
+  "2003": 224,
+  "1997": 142,
+  "2006": 280,
+  "2000": 174,
+  "2009": 318
+ }
 }
