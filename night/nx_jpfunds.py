@@ -213,7 +213,7 @@ def cum(mon, months):
     return g - 1
 
 
-def base_pool(F, pool_keys, y, L, U, fx, fx_mode='rule'):
+def base_pool(F, pool_keys, y, L, U, fx, fx_mode='rule', dedupe_mode='rule'):
     """y 年9月の選択の日: 適格（能動・フィルター・5分類・L×12 か月そろう）→ 外国は為替の検査 → 同じ委託会社で相関 ≥0.995 を束ねる（純資産最大を残す）。
     fx_mode: 'rule'＝振り返りの月（事前登録どおり）／'36m'＝t までの最大36か月（事後の感度）／'none'＝為替の検査なし（事後の感度）"""
     months = lookback(y, L)
@@ -247,8 +247,17 @@ def base_pool(F, pool_keys, y, L, U, fx, fx_mode='rule'):
         for mg, lst in by_mgr.items():
             if len(lst) < 2:
                 continue
-            M = np.array([[F[a]['mon'][m] for m in months] for a in lst])
-            C = np.corrcoef(M)
+            if dedupe_mode == 'rule':
+                M = np.array([[F[a]['mon'][m] for m in months] for a in lst])
+                C = np.corrcoef(M)
+            else:   # 事後の感度: t までの最大36か月の共通の月（12か月未満なら振り返りの月）
+                C = np.zeros((len(lst), len(lst)))
+                for i in range(len(lst)):
+                    for j in range(i + 1, len(lst)):
+                        cm = [m for m in lookback(y, 3) if m in F[lst[i]]['mon'] and m in F[lst[j]]['mon']]
+                        if len(cm) < 12:
+                            cm = months
+                        C[i, j] = N.corr([F[lst[i]]['mon'][m] for m in cm], [F[lst[j]]['mon'][m] for m in cm])
             for i in range(len(lst)):
                 for j in range(i + 1, len(lst)):
                     if C[i, j] >= DEDUPE_RHO:
@@ -520,7 +529,6 @@ def taxed_portfolio(F, hold, comp_src, comp, chains, J):
     """R4 課税口座: 分配金に 20.315%（払った日）・外れた器の含み益に 20.315%（外れる月）・最後の月に全部売る。相手も同じ"""
     cache = {}
     s, b, w = {}, {}, {}
-    spells_f, spells_c = {}, {}
     closed = collections.defaultdict(float)
     closed_b = collections.defaultdict(float)
     ys = sorted(hold)
@@ -1106,6 +1114,15 @@ def post_hoc(F, FA, R, lib_keys, pools, holds, recs, series, comp, chains, med, 
     s_, b_ = series['X1_top_q_1y'][0], series['X1_top_q_1y'][1]
     ph['PH7_X1_from_2009_10_same_window_as_P1'] = {'full': N.excess_stats(s_, b_, 200910), 'lower_bound': N.excess_stats(lower(s_, h_lb, LB_HIT), b_, 200910),
                                                    'after_cost': N.excess_stats(series['X1_top_q_1y'][3], series['X1_top_q_1y'][4], 200910)}
+    # PH10 X1 の重複の除去を36か月の相関にした感度（12か月の相関は同じ委託会社の別のファンドを単連結で束ねやすい: 2012 年の三菱UFJ の国内株7本など）
+    hold10 = {}
+    for y in range(2007, 2026):
+        hold10[y], _ = pick(F, base_pool(F, lib_keys, y, 1, U, fx, dedupe_mode='36m'), y, 'top')
+    s_, b_, w_ = portfolio(F, hold10, comp, a=200710)
+    cs, cb, _ = costs(F, hold10, w_, chains, med, 'min')
+    ph['PH10_X1_dedupe_36m'] = {'full': N.excess_stats(s_, b_), 'halves': [N.excess_stats(s_, b_, *halves(s_, b_)[0]), N.excess_stats(s_, b_, *halves(s_, b_)[1])],
+                                'after_cost': N.excess_stats(net(s_, cs), net(b_, cb)), 'lower_bound': N.excess_stats(lower(s_, h_lb, LB_HIT), b_),
+                                'n_selected_by_year': {y: len(v) for y, v in hold10.items()}}
     # PH9 国内株式だけ（事後に選んだ部分集合）: 費用・下限・寄与の最大を抜いた版・保有年
     ph9 = {'note': '★事後。PH1 で X1 の勝ちが国内株式だけから来ると分かった後に切り出した部分集合（格付けに使わない・5分類×9規則から選んだ＝多重検定の数に入る）'}
     for rid in ('X1_top_q_1y', 'P1_top_q_3y', 'P2_top_q_5y', 'X4_top_d_3y', 'C2_all_active'):
@@ -1233,6 +1250,7 @@ IMPL_NOTES = [
     '新興国の相手2本で保有の12か月の相関が 0.90 を下回った（0.30・0.90）。全履歴の相関は 0.94 前後で、同じ月の別の新興国の指数型とも 0.999 ＝器・分類の誤りではなく、静かな年のばらつきの小ささと1日遅れの基準価額による（data_checks.comparator_corr_note）',
     '為替の係数の検査は、名前にヘッジありのある外国の器148本（除外済み）に当てると 115本（78%）で 0.5 未満＝効くが完全ではない（テーマ型のヘッジありで係数が高く出るものがある）。振り返り1年（X1）では12か月の回帰で雑音が大きく、2021 年の GLW は 119本をヘッジありとみなした（事後の感度 PH4: 36か月の検査・検査なしでも X1 は +2.1・+2.0）',
     'RULES の正規表現の穴を2つ見つけた（凍結なので直していない）: hedged_regex の『ヘッジ型』が『為替ノーヘッジ型』に当たる（指数型1本）／currency_course_regex が『通貨セレクトコース』『米ドル・コース』に当たらない（data_checks.filter_gap_currency_select に選ばれた本数）',
+    '重複の除去は振り返りの月の相関（事前登録どおり）。振り返り1年（X1）では12か月の相関 0.995 が同じ委託会社の別のファンドを単連結で束ねることがある（例: 2012 年の三菱UFJ の国内株7本が1組）。事後の感度 PH10 で36か月の相関にした版を並べた',
     'B 族（三菱UFJ の償還ファンド）は 60本の全履歴の最後の日がどれも償還日の7暦日以内。5分類・能動・フィルターを通るのは21本（国内株式19・日本を除く世界2）',
 ]
 
@@ -1266,13 +1284,21 @@ def main():
     tested = []
     for rid, fam, L, how, y0, desc in RULESET:
         tested.append(recs[rid])
+    # 報告の族（格付けしない）と事後の診断も tested に1本残らず（中身は report_only / post_hoc_diagnostics）
+    for k in rep:
+        tested.append({'id': k, 'family': 'report' if not k.startswith('B_') and not k.startswith('Q_') else ('survivorship_check' if k.startswith('B_') else 'real_instrument_hindsight'),
+                       'graded': False, 'grade': '報告（格付けしない・事前登録）', 'where': f'report_only.{k}'})
+    for k in ph:
+        if k == 'label':
+            continue
+        tested.append({'id': k, 'family': 'post_hoc', 'graded': False, 'grade': '事後（格付けに使わない）', 'where': f'post_hoc_diagnostics.{k}'})
     fam_name = {'P': 'primary（主）', 'C': 'control（対照）', 'X': 'exploratory（探索）'}
     obj = {
         'angle': 'nx_jpfunds', 'prereg': 'out/nx_jpfunds_prereg.json', 'global_prereg': 'out/nx_prereg.json',
         'frozen_verified': ver, 'grade_function': 'nx_common.grade_short（事前登録 criteria.which = criteria_short_sample）',
         'period_end': END, 'data_checks': chk, 'holm': holm,
-        'grades': {r['id']: r['grade'] for r in tested},
-        'families': {r['id']: fam_name[r['family']] for r in tested},
+        'grades': {r['id']: r['grade'] for r in tested if r.get('graded', True)},
+        'families': {r['id']: fam_name[r['family']] for r in tested if r.get('graded', True)},
         'tested': tested, 'report_only': rep, 'post_hoc_diagnostics': ph,
         'holdings_by_rule': {rid: {y: v for y, v in holds[rid].items()} for rid in recs},
         'fund_names': {x: [F[x]['name'][:60], F[x]['cat'], F[x]['fee']] for rid in recs for y in holds[rid] for x in holds[rid][y]},
