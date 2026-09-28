@@ -578,7 +578,25 @@ class Arm:
         return self.value() + self.cash
 
 
+CPI_FILLED = []
+
+
+def fill_cpi(cpi):
+    """欠けた月（米国 CPI の 2025-10 は政府閉鎖で未公表）を前後の月の幾何補間で埋める。
+    積立額と NISA 枠の実質化だけに使い、リターンには使わない（事後の技術的な修正・deviations に記録）"""
+    ks = sorted(cpi)
+    out = dict(cpi)
+    for a, b in zip(ks, ks[1:]):
+        gap = mrange(madd(a, 1), madd(b, -1))
+        n = len(gap) + 1
+        for i, m in enumerate(gap, 1):
+            out[m] = cpi[a] * (cpi[b] / cpi[a]) ** (i / n)
+            CPI_FILLED.append(m)
+    return out
+
+
 def make_idx_cpi(cpi, ref=FR_END):
+    cpi = fill_cpi(cpi)
     base = cpi[ref]
 
     def f(m):
@@ -875,6 +893,9 @@ def run_all(D, ed, t0):
            'sanity': {}, 'deviations': [], 'tested': []}
     san = out['sanity']
     san['selftest'] = selftest()
+    san['cpi_filled_months'] = sorted(set(CPI_FILLED))
+    out['deviations'].append('米国 CPI（CPIAUCNS）の 2025-10 が欠けていた（政府閉鎖で未公表）ため、最初の実行が KeyError で止まった。'
+                             '前後の月の幾何補間で埋めて再実行した（積立額と NISA 枠の実質化だけに使う・リターンには使わない・結果を見る前の技術的な修正）')
     san['french_mkt_cagr_full'] = round(M.cagr(mkt) * 100, 2)
     san['french_mkt_cagr_2007'] = round(M.cagr(M.window(mkt, M.HOLD_START)) * 100, 2)
     dy = D['dy']
