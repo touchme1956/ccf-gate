@@ -425,16 +425,16 @@ def mk_sector(names, k=3, score='r12', absf=False):
     return f
 
 
-def alive_next(H, s):
-    """事前登録3: t+1 月にもファンドが存在するか（合併・廃止の日付だけを見る。リターンは見ない）"""
-    return bool(H.R.get(s)) and max(H.R[s]) > H.t
+def alive_next(H, s, h=1):
+    """事前登録3: t+h 月にもファンドが存在するか（合併・廃止の日付だけを見る。リターンは見ない）。事前登録4の3か月版は h=3"""
+    return bool(H.R.get(s)) and max(H.R[s]) >= madd(H.t, h)
 
 
-def mk_sector_dyn(names, k, score='r12', min_n=20, alive=False):
+def mk_sector_dyn(names, k, score='r12', min_n=20, alive=False, alive_h=1):
     """その月に12か月の窓がそろったものだけから上位 k（対象が min_n 未満の月は作らない＝始まらない）"""
     def f(H):
         sc = (lambda s: H.cum(s, 12)) if score == 'r12' else H.blend
-        avail = [s for s in names if H.R.get(s) and (not alive or alive_next(H, s)) and sc(s) is not None]
+        avail = [s for s in names if H.R.get(s) and (not alive or alive_next(H, s, alive_h)) and sc(s) is not None]
         if len(avail) < min_n:
             return None
         top = topk(H, avail, sc, k)
@@ -487,11 +487,14 @@ def mk_ew(names):
 
 
 # ───────────────────────── 走らせる ─────────────────────────
-def run(R, rule, z=END, dynamic=False):
+def run(R, rule, z=END, dynamic=False, Rh=None):
     """月末 t の信号で t+1 を持つ。戻り値: gross, net, net_stress, 重みの記録, 売買量（Σ|Δw|）
-    dynamic=True（途中で消えるファンドを含む族）: 終わりは END。持つファンドは必ず翌月の値がある（規則が存在を確かめる）"""
+    dynamic=True（途中で消えるファンドを含む族）: 終わりは END。持つファンドは必ず翌月の値がある（規則が存在を確かめる）
+    Rh（事前登録4・1日遅れ）: 信号は R（暦月）で作り、保有のリターンは Rh（t+1 月の最初の営業日→t+2 月の最初の営業日）
+    規則が 'HOLD' を返した月（事前登録4・3か月ごと）は入れ替えず、値動き後の重みのまま持つ（売買0）"""
+    H_ = Rh if Rh is not None else R
     if not dynamic:
-        z = min([z] + [max(v) for v in R.values() if v])      # 必要な系列のうち最も早く終わる月まで（0で埋めない）
+        z = min([z] + [max(v) for v in H_.values() if v])     # 必要な系列のうち最も早く終わる月まで（0で埋めない）
     months = sorted(set().union(*[set(v) for v in R.values()]))
     months = [m for m in months if m <= z]
     gross, trades, wpath = {}, {}, {}
@@ -505,13 +508,17 @@ def run(R, rule, z=END, dynamic=False):
             w = rule(Hist(R, t))
         except KeyError:
             w = None
+        if isinstance(w, str) and w == 'HOLD':
+            if not started:
+                continue
+            w = dict(w_prev_drift)
         if w is None:
             if started:
                 raise RuntimeError(f'開始後に信号が作れない: {t}')
             continue
-        if not all(nxt in R[s] for s in w):
+        if not all(nxt in H_[s] for s in w):
             if started:
-                raise RuntimeError(f'開始後に保有の翌月リターンが無い: {t}→{nxt} {[s for s in w if nxt not in R[s]]}')
+                raise RuntimeError(f'開始後に保有の翌月リターンが無い: {t}→{nxt} {[s for s in w if nxt not in H_[s]]}')
             continue
         tot = sum(w.values())
         assert abs(tot - 1) < 1e-9, (t, w)
@@ -520,11 +527,11 @@ def run(R, rule, z=END, dynamic=False):
             keys = set(w) | set(w_prev_drift)
             tr = sum(abs(w.get(s, 0) - w_prev_drift.get(s, 0)) for s in keys)
         started = True
-        rp = sum(w[s] * R[s][nxt] for s in w)
+        rp = sum(w[s] * H_[s][nxt] for s in w)
         gross[nxt] = rp
         trades[nxt] = tr
         wpath[t] = w
-        w_prev_drift = {s: w[s] * (1 + R[s][nxt]) / (1 + rp) for s in w}
+        w_prev_drift = {s: w[s] * (1 + H_[s][nxt]) / (1 + rp) for s in w}
     net = {m: gross[m] - C_SIDE * trades[m] for m in gross}
     net_s = {m: gross[m] - C_SIDE_STRESS * trades[m] for m in gross}
     return gross, net, net_s, wpath, trades
@@ -640,7 +647,7 @@ def gics_rule(k, score, absf):
     return f
 
 
-def repl_sector(rf, k, score, absf, cache):
+def repl_sector(rf, k, score, absf, cache, quarterly=False):
     res, pos, n = {}, 0, 0
     for c in COUNTRIES:
         if c not in cache:
@@ -648,7 +655,8 @@ def repl_sector(rf, k, score, absf, cache):
         G, mk = cache[c]
         R = dict(G)
         R['TBILL'] = rf
-        g, _, _, _, _ = run_loose(R, gics_rule(k, score, absf), z=202512)
+        rule = gics_rule(k, score, absf)
+        g, _, _, _, _ = run_loose(R, mk_quarterly(rule) if quarterly else rule, z=202512)
         st = M.excess_stats(g, mk)
         if st is None:
             res[c] = None
@@ -660,23 +668,38 @@ def repl_sector(rf, k, score, absf, cache):
 
 
 def run_loose(R, rule, z):
-    """GICS 用: 開始後に一時的に信号が作れない月があっても止めない（その月は持たない＝記録しない・0で埋めない）"""
+    """GICS 用: 開始後に一時的に信号が作れない月があっても止めない（その月は持たない＝記録しない・0で埋めない）。
+    'HOLD'（3か月ごと）は前の組を値動きのまま持つ"""
     months = sorted(set().union(*[set(v) for v in R.values() if v]))
-    gross = {}
+    gross, wd = {}, None
     for t in months:
         nxt = madd(t, 1)
         if nxt > z:
             break
         w = rule(Hist(R, t))
+        if isinstance(w, str) and w == 'HOLD':
+            w = dict(wd) if wd else None
         if w is None or not all(nxt in R[s] for s in w):
+            wd = None
             continue
-        gross[nxt] = sum(w[s] * R[s][nxt] for s in w)
+        rp = sum(w[s] * R[s][nxt] for s in w)
+        gross[nxt] = rp
+        wd = {s: w[s] * (1 + R[s][nxt]) / (1 + rp) for s in w}
     return gross, None, None, None, None
+
+
+def mk_quarterly(base):
+    """3・6・9・12月末だけ base で入れ替え、他の月は 'HOLD'"""
+    def f(H):
+        if H.t % 100 in (3, 6, 9, 12):
+            return base(H)
+        return 'HOLD'
+    return f
 
 
 # ───────────────────────── 仕様 ─────────────────────────
 SRC_NAMES = []
-POSTPUB = {'H1': 201101, 'H2': 201101, 'H3': 201101, 'H4': 201101, 'E1': 201101, 'E2': 201101, 'E3': 201101, 'E4': 201101, 'G1': 201101, 'G2': 201101, 'G3': 201101, 'G4': 201101, 'G6': 201101, 'G7': 201101, 'P1': 201501, 'P2': 200801, 'P3': 201801, 'P4': 201901, 'P5': 201101, 'X3': 201101, 'X4': 201101,
+POSTPUB = {'Q1': 201101, 'Q2': 201101, 'Q3': 201101, 'Q4': 201101, 'D1': 201101, 'D2': 201101, 'D3': 201101, 'D4': 201101, 'H1': 201101, 'H2': 201101, 'H3': 201101, 'H4': 201101, 'E1': 201101, 'E2': 201101, 'E3': 201101, 'E4': 201101, 'G1': 201101, 'G2': 201101, 'G3': 201101, 'G4': 201101, 'G6': 201101, 'G7': 201101, 'P1': 201501, 'P2': 200801, 'P3': 201801, 'P4': 201901, 'P5': 201101, 'X3': 201101, 'X4': 201101,
            'X5': 201501, 'X7': 201101}
 
 
@@ -746,6 +769,15 @@ def specs():
         one(id=f'{eid}_ETF_K{k}_{lab}', rule=eid, family='exploratory4', version='E', dynamic=True,
             description=f'探索4: 実在の業種 ETF（iShares・SPDR 44本）の{"12か月" if sc == "r12" else "(r1+r3+r6+r12)/4"}上位{k}本',
             rule_fn=mk_sector_dyn(ETFIND, k, sc, 20, alive=True), slots=list(ETFIND), repl=(kg, sc, False))
+    # 第5族（事前登録4）: 3か月ごと／第6族: 1営業日遅れ
+    for (k, kg, sc, lab, qid, did) in ((3, 1, 'r12', 'R12', 'Q1', 'D1'), (6, 2, 'r12', 'R12', 'Q2', 'D2'),
+                                       (3, 1, 'blend', 'BL', 'Q3', 'D3'), (6, 2, 'blend', 'BL', 'Q4', 'D4')):
+        one(id=f'{qid}_FSELD_K{k}_{lab}_Q', rule=qid, family='exploratory5', version='F', dynamic=True, quarterly=True,
+            description=f'探索5: Fidelity Select＋合併・廃止6本の{"12か月" if sc == "r12" else "(r1+r3+r6+r12)/4"}上位{k}本・3か月ごとに入れ替え',
+            rule_fn=mk_quarterly(mk_sector_dyn(fseld, k, sc, 20, alive=True, alive_h=3)), slots=fseld, repl=(kg, sc, False))
+        one(id=f'{did}_FSEL_K{k}_{lab}_LAG1', rule=did, family='exploratory6', version='F', lag=True,
+            description=f'探索6: Fidelity Select 33本の{"12か月" if sc == "r12" else "(r1+r3+r6+r12)/4"}上位{k}本・翌月最初の営業日の基準価額で約定',
+            rule_fn=mk_sector_dyn(FSEL, k, sc, 20), slots=list(FSEL), repl=(kg, sc, False))
     one(id='H5_FSELD_EW', rule='H5', family='reference3', version='F', dynamic=True, description='参照3: Fidelity Select＋死んだ6本を全部等分',
         rule_fn=mk_ew_dyn(fseld, 20, alive=True), slots=fseld, repl=None)
     one(id='E5_ETF_EW', rule='E5', family='reference4', version='E', dynamic=True, description='参照4: 業種 ETF を全部等分',
@@ -804,6 +836,53 @@ def summarize_alloc(wpath, a=None):
         for s, x in w.items():
             cnt[s] = cnt.get(s, 0) + x
     return {s: round(v / n, 3) for s, v in sorted(cnt.items(), key=lambda x: -x[1])} if n else {}
+
+
+def build_lag(names):
+    """事前登録4: 1営業日遅れの保有区間。区間 m = m 月の最初の営業日の引け → m+1 月の最初の営業日の引け（French 日次の暦）。
+    戻り値: Rh {ファンド: {m: 区間リターン}}, 市場 {m: 区間リターン}, RF {m: 区間の複利}"""
+    ffd = M.ff_factors('daily')
+    mk_d, rf_d = ffd['mkt'], ffd['rf']
+    days = sorted(d for d in mk_d if d in rf_d)
+    first = {}
+    for d in days:
+        first.setdefault(d // 100, d)
+    pos = {d: i for i, d in enumerate(days)}
+    mkt_lag, rf_lag = {}, {}
+    for m in sorted(first):
+        m2 = madd(m, 1)
+        if m2 not in first:
+            continue
+        v = w = 1.0
+        for d in days[pos[first[m]] + 1:pos[first[m2]] + 1]:
+            v *= 1 + mk_d[d]
+            w *= 1 + rf_d[d]
+        mkt_lag[m], rf_lag[m] = v - 1, w - 1
+    import bisect
+    Rh = {}
+    for t in names:
+        dr = M.yahoo(t, interval='1d')
+        ks = sorted(dr)
+        lv, L = [], 1.0
+        for k in ks:
+            L *= 1 + dr[k]
+            lv.append(L)
+
+        def level(d):
+            i = bisect.bisect_right(ks, d) - 1
+            if i < 0:
+                return None
+            dd = ks[i]
+            gap = (datetime.date(d // 10000, d // 100 % 100, d % 100) - datetime.date(dd // 10000, dd // 100 % 100, dd % 100)).days
+            return lv[i] if gap <= 5 else None     # 5日より古い値は使わない（0で埋めない）
+
+        out = {}
+        for m in mkt_lag:
+            a0, b0 = level(first[m]), level(first[madd(m, 1)])
+            if a0 and b0 and first[m] > ks[0]:
+                out[m] = b0 / a0 - 1
+        Rh[t] = out
+    return Rh, mkt_lag, rf_lag
 
 
 def diag_post_hoc(src, rf, mkt, runs):
@@ -869,11 +948,18 @@ def main():
         g, n, _, _, _ = run(Rv, mk_static({'US': 0.6, 'AGG': 0.4}))
         ref6040[v] = n
         spy[v] = Rv['US']
+    lagd = None
     for sp in specs():
         v = sp['version']
+        if sp.get('lag'):
+            if lagd is None:
+                lagd = build_lag(FSEL)
+            Rh, mkt_, rf_ = lagd
+        else:
+            Rh, mkt_, rf_ = None, mkt, rf
         R, seg = build_version(src, rf, v, sp['slots'])
         try:
-            g, n, ns, wpath, trades = run(R, sp['rule_fn'], dynamic=sp.get('dynamic', False))
+            g, n, ns, wpath, trades = run(R, sp['rule_fn'], dynamic=sp.get('dynamic', False), Rh=Rh)
         except RuntimeError as e:
             log('  ✗', sp['id'], e)
             rows.append({'id': sp['id'], 'error': str(e)})
@@ -881,8 +967,8 @@ def main():
         unaligned = None
         if sp.get('align_to'):
             a0 = starts[sp['align_to']]
-            unaligned = {'from': min(g), 'full': M.excess_stats(g, mkt), 'train': M.excess_stats(g, mkt, z=M.TRAIN_END),
-                         'hold': M.excess_stats(g, mkt, a=M.HOLD_START), 'roll20': M.rolling(n, mkt, 20)}
+            unaligned = {'from': min(g), 'full': M.excess_stats(g, mkt_), 'train': M.excess_stats(g, mkt_, z=M.TRAIN_END),
+                         'hold': M.excess_stats(g, mkt_, a=M.HOLD_START), 'roll20': M.rolling(n, mkt_, 20)}
             g, n, ns = ({k: v for k, v in d.items() if k >= a0} for d in (g, n, ns))
             trades = {k: v for k, v in trades.items() if k >= a0}
             wpath = {k: v for k, v in wpath.items() if madd(k, 1) >= a0}
@@ -892,29 +978,29 @@ def main():
             continue
         ks = sorted(g)
         starts[sp['id']] = ks[0]
-        runs[sp['id']] = (R, wpath, g, n)
-        full = M.excess_stats(g, mkt)
-        train = M.excess_stats(g, mkt, z=M.TRAIN_END)
-        hold = M.excess_stats(g, mkt, a=M.HOLD_START)
-        recent = M.excess_stats(g, mkt, a=M.RECENT_START)
+        runs[sp['id']] = (Rh if Rh is not None else R, wpath, g, n)
+        full = M.excess_stats(g, mkt_)
+        train = M.excess_stats(g, mkt_, z=M.TRAIN_END)
+        hold = M.excess_stats(g, mkt_, a=M.HOLD_START)
+        recent = M.excess_stats(g, mkt_, a=M.RECENT_START)
         pp = POSTPUB.get(sp['rule'])
-        post = M.excess_stats(g, mkt, a=pp) if pp else None
-        cost_hold = M.excess_stats(n, mkt, a=M.HOLD_START)
-        cost_full = M.excess_stats(n, mkt)
-        stress_hold = M.excess_stats(ns, mkt, a=M.HOLD_START)
-        mk_w = {k: mkt[k] for k in ks if k in mkt}
-        sh = {'train': (M.sharpe(n, rf, z=M.TRAIN_END), M.sharpe(mk_w, rf, z=M.TRAIN_END)),
-              'hold': (M.sharpe(n, rf, a=M.HOLD_START), M.sharpe(mk_w, rf, a=M.HOLD_START))}
+        post = M.excess_stats(g, mkt_, a=pp) if pp else None
+        cost_hold = M.excess_stats(n, mkt_, a=M.HOLD_START)
+        cost_full = M.excess_stats(n, mkt_)
+        stress_hold = M.excess_stats(ns, mkt_, a=M.HOLD_START)
+        mk_w = {k: mkt_[k] for k in ks if k in mkt_}
+        sh = {'train': (M.sharpe(n, rf_, z=M.TRAIN_END), M.sharpe(mk_w, rf_, z=M.TRAIN_END)),
+              'hold': (M.sharpe(n, rf_, a=M.HOLD_START), M.sharpe(mk_w, rf_, a=M.HOLD_START))}
         turn_ann = round(S.mean(trades[k] for k in ks) / 2 * 12, 2)
         turn_hold = [trades[k] for k in ks if k >= M.HOLD_START]
         rep = None
         if sp['repl']:
-            rep = repl_sector(rf, *sp['repl'], gcache)
+            rep = repl_sector(rf, *sp['repl'], gcache, quarterly=sp.get('quarterly', False))
         taxr = None
         if hold:
-            ts = tax_sim(R, wpath, M.HOLD_START)
+            ts = tax_sim(Rh if Rh is not None else R, wpath, M.HOLD_START)
             if ts:
-                taxr = {'after_tax_cagr': round(ts[0] * 100, 2), 'bench_after_tax_cagr': round(bh_tax(mkt, M.HOLD_START) * 100, 2),
+                taxr = {'after_tax_cagr': round(ts[0] * 100, 2), 'bench_after_tax_cagr': round(bh_tax(mkt_, M.HOLD_START) * 100, 2),
                         'months': ts[1]}
                 taxr['diff'] = round(taxr['after_tax_cagr'] - taxr['bench_after_tax_cagr'], 2)
         row = {'id': sp['id'], 'rule': sp['rule'], 'family': sp['family'], 'version': v, 'description': sp['description'],
@@ -924,17 +1010,17 @@ def main():
                'switches_per_year': round(sum(1 for k in ks if trades[k] > 0.2) / len(ks) * 12, 2),
                'full': full, 'train': train, 'hold': hold, 'recent': recent, 'postpub_from': pp, 'postpub': post,
                'cost_full': cost_full, 'cost_hold': cost_hold, 'cost_hold_stress030': stress_hold,
-               'check_apply_cost_hold': M.excess_stats(M.apply_cost(g, S.mean(turn_hold) / 2 * 12 if turn_hold else 0, 0.001), mkt, a=M.HOLD_START),
-               'roll20': M.rolling(n, mkt, 20), 'dca20': M.dca(n, mkt, 20),
+               'check_apply_cost_hold': M.excess_stats(M.apply_cost(g, S.mean(turn_hold) / 2 * 12 if turn_hold else 0, 0.001), mkt_, a=M.HOLD_START),
+               'roll20': M.rolling(n, mkt_, 20), 'dca20': M.dca(n, mkt_, 20),
                'sharpe': sh, 'maxdd': round(M.maxdd(n) * 100, 1), 'maxdd_bench': round(M.maxdd(mk_w) * 100, 1),
-               'vs_spy_full': M.excess_stats(n, spy[v]), 'vs_spy_hold': M.excess_stats(n, spy[v], a=M.HOLD_START),
+               'vs_spy_full': None if Rh is not None else M.excess_stats(n, spy[v]), 'vs_spy_hold': None if Rh is not None else M.excess_stats(n, spy[v], a=M.HOLD_START),
                'vs_6040_hold': M.excess_stats(n, ref6040[v], a=M.HOLD_START) if sp['alloc'] else None,
                'alloc_avg_full': summarize_alloc(wpath), 'alloc_avg_hold': summarize_alloc(wpath, M.HOLD_START),
                'last_signal': {'month': max(wpath), 'weights': {s: round(x, 3) for s, x in wpath[max(wpath)].items()}},
                'tax_jp_hold': taxr, 'repl': rep}
-        if sp['family'] in ('exploratory2', 'reference2', 'exploratory3', 'reference3', 'exploratory4', 'reference4'):
+        if sp['family'] in ('exploratory2', 'reference2', 'exploratory3', 'reference3', 'exploratory4', 'reference4', 'exploratory5', 'exploratory6'):
             nf = {k: g[k] - 0.0075 * trades[k] / 2 for k in g}   # 売りのたびに 0.75%（短期解約手数料の最悪ケース）
-            row['cost_hold_fidelity075'] = M.excess_stats(nf, mkt, a=M.HOLD_START)
+            row['cost_hold_fidelity075'] = M.excess_stats(nf, mkt_, a=M.HOLD_START)
             row['hold_share_by_fund'] = summarize_alloc(wpath, M.HOLD_START)
         if unaligned:
             row['unaligned_full_history_not_graded'] = unaligned
@@ -971,6 +1057,7 @@ def main():
            'cost': '売り・買いそれぞれ 0.05%（片道100%あたり 0.10%）を各月の実際の売買量に掛けてその月に引く。stress は片道 0.30%',
            'sanity': sanity, 'n_tested': len(rows), 'grades_excluding_reference': grades,
            'prereg2': 'mw_etf_tactical_prereg2.json', 'prereg2_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg2.json')),
+           'prereg4': 'mw_etf_tactical_prereg4.json', 'prereg4_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg4.json')),
            'prereg3': 'mw_etf_tactical_prereg3.json', 'prereg3_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg3.json')),
            'dead_funds_monthly_returns_from_alpha_vantage': {t: {str(k): round(v, 6) for k, v in sorted(src['AV_' + t].items())} for t in DEAD},
            'tested': rows, 'diagnostics_post_hoc_not_graded': diag_post_hoc(src, rf, mkt, runs), 'log': LOG}
