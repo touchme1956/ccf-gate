@@ -99,6 +99,33 @@ def capw(name, idxs):
     return out, skipped
 
 
+def capw0(name, idxs):
+    """capw と同じだが、前月の社数が0の箱は重み0（空の箱＝測った0。欠測ではない）。
+    社数>0 なのに当月のリターンか前月の平均時価総額が欠ける月は出さない"""
+    t = fr(name)
+    months = sorted(set.union(*[set(t['ret'][i]) for i in idxs]))
+    out, skipped = {}, 0
+    for ym in months:
+        p = prev_ym(ym)
+        num = den = 0.0
+        bad = False
+        for i in idxs:
+            n = t['n'][i].get(p)
+            if n is None:
+                bad = True; break
+            if n <= 0:
+                continue
+            s_, r = t['size'][i].get(p), t['ret'][i].get(ym)
+            if s_ is None or s_ <= 0 or r is None:
+                bad = True; break
+            num += n * s_ * r; den += n * s_
+        if bad or den <= 0:
+            skipped += 1
+            continue
+        out[ym] = num / den
+    return out, skipped
+
+
 def mix(series):
     """等分の混合（毎月組み直し）。全部の袖に値がある月だけ"""
     ks = sorted(set.intersection(*[set(s) for s in series]))
@@ -312,7 +339,10 @@ def fam_B():
     return L
 
 
-JKP_TO = {'be_me': 0.6, 'gp_at': 0.4, 'qmj': 0.6, 'ope_be': 0.5, 'chcsho_12m': 1.0, 'oaccruals_at': 1.2, 'ret_12_1': 2.5}
+JKP_TO = {'be_me': 0.6, 'gp_at': 0.4, 'qmj': 0.6, 'ope_be': 0.5, 'chcsho_12m': 1.0, 'oaccruals_at': 1.2, 'ret_12_1': 2.5,
+          # 第2段（out/mw_combo_us_prereg2.json）
+          'cop_at': 0.4, 'at_gr1': 0.8, 'noa_at': 0.6, 'eqnpo_12m': 0.8, 'betabab_1260d': 0.6, 'ivol_capm_252d': 1.0,
+          'qmj_prof': 0.4, 'qmj_growth': 0.8, 'qmj_safety': 0.5}
 JKP_PUB = {'be_me': 1992, 'ret_12_1': 1993, 'qmj': 2013, 'gp_at': 2013, 'ope_be': 2015, 'chcsho_12m': 2008, 'oaccruals_at': 1996}
 
 
@@ -323,9 +353,23 @@ def fam_C_spec():
 
 
 def fam_C():
+    return jkp_family(fam_C_spec())
+
+
+def fam_E_spec():
+    Q5 = ['ope_be', 'gp_at', 'qmj', 'chcsho_12m', 'oaccruals_at']
+    return {'E1_QUAL5_MOM': (Q5 + ['ret_12_1'], 2015), 'E2_QUAL5_VAL': (Q5 + ['be_me'], 2015), 'E3_PROF3': (['gp_at', 'ope_be', 'cop_at'], 2016),
+            'E4_CAPDISC4': (['chcsho_12m', 'at_gr1', 'noa_at', 'eqnpo_12m'], 2008), 'E5_QUAL5_LOWRISK': (Q5 + ['betabab_1260d', 'ivol_capm_252d'], 2015),
+            'E6_QMJ3': (['qmj_prof', 'qmj_growth', 'qmj_safety'], 2013), 'E7_QUAL8': (Q5 + ['cop_at', 'at_gr1', 'noa_at'], 2016)}
+
+
+def fam_E():
+    return jkp_family(fam_E_spec())
+
+
+def jkp_family(spec):
     L = {}
-    jv = {}
-    for sid, (keys, pub) in fam_C_spec().items():
+    for sid, (keys, pub) in spec.items():
         ex = jkp_mix('usa', keys, start=196307)
         to = S.mean(JKP_TO[k] for k in keys) + 0.1
         pairs = {c: (jkp_mix(c, keys, min_n=10), M.jkp_mkt(c, 'vw')) for c in JKP7}
@@ -337,7 +381,46 @@ def fam_C():
     return L
 
 
-FAMILIES = [('A_triple', fam_A, True, 1), ('B_double', fam_B, True, 1), ('C_jkp', fam_C, True, 1)]
+def fam_D():
+    """第2段: French（CRSP）の BIG 行で C6 の考え方を作り直す（out/mw_combo_us_prereg2.json）"""
+    row = lambda name, lab: pf(name, col_index(name, lab))
+    op, ac, ni = row('25_Portfolios_ME_OP_5x5', 'BIG HiOP'), row('25_Portfolios_ME_AC_5x5', 'BIG LoAC'), row('25_Portfolios_ME_NI_5x5', 'BIG NegNI')
+    inv, mom, bm = row('25_Portfolios_ME_INV_5x5', 'BIG LoINV'), row('25_Portfolios_ME_Prior_12_2', 'BIG HiPRIOR'), row('25_Portfolios_5x5', 'BIG HiBM')
+    F100O, F100I = '100_Portfolios_ME_OP_10x10', '100_Portfolios_ME_INV_10x10'
+    assert [fr(F100O)['cols'][i] for i in (97, 98, 99)] == ['ME10 OP8', 'ME10 OP9', 'BIG HiOP'], fr(F100O)['cols'][97:]
+    assert [fr(F100I)['cols'][i] for i in (90, 91, 92)] == ['BIG LoINV', 'ME10 INV2', 'ME10 INV3'], fr(F100I)['cols'][90:93]
+    mop, k1 = capw0(F100O, [97, 98, 99])
+    minv, k2 = capw0(F100I, [90, 91, 92])
+    RG = {'op': ('ME_OP', 'BIG HiOP'), 'inv': ('ME_INV', 'BIG LoINV'), 'bm': ('ME_BE-ME', 'BIG HiBM'), 'mom': ('ME_Prior_12_2', 'BIG HiPRIOR')}
+
+    def proxy(sigs):
+        d = {}
+        for rg in REG3 + ['Developed_ex_US']:
+            ss = []
+            for g in sigs:
+                suf, lab = RG[g]
+                name = f'{rg}_25_Portfolios_{suf}'
+                ss.append(pf(name, col_index(name, lab)))
+            d[rg] = (mix(ss), region_mkt(rg))
+        return d
+    S63 = 196307
+    L = {
+        'D1_BIG_QUAL3': dict(s=mix([op, ac, ni]), to=0.633, uc=0.001, pub=2015, repl=None, repl_proxy=proxy(['op']), desc='French BIG: 高OP+低発生主義+株数純減 を1/3ずつ'),
+        'D2_BIG_QUAL4': dict(s=mix([op, ac, ni, inv]), to=0.625, uc=0.001, pub=2015, repl=None, repl_proxy=proxy(['op', 'inv']), desc='D1+低投資 を1/4ずつ'),
+        'D3_BIG_QUAL4_MOM': dict(s=mix([op, ac, ni, inv, mom]), to=1.32, uc=0.001, pub=2015, repl=None, repl_proxy=proxy(['op', 'inv', 'mom']), desc='D2+勢い を1/5ずつ'),
+        'D4_BIG_QUAL4_VAL': dict(s=mix([op, ac, ni, inv, bm]), to=0.62, uc=0.001, pub=2015, repl=None, repl_proxy=proxy(['op', 'inv', 'bm']), desc='D2+割安 を1/5ずつ'),
+        'D5_BIG_QUAL4_VAL_MOM': dict(s=mix([op, ac, ni, inv, bm, mom]), to=1.2, uc=0.001, pub=2015, repl=None, repl_proxy=proxy(['op', 'inv', 'bm', 'mom']), desc='D2+割安+勢い を1/6ずつ'),
+        'D6_MEGA_OP_INV': dict(s=mix([mop, minv]), to=0.7, uc=0.001, pub=2015, repl=None, skipped=k1 + k2, desc='規模の最上位10分位×(OP上位3分位)と×(INV下位3分位)を半々'),
+        'D7_MEGA_HiOP3': dict(s=mop, to=0.6, uc=0.001, pub=2015, repl=None, skipped=k1, desc='規模の最上位10分位×OP上位3分位（前月の時価で合成）'),
+    }
+    for v in L.values():
+        v['s'] = since(v['s'], S63)
+    return L
+
+
+FAMILIES = [('A_triple', fam_A, True, 1), ('B_double', fam_B, True, 1), ('C_jkp', fam_C, True, 1),
+            ('D_frbig', fam_D, False, 2), ('E_jkp2', fam_E, False, 2)]
+PREREGS = {1: PREREG, 2: 'out/mw_combo_us_prereg2.json'}
 
 
 LABELS = [(F_OPINV, 28, 'BIG HiOP LoINV'), (F_BMOP, 31, 'BIG HiBM HiOP'), (F_BMOP, 19, 'BIG LoBM HiOP'), (F_BMINV, 28, 'BIG HiBM LoINV'),
@@ -367,13 +450,14 @@ def sanity():
 
 def run(families=None):
     res = {'prereg': PREREG, 'prereg_commit': git_sha(PREREG), 'global_prereg': 'out/mw_prereg.json',
+           'preregs': {st: {'file': f, 'commit': git_sha(f)} for st, f in PREREGS.items()},
            'benchmark': 'French Mkt = Mkt-RF + RF（総リターン）', 'sanity': sanity(), 'families': {}, 'tested': []}
     for fam, fn, primary, stage in (families or FAMILIES):
         L = fn()
         rows = []
         for sid, v in L.items():
             s = v['s']
-            r = {'id': sid, 'family': fam, 'primary': primary, 'stage': stage, 'desc': v['desc'],
+            r = {'id': sid, 'family': fam, 'primary': primary, 'exploratory': not primary, 'stage': stage, 'desc': v['desc'],
                  'from': min(s) if s else None, 'to': max(s) if s else None,
                  'turnover_oneway_per_year': v['to'], 'unit_cost': v['uc'], 'pub_year': v.get('pub')}
             r.update(pack(s, MKT, v['to'], v['uc'], v.get('pub')))
