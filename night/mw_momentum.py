@@ -317,6 +317,85 @@ def seas_rank(R, a, b, frac=None, K=None, third=False, unit=0.0005):
                        'eligible_median': S.median(elig) if elig else None}
 
 
+def jkp_all_factors(region, weighting='vw'):
+    """JKP の all_factors（符号つきの買い−売り・超過）→ {因子名: {yyyymm: 小数}}"""
+    out = {}
+    for x in M.jkp_rows(region, 'all_factors', 'factor', weighting):
+        if x['ret'] in ('', 'NA', 'na'):
+            continue
+        out.setdefault(x['name'], {})[M._ym(x['date'])] = float(x['ret'])
+    return out
+
+
+def factor_momentum(region, avail_keys, mkt_excess, log_fn=print):
+    """因子の勢い（第6次）。戻り値 {'tsfm','csfm','static'}: (月次の超過リターン, 月の費用, 情報)。
+    良い側は 2006-12 までのデータだけで決める。信号は t−11〜t の12か月の買い−売りの累積（そろう因子だけ）。翌月 t+1 に持つ"""
+    F = jkp_all_factors(region)
+    G, sides = {}, {}
+    for k in sorted(F):
+        if k not in avail_keys:
+            continue
+        try:
+            P = {pf: jkp_rows_filtered(region, k, pf) for pf in ('1.0', '3.0')}
+        except Exception as ex:  # noqa
+            log_fn('F18 三分位の取得失敗', region, k, ex)
+            continue
+        ms = sorted(m for m in set(P['1.0']) & set(P['3.0']) & set(F[k]) if m <= TR)
+        if len(ms) < 24:
+            continue
+        c = M.corr([P['3.0'][m] - P['1.0'][m] for m in ms], [F[k][m] for m in ms])
+        side = '3.0' if c > 0 else '1.0'
+        sides[k] = side
+        G[k] = P[side]
+    months = sorted(set().union(*[set(v) for v in F.values()]) | set(mkt_excess))
+    idx = {m: i for i, m in enumerate(months)}
+    lf = {k: {m: math.log1p(v) for m, v in F[k].items()} for k in G}
+    res = {}
+    for mode in ('tsfm', 'csfm', 'static'):
+        ret, cost, turn, nsel = {}, {}, {}, []
+        prev_w, prev_r = None, None
+        for i in range(11, len(months) - 1):
+            t, m1 = months[i], months[i + 1]
+            win = months[i - 11:i + 1]
+            elig = []
+            for k in G:
+                if m1 not in G[k]:
+                    continue
+                if mode == 'static':
+                    elig.append((0.0, k)); continue
+                if all(m in lf[k] for m in win):
+                    elig.append((sum(lf[k][m] for m in win), k))
+            if mode == 'tsfm':
+                sel = [k for v, k in elig if v > 0]
+            elif mode == 'csfm':
+                elig.sort(key=lambda x: (-x[0], x[1]))
+                sel = [k for v, k in elig[:math.ceil(0.2 * len(elig))]] if elig else []
+            else:
+                sel = [k for v, k in elig]
+            if not sel:
+                if mode == 'tsfm' and m1 in mkt_excess and elig:
+                    w2 = {'_mkt': 1.0}; rp = mkt_excess[m1]
+                else:
+                    prev_w = None
+                    continue
+            else:
+                w2 = {k: 1 / len(sel) for k in sel}
+                rp = sum(G[k][m1] for k in sel) / len(sel)
+            if prev_w is not None:
+                drift = {k: x * (1 + prev_r[k]) / (1 + prev_r['_p']) for k, x in prev_w.items()}
+                to = 0.5 * sum(abs(w2.get(q, 0.0) - drift.get(q, 0.0)) for q in set(drift) | set(w2))
+            else:
+                to = 0.0
+            ret[m1] = rp; turn[m1] = to; cost[m1] = to * 0.001 + 2.0 / 12 * 0.001; nsel.append(len(sel))
+            prev_w = w2
+            prev_r = {k: (G[k][m1] if k != '_mkt' else mkt_excess[m1]) for k in w2}; prev_r['_p'] = rp
+        yrs = len(turn) / 12 if turn else 0
+        res[mode] = (ret, cost, {'months': len(ret), 'from': min(ret) if ret else None, 'factors_with_side': len(G),
+                                 'factor_switch_turnover_per_year': round(sum(turn.values()) / yrs, 3) if yrs else None,
+                                 'selected_median': S.median(nsel) if nsel else None, 'sides_3_share': round(sum(1 for v in sides.values() if v == '3.0') / len(sides), 3) if sides else None})
+    return res
+
+
 def kof(frac, N):
     return max(2, int(math.floor(frac * N + 0.5)))
 
@@ -888,7 +967,24 @@ def main():
              rule='国の季節性 1-10 上位1/3', cost=cst_, pub=2008, extra={'info': info})
     log('phase5 done')
 
-    fams = ['F1', 'F2', 'F3g', 'F3s', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14', 'F15', 'F16p', 'F16g', 'F17']
+    # ═════════ 第6次（out/mw_momentum_prereg6.json）═════════
+    fm = {}
+    for reg in ('usa', 'world_ex_us', 'jpn', 'emerging'):
+        mex = M.jkp_mkt(reg, 'vw')
+        fm[reg] = factor_momentum(reg, set(avail['portfolios'].get(reg, [])), mex, log)
+        log('F18 region done', reg, {k: v[2] for k, v in fm[reg].items()})
+    for mode, sid, lab in (('tsfm', 'F18a_tsfm', '因子の勢い（時系列）: 過去12か月が正の因子の良い側を等分'),
+                           ('csfm', 'F18b_csfm_top20', '因子の勢い（横断）: 過去12か月の上位20%の因子の良い側を等分'),
+                           ('static', 'F18c_static_control', '対照: 全因子の良い側を等分（勢いなし）')):
+        units = {}
+        for reg in ('world_ex_us', 'jpn', 'emerging'):
+            r_, c_, i_ = fm[reg][mode]
+            units[reg] = unit_stats(add_rf(r_, RF), CMKT[reg])
+        r_, c_, i_ = fm['usa'][mode]
+        evaluate(sid, 'F18', f'JKP 米国 {lab} vs 米国 mkt vw', add_rf(r_, RF), CMKT['usa'], rule=lab, cost=c_, repl=repl_summary(units), pub=2019, extra={'info': i_})
+    log('phase6 done')
+
+    fams = ['F1', 'F2', 'F3g', 'F3s', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14', 'F15', 'F16p', 'F16g', 'F17', 'F18']
     fam_holm = finalize(fams)
     # ─ 診断（第4次・報告のみ）─
     diag = {}
@@ -933,11 +1029,13 @@ def main():
     sha2 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg2.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
     sha4 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg4.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
     sha5 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg5.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
+    sha6 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg6.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
     sha3 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg3.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
     out = {'angle': 'momentum', 'prereg': f'out/{PRE}', 'prereg_commit': sha, 'prereg2': 'out/mw_momentum_prereg2.json', 'prereg2_commit': sha2,
            'prereg3': 'out/mw_momentum_prereg3.json', 'prereg3_commit': sha3,
            'prereg4': 'out/mw_momentum_prereg4.json', 'prereg4_commit': sha4,
-           'prereg5': 'out/mw_momentum_prereg5.json', 'prereg5_commit': sha5, 'global_prereg': 'out/mw_prereg.json',
+           'prereg5': 'out/mw_momentum_prereg5.json', 'prereg5_commit': sha5,
+           'prereg6': 'out/mw_momentum_prereg6.json', 'prereg6_commit': sha6, 'global_prereg': 'out/mw_prereg.json',
            'generated': datetime.date.today().isoformat(), 'sanity': sanity, 'family_holm': fam_holm, 'summary': summary,
            'deviations': DEVIATIONS, 'diagnostics': diag, 'tested': TESTED, 'log': LOG[-80:]}
     p = os.path.join(BASE, 'out', OUT)
