@@ -19,6 +19,8 @@ import mw_common as M  # noqa: E402
 
 PREREG = 'mw_tech_ipo_wave_prereg.json'
 PREREG2 = 'mw_tech_ipo_wave_prereg2.json'   # 探索の族 X（上場の波 × 相対トレンド）
+PREREG3 = 'mw_tech_ipo_wave_prereg3.json'   # 探索の族 Y（日照りの後だけハイテク）
+B5 = 0.20
 OUT = 'mw_tech_ipo_wave.json'
 END = 202608                  # French の終わり
 INT_SIG_END = 202112          # Internet の印を使う最後の月（Ritter が近年更新していない）
@@ -263,8 +265,10 @@ def sub(d, keys):
     return {k: d[k] for k in keys if k in d}
 
 
-def eval_timing(name, family, desc, tech, mkt, rf, state, wh, sig_meta):
-    g, n, w, tv, miss = timing(tech, mkt, state, wh)
+def eval_timing(name, family, desc, tech, mkt, rf, state, wh, sig_meta, default_mkt=False):
+    """default_mkt=True（事前登録3の Y 族）: ふだんは市場、state の月だけ全部ハイテク（最初の月は市場を持っている）"""
+    run = (lambda c: timing(mkt, tech, state, wh, cost=c)) if default_mkt else (lambda c: timing(tech, mkt, state, wh, cost=c))
+    g, n, w, tv, miss = run(COST)
     ks = sorted(g)
     res = {'name': name, 'family': family, 'desc': desc, 'rule': 'R1' if wh == 0 else 'R2', 'from': ks[0], 'to': ks[-1],
            'months': len(ks), 'missing_months_skipped': miss, 'hot_share': round(sum(1 for k in ks if state[k]) / len(ks), 3),
@@ -278,7 +282,7 @@ def eval_timing(name, family, desc, tech, mkt, rf, state, wh, sig_meta):
         sp = {'train': (M.sharpe(n, rf, z=M.TRAIN_END), M.sharpe(bb, rf, z=M.TRAIN_END)),
               'hold': (M.sharpe(n, rf, a=M.HOLD_START), M.sharpe(bb, rf, a=M.HOLD_START))}
         post = {'BW2000_2001+': M.excess_stats(n, bb, a=200101), 'PV2005_2006+': M.excess_stats(n, bb, a=200601)}
-        hi = timing(tech, mkt, state, wh, cost=COST_HI)[1]
+        hi = run(COST_HI)[1]
         res['cmp'][bn] = {'full': full, 'train': train, 'hold': hold, 'recent': recent, 'full_net': full_net, 'train_net': train_net,
                           'hold_net': hold_net, 'hold_net_cost0.20': M.excess_stats(hi, bb, a=M.HOLD_START),
                           'roll20_net': roll20, 'dca20_net': dca20, 'sharpe_pair_net': sp, 'post_publication_net': post,
@@ -525,6 +529,7 @@ def main():
     for k in pct:
         H[k + '_Q5'] = readings(pct[k], Q5)
         H[k + '_T3'] = readings(pct[k], T3)
+        H[k + '_B5'] = {s_: p_ <= B5 for s_, p_ in pct[k].items()}   # 事前登録3: 日照りの読み
     sig_meta = {}
     for k, h in H.items():
         rr = runs({s: v for s, v in h.items()})
@@ -573,7 +578,9 @@ def main():
     # ── 探索族 X（事前登録2）: 上場の波 × ハイテクの相対トレンドの崩れ
     def rel_trend(tech):
         ks = sorted(k for k in tech if k in mkt)
-        assert all(ym_add(a, 1) == b for a, b in zip(ks, ks[1:])), '相対指数の月が連続していない'
+        # T3 は 1957-07 以前に銘柄数が5未満で欠ける月がある → 最後の連続した区間だけで相対指数を作る（欠けをまたがない）
+        gaps = [i for i, (a, b) in enumerate(zip(ks, ks[1:]), 1) if ym_add(a, 1) != b]
+        ks = ks[gaps[-1]:] if gaps else ks
         ri, v = {}, 1.0
         for k in ks:
             v *= (1 + tech[k]) / (1 + mkt[k]); ri[k] = v
@@ -602,6 +609,17 @@ def main():
                         tech, mkt, rf, s, 0.0, sig_meta[sig] if sig else {'trend_only': True})
         r['primary'] = False
         strats['X'].append(r)
+    # ── 探索族 Y（事前登録3）: ふだんは市場、日照りの読みの後12か月だけハイテク
+    yspec = [('Y1_R1_VC_B5_T3', 'VC_B5', 'T3'), ('Y2_R1_VC_B5_NDX', 'VC_B5', 'NDX'), ('Y3_R1_GROSS_B5_T3', 'GROSS_B5', 'T3'), ('Y4_R1_TNL_B5_T3', 'TNL_B5', 'T3')]
+    strats['Y'] = []
+    ystates = {}
+    for nm, sig, tn in yspec:
+        tech = t3 if tn == 'T3' else ndx
+        s = st(sig); s = {t: v for t, v in s.items() if t in tech}
+        ystates[nm] = s
+        r = eval_timing(nm, '探索 Y（日照りの後だけハイテク・事前登録3）', f'ふだん市場・信号 {sig} の日照りの後12か月だけ {tn}', tech, mkt, rf, s, 0.0, sig_meta[sig], default_mkt=True)
+        r['primary'] = False
+        strats['Y'].append(r)
     for fam in strats:
         for comp in ('tech', 'mkt'):
             grade_family(strats[fam], comp)
@@ -629,6 +647,11 @@ def main():
         nmd = nm.replace('_R1_', 'D_R3_', 1)
         dres.append(eval_dca(nmd, '探索 X の積立（D判定・事前登録2）', f'R3・{"信号 " + sig + " かつ " if sig else "【対照】"}相対トレンドの下・器 {tn}', tech, mkt, xstates[nm], END,
                              sig_meta[sig] if sig else {'trend_only': True}))
+    for (nm, sig, tn) in yspec:
+        tech = t3 if tn == 'T3' else ndx
+        nmd = nm.replace('_R1_', 'D_R3_', 1)
+        inv = {t: (not v) for t, v in ystates[nm].items()}   # eval_dca は state=真 の月に市場へ入れる → 日照りでない月が真
+        dres.append(eval_dca(nmd, '探索 Y の積立（D判定・事前登録3）', f'R3・ふだん市場へ・{sig} の日照りの後12か月だけ {tn} へ', tech, mkt, inv, END, sig_meta[sig]))
     for d in dres:
         log(d['name'], d['windows'], 'vsTech', d['judgement_vs_tech'], d['cmp']['tech']['train_windows'], d['cmp']['tech']['hold_windows'],
             'vsMkt', d['judgement_vs_mkt'], d['cmp']['mkt']['hold_windows'])
@@ -760,8 +783,25 @@ def main():
     reports['X_baseline_dca_tech_vs_mkt'] = base
     reports['X_switches'] = {r['name']: {'switches_per_year': r['switches_per_year'], 'hot_share(=市場にいた割合)': r['hot_share']} for r in strats['X']}
 
+    # 事前登録3の報告: 日照りの予言・日照りの期間
+    pc, ec = {}, {}
+    for sig in ('VC_B5', 'GROSS_B5', 'TNL_B5'):
+        for tech, tname in ((t3, 'T3'), (ndx, 'NDX')):
+            for k in (12, 36):
+                pc[f'{sig}|{tname}|k{k}'] = {'full': predictive(H[sig], tech, mkt, k), 'train': predictive(H[sig], tech, mkt, k, train=True),
+                                             'hold': predictive(H[sig], tech, mkt, k, a=M.HOLD_START)}
+            s = st(sig); s = {t: v for t, v in s.items() if t in tech}
+            e = episodes(s, tech, mkt)
+            for lab in ('train', 'hold', 'all'):
+                sel = [x for x in e['list'] if (lab == 'all' or (lab == 'train' and x['start'] <= M.TRAIN_END) or (lab == 'hold' and x['start'] >= M.HOLD_START))]
+                k_ = sum(1 for x in sel if not x['hit_market_won_during'])
+                e[lab] = {'episodes': len(sel), 'hits_tech_won': k_, 'binom_p_one_sided': binom_ge(k_, len(sel))}
+            ec[f'{sig}|{tname}'] = e
+    reports['Y_predictive_cold'] = pc
+    reports['Y_episodes_cold'] = ec
+
     # ── 出力
-    all_timing = strats['P'] + strats['N'] + strats['E'] + strats['X']
+    all_timing = strats['P'] + strats['N'] + strats['E'] + strats['X'] + strats['Y']
     for r in all_timing:
         r.pop('_series', None)
     for r in all_timing:
@@ -772,10 +812,11 @@ def main():
     tested.append({'name': 'SR_a_R1_LIFEY_Drugs', 'family': '再現の報告', 'kind': 'report'})
     tested.append({'name': f'SR_b_net_listings_x{len(ind)}', 'family': '再現の報告', 'kind': 'report', 'count': len(ind)})
     tested.append({'name': 'BASE_T3・BASE_NDX（今の規則の積立 vs 市場の積立）', 'family': '基準の報告（事前登録2）', 'kind': 'report'})
-    out = {'angle': 'tech_ipo_wave', 'prereg': [PREREG, PREREG2], 'prereg_commit': {PREREG: git_sha(f'out/{PREREG}'), PREREG2: git_sha(f'out/{PREREG2}')},
+    out = {'angle': 'tech_ipo_wave', 'prereg': [PREREG, PREREG2, PREREG3],
+           'prereg_commit': {PREREG: git_sha(f'out/{PREREG}'), PREREG2: git_sha(f'out/{PREREG2}'), PREREG3: git_sha(f'out/{PREREG3}')},
            'benchmark_note': 'grade_vs_tech = 同じハイテクの器を買って持つだけ（全体の事前登録のタイミング型の相手）／grade_vs_mkt = French Mkt（市場に勝つか）',
            'tested_count': len(tested), 'tested': tested,
-           'families': {'P': strats['P'], 'N': strats['N'], 'E': strats['E'], 'X': strats['X'], 'D': dres},
+           'families': {'P': strats['P'], 'N': strats['N'], 'E': strats['E'], 'X': strats['X'], 'Y': strats['Y'], 'D': dres},
            'signals': sig_meta, 'reports': reports, 'sanity': sanity, 'log': LOG}
     p = M.save(OUT, out)
     log('saved', p, os.path.getsize(p))
