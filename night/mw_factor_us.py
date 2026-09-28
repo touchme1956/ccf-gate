@@ -319,5 +319,103 @@ def main():
               f"20年窓{(e['roll20'] or {}).get('win_rate')} 再現{(e.get('repl') or {}).get('positive')}/{(e.get('repl') or {}).get('regions')} Holm{e.get('holm_p_family')}")
 
 
+# ───────────────────────── 事後の点検（結果を見た後に足した・判定には使わない）─────────────────────────
+def ex_fin_market():
+    """French 49業種から金融（Banks・Insur・RlEst・Fin）を除いた時価加重の市場（総リターン）。
+    重みは前月の『平均規模×社数』（当月の値は使わない）"""
+    t = M.french_tables('49_Industry_Portfolios')
+    ret = t['Average Value Weighted Returns -- Monthly']; sz = t['Average Firm Size']; nf = t['Number of Firms in Portfolios']
+    cols = ret['cols']; fin = {'Banks', 'Insur', 'RlEst', 'Fin'}
+    ks = sorted(ret['data']); out_all, out_xf = {}, {}
+    for p, k in zip(ks, ks[1:]):
+        num_a = den_a = num_x = den_x = 0.0
+        for i, c in enumerate(cols):
+            r, s, n = ret['data'][k][i], sz['data'].get(p, [None] * 49)[i], nf['data'].get(p, [None] * 49)[i]
+            if r is None or s is None or n is None or s <= 0 or n <= 0:
+                continue
+            w = s * n
+            num_a += w * r / 100; den_a += w
+            if c not in fin:
+                num_x += w * r / 100; den_x += w
+        if den_a > 0:
+            out_all[k] = num_a / den_a; out_xf[k] = num_x / den_x
+    return out_all, out_xf
+
+
+def post_hoc():
+    p = os.path.join(M.BASE, 'out', OUT_NAME)
+    j = json.load(open(p))
+    fam = PRE['families']
+    a_turn = {x['key']: x['turnover_pct'] for x in fam['a_jkp_tercile_vw']['list']}
+    ph = {'label': '事後（結果を見た後に足した点検・格付けには使わない）', 'why': 'S/A が多数出たので「見かけの勝ちではないか」をまず疑う: 上限なし時価加重（巨大株）への依存・金融を避けた効果・時期の偏り・互いの重なり・良い側と悪い側の単調性'}
+    all_mkt, xf_mkt = ex_fin_market()
+    ph['ex_fin_market_check'] = {'rebuilt_all_vs_french_mkt': M.excess_stats(all_mkt, MKT), 'ex_fin_vs_french_mkt_hold': M.excess_stats(xf_mkt, MKT, a=M.HOLD_START)}
+    mkt_rows = {M._ym(x['date']): float(x['n_stocks']) for x in M.jkp_rows('usa', 'mkt', 'factor', 'vw') if x.get('n_stocks') not in (None, '', 'NA')}
+    subs = [('2007-2012', 200701, 201212), ('2013-2019', 201301, 201912), ('2020-', 202001, None), ('2007-2019', 200701, 201912)]
+    targets = [e for e in j['tested'] if e.get('grade') in ('S', 'A', 'B')]
+    res = {}
+    hold_series = {}
+    for e in targets:
+        r = {'grade': e['grade']}
+        if e['family'] == 'a':
+            k, side = e['key'], e['good_side']
+            s = jkp_tercile('usa', k, side)
+            bad = '1.0' if side == '3.0' else '3.0'
+            # 網羅率: 三分位の銘柄数の合計 ÷ JKP 市場の銘柄数（保有期間の平均）
+            ns = {}
+            for x in M.jkp_rows('usa', k, 'portfolios', 'vw'):
+                m = M._ym(x['date'])
+                if m >= M.HOLD_START and x.get('n') not in (None, '', 'NA'):
+                    ns[m] = ns.get(m, 0) + float(x['n'])
+            cov = [ns[m] / mkt_rows[m] for m in ns if m in mkt_rows and mkt_rows[m] > 0]
+            r['coverage_hold'] = round(S.mean(cov), 3) if cov else None
+            r['bad_side_hold'] = M.excess_stats(jkp_tercile('usa', k, bad), MKTRF, a=M.HOLD_START)
+            r['middle_hold'] = M.excess_stats(jkp_tercile('usa', k, '2.0'), MKTRF, a=M.HOLD_START)
+            for wt in ('vw_cap', 'ew'):
+                try:
+                    sw = {M._ym(x['date']): float(x['ret']) for x in M.jkp_rows('usa', k, 'portfolios', wt) if x['pf'] == side and x['ret'] not in ('', 'NA', 'na')
+                          and not (x.get('n') not in (None, '', 'NA') and float(x['n']) < NMIN)}
+                    r[f'{wt}_full'] = M.excess_stats(sw, MKTRF); r[f'{wt}_hold'] = M.excess_stats(sw, MKTRF, a=M.HOLD_START)
+                except Exception as ex:  # noqa
+                    r[f'{wt}_error'] = str(ex)[:100]
+        else:
+            spec = next(x for x in fam['b_french_single_sort_vw']['list'] + fam['c_french_largecap']['list'] if x['name'] == e['name'])
+            cols = fr_cols(spec['file'])
+            tot = cols[spec['cols'][0]] if len(spec['cols']) == 1 else ew([cols[c] for c in spec['cols']], len(spec['cols']))
+            s = to_excess(tot)
+        tot = {k2: v + RF[k2] for k2, v in s.items() if k2 in RF}
+        r['vs_ex_fin_market_hold'] = M.excess_stats(tot, xf_mkt, a=M.HOLD_START)
+        r['vs_ex_fin_market_full'] = M.excess_stats(tot, xf_mkt)
+        r['subperiods'] = {lab: M.excess_stats(s, MKTRF, a=a, z=z) for lab, a, z in subs}
+        res[e['name']] = r
+        if e['grade'] == 'S':
+            hold_series[e['name']] = {k2: s[k2] - MKTRF[k2] for k2 in s if k2 in MKTRF and k2 >= M.HOLD_START}
+    ph['per_strategy'] = res
+    # S どうしの重なり（保有期間の超過の相関・実効的な独立の本数）
+    names = sorted(hold_series)
+    if len(names) >= 2:
+        ks = sorted(set.intersection(*[set(hold_series[n]) for n in names]))
+        import numpy as np
+        X = np.array([[hold_series[n][k2] for n in names] for k2 in ks])
+        C = np.corrcoef(X.T)
+        lam = np.linalg.eigvalsh(C)
+        ph['S_overlap'] = {'names': names, 'months': len(ks), 'mean_offdiag_corr': round(float((C.sum() - len(names)) / (len(names) ** 2 - len(names))), 3),
+                           'effective_n_bets': round(float(lam.sum() ** 2 / (lam ** 2).sum()), 2),
+                           'corr': {a: {b: round(float(C[i, jx]), 2) for jx, b in enumerate(names)} for i, a in enumerate(names)}}
+    j['post_hoc_事後'] = ph
+    M.save(OUT_NAME, j)
+    f = lambda v: f"{v['ex_ann']:+5.2f}(t{v['t']:+.1f})" if v and v.get('t') is not None else '    —     '
+    print('ex-fin check', ph['ex_fin_market_check'])
+    for n, r in res.items():
+        sp = r['subperiods']
+        print(f"{r['grade']} {n[:22]:22} cov{r.get('coverage_hold')} 悪{f(r.get('bad_side_hold'))} 中{f(r.get('middle_hold'))} cap{f(r.get('vw_cap_hold'))} ew{f(r.get('ew_hold'))} 対非金融{f(r['vs_ex_fin_market_hold'])} "
+              f"07-12{f(sp['2007-2012'])} 13-19{f(sp['2013-2019'])} 20-{f(sp['2020-'])}")
+    if 'S_overlap' in ph:
+        print('S overlap', ph['S_overlap']['mean_offdiag_corr'], ph['S_overlap']['effective_n_bets'])
+
+
 if __name__ == '__main__':
-    main()
+    if '--post-hoc' in sys.argv:
+        post_hoc()
+    else:
+        main()
