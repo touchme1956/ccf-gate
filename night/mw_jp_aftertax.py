@@ -1264,8 +1264,131 @@ def run_part2(D, ed, t0):
     log('書いた part2', p, os.path.getsize(p), f'{time.time() - t0:.0f}s')
 
 
+
+# ───────────────────────── 事後の点検（結果を見た後に足した・格付けしない） ─────────────────────────
+def run_diag(D, ed, t0):
+    """仕組みの分解: 相手と同じ指数を『上乗せ』の席に置いたら比は1になるか・枠の制限と NISA の中の売買がいくら削るか。
+    E3 の置き場所の判定がどの期間の SPDR に乗っているか"""
+    RN = Runner(D)
+    mkt, fx = D['mkt'], D['fx']
+    p = os.path.join(M.BASE, 'out', OUT)
+    out = json.load(open(p))
+    bspec = bench_spec(mkt)
+    res = {}
+    clones = {
+        'clone_fund_T0': dict(kind='single', vehicle='fund', fee=BENCH_FEE, R=mkt, T=0.0, cu=0.0),
+        'clone_direct_T0': dict(kind='single', vehicle='direct', fee=0.0, R=mkt, T=0.0, cu=0.0),
+        'clone_fund_T0128': dict(kind='single', vehicle='fund', fee=BENCH_FEE, R=mkt, T=0.128, cu=0.001),
+        'clone_fund_T0931': dict(kind='single', vehicle='fund', fee=BENCH_FEE, R=mkt, T=0.931, cu=0.002),
+    }
+    for cn, e in clones.items():
+        spec = arm_spec(e, mkt)
+        for rg in ('R2_real', 'R3_taxable', 'L1_real', 'R1_nisa_unlimited'):
+            rs = []
+            for a, z in dca_windows(196401, 202512, 20):
+                r, *_ = RN.pair(REG[rg], spec, bspec, a, z)
+                rs.append((a, round(r, 4)))
+            res[f'{cn}__{rg}'] = summarize_ratios(rs)
+            log('事後', cn, rg, json.dumps(res[f'{cn}__{rg}'], ensure_ascii=False))
+    # 同じ器・同じ実現率・同じ費用で『上乗せ0』の対照（French Mkt）と窓ごとに割る＝税と器の効果を除いた上乗せ
+    ctrl = {}
+    for en in ('E1_cop_tilt', 'E1m_cop_mega', 'E2_gate_P1', 'E3_sector_mom', 'E4_fsel_top3'):
+        e = ed[en]
+        if e['kind'] == 'single':
+            c = dict(kind='single', vehicle=e['vehicle'], fee=e['fee'], R=mkt, T=e['T'], cu=e['cu'])
+        else:
+            to = S.mean(e['trades'][k] for k in e['trades']) / 2 * 12
+            c = dict(kind='single', vehicle=e['vehicle'], fee=e['fee'], R=mkt, T=to, cu=e['cs'] * 2)
+        spec_e, spec_c = arm_spec(e, mkt), arm_spec(c, mkt)
+        first, last = e['start'], min(e['end'], FR_END)
+        for rg in ('R1_nisa_unlimited', 'R2_real', 'R3_taxable', 'L1_real'):
+            rr, rc_ = [], []
+            for a, z in dca_windows(first, last, 20):
+                r1, *_ = RN.pair(REG[rg], spec_e, bspec, a, z)
+                r2, *_ = RN.pair(REG[rg], spec_c, bspec, a, z)
+                rr.append((a, round(r1 / r2, 4)))
+                rc_.append((a, round(r2, 4)))
+            h1, *_ = RN.pair(REG[rg], spec_e, bspec, 200701, last)
+            h2, *_ = RN.pair(REG[rg], spec_c, bspec, 200701, last)
+            ctrl[f'{en}__{rg}'] = {'edge_over_control': summarize_ratios(rr), 'control_vs_bench': summarize_ratios(rc_),
+                                   'hold_2007_edge_over_control': round(h1 / h2, 4), 'control_T': round(c['T'], 3)}
+            log('事後 対照', en, rg, json.dumps(ctrl[f'{en}__{rg}'], ensure_ascii=False)[:300])
+    res['edge_over_zero_edge_control'] = ctrl
+    # E3e（SPDR）の税前: NISA が埋まった後（2015-10〜）だけの超過
+    g = ed['E3e_spdr_mom']['gross']
+    res['E3e_pretax_gross_vs_mkt_201510_on'] = M.excess_stats(g, mkt, a=201510)
+    res['E3e_pretax_gross_vs_mkt_200701_201509'] = M.excess_stats(g, mkt, a=200701, z=201509)
+    res['note'] = ('clone_* は French Mkt そのものを上乗せの席に置いた型（fund＝相手と同じ積み上げ型の投信、direct＝個別株のように配当を毎年受け取る）。'
+                   'R2 の fund_T0 の比が枠の制限（成長枠だけ 1200万 vs 相手 1800万）の代金、T0128/T0931 は NISA の中の売買（実現率 年12.8%/93.1%）の代金、'
+                   'L1 の fund_T0 は 1 になるはず（道具の検算）')
+    out['diagnostics_post_hoc_not_graded'] = res
+    M.save(OUT, out)
+    log('書いた diag', f'{time.time() - t0:.0f}s')
+
+
+
+# ───────────────────────── まとめ（数字は JSON から読む・文は結果を見た後に書いた） ─────────────────────────
+def finalize():
+    p = os.path.join(M.BASE, 'out', OUT)
+    out = json.load(open(p))
+    V, X1, X2 = out['verdicts'], out['part2']['x1_verdicts'], out['part2']['x2_verdicts']
+    dg = out['diagnostics_post_hoc_not_graded']
+    tbl = {}
+    for n in PRIMARY + SECONDARY:
+        e = out['edges'][n]
+        g = lambda rg: (e['dca'][rg].get('roll20') or {})
+        tbl[n] = {'主の判定': V[n]['verdict'], '置き場所を分けた判定(探索X1)': X1.get(n, {}).get('verdict'),
+                  '非課税R1_20年窓_勝率_中央': [g('R1_nisa_unlimited').get('win_share'), g('R1_nisa_unlimited').get('median')],
+                  '現実R2_20年窓_勝率_中央': [g('R2_real').get('win_share'), g('R2_real').get('median')],
+                  '課税口座R3_20年窓_勝率_中央': [g('R3_taxable').get('win_share'), g('R3_taxable').get('median')],
+                  '置き場所L1_20年窓_勝率_中央': [(X1.get(n, {}).get('L1_roll20') or {}).get('win_share'), (X1.get(n, {}).get('L1_roll20') or {}).get('median')],
+                  'R2_2007〜_米ドル_円': [V[n]['R2_2007'], V[n]['jpy_R2_2007_ratio']],
+                  'L1_2007〜_米ドル_円': [X1.get(n, {}).get('L1_2007'), X1.get(n, {}).get('L1_jpy_2007')],
+                  '年の売買（片道）': e['turnover_or_realization']}
+    out['verdict_table'] = tbl
+    out['mechanism_zero_edge_clones_post_hoc'] = {k: {'win_share': v['win_share'], 'median': v['median']} for k, v in dg.items()
+                                                 if k.startswith('clone_') and isinstance(v, dict)}
+    out['deviations'] = out.get('deviations', []) + [
+        '事前登録2（探索 X1 置き場所・X2 帯）は主の族の結果を見た後に足した（成績を測る前にコミット 824c39d）。判定に使わない探索として扱う',
+        '事後（格付けしない）: 上乗せ0の対照（同じ器・同じ売買の French Mkt）・枠の制限の代金・E3e の期間分割を足した',
+        '事後に気づいた設計の偏り: 直接持つ個別株・ETF には年の費用を置かず（E1・E2・E3e・E4 は実績に費用込み）、相手の指数ファンドには年0.10% を置いた。'
+        'このため上乗せ0の直接保有の対照でも R1 で +1.2%・置き場所 L1 で勝率 98%・中央 +0.15% になる。E1 の L1 の勝ちは対照に対しても +0.51%（43本すべて）なので費用の偏りだけではないが、E1m の L1（+0.14%）は大半がこの偏り',
+        'E3 の判定の2007〜は実物の SPDR で見る規則。L1 の SPDR は米ドル 1.0083・円 1.0005 と線の上だが、SPDR の税前の超過は 2015-10〜 で −0.5%/年（t −0.19）で、勝ちは積立の時期の重みと税の置き方による＝偶然と区別できない',
+        'NISA の中の米国配当の源泉10%・課税口座の外国税額控除（全額・12月に還付）・新NISA を1926年から当てる、はすべて仮定（事前登録どおり）']
+    out['summary_ja'] = SUMMARY_JA
+    out['caveats'] = CAVEATS
+    M.save(OUT, out)
+    print(json.dumps(tbl, ensure_ascii=False, indent=1))
+
+
+SUMMARY_JA = [
+    '日本の税（20.315%・損の繰越3年・ウォッシュセール規則なし）と新NISA の枠（年360万・生涯1800万・売った枠は簿価で翌年に戻る・買い直しは毎回枠を使う）を月ごとに再現する模型を作り、月17万円を20年積み立てて、これまで残った上乗せ4つを『同じ額を指数ファンドへ NISA から入れて持ち続ける』のと税引後の最終資産で比べた（事前登録どおり・米国1926〜・円建ては2007〜）。',
+    '事前登録の判定で『残る』は0本。cop_at の傾け（E1）・門の16本の混合（E2）・Fidelity 風の上位3（E4）は『NISA の中だけなら残る』、セクター ETF の勢い（E3）は実物の SPDR が2007年以降は税の前から市場に負け（−0.2%/年）で『残らない』。',
+    '負ける仕組みは二つ。①新NISA の中で売り買いすると、枠は簿価でしか戻らず買い直しは時価で枠を使うので、含み益が毎年 NISA の外へ押し出される（上乗せ0の指数を年12.8%入れ替えるだけで最終資産 −7%、年93%なら −19%・20年窓の中央）。②個別株・ETF はつみたて枠に入らず、NISA が1200万で止まる（これだけで −2.6%）。',
+    'E1: 非課税なら最終資産 +8.1%（20年窓43本で全勝）→ 現実（NISA＋課税口座）では勝率47%・中央 −0.7%、課税口座だけなら勝率95%・+4.2%。E2: 非課税 +8.4% → 現実は勝率9%・中央 −10%、課税口座だけでも勝率49%。',
+    'E4（年4.6回の入れ替え）: 非課税 +93% → 現実も米ドルでは勝率89%・中央 +47% だが、円建ての2007年以降は −5.4%（為替の含み益も売るたびに課税される）で線を割った。そもそも日本の居住者は買えない。',
+    '探索（事前登録2）: 『NISA は指数を一度も売らずに持ち、NISA に入りきらない分だけ上乗せを課税口座で持つ』と置き場所を分けると、E1 は20年窓43本すべてで勝ち、2007年以降も米ドル・円とも勝った＝『置き場所を分ければ残る』。ただし大きさは最終資産の +0.56%（中央）で、同じ器の上乗せ0の対照に対しても +0.5% しかない。',
+    '同じ置き場所で E3 も線を越えたが、2007年以降の実物（SPDR）の余裕は米ドル +0.8%・円 +0.05% で偶然と区別できない。E4 は勝率79% で線（80%）をわずかに割り、E2 は勝率72% で届かない。',
+    '帯で入れ替えを減らした Fidelity 風（年4.6回→2.3回）は税の前の一括で S（2007〜 +4.5%/年 t1.71）、課税口座だけで B（+2.7%/年 t1.19）。現実の積立（R2）は勝率74% で『NISA の中だけなら残る』。',
+    '損出し（同じ指数の双子へ乗り換え・10%/20%下落で・益出しつきも）は12本すべて上乗せにならなかった（中央 −0.3〜0%）。日本は損の繰越が3年で切れ、積み立て型の指数ファンドだけを持つ人には相殺する利益も配当も無い。',
+    '全体の線（C1〜C8・一括の税引後）: 課税口座では E3・E4 が B、E1・E2 は C。税の前は E1・E2 が S（元の角度どおり再現）。',
+    '実務の意味: この投資家にとって、紙の上の上乗せは NISA の中で売買した時点で大半が消える。規則にするなら『NISA の中は売らない指数』で、上乗せを試すなら NISA が埋まった後の課税口座で、売買の少ないもの（E1 型・年13%）だけ。最大の注意: 新NISA を過去へ当てた仮定の模型で、E1 の勝ちは +0.5% と、配当・費用の置き方の仮定の幅と同じくらい小さい。'
+]
+CAVEATS = [
+    '新NISA（2024〜）を1926年から仮に当て、積立と枠を実質一定にした模型。窓は重なる（20年窓79本でも独立な試行は約5本）',
+    '配当利回りは全資産に French 市場の値を当てた。投信の分配（キャピタルゲイン分配）・業種ごとの利回り差は入れていない',
+    '直接保有には年の費用を置かず相手の指数ファンドに0.10% を置いた（事後に気づいた偏り・上乗せ0の対照で大きさを示した）',
+    'E1・E2 は数百〜数千社の分散した集合で、個人は同じものを作れない（ETF も無い）。税は『年の実現率×平均の含み益』の近似',
+    'Fidelity Select は日本の居住者は買えない。30日未満の解約手数料・分配の課税も入れていない',
+    '外国税額控除は全額使える（給与所得が十分）・還付は12月に受け取ると置いた（実際は翌年3月）'
+]
+
+
 # ───────────────────────── 本番 ─────────────────────────
 def main():
+    if '--finalize' in sys.argv:
+        finalize()
+        return
     if '--selftest' in sys.argv:
         r = selftest()
         print(json.dumps(r, ensure_ascii=False, indent=1))
@@ -1281,6 +1404,9 @@ def main():
         info['fx'] = [min(D['fx']), max(D['fx'])]
         info['cpi'] = [min(D['cpi']), max(D['cpi'])]
         print(json.dumps(info, ensure_ascii=False, indent=1))
+        return
+    if '--diag' in sys.argv:
+        run_diag(D, ed, t0)
         return
     if '--part2' in sys.argv:
         run_part2(D, ed, t0)
