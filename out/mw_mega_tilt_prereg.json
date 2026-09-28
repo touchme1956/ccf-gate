@@ -1,0 +1,97 @@
+{
+ "angle": "mega_tilt",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "global_prereg": "out/mw_prereg.json（線 C1〜C8・格付け S/A/B/C をそのまま使う。ここでは動かさない）",
+ "question": "大型株の個人投資家が実際に作れる形——『市場（上限なしの時価加重）＋ λ ×（大型株の中の買い−売り）』——で、S&P500 型の純粋な市場（French Mkt）に、2007年以降も含めて勝てたか",
+ "measured_before_registration": "データの有無だけ（期間・列名・銘柄数・向きの表）。戦略と市場を比べた数字は1つも計算していない",
+ "known_before_registration_leak": [
+  "CLAUDE.md（2026-09-26 の jkp_evidence 節）に、米国 mega（NYSE 80%点超）の因子の結果が既に書いてある: GP/A 全期間 +2.9%/年 t2.9・2007〜 +4.2 t2.0 ／ 営業利益÷自己資本 +3.0 t3.3・2007〜 +3.2 t2.2 ／ 質(qmj) +3.4 t3.8・2007〜 +3.8 t2.0 ／ 配当 2007〜 −0.6 ／ 低PER 2007〜 0.0（n≥10 の月・向きを掛けた版）。つまり主の族の一部は保有期間の符号を知ったうえで登録している（後知恵の漏れ）。消せないので、米国外の地域（C5）と公表後の期間を独立の答え合わせとして重く見る",
+  "同じく longonly_test（2026-09-26）: 質の上位三分位（vw_cap・買いだけ）は 2007〜 の純粋な時価加重市場に +0.43%/年 t0.5 で、S&P500 型には勝っていない。ここで測るのは『上位だけを持つ』ではなく『市場を持ったまま少し傾ける』形",
+  "元論文の標本期間が保有期間（2007〜）に重なる特徴がある: gp_at（〜2010）・ope_be（〜2013）・cop_at（〜2016）・qmj/qmj_prof（〜2016）・betabab_1260d（〜2012）。これらの保有期間は私たちには未使用でも論文には使われている"
+ ],
+ "benchmark": "French の Mkt（Mkt-RF + RF・CRSP 全上場・上限なしの時価加重）。傾けた側 s = Mkt + λ×LS − 費用、相手 b = Mkt（どちらも総リターン）。LS は自己資金ゼロの買い−売り（超過どうしの差＝総リターンどうしの差）なので混ぜていない。米国外は同じ地域の JKP の時価加重市場（vw・超過）に対して s = mkt + λ×LS（どちらも超過）",
+ "data": {
+  "mega_cmp": "JKP の規模別ファイル https://jkpfactors-data.s3.amazonaws.com/public/factor/%5Busa%5D_%5B{特徴}%5D_%5Bmega%5D.zip（列: location,name,size_grp,date,n,ret）。★JKP の作成コード（github bkelly-lab/ReplicationCrisis GlobalFactors/portfolios.R の cmp 節・277〜300行）で確認: これは三分位ではなく『characteristic-managed portfolio』＝mega の全銘柄を特徴の順位で重みづけ（重み ∝ 順位−平均、買い1・売り1）した買い−売りで、時価加重ではない（順位加重≒等加重に近い）。向きは掛かっていない（lms_returns だけが向きを掛ける）ので、Factor Details.xlsx の direction を掛ける。米国しか公開されていない（availability.json の factor_sizes が ['usa']）",
+  "vw_tercile": "JKP の all_factors（weighting='vw'＝上限なしの時価加重・三分位・非マイクロ株の分位点）。符号は予言の向きに揃え済み。米国と米国外10地域（developed, world_ex_us, jpn, emerging, gbr, deu, fra, che, can, aus）",
+  "french_crosscheck": "French の 6_Portfolios（2x3: BIG＝NYSE 中央値超）と 25_Portfolios（5x5: ME5＝NYSE 80%点超＝mega に相当）の時価加重リターン。米国外は French の Developed_ex_US / Europe / Japan / Asia_Pacific_ex_Japan / Emerging_Markets の 6_Portfolios（BIG＝地域の時価総額上位90%）",
+  "feasibility_inputs": "French の ME_Breakpoints（NYSE の80%点）・Portfolios_Formed_on_ME（全上場の社数×平均時価総額＝市場全体の時価総額）・各 6/25 ポートフォリオの社数×平均時価総額"
+ },
+ "filters": {
+  "mega_cmp": "n（mega の銘柄数）≥ 50 の月だけ使う（1951年ごろから。1927〜の価格系は 1927年から）",
+  "vw_us_and_countries": "n_stocks_min（買い・売りの少ない方の銘柄数）≥ 10 の月だけ",
+  "vw_regions": "n_countries ≥ 3 の月だけ（developed / world_ex_us / emerging）",
+  "blends": "構成要素がすべてそろう月だけ（欠けた月を0で埋めない＝ルール7）"
+ },
+ "characteristics": {
+  "_note": "良い側＝JKP Factor Details の direction（+1 は高いほど良い、−1 は低いほど良い）。turnover は片側の脚の年間回転率の仮定（大型株・月次見直し）。pub は元論文の公表年（公表後の報告用）",
+  "gp_at": {"意味": "粗利÷総資産", "direction": 1, "turnover": 0.4, "pub": 2013, "群": "質"},
+  "ope_be": {"意味": "営業利益÷自己資本", "direction": 1, "turnover": 0.4, "pub": 2015, "群": "質"},
+  "qmj": {"意味": "質（総合）", "direction": 1, "turnover": 0.4, "pub": 2018, "群": "質"},
+  "qmj_prof": {"意味": "質・収益性", "direction": 1, "turnover": 0.4, "pub": 2018, "群": "質"},
+  "cop_at": {"意味": "現金ベースの営業利益÷総資産", "direction": 1, "turnover": 0.4, "pub": 2016, "群": "質"},
+  "chcsho_12m": {"意味": "株数の増加が小さい", "direction": -1, "turnover": 0.8, "pub": 2008, "群": "投資・発行"},
+  "oaccruals_at": {"意味": "発生主義の利益が小さい", "direction": -1, "turnover": 0.8, "pub": 1996, "群": "投資・発行"},
+  "ret_12_1": {"意味": "勢い（12-1か月）", "direction": 1, "turnover": 1.5, "pub": 1993, "群": "勢い"},
+  "be_me": {"意味": "簿価÷時価（割安）", "direction": 1, "turnover": 0.4, "pub": 1985, "群": "割安"},
+  "ni_me": {"意味": "益回り（低PER）", "direction": 1, "turnover": 0.4, "pub": 1983, "群": "割安"},
+  "at_gr1": {"意味": "総資産の伸びが小さい", "direction": -1, "turnover": 0.8, "pub": 2008, "群": "投資・発行"},
+  "ivol_capm_252d": {"意味": "固有のぶれが小さい", "direction": -1, "turnover": 0.8, "pub": 2003, "群": "低リスク"},
+  "betabab_1260d": {"意味": "低ベータ（Frazzini-Pedersen）", "direction": -1, "turnover": 0.4, "pub": 2014, "群": "低リスク"},
+  "niq_su": {"意味": "決算のサプライズ（SUE）", "direction": 1, "turnover": 1.5, "pub": 1984, "群": "勢い"}
+ },
+ "blends": {
+  "Q5": "質の5本の等分: gp_at, ope_be, qmj, qmj_prof, cop_at（LS を等分に平均）",
+  "QM": "0.5×Q5 + 0.5×ret_12_1",
+  "QMV": "(Q5 + ret_12_1 + be_me) ÷ 3",
+  "turnover": "構成要素の turnover を同じ重みで平均（打ち消し合いを数えない＝保守側）"
+ },
+ "families": {
+  "P（主の族・Holm はこの34本で掛ける）": {
+   "P-A mega": "米国 mega の順位加重 LS（向きを掛けた JKP 規模別）× λ=0.2。14特徴＋3混合＝17本（オーケストレーターが指定した主の形）",
+   "P-B vw": "米国 JKP 'vw'（上限なしの時価加重・全規模＝時価総額の大半は大型株）の三分位 LS × λ=0.2。同じ17本（実装できる形として私が足した）",
+   "C5（再現）": "P-A・P-B とも、同じ特徴の JKP 'vw' LS を米国外10地域（developed, world_ex_us, jpn, emerging, gbr, deu, fra, che, can, aus）に当て、λ=0.2・同じ費用で『費用後の超過の算術平均 > 0』の地域が 2/3 以上なら合格。★mega は米国しか無いので P-A の再現は vw の形で代用（作り方が違う＝逸脱として記録）。developed / world_ex_us は国と重なる（独立でない）ので、国だけ8つの内訳も報告する"
+  },
+  "X1（探索・尺度違い）": {
+   "λ=0.33": "P-A・P-B の同じ34本を λ=0.33 で（判定の符号・t は λ にほぼよらないので、大きさの参考）",
+   "λ_feas": "P-A の17本を、訓練期間（〜2006）だけで決めた『買いだけで作れる上限』λ_feas で。λ_feas = 〜2006 の各月の最悪ケース上限 {NYSE 80%点 ÷ 市場全体の時価総額 × n/4}（n＝ret_12_1 の mega 銘柄数）の中央値を 0.01 単位で切り捨て"
+  },
+  "X2（探索・French の大型株だけの答え合わせ）": {
+   "2x3 BIG": "BIG の良い側 − BIG の悪い側（時価加重）: be_me←BE/ME（HiBM−LoBM）, ni_me←E/P（HiEP−LoEP）, ope_be←OP（HiOP−LoOP）, at_gr1←INV（LoINV−HiINV）, ret_12_1←Prior 12-2（HiPRIOR−LoPRIOR）＝5本",
+   "5x5 ME5": "ME5（mega に相当）の端の五分位どうし: be_me（BIG HiBM−BIG LoBM）, ope_be（HiOP−LoOP）, at_gr1（LoINV−HiINV）, ret_12_1（HiPRIOR−LoPRIOR）, oaccruals_at（BIG LoAC−BIG HiAC）, chcsho_12m（BIG NegNI−BIG HiNI）, betabab_1260d（BIG LoBETA−BIG HiBETA）, ivol_capm_252d（BIG LoVAR−BIG HiVAR・RESVAR）＝8本",
+   "混合": "2x3 BIG で F_QM = (OP + Prior)/2、F_QMV = (OP + Prior + BM)/3 ＝2本",
+   "λ": "0.2。買いだけで作れるか＝各月の λ_max = 悪い側の時価総額 ÷ 市場全体の時価総額（French の社数×平均時価総額）。『全月の95%以上で λ_max ≥ 0.2』なら買いだけで作れると表示",
+   "C5": "BM/OP/INV/Prior は French の米国外 6_Portfolios の BIG の行（Developed_ex_US, Europe, Japan, Asia_Pacific_ex_Japan, Emerging の5地域）で同じ作り方。E/P・AC・NI・BETA・RESVAR は French に米国外が無いので JKP 'vw' の同じ特徴（ni_me, oaccruals_at, chcsho_12m, betabab_1260d, ivol_capm_252d）の10地域で代用"
+  }
+ },
+ "lambda_feasibility": {
+  "why": "傾け s = 市場 + λ×(良い側 − 悪い側) の重みが負にならない条件。悪い側の銘柄 i の重みは w_m,i − λ×w_bad,i ≥ 0",
+  "vw_tercile_and_french": "悪い側が時価加重なら条件は銘柄によらず λ ≤ 悪い側の時価総額 ÷ 市場全体。French は社数×平均時価総額から月ごとに出す。JKP の vw 三分位は時価総額が公開されていないので、同じ特徴の French 2x3 の（BIG+SMALL の悪い側）で近似（無い特徴は近似なしと明記）",
+  "mega_cmp": "順位加重なので最下位の銘柄の売り重み ≈ 4/n。最悪ケース上限 = (mega の最小の会社≈NYSE 80%点) ÷ 市場全体 × n/4、平均的な上限 = 同 × n/2 を月ごとに報告。さらに『順位と規模が mega の中で無相関』という仮定で、French の Hi 20（NYSE 80%点超）の社数と平均時価総額から Pareto 分布を当て、λ=0.2 で必要になる売り（負の重み）の合計を年ごとに推定して報告（推定であって判定には使わない）",
+  "rule": "λ=0.2 で重みが負になる月が多いなら『厳密な買いだけでは作れない（小さな売りが要る）』と明記する。判定（C1〜C7）はオーケストレーターの指定どおり λ=0.2 で行う（t・符号は λ にほぼよらない）。大きさは λ_feas でも報告"
+ },
+ "costs": {
+  "rule": "年間費用 = 片側の脚の回転率 × λ × 2脚 × 0.10%（大型株）。mw_common.apply_cost(s, 回転率×λ×2, 0.001) で月割りに引く",
+  "turnover_classes": "質・割安・低ベータ 40%/年、投資・発行・発生主義・固有のぶれ 80%/年、勢い・SUE 150%/年（大型株・月次見直しの目安）",
+  "stress": "費用3倍（0.30%）の保有期間も報告（判定には使わない）。★順位加重の mega CMP は順位が少し動くだけで重みが動くので、三分位より回転が大きい可能性がある（既知の限界）"
+ },
+ "periods": {"train": "データの始まり（上のフィルタ後）〜2006-12", "hold": "2007-01〜2025-12（JKP の終わり）", "recent": "2013-07〜", "post_publication": "元論文の公表年の翌年1月〜（報告のみ）", "full": "始まり〜2025-12"},
+ "metrics": "mw_common.excess_stats（全期間・訓練・保有・最近・公表後、費用前）、保有期間の費用後、費用3倍の保有期間、rolling(20)・dca(20)（どちらも費用後）、最大下落（傾け・市場）、C5 の地域ごとの費用後の超過",
+ "grading": "mw_common.grade(full, train, hold, roll20=費用後, cost_hold=費用後の保有, repl=C5, family_holm_p=族の中の Holm 補正後 p（保有期間・費用前）)。タイミング・レバレッジではない（C8 は N/A）。族ごとに Holm を掛ける（P＝34本、X1-λ0.33＝34本、X1-λfeas＝17本、X2＝15本）",
+ "sanity_checks": [
+  "French Mkt の CAGR 1926〜 ≈ 10.4%、2007〜 ≈ 11.1%（mw_common の自己検査）",
+  "JKP 米国 vw の mkt と French Mkt-RF の差（全期間・2007〜）",
+  "JKP 米国 vw の all_factors（符号つき）と、同じ特徴の vw 三分位ポートフォリオ（3−1）×direction の相関 ≈ 1",
+  "mega の LS × direction が、同じ特徴の全規模の符号つき因子と正の相関を持つこと（向きの掛け忘れ・二重掛けの検出）",
+  "French 2x3 BIG の OP の LS と JKP mega ope_be の相関（独立の作り方どうしが同じ向きか）",
+  "信号は当月末までに分かる値で翌月のリターン（JKP は ret_exc_lead1m・French は6月末の組み替え）＝作り方が後知恵を避けている。日付は両方ともリターンの月"
+ ],
+ "known_limits": [
+  "French/JKP のポートフォリオは数百社の分散した集合。門の4〜5社の集中とは別物",
+  "mega CMP は順位加重（≒等加重）で、時価加重の巨大テックの動きは LS に入らない（市場の側に残る）。実装すると λ=0.2 では小さな売りが要る可能性が高い（上の推定で報告）",
+  "費用は概算。税（課税口座での売買）は入れていない",
+  "後知恵の漏れ（上の known_before_registration_leak）",
+  "JKP のデータは 2025-12 まで（French は 2026-08 までだが、比べるのは 2025-12 まで）"
+ ],
+ "files": {"script": "night/mw_mega_tilt.py", "result": "out/mw_mega_tilt.json"}
+}
