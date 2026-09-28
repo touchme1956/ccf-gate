@@ -773,6 +773,77 @@ def post_hoc(D):
     return out
 
 
+# ───────────────────────── 第3部（prereg3・報告のみ・事後の点検） ─────────────────────────
+PRE3 = 'mw_options_vrp_prereg3.json'
+
+
+def alpha_beta(s, b, rf, a=None, z=None):
+    ks = [k for k in sorted(s) if k in b and k in rf and (a is None or k >= a) and (z is None or k <= z)]
+    xs = [s[k] - rf[k] for k in ks]; ys = [b[k] - rf[k] for k in ks]
+    be = slope(ys, xs)
+    al = [x - be * y for x, y in zip(xs, ys)]
+    return {'from': ks[0], 'to': ks[-1], 'beta': round(be, 3), 'alpha_ann_pct': round(S.mean(al) * 1200, 2), 'alpha_nw_t': round(M.nw_t(al), 2)}
+
+
+def part3(D, res, add_fn, log_fn):
+    rf, sp = D['rf'], D['sp']
+    rep = {'prereg3': PRE3, 'prereg3_commit': git_sha(os.path.join('out', PRE3)), 'label': '報告のみ・事後（格付けしない）'}
+    names = {'F1': 'F1-BTZ1m', 'F2': 'F2-BTZ3m', 'F3': 'F3-med0.5/1', 'F4': 'F4-med1/1.5'}
+    # R: 米国の別の指数
+    R = {}
+    for lab, vid, etf in [('ダウ(DIA)', 'VXDCLS', 'DIA'), ('ナスダック100(QQQ)', 'VXNCLS', 'QQQ'), ('ラッセル2000(IWM)', 'RVXCLS', 'IWM'),
+                          ('新興国(EEM)', 'VXEEMCLS', 'EEM')]:
+        try:
+            vol, px = fred_daily(vid), yahoo_levels(etf)
+        except Exception as ex_:  # noqa
+            R[lab] = {'status': f'取れず: {str(ex_)[:100]}'}
+            continue
+        v2 = vrp_series(vol, px)
+        r2 = monthly_from_levels(px)
+        FF, _, st2, _ = f_family(v2, r2, rf)
+        rr = {'vrp_from': min(v2), 'vrp_months': len(v2), 'start': st2}
+        for k, (g, n, TO, W) in FF.items():
+            e = add_fn(f'{names[k]}[{etf}]', 'report3', g, n, None, r2, etf, RS, f'第2部の規則を {lab} に当てる（報告のみ）')
+            rr[names[k]] = {'hold_or_all': e.get('full'), 'net': e.get('cost_full'), 'sharpe_full': e.get('sharpe', {}).get('full'),
+                            'weights': wstats(W, TO), 'maxdd': e.get('maxdd', {}).get('full')}
+        R[lab] = rr
+    rep['R_other_us_indices'] = R
+    # P1〜P4
+    spx, vix = cboe_daily('SPX'), cboe_daily('VIX')
+    vrp = vrp_series(vix, spx)
+    F, _, st, _ = f_family(vrp, sp, rf, start=F_START)
+    P = {}
+    for k, lev in [('F4', 1.25), ('F3', 0.75)]:
+        g, n, TO, W = F[k]
+        Wst = {m: lev for m in W}
+        gs, ns, _ = run_w(Wst, sp, rf, start=st)
+        e = add_fn(f'static{lev}x', 'posthoc3', gs, ns, None, sp, 'SPXTR', RS, f'いつも {lev} 倍（事後の比較用）')
+        P[f'P1_{names[k]}_minus_static{lev}'] = {lab: M.excess_stats(g, gs, a=a, z=z) for lab, a, z in [('train', None, TE), ('hold', HS, None), ('full', None, None)]}
+        P[f'P1_{names[k]}_minus_static{lev}_net'] = {lab: M.excess_stats(n, ns, a=a, z=z) for lab, a, z in [('train', None, TE), ('hold', HS, None), ('full', None, None)]}
+        P[f'P1_static{lev}_vs_sp'] = {'train': (e.get('train') or {}), 'hold': (e.get('hold') or {}), 'sharpe': e.get('sharpe')}
+    P['P2_alpha'] = {names[k]: {lab: alpha_beta(F[k][0], sp, rf, a, z) for lab, a, z in [('train', None, TE), ('hold', HS, None), ('full', None, None)]}
+                     for k in F}
+    # P3: VXO で 1990 年より前へ延ばす
+    try:
+        vxo = fred_daily('VXOCLS')
+        v_old = {m: v for m, v in vrp_series(vxo, spx).items() if 198601 <= m <= 198912}
+        vx = dict(v_old); vx.update(vrp)
+        W4 = fc_median(vx, 1.0, 1.5)
+        g, n, TO = run_w(W4, sp, rf, start=199101)
+        e = add_fn('F4-med1/1.5(VXO で1991〜・事後)', 'posthoc3', g, n, None, sp, 'VRP', RS, 'VXO で 1986〜1989 の VRP をつないだ F4（事後）')
+        P['P3_vxo_extension'] = {'vxo_months': len(v_old), 'vxo_vrp_mean_pct2_m': round(S.mean(v_old.values()) * 1e4, 3), 'start': min(g),
+                                 'train': e.get('train'), 'hold': e.get('hold'), 'full': e.get('full'), 'sharpe': e.get('sharpe'),
+                                 'train_1991_1995_only': M.excess_stats(g, same(sp, g)[0], a=199101, z=199503),
+                                 'weights': wstats({m: W4[m] for m in g}, TO)}
+    except Exception as ex_:  # noqa
+        P['P3_vxo_extension'] = {'status': f'取れず: {str(ex_)[:100]}'}
+    W = F['F4'][3]
+    P['P4_episodes_F4_w'] = {lab: {str(m): W.get(m) for m in sorted(W) if a <= m <= z} for lab, a, z in
+                             [('2008', 200801, 200812), ('2009H1', 200901, 200906), ('2020', 202001, 202012), ('2022', 202201, 202212)]}
+    rep['P'] = P
+    return rep
+
+
 # ───────────────────────── 本体 ─────────────────────────
 def git_sha(path):
     try:
@@ -899,25 +970,34 @@ def main():
     log('判定', ' '.join(f"{k}:{e['grade']}" for k, e in res.items()))
 
     # 第2部（prereg2 がコミットされているときだけ測る）
-    p2 = None
+    rep2 = None
     if git_sha(os.path.join('out', PRE2)):
         n1 = set(res)
-        p2 = part2(D, res, add, log)
+        rep2 = part2(D, res, add, log)
         new = [k for k in res if k not in n1]
         famAll = [k for k, e in res.items() if e['family'] in ('A', 'B', 'C', 'E', 'F', 'G')]
         hpAll = M.holm({k: (res[k].get('hold') or {}).get('p') for k in famAll})
         famFG = [k for k in new if res[k]['family'] in ('F', 'G')]
         hpFG = M.holm({k: (res[k].get('hold') or {}).get('p') for k in famFG})
-        p2['holm'] = {'angle_wide_n': len(famAll), 'part2_only_n': len(famFG),
+        rep2['holm'] = {'angle_wide_n': len(famAll), 'part2_only_n': len(famFG),
                       'part2_only': {k: hpFG.get(k) for k in famFG}, 'angle_wide': {k: hpAll.get(k) for k in famFG}}
         for k in new:
             e = res[k]
             base = k.split('[')[0].split('(')[0]
-            rp = p2['C5_repl'].get(base) if e['family'] in ('F',) else None
+            rp = rep2['C5_repl'].get(base) if e['family'] in ('F',) else None
             finish(e, hpAll.get(k) if e['family'] in ('F', 'G') else None, repl=rp)
             if e['family'] in ('F', 'G'):
                 e['family_holm_p_part2_only'] = hpFG.get(k)
         log('第2部の判定', ' '.join(f"{k}:{res[k]['grade']}" for k in new))
+        if git_sha(os.path.join('out', PRE3)):
+            n2 = set(res)
+            rep3 = part3(D, res, add, log)
+            for k in [k for k in res if k not in n2]:
+                finish(res[k], None)
+                res[k]['grade_label'] = res[k]['grade']
+                res[k]['grade'] = '報告のみ'
+            rep2['part3'] = rep3
+            log('第3部（報告のみ）', len([k for k in res if k not in n2]), '本')
     else:
         log('第2部: prereg2 がコミットされていないので測らない')
 
@@ -994,7 +1074,7 @@ def main():
            'prereg2': PRE2, 'prereg2_commit': git_sha(os.path.join('out', PRE2)),
            'question': pre['question'], 'end': END, 'sanity': san, 'known_numbers': known,
            'n_tested': len(res), 'n_holm_family_ABC': len(famA), 'n_holm_family_E': len(famE),
-           'tested': tested, 'strategies': res, 'real_vehicles': real, 'part2': p2, 'post_hoc_notes': post_hoc(D),
+           'tested': tested, 'strategies': res, 'real_vehicles': real, 'part2': rep2, 'post_hoc_notes': post_hoc(D),
            'runtime_sec': round(time.time() - t0, 1), 'log_tail': LOG[-40:]}
     p = M.save(OUT, obj)
     log('書いた', p, round(os.path.getsize(p) / 1e6, 2), 'MB')
