@@ -9,11 +9,16 @@
 
 spec の形（すべて月末に判定・翌月に適用）:
   {'kind':'sma',   'n':10, 'band':0.0}        配当込み指数の水準 vs 過去 n か月（当月末を含む）の月末水準の平均
+                                              'on':'xs' なら短期金利を引いた指数（(1+r)/(1+rf) の累積）で判定
   {'kind':'mom',   'n':12, 'vs':'rf'|'zero'}  過去 n か月の配当込みリターン > 同じ期間の短期金利（または 0）
   {'kind':'xover', 'fast':3, 'slow':12}        月末水準の fast か月平均 > slow か月平均
   {'kind':'dsma',  'n':200, 'band':0.0}       日次の配当込み指数（月の最終営業日の終値）vs 過去 n 営業日の平均
   {'kind':'combo', 'mode':'both'|'either'|'avg', 'parts':[spec, ...]}
       both＝全部が上向きなら持つ／either＝どれか一つでも／avg＝上向きの割合だけ持つ（0〜1 の端数の持ち高）
+  {'kind':'asym', 'exit':spec, 'entry':spec}  持っている間は exit の信号が下向きになったら降り、降りている間は entry の信号が上向きになったら戻る
+  {'kind':'volcond', 'trend':spec, 'src':'daily'|'monthly', 'win':63|12}
+      trend が下向き かつ 足元のぶれ（日次63営業日 or 月次12か月）がそれまでの全月末のぶれの中央値より高いときだけ降りる
+  {'kind':'dsma_d', 'n':200, 'band':0.0}      日次で判定し翌営業日に適用（毎日入れ替え得る）。前日の終値までを使う
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -47,7 +52,11 @@ def _levels(ret):
 def _sig_monthly(spec, ret, rf):
     """月末 k に判定した上向きの度合い {k: 0〜1}（k 月末までのデータだけを使う）"""
     ks = sorted(ret)
-    lv = _levels(ret)
+    if spec.get('on') == 'xs':                     # 短期金利を引いた指数（株の上乗せの趨勢）で判定する
+        ks = [k for k in ks if k in rf]
+        lv = _levels({k: (1 + ret[k]) / (1 + rf[k]) - 1 for k in ks})
+    else:
+        lv = _levels(ret)
     kind = spec['kind']
     out = {}
     if kind == 'sma':
@@ -126,6 +135,25 @@ def _sig_daily(spec, daily):
     return out
 
 
+def _vol_monthend(spec, ret, daily):
+    """月末 k の足元のぶれ {k: 年率}。日次なら k 月の最終営業日までの win 営業日、月次なら k 月までの win か月"""
+    import statistics as S
+    win = spec.get('win', 63 if spec.get('src', 'daily') == 'daily' else 12)
+    out = {}
+    if spec.get('src', 'daily') == 'daily':
+        ds = sorted(daily)
+        for i, d in enumerate(ds):
+            last = (i == len(ds) - 1) or (ds[i + 1] // 100 != d // 100)
+            if not last or i < win - 1 or (i == len(ds) - 1 and not _month_complete(d)):
+                continue
+            out[d // 100] = S.stdev(daily[x] for x in ds[i - win + 1:i + 1]) * 252 ** 0.5
+    else:
+        ks = sorted(ret)
+        for i in range(win - 1, len(ks)):
+            out[ks[i]] = S.stdev(ret[x] for x in ks[i - win + 1:i + 1]) * 12 ** 0.5
+    return out
+
+
 def _month_complete(d):
     """日次データの最後の日が、その月の最終営業日とみなせるか（25日以降なら月末とみなす）"""
     return d % 100 >= 25
@@ -140,6 +168,29 @@ def signals(spec, ret, rf, daily=None):
         if daily is None:
             raise ValueError('dsma には日次が要る')
         return _sig_daily(spec, daily)
+    if kind == 'asym':
+        ex, en = signals(spec['exit'], ret, rf, daily), signals(spec['entry'], ret, rf, daily)
+        out, state = {}, None
+        for k in sorted(set(ex) & set(en)):
+            if state is None:
+                state = ex[k]
+            elif state >= 1 and ex[k] < 1:
+                state = 0.0
+            elif state < 1 and en[k] >= 1:
+                state = 1.0
+            out[k] = state
+        return out
+    if kind == 'volcond':
+        tr = signals(spec['trend'], ret, rf, daily)
+        vol = _vol_monthend(spec, ret, daily)
+        out, hist = {}, []
+        for k in sorted(vol):
+            hist.append(vol[k])
+            if k not in tr:
+                continue
+            med = sorted(hist)[len(hist) // 2]
+            out[k] = 0.0 if (tr[k] < 1 and vol[k] > med) else 1.0
+        return out
     if kind == 'combo':
         parts = [signals(p, ret, rf, daily) for p in spec['parts']]
         ks = set(parts[0])
@@ -178,11 +229,75 @@ def apply(pos, ret, rf, start=None):
 
 
 def _needs_daily(spec):
-    if spec['kind'] == 'dsma':
+    k = spec['kind']
+    if k in ('dsma', 'dsma_d'):
         return True
-    if spec['kind'] == 'combo':
+    if k == 'combo':
         return any(_needs_daily(p) for p in spec['parts'])
+    if k == 'asym':
+        return _needs_daily(spec['exit']) or _needs_daily(spec['entry'])
+    if k == 'volcond':
+        return spec.get('src', 'daily') == 'daily' or _needs_daily(spec['trend'])
     return False
+
+
+# ───────────────────────── 日次で入れ替える規則 ─────────────────────────
+def daily_weights(spec, daily):
+    """日次で入れ替える規則の持ち高 {営業日 d: w}（d の前の営業日の終値までで決める）"""
+    n, band = spec['n'], spec.get('band', 0.0)
+    ds = sorted(daily)
+    v, lv = 1.0, []
+    for d in ds:
+        v *= 1 + daily[d]
+        lv.append(v)
+    w_next, state, run = {}, None, 0.0
+    for i, d in enumerate(ds):
+        run += lv[i]
+        if i >= n:
+            run -= lv[i - n]
+        if i < n - 1 or i == len(ds) - 1:
+            continue
+        avg, x = run / n, lv[i]
+        if band <= 0 or state is None:
+            state = 1.0 if x > avg else 0.0
+        elif x > avg * (1 + band):
+            state = 1.0
+        elif x < avg * (1 - band):
+            state = 0.0
+        w_next[ds[i + 1]] = state
+    return w_next
+
+
+def _daily_run(spec, mkt, rf, daily, drf, start=None):
+    """日次の判定（t 日の終値）→ t+1 日に適用。月次へ複利でまとめ、日次と月次の系列の作りの差（丸め）を
+    その月の平均の持ち高で按分して足す（全日持ちなら月次の市場と一致させる）。回転は その月の |Δw| の和"""
+    daily = {d: v for d, v in daily.items() if d in drf}
+    ds = sorted(daily)
+    w_next = daily_weights(spec, daily)
+    acc = {}
+    prev = None
+    for d in ds:
+        if d not in w_next:
+            continue
+        m = d // 100
+        w = w_next[d]
+        a = acc.setdefault(m, {'s': 1.0, 'mk': 1.0, 'rf': 1.0, 'w': 0.0, 'n': 0, 'tv': 0.0})
+        a['s'] *= 1 + w * daily[d] + (1 - w) * drf[d]
+        a['mk'] *= 1 + daily[d]
+        a['rf'] *= 1 + drf[d]
+        a['w'] += w; a['n'] += 1
+        a['tv'] += 0.0 if prev is None else abs(w - prev)
+        prev = w
+    r, tv = {}, {}
+    ms = sorted(acc)
+    for j, m in enumerate(ms):
+        if m not in mkt or m not in rf or (start is not None and m < start) or j == 0:
+            continue                                   # 最初の月は途中から始まるので捨てる
+        a = acc[m]
+        wb = a['w'] / a['n']
+        r[m] = (a['s'] - 1) + wb * (mkt[m] - (a['mk'] - 1)) + (1 - wb) * (rf[m] - (a['rf'] - 1))
+        tv[m] = a['tv']
+    return r, tv
 
 
 # ───────────────────────── 本体 ─────────────────────────
@@ -205,11 +320,14 @@ def _markets(spec, us_rf):
             continue
         dd = None
         if daily:
-            dd, _ = h.french_region(reg, daily=True)
+            dd, ddrf = h.french_region(reg, daily=True)
         ks = sorted(mk)
         start = h.add_months(ks[0], WARM)
-        pos = positions(spec, mk, rf, dd)
-        ret, tv = apply(pos, mk, rf, start)
+        if spec['kind'] == 'dsma_d':
+            ret, tv = _daily_run(spec, mk, rf, dd, ddrf, start)
+        else:
+            pos = positions(spec, mk, rf, dd)
+            ret, tv = apply(pos, mk, rf, start)
         out[f'region:{reg}'] = {'ret': ret, 'bench': {m: mk[m] for m in ret}, 'rf': rf, 'turnover': tv, 'cost': COST}
     return out
 
@@ -218,63 +336,96 @@ def run(spec):
     mkt, rf = h.us_market()
     daily = None
     if _needs_daily(spec):
-        daily, _ = h.us_market_daily()
-    pos = positions(spec, mkt, rf, daily)
-    ret, tv = apply(pos, mkt, rf, US_START)
+        daily, drf = h.us_market_daily()
+    if spec['kind'] == 'dsma_d':
+        ret, tv = _daily_run(spec, mkt, rf, daily, drf, US_START)
+    else:
+        pos = positions(spec, mkt, rf, daily)
+        ret, tv = apply(pos, mkt, rf, US_START)
     return {'ret': ret, 'bench': {m: mkt[m] for m in ret}, 'rf': rf, 'turnover': tv, 'cost': COST,
             'markets': _markets(spec, rf)}
 
 
 # ───────────────────────── 先読みの検査 ─────────────────────────
 def lookahead_test(spec, n_cuts=40, seed=7):
-    """(1) 切り詰め: データを k 月末で切って計算し直しても、k+1 月までの持ち高が全データの計算と一致するか
-       (2) 撹乱: k 月（と日次の k 月の全営業日）以降のリターンを乱しても、k 月までの持ち高が変わらないか
-       (3) ずらし: 持ち高 m は m−1 月末の信号そのものか（信号の月 = 持ち高の月 − 1）
-    米国（月次・日次）と、日次を使わない規則なら国の系列一つでも確かめる。→ {'ok': bool, 'checked': 件数, 'fail': [...]}"""
+    """先読みが無いことを機械で確かめる。→ {'ok': bool, 'checked': 比べた件数, 'fail': [...]}
+    月末に判定する規則:
+      (1) 切り詰め: データ（月次・日次・短期金利）を k 月末で切って計算し直しても、k+1 月までの持ち高が全データの計算と一致する
+      (2) 撹乱:     k 月（と k 月の全営業日）以降のリターンを乱数に置き換えても、k 月までの持ち高が変わらない
+                    ＝月 k の持ち高は 月 k のリターンを見ていない（同じ月の先読みも捕まえる）
+      (3) ずらし:   持ち高 m は m−1 月末の信号そのもの
+      (4) 国の系列（日本・月次の規則だけ）でも (1)
+    日次で入れ替える規則（dsma_d）:
+      (2') 営業日 t 以降の日次リターンを乱しても、t 日までの持ち高が変わらない（t 日の持ち高は t−1 日の終値まで）
+    どちらも最後に run() の成績で (1'') 切り詰めた計算と全データの計算が k 月まで一致することを確かめる"""
     import random
     rnd = random.Random(seed)
     mkt, rf = h.us_market()
-    daily = h.us_market_daily()[0] if _needs_daily(spec) else None
-    full = positions(spec, mkt, rf, daily)
+    nd = _needs_daily(spec)
+    daily, drf = h.us_market_daily() if nd else (None, None)
     ks = sorted(mkt)
     cuts = sorted(rnd.sample(ks[24:-1], min(n_cuts, len(ks) - 25)))
     fail, checked = [], 0
-    for k in cuts:
-        # (1) 切り詰め
-        m2 = {m: v for m, v in mkt.items() if m <= k}
-        r2 = {m: v for m, v in rf.items() if m <= k}
-        d2 = {d: v for d, v in daily.items() if d // 100 <= k} if daily else None
-        p2 = positions(spec, m2, r2, d2)
-        for m in full:
-            if m <= h.add_months(k, 1):
-                checked += 1
-                if p2.get(m) != full[m]:
-                    fail.append(('truncate', k, m, full[m], p2.get(m)))
-        # (2) 撹乱（k 月以降を別の値へ）
-        m3 = {m: (v if m < k else rnd.uniform(-0.3, 0.3)) for m, v in mkt.items()}
-        r3 = {m: (v if m < k else rnd.uniform(0, 0.02)) for m, v in rf.items()}
-        d3 = {d: (v if d // 100 < k else rnd.uniform(-0.1, 0.1)) for d, v in daily.items()} if daily else None
-        p3 = positions(spec, m3, r3, d3)
-        for m in full:
-            if m <= k:
-                checked += 1
-                if p3.get(m) != full[m]:
-                    fail.append(('perturb', k, m, full[m], p3.get(m)))
-    # (3) ずらし
-    sig = signals(spec, mkt, rf, daily)
-    for m, w in full.items():
-        checked += 1
-        if sig.get(h.add_months(m, -1)) != w:
-            fail.append(('shift', m, w))
-    # 国の系列（月次の規則だけ）
-    if not _needs_daily(spec):
-        c = h.french_countries('Dollar')['Japan']
-        fc = positions(spec, c, rf)
-        for k in sorted(rnd.sample(sorted(c)[24:-1], 15)):
-            p2 = positions(spec, {m: v for m, v in c.items() if m <= k}, {m: v for m, v in rf.items() if m <= k})
-            for m in fc:
+    if spec['kind'] == 'dsma_d':
+        full = daily_weights(spec, daily)
+        ds = sorted(daily)
+        for t in sorted(rnd.sample(ds[300:-1], n_cuts)):
+            d3 = {d: (v if d < t else rnd.uniform(-0.1, 0.1)) for d, v in daily.items()}
+            p3 = daily_weights(spec, d3)
+            for d, w in full.items():
+                if d <= t:
+                    checked += 1
+                    if p3.get(d) != w:
+                        fail.append(('perturb-daily', t, d, w, p3.get(d)))
+    else:
+        full = positions(spec, mkt, rf, daily)
+        for k in cuts:
+            m2 = {m: v for m, v in mkt.items() if m <= k}
+            r2 = {m: v for m, v in rf.items() if m <= k}
+            d2 = {d: v for d, v in daily.items() if d // 100 <= k} if nd else None
+            p2 = positions(spec, m2, r2, d2)
+            for m in full:
                 if m <= h.add_months(k, 1):
                     checked += 1
-                    if p2.get(m) != fc[m]:
-                        fail.append(('truncate-japan', k, m))
+                    if p2.get(m) != full[m]:
+                        fail.append(('truncate', k, m, full[m], p2.get(m)))
+            m3 = {m: (v if m < k else rnd.uniform(-0.3, 0.3)) for m, v in mkt.items()}
+            r3 = {m: (v if m < k else rnd.uniform(0, 0.02)) for m, v in rf.items()}
+            d3 = {d: (v if d // 100 < k else rnd.uniform(-0.1, 0.1)) for d, v in daily.items()} if nd else None
+            p3 = positions(spec, m3, r3, d3)
+            for m in full:
+                if m <= k:
+                    checked += 1
+                    if p3.get(m) != full[m]:
+                        fail.append(('perturb', k, m, full[m], p3.get(m)))
+        sig = signals(spec, mkt, rf, daily)
+        for m, w in full.items():
+            checked += 1
+            if sig.get(h.add_months(m, -1)) != w:
+                fail.append(('shift', m, w))
+        if not nd:
+            c = h.french_countries('Dollar')['Japan']
+            fc = positions(spec, c, rf)
+            for k in sorted(rnd.sample(sorted(c)[24:-1], 15)):
+                p2 = positions(spec, {m: v for m, v in c.items() if m <= k}, {m: v for m, v in rf.items() if m <= k})
+                for m in fc:
+                    if m <= h.add_months(k, 1):
+                        checked += 1
+                        if p2.get(m) != fc[m]:
+                            fail.append(('truncate-japan', k, m))
+    # (1'') 成績そのもの: k 月末で切ったデータの計算と全データの計算が k 月まで一致する
+    def _ret(mk, r, d, dr):
+        if spec['kind'] == 'dsma_d':
+            return _daily_run(spec, mk, r, d, dr, US_START)[0]
+        return apply(positions(spec, mk, r, d), mk, r, US_START)[0]
+    fr = _ret(mkt, rf, daily, drf)
+    for k in cuts[::4]:
+        tr = _ret({m: v for m, v in mkt.items() if m <= k}, {m: v for m, v in rf.items() if m <= k},
+                  {d: v for d, v in daily.items() if d // 100 <= k} if nd else None,
+                  {d: v for d, v in drf.items() if d // 100 <= k} if nd else None)
+        for m, v in fr.items():
+            if m <= k:
+                checked += 1
+                if m not in tr or abs(tr[m] - v) > 1e-12:
+                    fail.append(('ret-truncate', k, m, v, tr.get(m)))
     return {'ok': not fail, 'checked': checked, 'fail': fail[:10]}

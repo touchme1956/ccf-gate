@@ -1,0 +1,356 @@
+{
+ "key": "intl_value",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "chars": [
+   "EP",
+   "CEP",
+   "YLD"
+  ],
+  "items": "Not Reqd",
+  "ccy": "Dollar",
+  "weight": "21か国の等加重（各国の High の等分・毎月等加重へ戻す）",
+  "bench": "French 国別 Mkt（Not Reqd・時価加重・米ドル）の21か国等加重",
+  "high": "各国で特徴の上位30%（French の High・時価加重・12月末に年1回組み替え）。複数の特徴は High の等分",
+  "fallback": "月 m−1 に High の値が無い特徴はその国の市場で代える（超過0）",
+  "cost": 0.0025,
+  "turnover_per_year": 0.5
+ },
+ "rationale": "【規則】21か国（French 国別・1975〜）それぞれで、益回り E/P・キャッシュフロー利回り CE/P・配当利回り Yld の『高い側の30%』（French の High・時価加重・年1回の組み替え）を三等分で持ち、国は等加重。相手は同じ21か国の市場（Mkt・時価加重・米ドル）の等加重。費用は回転1あたり0.25%・回転50%/年（1月に計上）。【先行研究・経済的な理由】Fama & French (1998, JF)「Value versus Growth: The International Evidence」は 1975-95 の13か国で割安（B/M・E/P・C/P・D/P）が12か国で成長株に勝つと報告。割安・高配当の上乗せは、困窮・景気のリスクへの対価（リスク説）または外挿のしすぎ（Lakonishok・Shleifer・Vishny 1994 の行動説）で説明される。利回り（利益・キャッシュフロー・配当 ÷ 価格）は国ごとの会計基準の差（簿価の定義・資産の再評価・持ち合い株）を受けにくい一方、簿価時価比は受けやすいので、国をまたぐ比較では利回り系のほうが雑音が小さいという理由も立つ（ただしこれは選んだ後の説明で、選定そのものは規則＝t 最大で行った）。【選定】特徴4つの全ての組15通り（Not Reqd）＋Required の母集団での5通り＝20変種。選定期間（1975-02〜2000-12・25.9年）の費用後の超過の t が最大の変種を規則どおり選んだ: EP+CEP+YLD 超過 +2.59%/年（年率 17.63% vs 15.03%）・t 3.04（Newey-West 2.54）・ぶれ 15.1% vs 15.3%・最大下落 -22.1% vs -24.2%・転がる10年 16/16 で勝ち・国ごとの再現 17/21 で正。次点の EP+CEP（t 3.03）とは差が無いに等しく、4つ全部の合成（選び方の自由度が無い版）は 超過 +2.40・t 2.75、単独でも E/P +2.44（t2.74）・CE/P +2.93（t2.80）・Yld +2.33（t2.40）・BE/ME +1.75（t1.65）と、20変種すべてが +1%/年以上だった＝特定の組だけが効いているのではない。弱い区間もある: 1985-1992 は +1.41（t1.16）。米国市場に対しては +1.93%/年（t0.6）で、相手の21か国等加重そのものが米国市場に -0.66%/年。",
+ "n_variants_tried": 20,
+ "selection_stats": {
+  "from": 197502,
+  "to": 200012,
+  "years": 25.9,
+  "cagr": 17.63,
+  "bench_cagr": 15.03,
+  "excess": 2.59,
+  "ex_arith": 2.21,
+  "t": 3.04,
+  "t_nw": 2.54,
+  "vol": 15.1,
+  "bench_vol": 15.3,
+  "maxdd": -22.1,
+  "bench_maxdd": -24.2,
+  "sharpe": 0.72,
+  "bench_sharpe": 0.57,
+  "roll10_win": "16/16"
+ },
+ "implement": "楽天証券で買える形なら: 米国上場の先進国割安ETF（iShares MSCI EAFE Value＝EFV・Alpha Architect IVAL・Schwab Fundamental Intl＝FNDF 等。⚠ 2026-09 の楽天の取扱一覧〔out/broker_lineup.json〕には EFV/IVAL/FNDF が無く、在るのは First Trust Global Select Dividend＝FGD〔高配当・経費0.55%〕程度）。日本の部分は東証の高配当ETF（1489 日経高配当株50・1478 iShares MSCI Japan 高配当利回り 等・NISA 成長投資枠で可）。国ごとの等加重を個人が再現するには国別の割安ETFが要り現実的でない＝実行は時価加重の先進国割安ETFで近似する（等加重の国の配分とは別物）。NISA: 成長投資枠で非レバレッジのETFは可（取扱があれば）",
+ "lookahead_test": "(1) 月 m の持ち物（どの国・どの特徴の High）を m−1 で切ったデータから作っても全データから作っても同一（45か月で照合） (2) 8つの切り点 K で、K より後を捨てた／K より後を乱数・欠測に差し替えたデータで回しても、K 以前の ret・bench・回転が1ビットも変わらない (3) 全系列を1か月後ろへずらすと持ち物の日付も正確に1か月ずれる（29か月で照合）。主の規則（EP+CEP+YLD・Not Reqd）と Required の4特徴で実行し全て通過: {\"main\": {\"positions_prefix_checked\": 45, \"truncate_scramble_cuts\": 8, \"shift1_checked\": 29}, \"required_all4\": {\"positions_prefix_checked\": 45, \"truncate_scramble_cuts\": 8, \"shift1_checked\": 29}}。⚠ French 自身の High/Low の組み替え（前年末に前年の会計値で並べる）の時点は検査できない＝データの作り手の側の先読みの可能性は残る",
+ "variants_table": [
+  {
+   "name": "BM",
+   "excess": 1.75,
+   "t": 1.65,
+   "t_nw": 1.59,
+   "countries_pos": "12/21"
+  },
+  {
+   "name": "EP",
+   "excess": 2.44,
+   "t": 2.74,
+   "t_nw": 2.53,
+   "countries_pos": "16/21"
+  },
+  {
+   "name": "CEP",
+   "excess": 2.93,
+   "t": 2.8,
+   "t_nw": 2.32,
+   "countries_pos": "16/21"
+  },
+  {
+   "name": "YLD",
+   "excess": 2.33,
+   "t": 2.4,
+   "t_nw": 1.82,
+   "countries_pos": "18/21"
+  },
+  {
+   "name": "BM+EP",
+   "excess": 2.12,
+   "t": 2.36,
+   "t_nw": 2.24,
+   "countries_pos": "15/21"
+  },
+  {
+   "name": "BM+CEP",
+   "excess": 2.39,
+   "t": 2.33,
+   "t_nw": 2.08,
+   "countries_pos": "16/21"
+  },
+  {
+   "name": "BM+YLD",
+   "excess": 2.06,
+   "t": 2.19,
+   "t_nw": 1.88,
+   "countries_pos": "18/21"
+  },
+  {
+   "name": "EP+CEP",
+   "excess": 2.76,
+   "t": 3.03,
+   "t_nw": 2.65,
+   "countries_pos": "15/21"
+  },
+  {
+   "name": "EP+YLD",
+   "excess": 2.4,
+   "t": 2.84,
+   "t_nw": 2.31,
+   "countries_pos": "17/21"
+  },
+  {
+   "name": "CEP+YLD",
+   "excess": 2.6,
+   "t": 2.82,
+   "t_nw": 2.28,
+   "countries_pos": "17/21"
+  },
+  {
+   "name": "BM+EP+CEP",
+   "excess": 2.43,
+   "t": 2.66,
+   "t_nw": 2.41,
+   "countries_pos": "16/21"
+  },
+  {
+   "name": "BM+EP+YLD",
+   "excess": 2.2,
+   "t": 2.54,
+   "t_nw": 2.21,
+   "countries_pos": "18/21"
+  },
+  {
+   "name": "BM+CEP+YLD",
+   "excess": 2.36,
+   "t": 2.53,
+   "t_nw": 2.18,
+   "countries_pos": "17/21"
+  },
+  {
+   "name": "EP+CEP+YLD",
+   "excess": 2.59,
+   "t": 3.04,
+   "t_nw": 2.54,
+   "countries_pos": "17/21"
+  },
+  {
+   "name": "BM+EP+CEP+YLD",
+   "excess": 2.4,
+   "t": 2.75,
+   "t_nw": 2.39,
+   "countries_pos": "17/21"
+  },
+  {
+   "name": "BM[Req]",
+   "excess": 1.55,
+   "t": 1.43,
+   "t_nw": 1.23,
+   "countries_pos": "11/21"
+  },
+  {
+   "name": "EP[Req]",
+   "excess": 1.07,
+   "t": 1.12,
+   "t_nw": 1.12,
+   "countries_pos": "14/21"
+  },
+  {
+   "name": "CEP[Req]",
+   "excess": 2.57,
+   "t": 2.5,
+   "t_nw": 2.06,
+   "countries_pos": "15/21"
+  },
+  {
+   "name": "YLD[Req]",
+   "excess": 1.52,
+   "t": 1.61,
+   "t_nw": 1.31,
+   "countries_pos": "14/21"
+  },
+  {
+   "name": "BM+EP+CEP+YLD[Req]",
+   "excess": 1.7,
+   "t": 1.87,
+   "t_nw": 1.59,
+   "countries_pos": "15/21"
+  }
+ ],
+ "markets": [
+  "Austria",
+  "Austrlia",
+  "Belgium",
+  "Canada",
+  "Denmark",
+  "Finland",
+  "France",
+  "Germany",
+  "HongKong",
+  "Ireland",
+  "Italy",
+  "Japan",
+  "Malaysia",
+  "Nethrlnd",
+  "NewZland",
+  "Norway",
+  "Singapor",
+  "Spain",
+  "Sweden",
+  "Swtzrlnd",
+  "UK"
+ ],
+ "selection_extra": {
+  "subperiods": {
+   "1975-1987": {
+    "excess": 2.61,
+    "t": 2.31
+   },
+   "1988-2000": {
+    "excess": 2.58,
+    "t": 2.04
+   },
+   "1985-1992": {
+    "excess": 1.41,
+    "t": 1.16
+   },
+   "1993-2000": {
+    "excess": 3.29,
+    "t": 1.7
+   }
+  },
+  "vs_us_market": {
+   "excess": 1.93,
+   "t": 0.6,
+   "cagr": 17.63,
+   "bench_cagr": 15.7,
+   "vol": 15.1,
+   "bench_vol": 15.3,
+   "maxdd": -22.1,
+   "bench_maxdd": -29.9
+  },
+  "bench_ew21_vs_us": {
+   "excess": -0.66,
+   "t": -0.23
+  },
+  "per_country": {
+   "Austria": {
+    "from": 198702,
+    "excess": 5.46,
+    "t": 1.98
+   },
+   "Austrlia": {
+    "from": 197502,
+    "excess": 6.69,
+    "t": 3.05
+   },
+   "Belgium": {
+    "from": 197502,
+    "excess": 3.28,
+    "t": 2.33
+   },
+   "Canada": {
+    "from": 197702,
+    "excess": 2.42,
+    "t": 1.08
+   },
+   "Denmark": {
+    "from": 198902,
+    "excess": -1.11,
+    "t": -0.15
+   },
+   "Finland": {
+    "from": 198802,
+    "excess": -9.95,
+    "t": -1.78
+   },
+   "France": {
+    "from": 197502,
+    "excess": 3.47,
+    "t": 2.02
+   },
+   "Germany": {
+    "from": 197502,
+    "excess": 1.93,
+    "t": 1.11
+   },
+   "HongKong": {
+    "from": 197502,
+    "excess": 4.21,
+    "t": 1.61
+   },
+   "Ireland": {
+    "from": 199102,
+    "excess": 2.07,
+    "t": 0.55
+   },
+   "Italy": {
+    "from": 197502,
+    "excess": 1.75,
+    "t": 1.09
+   },
+   "Japan": {
+    "from": 197502,
+    "excess": 4.68,
+    "t": 2.43
+   },
+   "Malaysia": {
+    "from": 199402,
+    "excess": 9.04,
+    "t": 1.6
+   },
+   "Nethrlnd": {
+    "from": 197502,
+    "excess": -1.24,
+    "t": -0.4
+   },
+   "NewZland": {
+    "from": 198802,
+    "excess": -1.75,
+    "t": 0.01
+   },
+   "Norway": {
+    "from": 197502,
+    "excess": 4.45,
+    "t": 1.14
+   },
+   "Singapor": {
+    "from": 197502,
+    "excess": 0.48,
+    "t": 0.26
+   },
+   "Spain": {
+    "from": 197502,
+    "excess": 2.58,
+    "t": 1.07
+   },
+   "Sweden": {
+    "from": 197502,
+    "excess": 2.84,
+    "t": 1.31
+   },
+   "Swtzrlnd": {
+    "from": 197502,
+    "excess": 0.57,
+    "t": 0.43
+   },
+   "UK": {
+    "from": 197502,
+    "excess": 2.28,
+    "t": 1.42
+   }
+  },
+  "a_priori_all4": {
+   "name": "BM+EP+CEP+YLD",
+   "excess": 2.4,
+   "t": 2.75,
+   "t_nw": 2.39,
+   "countries_pos": "17/21"
+  }
+ }
+}

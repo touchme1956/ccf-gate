@@ -1,0 +1,329 @@
+{
+ "key": "bigmom",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "sleeves": [
+   "mom",
+   "val"
+  ],
+  "form": "hi",
+  "rebalance": "monthly"
+ },
+ "rationale": "【なぜこの規則か】割安（Fama-French 1992/1993）と勢い（Jegadeesh-Titman 1993・Carhart 1997）はどちらも 2000年以前に公表済みの効果で、二つは互いに逆に動きやすい（Asness 1997『価値と勢いの相互作用』・Asness-Moskowitz-Pedersen 2013）。選定期間でも米国市場に対する超過の月次相関は −0.29 で、半分ずつ持つと片方だけより超過のぶれが小さくなり t が上がる。大型株（NYSE の中央値より上）に限るのは、費用と容量の問題を小さくし、個人が持てる形に近づけるため。売りの側は持たない（買いだけ）。【選定の結果（1927-01〜2000-12・74年・費用後）】年率 14.07% vs 米国市場 10.65%・超過 +3.42%/年・t 5.33（Newey-West 4.97）・転がる10年で 63/65 勝ち。ぶれ 21.9% vs 19.3%・最大下落 −84.2% vs −83.7%（1929-32）＝ややリスクを増やして勝っている。時代別: 1927-62 +3.07（t3.25）／1963-2000 +3.76（t4.84）／1990-2000 +3.24（t2.17）。費用の感度: 勢いの回転を 300%/年にしても +3.28（t5.14）、回転1あたり 0.5% にしても +3.05（t4.83）。国際版（1990-11〜2000-12・参考）は 5地域すべてで正（+1.2〜+3.8%/年・t1.1〜1.9）。【選び方】事前登録どおり、試した23の変種のうち選定期間の超過が +1%/年以上で費用後の t が最大のもの。2位は同じ組の年1回戻し（t5.29）、3位は4つ等分の年1回戻し（t4.63・1963〜）。収益性（Novy-Marx 2013）と投資（Titman-Wei-Xie 2004・Fama-French 2015）の袖は1963年以降しかデータが無く、しかも公表が2000年より後の効果で、どの組み合わせもこの規則の t に届かなかった。",
+ "n_variants_tried": 23,
+ "selection_stats": {
+  "from": 192701,
+  "to": 200012,
+  "years": 74.0,
+  "cagr": 14.07,
+  "bench_cagr": 10.65,
+  "excess": 3.42,
+  "ex_arith": 3.57,
+  "t": 5.33,
+  "t_nw": 4.97,
+  "vol": 21.9,
+  "bench_vol": 19.3,
+  "maxdd": -84.2,
+  "bench_maxdd": -83.7,
+  "sharpe": 0.54,
+  "bench_sharpe": 0.43,
+  "roll10_win": "63/65"
+ },
+ "implement": "米国の大型株（NYSE の中央値より大きい株）のうち、①直近12か月（最後の1か月を除く）の値上がりが上位3割の株の時価加重と、②簿価時価比率が上位3割の株の時価加重を、半分ずつ持ち毎月半々へ戻す。割安の側は楽天証券の米国ETF（成長投資枠でNISA可）の VTV・MGV・VOOV/SPYV が近い代わりになる。勢いの側は楽天の米国ETF一覧（out/broker_lineup.json・742本）に MTUM・SPMO 等の勢いのETFが無く、S&P500 の中で勢いの上位3割（約150社）を自分で組んで毎月入れ替えるしかない（回転が年200%前後なので NISA の枠を食い、実際は課税の特定口座）。他社（SBI・マネックス）で勢いのETFを扱うかは未確認",
+ "family_name": "大型株の勢いと割安を半分ずつ（買いだけ・毎月戻す）",
+ "lookahead_test": "(1) 1950-12/1970-06/1985-12/1996-06 以降の全データ（リターン・社数・平均時価）を乱数で乱しても、その月の持ち方（重み）とそれより前のリターンが変わらないこと (2) データをその月の前で切って組み立てても、それまでのリターン・回転が全データの場合と完全に一致すること——を確かめて合格。自前の信号を作る変種（組どうしの勢い・悪い3割を除く時価の重み・年1回の戻し）も同じ検査に合格。負の対照: 当月のリターンで組を選ぶわざと先読みする規則を、検査器が捕まえることを確認。組の中の銘柄の選び方は French が作る（勢い＝t−12〜t−2 の株価で毎月末／簿価時価＝前年度の簿価と前年12月の時価で毎年6月末）",
+ "variants_table": [
+  {
+   "name": "mom",
+   "from": 192701,
+   "years": 74.0,
+   "excess": 3.58,
+   "t": 4.33,
+   "vol": 19.9,
+   "bench_vol": 19.3,
+   "turnover_yr": 2.0
+  },
+  {
+   "name": "val",
+   "from": 192607,
+   "years": 74.5,
+   "excess": 2.73,
+   "t": 2.83,
+   "vol": 25.8,
+   "bench_vol": 19.2,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "op",
+   "from": 196307,
+   "years": 37.5,
+   "excess": 0.8,
+   "t": 1.25,
+   "vol": 15.7,
+   "bench_vol": 15.3,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "inv",
+   "from": 196307,
+   "years": 37.5,
+   "excess": 1.98,
+   "t": 1.86,
+   "vol": 15.1,
+   "bench_vol": 15.3,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "mom25",
+   "from": 192701,
+   "years": 74.0,
+   "excess": 3.42,
+   "t": 3.16,
+   "vol": 20.9,
+   "bench_vol": 19.3,
+   "turnover_yr": 2.0
+  },
+  {
+   "name": "mom_exlow",
+   "from": 192702,
+   "years": 73.9,
+   "excess": 0.62,
+   "t": 1.76,
+   "vol": 18.9,
+   "bench_vol": 19.3,
+   "turnover_yr": 2.0
+  },
+  {
+   "name": "val_exlow",
+   "from": 192608,
+   "years": 74.4,
+   "excess": 0.55,
+   "t": 1.13,
+   "vol": 21.2,
+   "bench_vol": 19.2,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "op_exlow",
+   "from": 196308,
+   "years": 37.4,
+   "excess": 0.14,
+   "t": 0.15,
+   "vol": 14.9,
+   "bench_vol": 15.3,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "inv_exlow",
+   "from": 196308,
+   "years": 37.4,
+   "excess": 0.68,
+   "t": 0.72,
+   "vol": 14.1,
+   "bench_vol": 15.3,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "mom+val",
+   "from": 192701,
+   "years": 74.0,
+   "excess": 3.42,
+   "t": 5.33,
+   "vol": 21.9,
+   "bench_vol": 19.3,
+   "turnover_yr": 1.33
+  },
+  {
+   "name": "mom+op",
+   "from": 196307,
+   "years": 37.5,
+   "excess": 2.09,
+   "t": 3.22,
+   "vol": 16.2,
+   "bench_vol": 15.3,
+   "turnover_yr": 1.29
+  },
+  {
+   "name": "op+inv",
+   "from": 196307,
+   "years": 37.5,
+   "excess": 1.44,
+   "t": 2.29,
+   "vol": 15.0,
+   "bench_vol": 15.3,
+   "turnover_yr": 0.55
+  },
+  {
+   "name": "val+op",
+   "from": 196307,
+   "years": 37.5,
+   "excess": 2.34,
+   "t": 3.1,
+   "vol": 14.8,
+   "bench_vol": 15.3,
+   "turnover_yr": 0.56
+  },
+  {
+   "name": "mom+op+inv",
+   "from": 196307,
+   "years": 37.5,
+   "excess": 2.12,
+   "t": 4.12,
+   "vol": 15.4,
+   "bench_vol": 15.3,
+   "turnover_yr": 1.06
+  },
+  {
+   "name": "all4",
+   "from": 196307,
+   "years": 37.5,
+   "excess": 2.56,
+   "t": 4.54,
+   "vol": 15.0,
+   "bench_vol": 15.3,
+   "turnover_yr": 0.94
+  },
+  {
+   "name": "all4_annual",
+   "from": 196307,
+   "years": 37.5,
+   "excess": 2.66,
+   "t": 4.63,
+   "vol": 15.0,
+   "bench_vol": 15.3,
+   "turnover_yr": 0.9
+  },
+  {
+   "name": "all4_exlow",
+   "from": 196308,
+   "years": 37.4,
+   "excess": 0.48,
+   "t": 0.67,
+   "vol": 14.4,
+   "bench_vol": 15.3,
+   "turnover_yr": 0.9
+  },
+  {
+   "name": "mom+val_exlow",
+   "from": 192702,
+   "years": 73.9,
+   "excess": 0.64,
+   "t": 1.74,
+   "vol": 19.8,
+   "bench_vol": 19.3,
+   "turnover_yr": 1.28
+  },
+  {
+   "name": "rot12_top1",
+   "from": 196407,
+   "years": 36.5,
+   "excess": 4.43,
+   "t": 3.65,
+   "vol": 17.1,
+   "bench_vol": 15.5,
+   "turnover_yr": 3.04
+  },
+  {
+   "name": "rot12_top2",
+   "from": 196407,
+   "years": 36.5,
+   "excess": 3.24,
+   "t": 3.99,
+   "vol": 16.1,
+   "bench_vol": 15.5,
+   "turnover_yr": 2.38
+  },
+  {
+   "name": "rot1_top2",
+   "from": 196308,
+   "years": 37.4,
+   "excess": 3.09,
+   "t": 3.35,
+   "vol": 15.3,
+   "bench_vol": 15.3,
+   "turnover_yr": 6.33
+  },
+  {
+   "name": "mom25+val25",
+   "from": 192701,
+   "years": 74.0,
+   "excess": 3.12,
+   "t": 3.41,
+   "vol": 23.9,
+   "bench_vol": 19.3,
+   "turnover_yr": 1.36,
+   "note": "最初の21本の表を見た後に足した頑健さの確認（どちらも選んだ規則を超えなかった）"
+  },
+  {
+   "name": "mom+val_annual",
+   "from": 192701,
+   "years": 74.0,
+   "excess": 3.43,
+   "t": 5.29,
+   "vol": 21.9,
+   "bench_vol": 19.3,
+   "turnover_yr": 1.27,
+   "note": "最初の21本の表を見た後に足した頑健さの確認（どちらも選んだ規則を超えなかった）"
+  }
+ ],
+ "markets": [
+  "Developed_ex_US",
+  "Europe",
+  "Japan",
+  "Asia_Pacific_ex_Japan",
+  "North_America"
+ ],
+ "cost_note": "回転1あたり 0.25%。回転は 勢い 200%/年・簿価時価 50%/年（事前登録の置き値）＋ 二つの袖を毎月半々へ戻す実額（平均で年 約0.33 の片道）。選定期間の平均の回転は 年1.33",
+ "selection_diagnostics": {
+  "subperiods": {
+   "1927-1962": [
+    3.07,
+    3.25
+   ],
+   "1963-2000": [
+    3.76,
+    4.84
+   ],
+   "1990-2000": [
+    3.24,
+    2.17
+   ]
+  },
+  "cost_sensitivity": {
+   "mom_turnover_300pct": [
+    3.28,
+    5.14
+   ],
+   "cost_0.5pct_per_turnover": [
+    3.05,
+    4.83
+   ]
+  },
+  "intl_1990_2000_reference": {
+   "Developed_ex_US": [
+    1.55,
+    1.5
+   ],
+   "Europe": [
+    1.2,
+    1.08
+   ],
+   "Japan": [
+    2.83,
+    1.65
+   ],
+   "Asia_Pacific_ex_Japan": [
+    3.78,
+    1.94
+   ],
+   "North_America": [
+    2.2,
+    1.69
+   ]
+  },
+  "excess_corr_mom_val": -0.29,
+  "note": "[超過%/年, t]・費用後"
+ }
+}
