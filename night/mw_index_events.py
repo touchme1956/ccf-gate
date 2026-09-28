@@ -233,7 +233,7 @@ def yh(t):
         res = (j.get('chart') or {}).get('result') if isinstance(j, dict) else None
         if res:
             r = res[0]; ts = r.get('timestamp') or []
-            adj = ((r['indicators'].get('adjclose') or [{}])[0].get('adjclose')) or r['indicators']['quote'][0]['close']
+            adj = ((r['indicators'].get('adjclose') or [{}])[0].get('adjclose')) or ((r['indicators'].get('quote') or [{}])[0].get('close')) or []
             px = {}
             for a, v in zip(ts, adj):
                 if v is None or v <= 0:
@@ -468,6 +468,63 @@ def e3_series(adds, bound, mkt, a, z):
     return out, stats
 
 
+# ───────────────────────── LEXCX の原本（年次の総リターン）─────────────────────────
+# 事前登録の健全性の検査（分配が入っているか）で、Yahoo の LEXCX が 1997 年以前の分配を大きく取りこぼしていると判った
+# （1988 年: Yahoo 6.1% vs 原本 28.21%）。原本 = 信託自身の 485BPOS の Financial Highlights『Total Return』
+# （全ての分配を NAV で再投資）。各年の月次を、その年の複利が原本に一致するよう同じ倍率で直す（R1b）。
+LEX_OFFICIAL = {  # 年: (総リターン%, 出典の提出書類 accession, その書類の中の表記)
+    1987: (-7.81, '0000024924-97-000017', '(7.81%)'), 1988: (28.21, '0000024924-97-000017', '28.21%'),
+    1989: (30.34, '0000024924-97-000017', '30.34%'), 1990: (-4.20, '0000024924-97-000017', '(4.20%)'),
+    1991: (19.41, '0000024924-97-000017', '19.41%'), 1992: (9.63, '0000024924-97-000017', '9.63%'),
+    1993: (17.57, '0000024924-97-000017', '17.57%'), 1994: (-0.77, '0000024924-97-000017', '(0.77%)'),
+    1995: (39.21, '0000024924-97-000017', '39.21%'), 1996: (22.43, '0000024924-97-000017', '22.43%'),
+    1997: (23.09, '0000950153-07-000924', '23.09 %'), 1998: (9.94, '0000950153-07-000924', '9.94 %'),
+    1999: (13.68, '0000950153-07-000924', '13.68 %'), 2000: (-4.93, '0000950153-07-000924', '(4.93 %)'),
+    2001: (-1.65, '0000950153-07-000924', '(1.65 %)'), 2002: (-11.90, '0000950153-07-000924', '(11.90 %)'),
+    2003: (25.93, '0000950153-07-000924', '25.93 %'), 2004: (17.14, '0000950153-07-000924', '17.14 %'),
+    2005: (10.36, '0000950153-07-000924', '10.36 %'), 2006: (19.98, '0000950153-07-000924', '19.98 %'),
+    2007: (10.82, '0001193125-17-148281', '10.82 %'), 2008: (-29.25, '0001193125-17-148281', '(29.25 )%'),
+    2009: (12.15, '0001193125-17-148281', '12.15 %'), 2010: (21.19, '0001193125-17-148281', '21.19 %'),
+    2011: (12.24, '0001193125-17-148281', '12.24 %'), 2012: (13.21, '0001193125-17-148281', '13.21 %'),
+    2013: (29.57, '0001193125-17-148281', '29.57 %'), 2014: (10.77, '0001193125-17-148281', '10.77 %'),
+    2015: (-11.38, '0001193125-17-148281', '(11.38 )%'), 2016: (19.39, '0001193125-26-187650', '19.39 %'),
+    2017: (16.61, '0001193125-26-187650', '16.61 %'), 2018: (-5.45, '0001193125-26-187650', '(5.45 )%'),
+    2019: (21.41, '0001193125-26-187650', '21.41 %'), 2020: (4.33, '0001193125-26-187650', '4.33 %'),
+    2021: (26.76, '0001193125-26-187650', '26.76 %'), 2022: (3.96, '0001193125-26-187650', '3.96 %'),
+    2023: (14.53, '0001193125-26-187650', '14.53 %'), 2024: (3.59, '0001193125-26-187650', '3.59 %'),
+    2025: (7.05, '0001193125-26-187650', '7.05 %')}
+LEX_DOCS = {'0000024924-97-000017': ('0000024924-97-000017.txt', 'lex_0000024924-97-000017.txt'),
+            '0000950153-07-000924': ('000095015307000924/p73619e485bpos.htm', 'lex2007.htm'),
+            '0001193125-17-148281': ('000119312517148281/d343549d485bpos.htm', 'lex2017.htm'),
+            '0001193125-26-187650': ('000119312526187650/d78064d485bpos.htm', 'lex2026.htm')}
+
+
+def lexcx_official(yahoo_series):
+    """原本の年次に合わせた LEXCX の月次（1987-01〜）。各年の月次に同じ倍率 f=((1+原本)/(1+Yahoo年次))^(1/12) を掛ける。
+    2026 年（原本がまだ無い）は Yahoo のまま。書類の本文に数字の表記があることを毎回確かめる"""
+    import html as H
+    texts = {}
+    for acc, (path, name) in LEX_DOCS.items():
+        b = sec_get(f'https://www.sec.gov/Archives/edgar/data/24924/{path}', name)
+        t = H.unescape(re.sub(r'<[^>]+>', ' ', b.decode('latin-1')))
+        texts[acc] = re.sub(r'\s+', ' ', t)
+    out, table = {}, []
+    for y, (pct, acc, lit) in sorted(LEX_OFFICIAL.items()):
+        assert lit in texts[acc], f'原本に {lit} が無い（{y}・{acc}）'
+        ms = [y * 100 + k for k in range(1, 13)]
+        if not all(m in yahoo_series for m in ms):
+            raise RuntimeError(f'LEXCX {y} の月が欠けている')
+        yr = math.prod(1 + yahoo_series[m] for m in ms) - 1
+        f = ((1 + pct / 100) / (1 + yr)) ** (1 / 12)
+        for m in ms:
+            out[m] = (1 + yahoo_series[m]) * f - 1
+        table.append({'year': y, 'official_pct': pct, 'yahoo_pct': round(yr * 100, 2), 'diff_pt': round(pct - yr * 100, 2), 'source': acc})
+    for m, v in yahoo_series.items():
+        if m >= 202601:
+            out[m] = v
+    return out, table
+
+
 # ───────────────────────── 統計・判定 ─────────────────────────
 def aftertax(s, turnover, a=200701, z=END, tax=0.20315):
     """日本の課税口座（一括・売却益課税）。毎年12月に片道回転率ぶんの含み益を実現・最後に全部売る"""
@@ -486,18 +543,21 @@ def aftertax(s, turnover, a=200701, z=END, tax=0.20315):
 
 def evaluate(name, s, mkt, spy, turnover, cpu):
     s = {k: v for k, v in s.items() if k <= END}
+    wipe = [k for k, v in s.items() if v <= -0.9999]
+    if wipe:   # L の下限で持っている社が全部 −100% の月＝累積で全損。対数が取れないので −99.99% で止めて計算（結論の符号は変わらない）
+        s = {k: max(v, -0.9999) for k, v in s.items()}
     full = M.excess_stats(s, mkt)
     train = M.excess_stats(s, mkt, z=M.TRAIN_END)
     hold = M.excess_stats(s, mkt, a=M.HOLD_START)
     recent = M.excess_stats(s, mkt, a=M.RECENT_START)
-    net = M.apply_cost(s, turnover, cpu)
+    net = {k: max(v, -0.9999) for k, v in M.apply_cost(s, turnover, cpu).items()}
     cost_hold = M.excess_stats(net, mkt, a=M.HOLD_START)
     roll = M.rolling(s, mkt, 20)
     dc = M.dca(s, mkt, 20)
     at_s, at_m = aftertax(s, turnover), aftertax(mkt, 0.0)
     pre_s = math.prod(1 + s[m] for m in months(M.HOLD_START, END) if m in s) if all(m in s for m in months(M.HOLD_START, END)) else None
     pre_m = math.prod(1 + mkt[m] for m in months(M.HOLD_START, END))
-    return {'name': name, 'months': len(s), 'from': min(s) if s else None, 'full': full, 'train': train, 'hold': hold, 'recent': recent,
+    return {'name': name, 'months': len(s), 'from': min(s) if s else None, 'wipeout_months': wipe[:24], 'n_wipeout_months': len(wipe), 'full': full, 'train': train, 'hold': hold, 'recent': recent,
             'cost': {'turnover_oneway_per_year': turnover, 'cost_per_100pct': cpu}, 'net_hold': cost_hold,
             'rolling20': roll, 'dca20': dc,
             'vs_spy_hold': M.excess_stats(s, spy, a=M.HOLD_START),
@@ -523,6 +583,12 @@ def main():
               'french_mkt_cagr_2007': round(M.cagr(M.window(mkt, 200701, END)) * 100, 2),
               'spy_vs_mkt_1993': M.excess_stats(spy, mkt),
               'spy_mkt_corr': round(M.corr([spy[k] for k in sorted(set(spy) & set(mkt))], [mkt[k] for k in sorted(set(spy) & set(mkt))]), 4)}
+    for lag in (-1, 1):   # 月の並びの検算: ずらすと相関が消えること
+        ks = [k for k in spy if madd(k, lag) in mkt]
+        sanity[f'spy_mkt_corr_lag{lag:+d}'] = round(M.corr([spy[k] for k in ks], [mkt[madd(k, lag)] for k in ks]), 4)
+    sptr = {k: v for k, v in M.yahoo('^SP500TR').items() if k <= END}
+    ks = sorted(set(sptr) & set(mkt))
+    sanity['sp500tr_mkt_corr'] = round(M.corr([sptr[k] for k in ks], [mkt[k] for k in ks]), 4)
     rows = load_membership()
     wiki, revid = load_wiki()
     sp = spells(rows)
@@ -541,6 +607,14 @@ def main():
         tested.append(ev)
         series[nm] = r
     sanity['fund_dividend_events'] = {t['ticker']: t['dividend_events'] for t in tested}
+    # 原本で直した LEXCX（事前登録の外＝健全性の検査で Yahoo の取りこぼしが見つかったための是正。主の族の Holm に入れる＝保守側）
+    lex_off, lex_table = lexcx_official(fund_series['R1_LEXCX'])
+    sanity['lexcx_yahoo_vs_official'] = lex_table
+    ev = evaluate('R1b_LEXCX_official', lex_off, mkt, spy, 0.0, 0.001)
+    ev.update({'family': 'primary_R', 'primary': True, 'ticker': 'LEXCX', 'bounded': False,
+               'deviation': '事前登録の外: Yahoo の分配の取りこぼしを原本（485BPOS の Financial Highlights）の年次総リターンで是正。1987-01〜（1986 年は Yahoo が11か月しか無く原本は暦年のため外す）'})
+    tested.append(ev)
+    series['R1b_LEXCX_official'] = lex_off
 
     # ── E1 凍結 ──
     snaps = dict(rows)
@@ -582,29 +656,44 @@ def main():
 
     # ── E4 スピンオフ ──
     spin, spin_cnt = load_spinoffs()
+    def rf_spin(e, m):
+        if not e['obs']:
+            return 'missing', None
+        return obs(e['t'], m, e['entry'])
     e4 = {}
     if spin is not None:
         for b in 'SL':
             evs = spin if b == 'L' else [e for e in spin if e['obs']]
-
-            def rf_(e, m):
-                if not e['obs']:
-                    return 'missing', None
-                return obs(e['t'], m, e['entry'])
-            e4[b] = calendar_ew(evs, 24, b, mkt, 199501, END, rf_)
+            e4[b] = calendar_ew(evs, 24, b, mkt, 199501, END, rf_spin)
+    # ── 事前登録2（探索・清い窓）──
+    x2 = {}
+    dels11 = [e for e in dels if e['m'] >= 201101]
+    dels11_S = [e for e in dels11 if e['cls'] == 'nonma']
+    for nm, H in (('X5_E2a_2011', 12), ('X6_E2b_2011', 36)):
+        x2[nm] = {b: calendar_ew(evs, H, b, mkt, 201102, END, lambda e, m: obs(e['t'], m, e['spell_start']))
+                  for b, evs in (('S', dels11_S), ('L', dels11))}
+    adds11 = [e for e in add if e['cls'] == 'confirmed' and e['m'] >= 201101]
+    x2['X7_E3_2011'] = {b: e3_series(adds11, b, mkt, 201102, END) for b in 'SL'}
+    if spin is not None:
+        sp07 = [e for e in spin if e['entry'] >= 200612]
+        x2['X8_E4_2007'] = {b: calendar_ew(sp07 if b == 'L' else [e for e in sp07 if e['obs']], 24, b, mkt, 200701, END, rf_spin)
+                            for b in 'SL'}
 
     # ── 評価（上下限つき）──
     bounded = {**{k: v for k, v in e1.items()}, **e2, 'E3_mkt_minus_adds': e3}
     if e4:
         bounded['E4_spinoffs24'] = e4
+    bounded.update(x2)
+    X2BASE = {'X5_E2a_2011': 'E2a_deletions12', 'X6_E2b_2011': 'E2b_deletions36', 'X7_E3_2011': 'E3_mkt_minus_adds', 'X8_E4_2007': 'E4_spinoffs24'}
     info_map = {}
     for nm, bs in bounded.items():
-        tv, cpu = TURN[nm]
+        tv, cpu = TURN[X2BASE.get(nm, nm)]
+        prim = nm not in X2BASE
         evs = {}
         for b in 'SL':
             s, info = bs[b]
             ev = evaluate(f'{nm}__{b}', s, mkt, spy, tv, cpu)
-            ev.update({'family': 'primary_E', 'primary': True, 'bound': b, 'bounded': True, 'coverage': info})
+            ev.update({'family': 'primary_E' if prim else 'exploratory_X2', 'primary': prim, 'bound': b, 'bounded': True, 'coverage': info})
             evs[b] = ev
             series[f'{nm}__{b}'] = s
         info_map[nm] = evs
@@ -638,7 +727,7 @@ def main():
             fg = max(S_['grade'], L_['grade'], key=lambda x: GORD[x])
         else:
             fg = '判定不能'
-        cands.append({'name': nm, 'final_grade': fg, 'grade_S': S_['grade'], 'grade_L': L_['grade'],
+        cands.append({'name': nm, 'family': S_['family'], 'final_grade': fg, 'grade_S': S_['grade'], 'grade_L': L_['grade'],
                       'hold_ex_S': (S_['hold'] or {}).get('ex_ann'), 'hold_ex_L': (L_['hold'] or {}).get('ex_ann'),
                       'train_ex_S': (tr_s or {}).get('ex_ann'), 'train_ex_L': (tr_l or {}).get('ex_ann')})
     for t in tested:
@@ -652,10 +741,30 @@ def main():
             'updated_ew_S_vs_mkt_full': M.excess_stats(upd, mkt), 'updated_ew_S_vs_mkt_hold': M.excess_stats(upd, mkt, a=M.HOLD_START),
             'additions12_S_vs_mkt_full': M.excess_stats(adds_only, mkt), 'additions12_S_vs_mkt_hold': M.excess_stats(adds_only, mkt, a=M.HOLD_START),
             'note': '参考（判定なし）。S は観測できる社だけ＝生き残りの偏りで上に出やすい'}
-    out = {'angle': 'index_events', 'prereg': PRE, 'prereg_commit': pre_sha, 'wiki_revid': revid,
+    pre2_sha = os.popen(f'git -C {M.BASE} log -n1 --format=%h -- out/mw_index_events_prereg2.json').read().strip()
+    out = {'angle': 'index_events', 'prereg': PRE, 'prereg_commit': pre_sha, 'prereg2': 'mw_index_events_prereg2.json', 'prereg2_commit': pre2_sha,
+           'wiki_revid': revid,
            'sanity': sanity, 'event_counts': ev_counts, 'spinoff_counts': spin_cnt, 'holm_primary': hp,
            'candidates': cands, 'diagnostics': diag, 'tested': tested,
            'series': {k: {str(m): round(v, 5) for m, v in sorted(s.items())} for k, s in series.items()}}
+    out['sanity_verdicts'] = {
+        'french_mkt': f"合格: CAGR 1926-07〜 {sanity['french_mkt_cagr_full']}%・2007〜 {sanity['french_mkt_cagr_2007']}%（目安 10.4 / 11.1）",
+        'spy_alignment': (f"事前登録の線（相関 0.99 以上）には {sanity['spy_mkt_corr']} で届かない。ただし月をずらすと相関は "
+                          f"{sanity['spy_mkt_corr_lag-1']} / {sanity['spy_mkt_corr_lag+1']} に消え、^SP500TR 自体も French Mkt と {sanity['sp500tr_mkt_corr']}"
+                          f"＝月の並びは正しく、差は S&P500 と全上場（小型株を含む）の違い。追従の差 {sanity['spy_vs_mkt_1993']['cagr_diff']}%/年は ±0.5 以内で合格"),
+        'fund_distributions': '不合格→是正: LEXCX の Yahoo 系列は分配の出来事を持つが、1997 年以前の分配を大きく取りこぼしていた（原本との差 1988 +22.1pt・1990 +16.1pt・1994 +14.7pt・1997 +8.9pt／1998〜2025 は 1999 +0.97pt・2003 −1.65pt を除き ±0.05pt 以内）。原本で直した R1b を足した',
+        'updated_ew_vs_rsp': (f"観測できる社だけで作った入れ替え続ける等加重 S&P500 は RSP に 2003〜 {sanity['updated_ew_vs_rsp_2003']['cagr_diff']}%/年・"
+                              f"2013〜 {sanity['updated_ew_vs_rsp_2013']['cagr_diff']}%/年 勝つ（RSP の信託報酬 0.20% を含む）＝S の上限は広い指数でも年 約1% 上に出る。"
+                              "外された社・スピンオフのような上場廃止が多い集合ではこの偏りはもっと大きい")}
+    out['deviations'] = [
+        'E1（凍結）と E4（スピンオフ）は時価加重ではなく等加重（1996 年と 2009 年より前の株数が無料で取れない）。事前登録どおり',
+        'R1b_LEXCX_official は事前登録の外: 健全性の検査で Yahoo の LEXCX の分配の取りこぼしが見つかったので、信託自身の 485BPOS の年次総リターン（全分配を NAV で再投資）に各年の月次を合わせた。1987-01〜（1986 年は Yahoo が11か月しか無い）。主の族の Holm に入れた（検定の数が増える＝保守側）',
+        'L の下限で『持つ社が全部 −100% の月』は対数が取れないので −99.99% で止めて統計を出した（mw_common.excess_stats は −100% の月で落ちる＝共通部品は直さず本スクリプトの中で回避）。結論の符号は変わらない',
+        'Wikipedia の変更表は 2026-05-23 版（それより新しい版では表が消えた）→ 2026-06〜08 の変更は『改名』に分類されて外れる（最後の2〜3か月だけ・影響は小さい）',
+        '理由の分類の誤り: CFC（Countrywide・2008-07 に BofA が買収）は理由の文に M&A の語が無く M&A 以外に数えた（Yahoo に無いので S では外れ、L では −100%）',
+        '名簿の T（1996〜2005 は旧 AT&T）を Yahoo は SBC（今の AT&T Inc.）の系列で返す＝同じ記号の別会社を掴んだ可能性がある（E1a）。記号の再利用の検問（Yahoo の系列が名簿の期間の始まりより後に始まる社は未観測）は BBT（今は Beacon Financial）・CPWR を正しく外したが、改名・合併の FE・ATI・AEE も外した（2007 年の 497 社中 5 社）',
+        'スピンオフの Yahoo の窓の検問で、親会社の歴史を引き継いだ逆スピン（MCO・CHH・FLO 等）や上場先の移動の 10-12B（EOG・JKHY・ALL 等）52 社が未観測になり、L では −100% に数えた＝L はさらに悲観側'
+    ]
     p = M.save('mw_index_events.json', out)
     print('書いた', p)
     for c in cands:
