@@ -13,6 +13,11 @@
 - X1（探索）: 残り49源の代表 × {static, dynamic}
 - XU（探索・参照）: X1 の倍率1
 - S（報告のみ）: P を 借入 RF+2% と 費用3倍 で
+事前登録2（out/mw_risk_matched_prereg2.json・探索）
+- X2: 低リスク21源をベータ1へ合わせる（beta_static / beta_dynamic）
+- X3/X3U: 訓練だけで組む混合（上位10の等分・ぶれの逆数・買いだけの最大シャープ・最小分散）
+- X4/X4U: 大型株 ME5（25_Portfolios_ME_*_5x5 の BIG 行）
+- S2（報告のみ）: P を倍率の上限 1.5倍で
 """
 import json, math, os, re, statistics as S, subprocess, sys
 
@@ -33,6 +38,7 @@ M.french_tables = _ft_cached
 BASE = M.BASE
 ANGLE = 'risk_matched'
 PREREG = 'mw_risk_matched_prereg.json'
+PREREG2 = 'mw_risk_matched_prereg2.json'
 LMAX, SPREAD, COST, WIN = 2.0, 0.01, 0.001, 36
 RANK_A, RANK_Z = 196307, 200612
 REGIONS = ['developed', 'world_ex_us', 'jpn', 'emerging']
@@ -80,6 +86,16 @@ FRENCH_SRC = {
     'BIG_BM': ('6_Portfolios_2x3', 'big', 0.3, 'その他', 1992, 'be_me', '大型株の簿価÷時価'),
     'BIG_PRIOR': ('6_Portfolios_ME_Prior_12_2', 'big', 1.5, 'その他', 1993, 'ret_12_1', '大型株の勢い（12-2）'),
 }
+
+
+DEVIATIONS = [
+    'C5 の地域は指示どおり developed・world_ex_us・jpn・emerging の4地域（3以上で合格）。developed は米国を含み独立ではないので、米国外3地域だけの数（nonus_positive/nonus_regions）も併記した。4地域で3以上なら米国外3地域でも2以上になるので、判定は厳しい側',
+    'AQR BAB（参考のみ・判定しない）の読み取りで日付の形（mm/dd/yyyy）を読めず初回は取れなかった。事前登録2の追加と同時に読み取りを直した（判定に関係しない）',
+    'JKP の ivol_hxz4_21d の3本と ni_inc8q の三分位2 は月が途切れている。順位づけの窓（196307〜200612）が欠ける候補は順位から外し、評価は連続した最長の区間だけで行う（欠測を0で埋めない）',
+    'seas_6_10na（6〜10年前の同じでない月のリターン）は JKP のクラスタ表で Low Risk に入っているので、登録どおり低リスク群として扱った（中身は季節性の信号）',
+    'シャープレシオ（C8）は mw_common.sharpe ではなく、戦略と市場を同じ月だけで比べる sharpe_same で計算した（mw_common.sharpe を市場に使うと市場だけ1926年からの月で測ってしまうため）',
+    '第1族の結果を見た後で事前登録2（X2・X3・X4・S2）を登録した。事前登録2の族はすべて探索',
+]
 
 
 def sha_of(path):
@@ -194,10 +210,15 @@ def lever(r_ex, m_ex, rf, rule, L_static=None, to=0.4, cost=COST, spread=SPREAD,
     hp, hm = [], []
     prevL = prev_r = prev_R = None
     for k in ks:
-        if rule == 'static':
+        if rule in ('static', 'beta_static'):
             L = L_static
         elif rule == 'unlevered':
             L = 1.0
+        elif rule == 'beta_dynamic':
+            L = None
+            if len(hp) >= win:
+                b = beta_of(hp[-win:], hm[-win:])
+                L = lmax if b <= 0 else min(lmax, 1 / b)
         else:
             L = None
             if len(hp) >= win:
@@ -230,6 +251,20 @@ def static_L(r_ex, m_ex, z=M.TRAIN_END, lmax=LMAX):
     if len(ks) < 60:
         return None
     return min(lmax, S.stdev([m_ex[k] for k in ks]) / S.stdev([r_ex[k] for k in ks]))
+
+
+def beta_of(x, m):
+    mx, mm = S.mean(x), S.mean(m)
+    vm = sum((v - mm) ** 2 for v in m)
+    return sum((a - mx) * (b - mm) for a, b in zip(x, m)) / vm if vm else 0.0
+
+
+def static_beta_L(r_ex, m_ex, z=M.TRAIN_END, lmax=LMAX):
+    ks = sorted(k for k in set(r_ex) & set(m_ex) if k <= z)
+    if len(ks) < 60:
+        return None
+    b = beta_of([r_ex[k] for k in ks], [m_ex[k] for k in ks])
+    return lmax if b <= 0 else min(lmax, 1 / b)
 
 
 def to_total(ex, rf):
@@ -280,20 +315,29 @@ def reg_mkt(region):
     return _RMKT[region]
 
 
-def replicate(maps, rule, RF, to):
-    """maps: [(key, pf), ...]（混合なら複数）。各地域で同じ規則。戻り: {'regions','positive','per_region',...}"""
+def replicate(maps, rule, RF, to, weights=None, renorm=False, lmax=LMAX):
+    """maps: [(key, pf), ...]（混合なら複数）。weights: 同じ長さの重み（無ければ等分）。
+    renorm=False: 1つでも欠けたらその地域は N/A（第1族）。renorm=True: 欠けた重みの合計 ≤ 50% なら残りを正規化（第2族 X3）。
+    各地域で同じ規則。戻り: {'regions','positive','per_region',...}"""
     per = {}
+    w_all = weights or [1 / len(maps)] * len(maps)
     for reg in REGIONS:
-        parts = [reg_series(reg, k, pf) for k, pf in maps]
-        if any(p is None for p in parts):
+        parts = [(reg_series(reg, k, pf), w) for (k, pf), w in zip(maps, w_all)]
+        miss = sum(w for p, w in parts if p is None)
+        if (not renorm and miss > 0) or (renorm and miss > 0.5 * sum(w_all)):
             per[reg] = None
             continue
-        ks = sorted(set.intersection(*[set(p) for p in parts]))
-        r_ex = {k: S.mean([p[k] for p in parts]) for k in ks}
+        parts = [(p, w) for p, w in parts if p is not None]
+        ws = sum(w for _, w in parts)
+        ks = sorted(set.intersection(*[set(p) for p, _ in parts]))
+        if len(ks) < 60:
+            per[reg] = None
+            continue
+        r_ex = {k: sum(p[k] * w for p, w in parts) / ws for k in ks}
         m_ex = reg_mkt(reg)
         cost = 0.003 if reg == 'emerging' else COST
-        L = static_L(r_ex, m_ex) if rule == 'static' else None
-        if rule == 'static' and L is None:
+        L = static_L(r_ex, m_ex, lmax=lmax) if rule == 'static' else (static_beta_L(r_ex, m_ex, lmax=lmax) if rule == 'beta_static' else None)
+        if rule in ('static', 'beta_static') and L is None:
             per[reg] = None
             continue
         # 地域の月の抜け（JKP の地域は連続のはず）を確かめる。抜けがあれば連続した最長の区間だけ
@@ -308,7 +352,7 @@ def replicate(maps, rule, RF, to):
             runs.append(cur)
             best = max(runs, key=len)
             r_ex = {k: r_ex[k] for k in best}
-        g, n, info = lever(r_ex, m_ex, RF, rule, L_static=L, to=to, cost=cost)
+        g, n, info = lever(r_ex, m_ex, RF, rule, L_static=L, to=to, cost=cost, lmax=lmax)
         full = M.excess_stats(n, m_ex)
         hold = M.excess_stats(n, m_ex, a=M.HOLD_START)
         if full is None:
@@ -326,10 +370,10 @@ def replicate(maps, rule, RF, to):
 
 
 # ───────────────────────── 評価 ─────────────────────────
-def evaluate(c, rule, MKT, MKTRF, RF, spread=SPREAD, cost=COST):
+def evaluate(c, rule, MKT, MKTRF, RF, spread=SPREAD, cost=COST, lmax=LMAX):
     r_ex = {k: v - RF[k] for k, v in c['r'].items() if k in RF}
-    L = static_L(r_ex, MKTRF) if rule == 'static' else None
-    g_ex, n_ex, info = lever(r_ex, MKTRF, RF, rule, L_static=L, to=c['to'], cost=cost, spread=spread)
+    L = static_L(r_ex, MKTRF, lmax=lmax) if rule == 'static' else (static_beta_L(r_ex, MKTRF, lmax=lmax) if rule == 'beta_static' else None)
+    g_ex, n_ex, info = lever(r_ex, MKTRF, RF, rule, L_static=L, to=c['to'], cost=cost, spread=spread, lmax=lmax)
     g, n = to_total(g_ex, RF), to_total(n_ex, RF)
     first = min(g)
     b = M.window(MKT, first)
@@ -346,6 +390,73 @@ def evaluate(c, rule, MKT, MKTRF, RF, spread=SPREAD, cost=COST):
     if c.get('pub'):
         e['post_publication'] = M.excess_stats(g, MKT, a=(c['pub'] + 1) * 100 + 1)
     return e, g, n
+
+
+RULE_JA = {'static': '訓練のぶれ比で固定倍率', 'dynamic': '36か月のぶれ比で毎月倍率', 'unlevered': '倍率1（借入なし）',
+           'beta_static': '訓練のベータの逆数で固定倍率', 'beta_dynamic': '36か月のベータの逆数で毎月倍率'}
+
+X4_FILES = {'BETA': ('25_Portfolios_ME_BETA_5x5', 'beta_60m', 0.4), 'VAR': ('25_Portfolios_ME_VAR_5x5', 'rvol_21d', 1.5),
+            'RESVAR': ('25_Portfolios_ME_RESVAR_5x5', 'ivol_ff3_21d', 1.5), 'OP': ('25_Portfolios_ME_OP_5x5', 'ope_be', 0.4),
+            'INV': ('25_Portfolios_ME_INV_5x5', 'at_gr1', 0.6), 'PRIOR': ('25_Portfolios_ME_Prior_12_2', 'ret_12_1', 1.5),
+            'AC': ('25_Portfolios_ME_AC_5x5', 'oaccruals_at', 0.8), 'NI': ('25_Portfolios_ME_NI_5x5', 'chcsho_12m', 0.6),
+            'BM': ('25_Portfolios_5x5', 'be_me', 0.3)}
+X4_PUB = {'BETA': 2014, 'VAR': 2006, 'RESVAR': 2006, 'OP': 2015, 'INV': 2008, 'PRIOR': 1993, 'AC': 1996, 'NI': 2008, 'BM': 1992}
+
+
+def x4_tercile(src, col):
+    c = col.strip()
+    if src == 'NI':
+        if 'NegNI' in c or 'ZeroNI' in c:
+            return '1.0'
+        if 'LoNI' in c or c.endswith('NI2'):
+            return '2.0'
+        return '3.0'
+    if c.startswith('BIG Lo'):
+        q = 1
+    elif c.startswith('BIG Hi'):
+        q = 5
+    else:
+        q = int(c[-1])
+    return tercile_of((q - 0.5) * 20)
+
+
+def load_x4(RF):
+    out = {}
+    for src, (fname, key, to) in X4_FILES.items():
+        s = M.french_series(fname, 'Value Weight')
+        for c in s:
+            if not (c.startswith('BIG') or c.startswith('ME5')):
+                continue
+            name = f'FR5_{src}[{c}]'
+            out[name] = {'name': name, 'kind': 'french5', 'source': 'FR5_' + src, 'col': c, 'group': '大型株', 'pub': X4_PUB[src],
+                         'to': to, 'r': dict(s[c]), 'map': (key, x4_tercile(src, c)),
+                         'desc': f'French 大型株（NYSE 80%点超）の {c}（{fname}・時価加重）'}
+    return out
+
+
+def qp_simplex(Sig, a, iters=200):
+    """min x'Σx s.t. a'x = 1, x ≥ 0 を有効制約法で解く → x（numpy）。a=μ で最大シャープ（接点）、a=1 で最小分散"""
+    import numpy as np
+    n = len(a)
+    F = [i for i in range(n) if a[i] > 0]
+    for _ in range(iters):
+        idx = np.array(F)
+        Sff = Sig[np.ix_(idx, idx)]
+        z = np.linalg.solve(Sff, a[idx])
+        x = np.zeros(n)
+        x[idx] = z / (a[idx] @ z)
+        if (x[idx] < -1e-12).any():
+            j = idx[int(np.argmin(x[idx]))]
+            F.remove(j)
+            continue
+        lam = 2 * x @ Sig @ x
+        nu = 2 * Sig @ x - lam * a
+        out = [i for i in range(n) if i not in F and a[i] > 0 and nu[i] < -1e-10]
+        if not out:
+            x[x < 0] = 0
+            return x
+        F.append(min(out, key=lambda i: nu[i]))
+    raise RuntimeError('qp_simplex 収束せず')
 
 
 def main():
@@ -400,19 +511,63 @@ def main():
     P_c = [cands[best[s]] for s in P_src] + [blend]
     X_c = [cands[best[s]] for s in X_src]
 
-    tested = []
+    # ── 第2族の候補（事前登録2） ──
+    import numpy as np
+    all_src = sorted(best, key=lambda s: -cands[best[s]]['train_sharpe'])
+    LR_c = [cands[best[s]] for s in lr]
+    top10 = [cands[best[s]] for s in all_src[:10]]
 
-    def run(c, rule, fam, primary, spread=SPREAD, cost=COST, tag=''):
-        e, g, n = evaluate(c, rule, MKT, MKTRF, RF, spread=spread, cost=cost)
+    def mk_blend(name, comps, ws, desc):
+        ws = [w / sum(ws) for w in ws]
+        ks = sorted(set.intersection(*[set(p['r']) for p in comps]))
+        b = {'name': name, 'kind': 'blend', 'source': name, 'col': '+'.join(p['name'] for p in comps), 'group': '混合',
+             'pub': None, 'to': sum(w * p['to'] for w, p in zip(ws, comps)) + 0.1,
+             'r': {k: sum(w * p['r'][k] for w, p in zip(ws, comps)) for k in ks}, 'maps': [p['map'] for p in comps],
+             'weights': ws, 'desc': desc,
+             'composition': [(p['name'], round(w, 4)) for p, w in zip(comps, ws) if w > 1e-6]}
+        b['train_sharpe'] = train_sharpe(b['r'], RF)
+        return b
+
+    x3 = [mk_blend('X3a_EW10', top10, [1] * 10, '訓練シャープ上位10源の等分混合')]
+    sd10 = [S.stdev([p['r'][k] - RF[k] for k in p['r'] if RANK_A <= k <= RANK_Z]) for p in top10]
+    x3.append(mk_blend('X3b_IV10', top10, [1 / v for v in sd10], '訓練シャープ上位10源をぶれの逆数で重みづけ'))
+    U55 = [cands[best[s]] for s in all_src]
+    kk = [k for k in sorted(RF) if RANK_A <= k <= RANK_Z]
+    X = np.array([[p['r'][k] - RF[k] for k in kk] for p in U55])
+    mu, Sig = X.mean(axis=1), np.cov(X)
+    x_t = qp_simplex(Sig, mu)
+    x_m = qp_simplex(Sig, np.ones(len(U55)))
+    wt, wm = x_t / x_t.sum(), x_m / x_m.sum()
+    keep_t = [i for i in range(len(U55)) if wt[i] > 1e-6]
+    keep_m = [i for i in range(len(U55)) if wm[i] > 1e-6]
+    x3.append(mk_blend('X3c_TAN', [U55[i] for i in keep_t], [wt[i] for i in keep_t], '55源の買いだけの最大シャープ（訓練の平均・共分散）'))
+    x3.append(mk_blend('X3d_MINV', [U55[i] for i in keep_m], [wm[i] for i in keep_m], '55源の買いだけの最小分散（訓練の共分散）'))
+    c5x = load_x4(RF)
+    for n_, c in c5x.items():
+        c['train_sharpe'] = train_sharpe(c['r'], RF)
+    best5 = {}
+    for n_, c in c5x.items():
+        if c['train_sharpe'] is None:
+            continue
+        if c['source'] not in best5 or c['train_sharpe'] > c5x[best5[c['source']]]['train_sharpe']:
+            best5[c['source']] = n_
+    X4_c = [c5x[best5[s]] for s in sorted(best5)]
+    print('X3', [(b['name'], len(b['composition'])) for b in x3], 'X4', [c['name'] for c in X4_c])
+
+    def run(c, rule, fam, primary, spread=SPREAD, cost=COST, tag='', lmax=LMAX):
+        e, g, n = evaluate(c, rule, MKT, MKTRF, RF, spread=spread, cost=cost, lmax=lmax)
         name = f"{fam}_{c['name']}_{rule}{tag}"
         rec = {'name': name, 'family': fam, 'primary': primary, 'rule': rule, 'candidate': c['name'], 'source': c['source'],
-               'group': c['group'], 'description': f"{c['desc']} を {'訓練のぶれ比で固定倍率' if rule == 'static' else ('36か月のぶれ比で毎月倍率' if rule == 'dynamic' else '倍率1（借入なし）')}{tag}",
+               'group': c['group'], 'description': f"{c['desc']} を {RULE_JA[rule]}{tag}",
                'train_sharpe_unlevered_196307_200612': round(c['train_sharpe'], 3) if c.get('train_sharpe') else None,
-               'turnover_ann': round(c['to'], 3), 'pub_year': c.get('pub')}
+               'turnover_ann': round(c['to'], 3), 'pub_year': c.get('pub'), 'lmax': lmax}
+        if c.get('composition'):
+            rec['composition'] = c['composition']
         rec.update(e)
+        rec['_c'] = c
         return rec
 
-    fams = {'P': [], 'U': [], 'X1': [], 'XU': [], 'S': []}
+    fams = {f: [] for f in ('P', 'U', 'X1', 'XU', 'S', 'X2', 'X3', 'X3U', 'X4', 'X4U', 'S2')}
     for c in P_c:
         for rule in ('static', 'dynamic'):
             fams['P'].append(run(c, rule, 'P', True))
@@ -420,27 +575,44 @@ def main():
         for rule in ('static', 'dynamic'):
             fams['S'].append(run(c, rule, 'S', False, spread=0.02, tag='・借入RF+2%'))
             fams['S'].append(run(c, rule, 'S', False, cost=0.003, tag='・費用3倍'))
+            fams['S2'].append(run(c, rule, 'S2', False, lmax=1.5, tag='・上限1.5倍'))
     for c in X_c:
         for rule in ('static', 'dynamic'):
             fams['X1'].append(run(c, rule, 'X1', False))
         fams['XU'].append(run(c, 'unlevered', 'XU', False))
+    for c in LR_c:
+        for rule in ('beta_static', 'beta_dynamic'):
+            fams['X2'].append(run(c, rule, 'X2', False))
+    for c in x3:
+        for rule in ('static', 'dynamic'):
+            fams['X3'].append(run(c, rule, 'X3', False))
+        fams['X3U'].append(run(c, 'unlevered', 'X3U', False))
+    for c in X4_c:
+        for rule in ('static', 'dynamic'):
+            fams['X4'].append(run(c, rule, 'X4', False))
+        fams['X4U'].append(run(c, 'unlevered', 'X4U', False))
 
     # C5
     print('C5 ...')
     rep_cache = {}
-    for fam in ('P', 'U', 'X1', 'XU'):
+    GRADED = ('P', 'U', 'X1', 'XU', 'X2', 'X3', 'X3U', 'X4', 'X4U')
+    for fam in GRADED:
+        renorm = fam in ('X3', 'X3U')
         for rec in fams[fam]:
-            c = blend if rec['candidate'] == blend['name'] else cands[rec['candidate']]
+            c = rec['_c']
             maps = c['maps'] if c['kind'] == 'blend' else [c['map']]
-            rule = 'unlevered' if rec['rule'] == 'unlevered' else rec['rule']
-            key = (tuple(maps), rule)
+            ws = c.get('weights')
+            key = (tuple(maps), tuple(ws) if ws else None, rec['rule'], renorm)
             if key not in rep_cache:
-                rep_cache[key] = replicate(maps, rule, RF, c['to'])
+                rep_cache[key] = replicate(maps, rec['rule'], RF, c['to'], weights=ws, renorm=renorm)
             rec['repl'] = rep_cache[key]
             rec['repl_map'] = [list(m) for m in maps]
+    for f in fams:
+        for rec in fams[f]:
+            rec.pop('_c', None)
 
     # Holm と判定
-    for fam in ('P', 'U', 'X1', 'XU'):
+    for fam in GRADED:
         ps = {r['name']: (r['hold']['p'] if r['hold'] else None) for r in fams[fam]}
         hp = M.holm(ps)
         for r in fams[fam]:
@@ -451,9 +623,10 @@ def main():
                               repl={'regions': r['repl']['regions'], 'positive': r['repl']['positive']} if r.get('repl') else None,
                               family_holm_p=r['family_holm_p'], sharpe_pair=sp if lev else None, leveraged_or_timing=lev)
             r['grade'], r['criteria'] = g, crit
-    for r in fams['S']:
-        r['grade'], r['criteria'] = None, None
-        r['note'] = '報告のみ（判定しない）'
+    for f in ('S', 'S2'):
+        for r in fams[f]:
+            r['grade'], r['criteria'] = None, None
+            r['note'] = '報告のみ（判定しない）'
 
     # AQR BAB（参考）
     bab = None
@@ -472,7 +645,11 @@ def main():
             if r[0] is None or r[iu] is None:
                 continue
             dt = r[0]
-            ym = dt.year * 100 + dt.month if hasattr(dt, 'year') else int(str(dt)[:4]) * 100 + int(str(dt)[5:7])
+            if hasattr(dt, 'year'):
+                ym = dt.year * 100 + dt.month
+            else:  # 'mm/dd/yyyy'
+                mm, dd, yy = str(dt).split('/')
+                ym = int(yy) * 100 + int(mm)
             d[ym] = float(r[iu])
         z = {k: 0.0 for k in d}
         bab = {'full': M.excess_stats(d, z), 'train': M.excess_stats(d, z, z=M.TRAIN_END), 'hold': M.excess_stats(d, z, a=M.HOLD_START),
@@ -488,9 +665,14 @@ def main():
     sanity['static_train_vol_check'] = chk
     sanity['mkt_train_sharpe_196307_200612'] = round(mkt_train_sharpe, 3)
 
-    all_rec = [r for f in ('P', 'U', 'X1', 'XU', 'S') for r in fams[f]]
+    all_rec = [r for f in fams for r in fams[f]]
     out = {
         'angle': ANGLE, 'prereg': PREREG, 'prereg_commit': sha_of(f'out/{PREREG}'),
+        'prereg2': PREREG2, 'prereg2_commit': sha_of(f'out/{PREREG2}'),
+        'family_labels': {'P': '主（事前登録1）', 'U': '参照・倍率1（事前登録1）', 'X1': '探索（事前登録1）', 'XU': '探索・倍率1（事前登録1）',
+                          'S': '報告のみ（借入RF+2%・費用3倍）', 'X2': '探索（事前登録2）ベータ合わせ', 'X3': '探索（事前登録2）訓練で組む混合',
+                          'X3U': '探索・倍率1（事前登録2）', 'X4': '探索（事前登録2）大型株ME5', 'X4U': '探索・倍率1（事前登録2）',
+                          'S2': '報告のみ（上限1.5倍）'},
         'global_prereg': 'mw_prereg.json', 'global_prereg_commit': sha_of('out/mw_prereg.json'),
         'benchmark': 'French Mkt（Mkt-RF+RF・総リターン）。地域は JKP vw 市場（超過）',
         'sanity': sanity,
@@ -501,14 +683,15 @@ def main():
                       'quality_order': [(s, best[s], round(cands[best[s]]['train_sharpe'], 3)) for s in ql],
                       'blend_train_sharpe': round(blend['train_sharpe'], 3) if blend['train_sharpe'] else None},
         'aqr_bab_reference': bab,
-        'deviations': [],
+        'deviations': DEVIATIONS,
+        'x3_weights': {b['name']: b['composition'] for b in x3},
         'n_tested': len(all_rec), 'n_graded': sum(1 for r in all_rec if r['grade']),
-        'grade_counts': {f: {g: sum(1 for r in fams[f] if r['grade'] == g) for g in 'SABC'} for f in ('P', 'U', 'X1', 'XU')},
+        'grade_counts': {f: {g: sum(1 for r in fams[f] if r['grade'] == g) for g in 'SABC'} for f in GRADED},
         'tested': all_rec,
     }
     p = M.save('mw_risk_matched.json', out)
     print('saved', p, 'n_tested', len(all_rec))
-    for f in ('P', 'U'):
+    for f in ('P', 'U', 'X2', 'X3', 'X3U', 'X4', 'X4U'):
         for r in fams[f]:
             h, hn, fu = r['hold'], r['net_cost_hold'], r['full']
             print(f"{r['name'][:60]:60s} {r['grade']} L={r['L_static'] or r['lever_info']['L_mean']} full {fu['ex_ann']:+.2f} t{fu['t']} | hold {h['ex_ann']:+.2f} t{h['t']} cagrΔ{h['cagr_diff']:+.2f} net {hn['ex_ann']:+.2f} | roll {r['roll20_net']['win_rate'] if r['roll20_net'] else None} | C5 {r['repl']['positive']}/{r['repl']['regions']} | SR {r['sharpe_pair']}")
