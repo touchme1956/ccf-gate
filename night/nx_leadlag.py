@@ -961,6 +961,9 @@ def main():
                 'why': '事前登録の中の二つの記述がこの2本で食い違う。判定の費用を一つにそろえた', 'affects_grade': 'E19・E20 だけ（探索）。どちらも C6（費用後の保有期間）が 0.30% で不合格なので、C4 の費用をどちらにしても格付けは C のまま'})
     dev.append({'what': 'C7 の Holm は丸める前の両側 p（nx_common.p_two(NW t)）で計算した（excess_stats の p は小数4桁に丸めてある）。丸めた p の Holm も各規則に併記し、線をまたぐ規則があれば sanity.rounding_boundary_check に名指しする。t の線（C1 2.0・C3 1.65・C7 3.0）は nx_common.grade のまま丸めた t で当てた（他の角度と同じ）',
                 'why': '事前登録 C7_family は「両側 p＝nx_common.p_two(NW t)」と書いている＝丸める前の値が文字どおり', 'affects_grade': '丸めの境界にある規則だけ（sanity.rounding_boundary_check を見よ）'})
+    dev.append({'what': 'C4（転がる20年窓）と20年積立の勝ちは rolling_exact／dca_exact で数えた（nx_common.rolling／dca と同じ窓・同じ出力の形で、勝ちだけ丸める前の差で数える）。事前登録 series_used_per_criterion は C4 に nx_common.rolling を名指ししている',
+                'why': '検査役の指摘（2026-09-28）: nx_common.rolling は年率差を小数2桁の%に丸めてから >0 を数えるので、0〜0.005%/年の勝ちが負けになる。全体の事前登録 C4 は「市場に勝った割合」なので、丸めてから数えるのは線の当て方の誤り＝規則の誤読の是正（線 0.8 は不変）。nx_common の数え方の結果も各規則に wins_nx_common_rounded として併記',
+                'affects_grade': 'この角度では無し（E11 の roll20_net 30/37→31/37 ほか、fixes 欄を見よ）'})
     res['implementation_notes_vs_previous_draft'] = [
         '前の実装者の作りかけ（セッションの上限で E18 の途中で止まった・out/nx_leadlag.json は未作成）を読み直し、事前登録と一行ずつ突き合わせてから走らせた',
         '直した点1: partner_signal は E5（J=3）・E6（J=12）で『自分の J か月の複利が有限』を順位に入る条件にしていた。事前登録の universe は「その月に French の VW リターンがあり、その信号が作れる業種」＝自分は t 月のリターンの有無だけで決まる。自分の側の条件を t 月のリターンに直した（J=1 の P1〜P3・E1〜E4・E7〜E11 は元と同じ）。影響は E6 の 1970-01〜1970-05 の Hlth（1969-07 開始）だけ',

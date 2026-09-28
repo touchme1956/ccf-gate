@@ -871,18 +871,41 @@ def post_hoc(units):
     for lag in (-1, 0, 1):
         ks = [k for k in sorted(lew) if 187101 <= k <= 191406 and D.madd(k, lag) in UK_IDX]
         inv[f'corr_lse_ew_t_boe_t{lag:+d}'] = round(C.corr([lew[k] for k in ks], [UK_IDX[D.madd(k, lag)] for k in ks]), 3)
+    uk_all, _ = D.uk_share_prices()
+    sh = {b: uk_all[9][b] / uk_all[9][a] - 1 for a, b in zip(sorted(uk_all[9]), sorted(uk_all[9])[1:]) if D.madd(a, 1) == b}
+    ks = [k for k in sorted(lew) if k <= 187012 and k in sh]
+    inv['corr_lse_ew_vs_smith_horne_col9_1869_1870'] = {'corr': round(C.corr([lew[k] for k in ks], [sh[k] for k in ks]), 3), 'n': len(ks)}
     ks = [k for k in sorted(lew) if k <= 187012 and k in UK_IDX]
-    inv['corr_lse_ew_vs_smith_horne_1869_1870'] = {'corr': round(C.corr([lew[k] for k in ks], [UK_IDX[k] for k in ks]), 3), 'n': len(ks)}
+    inv['corr_lse_ew_vs_boe_col23_acheson_1869_1870'] = {'corr': round(C.corr([lew[k] for k in ks], [UK_IDX[k] for k in ks]), 3), 'n': len(ks)}
     zeros = sum(1 for d in LSE_RET.values() for v in d.values() if v == 0.0)
     inv['share_of_zero_stock_month_returns_lse'] = round(zeros / sum(len(d) for d in LSE_RET.values()), 3)
     geo = geo_ew(LSE_RET, LSE_SEG_M)
     for a, z in ((186902, 188712), (188801, 190712), (191502, 192912)):
         inv[f'cagr_{a}_{z}'] = {'lse_ew_arith': round(C.cagr(C.window(lew, a, z)) * 100, 2), 'lse_ew_geo': round(C.cagr(C.window(geo, a, z)) * 100, 2),
                                 'boe_index': round(C.cagr(C.window(UK_IDX, a, z)) * 100, 2)}
-    inv['reading'] = ('LSE の読み込みは内部で整合する（同じ業種の大手の本線鉄道どうしの月次の相関 0.56〜0.67・1869〜1870 は Smith-Horne と 0.79）。'
-                      '1871〜1914 の相関が低いのは、(i) LSE の株の月の 43% が値動き0（古い気配）で等分の相手が前後の月へにじむ（t−1・t・t+1 の相関の和 ≈0.85）、'
-                      '(ii) 等分の算術平均が株ごとのノイズで上振れる（1869〜1887 の年率 算術 +8.8% に対し 対数の平均 −3% 前後・イングランド銀行 −0.1%）ため。'
-                      '読み込みの誤りではなく、データのノイズと薄商い。だが事前登録の線（0.6）は下回った＝止まる条件に触れた')
+    # 同じ業種の大手の本線鉄道（普通株・説明の行が空＝本体の株）どうしの月次の相関＝ LSE の読み込みの内部の整合
+    raw = D.lse_raw()['sec']
+    pat = re.compile(r'^(Great Western|Midland|Great Northern|North[- ]Eastern|Caledonian|Great Eastern|North British)\b', re.I)
+    hr = [i for i in LSE_RET if raw.get(i, {}).get('file') == 'rail' and pat.search(raw[i]['name']) and not (raw[i]['sec'] or '').strip()
+          and sum(1 for k in LSE_RET[i] if 187101 <= k <= 191406) >= 120]
+    pc = []
+    for x_ in range(len(hr)):
+        for y_ in range(x_ + 1, len(hr)):
+            a_, b_ = LSE_RET[hr[x_]], LSE_RET[hr[y_]]
+            kk = [k for k in a_ if k in b_ and 187101 <= k <= 191406]
+            if len(kk) >= 60:
+                pc.append(round(C.corr([a_[k] for k in kk], [b_[k] for k in kk]), 3))
+    vb = []
+    for i in hr:
+        kk = [k for k in LSE_RET[i] if k in UK_IDX and 187101 <= k <= 191406]
+        vb.append(round(C.corr([LSE_RET[i][k] for k in kk], [UK_IDX[k] for k in kk]), 3))
+    inv['home_rail_majors'] = {'ids': {i: raw[i]['name'][:40] for i in hr}, 'pairwise_corr_sorted': sorted(pc),
+                               'median_pairwise': _stat.median(pc) if pc else None, 'corr_each_vs_boe_1871_1914': vb}
+    inv['reading'] = ('LSE の読み込みの誤りを示す明確な形は見つからなかったが確証も無い（1869〜1870 の LSE の等分と Smith-Horne の相関は corr_lse_ew_vs_smith_horne_col9_1869_1870・大手の鉄道の株どうしと指数との相関は home_rail_majors）。'
+                      '1871〜1914 の相関が低い理由として測れたのは: (i) LSE の株の月の約43% が値動き0（古い気配）で等分の相手が前後の月へにじむ（t−1・t・t+1 の相関の和 ≈0.86）、'
+                      '(ii) 等分の算術平均が株ごとのノイズで大きく上振れる（1869〜1887 の年率 算術 +8.75% 対 対数の平均 −1.74% 対 イングランド銀行 −0.08%）。'
+                      '大手の鉄道の株は株どうし（中央 0.32）よりイングランド銀行の指数（Smith-Horne）との相関が低い（0.09〜0.37）＝指数の側の作り（25〜82証券）も一因かもしれない（未確認）。'
+                      '読み込みの誤りではなくデータのノイズと薄商いと判断したが、事前登録の線（0.6）は下回った＝止まる条件に触れた')
     ph['sanity_stop_investigation'] = inv
     # (2) 勝者−敗者（同じ作り方の上位−下位）: 相手に共通の上振れ（ノイズ・等分）を消す
     ls = {}
@@ -989,15 +1012,106 @@ def post_hoc(units):
     allg = [v for d in ind_gap.values() for v in d.values()]
     nb['lse_industries_mean_gap_ann_pct'] = round(_stat.mean(allg) * 1200, 2)
     ph['noise_uplift'] = {'ann_pct': nb, 'note': '月ごとの（算術の平均 − 対数の平均）×12。保有の組が相手より大きければ、その分の超過はノイズの上振れで説明されうる'}
+    # (9) 季節性と配当落ち: 価格だけのリターンは配当の支払いの月に下がる＝『同じ暦月の過去のリターン』が配当の月を拾う疑い
+    ph['seasonality_ex_dividend'] = seas_exdiv(units)
     log('post-hoc done')
     return ph
+
+
+def lse_payable():
+    """IMM の dvdpayable（配当の支払いの月・例 'Mar;Sep'）→ {id: {ym: [月…]}}。out/_nx_cache/nx_pre1926x_dvdpayable.json に置く"""
+    p = os.path.join(C.CACHE, 'nx_pre1926x_dvdpayable.json')
+    if not os.path.exists(p):
+        import zipfile, io, csv
+        MONL = {m: i + 1 for i, m in enumerate(['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'])}
+        out, cnt = {}, collections.Counter()
+        for key, inner in (('lse_rail', 'Railways_new.csv'), ('lse_bank', 'Banks_new.csv'), ('lse_misc', 'Misc_new.csv')):
+            z = zipfile.ZipFile(D.path(key))
+            for row in csv.DictReader(io.TextIOWrapper(z.open(inner), encoding='latin-1')):
+                s = (row.get('dvdpayable') or '').strip()
+                if not s or s == 'NULL':
+                    continue
+                ms = sorted({MONL[x] for x in re.findall(r'[A-Za-z]{3}', s.lower()) if x in MONL})
+                if not ms:
+                    cnt['unparsed'] += 1
+                    continue
+                try:
+                    ym = int(row['year']) * 100 + int(row['month'])
+                except (ValueError, KeyError):
+                    continue
+                out.setdefault(row['id'], {})[ym] = ms
+                cnt['rows'] += 1
+        json.dump({'pay': out, 'counts': cnt}, open(p, 'w'))
+    o = json.load(open(p))
+    return {i: {int(k): v for k, v in d.items()} for i, d in o['pay'].items()}, o['counts']
+
+
+def seas_exdiv(units):
+    PAY, pcnt = lse_payable()
+
+    def pay_at(i, m):
+        """月 m の直前 12 か月以内に分かった支払いの月の一覧（先読みなし: m−1 までの記録）"""
+        d = PAY.get(i)
+        if not d:
+            return None
+        for k in range(1, 13):
+            v = d.get(D.madd(m, -k))
+            if v:
+                return v
+        return None
+    r = RULES['B_seas_6_10an_tercile']
+    R = LSE_RET
+    res = {'payable_rows': pcnt}
+    # (a) 保有の月が支払いの月（か前月）に当たる株の割合: 上位の組・下位の組・母集団
+    share = {}
+    for side in ('top', 'bottom'):
+        x = hold_side(r, R, R, side)
+        for lag in (0, 1):
+            v = []
+            for m, w in x['w'].items():
+                kn = [(wt, (D.madd(m, lag) % 100 or 12) in p) for n, wt in w.items() for p in [pay_at(n, m)] if p]
+                if kn:
+                    v.append(math.fsum(wt for wt, hit in kn if hit) / math.fsum(wt for wt, _ in kn))
+            share[f'{side}_paymonth_eq_hold_plus{lag}'] = round(_stat.mean(v), 3) if v else None
+    for lag in (0, 1):
+        v = []
+        for m in BENCH['lse_ew']:
+            kn = [(D.madd(m, lag) % 100 or 12) in p for n in R if m in R[n] for p in [pay_at(n, m)] if p]
+            if kn:
+                v.append(sum(kn) / len(kn))
+        share[f'universe_paymonth_eq_hold_plus{lag}'] = round(_stat.mean(v), 3) if v else None
+    res['share_of_holdings_paying'] = share
+    # (b) 配当を支払いの月に置いた総リターンの近似（年の利回り＝dy×12・年30%超は足さない・支払いの回数で割る）で作り直す
+    for lag, name in ((0, 'div_in_pay_month'), (1, 'div_in_month_before_pay')):
+        Rt = {}
+        for i, d in R.items():
+            dd = {}
+            for m, v in d.items():
+                add = 0.0
+                y = LSE_DY.get(i, {}).get(m)
+                p = pay_at(i, m)
+                if y is not None and y * 12 <= 0.30 and p and (D.madd(m, lag) % 100 or 12) in p:
+                    add = y * 12 / len(p)
+                dd[m] = v + add
+            Rt[i] = dd
+        row = {}
+        for uid in D.FAMILIES['B']:
+            rr = RULES[uid]
+            top = hold_side(rr, Rt, Rt, 'top')
+            bot = hold_side(rr, Rt, Rt, 'bottom')
+            row[uid] = {'top_net_vs_ew': es(top['net'], ew(Rt, LSE_SEG_M)), 'top_minus_bottom_gross': es(top['s'], bot['s'])}
+        res[name] = row
+    res['note'] = ('事後。IMM の dvdpayable（配当の支払いの月）を生の3ファイルから読んだ。価格だけのリターンは配当落ちの月に下がるので、'
+                   '『6〜10年前の同じ暦月のリターン』は配当の月でない月を拾いやすい。(b) は配当を支払いの月（か前月）に置いた総リターンの近似で作り直した版')
+    return res
 
 
 DEVIATIONS = [
     {'what': '健全性の点検の順番と、止まる条件に触れたのに止まらなかったこと',
      'detail': '事前登録は sanity_checks_before_results（成績の前の点検）と書いたが、この道具は同じ実行の中で 22 単位の成績を計算して画面に出した後に点検した（私は点検の前に A〜H の超過・t を見た）。'
                'その点検で LSE の等分とイングランド銀行の指数（Smith-Horne 1871〜1914）の相関が 0.483 で線 0.6 を下回り、登録の『読み込みを疑って止まる』に当たった。止まらずに調べた（post_hoc.sanity_stop_investigation）: '
-               '読み込みの誤りの形跡は無い（同じ業種の大手の本線鉄道どうしの相関 0.56〜0.67・1869〜1870 は Smith-Horne と 0.79）が、LSE の株の月の 43% が値動き0（古い気配）で、等分の算術平均は株ごとのノイズで大きく上振れる（1869〜1887 年率 +8.8% 対 イングランド銀行 −0.1%）。',
+               '読み込みの誤りを示す明確な形は見つからなかった（1869〜1870 の LSE の等分と Smith-Horne の相関 0.789・n23／大手の鉄道の普通株9つの相関は株どうしの中央 0.32〔最大 0.67〕に対し Smith-Horne とは 0.09〜0.37）が、確証も無い。'
+               'LSE の株の月の 43% が値動き0（古い気配）で、等分の算術平均は株ごとのノイズで大きく上振れる（1869〜1887 年率 算術 +8.75% 対 対数の平均 −1.74% 対 イングランド銀行 −0.08%）。',
      'affects_grade': True,
      'how': 'B（LSE の株）と D（LSE の業種）の格付けは登録どおりのまま出し、tested の各行に grade_flag を付けた。止まる条件に触れた暫定の格付けとして読むこと。事後の診断（勝者−敗者・幾何で束ねた版・極端値を落とした版・窓を2〜3か月あけた版）を post_hoc に並べた'},
     {'what': '組を作れる月数の点検（±1）で、4 単位が 2〜4 か月ずれた',
@@ -1012,6 +1126,7 @@ DEVIATIONS = [
     {'what': 'R4 の F16g', 'detail': 'eknzbh mw_momentum_prereg5 の F16 の作り方（翌月と同じ暦月の a〜b 年前の平均・上位 K=max(2,四捨五入(割合×N))・1か月持つ・正確な回転×0.05%）。候補の下限は元に無いので、この角度の F3g と同じ 5 にした。窓は区間の中だけ（LSE の区間2 は 15 年なので 11〜15・16〜20・1〜20 年は区間1 だけ）', 'affects_grade': False},
     {'what': '全体の C1〜C8', 'detail': 'この角度の格付けは事前登録どおり criteria_independent_era（E1〜E7・grade_era）。まとめ役の依頼にある C1〜C8 は、前半を『訓練』・後半を『保有』に読み替えた参考の値（C1_C8_reference）だけで、格付けではない（C1・C2・C3・C7 は費用前、C4・C6・C8 は費用後＝mw の約束）', 'affects_grade': False},
     {'what': 'シャープの現金', 'detail': 'E5 はその単位の rf（A_S3 は us_cash・D_S3 は uk_cash・H は uk_hal）。timing でない B・C のシャープ（報告だけ）は英国 uk_cash・米国 us_cash', 'affects_grade': False},
+    {'what': '事後の診断で抽出に無い欄を読んだ', 'detail': '季節性と配当落ちの診断（post_hoc.seasonality_ex_dividend）のために、IMM の生の3ファイルから dvdpayable（配当の支払いの月）を読んだ（out/_nx_cache/nx_pre1926x_dvdpayable.json）。登録の抽出（sha 凍結）には入っていない欄で、格付けには使わない', 'affects_grade': False},
     {'what': '実装の直し（規則は不変）', 'detail': '初回の実行は季節性の規則（stk_seas）に skip の欄が無いため KeyError で止まった（B_ret_12_1 まで計算・保存なし）。欄が無いときは None を渡すように直して最初から実行し直した。excess_stats の β の計算を速くする細工（nx_stack.py と同じ・数値は同一）を入れた', 'affects_grade': False},
 ]
 
@@ -1102,8 +1217,43 @@ def main():
         'post_hoc': ph,
         'runtime_sec': None,
     }
+    out['post_hoc']['interpretation'] = interpret(out)
     out['runtime_sec'] = (datetime.datetime.now() - t0).total_seconds()
     return out, units
+
+
+def interpret(out):
+    """事後の読み（数字は同じ実行の結果から引く・格付けには使わない）"""
+    T = {t['id']: t for t in out['tested']}
+    ph = out['post_hoc']
+    W = ph['winners_minus_losers']['rows']
+    G = ph['geometric_aggregation']['rows']
+    K = ph['longer_gap']['rows']
+    TR = ph['trimmed_extremes']['rows']
+    f = lambda e: None if not e else f"{e['ex_ann']:+.2f}%/年 t{e['t']}"
+    lines = []
+    d_ids = [u for u in D.FAMILIES['D'] if RULES[u]['kind'] != 'ind_trend']
+    lines.append('D（LSE の業種の勢い 6本）: 登録の格付けは全部 S。勝者−敗者は ' + '・'.join(f"{u[2:]} {f(W[u]['top_minus_bottom_gross'])}" for u in d_ids)
+                 + '。窓を3か月あけても ' + '・'.join(f"{u[2:]} {f(K[u]['skip3'])}" for u in d_ids)
+                 + '。幾何で束ねても ' + '・'.join(f"{u[2:]} {f(G[u])}" for u in d_ids)
+                 + '。極端値を落としても ' + '・'.join(f"{u[2:]} {f(TR[u])}" for u in d_ids)
+                 + '。保有する業種のノイズの上振れ（算術−幾何）は相手より ' + '・'.join(f"{u[2:]} {ph['noise_uplift']['ann_pct'][u] - ph['noise_uplift']['ann_pct']['universe_arith_minus_geo_ann_pct']:+.2f}" for u in d_ids)
+                 + ' %/年（noise_uplift）＝ D の超過はノイズ・古い気配・等分の作りでは説明しきれず、業種の勢いそのものの見込みが高い（ただし止まる条件に触れたデータの上・事後の読み）')
+    lines.append('D の S3（業種ごとの10か月線 2倍・3倍）: S。ただし相手（LSE の業種の等分）は1次の自己相関が高い古い気配の指数で、10か月線の出入りは平滑な指数ほど効きやすい。窓を3か月あけても '
+                 + '・'.join(f"{u[2:]} {f(K[u]['skip3'])}" for u in ('D_S3_FABER_L2', 'D_S3_FABER_L3')) + '・幾何 ' + '・'.join(f"{u[2:]} {f(G[u])}" for u in ('D_S3_FABER_L2', 'D_S3_FABER_L3')))
+    lines.append('B_F1a1（LSE の株の上位10%）: 登録の格付けは S だが、勝者−敗者は ' + f(W['B_F1a1_top_decile']['top_minus_bottom_gross'])
+                 + '・下位10% も相手に ' + f(W['B_F1a1_top_decile']['bottom_net_vs_bench'])
+                 + '＝両端の十分位がともに相手（古い気配の多い等分）に勝っているだけで、勢い（勝者が敗者に勝つ）ではない。S を勢いの再現として数えてはいけない')
+    lines.append('B_ret_12_1（LSE の株の上位3分の1）: 格付け B（費用後 ' + f(T['B_ret_12_1_tercile']['full_net']) + '）。勝者−敗者は '
+                 + f(W['B_ret_12_1_tercile']['top_minus_bottom_gross']) + '＝株の勢いは買い−売りでは出るが、買いだけで相手に勝つ幅は小さい（Chabot-Ghysels-Jagannathan と同じ向き）')
+    lines.append('B_seas（LSE の株の季節性）: 格付け B（費用後 ' + f(T['B_seas_6_10an_tercile']['full_net']) + '・費用前 ' + f(T['B_seas_6_10an_tercile']['full_gross'])
+                 + '・年の回転 ' + str(T['B_seas_6_10an_tercile']['turnover_ann_oneway']) + '）。勝者−敗者 ' + f(W['B_seas_6_10an_tercile']['top_minus_bottom_gross'])
+                 + '。下位の組は保有の月が配当の支払いの月に当たる株が多い（seasonality_ex_dividend）＝価格だけのリターンの配当落ちを拾っている部分がある。配当を支払いの月に置き直しても勝者−敗者は残った')
+    a_ids = [u for u in D.FAMILIES['A'] if RULES[u]['kind'] != 'ind_trend']
+    lines.append('A（Cowles の業種の勢い 7本）: A 2本（G3・G4）・B 5本。勝者−敗者は ' + '・'.join(f"{u[2:]} {f(W[u]['top_minus_bottom_gross'])}" for u in a_ids)
+                 + '。1871〜1898（業種 6〜18）は多くが負、1899〜1926 は正（R5）。元のまま（1か月あけない）は大きく勝つ（R1）が、それは月平均の見かけの自己相関（Working 1960）')
+    lines.append('A の S3・H（英国のハロウィーン 1709〜1914）・C（Old NYSE の株の勢い）: C・C・B。ハロウィーンは 206年で 88年だけ勝ち（calendar_years）')
+    return lines
 
 
 if __name__ == '__main__':
