@@ -373,13 +373,17 @@ def main():
     p2 = prereg2(dict(av=av, rf=rf, cm=cm, rmk=rmk, PF=PF, side=side, cand=cand, primary_hold_p=hp, primary_tested=tested))
 
     p3 = prereg3(dict(rf=rf, rmk=rmk, PF=PF, side=side, all_hold_p=p2.pop('_all_hold_p')))
+    p4 = prereg4(dict(all_hold_p=p3.pop('_all_hold_p')))
+
+    ph = post_hoc(dict(rf=rf, rmk=rmk, PF=PF, side=side, cm=cm, cand=cand), p2, p3)
 
     out = {'tool': 'night/mw_intl.py', 'prereg': f'out/{PRE_NAME}', 'prereg_commit': git_sha(f'out/{PRE_NAME}'),
            'global_prereg': 'out/mw_prereg.json', 'representative': REP, 'good_side': side,
            'n_tested': len(tested), 'tested': tested, 'graded': graded, 'holm_family': hol,
            'regional': {loc: {k: v for k, v in d.items()} for loc, d in regional.items()},
-           'country_summary': summary, 'per_country': per_country, 'sanity': sanity, 'prereg2': p2, 'prereg3': p3}
-    out['n_tested_all'] = len(tested) + len(p2['tested']) + len(p3['tested'])
+           'country_summary': summary, 'per_country': per_country, 'sanity': sanity, 'prereg2': p2, 'prereg3': p3, 'prereg4': p4, 'post_hoc_diagnostics': ph}
+    p4.pop('_all_hold_p', None)
+    out['n_tested_all'] = len(tested) + len(p2['tested']) + len(p3['tested']) + len(p4['tested'])
     p = M.save('mw_intl.json', out)
     # 画面
     print('prereg', out['prereg_commit'])
@@ -393,6 +397,8 @@ def main():
               f"平均 保{(sm['pooled_equal_weight_countries']['hold'] or {}).get('ex')} holm {gg['holm_p']}")
     print_prereg2(p2)
     print_prereg3(p3)
+    print_prereg4(p4)
+    print('事後の診断', json.dumps({k: (v if not isinstance(v, dict) else {kk: (vv if not isinstance(vv, dict) or 'ex_ann' not in vv else (vv['ex_ann'], vv['t'], vv['te'])) for kk, vv in v.items()}) for k, v in ph.items()}, ensure_ascii=False, default=str)[:4000])
     print('→', p)
 
 # ───────────────────────── 事前登録2（out/mw_intl_prereg2.json） ─────────────────────────
@@ -756,7 +762,7 @@ def prereg3(ctx):
     return {'prereg': f'out/{PRE3_NAME}', 'prereg_commit': git_sha(f'out/{PRE3_NAME}'), 'check': check,
             'families': {'F3a_french_dev_ex_us': {'members': {k: dict(rep[k], **graded[k]) for k in members}, 'holm': hol}},
             'french_regions': {reg: d for reg, d in allreg.items() if reg != 'Developed_ex_US'},
-            'etf_reality_check': etf, 'us_combos': us, 'angle_wide_holm_reference': M.holm(all_p), 'n_graded_angle': len(all_p), 'tested': tested}
+            'etf_reality_check': etf, 'us_combos': us, 'angle_wide_holm_reference': M.holm(all_p), 'n_graded_angle': len(all_p), 'tested': tested, '_all_hold_p': all_p}
 
 
 def print_prereg3(p3):
@@ -776,6 +782,206 @@ def print_prereg3(p3):
         print('  US', k, v.get('start'), '全', f(v.get('full')), '訓', f(v.get('train')), '保', f(v.get('hold')), '20年', (v.get('roll20') or {}).get('wins'), (v.get('roll20') or {}).get('windows'))
     ah = p3['angle_wide_holm_reference']
     print('  angle-wide holm <0.05 (n=%d):' % p3['n_graded_angle'], {k: v for k, v in sorted(ah.items(), key=lambda x: x[1]) if v < 0.05})
+
+# ───────────────────────── 事前登録4（out/mw_intl_prereg4.json） ─────────────────────────
+PRE4_NAME = 'mw_intl_prereg4.json'
+F4_COLS = ['Mkt', 'BM_H', 'BM_L', 'EP_H', 'EP_L', 'CEP_H', 'CEP_L', 'DP_H', 'DP_L', 'Zero']
+F4_MEM = {'f4_bm': ['BM_H'], 'f4_ep': ['EP_H'], 'f4_cep': ['CEP_H'], 'f4_dp': ['DP_H'], 'f4_value4': ['BM_H', 'EP_H', 'CEP_H', 'DP_H']}
+F4_DESC = {'f4_bm': 'B/M 上位30%（国の中で並べる）', 'f4_ep': 'E/P 上位30%', 'f4_cep': 'CE/P 上位30%', 'f4_dp': '配当利回り 上位30%', 'f4_value4': '割安4本を等分'}
+
+
+def _f4_read(zipname):
+    """French の国際 .Dat（zip）→ {ファイル名: {列: {ym: 小数}}}。最初の表（米ドル・All 4 Not Reqd）だけ"""
+    b = M.get(f'https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{zipname}.zip', name=f'fr_{zipname}.zip')
+    z = zipfile.ZipFile(io.BytesIO(b))
+    out = {}
+    for nm in z.namelist():
+        txt = z.read(nm).decode('latin-1').splitlines()
+        cols = {c: {} for c in F4_COLS}
+        started = False
+        for line in txt:
+            parts = line.split()
+            if not started:
+                if parts[:3] == ['Mkt', 'High', 'Low']:
+                    started = True
+                continue
+            if not parts:
+                break
+            if not parts[0].isdigit() or len(parts[0]) != 6:
+                break
+            ym = int(parts[0])
+            for c, v in zip(F4_COLS, parts[1:]):
+                x = float(v)
+                if x > -99.9:
+                    cols[c][ym] = x / 100
+        out[nm.rsplit('.', 1)[0]] = cols
+    return out
+
+
+def prereg4(ctx):
+    C = _f4_read('F-F_International_Countries'); I_ = _f4_read('F-F_International_Indices')
+    unit, turn = 0.003, 0.3
+
+    def strat(cols, k):
+        parts = [cols[c] for c in F4_MEM[k]]
+        if not all(parts):
+            return {}
+        ms = set.intersection(*[set(q) for q in parts])
+        return {m: S.mean(q[m] for q in parts) for m in ms}
+
+    def ev(cols, k):
+        g, mk = strat(cols, k), cols['Mkt']
+        ms = sorted(set(g) & set(mk))
+        if len(ms) < 60:
+            return {'months': len(ms), 'note': 'データ不足'}
+        s_, b_ = {m: g[m] for m in ms}, {m: mk[m] for m in ms}
+        return {'months': len(ms), 'start': ms[0], 'end': ms[-1], **four(s_, b_),
+                'hold_net': M.excess_stats(M.apply_cost(s_, turn, unit), b_, a=M.HOLD_START),
+                'hold_net_2x': M.excess_stats(M.apply_cost(s_, turn, unit * 2), b_, a=M.HOLD_START),
+                'roll20': M.rolling(s_, b_, 20), 'dca20': M.dca(s_, b_, 20), 'turnover': turn, 'unit_cost': unit}
+
+    cty = {c: {k: ev(cols, k) for k in F4_MEM} for c, cols in C.items()}
+    idx = {c: {k: ev(cols, k) for k in F4_MEM} for c, cols in I_.items()}
+    fams = {'F4a_eafe_value': (idx['Ind_all'], ()), 'F4b_japan_value': (cty['Japan'], ('Japan',))}
+    families, tested, all_p = {}, [], dict(ctx['all_hold_p'])
+    for fam, (rep, excl) in fams.items():
+        hp = {k: (r.get('hold') or {}).get('p') for k, r in rep.items() if r.get('hold')}
+        hol = M.holm(hp)
+        mem = {}
+        for k, r in rep.items():
+            q = {c: d[k] for c, d in cty.items() if c not in excl and d[k].get('months', 0) >= MIN_MONTHS and d[k].get('full')}
+            repl = {'regions': len(q), 'positive': sum(1 for v in q.values() if v['full']['ex_ann'] > 0)}
+            repl_h = {'regions': sum(1 for v in q.values() if v.get('hold')), 'positive': sum(1 for v in q.values() if v.get('hold') and v['hold']['ex_ann'] > 0)}
+            g, crit = M.grade(r.get('full'), r.get('train'), r.get('hold'), r.get('roll20'), cost_hold=r.get('hold_net'), repl=repl, family_holm_p=hol.get(k))
+            mem[k] = dict(r, grade=g, criteria=crit, holm_p=hol.get(k), repl=repl, repl_hold_reported=repl_h)
+            if r.get('hold') and r['hold'].get('p') is not None:
+                all_p[f'{fam}:{k}'] = r['hold']['p']
+            tested.append({'name': f'{fam}:{k}', 'family': fam, 'series': 'French 国際（MSCI→Bloomberg）国の中で並べた割安 上位30% vs 市場',
+                           'description': F4_DESC[k], 'grade': g, 'criteria': crit})
+        families[fam] = {'members': mem, 'holm': hol}
+    for c in cty:
+        for k in F4_MEM:
+            tested.append({'name': f'f4_country:{c}:{k}', 'family': 'reported', 'series': f'French 国別 {c}', 'grade': None})
+    for c in idx:
+        if c != 'Ind_all':
+            for k in F4_MEM:
+                tested.append({'name': f'f4_index:{c}:{k}', 'family': 'reported', 'series': f'French 指数 {c}', 'grade': None})
+    compactc = {c: {k: {w: compact(v.get(w)) for w in ('full', 'train', 'hold')} | {'months': v.get('months'), 'start': v.get('start')} for k, v in d.items()} for c, d in cty.items()}
+    return {'prereg': f'out/{PRE4_NAME}', 'prereg_commit': git_sha(f'out/{PRE4_NAME}'), 'families': families,
+            'indices_reported': {c: d for c, d in idx.items() if c != 'Ind_all'}, 'countries': compactc,
+            'angle_wide_holm_reference': M.holm(all_p), 'n_graded_angle': len(all_p), 'tested': tested, '_all_hold_p': all_p}
+
+
+def print_prereg4(p4):
+    f = lambda v: f"{v['ex_ann']:+5.2f}(t{v['t']:+.1f})" if v else '    —     '
+    for fam, d in p4['families'].items():
+        print('==', fam)
+        for k, r in d['members'].items():
+            if 'full' not in r:
+                print(k, r.get('grade'), r.get('note')); continue
+            print(f"{k:10} {r['grade']} {r['start']} 全{f(r['full'])} 訓{f(r['train'])} 保{f(r['hold'])} 近{f(r['recent'])} 費後{f(r['hold_net'])} "
+                  f"20年{(r['roll20'] or {}).get('wins')}/{(r['roll20'] or {}).get('windows')} 国 全{r['repl']['positive']}/{r['repl']['regions']} "
+                  f"保{r['repl_hold_reported']['positive']}/{r['repl_hold_reported']['regions']} holm {r['holm_p']} te {r['hold']['te']}")
+    for c, d in p4['indices_reported'].items():
+        print(' ', c, ' '.join(f"{k}:{d[k]['full']['ex_ann']:+.1f}/{d[k]['hold']['ex_ann']:+.1f}(t{d[k]['hold']['t']:+.1f})" for k in d if d[k].get('full')))
+    ah = p4['angle_wide_holm_reference']
+    print('  angle-wide holm <0.05 (n=%d):' % p4['n_graded_angle'], {k: v for k, v in sorted(ah.items(), key=lambda x: x[1]) if v < 0.05})
+
+
+
+# ───────────────────────── 事後の診断（結果を見た後に足した・判定しない） ─────────────────────────
+def post_hoc(ctx, p2, p3):
+    """事後: JKP と French の差の出どころ・保有期間の前後半・年ごと・相対の最大下落。判定には使わない"""
+    rf, rmk, PF, side, cm, cand = ctx['rf'], ctx['rmk'], ctx['PF'], ctx['side'], ctx['cm'], ctx['cand']
+    out = {'label': '事後（結果を見た後に足した診断・判定には使わない）'}
+    cn = country_nstocks()
+    exus = collections.Counter()
+    for loc, d in cn.items():
+        if loc != 'usa':
+            for m, n in d.items():
+                exus[m] += n
+
+    def scr(loc, k, den):
+        pf = PF.get((loc, k))
+        if not pf:
+            return {}
+        o = {}
+        for m, (r, n) in pf[side[k]].items():
+            if n < N_MIN or m < START2 or not den.get(m):
+                continue
+            if sum(pf[q][m][1] for q in pf if m in pf[q]) / den[m] >= RTHR:
+                o[m] = r
+        return o
+
+    def mix(parts):
+        if not all(parts):
+            return {}
+        ms = set.intersection(*[set(q) for q in parts])
+        return {m: S.mean(q[m] for q in parts) for m in ms}
+
+    def rel_dd(s, b):
+        w, pk, dd, at = 1.0, 1.0, 0.0, None
+        for k in sorted(set(s) & set(b)):
+            w *= (1 + s[k]) / (1 + b[k]); pk = max(pk, w)
+            if w / pk - 1 < dd:
+                dd, at = w / pk - 1, k
+        return round(dd * 100, 1), at
+
+    def yearly(s, b, a=M.HOLD_START):
+        yr = collections.defaultdict(lambda: [1.0, 1.0])
+        for k in sorted(set(s) & set(b)):
+            if k >= a:
+                yr[k // 100][0] *= 1 + s[k]; yr[k // 100][1] *= 1 + b[k]
+        return {y: round((v[0] - v[1]) * 100, 1) for y, v in sorted(yr.items())}
+
+    wx = {k: scr('world_ex_us', k, exus) for k in CHARS}
+    vm = mix([mix([wx[k] for k in VALUE4]), wx['ret_12_1']])
+    mk = rmk['world_ex_us']
+    ms = sorted(set(vm) & set(mk) & set(rf))
+    s = to_total({m: vm[m] for m in ms}, rf); b = to_total({m: mk[m] for m in ms}, rf)
+    out['jkp_world_ex_us_val_mom'] = {'hold_2007_2015': M.excess_stats(s, b, a=200701, z=201512), 'hold_2016_2025': M.excess_stats(s, b, a=201601),
+                                      'yearly_hold': yearly(s, b), 'relative_max_drawdown_hold': rel_dd({k: s[k] for k in s if k >= M.HOLD_START}, b),
+                                      'relative_max_drawdown_full': rel_dd(s, b)}
+    one = mix([wx['be_me'], wx['ret_12_1']])
+    ms1 = sorted(set(one) & set(mk) & set(rf))
+    s1 = to_total({m: one[m] for m in ms1}, rf); b1 = to_total({m: mk[m] for m in ms1}, rf)
+    out['jkp_world_ex_us_bm_plus_mom_single_measure'] = {'why': 'French と同じ B/M だけの割安で作ると（割安4本の平均との差を見る）', **four(s1, b1)}
+    # 国の群ごとの単純平均（先進国・新興国）
+    grp = {'developed_ex_us': [c for c in cand if c in DEVELOPED], 'emerging_and_other': [c for c in cand if c not in DEVELOPED]}
+    for g, cs in grp.items():
+        pool = collections.defaultdict(list)
+        for c in cs:
+            base = {k: scr(c, k, cn.get(c, {})) for k in VALUE4 + ['ret_12_1'] if PF.get((c, k))}
+            vv = [base[k] for k in VALUE4 if k in base and base[k]]
+            if len(vv) < 2 or not base.get('ret_12_1'):
+                continue
+            vc = {}
+            for m in set().union(*[set(v) for v in vv]):
+                x = [v[m] for v in vv if m in v]
+                if len(x) >= 2:
+                    vc[m] = S.mean(x)
+            v2 = mix([vc, base['ret_12_1']])
+            mm = sorted(set(v2) & set(cm[c]) & set(rf))
+            if len(mm) < MIN_MONTHS:
+                continue
+            for m in mm:
+                pool[m].append(v2[m] - cm[c][m])
+        pm = {m: S.mean(v) for m, v in pool.items()}
+        out[f'val_mom_equal_weight_countries_{g}'] = {'countries': len(cs), 'full': ts_stats(pm), 'train': ts_stats(pm, z=M.TRAIN_END), 'hold': ts_stats(pm, a=M.HOLD_START)}
+    # French の val_mom（Developed ex US）の前後半・年ごと
+    fx = _fr_mkt('Developed_ex_US_3_Factors')
+    hb = _fr_vw('Developed_ex_US_6_Portfolios_ME_BE-ME')['BIG HiBM']; hp = _fr_vw('Developed_ex_US_6_Portfolios_ME_Prior_12_2')['BIG HiPRIOR']
+    fv = mix([hb, hp]); ms2 = sorted(set(fv) & set(fx))
+    s2 = {m: fv[m] for m in ms2}; b2 = {m: fx[m] for m in ms2}
+    out['french_dev_ex_us_val_mom'] = {'hold_2007_2015': M.excess_stats(s2, b2, a=200701, z=201512), 'hold_2016_2026': M.excess_stats(s2, b2, a=201601),
+                                       'yearly_hold': yearly(s2, b2), 'relative_max_drawdown_hold': rel_dd({k: s2[k] for k in s2 if k >= M.HOLD_START}, b2)}
+    # 日本の割安（JKP be_me）の相対の最大下落・年ごと
+    jb = scr('jpn', 'be_me', cn.get('jpn', {}))
+    ms3 = sorted(set(jb) & set(cm['jpn']) & set(rf))
+    s3 = to_total({m: jb[m] for m in ms3}, rf); b3 = to_total({m: cm['jpn'][m] for m in ms3}, rf)
+    out['jkp_japan_be_me'] = {'yearly_hold': yearly(s3, b3), 'relative_max_drawdown_full': rel_dd(s3, b3),
+                              'hold_2007_2015': M.excess_stats(s3, b3, a=200701, z=201512), 'hold_2016_2025': M.excess_stats(s3, b3, a=201601)}
+    return out
 
 
 
