@@ -280,6 +280,43 @@ def ew_rank_portfolio(R, L, skip, frac, unit, ceil_frac=True):
                        'eligible_median': S.median(cnt) if cnt else None}
 
 
+def seas_rank(R, a, b, frac=None, K=None, third=False, unit=0.0005):
+    """季節性: 月末 i に、翌月 m1 と同じ暦月の a〜b 年前（m1−100y）のリターンの平均で並べる（その年数ぶん全部そろう名前だけ）。
+    上位 K（または上位 1/3 切り上げ）を等分で翌月1か月持つ。後知恵なし: 1年前の同じ月 = m1−12か月 ≤ t"""
+    months = sorted(set().union(*[set(v) for v in R.values()]))
+    ret, cost, turn, elig = {}, {}, {}, []
+    prev_w, prev_r = None, None
+    for i in range(len(months) - 1):
+        m1 = months[i + 1]
+        sc = []
+        for nm, r in R.items():
+            vals = [r.get(m1 - 100 * y) for y in range(a, b + 1)]
+            if all(v is not None for v in vals) and m1 - 100 * a <= months[i]:
+                sc.append((-sum(vals) / len(vals), nm))
+        k = (math.ceil(len(sc) / 3) if third else K)
+        if not sc or k is None or len(sc) < max(k, 2):
+            prev_w = None
+            continue
+        sc.sort()
+        sel = [nm for _, nm in sc[:k]]
+        avail = [nm for nm in sel if m1 in R[nm]]
+        if not avail:
+            prev_w = None
+            continue
+        w2 = {nm: 1 / len(avail) for nm in avail}
+        rp = sum(R[nm][m1] for nm in avail) / len(avail)
+        if prev_w is not None:
+            drift = {nm: x * (1 + prev_r[nm]) / (1 + prev_r['_p']) for nm, x in prev_w.items()}
+            to = 0.5 * sum(abs(w2.get(q, 0.0) - drift.get(q, 0.0)) for q in set(drift) | set(w2))
+        else:
+            to = 0.0
+        ret[m1] = rp; turn[m1] = to; cost[m1] = to * unit; elig.append(len(sc))
+        prev_w = w2; prev_r = {nm: R[nm][m1] for nm in avail}; prev_r['_p'] = rp
+    yrs = len(turn) / 12 if turn else 0
+    return ret, cost, {'months': len(ret), 'from': min(ret) if ret else None, 'oneway_turnover_per_year': round(sum(turn.values()) / yrs, 3) if yrs else None,
+                       'eligible_median': S.median(elig) if elig else None}
+
+
 def kof(frac, N):
     return max(2, int(math.floor(frac * N + 0.5)))
 
@@ -407,6 +444,12 @@ def selftest():
     assert i4['months'] > 0
     xs = {m: random.gauss(0.01, 0.05) for m in months}; ys = {m: random.gauss(0.008, 0.04) for m in months}
     assert excess_stats(xs, ys) == M.excess_stats(xs, ys) and excess_stats(xs, ys, a=200201) == M.excess_stats(xs, ys, a=200201), 'excess_stats の高速版が mw_common と一致しない'
+    # 季節性の後知恵の検問: 各年の同じ月だけ A が上がる → 翌年の同じ月に A を持つ。当年の値を使っていないこと
+    months5 = [y * 100 + m for y in range(2000, 2006) for m in range(1, 13)]
+    R5 = {'A': {m: (0.10 if m % 100 == 3 else 0.0) for m in months5}, 'B': {m: 0.001 for m in months5}}
+    R5['A'][200003] = 0.0   # 2000年3月は上がらない → 2001年3月は B を持つはず（2000年3月の値だけが根拠）
+    r5, _, _ = seas_rank(R5, 1, 1, K=1, unit=0.0)
+    assert abs(r5[200103] - 0.001) < 1e-12 and abs(r5[200203] - 0.10) < 1e-12, ('季節性の窓がずれている', r5.get(200103), r5.get(200203))
     print('selftest OK', info, i2, i4)
 
 
@@ -749,6 +792,8 @@ def main():
     cands9 = [c for c in sorted(avail['portfolios']) if c not in REGIONS | SEEN8]
     ser9 = {}
     for c in cands9:
+        if 'ret_12_1' not in set(avail['portfolios'].get(c, [])):
+            ser9[c] = None; continue
         try:
             ser9[c] = add_rf(jkp_rows_filtered(c, 'ret_12_1', us_side), RF)
         except Exception as ex:  # noqa
@@ -806,6 +851,8 @@ def main():
         side_us, _ = M.jkp_good_side('usa', key, 'vw', upto=TR)
         ser = {}
         for c in cands9:
+            if key not in set(avail['portfolios'].get(c, [])):
+                ser[c] = None; continue   # JKP の一覧に無い（取得すると 403 を5回待つ）
             try:
                 ser[c] = add_rf(jkp_rows_filtered(c, key, side_us), RF)
             except Exception as ex:  # noqa
@@ -813,7 +860,35 @@ def main():
         panel(f'F15_panel_{key}_ew', f'まだ見ていない国々の JKP {key} 三分位（{side_us}）の等分 vs 同じ国々の市場の等分', ser, to, 0.003, pub=pub)
     log('phase4 panels done')
 
-    fams = ['F1', 'F2', 'F3g', 'F3s', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14', 'F15']
+    # ═════════ 第5次（out/mw_momentum_prereg5.json）═════════
+    WIN = {'1-1': (1, 1), '2-5': (2, 5), '6-10': (6, 10), '11-15': (11, 15), '16-20': (16, 20), '1-10': (1, 10), '1-20': (1, 20)}
+    seas_repl_cache = {}
+
+    def seas_repl(frac):
+        if frac not in seas_repl_cache:
+            units = {}
+            for c in GICS_UNITS:
+                r, cst_, info = seas_rank(GICS[c], 1, 10, K=kof(frac, 11), unit=0.0005)
+                units[c] = unit_stats(r, CMKT[c])
+            seas_repl_cache[frac] = repl_summary(units)
+        return seas_repl_cache[frac]
+    for N, R in IND.items():
+        for wk, (a, b) in WIN.items():
+            for frac in (0.15, 0.30):
+                K = kof(frac, N)
+                r, cst_, info = seas_rank(R, a, b, K=K, unit=0.0005)
+                lab = f'米国 {N}業種の季節性・{wk}年前の同じ暦月・上位{K}（{int(frac * 100)}%）・1か月保有'
+                if wk == '1-20' and frac == 0.15:
+                    evaluate(f'F16p_ind{N}_seas_1-20', 'F16p', lab, r, MKT, rule=lab, cost=cst_, repl=seas_repl(frac), pub=2008, extra={'info': info, 'K': K})
+                evaluate(f'F16g_ind{N}_seas_{wk}_K{int(frac * 100)}', 'F16g', lab, r, MKT, rule=lab, cost=cst_, repl=seas_repl(frac), pub=2008,
+                         extra={'info': info, 'K': K}, compact=True)
+    log('F16 done')
+    r, cst_, info = seas_rank({c: CMKT[c] for c in DEV23}, 1, 10, third=True, unit=0.0015)
+    evaluate('F17_country_seas_1-10_top_third', 'F17', '先進23か国の国の季節性（1〜10年前の同じ暦月）・上位1/3 等分 vs JKP developed mkt vw', r, CMKT['developed'],
+             rule='国の季節性 1-10 上位1/3', cost=cst_, pub=2008, extra={'info': info})
+    log('phase5 done')
+
+    fams = ['F1', 'F2', 'F3g', 'F3s', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14', 'F15', 'F16p', 'F16g', 'F17']
     fam_holm = finalize(fams)
     # ─ 診断（第4次・報告のみ）─
     diag = {}
@@ -826,7 +901,7 @@ def main():
     blocks = [(200701, 201112), (201201, 201612), (201701, 202112), (202201, 202612)]
     diag['D2_blocks'], diag['D3_capm'], diag['D4_breakeven'] = {}, {}, {}
     for e in TESTED:
-        if e['grade'] not in ('S', 'A') or e['family'] == 'F3g':
+        if e['grade'] not in ('S', 'A') or e['family'] in ('F3g', 'F16g'):
             continue
         s_, b_ = SERIES[e['id']]
         diag['D2_blocks'][e['id']] = {f'{a // 100}-{z // 100}': (round(S.mean(s_[k] - b_[k] for k in s_ if a <= k <= z) * 1200, 2) if any(a <= k <= z for k in s_) else None) for a, z in blocks}
@@ -857,10 +932,12 @@ def main():
     summary['top_by_net_hold_ex'] = [(e['id'], e['grade'], e['cost_hold']['ex_ann'], e['cost_hold']['t']) for e in top]
     sha2 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg2.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
     sha4 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg4.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
+    sha5 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg5.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
     sha3 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg3.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
     out = {'angle': 'momentum', 'prereg': f'out/{PRE}', 'prereg_commit': sha, 'prereg2': 'out/mw_momentum_prereg2.json', 'prereg2_commit': sha2,
            'prereg3': 'out/mw_momentum_prereg3.json', 'prereg3_commit': sha3,
-           'prereg4': 'out/mw_momentum_prereg4.json', 'prereg4_commit': sha4, 'global_prereg': 'out/mw_prereg.json',
+           'prereg4': 'out/mw_momentum_prereg4.json', 'prereg4_commit': sha4,
+           'prereg5': 'out/mw_momentum_prereg5.json', 'prereg5_commit': sha5, 'global_prereg': 'out/mw_prereg.json',
            'generated': datetime.date.today().isoformat(), 'sanity': sanity, 'family_holm': fam_holm, 'summary': summary,
            'deviations': DEVIATIONS, 'diagnostics': diag, 'tested': TESTED, 'log': LOG[-80:]}
     p = os.path.join(BASE, 'out', OUT)
