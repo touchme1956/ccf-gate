@@ -54,6 +54,7 @@ LARGE_N, INVEST_N = 500, 1000     # 大型株 = 集計の保有額の上位500�
 TOPK = 20                         # D: best idea に選んだ運用者の数が多い大型株 上位20
 PX_TOL = 0.15                     # 13F の暗黙の株価と Yahoo の当時の株価の照合の許容
 SPIKE = 3.0                       # 月 +300% 超はデータの誤り → その月から未観測
+RET_FROM = 201301                 # Yahoo のリターンと跳ねの検出は 2013-01 以降だけ（検証の窓）
 MISS_P30, MISS_P100 = -0.30, -1.00
 COST_SMALL, COST_LARGE = 0.003, 0.001
 # 事前登録2（データの掃除・結果を見る前）: ありえない株数
@@ -627,9 +628,7 @@ def yh_fetch(sym):
     pth = yh_path(sym)
     if os.path.exists(pth):
         return 'cached'
-    alt = os.path.join(IE_YH, sym + '.json')        # index_events が取った同じ形式の月次（読むだけ）
-    if os.path.exists(alt) and os.path.getsize(alt) > 0:
-        return 'ie_yh'
+    # index_events の ie_yh は使わない（期間の短いファイルが混じっていた＝EA・AVB は3か月だけ）→ 全部自分で取る
     u = (f'https://query1.finance.yahoo.com/v8/finance/chart/{urllib.request.quote(sym)}?period1=0&period2={int(time.time())}'
          f'&interval=1mo&events=div%2Csplit')
     for i in range(5):
@@ -655,7 +654,7 @@ def yh_load(sym):
     if sym in _yh:
         return _yh[sym]
     out = None
-    for pth in (yh_path(sym), os.path.join(IE_YH, sym + '.json')):
+    for pth in (yh_path(sym),):
         if not os.path.exists(pth):
             continue
         try:
@@ -679,21 +678,22 @@ def yh_load(sym):
                 close[k] = c_
             if a_ is not None and a_ > 0:
                 adj[k] = a_
-        splits = []
+        splits, splits_d = [], []
         for ev in ((r.get('events') or {}).get('splits') or {}).values():
             d = datetime.datetime.utcfromtimestamp(ev['date'])
             if ev.get('numerator') and ev.get('denominator'):
                 splits.append((d.year * 100 + d.month, ev['numerator'] / ev['denominator']))
-        ret, ks = {}, sorted(adj)
+                splits_d.append((d.date(), ev['numerator'] / ev['denominator']))
+        ret, ks = {}, sorted(k for k in adj if k >= RET_FROM)
         spike = None
-        for a0, k in zip(ks, ks[1:]):
+        for a0, k in zip(ks, ks[1:]):         # リターンと『+300% 超』の検出は検証の窓（2013-01〜）の中だけ（1990年代の跳ねで全部を未観測にしない）
             if madd(a0, 1) != k:
                 continue                      # 欠けた月をまたぐリターンは作らない
             x = adj[k] / adj[a0] - 1
             if x > SPIKE:
                 spike = k; break              # データの誤り → この月から先は未観測
             ret[k] = x
-        out = {'close': close, 'adj': adj, 'splits': splits, 'ret': ret, 'spike': spike,
+        out = {'close': close, 'adj': adj, 'splits': splits, 'splits_d': splits_d, 'ret': ret, 'spike': spike,
                'type': r['meta'].get('instrumentType'), 'name': r['meta'].get('longName') or r['meta'].get('shortName')}
         break
     _yh[sym] = out
@@ -753,7 +753,7 @@ def resolve(tasks, P, ftd, figi, fetch=True, rounds=8, threads=4):
             break
         syms = sorted(set(want.values()))
         if fetch:
-            todo = [s_ for s_ in syms if not os.path.exists(yh_path(s_)) and not os.path.exists(os.path.join(IE_YH, s_ + '.json'))]
+            todo = [s_ for s_ in syms if not os.path.exists(yh_path(s_))]
             print(f'  照合 {rd}: 対象 {len(want)} 組・記号 {len(syms)}・未取得 {len(todo)}', flush=True)
             with cf.ThreadPoolExecutor(threads) as ex:
                 res = list(ex.map(yh_fetch, todo))
@@ -944,7 +944,7 @@ def port_returns(W, strategy, res, L):
         if prev_end is not None:
             keys = set(v) | set(prev_end)
             turn.append(0.5 * sum(abs(v.get(k, 0) - prev_end.get(k, 0)) for k in keys))
-        alive = {cu: (st[cu][0] == 'ok') for cu in v}
+        alive = {cu: True for cu in v}      # 未観測（unmapped）も最初の月に L で現金化する（O では v に入っていない）
         cash = 0.0
         for m in ms:
             V0 = sum(v.values()) + cash
@@ -1053,6 +1053,7 @@ def evaluate(name, fam, desc, s, b, spy, rf, facs, turnover, cost, holm_p=None, 
 SPLIT_C = sorted({x for b_ in (2, 3, 4, 5, 6, 7, 8, 10, 12, 15, 20, 25, 30, 40, 50, 100, 1.5, 1.25, 1.2,
                                1.02, 1.03, 1.04, 1.05, 1.06, 1.08, 1.1) for x in (b_, 1 / b_)} | {1.0})
 Q_SPIKE = 3.0                     # 四半期 +300% 超はデータの誤り → 未観測
+Q_MIN_HOLDERS = 3                 # 道 Q の株価は両端とも3社以上の合意があるときだけ（結果を見る前の直し）
 _qpx = {}
 
 
@@ -1063,7 +1064,59 @@ def qpx(p):
     return _qpx[p]
 
 
+_ysym = None
+
+
+def _yahoo_split(cu, q0, q1):
+    """照合できた CUSIP は Yahoo の分割の記録（株価ではなく分割の事実だけ）を使う"""
+    global _ysym
+    if _ysym is None:
+        _ysym = {}
+        pth = os.path.join(C, 'resolved.json')
+        if os.path.exists(pth):
+            for k, v in json.load(open(pth)).items():
+                if v:
+                    _ysym.setdefault(k.split('|')[0], v)
+    sym = _ysym.get(cu)
+    y = yh_load(sym) if sym else None
+    if not y:
+        return None
+    # 株数の変化だけ（分割の候補の比に 0.5% 以内）を使う。分社化・増資の調整（1.158 等の半端な比）は価格だけの道では使わない
+    ev = [(d, r) for d, r in y.get('splits_d', []) if any(abs(r / c - 1) <= 0.005 for c in SPLIT_C if c != 1.0)]
+    e0, e1 = qend(q0), qend(q1)
+    lag = datetime.timedelta(days=10)
+    base = [r for d, r in ev if e0 < d <= e1 - lag]
+    amb = [r for d, r in ev if e0 - lag < d <= e0] + [r for d, r in ev if e1 - lag < d <= e1]
+    f0 = math.prod(base) if base else 1.0
+    if not amb:
+        return f0
+    # 期末の前後10日の分割は、Yahoo の日付（権利確定日のことがある）と 13F の株価の日付がずれうる → 株価の比が1に近づく方を採る
+    a, b_ = qpx(q0).get(cu), qpx(q1).get(cu)
+    pr = b_[0] / a[0] if a and b_ and a[0] > 0 else None
+    best_f = f0
+    if pr:
+        best_err = None
+        for mask in range(1 << len(amb)):
+            f = f0 * math.prod(r for i, r in enumerate(amb) if mask >> i & 1)
+            err = abs(math.log(pr * f))
+            if best_err is None or err < best_err:
+                best_f, best_err = f, err
+    return best_f
+
+
+def qend(q):
+    nxt = madd(q, 1)
+    return datetime.date(nxt // 100, nxt % 100, 1) - datetime.timedelta(days=1)
+
+
 def split_factor(cu, q0, q1):
+    yf = _yahoo_split(cu, q0, q1)
+    if yf is not None:
+        return yf, 'yahoo'
+    return split_factor_13f(cu, q0, q1)
+
+
+def split_factor_13f(cu, q0, q1):
     """q0→q1 の株数の倍率（分割・株式配当）。両方に居る持ち手の株数の比の最頻値が分割の候補に一致し（±1%）、
     持ち手の2割以上（3社以上）がちょうどその比なら採る。株価の動きで裏を取る（直すと株価の比が1へ近づくときだけ）"""
     a, b_ = qpx(q0).get(cu), qpx(q1).get(cu)
@@ -1075,15 +1128,22 @@ def split_factor(cu, q0, q1):
         return 1.0, 'few_common'
     rs = Counter(round(hb[c] / ha[c], 3) for c in com)
     r, n = rs.most_common(1)[0]
-    if n < max(3, 0.2 * len(com)):
-        return 1.0, 'no_mode'
-    cand = min(SPLIT_C, key=lambda x: abs(math.log(r / x)))
-    if abs(r / cand - 1) > 0.01 or cand == 1.0:
-        return 1.0, 'none'
     pr = b_[0] / a[0] if a[0] > 0 else None
-    if pr and abs(math.log(pr * cand)) < abs(math.log(pr)):
-        return cand, 'split'
-    return 1.0, 'unconfirmed'
+    if n >= max(3, 0.2 * len(com)):
+        cand = min(SPLIT_C, key=lambda x: abs(math.log(r / x)))
+        if abs(r / cand - 1) <= 0.01 and cand != 1.0:
+            if pr and abs(math.log(pr * cand)) < abs(math.log(pr)):
+                return cand, 'split'
+            return 1.0, 'unconfirmed'
+    # 予備（事前登録の後・結果を見る前の直し）: ちょうどの比の持ち手は少ない（売買で株数が動く）ので、
+    # 共通の持ち手の株数の比の中央値が 2倍以上（または 1/2 以下）の分割の候補に ±3% で合い、株価の比も1に近づくなら分割とみなす
+    if len(com) >= 5:
+        rm = S.median(hb[c] / ha[c] for c in com)
+        big = [x for x in SPLIT_C if abs(math.log(x)) >= math.log(2) - 1e-9]
+        cand = min(big, key=lambda x: abs(math.log(rm / x)))
+        if abs(rm / cand - 1) <= 0.03 and pr and abs(math.log(pr * cand)) < abs(math.log(pr)):
+            return cand, 'split_median'
+    return 1.0, 'none'
 
 
 def q_ret(cu, q0, q1):
@@ -1091,6 +1151,8 @@ def q_ret(cu, q0, q1):
     a, b_ = qpx(q0).get(cu), qpx(q1).get(cu)
     if not a or not b_ or a[0] <= 0 or b_[0] <= 0:
         return None
+    if a[1] < Q_MIN_HOLDERS or b_[1] < Q_MIN_HOLDERS:
+        return None                   # 持ち手が3社未満の株価は単位の誤りが混じる（合意にならない）→ 未観測
     k, _ = split_factor(cu, q0, q1)
     r = b_[0] * k / a[0] - 1
     return None if r > Q_SPIKE else r
@@ -1209,6 +1271,22 @@ def evaluate_q(name, fam, desc, s, b, turnover, cost, holm_p=None):
             'cost_per_unit': cost, 'full': full, 'train': train, 'hold': hold, 'recent': recent, 'net_cost_hold': cost_hold,
             'roll20': None, 'max_dd_quarterly': round(M.maxdd(s) * 100, 1) if s else None,
             'holm_p_hold': holm_p, 'grade': g, 'criteria': crit}
+
+
+DEVIATIONS = [
+    '事前登録の後・戦略の数字を見る前に直した誤り（すべて合成データの検算かデータの点検で発見）:',
+    '(1) port_returns: 組む時点で未観測（unmapped）の株が P30/P100 で −30% ではなく −100%（比重ごと消える）になっていた → 最初の月に L で現金化するよう直した（合成データの検算で発見）',
+    '(2) Yahoo の +300% 超の検出が 1990年代の跳ねも拾い、REGN・NVR・HUBB 等を検証の窓の全期間で未観測にしていた → 検出とリターンを 2013-01 以降に限った（事前登録の『その月から未観測』は窓の中の月に当てる）',
+    '(3) index_events の Yahoo キャッシュ（ie_yh）に3か月分しか無いファイルが混じっていた → 使わず、全部この道具で取り直した',
+    '(4) 2025-06〜08 の 13F の zip は中にフォルダがある → 読み方の修正',
+    '(5) データの掃除の追補（事前登録2・31866f3）: 株数ごと膨らんだ行・提出を除き、10 のべきの直しの許容を 0.05 に',
+    '(6) 道 Q の株価を取る範囲をどれかの戦略の組み入れに入る CUSIP に限った（実装だけ・規則は同じ）',
+    '(7) E6 の上位1000からも『株でないもの』（OpenFIGI の種類）を除いた（事前登録3の『株』の読み）',
+    '(8) 道 Q の分割の検出: 事前登録の『ちょうど同じ比の持ち手が2割以上』は売買で株数が動くため既知の分割（AAPL 7:1・NVDA 10:1・AMZN 20:1 等）を1つも拾えなかった → '
+    'Yahoo に照合できた CUSIP は Yahoo の分割の記録（比が分割の候補に合うものだけ・分社化の半端な比は使わない・期末前後10日は 13F の株価の比で帰属を決める）、'
+    '照合できない CUSIP は事前登録の方法＋予備（持ち手の株数の比の中央値が2倍以上の候補に±3%）。照合できた名前で Yahoo の分割と突き合わせて確かめた（結果を見る前）',
+    '(9) 道 Q の株価は両端とも持ち手3社以上の合意があるときだけ（1〜2社の株価に単位の誤りが混じり −99.9% が出ていた）',
+]
 
 
 def git_sha(path):
@@ -1359,6 +1437,7 @@ def main():
            'n_tested': len(tested), 'holm_primary': holm, 'holm_primary_Q': holmQ, 'holm_E': holmE, 'holm_E_Q': holmQE,
            'holm_real': rholm,
            'sanity': sanity, 'periods': per, 'top_best_ideas_by_period': top_bi,
+           'deviations': DEVIATIONS,
            'price_resolution': {'pairs': len(res), **res_stats},
            'series_monthly': {f'{k}__{v}': {str(m): round(x, 6) for m, x in sorted(r.items())} for (k, v), r in series.items() if v == 'O' or k in PRIMARY},
            'series_quarterly_Q': {f'Q_{k}__{v}': {str(m): round(x, 6) for m, x in sorted(r.items())} for (k, v), r in seriesQ.items() if v == 'O' or k in PRIMARY},
