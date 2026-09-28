@@ -701,6 +701,52 @@ def main():
              'jkp_info': jkp_info, 'replication_summary': repl_summary, 'B1_borrow_cost_E2_SSms': borrow,
              'L1_live_market_neutral': funds_mn, 'L2_japan_market_neutral': jp_mn}
 
+    # ═════════ 事後（結果を見た後の分解・判定に使わない）═════════
+    post_hoc = {'note': '事後: 探索2の結果（Century の米国の銘柄選択は保有期間 ≈0、米国外が強い、JKP では国の半分しか再現しない）を見た後で、どの部品が効いたかを分解した。判定・格には使わない'}
+    comp_stats = {}
+    for reg in ['US', 'Intl']:
+        for sty in ['Value', 'Momentum', 'Defensive', 'Multi-style']:
+            key = f'{reg} Stock Selection {sty}'
+            o = CEN[key]
+            comp_stats[key] = {'train': ann_stats(o, z=TE), 'hold': ann_stats(o, a=HS), 'recent': ann_stats(o, a=RS),
+                               'corr_mktrf_hold': corr_w(o, mktrf, a=HS)}
+    post_hoc['century_stock_selection_components_raw'] = comp_stats
+    yr = {}
+    for n in ['E2_SSms_v10_k50', 'P_TSMOM_k50', 'E1_CENms_v10_k100']:
+        sl = res[n]['_sleeve']
+        by = {}
+        for t, v in sl.items():
+            if t >= HS:
+                by[t // 100] = by.get(t // 100, 0.0) + v - DRAG / 12
+        yr[n] = {'years': len(by), 'positive_years': sum(1 for v in by.values() if v > 0),
+                 'by_year_pct': {y: round(v * 100, 2) for y, v in sorted(by.items())}}
+    for n in ['X2_CEN_INTLss_v10_k50']:
+        sl = res2[n]['_sleeve']
+        by = {}
+        for t, v in sl.items():
+            if t >= HS:
+                by[t // 100] = by.get(t // 100, 0.0) + v - DRAG / 12
+        yr[n] = {'years': len(by), 'positive_years': sum(1 for v in by.values() if v > 0),
+                 'by_year_pct': {y: round(v * 100, 2) for y, v in sorted(by.items())}}
+    post_hoc['sleeve_net_by_calendar_year_hold'] = yr
+    for reg in ['jpn', 'gbr', 'usa']:
+        post_hoc.setdefault('jkp_components_hold_raw', {})[reg] = {k: ann_stats(M.jkp_factor(reg, k, 'vw_cap'), a=HS) for k in ['be_me', 'ret_12_1', 'betabab_1260d']}
+    part2['post_hoc'] = post_hoc
+
+    # ── 結論（事前登録1の reality_gap の書き方どおり）
+    def live_ok(e, k='k50'):
+        h = e['hold_2007'][k]
+        return bool(h['ex_hold'] and h['ex_hold']['ex_ann'] > 0 and h['sharpe_hold'][0] > h['sharpe_hold'][1])
+    verdict = {
+        'paper_grades': {n: e['grade'] for n, e in {**res, **res2}.items() if e['grade'] in 'SAB'},
+        'trend_live_check_2007': {'survivors_k50': live_ok(comps['survivors_only']), 'with_dead_k50': live_ok(comps['with_dead']),
+                                  'survivors_k100': live_ok(comps['survivors_only'], 'k100'), 'with_dead_k100': live_ok(comps['with_dead'], 'k100')},
+        'equity_market_neutral_live_check_2007': {'k50': live_ok(funds_mn['composite_mn']), 'k100': live_ok(funds_mn['composite_mn'], 'k100')},
+        'multistyle_live_2013': {t: (funds[t]['stack_k50']['ex'] and funds[t]['stack_k50']['ex']['ex_ann'] > 0 and funds[t]['stack_k50']['sharpe'][0] > funds[t]['stack_k50']['sharpe'][1]) for t in ['QSPIX', 'QRPIX']},
+        'rule': '紙で A/S のものは、実在のファンドで保有期間の超過 > 0 かつ シャープ > 市場 が起きていなければ『紙の上だけ』（事前登録1）',
+    }
+    part2['verdict'] = verdict
+
     # ── 保存
     tested = []
     for n, e in res2.items():
@@ -739,6 +785,19 @@ def main():
         'reality_gap': {'funds': funds, 'composite': comps, 'paper_same_window_as_composite': paper_same},
         'japan_investability': {'toushin_lib': jp, 'tsumitate_lineup_hits': tl_hits, 'rakuten_us_etf_lineup': bl_check},
         'part2': part2,
+        'deviations': [
+            '指示書の費用（運用1%＋成功報酬20%＋証拠金の目減り0.2%）に、売買費用（年 T×c×0.05%・厳しめ0.10%）を足した（AQR の系列は費用前のため・指示書より厳しい側）',
+            '成功報酬は高値更新条件なし（前年の負けを取り戻す前でも取る＝厳しい側）',
+            'C5（地域の複製）は構造上ほぼ同じ数字になる: 重ねる戦略の算術の超過は k×(a−費用)−drag で、下に敷く市場に依らない。3地域とも自動的に同じ符号になるので、独立の証拠として数えない。独立の答え合わせは探索2の JKP 8か国と実在ファンドで行った',
+            '死んだファンドは Alpha Vantage の1日25回の枠（他の角度と共有）で MHFIX と PFFTX の2本だけ取れた。FUTS は同じ記号の無関係な低位株が返ったので不採用、WFIIX は AV に無し、RTSIX・WAVEX は枠切れで未取得（欠測のまま）',
+            'mw_common.yahoo は取れない記号で 2+4+8+16+32 秒待つので遅い（不具合ではない）',
+        ],
+        'strongest_caveats': [
+            '紙の S（E2_SSms・X2・E1_CENms）はすべて AQR の Century の作り方に依存する。同じ考え（割安＋勢い＋低ベータ）を JKP で作り直すと、米国は保有期間 −1.4%/年、8か国中4か国しか市場に勝たない。Century の中でも米国の銘柄選択は保有期間 ≈0 で、勝ちは米国外の銘柄選択（特に勢いと守り）から来ている',
+            '実在の株のマーケット・ニュートラル4本の合成は紙より年約7%低い（1998〜）。AQR 自身の QMNIX（2014〜）と BlackRock の BDMIX（2013〜）は紙に近い成績だった',
+            'トレンドの実在ファンド（生き残り17本＋死んだ2本）を重ねると 2007〜 の上乗せは年 +0.7〜0.9%（t≈0.8〜0.9）で、2008年と2022年を抜くとほぼ 0',
+            '日本の個人は楽天で DBMF・KMLM・CTA・RSST・NTSX・AQR の各ファンドを買えない。国内の投信は Man AHL の2本（うち1本は SMA 専用）と 2026-07 設定の明治安田『S&P500／ゴールド・プラス・Man トレンドフォロー戦略』だけで、NISA の印は つみたて対象外（nisaFlg=2）',
+        ],
         'runtime_sec': round(time.time() - t0, 1), 'log_tail': LOG[-80:],
     }
     p = M.save(OUT, out)
