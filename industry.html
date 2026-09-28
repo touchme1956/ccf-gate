@@ -41,6 +41,7 @@ tr.x td{background:var(--hl);white-space:normal;text-align:left}
 <div class="sub" id="meta">読み込み中…</div>
 
 <div class="card warn" id="check"></div>
+<div class="card" id="peak"><h2>比重が「過去最大」になった業種は、その後どうなったか</h2><div class="note">読み込み中…</div></div>
 
 <div class="card">
   <h2>業種の一覧 <span class="tag">見出しを押すと並べ替え・行を押すと推移と主な会社</span></h2>
@@ -116,4 +117,30 @@ fetch('out/industry_long.json',{cache:'no-cache'}).then(r=>r.json()).then(L=>{
  h+='</tbody></table></div><p class="note">年代の列＝その10年の株価の年率 − 市場（%/年）。緑は市場に勝った年代、赤は負けた年代。</p>';
  document.getElementById('long').innerHTML='<h2>100年で見る（1926〜・Ken French 49業種）</h2>'+h;
 }).catch(e=>{document.getElementById('long').innerHTML='<h2>100年で見る</h2><div class="note">out/industry_long.json を読めませんでした</div>';});
+Promise.all(['out/industry_peak.json','out/industry_exposure.json'].map(u=>fetch(u,{cache:'no-cache'}).then(r=>r.json()))).then(([K,X])=>{
+ const pr=K['主_閾値5%・次の10年・山ごと']||{},bs=K['比較群_記録でない年(比重5%以上)・10年']||{},p20=(K['道筋_山ごと']||{})['20年']||{};
+ const hs=(K['副']||{})['★後知恵: 山の最後の記録(最大の年)・10年']||{},ag=K['記録の後_5年以内にもう一度記録が来た割合(その時点の基礎率)']||{};
+ const sg=v=>v==null?'—':(v>0?'+':'')+v;
+ const now=(K['今_記録を付けている業種']||[]).map(r=>`${r.ja} ${P(r['比重'])}（${r['今の山の最初の記録']}年から記録${r['今の山の記録の年数']}回）`).join('・');
+ let h=`<h2>比重が「過去最大」になった業種は、その後どうなったか <span class="tag">1936〜${K['比重の最新の年']}・事前登録つき</span></h2>
+ <div class="note">いま記録を付けている業種: ${now||'—'}。比重（その業種の時価総額 ÷ 米国株全体）が、それまでのどの年よりも大きくなった年を「記録」と数え、その後10年・20年の株価を市場と比べた（比重5%以上の業種・同じ業種の続く記録は一つの山にまとめる）。</div>
+ <div class="kpis" style="margin-top:8px">
+ <div class="kpi"><b>判定（事前登録の決まりどおり）</b><span>${K['判定']}</span><div class="note">次の10年に市場に勝った山 ${pr['勝った山']}・中央値 ${sg(pr['中央値(%/年)'])}%/年</div></div>
+ <div class="kpi"><b>比べる相手: 記録ではない大きな業種</b><span>${sg(bs['中央値(%/年)'])}%/年</span><div class="note">勝率 ${Math.round((bs['勝率']||0)*100)}%（比重5%以上の業種の年 ${bs['業種の年']}）</div></div>
+ <div class="kpi"><b>次の20年</b><span>${sg(p20['中央値(%/年)'])}%/年</span><div class="note">勝った山 ${p20['勝った山']||'—'}</div></div>
+ <div class="kpi"><b>記録の後、5年以内にもう一度記録</b><span>${Math.round((ag['割合']||0)*100)}%</span><div class="note">記録は続きやすい。どれが最後の記録かは、その時点では分からない</div></div></div>
+ <p class="note">★「最大だった年」から数えると ${sg(hs['中央値(%/年)'])}%/年（勝った山 ${hs['勝った山']}）とずっと悪く見える。最大の年は後から見て初めて分かる年で、その後は定義上比重が下がるため。上の数字は、その時点で分かる記録ごとに数えた後知恵なしの版。</p>
+ <div class="tw"><table><thead><tr><th>業種</th><th>記録の年</th><th>比重</th><th>次の10年 対市場</th><th>次の20年</th><th>10年後の比重</th></tr></thead><tbody>`;
+ for(const r of (K['山']||[])){const a=r['次の10年の超過(山の中央値・%/年)'],b=r['次の20年の超過(山の中央値・%/年)'],m=r['10年後の比重÷記録の年(山の中央値)'];
+  h+=`<tr><td>${r.ja}${r['今も続いている']?'<span class="tag">続いている</span>':''}</td><td>${r['最初の記録']===r['最後の記録']?r['最初の記録']:r['最初の記録']+'〜'+r['最後の記録']}（${r['記録の年数']}回）</td><td>${P(r['最初の比重'])}→${P(r['最大の比重'])}</td><td class="${cls(a)}">${a==null?'—':sg(a)}</td><td class="${cls(b)}">${b==null?'—':sg(b)}</td><td>${m==null?'—':m.toFixed(2)+'倍'}</td></tr>`;}
+ h+=`</tbody></table></div><p class="note">対市場＝業種の年率 − 市場の年率（%/年・配当込み）。山の中の記録ごとの値の中央値。長い山（家庭用品1963〜・銀行1988〜・コンピュータ機器1961〜）では、最初のほうの記録の後は勝ち、終わりのほうの記録の後に大きく負けた。</p>`;
+ const M=X['米国市場全体(French・2025年末)']||{},n=X['今の保有']||{},t=X['目標の姿']||{};
+ const two=(b,c)=>(b[`記録の二業種(ソフトウェア＋半導体・電子部品)_${c}`]||{})['%'];
+ h+=`<h2 style="margin-top:14px">自分のお金のうち、この二つの業種に乗っている割合</h2>
+ <div class="kpis"><div class="kpi"><b>米国株全体</b><span>${M['二つの合計(%)']}%</span><div class="note">ソフトウェア ${M['ソフトウェア(%)']}%・半導体・電子部品 ${M['半導体・電子部品(%)']}%</div></div>
+ <div class="kpi"><b>今の保有</b><span>${two(n,'French寄せ')}%</span><div class="note">ソフトウェア ${(n['記録の二業種(ソフトウェア＋半導体・電子部品)_French寄せ']||{})['ソフトウェア(%)']}%・半導体・電子部品 ${(n['記録の二業種(ソフトウェア＋半導体・電子部品)_French寄せ']||{})['半導体・電子部品(%)']}%・未分類 ${n['未分類(%)']}%</div></div>
+ <div class="kpi"><b>目標の姿（個別20・iFreeNEXT 60・SMH 20）</b><span>${two(t,'French寄せ')}%</span><div class="note">ソフトウェア ${(t['記録の二業種(ソフトウェア＋半導体・電子部品)_French寄せ']||{})['ソフトウェア(%)']}%・半導体・電子部品 ${(t['記録の二業種(ソフトウェア＋半導体・電子部品)_French寄せ']||{})['半導体・電子部品(%)']}%</div></div></div>
+ <p class="note">ETF は中身の銘柄まで分解し、SEC の業種コードで French と同じ49業種に分けた。Apple は French の分類に合わせて半導体・電子部品に数えた（SEC の業種コードのままならコンピュータ機器で、今 ${two(n,'EDGAR')}%・目標 ${two(t,'EDGAR')}%）。ASML・LRCX は French の分類では「機械」なので上の割合に入っていない。半導体の装置まで含めた半導体の連鎖は 今 ${n['半導体の連鎖(装置・材料を含む・lookthrough の SEMI)(%)']}%・目標 ${t['半導体の連鎖(装置・材料を含む・lookthrough の SEMI)(%)']}%。</p>`;
+ document.getElementById('peak').innerHTML=h;
+}).catch(e=>{document.getElementById('peak').innerHTML='<h2>比重が「過去最大」になった業種は、その後どうなったか</h2><div class="note">out/industry_peak.json・out/industry_exposure.json を読めませんでした</div>';});
 </script></body></html>
