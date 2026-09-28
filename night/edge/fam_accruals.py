@@ -24,7 +24,8 @@
   再現: JKP 先進国22か国（米国を除く）に同じ特徴・同じ側・同じ重み。国の相手は JKP の国の mkt（vw）＋米国 RF（米ドル）。
 
 使い方: python3 night/edge/fam_accruals.py          → 変種の表（選定の段・2000-12 まで）
-        python3 night/edge/fam_accruals.py --save   → 選んで凍結（out/edge/spec_accruals.json）
+        python3 night/edge/fam_accruals.py --save LOOKAHEAD.json   → 選んで凍結（out/edge/spec_accruals.json）
+          LOOKAHEAD.json は先読み検査（scratchpad の lookahead_accruals.py）の結果。ok でなければ凍結しない
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -215,9 +216,6 @@ def select():
     return D, rows
 
 
-LOOKAHEAD = None          # main(save=True) の前に scratchpad の lookahead_accruals.py の結果で埋める（下の _lookahead_text）
-
-
 def _lookahead_text(res):
     return ('scratchpad の lookahead_accruals.py で確かめた（すべて食い違い0）: '
             f"(1) 切り口: EDGE_SEL_END=199012 と 200012 で別プロセスに走らせ、1990-12 までの規則・相手・回転（{res['prefix_months']}か月）と"
@@ -258,10 +256,56 @@ def main(save=False, la=None):
     print('選定期間:', st)
     print('他の市場（選定期間・参考）:', mkt_sel)
     if not save:
-        return best, st, rows, mkt_sel
+        return best, st
     assert la and la.get('ok'), la
-    return best, st, rows, mkt_sel, spec, how, tbl, D, r
+    sub = best['sub']
+    g = {x['name']: x for x in rows}
+    sloan = g['oaccruals_at|vw_cap']
+    vwv = g[best['name'].split('|')[0] + '|vw']
+    badv = g[f"{best['spec']['chars'][0]}|vw_cap|悪い側（参考）"] if len(best['spec']['chars']) == 1 else None
+    pos = sum(1 for v in mkt_sel.values() if v['excess'] > 0)
+    rationale = (
+        f"【規則】{best['name']}: 米国上場株を JKP の特徴 {'・'.join(best['spec']['chars'])} で三分位に分け、発生主義の利益が小さい三分位"
+        "（'1.0'）を買いだけで持つ" + ('（脚は等分・毎月戻す）' if len(best['spec']['chars']) > 1 else '') +
+        f"。重みは {best['spec']['w']}（vw_cap＝NYSE の80%点で1社の重みに上限／vw＝上限なしの時価加重）。組は JKP が m−1 月末に組んだものをそのまま使う。"
+        '【なぜ】Sloan（1996, The Accounting Review）: 利益のうち現金の裏付けの無い部分（発生主義の利益＝運転資本の増分−減価償却）は'
+        '現金の部分より持続しにくいのに、投資家は利益を一まとめに見て両者の持続性の差を株価に織り込まない＝発生主義の利益が大きい会社は'
+        '翌年以降に利益が落ちて株価が失望し、小さい会社は相対的に報われる（1962-1991 の米国で両端の十分位の差 年約10%）。'
+        '経営者の利益調整（引当金・在庫・売掛金の積み増し）の痕跡でもある。'
+        'oaccruals_ni は同じ発生主義の利益を純利益の絶対値で割る（利益の何割が発生主義か＝Hafzalla・Lundholm・Van Winkle 2011 の percent accruals）。'
+        '⚠ oaccruals_ni（2011）と taccruals_at（Richardson ら 2005）の定義は2001年以降に公表された——2000年までに知られていたのは Sloan の oaccruals_at だけ。'
+        '事前登録 r6 はこの3本を系統に並べたので、選び方（t が最大）どおりに選んだが、その分だけ『後から見つかった測り方』を選ぶ後知恵がある。'
+        f"【選定期間 {st['from']}〜{st['to']}（{st['years']}年）】費用後の年率 {st['cagr']}% 対 French 米国市場 {st['bench_cagr']}%、"
+        f"超過 {st['excess']:+}%/年、t {st['t']}（Newey-West {st['t_nw']}）、ぶれ {st['vol']}% 対 {st['bench_vol']}%、"
+        f"最大下落 {st['maxdd']}% 対 {st['bench_maxdd']}%、転がる10年で勝った窓 {st['roll10_win']}。"
+        f"市場に対するβ {best['beta']}・CAPM のα {best['alpha_capm']:+}%/年。JKP の上限つき市場（vw_cap）に対しては {best['ex_vs_jkp_capped_mkt']:+}%/年"
+        '＝超過のうち「上限つきの重み（中型寄り）」の分は小さい。'
+        f"部分期間: 1952-1962 {sub['1952-1962']['excess']:+}%/年（t {sub['1952-1962']['t']}）・1963-1995 {sub['1963-1995']['excess']:+}%/年（t {sub['1963-1995']['t']}）・"
+        f"1996-2000（Sloan の公表後）{sub['1996-2000（Sloan 公表後）']['excess']:+}%/年（t {sub['1996-2000（Sloan 公表後）']['t']}）＝効きはほぼ 1963-1995 に集まり、公表後の5年は小さい。"
+        f"参考: Sloan 自身の測り方 oaccruals_at|vw_cap は {sloan['stats']['excess']:+}%/年（t {sloan['stats']['t']}）・公表後 {sloan['sub']['1996-2000（Sloan 公表後）']['excess']:+}%/年。"
+        f"上限なしの vw では {vwv['stats']['excess']:+}%/年（t {vwv['stats']['t']}）＝巨大株の重みを抑えないと効きは6割ほどに縮む。"
+        + (f"悪い側（発生主義の大きい三分位・vw_cap）は {badv['stats']['excess']:+}%/年（t {badv['stats']['t']}）で、良い側より悪い（系統の前提の向き）。" if badv else '') +
+        f"【選び方】{how}。選べる14変種はすべて +1%/年 以上で t 2.6〜5.6（3本とも同じ向き・どの組でも効く＝一本の数字だけで効く規則ではない）。"
+        f"【他の市場（選定期間・参考）】国のデータは 1983〜1998 年に始まり 2〜17 年しかない。超過が正は {pos}/{len(mkt_sel)} か国＝選定期間の国の比較はほぼ雑音。"
+        '【予想】事前登録 r6 の予想どおり、米国では公表後に弱まった（1996-2000 の小ささ）。ホールドアウトで +1%/年・t≥2 を満たす見込みは高くない。'
+    )
+    extra = {'implement': FAMILY['implement'], 'family_name': FAMILY['name'], 'lookahead_test': _lookahead_text(la),
+             'lookahead_result': la, 'directions': D, 'variants_table': tbl, 'markets': list(r['markets']),
+             'markets_selection_period': mkt_sel, 'selection_note': how,
+             'variants_note': '選べる14（1本ずつ3・2本の等分3・3本の等分1 × 重み vw_cap/vw）＋参考3（悪い側・向きの確かめ・選ばない）＝17。'
+                              '変種の一覧は、向きの確かめ（3本の三分位の月平均の並び）を見た後・変種の成績を見る前に「すべての組み合わせ」として固定した',
+             'benchmark': 'French 米国市場（Mkt-RF＋RF・CRSP 全上場の上限なし時価加重）。他の国は JKP の国の mkt（vw＝上限なし・米ドル超過）＋French RF',
+             'cost_note': '片道の回転100%につき0.25%。回転は 50%/年（事前登録 r6 の会計の信号の置き値）＋等分の組の毎月の戻し',
+             'eligible_variants': sum(1 for x in rows if x['eligible']), 'reference_variants': sum(1 for x in rows if not x['eligible'])}
+    doc = h.save_spec('accruals', spec, rationale, len(rows), st, extra)
+    print('凍結:', best['name'], doc['n_variants_tried'])
+    return doc
 
 
 if __name__ == '__main__':
-    main(save=False)
+    if '--save' in sys.argv:
+        import json
+        la = json.load(open(sys.argv[sys.argv.index('--save') + 1]))
+        main(save=True, la=la)
+    else:
+        main(save=False)

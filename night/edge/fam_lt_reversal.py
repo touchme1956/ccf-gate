@@ -308,18 +308,25 @@ def main(save=False, la_result=None):
         f"1981-2000 {sub['1981-2000']['excess']:+}%/年（t {sub['1981-2000']['t']}）。"
         f"Fama-French 3因子の α は {f3['alpha_pct_yr']:+}%/年（t {f3['t_alpha']}・HML の係数 {f3['b_hml']}・SMB {f3['b_smb']}）＝上乗せの多くは割安と小型への傾きで説明される"
         f"（1963〜: α {f3_63['alpha_pct_yr']:+}%/年・t {f3_63['t_alpha']}・HML {f3_63['b_hml']}）。"
-        f"1月の偏り: 月平均の超過は1月 {jan['1月だけ']['mean_ex_pct_per_month']}%（t {jan['1月だけ']['t']}）・1月以外 {jan['1月以外']['mean_ex_pct_per_month']}%（t {jan['1月以外']['t']}）。"
+        f"1月の偏り: 月平均の超過は1月 {jan['1月だけ']['mean_ex_pct_per_month']}%（t {jan['1月だけ']['t']}）・1月以外 {jan['1月以外']['mean_ex_pct_per_month']}%（t {jan['1月以外']['t']}）"
+        f"＝算術の超過 {st['ex_arith']}%/年のうち {jan['1月だけ']['contrib_pct_yr']}%/年が1月の分（De Bondt-Thaler 1985 自身が報告した偏り・年末の節税売りの反動）。"
+        '規則は月を選ばず通年で持つ（1月だけ持つ変種は作っていない）が、効きの源が一つの月に集まっていることは弱みとして書いておく。'
         f"JKP の上限つき市場（vw_cap）に対しては {best['ex_vs_jkp_capped_mkt']:+}%/年。"
         f"参考: もう一方の重み（{other_w['spec']['w']}）の負け組は {other_w['stats']['excess']:+}%/年（t {other_w['stats']['t']}）、"
         f"勝ち組を避ける（負け＋中の等分・{avoid['spec']['w']}）は {avoid['stats']['excess']:+}%/年（t {avoid['stats']['t']}）、"
         f"勝ち組の三分位（{win['spec']['w']}）は {win['stats']['excess']:+}%/年（t {win['stats']['t']}）＝負け組 ＞ 勝ち組 の向きは選定期間で成り立つ。"
         f"【選び方】{how}。"
-        f"【他の市場（選定期間・参考・1986年ごろから）】先進国22か国のうち選定期間の超過が正は {pos}/{len(mkt_sel)}（国のデータは 1980年代後半に始まり15年前後しかない）。"
-        '【予想】事前登録 r6 の予想どおり、割安と同じ源泉なので 2001年以降の米国（大型・グロース優位）では負ける見込みが高い。'
+        f"【他の市場（選定期間・参考）】先進国22か国のうち選定期間に24か月以上ある {len(mkt_sel)} か国で超過が正は {pos}（国の ret_60_12 は5年の過去が要るので"
+        '1991年ごろに始まり、選定期間は2〜14年しかない＝雑音が大きい。1990年代の日本・欧州の不振と重なる）。'
+        f"【予想】事前登録 r6 の予想は「割安と同じく2001年以降の米国では負ける」。選定期間でも 1981-2000 の20年は t {sub['1981-2000']['t']} と弱く、FF3 の α は負。"
+        '（調べる側は2001年以降の割安の不振を知っている——この予想自体に後知恵がある）。'
         '回転の置き値 200%/年は、5年の窓がゆっくり動く ret_60_12 には重めの可能性がある（実際の回転は公表されていない）。'
     )
     extra = {'implement': FAMILY['implement'], 'family_name': FAMILY['name'], 'lookahead_test': LOOKAHEAD,
-             'lookahead_result': la_result, 'direction': D, 'variants_table': tbl, 'markets': list(r['markets']),
+             'lookahead_result': la_result, 'direction': D, 'variants_table': tbl, 'markets': list(REPL),
+             'markets_note': ('再現は事前登録 r6 の先進国22か国すべてに当てる（run の markets のキー＝JKP の3文字）。'
+                              '選定期間（〜2000-12）に三分位20社以上の月が24か月以上あるのは ' + str(len(r['markets'])) + ' か国（'
+                              + ' '.join(sorted(r['markets'])) + '）。fin・irl・prt・isr は2000年以前が薄く、ホールドアウトで24か月以上そろえば入る'),
              'markets_selection_period': mkt_sel, 'selection_note': how, 'ff3_selection': {'1931-2000': f3, '1963-2000': f3_63},
              'january': jan,
              'benchmark': 'French 米国市場（Mkt-RF＋RF・CRSP 全上場の上限なし時価加重）。他の国は JKP の国の mkt（vw＝上限なし・米ドル超過）＋French RF',
@@ -331,4 +338,8 @@ def main(save=False, la_result=None):
 
 
 if __name__ == '__main__':
-    main(save='--save' in sys.argv)
+    la = None
+    if '--la' in sys.argv:                      # scratchpad の先読み検査の結果（JSON）を spec に同梱する
+        import json
+        la = json.load(open(sys.argv[sys.argv.index('--la') + 1]))
+    main(save='--save' in sys.argv, la_result=la)

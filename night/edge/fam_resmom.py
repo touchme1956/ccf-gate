@@ -215,18 +215,19 @@ def select():
     return D, rows
 
 
-def lookahead_test(spec):
+def lookahead_test(spec, region='usa', cuts=(194012, 196512, 198512, 199512, 199912), min_n=MIN_N):
     """(1) 切り詰め: 全入力（脚のリターン・銘柄数・RF）を月 X で切っても X までの規則のリターンと回転が1つも変わらない
-       (2) 毒: X より後の脚のリターン・銘柄数・RF を別の値（1か月ずらし＋乱数）に置き換えても X までは不変（後ろは変わる＝空回りしていない）
+       (2) 毒: X より後の脚のリターン（1か月ずらし＋乱数）・銘柄数（乱数）・RF（乱数）に置き換えても X までは不変
+           （X より後は変わる＝検査が空回りしていない）
        (3) 最後の1か月を削っても、それ以前は不変
-       (4) 月合わせ: 規則の月 m の総リターン − 月 m の RF = 脚の月 m の超過の等分（1脚なら一致）
+       (4) 月合わせ: 規則の月 m の総リターン − 月 m の RF = 脚の月 m の超過の等分（毎月等分へ戻すので脚が何本でも一致）
        (5) 側（信号）は spec の定数で、データから再推定しない"""
     import random
     mk, rf = h.us_market()
-    full, ftv = build(spec, 'usa', rf, MIN_N)
+    full, ftv = build(spec, region, rf, min_n)
     saved = {k: v for k, v in _MEMO.items()}
-    res = {}
-    cuts = [194012, 196512, 198512, 199512, 199912]
+    res = {'region': region, 'months': len(full)}
+    cuts = [X for X in cuts if full and min(full) < X < max(full)]
     rnd = random.Random(20260928)
     try:
         ok1 = ok2 = True
@@ -235,32 +236,32 @@ def lookahead_test(spec):
             for k, v in saved.items():
                 _MEMO[k] = {s: ({m: r for m, r in p.items() if m <= X}, {m: n for m, n in c.items() if m <= X}) for s, (p, c) in v.items()}
             rfX = {m: v for m, v in rf.items() if m <= X}
-            part, ptv = build(spec, 'usa', rfX, MIN_N)
+            part, ptv = build(spec, region, rfX, min_n)
             ok1 &= set(part) == {m for m in full if m <= X} and all(abs(part[m] - full[m]) < 1e-15 and abs(ptv[m] - ftv[m]) < 1e-15 for m in part)
             _MEMO.clear()
             for k, v in saved.items():
                 _MEMO[k] = {s: ({m: (r if m <= X else p.get(h.add_months(m, -1), r) + rnd.uniform(-0.05, 0.05)) for m, r in p.items()},
                                 {m: (n if m <= X else rnd.randint(0, 2 * n + 1)) for m, n in c.items()}) for s, (p, c) in v.items()}
             rfP = {m: (v if m <= X else rnd.uniform(0, 0.01)) for m, v in rf.items()}
-            part, ptv = build(spec, 'usa', rfP, MIN_N)
+            part, ptv = build(spec, region, rfP, min_n)
             ok2 &= all(m in part and abs(part[m] - full[m]) < 1e-15 and abs(ptv[m] - ftv[m]) < 1e-15 for m in full if m <= X)
             ok2 &= any(m not in part or abs(part[m] - full[m]) > 1e-12 for m in full if m > X)
+        res['cuts'] = cuts
         res['truncate'] = ok1
         res['poison_future'] = ok2
         _MEMO.clear()
         last = max(full)
         for k, v in saved.items():
             _MEMO[k] = {s: ({m: r for m, r in p.items() if m < last}, c) for s, (p, c) in v.items()}
-        part, _ = build(spec, 'usa', rf, MIN_N)
+        part, _ = build(spec, region, rf, min_n)
         res['drop_last_month'] = all(abs(part[m] - full[m]) < 1e-15 for m in full if m < last)
     finally:
         _MEMO.clear()
         _MEMO.update(saved)
-    Ls = [legs('usa', ch, spec['w'])[side][0] for ch, side in spec['legs']]
-    res['month_align_maxdiff'] = max(abs(full[m] - rf[m] - sum(x[m] for x in Ls) / len(Ls)) for m in full) if len(Ls) == 1 else 'n/a（等分は毎月戻すので脚の単純平均と一致しない）'
+    Ls = [legs(region, ch, spec['w'])[side][0] for ch, side in spec['legs']]
+    res['month_align_maxdiff'] = max(abs(full[m] - rf[m] - sum(x[m] for x in Ls) / len(Ls)) for m in full)
     res['sides_constant'] = all(side in (LOW, MID, HIGH) for _, side in spec['legs'])
-    res['ok'] = ok1 and ok2 and res['drop_last_month'] and res['sides_constant'] and (
-        not isinstance(res['month_align_maxdiff'], float) or res['month_align_maxdiff'] < 1e-12)
+    res['ok'] = bool(cuts) and ok1 and ok2 and res['drop_last_month'] and res['sides_constant'] and res['month_align_maxdiff'] < 1e-12
     return res
 
 
@@ -300,9 +301,78 @@ def main(save=False):
     if not save:
         return best, st, D, rows, mkt_sel
     la = lookahead_test(spec)
-    print('lookahead', la)
-    assert la['ok'], la
-    return best, st, D, rows, mkt_sel, spec, r, how, la
+    la_c = {c: lookahead_test(spec, c, cuts=(199312, 199612, 199912), min_n=MIN_N_REPL) for c in ('gbr', 'jpn', 'can')}
+    print('lookahead', la, la_c)
+    assert la['ok'] and all(x['ok'] for x in la_c.values()), (la, la_c)
+    mk, rf = h.us_market()
+    # 参考: 普通の勢い（ret_12_1 の良い側・vw_cap）を同じ窓で（崩れの深さと t の比較）
+    pm = next(x for x in rows if x['name'].startswith('普通の勢い'))
+    pr, ptv = build(pm['spec'], 'usa', rf, MIN_N)
+    pm_same = h.stats(pr, mk, rf, a=st['from'], b=h.SEL_END, turnover=ptv, cost=COST)
+    ms = sorted(set(pr) & set(r['ret']) & set(mk))
+    corr = round(_corr([pr[m] - mk[m] for m in ms], [r['ret'][m] - mk[m] for m in ms]), 2)
+    sub = best['sub']
+    pos = sum(1 for v in mkt_sel.values() if v['excess'] > 0)
+    d12 = D['resff3_12_1']
+    same_risk = st['vol'] <= st['bench_vol'] * 1.1 and st['maxdd'] >= st['bench_maxdd'] - 5
+    rationale = (
+        '【規則】米国上場株を、過去 t−12〜t−1 か月の Fama-French 3因子（市場・規模・割安）の残差の累積を残差のぶれで割った値'
+        '（JKP の resff3_12_1）で三分位に分け、値の大きい三分位（\'3.0\'）を上限つきの時価加重（JKP vw_cap＝NYSE の80%点で重みに上限）で'
+        '買いだけで持つ。組は JKP が毎月 m−1 月末に組んだものをそのまま使い、月 m のリターンを取る。三分位が50社未満の月は使わない。'
+        '【なぜ（2000年以前の理由）】(1) 勢い（Jegadeesh・Titman 1993）: 過去12か月に上がった株は次の数か月も市場に勝ちやすい。'
+        '原因は情報がゆっくり伝わること・投資家の過小反応（Barberis・Shleifer・Vishny 1998、Daniel・Hirshleifer・Subrahmanyam 1998、Hong・Stein 1999）。'
+        '(2) 普通の勢いは、過去に上がった「因子」（市場・小型・割安）への傾きを抱えるので、因子の向きが反転すると一斉に崩れる'
+        '（Grundy・Martin 2001〔1998年の working paper〕: 因子の分を除いた会社固有の勢いのほうが安定）。'
+        '残差の勢いは因子の分を除いた会社固有の過小反応だけを取り、さらに残差のぶれで割るので、特定の荒い銘柄に偏らない。'
+        '⚠ この系統の名前（Blitz・Huij・Martens 2011）は選定期間より後の論文で、調べる側はその論文が2000年以降の米国・他国でも効いたと報告したことを知っている＝後知恵。'
+        f'【向き】JKP の因子と 3.0−1.0 の相関 {d12["corr_factor_vs_3minus1"]}（＝direction +1）・三分位の年平均の超過（vw_cap・50社以上の月）'
+        f'{d12["tercile_mean_excess_pct_yr_vw_cap"]}＝1<2<3 の単調な並び。よって良い側は \'3.0\'（残差の勢いが大きい側）。'
+        f'【選定期間 {st["from"]}〜{st["to"]}（{st["years"]}年・JKP の resff3 は三分位が50社そろうのが 1953-05 から）】'
+        f'費用後（回転 200%/年 × 0.25%＝年0.5%）の年率 {st["cagr"]}% 対 French 米国市場 {st["bench_cagr"]}%、超過 {st["excess"]:+}%/年、'
+        f't {st["t"]}（Newey-West {st["t_nw"]}）、ぶれ {st["vol"]}% 対 {st["bench_vol"]}%、最大下落 {st["maxdd"]}% 対 {st["bench_maxdd"]}%、'
+        f'転がる10年で勝った窓 {st["roll10_win"]}、β {best["beta"]}・CAPM のα {best["alpha_capm"]:+}%/年'
+        f'（{"同じリスクの区分に入る" if same_risk else "リスクを増やしている"}）。'
+        f'JKP の上限つき市場（vw_cap）に対しても {best["ex_vs_jkp_capped_mkt"]:+}%/年＝超過は重みの付け方（中型寄り）の分ではない。'
+        f'部分期間: 〜1962 {sub["〜1962"]["excess"]:+}%/年（t {sub["〜1962"]["t"]}）・1963-1985 {sub["1963-1985"]["excess"]:+}（t {sub["1963-1985"]["t"]}）・'
+        f'1986-2000 {sub["1986-2000"]["excess"]:+}（t {sub["1986-2000"]["t"]}）＝3つの時期すべてで正。'
+        f'超過の悪い月 {best["worst_months"]}。'
+        f'参考: 同じ窓の普通の勢い（ret_12_1 の良い側・vw_cap）は 超過 {pm_same["excess"]:+}%/年・t {pm_same["t"]}・ぶれ {pm_same["vol"]}%・最大下落 {pm_same["maxdd"]}%'
+        f'（超過どうしの相関 {corr}）＝同じくらいの上乗せを、より小さいぶれで取っている（予想「普通の勢いより崩れが浅い」と同じ向き）。'
+        f'【選び方】{how}。t が次に大きいのは『12-1と6-1の良い側を等分・vw_cap』（t 5.64）で、どちらも同じ系統。'
+        'vw（上限なし）の変種は弱い（12-1 で +3.29%/年・t 3.49）——上限なしの三分位は数社の巨大株の動きに振られる（1974-01・1974-12 に市場より −18% の月がある）。'
+        f'【他の市場（選定期間・参考）】先進国のうち三分位が20社以上そろう月が24か月以上ある{len(mkt_sel)}か国で、超過が正は {pos}/{len(mkt_sel)}'
+        '（国のデータは 1984〜1997年ごろに始まり、多くは10年前後しかない＝雑音が大きい）。'
+        '【予想】米国では公表（2011）後と2009年の勢いの崩れで上乗せは小さくなる見込み（事前登録 r6 の予想「米国では小さい」）。'
+    )
+    tbl = [{'name': x['name'], 'eligible': x['eligible'], 'from': x['stats']['from'], 'excess': x['stats']['excess'],
+            't': x['stats']['t'], 't_nw': x['stats']['t_nw'], 'vol': x['stats']['vol'], 'maxdd': x['stats']['maxdd'],
+            'beta': x['beta'], 'alpha_capm': x['alpha_capm'], 'ex_vs_jkp_capped_mkt': x['ex_vs_jkp_capped_mkt'],
+            'sub_periods': x['sub'], 'turnover_yr': x['turnover_yr'], 'worst_months': x['worst_months']} for x in rows]
+    extra = {
+        'implement': FAMILY['implement'], 'family_name': FAMILY['name'],
+        'lookahead_test': ('lookahead_test() で米国（1965-12/1985-12/1995-12/1999-12 で切る）と英国・日本・カナダ（1993-12/1996-12/1999-12）を確かめた（すべて食い違い0）: '
+                           '(1) 切り詰め: 脚のリターン・銘柄数・RF を月 X で切って作り直しても、X までの規則のリターンと回転が 1e-15 で一致し、月の集合も同じ '
+                           '(2) 毒: X より後の脚のリターンを1か月ずらして乱数を足し、銘柄数と RF を乱数に置き換えても X までは不変（X より後は変わる＝検査が空回りしていない） '
+                           '(3) 最後の1か月（2000-12）を削っても、それ以前は不変 '
+                           f'(4) 月合わせ: 月 m の総リターン − 月 m の RF = 脚の月 m の超過（差の最大 {la["month_align_maxdiff"]:.1e}） '
+                           '(5) 側（信号）は spec の定数でデータから再推定しない（向きは選定期間の米国データで一度だけ決めた）。'
+                           '信号そのもの（残差の勢いの三分位）は JKP が m−1 月末までの月次リターンと3因子で作ったもので、この module は全期間の平均・分位・標準化を一切使わない。'
+                           f'もっともらしさ: 普通の勢い（同じ作り）の上乗せは {pm_same["excess"]:+}%/年で Jegadeesh・Titman 1993 と同じ大きさ——同じ月のリターンが信号に混ざっていれば三分位の差は年数十%になる'),
+        'directions': D,
+        'variants_table': tbl,
+        'variants_note': '選べる8（12-1・6-1・両方の等分・悪い側を避ける〔中＋良〕 × vw_cap/vw）＋参考3（12-1 の悪い側 × 2・普通の勢い12-1 の良い側）。成績を見る前に scratchpad の plan_resmom.md で固定',
+        'plain_momentum_same_window': pm_same, 'corr_excess_vs_plain_momentum': corr,
+        'markets': list(REPL),                       # ホールドアウトで当てる22か国（選定期間に24か月そろうのは markets_selection_period の国だけ）
+        'markets_selection_period': mkt_sel,
+        'markets_note': '国は JKP の3文字（jpn・gbr…）で run() の markets のキーと同じ。相手はその国の JKP mkt(vw)+米国RF（米ドル）。三分位が20社未満の月は落とす',
+        'benchmark': 'French 米国市場（Mkt-RF＋RF・CRSP 全上場の上限なし時価加重）',
+        'cost_note': '片道の回転1あたり0.25%・回転 200%/年（事前登録 r6 の価格の信号の置き値）。等分の変種は脚どうしの戻しを足す',
+        'selection_note': how,
+        'eligible_variants': sum(1 for x in rows if x['eligible']), 'reference_variants': sum(1 for x in rows if not x['eligible']),
+    }
+    doc = h.save_spec('resmom', spec, rationale, len(rows), st, extra)
+    print('凍結:', best['name'], doc['n_variants_tried'])
+    return doc
 
 
 if __name__ == '__main__':

@@ -312,8 +312,113 @@ def main(freeze=False):
     return best, spec, st, la, mkt_sel, D, rows, how, out
 
 
+LOOKAHEAD = ('lookahead_test() で確かめた（選んだ規則と4本の等分の両方・食い違い0）: '
+             '(1) 切り詰め: JKP の脚（リターンと銘柄数）と RF を 1950-12/1970-12/1985-12/1995-12/1999-12 で切って作り直しても、'
+             '切った月までの規則のリターンと回転が完全一致（持つ月の集合も同じ）。'
+             '(2) ずらし: 切った月より後の脚の値と銘柄数を1か月ずらして壊しても、それより前は不変（後ろは変わる＝検査が空回りしていない）。'
+             '(3) 毒: 切った月より後の脚のリターン・銘柄数・RF を乱数に置き換えても、それより前は不変（後ろは変わる）。'
+             '(4) 月合わせ: 月 m の総リターン = 脚の月 m の超過の等分 + 月 m の RF（差の最大 1e-16 未満）。'
+             '(5) 側（信号）は spec の定数で、データから再推定しない。'
+             '(6) 信号の時点: JKP の行の date はリターンの月で、組は前の月末の特徴。最初の行が seas_1_1an 1927-01・seas_2_5an 1931-01・'
+             'seas_6_10an 1936-01・seas_11_15an 1941-01＝どれも「いちばん古いラグが CRSP の最初のリターン 1926-01 にちょうど届く月」で、'
+             '信号が月 m の12か月以上前のリターンだけで作られていることと整合する（同じ月のリターンを使っていれば行はもっと早く始まる）。'
+             '銘柄数 n も組んだ時点（m−1 月末）の数で、持つかどうかの判定（50社以上）に使う')
+
+
+def mom_alpha(ret, tv, mk, rf, b=None):
+    """市場＋勢い（French の Mom）で回帰した費用後のα（%/年）と t・勢いへの感応度（参考）"""
+    import numpy as np
+    d = h.french('F-F_Momentum_Factor')
+    t0 = next(iter(d))
+    umd = d[t0][next(iter(d[t0]))]
+    ms = [m for m in sorted(ret) if m in umd and m in mk and m > 9999 and (b is None or m <= b)]
+    X = np.array([[1.0, mk[m] - rf[m], umd[m] / 100] for m in ms])
+    y = np.array([ret[m] - tv[m] * COST - rf[m] for m in ms])
+    c = np.linalg.lstsq(X, y, rcond=None)[0]
+    e = y - X @ c
+    se = np.sqrt(np.diag(np.linalg.inv(X.T @ X)) * e.var(ddof=3))
+    return {'alpha_after_cost_pct_yr': round(float(c[0]) * 1200, 2), 't': round(float(c[0] / se[0]), 2),
+            'beta_mkt': round(float(c[1]), 2), 'umd_loading': round(float(c[2]), 3), 'from': ms[0], 'to': ms[-1]}
+
+
+def freeze():
+    best, spec, st, la, mkt_sel, D, rows, how, out = main(freeze=True)
+    mk, rf = h.us_market()
+    la_all4 = lookahead_test({'chars': list(CHARS), 'w': spec['w'], 'sides': {c: D[c]['side'] for c in CHARS}})
+    assert la_all4['ok'], la_all4
+    ma = mom_alpha(out['ret'], out['turnover'], mk, rf, b=h.SEL_END)
+    reb = round((best['turnover_yr'] - TURN_ANN) * 100, 1)
+    capshare = round((st['excess'] - best['ex_vs_jkp_capped_mkt']) / st['excess'] * 100) if st['excess'] else None
+    # 回転の置き値の感度（参考・選定期間。事前登録の置き値 600%/年は変えない）
+    r, tv = build(spec, 'usa', rf, MIN_N)
+    sens = {}
+    for ta in (8.0, 10.0):
+        t2 = {m: ta / 12 + (tv[m] - TURN_ANN / 12) for m in tv}
+        s2 = h.stats(r, mk, rf, b=h.SEL_END, turnover=t2, cost=COST)
+        sens[f'{int(ta * 100)}%/年'] = {'excess': s2['excess'], 't': s2['t']}
+    sub = best['sub']
+    others = {x['name']: x for x in rows}
+    a4, l3, s1 = others['all4|vw_cap'], others['long3(2_5+6_10+11_15)|vw_cap'], others['seas_1_1an|vw_cap']
+    vwv = others['near2(1_1+2_5)|vw']
+    pos = sum(1 for v in mkt_sel.values() if v['excess'] > 0)
+    rationale = (
+        '【規則】米国上場株を毎月末に JKP の seas_1_1an（1年前の、来月と同じ暦の月のリターン）と seas_2_5an（2〜5年前の同じ暦の月の平均）で'
+        'それぞれ三分位に分け、両方の上の三分位（\'3.0\'＝同じ暦の月に高かった側）を上限つきの時価加重（JKP vw_cap）で持ち、二つの組を等分して毎月戻す。'
+        '【なぜ】Heston & Sadka 2008（JFE・データ 1965-2002）: ある株の月 t のリターンは、12・24・36…か月前（同じ暦の月）のリターンと正に相関し、'
+        'この関係は20年先のラグまで続き、ほかの月のラグでは続かない＝勢い（12−1）や反転とは別の現象。'
+        '経済的な筋: 決算発表・配当・税（1月効果）・機関の決まった月の資金の出入りなど、会社ごとに暦で繰り返す事情が、同じ月に同じ向きの需要や'
+        'リスクの上乗せを作る（Heston-Sadka は業種・規模・決算月だけでは説明しきれないと報告）。近いラグ（1年と2〜5年）はデータの被覆が広く、'
+        '同論文でも係数が大きい。⚠ 1年前の同じ月（t−11）は 12−1 の勢いの窓の中にあるが、French の勢い因子への感応度は −0.01 で、'
+        f'市場＋勢いで回帰すると勢いへの感応度は {ma["umd_loading"]:+}、費用後のαは {ma["alpha_after_cost_pct_yr"]:+}%/年（t {ma["t"]}）残る。'
+        f'【選定期間 {st["from"]}〜{st["to"]}（{st["years"]}年）】費用後（回転 600%/年×0.25%＝年1.5%を引いた後）の年率 {st["cagr"]}% 対 French 米国市場 {st["bench_cagr"]}%、'
+        f'超過 {st["excess"]:+}%/年（費用前 {best["gross_excess"]:+}）、t {st["t"]}（Newey-West {st["t_nw"]}）、ぶれ {st["vol"]}% 対 {st["bench_vol"]}%、'
+        f'最大下落 {st["maxdd"]}% 対 {st["bench_maxdd"]}%、転がる10年で勝った窓 {st["roll10_win"]}。'
+        f'市場に対するβ {best["beta"]}・CAPM のα（費用前）{best["alpha_capm"]:+}%/年。'
+        f'JKP の上限つき市場（vw_cap）に対しては {best["ex_vs_jkp_capped_mkt"]:+}%/年＝超過の約{capshare}%は上限つきの重み（中型寄り）の分。'
+        f'部分期間: 〜1962 {sub["〜1962"]["excess"]:+}%/年（t {sub["〜1962"]["t"]}）・1963-1985 {sub["1963-1985"]["excess"]:+}（t {sub["1963-1985"]["t"]}）・'
+        f'1986-2000 {sub["1986-2000"]["excess"]:+}（t {sub["1986-2000"]["t"]}）＝効きは時代とともに小さくなっている。'
+        f'回転の置き値の感度（参考）: 800%/年なら {sens["800%/年"]["excess"]:+}（t {sens["800%/年"]["t"]}）・1000%/年なら {sens["1000%/年"]["excess"]:+}（t {sens["1000%/年"]["t"]}）'
+        '——暦の月ごとに信号が別の月のリターンになるので実際の回転は置き値より重いかもしれない。'
+        f'【選び方】{how}。14変種のうち線（+1%/年）を越えたのは {sum(1 for x in rows if x["stats"]["excess"] >= 1.0)} 本。'
+        f'次点は 4本の等分・vw_cap（{a4["stats"]["excess"]:+}・t {a4["stats"]["t"]}・1941〜）、長いラグ3本・vw_cap（{l3["stats"]["excess"]:+}・t {l3["stats"]["t"]}）。'
+        f'単独で t が最大の seas_1_1an・vw_cap（{s1["stats"]["excess"]:+}・t {s1["stats"]["t"]}）は 1986-2000 が {s1["sub"]["1986-2000"]["excess"]:+}。'
+        f'同じ組の上限なし（vw）は {vwv["stats"]["excess"]:+}（t {vwv["stats"]["t"]}）＝巨大株まで入れると弱い。'
+        '良い側は選定期間の米国データで確かめた（因子と 3.0−1.0 の相関 +1.000・三分位の平均が4本とも 1.0<2.0<3.0 の順）。'
+        f'【他の市場（選定期間・参考）】JKP の先進国のうち選定期間に20社以上の月が24か月以上ある {len(mkt_sel)} か国で、超過が正は {pos}。'
+        '国のデータは 1987〜1991 年ごろからで短く、選定期間の国の比較はほぼ雑音。'
+        '【予想】事前登録 r6 の予想どおり、回転が重いので費用後は弱い側。選定期間の t は大きいが 1986 年以降に縮んでおり、公表（2008）後のホールドアウトで '
+        '+1%/年・t≥2 を満たすかは疑わしい。'
+    )
+    tbl = [{'name': x['name'], 'from': x['stats']['from'], 'excess': x['stats']['excess'], 't': x['stats']['t'],
+            't_nw': x['stats']['t_nw'], 'gross_excess': x['gross_excess'], 'vol': x['stats']['vol'], 'maxdd': x['stats']['maxdd'],
+            'beta': x['beta'], 'alpha_capm_gross': x['alpha_capm'], 'ex_vs_jkp_capped_mkt': x['ex_vs_jkp_capped_mkt'],
+            'sub_periods': x['sub'], 'turnover_yr': x['turnover_yr']} for x in rows]
+    extra = {
+        'implement': FAMILY['implement'],
+        'family_name': FAMILY['name'],
+        'lookahead_test': LOOKAHEAD,
+        'lookahead_result': {'selected': la, 'all4': la_all4},
+        'directions': D,
+        'variants_table': tbl,
+        'variants_plan': '成績を見る前に固定した14本（単独4本×重み2・4本の等分×2・長いラグ3本×2・近いラグ2本×2）。scratchpad の plan_seas.md',
+        'turnover_sensitivity_selection': sens,
+        'momentum_adjusted_alpha_selection': dict(ma, note='French の Mkt-RF と Mom で回帰（選定期間・参考）'),
+        'markets': list(DEV),
+        'markets_selection_period': mkt_sel,
+        'markets_note': '国は JKP の3文字（run() の markets のキーと同じ）。相手はその国の JKP mkt(vw)+米国 RF（米ドル）。'
+                        '脚の三分位がどちらも20社以上の月だけ・24か月未満の国は run() が落とす（選定期間では9か国が落ちる。ホールドアウトでは全期間を読むので増える）',
+        'benchmark': 'French 米国市場（Mkt-RF＋RF・CRSP 全上場の上限なし時価加重・配当込み）',
+        'cost_note': '片道の回転1あたり 0.25%。回転は脚ごとに 600%/年（事前登録 r6 の seas_* の置き値）＋二つの組を毎月等分へ戻す売買（選んだ規則で実測 約' + str(reb) + '%/年）',
+    }
+    doc = h.save_spec('seas', spec, rationale, len(rows), st, extra)
+    print('FROZEN', best['name'], doc['n_variants_tried'])
+    return doc
+
+
 if __name__ == '__main__':
-    if '--la' in sys.argv:
+    if '--save' in sys.argv:
+        freeze()
+    elif '--la' in sys.argv:
         D = directions()
         sp = {'chars': list(CHARS), 'w': 'vw_cap', 'sides': {c: D[c]['side'] for c in CHARS}}
         print(lookahead_test(sp))

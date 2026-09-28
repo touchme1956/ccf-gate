@@ -155,7 +155,13 @@ def directions():
         f = h.jkp('usa', c, 'factor', 'vw_cap')
         ms = sorted(set(f) & set(p[LOW]) & set(p[HIGH]))
         r = _corr([f[m] for m in ms], [p[HIGH][m] - p[LOW][m] for m in ms])
-        out[c] = {'side': HIGH if r > 0 else LOW, 'corr': round(r, 4), 'months': len(ms), 'from': ms[0], 'to': ms[-1]}
+        # 実物の並び: 3つの三分位がそろって50社以上の月だけで、三分位ごとの平均の超過（年率%・JKP の ret＝T-bill を引いた超過）
+        n = _counts('usa', c, 'vw_cap')
+        mm = [m for m in sorted(set(p[LOW]) & set(p[MID]) & set(p[HIGH])) if all(n[s].get(m, 0) >= MIN_N for s in (LOW, MID, HIGH))]
+        means = {s: round(S.mean(p[s][m] for m in mm) * 1200, 2) for s in (LOW, MID, HIGH)}
+        out[c] = {'side': HIGH if r > 0 else LOW, 'corr': round(r, 4), 'months': len(ms), 'from': ms[0], 'to': ms[-1],
+                  'tercile_mean_excess_over_tbill_pct_yr': means, 'tercile_means_window': f'{mm[0]}-{mm[-1]}（{len(mm)}か月）',
+                  'monotonic_increasing': means[LOW] < means[MID] < means[HIGH]}
     return out
 
 
@@ -300,6 +306,9 @@ def main(freeze=False):
         f"{'上限つきの時価加重（vw_cap）' if best['spec']['w'] == 'vw_cap' else '上限なしの時価加重（vw）'}で買いだけで持つ"
         f"{'（' + '・'.join(best['spec']['chars']) + ' の厚い側を等分・毎月戻す）' if len(best['spec']['chars']) > 1 else ''}。"
         '研究開発を開示しない会社は三分位に入らない（米国の上場のおよそ半分だけが素材）。三分位が50社未満の月は持たない。'
+        '良い側の確かめ: JKP の direction は3本とも +1、選定期間の因子と 3.0−1.0 の相関は3本とも +1.000、三分位の平均の超過（T-bill 超・3つとも50社以上の月）は '
+        + '／'.join(f"{c} 薄い{D[c]['tercile_mean_excess_over_tbill_pct_yr'][LOW]}<中{D[c]['tercile_mean_excess_over_tbill_pct_yr'][MID]}<厚い{D[c]['tercile_mean_excess_over_tbill_pct_yr'][HIGH]}%/年"
+                   for c in CHARS) + '（3本とも単調）。'
         '【なぜ】研究開発は会計上その年の費用として全額落とされるので、研究開発の厚い会社は利益と簿価が小さく見え、'
         '市場は将来の利益を過小に見積もる（Lev & Sougiannis 1996・Chan, Lakonishok & Sougiannis 2001〔1975〜1995 の米国〕：'
         '研究開発費÷時価総額の高い組は年に約6%市場に勝ち、特に過去に株価が下がった研究開発の厚い会社で大きい。研究開発費÷売上は平均では勝たない）。'
