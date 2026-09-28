@@ -28,6 +28,7 @@ import mw_common as M
 
 PREREG = 'out/mw_dominant_market_prereg.json'
 PREREG2 = 'out/mw_dominant_market_prereg2.json'
+PREREG3 = 'out/mw_dominant_market_prereg3.json'
 OUT = 'mw_dominant_market.json'
 JST_URL = 'https://www.macrohistory.net/app/download/9834512569/JSTdatasetR6.xlsx?t=1763503850'
 WB = 'https://api.worldbank.org/v2/country/all/indicator/{}?format=json&per_page=20000&date={}'
@@ -1208,6 +1209,172 @@ def main():
     except Exception as ex:  # noqa
         out['part4_sanity'] = f'失敗: {ex}'
     log('第4部 E 済', {g: (e['grade'], e['train'] and (e['train']['ex_ann'], e['train']['t']), e['hold'] and (e['hold']['ex_ann'], e['hold']['t'])) for g, e in Eg.items()})
+
+    # ═══════════ 第5部: 探索の族 F（out/mw_dominant_market_prereg3.json・小さい国の頑丈さ） ═══════════
+    out['prereg3'] = PREREG3
+    out['prereg3_commit'] = git_sha(PREREG3)
+    DEV22 = 'jpn gbr deu fra che nld swe dnk nor fin bel aut ita esp irl prt can aus nzl hkg sgp isr'.split()
+    jk = {}
+    for c in DEV22 + ['grc']:
+        jk[c.upper()] = {k: v + rf[k] for k, v in M.jkp_mkt(c, 'vw').items() if k in rf}
+    for c, v in em.items():
+        jk.setdefault(c, v)
+    jstart = {c: min(v) for c, v in jk.items()}
+
+    def ann_growth(ser):
+        a = {}
+        for Y in range(1970, 2027):
+            ms = [Y * 100 + m for m in range(1, 13)]
+            if all(m in ser for m in ms):
+                a[Y] = math.prod(1 + ser[m] for m in ms)
+        return a
+    capJ = {}
+    for c, ser in jk.items():
+        a = ann_growth(ser)
+        g = (lambda x, y, a=a: math.prod(a[t] for t in range(x + 1, y + 1)) if all(t in a for t in range(x + 1, y + 1)) else None)
+        obs = {Y: v for (cc, Y), v in wb_cap.items() if cc == c}
+        capJ[c] = clean_caps(obs, g, 1975, 2025)
+
+    def sc_pair(univ_fn, cap_est):
+        """(小さい半分の等分, 同じ宇宙の時価加重) の重みの関数の組"""
+        def both(Y):
+            k = {c: cap_est[c].get(Y - 1) for c in univ_fn(Y) if c in cap_est}
+            k = {c: v[0] for c, v in k.items() if v}
+            if len(k) < 2:
+                return None, None
+            t = sum(k.values())
+            n = len(k) // 2
+            small = sorted(k, key=lambda c: (k[c], c))[:n]
+            return {c: 1 / n for c in small}, {c: v / t for c, v in k.items()}
+        return (lambda Y: both(Y)[0]), (lambda Y: both(Y)[1])
+    capJe = {c: v[0] for c, v in capJ.items()}
+    u_f1 = lambda Y: [c.upper() for c in DEV22 if jstart[c.upper()] <= Y * 100 + 1]
+    u_f1b = lambda Y: u_f1(Y) + (['GRC'] if 2002 <= Y <= 2013 and jstart['GRC'] <= Y * 100 + 1 else [])
+    u_f3 = lambda Y: [c for c in em if em_start[c] <= Y * 100 + 1]
+    runs = {}
+    for fid, uf, y0, y1 in (('F1_SC_JKPDEV', u_f1, 1987, 2025), ('F1b_SC_JKPDEV_GRC', u_f1b, 1987, 2025), ('F3_SC_EM', u_f3, 2001, 2025)):
+        sf, bf = sc_pair(uf, capJe)
+        rs = fund_monthly(sf, jk, y0, y1, renorm=True)
+        rb = fund_monthly(bf, jk, y0, y1, renorm=True)
+        runs[fid] = (rs, rb)
+    f3s, f3b = runs['F3_SC_EM'][0][0], runs['F3_SC_EM'][1][0]
+    f3 = {'full': M.excess_stats(f3s, f3b), 'hold': M.excess_stats(f3s, f3b, M.HOLD_START), 'first': min(f3s), 'last': max(f3s),
+          'events': runs['F3_SC_EM'][0][3], 'n_countries_2001': len(u_f3(2001)), 'with_caps_2001': sum(1 for c in u_f3(2001) if capJe[c].get(2000))}
+    Fg = {}
+    for fid in ('F1_SC_JKPDEV', 'F1b_SC_JKPDEV_GRC'):
+        (r, turn, wts, ev), (b, _, _, _) = runs[fid]
+        rn = net_monthly(r, turn, wts, True, lambda w: 0.0, fee=0.004, tc=0.0015)
+        e = {'id': fid, 'benchmark': '同じ宇宙の時価加重（世界銀行の時価・実時間の掃除・JKP の総リターンで運ぶ）', 'events': ev,
+             'full': M.excess_stats(r, b), 'train': M.excess_stats(r, b, None, M.TRAIN_END), 'hold': M.excess_stats(r, b, M.HOLD_START),
+             'recent': M.excess_stats(r, b, M.RECENT_START), 'hold_net': M.excess_stats(rn, b, M.HOLD_START), 'full_net': M.excess_stats(rn, b),
+             'roll20': M.rolling(r, b, 20), 'roll20_net': M.rolling(rn, b, 20), 'dca20': M.dca(r, b, 20), 'dca20_net': M.dca(rn, b, 20),
+             'avg_turnover_oneway_per_year': round(S.mean(turn.values()), 3) if turn else None,
+             'weights_sample': {Y: sorted(wts[Y]) for Y in (1987, 2000, 2007, 2012, 2025) if Y in wts},
+             'repl': {'regions': 1, 'positive': int(bool(f3['full'] and f3['full']['ex_ann'] > 0)), 'units': {'EM_F3': f3}}}
+        Fg[fid] = e
+    hp = {g: (e['hold']['p'] if e['hold'] and (e['hold']['t'] or 0) > 0 else 1.0) for g, e in Fg.items()}
+    hh = M.holm(hp)
+    for g, e in Fg.items():
+        e['family'] = 'F（探索・prereg3）'
+        e['holm_p_hold'] = hh.get(g)
+        gr, cr = M.grade(e['full'], e['train'], e['hold'], e['roll20'], cost_hold=e['hold_net'], repl=e['repl'], family_holm_p=hh.get(g))
+        e['grade'], e['criteria'] = gr, cr
+        tested.append({'name': g, 'kind': 'graded_usd_monthly', 'family': 'F', 'primary': False, 'exploratory': True, 'grade': gr})
+    out['part5_graded_F'] = Fg
+    out['part5_F3_em'] = f3
+    tested.append({'name': 'F3_SC_EM', 'kind': 'replication_report', 'family': 'F', 'grade': None,
+                   'full_ex_ann': f3['full'] and f3['full']['ex_ann']})
+
+    # F2: JST（年次・米国外15か国・米ドル未ヘッジ・GDP の大きさ）
+    XUS15 = [c for c in C16 if c != 'USA']
+    f2 = {'sc': {}, 'gdpw': {}, 'ew': {}}
+    for Y in range(1872, 2021):
+        if Y in U_WAR:
+            continue
+        u = [c for c in XUS15 if J.first[c] <= Y - 1]
+        g = {c: J.gdp_usd(c, Y - 2) for c in u}
+        g = {c: v for c, v in g.items() if v}
+        if len(g) < 4:
+            continue
+        n = len(g) // 2
+        small = sorted(g, key=lambda c: (g[c], c))[:n]
+        tot = sum(g.values())
+        for k, w in (('sc', {c: 1 / n for c in small}), ('gdpw', {c: v / tot for c, v in g.items()}), ('ew', {c: 1 / len(g) for c in g})):
+            rr = {c: J.r_usd(c, Y) for c in w}
+            vs = sum(v for c, v in w.items() if rr[c] is not None)
+            if vs < RENORM_MIN:
+                continue
+            f2[k][Y] = sum(v * rr[c] for c, v in w.items() if rr[c] is not None) / vs
+
+    def short(s_, b_, a, z):
+        ks = sorted(k for k in set(s_) & set(b_) if a <= k <= z)
+        if len(ks) < 6:
+            return None
+        ex = [s_[k] - b_[k] for k in ks]
+        gs = math.exp(math.fsum(math.log1p(s_[k]) for k in ks) / len(ks)) - 1
+        gb = math.exp(math.fsum(math.log1p(b_[k]) for k in ks) / len(ks)) - 1
+        m = S.mean(ex); sd = S.stdev(ex)
+        return {'from': ks[0], 'to': ks[-1], 'years': len(ks), 'ex_ann': round(m * 100, 2), 't_iid': round(m / sd * math.sqrt(len(ks)), 2) if sd else None,
+                'cagr_diff': round((gs - gb) * 100, 2), 'win_years': sum(1 for x in ex if x > 0)}
+    f2rep = {}
+    for bn in ('gdpw', 'ew'):
+        f2rep[f'sc_vs_{bn}'] = {f'{a}_{z}': short(f2['sc'], f2[bn], a, z) for a, z in ((1871, 1938), (1950, 2006), (2007, 2020), (1871, 2020))}
+        f2rep[f'sc_vs_{bn}']['nw_full'] = M.excess_stats(f2['sc'], f2[bn], per_year=1, lag=2)
+    a1, a2 = f2rep['sc_vs_gdpw']['1871_1938'], f2rep['sc_vs_gdpw']['1950_2006']
+    f2rep['replicates_vs_gdpw'] = bool(a1 and a2 and a1['ex_ann'] > 0 and a2['ex_ann'] > 0)
+    out['part5_F2_jst'] = f2rep
+    tested.append({'name': 'F2_SC_JST_GDP', 'kind': 'replication_report', 'family': 'F', 'grade': None, 'replicates': f2rep['replicates_vs_gdpw']})
+
+    # F4: 実在の国別 ETF（Yahoo・生き残りの偏りあり）
+    ETFS = {'EWA': 'AUS', 'EWO': 'AUT', 'EWK': 'BEL', 'EWC': 'CAN', 'EWQ': 'FRA', 'EWG': 'DEU', 'EWH': 'HKG', 'EWI': 'ITA', 'EWJ': 'JPN',
+            'EWN': 'NLD', 'EWS': 'SGP', 'EWP': 'ESP', 'EWD': 'SWE', 'EWL': 'CHE', 'EWU': 'GBR', 'ENZL': 'NZL', 'EIRL': 'IRL', 'ENOR': 'NOR',
+            'EFNL': 'FIN', 'EDEN': 'DNK', 'EIS': 'ISR'}
+    et, f4 = {}, {}
+    try:
+        for tk, c in ETFS.items():
+            et[c] = M.yahoo(tk)
+        efa = M.yahoo('EFA')
+        capE = {c: (Fo.cap[c] if c in Fo.cap else capJe.get(c, {})) for c in et}
+        etstart = {c: min(v) for c, v in et.items()}
+        sf, bf = sc_pair(lambda Y: [c for c in et if etstart[c] <= Y * 100 + 1], capE)
+        rs = fund_monthly(sf, et, 1997, 2026, renorm=True)
+        rb = fund_monthly(bf, et, 1997, 2026, renorm=True)
+        f4 = {'vs_same_etfs_capw': M.excess_stats(rs[0], rb[0]), 'vs_EFA': M.excess_stats(rs[0], efa),
+              'hold_vs_same': M.excess_stats(rs[0], rb[0], M.HOLD_START), 'hold_vs_EFA': M.excess_stats(rs[0], efa, M.HOLD_START),
+              'events': rs[3], 'first': min(rs[0]), 'last': max(rs[0]), 'avg_turnover': round(S.mean(rs[1].values()), 3) if rs[1] else None,
+              'note': 'ETF の値動きに信託報酬が入っている（費用後に近い）。生き残った ETF だけ'}
+    except Exception as ex:  # noqa
+        f4 = {'error': str(ex)}
+    out['part5_F4_etf'] = f4
+    tested.append({'name': 'F4_SC_ETF', 'kind': 'reality_check_report', 'family': 'F', 'grade': None})
+
+    # 事後（E1 を見た後に決めた診断・格付けしない）
+    ph = {}
+    e1r = fund_monthly(wx_sc, R)[0]
+    ph['subperiods'] = {f'{a}_{z}': M.excess_stats(e1r, bx, a, z) for a, z in ((197601, 199012), (199101, 200612), (200701, 201512), (201601, 202512))}
+    loo = {}
+    for c in XUS:
+        mem = [x for x in XUS if x != c]
+        sf, bf = sc_pair(lambda Y, mem=mem: [x for x in mem if Fo.start[x] <= Y * 100 + 1], {x: Fo.cap[x] for x in mem})
+        a_ = fund_monthly(sf, R)[0]
+        b_ = fund_monthly(bf, R)[0]
+        st, sh = M.excess_stats(a_, b_, None, M.TRAIN_END), M.excess_stats(a_, b_, M.HOLD_START)
+        loo[c] = {'train_ex': st and st['ex_ann'], 'train_t': st and st['t'], 'hold_ex': sh and sh['ex_ann'], 'hold_t': sh and sh['t']}
+    ph['leave_one_out'] = loo
+    ph['leave_one_out_min'] = {'train': min((v['train_ex'], k) for k, v in loo.items()), 'hold': min((v['hold_ex'], k) for k, v in loo.items())}
+    RL = {c: F[c]['loc'] for c in XUS}
+    e1l, bxl = fund_monthly(wx_sc, RL)[0], fund_monthly(wx_cap, RL)[0]
+    ph['local_currency'] = {'full': M.excess_stats(e1l, bxl), 'train': M.excess_stats(e1l, bxl, None, M.TRAIN_END), 'hold': M.excess_stats(e1l, bxl, M.HOLD_START),
+                            'note': '同じ重みの規則を現地通貨のリターンで回した超過。米ドルの超過との差が為替の寄与の目安'}
+    cnt = {}
+    for Y in range(1976, 2026):
+        w = wx_sc(Y)
+        for c in w:
+            cnt[c] = cnt.get(c, 0) + 1
+    ph['years_held_by_country'] = dict(sorted(cnt.items(), key=lambda x: -x[1]))
+    out['part5_posthoc_E1_not_graded'] = ph
+    log('第5部 F 済', {g: (e['grade'], e['train'] and (e['train']['ex_ann'], e['train']['t']), e['hold'] and (e['hold']['ex_ann'], e['hold']['t'])) for g, e in Fg.items()},
+        'F3', f3['full'] and f3['full']['ex_ann'], 'F2', f2rep['replicates_vs_gdpw'])
 
     # ═══════════ 点検 ═══════════
     san = {}
