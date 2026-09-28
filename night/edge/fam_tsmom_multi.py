@@ -6,6 +6,9 @@
   規則: 各資産の過去の勢い（短期金利との比較）が正なら持ち、負なら短期金利。持つ資産の重みは直近のぶれの逆数、
         全体を米国株の直近のぶれまで借りる（上限2倍・借りた分に 短期金利＋0.4%/年・レバレッジ型ETFの経費 0.9%/年）。月次。
   相手: 米国株100%（French 市場）。費用: 片道の回転1あたり 0.10%。他の市場での再現は無し。
+  凍結した主の規則（out/edge/spec_tsmom_multi.json）は weight='eq'（持つ資産を等分）・12か月・ぶれ12か月・H。
+  ⚠ 選定期間（1954-06〜2000-12）では24の変種すべてが米国株に負けた（+1%/年 に届いた変種は0）——詳しくは spec の rationale。
+  ⚠ Shiller GS10 の 1953-03 以前は毎年1月の値の直線補間（月次のぶれ 0.5%/年 の作り物）なので債券は 1953-04 以降だけを使う。
 
 ★先読みの禁止: 月 m の重みは m−1 月末までの系列だけで作る（_weights は m より前のキーしか読まない）。
   ⚠ 債券は Shiller の GS10（1953年以降は FRED GS10＝日々の利回りの**月平均**）から作るので、平均どうしの差は
@@ -37,6 +40,7 @@ DEFAULT_SPEC = {
     'bond_skip': 1,          # 債券の勢い・ぶれを何か月空けて測るか（月平均の利回りの作り物の自己相関を避ける）
     'nonus': True,           # 米国外株を使う（1975〜・データが揃ってから）
     'weight': 'inv',         # 'inv'＝持つ資産を直近のぶれの逆数で / 'eq'＝持つ資産を等分（推定誤差に強い 1/N・DeMiguel ほか 2009）
+    'bond_src': 'shiller',   # 'shiller'＝Shiller GS10（1953-04〜は FRED GS10＝日々の月平均）＋最後の月の後を FRED GS10 で継ぐ（主）/ 'dgs10_me'＝FRED DGS10 の月末の利回り（1962〜・診断用）
     'require': ['us', 'bond'],  # この資産が全部測れる月から始める（多資産の規則として評価する。米国外は揃ってから加わる）
     'cost': 0.001,           # 片道の回転1あたり（事前登録: 指数・ETF 0.10%）
 }
@@ -117,7 +121,12 @@ def nonus_ew(countries=None):
 def load(spec=None):
     spec = dict(DEFAULT_SPEC, **(spec or {}))
     us, rf = h.us_market()
-    A = {'us': us, 'bond': bond_returns()}
+    if spec.get('bond_src', 'shiller') == 'dgs10_me':
+        y = {m: v / 100 for m, v in h.fred('DGS10').items()}      # fred() は日次を月のキーへ畳む＝その月の最後の日の値
+        bond = bond_returns(y, real_from=min(y)) if y else {}
+    else:
+        bond = bond_returns()
+    A = {'us': us, 'bond': bond}
     if spec.get('nonus', True):
         A['nonus'] = nonus_ew()
     return A, rf
