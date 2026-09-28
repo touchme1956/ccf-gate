@@ -1,0 +1,46 @@
+{
+ "angle": "macro_timing",
+ "prereg_no": 4,
+ "kind": "探索（exploratory）。主・探索2・探索3の結果（29本すべて C）を見た後に登録する",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "what_was_seen_before_this_registration": "主の21本・X1・X2・X3 の8本すべて C。X3c（公定歩合の向き）は保有 −7.3%/年: 2010-02 の公定歩合の引き上げ（0.50% → 0.75%。窓口貸出の上乗せ幅を戻す技術的な変更）が『引き締め』と数えられ、2010-02〜2019-07 を現金で過ごした。X3a・X3b（信用スプレッドの拡大×トレンド）は訓練の t が 1 前後。",
+ "why": "ブリーフが固定した古典12変数の外に、Goyal-Welch-Zafirov 2024 の月次の新しい変数のうち『全期間で作り直す必要がある』と原本の ReadMe が注記していないもの（＝後から分かる情報で作られていないもの）で、1926年から揃う8本と 1958年からの1本が残っている。これを同じ作り方で測って、この族を閉じる。短すぎる変数（vrp・vp・impvar・rsvix・disag は 1981〜1996 開始＝20年の助走の後に訓練期間がほぼ残らない）と、原本が『全期間で作り直す必要がある』と注記する変数（tchi・sntm・fbm・ogap・shtint・cay・pce）は使わない",
+ "global_prereg": "out/mw_prereg.json（線は動かさない）",
+ "base_prereg": "out/mw_macro_timing_prereg.json（判断の時点・再帰的な推定・20年の助走・CT 制約・w の式・費用・窓は同じ）",
+ "new_predictors": {
+  "avgcor": {"sign": 1, "source": "Pollet & Wilson 2010（平均相関が高いと先のリターンが高い）", "lag": "d の値"},
+  "wtexas": {"sign": -1, "source": "Driesprong, Jacobsen & Maat 2008（原油価格の上昇は先の株のリターンを下げる）", "lag": "d の値"},
+  "dtoy": {"sign": 1, "source": "Li & Yu 2012（ダウの52週高値への近さは先のリターンを上げる）", "lag": "d の値"},
+  "dtoat": {"sign": -1, "source": "Li & Yu 2012（過去最高値への近さは先のリターンを下げる）", "lag": "d の値"},
+  "skvw": {"sign": -1, "source": "Jondeau, Zhang & Zhu 2019（平均の歪度が高いと先のリターンが低い）", "lag": "d の値"},
+  "tail": {"sign": 1, "source": "Kelly & Jiang 2014（裾のリスクが高いと先のリターンが高い）", "lag": "d の値"},
+  "rdsp": {"sign": -1, "source": "Maio 2016（銘柄間のリターンのばらつきが大きいと先のリターンが低い）", "lag": "d の値"},
+  "lzrt": {"sign": 1, "source": "Chen, Eaton & Paye 2018・Amihud 2002（市場全体の流動性の低さは先のリターンを上げる）", "lag": "d の値"},
+  "ndrbl": {"sign": -1, "source": "Jones & Tuzel 2013（耐久財の新規受注÷出荷が高いと先のリターンが低い）", "lag": "d−1 の値（統計の公表が約1か月遅れ）"}
+ },
+ "families": {
+  "X4_new_combination": {
+   "role": "探索の族4（格付け・Holm はこの4本の中で）。タイミング型 → C8 必須。C5 は N/A（米国外の同じ変数が無い）",
+   "strategies": {
+    "X4a_new9_mean_CT": "新しい9変数の CT 制約つき予測の等しい平均、w = clip(f ÷ (3σ²), 0, 1.5)（P1 と同じ式）",
+    "X4b_new9_tilt": "同じ予測で w = clip(f ÷ PM, 0, 1.5)（X1a と同じ式）",
+    "X4c_all21_mean_CT": "古典12変数＋新しい9変数＝21変数の CT 制約つき等しい平均、P1 と同じ式",
+    "X4d_all21_tilt": "21変数の予測で X1a と同じ式"
+   }
+  },
+  "X5_new_single": {
+   "role": "探索の族5（格付け・Holm はこの9本の中で）。1変数ずつ CT 制約つき、P1 と同じ式。C5 は N/A",
+   "strategies": ["X5_avgcor", "X5_wtexas", "X5_dtoy", "X5_dtoat", "X5_skvw", "X5_tail", "X5_rdsp", "X5_lzrt", "X5_ndrbl"]
+  }
+ },
+ "post_hoc_reports_not_graded": {
+  "X3c_posthoc_fftarget": "事後（格付けしない）: X3c の 2003-01 以降の公定歩合（DPCREDIT）を FF 金利の誘導目標（DFEDTAR〜2008-12-15、DFEDTARU 2008-12-16〜・月末値）に替えた版。2010-02 の技術的な引き上げを数えないとどうなるかを見るためだけ。X3c の結果を見た後の変更なので判定には使わない"
+ },
+ "grading": "主と同じ。family = X4 / X5、exploratory = true",
+ "known_limits_before_results": [
+  "変数の選び方（どれが論文で効いたか）は文献で知っている＝訓練期間にも保有期間にも知識の漏れがある",
+  "新しい変数は 1926 年ごろからなので、最初の予測は 1946〜47年（ndrbl は 1978年）。訓練期間は約60年",
+  "符号の理論の向きは論文の主張から取った（原本を今回読み直してはいない）。向きを取り違えていれば CT 制約が予測を過去の平均に落とす"
+ ]
+}

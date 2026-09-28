@@ -41,6 +41,13 @@ POST['X3'] = {'post_JMJ_1996': 199701, 'post_GrowthTrend_2016': 201701}
 POLICY_CC = {'GB': ['GB'], 'AU': ['AU'], 'CA': ['CA'], 'JP': ['JP'], 'DE': ['DE', 'EZ'], 'IT': ['IT', 'EZ'], 'ES': ['ES', 'EZ'],
              'FR': ['EZ'], 'NL': ['EZ'], 'BE': ['EZ'], 'AT': ['EZ'], 'FI': ['EZ'], 'IE': ['EZ']}
 EURO = {'DE', 'IT', 'ES', 'FR', 'NL', 'BE', 'AT', 'FI', 'IE'}
+PREREG4 = 'mw_macro_timing_prereg4.json'
+NEW9 = ['avgcor', 'wtexas', 'dtoy', 'dtoat', 'skvw', 'tail', 'rdsp', 'lzrt', 'ndrbl']
+SIGN.update({'avgcor': 1, 'wtexas': -1, 'dtoy': 1, 'dtoat': -1, 'skvw': -1, 'tail': 1, 'rdsp': -1, 'lzrt': 1, 'ndrbl': -1})
+EXPLORATORY.update({'X4': PREREG4, 'X5': PREREG4})
+POST['X4'] = {'post_GW_CT_2008': 200901, 'post_RSZ_2010': 201101}
+POST['X5'] = {'post_GW_CT_2008': 200901}
+POST['PH'] = POST['X3']
 LOG = []
 
 
@@ -71,7 +78,8 @@ def goyal():
     wb = openpyxl.load_workbook(io.BytesIO(b), read_only=True, data_only=True)
     rows = list(wb['Monthly'].iter_rows(values_only=True))
     h = list(rows[0])
-    want = ['price', 'd12', 'e12', 'Rfree', 'tbl', 'lty', 'tms', 'dfy', 'dfr', 'infl', 'ntis', 'svar', 'csp', 'AAA', 'BAA', 'corpr', 'ltr']
+    want = ['price', 'd12', 'e12', 'Rfree', 'tbl', 'lty', 'tms', 'dfy', 'dfr', 'infl', 'ntis', 'svar', 'csp', 'AAA', 'BAA', 'corpr', 'ltr',
+            'avgcor', 'wtexas', 'dtoy', 'dtoat', 'skvw', 'tail', 'rdsp', 'lzrt', 'ndrbl']
     idx = {w: h.index(w) for w in want}
     out = {w: {} for w in want}
     for r in rows[1:]:
@@ -138,8 +146,8 @@ def pred_at(gy, name, d):
         if name == 'ep':
             e = gy['e12'].get(ym_add(d, -3))
             return math.log(e / gy['price'][d]) if e and e > 0 else None
-        if name == 'infl':
-            return gy['infl'].get(ym_add(d, -1))
+        if name in ('infl', 'ndrbl'):
+            return gy[name].get(ym_add(d, -1))
         if name == 'ik':
             best = None
             for q in gy['_ikq']:
@@ -872,6 +880,47 @@ def main():
     e['repl'] = country_policy_block(fc_all, True)
     tested.append(e)
 
+    # ── 探索4（prereg4）: GWZ の新しい9変数
+    for pn in NEW9:
+        Z[pn] = {m: v for m in months if (v := pred_at(gy, pn, dtime(m))) is not None}
+        log('変数', pn, min(Z[pn]) if Z[pn] else None, max(Z[pn]) if Z[pn] else None, len(Z[pn]))
+        FC[pn] = recursive_forecasts(months, Z[pn], er, dtime)
+
+    def comb_of(names):
+        out = {}
+        for m in months:
+            v = [ct_value(FC[pn][m], SIGN[pn]) for pn in names if m in FC[pn]]
+            if v:
+                out[m] = S.mean(v)
+        return out
+
+    for tag, names in (('new9', NEW9), ('all21', PREDS + NEW9)):
+        fx = comb_of(names)
+        W = weights_from(fx, VAR, WMAX)
+        e = evaluate(f"X4{'a' if tag == 'new9' else 'c'}_{tag}_mean_CT", 'X4', W, r, c, mkt, rf, dy, er, fx, PM)
+        e['repl'] = None
+        tested.append(e)
+        W = {m: min(WMAX, max(0.0, fx[m] / PM[m])) for m in fx if m in PM and PM[m] > 0}
+        e = evaluate(f"X4{'b' if tag == 'new9' else 'd'}_{tag}_tilt", 'X4', W, r, c, mkt, rf, dy)
+        e['repl'] = None
+        tested.append(e)
+    for pn in NEW9:
+        fct = {m: ct_value(f, SIGN[pn]) for m, f in FC[pn].items()}
+        W = weights_from(fct, VAR, WMAX)
+        base_i = {m: f['pm'] for m, f in FC[pn].items()}
+        e = evaluate('X5_' + pn, 'X5', W, r, c, mkt, rf, dy, er, fct, base_i)
+        e['repl'] = None
+        tested.append(e)
+    # 事後（格付けしない）: X3c の 2003 年以降を FF 金利の誘導目標に替えた版
+    pol2 = policy_regime([(fred('M13009USM156NNBR'), None, 196907), (fred('INTDSRUSM193N'), 196908, 200212),
+                          (fred('DFEDTAR'), 200301, 200812), (fred('DFEDTARU'), 200901, None)])
+    W0 = {m: (1.0 if pol2[dtime(m)] == 1 else 0.0) for m in months_all if dtime(m) in pol2}
+    e = evaluate('X3c_posthoc_fftarget', 'PH', W0, r, c, mkt, rf, dy)
+    e['post_hoc'] = True
+    e['repl'] = None
+    e['note'] = '事後（X3c の結果を見た後の変更）。格付けしない・Holm に入れない'
+    tested.append(e)
+
     for e in tested:
         e['exploratory'] = e['family'] in EXPLORATORY
         if e['exploratory']:
@@ -880,9 +929,16 @@ def main():
     # Holm と格付け
     fams = {}
     for e in tested:
+        if e.get('post_hoc'):
+            continue
         fams.setdefault(e['family'], {})[e['name']] = (e.get('hold') or {}).get('p')
     hp = {f: M.holm(v) for f, v in fams.items()}
     for e in tested:
+        if e.get('post_hoc'):
+            e['grade'], e['criteria'], e['holm_p'] = None, None, None
+            h = e.get('hold') or {}
+            log(f"{e['name']:22s} 事後  保有 {h.get('ex_ann')} t{h.get('t')}  シャープ {(e.get('sharpe') or {}).get('hold')}")
+            continue
         e['holm_p'] = hp[e['family']].get(e['name'])
         sp = e.get('sharpe') or {}
         pair = {'train': sp.get('train'), 'hold': sp.get('hold')}
@@ -897,7 +953,8 @@ def main():
 
     out = {'angle': 'macro_timing', 'prereg': PREREG, 'prereg_commit': pre_sha,
            'prereg2': PREREG2, 'prereg2_commit': git_sha('out/' + PREREG2),
-           'prereg3': PREREG3, 'prereg3_commit': git_sha('out/' + PREREG3), 'sanity': san,
+           'prereg3': PREREG3, 'prereg3_commit': git_sha('out/' + PREREG3),
+           'prereg4': PREREG4, 'prereg4_commit': git_sha('out/' + PREREG4), 'sanity': san,
            'participation': {str(y): round(S.mean(npart[m] for m in npart if m // 100 == y), 1) for y in range(1891, 2026, 5) if any(m // 100 == y for m in npart)},
            'n_tested': len(tested), 'tested': tested, 'log': LOG}
     p = M.save(OUT, out)
