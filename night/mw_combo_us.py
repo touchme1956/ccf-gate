@@ -499,6 +499,10 @@ def run(families=None):
     res['diagnostics_posthoc']['explain_S_A'] = expl
     res['diagnostics_posthoc']['all_tests_multiplicity'] = all_tests_multiplicity(res['tested'])
     res['stage3_confirm'] = stage3()
+    c6 = SER['C6_QUAL5']
+    res['diagnostics_posthoc']['C6_QUAL5']['industry_reg'] = {'train': industry_reg(c6, z=M.TRAIN_END), 'hold': industry_reg(c6, a=M.HOLD_START)}
+    res['diagnostics_posthoc']['C6_QUAL5']['breakeven_unit_cost_hold'] = round(res['tested'][[r['id'] for r in res['tested']].index('C6_QUAL5')]['hold']['ex_ann'] / 100 / 0.84, 4)
+    res['diagnostics_posthoc']['C6_QUAL5']['etf_proxies'] = etf_proxies(c6)
     return res
 
 
@@ -649,6 +653,54 @@ def stage3():
         for w in ('vw', 'vw_cap', 'ew'))
     return {'prereg': 'out/mw_combo_us_prereg3.json', 'prereg_commit': git_sha('out/mw_combo_us_prereg3.json'),
             'countries_with_C6_sleeves': base, 'T1_all_countries': T1, 'T2_like_for_like': T2}
+
+
+def industry_reg(s, a=None, z=None):
+    """事後の説明: (戦略−市場) を French 12業種の (業種−市場) に回帰 → 業種の傾きで説明できない残り（α）"""
+    import numpy as np
+    v = next(v for t, v in M.french_tables('12_Industry_Portfolios').items() if 'value weight' in t.lower() and v['freq'] == 'monthly')
+    cols = v['cols']
+    ind = {c: {d: r[i] / 100 for d, r in v['data'].items() if r[i] is not None} for i, c in enumerate(cols)}
+    ks = sorted(k for k in s if k in MKT and all(k in ind[c] for c in cols) and (a is None or k >= a) and (z is None or k <= z))
+    if len(ks) < 60:
+        return None
+    y = np.array([s[k] - MKT[k] for k in ks])
+    X = np.column_stack([np.ones(len(ks))] + [np.array([ind[c][k] - MKT[k] for k in ks]) for c in cols])
+    b, *_ = np.linalg.lstsq(X, y, rcond=None)
+    e = y - X @ b
+    cov = np.linalg.pinv(X.T @ X) * (e @ e) / (len(ks) - X.shape[1])
+    se = np.sqrt(np.diag(cov))
+    return {'from': ks[0], 'to': ks[-1], 'alpha_ann': round(b[0] * 1200, 2), 'alpha_t': round(b[0] / se[0], 2),
+            'r2': round(1 - (e @ e) / ((y - y.mean()) @ (y - y.mean())), 3),
+            'tilts': {c: round(bb, 3) for c, bb in zip(cols, b[1:])}}
+
+
+ETF_PROXIES = ['QUAL', 'SPHQ', 'JQUA', 'DGRW', 'QDF', 'FQAL', 'VIG', 'MOAT', 'USMV', 'COWZ', 'QUS', 'QQQ', 'XLK', 'SPY', 'RSP']
+
+
+def etf_proxies(c6_total):
+    """事後（判定に使わない・Yahoo＝生き残りの偏りあり）: 実在の ETF が C6 の超過にどれだけ似ているか。
+    ETF の (ETF−French Mkt) と C6 の (C6−French Mkt) の相関、同じ月での両者の超過"""
+    out = {}
+    for t in ETF_PROXIES:
+        try:
+            r = M.yahoo(t, '1mo')
+        except Exception as e:  # noqa
+            out[t] = {'error': str(e)[:160]}
+            continue
+        r = {k: v for k, v in r.items() if k in MKT}
+        if len(r) < 36:
+            out[t] = {'error': 'short'}
+            continue
+        ks = sorted(set(r) & set(c6_total))
+        d = {'life_vs_french_mkt': M.excess_stats(r, MKT)}
+        if len(ks) >= 36:
+            d['overlap_months'] = len(ks)
+            d['corr_excess_with_C6'] = round(M.corr([r[k] - MKT[k] for k in ks], [c6_total[k] - MKT[k] for k in ks]), 3)
+            d['etf_excess_same_months'] = M.excess_stats({k: r[k] for k in ks}, MKT)
+            d['C6_excess_same_months'] = M.excess_stats({k: c6_total[k] for k in ks}, MKT)
+        out[t] = d
+    return out
 
 
 def brief(res):
