@@ -810,6 +810,7 @@ PRIMARY = ['P1_A_ew_all', 'P2_B_vw_all', 'P3_C_consensus2_all', 'P4_D_top20_larg
 EXPLOR = ['X1_A_ew_invest', 'X2_C_consensus2_invest', 'X3_E_topweight_ew', 'X4_F_concentrated_ew', 'X5_H_annual_ew_invest',
           'X6_D_top20_large_vw']
 SANITY = ['S1_all_large500_vw', 'S2_all_large500_ew']
+POSTHOC = ['H1_top20_largest_vw', 'H2_top20_largest_ew']   # 事後（結果を見た後）の対照・判定しない
 EXP2 = ['E1_new_best_ew', 'E2_persistent_best_ew', 'E3_nonmega_best_ew', 'E4_tilt_weighted', 'E5_top5tilt_ew',
         'E6_breadth_up_d10']      # 事前登録3（探索の族・結果を見る前）
 VERSIONS = {'O': None, 'P30': MISS_P30, 'P100': MISS_P100}
@@ -827,6 +828,8 @@ DESC = {
     'X6_D_top20_large_vw': 'P4 を集計保有額で加重',
     'S1_all_large500_vw': '検算: 大型株上位500を集計保有額で加重（≒S&P500。市場とほぼ同じになるはず）',
     'S2_all_large500_ew': '検算: 大型株上位500を等しく（≒RSP）',
+    'H1_top20_largest_vw': '事後の対照（判定しない）: best idea と関係なく 13F の集計保有額の上位20の株を集計保有額で加重＝X6 の勝ちが巨大株の効果かを見る',
+    'H2_top20_largest_ew': '事後の対照（判定しない）: 同じ上位20を等しく＝P4 と比べる',
     'E1_new_best_ew': '探索: 新しく best idea になった株（同じ運用者の前の四半期の傾き上位5に無かった）を等しく',
     'E2_persistent_best_ew': '探索: 前の四半期も同じ運用者の best idea だった株を等しく',
     'E3_nonmega_best_ew': '探索: P1 から集計保有額の上位50を除いて等しく',
@@ -841,7 +844,7 @@ def build_weights(P, figi, ftd):
     bt = pick_best(P, figi, ftd, 'tilt')
     bw = pick_best(P, figi, ftd, 'topw')
     b5 = pick_best(P, figi, ftd, 'tilt', n=NCAND)
-    W = {k: {} for k in PRIMARY + EXPLOR + SANITY + EXP2}
+    W = {k: {} for k in PRIMARY + EXPLOR + SANITY + EXP2 + POSTHOC}
     nmgr = {p: {m['cik']: m['n'] for m in d['managers']} for p, d in P.items()}
     prevtop5 = {p: {m['cik']: {x[0] for x in m['tilt']} for m in d['managers']} for p, d in P.items()}
     prevbest = {p: {cik: cu for cik, cu, _, _ in bt[p]} for p in P}
@@ -889,6 +892,11 @@ def build_weights(P, figi, ftd):
         tt = sum(ts.values())
         W['E4_tilt_weighted'][p] = {cu: v / tt for cu, v in ts.items() if v > 0} if tt > 0 else {}
         W['E5_top5tilt_ew'][p] = ew(sorted({cu for _, cu, _, _ in b5[p]}))
+        # ── 事後の対照（結果を見た後に追加・判定しない）: best idea と関係なく集計保有額の上位20（株だけ） ──
+        t20 = sorted([cu for cu, v in sec.items() if v['rank'] <= 60 and not is_nonstock(cu, figi, ftd_symbols(ftd, cu, p)[1], v)],
+                     key=lambda cu: rk(cu))[:TOPK]
+        W['H1_top20_largest_vw'][p] = vw(t20)
+        W['H2_top20_largest_ew'][p] = ew(t20)
     return W, {p: len(bt[p]) for p in bt}, {p: Counter(cu for _, cu, _, _ in bt[p]) for p in bt}
 
 
@@ -1286,6 +1294,20 @@ DEVIATIONS = [
     'Yahoo に照合できた CUSIP は Yahoo の分割の記録（比が分割の候補に合うものだけ・分社化の半端な比は使わない・期末前後10日は 13F の株価の比で帰属を決める）、'
     '照合できない CUSIP は事前登録の方法＋予備（持ち手の株数の比の中央値が2倍以上の候補に±3%）。照合できた名前で Yahoo の分割と突き合わせて確かめた（結果を見る前）',
     '(9) 道 Q の株価は両端とも持ち手3社以上の合意があるときだけ（1〜2社の株価に単位の誤りが混じり −99.9% が出ていた）',
+    '(10) 結果を見た後に、事後の対照 H1（best idea と関係なく集計保有額の上位20・時価加重）と H2（同・等しく）と、X6−H1・P4−H2 の差を加えた。'
+    '事後なので判定しない（grade=事後）',
+    '(11) 道 Y の P30/P100 は事前登録どおり『組む時点で Yahoo に照合できない株（全体の約26%・等しく）を毎四半期 −30%/−100%』とするため、'
+    '年 −35%〜−100% という意味の薄い下限になった（照合できない株の多くは後に買収された社や記号の変わった社で、実際に −30% になったわけではない）。'
+    '生き残りの偏りの幅は道 Q（13F の四半期末の株価）で読むのが実質的',
+]
+SUMMARY_JA = [
+    '問い: 13F の機関投資家（能動的な約2,500社）の best idea（自分の比重−13F 全体の比重 が最大の株）を、提出が公開された翌月から写すと S&P500 型の市場（French Mkt）に勝つか。Cohen-Polk-Silli (2010) の公表後（2013-09〜2026-08・13年）',
+    '主の4本（道 Y・Yahoo・観測できる株だけ）: 等しく −1.75%/年（t −1.62）・集計保有額で加重 +0.03%/年（t 0.07）・2人以上の best idea −1.01%/年（t −1.24）・大型株の上位20 −0.39%/年（t −0.29）。費用後はさらに −0.1〜−0.4',
+    '生き残りの偏りの小さい道 Q（13F の四半期末の株価・配当なし）: −3.23・−0.79・−1.81・−1.86%/年（同じ作り方の検算の上位500 が −0.78 なので、それを引くと 等しく −2.5・加重 0・合意 −1.0・上位20 −1.1）',
+    '等しく持つ版の負けの大半は『大型500を等しく持つ』だけで出る負け（−1.58%/年）と同じ大きさ＝best idea の上乗せは0前後。FF5+勢いのアルファも −1.7〜+0.7%/年で t は全部 |2| 未満',
+    '唯一の勝ち X6（best idea に多く選ばれた大型20社を時価加重）+2.84%/年（t 1.63）は、事後の対照『best idea と関係なく最大の20社を時価加重』+2.79%/年とほぼ同じ（差 +0.05・t 0.06）＝巨大株の時代の効果で best idea の力ではない',
+    '実在の器: GURU（ヘッジファンドの 13F の写し・2012〜）−2.19%/年（t −1.02・年率 12.1% vs 市場 14.9%）・GVIP（2016-12〜）+1.04%/年（t 0.4・β1.10）・ALFA は上場廃止で測れない（失敗した器が消える偏り）',
+    '判定: 判定を付けた98本（戦略94本＋検算4本・測れなかった ALFA を含む。事後の対照6本は判定しない）はすべて C。13F の構造化データは 2013年からなので訓練期間（〜2006）が無く C1 が測れない＝格の天井は C。ただ保有期間だけを見ても、主の族で C2（勝ち）と C6（費用後の勝ち）を両方満たすものは無い',
 ]
 
 
@@ -1360,6 +1382,21 @@ def main():
         e['coverage'] = {'quarters': len(cv), 'mean_names': round(S.mean(c['n'] for c in cv), 1) if cv else None,
                          'mean_w_unmapped': round(S.mean(c['w_unmapped'] for c in cv), 4) if cv else None}
         tested.append(e)
+    # 事後の対照（判定しない）
+    for k in POSTHOC:
+        r, cv, tn = port_returns(W, k, res, None)
+        series[(k, 'O')] = r; turns[(k, 'O')] = tn
+        e = evaluate(f'{k}__O', '事後（結果を見た後に加えた対照・判定しない）', DESC[k], r, b, spy, rf, facs, tn, COST_LARGE)
+        e['grade'] = '事後'; e['criteria'] = None
+        e['coverage'] = {'quarters': len(cv), 'mean_names': round(S.mean(c['n'] for c in cv), 1) if cv else None,
+                         'mean_w_unmapped': round(S.mean(c['w_unmapped'] for c in cv), 4) if cv else None}
+        tested.append(e)
+    for a_, b_ in (('X6_D_top20_large_vw', 'H1_top20_largest_vw'), ('P4_D_top20_large', 'H2_top20_largest_ew')):
+        diff = {m: series[(a_, 'O')][m] - series[(b_, 'O')][m] for m in series[(a_, 'O')] if m in series[(b_, 'O')]}
+        zero = {m: 0.0 for m in diff}
+        posthoc_diff = M.excess_stats({m: v for m, v in diff.items()}, zero)
+        tested.append({'name': f'{a_}_minus_{b_}__O', 'family': '事後（差・判定しない）', 'grade': '事後', 'criteria': None,
+                       'description': f'{a_} − {b_}（道 Y・O）の月次の差＝best idea で選ぶことの上乗せ', 'hold': posthoc_diff})
     # 実在の器
     real = {}
     for k, t in REAL.items():
@@ -1425,6 +1462,12 @@ def main():
                              'gone_before_h0_total': sum(c['gone_before_h0'] for c in cv),
                              'vanished_in_hold_total': sum(c['vanished_in_hold'] for c in cv)}
             tested.append(e)
+    for k in POSTHOC:
+        r, cv = port_returns_q(W, k, None)
+        seriesQ[(k, 'O')] = r
+        e = evaluate_q(f'Q_{k}__O', '事後（道 Q・判定しない）', DESC[k] + '（道 Q）', r, bq, turns[(k, 'O')], COST_LARGE)
+        e['grade'] = '事後'; e['criteria'] = None
+        tested.append(e)
     sanity['Q_exdiv_market'] = exdiv_info
     sanity['Q_french_div_minus_exdiv_ann_pct'] = M.excess_stats(bq_div, bq, a=201309, per_year=4, lag=4)
     per = [{'period': p, 'formation': formation(p), 'filings': d['n_filings'], 'eligible_managers': d['n_eligible'],
@@ -1437,7 +1480,10 @@ def main():
            'n_tested': len(tested), 'holm_primary': holm, 'holm_primary_Q': holmQ, 'holm_E': holmE, 'holm_E_Q': holmQE,
            'holm_real': rholm,
            'sanity': sanity, 'periods': per, 'top_best_ideas_by_period': top_bi,
-           'deviations': DEVIATIONS,
+           'deviations': DEVIATIONS, 'summary_ja': SUMMARY_JA,
+           'grade_note': 'C1（訓練期間 〜2006 で正・t≥2）は 13F の構造化データが 2013年からのため測れず、mw_common.grade は空欄を不合格側に倒す＝全戦略の格の天井は C（事前登録どおり）',
+           'replication_note': 'C5（米国外での再現）は N/A（13F は米国だけ）',
+           'post_publication': {'paper': 'Cohen, Polk & Silli (2010)', 'window': '2013-09〜2026-08（全部が公表後）'},
            'price_resolution': {'pairs': len(res), **res_stats},
            'series_monthly': {f'{k}__{v}': {str(m): round(x, 6) for m, x in sorted(r.items())} for (k, v), r in series.items() if v == 'O' or k in PRIMARY},
            'series_quarterly_Q': {f'Q_{k}__{v}': {str(m): round(x, 6) for m, x in sorted(r.items())} for (k, v), r in seriesQ.items() if v == 'O' or k in PRIMARY},
@@ -1447,9 +1493,10 @@ def main():
     for e in tested:
         if e.get('unavailable'):
             print(e['name'], 'N/A'); continue
-        h = e['hold']; nc = e['net_cost_hold']
-        print(f"{e['name']:<38} {e['grade']} hold {h['ex_ann'] if h else None:>6} t {h['t'] if h else None:>5} "
-              f"cagrΔ {h['cagr_diff'] if h else None:>6} net {nc['ex_ann'] if nc else None:>6} TO {e.get('turnover_oneway_annual')}")
+        h = e.get('hold'); nc = e.get('net_cost_hold')
+        f_ = lambda x: str(x) if x is not None else '-'
+        print(f"{e['name']:<38} {e['grade']} hold {f_(h['ex_ann'] if h else None):>6} t {f_(h['t'] if h else None):>5} "
+              f"cagrΔ {f_(h['cagr_diff'] if h else None):>6} net {f_(nc['ex_ann'] if nc else None):>6} TO {e.get('turnover_oneway_annual')}")
     print('sanity', json.dumps(sanity, ensure_ascii=False)[:800])
 
 if __name__ == '__main__':
