@@ -24,6 +24,7 @@ import mw_common as M
 
 PREREG = 'out/mw_flow_tilt_prereg.json'
 PREREG2 = 'out/mw_flow_tilt_prereg2.json'
+PREREG3 = 'out/mw_flow_tilt_prereg3.json'
 OUT = 'mw_flow_tilt.json'
 FR_URL = 'https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{}.zip'
 MSCI_URL = ('https://app2.msci.com/products/service/index/indexmaster/getLevelDataForGraph?currency_symbol=USD&index_variant={v}'
@@ -1148,10 +1149,276 @@ def run_part2(D, dy, rel, mom, chP, gross, net, Wg, Wn, SPn, decide, ret, dp, ch
     rep['_now'].update({k: {b: round(v, 3) for b, v in X[k][last].items()} for k in X if k.startswith(('X5', 'X6'))})
     rep['sanity2'] = sanity2
     rep['prereg2_commit'] = git_sha(PREREG2)
+    rep['_X'], rep['_N'], rep['_R2'] = X, N, R2
     return tested, rep
 
 
 JST_GW = {}
+
+
+# ───────────────────────── 探索の第3族（事前登録3） ─────────────────────────
+ETF_OF = {'aus': 'EWA', 'aut': 'EWO', 'bel': 'EWK', 'can': 'EWC', 'dnk': 'EDEN', 'fin': 'EFNL', 'fra': 'EWQ', 'deu': 'EWG', 'hkg': 'EWH',
+          'irl': 'EIRL', 'ita': 'EWI', 'jpn': 'EWJ', 'nld': 'EWN', 'nzl': 'ENZL', 'nor': 'ENOR', 'sgp': 'EWS', 'esp': 'EWP', 'swe': 'EWD',
+          'che': 'EWL', 'gbr': 'EWU'}
+Z_START = 199107
+Z5_START = 199605
+
+
+def fr_region_total(name):
+    for t, v in M.french_tables(name).items():
+        if v['freq'] == 'monthly':
+            i, j = v['cols'].index('Mkt-RF'), v['cols'].index('RF')
+            return {d: (row[i] + row[j]) / 100 for d, row in v['data'].items() if row[i] is not None and row[j] is not None}
+    raise KeyError(name)
+
+
+def run_part3(D, rel, chP, Xch, Nch, R1, R2, ret, dp, decide_all):
+    log('── 事前登録3（探索） ──')
+    P3 = json.load(open(os.path.join(M.BASE, PREREG3)))
+    dev, dxu = fr_region_total('Developed_3_Factors'), fr_region_total('Developed_ex_US_3_Factors')
+    us = D.sp
+    ks = [m for m in sorted(dev) if m in dxu and m in us]
+    wdev, fits = {}, []
+    for i in range(12, len(ks)):
+        win = ks[i - 12:i]
+        xs = [us[k] - dxu[k] for k in win]; ys = [dev[k] - dxu[k] for k in win]
+        b = sum(x * y for x, y in zip(xs, ys)) / sum(x * x for x in xs)
+        wdev[ks[i]] = b
+        tot = sum((y - S.mean(ys)) ** 2 for y in ys)
+        fits.append(1 - sum((y - b * x) ** 2 for x, y in zip(xs, ys)) / tot if tot > 0 else None)
+    # 器
+    D.usd['USF'] = D.sp; D.div['USF'] = D.div['US']; FEE['USF'] = 0.0937; WH['USF'] = 0.10
+    D.usd['XD'] = D.ind_usd['Ind_all']; D.div['XD'] = D.div['XUS']; FEE['XD'] = 0.11; WH['XD'] = 0.13
+    etf = {}
+    for c, tk in ETF_OF.items():
+        try:
+            etf[c] = {k: v for k, v in M.yahoo(tk).items() if k <= END}
+        except Exception as e:  # noqa
+            log('ETF 取得失敗', tk, e)
+            etf[c] = {}
+        k = 'e_' + c
+        D.usd[k] = etf[c]; D.div[k] = D.c_div[c]; FEE[k] = 0.0; WH[k] = 0.10
+    msci = {}
+    for code, name in ((892400, 'ACWI'), (990100, 'MWORLD')):
+        lv = D.msci_levels(code, 'NETR')
+        kk = sorted(lv)
+        msci[name] = {k: lv[k] / lv[p] - 1 for p, k in zip(kk, kk[1:]) if ym_add(p, 1) == k and k <= END}
+    MFEE = {'ACWI': 0.0578, 'MWORLD': 0.099}
+    frdev = dev
+
+    def usd3(b, m, net):
+        if b == 'BD':
+            w = wdev.get(m)
+            a, x = D.usd['USF'].get(m), D.usd['XD'].get(m)
+            if w is None or a is None or x is None:
+                return None
+            r = w * a + (1 - w) * x
+            if net:
+                du, dx = D.div['US'].get(m), D.div['XD'].get(m)
+                if du is None or dx is None:
+                    return None
+                r -= 0.099 / 1200 + w * 0.10 * du + (1 - w) * 0.13 * dx
+            return r
+        if b in msci:
+            r = msci[b].get(m)
+            return None if r is None else r - (MFEE[b] / 1200 if net else 0.0)
+        if b == 'FRDEV':
+            return frdev.get(m)
+        return D.ret(b, m, net=net, jpy=False)
+
+    def mk(net):
+        def f(b, m):
+            r = usd3(b, m, net)
+            fx = D.fxr(m)
+            return None if r is None or fx is None else (1 + r) * (1 + fx) - 1
+        return f
+    g3, n3 = mk(False), mk(True)
+    sanity3 = {'w_dev_fit_r2_median': r2(S.median([f for f in fits if f is not None]), 4), 'w_dev': {str(k): r2(wdev.get(k), 3) for k in (199107, 200012, 201012, 202512)},
+               'etf_first_month': {c: (min(v) if v else None) for c, v in etf.items()},
+               'bd_vs_french_developed_cagr': None}
+    kk = [m for m in months(Z_START, END) if usd3('BD', m, False) is not None and m in frdev]
+    sanity3['bd_vs_french_developed_cagr'] = {'BD': r2(M.cagr([usd3('BD', m, False) for m in kk]) * 100), 'French_Developed': r2(M.cagr([frdev[m] for m in kk]) * 100),
+                                              'corr': r2(M.corr([usd3('BD', m, False) for m in kk], [frdev[m] for m in kk]), 4)}
+    kk = [m for m in months(200101, END) if m in msci['MWORLD'] and usd3('BD', m, False) is not None]
+    sanity3['bd_vs_msci_world_net_2001'] = {'BD': r2(M.cagr([usd3('BD', m, False) for m in kk]) * 100), 'MSCI_World_NETR': r2(M.cagr([msci['MWORLD'][m] for m in kk]) * 100)}
+    log('sanity3', sanity3)
+    # 信号
+    ctry = list(FR_FILES)
+    crel = {c: rel_series(dy_series(D.c_div[c])) for c in ctry}
+    momZ = {b: mom_series(D.usd[b]) for b in ('USF', 'XD')}
+    relZ = {'USF': rel['US'], 'XD': rel['XUS']}
+    decide = months(ym_add(Z_START, -1), ym_add(END, -1))
+    Z = {k: {} for k in P3['families']['Z_monthly']['strategies']}
+    fb = {k: 0 for k in Z}
+    ND = {}
+    for t in decide:
+        w = wdev[ym_add(t, 1)]
+        ND[t] = {'USF': w, 'XD': 1 - w}
+        Y = t // 100
+        el = [c for c in ctry if (D.c_firms[c].get(Y) or 0) >= 20 and t in crel[c] and ym_add(t, 1) in D.c_usd[c]]
+        order = sorted(el, key=lambda c: (-crel[c][t], c))
+        for name, K in (('Z1_UScap_XDcountry_top3', 3), ('Z2_UScap_XDcountry_top1', 1)):
+            if len(order) >= K:
+                Z[name][t] = {'USF': w, **{'c_' + c: (1 - w) / K for c in order[:K]}}
+            else:
+                Z[name][t] = {'USF': w, 'XD': 1 - w}; fb[name] += 1
+        if all(t in momZ[b] for b in momZ):
+            Z['Z3_mom_US_XD'][t] = {max(('USF', 'XD'), key=lambda b: momZ[b][t]): 1.0}
+        else:
+            Z['Z3_mom_US_XD'][t] = {'USF': w, 'XD': 1 - w}; fb['Z3_mom_US_XD'] += 1
+        p = pick_top(relZ, ['USF', 'XD'], t, ['USF', 'XD'])
+        if p is None:
+            Z['Z4_rel_US_XD'][t] = {'USF': w, 'XD': 1 - w}; fb['Z4_rel_US_XD'] += 1
+        else:
+            Z['Z4_rel_US_XD'][t] = {p: 1.0}
+        if t >= ym_add(Z5_START, -1):
+            ele = [c for c in order if ym_add(t, 1) in etf[c] and t in etf[c]]
+            if len(ele) >= 3:
+                Z['Z5_UScap_XDcountryETF_top3'][t] = {'USF': w, **{'e_' + c: (1 - w) / 3 for c in ele[:3]}}
+            else:
+                Z['Z5_UScap_XDcountryETF_top3'][t] = {'USF': w, 'XD': 1 - w}; fb['Z5_UScap_XDcountryETF_top3'] += 1
+    # 中立の道
+    rep = {'sanity3': sanity3}
+    twNg, _, _ = simulate(ND, g3, Z_START, END)
+    twNn, _, _ = simulate(ND, n3, Z_START, END)
+    BDg = {m: g3('BD', m) for m in months(Z_START, END)}
+    BDn = {m: n3('BD', m) for m in months(Z_START, END)}
+    FDg = {m: g3('FRDEV', m) for m in months(Z_START, END)}
+    MWn = {m: n3('MWORLD', m) for m in months(200101, END) if n3('MWORLD', m) is not None}
+    ACn = {m: n3('ACWI', m) for m in months(200101, END) if n3('ACWI', m) is not None}
+    rep['N_dev_vs_BD'] = {'gross_full': M.excess_stats(twNg, BDg, Z_START, END), 'net_hold': M.excess_stats(twNn, BDn, HOLD_START, END),
+                          'dca20': dca_windows(ND, n3, 'BD', Z_START, END)}
+    log('N_dev vs BD', rep['N_dev_vs_BD']['gross_full']['ex_ann'], rep['N_dev_vs_BD']['gross_full']['t'], rep['N_dev_vs_BD']['dca20']['nisa'])
+    tested, pv, ZR = [], {}, {}
+    for name, c in Z.items():
+        st = Z5_START if name.startswith('Z5') else Z_START
+        ev = []
+        twg, _, flows = simulate(c, g3, st, END, move_to='XD', events=ev)
+        twn, Hn, _ = simulate(c, n3, st, END, move_to='XD')
+        frg, _, _ = simulate(c, g3, HOLD_START, END, move_to='XD')
+        frn, _, _ = simulate(c, n3, HOLD_START, END, move_to='XD')
+        e = {'gross': {k: M.excess_stats(twg, BDg, a, z) for k, (a, z) in (('full', (st, END)), ('train', (st, TRAIN_END)), ('hold', (HOLD_START, END)), ('recent', (RECENT_START, END)))},
+             'net': {k: M.excess_stats(twn, BDn, a, z) for k, (a, z) in (('full', (st, END)), ('train', (st, TRAIN_END)), ('hold', (HOLD_START, END)), ('recent', (RECENT_START, END)))},
+             'fresh2007_gross': M.excess_stats(frg, BDg, HOLD_START, END), 'fresh2007_net': M.excess_stats(frn, BDn, HOLD_START, END),
+             'fresh2007_net_vs_MSCI_World': M.excess_stats(frn, MWn, HOLD_START, END), 'fresh2007_net_vs_MSCI_ACWI': M.excess_stats(frn, ACn, HOLD_START, END),
+             'vs_French_Developed_gross': {'full': M.excess_stats(twg, FDg, st, END), 'hold': M.excess_stats(twg, FDg, HOLD_START, END)}}
+        tot = sum(flows.values()); totH = sum(Hn.values())
+        x = {'name': name, 'family': 'Z（探索・事前登録3）', 'primary': False, 'exploratory': True, 'graded': True,
+             'description': P3['families']['Z_monthly']['strategies'][name], **e,
+             'roll20_lump_net': M.rolling(twn, BDn, 20),
+             'dca20_BD': dca_windows(c, n3, 'BD', st, END, 20, 12, move_to='XD'),
+             'dca20_BD_step1': dca_windows(c, n3, 'BD', st, END, 20, 1, move_to='XD'),
+             'dca15_BD_step1': dca_windows(c, n3, 'BD', st, END, 15, 1, move_to='XD'),
+             'dca10_BD_step1': dca_windows(c, n3, 'BD', st, END, 10, 1, move_to='XD'),
+             'dca20_vs_N_dev': dca_two_windows(c, ND, n3, st, END, move_to='XD'),
+             'dca15_MSCI_World_2001_step1': dca_windows(c, n3, 'MWORLD', 200101, END, 15, 1, move_to='XD'),
+             'dca10_MSCI_World_2001_step1': dca_windows(c, n3, 'MWORLD', 200101, END, 10, 1, move_to='XD'),
+             'dca20_sp500': dca_windows(c, n3, 'SP', st, END, 20, 12, move_to='XD'),
+             'flow_share': {b: round(v / tot, 3) for b, v in sorted(flows.items(), key=lambda z: -z[1])[:10]},
+             'final_holding_share': {b: round(v / totH, 3) for b, v in sorted(Hn.items(), key=lambda z: -z[1])[:10]},
+             'fallback_months': fb[name], 'data_end_moves': ev[:20]}
+        if name.startswith(('Z3', 'Z4')):
+            x['choice_runs'] = runs(c, [t for t in decide if t >= ym_add(st, -1)])
+        ZR[name] = x
+        pv[name] = max(e['net']['hold']['p'] or 1, e['fresh2007_net']['p'] or 1)
+        log(name, 'train', e['gross']['train']['ex_ann'], e['gross']['train']['t'], '| hold', e['gross']['hold']['ex_ann'], e['gross']['hold']['t'],
+            '| fresh', e['fresh2007_net']['ex_ann'], e['fresh2007_net']['t'], '| vsMW', e['fresh2007_net_vs_MSCI_World']['ex_ann'],
+            '| DCA20 BD', x['dca20_BD']['nisa']['median_ratio'], x['dca20_BD']['nisa']['win_rate'], '| vsN', x['dca20_vs_N_dev']['nisa']['median_ratio'])
+    holm = M.holm(pv)
+    c5 = {'Z1_UScap_XDcountry_top3': ('R2', 'top3'), 'Z5_UScap_XDcountryETF_top3': ('R2', 'top3'), 'Z2_UScap_XDcountry_top1': ('R1', 'top1'),
+          'Z4_rel_US_XD': ('R1', 'top1'), 'Z3_mom_US_XD': ('R2', 'mom_top1')}
+    for name, x in ZR.items():
+        src, rule = c5[name]
+        det = {reg: (R2[reg][rule]['full']['ex_ann'] if src == 'R2' else R1[reg][rule]['full']['ex_ann']) for reg in C5_REGIONS}
+        repl = {'regions': len(C5_REGIONS), 'positive': sum(1 for v in det.values() if v > 0), 'rule': rule, 'detail': det}
+        hw = hold_worse(x['gross']['hold'], x['fresh2007_gross'])
+        cw = hold_worse(x['net']['hold'], x['fresh2007_net'])
+        lump, dcaw = x['roll20_lump_net'], x['dca20_BD']['nisa'] if x['dca20_BD'] else None
+        roll_for_grade = {'win_rate': min(lump['win_rate'] if lump else 0.0, dcaw['win_rate'] if dcaw else 0.0),
+                          'lump_win_rate': lump['win_rate'] if lump else None, 'dca_win_rate': dcaw['win_rate'] if dcaw else None}
+        g, crit = M.grade(x['gross']['full'], x['gross']['train'], hw, roll_for_grade, cost_hold=cw, repl=repl, family_holm_p=holm.get(name))
+        x.update({'hold_for_grade': hw, 'cost_hold_for_grade': cw, 'roll20_for_grade': roll_for_grade, 'repl': repl,
+                  'family_holm_p': holm.get(name), 'holm_input_p': pv[name], 'grade': g, 'criteria': crit})
+        tested.append(x)
+        log(name, 'grade', g, crit)
+
+    # --- 事後: P・X を MSCI ACWI（実物に近い相手）で ---
+    net1 = lambda b, m: D.ret(b, m, net=True, jpy=True) if b not in msci else n3(b, m)
+    post = {}
+    for fam, chs in (('P', chP), ('X', Xch), ('N', {'N_neutral_flow': Nch})):
+        for name, c in chs.items():
+            mt = 'XUS' if name.startswith(('X5', 'X6')) else None
+            fr, _, _ = simulate(c, net1, HOLD_START, END, move_to=mt)
+            post[name] = {'fresh2007_net_vs_MSCI_ACWI': M.excess_stats(fr, ACn, HOLD_START, END),
+                          'dca10_vs_MSCI_ACWI_2001_step1': (dca_windows(c, net1, 'ACWI', 200101, END, 10, 1, move_to=mt) or {}).get('nisa'),
+                          'dca15_vs_MSCI_ACWI_2001_step1': (dca_windows(c, net1, 'ACWI', 200101, END, 15, 1, move_to=mt) or {}).get('nisa')}
+    rep['posthoc_P_X_vs_MSCI_ACWI'] = post
+    log('事後 vs ACWI', {k: (v['fresh2007_net_vs_MSCI_ACWI']['ex_ann'], v['fresh2007_net_vs_MSCI_ACWI']['t'], v['dca15_vs_MSCI_ACWI_2001_step1']['median_ratio']) for k, v in post.items()})
+
+    # --- Z6・Z7（JST） ---
+    def zj(y_from, y_to):
+        out = {'Z6_JST_UScap_XUScountry_top3': {}, 'Z7_JST_mom_US_XUS15': {}}
+        for Y in range(y_from - 1, y_to):
+            ws = {c: JST_GW[c][Y] for c in C16 if Y in JST_GW[c]}
+            su = ws.get('USA', 0.0) / sum(ws.values()) if ws else None
+            sc = sorted(((jst_rel(dp, Y, c), c) for c in C16 if c != 'USA' and Y in ret[c]), key=lambda z: (-(z[0] or -1), z[1]))
+            sc = [c for v, c in sc if v is not None]
+            if su is not None and len(sc) >= 3 and 'USA' in ws:
+                out['Z6_JST_UScap_XUScountry_top3'][Y] = {'USA': su, **{c: (1 - su) / 3 for c in sc[:3]}}
+            else:
+                out['Z6_JST_UScap_XUScountry_top3'][Y] = {'B': 1.0}
+            ru, rx = ret['USA'].get(Y), ret['XUS'].get(Y)
+            out['Z7_JST_mom_US_XUS15'][Y] = {'B': 1.0} if ru is None or rx is None else {('USA' if ru >= rx else 'XUS'): 1.0}
+        return out
+    zA, zB = zj(1881, 1925), zj(1926, 2020)
+    NB = {}
+    for Y in range(1925, 2020):
+        ws = {c: JST_GW[c][Y] for c in C16 if Y in JST_GW[c]}
+        tw = sum(ws.values())
+        NB[Y] = {c: w / tw for c, w in ws.items()}
+    NA = {}
+    for Y in range(1880, 1925):
+        ws = {c: JST_GW[c][Y] for c in C16 if Y in JST_GW[c]}
+        tw = sum(ws.values())
+        NA[Y] = {c: w / tw for c, w in ws.items()}
+    Bb = ret['B']
+    YR, ypv = {}, {}
+    for name in zA:
+        twA, _, evA = jst_simulate(zA[name], ret, 1881, 1925)
+        twB, _, evB = jst_simulate(zB[name], ret, 1926, 2020)
+        twBn, _, _ = jst_simulate(zB[name], ret, 1926, 2020, fee=0.0005)
+        fr, _, _ = jst_simulate(zB[name], ret, 2007, 2020)
+        frn, _, _ = jst_simulate(zB[name], ret, 2007, 2020, fee=0.0005)
+        e = {'A_1881_1925': M.excess_stats(twA, Bb, 1881, 1925, per_year=1, lag=2), 'full_1926_2020': M.excess_stats(twB, Bb, 1926, 2020, per_year=1, lag=2),
+             'train_1926_2006': M.excess_stats(twB, Bb, 1926, 2006, per_year=1, lag=2), 'hold_2007_2020': short_stats(twB, Bb, 2007, 2020),
+             'hold_2007_2020_net': short_stats(twBn, Bb, 2007, 2020), 'fresh2007': short_stats(fr, Bb, 2007, 2020), 'fresh2007_net': short_stats(frn, Bb, 2007, 2020)}
+        x = {'name': name, 'family': 'Z（探索・JST・事前登録3）', 'primary': False, 'exploratory': True, 'graded': True,
+             'description': P3['families']['Z_JST']['strategies'][name], **e, 'roll20_lump_B': roll_annual(twB, Bb, 20),
+             'dca20_B_path': summ_ratios([(y0, jst_dca(zB[name], ret, 'B', y0, 20)) for y0 in range(1926, 2002)]),
+             'dca20_A_path': summ_ratios([(y0, jst_dca(zA[name], ret, 'B', y0, 20)) for y0 in range(1881, 1907)]),
+             'dca20_vs_N_gdp_B': summ_ratios([(y0, jst_dca_two(zB[name], NB, ret, y0, 20)) for y0 in range(1926, 2002)]),
+             'dca20_vs_N_gdp_A': summ_ratios([(y0, jst_dca_two(zA[name], NA, ret, y0, 20)) for y0 in range(1881, 1907)]),
+             'imputation_A': evA, 'imputation_B': evB}
+        YR[name] = x
+        ypv[name] = max(e['hold_2007_2020_net']['p'] or 1, e['fresh2007_net']['p'] or 1)
+        log(name, 'A', e['A_1881_1925']['ex_ann'], e['A_1881_1925']['t'], '| train', e['train_1926_2006']['ex_ann'], e['train_1926_2006']['t'],
+            '| hold', e['hold_2007_2020']['ex_ann'], '| fresh', e['fresh2007']['ex_ann'], '| DCA B', x['dca20_B_path']['median_ratio'], x['dca20_B_path']['win_rate'],
+            '| vsN', x['dca20_vs_N_gdp_B']['median_ratio'], x['dca20_vs_N_gdp_B']['win_rate'], '| A vsN', x['dca20_vs_N_gdp_A']['median_ratio'])
+    yholm = M.holm(ypv)
+    for name, x in YR.items():
+        hw = hold_worse(x['hold_2007_2020'], x['fresh2007'])
+        cw = hold_worse(x['hold_2007_2020_net'], x['fresh2007_net'])
+        lump, dcab = x['roll20_lump_B'], x['dca20_B_path']
+        roll_for_grade = {'win_rate': min(lump['win_rate'] if lump else 0.0, dcab['win_rate'] if dcab else 0.0)}
+        repl = {'regions': 1, 'positive': 1 if x['A_1881_1925']['ex_ann'] > 0 else 0, 'what': '道 A（1881〜1925）'}
+        g, crit = M.grade(x['full_1926_2020'], x['train_1926_2006'], hw, roll_for_grade, cost_hold=cw, repl=repl, family_holm_p=yholm.get(name))
+        x.update({'hold_for_grade': hw, 'cost_hold_for_grade': cw, 'roll20_for_grade': roll_for_grade, 'repl': repl, 'family_holm_p': yholm.get(name), 'grade': g, 'criteria': crit})
+        tested.append(x)
+        log(name, 'grade', g, crit)
+    last = decide[-1]
+    rep['_now'] = {k: {b: round(v, 3) for b, v in Z[k][last].items()} for k in Z}
+    rep['prereg3_commit'] = git_sha(PREREG3)
+    return tested, rep
 
 
 # ───────────────────────── 点検（--check） ─────────────────────────
@@ -1370,13 +1637,20 @@ def main():
         tested2, part2 = run_part2(D, dy, rel, mom, ch, gross, net, Wg, Wn, SPn, decide, ret, dp, chA, chB)
         tested += tested2
         now['part2_choices'] = part2.pop('_now', None)
+        Xch, Nch, R2 = part2.pop('_X'), part2.pop('_N'), part2.pop('_R2')
+    part3 = None
+    if part2 and os.path.exists(os.path.join(M.BASE, PREREG3)):
+        tested3, part3 = run_part3(D, rel, ch, Xch, Nch, R, R2, ret, dp, decide)
+        tested += tested3
+        now['part3_choices'] = part3.pop('_now', None)
 
     out = {'angle': 'flow_tilt', 'prereg': PREREG, 'prereg_commit': git_sha(PREREG),
            'prereg2': PREREG2 if part2 else None, 'prereg2_commit': git_sha(PREREG2) if part2 else None,
+           'prereg3': PREREG3 if part3 else None, 'prereg3_commit': git_sha(PREREG3) if part3 else None,
            'global_prereg': 'out/mw_prereg.json', 'global_prereg_commit': git_sha('out/mw_prereg.json'),
            'n_tested': len(tested), 'n_graded': sum(1 for x in tested if x.get('graded')),
            'grades': {x['name']: x.get('grade', '格付け外') for x in tested},
-           'sanity': sanity, 'current_signal': now, 'part2': part2, 'tested': tested, 'log': LOG[-120:], 'runtime_s': round(time.time() - t0, 1)}
+           'sanity': sanity, 'current_signal': now, 'part2': part2, 'part3': part3, 'tested': tested, 'log': LOG[-120:], 'runtime_s': round(time.time() - t0, 1)}
     p = M.save(OUT, out)
     log('書いた', p, round(os.path.getsize(p) / 1e6, 2), 'MB')
 
