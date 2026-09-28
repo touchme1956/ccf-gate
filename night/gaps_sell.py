@@ -21,14 +21,64 @@ FC = os.path.join(BASE, 'out', '_gaps_cache', 'frames')
 PXC = os.path.join(BASE, 'out', '_gaps_cache', 'px')
 WACC = 9.0
 YEARS = range(2009, 2026)
+# ★結果を見る前の修正（2026-09-28・走らせる前の点検で見つけた・結果はまだ一度も出ていない）:
+#   初版は負債のタグを4つ（LongTermDebt / …Noncurrent / …Current / ShortTermBorrowings）しか見ず、
+#   **どれも無い社を負債0として** ROIC を出していた（ルール7の事故の型）。実測 HD 2016: 負債は
+#   LongTermDebtAndCapitalLeaseObligations にだけあり、投下資本が 自己資本−のれん に縮んで ROIC 389.6%。
+#   Visa は StockholdersEquity を2011年でやめ、…IncludingPortionAttributableToNoncontrollingInterest へ移っていた＝全年が落ちていた。
+#   ⇒ 候補を採取器 hachimon_fetch の TAGS に寄せて広げ、**負債のタグが一つも無い社年は『測れない』**（事前登録の
+#     「取れない値はゼロと読まず『測れない』」どおり）。候補は『代替』（先に当たったものを使う）と『構成要素』（足す）を分ける:
+#     負債 ＝ 非流動（代替: LongTermDebtNoncurrent → LongTermDebtAndCapitalLeaseObligations → LongTermNotesPayable → UnsecuredLongTermDebt）
+#          ＋ 流動（DebtCurrent があればそれ一つ＝1年内返済と短期借入の合計。無ければ 1年内返済〔代替: LongTermDebtCurrent →
+#             LongTermDebtAndCapitalLeaseObligationsCurrent〕＋ 短期借入〔代替: ShortTermBorrowings → CommercialPaper〕）。
+#     非流動が無い社年だけ LongTermDebt（米国基準の定義では1年内返済を含む総額）＋短期借入、それも無ければ
+#     DebtAndCapitalLeaseObligations / DebtLongtermAndShorttermCombinedAmount（総額）を使う。
+#   ⚠ 構成要素の取りこぼし（転換社債・シニア債を別タグで出す社）は残る＝負債を小さく読む向き。
 DUR = ['OperatingIncomeLoss', 'NetIncomeLoss', 'NetCashProvidedByUsedInOperatingActivities',
        'PaymentsToAcquirePropertyPlantAndEquipment', 'IncomeTaxExpenseBenefit',
        'IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest',
-       'InterestExpense', 'DepreciationDepletionAndAmortization', 'DepreciationAndAmortization', 'GrossProfit',
-       'Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'SalesRevenueNet']
-INS = ['StockholdersEquity', 'LongTermDebt', 'LongTermDebtNoncurrent', 'LongTermDebtCurrent', 'ShortTermBorrowings',
-       'Goodwill', 'IntangibleAssetsNetExcludingGoodwill', 'CashAndCashEquivalentsAtCarryingValue', 'Assets', 'Liabilities',
+       'IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments',
+       'InterestExpense', 'InterestExpenseDebt', 'InterestExpenseNonoperating', 'InterestAndDebtExpense',
+       'DepreciationDepletionAndAmortization', 'DepreciationAndAmortization', 'DepreciationAmortizationAndAccretionNet',
+       'GrossProfit',
+       'Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'RevenueFromContractWithCustomerIncludingAssessedTax',
+       'SalesRevenueNet']
+INS = ['StockholdersEquity', 'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest',
+       'LongTermDebt', 'LongTermDebtNoncurrent', 'LongTermDebtCurrent', 'ShortTermBorrowings',
+       'LongTermDebtAndCapitalLeaseObligations', 'LongTermDebtAndCapitalLeaseObligationsCurrent', 'DebtCurrent',
+       'CommercialPaper', 'LongTermNotesPayable', 'UnsecuredLongTermDebt',
+       'DebtAndCapitalLeaseObligations', 'DebtLongtermAndShorttermCombinedAmount',
+       'Goodwill', 'IntangibleAssetsNetExcludingGoodwill', 'CashAndCashEquivalentsAtCarryingValue',
+       'CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents', 'Assets', 'Liabilities',
        'AssetsCurrent', 'LiabilitiesCurrent', 'RetainedEarningsAccumulatedDeficit']
+
+
+def first(d, keys):
+    """代替の候補: 先に当たった値（無ければ None）。0 は値として扱う"""
+    for k in keys:
+        if d.get(k) is not None:
+            return d[k]
+    return None
+
+
+def debt_of(d):
+    """有利子負債。タグが一つも無ければ None（負債0と読まない）"""
+    lnc = first(d, ['LongTermDebtNoncurrent', 'LongTermDebtAndCapitalLeaseObligations', 'LongTermNotesPayable', 'UnsecuredLongTermDebt'])
+    st = first(d, ['ShortTermBorrowings', 'CommercialPaper'])
+    if d.get('DebtCurrent') is not None:
+        cur = d['DebtCurrent']
+    else:
+        c = first(d, ['LongTermDebtCurrent', 'LongTermDebtAndCapitalLeaseObligationsCurrent'])
+        cur = None if (c is None and st is None) else (c or 0) + (st or 0)
+    if lnc is not None:
+        return lnc + (cur or 0)
+    if d.get('LongTermDebt') is not None:
+        return d['LongTermDebt'] + (st or 0)
+    if d.get('DebtLongtermAndShorttermCombinedAmount') is not None:
+        return d['DebtLongtermAndShorttermCombinedAmount']          # 短期借入も含む総額
+    if d.get('DebtAndCapitalLeaseObligations') is not None:
+        return d['DebtAndCapitalLeaseObligations'] + (st or 0)     # 長期（1年内返済を含む）の総額
+    return cur          # 流動の負債だけ出している社（無ければ None＝測れない）
 
 
 def frame(tag, period):
@@ -92,30 +142,30 @@ def features(P):
         out = {}
         for y, d in ys.items():
             oi = d.get('OperatingIncomeLoss')
-            eq = d.get('StockholdersEquity')
+            eq = first(d, ['StockholdersEquity', 'StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest'])
             if oi is None or eq is None:
                 continue
-            pre, tax = d.get('IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest'), d.get('IncomeTaxExpenseBenefit')
+            pre = first(d, ['IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest',
+                            'IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments'])
+            tax = d.get('IncomeTaxExpenseBenefit')
             t = min(0.5, max(0.0, tax / pre)) if (pre and pre > 0 and tax is not None) else (0.35 if y <= 2017 else 0.21)
-            if d.get('LongTermDebt') is not None:
-                debt = d['LongTermDebt']
+            debt = debt_of(d)
+            if debt is not None:
+                ic = eq + debt - (d.get('Goodwill') or 0) - (d.get('IntangibleAssetsNetExcludingGoodwill') or 0)
+                roic = (oi * (1 - t) / ic * 100) if (eq > 0 and ic > 0 and ic >= 0.2 * eq) else None
             else:
-                parts = [d.get('LongTermDebtNoncurrent'), d.get('LongTermDebtCurrent')]
-                debt = sum(p for p in parts if p is not None)
-            debt += d.get('ShortTermBorrowings') or 0
-            ic = eq + debt - (d.get('Goodwill') or 0) - (d.get('IntangibleAssetsNetExcludingGoodwill') or 0)
-            roic = (oi * (1 - t) / ic * 100) if (eq > 0 and ic > 0 and ic >= 0.2 * eq) else None
-            da = d.get('DepreciationDepletionAndAmortization') if d.get('DepreciationDepletionAndAmortization') is not None else d.get('DepreciationAndAmortization')
+                roic = None                                   # 負債が測れない＝ROIC も測れない（0と読まない）
+            da = first(d, ['DepreciationDepletionAndAmortization', 'DepreciationAndAmortization', 'DepreciationAmortizationAndAccretionNet'])
             ebitda = oi + da if da is not None else None
-            cash = d.get('CashAndCashEquivalentsAtCarryingValue')
-            nde = ((debt - cash) / ebitda) if (ebitda and ebitda > 0 and cash is not None) else None
-            ie = d.get('InterestExpense')
+            cash = first(d, ['CashAndCashEquivalentsAtCarryingValue', 'CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents'])
+            nde = ((debt - cash) / ebitda) if (debt is not None and ebitda and ebitda > 0 and cash is not None) else None
+            ie = first(d, ['InterestExpense', 'InterestExpenseDebt', 'InterestExpenseNonoperating', 'InterestAndDebtExpense'])
             ic_cov = (oi / ie) if (ie and ie > 0) else None
             ta, tl, ca, cl, re_ = d.get('Assets'), d.get('Liabilities'), d.get('AssetsCurrent'), d.get('LiabilitiesCurrent'), d.get('RetainedEarningsAccumulatedDeficit')
             z = (6.56 * (ca - cl) / ta + 3.26 * re_ / ta + 6.72 * oi / ta + 1.05 * eq / tl) if (ta and tl and ca is not None and cl is not None and re_ is not None and ta > 0 and tl > 0) else None
             ni, ocf, cap = d.get('NetIncomeLoss'), d.get('NetCashProvidedByUsedInOperatingActivities'), d.get('PaymentsToAcquirePropertyPlantAndEquipment')
             conv = ((ocf - (cap or 0)) / ni * 100) if (ni and ni > 0 and ocf is not None) else None
-            rev = next((d[k] for k in ('Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'SalesRevenueNet') if d.get(k)), None)
+            rev = next((d[k] for k in ('Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'RevenueFromContractWithCustomerIncludingAssessedTax', 'SalesRevenueNet') if d.get(k)), None)
             gm = (d['GrossProfit'] / rev * 100) if (d.get('GrossProfit') is not None and rev and rev > 0) else None
             out[y] = dict(roic=roic, eq=eq, nde=nde, icov=ic_cov, z=z, conv=conv, gm=gm, end=d.get('_end'))
         for y in out:
@@ -256,6 +306,7 @@ def main():
                                  '比較群の社年': sum(len(v) for v in controls.values())}
     doc = {'generated': time.strftime('%Y-%m-%d'), 'tool': 'night/gaps_sell.py', 'prereg': 'out/gaps7_prereg.json Q3_sell（9c28f6c）',
            '判定（主＝WACC9%・36か月）': res['WACC9%']['判定'], '結果': res,
+           '結果を見る前の修正': '負債・自己資本・D&A・利息・現金の候補タグを採取器 hachimon_fetch に寄せて広げ、負債のタグが一つも無い社年は負債0ではなく『測れない』にした（初版は HD 2016 の ROIC を 389.6% と出していた）。検定を一度も走らせ終える前に見つけた',
            '母集団': {'一度でも保有の条件を満たした社': len(ever), 'うち今ティッカーが無く外れた社（生存バイアス）': len(no_ticker),
                     '株価が取れた社': sum(1 for c in tick if PX.get(tick[c]))},
            '注': 'frames は暦年にそろえる（6月決算の社は損益と貸借の時点がずれる）。定性の部分（堀の減衰・disrupt・erosion・質スコアの連続低下）は測れない。今ティッカーが無い社は入らない＝倒産した社が抜ける（引き金の社を良く見せる向き）'}
