@@ -83,9 +83,16 @@ RULES = {
     'O3': dict(o3=True),
     'O4': dict(o4=True),
     'O5': dict(o1=O1_L, o2='all', o3=True),
+    # 事前登録2（探索・out/mw_nisa_ops_prereg2.json）
+    'X1': dict(o1=O1_L, o1cap=True),
+    'X1b': dict(o1=O1_L10, o1cap=True),
+    'X2': dict(cfirst=True),
+    'X3': dict(cfirst=True, o2='all', o2c=True),
+    'X4': dict(cfirst=True, o1=O1_L, o1cap=True),
 }
 PRIMARY_RULES = ['O1', 'O2a', 'O2b', 'O3', 'O4', 'O5']
 SECONDARY_RULES = ['O1_L10']
+EXPLORE_RULES = ['X1', 'X1b', 'X2', 'X3', 'X4']
 
 
 class Cfg:
@@ -314,10 +321,33 @@ class HH:
                 out.append((ac, a))
         return out
 
+    def o1_plan(self):
+        """売る口と額。O1: 口を全部。X1（o1cap）: 翌年1月に買い戻せる額まで（損の深い口から・口の一部も可）"""
+        c = self.o1_candidates()
+        if not self.rule.get('o1cap'):
+            return [(ac, a, self.pos[(ac, a)][0]) for ac, a in c]
+        h, k = self.cfg.holders, self.k
+        yr = 12 * self.cfg.contrib * k
+        ctot = (Q_TSUMI + Q_GROWTH) * h * k - yr
+        cg = Q_GROWTH * h * k - yr * self.cfg.castle_share
+        out = []
+        for ac, a in sorted(c, key=lambda x: self.pos[x][0] / self.pos[x][1]):
+            v = self.pos[(ac, a)][0]
+            x = min(v, max(0.0, ctot))
+            if self.is_castle(a):
+                x = min(x, max(0.0, cg))
+            if x > EPS:
+                out.append((ac, a, x))
+                ctot -= x
+                if self.is_castle(a):
+                    cg -= x
+        return out
+
     def o1_sell_month(self, m):
         """12月の月初（11月末の値で判断）: 簿価を L 以上下回る NISA の口を売り、同じ資産を課税口座でつなぐ"""
-        for ac, a in self.o1_candidates():
+        for ac, a, xs in self.o1_plan():
             v, b = self.pos[(ac, a)]
+            b = b * xs / v; v = xs
             got = self.sell(ac, a, v, m, kind='switch')
             self.stats['o1_sales'] += 1
             self.stats['o1_room_gain'] += b - v
@@ -333,9 +363,15 @@ class HH:
                 del self.bridge[a]; continue
             self.bridge[a] = min(1.0, self.bridge[a] / p[0]) if p[0] > EPS else 0.0
 
+    def o1_order(self, items):
+        """X1（o1cap）は城を先に買い戻す（成長投資枠の取り合いを避ける）。O1 は記録どおりの順"""
+        if self.rule.get('o1cap'):
+            return sorted(items, key=lambda x: (0 if self.is_castle(x[0]) else 1, x[0]))
+        return items
+
     def o1_rebuy_month(self, m):
         """1月の月初: つなぎを売り、復活した枠で NISA へ買い戻す（入りきらない分は課税口座に残す）"""
-        for a, frac in list(self.bridge.items()):
+        for a, frac in self.o1_order(list(self.bridge.items())):
             p = self.pos.get(('T', a))
             if p and frac > 0:
                 want = frac * p[0]
@@ -350,15 +386,16 @@ class HH:
 
     def o1_sell_annual(self, m):
         """年次: 年末の値で判断して売り、年の境目で買い戻す（つなぎの時間は0）"""
-        for ac, a in self.o1_candidates():
+        for ac, a, xs in self.o1_plan():
             v, b = self.pos[(ac, a)]
+            b = b * xs / v; v = xs
             got = self.sell(ac, a, v, m, kind='switch')
             self.stats['o1_sales'] += 1
             self.stats['o1_room_gain'] += b - v
             self.o1cash[a] = self.o1cash.get(a, 0.0) + got
 
     def o1_rebuy_annual(self, m):
-        for a, x in list(self.o1cash.items()):
+        for a, x in self.o1_order(list(self.o1cash.items())):
             got = self.nisa_put(a, x, m, from_usd=True, kind='switch')
             self.stats['o1_rebought'] += got
             if x - got > EPS:
@@ -377,6 +414,8 @@ class HH:
                 continue                     # O5: 城は課税口座に置く（O3）ので移さない
             if a == 'IDXE':
                 continue                     # 分配型 ETF（O4）の区画は対象外（組み合わせない）
+            if self.rule.get('o2c') and not self.is_castle(a):
+                continue                     # X3: 城の区画だけを移す
             gfrac = v / b - 1 if b > 0 else 0.0
             if mode == 'loss' and gfrac >= 0:
                 continue
@@ -485,6 +524,18 @@ class HH:
         tg = self.castle_targets() if xc > EPS else {}
         for a, w in tg.items():
             dem[a] = dem.get(a, 0.0) + xc * w
+        # X2〜X4（cfirst）: 城（売る袖）を先に成長投資枠へ
+        if self.rule.get('cfirst'):
+            cd = {a: x for a, x in dem.items() if self.is_castle(a) and x > EPS}
+            tot = sum(cd.values())
+            if tot > EPS:
+                cap = self.room('X', 'NG')
+                f = min(1.0, cap / tot)
+                for a, x in cd.items():
+                    y = x * f
+                    if y > EPS:
+                        self._put_mixed('NG', a, y, m, usd_share)
+                        dem[a] -= y
         # つみたて枠（指数だけ）
         if 'IDX' in dem:
             y = min(dem['IDX'], self.room('IDX', 'NT'))
@@ -772,6 +823,26 @@ def selftest():
     # (11) 流動化の値（毎月）と最終額が一致する（最後の月）
     fin, hh, rec, _ = run_hh(P7, Cfg('t', holders=1), {'o1': O1_L, 'o2': 'all'}, P7['keys'], record=True)
     ok['liq_value_matches_final'] = abs(rec[P7['keys'][-1]] - fin) / fin < 1e-9
+    # (12) 事前登録2 X1: 売る額は翌年1月に買い戻せる額まで（1人・積立0 → 年の枠 360万）→ 課税口座に取り残しが出ない
+    P8 = synth_path(30, r=0.0)
+    P8['R']['MKT'][P8['keys'][2]] = -0.30
+    cfg = Cfg('t', castle_share=0.0, holders=1, contrib=0)
+    res = {}
+    for rname, rule in (('O1', {'o1': O1_L}), ('X1', {'o1': O1_L, 'o1cap': True})):
+        hh = HH(P8, cfg, rule)
+        hh._add('NG', 'IDX', 10_000_000.0, 10_000_000.0); hh.life = hh.life_g = 10_000_000.0
+        for mm in P8['keys']:
+            hh.step(mm, 0.0)
+        res[rname] = dict(hh.stats)
+    # 30か月で12月が2回 → X1 は毎回 360万ずつ（計 約719万）売って全部買い戻す。O1 は1回目で全部売り 339万が取り残される
+    ok['x1_caps_sale_no_stranding'] = res['O1']['o1_left_taxable'] > 3e6 and res['X1']['o1_left_taxable'] < 1.0 and 7.1e6 < res['X1']['o1_rebought'] < 7.2e6 and res['X1']['o1_sales'] == 2
+    # (13) 事前登録2 X2: 成長投資枠の空きが足りないとき、城が先に入る
+    hh = HH(P6, Cfg('t', castle_share=0.5, holders=1, contrib=0), {'cfirst': True})
+    hh.qu['NT'] = Q_TSUMI; hh.qu['NG'] = Q_GROWTH - 100_000
+    hh.year = P6['keys'][0] // 100
+    hh.cash_i = 300_000.0; hh.cash_cj = 100_000.0
+    hh.buy_all(P6['keys'][0])
+    ok['x2_castle_first'] = abs(hh.pos.get(('NG', 'CL'), [0, 0])[1] - 100_000) < 1e-6 and ('NG', 'IDX') not in hh.pos and abs(hh.pos[('T', 'IDX')][1] - 300_000) < 1e-6
     return ok
 
 
@@ -1194,8 +1265,16 @@ def grade_block(lab, cfg, rname, pn='USJ'):
     st, series = {}, {}
     for nm, (a, z) in per.items():
         kk = [k for k in ks if a <= k <= z]
-        fs, hs, rs, cs = lab.arm(pn, cfg, rname, None, kk, record=True)
-        fb, hb, rb, cb = lab.arm(pn, cfg, 'D0', None, kk, record=True)
+        pre = None
+        if cfg.init_taxable:
+            # 事前登録2 の直し: S4 は各期間の前12か月を課税口座の持ち越しの期間にする（起点が道の最初なら1年ずらす）
+            i0 = ks.index(kk[0])
+            if i0 < 12:
+                kk = kk[12 - i0:]
+                i0 = ks.index(kk[0])
+            pre = ks[i0 - 12:i0]
+        fs, hs, rs, cs = lab.arm(pn, cfg, rname, pre, kk, record=True)
+        fb, hb, rb, cb = lab.arm(pn, cfg, 'D0', pre, kk, record=True)
         s, b = twr(rs, cs, kk), twr(rb, cb, kk)
         st[nm] = M.excess_stats(s, b)
         st[nm + '_final_ratio'] = round(fs / fb, 6)
@@ -1211,7 +1290,8 @@ def main():
     D = load_data()
     P = build_paths(D)
     lab = Lab(D, P)
-    out = {'angle': ANGLE, 'prereg': PREREG, 'prereg_commit': git_sha(f'out/{PREREG}'), 'global_prereg': 'mw_prereg.json',
+    out = {'angle': ANGLE, 'prereg': PREREG, 'prereg_commit': git_sha(f'out/{PREREG}'), 'prereg2': 'mw_nisa_ops_prereg2.json',
+           'prereg2_commit': git_sha('out/mw_nisa_ops_prereg2.json'), 'global_prereg': 'mw_prereg.json',
            'global_prereg_commit': git_sha('out/mw_prereg.json'),
            'benchmark': '既定の運用 D0（同じ道・同じ積立・同じ資産: NISA から先に買う〔指数はつみたて→成長・城は成長〕・売らない〔城の回転だけ〕・減らすときは口座の時価で按分・枠の回収や移し替えなし・課税口座の溢れも積み上げ型の投信）',
            'sanity': {}, 'deviations': [], 'tested': []}
@@ -1238,12 +1318,12 @@ def main():
     # 主の族（P）と副（O1_L10）
     for sc in ['P', 'S1_one_holder', 'S2_300k', 'S3_tax25', 'S4_init_taxable']:
         cfg = SCEN[sc]
-        for rn in PRIMARY_RULES + SECONDARY_RULES:
+        for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES:
             W = run_windows(lab, main_sets, cfg, rn)
             res = block(W, ['USJ', 'JPJ', 'USD', 'JST'])
             v, ph, det = verdict(res)
             rec = {'name': f'{rn}__{sc}', 'rule': rn, 'scenario': sc, 'castle': 'clone', 'costs': 'brief',
-                   'family': 'primary' if (sc == 'P' and rn in PRIMARY_RULES) else ('secondary_rule' if sc == 'P' else 'sensitivity'),
+                   'family': ('explore_prereg2' if rn in EXPLORE_RULES else ('primary' if rn in PRIMARY_RULES else 'secondary_rule')) + ('' if sc == 'P' else '__sensitivity'),
                    'verdict': v, 'pass_by_horizon': ph, 'verdict_detail': det, 'windows': res, 'stress': stress(W),
                    'windows_usj20': W['USJ'][20]['rs'] if sc in ('P',) else None}
             out['tested'].append(rec)
@@ -1251,7 +1331,7 @@ def main():
             u = res['USJ'][20]['all']; j = res['JPJ'][20]['all']; us = res['USD'][20]['all']; js = res['JST'][20]['all']
             log(f'{rn:7s} {sc:16s} {v:10s} USJ20 勝{u["win_share"]} 同{u["tie_share"]} 中{u["median"]} | JPJ20 勝{j["win_share"]} 中{j["median"]} | USD20 勝{us["win_share"]} 中{us["median"]} | JST20 勝{js["win_share"]} 中{js["median"]}  ({time.time() - t0:.0f}s)')
     # 城を名前（49業種・5銘柄）で持つ（米国の道だけ・3つの seed）
-    for rn in PRIMARY_RULES + SECONDARY_RULES:
+    for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES:
         for seed in SEEDS:
             cfg = Cfg('S5_names', castle='names', seed=seed)
             W = run_windows(lab, ['USJ', 'USD'], cfg, rn, seed=seed)
@@ -1263,7 +1343,7 @@ def main():
             u = res['USJ'][20]['all']; us = res['USD'][20]['all']
             log(f'{rn:7s} S5_names s{seed} {v:10s} USJ20 勝{u["win_share"]} 中{u["median"]} | USD20 勝{us["win_share"]} 中{us["median"]}  ({time.time() - t0:.0f}s)')
     # 楽天の実際の手数料（USJ だけ）
-    for rn in PRIMARY_RULES + SECONDARY_RULES:
+    for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES:
         cfg = SCEN['S7_rakuten']
         W = run_windows(lab, ['USJ'], cfg, rn)
         res = block(W, ['USJ'])
@@ -1276,7 +1356,7 @@ def main():
     n5 = {}
     ks = [k for k in P['USJ']['keys'] if 201007 <= k <= FR_END]
     for sc, hol in (('P', 2), ('S1_one_holder', 1)):
-        for rn in PRIMARY_RULES + SECONDARY_RULES:
+        for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES:
             cfg = Cfg('S6_n5_' + sc, castle='n5', holders=hol)
             r, ss, sb, fs, fb = lab.ratio('USJ', cfg, rn, None, ks)
             n5[f'{rn}__{sc}'] = {'ratio': round(r, 6), 'rule_final': round(fs), 'default_final': round(fb),
@@ -1292,8 +1372,9 @@ def main():
     out['grades'] = {}
     for sc in ['P', 'S1_one_holder', 'S2_300k', 'S4_init_taxable']:
         cfg = SCEN[sc]
-        gb = {rn: grade_block(lab, cfg, rn) for rn in PRIMARY_RULES + SECONDARY_RULES}
-        fams = [(PRIMARY_RULES, 'primary' if sc == 'P' else f'sens_{sc}'), (SECONDARY_RULES, 'secondary' if sc == 'P' else f'sens2_{sc}')]
+        gb = {rn: grade_block(lab, cfg, rn) for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES}
+        fams = [(PRIMARY_RULES, 'primary' if sc == 'P' else f'sens_{sc}'), (SECONDARY_RULES, 'secondary' if sc == 'P' else f'sens2_{sc}'),
+                (EXPLORE_RULES, 'explore_prereg2' if sc == 'P' else f'sens_explore_{sc}')]
         for members, fname in fams:
             hp = M.holm({rn: (gb[rn]['hold'] or {}).get('p') for rn in members if gb[rn].get('hold')})
             for rn in members:
