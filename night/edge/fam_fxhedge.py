@@ -251,3 +251,48 @@ def run(spec):
         if len(r2) >= 24:
             markets[f'{ccy}の投資家'] = {'ret': r2, 'bench': b2, 'rf': f2, 'turnover': t2, 'cost': COST}
     return {'ret': ret, 'bench': bench, 'rf': rfl, 'turnover': tv, 'cost': COST, 'markets': markets}
+
+
+# ───────────────────────── 先読みの検査（選定の段の中だけで回す） ─────────────────────────
+def lookahead_test(spec, ccy='JPY', cut_from=197501, cut_to=None, step=1):
+    """月末 c までの生データ（FRED・French）だけで作った『月 c+1 のヘッジ比率』が、全データで作った同じ月の値と一致するか。
+    さらに c までのデータで作った ret が、c 以前の月で全データの ret と1ビットも違わないか。
+    → (検査した月の数, 食い違いの一覧)"""
+    orig = h.fred
+    mkt, rf = h.us_market()
+    cpi = _needs_cpi(spec)
+    usr = spec.get('us_rate', 'tbill')
+    Dfull = load(ccy, cpi, mkt, rf, usr)
+    rfull, _, _, _, hfull = build(spec, Dfull, spec.get('start', 197401))
+    cut_to = cut_to or max(hfull)
+    bad, n = [], 0
+    cache = {}
+
+    def fred_cut(sid, _c=[None]):
+        if sid not in cache:
+            cache[sid] = orig(sid)
+        return {k: v for k, v in cache[sid].items() if k <= CUT[0]}
+    CUT = [None]
+    h.fred = fred_cut
+    try:
+        c = cut_from
+        while c < cut_to:
+            CUT[0] = c
+            mk = {k: v for k, v in mkt.items() if k <= c}
+            rr = {k: v for k, v in rf.items() if k <= c}
+            Dc = load(ccy, cpi, mk, rr, usr)
+            m = h.add_months(c, 1)
+            x = hedge_ratio(spec, Dc, m)
+            x = 0.0 if x is None else x
+            if m in hfull and abs(x - hfull[m]) > 1e-12:
+                bad.append(('hedge_ratio', m, x, hfull[m]))
+            rc, _, _, _, _ = build(spec, Dc, spec.get('start', 197401))
+            for k, v in rc.items():
+                if abs(v - rfull[k]) > 1e-12:
+                    bad.append(('ret', c, k, v, rfull[k]))
+                    break
+            n += 1
+            c = h.add_months(c, step)
+    finally:
+        h.fred = orig
+    return n, bad
