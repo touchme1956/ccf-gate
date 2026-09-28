@@ -1,27 +1,30 @@
 #!/usr/bin/env python3
 """night/mw_trend.py — 『市場に勝てる歴史検証』角度 trend: トレンド追随の市場タイミング（レバレッジなし・あり）
 
-読むだけ（門の判定・採点・配分には不使用）。事前登録 out/mw_trend_prereg.json の規則をそのまま測り、
-out/mw_trend.json へ書く。線は out/mw_prereg.json（mw_common.grade）。
+読むだけ（門の判定・採点・配分には不使用）。事前登録 out/mw_trend_prereg.json（第1族）・out/mw_trend_prereg2.json（第2族・探索）
+の規則をそのまま測り、out/mw_trend.json へ書く。線は out/mw_prereg.json（mw_common.grade）。
 
 規則（論文の既定値・結果を見る前に固定）
 - Faber (2007): 月末の総リターン指数 > 10か月平均 → 翌月は株、ほかは短期金利
 - Gayed & Bilello (2016): 価格指数 > 200営業日平均 → 日々L倍（L=1,1.25,1.5,2,3）、ほかは短期金利。
   信号は t の終値、売買は t+1 の終値（1日遅れ）＝ t+2 日目のリターンから新しい持ち方
 - Moskowitz-Ooi-Pedersen (2012): 直近12か月の超過 > 0 → 株、ほかは短期金利
+第2族（探索）: 訓練期間だけで選んだ (N日線, 幅) ／ 国債への退避 ／ ゴールデンクロス ／ 二つの信号の一致
 
 相手（判定の主）は同じ指数をレバレッジなしで買って持つだけ。総リターンどうしで比べる。
+使い方: python3 night/mw_trend.py            （第1族＋第2族を全部測って書く）
 """
 import sys, os, json, math, datetime, subprocess, statistics as S
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
 
-PRE_NAME = 'mw_trend_prereg.json'
+PRE_NAMES = ['mw_trend_prereg.json', 'mw_trend_prereg2.json']
 OUT_NAME = 'mw_trend.json'
 COST = 0.001      # 判定用: 持ち替え1回あたり資産の0.10%（全体の事前登録の既定）
 COST_LO = 0.0005  # 報告: 指示書の0.05%
 TAX = 0.20315
 SPREAD, FEE = 0.005, 0.009
+FUT_SPREAD, FUT_FEE = 0.003, 0.0  # 【事後・報告のみ】先物で持つ場合の費用
 YH_P2 = 1790000000  # Yahoo の取得の終わり（2026-09-21・キャッシュの再現のため固定。French の終わり 2026-08-31 で切る）
 NDX_DIV, IXIC_DIV = 0.005, 0.010
 FR_END = 20260831
@@ -98,16 +101,37 @@ def shiller():
     return r
 
 
-def cp_rate():
-    """NBER 商業手形金利（年率%）→ 月次の小数リターン {yyyymm: r}"""
-    c = M.get('https://fred.stlouisfed.org/graph/fredgraph.csv?id=M13002US35620M156NNBR', name='fred_M13002US35620M156NNBR.csv', max_age_days=3650).decode()
+def fred_csv(sid):
+    c = M.get(f'https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}', name=f'fred_{sid}.csv', max_age_days=3650).decode()
     out = {}
     for line in c.strip().splitlines()[1:]:
         d, v = line.split(',')
         if v in ('', '.'):
             continue
-        out[int(d[:4]) * 100 + int(d[5:7])] = float(v) / 1200
+        out[int(d[:4]) * 10000 + int(d[5:7]) * 100 + int(d[8:10])] = float(v)
     return out
+
+
+def cp_rate():
+    """NBER 商業手形金利（年率%）→ 月次の小数リターン {yyyymm: r}"""
+    return {k // 100: v / 1200 for k, v in fred_csv('M13002US35620M156NNBR').items()}
+
+
+def bond_index_daily():
+    """FRED DGS10 → 10年額面債を毎日作り直す近似の総リターン指数 {yyyymmdd: 指数}（観測日だけ）"""
+    y = fred_csv('DGS10')
+    ks = sorted(y)
+    idx, w = {ks[0]: 1.0}, 1.0
+    for p, k in zip(ks, ks[1:]):
+        c, yy = y[p] / 100, y[k] / 100
+        dp = datetime.date(p // 10000, p // 100 % 100, p % 100); dk = datetime.date(k // 10000, k // 100 % 100, k % 100)
+        dt = (dk - dp).days / 365.0
+        m = 10 - dt
+        disc = (1 + yy / 2) ** (-2 * m)
+        P = (c / yy) * (1 - disc) + disc if yy > 0 else 1 + c * m
+        w *= P + c * dt
+        idx[k] = w
+    return idx
 
 
 # ───────────────────────── 信号 ─────────────────────────
@@ -124,13 +148,50 @@ def sma_sig(px, N):
     return out
 
 
+def sma_band_sig(px, N, b):
+    """ヒステリシスつき: 持っている間は 価格 < 平均×(1−b) で降り、降りている間は 価格 > 平均×(1+b) で戻る"""
+    if b == 0:
+        return sma_sig(px, N)
+    ks = sorted(px)
+    out, run, st = {}, 0.0, None
+    for i, k in enumerate(ks):
+        run += px[k]
+        if i >= N:
+            run -= px[ks[i - N]]
+        if i >= N - 1:
+            m = run / N
+            if st is None:
+                st = 1 if px[k] > m else 0
+            elif st == 1 and px[k] < m * (1 - b):
+                st = 0
+            elif st == 0 and px[k] > m * (1 + b):
+                st = 1
+            out[k] = st
+    return out
+
+
+def cross_sig(px, a=50, z=200):
+    """a 日線 > z 日線 → 1"""
+    ks = sorted(px)
+    out, ra, rz = {}, 0.0, 0.0
+    for i, k in enumerate(ks):
+        ra += px[k]; rz += px[k]
+        if i >= a:
+            ra -= px[ks[i - a]]
+        if i >= z:
+            rz -= px[ks[i - z]]
+        if i >= z - 1:
+            out[k] = 1 if ra / a > rz / z else 0
+    return out
+
+
+def month_ends(ks):
+    return [k for i, k in enumerate(ks) if i == len(ks) - 1 or ks[i + 1] // 100 != k // 100]
+
+
 def month_end_sig_sma(px, N):
     """日次価格の月末値 > 直近 N か月の月末値の平均 → {月末の日付: 0/1}"""
-    ks = sorted(px)
-    me = []
-    for i, k in enumerate(ks):
-        if i == len(ks) - 1 or ks[i + 1] // 100 != k // 100:
-            me.append(k)
+    me = month_ends(sorted(px))
     out = {}
     for i in range(N - 1, len(me)):
         w = [px[me[j]] for j in range(i - N + 1, i + 1)]
@@ -140,8 +201,7 @@ def month_end_sig_sma(px, N):
 
 def month_end_sig_tsmom(daily_ex_index, months=12):
     """日次の超過指数（累積）の月末値の12か月前比 > 1 → {月末の日付: 0/1}"""
-    ks = sorted(daily_ex_index)
-    me = [k for i, k in enumerate(ks) if i == len(ks) - 1 or ks[i + 1] // 100 != k // 100]
+    me = month_ends(sorted(daily_ex_index))
     out = {}
     for i in range(months, len(me)):
         out[me[i]] = 1 if daily_ex_index[me[i]] / daily_ex_index[me[i - months]] > 1 else 0
@@ -159,6 +219,11 @@ def map_sig(dates, sig):
     return out
 
 
+def either(a, b):
+    """二つの信号（日付に写した list）のどちらかが 1 なら 1（両方 0 のときだけ 0）"""
+    return [None if (x is None or y is None) else (1 if (x or y) else 0) for x, y in zip(a, b)]
+
+
 def cum_index(r):
     w, out = 1.0, {}
     for k in sorted(r):
@@ -166,20 +231,43 @@ def cum_index(r):
     return out
 
 
+def monthly_sma_sig(ms, r, N, b=0.0):
+    idx = cum_index({k: r[k] for k in ms})
+    return sma_band_sig({k: idx[k] for k in ms}, N, b)
+
+
+def monthly_cross_sig(ms, r, a, z):
+    idx = cum_index({k: r[k] for k in ms})
+    return cross_sig({k: idx[k] for k in ms}, a, z)
+
+
+def monthly_tsmom_sig(ms, r, rf):
+    s = {}
+    for i in range(11, len(ms)):
+        g = 1.0
+        for j in range(i - 11, i + 1):
+            g *= 1 + r[ms[j]] - rf[ms[j]]
+        s[ms[i]] = 1 if g > 1 else 0
+    return s
+
+
 # ───────────────────────── 実行 ─────────────────────────
-def lev_ret(v, f, L, per):
+def lev_ret(v, f, L, per, spread=SPREAD, fee=FEE):
     if L == 1:
         return v
-    x = L * v - (L - 1) * (f + SPREAD / per) - FEE / per
+    x = L * v - (L - 1) * (f + spread / per) - fee / per
     return max(x, -1.0)
 
 
-def run_daily(D, r, rf, sig_on_D, L, lag=2):
-    """日次。position[i] = sig_on_D[i-lag]。戻り値: dict（keys, inv, cash, pos, gross, net, net05, 切替数）。最初の不完全な月は落とす"""
+def run_daily(D, r, rf, sig_on_D, L, lag=2, off=None, cost_mult=1, spread=SPREAD, fee=FEE):
+    """日次。position[i] = sig_on_D[i-lag]。off=降りている間の資産（None なら RF）。最初の不完全な月は落とす"""
     for d in D:
-        if d not in rf or d not in r:
-            raise RuntimeError(f'RF かリターンが無い日 {d}（0で埋めない）')
-    lev = M.lever_daily({d: r[d] for d in D}, L, {d: rf[d] for d in D}, spread=SPREAD, fee=FEE if L > 1 else 0.0) if L != 1 else {d: r[d] for d in D}
+        if d not in rf or d not in r or (off is not None and d not in off):
+            raise RuntimeError(f'RF・リターン・退避先のどれかが無い日 {d}（0で埋めない）')
+    if L != 1:
+        lev = M.lever_daily({d: r[d] for d in D}, L, {d: rf[d] for d in D}, spread=spread, fee=fee)
+    else:
+        lev = {d: r[d] for d in D}
     idx = [i for i in range(lag, len(D)) if sig_on_D[i - lag] is not None]
     if not idx:
         return None
@@ -189,11 +277,11 @@ def run_daily(D, r, rf, sig_on_D, L, lag=2):
     keys, inv, cash, pos = [], [], [], []
     for i in idx:
         d = D[i]
-        keys.append(d); inv.append(max(lev[d], -1.0)); cash.append(rf[d]); pos.append(sig_on_D[i - lag])
-    return finish(keys, inv, cash, pos)
+        keys.append(d); inv.append(max(lev[d], -1.0)); cash.append(rf[d] if off is None else off[d]); pos.append(sig_on_D[i - lag])
+    return finish(keys, inv, cash, pos, cost_mult)
 
 
-def run_monthly(ms, r, rf, sig, L, lag=1):
+def run_monthly(ms, r, rf, sig, L, lag=1, off=None, cost_mult=1):
     """月次。position[k] = sig[ms[k-lag]]（sig は月→0/1）"""
     keys, inv, cash, pos = [], [], [], []
     for i in range(lag, len(ms)):
@@ -201,13 +289,13 @@ def run_monthly(ms, r, rf, sig, L, lag=1):
         if s is None:
             continue
         k = ms[i]
-        if k not in r or k not in rf:
+        if k not in r or k not in rf or (off is not None and k not in off):
             raise RuntimeError(f'月 {k} のデータ欠け（0で埋めない）')
-        keys.append(k); inv.append(lev_ret(r[k], rf[k], L, 12)); cash.append(rf[k]); pos.append(s)
-    return finish(keys, inv, cash, pos)
+        keys.append(k); inv.append(lev_ret(r[k], rf[k], L, 12)); cash.append(rf[k] if off is None else off[k]); pos.append(s)
+    return finish(keys, inv, cash, pos, cost_mult)
 
 
-def finish(keys, inv, cash, pos):
+def finish(keys, inv, cash, pos, cost_mult=1):
     gross, net, net05 = {}, {}, {}
     sw = 0
     for i, k in enumerate(keys):
@@ -215,8 +303,8 @@ def finish(keys, inv, cash, pos):
         gross[k] = g
         if i > 0 and pos[i] != pos[i - 1]:
             sw += 1
-            net[k] = (1 + g) * (1 - COST) - 1
-            net05[k] = (1 + g) * (1 - COST_LO) - 1
+            net[k] = (1 + g) * (1 - COST * cost_mult) - 1
+            net05[k] = (1 + g) * (1 - COST_LO * cost_mult) - 1
         else:
             net[k] = g; net05[k] = g
     return {'keys': keys, 'inv': inv, 'cash': cash, 'pos': pos, 'gross': gross, 'net': net, 'net05': net05, 'switches': sw}
@@ -335,6 +423,15 @@ def tax_rolling(run, bh_run, per, yearf, years=20):
 
 
 # ───────────────────────── 評価 ─────────────────────────
+def by_decade(nm, b):
+    out = {}
+    for d0 in range(1920, 2030, 10):
+        ks = [k for k in nm if k in b and d0 * 100 <= k <= (d0 + 9) * 100 + 12]
+        if len(ks) >= 24:
+            out[str(d0)] = round((M.cagr([nm[k] for k in ks]) - M.cagr([b[k] for k in ks])) * 100, 2)
+    return out
+
+
 def evaluate(run, bench_m, rf_m, blev_m, per_daily, post_pub):
     """月次の gross/net と相手（月次）から統計を作る"""
     if per_daily:
@@ -368,6 +465,7 @@ def evaluate(run, bench_m, rf_m, blev_m, per_daily, post_pub):
     n = len(run['keys'])
     e['time_in_market'] = round(sum(run['pos']) / n, 3)
     e['switches_per_year'] = round(run['switches'] / years_span(run['keys'], per_daily), 2)
+    e['by_decade_net_cagr_diff'] = by_decade(nm, b)
     return e
 
 
@@ -381,280 +479,357 @@ def repl_positive(st):
     return bool(st and st['ex_ann'] > 0 and st['cagr_diff'] > 0)
 
 
-# ───────────────────────── 本体 ─────────────────────────
-def main():
-    res = {'angle': 'trend', 'prereg': PRE_NAME}
-    try:
-        sha = subprocess.check_output(['git', 'log', '-1', '--format=%H', '--', os.path.join('out', PRE_NAME)], cwd=M.BASE).decode().strip()
-    except Exception:
-        sha = None
-    res['prereg_commit'] = sha
-    log('事前登録の commit', sha)
+# ───────────────────────── データの用意 ─────────────────────────
+class Ctx:
+    pass
 
-    # ---- US ----
-    ffd = M.ff_factors('daily')
-    ffm = M.ff_factors('monthly')
-    D_us = sorted(d for d in ffd['mkt'] if d in ffd['rf'])
-    r_us, rf_us = ffd['mkt'], ffd['rf']
-    sanity = {}
-    mk = M.to_monthly({d: r_us[d] for d in D_us})
-    sanity['us_mkt_cagr_full_from_daily'] = round(M.cagr(mk) * 100, 2)
-    sanity['us_mkt_cagr_2007_from_daily'] = round(M.cagr(M.window(mk, M.HOLD_START)) * 100, 2)
-    sanity['us_mkt_cagr_full_monthly_file'] = round(M.cagr(ffm['mkt']) * 100, 2)
-    log('検算 US Mkt 年率', sanity)
-    gspc, _ = yh_daily('^GSPC')
-    gspc = {k: v for k, v in gspc.items() if k <= FR_END}
-    ndx_px, _ = yh_daily('^NDX')
-    ndx_px = {k: v for k, v in ndx_px.items() if k <= FR_END}
-    _, qqq_adj = yh_daily('QQQ')
-    qqq_adj = {k: v for k, v in qqq_adj.items() if k <= FR_END}
-    ixic_px, _ = yh_daily('^IXIC')
-    ixic_px = {k: v for k, v in ixic_px.items() if k <= FR_END}
 
-    # NDX 総リターン（日次）
-    def ndx_tr(div):
-        pr = rets(ndx_px)
-        qr = rets(qqq_adj)
-        q0 = min(qqq_adj)
-        out = {}
-        dd = (1 + div) ** (1 / 252) - 1
-        for k, v in pr.items():
-            if k <= q0:
-                out[k] = (1 + v) * (1 + dd) - 1
-            elif k in qr:
-                out[k] = qr[k]
-        return out
-    ndx_r = ndx_tr(NDX_DIV)
-    ixic_r = {k: (1 + v) * (1 + ((1 + IXIC_DIV) ** (1 / 252) - 1)) - 1 for k, v in rets(ixic_px).items()}
-    miss = {'ndx_days_not_in_french_rf': sum(1 for k in ndx_r if k not in rf_us), 'ixic_days_not_in_french_rf': sum(1 for k in ixic_r if k not in rf_us),
-            'qqq_splice_gap_days': sum(1 for k in rets(ndx_px) if k > min(qqq_adj) and k not in rets(qqq_adj))}
-    sanity['missing'] = miss
+def load():
+    c = Ctx()
+    c.sanity = {}
+    ffd = M.ff_factors('daily'); ffm = M.ff_factors('monthly')
+    c.ffd, c.ffm = ffd, ffm
+    c.D_us = sorted(d for d in ffd['mkt'] if d in ffd['rf'])
+    c.r_us, c.rf_us = ffd['mkt'], ffd['rf']
+    mk = M.to_monthly({d: c.r_us[d] for d in c.D_us})
+    c.sanity['us_mkt_cagr_full_from_daily'] = round(M.cagr(mk) * 100, 2)
+    c.sanity['us_mkt_cagr_2007_from_daily'] = round(M.cagr(M.window(mk, M.HOLD_START)) * 100, 2)
+    c.sanity['us_mkt_cagr_full_monthly_file'] = round(M.cagr(ffm['mkt']) * 100, 2)
+    log('検算 US Mkt 年率', c.sanity)
+    c.gspc = {k: v for k, v in yh_daily('^GSPC')[0].items() if k <= FR_END}
+    c.ndx_px = {k: v for k, v in yh_daily('^NDX')[0].items() if k <= FR_END}
+    c.qqq_adj = {k: v for k, v in yh_daily('QQQ')[1].items() if k <= FR_END}
+    c.ixic_px = {k: v for k, v in yh_daily('^IXIC')[0].items() if k <= FR_END}
+    c.ndx_r = ndx_tr(c, NDX_DIV)
+    c.ixic_r = {k: (1 + v) * (1 + ((1 + IXIC_DIV) ** (1 / 252) - 1)) - 1 for k, v in rets(c.ixic_px).items()}
+    miss = {'ndx_days_not_in_french_rf': sum(1 for k in c.ndx_r if k not in c.rf_us), 'ixic_days_not_in_french_rf': sum(1 for k in c.ixic_r if k not in c.rf_us),
+            'qqq_splice_gap_days': sum(1 for k in rets(c.ndx_px) if k > min(c.qqq_adj) and k not in rets(c.qqq_adj))}
+    c.sanity['missing'] = miss
     log('欠け', miss)
-    D_ndx = sorted(k for k in ndx_r if k in rf_us)
-    D_ixic = sorted(k for k in ixic_r if k in rf_us)
-
-    # 信号
-    sig_gspc = {N: map_sig(D_us, sma_sig(gspc, N)) for N in (50, 100, 150, 200, 250, 300)}
-    us_tr_idx = cum_index({d: r_us[d] for d in D_us})
-    sig_us_tr200 = map_sig(D_us, sma_sig(us_tr_idx, 200))
-    ndx_sig = {N: map_sig(D_ndx, sma_sig(ndx_px, N)) for N in (50, 100, 150, 200, 250, 300)}
-    ixic_sig200 = map_sig(D_ixic, sma_sig(ixic_px, 200))
-    us_faberD = map_sig(D_us, month_end_sig_sma(us_tr_idx, 10))
-    ndx_faberD = map_sig(D_ndx, month_end_sig_sma(ndx_px, 10))
-    us_ex_idx = cum_index({d: ffd['mktrf'][d] for d in D_us})
-    us_tsmomD = map_sig(D_us, month_end_sig_tsmom(us_ex_idx, 12))
-
-    # 日次の遅れの機械検算（持ち方の変化の日と信号の日の差）
-    def lag_check(D, sigD, run):
-        pos_by = dict(zip(run['keys'], run['pos']))
-        bad = 0; n = 0
-        idx = {d: i for i, d in enumerate(D)}
-        for d in run['keys'][:4000]:
-            i = idx[d]; n += 1
-            if pos_by[d] != sigD[i - 2]:
-                bad += 1
-        return {'checked': n, 'mismatch': bad}
-
-    # 月次
-    ms_us = sorted(k for k in ffm['mkt'] if k in ffm['rf'])
-    r_usm, rf_usm = ffm['mkt'], ffm['rf']
-    us_idx_m = cum_index({k: r_usm[k] for k in ms_us})
-    faber_m = {}
-    for N in (6, 8, 10, 12):
-        s = {}
-        for i in range(N - 1, len(ms_us)):
-            w = [us_idx_m[ms_us[j]] for j in range(i - N + 1, i + 1)]
-            s[ms_us[i]] = 1 if us_idx_m[ms_us[i]] > sum(w) / N else 0
-        faber_m[N] = s
-    tsmom_m = {}
-    for i in range(11, len(ms_us)):
-        g = 1.0
-        for j in range(i - 11, i + 1):
-            g *= 1 + ffm['mktrf'][ms_us[j]]
-        tsmom_m[ms_us[i]] = 1 if g > 1 else 0
-
+    c.D_ndx = sorted(k for k in c.ndx_r if k in c.rf_us)
+    c.D_ixic = sorted(k for k in c.ixic_r if k in c.rf_us)
+    c.us_tr_idx = cum_index({d: c.r_us[d] for d in c.D_us})
+    c.us_ex_idx = cum_index({d: ffd['mktrf'][d] for d in c.D_us})
+    # 月次 US
+    c.ms_us = sorted(k for k in ffm['mkt'] if k in ffm['rf'])
+    c.r_usm, c.rf_usm = ffm['mkt'], ffm['rf']
     # Shiller
-    sr = shiller()
-    cp = cp_rate()
-    ms_sh = sorted(sr)
-    rf_sh = {}
+    c.sr = shiller(); cp = cp_rate()
+    ms_sh = sorted(c.sr); rf_sh = {}
     for k in ms_sh:
         if k <= 192606:
             if k in cp:
                 rf_sh[k] = cp[k]
-        elif k in rf_usm:
-            rf_sh[k] = rf_usm[k]
-    ms_sh = [k for k in ms_sh if k in rf_sh]
-    sh_idx = cum_index({k: sr[k] for k in ms_sh})
-    sh_sig = {}
-    for i in range(9, len(ms_sh)):
-        w = [sh_idx[ms_sh[j]] for j in range(i - 9, i + 1)]
-        sh_sig[ms_sh[i]] = 1 if sh_idx[ms_sh[i]] > sum(w) / 10 else 0
-    sanity['shiller'] = {'from': ms_sh[0], 'to': ms_sh[-1], 'cagr': round(M.cagr({k: sr[k] for k in ms_sh}) * 100, 2)}
-    log('Shiller', sanity['shiller'])
-
-    # ---- 地域 ----
-    REG_D = {'Europe': 'Europe_3_Factors_Daily', 'Japan': 'Japan_3_Factors_Daily', 'Asia_Pacific_ex_Japan': 'Asia_Pacific_ex_Japan_3_Factors_Daily',
-             'Developed_ex_US': 'Developed_ex_US_3_Factors_Daily', 'North_America': 'North_America_3_Factors_Daily'}
-    COUNTED = ['Europe', 'Japan', 'Asia_Pacific_ex_Japan', 'Emerging']
-    regd = {}
-    for nm, fn in REG_D.items():
+        elif k in c.rf_usm:
+            rf_sh[k] = c.rf_usm[k]
+    c.ms_sh = [k for k in ms_sh if k in rf_sh]; c.rf_sh = rf_sh
+    c.sanity['shiller'] = {'from': c.ms_sh[0], 'to': c.ms_sh[-1], 'cagr': round(M.cagr({k: c.sr[k] for k in c.ms_sh}) * 100, 2)}
+    # 国債（日次の指数 → French の日付へ前日のまま写してリターン）
+    bidx = bond_index_daily()
+    c.bond_first = min(bidx)
+    def bond_on(D):
+        vals = map_sig(D, bidx)
+        out = {}
+        for p, k, vp, vk in zip(D, D[1:], vals, vals[1:]):
+            if vp is not None and vk is not None:
+                out[k] = vk / vp - 1
+        return out
+    c.bond_on = bond_on
+    c.bond_us = bond_on(c.D_us)
+    # 国債の作り方の検算（IEF との月次）
+    try:
+        ief = {k: v for k, v in yh_daily('IEF')[1].items() if k <= FR_END}
+        im = M.to_monthly(rets(ief))
+        bm = M.to_monthly({k: v for k, v in c.bond_us.items() if k > min(ief)})
+        ks = sorted(set(im) & set(bm))
+        c.sanity['bond_vs_IEF_monthly'] = {'months': len(ks), 'corr': round(M.corr([im[k] for k in ks], [bm[k] for k in ks]), 3),
+                                          'cagr_constructed': round(M.cagr([bm[k] for k in ks]) * 100, 2), 'cagr_IEF': round(M.cagr([im[k] for k in ks]) * 100, 2)}
+        log('国債の検算', c.sanity['bond_vs_IEF_monthly'])
+    except Exception as ex:  # noqa
+        c.sanity['bond_vs_IEF_monthly'] = f'失敗 {ex}'
+    # 地域
+    c.REG_D = {'Europe': 'Europe_3_Factors_Daily', 'Japan': 'Japan_3_Factors_Daily', 'Asia_Pacific_ex_Japan': 'Asia_Pacific_ex_Japan_3_Factors_Daily',
+               'Developed_ex_US': 'Developed_ex_US_3_Factors_Daily', 'North_America': 'North_America_3_Factors_Daily'}
+    c.COUNTED = ['Europe', 'Japan', 'Asia_Pacific_ex_Japan', 'Emerging']
+    c.regd = {}
+    for nm, fn in c.REG_D.items():
         mkt, rf = fr_region(fn, 'daily')
         D = sorted(d for d in mkt if d in rf)
-        regd[nm] = {'D': D, 'r': mkt, 'rf': rf, 'idx': cum_index({d: mkt[d] for d in D}),
-                    'ex_idx': cum_index({d: mkt[d] - rf[d] for d in D})}
-    em_mkt, em_rf = fr_region('Emerging_5_Factors', 'monthly')
-    ms_em = sorted(k for k in em_mkt if k in em_rf)
+        c.regd[nm] = {'D': D, 'r': mkt, 'rf': rf, 'idx': cum_index({d: mkt[d] for d in D}), 'ex_idx': cum_index({d: mkt[d] - rf[d] for d in D}),
+                      'bond': None}
+    c.em_mkt, c.em_rf = fr_region('Emerging_5_Factors', 'monthly')
+    c.ms_em = sorted(k for k in c.em_mkt if k in c.em_rf)
+    return c
 
-    def monthly_sma_sig(ms, r, N):
-        idx = cum_index({k: r[k] for k in ms})
-        s = {}
-        for i in range(N - 1, len(ms)):
-            w = [idx[ms[j]] for j in range(i - N + 1, i + 1)]
-            s[ms[i]] = 1 if idx[ms[i]] > sum(w) / N else 0
-        return s
 
-    def monthly_tsmom_sig(ms, r, rf):
-        s = {}
-        for i in range(11, len(ms)):
-            g = 1.0
-            for j in range(i - 11, i + 1):
-                g *= 1 + r[ms[j]] - rf[ms[j]]
-            s[ms[i]] = 1 if g > 1 else 0
-        return s
+def ndx_tr(c, div):
+    pr = rets(c.ndx_px); qr = rets(c.qqq_adj); q0 = min(c.qqq_adj)
+    out = {}
+    dd = (1 + div) ** (1 / 252) - 1
+    for k, v in pr.items():
+        if k <= q0:
+            out[k] = (1 + v) * (1 + dd) - 1
+        elif k in qr:
+            out[k] = qr[k]
+    return out
 
-    def region_eval(rule):
-        """rule = {'kind': 'sma'|'faber_m'|'tsmom_m'|'faber_d'|'tsmom_d', 'N', 'L'} → 地域ごとの費用後の全期間の超過"""
-        det = {}
-        for nm in list(REG_D) + ['Emerging']:
-            if nm == 'Emerging':
-                ms, r, rf = ms_em, em_mkt, em_rf
-                k = rule['kind']; L = rule['L']
-                if k == 'sma':
-                    sig = monthly_sma_sig(ms, r, max(1, round(rule['N'] / 21)))
-                elif k in ('faber_m', 'faber_d'):
-                    sig = monthly_sma_sig(ms, r, rule['N'])
-                else:
-                    sig = monthly_tsmom_sig(ms, r, rf)
-                run = run_monthly(ms, r, rf, sig, L)
-                s_n, s_g = run['net'], run['gross']
-                b = {k2: r[k2] for k2 in run['keys']}
+
+# ───────────────────────── 地域での再現（C5） ─────────────────────────
+def region_eval(c, rule):
+    """rule = {'kind': 'sma'|'faber_m'|'tsmom_m'|'faber_d'|'tsmom_d'|'cross'|'dual', 'N', 'b', 'L', 'off'} →
+    地域ごとの費用後の全期間の超過。off='bond' なら降りている間は米国10年国債"""
+    det = {}
+    k = rule['kind']; L = rule['L']; b = rule.get('b', 0.0); off_bond = rule.get('off') == 'bond'
+    cm = 2 if off_bond else 1
+    for nm in list(c.REG_D) + ['Emerging']:
+        if nm == 'Emerging':
+            ms, r, rf = c.ms_em, c.em_mkt, c.em_rf
+            if k == 'sma':
+                sig = monthly_sma_sig(ms, r, max(1, round(rule['N'] / 21)), b)
+            elif k in ('faber_m', 'faber_d'):
+                sig = monthly_sma_sig(ms, r, rule['N'], b)
+            elif k == 'cross':
+                sig = monthly_cross_sig(ms, r, 2, 10)
+            elif k == 'dual':
+                s1 = monthly_sma_sig(ms, r, 10); s2 = monthly_tsmom_sig(ms, r, rf)
+                sig = {m: (1 if (s1[m] or s2[m]) else 0) for m in s1 if m in s2}
             else:
-                g = regd[nm]; D = g['D']; L = rule['L']; k = rule['kind']
-                if k == 'sma':
-                    run = run_daily(D, g['r'], g['rf'], map_sig(D, sma_sig(g['idx'], rule['N'])), L)
-                elif k == 'faber_d':
-                    run = run_daily(D, g['r'], g['rf'], map_sig(D, month_end_sig_sma(g['idx'], rule['N'])), L)
-                elif k == 'tsmom_d':
-                    run = run_daily(D, g['r'], g['rf'], map_sig(D, month_end_sig_tsmom(g['ex_idx'], 12)), L)
-                else:
-                    rm = M.to_monthly({d: g['r'][d] for d in D}); rfm = M.to_monthly({d: g['rf'][d] for d in D})
-                    ms = sorted(rm)
-                    sig = monthly_sma_sig(ms, rm, rule['N']) if k == 'faber_m' else monthly_tsmom_sig(ms, rm, rfm)
-                    run = run_monthly(ms, rm, rfm, sig, L)
-                    s_n, s_g = run['net'], run['gross']
-                    b = {k2: rm[k2] for k2 in run['keys']}
-                    det[nm] = pack_region(s_g, s_n, b)
-                    continue
-                s_n = M.to_monthly(run['net']); s_g = M.to_monthly(run['gross'])
-                b = M.to_monthly({d: g['r'][d] for d in run['keys']})
-            det[nm] = pack_region(s_g, s_n, b)
-        pos = sum(1 for nm in COUNTED if det[nm]['positive'])
-        return {'regions': len(COUNTED), 'positive': pos, 'counted': COUNTED, 'detail': det}
-
-    def pack_region(s_g, s_n, b):
-        full_n = M.excess_stats(s_n, b)
-        return {'net_full': full_n, 'gross_full': M.excess_stats(s_g, b), 'net_hold': M.excess_stats(s_n, b, a=M.HOLD_START),
-                'positive': repl_positive(full_n)}
-
-    # ---- 戦略の定義 ----
-    strategies = []  # dict(id, family, desc, kind, ...)
-
-    def add(id_, family, desc, runner, bench, rfm, blev, per_daily, post_pub, rule, tax=False, graded=True, extra=None):
-        strategies.append(dict(id=id_, family=family, desc=desc, runner=runner, bench=bench, rfm=rfm, blev=blev, per_daily=per_daily,
-                               post_pub=post_pub, rule=rule, tax=tax, graded=graded, extra=extra or {}))
-
-    PP_FABER = {'post_faber_2008': 200801, 'post_gayed_2016': 201601, 'post_gayed_2017': 201701}
-    PP_GAYED = {'post_gayed_2016': 201601, 'post_gayed_2017': 201701}
-    PP_MOP = {'post_mop_2013': 201301, 'post_gayed_2016': 201601}
-
-    # 月次 US
-    def mk_monthly_us(sig, L):
-        return lambda: run_monthly(ms_us, r_usm, rf_usm, sig, L)
-    add('P01_US_FABER10_L1', 'primary', 'US Faber 10か月線（French 月次）・1倍', mk_monthly_us(faber_m[10], 1), 'us_m', 'us_m', None, False, PP_FABER, {'kind': 'faber_m', 'N': 10, 'L': 1}, tax=True)
-    add('P02_US_TSMOM12_L1', 'primary', 'US 12か月の時系列モメンタム（French 月次）・1倍', mk_monthly_us(tsmom_m, 1), 'us_m', 'us_m', None, False, PP_MOP, {'kind': 'tsmom_m', 'N': 12, 'L': 1}, tax=True)
-    LS = [1, 1.25, 1.5, 2, 3]
-    for j, L in enumerate(LS):
-        add(f'P{3 + j:02d}_US_SMA200_L{L}', 'primary', f'US ^GSPC 200日線・French 日次 Mkt を{L}倍', (lambda L=L: run_daily(D_us, r_us, rf_us, sig_gspc[200], L)), 'us_d', 'us_d', L, True, PP_GAYED, {'kind': 'sma', 'N': 200, 'L': L}, tax=True)
-    for j, L in enumerate(LS):
-        add(f'P{8 + j:02d}_NDX_SMA200_L{L}', 'primary', f'NDX ^NDX 200日線・NDX 総リターンを{L}倍', (lambda L=L: run_daily(D_ndx, ndx_r, rf_us, ndx_sig[200], L)), 'ndx_d', 'ndx_d', L, True, PP_GAYED, {'kind': 'sma', 'N': 200, 'L': L}, tax=True)
-    # 探索
-    add('E01_SHILLER_FABER10_L1', 'exploratory', 'Shiller 1871〜 総リターン 10か月線（2か月遅れ）・1倍', lambda: run_monthly(ms_sh, sr, rf_sh, sh_sig, 1, lag=2), 'sh_m', 'sh_m', None, False, PP_FABER, {'kind': 'faber_m', 'N': 10, 'L': 1}, tax=True)
-    for j, L in enumerate(LS):
-        add(f'E{2 + j:02d}_IXIC_SMA200_L{L}', 'exploratory', f'^IXIC 200日線・{L}倍（推定配当1%）', (lambda L=L: run_daily(D_ixic, ixic_r, rf_us, ixic_sig200, L)), 'ixic_d', 'ixic_d', L, True, PP_GAYED, {'kind': 'sma', 'N': 200, 'L': L}, tax=True)
-    for j, L in enumerate([1, 2, 3]):
-        add(f'E{7 + j:02d}_US_FABER10D_L{L}', 'exploratory', f'US Faber 10か月線（日次・1日遅れ）・{L}倍', (lambda L=L: run_daily(D_us, r_us, rf_us, us_faberD, L)), 'us_d', 'us_d', L, True, PP_FABER, {'kind': 'faber_d', 'N': 10, 'L': L}, tax=True)
-    for j, L in enumerate([1, 2, 3]):
-        add(f'E{10 + j:02d}_NDX_FABER10D_L{L}', 'exploratory', f'NDX Faber 10か月線（日次・1日遅れ）・{L}倍', (lambda L=L: run_daily(D_ndx, ndx_r, rf_us, ndx_faberD, L)), 'ndx_d', 'ndx_d', L, True, PP_FABER, {'kind': 'faber_d', 'N': 10, 'L': L}, tax=True)
-    add('E13_US_SMA200TR_L1', 'exploratory', 'US French Mkt 総リターン指数の200日線・1倍', lambda: run_daily(D_us, r_us, rf_us, sig_us_tr200, 1), 'us_d', 'us_d', 1, True, PP_GAYED, {'kind': 'sma', 'N': 200, 'L': 1}, tax=True)
-    for j, L in enumerate([1, 2]):
-        add(f'E{14 + j:02d}_US_TSMOM12D_L{L}', 'exploratory', f'US 12か月モメンタム（日次・1日遅れ）・{L}倍', (lambda L=L: run_daily(D_us, r_us, rf_us, us_tsmomD, L)), 'us_d', 'us_d', L, True, PP_MOP, {'kind': 'tsmom_d', 'N': 12, 'L': L}, tax=True)
-    # 格子
-    for N in (50, 100, 150, 250, 300):
-        for L in (1, 2):
-            add(f'G_US_SMA{N}_L{L}', 'grid', f'US ^GSPC {N}日線・{L}倍', (lambda N=N, L=L: run_daily(D_us, r_us, rf_us, sig_gspc[N], L)), 'us_d', 'us_d', L, True, PP_GAYED, {'kind': 'sma', 'N': N, 'L': L})
-    for N in (50, 100, 150, 250, 300):
-        for L in (1, 2):
-            add(f'G_NDX_SMA{N}_L{L}', 'grid', f'NDX ^NDX {N}日線・{L}倍', (lambda N=N, L=L: run_daily(D_ndx, ndx_r, rf_us, ndx_sig[N], L)), 'ndx_d', 'ndx_d', L, True, PP_GAYED, {'kind': 'sma', 'N': N, 'L': L})
-    for N in (6, 8, 12):
-        add(f'G_US_FABER{N}_L1', 'grid', f'US {N}か月線（French 月次）・1倍', mk_monthly_us(faber_m[N], 1), 'us_m', 'us_m', None, False, PP_FABER, {'kind': 'faber_m', 'N': N, 'L': 1})
-    # 感度（報告のみ）
-    for dv, tag in ((0.0, 'div0'), (0.01, 'div1')):
-        rr = ndx_tr(dv)
-        for L in (1, 3):
-            add(f'X_NDX_{tag}_SMA200_L{L}', 'sensitivity', f'NDX 1999年以前の推定配当 {dv * 100:.0f}%/年・200日線・{L}倍',
-                (lambda rr=rr, L=L: run_daily(D_ndx, rr, rf_us, ndx_sig[200], L)), ('ndx_d_div', rr), 'ndx_d', L, True, PP_GAYED, None, graded=False)
-
-    # ---- 実行 ----
-    bench_cache = {}
-
-    def bench_for(kind, run):
-        """相手（月次）・RF（月次）・レバレッジ込み買い持ち（月次）を run の日付で作る"""
-        ks = run['keys']
-        if kind == 'us_m':
-            return {k: r_usm[k] for k in ks}, {k: rf_usm[k] for k in ks}, None, (r_usm, rf_usm)
-        if kind == 'sh_m':
-            return {k: sr[k] for k in ks}, {k: rf_sh[k] for k in ks}, None, (sr, rf_sh)
-        if isinstance(kind, tuple):
-            rr = kind[1]
+                sig = monthly_tsmom_sig(ms, r, rf)
+            off = None
+            if off_bond:
+                bm = M.to_monthly(c.bond_us)
+                ms = [m for m in ms if m in bm]
+                off = bm
+            run = run_monthly(ms, r, rf, sig, L, off=off, cost_mult=cm)
+            s_n, s_g = run['net'], run['gross']
+            bb = {k2: r[k2] for k2 in run['keys']}
         else:
-            rr = {'us_d': r_us, 'ndx_d': ndx_r, 'ixic_d': ixic_r}[kind]
-        b = M.to_monthly({d: rr[d] for d in ks})
-        rfm = M.to_monthly({d: rf_us[d] for d in ks})
-        return b, rfm, rr, (rr, rf_us)
+            g = c.regd[nm]; D = g['D']
+            off = None
+            if off_bond:
+                if g['bond'] is None:
+                    g['bond'] = c.bond_on(D)
+                off = g['bond']
+                D = [d for d in D if d in off]
+            if k in ('faber_m', 'tsmom_m'):
+                rm = M.to_monthly({d: g['r'][d] for d in D}); rfm = M.to_monthly({d: g['rf'][d] for d in D})
+                ms = sorted(rm)
+                sig = monthly_sma_sig(ms, rm, rule['N'], b) if k == 'faber_m' else monthly_tsmom_sig(ms, rm, rfm)
+                offm = M.to_monthly({d: off[d] for d in D}) if off is not None else None
+                run = run_monthly(ms, rm, rfm, sig, L, off=offm, cost_mult=cm)
+                det[nm] = pack_region(run['gross'], run['net'], {k2: rm[k2] for k2 in run['keys']})
+                continue
+            if k == 'sma':
+                sd = map_sig(D, sma_band_sig(g['idx'], rule['N'], b))
+            elif k == 'faber_d':
+                sd = map_sig(D, month_end_sig_sma(g['idx'], rule['N']))
+            elif k == 'tsmom_d':
+                sd = map_sig(D, month_end_sig_tsmom(g['ex_idx'], 12))
+            elif k == 'cross':
+                sd = map_sig(D, cross_sig(g['idx'], 50, 200))
+            elif k == 'dual':
+                sd = either(map_sig(D, sma_sig(g['idx'], 200)), map_sig(D, month_end_sig_tsmom(g['ex_idx'], 12)))
+            else:
+                raise KeyError(k)
+            run = run_daily(D, g['r'], g['rf'], sd, L, off=off, cost_mult=cm)
+            s_n = M.to_monthly(run['net']); s_g = M.to_monthly(run['gross'])
+            bb = M.to_monthly({d: g['r'][d] for d in run['keys']})
+        det[nm] = pack_region(s_g, s_n, bb)
+    pos = sum(1 for nm in c.COUNTED if det[nm]['positive'])
+    return {'regions': len(c.COUNTED), 'positive': pos, 'counted': c.COUNTED, 'rule_positive': 'ex_ann>0 かつ cagr_diff>0（費用後・地域の全期間）', 'detail': det}
 
-    tested = []
+
+def pack_region(s_g, s_n, b):
+    full_n = M.excess_stats(s_n, b)
+    return {'net_full': full_n, 'gross_full': M.excess_stats(s_g, b), 'net_hold': M.excess_stats(s_n, b, a=M.HOLD_START),
+            'positive': repl_positive(full_n)}
+
+
+# ───────────────────────── 戦略の定義 ─────────────────────────
+PP_FABER = {'post_faber_2008': 200801, 'post_gayed_2016': 201601, 'post_gayed_2017': 201701}
+PP_GAYED = {'post_gayed_2016': 201601, 'post_gayed_2017': 201701}
+PP_MOP = {'post_mop_2013': 201301, 'post_gayed_2016': 201601}
+LS = [1, 1.25, 1.5, 2, 3]
+
+
+def spec(id_, family, desc, runner, bench, blev, per_daily, post_pub, rule, tax=False, graded=True, label=None):
+    return dict(id=id_, family=family, desc=desc, runner=runner, bench=bench, blev=blev, per_daily=per_daily,
+                post_pub=post_pub, rule=rule, tax=tax, graded=graded, label=label)
+
+
+def family1(c):
+    out = []
+    sig_gspc = {N: map_sig(c.D_us, sma_sig(c.gspc, N)) for N in (50, 100, 150, 200, 250, 300)}
+    c.sig_gspc = sig_gspc
+    sig_us_tr200 = map_sig(c.D_us, sma_sig(c.us_tr_idx, 200))
+    ndx_sig = {N: map_sig(c.D_ndx, sma_sig(c.ndx_px, N)) for N in (50, 100, 150, 200, 250, 300)}
+    c.ndx_sig = ndx_sig
+    ixic_sig200 = map_sig(c.D_ixic, sma_sig(c.ixic_px, 200))
+    us_faberD = map_sig(c.D_us, month_end_sig_sma(c.us_tr_idx, 10))
+    c.us_faberD = us_faberD
+    ndx_faberD = map_sig(c.D_ndx, month_end_sig_sma(c.ndx_px, 10))
+    us_tsmomD = map_sig(c.D_us, month_end_sig_tsmom(c.us_ex_idx, 12))
+    c.us_tsmomD = us_tsmomD
+    faber_m = {}
+    us_idx_m = cum_index({k: c.r_usm[k] for k in c.ms_us})
+    for N in (6, 8, 10, 12):
+        s = {}
+        for i in range(N - 1, len(c.ms_us)):
+            w = [us_idx_m[c.ms_us[j]] for j in range(i - N + 1, i + 1)]
+            s[c.ms_us[i]] = 1 if us_idx_m[c.ms_us[i]] > sum(w) / N else 0
+        faber_m[N] = s
+    tsmom_m = {}
+    for i in range(11, len(c.ms_us)):
+        g = 1.0
+        for j in range(i - 11, i + 1):
+            g *= 1 + c.ffm['mktrf'][c.ms_us[j]]
+        tsmom_m[c.ms_us[i]] = 1 if g > 1 else 0
+    sh_idx = cum_index({k: c.sr[k] for k in c.ms_sh})
+    sh_sig = {}
+    for i in range(9, len(c.ms_sh)):
+        w = [sh_idx[c.ms_sh[j]] for j in range(i - 9, i + 1)]
+        sh_sig[c.ms_sh[i]] = 1 if sh_idx[c.ms_sh[i]] > sum(w) / 10 else 0
+
+    def mk_monthly_us(sig, L):
+        return lambda: run_monthly(c.ms_us, c.r_usm, c.rf_usm, sig, L)
+    out.append(spec('P01_US_FABER10_L1', 'primary', 'US Faber 10か月線（French 月次）・1倍', mk_monthly_us(faber_m[10], 1), 'us_m', None, False, PP_FABER, {'kind': 'faber_m', 'N': 10, 'L': 1}, tax=True))
+    out.append(spec('P02_US_TSMOM12_L1', 'primary', 'US 12か月の時系列モメンタム（French 月次）・1倍', mk_monthly_us(tsmom_m, 1), 'us_m', None, False, PP_MOP, {'kind': 'tsmom_m', 'N': 12, 'L': 1}, tax=True))
+    for j, L in enumerate(LS):
+        out.append(spec(f'P{3 + j:02d}_US_SMA200_L{L}', 'primary', f'US ^GSPC 200日線・French 日次 Mkt を{L}倍', (lambda L=L: run_daily(c.D_us, c.r_us, c.rf_us, sig_gspc[200], L)), 'us_d', L, True, PP_GAYED, {'kind': 'sma', 'N': 200, 'L': L}, tax=True))
+    for j, L in enumerate(LS):
+        out.append(spec(f'P{8 + j:02d}_NDX_SMA200_L{L}', 'primary', f'NDX ^NDX 200日線・NDX 総リターンを{L}倍', (lambda L=L: run_daily(c.D_ndx, c.ndx_r, c.rf_us, ndx_sig[200], L)), 'ndx_d', L, True, PP_GAYED, {'kind': 'sma', 'N': 200, 'L': L}, tax=True))
+    out.append(spec('E01_SHILLER_FABER10_L1', 'exploratory', 'Shiller 1871〜 総リターン 10か月線（2か月遅れ）・1倍', lambda: run_monthly(c.ms_sh, c.sr, c.rf_sh, sh_sig, 1, lag=2), 'sh_m', None, False, PP_FABER, {'kind': 'faber_m', 'N': 10, 'L': 1}, tax=True))
+    for j, L in enumerate(LS):
+        out.append(spec(f'E{2 + j:02d}_IXIC_SMA200_L{L}', 'exploratory', f'^IXIC 200日線・{L}倍（推定配当1%）', (lambda L=L: run_daily(c.D_ixic, c.ixic_r, c.rf_us, ixic_sig200, L)), 'ixic_d', L, True, PP_GAYED, {'kind': 'sma', 'N': 200, 'L': L}, tax=True))
+    for j, L in enumerate([1, 2, 3]):
+        out.append(spec(f'E{7 + j:02d}_US_FABER10D_L{L}', 'exploratory', f'US Faber 10か月線（日次・1日遅れ）・{L}倍', (lambda L=L: run_daily(c.D_us, c.r_us, c.rf_us, us_faberD, L)), 'us_d', L, True, PP_FABER, {'kind': 'faber_d', 'N': 10, 'L': L}, tax=True))
+    for j, L in enumerate([1, 2, 3]):
+        out.append(spec(f'E{10 + j:02d}_NDX_FABER10D_L{L}', 'exploratory', f'NDX Faber 10か月線（日次・1日遅れ）・{L}倍', (lambda L=L: run_daily(c.D_ndx, c.ndx_r, c.rf_us, ndx_faberD, L)), 'ndx_d', L, True, PP_FABER, {'kind': 'faber_d', 'N': 10, 'L': L}, tax=True))
+    out.append(spec('E13_US_SMA200TR_L1', 'exploratory', 'US French Mkt 総リターン指数の200日線・1倍', lambda: run_daily(c.D_us, c.r_us, c.rf_us, sig_us_tr200, 1), 'us_d', 1, True, PP_GAYED, {'kind': 'sma', 'N': 200, 'L': 1}, tax=True))
+    for j, L in enumerate([1, 2]):
+        out.append(spec(f'E{14 + j:02d}_US_TSMOM12D_L{L}', 'exploratory', f'US 12か月モメンタム（日次・1日遅れ）・{L}倍', (lambda L=L: run_daily(c.D_us, c.r_us, c.rf_us, us_tsmomD, L)), 'us_d', L, True, PP_MOP, {'kind': 'tsmom_d', 'N': 12, 'L': L}, tax=True))
+    for N in (50, 100, 150, 250, 300):
+        for L in (1, 2):
+            out.append(spec(f'G_US_SMA{N}_L{L}', 'grid', f'US ^GSPC {N}日線・{L}倍', (lambda N=N, L=L: run_daily(c.D_us, c.r_us, c.rf_us, sig_gspc[N], L)), 'us_d', L, True, PP_GAYED, {'kind': 'sma', 'N': N, 'L': L}))
+    for N in (50, 100, 150, 250, 300):
+        for L in (1, 2):
+            out.append(spec(f'G_NDX_SMA{N}_L{L}', 'grid', f'NDX ^NDX {N}日線・{L}倍', (lambda N=N, L=L: run_daily(c.D_ndx, c.ndx_r, c.rf_us, ndx_sig[N], L)), 'ndx_d', L, True, PP_GAYED, {'kind': 'sma', 'N': N, 'L': L}))
+    for N in (6, 8, 12):
+        out.append(spec(f'G_US_FABER{N}_L1', 'grid', f'US {N}か月線（French 月次）・1倍', mk_monthly_us(faber_m[N], 1), 'us_m', None, False, PP_FABER, {'kind': 'faber_m', 'N': N, 'L': 1}))
+    for dv, tag in ((0.0, 'div0'), (0.01, 'div1')):
+        rr = ndx_tr(c, dv)
+        for L in (1, 3):
+            out.append(spec(f'X_NDX_{tag}_SMA200_L{L}', 'sensitivity', f'NDX 1999年以前の推定配当 {dv * 100:.0f}%/年・200日線・{L}倍',
+                            (lambda rr=rr, L=L: run_daily(c.D_ndx, rr, c.rf_us, ndx_sig[200], L)), ('ndx_d_div', rr), L, True, PP_GAYED, None, graded=False))
+    return out
+
+
+def train_select(c, D, r, rf, px, label):
+    """訓練期間（〜2006-12）だけで (N, b) を選ぶ。L=1・費用後の月次シャープレシオ最大。保有期間は一切計算しない"""
+    grid = []
     runs = {}
-    for st in strategies:
+    for N in (50, 100, 150, 200, 250, 300):
+        for b in (0.0, 0.005, 0.01, 0.02, 0.03, 0.05):
+            run = run_daily(D, r, rf, map_sig(D, sma_band_sig(px, N, b)), 1)
+            nm = M.to_monthly({k: v for k, v in run['net'].items() if k <= 20061231})
+            runs[(N, b)] = nm
+    a = max(min(nm) for nm in runs.values())
+    rfm = M.to_monthly({d: rf[d] for d in D if d <= 20061231})
+    for (N, b), nm in runs.items():
+        grid.append({'N': N, 'b': b, 'train_sharpe': M.sharpe(nm, rfm, a, M.TRAIN_END), 'train_from': a})
+    best = max(grid, key=lambda g: g['train_sharpe'])
+    log(f'{label} 訓練だけで選んだ', best)
+    return best, grid
+
+
+def family2(c):
+    out = []
+    sel = {}
+    best, grid = train_select(c, c.D_us, c.r_us, c.rf_us, c.gspc, 'US')
+    sel['US'] = {'selected': best, 'grid_train_only': grid}
+    s_us = map_sig(c.D_us, sma_band_sig(c.gspc, best['N'], best['b']))
+    for L in (1, 1.5, 2, 3):
+        out.append(spec(f'X1_US_TRAINOPT_N{best["N"]}_b{best["b"]}_L{L}', 'exploratory2', f'US ^GSPC {best["N"]}日線・幅{best["b"] * 100:.1f}%（訓練だけで選択）・{L}倍',
+                        (lambda L=L: run_daily(c.D_us, c.r_us, c.rf_us, s_us, L)), 'us_d', L, True, PP_GAYED, {'kind': 'sma', 'N': best['N'], 'b': best['b'], 'L': L}, tax=True))
+    bestn, gridn = train_select(c, c.D_ndx, c.ndx_r, c.rf_us, c.ndx_px, 'NDX')
+    sel['NDX'] = {'selected': bestn, 'grid_train_only': gridn}
+    s_ndx = map_sig(c.D_ndx, sma_band_sig(c.ndx_px, bestn['N'], bestn['b']))
+    for L in (1, 1.5, 2, 3):
+        out.append(spec(f'X2_NDX_TRAINOPT_N{bestn["N"]}_b{bestn["b"]}_L{L}', 'exploratory2', f'NDX ^NDX {bestn["N"]}日線・幅{bestn["b"] * 100:.1f}%（訓練だけで選択）・{L}倍',
+                        (lambda L=L: run_daily(c.D_ndx, c.ndx_r, c.rf_us, s_ndx, L)), 'ndx_d', L, True, PP_GAYED, {'kind': 'sma', 'N': bestn['N'], 'b': bestn['b'], 'L': L}, tax=True))
+    c.train_selection = sel
+    # X3 国債への退避（1962〜）
+    D_b = [d for d in c.D_us if d in c.bond_us]
+    s200_b = map_sig(D_b, sma_sig(c.gspc, 200))
+    fab_b = map_sig(D_b, month_end_sig_sma(c.us_tr_idx, 10))
+    for L in (1, 2, 3):
+        out.append(spec(f'X3_US_SMA200_BOND_L{L}', 'exploratory2', f'US ^GSPC 200日線・降りたら10年国債・{L}倍（1962〜）',
+                        (lambda L=L: run_daily(D_b, c.r_us, c.rf_us, s200_b, L, off=c.bond_us, cost_mult=2)), 'us_d', L, True, PP_GAYED, {'kind': 'sma', 'N': 200, 'L': L, 'off': 'bond'}))
+    for L in (1, 2, 3):
+        out.append(spec(f'X3_US_FABER10D_BOND_L{L}', 'exploratory2', f'US Faber 10か月線（日次・1日遅れ）・降りたら10年国債・{L}倍（1962〜）',
+                        (lambda L=L: run_daily(D_b, c.r_us, c.rf_us, fab_b, L, off=c.bond_us, cost_mult=2)), 'us_d', L, True, PP_FABER, {'kind': 'faber_d', 'N': 10, 'L': L, 'off': 'bond'}))
+    # X4 ゴールデンクロス
+    gc_us = map_sig(c.D_us, cross_sig(c.gspc, 50, 200))
+    gc_ndx = map_sig(c.D_ndx, cross_sig(c.ndx_px, 50, 200))
+    for L in (1, 2, 3):
+        out.append(spec(f'X4_US_CROSS50_200_L{L}', 'exploratory2', f'US ^GSPC 50日線>200日線・{L}倍', (lambda L=L: run_daily(c.D_us, c.r_us, c.rf_us, gc_us, L)), 'us_d', L, True, PP_GAYED, {'kind': 'cross', 'L': L}, tax=True))
+    for L in (1, 2, 3):
+        out.append(spec(f'X4_NDX_CROSS50_200_L{L}', 'exploratory2', f'NDX ^NDX 50日線>200日線・{L}倍', (lambda L=L: run_daily(c.D_ndx, c.ndx_r, c.rf_us, gc_ndx, L)), 'ndx_d', L, True, PP_GAYED, {'kind': 'cross', 'L': L}, tax=True))
+    # X5 二つの信号の一致（両方『下』のときだけ降りる）
+    dual = either(c.sig_gspc[200], c.us_tsmomD)
+    for L in (1, 2, 3):
+        out.append(spec(f'X5_US_DUAL_L{L}', 'exploratory2', f'US 200日線と12か月モメンタムが両方『下』のときだけ降りる・{L}倍', (lambda L=L: run_daily(c.D_us, c.r_us, c.rf_us, dual, L)), 'us_d', L, True, PP_GAYED, {'kind': 'dual', 'L': L}, tax=True))
+    # 【事後・報告のみ】先物の費用で持ったら
+    for base, D, r, sig, L, bench in (('P05_US_SMA200', c.D_us, c.r_us, c.sig_gspc[200], 1.5, 'us_d'), ('P06_US_SMA200', c.D_us, c.r_us, c.sig_gspc[200], 2, 'us_d'),
+                                     ('P07_US_SMA200', c.D_us, c.r_us, c.sig_gspc[200], 3, 'us_d'), ('P10_NDX_SMA200', c.D_ndx, c.ndx_r, c.ndx_sig[200], 1.5, 'ndx_d'),
+                                     ('P11_NDX_SMA200', c.D_ndx, c.ndx_r, c.ndx_sig[200], 2, 'ndx_d'), ('P12_NDX_SMA200', c.D_ndx, c.ndx_r, c.ndx_sig[200], 3, 'ndx_d'),
+                                     ('E08_US_FABER10D', c.D_us, c.r_us, c.us_faberD, 2, 'us_d'), ('E09_US_FABER10D', c.D_us, c.r_us, c.us_faberD, 3, 'us_d')):
+        out.append(spec(f'H_{base}_L{L}_FUTCOST', 'posthoc', f'【事後】{base} {L}倍を先物の費用（RF+0.3%・経費0）で',
+                        (lambda D=D, r=r, sig=sig, L=L: run_daily(D, r, c.rf_us, sig, L, spread=FUT_SPREAD, fee=FUT_FEE)), bench, None, True, PP_GAYED, None, graded=False,
+                        label='事後（第1族の結果を見た後の問い・判定しない）'))
+    return out
+
+
+# ───────────────────────── 本体 ─────────────────────────
+def bench_for(c, kind, run):
+    """相手（月次）・RF（月次）・日次の原資産・（原資産, RF の源）"""
+    ks = run['keys']
+    if kind == 'us_m':
+        return {k: c.r_usm[k] for k in ks}, {k: c.rf_usm[k] for k in ks}, None, (c.r_usm, c.rf_usm)
+    if kind == 'sh_m':
+        return {k: c.sr[k] for k in ks}, {k: c.rf_sh[k] for k in ks}, None, (c.sr, c.rf_sh)
+    rr = kind[1] if isinstance(kind, tuple) else {'us_d': c.r_us, 'ndx_d': c.ndx_r, 'ixic_d': c.ixic_r}[kind]
+    return M.to_monthly({d: rr[d] for d in ks}), M.to_monthly({d: c.rf_us[d] for d in ks}), rr, (rr, c.rf_us)
+
+
+def lag_check(D, sigD, run):
+    pos_by = dict(zip(run['keys'], run['pos']))
+    idx = {d: i for i, d in enumerate(D)}
+    bad = sum(1 for d in run['keys'][:4000] if pos_by[d] != sigD[idx[d] - 2])
+    return {'checked': min(4000, len(run['keys'])), 'mismatch': bad}
+
+
+def run_specs(c, specs):
+    tested = []
+    for st in specs:
         run = st['runner']()
         if run is None:
             log('実行不能', st['id']); continue
-        b_m, rf_m, rr_d, (rsrc, rfsrc) = bench_for(st['bench'], run)
+        b_m, rf_m, rr_d, (rsrc, rfsrc) = bench_for(c, st['bench'], run)
         blev_m = None
         if st['per_daily'] and st['blev'] is not None and st['blev'] != 1:
-            blev_d = M.lever_daily({d: rr_d[d] for d in run['keys']}, st['blev'], {d: rf_us[d] for d in run['keys']}, spread=SPREAD, fee=FEE)
-            blev_m = M.to_monthly(blev_d)
+            blev_m = M.to_monthly(M.lever_daily({d: rr_d[d] for d in run['keys']}, st['blev'], {d: c.rf_us[d] for d in run['keys']}, spread=SPREAD, fee=FEE))
         e = evaluate(run, b_m, rf_m, blev_m, st['per_daily'], st['post_pub'])
         ent = {'id': st['id'], 'family': st['family'], 'desc': st['desc'], 'rule': st['rule'], 'graded': st['graded'],
                'window': [run['keys'][0], run['keys'][-1]], **e}
+        if st['label']:
+            ent['label'] = st['label']
         if st['id'].startswith('P03'):
-            sanity['lag_check_us_sma200'] = lag_check(D_us, sig_gspc[200], run)
+            c.sanity['lag_check_us_sma200'] = lag_check(c.D_us, c.sig_gspc[200], run)
         if st['id'].startswith('P08'):
-            sanity['lag_check_ndx_sma200'] = lag_check(D_ndx, ndx_sig[200], run)
-        # C5
+            c.sanity['lag_check_ndx_sma200'] = lag_check(c.D_ndx, c.ndx_sig[200], run)
         if st['rule'] is not None and st['graded']:
-            ent['repl'] = region_eval(st['rule'])
-        # 税
+            ent['repl'] = region_eval(c, st['rule'])
         if st['tax']:
             per = 252 if st['per_daily'] else 12
             yearf = (lambda k: k // 10000) if st['per_daily'] else (lambda k: k // 100)
@@ -665,39 +840,52 @@ def main():
             if st['family'] == 'primary':
                 ent['tax_japan']['rolling20_taxable_vs_bh_taxable'] = tax_rolling(run, bh, per, yearf)
                 if st['blev'] not in (None, 1):
-                    # 同じ L の買い持ち（課税後）とも
                     bl = {'keys': run['keys'], 'inv': [lev_ret(rsrc[k], rfsrc[k], st['blev'], 252) for k in run['keys']], 'cash': [rfsrc[k] for k in run['keys']]}
                     ent['tax_japan']['vs_levered_bh_windows'] = tax_report(run, bl, per, yearf, win)
         tested.append(ent)
-        runs[st['id']] = run
         h = e['hold']; t = e['train']
-        log(f"{st['id']:26s} 訓練 {t['ex_ann'] if t else None:>7} t{t['t'] if t else None} 保有 {h['ex_ann'] if h else None:>7} t{h['t'] if h else None} 幾何差 {h['cagr_diff'] if h else None} "
+        log(f"{st['id']:34s} 訓練 {t['ex_ann'] if t else None:>7} t{t['t'] if t else None} 保有 {h['ex_ann'] if h else None:>7} t{h['t'] if h else None} 幾何差 {h['cagr_diff'] if h else None} "
             f"費用後保有 {e['cost_hold']['ex_ann'] if e['cost_hold'] else None} 20年勝率 {e['roll20']['win_rate'] if e['roll20'] else None} "
             f"Sharpe訓練 {e['sharpe']['train']} 保有 {e['sharpe']['hold']} 地域 {ent.get('repl', {}).get('positive')}/{ent.get('repl', {}).get('regions')}")
+    return tested
 
-    # L=1 のレバレッジ込み買い持ちが買い持ちと一致するか
-    lv1 = M.lever_daily({d: r_us[d] for d in D_us[:1000]}, 1, {d: rf_us[d] for d in D_us[:1000]}, spread=SPREAD, fee=0.0)
-    sanity['lever1_equals_bh'] = max(abs(lv1[d] - r_us[d]) for d in D_us[:1000]) < 1e-12
 
-    # ---- Holm と判定 ----
+def main():
+    res = {'angle': 'trend', 'prereg': PRE_NAMES}
+    shas = {}
+    for p in PRE_NAMES:
+        try:
+            shas[p] = subprocess.check_output(['git', 'log', '-1', '--format=%H', '--', os.path.join('out', p)], cwd=M.BASE).decode().strip() or None
+        except Exception:
+            shas[p] = None
+    res['prereg_commit'] = shas
+    log('事前登録の commit', shas)
+    c = load()
+    specs = family1(c) + family2(c)
+    tested = run_specs(c, specs)
+    lv1 = M.lever_daily({d: c.r_us[d] for d in c.D_us[:1000]}, 1, {d: c.rf_us[d] for d in c.D_us[:1000]}, spread=SPREAD, fee=0.0)
+    c.sanity['lever1_equals_bh'] = max(abs(lv1[d] - c.r_us[d]) for d in c.D_us[:1000]) < 1e-12
+    # Holm と判定
     prim = {x['id']: x['hold']['p'] for x in tested if x['family'] == 'primary' and x['hold']}
     allg = {x['id']: x['hold']['p'] for x in tested if x['graded'] and x['hold']}
-    hp = M.holm(prim); ha = M.holm(allg)
+    hp, ha = M.holm(prim), M.holm(allg)
     for x in tested:
         if not x['graded']:
             x['grade'] = '報告のみ（判定しない）'; continue
         if x['family'] == 'primary':
-            x['holm_family'] = 'primary(12)'; x['holm_p'] = hp.get(x['id'])
+            x['holm_family'] = f'primary({len(prim)})'; x['holm_p'] = hp.get(x['id'])
         else:
             x['holm_family'] = f'all_graded({len(allg)})'; x['holm_p'] = ha.get(x['id'])
         sp = {'train': tuple(x['sharpe']['train']), 'hold': tuple(x['sharpe']['hold'])}
-        g, c = M.grade(x['full'], x['train'], x['hold'], x['roll20'], cost_hold=x['cost_hold'], repl=x.get('repl'),
-                       family_holm_p=x['holm_p'], sharpe_pair=sp, leveraged_or_timing=True)
-        x['grade'] = g; x['criteria'] = c
-        if x['family'] != 'primary':
-            x['label'] = '探索' if x['family'] == 'exploratory' else '頑健性の格子（勝ちの主張には使わない）'
-    res['sanity'] = sanity
+        g, cr = M.grade(x['full'], x['train'], x['hold'], x['roll20'], cost_hold=x['cost_hold'], repl=x.get('repl'),
+                        family_holm_p=x['holm_p'], sharpe_pair=sp, leveraged_or_timing=True)
+        x['grade'] = g; x['criteria'] = cr
+        if x['family'] != 'primary' and 'label' not in x:
+            x['label'] = {'exploratory': '探索（第1族）', 'exploratory2': '探索（第2族・第1族の結果を見た後に登録）', 'grid': '頑健性の格子（勝ちの主張には使わない）'}[x['family']]
+    res['sanity'] = c.sanity
+    res['train_selection'] = getattr(c, 'train_selection', None)
     res['n_tested'] = len(tested)
+    res['n_graded'] = len(allg)
     res['grades'] = {g: [x['id'] for x in tested if x.get('grade') == g] for g in ('S', 'A', 'B', 'C')}
     res['tested'] = tested
     res['log'] = LOG
