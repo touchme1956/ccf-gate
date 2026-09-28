@@ -319,9 +319,10 @@ def main():
     out['deviations'] = ['mw_common.excess_stats の β の式が S.mean を要素ごとに呼び直す O(n²)・標準 statistics の分数計算で1回数秒かかるため、mw_common が参照する統計関数（mean/pvariance/stdev）だけを math.fsum の同じ式へ差し替えて実行（mw_common は書き換えていない・合成データで全項目一致を確認）']
 
     # ── 地域のデータ ──
-    RG, RM = {}, {}
+    RG, RM, RP = {}, {}, {}
     for reg in REGIONS:
-        RG[reg] = good_series(load_terciles(reg), D)
+        RP[reg] = load_terciles(reg)
+        RG[reg] = good_series(RP[reg], D)
         RM[reg] = M.jkp_mkt(reg, 'vw')
 
     tested = []
@@ -401,11 +402,235 @@ def main():
     # ── 報告のみ: McLean-Pontiff 型の減衰 ──
     out['decay'] = decay_report(G, D, mktrf)
 
+    # ── 探索2（事前登録2）: 実時間で学ぶ採用者 ──
+    if os.path.exists(os.path.join(M.BASE, 'out', PREREG2)):
+        out['prereg2'] = PREREG2
+        out['prereg2_commit'] = git_sha(os.path.join('out', PREREG2))
+        t2, rep2 = part2(D, P, G, mktrf, rf, RP, RG, RM)
+        tested += t2
+        out['post_hoc_regional_adopter'] = rep2
+
     out['tested'] = tested
     out['n_tested'] = len(tested)
     out['summary'] = summarize(tested)
     M.save(OUT, out)
     print(json.dumps(out['summary'], ensure_ascii=False, indent=1)[:6000])
+
+
+# ───────────────────────── 探索2: 実時間で学ぶ採用者（out/mw_postpub_prereg2.json）─────────────────────────
+PREREG2 = 'mw_postpub_prereg2.json'
+P2_START_US = 198001
+
+
+def ym_add(t, n):
+    y, m = divmod(t // 100 * 12 + (t % 100 - 1) + n, 12)
+    return y * 100 + m + 1
+
+
+def prev_months(t, L):
+    return [ym_add(t, -i) for i in range(L, 0, -1)]
+
+
+class Hist:
+    """特徴ごとの（良い側−市場）の履歴。t より前の月だけを返す（後知恵なし）"""
+    def __init__(self, G, mkt):
+        import bisect
+        self.b = bisect
+        self.ks, self.cs, self.cq = {}, {}, {}
+        for a, g in G.items():
+            ks = sorted(k for k in g if k in mkt)
+            xs = [g[k] - mkt[k] for k in ks]
+            cs, cq, s1, s2 = [0.0], [0.0], 0.0, 0.0
+            for x in xs:
+                s1 += x; s2 += x * x
+                cs.append(s1); cq.append(s2)
+            self.ks[a], self.cs[a], self.cq[a] = ks, cs, cq
+
+    def before(self, a, t, since=None):
+        """(n, 和, 二乗和) for months since <= m < t"""
+        ks = self.ks.get(a)
+        if not ks:
+            return 0, 0.0, 0.0
+        j = self.b.bisect_left(ks, t)
+        i = self.b.bisect_left(ks, since) if since else 0
+        if j <= i:
+            return 0, 0.0, 0.0
+        return j - i, self.cs[a][j] - self.cs[a][i], self.cq[a][j] - self.cq[a][i]
+
+
+def run_rule(rule, D, P, G, mkt, start, adopt):
+    """rule(t) → {スロット: 重み}（スロット＝(特徴, 三分位) か 'MKT'）。当月のリターンと回転率（選び直し＋構成）"""
+    months = sorted(k for k in mkt if k >= start and k <= DATA_END)
+    ret, trn, sel_m, nh = {}, {}, {}, {}
+    prev = None
+    for t in months:
+        w = rule(t)
+        if not w:
+            w = {'MKT': 1.0}
+        r = 0.0
+        comp = 0.0
+        for s_, x in w.items():
+            if s_ == 'MKT':
+                r += x * mkt[t]
+            else:
+                a, pf = s_
+                r += x * P[a][pf][t]
+                comp += x * D[a]['turn'] * (2.0 if pf == '2.0' else 1.0)
+        sel = 0.5 * math.fsum(abs(w.get(k, 0.0) - prev.get(k, 0.0)) for k in set(w) | set(prev)) if prev is not None else 0.0
+        ret[t] = r
+        trn[t] = comp + 12 * sel
+        sel_m[t] = sel
+        nh[t] = sum(1 for k in w if k != 'MKT')
+        prev = w
+    return ret, trn, nh
+
+
+def eq(slots):
+    slots = list(slots)
+    return {s_: 1 / len(slots) for s_ in slots} if slots else None
+
+
+def make_rules(D, P, G, mkt, adopt):
+    H = Hist(G, mkt)
+    gp = {a: D[a]['good_pf'] for a in G}
+    adopted = lambda t: [a for a in G if adopt.get(a) is not None and adopt[a] <= t and t in G[a]]
+    # 符号つきロング・ショート（向き×(第3−第1)）
+    LS = {}
+    for a in P:
+        p1, p3 = P[a].get('1.0', {}), P[a].get('3.0', {})
+        LS[a] = {k: D[a]['direction'] * (p3[k] - p1[k]) for k in p1 if k in p3}
+
+    def fm(L, q):
+        def rule(t):
+            pm = prev_months(t, L)
+            cand = []
+            for a in adopted(t):
+                if all(m in G[a] and m in mkt for m in pm):
+                    cand.append((-math.fsum(G[a][m] - mkt[m] for m in pm), a))
+            if len(cand) < 3:
+                return None
+            k = max(3, math.ceil(q * len(cand)))
+            return eq((a, gp[a]) for _, a in sorted(cand)[:k])
+        return rule
+
+    def tsfm(L):
+        def rule(t):
+            pm = prev_months(t, L)
+            slots = []
+            for a in adopted(t):
+                if all(m in LS[a] for m in pm):
+                    on = math.fsum(LS[a][m] for m in pm) > 0
+                else:
+                    on = True
+                slots.append((a, gp[a]) if on else 'MKT')
+            if not slots:
+                return None
+            w = collections.Counter()
+            for s_ in slots:
+                w[s_] += 1 / len(slots)
+            return dict(w)
+        return rule
+
+    def surv(minm):
+        def rule(t):
+            keep = []
+            for a in adopted(t):
+                n, s1, _ = H.before(a, t, since=adopt[a])
+                if n < minm or s1 > 0:
+                    keep.append((a, gp[a]))
+            return eq(keep)
+        return rule
+
+    def rtt(thr, minm=60):
+        def rule(t):
+            keep = []
+            for a in adopted(t):
+                n, s1, s2 = H.before(a, t)
+                if n < minm:
+                    continue
+                m = s1 / n
+                var = (s2 - n * m * m) / (n - 1)
+                if var > 0 and m / math.sqrt(var / n) >= thr:
+                    keep.append((a, gp[a]))
+            return eq(keep)
+        return rule
+
+    def age(fresh, yrs=10):
+        def rule(t):
+            keep = []
+            for a in adopted(t):
+                young = t < ym_add(adopt[a], 12 * yrs)
+                if young == fresh:
+                    keep.append((a, gp[a]))
+            return eq(keep)
+        return rule
+
+    def both(L, q):
+        def rule(t):
+            pm = prev_months(t, L)
+            cand = []
+            for a in P:
+                for pf, g in P[a].items():
+                    if t in g and all(m in g and m in mkt for m in pm):
+                        cand.append((-math.fsum(g[m] - mkt[m] for m in pm), a, pf))
+            if len(cand) < 3:
+                return None
+            k = max(3, math.ceil(q * len(cand)))
+            return eq((a, pf) for _, a, pf in sorted(cand)[:k])
+        return rule
+
+    return [
+        ('X1_FM12_top20', '実時間の採用者のうち、直前12か月の（良い側−市場）の和が上位20%の特徴だけ等分（因子の勢い・Gupta-Kelly 2019／Arnott ほか 2023）', fm(12, 0.2)),
+        ('X2_FM1_top20', '同じ・直前1か月で上位20%（1か月の因子の勢い・Arnott ほか）', fm(1, 0.2)),
+        ('X3_TSFM12', '採用済みの各特徴について、直前12か月の符号つきロング・ショートの和が正なら良い側、負なら市場を持つ（時系列の因子の勢い・Ehsani-Linnainmaa 2022）', tsfm(12)),
+        ('X4_SURV36', '公表後36か月以上たった特徴は、公表後の（良い側−市場）の平均が正のときだけ持つ（公表を生き残った特徴）', surv(36)),
+        ('X5_RTT2', 'データの始まりから前月までの（良い側−市場）の t 値（単純）が2以上の採用済み特徴だけ（実時間の再現の確かめ・60か月以上）', rtt(2.0)),
+        ('X6_RTT3', '同じ・t≥3（Harvey-Liu-Zhu の線）', rtt(3.0)),
+        ('X7_FRESH10', '採用から10年以内の特徴だけ（裁定が進む前）', age(True)),
+        ('X8_SEASONED10', '採用から10年以上たった特徴だけ（公表の山が過ぎた後）', age(False)),
+        ('X9_FM12_both5', '公表と向きを使わず、153特徴×3つの三分位（459）を直前12か月の（三分位−市場）の和で並べ上位5%を等分（ポートフォリオの勢い）', both(12, 0.05)),
+    ]
+
+
+def part2(D, P, G, mktrf, rf, RP, RG, RM):
+    ad0 = adopt_dates(D, 0)
+    rules = make_rules(D, P, G, mktrf, ad0)
+    reg_rules = {reg: dict((n, f) for n, _, f in make_rules(D, RP[reg], RG[reg], RM[reg], ad0)) for reg in REGIONS}
+    res = {}
+    for name, desc, rule in rules:
+        r, trn, nh = run_rule(rule, D, P, G, mktrf, P2_START_US, ad0)
+        th = mean_turn(trn)
+        e = evaluate(r, mktrf, rf, th)
+        rep = {}
+        for reg in REGIONS:
+            rr, rt, rn = run_rule(reg_rules[reg][name], D, RP[reg], RG[reg], RM[reg], REG_START, ad0)
+            rep[reg] = {'full': M.excess_stats(to_total(rr, rf), to_total(RM[reg], rf), a=REG_START),
+                        'hold': M.excess_stats(to_total(rr, rf), to_total(RM[reg], rf), a=M.HOLD_START),
+                        'mkt_months': sum(1 for k in rn if rn[k] == 0), 'turnover_hold': round(mean_turn(rt), 2)}
+        pos = sum(1 for v in rep.values() if v['full'] and v['full']['ex_ann'] > 0)
+        nreg = sum(1 for v in rep.values() if v['full'])
+        res[name] = {'name': name, 'family': 'explore2', 'primary': False, 'description': desc, 'start': P2_START_US,
+                     'months_all_market': sum(1 for k in nh if nh[k] == 0), 'held_avg': round(S.mean(nh.values()), 1),
+                     'held_2006': nh.get(200612), 'held_2025': nh.get(202512),
+                     'eval': e, 'repl': {'regions': nreg, 'positive': pos, 'detail': rep}, 'annual': annual_table(r, mktrf)}
+    hp = M.holm({k: (v['eval']['hold'] or {}).get('p') for k, v in res.items()})
+    for k, v in res.items():
+        v['holm_p_hold'] = hp.get(k)
+        finalize(v)
+    # 事後（判定に使わない）: 主の族の採用者を米国外の地域で単独の戦略として見る
+    rep2 = {'label': '事後（結果1で地域の数字を見た後に、同じ規則を地域の投資家の戦略として並べ直しただけ・判定に使わない）', 'rows': {}}
+    known = [a for a, d in D.items() if d['pub']]
+    for reg in REGIONS:
+        for nm, bal in (('P1_RT_all', False), ('P4_RT_balanced', True)):
+            rr, rc, rt = adopter(RG[reg], D, known, ad0, bal, start_min=REG_START)
+            s_, b_ = to_total(rr, rf), to_total(RM[reg], rf)
+            ks = sorted(set(s_) & set(b_))
+            s_ = {k: s_[k] for k in ks}; b_ = {k: b_[k] for k in ks}
+            rep2['rows'][f'{reg}:{nm}'] = {'full': M.excess_stats(s_, b_), 'train': M.excess_stats(s_, b_, z=M.TRAIN_END),
+                                          'hold': M.excess_stats(s_, b_, a=M.HOLD_START),
+                                          'cost_hold': M.excess_stats(M.apply_cost(s_, mean_turn(rt), COST), b_, a=M.HOLD_START),
+                                          'roll20': M.rolling(s_, b_, 20), 'dca20': M.dca(s_, b_, 20)}
+    return list(res.values()), rep2
 
 
 def annual_table(r, mktrf):
