@@ -307,6 +307,9 @@ def stats(ret, bench, rf=None, a=None, b=None, turnover=None, cost=0.0):
         gl = sum((ex[i] - mu) * (ex[i - l] - mu) for i in range(l, n)) / n
         nw += 2 * (1 - l / (lag + 1)) * gl
     t_nw = mu / math.sqrt(nw / n) if nw > 0 else None
+    # 相手も共通の月だけで複利する（2026-09-28 是正: 規則に欠けた月がある国で、相手だけが欠けた月の分まで複利され
+    # 幾何の超過が片方に偏っていた。t・ならしは元から共通の月だけで、変わらない）
+    bench = {m: bench[m] for m in ms}
     cs, cb = cagr(net, ms[0], ms[-1]), cagr(bench, ms[0], ms[-1])
     vol = S.stdev(net[m] for m in ms) * math.sqrt(12)
     volb = S.stdev(bench[m] for m in ms) * math.sqrt(12)
