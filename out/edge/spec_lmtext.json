@@ -1,0 +1,441 @@
+{
+ "key": "lmtext",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "signal": "dneg",
+  "q": 5,
+  "start": 199401,
+  "min_univ": 100,
+  "max_age_months": 15,
+  "prev_days": [
+   274,
+   457
+  ],
+  "max_ret": 3.0,
+  "min_px": 1.0,
+  "forms": [
+   "10-K",
+   "10-K405",
+   "10-KT",
+   "10KT405"
+  ],
+  "side_note": "低い側（文献の向きで固定）"
+ },
+ "rationale": "【規則】dneg|q5: 米国上場の生き残りの会社（SEC の今日のティッカー表 × Yahoo の株価）を、毎月 m−1 月末までに出た直近の 10-K の「dneg」で並べ、低い側の五分位を等加重で持つ（毎月組み直す）。相手は同じ月の同じ母集団の等加重。【なぜ】2001年より前に筋があった・または同じ筋の文献: 否定語の多い 10-K は悪い知らせを含み市場はそれをゆっくり織り込む（Tetlock 2007・Loughran & McDonald 2011）、長く読みにくい 10-K は悪い知らせを隠す（Li 2008「Annual report readability」・Loughran & McDonald 2014）、書き換えの多い 10-K は事業の変化を示し、投資家は去年からの変更を読み飛ばす（Cohen・Malloy・Nguyen 2020「Lazy Prices」）。⚠ これらの論文はどれも2001年より後の公表で、辞書（LM）も2011年の作。使う10-K の本文そのものは当時に公開されていた。【選定期間 199504〜200012（5.8年）】費用後の年率 19.64% 対 同じ母集団の等加重 19.15%、超過 +0.49%/年、t 0.36（Newey-West 0.38）、ぶれ 14.3% 対 13.6%、最大下落 -24.8% 対 -23.2%。部分期間 1994-1997 +2.99%/年（t 1.26）・1998-2000 -1.44%/年（t -0.54）。回転 1.4/年（実測）。French の米国市場に対しては +0.45%/年（t 0.04・参考）——同じ母集団の等加重そのものが French 市場に -0.04%/年（生き残りだけの等加重は市場より強く出る）。【選び方】どの変種も +1%/年 に届かなかった。t が最大の変種を選んだ（線に届かないことを承知で・事前登録の選び方の但し書きどおり）。t の上位4: dneg|q3 +0.31%（t 0.36） / dneg|q5 +0.49%（t 0.36） / lit|q5 +0.44%（t 0.28） / unc|q5 -0.64%（t -0.42）。【材料】LM の 10-K の原本（10-K・10-K405・10-KT・10KT405）がある CIK 15187社（選定の段＝2000-12 までに提出）、そのうち今日の SEC のティッカー表に載る 1372社、Yahoo の月次が取れた 1249社（取れなかった会社はただ居ない）。組の社数の中央値 139・母集団 699。【判定の上限】⚠ 生き残りだけの価格（上場廃止した会社が入らない）なので、線を全部越えても『候補』まで（事前登録 r10 verdict_cap）。他の市場での再現は無し。【事前登録に無かった決め事】(a) 月の母集団 100社未満の月は使わない（1994年初めの EDGAR の移行期）。(b) 10-KT の405版（10KT405）も 10-KT として含めた。(c) 前の 10-K の「9〜15か月前」は 274〜457日。(d) dneg は符号つきの変化（今回−前回）の低い側＝否定語が減った会社。(e) comp は6信号がすべてそろう会社の中で各信号を百分位にして平均。(f) $1 の線は分割の記録で戻した当時の名目株価で判定。(g) Yahoo は h.yahoo と同じ読み方だが分割の記録を得るため別のキャッシュ名（yhs_）で取った。(h) 1社に複数のティッカーがあれば SEC の表の最初。(i) 回転は初月を0（他の系統と同じ）。(j) t の比較は h.stats の小数2桁に丸める前の値で行った（dneg の三分位と五分位が丸めると同じ t 0.36 で並んだため。丸める前は dneg|q3 0.36164 / dneg|q5 0.36171）。⚠ 選定期間は7年と短い（事前登録にも明記）。",
+ "n_variants_tried": 14,
+ "selection_stats": {
+  "from": 199504,
+  "to": 200012,
+  "years": 5.8,
+  "cagr": 19.64,
+  "bench_cagr": 19.15,
+  "excess": 0.49,
+  "ex_arith": 0.51,
+  "t": 0.36,
+  "t_nw": 0.38,
+  "vol": 14.3,
+  "bench_vol": 13.6,
+  "maxdd": -24.8,
+  "bench_maxdd": -23.2,
+  "sharpe": 0.98,
+  "bench_sharpe": 0.99,
+  "roll10_win": null
+ },
+ "implement": "楽天証券の米国株（成長投資枠＝NISA 可・レバレッジではない）で、毎月、各社の直近の 10-K（年次報告書）の語の集計（Loughran-McDonald の辞書で数えた否定語・不確実語・訴訟語の割合、前年からの大きさの変化、語数）で並べ、良い側の3分の1（または5分の1）を等加重で持つ。組は数百〜千社になるので、個人は数十社へ絞る近似になる。この信号をそのまま使う ETF は無い。⚠ 株価は今日上場している会社だけ（生き残り）なので、線を全部越えても判定は『候補』まで（事前登録 r10 の verdict_cap）。他の市場での再現は無い",
+ "family_name": "決算書の文章（10-K の否定語・不確実語・訴訟語の割合、書き換えの量、否定語の悪化、語数の少ない側）",
+ "lookahead_test": "(1) 別プロセスの切り口: EDGE_SEL_END=199712 と 200012 で別々に run() を回し、1997-12 までの組・相手・回転が完全一致（1e-12）。（night/edge/prefix_check.py の 1990-12 の切り口は LM のデータ（1993〜）より前なので比べる月が0か月＝空回り。1997-12 でも切った）(2) 読み込みの切り落とし: 選定の段では LM の提出を「提出月 > SEL_END」で捨て、株価は h.guard（月 > SEL_END を捨てる）。(3) 月合わせ（コードを読む検査）: 月 m の組は m−1 月末までに提出された 10-K（提出月 ≤ m−1）の信号と m−1 月末の名目株価で決め、月 m のリターンは m−1 月末→m 月末の adjclose。前の 10-K は今回の提出より前の提出だけ。順位・分位は同じ月の断面の中だけで作り、全期間の平均・分位は一切使わない。⚠ 例外は事前登録の +300% の除外（月 m のリターンで落とす）＝組と相手の両方から同じ会社を落とす。(4) 分割の記録は Yahoo の遡った割り算を戻して当時の名目株価（$1 の線）を復元するためだけに使う（今日時点の記録を使うが、復元される値は当時の値札）",
+ "lookahead_result": {
+  "cut": 199712,
+  "ret": {
+   "months": 33,
+   "diffs": 0
+  },
+  "bench": {
+   "months": 33,
+   "diffs": 0
+  },
+  "turnover": {
+   "months": 33,
+   "diffs": 0
+  },
+  "later_months_in_full": 36,
+  "ok": true
+ },
+ "variants_table": [
+  {
+   "name": "neg|q3",
+   "excess": -1.88,
+   "t": -1.44,
+   "t_nw": -1.52,
+   "from": 199404,
+   "vol": 12.1,
+   "bench_vol": 13.3,
+   "maxdd": -20.2,
+   "t_unrounded": -1.4352128249074856,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": -1.45,
+     "t": -1.24
+    },
+    "1998-2000": {
+     "excess": -2.36,
+     "t": -0.98
+    }
+   },
+   "turnover_yr": 0.93,
+   "ex_vs_french_mkt": -2.39,
+   "t_vs_french_mkt": -0.81,
+   "n_portfolio_median": 312,
+   "n_universe_median": 936
+  },
+  {
+   "name": "neg|q5",
+   "excess": -3.33,
+   "t": -1.82,
+   "t_nw": -1.77,
+   "from": 199404,
+   "vol": 12.2,
+   "bench_vol": 13.3,
+   "maxdd": -20.7,
+   "t_unrounded": -1.8199757387067697,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": -3.36,
+     "t": -1.93
+    },
+    "1998-2000": {
+     "excess": -3.28,
+     "t": -1.0
+    }
+   },
+   "turnover_yr": 1.0,
+   "ex_vs_french_mkt": -3.83,
+   "t_vs_french_mkt": -1.13,
+   "n_portfolio_median": 187,
+   "n_universe_median": 936
+  },
+  {
+   "name": "unc|q3",
+   "excess": -0.87,
+   "t": -0.78,
+   "t_nw": -0.91,
+   "from": 199404,
+   "vol": 13.1,
+   "bench_vol": 13.3,
+   "maxdd": -22.8,
+   "t_unrounded": -0.7816730880605596,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": -0.55,
+     "t": -0.33
+    },
+    "1998-2000": {
+     "excess": -1.22,
+     "t": -0.78
+    }
+   },
+   "turnover_yr": 1.02,
+   "ex_vs_french_mkt": -1.37,
+   "t_vs_french_mkt": -0.43,
+   "n_portfolio_median": 312,
+   "n_universe_median": 936
+  },
+  {
+   "name": "unc|q5",
+   "excess": -0.64,
+   "t": -0.42,
+   "t_nw": -0.56,
+   "from": 199404,
+   "vol": 12.7,
+   "bench_vol": 13.3,
+   "maxdd": -21.2,
+   "t_unrounded": -0.42105109084032255,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": 0.13,
+     "t": 0.05
+    },
+    "1998-2000": {
+     "excess": -1.49,
+     "t": -0.64
+    }
+   },
+   "turnover_yr": 1.12,
+   "ex_vs_french_mkt": -1.14,
+   "t_vs_french_mkt": -0.37,
+   "n_portfolio_median": 187,
+   "n_universe_median": 936
+  },
+  {
+   "name": "lit|q3",
+   "excess": -0.79,
+   "t": -0.78,
+   "t_nw": -0.73,
+   "from": 199404,
+   "vol": 12.9,
+   "bench_vol": 13.3,
+   "maxdd": -21.7,
+   "t_unrounded": -0.7834116735500303,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": -0.32,
+     "t": -0.28
+    },
+    "1998-2000": {
+     "excess": -1.31,
+     "t": -0.77
+    }
+   },
+   "turnover_yr": 1.02,
+   "ex_vs_french_mkt": -1.3,
+   "t_vs_french_mkt": -0.47,
+   "n_portfolio_median": 312,
+   "n_universe_median": 936
+  },
+  {
+   "name": "lit|q5",
+   "excess": 0.44,
+   "t": 0.28,
+   "t_nw": 0.27,
+   "from": 199404,
+   "vol": 13.3,
+   "bench_vol": 13.3,
+   "maxdd": -21.3,
+   "t_unrounded": 0.2827003281250505,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": 1.44,
+     "t": 0.86
+    },
+    "1998-2000": {
+     "excess": -0.66,
+     "t": -0.27
+    }
+   },
+   "turnover_yr": 1.08,
+   "ex_vs_french_mkt": -0.06,
+   "t_vs_french_mkt": -0.1,
+   "n_portfolio_median": 187,
+   "n_universe_median": 936
+  },
+  {
+   "name": "dsize|q3",
+   "excess": -2.35,
+   "t": -2.12,
+   "t_nw": -2.42,
+   "from": 199504,
+   "vol": 12.7,
+   "bench_vol": 13.6,
+   "maxdd": -21.1,
+   "t_unrounded": -2.1156719174180467,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": -1.08,
+     "t": -0.67
+    },
+    "1998-2000": {
+     "excess": -3.33,
+     "t": -2.14
+    }
+   },
+   "turnover_yr": 1.09,
+   "ex_vs_french_mkt": -2.39,
+   "t_vs_french_mkt": -0.71,
+   "n_portfolio_median": 233,
+   "n_universe_median": 699
+  },
+  {
+   "name": "dsize|q5",
+   "excess": -3.13,
+   "t": -2.08,
+   "t_nw": -3.06,
+   "from": 199504,
+   "vol": 13.0,
+   "bench_vol": 13.6,
+   "maxdd": -21.7,
+   "t_unrounded": -2.0837866744676523,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": -2.99,
+     "t": -1.26
+    },
+    "1998-2000": {
+     "excess": -3.23,
+     "t": -1.65
+    }
+   },
+   "turnover_yr": 1.24,
+   "ex_vs_french_mkt": -3.17,
+   "t_vs_french_mkt": -0.86,
+   "n_portfolio_median": 139,
+   "n_universe_median": 699
+  },
+  {
+   "name": "dneg|q3",
+   "excess": 0.31,
+   "t": 0.36,
+   "t_nw": 0.44,
+   "from": 199504,
+   "vol": 14.0,
+   "bench_vol": 13.6,
+   "maxdd": -24.1,
+   "t_unrounded": 0.36164126775852484,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": 1.41,
+     "t": 0.98
+    },
+    "1998-2000": {
+     "excess": -0.55,
+     "t": -0.29
+    }
+   },
+   "turnover_yr": 1.28,
+   "ex_vs_french_mkt": 0.27,
+   "t_vs_french_mkt": -0.02,
+   "n_portfolio_median": 233,
+   "n_universe_median": 699
+  },
+  {
+   "name": "dneg|q5",
+   "excess": 0.49,
+   "t": 0.36,
+   "t_nw": 0.38,
+   "from": 199504,
+   "vol": 14.3,
+   "bench_vol": 13.6,
+   "maxdd": -24.8,
+   "t_unrounded": 0.3617102675307575,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": 2.99,
+     "t": 1.26
+    },
+    "1998-2000": {
+     "excess": -1.44,
+     "t": -0.54
+    }
+   },
+   "turnover_yr": 1.4,
+   "ex_vs_french_mkt": 0.45,
+   "t_vs_french_mkt": 0.04,
+   "n_portfolio_median": 139,
+   "n_universe_median": 699
+  },
+  {
+   "name": "words|q3",
+   "excess": -1.17,
+   "t": -1.2,
+   "t_nw": -0.99,
+   "from": 199404,
+   "vol": 12.9,
+   "bench_vol": 13.3,
+   "maxdd": -21.2,
+   "t_unrounded": -1.2025556752738968,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": -0.24,
+     "t": -0.22
+    },
+    "1998-2000": {
+     "excess": -2.21,
+     "t": -1.33
+    }
+   },
+   "turnover_yr": 0.97,
+   "ex_vs_french_mkt": -1.68,
+   "t_vs_french_mkt": -0.54,
+   "n_portfolio_median": 312,
+   "n_universe_median": 936
+  },
+  {
+   "name": "words|q5",
+   "excess": -2.38,
+   "t": -1.7,
+   "t_nw": -1.61,
+   "from": 199404,
+   "vol": 12.8,
+   "bench_vol": 13.3,
+   "maxdd": -21.5,
+   "t_unrounded": -1.7024467726123649,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": -1.5,
+     "t": -0.76
+    },
+    "1998-2000": {
+     "excess": -3.34,
+     "t": -1.65
+    }
+   },
+   "turnover_yr": 1.03,
+   "ex_vs_french_mkt": -2.88,
+   "t_vs_french_mkt": -0.81,
+   "n_portfolio_median": 187,
+   "n_universe_median": 936
+  },
+  {
+   "name": "comp|q3",
+   "excess": -3.61,
+   "t": -2.83,
+   "t_nw": -2.2,
+   "from": 199504,
+   "vol": 12.3,
+   "bench_vol": 13.6,
+   "maxdd": -21.2,
+   "t_unrounded": -2.8253002999912247,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": -2.21,
+     "t": -1.34
+    },
+    "1998-2000": {
+     "excess": -4.67,
+     "t": -2.52
+    }
+   },
+   "turnover_yr": 1.01,
+   "ex_vs_french_mkt": -3.65,
+   "t_vs_french_mkt": -0.99,
+   "n_portfolio_median": 233,
+   "n_universe_median": 699
+  },
+  {
+   "name": "comp|q5",
+   "excess": -3.33,
+   "t": -2.05,
+   "t_nw": -1.98,
+   "from": 199504,
+   "vol": 12.0,
+   "bench_vol": 13.6,
+   "maxdd": -19.8,
+   "t_unrounded": -2.0549908021200034,
+   "sub_periods": {
+    "1994-1997": {
+     "excess": -1.68,
+     "t": -0.82
+    },
+    "1998-2000": {
+     "excess": -4.59,
+     "t": -1.92
+    }
+   },
+   "turnover_yr": 1.11,
+   "ex_vs_french_mkt": -3.37,
+   "t_vs_french_mkt": -0.88,
+   "n_portfolio_median": 139,
+   "n_universe_median": 699
+  }
+ ],
+ "selection_note": "どの変種も +1%/年 に届かなかった。t が最大の変種を選んだ（線に届かないことを承知で・事前登録の選び方の但し書きどおり）",
+ "data_counts": {
+  "ciks_with_10k": 15187,
+  "ciks_with_ticker": 1372,
+  "ciks_with_price": 1249
+ },
+ "verdict_cap": "候補まで（生き残りだけの価格・事前登録 r10）",
+ "benchmark": "主＝同じ月の同じ母集団（その変種の信号がある生き残りの会社）の等加重（run() の bench）。参考＝French 米国市場（run() の bench_mkt）",
+ "cost_note": "片道の回転100%につき0.25%。回転は前月の組を値動きで流した重みから今月の等分への入れ替わり（実測）"
+}
