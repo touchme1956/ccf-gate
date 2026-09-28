@@ -1419,6 +1419,39 @@ def main():
     san['jst_renorm_events'] = stats
     san['french_fund_events'] = {k: v[3] for k, v in fundF.items() if isinstance(k, str)}
     out['sanity'] = san
+    # ═══════════ まとめ（数字は上の結果から機械で拾う） ═══════════
+    P1 = out['part1_jst_regret']
+    summ = {'decision_primary_JST_L20_net': {}, 'decision_robustness': {}}
+    for D in ('D1', 'D2', 'D3'):
+        v = P1[f'{D}_vs_Wb_L20_net']
+        summ['decision_primary_JST_L20_net'][D] = {'verdict': v['verdict'], 'W_over_D_p10_p50_p90': [v['pooled']['W_over_D'][q] for q in ('p10', 'p50', 'p90')],
+                                                   'P_D_over_W_lt_0.7': v['pooled']['P_D_over_W_lt_0.7'], 'P_W_over_D_lt_0.7': v['pooled']['P_W_over_D_lt_0.7'],
+                                                   'homes_W_median_gt1_A': f"{v['A_le1945']['homes_median_gt1']}/{v['A_le1945']['homes_counted']}",
+                                                   'homes_W_median_gt1_B': f"{v['B_ge1946']['homes_median_gt1']}/{v['B_ge1946']['homes_counted']}",
+                                                   'independent_windows_A_B': [v['independent_windows_A'], v['independent_windows_B']],
+                                                   'cross_home_corr_logR': v['cross_home_mean_corr_logR']}
+        summ['decision_robustness'][D] = {f'L{L}': P1[f'{D}_vs_Wb_L{L}_net']['verdict'] for L in LS}
+    P2 = out['part2_french_regret']
+    summ['french_1976_2025_L20_net'] = {D: {'share_homes_W_median_gt1': P2[f'{D}_vs_W2_L20_net']['share_homes_median_gt1'],
+                                            'W_over_D_p10_p50_p90': [P2[f'{D}_vs_W2_L20_net']['pooled']['W_over_D'][q] for q in ('p10', 'p50', 'p90')],
+                                            'P_D_over_W_lt_0.7': P2[f'{D}_vs_W2_L20_net']['pooled']['P_D_over_W_lt_0.7']} for D in ('D1', 'D2', 'D3')}
+    allg = {}
+    for fam in ('part3_graded_GP', 'part3_graded_T', 'part4_graded_E', 'part5_graded_F'):
+        for g, e in out[fam].items():
+            allg[g] = {'grade': e['grade'], 'train': e['train'] and [e['train']['ex_ann'], e['train']['t']], 'hold': e['hold'] and [e['hold']['ex_ann'], e['hold']['t']],
+                       'hold_net': e['hold_net'] and e['hold_net']['ex_ann'], 'full_t': e['full'] and e['full']['t']}
+    summ['graded'] = allg
+    summ['grade_counts'] = {k: sum(1 for v in allg.values() if v['grade'] == k) for k in 'SABC'}
+    out['summary'] = summ
+    out['deviations'] = [
+        '費用後（C6）は mw_common.apply_cost の一定の平均回転ではなく、毎年1月（業種は7月）の実際の回転×単価と、年率の器の上乗せ・源泉税を月割りで引いた（平均回転は avg_turnover_oneway_per_year に記録）',
+        'French の国別のデータは 2025-12 で終わるので、月次の部（第2〜4部）の終わりは 2025-12（米国の French Mkt は 2026-08 まであるが揃えた）',
+        'B（支配的な市場 vs 世界）の費用は戦略の側だけに掛け、相手の W2 には掛けない（戦略に厳しい側）',
+        '他の角度の道具で見つけた問題（直していない・報告のみ）: (1) mw_deep_history の gdp_bench は JST の gdp の単位（十億・百万・兆）を直さずに gdp/xrusd を国の間で比べている＝その GDP 加重の報告（vs_gdp_weight・gdpw_vs_ew）の重みは誤り。(2) JKP の地域 developed は米国を含まない（米国外の先進国）。mw_common の注記はこれを書いていない（mw_country_verify は気づいている）',
+        '実行時の mw_common.yahoo は別の作業者のコミット前の変更（取引所の時刻で月を切る・抜けた月をまたがない）を含んでいた（使ったのは第5部の F4 の ETF だけ）',
+        'JST の D1（最大の市場）は 1975 年以前は GDP の代理（=米国）。1914年頃までの最大の株式市場はロンドンだったはずで、D に有利な後知恵を含む（事前登録どおり旗）',
+        '世界銀行の時価総額の入力誤り（日本1977-78・英国1979-80・仏伊墺1998・ノルウェー1984・フィンランド1999〜・シンガポール1982-83・スウェーデン1977-78）は事前登録の実時間の規則で棄却・補った（sanity.caps_rejected_*）。フィンランドの 1999 年以降は約1/5 の水準が『新しい水準』として採られた（誤りの可能性が高いが規則どおり）'
+    ]
     out['tested'] = tested
     out['n_tested'] = len(tested)
     out['log'] = LOG
