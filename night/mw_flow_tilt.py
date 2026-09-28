@@ -1651,8 +1651,57 @@ def main():
            'n_tested': len(tested), 'n_graded': sum(1 for x in tested if x.get('graded')),
            'grades': {x['name']: x.get('grade', '格付け外') for x in tested},
            'sanity': sanity, 'current_signal': now, 'part2': part2, 'part3': part3, 'tested': tested, 'log': LOG[-120:], 'runtime_s': round(time.time() - t0, 1)}
+    try:
+        out.update(finalize(out))
+    except Exception as e:  # noqa
+        out['finalize_error'] = str(e)[:300]
     p = M.save(OUT, out)
     log('書いた', p, round(os.path.getsize(p) / 1e6, 2), 'MB')
+
+
+def finalize(out):
+    """数字から要約を組む（結果を書き写さない＝走らせ直すと同じ文が数字ごと更新される）"""
+    T = {x['name']: x for x in out['tested']}
+    g = lambda n, *k: _dig(T.get(n), k)
+    sg = lambda v: f'{v:+.2f}' if isinstance(v, (int, float)) else str(v)
+    p3 = out.get('part3') or {}
+    ph = p3.get('posthoc_P_X_vs_MSCI_ACWI', {})
+    cs = out['current_signal']
+    lines = [
+     f"問い: 毎月の入金だけを割安な地域へ向け一度も売らない積立（つみたて枠に入る形）は、全世界の時価加重・S&P500 の積立に勝つか。3回の事前登録で {out['n_graded']} 本を格付け（ほか再現・報告 {out['n_tested'] - out['n_graded']} 本）。S・A は0本、B は1本（X5）、残りは C。",
+     f"主の族（F1: 米国と米国外のうち配当利回りが自分の20年の中央値に比べて高い方へ全部）: 1991〜2017 の26年は入金がずっと米国外へ向き、20年の積立の最終額は全世界に対し中央 {g('F1_US_vs_XUS','dca20_world','nisa','median_ratio')} 倍（21窓で勝ち {round(g('F1_US_vs_XUS','dca20_world','nisa','win_rate')*21)}）、S&P500 に対し {g('F1_US_vs_XUS','dca20_sp500','nisa','median_ratio')} 倍。2007年から始めた道は全世界（JKP）に年 {sg(g('F1_US_vs_XUS','fresh_start_2007_net','ex_ann'))}%（t {g('F1_US_vs_XUS','fresh_start_2007_net','t')}）、実物の MSCI オール・カントリーに年 {sg(_dig(ph,('F1_US_vs_XUS','fresh2007_net_vs_MSCI_ACWI','ex_ann')))}%。",
+     f"4地域版（F3）は日本の配当利回りが1989年の0.4%から2.5%へ上がり続けたため1996年から30年ほぼ日本へ入金し、20年の積立は中央 {g('F3_4regions_top1','dca20_world','nisa','median_ratio')} 倍（21窓で勝ち {round(g('F3_4regions_top1','dca20_world','nisa','win_rate')*21)}）＝『自分の過去より安い』は払い出し方の変化と長い下げに引っぱられる。",
+     f"唯一の B（X5: 米国は時価の重みのまま、米国外の分だけ割安な上位3か国へ）は JKP の全世界に対し訓練 {sg(g('X5_UScap_XUScountry_top3','gross','train','ex_ann'))}%/年（t {g('X5_UScap_XUScountry_top3','gross','train','t')}）・保有 {sg(g('X5_UScap_XUScountry_top3','gross','hold','ex_ann'))}%（t {g('X5_UScap_XUScountry_top3','gross','hold','t')}）。だが相手の JKP 全世界は訓練期間に新興国のデータが壊れ（1988年 JKP 新興国 −50.7%）、2007年以降は MSCI オール・カントリーより年0.95% 弱い。",
+     f"汚れの無い同じ出どころの先進国の相手で測り直すと（Z1）訓練 {sg(g('Z1_UScap_XDcountry_top3','gross','train','ex_ann'))}%（t {g('Z1_UScap_XDcountry_top3','gross','train','t')}）は残るが保有は {sg(g('Z1_UScap_XDcountry_top3','gross','hold','ex_ann'))}%（t {g('Z1_UScap_XDcountry_top3','gross','hold','t')}）で C。実在の iShares 国別 ETF で持つと（Z5）20年の積立は中央 {g('Z5_UScap_XDcountryETF_top3','dca20_BD','nisa','median_ratio')} 倍で負け。MSCI オール・カントリーに対しては X5 も 2007年以降 {sg(_dig(ph,('X5_UScap_XUScountry_top3','fresh2007_net_vs_MSCI_ACWI','ex_ann')))}%/年。",
+     f"保有期間でいちばん強かったのは勢いの入金（米国と米国外のうち直近12-1か月が強い方へ）: 汚れの無い版（Z3）で 2007〜 {sg(g('Z3_mom_US_XD','gross','hold','ex_ann'))}%/年（t {g('Z3_mom_US_XD','gross','hold','t')}）、MSCI World に {sg(g('Z3_mom_US_XD','fresh2007_net_vs_MSCI_World','ex_ann'))}%（t {g('Z3_mom_US_XD','fresh2007_net_vs_MSCI_World','t')}）。だが訓練 1991〜2006 は t {g('Z3_mom_US_XD','gross','train','t')}、JST の 1926〜2006 は {sg(g('Z7_JST_mom_US_XUS15','train_1926_2006','ex_ann'))}%/年で、2007年以降の米国の独走を映しただけの疑いが強い（C）。",
+     f"JST の長い歴史（1881〜2020・年次）: 国の割安（配当利回りの上位3か国）の入金版 J4 は 1881〜1925 {sg(g('J4_country_top3_dp','A_1881_1925','ex_ann'))}%/年（t {g('J4_country_top3_dp','A_1881_1925','t')}）だが 1926〜2006 は {sg(g('J4_country_top3_dp','train_1926_2006','ex_ann'))}%（t {g('J4_country_top3_dp','train_1926_2006','t')}）で C。",
+     f"いまの信号（{cs['decision_month']} 末）: 米国の配当利回り {cs['dy_pct'].get('US')}%＝自分の20年の中央値の {cs['rel'].get('US')} 倍、米国外 {cs['dy_pct'].get('XUS')}%（{cs['rel'].get('XUS')} 倍）→ F1 なら米国外へ・F3 なら日本へ。ただしこれは勝てなかった規則の信号",
+     "結論: 入金だけの地域の割安の傾けは、事前登録の線（C1〜C8）で市場に勝つ証拠にならなかった。『国の割安』の紙の上乗せは売らない形でも2007年以降は残らず、つみたて枠の既定（オール・カントリー／S&P500 をそのまま積む）を替える根拠は無い",
+    ]
+    deviations = [
+     "mw_common.rolling/dca は月次のリターン系列の前提で、入金の道（窓の起点ごとに持ち分が0から始まる）を扱えない → 同じ定義の入金版の積立（dca_windows）と年次版（JST）を自前で。grade には一括の転がる20年と20年の積立の勝率の小さい方を渡した（厳しい側）",
+     "格付けの系列は『最初から入金を続けた一本の道』の時間加重リターン。事前登録2・3では C2・C3・C6 を『2007年から新しく始めた道』でも満たすことを加えた（厳しい側）",
+     "JST は年次の読み替え（C1=1926〜2006・保有=2007〜2020 の自前の短い要約・C5=1881〜1925 の道）",
+     "★データの点検で見つけた外部データの問題（mw_common の不具合ではない）: (1) JKP の emerging は 1986〜1995 年に MSCI EM と合わない（1988 −50.7%・1990 −67.5%）→ JKP world・world_ex_us も訓練期間に汚れる（JKP world_ex_us 1988 +1.0% 対 French 米国外先進国 +24.7%・1986〜2006 年率 8.97% 対 11.07%）。(2) JKP world は 2007〜2025 に MSCI ACWI（総リターン）より年 0.95% 低い（新興国の比重 約23%・米国の比重が低い）。(3) ★JKP の 'developed' は米国を含まない（world = 0.42·usa + 0.35·developed + 0.23·emerging・R2 0.999／n_countries 22）。mw_country は『時価加重の先進国市場（JKP developed vw）』を相手にしているので、実際には米国外の先進国が相手だった可能性がある（他の角度の点検を勧める）",
+     "事前登録1 の後に見つけた汚れのため、事前登録3 で同じ出どころの先進国の相手 BD（CRSP の米国＋French の米国外先進国を French Developed から推定した時価の重みで合わせたもの）を登録してから測った。P・X を MSCI ACWI で見直したのは事後（判定に使わない）",
+     "R の再現で、データの終わる国（French の Malaysia は 2001-10 まで）の持ち分を地域の時価加重へ置き換える規則を事前登録1の確定前に書き足した（測る前）"
+    ]
+    caveats = [
+     "20年の積立の窓は 1986〜2025（または 1991〜2025）では独立に数えて2本分ほどしかない。窓の勝率 100% も『2回続けて勝った』程度の重み",
+     "私たちは2007年以降に米国が勝ったことを知っている。勢いの入金の保有期間の勝ちはその知識の中にある",
+     "つみたて枠の投信は2017年以降にしか無く、それ以前は指数に信託報酬と源泉税の概数を当てた仮想の商品",
+     "French の国別データは大型株中心で毎年作り直される。国別 ETF は生き残りだけ",
+     "JST は時価総額が無く GDP の重みで代えた。H（ヘッジ）で測っており円の投資家の実際ではない"
+    ]
+    return {'summary_ja': lines, 'deviations': deviations, 'caveats': caveats}
+
+
+def _dig(x, keys):
+    for k in keys:
+        if x is None:
+            return None
+        x = x.get(k) if isinstance(x, dict) else None
+    return x
 
 
 if __name__ == '__main__':
