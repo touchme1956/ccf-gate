@@ -18,7 +18,7 @@ import sys, os, json, math, datetime, subprocess, statistics as S
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
 
-PRE_NAMES = ['mw_trend_prereg.json', 'mw_trend_prereg2.json', 'mw_trend_prereg3.json', 'mw_trend_prereg4.json']
+PRE_NAMES = ['mw_trend_prereg.json', 'mw_trend_prereg2.json', 'mw_trend_prereg3.json', 'mw_trend_prereg4.json', 'mw_trend_prereg5.json']
 OUT_NAME = 'mw_trend.json'
 COST = 0.001      # 判定用: 持ち替え1回あたり資産の0.10%（全体の事前登録の既定）
 COST_LO = 0.0005  # 報告: 指示書の0.05%
@@ -959,6 +959,238 @@ def family4(c):
     return out
 
 
+# ───────────────────────── 第5族: 業種ごとに10か月線で出入り ─────────────────────────
+def fr_ind(name):
+    """French 業種ファイル（月次）→ (列, リターン {列: {月: r}}, 時価総額 {列: {月: 平均規模×社数}})"""
+    t = M.french_tables(name)
+    ret = size = nf = None
+    for k, v in t.items():
+        if v['freq'] != 'monthly':
+            continue
+        if 'Value Weighted' in k and ret is None:
+            ret = v
+        elif 'Number of Firms' in k and nf is None:
+            nf = v
+        elif 'Average Firm Size' in k and size is None:
+            size = v
+    cols = ret['cols']
+    R = {c: {} for c in cols}; C = {c: {} for c in cols}
+    for m, row in ret['data'].items():
+        for c, x in zip(cols, row):
+            if x is not None:
+                R[c][m] = x / 100
+    for m, row in size['data'].items():
+        nrow = nf['data'].get(m)
+        if nrow is None:
+            continue
+        for c, sz, n in zip(cols, row, nrow):
+            if sz is not None and n is not None and n > 0:
+                C[c][m] = sz * n
+    return cols, R, C
+
+
+def fr_ind_daily(name):
+    for k, v in M.french_tables(name).items():
+        if v['freq'] == 'daily' and 'Value Weighted' in k:
+            R = {c: {} for c in v['cols']}
+            for d, row in v['data'].items():
+                for c, x in zip(v['cols'], row):
+                    if x is not None:
+                        R[c][d] = x / 100
+            return v['cols'], R
+    raise KeyError(name)
+
+
+def ind_signals_monthly(cols, R, N=10):
+    """業種ごとの総リターン指数の月末値 > N か月平均 → {業種: {月: 0/1}}（その業種のデータが連続している月だけ）"""
+    sig = {}
+    for c in cols:
+        ks = sorted(R[c]); idx = cum_index(R[c]); s = {}
+        for i in range(N - 1, len(ks)):
+            w = [idx[ks[j]] for j in range(i - N + 1, i + 1)]
+            s[ks[i]] = 1 if idx[ks[i]] > sum(w) / N else 0
+        sig[c] = s
+    return sig
+
+
+def run_ind_monthly(ms, cols, R, C, rf, L, sig, start=None):
+    """月 m: 重み = 月 m−1 の表の時価総額、信号 = 月 m−1 の月末。株の割合 E = L×Σ_上 w。費用 = 出入りした業種の重み×L×0.10%"""
+    keys, gross, net, net05, pos = [], {}, {}, {}, []
+    bh = {}
+    flips = 0; prev_on = None; esum = 0.0
+    for i in range(2, len(ms)):
+        m, mp = ms[i], ms[i - 1]
+        if start is not None and m < start:
+            continue
+        inc = [c for c in cols if m in R[c] and mp in C[c]]
+        if not inc or m not in rf:
+            continue
+        W = sum(C[c][mp] for c in inc)
+        w = {c: C[c][mp] / W for c in inc}
+        on = {c: sig[c].get(mp, 1) for c in inc}
+        f = sum(w[c] for c in inc if on[c])
+        E = L * f
+        eq = sum(w[c] * R[c][m] for c in inc if on[c])
+        g = L * eq + (1 - E) * rf[m] - (((E - 1) * SPREAD + FEE) / 12 if E > 1 else 0.0)
+        g = max(g, -1.0)
+        tv = 0.0
+        if prev_on is not None:
+            for c in inc:
+                if c in prev_on and prev_on[c] != on[c]:
+                    tv += w[c] * L; flips += 1
+        keys.append(m); gross[m] = g; net[m] = (1 + g) * (1 - COST * tv) - 1; net05[m] = (1 + g) * (1 - COST_LO * tv) - 1
+        pos.append(1 if f > 0 else 0); esum += E
+        bh[m] = sum(w[c] * R[c][m] for c in inc)
+        prev_on = on
+    return {'keys': keys, 'gross': gross, 'net': net, 'net05': net05, 'pos': pos, 'switches': flips,
+            'avg_exposure_when_in': round(esum / len(keys), 3) if keys else None, 'bh_recon': bh}
+
+
+def run_ind_daily(D, cols, Rd, Cm, rf, L, me_sig):
+    """日次・1日遅れ。月の最初の営業日の終値で入れ替え（重み = 前月の表の時価総額、信号 = 前月末）。
+    月中は持ち高をそのまま伸ばす。借入は RF+0.5%、E>1 なら経費0.9%/年を日割り。3本（費用なし・0.10%・0.05%）を並べて回す"""
+    first_of_month = [i for i in range(1, len(D)) if D[i] // 100 != D[i - 1] // 100]
+    fom = set(first_of_month)
+    out = {}
+    for tag, cst in (('gross', 0.0), ('net', COST), ('net05', COST_LO)):
+        V = 1.0; h = {}; cash = 1.0; started = False; prev_on = None; rets = {}; flips = 0; pos = []; esum = 0.0; nd = 0
+        for i in range(1, len(D)):
+            d = D[i]
+            if started:
+                V0 = V
+                for c in list(h):
+                    r = Rd[c].get(d)
+                    if r is None:
+                        raise RuntimeError(f'業種 {c} の日次が無い日 {d}（0で埋めない）')
+                    h[c] *= 1 + r
+                gx = sum(h.values())
+                cash = cash * (1 + rf[d]) if cash >= 0 else cash * (1 + rf[d] + SPREAD / 252)
+                fee = FEE / 252 * V0 if gx > V0 * (1 + 1e-9) and L > 1 else 0.0
+                cash -= fee
+                V = gx + cash
+                rets[d] = V / V0 - 1
+                pos.append(1 if gx > 0 else 0); esum += gx / V0; nd += 1
+            if i in fom:
+                m = D[i] // 100
+                ym = (m // 100) * 12 + m % 100 - 1
+                mp = ((ym - 1) // 12) * 100 + (ym - 1) % 12 + 1  # 前月
+                me = D[i - 1]  # 前月の最後の営業日
+                inc = [c for c in cols if mp in Cm[c]]
+                if not inc or any(me not in me_sig[c] for c in inc):
+                    continue
+                W = sum(Cm[c][mp] for c in inc)
+                w = {c: Cm[c][mp] / W for c in inc}
+                on = {c: me_sig[c][me] for c in inc}
+                # 取引は i の終値（= 信号の翌営業日）→ ここで入れ替え
+                tv = 0.0
+                if prev_on is not None:
+                    for c in inc:
+                        if prev_on.get(c) is not None and prev_on[c] != on[c]:
+                            tv += w[c] * L; flips += 1
+                V *= 1 - cst * tv
+                if started and d in rets:
+                    rets[d] = (1 + rets[d]) * (1 - cst * tv) - 1
+                h = {c: V * L * w[c] for c in inc if on[c]}
+                cash = V - sum(h.values())
+                prev_on = on
+                started = True
+        out[tag] = rets
+        if tag == 'gross':
+            out['pos'] = pos; out['switches'] = flips; out['avg_exposure_when_in'] = round(esum / nd, 3) if nd else None
+    ks = sorted(out['gross'])
+    # 最初の不完全な月を落とす（最初の入れ替えは月の最初の営業日の終値なので、その月は必ず途中から）
+    if ks:
+        m0 = ks[0] // 100
+        ks = [k for k in ks if k // 100 != m0]
+    return {'keys': ks, 'gross': {k: out['gross'][k] for k in ks}, 'net': {k: out['net'][k] for k in ks}, 'net05': {k: out['net05'][k] for k in ks},
+            'pos': out['pos'][-len(ks):], 'switches': out['switches'], 'avg_exposure_when_in': out['avg_exposure_when_in']}
+
+
+C5_IND = ['jpn', 'gbr', 'deu', 'fra', 'can', 'aus']
+
+
+def jkp_ind(country):
+    url = f'https://jkpfactors-data.s3.amazonaws.com/public/industry/%5B{country}%5D_%5Bgics%5D_%5Bmonthly%5D_%5Bvw%5D.zip'
+    import zipfile, io, csv
+    b = M.get(url, name=f'jkp_industry_{country}_gics_vw_monthly.zip')
+    z = zipfile.ZipFile(io.BytesIO(b))
+    R = {}
+    for x in csv.DictReader(io.StringIO(z.read(z.namelist()[0]).decode())):
+        if x['ret'] in ('', 'NA', 'na'):
+            continue
+        R.setdefault(x['gics'], {})[int(x['date'][:4]) * 100 + int(x['date'][5:7])] = float(x['ret'])
+    return R
+
+
+def region_eval_ind(c, L):
+    """第5族の C5: JKP の国別 GICS 業種（等分）で同じ規則 vs 同じ業種を等分で全部持つだけ"""
+    det = {}
+    rf = c.rf_usm
+    for ctry in C5_IND:
+        Rx = jkp_ind(ctry)
+        cols = sorted(Rx)
+        R = {g: {m: v + rf[m] for m, v in Rx[g].items() if m in rf} for g in cols}
+        sig = ind_signals_monthly(cols, R, 10)
+        ms = sorted(set().union(*[set(R[g]) for g in cols]))
+        keys, gross, net = [], {}, {}
+        bh = {}; prev_on = None
+        for i in range(1, len(ms)):
+            m, mp = ms[i], ms[i - 1]
+            inc = [g for g in cols if m in R[g] and mp in sig[g]]
+            if len(inc) < 3:
+                continue
+            w = 1 / len(inc)
+            on = {g: sig[g][mp] for g in inc}
+            f = sum(w for g in inc if on[g]); E = L * f
+            eq = sum(w * R[g][m] for g in inc if on[g])
+            gr = L * eq + (1 - E) * rf[m] - (((E - 1) * SPREAD + FEE) / 12 if E > 1 else 0.0)
+            tv = sum(w * L for g in inc if prev_on is not None and g in prev_on and prev_on[g] != on[g])
+            keys.append(m); gross[m] = gr; net[m] = (1 + gr) * (1 - COST * tv) - 1
+            bh[m] = sum(w * R[g][m] for g in inc)
+            prev_on = on
+        det[ctry] = pack_region(gross, net, bh)
+        det[ctry]['from'] = keys[0] if keys else None
+    return {'regions': len(C5_IND), 'positive': sum(1 for k in C5_IND if det[k]['positive']), 'counted': C5_IND,
+            'rule_positive': 'ex_ann>0 かつ cagr_diff>0（費用後・国の全期間）・業種は等分で相手も等分で全部持つだけ（JKP に業種の時価総額が無いため）', 'detail': det}
+
+
+def family5(c):
+    out = []
+    cols10, R10, C10 = fr_ind('10_Industry_Portfolios')
+    cols49, R49, C49 = fr_ind('49_Industry_Portfolios')
+    s10 = ind_signals_monthly(cols10, R10); s49 = ind_signals_monthly(cols49, R49)
+    ms = c.ms_us
+    start10 = 192705  # 10業種すべての信号がそろう月の翌月（1926-07 + 10か月）
+    c.ind_recon = {}
+    for L in (1, 1.5, 2, 3):
+        out.append(spec(f'S1_US_IND10_FABER_L{L}', 'exploratory5', f'US 10業種それぞれの10か月線で出入り（月次）・{L}倍',
+                        (lambda L=L: run_ind_monthly(ms, cols10, R10, C10, c.rf_usm, L, s10, start10)), 'us_m', None, False, PP_FABER, {'kind': 'ind', 'L': L}))
+    colsd, Rd = fr_ind_daily('10_Industry_Portfolios_daily')
+    assert colsd == cols10, (colsd, cols10)
+    # 日次の業種指数の月末値で信号
+    me_sig = {}
+    for cc in colsd:
+        me_sig[cc] = month_end_sig_sma(cum_index(Rd[cc]), 10)
+    D = [d for d in c.D_us if all(d in Rd[cc] for cc in colsd)]
+    for L in (1, 2, 3):
+        out.append(spec(f'S2_US_IND10_FABERD_L{L}', 'exploratory5', f'US 10業種それぞれの10か月線（日次・1日遅れ）・{L}倍',
+                        (lambda L=L: run_ind_daily(D, colsd, Rd, C10, c.rf_us, L, me_sig)), 'us_d', None, True, PP_FABER, {'kind': 'ind', 'L': L}))
+    for L in (1, 2, 3):
+        out.append(spec(f'S3_US_IND49_FABER_L{L}', 'exploratory5', f'US 49業種それぞれの10か月線で出入り（月次）・{L}倍',
+                        (lambda L=L: run_ind_monthly(ms, cols49, R49, C49, c.rf_usm, L, s49, start10)), 'us_m', None, False, PP_FABER, {'kind': 'ind', 'L': L}))
+    # 【事後・報告のみ】市場全体の Faber 10か月線（月次の既定値）を L 倍
+    us_idx_m = cum_index({k: c.r_usm[k] for k in ms})
+    f10 = {}
+    for i in range(9, len(ms)):
+        w = [us_idx_m[ms[j]] for j in range(i - 9, i + 1)]
+        f10[ms[i]] = 1 if us_idx_m[ms[i]] > sum(w) / 10 else 0
+    for L in (1.5, 2, 3):
+        out.append(spec(f'H_P01_US_FABER10_L{L}', 'posthoc', f'【事後】市場全体の Faber 10か月線（月次）・{L}倍',
+                        (lambda L=L: run_monthly(ms, c.r_usm, c.rf_usm, f10, L)), 'us_m', None, False, PP_FABER, None, graded=False,
+                        label='事後（P01 の1倍の保有期間の結果を見た後の問い・判定しない）'))
+    return out
+
+
 # ───────────────────────── 本体 ─────────────────────────
 def bench_for(c, kind, run):
     """相手（月次）・RF（月次）・日次の原資産・（原資産, RF の源）"""
@@ -1028,9 +1260,13 @@ def run_one(c, st):
             ent.setdefault('_sanity', {})['lag_check_ndx_sma200'] = lag_check(c.D_ndx, c.ndx_sig[200], run)
         if 'avg_exposure_when_in' in run:
             ent['avg_exposure_when_in'] = run['avg_exposure_when_in']
+        if 'bh_recon' in run:
+            ent['industry_bh_recon_vs_french_mkt'] = {'full': M.excess_stats(run['bh_recon'], b_m), 'strategy_vs_recon_full': M.excess_stats(run['gross'], run['bh_recon']),
+                                                      'strategy_vs_recon_hold': M.excess_stats(run['gross'], run['bh_recon'], a=M.HOLD_START)}
         if st['rule'] is not None and st['graded']:
             k = st['rule']['kind']
             ent['repl'] = (region_eval_vt(c, st['rule']['trend'], st['rule']['L']) if k == 'vt' else
+                           region_eval_ind(c, st['rule']['L']) if k == 'ind' else
                            region_eval_frac(c, st['rule']['frac'], st['rule']['L']) if k == 'frac' else region_eval(c, st['rule']))
         if st['tax']:
             per = 252 if st['per_daily'] else 12
@@ -1063,8 +1299,24 @@ def main():
     res['prereg_commit'] = shas
     log('事前登録の commit', shas)
     c = load()
-    specs = family1(c) + family2(c) + family3(c) + family4(c)
-    tested = run_specs(c, specs)
+    fams = {'1': family1, '2': family2, '3': family3, '4': family4, '5': family5}
+    only = os.environ.get('MW_TREND_ONLY')  # 例 '5' → その族だけ測り直して既存の out/mw_trend.json に足す（Holm と判定は全部で掛け直す）
+    if only:
+        prev = json.load(open(os.path.join(M.BASE, 'out', OUT_NAME)))
+        specs = []
+        for k in only.split(','):
+            specs += fams[k](c)
+        ids = {st['id'] for st in specs}
+        keep = [x for x in prev['tested'] if x['id'] not in ids]
+        for k, v in (prev.get('sanity') or {}).items():
+            c.sanity.setdefault(k, v)
+        if prev.get('train_selection') and not getattr(c, 'train_selection', None):
+            c.train_selection = prev['train_selection']
+        LOG[:0] = prev.get('log', [])
+        tested = keep + run_specs(c, specs)
+    else:
+        specs = [st for k in sorted(fams) for st in fams[k](c)]
+        tested = run_specs(c, specs)
     lv1 = M.lever_daily({d: c.r_us[d] for d in c.D_us[:1000]}, 1, {d: c.rf_us[d] for d in c.D_us[:1000]}, spread=SPREAD, fee=0.0)
     c.sanity['lever1_equals_bh'] = max(abs(lv1[d] - c.r_us[d]) for d in c.D_us[:1000]) < 1e-12
     # Holm と判定
@@ -1083,7 +1335,7 @@ def main():
                         family_holm_p=x['holm_p'], sharpe_pair=sp, leveraged_or_timing=True)
         x['grade'] = g; x['criteria'] = cr
         if x['family'] != 'primary' and 'label' not in x:
-            x['label'] = {'exploratory': '探索（第1族）', 'exploratory2': '探索（第2族・第1族の結果を見た後に登録）', 'exploratory3': '探索（第3族・第1族の結果を見た後に登録）', 'exploratory4': '探索（第4族・第1族の結果を見た後に登録）', 'grid': '頑健性の格子（勝ちの主張には使わない）'}[x['family']]
+            x['label'] = {'exploratory': '探索（第1族）', 'exploratory2': '探索（第2族・第1族の結果を見た後に登録）', 'exploratory3': '探索（第3族・第1族の結果を見た後に登録）', 'exploratory4': '探索（第4族・第1族の結果を見た後に登録）', 'exploratory5': '探索（第5族・第1〜4族の結果を見た後に登録）', 'grid': '頑健性の格子（勝ちの主張には使わない）'}[x['family']]
     res['sanity'] = c.sanity
     res['train_selection'] = getattr(c, 'train_selection', None)
     res['n_tested'] = len(tested)
