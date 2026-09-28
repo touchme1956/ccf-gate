@@ -99,7 +99,7 @@ def mlen(k):
 
 
 def today_ym():
-    d = datetime.datetime.utcnow().date()
+    d = datetime.datetime.now(datetime.timezone.utc).date()
     return d.year * 100 + d.month
 
 
@@ -145,7 +145,7 @@ def yh_daily(ticker, max_age=1.0):
     for t_, a in zip(ts, adj):
         if a is None or a <= 0:
             continue                                   # 欠けた足は使わない（0 と読まない）
-        d = datetime.datetime.utcfromtimestamp(t_)
+        d = datetime.datetime.fromtimestamp(t_, datetime.timezone.utc)
         rows.append((d.year * 10000 + d.month * 100 + d.day, a))
     rows.sort()
     _YH[ticker] = rows
@@ -604,7 +604,20 @@ def power(des, hist, n=5000, years=40, block=12, seed=20260928):
                 'p_futility_by': {f'{y}y': round(float((ffirst <= y * 12).mean()), 3) for y in (3, 5, 10, 20)},
                 'oracle_years_6_over_IR2': round(6 / ir ** 2, 1) if ir else None,
             }
-        out[h] = {'sigma_d': P['sigma_d'], 'lambda': P['lambda'], 'B': P['B'], 'mu_d': P['mu_d'], 'by_true_edge_pct': rows}
+        # 追加（登録の後に足した設計の比較・前向きのデータは使わない）: 3・5・10・20年以内に 50% の確率で e≥20 に届くのに要る真の上乗せ
+        need = {}
+        sub = base[:2000]
+        grid = [g / 2 for g in range(1, 61)]          # 0.5〜30%/年
+        for yrs in (3, 5, 10, 20):
+            need[f'{yrs}y'] = None
+            for mu in grid:
+                xs = np.clip(sub[:, :yrs * 12] + mu / 100 / 12, -B, B)
+                le = np.cumsum(np.log1p(lam * xs), axis=1)
+                if float((le >= LN20).any(axis=1).mean()) >= 0.5:
+                    need[f'{yrs}y'] = mu
+                    break
+        out[h] = {'sigma_d': P['sigma_d'], 'lambda': P['lambda'], 'B': P['B'], 'mu_d': P['mu_d'], 'by_true_edge_pct': rows,
+                  'edge_needed_for_50pct_by_pct_per_year（追加）': {k: (v if v is not None else '>30') for k, v in need.items()}}
     return out
 
 
@@ -637,25 +650,45 @@ def castle_rule_power(n=5000, years=20, block=12, seed=20260929):
         def ann_diff(t0, t1):
             k = t1 - t0
             return (np.exp(lc[:, t0:t1].sum(1) * 12 / k) - np.exp(lq[:, t0:t1].sum(1) * 12 / k)) * 100
-        # D0: 今の規則（3年: +3以上で25／5年: +3以上で30・負けで10／以降毎年 直近5年: +3以上で30・負けで一段下げ〔10→0〕）
-        lvl = np.full(n, 20.0)
-        track = {}
-        d3 = ann_diff(0, 36)
-        lvl = np.where(d3 >= 3, 25.0, lvl)
-        track[3] = lvl.copy()
-        for y in range(5, years + 1):
-            d5 = ann_diff((y - 5) * 12, y * 12)
-            alive = lvl > 0
-            up = alive & (d5 >= 3)
-            dn = alive & (d5 < 0)
-            if y == 5:
-                lvl = np.where(up, 30.0, np.where(dn, 10.0, lvl))
-            else:
-                lvl = np.where(up, 30.0, np.where(dn, np.where(lvl > 10, 10.0, 0.0), lvl))
-            track[y] = lvl.copy()
-        d0 = {f'{y}y': {'p_up(>20)': round(float((track[y] > 20).mean()), 3), 'p_down(<20)': round(float((track[y] < 20).mean()), 3),
-                        'p_30': round(float((track[y] == 30).mean()), 3), 'p_0': round(float((track[y] == 0).mean()), 3)}
-              for y in (3, 5, 10, 20)}
+        diffs = {3: ann_diff(0, 36)}
+        for y in range(4, years + 1):
+            diffs[y] = ann_diff(max(0, y - 5) * 12, y * 12)
+
+        def summ(track):
+            return {f'{y}y': {'p_up(>20)': round(float((track[y] > 20).mean()), 3), 'p_down(<20)': round(float((track[y] < 20).mean()), 3),
+                              'p_30': round(float((track[y] == 30).mean()), 3), 'p_0': round(float((track[y] == 0).mean()), 3),
+                              'mean_level': round(float(track[y].mean()), 1)} for y in (3, 5, 10, 20)}
+
+        def rule_d0(absorbing=True):
+            # D0: 今の規則（3年: +3以上で25／5年: +3以上で30・負けで10／以降毎年 直近5年: +3以上で30・負けで一段下げ〔10→0〕）
+            lvl = np.full(n, 20.0)
+            track = {}
+            lvl = np.where(diffs[3] >= 3, 25.0, lvl)
+            track[3] = lvl.copy(); track[4] = lvl.copy()
+            for y in range(5, years + 1):
+                d5 = diffs[y]
+                alive = (lvl > 0) if absorbing else np.ones(n, bool)
+                up = alive & (d5 >= 3)
+                dn = alive & (d5 < 0)
+                if y == 5:
+                    lvl = np.where(up, 30.0, np.where(dn, 10.0, lvl))
+                else:
+                    lvl = np.where(up, 30.0, np.where(dn, np.where(lvl > 10, 10.0, 0.0), lvl))
+                track[y] = lvl.copy()
+            return summ(track)
+
+        def rule_d3():
+            # D3（追加）: 毎年 直近 min(年数,5)年で +3 以上なら +5pt（上限30）、−3 以下なら −5pt（下限10）、間は据え置き
+            lvl = np.full(n, 20.0)
+            track = {}
+            for y in range(3, years + 1):
+                dd = diffs[y]
+                lvl = np.where(dd >= 3, np.minimum(30.0, lvl + 5), np.where(dd <= -3, np.maximum(10.0, lvl - 5), lvl))
+                track[y] = lvl.copy()
+            return summ(track)
+        d0 = rule_d0(True)
+        d0b = rule_d0(False)
+        d3r = rule_d3()
         # D1: e 過程（H3 と同じ設計）: e≥20 で 30%、e_f≥20（+3 を否定）で 10%
         xs = np.clip(act, -B, B)
         le = np.cumsum(np.log1p(lam * xs), axis=1)
@@ -670,7 +703,11 @@ def castle_rule_power(n=5000, years=20, block=12, seed=20260929):
             seg = act[:, :y * 12]
             t = seg.mean(1) / (seg.std(1, ddof=1) / math.sqrt(y * 12))
             d2[f'{y}y'] = {'p_up': round(float((t >= 1.65).mean()), 3), 'p_down': round(float((t <= -1.65).mean()), 3)}
-        res['by_true_edge_pct'][f'{mu:g}'] = {'D0_current_rule': d0, 'D1_eprocess': d1, 'D2_fixed_t_5_10_20y': d2}
+        res['by_true_edge_pct'][f'{mu:g}'] = {'D0_current_rule': d0, 'D1_eprocess': d1, 'D2_fixed_t_5_10_20y': d2,
+                                              'D0b_current_rule_0pct_not_absorbing（追加）': d0b, 'D3_symmetric_steps（追加）': d3r}
+    res['notes'] = ['D0 は castle_rule の文言どおり（0% になったら城が無い＝測れないので戻らない、と読んだ）。D0b は 0% でも紙の城を測り続けて +3 で 30% に戻す読み方',
+                    'D0b・D3 と edge_needed は登録の後に足した設計の比較（前向きのデータは使わない・判定ではない）',
+                    '物差しは時間加重の年率差で近似（実際の castle_rule は 📈成績 の金額加重＝積み立ての新しい月ほど重い＝さらにぶれる）']
     res['years_for_t2_at_edge3'] = round((2 * te / 3.0) ** 2, 1)
     return res
 
@@ -693,6 +730,33 @@ def sanity():
             'today_ym': today_ym(), 'last_complete_month_spy': max(spy)}
 
 
+DEVIATIONS = [
+    'Yahoo は mw_common.yahoo（月足）ではなく日足から月末値を作った: 月足は当月の途中の値を最後の月として返す（2026-09-28 には 202609 が入る）。未完の月を使わないため、最後の日足が月末の5日以内の月だけを完了とした（他の角度で 202609 を切っていない道具があれば、途中の月が混ざる）',
+    'French の表は mw_common.french_tables のキャッシュが30日なので、update 段だけこの工程の中で mw_common.get を包み、fw_ 付きの別名で1日ごとに取り直す（mw_common.py は変更していない）',
+    '事前登録の ci_suggestion は add の一覧に out/mw_forward.json を足すことを書き落としていた（ops.yml のコミット段は明示した道しか add しない）→ 出力の ci_suggestion で補った',
+    '登録（19e8ce2）の後に足したもの: 名簿が空の月は賭けずに飛ばす規則（空＝城を持たない月。登録の文言『半分以上欠けたら待つ』は値の欠けの規則で、空の名簿を想定していなかった）・検出力の表に edge_needed と castle_rule の D0b・D3（設計の比較だけ・前向きのデータは使わない）',
+]
+
+
+def headline(obj):
+    pw, cr = obj['power'], obj['castle_rule_power']
+    h = {}
+    for k, v in pw.items():
+        b = v['by_true_edge_pct']
+        h[k] = {'sigma_d': v['sigma_d'], 'mu_d': v['mu_d'], 'lambda': v['lambda'],
+                'p20y_at_edge_1_2_3': [b['1']['p_cross_by']['20y'], b['2']['p_cross_by']['20y'], b['3']['p_cross_by']['20y']],
+                'p10y_at_edge_1_2_3': [b['1']['p_cross_by']['10y'], b['2']['p_cross_by']['10y'], b['3']['p_cross_by']['10y']],
+                'false_positive_20y_at_edge0': b['0']['p_cross_by']['20y'],
+                'oracle_years_at_edge_1_2_3': [b['1']['oracle_years_6_over_IR2'], b['2']['oracle_years_6_over_IR2'], b['3']['oracle_years_6_over_IR2']],
+                'edge_needed_50pct': v['edge_needed_for_50pct_by_pct_per_year（追加）']}
+    c = cr['by_true_edge_pct']
+    h['castle_rule'] = {'te_vs_qqq': cr['te_vs_qqq_pct'], 'years_for_t2_at_edge3': cr['years_for_t2_at_edge3'],
+                        'D0_p_up_at_3y_edge0_vs_3': [c['0']['D0_current_rule']['3y']['p_up(>20)'], c['3']['D0_current_rule']['3y']['p_up(>20)']],
+                        'D0_p_30_at_5y_edge0_vs_3': [c['0']['D0_current_rule']['5y']['p_30'], c['3']['D0_current_rule']['5y']['p_30']],
+                        'D0_p_0_at_20y_edge0_3_5': [c['0']['D0_current_rule']['20y']['p_0'], c['3']['D0_current_rule']['20y']['p_0'], c['5']['D0_current_rule']['20y']['p_0']]}
+    return h
+
+
 def sha_of(path):
     try:
         return subprocess.run(['git', '-C', BASE, 'log', '-1', '--format=%H', '--', path], capture_output=True, text=True).stdout.strip() or None
@@ -700,9 +764,10 @@ def sha_of(path):
         return None
 
 
-CI_LINE = ("ops.yml の steps に 1段足す: `- name: 前向きの検証（mw_forward・判定に不使用）` / `continue-on-error: true` / "
-           "`run: timeout 900 python3 night/mw_forward.py update | tail -12`（fetch-depth: 0 は既にある＝城の名簿を git から引ける。"
-           "出力 out/mw_forward.json は既存のコミット段が拾う out/ の下）")
+CI_LINE = ("ops.yml に2か所: (1) steps に1段 `- name: 前向きの検証（mw_forward・判定に不使用）` / `continue-on-error: true` / "
+           "`run: timeout 900 python3 night/mw_forward.py update | tail -12` を足す（fetch-depth: 0 は既にある＝城の名簿を git から引ける・"
+           "update 段は標準ライブラリだけ）。(2) 最後の `ccf_git_add ... out/industry_exposure.json` の行の末尾に `out/mw_forward.json` を足す"
+           "（足さないと『回っているのに残らない』＝ops.yml の注記どおり）")
 
 
 def main():
@@ -735,8 +800,10 @@ def main():
         obj['power'] = power(des, hist)
         obj['castle_rule_power'] = castle_rule_power()
         obj['sanity'] = sanity()
+        obj['headline'] = headline(obj)
+        obj['deviations'] = DEVIATIONS
     else:
-        for k in ('power', 'castle_rule_power', 'sanity'):
+        for k in ('power', 'castle_rule_power', 'sanity', 'headline', 'deviations'):
             if k in old:
                 obj[k] = old[k]
     obj['runtime_s'] = round(time.time() - t0, 1)
