@@ -46,6 +46,20 @@ def mrange(a, z):
 
 
 # ───────────────────────── データ ─────────────────────────
+NOTES = {
+    'headline_ja': '業種モメンタム（過去6〜12か月に強かった業種を買う・毎月入れ替え）が格付け A。S は無し（米国の2007年以降の t が 1.65 に届かない）。実在のセクターETF（米国SPDR 9本・日本TOPIX-17）では2008年以降は市場に勝っていない',
+    'deviations': [
+        '第1の族の事前登録の後に道具の不具合を1件直した: スイス（che）には GICS 55（公益）が無く、再現の固定の組の判定で KeyError になった → 無いセクターは「無い」として扱う（守りの業種の再現はスイスを数えない＝6か国）。規則は変えていない',
+        '費用: 課題文の「売買100%あたり0.05%」を、買い＋売りの両側の合計（Σ|Δw|）に掛けた（片側に直すと0.10%＝厳しい側）',
+        '第2〜第5の族は第1の族の結果（保有期間を含む）を見た後に作った探索。第1の族の格付けを置き換えない',
+        'C5 の再現は JKP の GICS 11セクター（1999-07〜2025-12・時価総額なし）で、K=5/10 とも上位3、時価加重の規則も等分で代用（事前登録どおり）',
+        'TOPIX-17 の 1629.T と 1306.T の Yahoo データに明らかな誤り（月次 −99.8%・+961% 等）→ 絶対値50%超の月を欠測として外し、相手は 1308.T にした（事前登録5どおり）',
+        '最後の表示の print が訓練期間の無い J 行で落ちた（JSON は保存済み）→ 表示だけ直した',
+        'mw_common に不具合は見つからなかった',
+    ],
+}
+
+
 class Data:
     def __init__(self):
         T = M.french_tables('49_Industry_Portfolios')
@@ -1140,7 +1154,7 @@ def main():
                        family_holm_p=e['holm_p_hold'])
         e['grade'], e['criteria'] = g, c
     rows.sort(key=lambda e: -(e['hold']['ex_ann'] if e['hold'] else -99))
-    out = {'angle': 'industry', 'prereg': PREREG, 'prereg_commit': git_sha(f'out/{PREREG}'),
+    out = {'angle': 'industry', 'notes': NOTES, 'prereg': PREREG, 'prereg_commit': git_sha(f'out/{PREREG}'),
            'prereg_files': {p: git_sha(f'out/{p}') for p in PREREG_FILES},
            'benchmark': 'French Mkt（Mkt−RF+RF・総リターン）', 'cost_per_100pct_twoway': COST,
            'sanity': sanity(D, sig), 'n_tested': len(rows),
@@ -1154,6 +1168,8 @@ def main():
     print('→', p)
     for e in rows:
         h, f, t = e['hold'], e['full'], e['train']
+        if t is None:
+            t = {'ex_ann': float('nan'), 't': float('nan')}
         print(f"{e['id']:<20} {'主' if e['primary'] else {PREREG: '探', PREREG2: '探2', PREREG3: '探3', PREREG5: '探5'}[e['prereg']]} 全{f['ex_ann']:+6.2f}(t{f['t']:+.2f}) 訓{t['ex_ann']:+6.2f}(t{t['t']:+.2f}) "
               f"保{h['ex_ann']:+6.2f}(t{h['t']:+.2f} g{h['cagr_diff']:+.2f}) 費後{e['cost_hold']['ex_ann']:+6.2f} "
               f"roll{e['roll20']['win_rate'] if e['roll20'] else None} repl{e['repl']} holm{e['holm_p_hold']} → {e['grade']}")

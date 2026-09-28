@@ -1,10 +1,25 @@
 {
  "angle": "industry",
+ "notes": {
+  "headline_ja": "業種モメンタム（過去6〜12か月に強かった業種を買う・毎月入れ替え）が格付け A。S は無し（米国の2007年以降の t が 1.65 に届かない）。実在のセクターETF（米国SPDR 9本・日本TOPIX-17）では2008年以降は市場に勝っていない",
+  "deviations": [
+   "第1の族の事前登録の後に道具の不具合を1件直した: スイス（che）には GICS 55（公益）が無く、再現の固定の組の判定で KeyError になった → 無いセクターは「無い」として扱う（守りの業種の再現はスイスを数えない＝6か国）。規則は変えていない",
+   "費用: 課題文の「売買100%あたり0.05%」を、買い＋売りの両側の合計（Σ|Δw|）に掛けた（片側に直すと0.10%＝厳しい側）",
+   "第2〜第5の族は第1の族の結果（保有期間を含む）を見た後に作った探索。第1の族の格付けを置き換えない",
+   "C5 の再現は JKP の GICS 11セクター（1999-07〜2025-12・時価総額なし）で、K=5/10 とも上位3、時価加重の規則も等分で代用（事前登録どおり）",
+   "TOPIX-17 の 1629.T と 1306.T の Yahoo データに明らかな誤り（月次 −99.8%・+961% 等）→ 絶対値50%超の月を欠測として外し、相手は 1308.T にした（事前登録5どおり）",
+   "最後の表示の print が訓練期間の無い J 行で落ちた（JSON は保存済み）→ 表示だけ直した",
+   "mw_common に不具合は見つからなかった"
+  ]
+ },
  "prereg": "mw_industry_prereg.json",
  "prereg_commit": "a2a91d9b133847b005317370ac3247cc8ca4f6ea",
  "prereg_files": {
   "mw_industry_prereg.json": "a2a91d9b133847b005317370ac3247cc8ca4f6ea",
-  "mw_industry_prereg2.json": "0322cf43615e0918b18d3881d91767dbf7b148e2"
+  "mw_industry_prereg2.json": "0322cf43615e0918b18d3881d91767dbf7b148e2",
+  "mw_industry_prereg3.json": "053f9e7f0a84e2af12c904fa0bfb4c945d61dbb9",
+  "mw_industry_prereg4.json": "0d49044d8dcc69b98b109b52b9e81b2dbe9623c2",
+  "mw_industry_prereg5.json": "c3d3d2ba4280e837240aba348126d9895778fb49"
  },
  "benchmark": "French Mkt（Mkt−RF+RF・総リターン）",
  "cost_per_100pct_twoway": 0.0005,
@@ -21,21 +36,26 @@
    "note": "同じ月のリターンで選ぶ（後知恵）と桁違いになる＝エンジンは後知恵をそのまま成績に出す。本番の信号は m より前しか見ない（_rets で assert）"
   }
  },
- "n_tested": 60,
+ "n_tested": 73,
  "grades": {
   "S": [],
   "A": [
+   "P9_multi_5",
    "R5_mom12_5_state",
+   "P7_dual_5",
    "R5_mom6_5_state",
    "R1_n17_mom12",
    "G3_mom12_5",
    "R1_n30_mom12",
+   "P10_mom12_5_q",
    "R1_n10_mom6",
    "G1_mom6_5",
    "R1_n30_mom6",
    "R1_n10_mom12",
    "R1_n12_mom6",
    "R1_n12_mom12",
+   "P2_mom12_7_5",
+   "P8_invvol_5",
    "G4_mom12_10",
    "R1_n48_mom12",
    "R1_n48_mom6",
@@ -43,14 +63,18 @@
    "R1_n38_mom12"
   ],
   "B": [
+   "P3_resmom_5",
    "R6_combo_5",
+   "P1_mom1_5",
    "B1_value5",
    "I4_npy10",
    "R3_mom12_5_inv",
    "R6_combo_10",
    "R3_mom12_10_inv",
+   "P4_resmom_10",
    "X8_hi52_10",
    "I3_npy5",
+   "P6_fip_10",
    "G5_avoidlosers"
   ],
   "C": [
@@ -61,6 +85,8 @@
    "H1_seas5",
    "F1_exfin",
    "R1_n17_mom6",
+   "J3_topix17_mom12_state",
+   "P5_fip_5",
    "X5_mom12_annual5",
    "D4_rev120_10",
    "R2_mom6_10_vw",
@@ -76,6 +102,7 @@
    "X3_exrecord_any",
    "R2_mom12_5_vw",
    "E1_exrecord",
+   "J1_topix17_mom12",
    "A1_sin_vw",
    "X4_exrecord_5y",
    "I1_dy5",
@@ -84,6 +111,7 @@
    "D1_rev60_5",
    "A3_def_vw",
    "X6_mom12_annual10",
+   "J2_topix17_mom6",
    "R4_spdr_mom6",
    "A4_def_ew",
    "X2_value10_vw",
@@ -92,6 +120,287 @@
   ]
  },
  "tested": [
+  {
+   "id": "P9_multi_5",
+   "start": 192707,
+   "end": 202608,
+   "turnover_twoway_ann": {
+    "full": 13.26,
+    "hold": 13.62
+   },
+   "full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 5.75,
+    "t": 4.42,
+    "p": 0.0,
+    "cagr_s": 16.12,
+    "cagr_b": 10.28,
+    "cagr_diff": 5.84,
+    "te": 11.13,
+    "ir": 0.52,
+    "beta": 0.97,
+    "vol_s": 21.0,
+    "vol_b": 18.4
+   },
+   "train": {
+    "from": 192707,
+    "to": 200612,
+    "years": 79.5,
+    "ex_ann": 6.13,
+    "t": 4.26,
+    "p": 0.0,
+    "cagr_s": 16.33,
+    "cagr_b": 10.07,
+    "cagr_diff": 6.25,
+    "te": 10.89,
+    "ir": 0.56,
+    "beta": 0.98,
+    "vol_s": 21.5,
+    "vol_b": 19.0
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 4.24,
+    "t": 1.39,
+    "p": 0.1652,
+    "cagr_s": 15.3,
+    "cagr_b": 11.13,
+    "cagr_diff": 4.17,
+    "te": 12.06,
+    "ir": 0.35,
+    "beta": 0.92,
+    "vol_s": 19.0,
+    "vol_b": 15.9
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 3.26,
+    "t": 0.78,
+    "p": 0.4357,
+    "cagr_s": 17.35,
+    "cagr_b": 14.39,
+    "cagr_diff": 2.97,
+    "te": 12.45,
+    "ir": 0.26,
+    "beta": 0.96,
+    "vol_s": 19.0,
+    "vol_b": 14.9
+   },
+   "post_pub": {
+    "from": 200001,
+    "to": 202608,
+    "years": 26.7,
+    "ex_ann": 6.18,
+    "t": 2.12,
+    "p": 0.0338,
+    "cagr_s": 14.82,
+    "cagr_b": 8.54,
+    "cagr_diff": 6.27,
+    "te": 13.7,
+    "ir": 0.45,
+    "beta": 0.83,
+    "vol_s": 18.7,
+    "vol_b": 15.7
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 3.56,
+    "t": 1.16,
+    "p": 0.2441,
+    "cagr_s": 14.53,
+    "cagr_b": 11.13,
+    "cagr_diff": 3.4,
+    "te": 12.06,
+    "ir": 0.29,
+    "beta": 0.92,
+    "vol_s": 19.0,
+    "vol_b": 15.9
+   },
+   "cost_full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 5.09,
+    "t": 3.91,
+    "p": 0.0001,
+    "cagr_s": 15.36,
+    "cagr_b": 10.28,
+    "cagr_diff": 5.08,
+    "te": 11.13,
+    "ir": 0.46,
+    "beta": 0.97,
+    "vol_s": 21.0,
+    "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 3.56,
+    "t": 1.16,
+    "p": 0.2441,
+    "cagr_s": 14.53,
+    "cagr_b": 11.13,
+    "cagr_diff": 3.4,
+    "te": 12.06,
+    "ir": 0.29,
+    "beta": 0.92,
+    "vol_s": 19.0,
+    "vol_b": 15.9
+   },
+   "fee030_hold_report_only": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 3.26,
+    "t": 1.07,
+    "p": 0.2862,
+    "cagr_s": 14.19,
+    "cagr_b": 11.13,
+    "cagr_diff": 3.06,
+    "te": 12.06,
+    "ir": 0.27,
+    "beta": 0.92,
+    "vol_s": 19.0,
+    "vol_b": 15.9
+   },
+   "roll20": {
+    "windows": 80,
+    "wins": 77,
+    "win_rate": 0.963,
+    "median": 6.3,
+    "worst": [
+     1932,
+     -1.61
+    ],
+    "best": [
+     1955,
+     13.42
+    ]
+   },
+   "dca20": {
+    "windows": 80,
+    "win_rate": 0.963,
+    "median_ratio": 2.053,
+    "worst": [
+     193107,
+     0.957
+    ],
+    "best": [
+     195507,
+     6.344
+    ]
+   },
+   "maxdd": -74.6,
+   "maxdd_mkt_same": -83.7,
+   "primary": false,
+   "prereg": "mw_industry_prereg3.json",
+   "family": "prereg3_momentum_refinements",
+   "rule": "1・3・6・12か月の累積の百分位の平均が最も高い5業種を等分・毎月（4本そろう業種だけ）",
+   "repl_key": "multi",
+   "repl": {
+    "regions": 7,
+    "positive": 7
+   },
+   "repl_detail": {
+    "jpn": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 2.82,
+     "t": 1.71,
+     "cagr_diff": 2.91
+    },
+    "gbr": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 3.37,
+     "t": 2.78,
+     "cagr_diff": 3.72
+    },
+    "can": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 2.21,
+     "t": 0.94,
+     "cagr_diff": 2.54
+    },
+    "fra": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.88,
+     "t": 1.18,
+     "cagr_diff": 2.18
+    },
+    "deu": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.52,
+     "t": 1.21,
+     "cagr_diff": 1.99
+    },
+    "aus": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 2.63,
+     "t": 1.69,
+     "cagr_diff": 2.94
+    },
+    "che": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 3.36,
+     "t": 2.78,
+     "cagr_diff": 3.47
+    }
+   },
+   "holding_last": {
+    "month": 202608,
+    "industries": [
+     "Hardw",
+     "Hlth",
+     "Oil",
+     "Ships",
+     "Soda"
+    ]
+   },
+   "holm_p_hold": 1.0,
+   "holm_family": "mw_industry_prereg3.json(10)",
+   "holm_p_hold_all": 1.0,
+   "grade": "A",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": false,
+    "C4_roll20": true,
+    "C5_repl": true,
+    "C6_net_cost": true,
+    "C7_multi": true,
+    "C8_sharpe": null
+   }
+  },
   {
    "id": "R5_mom12_5_state",
    "start": 192907,
@@ -196,6 +505,23 @@
     "beta": 1.04,
     "vol_s": 22.1,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 3.58,
+    "t": 1.17,
+    "p": 0.2414,
+    "cagr_s": 14.11,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.99,
+    "te": 12.85,
+    "ir": 0.28,
+    "beta": 1.03,
+    "vol_s": 20.8,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -328,7 +654,288 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
+   "holm_p_hold_all": 1.0,
+   "grade": "A",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": false,
+    "C4_roll20": true,
+    "C5_repl": true,
+    "C6_net_cost": true,
+    "C7_multi": true,
+    "C8_sharpe": null
+   }
+  },
+  {
+   "id": "P7_dual_5",
+   "start": 192707,
+   "end": 202608,
+   "turnover_twoway_ann": {
+    "full": 6.58,
+    "hold": 6.91
+   },
+   "full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 7.16,
+    "t": 5.63,
+    "p": 0.0,
+    "cagr_s": 17.3,
+    "cagr_b": 10.28,
+    "cagr_diff": 7.01,
+    "te": 11.69,
+    "ir": 0.61,
+    "beta": 1.07,
+    "vol_s": 22.8,
+    "vol_b": 18.4
+   },
+   "train": {
+    "from": 192707,
+    "to": 200612,
+    "years": 79.5,
+    "ex_ann": 8.03,
+    "t": 5.84,
+    "p": 0.0,
+    "cagr_s": 18.11,
+    "cagr_b": 10.07,
+    "cagr_diff": 8.04,
+    "te": 11.27,
+    "ir": 0.71,
+    "beta": 1.07,
+    "vol_s": 23.2,
+    "vol_b": 19.0
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 3.65,
+    "t": 1.18,
+    "p": 0.2366,
+    "cagr_s": 14.05,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.92,
+    "te": 13.22,
+    "ir": 0.28,
+    "beta": 1.06,
+    "vol_s": 21.4,
+    "vol_b": 15.9
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 2.97,
+    "t": 0.79,
+    "p": 0.4274,
+    "cagr_s": 16.75,
+    "cagr_b": 14.39,
+    "cagr_diff": 2.37,
+    "te": 12.97,
+    "ir": 0.23,
+    "beta": 1.04,
+    "vol_s": 20.2,
+    "vol_b": 14.9
+   },
+   "post_pub": {
+    "from": 201301,
+    "to": 202608,
+    "years": 13.7,
+    "ex_ann": 2.84,
+    "t": 0.79,
+    "p": 0.4285,
+    "cagr_s": 17.23,
+    "cagr_b": 14.98,
+    "cagr_diff": 2.25,
+    "te": 12.79,
+    "ir": 0.22,
+    "beta": 1.04,
+    "vol_s": 19.9,
+    "vol_b": 14.7
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 3.31,
+    "t": 1.07,
+    "p": 0.2838,
+    "cagr_s": 13.66,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.53,
+    "te": 13.22,
+    "ir": 0.25,
+    "beta": 1.06,
+    "vol_s": 21.4,
+    "vol_b": 15.9
+   },
+   "cost_full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 6.83,
+    "t": 5.37,
+    "p": 0.0,
+    "cagr_s": 16.92,
+    "cagr_b": 10.28,
+    "cagr_diff": 6.63,
+    "te": 11.69,
+    "ir": 0.58,
+    "beta": 1.07,
+    "vol_s": 22.8,
+    "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 3.31,
+    "t": 1.07,
+    "p": 0.2838,
+    "cagr_s": 13.66,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.53,
+    "te": 13.22,
+    "ir": 0.25,
+    "beta": 1.06,
+    "vol_s": 21.4,
+    "vol_b": 15.9
+   },
+   "fee030_hold_report_only": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 3.01,
+    "t": 0.97,
+    "p": 0.3298,
+    "cagr_s": 13.32,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.19,
+    "te": 13.22,
+    "ir": 0.23,
+    "beta": 1.06,
+    "vol_s": 21.4,
+    "vol_b": 15.9
+   },
+   "roll20": {
+    "windows": 80,
+    "wins": 80,
+    "win_rate": 1.0,
+    "median": 6.89,
+    "worst": [
+     1935,
+     2.67
+    ],
+    "best": [
+     1988,
+     14.82
+    ]
+   },
+   "dca20": {
+    "windows": 80,
+    "win_rate": 1.0,
+    "median_ratio": 2.158,
+    "worst": [
+     200607,
+     1.314
+    ],
+    "best": [
+     198807,
+     8.022
+    ]
+   },
+   "maxdd": -79.3,
+   "maxdd_mkt_same": -83.7,
+   "primary": false,
+   "prereg": "mw_industry_prereg3.json",
+   "family": "prereg3_momentum_refinements",
+   "rule": "二重モメンタム: G3（12か月の上位5）の各枠（20%）は、その業種の12か月の累積が同じ12か月の T-bill の累積を上回るときだけその業種を持ち、下回る枠は市場（49業種の時価加重）を持つ・毎月",
+   "repl_key": "dual",
+   "repl": {
+    "regions": 7,
+    "positive": 7
+   },
+   "repl_detail": {
+    "jpn": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.95,
+     "t": 1.5,
+     "cagr_diff": 1.85
+    },
+    "gbr": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 3.16,
+     "t": 2.44,
+     "cagr_diff": 3.31
+    },
+    "can": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 3.21,
+     "t": 1.52,
+     "cagr_diff": 3.36
+    },
+    "fra": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 2.24,
+     "t": 1.86,
+     "cagr_diff": 2.53
+    },
+    "deu": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.42,
+     "t": 1.18,
+     "cagr_diff": 1.7
+    },
+    "aus": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.49,
+     "t": 1.12,
+     "cagr_diff": 1.38
+    },
+    "che": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 2.73,
+     "t": 1.99,
+     "cagr_diff": 2.69
+    }
+   },
+   "holding_last": {
+    "month": 202608,
+    "industries": [
+     "Chips",
+     "Gold",
+     "Hardw",
+     "Mach",
+     "Mines"
+    ]
+   },
+   "holm_p_hold": 1.0,
+   "holm_family": "mw_industry_prereg3.json(10)",
    "holm_p_hold_all": 1.0,
    "grade": "A",
    "criteria": {
@@ -461,6 +1068,23 @@
     "beta": 1.12,
     "vol_s": 23.9,
     "vol_b": 18.3
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 3.51,
+    "t": 1.04,
+    "p": 0.2963,
+    "cagr_s": 13.51,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.39,
+    "te": 13.39,
+    "ir": 0.26,
+    "beta": 1.17,
+    "vol_s": 22.7,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -644,6 +1268,23 @@
     "vol_s": 21.6,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.65,
+    "t": 0.79,
+    "p": 0.4298,
+    "cagr_s": 13.17,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.04,
+    "te": 12.63,
+    "ir": 0.21,
+    "beta": 1.01,
+    "vol_s": 20.4,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -775,7 +1416,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "A",
    "criteria": {
@@ -893,6 +1534,23 @@
     "beta": 0.95,
     "vol_s": 20.0,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.71,
+    "t": 1.06,
+    "p": 0.2906,
+    "cagr_s": 13.28,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.15,
+    "te": 11.79,
+    "ir": 0.23,
+    "beta": 1.04,
+    "vol_s": 20.2,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -1023,7 +1681,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "A",
    "criteria": {
@@ -1032,6 +1690,287 @@
     "C3_hold_t": false,
     "C4_roll20": true,
     "C5_repl": true,
+    "C6_net_cost": true,
+    "C7_multi": true,
+    "C8_sharpe": null
+   }
+  },
+  {
+   "id": "P3_resmom_5",
+   "start": 192907,
+   "end": 202608,
+   "turnover_twoway_ann": {
+    "full": 8.69,
+    "hold": 9.45
+   },
+   "full": {
+    "from": 192907,
+    "to": 202608,
+    "years": 97.2,
+    "ex_ann": 5.35,
+    "t": 4.93,
+    "p": 0.0,
+    "cagr_s": 15.24,
+    "cagr_b": 9.8,
+    "cagr_diff": 5.44,
+    "te": 9.29,
+    "ir": 0.58,
+    "beta": 1.01,
+    "vol_s": 20.9,
+    "vol_b": 18.4
+   },
+   "train": {
+    "from": 192907,
+    "to": 200612,
+    "years": 77.5,
+    "ex_ann": 5.94,
+    "t": 4.98,
+    "p": 0.0,
+    "cagr_s": 15.61,
+    "cagr_b": 9.47,
+    "cagr_diff": 6.14,
+    "te": 8.93,
+    "ir": 0.67,
+    "beta": 1.01,
+    "vol_s": 21.2,
+    "vol_b": 19.0
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 3.03,
+    "t": 1.2,
+    "p": 0.2314,
+    "cagr_s": 13.8,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.67,
+    "te": 10.62,
+    "ir": 0.29,
+    "beta": 1.02,
+    "vol_s": 19.3,
+    "vol_b": 15.9
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 4.04,
+    "t": 1.31,
+    "p": 0.1914,
+    "cagr_s": 18.53,
+    "cagr_b": 14.39,
+    "cagr_diff": 4.15,
+    "te": 10.92,
+    "ir": 0.37,
+    "beta": 0.94,
+    "vol_s": 17.7,
+    "vol_b": 14.9
+   },
+   "post_pub": {
+    "from": 201201,
+    "to": 202608,
+    "years": 14.7,
+    "ex_ann": 4.47,
+    "t": 1.58,
+    "p": 0.1142,
+    "cagr_s": 19.79,
+    "cagr_b": 15.07,
+    "cagr_diff": 4.72,
+    "te": 10.45,
+    "ir": 0.43,
+    "beta": 0.94,
+    "vol_s": 17.1,
+    "vol_b": 14.5
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.56,
+    "t": 1.01,
+    "p": 0.3125,
+    "cagr_s": 13.27,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.14,
+    "te": 10.62,
+    "ir": 0.24,
+    "beta": 1.02,
+    "vol_s": 19.3,
+    "vol_b": 15.9
+   },
+   "cost_full": {
+    "from": 192907,
+    "to": 202608,
+    "years": 97.2,
+    "ex_ann": 4.92,
+    "t": 4.53,
+    "p": 0.0,
+    "cagr_s": 14.75,
+    "cagr_b": 9.8,
+    "cagr_diff": 4.94,
+    "te": 9.29,
+    "ir": 0.53,
+    "beta": 1.01,
+    "vol_s": 20.9,
+    "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.56,
+    "t": 1.01,
+    "p": 0.3125,
+    "cagr_s": 13.27,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.14,
+    "te": 10.62,
+    "ir": 0.24,
+    "beta": 1.02,
+    "vol_s": 19.3,
+    "vol_b": 15.9
+   },
+   "fee030_hold_report_only": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.26,
+    "t": 0.89,
+    "p": 0.3727,
+    "cagr_s": 12.93,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.8,
+    "te": 10.62,
+    "ir": 0.21,
+    "beta": 1.02,
+    "vol_s": 19.3,
+    "vol_b": 15.9
+   },
+   "roll20": {
+    "windows": 78,
+    "wins": 78,
+    "win_rate": 1.0,
+    "median": 4.66,
+    "worst": [
+     1945,
+     2.18
+    ],
+    "best": [
+     1985,
+     9.03
+    ]
+   },
+   "dca20": {
+    "windows": 78,
+    "win_rate": 1.0,
+    "median_ratio": 1.696,
+    "worst": [
+     200007,
+     1.211
+    ],
+    "best": [
+     198807,
+     4.159
+    ]
+   },
+   "maxdd": -74.7,
+   "maxdd_mkt_same": -83.7,
+   "primary": false,
+   "prereg": "mw_industry_prereg3.json",
+   "family": "prereg3_momentum_refinements",
+   "rule": "残差モメンタム: m−36〜m−1 の36か月で業種のリターンを市場（French Mkt）に回帰（α・β）し、m−12〜m−2 の11か月の残差の平均÷残差の標準偏差が最も高い5業種を等分・毎月",
+   "repl_key": "resmom",
+   "repl": {
+    "regions": 7,
+    "positive": 4
+   },
+   "repl_detail": {
+    "jpn": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": -1.1,
+     "t": -0.78,
+     "cagr_diff": -1.2
+    },
+    "gbr": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": 3.77,
+     "t": 2.62,
+     "cagr_diff": 3.87
+    },
+    "can": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": -0.3,
+     "t": -0.15,
+     "cagr_diff": -0.57
+    },
+    "fra": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": -0.09,
+     "t": -0.07,
+     "cagr_diff": -0.01
+    },
+    "deu": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": 1.17,
+     "t": 1.17,
+     "cagr_diff": 1.26
+    },
+    "aus": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": 4.02,
+     "t": 2.66,
+     "cagr_diff": 4.31
+    },
+    "che": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": 3.9,
+     "t": 3.31,
+     "cagr_diff": 3.77
+    }
+   },
+   "holding_last": {
+    "month": 202608,
+    "industries": [
+     "ElcEq",
+     "Hardw",
+     "LabEq",
+     "Mach",
+     "Steel"
+    ]
+   },
+   "holm_p_hold": 1.0,
+   "holm_family": "mw_industry_prereg3.json(10)",
+   "holm_p_hold_all": 1.0,
+   "grade": "B",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": false,
+    "C4_roll20": true,
+    "C5_repl": false,
     "C6_net_cost": true,
     "C7_multi": true,
     "C8_sharpe": null
@@ -1156,6 +2095,23 @@
     "beta": 1.0,
     "vol_s": 22.1,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.63,
+    "t": 0.81,
+    "p": 0.4202,
+    "cagr_s": 12.97,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.84,
+    "te": 13.65,
+    "ir": 0.19,
+    "beta": 1.01,
+    "vol_s": 21.1,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -1406,6 +2362,23 @@
     "vol_s": 19.7,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.41,
+    "t": 0.99,
+    "p": 0.3219,
+    "cagr_s": 13.28,
+    "cagr_b": 11.13,
+    "cagr_diff": 2.15,
+    "te": 9.97,
+    "ir": 0.24,
+    "beta": 1.0,
+    "vol_s": 18.7,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -1538,7 +2511,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "A",
    "criteria": {
@@ -1657,6 +2630,23 @@
     "vol_s": 19.2,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.04,
+    "t": 0.76,
+    "p": 0.4463,
+    "cagr_s": 13.08,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.95,
+    "te": 10.38,
+    "ir": 0.2,
+    "beta": 0.9,
+    "vol_s": 17.6,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -1721,7 +2711,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "B",
    "criteria": {
@@ -1730,6 +2720,287 @@
     "C3_hold_t": false,
     "C4_roll20": true,
     "C5_repl": null,
+    "C6_net_cost": true,
+    "C7_multi": true,
+    "C8_sharpe": null
+   }
+  },
+  {
+   "id": "P10_mom12_5_q",
+   "start": 192707,
+   "end": 202608,
+   "turnover_twoway_ann": {
+    "full": 3.55,
+    "hold": 3.83
+   },
+   "full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 6.11,
+    "t": 4.66,
+    "p": 0.0,
+    "cagr_s": 16.18,
+    "cagr_b": 10.28,
+    "cagr_diff": 5.89,
+    "te": 12.35,
+    "ir": 0.49,
+    "beta": 1.02,
+    "vol_s": 22.4,
+    "vol_b": 18.4
+   },
+   "train": {
+    "from": 192707,
+    "to": 200612,
+    "years": 79.5,
+    "ex_ann": 6.99,
+    "t": 4.96,
+    "p": 0.0,
+    "cagr_s": 17.08,
+    "cagr_b": 10.07,
+    "cagr_diff": 7.0,
+    "te": 11.91,
+    "ir": 0.59,
+    "beta": 1.01,
+    "vol_s": 22.5,
+    "vol_b": 19.0
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.52,
+    "t": 0.77,
+    "p": 0.4416,
+    "cagr_s": 12.62,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.49,
+    "te": 14.0,
+    "ir": 0.18,
+    "beta": 1.07,
+    "vol_s": 22.0,
+    "vol_b": 15.9
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 2.34,
+    "t": 0.69,
+    "p": 0.489,
+    "cagr_s": 15.81,
+    "cagr_b": 14.39,
+    "cagr_diff": 1.42,
+    "te": 13.1,
+    "ir": 0.18,
+    "beta": 1.11,
+    "vol_s": 21.0,
+    "vol_b": 14.9
+   },
+   "post_pub": {
+    "from": 200001,
+    "to": 202608,
+    "years": 26.7,
+    "ex_ann": 5.48,
+    "t": 1.79,
+    "p": 0.0743,
+    "cagr_s": 13.3,
+    "cagr_b": 8.54,
+    "cagr_diff": 4.76,
+    "te": 15.9,
+    "ir": 0.35,
+    "beta": 0.95,
+    "vol_s": 21.8,
+    "vol_b": 15.7
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.33,
+    "t": 0.71,
+    "p": 0.477,
+    "cagr_s": 12.4,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.28,
+    "te": 14.0,
+    "ir": 0.17,
+    "beta": 1.07,
+    "vol_s": 22.0,
+    "vol_b": 15.9
+   },
+   "cost_full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 5.93,
+    "t": 4.52,
+    "p": 0.0,
+    "cagr_s": 15.97,
+    "cagr_b": 10.28,
+    "cagr_diff": 5.69,
+    "te": 12.35,
+    "ir": 0.48,
+    "beta": 1.02,
+    "vol_s": 22.4,
+    "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.33,
+    "t": 0.71,
+    "p": 0.477,
+    "cagr_s": 12.4,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.28,
+    "te": 14.0,
+    "ir": 0.17,
+    "beta": 1.07,
+    "vol_s": 22.0,
+    "vol_b": 15.9
+   },
+   "fee030_hold_report_only": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.03,
+    "t": 0.62,
+    "p": 0.5356,
+    "cagr_s": 12.07,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.94,
+    "te": 14.0,
+    "ir": 0.14,
+    "beta": 1.07,
+    "vol_s": 22.0,
+    "vol_b": 15.9
+   },
+   "roll20": {
+    "windows": 80,
+    "wins": 80,
+    "win_rate": 1.0,
+    "median": 6.78,
+    "worst": [
+     2005,
+     0.85
+    ],
+    "best": [
+     1988,
+     12.63
+    ]
+   },
+   "dca20": {
+    "windows": 80,
+    "win_rate": 1.0,
+    "median_ratio": 2.111,
+    "worst": [
+     200507,
+     1.011
+    ],
+    "best": [
+     198807,
+     6.057
+    ]
+   },
+   "maxdd": -74.8,
+   "maxdd_mkt_same": -83.7,
+   "primary": false,
+   "prereg": "mw_industry_prereg3.json",
+   "family": "prereg3_momentum_refinements",
+   "rule": "G3 を四半期ごと（1・4・7・10月）にだけ入れ替える（売買を減らした版）",
+   "repl_key": "mom12q",
+   "repl": {
+    "regions": 7,
+    "positive": 7
+   },
+   "repl_detail": {
+    "jpn": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.75,
+     "t": 0.91,
+     "cagr_diff": 1.65
+    },
+    "gbr": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 2.83,
+     "t": 1.92,
+     "cagr_diff": 2.84
+    },
+    "can": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.68,
+     "t": 0.72,
+     "cagr_diff": 1.77
+    },
+    "fra": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 0.23,
+     "t": 0.18,
+     "cagr_diff": 0.46
+    },
+    "deu": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.92,
+     "t": 1.36,
+     "cagr_diff": 2.29
+    },
+    "aus": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 0.73,
+     "t": 0.48,
+     "cagr_diff": 0.7
+    },
+    "che": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 2.24,
+     "t": 1.43,
+     "cagr_diff": 2.21
+    }
+   },
+   "holding_last": {
+    "month": 202608,
+    "industries": [
+     "ElcEq",
+     "Gold",
+     "Hardw",
+     "Mach",
+     "Steel"
+    ]
+   },
+   "holm_p_hold": 1.0,
+   "holm_family": "mw_industry_prereg3.json(10)",
+   "holm_p_hold_all": 1.0,
+   "grade": "A",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": false,
+    "C4_roll20": true,
+    "C5_repl": true,
     "C6_net_cost": true,
     "C7_multi": true,
     "C8_sharpe": null
@@ -1839,6 +3110,23 @@
     "beta": 0.89,
     "vol_s": 19.0,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.08,
+    "t": 0.87,
+    "p": 0.3855,
+    "cagr_s": 12.71,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.58,
+    "te": 12.16,
+    "ir": 0.17,
+    "beta": 0.98,
+    "vol_s": 19.8,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -1968,7 +3256,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "A",
    "criteria": {
@@ -2101,6 +3389,23 @@
     "beta": 1.0,
     "vol_s": 22.0,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.9,
+    "t": 0.55,
+    "p": 0.5846,
+    "cagr_s": 12.25,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.12,
+    "te": 13.37,
+    "ir": 0.14,
+    "beta": 1.0,
+    "vol_s": 20.8,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -2351,6 +3656,23 @@
     "vol_s": 19.4,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.92,
+    "t": 0.84,
+    "p": 0.3999,
+    "cagr_s": 12.81,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.68,
+    "te": 9.8,
+    "ir": 0.2,
+    "beta": 0.98,
+    "vol_s": 18.3,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -2483,7 +3805,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "A",
    "criteria": {
@@ -2601,6 +3923,23 @@
     "beta": 0.93,
     "vol_s": 19.7,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.0,
+    "t": 0.58,
+    "p": 0.565,
+    "cagr_s": 12.57,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.44,
+    "te": 12.89,
+    "ir": 0.15,
+    "beta": 0.97,
+    "vol_s": 20.0,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -2730,7 +4069,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "A",
    "criteria": {
@@ -2741,6 +4080,287 @@
     "C5_repl": true,
     "C6_net_cost": true,
     "C7_multi": true,
+    "C8_sharpe": null
+   }
+  },
+  {
+   "id": "P1_mom1_5",
+   "start": 192608,
+   "end": 202608,
+   "turnover_twoway_ann": {
+    "full": 20.28,
+    "hold": 20.56
+   },
+   "full": {
+    "from": 192608,
+    "to": 202608,
+    "years": 100.1,
+    "ex_ann": 3.2,
+    "t": 2.48,
+    "p": 0.0132,
+    "cagr_s": 13.03,
+    "cagr_b": 10.35,
+    "cagr_diff": 2.68,
+    "te": 11.88,
+    "ir": 0.27,
+    "beta": 1.03,
+    "vol_s": 22.2,
+    "vol_b": 18.3
+   },
+   "train": {
+    "from": 192608,
+    "to": 200612,
+    "years": 80.4,
+    "ex_ann": 3.42,
+    "t": 2.4,
+    "p": 0.0163,
+    "cagr_s": 13.06,
+    "cagr_b": 10.16,
+    "cagr_diff": 2.89,
+    "te": 11.67,
+    "ir": 0.29,
+    "beta": 1.04,
+    "vol_s": 22.8,
+    "vol_b": 18.9
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.28,
+    "t": 0.76,
+    "p": 0.447,
+    "cagr_s": 12.94,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.81,
+    "te": 12.71,
+    "ir": 0.18,
+    "beta": 0.95,
+    "vol_s": 19.8,
+    "vol_b": 15.9
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 1.5,
+    "t": 0.37,
+    "p": 0.7147,
+    "cagr_s": 15.28,
+    "cagr_b": 14.39,
+    "cagr_diff": 0.89,
+    "te": 12.99,
+    "ir": 0.12,
+    "beta": 0.96,
+    "vol_s": 19.3,
+    "vol_b": 14.9
+   },
+   "post_pub": {
+    "from": 200001,
+    "to": 202608,
+    "years": 26.7,
+    "ex_ann": 4.18,
+    "t": 1.57,
+    "p": 0.1155,
+    "cagr_s": 12.38,
+    "cagr_b": 8.54,
+    "cagr_diff": 3.84,
+    "te": 13.5,
+    "ir": 0.31,
+    "beta": 0.91,
+    "vol_s": 19.6,
+    "vol_b": 15.7
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.25,
+    "t": 0.42,
+    "p": 0.676,
+    "cagr_s": 11.79,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.66,
+    "te": 12.71,
+    "ir": 0.1,
+    "beta": 0.95,
+    "vol_s": 19.8,
+    "vol_b": 15.9
+   },
+   "cost_full": {
+    "from": 192608,
+    "to": 202608,
+    "years": 100.1,
+    "ex_ann": 2.18,
+    "t": 1.69,
+    "p": 0.0904,
+    "cagr_s": 11.9,
+    "cagr_b": 10.35,
+    "cagr_diff": 1.55,
+    "te": 11.88,
+    "ir": 0.18,
+    "beta": 1.03,
+    "vol_s": 22.2,
+    "vol_b": 18.3
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.25,
+    "t": 0.42,
+    "p": 0.676,
+    "cagr_s": 11.79,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.66,
+    "te": 12.71,
+    "ir": 0.1,
+    "beta": 0.95,
+    "vol_s": 19.8,
+    "vol_b": 15.9
+   },
+   "fee030_hold_report_only": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.95,
+    "t": 0.32,
+    "p": 0.7505,
+    "cagr_s": 11.46,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.33,
+    "te": 12.71,
+    "ir": 0.08,
+    "beta": 0.95,
+    "vol_s": 19.8,
+    "vol_b": 15.9
+   },
+   "roll20": {
+    "windows": 81,
+    "wins": 66,
+    "win_rate": 0.815,
+    "median": 2.57,
+    "worst": [
+     1931,
+     -4.36
+    ],
+    "best": [
+     1964,
+     11.18
+    ]
+   },
+   "dca20": {
+    "windows": 81,
+    "win_rate": 0.765,
+    "median_ratio": 1.391,
+    "worst": [
+     192908,
+     0.735
+    ],
+    "best": [
+     196108,
+     3.887
+    ]
+   },
+   "maxdd": -85.4,
+   "maxdd_mkt_same": -83.7,
+   "primary": false,
+   "prereg": "mw_industry_prereg3.json",
+   "family": "prereg3_momentum_refinements",
+   "rule": "直前の1か月（m−1）のリターンが最も高い5業種を等分・毎月",
+   "repl_key": "mom1",
+   "repl": {
+    "regions": 7,
+    "positive": 6
+   },
+   "repl_detail": {
+    "jpn": {
+     "from": 199908,
+     "to": 202512,
+     "months": 317,
+     "counted": true,
+     "ex_ann": 2.63,
+     "t": 1.44,
+     "cagr_diff": 2.67
+    },
+    "gbr": {
+     "from": 199908,
+     "to": 202512,
+     "months": 317,
+     "counted": true,
+     "ex_ann": 4.38,
+     "t": 2.02,
+     "cagr_diff": 4.27
+    },
+    "can": {
+     "from": 199908,
+     "to": 202512,
+     "months": 317,
+     "counted": true,
+     "ex_ann": 4.49,
+     "t": 1.74,
+     "cagr_diff": 4.73
+    },
+    "fra": {
+     "from": 199908,
+     "to": 202512,
+     "months": 317,
+     "counted": true,
+     "ex_ann": 3.19,
+     "t": 1.83,
+     "cagr_diff": 3.1
+    },
+    "deu": {
+     "from": 199908,
+     "to": 202512,
+     "months": 317,
+     "counted": true,
+     "ex_ann": -0.2,
+     "t": -0.13,
+     "cagr_diff": 0.02
+    },
+    "aus": {
+     "from": 199908,
+     "to": 202512,
+     "months": 317,
+     "counted": true,
+     "ex_ann": 0.35,
+     "t": 0.24,
+     "cagr_diff": 0.32
+    },
+    "che": {
+     "from": 199908,
+     "to": 202512,
+     "months": 317,
+     "counted": true,
+     "ex_ann": 5.91,
+     "t": 3.64,
+     "cagr_diff": 6.0
+    }
+   },
+   "holding_last": {
+    "month": 202608,
+    "industries": [
+     "Fin",
+     "Oil",
+     "PerSv",
+     "Rtail",
+     "Ships"
+    ]
+   },
+   "holm_p_hold": 1.0,
+   "holm_family": "mw_industry_prereg3.json(10)",
+   "holm_p_hold_all": 1.0,
+   "grade": "B",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": false,
+    "C4_roll20": true,
+    "C5_repl": true,
+    "C6_net_cost": true,
+    "C7_multi": false,
     "C8_sharpe": null
    }
   },
@@ -2863,6 +4483,23 @@
     "beta": 1.23,
     "vol_s": 27.9,
     "vol_b": 18.3
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 2.12,
+    "t": 0.48,
+    "p": 0.6299,
+    "cagr_s": 11.46,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.33,
+    "te": 16.02,
+    "ir": 0.13,
+    "beta": 1.2,
+    "vol_s": 24.7,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -3046,6 +4683,23 @@
     "vol_s": 19.9,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.69,
+    "t": 0.71,
+    "p": 0.4794,
+    "cagr_s": 12.3,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.17,
+    "te": 11.95,
+    "ir": 0.14,
+    "beta": 0.99,
+    "vol_s": 19.7,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -3174,7 +4828,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "A",
    "criteria": {
@@ -3292,6 +4946,23 @@
     "beta": 0.94,
     "vol_s": 19.9,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.74,
+    "t": 0.51,
+    "p": 0.6109,
+    "cagr_s": 12.21,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.08,
+    "te": 12.8,
+    "ir": 0.14,
+    "beta": 1.0,
+    "vol_s": 20.3,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -3421,7 +5092,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "A",
    "criteria": {
@@ -3554,6 +5225,23 @@
     "beta": 0.99,
     "vol_s": 19.7,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.9,
+    "t": 1.2,
+    "p": 0.2297,
+    "cagr_s": 12.91,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.78,
+    "te": 7.21,
+    "ir": 0.26,
+    "beta": 1.01,
+    "vol_s": 17.6,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -3742,6 +5430,23 @@
     "vol_s": 19.3,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.4,
+    "t": 0.79,
+    "p": 0.4305,
+    "cagr_s": 12.47,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.34,
+    "te": 8.18,
+    "ir": 0.17,
+    "beta": 0.95,
+    "vol_s": 17.2,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -3806,7 +5511,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "B",
    "criteria": {
@@ -3815,6 +5520,568 @@
     "C3_hold_t": false,
     "C4_roll20": true,
     "C5_repl": null,
+    "C6_net_cost": true,
+    "C7_multi": true,
+    "C8_sharpe": null
+   }
+  },
+  {
+   "id": "P2_mom12_7_5",
+   "start": 192707,
+   "end": 202608,
+   "turnover_twoway_ann": {
+    "full": 9.18,
+    "hold": 9.65
+   },
+   "full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 6.19,
+    "t": 4.64,
+    "p": 0.0,
+    "cagr_s": 16.22,
+    "cagr_b": 10.28,
+    "cagr_diff": 5.93,
+    "te": 11.94,
+    "ir": 0.52,
+    "beta": 1.06,
+    "vol_s": 22.9,
+    "vol_b": 18.4
+   },
+   "train": {
+    "from": 192707,
+    "to": 200612,
+    "years": 79.5,
+    "ex_ann": 7.31,
+    "t": 4.9,
+    "p": 0.0,
+    "cagr_s": 17.34,
+    "cagr_b": 10.07,
+    "cagr_diff": 7.26,
+    "te": 11.73,
+    "ir": 0.62,
+    "beta": 1.05,
+    "vol_s": 23.1,
+    "vol_b": 19.0
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.69,
+    "t": 0.61,
+    "p": 0.5418,
+    "cagr_s": 11.79,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.66,
+    "te": 12.72,
+    "ir": 0.13,
+    "beta": 1.11,
+    "vol_s": 21.7,
+    "vol_b": 15.9
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 3.01,
+    "t": 0.94,
+    "p": 0.3477,
+    "cagr_s": 16.83,
+    "cagr_b": 14.39,
+    "cagr_diff": 2.44,
+    "te": 12.42,
+    "ir": 0.24,
+    "beta": 1.06,
+    "vol_s": 20.1,
+    "vol_b": 14.9
+   },
+   "post_pub": {
+    "from": 201301,
+    "to": 202608,
+    "years": 13.7,
+    "ex_ann": 2.65,
+    "t": 0.86,
+    "p": 0.3896,
+    "cagr_s": 17.04,
+    "cagr_b": 14.98,
+    "cagr_diff": 2.06,
+    "te": 12.25,
+    "ir": 0.22,
+    "beta": 1.06,
+    "vol_s": 19.8,
+    "vol_b": 14.7
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.2,
+    "t": 0.44,
+    "p": 0.6633,
+    "cagr_s": 11.25,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.13,
+    "te": 12.72,
+    "ir": 0.09,
+    "beta": 1.11,
+    "vol_s": 21.7,
+    "vol_b": 15.9
+   },
+   "cost_full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 5.73,
+    "t": 4.3,
+    "p": 0.0,
+    "cagr_s": 15.69,
+    "cagr_b": 10.28,
+    "cagr_diff": 5.41,
+    "te": 11.94,
+    "ir": 0.48,
+    "beta": 1.06,
+    "vol_s": 22.9,
+    "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.2,
+    "t": 0.44,
+    "p": 0.6633,
+    "cagr_s": 11.25,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.13,
+    "te": 12.72,
+    "ir": 0.09,
+    "beta": 1.11,
+    "vol_s": 21.7,
+    "vol_b": 15.9
+   },
+   "fee030_hold_report_only": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.9,
+    "t": 0.33,
+    "p": 0.7438,
+    "cagr_s": 10.92,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.21,
+    "te": 12.72,
+    "ir": 0.07,
+    "beta": 1.11,
+    "vol_s": 21.7,
+    "vol_b": 15.9
+   },
+   "roll20": {
+    "windows": 80,
+    "wins": 79,
+    "win_rate": 0.988,
+    "median": 6.03,
+    "worst": [
+     2006,
+     -0.01
+    ],
+    "best": [
+     1927,
+     10.17
+    ]
+   },
+   "dca20": {
+    "windows": 80,
+    "win_rate": 0.975,
+    "median_ratio": 1.967,
+    "worst": [
+     200007,
+     0.936
+    ],
+    "best": [
+     198507,
+     3.736
+    ]
+   },
+   "maxdd": -78.5,
+   "maxdd_mkt_same": -83.7,
+   "primary": false,
+   "prereg": "mw_industry_prereg3.json",
+   "family": "prereg3_momentum_refinements",
+   "rule": "m−12〜m−7 月（中間の6か月）の累積が最も高い5業種を等分・毎月",
+   "repl_key": "mom12_7",
+   "repl": {
+    "regions": 7,
+    "positive": 7
+   },
+   "repl_detail": {
+    "jpn": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 2.1,
+     "t": 0.97,
+     "cagr_diff": 1.99
+    },
+    "gbr": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 3.84,
+     "t": 2.34,
+     "cagr_diff": 3.87
+    },
+    "can": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.1,
+     "t": 0.46,
+     "cagr_diff": 1.1
+    },
+    "fra": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 0.34,
+     "t": 0.22,
+     "cagr_diff": 0.4
+    },
+    "deu": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.66,
+     "t": 1.02,
+     "cagr_diff": 1.66
+    },
+    "aus": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.79,
+     "t": 1.05,
+     "cagr_diff": 1.91
+    },
+    "che": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 3.43,
+     "t": 2.19,
+     "cagr_diff": 3.31
+    }
+   },
+   "holding_last": {
+    "month": 202608,
+    "industries": [
+     "Coal",
+     "Gold",
+     "Mach",
+     "Mines",
+     "Steel"
+    ]
+   },
+   "holm_p_hold": 1.0,
+   "holm_family": "mw_industry_prereg3.json(10)",
+   "holm_p_hold_all": 1.0,
+   "grade": "A",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": false,
+    "C4_roll20": true,
+    "C5_repl": true,
+    "C6_net_cost": true,
+    "C7_multi": true,
+    "C8_sharpe": null
+   }
+  },
+  {
+   "id": "P8_invvol_5",
+   "start": 192707,
+   "end": 202608,
+   "turnover_twoway_ann": {
+    "full": 7.52,
+    "hold": 8.29
+   },
+   "full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 6.31,
+    "t": 5.19,
+    "p": 0.0,
+    "cagr_s": 16.73,
+    "cagr_b": 10.28,
+    "cagr_diff": 6.45,
+    "te": 11.67,
+    "ir": 0.54,
+    "beta": 0.96,
+    "vol_s": 21.1,
+    "vol_b": 18.4
+   },
+   "train": {
+    "from": 192707,
+    "to": 200612,
+    "years": 79.5,
+    "ex_ann": 7.49,
+    "t": 5.56,
+    "p": 0.0,
+    "cagr_s": 17.94,
+    "cagr_b": 10.07,
+    "cagr_diff": 7.86,
+    "te": 11.44,
+    "ir": 0.65,
+    "beta": 0.95,
+    "vol_s": 21.4,
+    "vol_b": 19.0
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.52,
+    "t": 0.6,
+    "p": 0.5481,
+    "cagr_s": 11.97,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.85,
+    "te": 12.48,
+    "ir": 0.12,
+    "beta": 0.99,
+    "vol_s": 20.1,
+    "vol_b": 15.9
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 1.32,
+    "t": 0.48,
+    "p": 0.6343,
+    "cagr_s": 14.99,
+    "cagr_b": 14.39,
+    "cagr_diff": 0.6,
+    "te": 11.88,
+    "ir": 0.11,
+    "beta": 1.04,
+    "vol_s": 19.6,
+    "vol_b": 14.9
+   },
+   "post_pub": {
+    "from": 201601,
+    "to": 202608,
+    "years": 10.7,
+    "ex_ann": -0.11,
+    "t": -0.03,
+    "p": 0.9736,
+    "cagr_s": 13.87,
+    "cagr_b": 15.02,
+    "cagr_diff": -1.15,
+    "te": 12.81,
+    "ir": -0.01,
+    "beta": 1.04,
+    "vol_s": 20.8,
+    "vol_b": 15.7
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.1,
+    "t": 0.44,
+    "p": 0.6623,
+    "cagr_s": 11.51,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.39,
+    "te": 12.48,
+    "ir": 0.09,
+    "beta": 0.99,
+    "vol_s": 20.1,
+    "vol_b": 15.9
+   },
+   "cost_full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 5.93,
+    "t": 4.88,
+    "p": 0.0,
+    "cagr_s": 16.3,
+    "cagr_b": 10.28,
+    "cagr_diff": 6.01,
+    "te": 11.67,
+    "ir": 0.51,
+    "beta": 0.96,
+    "vol_s": 21.1,
+    "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.1,
+    "t": 0.44,
+    "p": 0.6623,
+    "cagr_s": 11.51,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.39,
+    "te": 12.48,
+    "ir": 0.09,
+    "beta": 0.99,
+    "vol_s": 20.1,
+    "vol_b": 15.9
+   },
+   "fee030_hold_report_only": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.8,
+    "t": 0.32,
+    "p": 0.7504,
+    "cagr_s": 11.18,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.05,
+    "te": 12.48,
+    "ir": 0.06,
+    "beta": 0.99,
+    "vol_s": 20.1,
+    "vol_b": 15.9
+   },
+   "roll20": {
+    "windows": 80,
+    "wins": 80,
+    "win_rate": 1.0,
+    "median": 7.03,
+    "worst": [
+     2005,
+     1.05
+    ],
+    "best": [
+     1962,
+     12.7
+    ]
+   },
+   "dca20": {
+    "windows": 80,
+    "win_rate": 1.0,
+    "median_ratio": 2.137,
+    "worst": [
+     200507,
+     1.07
+    ],
+    "best": [
+     198807,
+     5.347
+    ]
+   },
+   "maxdd": -72.4,
+   "maxdd_mkt_same": -83.7,
+   "primary": false,
+   "prereg": "mw_industry_prereg3.json",
+   "family": "prereg3_momentum_refinements",
+   "rule": "G3 の5業種を、12か月（m−12〜m−1）の月次リターンの標準偏差の逆数で加重・毎月",
+   "repl_key": "invvol",
+   "repl": {
+    "regions": 7,
+    "positive": 7
+   },
+   "repl_detail": {
+    "jpn": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.79,
+     "t": 0.91,
+     "cagr_diff": 1.86
+    },
+    "gbr": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 3.08,
+     "t": 2.26,
+     "cagr_diff": 3.43
+    },
+    "can": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 2.44,
+     "t": 1.16,
+     "cagr_diff": 2.93
+    },
+    "fra": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.15,
+     "t": 0.78,
+     "cagr_diff": 1.61
+    },
+    "deu": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 2.44,
+     "t": 1.77,
+     "cagr_diff": 3.0
+    },
+    "aus": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 1.33,
+     "t": 0.94,
+     "cagr_diff": 1.53
+    },
+    "che": {
+     "from": 200007,
+     "to": 202512,
+     "months": 306,
+     "counted": true,
+     "ex_ann": 2.1,
+     "t": 1.38,
+     "cagr_diff": 2.18
+    }
+   },
+   "holding_last": {
+    "month": 202608,
+    "industries": [
+     "Chips",
+     "Gold",
+     "Hardw",
+     "Mach",
+     "Mines"
+    ]
+   },
+   "holm_p_hold": 1.0,
+   "holm_family": "mw_industry_prereg3.json(10)",
+   "holm_p_hold_all": 1.0,
+   "grade": "A",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": false,
+    "C4_roll20": true,
+    "C5_repl": true,
     "C6_net_cost": true,
     "C7_multi": true,
     "C8_sharpe": null
@@ -3939,6 +6206,23 @@
     "beta": 1.0,
     "vol_s": 20.4,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.21,
+    "t": 0.59,
+    "p": 0.5522,
+    "cagr_s": 12.07,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.94,
+    "te": 8.66,
+    "ir": 0.14,
+    "beta": 0.99,
+    "vol_s": 18.0,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -4194,6 +6478,23 @@
     "vol_s": 20.3,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.21,
+    "t": 0.6,
+    "p": 0.5457,
+    "cagr_s": 12.07,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.94,
+    "te": 8.72,
+    "ir": 0.14,
+    "beta": 0.99,
+    "vol_s": 18.0,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -4330,7 +6631,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "A",
    "criteria": {
@@ -4449,6 +6750,23 @@
     "vol_s": 18.6,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.05,
+    "t": 0.52,
+    "p": 0.6056,
+    "cagr_s": 12.25,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.13,
+    "te": 7.97,
+    "ir": 0.13,
+    "beta": 0.89,
+    "vol_s": 16.1,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -4518,7 +6836,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "B",
    "criteria": {
@@ -4637,6 +6955,23 @@
     "vol_s": 18.5,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.24,
+    "t": 1.03,
+    "p": 0.3045,
+    "cagr_s": 12.58,
+    "cagr_b": 11.13,
+    "cagr_diff": 1.46,
+    "te": 5.2,
+    "ir": 0.24,
+    "beta": 0.92,
+    "vol_s": 15.5,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -4706,7 +7041,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "B",
    "criteria": {
@@ -4839,6 +7174,23 @@
     "beta": 1.18,
     "vol_s": 25.5,
     "vol_b": 18.3
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.39,
+    "t": 0.52,
+    "p": 0.6056,
+    "cagr_s": 11.55,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.42,
+    "te": 11.5,
+    "ir": 0.12,
+    "beta": 1.14,
+    "vol_s": 21.3,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -5027,6 +7379,23 @@
     "vol_s": 21.4,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.72,
+    "t": 0.24,
+    "p": 0.8106,
+    "cagr_s": 10.93,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.2,
+    "te": 13.77,
+    "ir": 0.05,
+    "beta": 1.0,
+    "vol_s": 21.0,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -5091,7 +7460,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "C",
    "criteria": {
@@ -5209,6 +7578,23 @@
     "beta": 1.0,
     "vol_s": 20.2,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.9,
+    "t": 0.4,
+    "p": 0.6906,
+    "cagr_s": 11.74,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.61,
+    "te": 9.07,
+    "ir": 0.1,
+    "beta": 0.98,
+    "vol_s": 18.0,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -5346,7 +7732,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "A",
    "criteria": {
@@ -5479,6 +7865,23 @@
     "beta": 1.0,
     "vol_s": 20.2,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.81,
+    "t": 0.36,
+    "p": 0.7211,
+    "cagr_s": 11.65,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.52,
+    "te": 9.02,
+    "ir": 0.09,
+    "beta": 0.97,
+    "vol_s": 17.9,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -5630,6 +8033,292 @@
    }
   },
   {
+   "id": "P4_resmom_10",
+   "start": 192907,
+   "end": 202608,
+   "turnover_twoway_ann": {
+    "full": 7.04,
+    "hold": 7.9
+   },
+   "full": {
+    "from": 192907,
+    "to": 202608,
+    "years": 97.2,
+    "ex_ann": 4.33,
+    "t": 5.04,
+    "p": 0.0,
+    "cagr_s": 14.13,
+    "cagr_b": 9.8,
+    "cagr_diff": 4.32,
+    "te": 7.53,
+    "ir": 0.58,
+    "beta": 1.04,
+    "vol_s": 20.7,
+    "vol_b": 18.4
+   },
+   "train": {
+    "from": 192907,
+    "to": 200612,
+    "years": 77.5,
+    "ex_ann": 5.13,
+    "t": 5.59,
+    "p": 0.0,
+    "cagr_s": 14.67,
+    "cagr_b": 9.47,
+    "cagr_diff": 5.2,
+    "te": 7.35,
+    "ir": 0.7,
+    "beta": 1.05,
+    "vol_s": 21.3,
+    "vol_b": 19.0
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 1.18,
+    "t": 0.57,
+    "p": 0.5689,
+    "cagr_s": 12.01,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.88,
+    "te": 8.13,
+    "ir": 0.14,
+    "beta": 1.01,
+    "vol_s": 18.0,
+    "vol_b": 15.9
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 1.35,
+    "t": 0.5,
+    "p": 0.6176,
+    "cagr_s": 15.64,
+    "cagr_b": 14.39,
+    "cagr_diff": 1.26,
+    "te": 8.45,
+    "ir": 0.16,
+    "beta": 0.96,
+    "vol_s": 16.6,
+    "vol_b": 14.9
+   },
+   "post_pub": {
+    "from": 201201,
+    "to": 202608,
+    "years": 14.7,
+    "ex_ann": 1.41,
+    "t": 0.58,
+    "p": 0.564,
+    "cagr_s": 16.43,
+    "cagr_b": 15.07,
+    "cagr_diff": 1.36,
+    "te": 8.07,
+    "ir": 0.17,
+    "beta": 0.96,
+    "vol_s": 16.0,
+    "vol_b": 14.5
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.78,
+    "t": 0.38,
+    "p": 0.7051,
+    "cagr_s": 11.58,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.45,
+    "te": 8.13,
+    "ir": 0.1,
+    "beta": 1.01,
+    "vol_s": 18.0,
+    "vol_b": 15.9
+   },
+   "cost_full": {
+    "from": 192907,
+    "to": 202608,
+    "years": 97.2,
+    "ex_ann": 3.98,
+    "t": 4.63,
+    "p": 0.0,
+    "cagr_s": 13.73,
+    "cagr_b": 9.8,
+    "cagr_diff": 3.93,
+    "te": 7.53,
+    "ir": 0.53,
+    "beta": 1.04,
+    "vol_s": 20.7,
+    "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.78,
+    "t": 0.38,
+    "p": 0.7051,
+    "cagr_s": 11.58,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.45,
+    "te": 8.13,
+    "ir": 0.1,
+    "beta": 1.01,
+    "vol_s": 18.0,
+    "vol_b": 15.9
+   },
+   "fee030_hold_report_only": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.48,
+    "t": 0.23,
+    "p": 0.8157,
+    "cagr_s": 11.24,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.11,
+    "te": 8.13,
+    "ir": 0.06,
+    "beta": 1.01,
+    "vol_s": 18.0,
+    "vol_b": 15.9
+   },
+   "roll20": {
+    "windows": 78,
+    "wins": 78,
+    "win_rate": 1.0,
+    "median": 4.65,
+    "worst": [
+     2005,
+     0.38
+    ],
+    "best": [
+     1963,
+     7.88
+    ]
+   },
+   "dca20": {
+    "windows": 78,
+    "win_rate": 0.974,
+    "median_ratio": 1.694,
+    "worst": [
+     200007,
+     0.963
+    ],
+    "best": [
+     198807,
+     2.67
+    ]
+   },
+   "maxdd": -78.4,
+   "maxdd_mkt_same": -83.7,
+   "primary": false,
+   "prereg": "mw_industry_prereg3.json",
+   "family": "prereg3_momentum_refinements",
+   "rule": "同じ残差モメンタムの上位10業種",
+   "repl_key": "resmom",
+   "repl": {
+    "regions": 7,
+    "positive": 4
+   },
+   "repl_detail": {
+    "jpn": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": -1.1,
+     "t": -0.78,
+     "cagr_diff": -1.2
+    },
+    "gbr": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": 3.77,
+     "t": 2.62,
+     "cagr_diff": 3.87
+    },
+    "can": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": -0.3,
+     "t": -0.15,
+     "cagr_diff": -0.57
+    },
+    "fra": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": -0.09,
+     "t": -0.07,
+     "cagr_diff": -0.01
+    },
+    "deu": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": 1.17,
+     "t": 1.17,
+     "cagr_diff": 1.26
+    },
+    "aus": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": 4.02,
+     "t": 2.66,
+     "cagr_diff": 4.31
+    },
+    "che": {
+     "from": 200207,
+     "to": 202512,
+     "months": 282,
+     "counted": true,
+     "ex_ann": 3.9,
+     "t": 3.31,
+     "cagr_diff": 3.77
+    }
+   },
+   "holding_last": {
+    "month": 202608,
+    "industries": [
+     "Chips",
+     "Drugs",
+     "ElcEq",
+     "Hardw",
+     "Hlth",
+     "LabEq",
+     "Mach",
+     "Mines",
+     "Rubbr",
+     "Steel"
+    ]
+   },
+   "holm_p_hold": 1.0,
+   "holm_family": "mw_industry_prereg3.json(10)",
+   "holm_p_hold_all": 1.0,
+   "grade": "B",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": false,
+    "C4_roll20": true,
+    "C5_repl": false,
+    "C6_net_cost": true,
+    "C7_multi": true,
+    "C8_sharpe": null
+   }
+  },
+  {
    "id": "X8_hi52_10",
    "start": 192707,
    "end": 202608,
@@ -5748,6 +8437,23 @@
     "beta": 0.91,
     "vol_s": 18.0,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.53,
+    "t": 0.27,
+    "p": 0.7898,
+    "cagr_s": 11.83,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.7,
+    "te": 7.41,
+    "ir": 0.07,
+    "beta": 0.85,
+    "vol_s": 15.2,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -5950,6 +8656,23 @@
     "beta": 1.04,
     "vol_s": 17.8,
     "vol_b": 15.7
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.03,
+    "t": 0.02,
+    "p": 0.9872,
+    "cagr_s": 10.61,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.52,
+    "te": 8.74,
+    "ir": 0.0,
+    "beta": 1.05,
+    "vol_s": 18.9,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -6205,6 +8928,23 @@
     "vol_s": 20.3,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.69,
+    "t": 0.38,
+    "p": 0.7047,
+    "cagr_s": 11.57,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.45,
+    "te": 8.39,
+    "ir": 0.08,
+    "beta": 0.98,
+    "vol_s": 17.6,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -6339,7 +9079,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "A",
    "criteria": {
@@ -6472,6 +9212,23 @@
     "beta": 1.08,
     "vol_s": 19.5,
     "vol_b": 15.7
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.13,
+    "t": -0.05,
+    "p": 0.9568,
+    "cagr_s": 10.17,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.96,
+    "te": 11.53,
+    "ir": -0.01,
+    "beta": 1.04,
+    "vol_s": 20.1,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -6737,6 +9494,23 @@
     "vol_s": 21.4,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.75,
+    "t": 0.34,
+    "p": 0.7333,
+    "cagr_s": 11.35,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.22,
+    "te": 9.02,
+    "ir": 0.08,
+    "beta": 1.05,
+    "vol_s": 19.0,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -6811,6 +9585,225 @@
     "C5_repl": null,
     "C6_net_cost": true,
     "C7_multi": false,
+    "C8_sharpe": null
+   }
+  },
+  {
+   "id": "P6_fip_10",
+   "start": 192707,
+   "end": 202608,
+   "turnover_twoway_ann": {
+    "full": 6.06,
+    "hold": 6.34
+   },
+   "full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 3.81,
+    "t": 5.26,
+    "p": 0.0,
+    "cagr_s": 14.25,
+    "cagr_b": 10.28,
+    "cagr_diff": 3.97,
+    "te": 6.96,
+    "ir": 0.55,
+    "beta": 1.0,
+    "vol_s": 19.6,
+    "vol_b": 18.4
+   },
+   "train": {
+    "from": 192707,
+    "to": 200612,
+    "years": 79.5,
+    "ex_ann": 4.56,
+    "t": 5.57,
+    "p": 0.0,
+    "cagr_s": 14.88,
+    "cagr_b": 10.07,
+    "cagr_diff": 4.81,
+    "te": 6.88,
+    "ir": 0.66,
+    "beta": 1.0,
+    "vol_s": 20.2,
+    "vol_b": 19.0
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.78,
+    "t": 0.57,
+    "p": 0.5715,
+    "cagr_s": 11.75,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.62,
+    "te": 7.21,
+    "ir": 0.11,
+    "beta": 0.98,
+    "vol_s": 17.2,
+    "vol_b": 15.9
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": -0.34,
+    "t": -0.22,
+    "p": 0.8275,
+    "cagr_s": 13.79,
+    "cagr_b": 14.39,
+    "cagr_diff": -0.6,
+    "te": 7.06,
+    "ir": -0.05,
+    "beta": 0.98,
+    "vol_s": 16.2,
+    "vol_b": 14.9
+   },
+   "post_pub": {
+    "from": 201501,
+    "to": 202608,
+    "years": 11.7,
+    "ex_ann": -0.58,
+    "t": -0.34,
+    "p": 0.7334,
+    "cagr_s": 12.8,
+    "cagr_b": 13.67,
+    "cagr_diff": -0.87,
+    "te": 7.43,
+    "ir": -0.08,
+    "beta": 0.97,
+    "vol_s": 16.8,
+    "vol_b": 15.5
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.47,
+    "t": 0.34,
+    "p": 0.7362,
+    "cagr_s": 11.4,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.27,
+    "te": 7.21,
+    "ir": 0.06,
+    "beta": 0.98,
+    "vol_s": 17.2,
+    "vol_b": 15.9
+   },
+   "cost_full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 3.51,
+    "t": 4.84,
+    "p": 0.0,
+    "cagr_s": 13.91,
+    "cagr_b": 10.28,
+    "cagr_diff": 3.63,
+    "te": 6.96,
+    "ir": 0.5,
+    "beta": 1.0,
+    "vol_s": 19.6,
+    "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.47,
+    "t": 0.34,
+    "p": 0.7362,
+    "cagr_s": 11.4,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.27,
+    "te": 7.21,
+    "ir": 0.06,
+    "beta": 0.98,
+    "vol_s": 17.2,
+    "vol_b": 15.9
+   },
+   "fee030_hold_report_only": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.17,
+    "t": 0.12,
+    "p": 0.9043,
+    "cagr_s": 11.07,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.06,
+    "te": 7.21,
+    "ir": 0.02,
+    "beta": 0.98,
+    "vol_s": 17.2,
+    "vol_b": 15.9
+   },
+   "roll20": {
+    "windows": 80,
+    "wins": 80,
+    "win_rate": 1.0,
+    "median": 3.83,
+    "worst": [
+     2006,
+     0.47
+    ],
+    "best": [
+     1958,
+     9.16
+    ]
+   },
+   "dca20": {
+    "windows": 80,
+    "win_rate": 0.975,
+    "median_ratio": 1.621,
+    "worst": [
+     200607,
+     0.989
+    ],
+    "best": [
+     195007,
+     3.568
+    ]
+   },
+   "maxdd": -83.7,
+   "maxdd_mkt_same": -83.7,
+   "primary": false,
+   "prereg": "mw_industry_prereg3.json",
+   "family": "prereg3_momentum_refinements",
+   "rule": "12か月の累積の上位20業種のうち ID が最も低い10業種を等分・毎月",
+   "repl_key": null,
+   "repl": null,
+   "repl_detail": null,
+   "holding_last": {
+    "month": 202608,
+    "industries": [
+     "Chips",
+     "Cnstr",
+     "ElcEq",
+     "Gold",
+     "Hardw",
+     "Hlth",
+     "Mach",
+     "Mines",
+     "Oil",
+     "Soda"
+    ]
+   },
+   "holm_p_hold": 1.0,
+   "holm_family": "mw_industry_prereg3.json(10)",
+   "holm_p_hold_all": 1.0,
+   "grade": "B",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": true,
+    "C3_hold_t": false,
+    "C4_roll20": true,
+    "C5_repl": null,
+    "C6_net_cost": true,
+    "C7_multi": true,
     "C8_sharpe": null
    }
   },
@@ -6918,6 +9911,23 @@
     "beta": 0.99,
     "vol_s": 18.2,
     "vol_b": 18.3
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.7,
+    "t": 1.59,
+    "p": 0.1112,
+    "cagr_s": 11.97,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.85,
+    "te": 1.81,
+    "ir": 0.39,
+    "beta": 0.97,
+    "vol_s": 15.5,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -7095,6 +10105,23 @@
     "vol_s": 20.2,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.22,
+    "t": 0.1,
+    "p": 0.9238,
+    "cagr_s": 10.53,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.59,
+    "te": 11.42,
+    "ir": 0.02,
+    "beta": 1.05,
+    "vol_s": 20.2,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -7224,7 +10251,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "C",
    "criteria": {
@@ -7235,6 +10262,386 @@
     "C5_repl": true,
     "C6_net_cost": false,
     "C7_multi": false,
+    "C8_sharpe": null
+   }
+  },
+  {
+   "id": "J3_topix17_mom12_state",
+   "start": 201101,
+   "end": 202608,
+   "turnover_twoway_ann": {
+    "full": 6.86,
+    "hold": 6.86
+   },
+   "full": {
+    "from": 201101,
+    "to": 202608,
+    "years": 15.7,
+    "ex_ann": 0.66,
+    "t": 0.32,
+    "p": 0.7496,
+    "cagr_s": 12.56,
+    "cagr_b": 12.21,
+    "cagr_diff": 0.35,
+    "te": 9.03,
+    "ir": 0.07,
+    "beta": 0.99,
+    "vol_s": 17.7,
+    "vol_b": 15.4
+   },
+   "train": null,
+   "hold": {
+    "from": 201101,
+    "to": 202608,
+    "years": 15.7,
+    "ex_ann": 0.66,
+    "t": 0.32,
+    "p": 0.7496,
+    "cagr_s": 12.56,
+    "cagr_b": 12.21,
+    "cagr_diff": 0.35,
+    "te": 9.03,
+    "ir": 0.07,
+    "beta": 0.99,
+    "vol_s": 17.7,
+    "vol_b": 15.4
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 0.35,
+    "t": 0.14,
+    "p": 0.8864,
+    "cagr_s": 12.74,
+    "cagr_b": 12.65,
+    "cagr_diff": 0.09,
+    "te": 9.18,
+    "ir": 0.04,
+    "beta": 0.94,
+    "vol_s": 16.4,
+    "vol_b": 14.4
+   },
+   "post_pub": null,
+   "cost_hold": {
+    "from": 201101,
+    "to": 202608,
+    "years": 15.7,
+    "ex_ann": -1.06,
+    "t": -0.51,
+    "p": 0.6089,
+    "cagr_s": 10.66,
+    "cagr_b": 12.21,
+    "cagr_diff": -1.55,
+    "te": 9.03,
+    "ir": -0.12,
+    "beta": 0.99,
+    "vol_s": 17.7,
+    "vol_b": 15.4
+   },
+   "cost_full": {
+    "from": 201101,
+    "to": 202608,
+    "years": 15.7,
+    "ex_ann": -1.06,
+    "t": -0.51,
+    "p": 0.6089,
+    "cagr_s": 10.66,
+    "cagr_b": 12.21,
+    "cagr_diff": -1.55,
+    "te": 9.03,
+    "ir": -0.12,
+    "beta": 0.99,
+    "vol_s": 17.7,
+    "vol_b": 15.4
+   },
+   "cost_unit_twoway": 0.0025,
+   "cost005_hold": {
+    "from": 201101,
+    "to": 202608,
+    "years": 15.7,
+    "ex_ann": 0.32,
+    "t": 0.15,
+    "p": 0.8784,
+    "cagr_s": 12.18,
+    "cagr_b": 12.21,
+    "cagr_diff": -0.03,
+    "te": 9.03,
+    "ir": 0.04,
+    "beta": 0.99,
+    "vol_s": 17.7,
+    "vol_b": 15.4
+   },
+   "fee030_hold_report_only": {
+    "from": 201101,
+    "to": 202608,
+    "years": 15.7,
+    "ex_ann": -1.36,
+    "t": -0.66,
+    "p": 0.5113,
+    "cagr_s": 10.33,
+    "cagr_b": 12.21,
+    "cagr_diff": -1.88,
+    "te": 9.03,
+    "ir": -0.15,
+    "beta": 0.99,
+    "vol_s": 17.7,
+    "vol_b": 15.4
+   },
+   "roll20": null,
+   "dca20": null,
+   "maxdd": -29.6,
+   "maxdd_mkt_same": -23.8,
+   "primary": false,
+   "prereg": "mw_industry_prereg5.json",
+   "family": "prereg5_topix17_real_etf",
+   "rule": "1308.T の36か月の累積が負の月は 1308.T を持ち、そうでなければ J1",
+   "benchmark": "1308.T（上場TOPIX・円建て）",
+   "data_errors_dropped": {
+    "1629.T": [
+     201412,
+     201506,
+     202602,
+     202603
+    ]
+   },
+   "repl_key": null,
+   "repl": null,
+   "repl_detail": null,
+   "holding_last": {
+    "month": 202608,
+    "industries": [
+     "1623.T",
+     "1625.T",
+     "1631.T"
+    ]
+   },
+   "holm_p_hold": 1.0,
+   "holm_family": "mw_industry_prereg5.json(3)",
+   "holm_p_hold_all": 1.0,
+   "grade": "C",
+   "criteria": {
+    "C1_train": false,
+    "C2_hold_sign": true,
+    "C3_hold_t": false,
+    "C4_roll20": false,
+    "C5_repl": null,
+    "C6_net_cost": false,
+    "C7_multi": false,
+    "C8_sharpe": null
+   }
+  },
+  {
+   "id": "P5_fip_5",
+   "start": 192707,
+   "end": 202608,
+   "turnover_twoway_ann": {
+    "full": 7.54,
+    "hold": 8.01
+   },
+   "full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 5.85,
+    "t": 5.76,
+    "p": 0.0,
+    "cagr_s": 16.32,
+    "cagr_b": 10.28,
+    "cagr_diff": 6.04,
+    "te": 9.9,
+    "ir": 0.59,
+    "beta": 0.99,
+    "vol_s": 20.7,
+    "vol_b": 18.4
+   },
+   "train": {
+    "from": 192707,
+    "to": 200612,
+    "years": 79.5,
+    "ex_ann": 7.16,
+    "t": 6.5,
+    "p": 0.0,
+    "cagr_s": 17.65,
+    "cagr_b": 10.07,
+    "cagr_diff": 7.57,
+    "te": 9.87,
+    "ir": 0.73,
+    "beta": 0.98,
+    "vol_s": 21.1,
+    "vol_b": 19.0
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.55,
+    "t": 0.26,
+    "p": 0.795,
+    "cagr_s": 11.13,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.0,
+    "te": 9.89,
+    "ir": 0.06,
+    "beta": 1.02,
+    "vol_s": 19.0,
+    "vol_b": 15.9
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 1.15,
+    "t": 0.49,
+    "p": 0.6226,
+    "cagr_s": 15.07,
+    "cagr_b": 14.39,
+    "cagr_diff": 0.68,
+    "te": 9.81,
+    "ir": 0.12,
+    "beta": 1.05,
+    "vol_s": 18.4,
+    "vol_b": 14.9
+   },
+   "post_pub": {
+    "from": 201501,
+    "to": 202608,
+    "years": 11.7,
+    "ex_ann": 0.42,
+    "t": 0.16,
+    "p": 0.8695,
+    "cagr_s": 13.47,
+    "cagr_b": 13.67,
+    "cagr_diff": -0.2,
+    "te": 10.18,
+    "ir": 0.04,
+    "beta": 1.05,
+    "vol_s": 19.2,
+    "vol_b": 15.5
+   },
+   "cost_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.15,
+    "t": 0.07,
+    "p": 0.9449,
+    "cagr_s": 10.69,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.44,
+    "te": 9.89,
+    "ir": 0.01,
+    "beta": 1.02,
+    "vol_s": 19.0,
+    "vol_b": 15.9
+   },
+   "cost_full": {
+    "from": 192707,
+    "to": 202608,
+    "years": 99.2,
+    "ex_ann": 5.47,
+    "t": 5.39,
+    "p": 0.0,
+    "cagr_s": 15.89,
+    "cagr_b": 10.28,
+    "cagr_diff": 5.61,
+    "te": 9.9,
+    "ir": 0.55,
+    "beta": 0.99,
+    "vol_s": 20.7,
+    "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.15,
+    "t": 0.07,
+    "p": 0.9449,
+    "cagr_s": 10.69,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.44,
+    "te": 9.89,
+    "ir": 0.01,
+    "beta": 1.02,
+    "vol_s": 19.0,
+    "vol_b": 15.9
+   },
+   "fee030_hold_report_only": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.15,
+    "t": -0.07,
+    "p": 0.9411,
+    "cagr_s": 10.36,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.77,
+    "te": 9.89,
+    "ir": -0.02,
+    "beta": 1.02,
+    "vol_s": 19.0,
+    "vol_b": 15.9
+   },
+   "roll20": {
+    "windows": 80,
+    "wins": 78,
+    "win_rate": 0.975,
+    "median": 6.43,
+    "worst": [
+     2005,
+     -0.37
+    ],
+    "best": [
+     1958,
+     14.46
+    ]
+   },
+   "dca20": {
+    "windows": 80,
+    "win_rate": 0.912,
+    "median_ratio": 2.135,
+    "worst": [
+     200107,
+     0.92
+    ],
+    "best": [
+     195507,
+     6.595
+    ]
+   },
+   "maxdd": -74.3,
+   "maxdd_mkt_same": -83.7,
+   "primary": false,
+   "prereg": "mw_industry_prereg3.json",
+   "family": "prereg3_momentum_refinements",
+   "rule": "frog-in-the-pan: 12か月の累積（m−12〜m−1）の上位10業種のうち、同じ12か月の日次リターンで ID = 符号(12か月の累積)×(下げた日の割合 − 上げた日の割合) が最も低い（少しずつ上がった）5業種を等分・毎月",
+   "repl_key": null,
+   "repl": null,
+   "repl_detail": null,
+   "holding_last": {
+    "month": 202608,
+    "industries": [
+     "Chips",
+     "Gold",
+     "Hardw",
+     "Hlth",
+     "Oil"
+    ]
+   },
+   "holm_p_hold": 1.0,
+   "holm_family": "mw_industry_prereg3.json(10)",
+   "holm_p_hold_all": 1.0,
+   "grade": "C",
+   "criteria": {
+    "C1_train": true,
+    "C2_hold_sign": false,
+    "C3_hold_t": false,
+    "C4_roll20": true,
+    "C5_repl": null,
+    "C6_net_cost": false,
+    "C7_multi": true,
     "C8_sharpe": null
    }
   },
@@ -7357,6 +10764,23 @@
     "beta": 1.06,
     "vol_s": 23.0,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.43,
+    "t": 0.13,
+    "p": 0.8967,
+    "cagr_s": 10.28,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.84,
+    "te": 13.83,
+    "ir": 0.03,
+    "beta": 1.09,
+    "vol_s": 22.1,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -7622,6 +11046,23 @@
     "vol_s": 18.2,
     "vol_b": 18.3
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.37,
+    "t": 0.97,
+    "p": 0.3301,
+    "cagr_s": 11.59,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.46,
+    "te": 1.9,
+    "ir": 0.2,
+    "beta": 0.98,
+    "vol_s": 15.6,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -7812,6 +11253,23 @@
     "beta": 1.07,
     "vol_s": 19.1,
     "vol_b": 15.7
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.4,
+    "t": 0.13,
+    "p": 0.8934,
+    "cagr_s": 10.52,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.61,
+    "te": 11.2,
+    "ir": 0.04,
+    "beta": 1.14,
+    "vol_s": 21.1,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -8067,6 +11525,23 @@
     "vol_s": 19.4,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.09,
+    "t": -0.06,
+    "p": 0.9541,
+    "cagr_s": 10.87,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.26,
+    "te": 8.43,
+    "ir": -0.01,
+    "beta": 0.92,
+    "vol_s": 16.8,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -8136,7 +11611,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "C",
    "criteria": {
@@ -8269,6 +11744,23 @@
     "beta": 1.17,
     "vol_s": 24.2,
     "vol_b": 18.3
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.36,
+    "t": 0.13,
+    "p": 0.8975,
+    "cagr_s": 10.35,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.78,
+    "te": 11.7,
+    "ir": 0.03,
+    "beta": 1.15,
+    "vol_s": 21.6,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -8457,6 +11949,23 @@
     "vol_s": 19.9,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.12,
+    "t": -0.07,
+    "p": 0.9479,
+    "cagr_s": 10.69,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.44,
+    "te": 8.26,
+    "ir": -0.01,
+    "beta": 0.98,
+    "vol_s": 17.6,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -8526,7 +12035,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "C",
    "criteria": {
@@ -8659,6 +12168,23 @@
     "beta": 0.77,
     "vol_s": 19.0,
     "vol_b": 18.3
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": 0.1,
+    "t": 0.03,
+    "p": 0.9752,
+    "cagr_s": 11.47,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.34,
+    "te": 14.01,
+    "ir": 0.01,
+    "beta": 0.53,
+    "vol_s": 14.5,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -8854,6 +12380,23 @@
     "vol_s": 18.9,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.59,
+    "t": -0.2,
+    "p": 0.8451,
+    "cagr_s": 10.43,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.69,
+    "te": 9.68,
+    "ir": -0.06,
+    "beta": 0.84,
+    "vol_s": 16.3,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -9036,6 +12579,23 @@
     "vol_s": 14.8,
     "vol_b": 15.2
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.24,
+    "t": -0.14,
+    "p": 0.8861,
+    "cagr_s": 10.82,
+    "cagr_b": 10.97,
+    "cagr_diff": -0.15,
+    "te": 7.81,
+    "ir": -0.03,
+    "beta": 0.83,
+    "vol_s": 14.7,
+    "vol_b": 15.4
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -9098,7 +12658,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "C",
    "criteria": {
@@ -9231,6 +12791,23 @@
     "beta": 0.93,
     "vol_s": 18.7,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.1,
+    "t": -0.05,
+    "p": 0.9574,
+    "cagr_s": 11.24,
+    "cagr_b": 11.13,
+    "cagr_diff": 0.11,
+    "te": 8.52,
+    "ir": -0.01,
+    "beta": 0.78,
+    "vol_s": 14.6,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -9434,6 +13011,23 @@
     "vol_s": 15.9,
     "vol_b": 15.7
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.36,
+    "t": -0.99,
+    "p": 0.3228,
+    "cagr_s": 10.69,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.44,
+    "te": 1.51,
+    "ir": -0.24,
+    "beta": 1.01,
+    "vol_s": 16.1,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -9624,6 +13218,23 @@
     "beta": 1.12,
     "vol_s": 22.8,
     "vol_b": 18.0
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.15,
+    "t": -0.05,
+    "p": 0.9625,
+    "cagr_s": 9.9,
+    "cagr_b": 11.13,
+    "cagr_diff": -1.22,
+    "te": 11.43,
+    "ir": -0.01,
+    "beta": 1.12,
+    "vol_s": 21.0,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -9894,6 +13505,23 @@
     "vol_s": 21.2,
     "vol_b": 15.7
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.17,
+    "t": -0.04,
+    "p": 0.9667,
+    "cagr_s": 9.45,
+    "cagr_b": 11.13,
+    "cagr_diff": -1.68,
+    "te": 15.11,
+    "ir": -0.01,
+    "beta": 1.1,
+    "vol_s": 23.0,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -10143,6 +13771,23 @@
     "vol_s": 18.1,
     "vol_b": 18.3
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.4,
+    "t": -0.77,
+    "p": 0.4439,
+    "cagr_s": 10.73,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.4,
+    "te": 2.8,
+    "ir": -0.14,
+    "beta": 0.97,
+    "vol_s": 15.7,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -10319,6 +13964,23 @@
     "vol_s": 21.6,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.88,
+    "t": -0.35,
+    "p": 0.723,
+    "cagr_s": 9.29,
+    "cagr_b": 11.13,
+    "cagr_diff": -1.84,
+    "te": 13.07,
+    "ir": -0.07,
+    "beta": 0.98,
+    "vol_s": 20.3,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -10383,7 +14045,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "C",
    "criteria": {
@@ -10502,6 +14164,23 @@
     "vol_s": 18.1,
     "vol_b": 18.3
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.43,
+    "t": -0.9,
+    "p": 0.3673,
+    "cagr_s": 10.69,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.44,
+    "te": 2.74,
+    "ir": -0.16,
+    "beta": 0.97,
+    "vol_s": 15.7,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -10560,6 +14239,172 @@
    "prereg": "mw_industry_prereg.json",
    "holm_p_hold": 1.0,
    "holm_family": "primary(27)",
+   "holm_p_hold_all": 1.0,
+   "grade": "C",
+   "criteria": {
+    "C1_train": false,
+    "C2_hold_sign": false,
+    "C3_hold_t": false,
+    "C4_roll20": false,
+    "C5_repl": null,
+    "C6_net_cost": false,
+    "C7_multi": false,
+    "C8_sharpe": null
+   }
+  },
+  {
+   "id": "J1_topix17_mom12",
+   "start": 200903,
+   "end": 202608,
+   "turnover_twoway_ann": {
+    "full": 6.82,
+    "hold": 6.82
+   },
+   "full": {
+    "from": 200903,
+    "to": 202608,
+    "years": 17.5,
+    "ex_ann": -0.53,
+    "t": -0.23,
+    "p": 0.8169,
+    "cagr_s": 10.72,
+    "cagr_b": 11.79,
+    "cagr_diff": -1.07,
+    "te": 10.05,
+    "ir": -0.05,
+    "beta": 0.99,
+    "vol_s": 18.6,
+    "vol_b": 15.8
+   },
+   "train": null,
+   "hold": {
+    "from": 200903,
+    "to": 202608,
+    "years": 17.5,
+    "ex_ann": -0.53,
+    "t": -0.23,
+    "p": 0.8169,
+    "cagr_s": 10.72,
+    "cagr_b": 11.79,
+    "cagr_diff": -1.07,
+    "te": 10.05,
+    "ir": -0.05,
+    "beta": 0.99,
+    "vol_s": 18.6,
+    "vol_b": 15.8
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": 0.18,
+    "t": 0.08,
+    "p": 0.9401,
+    "cagr_s": 12.57,
+    "cagr_b": 12.65,
+    "cagr_diff": -0.08,
+    "te": 9.25,
+    "ir": 0.02,
+    "beta": 0.93,
+    "vol_s": 16.3,
+    "vol_b": 14.4
+   },
+   "post_pub": null,
+   "cost_hold": {
+    "from": 200903,
+    "to": 202608,
+    "years": 17.5,
+    "ex_ann": -2.24,
+    "t": -0.97,
+    "p": 0.3311,
+    "cagr_s": 8.86,
+    "cagr_b": 11.79,
+    "cagr_diff": -2.93,
+    "te": 10.05,
+    "ir": -0.22,
+    "beta": 0.99,
+    "vol_s": 18.6,
+    "vol_b": 15.8
+   },
+   "cost_full": {
+    "from": 200903,
+    "to": 202608,
+    "years": 17.5,
+    "ex_ann": -2.24,
+    "t": -0.97,
+    "p": 0.3311,
+    "cagr_s": 8.86,
+    "cagr_b": 11.79,
+    "cagr_diff": -2.93,
+    "te": 10.05,
+    "ir": -0.22,
+    "beta": 0.99,
+    "vol_s": 18.6,
+    "vol_b": 15.8
+   },
+   "cost_unit_twoway": 0.0025,
+   "cost005_hold": {
+    "from": 200903,
+    "to": 202608,
+    "years": 17.5,
+    "ex_ann": -0.87,
+    "t": -0.38,
+    "p": 0.7042,
+    "cagr_s": 10.34,
+    "cagr_b": 11.79,
+    "cagr_diff": -1.45,
+    "te": 10.05,
+    "ir": -0.09,
+    "beta": 0.99,
+    "vol_s": 18.6,
+    "vol_b": 15.8
+   },
+   "fee030_hold_report_only": {
+    "from": 200903,
+    "to": 202608,
+    "years": 17.5,
+    "ex_ann": -2.54,
+    "t": -1.1,
+    "p": 0.2704,
+    "cagr_s": 8.53,
+    "cagr_b": 11.79,
+    "cagr_diff": -3.26,
+    "te": 10.05,
+    "ir": -0.25,
+    "beta": 0.99,
+    "vol_s": 18.6,
+    "vol_b": 15.8
+   },
+   "roll20": null,
+   "dca20": null,
+   "maxdd": -33.9,
+   "maxdd_mkt_same": -26.3,
+   "primary": false,
+   "prereg": "mw_industry_prereg5.json",
+   "family": "prereg5_topix17_real_etf",
+   "rule": "TOPIX-17 業種別ETF 17本から12か月の累積の上位3本を等分・毎月。相手は 1308.T（どちらも Yahoo の調整後終値＝円建て）",
+   "benchmark": "1308.T（上場TOPIX・円建て）",
+   "data_errors_dropped": {
+    "1629.T": [
+     201412,
+     201506,
+     202602,
+     202603
+    ]
+   },
+   "repl_key": null,
+   "repl": null,
+   "repl_detail": null,
+   "holding_last": {
+    "month": 202608,
+    "industries": [
+     "1623.T",
+     "1625.T",
+     "1631.T"
+    ]
+   },
+   "holm_p_hold": 1.0,
+   "holm_family": "mw_industry_prereg5.json(3)",
    "holm_p_hold_all": 1.0,
    "grade": "C",
    "criteria": {
@@ -10692,6 +14537,23 @@
     "beta": 0.66,
     "vol_s": 17.1,
     "vol_b": 18.3
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.66,
+    "t": -0.21,
+    "p": 0.8345,
+    "cagr_s": 10.66,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.47,
+    "te": 14.02,
+    "ir": -0.05,
+    "beta": 0.52,
+    "vol_s": 14.5,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -10871,6 +14733,23 @@
     "beta": 0.98,
     "vol_s": 18.1,
     "vol_b": 18.3
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.76,
+    "t": -1.13,
+    "p": 0.2589,
+    "cagr_s": 10.32,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.8,
+    "te": 3.18,
+    "ir": -0.24,
+    "beta": 0.97,
+    "vol_s": 15.7,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -11062,6 +14941,23 @@
     "beta": 0.93,
     "vol_s": 19.8,
     "vol_b": 18.4
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -0.8,
+    "t": -0.35,
+    "p": 0.7291,
+    "cagr_s": 10.33,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.8,
+    "te": 10.75,
+    "ir": -0.07,
+    "beta": 0.74,
+    "vol_s": 15.4,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -11259,6 +15155,23 @@
     "beta": 0.76,
     "vol_s": 16.0,
     "vol_b": 18.3
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -1.29,
+    "t": -0.62,
+    "p": 0.5365,
+    "cagr_s": 10.2,
+    "cagr_b": 11.13,
+    "cagr_diff": -0.93,
+    "te": 9.93,
+    "ir": -0.13,
+    "beta": 0.63,
+    "vol_s": 12.9,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -11512,6 +15425,23 @@
     "vol_s": 19.8,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -1.76,
+    "t": -0.86,
+    "p": 0.3878,
+    "cagr_s": 8.81,
+    "cagr_b": 11.13,
+    "cagr_diff": -2.32,
+    "te": 8.45,
+    "ir": -0.21,
+    "beta": 1.0,
+    "vol_s": 18.0,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -11646,7 +15576,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "C",
    "criteria": {
@@ -11779,6 +15709,23 @@
     "beta": 1.15,
     "vol_s": 25.4,
     "vol_b": 18.0
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -1.55,
+    "t": -0.34,
+    "p": 0.7333,
+    "cagr_s": 7.81,
+    "cagr_b": 11.13,
+    "cagr_diff": -3.32,
+    "te": 15.49,
+    "ir": -0.1,
+    "beta": 1.11,
+    "vol_s": 23.4,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -12028,6 +15975,23 @@
     "beta": 0.8,
     "vol_s": 16.5,
     "vol_b": 18.3
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -1.85,
+    "t": -0.94,
+    "p": 0.3471,
+    "cagr_s": 9.64,
+    "cagr_b": 11.13,
+    "cagr_diff": -1.48,
+    "te": 9.6,
+    "ir": -0.19,
+    "beta": 0.62,
+    "vol_s": 12.4,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -12289,6 +16253,23 @@
     "vol_s": 21.2,
     "vol_b": 18.4
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -2.02,
+    "t": -0.98,
+    "p": 0.3294,
+    "cagr_s": 8.21,
+    "cagr_b": 11.13,
+    "cagr_diff": -2.92,
+    "te": 9.74,
+    "ir": -0.21,
+    "beta": 1.06,
+    "vol_s": 19.4,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -12439,6 +16420,172 @@
    }
   },
   {
+   "id": "J2_topix17_mom6",
+   "start": 200809,
+   "end": 202608,
+   "turnover_twoway_ann": {
+    "full": 8.6,
+    "hold": 8.6
+   },
+   "full": {
+    "from": 200809,
+    "to": 202608,
+    "years": 18.0,
+    "ex_ann": -2.06,
+    "t": -1.08,
+    "p": 0.2796,
+    "cagr_s": 6.93,
+    "cagr_b": 9.43,
+    "cagr_diff": -2.5,
+    "te": 9.44,
+    "ir": -0.22,
+    "beta": 0.95,
+    "vol_s": 18.3,
+    "vol_b": 16.6
+   },
+   "train": null,
+   "hold": {
+    "from": 200809,
+    "to": 202608,
+    "years": 18.0,
+    "ex_ann": -2.06,
+    "t": -1.08,
+    "p": 0.2796,
+    "cagr_s": 6.93,
+    "cagr_b": 9.43,
+    "cagr_diff": -2.5,
+    "te": 9.44,
+    "ir": -0.22,
+    "beta": 0.95,
+    "vol_s": 18.3,
+    "vol_b": 16.6
+   },
+   "recent": {
+    "from": 201307,
+    "to": 202608,
+    "years": 13.2,
+    "ex_ann": -1.54,
+    "t": -0.77,
+    "p": 0.4405,
+    "cagr_s": 10.64,
+    "cagr_b": 12.65,
+    "cagr_diff": -2.01,
+    "te": 9.05,
+    "ir": -0.17,
+    "beta": 0.95,
+    "vol_s": 16.4,
+    "vol_b": 14.4
+   },
+   "post_pub": null,
+   "cost_hold": {
+    "from": 200809,
+    "to": 202608,
+    "years": 18.0,
+    "ex_ann": -4.21,
+    "t": -2.21,
+    "p": 0.027,
+    "cagr_s": 4.67,
+    "cagr_b": 9.43,
+    "cagr_diff": -4.76,
+    "te": 9.44,
+    "ir": -0.45,
+    "beta": 0.95,
+    "vol_s": 18.3,
+    "vol_b": 16.6
+   },
+   "cost_full": {
+    "from": 200809,
+    "to": 202608,
+    "years": 18.0,
+    "ex_ann": -4.21,
+    "t": -2.21,
+    "p": 0.027,
+    "cagr_s": 4.67,
+    "cagr_b": 9.43,
+    "cagr_diff": -4.76,
+    "te": 9.44,
+    "ir": -0.45,
+    "beta": 0.95,
+    "vol_s": 18.3,
+    "vol_b": 16.6
+   },
+   "cost_unit_twoway": 0.0025,
+   "cost005_hold": {
+    "from": 200809,
+    "to": 202608,
+    "years": 18.0,
+    "ex_ann": -2.49,
+    "t": -1.31,
+    "p": 0.1911,
+    "cagr_s": 6.48,
+    "cagr_b": 9.43,
+    "cagr_diff": -2.95,
+    "te": 9.44,
+    "ir": -0.26,
+    "beta": 0.95,
+    "vol_s": 18.3,
+    "vol_b": 16.6
+   },
+   "fee030_hold_report_only": {
+    "from": 200809,
+    "to": 202608,
+    "years": 18.0,
+    "ex_ann": -4.51,
+    "t": -2.37,
+    "p": 0.0178,
+    "cagr_s": 4.35,
+    "cagr_b": 9.43,
+    "cagr_diff": -5.08,
+    "te": 9.44,
+    "ir": -0.48,
+    "beta": 0.95,
+    "vol_s": 18.3,
+    "vol_b": 16.6
+   },
+   "roll20": null,
+   "dca20": null,
+   "maxdd": -47.7,
+   "maxdd_mkt_same": -33.3,
+   "primary": false,
+   "prereg": "mw_industry_prereg5.json",
+   "family": "prereg5_topix17_real_etf",
+   "rule": "同じく6か月の累積の上位3本",
+   "benchmark": "1308.T（上場TOPIX・円建て）",
+   "data_errors_dropped": {
+    "1629.T": [
+     201412,
+     201506,
+     202602,
+     202603
+    ]
+   },
+   "repl_key": null,
+   "repl": null,
+   "repl_detail": null,
+   "holding_last": {
+    "month": 202608,
+    "industries": [
+     "1625.T",
+     "1626.T",
+     "1631.T"
+    ]
+   },
+   "holm_p_hold": 0.8388,
+   "holm_family": "mw_industry_prereg5.json(3)",
+   "holm_p_hold_all": 1.0,
+   "grade": "C",
+   "criteria": {
+    "C1_train": false,
+    "C2_hold_sign": false,
+    "C3_hold_t": false,
+    "C4_roll20": false,
+    "C5_repl": null,
+    "C6_net_cost": false,
+    "C7_multi": false,
+    "C8_sharpe": null
+   }
+  },
+  {
    "id": "R4_spdr_mom6",
    "start": 199907,
    "end": 202608,
@@ -12543,6 +16690,23 @@
     "vol_s": 14.6,
     "vol_b": 15.1
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -2.51,
+    "t": -1.68,
+    "p": 0.0938,
+    "cagr_s": 8.37,
+    "cagr_b": 10.97,
+    "cagr_diff": -2.6,
+    "te": 8.03,
+    "ir": -0.31,
+    "beta": 0.81,
+    "vol_s": 14.6,
+    "vol_b": 15.4
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -12605,7 +16769,7 @@
     ]
    },
    "holm_p_hold": 1.0,
-   "holm_family": "prereg2(24)",
+   "holm_family": "mw_industry_prereg2.json(24)",
    "holm_p_hold_all": 1.0,
    "grade": "C",
    "criteria": {
@@ -12723,6 +16887,23 @@
     "beta": 0.83,
     "vol_s": 17.0,
     "vol_b": 18.3
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -2.51,
+    "t": -1.36,
+    "p": 0.1754,
+    "cagr_s": 8.85,
+    "cagr_b": 11.13,
+    "cagr_diff": -2.28,
+    "te": 8.88,
+    "ir": -0.28,
+    "beta": 0.68,
+    "vol_s": 13.0,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -12984,6 +17165,23 @@
     "vol_s": 22.1,
     "vol_b": 18.3
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -2.76,
+    "t": -1.33,
+    "p": 0.1834,
+    "cagr_s": 7.47,
+    "cagr_b": 11.13,
+    "cagr_diff": -3.66,
+    "te": 9.52,
+    "ir": -0.29,
+    "beta": 1.05,
+    "vol_s": 19.2,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -13185,6 +17383,23 @@
     "beta": 0.81,
     "vol_s": 15.7,
     "vol_b": 18.0
+   },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -3.05,
+    "t": -1.62,
+    "p": 0.1053,
+    "cagr_s": 8.25,
+    "cagr_b": 11.13,
+    "cagr_diff": -2.88,
+    "te": 8.38,
+    "ir": -0.36,
+    "beta": 0.7,
+    "vol_s": 13.1,
+    "vol_b": 15.9
    },
    "fee030_hold_report_only": {
     "from": 200701,
@@ -13455,6 +17670,23 @@
     "vol_s": 14.3,
     "vol_b": 18.0
    },
+   "cost_unit_twoway": 0.0005,
+   "cost005_hold": {
+    "from": 200701,
+    "to": 202608,
+    "years": 19.7,
+    "ex_ann": -3.21,
+    "t": -1.38,
+    "p": 0.1677,
+    "cagr_s": 8.18,
+    "cagr_b": 11.13,
+    "cagr_diff": -2.95,
+    "te": 10.48,
+    "ir": -0.31,
+    "beta": 0.58,
+    "vol_s": 12.3,
+    "vol_b": 15.9
+   },
    "fee030_hold_report_only": {
     "from": 200701,
     "to": 202608,
@@ -13601,6 +17833,396 @@
   }
  ],
  "replication_raw": {
+  "mom1": {
+   "jpn": {
+    "from": 199908,
+    "to": 202512,
+    "months": 317,
+    "counted": true,
+    "ex_ann": 2.63,
+    "t": 1.44,
+    "cagr_diff": 2.67
+   },
+   "gbr": {
+    "from": 199908,
+    "to": 202512,
+    "months": 317,
+    "counted": true,
+    "ex_ann": 4.38,
+    "t": 2.02,
+    "cagr_diff": 4.27
+   },
+   "can": {
+    "from": 199908,
+    "to": 202512,
+    "months": 317,
+    "counted": true,
+    "ex_ann": 4.49,
+    "t": 1.74,
+    "cagr_diff": 4.73
+   },
+   "fra": {
+    "from": 199908,
+    "to": 202512,
+    "months": 317,
+    "counted": true,
+    "ex_ann": 3.19,
+    "t": 1.83,
+    "cagr_diff": 3.1
+   },
+   "deu": {
+    "from": 199908,
+    "to": 202512,
+    "months": 317,
+    "counted": true,
+    "ex_ann": -0.2,
+    "t": -0.13,
+    "cagr_diff": 0.02
+   },
+   "aus": {
+    "from": 199908,
+    "to": 202512,
+    "months": 317,
+    "counted": true,
+    "ex_ann": 0.35,
+    "t": 0.24,
+    "cagr_diff": 0.32
+   },
+   "che": {
+    "from": 199908,
+    "to": 202512,
+    "months": 317,
+    "counted": true,
+    "ex_ann": 5.91,
+    "t": 3.64,
+    "cagr_diff": 6.0
+   }
+  },
+  "mom12_7": {
+   "jpn": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 2.1,
+    "t": 0.97,
+    "cagr_diff": 1.99
+   },
+   "gbr": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 3.84,
+    "t": 2.34,
+    "cagr_diff": 3.87
+   },
+   "can": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.1,
+    "t": 0.46,
+    "cagr_diff": 1.1
+   },
+   "fra": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 0.34,
+    "t": 0.22,
+    "cagr_diff": 0.4
+   },
+   "deu": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.66,
+    "t": 1.02,
+    "cagr_diff": 1.66
+   },
+   "aus": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.79,
+    "t": 1.05,
+    "cagr_diff": 1.91
+   },
+   "che": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 3.43,
+    "t": 2.19,
+    "cagr_diff": 3.31
+   }
+  },
+  "resmom": {
+   "jpn": {
+    "from": 200207,
+    "to": 202512,
+    "months": 282,
+    "counted": true,
+    "ex_ann": -1.1,
+    "t": -0.78,
+    "cagr_diff": -1.2
+   },
+   "gbr": {
+    "from": 200207,
+    "to": 202512,
+    "months": 282,
+    "counted": true,
+    "ex_ann": 3.77,
+    "t": 2.62,
+    "cagr_diff": 3.87
+   },
+   "can": {
+    "from": 200207,
+    "to": 202512,
+    "months": 282,
+    "counted": true,
+    "ex_ann": -0.3,
+    "t": -0.15,
+    "cagr_diff": -0.57
+   },
+   "fra": {
+    "from": 200207,
+    "to": 202512,
+    "months": 282,
+    "counted": true,
+    "ex_ann": -0.09,
+    "t": -0.07,
+    "cagr_diff": -0.01
+   },
+   "deu": {
+    "from": 200207,
+    "to": 202512,
+    "months": 282,
+    "counted": true,
+    "ex_ann": 1.17,
+    "t": 1.17,
+    "cagr_diff": 1.26
+   },
+   "aus": {
+    "from": 200207,
+    "to": 202512,
+    "months": 282,
+    "counted": true,
+    "ex_ann": 4.02,
+    "t": 2.66,
+    "cagr_diff": 4.31
+   },
+   "che": {
+    "from": 200207,
+    "to": 202512,
+    "months": 282,
+    "counted": true,
+    "ex_ann": 3.9,
+    "t": 3.31,
+    "cagr_diff": 3.77
+   }
+  },
+  "invvol": {
+   "jpn": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.79,
+    "t": 0.91,
+    "cagr_diff": 1.86
+   },
+   "gbr": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 3.08,
+    "t": 2.26,
+    "cagr_diff": 3.43
+   },
+   "can": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 2.44,
+    "t": 1.16,
+    "cagr_diff": 2.93
+   },
+   "fra": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.15,
+    "t": 0.78,
+    "cagr_diff": 1.61
+   },
+   "deu": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 2.44,
+    "t": 1.77,
+    "cagr_diff": 3.0
+   },
+   "aus": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.33,
+    "t": 0.94,
+    "cagr_diff": 1.53
+   },
+   "che": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 2.1,
+    "t": 1.38,
+    "cagr_diff": 2.18
+   }
+  },
+  "multi": {
+   "jpn": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 2.82,
+    "t": 1.71,
+    "cagr_diff": 2.91
+   },
+   "gbr": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 3.37,
+    "t": 2.78,
+    "cagr_diff": 3.72
+   },
+   "can": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 2.21,
+    "t": 0.94,
+    "cagr_diff": 2.54
+   },
+   "fra": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.88,
+    "t": 1.18,
+    "cagr_diff": 2.18
+   },
+   "deu": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.52,
+    "t": 1.21,
+    "cagr_diff": 1.99
+   },
+   "aus": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 2.63,
+    "t": 1.69,
+    "cagr_diff": 2.94
+   },
+   "che": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 3.36,
+    "t": 2.78,
+    "cagr_diff": 3.47
+   }
+  },
+  "mom12q": {
+   "jpn": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.75,
+    "t": 0.91,
+    "cagr_diff": 1.65
+   },
+   "gbr": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 2.83,
+    "t": 1.92,
+    "cagr_diff": 2.84
+   },
+   "can": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.68,
+    "t": 0.72,
+    "cagr_diff": 1.77
+   },
+   "fra": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 0.23,
+    "t": 0.18,
+    "cagr_diff": 0.46
+   },
+   "deu": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.92,
+    "t": 1.36,
+    "cagr_diff": 2.29
+   },
+   "aus": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 0.73,
+    "t": 0.48,
+    "cagr_diff": 0.7
+   },
+   "che": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 2.24,
+    "t": 1.43,
+    "cagr_diff": 2.21
+   }
+  },
   "def": {
    "jpn": {
     "from": 199907,
@@ -14310,6 +18932,71 @@
     "t": 0.58,
     "cagr_diff": 0.69
    }
+  },
+  "dual": {
+   "jpn": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.95,
+    "t": 1.5,
+    "cagr_diff": 1.85
+   },
+   "gbr": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 3.16,
+    "t": 2.44,
+    "cagr_diff": 3.31
+   },
+   "can": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 3.21,
+    "t": 1.52,
+    "cagr_diff": 3.36
+   },
+   "fra": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 2.24,
+    "t": 1.86,
+    "cagr_diff": 2.53
+   },
+   "deu": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.42,
+    "t": 1.18,
+    "cagr_diff": 1.7
+   },
+   "aus": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 1.49,
+    "t": 1.12,
+    "cagr_diff": 1.38
+   },
+   "che": {
+    "from": 200007,
+    "to": 202512,
+    "months": 306,
+    "counted": true,
+    "ex_ann": 2.73,
+    "t": 1.99,
+    "cagr_diff": 2.69
+   }
   }
  },
  "diagnostics_post_hoc_not_graded": {
@@ -14430,6 +19117,1673 @@
    "p95": 1.71,
    "max": 4.03,
    "n": 200
+  },
+  "pooled_international": {
+   "mom1": {
+    "countries": 7,
+    "from": 199908,
+    "to": 202512,
+    "ex_ann": 2.97,
+    "t": 2.5
+   },
+   "mom12_7": {
+    "countries": 7,
+    "from": 200007,
+    "to": 202512,
+    "ex_ann": 2.04,
+    "t": 1.96
+   },
+   "resmom": {
+    "countries": 7,
+    "from": 200207,
+    "to": 202512,
+    "ex_ann": 1.62,
+    "t": 2.54
+   },
+   "invvol": {
+    "countries": 7,
+    "from": 200007,
+    "to": 202512,
+    "ex_ann": 2.05,
+    "t": 2.07
+   },
+   "multi": {
+    "countries": 7,
+    "from": 200007,
+    "to": 202512,
+    "ex_ann": 2.54,
+    "t": 2.64
+   },
+   "mom12q": {
+    "countries": 7,
+    "from": 200007,
+    "to": 202512,
+    "ex_ann": 1.63,
+    "t": 1.8
+   },
+   "def": {
+    "countries": 6,
+    "from": 200607,
+    "to": 202512,
+    "ex_ann": -0.92,
+    "t": -0.61
+   },
+   "siegel": {
+    "countries": 7,
+    "from": 199907,
+    "to": 202512,
+    "ex_ann": -0.04,
+    "t": -0.02
+   },
+   "lowvol": {
+    "countries": 7,
+    "from": 200407,
+    "to": 202512,
+    "ex_ann": 0.21,
+    "t": 0.18
+   },
+   "rev60": {
+    "countries": 7,
+    "from": 200407,
+    "to": 202512,
+    "ex_ann": -0.23,
+    "t": -0.2
+   },
+   "rev120": {
+    "countries": 7,
+    "from": 200907,
+    "to": 202512,
+    "ex_ann": 1.55,
+    "t": 1.57
+   },
+   "mom6": {
+    "countries": 7,
+    "from": 200001,
+    "to": 202512,
+    "ex_ann": 1.99,
+    "t": 1.8
+   },
+   "mom12": {
+    "countries": 7,
+    "from": 200007,
+    "to": 202512,
+    "ex_ann": 1.99,
+    "t": 2.08
+   },
+   "mom12a": {
+    "countries": 7,
+    "from": 200007,
+    "to": 202512,
+    "ex_ann": 0.17,
+    "t": 0.18
+   },
+   "seas": {
+    "countries": 7,
+    "from": 200907,
+    "to": 202512,
+    "ex_ann": 0.18,
+    "t": 0.21
+   },
+   "mom6_state": {
+    "countries": 7,
+    "from": 200001,
+    "to": 202512,
+    "ex_ann": 1.87,
+    "t": 1.88
+   },
+   "mom12_state": {
+    "countries": 7,
+    "from": 200007,
+    "to": 202512,
+    "ex_ann": 2.07,
+    "t": 3.09
+   },
+   "dual": {
+    "countries": 7,
+    "from": 200007,
+    "to": 202512,
+    "ex_ann": 2.31,
+    "t": 3.13
+   }
+  },
+  "us_gics_jkp": {
+   "mom1": {
+    "full": {
+     "from": 199908,
+     "to": 202512,
+     "ex_ann": 0.29,
+     "t": 0.2,
+     "cagr_diff": 0.34,
+     "te": 9.23
+    },
+    "train": {
+     "from": 199908,
+     "to": 200612,
+     "ex_ann": 0.32,
+     "t": 0.11,
+     "cagr_diff": 0.1,
+     "te": 10.62
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "ex_ann": 0.28,
+     "t": 0.17,
+     "cagr_diff": 0.44,
+     "te": 8.65
+    }
+   },
+   "mom12_7": {
+    "full": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 1.33,
+     "t": 0.93,
+     "cagr_diff": 1.4,
+     "te": 8.63
+    },
+    "train": {
+     "from": 200007,
+     "to": 200612,
+     "ex_ann": 1.9,
+     "t": 0.72,
+     "cagr_diff": 1.95,
+     "te": 10.15
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "ex_ann": 1.13,
+     "t": 0.67,
+     "cagr_diff": 1.19,
+     "te": 8.07
+    }
+   },
+   "resmom": {
+    "full": {
+     "from": 200207,
+     "to": 202512,
+     "ex_ann": 1.35,
+     "t": 0.8,
+     "cagr_diff": 1.36,
+     "te": 7.54
+    },
+    "train": {
+     "from": 200207,
+     "to": 200612,
+     "ex_ann": 0.83,
+     "t": 0.37,
+     "cagr_diff": 0.57,
+     "te": 6.21
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "ex_ann": 1.47,
+     "t": 0.73,
+     "cagr_diff": 1.54,
+     "te": 7.83
+    }
+   },
+   "invvol": {
+    "full": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 0.93,
+     "t": 0.59,
+     "cagr_diff": 1.19,
+     "te": 9.06
+    },
+    "train": {
+     "from": 200007,
+     "to": 200612,
+     "ex_ann": 4.2,
+     "t": 1.06,
+     "cagr_diff": 4.59,
+     "te": 11.35
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "ex_ann": -0.19,
+     "t": -0.12,
+     "cagr_diff": -0.05,
+     "te": 8.13
+    }
+   },
+   "multi": {
+    "full": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 1.21,
+     "t": 0.75,
+     "cagr_diff": 1.42,
+     "te": 8.47
+    },
+    "train": {
+     "from": 200007,
+     "to": 200612,
+     "ex_ann": 4.84,
+     "t": 1.17,
+     "cagr_diff": 5.16,
+     "te": 10.63
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "ex_ann": -0.03,
+     "t": -0.02,
+     "cagr_diff": 0.06,
+     "te": 7.58
+    }
+   },
+   "mom12q": {
+    "full": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": -0.71,
+     "t": -0.39,
+     "cagr_diff": -0.82,
+     "te": 9.28
+    },
+    "train": {
+     "from": 200007,
+     "to": 200612,
+     "ex_ann": 1.17,
+     "t": 0.38,
+     "cagr_diff": 1.34,
+     "te": 10.21
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "ex_ann": -1.35,
+     "t": -0.63,
+     "cagr_diff": -1.62,
+     "te": 8.96
+    }
+   },
+   "lowvol": {
+    "full": {
+     "from": 200407,
+     "to": 202512,
+     "ex_ann": -2.71,
+     "t": -1.53,
+     "cagr_diff": -2.38,
+     "te": 9.05
+    },
+    "train": {
+     "from": 200407,
+     "to": 200612,
+     "ex_ann": -3.19,
+     "t": -2.09,
+     "cagr_diff": -3.27,
+     "te": 5.06
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "ex_ann": -2.65,
+     "t": -1.33,
+     "cagr_diff": -2.26,
+     "te": 9.45
+    }
+   },
+   "rev60": {
+    "full": {
+     "from": 200407,
+     "to": 202512,
+     "ex_ann": 0.98,
+     "t": 0.49,
+     "cagr_diff": 0.66,
+     "te": 8.57
+    },
+    "train": {
+     "from": 200407,
+     "to": 200612,
+     "ex_ann": -0.76,
+     "t": -0.56,
+     "cagr_diff": -0.98,
+     "te": 4.18
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "ex_ann": 1.2,
+     "t": 0.54,
+     "cagr_diff": 0.88,
+     "te": 9.0
+    }
+   },
+   "rev120": {
+    "full": {
+     "from": 200907,
+     "to": 202512,
+     "ex_ann": 2.51,
+     "t": 1.01,
+     "cagr_diff": 2.5,
+     "te": 8.18
+    },
+    "train": null,
+    "hold": {
+     "from": 200907,
+     "to": 202512,
+     "ex_ann": 2.51,
+     "t": 1.01,
+     "cagr_diff": 2.5,
+     "te": 8.18
+    }
+   },
+   "mom6": {
+    "full": {
+     "from": 200001,
+     "to": 202512,
+     "ex_ann": 0.56,
+     "t": 0.32,
+     "cagr_diff": 0.59,
+     "te": 9.21
+    },
+    "train": {
+     "from": 200001,
+     "to": 200612,
+     "ex_ann": 4.52,
+     "t": 1.37,
+     "cagr_diff": 4.65,
+     "te": 11.37
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "ex_ann": -0.9,
+     "t": -0.48,
+     "cagr_diff": -1.01,
+     "te": 8.27
+    }
+   },
+   "mom12": {
+    "full": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 1.17,
+     "t": 0.74,
+     "cagr_diff": 1.35,
+     "te": 9.2
+    },
+    "train": {
+     "from": 200007,
+     "to": 200612,
+     "ex_ann": 3.9,
+     "t": 1.15,
+     "cagr_diff": 4.16,
+     "te": 11.28
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "ex_ann": 0.24,
+     "t": 0.14,
+     "cagr_diff": 0.33,
+     "te": 8.39
+    }
+   },
+   "mom12a": {
+    "full": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": -0.34,
+     "t": -0.22,
+     "cagr_diff": -0.56,
+     "te": 8.3
+    },
+    "train": {
+     "from": 200007,
+     "to": 200612,
+     "ex_ann": 0.94,
+     "t": 0.39,
+     "cagr_diff": 0.98,
+     "te": 8.37
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "ex_ann": -0.79,
+     "t": -0.41,
+     "cagr_diff": -1.13,
+     "te": 8.29
+    }
+   },
+   "seas": {
+    "full": {
+     "from": 200907,
+     "to": 202512,
+     "ex_ann": -2.46,
+     "t": -1.58,
+     "cagr_diff": -2.83,
+     "te": 6.42
+    },
+    "train": null,
+    "hold": {
+     "from": 200907,
+     "to": 202512,
+     "ex_ann": -2.46,
+     "t": -1.58,
+     "cagr_diff": -2.83,
+     "te": 6.42
+    }
+   }
+  },
+  "skip_month_checks": {
+   "unseen16_mom12_skip1": {
+    "positive": "16/16",
+    "pooled_ex_ann": 3.52,
+    "t": 4.62,
+    "hold_ex_ann": 3.42,
+    "hold_t": 3.73
+   },
+   "unseen16_mom6_skip1": {
+    "positive": "15/16",
+    "pooled_ex_ann": 3.72,
+    "t": 4.67,
+    "hold_ex_ann": 3.48,
+    "hold_t": 3.77
+   },
+   "seen7_mom12_skip1": {
+    "positive": "6/7",
+    "pooled_ex_ann": 1.83,
+    "t": 1.96,
+    "hold_ex_ann": 1.39,
+    "hold_t": 1.36
+   },
+   "seen7_mom6_skip1": {
+    "positive": "7/7",
+    "pooled_ex_ann": 1.73,
+    "t": 1.58,
+    "hold_ex_ann": 0.57,
+    "hold_t": 0.53
+   },
+   "us49_mom12_skip1_top5": {
+    "full": {
+     "ex_ann": 6.58,
+     "t": 5.03,
+     "cagr_diff": 6.41
+    },
+    "train": {
+     "ex_ann": 7.56,
+     "t": 5.3,
+     "cagr_diff": 7.6
+    },
+    "hold": {
+     "ex_ann": 2.62,
+     "t": 0.85,
+     "cagr_diff": 1.67
+    }
+   },
+   "us49_mom12_skip1_top10": {
+    "full": {
+     "ex_ann": 5.05,
+     "t": 5.29,
+     "cagr_diff": 5.14
+    },
+    "train": {
+     "ex_ann": 5.96,
+     "t": 5.6,
+     "cagr_diff": 6.19
+    },
+    "hold": {
+     "ex_ann": 1.4,
+     "t": 0.71,
+     "cagr_diff": 0.98
+    }
+   },
+   "us49_mom6_skip1_top5": {
+    "full": {
+     "ex_ann": 3.62,
+     "t": 2.49,
+     "cagr_diff": 3.11
+    },
+    "train": {
+     "ex_ann": 4.19,
+     "t": 2.55,
+     "cagr_diff": 3.83
+    },
+    "hold": {
+     "ex_ann": 1.27,
+     "t": 0.41,
+     "cagr_diff": 0.22
+    }
+   }
+  }
+ },
+ "unseen_panel_prereg4": {
+  "prereg": "mw_industry_prereg4.json",
+  "prereg_commit": "0d49044d8dcc69b98b109b52b9e81b2dbe9623c2",
+  "results": {
+   "mom12": {
+    "per_country": {
+     "chn": {
+      "from": 200201,
+      "to": 202512,
+      "months": 288,
+      "counted": true,
+      "ex_ann": 4.09,
+      "t": 2.53
+     },
+     "hkg": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 7.04,
+      "t": 3.07
+     },
+     "idn": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 7.38,
+      "t": 2.35
+     },
+     "ind": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 0.44,
+      "t": 0.2
+     },
+     "isr": {
+      "from": 200204,
+      "to": 202512,
+      "months": 285,
+      "counted": true,
+      "ex_ann": 4.9,
+      "t": 2.28
+     },
+     "ita": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 4.15,
+      "t": 1.8
+     },
+     "kor": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 3.79,
+      "t": 1.5
+     },
+     "mys": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 2.94,
+      "t": 1.7
+     },
+     "nor": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 1.41,
+      "t": 0.69
+     },
+     "pak": {
+      "from": 200201,
+      "to": 202512,
+      "months": 288,
+      "counted": true,
+      "ex_ann": 5.06,
+      "t": 2.52
+     },
+     "pol": {
+      "from": 200201,
+      "to": 202512,
+      "months": 288,
+      "counted": true,
+      "ex_ann": 3.19,
+      "t": 1.46
+     },
+     "rus": {
+      "from": 200402,
+      "to": 202207,
+      "months": 222,
+      "counted": true,
+      "ex_ann": 5.14,
+      "t": 1.83
+     },
+     "sgp": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 2.28,
+      "t": 1.76
+     },
+     "swe": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 1.78,
+      "t": 0.77
+     },
+     "tha": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 5.27,
+      "t": 2.35
+     },
+     "vnm": {
+      "from": 200908,
+      "to": 202512,
+      "months": 197,
+      "counted": true,
+      "ex_ann": 8.38,
+      "t": 2.91
+     }
+    },
+    "counted": 16,
+    "positive": 16,
+    "pooled_all": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 4.13,
+     "t": 5.74,
+     "hold_2007_ex_ann": 4.17,
+     "hold_2007_t": 4.95
+    },
+    "pooled_developed": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 3.64,
+     "t": 4.11,
+     "hold_2007_ex_ann": 3.62,
+     "hold_2007_t": 3.72
+    },
+    "positive_developed": "6/6",
+    "pooled_emerging": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 4.43,
+     "t": 5.02,
+     "hold_2007_ex_ann": 4.49,
+     "hold_2007_t": 4.16
+    },
+    "positive_emerging": "10/10",
+    "pass_line": true
+   },
+   "mom6": {
+    "per_country": {
+     "chn": {
+      "from": 200107,
+      "to": 202512,
+      "months": 294,
+      "counted": true,
+      "ex_ann": 2.58,
+      "t": 1.58
+     },
+     "hkg": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 8.22,
+      "t": 3.83
+     },
+     "idn": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 6.79,
+      "t": 2.11
+     },
+     "ind": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 3.42,
+      "t": 2.06
+     },
+     "isr": {
+      "from": 200110,
+      "to": 202512,
+      "months": 291,
+      "counted": true,
+      "ex_ann": 8.0,
+      "t": 3.68
+     },
+     "ita": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 4.32,
+      "t": 2.37
+     },
+     "kor": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 2.91,
+      "t": 1.22
+     },
+     "mys": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 7.26,
+      "t": 4.74
+     },
+     "nor": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 0.93,
+      "t": 0.38
+     },
+     "pak": {
+      "from": 200107,
+      "to": 202512,
+      "months": 294,
+      "counted": true,
+      "ex_ann": 4.19,
+      "t": 2.14
+     },
+     "pol": {
+      "from": 200107,
+      "to": 202512,
+      "months": 294,
+      "counted": true,
+      "ex_ann": 3.19,
+      "t": 1.29
+     },
+     "rus": {
+      "from": 200204,
+      "to": 202207,
+      "months": 244,
+      "counted": true,
+      "ex_ann": 5.21,
+      "t": 1.79
+     },
+     "sgp": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 2.22,
+      "t": 1.46
+     },
+     "swe": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 3.06,
+      "t": 1.07
+     },
+     "tha": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 6.71,
+      "t": 3.1
+     },
+     "vnm": {
+      "from": 200902,
+      "to": 202512,
+      "months": 203,
+      "counted": true,
+      "ex_ann": 8.71,
+      "t": 4.19
+     }
+    },
+    "counted": 16,
+    "positive": 16,
+    "pooled_all": {
+     "from": 200001,
+     "to": 202512,
+     "ex_ann": 4.89,
+     "t": 6.19,
+     "hold_2007_ex_ann": 4.94,
+     "hold_2007_t": 5.4
+    },
+    "pooled_developed": {
+     "from": 200001,
+     "to": 202512,
+     "ex_ann": 4.52,
+     "t": 4.59,
+     "hold_2007_ex_ann": 4.53,
+     "hold_2007_t": 4.18
+    },
+    "positive_developed": "6/6",
+    "pooled_emerging": {
+     "from": 200001,
+     "to": 202512,
+     "ex_ann": 5.08,
+     "t": 5.63,
+     "hold_2007_ex_ann": 5.19,
+     "hold_2007_t": 5.0
+    },
+    "positive_emerging": "10/10",
+    "pass_line": true
+   },
+   "mom12_state": {
+    "per_country": {
+     "chn": {
+      "from": 200201,
+      "to": 202512,
+      "months": 288,
+      "counted": true,
+      "ex_ann": 1.31,
+      "t": 1.16
+     },
+     "hkg": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 6.49,
+      "t": 3.12
+     },
+     "idn": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 5.81,
+      "t": 1.97
+     },
+     "ind": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 1.53,
+      "t": 1.31
+     },
+     "isr": {
+      "from": 200204,
+      "to": 202512,
+      "months": 285,
+      "counted": true,
+      "ex_ann": 6.22,
+      "t": 3.57
+     },
+     "ita": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 2.17,
+      "t": 1.28
+     },
+     "kor": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 3.49,
+      "t": 1.6
+     },
+     "mys": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 1.17,
+      "t": 1.01
+     },
+     "nor": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": -0.05,
+      "t": -0.03
+     },
+     "pak": {
+      "from": 200201,
+      "to": 202512,
+      "months": 288,
+      "counted": true,
+      "ex_ann": 3.69,
+      "t": 2.07
+     },
+     "pol": {
+      "from": 200201,
+      "to": 202512,
+      "months": 288,
+      "counted": true,
+      "ex_ann": 1.59,
+      "t": 1.11
+     },
+     "rus": {
+      "from": 200402,
+      "to": 202207,
+      "months": 222,
+      "counted": true,
+      "ex_ann": 2.54,
+      "t": 0.91
+     },
+     "sgp": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 1.0,
+      "t": 0.91
+     },
+     "swe": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 1.55,
+      "t": 0.99
+     },
+     "tha": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 4.68,
+      "t": 2.48
+     },
+     "vnm": {
+      "from": 200908,
+      "to": 202512,
+      "months": 197,
+      "counted": true,
+      "ex_ann": 4.35,
+      "t": 1.77
+     }
+    },
+    "counted": 16,
+    "positive": 15,
+    "pooled_all": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 3.0,
+     "t": 5.54,
+     "hold_2007_ex_ann": 3.16,
+     "hold_2007_t": 5.63
+    },
+    "pooled_developed": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 2.91,
+     "t": 4.27,
+     "hold_2007_ex_ann": 3.15,
+     "hold_2007_t": 4.22
+    },
+    "positive_developed": "5/6",
+    "pooled_emerging": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 3.06,
+     "t": 4.78,
+     "hold_2007_ex_ann": 3.18,
+     "hold_2007_t": 4.44
+    },
+    "positive_emerging": "10/10",
+    "pass_line": true
+   },
+   "ew_sectors": {
+    "per_country": {
+     "chn": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": 1.11,
+      "t": 1.32
+     },
+     "hkg": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": 1.25,
+      "t": 1.17
+     },
+     "idn": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": 0.54,
+      "t": 0.38
+     },
+     "ind": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": 0.44,
+      "t": 0.57
+     },
+     "isr": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": 1.32,
+      "t": 0.99
+     },
+     "ita": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": 0.91,
+      "t": 0.72
+     },
+     "kor": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": 1.06,
+      "t": 0.71
+     },
+     "mys": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": 0.35,
+      "t": 0.42
+     },
+     "nor": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": 0.59,
+      "t": 0.36
+     },
+     "pak": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": 0.59,
+      "t": 0.37
+     },
+     "pol": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": 0.18,
+      "t": 0.12
+     },
+     "rus": {
+      "from": 200101,
+      "to": 202207,
+      "months": 259,
+      "counted": true,
+      "ex_ann": -0.06,
+      "t": -0.02
+     },
+     "sgp": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": -1.68,
+      "t": -1.56
+     },
+     "swe": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": 1.37,
+      "t": 0.9
+     },
+     "tha": {
+      "from": 199907,
+      "to": 202512,
+      "months": 318,
+      "counted": true,
+      "ex_ann": 1.38,
+      "t": 1.15
+     },
+     "vnm": {
+      "from": 200705,
+      "to": 202512,
+      "months": 224,
+      "counted": true,
+      "ex_ann": -0.37,
+      "t": -0.19
+     }
+    },
+    "counted": 16,
+    "positive": 13,
+    "pooled_all": {
+     "from": 199907,
+     "to": 202512,
+     "ex_ann": 0.56,
+     "t": 1.11,
+     "hold_2007_ex_ann": 0.55,
+     "hold_2007_t": 0.98
+    },
+    "pooled_developed": {
+     "from": 199907,
+     "to": 202512,
+     "ex_ann": 0.63,
+     "t": 0.86,
+     "hold_2007_ex_ann": 0.9,
+     "hold_2007_t": 1.13
+    },
+    "positive_developed": "5/6",
+    "pooled_emerging": {
+     "from": 199907,
+     "to": 202512,
+     "ex_ann": 0.56,
+     "t": 1.11,
+     "hold_2007_ex_ann": 0.34,
+     "hold_2007_t": 0.61
+    },
+    "positive_emerging": "8/10"
+   },
+   "mom12_minus_ew": {
+    "per_country": {
+     "chn": {
+      "from": 200201,
+      "to": 202512,
+      "months": 288,
+      "counted": true,
+      "ex_ann": 3.22,
+      "t": 1.88
+     },
+     "hkg": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 5.28,
+      "t": 2.85
+     },
+     "idn": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 6.84,
+      "t": 2.89
+     },
+     "ind": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": -0.12,
+      "t": -0.06
+     },
+     "isr": {
+      "from": 200204,
+      "to": 202512,
+      "months": 285,
+      "counted": true,
+      "ex_ann": 3.0,
+      "t": 1.64
+     },
+     "ita": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 3.01,
+      "t": 1.44
+     },
+     "kor": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 2.22,
+      "t": 1.17
+     },
+     "mys": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 3.17,
+      "t": 2.22
+     },
+     "nor": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 0.92,
+      "t": 0.64
+     },
+     "pak": {
+      "from": 200201,
+      "to": 202512,
+      "months": 288,
+      "counted": true,
+      "ex_ann": 3.51,
+      "t": 2.08
+     },
+     "pol": {
+      "from": 200201,
+      "to": 202512,
+      "months": 288,
+      "counted": true,
+      "ex_ann": 2.41,
+      "t": 1.62
+     },
+     "rus": {
+      "from": 200402,
+      "to": 202207,
+      "months": 222,
+      "counted": true,
+      "ex_ann": 5.31,
+      "t": 3.29
+     },
+     "sgp": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 3.4,
+      "t": 2.68
+     },
+     "swe": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": -0.53,
+      "t": -0.31
+     },
+     "tha": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 4.42,
+      "t": 2.9
+     },
+     "vnm": {
+      "from": 200908,
+      "to": 202512,
+      "months": 197,
+      "counted": true,
+      "ex_ann": 7.63,
+      "t": 2.74
+     }
+    },
+    "counted": 16,
+    "positive": 14,
+    "pooled_all": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 3.2,
+     "t": 5.31,
+     "hold_2007_ex_ann": 3.57,
+     "hold_2007_t": 4.96
+    },
+    "pooled_developed": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 2.51,
+     "t": 2.99,
+     "hold_2007_ex_ann": 2.73,
+     "hold_2007_t": 2.83
+    },
+    "positive_developed": "5/6",
+    "pooled_emerging": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 3.64,
+     "t": 5.22,
+     "hold_2007_ex_ann": 4.06,
+     "hold_2007_t": 4.78
+    },
+    "positive_emerging": "9/10",
+    "pass_line": true
+   },
+   "mom6_minus_ew": {
+    "per_country": {
+     "chn": {
+      "from": 200107,
+      "to": 202512,
+      "months": 294,
+      "counted": true,
+      "ex_ann": 1.79,
+      "t": 1.02
+     },
+     "hkg": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 6.43,
+      "t": 3.9
+     },
+     "idn": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 6.2,
+      "t": 2.64
+     },
+     "ind": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 3.04,
+      "t": 2.02
+     },
+     "isr": {
+      "from": 200110,
+      "to": 202512,
+      "months": 291,
+      "counted": true,
+      "ex_ann": 6.06,
+      "t": 3.12
+     },
+     "ita": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 3.09,
+      "t": 2.01
+     },
+     "kor": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 1.14,
+      "t": 0.53
+     },
+     "mys": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 7.2,
+      "t": 6.19
+     },
+     "nor": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 0.52,
+      "t": 0.3
+     },
+     "pak": {
+      "from": 200107,
+      "to": 202512,
+      "months": 294,
+      "counted": true,
+      "ex_ann": 3.06,
+      "t": 1.84
+     },
+     "pol": {
+      "from": 200107,
+      "to": 202512,
+      "months": 294,
+      "counted": true,
+      "ex_ann": 2.54,
+      "t": 1.76
+     },
+     "rus": {
+      "from": 200204,
+      "to": 202207,
+      "months": 244,
+      "counted": true,
+      "ex_ann": 5.03,
+      "t": 3.36
+     },
+     "sgp": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 3.31,
+      "t": 2.3
+     },
+     "swe": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 1.08,
+      "t": 0.56
+     },
+     "tha": {
+      "from": 200001,
+      "to": 202512,
+      "months": 312,
+      "counted": true,
+      "ex_ann": 5.52,
+      "t": 3.87
+     },
+     "vnm": {
+      "from": 200902,
+      "to": 202512,
+      "months": 203,
+      "counted": true,
+      "ex_ann": 7.74,
+      "t": 3.45
+     }
+    },
+    "counted": 16,
+    "positive": 16,
+    "pooled_all": {
+     "from": 200001,
+     "to": 202512,
+     "ex_ann": 3.96,
+     "t": 6.95,
+     "hold_2007_ex_ann": 4.34,
+     "hold_2007_t": 6.62
+    },
+    "pooled_developed": {
+     "from": 200001,
+     "to": 202512,
+     "ex_ann": 3.47,
+     "t": 4.59,
+     "hold_2007_ex_ann": 3.63,
+     "hold_2007_t": 4.27
+    },
+    "positive_developed": "6/6",
+    "pooled_emerging": {
+     "from": 200001,
+     "to": 202512,
+     "ex_ann": 4.21,
+     "t": 6.21,
+     "hold_2007_ex_ann": 4.76,
+     "hold_2007_t": 5.93
+    },
+    "positive_emerging": "10/10",
+    "pass_line": true
+   },
+   "mom12_state_minus_ew": {
+    "per_country": {
+     "chn": {
+      "from": 200201,
+      "to": 202512,
+      "months": 288,
+      "counted": true,
+      "ex_ann": 0.44,
+      "t": 0.33
+     },
+     "hkg": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 4.73,
+      "t": 2.88
+     },
+     "idn": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 5.26,
+      "t": 2.25
+     },
+     "ind": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 0.97,
+      "t": 0.74
+     },
+     "isr": {
+      "from": 200204,
+      "to": 202512,
+      "months": 285,
+      "counted": true,
+      "ex_ann": 4.32,
+      "t": 2.62
+     },
+     "ita": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 1.03,
+      "t": 0.54
+     },
+     "kor": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 1.92,
+      "t": 1.11
+     },
+     "mys": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 1.4,
+      "t": 1.22
+     },
+     "nor": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": -0.53,
+      "t": -0.35
+     },
+     "pak": {
+      "from": 200201,
+      "to": 202512,
+      "months": 288,
+      "counted": true,
+      "ex_ann": 2.14,
+      "t": 1.5
+     },
+     "pol": {
+      "from": 200201,
+      "to": 202512,
+      "months": 288,
+      "counted": true,
+      "ex_ann": 0.81,
+      "t": 0.55
+     },
+     "rus": {
+      "from": 200402,
+      "to": 202207,
+      "months": 222,
+      "counted": true,
+      "ex_ann": 2.71,
+      "t": 1.25
+     },
+     "sgp": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 2.12,
+      "t": 1.7
+     },
+     "swe": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": -0.76,
+      "t": -0.67
+     },
+     "tha": {
+      "from": 200007,
+      "to": 202512,
+      "months": 306,
+      "counted": true,
+      "ex_ann": 3.84,
+      "t": 2.62
+     },
+     "vnm": {
+      "from": 200908,
+      "to": 202512,
+      "months": 197,
+      "counted": true,
+      "ex_ann": 3.6,
+      "t": 1.45
+     }
+    },
+    "counted": 16,
+    "positive": 14,
+    "pooled_all": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 2.08,
+     "t": 4.15,
+     "hold_2007_ex_ann": 2.56,
+     "hold_2007_t": 4.95
+    },
+    "pooled_developed": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 1.78,
+     "t": 2.7,
+     "hold_2007_ex_ann": 2.25,
+     "hold_2007_t": 3.06
+    },
+    "positive_developed": "4/6",
+    "pooled_emerging": {
+     "from": 200007,
+     "to": 202512,
+     "ex_ann": 2.28,
+     "t": 4.06,
+     "hold_2007_ex_ann": 2.76,
+     "hold_2007_t": 4.5
+    },
+    "positive_emerging": "10/10",
+    "pass_line": true
+   }
   }
  },
  "generated": "2026-09-28"
