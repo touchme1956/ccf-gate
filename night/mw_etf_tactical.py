@@ -705,7 +705,7 @@ def mk_quarterly(base):
 
 # ───────────────────────── 仕様 ─────────────────────────
 SRC_NAMES = []
-POSTPUB = {'K1': 201101, 'K2': 201101, 'K3': 201101, 'K4': 201101, 'W1': 201101, 'W2': 201101, 'W3': 201101, 'W4': 201101, 'Q1': 201101, 'Q2': 201101, 'Q3': 201101, 'Q4': 201101, 'D1': 201101, 'D2': 201101, 'D3': 201101, 'D4': 201101, 'H1': 201101, 'H2': 201101, 'H3': 201101, 'H4': 201101, 'E1': 201101, 'E2': 201101, 'E3': 201101, 'E4': 201101, 'G1': 201101, 'G2': 201101, 'G3': 201101, 'G4': 201101, 'G6': 201101, 'G7': 201101, 'P1': 201501, 'P2': 200801, 'P3': 201801, 'P4': 201901, 'P5': 201101, 'X3': 201101, 'X4': 201101,
+POSTPUB = {'M1': 201101, 'M2': 201101, 'M3': 201101, 'M4': 201101, 'K1': 201101, 'K2': 201101, 'K3': 201101, 'K4': 201101, 'W1': 201101, 'W2': 201101, 'W3': 201101, 'W4': 201101, 'Q1': 201101, 'Q2': 201101, 'Q3': 201101, 'Q4': 201101, 'D1': 201101, 'D2': 201101, 'D3': 201101, 'D4': 201101, 'H1': 201101, 'H2': 201101, 'H3': 201101, 'H4': 201101, 'E1': 201101, 'E2': 201101, 'E3': 201101, 'E4': 201101, 'G1': 201101, 'G2': 201101, 'G3': 201101, 'G4': 201101, 'G6': 201101, 'G7': 201101, 'P1': 201501, 'P2': 200801, 'P3': 201801, 'P4': 201901, 'P5': 201101, 'X3': 201101, 'X4': 201101,
            'X5': 201501, 'X7': 201101}
 
 
@@ -793,6 +793,11 @@ def specs():
         one(id=f'{wid}_FSELD_K{k}_{lab}_LAG1', rule=wid, family='exploratory8', version='F', dynamic=True, lag='dead', z=202607,
             description=f'探索8: Select＋合併・廃止6本の{"12か月" if sc == "r12" else "(r1+r3+r6+r12)/4"}上位{k}本・1日遅れの約定（死んだ6本は暦月で近似）',
             rule_fn=mk_sector_dyn(fseld, k, sc, 20, alive=True), slots=fseld, repl=(kg, sc, False))
+    # 第9族（事前登録6）: 月の真ん中（11営業日目）で入れ替え
+    for (k, kg, sc, lab, mid) in ((3, 1, 'r12', 'R12', 'M1'), (6, 2, 'r12', 'R12', 'M2'), (3, 1, 'blend', 'BL', 'M3'), (6, 2, 'blend', 'BL', 'M4')):
+        one(id=f'{mid}_FSEL_K{k}_{lab}_MID', rule=mid, family='exploratory9', version='F', lag='mid',
+            description=f'探索9: Fidelity Select 33本の{"12か月" if sc == "r12" else "(r1+r3+r6+r12)/4"}上位{k}本・月の11営業日目で区切って毎月入れ替え',
+            rule_fn=mk_sector_dyn(FSEL, k, sc, 20), slots=list(FSEL), repl=(kg, sc, False))
     one(id='K5_RAKU_EW', rule='K5', family='reference7', version='E', dynamic=True, description='参照7: 楽天の業種・テーマ ETF を全部等分',
         rule_fn=mk_ew_dyn(RAKU, 20, alive=True), slots=list(RAKU), repl=None)
     one(id='H5_FSELD_EW', rule='H5', family='reference3', version='F', dynamic=True, description='参照3: Fidelity Select＋死んだ6本を全部等分',
@@ -855,15 +860,17 @@ def summarize_alloc(wpath, a=None):
     return {s: round(v / n, 3) for s, v in sorted(cnt.items(), key=lambda x: -x[1])} if n else {}
 
 
-def build_lag(names):
+def build_lag(names, k=1):
     """事前登録4: 1営業日遅れの保有区間。区間 m = m 月の最初の営業日の引け → m+1 月の最初の営業日の引け（French 日次の暦）。
+    事前登録6: k=11 で『月の11営業日目』で区切ったずらした月。
     戻り値: Rh {ファンド: {m: 区間リターン}}, 市場 {m: 区間リターン}, RF {m: 区間の複利}"""
     ffd = M.ff_factors('daily')
     mk_d, rf_d = ffd['mkt'], ffd['rf']
     days = sorted(d for d in mk_d if d in rf_d)
-    first = {}
+    bym = {}
     for d in days:
-        first.setdefault(d // 100, d)
+        bym.setdefault(d // 100, []).append(d)
+    first = {m: v[k - 1] for m, v in bym.items() if len(v) >= k}
     pos = {d: i for i, d in enumerate(days)}
     mkt_lag, rf_lag = {}, {}
     for m in sorted(first):
@@ -1043,10 +1050,10 @@ def main():
         g, n, _, _, _ = run(Rv, mk_static({'US': 0.6, 'AGG': 0.4}))
         ref6040[v] = n
         spy[v] = Rv['US']
-    lagd = None
+    lagd = midd = None
     for sp in specs():
         v = sp['version']
-        if sp.get('lag'):
+        if sp.get('lag') and sp['lag'] != 'mid':
             if lagd is None:
                 lagd = build_lag(FSEL)
             Rh, mkt_, rf_ = lagd
@@ -1056,7 +1063,15 @@ def main():
                     Rh['AV_' + t_] = src['AV_' + t_]
         else:
             Rh, mkt_, rf_ = None, mkt, rf
-        R, seg = build_version(src, rf, v, sp['slots'])
+        if sp.get('lag') == 'mid':                          # 事前登録6: 月の11営業日目で区切ったずらした月（信号も保有も）
+            if midd is None:
+                midd = build_lag(FSEL, k=11)
+            Rm, mkt_, rf_ = midd
+            R = {'TBILL': rf_}
+            R.update({x: Rm[x] for x in FSEL if Rm.get(x)})
+            seg, Rh = {}, None
+        else:
+            R, seg = build_version(src, rf, v, sp['slots'])
         try:
             g, n, ns, wpath, trades = run(R, sp['rule_fn'], z=sp.get('z', END), dynamic=sp.get('dynamic', False), Rh=Rh)
         except RuntimeError as e:
@@ -1078,7 +1093,7 @@ def main():
         ks = sorted(g)
         starts[sp['id']] = ks[0]
         runs[sp['id']] = (Rh if Rh is not None else R, wpath, g, n)
-        if Rh is not None:
+        if sp.get('lag'):
             runs['__bench__' + sp['id']] = mkt_
         full = M.excess_stats(g, mkt_)
         train = M.excess_stats(g, mkt_, z=M.TRAIN_END)
@@ -1114,13 +1129,13 @@ def main():
                'check_apply_cost_hold': M.excess_stats(M.apply_cost(g, S.mean(turn_hold) / 2 * 12 if turn_hold else 0, 0.001), mkt_, a=M.HOLD_START),
                'roll20': M.rolling(n, mkt_, 20), 'dca20': M.dca(n, mkt_, 20),
                'sharpe': sh, 'maxdd': round(M.maxdd(n) * 100, 1), 'maxdd_bench': round(M.maxdd(mk_w) * 100, 1),
-               'vs_spy_full': None if Rh is not None else M.excess_stats(n, spy[v]), 'vs_spy_hold': None if Rh is not None else M.excess_stats(n, spy[v], a=M.HOLD_START),
+               'vs_spy_full': None if sp.get('lag') else M.excess_stats(n, spy[v]), 'vs_spy_hold': None if sp.get('lag') else M.excess_stats(n, spy[v], a=M.HOLD_START),
                'vs_6040_hold': M.excess_stats(n, ref6040[v], a=M.HOLD_START) if sp['alloc'] else None,
                'alloc_avg_full': summarize_alloc(wpath), 'alloc_avg_hold': summarize_alloc(wpath, M.HOLD_START),
                'last_signal': {'month': max(wpath), 'weights': {s: round(x, 3) for s, x in wpath[max(wpath)].items()}},
                'tax_jp_hold': taxr, 'repl': rep}
         if sp['family'] in ('exploratory2', 'reference2', 'exploratory3', 'reference3', 'exploratory4', 'reference4', 'exploratory5', 'exploratory6',
-                            'exploratory7', 'reference7', 'exploratory8'):
+                            'exploratory7', 'reference7', 'exploratory8', 'exploratory9'):
             nf = {k: g[k] - 0.0075 * trades[k] / 2 for k in g}   # 売りのたびに 0.75%（短期解約手数料の最悪ケース）
             row['cost_hold_fidelity075'] = M.excess_stats(nf, mkt_, a=M.HOLD_START)
             row['hold_share_by_fund'] = summarize_alloc(wpath, M.HOLD_START)
@@ -1160,6 +1175,7 @@ def main():
            'sanity': sanity, 'n_tested': len(rows), 'grades_excluding_reference': grades,
            'deviations': DEVIATIONS, 'summary_ja': SUMMARY_JA,
            'prereg2': 'mw_etf_tactical_prereg2.json', 'prereg2_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg2.json')),
+           'prereg6': 'mw_etf_tactical_prereg6.json', 'prereg6_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg6.json')),
            'prereg5': 'mw_etf_tactical_prereg5.json', 'prereg5_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg5.json')),
            'prereg4': 'mw_etf_tactical_prereg4.json', 'prereg4_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg4.json')),
            'prereg3': 'mw_etf_tactical_prereg3.json', 'prereg3_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg3.json')),
