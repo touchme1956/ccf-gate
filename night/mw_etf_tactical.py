@@ -188,6 +188,16 @@ def load_all():
     for c in ind30:
         if c.strip().lower() != 'other':
             src['FR30_' + c.strip()] = cut(ind30[c])
+    # 事前登録3: 死んだ Select（AV・手で写した値。out/_mw_cache/av_dead_select_{T}.csv）
+    import csv as _csv
+    for t in DEAD:
+        rows = sorted(_csv.DictReader(open(os.path.join(M.CACHE, f'av_dead_select_{t}.csv'))), key=lambda r: r['date'])
+        px = {int(r['date'][:4]) * 100 + int(r['date'][5:7]): float(r['adj']) for r in rows}
+        ks = sorted(px)
+        src['AV_' + t] = cut({k: px[k] / px[p] - 1 for p, k in zip(ks, ks[1:]) if madd(p, 1) == k})
+    for t in ETFIND:
+        if t not in src:
+            src[t] = yh(t)
     # French 10業種（Other を除く9）
     ind = M.french_series('10_Industry_Portfolios', 'Value Weight')
     for c in ['NoDur', 'Durbl', 'Manuf', 'Enrgy', 'HiTec', 'Telcm', 'Shops', 'Hlth', 'Utils']:
@@ -228,6 +238,10 @@ SLOTS = {
 FSEL = ['FSPTX', 'FSENX', 'FIDSX', 'FSUTX', 'FSPHX', 'FSDAX', 'FDLSX', 'FSLBX', 'FSCHX', 'FDFAX', 'FSELX', 'FSTCX', 'FSCSX', 'FDCPX',
         'FSAGX', 'FBIOX', 'FSVLX', 'FSPCX', 'FSRPX', 'FSAVX', 'FSHCX', 'FBMPX', 'FSRBX', 'FSHOX', 'FSDPX', 'FSRFX', 'FSLEX', 'FSCPX',
         'FNARX', 'FBSOX', 'FSMEX', 'FWRLX', 'FPHAX']
+DEAD = ['FSESX', 'FSNGX', 'FSAIX', 'FSDCX', 'FCYIX', 'FSCGX']   # 事前登録3: 合併・廃止された Select（Alpha Vantage・1999-12〜）
+ETFIND = ['IYW', 'IYF', 'IYH', 'IYE', 'IYM', 'IYJ', 'IYC', 'IYK', 'IDU', 'IYZ', 'IYR', 'IYT', 'IAT', 'IAI', 'IAK', 'IHF', 'IHI', 'IHE',
+          'ITA', 'ITB', 'IEZ', 'IEO', 'SOXX', 'IGV', 'IGE', 'IBB', 'XBI', 'XHB', 'XRT', 'KBE', 'KRE', 'KIE', 'KCE', 'XSD', 'XPH', 'XME',
+          'XOP', 'XES', 'XAR', 'XHE', 'XHS', 'XTL', 'XTN', 'XSW']
 SECT_EF = ['XLB', 'XLE', 'XLF', 'XLI', 'XLK', 'XLP', 'XLU', 'XLV', 'XLY']
 SECT_L = ['FR10_' + c for c in ['NoDur', 'Durbl', 'Manuf', 'Enrgy', 'HiTec', 'Telcm', 'Shops', 'Hlth', 'Utils']]
 
@@ -257,7 +271,7 @@ def build_version(src, rf, ver, slots):
     for s in slots:
         if s == 'TBILL':
             continue
-        if s.startswith('FR10_') or s.startswith('FR30_') or s == 'FF_MKT' or s in FSEL:
+        if s.startswith('FR10_') or s.startswith('FR30_') or s.startswith('AV_') or s == 'FF_MKT' or s in FSEL or s in ETFIND:
             R[s] = src[s]
             seg[s] = {s: [min(src[s]), max(src[s])]}
             continue
@@ -411,11 +425,16 @@ def mk_sector(names, k=3, score='r12', absf=False):
     return f
 
 
-def mk_sector_dyn(names, k, score='r12', min_n=20):
+def alive_next(H, s):
+    """事前登録3: t+1 月にもファンドが存在するか（合併・廃止の日付だけを見る。リターンは見ない）"""
+    return bool(H.R.get(s)) and max(H.R[s]) > H.t
+
+
+def mk_sector_dyn(names, k, score='r12', min_n=20, alive=False):
     """その月に12か月の窓がそろったものだけから上位 k（対象が min_n 未満の月は作らない＝始まらない）"""
     def f(H):
         sc = (lambda s: H.cum(s, 12)) if score == 'r12' else H.blend
-        avail = [s for s in names if H.R.get(s) and sc(s) is not None]
+        avail = [s for s in names if H.R.get(s) and (not alive or alive_next(H, s)) and sc(s) is not None]
         if len(avail) < min_n:
             return None
         top = topk(H, avail, sc, k)
@@ -423,9 +442,9 @@ def mk_sector_dyn(names, k, score='r12', min_n=20):
     return f
 
 
-def mk_ew_dyn(names, min_n=20):
+def mk_ew_dyn(names, min_n=20, alive=False):
     def f(H):
-        avail = [s for s in names if H.R.get(s) and H.cum(s, 12) is not None]
+        avail = [s for s in names if H.R.get(s) and (not alive or alive_next(H, s)) and H.cum(s, 12) is not None]
         if len(avail) < min_n:
             return None
         return {s: 1 / len(avail) for s in avail}
@@ -468,9 +487,11 @@ def mk_ew(names):
 
 
 # ───────────────────────── 走らせる ─────────────────────────
-def run(R, rule, z=END):
-    """月末 t の信号で t+1 を持つ。戻り値: gross, net, net_stress, 重みの記録, 売買量（Σ|Δw|）"""
-    z = min([z] + [max(v) for v in R.values() if v])          # 必要な系列のうち最も早く終わる月まで（0で埋めない）
+def run(R, rule, z=END, dynamic=False):
+    """月末 t の信号で t+1 を持つ。戻り値: gross, net, net_stress, 重みの記録, 売買量（Σ|Δw|）
+    dynamic=True（途中で消えるファンドを含む族）: 終わりは END。持つファンドは必ず翌月の値がある（規則が存在を確かめる）"""
+    if not dynamic:
+        z = min([z] + [max(v) for v in R.values() if v])      # 必要な系列のうち最も早く終わる月まで（0で埋めない）
     months = sorted(set().union(*[set(v) for v in R.values()]))
     months = [m for m in months if m <= z]
     gross, trades, wpath = {}, {}, {}
@@ -655,7 +676,7 @@ def run_loose(R, rule, z):
 
 # ───────────────────────── 仕様 ─────────────────────────
 SRC_NAMES = []
-POSTPUB = {'G1': 201101, 'G2': 201101, 'G3': 201101, 'G4': 201101, 'G6': 201101, 'G7': 201101, 'P1': 201501, 'P2': 200801, 'P3': 201801, 'P4': 201901, 'P5': 201101, 'X3': 201101, 'X4': 201101,
+POSTPUB = {'H1': 201101, 'H2': 201101, 'H3': 201101, 'H4': 201101, 'E1': 201101, 'E2': 201101, 'E3': 201101, 'E4': 201101, 'G1': 201101, 'G2': 201101, 'G3': 201101, 'G4': 201101, 'G6': 201101, 'G7': 201101, 'P1': 201501, 'P2': 200801, 'P3': 201801, 'P4': 201901, 'P5': 201101, 'X3': 201101, 'X4': 201101,
            'X5': 201501, 'X7': 201101}
 
 
@@ -715,6 +736,20 @@ def specs():
             rule_fn=mk_sector_dyn(fr30(), k, 'r12', 29), slots=fr30(), repl=(kg, 'r12', False), align_to='G1_FSEL_K3_R12')
     one(id='G5_FSEL_EW', rule='G5', family='reference2', version='F', description='参照2: Fidelity Select を全部等分',
         rule_fn=mk_ew_dyn(FSEL, 20), slots=list(FSEL), repl=None)
+    # 第3族（事前登録3）: 死んだ Select 6本を足す／第4族: 業種 ETF
+    fseld = list(FSEL) + ['AV_' + t for t in DEAD]
+    for (k, kg, sc, lab, hid, eid) in ((3, 1, 'r12', 'R12', 'H1', 'E1'), (6, 2, 'r12', 'R12', 'H2', 'E2'),
+                                       (3, 1, 'blend', 'BL', 'H3', 'E3'), (6, 2, 'blend', 'BL', 'H4', 'E4')):
+        one(id=f'{hid}_FSELD_K{k}_{lab}', rule=hid, family='exploratory3', version='F', dynamic=True,
+            description=f'探索3: Fidelity Select＋合併・廃止6本（生き残りの偏りを直す）の{"12か月" if sc == "r12" else "(r1+r3+r6+r12)/4"}上位{k}本',
+            rule_fn=mk_sector_dyn(fseld, k, sc, 20, alive=True), slots=fseld, repl=(kg, sc, False))
+        one(id=f'{eid}_ETF_K{k}_{lab}', rule=eid, family='exploratory4', version='E', dynamic=True,
+            description=f'探索4: 実在の業種 ETF（iShares・SPDR 44本）の{"12か月" if sc == "r12" else "(r1+r3+r6+r12)/4"}上位{k}本',
+            rule_fn=mk_sector_dyn(ETFIND, k, sc, 20, alive=True), slots=list(ETFIND), repl=(kg, sc, False))
+    one(id='H5_FSELD_EW', rule='H5', family='reference3', version='F', dynamic=True, description='参照3: Fidelity Select＋死んだ6本を全部等分',
+        rule_fn=mk_ew_dyn(fseld, 20, alive=True), slots=fseld, repl=None)
+    one(id='E5_ETF_EW', rule='E5', family='reference4', version='E', dynamic=True, description='参照4: 業種 ETF を全部等分',
+        rule_fn=mk_ew_dyn(ETFIND, 20, alive=True), slots=list(ETFIND), repl=None)
     return out
 
 
@@ -838,7 +873,7 @@ def main():
         v = sp['version']
         R, seg = build_version(src, rf, v, sp['slots'])
         try:
-            g, n, ns, wpath, trades = run(R, sp['rule_fn'])
+            g, n, ns, wpath, trades = run(R, sp['rule_fn'], dynamic=sp.get('dynamic', False))
         except RuntimeError as e:
             log('  ✗', sp['id'], e)
             rows.append({'id': sp['id'], 'error': str(e)})
@@ -897,7 +932,7 @@ def main():
                'alloc_avg_full': summarize_alloc(wpath), 'alloc_avg_hold': summarize_alloc(wpath, M.HOLD_START),
                'last_signal': {'month': max(wpath), 'weights': {s: round(x, 3) for s, x in wpath[max(wpath)].items()}},
                'tax_jp_hold': taxr, 'repl': rep}
-        if sp['family'] in ('exploratory2', 'reference2'):
+        if sp['family'] in ('exploratory2', 'reference2', 'exploratory3', 'reference3', 'exploratory4', 'reference4'):
             nf = {k: g[k] - 0.0075 * trades[k] / 2 for k in g}   # 売りのたびに 0.75%（短期解約手数料の最悪ケース）
             row['cost_hold_fidelity075'] = M.excess_stats(nf, mkt, a=M.HOLD_START)
             row['hold_share_by_fund'] = summarize_alloc(wpath, M.HOLD_START)
@@ -936,6 +971,8 @@ def main():
            'cost': '売り・買いそれぞれ 0.05%（片道100%あたり 0.10%）を各月の実際の売買量に掛けてその月に引く。stress は片道 0.30%',
            'sanity': sanity, 'n_tested': len(rows), 'grades_excluding_reference': grades,
            'prereg2': 'mw_etf_tactical_prereg2.json', 'prereg2_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg2.json')),
+           'prereg3': 'mw_etf_tactical_prereg3.json', 'prereg3_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg3.json')),
+           'dead_funds_monthly_returns_from_alpha_vantage': {t: {str(k): round(v, 6) for k, v in sorted(src['AV_' + t].items())} for t in DEAD},
            'tested': rows, 'diagnostics_post_hoc_not_graded': diag_post_hoc(src, rf, mkt, runs), 'log': LOG}
     p = M.save(OUT, res)
     print('saved', p, os.path.getsize(p))
