@@ -183,6 +183,11 @@ def yahoo(ticker, interval='1mo', start=None):
         d = datetime.datetime.utcfromtimestamp(t)
         k = d.year * 100 + d.month if interval == '1mo' else d.year * 10000 + d.month * 100 + d.day
         px[k] = a
+    if interval == '1mo':
+        # 2026-09-28 mw_forward の点検で判明: 月足の最後の本は『まだ終わっていない今月』（途中の値）。
+        # 途中の月を1か月として混ぜないよう、今月以降の本を落とす
+        now = datetime.datetime.utcnow()
+        px = {k: v for k, v in px.items() if k < now.year * 100 + now.month}
     ks = sorted(px)
     return {k: px[k] / px[p] - 1 for p, k in zip(ks, ks[1:])}
 
