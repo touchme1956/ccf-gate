@@ -927,6 +927,62 @@ def diag_post_hoc(src, rf, mkt, runs):
             g = runs[rid][2]
             out[f'subperiods_{rid}'] = {'2007-2016': M.excess_stats(g, mkt, a=200701, z=201612),
                                         '2017-2026': M.excess_stats(g, mkt, a=201701)}
+    # 第2〜8族の S の中身（事後）: 年ごとの超過・ファンド別の寄与・一番効いたファンドを除く・現実的な短期手数料・区間
+    for rid in ('H3_FSELD_K3_BL', 'W3_FSELD_K3_BL_LAG1', 'G3_FSEL_K3_BL', 'D3_FSEL_K3_BL_LAG1', 'K1_RAKU_K3_R12'):
+        if rid not in runs:
+            continue
+        R_, wp_, g_, n_ = runs[rid]
+        bm = runs.get('__bench__' + rid) or mkt
+        yrs = {}
+        for m in sorted(n_):
+            if m in bm:
+                a_, b_ = yrs.get(m // 100, (1.0, 1.0))
+                yrs[m // 100] = (a_ * (1 + n_[m]), b_ * (1 + bm[m]))
+        out[f'yearly_excess_net_{rid}'] = {y: round((a_ - b_) * 100, 1) for y, (a_, b_) in yrs.items()}
+        hold_years = [v for y, v in out[f'yearly_excess_net_{rid}'].items() if y >= 2007]
+        out[f'yearly_win_share_2007on_{rid}'] = round(sum(1 for v in hold_years if v > 0) / len(hold_years), 3) if hold_years else None
+        out[f'hold_contrib_{rid}'] = contrib(rid) if not rid.startswith(('W', 'D')) else None
+        out[f'subperiods_{rid}'] = {'2007-2016': M.excess_stats(n_, bm, a=200701, z=201612), '2017-': M.excess_stats(n_, bm, a=201701)}
+    # 一番効いたファンドを除いた H3（事後）
+    if 'H3_FSELD_K3_BL' in runs:
+        cb = contrib('H3_FSELD_K3_BL')
+        top = next(iter(cb))
+        names = [x for x in list(FSEL) + ['AV_' + t for t in DEAD] if x != top]
+        R2 = {'TBILL': rf}
+        for x in names:
+            if src.get(x):
+                R2[x] = src[x]
+        g2, n2, _, _, _ = run(R2, mk_sector_dyn(names, 3, 'blend', 20, alive=True), dynamic=True)
+        out['H3_without_top_contributor'] = {'removed': top, 'hold': M.excess_stats(n2, mkt, a=M.HOLD_START), 'full': M.excess_stats(n2, mkt),
+                                             'train': M.excess_stats(n2, mkt, z=M.TRAIN_END)}
+        # 現実的な短期手数料: 保有の月（前月の最後の営業日→当月の最後の営業日）が30日未満の月の売りにだけ 0.75%
+        ffd = M.ff_factors('daily')
+        last = {}
+        for d in sorted(ffd['mkt']):
+            last[d // 100] = d
+        short = set()
+        for m in last:
+            pm = madd(m, -1)
+            if pm in last:
+                a_, b_ = last[pm], last[m]
+                days = (datetime.date(b_ // 10000, b_ // 100 % 100, b_ % 100) - datetime.date(a_ // 10000, a_ // 100 % 100, a_ % 100)).days
+                if days < 30:
+                    short.add(madd(m, 1))    # m 月末に売る → その売買の費用は m+1 月に計上（run と同じ）
+        R_, wp_, g_, n_ = runs['H3_FSELD_K3_BL']
+        tr_ = {madd(t, 1): None for t in wp_}
+        # 売買量は run の記録から作り直す（n_ = g_ − 0.05%×売買量）
+        nf = {}
+        for m in g_:
+            trade = (g_[m] - n_[m]) / C_SIDE if C_SIDE else 0
+            nf[m] = n_[m] - (0.0075 * trade / 2 if m in short else 0.0)
+        out['H3_realistic_fidelity_fee'] = {'rule': '保有月が30日未満（前月末→当月末の営業日）の月の売りにだけ 0.75%（全部の売りに掛ける最悪ケースより現実的・事後）',
+                                            'short_months_share': round(sum(1 for m in g_ if m in short) / len(g_), 3),
+                                            'hold': M.excess_stats(nf, mkt, a=M.HOLD_START), 'full': M.excess_stats(nf, mkt)}
+        # 生き残りの偏りの大きさ: 生き残りだけの等分の超過を 1987-1999 と 2000-2006 で
+        if 'G5_FSEL_EW' in runs:
+            ge = runs['G5_FSEL_EW'][2]
+            out['survivor_EW_excess_by_era'] = {'1987-1999': M.excess_stats(ge, mkt, z=199912), '2000-2006': M.excess_stats(ge, mkt, a=200001, z=200612),
+                                                '2007-': M.excess_stats(ge, mkt, a=200701)}
     # French 9業種から Durbl（Tesla を含む耐久財）を除いた8業種で同じ規則（事後）
     R = {'TBILL': rf}
     names = [x for x in SECT_L if x != 'FR10_Durbl']
@@ -941,6 +997,28 @@ def diag_post_hoc(src, rf, mkt, runs):
         out['P5_L_vs_E_monthly_excess_corr'] = round(M.corr([gl[k] - mkt[k] for k in ks], [ge[k] - mkt[k] for k in ks]), 3)
         out['P5_L_minus_E_same_months'] = M.excess_stats(gl, ge, a=ks[0])
     return out
+
+
+DEVIATIONS = [
+    '判定の保有期間は全角度共通の mw_prereg（2007-01〜）。課題文は公表後を主の保有期間と書くが、事前登録どおり公表後（GEM 2015〜・GTAA 2008〜・VAA 2018〜・DAA 2019〜・セクター 2011〜）は並べて報告（postpub）',
+    '費用は mw_common.apply_cost と同じ単価（片道100%あたり 0.10%＝売り・買いそれぞれ 0.05%）を、平均でなく各月の実際の売買量に掛けた。apply_cost で平均化した版を check_apply_cost_hold に併記（差はほぼ無い）',
+    'Faber の10か月線は価格指数でなく総リターン指数で判定（投信の分配落ちで偽の信号が出ないため・事前登録どおり）。DAA の守りの UST（2倍の国債 ETF）は LQD に置き換え（事前登録どおり）',
+    'Yahoo は投信の月次を 1985-02 より前に返さない（日次はもっと前まである）。F 版の訓練期間はそこで切れる',
+    '事前登録3の死んだ Select 6本（FSESX・FSNGX・FSAIX・FSDCX・FCYIX・FSCGX）は Alpha Vantage（MCP）の月次の調整後終値を手で写した（1999-12〜各ファンドの最後の月）。全行で『分配の無い月は 調整後÷終値 が前月と同じ』を確かめ崩れ0。AV と Yahoo は生きている FSENX で累積リターンの差が数年で最大2%ほど（AV が低い側）。再現のため月次リターンを dead_funds_monthly_returns_from_alpha_vantage に同梱',
+    '事前登録4の3か月版で『3か月先まで存在』をデータの終わり（2026-08）の先まで求めて最後の四半期に全ファンドが対象外になる実装の不具合があった → 『3か月先かデータの終わりまで存在』に直した（Q 族の結果を見る前・規則の意図どおり）',
+    '事前登録5の第8族（死んだファンド＋1日遅れ）は死んだ6本の区間に暦月のリターンを使う近似（事前登録どおり）',
+    'mw_common に不具合は見つからなかった（yahoo() の月次は日次から作った月末リターンと4本で完全一致を確認）',
+    'C5 はセクター規則だけ JKP GICS 11セクター（7か国・1999-07〜2025-12）。9セクター・約32業種の規則を11セクターで当てる（K=3→上位1・K=6→上位2 は業種数に対する割合で事前に固定）。他の規則は地域版が無く N/A',
+    '参照族（reference*）は判定するが勝ちの候補に数えない（grades_excluding_reference）',
+]
+SUMMARY_JA = [
+    '公表された戦術的配分（GEM・GTAA-5・VAA・DAA）は、ETF・投信の実物でも長い代理でも 2007年以降は市場に年2.5〜6.4%負けた（全部 C）。下落は浅い（最大下落 −11〜−20% 対 市場 −50%）が、勝ちの線はシャープではなくリターンで超える必要がある',
+    '9つの SPDR セクターの勢い（上位3）は 2007年以降 −0.2%/年（C）。同じ規則を French の9業種（紙の上）に当てると +2.5%/年（A）だが、その保有期間の勝ちは耐久財（Tesla）1業種が主で、除くと +0.7%/年',
+    'NASDAQ100 と S&P500 の強い方への切替は 2007年以降 +4.3%/年（t3.4）だが、1986〜2006 の訓練期間で t0.7 しかなく C（勝ちは巨大テックの時代＝後知恵）',
+    '細かい業種の実在ファンド（Fidelity Select 約33本・1987〜）で (r1+r3+r6+r12)/4 の上位3を毎月持つ規則が S: 2007年以降 +5.6%/年（t2.4）・費用後 +5.2',
+    'その S を疑った: 合併・廃止の6本を足す +4.4（t1.9・S のまま）、翌営業日の約定 +5.1（S）、両方同時 +4.5（t1.95・S）。しかし3か月ごとの入れ替えだと −1.7%/年（勝ちは毎月の鮮度に依存）、Fidelity の30日未満の解約手数料 0.75% を現実的に当てると +2.9%/年・t1.25（B 相当）',
+    '日本の居住者は Fidelity Select（米国籍の投信）を買えない。楽天で買える業種・テーマ ETF 101本で同じ型（12か月上位3）は 2007年以降 年+7.5%（算術・t1.7）・年率差+3.7% だが、2003〜2006 しか訓練期間が無く C。値動きが非常に荒い（2020 +59%・2021 −39%）',
+]
 
 
 def main():
@@ -1000,6 +1078,8 @@ def main():
         ks = sorted(g)
         starts[sp['id']] = ks[0]
         runs[sp['id']] = (Rh if Rh is not None else R, wpath, g, n)
+        if Rh is not None:
+            runs['__bench__' + sp['id']] = mkt_
         full = M.excess_stats(g, mkt_)
         train = M.excess_stats(g, mkt_, z=M.TRAIN_END)
         hold = M.excess_stats(g, mkt_, a=M.HOLD_START)
@@ -1078,6 +1158,7 @@ def main():
            'benchmark': 'French Mkt（Mkt-RF+RF・総リターン）。報告: VFINX→SPY のつないだ US 枠、60/40（R1 の同じ版）',
            'cost': '売り・買いそれぞれ 0.05%（片道100%あたり 0.10%）を各月の実際の売買量に掛けてその月に引く。stress は片道 0.30%',
            'sanity': sanity, 'n_tested': len(rows), 'grades_excluding_reference': grades,
+           'deviations': DEVIATIONS, 'summary_ja': SUMMARY_JA,
            'prereg2': 'mw_etf_tactical_prereg2.json', 'prereg2_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg2.json')),
            'prereg5': 'mw_etf_tactical_prereg5.json', 'prereg5_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg5.json')),
            'prereg4': 'mw_etf_tactical_prereg4.json', 'prereg4_commit': git_sha(os.path.join('out', 'mw_etf_tactical_prereg4.json')),
