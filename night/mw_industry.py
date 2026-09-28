@@ -16,10 +16,11 @@ import mw_common as M
 
 BASE = M.BASE
 PREREG = 'mw_industry_prereg.json'
-PREREG_FILES = ['mw_industry_prereg.json', 'mw_industry_prereg2.json', 'mw_industry_prereg3.json', 'mw_industry_prereg4.json']
+PREREG_FILES = ['mw_industry_prereg.json', 'mw_industry_prereg2.json', 'mw_industry_prereg3.json', 'mw_industry_prereg4.json', 'mw_industry_prereg5.json']
 PREREG2 = 'mw_industry_prereg2.json'
 PREREG3 = 'mw_industry_prereg3.json'
 PREREG4 = 'mw_industry_prereg4.json'
+PREREG5 = 'mw_industry_prereg5.json'
 OUT = 'mw_industry.json'
 COST = 0.0005          # 両側の売買 100% あたり 0.05%
 ETF_FEE = 0.0030       # 参考: 業種ETFの信託報酬の目安（判定に使わない）
@@ -566,7 +567,8 @@ def r2(x):
     return None if x is None else round(x, 2)
 
 
-def evaluate(sid, r, turn, b, pub_year=None):
+def evaluate(sid, r, turn, b, pub_year=None, cost=None):
+    cost = COST if cost is None else cost
     ks = sorted(k for k in r if k in b)
     r = {k: r[k] for k in ks}
     full = M.excess_stats(r, b)
@@ -576,13 +578,14 @@ def evaluate(sid, r, turn, b, pub_year=None):
     post = M.excess_stats(r, b, a=(pub_year + 1) * 100 + 1) if pub_year else None
     t_hold = ann_turnover(turn, a=M.HOLD_START)
     t_full = ann_turnover(turn)
-    cost_hold = M.excess_stats(M.apply_cost(r, t_hold, COST), b, a=M.HOLD_START) if t_hold is not None else None
-    cost_full = M.excess_stats(M.apply_cost(r, t_full, COST), b) if t_full is not None else None
-    fee_hold = M.excess_stats({k: v - ETF_FEE / 12 for k, v in M.apply_cost(r, t_hold, COST).items()}, b, a=M.HOLD_START) if t_hold is not None else None
+    cost_hold = M.excess_stats(M.apply_cost(r, t_hold, cost), b, a=M.HOLD_START) if t_hold is not None else None
+    cost_full = M.excess_stats(M.apply_cost(r, t_full, cost), b) if t_full is not None else None
+    fee_hold = M.excess_stats({k: v - ETF_FEE / 12 for k, v in M.apply_cost(r, t_hold, cost).items()}, b, a=M.HOLD_START) if t_hold is not None else None
+    cost005_hold = M.excess_stats(M.apply_cost(r, t_hold, COST), b, a=M.HOLD_START) if t_hold is not None else None
     return {'id': sid, 'start': ks[0], 'end': ks[-1],
             'turnover_twoway_ann': {'full': r2(t_full), 'hold': r2(t_hold)},
             'full': full, 'train': train, 'hold': hold, 'recent': recent, 'post_pub': post,
-            'cost_hold': cost_hold, 'cost_full': cost_full, 'fee030_hold_report_only': fee_hold,
+            'cost_hold': cost_hold, 'cost_full': cost_full, 'cost_unit_twoway': cost, 'cost005_hold': cost005_hold, 'fee030_hold_report_only': fee_hold,
             'roll20': M.rolling(r, b, 20), 'dca20': M.dca(r, b, 20),
             'maxdd': round(M.maxdd(r) * 100, 1), 'maxdd_mkt_same': round(M.maxdd({k: b[k] for k in ks}) * 100, 1)}
 
@@ -996,9 +999,97 @@ def unseen_panel():
     return out
 
 
+# ───────────────────────── prereg5: TOPIX-17 業種別ETF（実在） ─────────────────────────
+def topix17_data():
+    def clean(t):
+        r = {k: v for k, v in M.yahoo(t).items() if k <= 202608}
+        bad = sorted(k for k, v in r.items() if abs(v) > 0.5)
+        return {k: v for k, v in r.items() if abs(v) <= 0.5}, bad
+    R, bad = {}, {}
+    for x in range(1617, 1634):
+        R[f'{x}.T'], bad[f'{x}.T'] = clean(f'{x}.T')
+    bench, bad['1308.T'] = clean('1308.T')
+    return R, bench, {k: v for k, v in bad.items() if v}
+
+
+def part5(D):
+    pre = json.load(open(os.path.join(BASE, 'out', PREREG5)))
+    specs = {s['id']: s for s in pre['strategies']}
+    R, bench, bad = topix17_data()
+    months = sorted(set().union(*[set(v) for v in R.values()]))
+
+    class SD:
+        pass
+    sd = SD(); sd.R = R; sd.ME = {}; sd.cols = list(R); sd.selectable = list(R); sd.has = lambda c, m: m in R[c]
+    m12 = mom_target(sd, 12, 3)
+
+    def state(m):
+        ks = [madd(m, -k) for k in range(1, 37)]
+        if not all(k in bench for k in ks):
+            return None
+        if math.fsum(math.log1p(bench[k]) for k in ks) < 0:
+            return {'__bench__': 1.0}
+        return m12(m)
+    R2 = dict(R); R2['__bench__'] = bench
+    T = {'J1_topix17_mom12': (m12, R), 'J2_topix17_mom6': (mom_target(sd, 6, 3), R), 'J3_topix17_mom12_state': (state, R2)}
+    rows = []
+    for sid, spec in specs.items():
+        tg, RR = T[sid]
+        r, turn, hold = run(tg, RR, months)
+        ev = evaluate(sid, r, turn, bench, None, cost=0.0025)
+        ev.update({'primary': False, 'prereg': PREREG5, 'family': 'prereg5_topix17_real_etf', 'rule': spec['rule'],
+                   'benchmark': '1308.T（上場TOPIX・円建て）', 'data_errors_dropped': bad, 'repl_key': None, 'repl': None, 'repl_detail': None})
+        last = max(hold)
+        ev['holding_last'] = {'month': last, 'industries': hold[last]}
+        rows.append(ev)
+    return rows
+
+
+def skip_checks(D, sig):
+    """事後の確かめ（判定しない）: 直近の1か月を飛ばしても残るか（値が古い株による見かけのモメンタムではないか）"""
+    out = {}
+
+    def skiptg(R, a, b, K=3):
+        def f(m):
+            sc = {}
+            for c in R:
+                ks = [madd(m, -k) for k in range(a, b + 1)]
+                if m in R[c] and all(k in R[c] for k in ks):
+                    sc[c] = math.fsum(math.log1p(R[c][k]) for k in ks)
+            sel = pick(sc, K)
+            return {c: 1.0 for c in sel} if len(sel) == K else None
+        return f
+    pre4 = json.load(open(os.path.join(BASE, 'out', PREREG4)))
+    for name, cs in (('unseen16', pre4['countries']), ('seen7', REPL_COUNTRIES)):
+        per = {}
+        for ctry in cs:
+            R = jkp_industry(ctry); mk = M.jkp_mkt(ctry, 'vw')
+            months = sorted(set().union(*[set(v) for v in R.values()]))
+            for key, (a, b) in {'mom12_skip1': (2, 12), 'mom6_skip1': (2, 7)}.items():
+                r, _, _ = run(skiptg(R, a, b), R, months)
+                per.setdefault(key, {})[ctry] = {m: r[m] - mk[m] for m in r if m in mk}
+        for key, pc in per.items():
+            ms = sorted(set().union(*[set(v) for v in pc.values()]))
+            avg = {m: S.mean([v[m] for v in pc.values() if m in v]) for m in ms}
+            x = [avg[m] for m in sorted(avg)]; h = [avg[m] for m in sorted(avg) if m >= M.HOLD_START]
+            out[f'{name}_{key}'] = {'positive': f"{sum(1 for v in pc.values() if S.mean(v.values()) > 0)}/{len(pc)}",
+                                    'pooled_ex_ann': round(S.mean(x) * 1200, 2), 't': round(M.nw_t(x), 2),
+                                    'hold_ex_ann': round(S.mean(h) * 1200, 2), 'hold_t': round(M.nw_t(h), 2)}
+    for name, (L, skip, K) in {'us49_mom12_skip1_top5': (11, 1, 5), 'us49_mom12_skip1_top10': (11, 1, 10), 'us49_mom6_skip1_top5': (5, 1, 5)}.items():
+        f = lambda m, L=L, skip=skip, K=K: (lambda sel: {c: 1.0 for c in sel} if len(sel) == K else None)(pick({c: sig.cum(c, m, L, skip) for c in D.selectable if D.has(c, m)}, K))
+        r, _, _ = run(f, D.R, D.months)
+        out[name] = {p: (lambda st: {x: st[x] for x in ('ex_ann', 't', 'cagr_diff')})(M.excess_stats(r, D.mkt, a=a, z=z))
+                     for p, a, z in (('full', None, None), ('train', None, M.TRAIN_END), ('hold', M.HOLD_START, None))}
+    return out
+
+
 def main():
     D = Data()
     sig = Sig(D)
+    if '--topix' in sys.argv:
+        for e in part5(D):
+            print(e['id'], {k: (e[k]['ex_ann'], e[k]['t'], e[k]['cagr_diff'], e[k]['from']) for k in ('full', 'hold', 'cost_hold', 'cost005_hold') if e[k]}, e['turnover_twoway_ann'], e['data_errors_dropped'])
+        return
     if '--panel' in sys.argv:
         print(json.dumps(unseen_panel(), ensure_ascii=False, indent=1)[:20000])
         return
@@ -1033,7 +1124,9 @@ def main():
         e['holm_family'] = 'primary(27)' if e['primary'] else 'primary+exploratory(36)'
     rows2 = part2(D, sig, rep) if os.path.exists(os.path.join(BASE, 'out', PREREG2)) else []
     rows3 = part3(D, sig, rep) if os.path.exists(os.path.join(BASE, 'out', PREREG3)) else []
-    for fam, rr in ((PREREG2, rows2), (PREREG3, rows3)):
+    rows5 = part5(D) if os.path.exists(os.path.join(BASE, 'out', PREREG5)) else []
+    rows3 = rows3 + rows5
+    for fam, rr in ((PREREG2, rows2), (PREREG3, [e for e in rows3 if e['prereg'] == PREREG3]), (PREREG5, rows5)):
         pf = M.holm({e['id']: e['hold']['p'] for e in rr if e['hold']})
         for e in rr:
             e['holm_p_hold'] = pf.get(e['id'])
@@ -1054,13 +1147,14 @@ def main():
            'grades': {g: [e['id'] for e in rows if e['grade'] == g] for g in 'SABC'},
            'tested': rows, 'replication_raw': rep,
            'diagnostics_post_hoc_not_graded': dict(diagnostics(D) if '--nodiag' not in sys.argv else {},
-                                                   pooled_international=pooled_repl(RAW), us_gics_jkp=us_gics_check()),
+                                                   pooled_international=pooled_repl(RAW), us_gics_jkp=us_gics_check(),
+                                                   skip_month_checks=skip_checks(D, sig)),
            'unseen_panel_prereg4': unseen_panel() if os.path.exists(os.path.join(BASE, 'out', PREREG4)) else None}
     p = M.save(OUT, out)
     print('→', p)
     for e in rows:
         h, f, t = e['hold'], e['full'], e['train']
-        print(f"{e['id']:<20} {'主' if e['primary'] else {PREREG: '探', PREREG2: '探2', PREREG3: '探3'}[e['prereg']]} 全{f['ex_ann']:+6.2f}(t{f['t']:+.2f}) 訓{t['ex_ann']:+6.2f}(t{t['t']:+.2f}) "
+        print(f"{e['id']:<20} {'主' if e['primary'] else {PREREG: '探', PREREG2: '探2', PREREG3: '探3', PREREG5: '探5'}[e['prereg']]} 全{f['ex_ann']:+6.2f}(t{f['t']:+.2f}) 訓{t['ex_ann']:+6.2f}(t{t['t']:+.2f}) "
               f"保{h['ex_ann']:+6.2f}(t{h['t']:+.2f} g{h['cagr_diff']:+.2f}) 費後{e['cost_hold']['ex_ann']:+6.2f} "
               f"roll{e['roll20']['win_rate'] if e['roll20'] else None} repl{e['repl']} holm{e['holm_p_hold']} → {e['grade']}")
 
