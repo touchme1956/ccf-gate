@@ -420,7 +420,7 @@ def fam_D():
 
 FAMILIES = [('A_triple', fam_A, True, 1), ('B_double', fam_B, True, 1), ('C_jkp', fam_C, True, 1),
             ('D_frbig', fam_D, False, 2), ('E_jkp2', fam_E, False, 2)]
-PREREGS = {1: PREREG, 2: 'out/mw_combo_us_prereg2.json'}
+PREREGS = {1: PREREG, 2: 'out/mw_combo_us_prereg2.json', 3: 'out/mw_combo_us_prereg3.json'}
 
 
 LABELS = [(F_OPINV, 28, 'BIG HiOP LoINV'), (F_BMOP, 31, 'BIG HiBM HiOP'), (F_BMOP, 19, 'BIG LoBM HiOP'), (F_BMINV, 28, 'BIG HiBM LoINV'),
@@ -498,6 +498,7 @@ def run(families=None):
                              'factor_full': factor_reg(s), 'subperiods': subperiods(s)}
     res['diagnostics_posthoc']['explain_S_A'] = expl
     res['diagnostics_posthoc']['all_tests_multiplicity'] = all_tests_multiplicity(res['tested'])
+    res['stage3_confirm'] = stage3()
     return res
 
 
@@ -584,6 +585,70 @@ def all_tests_multiplicity(rows):
 def subperiods(s):
     return {k: M.excess_stats(s, MKT, a=a, z=z) for k, (a, z) in
             {'2007-2015': (200701, 201512), '2016-': (201601, None), '1963-1984': (196307, 198412), '1985-2006': (198501, 200612)}.items()}
+
+
+DEV22 = ['aus', 'aut', 'bel', 'can', 'che', 'deu', 'dnk', 'esp', 'fin', 'fra', 'gbr', 'hkg', 'irl', 'isr', 'ita', 'jpn', 'nld', 'nor', 'nzl', 'prt', 'sgp', 'swe']
+AGG = {'usa', 'world', 'world_ex_us', 'developed', 'emerging', 'frontier', 'all_countries', 'all_regions'}
+
+
+def binom_upper(k, n):
+    from math import comb
+    return sum(comb(n, i) for i in range(k, n + 1)) / 2 ** n if n else None
+
+
+def stage3():
+    """第3段（out/mw_combo_us_prereg3.json）: C6 を JKP の全部の国で／同じ作り方の市場どうしで"""
+    av = json.loads(M.get('https://jkpfactors-data.s3.amazonaws.com/public/availability.json', name='jkp_availability.json'))['portfolios']
+    specs = {'C6_QUAL5': fam_C_spec()['C6_QUAL5'][0]}
+    specs.update({k: v[0] for k, v in fam_E_spec().items() if k in ('E1_QUAL5_MOM', 'E2_QUAL5_VAL', 'E3_PROF3', 'E7_QUAL8')})
+    base = sorted(c for c in av if c not in AGG and isinstance(av[c], list) and all(k in av[c] for k in specs['C6_QUAL5']))
+    T1 = {}
+    for sid, keys in specs.items():
+        cs = [c for c in base if all(k in av[c] for k in keys)]
+        det = {}
+        for c in cs:
+            try:
+                sx, mk = jkp_mix(c, keys, min_n=10), M.jkp_mkt(c, 'vw')
+            except Exception as e:  # noqa  取れなかった国も名指しで残す（黙って落とさない）
+                det[c] = {'error': str(e)[:200], 'dev': c in DEV22}
+                continue
+            common = set(sx) & set(mk)
+            nh = sum(1 for k in common if k >= M.HOLD_START)
+            det[c] = {'dev': c in DEV22, 'months': len(common), 'hold_months': nh,
+                      'full': M.excess_stats(sx, mk) if len(common) >= 120 else None,
+                      'hold': M.excess_stats(sx, mk, a=M.HOLD_START) if nh >= 60 else None}
+
+        def summ(filt):
+            fc = [c for c, d in det.items() if d.get('full') and filt(c)]
+            hc = [c for c, d in det.items() if d.get('hold') and filt(c)]
+            fp = sum(1 for c in fc if det[c]['full']['ex_ann'] > 0)
+            hp = sum(1 for c in hc if det[c]['hold']['ex_ann'] > 0)
+            ts = sorted(det[c]['full']['t'] for c in fc if det[c]['full']['t'] is not None)
+            ex = sorted(det[c]['full']['ex_ann'] for c in fc)
+            return {'full_counted': len(fc), 'full_positive': fp, 'full_share': round(fp / len(fc), 3) if fc else None,
+                    'full_sign_p_one_sided': round(binom_upper(fp, len(fc)), 5) if fc else None,
+                    'full_median_ex_ann': ex[len(ex) // 2] if ex else None, 'full_median_t': ts[len(ts) // 2] if ts else None,
+                    'full_t_ge_2': sum(1 for t in ts if t >= 2), 'full_t_le_-2': sum(1 for t in ts if t <= -2),
+                    'hold_counted': len(hc), 'hold_positive': hp, 'hold_share': round(hp / len(hc), 3) if hc else None,
+                    'hold_sign_p_one_sided': round(binom_upper(hp, len(hc)), 5) if hc else None,
+                    'negative_full': sorted(c for c in fc if det[c]['full']['ex_ann'] <= 0)}
+        T1[sid] = {'all': summ(lambda c: True), 'developed22': summ(lambda c: c in DEV22), 'others': summ(lambda c: c not in DEV22),
+                   'prediction_full_share_ge_2_3': None, 'detail': det}
+        T1[sid]['prediction_full_share_ge_2_3'] = bool(T1[sid]['all']['full_share'] is not None and T1[sid]['all']['full_share'] >= 2 / 3)
+    T2 = {}
+    keys = specs['C6_QUAL5']
+    for w in ('vw', 'vw_cap', 'ew'):
+        sx = since(mix([M.jkp_portfolios('usa', k, w)[good_side(k)] for k in keys]), 196307)
+        mk = M.jkp_mkt('usa', w)
+        T2[w] = {'vs_same_weight_jkp_mkt': {'full': M.excess_stats(sx, mk), 'train': M.excess_stats(sx, mk, z=M.TRAIN_END),
+                                            'hold': M.excess_stats(sx, mk, a=M.HOLD_START), 'recent': M.excess_stats(sx, mk, a=M.RECENT_START)},
+                 'vs_french_mkt': {'train': M.excess_stats(to_total(sx), MKT, z=M.TRAIN_END), 'hold': M.excess_stats(to_total(sx), MKT, a=M.HOLD_START)},
+                 'same_weight_mkt_vs_french_mktrf': {'train': M.excess_stats(mk, MKTRF, z=M.TRAIN_END), 'hold': M.excess_stats(mk, MKTRF, a=M.HOLD_START)}}
+    T2['prediction_all_positive_train_and_hold'] = all(
+        (T2[w]['vs_same_weight_jkp_mkt']['train'] or {}).get('ex_ann', -1) > 0 and (T2[w]['vs_same_weight_jkp_mkt']['hold'] or {}).get('ex_ann', -1) > 0
+        for w in ('vw', 'vw_cap', 'ew'))
+    return {'prereg': 'out/mw_combo_us_prereg3.json', 'prereg_commit': git_sha('out/mw_combo_us_prereg3.json'),
+            'countries_with_C6_sleeves': base, 'T1_all_countries': T1, 'T2_like_for_like': T2}
 
 
 def brief(res):
