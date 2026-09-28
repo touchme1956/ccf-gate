@@ -89,10 +89,15 @@ RULES = {
     'X2': dict(cfirst=True),
     'X3': dict(cfirst=True, o2='all', o2c=True),
     'X4': dict(cfirst=True, o1=O1_L, o1cap=True),
+    # 事前登録3（探索・out/mw_nisa_ops_prereg3.json）
+    'X5': dict(o1=O1_L, o1cap='reserve', o1when='yearend'),
+    'X5b': dict(o1=O1_L10, o1cap='reserve', o1when='yearend'),
+    'X5c': dict(o1=O1_L, o1cap='reserve', o1when='dec_cash'),
 }
 PRIMARY_RULES = ['O1', 'O2a', 'O2b', 'O3', 'O4', 'O5']
 SECONDARY_RULES = ['O1_L10']
 EXPLORE_RULES = ['X1', 'X1b', 'X2', 'X3', 'X4']
+EXPLORE3_RULES = ['X5', 'X5b', 'X5c']
 
 
 class Cfg:
@@ -304,7 +309,7 @@ class HH:
         return sum(v[0] for v in self.pos.values())
 
     def cash_all(self):
-        return self.cash_i + self.cash_cj + self.cash_cu
+        return self.cash_i + self.cash_cj + self.cash_cu + sum(self.o1cash.values())
 
     def acct_of(self, a):
         return [k for k in self.pos if k[1] == a]
@@ -330,6 +335,12 @@ class HH:
         yr = 12 * self.cfg.contrib * k
         ctot = (Q_TSUMI + Q_GROWTH) * h * k - yr
         cg = Q_GROWTH * h * k - yr * self.cfg.castle_share
+        if self.rule.get('o1cap') == 'reserve':
+            # 事前登録3: 城の回転の買い直しと配当の再投資の見込みも取っておく
+            cn = sum(v[0] for (ac, a), v in self.pos.items() if ac in ('NT', 'NG') and self.is_castle(a))
+            res = cn * (self.cfg.turn + 0.05)
+            ctot -= res
+            cg -= res
         out = []
         for ac, a in sorted(c, key=lambda x: self.pos[x][0] / self.pos[x][1]):
             v = self.pos[(ac, a)][0]
@@ -615,15 +626,17 @@ class HH:
         y = m // 100 if f == 12 else m
         mo = m % 100 if f == 12 else None
         annual = f == 1
-        if annual and self.rule.get('o1') and not self.pre and self.year is not None:
-            self.o1_sell_annual(m)
+        when = self.rule.get('o1when')
+        if self.rule.get('o1') and not self.pre and self.year is not None and (annual or (when == 'yearend' and mo == 1)):
+            self.o1_sell_annual(m)             # 年の境目（前年の売りとして記録）: 年次の O1・X1 と 事前登録3 の X5
+
         self.new_year(y)
         if contrib > 0:
             s = self.cfg.castle_share
             self.cash_i += contrib * (1 - s); self.cash_cj += contrib * s
         if not self.pre:
             if self.rule.get('o1'):
-                if annual:
+                if annual or (when in ('yearend', 'dec_cash') and mo == 1):
                     self.o1_rebuy_annual(m)
                 elif mo == 1:
                     self.o1_rebuy_month(m)
@@ -637,8 +650,11 @@ class HH:
         self.cover(m)
         self.buy_all(m)
         if not annual and not self.pre and self.rule.get('o1') and mo == 12:
-            self.o1_sell_month(m)
-            self.o1_fix_bridge()
+            if when == 'dec_cash':
+                self.o1_sell_annual(m)         # 事前登録3 X5c: 12月は現金で持つ（値動きを逃す）
+            elif when is None:
+                self.o1_sell_month(m)
+                self.o1_fix_bridge()
         self.apply(m)
         self.step_i += 1
 
@@ -646,7 +662,8 @@ class HH:
         """いま全部売って円にしたら手元に残る額（税・為替・手数料の後）"""
         tv = self.value() + self.cash_all() + getattr(self, '_pending_etf', 0.0)
         s = self.fxs(m)
-        fxc = sum(v[0] for (ac, a), v in self.pos.items() if self.is_usd(a)) * s + (self.cash_cu + getattr(self, '_pending_etf', 0.0)) * s
+        fxc = sum(v[0] for (ac, a), v in self.pos.items() if self.is_usd(a)) * s + (self.cash_cu + getattr(self, '_pending_etf', 0.0)) * s \
+            + sum(x for a, x in self.o1cash.items() if self.is_usd(a)) * s
         cm = sum(self.comm(ac, a, v[0], 'regular') for (ac, a), v in self.pos.items() if ac == 'T') if self.cfg.costs == 'rakuten' else 0.0
         if self.tax <= 0:
             return tv - fxc - cm
@@ -681,7 +698,9 @@ class HH:
             if self.is_usd(key[1]):
                 c = v * s; v -= c; self.stats['fx_cost'] += c
             nis += v
-        cu = self.cash_cu + getattr(self, '_pending_etf', 0.0)
+        cu = self.cash_cu + getattr(self, '_pending_etf', 0.0) + sum(x for a, x in self.o1cash.items() if self.is_usd(a))
+        self.cash_cj += sum(x for a, x in self.o1cash.items() if not self.is_usd(a))
+        self.o1cash = {}
         c = cu * s
         self.stats['fx_cost'] += c
         return nis + self.cash_i + self.cash_cj + cu - c
@@ -699,6 +718,8 @@ def run_hh(P, cfg, rule, keys, defl=None, sched=None, record=False, pre_keys=Non
             hh.k = defl(m) if defl else 1.0
             hh.step(m, per * hh.k)
         hh.pre = False
+        if record:
+            rec['_pre'] = hh.liquidation_value(pre_keys[-1])   # 事前登録3 の直し: 時間加重の最初の月の前の値
     for m in keys:
         hh.k = defl(m) if defl else 1.0
         c = per * hh.k
@@ -843,6 +864,20 @@ def selftest():
     hh.cash_i = 300_000.0; hh.cash_cj = 100_000.0
     hh.buy_all(P6['keys'][0])
     ok['x2_castle_first'] = abs(hh.pos.get(('NG', 'CL'), [0, 0])[1] - 100_000) < 1e-6 and ('NG', 'IDX') not in hh.pos and abs(hh.pos[('T', 'IDX')][1] - 300_000) < 1e-6
+    # (14) 事前登録3 X5: 年の境目で売り買い（つなぎ無し）→ 課税口座に何も残らず、12月末の値で生涯枠が (B−M) 減る。X5c は12月を現金で持つ
+    P9 = synth_path(30, r=0.0)
+    P9['R']['MKT'][P9['keys'][2]] = -0.30
+    P9['R']['MKT'][P9['keys'][11]] = 0.05      # 12月の値上がり（X5c だけが逃す）
+    cfg = Cfg('t', castle_share=0.0, holders=1, contrib=0)
+    r14 = {}
+    for rname, rule in (('X5', RULES['X5']), ('X5c', RULES['X5c'])):
+        hh = HH(P9, cfg, rule)
+        hh.cash_i = 1_000_000.0
+        for mm in P9['keys']:
+            hh.step(mm, 0.0)
+        r14[rname] = (hh.life, hh.value(), ('T', 'IDX') in hh.pos, dict(hh.stats))
+    ok['x5_yearend_switch'] = (not r14['X5'][2]) and 0.72e6 < r14['X5'][0] < 0.735e6 and r14['X5'][3]['o1_sales'] == 1 \
+        and (not r14['X5c'][2]) and 0.69e6 < r14['X5c'][0] < 0.70e6 and r14['X5c'][1] < r14['X5'][1] * 0.96
     return ok
 
 
@@ -1248,7 +1283,7 @@ def stress(W):
 
 
 def twr(rec, contribs, keys):
-    out, prev = {}, 0.0
+    out, prev = {}, rec.get('_pre', 0.0)
     for m in keys:
         c = contribs[m]
         den = prev + c
@@ -1291,7 +1326,8 @@ def main():
     P = build_paths(D)
     lab = Lab(D, P)
     out = {'angle': ANGLE, 'prereg': PREREG, 'prereg_commit': git_sha(f'out/{PREREG}'), 'prereg2': 'mw_nisa_ops_prereg2.json',
-           'prereg2_commit': git_sha('out/mw_nisa_ops_prereg2.json'), 'global_prereg': 'mw_prereg.json',
+           'prereg2_commit': git_sha('out/mw_nisa_ops_prereg2.json'), 'prereg3': 'mw_nisa_ops_prereg3.json',
+           'prereg3_commit': git_sha('out/mw_nisa_ops_prereg3.json'), 'global_prereg': 'mw_prereg.json',
            'global_prereg_commit': git_sha('out/mw_prereg.json'),
            'benchmark': '既定の運用 D0（同じ道・同じ積立・同じ資産: NISA から先に買う〔指数はつみたて→成長・城は成長〕・売らない〔城の回転だけ〕・減らすときは口座の時価で按分・枠の回収や移し替えなし・課税口座の溢れも積み上げ型の投信）',
            'sanity': {}, 'deviations': [], 'tested': []}
@@ -1318,12 +1354,12 @@ def main():
     # 主の族（P）と副（O1_L10）
     for sc in ['P', 'S1_one_holder', 'S2_300k', 'S3_tax25', 'S4_init_taxable']:
         cfg = SCEN[sc]
-        for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES:
+        for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES + EXPLORE3_RULES:
             W = run_windows(lab, main_sets, cfg, rn)
             res = block(W, ['USJ', 'JPJ', 'USD', 'JST'])
             v, ph, det = verdict(res)
             rec = {'name': f'{rn}__{sc}', 'rule': rn, 'scenario': sc, 'castle': 'clone', 'costs': 'brief',
-                   'family': ('explore_prereg2' if rn in EXPLORE_RULES else ('primary' if rn in PRIMARY_RULES else 'secondary_rule')) + ('' if sc == 'P' else '__sensitivity'),
+                   'family': ('explore_prereg3' if rn in EXPLORE3_RULES else 'explore_prereg2' if rn in EXPLORE_RULES else ('primary' if rn in PRIMARY_RULES else 'secondary_rule')) + ('' if sc == 'P' else '__sensitivity'),
                    'verdict': v, 'pass_by_horizon': ph, 'verdict_detail': det, 'windows': res, 'stress': stress(W),
                    'windows_usj20': W['USJ'][20]['rs'] if sc in ('P',) else None}
             out['tested'].append(rec)
@@ -1331,7 +1367,7 @@ def main():
             u = res['USJ'][20]['all']; j = res['JPJ'][20]['all']; us = res['USD'][20]['all']; js = res['JST'][20]['all']
             log(f'{rn:7s} {sc:16s} {v:10s} USJ20 勝{u["win_share"]} 同{u["tie_share"]} 中{u["median"]} | JPJ20 勝{j["win_share"]} 中{j["median"]} | USD20 勝{us["win_share"]} 中{us["median"]} | JST20 勝{js["win_share"]} 中{js["median"]}  ({time.time() - t0:.0f}s)')
     # 城を名前（49業種・5銘柄）で持つ（米国の道だけ・3つの seed）
-    for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES:
+    for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES + EXPLORE3_RULES:
         for seed in SEEDS:
             cfg = Cfg('S5_names', castle='names', seed=seed)
             W = run_windows(lab, ['USJ', 'USD'], cfg, rn, seed=seed)
@@ -1343,7 +1379,7 @@ def main():
             u = res['USJ'][20]['all']; us = res['USD'][20]['all']
             log(f'{rn:7s} S5_names s{seed} {v:10s} USJ20 勝{u["win_share"]} 中{u["median"]} | USD20 勝{us["win_share"]} 中{us["median"]}  ({time.time() - t0:.0f}s)')
     # 楽天の実際の手数料（USJ だけ）
-    for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES:
+    for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES + EXPLORE3_RULES:
         cfg = SCEN['S7_rakuten']
         W = run_windows(lab, ['USJ'], cfg, rn)
         res = block(W, ['USJ'])
@@ -1356,7 +1392,7 @@ def main():
     n5 = {}
     ks = [k for k in P['USJ']['keys'] if 201007 <= k <= FR_END]
     for sc, hol in (('P', 2), ('S1_one_holder', 1)):
-        for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES:
+        for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES + EXPLORE3_RULES:
             cfg = Cfg('S6_n5_' + sc, castle='n5', holders=hol)
             r, ss, sb, fs, fb = lab.ratio('USJ', cfg, rn, None, ks)
             n5[f'{rn}__{sc}'] = {'ratio': round(r, 6), 'rule_final': round(fs), 'default_final': round(fb),
@@ -1372,9 +1408,10 @@ def main():
     out['grades'] = {}
     for sc in ['P', 'S1_one_holder', 'S2_300k', 'S4_init_taxable']:
         cfg = SCEN[sc]
-        gb = {rn: grade_block(lab, cfg, rn) for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES}
+        gb = {rn: grade_block(lab, cfg, rn) for rn in PRIMARY_RULES + SECONDARY_RULES + EXPLORE_RULES + EXPLORE3_RULES}
         fams = [(PRIMARY_RULES, 'primary' if sc == 'P' else f'sens_{sc}'), (SECONDARY_RULES, 'secondary' if sc == 'P' else f'sens2_{sc}'),
-                (EXPLORE_RULES, 'explore_prereg2' if sc == 'P' else f'sens_explore_{sc}')]
+                (EXPLORE_RULES, 'explore_prereg2' if sc == 'P' else f'sens_explore_{sc}'),
+                (EXPLORE3_RULES, 'explore_prereg3' if sc == 'P' else f'sens_explore3_{sc}')]
         for members, fname in fams:
             hp = M.holm({rn: (gb[rn]['hold'] or {}).get('p') for rn in members if gb[rn].get('hold')})
             for rn in members:
