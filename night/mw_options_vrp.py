@@ -744,6 +744,13 @@ def part2(D, res, add_fn, log_fn):
 
 
 PP_G = {'PUT': 200801, 'BXM': 200301}
+DEVIATIONS = [
+    '第1部の事前登録は RXM を『25デルタのストラングルを売り5デルタを買う（市場中立に近い）』と書いたが、CBOE の名前は Risk Reversal で、データは β 0.50・大きな上げの月に大きく上がる＝コールを買いプットを売るリスク・リバーサル（デルタ約0.5）。O-RXM は約1.5倍に借りた S&P500（対 S&P500 配当込み α +0.18%/年 t 0.34）。式は登録どおりで判定も変えていない（post_hoc_notes）',
+    'O-RXM[vs French Mkt] の S は頑健性の行（候補外）。訓練の French Mkt のシャープ 0.476 が S&P500 配当込み 0.501 より低かったぶん C8 を通っただけで、借りた分（β1.45）の勝ち',
+    'mw_common.sharpe は小数3桁に丸めてから C8 で比べる。O-RXM の訓練は丸めなしでも 0.4998 対 0.5010（判定は同じ）',
+    '第2部を測った後、報告の辞書（part2）が実在の器の処理の変数で上書きされる不具合を直して測り直した（格付け・数字は同じ・C5 の判定には直す前から正しい値が使われていた）',
+    '第3部は事前登録3（2c738e1）で報告のみ・事後と宣言してから測った。第2部までの格付けは変えていない',
+]
 
 
 def post_hoc(D):
@@ -1075,6 +1082,7 @@ def main():
            'question': pre['question'], 'end': END, 'sanity': san, 'known_numbers': known,
            'n_tested': len(res), 'n_holm_family_ABC': len(famA), 'n_holm_family_E': len(famE),
            'tested': tested, 'strategies': res, 'real_vehicles': real, 'part2': rep2, 'post_hoc_notes': post_hoc(D),
+           'deviations': DEVIATIONS,
            'runtime_sec': round(time.time() - t0, 1), 'log_tail': LOG[-40:]}
     p = M.save(OUT, obj)
     log('書いた', p, round(os.path.getsize(p) / 1e6, 2), 'MB')
