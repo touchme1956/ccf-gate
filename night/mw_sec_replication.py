@@ -1177,6 +1177,134 @@ def run2():
     print('→', p)
 
 
+
+# ───────────────────────── 探索の第2族（prereg3）: 上位100社の結果の点検 ─────────────────────────
+PRE3_NAME = 'mw_sec_replication_prereg3.json'
+FAM3 = {'cop_at_M50_T3VW': 'M50', 'cop_at_M200_T3VW': 'M200', 'cop_at_M100_T3VW_exBusEq': 'M100_exfin_exBusEq',
+        'cop_at_M100_IN_T3SM': 'M100_exfin', 'gp_at_M100_T3VW': 'M100', 'ope_be_M100_T3VW': 'M100'}
+MEGA6 = {'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA'}
+
+
+def mk(u, k, drop=()):
+    keep = [c for c in u if u[c]['ticker'] not in drop]
+    return {c: u[c] for c in sorted(keep, key=lambda c: -u[c]['fcap'])[:k]}
+
+
+def m100_cohorts(uni, drop=()):
+    C = {}
+    for t in YEARS:
+        m = mk(uni[t], 100, drop)
+        R, sc = scores(m)
+        C.setdefault('S', {})[t] = _w(m, top_by(sc['cop_at'], m, frac=1 / 3), True)
+        C.setdefault('B', {})[t] = _w(m, list(m), True)
+    return C
+
+
+def run3():
+    t0 = time.time()
+    out_p = os.path.join(M.BASE, 'out', OUT_NAME)
+    main = json.load(open(out_p))
+    panel = build_panel()
+    uni, price, diag, sic, tick = build_universe(panel)
+    rets = {x: v[0] for x, v in price.items() if v}
+    C = {}
+    ind_map = {}
+    for t in YEARS:
+        u = uni[t]
+        for c, r in u.items():
+            ind_map[(t, r['ticker'])] = r.get('ff12') or '?'
+        for k in (50, 100, 200):
+            m = mk(u, k)
+            C.setdefault(f'M{k}', {})[t] = _w(m, list(m), True)
+        m50, m200, m100 = mk(u, 50), mk(u, 200), mk(u, 100)
+        R, sc = scores(m50); C.setdefault('cop_at_M50_T3VW', {})[t] = _w(m50, top_by(sc['cop_at'], m50, frac=1 / 3), True)
+        R, sc = scores(m200); C.setdefault('cop_at_M200_T3VW', {})[t] = _w(m200, top_by(sc['cop_at'], m200, frac=1 / 3), True)
+        R, sc = scores(m100)
+        C.setdefault('gp_at_M100_T3VW', {})[t] = _w(m100, top_by(sc['gp_at'], m100, frac=1 / 3), True)
+        C.setdefault('ope_be_M100_T3VW', {})[t] = _w(m100, top_by(sc['ope_be'], m100, frac=1 / 3), True)
+        C.setdefault('cop_at_M100_T3VW', {})[t] = _w(m100, top_by(sc['cop_at'], m100, frac=1 / 3), True)
+        C.setdefault('M100_exfin', {})[t] = _w(m100, list(R), True)
+        mx = {c: r for c, r in m100.items() if r.get('ff12') and r['ff12'] not in ('Money', 'BusEq')}
+        Rx, scx = scores(mx)
+        C.setdefault('cop_at_M100_T3VW_exBusEq', {})[t] = _w(mx, top_by(scx['cop_at'], mx, frac=1 / 3), True)
+        C.setdefault('M100_exfin_exBusEq', {})[t] = _w(mx, list(mx), True)
+        # 業種中立（上位100社の中）
+        indw, grp = {}, {}
+        for c in R:
+            indw[R[c]['ff12']] = indw.get(R[c]['ff12'], 0.0) + m100[c]['fcap']
+        for c in sc['cop_at']:
+            grp.setdefault(R[c]['ff12'], []).append(c)
+        wsum = sum(indw[g] for g in grp); w = {}
+        for g, cs in grp.items():
+            cs = sorted(cs, key=lambda c: (-sc['cop_at'][c], -m100[c]['fcap']))
+            pick = cs[:max(1, math.ceil(len(cs) / 3))]
+            tot = sum(m100[c]['fcap'] for c in pick)
+            for c in pick:
+                w[m100[c]['ticker']] = indw[g] / wsum * m100[c]['fcap'] / tot
+        C.setdefault('cop_at_M100_IN_T3SM', {})[t] = w
+        C.setdefault('U_all', {})[t] = _w(u, list(u), True)
+    ser, turn, drops = {}, {}, {}
+    for nm, coh in C.items():
+        ser[nm], turn[nm], drops[nm] = simulate(coh, rets)
+    spy = yahoo_series('SPY')[0]
+    ff = M.ff_factors()
+    mkt = {k: v for k, v in ff['mkt'].items() if START <= k <= END}
+    res, pv = {}, {}
+    for nm, pb in FAM3.items():
+        B = {pb: ser[pb], 'U_all': ser['U_all'], 'SPY': spy, 'FF_Mkt': mkt}
+        r = {'name': nm, 'primary': False, 'exploratory': 'prereg3', 'primary_benchmark': pb,
+             'turnover_oneway_ann': round(turn[nm], 3) if turn[nm] else None, 'cagr': round(M.cagr(ser[nm]) * 100, 2),
+             'maxdd': round(M.maxdd(ser[nm]) * 100, 1), 'dropped_stock_months': drops[nm], 'vs': {}}
+        for bn, b in B.items():
+            r['vs'][bn] = stats_block(ser[nm], b, turn[nm] or 0.0)
+        pv[nm] = r['vs'][pb]['full']['p'] if r['vs'][pb]['full'] else None
+        res[nm] = r
+    hm = M.holm(pv)
+    for nm, r in res.items():
+        v = r['vs'][r['primary_benchmark']]
+        g, c = M.grade(v['full'], None, v['full'], v['roll20'], cost_hold=v['net_cost_full'], repl=None, family_holm_p=hm.get(nm))
+        r['grade'] = g; r['criteria'] = c; r['holm_p'] = hm.get(nm)
+    refs = {f'M{k}_vs_U_all': stats_block(ser[f'M{k}'], ser['U_all']) for k in (50, 100, 200)}
+    refs['M100_vs_SPY'] = stats_block(ser['M100'], spy)
+    # 診断: 浮動株そのままの上位100社で価格が無い社
+    tkmap, _ = ticker_map()
+    surv = {}
+    for t in YEARS:
+        top = [c for c, fl in raw_candidates(panel, t, tkmap) if sic.get(c, '') not in EXCL_SIC][:100]
+        pr = set(diag[t]['priced'])
+        surv[t] = {'n': len(top), 'missing': sum(1 for c in top if c not in pr),
+                   'missing_names': [panel[c]['name'][:30] for c in top if c not in pr][:12]}
+    # 事後
+    def ind(m, k):
+        t = m // 100 if m % 100 >= 7 else m // 100 - 1
+        return ind_map.get((t, k), '?')
+    ds, dws = simulate_detail(C['cop_at_M100_T3VW'], rets)
+    db, dwb = simulate_detail(C['M100'], rets)
+    dbx, dwbx = simulate_detail(C['M100_exfin'], rets)
+    post = {'brinson_vs_M100_exfin': brinson(dws, dwbx, rets, ind)}
+    contrib = {}
+    ms = sorted(set(dws) & set(dwb))
+    for m in ms:
+        for k in set(dws[m]) | set(dwb[m]):
+            contrib[k] = contrib.get(k, 0.0) + (dws[m].get(k, 0.0) - dwb[m].get(k, 0.0)) * rets[k][m]
+    cs = sorted(((round(v * 12 / len(ms) * 100, 2), k) for k, v in contrib.items()), reverse=True)
+    post['contributors_vs_M100'] = {'active_sum_ann': round(sum(v for v, _ in cs), 2), 'top10': cs[:10], 'bottom5': cs[-5:]}
+    top1 = cs[0][1]
+    for lab, drop in (('leave_out_top1_' + top1, {top1}), ('leave_out_mega6', MEGA6)):
+        Cd = m100_cohorts(uni, drop)
+        s_, _t, _d = simulate(Cd['S'], rets); b_, _t2, _d2 = simulate(Cd['B'], rets)
+        post[lab] = {'vs_own_M100': M.excess_stats(s_, b_, START, END), 'vs_SPY': M.excess_stats(s_, spy, START, END),
+                     'first_half': M.excess_stats(s_, b_, START, 201806), 'second_half': M.excess_stats(s_, b_, 201807, END)}
+    tested3 = [{'name': nm, 'role': 'exploratory_prereg3', 'grade': res[nm]['grade']} for nm in FAM3] + \
+              [{'name': k, 'role': 'post_hoc_事後', 'grade': None} for k in post]
+    main['exploratory_prereg3'] = {'prereg': PRE3_NAME, 'prereg_commit': sha_of(f'out/{PRE3_NAME}'), 'strategies': res, 'refs': refs,
+                                   'survivorship_top100': surv, 'post_hoc_事後': post, 'tested': tested3, 'runtime_s': round(time.time() - t0)}
+    main['tested'] = [x for x in main['tested'] if x.get('role') not in ('exploratory_prereg3',) and not (x.get('role') == 'post_hoc_事後' and x['name'] in post)] + tested3
+    main['n_tested'] = len(main['tested'])
+    p = M.save(OUT_NAME, main)
+    print('→', p)
+
+
 if __name__ == '__main__':
     stage = sys.argv[1] if len(sys.argv) > 1 else 'run'
     if stage == 'extract':
@@ -1187,3 +1315,5 @@ if __name__ == '__main__':
         run()
     elif stage == 'run2':
         run2()
+    elif stage == 'run3':
+        run3()
