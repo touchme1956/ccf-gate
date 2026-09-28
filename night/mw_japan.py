@@ -664,6 +664,38 @@ def sanity():
     return out
 
 
+DEVIATIONS = [
+    "ETF（E5・報告のみ）: 相手の 1306.T は Yahoo の系列が分割の未調整で壊れていた（2014-12 −90%・2026-02 −91%・2026-03 +961%）。第1回の ETF の結果は無効。第2の事前登録で 1305.T へ替え、1348.T を照合に出した",
+    "mw_common.grade() は全体の事前登録の『訓練期間は最低15年』を見ていない（共通部品の穴・mw_common は編集していない）。この道具で15年未満の訓練期間を C1 不合格にした（第2の事前登録）。これで P の B1（配当＋割安＋還元）は第1回の S から C に変わった（eqnpo_me の日本のデータが1987〜1999年に途切れ途切れで訓練期間13.2年）",
+    "JKP 日本の会計系の特徴は1987〜88年に三分位あたり6〜13銘柄、qmj は1993-04まで3〜7銘柄しかない。事前登録に銘柄数の下限は無かったので格付けはそのまま。n≥30 の月だけで測り直した訓練期間の値を robust に『事後』として付けた（qmj を含む B2 と E4 の割安＋質＋勢いは n≥30 だと訓練期間13.7年で15年を割る）",
+    "diagnostics（事後・格付けに使わない）: 三分位の等分平均そのものが市場に少し勝つ（小型寄りの傾き）かを確かめる『偽薬』＝同じ特徴の3つの分位を全部等分に持った場合と、反対側を持った場合を並べた",
+]
+
+
+def diagnostics(fams, bj_tot):
+    """事後の診断（格付けに使わない）: 偽薬（同じ特徴の3分位を全部等分）と反対側"""
+    out = {}
+    for f, rows in fams.items():
+        for r in rows:
+            if r.get('grade') not in ('S', 'A', 'B') or not r.get('comps'):
+                continue
+            comps = [(k, sd) for k, sd, _ in r['comps']]
+            w = r['comps'][0][2]
+            need = 'half' if f == 'E6' else 'all'
+            plc = [(k, sd) for k, _ in comps for sd in ('1.0', '2.0', '3.0')]
+            opp = [(k, '1.0' if sd == '3.0' else '3.0') for k, sd in comps]
+            nmin = 30 if f == 'E6' else 0
+            s = tot(composite('jpn', comps, w, nmin, need, start=JKP_START))
+            p = tot(composite('jpn', plc, w, nmin, need, start=JKP_START))
+            o = tot(composite('jpn', opp, w, nmin, need, start=JKP_START))
+            d = {}
+            for nm, x, b in (('placebo_vs_mkt', p, bj_tot), ('opposite_vs_mkt', o, bj_tot), ('strategy_vs_placebo', s, p)):
+                d[nm] = {w2: (lambda st: {k: st[k] for k in ('ex_ann', 't', 'cagr_diff')} if st else None)(M.excess_stats(x, b, a, z))
+                         for w2, a, z in (('train', None, TRAIN_END), ('hold', HOLD, None))}
+            out[r['id']] = d
+    return out
+
+
 def git_sha(path):
     try:
         return subprocess.check_output(['git', '-C', M.BASE, 'log', '-n1', '--format=%H', '--', path], text=True).strip() or None
@@ -706,6 +738,8 @@ def main():
         for r in rows:
             if r.get('grade') in ('S', 'A', 'B') and r.get('comps'):
                 r['robust'] = robust_n30(r, bj_tot)
+    out['diagnostics'] = diagnostics(fams, bj_tot)
+    out['deviations'] = DEVIATIONS
     tested = []
     for f, rows in fams.items():
         for r in rows:
