@@ -485,6 +485,19 @@ def run(families=None):
         res['tested'].extend(rows)
     res['n_tested'] = len(res['tested'])
     res['diagnostics_posthoc'] = {'C6_QUAL5': diagnostics_c6()}
+    # 格付け S/A の戦略の説明（事後・判定に使わない）: 因子回帰と小期間
+    SER = {}
+    for fam, fn, primary, stage in (families or FAMILIES):
+        for sid, v in fn().items():
+            SER[sid] = v['s']
+    expl = {}
+    for r in res['tested']:
+        if r['grade'] in ('S', 'A'):
+            s = SER[r['id']]
+            expl[r['id']] = {'factor_train': factor_reg(s, z=M.TRAIN_END), 'factor_hold': factor_reg(s, a=M.HOLD_START),
+                             'factor_full': factor_reg(s), 'subperiods': subperiods(s)}
+    res['diagnostics_posthoc']['explain_S_A'] = expl
+    res['diagnostics_posthoc']['all_tests_multiplicity'] = all_tests_multiplicity(res['tested'])
     return res
 
 
@@ -526,6 +539,51 @@ def diagnostics_c6():
         if st:
             o['decades'][f'{a}s'] = st
     return o
+
+
+def ff6():
+    """French の5因子(2x3)+Mom（小数）→ {'mktrf','smb','hml','rmw','cma','mom'}"""
+    o = {}
+    for name, cols in (('F-F_Research_Data_5_Factors_2x3', ['Mkt-RF', 'SMB', 'HML', 'RMW', 'CMA']), ('F-F_Momentum_Factor', ['Mom'])):
+        v = next(v for t, v in M.french_tables(name).items() if v['freq'] == 'monthly')
+        for c in cols:
+            i = v['cols'].index(c)
+            o[c.lower().replace('-', '')] = {d: r[i] / 100 for d, r in v['data'].items() if r[i] is not None}
+    return o
+
+
+def factor_reg(s, a=None, z=None):
+    """事後の説明（判定に使わない）: (戦略−市場) を SMB・HML・RMW・CMA・Mom と市場超過に回帰。年率のα・NW でない素の t"""
+    import numpy as np
+    F = ff6()
+    names = ['mktrf', 'smb', 'hml', 'rmw', 'cma', 'mom']
+    ks = sorted(k for k in s if k in MKT and all(k in F[n] for n in names) and (a is None or k >= a) and (z is None or k <= z))
+    if len(ks) < 60:
+        return None
+    y = np.array([s[k] - MKT[k] for k in ks])
+    X = np.column_stack([np.ones(len(ks))] + [np.array([F[n][k] for k in ks]) for n in names])
+    b, *_ = np.linalg.lstsq(X, y, rcond=None)
+    e = y - X @ b
+    cov = np.linalg.inv(X.T @ X) * (e @ e) / (len(ks) - X.shape[1])
+    se = np.sqrt(np.diag(cov))
+    out = {'from': ks[0], 'to': ks[-1], 'alpha_ann': round(b[0] * 1200, 2), 'alpha_t': round(b[0] / se[0], 2),
+           'r2': round(1 - (e @ e) / ((y - y.mean()) @ (y - y.mean())), 3)}
+    for n, bb, ss in zip(names, b[1:], se[1:]):
+        out[n] = [round(bb, 3), round(bb / ss, 1)]
+    return out
+
+
+def all_tests_multiplicity(rows):
+    """事後の透明性: この角度で試した全部（主+探索）をまとめて Holm。保有期間の p と全期間の p の両方"""
+    hp = M.holm({r['id']: (r['hold'] or {}).get('p') for r in rows})
+    fp = M.holm({r['id']: (r['full'] or {}).get('p') for r in rows})
+    return {'n': len(rows), 'holm_hold_p': hp, 'holm_full_p': fp,
+            'note': '全体の線 C7 は族ごとの Holm。ここは『角度の中で試した全部』で数えた場合の参考（格付けは変えない）'}
+
+
+def subperiods(s):
+    return {k: M.excess_stats(s, MKT, a=a, z=z) for k, (a, z) in
+            {'2007-2015': (200701, 201512), '2016-': (201601, None), '1963-1984': (196307, 198412), '1985-2006': (198501, 200612)}.items()}
 
 
 def brief(res):
