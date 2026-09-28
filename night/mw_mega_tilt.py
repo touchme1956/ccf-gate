@@ -16,6 +16,17 @@ import csv, io, json, math, os, random, statistics as S, subprocess, sys, zipfil
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M  # noqa: E402
 
+_FT, _orig_ft = {}, M.french_tables
+
+
+def _ft_cached(name):  # French の zip を一度だけ読む（mw_common は変えない）
+    if name not in _FT:
+        _FT[name] = _orig_ft(name)
+    return _FT[name]
+
+
+M.french_tables = _ft_cached
+
 BASE = M.BASE
 PREREG = 'mw_mega_tilt_prereg.json'
 PR = json.load(open(os.path.join(BASE, 'out', PREREG)))
@@ -391,7 +402,7 @@ def fr_intl_ls(suffix, good_short, bad_short):
 
 
 # ───────────────────────── 本体 ─────────────────────────
-def main():
+def part1():
     out = {'angle': 'mega_tilt', 'prereg': PREREG, 'prereg_commit': sha_of(f'out/{PREREG}'),
            'global_prereg': 'mw_prereg.json', 'global_prereg_commit': sha_of('out/mw_prereg.json'),
            'benchmark': 'French Mkt（Mkt-RF+RF）', 'jkp_end': JKP_END, 'sanity': {}, 'deviations': [], 'tested': []}
@@ -540,18 +551,234 @@ def main():
     out['families'] = {f: {'n': len(r), 'grades': {g: sum(1 for x in r if x.get('grade') == g) for g in 'SABC'}} for f, r in fams.items()}
     out['deviations'].append('JKP の規模別（mega）は三分位の時価加重ではなく順位加重の characteristic-managed portfolio だった（作成コード portfolios.R の cmp 節で確認）。そのため λ=0.2 は厳密な買いだけでは作れない可能性が高い（feasibility 参照）')
     out['deviations'].append('JKP の規模別は米国しか公開されていないので、P-A の C5（再現）は同じ特徴の JKP vw 三分位 LS（全規模・時価加重）の米国外10地域で代用')
-    p = M.save('mw_mega_tilt.json', out)
-    # 表示
+    ctx = {'mkt': mkt, 'mktrf': mktrf, 'mega': mega, 'vwu': vwu, 'reg_vw': reg_vw, 'reg_mkt': reg_mkt, 'tot': tot,
+           'names': names, 'to_of': to_of, 'pub_of': pub_of, 'frls': frls, 'fams': fams}
+    return out, ctx
+
+
+# ═════════════════════════ prereg2（探索の追加） ═════════════════════════
+PREREG2 = 'mw_mega_tilt_prereg2.json'
+THEME_TO = {'short_term_reversal': 10.0, 'seasonality': 3.0, 'momentum': 1.5, 'profit_growth': 1.5, 'low_risk': 0.8, 'accruals': 0.8,
+            'debt_issuance': 0.8, 'investment': 0.8, 'quality': 0.4, 'profitability': 0.4, 'value': 0.4, 'low_leverage': 0.4, 'size': 0.4}
+
+
+def vw_all_every(region):
+    """JKP all_factors（vw・符号つき）を全特徴で → {特徴: {ym: ret}}（フィルタは vw_all と同じ）"""
+    out = {}
+    for x in M.jkp_rows(region, 'all_factors', 'factor', 'vw'):
+        if x['ret'] in ('', 'NA', 'na'):
+            continue
+        if 'n_stocks_min' in x and x['n_stocks_min'] not in ('', 'NA') and int(float(x['n_stocks_min'])) < 10:
+            continue
+        if 'n_countries' in x and x['n_countries'] not in ('', 'NA') and int(float(x['n_countries'])) < 3:
+            continue
+        out.setdefault(x['name'], {})[int(x['date'][:4]) * 100 + int(x['date'][5:7])] = float(x['ret'])
+    return out
+
+
+def themes_vw(region):
+    out = {}
+    for x in M.jkp_rows(region, 'all_themes', 'factor', 'vw'):
+        if x['ret'] in ('', 'NA', 'na'):
+            continue
+        if 'n_countries' in x and x['n_countries'] not in ('', 'NA') and int(float(x['n_countries'])) < 3:
+            continue
+        out.setdefault(x['name'], {})[int(x['date'][:4]) * 100 + int(x['date'][5:7])] = float(x['ret'])
+    return out
+
+
+def cluster_labels():
+    b = M.get('https://raw.githubusercontent.com/bkelly-lab/ReplicationCrisis/master/GlobalFactors/Cluster%20Labels.csv', name='jkp_cluster_labels.csv')
+    return {r['characteristic']: r['cluster'].lower().replace('-', '_').replace(' ', '_') for r in csv.DictReader(io.StringIO(b.decode()))}
+
+
+def composite(series_by_char, chars, min_share=0.8):
+    """選んだ特徴の等分平均。月ごとに min_share 以上そろう月だけ・そろった分で平均（0で埋めない）"""
+    months = set()
+    for c in chars:
+        months |= set(series_by_char.get(c, {}))
+    out = {}
+    need = math.ceil(min_share * len(chars))
+    for m in sorted(months):
+        v = [series_by_char[c][m] for c in chars if m in series_by_char.get(c, {})]
+        if len(v) >= need and v:
+            out[m] = sum(v) / len(v)
+    return out
+
+
+def fr_exclusion(fname, good, bad, tot):
+    ls = fr_ls(fname, good, bad)
+    cap = fr_capshare(fname, [bad])
+    c = {k: cap[k] / tot[k] for k in cap if k in tot and tot[k] > 0}
+    out, cs = {}, []
+    for k in sorted(ls):
+        pk = prev_month(k)
+        if pk in c:
+            out[k] = c[pk] * ls[k]
+            cs.append(c[pk])
+    return out, (S.mean(cs) if cs else None), (sorted(cs)[len(cs) // 2] if cs else None)
+
+
+def diagnostics(mkt, mktrf, ls, lam):
+    ks = sorted(k for k in set(mkt) & set(ls) & set(mktrf) if M.HOLD_START <= k <= JKP_END)
+    s = {k: mkt[k] + lam * ls[k] for k in ks}
+    b = {k: mkt[k] for k in ks}
+    d = {'D1_2007_2015': M.excess_stats(s, b, a=200701, z=201512), 'D1_2016_2025': M.excess_stats(s, b, a=201601)}
+    k2 = [k for k in ks if not (200801 <= k <= 200912)]
+    ex2 = [lam * ls[k] for k in k2]
+    t2 = M.nw_t(ex2)
+    d['D2_ex_2008_2009'] = {'ex_ann': round(S.mean(ex2) * 1200, 2), 't': round(t2, 2) if t2 is not None else None, 'months': len(k2)}
+    ex = [lam * ls[k] for k in ks]
+    xm = [mktrf[k] for k in ks]
+    mx, me = S.mean(xm), S.mean(ex)
+    beta = sum((a - mx) * (e - me) for a, e in zip(xm, ex)) / sum((a - mx) ** 2 for a in xm)
+    al = [e - beta * a for e, a in zip(ex, xm)]
+    ta = M.nw_t(al)
+    d['D3_capm'] = {'beta_of_excess': round(beta, 3), 'alpha_ann': round(S.mean(al) * 1200, 2), 't': round(ta, 2) if ta is not None else None}
+    yrs = {}
+    for k in ks:
+        y = k // 100
+        a = yrs.setdefault(y, [1.0, 1.0])
+        a[0] *= 1 + s[k]; a[1] *= 1 + b[k]
+    diffs = {y: round((v[0] - v[1]) * 100, 2) for y, v in yrs.items() if sum(1 for k in ks if k // 100 == y) == 12}
+    best = max(diffs, key=diffs.get) if diffs else None
+    d['D4_calendar'] = {'years': len(diffs), 'years_won': sum(1 for v in diffs.values() if v > 0),
+                        'mean_diff_pct': round(S.mean(diffs.values()), 2) if diffs else None,
+                        'best_year': [best, diffs.get(best)] if best else None,
+                        'mean_diff_ex_best_pct': round(S.mean(v for y, v in diffs.items() if y != best), 2) if len(diffs) > 1 else None,
+                        'worst_year': list(min(diffs.items(), key=lambda x: x[1])) if diffs else None,
+                        'by_year': diffs}
+    return d
+
+
+def part2(out, ctx):
+    mkt, mktrf, tot = ctx['mkt'], ctx['mktrf'], ctx['tot']
+    out['prereg2'] = PREREG2
+    out['prereg2_commit'] = sha_of(f'out/{PREREG2}')
+    fams = ctx['fams']
+    # ── X3a French 除外ルール
+    X3 = []
+    x2rep = {r['name']: r['repl'] for r in fams['X2']}
+    for key, (fname, g, bcol, jk, suf) in list(FR2.items()) + list(FR5.items()):
+        ls, cmean, cmed = fr_exclusion(fname, g, bcol, tot)
+        rp = x2rep.get(key)
+        rec = evaluate(f'X3a_{key}_excl', 'X3', f'French {fname}: 悪い側（{bcol}）を全部売り良い側（{g}）へ移す（前月の時価総額の比・構造的に買いだけ）',
+                       mkt, ls, 1.0, CH[jk]['turnover'] * (cmean or 0), CH[jk]['pub'], rp,
+                       extra={'lambda_is_time_varying': True, 'lambda_mean': round(cmean, 4) if cmean else None, 'lambda_median': round(cmed, 4) if cmed else None})
+        X3.append(rec)
+        ctx.setdefault('ls_of', {})[rec['name']] = (ls, 1.0)
+    # ── X3b JKP vw を λ_vw で
+    cap = fr_capshare('6_Portfolios_ME_OP_2x3', ['BIG LoOP', 'SMALL LoOP'])
+    tr = sorted(cap[k] / tot[k] for k in cap if k in tot and k <= M.TRAIN_END)
+    lam_vw = max(0.01, math.floor(tr[int(len(tr) * 0.05)] * 100) / 100)
+    out['feasibility']['lambda_vw'] = lam_vw
+    out['feasibility']['lambda_vw_rule'] = '訓練期間（1963-07〜2006-12）の French 2x3（BIG LoOP + SMALL LoOP）の時価総額 ÷ 市場全体 の5%点を 0.01 単位で切り捨て'
+    to_of, pub_of, vwu, reg_vw, reg_mkt = ctx['to_of'], ctx['pub_of'], ctx['vwu'], ctx['reg_vw'], ctx['reg_mkt']
+    for nm in ctx['names']:
+        regls = {r: build(reg_vw[r], nm) for r in REGIONS}
+        rp = repl_test({r: v for r, v in regls.items() if v}, lam_vw, to_of(nm), reg_mkt)
+        ls = build(vwu, nm)
+        rec = evaluate(f'X3b_vw_{nm}_lamvw', 'X3', f'P-B と同じ・λ_vw={lam_vw}（収益性の悪い側の時価総額の近似で買いだけに収まる見込みの大きさ）', mkt, ls,
+                       lam_vw, to_of(nm), pub_of(nm), rp)
+        X3.append(rec)
+        ctx['ls_of'][rec['name']] = (ls, lam_vw)
+    fams['X3'] = finish_family(X3)
+    # ── X4 合成とテーマ
+    dx = directions_from_xlsx()
+    avail = json.load(open(os.path.join(M.CACHE, 'jkp_availability.json')))['factor_sizes']['usa']
+    mega_all = {}
+    for k in avail:
+        if dx.get(k) not in (1, -1):
+            continue
+        try:
+            r, _ = mega_raw(k)
+        except Exception as e:  # noqa
+            print('  mega 取得失敗', k, e)
+            continue
+        mega_all[k] = {ym: v * dx[k] for ym, v in r.items()}
+    vw_every = vw_all_every('usa')
+    reg_every = {r: vw_all_every(r) for r in REGIONS}
+    out['x4_inputs'] = {'mega_chars': len(mega_all), 'vw_chars': len(vw_every), 'directions_known': sum(1 for v in dx.values() if v in (1, -1))}
+
+    def select(sd, thr):
+        sel = []
+        for k, s in sd.items():
+            x = [v for m, v in sorted(s.items()) if m <= M.TRAIN_END]
+            if len(x) < 180:
+                continue
+            t = M.nw_t(x)
+            if S.mean(x) > 0 and t is not None and t >= thr:
+                sel.append(k)
+        return sorted(sel)
+    X4 = []
+    out['x4_selected'] = {}
+    for src_name, sd in (('mega', mega_all), ('vw', vw_every)):
+        for thr in (3.0, 2.0):
+            sel = select(sd, thr)
+            out['x4_selected'][f'{src_name}_t{thr}'] = sel
+            ls = composite(sd, sel)
+            regls = {r: composite(reg_every[r], [c for c in sel]) for r in REGIONS}
+            rp = repl_test({r: v for r, v in regls.items() if v}, LAM, 0.8, reg_mkt)
+            rec = evaluate(f'X4a_{src_name}_trainsel_t{thr:.0f}', 'X4', f'{src_name} の153特徴から訓練期間（〜2006）で平均>0 かつ t≥{thr} の {len(sel)} 本を等分に合成', mkt, ls, LAM, 0.8, None, rp,
+                           extra={'n_selected': len(sel)})
+            X4.append(rec)
+            ctx['ls_of'][rec['name']] = (ls, LAM)
+    cl = cluster_labels()
+    th_vw = themes_vw('usa')
+    reg_th = {r: themes_vw(r) for r in REGIONS}
+    themes = sorted(set(cl.values()))
+    out['x4_theme_members_mega'] = {}
+    for th in themes:
+        mem = [c for c, t in cl.items() if t == th and c in mega_all]
+        out['x4_theme_members_mega'][th] = mem
+        rp = repl_test({r: reg_th[r].get(th) for r in REGIONS if reg_th[r].get(th)}, LAM, THEME_TO[th], reg_mkt)
+        ls = composite(mega_all, mem)
+        rec = evaluate(f'X4b_mega_theme_{th}', 'X4', f'mega のテーマ「{th}」（{len(mem)} 特徴の順位加重 LS を等分）', mkt, ls, LAM, THEME_TO[th], None, rp)
+        X4.append(rec)
+        ctx['ls_of'][rec['name']] = (ls, LAM)
+        ls2 = th_vw.get(th)
+        rec = evaluate(f'X4b_vw_theme_{th}', 'X4', f'JKP 公開の vw テーマ「{th}」（米国・全規模・時価加重）', mkt, ls2, LAM, THEME_TO[th], None, rp)
+        X4.append(rec)
+        ctx['ls_of'][rec['name']] = (ls2, LAM)
+    fams['X4'] = finish_family(X4)
+    # ── 診断（判定に使わない）: P・X3・X4 の S/A
+    for r in ctx['fams']['P']:
+        nm = r['name']
+        base = nm.split('_', 2)[2]
+        src = ctx['mega'] if nm.startswith('PA_') else vwu
+        ctx['ls_of'][nm] = (build(src, base), LAM)
+    for f in ('P', 'X3', 'X4'):
+        for r in fams[f]:
+            if r.get('grade') in ('S', 'A') and r['name'] in ctx['ls_of']:
+                ls, lam = ctx['ls_of'][r['name']]
+                r['diagnostics'] = diagnostics(mkt, mktrf, ls, lam)
+    out['tested'] = []
+    for f, recs in fams.items():
+        out['tested'].extend(recs)
+    out['n_tested'] = len(out['tested'])
+    out['families'] = {f: {'n': len(r), 'grades': {g: sum(1 for x in r if x.get('grade') == g) for g in 'SABC'}} for f, r in fams.items()}
+
+
+def show(out):
     print('\n族  名前                         格  全期間(t)      訓練(t)       保有(t)       保有費用後  最近   20年勝率  C5')
     for r in out['tested']:
         if r.get('error'):
-            print(r['name'], 'ERR', r['error']); continue
+            print(r['family'], r['name'], 'ERR', r['error'])
+            continue
         f = lambda s: f"{s['ex_ann']:+5.2f}({s['t']:+4.1f})" if s else '   —      '
         rp = r.get('repl') or {}
-        print(f"{r['family']:10} {r['name'][:30]:30} {r['grade']}  {f(r['full'])}  {f(r['train'])}  {f(r['hold'])}  "
+        print(f"{r['family']:10} {r['name'][:34]:34} {r['grade']}  {f(r['full'])}  {f(r['train'])}  {f(r['hold'])}  "
               f"{r['net_cost_hold']['ex_ann'] if r['net_cost_hold'] else '—':>6}  {r['recent']['ex_ann'] if r['recent'] else '—':>5}  "
               f"{r['roll20_net']['win_rate'] if r['roll20_net'] else '—':>5}  {rp.get('positive')}/{rp.get('regions')}")
-    print('書いた', p)
+
+
+def main():
+    out, ctx = part1()
+    if '--part1-only' not in sys.argv:
+        part2(out, ctx)
+    p = M.save('mw_mega_tilt.json', out)
+    show(out)
+    print('書いた', p, '試した数', out['n_tested'])
 
 
 if __name__ == '__main__':
