@@ -1,0 +1,4778 @@
+{
+ "generated": "2026-09-28",
+ "angle": "nx_osap_zoo",
+ "title": "OSAP の残りの予言変数の全数調査: 大型株だけ・年1回の組み直し（FF93 型の BH）の良い側を時価加重で買って持つ",
+ "question": "Chen & Zimmermann の Open Source Asset Pricing（CRSP/Compustat・上場廃止込み・2025.10 版）の予言変数 212 本のうち、(a) JKP 153 の特性と同じ量でない (b) q07leu が試していない (c) 兄弟の角度 nx_osap_intang・nx_osap_info の規則に入っていない (d) 他セッションが同じ経済の規則を試していない、残りの連続の変数 29 本について、論文の向きの良い側を『大型株だけ』で持つ ——NYSE の時価の中央値より大きく、変数が NYSE の70%点を超える会社を毎年6月に選び、7月〜翌6月まで時価加重で持つ（OSAP の FF93style の BH）——と、French Mkt（上限なしの時価加重・S&P500 に近い）に、訓練期間（各変数の評価の開始〜2006-12）でも保有期間（2007-01〜2024-12）でも費用後に勝つか。とくに Cohen-Frazzini の顧客の勢い・Menzly-Ozbas の顧客/仕入れ先の業種の勢い（nx_leadlag の独立の答え合わせ）と、受注残・前受収益（main の moat4・moat_dr の独立の答え合わせ）を含む",
+ "asked_by": "ユーザー「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して。限界までやって途中報告を入れながら結果が出るまで分析を止めずに。トークンの限界までやってほしい。今まではそんなものはないという報告で終わってたけどそれはなしで探し続ける努力をしてほしい。今別のSessionでこの内容を2つ回してる。別のSessionで検証していない新たな分析を同じ内容でしてほしい」（2026-09-28）。全体の事前登録 out/nx_prereg.json の追加の角度（まとめ役の指示: OSAP の残りの全数調査）",
+ "registered_before_measuring": true,
+ "global_prereg": "out/nx_prereg.json（C1〜C8・格付け S/A/B/C・criteria_short_sample・誠実さの約束）。統計と格付けは night/nx_common.py の excess_stats / holm / apply_cost / grade / grade_short / p_two / p_one をそのまま使う",
+ "feasibility_and_redesign": {
+  "finding": "依頼の形（残りの信号の QuintilesVW の第5五分位〔連続〕と VWforce の良い側の組〔離散〕を French Mkt と C1〜C8 で比べる）は、eknzbh 枝の角度 mw_oap_signals（事前登録 a52656de・2026-09-28 17:28 UTC・結果 6b73376b 17:39 UTC）が、OSAP の予言変数 212 本すべてについて既に測っていた: 主の族 P（アナリスト・オプション・13F・出来事・空売りの45本・連続は DecilesVW の第10十分位・離散は VWforce の最大番号）・PQ（主の連続27本の QuintilesVW の05）・S（残り167本すべて・同じ組）・SQ（残りの連続152本の QuintilesVW の05）・束ねた9本、さらに事前登録2で E_LC（主の45本の ME>NYSE20% の原論文の組）・因子の勢い・歩きながらの選抜。線は同じ C1〜C8（mw_prereg.json＝nx_prereg.json と同一）・相手も同じ French Mkt・費用 0.30%。＝依頼の『残りの信号』はどれも、同じ組・同じ相手・同じ線で別のセッションが格付け済み。配当の信号（DivInit・DivOmit・DivSeason）も eknzbh の主の族（Event）で VWforce の良い側と大型版の両方を格付け済み。さらにこの角度の兄弟 nx_osap_intang の報告 R5 が、QuintilesVW の連続179本すべての05を同じ grade() で数えていた（基礎率）",
+  "why_siblings_did_not_see_it": "兄弟の2角度は 2026-09-28 17:00 UTC ごろに他の枝を確かめて事前登録した。eknzbh の mw_oap_signals の事前登録はその後（17:28）に push された",
+  "side_finding_for_the_program": "兄弟 nx_osap_intang の主 P と探索 X1（QuintilesVW の05・DecilesVW の10・VWforce の良い側）と、nx_osap_info の主 P・Q と探索 XL・XS の大半も、eknzbh mw_oap_signals の P・PQ・S・SQ と同じ組を同じ線で測っている＝「別のセッションで検証していない」とは言えない。兄弟で新しいのは FF93 型の BH（intang X2 の5本・info XL17〜21 と XS15・XS16）・合成・回転の実測だけ。まとめ役は多重検定の数え方と「新しさ」の主張を直す必要がある",
+  "redesign": "主の族を、誰も測っていない形＝OSAP の FF93style の BH（大型株＝NYSE の時価の中央値超 × 変数の良い側の3分位〔NYSE の70%点超〕・6月に年1回組み直し・時価加重）に替えた。eknzbh（DecilesVW・QuintilesVW・VWforce・ME>NYSE20% だけ）も q07leu（OSAP を使っていない）も hbm38n（同）も FF93style を使っていない（git grep で確かめた）。兄弟が BH で測ったのは自分の変数の12本だけ（残りの29本とは重ならない）。この形は (1) 上限なしの時価加重の市場の大半を占める大型株の中で信号が効くか、(2) 年1回しか売買しない＝費用に強く個人の運用に近い、を問う別の検定で、依頼の「良い側を時価加重・買いだけで French Mkt と比べる」はそのまま保つ",
+  "what_stays_as_requested": "全数調査・良い側（SignalDoc の Sign の向き）・時価加重・買いだけ・相手 French Mkt・評価の開始（良い側20社以上）・費用（回転の置き値×0.30%）・C5 N/A・族全体の Holm と全期間 t≥3.0・プログラム全体の Bonferroni",
+  "what_changes": "(1) 連続の信号の組: QuintilesVW の05 → FF93style の BH（主）。QuintilesVW の05 は「重複の報告」R_dupQ5 に残し（29本）、格付けの文字を付けず勝ちにも数えない (2) 離散の信号（配当の3本ほか16本）: OSAP に FF93 型が無く、新しい形が作れない → VWforce の良い側を「重複の報告」R_dupVWF に残す（格付けの文字を付けない） (3) 回転: BH は兄弟の道具（銘柄ごとの信号のファイル）では実測できない（時価も取引所も無い・Size・Price・STreversal の列も無い）→ 定義上の上限 年1.0 を置く",
+  "feasibility": "主の族 29本（長い歴史の線 28本・短い標本の線 1本〔DelDRC〕）と探索の合成 3本は、データの形の上ですべて測れる（評価の中で Nlong<20 で落ちる月 0・欠け 0・向きの確かめ BH>BL が全月）"
+ },
+ "grading_call": "長い歴史（Z の28本・ZC の3本）: nx_common.grade(full=費用前の全期間〔評価の開始〜2024-12〕, train=費用前の訓練〔開始〜2006-12〕, hold=費用前の保有〔2007-01〜2024-12〕, roll20=費用後の転がる20年窓〔一括・毎年7月起点・勝ちは丸める前の差>0で数える＝兄弟 nx_osap_intang の rolling_x と同じ／nx_common の中央の是正が入ればそれ〕, cost_hold=費用後の保有, repl=None〔C5 N/A〕, family_holm_p=族の中の Holm 補正後 p, leveraged_or_timing=False〔C8 N/A〕)。短い標本（Z の DelDRC）: nx_common.grade_short(full=費用前の全期間 2002-07〜2024-12, first_half/second_half=月数で二等分した費用前, drop_top=【代用】暦年の幾何の超過が最大の1年を抜いた費用前の全期間〔OSAP に銘柄ごとのリターンが無い＝兄弟 info と同じ代用〕, cost_full=費用後の全期間, lower_bound=【代用】費用3倍〔0.90%/年〕の全期間〔上場廃止の下限は OSAP が既に −35%/−55% を合成済み＝兄弟 info と同じ代用〕, family_holm_p_one=Z の族の Holm 補正後 p)",
+ "tools": {
+  "data": "night/nx_osap_zoo_data.py（取得と整形だけ・成績は計算しない）→ out/_nx_cache/nx_osap_zoo_ports.json（gitignore）。212本の扱い CLASS・規則の台帳 RULES・報告の台帳 REPORT もこのファイルにあり、測る道具は import する（写さない）。取得は兄弟 night/nx_osap_intang_data.py の FILES・fetch・rows_of を import",
+  "extract_sha256": "114000f69ff68b1d4d8cd163466537ef279ce93e63580836d43ca20c26650110（nx_osap_zoo_ports.json の signals を sort_keys・区切り詰めで直列化した sha256）",
+  "rules_sha256": "c83f6c4b48b1cf209fc498a306a65d86e80fd2473b523f47463d3cc283aa22d2（RULES・REPORT・定数〔NMIN・LAST・単価・BH の回転・合成の足し分・重複の報告の回転の置き値〕を sort_keys・区切り詰めで直列化した sha256）",
+  "class_sha256": "c66150575231dd0233ecdb8164b3f96294cf70ae52d64bc4d4506e2b5d9cfb29（212本の扱い CLASS の sha256）",
+  "sha_rule": "測る道具は最初に3つの sha を計算し直し、この値と違えば止まる（台帳と数字を結果を見てから作り直していないことの証明）。OSAP・French が更新されて sha が変わったら両方の版で測って報告する（格付けは登録時の版）",
+  "measure_next": "night/nx_osap_zoo.py → out/nx_osap_zoo.json（この事前登録の後に書く。tested に Z 29本・ZC 3本を1本残らず残す。報告 R も全部）",
+  "reuse_not_copy": "rolling_x・dca_x・size_halves（大型の半分の市場）は night/nx_osap_intang.py から import する（写さない）。nx_common の rolling/dca の丸めの中央の是正が入ったら、そちらを使い、どちらを使ったかを書く"
+ },
+ "stance_before_results": "測定器。門・採点・四関門・席・配分・売却規律には入れない。線（C1〜C8・短い標本の線）は結果を見て動かさない。規則の中身（組・良い側・回転・費用・評価の開始と終わり・合成の脚）はこの登録と night/nx_osap_zoo_data.py の台帳で固定し、測った後に変えたら『事後』と明記して格付けに使わない。予想（測る前・判定に使わない）: 主の29本は S 0本・A 0〜1本・B 3〜8本・残りは C。理由は (1) 原論文の多くは等加重・買い−売り・小型株込みで、大型株だけ・時価加重・買いだけでは大きく縮む（Fama-French 2008・Hou-Xue-Zhang 2020 は NYSE の切れ目と時価加重で異常の多くが消えると報告）(2) 月次の信号（顧客の勢い・業種のつながり・決算発表のリターン・同じ業種の大型のリターン）は6月の値を1年持つので古くなり、効果の大半が消える見込み (3) 私は他セッションの結果の要約から、これらの信号の QuintilesVW・DecilesVW の版が S・A に届かなかったことを知っている（contamination）。望みがあるとすれば、年に1度しか変わらない会計の信号（受注残・現金の生産性・不動産・異常な発生主義・資産回転の変化）と、大型株でも効くと言われる流動性・裾のβ。無形のリターン（Intan 4本）は割安の仲間で、2007年以降の成長株の時代に負けやすいと予想する——これは後知恵を含む",
+ "why_new": {
+  "checked_at": "2026-09-28 21:30 UTC ごろ（origin の eknzbh・hbm38n・q07leu の枝を fetch し、night/*・out/* を openassetpricing・PredictorPorts・PredictorAltPorts・SignalDoc・OSAP・Chen-Zimmermann・FF93・2x3・BH で git grep）",
+  "eknzbh": "mw_oap_signals（上の feasibility_and_redesign）と mw_postpub（SignalDoc の公表年だけ）。使ったファイルは DecilesVW・QuintilesVW・LiqScreen_VWforce・LiqScreen_ME_gt_NYSE20pct・PredictorPortsFull・SignalDoc だけで、FF93style は一度も使っていない（night/mw_oap_signals.py・mw_oap_signals_verify.py の FILES で確かめた）。JKP 153 は mw_factor_us ほかで全部",
+  "hbm38n": "OSAP を使っていない（git grep で該当なし）。スピンオフ（ev5）は OSAP の Spinoff と同じ経済の規則＝除外",
+  "q07leu": "OSAP を使っていない。株の特徴は JKP（oaccruals_ni・ocf_at_chg1・prc_highprc_252d・inv_gr1・dolvol_126d・rd_me・niq_su・cop_at・chcsho_12m・age・ret_60_12・resff3_12_1・seas・rmax5/rskew・betabab・charmom153 と mvopt153 は JKP 153 全部）と、JKP 以外は lmtext（10-K の否定語）・sin（French の業種）・indmom（French の業種）・options（CBOE の指数）。out/edge/spec_*.json の key・spec・rationale の先頭だけを読んで確かめた（下の contamination）",
+  "siblings": "兄弟の nx_osap_intang（15変数）・nx_osap_info（31変数）の RULES（night/nx_osap_*_data.py）と事前登録の families を読んで、変数ごとに除外した（X_SIB）",
+  "other_nx": "nx_leadlag（業種の先行遅行・French/BEA の業種の組）とは作り方が違う（こちらは OSAP の会社ごとの信号・大型株の BH）＝独立の答え合わせとして入れる（依頼の指示）。nx_lazy（10-K の本文）・nx_brand・nx_activist（13D）と同じ変数は OSAP に無い（Activism1/2 は G 指数と機関の保有で、13D ではない・保有期間が無く報告のみ）",
+  "main_before": "受注残（moat4 C1・2019-21 の3起点・SEC XBRL）・前受収益（moat_dr・2013/16/17/18）は、この台帳の以前のセッションが短い期間・別のデータで測った（不合格）。OSAP の OrderBacklog・OrderBacklogChg・DelDRC は長い歴史・大型株の BH で、独立の答え合わせとして入れる（兄弟 intang は main に任せて外していた）"
+ },
+ "overlap_method": {
+  "same_as_siblings": "兄弟 nx_osap_intang と同じ2段: (1) JKP の Factor Details.xlsx（bkelly-lab/ReplicationCrisis・abr_jkp のある153行）の cite の第1著者の姓＋年と、SignalDoc の Authors の第1語＋Year の一致を機械で探す (2) 一致したもの・しないものすべての SignalDoc の Detailed Definition を読み、JKP の特性と『同じ量』かを判定する",
+  "rule_same_quantity": "除外（X_JKP）＝同じ分子と分母の考えの量（期間・窓の長さ・割る数・遅れの違いだけ）／同じ量を対象を絞って並べただけ（例: FirmAgeMom＝若い会社の中の6か月の勢い）／JKP の特性の単純な組み合わせ（例: BPEBM＝be_me − bev_mev）。残す（Z_near の印）＝同じ論文・近い主題でも別の量（回帰の残差・前年差・時価で割ったぶれ・傾き）",
+  "differs_from_intang_judgment": "AbnormalAccruals・IntanBM・IntanCFP・IntanEP・IntanSP は兄弟 intang が「JKP の発生主義・長期の逆張りと同じ経済の信号」として外したが、上の線（同じ量か）では別の量（残差）なので Z_near として入れる。CustomerMomentum・iomom_cust・iomom_supp は兄弟が nx_leadlag に任せて外したが、依頼の指示で入れる。OrderBacklog・DelDRC は兄弟が main に任せて外したが、長い歴史の独立の答え合わせとして入れる",
+  "cite_match_counts": {
+   "author_year_matched": 113,
+   "of_which_judged_different_quantity_and_kept": [
+    "AbnormalAccruals",
+    "ChAssetTurnover",
+    "DivYieldST",
+    "IntanBM",
+    "IntanCFP",
+    "IntanEP",
+    "IntanSP",
+    "VarCF",
+    "VolumeTrend",
+    "betaVIX"
+   ],
+   "of_which_judged_different_quantity_but_sibling": [
+    "AOP",
+    "AdExp",
+    "AnalystValue",
+    "BrandInvest",
+    "PredictedFE"
+   ],
+   "not_matched_but_same_quantity_by_definition": [
+    "AgeIPO",
+    "BM",
+    "BidAskSpread",
+    "ChEQ",
+    "EP",
+    "FirmAge",
+    "FirmAgeMom",
+    "InvGrowth",
+    "Mom6mJunk",
+    "NumEarnIncrease",
+    "OperProf",
+    "Price",
+    "ReturnSkew",
+    "ReturnSkew3F",
+    "ShareRepurchase",
+    "hire"
+   ]
+  },
+  "counts": {
+   "Z": 19,
+   "Z_near": 10,
+   "R_train": 3,
+   "R_thin": 1,
+   "R_dup": 16,
+   "X_SIB": 46,
+   "X_OTHER": 2,
+   "X_Q07": 1,
+   "X_JKP": 114
+  },
+  "status_meaning": {
+   "Z": "主の族（BH を格付け）",
+   "Z_near": "主の族（同じ・近い印つき）",
+   "R_train": "報告のみ・保有期間の信号が無い",
+   "R_thin": "報告のみ・BH の銘柄が少なすぎる",
+   "R_dup": "報告のみ・離散で FF93 型が無く、eknzbh が同じ組で格付け済み",
+   "X_SIB": "除外・兄弟の規則",
+   "X_Q07": "除外・q07leu",
+   "X_OTHER": "除外・他セッションが同じ経済の規則",
+   "X_JKP": "除外・JKP 153 と同じ量"
+  }
+ },
+ "signals_all_212": [
+  {
+   "signal": "AnnouncementReturn",
+   "status": "Z",
+   "reason": "決算発表の前日〜2日後の市場調整リターン（CJL 1996）。JKP に無い（Factor Details の Abr は abr_jkp 無し）。q07leu pead・eknzbh の業績の勢いは会計の驚き niq_su 等で、株価の反応ではない"
+  },
+  {
+   "signal": "BetaLiquidityPS",
+   "status": "Z",
+   "reason": "Pastor-Stambaugh の流動性のβ（60か月）。JKP に無い"
+  },
+  {
+   "signal": "BetaTailRisk",
+   "status": "Z",
+   "reason": "Kelly-Jiang の裾のリスクのβ（120か月）。JKP に無い"
+  },
+  {
+   "signal": "CashProd",
+   "status": "Z",
+   "reason": "現金の生産性（(時価−総資産)÷現金）。JKP に無い（JKP cash_at は現金÷総資産の水準）"
+  },
+  {
+   "signal": "CustomerMomentum",
+   "status": "Z",
+   "reason": "主要顧客（Compustat の区分データ）の前月の株価リターン（Cohen-Frazzini 2008）。JKP に無い",
+   "flags": [
+    "nx_leadlag の独立の答え合わせ（業種ではなく会社どうしの取引先のつながり）",
+    "兄弟 intang は nx_leadlag に任せて外した→この角度で入れる（依頼の指示）"
+   ]
+  },
+  {
+   "signal": "DelDRC",
+   "status": "Z",
+   "reason": "前受収益の前年差÷平均総資産（Prakash-Sinha 2013）。JKP に無い。BH は 2002-07 から＝訓練が15年に満たない→短い標本の線（criteria_short_sample）",
+   "flags": [
+    "main の moat_dr（前受収益の倍率・2013/16/17/18・不合格）の独立の答え合わせ。兄弟 intang は main に任せて外した"
+   ]
+  },
+  {
+   "signal": "EarningsStreak",
+   "status": "Z",
+   "reason": "アナリスト予想に対する驚きが同じ向きに続いた会社の驚き（Loh-Warachka 2012・I/B/E/S）。JKP に無い・兄弟 info の規則に無い"
+  },
+  {
+   "signal": "EarnSupBig",
+   "status": "Z",
+   "reason": "同じ業種の大型30%の会社の利益の驚きを、大型30%以外の会社に当てる（Hou 2007・業種の中の先行遅行）。JKP に無い",
+   "flags": [
+    "nx_leadlag と近い考え（情報の遅れの伝わり）",
+    "定義上、時価の上位30%の会社は信号を持たない＝BH は NYSE の中央値〜全銘柄の上位30%の会社だけ"
+   ]
+  },
+  {
+   "signal": "Frontier",
+   "status": "Z",
+   "reason": "簿価時価比を会社の特徴で説明した回帰の残差（Nguyen-Swanson 2009・効率的フロンティア）。JKP に無い"
+  },
+  {
+   "signal": "IndRetBig",
+   "status": "Z",
+   "reason": "同じ業種の大型30%の会社の前月のリターンを、大型30%以外の会社に当てる（Hou 2007）。JKP に無い。業種の勢い（IndMom・q07leu indmom）は業種自身の6か月で別の量",
+   "flags": [
+    "nx_leadlag と近い考え（情報の遅れの伝わり）",
+    "定義上、時価の上位30%の会社は信号を持たない"
+   ]
+  },
+  {
+   "signal": "iomom_cust",
+   "status": "Z",
+   "reason": "BEA の産業連関表で重みづけした顧客の業種の前月のリターン（Menzly-Ozbas 2010）。JKP に無い",
+   "flags": [
+    "nx_leadlag の独立の答え合わせ（nx_leadlag は業種の組、こちらは会社の組・OSAP の作り方）",
+    "兄弟 intang は nx_leadlag に任せて外した→この角度で入れる（依頼の指示）"
+   ]
+  },
+  {
+   "signal": "iomom_supp",
+   "status": "Z",
+   "reason": "BEA の産業連関表で重みづけした仕入れ先の業種の前月のリターン（Menzly-Ozbas 2010）。JKP に無い",
+   "flags": [
+    "nx_leadlag の独立の答え合わせ",
+    "兄弟 intang は nx_leadlag に任せて外した→この角度で入れる（依頼の指示）"
+   ]
+  },
+  {
+   "signal": "OrderBacklog",
+   "status": "Z",
+   "reason": "受注残÷平均総資産（Rajgopal ほか 2003・符号−＝少ない側が良い）。JKP に無い",
+   "flags": [
+    "main の moat4 C1（受注残の倍率・2019-21 の3起点・SEC XBRL・約200社・不合格）の独立の答え合わせ（長い歴史・大型株）。兄弟 intang は main に任せて外した"
+   ]
+  },
+  {
+   "signal": "OrderBacklogChg",
+   "status": "Z",
+   "reason": "受注残÷平均総資産の前年差（Baik-Ahn 2007・符号＋）。JKP に無い",
+   "flags": [
+    "main の moat4 C1 の独立の答え合わせ"
+   ]
+  },
+  {
+   "signal": "PriceDelayRsq",
+   "status": "Z",
+   "reason": "市場の過去のリターンへの遅れた反応（Hou-Moskowitz 2005・決定係数の版）。JKP に無い",
+   "flags": [
+    "同じ論文の3つの版（Rsq・Slope・Tstat）＝独立の試行は1つに近い"
+   ]
+  },
+  {
+   "signal": "PriceDelaySlope",
+   "status": "Z",
+   "reason": "同じ（係数の版）",
+   "flags": [
+    "同じ論文の3つの版"
+   ]
+  },
+  {
+   "signal": "PriceDelayTstat",
+   "status": "Z",
+   "reason": "同じ（t値の版）",
+   "flags": [
+    "同じ論文の3つの版"
+   ]
+  },
+  {
+   "signal": "realestate",
+   "status": "Z",
+   "reason": "不動産の保有の割合（業種の平均を引く・Tuzel 2010）。JKP に無い（JKP tangibility は有形固定資産全体）"
+  },
+  {
+   "signal": "retConglomerate",
+   "status": "Z",
+   "reason": "多角化企業の各事業の業種の単一事業の会社の前月リターンを売上で加重（Cohen-Lou 2012）。JKP に無い",
+   "flags": [
+    "nx_leadlag と近い考え（情報の遅れの伝わり）"
+   ]
+  },
+  {
+   "signal": "AbnormalAccruals",
+   "status": "Z_near",
+   "reason": "発生主義の利益の「異常な部分」（業種×年の回帰の残差・Xie 2001）。JKP の oaccruals_at（Sloan 1996）・q07leu accruals（oaccruals_ni）は発生主義の利益そのもの＝この角度の線（同じ量か）では別の量",
+   "flags": [
+    "Xie (2001) は JKP の capx_gr1 の cite と同じ（別の変数）",
+    "兄弟 intang は「JKP の発生主義・q07leu accruals と同じ経済の信号」として外した＝判定が兄弟と違う"
+   ],
+   "jkp_cite_author_year_match": [
+    "capx_gr1"
+   ]
+  },
+  {
+   "signal": "betaVIX",
+   "status": "Z_near",
+   "reason": "VIX の日次の変化へのβ（1か月・Ang ほか 2006）。JKP の ivol_ff3_21d・rvol_21d は同じ論文の別の量（自分のぶれ）",
+   "flags": [
+    "Ang et al. (2006) は JKP ivol_ff3_21d・rvol_21d の cite と同じ"
+   ],
+   "jkp_cite_author_year_match": [
+    "betadown_252d",
+    "ivol_ff3_21d",
+    "rvol_21d"
+   ]
+  },
+  {
+   "signal": "ChAssetTurnover",
+   "status": "Z_near",
+   "reason": "資産回転率の前年差（Soliman 2008）。JKP sale_bev（Soliman 2008）は水準で、変化は無い",
+   "flags": [
+    "Soliman (2008) は JKP ebit_bev・ebit_sale・sale_bev の cite と同じ"
+   ],
+   "jkp_cite_author_year_match": [
+    "ebit_bev",
+    "ebit_sale",
+    "sale_bev"
+   ]
+  },
+  {
+   "signal": "IntanBM",
+   "status": "Z_near",
+   "reason": "5年リターンのうち簿価時価比の変化で説明できない部分（無形のリターン・Daniel-Titman 2006）。JKP ret_60_12・q07leu lt_reversal は生の過去リターン＝別の量",
+   "flags": [
+    "Daniel-Titman (2006) は JKP eqnpo_12m の cite と同じ（別の変数）",
+    "兄弟 intang は「長期の逆張り・JKP と同じ論文」として外した＝判定が兄弟と違う",
+    "同じ論文の4つの版（BM・CFP・EP・SP）"
+   ],
+   "jkp_cite_author_year_match": [
+    "eqnpo_12m"
+   ]
+  },
+  {
+   "signal": "IntanCFP",
+   "status": "Z_near",
+   "reason": "同じ（キャッシュフロー÷時価の版）",
+   "flags": [
+    "同じ論文の4つの版",
+    "兄弟 intang は外した"
+   ],
+   "jkp_cite_author_year_match": [
+    "eqnpo_12m"
+   ]
+  },
+  {
+   "signal": "IntanEP",
+   "status": "Z_near",
+   "reason": "同じ（益回りの版）",
+   "flags": [
+    "同じ論文の4つの版",
+    "兄弟 intang は外した"
+   ],
+   "jkp_cite_author_year_match": [
+    "eqnpo_12m"
+   ]
+  },
+  {
+   "signal": "IntanSP",
+   "status": "Z_near",
+   "reason": "同じ（売上÷時価の版）",
+   "flags": [
+    "同じ論文の4つの版",
+    "兄弟 intang は外した"
+   ],
+   "jkp_cite_author_year_match": [
+    "eqnpo_12m"
+   ]
+  },
+  {
+   "signal": "TrendFactor",
+   "status": "Z_near",
+   "reason": "3〜1000日の移動平均の比を回帰で合成した価格の趨勢（Han-Zhou-Zhu 2016）。JKP に無い。株の勢い（eknzbh・q07leu）とは別の量だが価格の趨勢の仲間",
+   "flags": [
+    "株価の勢いの仲間"
+   ]
+  },
+  {
+   "signal": "VarCF",
+   "status": "Z_near",
+   "reason": "(利益＋減価償却)÷時価の60か月の分散（Haugen-Baker 1996）。JKP ocfq_saleq_std（営業CF÷売上のぶれ）・earnings_variability とは作り方が違う（時価で割る）",
+   "flags": [
+    "Haugen-Baker (1996) は JKP at_turnover・ni_be の cite と同じ"
+   ],
+   "jkp_cite_author_year_match": [
+    "at_turnover",
+    "ni_be"
+   ]
+  },
+  {
+   "signal": "VolumeTrend",
+   "status": "Z_near",
+   "reason": "出来高の60か月の傾き（Haugen-Baker 1996）。JKP に傾きは無い（turnover_126d・dolvol_var_126d は水準とぶれ）",
+   "flags": [
+    "Haugen-Baker (1996) は JKP の cite と同じ"
+   ],
+   "jkp_cite_author_year_match": [
+    "at_turnover",
+    "ni_be"
+   ]
+  },
+  {
+   "signal": "ProbInformedTrading",
+   "status": "R_thin",
+   "reason": "PIN（Easley ほか 2002）は 2013 年の推定で終わり、BH の良い側は銘柄数の中央値22・Nlong<20 で落ちる月が114（訓練12か月・保有30か月しか残らない）。★eknzbh の検証の一覧で Q5 の格付け（B）を見てしまった（contamination）"
+  },
+  {
+   "signal": "Activism1",
+   "status": "R_train",
+   "reason": "G 指数（Governance・1990〜2006）から作る＝BH の最後の6月の組は 2006-06・保有期間は 2007-01〜06 の6か月だけ。eknzbh は主の族で格付け済み"
+  },
+  {
+   "signal": "Activism2",
+   "status": "R_train",
+   "reason": "同じ（G 指数から作る・保有期間の信号が無い）"
+  },
+  {
+   "signal": "Governance",
+   "status": "R_train",
+   "reason": "離散（G 指数・1990〜2006）。保有期間の信号が無い。eknzbh の副の族で格付け済み"
+  },
+  {
+   "signal": "AccrualsBM",
+   "status": "R_dup",
+   "reason": "離散（簿価時価比の高い×発生主義の低い・Bartov-Kim 2004＝JKP be_me と oaccruals_at の組み合わせ）。eknzbh の副の族で格付け済み"
+  },
+  {
+   "signal": "ConvDebt",
+   "status": "R_dup",
+   "reason": "離散（転換社債の有無・Valta 2016・符号−）。eknzbh の副の族で格付け済み"
+  },
+  {
+   "signal": "DebtIssuance",
+   "status": "R_dup",
+   "reason": "離散（社債の発行・Spiess-Affleck-Graves 1999・符号−）。JKP dbnetis_at（純負債の発行）と近い。eknzbh の副の族で格付け済み"
+  },
+  {
+   "signal": "DivInit",
+   "status": "R_dup",
+   "reason": "離散（配当の開始・Michaely-Thaler-Womack 1995）。eknzbh の主の族（Event）で VWforce の良い側と大型版（ME>NYSE20%）を格付け済み"
+  },
+  {
+   "signal": "DivOmit",
+   "status": "R_dup",
+   "reason": "離散（配当の停止・符号−＝良い側は停止しなかった会社＝市場のほぼ全部）。eknzbh の主の族で格付け済み"
+  },
+  {
+   "signal": "DivSeason",
+   "status": "R_dup",
+   "reason": "離散（配当の季節性・Hartzmark-Salomon 2013）。eknzbh の主の族で格付け済み"
+  },
+  {
+   "signal": "DivYieldST",
+   "status": "R_dup",
+   "reason": "離散（翌月の配当の予想・Litzenberger-Ramaswamy 1979＝JKP div12m_me と同じ論文の別の量）。eknzbh の副の族で格付け済み",
+   "jkp_cite_author_year_match": [
+    "div12m_me"
+   ]
+  },
+  {
+   "signal": "ExchSwitch",
+   "status": "R_dup",
+   "reason": "離散（取引所の移動・符号−）。eknzbh の主の族で格付け済み"
+  },
+  {
+   "signal": "IndIPO",
+   "status": "R_dup",
+   "reason": "離散（新規上場・符号−）。eknzbh の主の族で格付け済み"
+  },
+  {
+   "signal": "MomRev",
+   "status": "R_dup",
+   "reason": "離散（勢い×長期の逆張り・Chan-Ko 2006＝JKP ret_12_1 と ret_60_12 の組み合わせ）。eknzbh の副の族で格付け済み"
+  },
+  {
+   "signal": "MomVol",
+   "status": "R_dup",
+   "reason": "離散（勢い×出来高・Lee-Swaminathan 2000＝JKP ret_6_1 と turnover の組み合わせ）。eknzbh の副の族で格付け済み"
+  },
+  {
+   "signal": "RDIPO",
+   "status": "R_dup",
+   "reason": "離散（研究開発の無い新規上場・符号−）。eknzbh の主の族で格付け済み"
+  },
+  {
+   "signal": "RIO_Disp",
+   "status": "R_dup",
+   "reason": "離散（機関の保有の残差×予想のばらつき・Nagel 2005）。eknzbh の主の族（13F）で格付け済み"
+  },
+  {
+   "signal": "RIO_MB",
+   "status": "R_dup",
+   "reason": "離散（機関の保有の残差×時価簿価比）。eknzbh の主の族で格付け済み"
+  },
+  {
+   "signal": "RIO_Turnover",
+   "status": "R_dup",
+   "reason": "離散（機関の保有の残差×売買回転）。eknzbh の主の族で格付け済み"
+  },
+  {
+   "signal": "RIO_Volatility",
+   "status": "R_dup",
+   "reason": "離散（機関の保有の残差×固有のぶれ）。eknzbh の主の族で格付け済み"
+  },
+  {
+   "signal": "AdExp",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang P2・X1・X2",
+   "jkp_cite_author_year_match": [
+    "rd_me",
+    "rd_sale"
+   ]
+  },
+  {
+   "signal": "AnalystRevision",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info P4・XL3・XL19"
+  },
+  {
+   "signal": "AnalystValue",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XL9",
+   "jkp_cite_author_year_match": [
+    "ival_me"
+   ]
+  },
+  {
+   "signal": "AOP",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XL10",
+   "jkp_cite_author_year_match": [
+    "ival_me"
+   ]
+  },
+  {
+   "signal": "BrandInvest",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang P3・X1・X2",
+   "jkp_cite_author_year_match": [
+    "emp_gr1"
+   ]
+  },
+  {
+   "signal": "ChangeInRecommendation",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info Q2・XS12・XS15"
+  },
+  {
+   "signal": "ChForecastAccrual",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XL14"
+  },
+  {
+   "signal": "ChNAnalyst",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XL13"
+  },
+  {
+   "signal": "CitationsRD",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang R1（訓練だけ）"
+  },
+  {
+   "signal": "ConsRecomm",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info Q1"
+  },
+  {
+   "signal": "CPVolSpread",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XS5"
+  },
+  {
+   "signal": "CredRatDG",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info P2"
+  },
+  {
+   "signal": "dCPVolSpread",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XS9"
+  },
+  {
+   "signal": "DelBreadth",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XL15"
+  },
+  {
+   "signal": "DownRecomm",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XS2"
+  },
+  {
+   "signal": "dVolCall",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XS7"
+  },
+  {
+   "signal": "dVolPut",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XS8"
+  },
+  {
+   "signal": "EarningsConsistency",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang X4"
+  },
+  {
+   "signal": "EarningsForecastDisparity",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XL6"
+  },
+  {
+   "signal": "ExclExp",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XL12"
+  },
+  {
+   "signal": "FEPS",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XL8"
+  },
+  {
+   "signal": "fgr5yrLag",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info P6・XL5・XL21"
+  },
+  {
+   "signal": "ForecastDispersion",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info P5・XL4・XL20"
+  },
+  {
+   "signal": "FR",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang P8・X1・X2"
+  },
+  {
+   "signal": "GrAdExp",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang X4"
+  },
+  {
+   "signal": "Herf",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang P6・X1・X2"
+  },
+  {
+   "signal": "HerfAsset",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang X4"
+  },
+  {
+   "signal": "HerfBE",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang X4"
+  },
+  {
+   "signal": "IO_ShortInterest",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info R（報告）"
+  },
+  {
+   "signal": "MS",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang P7"
+  },
+  {
+   "signal": "OptionVolume1",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XS10"
+  },
+  {
+   "signal": "OptionVolume2",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XS11"
+  },
+  {
+   "signal": "OrgCap",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang P1・X1・X2"
+  },
+  {
+   "signal": "PatentsRD",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang R1（訓練だけ）"
+  },
+  {
+   "signal": "PredictedFE",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XL11",
+   "jkp_cite_author_year_match": [
+    "ival_me"
+   ]
+  },
+  {
+   "signal": "RDAbility",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang P4"
+  },
+  {
+   "signal": "RDS",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang X4"
+  },
+  {
+   "signal": "Recomm_ShortInterest",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XS3"
+  },
+  {
+   "signal": "REV6",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info P3・XL2・XL18"
+  },
+  {
+   "signal": "RIVolSpread",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XS6"
+  },
+  {
+   "signal": "sfe",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XL7"
+  },
+  {
+   "signal": "ShortInterest",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info P1・XL1・XL17"
+  },
+  {
+   "signal": "skew1",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info Q3・XS13・XS16"
+  },
+  {
+   "signal": "SmileSlope",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XS4"
+  },
+  {
+   "signal": "SurpriseRD",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_intang P5"
+  },
+  {
+   "signal": "UpRecomm",
+   "status": "X_SIB",
+   "reason": "兄弟の規則 nx_osap_info XS1"
+  },
+  {
+   "signal": "sinAlgo",
+   "status": "X_Q07",
+   "reason": "罪の株（Hong-Kacperczyk 2009）＝q07leu sin（French の Smoke・Beer・Fun）で試した"
+  },
+  {
+   "signal": "IndMom",
+   "status": "X_OTHER",
+   "reason": "業種の勢い（Grinblatt-Moskowitz 1999）＝q07leu indmom（French 49業種）・eknzbh の業種の勢い・q07leu tech_switch で試した"
+  },
+  {
+   "signal": "Spinoff",
+   "status": "X_OTHER",
+   "reason": "スピンオフ（Cusatis ほか 1993）＝hbm38n ev5 のスピンオフで試した。eknzbh の主の族でも格付け済み（離散）"
+  },
+  {
+   "signal": "Accruals",
+   "status": "X_JKP",
+   "reason": "Sloan (1996)・同じ論文",
+   "jkp_same_quantity": [
+    "oaccruals_at"
+   ],
+   "also_tested_by": [
+    "q07leu accruals"
+   ],
+   "jkp_cite_author_year_match": [
+    "oaccruals_at"
+   ]
+  },
+  {
+   "signal": "AgeIPO",
+   "status": "X_JKP",
+   "reason": "新規上場の会社の創業からの年数（Ritter 1991）＝会社の年数を新規上場に絞った同じ量。eknzbh の主の族（Event）で VWforce 以外に大型版（ME>NYSE20%）も格付け済み",
+   "jkp_same_quantity": [
+    "age"
+   ],
+   "also_tested_by": [
+    "q07leu old_firms"
+   ]
+  },
+  {
+   "signal": "AM",
+   "status": "X_JKP",
+   "reason": "Fama-French (1992)・同じ論文",
+   "jkp_same_quantity": [
+    "at_me"
+   ],
+   "jkp_cite_author_year_match": [
+    "at_be",
+    "at_me"
+   ]
+  },
+  {
+   "signal": "AssetGrowth",
+   "status": "X_JKP",
+   "reason": "Cooper-Gulen-Schill (2008)・同じ論文",
+   "jkp_same_quantity": [
+    "at_gr1"
+   ],
+   "jkp_cite_author_year_match": [
+    "at_gr1"
+   ]
+  },
+  {
+   "signal": "Beta",
+   "status": "X_JKP",
+   "reason": "Fama-MacBeth (1973)・同じ論文",
+   "jkp_same_quantity": [
+    "beta_60m"
+   ],
+   "jkp_cite_author_year_match": [
+    "beta_60m"
+   ]
+  },
+  {
+   "signal": "BetaFP",
+   "status": "X_JKP",
+   "reason": "Frazzini-Pedersen (2014)・同じ論文",
+   "jkp_same_quantity": [
+    "betabab_1260d"
+   ],
+   "also_tested_by": [
+    "q07leu lowbeta_lev"
+   ],
+   "jkp_cite_author_year_match": [
+    "betabab_1260d"
+   ]
+  },
+  {
+   "signal": "BidAskSpread",
+   "status": "X_JKP",
+   "reason": "OSAP の定義は Corwin-Schultz の高値安値の推定＝JKP と同じ推定",
+   "jkp_same_quantity": [
+    "bidaskhl_21d"
+   ]
+  },
+  {
+   "signal": "BM",
+   "status": "X_JKP",
+   "reason": "簿価÷時価（Stattman 1980）＝JKP be_me（Rosenberg ほか 1985）と同じ量",
+   "jkp_same_quantity": [
+    "be_me"
+   ]
+  },
+  {
+   "signal": "BMdec",
+   "status": "X_JKP",
+   "reason": "12月の時価で割る簿価時価比（Fama-French 1992）",
+   "jkp_same_quantity": [
+    "be_me"
+   ],
+   "jkp_cite_author_year_match": [
+    "at_be",
+    "at_me"
+   ]
+  },
+  {
+   "signal": "BookLeverage",
+   "status": "X_JKP",
+   "reason": "Fama-French (1992)・同じ論文",
+   "jkp_same_quantity": [
+    "at_be"
+   ],
+   "jkp_cite_author_year_match": [
+    "at_be",
+    "at_me"
+   ]
+  },
+  {
+   "signal": "BPEBM",
+   "status": "X_JKP",
+   "reason": "簿価時価比の負債の部分＝BP − EBM（Penman-Richardson-Tuna 2007・JKP bev_mev・netdebt_me と同じ論文）＝JKP の2特性の差",
+   "jkp_same_quantity": [
+    "be_me",
+    "bev_mev"
+   ],
+   "jkp_cite_author_year_match": [
+    "bev_mev",
+    "netdebt_me"
+   ]
+  },
+  {
+   "signal": "Cash",
+   "status": "X_JKP",
+   "reason": "Palazzo (2012)・同じ論文",
+   "jkp_same_quantity": [
+    "cash_at"
+   ],
+   "jkp_cite_author_year_match": [
+    "cash_at"
+   ]
+  },
+  {
+   "signal": "CBOperProf",
+   "status": "X_JKP",
+   "reason": "Ball ほか (2016)・同じ論文",
+   "jkp_same_quantity": [
+    "cop_atl1"
+   ],
+   "jkp_cite_author_year_match": [
+    "cop_atl1",
+    "op_atl1"
+   ]
+  },
+  {
+   "signal": "CF",
+   "status": "X_JKP",
+   "reason": "(利益＋減価償却)÷時価（LSV 1994＝JKP fcf_me と同じ論文）＝キャッシュフロー利回り",
+   "jkp_same_quantity": [
+    "fcf_me",
+    "ocf_me"
+   ],
+   "jkp_cite_author_year_match": [
+    "fcf_me",
+    "sale_gr1",
+    "sale_gr3"
+   ]
+  },
+  {
+   "signal": "cfp",
+   "status": "X_JKP",
+   "reason": "Desai ほか (2004)・同じ論文",
+   "jkp_same_quantity": [
+    "ocf_me"
+   ],
+   "jkp_cite_author_year_match": [
+    "ocf_me"
+   ]
+  },
+  {
+   "signal": "ChEQ",
+   "status": "X_JKP",
+   "reason": "自己資本の伸び（分子は同じ自己資本の変化・割る数だけ違う）",
+   "jkp_same_quantity": [
+    "be_gr1a"
+   ]
+  },
+  {
+   "signal": "ChInv",
+   "status": "X_JKP",
+   "reason": "Thomas-Zhang (2002)・同じ論文",
+   "jkp_same_quantity": [
+    "inv_gr1a"
+   ],
+   "jkp_cite_author_year_match": [
+    "inv_gr1a"
+   ]
+  },
+  {
+   "signal": "ChInvIA",
+   "status": "X_JKP",
+   "reason": "設備投資の伸び（業種の平均を引く）・Abarbanell-Bushee (1998) は JKP dsale_dinv ほかの cite と同じ",
+   "jkp_same_quantity": [
+    "capx_gr1"
+   ],
+   "jkp_cite_author_year_match": [
+    "dgp_dsale",
+    "dsale_dinv",
+    "dsale_drec",
+    "dsale_dsga",
+    "sale_emp_gr1"
+   ]
+  },
+  {
+   "signal": "ChNNCOA",
+   "status": "X_JKP",
+   "reason": "非流動の純営業資産の変化",
+   "jkp_same_quantity": [
+    "nncoa_gr1a"
+   ],
+   "jkp_cite_author_year_match": [
+    "ebit_bev",
+    "ebit_sale",
+    "sale_bev"
+   ]
+  },
+  {
+   "signal": "ChNWC",
+   "status": "X_JKP",
+   "reason": "運転資本の変化",
+   "jkp_same_quantity": [
+    "cowc_gr1a"
+   ],
+   "jkp_cite_author_year_match": [
+    "ebit_bev",
+    "ebit_sale",
+    "sale_bev"
+   ]
+  },
+  {
+   "signal": "ChTax",
+   "status": "X_JKP",
+   "reason": "Thomas-Zhang (2011)・同じ論文",
+   "jkp_same_quantity": [
+    "tax_gr1a"
+   ],
+   "jkp_cite_author_year_match": [
+    "tax_gr1a"
+   ]
+  },
+  {
+   "signal": "CompEquIss",
+   "status": "X_JKP",
+   "reason": "Daniel-Titman (2006) の複合的な株式の発行・同じ論文",
+   "jkp_same_quantity": [
+    "eqnpo_12m"
+   ],
+   "jkp_cite_author_year_match": [
+    "eqnpo_12m"
+   ]
+  },
+  {
+   "signal": "CompositeDebtIssuance",
+   "status": "X_JKP",
+   "reason": "Lyandres-Sun-Zhang (2008)・同じ論文",
+   "jkp_same_quantity": [
+    "debt_gr3"
+   ],
+   "jkp_cite_author_year_match": [
+    "debt_gr3",
+    "ppeinv_gr1a"
+   ]
+  },
+  {
+   "signal": "CoskewACX",
+   "status": "X_JKP",
+   "reason": "共歪度（Ang-Chen-Xing 2006 は JKP betadown_252d の cite と同じ）",
+   "jkp_same_quantity": [
+    "coskew_21d"
+   ],
+   "jkp_cite_author_year_match": [
+    "betadown_252d",
+    "ivol_ff3_21d",
+    "rvol_21d"
+   ]
+  },
+  {
+   "signal": "Coskewness",
+   "status": "X_JKP",
+   "reason": "Harvey-Siddique (2000)・同じ論文",
+   "jkp_same_quantity": [
+    "coskew_21d"
+   ],
+   "jkp_cite_author_year_match": [
+    "coskew_21d"
+   ]
+  },
+  {
+   "signal": "DelCOA",
+   "status": "X_JKP",
+   "reason": "Richardson ほか (2005)",
+   "jkp_same_quantity": [
+    "coa_gr1a"
+   ],
+   "jkp_cite_author_year_match": [
+    "be_gr1a",
+    "coa_gr1a",
+    "col_gr1a",
+    "cowc_gr1a",
+    "fnl_gr1a",
+    "lti_gr1a",
+    "ncoa_gr1a",
+    "ncol_gr1a",
+    "nfna_gr1a",
+    "nncoa_gr1a",
+    "sti_gr1a",
+    "taccruals_at"
+   ]
+  },
+  {
+   "signal": "DelCOL",
+   "status": "X_JKP",
+   "reason": "Richardson ほか (2005)",
+   "jkp_same_quantity": [
+    "col_gr1a"
+   ],
+   "jkp_cite_author_year_match": [
+    "be_gr1a",
+    "coa_gr1a",
+    "col_gr1a",
+    "cowc_gr1a",
+    "fnl_gr1a",
+    "lti_gr1a",
+    "ncoa_gr1a",
+    "ncol_gr1a",
+    "nfna_gr1a",
+    "nncoa_gr1a",
+    "sti_gr1a",
+    "taccruals_at"
+   ]
+  },
+  {
+   "signal": "DelEqu",
+   "status": "X_JKP",
+   "reason": "Richardson ほか (2005)",
+   "jkp_same_quantity": [
+    "be_gr1a"
+   ],
+   "jkp_cite_author_year_match": [
+    "be_gr1a",
+    "coa_gr1a",
+    "col_gr1a",
+    "cowc_gr1a",
+    "fnl_gr1a",
+    "lti_gr1a",
+    "ncoa_gr1a",
+    "ncol_gr1a",
+    "nfna_gr1a",
+    "nncoa_gr1a",
+    "sti_gr1a",
+    "taccruals_at"
+   ]
+  },
+  {
+   "signal": "DelFINL",
+   "status": "X_JKP",
+   "reason": "Richardson ほか (2005)",
+   "jkp_same_quantity": [
+    "fnl_gr1a"
+   ],
+   "jkp_cite_author_year_match": [
+    "be_gr1a",
+    "coa_gr1a",
+    "col_gr1a",
+    "cowc_gr1a",
+    "fnl_gr1a",
+    "lti_gr1a",
+    "ncoa_gr1a",
+    "ncol_gr1a",
+    "nfna_gr1a",
+    "nncoa_gr1a",
+    "sti_gr1a",
+    "taccruals_at"
+   ]
+  },
+  {
+   "signal": "DelLTI",
+   "status": "X_JKP",
+   "reason": "Richardson ほか (2005)",
+   "jkp_same_quantity": [
+    "lti_gr1a"
+   ],
+   "jkp_cite_author_year_match": [
+    "be_gr1a",
+    "coa_gr1a",
+    "col_gr1a",
+    "cowc_gr1a",
+    "fnl_gr1a",
+    "lti_gr1a",
+    "ncoa_gr1a",
+    "ncol_gr1a",
+    "nfna_gr1a",
+    "nncoa_gr1a",
+    "sti_gr1a",
+    "taccruals_at"
+   ]
+  },
+  {
+   "signal": "DelNetFin",
+   "status": "X_JKP",
+   "reason": "Richardson ほか (2005)",
+   "jkp_same_quantity": [
+    "nfna_gr1a"
+   ],
+   "jkp_cite_author_year_match": [
+    "be_gr1a",
+    "coa_gr1a",
+    "col_gr1a",
+    "cowc_gr1a",
+    "fnl_gr1a",
+    "lti_gr1a",
+    "ncoa_gr1a",
+    "ncol_gr1a",
+    "nfna_gr1a",
+    "nncoa_gr1a",
+    "sti_gr1a",
+    "taccruals_at"
+   ]
+  },
+  {
+   "signal": "dNoa",
+   "status": "X_JKP",
+   "reason": "Hirshleifer ほか (2004)",
+   "jkp_same_quantity": [
+    "noa_gr1a"
+   ],
+   "jkp_cite_author_year_match": [
+    "noa_at",
+    "noa_gr1a"
+   ]
+  },
+  {
+   "signal": "DolVol",
+   "status": "X_JKP",
+   "reason": "Brennan ほか (1998)",
+   "jkp_same_quantity": [
+    "dolvol_126d"
+   ],
+   "also_tested_by": [
+    "q07leu turnover"
+   ],
+   "jkp_cite_author_year_match": [
+    "dolvol_126d"
+   ]
+  },
+  {
+   "signal": "EarningsSurprise",
+   "status": "X_JKP",
+   "reason": "Foster-Olsen-Shevlin (1984)",
+   "jkp_same_quantity": [
+    "niq_su"
+   ],
+   "also_tested_by": [
+    "q07leu pead"
+   ],
+   "jkp_cite_author_year_match": [
+    "niq_su"
+   ]
+  },
+  {
+   "signal": "EBM",
+   "status": "X_JKP",
+   "reason": "Penman-Richardson-Tuna (2007)",
+   "jkp_same_quantity": [
+    "bev_mev"
+   ],
+   "jkp_cite_author_year_match": [
+    "bev_mev",
+    "netdebt_me"
+   ]
+  },
+  {
+   "signal": "EntMult",
+   "status": "X_JKP",
+   "reason": "Loughran-Wellman (2011)",
+   "jkp_same_quantity": [
+    "ebitda_mev"
+   ],
+   "jkp_cite_author_year_match": [
+    "ebitda_mev"
+   ]
+  },
+  {
+   "signal": "EP",
+   "status": "X_JKP",
+   "reason": "益回り（Basu 1977・JKP は Basu 1983）",
+   "jkp_same_quantity": [
+    "ni_me"
+   ]
+  },
+  {
+   "signal": "EquityDuration",
+   "status": "X_JKP",
+   "reason": "Dechow-Sloan-Soliman (2004)",
+   "jkp_same_quantity": [
+    "eq_dur"
+   ],
+   "jkp_cite_author_year_match": [
+    "eq_dur"
+   ]
+  },
+  {
+   "signal": "FirmAge",
+   "status": "X_JKP",
+   "reason": "上場からの年数",
+   "jkp_same_quantity": [
+    "age"
+   ],
+   "also_tested_by": [
+    "q07leu old_firms"
+   ]
+  },
+  {
+   "signal": "FirmAgeMom",
+   "status": "X_JKP",
+   "reason": "6か月の勢いを若い会社（年数の最下位五分位）に絞っただけ（Zhang 2006）＝対象を絞った同じ量",
+   "jkp_same_quantity": [
+    "ret_6_1"
+   ]
+  },
+  {
+   "signal": "GP",
+   "status": "X_JKP",
+   "reason": "Novy-Marx (2013)",
+   "jkp_same_quantity": [
+    "gp_at"
+   ],
+   "jkp_cite_author_year_match": [
+    "gp_at"
+   ]
+  },
+  {
+   "signal": "grcapx",
+   "status": "X_JKP",
+   "reason": "Anderson-Garcia-Feijoo (2006)",
+   "jkp_same_quantity": [
+    "capx_gr2"
+   ],
+   "jkp_cite_author_year_match": [
+    "capx_gr2",
+    "capx_gr3"
+   ]
+  },
+  {
+   "signal": "grcapx3y",
+   "status": "X_JKP",
+   "reason": "Anderson-Garcia-Feijoo (2006)",
+   "jkp_same_quantity": [
+    "capx_gr3"
+   ],
+   "jkp_cite_author_year_match": [
+    "capx_gr2",
+    "capx_gr3"
+   ]
+  },
+  {
+   "signal": "GrLTNOA",
+   "status": "X_JKP",
+   "reason": "Fairfield-Whisenant-Yohn (2003)",
+   "jkp_same_quantity": [
+    "lnoa_gr1a"
+   ],
+   "jkp_cite_author_year_match": [
+    "lnoa_gr1a"
+   ]
+  },
+  {
+   "signal": "GrSaleToGrInv",
+   "status": "X_JKP",
+   "reason": "Abarbanell-Bushee (1998)",
+   "jkp_same_quantity": [
+    "dsale_dinv"
+   ],
+   "jkp_cite_author_year_match": [
+    "dgp_dsale",
+    "dsale_dinv",
+    "dsale_drec",
+    "dsale_dsga",
+    "sale_emp_gr1"
+   ]
+  },
+  {
+   "signal": "GrSaleToGrOverhead",
+   "status": "X_JKP",
+   "reason": "Abarbanell-Bushee (1998)",
+   "jkp_same_quantity": [
+    "dsale_dsga"
+   ],
+   "jkp_cite_author_year_match": [
+    "dgp_dsale",
+    "dsale_dinv",
+    "dsale_drec",
+    "dsale_dsga",
+    "sale_emp_gr1"
+   ]
+  },
+  {
+   "signal": "High52",
+   "status": "X_JKP",
+   "reason": "George-Hwang (2004)",
+   "jkp_same_quantity": [
+    "prc_highprc_252d"
+   ],
+   "also_tested_by": [
+    "q07leu hi52"
+   ],
+   "jkp_cite_author_year_match": [
+    "prc_highprc_252d"
+   ]
+  },
+  {
+   "signal": "hire",
+   "status": "X_JKP",
+   "reason": "Belo-Lin-Bazdresch (2014)",
+   "jkp_same_quantity": [
+    "emp_gr1"
+   ]
+  },
+  {
+   "signal": "IdioVol3F",
+   "status": "X_JKP",
+   "reason": "Ang ほか (2006)",
+   "jkp_same_quantity": [
+    "ivol_ff3_21d"
+   ],
+   "jkp_cite_author_year_match": [
+    "betadown_252d",
+    "ivol_ff3_21d",
+    "rvol_21d"
+   ]
+  },
+  {
+   "signal": "IdioVolAHT",
+   "status": "X_JKP",
+   "reason": "Ali-Hwang-Trombley (2003)",
+   "jkp_same_quantity": [
+    "ivol_capm_252d"
+   ],
+   "jkp_cite_author_year_match": [
+    "ivol_capm_252d"
+   ]
+  },
+  {
+   "signal": "Illiquidity",
+   "status": "X_JKP",
+   "reason": "Amihud (2002)",
+   "jkp_same_quantity": [
+    "ami_126d"
+   ],
+   "jkp_cite_author_year_match": [
+    "ami_126d"
+   ]
+  },
+  {
+   "signal": "IntMom",
+   "status": "X_JKP",
+   "reason": "Novy-Marx (2012)",
+   "jkp_same_quantity": [
+    "ret_12_7"
+   ],
+   "jkp_cite_author_year_match": [
+    "ret_12_7"
+   ]
+  },
+  {
+   "signal": "Investment",
+   "status": "X_JKP",
+   "reason": "Titman-Wei-Xie (2004)",
+   "jkp_same_quantity": [
+    "capex_abn"
+   ],
+   "jkp_cite_author_year_match": [
+    "capex_abn"
+   ]
+  },
+  {
+   "signal": "InvestPPEInv",
+   "status": "X_JKP",
+   "reason": "Lyandres-Sun-Zhang (2008)",
+   "jkp_same_quantity": [
+    "ppeinv_gr1a"
+   ],
+   "jkp_cite_author_year_match": [
+    "debt_gr3",
+    "ppeinv_gr1a"
+   ]
+  },
+  {
+   "signal": "InvGrowth",
+   "status": "X_JKP",
+   "reason": "Belo-Lin (2012)",
+   "jkp_same_quantity": [
+    "inv_gr1"
+   ],
+   "also_tested_by": [
+    "q07leu investment は inv_gr1"
+   ]
+  },
+  {
+   "signal": "Leverage",
+   "status": "X_JKP",
+   "reason": "Bhandari (1988)",
+   "jkp_same_quantity": [
+    "debt_me"
+   ],
+   "jkp_cite_author_year_match": [
+    "debt_me"
+   ]
+  },
+  {
+   "signal": "LRreversal",
+   "status": "X_JKP",
+   "reason": "De Bondt-Thaler (1985)",
+   "jkp_same_quantity": [
+    "ret_60_12"
+   ],
+   "also_tested_by": [
+    "q07leu lt_reversal"
+   ],
+   "jkp_cite_author_year_match": [
+    "ret_60_12"
+   ]
+  },
+  {
+   "signal": "MaxRet",
+   "status": "X_JKP",
+   "reason": "Bali-Cakici-Whitelaw (2011)",
+   "jkp_same_quantity": [
+    "rmax1_21d"
+   ],
+   "also_tested_by": [
+    "q07leu lottery"
+   ],
+   "jkp_cite_author_year_match": [
+    "rmax1_21d"
+   ]
+  },
+  {
+   "signal": "MeanRankRevGrowth",
+   "status": "X_JKP",
+   "reason": "過去5年の売上の伸びの順位（LSV 1994・同じ論文）",
+   "jkp_same_quantity": [
+    "sale_gr3",
+    "sale_gr1"
+   ],
+   "jkp_cite_author_year_match": [
+    "fcf_me",
+    "sale_gr1",
+    "sale_gr3"
+   ]
+  },
+  {
+   "signal": "Mom12m",
+   "status": "X_JKP",
+   "reason": "Jegadeesh-Titman (1993)",
+   "jkp_same_quantity": [
+    "ret_12_1"
+   ],
+   "jkp_cite_author_year_match": [
+    "ret_12_1",
+    "ret_6_1"
+   ]
+  },
+  {
+   "signal": "Mom12mOffSeason",
+   "status": "X_JKP",
+   "reason": "Heston-Sadka (2008)",
+   "jkp_same_quantity": [
+    "seas_1_1na"
+   ],
+   "jkp_cite_author_year_match": [
+    "seas_11_15an",
+    "seas_11_15na",
+    "seas_16_20an",
+    "seas_16_20na",
+    "seas_1_1an",
+    "seas_1_1na",
+    "seas_2_5an",
+    "seas_2_5na",
+    "seas_6_10an",
+    "seas_6_10na"
+   ]
+  },
+  {
+   "signal": "Mom6m",
+   "status": "X_JKP",
+   "reason": "Jegadeesh-Titman (1993)",
+   "jkp_same_quantity": [
+    "ret_6_1"
+   ],
+   "jkp_cite_author_year_match": [
+    "ret_12_1",
+    "ret_6_1"
+   ]
+  },
+  {
+   "signal": "Mom6mJunk",
+   "status": "X_JKP",
+   "reason": "6か月の勢いを格付けの低い会社に絞っただけ（Avramov ほか 2007）。★eknzbh の検証の一覧で格付け（D10 が B）を見てしまった",
+   "jkp_same_quantity": [
+    "ret_6_1"
+   ]
+  },
+  {
+   "signal": "MomOffSeason",
+   "status": "X_JKP",
+   "reason": "Heston-Sadka (2008)",
+   "jkp_same_quantity": [
+    "seas_2_5na"
+   ],
+   "also_tested_by": [
+    "q07leu seas"
+   ],
+   "jkp_cite_author_year_match": [
+    "seas_11_15an",
+    "seas_11_15na",
+    "seas_16_20an",
+    "seas_16_20na",
+    "seas_1_1an",
+    "seas_1_1na",
+    "seas_2_5an",
+    "seas_2_5na",
+    "seas_6_10an",
+    "seas_6_10na"
+   ]
+  },
+  {
+   "signal": "MomOffSeason06YrPlus",
+   "status": "X_JKP",
+   "reason": "Heston-Sadka (2008)",
+   "jkp_same_quantity": [
+    "seas_6_10na"
+   ],
+   "jkp_cite_author_year_match": [
+    "seas_11_15an",
+    "seas_11_15na",
+    "seas_16_20an",
+    "seas_16_20na",
+    "seas_1_1an",
+    "seas_1_1na",
+    "seas_2_5an",
+    "seas_2_5na",
+    "seas_6_10an",
+    "seas_6_10na"
+   ]
+  },
+  {
+   "signal": "MomOffSeason11YrPlus",
+   "status": "X_JKP",
+   "reason": "Heston-Sadka (2008)",
+   "jkp_same_quantity": [
+    "seas_11_15na"
+   ],
+   "jkp_cite_author_year_match": [
+    "seas_11_15an",
+    "seas_11_15na",
+    "seas_16_20an",
+    "seas_16_20na",
+    "seas_1_1an",
+    "seas_1_1na",
+    "seas_2_5an",
+    "seas_2_5na",
+    "seas_6_10an",
+    "seas_6_10na"
+   ]
+  },
+  {
+   "signal": "MomOffSeason16YrPlus",
+   "status": "X_JKP",
+   "reason": "Heston-Sadka (2008)",
+   "jkp_same_quantity": [
+    "seas_16_20na"
+   ],
+   "jkp_cite_author_year_match": [
+    "seas_11_15an",
+    "seas_11_15na",
+    "seas_16_20an",
+    "seas_16_20na",
+    "seas_1_1an",
+    "seas_1_1na",
+    "seas_2_5an",
+    "seas_2_5na",
+    "seas_6_10an",
+    "seas_6_10na"
+   ]
+  },
+  {
+   "signal": "MomSeason",
+   "status": "X_JKP",
+   "reason": "Heston-Sadka (2008)",
+   "jkp_same_quantity": [
+    "seas_2_5an"
+   ],
+   "also_tested_by": [
+    "q07leu seas"
+   ],
+   "jkp_cite_author_year_match": [
+    "seas_11_15an",
+    "seas_11_15na",
+    "seas_16_20an",
+    "seas_16_20na",
+    "seas_1_1an",
+    "seas_1_1na",
+    "seas_2_5an",
+    "seas_2_5na",
+    "seas_6_10an",
+    "seas_6_10na"
+   ]
+  },
+  {
+   "signal": "MomSeason06YrPlus",
+   "status": "X_JKP",
+   "reason": "Heston-Sadka (2008)",
+   "jkp_same_quantity": [
+    "seas_6_10an"
+   ],
+   "jkp_cite_author_year_match": [
+    "seas_11_15an",
+    "seas_11_15na",
+    "seas_16_20an",
+    "seas_16_20na",
+    "seas_1_1an",
+    "seas_1_1na",
+    "seas_2_5an",
+    "seas_2_5na",
+    "seas_6_10an",
+    "seas_6_10na"
+   ]
+  },
+  {
+   "signal": "MomSeason11YrPlus",
+   "status": "X_JKP",
+   "reason": "Heston-Sadka (2008)",
+   "jkp_same_quantity": [
+    "seas_11_15an"
+   ],
+   "jkp_cite_author_year_match": [
+    "seas_11_15an",
+    "seas_11_15na",
+    "seas_16_20an",
+    "seas_16_20na",
+    "seas_1_1an",
+    "seas_1_1na",
+    "seas_2_5an",
+    "seas_2_5na",
+    "seas_6_10an",
+    "seas_6_10na"
+   ]
+  },
+  {
+   "signal": "MomSeason16YrPlus",
+   "status": "X_JKP",
+   "reason": "Heston-Sadka (2008)",
+   "jkp_same_quantity": [
+    "seas_16_20an"
+   ],
+   "jkp_cite_author_year_match": [
+    "seas_11_15an",
+    "seas_11_15na",
+    "seas_16_20an",
+    "seas_16_20na",
+    "seas_1_1an",
+    "seas_1_1na",
+    "seas_2_5an",
+    "seas_2_5na",
+    "seas_6_10an",
+    "seas_6_10na"
+   ]
+  },
+  {
+   "signal": "MomSeasonShort",
+   "status": "X_JKP",
+   "reason": "Heston-Sadka (2008)",
+   "jkp_same_quantity": [
+    "seas_1_1an"
+   ],
+   "also_tested_by": [
+    "q07leu seas"
+   ],
+   "jkp_cite_author_year_match": [
+    "seas_11_15an",
+    "seas_11_15na",
+    "seas_16_20an",
+    "seas_16_20na",
+    "seas_1_1an",
+    "seas_1_1na",
+    "seas_2_5an",
+    "seas_2_5na",
+    "seas_6_10an",
+    "seas_6_10na"
+   ]
+  },
+  {
+   "signal": "MRreversal",
+   "status": "X_JKP",
+   "reason": "月 t−18〜t−13 の過去リターン（De Bondt-Thaler 1985・同じ論文）＝過去リターンの窓違い",
+   "jkp_same_quantity": [
+    "ret_60_12"
+   ],
+   "jkp_cite_author_year_match": [
+    "ret_60_12"
+   ]
+  },
+  {
+   "signal": "NetDebtFinance",
+   "status": "X_JKP",
+   "reason": "Bradshaw-Richardson-Sloan (2006)",
+   "jkp_same_quantity": [
+    "dbnetis_at"
+   ],
+   "jkp_cite_author_year_match": [
+    "dbnetis_at",
+    "eqnetis_at",
+    "netis_at"
+   ]
+  },
+  {
+   "signal": "NetDebtPrice",
+   "status": "X_JKP",
+   "reason": "Penman-Richardson-Tuna (2007)",
+   "jkp_same_quantity": [
+    "netdebt_me"
+   ],
+   "jkp_cite_author_year_match": [
+    "bev_mev",
+    "netdebt_me"
+   ]
+  },
+  {
+   "signal": "NetEquityFinance",
+   "status": "X_JKP",
+   "reason": "Bradshaw-Richardson-Sloan (2006)",
+   "jkp_same_quantity": [
+    "eqnetis_at"
+   ],
+   "jkp_cite_author_year_match": [
+    "dbnetis_at",
+    "eqnetis_at",
+    "netis_at"
+   ]
+  },
+  {
+   "signal": "NetPayoutYield",
+   "status": "X_JKP",
+   "reason": "Boudoukh ほか (2007)",
+   "jkp_same_quantity": [
+    "eqnpo_me"
+   ],
+   "jkp_cite_author_year_match": [
+    "eqnpo_me",
+    "eqpo_me"
+   ]
+  },
+  {
+   "signal": "NOA",
+   "status": "X_JKP",
+   "reason": "Hirshleifer ほか (2004)",
+   "jkp_same_quantity": [
+    "noa_at"
+   ],
+   "jkp_cite_author_year_match": [
+    "noa_at",
+    "noa_gr1a"
+   ]
+  },
+  {
+   "signal": "NumEarnIncrease",
+   "status": "X_JKP",
+   "reason": "利益が前年同期より増えた四半期の連続数（最大8）＝Barth-Elliott-Finn (1999) の量（兄弟 intang の判定を引き継ぐ）",
+   "jkp_same_quantity": [
+    "ni_inc8q"
+   ]
+  },
+  {
+   "signal": "OperProf",
+   "status": "X_JKP",
+   "reason": "Fama-French (2006/2015)",
+   "jkp_same_quantity": [
+    "ope_be"
+   ]
+  },
+  {
+   "signal": "OperProfRD",
+   "status": "X_JKP",
+   "reason": "研究開発を足し戻した営業利益÷総資産（Ball ほか 2016・同じ論文）",
+   "jkp_same_quantity": [
+    "op_at",
+    "op_atl1"
+   ],
+   "jkp_cite_author_year_match": [
+    "cop_atl1",
+    "op_atl1"
+   ]
+  },
+  {
+   "signal": "OPLeverage",
+   "status": "X_JKP",
+   "reason": "Novy-Marx (2011)",
+   "jkp_same_quantity": [
+    "opex_at"
+   ],
+   "jkp_cite_author_year_match": [
+    "opex_at"
+   ]
+  },
+  {
+   "signal": "OScore",
+   "status": "X_JKP",
+   "reason": "Dichev (1998)・離散",
+   "jkp_same_quantity": [
+    "o_score"
+   ],
+   "jkp_cite_author_year_match": [
+    "o_score",
+    "z_score"
+   ]
+  },
+  {
+   "signal": "PayoutYield",
+   "status": "X_JKP",
+   "reason": "Boudoukh ほか (2007)",
+   "jkp_same_quantity": [
+    "eqpo_me"
+   ],
+   "jkp_cite_author_year_match": [
+    "eqnpo_me",
+    "eqpo_me"
+   ]
+  },
+  {
+   "signal": "PctAcc",
+   "status": "X_JKP",
+   "reason": "Hafzalla ほか (2011)",
+   "jkp_same_quantity": [
+    "oaccruals_ni"
+   ],
+   "also_tested_by": [
+    "q07leu accruals"
+   ],
+   "jkp_cite_author_year_match": [
+    "oaccruals_ni",
+    "taccruals_ni"
+   ]
+  },
+  {
+   "signal": "PctTotAcc",
+   "status": "X_JKP",
+   "reason": "Hafzalla ほか (2011)",
+   "jkp_same_quantity": [
+    "taccruals_ni"
+   ],
+   "jkp_cite_author_year_match": [
+    "oaccruals_ni",
+    "taccruals_ni"
+   ]
+  },
+  {
+   "signal": "Price",
+   "status": "X_JKP",
+   "reason": "株価",
+   "jkp_same_quantity": [
+    "prc"
+   ]
+  },
+  {
+   "signal": "PS",
+   "status": "X_JKP",
+   "reason": "Piotroski (2000)",
+   "jkp_same_quantity": [
+    "f_score"
+   ],
+   "jkp_cite_author_year_match": [
+    "f_score"
+   ]
+  },
+  {
+   "signal": "RD",
+   "status": "X_JKP",
+   "reason": "Chan-Lakonishok-Sougiannis (2001)",
+   "jkp_same_quantity": [
+    "rd_me"
+   ],
+   "also_tested_by": [
+    "q07leu rd"
+   ],
+   "jkp_cite_author_year_match": [
+    "rd_me",
+    "rd_sale"
+   ]
+  },
+  {
+   "signal": "RDcap",
+   "status": "X_JKP",
+   "reason": "Li (2011)",
+   "jkp_same_quantity": [
+    "rd5_at"
+   ],
+   "jkp_cite_author_year_match": [
+    "rd5_at"
+   ]
+  },
+  {
+   "signal": "RealizedVol",
+   "status": "X_JKP",
+   "reason": "Ang ほか (2006)",
+   "jkp_same_quantity": [
+    "rvol_21d"
+   ],
+   "jkp_cite_author_year_match": [
+    "betadown_252d",
+    "ivol_ff3_21d",
+    "rvol_21d"
+   ]
+  },
+  {
+   "signal": "ResidualMomentum",
+   "status": "X_JKP",
+   "reason": "Blitz-Huij-Martens (2011)",
+   "jkp_same_quantity": [
+    "resff3_12_1"
+   ],
+   "also_tested_by": [
+    "q07leu resmom"
+   ],
+   "jkp_cite_author_year_match": [
+    "resff3_12_1",
+    "resff3_6_1"
+   ]
+  },
+  {
+   "signal": "ReturnSkew",
+   "status": "X_JKP",
+   "reason": "Bali-Engle-Murray (2016)",
+   "jkp_same_quantity": [
+    "rskew_21d"
+   ],
+   "also_tested_by": [
+    "q07leu lottery"
+   ]
+  },
+  {
+   "signal": "ReturnSkew3F",
+   "status": "X_JKP",
+   "reason": "Bali-Engle-Murray (2016)",
+   "jkp_same_quantity": [
+    "iskew_ff3_21d"
+   ]
+  },
+  {
+   "signal": "RevenueSurprise",
+   "status": "X_JKP",
+   "reason": "Jegadeesh-Livnat (2006)",
+   "jkp_same_quantity": [
+    "saleq_su"
+   ],
+   "jkp_cite_author_year_match": [
+    "saleq_su"
+   ]
+  },
+  {
+   "signal": "roaq",
+   "status": "X_JKP",
+   "reason": "Balakrishnan-Bartov-Faurel (2010)",
+   "jkp_same_quantity": [
+    "niq_at"
+   ],
+   "jkp_cite_author_year_match": [
+    "niq_at"
+   ]
+  },
+  {
+   "signal": "RoE",
+   "status": "X_JKP",
+   "reason": "Haugen-Baker (1996)",
+   "jkp_same_quantity": [
+    "ni_be"
+   ],
+   "jkp_cite_author_year_match": [
+    "at_turnover",
+    "ni_be"
+   ]
+  },
+  {
+   "signal": "ShareIss1Y",
+   "status": "X_JKP",
+   "reason": "Pontiff-Woodgate (2008)。★eknzbh の結果の要約で格付けを見てしまった",
+   "jkp_same_quantity": [
+    "chcsho_12m"
+   ],
+   "also_tested_by": [
+    "q07leu payout"
+   ],
+   "jkp_cite_author_year_match": [
+    "chcsho_12m"
+   ]
+  },
+  {
+   "signal": "ShareIss5Y",
+   "status": "X_JKP",
+   "reason": "5年の株数の変化（Daniel-Titman 2006・JKP eqnpo_12m と同じ論文）＝株数の変化の窓違い。★eknzbh の結果の要約で格付けを見てしまった",
+   "jkp_same_quantity": [
+    "chcsho_12m",
+    "eqnpo_12m"
+   ],
+   "jkp_cite_author_year_match": [
+    "eqnpo_12m"
+   ]
+  },
+  {
+   "signal": "ShareRepurchase",
+   "status": "X_JKP",
+   "reason": "自社株買いの有無（Ikenberry ほか 1995）＝JKP の純還元・株数の変化と同じ経済の信号（兄弟 intang の判定を引き継ぐ）・離散",
+   "jkp_same_quantity": [
+    "eqpo_me",
+    "chcsho_12m"
+   ],
+   "also_tested_by": [
+    "q07leu payout"
+   ]
+  },
+  {
+   "signal": "ShareVol",
+   "status": "X_JKP",
+   "reason": "Datar-Naik-Radcliffe (1998)・離散",
+   "jkp_same_quantity": [
+    "turnover_126d"
+   ],
+   "jkp_cite_author_year_match": [
+    "turnover_126d"
+   ]
+  },
+  {
+   "signal": "Size",
+   "status": "X_JKP",
+   "reason": "Banz (1981)。FF93 型にも無い",
+   "jkp_same_quantity": [
+    "market_equity"
+   ],
+   "jkp_cite_author_year_match": [
+    "market_equity"
+   ]
+  },
+  {
+   "signal": "SP",
+   "status": "X_JKP",
+   "reason": "Barbee-Mukherji-Raines (1996)",
+   "jkp_same_quantity": [
+    "sale_me"
+   ],
+   "jkp_cite_author_year_match": [
+    "sale_me"
+   ]
+  },
+  {
+   "signal": "std_turn",
+   "status": "X_JKP",
+   "reason": "Chordia-Subrahmanyam-Anshuman (2001)",
+   "jkp_same_quantity": [
+    "turnover_var_126d"
+   ],
+   "jkp_cite_author_year_match": [
+    "dolvol_var_126d",
+    "turnover_var_126d"
+   ]
+  },
+  {
+   "signal": "STreversal",
+   "status": "X_JKP",
+   "reason": "Jegadeesh (1990)",
+   "jkp_same_quantity": [
+    "ret_1_0"
+   ],
+   "jkp_cite_author_year_match": [
+    "ret_1_0"
+   ]
+  },
+  {
+   "signal": "tang",
+   "status": "X_JKP",
+   "reason": "Hahn-Lee (2009)",
+   "jkp_same_quantity": [
+    "tangibility"
+   ],
+   "jkp_cite_author_year_match": [
+    "tangibility"
+   ]
+  },
+  {
+   "signal": "Tax",
+   "status": "X_JKP",
+   "reason": "Lev-Nissim (2004)（兄弟 intang の判定を引き継ぐ）",
+   "jkp_same_quantity": [
+    "pi_nix"
+   ],
+   "jkp_cite_author_year_match": [
+    "pi_nix"
+   ]
+  },
+  {
+   "signal": "TotalAccruals",
+   "status": "X_JKP",
+   "reason": "Richardson ほか (2005)",
+   "jkp_same_quantity": [
+    "taccruals_at"
+   ],
+   "jkp_cite_author_year_match": [
+    "be_gr1a",
+    "coa_gr1a",
+    "col_gr1a",
+    "cowc_gr1a",
+    "fnl_gr1a",
+    "lti_gr1a",
+    "ncoa_gr1a",
+    "ncol_gr1a",
+    "nfna_gr1a",
+    "nncoa_gr1a",
+    "sti_gr1a",
+    "taccruals_at"
+   ]
+  },
+  {
+   "signal": "VolMkt",
+   "status": "X_JKP",
+   "reason": "売買代金÷時価＝売買回転（Haugen-Baker 1996）",
+   "jkp_same_quantity": [
+    "turnover_126d"
+   ],
+   "jkp_cite_author_year_match": [
+    "at_turnover",
+    "ni_be"
+   ]
+  },
+  {
+   "signal": "VolSD",
+   "status": "X_JKP",
+   "reason": "Chordia-Subrahmanyam-Anshuman (2001)",
+   "jkp_same_quantity": [
+    "dolvol_var_126d"
+   ],
+   "jkp_cite_author_year_match": [
+    "dolvol_var_126d",
+    "turnover_var_126d"
+   ]
+  },
+  {
+   "signal": "XFIN",
+   "status": "X_JKP",
+   "reason": "Bradshaw-Richardson-Sloan (2006)",
+   "jkp_same_quantity": [
+    "netis_at"
+   ],
+   "jkp_cite_author_year_match": [
+    "dbnetis_at",
+    "eqnetis_at",
+    "netis_at"
+   ]
+  },
+  {
+   "signal": "zerotrade12M",
+   "status": "X_JKP",
+   "reason": "Liu (2006)",
+   "jkp_same_quantity": [
+    "zero_trades_252d"
+   ],
+   "jkp_cite_author_year_match": [
+    "zero_trades_126d",
+    "zero_trades_21d",
+    "zero_trades_252d"
+   ]
+  },
+  {
+   "signal": "zerotrade1M",
+   "status": "X_JKP",
+   "reason": "Liu (2006)",
+   "jkp_same_quantity": [
+    "zero_trades_21d"
+   ],
+   "jkp_cite_author_year_match": [
+    "zero_trades_126d",
+    "zero_trades_21d",
+    "zero_trades_252d"
+   ]
+  },
+  {
+   "signal": "zerotrade6M",
+   "status": "X_JKP",
+   "reason": "Liu (2006)",
+   "jkp_same_quantity": [
+    "zero_trades_126d"
+   ],
+   "jkp_cite_author_year_match": [
+    "zero_trades_126d",
+    "zero_trades_21d",
+    "zero_trades_252d"
+   ]
+  }
+ ],
+ "data": {
+  "source": "Open Source Asset Pricing（Andrew Y. Chen・Tom Zimmermann）2025.10 版（https://www.openassetpricing.com/data/）。Google Drive から鍵なしで取得（兄弟と同じファイル・同じ sha256）",
+  "files": {
+   "SignalDoc": {
+    "drive_id": "1Sev9s6cPFUGgxp1pFiej0lGzpsMqJCI2",
+    "cache": "osap_SignalDoc.csv",
+    "bytes": 181581,
+    "sha256": "590a308e40483fa87c0cbb95f73c010d09a61e22a3e2059627d2b3de9b77e0d9"
+   },
+   "FF93style": {
+    "drive_id": "1pDRMNTOvRfvooAzYOmG9sBBz74mUO80Q",
+    "cache": "osap_PredictorAltPorts_FF93style.zip",
+    "bytes": 22036534,
+    "sha256": "4b1e9333687368004de2a14ff759b6794fcc5f629403012e396a722fc36ae0e1",
+    "missing_signals": []
+   },
+   "QuintilesVW": {
+    "drive_id": "1ef905SSlCDyh1KU9W1tJs5sfBFz0HPUt",
+    "cache": "osap_PredictorAltPorts_QuintilesVW.zip",
+    "bytes": 18947238,
+    "sha256": "03c2358f223670b6ce21853f2f9d86404012f6cea9a14e76d116ca05f20d5070",
+    "missing_signals": []
+   },
+   "VWforce": {
+    "drive_id": "1KZE3FgBxFPaNOyxoRw63ubZHOlkR9kZW",
+    "cache": "osap_PredictorAltPorts_LiqScreen_VWforce.zip",
+    "bytes": 25962554,
+    "sha256": "53d3ae1f3de7a17d051de0125da2c42e4d4cf664faf6e4f6cfdd3b4994675a2a",
+    "missing_signals": []
+   },
+   "JKP_Factor_Details": {
+    "n_jkp": 153,
+    "sha256": "4c579e4dcb93eed0897941d8f5f84e9cc784a2d3fc696be68a29a24e68206141"
+   },
+   "French_F-F_Research_Data_Factors": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors_CSV.zip",
+    "cache": "fr_F-F_Research_Data_Factors.zip",
+    "bytes": 13065,
+    "sha256": "593f4fbef03181bc0b22ff6292f217689dd1fb79355049ca905d95b262040a66"
+   },
+   "French_Portfolios_Formed_on_ME": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/Portfolios_Formed_on_ME_CSV.zip",
+    "cache": "fr_Portfolios_Formed_on_ME.zip",
+    "bytes": 200765,
+    "sha256": "f6c4c440b4c6f26f1f01365e84ccae5338ae52e65057034d2ef3d3c0c1843020"
+   },
+   "French_F-F_Research_Data_5_Factors_2x3": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_5_Factors_2x3_CSV.zip",
+    "cache": "fr_F-F_Research_Data_5_Factors_2x3.zip",
+    "bytes": 11964,
+    "sha256": "36756c5c2559648519ac4b22913d860c6afd865cfebce920e3e8927f8e2d10b7"
+   },
+   "French_F-F_Momentum_Factor": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Momentum_Factor_CSV.zip",
+    "cache": "fr_F-F_Momentum_Factor.zip",
+    "bytes": 5600,
+    "sha256": "c06d1c2e9a5e4f6985879722f23c6bb585f46b34eaf3fcb681d4de887e353f3e"
+   }
+  },
+  "construction_verified_in_code": {
+   "read_at": "2026-09-28（raw.githubusercontent.com の OpenSourceAP/CrossSection master・Portfolios/Code/32_Predictor2x3Ports.R を読んだ）",
+   "ff93_bh": "予言変数ごとに、SignalDoc の Sign を掛けた信号の6月の値（yyyymm の月が6）を取り、NYSE（exchcd 1）かつ shrcd 10/11 の会社で信号の30%点・70%点と時価（6月）の中央値を作る。NYSE・AMEX・NASDAQ（exchcd 1/2/3）・shrcd 10/11 の会社を、時価が中央値以下=S／超=B、信号が30%点以下=L／70%点以下=M／超=H で6組に分ける。組の割り当ては銘柄ごとに翌年まで前へ埋め（fill）、1か月ずらして（lag）7月から持つ。リターンは前月末の時価 melag で加重（時価加重）、Nlong は melag のある銘柄の数。LS＝½(SH+BH) − ½(SL+BL)。H が論文の良い側（Sign を掛けた後の高い側）＝BH が「大型株の良い側」",
+   "fill_staleness": "★割り当ては銘柄ごとに前へ埋めるので、翌年6月に信号が無くなった会社も古い組のまま残る（上場廃止まで）。先読みではない（当時も持ち続けられる）が、信号の新しさが薄まる。信号そのものが終わった後も組は続く（Activism は 2007 以降も古い組が続く＝終わりの規則で切る）",
+   "returns": "CRSP 月次の ret に上場廃止のリターンを合成（欠けた業績由来の上場廃止は NYSE/AMEX −35%・NASDAQ −55%）した % 表記の総リターン（11_ProcessCRSP.R・兄弟が確かめた）→ /100",
+   "universe_vs_benchmark": "BH の母集団は shrcd 10/11・exchcd 1/2/3＝French Mkt と同じ。違いは『信号がある会社』であること（受注残を開示する・区分データがある・I/B/E/S に予想がある・産業連関表で業種が決まる等）",
+   "quintile_and_vwforce": "R_dupQ5 は QuintilesVW の05（全銘柄の五分位の切れ目・時価加重・SignalDoc の組み直しの間隔）、R_dupVWF は LiqScreen_VWforce の最大の番号（原論文の組・時価加重に強制）＝eknzbh と同じ組"
+  },
+  "direction_check_shape": "形の確かめ（リターンではない）: FF93style の signallag（組の時価加重の平均の Sign つきの信号）が BH > BL の月の割合は、主の29本と報告の3本の全部で 1.0（全月）＝BH が論文の良い側であることを確かめた",
+  "evaluation_window": {
+   "start": "良い側の組（BH・Q5 の05・VWforce の最大番号）の Nlong が初めて20以上で ret がある月から。その後に Nlong<20 の月は s と b の両方から落とす（0で埋めない・前後をつながない）",
+   "end_rule_bh": "最後の6月の組（QuintilesVW の05 に Y年7月のリターンがある最大の Y＝Y年6月末の信号がある）を1年持った (Y+1)年6月まで、かつ 2024-12 まで。主の29本はすべて 2024-12（規則が効くのは Activism1/2〔2007-06 で終わり〕と PIN だけ）",
+   "benchmark_months": "French と OSAP の両方がある月だけ（OSAP は 2024-12 で終わる＝保有期間は 2007-01〜2024-12 の216か月）"
+  },
+  "shape_primary": {
+   "Z_AbnormalAccruals_BH": {
+    "eval_from": 197207,
+    "eval_to": 202412,
+    "months": 630,
+    "train_months": 414,
+    "train_years": 34.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 220.0,
+    "nlong_median_hold": 231.0,
+    "nlong_min": 122
+   },
+   "Z_AnnouncementReturn_BH": {
+    "eval_from": 197207,
+    "eval_to": 202412,
+    "months": 630,
+    "train_months": 414,
+    "train_years": 34.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 268.0,
+    "nlong_median_hold": 274.0,
+    "nlong_min": 163
+   },
+   "Z_BetaLiquidityPS_BH": {
+    "eval_from": 196607,
+    "eval_to": 202412,
+    "months": 702,
+    "train_months": 486,
+    "train_years": 40.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 214.0,
+    "nlong_median_hold": 228.0,
+    "nlong_min": 158
+   },
+   "Z_BetaTailRisk_BH": {
+    "eval_from": 193207,
+    "eval_to": 202412,
+    "months": 1110,
+    "train_months": 894,
+    "train_years": 74.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 136.0,
+    "nlong_median_hold": 163.0,
+    "nlong_min": 33
+   },
+   "Z_CashProd_BH": {
+    "eval_from": 195107,
+    "eval_to": 202412,
+    "months": 882,
+    "train_months": 666,
+    "train_years": 55.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 196.0,
+    "nlong_median_hold": 197.0,
+    "nlong_min": 32
+   },
+   "Z_ChAssetTurnover_BH": {
+    "eval_from": 195307,
+    "eval_to": 202412,
+    "months": 858,
+    "train_months": 642,
+    "train_years": 53.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 197.0,
+    "nlong_median_hold": 238.0,
+    "nlong_min": 38
+   },
+   "Z_CustomerMomentum_BH": {
+    "eval_from": 198807,
+    "eval_to": 202412,
+    "months": 438,
+    "train_months": 222,
+    "train_years": 18.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 74.0,
+    "nlong_median_hold": 93.0,
+    "nlong_min": 21
+   },
+   "Z_DelDRC_BH": {
+    "eval_from": 200207,
+    "eval_to": 202412,
+    "months": 270,
+    "train_months": 54,
+    "train_years": 4.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 124.0,
+    "nlong_median_hold": 127.0,
+    "nlong_min": 30
+   },
+   "Z_EarnSupBig_BH": {
+    "eval_from": 196407,
+    "eval_to": 202412,
+    "months": 726,
+    "train_months": 510,
+    "train_years": 42.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 257.0,
+    "nlong_median_hold": 258.0,
+    "nlong_min": 75
+   },
+   "Z_EarningsStreak_BH": {
+    "eval_from": 198507,
+    "eval_to": 202412,
+    "months": 474,
+    "train_months": 258,
+    "train_years": 21.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 197.0,
+    "nlong_median_hold": 179.5,
+    "nlong_min": 109
+   },
+   "Z_Frontier_BH": {
+    "eval_from": 197107,
+    "eval_to": 202412,
+    "months": 642,
+    "train_months": 426,
+    "train_years": 35.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 59.0,
+    "nlong_median_hold": 62.5,
+    "nlong_min": 30
+   },
+   "Z_IndRetBig_BH": {
+    "eval_from": 192607,
+    "eval_to": 202412,
+    "months": 1182,
+    "train_months": 966,
+    "train_years": 80.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 229.0,
+    "nlong_median_hold": 298.0,
+    "nlong_min": 24
+   },
+   "Z_IntanBM_BH": {
+    "eval_from": 196807,
+    "eval_to": 202412,
+    "months": 678,
+    "train_months": 462,
+    "train_years": 38.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 112.0,
+    "nlong_median_hold": 121.0,
+    "nlong_min": 52
+   },
+   "Z_IntanCFP_BH": {
+    "eval_from": 195607,
+    "eval_to": 202412,
+    "months": 822,
+    "train_months": 606,
+    "train_years": 50.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 118.0,
+    "nlong_median_hold": 132.0,
+    "nlong_min": 34
+   },
+   "Z_IntanEP_BH": {
+    "eval_from": 195607,
+    "eval_to": 202412,
+    "months": 822,
+    "train_months": 606,
+    "train_years": 50.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 126.0,
+    "nlong_median_hold": 149.0,
+    "nlong_min": 22
+   },
+   "Z_IntanSP_BH": {
+    "eval_from": 195607,
+    "eval_to": 202412,
+    "months": 822,
+    "train_months": 606,
+    "train_years": 50.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 96.0,
+    "nlong_median_hold": 102.0,
+    "nlong_min": 24
+   },
+   "Z_OrderBacklog_BH": {
+    "eval_from": 197107,
+    "eval_to": 202412,
+    "months": 642,
+    "train_months": 426,
+    "train_years": 35.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 95.0,
+    "nlong_median_hold": 96.0,
+    "nlong_min": 24
+   },
+   "Z_OrderBacklogChg_BH": {
+    "eval_from": 197207,
+    "eval_to": 202412,
+    "months": 630,
+    "train_months": 414,
+    "train_years": 34.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 63.0,
+    "nlong_median_hold": 58.0,
+    "nlong_min": 28
+   },
+   "Z_PriceDelayRsq_BH": {
+    "eval_from": 192807,
+    "eval_to": 202412,
+    "months": 1158,
+    "train_months": 942,
+    "train_years": 78.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 140.0,
+    "nlong_median_hold": 188.0,
+    "nlong_min": 30
+   },
+   "Z_PriceDelaySlope_BH": {
+    "eval_from": 192807,
+    "eval_to": 202412,
+    "months": 1158,
+    "train_months": 942,
+    "train_years": 78.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 161.0,
+    "nlong_median_hold": 225.0,
+    "nlong_min": 38
+   },
+   "Z_PriceDelayTstat_BH": {
+    "eval_from": 192807,
+    "eval_to": 202412,
+    "months": 1158,
+    "train_months": 942,
+    "train_years": 78.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 162.0,
+    "nlong_median_hold": 226.0,
+    "nlong_min": 38
+   },
+   "Z_TrendFactor_BH": {
+    "eval_from": 192607,
+    "eval_to": 202412,
+    "months": 1182,
+    "train_months": 966,
+    "train_years": 80.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 176.0,
+    "nlong_median_hold": 225.0,
+    "nlong_min": 58
+   },
+   "Z_VarCF_BH": {
+    "eval_from": 195307,
+    "eval_to": 202412,
+    "months": 858,
+    "train_months": 642,
+    "train_years": 53.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 357.0,
+    "nlong_median_hold": 393.5,
+    "nlong_min": 63
+   },
+   "Z_VolumeTrend_BH": {
+    "eval_from": 192807,
+    "eval_to": 202412,
+    "months": 1158,
+    "train_months": 942,
+    "train_years": 78.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 144.0,
+    "nlong_median_hold": 262.0,
+    "nlong_min": 40
+   },
+   "Z_betaVIX_BH": {
+    "eval_from": 198607,
+    "eval_to": 202412,
+    "months": 462,
+    "train_months": 246,
+    "train_years": 20.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 282.0,
+    "nlong_median_hold": 287.0,
+    "nlong_min": 173
+   },
+   "Z_iomom_cust_BH": {
+    "eval_from": 198707,
+    "eval_to": 202412,
+    "months": 450,
+    "train_months": 234,
+    "train_years": 19.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 201.0,
+    "nlong_median_hold": 187.0,
+    "nlong_min": 141
+   },
+   "Z_iomom_supp_BH": {
+    "eval_from": 198707,
+    "eval_to": 202412,
+    "months": 450,
+    "train_months": 234,
+    "train_years": 19.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 240.5,
+    "nlong_median_hold": 233.0,
+    "nlong_min": 130
+   },
+   "Z_realestate_BH": {
+    "eval_from": 197007,
+    "eval_to": 202412,
+    "months": 654,
+    "train_months": 438,
+    "train_years": 36.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 185.0,
+    "nlong_median_hold": 219.0,
+    "nlong_min": 80
+   },
+   "Z_retConglomerate_BH": {
+    "eval_from": 197607,
+    "eval_to": 202412,
+    "months": 582,
+    "train_months": 366,
+    "train_years": 30.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "gaps": 0,
+    "nlong_median": 143.0,
+    "nlong_median_hold": 166.0,
+    "nlong_min": 23
+   }
+  },
+  "shape_report": {
+   "R_dupQ5_AbnormalAccruals": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 197207,
+    "eval_to": 202412,
+    "train_years": 34.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 716.0
+   },
+   "R_dupQ5_AnnouncementReturn": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 197111,
+    "eval_to": 202412,
+    "train_years": 35.2,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 938.0
+   },
+   "R_dupQ5_BetaLiquidityPS": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 196601,
+    "eval_to": 202412,
+    "train_years": 41.0,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 726.5
+   },
+   "R_dupQ5_BetaTailRisk": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 193201,
+    "eval_to": 202412,
+    "train_years": 74.8,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 2,
+    "nlong_median": 320.0
+   },
+   "R_dupQ5_CashProd": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 195107,
+    "eval_to": 202412,
+    "train_years": 55.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 765.0
+   },
+   "R_dupQ5_ChAssetTurnover": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 195307,
+    "eval_to": 202412,
+    "train_years": 53.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 462.0
+   },
+   "R_dupQ5_CustomerMomentum": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 197810,
+    "eval_to": 202412,
+    "train_years": 27.9,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 4,
+    "nlong_median": 112
+   },
+   "R_dupQ5_DelDRC": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 200207,
+    "eval_to": 202412,
+    "train_years": 4.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 285.0
+   },
+   "R_dupQ5_EarnSupBig": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 196306,
+    "eval_to": 202412,
+    "train_years": 43.6,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 671
+   },
+   "R_dupQ5_EarningsStreak": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 198502,
+    "eval_to": 202412,
+    "train_years": 21.9,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 448
+   },
+   "R_dupQ5_Frontier": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 196707,
+    "eval_to": 202412,
+    "train_years": 39.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 318.5
+   },
+   "R_dupQ5_IndRetBig": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 192602,
+    "eval_to": 202412,
+    "train_years": 80.9,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 471
+   },
+   "R_dupQ5_IntanBM": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 196801,
+    "eval_to": 202412,
+    "train_years": 39.0,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 438.5
+   },
+   "R_dupQ5_IntanCFP": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 195607,
+    "eval_to": 202412,
+    "train_years": 50.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 439.5
+   },
+   "R_dupQ5_IntanEP": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 195607,
+    "eval_to": 202412,
+    "train_years": 50.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 426.5
+   },
+   "R_dupQ5_IntanSP": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 195607,
+    "eval_to": 202412,
+    "train_years": 50.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 514.0
+   },
+   "R_dupQ5_OrderBacklog": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 197107,
+    "eval_to": 202412,
+    "train_years": 35.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 182.0
+   },
+   "R_dupQ5_OrderBacklogChg": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 197207,
+    "eval_to": 202412,
+    "train_years": 34.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 166.5
+   },
+   "R_dupQ5_PriceDelayRsq": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 192708,
+    "eval_to": 202408,
+    "train_years": 79.4,
+    "hold_months": 212,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 825
+   },
+   "R_dupQ5_PriceDelaySlope": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 192708,
+    "eval_to": 202408,
+    "train_years": 79.4,
+    "hold_months": 212,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 842
+   },
+   "R_dupQ5_PriceDelayTstat": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 192708,
+    "eval_to": 202408,
+    "train_years": 79.4,
+    "hold_months": 212,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 840
+   },
+   "R_dupQ5_TrendFactor": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 192603,
+    "eval_to": 202412,
+    "train_years": 80.8,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 421.0
+   },
+   "R_dupQ5_VarCF": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 195307,
+    "eval_to": 202412,
+    "train_years": 53.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 678.0
+   },
+   "R_dupQ5_VolumeTrend": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 192807,
+    "eval_to": 202412,
+    "train_years": 78.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 418.0
+   },
+   "R_dupQ5_betaVIX": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 198602,
+    "eval_to": 202412,
+    "train_years": 20.9,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 1406
+   },
+   "R_dupQ5_iomom_cust": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 198602,
+    "eval_to": 202412,
+    "train_years": 20.9,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 826
+   },
+   "R_dupQ5_iomom_supp": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 198602,
+    "eval_to": 202412,
+    "train_years": 20.9,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 799
+   },
+   "R_dupQ5_realestate": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 197007,
+    "eval_to": 202412,
+    "train_years": 36.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 413.5
+   },
+   "R_dupQ5_retConglomerate": {
+    "file": "QuintilesVW",
+    "port": "05",
+    "eval_from": 197602,
+    "eval_to": 202412,
+    "train_years": 30.9,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 271
+   },
+   "R_dupVWF_AccrualsBM": {
+    "file": "VWforce",
+    "port": "02",
+    "eval_from": 197007,
+    "eval_to": 202412,
+    "train_years": 35.6,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 11,
+    "nlong_median": 123
+   },
+   "R_dupVWF_ConvDebt": {
+    "file": "VWforce",
+    "port": "02",
+    "eval_from": 195101,
+    "eval_to": 202412,
+    "train_years": 56.0,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 3986.0
+   },
+   "R_dupVWF_DebtIssuance": {
+    "file": "VWforce",
+    "port": "02",
+    "eval_from": 196207,
+    "eval_to": 202412,
+    "train_years": 44.5,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 1753.0
+   },
+   "R_dupVWF_DivInit": {
+    "file": "VWforce",
+    "port": "02",
+    "eval_from": 192602,
+    "eval_to": 202409,
+    "train_years": 63.6,
+    "hold_months": 213,
+    "dropped_after_start_nlong_lt20": 211,
+    "nlong_median": 54.0
+   },
+   "R_dupVWF_DivOmit": {
+    "file": "VWforce",
+    "port": "02",
+    "eval_from": 192601,
+    "eval_to": 202412,
+    "train_years": 81.0,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 3590.0
+   },
+   "R_dupVWF_DivSeason": {
+    "file": "VWforce",
+    "port": "02",
+    "eval_from": 192602,
+    "eval_to": 202412,
+    "train_years": 80.9,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 655
+   },
+   "R_dupVWF_DivYieldST": {
+    "file": "VWforce",
+    "port": "04",
+    "eval_from": 192605,
+    "eval_to": 202412,
+    "train_years": 69.0,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 137,
+    "nlong_median": 161.0
+   },
+   "R_dupVWF_ExchSwitch": {
+    "file": "VWforce",
+    "port": "02",
+    "eval_from": 192601,
+    "eval_to": 202412,
+    "train_years": 81.0,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 4112.0
+   },
+   "R_dupVWF_IndIPO": {
+    "file": "VWforce",
+    "port": "02",
+    "eval_from": 192601,
+    "eval_to": 202412,
+    "train_years": 81.0,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 3709.5
+   },
+   "R_dupVWF_MomRev": {
+    "file": "VWforce",
+    "port": "02",
+    "eval_from": 192901,
+    "eval_to": 202412,
+    "train_years": 71.8,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 74,
+    "nlong_median": 118.5
+   },
+   "R_dupVWF_MomVol": {
+    "file": "VWforce",
+    "port": "10",
+    "eval_from": 192807,
+    "eval_to": 202412,
+    "train_years": 74.7,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 46,
+    "nlong_median": 53.0
+   },
+   "R_dupVWF_RDIPO": {
+    "file": "VWforce",
+    "port": "02",
+    "eval_from": 195101,
+    "eval_to": 202412,
+    "train_years": 56.0,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 4397.5
+   },
+   "R_dupVWF_RIO_Disp": {
+    "file": "VWforce",
+    "port": "05",
+    "eval_from": 197808,
+    "eval_to": 202412,
+    "train_years": 28.4,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 273
+   },
+   "R_dupVWF_RIO_MB": {
+    "file": "VWforce",
+    "port": "05",
+    "eval_from": 196704,
+    "eval_to": 202412,
+    "train_years": 39.7,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 1,
+    "nlong_median": 75.0
+   },
+   "R_dupVWF_RIO_Turnover": {
+    "file": "VWforce",
+    "port": "05",
+    "eval_from": 192704,
+    "eval_to": 202412,
+    "train_years": 74.2,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 66,
+    "nlong_median": 94
+   },
+   "R_dupVWF_RIO_Volatility": {
+    "file": "VWforce",
+    "port": "05",
+    "eval_from": 192607,
+    "eval_to": 202412,
+    "train_years": 80.2,
+    "hold_months": 216,
+    "dropped_after_start_nlong_lt20": 3,
+    "nlong_median": 124
+   },
+   "R_BH_Activism1": {
+    "file": "FF93style",
+    "port": "BH",
+    "eval_from": 199107,
+    "eval_to": 200706,
+    "train_years": 15.5,
+    "hold_months": 6,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 133.5
+   },
+   "R_BH_Activism2": {
+    "file": "FF93style",
+    "port": "BH",
+    "eval_from": 199507,
+    "eval_to": 200706,
+    "train_years": 11.5,
+    "hold_months": 6,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 34.5
+   },
+   "R_BH_ProbInformedTrading": {
+    "file": "FF93style",
+    "port": "BH",
+    "eval_from": 200107,
+    "eval_to": 201006,
+    "train_years": 1.0,
+    "hold_months": 30,
+    "dropped_after_start_nlong_lt20": 114,
+    "nlong_median": 22.0
+   },
+   "R_dupVWF_Governance": {
+    "file": "VWforce",
+    "port": "10",
+    "eval_from": 199010,
+    "eval_to": 200702,
+    "train_years": 16.2,
+    "hold_months": 2,
+    "dropped_after_start_nlong_lt20": 0,
+    "nlong_median": 176
+   }
+  },
+  "survivor_bias": "無し（CRSP の上場廃止した会社とそのリターンを含む）。Compustat の埋め戻し・OSAP が版ごとに全履歴を作り直すことによる、当時は知られていなかった値の混入はありうる"
+ },
+ "criteria": {
+  "Z_long": {
+   "which": "criteria_long_history（C1〜C8）。Z の28本（DelDRC 以外）の訓練は 18.5〜80.5年（最短 CustomerMomentum 18.5年）",
+   "s_and_b": "s = BH の月次の総リターン（ret/100）、b = French Mkt（Mkt-RF + RF・総リターン）",
+   "C1_C2_C3": "費用前の excess_stats の訓練・保有",
+   "C4_roll20": "費用後（s_net 対 b）の転がる20年窓（一括・毎年7月起点・評価の開始〜2024-12・窓の97%以上の月がある窓だけ）。勝ちは丸める前の差>0 で数える",
+   "C5_repl": "N/A（OSAP は米国だけ。JKP の各国データに同じ量が無い＝だから JKP と重ならない変数だけを選んだ）。考えた代わりの単位と外した理由: (a) 小型の半分の良い側 SH は同じ国・同じ期間・同じ信号で独立ではない (b) 原論文の標本の外の時代は訓練・保有と重なる。→ A には C3 が要る（線を緩めない側）。(a)(b) は報告 R2・R3",
+   "C6_net_cost": "費用後の保有期間で C2（算術の超過が正 かつ 幾何の年率差が正）",
+   "C7_multi": "全期間（評価の開始〜2024-12）の NW t ≥ 3.0（費用前）または Z の族の Holm 補正後 p < 0.05",
+   "C8_sharpe": "N/A（買いだけ・借入なし・時期選びなし）"
+  },
+  "Z_short": {
+   "which": "criteria_short_sample（DelDRC だけ: BH は 2002-07 から＝訓練 4.5年）",
+   "full": "excess_stats（費用前・2002-07〜2024-12）",
+   "halves": "全期間を月数で二等分した費用前の幾何の年率差がどちらも正",
+   "drop_top": "【代用】暦年の幾何の超過（Π(1+s)−Π(1+b)）が最大の1暦年を抜いた全期間の費用前の幾何の年率差が正。代用で S が出たら「S（代用あり）」と書く",
+   "cost": "費用後（0.30%/年）の全期間で幾何の年率差が正",
+   "lower_bound": "【代用】費用3倍（0.90%/年）の全期間で幾何の年率差が正",
+   "holm": "Z の族の Holm 補正後 p（この規則は全期間の片側 p＝p_one(NW t)）< 0.05"
+  },
+  "ZC_long": "探索（格付けはするが『探索』と明記）。Z_long と同じ線・同じ呼び出し。Holm は ZC の3本の中で（両側・保有・費用前）。主の結論には使わない",
+  "holm": "Z の族＝29本で1つの Holm。各規則は自分の線が使う p を出す: 長い歴史の28本＝保有期間（2007-01〜2024-12）の費用前の NW t の両側 p（p_two）、DelDRC＝全期間の費用前の NW t の片側 p（p_one）。Holm はどの有効な p の組にも使えるので混ぜてよい（DelDRC にとっても族は29本＝緩めない側）。ZC は別に3本で Holm",
+  "t3": "全期間の NW t ≥ 3.0（Harvey-Liu-Zhu）を全規則について書く（C7 のもう片方）",
+  "program_bonferroni": {
+   "rule": "プログラム全体（nx の全角度の格付けした本数の合計 N・この角度の32本を含む）で、両側 α=0.05 の Bonferroni の t の線 t* = Φ⁻¹(1 − 0.025/N) を出し、各規則の保有期間の |t|（Holm と同じ p の t）と全期間の t がそれを越えるかを報告する（格付けには使わない）",
+   "N_at_registration": 400,
+   "breakdown": {
+    "nx_stack": 79,
+    "nx_leadlag": 26,
+    "nx_jst": 46,
+    "nx_lazy": 50,
+    "nx_brand": 16,
+    "nx_activist": 19,
+    "nx_osap_intang": 27,
+    "nx_osap_info": 46,
+    "nx_sentcond": 19,
+    "nx_govparty": 18,
+    "nx_pre1926x": 22,
+    "nx_osap_zoo": 32
+   },
+   "t_star_at_registration": 3.836,
+   "note": "測る時点で各角度の out/nx_<角度>.json の tested（または事前登録の test_count）を数え直して N と t* を更新する。nx_jst は相手3通りの格付けを数えた46本",
+   "reference_including_eknzbh_osap": {
+    "eknzbh_mw_oap_signals_graded": 452,
+    "breakdown": {
+     "P（主45）": 45,
+     "PQ（主の五分位27）": 27,
+     "S（副167）": 167,
+     "SQ（副の五分位152）": 152,
+     "PC（束9）": 9,
+     "E_FM": 3,
+     "E_WF": 4,
+     "E_LC（大型版45）": 45
+    },
+    "N": 852,
+    "t_star": 4.018,
+    "why": "同じ OSAP の予言変数の組を別のセッションが格付けした本数。この角度の信号の選び方はそれを踏まえている（知識の漏れ）ので参考に並べる"
+   }
+  },
+  "cost_assumption": {
+   "unit": "片道の売買 100% あたり 0.30%（兄弟 intang・eknzbh mw_factor_us と同じ単価。依頼の指示）",
+   "turnover_bh": "年 1.0（上限）。BH は毎年6月に1回だけ組み直し、年の途中は前月末の時価で加重＝買って持つのと同じで売買が要らない（新しく入る会社も無い）。6月に全部入れ替えても片道100%＝年1.0 を超えない。上場廃止の現金の入れ直しは数えない",
+   "why_not_measured": "兄弟の道具（night/nx_osap_info_data.py の turnover・銘柄ごとの信号 signed_predictors_dl_wide）で測りたかったが、そのファイルは permno・yyyymm と信号209本だけで、時価（Size の列も無い）・取引所（NYSE の切れ目に要る）が無い＝BH の組を写せない。兄弟 info も BH を「理屈で年1.0」とした",
+   "monthly_charge": "s_net = s − 1.0 × 0.30% / 12（毎月 0.025%・年 0.30%）。合成 ZC は脚の回転の平均 1.0 ＋ 等分へ戻す 0.10 ＝ 1.1（年 0.33%）",
+   "sensitivity_report_only": "R5: 回転 0.5（上限の半分）・単価 0.10%・0.60% の3通りで C4・C6 を計算し直す（格付けは既定の 1.0 × 0.30% だけ）",
+   "tax": "入れない"
+  },
+  "post_publication": "公表年（SignalDoc の Year）の翌年1月から（報告のみ）"
+ },
+ "families": {
+  "Z_primary": {
+   "role": "主の族（格付けする・Holm はこの29本で）",
+   "rules": {
+    "Z_AbnormalAccruals_BH": {
+     "signal": "AbnormalAccruals",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、発生主義の利益の異常な部分が小さい側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z_near",
+     "criteria": "long",
+     "flags": [
+      "Xie (2001) は JKP の capx_gr1 の cite と同じ（別の変数）",
+      "兄弟 intang は「JKP の発生主義・q07leu accruals と同じ経済の信号」として外した＝判定が兄弟と違う"
+     ],
+     "op": {
+      "authors": "Xie",
+      "year": 2001,
+      "journal": "AR",
+      "sample": [
+       "1971",
+       "1992"
+      ],
+      "sign": -1,
+      "op_weight": "EW",
+      "op_return_pct_month": "0.916666667",
+      "op_t": "8.43",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "2_fair",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 197207,
+     "eval_to": 202412,
+     "train_years": 34.5,
+     "hold_months": 216,
+     "nlong_median": 220.0,
+     "nlong_median_hold": 231.0,
+     "nlong_min": 122,
+     "post_publication_from": 200201
+    },
+    "Z_AnnouncementReturn_BH": {
+     "signal": "AnnouncementReturn",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、直近の決算発表の前日〜2日後の市場調整リターンが高い側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [],
+     "op": {
+      "authors": "Chan, Jegadeesh and Lakonishok",
+      "year": 1996,
+      "journal": "JF",
+      "sample": [
+       "1977",
+       "1992"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "9.25",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 197207,
+     "eval_to": 202412,
+     "train_years": 34.5,
+     "hold_months": 216,
+     "nlong_median": 268.0,
+     "nlong_median_hold": 274.0,
+     "nlong_min": 163,
+     "post_publication_from": 199701
+    },
+    "Z_BetaLiquidityPS_BH": {
+     "signal": "BetaLiquidityPS",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、Pastor-Stambaugh の市場の流動性ショックへのβが高い（60か月）側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [],
+     "op": {
+      "authors": "Pastor and Stambaugh",
+      "year": 2003,
+      "journal": "JPE",
+      "sample": [
+       "1968",
+       "1999"
+      ],
+      "sign": 1,
+      "op_weight": "VW",
+      "op_return_pct_month": "0.533333333",
+      "op_t": "2.54",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 196607,
+     "eval_to": 202412,
+     "train_years": 40.5,
+     "hold_months": 216,
+     "nlong_median": 214.0,
+     "nlong_median_hold": 228.0,
+     "nlong_min": 158,
+     "post_publication_from": 200401
+    },
+    "Z_BetaTailRisk_BH": {
+     "signal": "BetaTailRisk",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、市場全体の裾のリスク（Kelly-Jiang の tailEX）へのβが高い（120か月）側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [],
+     "op": {
+      "authors": "Kelly and Jiang",
+      "year": 2014,
+      "journal": "RFS",
+      "sample": [
+       "1963",
+       "2010"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "0.33",
+      "op_t": "2.48",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 193207,
+     "eval_to": 202412,
+     "train_years": 74.5,
+     "hold_months": 216,
+     "nlong_median": 136.0,
+     "nlong_median_hold": 163.0,
+     "nlong_min": 33,
+     "post_publication_from": 201501
+    },
+    "Z_CashProd_BH": {
+     "signal": "CashProd",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、現金の生産性（(時価−総資産)÷現金）が低い側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [],
+     "op": {
+      "authors": "Chandrashekar and Rao",
+      "year": 2009,
+      "journal": "WP",
+      "sample": [
+       "1963",
+       "2003"
+      ],
+      "sign": -1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "3.6",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 195107,
+     "eval_to": 202412,
+     "train_years": 55.5,
+     "hold_months": 216,
+     "nlong_median": 196.0,
+     "nlong_median_hold": 197.0,
+     "nlong_min": 32,
+     "post_publication_from": 201001
+    },
+    "Z_ChAssetTurnover_BH": {
+     "signal": "ChAssetTurnover",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、資産回転率が前年より上がった側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z_near",
+     "criteria": "long",
+     "flags": [
+      "Soliman (2008) は JKP ebit_bev・ebit_sale・sale_bev の cite と同じ"
+     ],
+     "op": {
+      "authors": "Soliman",
+      "year": 2008,
+      "journal": "AR",
+      "sample": [
+       "1984",
+       "2002"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "5.12",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 195307,
+     "eval_to": 202412,
+     "train_years": 53.5,
+     "hold_months": 216,
+     "nlong_median": 197.0,
+     "nlong_median_hold": 238.0,
+     "nlong_min": 38,
+     "post_publication_from": 200901
+    },
+    "Z_CustomerMomentum_BH": {
+     "signal": "CustomerMomentum",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、主要顧客の前月の株価リターンが高い側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [
+      "nx_leadlag の独立の答え合わせ（業種ではなく会社どうしの取引先のつながり）",
+      "兄弟 intang は nx_leadlag に任せて外した→この角度で入れる（依頼の指示）"
+     ],
+     "op": {
+      "authors": "Cohen and Frazzini",
+      "year": 2008,
+      "journal": "JF",
+      "sample": [
+       "1980",
+       "2004"
+      ],
+      "sign": 1,
+      "op_weight": "VW",
+      "op_return_pct_month": "1.578",
+      "op_t": "3.79",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 198807,
+     "eval_to": 202412,
+     "train_years": 18.5,
+     "hold_months": 216,
+     "nlong_median": 74.0,
+     "nlong_median_hold": 93.0,
+     "nlong_min": 21,
+     "post_publication_from": 200901
+    },
+    "Z_DelDRC_BH": {
+     "signal": "DelDRC",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、前受収益が前年より増えた（÷総資産）側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "short",
+     "flags": [
+      "main の moat_dr（前受収益の倍率・2013/16/17/18・不合格）の独立の答え合わせ。兄弟 intang は main に任せて外した"
+     ],
+     "op": {
+      "authors": "Prakash and Sinha",
+      "year": 2013,
+      "journal": "CAR",
+      "sample": [
+       "2002",
+       "2007"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "3.59",
+      "osap_predictability": "2_likely",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 200207,
+     "eval_to": 202412,
+     "train_years": 4.5,
+     "hold_months": 216,
+     "nlong_median": 124.0,
+     "nlong_median_hold": 127.0,
+     "nlong_min": 30,
+     "post_publication_from": 201401
+    },
+    "Z_EarnSupBig_BH": {
+     "signal": "EarnSupBig",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、同じ業種の大型の会社の利益の驚きが大きい側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [
+      "nx_leadlag と近い考え（情報の遅れの伝わり）",
+      "定義上、時価の上位30%の会社は信号を持たない＝BH は NYSE の中央値〜全銘柄の上位30%の会社だけ"
+     ],
+     "op": {
+      "authors": "Hou",
+      "year": 2007,
+      "journal": "RFS",
+      "sample": [
+       "1972",
+       "2001"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "8.91",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 196407,
+     "eval_to": 202412,
+     "train_years": 42.5,
+     "hold_months": 216,
+     "nlong_median": 257.0,
+     "nlong_median_hold": 258.0,
+     "nlong_min": 75,
+     "post_publication_from": 200801
+    },
+    "Z_EarningsStreak_BH": {
+     "signal": "EarningsStreak",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、アナリスト予想に対する驚きが同じ向きに続いている会社の驚きが大きい側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [],
+     "op": {
+      "authors": "Loh and Warachka",
+      "year": 2012,
+      "journal": "MS",
+      "sample": [
+       "1987",
+       "2009"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "0.957",
+      "op_t": "9.51",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 198507,
+     "eval_to": 202412,
+     "train_years": 21.5,
+     "hold_months": 216,
+     "nlong_median": 197.0,
+     "nlong_median_hold": 179.5,
+     "nlong_min": 109,
+     "post_publication_from": 201301
+    },
+    "Z_Frontier_BH": {
+     "signal": "Frontier",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、簿価時価比が会社の特徴から見込まれる値より高い（効率的フロンティアの残差）側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [],
+     "op": {
+      "authors": "Nguyen and Swanson",
+      "year": 2009,
+      "journal": "JFQA",
+      "sample": [
+       "1980",
+       "2003"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "0.96",
+      "op_t": "4.863206041",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 197107,
+     "eval_to": 202412,
+     "train_years": 35.5,
+     "hold_months": 216,
+     "nlong_median": 59.0,
+     "nlong_median_hold": 62.5,
+     "nlong_min": 30,
+     "post_publication_from": 201001
+    },
+    "Z_IndRetBig_BH": {
+     "signal": "IndRetBig",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、同じ業種の大型の会社の前月のリターンが高い側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [
+      "nx_leadlag と近い考え（情報の遅れの伝わり）",
+      "定義上、時価の上位30%の会社は信号を持たない"
+     ],
+     "op": {
+      "authors": "Hou",
+      "year": 2007,
+      "journal": "RFS",
+      "sample": [
+       "1972",
+       "2001"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "11",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 192607,
+     "eval_to": 202412,
+     "train_years": 80.5,
+     "hold_months": 216,
+     "nlong_median": 229.0,
+     "nlong_median_hold": 298.0,
+     "nlong_min": 24,
+     "post_publication_from": 200801
+    },
+    "Z_IntanBM_BH": {
+     "signal": "IntanBM",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、5年のリターンのうち簿価時価比の変化で説明できない部分（無形のリターン）が小さい側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z_near",
+     "criteria": "long",
+     "flags": [
+      "Daniel-Titman (2006) は JKP eqnpo_12m の cite と同じ（別の変数）",
+      "兄弟 intang は「長期の逆張り・JKP と同じ論文」として外した＝判定が兄弟と違う",
+      "同じ論文の4つの版（BM・CFP・EP・SP）"
+     ],
+     "op": {
+      "authors": "Daniel and Titman",
+      "year": 2006,
+      "journal": "JF",
+      "sample": [
+       "1968",
+       "2003"
+      ],
+      "sign": -1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "3.99",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 196807,
+     "eval_to": 202412,
+     "train_years": 38.5,
+     "hold_months": 216,
+     "nlong_median": 112.0,
+     "nlong_median_hold": 121.0,
+     "nlong_min": 52,
+     "post_publication_from": 200701
+    },
+    "Z_IntanCFP_BH": {
+     "signal": "IntanCFP",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、同（キャッシュフロー÷時価で説明できない部分）が小さい側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z_near",
+     "criteria": "long",
+     "flags": [
+      "同じ論文の4つの版",
+      "兄弟 intang は外した"
+     ],
+     "op": {
+      "authors": "Daniel and Titman",
+      "year": 2006,
+      "journal": "JF",
+      "sample": [
+       "1968",
+       "2003"
+      ],
+      "sign": -1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "4.89",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 195607,
+     "eval_to": 202412,
+     "train_years": 50.5,
+     "hold_months": 216,
+     "nlong_median": 118.0,
+     "nlong_median_hold": 132.0,
+     "nlong_min": 34,
+     "post_publication_from": 200701
+    },
+    "Z_IntanEP_BH": {
+     "signal": "IntanEP",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、同（益回りで説明できない部分）が小さい側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z_near",
+     "criteria": "long",
+     "flags": [
+      "同じ論文の4つの版",
+      "兄弟 intang は外した"
+     ],
+     "op": {
+      "authors": "Daniel and Titman",
+      "year": 2006,
+      "journal": "JF",
+      "sample": [
+       "1968",
+       "2003"
+      ],
+      "sign": -1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "4.64",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 195607,
+     "eval_to": 202412,
+     "train_years": 50.5,
+     "hold_months": 216,
+     "nlong_median": 126.0,
+     "nlong_median_hold": 149.0,
+     "nlong_min": 22,
+     "post_publication_from": 200701
+    },
+    "Z_IntanSP_BH": {
+     "signal": "IntanSP",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、同（売上÷時価で説明できない部分）が小さい側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z_near",
+     "criteria": "long",
+     "flags": [
+      "同じ論文の4つの版",
+      "兄弟 intang は外した"
+     ],
+     "op": {
+      "authors": "Daniel and Titman",
+      "year": 2006,
+      "journal": "JF",
+      "sample": [
+       "1968",
+       "2003"
+      ],
+      "sign": -1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "4.24",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "2_fair",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 195607,
+     "eval_to": 202412,
+     "train_years": 50.5,
+     "hold_months": 216,
+     "nlong_median": 96.0,
+     "nlong_median_hold": 102.0,
+     "nlong_min": 24,
+     "post_publication_from": 200701
+    },
+    "Z_OrderBacklog_BH": {
+     "signal": "OrderBacklog",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、受注残÷総資産が少ない側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [
+      "main の moat4 C1（受注残の倍率・2019-21 の3起点・SEC XBRL・約200社・不合格）の独立の答え合わせ（長い歴史・大型株）。兄弟 intang は main に任せて外した"
+     ],
+     "op": {
+      "authors": "Rajgopal, Shevlin, Venkatachalam",
+      "year": 2003,
+      "journal": "RAS",
+      "sample": [
+       "1981",
+       "1999"
+      ],
+      "sign": -1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "2.38",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 197107,
+     "eval_to": 202412,
+     "train_years": 35.5,
+     "hold_months": 216,
+     "nlong_median": 95.0,
+     "nlong_median_hold": 96.0,
+     "nlong_min": 24,
+     "post_publication_from": 200401
+    },
+    "Z_OrderBacklogChg_BH": {
+     "signal": "OrderBacklogChg",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、受注残÷総資産が前年より増えた側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [
+      "main の moat4 C1 の独立の答え合わせ"
+     ],
+     "op": {
+      "authors": "Baik and Ahn",
+      "year": 2007,
+      "journal": "Other",
+      "sample": [
+       "1971",
+       "1999"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "1.1675",
+      "op_t": "NA",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "2_fair",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 197207,
+     "eval_to": 202412,
+     "train_years": 34.5,
+     "hold_months": 216,
+     "nlong_median": 63.0,
+     "nlong_median_hold": 58.0,
+     "nlong_min": 28,
+     "post_publication_from": 200801
+    },
+    "Z_PriceDelayRsq_BH": {
+     "signal": "PriceDelayRsq",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、市場への反応の遅れが大きい（決定係数の版）側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [
+      "同じ論文の3つの版（Rsq・Slope・Tstat）＝独立の試行は1つに近い"
+     ],
+     "op": {
+      "authors": "Hou and Moskowitz",
+      "year": 2005,
+      "journal": "RFS",
+      "sample": [
+       "1964",
+       "2001"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "0.31",
+      "op_t": "3.4",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 192807,
+     "eval_to": 202412,
+     "train_years": 78.5,
+     "hold_months": 216,
+     "nlong_median": 140.0,
+     "nlong_median_hold": 188.0,
+     "nlong_min": 30,
+     "post_publication_from": 200601
+    },
+    "Z_PriceDelaySlope_BH": {
+     "signal": "PriceDelaySlope",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、市場への反応の遅れが大きい（係数の版）側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [
+      "同じ論文の3つの版"
+     ],
+     "op": {
+      "authors": "Hou and Moskowitz",
+      "year": 2005,
+      "journal": "RFS",
+      "sample": [
+       "1964",
+       "2001"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "1.21",
+      "op_t": "7.7",
+      "osap_predictability": "2_likely",
+      "osap_rep_quality": "3_distant",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 192807,
+     "eval_to": 202412,
+     "train_years": 78.5,
+     "hold_months": 216,
+     "nlong_median": 161.0,
+     "nlong_median_hold": 225.0,
+     "nlong_min": 38,
+     "post_publication_from": 200601
+    },
+    "Z_PriceDelayTstat_BH": {
+     "signal": "PriceDelayTstat",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、市場への反応の遅れが大きい（t値の版）側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [
+      "同じ論文の3つの版"
+     ],
+     "op": {
+      "authors": "Hou and Moskowitz",
+      "year": 2005,
+      "journal": "RFS",
+      "sample": [
+       "1964",
+       "2001"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "1.1",
+      "op_t": "7.39",
+      "osap_predictability": "2_likely",
+      "osap_rep_quality": "3_distant",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 192807,
+     "eval_to": 202412,
+     "train_years": 78.5,
+     "hold_months": 216,
+     "nlong_median": 162.0,
+     "nlong_median_hold": 226.0,
+     "nlong_min": 38,
+     "post_publication_from": 200601
+    },
+    "Z_TrendFactor_BH": {
+     "signal": "TrendFactor",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、3〜1000日の移動平均の比から作った価格の趨勢が強い側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z_near",
+     "criteria": "long",
+     "flags": [
+      "株価の勢いの仲間"
+     ],
+     "op": {
+      "authors": "Han, Zhou, Zhu",
+      "year": 2016,
+      "journal": "JFE",
+      "sample": [
+       "1930",
+       "2014"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "1.63",
+      "op_t": "15",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 192607,
+     "eval_to": 202412,
+     "train_years": 80.5,
+     "hold_months": 216,
+     "nlong_median": 176.0,
+     "nlong_median_hold": 225.0,
+     "nlong_min": 58,
+     "post_publication_from": 201701
+    },
+    "Z_VarCF_BH": {
+     "signal": "VarCF",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、(利益＋減価償却)÷時価の60か月の分散が小さい側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z_near",
+     "criteria": "long",
+     "flags": [
+      "Haugen-Baker (1996) は JKP at_turnover・ni_be の cite と同じ"
+     ],
+     "op": {
+      "authors": "Haugen and Baker",
+      "year": 1996,
+      "journal": "JFE",
+      "sample": [
+       "1979",
+       "1993"
+      ],
+      "sign": -1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "2.5",
+      "osap_predictability": "2_likely",
+      "osap_rep_quality": "2_fair",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 195307,
+     "eval_to": 202412,
+     "train_years": 53.5,
+     "hold_months": 216,
+     "nlong_median": 357.0,
+     "nlong_median_hold": 393.5,
+     "nlong_min": 63,
+     "post_publication_from": 199701
+    },
+    "Z_VolumeTrend_BH": {
+     "signal": "VolumeTrend",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、出来高の60か月の傾きが小さい（出来高が増えていない）側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z_near",
+     "criteria": "long",
+     "flags": [
+      "Haugen-Baker (1996) は JKP の cite と同じ"
+     ],
+     "op": {
+      "authors": "Haugen and Baker",
+      "year": 1996,
+      "journal": "JFE",
+      "sample": [
+       "1979",
+       "1993"
+      ],
+      "sign": -1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "3",
+      "osap_predictability": "2_likely",
+      "osap_rep_quality": "2_fair",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 192807,
+     "eval_to": 202412,
+     "train_years": 78.5,
+     "hold_months": 216,
+     "nlong_median": 144.0,
+     "nlong_median_hold": 262.0,
+     "nlong_min": 40,
+     "post_publication_from": 199701
+    },
+    "Z_betaVIX_BH": {
+     "signal": "betaVIX",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、VIX の日次の変化へのβが小さい（1か月）側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z_near",
+     "criteria": "long",
+     "flags": [
+      "Ang et al. (2006) は JKP ivol_ff3_21d・rvol_21d の cite と同じ"
+     ],
+     "op": {
+      "authors": "Ang et al.",
+      "year": 2006,
+      "journal": "JF",
+      "sample": [
+       "1986",
+       "2000"
+      ],
+      "sign": -1,
+      "op_weight": "VW",
+      "op_return_pct_month": "1.04",
+      "op_t": "3.9",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 198607,
+     "eval_to": 202412,
+     "train_years": 20.5,
+     "hold_months": 216,
+     "nlong_median": 282.0,
+     "nlong_median_hold": 287.0,
+     "nlong_min": 173,
+     "post_publication_from": 200701
+    },
+    "Z_iomom_cust_BH": {
+     "signal": "iomom_cust",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、産業連関表で顧客にあたる業種の前月のリターンが高い側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [
+      "nx_leadlag の独立の答え合わせ（nx_leadlag は業種の組、こちらは会社の組・OSAP の作り方）",
+      "兄弟 intang は nx_leadlag に任せて外した→この角度で入れる（依頼の指示）"
+     ],
+     "op": {
+      "authors": "Menzly and Ozbas",
+      "year": 2010,
+      "journal": "JF",
+      "sample": [
+       "1986",
+       "2005"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "4.11",
+      "osap_predictability": "2_likely",
+      "osap_rep_quality": "2_fair",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 198707,
+     "eval_to": 202412,
+     "train_years": 19.5,
+     "hold_months": 216,
+     "nlong_median": 201.0,
+     "nlong_median_hold": 187.0,
+     "nlong_min": 141,
+     "post_publication_from": 201101
+    },
+    "Z_iomom_supp_BH": {
+     "signal": "iomom_supp",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、産業連関表で仕入れ先にあたる業種の前月のリターンが高い側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [
+      "nx_leadlag の独立の答え合わせ",
+      "兄弟 intang は nx_leadlag に任せて外した→この角度で入れる（依頼の指示）"
+     ],
+     "op": {
+      "authors": "Menzly and Ozbas",
+      "year": 2010,
+      "journal": "JF",
+      "sample": [
+       "1986",
+       "2005"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "NA",
+      "op_t": "5.03",
+      "osap_predictability": "2_likely",
+      "osap_rep_quality": "2_fair",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 198707,
+     "eval_to": 202412,
+     "train_years": 19.5,
+     "hold_months": 216,
+     "nlong_median": 240.5,
+     "nlong_median_hold": 233.0,
+     "nlong_min": 130,
+     "post_publication_from": 201101
+    },
+    "Z_realestate_BH": {
+     "signal": "realestate",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、不動産の保有の割合が業種の平均より高い側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [],
+     "op": {
+      "authors": "Tuzel",
+      "year": 2010,
+      "journal": "RFS",
+      "sample": [
+       "1971",
+       "2005"
+      ],
+      "sign": 1,
+      "op_weight": "VW",
+      "op_return_pct_month": "0.244166667",
+      "op_t": "1.8",
+      "osap_predictability": "2_likely",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "12"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 197007,
+     "eval_to": 202412,
+     "train_years": 36.5,
+     "hold_months": 216,
+     "nlong_median": 185.0,
+     "nlong_median_hold": 219.0,
+     "nlong_min": 80,
+     "post_publication_from": 201101
+    },
+    "Z_retConglomerate_BH": {
+     "signal": "retConglomerate",
+     "file": "FF93style",
+     "port": "BH",
+     "what": "NYSE の時価の中央値より大きい会社のうち、多角化企業の各事業の業種（単一事業の会社）の前月のリターンが高い側（NYSE の70%点超）。6月の値で組み7月〜翌6月持つ・時価加重",
+     "class": "Z",
+     "criteria": "long",
+     "flags": [
+      "nx_leadlag と近い考え（情報の遅れの伝わり）"
+     ],
+     "op": {
+      "authors": "Cohen and Lou",
+      "year": 2012,
+      "journal": "JFE",
+      "sample": [
+       "1977",
+       "2009"
+      ],
+      "sign": 1,
+      "op_weight": "EW",
+      "op_return_pct_month": "1.18",
+      "op_t": "5.51",
+      "osap_predictability": "1_clear",
+      "osap_rep_quality": "1_good",
+      "op_rebalance_months": "1"
+     },
+     "turn": 1.0,
+     "cost_pct_per_year": 0.3,
+     "eval_from": 197607,
+     "eval_to": 202412,
+     "train_years": 30.5,
+     "hold_months": 216,
+     "nlong_median": 143.0,
+     "nlong_median_hold": 166.0,
+     "nlong_min": 23,
+     "post_publication_from": 201301
+    }
+   },
+   "independent_ideas": "29本は独立の試行29回ではない: Intan の4本（同じ論文・同じ残差の作り方）・PriceDelay の3本（同じ論文）・iomom の2本は、それぞれ一つの考えに近い。独立の考えは約22"
+  },
+  "ZC_exploratory": {
+   "role": "探索（別に Holm 3本）。主の BH の等分の合成（その月に使える脚〔評価の開始以降・Nlong≥20〕だけを等分・毎月等分へ戻す・min_legs 本に満たない月は落とす）",
+   "rules": {
+    "ZC1_ALL": {
+     "parts": [
+      "AbnormalAccruals",
+      "AnnouncementReturn",
+      "BetaLiquidityPS",
+      "BetaTailRisk",
+      "CashProd",
+      "ChAssetTurnover",
+      "CustomerMomentum",
+      "DelDRC",
+      "EarnSupBig",
+      "EarningsStreak",
+      "Frontier",
+      "IndRetBig",
+      "IntanBM",
+      "IntanCFP",
+      "IntanEP",
+      "IntanSP",
+      "OrderBacklog",
+      "OrderBacklogChg",
+      "PriceDelayRsq",
+      "PriceDelaySlope",
+      "PriceDelayTstat",
+      "TrendFactor",
+      "VarCF",
+      "VolumeTrend",
+      "betaVIX",
+      "iomom_cust",
+      "iomom_supp",
+      "realestate",
+      "retConglomerate"
+     ],
+     "min_legs": 10,
+     "turn": "脚の回転の平均（1.0）＋0.1＝1.1",
+     "cost_pct_per_year": 0.33,
+     "what": "主の族 Z の全部の BH を等分（その月に使える脚だけ・毎月等分へ戻す）"
+    },
+    "ZC2_LINKS": {
+     "parts": [
+      "CustomerMomentum",
+      "iomom_cust",
+      "iomom_supp",
+      "IndRetBig",
+      "EarnSupBig",
+      "retConglomerate"
+     ],
+     "min_legs": 3,
+     "turn": "脚の回転の平均（1.0）＋0.1＝1.1",
+     "cost_pct_per_year": 0.33,
+     "what": "つながった会社・業種の情報の遅れ（顧客・仕入れ先・同じ業種の大型・多角化企業の事業）"
+    },
+    "ZC3_ACCT": {
+     "parts": [
+      "AbnormalAccruals",
+      "ChAssetTurnover",
+      "CashProd",
+      "Frontier",
+      "realestate",
+      "OrderBacklog",
+      "OrderBacklogChg",
+      "DelDRC",
+      "VarCF"
+     ],
+     "min_legs": 4,
+     "turn": "脚の回転の平均（1.0）＋0.1＝1.1",
+     "cost_pct_per_year": 0.33,
+     "what": "会計から作る信号（発生主義の異常・資産回転の変化・現金の生産性・割安の残差・不動産・受注残・前受収益・CF のぶれ）"
+    }
+   }
+  },
+  "R_report_only": {
+   "R1_big_half_benchmark": "同じ BH を、同じ大きさの市場＝French の Portfolios_Formed_on_ME の6〜10十分位（NYSE の切れ目）を Number of Firms × Average Firm Size で時価加重に合わせた「大型の半分」と比べる（費用前・後）。大型株であること自体の効果を切り分ける",
+   "R2_inside_large": "BL（大型の悪い側）・BM・BH − BL（大型株の中の買い−売り）・OSAP の LS の恒等（½(SH+BH) − ½(SL+BL)）・SH（小型の良い側）の対 小型の半分（French の1〜5十分位）",
+   "R3_subperiods": "直近（2013-07〜）・公表後（Year+1 の1月〜）・保有期間の前半（2007-01〜2015-12）と後半（2016-01〜2024-12）・原論文の標本の中と外",
+   "R4_duplicate_Q5": "R_dupQ5（29本・QuintilesVW の05・eknzbh と同じ組）の excess_stats（費用前・費用後〔eknzbh の置き値: 組み直し1か月 2.0・3か月 1.0・6か月 0.7・12か月 0.5・36か月 0.3・不明 0.5・速い信号〔AnnouncementReturn・betaVIX・IndRetBig〕6.0〕×0.30%）と C1〜C6 の真偽だけ。格付けの文字（S/A/B/C）と C7 は出さない（族の数え方が eknzbh と違い、並べると同じ検定を二度数える）。BH と Q5 の月次の超過の相関（訓練・保有）も出す＝BH がどれだけ別の検定かの見当",
+   "R5_cost_sensitivity": "回転 0.5・単価 0.10%・0.60%",
+   "R6_other_metrics": "シャープ（French RF を引く）・最大下落・β・追従のぶれ・情報比・20年積立の最終額の比（dca_x・丸める前で数える）・転がる10年窓",
+   "R7_factor_alpha": "CAPM と FF5＋UMD（French の F-F_Research_Data_5_Factors_2x3・F-F_Momentum_Factor）のアルファ（NW t・保有と全期間）。規模・割安・収益性・投資・勢いへの傾きで説明できる分を切り分ける（報告のみ）",
+   "R8_independent_checks": "(a) nx_leadlag の主の規則（out/nx_leadlag.json・この角度の数字を固めた後に読む）と、CustomerMomentum・iomom_cust・iomom_supp・IndRetBig・EarnSupBig・retConglomerate・ZC2 の保有期間の超過の符号が一致するか (b) main の moat4 C1（受注残）・moat_dr（前受収益）の結論（CLAUDE.md・どちらも不合格）と OrderBacklog・OrderBacklogChg・DelDRC の符号",
+   "R9_train_or_thin": "R_train（Activism1・Activism2 の BH〔〜2007-06〕・Governance の VWforce の良い側〔〜2007-02〕）と R_thin（ProbInformedTrading の BH）: 使える期間の excess_stats だけ（格付けしない）",
+   "R10_duplicate_discrete": "R_dupVWF（16本・配当の DivInit・DivOmit・DivSeason・DivYieldST ほか）: VWforce の最大番号の excess_stats（費用前・費用後〔eknzbh の置き値〕）と C1〜C6 の真偽だけ（格付けの文字・C7 は出さない）",
+   "R11_crosscheck_eknzbh": "この角度の数字（R4・R10）を固めて書いた後に、eknzbh の out/mw_oap_signals.json（origin の枝）を読み、同じ組の訓練・保有の超過の差（再現の誤差）を並べる＝別のコードでの独立の再計算（反証の検査）"
+  }
+ },
+ "benchmark": {
+  "graded": "French Mkt（Mkt-RF + RF・上限なしの時価加重・CRSP の shrcd 10/11・NYSE/AMEX/NASDAQ＝S&P500 にほぼ等しい）。s と b はどちらも総リターン",
+  "why_not_big_half_for_grading": "依頼と全体の登録の相手が French Mkt（個人が代わりに持てる S&P500 に近いもの）だから。大型の半分は R1 で並べる",
+  "reported_not_graded": "大型の半分・小型の半分・CAPM/FF5+UMD のアルファ・シャープ・最大下落・β・追従のぶれ・20年積立の比・直近・公表後・原論文の標本の外・費用の感度"
+ },
+ "timing": {
+  "what_is_known_when": "BH は6月末の信号（その月の末に使える値・OSAP の FAQ「Data are always end-of-month」）で組み、1か月ずらして7月から翌6月まで持つ（32_Predictor2x3Ports.R の lag）。年次の会計値は決算期末の6か月後の月から、四半期は期末の3か月後か公表日の遅いほうから（OSAP の DataDownloads・兄弟が確かめた）",
+  "our_estimation": "この角度はデータから何も推定しない（組・良い側・回転・費用・合成の脚はすべてこの登録の定数）",
+  "known_look_ahead_risks": [
+   "OSAP は版ごとに全履歴を作り直す＝過去の値が当時の Compustat・I/B/E/S の値と同じ保証は無い",
+   "iomom_cust・iomom_supp は BEA の産業連関表を「5年遅れ」として使う（OSAP の定義）。表そのものの公表の遅れはそれより長い年がありうる",
+   "CustomerMomentum・retConglomerate は Compustat の区分データ（後から整えられた）を使う",
+   "TrendFactor は Han-Zhou-Zhu の回帰の係数を毎月の横断で推定する（OSAP の作り方・その月までの値）"
+  ]
+ },
+ "real_instrument_check": {
+  "direct_instrument": "無い。BH は数十〜数百の米国の大型株を年1回入れ替える紙の上のポートフォリオで、同じ規則の ETF・投信は無い",
+  "implementability": "年1回の組み直しなので費用には強いが、個人が持つには Nlong の中央値 59〜393 社を買う必要がある。上位の数十社で近似する規則はこの登録に無い（作るなら別の登録）。NISA の成長投資枠は売っても枠が年内に戻らない"
+ },
+ "prior": {
+  "op_reported_from_SignalDoc": {
+   "AbnormalAccruals": {
+    "authors": "Xie",
+    "year": "2001",
+    "journal": "AR",
+    "sample": "1971〜1992",
+    "op_weight": "EW",
+    "return_pct_month": "0.916666667",
+    "t": "8.43",
+    "osap_predictability": "1_clear"
+   },
+   "AnnouncementReturn": {
+    "authors": "Chan, Jegadeesh and Lakonishok",
+    "year": "1996",
+    "journal": "JF",
+    "sample": "1977〜1992",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "9.25",
+    "osap_predictability": "1_clear"
+   },
+   "BetaLiquidityPS": {
+    "authors": "Pastor and Stambaugh",
+    "year": "2003",
+    "journal": "JPE",
+    "sample": "1968〜1999",
+    "op_weight": "VW",
+    "return_pct_month": "0.533333333",
+    "t": "2.54",
+    "osap_predictability": "1_clear"
+   },
+   "BetaTailRisk": {
+    "authors": "Kelly and Jiang",
+    "year": "2014",
+    "journal": "RFS",
+    "sample": "1963〜2010",
+    "op_weight": "EW",
+    "return_pct_month": "0.33",
+    "t": "2.48",
+    "osap_predictability": "1_clear"
+   },
+   "CashProd": {
+    "authors": "Chandrashekar and Rao",
+    "year": "2009",
+    "journal": "WP",
+    "sample": "1963〜2003",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "3.6",
+    "osap_predictability": "1_clear"
+   },
+   "ChAssetTurnover": {
+    "authors": "Soliman",
+    "year": "2008",
+    "journal": "AR",
+    "sample": "1984〜2002",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "5.12",
+    "osap_predictability": "1_clear"
+   },
+   "CustomerMomentum": {
+    "authors": "Cohen and Frazzini",
+    "year": "2008",
+    "journal": "JF",
+    "sample": "1980〜2004",
+    "op_weight": "VW",
+    "return_pct_month": "1.578",
+    "t": "3.79",
+    "osap_predictability": "1_clear"
+   },
+   "DelDRC": {
+    "authors": "Prakash and Sinha",
+    "year": "2013",
+    "journal": "CAR",
+    "sample": "2002〜2007",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "3.59",
+    "osap_predictability": "2_likely"
+   },
+   "EarnSupBig": {
+    "authors": "Hou",
+    "year": "2007",
+    "journal": "RFS",
+    "sample": "1972〜2001",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "8.91",
+    "osap_predictability": "1_clear"
+   },
+   "EarningsStreak": {
+    "authors": "Loh and Warachka",
+    "year": "2012",
+    "journal": "MS",
+    "sample": "1987〜2009",
+    "op_weight": "EW",
+    "return_pct_month": "0.957",
+    "t": "9.51",
+    "osap_predictability": "1_clear"
+   },
+   "Frontier": {
+    "authors": "Nguyen and Swanson",
+    "year": "2009",
+    "journal": "JFQA",
+    "sample": "1980〜2003",
+    "op_weight": "EW",
+    "return_pct_month": "0.96",
+    "t": "4.863206041",
+    "osap_predictability": "1_clear"
+   },
+   "IndRetBig": {
+    "authors": "Hou",
+    "year": "2007",
+    "journal": "RFS",
+    "sample": "1972〜2001",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "11",
+    "osap_predictability": "1_clear"
+   },
+   "IntanBM": {
+    "authors": "Daniel and Titman",
+    "year": "2006",
+    "journal": "JF",
+    "sample": "1968〜2003",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "3.99",
+    "osap_predictability": "1_clear"
+   },
+   "IntanCFP": {
+    "authors": "Daniel and Titman",
+    "year": "2006",
+    "journal": "JF",
+    "sample": "1968〜2003",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "4.89",
+    "osap_predictability": "1_clear"
+   },
+   "IntanEP": {
+    "authors": "Daniel and Titman",
+    "year": "2006",
+    "journal": "JF",
+    "sample": "1968〜2003",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "4.64",
+    "osap_predictability": "1_clear"
+   },
+   "IntanSP": {
+    "authors": "Daniel and Titman",
+    "year": "2006",
+    "journal": "JF",
+    "sample": "1968〜2003",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "4.24",
+    "osap_predictability": "1_clear"
+   },
+   "OrderBacklog": {
+    "authors": "Rajgopal, Shevlin, Venkatachalam",
+    "year": "2003",
+    "journal": "RAS",
+    "sample": "1981〜1999",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "2.38",
+    "osap_predictability": "1_clear"
+   },
+   "OrderBacklogChg": {
+    "authors": "Baik and Ahn",
+    "year": "2007",
+    "journal": "Other",
+    "sample": "1971〜1999",
+    "op_weight": "EW",
+    "return_pct_month": "1.1675",
+    "t": "NA",
+    "osap_predictability": "1_clear"
+   },
+   "PriceDelayRsq": {
+    "authors": "Hou and Moskowitz",
+    "year": "2005",
+    "journal": "RFS",
+    "sample": "1964〜2001",
+    "op_weight": "EW",
+    "return_pct_month": "0.31",
+    "t": "3.4",
+    "osap_predictability": "1_clear"
+   },
+   "PriceDelaySlope": {
+    "authors": "Hou and Moskowitz",
+    "year": "2005",
+    "journal": "RFS",
+    "sample": "1964〜2001",
+    "op_weight": "EW",
+    "return_pct_month": "1.21",
+    "t": "7.7",
+    "osap_predictability": "2_likely"
+   },
+   "PriceDelayTstat": {
+    "authors": "Hou and Moskowitz",
+    "year": "2005",
+    "journal": "RFS",
+    "sample": "1964〜2001",
+    "op_weight": "EW",
+    "return_pct_month": "1.1",
+    "t": "7.39",
+    "osap_predictability": "2_likely"
+   },
+   "TrendFactor": {
+    "authors": "Han, Zhou, Zhu",
+    "year": "2016",
+    "journal": "JFE",
+    "sample": "1930〜2014",
+    "op_weight": "EW",
+    "return_pct_month": "1.63",
+    "t": "15",
+    "osap_predictability": "1_clear"
+   },
+   "VarCF": {
+    "authors": "Haugen and Baker",
+    "year": "1996",
+    "journal": "JFE",
+    "sample": "1979〜1993",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "2.5",
+    "osap_predictability": "2_likely"
+   },
+   "VolumeTrend": {
+    "authors": "Haugen and Baker",
+    "year": "1996",
+    "journal": "JFE",
+    "sample": "1979〜1993",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "3",
+    "osap_predictability": "2_likely"
+   },
+   "betaVIX": {
+    "authors": "Ang et al.",
+    "year": "2006",
+    "journal": "JF",
+    "sample": "1986〜2000",
+    "op_weight": "VW",
+    "return_pct_month": "1.04",
+    "t": "3.9",
+    "osap_predictability": "1_clear"
+   },
+   "iomom_cust": {
+    "authors": "Menzly and Ozbas",
+    "year": "2010",
+    "journal": "JF",
+    "sample": "1986〜2005",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "4.11",
+    "osap_predictability": "2_likely"
+   },
+   "iomom_supp": {
+    "authors": "Menzly and Ozbas",
+    "year": "2010",
+    "journal": "JF",
+    "sample": "1986〜2005",
+    "op_weight": "EW",
+    "return_pct_month": "NA",
+    "t": "5.03",
+    "osap_predictability": "2_likely"
+   },
+   "realestate": {
+    "authors": "Tuzel",
+    "year": "2010",
+    "journal": "RFS",
+    "sample": "1971〜2005",
+    "op_weight": "VW",
+    "return_pct_month": "0.244166667",
+    "t": "1.8",
+    "osap_predictability": "2_likely"
+   },
+   "retConglomerate": {
+    "authors": "Cohen and Lou",
+    "year": "2012",
+    "journal": "JFE",
+    "sample": "1977〜2009",
+    "op_weight": "EW",
+    "return_pct_month": "1.18",
+    "t": "5.51",
+    "osap_predictability": "1_clear"
+   }
+  },
+  "literature": {
+   "fama_french_2008": "Fama-French (2008, JF)「Dissecting Anomalies」: 異常の多くは小型・超小型株で強く、大型株では弱いか消える",
+   "hou_xue_zhang_2020": "Hou-Xue-Zhang (2020, RFS)「Replicating Anomalies」: NYSE の切れ目・時価加重で作ると452の異常の約65%が t<1.96（数字は記憶による要旨・本文未確認）",
+   "mclean_pontiff_2016": "公表後に買い−売りの利益は約58%小さい",
+   "chen_zimmermann_2022": "OSAP の再現は原論文の t とほぼ同じ（ただし論文の重みと買い−売り）",
+   "chen_velikov_2023": "費用と公表後の減衰を入れると異常の期待リターンは平均でほぼ0",
+   "cohen_frazzini_2008": "顧客の勢いは月次で組むと強いが、効果は数か月で消える（年1回の組み直しでは古くなる見込み）",
+   "this_ledger": "この台帳の既知: JKP の因子は 2007年以降に中央値で0.44倍に縮んだ・買いだけの質の選別は上限なしの時価加重の市場に 2007〜 ほぼ0・受注残（moat4）と前受収益（moat_dr）は不合格"
+  },
+  "expected_size": "原論文（多くは等加重・買い−売り）から、大型株だけ・時価加重・買いだけ・対 上限なしの市場へ移すと、上乗せは原論文の1/5〜1/3（公表後はさらに半分）＝年0〜1%。保有期間の t≥1.65 には年2〜3%前後が要る（大型株の BH の追従のぶれ 4〜8% として）"
+ },
+ "contamination": {
+  "what_i_looked_at_for_design": "OSAP の SignalDoc（原論文の数字・定義）、OSAP のコード 32_Predictor2x3Ports.R、各ファイルの形（信号ごとの組・日付・Nlong・ret が欠けか否か・FF93 の signallag の BH と BL の大小の月の割合）。この角度の規則の成績（平均・t・シャープ・累積・勝率・市場との差）はどの規則についても計算していない・表示していない",
+  "seen_results_of_other_sessions": [
+   "★eknzbh の git log の見出し 6b73376b を表示した: 「mw_oap_signals: 結果（JKP に無い情報源〔アナリスト予想・オプション・13F・出来事・空売り〕45本の良い側の端は A・S 無し〔B は REV6 1本・保有 +4.1%/年 t1.1 だがβ1.38でα+0.2〕・束ねた9本は保有で全敗〔−0.1〜−1.0%/年〕・探索〔因子の勢い・歩きながらの選抜・大型株の原論文版〕も A・S 無し。S・A は副の族の株数の減少・勢い・季節性だけ〔ShareIss1Y 第10十分位 保有 +1.78%/年 t2.0〕で JKP の既出の主題・French の株数を減らした会社全体では 2007〜 +0.16 t0.25）」",
+   "★eknzbh の out/mw_oap_signals_prereg2.json の written_after を表示した: 副の族の S は ShareIss1Y・ShareIss5Y（第10十分位）と MomOffSeason06YrPlus（第5五分位）、A は Mom12m・Mom6m・Mom12mOffSeason・IntMom（五分位）、主の族は B が REV6 だけ、束ねた9本は保有で負け",
+   "★eknzbh の night/mw_oap_signals_verify.py の候補の一覧 CANDS を表示した: 上の7本の格付けと、Mom6mJunk（第10十分位）・ProbInformedTrading（第5五分位）・REV6 が B",
+   "★兄弟 night/nx_osap_intang.py の中の結果の文（grep で1行出た）: 「主の8本（B 1/8）は基礎率（B 13/179）と同程度。179本の唯一の S は MomOffSeason06YrPlus（…保有 t… で線の境界）」＝この台帳の R5 が QuintilesVW の179本すべての05を格付けし、S は JKP と重なる1本・B は13本だった",
+   "⇒ この角度の主の29本の QuintilesVW・DecilesVW の版が S にも A にも届かなかったこと（B か C）を、測る前に知っている。BH はそれらと相関が高いと見込まれるので、主の族の検定は完全には盲目でない。どの信号が B だったかは知らない（ProbInformedTrading と Mom6mJunk を除く＝どちらも主の族に入れていない）",
+   "git log の見出し 459536c8「nx_osap_intang・nx_osap_info: 結果（どちらも主の族に A/S なし）」を見た。兄弟の結果の JSON（out/nx_osap_intang.json・out/nx_osap_info.json）は開いていない（信号の一覧は事前登録と RULES から取った）",
+   "q07leu の out/edge/spec_options.json を表示した際、選定期間（1986-08〜2000-12）の BXMD・BXY・CMBO・PPUT・RXM ほかの成績（CAGR・t など）が画面に出た（この角度と無関係の CBOE の指数）。以後は key・spec・rationale の先頭だけを表示した",
+   "q07leu の git log の見出し 02d3aa54（lmtext −0.72%/年 t−1.18・charmom153 +1.40 t1.18・mvopt153 +0.69 t2.52 ほか）・eknzbh の見出し（29角度・3,613本・3本〔兄弟の事前登録の contamination 欄で〕）・nx_stack・nx_activist の結果の見出し（git log）",
+   "CLAUDE.md（会話の最初に読み込まれる）の main の結果: 受注残（moat4 C1・差+1.5〜+3.1 だが p=0.25・STRL 1社を抜くと負）・前受収益（moat_dr・2013 だけ +5.5 で NVDA が63%・2016-18 は負け）・JKP の因子の縮み・質の選別の 2007年以降のほぼ0",
+   "作業ツリーの out/nx_leadlag.json・out/nx_jst.json（他の nx 角度の結果）が在ることを git status で見たが、中身は読んでいない（nx_leadlag の結果は R8 で、この角度の数字を固めた後に読む）"
+  ],
+  "shape_based_choices": "形を見た後に決めたもの（リターンは見ていない）: 主の族を BH にしたこと（データの有無と重複の確認から）、ProbInformedTrading を R_thin にしたこと（BH の Nlong の中央値22・落ちる月114）、Activism1/2 を R_train にしたこと（最後の6月の組が 2006）、DelDRC を短い標本の線にしたこと（BH が 2002-07 から）、合成 ZC の min_legs（脚の始まりの年の形から）",
+  "world_knowledge": "2007〜2024年の米国株の大まかな歴史を知っている: 巨大テックが指数の上昇の大半を占めた・割安（簿価時価比）は2007〜2020年に成長に大きく負けた・2009年の勢いの崩れ・2008/2020/2022年の下落。無形のリターン（Intan）と Frontier は割安の仲間、受注残の少ない側・前受収益の増えた側にはソフトウェアの定期収入の会社が入りやすいと推測できる。論文の結果の向き（prior）と公表後に縮むことも知っている。消せないので、線（C1 の訓練の t・C3 の保有の t・C7）と報告 R1（大型の半分）・R3（公表後）・R7（因子のアルファ）で答え合わせをする"
+ },
+ "sanity_checks_before_results": [
+  "extract_sha256・rules_sha256・class_sha256 が tools の値と一致すること（違えば止まる）",
+  "CLASS が SignalDoc の予言変数 212本と過不足なく一致すること（データの道具の check_class・違えば止まる）",
+  "FF93style の恒等: 各変数の LS ＝ ½(SH+BH) − ½(SL+BL)（全月・誤差 1e-6 未満）＝BH が論文の良い側の組であることの確認。合わなければ止まる",
+  "向き: signallag の BH > BL の月の割合が1.0（データの道具が保存した値）",
+  "ret の単位: /100 した後の |月次| > 1.0 の月の数を数え、0 でなければ報告して止まる",
+  "French Mkt ＝ Mkt-RF + RF を全月で確かめる。OSAP の最後の月（2024-12）より後の月が比較に入っていないこと",
+  "評価の窓の形が data.shape_primary と一致すること（開始の月・月数・落ちる月 0・欠け 0）",
+  "ZC の各月の脚の数が min_legs 以上・脚の重みの合計が1であること",
+  "R1 の大型の半分＋小型の半分（同じ重み）が French Mkt に近いこと（兄弟 intang の size_halves の確かめをそのまま）",
+  "R4 で R_dupQ5 の系列が兄弟 intang の R5 の同じ系列（QuintilesVW の05）と一致すること（同じファイル・同じ sha）"
+ ],
+ "known_limits": [
+  "OSAP は 2024-12 で終わる＝保有期間は18年（216か月）。French の最後の20か月は測れない",
+  "米国だけで独立の地域が無い（C5 は N/A）→ A には C3（保有の t≥1.65）が要る",
+  "★他セッション（eknzbh）が同じ変数の別の組（第10十分位・第5五分位）を同じ線で格付けし、その要約の一部を私は見た。BH はそれらと相関が高いと見込まれ、主の族の検定は完全には盲目ではない（contamination）",
+  "FF93 型は6月の値を1年持つので、月次で変わる信号（決算発表のリターン・顧客の勢い・業種のつながり・同じ業種の大型のリターン・VIX のβ・価格の趨勢）は古くなる。これは規則の性質で、原論文の検定とは別物",
+  "組の割り当ては銘柄ごとに前へ埋める（fill）ので、信号が無くなった会社も古い組のまま残る（data.construction_verified_in_code.fill_staleness）",
+  "BH の回転は上限の 1.0 を置いた（実測できない）＝費用は多めに見積もる側",
+  "29本の中にも似た信号がある（Intan の4本・PriceDelay の3本・iomom の2本）＝独立の試行は約22",
+  "良い側の組の母集団は変数ごとに違う（受注残を開示する会社・区分データのある会社・I/B/E/S のある会社・EarnSupBig と IndRetBig は業種の中の大型30%を除く）。French Mkt との差には『その母集団に居ること』の効果も入る（R1・R2 で見当）",
+  "OSAP の組のリターンだけで銘柄ごとのリターンが無い＝「最大寄与の1銘柄を抜く」はできない（短い標本の線の drop_top は代用）",
+  "紙の上のポートフォリオで、個人が同じものを持つ手段は無い",
+  "私たちは2007年以降の歴史と各論文の結果を知っている"
+ ],
+ "test_count": {
+  "Z": 29,
+  "ZC": 3,
+  "total_graded": 32,
+  "report_only": "R_dupQ5 29本・R_dupVWF 16本（格付けの文字を付けない重複の報告）・R_train 3本（Activism1・Activism2・Governance）・R_thin 1本（ProbInformedTrading）・R1 大型の半分・R2 大型の中の買い−売りと小型の半分・R3 期間の切り方・R5 費用の感度・R6 その他の指標・R7 因子のアルファ・R8 独立の答え合わせ・R11 eknzbh との再計算の差",
+  "note": "これで全部。測った後に規則を足したら『事後』と明記し、格付けに使わない"
+ }
+}
