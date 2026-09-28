@@ -766,6 +766,39 @@ def part3(D, tested):
     return res
 
 
+def make_summary(out):
+    """結果の数字から要約を組む（手で数字を書かない）"""
+    T = {t['name']: t for t in out['tested']}
+
+    def a(nm, H='H20', sub='all'):
+        return T[nm]['angle'][H][sub]
+    g1, g2 = a('G1'), a('G2')
+    sm = {
+        'answer_angle': {
+            'G1_10pct': {'tail_ratio_q10': g1['tail_ratio_q10'], 'paired_median': g1['paired_median'], 'win_rate': g1['paired_win_rate'],
+                         'bad10_paired_median': g1['bad10_paired_median'], 'bench_worst': g1['bench_worst_window'],
+                         'pass': T['G1']['angle']['H20']['pass'], 'robust': T['G1']['angle']['H20']['robust']},
+            'G2_20pct': {'tail_ratio_q10': g2['tail_ratio_q10'], 'paired_median': g2['paired_median'], 'win_rate': g2['paired_win_rate'],
+                         'bad10_paired_median': g2['bad10_paired_median'], 'bench_worst': g2['bench_worst_window'],
+                         'pass': T['G2']['angle']['H20']['pass'], 'robust': T['G2']['angle']['H20']['robust']},
+            'decades_G1': T['G1']['angle']['H20']['decades'],
+            'G4_world': {'pass': T['G4']['angle']['H20']['pass'], 'robust': T['G4']['angle']['H20']['robust'],
+                         'tail': a('G4')['tail_ratio_q10'], 'median': a('G4')['paired_median'], 'n': a('G4')['n'], 'starts': [a('G4')['from'], a('G4')['to']]},
+        },
+        'angle_passes': sorted(n for n, t in T.items() if t.get('angle_pass_H20')),
+        'angle_robust': sorted(n for n, t in T.items() if t.get('angle_robust_H20')),
+        'global_grades': {n: t.get('grade') for n, t in T.items() if t.get('graded_global')},
+    }
+    L = out.get('part2', {}).get('L', {})
+    if L:
+        sm['G4_long_proxies'] = {nm: {'pass': L[nm]['pass'], 'robust': L[nm]['robust'], 'tail': L[nm]['all'].get('tail_ratio_q10'),
+                                      'median': L[nm]['all'].get('paired_median'), 'le1990_median': L[nm]['le1990'].get('paired_median'), 'n': L[nm]['all'].get('n')}
+                                 for nm in L if nm.startswith('G4')}
+    R = out['replication']
+    sm['replication'] = {'R1_w10': R['R1']['count_w10'], 'R1_w20': R['R1']['count_w20'], 'R2_w10': R['R2']['count_w10'], 'R2_w20': R['R2']['count_w20']}
+    return sm
+
+
 # ───────────────────────── 本体 ─────────────────────────
 def check():
     D = load_all()
@@ -1003,6 +1036,20 @@ def main():
     out['n_graded_global'] = sum(1 for t in tested if t.get('graded_global'))
     out['grades'] = {t['name']: t.get('grade') for t in tested if t.get('graded_global')}
     out['tested'] = tested
+    out['summary'] = make_summary(out)
+    out['deviations'] = [
+        '規則・線は結果を見て一つも動かしていない（第1回 6991597・第2回 f134035・第3回 110ce8a の事前登録どおり）',
+        '事前登録2 の G4L_gdp の重みは、登録を書いている途中（コミット前）に JST の gdp の単位が国ごとに違う（百万・十億・兆）と分かったので World Bank の GDP（ドル）へ替えた。コミットした登録にはその経緯を書いてある',
+        '事前登録3 の「発火から新高値の翌月までは金の目標0%」は文言どおり『新高値が分かった月の翌月（を含む）まで0%』と読んだ（1か月の差）',
+        'mw_common.py に不具合は見つからなかった（French の CAGR 10.38%・2007〜 11.13% を再現・excess_stats/rolling/dca をそのまま使用）',
+        '世界の線（C1〜C8）の格付けは、積立（gap）に一つの系列が無いので定率の近似（毎月リバランス）で付けた＝事前登録どおり。角度の問いへの答えは積立の模擬のほう'
+    ]
+    out['posthoc'] = [
+        '事後（判定に使わない・記述だけ）: 金10%が守った窓は起点 1989〜1993年（終わり 2008〜2013年）にほぼ限られる。起点 1972〜1988年は毎年負け（−1.5〜−20%）、1994〜2006年も小さく負け（−0.1〜−6%）',
+        '事後: gap は売らないので、金が上がった窓では金の比率が目標を大きく超える（相手の最悪の窓 1989-03 起点では最後に31%）。『10%を保つ』の実態は『10%以上』',
+        '事後: 金も S&P500 もドル建てなので、中央の負けは円でもドルでも同じ（名目同額 G1: 円 0.947・ドル 0.950）。裾の守りは円のほうが小さい（1.025 vs 1.086）',
+        '事後: 金は相手の最悪の窓を変えるが、戦略自身の最悪の窓は別の時代（1975年起点・金が高値の1980年に買った窓）に移る'
+    ]
     out['log'] = LOG
     p = M.save(OUT, out)
     log('書いた', p, os.path.getsize(p))
