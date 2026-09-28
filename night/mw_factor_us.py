@@ -414,8 +414,63 @@ def post_hoc():
         print('S overlap', ph['S_overlap']['mean_offdiag_corr'], ph['S_overlap']['effective_n_bets'])
 
 
+# ───────────────────────── 探索の族 e2（out/mw_factor_us_prereg2.json・測る前に登録）─────────────────────────
+def explore2():
+    PRE2 = 'mw_factor_us_prereg2.json'
+    pre2 = json.load(open(os.path.join(M.BASE, 'out', PRE2)))
+    p = os.path.join(M.BASE, 'out', OUT_NAME)
+    j = json.load(open(p))
+    j['tested'] = [e for e in j['tested'] if e.get('family') != 'e2']   # 再実行しても二重に数えない
+    a_ent = {e['key']: e for e in j['tested'] if e.get('family') == 'a' and e.get('good_side')}
+    turn = {x['key']: x['turnover_pct'] for x in PRE['families']['a_jkp_tercile_vw']['list']}
+    ser = {k: jkp_tercile('usa', k, e['good_side']) for k, e in a_ent.items()}
+    groups = [(f'e2_cluster_{c.replace(" ", "_").replace("-", "_")}', c, [k for k in ks if k in a_ent], 3)
+              for c, ks in pre2['families']['e2_jkp_cluster_composites']['clusters'].items()]
+    groups.append(('e2_zoo_all153', '全153特性', sorted(a_ent), 10))
+    new = []
+    for name, lab, keys, mn in groups:
+        s = ew([ser[k] for k in keys], mn)
+        ent = {'name': name, 'family': 'e2', 'primary': False, 'exploratory': True,
+               'description': f'探索: JKP {lab} の良い側 vw 三分位 {len(keys)} 本の毎月等分（構成要素{mn}本以上の月）', 'constituents': keys,
+               'months': len(s), 'from': min(s) if s else None}
+        ent.update(evaluate(s, S.mean(turn[k] for k in keys), 0.003))
+        # 地域の再現（同じ構成要素・同じ良い側・同じ最低本数）
+        rep, pos = {}, 0
+        for reg in ('developed', 'emerging', 'jpn'):
+            parts = [x for x in (jkp_tercile(reg, k, a_ent[k]['good_side']) for k in keys) if x]
+            rs = ew(parts, mn) if parts else {}
+            b = M.jkp_mkt(reg, 'vw')
+            st_f = M.excess_stats(rs, b) if rs else None
+            ok = bool(st_f and st_f['ex_ann'] > 0)
+            rep[reg] = {'full': st_f, 'hold': M.excess_stats(rs, b, a=M.HOLD_START) if rs else None, 'positive': ok, 'counted': reg != 'jpn'}
+            pos += ok and reg != 'jpn'
+        ent['repl'] = {'regions': 2, 'positive': pos, 'detail': rep}
+        new.append(ent)
+    hp = M.holm({e['name']: e['hold']['p'] for e in new if e.get('hold')})
+    for e in new:
+        g, crit = M.grade(e['full'], e['train'] if e['train_len_ok'] else None, e['hold'], e['roll20'], cost_hold=e['net_hold'],
+                          repl={'regions': 2, 'positive': e['repl']['positive']}, family_holm_p=hp.get(e['name']))
+        e['holm_p_family'] = hp.get(e['name']); e['grade'] = g; e['criteria'] = crit
+        e['grade_label'] = f'{g}（探索・参考）'
+    j['tested'] += new
+    j['n_tested'] = len(j['tested'])
+    j['exploratory_prereg2'] = {'prereg': f'out/{PRE2}', 'prereg_commit': sha_of(f'out/{PRE2}'),
+                                'grade_counts': {g: sum(1 for e in new if e['grade'] == g) for g in 'SABC'}}
+    counts = {}
+    for e in j['tested']:
+        counts.setdefault(e['family'], {}).setdefault(e['grade'], 0); counts[e['family']][e['grade']] += 1
+    j['grade_counts'] = counts
+    M.save(OUT_NAME, j)
+    f = lambda v: f"{v['ex_ann']:+5.2f}(t{v['t']:+.2f})" if v and v.get('t') is not None else '    —      '
+    for e in new:
+        print(f"{e['grade']} {e['name'][:34]:34} n{len(e['constituents']):3} 全{f(e['full'])} 訓{f(e['train'])} 保{f(e['hold'])} 費後{f(e['net_hold'])} "
+              f"20年窓{(e['roll20'] or {}).get('win_rate')} 再現{e['repl']['positive']}/2 Holm{e['holm_p_family']}")
+
+
 if __name__ == '__main__':
     if '--post-hoc' in sys.argv:
         post_hoc()
+    elif '--explore2' in sys.argv:
+        explore2()
     else:
         main()
