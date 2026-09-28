@@ -784,6 +784,7 @@ def main():
             part2(out, ctx)
             part3(out)
             part4(out)
+    summarize(out)
     p = M.save('mw_mega_tilt.json', out)
     show(out)
     print('書いた', p, '試した数', out['n_tested'])
@@ -1014,6 +1015,29 @@ def part4(out):
     for r in out['tested']:
         fams.setdefault(r['family'], []).append(r)
     out['families'] = {f: {'n': len(r), 'grades': {g: sum(1 for x in r if x.get('grade') == g) for g in 'SABC'}} for f, r in fams.items()}
+
+
+def summarize(out):
+    """結果の要約（数えるだけ）と、結果を見た後に書いた解釈（判定には使わない）"""
+    T = [r for r in out['tested'] if not r.get('error')]
+    key = lambda r: (r['hold'] or {}).get('t') or -9
+    out['summary'] = {
+        'n_tested': len(out['tested']),
+        'grades_by_family': out['families'],
+        'S_primary': [r['name'] for r in T if r['family'] == 'P' and r['grade'] == 'S'],
+        'top_primary_by_hold_t': [[r['name'], r['grade'], r['hold']['ex_ann'], r['hold']['t'], r['net_cost_hold']['ex_ann'], r.get('family_holm_p')]
+                                  for r in sorted([x for x in T if x['family'] == 'P'], key=key, reverse=True)[:8]],
+        'top_all_by_hold_t': [[r['name'], r['grade'], r['hold']['ex_ann'], r['hold']['t']] for r in sorted(T, key=key, reverse=True)[:12]],
+    }
+    out['interpretation_ja_written_after_results'] = [
+        '主の族（米国・λ=0.2）で S が10本。どれも『質・収益性』（cop_at・ope_be・qmj・qmj_prof・Q5・QM）か発生主義（oaccruals_at）。割安（be_me・ni_me）・低ベータ・固有のぶれ・投資は2007年以降に負け（C）',
+        '最も強い1本は vw の cop_at（現金ベースの営業利益÷総資産）: 保有期間 +1.50%/年 t3.3（族の Holm p=0.037）・費用後 +1.49・前後半とも正（+1.54/+1.47）・2008-09を除いても t3.2・公表後（2017〜）+1.74 t2.8。mega（順位加重 +0.95 t2.4）と large（別の銘柄群 +0.86 t3.2）でも S＝同じ特徴が3つの作り方で勝った',
+        '★大きさの注意: λ=0.2 は厳密な買いだけでは作れない。mega の順位加重は約6%の売りが要り（Pareto 推定）、買いだけの上限は λ≈0.04（→ 保有 +0.19%/年）。vw の収益性は悪い側の時価総額が約16%（French OP）で、買いだけに収まる見込みの λ≈0.11 では cop_at +0.83%/年 t3.3・Q5 +0.68 t2.8',
+        '★後知恵の漏れ: 勝った質・収益性の特徴はどれも2006年より後に公表された（gp_at 2013・ope_be 2015・cop_at 2016・qmj 2018）。2006年に知り得た特徴だけで訓練期間から選んだ合成（X6a）は保有 +0.25%/年 t2.0（S・漏れの無い形で最も強い）、2006年に知られていた質の等分（X6b）は +0.27 t1.4（B）',
+        '独立の作り方（French の BIG/ME5・時価加重）では OP の訓練期間 t が 1.4/0.8 で C1 に届かない（保有 +0.93 t2.2 は同じ向き）。JKP の ope_be も訓練を 1963-2006 に揃えると mega t1.66・vw t2.05＝1950年代のデータに一部頼っている',
+        '日本では再現しない: vw cop_at −0.10%/年・Q5 +0.08 t0.25（米国外10地域のうち日本だけが弱い）',
+        '実在の質ETF（QUAL・SPHQ 等）は設定来 S&P500 に負けている（CLAUDE.md・mw_factor_us）。ここで勝ったのは『市場の時価の重みを保ったまま少しだけ傾ける』形で、上位だけを持つ ETF とは別物',
+    ]
 
 
 if __name__ == '__main__':
