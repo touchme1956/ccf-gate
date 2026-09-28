@@ -13,6 +13,12 @@
   part2 実在の手段: Yahoo の日次の調整後終値（分配込み）→ 月次。French Mkt と比べ、紙の上乗せへの載りと『実装の目減り』を出す
   part3 業種中立: SN60/SN120（直前の窓の係数で業種成分を引いた紙の上乗せ）・スタイル分析で紙の業種の重み
   I 族: P5 の業種の写し（直前の窓のスタイル分析の重みで翌月の業種を持つ）＝買いだけ・業種の器
+  E 族（第2段・探索・out/mw_reality_gap_prereg2.json）: 長寿の大型株投信19本（E_LF）と上限なしの巨大株・成長ETF10本（E_MEGA）
+
+データの穴（第1段の検算で見つけて直した・直す前の値は as_registered_raw_data に残す）
+  - Yahoo が分割イベントを持ちながら調整後終値に反映していない（CFIMX 2025-05 の 10:1）→分割比で割り戻す
+  - 投信の 1987年より前は信用できない（VFINX が S&P500 総リターンから 1985 −9.6pt・1986 −9.2pt）→投信は 1987-01 から
+  - 投信のキャピタルゲイン分配の取りこぼし→Yahoo fundPerformance（Morningstar 年次）と照合し、1pt 超違う年は12か月を等倍で直す
 """
 import sys, os, json, math, subprocess, datetime, time, urllib.parse, urllib.request, statistics as S
 from concurrent.futures import ThreadPoolExecutor
@@ -665,7 +671,7 @@ def main():
         for t, v, err in ex.map(fetch, tickers):
             raw[t] = (v, err)
     VM, VM_RAW, flags, errors, split_fixes, cut = {}, {}, {}, {}, {}, {}
-    ms_check, ms_cov, ms_fixed = {}, {}, {}
+    ms_check, ms_cov, ms_fixed, ms_missing = {}, {}, {}, []
     for t, (v, err) in raw.items():
         if v is None or not v[0]:
             errors[t] = err or 'no data'
@@ -682,6 +688,8 @@ def main():
         ms = ms_annual(t) if t != 'BRK-A' else {}
         ms_check[t] = {y: [annual(m, y), round(v * 100, 2)] for y, v in ms.items() if annual(m, y) is not None and abs(annual(m, y) - v * 100) > 1.0}
         ms_cov[t] = len([y for y in ms if annual(m, y) is not None])
+        if itype == 'MUTUALFUND' and not ms:
+            ms_missing.append(t)
         if itype == 'MUTUALFUND' and ms:
             m, fx2 = ms_correct(m, ms)
             if fx2:
@@ -695,6 +703,7 @@ def main():
                           'distribution_flags（分配の取りこぼし疑い・日次 手段−Mkt < −4% かつ ±5日に分配なし）': {t: f for t, f in flags.items() if f},
                           'morningstar_check（事後の検算: 暦年の Yahoo と Morningstar 年次総リターンが 1pt 超違う年 [Yahoo, MS]・直す前）': {t: v for t, v in ms_check.items() if v},
                           'morningstar_years_compared': ms_cov,
+                          'morningstar_missing_for_mutual_funds（Morningstar 年次が取れず直せなかった投信）': ms_missing,
                           'morningstar_fixed（投信だけ・その年の12か月を等倍で直して年次を Morningstar に合わせた）': ms_fixed,
                           'note': 'ETF は Morningstar と 1pt 超違う年が1つも無かった（Yahoo の値のまま）。投信は分配（主にキャピタルゲイン）の取りこぼしで Yahoo が大きく低く出る年があった。'}
 
@@ -834,6 +843,34 @@ def main():
 
     # ── 事前登録の読み方（R1〜R7）
     res['rules'] = rules(res, p1, cov, ev_R, tested)
+
+    # ── 事後（結果を見た後に足した診断・判定には使わない）: 実在ETFと同じ月で、紙の上乗せを『業種中立の部分 SN60』と『残り（業種・β）』に分ける
+    ph = {}
+    for t in ['QUAL', 'SPHQ_Q', 'FQAL', 'JQUA', 'QUS', 'DGRW', 'VIG', 'SCHD', 'MOAT', 'COMP_QETF_US', 'COMP_QFUND', 'COMP_ALLFUNDS', 'FCNTX', 'MGK', 'QQQ']:
+        if t not in ev_R:
+            continue
+        ks = [k for k in series[t] if k in MKT and k <= JKP_END and k in P5A and k in SN60]
+        if len(ks) < 36:
+            continue
+        veh = {k: series[t][k] - MKT[k] for k in ks}
+        ph[t] = {'from': ks[0], 'to': ks[-1], 'vehicle_active': mean_t(veh), 'paper_active_P5': mean_t({k: P5A[k] for k in ks}),
+                 'paper_sector_neutral_SN60': mean_t({k: SN60[k] for k in ks}),
+                 'paper_industry_and_beta_part（P5 − SN60）': mean_t({k: P5A[k] - SN60[k] for k in ks}),
+                 'cap_factor（JKP 上限つき − 上限なし）': mean_t({k: CAPF[k] for k in ks if k in CAPF})}
+    res['deviations（事前登録からのずれ）'] = [
+        'Yahoo のデータの穴を3つ直した（戦略の成績ではなくデータの検算で見つけた・直す前の値は as_registered_raw_data に残した）: '
+        '(1) CFIMX は 2025-05-12 の 10:1 分割がイベントにあるのに調整後終値に未反映（139→14.5）→分割比で割り戻した。'
+        '(2) 投信の 1987年より前: VFINX の Yahoo 年次が 1985 −9.6pt・1986 −9.2pt と S&P500 総リターンから外れた（1987〜は信託報酬の範囲）→投信は 1987-01 から。'
+        '(3) 投信のキャピタルゲイン分配の取りこぼし: Yahoo の fundPerformance（Morningstar の年次総リターン）と暦年で照合し、1pt 超違う年はその年の12か月を等倍で直して年次を合わせた（CFIMX は 34年、NYVTX・PRGFX・MPGFX・AMCPX は 1987〜1995年頃が大きく外れていた。ETF は1年も外れていない）。',
+        '事前登録の『分配の取りこぼし疑い』の旗（日次 −4% かつ ±5日に分配なし）は、分配イベントがあるのに金額が小さい型を捕まえられなかった。旗の月を欠測にした感度は残したが、主の直しは Morningstar 照合に置き換えた。',
+        'FCNTX の B は上の直しに依存する（生データのままなら訓練 −0.19%/年で C）。',
+        'mw_common.yahoo（月足）ではなく日足の調整後終値から月次を作った（分割・分配イベントを見るため）。',
+        '世界の投信 MSFAX の紙への回帰は、米国と米国外の紙の上乗せを両方入れた（事前登録に書いていなかった）。',
+        'I 族の写しは P5 のデータ（〜2025-12）で重みを決めるので 2026-01 で終わる。',
+        '上限の効果の診断（diag_capping）と post_hoc の窓の分解は第1段の結果を見た後に足した（判定なし）。',
+    ]
+    res['post_hoc_事後'] = {'label': '事後（結果を見た後に足した診断・格付けには使わない）', 'etf_window_decomposition': ph,
+                          'capped_market_vs_pure_market': res['part1_capping']['jkp_capped_market_vs_french_mktrf']}
     return res
 
 
