@@ -985,8 +985,100 @@ def jkp_breadth(c, cmode='train'):
     return res
 
 
+DETAIL_COLS = ['full_ex', 'full_t', 'full_cagr_diff', 'train_ex', 'train_t', 'hold_ex', 'hold_t', 'hold_cagr_diff', 'sharpe_full', 'sharpe_hold', 'from', 'avg_w', 'note']
+
+
+def compact(res):
+    """国・業種の明細を表の形（列名＋行）にまとめて大きさを抑える（中身は同じ）"""
+    for key in ('jkp_breadth_report', 'jkp_breadth_b1_report', 'industry_breadth_report'):
+        for rule, v in (res.get(key) or {}).items():
+            d = v.get('detail')
+            if isinstance(d, dict) and 'cols' not in d:
+                v['detail'] = {'cols': DETAIL_COLS, 'rows': {k: [row.get(cn) for cn in DETAIL_COLS] for k, row in d.items()}}
+    return res
+
+
+def posthoc(c, J):
+    """【事後・判定しない】S/A と B の上位について: (1) 同じ平均倍率で一定に持った場合（時期を読まない）との比較
+    (2) 倍率の月を入れ替えた並べ替え検定（倍率の分布は同じ・時期だけを壊す）"""
+    import random
+    ids = [x['id'] for x in J['tested'] if x.get('grade') in ('S', 'A')]
+    bs = sorted([x for x in J['tested'] if x.get('grade') == 'B'], key=lambda x: -(x['cost_hold'] or {}).get('ex_ann', -99))[:6]
+    ids += [x['id'] for x in bs]
+    spm = {sp['id']: sp for sp in specs()}
+    out = {'note': '事後（結果を見た後の診断）・判定には使わない。const_lev = 訓練期間の平均倍率で一定に持つ（毎月その倍率に戻す・同じ借入と費用の作り）。'
+                   'perm = 倍率の系列を月の間で入れ替えた（同じ期間の中だけ・1000回・種0）ときの費用前の超過の分布の中で、実際の値以上になった割合（平均の差）。'
+                   'perm_sharpe = 同じ入れ替えでシャープレシオ（費用前）が実際以上になった割合（ボラ管理の理屈はシャープを上げることなので、こちらが本来の検定）',
+           'rows': {}}
+    for i in ids:
+        sp = spm.get(i)
+        if sp is None:
+            continue
+        mk = {'US': c.us, 'NDX': c.ndx, 'HiTec': c.hitec, 'IXIC': c.ixic}[sp['idx']]
+        run, info = run_rule(mk, sp['sig'], sp['cap'], sp['cmode'], sp['lag'])
+        b = run.get('bench') or mk.m
+        W = run['w']
+        tr = [w for k, w in W.items() if k <= M.TRAIN_END]
+        L = S.mean(tr) if tr else S.mean(W.values())
+        wb = {prv(k): L for k in W}  # 同じ月に一定の倍率 L
+        crun = run_monthly(mk, None, L, None, False, w_by=wb)
+        row = {'avg_w_train': round(L, 3)}
+        for nm, a in (('hold', M.HOLD_START), ('full', None)):
+            st = M.excess_stats(run['gross'], b, a=a); cs = M.excess_stats(crun['net'], b, a=a); ss = M.excess_stats(run['net'], b, a=a)
+            row[nm] = {'strategy_net_ex': ss['ex_ann'], 'const_lev_net_ex': cs['ex_ann'], 'timing_value_net': round(ss['ex_ann'] - cs['ex_ann'], 2),
+                       'strategy_vs_const_lev': M.excess_stats(run['net'], crun['net'], a=a),
+                       'sharpe_strategy': M.sharpe(run['net'], mk.rf, a=a), 'sharpe_const_lev': M.sharpe(crun['net'], mk.rf, a=a),
+                       'sharpe_bench': M.sharpe({k: b[k] for k in run['net'] if k in b}, mk.rf, a=a)}
+            if sp['lag']:
+                continue
+            ks = sorted(k for k in W if (a is None or k >= a) and k in b)
+            ws = [W[k] for k in ks]
+            act = st['ex_ann']
+            rng = random.Random(0)
+            cnt = 0; vals = []
+            for _ in range(1000):
+                sh = ws[:]; rng.shuffle(sh)
+                ex = [(w * mk.m[k] + (1 - w) * mk.rf[k] - max(w - 1, 0) * SPREAD / 12) - b[k] for w, k in zip(sh, ks)]
+                v = S.fmean(ex) * 1200
+                vals.append(v)
+                if v >= act:
+                    cnt += 1
+            vals.sort()
+            row[nm]['perm'] = {'actual_gross_ex': act, 'perm_median': round(vals[500], 2), 'perm_p95': round(vals[950], 2), 'p_one_sided': round((cnt + 1) / 1001, 4)}
+            # シャープの並べ替え検定
+            def sr(wl):
+                e = [w * (mk.m[k] - mk.rf[k]) - max(w - 1, 0) * SPREAD / 12 for w, k in zip(wl, ks)]
+                return S.fmean(e) / S.stdev(e) * math.sqrt(12)
+            act_sr = sr(ws)
+            rng = random.Random(1)
+            cs_ = 0; svals = []
+            for _ in range(1000):
+                sh = ws[:]; rng.shuffle(sh)
+                v = sr(sh); svals.append(v)
+                if v >= act_sr:
+                    cs_ += 1
+            svals.sort()
+            row[nm]['perm_sharpe'] = {'actual_gross_sr': round(act_sr, 3), 'perm_median': round(svals[500], 3), 'perm_p95': round(svals[950], 3), 'p_one_sided': round((cs_ + 1) / 1001, 4)}
+            row[nm]['maxdd'] = {'strategy': round(M.maxdd({k: run['net'][k] for k in run['net'] if (a is None or k >= a)}) * 100, 1),
+                                'const_lev': round(M.maxdd({k: crun['net'][k] for k in crun['net'] if (a is None or k >= a)}) * 100, 1),
+                                'bench': round(M.maxdd({k: b[k] for k in run['net'] if k in b and (a is None or k >= a)}) * 100, 1)}
+        out['rows'][i] = row
+        log('事後', i, 'L', row['avg_w_train'], '保有 戦略', row['hold']['strategy_net_ex'], '一定倍率', row['hold']['const_lev_net_ex'],
+            '並べ替え p', row['hold'].get('perm', {}).get('p_one_sided'), '全期間 p', row['full'].get('perm', {}).get('p_one_sided'),
+            'シャープ並べ替え p 保有', row['hold'].get('perm_sharpe', {}).get('p_one_sided'), '全期間', row['full'].get('perm_sharpe', {}).get('p_one_sided'),
+            '最大下落 全期間', row['full'].get('maxdd'))
+    return out
+
+
 def main():
     check = '--check' in sys.argv
+    if '--posthoc' in sys.argv:
+        J = json.load(open(os.path.join(M.BASE, 'out', OUT_NAME)))
+        c = load()
+        J['posthoc_diagnostics'] = posthoc(c, J)
+        J['log'] = J.get('log', []) + LOG
+        M.save(OUT_NAME, compact(J))
+        return
     res = {'angle': 'volmanaged', 'prereg': PRE_NAMES}
     shas = {}
     for p in PRE_NAMES:
@@ -1037,7 +1129,7 @@ def main():
     res['grades'] = {g: [x['id'] for x in tested if x.get('grade') == g] for g in ('S', 'A', 'B', 'C')}
     res['tested'] = tested
     res['log'] = LOG
-    p = M.save(OUT_NAME, res)
+    p = M.save(OUT_NAME, compact(res))
     log('書いた', p, '格付け', {g: len(v) for g, v in res['grades'].items()})
 
 
