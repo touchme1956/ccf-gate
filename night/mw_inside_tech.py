@@ -325,6 +325,69 @@ def P_pre1966(F):
     return out
 
 
+# ───────────────────────── Y（prereg3: 時価加重をやめる・国ごとの IT） ─────────────────────────
+DEV22 = ['aus', 'aut', 'bel', 'can', 'che', 'deu', 'dnk', 'esp', 'fin', 'fra', 'gbr', 'hkg', 'irl', 'isr', 'ita', 'jpn',
+         'nld', 'nor', 'nzl', 'prt', 'sgp', 'swe']
+
+
+def jkp_it(c, w):
+    import io, zipfile, csv
+    try:
+        b = M.get(f'https://jkpfactors-data.s3.amazonaws.com/public/industry/%5B{c}%5D_%5Bgics%5D_%5Bmonthly%5D_%5B{w}%5D.zip',
+                  name=f'jkp_ind_{c}_gics_{w}.zip', tries=3)
+    except Exception:  # noqa
+        return None
+    z = zipfile.ZipFile(io.BytesIO(b))
+    out = {}
+    for r in csv.DictReader(io.StringIO(z.read(z.namelist()[0]).decode())):
+        if r['gics'] == '45' and r['ret'] not in ('', 'NA', 'na'):
+            out[M._ym(r['date'])] = float(r['ret'])
+    return out
+
+
+def Y_family(F):
+    res = {}
+    cost = {'cap': (0.20, 0.001), 'ew': (1.00, 0.003)}
+    for lab, w in (('Y_ITcap_usa', 'vw_cap'), ('Y_ITew_usa', 'ew')):
+        s, b = jkp_it('usa', w), jkp_it('usa', 'vw')
+        turn, cu = cost['cap' if w == 'vw_cap' else 'ew']
+        e = {'full': M.excess_stats(s, b), 'train': M.excess_stats(s, b, z=M.TRAIN_END), 'hold': M.excess_stats(s, b, a=M.HOLD_START),
+             'recent': M.excess_stats(s, b, a=M.RECENT_START), 'turnover_ann': turn, 'cost_per_unit': cu,
+             'cost_hold': M.excess_stats(M.apply_cost(s, turn, cu), b, a=M.HOLD_START), 'roll20': M.rolling(s, b, 20), 'dca20': M.dca(s, b, 20)}
+        det = {}
+        for c in DEV22:
+            sc, bc = jkp_it(c, w), jkp_it(c, 'vw')
+            st = M.excess_stats(sc, bc) if sc and bc else None
+            if st:
+                det[c] = {'ex_ann': st['ex_ann'], 't': st['t'], 'from': st['from'], 'to': st['to'],
+                          'hold_ex': (M.excess_stats(sc, bc, a=M.HOLD_START) or {}).get('ex_ann')}
+        e['repl'] = {'regions': len(det), 'positive': sum(1 for v in det.values() if v['ex_ann'] > 0), 'detail': det,
+                     'rule': '先進22か国のうち24か月以上そろう国・全期間の平均の差が正の国の数'}
+        res[lab] = e
+    cols = CLUSTERS['tech']
+    cap = run_rule(F, cols, 'cap')[0]
+    sew = {k: v for k, v in stock_ew(F, cols).items() if k >= START}
+    e = {'full': M.excess_stats(sew, cap), 'train': M.excess_stats(sew, cap, z=M.TRAIN_END), 'hold': M.excess_stats(sew, cap, a=M.HOLD_START),
+         'recent': M.excess_stats(sew, cap, a=M.RECENT_START), 'turnover_ann': 1.0, 'cost_per_unit': 0.003,
+         'cost_hold': M.excess_stats(M.apply_cost(sew, 1.0, 0.003), cap, a=M.HOLD_START), 'roll20': M.rolling(sew, cap, 20), 'dca20': M.dca(sew, cap, 20)}
+    det = {}
+    for cl in REPL:
+        cb = run_rule(F, CLUSTERS[cl], 'cap')[0]
+        cs = {k: v for k, v in stock_ew(F, CLUSTERS[cl]).items() if k >= START}
+        st = M.excess_stats(cs, cb)
+        det[cl] = {'full': st, 'hold': M.excess_stats(cs, cb, a=M.HOLD_START)}
+    e['repl'] = {'regions': len(REPL), 'positive': sum(1 for v in det.values() if v['full'] and v['full']['ex_ann'] > 0), 'detail': det,
+                 'rule': '3つの塊・全期間の平均の差が正の数'}
+    res['Y_FR_stockEW_tech'] = e
+    hh = M.holm({k: (v['hold'] or {}).get('p') for k, v in res.items()})
+    for k, e in res.items():
+        e['family_holm_p_hold'] = hh.get(k)
+        g, c = M.grade(e['full'], e['train'], e['hold'], e['roll20'], cost_hold=e['cost_hold'], repl=e['repl'], family_holm_p=hh.get(k))
+        e['grade'], e['criteria'] = g, c
+        e['role'] = 'exploratory_prereg3（探索）'
+    return res
+
+
 # ───────────────────────── S（SEC 2010〜） ─────────────────────────
 def S_family():
     import mw_sec_replication as SR
@@ -569,6 +632,7 @@ def run():
     for r in X_RULES:
         X[r]['role'] = 'exploratory_prereg2（探索・主の族の格付けを置き換えない）'
     P = P_pre1966(F)
+    Y = Y_family(F)
     tested = []
     for r in L_RULES:
         tested.append({'name': r, 'family': 'L', 'role': 'primary', 'grade': L[r]['grade'], 'desc': DESC[r]})
@@ -586,10 +650,15 @@ def run():
         tested.append({'name': r, 'family': 'X', 'role': 'exploratory_prereg2', 'grade': X[r]['grade'], 'desc': DESC[r]})
         for cl in REPL:
             tested.append({'name': f'{r}@{cl}', 'family': 'X_repl', 'role': 'C5 の再現（格付けしない）'})
+    for k, v in Y.items():
+        tested.append({'name': k, 'family': 'Y', 'role': 'exploratory_prereg3', 'grade': v['grade']})
+        for c in v['repl']['detail']:
+            tested.append({'name': f'{k}@{c}', 'family': 'Y_repl', 'role': 'C5 の再現（格付けしない）'})
     for r in L_RULES + X_RULES:
         tested.append({'name': f'{r}@pre1966', 'family': 'P', 'role': 'report_prereg2（1946-07〜1966-06・格付けしない）'})
     obj = {'angle': 'inside_tech', 'tool': 'night/mw_inside_tech.py', 'prereg': PRE_NAME, 'prereg_commit': sha_of(os.path.join('out', PRE_NAME)),
-           'global_prereg': 'out/mw_prereg.json', 'checks': checks, 'L': L, 'S': Sf, 'S_info': Sinfo, 'E': Ef, 'I': If, 'X': X, 'P_pre1966': P,
+           'global_prereg': 'out/mw_prereg.json', 'checks': checks, 'L': L, 'S': Sf, 'S_info': Sinfo, 'E': Ef, 'I': If, 'X': X, 'P_pre1966': P, 'Y': Y,
+           'prereg3': 'mw_inside_tech_prereg3.json', 'prereg3_commit': sha_of(os.path.join('out', 'mw_inside_tech_prereg3.json')),
            'prereg2': 'mw_inside_tech_prereg2.json', 'prereg2_commit': sha_of(os.path.join('out', 'mw_inside_tech_prereg2.json')),
            'tested': tested, 'n_tested': len(tested), 'runtime_s': round(time.time() - t0, 1)}
     p = M.save(OUT_NAME, obj)
@@ -599,6 +668,10 @@ def run():
         f = lambda x: (x['ex_ann'], x['t']) if x else None
         print(r, e['grade'], 'full', f(e['full']), 'train', f(e['train']), 'hold', f(e['hold']), 'cost', f(e['cost_hold']),
               'roll', (e['roll20'] or {}).get('win_rate'), 'repl', e['repl']['positive'], 'holm', e['family_holm_p_hold'])
+    for k, e in Y.items():
+        f = lambda x: (x['ex_ann'], x['t']) if x else None
+        print(k, e['grade'], 'full', f(e['full']), 'train', f(e['train']), 'hold', f(e['hold']), 'cost', f(e['cost_hold']),
+              'roll', (e['roll20'] or {}).get('win_rate'), 'repl', e['repl']['positive'], '/', e['repl']['regions'])
 
 
 if __name__ == '__main__':
