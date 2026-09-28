@@ -57,6 +57,7 @@ CUR = {
 USD_RATE = 'IRSTCI01USM156N'   # 米国の翌日物（FF金利の月平均）
 PRIMARY_SIGS = ['V', 'M', 'C', 'VM']
 E1_SIGS = ['VOTE2', 'VAMP', 'MAMP', 'RISK12']
+E2_SIGS = ['TREND3', 'DIFF12', 'MRISK']       # 第2回の登録（out/mw_jpy_hedge_prereg2.json）
 
 
 def log(*a):
@@ -206,7 +207,7 @@ def signals(D, c, S_=None, r_c=None, cpi_c=None, cpi_freq=None, r_other=None, cp
         a, b = cpi_known(cpi_o, other_freq, t), cpi_known(cpi_c, cpi_freq, t)
         if a is not None and b is not None:
             q[t] = S_[t] * a / b          # 実質の外貨の値段（高い＝外貨が実質で割高）
-    sig = {k: {} for k in PRIMARY_SIGS + E1_SIGS}
+    sig = {k: {} for k in PRIMARY_SIGS + E1_SIGS + E2_SIGS}
     mkt_ex = D['mktrf']
     for t in ks:
         # V: 実質の値段が過去60か月（当月を含む）の平均より上ならヘッジ
@@ -235,6 +236,26 @@ def signals(D, c, S_=None, r_c=None, cpi_c=None, cpi_freq=None, r_other=None, cp
                 break
         if ok:
             sig['MAMP'][t] = g - 1 < 0
+        # E2_TREND3: 1・3・12か月のドルを持つ超過リターン（t まで）のうち負の数 ÷ 3 ＝ヘッジの割合（HOP 2017 の混ぜ方）
+        neg, ok3 = 0, True
+        for L in (1, 3, 12):
+            g3 = 1.0
+            for i in range(L):
+                s = ym_add(t, -i); s0 = ym_add(s, -1)
+                if s in S_ and s0 in S_ and s0 in r_c and s0 in r_o:
+                    g3 *= S_[s] / S_[s0] * (1 + r_o[s0] / 1200) / (1 + r_c[s0] / 1200)
+                else:
+                    ok3 = False
+                    break
+            if not ok3:
+                break
+            neg += g3 - 1 < 0
+        if ok3:
+            sig['TREND3'][t] = neg / 3
+        # E2_DIFF12: 金利差（外貨 − c）が過去12か月で縮んだらヘッジ
+        t12 = ym_add(t, -12)
+        if t in r_c and t in r_o and t12 in r_c and t12 in r_o:
+            sig['DIFF12'][t] = (r_o[t] - r_c[t]) - (r_o[t12] - r_c[t12]) < 0
         # RISK12: 米国株の12か月（t−11〜t）の超過リターンが負ならヘッジ（MOP 2012 の時系列モメンタム・安全資産の円）
         mm = [mkt_ex.get(ym_add(t, -i)) for i in range(12)]
         if None not in mm:
@@ -244,6 +265,8 @@ def signals(D, c, S_=None, r_c=None, cpi_c=None, cpi_freq=None, r_other=None, cp
             sig['VM'][t] = sig['V'][t] and sig['M'][t]
         if t in sig['V'] and t in sig['M'] and t in sig['C']:
             sig['VOTE2'][t] = (sig['V'][t] + sig['M'][t] + sig['C'][t]) >= 2
+        if t in sig['M'] and t in sig['RISK12']:
+            sig['MRISK'][t] = sig['M'][t] or sig['RISK12'][t]
     return sig
 
 
@@ -277,11 +300,12 @@ def contiguous(keys_ok, start, end):
 
 
 def stock_series(sig, Ru, Rh, mlist, fee=0.0):
+    """前月末の信号を当月に当てる（後知恵なし）。信号は True/False（全部か無し）か 0〜1 の割合（E2_TREND3）"""
     s, h, sw, prev = {}, {}, 0, None
     for t in mlist:
-        st = sig[ym_add(t, -1)]          # 前月末の信号を当月に当てる（後知恵なし）
-        s[t] = (Rh[t] - fee / 12) if st else Ru[t]
-        h[t] = 1.0 if st else 0.0
+        st = float(sig[ym_add(t, -1)])
+        s[t] = st * (Rh[t] - fee / 12) + (1 - st) * Ru[t]
+        h[t] = st
         if prev is not None and st != prev:
             sw += 1
         prev = st
@@ -386,7 +410,9 @@ def tax_switch(sig, Ru, Rh, mlist):
     tx = _settle(rg + V - B, cf, mlist[-1] // 100)
     after = V - tx
     after_b = Wb - TAX * max(Wb - Bb, 0.0)
-    return {'after_tax_ratio': round(after / after_b, 4), 'pre_tax_ratio': round(V / Wb, 4), 'switches': sw}
+    # 名前の是正（第2回の登録に記録）: 旧 pre_tax_ratio は『途中の税を払った後・最後の売却の税の前』の比だった
+    return {'after_tax_ratio': round(after / after_b, 4), 'before_final_tax_ratio': round(V / Wb, 4),
+            'no_tax_ratio': dca_ratio(*stock_series(sig, Ru, Rh, mlist)[:1], Ru, mlist), 'switches': sw}
 
 
 def tax_overlay(s, Ru, mlist):
@@ -432,7 +458,7 @@ def turnover_cost(s, h, a, z):
     ks = [k for k in sorted(s) if a <= k <= z]
     if len(ks) < 24:
         return None, None
-    sw = sum(1 for p, k in zip(ks, ks[1:]) if h[k] != h[p])
+    sw = sum(abs(h[k] - h[p]) for p, k in zip(ks, ks[1:]))     # 片道の回転（全部か無しなら切り替えの回数と同じ）
     to = sw / (len(ks) / 12)
     c = M.apply_cost({k: s[k] for k in ks}, to, COST_UNIT)
     return {k: c[k] - h[k] * HEDGE_FEE / 12 for k in ks}, round(to, 2)
@@ -539,7 +565,8 @@ def check():
 # ───────────────────────── 本番 ─────────────────────────
 def run():
     D = load()
-    out = {'angle': 'jpy_hedge', 'prereg': PREREG, 'prereg_commit': git_sha(os.path.join('out', PREREG)), 'tested': [], 'log': LOG}
+    out = {'angle': 'jpy_hedge', 'prereg': PREREG, 'prereg_commit': git_sha(os.path.join('out', PREREG)),
+           'prereg2': PREREG2, 'prereg2_commit': git_sha(os.path.join('out', PREREG2)), 'tested': [], 'log': LOG}
     J = D['cur']['JPY']
     Ru, Rh, rfj, sig = build_currency(D, 'JPY')
     avail = avail_for(PRIMARY_SIGS + E1_SIGS, sig, Ru, START_JP, END_M)
@@ -586,7 +613,8 @@ def run():
         cur_data[c] = (cRu, cRh, crf, csig, st_)
 
     res = {}
-    fam = {'P': {}, 'E1': {}}
+    fam = {'P': {}, 'E1': {}, 'E2': {}}
+    NEED = {'P': PRIMARY_SIGS, 'E1': PRIMARY_SIGS + E1_SIGS, 'E2': PRIMARY_SIGS + E2_SIGS}
 
     def run_one(sid, sname, impl, family):
         if impl == 'STOCK':
@@ -608,8 +636,7 @@ def run():
         # C5: 同じ規則を他の8通貨の投資家（米国株を持つ）に当てる。全期間の超過が正の通貨を数える
         per = {}
         for c, (cRu, cRh, crf, csig, st_) in cur_data.items():
-            need = PRIMARY_SIGS if family == 'P' else PRIMARY_SIGS + E1_SIGS
-            av = avail_for(need, csig, cRu, st_, END_M)
+            av = avail_for(NEED[family], csig, cRu, st_, END_M)
             if len(av) < 60:
                 continue
             if impl == 'STOCK':
@@ -630,10 +657,11 @@ def run():
         if impl == 'STOCK':
             s, h, sw = stock_series(sig[sname], Ru, Rh, avail)
             mh = [k for k in avail if k >= M.HOLD_START]
+            allornone = all(v in (0.0, 1.0) for v in h.values())
             r['tax'] = {
-                'switch_in_taxable_full': tax_switch(sig[sname], Ru, Rh, avail),
-                'switch_in_taxable_hold': tax_switch(sig[sname], Ru, Rh, mh),
-                'switch_in_taxable_20y': tax_windows(lambda w: tax_switch(sig[sname], Ru, Rh, w), avail=A),
+                'switch_in_taxable_full': tax_switch(sig[sname], Ru, Rh, avail) if allornone else None,
+                'switch_in_taxable_hold': tax_switch(sig[sname], Ru, Rh, mh) if allornone else None,
+                'switch_in_taxable_20y': tax_windows(lambda w: tax_switch(sig[sname], Ru, Rh, w), avail=A) if allornone else None,
                 'overlay_fx_taxable_full': tax_overlay(s, Ru, avail),
                 'overlay_fx_taxable_hold': tax_overlay(s, Ru, mh),
                 'overlay_fx_taxable_20y': tax_windows(lambda w: tax_overlay(s, Ru, w), avail=A),
@@ -654,6 +682,23 @@ def run():
             run_one(f'P_{sname}_{impl}', sname, impl, 'P')
     for sname in E1_SIGS:
         run_one(f'E1_{sname}_STOCK', sname, 'STOCK', 'E1')
+    # 第2回の登録（out/mw_jpy_hedge_prereg2.json）: E2 は第1回の結果を見た後の探索の族
+    for sname in E2_SIGS:
+        run_one(f'E2_{sname}_STOCK', sname, 'STOCK', 'E2')
+
+    # ── 事後の参考（格付けしない）: M と MAMP を資本規制の時代（1974-03〜1980-12）へ後ろに延ばす
+    back = {}
+    for sname in ('M', 'MAMP'):
+        avb = avail_for([sname], sig, Ru, 197403, END_M)
+        sb, hb, _ = stock_series(sig[sname], Ru, Rh, avb)
+        back[f'BACK_{sname}_STOCK'] = {'from': avb[0], 'pre1981': M.excess_stats(sb, Ru, None, 198012),
+                                        'train_extended_1974_2006': M.excess_stats(sb, Ru, None, M.TRAIN_END),
+                                        'full_extended_1974_2026': M.excess_stats(sb, Ru),
+                                        'note': '事後（第1回の結果を見てから期間を延ばした）・格付けしない。資本規制の下で金利平価が成り立たない時代を含む'}
+        out['tested'].append({'id': f'BACK_{sname}_STOCK', 'family': '事後', 'impl': 'STOCK', 'signal': sname, 'graded': False})
+        log(f'BACK_{sname}_STOCK', 'pre1981', (back[f'BACK_{sname}_STOCK']['pre1981'] or {}).get('ex_ann'), (back[f'BACK_{sname}_STOCK']['pre1981'] or {}).get('t'),
+            '| 延ばした訓練', back[f'BACK_{sname}_STOCK']['train_extended_1974_2006']['ex_ann'], back[f'BACK_{sname}_STOCK']['train_extended_1974_2006']['t'])
+    out['post_hoc_back_extension'] = back
 
     # ── 参考: 常に50%・100%ヘッジ（族の外）
     for w in (0.5, 1.0):
@@ -750,7 +795,7 @@ def run():
                      'dca20_median': (r['dca20'] or {}).get('median_ratio'), 'holm_p': r.get('holm_p'),
                      'repl': r.get('repl'), 'latest_signal': r.get('latest_signal')})
     out['summary'] = sorted(summ, key=lambda x: -(x['hold_ex'] or -99))
-    out['counts'] = {'n_tested': len(out['tested']), 'graded': sum(1 for x in out['tested'] if x['family'] in ('P', 'E1')),
+    out['counts'] = {'n_tested': len(out['tested']), 'graded': sum(1 for x in out['tested'] if x['family'] in ('P', 'E1', 'E2')),
                      'grades': {g: sum(1 for x in summ if x['grade'] == g) for g in 'SABC'}}
     p = M.save(OUT, out)
     log('書いた', p)
