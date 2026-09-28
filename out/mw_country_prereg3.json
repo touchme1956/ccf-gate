@@ -1,0 +1,55 @@
+{
+ "angle": "country",
+ "part": "prereg3（探索の第3段・測る前に登録）",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "honest_context": [
+  "第1回（15ef00b）と訂正後（c7d616e）の結果を見た後に作った族。見たこと: (1) 米国込みの時価加重の先進国（French Developed）に対しては、主の7本のうち P7（米国と米国外の切替）だけが保有期間で正（+0.42%/年・t0.40・B）、国を選ぶ規則はすべて負（−1〜−3%/年）。(2) 米国抜きの先進国（JKP developed）に対しては、第1回の登録どおりの規則のうち E2_dp_K3（配当利回りの高い3か国・年次）が S（保有 +3.76%/年・t2.81・費用後 +3.31%/年）で、国の勢い・割安も +1.2〜1.6%/年（B）",
+  "したがって D 族は『結果を見て選んだ仮説（配当利回りで国を選ぶ）の頑丈さと再現』であり、保有期間（2007〜2025）は同じ国・同じ年なので新しい証拠ではない。新しい証拠になりうるのは D4 の1976〜1986（JKP より前・別のデータ元 MSCI）と D5 の実在ETF（別の道具）だけ。格付けは『探索（結果を見た後）』と明記し、主の結論を置き換えない",
+  "配当利回りで国を選ぶこと自体は結果を見る前からある説（Keppler 1991 JPM『The Importance of Dividend Yields in Country Selection』・MSCI 1969〜1989）。E2_dp は第1回の登録に入っていた（後から作った規則ではない）",
+  "K 族（CAPE＝10年平均利益に対する株価）は、割安の物差し（B/M・E/P・CE/P・自分の過去比）が米国込みの相手に負けたのを見た後に足した物差し。CAPE の数字はまだ一つも計算していない"
+ ],
+ "global_criteria": "out/mw_prereg.json（C1〜C8）と mw_common.grade。線は動かさない",
+ "common": "月末 t に分かる値だけ・欠測は順位に入れない・国の等分・年次は6月末に選び1年持つ（重みは漂う）・費用は先進国の国別（売買0.15%＋信託報酬の差0.40%/年）、ETF は売買0.15%のみ。C5 は N/A（新興国に配当の値が無い）",
+ "families": {
+  "D_dividend": {
+   "label": "探索（結果を見た後）: 配当利回りで国を選ぶ規則の頑丈さと再現",
+   "holm": "この族の13本で Holm（保有期間・費用前・t≤0 は p=1）",
+   "strategies": {
+    "D1_f20_dp_K3": "F20（米国を含まない French の20か国・リターンは JKP）で、Y−1年12月末の配当利回り（dp_ret＝過去12か月の配当リターンの和・現地通貨）の上位3か国を Y年6月末に等分 vs French Developed_ex_US（1990-07〜）",
+    "D1_f20_dp_K5": "同 上位5",
+    "D2_f20_yld_K3": "F20 で French の年次表の Yld（年 Y の値＝Y−1年12月末）の上位3・6月末 vs French Developed_ex_US（Keppler 1991 の物差しに近い）",
+    "D2_f20_yld_K5": "同 上位5",
+    "D3_f20_dpM_K3": "F20 で毎月末の dp_ret（その月までの12か月）の上位3を毎月等分 vs French Developed_ex_US",
+    "D3_f20_dpM_K5": "同 上位5",
+    "D4_eafe_dp_K3": "EAFE19（French の国別ドル建てリターン・1975〜）で Y−1年12月末の dp_ret の上位3・6月末 vs French Ind_all（EAFE 加重）。訓練 1976-07〜2006-12（1976〜1986 は JKP より前の独立の期間）",
+    "D4_eafe_dp_K5": "同 上位5",
+    "D5_etf_dp_K3": "iShares 国別ETF 15本（SPY を除く）で、対応する国の Y−1年12月末の dp_ret（French）の上位3・6月末 vs French Developed_ex_US。保有 2007-01〜2025-12（信号の表が 2025 年まで）。訓練は ETF の 1997-07〜2006-12（9.5年で15年に満たない＝C1 は参考）。参考に EFA（2001-09〜）とも比べる",
+    "D5_etf_dp_K5": "同 上位5",
+    "D6_f20_dp_K2": "D1 の K=2",
+    "D6_f20_dp_K4": "D1 の K=4",
+    "D6_f20_dp_K6": "D1 の K=6"
+   }
+  },
+  "K_cape": {
+   "label": "探索（結果を見た後に足した物差し・数字は未計算）: CAPE（10年平均の名目利益に対する株価）の低い国",
+   "holm": "この族の4本で Holm",
+   "definition": "年 Y の利益 E_Y = E/P（French の年次表・年 Y）× P（Y−1年12月末の現地通貨の配当抜き価格指数）。CAPE_Y = P(Y−1年12月末) ÷ mean(E_{Y−9..Y})（10年そろう国だけ・平均が正のときだけ）。低いほど割安。Y年6月末に選び1年持つ。米国は French の米国 E/P と規模別10分割の配当抜きの価格指数で同じ式",
+   "strategies": {
+    "K1_f20_cape_K3": "F20 で CAPE の低い3か国 vs French Developed_ex_US",
+    "K1_f20_cape_K5": "同 5か国",
+    "K2_v21_cape_K3": "V21（米国込み）で CAPE の低い3か国 vs French Developed（米国込み）",
+    "K2_v21_cape_K5": "同 5か国"
+   }
+  },
+  "X_post_hoc_reports": {
+   "label": "事後（格付けしない・報告のみ）",
+   "items": {
+    "X1_us_anchor_dp3": "米国は市場の重みのまま持ち、米国外の部分だけを D1_f20_dp_K3 に置き換えた姿 vs French Developed。米国の重み w(t) は French Developed を French North America と French Developed_ex_US に回帰した過去36か月の係数（月末 t までのデータだけ・0〜1 に収める）",
+    "X2_usrow_dp3": "P7 の切替で、米国外が勝っている月に米国外の指数の代わりに D1_f20_dp_K3 を持つ vs French Developed",
+    "X3_frontier_ex_zwe": "E4_fr_mom12_K3/K5 からジンバブエ（公定レートのハイパーインフレで月+100%超の非現実的なドル建てリターン）を除いた版 vs JKP frontier vw",
+    "X4_dp3_vs_us": "D1_f20_dp_K3 と米国（JKP usa）の比較（保有期間・転がる20年窓・積立）"
+   }
+  }
+ }
+}
