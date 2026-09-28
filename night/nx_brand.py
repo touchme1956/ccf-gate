@@ -27,7 +27,9 @@ OUT_NAME = 'nx_brand.json'
 END = 202608          # French と揃える（2026-09 は月の途中で使わない）
 LB_HIT = -0.30        # 上場廃止の下限版: 途切れた月に −30%
 COST = {'us': 0.0020, 'global': 0.0030}          # 片道の回転 100% あたり（事前登録）
-COST_SENS = {'us': 0.00495, 'global': 0.0060}   # R7 感度
+COST_SENS = {'us': 0.00495, 'global': 0.0060}   # R7 感度（事前登録の数字。★片側＝1回の約定の料率。片道の回転1単位は売り1回＋買い1回＝2回の約定でできている）
+COST_SENS_RT = {'us': 0.0099, 'global': 0.0120}  # R7b（検査の後に足した・報告のみ）: 売りと買いの両方に掛けた版（片道の回転1単位あたり 2回分）
+AV_STORE = os.path.join(N.BASE, 'out', 'nx_brand_av_delisted.json')   # 上場廃止した米国の親会社の Alpha Vantage 月足（書き写し・コミットする）
 
 
 # ───────────────────────── 事前登録と一覧 ─────────────────────────
@@ -111,10 +113,72 @@ def series(tk, fetch=False):
             if c is not None and c > 0:
                 close[k] = c
         if px:
-            out = {'px': px, 'close': close, 'ccy': (r.get('meta') or {}).get('currency'), 'first': min(px), 'last': max(px),
-                   'events': r.get('events') or {}}
+            meta = r.get('meta') or {}
+            off = int(meta.get('gmtoffset') or 0)
+            divm = {}
+            for v in ((r.get('events') or {}).get('dividends') or {}).values():
+                # 配当の時刻は取引所の寄り付きなど（ニューヨークは UTC 13:30）。+12 時間では月末の配当が翌月に入るので、現地の時刻で日付を読む
+                d = datetime.datetime.utcfromtimestamp(int(v['date']) + off)
+                divm.setdefault(d.year * 100 + d.month, []).append((d.date().isoformat(), float(v.get('amount') or 0)))
+            out = {'px': px, 'close': close, 'ccy': meta.get('currency'), 'first': min(px), 'last': max(px),
+                   'events': r.get('events') or {}, 'gmtoffset': off, 'divm': divm}
     PX[tk] = out
     return out
+
+
+# ───────────────────────── 配当の照合（調整後終値 と 終値＋配当）・検査の後に足した ─────────────────────────
+# 検査で見つかった Yahoo の調整後終値の誤り（2026-09-28 の検査役の指摘を、日足で一つずつ確かめた）:
+#  (a) 調整後終値が『記録された配当』と合わない月（配当が 0.1% なのに調整後が 20% 超 跳ねる）→ 終値＋記録された配当
+#  (b) 記録された配当そのものが偽（その日に終値が下がっていない・年1回の配当の重複）や、分割と配当の二重の調整 → 終値（＋本物の配当だけ）
+ADJ_FIX = {
+    ('ITX.MC', 200709): {'use': 'close+div', 'why': '2007-09-25 に調整後÷終値の比が 0.3713→0.4800（調整 22.6% 分）に跳ねたが、その日の終値は −2.2%（下がっていない）で、記録された配当は €0.0117（0.13%）だけ＝調整後終値の誤り'},
+    ('ITX.MC', 200809): {'use': 'close+div', 'why': '2008-09-25 に調整後÷終値の比が 0.4968→0.6169（調整 19.5% 分）に跳ねたが、その日の終値は +2.4% で、記録された配当は €0.0069 だけ＝調整後終値の誤り'},
+    ('CS.PA', 200805): {'use': 'close', 'why': 'AXA の配当は年1回（2007 年度分 €1.20＝Yahoo では 2009 年の増資の調整後 €1.17・2008-04-24）。5月の €3.71（05-12）と €1.18（05-22）は偽の配当＝その日の終値は +0.3%・−1.4% で配当の分だけ下がっていない。5月は終値のリターンだけ'},
+    ('XRX', 201701): {'use': 'close', 'why': 'Conduent の分離（2016-12-31 の配布・1:5）を Yahoo は 2017-01-03 の分割 1518:1000（＝8.73÷(8.73−2.98)・分離の価値 $2.98 を分割の形で終値に反映）と、同じ日の配当 $2.98 の両方で調整していた＝二重。'
+                                            '終値（分割の調整だけ）のリターン +20.5% を使う（反映済みの他の分離と同じ扱い）。参考: 受け取った CNDT を月末まで持った版は (6.93+0.2×14.96)/8.73−1 = +13.7%'},
+}
+DIVCAP = {}   # {記号: {'median': 捕捉率の中央値, 'n': 月数, 'use_close_div': bool}}（配当の通貨の食い違いの検査の結果）
+
+
+def div_capture(tk, s):
+    """調整後終値が記録された配当をどれだけ取り込んでいるか（捕捉率＝(調整後のリターン−終値のリターン)÷(配当÷前月の終値×(1+終値のリターン))）の中央値。
+    対象: 2007-01〜END で、配当が前月の終値の 0.3% 以上・終値のリターンが ±15% 以内の月。中央値 < 0.5 かつ 3か月以上なら
+    『調整後終値に配当が実質入っていない（配当と株価の通貨・単位の食い違い）』として、その記号はすべての月を終値＋配当で作る"""
+    if tk in DIVCAP:
+        return DIVCAP[tk]
+    ks = sorted(s['px'])
+    caps = []
+    for p, k in zip(ks, ks[1:]):
+        if k < 200701 or ym_next(p) != k:
+            continue
+        c0, c1 = s['close'].get(p), s['close'].get(k)
+        d = sum(a for _, a in s['divm'].get(k, []))
+        if not c0 or not c1 or d / c0 < 0.003:
+            continue
+        rc = c1 / c0 - 1
+        if abs(rc) > 0.15:
+            continue
+        ra = s['px'][k] / s['px'][p] - 1
+        caps.append((ra - rc) / (d / c0 * (1 + rc)))
+    rec = {'median': round(S.median(caps), 3) if caps else None, 'n': len(caps),
+           'use_close_div': bool(caps) and len(caps) >= 3 and S.median(caps) < 0.5}
+    DIVCAP[tk] = rec
+    return rec
+
+
+def local_ret(tk, s, p, k):
+    """現地通貨の月次リターン（前の値のある月 p → k）。原則は調整後終値。配当の通貨が食い違う記号と ADJ_FIX の月だけ終値から作る"""
+    ra = s['px'][k] / s['px'][p] - 1
+    c0, c1 = s['close'].get(p), s['close'].get(k)
+    if not c0 or not c1:
+        return ra, None
+    fix = ADJ_FIX.get((tk, k))
+    divs = sum(a for m, lst in s['divm'].items() if p < m <= k for _, a in lst)
+    if fix:
+        return ((c1 + divs) / c0 - 1 if fix['use'] == 'close+div' else c1 / c0 - 1), 'adj_fix'
+    if div_capture(tk, s)['use_close_div']:
+        return (c1 + divs) / c0 - 1, 'close_div'
+    return ra, None
 
 
 def fx_series(ccy, fetch=False):
@@ -130,13 +194,20 @@ def fx_series(ccy, fetch=False):
             src = s['close'] or s['px']
             fx = {k: (1 / v if inv else v) for k, v in src.items() if v}
             # データの誤りの訂正: Yahoo の月足の為替には桁の壊れた月がある（実測 KRWUSD=X 2015-02 が 9.07＝本来 0.00091、TWDUSD=X 2014-12）。
-            # 同じ記号の日足から『その月の日々の値の中央値から ±20% に入る最後の日』の値を作り、月足と 3% 超ずれる月は日足の値に置き換える
-            d = daily_month_end(tk)
+            # 同じ記号の日足から月末の値を作り、月足と 3% 超ずれる月は日足の値に置き換える。
+            # ★検査の後に直した: Yahoo の為替の日足は日付 D の足の終値が実際には D−1 の終値（1日遅れ。実測 EURUSD=X 2012-06: 月足 1.2665・日足 06-29 1.2441・07-02 1.2655）
+            # なので、月末の値は『翌月の最初の日足』（無ければその月の最後の日足）を使う
+            # （置き換えるのは、月足がその月の最後の日足とも翌月の最初の日足とも 3% 超ずれる月だけ。日足にも抜け・誤りがあるので、
+            #   翌月の最初の日足だけと比べると正しい月足を誤って置き換える〔実測: 翌月の最初の日足だけで比べると CAD 2020-12・EUR 2008-07 等 9か月が新たに置き換わった〕）
+            dl = daily_month_end(tk)
+            dn = daily_month_end(tk, next_first=True)
             fixes = []
-            if d:
-                for k, v in d.items():
-                    v = 1 / v if inv else v
-                    if k in fx and abs(fx[k] / v - 1) > 0.03:
+            if dl:
+                for k, vl in dl.items():
+                    vn = dn.get(k, vl)
+                    vl, vn = (1 / vl, 1 / vn) if inv else (vl, vn)
+                    v = vn if abs(vn / vl - 1) < 0.03 else vl
+                    if k in fx and abs(fx[k] / vl - 1) > 0.03 and abs(fx[k] / vn - 1) > 0.03:
                         fixes.append((k, fx[k], v))
                         fx[k] = v
                     elif k not in fx and k <= END:
@@ -150,8 +221,9 @@ def fx_series(ccy, fetch=False):
 FXC = {}
 
 
-def daily_month_end(tk):
-    """日足の終値から月末の値（その月の日々の値の中央値から ±20% に入る最後の日）"""
+def daily_month_end(tk, next_first=False):
+    """日足の終値から月末の値（その月の日々の値の中央値から ±20% に入る最後の日）。
+    next_first=True: 翌月の最初の日足（翌月の中央値から ±20% に入る最初の日）を月末の値にする（為替の日足の 1日遅れ用）。翌月が無ければその月の最後の日"""
     j = yh_json(tk, '1d', fetch=True)
     if not j or not (j.get('chart') or {}).get('result'):
         return None
@@ -165,13 +237,15 @@ def daily_month_end(tk):
             continue
         d = datetime.datetime.utcfromtimestamp(t + off)   # 日足の時刻は取引所の寄り付き（ニューヨークは UTC 13:30）＝現地の時刻で日付を読む
         bym.setdefault(d.year * 100 + d.month, []).append(v)
-    out = {}
+    last, first = {}, {}
     for k, vs in bym.items():
         med = S.median(vs)
         good = [v for v in vs if abs(v / med - 1) < 0.2]
         if good:
-            out[k] = good[-1]
-    return out
+            last[k], first[k] = good[-1], good[0]
+    if not next_first:
+        return last
+    return {k: first.get(ym_next(k), v) for k, v in last.items()}
 
 
 def ym_prev(ym):
@@ -207,9 +281,11 @@ def usd_returns(tk):
     if s['ccy'] not in (None, 'USD') and not fx:
         RET[tk] = None
         return None
-    r, gaps = {}, []
+    r, gaps, how = {}, [], {}
     for p, k in zip(ks, ks[1:]):
-        x = s['px'][k] / s['px'][p] - 1
+        x, h_ = local_ret(tk, s, p, k)
+        if h_:
+            how[k] = h_
         if fx:
             f0, f1 = fx['fx'].get(p), fx['fx'].get(k)
             if not f0 or not f1:
@@ -221,7 +297,7 @@ def usd_returns(tk):
     if fx:
         FXM[fx['tk']] = set(fx['fx'])
     out = {'r': r, 'first': ks[0], 'last': ks[-1], 'px_months': set(ks), 'gaps': gaps, 'ccy': s['ccy'],
-           'fx': (fx or {}).get('tk')}
+           'fx': (fx or {}).get('tk'), 'how': how}
     RET[tk] = out
     return out
 
@@ -267,7 +343,10 @@ def ib_prev_values(o, y):
     return {B.norm(r['name']): r['value'] for r in B.ib_api(y - 1) if r.get('value')}, 'api_prev'
 
 
-def ib_forms(o, universe='us', rank_max=None, pick=None, uniform_nov=False, list_src='complete'):
+TIES = []   # E2/E3 の 1/3 の境目で前年比が同じになった年（記録のみ）
+
+
+def ib_forms(o, universe='us', rank_max=None, pick=None, uniform_nov=False, list_src='complete', tie=None):
     """Interbrand の持つもの。universe: 'us' | 'global' | 'nonus'。pick: None | 'risers' | 'fallers'。
     list_src: 'complete'（当時の原本で組んだ 17年分）| 'api_survivor'（R1: 2007〜2019 の API の生き残り・2015/2017 を含む）| 'api_2001_2006'（R2）"""
     P = o['parents']
@@ -318,7 +397,8 @@ def ib_forms(o, universe='us', rank_max=None, pick=None, uniform_nov=False, list
             if rank_max and (r.get('rank') or 999) > rank_max:
                 continue
             h = hold.setdefault(pid, {'cands': list(pp.get('yahoo') or []), 'status': 'private' if pid == 'PRIVATE' else 'listed',
-                                      'val': 0.0, 'grid_val': 0.0, 'rows': [], 'label': pp.get('name'), 'old': (o['old_ticker'].get(pid))})
+                                      'val': 0.0, 'grid_val': 0.0, 'rows': [], 'label': pp.get('name'), 'old': (o['old_ticker'].get(pid)),
+                                      'note': pp.get('note')})
             v = float(r.get('value') or 0)
             h['val'] += v
             if r.get('src') == 'pdf_grid_value':
@@ -348,6 +428,19 @@ def ib_forms(o, universe='us', rank_max=None, pick=None, uniform_nov=False, list
             order = sorted(yo, key=lambda k: (-yo[k], k))
             k3 = int(round(len(order) / 3.0))
             keep = set(order[:k3]) if pick == 'risers' else set(order[len(order) - k3:])
+            # 境目の同順位（事前登録に決めが無い・実装は記号の順）。★検査の後に足した: tie='all'（同順位を全部含める）・'value'（ブランド価値の大きいほうを取る）を報告のみで並べる
+            if k3:
+                edge = yo[order[k3 - 1]] if pick == 'risers' else yo[order[len(order) - k3]]
+                tied = sorted(k for k in yo if yo[k] == edge)
+                if len(tied) > 1 and any(k not in keep for k in tied):
+                    if tie is None:
+                        TIES.append((pick, y, M, round(edge, 4), tied, sorted(k for k in tied if k in keep)))
+                    if tie == 'all':
+                        keep |= set(tied)
+                    elif tie == 'value':
+                        n_in = sum(1 for k in tied if k in keep)
+                        best = sorted(tied, key=lambda k: (-hold[k]['val'], k))[:n_in]
+                        keep = (keep - set(tied)) | set(best)
             hold = {k: v for k, v in hold.items() if k in keep}
             for k in hold:
                 hold[k]['yoy'] = yo[k]
@@ -393,6 +486,9 @@ def wmac_forms(o, universe='us', subset='allstars'):
     return forms
 
 
+FORBES_OLD_TICKER = {}   # apply_fixes が足す（Kellogg だけ・Alpha Vantage の上場廃止の代替を Forbes の行にも当てる）
+
+
 def forbes_forms(o):
     fb = o['forbes']
     forms = []
@@ -405,7 +501,8 @@ def forbes_forms(o):
             if not r.get('us'):
                 continue
             hold[r['name']] = {'cands': [r['yahoo']] if r.get('yahoo') else [], 'status': 'listed', 'val': 1.0, 'grid_val': 0.0,
-                               'rows': [(r['rank'], r['name'], r.get('industry'), r.get('innovation_premium'))], 'label': r['name'], 'old': None}
+                               'rows': [(r['rank'], r['name'], r.get('industry'), r.get('innovation_premium'))], 'label': r['name'],
+                               'old': FORBES_OLD_TICKER.get(r['name'])}
         forms.append({'list': 'FORBES', 'list_year': y, 'buy': v['buy_month'], 'last': v['hold_last_month'], 'hold': hold, 'unmapped': []})
     return forms
 
@@ -414,30 +511,60 @@ def forbes_forms(o):
 AV_NOTE = []
 
 
+AVC = {}
+
+
 def av_returns(sym, last_month):
     """上場廃止した米国の親会社の Alpha Vantage 月次調整後（事前登録の delisted_fallback）。
-    MCP で取った結果を out/_nx_cache/av_{記号}_monthly_adj.json に置いたときだけ使う（無ければ None）。
-    系列の最後の月が上場廃止の月と ±1か月で一致するときだけ採用"""
-    p = os.path.join(N.CACHE, f'av_{sym}_monthly_adj.json')
-    if not os.path.exists(p):
-        return None
-    j = json.load(open(p))
-    ts = j.get('Monthly Adjusted Time Series') or {}
-    px = {}
-    for d, row in ts.items():
+    出所は out/nx_brand_av_delisted.json（MCP の応答の書き写し・コミットする）、無ければ out/_nx_cache/av_{記号}_monthly_adj.json。
+    系列の最後の月が上場廃止の月と ±1か月で一致するときだけ採用。
+    ★検査の後に足した: 調整後のリターンと終値＋配当のリターンが 2% 超 食い違う月は終値＋配当に置き換える（実測 K 2023-10: WK Kellogg の分離を
+    AV が分割の形と配当 $3.67 の両方で調整＝二重。調整後 −3.4% → 終値＋配当 −9.0%）"""
+    if sym in AVC:
+        return AVC[sym]
+    rows = None
+    if os.path.exists(AV_STORE):
+        st = (json.load(open(AV_STORE)).get('series') or {}).get(sym)
+        if st:
+            rows = [(r[0], r[1], r[2], r[3]) for r in st['rows']]
+    if rows is None:
+        p = os.path.join(N.CACHE, f'av_{sym}_monthly_adj.json')
+        if not os.path.exists(p):
+            AVC[sym] = None
+            return None
+        j = json.load(open(p))
+        ts = j.get('Monthly Adjusted Time Series') or {}
+        rows = [(d, float(r.get('4. close') or 0), float(r.get('5. adjusted close') or 0), float(r.get('7. dividend amount') or 0)) for d, r in ts.items()]
+    px, cl, dv = {}, {}, {}
+    for d, c, a, dd in rows:
         k = int(d[:4]) * 100 + int(d[5:7])
-        a = float(row.get('5. adjusted close') or 0)
         if a > 0 and k <= END:
-            px[k] = a
+            px[k], cl[k], dv[k] = a, c, dd
     if not px:
+        AVC[sym] = None
         return None
     lk = max(px)
     if abs((lk // 100 * 12 + lk % 100) - (last_month // 100 * 12 + last_month % 100)) > 1:
         AV_NOTE.append(f'{sym}: AV の最後の月 {lk} が上場廃止の月 {last_month} と ±1 か月で一致しない＝使わない')
+        AVC[sym] = None
         return None
     ks = sorted(px)
-    return {'r': {k: px[k] / px[p0] - 1 for p0, k in zip(ks, ks[1:])}, 'first': ks[0], 'last': ks[-1], 'px_months': set(ks), 'gaps': [],
-            'ccy': 'USD', 'fx': None}
+    r, fixed = {}, []
+    for p0, k in zip(ks, ks[1:]):
+        ra = px[k] / px[p0] - 1
+        rcd = (cl[k] + dv[k]) / cl[p0] - 1 if cl.get(p0) and cl.get(k) else ra
+        if abs(ra - rcd) > 0.02:
+            fixed.append((k, round(ra, 4), round(rcd, 4), dv[k]))
+            ra = rcd
+        r[k] = ra
+    if fixed:
+        AV_NOTE.append(f'{sym}: 調整後と終値＋配当が 2% 超 食い違う月を終値＋配当に置き換えた {fixed}')
+    big = [(k, round(v, 3)) for k, v in r.items() if v > 1.0 or v < -0.6]
+    if big:   # 事前登録の外れ値の検査（+100% 超・−60% 未満）の対象。AV は日足が取れないので確かめた出来事を書く
+        AV_NOTE.append(f'{sym}: +100% 超か −60% 未満の月 {big}' + ('（JWN 2020-11 はワクチンの発表の月の小売株の急騰・終値 12.10→25.92。AV の日足は取れず、日足では確かめていない＝そのまま）' if sym == 'JWN' else '（そのまま）'))
+    out = {'r': r, 'first': ks[0], 'last': ks[-1], 'px_months': set(ks), 'gaps': [], 'ccy': 'USD', 'fx': None}
+    AVC[sym] = out
+    return out
 
 
 def _avail_at(u, M):
@@ -447,7 +574,7 @@ def _avail_at(u, M):
 
 
 def resolve(fkey, h, M):
-    """→ (状態, 記号)。状態: ok / private / pre_ipo / missing"""
+    """→ (状態, 記号)。状態: ok / private / pre_ipo / delisted_before_buy / missing"""
     if h['status'] == 'private':
         return 'private', None
     if PRE_IPO.get(fkey, 0) > M:
@@ -464,7 +591,32 @@ def resolve(fkey, h, M):
         if u and M in u['px_months']:
             RET['AV:' + old[0]] = u
             return 'ok', 'AV:' + old[0]
+    if old and delisted_before_buy(old, h, M):
+        return 'delisted_before_buy', None
     return 'missing', None
+
+
+def _last_trading_day(ym):
+    """その月の最後の平日（祝日は見ない＝月末が祝日でも上場廃止の日との比較には十分）"""
+    y, m = ym // 100, ym % 100
+    d = datetime.date(y + (m == 12), m % 12 + 1, 1) - datetime.timedelta(days=1)
+    while d.weekday() >= 5:
+        d -= datetime.timedelta(days=1)
+    return d
+
+
+def delisted_before_buy(old, h, M):
+    """★検査の後に足した: 買う月の月末に、もう上場していなかった会社（事前登録の lower_bound は『買う月に値の無い（上場していた）親会社』だけが対象で、
+    上場していない会社は private / pre_ipo と同じく母集団から外す）。old = (記号, 最後の月, 再利用)。
+    最後の月 < 買う月 なら上場していない。最後の月 = 買う月 なら、対応表の注記の上場廃止の日（YYYY-MM-DD）が月の最後の平日より前のときだけ"""
+    if old[1] < M:
+        return True
+    if old[1] == M:
+        m = re.match(r'^(\d{4})-(\d{2})-(\d{2})', (h.get('note') or '').strip())
+        if m:
+            d = datetime.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+            return d < _last_trading_day(M)
+    return False
 
 
 
@@ -535,7 +687,7 @@ def simulate(forms, bench, mode='base', weights='ew', exclude=frozenset(), grid_
         M, H = f['buy'], min(f['last'], z)
         if M >= z:
             break
-        mem, dropped = {}, {'private': [], 'pre_ipo': [], 'missing': []}
+        mem, dropped = {}, {'private': [], 'pre_ipo': [], 'delisted_before_buy': [], 'missing': []}
         for key, h in f['hold'].items():
             if key in exclude:
                 continue
@@ -693,15 +845,18 @@ def factors(region):
     return out
 
 
-def factor_alpha(r, region, a, z, spread=None):
-    """切片（年率%）と NW t。spread を渡すと r − spread（買いと買いの差＝自己資金のいらない形）を回帰する（E9）"""
+def factor_alpha(r, region, a, z, spread=None, extra=None):
+    """切片（年率%）と NW t。spread を渡すと r − spread（買いと買いの差＝自己資金のいらない形）を回帰する（E9）。
+    extra = {名前: 月次の系列}（★事後の診断 PH9: QQQ−SPY などを因子に足す）"""
     F = factors(region)
-    ks = [k for k in sorted(r) if a <= k <= z and k in F and (spread is None or k in spread)]
+    extra = extra or {}
+    ks = [k for k in sorted(r) if a <= k <= z and k in F and (spread is None or k in spread) and all(k in v for v in extra.values())]
     if len(ks) < 36:
         return None
     names = ['Mkt-RF', 'SMB', 'HML', 'RMW', 'CMA', 'Mom']
     y = [r[k] - (spread[k] if spread is not None else F[k]['RF']) for k in ks]
-    X = [[1.0] + [F[k][c] for c in names] for k in ks]
+    X = [[1.0] + [F[k][c] for c in names] + [v[k] for v in extra.values()] for k in ks]
+    names = names + list(extra)
     b, se, r2 = ols_nw(y, X)
     return {'region': region, 'from': ks[0], 'to': ks[-1], 'months': len(ks), 'alpha_ann': round(float(b[0]) * 1200, 2),
             't_alpha_nw12': round(float(b[0] / se[0]), 2), 'loadings': {c: round(float(x), 3) for c, x in zip(names, b[1:])},
@@ -716,7 +871,7 @@ def coverage(o, show=True):
     for name, fs in F.items():
         rows = []
         for f in fs:
-            c = {'ok': 0, 'missing': 0, 'private': 0, 'pre_ipo': 0}
+            c = {'ok': 0, 'missing': 0, 'private': 0, 'pre_ipo': 0, 'delisted_before_buy': 0}
             for key, h in f['hold'].items():
                 st, tk = resolve(key, h, f['buy'])
                 c[st] += 1
@@ -771,6 +926,24 @@ def apply_fixes(o):
     DEVIATIONS.append({'what': 'WMAC の候補のうち一度も株が上場していない会社（相互会社・協同組合・パートナーシップ・従業員所有: USAA・State Farm・Northwestern Mutual・New York Life・MassMutual・Nationwide・Liberty Mutual・TIAA・Thrivent・Publix・Graybar・Peter Kiewit・Jones Financial・Land O\'Lakes・CH2M Hill）を非上場として母集団から外した',
                        'why': '事前登録の missing_rules.private（非上場は買えないので母集団から外す）を WMAC に当てる形を、事前登録は名前で決めていなかった。Fortune の Company type は今の種類（買収された会社も Private）なので使えず、名前で固定した',
                        'affects_grade': 'P4・E6〜E11 の下限版・中立版（base は元から値が無いので外れる）。All-Stars では Publix・USAA'})
+    apply_fixes_after_inspection(o)
+
+
+INSPECTION_FIXES = []   # ★検査（3レンズ）の後の是正の記録（前後の数字は run() が足す）
+
+
+def apply_fixes_after_inspection(o):
+    """★1回目の結果と検査役の指摘を見た後の是正（2026-09-28）。規則そのもの（一覧・重み・相手・期間・格付けの線）は変えていない"""
+    # (1) 上場廃止の代替（事前登録 data.prices.delisted_fallback）を実施: 1回目は Alpha Vantage の上限で使えなかった。
+    #     OLD_TICKER に無かった Kellogg（K）・Avon（AVP）は事前登録の規則（上場廃止で Yahoo に値の無い米国の親会社は AV を当時の記号で当たる）の対象なので足した
+    o['old_ticker'].setdefault('K', ['K', 202512, ''])
+    o['old_ticker'].setdefault('AVP', ['AVP', 202001, ''])
+    o['wmac_old_ticker'].setdefault('/company/kellogg/', ['K', 202512, ''])
+    FORBES_OLD_TICKER['Kellogg'] = ['K', 202512, '']
+    # (2) Xerox の Conduent の分離（2016-12-31 配布・2017-01-03 から別取引）を分離の検査の対象に足した（EVENTS に無かった）
+    ev = [tuple(x) for x in o['events']]
+    if ('XRX', 201701, 'Conduent を分離') not in ev:
+        o['events'] = list(o['events']) + [['XRX', 201701, 'Conduent を分離']]
 
 
 # ───────────────────────── 分離（spin-off）の検査 ─────────────────────────
@@ -797,7 +970,7 @@ def _daily(tk):
         # 日足の時刻は取引所の寄り付き（ニューヨークは UTC 13:30）。月足と同じ +12 時間では米国の日付が1日先へずれるので、現地の時刻で日付を読む
         d = datetime.datetime.utcfromtimestamp(t + off).date()
         rows.append({'d': d.isoformat(), 'ym': d.year * 100 + d.month, 'open': q['open'][i], 'close': c, 'adj': a})
-    return {'rows': rows, 'events': r.get('events') or {}}
+    return {'rows': rows, 'events': r.get('events') or {}, 'gmtoffset': off}
 
 
 def spin_check(o):
@@ -812,7 +985,15 @@ def spin_check(o):
                 tk = c
                 break
         if not tk:
-            rec.update(verdict='系列なし（値の無い親会社として missing の約束に回る）', ticker=None)
+            old = (o.get('old_ticker') or {}).get(pid)
+            av = av_returns(old[0], old[1]) if old and old[2] != 'reused' else None
+            if av and av['first'] < ym <= av['last']:
+                rec.update(ticker='AV:' + old[0], verdict_class='av_checked',
+                           verdict=f'Yahoo に系列なし → Alpha Vantage の月足で持つ。AV の調整後終値は分離を二重に調整していた（その月の調整後 −3.4%・終値＋記録された配当 −9.0%）'
+                                   f'→ av_returns が終値＋配当に置き換えた（月のリターン {round(av["r"].get(ym, float("nan")) * 100, 2)}%）' if pid == 'K' else
+                                   f'Yahoo に系列なし → Alpha Vantage の月足（月のリターン {round(av["r"].get(ym, float("nan")) * 100, 2)}%）')
+            else:
+                rec.update(verdict='系列なし（値の無い親会社として missing の約束に回る）', ticker=None, verdict_class='no_series')
             out.append(rec)
             continue
         dd = _daily(tk)
@@ -825,24 +1006,41 @@ def spin_check(o):
         wc = min(win, key=lambda x: x[1])
         wa = min(win, key=lambda x: x[2])
         big_div = []
+        off = int(dd.get('gmtoffset') or 0)
         for k, v in (dd['events'].get('dividends') or {}).items():
-            d = datetime.datetime.utcfromtimestamp(int(k) + 43200).date()
+            d = datetime.datetime.utcfromtimestamp(int(v.get('date', k)) + off).date()   # ★検査の後に直した: 現地の時刻で日付を読む（+12時間では月末の配当が翌月に入った）
             yy = d.year * 100 + d.month
             if lo <= yy <= hi:
                 px = next((r['close'] for r in reversed(dd['rows']) if r['d'] < d.isoformat()), None)
                 if px and v.get('amount', 0) > 0.05 * px:
                     big_div.append((d.isoformat(), round(v['amount'], 3), round(v['amount'] / px, 3)))
+        splits = []
+        for k, v in (dd['events'].get('splits') or {}).items():
+            d = datetime.datetime.utcfromtimestamp(int(v.get('date', k)) + off).date()
+            if lo <= d.year * 100 + d.month <= hi:
+                splits.append((d.isoformat(), v.get('splitRatio')))
+        double = [(a, b) for a in splits for b in big_div if a[0] == b[0]]
         rec.update(ticker=tk, worst_close_day=(wc[0], round(wc[1], 4), round(wc[2], 4)), worst_adj_day=(wa[0], round(wa[2], 4)),
-                   large_dividend_adjustments=big_div, month_return_usd=round(usd_returns(tk)['r'].get(ym, float('nan')), 4))
+                   large_dividend_adjustments=big_div, splits_in_window=splits, month_return_usd=round(usd_returns(tk)['r'].get(ym, float('nan')), 4))
         if 'Kenvue' in desc:
             rec['verdict'] = '交換買付（応じなければ株価に分離の段差は出ない）＝手直し不要'
+            rec['verdict_class'] = 'exchange_offer'
+        elif double:
+            rec['verdict'] = (f'二重に反映: 同じ日に分割 {double[0][0][1]} と配当 {double[0][1][1]}（前日の終値の {round(double[0][1][2] * 100, 1)}%）の両方で調整されていた'
+                              f'（調整後の月のリターンが本来より約 {round(double[0][1][2] * 100, 1)}% 高い）→ ADJ_FIX で終値（分割の調整だけ）のリターンに置き換えた')
+            rec['verdict_class'] = 'double_adjusted_fixed'
+            rec['month_return_usd_after_fix'] = round(usd_returns(tk)['r'].get(ym, float('nan')), 4)
         elif wa[2] > -0.15:
-            rec['verdict'] = ('反映済み: 調整後終値の日々の下落に分離の段差が無い'
+            rec['verdict'] = ('反映済み（判定の線: 調整後終値の日々の下落に −15% を超える段差が無い。★この線で見分けられるのは分離の価値が約15%を超える事例だけで、'
+                              'それより小さい分離〔Kering→Puma・Siemens Energy・IBM→Kyndryl 等〕は月のリターンの検算〔検査役: IBM 2021-11 −0.8%・SIE 2020-09 +1.9%・'
+                              'GE 2023-01 +23.0%・GE 2024-04 +15.7%・MMM 2024-04 +8.8% はどれも反映済みの値と整合〕で確かめた）'
                               + ('（Yahoo が分離を大きな配当として調整後終値に入れている）' if big_div else '（Yahoo が分離より前の履歴を分割と同じ形で書き直している＝終値も連続）'))
+            rec['verdict_class'] = 'reflected_dividend' if big_div else 'reflected_history_rewritten'
         else:
             fx = SPIN_RATIO.get((pid, ym))
             if not fx:
                 rec['verdict'] = '反映されていない・比率が一次の出所で確かめられない → その月を値の無い月として扱う'
+                rec['verdict_class'] = 'not_reflected_missing'
                 BAD_MONTH.setdefault(tk, set()).add(ym)
             else:
                 pre = wa[3]
@@ -858,6 +1056,7 @@ def spin_check(o):
                 else:
                     r_usd = r_loc
                 SPIN_FIX.setdefault(tk, {})[ym] = r_usd
+                rec['verdict_class'] = 'not_reflected_fixed'
                 rec['verdict'] = (f"反映されていない（{wa[0]} に調整後終値も {round(wa[2] * 100, 1)}%）→ 一次の出所で比率 {fx['ratio']} を確かめ、"
                                   f"受け取った株の価値＝分離の前日の終値 {round(pre['close'], 2)} − 分離の日の寄り付き（取引所の値決め）{round(exd['open'], 2)} = {round(v0, 2)} で、"
                                   f"その月のリターンを {round(u['r'][ym] * 100, 2)}% → {round(r_usd * 100, 2)}%（ドル）に置き換えた")
@@ -913,6 +1112,65 @@ def outlier_check(pairs, bench):
     return out, diag
 
 
+# ───────────────────────── 配当の照合の一覧（★検査の後に足した・何も変えない＝ADJ_FIX と DIVCAP の結果を並べるだけ） ─────────────────────────
+ADJ_NOTE = {
+    ('SINGY', 202006): 'Singapore Airlines の ADR。2020 年の株主割当増資で、ADR の保有者は新株を引き受けられず預託銀行が権利を売った代金（$1.708/ADR）を配った＝本物の現金の分配。'
+                       '差は再投資の時期の違い（調整後は配当落ちの日に再投資）。調整後のまま（E7 の1か月だけ）',
+}
+
+
+def adj_check(pairs):
+    """持っている全ての（記号, 月）で、調整後のリターン と 終値＋記録された配当のリターン（どちらも現地通貨）を比べる。
+    2% 超 食い違う月・1回の配当が前月の終値の 8% を超える月を一覧にし、その扱い（ADJ_FIX／通貨の食い違い／本物の大きな分配の再投資の時期の差）を書く"""
+    rows = []
+    for (tk, t) in sorted(pairs):
+        if tk.startswith('AV:'):
+            continue
+        s = series(tk)
+        ks = [k for k in sorted(s['px']) if k < t]
+        if not ks or t not in s['px']:
+            continue
+        p = ks[-1]
+        c0, c1 = s['close'].get(p), s['close'].get(t)
+        if not c0 or not c1:
+            continue
+        ra = s['px'][t] / s['px'][p] - 1
+        divs = [(d, a) for m, lst in s['divm'].items() if p < m <= t for d, a in lst]
+        dsum = sum(a for _, a in divs)
+        rcd = (c1 + dsum) / c0 - 1
+        big = [(d, round(a, 4), round(a / c0, 3)) for d, a in divs if a / c0 > 0.08]
+        if abs(ra - rcd) <= 0.02 and not big:
+            continue
+        used, how = local_ret(tk, s, p, t)
+        rec = {'ticker': tk, 'month': t, 'adj': round(ra, 4), 'close': round(c1 / c0 - 1, 4), 'close_plus_div': round(rcd, 4), 'used_local': round(used, 4),
+               'dividends': [(d, round(a, 4)) for d, a in divs], 'large': big}
+        if how == 'adj_fix':
+            rec['verdict'] = 'Yahoo の調整後終値の誤り → ' + ADJ_FIX[(tk, t)]['why']
+        elif how == 'close_div':
+            rec['verdict'] = f'配当の通貨・単位の食い違い（捕捉率の中央値 {DIVCAP[tk]["median"]}）→ 全ての月を終値＋配当で作った'
+        elif (tk, t) in ADJ_NOTE:
+            rec['verdict'] = ADJ_NOTE[(tk, t)]
+        elif big:
+            dd = _daily(tk)
+            steps = []
+            for d, a, fr in big:
+                i = next((i for i, r in enumerate(dd['rows']) if r['d'] >= d), None) if dd else None
+                if i:
+                    steps.append((d, fr, round(dd['rows'][i]['close'] / dd['rows'][i - 1]['close'] - 1, 4)))
+            backed = steps and all(st <= -0.5 * fr for _, fr, st in steps)
+            rec['ex_day_close_step'] = steps
+            rec['verdict'] = ('本物の大きな分配（特別配当・分離を配当の形で・合併の現金）: 配当落ちの日に終値が分配の半分以上下がっている。差は再投資の時期の違い＝調整後のまま（CRSP と同じ約束）'
+                              if backed else '大きな分配だが配当落ちの日の終値の下げが小さい＝確かめきれない（調整後のまま）')
+        else:
+            rec['verdict'] = '確かめきれない（調整後のまま）'
+        rows.append(rec)
+    return {'rule': '持っている月で |調整後 − 終値＋配当| > 2% か、1回の配当 > 前月の終値の 8%（現地通貨）', 'rows': rows,
+            'div_capture_close_div': {k: v for k, v in DIVCAP.items() if v['use_close_div']},
+            'div_capture_note': '捕捉率＝(調整後のリターン−終値のリターン)÷(配当÷前月の終値×(1+終値のリターン))。1 なら調整後終値が配当をそのまま取り込んでいる。'
+                                '中央値 < 0.5（3か月以上）の記号は全ての月を終値＋記録された配当で作った（ロンドン: 株価はペンス・配当もペンスなのに調整がほぼ0＝Yahoo の単位の誤り。'
+                                'Prada 1913.HK: 配当は香港ドル建てで記録されているのに調整はユーロの額＝約 1/9）'}
+
+
 # ───────────────────────── 規則ごとの測定 ─────────────────────────
 def window_of(forms):
     return ym_next(forms[0]['buy']), min(max(f['last'] for f in forms), END)
@@ -937,6 +1195,7 @@ def measure(rid, family, desc, forms, bench, bench_name, weights, cost_key, rf, 
     net = N.apply_cost(r, ann_to, COST[cost_key])
     cost_full = N.excess_stats(net, b, a, z)
     net_s = N.apply_cost(r, ann_to, COST_SENS[cost_key])
+    net_rt = N.apply_cost(r, ann_to, COST_SENS_RT[cost_key])
     lo = simulate(forms, bench, 'lower', weights)
     lower = N.excess_stats(lo['r'], b, a, z)
     ne = simulate(forms, bench, 'neutral', weights)
@@ -952,7 +1211,10 @@ def measure(rid, family, desc, forms, bench, bench_name, weights, cost_key, rf, 
         'hold_2007on': N.excess_stats(r, b, max(a, N.HOLD_START), z),
         'recent_2013_07on': N.excess_stats(r, b, max(a, N.RECENT_START), z),
         'cost': {'annual_oneway_turnover': round(ann_to, 3), 'cost_per_unit': COST[cost_key], 'after_cost_full': cost_full,
-                 'sensitivity_cost_per_unit': COST_SENS[cost_key], 'after_cost_sensitivity_full': N.excess_stats(net_s, b, a, z)},
+                 'sensitivity_cost_per_unit': COST_SENS[cost_key], 'after_cost_sensitivity_full': N.excess_stats(net_s, b, a, z),
+                 'sensitivity_note': '★検査の後に直した注記: R7 の 0.495%（楽天の米国株の手数料率）は片側＝1回の約定の料率。片道の回転1単位は売り1回＋買い1回＝2回の約定なので、'
+                                     '課税口座の実際の手数料は約 0.99%/単位（R7b）。NISA 口座では楽天の米国株の手数料は0円',
+                 'sensitivity_roundtrip_cost_per_unit': COST_SENS_RT[cost_key], 'after_cost_sensitivity_roundtrip_full': N.excess_stats(net_rt, b, a, z)},
         'drop_top': {'dropped': top, 'dropped_label': str(top), 'contrib_ann_pct': round(base['contrib'][top] / (len(rr) / 12) * 100, 3), 'stats': drop_top,
                      'top5_contrib': [(str(k), round(v / (len(rr) / 12) * 100, 3)) for k, v in top_c[:5]],
                      'bottom5_contrib': [(str(k), round(v / (len(rr) / 12) * 100, 3)) for k, v in top_c[-5:]]},
@@ -1069,6 +1331,106 @@ def post_hoc(F, spy, sims, recs):
     return out
 
 
+def post_hoc_inspection(sims, recs, benches, qqq, spy, dev, prim_p, expl_p):
+    """★事後（2回目の検査の後に足した・格付けに使わない）: 検査役（悪魔の代弁者）が測った頑健性を、このコードの数字で再現して残す。
+    PH8: 超過（対数）が最も大きい一覧の年を相手と同じにした版と、その p で Holm を計算し直した値。
+    PH9: 6因子（R4）に QQQ−SPY（大型成長・テックへの傾き）を足した切片。全体版は SPY−Developed（米国への傾き）も足す"""
+    out = {'note': '★事後の診断（検査の後に足した）。格付けには使わない'}
+    ph8 = {}
+    for rid in ('P1_IB_US_EW', 'P2_IB_US_BVW', 'P3_IB_GL_EW', 'E3_IB_US_EW_fallers', 'E4_IB_GL_BVW', 'E5_IB_US_EW_uniform_nov', 'E6_WMAC_US_top10', 'E7_WMAC_GL_EW'):
+        a, z = recs[rid]['window']
+        r, b = sims[rid]['r'], benches[rid]
+        by = []
+        for f in sims[rid]['forms']:
+            ks = [k for k in ym_range(ym_next(f['buy']), f['last']) if k in r and a <= k <= z]
+            if ks:
+                by.append((f['list_year'], ks, sum(math.log(1 + r[k]) - math.log(1 + b[k]) for k in ks)))
+        tot = sum(x[2] for x in by)
+        best = max(by, key=lambda x: x[2])
+        r2 = dict(r)
+        for k in best[1]:
+            r2[k] = b[k]
+        st = N.excess_stats(r2, b, a, z)
+        pp = dict(prim_p if recs[rid]['family'] == 'primary' else expl_p)
+        pp[rid] = N.p_one(st['t']) if st else None
+        ph8[rid] = {'dropped_list_year': best[0], 'months': [best[1][0], best[1][-1]], 'share_of_log_excess': round(best[2] / tot, 3) if tot > 0 else None,
+                    'stats': st, 'p_one': round(pp[rid], 4) if pp[rid] is not None else None, 'holm_recomputed': N.holm(pp).get(rid)}
+    out['PH8_drop_best_list_year'] = ph8
+    qs = {k: qqq[k] - spy[k] for k in qqq if k in spy}
+    sd = {k: spy[k] - dev[k] for k in spy if k in dev}
+    ph9 = {}
+    for rid in ('P1_IB_US_EW', 'P2_IB_US_BVW', 'E3_IB_US_EW_fallers', 'E5_IB_US_EW_uniform_nov', 'E6_WMAC_US_top10'):
+        a, z = recs[rid]['window']
+        rr = {k: v for k, v in sims[rid]['r'].items() if a <= k <= z}
+        ph9[rid] = {'base_R4': recs[rid]['factor_alpha_R4'], 'plus_QQQ_minus_SPY': factor_alpha(rr, 'us', a, z, extra={'QQQ_minus_SPY': qs})}
+    for rid in ('P3_IB_GL_EW', 'E4_IB_GL_BVW', 'E7_WMAC_GL_EW'):
+        a, z = recs[rid]['window']
+        rr = {k: v for k, v in sims[rid]['r'].items() if a <= k <= z}
+        ph9[rid] = {'base_R4': recs[rid]['factor_alpha_R4'], 'plus_QQQ_minus_SPY': factor_alpha(rr, 'dev', a, z, extra={'QQQ_minus_SPY': qs}),
+                    'plus_QQQ_minus_SPY_and_SPY_minus_Dev': factor_alpha(rr, 'dev', a, z, extra={'QQQ_minus_SPY': qs, 'SPY_minus_Dev': sd})}
+    out['PH9_factor_alpha_plus_growth_tilt'] = ph9
+    return out
+
+
+# 2回目の実行（検査の前・out/nx_brand.json の前の版）の数字: (格付け, 全期間の幾何の年率差 %, NW t, 下限版, 中立版)
+PREV_RUN2 = {
+    'P1_IB_US_EW': ('A', 2.23, 1.86, -0.88, 1.91), 'P2_IB_US_BVW': ('S', 3.33, 2.56, 2.12, 3.19), 'P3_IB_GL_EW': ('S', 2.12, 2.25, 0.41, 1.93),
+    'P4_WMAC_US_EW': ('B', 0.34, 0.33, -1.30, 0.27), 'E1_IB_US_EW_top50': ('B', 1.40, 1.12, -0.29, 1.23), 'E2_IB_US_EW_risers': ('B', 1.67, 0.93, 0.83, 1.65),
+    'E3_IB_US_EW_fallers': ('A', 3.37, 1.72, -1.36, 2.87), 'E4_IB_GL_BVW': ('S', 3.80, 3.48, 3.02, 3.69), 'E5_IB_US_EW_uniform_nov': ('A', 2.11, 1.77, -0.86, 1.84),
+    'E6_WMAC_US_top10': ('A', 4.19, 2.14, 4.19, 4.19), 'E7_WMAC_GL_EW': ('A', 2.88, 2.31, 1.47, 2.75), 'E8_WMAC_US_contenders': ('C', -0.58, -0.17, -4.54, -0.54),
+    'E10_WMAC_US_industry_leaders': ('C', -0.05, 0.12, -1.38, -0.08), 'E11_WMAC_US_industry_laggards': ('C', -1.02, -0.09, -7.68, -0.58),
+    'E12_FORBES_US_EW': ('B', 3.37, 1.35, -6.52, 2.93), 'E9_WMAC_US_allstars_vs_contenders': ('B', 0.92, 0.38, -0.72, 0.85),
+    '_holm_primary': {'P2_IB_US_BVW': 0.0209, 'P3_IB_GL_EW': 0.0367, 'P1_IB_US_EW': 0.0629, 'P4_WMAC_US_EW': 0.3707},
+}
+
+
+def inspection_record(recs, hp, he):
+    """★検査（3レンズ）の後の是正の一覧と、2回目の実行（検査の前）との前後の数字"""
+    after = {k: (v['grade'], (v['full'] or {}).get('cagr_diff'), (v['full'] or {}).get('t'), (v['lower_bound'] or {}).get('cagr_diff'),
+                 (v['neutral_R5'] or {}).get('cagr_diff')) for k, v in recs.items()}
+    return {
+        'when': '2026-09-28（2回目の実行と3人の検査役の報告を見た後）',
+        'rule_changes': 'なし（一覧・重み・相手・期間・費用の線・格付けの線は事前登録のまま）。直したのはデータと、事前登録の約束の当て方だけ',
+        'fixes': [
+            {'what': '上場廃止の代替（事前登録 data.prices.delisted_fallback）を実施した',
+             'detail': '1回目・2回目は Alpha Vantage の上限で使えなかった。2026-09-28 の夜に MCP で取れた9記号（K・AVP・TIF・VIAB・YHOO・HNZ・BKC・MER・JWN）の月足を書き写して '
+                       'out/nx_brand_av_delisted.json に置き（打ち間違いは調整後÷終値の比の検査で0件）、事前登録の約束（最後の月が上場廃止の月と ±1か月）で採用。'
+                       'Kellogg（K）と Avon（AVP）は対応表の OLD_TICKER に無かったが、事前登録の規則（上場廃止で Yahoo に値の無い米国の親会社は AV を当時の記号で当たる）の対象なので足した。'
+                       'EK・WWY は AV に記号が無く、STJ・WFM は AV の上限で取れなかった＝missing の約束のまま。HNZ・BKC は上場廃止の後の出来高0の据え置きの行と、BKC は同じ記号の別銘柄（2018-2019）の行を書き写していない。'
+                       'K の 2023-10（WK Kellogg の分離）は AV の調整後終値も二重に調整していた（調整後 −3.4%・終値＋配当 −9.0%）→ 終値＋配当',
+             'source': 'St. Jude と Kellogg/Avon の欠け（検査役 1・2）'},
+            {'what': '買う月の月末にもう上場していなかった会社を、どの版でも母集団から外した（delisted_before_buy）',
+             'detail': 'St. Jude Medical（WMAC 2017・最後の月 2017-01・買う月 2017-02）・Dell（2013 の一覧・2013-10-29 非公開化・買う月 2013-10 の月末には上場していない）・'
+                       'Anheuser-Busch（E5 2008・2008-11-18 買収・買う月 2008-11）。事前登録の lower_bound は『買う月に値の無い（上場していた）親会社』が対象で、下限版で −30%・中立版で相手と同じにしていたのは誤り',
+             'source': '検査役 1（St. Jude）・検査役 2（Dell）'},
+            {'what': 'Yahoo の調整後終値の誤り4か月を直した（ADJ_FIX）',
+             'detail': 'ITX.MC 2007-09（調整後 +41.9%→終値＋配当 +9.9%）・ITX.MC 2008-09（+15.7%→−6.7%）・CS.PA 2008-05（+19.6%→終値 −5.0%・偽の配当 €3.71/€1.18）・'
+                       'XRX 2017-01（+38.4%→終値 +20.5%・Conduent の分離を分割 1518:1000 と配当 $2.98 で二重に調整）。日足で配当落ちの日に終値が下がっていないことを確かめた',
+             'source': '検査役 2'},
+            {'what': '配当が調整後終値に実質入っていない記号（配当の通貨・単位の食い違い）を、すべての月で終値＋記録された配当から作った（DIVCAP の捕捉率の中央値 < 0.5）',
+             'detail': 'ロンドン6社（BP.L・HSBA.L・SHEL.L・DGE.L・BARC.L・BRBY.L: 株価も配当もペンスなのに調整がほぼ0＝捕捉率 0.01）と Prada（1913.HK: 配当は香港ドルで記録されているのに調整はユーロの額＝捕捉率 0.12）。'
+                       'Prada は検査役の指摘の外で、同じ検査（全記号の捕捉率）で見つけた',
+             'source': '検査役 2（ロンドン）・この是正の中の全記号の検査（Prada）'},
+            {'what': 'Xerox の Conduent の分離（2017-01）を分離の検査の対象に足し、分離の検査に『同じ日の分割と大きな配当＝二重の調整』の判定を足した。配当の日付を現地の時刻で読むよう直した（+12時間では月末の配当が翌月に入った）',
+             'source': '検査役 2（Xerox）'},
+            {'what': '分離の検査の件数の表記を直した（data_checks.spin_offs_counts に分類ごとの数）。−15% の閾値で見分けられるのは分離の価値が約15%を超える事例だけ、と判定の文に書いた',
+             'source': '検査役 1'},
+            {'what': '為替の壊れた月の置き換えに『翌月の最初の日足』を使う（Yahoo の為替の日足は1日遅れ）',
+             'source': '検査役 2（影響は小数2桁で0）'},
+            {'what': 'R7 の費用の感度は片側の料率なので、売りと買いの両方に掛けた R7b（米国 0.99%・全体 1.20%）を足した（報告のみ）',
+             'source': '検査役 3'},
+            {'what': 'E2/E3 の境目の同順位（事前登録に決めが無い・実装は記号の順）を R10 に並べた（同順位を全部含める・価値の大きいほうを取る）',
+             'source': '検査役 2'},
+            {'what': '事後の診断 PH8（超過が最大の一覧の年を相手と同じにした版・Holm の再計算）と PH9（6因子に QQQ−SPY を足した切片）を足した（格付けに使わない）',
+             'source': '検査役 3'},
+        ],
+        'before_run2': {k: v for k, v in PREV_RUN2.items() if not k.startswith('_')},
+        'before_run2_holm_primary': PREV_RUN2['_holm_primary'],
+        'after': after, 'after_holm_primary': hp, 'after_holm_exploratory': he,
+        'format': '(格付け, 全期間の幾何の年率差 %, NW t, 下限版の年率差, 中立版の年率差)',
+    }
+
+
 def run():
     pre, o, sha = load_lists()
     apply_fixes(o)
@@ -1110,6 +1472,7 @@ def run():
     F['E4'] = F['P3']
     pairs = held_pairs([F[k] for k in ('P1', 'P3', 'P4', 'E1', 'E2', 'E3', 'E5', 'E6', 'E7', 'E8', 'E10', 'E11', 'E12', 'R1', 'R2', 'NONUS')])
     outl, diag = outlier_check(pairs, spy)
+    adjc = adj_check(pairs)
 
     spec = [
         ('P1_IB_US_EW', 'primary', 'Interbrand 17年分（当時の原本）の米国の親会社を等分・相手 SPY', 'P1', spy, 'SPY', 'ew', 'us', 'us'),
@@ -1149,6 +1512,16 @@ def run():
 
     # ── 報告のみ（格付けしない）
     rep = {}
+    # R10（★検査の後に足した）: E2/E3 の 1/3 の境目の同順位の扱いを変えた版（事前登録に決めが無い。実装は記号の順）
+    r10 = {'ties_found': sorted({(t[0], t[1], t[3], tuple(t[4]), tuple(t[5])) for t in TIES}), 'variants': {}}
+    for rid, pk in (('E2_IB_US_EW_risers', 'risers'), ('E3_IB_US_EW_fallers', 'fallers')):
+        a, z = recs[rid]['window']
+        for tv in ('all', 'value'):
+            sv = simulate(ib_forms(o, 'us', pick=pk, tie=tv), spy, 'base', 'ew')
+            st = N.excess_stats(sv['r'], spy, a, z)
+            r10['variants'][f'{rid}__tie_{tv}'] = {'stats': st, 'p_one': round(N.p_one(st['t']), 4) if st else None}
+    rep['R10_tie_variants'] = r10
+    rep['R7b_cost_sensitivity_roundtrip'] = {k: v['cost']['after_cost_sensitivity_roundtrip_full'] for k, v in recs.items()}
     a1, z1 = window_of(F['R1'])
     r1 = simulate(F['R1'], spy, 'base', 'ew')
     rep['R1_hindsight_api'] = {'desc': 'P1 を Interbrand の API の生き残りの一覧（2007〜2019 は抜けた一覧・2015/2017 は10月に買う）で組んだ版（後知恵）',
@@ -1196,6 +1569,8 @@ def run():
     rep['C5_like_units_report']['units'] = 4
 
     ph = post_hoc(F, spy, sims, recs)
+    benches = {k: (spy if v['benchmark'] == 'SPY' else dev) for k, v in recs.items() if v['benchmark'] in ('SPY', 'French Developed Mkt')}
+    ph.update(post_hoc_inspection(sims, recs, benches, etf['QQQ'], spy, dev, prim, expl))
     tested = [recs[k] for k in recs]
     # 格付けしない報告（R1〜R9）と事後の診断も tested に1本ずつ残す（多重検定の数を数えるため・grade は None）
     def _t(i, fam, desc, st):
@@ -1218,7 +1593,27 @@ def run():
     tested.append(_t('PH3_P1_ex_tech6', 'post_hoc', ph['PH3_P1_ex_tech6']['desc'], ph['PH3_P1_ex_tech6']['vs_SPY']))
     tested.append(_t('PH4_P2_cap10', 'post_hoc', ph['PH4_P2_cap10']['desc'], ph['PH4_P2_cap10']['vs_SPY']))
     tested.append(_t('PH5_P2_minus_P1', 'post_hoc', ph['PH5_P2_minus_P1']['desc'], ph['PH5_P2_minus_P1']['stats']))
+    for nm, v in rep['R10_tie_variants']['variants'].items():
+        tested.append(_t(f'R10_{nm}', 'report_only', '★検査の後: E2/E3 の境目の同順位の扱いを変えた版', v['stats']))
+    for rid, v in ph['PH8_drop_best_list_year'].items():
+        tested.append(_t(f'PH8_{rid}', 'post_hoc', f'★検査の後: 超過が最大の一覧の年（{v["dropped_list_year"]}）を相手と同じにした版', v['stats']))
     grades = {k: v['grade'] for k, v in recs.items()}
+    spin_counts = {}
+    for x in spins:
+        spin_counts[x.get('verdict_class', '?')] = spin_counts.get(x.get('verdict_class', '?'), 0) + 1
+    spin_counts['total_events'] = len(spins)
+    av_used = {}
+    for (tk, t) in pairs:
+        if tk.startswith('AV:'):
+            av_used.setdefault(tk[3:], []).append(t)
+    av_used = {k: [min(v), max(v), len(v)] for k, v in sorted(av_used.items())}
+    miss_primary = {}
+    for rid in ('P1_IB_US_EW', 'P3_IB_GL_EW', 'P4_WMAC_US_EW'):
+        for f in recs[rid]['forms']:
+            for k in (f.get('dropped') or {}).get('missing', []):
+                miss_primary.setdefault(k, set()).add(f['list_year'])
+    miss_primary = {k: sorted(v) for k, v in sorted(miss_primary.items())}
+    inspection = inspection_record(recs, hp, he)
     best = max(recs.values(), key=lambda v: ({'S': 3, 'A': 2, 'B': 1, 'C': 0}[v['grade']] + (0.5 if v['family'] == 'primary' else 0), (v['full'] or {}).get('cagr_diff', -99)))
     out = {
         'angle': 'nx_brand', 'prereg': 'out/nx_brand_prereg.json', 'global_prereg': 'out/nx_prereg.json（criteria_short_sample）',
@@ -1226,11 +1621,14 @@ def run():
         'grade_function': 'nx_common.grade_short（事前登録 criteria.which = criteria_short_sample）',
         'period_end': END,
         'deviations_from_prereg': DEVIATIONS + [
-            {'what': '上場廃止した米国の親会社の Alpha Vantage 月次調整後（delisted_fallback）は使えなかった',
-             'why': 'Alpha Vantage の MCP が 2026-09-28 に『25 requests per day』の上限に達していた（並走の他セッションが使い切った）。鍵のファイルもリポジトリに無い。'
-                    'av_returns() はキャッシュ out/_nx_cache/av_{記号}_monthly_adj.json があれば使う形で残した（今回は1件も無い）',
-             'affects_grade': 'Interbrand の BKC・EK・HNZ・MER・TIF・VIAB・WWY・YHOO・LNKD と WMAC の WFM・STJ・JWN は、事前登録どおり missing の約束（base は外す・下限版は −30%・中立版は相手と同じ）に回った。'
-                              '★Kellanova（K）は 2025-12 の Mars の買収で Yahoo から消え、事前登録の OLD_TICKER にも無い＝Interbrand 2007〜2024 のすべての年で値の無い親会社になった（base では外れ、下限版は毎年 −30%＝下限版は本来より厳しい）'},
+            {'what': '上場廃止した米国の親会社の Alpha Vantage 月次調整後（delisted_fallback）: 1回目・2回目の実行では使えなかった → ★3回目（検査の後）に9記号で実施',
+             'why': '1回目・2回目: Alpha Vantage の MCP が 2026-09-28 の日中に『25 requests per day』の上限に達していた（並走の他セッションが使い切った）。鍵のファイルもリポジトリに無い。'
+                    '3回目: 同じ日の夜に MCP で K・AVP・TIF・VIAB・YHOO・HNZ・BKC・MER・JWN が取れた（EK・WWY は記号が無い、STJ・WFM は再び上限）。応答を out/nx_brand_av_delisted.json に書き写した',
+             'affects_grade': '★値の無い上場会社（missing の約束）に残るもの: Interbrand の EK（2007）・WWY（2007）と、事前登録の代替が米国の親会社だけなので米国外の Credit Suisse（CSGN・2010〜2012・P3）・'
+                              'Porsche SE（PAH3・2007〜2008・Yahoo の系列は 2009-01 から・P3）・Reuters（RTR.L・2007）・Grupo Modelo（2010〜2012）。WMAC の STJ（2014〜2016）・WFM（2014〜2017）。'
+                              'Dell（2007〜2012）・Anheuser-Busch（2007〜2008）・Hertz（2007）は記号が別会社に再利用されたので事前登録どおり AV も使わない。'
+                              '2回目までの記録は Kellogg だけを挙げていたが、Avon（AVP・2007〜2013・主の族 P1/P2/P3）・Credit Suisse・Porsche SE も欠けていた（検査役 1 の指摘）。'
+                              'P2 の値の無い親会社のブランド価値の割合は data_checks.value_share_missing_P2_by_list_year（2回目は 2007 年 11.4% → 2024 年 0.3%・事前登録の見込み 6.7% より大きかった）'},
             {'what': 'Yahoo の月足の時刻を 12 時間ずらして月を読んだ',
              'why': '月の足の時刻は取引所の現地の 1日 0時で、UTC のまま読むと米国外の系列（東京・欧州・ソウル）と為替の月が1か月前にずれる（為替は毎年10月が抜けていた）。nx_common.yahoo() は UTC のまま読むので、この角度では自前の series() を使った（キャッシュは同じファイル）',
              'affects_grade': '米国外の株と為替（P3・E4・E7）。米国の株（ニューヨークの 0時 = UTC 4〜5時）は変わらない'},
@@ -1244,8 +1642,11 @@ def run():
                                    'E7': ('A', 2.88, 2.31), 'E8': ('C', -0.68, -0.24), 'E9': ('B', 1.02, 0.45), 'E10': ('C', -0.05, 0.12), 'E11': ('C', -1.02, -0.09), 'E12': ('B', 3.37, 1.35),
                                    'format': '(格付け, 全期間の幾何の年率差 %, NW t)'},
              'affects_grade': '主の族の格付けは変わらない（P1 A・P2 S・P3 S・P4 B のまま）。探索の E3・E5 が B → A に上がった（Holm は通らない）。同じ直しで E9 の因子の切片を P4 そのものではなく P4 − E8 の差で回帰するよう直した'},
-            {'what': '為替の月足の壊れた月を、同じ記号の日足から作った月末の値に置き換えた（KRW 7か月・TWD 3か月）',
-             'why': 'KRWUSD=X の月足は 2015-02・2015-10・2016-01・2016-07・2017-09 に 8〜9（本来 0.0009 前後）、TWDUSD=X は 2014-12 に 0.27（本来 0.032）＝データの誤り。月足と日足の月末が 3% 超ずれる月だけ置き換えた',
+            {'what': '為替の月足の壊れた月を、同じ記号の日足から作った月末の値に置き換えた（評価期間の中は KRW 5か月・TWD 1か月。2回目までは KRW 7・TWD 3）',
+             'why': 'KRWUSD=X の月足は 2015-02・2015-10・2016-01・2016-07・2017-09 に 8〜9（本来 0.0009 前後）、TWDUSD=X は 2014-12 に 0.27（本来 0.032）＝データの誤り。'
+                    '★検査の後に直した: Yahoo の為替の日足は1日遅れ（日付 D の足の終値が D−1 の終値）なので、置き換えの値は翌月の最初の日足（その月の最後の日足と 3% 以内で一致するとき）にし、'
+                    '置き換えるのは月足が『その月の最後の日足』とも『翌月の最初の日足』とも 3% 超ずれる月だけにした。2回目までの『最後の日足とだけ比べる』は、1日遅れのせいで正しい月足も置き換えていた'
+                    '（KRW 2008-07・2022-11、TWD 2008-07・2015-11 など。成績への影響は小数2桁で0）',
              'affects_grade': '韓国・台湾の株（Samsung・Hyundai・Kia・LG・HTC）を持つ全体版'},
         ],
         'implementation_notes': [
@@ -1264,7 +1665,13 @@ def run():
             'fx_tickers': {c: FXC[c]['tk'] for c in FXC},
             'av_fallback_notes': AV_NOTE,
             'gaps_in_held_series': sorted({(tk, g) for (tk, t) in pairs for g in (usd_returns(tk) or {}).get('gaps', []) if g[1] >= 200708} , key=str)[:200],
+            'spin_offs_counts': spin_counts,
+            'adj_vs_close_plus_div': adjc,
+            'av_delisted_used': av_used,
+            'missing_listed_parents_primary': miss_primary,
+            'value_share_missing_P2_by_list_year': [(f['list_year'], f['value_share_missing']) for f in recs['P2_IB_US_BVW']['forms']],
         },
+        'inspection_fixes': inspection,
         'holm': {'primary_p_one': prim, 'primary_holm': hp, 'exploratory_p_one': expl, 'exploratory_holm': he},
         'grades': grades,
         'best': {'id': best['id'], 'grade': best['grade'], 'full': best['full']},
@@ -1291,6 +1698,23 @@ def run():
         f"P2 は QQQ には {_f(rep['R3_other_benchmarks']['P2_IB_US_BVW']['QQQ'])}、P1 は QQQ に {_f(rep['R3_other_benchmarks']['P1_IB_US_EW']['QQQ'])}、"
         f"P3 は SPY に {_f(rep['R3_other_benchmarks']['P3_IB_GL_EW']['SPY'])}（相手を French Developed から SPY に替えると負け）",
         f"後知恵の偏り: 今の Interbrand の API の生き残りの一覧で組むと P1 の相当は SPY に {_f(rep['R1_hindsight_api']['full'])}（当時の原本の P1 より {rep['R1_hindsight_api']['vs_P1_same_window_cagr_diff']['cagr_diff']}%/年 良く見える）",
+    ]
+    p8, p9 = ph['PH8_drop_best_list_year'], ph['PH9_factor_alpha_plus_growth_tilt']
+    ib = out['inspection_fixes']['before_run2']
+    out['summary_ja'] += [
+        "★検査（3レンズ）の後の是正（規則は変えていない）: (1) 事前登録の上場廃止の代替（Alpha Vantage）を9記号で実施（Kellogg・Avon・Tiffany・Viacom・Yahoo!・Heinz・Burger King・"
+        "Merrill Lynch・Nordstrom）(2) 買う月にもう上場していなかった St. Jude・Dell 2013・Anheuser-Busch（E5 2008）を母集団から外した (3) Yahoo の調整後終値の誤り4か月（Inditex×2・AXA・Xerox）"
+        "(4) 配当が調整後終値に入っていないロンドン6社と Prada を終値＋配当に (5) Xerox の分離の二重の調整・分離の検査の件数・為替の日足の1日遅れ・R7 の往復の費用・E2/E3 の同順位の記録",
+        f"格付けの変化（2回目 → 今回）: P1 {ib['P1_IB_US_EW'][0]}→{R['P1_IB_US_EW']['grade']}（{ib['P1_IB_US_EW'][1]}→{R['P1_IB_US_EW']['full']['cagr_diff']}・t {ib['P1_IB_US_EW'][2]}→{R['P1_IB_US_EW']['full']['t']}）／"
+        f"P4 {ib['P4_WMAC_US_EW'][0]}→{R['P4_WMAC_US_EW']['grade']}（{ib['P4_WMAC_US_EW'][1]}→{R['P4_WMAC_US_EW']['full']['cagr_diff']}）／"
+        f"E3 {ib['E3_IB_US_EW_fallers'][0]}→{R['E3_IB_US_EW_fallers']['grade']}・E5 {ib['E5_IB_US_EW_uniform_nov'][0]}→{R['E5_IB_US_EW_uniform_nov']['grade']}。"
+        "動かしたのはほぼ上場廃止の代替（Avon・Kellogg・Merrill Lynch・Nordstrom が市場に大きく負けていた＝欠けが規則を良く見せていた）。データの誤りの直し（(3)(4)）は P3 +0.1pt 程度で向きが打ち消し合う",
+        f"★事後（検査の後・格付けに使わない）: 超過が最大の一覧の年を相手と同じにすると P2（{p8['P2_IB_US_BVW']['dropped_list_year']} の一覧）の Holm は {p8['P2_IB_US_BVW']['holm_recomputed']}、"
+        f"P3（{p8['P3_IB_GL_EW']['dropped_list_year']}）は {p8['P3_IB_GL_EW']['holm_recomputed']}＝どちらも S の線（0.05）を割る。"
+        f"6因子に QQQ−SPY を足すと切片は P2 {p9['P2_IB_US_BVW']['base_R4']['alpha_ann']}→{p9['P2_IB_US_BVW']['plus_QQQ_minus_SPY']['alpha_ann']}%/年（t {p9['P2_IB_US_BVW']['plus_QQQ_minus_SPY']['t_alpha_nw12']}）・"
+        f"P3 {p9['P3_IB_GL_EW']['base_R4']['alpha_ann']}→{p9['P3_IB_GL_EW']['plus_QQQ_minus_SPY']['alpha_ann']}（t {p9['P3_IB_GL_EW']['plus_QQQ_minus_SPY']['t_alpha_nw12']}）・"
+        f"E4 {p9['E4_IB_GL_BVW']['base_R4']['alpha_ann']}→{p9['E4_IB_GL_BVW']['plus_QQQ_minus_SPY_and_SPY_minus_Dev']['alpha_ann']}（米国の傾きも足して t {p9['E4_IB_GL_BVW']['plus_QQQ_minus_SPY_and_SPY_minus_Dev']['t_alpha_nw12']}）"
+        "＝S の勝ちは 2007〜2026 の大型成長株・巨大テックへの傾きと一つ二つの相場で説明でき、『ブランド』そのものの上乗せは確かめられない",
     ]
     p = N.save(OUT_NAME, out)
     print('saved', p)
