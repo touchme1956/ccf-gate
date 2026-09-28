@@ -2,15 +2,19 @@
 """night/edge/fam_qualvalue.py — 系統 qualvalue（第2回）: 大型株の『割安 × 高収益 × 投資が控えめ』の組を買って持つ
 
 素材は Ken French の3重の組（2x4x4: 規模を NYSE の中央値で2つ × 2つの特徴を NYSE の四分位で独立に4つずつ・毎年6月末に組み替え）と
-5x5 の2重の組（全規模・時価加重＝事実上は大型株の組）。規則は「大型（Big）の決めた升目を時価加重でまとめて持つ」だけ。
-升目どうしは前の月の時価総額（社数 × 平均時価総額）でまとめる（＝その升目を全部まとめた指数を持つのと同じ）。
+5x5 の2重の組（全規模・時価加重＝事実上は大型株の組）。規則は「大型（Big）の決めた升目を持つ」だけ（升目の中は時価加重 or 等加重）。
+升目どうしは前の月の時価総額（社数 × 平均時価総額）か社数でまとめる。米国の大型＝NYSE の時価総額の中央値より上／
+国際版の大型＝その地域の時価総額の上位90%を占める会社（French の定義）。
 
   ■ 先読みの扱い
     ・升目の組入れは French が毎年6月末に、前の会計年度の簿価・営業利益・総資産の伸び（t−1年）と6月末の時価で決めている。
       月 m のリターンは m の月初に決まっている組入れの結果なので、月 m の規則のリターンに使う情報は m−1 月末までに揃っている。
     ・升目をまとめる重みは **m−1 月の**（社数 × 平均時価総額）。French の平均時価総額が月初か月末かに関わらず m−1 月末までに分かる。
     ・全期間の平均・百分位・標準化は一切使わない（prefix_check で確かめる）。
-  ■ 費用: 回転は事前登録の『会計の信号 50%/年』＝毎月 0.5/12・回転1あたり 0.25%。
+  ■ 費用: 回転1あたり 0.25%。回転は spec['turnover_yr']（毎月 turnover_yr/12）。事前登録の『会計の信号 50%/年』が下限で、
+    升目の中を等加重にする規則は毎月 等しい重みへ戻す分（片道 約36%/年）が加わるので 100%/年 と保守的に置く。
+  ■ spec: legs=[{file, size(2=大型), a=[段], b=[段], axes=[a の名, b の名]}]（脚どうしは毎月等分）／within='vw'|'ew'（升目の中の重み）／
+          combine='cap'|'firms'|'equal'（升目どうしの重み・m−1 月の値）／turnover_yr／cost／replicate（国際版の同じ升目で再現を見るか）
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -19,11 +23,11 @@ import harness as h   # noqa: E402
 FAMILY = {
     'key': 'qualvalue',
     'name': '大型株の割安×高収益×控えめな投資（French 3重の組）',
-    'implement': ('楽天証券の米国ETFで「大型・割安・高収益（質）」を同時に満たす指数を買って持つ。候補: Pacer US Cash Cows 100（COWZ・'
-                  'ラッセル1000からフリーCF利回りの高い100社）・iShares MSCI USA Quality Factor（QUAL）と Value Factor（VLUE）の等分・'
-                  'Distillate US Fundamental Stability & Value（DSTL）など。成長投資枠（NISA）で買える米国ETFが多い（各ETFの取扱と'
-                  'NISA対象かは楽天の画面で確かめる）。年1回（7月）に見直し、指数側が組み替えるので持ち替えは基本的に不要。'
-                  '⚠ ETFは French の升目そのものではない（選び方の定義・重み・費用 0.15〜0.40%/年 が違う）'),
+    'implement': ('楽天証券の米国ETF（成長投資枠・NISA対象かは各ETFの画面で確かめる）で「大型の割安×高収益を、少数の巨大株に偏らずに」持つ形へ寄せる。'
+                  '楽天の取扱一覧（out/broker_lineup.json 2026-08-24）に在る近いもの: Global X US Cash Flow Kings 100（FLOW・0.25%・大中型からフリーCF利回りの高い100社）／'
+                  'VanEck Morningstar Wide Moat（MOAT・0.46%・堀のある会社を割安な順に・ほぼ等分）／Global X S&P 500 Quality Dividend（QDIV・0.20%）／'
+                  'Invesco S&P 500 Equal Weight（RSP・0.20%）と Vanguard Value（VTV・0.04%）の組合せ。COWZ・QUAL・VLUE・QVAL は一覧に無い。'
+                  '年1回（7月）に見直す。⚠ どのETFも French の升目そのものではない（選び方の定義・重み・経費 0.04〜0.46%/年が違う）＝検定するのは升目の規則で、ETFの成績ではない'),
 }
 
 VW, EW = 'Average Value Weighted Returns -- Monthly', 'Average Equal Weighted Returns -- Monthly'
@@ -163,11 +167,8 @@ def run(spec):
     markets = {}
     if spec.get('replicate', True):
         for rg in REGIONS:
-            try:
-                r = rule_ret(spec, rg)
-            except Exception:
-                r = None
-            if not r:
+            r = rule_ret(spec, rg)          # 取れなければ落ちる（黙って再現の市場を減らすと、再現の条件を素通りさせる）
+            if r is None:                   # 国際版の無い升目（5x5）だけは再現を持たない
                 continue
             bm, rrf = h.french_region(rg)
             markets[rg] = {'ret': r, 'bench': bm, 'rf': rrf, 'turnover': _turn(r, spec), 'cost': cost}
