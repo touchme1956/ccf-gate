@@ -878,8 +878,93 @@ def checks_main():
     print('saved checks', len(res))
 
 
+# ───────────────────────── 現実の答え合わせ（事前登録4） ─────────────────────────
+PREREG4 = 'mw_risk_matched_prereg4.json'
+R_VEH = [('USMV', 'SPY', 'usa', 'rvol_21d', '1.0', '米国の最小分散（MSCI USA Min Vol）'),
+         ('SPLV', 'SPY', 'usa', 'rvol_21d', '1.0', '米国の低ボラ100銘柄（S&P 500 Low Volatility）'),
+         ('LGLV', 'SPY', 'usa', 'rvol_21d', '1.0', '米国大型の低ボラ（SPDR）'),
+         ('FDLO', 'SPY', 'usa', 'rvol_21d', '1.0', '米国の低ボラ（Fidelity）'),
+         ('XMLV', 'SPY', 'usa', 'rvol_21d', '1.0', '米国中型の低ボラ（S&P MidCap 400 Low Volatility）'),
+         ('QUAL', 'SPY', 'usa', 'ocf_at', '3.0', '米国の質（MSCI USA Sector Neutral Quality）'),
+         ('SPHQ', 'SPY', 'usa', 'ocf_at', '3.0', '米国の質（S&P 500 Quality。2016年まで別の指数）'),
+         ('JQUA', 'SPY', 'usa', 'ocf_at', '3.0', '米国の質（JPMorgan US Quality Factor）'),
+         ('DGRW', 'SPY', 'usa', 'ocf_at', '3.0', '米国の質を加味した増配（WisdomTree）'),
+         ('EFAV', 'EFA', 'world_ex_us', 'rvol_21d', '1.0', '先進国（米国外）の最小分散'),
+         ('EEMV', 'EEM', 'emerging', 'rvol_21d', '1.0', '新興国の最小分散'),
+         ('ACWV', 'ACWI', 'world', 'rvol_21d', '1.0', '全世界の最小分散')]
+
+
+def reality_main():
+    ff = M.ff_factors()
+    MKT, MKTRF, RF = ff['mkt'], ff['mktrf'], ff['rf']
+    d = json.load(open(os.path.join(BASE, 'out', 'mw_risk_matched.json')))
+    END = max(RF)
+    recs, twins = [], {}
+    for etf, bench, reg, key, pf, ja in R_VEH:
+        e = {k: v for k, v in M.yahoo(etf, '1mo').items() if k <= END and k in RF}
+        b = {k: v for k, v in M.yahoo(bench, '1mo').items() if k <= END and k in RF}
+        r_ex = {k: v - RF[k] for k, v in e.items() if k in b}
+        m_ex = {k: v - RF[k] for k, v in b.items()}
+        # 紙の対応（全期間で規則を回してから、同じ月だけを取り出す）
+        pp = M.jkp_portfolios(reg, key, 'vw')[pf]
+        pm = MKTRF if reg == 'usa' else M.jkp_mkt(reg, 'vw')
+        for rule in ('dynamic', 'beta_dynamic', 'unlevered'):
+            g_ex, n_ex, info = lever(r_ex, m_ex, RF, rule, to=0.0, cost=COST)
+            g, n = to_total(g_ex, RF), to_total(n_ex, RF)
+            bb = {k: b[k] for k in g}
+            name = f"R_{etf}_{rule}"
+            rec = {'name': name, 'family': 'R', 'primary': False, 'rule': rule, 'candidate': etf, 'source': 'Yahoo ' + etf,
+                   'group': '現実のETF', 'description': f"{ja}（{etf}）を {RULE_JA[rule]}・相手 {bench}（どちらも Yahoo の分配込み）",
+                   'turnover_ann': 0.0, 'pub_year': None, 'benchmark_vehicle': bench,
+                   'full': M.excess_stats(g, b), 'train': M.excess_stats(g, b, z=M.TRAIN_END),
+                   'hold': M.excess_stats(g, b, a=M.HOLD_START), 'recent': M.excess_stats(g, b, a=M.RECENT_START),
+                   'net_cost_full': M.excess_stats(n, b), 'net_cost_hold': M.excess_stats(n, b, a=M.HOLD_START),
+                   'roll20_net': M.rolling(n, b, 20), 'dca20_net': M.dca(n, b, 20),
+                   'sharpe_pair': {'train': sharpe_same(n, b, RF, z=M.TRAIN_END), 'hold': sharpe_same(n, b, RF, a=M.HOLD_START)},
+                   'L_static': None, 'lever_info': info, 'repl': None}
+            ks = sorted(n)
+            rec['maxdd'] = {'strategy': round(M.maxdd(n) * 100, 1), 'mkt': round(M.maxdd(bb) * 100, 1)} if n else None
+            # 紙の双子
+            pg, pn, pinfo = lever(pp, pm, RF, rule, to=JKP_TO.get(key, 0.4), cost=0.003 if reg == 'emerging' else COST)
+            common = sorted(set(pn) & set(n))
+            if len(common) >= 24:
+                if reg == 'usa':
+                    ps = M.excess_stats({k: pn[k] + RF[k] for k in common}, MKT)
+                else:
+                    ps = M.excess_stats({k: pn[k] for k in common}, pm)
+                es = M.excess_stats({k: n[k] for k in common}, b)
+                rec['paper_twin'] = {'paper': f'JKP {reg} {key} 三分位{pf[0]}（vw）・相手 ' + ('French Mkt' if reg == 'usa' else f'JKP {reg} vw 市場'),
+                                     'from': common[0], 'to': common[-1], 'paper_net_ex_ann': ps['ex_ann'] if ps else None, 'paper_t': ps['t'] if ps else None,
+                                     'etf_net_ex_ann_same_window': es['ex_ann'] if es else None, 'etf_t_same_window': es['t'] if es else None,
+                                     'gap_paper_minus_etf': round(ps['ex_ann'] - es['ex_ann'], 2) if ps and es else None,
+                                     'paper_L_mean': pinfo['L_mean']}
+            recs.append(rec)
+    hp = M.holm({r['name']: (r['hold']['p'] if r['hold'] else None) for r in recs})
+    for r in recs:
+        r['family_holm_p'] = hp.get(r['name'])
+        lev = r['rule'] != 'unlevered'
+        g, crit = M.grade(r['full'], r['train'], r['hold'], r['roll20_net'], cost_hold=r['net_cost_hold'], repl=None,
+                          family_holm_p=r['family_holm_p'], sharpe_pair=r['sharpe_pair'] if lev else None, leveraged_or_timing=lev)
+        r['grade'], r['criteria'] = g, crit
+        h, pt = r['net_cost_hold'], r.get('paper_twin', {})
+        print(f"{r['name']:24s} {g} {h['from'] if h else ''}〜 L={r['lever_info']['L_mean']} net {h['ex_ann'] if h else None:+} t{h['t'] if h else None} "
+              f"cagrΔ {h['cagr_diff'] if h else None} SR {r['sharpe_pair']['hold']} | 紙 {pt.get('paper_net_ex_ann')} t{pt.get('paper_t')} vs ETF {pt.get('etf_net_ex_ann_same_window')} 差 {pt.get('gap_paper_minus_etf')}")
+    d['tested'] = [r for r in d['tested'] if r['family'] != 'R'] + recs
+    d['prereg4'] = PREREG4
+    d['prereg4_commit'] = sha_of(f'out/{PREREG4}')
+    d['n_tested'] = len(d['tested'])
+    d['n_graded'] = sum(1 for r in d['tested'] if r['grade'])
+    d['grade_counts']['R'] = {g: sum(1 for r in recs if r['grade'] == g) for g in 'SABC'}
+    d.setdefault('family_labels', {})['R'] = '現実の答え合わせ（事前登録4・実在ETFを同じ規則で）'
+    json.dumps(d, ensure_ascii=False)
+    M.save('mw_risk_matched.json', d)
+    print('saved reality', len(recs))
+
+
 if __name__ == '__main__':
     if '--checks' in sys.argv:
         checks_main()
+    elif '--reality' in sys.argv:
+        reality_main()
     else:
         main()
