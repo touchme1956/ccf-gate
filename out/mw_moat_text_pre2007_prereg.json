@@ -1,0 +1,585 @@
+{
+ "angle": "moat_text_pre2007",
+ "title_ja": "irr=85（顧客側の再認定ロック）を2007年より前の10-K本文で初めて検定する——堀の読みは逆風の時代にも純粋な時価加重の市場に勝つか",
+ "stage": "第1段（準備）で凍結。本文を抽出する前・読み手に渡す前・株価を一度も取得・参照していない時点",
+ "global_prereg": "out/mw_prereg.json（線 C1〜C8・格 S/A/B/C は mw_common.grade をそのまま当てる。線は結果を見て動かさない）",
+ "question": "自社の 10-K が『顧客の側の再認定・認証のロック』（門の irr=85 の機構＝顧客自身の工程・製品が当社の部品・仕様で認定・認証されていて、乗り換えるには顧客が再認定をやり直す——FAA/OEM 承認の航空部品・FDA 下の医療機器の部材・ファブに認定された半導体の材料と装置・国防総省の単独調達）を述べている S&P500 の会社は、訓練期間 1997-07〜2006-12（irr85 の既存の証拠がすべて生まれた AI・半導体の相場より前で、ハードウェアと半導体に逆風だった独立の時代）と、新しく読んだビンテージでの 2007-01 以降に、純粋な時価加重の米国市場（French Mkt）に勝ったか",
+ "universe": {
+  "membership": "out/_mw_cache/ie_sp500_components.csv（fja05680/sp500・mw_index_events と同じ）。各ビンテージ v の形成は v年7月1日、名簿は v年6月30日以前で最後の日付のもの（後から分かる情報を使わない）",
+  "ticker_note": "名簿の記号は CRSP 流の『その会社の最後の記号』であることが多い（例: 1997年のアルコアが ARNC・マグロウヒルが SPGI）。同じ記号の文字列に二社がつぶれている箇所もある（例: 1997年の T）",
+  "cik_mapping": "候補＝今日の SEC 一覧（company_tickers.json）でその記号を持つ CIK ∪ EDGAR 全文検索（2001〜）で『symbol T』を 10-K（添付を含む）で名乗った提出者 ∪ 1995-01〜2001-06 の 10-K（ex27 のキャッシュの『symbol』抜粋を取引所の文脈つきで読み直したもの）で T を名乗った提出者 ∪ 社名の一致（今日の SEC 名・全文検索の表示名・ウィキペディアの入れ替え表の名 と 窓の 10-K 提出者名）。検問＝その CIK が窓の中で 10-K を出していること。大きさの検問＝表紙の非関係者の時価（float）が5倍以上大きい別の候補がいる候補は外す（他社の記号を本文に書いただけの小型株を拾わないため）。決め方＝T を自分の記号として名乗った年（窓の本文・1995〜2001・全文検索の提出年・今日の保有者は 2026年）がビンテージに最も近い候補。同点・拮抗（2番手との差が3年未満）のときは 合同の 10-K（同じ本文）→ 今日の保有者 → 時価の分かる社が一つ → 最大の時価が2番手の2倍以上 の順で決め、決まらなければ曖昧。名乗りの証拠が無ければ社名の一致が一意のときだけ採る。名乗りが6年以上離れる候補は時価が当時に名乗った社の下位10%点の1/3未満なら使い回しとして棄てる。同じ CIK が二つの記号に当たったら 手の対応 → 窓の本文で名乗った方 → 名乗りの近い方 に残し、他方はその CIK を除いて決め直す。そのうえで全ビンテージの対応結果の社名を一件ずつ目で見て、明らかな誤り（小型株・子会社・資金調達の信託を拾ったもの）と付かなかった社を、窓の 10-K 提出者名で CIK を確かめて手で直した（MANUAL_MAP・このファイルに理由つきで全件。株価は一度も見ていない）。外国の提出者（20-F/40-F）・当時 10-K を出していなかった社（Fannie Mae/Freddie Mac の一部の年）・10-K が訂正で窓の後にずれた社は対応なしとして一覧に残す",
+  "coverage_reporting": "各ビンテージの名簿の社数・対応できた社数・窓に 10-K がある社数・本文が取れた社数・候補段落がある社数を数え、未対応の記号は全部列挙する"
+ },
+ "vintages": {
+  "train": [
+   1997,
+   2000,
+   2003,
+   2006
+  ],
+  "holdout_fresh": [
+   2009,
+   2012
+  ],
+  "labels": "各ビンテージのラベルは3年持ち越す（1997→1997-07〜2000-06、2000→2000-07〜2003-06、2003→2003-07〜2006-06、2006→2006-07〜2009-06、2009→2009-07〜2012-06、2012→2012-07〜2015-06）",
+  "train_returns": "訓練に数えるのは 1997-07〜2006-12 の月だけ（2006 ビンテージの 2007-01〜2009-06 は保有期間に入る＝報告で分けて出す）",
+  "report_only": "out/irr_regrade 等にある既存の 2013/2015/2018 の読みは報告のみ（新しいビンテージとして使わない・判定に使わない）"
+ },
+ "budget": {
+  "max_reading_units": 1400,
+  "unit": "読み手に実際に渡す社×ビンテージ（候補段落が1つ以上ある単位）。候補段落が0の単位は読まずに no85 とする（下の自動ラベル）",
+  "cascade": [
+   "合計が1,400を超えたら、まず最も新しい保有期間のビンテージ 2012 を丸ごと読まない（2012 の社は無ラベル）",
+   "それでも超えたら、残りの各ビンテージの中から同じ割合で無作為に抜く（種 20260928）。抜いた単位は無ラベル（lock にも非 lock にも入れない）。2009 は落とさない＝新しく読む保有期間のビンテージを最低1つ残す"
+  ],
+  "scope": "予算が効くのは読みの族（F2・rep・dur）だけ。F1（機械）は全ビンテージ・全単位で数える。2012 を読まない場合、F2・rep・dur の 2012 ビンテージは丸ごと無ラベル（自動 no85 も含めて作らない）で、2009 ビンテージの持ち物が 2012-07 以降も買って持たれる（portfolios.after_last_vintage）"
+ },
+ "text_rules": {
+  "filing": "窓＝形成の前15か月（v-1 年4月1日〜v 年6月30日）に提出された 10-K / 10-K405 / 10-KT / 10-KT405 のうち最新の1件（訂正 /A は使わない・10-KSB は対象外）。EDGAR full-index の form.idx から",
+  "source": "1995-01〜2001-06 の提出は ex27 のキャッシュ（本体の先頭 60,000 字・読むだけ）を先に見て、本体が 60,000 字に収まっていればそれを使い、切れていれば全文 .txt を取り直す。それ以外は https://www.sec.gov/Archives/edgar/data/{CIK}/{accession}.txt（SEC の User-Agent は連絡先つき・毎秒6件以下）",
+  "sections": "本体（最初の 10-K 型の文書）だけから Item 1（Business。『Items 1 and 2』は Item 3 まで）・Item 1A（Risk Factors）・Item 7（MD&A）を見出しで切り出す。目次の見出しを避けるため、同じ見出しの候補のうち次の見出しまでが最も長いものを採る。本体が Item 7 を年次報告書（EX-13）へ委ねている場合は Item 7 は無し（EX-13 は読まない＝1990年代は Item 7 が本体に無いことが多い。これは時代の非対称として記録する）。見出しが一つも無い本体は先頭 150,000 字を Item 1 の代わりにする",
+  "paragraphs": "空行で段落に分け、改行をつなぐ。12語未満・数字の語が4割以上（表）・大文字だけの見出しは捨てる。600語を超える塊は文の区切りで約300語ずつに分ける"
+ },
+ "regex": {
+  "qual": [
+   {
+    "name": "qualif*（requalif・re-qualif を含む）",
+    "re": "\\b(?:re-?)?qualif\\w*"
+   },
+   {
+    "name": "certif*（recertif・re-certif・type certificate を含む）",
+    "re": "\\b(?:re-?)?certif\\w*"
+   },
+   {
+    "name": "validat*（revalidat を含む）",
+    "re": "\\b(?:re-?)?validat\\w*"
+   },
+   {
+    "name": "approved supplier/vendor/source/manufacturer",
+    "re": "\\bapproved\\s+(?:suppliers?|vendors?|sources?|manufacturers?)\\b"
+   },
+   {
+    "name": "supplier/vendor/source approval",
+    "re": "\\b(?:supplier|vendor|source)\\s+approvals?\\b"
+   },
+   {
+    "name": "design-in / designed in",
+    "re": "\\bdesign(?:ed)?[- ]ins?\\b"
+   },
+   {
+    "name": "design win",
+    "re": "\\bdesign[- ]wins?\\b"
+   },
+   {
+    "name": "sole source / single source",
+    "re": "\\b(?:sole|single)[- ]sourc\\w*"
+   },
+   {
+    "name": "specified by",
+    "re": "\\bspecified\\s+by\\b"
+   },
+   {
+    "name": "spec-in",
+    "re": "\\bspec[- ]in\\b"
+   },
+   {
+    "name": "type certificate",
+    "re": "\\btype\\s+certificat\\w*"
+   },
+   {
+    "name": "PMA（大文字）",
+    "re": "\\bPMAs?\\b",
+    "case": true
+   },
+   {
+    "name": "STC（大文字）",
+    "re": "\\bSTCs?\\b",
+    "case": true
+   },
+   {
+    "name": "510(k)",
+    "re": "\\b510\\s?\\(k\\)"
+   },
+   {
+    "name": "MIL-SPEC / military specification",
+    "re": "\\bMIL[- ]?SPEC\\w*|\\bmilitary\\s+specifications?\\b"
+   },
+   {
+    "name": "AS9100（大文字）",
+    "re": "\\bAS\\s?9100\\w*",
+    "case": true
+   },
+   {
+    "name": "QPL / QML（大文字）",
+    "re": "\\bQ[PM]Ls?\\b",
+    "case": true
+   }
+  ],
+  "exclude": [
+   {
+    "name": "公認会計士",
+    "re": "certified\\s+public\\s+account\\w*"
+   },
+   {
+    "name": "証書・許認可の定型（certificate of deposit/incorporation/need/public convenience …）",
+    "re": "certificates?\\s+of\\s+(?:deposit|incorporation|designation|need|public\\s+convenience|authority|occupancy|participation|beneficial|insurance|title|formation|amendment|limited\\s+partnership|good\\s+standing|compliance|registration)"
+   },
+   {
+    "name": "証券としての certificate",
+    "re": "(?:pass[- ]through|trust|equipment\\s+trust|participation|mortgage|stock|share|gift|tax|interest|receivable|lease)\\s+certificates?"
+   },
+   {
+    "name": "certificate holder",
+    "re": "certificate\\s*-?holders?"
+   },
+   {
+    "name": "人・制度・税務の qualified",
+    "re": "(?:non-?)?qualified\\s+(?:retirement|pension|benefit|defined|savings|profit|stock|employee|deferred|plans?|dividends?|opinion|institutional|buyers?|personnel|employees|people|staff|individuals|candidates|engineers|technical|management|professionals|workers|labor|drivers|pilots|nurses|physicians|teachers|applicants|scientists|sales|managers|executives|special\\s+purpose|hedg\\w+|affordable|small\\s+business|reit|subsidiar\\w+|investors?|purchasers?|residential|mortgage)"
+   },
+   {
+    "name": "税・会計の qualify as/for",
+    "re": "qualif(?:y|ies|ied|ying|ication)\\s+(?:as|for)\\s+(?:an?\\s+|the\\s+)?(?:reit|real\\s+estate\\s+investment|hedg\\w+|tax|capital|investment|pooling|purchase|sale|special|exemption|well[- ]capitalized|treatment|accounting|deduction|listing)"
+   },
+   {
+    "name": "法律の定型（qualified in its entirety / by reference）",
+    "re": "qualifi\\w*\\s+(?:in\\s+(?:its|their)\\s+entirety|by\\s+reference)"
+   },
+   {
+    "name": "Sarbanes-Oxley の証明",
+    "re": "(?:sarbanes[- ]oxley|section\\s+(?:302|906)|chief\\s+(?:executive|financial)\\s+officer)\\W+(?:\\w+\\W+){0,8}?certif\\w*|certif\\w*\\W+(?:\\w+\\W+){0,8}?(?:section\\s+(?:302|906)|sarbanes)"
+   },
+   {
+    "name": "資格者（board-certified 等）",
+    "re": "board[- ]certified|certified\\s+(?:nurse|financial|pilots?|mail|teachers?|technicians?|registered|management\\s+accountants?)"
+   },
+   {
+    "name": "モデル・前提の検証",
+    "re": "validat\\w*\\s+(?:(?:of|the|our|its)\\s+)?(?:assumptions?|models?|estimates?|valuations?)"
+   }
+  ],
+  "counterparty": [
+   {
+    "name": "customer*",
+    "re": "\\bcustomers?\\w*"
+   },
+   {
+    "name": "OEM* / original equipment manufacturer",
+    "re": "\\bOEMs?\\b|\\boriginal\\s+equipment\\s+manufacturers?\\b"
+   },
+   {
+    "name": "airframer* / airframe manufacturer",
+    "re": "\\bairframers?\\b|\\bairframe\\s+manufacturers?\\b"
+   },
+   {
+    "name": "FAA（大文字）",
+    "re": "\\bFAA\\b|Federal\\s+Aviation\\s+Administration",
+    "case": true
+   },
+   {
+    "name": "FDA（大文字）",
+    "re": "\\bFDA\\b|Food\\s+and\\s+Drug\\s+Administration",
+    "case": true
+   },
+   {
+    "name": "DoD / Department of Defense",
+    "re": "\\bDoD\\b|\\bDOD\\b|Department\\s+of\\s+Defense",
+    "case": true
+   },
+   {
+    "name": "NRC / Nuclear Regulatory Commission",
+    "re": "\\bNRC\\b|Nuclear\\s+Regulatory\\s+Commission",
+    "case": true
+   },
+   {
+    "name": "government*",
+    "re": "\\bgovernments?\\w*"
+   },
+   {
+    "name": "fab / fabs / wafer fab / fabrication facility（fabric 等は含めない）",
+    "re": "\\bfabs?\\b|\\bwafer\\s+fab\\w*|\\bfabrication\\s+(?:facilit\\w*|plants?|lines?|sites?)"
+   },
+   {
+    "name": "foundry / foundries",
+    "re": "\\bfoundr(?:y|ies)\\b"
+   }
+  ],
+  "switch_any": [
+   {
+    "name": "lengthy",
+    "re": "\\blengthy\\b"
+   },
+   {
+    "name": "costly",
+    "re": "\\bcostly\\b"
+   },
+   {
+    "name": "months",
+    "re": "\\bmonths\\b"
+   },
+   {
+    "name": "years",
+    "re": "\\byears\\b"
+   },
+   {
+    "name": "re- で始まる語（re-qualify 等）",
+    "re": "\\bre-[a-z]\\w+"
+   },
+   {
+    "name": "requalif* / recertif* / revalidat*",
+    "re": "\\bre(?:qualif|certif|validat)\\w*"
+   },
+   {
+    "name": "switching cost / time-consuming",
+    "re": "\\bswitching\\s+costs?\\b|\\btime[- ]consuming\\b"
+   }
+  ],
+  "f1_switch": [
+   {
+    "name": "lengthy",
+    "re": "\\blengthy\\b"
+   },
+   {
+    "name": "costly",
+    "re": "\\bcostly\\b"
+   },
+   {
+    "name": "months",
+    "re": "\\bmonths\\b"
+   },
+   {
+    "name": "years",
+    "re": "\\byears\\b"
+   },
+   {
+    "name": "re-qualif* / requalif*",
+    "re": "\\bre-?qualif\\w*"
+   },
+   {
+    "name": "re-certif* / recertif*",
+    "re": "\\bre-?certif\\w*"
+   }
+  ],
+  "requal_bonus": [
+   {
+    "name": "再認定・再認証・再検証の語",
+    "re": "\\bre-?(?:qualif|certif|validat)\\w*"
+   }
+  ]
+ },
+ "regex_notes": "大文字小文字を区別しないのが既定、case=true の式だけ区別する。exclude に当たった区間に重なる qual の当たりは数えない（公認会計士・証書・税務の qualified などの定型を除くため）。指示書の語から変えた点: fab* は fabric/fabricate を拾うので fab/fabs/wafer fab/fabrication facility に限った。switch_any に switching cost と time-consuming を足した。counterparty に NRC（提案の F1 の語）を足した。client は足していない",
+ "candidate_rule": "候補段落＝qual の当たりが1つ以上 かつ（counterparty または switch_any の当たりが1つ以上）",
+ "ranking_rule": "段落の点＝2×（当たった qual の式の種類数）＋1×（counterparty の式の種類数）＋2×（switch_any の式の種類数）＋4×［F1 の条件を段落の中で満たす］＋3×［requal_bonus の語がある］。点の高い順に最大 8 段落（同点は文書の前から）。各段落は最大 350 語（長ければ最初の qual の当たりの120語前から切り出す）。単位の合計は最大 1800 語（点の順に足し、超える段落は残りが80語以上なら残りの語数に切り、80語未満なら打ち切る）。読み手には文書の順に並べて渡す",
+ "auto_label": "候補段落が0の単位は読まずに irr=no85（非 lock）とする。これは事前に決めた既定で、限界として数を報告する（本文に機構があっても語の網に掛からなければ非 lock になる）",
+ "F1": {
+  "definition": "機械の族・漏れなし（人も LLM も読まない）: 抽出した Item 1/1A/7 のどれかの段落の中に、qual の当たり q・counterparty の当たり c・f1_switch の当たり s があり、|q−c| ≤ 40 語 かつ |q−s| ≤ 40 語（語の位置は空白で区切った語の番号）なら、その社×ビンテージを F1 の旗とする。exclude は同じく効かせる。候補の上位8段落ではなく全段落で数える",
+  "portfolio": "F1 の旗の社を lock と同じ作り方で持つ（副の族）"
+ },
+ "F2": {
+  "protocol": "伏せた段落だけを読む。独立の読み手2人（別々のセッション・互いの答えを見ない）が全単位を読む。irr≥85（100 も 85 と数える）かどうかで2人が割れた単位だけを3人目が読み、最終のラベルは3人の多数決（85以上か否か）。irr の刻みそのものは報告用（2人一致ならその値・割れたら3人目の値）",
+  "reader_instructions": "out/_mw_cache/moat_text/READER_INSTRUCTIONS.md（門の irr の規約・85 の二重読みの検問①〜⑥・out/irr_regrade/RUBRIC.md を逐語で写し、rep/dur の刻みも門のまま）",
+  "reader_output": "irr ∈ {100,85,70,50,null}＋一文の理由＋85/100 を支える原文の逐語の引用（無ければ null）、rep ∈ {100,80,60,35,null}、dur ∈ {100,85,75,55,null}、recognised（どの会社か分かったと思うか・社名は書かない）、confidence 1〜3",
+  "reader_limits": "渡された束のファイルと指示書だけを読む（Web・リポジトリの他のファイル・鍵のファイル KEY_do_not_open.json は開かない）",
+  "subsets_report": [
+   "2人が一致した単位だけの lock",
+   "どちらの読み手も recognised=false の単位だけの lock",
+   "読み手どうしの一致率（κ）"
+  ]
+ },
+ "masking": "社名（ヘッダの COMPANY CONFORMED NAME・FORMER CONFORMED NAME・今日の SEC 名）と、本文の定義の中の別名（(\"XYZ\" or the \"Company\") の類）、EX-21 の子会社名（本文に現れるもの）、記号（名簿の記号・本文が名乗る記号）→ [COMPANY]。固有の製品・ブランド・相手先の名＝その社の抽出本文（Item 1/1A/7 全体）の中で大文字で始まる語のうち、3回以上現れ（文頭を含む）・文頭でない所に一度は現れ・小文字の形では一度も現れず・同じビンテージの文書の3%未満にしか現れず・保持語（規制当局・相手先の略語・月・地名の一般語など）でないもの → [PRODUCT_n]（単位ごとに初出順の番号）。業種の語は残す。単位の順番は種 20260928 で無作為に並べ、不透明な id（u0001…）を振る。id → CIK・記号・ビンテージ・SIC の鍵は out/_mw_cache/moat_text/KEY_do_not_open.json（読み手は開かない）",
+ "batches": "約60単位ずつ out/_mw_cache/moat_text/batches/batch_XX.json。各単位は {id, vintage_year, passages:[...]}（時代の文脈のため年は渡す。SIC・社名は渡さない）",
+ "labels_to_portfolios": {
+  "lock": "最終ラベル irr ∈ {85, 100}（門と同じく 100 も 85 と数える）",
+  "nonlock": "最終ラベル irr ∈ {70, 50, null} と自動 no85",
+  "unlabelled": "記号→CIK が対応できない・窓に 10-K が無い・本文が取れない・予算で読まなかった単位（lock にも非 lock にも入れない。数を報告する）"
+ },
+ "portfolios": {
+  "formation": "各ビンテージ v の7月（最初のリターン月は v年7月）に作り、次のビンテージまで3年持つ（年の途中で入れ替えない・S&P500 から外れても持ち続ける）",
+  "vw_primary": "時価加重（主）: 重み＝本文に使った 10-K の表紙の非関係者の時価（形成の時点で分かっている値）。表紙から読めない社はそのビンテージの中央値を置く（数を報告）。重みは持っている間リターンで漂わせる（買って持つ）",
+  "ew": "等加重: 形成時に等分し、毎月等分に戻す（観測できる社の平均）",
+  "after_last_vintage": "最後に読んだビンテージの持ち物は、3年を過ぎても 2026-08 まで買って持ち続ける（ラベルは古いまま・入れ替えない）。保有期間の判定はこれを含めた 2007-01〜2026-08 で行い、新しいラベルだけの窓（2007-01〜最後のビンテージ＋36か月）も並べて報告する",
+  "cohort_report": "報告のみ: 各ビンテージの lock を5年と2026-08まで買って持つ（NISA 型の手を触れない持ち方）"
+ },
+ "returns": "Yahoo の月次の調整後終値（配当込み・mw_common.yahoo と同じ）。系列の選び方（CIK と同じ会社の系列だけを使う）: (a) 対応した CIK が今日の SEC 一覧に記号を持てばその記号。(b) 持たなければ名簿の記号 T——ただし T の今日の保有者が別の CIK なら、その保有者が当時（そのビンテージの窓）に 10-K を出しておらず、かつ社名が続いている（正規化した社名の先頭語が一致するか一方が他方の前方一致で5字以上・一般語でない）ときだけ同じ会社の続き（持株会社への組み替え・改名）として T を使い、それ以外は別の会社の系列なので観測なしにする。(c) T を今日だれも持たなければ T を試す。どの場合も系列の最初の月が形成月より後なら観測なし（記号の使い回しを踏まない＝mw_index_events.obs と同じ検問）。月 +300% 超はデータの誤りとしてその月から先を捨てる",
+ "float_sanity": "表紙の時価が 5,000万ドル未満または 1兆ドル超なら読み違いとして欠測扱い（そのビンテージの中央値を置く）",
+ "survivorship": "観測できない月の扱いを二通りで囲む（mw_index_events と同じ）: S＝その月から外す（最後の値で売り、残りへ按分）／L＝その月 −100% として外す。格は S と L の両方で付け、保有期間の超過の符号が S と L で一致したときだけ格を付ける（割れたら C）。付ける格は S と L の低い方",
+ "benchmarks": {
+  "primary": "French Mkt（Mkt-RF + RF・上限なしの時価加重・CRSP 全上場）",
+  "secondary": "同じビンテージの対応済み・ラベル付きの全社（lock＋非 lock＋自動 no85）を同じ作り方（同じ Yahoo・同じ S/L・同じ重み）で持った時価加重＝生き残りの偏りを一次で打ち消す相手"
+ },
+ "controls": {
+  "within_sic2": "業種をそろえる: lock の各社のリターン − 同じビンテージ・同じ SIC 上2桁の非 lock の時価加重、を lock の重みで平均（同じ SIC2 に非 lock が居ない社はこの対照から外し数を報告）",
+  "ex_semis_chain": "半導体の連鎖を除く: SIC 3674・3559、および名指しの装置・材料 ['KLAC', 'TER', 'ENTG', 'CCMP', 'MKSI', 'AEIS', 'BRKS', 'CYMI', 'VECO', 'NVLS', 'LRCX', 'AMAT', 'ASML', 'UCTT', 'ICHR', 'ONTO', 'NANO', 'FORM', 'COHU', 'KLIC', 'ACLS', 'PLAB', 'CAMT', 'AMKR', 'ATMI', 'CMOS', 'NVMI', 'RTEC', 'PKE']",
+  "ex_aero_defence": "航空・防衛を除く: SIC 3720-3729・3760-3769・3812",
+  "sic_source": "SIC は本文に使った 10-K のヘッダ（当時の値）。無ければ今日の SEC の値（印を付ける）"
+ },
+ "secondary_families": {
+  "F1": "F1 の旗（機械）",
+  "rep_top": "最終 rep ∈ {100, 80}（2人の読みの一致・割れは3人目・3人目が読んでいない単位は2人の低い方）",
+  "dur_top": "最終 dur ∈ {100, 85}（門と同じく 100 を 85 と数える。決め方は rep と同じ）"
+ },
+ "periods": {
+  "train": "1997-07〜2006-12（訓練のビンテージ 1997/2000/2003/2006 のラベルだけ）",
+  "holdout": "2007-01〜2026-08（2006 ビンテージの 2007-01〜2009-06 を含む＝報告で分ける）",
+  "full": "1997-07〜2026-08",
+  "recent": "2013-07〜（報告のみ）"
+ },
+ "tests_holm": {
+  "family": [
+   "H1 F2 lock 時価加重 − French Mkt（主）",
+   "H2 F2 lock 等加重 − French Mkt",
+   "H3 F2 lock 時価加重 − 同じ母集団の時価加重",
+   "H4 F1 時価加重 − French Mkt",
+   "H5 F1 時価加重 − 同じ母集団の時価加重",
+   "H6 rep 上位 時価加重 − French Mkt",
+   "H7 dur 上位 時価加重 − French Mkt"
+  ],
+  "rule": "保有期間の NW t（ラグ12）から両側 p、この7本で Holm（S と L で別々に）。C7 は全期間 t≥3.0 または Holm 後 p<0.05",
+  "report_only": [
+   "業種そろえ（SIC2）",
+   "半導体の連鎖を除く",
+   "航空・防衛を除く",
+   "2人一致の部分集合",
+   "誰も会社を分からなかった部分集合",
+   "新しいラベルだけの保有期間",
+   "2006 ビンテージのはみ出し 2007-01〜2009-06",
+   "2013-07〜",
+   "5年の手を触れない持ち方"
+  ]
+ },
+ "grading": "mw_common.grade(full, train, hold, roll20, cost_hold, repl=None, family_holm_p, leveraged_or_timing=False)。C4 は全期間の転がる20年窓（毎年7月起点・一括）。C5 は米国外の本文が無いので N/A。C8 は該当なし",
+ "costs": "片道の売買 100% あたり 0.10%（大型株）。売買は各ビンテージの作り替え（漂った重み→新しい重み の差の半分の合計）と最初の買い。年あたりの平均回転率で月割りに引く（mw_common.apply_cost）",
+ "reachability": "株価を見る前に数えて記録する: 各ビンテージの F1 の旗の社数（第1段で数える）と F2 の lock の社数（第2段の読みの後）。lock が10社未満のビンテージは『薄い』と印を付けて報告する（格は変えない）",
+ "knowledge_leak_note": [
+  "台帳の既存の結果を知っている: 2013/2015/2018 の3ビンテージで irr=85 の社単位 lift +0.404（置換 p≈0・n=627）・半導体を除いて +0.315・『半導体の連鎖』のラベル単体は +0.436（irr=85 より大きい）・irr=100 は負（docs/CLAUDE_ARCHIVE.md L12717）",
+  "2007年以降の歴史を知っている: 巨大テックと半導体（特に 2016〜 と AI 相場の 2023〜）が米国の勝ちの大半を説明した・質や収益性の因子は 2007年以降の純粋な時価加重の市場に対してほぼ0（mw の既存の結果）",
+  "業種の時代を知っている: 半導体は 1998〜2000 のバブル・2000〜2002 の崩壊・2000年代は出遅れ・2016〜 に大勝ち。航空・防衛は 2001年の同時多発テロの後に民間航空が崩れ、防衛は 2002〜2007 に強く、2020年の感染症で民間航空が再び崩れた。医療機器は 1990〜2000年代に強かった",
+  "読み手（LLM）は会社の歴史を知っている。社名を伏せても言い当てうる（angles4 では 92% を言い当てた）ので recognised を記録し、誰も分からなかった部分集合を報告する",
+  "設計者（私）は今日の門の irr=85 の顔ぶれ（CW・LRCX・WST・COHR・BWXT など）を知っている。語の網と規約は門の既存の文言から写し、結果を見て変えない"
+ ],
+ "known_limits": [
+  "名簿の記号は後の記号で、同じ記号に二社がつぶれた箇所がある（対応の誤りは数えて報告し、抜き取りで点検する）",
+  "1990年代の 10-K は本体が短く年次報告書（EX-13）に委ねる社が多い。Item 7 は時代で有無が違う（ビンテージの中の比較なので水準の差は打ち消される）",
+  "語の網に掛からない機構は自動で非 lock になる（取りこぼしは lock を薄める向き）",
+  "Yahoo は上場廃止した社の履歴を持たない。S/L で囲むが、囲みが広いと格が付かない",
+  "最後のビンテージの後は古いラベルのまま持ち続ける（2012 を読まなければ 2009 のラベルで 2026 まで）",
+  "株価で重みを付けない（表紙の時価は数か月〜1年古い）"
+ ],
+ "generated": "2026-09-28",
+ "frozen_before_extraction": true,
+ "coverage_mapping_at_freeze": {
+  "1997": {
+   "membership_date": "1997-06-26",
+   "window": [
+    "1996-04-01",
+    "1997-06-30"
+   ],
+   "members": 488,
+   "mapped_with_10k_in_window": 471,
+   "mapping_rate": 0.965,
+   "n_manual": 119,
+   "via": {
+    "manual": 119,
+    "declared_at_time": 210,
+    "declared_nearest_late": 87,
+    "unmapped_manual": 11,
+    "declared_nearest": 30,
+    "declared_at_time_inwindow": 10,
+    "name_match": 13,
+    "unmapped": 6,
+    "declared_at_time_tie_current_holder": 2
+   },
+   "not_mapped": [
+    "ABX（unmapped_manual：Barrick Gold（外国の提出者・10-K なし））",
+    "BMGCA（unmapped）",
+    "ETS（unmapped_manual：当時の会社が特定できない（機械は ETS International を拾った））",
+    "FMCC（unmapped_manual：Freddie Mac（当時は SEC に 10-K を出していない））",
+    "FNMA（unmapped_manual：Fannie Mae（当時は SEC に 10-K を出していない））",
+    "INCLF（unmapped_manual：Inco（窓に 10-K なし・外国の提出者））",
+    "LDW.B（unmapped_manual：Laidlaw（窓に 10-K なし・外国の提出者））",
+    "MWI（unmapped）",
+    "MZIAQ（unmapped）",
+    "NLV（unmapped）",
+    "NRTLQ（unmapped_manual：Northern Telecom（窓に 10-K なし・外国の提出者））",
+    "PDG（unmapped_manual：Placer Dome（窓に 10-K なし・外国の提出者））",
+    "RDS.A（unmapped_manual：Royal Dutch Petroleum（20-F））",
+    "TMC.A（unmapped）",
+    "UMG（unmapped）",
+    "UN（unmapped_manual：Unilever N.V.（外国の提出者・10-K なし））",
+    "X（unmapped_manual：USX-U.S. Steel Group は USX Corp（MRO と同じ CIK 101778）の追跡株。一社一記）"
+   ]
+  },
+  "2000": {
+   "membership_date": "2000-06-29",
+   "window": [
+    "1999-04-01",
+    "2000-06-30"
+   ],
+   "members": 492,
+   "mapped_with_10k_in_window": 479,
+   "mapping_rate": 0.974,
+   "n_manual": 73,
+   "via": {
+    "manual": 73,
+    "declared_nearest_late_tie_largest_float": 2,
+    "declared_at_time": 247,
+    "declared_nearest_late": 71,
+    "unmapped_manual": 13,
+    "declared_at_time_tie_current_holder": 5,
+    "declared_nearest_late_tie_current_holder": 5,
+    "declared_nearest": 44,
+    "declared_at_time_inwindow": 8,
+    "name_match": 9,
+    "declared_at_time_tie_only_known_float": 5,
+    "declared_at_time_tie_joint_filing": 4,
+    "declared_nearest_late_tie_joint_filing": 5,
+    "declared_nearest_tie_current_holder": 1
+   },
+   "not_mapped": [
+    "ABX（unmapped_manual：Barrick（外国））",
+    "ETS（unmapped_manual：当時の会社が特定できない）",
+    "FMCC（unmapped_manual：Freddie Mac（10-K なし））",
+    "FNMA（unmapped_manual：Fannie Mae（10-K なし））",
+    "INCLF（unmapped_manual：Inco（外国））",
+    "NRTLQ（unmapped_manual：Nortel（外国））",
+    "PCS（unmapped_manual：Sprint PCS の追跡株（Sprint の 10-K と同じ本文・一社一記号の規則で持たない）。機械は Potas）",
+    "PDG（unmapped_manual：Placer Dome（外国））",
+    "RDS.A（unmapped_manual：Royal Dutch（20-F））",
+    "UN（unmapped_manual：Unilever N.V.（外国の提出者））",
+    "VSTNQ（unmapped_manual：Visteon（最初の 10-K は 2001年＝窓に無い））",
+    "WAMUQ（unmapped_manual：WM と同じ Washington Mutual（名簿の文字列の重複））",
+    "X（unmapped_manual：USX-U.S. Steel Group は USX Corp（MRO）の追跡株）"
+   ]
+  },
+  "2003": {
+   "membership_date": "2003-06-26",
+   "window": [
+    "2002-04-01",
+    "2003-06-30"
+   ],
+   "members": 494,
+   "mapped_with_10k_in_window": 489,
+   "mapping_rate": 0.99,
+   "n_manual": 54,
+   "via": {
+    "declared_at_time_inwindow": 7,
+    "manual": 54,
+    "declared_at_time": 296,
+    "declared_at_time_tie_only_known_float": 7,
+    "declared_nearest_late": 59,
+    "declared_at_time_tie_current_holder": 5,
+    "declared_nearest_late_tie_current_holder": 6,
+    "declared_nearest": 38,
+    "name_match": 9,
+    "declared_at_time_tie_joint_filing": 5,
+    "unmapped_manual": 5,
+    "declared_nearest_late_tie_joint_filing": 2,
+    "declared_nearest_tie_joint_filing": 1
+   },
+   "not_mapped": [
+    "CMI（unmapped_manual：Cummins（2002 年度の 10-K は訂正で遅れ、窓に無い））",
+    "FMCC（unmapped_manual：Freddie Mac（10-K なし））",
+    "PCS（unmapped_manual：Sprint PCS の追跡株）",
+    "SBL（unmapped_manual：Symbol Technologies（訂正で 10-K が遅れ、窓に無い））",
+    "WAMUQ（unmapped_manual：WM と同じ Washington Mutual（名簿の文字列の重複））"
+   ]
+  },
+  "2006": {
+   "membership_date": "2006-06-30",
+   "window": [
+    "2005-04-01",
+    "2006-06-30"
+   ],
+   "members": 497,
+   "mapped_with_10k_in_window": 491,
+   "mapping_rate": 0.988,
+   "n_manual": 35,
+   "via": {
+    "manual": 35,
+    "declared_at_time": 331,
+    "declared_nearest": 28,
+    "declared_nearest_late": 52,
+    "declared_at_time_tie_joint_filing": 9,
+    "declared_nearest_late_tie_current_holder": 7,
+    "declared_at_time_tie_current_holder": 4,
+    "declared_at_time_tie_largest_float": 2,
+    "declared_at_time_inwindow": 6,
+    "name_match": 9,
+    "declared_at_time_tie_only_known_float": 4,
+    "unmapped_manual": 6,
+    "declared_nearest_late_tie_joint_filing": 2,
+    "declared_nearest_tie_largest_float": 1,
+    "declared_nearest_tie_joint_filing": 1
+   },
+   "not_mapped": [
+    "BOL（unmapped_manual：Bausch & Lomb（訂正で 10-K が遅れ、窓に無い））",
+    "EQ（unmapped_manual：Embarq（2006-05 分離・最初の 10-K は窓の後））",
+    "FMCC（unmapped_manual：Freddie Mac（窓に 10-K なし））",
+    "FNMA（unmapped_manual：Fannie Mae（訂正で 10-K が遅れ、窓に無い））",
+    "NAV（unmapped_manual：Navistar（訂正で 10-K が遅れ、窓に無い））",
+    "WAMUQ（unmapped_manual：WM と同じ Washington Mutual（名簿の文字列の重複））"
+   ]
+  },
+  "2009": {
+   "membership_date": "2009-06-30",
+   "window": [
+    "2008-04-01",
+    "2009-06-30"
+   ],
+   "members": 499,
+   "mapped_with_10k_in_window": 499,
+   "mapping_rate": 1.0,
+   "n_manual": 27,
+   "via": {
+    "manual": 27,
+    "declared_at_time": 352,
+    "declared_nearest_late": 57,
+    "declared_at_time_tie_joint_filing": 8,
+    "declared_nearest_late_tie_current_holder": 10,
+    "declared_at_time_tie_current_holder": 6,
+    "declared_at_time_inwindow": 7,
+    "declared_nearest": 18,
+    "name_match": 6,
+    "declared_nearest_late_tie_joint_filing": 4,
+    "declared_nearest_tie_joint_filing": 2,
+    "declared_at_time_tie_only_known_float": 2
+   },
+   "not_mapped": []
+  },
+  "2012": {
+   "membership_date": "2012-06-29",
+   "window": [
+    "2011-04-01",
+    "2012-06-30"
+   ],
+   "members": 497,
+   "mapped_with_10k_in_window": 496,
+   "mapping_rate": 0.998,
+   "n_manual": 22,
+   "via": {
+    "manual": 22,
+    "declared_at_time": 356,
+    "declared_nearest_late": 49,
+    "declared_at_time_inwindow": 8,
+    "declared_at_time_tie_joint_filing": 16,
+    "declared_nearest_late_tie_joint_filing": 6,
+    "declared_nearest_late_tie_current_holder": 5,
+    "declared_nearest": 19,
+    "name_match": 4,
+    "declared_at_time_tie_current_holder": 8,
+    "declared_at_time_tie_only_known_float": 1,
+    "declared_nearest_tie_joint_filing": 2,
+    "unmapped_manual": 1
+   },
+   "not_mapped": [
+    "PSX（unmapped_manual：Phillips 66（2012-05 分離・最初の 10-K は窓の後））"
+   ]
+  }
+ },
+ "manual_map_entries": 366,
+ "deviations_from_task_text": [
+  "night/irr85_criteria.py は読みの規約の文を持たない（別枠85 の下限を歴史で調べる道具）。指示書には index.html の刻み・審査プロトコル（ccfAskText）の irr/rep/dur の節と out/irr_regrade/RUBRIC.md を逐語で写した",
+  "ex27 のキャッシュは raw/{受付番号の先頭10桁}/{受付番号}.json.gz の形（raw/{CIK}/ ではない）。読むだけ",
+  "語の網: fab* を fab/fabs/wafer fab/fabrication facility に限った（fabric を拾わないため）。switch_any に switching cost と time-consuming、counterparty に NRC を足した",
+  "記号→CIK の対応は機械の規則だけでは小型株・子会社を拾う誤りが残ったので、全ビンテージを目で見て手で直した（MANUAL_MAP・理由つき）"
+ ]
+}
