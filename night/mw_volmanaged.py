@@ -19,7 +19,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
 import numpy as np
 
-PRE_NAMES = ['mw_volmanaged_prereg.json', 'mw_volmanaged_prereg2.json']
+PRE_NAMES = ['mw_volmanaged_prereg.json', 'mw_volmanaged_prereg2.json', 'mw_volmanaged_prereg3.json']
+IXIC_DIV = 0.010
 OUT_NAME = 'mw_volmanaged.json'
 COST = 0.001       # 判定用: 片道売買100%あたり0.10%（全体の事前登録の既定）
 COST_LO = 0.0005   # 報告: 指示書の0.05%
@@ -320,22 +321,31 @@ def c_expanding(mk, X, cap, trend, solver=None):
     return out
 
 
-def run_monthly(mk, X, cap, c, trend, c_by=None):
-    """月次: w_t（t の月末に決定）を t+1 に使う。gross / net / net05 / net_sp2 と倍率・売買額"""
+def run_monthly(mk, X, cap, c, trend, c_by=None, w_by=None):
+    """月次: w_t（t の月末に決定）を t+1 に使う。gross / net / net05 / net_sp2 と倍率・売買額。
+    w_by を渡すと、その倍率（キーは決めた月末 t0）をそのまま使う（第3族の3信号の平均）"""
     g, n, n5, ns2, W, TR = {}, {}, {}, {}, {}, {}
     prev_w = prev_t1 = None
     prev_s = None
     gaps = 0
     for t0, t1 in zip(mk.months, mk.months[1:]):
-        x = X.get(t0)
-        on = mk.trend.get(t0) if trend else 1
-        cc = c if c_by is None else c_by.get(t0)
-        if x is None or on is None or cc is None:
-            if prev_w is not None:
-                gaps += 1
-            prev_w = None
-            continue
-        w = weight(x, cc, cap, on)
+        if w_by is not None:
+            w = w_by.get(t0)
+            if w is None:
+                if prev_w is not None:
+                    gaps += 1
+                prev_w = None
+                continue
+        else:
+            x = X.get(t0)
+            on = mk.trend.get(t0) if trend else 1
+            cc = c if c_by is None else c_by.get(t0)
+            if x is None or on is None or cc is None:
+                if prev_w is not None:
+                    gaps += 1
+                prev_w = None
+                continue
+            w = weight(x, cc, cap, on)
         m, rf = mk.m[t1], mk.rf[t1]
         if prev_w is not None and prev_t1 == t0:
             drift = prev_w * (1 + mk.m[t0]) / (1 + prev_s) if (1 + prev_s) != 0 else prev_w
@@ -651,7 +661,73 @@ def load():
         c.reg[nmk] = Mk(nmk, {d: dmk[d] - drf[d] for d in Dr}, {d: dmk[d] for d in Dr}, {d: drf[d] for d in Dr}, mm, mrf)
         c.sanity[f'region_{nmk}'] = [c.reg[nmk].months[0], c.reg[nmk].months[-1], len(c.reg[nmk].months), 'gaps', c.reg[nmk].gaps]
     c.ffm = ffm
+    c.ffd = ffd
+    # 第3族: HiTec（French 10業種・時価加重）
+    ind_d = M.french_series('10_Industry_Portfolios_daily', 'Value Weight', 'daily')
+    ind_m = M.french_series('10_Industry_Portfolios', 'Value Weight', 'monthly')
+    c.ind10 = {}
+    for col in ind_d:
+        Dd = sorted(d for d in ind_d[col] if d in ffd['rf'])
+        c.ind10[col] = Mk(col, {d: ind_d[col][d] - ffd['rf'][d] for d in Dd}, {d: ind_d[col][d] for d in Dd}, {d: ffd['rf'][d] for d in Dd},
+                          ind_m[col], ffm['rf'])
+    c.hitec = c.ind10['HiTec']
+    c.sanity['hitec'] = [c.hitec.months[0], c.hitec.months[-1], len(c.hitec.months), 'gaps', c.hitec.gaps,
+                         'cagr', round(M.cagr(c.hitec.m) * 100, 2), 'cagr_2007', round(M.cagr(M.window(c.hitec.m, M.HOLD_START)) * 100, 2)]
+    # 第3族: NASDAQ 総合（価格＋推定配当1%）
+    ixp = {k: v for k, v in yh_daily('^IXIC')[0].items() if k <= FR_END}
+    ddi = (1 + IXIC_DIV) ** (1 / 252) - 1
+    ixr = {k: (1 + v) * (1 + ddi) - 1 for k, v in rets(ixp).items()}
+    Di = sorted(k for k in ixr if k in ffd['rf'])
+    ixm = M.to_monthly({k: ixr[k] for k in Di})
+    ixm.pop(Di[0] // 100, None)
+    c.ixic = Mk('IXIC', {k: ixr[k] - ffd['rf'][k] for k in Di}, {k: ixr[k] for k in Di}, {k: ffd['rf'][k] for k in Di}, ixm, ffm['rf'])
+    c.sanity['ixic'] = [c.ixic.months[0], c.ixic.months[-1], len(c.ixic.months), 'gaps', c.ixic.gaps, 'days_not_in_french', sum(1 for k in ixr if k not in ffd['rf']),
+                        'cagr', round(M.cagr(c.ixic.m) * 100, 2)]
+    log('検算 HiTec/IXIC', c.sanity['hitec'], c.sanity['ixic'])
     return c
+
+
+def ind_breadth(c):
+    """報告のみ: A の3規則 × {B1, B1EXP} を French 10業種に、VAR1 × {B1, B1EXP} を49業種に"""
+    res = {}
+    ind49_d = M.french_series('49_Industry_Portfolios_daily', 'Value Weight', 'daily')
+    ind49_m = M.french_series('49_Industry_Portfolios', 'Value Weight', 'monthly')
+    ffd, ffm = c.ffd, c.ffm
+    c.ind49 = {}
+    for col in ind49_d:
+        dd = ind49_d[col]; mm = ind49_m.get(col, {})
+        if not dd or min(dd) > 19260702 or len(dd) < 26000 or len(mm) < 1190:
+            continue  # 1926-07 から欠けの無い業種だけ（事前登録どおり）
+        Dd = sorted(d for d in dd if d in ffd['rf'])
+        c.ind49[col] = Mk(col, {d: dd[d] - ffd['rf'][d] for d in Dd}, None, None, mm, ffm['rf'])
+    for panel, mks, sigs in (('ind10', c.ind10, ('VAR1', 'VOL1', 'DOWN')), ('ind49', c.ind49, ('VAR1',))):
+        for sg in sigs:
+            for cm in ('train_b1', 'expanding_b1'):
+                key = f'{panel}_{sg}_cap1.5_{cm}'
+                rows = {}
+                for nm, mk in mks.items():
+                    run, info = run_rule(mk, sg, 1.5, cm)
+                    if run is None:
+                        rows[nm] = {'note': info.get('note')}; continue
+                    f = M.excess_stats(run['net'], mk.m); h = M.excess_stats(run['net'], mk.m, a=M.HOLD_START)
+                    tr = M.excess_stats(run['gross'], mk.m, z=M.TRAIN_END)
+                    rows[nm] = {'full_ex': f['ex_ann'], 'full_t': f['t'], 'full_cagr_diff': f['cagr_diff'],
+                                'train_ex': tr['ex_ann'] if tr else None, 'train_t': tr['t'] if tr else None,
+                                'hold_ex': h['ex_ann'] if h else None, 'hold_t': h['t'] if h else None, 'hold_cagr_diff': h['cagr_diff'] if h else None,
+                                'sharpe_full': [M.sharpe(run['net'], mk.rf), M.sharpe({k: mk.m[k] for k in run['net']}, mk.rf)],
+                                'sharpe_hold': [M.sharpe(run['net'], mk.rf, a=M.HOLD_START), M.sharpe({k: mk.m[k] for k in run['net']}, mk.rf, a=M.HOLD_START)]}
+                ok = {k: v for k, v in rows.items() if 'full_ex' in v}
+                cnt = lambda f: sum(1 for v in ok.values() if f(v))
+                res[key] = {'n': len(ok), 'full_positive': cnt(lambda v: v['full_ex'] > 0 and v['full_cagr_diff'] > 0),
+                            'train_t_ge2': cnt(lambda v: (v['train_t'] or 0) >= 2), 'hold_positive': cnt(lambda v: v['hold_ex'] is not None and v['hold_ex'] > 0 and v['hold_cagr_diff'] > 0),
+                            'sharpe_up_full': cnt(lambda v: None not in v['sharpe_full'] and v['sharpe_full'][0] > v['sharpe_full'][1]),
+                            'sharpe_up_hold': cnt(lambda v: None not in v['sharpe_hold'] and v['sharpe_hold'][0] > v['sharpe_hold'][1]),
+                            'median_full_ex': round(S.median([v['full_ex'] for v in ok.values()]), 2) if ok else None,
+                            'median_hold_ex': round(S.median([v['hold_ex'] for v in ok.values() if v['hold_ex'] is not None]), 2) if ok else None,
+                            'detail': rows}
+                log(f"業種 {key}: n {res[key]['n']} 全期間で正 {res[key]['full_positive']} 訓練 t≥2 {res[key]['train_t_ge2']} 保有で正 {res[key]['hold_positive']} "
+                    f"シャープ上 全期間 {res[key]['sharpe_up_full']} 保有 {res[key]['sharpe_up_hold']} 中央 全期間 {res[key]['median_full_ex']} 保有 {res[key]['median_hold_ex']}")
+    return res
 
 
 JKP_C = 'aus aut bel bra can che chl chn col cze deu dnk egy esp fin fra gbr grc hkg hun idn ind irl isr ita jpn kor mex mys nld nor nzl per phl pol prt sgp swe tha tur twn zaf'.split()
@@ -681,7 +757,8 @@ def load_jkp(c):
 
 # ───────────────────────── 戦略の定義 ─────────────────────────
 LABELS = {'exploratory': '探索（第1族の事前登録に含めて結果を見る前に固定）',
-          'exploratory2': '探索（第2族・第1族の結果を見た後に登録）'}
+          'exploratory2': '探索（第2族・第1族の結果を見た後に登録）',
+          'exploratory3': '探索（第3族・第2族の結果を見た後に登録）'}
 SIG = {'VAR1': ('VAR1', False), 'VOL1': ('VOL1', False), 'VAR6': ('VAR6', False), 'VAR1T': ('VAR1', True),
        'EWMA': ('EWMA', False), 'DOWN': ('DOWN', False), 'VOL1T': ('VOL1', True)}
 
@@ -718,10 +795,58 @@ def specs():
             for cap in CAPS:
                 j += 1
                 out.append({'id': f'Q{j:02d}_{idx}_{sg}_cap{cap:g}_B1', 'family': 'exploratory2', 'idx': idx, 'sig': sg, 'cap': cap, 'cmode': 'train_b1', 'lag': 0})
+    # 第3族（prereg3）
+    h = 0
+    for idx in ('HiTec', 'IXIC'):
+        for sg in ('VAR1', 'VOL1', 'DOWN'):
+            for cm in ('train_b1', 'expanding_b1'):
+                h += 1
+                out.append({'id': f"H{h:02d}_{idx}_{sg}_cap1.5_{'B1' if cm == 'train_b1' else 'B1EXP'}", 'family': 'exploratory3', 'idx': idx, 'sig': sg, 'cap': 1.5, 'cmode': cm, 'lag': 0})
+    for sg in ('VAR1', 'VOL1', 'DOWN'):
+        h += 1
+        out.append({'id': f'H{h:02d}_NDX_{sg}_cap1.5_B1_LAG1', 'family': 'exploratory3', 'idx': 'NDX', 'sig': sg, 'cap': 1.5, 'cmode': 'train_b1', 'lag': 1})
+    for idx in ('US', 'NDX'):
+        for cap in CAPS:
+            for cm in ('train_b1', 'expanding_b1'):
+                h += 1
+                out.append({'id': f"H{h:02d}_{idx}_ENS_cap{cap:g}_{'B1' if cm == 'train_b1' else 'B1EXP'}", 'family': 'exploratory3', 'idx': idx, 'sig': 'ENS', 'cap': cap, 'cmode': cm, 'lag': 0})
     return out
 
 
+def weights_of(mk, sg, cap, cmode):
+    """規則の倍率 {t0: w}（決めた月末がキー）"""
+    kind, trend = SIG[sg]
+    X = mk.X(kind)
+    if cmode in ('train', 'train_b1'):
+        c, _ = (solve_c if cmode == 'train' else solve_c_beta)(mk, X, cap, trend, end=mk.train_end)
+        if c is None:
+            return None
+        cb = None
+    else:
+        cb = c_expanding(mk, X, cap, trend, solver=solve_c if cmode == 'expanding' else solve_c_beta)
+        c = None
+    out = {}
+    for t0 in mk.months:
+        x = X.get(t0); on = mk.trend.get(t0) if trend else 1
+        cc = c if cb is None else cb.get(t0)
+        if x is None or on is None or cc is None:
+            continue
+        out[t0] = weight(x, cc, cap, on)
+    return out
+
+
+def run_ens(mk, cap, cmode):
+    parts = [weights_of(mk, sg, cap, cmode) for sg in ('VAR1', 'VOL1', 'DOWN')]
+    if any(p is None for p in parts):
+        return None, {'note': '訓練期間が短すぎる'}
+    ks = set(parts[0]) & set(parts[1]) & set(parts[2])
+    wb = {k: sum(p[k] for p in parts) / 3 for k in ks}
+    return run_monthly(mk, None, cap, None, False, w_by=wb), {'ens': 'VAR1・VOL1・DOWN の倍率の平均（各自 β=1 の c）', 'cmode': cmode}
+
+
 def run_rule(mk, sg, cap, cmode, lag=0):
+    if sg == 'ENS':
+        return run_ens(mk, cap, cmode)
     kind, trend = SIG[sg]
     X = mk.X(kind)
     info = {}
@@ -776,7 +901,7 @@ def _region_repl(c, sp):
 
 
 def run_one(c, sp):
-    mk = c.us if sp['idx'] == 'US' else c.ndx
+    mk = {'US': c.us, 'NDX': c.ndx, 'HiTec': getattr(c, 'hitec', None), 'IXIC': getattr(c, 'ixic', None)}[sp['idx']]
     run, info = run_rule(mk, sp['sig'], sp['cap'], sp['cmode'], sp['lag'])
     if run is None:
         log('実行不能', sp['id'], info); return None
@@ -905,6 +1030,7 @@ def main():
     tested += report_only(c)
     res['jkp_breadth_report'] = jkp_breadth(c)
     res['jkp_breadth_b1_report'] = jkp_breadth(c, 'train_b1')
+    res['industry_breadth_report'] = ind_breadth(c)
     res['sanity'] = c.sanity
     res['n_tested'] = len(tested)
     res['n_graded'] = len(allg)
