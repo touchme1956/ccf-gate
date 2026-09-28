@@ -423,6 +423,7 @@ def main():
         t4, rep4 = part4(D, P, G, mktrf, rf)
         tested += t4
         out['countries'] = rep4
+        out['post_hoc_tilt_market_regions'] = post_hoc_tilt_regions(D, P, G, mktrf, rf, RP, RG, RM, t4)
 
     out['tested'] = tested
     out['n_tested'] = len(tested)
@@ -885,8 +886,35 @@ def part4(D, P, G, mktrf, rf):
                                  'hold_t_ge_1_65': sum(1 for h in hs if (h['t'] or 0) >= 1.65),
                                  'hold_mean_ex': round(S.mean(h['ex_ann'] for h in hs), 2) if hs else None,
                                  'hold_median_ex': round(S.median(h['ex_ann'] for h in hs), 2) if hs else None,
-                                 'grades': dict(collections.Counter(v['grade'] for v in rows.values()))}
+                                 'grades': dict(collections.Counter(v['grade'] for v in rows.values())),
+                                 'sign_test_hold_p_one_sided': round(sum(math.comb(len(hs), k) for k in range(sum(1 for h in hs if h['ex_ann'] > 0), len(hs) + 1)) / 2 ** len(hs), 8) if hs else None,
+                                 'sign_note': '国どうしは相関しているので符号検定の p は楽観側（参考）'}
     return tested, info
+
+
+def post_hoc_tilt_regions(D, P, G, mktrf, rf, RP, RG, RM, t4):
+    """事後（地域を C5 として見た後）: 米国・日本・地域の『市場＋傾き』（ZT と同じ規則）と日本の採用者（Z と同じ）。
+    格付けは参考に付けるが、勝ちには数えない"""
+    known = [a for a, d in D.items() if d['pub']]
+    ad0 = adopt_dates(D, 0)
+    out = {'label': '事後（地域の数字を見た後・判定と勝ちの数に入れない）', 'rows': {}}
+    ztpos = sum(1 for v in t4 if v['family'] == 'explore4_ZT' and v['eval']['full'] and v['eval']['full']['ex_ann'] > 0)
+    ztn = sum(1 for v in t4 if v['family'] == 'explore4_ZT' and v['eval']['full'])
+    for reg, Pr, Gr, mk, st in [('usa', P, G, mktrf, P2_START_US)] + [(r, RP[r], RG[r], RM[r], REG_START) for r in REGIONS]:
+        T = tilt_series(Pr, D)
+        zt, zc = tilt_market(mk, T, D, known, ad0, st)
+        r_, rc, rt = adopter(Gr, D, known, ad0, False, start_min=st)
+        th = mean_turn(rt)
+        rows = {}
+        for lab, ser in (('ZT', zt), ('Z', r_)):
+            e = evaluate(ser, mk, rf, th)
+            v = {'eval': e, 'repl': {'regions': ztn, 'positive': ztpos}, 'holm_p_hold': None}
+            finalize(v)
+            rows[lab] = {'grade_reference_only': v['grade'], 'criteria': v['criteria'],
+                         'full': e['full'], 'train': e['train'], 'hold': e['hold'], 'cost_hold': e['cost_hold'],
+                         'roll20': e['roll20'], 'dca20': e['dca20']}
+        out['rows'][reg] = rows
+    return out
 
 
 def annual_table(r, mktrf):
