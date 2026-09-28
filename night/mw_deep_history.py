@@ -765,6 +765,47 @@ def part2(J, ev, fam, pA):
     return rb, rep, len(p44)
 
 
+def conclusion(ev, fam, J, rep2):
+    """結論の文（数字は ev から引く）"""
+    g = lambda k, w, f='ex_ann': (ev[k].get(w) or {}).get(f)
+    S_ = sorted(k for k, e in ev.items() if e['grade'] == 'S')
+    A_ = sorted(k for k, e in ev.items() if e['grade'] == 'A')
+    B_ = sorted(k for k, e in ev.items() if e['grade'] == 'B')
+    c = []
+    c.append(f"格付けした {len(ev)} 本（主8・副8・探索6・BSV 14・ハロウィーン2・頑健性6）: S {len(S_)} 本・A {len(A_)} 本・B {len(B_)} 本。"
+             "S の内訳は JST の国の回転（割安・勢い・その両方・キャリー）と BSV の紙の上乗せ")
+    c.append(f"★本当に独立の期間 1872〜1925 年でも、国の『割安（配当利回り）＋勢い』を半分ずつ（上位3か国）は等分の相手に "
+             f"+{g('P5_VM_K3','train')}%/年（t{g('P5_VM_K3','train','t')}）、1926〜2020 年も +{g('P5_VM_K3','hold')}%/年（t{g('P5_VM_K3','hold','t')}）勝った。"
+             "1か国を抜いても・戦争の年を抜いても・ブロック・ブートストラップでも残る")
+    c.append(f"★だが 2007〜2020 年は国の回転のすべての規則が負けた（VM 上位3か国 {g('P5_VM_K3','h2007_2020')}%/年 t{g('P5_VM_K3','h2007_2020','t')}・"
+             f"割安 上位3か国 {g('P1_VAL_K3','h2007_2020')}%/年 t{g('P1_VAL_K3','h2007_2020','t')}・14年中 3〜7年しか勝たない）。"
+             "ALS 1997 の公表後（1998〜2020）も −0.3〜−0.7%/年。mw_country の月次の現代のデータ（2007〜2025）でも国の勢い・割安は先進国の時価加重に −1.1〜−1.4%/年（EAFE の中では +0.5%/年前後・t<0.6）＝同じ向き。"
+             "S はこの角度の事前登録の割り当て（保有 = 1926〜2020・うち2007年以降は14年）での格付けで、全体の標準の保有（2007〜）なら C2 で落ちる")
+    c.append(f"頑健性: 配当利回りを1年古い値にすると上乗せは約半分（保有 +{g('RB1_VALLAG_K3','hold')}%/年 t{g('RB1_VALLAG_K3','hold','t')}）、"
+             f"勢いを1年飛ばすと符号が逆（保有 {g('RB3_MOMSKIP_K3','hold')}%/年 t{g('RB3_MOMSKIP_K3','hold','t')}）＝勝ちは直近1年の値に頼る。"
+             "1925 年以前の国の相対リターンの1年の自己相関は中央 +0.15（ならされた指数の疑い）で、勢いの一部が偽物である可能性は消せない")
+    c.append(f"BSV（紙・買い−売り・空売り要）: 株価指数のトレンドを株に半分重ねると 1800〜1925 +{g('B1_TREND','train')}%/年 t{g('B1_TREND','train','t')}・"
+             f"1926〜2016 +{g('B1_TREND','hold')}%/年。ただし 2007〜2016 は +{g('B1_TREND','h2007_2016')}%/年 t{g('B1_TREND','h2007_2016','t')}。"
+             "1925 年以前の数字は論文の著者が公表済みの『前の標本』で、この mw には新しいが学界には新しくない。mw_overlay の reality_gap では、実在のトレンド・ファンドを株に重ねた 2007 年以降の上乗せは年 +0.7〜0.9%（t≈0.8〜0.9）で 2008 年と 2022 年を抜くとほぼ 0、しかも日本の個人の NISA では買えない")
+    c.append(f"ハロウィーン1.5倍（米国）は 1871〜1925 年で +{g('Z1_HAL_OV15','train')}%/年 t{g('Z1_HAL_OV15','train','t')}＝C1 で落ち、mw_calendar の S を独立の昔の期間では確かめられなかった")
+    return {'conclusion_ja': c,
+            'deviations': [
+                'mw_common.rolling / dca は月次（と日次）のキーを前提にしていて年次のキーに対応しない → 同じ定義の年次版を自前で（事前登録どおり）',
+                'mw_common.excess_stats は年次で24年未満だと値を返さない → 2007〜2020（14年）と 1998〜2020 は自前の短い窓の要約（NW ラグ1）',
+                '全体の訓練（〜2006）/保有（2007〜）を、年次の JST・BSV・ハロウィーンでは事前登録どおり割り当て直した（C1 = 1925 年以前）',
+                'Holm は費用後の保有期間の p で掛けた（厳しい側）',
+                'mw_common に不具合は見つからなかった（rolling の年次非対応は仕様の範囲）'],
+            'caveats': [
+                'S はこの角度の割り当て（保有 = 1926〜2020）での格付け。全体の標準の保有期間（2007〜）に当たる 2007〜2020 はすべての国の回転が負け（t 約 −2〜−3）',
+                '国の生き残りの偏り: JST は市場が消えた・崩れた国（ロシア・中国・オーストリア＝ハンガリー・アルゼンチン）を含まない。割安の国選びはこうした国を拾いやすいので、上乗せは上振れしうる',
+                '物価上昇率100%以上の年・戦時の欠け（DEU 1945〜49 など）は戦略と相手の両方から外した＝最悪の年が抜けている',
+                '年次・16か国・初期は銘柄の少ない指数。1925 年以前の勢いはならされた指数の自己相関で作られた分がありうる',
+                'VM 上位3か国の 1925 年以前の上乗せの半分強は日本（1886〜1925）の寄与。割安 上位3か国は日本を抜くと訓練の t が 1.09 に落ちる',
+                '米国だけを相手にすると、VM 上位3か国は 1872〜1925 +1.8%/年 t0.95・1926〜2020 +2.65%/年 t1.61・2007〜2020 −4.9%/年 t−2.6',
+                'BSV の上乗せは紙（費用前の系列・空売りと先物が要る・1925 年以前は実行不能）。個人の NISA では作れない'],
+            'n_S': len(S_), 'n_A': len(A_), 'n_B': len(B_)}
+
+
 def main():
     if '--check' in sys.argv:
         check_only()
@@ -894,7 +935,7 @@ def main():
                        'gdpw_vs_ew_train': es(gb, R['bench'], None, T_END), 'gdpw_vs_ew_hold': es(gb, R['bench'], H_START, None),
                        'ew_cagr_train': round(M.cagr(M.window(R['bench'], None, T_END), 1) * 100, 2),
                        'ew_cagr_hold': round(M.cagr(M.window(R['bench'], H_START), 1) * 100, 2),
-                       'ew_equals_bench_check': R['gross'] == R['bench']}
+                       'ew_strategy_minus_bench_maxabs': max(abs(R['gross'][y] - R['bench'][y]) for y in R['gross'])}
     # ハロウィーンの半月ずらし（診断）
     hal_diag = {k: {kk: vv for kk, vv in eval_hal(k, kind, m, rf, (12, 1, 2, 3, 4, 5)).items() if kk in ('train', 'hold', 'full')}
                 for k, kind in (('Z1_shift_DecMay', 'OV15'), ('Z2_shift_DecMay', 'SW'))}
@@ -944,6 +985,7 @@ def main():
     # JST の系列（年次）を小さく残す: 主の族だけ
     out['series_primary'] = {k: {'gross': ev[k]['_series']['gross'], 'bench': ev[k]['_series']['bench'], 'turn': ev[k]['_series']['turn']}
                              for k in ev if fam[k] == 'P'}
+    out.update(conclusion(ev, fam, J, rep2))
     p = M.save(OUT, out)
     log('書いた', p, os.path.getsize(p))
 
