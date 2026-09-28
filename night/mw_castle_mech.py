@@ -1014,6 +1014,103 @@ def run2():
     log('保存', p_, round(os.path.getsize(p_) / 1e6, 2), 'MB')
 
 
+# ───────────────────────── 探索の対照（prereg3） ─────────────────────────
+PRE3 = 'mw_castle_mech_prereg3.json'
+
+
+def run3():
+    global D
+    t0 = time.time()
+    outp = os.path.join(M.BASE, 'out', OUT)
+    main_ = json.load(open(outp))
+    D = load()
+    uni = D['uni']
+    F, B, UT, pools = forms(uni)
+    R = D['R']
+    fm = {k: v for k, v in D['ff']['mkt'].items() if START <= k <= END}
+    spy = D['cores']['SPX'][0]
+    bench0 = {nm: SR.simulate(B[nm], R)[0] for nm in B}
+    nullF = {'aged_null_U_all': B['U_all'], 'aged_null_M100': B['M100'], 'aged_null_M100_exfin': {}}
+    for J in SR.YEARS:
+        u = uni[J]
+        m100 = {c: u[c] for c in sorted(u, key=lambda c: -u[c]['fcap'])[:100]}
+        Rm, _sc = SR.scores(m100)
+        nullF['aged_null_M100_exfin'][J] = {m100[c]['ticker']: m100[c]['fcap'] for c in Rm}
+    nulls, nser = {}, {}
+    for nm, Fm in nullF.items():
+        ag = aged_of(Fm, R)
+        nser[nm] = ag
+        pb = 'U_all' if nm == 'aged_null_U_all' else 'M100'
+        nulls[nm] = {'vs_' + pb: M.excess_stats(ag, bench0[pb]), 'vs_FF_Mkt': M.excess_stats(ag, fm), 'vs_SPY': M.excess_stats(ag, spy),
+                     'subperiods_vs_' + pb: sub2(ag, bench0[pb])}
+    adj = {}
+    for form, nn in (('T3VW', 'aged_null_U_all'), ('M100_T3VW', 'aged_null_M100'), ('M100_T5', 'aged_null_M100')):
+        ag = aged_of(F[form], R)
+        diff = {m: ag[m] - nser[nn][m] for m in ag if m in nser[nn]}
+        zero = {m: 0.0 for m in diff}
+        st = M.excess_stats(diff, zero)
+        adj[form] = {'minus': nn, 'diff_stats': st, 'persist_after_control': bool(st and st['ex_ann'] > 0 and (st['t'] or 0) >= 1.65),
+                     'subperiods': sub2(diff, zero)}
+    # 無作為の5社の2〜5年目
+    rng = random.Random(SEED)
+    T5 = aged_of(F['M100_T5'], R)
+    t5ex = M.excess_stats(T5, bench0['M100'])['ex_ann']
+    rnd = {}
+    for pool in ('b1_M100_exfin', 'b2_M100_top_third_cop_at'):
+        P = pools[pool]
+        v = []
+        for i in range(R_DRAWS):
+            Fr = {J: {x: 1.0 for x in rng.sample(P[J], min(5, len(P[J])))} for J in SR.YEARS}
+            ag = aged_of(Fr, R)
+            v.append(M.excess_stats(ag, bench0['M100'])['ex_ann'])
+        v.sort()
+        q = lambda p: round(v[min(len(v) - 1, int(p * len(v)))], 2)
+        rnd[pool] = {'draws': len(v), 'share_positive': round(sum(1 for x in v if x > 0) / len(v), 3), 'p05': q(0.05), 'median': q(0.5), 'p95': q(0.95),
+                     'mean': round(S.mean(v), 2), 'M100_T5_ex': t5ex, 'M100_T5_percentile': round(sum(1 for x in v if x < t5ex) / len(v), 3)}
+    main_['exploratory_prereg3'] = {'prereg': PRE3, 'prereg_commit': git_sha(f'out/{PRE3}'), 'aged_null_controls': nulls,
+                                    'adjusted_persistence': adj, 'aged_random5_vs_M100': rnd, 'runtime_s': round(time.time() - t0, 1)}
+    tested3 = [{'name': nm, 'role': 'report_control_prereg3', 'grade': None} for nm in nulls] + \
+              [{'name': f'adjusted_persistence_{f}', 'role': 'report_control_prereg3', 'grade': None} for f in adj] + \
+              [{'name': f'aged_random5_{p}', 'role': 'report_distribution_prereg3', 'grade': None} for p in rnd]
+    main_['tested'] = [x for x in main_['tested'] if not str(x.get('role', '')).endswith('prereg3')] + tested3
+    main_['n_tested'] = len(main_['tested'])
+    p_ = M.save(OUT, main_)
+    log('保存', p_, round(os.path.getsize(p_) / 1e6, 2), 'MB', round(time.time() - t0, 1))
+
+
+def finalize():
+    """見出し（JSON の数字を拾うだけ・新しい検定はしない）"""
+    outp = os.path.join(M.BASE, 'out', OUT)
+    d = json.load(open(outp))
+    p1 = d['part1_event_time_decay']; g = d['graded_primary']; W = d['wealth_full_window']
+    e2 = d.get('exploratory_prereg2', {}); e3 = d.get('exploratory_prereg3', {})
+    h = {'grades': {nm: r['grade'] for nm, r in g.items()},
+         'persistence_aged_2_5': {f: {'vs': p1[f]['primary_benchmark'], 'ex_ann': p1[f]['aged_2_5']['vs_' + p1[f]['primary_benchmark']]['ex_ann'],
+                                      't': p1[f]['aged_2_5']['vs_' + p1[f]['primary_benchmark']]['t'], 'pass': p1[f]['aged_2_5']['persistence_criterion_pass'],
+                                      'after_null_control': (e3.get('adjusted_persistence', {}).get(f, {}).get('diff_stats') or {}).get('ex_ann'),
+                                      'ex_mega6_vs_FF_Mkt': (e2.get('graded_E2', {}).get(f'decay_aged25_{f}_exMega6', {}).get('full') or {}).get('ex_ann')}
+                                  for f in ('T3VW', 'M100_T3VW', 'M100_T5')},
+         'event_year_ex_vs_primary': {f: {k: p1[f]['by_event_year'][str(k)]['vs_' + p1[f]['primary_benchmark']]['ex_ann'] for k in range(1, KMAX + 1)} for f in ('T3VW', 'M100_T3VW', 'M100_T5')},
+         'castle_vs_FF_Mkt': {nm: [r['full']['ex_ann'], r['full']['t'], r['holm_p']] for nm, r in g.items() if nm.startswith('castle')},
+         'wealth_ratio_mech_N5': {c: {reg: W['mech_N5'][c][reg]['ratio_vs_core_liquidated'] for reg in W['mech_N5'][c]} for c in W['mech_N5']},
+         'wealth_ratio_annual_N5': {c: {reg: W['annual_N5'][c][reg]['ratio_vs_core_liquidated'] for reg in W['annual_N5'][c]} for c in W['annual_N5']},
+         'windows_p_beat': {H: {arm: {c: d['windows_10_15y'][H][arm][c]['taxable']['p_beat_core'] for c in d['windows_10_15y'][H][arm]} for arm in d['windows_10_15y'][H]} for H in d['windows_10_15y']},
+         'bootstrap_p_beat': {k: {H: v[H]['p_beat_core'] for H in v} for k, v in d['cohort_bootstrap'].items()},
+         'years_to_t2_mech_N5': {c: d['years_to_t2'][f'mech_N5|{c}']['years_needed_from_t'] for c in ('SPX', 'NDX')}}
+    d['ex27_out_of_sample'] = ex27_rerun()
+    d['headline'] = h
+    d['deviations'] = [
+        '事前登録の out_of_sample（EX-27 1996〜2001 での再実行）は行えなかった: 実行の時点で ex27 の角度の社ごとのパネルがリポジトリに無く、SEC を二重に叩かない約束（ルール5）どおり自分では集めていない＝N/A',
+        '事前登録の後に模型へ足したのは報告用の記録だけ（社ごとに買った円・終わりの時価。売買・税・判定の規則は不変）。自己検査6項目は足した後も合格',
+        '格付けの保有期間はデータのある 2010-07（decay は 2011-07）〜2026-08＝全期間と同じ。訓練期間なし・16年しか無いので転がる20年窓（C4）も構造的に不合格',
+        '配当利回り（税の計算だけに使う）は adjclose と close のリターンの差。配当の無い月にもごく小さな正の値が出る（丸めの誤差・SPY で年1.76% と常識の範囲）',
+        '事前登録の『NISA の枠つき』は枠の中に収まらない分を課税口座へ回す併用（nisa_q）。月¥100,000 の感度では生涯枠がほぼ16年もつので、NISA だけに近い姿はそちらで見る',
+        '1年目の点検: T3VW 対 U_all は 2026-06 まで +1.81%/年（mw_sec_replication の2026-08まで +1.90 と、最後の2か月の分だけ違う＝想定どおり）',
+    ]
+    M.save(OUT, d)
+    print(json.dumps(h, ensure_ascii=False, indent=1))
+
+
 def check():
     global D
     D = load()
@@ -1028,6 +1125,10 @@ if __name__ == '__main__':
         selftest()
     elif '--prereg2' in sys.argv:
         run2()
+    elif '--prereg3' in sys.argv:
+        run3()
+    elif '--finalize' in sys.argv:
+        finalize()
     elif '--check' in sys.argv:
         check()
     else:
