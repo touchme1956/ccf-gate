@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
 
 PREREG = 'out/mw_dominant_market_prereg.json'
+PREREG2 = 'out/mw_dominant_market_prereg2.json'
 OUT = 'mw_dominant_market.json'
 JST_URL = 'https://www.macrohistory.net/app/download/9834512569/JSTdatasetR6.xlsx?t=1763503850'
 WB = 'https://api.worldbank.org/v2/country/all/indicator/{}?format=json&per_page=20000&date={}'
@@ -578,9 +579,10 @@ def fr_weights(Fo, name, Y, h=None, members=None):
     raise ValueError(name)
 
 
-def fund_monthly(wfun, rets, y0=1976, y1=2025, rebal_month=1):
-    """年に一度（rebal_month）目標へ戻し、年の中は漂わせる（買って持つ）。→ (月次リターン, {年: 回転}, {年: 目標の重み}, 事象)"""
-    out, turn, wts, ev = {}, {}, {}, {'blank_years': 0, 'missing_month': 0}
+def fund_monthly(wfun, rets, y0=1976, y1=2025, rebal_month=1, renorm=False):
+    """年に一度（rebal_month）目標へ戻し、年の中は漂わせる（買って持つ）。→ (月次リターン, {年: 回転}, {年: 目標の重み}, 事象)
+    renorm=True（第2の事前登録の新興国）: 欠けた月は残りの国で割り直し（有効な重み 85% 未満ならその月は空欄）、欠けた国は動かさない"""
+    out, turn, wts, ev = {}, {}, {}, {'blank_years': 0, 'missing_month': 0, 'renorm_months': 0, 'blank_months': 0}
     prev_h = None
     for Y in range(y0, y1 + 1):
         w = wfun(Y)
@@ -600,6 +602,18 @@ def fund_monthly(wfun, rets, y0=1976, y1=2025, rebal_month=1):
         ok = True
         for m in ms:
             vals = {c: rets[c].get(m) for c in h}
+            if renorm and any(v is None for v in vals.values()) and m <= min(max(rets[c]) for c in h):
+                tot = sum(h.values())
+                vs = sum(h[c] for c in h if vals[c] is not None)
+                if vs / tot < RENORM_MIN:
+                    ev['blank_months'] += 1
+                    continue
+                ev['renorm_months'] += 1
+                out[m] = sum(h[c] * vals[c] for c in h if vals[c] is not None) / vs
+                for c in h:
+                    if vals[c] is not None:
+                        h[c] *= 1 + vals[c]
+                continue
             if any(v is None for v in vals.values()):
                 if all(rets[c].get(m) is None for c in h) and m > max(max(rets[c]) for c in h):
                     ok = False; break          # データの終わり
@@ -613,7 +627,7 @@ def fund_monthly(wfun, rets, y0=1976, y1=2025, rebal_month=1):
     return out, turn, wts, ev
 
 
-def net_monthly(r, turn, wts, multi, foreign_of, fee=FEE_GAP, rebal_month=1):
+def net_monthly(r, turn, wts, multi, foreign_of, fee=FEE_GAP, rebal_month=1, tc=TC):
     """月次の費用後: 毎月 (fee×複数国 + WHT×自国外の重み)/12、目標へ戻す月に TC×回転"""
     out = {}
     for m, v in r.items():
@@ -623,7 +637,7 @@ def net_monthly(r, turn, wts, multi, foreign_of, fee=FEE_GAP, rebal_month=1):
             continue
         d = (fee * multi + WHT * foreign_of(w)) / 12
         if m % 100 == rebal_month:
-            d += TC * turn.get(Y, 0.0)
+            d += tc * turn.get(Y, 0.0)
         out[m] = v - d
     return out
 
@@ -1098,6 +1112,102 @@ def main():
         tested.append({'name': g, 'kind': 'graded_usd_monthly', 'family': 'T', 'primary': g == 'T1_49_20', 'grade': gr})
     out['part3_graded_T'] = Tg
     log('第3部 T 済', {g: (e['grade'], e['hold'] and e['hold']['ex_ann']) for g, e in Tg.items()})
+
+    # ═══════════ 第4部: 探索の族 E（out/mw_dominant_market_prereg2.json・米国外で支配的な国に寄せない重み） ═══════════
+    out['prereg2'] = PREREG2
+    out['prereg2_commit'] = git_sha(PREREG2)
+    XUS = sorted(FRF)
+
+    def wx_cap(Y):
+        return Fo.w_cap(Y, XUS)
+
+    def wx_sc(Y):
+        w = wx_cap(Y)
+        if not w:
+            return None
+        n = len(w) // 2
+        small = sorted(w, key=lambda c: (w[c], c))[:n]
+        return {c: 1 / n for c in small} if n else None
+
+    def wx_ew(Y):
+        w = wx_cap(Y)
+        return {c: 1 / len(w) for c in w} if w else None
+
+    def wx_gdp(Y):
+        w = wx_cap(Y)
+        if not w:
+            return None
+        g = {c: wb_gdp.get((c, Y - 2)) for c in w}
+        g = {c: v for c, v in g.items() if v}
+        t = sum(g.values())
+        return {c: v / t for c, v in g.items()} if g else None
+    bx = fund_monthly(wx_cap, R)[0]
+    # 新興国（JKP・総に直す）
+    rf = ff['rf']
+    EMC = 'bra chl chn col cze egy grc hun ind idn kor kwt mys mex per phl pol qat sau zaf twn tha tur are'.split()
+    em = {}
+    for c in EMC:
+        em[c.upper()] = {k: v + rf[k] for k, v in M.jkp_mkt(c, 'vw').items() if k in rf}
+    em_b = {k: v + rf[k] for k, v in M.jkp_mkt('emerging', 'vw').items() if k in rf}
+    em_start = {c: min(v) for c, v in em.items()}
+
+    def em_univ(Y):
+        return [c for c in em if em_start[c] <= Y * 100 + 1]
+
+    def em_ew(Y):
+        u = em_univ(Y)
+        return {c: 1 / len(u) for c in u} if u else None
+
+    def em_gdp(Y):
+        g = {c: wb_gdp.get((c, Y - 2)) for c in em_univ(Y)}
+        g = {c: v for c, v in g.items() if v}
+        t = sum(g.values())
+        return {c: v / t for c, v in g.items()} if g else None
+    em_series = {'E2_EW_XUS': fund_monthly(em_ew, em, 1989, 2025, renorm=True), 'E3_GDP_XUS': fund_monthly(em_gdp, em, 1989, 2025, renorm=True)}
+    Eg = {}
+    for gid, wf in (('E1_SC_XUS', wx_sc), ('E2_EW_XUS', wx_ew), ('E3_GDP_XUS', wx_gdp)):
+        r, turn, wts, ev = fund_monthly(wf, R)
+        rn = net_monthly(r, turn, wts, True, lambda w: 0.0, fee=0.004, tc=0.0015)
+        e = {'id': gid, 'benchmark': '米国外20か国の時価加重（世界銀行の時価・実時間の掃除）', 'events': ev,
+             'full': M.excess_stats(r, bx), 'train': M.excess_stats(r, bx, None, M.TRAIN_END), 'hold': M.excess_stats(r, bx, M.HOLD_START),
+             'recent': M.excess_stats(r, bx, M.RECENT_START), 'hold_net': M.excess_stats(rn, bx, M.HOLD_START), 'full_net': M.excess_stats(rn, bx),
+             'roll20': M.rolling(r, bx, 20), 'roll20_net': M.rolling(rn, bx, 20), 'dca20': M.dca(r, bx, 20), 'dca20_net': M.dca(rn, bx, 20),
+             'avg_turnover_oneway_per_year': round(S.mean(turn.values()), 3) if turn else None,
+             'weights_sample': {Y: {c: round(v, 3) for c, v in sorted(wts[Y].items(), key=lambda x: -x[1])} for Y in (1976, 1990, 2007, 2025) if Y in wts}}
+        if gid in em_series:
+            x, _, _, evx = em_series[gid]
+            st = M.excess_stats(x, em_b)
+            e['repl'] = {'regions': 1, 'positive': int(bool(st and st['ex_ann'] > 0)),
+                         'units': {'EM': {'full_ex_ann': st and st['ex_ann'], 'full_t': st and st['t'],
+                                          'train_ex_ann': (M.excess_stats(x, em_b, None, M.TRAIN_END) or {}).get('ex_ann'),
+                                          'hold_ex_ann': (M.excess_stats(x, em_b, M.HOLD_START) or {}).get('ex_ann'), 'events': evx}}}
+        else:
+            e['repl'] = None
+        Eg[gid] = e
+    hp = {g: (e['hold']['p'] if e['hold'] and (e['hold']['t'] or 0) > 0 else 1.0) for g, e in Eg.items()}
+    hh = M.holm(hp)
+    for g, e in Eg.items():
+        e['family'] = 'E（探索・prereg2）'
+        e['holm_p_hold'] = hh.get(g)
+        gr, cr = M.grade(e['full'], e['train'], e['hold'], e['roll20'], cost_hold=e['hold_net'], repl=e['repl'], family_holm_p=hh.get(g))
+        e['grade'], e['criteria'] = gr, cr
+        tested.append({'name': g, 'kind': 'graded_usd_monthly', 'family': 'E', 'primary': False, 'exploratory': True, 'grade': gr})
+    out['part4_graded_E'] = Eg
+    # 点検: 米国外の時価加重 vs JKP developed（米国外）・French Ind_all
+    try:
+        jdev = {k: v + rf[k] for k, v in M.jkp_mkt('developed', 'vw').items() if k in rf}
+        zi = zipfile.ZipFile(io.BytesIO(M.get('https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_International_Indices.zip',
+                                              name='fr_F-F_International_Indices.zip')))
+        a = parse_fr_dat(zi.read('Ind_all.Dat').decode('latin-1'))
+        sec = a[('USD', 'NR', 'm')]
+        ind_all = {k: v[sec['cols'].index('Mkt')] / 100 for k, v in sec['data'].items() if v[sec['cols'].index('Mkt')] is not None}
+        com = sorted(set(bx) & set(jdev))
+        com2 = sorted(set(bx) & set(ind_all))
+        out['part4_sanity'] = {'bench_xus_vs_jkp_developed': M.excess_stats(bx, jdev), 'corr_jkp_developed': round(M.corr([bx[k] for k in com], [jdev[k] for k in com]), 4),
+                               'bench_xus_vs_french_ind_all': M.excess_stats(bx, ind_all), 'corr_french_ind_all': round(M.corr([bx[k] for k in com2], [ind_all[k] for k in com2]), 4)}
+    except Exception as ex:  # noqa
+        out['part4_sanity'] = f'失敗: {ex}'
+    log('第4部 E 済', {g: (e['grade'], e['train'] and (e['train']['ex_ann'], e['train']['t']), e['hold'] and (e['hold']['ex_ann'], e['hold']['t'])) for g, e in Eg.items()})
 
     # ═══════════ 点検 ═══════════
     san = {}
