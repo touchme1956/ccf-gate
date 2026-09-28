@@ -402,7 +402,28 @@ def daily_rule_sets(dates, fomc_keys, us=True):
     prev = {b: a for a, b in zip(ds, ds[1:])}
     fom2 = fom | set(prev[k] for k in fom if k in prev)
     return {'tom': tom_set(ds), 'ph': ph, 'ph_all': ph_all, 'fomc': fom, 'fomc2': fom2, 'santa': santa_set(ds),
-            'ariel': ariel_set(ds), 'lunar': lunar_set(ds), 'gaps': gaps}
+            'ariel': ariel_set(ds), 'lunar': lunar_set(ds), 'gaps': gaps, 'dates': ds}
+
+
+def lazy(c, key, fn):
+    if key not in c:
+        c[key] = fn(c['dates'])
+    return c[key]
+
+
+def turn_set(dates, m, a, b):
+    """月 m の最後の a 立会日＋翌月の最初の b 立会日（m=12 なら12月→1月＝年末年始）"""
+    g = month_groups(dates)
+    yms = sorted(g)
+    fp, lp = edges_ok(dates)
+    m2 = 1 if m == 12 else m + 1
+    s = set()
+    for i, ym in enumerate(yms):
+        if ym % 100 == m and a > 0 and not (i == len(yms) - 1 and lp):
+            s.update(g[ym][-a:])
+        if ym % 100 == m2 and b > 0 and not (i == 0 and fp):
+            s.update(g[ym][:b])
+    return s
 
 
 # 各戦略: (id, 族, 説明, 種類, 規則)。種類: 'd'=日次の倍率、'm'=月次の倍率、'rot'=1月の小型株
@@ -466,7 +487,7 @@ def country_data():
     return cm, cd, cs, miss
 
 
-def country_eval(spec, CD, fomc_keys, rf_m):
+def country_eval(spec, CD, fomc_keys, rf_m, keep=None):
     sid, fam, desc, kind, rule, tag = spec
     cm, cd, cs, miss = CD
     res = []
@@ -500,12 +521,20 @@ def country_eval(spec, CD, fomc_keys, rf_m):
                 if not rx:
                     continue
                 ks = sorted(rx)
-                cal = CAL_CACHE.setdefault(c, daily_rule_sets(ks, fomc_keys, us=False))
+                if c not in CAL_CACHE:
+                    CAL_CACHE[c] = daily_rule_sets(ks, fomc_keys, us=False)
+                cal = CAL_CACHE[c]
                 if tag == 'fomc':
                     ks = [k for k in ks if k >= 19940201]
                 gd, nd = simulate_ex(ks, rx, lambda k: rule(k, cal), cost, SPREAD, 252)
                 g, n = M.to_monthly(gd), M.to_monthly(nd)
                 b = M.to_monthly({k: rx[k] for k in ks})
+            if keep is not None:
+                keep[c] = (n, b)
+            if min(n.values()) <= -1:  # 全損＝その国は負け（分母に残す・ルール7: 黙って落とさない）
+                wk = min(k for k in n if n[k] <= -1)
+                res.append([c, None, None, None, None, None, round(len(n) / 12, 1), f'全損 {wk}'])
+                continue
             st = M.excess_stats(n, b)
             sh = M.excess_stats(n, b, a=HO_START)
             if not st:
@@ -513,14 +542,15 @@ def country_eval(spec, CD, fomc_keys, rf_m):
             res.append([c, st['ex_ann'], st['cagr_diff'], st['t'], sh['ex_ann'] if sh else None, sh['cagr_diff'] if sh else None, st['years']])
         except Exception as e:  # noqa
             log('country err', sid, c, repr(e))
-    pos = sum(1 for x in res if x[1] > 0 and x[2] > 0)
+    pos = sum(1 for x in res if x[1] is not None and x[1] > 0 and x[2] > 0)
     pos_h = sum(1 for x in res if x[4] is not None and x[4] > 0 and x[5] > 0)
-    nh = sum(1 for x in res if x[4] is not None)
+    nh = sum(1 for x in res if x[4] is not None or x[1] is None)
     dev = [x for x in res if x[0] in DEV]
+    ok = [x[1] for x in res if x[1] is not None]
     return {'regions': len(res), 'positive': pos, 'share': round(pos / len(res), 3) if res else None,
-            'hold_positive': pos_h, 'hold_regions': nh,
-            'dev_positive': sum(1 for x in dev if x[1] > 0 and x[2] > 0), 'dev_regions': len(dev),
-            'median_ex_ann': round(S.median(x[1] for x in res), 2) if res else None,
+            'hold_positive': pos_h, 'hold_regions': nh, 'wipeouts': [x[0] for x in res if x[1] is None],
+            'dev_positive': sum(1 for x in dev if x[1] is not None and x[1] > 0 and x[2] > 0), 'dev_regions': len(dev),
+            'median_ex_ann': round(S.median(ok), 2) if ok else None,
             'jpn': next((x for x in res if x[0] == 'jpn'), None),
             'detail_cols': ['国', '全期間の超過(費用後)', '幾何の年率差', 't', '保有の超過', '保有の幾何差', '年数'], 'detail': res}
 
@@ -543,6 +573,182 @@ def jb_ex(ks, rx, jan, cost):
 
 
 CAL_CACHE = {}
+
+
+# ───────────────────────── 第2族（探索・out/mw_calendar_prereg2.json） ─────────────────────────
+def ndx_tr():
+    """NDX の日次総リターン: 1999-03-10 までは ^NDX の価格＋推定配当 年0.5%、1999-03-11 からは QQQ の調整後"""
+    px, q = M.yahoo('^NDX', '1d'), M.yahoo('QQQ', '1d')
+    tr = {k: v + 0.005 / 252 for k, v in px.items() if k <= 19990310}
+    tr.update({k: v for k, v in q.items() if k >= 19990311})
+    return {k: tr[k] for k in sorted(tr) if k <= 20260831}
+
+
+def rf_carry(keys, rf):
+    """keys の日の RF。French に無い日は直前の French の日の RF（0で埋めない）。使った日数も返す"""
+    fr = sorted(rf)
+    out, miss, j, last = {}, 0, 0, None
+    for k in keys:
+        while j < len(fr) and fr[j] <= k:
+            last = fr[j]; j += 1
+        if k in rf:
+            out[k] = rf[k]
+        elif last is not None:
+            out[k] = rf[last]; miss += 1
+    return out, miss
+
+
+def eval_total(ks, r, rf, rule, per, tag, const_ok=True):
+    """総リターンの原資産に倍率の規則を当てて evaluate（費用0.10%・0.05%・借入1.5% も）"""
+    gd, nd, turn, avg = simulate(ks, r, rf, rule, COST, SPREAD, per)
+    _, nd5, _, _ = simulate(ks, r, rf, rule, COST_LO, SPREAD, per)
+    _, ndh, _, _ = simulate(ks, r, rf, rule, COST, SPREAD_HI, per)
+    tm = M.to_monthly if per == 252 else (lambda x: x)
+    g, n, n5, nh = tm(gd), tm(nd), tm(nd5), tm(ndh)
+    b = tm({k: r[k] for k in ks}); rfm = tm({k: rf[k] for k in ks})
+    ev = evaluate(g, n, b, rfm, POSTPUB.get(tag, []))
+    ev['net_hold_cost005'] = M.excess_stats(n5, b, a=HO_START)
+    ev['net_hold_spread15_or_smallcost1pct'] = M.excess_stats(nh, b, a=HO_START)
+    ev['avg_exposure'] = round(avg, 3); ev['turnover_oneway_per_year'] = round(turn, 2)
+    if const_ok and avg > 1.0001:
+        _, ndc, _, _ = simulate(ks, r, rf, lambda k: avg, COST, SPREAD, per)
+        cst = tm(ndc)
+        ev['vs_constant_exposure'] = {'const_L': round(avg, 3), 'full': compact(M.excess_stats(n, cst)),
+                                      'train': compact(M.excess_stats(n, cst, z=TR_END)), 'hold': compact(M.excess_stats(n, cst, a=HO_START))}
+    return ev, n, b
+
+
+def eval_excess(ks, rx, rule, per, tag):
+    """超過の原資産（JKP）に倍率の規則。シャープレシオは超過そのもの（RF=0 として渡す）"""
+    gd, nd = simulate_ex(ks, rx, rule, COST, SPREAD, per)
+    _, nd5 = simulate_ex(ks, rx, rule, COST_LO, SPREAD, per)
+    _, ndh = simulate_ex(ks, rx, rule, COST, SPREAD_HI, per)
+    tm = M.to_monthly if per == 252 else (lambda x: x)
+    g, n, n5, nh = tm(gd), tm(nd), tm(nd5), tm(ndh)
+    b = tm({k: rx[k] for k in ks})
+    zero = {k: 0.0 for k in b}
+    ev = evaluate(g, n, b, zero, POSTPUB.get(tag, []))
+    ev['net_hold_cost005'] = M.excess_stats(n5, b, a=HO_START)
+    ev['net_hold_spread15_or_smallcost1pct'] = M.excess_stats(nh, b, a=HO_START)
+    ev['avg_exposure'] = round(S.mean(rule(k) for k in ks), 3)
+    ev['note'] = '超過どうし（JKP・米国 T-bill を引いた値）。シャープレシオは超過の平均÷標準偏差'
+    return ev, n, b
+
+
+def family2(ctx, CD, cal, tested):
+    D, r, rf, ffm, fomc_keys = ctx['D'], ctx['r'], ctx['rf'], ctx['ffm'], ctx['fomc_keys']
+    bm_d = ctx['bm_d']
+    X = 'exploratory2'
+    diag = {}
+    # X01: 年末年始の窓を訓練期間だけで選ぶ
+    log('X01 grid')
+    grid = []
+    for a in range(1, 11):
+        for b_ in range(0, 11):
+            win = turn_set(D, 12, a, b_)
+            _, nd, _, _ = simulate(D, r, rf, lambda k: 1.5 if k in win else 1.0, COST, SPREAD, 252)
+            n = M.to_monthly(nd)
+            tr = M.excess_stats(n, bm_d, z=TR_END); ho = M.excess_stats(n, bm_d, a=HO_START)
+            grid.append({'a': a, 'b': b_, 'train_net_ex': tr['ex_ann'], 'train_net_t': tr['t'], 'hold_net_ex': ho['ex_ann'], 'hold_net_t': ho['t'],
+                         'hold_net_cagr_diff': ho['cagr_diff']})
+    best = max(grid, key=lambda x: (x['train_net_t'], -(x['a'] + x['b'])))
+    A, B = best['a'], best['b']
+    diag['D4_toy_grid_surface'] = {'selected': (A, B), 'selection': '訓練（〜2006）の費用後の NW t が最大', 'grid': grid,
+                                   'hold_net_positive_share': round(sum(1 for x in grid if x['hold_net_ex'] > 0 and x['hold_net_cagr_diff'] > 0) / len(grid), 3)}
+    log('X01 selected', A, B, best)
+    toy_key = f'toy_{A}_{B}'
+    specs2 = [
+        ('X01_TOY_SEL', X, f'年末年始の窓（訓練で選んだ 12月の最後の{A}立会日＋1月の最初の{B}立会日）1.5倍', 'd',
+         lambda k, c: 1.5 if k in lazy(c, toy_key, lambda ds: turn_set(ds, 12, A, B)) else 1.0, 'santa'),
+        ('X02_SANTA_OV20', X, 'サンタクロース・ラリー2倍', 'd', lambda k, c: 2.0 if k in c['santa'] else 1.0, 'santa'),
+    ]
+    for sp in specs2:
+        sid, fam, desc, kind, rule, tag = sp
+        log('run', sid)
+        ev, n, b = eval_total(D, r, rf, lambda k: rule(k, cal), 252, tag)
+        ev['repl'] = country_eval(sp, CD, fomc_keys, ffm['rf'])
+        ev['tax_japan'] = None
+        tested.append({'id': sid, 'family': fam, 'desc': desc, 'kind': kind, 'ev': ev})
+    # X03・X04: NASDAQ-100
+    ndx = ndx_tr()
+    kn = sorted(ndx)
+    rfn, miss = rf_carry(kn, rf)
+    kn = [k for k in kn if k in rfn]
+    big = sorted(((k, v) for k, v in ndx.items() if abs(v) > 0.2), key=lambda x: -abs(x[1]))
+    diag['ndx_data'] = {'from': kn[0], 'to': kn[-1], 'days': len(kn), 'rf_carried_days': miss, 'abs_ret_gt_20pct': big[:10]}
+    santa_n = santa_set(kn)
+    for sid, desc, rule, tag in (('X03_SANTA_OV15_NDX', 'NASDAQ-100 にサンタ1.5倍', lambda k: 1.5 if k in santa_n else 1.0, 'santa'),
+                                 ('X04_HAL_OV15_NDX', 'NASDAQ-100 にハロウィーン1.5倍（日次）', lambda k: 1.5 if hal(k // 100) else 1.0, 'hal')):
+        log('run', sid)
+        ev, n, b = eval_total(kn, ndx, rfn, rule, 252, tag)
+        ev['tax_japan'] = None
+        tested.append({'id': sid, 'family': X, 'desc': desc, 'kind': 'd_ndx', 'ev': ev,
+                       'repl_from': 'E06_SANTA_OV15' if 'SANTA' in sid else 'P2_HAL_OV15'})
+    # X05・X06: 世界（JKP world vw）
+    wd = jkp_daily('world')
+    kw = sorted(wd)
+    santa_w = santa_set(kw)
+    log('run X05')
+    ev, n, b = eval_excess(kw, wd, lambda k: 1.5 if k in santa_w else 1.0, 252, 'santa')
+    tested.append({'id': 'X05_SANTA_OV15_WORLD', 'family': X, 'desc': '世界の市場（JKP world）にサンタ1.5倍', 'kind': 'd_world', 'ev': ev, 'repl_from': 'E06_SANTA_OV15'})
+    wm = M.jkp_mkt('world', 'vw')
+    km = sorted(wm)
+    log('run X06')
+    ev, n, b = eval_excess(km, wm, lambda ym: 1.5 if hal(ym) else 1.0, 12, 'hal')
+    tested.append({'id': 'X06_HAL_OV15_WORLD', 'family': X, 'desc': '世界の市場（JKP world 月次）にハロウィーン1.5倍', 'kind': 'm_world', 'ev': ev, 'repl_from': 'P2_HAL_OV15'})
+    # X07: 年末年始の小型株（Lo 30 日次）
+    log('run X07')
+    lo30 = M.french_series('Portfolios_Formed_on_ME_Daily', 'Value Weight', 'daily')['Lo 30']
+    ks = [k for k in D if k in lo30]
+    win = turn_set(ks, 12, 1, 5)
+    gd, nd, _ = rotation(ks, r, lo30, lambda k: k in win, 0.004)
+    _, nd5, _ = rotation(ks, r, lo30, lambda k: k in win, 0.003)
+    _, ndh, _ = rotation(ks, r, lo30, lambda k: k in win, 0.011)
+    sw = sum(1 for a_, b2 in zip(ks, ks[1:]) if (a_ in win) != (b2 in win)) / (len(ks) / 252)
+    g, n, n5, nh = M.to_monthly(gd), M.to_monthly(nd), M.to_monthly(nd5), M.to_monthly(ndh)
+    b = M.to_monthly({k: r[k] for k in ks}); rfm = M.to_monthly({k: rf[k] for k in ks})
+    ev = evaluate(g, n, b, rfm, [('post1984', 198401)])
+    ev['net_hold_cost005'] = M.excess_stats(n5, b, a=HO_START)
+    ev['net_hold_spread15_or_smallcost1pct'] = M.excess_stats(nh, b, a=HO_START)
+    ev['avg_exposure'] = 1.0; ev['turnover_oneway_per_year'] = round(sw, 2); ev['tax_japan'] = None
+    ev['repl'] = {'regions': 0, 'positive': 0, 'note': '国別の日次の小型株が無い＝N/A'}
+    tested.append({'id': 'X07_TOY_SC30', 'family': X, 'desc': '年末年始（12月の最終立会日＋1月の最初の5立会日）は Lo 30、ほかは Mkt', 'kind': 'rot_d', 'ev': ev})
+
+    # 診断（判定しない）
+    log('diagnostics')
+    d1 = {}
+    for m in range(1, 12):
+        win = turn_set(D, m, 5, 2)
+        _, nd, _, _ = simulate(D, r, rf, lambda k: 1.5 if k in win else 1.0, COST, SPREAD, 252)
+        n = M.to_monthly(nd)
+        d1[f'{m:02d}->{(m % 12) + 1:02d}'] = {'full': compact(M.excess_stats(n, bm_d)), 'train': compact(M.excess_stats(n, bm_d, z=TR_END)),
+                                            'hold': compact(M.excess_stats(n, bm_d, a=HO_START))}
+    diag['D1_placebo_other_months'] = d1
+    # D2: 2008-12・2009-01 を除く（事後の疑い）
+    sp6 = [t for t in specs() if t[0] == 'E06_SANTA_OV15'][0]
+    _, nd, _, _ = simulate(D, r, rf, lambda k: sp6[4](k, cal), COST, SPREAD, 252)
+    n = M.to_monthly(nd)
+    ex = (200812, 200901)
+    nn = {k: v for k, v in n.items() if k not in ex}; bb = {k: v for k, v in bm_d.items() if k not in ex}
+    keep = {}
+    country_eval(sp6, CD, fomc_keys, ffm['rf'], keep=keep)
+    cnt = []
+    for c, (cn, cb) in keep.items():
+        st = M.excess_stats({k: v for k, v in cn.items() if k not in ex}, {k: v for k, v in cb.items() if k not in ex}, a=HO_START)
+        if st:
+            cnt.append((c, st['ex_ann'], st['cagr_diff']))
+    diag['D2_santa_ex_2008'] = {'label': '事後（結果を見た後の疑い）・判定しない', 'us_hold_net': compact(M.excess_stats(nn, bb, a=HO_START)),
+                                'us_hold_net_with': compact(M.excess_stats(n, bm_d, a=HO_START)),
+                                'countries_hold_positive': sum(1 for c, e, g_ in cnt if e > 0 and g_ > 0), 'countries': len(cnt),
+                                'detail': cnt}
+    # D3: JKP usa 日次で同じサンタ
+    ud = jkp_daily('usa')
+    ku = sorted(ud)
+    su = santa_set(ku)
+    ev3, n3, b3 = eval_excess(ku, ud, lambda k: 1.5 if k in su else 1.0, 252, 'santa')
+    diag['D3_santa_jkp_us'] = {'full': compact(ev3['full']), 'train': compact(ev3['train']), 'hold': compact(ev3['hold']),
+                               'net_hold': compact(ev3['net_hold']), 'net_full': compact(ev3['net_full'])}
+    return diag
 
 
 # ───────────────────────── 本体 ─────────────────────────
@@ -657,24 +863,35 @@ def run():
         ev['repl'] = repl
         tested.append({'id': sid, 'family': fam, 'desc': desc, 'kind': kind, 'ev': ev})
 
+    # 第2族（探索）
+    ctx = {'D': D, 'r': r, 'rf': rf, 'ffm': ffm, 'fomc_keys': fomc_keys, 'bm_d': bm_d}
+    diag = family2(ctx, CD, cal, tested)
+    byid = {t['id']: t for t in tested}
+    for t in tested:
+        if t.get('repl_from'):
+            t['ev']['repl'] = dict(byid[t['repl_from']]['ev']['repl'], note=f"同じ規則＝{t['repl_from']} の国別の数を使う")
+
     # Holm と判定
     prim = {t['id']: (t['ev']['hold'] or {}).get('p') for t in tested if t['family'] == 'primary'}
     allg = {t['id']: (t['ev']['hold'] or {}).get('p') for t in tested if t['family'] in ('primary', 'exploratory')}
-    hp, ha = M.holm(prim), M.holm(allg)
+    allg2 = {t['id']: (t['ev']['hold'] or {}).get('p') for t in tested if t['family'] in ('primary', 'exploratory', 'exploratory2')}
+    hp, ha, ha2 = M.holm(prim), M.holm(allg), M.holm(allg2)
     for t in tested:
         ev = t['ev']
         fam = t['family']
-        hpv = hp.get(t['id']) if fam == 'primary' else ha.get(t['id'])
+        hpv = hp.get(t['id']) if fam == 'primary' else (ha.get(t['id']) if fam == 'exploratory' else ha2.get(t['id']))
+        t['holm_p_all31'] = ha2.get(t['id'])
         repl = ev['repl']
         g_, crit = M.grade(ev['full'], ev['train'], ev['hold'], ev['roll20_net'], cost_hold=ev['net_hold'],
                            repl={'regions': repl['regions'], 'positive': repl['positive']} if repl['regions'] else None,
                            family_holm_p=hpv, sharpe_pair={'train': ev['sharpe']['train'], 'hold': ev['sharpe']['hold']},
                            leveraged_or_timing=True)
         t['holm_p'] = hpv
-        t['holm_family'] = 'primary(9)' if fam == 'primary' else ('all_graded(24)' if fam == 'exploratory' else None)
-        t['grade'] = g_ if fam in ('primary', 'exploratory') else f'（判定しない）{g_}'
+        t['holm_family'] = {'primary': 'primary(9)', 'exploratory': 'all_graded(24)', 'exploratory2': f'all_graded({len(allg2)})'}.get(fam)
+        t['grade'] = g_ if fam in ('primary', 'exploratory', 'exploratory2') else f'（判定しない）{g_}'
         t['criteria'] = crit
-    return {'sanity': sanity, 'literature_check': lit, 'tested': tested, 'holm_primary': hp, 'holm_all_graded': ha}
+    return {'sanity': sanity, 'literature_check': lit, 'tested': tested, 'holm_primary': hp, 'holm_all_graded': ha,
+            'holm_all_graded2': ha2, 'diagnostics': diag}
 
 
 def shrink(ev):
@@ -698,7 +915,7 @@ def main():
     tested = []
     for t in res['tested']:
         tested.append({'id': t['id'], 'family': t['family'], 'desc': t['desc'], 'grade': t['grade'], 'criteria': t['criteria'],
-                       'holm_p_hold': t['holm_p'], 'holm_family': t['holm_family'], **shrink(t['ev'])})
+                       'holm_p_hold': t['holm_p'], 'holm_family': t['holm_family'], 'holm_p_all31': t.get('holm_p_all31'), **shrink(t['ev'])})
     summary = [{'id': t['id'], 'family': t['family'], 'grade': t['grade'],
                 'full_ex': (t['full'] or {}).get('ex_ann'), 'full_t': (t['full'] or {}).get('t'),
                 'train_ex': (t['train'] or {}).get('ex_ann'), 'train_t': (t['train'] or {}).get('t'),
@@ -709,7 +926,10 @@ def main():
     out = {'angle': 'calendar', 'prereg': f'out/{PREREG}', 'prereg_commit': sha, 'global_prereg': 'out/mw_prereg.json',
            'benchmark': 'French Mkt（Mkt-RF + RF・上限なしの時価加重）。日次の規則は同じ日次 Mkt を月次へ直したもの。国別は JKP の国の mkt（超過どうし）',
            'sanity': res['sanity'], 'literature_check': res['literature_check'],
-           'holm_primary': res['holm_primary'], 'holm_all_graded': res['holm_all_graded'],
+           'prereg2': 'out/mw_calendar_prereg2.json',
+           'prereg2_commit': subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_calendar_prereg2.json'], cwd=M.BASE, capture_output=True, text=True).stdout.strip(),
+           'holm_primary': res['holm_primary'], 'holm_all_graded': res['holm_all_graded'], 'holm_all_graded2': res['holm_all_graded2'],
+           'diagnostics': res['diagnostics'],
            'summary': summary, 'tested': tested}
     p = M.save('mw_calendar.json', out)
     log('saved', p, os.path.getsize(p))
