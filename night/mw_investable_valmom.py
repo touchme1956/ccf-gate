@@ -297,6 +297,7 @@ class ItaLib:
 
 
 _ITA = {}
+UNIT_FIX = {}
 
 
 def ita_lib():
@@ -329,7 +330,21 @@ def ita_monthly(key):
     rows.sort()
     tr, prev, last = None, None, {}
     for d, nav, dist in rows:
-        tr = 1.0 if prev is None else tr * (nav + dist) / prev
+        if prev is None:
+            tr = 1.0
+        else:
+            f = (nav + dist) / prev
+            if f > 5 or f < 0.2:
+                # 事後に見つけたデータの穴（結果ではなくデータの検算で直す）: 東証ETF の基準価額の単位が途中で変わる
+                # （1478 は 2016-07-19 に 1口→100口あたり・1,692→170,799）。10 のべきで割り戻し、それでも外れる日は鎖を切る（0 と読まない）
+                p10 = 10 ** round(math.log10(f))
+                if 0.8 <= f / p10 <= 1.25:
+                    UNIT_FIX.setdefault(key, []).append({'date': d, 'raw_ratio': round(f, 4), 'divided_by': p10})
+                    f = f / p10
+                else:
+                    UNIT_FIX.setdefault(key, []).append({'date': d, 'raw_ratio': round(f, 4), 'action': '鎖を切る（この日から先を別の系列として扱わず、この月までで打ち切る）'})
+                    break
+            tr = tr * f
         prev = nav
         last[d // 100] = tr
     ks = sorted(k for k in last if k < NOW_YM)
@@ -347,7 +362,10 @@ def ita_meta():
         except Exception as e:  # noqa
             hit, err = None, str(e)[:120]
         if hit:
-            tr = hit.get('trustReward')
+            try:
+                tr = float(hit.get('trustReward'))
+            except (TypeError, ValueError):
+                tr = None
             out[key] = {'isin': isin, 'name': hit.get('fundNm'), 'company': hit.get('entrustCmpNm'), 'established': str(hit.get('establishedDate'))[:10],
                         'trust_fee_ex_tax_pct': tr, 'trust_fee_incl_tax_pct': round(tr * 1.1, 4) if isinstance(tr, (int, float)) else None,
                         'net_assets_mil_jpy': hit.get('totalNetAssets'), 'nisa_tsumitate': hit.get('nisaFlg') in (1, '1'),
@@ -376,6 +394,16 @@ def rakuten_etfs():
         out['_error'] = str(e)[:200]
     lineup = json.load(open(os.path.join(M.BASE, 'out', 'broker_lineup.json')))['etfs']
     return out, lineup
+
+
+def sbi_list(tickers):
+    """事後に足した情報（格付けには不使用）: SBI証券の米国株・ETF 取扱一覧の HTML に名前が載っているか"""
+    try:
+        t = M.get('https://search.sbisec.co.jp/v2/popwin/info/stock/pop6040_usequity_list.html', name='sbi_usequity_list.html', max_age_days=7).decode('shift_jis', 'replace')
+    except Exception as e:  # noqa
+        return {'_error': str(e)[:200]}
+    import re
+    return {k: bool(re.search(r'>\s*' + re.escape(k) + r'\s*<', t)) for k in tickers}
 
 
 # ───────────────────────── 統計の小道具 ─────────────────────────
@@ -556,6 +584,7 @@ def main():
         meta = {'_error': str(e)[:200]}
     out['universe'] = {'rakuten_etfd_csv': {t: rk.get(t) for t in sorted(set(PRE['families']['P_buyable']['members']) | set(PRE['families']['R_reference']['members']) | {'VEA', 'EFA', 'VEU', 'SPDW', 'EEM', 'EWJ', 'ACWI', 'VGK', 'QQQ', 'SMH', 'IEMG', 'SCZ', 'DXJ'}) if not t.startswith(('JP', 'COMBO'))},
                        'in_broker_lineup_2026_08_24': {t: (t in lineup) for t in sorted(set(PRE['families']['P_buyable']['members']) | set(PRE['families']['R_reference']['members'])) if not t.startswith(('JP', 'COMBO'))},
+                       'in_sbi_list_2026_09_28（事後に足した情報・格付けには不使用）': sbi_list(sorted(t for t in set(PRE['families']['P_buyable']['members']) | set(PRE['families']['R_reference']['members']) if not t.startswith(('JP', 'COMBO')))),
                        'ita_meta': meta, 'prereg_universe_notes': PRE['context_known_before_registering']['universe_found_before_registering']}
 
     # ── 族 K（紙）
@@ -719,7 +748,40 @@ def main():
     if k_base is not None:
         dmu = (k_base * E_A - 0.44 - 0.32) - (-0.46)
         for w in (0.1, 0.2, 0.3):
-            analytic[f'w{int(w * 100)}'] = {'mean_diff_pct': r2(w * dmu, 3), 'rebalance_bonus_pct': r2(w * (1 - w) * (sdC ** 2 + sdV ** 2 - 2 * rho * sdC * sdV) / 2 * 100, 3)}
+            var_mix = (1 - w) ** 2 * sdC ** 2 + w ** 2 * sdV ** 2 + 2 * w * (1 - w) * rho * sdC * sdV
+            analytic[f'w{int(w * 100)}'] = {
+                'mean_diff_pct（算術の差 w×(μV−μC)）': r2(w * dmu, 3),
+                'rebalance_bonus_pct（混ぜた幾何 − 両方の幾何の加重平均）': r2(w * (1 - w) * (sdC ** 2 + sdV ** 2 - 2 * rho * sdC * sdV) / 2 * 100, 3),
+                'geo_diff_vs_current_pct（混ぜた幾何 − 今の幾何 ≈ w×Δμ ＋ (σC² − σmix²)/2）': r2(w * dmu + (sdC ** 2 - var_mix) / 2 * 100, 3),
+                'note': '2026-09-28 事後に直した: 初版は rebalance_bonus だけを出していたが、今の配分との比較に要るのは geo_diff（揺れの小さくなる分の効果）。どちらも報告だけ'}
+    # 事後（結果を見た後に足した感度・判定には使わない）: 今の ETF 側の揺れに見合う期待（CAPM の β）を置いたら
+    post = {'label': '事後（初回の結果を見た後に足した感度・格付けにも前向きの基準にも使わない）'}
+    ffm = {m: mkt_us[m] for m in C_usd if START2 <= m <= JKP_END and m in mkt_us}
+    kk = sorted(ffm)
+    cu = [C_usd[m] - rf[m] for m in kk]; mu_ = [mkt_us[m] - rf[m] for m in kk]
+    beta_C = float(np.cov(cu, mu_)[0, 1] / np.var(mu_, ddof=1))
+    post['beta_current_vs_us_mkt_usd_1990_2025'] = r2(beta_C, 3)
+    post['g_C_if_capm（(β−1)×(7.0−3.0)）'] = r2((beta_C - 1) * 4.0, 2)
+    be = []
+    if k_base is not None:
+        for gC in (0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0):
+            rC = cc + (7.0 + gC - 0.46) / 1200
+            rV = xx + k_base * ax + (7.0 + 0 + k_base * E_A - 0.44 - 0.32) / 1200
+            Wc = dca_term(rC); Wm = dca_term(0.8 * rC + 0.2 * rV)
+            rat = Wm / Wc
+            be.append({'g_C': gC, 'gap': 0, 'k': 'k_base', 'w': 0.2, 'p_mix_wins': r2(float((rat > 1).mean()), 3), 'ratio_median': r2(float(np.median(rat)), 3)})
+    post['break_even_scan_w20_gap0_kbase'] = be
+    pxs = {}
+    for cp in ('VEA', 'EFA', 'SPDW', 'SCHF', 'CWI', 'VEU'):
+        try:
+            b_ = yh(cp); s_ = yh('PXF')
+            kx = sorted(set(s_) & set(b_))
+            pxs[f'PXF vs {cp}'] = {'full': M.excess_stats({m: s_[m] for m in kx}, {m: b_[m] for m in kx}),
+                                   'from_2013_07': M.excess_stats({m: s_[m] for m in kx}, {m: b_[m] for m in kx}, a=M.RECENT_START)}
+        except Exception as e:  # noqa
+            pxs[f'PXF vs {cp}'] = {'error': str(e)[:150]}
+    post['pxf_counterpart_sensitivity'] = pxs
+    out['post_hoc'] = post
     out['forward'] = {'months_used': [ms[0], ms[-1], len(ms)], 'E_A_paper_active_ann_pct': r2(E_A, 3), 'beta_pxf': beta_pxf, 'k_values': {k: r2(v, 3) for k, v in ks.items()},
                       'vol_current_jpy': r2(sdC * 100, 1), 'vol_sleeve_base_jpy': r2(sdV * 100, 1), 'corr_base': r2(rho, 3),
                       'analytic_base_gap0_gC0': analytic, 'history_exus_minus_us_cagr_pct': gaps, 'base_rows': base, 'grid': Fres}
@@ -741,6 +803,7 @@ def main():
         san['kokusai_fund_vs_acwi_jpy'] = {'error': str(e)[:200]}
     san['ndx_dividend_estimate_pct'] = r2(d_hat, 3)
     san['morningstar_fix'] = MSFIX
+    san['ita_unit_change_fix（事後に見つけたデータの穴）'] = UNIT_FIX
     san['no_lookahead'] = '紙は JKP の組み立て（t 月末の特性で t+1 月）。E1 の重みは7月の直前60か月だけ。器は実在の値'
     out['sanity'] = san
 
@@ -762,6 +825,29 @@ def main():
     out['n_tested'] = len(tested)
     out['n_graded'] = sum(1 for t in tested if t['grade'] is not None)
     out['grade_counts'] = dict(collections.Counter(t['grade'] for t in tested if t['grade'] is not None))
+    out['deviations'] = [
+        '事後に見つけたデータの穴: 投信協会の東証ETF の基準価額の単位が途中で変わる（1478 は 2016-07-19 に 1口→100口あたり）。初回の結果（1478 の超過 +971%/年）で気づき、日次の比が 5倍超・1/5未満のときは 10 のべきで割り戻す処理を足した（割っても外れる日は鎖を切る）。直したのは 1478 の1日だけ（sanity に記録）',
+        '報告だけの解析値: 前向きの analytic は初版で rebalance_bonus（混ぜた幾何 − 両方の幾何の加重平均）だけを出していたが、今の配分との比較に要る geo_diff（揺れが小さくなる分を含む）を足した',
+        '事後（格付けにも前向きの基準にも使わない）: PXF の相手を変えた感度（EFA・SPDW・SCHF・CWI・VEU）、今の ETF 側の β に見合う期待（CAPM）での前向きの感度と損益分岐の走査、SBI証券の取扱一覧の確認を足した',
+        'メタ情報の直し: 投信協会の trustReward が文字列で来たので数値に直した（格付け・成績には無関係）',
+        '取得: 登録前のデータの有無の確認で night/fetch_tsumitate_funds.py の Lib（User-Agent に利用者の連絡先が入っている）を使って投信協会に問い合わせた。本番の道具は mw_common の User-Agent（連絡先なし）に替えた',
+        'mw_common.py は変更していない']
+    fam_P = out['families']['P_buyable']
+    pxf_r, ifr = fam_P.get('PXF') or {}, fam_P.get('JP:iFree新興国RAFI') or {}
+    L = lambda r: ((r.get('loading') or {}).get('one_factor') or {})
+    LL = lambda r: (r.get('loading') or {})
+    ia = I['A_real']['sleeves']; ib = I['B_proxy']['sleeves']
+    d20 = lambda d, v, w='w20': ((d.get(v) or {}).get('by_weight') or {}).get(w, {}).get('dca20') or {}
+    bs = [f for f in Fres if f['g_C'] == 0 and f['gap'] == 0 and f['k'] == 'k_base' and f['w'] == 0.2]
+    b0 = [f for f in Fres if f['g_C'] == 0 and f['gap'] == 0 and f['k'] == 'k0' and f['w'] == 0.2]
+    out['summary_ja'] = [
+        f"紙の『米国外の国の中の割安＋勢い』は再現した（全期間 +{K['paper:world_ex_us']['full']['ex_ann']}%/年 t{K['paper:world_ex_us']['full']['t']}・2007〜 +{K['paper:world_ex_us']['hold']['ex_ann']} t{K['paper:world_ex_us']['hold']['t']}）。",
+        f"楽天で買える器の中で米国外の割安を実装しているのは PXF（基本指標加重）と iFree新興国株式（RAFI 新興国・つみたて枠）だけで、米国外の勢い（モメンタム）の器は楽天に1本も無い。",
+        f"PXF は VEA に対して 2007〜 +{(pxf_r.get('hold') or {}).get('ex_ann')}%/年（t{(pxf_r.get('hold') or {}).get('t')}）。紙の上乗せへの載り β{L(pxf_r).get('beta')}・同じ月の紙 +{LL(pxf_r).get('paper_active_ann')} に対し器 +{LL(pxf_r).get('vehicle_active_ann')}＝取れたのは約{int(round((LL(pxf_r).get('capture') or 0) * 100))}%。割安の半分だけで、勢いの半分は逆向き。",
+        f"iFree新興国（RAFI）は相手に +{(ifr.get('hold') or {}).get('ex_ann')}%/年（t{(ifr.get('hold') or {}).get('t')}）。日本の全世界アクティブ割安・高配当投信9本は全部コクサイ（円）に負けた（2007〜 −1.2〜−4.9%/年・信託報酬 税込0.76〜1.98%）。",
+        '全体の線では買える器はすべて C（2007年以降に生まれ、訓練期間も20年窓も無い＝構造的）。紙以外で B は買えない DODFX だけ。',
+        f"円の毎月積立: 今の ETF 側の20%を米国外（紙の割安＋勢いそのものでも）に替えると、2000〜2005年起点の20年窓はすべて負け（紙で中央 {d20(ia, 'V1_paper').get('ratio_median')}・最悪 {d20(ia, 'V1_paper').get('ratio_worst')}）。1990年起点の代理でも勝率 {d20(ib, 'V1_paper').get('win_rate')}（紙）・{d20(ib, 'V3_pxf_like').get('win_rate')}（PXF 型）。米国外の市場が米国に年約5%負けた差が上乗せを飲み込んだ。",
+        f"前向き（紙の上乗せを半分×PXF の載り・米国外と米国の差0・今の側に上乗せの期待なし）: 20%置き換えで勝つ確率 {bs[0]['p_mix_wins'] if bs else None}・最終資産の中央 ×{bs[0]['ratio_median'] if bs else None}。ただし上乗せ抜き（k=0）でも ×{b0[0]['ratio_median'] if b0 else None}＝差のほとんどは揺れが小さくなる分で、割安＋勢いの上乗せの寄与は20年で約1%。今の側の揺れに見合う期待（事後・CAPM）を置くと勝つ確率は約6割まで下がる。"]
     out['runtime_sec'] = round(time.time() - t0, 1)
     p = M.save(OUT_NAME, out)
     print('→', p, out['grade_counts'], out['runtime_sec'], 's')
