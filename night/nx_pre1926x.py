@@ -553,10 +553,12 @@ def r3_costs(units):
         e = row.get('full') if 'full' in row else (out[uid]['unit_0.01']['full'] if row.get('same_as') else None)
         per_side[uid] = e and {'ex_ann': e['ex_ann'], 't': e['t'], 'cagr_diff': e['cagr_diff']}
     dd = {u: v for u, v in per_side.items() if u.startswith('D_') and v}
-    summ = ('売買の各側に 1%（当時の現実に近い単価・Σ|Δw|×1%・S3 は出入りの各回 1%×L）でそろえると、LSE の業種 D は 8本のうち正 '
-            + str(sum(1 for v in dd.values() if v['ex_ann'] > 0 and v['cagr_diff'] > 0)) + '・t≥2 '
+    summ = ('売買の各側に 1%（当時の現実に近い単価・Σ|Δw|×1%・S3 は出入りの各回 1%×L）でそろえると、LSE の業種 D は 8本のうち正（算術の超過>0 かつ 幾何の差>0）'
+            + str(sum(1 for v in dd.values() if v['ex_ann'] > 0 and v['cagr_diff'] > 0)) + '・算術の超過>0 だけなら '
+            + str(sum(1 for v in dd.values() if v['ex_ann'] > 0)) + '・t≥2 '
             + str(sum(1 for v in dd.values() if (v['t'] or 0) >= 2)) + '（' + '・'.join(f"{u[2:]} {v['ex_ann']:+.2f} t{v['t']}" for u, v in dd.items()) + '）。'
             + '業種の勢いの6本だけなら 正 ' + str(sum(1 for u, v in dd.items() if 'S3' not in u and v['ex_ann'] > 0 and v['cagr_diff'] > 0))
+            + '（算術だけなら ' + str(sum(1 for u, v in dd.items() if 'S3' not in u and v['ex_ann'] > 0)) + '）'
             + '・t≥2 ' + str(sum(1 for u, v in dd.items() if 'S3' not in u and (v['t'] or 0) >= 2)) + '。★D は止まる条件に触れたデータ（主の格付けは PENDING_stop）')
     return {'rows': out, 'per_side_1pct': per_side, 'summary_per_side_1pct': summ,
             'note': '各規則の費用の式の形（two＝両側 Σ|Δw|×単価・one＝片道 ½Σ|Δw|×単価・moved＝出入り×L×単価・dL＝|ΔL|×単価）はそのままで単価だけ 0.50%・1.00% に替えた（unit_*・事前登録の文言どおり）。'
@@ -1149,6 +1151,433 @@ def seas_exdiv(units):
     return res
 
 
+# ═════════════════════════ 8. 検査役の指摘（2026-09-28）による直し（事後・格付けは登録の版） ═════════════════════════
+# 凍結した data 道具（sha を事前登録に刻んだ）は書き換えない。直した版はここに写して作り、登録の版と並べる（tools.measure_next の約束）。
+def unit_eval(r, R=None, bench_R=None, builder=None):
+    """1つの単位を組み立てて、格付けに要る束（stats・最大寄与を抜いた版）を返す。builder を渡すとそれで組み立てる（exclude を受ける関数）"""
+    mk = builder or (lambda exclude=(): build(r, R=R, bench_R=bench_R, exclude=exclude))
+    x = mk()
+    st = bundle(x, r)
+    top, top5 = contrib_top(x, r)
+    dt = None
+    if top is not None:
+        xd = mk(exclude=(top,))
+        dt = C.excess_stats(xd['net'], xd['b'])
+    return {'x': x, 'stats': st, 'drop_top': {'excluded': cname(r, top) if top is not None else None, 'top5_contrib': top5, 'net_vs_b': dt}, 'rule': r}
+
+
+def grade_with_family(uid, variant_unit, units, fam_of, extra=None):
+    """uid だけを差し替えた版で、同じ族の Holm（他の単位は登録の版の p）を当てて grade_era。extra={uid2: 差し替え版} で複数を同時に差し替える"""
+    f = fam_of[uid]
+    ids = [u for u in UNIT_IDS if fam_of[u] == f]
+    sub = {u: units[u] for u in ids}
+    sub[uid] = variant_unit
+    for u2, v2 in (extra or {}).items():
+        sub[u2] = v2
+    g = grade_units(sub, {u: f for u in ids})
+    return g[uid]
+
+
+def short_es(e):
+    return None if not e else {k: e[k] for k in ('ex_ann', 't', 'cagr_diff')}
+
+
+# ── (5) P9 の同点: 百分位の平均を浮動小数で足すと、数学的に同点の業種が最後の1桁の差で並ぶ（名前の順にならない）──
+def _twice_ranks(vals):
+    """{名前: 値} → {名前: 2×平均の順位（整数）}。D._pct_ranks の (n−1)×2 倍＝同じ母集団の中では順序が同じで、足しても丸め誤差が無い"""
+    items = sorted(vals.items(), key=lambda x: x[1])
+    n, out, i = len(items), {}, 0
+    while i < n:
+        j = i
+        while j + 1 < n and items[j + 1][1] == items[i][1]:
+            j += 1
+        for k in range(i, j + 1):
+            out[items[k][0]] = i + j
+        i = j + 1
+    return out
+
+
+def build_ind_multi_exact(R, months, windows, skip, K, minN, cost, exclude=()):
+    """D.build_ind_multi と同じ規則（1・3・6・12 か月の百分位の平均の上位 K・4本そろう業種だけ）で、同点を docstring どおり名前の順にした版。
+    同じ月の候補は全部の窓で同じ n なので、百分位の平均の大小は『2×順位の和（整数）』の大小と同じ。→ (−順位の和, 名前) で並べる"""
+    names = [n for n in R if n not in exclude]
+    lr = {n: [math.log1p(R[n][m]) if m in R[n] else None for m in months] for n in names}
+    Lmax = max(windows)
+    coh, flips, old_coh = {}, 0, {}
+    for f in range(len(months)):
+        hi = f - skip
+        if hi - Lmax + 1 < 0:
+            continue
+        ok = [n for n in names if all(v is not None for v in lr[n][hi - Lmax + 1:hi + 1])]
+        if len(ok) < minN or len(ok) < K:
+            continue
+        tot, avg = collections.defaultdict(int), collections.defaultdict(float)
+        for L in windows:
+            vals = {n: math.fsum(lr[n][hi - L + 1:hi + 1]) for n in ok}
+            tr, pr = _twice_ranks(vals), D._pct_ranks(vals)
+            for n in ok:
+                tot[n] += tr[n]
+                avg[n] += pr[n] / len(windows)
+        coh[f] = [n for _, _, n in sorted((-tot[n], str(n), n) for n in ok)[:K]]
+        old_coh[f] = [n for _, _, n in sorted((-avg[n], str(n), n) for n in ok)[:K]]
+        flips += set(coh[f]) != set(old_coh[f])
+    s, net, turn, W = D._hold(months, coh, 1, R, cost)
+    return {'s': s, 'net': net, 'turn': turn, 'w': W, 'flips': flips, 'formed': len(coh)}
+
+
+def fix_p9_exact(units, fam_of):
+    out = {}
+    for uid in ('A_P9_multi_5', 'D_P9_multi_5'):
+        r = RULES[uid]
+        R = DATA_R[r['data']]
+        info = {'flips': 0, 'formed': 0}
+
+        def mk(exclude=(), r=r, R=R, info=info):
+            o = {'s': {}, 'net': {}, 'turn': {}, 'w': {}}
+            for ms in DATA_SEGS[r['data']]:
+                x = build_ind_multi_exact(R, ms, r['windows'], r['skip'], r['K'], r['minN'], tuple(r['cost']), exclude=exclude)
+                for k in o:
+                    o[k].update(x[k])
+                if not exclude:
+                    info['flips'] += x['flips']; info['formed'] += x['formed']
+            o['b'], o['R'] = BENCH[r['bench']], R
+            o['rf'] = RATES[r['rf']]
+            return o
+        v = unit_eval(r, builder=mk)
+        g = grade_with_family(uid, v, units, fam_of)
+        st, st0 = v['stats'], units[uid]['stats']
+        out[uid] = {'formation_months_changed': info['flips'], 'formation_months': info['formed'],
+                    'registered': {'full_net': short_es(st0['full_net']), 'h1_cagr_diff': st0['h1_net']['cagr_diff'], 'h2_cagr_diff': st0['h2_net']['cagr_diff'],
+                                   'roll20_median': (st0.get('roll20') or {}).get('median')},
+                    'exact_ties': {'full_net': short_es(st['full_net']), 'h1_cagr_diff': st['h1_net']['cagr_diff'], 'h2_cagr_diff': st['h2_net']['cagr_diff'],
+                                   'roll20_median': (st.get('roll20') or {}).get('median'), 'drop_top': short_es(v['drop_top']['net_vs_b'])},
+                    'grade_exact_ties': g['grade'], 'criteria_exact_ties': g['criteria']}
+    return out
+
+
+# ── (3) D_S3 の単位の不一致: LSE の業種は価格だけ、現金の脚は総リターンの金利 ──
+def build_ind_trend_split(R_sig, R_hold, months, rf, sma, Lev, skip, cost, spread, fee, exclude=()):
+    """D.build_ind_trend の写し。信号（10か月線）は R_sig（登録どおり価格だけ）、保有の月のリターンと相手は R_hold。
+    R_sig=R_hold なら D.build_ind_trend と1ビットも違わない（実行時に確かめる）"""
+    names = [n for n in R_sig if n not in exclude]
+    idx, up = {}, {}
+    for n in names:
+        I, u, hist, lev = {}, {}, [], None
+        for g, m in enumerate(months):
+            if m not in R_sig[n]:
+                hist, lev = [], None
+                continue
+            if lev is None:
+                lev, hist = 1.0, [1.0]
+            lev *= 1 + R_sig[n][m]
+            hist.append(lev)
+            I[g] = lev
+            h = hist[-sma:]
+            u[g] = True if len(h) < sma else lev > math.fsum(h) / sma
+        idx[n], up[n] = I, u
+    s, net, b, E, W = {}, {}, {}, {}, {}
+    prev_state = None
+    for j in range(1, len(months)):
+        m = months[j]
+        g = j - 1 - skip
+        if g < 0:
+            continue
+        U = [n for n in names if (j - 1) in idx[n] and m in R_sig[n] and g in up[n]]
+        if not U or m not in rf:
+            prev_state = None
+            continue
+        w = 1.0 / len(U)
+        ups = [n for n in U if up[n][g]]
+        e = Lev * w * len(ups)
+        rp = Lev * math.fsum(w * R_hold[n][m] for n in ups) + (1 - e) * rf[m]
+        if e > 1:
+            rp -= ((e - 1) * spread + fee) / 12
+        st = {n: up[n][g] for n in U}
+        moved = 0.0 if prev_state is None else math.fsum(w for n in U if n in prev_state and prev_state[n] != st[n])
+        s[m] = rp
+        net[m] = rp - moved * Lev * cost[1]
+        b[m] = math.fsum(R_hold[n][m] for n in U) / len(U)
+        E[m] = e
+        W[m] = {n: (Lev * w if st[n] else 0.0) for n in U}
+        prev_state = st
+    return {'s': s, 'net': net, 'b': b, 'E': E, 'w': W}
+
+
+def lse_ind_dividend(ret, sect, dy, cap=0.30):
+    """業種ごとの月の配当利回りの近似＝その月の業種の構成の株（D.lse_industries と同じ所属）の dy の等分の平均（年 cap 超は除く・分からない株は平均に入れない）"""
+    acc = collections.defaultdict(lambda: collections.defaultdict(list))
+    for i, r in ret.items():
+        sr = sect.get(i, [])
+        for k in r:
+            s = D.sector_at(sr, k)
+            if s and s not in D.LSE_NOT_SELECTABLE:
+                y = dy.get(i, {}).get(k)
+                if y is not None and y * 12 <= cap:
+                    acc[s][k].append(y)
+    return {s: {k: math.fsum(v) / len(v) for k, v in d.items() if v} for s, d in acc.items()}
+
+
+def fix_s3_dividend(units, fam_of, LI=None, ret=None, sect=None, dy=None, label='registered_panel'):
+    LI = LSE_IND if LI is None else LI
+    dyi = lse_ind_dividend(ret if ret is not None else LSE_RET, sect if sect is not None else LSE_SECT, dy if dy is not None else LSE_DY)
+    n_all = sum(len(d) for d in LI.values())
+    n_known = sum(1 for s, d in LI.items() for k in d if k in dyi.get(s, {}))
+    mean_dy = _stat.mean([dyi[s][k] for s, d in LI.items() for k in d if k in dyi.get(s, {})]) * 1200
+    out = {'panel': label, 'industry_dividend_yield': {'industry_months': n_all, 'with_estimate': n_known, 'mean_ann_pct': round(mean_dy, 2),
+                                                       'rule': 'R7 と同じ配当の近似（直近4回の配当率×払込額÷12÷p_{t−1}・年30%超は除く）を業種の構成の株で等分に平均。分からない業種の月は足さない（0）'},
+           'rows': {}}
+    # 写しが登録の版と同じことの確認（R_hold=R_sig）
+    same = True
+    for uid in ('D_S3_FABER_L2', 'D_S3_FABER_L3'):
+        r = RULES[uid]
+        for ms in DATA_SEGS[r['data']]:
+            a_ = D.build_ind_trend(LSE_IND, ms, RATES[r['rf']], r['sma'], r['Lev'], r['skip'], tuple(r['cost']), r['spread'], r['fee'])
+            b_ = build_ind_trend_split(LSE_IND, LSE_IND, ms, RATES[r['rf']], r['sma'], r['Lev'], r['skip'], tuple(r['cost']), r['spread'], r['fee'])
+            same = same and all(a_[k] == b_[k] for k in ('s', 'net', 'b', 'E', 'w'))
+    out['copy_reproduces_registered'] = same
+    for mult in (1.0, 0.5, 0.25):
+        Rh = {s: {k: v + mult * dyi.get(s, {}).get(k, 0.0) for k, v in d.items()} for s, d in LI.items()}
+        vs = {}
+        for uid in ('D_S3_FABER_L2', 'D_S3_FABER_L3'):
+            r = RULES[uid]
+            rf = RATES[r['rf']]
+
+            def mk(exclude=(), r=r, rf=rf, Rh=Rh):
+                o = {'s': {}, 'net': {}, 'b': {}, 'w': {}, 'E': {}}
+                for ms in DATA_SEGS[r['data']]:
+                    x = build_ind_trend_split(LI, Rh, ms, rf, r['sma'], r['Lev'], r['skip'], tuple(r['cost']), r['spread'], r['fee'], exclude=exclude)
+                    for k in o:
+                        o[k].update(x[k])
+                o['R'], o['rf'], o['turn'] = Rh, rf, {}
+                return o
+            vs[uid] = unit_eval(r, builder=mk)
+        for uid, v in vs.items():
+            other = {u: w for u, w in vs.items() if u != uid}
+            g = grade_with_family(uid, v, units, fam_of, extra=other)
+            st = v['stats']
+            out['rows'][f'{uid}_div_x{mult}'] = {'full_net': short_es(st['full_net']), 'h1_cagr_diff': st['h1_net']['cagr_diff'], 'h2_cagr_diff': st['h2_net']['cagr_diff'],
+                                                 'sharpe_h1': st['sharpe']['h1'], 'sharpe_h2': st['sharpe']['h2'],
+                                                 'mean_exposure_E': round(_stat.mean(v['x']['E'].values()), 3),
+                                                 'drop_top': short_es(v['drop_top']['net_vs_b']), 'grade': g['grade'], 'criteria': g['criteria']}
+    for uid in ('D_S3_FABER_L2', 'D_S3_FABER_L3'):
+        st = units[uid]['stats']
+        out['rows'][f'{uid}_registered_price_only'] = {'full_net': short_es(st['full_net']), 'h1_cagr_diff': st['h1_net']['cagr_diff'], 'h2_cagr_diff': st['h2_net']['cagr_diff'],
+                                                       'sharpe_h1': st['sharpe']['h1'], 'sharpe_h2': st['sharpe']['h2'],
+                                                       'note': '倍率 E は配当を足した版と同じ（信号は価格だけ）'}
+    out['note'] = ('事後（検査役の指摘 2026-09-28）。登録の D_S3 は株の脚が価格だけ（配当なし）で現金の脚 uk_cash が総リターンの金利＝単位が混ざる。'
+                   '信号は登録どおり価格だけの業種指数、保有の月だけ配当の近似を戦略と相手（業種の等分）の両側に足した。x0.5・x0.25 は配当の近似が過大な場合の感度')
+    return out
+
+
+# ── (4) 英国のハロウィーンの単位の不一致: 指数は価格だけ、借入は短期金利＋0.5% を丸ごと払う ──
+def fix_h_dividend(units, fam_of):
+    r = RULES['H_HAL_OV15_UK']
+    out = {'rows': {}}
+    st0 = units['H_HAL_OV15_UK']['stats']
+    out['rows']['registered_price_only'] = {'full_net': short_es(st0['full_net']), 'h1_cagr_diff': st0['h1_net']['cagr_diff'], 'h2_cagr_diff': st0['h2_net']['cagr_diff'],
+                                            'sharpe_h1': st0['sharpe']['h1'], 'sharpe_h2': st0['sharpe']['h2'], 'grade': 'C（登録）'}
+
+    def one(m, period):
+        rr = dict(r)
+        rr['period'] = list(period)
+        x = build(rr, R=m, period=period)
+        st = bundle(x, rr)
+        v = {'x': x, 'stats': st, 'drop_top': None, 'rule': rr}
+        g = grade_units({'H_HAL_OV15_UK': v}, {'H_HAL_OV15_UK': 'H'})['H_HAL_OV15_UK']
+        return {'full_net': short_es(st['full_net']), 'h1_cagr_diff': st['h1_net']['cagr_diff'], 'h2_cagr_diff': st['h2_net']['cagr_diff'],
+                'sharpe_h1': st['sharpe']['h1'], 'sharpe_h2': st['sharpe']['h2'], 'months': st['months'], 'grade': g['grade'], 'criteria': g['criteria']}
+    for y in (0.01, 0.02, 0.03, 0.04, 0.05):
+        m = {k: v + y / 12 for k, v in UK_IDX.items()}
+        out['rows'][f'const_dy_{int(round(y * 100))}pct'] = one(m, tuple(r['period']))
+    # 符号が反転する配当利回り（算術の超過・幾何の差）＝ 二分法（一定の配当・1709〜1914）
+    def ex_at(y, key):
+        m = {k: v + y / 12 for k, v in UK_IDX.items()}
+        x = build(r, R=m)
+        return C.excess_stats(x['net'], x['b'])[key]
+    be = {}
+    for key in ('ex_ann', 'cagr_diff'):
+        lo, hi = 0.0, 0.05
+        for _ in range(20):
+            mid = (lo + hi) / 2
+            if ex_at(mid, key) > 0:
+                hi = mid
+            else:
+                lo = mid
+        be[key] = round(hi * 100, 2)
+    out['breakeven_dy_pct'] = {'arith_excess': be['ex_ann'], 'geometric_diff': be['cagr_diff'],
+                               'note': '一定の配当利回りを両側に足したとき、費用後の算術の超過・幾何の年率差が 0 を超える配当（%/年・excess_stats の丸め 0.01 の範囲）'}
+    dyu = {}
+    for m_ in BENCH['lse_ew']:
+        v = [LSE_DY[i][m_] for i in LSE_RET if m_ in LSE_RET[i] and m_ in LSE_DY.get(i, {}) and LSE_DY[i][m_] * 12 <= 0.30]
+        if v:
+            dyu[m_] = math.fsum(v) / len(v)
+    ks = [k for k in dyu if 187101 <= k <= 191406]
+    m = {k: v + dyu[k] for k, v in UK_IDX.items() if k in dyu}
+    row = one(m, (187101, 190712))
+    row['dy_mean_ann_pct'] = round(_stat.mean([dyu[k] for k in ks]) * 1200, 2)
+    row['note'] = 'LSE の等分の配当の近似（月ごと・年30%超は除く）を指数に足した。配当の近似は LSE の区間1 だけ＝1871-01〜1907-12（健全性の点検の『1871〜1914』の 444 か月と同じ月）'
+    out['rows']['lse_ew_dy_proxy_1871_1907'] = row
+    x = build(r, R=UK_IDX, period=(187101, 190712))
+    out['rows']['price_only_1871_1907'] = {'full_net': short_es(C.excess_stats(x['net'], x['b']))}
+    out['note'] = ('事後（検査役の指摘 2026-09-28）。登録の H は価格だけの指数を 1.5 倍に持ち、借入には短期金利＋0.5% を丸ごと払う＝冬の月ごとに 0.5×配当利回り/12 だけ過小（年換算 0.25×dy）。'
+                   '一定の配当利回りを戦略と相手の両側に足した感度。格付けは登録の C のまま（E5 は配当 4% 以上で不合格、3% なら合格）')
+    return out
+
+
+# ── (6)(7) LSE の読み込みの直し: 1株の額面（capitalpar）の変化・逆戻りしない約10倍の跳ね ──
+def _jump_filter(r, mode):
+    if not mode:
+        return r, 0
+    drop = set()
+    for k, v in r.items():
+        q = 1 + v
+        if mode == 'gt300' and v > 3.0:
+            drop.add(k)
+        elif mode == 'x5' and (q >= 5 or q <= 0.2):
+            drop.add(k)
+        elif mode == 'x10sig' and q > 0 and any(abs(math.log(q) - e * math.log(10)) <= math.log(1.35) for e in (-2, -1, 1, 2)):
+            drop.add(k)
+    return {k: v for k, v in r.items() if k not in drop}, len(drop)
+
+
+JUMP_NOTE = {'gt300': '株の月のリターン > +300% を欠測（検査役の再計算と同じ・両側）',
+             'x5': '株の月の値の比が ×5 以上か ×1/5 以下を欠測（逆戻りしない跳ね・本物の暴落も落とす粗い版）',
+             'x10sig': '株の月の値の比が 約10倍・約1/10・約100倍・約1/100（±35%）を欠測（単位の変わり目の形だけ）'}
+
+
+def lse_panel_variant(par=False, jump=None):
+    """D.lse_panel の写し（凍結した data 道具は書き換えない）。par=True で 1株の額面（capitalpar・月の組の3番目）の変化も落とす。
+    jump で掃除の後に逆戻りしない跳ねを欠測にする（_jump_filter）。par=False・jump=None なら抽出と1ビットも違わない（実行時に確かめる）"""
+    obj = D.lse_raw()
+    raw, heads = obj['sec'], obj['headings']
+    cnt = collections.Counter()
+    ret, sect, plag, dy = {}, {}, {}, {}
+    for i, rec in raw.items():
+        if not D.lse_is_common(rec):
+            continue
+        Mo = rec['m']
+        ks = sorted(k for k in Mo if Mo[k][0])
+        if not ks:
+            continue
+        r, sruns, pl, dv = {}, [], {}, {}
+        for a, b in zip(ks, ks[1:]):
+            va, vb = Mo[a], Mo[b]
+            if D.madd(a, 1) != b:
+                continue
+            sa = D.lse_sector(rec['file'], heads[va[9]])
+            if sa == 'EXCLUDE':
+                continue
+            if (va[1] and vb[1] and va[1] != vb[1]) or (va[3] and vb[3] and va[3] != vb[3]) or (va[6] and vb[6] and va[6] != vb[6]):
+                continue
+            if par and va[2] and vb[2] and va[2] != vb[2]:
+                cnt['drop_par_change'] += 1
+                continue
+            r[b] = vb[0] / va[0] - 1
+            pl[b] = va[0]
+            basis = va[1] or va[2] or va[3] or va[6]
+            if va[7] is not None and basis:
+                dv[b] = va[7] / 100 * basis / 12 / va[0]
+            if sruns and sruns[-1][2] == sa and sruns[-1][1] == D.madd(b, -1):
+                sruns[-1][1] = b
+            else:
+                sruns.append([b, b, sa])
+        r = D.clean_returns(r, cnt)
+        r, nj = _jump_filter(r, jump)
+        cnt['drop_jump'] += nj
+        if not r:
+            continue
+        ret[i] = r
+        sect[i] = sruns
+        plag[i] = {k: v for k, v in pl.items() if k in r}
+        dy[i] = {k: v for k, v in dv.items() if k in r}
+    return {'ret': ret, 'sect': sect, 'plag': plag, 'dy': dy, 'counts': dict(cnt)}
+
+
+def lse_variant_run(units, fam_of, par, jump):
+    P = lse_panel_variant(par, jump)
+    ret, sect = P['ret'], P['sect']
+    LI, _ = D.lse_industries({'ret': ret, 'sect': sect})
+    bew = ew(ret, LSE_SEG_M)
+    lk = [k for k in sorted(set(bew) & set(UK_IDX)) if 187101 <= k <= 191406]
+    res = {'par': par, 'jump': jump, 'jump_note': JUMP_NOTE.get(jump), 'counts': P['counts'],
+           'stock_months': sum(len(d) for d in ret.values()),
+           'n_gt300': sum(1 for d in ret.values() for v in d.values() if v > 3.0),
+           'n_gt500': sum(1 for d in ret.values() for v in d.values() if v > 5.0),
+           'sanity_corr_lse_ew_vs_boe_1871_1914': {'corr': corr_d(bew, UK_IDX, lk), 'n': len(lk), 'threshold': 0.6},
+           'lse_ew_arith_cagr_pct': {f'{a}-{z}': round(C.cagr(C.window(bew, a, z)) * 100, 2) for a, z in ((186902, 188712), (188801, 190712), (191502, 192912))}}
+    res['sanity_corr_lse_ew_vs_boe_1871_1914']['ok'] = (res['sanity_corr_lse_ew_vs_boe_1871_1914']['corr'] or 0) >= 0.6
+    vu = {}
+    for uid in D.FAMILIES['B'] + D.FAMILIES['D']:
+        r = RULES[uid]
+        vu[uid] = unit_eval(r, R=(ret if r['data'] == 'lse_stk' else LI), bench_R=(ret if r['kind'] != 'ind_trend' else None))
+    g = grade_units(vu, fam_of)
+    rows = {}
+    for uid, v in vu.items():
+        st, st0 = v['stats'], units[uid]['stats']
+        r = RULES[uid]
+        wl = None
+        if r['kind'] != 'ind_trend':
+            Rv = ret if r['data'] == 'lse_stk' else LI
+            top, bot = hold_side(r, Rv, Rv, 'top'), hold_side(r, Rv, Rv, 'bottom')
+            wl = {'top_minus_bottom_gross': short_es(C.excess_stats(top['s'], bot['s'])), 'bottom_net_vs_bench': short_es(C.excess_stats(bot['net'], v['x']['b']))}
+        rows[uid] = {'full_net': short_es(st['full_net']), 'h1_cagr_diff': st['h1_net']['cagr_diff'], 'h2_cagr_diff': st['h2_net']['cagr_diff'],
+                     'drop_top': {'excluded': v['drop_top']['excluded'], 'net_vs_b': short_es(v['drop_top']['net_vs_b'])},
+                     'grade': g[uid]['grade'], 'criteria': g[uid]['criteria'], 'holm_p_one_family': g[uid]['holm_p_one_family'],
+                     'registered_full_net': short_es(st0['full_net']), 'winners_minus_losers': wl}
+    res['rows'] = rows
+    res['grade_counts_B_D'] = dict(collections.Counter(x['grade'] for x in rows.values()))
+    res['_LI'], res['_ret'], res['_sect'], res['_dy'], res['_vu'] = LI, ret, sect, P['dy'], vu
+    return res
+
+
+def lse_variants(units, fam_of):
+    base = lse_panel_variant(False, None)
+    ext_ret = LSE_RET
+    same = (set(base['ret']) == set(ext_ret) and all(base['ret'][i] == ext_ret[i] for i in ext_ret)
+            and all(base['plag'][i] == LSE_PLAG.get(i, {}) for i in ext_ret)
+            and all(base['dy'][i] == LSE_DY.get(i, {}) for i in ext_ret)
+            and all([list(x) for x in base['sect'][i]] == [list(x) for x in LSE_SECT[i]] for i in ext_ret))
+    out = {'copy_reproduces_registered_panel': same}
+    if not same:
+        raise SystemExit('LSE の写しが登録の抽出と一致しない → 止まる')
+    # 額面の変化が残した月（登録の版）
+    obj = D.lse_raw()
+    pc = []
+    for i, rec in obj['sec'].items():
+        if i not in LSE_RET:
+            continue
+        Mo = rec['m']
+        for b, v in LSE_RET[i].items():
+            a = D.madd(b, -1)
+            va, vb = Mo.get(a), Mo.get(b)
+            if va and vb and va[2] and vb[2] and va[2] != vb[2]:
+                pc.append((i, b, v, va[2], vb[2], va[0], vb[0]))
+    rs = [x[2] for x in pc]
+    ex = sorted(pc, key=lambda x: -x[2])[:5]
+    out['par_change_months_in_registered_panel'] = {'n': len(pc), 'mean_monthly_ret': round(_stat.mean(rs), 4) if rs else None,
+                                                    'n_gt300': sum(1 for x in rs if x > 3), 'n_lt_minus80': sum(1 for x in rs if x < -0.8),
+                                                    'examples': [{'id': i, 'name': obj['sec'][i]['name'][:40], 'month': b, 'ret': round(v, 3), 'par': [pa, pb], 'price': [p0, p1]} for i, b, v, pa, pb, p0, p1 in ex]}
+    reg_ext = {'n_gt300': sum(1 for d in LSE_RET.values() for v in d.values() if v > 3.0), 'n_gt500': sum(1 for d in LSE_RET.values() for v in d.values() if v > 5.0)}
+    out['registered_panel_extremes'] = reg_ext
+    V = {}
+    for name, par, jump in (('par', True, None), ('gt300', False, 'gt300'), ('par_x10sig', True, 'x10sig'), ('par_x5', True, 'x5')):
+        V[name] = lse_variant_run(units, fam_of, par, jump)
+        log('LSE variant', name, V[name]['grade_counts_B_D'], V[name]['sanity_corr_lse_ew_vs_boe_1871_1914'])
+    # 額面を直した版の上で D_S3 の配当をそろえる（(3) と (6) の両方）
+    pv = V['par']
+    s3par = fix_s3_dividend(pv['_vu'], fam_of, LI=pv['_LI'], ret=pv['_ret'], sect=pv['_sect'], dy=pv['_dy'], label='par_fixed_panel')
+    for k in list(V):
+        for kk in ('_LI', '_ret', '_sect', '_dy', '_vu'):
+            V[k].pop(kk, None)
+    out['variants'] = V
+    out['s3_dividend_on_par_fixed_panel'] = s3par
+    out['note'] = ('事後（検査役の指摘 2026-09-28）。登録の掃除（D.lse_panel）は 払込額・amntshare・sharestock の変化は落とすが、1株の額面（capitalpar）の変化を見ていない＝'
+                   '額面 £10→£100 の併合などの単位の変更が +900% 前後のリターンとして残る。par で額面の変化の対も落とした。gt300・x10sig・x5 は逆戻りしない跳ねの粗い版（JUMP_NOTE）。'
+                   '各版で B・D を作り直し、同じ族の Holm（族の他の単位もその版の値）で grade_era を当てた（事後・格付けは登録の版）。'
+                   's3_dividend_on_par_fixed_panel は額面を直した版の上で D_S3 の配当をそろえた（族の Holm の他の単位は額面を直した版）')
+    return out
+
+
 DEVIATIONS = [
     {'what': '健全性の点検の順番と、止まる条件に触れたのに止まらなかったこと',
      'detail': '事前登録は sanity_checks_before_results（成績の前の点検）と書いたが、この道具は同じ実行の中で 22 単位の成績を計算して画面に出した後に点検した（私は点検の前に A〜H の超過・t を見た）。'
@@ -1156,7 +1585,11 @@ DEVIATIONS = [
                '読み込みの誤りを示す明確な形は見つからなかった（1869〜1870 の LSE の等分と Smith-Horne の相関 0.789・n23／大手の鉄道の普通株9つの相関は株どうしの中央 0.32〔最大 0.67〕に対し Smith-Horne とは 0.09〜0.37）が、確証も無い。'
                'LSE の株の月の 43% が値動き0（古い気配）で、等分の算術平均は株ごとのノイズで大きく上振れる（1869〜1887 年率 算術 +8.75% 対 対数の平均 −1.74% 対 イングランド銀行 −0.08%）。',
      'affects_grade': True,
-     'how': 'B（LSE の株）と D（LSE の業種）の格付けは登録どおりのまま出し、tested の各行に grade_flag を付けた。止まる条件に触れた暫定の格付けとして読むこと。事後の診断（勝者−敗者・幾何で束ねた版・極端値を落とした版・窓を2〜3か月あけた版）を post_hoc に並べた'},
+     'how': '★検査役の指摘（2026-09-28）で直した: 相手どうしの形の点検（sanity_shape）を成績の前に回し、止まる条件に触れたデータ（LSE）の単位＝B 3・D 8 の主の格付けを '
+            "'PENDING_stop' にした（grade_counts・rule_level_verdicts・R11 はこの主の版）。登録どおりに出した格付け（S 9・A 2・B 8・C 3）は "
+            "'grade_provisional_if_lse_reading_ok'・grade_counts_provisional_if_lse_reading_ok・rule_level_verdicts_provisional_if_lse_reading_ok に移した。"
+            '事後の診断（勝者−敗者・幾何で束ねた版・極端値を落とした版・窓を2〜3か月あけた版）と、検査役が見つけた読み込みの穴（額面の変化・逆戻りしない約10倍の跳ね）を直した版を post_hoc に並べた。'
+            '初回の実行（直す前）は点検の前に成績を画面に出した＝私は B・D の成績を見た後でこの順番に直した（汚れは消せない）'},
     {'what': '組を作れる月数の点検（±1）で、4 単位が 2〜4 か月ずれた',
      'detail': 'A_S3 L2/L3 659（事前登録『約 657』）・D_F1b 578（580）・D_S3 L2/L3 642（『約 646』）。事前登録の数は形成の窓のリターンの有無だけで数えた近似（S3 は『約』と明記）で、組み立ては保有の月にリターンのある構成要素が1つ以上あること（F1b は6つの組すべて）と現金の金利を足して要る。データも規則も変えていない',
      'affects_grade': False},
@@ -1171,18 +1604,53 @@ DEVIATIONS = [
     {'what': 'シャープの現金', 'detail': 'E5 はその単位の rf（A_S3 は us_cash・D_S3 は uk_cash・H は uk_hal）。timing でない B・C のシャープ（報告だけ）は英国 uk_cash・米国 us_cash', 'affects_grade': False},
     {'what': '事後の診断で抽出に無い欄を読んだ', 'detail': '季節性と配当落ちの診断（post_hoc.seasonality_ex_dividend）のために、IMM の生の3ファイルから dvdpayable（配当の支払いの月）を読んだ（out/_nx_cache/nx_pre1926x_dvdpayable.json）。登録の抽出（sha 凍結）には入っていない欄で、格付けには使わない', 'affects_grade': False},
     {'what': '実装の直し（規則は不変）', 'detail': '初回の実行は季節性の規則（stk_seas）に skip の欄が無いため KeyError で止まった（B_ret_12_1 まで計算・保存なし）。欄が無いときは None を渡すように直して最初から実行し直した。excess_stats の β の計算を速くする細工（nx_stack.py と同じ・数値は同一）を入れた', 'affects_grade': False},
+    {'what': '検査役の指摘（2026-09-28）による直し（fixes 欄）', 'detail': '7件を確かめ、7件とも誤りと確認した。主の格付けに効くのは (1) 止まる条件の扱い（B・D を PENDING_stop）だけ。'
+               '(2)〜(7) は凍結した data 道具を書き換えずに、この道具の中に写した版で直した数字を事後として並べた（tools.measure_next の約束: 格付けは登録の版）。詳細は fixes', 'affects_grade': True},
 ]
 
 
 # ═════════════════════════ 8. 本体 ═════════════════════════
+def verdict_primary(gs):
+    """主のまとめ: PENDING_stop（止まる条件）と NA は数えない。格付けできる単位が PENDING だけなら『保留』"""
+    real = [g for g in gs if g in ('S', 'A', 'B', 'C')]
+    if not real and any(g == 'PENDING_stop' for g in gs):
+        return '保留（止まる条件に触れたデータの単位だけ）'
+    return D.rule_verdict(real)
+
+
+def verdict_table(stu, gmap, primary=True):
+    out = {}
+    for src, lst in stu.items():
+        ids = [x.split('（')[0] for x in lst]
+        gs = [gmap.get(i, 'NA') for i in ids]
+        v = {'units': dict(zip(ids, gs)), 'verdict': verdict_primary(gs) if primary else D.rule_verdict(gs)}
+        pend = [i for i, g in zip(ids, gs) if g == 'PENDING_stop']
+        if pend:
+            v['pending_units'] = pend
+        out[src] = v
+    return out
+
+
 def main():
     t0 = datetime.datetime.now()
+    # ★事前登録どおり、相手どうしの形の点検を成績の前に回す（検査役の指摘 2026-09-28 で直した順番）
+    log('sanity (shape) before results...')
+    shape = sanity_shape()
+    STOP = [u for u in shape['stopped_units']]
+    if STOP:
+        log('⚠ 相手どうしの形の点検で閾値を下回った:', shape['stop_on_shape'], '→ 主の格付けに入れない単位', STOP)
     units = run_main()
     fam_of = {u: RULES[u]['fam'] for u in UNIT_IDS}
-    G = grade_units(units, fam_of)
-    # R11: 22 単位ぜんぶの Holm
-    pone = {u: G[u]['p_one'] for u in UNIT_IDS}
-    prog_holm = C.holm(pone)
+    # 主: 止まる条件の外の単位だけを格付けする（族はデータの単位ごとなので、A・C・H の Holm は B・D に左右されない）
+    G_main = grade_units({u: units[u] for u in UNIT_IDS if u not in STOP}, fam_of)
+    # 暫定（LSE の読み込みが正しかったとしたら）: 止まる条件に触れた単位を登録どおりに格付けした値（主には使わない）
+    G_prov = grade_units({u: units[u] for u in UNIT_IDS if u in STOP}, fam_of) if STOP else {}
+    G_all = {**G_main, **G_prov}
+    G = {u: ({'grade': 'PENDING_stop', 'criteria': None, 'p_one': G_prov[u]['p_one'], 'holm_p_one_family': None} if u in STOP else G_main[u]) for u in UNIT_IDS}
+    # R11: 22 単位ぜんぶの Holm（主は止まった単位を p=1 で数える＝NA_short と同じ扱い・暫定は実際の p）
+    pone_prov = {u: G_all[u]['p_one'] for u in UNIT_IDS}
+    pone_main = {u: (1.0 if u in STOP else G_all[u]['p_one']) for u in UNIT_IDS}
+    prog_holm, prog_holm_prov = C.holm(pone_main), C.holm(pone_prov)
     # 参考の C1〜C8（後半の族内 Holm は両側 p）
     hold_p = {}
     for u in UNIT_IDS:
@@ -1191,19 +1659,18 @@ def main():
     fam_hold_holm = {}
     for f in 'ABCDH':
         fam_hold_holm.update(C.holm({u: hold_p[u] for u in UNIT_IDS if fam_of[u] == f}))
-    log('sanity...')
-    san = sanity(units)
-    if san['stop_on_shape']:
-        log('⚠ 相手どうしの形の点検で閾値を下回った:', san['stop_on_shape'])
+    log('sanity (rest)...')
+    san = sanity(units, shape)
     tested = []
     for u in UNIT_IDS:
         r = RULES[u]
         st = units[u]['stats']
-        tested.append({
+        row = {
             'id': u, 'family': r['fam'], 'key': r['key'], 'src_rules': r['src'], 'kind': r['kind'], 'what': r['what'],
             'data': r.get('data'), 'bench': r.get('bench'), 'cost_spec': list(r['cost']), 'timing': bool(r.get('timing')),
-            'grade': G[u]['grade'], 'criteria_E': G[u]['criteria'], 'p_one': G[u]['p_one'], 'holm_p_one_family': G[u]['holm_p_one_family'],
-            'holm_p_one_program22': prog_holm.get(u),
+            'grade': G[u]['grade'], 'criteria_E': G[u]['criteria'], 'p_one': G_all[u]['p_one'], 'holm_p_one_family': G[u]['holm_p_one_family'],
+            'grade_provisional_if_lse_reading_ok': G_all[u]['grade'],
+            'holm_p_one_program22': prog_holm.get(u), 'holm_p_one_program22_provisional': prog_holm_prov.get(u),
             'months': st['months'], 'first': st['first'], 'last': st['last'], 'halves': st.get('halves'),
             'full_net': st.get('full_net'), 'h1_net': st.get('h1_net'), 'h2_net': st.get('h2_net'),
             'full_gross': st.get('full_gross'), 'h1_gross': st.get('h1_gross'), 'h2_gross': st.get('h2_gross'),
@@ -1213,18 +1680,25 @@ def main():
             'drop_top': units[u]['drop_top'],
             'train_hold_note': '訓練（〜2006）・保有（2007〜）は無い（この角度は 1709〜1929 年だけ）。前半・後半（数で二分）を代わりに置いた＝h1/h2',
             'C1_C8_reference': ref_c1_c8(st, r, fam_hold_holm.get(u)),
-        })
+        }
+        if u in STOP:
+            row['criteria_E_provisional_if_lse_reading_ok'] = G_all[u]['criteria']
+            row['holm_p_one_family_provisional'] = G_all[u]['holm_p_one_family']
+            row['grade_flag'] = ('⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が '
+                                 f"{shape['lse_ew_vs_boe_1871_1914']['corr']} で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。"
+                                 "主の格付けは 'PENDING_stop'（grade_counts・rule_level_verdicts に入れない）。登録どおりに出した値は grade_provisional_if_lse_reading_ok（暫定）。"
+                                 '事後の調べ（post_hoc.sanity_stop_investigation）と、検査役が見つけた読み込みの穴を直した版（fixes・post_hoc.fix_lse_reading）を必ず並べて読むこと')
+        tested.append(row)
     for u, why in NOT_TESTABLE.items():
         tested.append({'id': u, 'family': u[0], 'grade': 'NA_not_testable_by_shape', 'why': why,
                        'src_rules': RULES[u]['src'] if u in RULES else None})
-    # 元の規則ごとのまとめ
+    # 元の規則ごとのまとめ（主＝止まる条件の外の単位だけ・暫定＝登録どおり）
     stu = PRE['why_new']['survivor_to_unit']
     gmap = {t['id']: t['grade'] for t in tested}
-    verdicts = {}
-    for src, lst in stu.items():
-        ids = [x.split('（')[0] for x in lst]
-        gs = [gmap.get(i, 'NA') for i in ids]
-        verdicts[src] = {'units': dict(zip(ids, gs)), 'verdict': D.rule_verdict(gs)}
+    gmap_prov = dict(gmap)
+    gmap_prov.update({u: G_all[u]['grade'] for u in UNIT_IDS})
+    verdicts = verdict_table(stu, gmap, primary=True)
+    verdicts_prov = verdict_table(stu, gmap_prov, primary=False)
     log('reports...')
     rep = {}
     rep['R1_asis'] = r1_asis(units); log('R1 done')
@@ -1237,23 +1711,65 @@ def main():
     rep['R8_delisting_lower_bound'] = r8_lb(units); log('R8 done')
     rep['R9_nyse_filled'] = r9_filled(units); log('R9 done')
     rep['R10_working_diagnostics'] = r10_working()
-    rep['R11_program_holm'] = {'holm_p_one': prog_holm, 'pass_0.05': [u for u, p in prog_holm.items() if p < 0.05]}
+    rep['R11_program_holm'] = {'holm_p_one': prog_holm, 'pass_0.05': [u for u, p in prog_holm.items() if p < 0.05],
+                               'holm_p_one_provisional_if_lse_reading_ok': prog_holm_prov, 'pass_0.05_provisional': [u for u, p in prog_holm_prov.items() if p < 0.05],
+                               'note': '主は止まる条件に触れた B・D の 11 単位を p=1 で数えた（NA_short と同じ扱い・m=22 のまま）。暫定は登録どおりの p'}
     rep['R12_turnover'] = {u: units[u]['turnover_ann'] for u in UNIT_IDS}
     grades = collections.Counter(G[u]['grade'] for u in UNIT_IDS)
+    grades_prov = collections.Counter(G_all[u]['grade'] for u in UNIT_IDS)
     log('post-hoc...')
     ph = post_hoc(units)
-    stop_hit = bool(san['stop_on_shape'])
-    for t in tested:
-        if stop_hit and t['id'][:2] in ('B_', 'D_'):
-            t['grade_flag'] = ('⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。'
-                               '格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと')
+    log('fixes (検査役の指摘)...')
+    fx_p9 = fix_p9_exact(units, fam_of); log('fix P9 done')
+    fx_s3 = fix_s3_dividend(units, fam_of); log('fix S3 dividend done')
+    fx_h = fix_h_dividend(units, fam_of); log('fix H dividend done')
+    fx_lse = lse_variants(units, fam_of); log('fix LSE reading done')
+    ph['fix_p9_exact_ties'] = fx_p9
+    ph['fix_s3_dividend_units_aligned'] = fx_s3
+    ph['fix_h_dividend_sensitivity'] = fx_h
+    ph['fix_lse_reading'] = fx_lse
+    # 暫定の表: LSE の読み込みが正しかったとして、検査役の直しを当てた版の格付け（すべて事後・主には使わない）
+    V = fx_lse['variants']
+    s3p = fx_lse['s3_dividend_on_par_fixed_panel']['rows']
+    prov_table = {}
+    for u in STOP:
+        row = {'registered_provisional': G_all[u]['grade']}
+        for k in V:
+            row[f'lse_{k}'] = V[k]['rows'][u]['grade']
+        if 'S3' in u:
+            row['dividend_aligned_registered_panel'] = fx_s3['rows'][f'{u}_div_x1.0']['grade']
+            row['dividend_aligned_par_fixed_panel'] = s3p[f'{u}_div_x1.0']['grade']
+        if u == 'D_P9_multi_5':
+            row['p9_exact_ties'] = fx_p9[u]['grade_exact_ties']
+        prov_table[u] = row
+    corrected = {}
+    for u in STOP:
+        corrected[u] = (s3p[f'{u}_div_x1.0']['grade'] if 'S3' in u else V['par']['rows'][u]['grade'])
+    gmap_corr = dict(gmap_prov)
+    gmap_corr.update(corrected)
+    fixes = build_fixes(units, G_all, grades, grades_prov, verdicts, verdicts_prov, shape, rep, fx_p9, fx_s3, fx_h, fx_lse, corrected)
     out = {
         'angle': 'nx_pre1926x', 'prereg': 'out/nx_pre1926x_prereg.json', 'generated': datetime.date.today().isoformat(),
         'frozen_check': FROZEN,
         'criteria_used': 'criteria_independent_era（nx_pre1926x_data.grade_era）。C1〜C8 は参考（事後・前半/後半の読み替え）だけ',
         'grade_counts': dict(grades),
+        'grade_counts_note': ("主の格付け。事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）に触れた LSE の単位（B 3・D 8）は 'PENDING_stop'＝格付けしない。"
+                              '格付けできたのは A 9・C 1・H 1 の11単位'),
+        'grade_counts_provisional_if_lse_reading_ok': dict(grades_prov),
+        'grade_counts_provisional_note': ('暫定（主ではない）: 止まる条件を無視して B・D を登録どおりに格付けした値。検査役の指摘で、この S 9 のうち D_S3 の2つは単位の不一致'
+                                          '（価格だけの株と総リターンの現金）に乗っていて、配当をそろえると C（→ provisional_corrected_by_fixes）'),
         'tested': tested,
         'rule_level_verdicts': verdicts,
+        'rule_level_verdicts_provisional_if_lse_reading_ok': verdicts_prov,
+        'provisional_grade_table_B_D': prov_table,
+        'provisional_corrected_by_fixes': {
+            'grades_B_D': corrected,
+            'grade_counts_all22': dict(collections.Counter(gmap_corr[u] for u in UNIT_IDS)),
+            'rule_level_verdicts': verdict_table(stu, gmap_corr, primary=False),
+            'note': ('事後・主には使わない: LSE の読み込みが正しかったとして（止まる条件を外した仮定）、検査役が見つけた2つの明白な穴を直した版——'
+                     '1株の額面（capitalpar）の変化の対を落とした LSE（fix_lse_reading.variants.par）と、D_S3 の株の脚に配当の近似を足して現金の脚と単位をそろえた版。'
+                     'A・C・H は主の格付けのまま。逆戻りしない跳ね（gt300・x10sig・x5）は選び方に任意さがあるので感度として並べるだけ（provisional_grade_table_B_D）')},
+        'fixes': fixes,
         'sanity_checks': san,
         'reports_not_graded': rep,
         'deviations_from_prereg': DEVIATIONS,
@@ -1265,6 +1781,101 @@ def main():
     return out, units
 
 
+def build_fixes(units, G_all, grades, grades_prov, verdicts, verdicts_prov, shape, rep, fx_p9, fx_s3, fx_h, fx_lse, corrected):
+    V = fx_lse['variants']
+    se = lambda u: short_es(units[u]['stats']['full_net'])
+    r3 = rep['R3_costs']
+    one_ids = [u for u in UNIT_IDS if RULES[u]['cost'][0] == 'one']
+    fx = []
+    fx.append({
+        'id': 'F1_stop_condition', 'verified': True, 'severity': 'changes_grade',
+        'finding': '事前登録の止まる条件（LSE の等分とイングランド銀行の指数の相関 ≥0.6）に触れたのに、B・D の格付けが grade_counts と rule_level_verdicts に印なしで入っていた',
+        'check': f"相関 {shape['lse_ew_vs_boe_1871_1914']['corr']}（n={shape['lse_ew_vs_boe_1871_1914']['n']}）＜ 0.6 を再計算で確認。旧版は点検を成績の後に回し、log を出すだけで先へ進んでいた",
+        'what_changed': "sanity_shape を run_main の前へ。止まったデータの単位（B 3・D 8）の主の格付けを 'PENDING_stop' にし、grade_counts・rule_level_verdicts・R11 を主の版にした。旧の値は *_provisional_if_lse_reading_ok へ移した",
+        'before': {'grade_counts': dict(grades_prov), 'rule_level_verdicts': {k: v['verdict'] for k, v in verdicts_prov.items()}},
+        'after': {'grade_counts': dict(grades), 'rule_level_verdicts': {k: v['verdict'] for k, v in verdicts.items()}},
+        'affects_grade': True})
+    before2 = {u: short_es(r3['rows'][u]['unit_0.01']['full']) for u in one_ids}
+    after2 = {u: short_es(r3['rows'][u]['per_side_unit_0.01']['full']) for u in one_ids}
+    fx.append({
+        'id': 'F2_R3_one_vs_two', 'verified': True, 'severity': 'changes_numbers（報告 R3 だけ・格付けは不変）',
+        'finding': "R3 の『片道 1%』で、one の式（½Σ|Δw|×u）の規則（F1b・F3g・株）は two の式（Σ|Δw|×u・G3・G4・P9）の半分の費用しか引いていなかった",
+        'check': 'D._cost_of: one=0.5×Σ|Δw|×u・two=Σ|Δw|×u を確認。R3 は式の形を保って u だけ替えていた（事前登録の文言には沿う）。当時の売買1回ごとの費用として読むには各側に u が要る',
+        'what_changed': "R3 の各行に per_side_unit_0.005・per_side_unit_0.01（Σ|Δw|×u にそろえた版）と summary_per_side_1pct を足し、note に one と two の単価の意味の違いを書いた",
+        'before_unit_0.01_one_rules': before2, 'after_per_side_0.01_one_rules': after2,
+        'summary_after': r3['summary_per_side_1pct'],
+        'vs_auditor': '検査役の再計算（D_F1b +1.29 t1.02・F3g K15 +0.96 t0.45・K30 +0.03 t0.03 cd −0.26・9-0 −0.81 t−0.66・two の D_G3 +1.86 t1.57・D_P9 −3.59）と完全に一致',
+        'retracted_summary': '実装者の前の要約『当時の現実に近い片道1%では LSE の D は6本のうち5本が正のまま（+1.5〜+3.8%/年）、t≥2 は F1b（t2.29）だけ』は one の規則の費用を半分に見積もっていたので撤回し、summary_after に置き換える',
+        'affects_grade': False})
+    s3 = fx_s3['rows']
+    fx.append({
+        'id': 'F3_D_S3_units', 'verified': True, 'severity': 'changes_grade（暫定の格付け。主は PENDING_stop）',
+        'finding': 'D_S3（LSE の業種ごとの10か月線 2倍・3倍）は株の脚が価格だけ・現金の脚 uk_cash が総リターンの金利＝単位が混ざり、E5（前半・後半のシャープ）が有利に出ていた',
+        'check': ('登録の値を再現した上で、配当の近似（R7 と同じ・年30%超は除く・業種平均 年'
+                  f"{fx_s3['industry_dividend_yield']['mean_ann_pct']}%）を保有の月だけ戦略と相手の両側に足すと、前半のシャープが相手を下回る"),
+        'what_changed': 'post_hoc.fix_s3_dividend_units_aligned（登録の LSE）と fix_lse_reading.s3_dividend_on_par_fixed_panel（額面を直した LSE）に並べた。格付けは登録の版（主は PENDING_stop）',
+        'before': {u: {'full_net': s3[f'{u}_registered_price_only']['full_net'], 'sharpe_h1': s3[f'{u}_registered_price_only']['sharpe_h1'],
+                       'sharpe_h2': s3[f'{u}_registered_price_only']['sharpe_h2'], 'grade_provisional': G_all[u]['grade']} for u in ('D_S3_FABER_L2', 'D_S3_FABER_L3')},
+        'after': {k: {kk: v[kk] for kk in ('full_net', 'sharpe_h1', 'sharpe_h2', 'grade')} for k, v in s3.items() if '_div_' in k},
+        'rule_note': "S3（業種ごとの10か月線）は単位をそろえると A（Cowles・総リターン同士）も D も C＝規則のまとめは『割れた』ではなく『再現せず』。D_S3 の S は『価格だけの株と総リターンの現金を混ぜたときだけ出る暫定の格付け』",
+        'affects_grade': True})
+    hr = fx_h['rows']
+    fx.append({
+        'id': 'F4_H_units', 'verified': True, 'severity': 'changes_numbers（格付け C は不変）',
+        'finding': "H（英国のハロウィーン1.5倍）の負の超過は、価格だけの指数を 1.5 倍に持ちながら借入の金利を丸ごと払う単位の不一致による人工物（冬の月ごとに 0.5×配当/12 だけ過小）",
+        'check': (f"登録の値（{hr['registered_price_only']['full_net']}）を再現した上で、一定の配当利回りを両側に足して再計算: 算術の超過は配当 {fx_h['breakeven_dy_pct']['arith_excess']}%・"
+                  f"幾何の差は {fx_h['breakeven_dy_pct']['geometric_diff']}% を超えると正に反転する"),
+        'what_changed': 'post_hoc.fix_h_dividend_sensitivity に配当 1〜5%（1709〜1914）と LSE の配当の近似（1871〜1907）と符号が反転する配当（breakeven_dy_pct）を並べた。格付けは登録の C（E5 だけで決まる: 配当 4% 以上で C、3% なら S 相当）',
+        'before': hr['registered_price_only'],
+        'after': {k: {kk: v.get(kk) for kk in ('full_net', 'h1_cagr_diff', 'h2_cagr_diff', 'sharpe_h1', 'sharpe_h2', 'grade', 'months')} for k, v in hr.items() if k != 'registered_price_only'},
+        'reading': "『英国のハロウィーンは超過が負』とは書かない。『超過の符号は配当の扱いで反転する。格付け C は E5（シャープの比較）だけで決まり、配当 4% 以上なら C のまま、3% なら S』",
+        'affects_grade': False})
+    fx.append({
+        'id': 'F5_P9_ties', 'verified': True, 'severity': 'changes_numbers（格付けは不変）',
+        'finding': "P9 の同点が docstring の『名前の順』になっていなかった（百分位の平均を浮動小数で足すため、数学的に同点の業種が最後の1桁の差で並ぶ）",
+        'check': f"組が変わる形成の月 A {fx_p9['A_P9_multi_5']['formation_months_changed']}/{fx_p9['A_P9_multi_5']['formation_months']}・D {fx_p9['D_P9_multi_5']['formation_months_changed']}/{fx_p9['D_P9_multi_5']['formation_months']}",
+        'what_changed': 'post_hoc.fix_p9_exact_ties に 2×順位の和（整数）で (−和, 名前) に並べた版を置いた（凍結した data 道具の build_ind_multi は書き換えない＝格付けは登録の版）。規則の誤読（実装の誤り）の是正で、規則そのものは変えていない',
+        'before': {u: fx_p9[u]['registered'] for u in fx_p9}, 'after': {u: {**fx_p9[u]['exact_ties'], 'grade': fx_p9[u]['grade_exact_ties']} for u in fx_p9},
+        'affects_grade': False})
+    vp = V['par']
+    fx.append({
+        'id': 'F6_LSE_par_change', 'verified': True, 'severity': 'changes_grade（暫定の格付け。主は PENDING_stop）',
+        'finding': 'LSE の払込・分割・併合の除外が 1株の額面（capitalpar）の変化を見ておらず、額面 £10→£100 の併合などが +900% 前後のリターンとして残っていた',
+        'check': (f"登録の版に額面が変わった（前後とも値あり）株×月が {fx_lse['par_change_months_in_registered_panel']['n']}（平均 月 "
+                  f"{fx_lse['par_change_months_in_registered_panel']['mean_monthly_ret'] * 100:+.1f}%・+300% 超 {fx_lse['par_change_months_in_registered_panel']['n_gt300']}・"
+                  f"−80% 未満 {fx_lse['par_change_months_in_registered_panel']['n_lt_minus80']}）。例は fix_lse_reading.par_change_months_in_registered_panel.examples"),
+        'what_changed': "lse_panel_variant（D.lse_panel の写し・写しが抽出と1ビットも違わないことを実行時に確認）に `va[2] and vb[2] and va[2] != vb[2]` の除外を足した版で B・D を作り直した（fix_lse_reading.variants.par）",
+        'before': {'grades_provisional': {u: G_all[u]['grade'] for u in D.FAMILIES['B'] + D.FAMILIES['D']},
+                   'full_net': {u: se(u) for u in D.FAMILIES['B'] + D.FAMILIES['D']},
+                   'sanity_corr': shape['lse_ew_vs_boe_1871_1914']['corr'],
+                   'lse_ew_arith_cagr_1869_1887': ph_cagr(BENCH['lse_ew'])},
+        'after': {'grades_provisional': {u: vp['rows'][u]['grade'] for u in vp['rows']},
+                  'full_net': {u: vp['rows'][u]['full_net'] for u in vp['rows']},
+                  'sanity_corr': vp['sanity_corr_lse_ew_vs_boe_1871_1914']['corr'],
+                  'lse_ew_arith_cagr_1869_1887': vp['lse_ew_arith_cagr_pct']['186902-188712']},
+        'stop_condition_after_fix': '額面を直しても相関は線 0.6 に届かない＝止まる条件は残る（主は PENDING_stop のまま）' if not vp['sanity_corr_lse_ew_vs_boe_1871_1914']['ok'] else '額面を直すと線を超える（ただし主は登録の読み込みで判定＝PENDING_stop のまま）',
+        'vs_auditor': ('検査役の再計算（D_G3 cd 4.31 t4.21・B_ret 1.30 t2.36 前半/後半 +0.38/+2.25・B_seas t2.49・1869〜1887 の等分の CAGR 5.16%・相関 0.499）と向きと格付け（B_ret・B_seas が B→S、他は S のまま）は同じで、'
+                       '数字は少し違う。こちらは登録の lse_panel の写し（抽出と1ビット一致を確認）に額面の条件を1つ足し、掃除（跳ねて戻る形）の前に対を落とした＝'
+                       '掃除の後に額面の変わった月を消す作り方とは、跳ねて戻る形の判定に巻き込まれる月（掃除の件数 411→367）だけ違う'),
+        'affects_grade': True})
+    fx.append({
+        'id': 'F7_LSE_non_reversing_jumps', 'verified': True, 'severity': 'changes_numbers（暫定の格付けの感度）',
+        'finding': '逆戻りしない約10倍の跳ね（系列の最後の月・額面の欄が変わらない気配の単位の変更）が掃除（跳ねて戻る形だけを捕まえる）をすり抜けている',
+        'check': (f"登録の版で r>+300% が {fx_lse['registered_panel_extremes']['n_gt300']}・+500% 超 {fx_lse['registered_panel_extremes']['n_gt500']}。"
+                  f"額面を直した後も r>+300% が {V['par']['n_gt300']} 残る"),
+        'what_changed': '事後の感度として gt300（登録の版で r>+300% を両側から欠測・検査役の再計算と同じ）・par_x10sig（額面を直した上で約10倍・約1/10・約100倍・約1/100 の月を欠測）・par_x5（額面を直した上で ×5 以上・×1/5 以下を欠測）を fix_lse_reading.variants に並べた。どれが正しいかは原本の紙面を見ないと決められないので、主にも暫定の直した版（provisional_corrected_by_fixes）にも入れない',
+        'vs_auditor': '検査役の再計算（r>+300% を両側から外す: D_G3 cd 5.38→3.41 t5.11・D_S3 L2 3.39→2.61・B_F1a1 3.89→3.95）は gt300 で完全に再現した',
+        'after': {k: {'grades': {u: V[k]['rows'][u]['grade'] for u in V[k]['rows']},
+                      'full_net': {u: V[k]['rows'][u]['full_net'] for u in V[k]['rows']},
+                      'counts': V[k]['counts'], 'sanity_corr': V[k]['sanity_corr_lse_ew_vs_boe_1871_1914']['corr']} for k in ('gt300', 'par_x10sig', 'par_x5')},
+        'affects_grade': False})
+    return fx
+
+
+def ph_cagr(b):
+    return round(C.cagr(C.window(b, 186902, 188712)) * 100, 2)
+
+
 def interpret(out):
     """事後の読み（数字は同じ実行の結果から引く・格付けには使わない）"""
     T = {t['id']: t for t in out['tested']}
@@ -1273,29 +1884,53 @@ def interpret(out):
     G = ph['geometric_aggregation']['rows']
     K = ph['longer_gap']['rows']
     TR = ph['trimmed_extremes']['rows']
+    V = ph['fix_lse_reading']['variants']
+    VP = V['par']['rows']
+    S3 = ph['fix_s3_dividend_units_aligned']['rows']
+    S3p = ph['fix_lse_reading']['s3_dividend_on_par_fixed_panel']['rows']
+    HD = ph['fix_h_dividend_sensitivity']['rows']
+    P9 = ph['fix_p9_exact_ties']
     f = lambda e: None if not e else f"{e['ex_ann']:+.2f}%/年 t{e['t']}"
+    sc = out['sanity_checks']['lse_ew_vs_boe_1871_1914']
     lines = []
+    gc = out['grade_counts']
+    lines.append(f"主の格付け: 事前登録の止まる条件（LSE の等分とイングランド銀行の指数の相関 {sc['corr']} < 0.6）に触れた LSE の11単位（B 3・D 8）は PENDING_stop。"
+                 f"格付けできた11単位（Cowles の業種 A 9・Old NYSE の C 1・英国の指数 H 1）は "
+                 + '・'.join(f'{k} {v}' for k, v in sorted(gc.items()) if k != 'PENDING_stop') + f"。S は {gc.get('S', 0)}。"
+                 + '格付け A 以上: ' + ('・'.join(f"{u}（{T[u]['grade']}・{f(T[u]['full_net'])}・族の Holm 後 p {T[u]['holm_p_one_family']}）" for u in UNIT_IDS if T[u]['grade'] in ('S', 'A')) or 'なし'))
     d_ids = [u for u in D.FAMILIES['D'] if RULES[u]['kind'] != 'ind_trend']
-    lines.append('D（LSE の業種の勢い 6本）: 登録の格付けは全部 S。勝者−敗者は ' + '・'.join(f"{u[2:]} {f(W[u]['top_minus_bottom_gross'])}" for u in d_ids)
+    lines.append('D（LSE の業種の勢い 6本・暫定＝止まったデータの上）: 登録どおりなら全部 S。勝者−敗者は ' + '・'.join(f"{u[2:]} {f(W[u]['top_minus_bottom_gross'])}" for u in d_ids)
+                 + '。額面の変化を直しても ' + '・'.join(f"{u[2:]} {f(VP[u]['full_net'])}（{VP[u]['grade']}）" for u in d_ids)
                  + '。窓を3か月あけても ' + '・'.join(f"{u[2:]} {f(K[u]['skip3'])}" for u in d_ids)
                  + '。幾何で束ねても ' + '・'.join(f"{u[2:]} {f(G[u])}" for u in d_ids)
                  + '。極端値を落としても ' + '・'.join(f"{u[2:]} {f(TR[u])}" for u in d_ids)
-                 + '。保有する業種のノイズの上振れ（算術−幾何）は相手より ' + '・'.join(f"{u[2:]} {ph['noise_uplift']['ann_pct'][u] - ph['noise_uplift']['ann_pct']['universe_arith_minus_geo_ann_pct']:+.2f}" for u in d_ids)
-                 + ' %/年（noise_uplift）＝ D の超過はノイズ・古い気配・等分の作りでは説明しきれず、業種の勢いそのものの見込みが高い（ただし止まる条件に触れたデータの上・事後の読み）')
-    lines.append('D の S3（業種ごとの10か月線 2倍・3倍）: S。ただし相手（LSE の業種の等分）は1次の自己相関が高い古い気配の指数で、10か月線の出入りは平滑な指数ほど効きやすい。窓を3か月あけても '
-                 + '・'.join(f"{u[2:]} {f(K[u]['skip3'])}" for u in ('D_S3_FABER_L2', 'D_S3_FABER_L3')) + '・幾何 ' + '・'.join(f"{u[2:]} {f(G[u])}" for u in ('D_S3_FABER_L2', 'D_S3_FABER_L3')))
-    lines.append('B_F1a1（LSE の株の上位10%）: 登録の格付けは S だが、勝者−敗者は ' + f(W['B_F1a1_top_decile']['top_minus_bottom_gross'])
+                 + '。売買の各側に 1% の費用では ' + '・'.join(f"{u[2:]} {f(out['reports_not_graded']['R3_costs']['per_side_1pct'][u])}" for u in d_ids)
+                 + '＝ D の業種の勢いは元の規則の費用（0.05%）なら直した版でも残るが、当時の費用（売買の各側 1%）では t≥2 に届かない（しかも読み込みの点検が通らない限り格付けしない）')
+    lines.append('D の S3（業種ごとの10か月線 2倍・3倍）: 登録どおりなら S だが、株の脚が価格だけ・現金の脚が総リターンの金利＝単位が混ざっていた。'
+                 '配当の近似を保有の月だけ両側に足すと ' + '・'.join(f"{u[2:]} {f(S3[u + '_div_x1.0']['full_net'])}・前半シャープ {S3[u + '_div_x1.0']['sharpe_h1'][0]} 対 {S3[u + '_div_x1.0']['sharpe_h1'][1]}（{S3[u + '_div_x1.0']['grade']}）" for u in ('D_S3_FABER_L2', 'D_S3_FABER_L3'))
+                 + '。額面を直した LSE でも ' + '・'.join(f"{u[2:]} {S3p[u + '_div_x1.0']['grade']}" for u in ('D_S3_FABER_L2', 'D_S3_FABER_L3'))
+                 + '＝超過は大きくなるが（借入側に偏った E の分）、E5 で落ちる。A_S3（Cowles・総リターン同士）も C なので、S3 は単位をそろえると両方の時代で再現せず')
+    lines.append('B_F1a1（LSE の株の上位10%・暫定）: 登録どおりなら S だが、勝者−敗者は ' + f(W['B_F1a1_top_decile']['top_minus_bottom_gross'])
                  + '・下位10% も相手に ' + f(W['B_F1a1_top_decile']['bottom_net_vs_bench'])
-                 + '＝両端の十分位がともに相手（古い気配の多い等分）に勝っているだけで、勢い（勝者が敗者に勝つ）ではない。S を勢いの再現として数えてはいけない')
-    lines.append('B_ret_12_1（LSE の株の上位3分の1）: 格付け B（費用後 ' + f(T['B_ret_12_1_tercile']['full_net']) + '）。勝者−敗者は '
-                 + f(W['B_ret_12_1_tercile']['top_minus_bottom_gross']) + '＝株の勢いは買い−売りでは出るが、買いだけで相手に勝つ幅は小さい（Chabot-Ghysels-Jagannathan と同じ向き）')
-    lines.append('B_seas（LSE の株の季節性）: 格付け B（費用後 ' + f(T['B_seas_6_10an_tercile']['full_net']) + '・費用前 ' + f(T['B_seas_6_10an_tercile']['full_gross'])
-                 + '・年の回転 ' + str(T['B_seas_6_10an_tercile']['turnover_ann_oneway']) + '）。勝者−敗者 ' + f(W['B_seas_6_10an_tercile']['top_minus_bottom_gross'])
-                 + '。下位の組は保有の月が配当の支払いの月に当たる株が多い（seasonality_ex_dividend）＝価格だけのリターンの配当落ちを拾っている部分がある。配当を支払いの月に置き直しても勝者−敗者は残った')
+                 + '。額面を直すと勝者−敗者 ' + f((VP['B_F1a1_top_decile']['winners_minus_losers'] or {}).get('top_minus_bottom_gross'))
+                 + '・下位10% の対 相手 ' + f((VP['B_F1a1_top_decile']['winners_minus_losers'] or {}).get('bottom_net_vs_bench'))
+                 + '＝両端の十分位がともに相手（古い気配の多い等分）に勝つ形で、勢いの再現として数えてはいけない')
+    lines.append('B_ret_12_1・B_seas（LSE の株・暫定）: 登録どおりなら B（' + f(T['B_ret_12_1_tercile']['full_net']) + '・' + f(T['B_seas_6_10an_tercile']['full_net'])
+                 + '）。額面の変化を直すと ' + f(VP['B_ret_12_1_tercile']['full_net']) + f"（{VP['B_ret_12_1_tercile']['grade']}）・" + f(VP['B_seas_6_10an_tercile']['full_net'])
+                 + f"（{VP['B_seas_6_10an_tercile']['grade']}）。勝者−敗者（登録）は " + f(W['B_ret_12_1_tercile']['top_minus_bottom_gross']) + '・' + f(W['B_seas_6_10an_tercile']['top_minus_bottom_gross'])
+                 + '。季節性は配当落ちの月を拾う部分がある（seasonality_ex_dividend）。どれも止まる条件の外に出ていないので格付けしない')
     a_ids = [u for u in D.FAMILIES['A'] if RULES[u]['kind'] != 'ind_trend']
     lines.append('A（Cowles の業種の勢い 7本）: A 2本（G3・G4）・B 5本。勝者−敗者は ' + '・'.join(f"{u[2:]} {f(W[u]['top_minus_bottom_gross'])}" for u in a_ids)
-                 + '。1871〜1898（業種 6〜18）は多くが負、1899〜1926 は正（R5）。元のまま（1か月あけない）は大きく勝つ（R1）が、それは月平均の見かけの自己相関（Working 1960）')
-    lines.append('A の S3・H（英国のハロウィーン 1709〜1914）・C（Old NYSE の株の勢い）: C・C・B。ハロウィーンは 206年で 88年だけ勝ち（calendar_years）')
+                 + '。1871〜1898（業種 6〜18）は多くが負、1899〜1926 は正（R5）。元のまま（1か月あけない）は大きく勝つ（R1）が、それは月平均の見かけの自己相関（Working 1960）。'
+                 + f"P9 の同点を名前の順に直すと {f(P9['A_P9_multi_5']['exact_ties']['full_net'])}（{P9['A_P9_multi_5']['grade_exact_ties']}・t<2 のまま）")
+    lines.append('H（英国のハロウィーン 1.5倍 1709〜1914）: 格付け C（登録）。登録の超過 ' + f(HD['registered_price_only']['full_net'])
+                 + ' は価格だけの指数を借入で持つ単位の不一致による人工物で、配当を両側に足すと 3% ' + f(HD['const_dy_3pct']['full_net']) + f"（{HD['const_dy_3pct']['grade']}）"
+                 + '・4% ' + f(HD['const_dy_4pct']['full_net']) + f"（{HD['const_dy_4pct']['grade']}）・5% " + f(HD['const_dy_5pct']['full_net']) + f"（{HD['const_dy_5pct']['grade']}）"
+                 + f"＝超過の符号は配当の扱いで反転する（算術の超過は配当 {ph['fix_h_dividend_sensitivity']['breakeven_dy_pct']['arith_excess']}%・幾何の差は {ph['fix_h_dividend_sensitivity']['breakeven_dy_pct']['geometric_diff']}% を超えると正）。"
+                 + '格付けは E5（シャープの比較）だけで決まり、配当 4% 以上なら C のまま、3% なら S。1871〜1907 に LSE の配当の近似を足すと '
+                 + f(HD['lse_ew_dy_proxy_1871_1907']['full_net']) + f"（{HD['lse_ew_dy_proxy_1871_1907']['grade']}）。ハロウィーンは 206年で 88年だけ勝ち（価格だけ・calendar_years）")
+    lines.append('C（Old NYSE の株の勢い）: B（' + f(T['C_ret_12_1_tercile']['full_net']) + '・t<2）')
+    lines.append('R3（費用の感度）: ' + out['reports_not_graded']['R3_costs']['summary_per_side_1pct'])
     return lines
 
 

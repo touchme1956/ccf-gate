@@ -34,10 +34,18 @@
  "criteria_used": "criteria_independent_era（nx_pre1926x_data.grade_era）。C1〜C8 は参考（事後・前半/後半の読み替え）だけ",
  "grade_counts": {
   "A": 2,
+  "B": 6,
+  "C": 3,
+  "PENDING_stop": 11
+ },
+ "grade_counts_note": "主の格付け。事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）に触れた LSE の単位（B 3・D 8）は 'PENDING_stop'＝格付けしない。格付けできたのは A 9・C 1・H 1 の11単位",
+ "grade_counts_provisional_if_lse_reading_ok": {
+  "A": 2,
   "B": 8,
   "C": 3,
   "S": 9
  },
+ "grade_counts_provisional_note": "暫定（主ではない）: 止まる条件を無視して B・D を登録どおりに格付けした値。検査役の指摘で、この S 9 のうち D_S3 の2つは単位の不一致（価格だけの株と総リターンの現金）に乗っていて、配当をそろえると C（→ provisional_corrected_by_fixes）",
  "tested": [
   {
    "id": "A_G3_mom12_5",
@@ -66,7 +74,9 @@
    },
    "p_one": 0.02222,
    "holm_p_one_family": 0.1555,
-   "holm_p_one_program22": 0.2444,
+   "grade_provisional_if_lse_reading_ok": "A",
+   "holm_p_one_program22": 0.4444,
+   "holm_p_one_program22_provisional": 0.2444,
    "months": 433,
    "first": 188903,
    "last": 192606,
@@ -313,7 +323,9 @@
    },
    "p_one": 0.00889,
    "holm_p_one_family": 0.08,
-   "holm_p_one_program22": 0.1156,
+   "grade_provisional_if_lse_reading_ok": "A",
+   "holm_p_one_program22": 0.1956,
+   "holm_p_one_program22_provisional": 0.1156,
    "months": 300,
    "first": 190103,
    "last": 192606,
@@ -560,7 +572,9 @@
    },
    "p_one": 0.02938,
    "holm_p_one_family": 0.1763,
-   "holm_p_one_program22": 0.2938,
+   "grade_provisional_if_lse_reading_ok": "B",
+   "holm_p_one_program22": 0.5582,
+   "holm_p_one_program22_provisional": 0.2938,
    "months": 433,
    "first": 188903,
    "last": 192606,
@@ -811,7 +825,9 @@
    },
    "p_one": 0.12924,
    "holm_p_one_family": 0.2378,
-   "holm_p_one_program22": 0.43,
+   "grade_provisional_if_lse_reading_ok": "B",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.43,
    "months": 647,
    "first": 187202,
    "last": 192606,
@@ -1058,7 +1074,9 @@
    },
    "p_one": 0.01786,
    "holm_p_one_family": 0.1429,
-   "holm_p_one_program22": 0.2143,
+   "grade_provisional_if_lse_reading_ok": "B",
+   "holm_p_one_program22": 0.3751,
+   "holm_p_one_program22_provisional": 0.2143,
    "months": 647,
    "first": 187202,
    "last": 192606,
@@ -1305,7 +1323,9 @@
    },
    "p_one": 0.03673,
    "holm_p_one_family": 0.1836,
-   "holm_p_one_program22": 0.3306,
+   "grade_provisional_if_lse_reading_ok": "B",
+   "holm_p_one_program22": 0.6611,
+   "holm_p_one_program22_provisional": 0.3306,
    "months": 647,
    "first": 187202,
    "last": 192606,
@@ -1553,7 +1573,9 @@
    },
    "p_one": 0.07927,
    "holm_p_one_family": 0.2378,
-   "holm_p_one_program22": 0.3963,
+   "grade_provisional_if_lse_reading_ok": "B",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.3963,
    "months": 649,
    "first": 187112,
    "last": 192606,
@@ -1800,7 +1822,9 @@
    },
    "p_one": 0.10749,
    "holm_p_one_family": 0.2378,
-   "holm_p_one_program22": 0.43,
+   "grade_provisional_if_lse_reading_ok": "C",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.43,
    "months": 659,
    "first": 187104,
    "last": 192606,
@@ -2047,7 +2071,9 @@
    },
    "p_one": 0.0537,
    "holm_p_one_family": 0.2148,
-   "holm_p_one_program22": 0.3759,
+   "grade_provisional_if_lse_reading_ok": "C",
+   "holm_p_one_program22": 0.9129,
+   "holm_p_one_program22_provisional": 0.3759,
    "months": 659,
    "first": 187104,
    "last": 192606,
@@ -2283,18 +2309,13 @@
     0.003
    ],
    "timing": false,
-   "grade": "S",
-   "criteria_E": {
-    "E1_sign": true,
-    "E2_t": true,
-    "E3_halves": true,
-    "E4_holm": true,
-    "E5_sharpe": null,
-    "E7_drop_top": true
-   },
+   "grade": "PENDING_stop",
+   "criteria_E": null,
    "p_one": 0.00045,
-   "holm_p_one_family": 0.0014,
-   "holm_p_one_program22": 0.0072,
+   "holm_p_one_family": null,
+   "grade_provisional_if_lse_reading_ok": "S",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.0072,
    "months": 622,
    "first": 187002,
    "last": 192912,
@@ -2514,7 +2535,16 @@
     "mapping": "訓練＝前半（費用前）・保有＝後半（費用前、C6 は後半の費用後）・C4＝全期間の転がる20年窓（費用後）・C7＝全期間の費用前の t≥3 か 後半（費用前・両側 p）の族内 Holm<0.05・C8＝前半/後半の費用後のシャープ（timing だけ）・C5 は N/A（mw の約束: C1・C2・C3・C7 は費用前、C4・C6・C8 は費用後）",
     "note": "事前登録の格付けではない（criteria.why_not_long_history）。他の角度と並べるための読み替えだけ"
    },
-   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと"
+   "criteria_E_provisional_if_lse_reading_ok": {
+    "E1_sign": true,
+    "E2_t": true,
+    "E3_halves": true,
+    "E4_holm": true,
+    "E5_sharpe": null,
+    "E7_drop_top": true
+   },
+   "holm_p_one_family_provisional": 0.0014,
+   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.4827 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。主の格付けは 'PENDING_stop'（grade_counts・rule_level_verdicts に入れない）。登録どおりに出した値は grade_provisional_if_lse_reading_ok（暫定）。事後の調べ（post_hoc.sanity_stop_investigation）と、検査役が見つけた読み込みの穴を直した版（fixes・post_hoc.fix_lse_reading）を必ず並べて読むこと"
   },
   {
    "id": "B_ret_12_1_tercile",
@@ -2532,18 +2562,13 @@
     0.003
    ],
    "timing": false,
-   "grade": "B",
-   "criteria_E": {
-    "E1_sign": true,
-    "E2_t": false,
-    "E3_halves": false,
-    "E4_holm": false,
-    "E5_sharpe": null,
-    "E7_drop_top": true
-   },
+   "grade": "PENDING_stop",
+   "criteria_E": null,
    "p_one": 0.0537,
-   "holm_p_one_family": 0.0873,
-   "holm_p_one_program22": 0.3759,
+   "holm_p_one_family": null,
+   "grade_provisional_if_lse_reading_ok": "B",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.3759,
    "months": 622,
    "first": 187002,
    "last": 192912,
@@ -2763,7 +2788,16 @@
     "mapping": "訓練＝前半（費用前）・保有＝後半（費用前、C6 は後半の費用後）・C4＝全期間の転がる20年窓（費用後）・C7＝全期間の費用前の t≥3 か 後半（費用前・両側 p）の族内 Holm<0.05・C8＝前半/後半の費用後のシャープ（timing だけ）・C5 は N/A（mw の約束: C1・C2・C3・C7 は費用前、C4・C6・C8 は費用後）",
     "note": "事前登録の格付けではない（criteria.why_not_long_history）。他の角度と並べるための読み替えだけ"
    },
-   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと"
+   "criteria_E_provisional_if_lse_reading_ok": {
+    "E1_sign": true,
+    "E2_t": false,
+    "E3_halves": false,
+    "E4_holm": false,
+    "E5_sharpe": null,
+    "E7_drop_top": true
+   },
+   "holm_p_one_family_provisional": 0.0873,
+   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.4827 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。主の格付けは 'PENDING_stop'（grade_counts・rule_level_verdicts に入れない）。登録どおりに出した値は grade_provisional_if_lse_reading_ok（暫定）。事後の調べ（post_hoc.sanity_stop_investigation）と、検査役が見つけた読み込みの穴を直した版（fixes・post_hoc.fix_lse_reading）を必ず並べて読むこと"
   },
   {
    "id": "B_seas_6_10an_tercile",
@@ -2781,18 +2815,13 @@
     0.003
    ],
    "timing": false,
-   "grade": "B",
-   "criteria_E": {
-    "E1_sign": true,
-    "E2_t": false,
-    "E3_halves": true,
-    "E4_holm": false,
-    "E5_sharpe": null,
-    "E7_drop_top": true
-   },
+   "grade": "PENDING_stop",
+   "criteria_E": null,
    "p_one": 0.04363,
-   "holm_p_one_family": 0.0873,
-   "holm_p_one_program22": 0.349,
+   "holm_p_one_family": null,
+   "grade_provisional_if_lse_reading_ok": "B",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.349,
    "months": 406,
    "first": 187902,
    "last": 192912,
@@ -3012,7 +3041,16 @@
     "mapping": "訓練＝前半（費用前）・保有＝後半（費用前、C6 は後半の費用後）・C4＝全期間の転がる20年窓（費用後）・C7＝全期間の費用前の t≥3 か 後半（費用前・両側 p）の族内 Holm<0.05・C8＝前半/後半の費用後のシャープ（timing だけ）・C5 は N/A（mw の約束: C1・C2・C3・C7 は費用前、C4・C6・C8 は費用後）",
     "note": "事前登録の格付けではない（criteria.why_not_long_history）。他の角度と並べるための読み替えだけ"
    },
-   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと"
+   "criteria_E_provisional_if_lse_reading_ok": {
+    "E1_sign": true,
+    "E2_t": false,
+    "E3_halves": true,
+    "E4_holm": false,
+    "E5_sharpe": null,
+    "E7_drop_top": true
+   },
+   "holm_p_one_family_provisional": 0.0873,
+   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.4827 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。主の格付けは 'PENDING_stop'（grade_counts・rule_level_verdicts に入れない）。登録どおりに出した値は grade_provisional_if_lse_reading_ok（暫定）。事後の調べ（post_hoc.sanity_stop_investigation）と、検査役が見つけた読み込みの穴を直した版（fixes・post_hoc.fix_lse_reading）を必ず並べて読むこと"
   },
   {
    "id": "C_ret_12_1_tercile",
@@ -3041,7 +3079,9 @@
    },
    "p_one": 0.21476,
    "holm_p_one_family": 0.2148,
-   "holm_p_one_program22": 0.43,
+   "grade_provisional_if_lse_reading_ok": "B",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.43,
    "months": 282,
    "first": 187102,
    "last": 192509,
@@ -3264,18 +3304,13 @@
     0.0005
    ],
    "timing": false,
-   "grade": "S",
-   "criteria_E": {
-    "E1_sign": true,
-    "E2_t": true,
-    "E3_halves": true,
-    "E4_holm": true,
-    "E5_sharpe": null,
-    "E7_drop_top": true
-   },
+   "grade": "PENDING_stop",
+   "criteria_E": null,
    "p_one": 0.0,
-   "holm_p_one_family": 0.0,
-   "holm_p_one_program22": 0.0,
+   "holm_p_one_family": null,
+   "grade_provisional_if_lse_reading_ok": "S",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.0,
    "months": 535,
    "first": 187603,
    "last": 192912,
@@ -3482,7 +3517,16 @@
     "mapping": "訓練＝前半（費用前）・保有＝後半（費用前、C6 は後半の費用後）・C4＝全期間の転がる20年窓（費用後）・C7＝全期間の費用前の t≥3 か 後半（費用前・両側 p）の族内 Holm<0.05・C8＝前半/後半の費用後のシャープ（timing だけ）・C5 は N/A（mw の約束: C1・C2・C3・C7 は費用前、C4・C6・C8 は費用後）",
     "note": "事前登録の格付けではない（criteria.why_not_long_history）。他の角度と並べるための読み替えだけ"
    },
-   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと"
+   "criteria_E_provisional_if_lse_reading_ok": {
+    "E1_sign": true,
+    "E2_t": true,
+    "E3_halves": true,
+    "E4_holm": true,
+    "E5_sharpe": null,
+    "E7_drop_top": true
+   },
+   "holm_p_one_family_provisional": 0.0,
+   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.4827 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。主の格付けは 'PENDING_stop'（grade_counts・rule_level_verdicts に入れない）。登録どおりに出した値は grade_provisional_if_lse_reading_ok（暫定）。事後の調べ（post_hoc.sanity_stop_investigation）と、検査役が見つけた読み込みの穴を直した版（fixes・post_hoc.fix_lse_reading）を必ず並べて読むこと"
   },
   {
    "id": "D_P9_multi_5",
@@ -3500,18 +3544,13 @@
     0.0005
    ],
    "timing": false,
-   "grade": "S",
-   "criteria_E": {
-    "E1_sign": true,
-    "E2_t": true,
-    "E3_halves": true,
-    "E4_holm": true,
-    "E5_sharpe": null,
-    "E7_drop_top": true
-   },
+   "grade": "PENDING_stop",
+   "criteria_E": null,
    "p_one": 0.00025,
-   "holm_p_one_family": 0.0008,
-   "holm_p_one_program22": 0.0043,
+   "holm_p_one_family": null,
+   "grade_provisional_if_lse_reading_ok": "S",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.0043,
    "months": 535,
    "first": 187603,
    "last": 192912,
@@ -3718,7 +3757,16 @@
     "mapping": "訓練＝前半（費用前）・保有＝後半（費用前、C6 は後半の費用後）・C4＝全期間の転がる20年窓（費用後）・C7＝全期間の費用前の t≥3 か 後半（費用前・両側 p）の族内 Holm<0.05・C8＝前半/後半の費用後のシャープ（timing だけ）・C5 は N/A（mw の約束: C1・C2・C3・C7 は費用前、C4・C6・C8 は費用後）",
     "note": "事前登録の格付けではない（criteria.why_not_long_history）。他の角度と並べるための読み替えだけ"
    },
-   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと"
+   "criteria_E_provisional_if_lse_reading_ok": {
+    "E1_sign": true,
+    "E2_t": true,
+    "E3_halves": true,
+    "E4_holm": true,
+    "E5_sharpe": null,
+    "E7_drop_top": true
+   },
+   "holm_p_one_family_provisional": 0.0008,
+   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.4827 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。主の格付けは 'PENDING_stop'（grade_counts・rule_level_verdicts に入れない）。登録どおりに出した値は grade_provisional_if_lse_reading_ok（暫定）。事後の調べ（post_hoc.sanity_stop_investigation）と、検査役が見つけた読み込みの穴を直した版（fixes・post_hoc.fix_lse_reading）を必ず並べて読むこと"
   },
   {
    "id": "D_F1b_MG_6_6",
@@ -3740,18 +3788,13 @@
     0.0005
    ],
    "timing": false,
-   "grade": "S",
-   "criteria_E": {
-    "E1_sign": true,
-    "E2_t": true,
-    "E3_halves": true,
-    "E4_holm": true,
-    "E5_sharpe": null,
-    "E7_drop_top": true
-   },
+   "grade": "PENDING_stop",
+   "criteria_E": null,
    "p_one": 0.0002,
-   "holm_p_one_family": 0.0008,
-   "holm_p_one_program22": 0.0036,
+   "holm_p_one_family": null,
+   "grade_provisional_if_lse_reading_ok": "S",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.0036,
    "months": 578,
    "first": 187308,
    "last": 192912,
@@ -3971,7 +4014,16 @@
     "mapping": "訓練＝前半（費用前）・保有＝後半（費用前、C6 は後半の費用後）・C4＝全期間の転がる20年窓（費用後）・C7＝全期間の費用前の t≥3 か 後半（費用前・両側 p）の族内 Holm<0.05・C8＝前半/後半の費用後のシャープ（timing だけ）・C5 は N/A（mw の約束: C1・C2・C3・C7 は費用前、C4・C6・C8 は費用後）",
     "note": "事前登録の格付けではない（criteria.why_not_long_history）。他の角度と並べるための読み替えだけ"
    },
-   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと"
+   "criteria_E_provisional_if_lse_reading_ok": {
+    "E1_sign": true,
+    "E2_t": true,
+    "E3_halves": true,
+    "E4_holm": true,
+    "E5_sharpe": null,
+    "E7_drop_top": true
+   },
+   "holm_p_one_family_provisional": 0.0008,
+   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.4827 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。主の格付けは 'PENDING_stop'（grade_counts・rule_level_verdicts に入れない）。登録どおりに出した値は grade_provisional_if_lse_reading_ok（暫定）。事後の調べ（post_hoc.sanity_stop_investigation）と、検査役が見つけた読み込みの穴を直した版（fixes・post_hoc.fix_lse_reading）を必ず並べて読むこと"
   },
   {
    "id": "D_F3g_12-1_H1_K15",
@@ -3989,18 +4041,13 @@
     0.0005
    ],
    "timing": false,
-   "grade": "S",
-   "criteria_E": {
-    "E1_sign": true,
-    "E2_t": true,
-    "E3_halves": true,
-    "E4_holm": true,
-    "E5_sharpe": null,
-    "E7_drop_top": true
-   },
+   "grade": "PENDING_stop",
+   "criteria_E": null,
    "p_one": 0.00062,
-   "holm_p_one_family": 0.0012,
-   "holm_p_one_program22": 0.0093,
+   "holm_p_one_family": null,
+   "grade_provisional_if_lse_reading_ok": "S",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.0093,
    "months": 579,
    "first": 187308,
    "last": 192912,
@@ -4220,7 +4267,16 @@
     "mapping": "訓練＝前半（費用前）・保有＝後半（費用前、C6 は後半の費用後）・C4＝全期間の転がる20年窓（費用後）・C7＝全期間の費用前の t≥3 か 後半（費用前・両側 p）の族内 Holm<0.05・C8＝前半/後半の費用後のシャープ（timing だけ）・C5 は N/A（mw の約束: C1・C2・C3・C7 は費用前、C4・C6・C8 は費用後）",
     "note": "事前登録の格付けではない（criteria.why_not_long_history）。他の角度と並べるための読み替えだけ"
    },
-   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと"
+   "criteria_E_provisional_if_lse_reading_ok": {
+    "E1_sign": true,
+    "E2_t": true,
+    "E3_halves": true,
+    "E4_holm": true,
+    "E5_sharpe": null,
+    "E7_drop_top": true
+   },
+   "holm_p_one_family_provisional": 0.0012,
+   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.4827 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。主の格付けは 'PENDING_stop'（grade_counts・rule_level_verdicts に入れない）。登録どおりに出した値は grade_provisional_if_lse_reading_ok（暫定）。事後の調べ（post_hoc.sanity_stop_investigation）と、検査役が見つけた読み込みの穴を直した版（fixes・post_hoc.fix_lse_reading）を必ず並べて読むこと"
   },
   {
    "id": "D_F3g_12-1_H1_K30",
@@ -4238,18 +4294,13 @@
     0.0005
    ],
    "timing": false,
-   "grade": "S",
-   "criteria_E": {
-    "E1_sign": true,
-    "E2_t": true,
-    "E3_halves": true,
-    "E4_holm": true,
-    "E5_sharpe": null,
-    "E7_drop_top": true
-   },
+   "grade": "PENDING_stop",
+   "criteria_E": null,
    "p_one": 6e-05,
-   "holm_p_one_family": 0.0004,
-   "holm_p_one_program22": 0.0013,
+   "holm_p_one_family": null,
+   "grade_provisional_if_lse_reading_ok": "S",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.0013,
    "months": 580,
    "first": 187308,
    "last": 192912,
@@ -4469,7 +4520,16 @@
     "mapping": "訓練＝前半（費用前）・保有＝後半（費用前、C6 は後半の費用後）・C4＝全期間の転がる20年窓（費用後）・C7＝全期間の費用前の t≥3 か 後半（費用前・両側 p）の族内 Holm<0.05・C8＝前半/後半の費用後のシャープ（timing だけ）・C5 は N/A（mw の約束: C1・C2・C3・C7 は費用前、C4・C6・C8 は費用後）",
     "note": "事前登録の格付けではない（criteria.why_not_long_history）。他の角度と並べるための読み替えだけ"
    },
-   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと"
+   "criteria_E_provisional_if_lse_reading_ok": {
+    "E1_sign": true,
+    "E2_t": true,
+    "E3_halves": true,
+    "E4_holm": true,
+    "E5_sharpe": null,
+    "E7_drop_top": true
+   },
+   "holm_p_one_family_provisional": 0.0004,
+   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.4827 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。主の格付けは 'PENDING_stop'（grade_counts・rule_level_verdicts に入れない）。登録どおりに出した値は grade_provisional_if_lse_reading_ok（暫定）。事後の調べ（post_hoc.sanity_stop_investigation）と、検査役が見つけた読み込みの穴を直した版（fixes・post_hoc.fix_lse_reading）を必ず並べて読むこと"
   },
   {
    "id": "D_F3g_9-0_H1_K30",
@@ -4488,18 +4548,13 @@
     0.0005
    ],
    "timing": false,
-   "grade": "S",
-   "criteria_E": {
-    "E1_sign": true,
-    "E2_t": true,
-    "E3_halves": true,
-    "E4_holm": true,
-    "E5_sharpe": null,
-    "E7_drop_top": true
-   },
+   "grade": "PENDING_stop",
+   "criteria_E": null,
    "p_one": 0.00094,
-   "holm_p_one_family": 0.0012,
-   "holm_p_one_program22": 0.0132,
+   "holm_p_one_family": null,
+   "grade_provisional_if_lse_reading_ok": "S",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.0132,
    "months": 584,
    "first": 187306,
    "last": 192912,
@@ -4719,7 +4774,16 @@
     "mapping": "訓練＝前半（費用前）・保有＝後半（費用前、C6 は後半の費用後）・C4＝全期間の転がる20年窓（費用後）・C7＝全期間の費用前の t≥3 か 後半（費用前・両側 p）の族内 Holm<0.05・C8＝前半/後半の費用後のシャープ（timing だけ）・C5 は N/A（mw の約束: C1・C2・C3・C7 は費用前、C4・C6・C8 は費用後）",
     "note": "事前登録の格付けではない（criteria.why_not_long_history）。他の角度と並べるための読み替えだけ"
    },
-   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと"
+   "criteria_E_provisional_if_lse_reading_ok": {
+    "E1_sign": true,
+    "E2_t": true,
+    "E3_halves": true,
+    "E4_holm": true,
+    "E5_sharpe": null,
+    "E7_drop_top": true
+   },
+   "holm_p_one_family_provisional": 0.0012,
+   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.4827 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。主の格付けは 'PENDING_stop'（grade_counts・rule_level_verdicts に入れない）。登録どおりに出した値は grade_provisional_if_lse_reading_ok（暫定）。事後の調べ（post_hoc.sanity_stop_investigation）と、検査役が見つけた読み込みの穴を直した版（fixes・post_hoc.fix_lse_reading）を必ず並べて読むこと"
   },
   {
    "id": "D_S3_FABER_L2",
@@ -4737,18 +4801,13 @@
     0.001
    ],
    "timing": true,
-   "grade": "S",
-   "criteria_E": {
-    "E1_sign": true,
-    "E2_t": true,
-    "E3_halves": true,
-    "E4_holm": true,
-    "E5_sharpe": true,
-    "E7_drop_top": true
-   },
+   "grade": "PENDING_stop",
+   "criteria_E": null,
    "p_one": 0.00014,
-   "holm_p_one_family": 0.0007,
-   "holm_p_one_program22": 0.0027,
+   "holm_p_one_family": null,
+   "grade_provisional_if_lse_reading_ok": "S",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.0027,
    "months": 642,
    "first": 186904,
    "last": 192912,
@@ -4968,7 +5027,16 @@
     "mapping": "訓練＝前半（費用前）・保有＝後半（費用前、C6 は後半の費用後）・C4＝全期間の転がる20年窓（費用後）・C7＝全期間の費用前の t≥3 か 後半（費用前・両側 p）の族内 Holm<0.05・C8＝前半/後半の費用後のシャープ（timing だけ）・C5 は N/A（mw の約束: C1・C2・C3・C7 は費用前、C4・C6・C8 は費用後）",
     "note": "事前登録の格付けではない（criteria.why_not_long_history）。他の角度と並べるための読み替えだけ"
    },
-   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと"
+   "criteria_E_provisional_if_lse_reading_ok": {
+    "E1_sign": true,
+    "E2_t": true,
+    "E3_halves": true,
+    "E4_holm": true,
+    "E5_sharpe": true,
+    "E7_drop_top": true
+   },
+   "holm_p_one_family_provisional": 0.0007,
+   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.4827 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。主の格付けは 'PENDING_stop'（grade_counts・rule_level_verdicts に入れない）。登録どおりに出した値は grade_provisional_if_lse_reading_ok（暫定）。事後の調べ（post_hoc.sanity_stop_investigation）と、検査役が見つけた読み込みの穴を直した版（fixes・post_hoc.fix_lse_reading）を必ず並べて読むこと"
   },
   {
    "id": "D_S3_FABER_L3",
@@ -4986,18 +5054,13 @@
     0.001
    ],
    "timing": true,
-   "grade": "S",
-   "criteria_E": {
-    "E1_sign": true,
-    "E2_t": true,
-    "E3_halves": true,
-    "E4_holm": true,
-    "E5_sharpe": true,
-    "E7_drop_top": true
-   },
+   "grade": "PENDING_stop",
+   "criteria_E": null,
    "p_one": 8e-05,
-   "holm_p_one_family": 0.0005,
-   "holm_p_one_program22": 0.0016,
+   "holm_p_one_family": null,
+   "grade_provisional_if_lse_reading_ok": "S",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.0016,
    "months": 642,
    "first": 186904,
    "last": 192912,
@@ -5217,7 +5280,16 @@
     "mapping": "訓練＝前半（費用前）・保有＝後半（費用前、C6 は後半の費用後）・C4＝全期間の転がる20年窓（費用後）・C7＝全期間の費用前の t≥3 か 後半（費用前・両側 p）の族内 Holm<0.05・C8＝前半/後半の費用後のシャープ（timing だけ）・C5 は N/A（mw の約束: C1・C2・C3・C7 は費用前、C4・C6・C8 は費用後）",
     "note": "事前登録の格付けではない（criteria.why_not_long_history）。他の角度と並べるための読み替えだけ"
    },
-   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと"
+   "criteria_E_provisional_if_lse_reading_ok": {
+    "E1_sign": true,
+    "E2_t": true,
+    "E3_halves": true,
+    "E4_holm": true,
+    "E5_sharpe": true,
+    "E7_drop_top": true
+   },
+   "holm_p_one_family_provisional": 0.0005,
+   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.4827 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。主の格付けは 'PENDING_stop'（grade_counts・rule_level_verdicts に入れない）。登録どおりに出した値は grade_provisional_if_lse_reading_ok（暫定）。事後の調べ（post_hoc.sanity_stop_investigation）と、検査役が見つけた読み込みの穴を直した版（fixes・post_hoc.fix_lse_reading）を必ず並べて読むこと"
   },
   {
    "id": "H_HAL_OV15_UK",
@@ -5247,7 +5319,9 @@
    },
    "p_one": 0.82894,
    "holm_p_one_family": 0.8289,
-   "holm_p_one_program22": 0.8289,
+   "grade_provisional_if_lse_reading_ok": "C",
+   "holm_p_one_program22": 1.0,
+   "holm_p_one_program22_provisional": 0.8289,
    "months": 2462,
    "first": 170905,
    "last": 191406,
@@ -5438,8 +5512,7 @@
    "why": "LSE の選べる業種（3社以上）は どの月も最大16（2K=20 に届く月が無い＝定義できる月 0）",
    "src_rules": [
     "industry:G4_mom12_10"
-   ],
-   "grade_flag": "⚠ 事前登録の健全性の点検（LSE の等分とイングランド銀行の指数の相関 ≥0.6）が 0.483 で線を下回った＝『読み込みを疑って止まる』条件に触れた単位（LSE を使う B・D）。格付けは登録どおりに出したが、止まる条件を満たしたまま出した暫定の値。事後の調べ（post_hoc.sanity_stop_investigation・winners_minus_losers・geometric_aggregation・trimmed_extremes）を必ず並べて読むこと"
+   ]
   },
   {
    "id": "C_seas_6_10an_tercile",
@@ -5452,6 +5525,130 @@
   }
  ],
  "rule_level_verdicts": {
+  "industry:G3_mom12_5": {
+   "units": {
+    "A_G3_mom12_5": "A",
+    "D_G3_mom12_5": "PENDING_stop"
+   },
+   "verdict": "再現",
+   "pending_units": [
+    "D_G3_mom12_5"
+   ]
+  },
+  "industry:G4_mom12_10": {
+   "units": {
+    "A_G4_mom12_10": "A",
+    "D_G4_mom12_10": "NA_not_testable_by_shape"
+   },
+   "verdict": "再現"
+  },
+  "industry:P9_multi_5": {
+   "units": {
+    "A_P9_multi_5": "B",
+    "D_P9_multi_5": "PENDING_stop"
+   },
+   "verdict": "向きだけ",
+   "pending_units": [
+    "D_P9_multi_5"
+   ]
+  },
+  "momentum:F1b_ind10/12/17/30/49": {
+   "units": {
+    "A_F1b_MG_6_6": "B",
+    "D_F1b_MG_6_6": "PENDING_stop"
+   },
+   "verdict": "向きだけ",
+   "pending_units": [
+    "D_F1b_MG_6_6"
+   ]
+  },
+  "momentum:F3g_ind17_12-1_H1_K15": {
+   "units": {
+    "A_F3g_12-1_H1_K15": "B",
+    "D_F3g_12-1_H1_K15": "PENDING_stop"
+   },
+   "verdict": "向きだけ",
+   "pending_units": [
+    "D_F3g_12-1_H1_K15"
+   ]
+  },
+  "momentum:F3g_ind30_12-1_H1_K30": {
+   "units": {
+    "A_F3g_12-1_H1_K30": "B",
+    "D_F3g_12-1_H1_K30": "PENDING_stop"
+   },
+   "verdict": "向きだけ",
+   "pending_units": [
+    "D_F3g_12-1_H1_K30"
+   ]
+  },
+  "momentum:F3g_ind17_9-0_H1_K30・F3g_ind30_9-0_H1_K30": {
+   "units": {
+    "A_F3g_9-0_H1_K30": "B",
+    "D_F3g_9-0_H1_K30": "PENDING_stop"
+   },
+   "verdict": "向きだけ",
+   "pending_units": [
+    "D_F3g_9-0_H1_K30"
+   ]
+  },
+  "trend:S3_US_IND49_FABER_L2": {
+   "units": {
+    "A_S3_FABER_L2": "C",
+    "D_S3_FABER_L2": "PENDING_stop"
+   },
+   "verdict": "再現せず",
+   "pending_units": [
+    "D_S3_FABER_L2"
+   ]
+  },
+  "trend:S3_US_IND49_FABER_L3": {
+   "units": {
+    "A_S3_FABER_L3": "C",
+    "D_S3_FABER_L3": "PENDING_stop"
+   },
+   "verdict": "再現せず",
+   "pending_units": [
+    "D_S3_FABER_L3"
+   ]
+  },
+  "momentum:F1a1_us_top_decile": {
+   "units": {
+    "B_F1a1_top_decile": "PENDING_stop"
+   },
+   "verdict": "保留（止まる条件に触れたデータの単位だけ）",
+   "pending_units": [
+    "B_F1a1_top_decile"
+   ]
+  },
+  "intl:F2a:ret_12_1": {
+   "units": {
+    "B_ret_12_1_tercile": "PENDING_stop",
+    "C_ret_12_1_tercile": "B"
+   },
+   "verdict": "向きだけ",
+   "pending_units": [
+    "B_ret_12_1_tercile"
+   ]
+  },
+  "momentum:F14_usa_seas_6_10an": {
+   "units": {
+    "B_seas_6_10an_tercile": "PENDING_stop",
+    "C_seas_6_10an_tercile": "NA_not_testable_by_shape"
+   },
+   "verdict": "保留（止まる条件に触れたデータの単位だけ）",
+   "pending_units": [
+    "B_seas_6_10an_tercile"
+   ]
+  },
+  "calendar:X06_HAL_OV15_WORLD・Y03_HAL_OV15_WXUS": {
+   "units": {
+    "H_HAL_OV15_UK": "C"
+   },
+   "verdict": "再現せず"
+  }
+ },
+ "rule_level_verdicts_provisional_if_lse_reading_ok": {
   "industry:G3_mom12_5": {
    "units": {
     "A_G3_mom12_5": "A",
@@ -5542,6 +5739,1167 @@
    "verdict": "再現せず"
   }
  },
+ "provisional_grade_table_B_D": {
+  "B_F1a1_top_decile": {
+   "registered_provisional": "S",
+   "lse_par": "S",
+   "lse_gt300": "S",
+   "lse_par_x10sig": "S",
+   "lse_par_x5": "S"
+  },
+  "B_ret_12_1_tercile": {
+   "registered_provisional": "B",
+   "lse_par": "S",
+   "lse_gt300": "S",
+   "lse_par_x10sig": "S",
+   "lse_par_x5": "S"
+  },
+  "B_seas_6_10an_tercile": {
+   "registered_provisional": "B",
+   "lse_par": "S",
+   "lse_gt300": "S",
+   "lse_par_x10sig": "S",
+   "lse_par_x5": "S"
+  },
+  "D_G3_mom12_5": {
+   "registered_provisional": "S",
+   "lse_par": "S",
+   "lse_gt300": "S",
+   "lse_par_x10sig": "S",
+   "lse_par_x5": "S"
+  },
+  "D_P9_multi_5": {
+   "registered_provisional": "S",
+   "lse_par": "S",
+   "lse_gt300": "S",
+   "lse_par_x10sig": "S",
+   "lse_par_x5": "S",
+   "p9_exact_ties": "S"
+  },
+  "D_F1b_MG_6_6": {
+   "registered_provisional": "S",
+   "lse_par": "S",
+   "lse_gt300": "S",
+   "lse_par_x10sig": "S",
+   "lse_par_x5": "S"
+  },
+  "D_F3g_12-1_H1_K15": {
+   "registered_provisional": "S",
+   "lse_par": "S",
+   "lse_gt300": "S",
+   "lse_par_x10sig": "S",
+   "lse_par_x5": "S"
+  },
+  "D_F3g_12-1_H1_K30": {
+   "registered_provisional": "S",
+   "lse_par": "S",
+   "lse_gt300": "S",
+   "lse_par_x10sig": "S",
+   "lse_par_x5": "S"
+  },
+  "D_F3g_9-0_H1_K30": {
+   "registered_provisional": "S",
+   "lse_par": "S",
+   "lse_gt300": "S",
+   "lse_par_x10sig": "S",
+   "lse_par_x5": "S"
+  },
+  "D_S3_FABER_L2": {
+   "registered_provisional": "S",
+   "lse_par": "S",
+   "lse_gt300": "S",
+   "lse_par_x10sig": "S",
+   "lse_par_x5": "S",
+   "dividend_aligned_registered_panel": "C",
+   "dividend_aligned_par_fixed_panel": "C"
+  },
+  "D_S3_FABER_L3": {
+   "registered_provisional": "S",
+   "lse_par": "S",
+   "lse_gt300": "S",
+   "lse_par_x10sig": "S",
+   "lse_par_x5": "S",
+   "dividend_aligned_registered_panel": "C",
+   "dividend_aligned_par_fixed_panel": "C"
+  }
+ },
+ "provisional_corrected_by_fixes": {
+  "grades_B_D": {
+   "B_F1a1_top_decile": "S",
+   "B_ret_12_1_tercile": "S",
+   "B_seas_6_10an_tercile": "S",
+   "D_G3_mom12_5": "S",
+   "D_P9_multi_5": "S",
+   "D_F1b_MG_6_6": "S",
+   "D_F3g_12-1_H1_K15": "S",
+   "D_F3g_12-1_H1_K30": "S",
+   "D_F3g_9-0_H1_K30": "S",
+   "D_S3_FABER_L2": "C",
+   "D_S3_FABER_L3": "C"
+  },
+  "grade_counts_all22": {
+   "A": 2,
+   "B": 6,
+   "C": 5,
+   "S": 9
+  },
+  "rule_level_verdicts": {
+   "industry:G3_mom12_5": {
+    "units": {
+     "A_G3_mom12_5": "A",
+     "D_G3_mom12_5": "S"
+    },
+    "verdict": "再現（強）"
+   },
+   "industry:G4_mom12_10": {
+    "units": {
+     "A_G4_mom12_10": "A",
+     "D_G4_mom12_10": "NA_not_testable_by_shape"
+    },
+    "verdict": "再現"
+   },
+   "industry:P9_multi_5": {
+    "units": {
+     "A_P9_multi_5": "B",
+     "D_P9_multi_5": "S"
+    },
+    "verdict": "再現（強）"
+   },
+   "momentum:F1b_ind10/12/17/30/49": {
+    "units": {
+     "A_F1b_MG_6_6": "B",
+     "D_F1b_MG_6_6": "S"
+    },
+    "verdict": "再現（強）"
+   },
+   "momentum:F3g_ind17_12-1_H1_K15": {
+    "units": {
+     "A_F3g_12-1_H1_K15": "B",
+     "D_F3g_12-1_H1_K15": "S"
+    },
+    "verdict": "再現（強）"
+   },
+   "momentum:F3g_ind30_12-1_H1_K30": {
+    "units": {
+     "A_F3g_12-1_H1_K30": "B",
+     "D_F3g_12-1_H1_K30": "S"
+    },
+    "verdict": "再現（強）"
+   },
+   "momentum:F3g_ind17_9-0_H1_K30・F3g_ind30_9-0_H1_K30": {
+    "units": {
+     "A_F3g_9-0_H1_K30": "B",
+     "D_F3g_9-0_H1_K30": "S"
+    },
+    "verdict": "再現（強）"
+   },
+   "trend:S3_US_IND49_FABER_L2": {
+    "units": {
+     "A_S3_FABER_L2": "C",
+     "D_S3_FABER_L2": "C"
+    },
+    "verdict": "再現せず"
+   },
+   "trend:S3_US_IND49_FABER_L3": {
+    "units": {
+     "A_S3_FABER_L3": "C",
+     "D_S3_FABER_L3": "C"
+    },
+    "verdict": "再現せず"
+   },
+   "momentum:F1a1_us_top_decile": {
+    "units": {
+     "B_F1a1_top_decile": "S"
+    },
+    "verdict": "再現（強）"
+   },
+   "intl:F2a:ret_12_1": {
+    "units": {
+     "B_ret_12_1_tercile": "S",
+     "C_ret_12_1_tercile": "B"
+    },
+    "verdict": "再現（強）"
+   },
+   "momentum:F14_usa_seas_6_10an": {
+    "units": {
+     "B_seas_6_10an_tercile": "S",
+     "C_seas_6_10an_tercile": "NA_not_testable_by_shape"
+    },
+    "verdict": "再現（強）"
+   },
+   "calendar:X06_HAL_OV15_WORLD・Y03_HAL_OV15_WXUS": {
+    "units": {
+     "H_HAL_OV15_UK": "C"
+    },
+    "verdict": "再現せず"
+   }
+  },
+  "note": "事後・主には使わない: LSE の読み込みが正しかったとして（止まる条件を外した仮定）、検査役が見つけた2つの明白な穴を直した版——1株の額面（capitalpar）の変化の対を落とした LSE（fix_lse_reading.variants.par）と、D_S3 の株の脚に配当の近似を足して現金の脚と単位をそろえた版。A・C・H は主の格付けのまま。逆戻りしない跳ね（gt300・x10sig・x5）は選び方に任意さがあるので感度として並べるだけ（provisional_grade_table_B_D）"
+ },
+ "fixes": [
+  {
+   "id": "F1_stop_condition",
+   "verified": true,
+   "severity": "changes_grade",
+   "finding": "事前登録の止まる条件（LSE の等分とイングランド銀行の指数の相関 ≥0.6）に触れたのに、B・D の格付けが grade_counts と rule_level_verdicts に印なしで入っていた",
+   "check": "相関 0.4827（n=444）＜ 0.6 を再計算で確認。旧版は点検を成績の後に回し、log を出すだけで先へ進んでいた",
+   "what_changed": "sanity_shape を run_main の前へ。止まったデータの単位（B 3・D 8）の主の格付けを 'PENDING_stop' にし、grade_counts・rule_level_verdicts・R11 を主の版にした。旧の値は *_provisional_if_lse_reading_ok へ移した",
+   "before": {
+    "grade_counts": {
+     "A": 2,
+     "B": 8,
+     "C": 3,
+     "S": 9
+    },
+    "rule_level_verdicts": {
+     "industry:G3_mom12_5": "再現（強）",
+     "industry:G4_mom12_10": "再現",
+     "industry:P9_multi_5": "再現（強）",
+     "momentum:F1b_ind10/12/17/30/49": "再現（強）",
+     "momentum:F3g_ind17_12-1_H1_K15": "再現（強）",
+     "momentum:F3g_ind30_12-1_H1_K30": "再現（強）",
+     "momentum:F3g_ind17_9-0_H1_K30・F3g_ind30_9-0_H1_K30": "再現（強）",
+     "trend:S3_US_IND49_FABER_L2": "割れた",
+     "trend:S3_US_IND49_FABER_L3": "割れた",
+     "momentum:F1a1_us_top_decile": "再現（強）",
+     "intl:F2a:ret_12_1": "向きだけ",
+     "momentum:F14_usa_seas_6_10an": "向きだけ",
+     "calendar:X06_HAL_OV15_WORLD・Y03_HAL_OV15_WXUS": "再現せず"
+    }
+   },
+   "after": {
+    "grade_counts": {
+     "A": 2,
+     "B": 6,
+     "C": 3,
+     "PENDING_stop": 11
+    },
+    "rule_level_verdicts": {
+     "industry:G3_mom12_5": "再現",
+     "industry:G4_mom12_10": "再現",
+     "industry:P9_multi_5": "向きだけ",
+     "momentum:F1b_ind10/12/17/30/49": "向きだけ",
+     "momentum:F3g_ind17_12-1_H1_K15": "向きだけ",
+     "momentum:F3g_ind30_12-1_H1_K30": "向きだけ",
+     "momentum:F3g_ind17_9-0_H1_K30・F3g_ind30_9-0_H1_K30": "向きだけ",
+     "trend:S3_US_IND49_FABER_L2": "再現せず",
+     "trend:S3_US_IND49_FABER_L3": "再現せず",
+     "momentum:F1a1_us_top_decile": "保留（止まる条件に触れたデータの単位だけ）",
+     "intl:F2a:ret_12_1": "向きだけ",
+     "momentum:F14_usa_seas_6_10an": "保留（止まる条件に触れたデータの単位だけ）",
+     "calendar:X06_HAL_OV15_WORLD・Y03_HAL_OV15_WXUS": "再現せず"
+    }
+   },
+   "affects_grade": true
+  },
+  {
+   "id": "F2_R3_one_vs_two",
+   "verified": true,
+   "severity": "changes_numbers（報告 R3 だけ・格付けは不変）",
+   "finding": "R3 の『片道 1%』で、one の式（½Σ|Δw|×u）の規則（F1b・F3g・株）は two の式（Σ|Δw|×u・G3・G4・P9）の半分の費用しか引いていなかった",
+   "check": "D._cost_of: one=0.5×Σ|Δw|×u・two=Σ|Δw|×u を確認。R3 は式の形を保って u だけ替えていた（事前登録の文言には沿う）。当時の売買1回ごとの費用として読むには各側に u が要る",
+   "what_changed": "R3 の各行に per_side_unit_0.005・per_side_unit_0.01（Σ|Δw|×u にそろえた版）と summary_per_side_1pct を足し、note に one と two の単価の意味の違いを書いた",
+   "before_unit_0.01_one_rules": {
+    "A_F1b_MG_6_6": {
+     "ex_ann": 0.52,
+     "t": 0.27,
+     "cagr_diff": -0.75
+    },
+    "A_F3g_12-1_H1_K15": {
+     "ex_ann": 1.63,
+     "t": 0.76,
+     "cagr_diff": 0.1
+    },
+    "A_F3g_12-1_H1_K30": {
+     "ex_ann": 0.74,
+     "t": 0.42,
+     "cagr_diff": -0.29
+    },
+    "A_F3g_9-0_H1_K30": {
+     "ex_ann": -0.04,
+     "t": -0.02,
+     "cagr_diff": -1.1
+    },
+    "B_F1a1_top_decile": {
+     "ex_ann": 1.72,
+     "t": 1.38,
+     "cagr_diff": 1.31
+    },
+    "B_ret_12_1_tercile": {
+     "ex_ann": -0.8,
+     "t": -1.35,
+     "cagr_diff": -0.88
+    },
+    "B_seas_6_10an_tercile": {
+     "ex_ann": -4.54,
+     "t": -6.92,
+     "cagr_diff": -4.63
+    },
+    "C_ret_12_1_tercile": {
+     "ex_ann": -0.65,
+     "t": -0.25,
+     "cagr_diff": -0.98
+    },
+    "D_F1b_MG_6_6": {
+     "ex_ann": 2.85,
+     "t": 2.29,
+     "cagr_diff": 2.53
+    },
+    "D_F3g_12-1_H1_K15": {
+     "ex_ann": 3.75,
+     "t": 1.83,
+     "cagr_diff": 3.02
+    },
+    "D_F3g_12-1_H1_K30": {
+     "ex_ann": 2.12,
+     "t": 1.94,
+     "cagr_diff": 1.93
+    },
+    "D_F3g_9-0_H1_K30": {
+     "ex_ann": 1.45,
+     "t": 1.22,
+     "cagr_diff": 1.2
+    }
+   },
+   "after_per_side_0.01_one_rules": {
+    "A_F1b_MG_6_6": {
+     "ex_ann": -1.18,
+     "t": -0.62,
+     "cagr_diff": -2.53
+    },
+    "A_F3g_12-1_H1_K15": {
+     "ex_ann": -1.34,
+     "t": -0.62,
+     "cagr_diff": -3.04
+    },
+    "A_F3g_12-1_H1_K30": {
+     "ex_ann": -1.75,
+     "t": -0.99,
+     "cagr_diff": -2.91
+    },
+    "A_F3g_9-0_H1_K30": {
+     "ex_ann": -2.66,
+     "t": -1.5,
+     "cagr_diff": -3.85
+    },
+    "B_F1a1_top_decile": {
+     "ex_ann": -1.72,
+     "t": -1.38,
+     "cagr_diff": -2.28
+    },
+    "B_ret_12_1_tercile": {
+     "ex_ann": -3.31,
+     "t": -5.43,
+     "cagr_diff": -3.45
+    },
+    "B_seas_6_10an_tercile": {
+     "ex_ann": -12.63,
+     "t": -19.13,
+     "cagr_diff": -12.32
+    },
+    "C_ret_12_1_tercile": {
+     "ex_ann": -3.63,
+     "t": -1.37,
+     "cagr_diff": -4.02
+    },
+    "D_F1b_MG_6_6": {
+     "ex_ann": 1.29,
+     "t": 1.02,
+     "cagr_diff": 0.89
+    },
+    "D_F3g_12-1_H1_K15": {
+     "ex_ann": 0.96,
+     "t": 0.45,
+     "cagr_diff": 0.06
+    },
+    "D_F3g_12-1_H1_K30": {
+     "ex_ann": 0.03,
+     "t": 0.03,
+     "cagr_diff": -0.26
+    },
+    "D_F3g_9-0_H1_K30": {
+     "ex_ann": -0.81,
+     "t": -0.66,
+     "cagr_diff": -1.16
+    }
+   },
+   "summary_after": "売買の各側に 1%（当時の現実に近い単価・Σ|Δw|×1%・S3 は出入りの各回 1%×L）でそろえると、LSE の業種 D は 8本のうち正（算術の超過>0 かつ 幾何の差>0）5・算術の超過>0 だけなら 6・t≥2 0（G3_mom12_5 +1.86 t1.57・P9_multi_5 -3.59 t-3.33・F1b_MG_6_6 +1.29 t1.02・F3g_12-1_H1_K15 +0.96 t0.45・F3g_12-1_H1_K30 +0.03 t0.03・F3g_9-0_H1_K30 -0.81 t-0.66・S3_FABER_L2 +1.11 t1.09・S3_FABER_L3 +2.94 t1.62）。業種の勢いの6本だけなら 正 3（算術だけなら 4）・t≥2 0。★D は止まる条件に触れたデータ（主の格付けは PENDING_stop）",
+   "vs_auditor": "検査役の再計算（D_F1b +1.29 t1.02・F3g K15 +0.96 t0.45・K30 +0.03 t0.03 cd −0.26・9-0 −0.81 t−0.66・two の D_G3 +1.86 t1.57・D_P9 −3.59）と完全に一致",
+   "retracted_summary": "実装者の前の要約『当時の現実に近い片道1%では LSE の D は6本のうち5本が正のまま（+1.5〜+3.8%/年）、t≥2 は F1b（t2.29）だけ』は one の規則の費用を半分に見積もっていたので撤回し、summary_after に置き換える",
+   "affects_grade": false
+  },
+  {
+   "id": "F3_D_S3_units",
+   "verified": true,
+   "severity": "changes_grade（暫定の格付け。主は PENDING_stop）",
+   "finding": "D_S3（LSE の業種ごとの10か月線 2倍・3倍）は株の脚が価格だけ・現金の脚 uk_cash が総リターンの金利＝単位が混ざり、E5（前半・後半のシャープ）が有利に出ていた",
+   "check": "登録の値を再現した上で、配当の近似（R7 と同じ・年30%超は除く・業種平均 年6.68%）を保有の月だけ戦略と相手の両側に足すと、前半のシャープが相手を下回る",
+   "what_changed": "post_hoc.fix_s3_dividend_units_aligned（登録の LSE）と fix_lse_reading.s3_dividend_on_par_fixed_panel（額面を直した LSE）に並べた。格付けは登録の版（主は PENDING_stop）",
+   "before": {
+    "D_S3_FABER_L2": {
+     "full_net": {
+      "ex_ann": 3.41,
+      "t": 3.64,
+      "cagr_diff": 3.39
+     },
+     "sharpe_h1": [
+      0.799,
+      0.707
+     ],
+     "sharpe_h2": [
+      0.42,
+      0.065
+     ],
+     "grade_provisional": "S"
+    },
+    "D_S3_FABER_L3": {
+     "full_net": {
+      "ex_ann": 6.39,
+      "t": 3.77,
+      "cagr_diff": 6.06
+     },
+     "sharpe_h1": [
+      0.795,
+      0.707
+     ],
+     "sharpe_h2": [
+      0.416,
+      0.065
+     ],
+     "grade_provisional": "S"
+    }
+   },
+   "after": {
+    "D_S3_FABER_L2_div_x1.0": {
+     "full_net": {
+      "ex_ann": 4.88,
+      "t": 4.61,
+      "cagr_diff": 5.29
+     },
+     "sharpe_h1": [
+      1.531,
+      1.66
+     ],
+     "sharpe_h2": [
+      1.361,
+      1.141
+     ],
+     "grade": "C"
+    },
+    "D_S3_FABER_L3_div_x1.0": {
+     "full_net": {
+      "ex_ann": 11.92,
+      "t": 5.94,
+      "cagr_diff": 13.08
+     },
+     "sharpe_h1": [
+      1.527,
+      1.66
+     ],
+     "sharpe_h2": [
+      1.356,
+      1.141
+     ],
+     "grade": "C"
+    },
+    "D_S3_FABER_L2_div_x0.5": {
+     "full_net": {
+      "ex_ann": 4.14,
+      "t": 4.24,
+      "cagr_diff": 4.31
+     },
+     "sharpe_h1": [
+      1.169,
+      1.183
+     ],
+     "sharpe_h2": [
+      0.896,
+      0.604
+     ],
+     "grade": "C"
+    },
+    "D_S3_FABER_L3_div_x0.5": {
+     "full_net": {
+      "ex_ann": 9.16,
+      "t": 5.0,
+      "cagr_diff": 9.43
+     },
+     "sharpe_h1": [
+      1.165,
+      1.183
+     ],
+     "sharpe_h2": [
+      0.892,
+      0.604
+     ],
+     "grade": "C"
+    },
+    "D_S3_FABER_L2_div_x0.25": {
+     "full_net": {
+      "ex_ann": 3.78,
+      "t": 3.97,
+      "cagr_diff": 3.84
+     },
+     "sharpe_h1": [
+      0.985,
+      0.945
+     ],
+     "sharpe_h2": [
+      0.659,
+      0.335
+     ],
+     "grade": "S"
+    },
+    "D_S3_FABER_L3_div_x0.25": {
+     "full_net": {
+      "ex_ann": 7.77,
+      "t": 4.42,
+      "cagr_diff": 7.71
+     },
+     "sharpe_h1": [
+      0.981,
+      0.945
+     ],
+     "sharpe_h2": [
+      0.656,
+      0.335
+     ],
+     "grade": "S"
+    }
+   },
+   "rule_note": "S3（業種ごとの10か月線）は単位をそろえると A（Cowles・総リターン同士）も D も C＝規則のまとめは『割れた』ではなく『再現せず』。D_S3 の S は『価格だけの株と総リターンの現金を混ぜたときだけ出る暫定の格付け』",
+   "affects_grade": true
+  },
+  {
+   "id": "F4_H_units",
+   "verified": true,
+   "severity": "changes_numbers（格付け C は不変）",
+   "finding": "H（英国のハロウィーン1.5倍）の負の超過は、価格だけの指数を 1.5 倍に持ちながら借入の金利を丸ごと払う単位の不一致による人工物（冬の月ごとに 0.5×配当/12 だけ過小）",
+   "check": "登録の値（{'ex_ann': -0.23, 't': -0.95, 'cagr_diff': -0.45}）を再現した上で、一定の配当利回りを両側に足して再計算: 算術の超過は配当 0.92%・幾何の差は 1.8% を超えると正に反転する",
+   "what_changed": "post_hoc.fix_h_dividend_sensitivity に配当 1〜5%（1709〜1914）と LSE の配当の近似（1871〜1907）と符号が反転する配当（breakeven_dy_pct）を並べた。格付けは登録の C（E5 だけで決まる: 配当 4% 以上で C、3% なら S 相当）",
+   "before": {
+    "full_net": {
+     "ex_ann": -0.23,
+     "t": -0.95,
+     "cagr_diff": -0.45
+    },
+    "h1_cagr_diff": -0.74,
+    "h2_cagr_diff": -0.15,
+    "sharpe_h1": [
+     -0.216,
+     -0.215
+    ],
+    "sharpe_h2": [
+     -0.072,
+     -0.098
+    ],
+    "grade": "C（登録）"
+   },
+   "after": {
+    "const_dy_1pct": {
+     "full_net": {
+      "ex_ann": 0.02,
+      "t": 0.1,
+      "cagr_diff": -0.2
+     },
+     "h1_cagr_diff": -0.5,
+     "h2_cagr_diff": 0.1,
+     "sharpe_h1": [
+      -0.127,
+      -0.132
+     ],
+     "sharpe_h2": [
+      0.069,
+      0.051
+     ],
+     "grade": "C",
+     "months": 2462
+    },
+    "const_dy_2pct": {
+     "full_net": {
+      "ex_ann": 0.27,
+      "t": 1.15,
+      "cagr_diff": 0.06
+     },
+     "h1_cagr_diff": -0.25,
+     "h2_cagr_diff": 0.37,
+     "sharpe_h1": [
+      -0.038,
+      -0.048
+     ],
+     "sharpe_h2": [
+      0.209,
+      0.2
+     ],
+     "grade": "B",
+     "months": 2462
+    },
+    "const_dy_3pct": {
+     "full_net": {
+      "ex_ann": 0.52,
+      "t": 2.19,
+      "cagr_diff": 0.32
+     },
+     "h1_cagr_diff": 0.01,
+     "h2_cagr_diff": 0.63,
+     "sharpe_h1": [
+      0.05,
+      0.036
+     ],
+     "sharpe_h2": [
+      0.35,
+      0.348
+     ],
+     "grade": "S",
+     "months": 2462
+    },
+    "const_dy_4pct": {
+     "full_net": {
+      "ex_ann": 0.77,
+      "t": 3.24,
+      "cagr_diff": 0.58
+     },
+     "h1_cagr_diff": 0.27,
+     "h2_cagr_diff": 0.91,
+     "sharpe_h1": [
+      0.139,
+      0.12
+     ],
+     "sharpe_h2": [
+      0.49,
+      0.497
+     ],
+     "grade": "C",
+     "months": 2462
+    },
+    "const_dy_5pct": {
+     "full_net": {
+      "ex_ann": 1.02,
+      "t": 4.28,
+      "cagr_diff": 0.86
+     },
+     "h1_cagr_diff": 0.53,
+     "h2_cagr_diff": 1.19,
+     "sharpe_h1": [
+      0.227,
+      0.204
+     ],
+     "sharpe_h2": [
+      0.63,
+      0.646
+     ],
+     "grade": "C",
+     "months": 2462
+    },
+    "lse_ew_dy_proxy_1871_1907": {
+     "full_net": {
+      "ex_ann": 1.06,
+      "t": 2.29,
+      "cagr_diff": 0.9
+     },
+     "h1_cagr_diff": 0.42,
+     "h2_cagr_diff": 1.38,
+     "sharpe_h1": [
+      0.4,
+      0.466
+     ],
+     "sharpe_h2": [
+      0.75,
+      0.778
+     ],
+     "grade": "C",
+     "months": 444
+    },
+    "price_only_1871_1907": {
+     "full_net": {
+      "ex_ann": -0.5,
+      "t": -1.07,
+      "cagr_diff": -0.73
+     },
+     "h1_cagr_diff": null,
+     "h2_cagr_diff": null,
+     "sharpe_h1": null,
+     "sharpe_h2": null,
+     "grade": null,
+     "months": null
+    }
+   },
+   "reading": "『英国のハロウィーンは超過が負』とは書かない。『超過の符号は配当の扱いで反転する。格付け C は E5（シャープの比較）だけで決まり、配当 4% 以上なら C のまま、3% なら S』",
+   "affects_grade": false
+  },
+  {
+   "id": "F5_P9_ties",
+   "verified": true,
+   "severity": "changes_numbers（格付けは不変）",
+   "finding": "P9 の同点が docstring の『名前の順』になっていなかった（百分位の平均を浮動小数で足すため、数学的に同点の業種が最後の1桁の差で並ぶ）",
+   "check": "組が変わる形成の月 A 11/434・D 12/537",
+   "what_changed": "post_hoc.fix_p9_exact_ties に 2×順位の和（整数）で (−和, 名前) に並べた版を置いた（凍結した data 道具の build_ind_multi は書き換えない＝格付けは登録の版）。規則の誤読（実装の誤り）の是正で、規則そのものは変えていない",
+   "before": {
+    "A_P9_multi_5": {
+     "full_net": {
+      "ex_ann": 4.39,
+      "t": 1.89,
+      "cagr_diff": 3.64
+     },
+     "h1_cagr_diff": 3.56,
+     "h2_cagr_diff": 3.72,
+     "roll20_median": 5.19
+    },
+    "D_P9_multi_5": {
+     "full_net": {
+      "ex_ann": 3.59,
+      "t": 3.48,
+      "cagr_diff": 3.5
+     },
+     "h1_cagr_diff": 4.55,
+     "h2_cagr_diff": 2.48,
+     "roll20_median": null
+    }
+   },
+   "after": {
+    "A_P9_multi_5": {
+     "full_net": {
+      "ex_ann": 4.62,
+      "t": 1.96,
+      "cagr_diff": 3.88
+     },
+     "h1_cagr_diff": 3.98,
+     "h2_cagr_diff": 3.77,
+     "roll20_median": 5.33,
+     "drop_top": {
+      "ex_ann": 4.9,
+      "t": 2.06,
+      "cagr_diff": 4.19
+     },
+     "grade": "B"
+    },
+    "D_P9_multi_5": {
+     "full_net": {
+      "ex_ann": 3.58,
+      "t": 3.51,
+      "cagr_diff": 3.48
+     },
+     "h1_cagr_diff": 4.61,
+     "h2_cagr_diff": 2.38,
+     "roll20_median": null,
+     "drop_top": {
+      "ex_ann": 2.44,
+      "t": 3.27,
+      "cagr_diff": 2.44
+     },
+     "grade": "S"
+    }
+   },
+   "affects_grade": false
+  },
+  {
+   "id": "F6_LSE_par_change",
+   "verified": true,
+   "severity": "changes_grade（暫定の格付け。主は PENDING_stop）",
+   "finding": "LSE の払込・分割・併合の除外が 1株の額面（capitalpar）の変化を見ておらず、額面 £10→£100 の併合などが +900% 前後のリターンとして残っていた",
+   "check": "登録の版に額面が変わった（前後とも値あり）株×月が 1717（平均 月 +29.0%・+300% 超 31・−80% 未満 18）。例は fix_lse_reading.par_change_months_in_registered_panel.examples",
+   "what_changed": "lse_panel_variant（D.lse_panel の写し・写しが抽出と1ビットも違わないことを実行時に確認）に `va[2] and vb[2] and va[2] != vb[2]` の除外を足した版で B・D を作り直した（fix_lse_reading.variants.par）",
+   "before": {
+    "grades_provisional": {
+     "B_F1a1_top_decile": "S",
+     "B_ret_12_1_tercile": "B",
+     "B_seas_6_10an_tercile": "B",
+     "D_G3_mom12_5": "S",
+     "D_P9_multi_5": "S",
+     "D_F1b_MG_6_6": "S",
+     "D_F3g_12-1_H1_K15": "S",
+     "D_F3g_12-1_H1_K30": "S",
+     "D_F3g_9-0_H1_K30": "S",
+     "D_S3_FABER_L2": "S",
+     "D_S3_FABER_L3": "S"
+    },
+    "full_net": {
+     "B_F1a1_top_decile": {
+      "ex_ann": 4.13,
+      "t": 3.32,
+      "cagr_diff": 3.89
+     },
+     "B_ret_12_1_tercile": {
+      "ex_ann": 0.95,
+      "t": 1.61,
+      "cagr_diff": 0.95
+     },
+     "B_seas_6_10an_tercile": {
+      "ex_ann": 1.12,
+      "t": 1.71,
+      "cagr_diff": 1.09
+     },
+     "D_G3_mom12_5": {
+      "ex_ann": 5.42,
+      "t": 4.78,
+      "cagr_diff": 5.38
+     },
+     "D_P9_multi_5": {
+      "ex_ann": 3.59,
+      "t": 3.48,
+      "cagr_diff": 3.5
+     },
+     "D_F1b_MG_6_6": {
+      "ex_ann": 4.32,
+      "t": 3.54,
+      "cagr_diff": 4.11
+     },
+     "D_F3g_12-1_H1_K15": {
+      "ex_ann": 6.4,
+      "t": 3.23,
+      "cagr_diff": 5.9
+     },
+     "D_F3g_12-1_H1_K30": {
+      "ex_ann": 4.11,
+      "t": 3.86,
+      "cagr_diff": 4.04
+     },
+     "D_F3g_9-0_H1_K30": {
+      "ex_ann": 3.6,
+      "t": 3.11,
+      "cagr_diff": 3.48
+     },
+     "D_S3_FABER_L2": {
+      "ex_ann": 3.41,
+      "t": 3.64,
+      "cagr_diff": 3.39
+     },
+     "D_S3_FABER_L3": {
+      "ex_ann": 6.39,
+      "t": 3.77,
+      "cagr_diff": 6.06
+     }
+    },
+    "sanity_corr": 0.4827,
+    "lse_ew_arith_cagr_1869_1887": 8.75
+   },
+   "after": {
+    "grades_provisional": {
+     "B_F1a1_top_decile": "S",
+     "B_ret_12_1_tercile": "S",
+     "B_seas_6_10an_tercile": "S",
+     "D_G3_mom12_5": "S",
+     "D_P9_multi_5": "S",
+     "D_F1b_MG_6_6": "S",
+     "D_F3g_12-1_H1_K15": "S",
+     "D_F3g_12-1_H1_K30": "S",
+     "D_F3g_9-0_H1_K30": "S",
+     "D_S3_FABER_L2": "S",
+     "D_S3_FABER_L3": "S"
+    },
+    "full_net": {
+     "B_F1a1_top_decile": {
+      "ex_ann": 4.04,
+      "t": 3.55,
+      "cagr_diff": 3.83
+     },
+     "B_ret_12_1_tercile": {
+      "ex_ann": 1.2,
+      "t": 2.13,
+      "cagr_diff": 1.22
+     },
+     "B_seas_6_10an_tercile": {
+      "ex_ann": 1.5,
+      "t": 2.43,
+      "cagr_diff": 1.48
+     },
+     "D_G3_mom12_5": {
+      "ex_ann": 4.32,
+      "t": 4.19,
+      "cagr_diff": 4.3
+     },
+     "D_P9_multi_5": {
+      "ex_ann": 3.0,
+      "t": 3.22,
+      "cagr_diff": 2.94
+     },
+     "D_F1b_MG_6_6": {
+      "ex_ann": 3.98,
+      "t": 3.23,
+      "cagr_diff": 3.73
+     },
+     "D_F3g_12-1_H1_K15": {
+      "ex_ann": 5.78,
+      "t": 2.82,
+      "cagr_diff": 5.17
+     },
+     "D_F3g_12-1_H1_K30": {
+      "ex_ann": 3.15,
+      "t": 3.14,
+      "cagr_diff": 3.07
+     },
+     "D_F3g_9-0_H1_K30": {
+      "ex_ann": 2.9,
+      "t": 2.92,
+      "cagr_diff": 2.78
+     },
+     "D_S3_FABER_L2": {
+      "ex_ann": 2.99,
+      "t": 3.53,
+      "cagr_diff": 2.95
+     },
+     "D_S3_FABER_L3": {
+      "ex_ann": 5.18,
+      "t": 3.33,
+      "cagr_diff": 4.79
+     }
+    },
+    "sanity_corr": 0.4973,
+    "lse_ew_arith_cagr_1869_1887": 5.42
+   },
+   "stop_condition_after_fix": "額面を直しても相関は線 0.6 に届かない＝止まる条件は残る（主は PENDING_stop のまま）",
+   "vs_auditor": "検査役の再計算（D_G3 cd 4.31 t4.21・B_ret 1.30 t2.36 前半/後半 +0.38/+2.25・B_seas t2.49・1869〜1887 の等分の CAGR 5.16%・相関 0.499）と向きと格付け（B_ret・B_seas が B→S、他は S のまま）は同じで、数字は少し違う。こちらは登録の lse_panel の写し（抽出と1ビット一致を確認）に額面の条件を1つ足し、掃除（跳ねて戻る形）の前に対を落とした＝掃除の後に額面の変わった月を消す作り方とは、跳ねて戻る形の判定に巻き込まれる月（掃除の件数 411→367）だけ違う",
+   "affects_grade": true
+  },
+  {
+   "id": "F7_LSE_non_reversing_jumps",
+   "verified": true,
+   "severity": "changes_numbers（暫定の格付けの感度）",
+   "finding": "逆戻りしない約10倍の跳ね（系列の最後の月・額面の欄が変わらない気配の単位の変更）が掃除（跳ねて戻る形だけを捕まえる）をすり抜けている",
+   "check": "登録の版で r>+300% が 129・+500% 超 68。額面を直した後も r>+300% が 106 残る",
+   "what_changed": "事後の感度として gt300（登録の版で r>+300% を両側から欠測・検査役の再計算と同じ）・par_x10sig（額面を直した上で約10倍・約1/10・約100倍・約1/100 の月を欠測）・par_x5（額面を直した上で ×5 以上・×1/5 以下を欠測）を fix_lse_reading.variants に並べた。どれが正しいかは原本の紙面を見ないと決められないので、主にも暫定の直した版（provisional_corrected_by_fixes）にも入れない",
+   "vs_auditor": "検査役の再計算（r>+300% を両側から外す: D_G3 cd 5.38→3.41 t5.11・D_S3 L2 3.39→2.61・B_F1a1 3.89→3.95）は gt300 で完全に再現した",
+   "after": {
+    "gt300": {
+     "grades": {
+      "B_F1a1_top_decile": "S",
+      "B_ret_12_1_tercile": "S",
+      "B_seas_6_10an_tercile": "S",
+      "D_G3_mom12_5": "S",
+      "D_P9_multi_5": "S",
+      "D_F1b_MG_6_6": "S",
+      "D_F3g_12-1_H1_K15": "S",
+      "D_F3g_12-1_H1_K30": "S",
+      "D_F3g_9-0_H1_K30": "S",
+      "D_S3_FABER_L2": "S",
+      "D_S3_FABER_L3": "S"
+     },
+     "full_net": {
+      "B_F1a1_top_decile": {
+       "ex_ann": 4.15,
+       "t": 3.89,
+       "cagr_diff": 3.95
+      },
+      "B_ret_12_1_tercile": {
+       "ex_ann": 1.47,
+       "t": 2.97,
+       "cagr_diff": 1.49
+      },
+      "B_seas_6_10an_tercile": {
+       "ex_ann": 1.62,
+       "t": 3.22,
+       "cagr_diff": 1.64
+      },
+      "D_G3_mom12_5": {
+       "ex_ann": 3.39,
+       "t": 5.11,
+       "cagr_diff": 3.41
+      },
+      "D_P9_multi_5": {
+       "ex_ann": 2.46,
+       "t": 3.72,
+       "cagr_diff": 2.47
+      },
+      "D_F1b_MG_6_6": {
+       "ex_ann": 3.48,
+       "t": 3.09,
+       "cagr_diff": 3.28
+      },
+      "D_F3g_12-1_H1_K15": {
+       "ex_ann": 5.6,
+       "t": 4.11,
+       "cagr_diff": 5.43
+      },
+      "D_F3g_12-1_H1_K30": {
+       "ex_ann": 3.19,
+       "t": 4.71,
+       "cagr_diff": 3.2
+      },
+      "D_F3g_9-0_H1_K30": {
+       "ex_ann": 2.51,
+       "t": 3.31,
+       "cagr_diff": 2.47
+      },
+      "D_S3_FABER_L2": {
+       "ex_ann": 2.64,
+       "t": 3.47,
+       "cagr_diff": 2.61
+      },
+      "D_S3_FABER_L3": {
+       "ex_ann": 4.21,
+       "t": 3.2,
+       "cagr_diff": 3.86
+      }
+     },
+     "counts": {
+      "drop_reversal_300pct": 411,
+      "drop_gt_990pct": 69,
+      "drop_jump": 129
+     },
+     "sanity_corr": 0.4997
+    },
+    "par_x10sig": {
+     "grades": {
+      "B_F1a1_top_decile": "S",
+      "B_ret_12_1_tercile": "S",
+      "B_seas_6_10an_tercile": "S",
+      "D_G3_mom12_5": "S",
+      "D_P9_multi_5": "S",
+      "D_F1b_MG_6_6": "S",
+      "D_F3g_12-1_H1_K15": "S",
+      "D_F3g_12-1_H1_K30": "S",
+      "D_F3g_9-0_H1_K30": "S",
+      "D_S3_FABER_L2": "S",
+      "D_S3_FABER_L3": "S"
+     },
+     "full_net": {
+      "B_F1a1_top_decile": {
+       "ex_ann": 4.08,
+       "t": 3.77,
+       "cagr_diff": 3.88
+      },
+      "B_ret_12_1_tercile": {
+       "ex_ann": 1.41,
+       "t": 2.66,
+       "cagr_diff": 1.43
+      },
+      "B_seas_6_10an_tercile": {
+       "ex_ann": 1.46,
+       "t": 2.84,
+       "cagr_diff": 1.49
+      },
+      "D_G3_mom12_5": {
+       "ex_ann": 3.63,
+       "t": 4.81,
+       "cagr_diff": 3.66
+      },
+      "D_P9_multi_5": {
+       "ex_ann": 2.43,
+       "t": 3.57,
+       "cagr_diff": 2.43
+      },
+      "D_F1b_MG_6_6": {
+       "ex_ann": 3.7,
+       "t": 3.28,
+       "cagr_diff": 3.51
+      },
+      "D_F3g_12-1_H1_K15": {
+       "ex_ann": 4.7,
+       "t": 3.13,
+       "cagr_diff": 4.44
+      },
+      "D_F3g_12-1_H1_K30": {
+       "ex_ann": 2.96,
+       "t": 4.21,
+       "cagr_diff": 2.95
+      },
+      "D_F3g_9-0_H1_K30": {
+       "ex_ann": 2.43,
+       "t": 3.18,
+       "cagr_diff": 2.37
+      },
+      "D_S3_FABER_L2": {
+       "ex_ann": 2.68,
+       "t": 3.45,
+       "cagr_diff": 2.64
+      },
+      "D_S3_FABER_L3": {
+       "ex_ann": 4.37,
+       "t": 3.15,
+       "cagr_diff": 3.98
+      }
+     },
+     "counts": {
+      "drop_reversal_300pct": 367,
+      "drop_gt_990pct": 61,
+      "drop_jump": 110,
+      "drop_par_change": 1754
+     },
+     "sanity_corr": 0.5058
+    },
+    "par_x5": {
+     "grades": {
+      "B_F1a1_top_decile": "S",
+      "B_ret_12_1_tercile": "S",
+      "B_seas_6_10an_tercile": "S",
+      "D_G3_mom12_5": "S",
+      "D_P9_multi_5": "S",
+      "D_F1b_MG_6_6": "S",
+      "D_F3g_12-1_H1_K15": "S",
+      "D_F3g_12-1_H1_K30": "S",
+      "D_F3g_9-0_H1_K30": "S",
+      "D_S3_FABER_L2": "S",
+      "D_S3_FABER_L3": "S"
+     },
+     "full_net": {
+      "B_F1a1_top_decile": {
+       "ex_ann": 4.47,
+       "t": 4.22,
+       "cagr_diff": 4.3
+      },
+      "B_ret_12_1_tercile": {
+       "ex_ann": 1.61,
+       "t": 3.18,
+       "cagr_diff": 1.64
+      },
+      "B_seas_6_10an_tercile": {
+       "ex_ann": 1.54,
+       "t": 3.05,
+       "cagr_diff": 1.57
+      },
+      "D_G3_mom12_5": {
+       "ex_ann": 3.72,
+       "t": 5.28,
+       "cagr_diff": 3.76
+      },
+      "D_P9_multi_5": {
+       "ex_ann": 2.61,
+       "t": 3.7,
+       "cagr_diff": 2.62
+      },
+      "D_F1b_MG_6_6": {
+       "ex_ann": 4.15,
+       "t": 3.63,
+       "cagr_diff": 3.96
+      },
+      "D_F3g_12-1_H1_K15": {
+       "ex_ann": 5.02,
+       "t": 3.38,
+       "cagr_diff": 4.77
+      },
+      "D_F3g_12-1_H1_K30": {
+       "ex_ann": 3.36,
+       "t": 5.07,
+       "cagr_diff": 3.37
+      },
+      "D_F3g_9-0_H1_K30": {
+       "ex_ann": 2.89,
+       "t": 4.01,
+       "cagr_diff": 2.87
+      },
+      "D_S3_FABER_L2": {
+       "ex_ann": 2.58,
+       "t": 3.53,
+       "cagr_diff": 2.55
+      },
+      "D_S3_FABER_L3": {
+       "ex_ann": 4.06,
+       "t": 3.22,
+       "cagr_diff": 3.71
+      }
+     },
+     "counts": {
+      "drop_reversal_300pct": 367,
+      "drop_gt_990pct": 61,
+      "drop_jump": 249,
+      "drop_par_change": 1754
+     },
+     "sanity_corr": 0.5117
+    }
+   },
+   "affects_grade": false
+  }
+ ],
  "sanity_checks": {
   "cowles_C1_minus_P1_monthly_mean": {
    "value": 0.0043,
@@ -5576,6 +6934,24 @@
   "stop_on_shape": [
    "lse_ew_vs_boe_1871_1914"
   ],
+  "stopped_data": [
+   "lse_ind",
+   "lse_stk"
+  ],
+  "stopped_units": [
+   "B_F1a1_top_decile",
+   "B_ret_12_1_tercile",
+   "B_seas_6_10an_tercile",
+   "D_G3_mom12_5",
+   "D_P9_multi_5",
+   "D_F1b_MG_6_6",
+   "D_F3g_12-1_H1_K15",
+   "D_F3g_12-1_H1_K30",
+   "D_F3g_9-0_H1_K30",
+   "D_S3_FABER_L2",
+   "D_S3_FABER_L3"
+  ],
+  "order": "この点検は成績（run_main）より前に回した（検査役の指摘で直した順番）。止まる条件に触れたデータの単位は主の格付けに入れない",
   "no_lookahead_real_data": {
    "A_G3_mom12_5": true,
    "A_G4_mom12_10": true,
@@ -8179,6 +9555,10 @@
       "h1_cagr_diff": 0.68,
       "h2_cagr_diff": 2.95
      },
+     "per_side_unit_0.005": {
+      "same_as": "unit_0.005",
+      "formula": "Σ|Δw| × 0.005（two の式はもともと売買の各側に u）"
+     },
      "unit_0.01": {
       "full": {
        "from": 188903,
@@ -8198,6 +9578,10 @@
       },
       "h1_cagr_diff": -1.7,
       "h2_cagr_diff": 0.02
+     },
+     "per_side_unit_0.01": {
+      "same_as": "unit_0.01",
+      "formula": "Σ|Δw| × 0.01（two の式はもともと売買の各側に u）"
      }
     },
     "A_G4_mom12_10": {
@@ -8221,6 +9605,10 @@
       "h1_cagr_diff": 0.12,
       "h2_cagr_diff": 5.48
      },
+     "per_side_unit_0.005": {
+      "same_as": "unit_0.005",
+      "formula": "Σ|Δw| × 0.005（two の式はもともと売買の各側に u）"
+     },
      "unit_0.01": {
       "full": {
        "from": 190103,
@@ -8240,6 +9628,10 @@
       },
       "h1_cagr_diff": -1.75,
       "h2_cagr_diff": 2.98
+     },
+     "per_side_unit_0.01": {
+      "same_as": "unit_0.01",
+      "formula": "Σ|Δw| × 0.01（two の式はもともと売買の各側に u）"
      }
     },
     "A_P9_multi_5": {
@@ -8263,6 +9655,10 @@
       "h1_cagr_diff": -0.31,
       "h2_cagr_diff": -1.6
      },
+     "per_side_unit_0.005": {
+      "same_as": "unit_0.005",
+      "formula": "Σ|Δw| × 0.005（two の式はもともと売買の各側に u）"
+     },
      "unit_0.01": {
       "full": {
        "from": 188903,
@@ -8282,6 +9678,10 @@
       },
       "h1_cagr_diff": -4.47,
       "h2_cagr_diff": -7.24
+     },
+     "per_side_unit_0.01": {
+      "same_as": "unit_0.01",
+      "formula": "Σ|Δw| × 0.01（two の式はもともと売買の各側に u）"
      }
     },
     "A_F1b_MG_6_6": {
@@ -8305,6 +9705,27 @@
       "h1_cagr_diff": -2.73,
       "h2_cagr_diff": 3.15
      },
+     "per_side_unit_0.005": {
+      "full": {
+       "from": 187202,
+       "to": 192606,
+       "years": 53.9,
+       "ex_ann": 0.52,
+       "t": 0.27,
+       "p": 0.785,
+       "cagr_s": 6.4,
+       "cagr_b": 7.15,
+       "cagr_diff": -0.75,
+       "te": 12.38,
+       "ir": 0.04,
+       "beta": 1.36,
+       "vol_s": 19.3,
+       "vol_b": 11.3
+      },
+      "h1_cagr_diff": -3.6,
+      "h2_cagr_diff": 2.22,
+      "formula": "Σ|Δw| × 0.005（売買の各側に 0.005）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187202,
@@ -8324,6 +9745,27 @@
       },
       "h1_cagr_diff": -3.6,
       "h2_cagr_diff": 2.22
+     },
+     "per_side_unit_0.01": {
+      "full": {
+       "from": 187202,
+       "to": 192606,
+       "years": 53.9,
+       "ex_ann": -1.18,
+       "t": -0.62,
+       "p": 0.5369,
+       "cagr_s": 4.62,
+       "cagr_b": 7.15,
+       "cagr_diff": -2.53,
+       "te": 12.38,
+       "ir": -0.1,
+       "beta": 1.36,
+       "vol_s": 19.3,
+       "vol_b": 11.3
+      },
+      "h1_cagr_diff": -5.32,
+      "h2_cagr_diff": 0.38,
+      "formula": "Σ|Δw| × 0.01（売買の各側に 0.01）"
      }
     },
     "A_F3g_12-1_H1_K15": {
@@ -8347,6 +9789,27 @@
       "h1_cagr_diff": -1.99,
       "h2_cagr_diff": 5.57
      },
+     "per_side_unit_0.005": {
+      "full": {
+       "from": 187202,
+       "to": 192606,
+       "years": 53.9,
+       "ex_ann": 1.63,
+       "t": 0.76,
+       "p": 0.4455,
+       "cagr_s": 7.25,
+       "cagr_b": 7.15,
+       "cagr_diff": 0.1,
+       "te": 14.88,
+       "ir": 0.11,
+       "beta": 1.35,
+       "vol_s": 20.9,
+       "vol_b": 11.3
+      },
+      "h1_cagr_diff": -3.63,
+      "h2_cagr_diff": 4.01,
+      "formula": "Σ|Δw| × 0.005（売買の各側に 0.005）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187202,
@@ -8366,6 +9829,27 @@
       },
       "h1_cagr_diff": -3.63,
       "h2_cagr_diff": 4.01
+     },
+     "per_side_unit_0.01": {
+      "full": {
+       "from": 187202,
+       "to": 192606,
+       "years": 53.9,
+       "ex_ann": -1.34,
+       "t": -0.62,
+       "p": 0.5366,
+       "cagr_s": 4.11,
+       "cagr_b": 7.15,
+       "cagr_diff": -3.04,
+       "te": 14.93,
+       "ir": -0.09,
+       "beta": 1.35,
+       "vol_s": 21.0,
+       "vol_b": 11.3
+      },
+      "h1_cagr_diff": -6.84,
+      "h2_cagr_diff": 0.96,
+      "formula": "Σ|Δw| × 0.01（売買の各側に 0.01）"
      }
     },
     "A_F3g_12-1_H1_K30": {
@@ -8389,6 +9873,27 @@
       "h1_cagr_diff": -2.13,
       "h2_cagr_diff": 4.35
      },
+     "per_side_unit_0.005": {
+      "full": {
+       "from": 187202,
+       "to": 192606,
+       "years": 53.9,
+       "ex_ann": 0.74,
+       "t": 0.42,
+       "p": 0.6721,
+       "cagr_s": 6.86,
+       "cagr_b": 7.15,
+       "cagr_diff": -0.29,
+       "te": 11.69,
+       "ir": 0.06,
+       "beta": 1.26,
+       "vol_s": 18.2,
+       "vol_b": 11.3
+      },
+      "h1_cagr_diff": -3.56,
+      "h2_cagr_diff": 3.14,
+      "formula": "Σ|Δw| × 0.005（売買の各側に 0.005）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187202,
@@ -8408,6 +9913,27 @@
       },
       "h1_cagr_diff": -3.56,
       "h2_cagr_diff": 3.14
+     },
+     "per_side_unit_0.01": {
+      "full": {
+       "from": 187202,
+       "to": 192606,
+       "years": 53.9,
+       "ex_ann": -1.75,
+       "t": -0.99,
+       "p": 0.3204,
+       "cagr_s": 4.24,
+       "cagr_b": 7.15,
+       "cagr_diff": -2.91,
+       "te": 11.73,
+       "ir": -0.15,
+       "beta": 1.26,
+       "vol_s": 18.2,
+       "vol_b": 11.3
+      },
+      "h1_cagr_diff": -6.38,
+      "h2_cagr_diff": 0.73,
+      "formula": "Σ|Δw| × 0.01（売買の各側に 0.01）"
      }
     },
     "A_F3g_9-0_H1_K30": {
@@ -8431,6 +9957,27 @@
       "h1_cagr_diff": -2.56,
       "h2_cagr_diff": 3.27
      },
+     "per_side_unit_0.005": {
+      "full": {
+       "from": 187112,
+       "to": 192606,
+       "years": 54.1,
+       "ex_ann": -0.04,
+       "t": -0.02,
+       "p": 0.9824,
+       "cagr_s": 6.14,
+       "cagr_b": 7.24,
+       "cagr_diff": -1.1,
+       "te": 11.7,
+       "ir": -0.0,
+       "beta": 1.25,
+       "vol_s": 18.1,
+       "vol_b": 11.3
+      },
+      "h1_cagr_diff": -3.98,
+      "h2_cagr_diff": 1.9,
+      "formula": "Σ|Δw| × 0.005（売買の各側に 0.005）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187112,
@@ -8450,6 +9997,27 @@
       },
       "h1_cagr_diff": -3.98,
       "h2_cagr_diff": 1.9
+     },
+     "per_side_unit_0.01": {
+      "full": {
+       "from": 187112,
+       "to": 192606,
+       "years": 54.1,
+       "ex_ann": -2.66,
+       "t": -1.5,
+       "p": 0.1349,
+       "cagr_s": 3.39,
+       "cagr_b": 7.24,
+       "cagr_diff": -3.85,
+       "te": 11.78,
+       "ir": -0.23,
+       "beta": 1.25,
+       "vol_s": 18.2,
+       "vol_b": 11.3
+      },
+      "h1_cagr_diff": -6.79,
+      "h2_cagr_diff": -0.78,
+      "formula": "Σ|Δw| × 0.01（売買の各側に 0.01）"
      }
     },
     "A_S3_FABER_L2": {
@@ -8473,6 +10041,10 @@
       "h1_cagr_diff": -3.31,
       "h2_cagr_diff": 4.96
      },
+     "per_side_unit_0.005": {
+      "same_as": "unit_0.005",
+      "formula": "moved・dL の式は出入り・倍率の変化の各回に u（もともと各側）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187104,
@@ -8492,6 +10064,10 @@
       },
       "h1_cagr_diff": -4.89,
       "h2_cagr_diff": 3.33
+     },
+     "per_side_unit_0.01": {
+      "same_as": "unit_0.01",
+      "formula": "moved・dL の式は出入り・倍率の変化の各回に u（もともと各側）"
      },
      "spread_1pct": {
       "full": {
@@ -8533,6 +10109,10 @@
       "h1_cagr_diff": -6.0,
       "h2_cagr_diff": 8.42
      },
+     "per_side_unit_0.005": {
+      "same_as": "unit_0.005",
+      "formula": "moved・dL の式は出入り・倍率の変化の各回に u（もともと各側）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187104,
@@ -8552,6 +10132,10 @@
       },
       "h1_cagr_diff": -8.31,
       "h2_cagr_diff": 5.91
+     },
+     "per_side_unit_0.01": {
+      "same_as": "unit_0.01",
+      "formula": "moved・dL の式は出入り・倍率の変化の各回に u（もともと各側）"
      },
      "spread_1pct": {
       "full": {
@@ -8593,6 +10177,27 @@
       "h1_cagr_diff": 1.56,
       "h2_cagr_diff": 4.71
      },
+     "per_side_unit_0.005": {
+      "full": {
+       "from": 187002,
+       "to": 192912,
+       "years": 51.8,
+       "ex_ann": 1.72,
+       "t": 1.38,
+       "p": 0.1678,
+       "cagr_s": 6.38,
+       "cagr_b": 5.07,
+       "cagr_diff": 1.31,
+       "te": 8.52,
+       "ir": 0.2,
+       "beta": 1.39,
+       "vol_s": 11.7,
+       "vol_b": 5.9
+      },
+      "h1_cagr_diff": -0.28,
+      "h2_cagr_diff": 2.88,
+      "formula": "Σ|Δw| × 0.005（売買の各側に 0.005）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187002,
@@ -8612,6 +10217,27 @@
       },
       "h1_cagr_diff": -0.28,
       "h2_cagr_diff": 2.88
+     },
+     "per_side_unit_0.01": {
+      "full": {
+       "from": 187002,
+       "to": 192912,
+       "years": 51.8,
+       "ex_ann": -1.72,
+       "t": -1.38,
+       "p": 0.1688,
+       "cagr_s": 2.79,
+       "cagr_b": 5.07,
+       "cagr_diff": -2.28,
+       "te": 8.52,
+       "ir": -0.2,
+       "beta": 1.39,
+       "vol_s": 11.6,
+       "vol_b": 5.9
+      },
+      "h1_cagr_diff": -3.88,
+      "h2_cagr_diff": -0.7,
+      "formula": "Σ|Δw| × 0.01（売買の各側に 0.01）"
      },
      "placeholder_turnover": {
       "annual_oneway": 4.0,
@@ -8655,6 +10281,27 @@
       "h1_cagr_diff": -0.9,
       "h2_cagr_diff": 1.73
      },
+     "per_side_unit_0.005": {
+      "full": {
+       "from": 187002,
+       "to": 192912,
+       "years": 51.8,
+       "ex_ann": -0.8,
+       "t": -1.35,
+       "p": 0.1771,
+       "cagr_s": 4.19,
+       "cagr_b": 5.07,
+       "cagr_diff": -0.88,
+       "te": 3.61,
+       "ir": -0.22,
+       "beta": 0.93,
+       "vol_s": 6.6,
+       "vol_b": 5.9
+      },
+      "h1_cagr_diff": -2.22,
+      "h2_cagr_diff": 0.43,
+      "formula": "Σ|Δw| × 0.005（売買の各側に 0.005）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187002,
@@ -8674,6 +10321,27 @@
       },
       "h1_cagr_diff": -2.22,
       "h2_cagr_diff": 0.43
+     },
+     "per_side_unit_0.01": {
+      "full": {
+       "from": 187002,
+       "to": 192912,
+       "years": 51.8,
+       "ex_ann": -3.31,
+       "t": -5.43,
+       "p": 0.0,
+       "cagr_s": 1.62,
+       "cagr_b": 5.07,
+       "cagr_diff": -3.45,
+       "te": 3.62,
+       "ir": -0.91,
+       "beta": 0.93,
+       "vol_s": 6.6,
+       "vol_b": 5.9
+      },
+      "h1_cagr_diff": -4.81,
+      "h2_cagr_diff": -2.11,
+      "formula": "Σ|Δw| × 0.01（売買の各側に 0.01）"
      },
      "placeholder_turnover": {
       "annual_oneway": 1.5,
@@ -8717,6 +10385,27 @@
       "h1_cagr_diff": -1.36,
       "h2_cagr_diff": 0.19
      },
+     "per_side_unit_0.005": {
+      "full": {
+       "from": 187902,
+       "to": 192912,
+       "years": 33.8,
+       "ex_ann": -4.54,
+       "t": -6.92,
+       "p": 0.0,
+       "cagr_s": -1.53,
+       "cagr_b": 3.11,
+       "cagr_diff": -4.63,
+       "te": 4.44,
+       "ir": -1.02,
+       "beta": 0.9,
+       "vol_s": 6.6,
+       "vol_b": 5.5
+      },
+      "h1_cagr_diff": -5.45,
+      "h2_cagr_diff": -3.84,
+      "formula": "Σ|Δw| × 0.005（売買の各側に 0.005）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187902,
@@ -8736,6 +10425,27 @@
       },
       "h1_cagr_diff": -5.45,
       "h2_cagr_diff": -3.84
+     },
+     "per_side_unit_0.01": {
+      "full": {
+       "from": 187902,
+       "to": 192912,
+       "years": 33.8,
+       "ex_ann": -12.63,
+       "t": -19.13,
+       "p": 0.0,
+       "cagr_s": -9.21,
+       "cagr_b": 3.11,
+       "cagr_diff": -12.32,
+       "te": 4.44,
+       "ir": -2.84,
+       "beta": 0.9,
+       "vol_s": 6.6,
+       "vol_b": 5.5
+      },
+      "h1_cagr_diff": -13.19,
+      "h2_cagr_diff": -11.47,
+      "formula": "Σ|Δw| × 0.01（売買の各側に 0.01）"
      },
      "placeholder_turnover": {
       "annual_oneway": 12.0,
@@ -8779,6 +10489,27 @@
       "h1_cagr_diff": 0.15,
       "h2_cagr_diff": 1.03
      },
+     "per_side_unit_0.005": {
+      "full": {
+       "from": 187102,
+       "to": 192509,
+       "years": 23.5,
+       "ex_ann": -0.65,
+       "t": -0.25,
+       "p": 0.8038,
+       "cagr_s": 3.48,
+       "cagr_b": 4.46,
+       "cagr_diff": -0.98,
+       "te": 13.34,
+       "ir": -0.05,
+       "beta": 0.86,
+       "vol_s": 21.2,
+       "vol_b": 19.5
+      },
+      "h1_cagr_diff": -1.36,
+      "h2_cagr_diff": -0.57,
+      "formula": "Σ|Δw| × 0.005（売買の各側に 0.005）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187102,
@@ -8798,6 +10529,27 @@
       },
       "h1_cagr_diff": -1.36,
       "h2_cagr_diff": -0.57
+     },
+     "per_side_unit_0.01": {
+      "full": {
+       "from": 187102,
+       "to": 192509,
+       "years": 23.5,
+       "ex_ann": -3.63,
+       "t": -1.37,
+       "p": 0.1694,
+       "cagr_s": 0.44,
+       "cagr_b": 4.46,
+       "cagr_diff": -4.02,
+       "te": 13.36,
+       "ir": -0.27,
+       "beta": 0.86,
+       "vol_s": 21.3,
+       "vol_b": 19.5
+      },
+      "h1_cagr_diff": -4.32,
+      "h2_cagr_diff": -3.7,
+      "formula": "Σ|Δw| × 0.01（売買の各側に 0.01）"
      },
      "placeholder_turnover": {
       "annual_oneway": 1.5,
@@ -8841,6 +10593,10 @@
       "h1_cagr_diff": 3.67,
       "h2_cagr_diff": 3.47
      },
+     "per_side_unit_0.005": {
+      "same_as": "unit_0.005",
+      "formula": "Σ|Δw| × 0.005（two の式はもともと売買の各側に u）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187603,
@@ -8860,6 +10616,10 @@
       },
       "h1_cagr_diff": 1.61,
       "h2_cagr_diff": 1.56
+     },
+     "per_side_unit_0.01": {
+      "same_as": "unit_0.01",
+      "formula": "Σ|Δw| × 0.01（two の式はもともと売買の各側に u）"
      }
     },
     "D_P9_multi_5": {
@@ -8883,6 +10643,10 @@
       "h1_cagr_diff": 0.93,
       "h2_cagr_diff": -1.04
      },
+     "per_side_unit_0.005": {
+      "same_as": "unit_0.005",
+      "formula": "Σ|Δw| × 0.005（two の式はもともと売買の各側に u）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187603,
@@ -8902,6 +10666,10 @@
       },
       "h1_cagr_diff": -2.97,
       "h2_cagr_diff": -4.83
+     },
+     "per_side_unit_0.01": {
+      "same_as": "unit_0.01",
+      "formula": "Σ|Δw| × 0.01（two の式はもともと売買の各側に u）"
      }
     },
     "D_F1b_MG_6_6": {
@@ -8925,6 +10693,27 @@
       "h1_cagr_diff": 3.26,
       "h2_cagr_diff": 3.45
      },
+     "per_side_unit_0.005": {
+      "full": {
+       "from": 187308,
+       "to": 192912,
+       "years": 48.2,
+       "ex_ann": 2.85,
+       "t": 2.29,
+       "p": 0.0218,
+       "cagr_s": 6.75,
+       "cagr_b": 4.22,
+       "cagr_diff": 2.53,
+       "te": 8.4,
+       "ir": 0.34,
+       "beta": 1.34,
+       "vol_s": 11.4,
+       "vol_b": 5.9
+      },
+      "h1_cagr_diff": 2.43,
+      "h2_cagr_diff": 2.62,
+      "formula": "Σ|Δw| × 0.005（売買の各側に 0.005）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187308,
@@ -8944,6 +10733,27 @@
       },
       "h1_cagr_diff": 2.43,
       "h2_cagr_diff": 2.62
+     },
+     "per_side_unit_0.01": {
+      "full": {
+       "from": 187308,
+       "to": 192912,
+       "years": 48.2,
+       "ex_ann": 1.29,
+       "t": 1.02,
+       "p": 0.3058,
+       "cagr_s": 5.11,
+       "cagr_b": 4.22,
+       "cagr_diff": 0.89,
+       "te": 8.41,
+       "ir": 0.15,
+       "beta": 1.34,
+       "vol_s": 11.4,
+       "vol_b": 5.9
+      },
+      "h1_cagr_diff": 0.78,
+      "h2_cagr_diff": 0.99,
+      "formula": "Σ|Δw| × 0.01（売買の各側に 0.01）"
      }
     },
     "D_F3g_12-1_H1_K15": {
@@ -8967,6 +10777,27 @@
       "h1_cagr_diff": 4.11,
       "h2_cagr_diff": 4.93
      },
+     "per_side_unit_0.005": {
+      "full": {
+       "from": 187308,
+       "to": 192912,
+       "years": 48.2,
+       "ex_ann": 3.75,
+       "t": 1.83,
+       "p": 0.0679,
+       "cagr_s": 7.26,
+       "cagr_b": 4.24,
+       "cagr_diff": 3.02,
+       "te": 13.36,
+       "ir": 0.28,
+       "beta": 1.45,
+       "vol_s": 15.7,
+       "vol_b": 5.9
+      },
+      "h1_cagr_diff": 2.56,
+      "h2_cagr_diff": 3.48,
+      "formula": "Σ|Δw| × 0.005（売買の各側に 0.005）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187308,
@@ -8986,6 +10817,27 @@
       },
       "h1_cagr_diff": 2.56,
       "h2_cagr_diff": 3.48
+     },
+     "per_side_unit_0.01": {
+      "full": {
+       "from": 187308,
+       "to": 192912,
+       "years": 48.2,
+       "ex_ann": 0.96,
+       "t": 0.45,
+       "p": 0.6554,
+       "cagr_s": 4.3,
+       "cagr_b": 4.24,
+       "cagr_diff": 0.06,
+       "te": 13.5,
+       "ir": 0.07,
+       "beta": 1.45,
+       "vol_s": 15.8,
+       "vol_b": 5.9
+      },
+      "h1_cagr_diff": -0.49,
+      "h2_cagr_diff": 0.61,
+      "formula": "Σ|Δw| × 0.01（売買の各側に 0.01）"
      }
     },
     "D_F3g_12-1_H1_K30": {
@@ -9009,6 +10861,27 @@
       "h1_cagr_diff": 3.52,
       "h2_cagr_diff": 2.56
      },
+     "per_side_unit_0.005": {
+      "full": {
+       "from": 187308,
+       "to": 192912,
+       "years": 48.3,
+       "ex_ann": 2.12,
+       "t": 1.94,
+       "p": 0.053,
+       "cagr_s": 6.15,
+       "cagr_b": 4.23,
+       "cagr_diff": 1.93,
+       "te": 7.43,
+       "ir": 0.29,
+       "beta": 1.11,
+       "vol_s": 9.9,
+       "vol_b": 5.9
+      },
+      "h1_cagr_diff": 2.38,
+      "h2_cagr_diff": 1.49,
+      "formula": "Σ|Δw| × 0.005（売買の各側に 0.005）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187308,
@@ -9028,6 +10901,27 @@
       },
       "h1_cagr_diff": 2.38,
       "h2_cagr_diff": 1.49
+     },
+     "per_side_unit_0.01": {
+      "full": {
+       "from": 187308,
+       "to": 192912,
+       "years": 48.3,
+       "ex_ann": 0.03,
+       "t": 0.03,
+       "p": 0.9761,
+       "cagr_s": 3.97,
+       "cagr_b": 4.23,
+       "cagr_diff": -0.26,
+       "te": 7.49,
+       "ir": 0.0,
+       "beta": 1.1,
+       "vol_s": 9.9,
+       "vol_b": 5.9
+      },
+      "h1_cagr_diff": 0.12,
+      "h2_cagr_diff": -0.63,
+      "formula": "Σ|Δw| × 0.01（売買の各側に 0.01）"
      }
     },
     "D_F3g_9-0_H1_K30": {
@@ -9051,6 +10945,27 @@
       "h1_cagr_diff": 2.67,
       "h2_cagr_diff": 2.12
      },
+     "per_side_unit_0.005": {
+      "full": {
+       "from": 187306,
+       "to": 192912,
+       "years": 48.7,
+       "ex_ann": 1.45,
+       "t": 1.22,
+       "p": 0.2212,
+       "cagr_s": 5.46,
+       "cagr_b": 4.26,
+       "cagr_diff": 1.2,
+       "te": 7.4,
+       "ir": 0.2,
+       "beta": 1.19,
+       "vol_s": 10.1,
+       "vol_b": 5.9
+      },
+      "h1_cagr_diff": 1.45,
+      "h2_cagr_diff": 0.96,
+      "formula": "Σ|Δw| × 0.005（売買の各側に 0.005）"
+     },
      "unit_0.01": {
       "full": {
        "from": 187306,
@@ -9070,6 +10985,27 @@
       },
       "h1_cagr_diff": 1.45,
       "h2_cagr_diff": 0.96
+     },
+     "per_side_unit_0.01": {
+      "full": {
+       "from": 187306,
+       "to": 192912,
+       "years": 48.7,
+       "ex_ann": -0.81,
+       "t": -0.66,
+       "p": 0.5104,
+       "cagr_s": 3.1,
+       "cagr_b": 4.26,
+       "cagr_diff": -1.16,
+       "te": 7.45,
+       "ir": -0.11,
+       "beta": 1.18,
+       "vol_s": 10.2,
+       "vol_b": 5.9
+      },
+      "h1_cagr_diff": -0.97,
+      "h2_cagr_diff": -1.34,
+      "formula": "Σ|Δw| × 0.01（売買の各側に 0.01）"
      }
     },
     "D_S3_FABER_L2": {
@@ -9093,6 +11029,10 @@
       "h1_cagr_diff": 2.57,
       "h2_cagr_diff": 2.01
      },
+     "per_side_unit_0.005": {
+      "same_as": "unit_0.005",
+      "formula": "moved・dL の式は出入り・倍率の変化の各回に u（もともと各側）"
+     },
      "unit_0.01": {
       "full": {
        "from": 186904,
@@ -9112,6 +11052,10 @@
       },
       "h1_cagr_diff": 1.21,
       "h2_cagr_diff": 0.63
+     },
+     "per_side_unit_0.01": {
+      "same_as": "unit_0.01",
+      "formula": "moved・dL の式は出入り・倍率の変化の各回に u（もともと各側）"
      },
      "spread_1pct": {
       "full": {
@@ -9153,6 +11097,10 @@
       "h1_cagr_diff": 5.97,
       "h2_cagr_diff": 2.84
      },
+     "per_side_unit_0.005": {
+      "same_as": "unit_0.005",
+      "formula": "moved・dL の式は出入り・倍率の変化の各回に u（もともと各側）"
+     },
      "unit_0.01": {
       "full": {
        "from": 186904,
@@ -9172,6 +11120,10 @@
       },
       "h1_cagr_diff": 3.87,
       "h2_cagr_diff": 0.76
+     },
+     "per_side_unit_0.01": {
+      "same_as": "unit_0.01",
+      "formula": "moved・dL の式は出入り・倍率の変化の各回に u（もともと各側）"
      },
      "spread_1pct": {
       "full": {
@@ -9213,6 +11165,10 @@
       "h1_cagr_diff": -1.14,
       "h2_cagr_diff": -0.56
      },
+     "per_side_unit_0.005": {
+      "same_as": "unit_0.005",
+      "formula": "moved・dL の式は出入り・倍率の変化の各回に u（もともと各側）"
+     },
      "unit_0.01": {
       "full": {
        "from": 170905,
@@ -9232,6 +11188,10 @@
       },
       "h1_cagr_diff": -1.64,
       "h2_cagr_diff": -1.07
+     },
+     "per_side_unit_0.01": {
+      "same_as": "unit_0.01",
+      "formula": "moved・dL の式は出入り・倍率の変化の各回に u（もともと各側）"
      },
      "spread_1pct": {
       "full": {
@@ -9253,7 +11213,115 @@
      }
     }
    },
-   "note": "各規則の費用の式の形（two＝両側 Σ|Δw|×単価・one＝片道 ½Σ|Δw|×単価・moved＝出入り×L×単価・dL＝|ΔL|×単価）はそのままで単価だけ 0.50%・1.00% に替えた。置き値の版は mw_momentum の F1a1 年400%・mw_intl の ret_12_1 年150%・mw_momentum_prereg3 の seas_6_10an 年1200% × この角度の単価（英国 0.30%・米国 0.10%）を月割りで費用前の系列から引いた"
+   "per_side_1pct": {
+    "A_G3_mom12_5": {
+     "ex_ann": 0.41,
+     "t": 0.16,
+     "cagr_diff": -0.85
+    },
+    "A_G4_mom12_10": {
+     "ex_ann": 1.25,
+     "t": 0.58,
+     "cagr_diff": 0.55
+    },
+    "A_P9_multi_5": {
+     "ex_ann": -4.54,
+     "t": -1.96,
+     "cagr_diff": -5.85
+    },
+    "A_F1b_MG_6_6": {
+     "ex_ann": -1.18,
+     "t": -0.62,
+     "cagr_diff": -2.53
+    },
+    "A_F3g_12-1_H1_K15": {
+     "ex_ann": -1.34,
+     "t": -0.62,
+     "cagr_diff": -3.04
+    },
+    "A_F3g_12-1_H1_K30": {
+     "ex_ann": -1.75,
+     "t": -0.99,
+     "cagr_diff": -2.91
+    },
+    "A_F3g_9-0_H1_K30": {
+     "ex_ann": -2.66,
+     "t": -1.5,
+     "cagr_diff": -3.85
+    },
+    "A_S3_FABER_L2": {
+     "ex_ann": -0.38,
+     "t": -0.2,
+     "cagr_diff": -0.92
+    },
+    "A_S3_FABER_L3": {
+     "ex_ann": 1.42,
+     "t": 0.41,
+     "cagr_diff": -1.54
+    },
+    "B_F1a1_top_decile": {
+     "ex_ann": -1.72,
+     "t": -1.38,
+     "cagr_diff": -2.28
+    },
+    "B_ret_12_1_tercile": {
+     "ex_ann": -3.31,
+     "t": -5.43,
+     "cagr_diff": -3.45
+    },
+    "B_seas_6_10an_tercile": {
+     "ex_ann": -12.63,
+     "t": -19.13,
+     "cagr_diff": -12.32
+    },
+    "C_ret_12_1_tercile": {
+     "ex_ann": -3.63,
+     "t": -1.37,
+     "cagr_diff": -4.02
+    },
+    "D_G3_mom12_5": {
+     "ex_ann": 1.86,
+     "t": 1.57,
+     "cagr_diff": 1.59
+    },
+    "D_P9_multi_5": {
+     "ex_ann": -3.59,
+     "t": -3.33,
+     "cagr_diff": -3.91
+    },
+    "D_F1b_MG_6_6": {
+     "ex_ann": 1.29,
+     "t": 1.02,
+     "cagr_diff": 0.89
+    },
+    "D_F3g_12-1_H1_K15": {
+     "ex_ann": 0.96,
+     "t": 0.45,
+     "cagr_diff": 0.06
+    },
+    "D_F3g_12-1_H1_K30": {
+     "ex_ann": 0.03,
+     "t": 0.03,
+     "cagr_diff": -0.26
+    },
+    "D_F3g_9-0_H1_K30": {
+     "ex_ann": -0.81,
+     "t": -0.66,
+     "cagr_diff": -1.16
+    },
+    "D_S3_FABER_L2": {
+     "ex_ann": 1.11,
+     "t": 1.09,
+     "cagr_diff": 0.91
+    },
+    "D_S3_FABER_L3": {
+     "ex_ann": 2.94,
+     "t": 1.62,
+     "cagr_diff": 2.28
+    }
+   },
+   "summary_per_side_1pct": "売買の各側に 1%（当時の現実に近い単価・Σ|Δw|×1%・S3 は出入りの各回 1%×L）でそろえると、LSE の業種 D は 8本のうち正（算術の超過>0 かつ 幾何の差>0）5・算術の超過>0 だけなら 6・t≥2 0（G3_mom12_5 +1.86 t1.57・P9_multi_5 -3.59 t-3.33・F1b_MG_6_6 +1.29 t1.02・F3g_12-1_H1_K15 +0.96 t0.45・F3g_12-1_H1_K30 +0.03 t0.03・F3g_9-0_H1_K30 -0.81 t-0.66・S3_FABER_L2 +1.11 t1.09・S3_FABER_L3 +2.94 t1.62）。業種の勢いの6本だけなら 正 3（算術だけなら 4）・t≥2 0。★D は止まる条件に触れたデータ（主の格付けは PENDING_stop）",
+   "note": "各規則の費用の式の形（two＝両側 Σ|Δw|×単価・one＝片道 ½Σ|Δw|×単価・moved＝出入り×L×単価・dL＝|ΔL|×単価）はそのままで単価だけ 0.50%・1.00% に替えた（unit_*・事前登録の文言どおり）。★one と two では単価の意味が違う: one の u は『片道の回転 ½Σ|Δw| あたり』＝売りと買いの各側に u/2、two の u は各側に u。そのため unit_* の one の規則（F1b・F3g・株）は two の規則（G3・G4・P9）の半分の費用しか引いていない。当時の売買1回ごとの費用（Jones 2002 の片道）として読むなら per_side_unit_*（Σ|Δw|×u にそろえた版・事後・検査役の指摘 2026-09-28）を使うこと。置き値の版は mw_momentum の F1a1 年400%・mw_intl の ret_12_1 年150%・mw_momentum_prereg3 の seas_6_10an 年1200% × この角度の単価（英国 0.30%・米国 0.10%）を月割りで費用前の系列から引いた"
   },
   "R4_grid_breadth": {
    "cowles": {
@@ -13191,6 +15259,31 @@
   },
   "R11_program_holm": {
    "holm_p_one": {
+    "A_G4_mom12_10": 0.1956,
+    "A_F3g_12-1_H1_K15": 0.3751,
+    "A_G3_mom12_5": 0.4444,
+    "A_P9_multi_5": 0.5582,
+    "A_F3g_12-1_H1_K30": 0.6611,
+    "A_S3_FABER_L3": 0.9129,
+    "A_F3g_9-0_H1_K30": 1.0,
+    "A_S3_FABER_L2": 1.0,
+    "A_F1b_MG_6_6": 1.0,
+    "C_ret_12_1_tercile": 1.0,
+    "H_HAL_OV15_UK": 1.0,
+    "B_F1a1_top_decile": 1.0,
+    "B_ret_12_1_tercile": 1.0,
+    "B_seas_6_10an_tercile": 1.0,
+    "D_F1b_MG_6_6": 1.0,
+    "D_F3g_12-1_H1_K15": 1.0,
+    "D_F3g_12-1_H1_K30": 1.0,
+    "D_F3g_9-0_H1_K30": 1.0,
+    "D_G3_mom12_5": 1.0,
+    "D_P9_multi_5": 1.0,
+    "D_S3_FABER_L2": 1.0,
+    "D_S3_FABER_L3": 1.0
+   },
+   "pass_0.05": [],
+   "holm_p_one_provisional_if_lse_reading_ok": {
     "D_G3_mom12_5": 0.0,
     "D_F3g_12-1_H1_K30": 0.0013,
     "D_S3_FABER_L3": 0.0016,
@@ -13214,7 +15307,7 @@
     "C_ret_12_1_tercile": 0.43,
     "H_HAL_OV15_UK": 0.8289
    },
-   "pass_0.05": [
+   "pass_0.05_provisional": [
     "D_G3_mom12_5",
     "D_F3g_12-1_H1_K30",
     "D_S3_FABER_L3",
@@ -13224,7 +15317,8 @@
     "B_F1a1_top_decile",
     "D_F3g_12-1_H1_K15",
     "D_F3g_9-0_H1_K30"
-   ]
+   ],
+   "note": "主は止まる条件に触れた B・D の 11 単位を p=1 で数えた（NA_short と同じ扱い・m=22 のまま）。暫定は登録どおりの p"
   },
   "R12_turnover": {
    "A_G3_mom12_5": 2.46,
@@ -13256,7 +15350,7 @@
    "what": "健全性の点検の順番と、止まる条件に触れたのに止まらなかったこと",
    "detail": "事前登録は sanity_checks_before_results（成績の前の点検）と書いたが、この道具は同じ実行の中で 22 単位の成績を計算して画面に出した後に点検した（私は点検の前に A〜H の超過・t を見た）。その点検で LSE の等分とイングランド銀行の指数（Smith-Horne 1871〜1914）の相関が 0.483 で線 0.6 を下回り、登録の『読み込みを疑って止まる』に当たった。止まらずに調べた（post_hoc.sanity_stop_investigation）: 読み込みの誤りを示す明確な形は見つからなかった（1869〜1870 の LSE の等分と Smith-Horne の相関 0.789・n23／大手の鉄道の普通株9つの相関は株どうしの中央 0.32〔最大 0.67〕に対し Smith-Horne とは 0.09〜0.37）が、確証も無い。LSE の株の月の 43% が値動き0（古い気配）で、等分の算術平均は株ごとのノイズで大きく上振れる（1869〜1887 年率 算術 +8.75% 対 対数の平均 −1.74% 対 イングランド銀行 −0.08%）。",
    "affects_grade": true,
-   "how": "B（LSE の株）と D（LSE の業種）の格付けは登録どおりのまま出し、tested の各行に grade_flag を付けた。止まる条件に触れた暫定の格付けとして読むこと。事後の診断（勝者−敗者・幾何で束ねた版・極端値を落とした版・窓を2〜3か月あけた版）を post_hoc に並べた"
+   "how": "★検査役の指摘（2026-09-28）で直した: 相手どうしの形の点検（sanity_shape）を成績の前に回し、止まる条件に触れたデータ（LSE）の単位＝B 3・D 8 の主の格付けを 'PENDING_stop' にした（grade_counts・rule_level_verdicts・R11 はこの主の版）。登録どおりに出した格付け（S 9・A 2・B 8・C 3）は 'grade_provisional_if_lse_reading_ok'・grade_counts_provisional_if_lse_reading_ok・rule_level_verdicts_provisional_if_lse_reading_ok に移した。事後の診断（勝者−敗者・幾何で束ねた版・極端値を落とした版・窓を2〜3か月あけた版）と、検査役が見つけた読み込みの穴（額面の変化・逆戻りしない約10倍の跳ね）を直した版を post_hoc に並べた。初回の実行（直す前）は点検の前に成績を画面に出した＝私は B・D の成績を見た後でこの順番に直した（汚れは消せない）"
   },
   {
    "what": "組を作れる月数の点検（±1）で、4 単位が 2〜4 か月ずれた",
@@ -13302,6 +15396,11 @@
    "what": "実装の直し（規則は不変）",
    "detail": "初回の実行は季節性の規則（stk_seas）に skip の欄が無いため KeyError で止まった（B_ret_12_1 まで計算・保存なし）。欄が無いときは None を渡すように直して最初から実行し直した。excess_stats の β の計算を速くする細工（nx_stack.py と同じ・数値は同一）を入れた",
    "affects_grade": false
+  },
+  {
+   "what": "検査役の指摘（2026-09-28）による直し（fixes 欄）",
+   "detail": "7件を確かめ、7件とも誤りと確認した。主の格付けに効くのは (1) 止まる条件の扱い（B・D を PENDING_stop）だけ。(2)〜(7) は凍結した data 道具を書き換えずに、この道具の中に写した版で直した数字を事後として並べた（tools.measure_next の約束: 格付けは登録の版）。詳細は fixes",
+   "affects_grade": true
   }
  ],
  "post_hoc": {
@@ -15612,15 +17711,2831 @@
    },
    "note": "事後。IMM の dvdpayable（配当の支払いの月）を生の3ファイルから読んだ。価格だけのリターンは配当落ちの月に下がるので、『6〜10年前の同じ暦月のリターン』は配当の月でない月を拾いやすい。(b) は配当を支払いの月（か前月）に置いた総リターンの近似で作り直した版"
   },
+  "fix_p9_exact_ties": {
+   "A_P9_multi_5": {
+    "formation_months_changed": 11,
+    "formation_months": 434,
+    "registered": {
+     "full_net": {
+      "ex_ann": 4.39,
+      "t": 1.89,
+      "cagr_diff": 3.64
+     },
+     "h1_cagr_diff": 3.56,
+     "h2_cagr_diff": 3.72,
+     "roll20_median": 5.19
+    },
+    "exact_ties": {
+     "full_net": {
+      "ex_ann": 4.62,
+      "t": 1.96,
+      "cagr_diff": 3.88
+     },
+     "h1_cagr_diff": 3.98,
+     "h2_cagr_diff": 3.77,
+     "roll20_median": 5.33,
+     "drop_top": {
+      "ex_ann": 4.9,
+      "t": 2.06,
+      "cagr_diff": 4.19
+     }
+    },
+    "grade_exact_ties": "B",
+    "criteria_exact_ties": {
+     "E1_sign": true,
+     "E2_t": false,
+     "E3_halves": true,
+     "E4_holm": false,
+     "E5_sharpe": null,
+     "E7_drop_top": true
+    }
+   },
+   "D_P9_multi_5": {
+    "formation_months_changed": 12,
+    "formation_months": 537,
+    "registered": {
+     "full_net": {
+      "ex_ann": 3.59,
+      "t": 3.48,
+      "cagr_diff": 3.5
+     },
+     "h1_cagr_diff": 4.55,
+     "h2_cagr_diff": 2.48,
+     "roll20_median": null
+    },
+    "exact_ties": {
+     "full_net": {
+      "ex_ann": 3.58,
+      "t": 3.51,
+      "cagr_diff": 3.48
+     },
+     "h1_cagr_diff": 4.61,
+     "h2_cagr_diff": 2.38,
+     "roll20_median": null,
+     "drop_top": {
+      "ex_ann": 2.44,
+      "t": 3.27,
+      "cagr_diff": 2.44
+     }
+    },
+    "grade_exact_ties": "S",
+    "criteria_exact_ties": {
+     "E1_sign": true,
+     "E2_t": true,
+     "E3_halves": true,
+     "E4_holm": true,
+     "E5_sharpe": null,
+     "E7_drop_top": true
+    }
+   }
+  },
+  "fix_s3_dividend_units_aligned": {
+   "panel": "registered_panel",
+   "industry_dividend_yield": {
+    "industry_months": 9229,
+    "with_estimate": 9228,
+    "mean_ann_pct": 6.68,
+    "rule": "R7 と同じ配当の近似（直近4回の配当率×払込額÷12÷p_{t−1}・年30%超は除く）を業種の構成の株で等分に平均。分からない業種の月は足さない（0）"
+   },
+   "rows": {
+    "D_S3_FABER_L2_div_x1.0": {
+     "full_net": {
+      "ex_ann": 4.88,
+      "t": 4.61,
+      "cagr_diff": 5.29
+     },
+     "h1_cagr_diff": 5.74,
+     "h2_cagr_diff": 4.85,
+     "sharpe_h1": [
+      1.531,
+      1.66
+     ],
+     "sharpe_h2": [
+      1.361,
+      1.141
+     ],
+     "mean_exposure_E": 1.27,
+     "drop_top": {
+      "ex_ann": 4.72,
+      "t": 4.41,
+      "cagr_diff": 5.08
+     },
+     "grade": "C",
+     "criteria": {
+      "E1_sign": true,
+      "E2_t": true,
+      "E3_halves": true,
+      "E4_holm": true,
+      "E5_sharpe": false,
+      "E7_drop_top": true
+     }
+    },
+    "D_S3_FABER_L3_div_x1.0": {
+     "full_net": {
+      "ex_ann": 11.92,
+      "t": 5.94,
+      "cagr_diff": 13.08
+     },
+     "h1_cagr_diff": 15.1,
+     "h2_cagr_diff": 11.15,
+     "sharpe_h1": [
+      1.527,
+      1.66
+     ],
+     "sharpe_h2": [
+      1.356,
+      1.141
+     ],
+     "mean_exposure_E": 1.905,
+     "drop_top": {
+      "ex_ann": 11.62,
+      "t": 5.78,
+      "cagr_diff": 12.63
+     },
+     "grade": "C",
+     "criteria": {
+      "E1_sign": true,
+      "E2_t": true,
+      "E3_halves": true,
+      "E4_holm": true,
+      "E5_sharpe": false,
+      "E7_drop_top": true
+     }
+    },
+    "D_S3_FABER_L2_div_x0.5": {
+     "full_net": {
+      "ex_ann": 4.14,
+      "t": 4.24,
+      "cagr_diff": 4.31
+     },
+     "h1_cagr_diff": 4.67,
+     "h2_cagr_diff": 3.96,
+     "sharpe_h1": [
+      1.169,
+      1.183
+     ],
+     "sharpe_h2": [
+      0.896,
+      0.604
+     ],
+     "mean_exposure_E": 1.27,
+     "drop_top": {
+      "ex_ann": 4.01,
+      "t": 4.06,
+      "cagr_diff": 4.14
+     },
+     "grade": "C",
+     "criteria": {
+      "E1_sign": true,
+      "E2_t": true,
+      "E3_halves": true,
+      "E4_holm": true,
+      "E5_sharpe": false,
+      "E7_drop_top": true
+     }
+    },
+    "D_S3_FABER_L3_div_x0.5": {
+     "full_net": {
+      "ex_ann": 9.16,
+      "t": 5.0,
+      "cagr_diff": 9.43
+     },
+     "h1_cagr_diff": 11.24,
+     "h2_cagr_diff": 7.71,
+     "sharpe_h1": [
+      1.165,
+      1.183
+     ],
+     "sharpe_h2": [
+      0.892,
+      0.604
+     ],
+     "mean_exposure_E": 1.905,
+     "drop_top": {
+      "ex_ann": 8.86,
+      "t": 4.85,
+      "cagr_diff": 9.01
+     },
+     "grade": "C",
+     "criteria": {
+      "E1_sign": true,
+      "E2_t": true,
+      "E3_halves": true,
+      "E4_holm": true,
+      "E5_sharpe": false,
+      "E7_drop_top": true
+     }
+    },
+    "D_S3_FABER_L2_div_x0.25": {
+     "full_net": {
+      "ex_ann": 3.78,
+      "t": 3.97,
+      "cagr_diff": 3.84
+     },
+     "h1_cagr_diff": 4.16,
+     "h2_cagr_diff": 3.54,
+     "sharpe_h1": [
+      0.985,
+      0.945
+     ],
+     "sharpe_h2": [
+      0.659,
+      0.335
+     ],
+     "mean_exposure_E": 1.27,
+     "drop_top": {
+      "ex_ann": 3.66,
+      "t": 3.81,
+      "cagr_diff": 3.69
+     },
+     "grade": "S",
+     "criteria": {
+      "E1_sign": true,
+      "E2_t": true,
+      "E3_halves": true,
+      "E4_holm": true,
+      "E5_sharpe": true,
+      "E7_drop_top": true
+     }
+    },
+    "D_S3_FABER_L3_div_x0.25": {
+     "full_net": {
+      "ex_ann": 7.77,
+      "t": 4.42,
+      "cagr_diff": 7.71
+     },
+     "h1_cagr_diff": 9.42,
+     "h2_cagr_diff": 6.08,
+     "sharpe_h1": [
+      0.981,
+      0.945
+     ],
+     "sharpe_h2": [
+      0.656,
+      0.335
+     ],
+     "mean_exposure_E": 1.905,
+     "drop_top": {
+      "ex_ann": 7.48,
+      "t": 4.27,
+      "cagr_diff": 7.31
+     },
+     "grade": "S",
+     "criteria": {
+      "E1_sign": true,
+      "E2_t": true,
+      "E3_halves": true,
+      "E4_holm": true,
+      "E5_sharpe": true,
+      "E7_drop_top": true
+     }
+    },
+    "D_S3_FABER_L2_registered_price_only": {
+     "full_net": {
+      "ex_ann": 3.41,
+      "t": 3.64,
+      "cagr_diff": 3.39
+     },
+     "h1_cagr_diff": 3.66,
+     "h2_cagr_diff": 3.12,
+     "sharpe_h1": [
+      0.799,
+      0.707
+     ],
+     "sharpe_h2": [
+      0.42,
+      0.065
+     ],
+     "note": "倍率 E は配当を足した版と同じ（信号は価格だけ）"
+    },
+    "D_S3_FABER_L3_registered_price_only": {
+     "full_net": {
+      "ex_ann": 6.39,
+      "t": 3.77,
+      "cagr_diff": 6.06
+     },
+     "h1_cagr_diff": 7.67,
+     "h2_cagr_diff": 4.52,
+     "sharpe_h1": [
+      0.795,
+      0.707
+     ],
+     "sharpe_h2": [
+      0.416,
+      0.065
+     ],
+     "note": "倍率 E は配当を足した版と同じ（信号は価格だけ）"
+    }
+   },
+   "copy_reproduces_registered": true,
+   "note": "事後（検査役の指摘 2026-09-28）。登録の D_S3 は株の脚が価格だけ（配当なし）で現金の脚 uk_cash が総リターンの金利＝単位が混ざる。信号は登録どおり価格だけの業種指数、保有の月だけ配当の近似を戦略と相手（業種の等分）の両側に足した。x0.5・x0.25 は配当の近似が過大な場合の感度"
+  },
+  "fix_h_dividend_sensitivity": {
+   "rows": {
+    "registered_price_only": {
+     "full_net": {
+      "ex_ann": -0.23,
+      "t": -0.95,
+      "cagr_diff": -0.45
+     },
+     "h1_cagr_diff": -0.74,
+     "h2_cagr_diff": -0.15,
+     "sharpe_h1": [
+      -0.216,
+      -0.215
+     ],
+     "sharpe_h2": [
+      -0.072,
+      -0.098
+     ],
+     "grade": "C（登録）"
+    },
+    "const_dy_1pct": {
+     "full_net": {
+      "ex_ann": 0.02,
+      "t": 0.1,
+      "cagr_diff": -0.2
+     },
+     "h1_cagr_diff": -0.5,
+     "h2_cagr_diff": 0.1,
+     "sharpe_h1": [
+      -0.127,
+      -0.132
+     ],
+     "sharpe_h2": [
+      0.069,
+      0.051
+     ],
+     "months": 2462,
+     "grade": "C",
+     "criteria": {
+      "E1_sign": false,
+      "E2_t": false,
+      "E3_halves": false,
+      "E4_holm": false,
+      "E5_sharpe": true,
+      "E7_drop_top": null
+     }
+    },
+    "const_dy_2pct": {
+     "full_net": {
+      "ex_ann": 0.27,
+      "t": 1.15,
+      "cagr_diff": 0.06
+     },
+     "h1_cagr_diff": -0.25,
+     "h2_cagr_diff": 0.37,
+     "sharpe_h1": [
+      -0.038,
+      -0.048
+     ],
+     "sharpe_h2": [
+      0.209,
+      0.2
+     ],
+     "months": 2462,
+     "grade": "B",
+     "criteria": {
+      "E1_sign": true,
+      "E2_t": false,
+      "E3_halves": false,
+      "E4_holm": false,
+      "E5_sharpe": true,
+      "E7_drop_top": null
+     }
+    },
+    "const_dy_3pct": {
+     "full_net": {
+      "ex_ann": 0.52,
+      "t": 2.19,
+      "cagr_diff": 0.32
+     },
+     "h1_cagr_diff": 0.01,
+     "h2_cagr_diff": 0.63,
+     "sharpe_h1": [
+      0.05,
+      0.036
+     ],
+     "sharpe_h2": [
+      0.35,
+      0.348
+     ],
+     "months": 2462,
+     "grade": "S",
+     "criteria": {
+      "E1_sign": true,
+      "E2_t": true,
+      "E3_halves": true,
+      "E4_holm": true,
+      "E5_sharpe": true,
+      "E7_drop_top": null
+     }
+    },
+    "const_dy_4pct": {
+     "full_net": {
+      "ex_ann": 0.77,
+      "t": 3.24,
+      "cagr_diff": 0.58
+     },
+     "h1_cagr_diff": 0.27,
+     "h2_cagr_diff": 0.91,
+     "sharpe_h1": [
+      0.139,
+      0.12
+     ],
+     "sharpe_h2": [
+      0.49,
+      0.497
+     ],
+     "months": 2462,
+     "grade": "C",
+     "criteria": {
+      "E1_sign": true,
+      "E2_t": true,
+      "E3_halves": true,
+      "E4_holm": true,
+      "E5_sharpe": false,
+      "E7_drop_top": null
+     }
+    },
+    "const_dy_5pct": {
+     "full_net": {
+      "ex_ann": 1.02,
+      "t": 4.28,
+      "cagr_diff": 0.86
+     },
+     "h1_cagr_diff": 0.53,
+     "h2_cagr_diff": 1.19,
+     "sharpe_h1": [
+      0.227,
+      0.204
+     ],
+     "sharpe_h2": [
+      0.63,
+      0.646
+     ],
+     "months": 2462,
+     "grade": "C",
+     "criteria": {
+      "E1_sign": true,
+      "E2_t": true,
+      "E3_halves": true,
+      "E4_holm": true,
+      "E5_sharpe": false,
+      "E7_drop_top": null
+     }
+    },
+    "lse_ew_dy_proxy_1871_1907": {
+     "full_net": {
+      "ex_ann": 1.06,
+      "t": 2.29,
+      "cagr_diff": 0.9
+     },
+     "h1_cagr_diff": 0.42,
+     "h2_cagr_diff": 1.38,
+     "sharpe_h1": [
+      0.4,
+      0.466
+     ],
+     "sharpe_h2": [
+      0.75,
+      0.778
+     ],
+     "months": 444,
+     "grade": "C",
+     "criteria": {
+      "E1_sign": true,
+      "E2_t": true,
+      "E3_halves": true,
+      "E4_holm": true,
+      "E5_sharpe": false,
+      "E7_drop_top": null
+     },
+     "dy_mean_ann_pct": 6.25,
+     "note": "LSE の等分の配当の近似（月ごと・年30%超は除く）を指数に足した。配当の近似は LSE の区間1 だけ＝1871-01〜1907-12（健全性の点検の『1871〜1914』の 444 か月と同じ月）"
+    },
+    "price_only_1871_1907": {
+     "full_net": {
+      "ex_ann": -0.5,
+      "t": -1.07,
+      "cagr_diff": -0.73
+     }
+    }
+   },
+   "breakeven_dy_pct": {
+    "arith_excess": 0.92,
+    "geometric_diff": 1.8,
+    "note": "一定の配当利回りを両側に足したとき、費用後の算術の超過・幾何の年率差が 0 を超える配当（%/年・excess_stats の丸め 0.01 の範囲）"
+   },
+   "note": "事後（検査役の指摘 2026-09-28）。登録の H は価格だけの指数を 1.5 倍に持ち、借入には短期金利＋0.5% を丸ごと払う＝冬の月ごとに 0.5×配当利回り/12 だけ過小（年換算 0.25×dy）。一定の配当利回りを戦略と相手の両側に足した感度。格付けは登録の C のまま（E5 は配当 4% 以上で不合格、3% なら合格）"
+  },
+  "fix_lse_reading": {
+   "copy_reproduces_registered_panel": true,
+   "par_change_months_in_registered_panel": {
+    "n": 1717,
+    "mean_monthly_ret": 0.2901,
+    "n_gt300": 31,
+    "n_lt_minus80": 18,
+    "examples": [
+     {
+      "id": "44374",
+      "name": "Arthur Guinness & Co. L. Ord",
+      "month": 188705,
+      "ret": 9.429,
+      "par": [
+       10.0,
+       100.0
+      ],
+      "price": [
+       26.37,
+       275.0
+      ]
+     },
+     {
+      "id": "50604",
+      "name": "Wolverhampton Gas",
+      "month": 188211,
+      "ret": 9.389,
+      "par": [
+       10.0,
+       100.0
+      ],
+      "price": [
+       18.0,
+       187.0
+      ]
+     },
+     {
+      "id": "32176",
+      "name": "Hull, Barnsley, and West Riding",
+      "month": 188206,
+      "ret": 9.195,
+      "par": [
+       2.0,
+       10.0
+      ],
+      "price": [
+       0.87,
+       8.87
+      ]
+     },
+     {
+      "id": "43977",
+      "name": "Gas Light and Coke, A stock",
+      "month": 187606,
+      "ret": 9.125,
+      "par": [
+       10.0,
+       100.0
+      ],
+      "price": [
+       20.0,
+       202.5
+      ]
+     },
+     {
+      "id": "33711",
+      "name": "Oude and Rohilkund stock ",
+      "month": 187302,
+      "ret": 9.095,
+      "par": [
+       10.0,
+       100.0
+      ],
+      "price": [
+       10.5,
+       106.0
+      ]
+     }
+    ]
+   },
+   "registered_panel_extremes": {
+    "n_gt300": 129,
+    "n_gt500": 68
+   },
+   "variants": {
+    "par": {
+     "par": true,
+     "jump": null,
+     "jump_note": null,
+     "counts": {
+      "drop_reversal_300pct": 367,
+      "drop_gt_990pct": 61,
+      "drop_jump": 0,
+      "drop_par_change": 1754
+     },
+     "stock_months": 689258,
+     "n_gt300": 106,
+     "n_gt500": 54,
+     "sanity_corr_lse_ew_vs_boe_1871_1914": {
+      "corr": 0.4973,
+      "n": 444,
+      "threshold": 0.6,
+      "ok": false
+     },
+     "lse_ew_arith_cagr_pct": {
+      "186902-188712": 5.42,
+      "188801-190712": 2.15,
+      "191502-192912": 5.19
+     },
+     "rows": {
+      "B_F1a1_top_decile": {
+       "full_net": {
+        "ex_ann": 4.04,
+        "t": 3.55,
+        "cagr_diff": 3.83
+       },
+       "h1_cagr_diff": 2.2,
+       "h2_cagr_diff": 5.46,
+       "drop_top": {
+        "excluded": "31186",
+        "net_vs_b": {
+         "ex_ann": 3.7,
+         "t": 3.38,
+         "cagr_diff": 3.49
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0006,
+       "registered_full_net": {
+        "ex_ann": 4.13,
+        "t": 3.32,
+        "cagr_diff": 3.89
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": -0.77,
+         "t": -0.31,
+         "cagr_diff": 0.06
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": 4.82,
+         "t": 2.43,
+         "cagr_diff": 3.79
+        }
+       }
+      },
+      "B_ret_12_1_tercile": {
+       "full_net": {
+        "ex_ann": 1.2,
+        "t": 2.13,
+        "cagr_diff": 1.22
+       },
+       "h1_cagr_diff": 0.18,
+       "h2_cagr_diff": 2.25,
+       "drop_top": {
+        "excluded": "31186",
+        "net_vs_b": {
+         "ex_ann": 1.1,
+         "t": 1.96,
+         "cagr_diff": 1.12
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0166,
+       "registered_full_net": {
+        "ex_ann": 0.95,
+        "t": 1.61,
+        "cagr_diff": 0.95
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 4.46,
+         "t": 4.04,
+         "cagr_diff": 4.77
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -3.25,
+         "t": -4.82,
+         "cagr_diff": -3.52
+        }
+       }
+      },
+      "B_seas_6_10an_tercile": {
+       "full_net": {
+        "ex_ann": 1.5,
+        "t": 2.43,
+        "cagr_diff": 1.48
+       },
+       "h1_cagr_diff": 1.09,
+       "h2_cagr_diff": 1.87,
+       "drop_top": {
+        "excluded": "48310",
+        "net_vs_b": {
+         "ex_ann": 1.22,
+         "t": 2.34,
+         "cagr_diff": 1.23
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0151,
+       "registered_full_net": {
+        "ex_ann": 1.12,
+        "t": 1.71,
+        "cagr_diff": 1.09
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 8.33,
+         "t": 10.83,
+         "cagr_diff": 8.47
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -6.85,
+         "t": -14.54,
+         "cagr_diff": -6.82
+        }
+       }
+      },
+      "D_G3_mom12_5": {
+       "full_net": {
+        "ex_ann": 4.32,
+        "t": 4.19,
+        "cagr_diff": 4.3
+       },
+       "h1_cagr_diff": 3.42,
+       "h2_cagr_diff": 5.18,
+       "drop_top": {
+        "excluded": "TRUSTS",
+        "net_vs_b": {
+         "ex_ann": 4.02,
+         "t": 4.02,
+         "cagr_diff": 3.98
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0001,
+       "registered_full_net": {
+        "ex_ann": 5.42,
+        "t": 4.78,
+        "cagr_diff": 5.38
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 7.02,
+         "t": 4.17,
+         "cagr_diff": 7.19
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -2.69,
+         "t": -2.6,
+         "cagr_diff": -2.87
+        }
+       }
+      },
+      "D_P9_multi_5": {
+       "full_net": {
+        "ex_ann": 3.0,
+        "t": 3.22,
+        "cagr_diff": 2.94
+       },
+       "h1_cagr_diff": 3.42,
+       "h2_cagr_diff": 2.46,
+       "drop_top": {
+        "excluded": "TRUSTS",
+        "net_vs_b": {
+         "ex_ann": 2.58,
+         "t": 3.52,
+         "cagr_diff": 2.57
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0031,
+       "registered_full_net": {
+        "ex_ann": 3.59,
+        "t": 3.48,
+        "cagr_diff": 3.5
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 4.76,
+         "t": 3.63,
+         "cagr_diff": 4.84
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -1.77,
+         "t": -2.46,
+         "cagr_diff": -1.89
+        }
+       }
+      },
+      "D_F1b_MG_6_6": {
+       "full_net": {
+        "ex_ann": 3.98,
+        "t": 3.23,
+        "cagr_diff": 3.73
+       },
+       "h1_cagr_diff": 3.26,
+       "h2_cagr_diff": 4.2,
+       "drop_top": {
+        "excluded": "MINES",
+        "net_vs_b": {
+         "ex_ann": 2.99,
+         "t": 2.36,
+         "cagr_diff": 2.9
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0031,
+       "registered_full_net": {
+        "ex_ann": 4.32,
+        "t": 3.54,
+        "cagr_diff": 4.11
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 5.16,
+         "t": 2.91,
+         "cagr_diff": 5.3
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -1.18,
+         "t": -1.18,
+         "cagr_diff": -1.56
+        }
+       }
+      },
+      "D_F3g_12-1_H1_K15": {
+       "full_net": {
+        "ex_ann": 5.78,
+        "t": 2.82,
+        "cagr_diff": 5.17
+       },
+       "h1_cagr_diff": 4.09,
+       "h2_cagr_diff": 6.26,
+       "drop_top": {
+        "excluded": "TRUSTS",
+        "net_vs_b": {
+         "ex_ann": 4.67,
+         "t": 2.75,
+         "cagr_diff": 4.27
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0035,
+       "registered_full_net": {
+        "ex_ann": 6.4,
+        "t": 3.23,
+        "cagr_diff": 5.9
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 8.77,
+         "t": 3.28,
+         "cagr_diff": 8.76
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -2.99,
+         "t": -1.95,
+         "cagr_diff": -3.58
+        }
+       }
+      },
+      "D_F3g_12-1_H1_K30": {
+       "full_net": {
+        "ex_ann": 3.15,
+        "t": 3.14,
+        "cagr_diff": 3.07
+       },
+       "h1_cagr_diff": 2.64,
+       "h2_cagr_diff": 3.5,
+       "drop_top": {
+        "excluded": "TRUSTS",
+        "net_vs_b": {
+         "ex_ann": 2.89,
+         "t": 3.31,
+         "cagr_diff": 2.86
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0031,
+       "registered_full_net": {
+        "ex_ann": 4.11,
+        "t": 3.86,
+        "cagr_diff": 4.04
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 5.87,
+         "t": 3.75,
+         "cagr_diff": 5.97
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -2.72,
+         "t": -3.06,
+         "cagr_diff": -2.9
+        }
+       }
+      },
+      "D_F3g_9-0_H1_K30": {
+       "full_net": {
+        "ex_ann": 2.9,
+        "t": 2.92,
+        "cagr_diff": 2.78
+       },
+       "h1_cagr_diff": 2.39,
+       "h2_cagr_diff": 3.18,
+       "drop_top": {
+        "excluded": "TRUSTS",
+        "net_vs_b": {
+         "ex_ann": 2.76,
+         "t": 3.22,
+         "cagr_diff": 2.7
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0035,
+       "registered_full_net": {
+        "ex_ann": 3.6,
+        "t": 3.11,
+        "cagr_diff": 3.48
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 4.13,
+         "t": 2.75,
+         "cagr_diff": 4.25
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -1.24,
+         "t": -1.27,
+         "cagr_diff": -1.47
+        }
+       }
+      },
+      "D_S3_FABER_L2": {
+       "full_net": {
+        "ex_ann": 2.99,
+        "t": 3.53,
+        "cagr_diff": 2.95
+       },
+       "h1_cagr_diff": 2.77,
+       "h2_cagr_diff": 3.13,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 2.91,
+         "t": 3.21,
+         "cagr_diff": 2.84
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": true,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0015,
+       "registered_full_net": {
+        "ex_ann": 3.41,
+        "t": 3.64,
+        "cagr_diff": 3.39
+       },
+       "winners_minus_losers": null
+      },
+      "D_S3_FABER_L3": {
+       "full_net": {
+        "ex_ann": 5.18,
+        "t": 3.33,
+        "cagr_diff": 4.79
+       },
+       "h1_cagr_diff": 5.05,
+       "h2_cagr_diff": 4.52,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 5.07,
+         "t": 3.08,
+         "cagr_diff": 4.59
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": true,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0026,
+       "registered_full_net": {
+        "ex_ann": 6.39,
+        "t": 3.77,
+        "cagr_diff": 6.06
+       },
+       "winners_minus_losers": null
+      }
+     },
+     "grade_counts_B_D": {
+      "S": 11
+     }
+    },
+    "gt300": {
+     "par": false,
+     "jump": "gt300",
+     "jump_note": "株の月のリターン > +300% を欠測（検査役の再計算と同じ・両側）",
+     "counts": {
+      "drop_reversal_300pct": 411,
+      "drop_gt_990pct": 69,
+      "drop_jump": 129
+     },
+     "stock_months": 690831,
+     "n_gt300": 0,
+     "n_gt500": 0,
+     "sanity_corr_lse_ew_vs_boe_1871_1914": {
+      "corr": 0.4997,
+      "n": 444,
+      "threshold": 0.6,
+      "ok": false
+     },
+     "lse_ew_arith_cagr_pct": {
+      "186902-188712": 5.23,
+      "188801-190712": 1.38,
+      "191502-192912": 4.74
+     },
+     "rows": {
+      "B_F1a1_top_decile": {
+       "full_net": {
+        "ex_ann": 4.15,
+        "t": 3.89,
+        "cagr_diff": 3.95
+       },
+       "h1_cagr_diff": 2.52,
+       "h2_cagr_diff": 5.39,
+       "drop_top": {
+        "excluded": "49009",
+        "net_vs_b": {
+         "ex_ann": 4.02,
+         "t": 3.79,
+         "cagr_diff": 3.81
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0002,
+       "registered_full_net": {
+        "ex_ann": 4.13,
+        "t": 3.32,
+        "cagr_diff": 3.89
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 0.29,
+         "t": 0.13,
+         "cagr_diff": 0.98
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": 3.88,
+         "t": 2.13,
+         "cagr_diff": 2.99
+        }
+       }
+      },
+      "B_ret_12_1_tercile": {
+       "full_net": {
+        "ex_ann": 1.47,
+        "t": 2.97,
+        "cagr_diff": 1.49
+       },
+       "h1_cagr_diff": 0.45,
+       "h2_cagr_diff": 2.52,
+       "drop_top": {
+        "excluded": "45162",
+        "net_vs_b": {
+         "ex_ann": 1.43,
+         "t": 2.91,
+         "cagr_diff": 1.45
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0015,
+       "registered_full_net": {
+        "ex_ann": 0.95,
+        "t": 1.61,
+        "cagr_diff": 0.95
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 4.63,
+         "t": 4.73,
+         "cagr_diff": 4.91
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -3.16,
+         "t": -5.04,
+         "cagr_diff": -3.39
+        }
+       }
+      },
+      "B_seas_6_10an_tercile": {
+       "full_net": {
+        "ex_ann": 1.62,
+        "t": 3.22,
+        "cagr_diff": 1.64
+       },
+       "h1_cagr_diff": 1.18,
+       "h2_cagr_diff": 2.1,
+       "drop_top": {
+        "excluded": "50384",
+        "net_vs_b": {
+         "ex_ann": 1.53,
+         "t": 3.11,
+         "cagr_diff": 1.55
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0013,
+       "registered_full_net": {
+        "ex_ann": 1.12,
+        "t": 1.71,
+        "cagr_diff": 1.09
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 8.35,
+         "t": 12.34,
+         "cagr_diff": 8.48
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -6.75,
+         "t": -15.15,
+         "cagr_diff": -6.68
+        }
+       }
+      },
+      "D_G3_mom12_5": {
+       "full_net": {
+        "ex_ann": 3.39,
+        "t": 5.11,
+        "cagr_diff": 3.41
+       },
+       "h1_cagr_diff": 2.4,
+       "h2_cagr_diff": 4.43,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 3.12,
+         "t": 4.82,
+         "cagr_diff": 3.13
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0,
+       "registered_full_net": {
+        "ex_ann": 5.42,
+        "t": 4.78,
+        "cagr_diff": 5.38
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 6.65,
+         "t": 5.17,
+         "cagr_diff": 6.81
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -3.25,
+         "t": -3.76,
+         "cagr_diff": -3.38
+        }
+       }
+      },
+      "D_P9_multi_5": {
+       "full_net": {
+        "ex_ann": 2.46,
+        "t": 3.72,
+        "cagr_diff": 2.47
+       },
+       "h1_cagr_diff": 3.06,
+       "h2_cagr_diff": 1.88,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 2.36,
+         "t": 3.6,
+         "cagr_diff": 2.35
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0005,
+       "registered_full_net": {
+        "ex_ann": 3.59,
+        "t": 3.48,
+        "cagr_diff": 3.5
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 4.41,
+         "t": 3.98,
+         "cagr_diff": 4.54
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -1.95,
+         "t": -2.69,
+         "cagr_diff": -2.06
+        }
+       }
+      },
+      "D_F1b_MG_6_6": {
+       "full_net": {
+        "ex_ann": 3.48,
+        "t": 3.09,
+        "cagr_diff": 3.28
+       },
+       "h1_cagr_diff": 2.84,
+       "h2_cagr_diff": 3.72,
+       "drop_top": {
+        "excluded": "MINES",
+        "net_vs_b": {
+         "ex_ann": 2.76,
+         "t": 2.41,
+         "cagr_diff": 2.73
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0014,
+       "registered_full_net": {
+        "ex_ann": 4.32,
+        "t": 3.54,
+        "cagr_diff": 4.11
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 4.99,
+         "t": 3.05,
+         "cagr_diff": 5.17
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -1.51,
+         "t": -1.44,
+         "cagr_diff": -1.89
+        }
+       }
+      },
+      "D_F3g_12-1_H1_K15": {
+       "full_net": {
+        "ex_ann": 5.6,
+        "t": 4.11,
+        "cagr_diff": 5.43
+       },
+       "h1_cagr_diff": 5.49,
+       "h2_cagr_diff": 5.37,
+       "drop_top": {
+        "excluded": "TEA_RUBBER",
+        "net_vs_b": {
+         "ex_ann": 4.29,
+         "t": 3.39,
+         "cagr_diff": 4.07
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0001,
+       "registered_full_net": {
+        "ex_ann": 6.4,
+        "t": 3.23,
+        "cagr_diff": 5.9
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 10.37,
+         "t": 5.31,
+         "cagr_diff": 10.68
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -4.77,
+         "t": -3.78,
+         "cagr_diff": -5.24
+        }
+       }
+      },
+      "D_F3g_12-1_H1_K30": {
+       "full_net": {
+        "ex_ann": 3.19,
+        "t": 4.71,
+        "cagr_diff": 3.2
+       },
+       "h1_cagr_diff": 3.23,
+       "h2_cagr_diff": 3.17,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 2.78,
+         "t": 4.08,
+         "cagr_diff": 2.77
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0,
+       "registered_full_net": {
+        "ex_ann": 4.11,
+        "t": 3.86,
+        "cagr_diff": 4.04
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 6.44,
+         "t": 5.33,
+         "cagr_diff": 6.61
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -3.25,
+         "t": -4.08,
+         "cagr_diff": -3.4
+        }
+       }
+      },
+      "D_F3g_9-0_H1_K30": {
+       "full_net": {
+        "ex_ann": 2.51,
+        "t": 3.31,
+        "cagr_diff": 2.47
+       },
+       "h1_cagr_diff": 2.53,
+       "h2_cagr_diff": 2.41,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 1.95,
+         "t": 2.45,
+         "cagr_diff": 1.88
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0014,
+       "registered_full_net": {
+        "ex_ann": 3.6,
+        "t": 3.11,
+        "cagr_diff": 3.48
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 4.58,
+         "t": 3.53,
+         "cagr_diff": 4.7
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -2.07,
+         "t": -2.53,
+         "cagr_diff": -2.23
+        }
+       }
+      },
+      "D_S3_FABER_L2": {
+       "full_net": {
+        "ex_ann": 2.64,
+        "t": 3.47,
+        "cagr_diff": 2.61
+       },
+       "h1_cagr_diff": 2.6,
+       "h2_cagr_diff": 2.61,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 2.58,
+         "t": 3.11,
+         "cagr_diff": 2.52
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": true,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.001,
+       "registered_full_net": {
+        "ex_ann": 3.41,
+        "t": 3.64,
+        "cagr_diff": 3.39
+       },
+       "winners_minus_losers": null
+      },
+      "D_S3_FABER_L3": {
+       "full_net": {
+        "ex_ann": 4.21,
+        "t": 3.2,
+        "cagr_diff": 3.86
+       },
+       "h1_cagr_diff": 4.26,
+       "h2_cagr_diff": 3.47,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 4.09,
+         "t": 2.9,
+         "cagr_diff": 3.66
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": true,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0014,
+       "registered_full_net": {
+        "ex_ann": 6.39,
+        "t": 3.77,
+        "cagr_diff": 6.06
+       },
+       "winners_minus_losers": null
+      }
+     },
+     "grade_counts_B_D": {
+      "S": 11
+     }
+    },
+    "par_x10sig": {
+     "par": true,
+     "jump": "x10sig",
+     "jump_note": "株の月の値の比が 約10倍・約1/10・約100倍・約1/100（±35%）を欠測（単位の変わり目の形だけ）",
+     "counts": {
+      "drop_reversal_300pct": 367,
+      "drop_gt_990pct": 61,
+      "drop_jump": 110,
+      "drop_par_change": 1754
+     },
+     "stock_months": 689148,
+     "n_gt300": 69,
+     "n_gt500": 17,
+     "sanity_corr_lse_ew_vs_boe_1871_1914": {
+      "corr": 0.5058,
+      "n": 444,
+      "threshold": 0.6,
+      "ok": false
+     },
+     "lse_ew_arith_cagr_pct": {
+      "186902-188712": 4.41,
+      "188801-190712": 1.9,
+      "191502-192912": 5.03
+     },
+     "rows": {
+      "B_F1a1_top_decile": {
+       "full_net": {
+        "ex_ann": 4.08,
+        "t": 3.77,
+        "cagr_diff": 3.88
+       },
+       "h1_cagr_diff": 2.23,
+       "h2_cagr_diff": 5.55,
+       "drop_top": {
+        "excluded": "49009",
+        "net_vs_b": {
+         "ex_ann": 3.94,
+         "t": 3.67,
+         "cagr_diff": 3.73
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0002,
+       "registered_full_net": {
+        "ex_ann": 4.13,
+        "t": 3.32,
+        "cagr_diff": 3.89
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": -0.44,
+         "t": -0.18,
+         "cagr_diff": 0.39
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": 4.54,
+         "t": 2.17,
+         "cagr_diff": 3.52
+        }
+       }
+      },
+      "B_ret_12_1_tercile": {
+       "full_net": {
+        "ex_ann": 1.41,
+        "t": 2.66,
+        "cagr_diff": 1.43
+       },
+       "h1_cagr_diff": 0.43,
+       "h2_cagr_diff": 2.44,
+       "drop_top": {
+        "excluded": "40109",
+        "net_vs_b": {
+         "ex_ann": 1.35,
+         "t": 2.57,
+         "cagr_diff": 1.37
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0045,
+       "registered_full_net": {
+        "ex_ann": 0.95,
+        "t": 1.61,
+        "cagr_diff": 0.95
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 4.45,
+         "t": 4.02,
+         "cagr_diff": 4.75
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -3.03,
+         "t": -4.34,
+         "cagr_diff": -3.28
+        }
+       }
+      },
+      "B_seas_6_10an_tercile": {
+       "full_net": {
+        "ex_ann": 1.46,
+        "t": 2.84,
+        "cagr_diff": 1.49
+       },
+       "h1_cagr_diff": 1.11,
+       "h2_cagr_diff": 1.86,
+       "drop_top": {
+        "excluded": "50384",
+        "net_vs_b": {
+         "ex_ann": 1.33,
+         "t": 2.64,
+         "cagr_diff": 1.36
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0045,
+       "registered_full_net": {
+        "ex_ann": 1.12,
+        "t": 1.71,
+        "cagr_diff": 1.09
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 7.98,
+         "t": 11.11,
+         "cagr_diff": 8.13
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -6.54,
+         "t": -13.09,
+         "cagr_diff": -6.48
+        }
+       }
+      },
+      "D_G3_mom12_5": {
+       "full_net": {
+        "ex_ann": 3.63,
+        "t": 4.81,
+        "cagr_diff": 3.66
+       },
+       "h1_cagr_diff": 2.63,
+       "h2_cagr_diff": 4.69,
+       "drop_top": {
+        "excluded": "MINES",
+        "net_vs_b": {
+         "ex_ann": 3.2,
+         "t": 4.23,
+         "cagr_diff": 3.28
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0,
+       "registered_full_net": {
+        "ex_ann": 5.42,
+        "t": 4.78,
+        "cagr_diff": 5.38
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 6.95,
+         "t": 5.23,
+         "cagr_diff": 7.11
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -3.3,
+         "t": -4.13,
+         "cagr_diff": -3.43
+        }
+       }
+      },
+      "D_P9_multi_5": {
+       "full_net": {
+        "ex_ann": 2.43,
+        "t": 3.57,
+        "cagr_diff": 2.43
+       },
+       "h1_cagr_diff": 2.93,
+       "h2_cagr_diff": 1.93,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 2.35,
+         "t": 3.47,
+         "cagr_diff": 2.33
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0011,
+       "registered_full_net": {
+        "ex_ann": 3.59,
+        "t": 3.48,
+        "cagr_diff": 3.5
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 4.49,
+         "t": 4.02,
+         "cagr_diff": 4.6
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -2.05,
+         "t": -3.05,
+         "cagr_diff": -2.15
+        }
+       }
+      },
+      "D_F1b_MG_6_6": {
+       "full_net": {
+        "ex_ann": 3.7,
+        "t": 3.28,
+        "cagr_diff": 3.51
+       },
+       "h1_cagr_diff": 3.15,
+       "h2_cagr_diff": 3.86,
+       "drop_top": {
+        "excluded": "MINES",
+        "net_vs_b": {
+         "ex_ann": 2.94,
+         "t": 2.46,
+         "cagr_diff": 2.9
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0021,
+       "registered_full_net": {
+        "ex_ann": 4.32,
+        "t": 3.54,
+        "cagr_diff": 4.11
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 4.69,
+         "t": 2.83,
+         "cagr_diff": 4.89
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -0.99,
+         "t": -0.93,
+         "cagr_diff": -1.39
+        }
+       }
+      },
+      "D_F3g_12-1_H1_K15": {
+       "full_net": {
+        "ex_ann": 4.7,
+        "t": 3.13,
+        "cagr_diff": 4.44
+       },
+       "h1_cagr_diff": 3.97,
+       "h2_cagr_diff": 4.91,
+       "drop_top": {
+        "excluded": "MINES",
+        "net_vs_b": {
+         "ex_ann": 4.47,
+         "t": 3.51,
+         "cagr_diff": 4.42
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0022,
+       "registered_full_net": {
+        "ex_ann": 6.4,
+        "t": 3.23,
+        "cagr_diff": 5.9
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 8.6,
+         "t": 3.93,
+         "cagr_diff": 8.87
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -3.91,
+         "t": -2.88,
+         "cagr_diff": -4.43
+        }
+       }
+      },
+      "D_F3g_12-1_H1_K30": {
+       "full_net": {
+        "ex_ann": 2.96,
+        "t": 4.21,
+        "cagr_diff": 2.95
+       },
+       "h1_cagr_diff": 2.82,
+       "h2_cagr_diff": 3.08,
+       "drop_top": {
+        "excluded": "MINES",
+        "net_vs_b": {
+         "ex_ann": 2.86,
+         "t": 4.03,
+         "cagr_diff": 2.92
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0001,
+       "registered_full_net": {
+        "ex_ann": 4.11,
+        "t": 3.86,
+        "cagr_diff": 4.04
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 5.72,
+         "t": 4.42,
+         "cagr_diff": 5.89
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -2.76,
+         "t": -3.28,
+         "cagr_diff": -2.93
+        }
+       }
+      },
+      "D_F3g_9-0_H1_K30": {
+       "full_net": {
+        "ex_ann": 2.43,
+        "t": 3.18,
+        "cagr_diff": 2.37
+       },
+       "h1_cagr_diff": 2.05,
+       "h2_cagr_diff": 2.7,
+       "drop_top": {
+        "excluded": "TEXTILES",
+        "net_vs_b": {
+         "ex_ann": 1.94,
+         "t": 2.67,
+         "cagr_diff": 1.86
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0022,
+       "registered_full_net": {
+        "ex_ann": 3.6,
+        "t": 3.11,
+        "cagr_diff": 3.48
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 3.56,
+         "t": 2.6,
+         "cagr_diff": 3.73
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -1.14,
+         "t": -1.2,
+         "cagr_diff": -1.36
+        }
+       }
+      },
+      "D_S3_FABER_L2": {
+       "full_net": {
+        "ex_ann": 2.68,
+        "t": 3.45,
+        "cagr_diff": 2.64
+       },
+       "h1_cagr_diff": 2.44,
+       "h2_cagr_diff": 2.84,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 2.58,
+         "t": 3.1,
+         "cagr_diff": 2.51
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": true,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0014,
+       "registered_full_net": {
+        "ex_ann": 3.41,
+        "t": 3.64,
+        "cagr_diff": 3.39
+       },
+       "winners_minus_losers": null
+      },
+      "D_S3_FABER_L3": {
+       "full_net": {
+        "ex_ann": 4.37,
+        "t": 3.15,
+        "cagr_diff": 3.98
+       },
+       "h1_cagr_diff": 3.99,
+       "h2_cagr_diff": 3.97,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 4.21,
+         "t": 2.87,
+         "cagr_diff": 3.76
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": true,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0022,
+       "registered_full_net": {
+        "ex_ann": 6.39,
+        "t": 3.77,
+        "cagr_diff": 6.06
+       },
+       "winners_minus_losers": null
+      }
+     },
+     "grade_counts_B_D": {
+      "S": 11
+     }
+    },
+    "par_x5": {
+     "par": true,
+     "jump": "x5",
+     "jump_note": "株の月の値の比が ×5 以上か ×1/5 以下を欠測（逆戻りしない跳ね・本物の暴落も落とす粗い版）",
+     "counts": {
+      "drop_reversal_300pct": 367,
+      "drop_gt_990pct": 61,
+      "drop_jump": 249,
+      "drop_par_change": 1754
+     },
+     "stock_months": 689009,
+     "n_gt300": 35,
+     "n_gt500": 0,
+     "sanity_corr_lse_ew_vs_boe_1871_1914": {
+      "corr": 0.5117,
+      "n": 444,
+      "threshold": 0.6,
+      "ok": false
+     },
+     "lse_ew_arith_cagr_pct": {
+      "186902-188712": 3.83,
+      "188801-190712": 1.93,
+      "191502-192912": 4.97
+     },
+     "rows": {
+      "B_F1a1_top_decile": {
+       "full_net": {
+        "ex_ann": 4.47,
+        "t": 4.22,
+        "cagr_diff": 4.3
+       },
+       "h1_cagr_diff": 3.04,
+       "h2_cagr_diff": 5.57,
+       "drop_top": {
+        "excluded": "49009",
+        "net_vs_b": {
+         "ex_ann": 4.34,
+         "t": 4.12,
+         "cagr_diff": 4.16
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0,
+       "registered_full_net": {
+        "ex_ann": 4.13,
+        "t": 3.32,
+        "cagr_diff": 3.89
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 1.0,
+         "t": 0.42,
+         "cagr_diff": 1.82
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": 3.49,
+         "t": 1.79,
+         "cagr_diff": 2.51
+        }
+       }
+      },
+      "B_ret_12_1_tercile": {
+       "full_net": {
+        "ex_ann": 1.61,
+        "t": 3.18,
+        "cagr_diff": 1.64
+       },
+       "h1_cagr_diff": 0.8,
+       "h2_cagr_diff": 2.48,
+       "drop_top": {
+        "excluded": "45162",
+        "net_vs_b": {
+         "ex_ann": 1.57,
+         "t": 3.12,
+         "cagr_diff": 1.6
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0015,
+       "registered_full_net": {
+        "ex_ann": 0.95,
+        "t": 1.61,
+        "cagr_diff": 0.95
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 4.87,
+         "t": 4.64,
+         "cagr_diff": 5.16
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -3.25,
+         "t": -5.01,
+         "cagr_diff": -3.48
+        }
+       }
+      },
+      "B_seas_6_10an_tercile": {
+       "full_net": {
+        "ex_ann": 1.54,
+        "t": 3.05,
+        "cagr_diff": 1.57
+       },
+       "h1_cagr_diff": 1.2,
+       "h2_cagr_diff": 1.94,
+       "drop_top": {
+        "excluded": "50384",
+        "net_vs_b": {
+         "ex_ann": 1.41,
+         "t": 2.86,
+         "cagr_diff": 1.43
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0015,
+       "registered_full_net": {
+        "ex_ann": 1.12,
+        "t": 1.71,
+        "cagr_diff": 1.09
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 8.26,
+         "t": 12.14,
+         "cagr_diff": 8.4
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -6.74,
+         "t": -14.65,
+         "cagr_diff": -6.67
+        }
+       }
+      },
+      "D_G3_mom12_5": {
+       "full_net": {
+        "ex_ann": 3.72,
+        "t": 5.28,
+        "cagr_diff": 3.76
+       },
+       "h1_cagr_diff": 2.75,
+       "h2_cagr_diff": 4.78,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 3.35,
+         "t": 5.07,
+         "cagr_diff": 3.37
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0,
+       "registered_full_net": {
+        "ex_ann": 5.42,
+        "t": 4.78,
+        "cagr_diff": 5.38
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 6.91,
+         "t": 5.34,
+         "cagr_diff": 7.1
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -3.19,
+         "t": -3.94,
+         "cagr_diff": -3.32
+        }
+       }
+      },
+      "D_P9_multi_5": {
+       "full_net": {
+        "ex_ann": 2.61,
+        "t": 3.7,
+        "cagr_diff": 2.62
+       },
+       "h1_cagr_diff": 3.21,
+       "h2_cagr_diff": 2.03,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 2.6,
+         "t": 3.66,
+         "cagr_diff": 2.6
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0005,
+       "registered_full_net": {
+        "ex_ann": 3.59,
+        "t": 3.48,
+        "cagr_diff": 3.5
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 4.59,
+         "t": 4.06,
+         "cagr_diff": 4.72
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -1.98,
+         "t": -2.86,
+         "cagr_diff": -2.08
+        }
+       }
+      },
+      "D_F1b_MG_6_6": {
+       "full_net": {
+        "ex_ann": 4.15,
+        "t": 3.63,
+        "cagr_diff": 3.96
+       },
+       "h1_cagr_diff": 3.84,
+       "h2_cagr_diff": 4.09,
+       "drop_top": {
+        "excluded": "MINES",
+        "net_vs_b": {
+         "ex_ann": 3.15,
+         "t": 2.65,
+         "cagr_diff": 3.13
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0006,
+       "registered_full_net": {
+        "ex_ann": 4.32,
+        "t": 3.54,
+        "cagr_diff": 4.11
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 5.58,
+         "t": 3.45,
+         "cagr_diff": 5.78
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -1.44,
+         "t": -1.39,
+         "cagr_diff": -1.82
+        }
+       }
+      },
+      "D_F3g_12-1_H1_K15": {
+       "full_net": {
+        "ex_ann": 5.02,
+        "t": 3.38,
+        "cagr_diff": 4.77
+       },
+       "h1_cagr_diff": 4.34,
+       "h2_cagr_diff": 5.2,
+       "drop_top": {
+        "excluded": "MINES",
+        "net_vs_b": {
+         "ex_ann": 4.64,
+         "t": 3.56,
+         "cagr_diff": 4.6
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0007,
+       "registered_full_net": {
+        "ex_ann": 6.4,
+        "t": 3.23,
+        "cagr_diff": 5.9
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 9.44,
+         "t": 4.49,
+         "cagr_diff": 9.69
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -4.43,
+         "t": -3.34,
+         "cagr_diff": -4.92
+        }
+       }
+      },
+      "D_F3g_12-1_H1_K30": {
+       "full_net": {
+        "ex_ann": 3.36,
+        "t": 5.07,
+        "cagr_diff": 3.37
+       },
+       "h1_cagr_diff": 3.37,
+       "h2_cagr_diff": 3.37,
+       "drop_top": {
+        "excluded": "MINES",
+        "net_vs_b": {
+         "ex_ann": 2.92,
+         "t": 4.21,
+         "cagr_diff": 2.99
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0,
+       "registered_full_net": {
+        "ex_ann": 4.11,
+        "t": 3.86,
+        "cagr_diff": 4.04
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 6.6,
+         "t": 5.6,
+         "cagr_diff": 6.77
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -3.23,
+         "t": -4.22,
+         "cagr_diff": -3.39
+        }
+       }
+      },
+      "D_F3g_9-0_H1_K30": {
+       "full_net": {
+        "ex_ann": 2.89,
+        "t": 4.01,
+        "cagr_diff": 2.87
+       },
+       "h1_cagr_diff": 2.96,
+       "h2_cagr_diff": 2.78,
+       "drop_top": {
+        "excluded": "MINES",
+        "net_vs_b": {
+         "ex_ann": 2.72,
+         "t": 3.66,
+         "cagr_diff": 2.78
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": null,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0002,
+       "registered_full_net": {
+        "ex_ann": 3.6,
+        "t": 3.11,
+        "cagr_diff": 3.48
+       },
+       "winners_minus_losers": {
+        "top_minus_bottom_gross": {
+         "ex_ann": 5.1,
+         "t": 4.11,
+         "cagr_diff": 5.24
+        },
+        "bottom_net_vs_bench": {
+         "ex_ann": -2.21,
+         "t": -2.83,
+         "cagr_diff": -2.36
+        }
+       }
+      },
+      "D_S3_FABER_L2": {
+       "full_net": {
+        "ex_ann": 2.58,
+        "t": 3.53,
+        "cagr_diff": 2.55
+       },
+       "h1_cagr_diff": 2.38,
+       "h2_cagr_diff": 2.71,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 2.46,
+         "t": 3.15,
+         "cagr_diff": 2.41
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": true,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0006,
+       "registered_full_net": {
+        "ex_ann": 3.41,
+        "t": 3.64,
+        "cagr_diff": 3.39
+       },
+       "winners_minus_losers": null
+      },
+      "D_S3_FABER_L3": {
+       "full_net": {
+        "ex_ann": 4.06,
+        "t": 3.22,
+        "cagr_diff": 3.71
+       },
+       "h1_cagr_diff": 3.64,
+       "h2_cagr_diff": 3.78,
+       "drop_top": {
+        "excluded": "INSURANCE",
+        "net_vs_b": {
+         "ex_ann": 3.86,
+         "t": 2.9,
+         "cagr_diff": 3.44
+        }
+       },
+       "grade": "S",
+       "criteria": {
+        "E1_sign": true,
+        "E2_t": true,
+        "E3_halves": true,
+        "E4_holm": true,
+        "E5_sharpe": true,
+        "E7_drop_top": true
+       },
+       "holm_p_one_family": 0.0007,
+       "registered_full_net": {
+        "ex_ann": 6.39,
+        "t": 3.77,
+        "cagr_diff": 6.06
+       },
+       "winners_minus_losers": null
+      }
+     },
+     "grade_counts_B_D": {
+      "S": 11
+     }
+    }
+   },
+   "s3_dividend_on_par_fixed_panel": {
+    "panel": "par_fixed_panel",
+    "industry_dividend_yield": {
+     "industry_months": 9229,
+     "with_estimate": 9228,
+     "mean_ann_pct": 6.68,
+     "rule": "R7 と同じ配当の近似（直近4回の配当率×払込額÷12÷p_{t−1}・年30%超は除く）を業種の構成の株で等分に平均。分からない業種の月は足さない（0）"
+    },
+    "rows": {
+     "D_S3_FABER_L2_div_x1.0": {
+      "full_net": {
+       "ex_ann": 4.27,
+       "t": 4.49,
+       "cagr_diff": 4.58
+      },
+      "h1_cagr_diff": 4.31,
+      "h2_cagr_diff": 4.85,
+      "sharpe_h1": [
+       1.339,
+       1.42
+      ],
+      "sharpe_h2": [
+       1.361,
+       1.141
+      ],
+      "mean_exposure_E": 1.236,
+      "drop_top": {
+       "ex_ann": 4.2,
+       "t": 4.19,
+       "cagr_diff": 4.48
+      },
+      "grade": "C",
+      "criteria": {
+       "E1_sign": true,
+       "E2_t": true,
+       "E3_halves": true,
+       "E4_holm": true,
+       "E5_sharpe": false,
+       "E7_drop_top": true
+      }
+     },
+     "D_S3_FABER_L3_div_x1.0": {
+      "full_net": {
+       "ex_ann": 10.43,
+       "t": 5.62,
+       "cagr_diff": 11.26
+      },
+      "h1_cagr_diff": 11.36,
+      "h2_cagr_diff": 11.15,
+      "sharpe_h1": [
+       1.332,
+       1.42
+      ],
+      "sharpe_h2": [
+       1.356,
+       1.141
+      ],
+      "mean_exposure_E": 1.855,
+      "drop_top": {
+       "ex_ann": 10.39,
+       "t": 5.37,
+       "cagr_diff": 11.14
+      },
+      "grade": "C",
+      "criteria": {
+       "E1_sign": true,
+       "E2_t": true,
+       "E3_halves": true,
+       "E4_holm": true,
+       "E5_sharpe": false,
+       "E7_drop_top": true
+      }
+     },
+     "D_S3_FABER_L2_div_x0.5": {
+      "full_net": {
+       "ex_ann": 3.63,
+       "t": 4.14,
+       "cagr_diff": 3.74
+      },
+      "h1_cagr_diff": 3.52,
+      "h2_cagr_diff": 3.96,
+      "sharpe_h1": [
+       0.957,
+       0.912
+      ],
+      "sharpe_h2": [
+       0.896,
+       0.604
+      ],
+      "mean_exposure_E": 1.236,
+      "drop_top": {
+       "ex_ann": 3.56,
+       "t": 3.81,
+       "cagr_diff": 3.64
+      },
+      "grade": "S",
+      "criteria": {
+       "E1_sign": true,
+       "E2_t": true,
+       "E3_halves": true,
+       "E4_holm": true,
+       "E5_sharpe": true,
+       "E7_drop_top": true
+      }
+     },
+     "D_S3_FABER_L3_div_x0.5": {
+      "full_net": {
+       "ex_ann": 7.81,
+       "t": 4.64,
+       "cagr_diff": 7.9
+      },
+      "h1_cagr_diff": 8.09,
+      "h2_cagr_diff": 7.71,
+      "sharpe_h1": [
+       0.95,
+       0.912
+      ],
+      "sharpe_h2": [
+       0.892,
+       0.604
+      ],
+      "mean_exposure_E": 1.855,
+      "drop_top": {
+       "ex_ann": 7.73,
+       "t": 4.37,
+       "cagr_diff": 7.74
+      },
+      "grade": "S",
+      "criteria": {
+       "E1_sign": true,
+       "E2_t": true,
+       "E3_halves": true,
+       "E4_holm": true,
+       "E5_sharpe": true,
+       "E7_drop_top": true
+      }
+     },
+     "D_S3_FABER_L2_div_x0.25": {
+      "full_net": {
+       "ex_ann": 3.31,
+       "t": 3.86,
+       "cagr_diff": 3.34
+      },
+      "h1_cagr_diff": 3.14,
+      "h2_cagr_diff": 3.54,
+      "sharpe_h1": [
+       0.762,
+       0.659
+      ],
+      "sharpe_h2": [
+       0.659,
+       0.335
+      ],
+      "mean_exposure_E": 1.236,
+      "drop_top": {
+       "ex_ann": 3.23,
+       "t": 3.54,
+       "cagr_diff": 3.23
+      },
+      "grade": "S",
+      "criteria": {
+       "E1_sign": true,
+       "E2_t": true,
+       "E3_halves": true,
+       "E4_holm": true,
+       "E5_sharpe": true,
+       "E7_drop_top": true
+      }
+     },
+     "D_S3_FABER_L3_div_x0.25": {
+      "full_net": {
+       "ex_ann": 6.49,
+       "t": 4.03,
+       "cagr_diff": 6.31
+      },
+      "h1_cagr_diff": 6.54,
+      "h2_cagr_diff": 6.08,
+      "sharpe_h1": [
+       0.755,
+       0.659
+      ],
+      "sharpe_h2": [
+       0.656,
+       0.335
+      ],
+      "mean_exposure_E": 1.855,
+      "drop_top": {
+       "ex_ann": 6.4,
+       "t": 3.76,
+       "cagr_diff": 6.13
+      },
+      "grade": "S",
+      "criteria": {
+       "E1_sign": true,
+       "E2_t": true,
+       "E3_halves": true,
+       "E4_holm": true,
+       "E5_sharpe": true,
+       "E7_drop_top": true
+      }
+     },
+     "D_S3_FABER_L2_registered_price_only": {
+      "full_net": {
+       "ex_ann": 2.99,
+       "t": 3.53,
+       "cagr_diff": 2.95
+      },
+      "h1_cagr_diff": 2.77,
+      "h2_cagr_diff": 3.13,
+      "sharpe_h1": [
+       0.565,
+       0.405
+      ],
+      "sharpe_h2": [
+       0.42,
+       0.065
+      ],
+      "note": "倍率 E は配当を足した版と同じ（信号は価格だけ）"
+     },
+     "D_S3_FABER_L3_registered_price_only": {
+      "full_net": {
+       "ex_ann": 5.18,
+       "t": 3.33,
+       "cagr_diff": 4.79
+      },
+      "h1_cagr_diff": 5.05,
+      "h2_cagr_diff": 4.52,
+      "sharpe_h1": [
+       0.558,
+       0.405
+      ],
+      "sharpe_h2": [
+       0.416,
+       0.065
+      ],
+      "note": "倍率 E は配当を足した版と同じ（信号は価格だけ）"
+     }
+    },
+    "copy_reproduces_registered": true,
+    "note": "事後（検査役の指摘 2026-09-28）。登録の D_S3 は株の脚が価格だけ（配当なし）で現金の脚 uk_cash が総リターンの金利＝単位が混ざる。信号は登録どおり価格だけの業種指数、保有の月だけ配当の近似を戦略と相手（業種の等分）の両側に足した。x0.5・x0.25 は配当の近似が過大な場合の感度"
+   },
+   "note": "事後（検査役の指摘 2026-09-28）。登録の掃除（D.lse_panel）は 払込額・amntshare・sharestock の変化は落とすが、1株の額面（capitalpar）の変化を見ていない＝額面 £10→£100 の併合などの単位の変更が +900% 前後のリターンとして残る。par で額面の変化の対も落とした。gt300・x10sig・x5 は逆戻りしない跳ねの粗い版（JUMP_NOTE）。各版で B・D を作り直し、同じ族の Holm（族の他の単位もその版の値）で grade_era を当てた（事後・格付けは登録の版）。s3_dividend_on_par_fixed_panel は額面を直した版の上で D_S3 の配当をそろえた（族の Holm の他の単位は額面を直した版）"
+  },
   "interpretation": [
-   "D（LSE の業種の勢い 6本）: 登録の格付けは全部 S。勝者−敗者は G3_mom12_5 +8.46%/年 t4.88・P9_multi_5 +5.87%/年 t4.12・F1b_MG_6_6 +6.04%/年 t3.35・F3g_12-1_H1_K15 +10.11%/年 t3.98・F3g_12-1_H1_K30 +7.31%/年 t4.85・F3g_9-0_H1_K30 +4.87%/年 t2.86。窓を3か月あけても G3_mom12_5 +4.08%/年 t3.49・P9_multi_5 +2.53%/年 t2.44・F1b_MG_6_6 +6.07%/年 t4.49・F3g_12-1_H1_K15 +8.05%/年 t4.16・F3g_12-1_H1_K30 +4.90%/年 t4.45・F3g_9-0_H1_K30 +3.81%/年 t3.57。幾何で束ねても G3_mom12_5 +6.28%/年 t8.15・P9_multi_5 +4.98%/年 t6.58・F1b_MG_6_6 +4.28%/年 t3.68・F3g_12-1_H1_K15 +7.09%/年 t5.32・F3g_12-1_H1_K30 +5.87%/年 t6.91・F3g_9-0_H1_K30 +4.95%/年 t6.25。極端値を落としても G3_mom12_5 +3.46%/年 t5.59・P9_multi_5 +2.26%/年 t3.36・F1b_MG_6_6 +2.85%/年 t2.87・F3g_12-1_H1_K15 +4.60%/年 t4.05・F3g_12-1_H1_K30 +2.98%/年 t4.82・F3g_9-0_H1_K30 +2.39%/年 t3.31。保有する業種のノイズの上振れ（算術−幾何）は相手より G3_mom12_5 +0.11・P9_multi_5 -0.30・F1b_MG_6_6 +1.07・F3g_12-1_H1_K15 +1.15・F3g_12-1_H1_K30 -0.13・F3g_9-0_H1_K30 +0.02 %/年（noise_uplift）＝ D の超過はノイズ・古い気配・等分の作りでは説明しきれず、業種の勢いそのものの見込みが高い（ただし止まる条件に触れたデータの上・事後の読み）",
-   "D の S3（業種ごとの10か月線 2倍・3倍）: S。ただし相手（LSE の業種の等分）は1次の自己相関が高い古い気配の指数で、10か月線の出入りは平滑な指数ほど効きやすい。窓を3か月あけても S3_FABER_L2 +3.19%/年 t3.7・S3_FABER_L3 +6.13%/年 t3.74・幾何 S3_FABER_L2 +3.73%/年 t4.02・S3_FABER_L3 +3.16%/年 t2.82",
-   "B_F1a1（LSE の株の上位10%）: 登録の格付けは S だが、勝者−敗者は -2.51%/年 t-0.95・下位10% も相手に +6.64%/年 t3.09＝両端の十分位がともに相手（古い気配の多い等分）に勝っているだけで、勢い（勝者が敗者に勝つ）ではない。S を勢いの再現として数えてはいけない",
-   "B_ret_12_1（LSE の株の上位3分の1）: 格付け B（費用後 +0.95%/年 t1.61）。勝者−敗者は +4.02%/年 t3.56＝株の勢いは買い−売りでは出るが、買いだけで相手に勝つ幅は小さい（Chabot-Ghysels-Jagannathan と同じ向き）",
-   "B_seas（LSE の株の季節性）: 格付け B（費用後 +1.12%/年 t1.71・費用前 +3.54%/年 t5.41・年の回転 8.086）。勝者−敗者 +8.42%/年 t10.59。下位の組は保有の月が配当の支払いの月に当たる株が多い（seasonality_ex_dividend）＝価格だけのリターンの配当落ちを拾っている部分がある。配当を支払いの月に置き直しても勝者−敗者は残った",
-   "A（Cowles の業種の勢い 7本）: A 2本（G3・G4）・B 5本。勝者−敗者は G3_mom12_5 +7.07%/年 t1.93・G4_mom12_10 +8.76%/年 t2.89・P9_multi_5 +6.83%/年 t1.78・F1b_MG_6_6 +3.27%/年 t1.2・F3g_12-1_H1_K15 +4.05%/年 t1.1・F3g_12-1_H1_K30 +3.17%/年 t0.99・F3g_9-0_H1_K30 +2.41%/年 t0.75。1871〜1898（業種 6〜18）は多くが負、1899〜1926 は正（R5）。元のまま（1か月あけない）は大きく勝つ（R1）が、それは月平均の見かけの自己相関（Working 1960）",
-   "A の S3・H（英国のハロウィーン 1709〜1914）・C（Old NYSE の株の勢い）: C・C・B。ハロウィーンは 206年で 88年だけ勝ち（calendar_years）"
+   "主の格付け: 事前登録の止まる条件（LSE の等分とイングランド銀行の指数の相関 0.4827 < 0.6）に触れた LSE の11単位（B 3・D 8）は PENDING_stop。格付けできた11単位（Cowles の業種 A 9・Old NYSE の C 1・英国の指数 H 1）は A 2・B 6・C 3。S は 0。格付け A 以上: A_G3_mom12_5（A・+5.08%/年 t2.01・族の Holm 後 p 0.1555）・A_G4_mom12_10（A・+5.06%/年 t2.37・族の Holm 後 p 0.08）",
+   "D（LSE の業種の勢い 6本・暫定＝止まったデータの上）: 登録どおりなら全部 S。勝者−敗者は G3_mom12_5 +8.46%/年 t4.88・P9_multi_5 +5.87%/年 t4.12・F1b_MG_6_6 +6.04%/年 t3.35・F3g_12-1_H1_K15 +10.11%/年 t3.98・F3g_12-1_H1_K30 +7.31%/年 t4.85・F3g_9-0_H1_K30 +4.87%/年 t2.86。額面の変化を直しても G3_mom12_5 +4.32%/年 t4.19（S）・P9_multi_5 +3.00%/年 t3.22（S）・F1b_MG_6_6 +3.98%/年 t3.23（S）・F3g_12-1_H1_K15 +5.78%/年 t2.82（S）・F3g_12-1_H1_K30 +3.15%/年 t3.14（S）・F3g_9-0_H1_K30 +2.90%/年 t2.92（S）。窓を3か月あけても G3_mom12_5 +4.08%/年 t3.49・P9_multi_5 +2.53%/年 t2.44・F1b_MG_6_6 +6.07%/年 t4.49・F3g_12-1_H1_K15 +8.05%/年 t4.16・F3g_12-1_H1_K30 +4.90%/年 t4.45・F3g_9-0_H1_K30 +3.81%/年 t3.57。幾何で束ねても G3_mom12_5 +6.28%/年 t8.15・P9_multi_5 +4.98%/年 t6.58・F1b_MG_6_6 +4.28%/年 t3.68・F3g_12-1_H1_K15 +7.09%/年 t5.32・F3g_12-1_H1_K30 +5.87%/年 t6.91・F3g_9-0_H1_K30 +4.95%/年 t6.25。極端値を落としても G3_mom12_5 +3.46%/年 t5.59・P9_multi_5 +2.26%/年 t3.36・F1b_MG_6_6 +2.85%/年 t2.87・F3g_12-1_H1_K15 +4.60%/年 t4.05・F3g_12-1_H1_K30 +2.98%/年 t4.82・F3g_9-0_H1_K30 +2.39%/年 t3.31。売買の各側に 1% の費用では G3_mom12_5 +1.86%/年 t1.57・P9_multi_5 -3.59%/年 t-3.33・F1b_MG_6_6 +1.29%/年 t1.02・F3g_12-1_H1_K15 +0.96%/年 t0.45・F3g_12-1_H1_K30 +0.03%/年 t0.03・F3g_9-0_H1_K30 -0.81%/年 t-0.66＝ D の業種の勢いは元の規則の費用（0.05%）なら直した版でも残るが、当時の費用（売買の各側 1%）では t≥2 に届かない（しかも読み込みの点検が通らない限り格付けしない）",
+   "D の S3（業種ごとの10か月線 2倍・3倍）: 登録どおりなら S だが、株の脚が価格だけ・現金の脚が総リターンの金利＝単位が混ざっていた。配当の近似を保有の月だけ両側に足すと S3_FABER_L2 +4.88%/年 t4.61・前半シャープ 1.531 対 1.66（C）・S3_FABER_L3 +11.92%/年 t5.94・前半シャープ 1.527 対 1.66（C）。額面を直した LSE でも S3_FABER_L2 C・S3_FABER_L3 C＝超過は大きくなるが（借入側に偏った E の分）、E5 で落ちる。A_S3（Cowles・総リターン同士）も C なので、S3 は単位をそろえると両方の時代で再現せず",
+   "B_F1a1（LSE の株の上位10%・暫定）: 登録どおりなら S だが、勝者−敗者は -2.51%/年 t-0.95・下位10% も相手に +6.64%/年 t3.09。額面を直すと勝者−敗者 -0.77%/年 t-0.31・下位10% の対 相手 +4.82%/年 t2.43＝両端の十分位がともに相手（古い気配の多い等分）に勝つ形で、勢いの再現として数えてはいけない",
+   "B_ret_12_1・B_seas（LSE の株・暫定）: 登録どおりなら B（+0.95%/年 t1.61・+1.12%/年 t1.71）。額面の変化を直すと +1.20%/年 t2.13（S）・+1.50%/年 t2.43（S）。勝者−敗者（登録）は +4.02%/年 t3.56・+8.42%/年 t10.59。季節性は配当落ちの月を拾う部分がある（seasonality_ex_dividend）。どれも止まる条件の外に出ていないので格付けしない",
+   "A（Cowles の業種の勢い 7本）: A 2本（G3・G4）・B 5本。勝者−敗者は G3_mom12_5 +7.07%/年 t1.93・G4_mom12_10 +8.76%/年 t2.89・P9_multi_5 +6.83%/年 t1.78・F1b_MG_6_6 +3.27%/年 t1.2・F3g_12-1_H1_K15 +4.05%/年 t1.1・F3g_12-1_H1_K30 +3.17%/年 t0.99・F3g_9-0_H1_K30 +2.41%/年 t0.75。1871〜1898（業種 6〜18）は多くが負、1899〜1926 は正（R5）。元のまま（1か月あけない）は大きく勝つ（R1）が、それは月平均の見かけの自己相関（Working 1960）。P9 の同点を名前の順に直すと +4.62%/年 t1.96（B・t<2 のまま）",
+   "H（英国のハロウィーン 1.5倍 1709〜1914）: 格付け C（登録）。登録の超過 -0.23%/年 t-0.95 は価格だけの指数を借入で持つ単位の不一致による人工物で、配当を両側に足すと 3% +0.52%/年 t2.19（S）・4% +0.77%/年 t3.24（C）・5% +1.02%/年 t4.28（C）＝超過の符号は配当の扱いで反転する（算術の超過は配当 0.92%・幾何の差は 1.8% を超えると正）。格付けは E5（シャープの比較）だけで決まり、配当 4% 以上なら C のまま、3% なら S。1871〜1907 に LSE の配当の近似を足すと +1.06%/年 t2.29（C）。ハロウィーンは 206年で 88年だけ勝ち（価格だけ・calendar_years）",
+   "C（Old NYSE の株の勢い）: B（+2.04%/年 t0.79・t<2）",
+   "R3（費用の感度）: 売買の各側に 1%（当時の現実に近い単価・Σ|Δw|×1%・S3 は出入りの各回 1%×L）でそろえると、LSE の業種 D は 8本のうち正（算術の超過>0 かつ 幾何の差>0）5・算術の超過>0 だけなら 6・t≥2 0（G3_mom12_5 +1.86 t1.57・P9_multi_5 -3.59 t-3.33・F1b_MG_6_6 +1.29 t1.02・F3g_12-1_H1_K15 +0.96 t0.45・F3g_12-1_H1_K30 +0.03 t0.03・F3g_9-0_H1_K30 -0.81 t-0.66・S3_FABER_L2 +1.11 t1.09・S3_FABER_L3 +2.94 t1.62）。業種の勢いの6本だけなら 正 3（算術だけなら 4）・t≥2 0。★D は止まる条件に触れたデータ（主の格付けは PENDING_stop）"
   ]
  },
- "runtime_sec": 179.700022
+ "runtime_sec": 417.588327
 }
