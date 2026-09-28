@@ -13,6 +13,8 @@
 JKP の三分位は超過（米国T-bill を引いた値）＝French の Mkt-RF と超過どうしで比べる。総リターンは＋French RF。
 """
 import sys, os, json, math, subprocess, statistics as S, time, random
+for _v in ('OPENBLAS_NUM_THREADS', 'OMP_NUM_THREADS', 'MKL_NUM_THREADS'):
+    os.environ.setdefault(_v, '1')   # 4つの子で BLAS の糸が取り合うと桁違いに遅くなる（2026-09-28 実測）
 import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
@@ -242,8 +244,8 @@ def qp_fista(Q, c, lo, up, w0=None, iters=20000, tol=1e-12):
 QP_STATS = {'pdas': 0, 'fallback': 0, 'iters': 0}
 
 
-def qp(Q, c, lo, up, w0=None, maxit=300):
-    """min ½w'Qw − c'w s.t. Σw=1, lo≤w≤up。主双対の有効制約法（PDAS）、収束しなければ FISTA"""
+def qp(Q, c, lo, up, w0=None, maxit=300, _polish=True):
+    """min ½w'Qw − c'w s.t. Σw=1, lo≤w≤up。主双対の有効制約法（PDAS）、収束しなければ FISTA → その有効集合から PDAS で仕上げ"""
     n = len(c)
     w = proj_box_budget(np.full(n, 1.0 / n) if w0 is None else w0, lo, up)
     L = w <= lo + 1e-12
@@ -299,8 +301,17 @@ def qp(Q, c, lo, up, w0=None, maxit=300):
             break
         seen.add(key)
         L, U = newL, newU
+    if not _polish:
+        return None
     QP_STATS['fallback'] += 1
-    return qp_fista(Q, c, lo, up, w0=w)
+    wf = qp_fista(Q, c, lo, up, w0=w)
+    wp = qp(Q, c, lo, up, wf, maxit=maxit, _polish=False)
+    if wp is not None:
+        QP_STATS['polished'] = QP_STATS.get('polished', 0) + 1
+        of = 0.5 * wf @ Q @ wf - c @ wf
+        op = 0.5 * wp @ Q @ wp - c @ wp
+        return wp if op <= of + 1e-13 * (1 + abs(of)) else wf
+    return wf
 
 
 def lp_max(mu, up):
