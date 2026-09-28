@@ -19,6 +19,38 @@ import sys, os, re, json, math, collections, subprocess, statistics as S, argpar
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M  # noqa: E402
 
+
+class _FastStats:
+    """mw_common.excess_stats は β の式の中で S.mean を要素ごとに呼び直す（O(n²)）うえ、標準の statistics は
+    分数の厳密計算で遅い（1200か月で1回数秒）。mw_common は他の道具と共有なので書き換えず、ここで
+    mw_common が参照する統計の関数だけを math.fsum の同じ式に差し替える（値は丸めた桁で一致を確認: 合成データで
+    excess_stats の全項目が同一）。平均は同じリストの呼び直しをその場で覚える（リストは書き換えられない）"""
+    _last = None
+
+    @staticmethod
+    def mean(x):
+        c = _FastStats._last
+        if c is not None and c[0] is x:
+            return c[1]
+        xs = x if isinstance(x, (list, tuple)) else list(x)
+        v = math.fsum(xs) / len(xs)
+        if isinstance(x, (list, tuple)):
+            _FastStats._last = (x, v)
+        return v
+
+    @staticmethod
+    def pvariance(x):
+        m = math.fsum(x) / len(x)
+        return math.fsum((v - m) ** 2 for v in x) / len(x)
+
+    @staticmethod
+    def stdev(x):
+        m = math.fsum(x) / len(x)
+        return math.sqrt(math.fsum((v - m) ** 2 for v in x) / (len(x) - 1))
+
+
+M.S = _FastStats  # 逸脱として記録（out/mw_postpub.json の deviations）
+
 PREREG = 'mw_postpub_prereg.json'
 OUT = 'mw_postpub.json'
 COST = 0.003          # 片道売買100%あたり 0.30%（事前登録）
@@ -284,6 +316,7 @@ def main():
     san['developed_corr_world_ex_us'] = round(M.corr([dv[k] for k in kk], [wx[k] for k in kk]), 3)
     san['oap_year_crosscheck'] = oap_crosscheck(D)
     out['sanity'] = san
+    out['deviations'] = ['mw_common.excess_stats の β の式が S.mean を要素ごとに呼び直す O(n²)・標準 statistics の分数計算で1回数秒かかるため、mw_common が参照する統計関数（mean/pvariance/stdev）だけを math.fsum の同じ式へ差し替えて実行（mw_common は書き換えていない・合成データで全項目一致を確認）']
 
     # ── 地域のデータ ──
     RG, RM = {}, {}
