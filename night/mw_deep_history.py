@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
 
 PREREG = 'out/mw_deep_history_prereg.json'
+PREREG2 = 'out/mw_deep_history_prereg2.json'
 OUT = 'mw_deep_history.json'
 JST_URL = 'https://www.macrohistory.net/app/download/9834512569/JSTdatasetR6.xlsx?t=1763503850'
 BSV_URL = 'https://ndownloader.figshare.com/files/26879918'
@@ -313,6 +314,26 @@ def select(rule, J, base, univ, Y, K=None):
         if len(sc) < 2 * K:
             return None
         return {c: 1 / K for c in topk(sc, K)}
+    # ── 第2族（頑健性・事前登録2）: 1年古い信号 ──
+    if rule == 'VALLAG':
+        sc = {c: J.g(c, Y - 1, 'eq_dp') for c in UY if J.g(c, Y - 1, 'eq_dp') is not None}
+        if len(sc) < 2 * K:
+            return None
+        return {c: 1 / K for c in topk(sc, K)}
+    if rule == 'MOMSKIP':
+        sc = {c: J.r(base, c, Y - 1) for c in UY if J.r(base, c, Y - 1) is not None}
+        if len(sc) < 2 * K:
+            return None
+        return {c: 1 / K for c in topk(sc, K)}
+    if rule == 'VMLAG':
+        a, b = select('VALLAG', J, base, univ, Y, K), select('MOMSKIP', J, base, univ, Y, K)
+        if a is None or b is None:
+            return None
+        w = {}
+        for d in (a, b):
+            for c, v in d.items():
+                w[c] = w.get(c, 0) + 0.5 * v
+        return w
     if rule == 'EW':
         return {c: 1 / len(UY) for c in UY}
     raise ValueError(rule)
@@ -630,6 +651,120 @@ def strip(e):
     return {k: v for k, v in e.items() if not k.startswith('_')}
 
 
+# ───────────────────────── 第2族（事前登録2）の報告の部品 ─────────────────────────
+def block_boot_p(x, block=5, reps=5000, seed=7):
+    """循環ブロック・ブートストラップ: 『平均 ≤ 0』の片側 p（中心化した分布で観測の平均以上になる割合）"""
+    import random
+    rnd = random.Random(seed)
+    n = len(x)
+    if n < 10:
+        return None
+    m = S.mean(x)
+    cnt = 0
+    nb = math.ceil(n / block)
+    for _ in range(reps):
+        s = []
+        for _ in range(nb):
+            st = rnd.randrange(n)
+            s.extend(x[(st + i) % n] for i in range(block))
+        mb = S.mean(s[:n])
+        if mb - m >= m:
+            cnt += 1
+    return round((cnt + 1) / (reps + 1), 4)
+
+
+def win_stats(g, b, a, z):
+    ks = [k for k in g if k in b and a <= k <= z]
+    return es(g, b, a, z) if len(ks) >= 24 else short_stats(g, b, a, z)
+
+
+def contrib(J, base, rule, K, a, z, univ=C16):
+    """訓練期間の国ごとの寄与（選ばれた年の 重み×(国のリターン − 相手)）"""
+    out = {}
+    for Y in range(a - 1, z):
+        w = select(rule, J, base, univ, Y, K)
+        UY = [c for c in univ if J.r(base, c, Y) is not None]
+        bv = [J.r(base, c, Y + 1) for c in UY if J.r(base, c, Y + 1) is not None]
+        if w is None or not bv:
+            continue
+        bm = sum(bv) / len(bv)
+        rr = {c: (J.cash(Y + 1) if c == 'CASH' else J.r(base, c, Y + 1)) for c in w}
+        ok = {c: x for c, x in w.items() if rr[c] is not None}
+        t = sum(ok.values())
+        for c, x in ok.items():
+            out[c] = out.get(c, 0.0) + x / t * (rr[c] - bm)
+    return {c: round(v * 100, 1) for c, v in sorted(out.items(), key=lambda kv: -kv[1])}
+
+
+def part2(J, ev, fam, pA):
+    """事前登録2（out/mw_deep_history_prereg2.json）: 頑健性の6本の格付けと報告"""
+    RB = [('RB1_VALLAG_K3', 'VALLAG', 3), ('RB2_VALLAG_K5', 'VALLAG', 5), ('RB3_MOMSKIP_K3', 'MOMSKIP', 3),
+          ('RB4_MOMSKIP_K5', 'MOMSKIP', 5), ('RB5_VMLAG_K3', 'VMLAG', 3), ('RB6_VMLAG_K5', 'VMLAG', 5)]
+    rb = {sid: eval_jst(J, sid, 'H', rule, K, False) for sid, rule, K in RB}
+    p44 = dict(pA)
+    for sid, e in rb.items():
+        p44[sid] = e['hold_net']['p'] if e.get('hold_net') else None
+    h44 = M.holm(p44)
+    for sid, e in rb.items():
+        e['family'] = 'RB'
+        e['holm_p'] = h44.get(sid)
+        e['holm_scope'] = '第1族38本＋第2族6本＝44本'
+        e['grade'], e['criteria'] = grade_jst(e, e['holm_p'])
+    rep = {}
+    S_RULES = [('P1_VAL_K3', 'H', 'VAL', 3), ('P3_MOM_K3', 'H', 'MOM', 3), ('P4_MOM_K5', 'H', 'MOM', 5), ('P5_VM_K3', 'H', 'VM', 3),
+               ('P6_VM_K5', 'H', 'VM', 5), ('U1_VAL_K3', 'U', 'VAL', 3), ('U2_VAL_K5', 'U', 'VAL', 5), ('U4_MOM_K5', 'U', 'MOM', 5),
+               ('U5_VM_K3', 'U', 'VM', 3), ('U6_VM_K5', 'U', 'VM', 5), ('X1_CARRY_K5', 'H', 'CARRY', 5), ('X3_VMRANK_K5', 'H', 'VMRANK', 5)]
+    loo, halves, boot, nowar = {}, {}, {}, {}
+    WAR = set(range(1914, 1920)) | set(range(1939, 1947))
+    for sid, base, rule, K in S_RULES:
+        rows = []
+        for c in C16:
+            R = run_rule(J, base, rule, K, [x for x in C16 if x != c])
+            t, h = es(R['gross'], R['bench'], None, T_END), es(R['gross'], R['bench'], H_START, None)
+            rows.append((c, t['ex_ann'] if t else None, t['t'] if t else None, h['ex_ann'] if h else None, h['t'] if h else None))
+        ok = [r for r in rows if r[2] is not None and r[4] is not None]
+        loo[sid] = {'train_ex_min': min(r[1] for r in ok), 'train_t_min': min(r[2] for r in ok), 'train_t_max': max(r[2] for r in ok),
+                    'hold_ex_min': min(r[3] for r in ok), 'hold_t_min': min(r[4] for r in ok), 'hold_t_max': max(r[4] for r in ok),
+                    'worst_drop_train': min(ok, key=lambda r: r[2])[0], 'worst_drop_hold': min(ok, key=lambda r: r[4])[0],
+                    'rows': rows}
+        R = ev[sid]['_series']
+        g, b = R['gross'], R['bench']
+        halves[sid] = {'1872_1898': win_stats(g, b, 1872, 1898), '1899_1925': win_stats(g, b, 1899, 1925)}
+        xt = [g[k] - b[k] for k in sorted(g) if k in b and k <= T_END]
+        xh = [g[k] - b[k] for k in sorted(g) if k in b and k >= H_START]
+        boot[sid] = {'train_p_one_sided': block_boot_p(xt), 'hold_p_one_sided': block_boot_p(xh)}
+        g2 = {k: v for k, v in g.items() if k not in WAR}
+        nowar[sid] = {'train': es(g2, b, None, T_END), 'hold': es(g2, b, H_START, None)}
+    rep['R1_leave_one_out'] = loo
+    rep['R2_halves'] = halves
+    rep['R3_bootstrap'] = boot
+    rep['R4_no_war'] = nowar
+    R5 = ev['P5_VM_K3']['_series']
+    yrs = sorted((k for k in R5['gross'] if k <= T_END), key=lambda k: -(R5['gross'][k] - R5['bench'][k]))[:5]
+    rep['R5_contrib'] = {'top_years': [(k, round((R5['gross'][k] - R5['bench'][k]) * 100, 1), R5['picks'][k]) for k in yrs],
+                         'country_contrib_train_pct_sum': contrib(J, 'H', 'VM', 3, 1872, T_END),
+                         'country_contrib_hold_pct_sum': contrib(J, 'H', 'VM', 3, H_START, 2020)}
+    try:
+        mc = json.load(open(os.path.join(M.BASE, 'out', 'mw_country.json')))
+        tt = {x['id']: x for x in mc['tested']}
+        cc = {}
+        for i in ['P1_mom12_K3', 'P2_mom12_K5', 'P3_bm_K3', 'P4_bm_K5', 'E2_dp_K3', 'E2_dp_K5', 'E6_mom12_K3', 'E6_bm_K3', 'E6_bm_K5']:
+            x = tt.get(i)
+            if not x:
+                continue
+            st = x.get('stats', {})
+            f = lambda s: {kk: s.get(kk) for kk in ('from', 'to', 'ex_ann', 't', 'cagr_diff')} if s else None
+            cc[i] = {'grade': x.get('grade'), 'universe': x.get('universe'), 'benchmark': x.get('benchmark'),
+                     'train': f(st.get('train')), 'hold': f(st.get('hold')), 'hold_net': f(st.get('hold_net')), 'post_pub': f(st.get('post_pub'))}
+        rep['R6_modern_crosscheck_from_mw_country'] = cc
+    except Exception as ex:  # noqa
+        rep['R6_modern_crosscheck_from_mw_country'] = {'error': str(ex)}
+    f = lambda s: (s['ex_ann'], s['t']) if s else None
+    rep['R7_bsv_recent'] = {k: {'grade': e['grade'], '1926_2006': f(e.get('disc_1926_2006')), '2007_2016': f(e.get('h2007_2016')),
+                                '2007_2016_net': f(e.get('h2007_2016_net'))} for k, e in ev.items() if fam[k] in ('B', 'BM')}
+    return rb, rep, len(p44)
+
+
 def main():
     if '--check' in sys.argv:
         check_only()
@@ -772,9 +907,17 @@ def main():
             raw[f'{st}_{asset}'] = {'1800_1925': M.excess_stats(F, zero, 180001, 192512), '1926_2006': M.excess_stats(F, zero, 192601, 200612),
                                     '2007_2016': M.excess_stats(F, zero, 200701, 201612)}
 
+    # ── 第2族（事前登録2・頑健性） ──
+    rb, rep2, n44 = part2(J, ev, fam, pA)
+    for k, e in rb.items():
+        ev[k] = e; fam[k] = 'RB'
+    n_graded = n44
+    log('第2族を足した後の格付けの本数', n_graded)
+
     # ── 先読みの検算 ──
     specs = [(f'P{i}', 'H', rule, K, C16) for i, rule, K, tim in RULES8] + [(f'U{i}', 'U', rule, K, C16) for i, rule, K, tim in RULES8] + \
-            [(sid, 'H', rule, K, C16) for sid, rule, K, tim in XR]
+            [(sid, 'H', rule, K, C16) for sid, rule, K, tim in XR] + \
+            [(s_, 'H', r_, k_, C16) for s_, r_, k_ in (('RB1', 'VALLAG', 3), ('RB3', 'MOMSKIP', 3), ('RB5', 'VMLAG', 5))]
     la = lookahead_check(J, specs)
     sanity['lookahead_truncation_check'] = la
     log('先読みの検算', la)
@@ -793,10 +936,11 @@ def main():
         log(f"{k:18s} {e['grade']}  訓練 {t['ex_ann'] if t else None}%/年 t{t['t'] if t else None} ／ 保有 {h['ex_ann'] if h else None} t{h['t'] if h else None} "
             f"費用後 {hn['ex_ann'] if hn else None} 幾何差 {hn['cagr_diff'] if hn else None} ／ 20年窓 {e['roll20']['win_rate'] if e.get('roll20') else None} Holm {e['holm_p']}")
     out = {'angle': 'deep_history', 'prereg': PREREG, 'prereg_commit': git_sha(PREREG),
+           'prereg2': PREREG2, 'prereg2_commit': git_sha(PREREG2),
            'n_tested_graded': n_graded, 'tested': tested,
            'strategies': {k: strip(e) for k, e in ev.items()},
            'report_robust_subsets': robust, 'report_usa_gdp_vs_ew': us_vs, 'report_halloween_shift': hal_diag,
-           'report_bsv_raw_factors': raw, 'sanity': sanity, 'log': LOG}
+           'report_bsv_raw_factors': raw, 'report_part2': rep2, 'sanity': sanity, 'log': LOG}
     # JST の系列（年次）を小さく残す: 主の族だけ
     out['series_primary'] = {k: {'gross': ev[k]['_series']['gross'], 'bench': ev[k]['_series']['bench'], 'turn': ev[k]['_series']['turn']}
                              for k in ev if fam[k] == 'P'}
