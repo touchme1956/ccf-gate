@@ -14,7 +14,7 @@
   part3 業種中立: SN60/SN120（直前の窓の係数で業種成分を引いた紙の上乗せ）・スタイル分析で紙の業種の重み
   I 族: P5 の業種の写し（直前の窓のスタイル分析の重みで翌月の業種を持つ）＝買いだけ・業種の器
 """
-import sys, os, json, math, subprocess, datetime, time, urllib.parse, statistics as S
+import sys, os, json, math, subprocess, datetime, time, urllib.parse, urllib.request, statistics as S
 from concurrent.futures import ThreadPoolExecutor
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import mw_common as M
@@ -330,7 +330,108 @@ def yh_daily(t):
         for e in (r.get('events') or {}).get(kind, {}).values():
             d = datetime.datetime.fromtimestamp(e['date'], datetime.timezone.utc)
             ev.add(datetime.date(d.year, d.month, d.day))
-    return days, px, ev
+    # 検算（事後に見つけたデータの穴・結果ではなくデータの検算で決めた）: Yahoo が分割イベントを持ちながら調整後終値に
+    # 反映していないことがある（CFIMX 2025-05-12 の 10:1・139→14.5）。分割の日の値動きが分割比と 10% 以内で一致するときだけ、
+    # それより前の値を分割比で割り戻す（一致しないときは Yahoo がすでに調整済みとみなして触らない）
+    fixes = []
+    for e in (r.get('events') or {}).get('splits', {}).values():
+        num, den = float(e.get('numerator') or 0), float(e.get('denominator') or 0)
+        if num <= 0 or den <= 0:
+            continue
+        d = datetime.datetime.fromtimestamp(e['date'], datetime.timezone.utc)
+        dk = d.year * 10000 + d.month * 100 + d.day
+        i = next((j for j, x in enumerate(days) if x >= dk), None)
+        if i is None or i == 0:
+            continue
+        jump = px[i] / px[i - 1]
+        if abs(jump * num / den - 1) < 0.10:
+            f = den / num
+            px = [p * f if j < i else p for j, p in enumerate(px)]
+            fixes.append({'date': dk, 'ratio': f'{num:g}:{den:g}', 'jump_before_fix': round(jump, 4)})
+    itype = (r.get('meta') or {}).get('instrumentType')
+    return days, px, ev, fixes, itype
+
+
+FUND_DATA_START = 198701
+# S&P 500 の年次総リターン（%・公開の値）。Yahoo の VFINX と突き合わせて投信の古いデータの信頼性を検算する
+SP500_TR = {1985: 32.16, 1986: 18.47, 1987: 5.23, 1988: 16.81, 1989: 31.49, 1990: -3.10, 1991: 30.47, 1992: 7.62, 1993: 10.08, 1994: 1.32,
+            1995: 37.58, 1996: 22.96, 1997: 33.36, 1998: 28.58, 1999: 21.04, 2000: -9.10, 2001: -11.89, 2002: -22.10, 2003: 28.68,
+            2004: 10.88, 2005: 4.91, 2006: 15.79, 2007: 5.49, 2008: -37.00}
+
+
+def yh_daily_unfixed(t):
+    """事前登録どおりの生データ（分割の未反映を直さない）"""
+    u = (f'https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(t)}?period1=0&period2={int(time.time())}'
+         f'&interval=1d&events=div%2Csplit%2CcapitalGains')
+    r = json.loads(M.get(u, name=f'rg_yh_{t.replace("^", "IDX_")}_1d_cg.json', max_age_days=3))['chart']['result'][0]
+    adj = (r['indicators'].get('adjclose') or [{}])[0].get('adjclose') or r['indicators']['quote'][0]['close']
+    days, px = [], []
+    for a, p in zip(r.get('timestamp') or [], adj):
+        if p is None or p <= 0:
+            continue
+        d = datetime.datetime.fromtimestamp(a, datetime.timezone.utc)
+        days.append(d.year * 10000 + d.month * 100 + d.day); px.append(p)
+    return days, px
+
+
+_OP = {}
+
+
+def ms_annual(t):
+    """Yahoo quoteSummary の fundPerformance.annualTotalReturns（Morningstar の年次総リターン）→ {年: 小数}。
+    事後に足した検算（投信の Yahoo 日次がキャピタルゲイン分配を取りこぼす年があると分かったため）。無ければ {}"""
+    import http.cookiejar
+    p = os.path.join(M.CACHE, f'rg_ms_{t}.json')
+    if not (os.path.exists(p) and os.path.getsize(p) > 0 and time.time() - os.path.getmtime(p) < 30 * 86400):
+        try:
+            if 'op' not in _OP:
+                cj = http.cookiejar.CookieJar()
+                op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+                ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36'
+                op.addheaders = [('User-Agent', ua), ('Accept', 'text/html'), ('Accept-Language', 'en-US,en;q=0.9')]
+                op.open('https://finance.yahoo.com/quote/SPY/', timeout=60).read()
+                op.addheaders = [('User-Agent', ua), ('Accept', '*/*')]
+                crumb = None
+                for i in range(6):
+                    try:
+                        crumb = op.open('https://query1.finance.yahoo.com/v1/test/getcrumb', timeout=60).read().decode(); break
+                    except Exception:  # noqa
+                        time.sleep(10 * (i + 1))
+                _OP['op'], _OP['crumb'] = op, crumb
+            b = _OP['op'].open(f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{urllib.parse.quote(t)}?modules=fundPerformance&crumb={_OP['crumb']}", timeout=60).read()
+            open(p, 'wb').write(b)
+        except Exception:  # noqa
+            return {}
+    try:
+        rets = json.load(open(p))['quoteSummary']['result'][0]['fundPerformance']['annualTotalReturns']['returns']
+    except Exception:  # noqa
+        return {}
+    return {int(x['year']): x['annualValue']['raw'] for x in rets if x.get('annualValue', {}).get('raw') is not None}
+
+
+def ms_correct(m, ms, thr=1.0):
+    """暦年の Yahoo（月次の積）と Morningstar の年次が thr ポイントを超えて違う年だけ、その年の12か月を同じ倍率で直し、
+    年の積が Morningstar と一致するようにする（倍率を月に等分）。直した年の {年: [Yahoo, Morningstar]} を返す"""
+    out, fixed = dict(m), {}
+    for y, v in ms.items():
+        a = annual(m, y)
+        if a is None or abs(a - v * 100) <= thr:
+            continue
+        k = ((1 + v) / (1 + a / 100)) ** (1 / 12)
+        for mm in range(y * 100 + 1, y * 100 + 13):
+            out[mm] = (1 + out[mm]) * k - 1
+        fixed[y] = [a, round(v * 100, 2)]
+    return out, fixed
+
+
+def annual(m, y):
+    ms = [m[k] for k in range(y * 100 + 1, y * 100 + 13) if k in m]
+    if len(ms) < 12:
+        return None
+    g = 1.0
+    for v in ms:
+        g *= 1 + v
+    return round((g - 1) * 100, 2)
 
 
 def monthly_from_daily(days, px):
@@ -373,6 +474,19 @@ SUBWIN = {'SPHQ_VLT': ('SPHQ', 200601, 201006), 'SPHQ_HQR': ('SPHQ', 201007, 201
 INTL = {t for t, g in GROUPS.items() if g == 'ETF_INTL'} | {'EFA'}
 GLOBAL = {t for t, g in GROUPS.items() if g == 'GLOBAL'}
 QFUND = [t for t, g in GROUPS.items() if g in ('QF', 'DG')]
+LONGFUND_R = [t for t, g in GROUPS.items() if g in ('QF', 'DG', 'GR')]
+
+# 第2段（探索・out/mw_reality_gap_prereg2.json）
+PRE2_NAME = 'mw_reality_gap_prereg2.json'
+PRE2 = json.load(open(os.path.join(M.BASE, 'out', PRE2_NAME)))
+for gname, lst in PRE2['families'].items():
+    if not isinstance(lst, list):
+        continue
+    code = gname.split('（')[0]
+    for t in lst:
+        GROUPS.setdefault(t, code)
+E_LF = [t for t, g in GROUPS.items() if g == 'E_LF']
+FAMILY_OF_GROUP = {'E_LF': 'E_LF', 'COMP_E': 'E_LF', 'E_MEGA': 'E_MEGA', 'SANITY': 'SANITY', 'E_SANITY': 'SANITY'}
 
 
 def main():
@@ -550,17 +664,39 @@ def main():
     with ThreadPoolExecutor(6) as ex:
         for t, v, err in ex.map(fetch, tickers):
             raw[t] = (v, err)
-    VM, flags, errors = {}, {}, {}
+    VM, VM_RAW, flags, errors, split_fixes, cut = {}, {}, {}, {}, {}, {}
+    ms_check, ms_cov, ms_fixed = {}, {}, {}
     for t, (v, err) in raw.items():
         if v is None or not v[0]:
             errors[t] = err or 'no data'
             continue
-        days, px, ev = v
-        VM[t] = monthly_from_daily(days, px)
+        days, px, ev, fx, itype = v
+        m = monthly_from_daily(days, px)
+        if fx:
+            split_fixes[t] = fx
+        # 事前登録どおりの生データ（分割の未反映・1987年より前の投信も含む）は別に残す
+        VM_RAW[t] = monthly_from_daily(*yh_daily_unfixed(t))
+        if itype == 'MUTUALFUND' and min(m) < FUND_DATA_START:
+            cut[t] = min(m)
+            m = {k: v for k, v in m.items() if k >= FUND_DATA_START}
+        ms = ms_annual(t) if t != 'BRK-A' else {}
+        ms_check[t] = {y: [annual(m, y), round(v * 100, 2)] for y, v in ms.items() if annual(m, y) is not None and abs(annual(m, y) - v * 100) > 1.0}
+        ms_cov[t] = len([y for y in ms if annual(m, y) is not None])
+        if itype == 'MUTUALFUND' and ms:
+            m, fx2 = ms_correct(m, ms)
+            if fx2:
+                ms_fixed[t] = fx2
+        VM[t] = m
         if t not in INTL and t not in GLOBAL:
-            flags[t] = dist_flags(days, px, ev, mkt_daily)
+            flags[t] = [f for f in dist_flags(days, px, ev, mkt_daily) if itype != 'MUTUALFUND' or f[0] // 100 >= FUND_DATA_START]
     res['part2_fetch'] = {'errors': errors, 'n_ok': len(VM),
-                          'distribution_flags（分配の取りこぼし疑い・日次 手段−Mkt < −4% かつ ±5日に分配なし）': {t: f for t, f in flags.items() if f}}
+                          'split_fixes（分割イベントがあるのに調整後終値に未反映だったものを直した）': split_fixes,
+                          'fund_data_start（投信は 1987-01 から。VFINX の Yahoo 年次が 1985 −9.6pt・1986 −9.2pt と S&P500 総リターンから外れ、1987〜は信託報酬の範囲で一致したため）': {'start': FUND_DATA_START, 'trimmed_from': cut},
+                          'distribution_flags（分配の取りこぼし疑い・日次 手段−Mkt < −4% かつ ±5日に分配なし）': {t: f for t, f in flags.items() if f},
+                          'morningstar_check（事後の検算: 暦年の Yahoo と Morningstar 年次総リターンが 1pt 超違う年 [Yahoo, MS]・直す前）': {t: v for t, v in ms_check.items() if v},
+                          'morningstar_years_compared': ms_cov,
+                          'morningstar_fixed（投信だけ・その年の12か月を等倍で直して年次を Morningstar に合わせた）': ms_fixed,
+                          'note': 'ETF は Morningstar と 1pt 超違う年が1つも無かった（Yahoo の値のまま）。投信は分配（主にキャピタルゲイン）の取りこぼしで Yahoo が大きく低く出る年があった。'}
 
     def bench_of(t):
         base = t.split('_')[0] if t in SUBWIN else t
@@ -589,11 +725,15 @@ def main():
     qf_members = [('VDIGX_DG' if t == 'VDIGX' else t) for t in QFUND]
     series['COMP_QETF_US'] = comp(etf_us, 2)
     series['COMP_QFUND'] = comp(qf_members, 3)
+    # 第2段（探索）の合成
+    series['COMP_LF'] = comp(E_LF, 3)
+    series['COMP_ALLFUNDS'] = comp([('VDIGX_DG' if t == 'VDIGX' else t) for t in LONGFUND_R] + E_LF, 3)
+    CAPF = active(JKP_MKT_CAP, JKP_MKT_VW)   # 上限の効果（JKP の上限つき市場 − 上限なし市場・超過どうし）
 
     ev_R = {}
     for t, r in series.items():
         base = t.split('_')[0] if t in SUBWIN else t
-        grp = 'SUB' if t in SUBWIN else ('COMP' if t.startswith('COMP_') else GROUPS.get(t))
+        grp = 'SUB' if t in SUBWIN else ('COMP_E' if t in ('COMP_LF', 'COMP_ALLFUNDS') else ('COMP' if t.startswith('COMP_') else GROUPS.get(t)))
         B, bname, RFF = bench_of(t)
         r = {k: v for k, v in r.items() if k in B}
         if len(r) < 36:
@@ -620,6 +760,7 @@ def main():
                 {'SN60_coef': e['sn60_loading']['coef']['SN60']} if e['sn60_loading'] else {})
             if e['ind12']:
                 e['ind12']['coef'] = {c: v for c, v in e['ind12']['coef'].items()}
+            e['diag_capping（判定なし）'] = reg(yj, [('paper_active_P5', P5A), ('cap_factor', CAPF), ('mktrf', MKTRF)], min_n=36)
         e['paper_same_months'] = mean_t(pa)
         e['gap_vs_paper'] = mean_t({k: yj[k] - pa[k] for k in pa})
         # 感度: 分配の取りこぼし疑いの月を欠測に
@@ -630,15 +771,34 @@ def main():
             e['flagged_months'] = sorted(bad)
         ev_R[t] = e
 
-    fam_R = [t for t, e in ev_R.items() if e['group'] != 'SANITY']
-    holm_R = M.holm({t: (ev_R[t]['hold'] or {}).get('p') for t in fam_R})
+    # 検算: VFINX（S&P500 の投信）の Yahoo 年次と S&P500 総リターン
+    vf = VM_RAW.get('VFINX', {})
+    res['sanity']['vfinx_vs_sp500_tr_annual'] = {y: {'yahoo_raw': annual(vf, y), 'sp500_tr': v, 'diff': round(annual(vf, y) - v, 2) if annual(vf, y) is not None else None}
+                                                 for y, v in SP500_TR.items()}
+    # 事前登録どおりの生データ（直す前）での判定を別に残す（直した手段だけ）
+    changed = sorted(set(split_fixes) | set(cut) | set(ms_fixed))
+    raw_block = {}
+    for t in changed:
+        B, bname, _ = bench_of(t)
+        r = {k: v for k, v in VM_RAW[t].items() if k in B}
+        e = eval_series(r, B)
+        raw_block[t] = {'from': min(r), 'full': e['full'], 'train': e['train'], 'hold': e['hold'], 'roll20': e['roll20'],
+                        'grade_without_holm': M.grade(e['full'], e['train'], e['hold'], e['roll20'], cost_hold=e['hold'])[0]}
+    res['as_registered_raw_data（直す前の Yahoo 生データ・判定には使わない）'] = raw_block
+
+    fam_of = {t: FAMILY_OF_GROUP.get(e['group'], 'R') for t, e in ev_R.items()}
+    holm_by = {}
+    for fam in ('R', 'E_LF', 'E_MEGA'):
+        holm_by.update(M.holm({t: (ev_R[t]['hold'] or {}).get('p') for t in ev_R if fam_of[t] == fam}))
     for t, e in ev_R.items():
-        in_fam = e['group'] != 'SANITY'
+        fam = fam_of[t]
+        in_fam = fam != 'SANITY'
         g, c = M.grade(e['full'], e['train'], e['hold'], e['roll20'], cost_hold=e['cost_hold'], repl=None,
-                       family_holm_p=holm_R.get(t) if in_fam else None)
-        tested.append({'id': t, 'family': 'R' if in_fam else 'SANITY', 'primary': in_fam, 'exploratory': False, 'group': e['group'],
+                       family_holm_p=holm_by.get(t) if in_fam else None)
+        tested.append({'id': t, 'family': fam, 'primary': fam == 'R', 'exploratory': fam.startswith('E_'),
+                       'stage': 2 if fam.startswith('E_') or e['group'] == 'E_SANITY' else 1, 'group': e['group'],
                        'desc': f"実在の手段 {t}（{e['group']}）対 {e['bench']}", 'unit_cost': 0.0, 'turnover_oneway_per_year_hold': 0.0,
-                       **{k: v for k, v in e.items() if k not in ('group',)}, 'holm_p_hold': holm_R.get(t) if in_fam else None,
+                       **{k: v for k, v in e.items() if k not in ('group',)}, 'holm_p_hold': holm_by.get(t) if in_fam else None,
                        'grade': g, 'criteria': c})
 
     # ── P_ref（再掲・族外）
@@ -666,8 +826,11 @@ def main():
 
     res['tested'] = tested
     res['n_tested'] = len(tested)
-    res['n_tested_by_family'] = {f: sum(1 for x in tested if x['family'] == f) for f in ('R', 'I', 'P_ref', 'SANITY')}
-    res['grade_counts'] = {f: {g: sum(1 for x in tested if x['family'] == f and x['grade'] == g) for g in 'SABC'} for f in ('R', 'I', 'P_ref', 'SANITY')}
+    FAMS = ('R', 'I', 'E_LF', 'E_MEGA', 'P_ref', 'SANITY')
+    res['n_tested_by_family'] = {f: sum(1 for x in tested if x['family'] == f) for f in FAMS}
+    res['grade_counts'] = {f: {g: sum(1 for x in tested if x['family'] == f and x['grade'] == g) for g in 'SABC'} for f in FAMS}
+    res['preregs'] = {'1': {'file': f'out/{PRE_NAME}', 'commit': sha_of(f'out/{PRE_NAME}'), 'families': ['R（主）', 'I（主）', 'P_ref（族外）']},
+                      '2': {'file': f'out/{PRE2_NAME}', 'commit': sha_of(f'out/{PRE2_NAME}'), 'families': ['E_LF（探索）', 'E_MEGA（探索）'], 'exploratory': True}}
 
     # ── 事前登録の読み方（R1〜R7）
     res['rules'] = rules(res, p1, cov, ev_R, tested)
