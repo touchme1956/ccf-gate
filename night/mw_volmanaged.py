@@ -37,6 +37,33 @@ CAPS = [1.5, 2.0]
 LOG = []
 
 
+def _excess_stats_fast(s, b, a=None, z=None, per_year=12, lag=12):
+    """mw_common.excess_stats と同じ計算（同じ式・同じ丸め）。β の計算で S.mean を要素ごとに呼び直す二乗の遅さだけを避ける
+    （mw_common は他の角度が使うので編集しない。平均を一度だけ計算するので値は一致する）"""
+    ks = sorted(k for k in set(s) & set(b) if (a is None or k >= a) and (z is None or k <= z))
+    if len(ks) < max(24, per_year * 2):
+        return None
+    ex = [s[k] - b[k] for k in ks]
+    sv, bv = [s[k] for k in ks], [b[k] for k in ks]
+    te = S.stdev(ex) * math.sqrt(per_year)
+    vb = S.pvariance(bv)
+    ms_, mb_ = S.mean(sv), S.mean(bv)
+    beta = sum((x - ms_) * (y - mb_) for x, y in zip(sv, bv)) / len(ks) / vb if vb else None
+    t = M.nw_t(ex, lag)
+    g_s, g_b = M.cagr(sv, per_year), M.cagr(bv, per_year)
+    return {'from': ks[0], 'to': ks[-1], 'years': round(len(ks) / per_year, 1),
+            'ex_ann': round(S.mean(ex) * per_year * 100, 2), 't': round(t, 2) if t is not None else None,
+            'p': round(M.p_two(t), 4) if t is not None else None,
+            'cagr_s': round(g_s * 100, 2), 'cagr_b': round(g_b * 100, 2), 'cagr_diff': round((g_s - g_b) * 100, 2),
+            'te': round(te * 100, 2), 'ir': round(S.mean(ex) * per_year / te, 2) if te else None,
+            'beta': round(beta, 2) if beta is not None else None,
+            'vol_s': round(S.stdev(sv) * math.sqrt(per_year) * 100, 1), 'vol_b': round(S.stdev(bv) * math.sqrt(per_year) * 100, 1)}
+
+
+_ORIG_EXCESS_STATS = M.excess_stats
+M.excess_stats = _excess_stats_fast
+
+
 def log(*a):
     s = ' '.join(str(x) for x in a)
     print(s, flush=True)
@@ -809,6 +836,8 @@ def main():
     bad = sum(1 for t1, w in run['w'].items() if abs(w - min(1.5, cc / X[prv(t1)])) > 1e-12)
     c.sanity['lookahead_index_check_P01'] = {'months': len(run['w']), 'mismatch': bad, 'rule': 'w[t1] == min(1.5, c/RV1[t1 の前月])'}
     c.sanity['c_solve_P01'] = ci
+    tw = {k: run['net'][k] for k in list(run['net'])[:400]}
+    c.sanity['excess_stats_fast_equals_mw_common'] = _ORIG_EXCESS_STATS(tw, mk.m) == _excess_stats_fast(tw, mk.m)
     # Holm と判定
     prim = {x['id']: x['hold']['p'] for x in tested if x['family'] == 'primary' and x['hold']}
     allg = {x['id']: x['hold']['p'] for x in tested if x['graded'] and x['hold']}
