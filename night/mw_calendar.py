@@ -634,11 +634,11 @@ def eval_total(ks, r, rf, rule, per, tag, const_ok=True):
     return ev, n, b
 
 
-def eval_excess(ks, rx, rule, per, tag):
+def eval_excess(ks, rx, rule, per, tag, cost=COST, cost_lo=COST_LO):
     """超過の原資産（JKP）に倍率の規則。シャープレシオは超過そのもの（RF=0 として渡す）"""
-    gd, nd = simulate_ex(ks, rx, rule, COST, SPREAD, per)
-    _, nd5 = simulate_ex(ks, rx, rule, COST_LO, SPREAD, per)
-    _, ndh = simulate_ex(ks, rx, rule, COST, SPREAD_HI, per)
+    gd, nd = simulate_ex(ks, rx, rule, cost, SPREAD, per)
+    _, nd5 = simulate_ex(ks, rx, rule, cost_lo, SPREAD, per)
+    _, ndh = simulate_ex(ks, rx, rule, cost, SPREAD_HI, per)
     tm = M.to_monthly if per == 252 else (lambda x: x)
     g, n, n5, nh = tm(gd), tm(nd), tm(nd5), tm(ndh)
     b = tm({k: rx[k] for k in ks})
@@ -649,7 +649,7 @@ def eval_excess(ks, rx, rule, per, tag):
     avg = S.mean(rule(k) for k in ks)
     ev['avg_exposure'] = round(avg, 3)
     if avg > 1.0001:
-        _, ndc = simulate_ex(ks, rx, lambda k: avg, COST, SPREAD, per)
+        _, ndc = simulate_ex(ks, rx, lambda k: avg, cost, SPREAD, per)
         cst = tm(ndc)
         ev['vs_constant_exposure'] = {'const_L': round(avg, 3), 'full': compact(M.excess_stats(n, cst)),
                                       'train': compact(M.excess_stats(n, cst, z=TR_END)), 'hold': compact(M.excess_stats(n, cst, a=HO_START))}
@@ -940,6 +940,96 @@ def family3(ctx, CD, cal, tested):
     return diag
 
 
+# ───────────────────────── 第4族（探索・out/mw_calendar_prereg4.json） ─────────────────────────
+def by_decade(n, b):
+    out = {}
+    for lab, a, z in (('1986-1995', 198601, 199512), ('1996-2005', 199601, 200512), ('2006-2015', 200601, 201512), ('2016-', 201601, 209912)):
+        st = M.excess_stats(n, b, a=a, z=z)
+        out[lab] = compact(st) if st else None
+    return out
+
+
+def in_window(m, start, end):
+    return (start <= m <= 12 or 1 <= m <= end) if start > end else (start <= m <= end)
+
+
+def family4(ctx, CD, cal, tested):
+    D, rf, ffm = ctx['D'], ctx['rf'], ctx['ffm']
+    Z = 'exploratory4'
+    diag = {}
+    wm = M.jkp_mkt('world', 'vw'); kw = sorted(wm)
+    log('run Z01')
+    ev, n, b = eval_excess(kw, wm, lambda ym: 1.5 if hal(ym) else 0.5, 12, 'hal')
+    tested.append({'id': 'Z01_HAL_TILT_WORLD', 'family': Z, 'desc': '【事後】JKP world: 11〜4月1.5倍・5〜10月0.5倍（平均1.0倍）', 'kind': 'm_world', 'ev': ev, 'repl_from': 'E01_HAL_TILT'})
+    dx_m, dx_rfm = fr_region_monthly('Developed_ex_US_3_Factors')
+    kx = sorted(k for k in dx_m if k in dx_rfm)
+    log('run Z02')
+    ev, n, b = eval_total(kx, dx_m, dx_rfm, lambda ym: 1.5 if hal(ym) else 1.0, 12, 'hal')
+    ev['tax_japan'] = None
+    tested.append({'id': 'Z02_HAL_OV15_DXUS_FR', 'family': Z, 'desc': 'French Developed_ex_US 月次にハロウィーン1.5倍', 'kind': 'm_dxus', 'ev': ev, 'repl_from': 'P2_HAL_OV15'})
+    em = M.jkp_mkt('emerging', 'vw'); ke = sorted(em)
+    log('run Z03')
+    ev, n, b = eval_excess(ke, em, lambda ym: 1.5 if hal(ym) else 1.0, 12, 'hal', cost=0.003, cost_lo=0.0015)
+    tested.append({'id': 'Z03_HAL_OV15_EM', 'family': Z, 'desc': 'JKP emerging 月次にハロウィーン1.5倍（費用0.30%）', 'kind': 'm_em', 'ev': ev, 'repl_from': 'P2_HAL_OV15'})
+    dv = M.jkp_mkt('developed', 'vw'); kv = sorted(dv)
+    log('run Z04')
+    ev, n, b = eval_excess(kv, dv, lambda ym: 1.5 if hal(ym) else 1.0, 12, 'hal')
+    tested.append({'id': 'Z04_HAL_OV15_JKPDEV', 'family': Z, 'desc': 'JKP developed 月次にハロウィーン1.5倍', 'kind': 'm_jkpdev', 'ev': ev, 'repl_from': 'P2_HAL_OV15'})
+
+    # D9: 10年ごと
+    d9 = {}
+    _, n = simulate_ex(kw, wm, lambda ym: 1.5 if hal(ym) else 1.0, COST, SPREAD, 12)
+    d9['X06_HAL_OV15_WORLD'] = by_decade(n, wm)
+    dev_m, dev_rfm = fr_region_monthly('Developed_3_Factors')
+    km = sorted(k for k in dev_m if k in dev_rfm)
+    _, n, _, _ = simulate(km, dev_m, dev_rfm, lambda ym: 1.5 if hal(ym) else 1.0, COST, SPREAD, 12)
+    d9['Y02_HAL_OV15_DEV'] = by_decade(n, dev_m)
+    wx = M.jkp_mkt('world_ex_us', 'vw')
+    _, n = simulate_ex(sorted(wx), wx, lambda ym: 1.5 if hal(ym) else 1.0, COST, SPREAD, 12)
+    d9['Y03_HAL_OV15_WXUS'] = by_decade(n, wx)
+    dxd, dxrf = fr_region_daily('Developed_ex_US_3_Factors_Daily')
+    kd = sorted(k for k in dxd if k in dxrf)
+    sd = santa_set(kd)
+    _, nd, _, _ = simulate(kd, dxd, dxrf, lambda k: 1.5 if k in sd else 1.0, COST, SPREAD, 252)
+    d9['Y04_SANTA_OV15_DXUS'] = by_decade(M.to_monthly(nd), M.to_monthly({k: dxd[k] for k in kd}))
+    diag['D9_by_decade'] = d9
+    # D10: 窓をずらす
+    d10 = {}
+    for st_ in (10, 11, 12):
+        for en in (3, 4, 5):
+            _, n = simulate_ex(kw, wm, lambda ym: 1.5 if in_window(ym % 100, st_, en) else 1.0, COST, SPREAD, 12)
+            d10[f'{st_:02d}-{en:02d}'] = {'full': compact(M.excess_stats(n, wm)), 'train': compact(M.excess_stats(n, wm, z=TR_END)),
+                                         'hold': compact(M.excess_stats(n, wm, a=HO_START))}
+    diag['D10_window_surface'] = d10
+    # D11: 円建て
+    try:
+        txt = M.get('https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXJPUS', name='fred_DEXJPUS.csv', max_age_days=30).decode()
+        px = {}
+        for line in txt.splitlines()[1:]:
+            a = line.split(',')
+            if len(a) >= 2 and a[1] not in ('', '.'):
+                try:
+                    px[int(a[0].replace('-', ''))] = float(a[1])
+                except ValueError:
+                    pass
+        me_ = {}
+        for k in sorted(px):
+            me_[k // 100] = px[k]  # 月の最後の値
+        ms = sorted(me_)
+        fx = {b_: me_[b_] / me_[a_] - 1 for a_, b_ in zip(ms, ms[1:])}
+        rfm = ffm['rf']
+        ks = [k for k in kw if k in fx and k in rfm]
+        _, n = simulate_ex(ks, wm, lambda ym: 1.5 if hal(ym) else 1.0, COST, SPREAD, 12)
+        sj = {k: (1 + n[k] + rfm[k]) * (1 + fx[k]) - 1 for k in ks}
+        bj = {k: (1 + wm[k] + rfm[k]) * (1 + fx[k]) - 1 for k in ks}
+        diag['D11_japan_yen'] = {'full': compact(M.excess_stats(sj, bj)), 'train': compact(M.excess_stats(sj, bj, z=TR_END)),
+                                 'hold': compact(M.excess_stats(sj, bj, a=HO_START)),
+                                 'note': '円建ての総リターンどうし（借入はドルの RF+0.5% の近似）'}
+    except Exception as e:  # noqa
+        diag['D11_japan_yen'] = {'error': str(e)[:200]}
+    return diag
+
+
 # ───────────────────────── 本体 ─────────────────────────
 def run():
     c = load()
@@ -1056,6 +1146,7 @@ def run():
     ctx = {'D': D, 'r': r, 'rf': rf, 'ffm': ffm, 'fomc_keys': fomc_keys, 'bm_d': bm_d}
     diag = family2(ctx, CD, cal, tested)
     diag.update(family3(ctx, CD, cal, tested))
+    diag.update(family4(ctx, CD, cal, tested))
     byid = {t['id']: t for t in tested}
     for t in tested:
         if t.get('repl_from'):
@@ -1066,11 +1157,13 @@ def run():
     allg = {t['id']: (t['ev']['hold'] or {}).get('p') for t in tested if t['family'] in ('primary', 'exploratory')}
     allg2 = {t['id']: (t['ev']['hold'] or {}).get('p') for t in tested if t['family'] in ('primary', 'exploratory', 'exploratory2')}
     allg3 = {t['id']: (t['ev']['hold'] or {}).get('p') for t in tested if t['family'] in ('primary', 'exploratory', 'exploratory2', 'exploratory3')}
-    hp, ha, ha2, ha3 = M.holm(prim), M.holm(allg), M.holm(allg2), M.holm(allg3)
+    allg4 = {t['id']: (t['ev']['hold'] or {}).get('p') for t in tested if t['family'] in ('primary', 'exploratory', 'exploratory2', 'exploratory3', 'exploratory4')}
+    hp, ha, ha2, ha3, ha4 = M.holm(prim), M.holm(allg), M.holm(allg2), M.holm(allg3), M.holm(allg4)
     for t in tested:
         ev = t['ev']
         fam = t['family']
-        hpv = {'primary': hp, 'exploratory': ha, 'exploratory2': ha2, 'exploratory3': ha3}.get(fam, ha3).get(t['id'])
+        hpv = {'primary': hp, 'exploratory': ha, 'exploratory2': ha2, 'exploratory3': ha3, 'exploratory4': ha4}.get(fam, ha4).get(t['id'])
+        t['holm_p_all43'] = ha4.get(t['id'])
         t['holm_p_all31'] = ha2.get(t['id'])
         t['holm_p_all39'] = ha3.get(t['id'])
         repl = ev['repl']
@@ -1080,8 +1173,8 @@ def run():
                            leveraged_or_timing=True)
         t['holm_p'] = hpv
         t['holm_family'] = {'primary': 'primary(9)', 'exploratory': 'all_graded(24)', 'exploratory2': f'all_graded({len(allg2)})',
-                            'exploratory3': f'all_graded({len(allg3)})'}.get(fam)
-        t['grade'] = g_ if fam in ('primary', 'exploratory', 'exploratory2', 'exploratory3') else f'（判定しない）{g_}'
+                            'exploratory3': f'all_graded({len(allg3)})', 'exploratory4': f'all_graded({len(allg4)})'}.get(fam)
+        t['grade'] = g_ if fam in ('primary', 'exploratory', 'exploratory2', 'exploratory3', 'exploratory4') else f'（判定しない）{g_}'
         t['criteria'] = crit
         if t['id'] == 'X05_SANTA_OV15_WORLD':
             t['withdrawn'] = ('取り下げ（測った後に見つけたデータの欠陥）: JKP world 日次は湾岸・イスラエルだけが取引する日曜・土曜を含み、'
@@ -1089,7 +1182,7 @@ def run():
                               '格付けは記録に残すが勝ちとして数えない。代わりは Y01（French Developed 日次）')
             t['grade'] = f'取り下げ（計算上は {g_}）'
     return {'sanity': sanity, 'literature_check': lit, 'tested': tested, 'holm_primary': hp, 'holm_all_graded': ha,
-            'holm_all_graded2': ha2, 'holm_all_graded3': ha3, 'diagnostics': diag}
+            'holm_all_graded2': ha2, 'holm_all_graded3': ha3, 'holm_all_graded4': ha4, 'diagnostics': diag}
 
 
 def shrink(ev):
@@ -1108,7 +1201,9 @@ def main():
     before = {}
     try:
         old = json.load(open(os.path.join(M.BASE, 'out', 'mw_calendar.json')))
-        for t in old.get('tested', []):
+        if old.get('gulf_weekend_fix_repl_before'):  # 直す前の数は一度だけ記録（後の実行で上書きしない）
+            before = old['gulf_weekend_fix_repl_before']
+        for t in ([] if before else old.get('tested', [])):
             if t['id'] in ('P5_PH_SW', 'P6_PH_OV15', 'E07_CALCOMBO_OV15', 'S_PH_ALLGAP_SW', 'S_PH_ALLGAP_OV15') and t.get('repl'):
                 before[t['id']] = {'positive': t['repl']['positive'], 'regions': t['repl']['regions'], 'hold_positive': t['repl'].get('hold_positive')}
     except Exception:  # noqa
@@ -1122,7 +1217,7 @@ def main():
     for t in res['tested']:
         tested.append({'id': t['id'], 'family': t['family'], 'desc': t['desc'], 'grade': t['grade'], 'criteria': t['criteria'],
                        'holm_p_hold': t['holm_p'], 'holm_family': t['holm_family'], 'holm_p_all31': t.get('holm_p_all31'),
-                       'holm_p_all39': t.get('holm_p_all39'), 'withdrawn': t.get('withdrawn'), 'repl_from': t.get('repl_from'), **shrink(t['ev'])})
+                       'holm_p_all39': t.get('holm_p_all39'), 'holm_p_all43': t.get('holm_p_all43'), 'withdrawn': t.get('withdrawn'), 'repl_from': t.get('repl_from'), **shrink(t['ev'])})
     summary = [{'id': t['id'], 'family': t['family'], 'grade': t['grade'],
                 'full_ex': (t['full'] or {}).get('ex_ann'), 'full_t': (t['full'] or {}).get('t'),
                 'train_ex': (t['train'] or {}).get('ex_ann'), 'train_t': (t['train'] or {}).get('t'),
@@ -1138,7 +1233,9 @@ def main():
            'prereg3': 'out/mw_calendar_prereg3.json',
            'prereg3_commit': subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_calendar_prereg3.json'], cwd=M.BASE, capture_output=True, text=True).stdout.strip(),
            'holm_primary': res['holm_primary'], 'holm_all_graded': res['holm_all_graded'], 'holm_all_graded2': res['holm_all_graded2'],
-           'holm_all_graded3': res['holm_all_graded3'],
+           'holm_all_graded3': res['holm_all_graded3'], 'holm_all_graded4': res['holm_all_graded4'],
+           'prereg4': 'out/mw_calendar_prereg4.json',
+           'prereg4_commit': subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_calendar_prereg4.json'], cwd=M.BASE, capture_output=True, text=True).stdout.strip(),
            'diagnostics': res['diagnostics'],
            'gulf_weekend_fix_repl_before': before,
            'deviations': [
