@@ -432,6 +432,36 @@ def grade(full, train, hold, roll20, cost_hold=None, repl=None, family_holm_p=No
     return g, c
 
 
+
+def p_one(t):
+    """片側 p（超過が正の向き）"""
+    return 0.5 * math.erfc(t / math.sqrt(2)) if t is not None else None
+
+
+def grade_short(full, first_half, second_half, drop_top, cost_full, lower_bound, family_holm_p_one=None):
+    """out/nx_prereg.json の criteria_short_sample（hbm38n の ev5 と同じ形）をそのまま当てる。
+    full/first_half/second_half/drop_top/cost_full/lower_bound = excess_stats の戻り値（無ければ None＝不合格側）。
+    family_holm_p_one = 角度の族の中の Holm 補正後の片側 p。欠けた入力は不合格側に倒す"""
+    c = {}
+    t = full['t'] if full else None
+    c['p_one'] = round(p_one(t), 4) if t is not None else None
+    c['holm'] = bool(family_holm_p_one is not None and family_holm_p_one < 0.05)
+    c['halves'] = bool(first_half and second_half and first_half['cagr_diff'] > 0 and second_half['cagr_diff'] > 0)
+    c['drop_top'] = bool(drop_top and drop_top['cagr_diff'] > 0)
+    c['cost'] = bool(cost_full and cost_full['cagr_diff'] > 0)
+    c['lower_bound'] = bool(lower_bound and lower_bound['cagr_diff'] > 0)
+    c['positive'] = bool(full and full['ex_ann'] > 0 and full['cagr_diff'] > 0)
+    if c['holm'] and c['halves'] and c['drop_top'] and c['cost'] and c['lower_bound']:
+        g = 'S'
+    elif c['p_one'] is not None and c['p_one'] < 0.05 and c['halves']:
+        g = 'A'
+    elif c['positive']:
+        g = 'B'
+    else:
+        g = 'C'
+    return g, c
+
+
 def save(name, obj):
     obj = dict(obj)
     obj.setdefault('generated', datetime.date.today().isoformat())
