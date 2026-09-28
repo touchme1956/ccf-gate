@@ -56,6 +56,12 @@ PX_TOL = 0.15                     # 13F の暗黙の株価と Yahoo の当時の
 SPIKE = 3.0                       # 月 +300% 超はデータの誤り → その月から未観測
 MISS_P30, MISS_P100 = -0.30, -1.00
 COST_SMALL, COST_LARGE = 0.003, 0.001
+# 事前登録2（データの掃除・結果を見る前）: ありえない株数
+IMPL_NH = 20                      # 持ち手が20社以上の CUSIP だけで判定
+IMPL_ROW_X = 5                    # 1行の株数が次に大きい持ち手の5倍超
+IMPL_ROW_OTHERS = 0.5             # かつ 他の全提出者の合計の半分超 → その行を捨てる
+IMPL_FILING_SHARE = 0.20          # 1つの提出の合計が 13F 全体の20%超 → 提出ごと除く
+RESCALE_TOL = 0.05                # 10 のべきで直すのは |log10(株価の比) − べき| ≤ 0.05 のときだけ（BRK-A/B の取り違え〔比≈1500〕を直さない）
 
 PASSIVE_RE = re.compile(r'VANGUARD|BLACKROCK|STATE STREET|GEODE|DIMENSIONAL|NORTHERN TRUST|SCHWAB|ISHARES|SPDR|WISDOMTREE|'
                         r'PROSHARE|DIREXION|FIRST TRUST|VAN ECK|VANECK|GLOBAL X|PARAMETRIC|RAFFERTY|\bINDEX\b', re.I)
@@ -174,6 +180,8 @@ def fetch():
 
 # ───────────────────────── 13F を読む ─────────────────────────
 def tsv(z, name):
+    if name not in z.namelist():     # 2025-06〜08 の zip は中にフォルダがある
+        name = next(n for n in z.namelist() if n.rsplit('/', 1)[-1] == name)
     with z.open(name) as f:
         yield from csv.DictReader(io.TextIOWrapper(f, 'utf-8', errors='ignore'), delimiter='\t', quoting=csv.QUOTE_NONE)
 
@@ -250,7 +258,7 @@ def read_clean(p, zpath):
             if cu in cons and cons[cu] > 0:
                 lr = math.log10((v / sh) / cons[cu])
                 k = round(lr)
-                if abs(lr - k) > 0.25 or abs(k) > 3:
+                if abs(lr - k) > (RESCALE_TOL if k else 0.25) or abs(k) > 3:
                     if abs(lr) > math.log10(3):
                         fix['row_dropped'] += 1; continue      # 合意の株価と3倍超ずれ、10のべきでも説明できない行
                     k = 0
@@ -265,7 +273,33 @@ def read_clean(p, zpath):
         # ETF の値も同じ尺度に（申告単位の比 kf で）
         etfv[a] = etfv[a] / 10 ** kf
         clean[a] = out
-        for cu, v in out.items():
+    # 提出ごとの大きさ: 1つの提出の合計が 13F 全体の20%超（最大の受動的な運用会社でも1割強）→ 単位か株数の誤り → 提出ごと除く
+    gtot = sum(sum(d.values()) for d in clean.values())
+    for a in list(clean):
+        if gtot > 0 and sum(clean[a].values()) > IMPL_FILING_SHARE * gtot:
+            fix['filing_dropped_oversize'] += 1
+            del clean[a]
+    # ありえない株数の掃除（事前登録2・結果を見る前に追加）: 株価は合っているのに株数ごと膨らんだ行
+    # （実例: 2023-06 Julius Baer が MSFT 34億株・HON 17億株〔13F 全体の4〜8割〕・2018-09 Vanguard が BRK-A 1.3億株〔発行済み約60万株〕）。
+    # 持ち手が20社以上の CUSIP で、1行の株数が『次に大きい持ち手の5倍超』かつ『他の全提出者の合計の半分超』なら、
+    # データの誤りか支配株主の戦略的な持分 → 集計の市場からも、その提出者の比重からも除く
+    top2, tsh, nh = defaultdict(lambda: [0.0, 0.0]), defaultdict(float), Counter()
+    for a_, d_ in clean.items():
+        for cu_ in d_:
+            x_ = shs[(a_, cu_)]; tsh[cu_] += x_; nh[cu_] += 1
+            t2 = top2[cu_]
+            if x_ > t2[0]:
+                t2[1] = t2[0]; t2[0] = x_
+            elif x_ > t2[1]:
+                t2[1] = x_
+    for a, d in clean.items():
+        for cu in list(d):
+            x = shs[(a, cu)]
+            if nh[cu] >= IMPL_NH and x >= top2[cu][0] and x > IMPL_ROW_X * top2[cu][1] and x > IMPL_ROW_OTHERS * (tsh[cu] - x):
+                fix['row_dropped_dominant'] += 1
+                del d[cu]
+    for a, d in clean.items():
+        for cu, v in d.items():
             agg[cu] += v
     return {'best': best, 'acc2cik': acc2cik, 'cover': cover, 'clean': clean, 'shs': shs, 'etfv': etfv, 'names': names,
             'titles': titles, 'px': px, 'cons': cons, 'agg': agg, 'fix': fix, 'rows_n': len(rows), 'cut': cut}
@@ -334,7 +368,7 @@ def _parse_one(p):
 
 def parse():
     import multiprocessing as mp
-    with mp.Pool(2) as pool:
+    with mp.Pool(3) as pool:
         pool.map(_parse_one, periods(), chunksize=1)
 
 
