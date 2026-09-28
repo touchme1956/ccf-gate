@@ -51,6 +51,10 @@ POST['PH'] = POST['X3']
 PREREG5 = 'mw_macro_timing_prereg5.json'
 EXPLORATORY['X6'] = PREREG5
 POST['X6'] = {'post_GW_CT_2008': 200901, 'post_RSZ_2010': 201101, 'post_GrowthTrend_2016': 201701}
+PREREG6 = 'mw_macro_timing_prereg6.json'
+ISO3 = {'GB': 'GBR', 'AT': 'AUT', 'AU': 'AUS', 'BE': 'BEL', 'CA': 'CAN', 'DK': 'DNK', 'FI': 'FIN', 'FR': 'FRA', 'DE': 'DEU', 'IE': 'IRL',
+        'IT': 'ITA', 'JP': 'JPN', 'NL': 'NLD', 'NO': 'NOR', 'ES': 'ESP', 'SE': 'SWE'}
+V1_PREDS = ['dp', 'ep', 'tbl', 'lty', 'tms', 'infl']
 LOG = []
 
 
@@ -669,6 +673,117 @@ def country_policy_block(fc_all, volmatch):
     return {'regions': reg_n, 'positive': pos, 'detail': det}
 
 
+# ───────────────────────── 検証（prereg6） ─────────────────────────
+def french_countries_ann():
+    """→ {ファイル名: {'loc': {yyyymm: 総リターン}, 'ann': {年: {'EP','Yld'}}}}（mw_valdca と同じ読み方）"""
+    z = zipfile.ZipFile(io.BytesIO(M.get(M.FR.format('F-F_International_Countries'), name='fr_F-F_International_Countries.zip')))
+    out = {}
+    for n in z.namelist():
+        if n not in COUNTRIES:
+            continue
+        bl = _blocks(z.read(n).decode('latin-1').splitlines())
+        assert 'Local' in bl[1]['hdr'][0] and 'Not Reqd' in bl[1]['hdr'][0], n
+        assert 'Average of Annual' in bl[8]['hdr'][0] and 'Not Reqd' in bl[8]['hdr'][2], n
+        loc = {int(r[0]): float(r[1]) / 100 for r in bl[1]['rows'] if float(r[1]) > -99}
+        ann = {}
+        for r in bl[8]['rows']:
+            ep, yld = float(r[3]), float(r[5])
+            ann[int(r[0])] = {'EP': ep / 100 if ep > -99 else None, 'Yld': yld / 100 if yld > -99 else None}
+        out[n] = {'loc': loc, 'ann': ann}
+    return out
+
+
+def v1_country(fc, cc):
+    """X6a と部品（予測で傾けるだけ・トレンド×失業だけ）を1か国で → dict"""
+    loc, ann = fc['loc'], fc['ann']
+    r3 = fred(f'IR3TIB01{cc}M156N')
+    try:
+        rc = fred(f'IRSTCI01{cc}M156N')
+    except RuntimeError:
+        rc = {}
+    rate = dict(rc); rate.update(r3)
+    try:
+        y10 = fred(f'IRLTLT01{cc}M156N')
+    except RuntimeError:
+        y10 = {}
+    try:
+        cpi = fred(f'{ISO3[cc]}CPIALLMINMEI')
+    except RuntimeError:
+        cpi = {}
+    un = fred(f'LRHUTTTT{cc}M156S')
+    ks = sorted(loc)
+    cash = {k: rate[ym_add(k, -1)] / 1200 for k in ks if ym_add(k, -1) in rate}
+    # 配当を除いた価格指数（年 Y の比率は Y 年7月から・mw_valdca と同じ近似）
+    def known_year(k):
+        y, m = divmod(k, 100)
+        return y if m > 6 else y - 1
+    PI, lv = {ym_add(ks[0], -1): 1.0}, 1.0
+    for k in ks:
+        a = ann.get(known_year(k)) or ann.get(k // 100)
+        dyv = a['Yld'] if a and a['Yld'] is not None else 0.0   # 価格指数の近似のためだけ（年内の比にしか効かない）
+        lv *= (1 + loc[k]) / (1 + dyv / 12)
+        PI[k] = lv
+    tri, lv = {}, 1.0
+    for k in ks:
+        lv *= 1 + loc[k]
+        tri[k] = lv
+
+    def zval(name, d):
+        Yk = known_year(d)
+        a = ann.get(Yk)
+        dec = (Yk - 1) * 100 + 12
+        if name in ('dp', 'ep'):
+            if a is None or dec not in PI or d not in PI:
+                return None
+            v = a['Yld'] if name == 'dp' else a['EP']
+            return math.log(v * PI[dec] / PI[d]) if v and v > 0 else None
+        if name == 'tbl':
+            return rate[d] / 100 if d in rate else None
+        if name == 'lty':
+            return y10[d] / 100 if d in y10 else None
+        if name == 'tms':
+            return y10[d] / 100 - rate[d] / 100 if d in y10 and d in rate else None
+        if name == 'infl':
+            a1, b1 = cpi.get(ym_add(d, -1)), cpi.get(ym_add(d, -2))
+            return a1 / b1 - 1 if a1 and b1 else None
+        return None
+
+    dfun = lambda m: ym_add(m, -1)
+    er = {k: loc[k] - cash[k] for k in ks if k in cash}
+    FCc = {}
+    for pn in V1_PREDS:
+        z = {m: v for m in ks if (v := zval(pn, dfun(m))) is not None}
+        FCc[pn] = recursive_forecasts(ks, z, er, dfun)
+    pm = prevailing_mean(ks, er, dfun)
+    f = {}
+    for m in ks:
+        v = [ct_value(FCc[pn][m], SIGN[pn]) for pn in V1_PREDS if m in FCc[pn]]
+        if v:
+            f[m] = S.mean(v)
+    tilt = {m: min(WMAX, max(0.0, f[m] / pm[m])) for m in f if m in pm and pm[m] > 0}
+    bad = {}
+    for m in ks:
+        d = dfun(m)
+        win = [ym_add(d, -i) for i in range(10)]
+        uw = [ym_add(d, -2 - i) for i in range(12)]
+        if not all(x in tri for x in win) or not all(x in un for x in uw):
+            continue
+        bad[m] = (tri[d] < S.mean(tri[x] for x in win)) and (un[uw[0]] > S.mean(un[x] for x in uw))
+    rows = {}
+    for tag, W in (('X6a', {m: (0.0 if bad[m] else tilt[m]) for m in bad if m in tilt}),
+                   ('tilt_only', dict(tilt)), ('gt_only', {m: (0.0 if bad[m] else 1.0) for m in bad})):
+        g, n, TO = run_w(W, loc, cash)
+        if len(n) < 120:
+            rows[tag] = f'N/A（評価できる月が {len(n)}）'
+            continue
+        b = {k: loc[k] for k in n}
+        xs = M.excess_stats(n, b)
+        rows[tag] = {'window': [min(n), max(n)], 'net': xs, 'positive': bool(xs['ex_ann'] > 0 and xs['cagr_diff'] > 0),
+                     'sharpe_net_vs_bench': sharpe_pair(n, b, cash), 'avg_w': round(S.mean(W[k] for k in n), 3),
+                     'n_predictors_avg': round(S.mean(sum(1 for pn in V1_PREDS if m in FCc[pn]) for m in n), 1)}
+    return rows
+
+
 # ───────────────────────── 評価 ─────────────────────────
 def evaluate(name, fam, W, r, c, mkt, rf, dy, er=None, fc=None, base=None):
     gross, net, TO = run_w(W, r, c)
@@ -923,6 +1038,70 @@ def main():
         e['repl'] = None
         tested.append(e)
 
+    # ── 検証（prereg6）: X6a を疑う
+    ver = {'prereg': PREREG6}
+    fca = french_countries_ann()
+    v1 = {}
+    for fn, (cc, jp) in COUNTRIES.items():
+        if cc not in ISO3 or fn not in fca:
+            continue
+        try:
+            v1[cc] = v1_country(fca[fn], cc)
+        except RuntimeError as ex:
+            v1[cc] = f'N/A（取得失敗: {str(ex)[:60]}）'
+    summ = {}
+    for tag in ('X6a', 'tilt_only', 'gt_only'):
+        ok = [v[tag] for v in v1.values() if isinstance(v, dict) and isinstance(v.get(tag), dict)]
+        summ[tag] = {'regions': len(ok), 'positive': sum(1 for x in ok if x['positive']),
+                     'sharpe_better': sum(1 for x in ok if x['sharpe_net_vs_bench'] and x['sharpe_net_vs_bench'][0] > x['sharpe_net_vs_bench'][1])}
+    summ['X6a']['replicates_2of3'] = bool(summ['X6a']['regions'] and summ['X6a']['positive'] / summ['X6a']['regions'] >= 2 / 3)
+    ver['V1_international'] = {'summary': summ, 'detail': v1}
+    log('検証 V1', summ)
+
+    def x6_us(sma_n=10, ma_n=12, lag_u=1, cap=WMAX, spread=SPREAD, cost=COST):
+        W = {}
+        for m in months:
+            d = dtime(m)
+            if m not in tilt and m not in f1:
+                continue
+            win = [ym_add(d, -i) for i in range(sma_n)]
+            uw = [ym_add(d, -lag_u - i) for i in range(ma_n)]
+            if not all(x in tri for x in win) or not all(x in un for x in uw) or m not in PM or PM[m] <= 0:
+                continue
+            bad = tri[d] < S.mean(tri[x] for x in win) and un[uw[0]] > S.mean(un[x] for x in uw)
+            W[m] = 0.0 if bad else min(cap, max(0.0, f1[m] / PM[m]))
+        g, n, TO = run_w(W, r, c, spread=spread, cost=cost)
+        g = {k: v for k, v in g.items() if k >= FRENCH_START}
+        n = {k: v for k, v in n.items() if k >= FRENCH_START}
+        return {'window': [min(n), max(n)], 'full': M.excess_stats(g, mkt), 'train': M.excess_stats(g, mkt, z=M.TRAIN_END),
+                'hold': M.excess_stats(g, mkt, a=M.HOLD_START), 'cost_hold': M.excess_stats(n, mkt, a=M.HOLD_START),
+                'sharpe': {w: sharpe_pair(n, mkt, rf, a, z) for w, (a, z) in {'train': (None, M.TRAIN_END), 'hold': (M.HOLD_START, None)}.items()}}, g, n
+    base_v, g6, n6 = x6_us()
+    v2 = {'base': {k: base_v[k] for k in ('full', 'train', 'hold')}}
+    for nm, kw in (('sma8', {'sma_n': 8}), ('sma12', {'sma_n': 12}), ('unrate_ma6', {'ma_n': 6}), ('unrate_ma18', {'ma_n': 18}),
+                   ('unrate_lag2', {'lag_u': 2}), ('cap1.25', {'cap': 1.25}), ('cap2.0', {'cap': 2.0}),
+                   ('spread3pct', {'spread': 0.03}), ('cost0.30pct', {'cost': 0.003})):
+        v, _, _ = x6_us(**kw)
+        v2[nm] = {'train': (v['train'] or {}).get('ex_ann'), 'train_t': (v['train'] or {}).get('t'),
+                  'hold': (v['hold'] or {}).get('ex_ann'), 'hold_t': (v['hold'] or {}).get('t'),
+                  'net_hold': (v['cost_hold'] or {}).get('ex_ann'), 'full_t': (v['full'] or {}).get('t'), 'sharpe': v['sharpe']}
+    ver['V2_sensitivity_post_hoc'] = v2
+    log('検証 V2', {k: (v.get('train'), v.get('train_t'), v.get('hold'), v.get('hold_t')) for k, v in v2.items() if k != 'base'})
+    ex89 = lambda d: {k: v for k, v in d.items() if not (200801 <= k <= 200912)}
+    yearly = {}
+    for y in range(1950, 2026):
+        kk = [k for k in g6 if k // 100 == y]
+        if len(kk) >= 6:
+            yearly[y] = round(((math.prod(1 + n6[k] for k in kk)) - math.prod(1 + mkt[k] for k in kk)) * 100, 1)
+    ver['V3_concentration'] = {'hold_ex_2008_09_gross': M.excess_stats(ex89(g6), mkt, a=M.HOLD_START),
+                               'full_ex_2008_09_gross': M.excess_stats(ex89(g6), mkt),
+                               'yearly_net_minus_mkt_pct': yearly,
+                               'by_decade_cagr_diff': {str(a): round((M.cagr({k: n6[k] for k in n6 if a * 100 <= k < (a + 10) * 100}) -
+                                                                        M.cagr({k: mkt[k] for k in n6 if a * 100 <= k < (a + 10) * 100})) * 100, 2)
+                                                       for a in range(1950, 2030, 10) if any(a * 100 <= k < (a + 10) * 100 for k in n6)},
+                               'best_5_years': sorted(yearly.items(), key=lambda x: -x[1])[:5]}
+    ver['V4_realtime'] = '測っていない（ALFRED の速報値）。既知の限界'
+
     # 事後（格付けしない）: X3c の 2003 年以降を FF 金利の誘導目標に替えた版
     pol2 = policy_regime([(fred('M13009USM156NNBR'), None, 196907), (fred('INTDSRUSM193N'), 196908, 200212),
                           (fred('DFEDTAR'), 200301, 200812), (fred('DFEDTARU'), 200901, None)])
@@ -993,7 +1172,8 @@ def main():
            'prereg2': PREREG2, 'prereg2_commit': git_sha('out/' + PREREG2),
            'prereg3': PREREG3, 'prereg3_commit': git_sha('out/' + PREREG3),
            'prereg4': PREREG4, 'prereg4_commit': git_sha('out/' + PREREG4),
-           'prereg5': PREREG5, 'prereg5_commit': git_sha('out/' + PREREG5), 'sanity': san,
+           'prereg5': PREREG5, 'prereg5_commit': git_sha('out/' + PREREG5),
+           'prereg6': PREREG6, 'prereg6_commit': git_sha('out/' + PREREG6), 'verification_X6a': ver, 'sanity': san,
            'participation': {str(y): round(S.mean(npart[m] for m in npart if m // 100 == y), 1) for y in range(1891, 2026, 5) if any(m // 100 == y for m in npart)},
            'n_tested': len(tested), 'tested': tested, 'log': LOG}
     p = M.save(OUT, out)
