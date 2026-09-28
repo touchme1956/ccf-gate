@@ -25,6 +25,7 @@ COST_UNIT = 0.001                  # 片道 100% あたり 0.10%（大型株・�
 SPREAD_MARGIN = 0.015              # 借入 = 短期金利 + 1.5%/年
 E_LAG = 3                          # 利益は3か月遅れで使う
 LOG = []
+RUIN = []   # JST の年次で1年に持ち分を失った（規則, 年, リターン）
 POOL = {}   # 国ごとの費用後の超過（R1 の束ね用・JSON には書かない）
 
 
@@ -1056,7 +1057,7 @@ def post_pub_for(rule):
     if rule == 'E3d_ECY_agree_tsmom':
         return {'post_MOP2012': 201301}
     if rule.startswith('E2') or rule.startswith('E3'):
-        return {'post_Faber2007': 200801}
+        return {'post_Faber2007': 200801, 'post_ShillerBlackJivraj2020': 202101}
     if rule == 'P11_FedModel_bond':
         return {'post_Yardeni1997': 199801}
     if rule in ('P12_RT_logCAPE_cash', 'P13_RT_ECY_cash'):
@@ -1120,6 +1121,136 @@ def tax_switch(keys, W, series_by_w, bench, rate=0.20315, c=COST_UNIT):
         bh *= 1 + bench[t]
     bh_tax = bh - max(0.0, bh - 1) * rate
     return {'after_tax_ratio': round(tv / bh_tax, 4), 'years': round(len(keys) / 12, 1)}
+
+
+def jst_data():
+    import openpyxl
+    b = M.get('https://www.macrohistory.net/app/download/9834512569/JSTdatasetR6.xlsx?t=1763503850', 'jst_R6.xlsx', max_age_days=90)
+    wb = openpyxl.load_workbook(io.BytesIO(b), read_only=True, data_only=True)
+    rows = list(wb['Sheet1'].iter_rows(values_only=True))
+    h = rows[0]
+    cols = ['eq_tr', 'eq_dp', 'bond_tr', 'bill_rate', 'cpi', 'ltrate']
+    I = {c: h.index(c) for c in cols + ['year', 'iso']}
+    out = {}
+    for r in rows[1:]:
+        d = {c: (float(r[I[c]]) if r[I[c]] is not None else None) for c in cols}
+        out.setdefault(r[I['iso']], {})[int(r[I['year']])] = d
+    return out
+
+
+def jst_country(dat, rule, cost_unit=COST_UNIT):
+    """1か国ぶん（年次）→ (戦略 {年: r}, 市場 {年: r})。信号は Y 年末、持ち方は Y+1 年"""
+    ys = sorted(dat)
+    edy, trend = {}, {}
+    for Y in ys:
+        d = dat[Y]
+        d10 = dat.get(Y - 10, {})
+        if None not in (d['eq_dp'], d['ltrate'], d['cpi']) and d10.get('cpi') and d['cpi'] and d10['cpi'] > 0 and d['cpi'] > 0:
+            pi10 = (d['cpi'] / d10['cpi']) ** 0.1 - 1
+            edy[Y] = d['eq_dp'] - (d['ltrate'] / 100 - pi10)
+        if d['eq_tr'] is not None and d['bill_rate'] is not None:
+            trend[Y] = d['eq_tr'] > d['bill_rate']
+    med, arr = {}, []
+    import bisect
+    for Y in sorted(edy):
+        bisect.insort(arr, edy[Y])
+        if len(arr) >= 10:
+            n = len(arr)
+            med[Y] = arr[n // 2] if n % 2 else (arr[n // 2 - 1] + arr[n // 2]) / 2
+    L = {'J1_agree_1.5': 1.5, 'J2_agree_2.0': 2.0, 'J3_agree_1.5_cash': 1.5, 'J4_value_only_2.0': 2.0, 'J5_trend_only_2.0': 2.0}[rule]
+    strat, bench = {}, {}
+    wprev = None
+    for Y in ys:
+        Y1 = Y + 1
+        if Y1 not in dat:
+            continue
+        d1 = dat[Y1]
+        if d1['eq_tr'] is None or d1['bill_rate'] is None:
+            wprev = None
+            continue
+        cheap = dear = up = down = None
+        if Y in edy and Y in med:
+            cheap, dear = edy[Y] > med[Y], edy[Y] < med[Y]
+        if Y in trend:
+            up, down = trend[Y], not trend[Y]
+        if rule in ('J1_agree_1.5', 'J2_agree_2.0', 'J3_agree_1.5_cash'):
+            if cheap is None or up is None:
+                wprev = None
+                continue
+            w = L if (cheap and up) else (0.0 if (dear and down) else 1.0)
+        elif rule == 'J4_value_only_2.0':
+            if cheap is None:
+                wprev = None
+                continue
+            w = L if cheap else 0.0
+        else:
+            if up is None:
+                wprev = None
+                continue
+            w = L if up else 0.0
+        alt = d1['bill_rate'] if rule == 'J3_agree_1.5_cash' else d1['bond_tr']
+        if w < 1 and alt is None:
+            wprev = None
+            continue
+        rs = d1['eq_tr']
+        if w < 1:
+            r = w * rs + (1 - w) * alt
+        elif w == 1:
+            r = rs
+        else:
+            r = w * rs - (w - 1) * (d1['bill_rate'] + SPREAD_MARGIN)
+        to = 0.0 if wprev is None else abs(w - wprev)
+        rr = r - to * cost_unit
+        bench[Y1] = rs
+        if rr <= -0.999:
+            # 年1回の売買で2倍などを持ち、1年で持ち分が無くなった（破産）。以後は続けられない → −99.9% を記録して打ち切る（楽観にしない）
+            strat[Y1] = -0.999
+            RUIN.append((rule, Y1, round(r, 3)))
+            break
+        strat[Y1] = rr
+        wprev = w
+    return strat, bench
+
+
+def jst_block():
+    data = jst_data()
+    res = {}
+    for rule in ('J1_agree_1.5', 'J2_agree_2.0', 'J3_agree_1.5_cash', 'J4_value_only_2.0', 'J5_trend_only_2.0'):
+        per, pos, reg, pooled_src = {}, 0, 0, {}
+        for iso, dat in sorted(data.items()):
+            st, bm = jst_country(dat, rule)
+            pre = {y: v for y, v in st.items() if y <= 1974}
+            post = {y: v for y, v in st.items() if y >= 1975}
+            xpre = M.excess_stats(pre, bm, per_year=1, lag=2) if len(pre) >= 24 else None
+            xpost = M.excess_stats(post, bm, per_year=1, lag=2) if len(post) >= 24 else None
+            xall = M.excess_stats(st, bm, per_year=1, lag=2) if len(st) >= 24 else None
+            per[iso] = {'years_pre1975': len(pre), 'pre1975': xpre, 'from1975': xpost, 'full': xall}
+            if iso != 'USA' and len(pre) >= 30 and xpre:
+                reg += 1
+                ok = xpre['ex_ann'] > 0 and xpre['cagr_diff'] > 0
+                pos += ok
+                per[iso]['positive_pre1975'] = ok
+            if iso != 'USA':
+                pooled_src[iso] = {y: st[y] - bm[y] for y in st}
+        years = sorted(set().union(*[set(v) for v in pooled_src.values()]))
+        pooled = {}
+        for y in years:
+            v = [d[y] for d in pooled_src.values() if y in d]
+            if len(v) >= 5:
+                pooled[y] = S.mean(v)
+        zero = {y: 0.0 for y in pooled}
+        pp = M.excess_stats({y: v for y, v in pooled.items() if y <= 1974}, zero, per_year=1, lag=2)
+        pq = M.excess_stats({y: v for y, v in pooled.items() if y >= 1975}, zero, per_year=1, lag=2)
+        verdict = None
+        if rule in ('J1_agree_1.5', 'J2_agree_2.0', 'J3_agree_1.5_cash'):
+            a = reg > 0 and pos / reg >= 2 / 3
+            b = bool(pp and pp['ex_ann'] > 0 and (pp['t'] or 0) >= 2.0)
+            verdict = '独立の再現あり' if (a and b) else '独立の再現なし'
+        res[rule] = {'ruin_events': [x for x in RUIN if x[0] == rule], 'countries_pre1975_30y': reg, 'positive_pre1975': pos, 'pooled_ex_us_pre1975': pp, 'pooled_ex_us_from1975': pq,
+                     'verdict': verdict, 'per_country': per}
+        log(f"JST {rule:18s} 1974年以前 正 {pos}/{reg} 束ね {pp['ex_ann'] if pp else None}%/年 t{pp['t'] if pp else None} ／ 1975〜 束ね {pq['ex_ann'] if pq else None} t{pq['t'] if pq else None} "
+            f"米国 1974以前 {per.get('USA', {}).get('pre1975', {}) and per['USA']['pre1975']['ex_ann']} → {verdict}")
+    return res
 
 
 # ───────────────────────── 本体 ─────────────────────────
@@ -1648,12 +1779,17 @@ def main():
             f"勝率 {h_['win_rate'] if h_ else None} ／ IRR差 中央 {a['median_irr_diff_pct']}% ／ 5%点 {sm['p05_multiple']} ／ 再現 {pos}/{reg}")
     tested += K
 
+    jst_res = jst_block()
     n_tested = len(tested)
     out = {'angle': 'valdca', 'prereg': PREREG, 'prereg_commit': sha,
-           'prereg_parts': {PREREG: sha, 'mw_valdca_prereg2.json': git_sha('out/mw_valdca_prereg2.json'), 'mw_valdca_prereg3.json': git_sha('out/mw_valdca_prereg3.json')}, 'sanity': sanity,
+           'prereg_parts': {PREREG: sha, 'mw_valdca_prereg2.json': git_sha('out/mw_valdca_prereg2.json'), 'mw_valdca_prereg3.json': git_sha('out/mw_valdca_prereg3.json'), 'mw_valdca_prereg4.json': git_sha('out/mw_valdca_prereg4.json')}, 'sanity': sanity,
            'train_only_parameters_used': dict(th, DBL_h=tp['DBL_h'], VA_g_monthly=tp['VA_g_monthly']),
            'posthoc': posthoc,
-           'n_tested': n_tested, 'grades': {x['name']: x['grade'] for x in tested},
+           'jst_replication_prereg4': jst_res,
+           'n_tested': n_tested,
+           'n_evaluated_including_reports': n_tested + len(grid) + len(rep.get('R2_decomposition_US_lev2', {})) + len(jst_res),
+           'n_note': 'n_tested = 格付けした族（P13・E2 3・E3 4・F 4・E1 5・E4 2）と積立の工夫 K 16。ほかに事後の点検の変形（grid）・分解（R2）・JST の再現（J1〜J5）も数えたのが n_evaluated_including_reports（多重検定の数え方）',
+           'grades': {x['name']: x['grade'] for x in tested},
            'tested': tested, 'log': LOG}
     p = M.save(OUT, out)
     log('書いた', p, 'n_tested', n_tested)
