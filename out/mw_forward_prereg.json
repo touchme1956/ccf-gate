@@ -1,0 +1,555 @@
+{
+ "angle": "forward",
+ "generated": "2026-09-28",
+ "registered_before_measuring": true,
+ "what_exists_at_registration": "前向きの月（2026-10 以降）のデータはまだ1か月も存在しない（2026-10 の月末は 2026-10-30）。登録前に見たのは ≤2026-08 の歴史だけで、それは設計（追従のぶれ σ_d・相手の ≤2006-12 の上乗せ）に使った",
+ "asked_by": "ユーザー（2026-09-28）「市場に勝てる歴史検証が出るまでいろんな角度から調べて…探し続けて」→ 角度 forward（漏れの無い唯一の検証＝今日登録して先の月で答え合わせ）",
+ "question": "歴史の検証（約3,500本）を生き残った市場に勝つ候補と、投資家自身の賭け（ETF 側・城）は、登録した後の月でも市場に勝つか。いつ見ても有効な検定（e過程）で毎月追い、e≥20 で『勝ち』（α=0.05）とする",
+ "why_forward": [
+  "mw の歴史の検証は 3,507本（mw_summary・全体の Bonferroni t≈4.34）。保有期間（2007〜）の結果も選ぶのに使われた＝知識の漏れは消せない",
+  "前向きの月は誰も見ていない。事前に規則・相手・賭けの大きさ・打ち切りを固定すれば、結果は漏れなく読める",
+  "e過程（賭けの資産）は毎月のぞいても・いつ止めても α を守る（Ville の不等式 P(sup E ≥ 1/α) ≤ α）。固定期間の t検定のように『見るたびに有意水準が膨らむ』ことが無い"
+ ],
+ "global_criteria_note": "out/mw_prereg.json の C1〜C8・S/A/B/C は歴史の検証の線。前向きの検証はそれとは別の線（下の e≥20）で裁き、格付けは付けない（N/A）",
+ "hypotheses": {
+  "H1_core_vs_SPY": {
+   "definition": "投資家の ETF 側（iFreeNEXT NASDAQ100 60・SMH 20 ＝ QQQM 75% / SMH 25%・毎月の組み直し）対 SPY",
+   "strategy_legs": {
+    "QQQM": 0.75,
+    "SMH": 0.25
+   },
+   "benchmark": "SPY（S&P500・配当込み）",
+   "benchmark_legs": {
+    "SPY": 1.0
+   },
+   "real_vehicle": true,
+   "data": "Yahoo 日次の調整後終値（配当込み）→ 月末値。QQQM・SMH・SPY",
+   "why": "資金の8割が乗っている賭け（NASDAQ100＋半導体）。検証済みの上乗せは無い（100年の業種の基礎率はむしろ反転）。前向きに見えるのはここだけ",
+   "cost_deducted_pct_per_year": 0.0,
+   "mu_d_rule": "固定 1.0%/年（検証済みの上乗せが無い＝検出したい最小の上乗せとして 1%/年）",
+   "frozen": {
+    "sigma_d": 13.183,
+    "sigma_window": [
+     200007,
+     202608
+    ],
+    "n_months": 314,
+    "mu_d": 1.0,
+    "counterpart": null,
+    "B": 0.155,
+    "lambda_kelly": 0.575,
+    "lambda": 0.575,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 4
+   }
+  },
+  "H2_castle_vs_SPY": {
+   "definition": "城（その月の名簿を等分・毎月の組み直し）対 SPY",
+   "strategy_legs": {
+    "castle": "名簿の等分・毎月の組み直し"
+   },
+   "benchmark": "SPY",
+   "benchmark_legs": {
+    "SPY": 1.0
+   },
+   "real_vehicle": true,
+   "data": "Yahoo 日次（名簿の各社・SPY）。名簿は git の履歴（out/score_all.json の buy ＋ gate_exceptions.json の in_castle_split）",
+   "why": "門が選ぶ個別株（投下可＋門外判断）が市場に勝つか＝ユーザーの問いそのもの",
+   "cost_deducted_pct_per_year": 0.05,
+   "mu_d_rule": "固定 3.0%/年（castle_rule の線 +3pt/年）",
+   "frozen": {
+    "sigma_d": 12.089,
+    "sigma_window": [
+     200604,
+     202608
+    ],
+    "n_months": 245,
+    "mu_d": 3.0,
+    "counterpart": null,
+    "B": 0.14,
+    "lambda_kelly": 2.053,
+    "lambda": 2.053,
+    "lambda_capped": false,
+    "mu_f": 3.0,
+    "clipped_months_hist": 1
+   }
+  },
+  "H3_castle_vs_QQQM": {
+   "definition": "城（同上）対 QQQM（castle_rule の物差しと同じ相手）",
+   "strategy_legs": {
+    "castle": "名簿の等分・毎月の組み直し"
+   },
+   "benchmark": "QQQM（NASDAQ100・castle_rule の相手）",
+   "benchmark_legs": {
+    "QQQM": 1.0
+   },
+   "real_vehicle": true,
+   "data": "同上・QQQM",
+   "why": "castle_rule（個別株の比率の規則）が使う物差しと同じ相手",
+   "cost_deducted_pct_per_year": 0.05,
+   "mu_d_rule": "固定 3.0%/年（castle_rule の線 +3pt/年）",
+   "frozen": {
+    "sigma_d": 11.668,
+    "sigma_window": [
+     200604,
+     202608
+    ],
+    "n_months": 245,
+    "mu_d": 3.0,
+    "counterpart": null,
+    "B": 0.135,
+    "lambda_kelly": 2.204,
+    "lambda": 2.204,
+    "lambda_capped": false,
+    "mu_f": 3.0,
+    "clipped_months_hist": 1
+   }
+  },
+  "H4_exUS_valmom_real": {
+   "definition": "米国外先進国の割安＋勢い・実在 ETF（PXF 50% / IMTM 50%・毎月の組み直し）対 VEA",
+   "strategy_legs": {
+    "PXF": 0.5,
+    "IMTM": 0.5
+   },
+   "benchmark": "VEA（FTSE 先進国〔米国除く〕全規模・時価加重）",
+   "benchmark_legs": {
+    "VEA": 1.0
+   },
+   "real_vehicle": true,
+   "data": "Yahoo 日次（PXF・IMTM・VEA）",
+   "why": "検証を生き残った『米国外の国の中での割安＋勢い』（intl F2b val_mom・ret_12_1・ni_me/ocf_me が A）を実在の ETF で。PXF は楽天で買える・IMTM は買えない",
+   "cost_deducted_pct_per_year": 0.0,
+   "mu_d_rule": "相手 fr_dxus_valmom の ≤2006-12 の超過の算術平均 × 0.5（公表後の縮み）を [0.5, 3.0]%/年 に収める",
+   "frozen": {
+    "sigma_d": 2.603,
+    "sigma_window": [
+     201502,
+     202608
+    ],
+    "n_months": 139,
+    "mu_d": 1.359,
+    "counterpart": "fr_dxus_valmom",
+    "B": 0.035,
+    "lambda_kelly": 20.064,
+    "lambda": 14.286,
+    "lambda_capped": true,
+    "mu_f": 1.359,
+    "clipped_months_hist": 0
+   }
+  },
+  "H5_EM_multifactor_real": {
+   "definition": "新興国の割安＋収益性の傾け・実在 ETF（AVEM）対 IEMG",
+   "strategy_legs": {
+    "AVEM": 1.0
+   },
+   "benchmark": "IEMG（MSCI 新興国 IMI・時価加重）",
+   "benchmark_legs": {
+    "IEMG": 1.0
+   },
+   "real_vehicle": true,
+   "data": "Yahoo 日次（AVEM・IEMG）",
+   "why": "検証で S のまま残った『新興国の大型株で良い側の多因子』（fmom_wf Q2R_Emerging_ew）を実在の ETF で。AVEM は楽天に無い",
+   "cost_deducted_pct_per_year": 0.0,
+   "mu_d_rule": "相手 fr_em_big4 の ≤2006-12 の超過の算術平均 × 0.5（公表後の縮み）を [0.5, 3.0]%/年 に収める",
+   "frozen": {
+    "sigma_d": 2.399,
+    "sigma_window": [
+     201910,
+     202608
+    ],
+    "n_months": 83,
+    "mu_d": 1.493,
+    "counterpart": "fr_em_big4",
+    "B": 0.03,
+    "lambda_kelly": 25.933,
+    "lambda": 16.667,
+    "lambda_capped": true,
+    "mu_f": 1.493,
+    "clipped_months_hist": 0
+   }
+  },
+  "H6_US_quality_real": {
+   "definition": "米国の質・実在 ETF（QUAL）対 SPY",
+   "strategy_legs": {
+    "QUAL": 1.0
+   },
+   "benchmark": "SPY",
+   "benchmark_legs": {
+    "SPY": 1.0
+   },
+   "real_vehicle": true,
+   "data": "Yahoo 日次（QUAL・SPY）",
+   "why": "検証で A の『現金ベースの収益性（cop_at）』（factor_us・reality_gap・mega_tilt で S/A）を実在の質 ETF で。QUAL は楽天に無い（同系の DGRW・MOAT・VIG はある）",
+   "cost_deducted_pct_per_year": 0.0,
+   "mu_d_rule": "相手 jkp_cop_at の ≤2006-12 の超過の算術平均 × 0.5（公表後の縮み）を [0.5, 3.0]%/年 に収める",
+   "frozen": {
+    "sigma_d": 2.91,
+    "sigma_window": [
+     201308,
+     202608
+    ],
+    "n_months": 157,
+    "mu_d": 0.93,
+    "counterpart": "jkp_cop_at",
+    "B": 0.035,
+    "lambda_kelly": 10.989,
+    "lambda": 10.989,
+    "lambda_capped": false,
+    "mu_f": 0.93,
+    "clipped_months_hist": 0
+   }
+  },
+  "H7_SEC_cop_at_M100": {
+   "definition": "紙: 時価総額上位100社のうち現金ベースの営業利益÷総資産（cop_at）の上位1/3・時価加重・毎年7月に組み直し（SEC XBRL）対 SPY",
+   "strategy_legs": {
+    "sec": "cop_at 上位1/3・上位100社・浮動株時価加重・年の中は買って持つ"
+   },
+   "benchmark": "SPY",
+   "benchmark_legs": {
+    "SPY": 1.0
+   },
+   "real_vehicle": false,
+   "data": "組入れ: SEC XBRL（night/mw_sec_replication.py の m100_cohorts の S）。2026年7月の組入れは下の frozen に凍結。値動き: Yahoo 日次",
+   "why": "同じ cop_at を、原本（SEC）から個人が組める形（上位100社の上位1/3・約27社）で。critic の F2",
+   "cost_deducted_pct_per_year": 0.05,
+   "mu_d_rule": "相手 jkp_cop_at の ≤2006-12 の超過の算術平均 × 0.5（公表後の縮み）を [0.5, 3.0]%/年 に収める",
+   "frozen": {
+    "sigma_d": 7.125,
+    "sigma_window": [
+     201007,
+     202608
+    ],
+    "n_months": 194,
+    "mu_d": 0.93,
+    "counterpart": "jkp_cop_at",
+    "B": 0.085,
+    "lambda_kelly": 1.833,
+    "lambda": 1.833,
+    "lambda_capped": false,
+    "mu_f": 0.93,
+    "clipped_months_hist": 0
+   }
+  },
+  "H8_EM_big4_paper": {
+   "definition": "紙: 新興国の大型株（French の BIG 行）で 割安・高収益・投資控えめ・勢い の良い側4本を等分 対 French の新興国市場",
+   "strategy_legs": {
+    "french_em": "BIG HiBM・BIG HiOP・BIG LoINV・BIG HiPRIOR を 1/4 ずつ・毎月の組み直し"
+   },
+   "benchmark": "French の新興国市場（Emerging_5_Factors の Mkt-RF + RF・時価加重）",
+   "benchmark_legs": null,
+   "real_vehicle": false,
+   "data": "Ken French: Emerging_Markets_6_Portfolios_ME_BE-ME（BIG HiBM）・_ME_OP（BIG HiOP）・_ME_INV（BIG LoINV）・_ME_Prior_12_2（BIG HiPRIOR）の Value Weight 月次、Emerging_5_Factors",
+   "why": "H5 の紙の上の元（CRSP 由来ではないが French の国際データ・上場廃止も入る）。検証で保有 +1.65%/年 t2.69・追従のぶれ 2.1%＝前向きで決着が付く見込みが最も高い",
+   "cost_deducted_pct_per_year": 0.18,
+   "mu_d_rule": "相手 fr_em_big4 の ≤2006-12 の超過の算術平均 × 0.5（公表後の縮み）を [0.5, 3.0]%/年 に収める",
+   "frozen": {
+    "sigma_d": 2.516,
+    "sigma_window": [
+     199207,
+     202608
+    ],
+    "n_months": 410,
+    "mu_d": 1.493,
+    "counterpart": "fr_em_big4",
+    "B": 0.03,
+    "lambda_kelly": 23.581,
+    "lambda": 16.667,
+    "lambda_capped": true,
+    "mu_f": 1.493,
+    "clipped_months_hist": 1
+   }
+  }
+ },
+ "counterparts_for_mu_d": {
+  "fr_dxus_valmom": {
+   "what": "French Developed_ex_US: 0.5×BIG HiBM + 0.5×BIG HiPRIOR − Developed_ex_US の市場（総リターン）",
+   "mu_pre": 2.719,
+   "from": 199011,
+   "to": 200612,
+   "n": 194,
+   "te_pre": 3.633,
+   "t_nw": 3.3543575761958953
+  },
+  "fr_em_big4": {
+   "what": "French Emerging: BIG の良い側4本の等分 − 新興国市場（4本すべてある 1992-07 から）",
+   "mu_pre": 2.986,
+   "from": 199207,
+   "to": 200612,
+   "n": 174,
+   "te_pre": 2.971,
+   "t_nw": 3.9268013060537363
+  },
+  "jkp_cop_at": {
+   "what": "JKP usa cop_at の vw 三分位の良い側（≤2006-12 のデータだけで決めた側＝3.0）− French Mkt-RF（どちらも超過）",
+   "mu_pre": 1.861,
+   "from": 195111,
+   "to": 200612,
+   "n": 662,
+   "te_pre": 4.46,
+   "t_nw": 2.832341939150721
+  }
+ },
+ "e_process": {
+  "active_return": "x_t = r_strategy,t − r_benchmark,t − 費用/12（月次・米ドル・総リターンどうし）。t は 2026-10 から",
+  "clip": "x̃_t = min(B, max(−B, x_t))。B = 4 × σ_d/√12 を 0.005 刻みで切り上げ（σ_d＝登録前の月次追従差の標準偏差×√12）",
+  "null": "H0: 各月、過去を条件とした E[x̃_t] ≤ 0（切り詰めた平均が0以下）。B は過去の月のほぼすべてを切らない幅（登録前に切られた月: H1 4/314・H2 1/245・H3 1/245・H4 0/139・H5 0/83・H6 0/157・H7 0/194・H8 1/410）",
+  "bet": "E_t = Π_{s≤t} (1 + λ x̃_s)。λ = min(μ_d/σ_d², 1/(2B))（μ_d・σ_d は年率の小数）。μ_d = 検出したい上乗せ（設計の対立仮説）。μ_d/σ_d² は μ_d を真とした時のケリーの賭け率、1/(2B) の上限で 1+λx̃ ≥ 0.5",
+  "why_fixed_lambda": "賭け率は登録時に固定（前向きのデータで変えない）。μ_d は相手の ≤2006-12 の上乗せの半分（mw の実測で公表後の縮みは 0.44〜0.56）＝その半分が真ならちょうどケリー。真の上乗せが μ_d/2 未満なら e は育たない（検出力の表に出す）",
+  "reject": "E_t ≥ 20 に一度でも達したら『勝ち』（α=0.05）。達した月を記録し、以後も記録は続ける",
+  "futility": "逆向きの e過程 F_t = Π (1 + λ (μ_f/12 − x̃_s))、μ_f = μ_d。F_t ≥ 20 で『設計の上乗せ μ_d 以上は無い』＝見込みなし（拘束しない＝追跡は続けてよい。E の有効性は変わらない）",
+  "horizon": "最長 2046-09（20年）。それまでにどちらにも達しなければ『証明できず（未決）』で打ち切る",
+  "confidence_sequence": "参考（判定に使わない）: 同じ λ で μ0 の格子（−10〜+10%/年・0.1刻み）を退けた範囲から、切り詰めた平均の年率の、いつ見ても有効な下限・上限",
+  "family": "8本それぞれ e≥20（各 α=0.05）が判定。族の多重性は併記: e-BH（偽発見率5%・Wang & Ramdas 2022）と Bonferroni（e ≥ K/α = 160）と 平均e（8本の e の平均≥20 で『どれも勝たない』を退ける）",
+  "no_peeking_penalty": "e過程なので毎月更新して見てよい。規則・相手・λ・B・μ_d は変えない（変えたら別の新しい登録として e=1 から）"
+ },
+ "data_rules": {
+  "month_complete": "Yahoo: 当月より前 かつ その月の最後の日足が月末の5日以内。French: その月の値が公表されてから（毎月中旬〜翌月）",
+  "lock": "一度取り込んだ月の x は固定（その時の値）。後のデータ改訂は反映しない（逐次検定の順序を守るため）",
+  "order": "月は順番に取り込む。途中の月が未完なら先へ進まない。3か月待っても出ない月は『欠測』として飛ばす（0 で埋めない・絶対のルール7）",
+  "castle_roster": "その月の初日 00:00 UTC より前の最後のコミットの out/score_all.json の buy ＝ 投下可 ＋ gate_exceptions.json の in_castle_split=true。等分・毎月の組み直し。半分以上の銘柄の値が無い月は作らない（待つ）。日本株（数字だけのコード）は東証 .T の円建てを JPY=X（1ドルあたり円）で米ドルへ",
+  "sec_formation": "毎年7月に組み直し（その年6月30日までに提出された10-K だけ）。2026年分は frozen に凍結。2027年以降は `python3 night/mw_forward.py form_sec Y`（SEC の一括 companyfacts.zip を Y年7月以降に取り直してから）で out/mw_forward_sec_formation_Y.json を作る。作られない年は、その年の7月からこの系列を止める（0 で埋めない）",
+  "delisting": "実在 ETF が上場廃止・統合されたら、その系列はそこで止める（別の ETF に差し替えない）。SEC の組入れで値の無い銘柄はその月から外し残りで按分（mw_sec_replication.simulate と同じ）",
+  "currency": "全部米ドル。円の投資家にとっても追従差はほぼ同じ（両方に同じ為替が掛かる）"
+ },
+ "reporting": {
+  "cadence": "毎月（CI に1行足せば自動・下の ci_suggestion）。正式の見直しは毎年9月（castle_rule と同じ月）。どれかが e≥20 か e_f≥20 に達したらその月に報告",
+  "what": "各仮説の e・e_f・月数・切り詰めた平均の帯・累積の追従差、族の e-BH・平均e",
+  "who_decides": "判定は報告だけ。門・採点・配分を動かすかはユーザーの明示指示の領分"
+ },
+ "power_analysis_spec": {
+  "method": "各仮説の登録前の月次追従差（費用控除後）から平均を引き、12か月の塊で円環ブロック・ブートストラップ（5,000本×40年）。真の上乗せ μ ∈ {0, 0.5, 1, 2, 3}%/年 を足し、上と同じ切り詰め・λ・B で e と e_f を回す",
+  "outputs": "3・5・10・20年以内に e≥20 に達する確率、達するまでの年数の中央、見込みなし（e_f≥20）の確率、理想の賭け（真の μ でケリー）の目安 6/IR² 年",
+  "castle_rule": "城（登録時の名簿の等分）と QQQ の組を同じ方法でブートストラップし、真の上乗せ μ ∈ {−3, −1, 0, +1, +3, +5}%/年 で、D0＝今の castle_rule（3年: +3pt以上で25%／5年: +3以上で30%・負けで10%／以降毎年 直近5年で同じ〔負けが続けば10→0%〕）、D1＝e過程（H3 と同じ設計: e≥20 で上げ・e_f≥20 で下げ）、D2＝5・10・20年の固定の t（≥1.65 で上げ・≤−1.65 で下げ）の行動の確率",
+  "note": "検出力は前向きのデータを使わない（登録前の歴史と仮の上乗せだけ）"
+ },
+ "known_limits": [
+  "追従のぶれが大きい系列（城 12%・ETF 側 13%・SEC 7%）は、真の上乗せが年3%でも決着まで数十年かかる（理想の賭けでも 6/IR² 年）。『勝ちが出ない』は『勝ちが無い』ではない",
+  "e過程の帰無は『切り詰めた平均』。負の裾が B を超える月が多いと、切り詰めない平均より甘くなる（切られた月数を毎回報告する）",
+  "実在 ETF の中身は検証した紙の上の特性と同じではない（PXF は基本指標加重・IMTM は MSCI の勢い・AVEM は Avantis の割安＋収益性・QUAL は業種中立の質）。紙の上の勝ちが実装で消えるかも併せて測る",
+  "城の名簿は門の判定で変わる。これは『門が選ぶ個別株を等分に持つ』規則の検証で、実際の口座（新規資金の配り方・円・税・入金の時期）とは違う。実際の口座の成績は 📈成績 の『個別株だけ』",
+  "SEC の系列は年1回の組み直しに 1.4GB の一括ファイルの取り直しが要る（手作業）。回さない年はそこで止まる",
+  "French の国際データは月の中旬以降に公表される。H8 は他より1か月遅れて更新される",
+  "8本の族。個別の e≥20 は各 α=0.05 で、8本のうち少なくとも1本が偶然 e≥20 に達する確率は最大で約34%（独立なら 1−0.95^8）・上限40%。だから e-BH（偽発見率5%）と Bonferroni（e≥160）と平均e を併記する",
+  "円の投資家の税・NISA の枠は入れていない（米ドルの総リターンどうし）"
+ ],
+ "frozen": {
+  "design": {
+   "H1_core_vs_SPY": {
+    "sigma_d": 13.183,
+    "sigma_window": [
+     200007,
+     202608
+    ],
+    "n_months": 314,
+    "mu_d": 1.0,
+    "counterpart": null,
+    "B": 0.155,
+    "lambda_kelly": 0.575,
+    "lambda": 0.575,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 4
+   },
+   "H2_castle_vs_SPY": {
+    "sigma_d": 12.089,
+    "sigma_window": [
+     200604,
+     202608
+    ],
+    "n_months": 245,
+    "mu_d": 3.0,
+    "counterpart": null,
+    "B": 0.14,
+    "lambda_kelly": 2.053,
+    "lambda": 2.053,
+    "lambda_capped": false,
+    "mu_f": 3.0,
+    "clipped_months_hist": 1
+   },
+   "H3_castle_vs_QQQM": {
+    "sigma_d": 11.668,
+    "sigma_window": [
+     200604,
+     202608
+    ],
+    "n_months": 245,
+    "mu_d": 3.0,
+    "counterpart": null,
+    "B": 0.135,
+    "lambda_kelly": 2.204,
+    "lambda": 2.204,
+    "lambda_capped": false,
+    "mu_f": 3.0,
+    "clipped_months_hist": 1
+   },
+   "H4_exUS_valmom_real": {
+    "sigma_d": 2.603,
+    "sigma_window": [
+     201502,
+     202608
+    ],
+    "n_months": 139,
+    "mu_d": 1.359,
+    "counterpart": "fr_dxus_valmom",
+    "B": 0.035,
+    "lambda_kelly": 20.064,
+    "lambda": 14.286,
+    "lambda_capped": true,
+    "mu_f": 1.359,
+    "clipped_months_hist": 0
+   },
+   "H5_EM_multifactor_real": {
+    "sigma_d": 2.399,
+    "sigma_window": [
+     201910,
+     202608
+    ],
+    "n_months": 83,
+    "mu_d": 1.493,
+    "counterpart": "fr_em_big4",
+    "B": 0.03,
+    "lambda_kelly": 25.933,
+    "lambda": 16.667,
+    "lambda_capped": true,
+    "mu_f": 1.493,
+    "clipped_months_hist": 0
+   },
+   "H6_US_quality_real": {
+    "sigma_d": 2.91,
+    "sigma_window": [
+     201308,
+     202608
+    ],
+    "n_months": 157,
+    "mu_d": 0.93,
+    "counterpart": "jkp_cop_at",
+    "B": 0.035,
+    "lambda_kelly": 10.989,
+    "lambda": 10.989,
+    "lambda_capped": false,
+    "mu_f": 0.93,
+    "clipped_months_hist": 0
+   },
+   "H7_SEC_cop_at_M100": {
+    "sigma_d": 7.125,
+    "sigma_window": [
+     201007,
+     202608
+    ],
+    "n_months": 194,
+    "mu_d": 0.93,
+    "counterpart": "jkp_cop_at",
+    "B": 0.085,
+    "lambda_kelly": 1.833,
+    "lambda": 1.833,
+    "lambda_capped": false,
+    "mu_f": 0.93,
+    "clipped_months_hist": 0
+   },
+   "H8_EM_big4_paper": {
+    "sigma_d": 2.516,
+    "sigma_window": [
+     199207,
+     202608
+    ],
+    "n_months": 410,
+    "mu_d": 1.493,
+    "counterpart": "fr_em_big4",
+    "B": 0.03,
+    "lambda_kelly": 23.581,
+    "lambda": 16.667,
+    "lambda_capped": true,
+    "mu_f": 1.493,
+    "clipped_months_hist": 1
+   }
+  },
+  "castle_roster_at_registration": [
+   "CW",
+   "MSFT",
+   "LRCX",
+   "ASML",
+   "TDG"
+  ],
+  "sec_formation_2026": {
+   "method": "night/mw_sec_replication.py: build_panel（v4）→ build_universe（上位500・6月末）→ m100_cohorts の S（金融を除いた cop_at の上位1/3・浮動株時価の上位100社の中・浮動株時価加重）",
+   "formation_month": 202606,
+   "holds": "2026-07 〜 2027-06（年の中は買って持つ）",
+   "n": 27,
+   "weights_fcap": {
+    "NVDA": 4499690826573.953,
+    "APP": 151148654661.00494,
+    "AAPL": 4238116084312.7593,
+    "QCOM": 201980598590.3426,
+    "META": 1221075928479.1604,
+    "LRCX": 461150127406.443,
+    "KLAC": 400766931202.86945,
+    "GOOGL": 3852936544198.928,
+    "LLY": 1243061731279.802,
+    "MA": 461558149524.9448,
+    "AMAT": 581998995969.6505,
+    "NFLX": 301598543550.24335,
+    "MSFT": 2743444759056.661,
+    "BKNG": 144242498592.36322,
+    "TJX": 170320406391.31656,
+    "ANET": 175342869159.49738,
+    "MO": 120264362484.59042,
+    "MRK": 321495102610.5327,
+    "LOW": 125151768038.8406,
+    "GILD": 117599777208.1977,
+    "TXN": 270633709183.61218,
+    "VRTX": 126525565366.90944,
+    "BMY": 117242647700.77618,
+    "HD": 356796870268.8663,
+    "MU": 1056527387050.0415,
+    "V": 588459173163.9666,
+    "VRT": 125743891703.7845
+   },
+   "weights_share": {
+    "NVDA": 0.1861,
+    "AAPL": 0.1753,
+    "GOOGL": 0.1594,
+    "MSFT": 0.1135,
+    "LLY": 0.0514,
+    "META": 0.0505,
+    "MU": 0.0437,
+    "V": 0.0243,
+    "AMAT": 0.0241,
+    "MA": 0.0191,
+    "LRCX": 0.0191,
+    "KLAC": 0.0166,
+    "HD": 0.0148,
+    "MRK": 0.0133,
+    "NFLX": 0.0125,
+    "TXN": 0.0112,
+    "QCOM": 0.0084,
+    "ANET": 0.0073,
+    "TJX": 0.007,
+    "APP": 0.0063,
+    "BKNG": 0.006,
+    "VRTX": 0.0052,
+    "VRT": 0.0052,
+    "LOW": 0.0052,
+    "MO": 0.005,
+    "GILD": 0.0049,
+    "BMY": 0.0048
+   },
+   "historical_turnover_oneway_per_year": 0.202
+  },
+  "constants": {
+   "first_forward_month": 202610,
+   "max_end": 204609,
+   "e_reject": 20,
+   "clip_k_sigma": 4,
+   "mu_haircut": 0.5,
+   "mu_range_pct": [
+    0.5,
+    3.0
+   ],
+   "wait_months": 3
+  }
+ },
+ "ci_suggestion": "ops.yml の steps に 1段足す: `- name: 前向きの検証（mw_forward・判定に不使用）` / `continue-on-error: true` / `run: timeout 900 python3 night/mw_forward.py update | tail -12`（fetch-depth: 0 は既にある＝城の名簿を git から引ける。出力 out/mw_forward.json は既存のコミット段が拾う out/ の下）",
+ "grade": "N/A（インフラと検出力。歴史の C1〜C8 の格付けは付けない）",
+ "tool": "night/mw_forward.py（design / init / update / form_sec）→ out/mw_forward.json"
+}
