@@ -327,13 +327,13 @@ def jkp_all_factors(region, weighting='vw'):
     return out
 
 
-def factor_momentum(region, avail_keys, mkt_excess, log_fn=print):
+def factor_momentum(region, avail_keys, mkt_excess, log_fn=print, keys=None, modes=('tsfm', 'csfm', 'static')):
     """因子の勢い（第6次）。戻り値 {'tsfm','csfm','static'}: (月次の超過リターン, 月の費用, 情報)。
     良い側は 2006-12 までのデータだけで決める。信号は t−11〜t の12か月の買い−売りの累積（そろう因子だけ）。翌月 t+1 に持つ"""
     F = jkp_all_factors(region)
     G, sides = {}, {}
     for k in sorted(F):
-        if k not in avail_keys:
+        if k not in avail_keys or (keys is not None and k not in keys):
             continue
         try:
             P = {pf: jkp_rows_filtered(region, k, pf) for pf in ('1.0', '3.0')}
@@ -351,7 +351,7 @@ def factor_momentum(region, avail_keys, mkt_excess, log_fn=print):
     idx = {m: i for i, m in enumerate(months)}
     lf = {k: {m: math.log1p(v) for m, v in F[k].items()} for k in G}
     res = {}
-    for mode in ('tsfm', 'csfm', 'static'):
+    for mode in modes:
         ret, cost, turn, nsel = {}, {}, {}, []
         prev_w, prev_r = None, None
         for i in range(11, len(months) - 1):
@@ -370,6 +370,9 @@ def factor_momentum(region, avail_keys, mkt_excess, log_fn=print):
             elif mode == 'csfm':
                 elig.sort(key=lambda x: (-x[0], x[1]))
                 sel = [k for v, k in elig[:math.ceil(0.2 * len(elig))]] if elig else []
+            elif mode == 'top2':
+                elig.sort(key=lambda x: (-x[0], x[1]))
+                sel = [k for v, k in elig[:2]] if len(elig) >= 2 else []
             else:
                 sel = [k for v, k in elig]
             if not sel:
@@ -984,7 +987,20 @@ def main():
         evaluate(sid, 'F18', f'JKP 米国 {lab} vs 米国 mkt vw', add_rf(r_, RF), CMKT['usa'], rule=lab, cost=c_, repl=repl_summary(units), pub=2019, extra={'info': i_})
     log('phase6 done')
 
-    fams = ['F1', 'F2', 'F3g', 'F3s', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14', 'F15', 'F16p', 'F16g', 'F17', 'F18']
+    # ═════════ 第7次（out/mw_momentum_prereg7.json）═════════
+    C7 = {'be_me', 'ret_12_1', 'qmj', 'betabab_1260d', 'market_equity', 'gp_at', 'at_gr1'}
+    fm7 = {}
+    for reg in ('usa', 'world_ex_us', 'jpn', 'emerging'):
+        fm7[reg] = factor_momentum(reg, set(avail['portfolios'].get(reg, [])), M.jkp_mkt(reg, 'vw'), log, keys=C7, modes=('tsfm', 'top2', 'static'))
+        log('F19 region done', reg, {k: v[2] for k, v in fm7[reg].items()})
+    for mode, sid, lab in (('tsfm', 'F19a_tsfm7', '古典7因子の因子の勢い（時系列）'), ('top2', 'F19b_top2of7', '古典7因子の過去12か月の上位2因子'),
+                           ('static', 'F19c_static7', '対照: 古典7因子の良い側を等分')):
+        units = {reg: unit_stats(add_rf(fm7[reg][mode][0], RF), CMKT[reg]) for reg in ('world_ex_us', 'jpn', 'emerging')}
+        r_, c_, i_ = fm7['usa'][mode]
+        evaluate(sid, 'F19', f'JKP 米国 {lab} vs 米国 mkt vw', add_rf(r_, RF), CMKT['usa'], rule=lab, cost=c_, repl=repl_summary(units), pub=2019, extra={'info': i_})
+    log('phase7 done')
+
+    fams = ['F1', 'F2', 'F3g', 'F3s', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14', 'F15', 'F16p', 'F16g', 'F17', 'F18', 'F19']
     fam_holm = finalize(fams)
     # ─ 診断（第4次・報告のみ）─
     diag = {}
@@ -1030,12 +1046,14 @@ def main():
     sha4 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg4.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
     sha5 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg5.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
     sha6 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg6.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
+    sha7 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg7.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
     sha3 = subprocess.run(['git', 'log', '-1', '--format=%H', '--', 'out/mw_momentum_prereg3.json'], cwd=BASE, capture_output=True, text=True).stdout.strip()
     out = {'angle': 'momentum', 'prereg': f'out/{PRE}', 'prereg_commit': sha, 'prereg2': 'out/mw_momentum_prereg2.json', 'prereg2_commit': sha2,
            'prereg3': 'out/mw_momentum_prereg3.json', 'prereg3_commit': sha3,
            'prereg4': 'out/mw_momentum_prereg4.json', 'prereg4_commit': sha4,
            'prereg5': 'out/mw_momentum_prereg5.json', 'prereg5_commit': sha5,
-           'prereg6': 'out/mw_momentum_prereg6.json', 'prereg6_commit': sha6, 'global_prereg': 'out/mw_prereg.json',
+           'prereg6': 'out/mw_momentum_prereg6.json', 'prereg6_commit': sha6,
+           'prereg7': 'out/mw_momentum_prereg7.json', 'prereg7_commit': sha7, 'global_prereg': 'out/mw_prereg.json',
            'generated': datetime.date.today().isoformat(), 'sanity': sanity, 'family_holm': fam_holm, 'summary': summary,
            'deviations': DEVIATIONS, 'diagnostics': diag, 'tested': TESTED, 'log': LOG[-80:]}
     p = os.path.join(BASE, 'out', OUT)
