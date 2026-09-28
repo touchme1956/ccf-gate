@@ -1,7 +1,7 @@
 {
  "generated": "2026-09-28",
  "prereg": "out/edge_prereg.json",
- "K_cumulative": 9,
+ "K_cumulative": 12,
  "families": {
   "lowbeta_lev": {
    "key": "lowbeta_lev",
@@ -459,7 +459,7 @@
    "round": 1,
    "holm": {
     "p": 0.13135688104273072,
-    "thr": 0.0125,
+    "thr": 0.008333333333333333,
     "pass": false
    },
    "criteria": {
@@ -597,7 +597,7 @@
    "round": 1,
    "holm": {
     "p": 0.5279031701805211,
-    "thr": 0.025,
+    "thr": 0.016666666666666666,
     "pass": false
    },
    "criteria": {
@@ -1037,7 +1037,7 @@
    "round": 1,
    "holm": {
     "p": 0.0008163523128285638,
-    "thr": 0.005555555555555556,
+    "thr": 0.004166666666666667,
     "pass": true
    },
    "criteria": {
@@ -1589,7 +1589,7 @@
    "round": 1,
    "holm": {
     "p": 0.10748769707458694,
-    "thr": 0.01,
+    "thr": 0.00625,
     "pass": false
    },
    "criteria": {
@@ -2092,7 +2092,7 @@
    "round": 3,
    "holm": {
     "p": 0.010724110021675818,
-    "thr": 0.008333333333333333,
+    "thr": 0.005555555555555556,
     "pass": false
    },
    "criteria": {
@@ -2168,7 +2168,7 @@
    "round": 3,
    "holm": {
     "p": 0.3820885778110474,
-    "thr": 0.016666666666666666,
+    "thr": 0.01,
     "pass": false
    },
    "criteria": {
@@ -2611,7 +2611,7 @@
    "round": 1,
    "holm": {
     "p": 0.0008740315156315671,
-    "thr": 0.00625,
+    "thr": 0.004545454545454546,
     "pass": true
    },
    "criteria": {
@@ -2778,7 +2778,7 @@
    "round": 1,
    "holm": {
     "p": 0.008656319025516558,
-    "thr": 0.0071428571428571435,
+    "thr": 0.005,
     "pass": false
    },
    "criteria": {
@@ -2925,7 +2925,7 @@
    "round": 1,
    "holm": {
     "p": 0.6590970262276774,
-    "thr": 0.05,
+    "thr": 0.025,
     "pass": false
    },
    "criteria": {
@@ -2937,6 +2937,284 @@
    },
    "verdict": "不合格",
    "risk": "同じリスクで"
+  },
+  "ctrymom": {
+   "key": "ctrymom",
+   "name": "国の勢いの入れ替え（過去の上位国を等加重で1か月持つ）",
+   "implement": "毎月末に各国の株価指数（配当込み・米ドル）の過去リターンを比べ、上位の国の国別ETF（iShares MSCI の EWJ/EWG/EWU/EWA/EWC/EWQ/EWL/EWD…、米国は IVV/VTI）を等額で翌月持つ。⚠ 2026-09 時点の楽天証券の米国ETFの取扱では 21か国のうち EWJ/EWG/EWS/EWM（と DAX）しか無い（EWU/EWA/EWC/EWQ/EWH 等は無い）ので、楽天だけでは実行できない——国別ETFを広く扱う証券会社（SBI・マネックス等の取扱を要確認）か、欠ける国を地域ETF（VGK/EPP/EFA）で代える必要がある。毎月の入れ替えは NISA の成長投資枠を急速に消費する（売っても枠は翌年まで戻らない）ので、実務は課税口座（特定口座）。売買益に 20.315% の税（主の判定には入れない）。国別ETFの経費 0.5%/年前後は相手（同じETFの等加重）と相殺する前提",
+   "spec": {
+    "J": 6,
+    "skip": 1,
+    "k": 5,
+    "abs": false,
+    "us": true
+   },
+   "n_variants": 30,
+   "selection": {
+    "from": 197602,
+    "to": 200012,
+    "years": 24.9,
+    "cagr": 21.42,
+    "bench_cagr": 14.99,
+    "excess": 6.43,
+    "ex_arith": 6.2,
+    "t": 3.37,
+    "t_nw": 2.67,
+    "vol": 18.7,
+    "bench_vol": 14.9,
+    "maxdd": -36.0,
+    "bench_maxdd": -25.4,
+    "sharpe": 0.79,
+    "bench_sharpe": 0.57,
+    "roll10_win": "14/15"
+   },
+   "holdout": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 6.62,
+    "bench_cagr": 8.17,
+    "excess": -1.55,
+    "ex_arith": -1.4,
+    "t": -1.35,
+    "t_nw": -1.54,
+    "vol": 17.8,
+    "bench_vol": 17.6,
+    "maxdd": -65.2,
+    "bench_maxdd": -59.9,
+    "sharpe": 0.35,
+    "bench_sharpe": 0.44,
+    "roll10_win": "1/16"
+   },
+   "replication": null,
+   "spec_commit": "6138d74 2026-09-28T12:25:09+00:00",
+   "round": 1,
+   "holm": {
+    "p": 0.9114920085625979,
+    "thr": 0.05,
+    "pass": false
+   },
+   "criteria": {
+    "1_ホールドアウトの超過≥+1%/年": false,
+    "2_t≥2": false,
+    "3_選定期間でも勝ち": true,
+    "4_Holm": false,
+    "5_他の市場で再現": null
+   },
+   "verdict": "不合格",
+   "risk": "リスクを増やして"
+  },
+  "dualmom": {
+   "key": "dualmom",
+   "name": "二重の勢い（米国株⇄米国外株⇄債券・Antonacci GEM）",
+   "implement": "楽天証券の特定口座（課税）で、米国株＝VTI（または楽天・全米株式インデックス・ファンド）、米国外株＝VEA / VXUS（または eMAXIS Slim 全世界株式〔除く米国〕）、降りた先＝IEF（米国7-10年国債）またはSHV/BIL（短期国債）のうち一つを丸ごと持ち、毎月末に1回だけ判定して入れ替える。NISA は向かない（売ると枠が翌年まで戻らず、年に数回の全額入れ替えで年間の投資枠を使い切る）。入れ替えのたびに売却益に 20.315% の税がかかる（主の判定には入れていない）。",
+   "spec": {
+    "lookback": "blend",
+    "safe": "bond",
+    "mode": "gem",
+    "nonus": "splice",
+    "bond_src": "fred",
+    "skip": 0,
+    "signal_lag": 0
+   },
+   "n_variants": 21,
+   "selection": {
+    "from": 197601,
+    "to": 200012,
+    "years": 25.0,
+    "cagr": 20.07,
+    "bench_cagr": 15.43,
+    "excess": 4.64,
+    "ex_arith": 3.77,
+    "t": 1.8,
+    "t_nw": 1.95,
+    "vol": 13.8,
+    "bench_vol": 15.3,
+    "maxdd": -22.7,
+    "bench_maxdd": -29.9,
+    "sharpe": 0.92,
+    "bench_sharpe": 0.59,
+    "roll10_win": "14/16"
+   },
+   "holdout": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 10.48,
+    "bench_cagr": 9.41,
+    "excess": 1.06,
+    "ex_arith": 0.46,
+    "t": 0.17,
+    "t_nw": 0.16,
+    "vol": 11.8,
+    "bench_vol": 15.5,
+    "maxdd": -22.9,
+    "bench_maxdd": -50.3,
+    "sharpe": 0.76,
+    "bench_sharpe": 0.55,
+    "roll10_win": "7/16"
+   },
+   "replication": null,
+   "spec_commit": "6138d74 2026-09-28T12:25:09+00:00",
+   "round": 1,
+   "holm": {
+    "p": 0.4325050683249616,
+    "thr": 0.0125,
+    "pass": false
+   },
+   "criteria": {
+    "1_ホールドアウトの超過≥+1%/年": true,
+    "2_t≥2": false,
+    "3_選定期間でも勝ち": true,
+    "4_Holm": false,
+    "5_他の市場で再現": null
+   },
+   "verdict": "不合格",
+   "risk": "同じリスクで"
+  },
+  "qualvalue": {
+   "key": "qualvalue",
+   "name": "大型株の割安×高収益×控えめな投資（French 3重の組）",
+   "implement": "楽天証券の米国ETF（成長投資枠・NISA対象かは各ETFの画面で確かめる）で「大型の割安×高収益を、少数の巨大株に偏らずに」持つ形へ寄せる。楽天の取扱一覧（out/broker_lineup.json 2026-08-24）に在る近いもの: Global X US Cash Flow Kings 100（FLOW・0.25%・大中型からフリーCF利回りの高い100社）／VanEck Morningstar Wide Moat（MOAT・0.46%・堀のある会社を割安な順に・ほぼ等分）／Global X S&P 500 Quality Dividend（QDIV・0.20%）／Invesco S&P 500 Equal Weight（RSP・0.20%）と Vanguard Value（VTV・0.04%）の組合せ。COWZ・QUAL・VLUE・QVAL は一覧に無い。年1回（7月）に見直す。⚠ どのETFも French の升目そのものではない（選び方の定義・重み・経費 0.04〜0.46%/年が違う）＝検定するのは升目の規則で、ETFの成績ではない",
+   "spec": {
+    "legs": [
+     {
+      "file": "32_Portfolios_ME_BEME_OP_2x4x4",
+      "a": [
+       3,
+       4
+      ],
+      "b": [
+       3,
+       4
+      ],
+      "axes": [
+       "BM",
+       "OP"
+      ],
+      "size": 2
+     }
+    ],
+    "within": "ew",
+    "combine": "cap",
+    "turnover_yr": 1.0,
+    "cost": 0.0025,
+    "replicate": true
+   },
+   "n_variants": 29,
+   "selection": {
+    "from": 196308,
+    "to": 200012,
+    "years": 37.4,
+    "cagr": 16.84,
+    "bench_cagr": 11.94,
+    "excess": 4.89,
+    "ex_arith": 4.57,
+    "t": 3.4,
+    "t_nw": 2.73,
+    "vol": 17.0,
+    "bench_vol": 15.3,
+    "maxdd": -39.4,
+    "bench_maxdd": -46.5,
+    "sharpe": 0.65,
+    "bench_sharpe": 0.42,
+    "roll10_win": "26/28"
+   },
+   "holdout": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 11.04,
+    "bench_cagr": 9.41,
+    "excess": 1.63,
+    "ex_arith": 2.27,
+    "t": 1.15,
+    "t_nw": 1.16,
+    "vol": 19.8,
+    "bench_vol": 15.5,
+    "maxdd": -54.0,
+    "bench_maxdd": -50.3,
+    "sharpe": 0.54,
+    "bench_sharpe": 0.55,
+    "roll10_win": "7/16"
+   },
+   "replication": {
+    "markets": {
+     "Europe": {
+      "from": 200101,
+      "to": 202608,
+      "years": 25.7,
+      "cagr": 10.78,
+      "bench_cagr": 6.77,
+      "excess": 4.01,
+      "ex_arith": 4.36,
+      "t": 3.4,
+      "t_nw": 2.41,
+      "vol": 21.3,
+      "bench_vol": 18.1,
+      "maxdd": -62.8,
+      "bench_maxdd": -59.0,
+      "sharpe": 0.51,
+      "bench_sharpe": 0.36,
+      "roll10_win": "10/16"
+     },
+     "Japan": {
+      "from": 200101,
+      "to": 202608,
+      "years": 25.7,
+      "cagr": 8.35,
+      "bench_cagr": 5.61,
+      "excess": 2.73,
+      "ex_arith": 2.8,
+      "t": 1.97,
+      "t_nw": 1.79,
+      "vol": 16.7,
+      "bench_vol": 15.2,
+      "maxdd": -39.8,
+      "bench_maxdd": -46.0,
+      "sharpe": 0.46,
+      "bench_sharpe": 0.32,
+      "roll10_win": "9/16"
+     },
+     "Asia_Pacific_ex_Japan": {
+      "from": 200101,
+      "to": 202608,
+      "years": 25.7,
+      "cagr": 12.41,
+      "bench_cagr": 8.5,
+      "excess": 3.91,
+      "ex_arith": 3.86,
+      "t": 2.75,
+      "t_nw": 2.12,
+      "vol": 20.4,
+      "bench_vol": 18.9,
+      "maxdd": -59.2,
+      "bench_maxdd": -60.0,
+      "sharpe": 0.59,
+      "bench_sharpe": 0.44,
+      "roll10_win": "13/16"
+     }
+    },
+    "positive": "3/3",
+    "pooled_excess": 3.67,
+    "pooled_t": 3.74
+   },
+   "spec_commit": "3c46b15 2026-09-28T12:32:43+00:00",
+   "round": 1,
+   "holm": {
+    "p": 0.1250719356371503,
+    "thr": 0.0071428571428571435,
+    "pass": false
+   },
+   "criteria": {
+    "1_ホールドアウトの超過≥+1%/年": true,
+    "2_t≥2": false,
+    "3_選定期間でも勝ち": true,
+    "4_Holm": false,
+    "5_他の市場で再現": true
+   },
+   "verdict": "不合格",
+   "risk": "リスクを増やして"
   }
  }
 }
