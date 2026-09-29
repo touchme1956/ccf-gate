@@ -7,7 +7,8 @@
 使っていない角度だけを取る（out/nx_prereg.json の not_covered_by_others）。
 
 統計と格付けの線は、比べられるように **mw_common.py（eknzbh 枝）と同一の定義**をそのまま写した
-（C1〜C8・S/A/B/C・Newey-West ラグ12・転がる20年窓・積立20年・Holm）。違うのは キャッシュの置き場
+（C1〜C8・S/A/B/C・Newey-West ラグ12・転がる20年窓・積立20年・Holm）。
+★ただし 2026-09-29 に rolling()/dca() の勝ちの数え方だけ是正した（丸める前の差で数える。mw_common は丸めてから数える＝境目の窓が負けになる）。違うのは キャッシュの置き場
 out/_nx_cache/（gitignore）と、AQR の xlsx の読み手 aqr_sheet() を足したことだけ。
 依存: openpyxl（AQR の xlsx を読むときだけ。pip install openpyxl）。
 
@@ -331,12 +332,15 @@ def rolling(s, b, years=20, start_month=7, per_year=12):
             continue
         gs = math.exp(math.fsum(math.log1p(s[k]) for k in w) / years) - 1
         gb = math.exp(math.fsum(math.log1p(b[k]) for k in w) / years) - 1
-        out.append((y, round((gs - gb) * 100, 2)))
+        out.append((y, (gs - gb) * 100))
     if not out:
         return None
+    # 勝ち負けは丸める前の差で数える（2026-09-29 是正: 旧版は小数2桁に丸めてから >0 を数え、+0.004pt の窓を負けにしていた）。表示だけ丸める
+    wins = sum(1 for _, c in out if c > 0)
     v = sorted(c for _, c in out)
-    return {'windows': len(out), 'wins': sum(1 for _, c in out if c > 0), 'win_rate': round(sum(1 for _, c in out if c > 0) / len(out), 3),
-            'median': v[len(v) // 2], 'worst': min(out, key=lambda x: x[1]), 'best': max(out, key=lambda x: x[1])}
+    r2 = lambda t: (t[0], round(t[1], 2))
+    return {'windows': len(out), 'wins': wins, 'win_rate': round(wins / len(out), 3),
+            'median': round(v[len(v) // 2], 2), 'worst': r2(min(out, key=lambda x: x[1])), 'best': r2(max(out, key=lambda x: x[1]))}
 
 
 def dca(s, b, years=20, step=12):
@@ -349,12 +353,14 @@ def dca(s, b, years=20, step=12):
         ws = wb = 0.0
         for k in w:
             ws = (ws + 1) * (1 + s[k]); wb = (wb + 1) * (1 + b[k])
-        out.append((w[0], round(ws / wb, 3)))
+        out.append((w[0], ws / wb))
     if not out:
         return None
+    # 勝ちは丸める前の比で数える（2026-09-29 是正）。表示だけ丸める
     v = sorted(r for _, r in out)
-    return {'windows': len(out), 'win_rate': round(sum(1 for r in v if r > 1) / len(v), 3), 'median_ratio': v[len(v) // 2],
-            'worst': min(out, key=lambda x: x[1]), 'best': max(out, key=lambda x: x[1])}
+    r3 = lambda t: (t[0], round(t[1], 3))
+    return {'windows': len(out), 'win_rate': round(sum(1 for r in v if r > 1) / len(v), 3), 'median_ratio': round(v[len(v) // 2], 3),
+            'worst': r3(min(out, key=lambda x: x[1])), 'best': r3(max(out, key=lambda x: x[1]))}
 
 
 def holm(pvals):
