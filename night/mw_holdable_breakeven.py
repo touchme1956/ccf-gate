@@ -29,6 +29,10 @@ DEVIATIONS = [
     '再開: 前の担当は prereg2 の後の本番の実行の途中でセッションの上限で止まった（2026-09-28 23:32）。2026-09-29 に同じコードで本番を回し直した（乱数の種は固定なので主の族の数字は初回と同じ〔JMKT の袖を除く〕）',
     'prereg3（X6 判別の限界・X7 歴史と基礎率の重みづけ平均・報告のみ）は、主の族の初回の数字を見た後に登録した（leak 欄に見たものを明記）。本番の出し直しの出力を見る前にコミットした',
     '手順の順番: prereg2 のコミット（c8566c1）は、探索の族を含む試運転（道 400/200 本・出力はキャッシュのみ）を始めた直後で、その出力を見る前だった。本番の数字は prereg2 のコミットの後に回した',
+    '【事後の観察・判定には使わない】個別の代理（0.2 TECH3＋0.4 CHIPS＋0.4 AERO）の AERO は 〜2006 に市場を年 +2.44%（対数）上回っていて、BR でもずらしていない。個別20% は主の族の全配合に共通なのでほぼ消えるが、個別を器に替える X3（C2SPX・C2NDX）と格付けの SPX_ONLY（訓練 t1.98 の大半）はこの AERO の歴史の上乗せを含む',
+    '【事後の観察】SMH の代理（MKT＋1.04×(CHIPS−MKT)）は 2000-08〜 の CAGR 10.03% で実物の SMH 11.08% より低い（切片 +1.8%/年を登録どおり入れていない）＝今の配合に不利な側。NDX の代理は 10.69% 対 実物 10.63% でほぼ一致',
+    '【事後の観察】X5 の実現の損益分岐 r* は、米国外の袖（EMM・EMR）では格子の π_T* と大きくずれた（EMM 3.14 対 0.96・EMR 6.53 対 1.94）。道ごとの勝ち負けは実現した米国の上乗せにも左右され、テックの実現値だけのロジスティックでは傾きが寝る。米国の袖（SPX・RSP・MOAT）では r* と π_T* はほぼ一致（SPX_w20 0.30 対 0.29）',
+    'X5・X7 は主の道の後処理（新しい配合ではない）なので tested には数えていない。X6 は配合ごとに1行を tested に入れた（報告のみ）',
     'mw_common.py は変更していない',
 ]
 OUT = 'mw_holdable_breakeven.json'
@@ -966,6 +970,7 @@ def finish(S, FX, fx_me, F, Y, INP, SL, MX, cells, xcells, st, t0, quick=False):
         tested.append({'name': f'X6:{mn}', 'family': 'X6_exploratory', 'grade': None, 'report_only': True, 'exploratory': True, 'x6': v})
     summary = build_summary(by, cur, verdict, cross, BRt, AW, G, INP, SL, F)
     summary['exploratory_lines'] = EX.get('lines', []) + X67['lines']
+    summary['summary_ja'] = build_summary_ja(by, cur, verdict, cross, BRt, AW, G, EX, X67)
     obj = {'angle': ANGLE, 'tool': 'night/mw_holdable_breakeven.py', 'prereg': PRE, 'prereg_commit': pre_sha, 'global_prereg': 'out/mw_prereg.json',
            'kind': '総合（意思決定の分析）。器の載り・公表後の目減りは入力で、上乗せ探しではない',
            'inputs': INP, 'fits': {k: v for k, v in F.items() if not k.startswith('_')}, 'yahoo_ranges': F.get('_yahoo_ranges'),
@@ -1154,6 +1159,43 @@ def x6_x7(by, cross, S, SL, MX):
         f"X7 基礎率の重みがいくつ以上なら4升すべてで P>0.5: " + json.dumps({k: v for k, v in need.items() if k in ('SPX_w20', 'SPX_ONLY', 'DEV_w20', 'PXF_w20', 'EMM_w20', 'EMR_w20', 'GOLD_w20', 'JHD_w20', 'ALL_EDGE_w20')}, ensure_ascii=False),
     ]
     return out
+
+
+def build_summary_ja(by, cur, verdict, cross, BRt, AW, G, EX, X67):
+    """利用者向けの要約（数字は計算した値から組む）"""
+    C4 = ['early_L60', 'early_L120', 'late_L60', 'late_L120']
+    def ps(mn, sn):
+        return '/'.join(f"{by[mn][sn][c]['p_beat']:.2f}" for c in C4)
+    def rm(mn, sn):
+        v = [by[mn][sn][c]['ratio_med'] for c in C4]
+        return f"{min(v):.2f}〜{max(v):.2f}"
+    prim_n = sum(1 for mn in by if mn not in ('NDX_ONLY', 'SPX100') and not mn.startswith('REF'))
+    x1h = EX['X1']['verdict_H']['beat_gt_0.5_both_L']
+    t3 = BRt['TECH3_minus_MKT']
+    sT = X67['X6']['s_T']['full']['sd_ann_pct']
+    x6 = X67['X6']['by_mix']
+    need = X67['X7']['min_weight_on_base_rate_for_all_4_cells_gt_0.5']
+    cs = cur['CUR_vs_SPX100']
+    g = G['CUR']
+    prim = [mn for mn in by if mn not in ('NDX_ONLY', 'SPX100') and not mn.startswith('REF')]
+    late_best = max(prim, key=lambda mn: max(by[mn]['H'][c]['p_beat'] for c in ('late_L60', 'late_L120')))
+    lb = [by[late_best]['H'][c]['p_beat'] for c in ('late_L60', 'late_L120')]
+    rr = [by[mn]['BR'][c]['ratio_med'] for mn in verdict['BR']['beat_gt_0.5_all_4_cells'] for c in C4]
+    rr_lo, rr_hi = (min(rr), max(rr)) if rr else (None, None)
+    lines = [
+        f"問い: 買える器だけの固定の配合（{prim_n}本）で、今の持ち方（個別20・iFreeNEXT NASDAQ100 60・SMH 20）に20年の円の積立・税引後・NISA込みで勝つ確率が5割を超えるものはあるか。",
+        f"(a) 歴史そのもの: 無い。〜2006 のプールでは五分前後（S&P500 に ETF 側の2割を替える SPX_w20 は P={ps('SPX_w20', 'H')}＝4升の順に 〜2006 L60/L120・2007〜 L60/L120）、2007〜 のプールではどの配合もほぼ負け（最良は {late_best} の {min(lb):.2f}〜{max(lb):.2f}）。100年ひとつのプールでも P>0.5 は {len(x1h)} 本。実際の20年窓（1926〜2006 起点・963窓）でも SPX_w20 が今の持ち方に勝ったのは {AW['SPX_w20']['win_rate']:.0%}。",
+        f"(b) 100年の基礎率（比重が過去最大の業種は次の20年に年 −1% 負ける・米国と米国外は同じ伸び）: ある。{len(verdict['BR']['beat_gt_0.5_all_4_cells'])} 本が4升すべてで P>0.5（例 SPX_w20 P={ps('SPX_w20', 'BR')}・最終資産の比の中央 {rm('SPX_w20', 'BR')}、個別20＋S&P500 80 は P={ps('SPX_ONLY', 'BR')}）。頑丈（4升とも ≥0.6）は新興国・日本株・配当の袖など {len(verdict['BR']['robust_ge_0.6_all_4_cells'])} 本。ただし差は小さく、その配合の最終資産の比の中央は {rr_lo:.3f}〜{rr_hi:.3f}。",
+        f"(c) 公表後の目減り（実測 0.15）を入れても {len(verdict['BR_h015']['beat_gt_0.5_all_4_cells'])} 本・頑丈 {len(verdict['BR_h015']['robust_ge_0.6_all_4_cells'])} 本でほぼ同じ。上乗せ（割安＋勢い・日本の高配当）は数%の差しか作らず、答えを決めているのはテックと米国の上乗せの置き方。",
+        f"損益分岐（今の持ち方が先を保つのに要る、テック3業種−市場の年率の対数の差）: S&P500 に2割替える配合なら +{cross['T']['SPX_w20']}%/年、個別20＋S&P500 80 なら {cross['T']['SPX_ONLY']}%/年（＝テックが市場と同じ伸びなら五分）、新興国 +{cross['T']['EMM_w20']}・新興国 RAFI +{cross['T']['EMR_w20']}・金 {cross['T']['GOLD_w20']}。歴史の20年窓でテックの上乗せが +{cross['T']['SPX_w20']} 以上だったのは {t3['share_ge_break_even']['SPX_w20']:.0%}（中央 +{t3['quantiles_pct'][0.5]}）、比重が記録の業種の基礎率（中央 −1.01）はその下。",
+        f"米国の上乗せの損益分岐: 米国外先進国 +{cross['US']['DEV_w20']}・新興国 +{cross['US']['EMM_w20']}・日本 +{cross['US']['JMKT_w20']}%/年。JST 150年の20年窓で米国がこれ以上勝ったのは {BRt['JST_all_1871_2020']['share_US_premium_ge_break_even']['DEV_w20']:.0%}（先進国）だが、French 1975〜 では米国が先進国に年 +{BRt['French_US_minus_EAFE_1975']['quantiles_pct'][0.5]}%（97%の窓で勝ち）＝時代で答えが逆になる。",
+        f"歴史と基礎率を半々に信じると、4升すべてで P>0.5 の配合は {len(X67['X7']['w_H_0.5']['beat_gt_0.5_all_4_cells'])} 本。S&P500 に2割替える案が勝つには基礎率を {need.get('SPX_w20')}（7割）以上信じる必要がある。",
+        f"判別の限界: テックと市場の差の年率のぶれは {sT}%。損益分岐 +{cross['T']['SPX_w20']} と基礎率 −1.0 を検出力80%で見分けるには約 {x6['SPX_w20']['n80_years_tech']:.0f} 年のデータが要り、20年後の実績でも {x6['SPX_w20']['p_20y_realized_on_wrong_side']:.0%} の確率で逆の側に出る。＝この選択は検証では決着せず、テックへの信念とぶれへの好みで決まる。",
+        f"格付け（市場の脚だけの静的な配合 18本 対 French Mkt）: すべて C。今の持ち方の米ドルの代理は 2007〜 +{g['hold']['ex_ann']}%/年（t{g['hold']['t']}）だが 〜2006 は +{g['train']['ex_ann']}%/年 t{g['train']['t']}（C1 不合格）・転がる20年の勝率 {g['roll20']['win_rate']:.0%}。",
+        f"参考: 今の持ち方が円の S&P500 だけ（SPX100）に勝つ確率は、歴史なら 〜2006 {cs['H']['early_L60']['p_cur_beats']:.0%}・2007〜 {cs['H']['late_L60']['p_cur_beats']:.0%}、基礎率なら 〜2006 {cs['BR']['early_L60']['p_cur_beats']:.0%}・2007〜 {cs['BR']['late_L60']['p_cur_beats']:.0%}。",
+        "但し書き: NASDAQ100・SMH・個別は French の業種で代理（個別の代理の AERO は歴史の上乗せを含む）、2007〜 のプールは実質1本の20年、新NISA を過去に当てた模型、日本の高配当の上乗せは検証されていない C の紙（配当の袖の頑丈さはこれに依る）。",
+    ]
+    return lines
 
 
 def build_summary(by, cur, verdict, cross, BRt, AW, G, INP, SL, F):
