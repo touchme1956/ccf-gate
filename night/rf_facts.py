@@ -68,8 +68,13 @@ def _num(v):
     return v if isinstance(v, (int, float)) and not isinstance(v, bool) else None
 
 
-def group_rows(g, tags):
-    """期間ごとに（先頭のタグから）提出の系列を作る → {(start,end): [(filed,val,form), …]（提出日昇順・値が変わったものだけ）}"""
+def group_rows(g, tags, merge=False):
+    """期間ごとに提出の系列を作る → {(start,end): [[filed,val], …]（提出日昇順・値が変わったものだけ）}
+    merge=False: その期間で使えた最も優先のタグだけ（純利益: NetIncomeLoss と ProfitLoss を混ぜない）。
+    merge=True : 全タグの提出を提出日の順に並べる（同じ提出日は優先の高いタグ）＝売上・税引前利益用。
+      ★2026-09-29 是正（独立の再実装が見つけた）: 旧版は売上でも『後の提出まで含めて最も優先のタグ』を先に決めていたので、
+      ASC 606 でタグが替わった社（2018〜19年の10-Kが比較の列を新しいタグで出し直した）は、2016〜2018年の選定日には
+      元の提出（旧タグ）が見えず、LTM売上が欠けた（2017-09-30 の資格社の LTM売上 1,509→891社）。時点の値は『その日までに出た値』にする"""
     per = {}
     for pri, tag in enumerate(tags):
         rows = ((g.get(tag) or {}).get("units") or {}).get("USD") or []
@@ -88,8 +93,17 @@ def group_rows(g, tags):
             per.setdefault((r["start"], r["end"]), {}).setdefault(pri, []).append((r["filed"], float(v), r["form"]))
     out = {}
     for k, byp in per.items():
-        p0 = min(byp)                       # その期間で使えた最も優先のタグ
-        seq = sorted(byp[p0])
+        if merge:
+            allr = sorted((f, pri, v) for pri, lst in byp.items() for f, v, _fm in lst)
+            seq, seen = [], set()
+            for f, _pri, v in allr:          # 同じ提出日は優先の高い（priの小さい）タグが先に来る
+                if f in seen:
+                    continue
+                seen.add(f)
+                seq.append((f, v, ""))
+        else:
+            p0 = min(byp)                       # その期間で使えた最も優先のタグ
+            seq = sorted(byp[p0])
         keep, last = [], None
         for f, v, fm in seq:
             if last is None or v != last:
@@ -136,7 +150,7 @@ def work(name):
         return name, {"why": "us-gaap なし（IFRS/20-F 等）"}
     res = {"cik": fc.get("cik"), "name": fc.get("entityName")}
     for k, tags in TAGS.items():
-        gr = group_rows(g, tags)
+        gr = group_rows(g, tags, merge=(k in ("rev", "pt")))
         res[k] = [[s, e, seq] for (s, e), seq in sorted(gr.items(), key=lambda kv: (kv[0][1], kv[0][0]))]
     if not res["ni"]:
         return name, {"why": "純利益の事実なし"}
