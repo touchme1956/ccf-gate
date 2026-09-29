@@ -50,6 +50,9 @@ FORMS = {"10-Q", "10-K", "10-KT", "10-Q/A", "10-K/A", "10-KT/A"}
 TAGS = {
     "ni": ["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLoss"],
     "oi": ["OperatingIncomeLoss"],
+    # 営業利益の事実が無い社（証券・銀行・保険など。Robinhood は 0 行）の代わり＝税引前利益（事後の感度 V1pt にだけ使う）
+    "pt": ["IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest",
+           "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments"],
     "rev": ["Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax",
             "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet",
             "SalesRevenueGoodsNet", "RevenuesNetOfInterestExpense"],

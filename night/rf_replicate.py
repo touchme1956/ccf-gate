@@ -164,9 +164,9 @@ class Firm:
         self.cik = cik
         self.name = f.get("name")
         self.rows = {}
-        for k in ("ni", "oi", "rev"):
+        for k in ("ni", "oi", "rev", "pt"):
             rr = []
-            for s, e, seq in f[k]:
+            for s, e, seq in f.get(k, []):
                 so, eo = o(s), o(e)
                 rr.append((so, eo, eo - so, [o(x[0]) for x in seq], [x[1] for x in seq]))
             self.rows[k] = rr
@@ -206,22 +206,72 @@ def split_after(px, S_o):
     return f
 
 
-def shares_at(firm, S_o, price, pf_val):
-    """株数（表紙→貸借対照表→基本加重平均・浮動株時価との比で桁の誤りを避ける）。戻り (株数, 出所) か (None, 理由)"""
-    cands = []
+def pit_hist(tri, S_o, n=4):
+    fo, vals, _ends = tri
+    i = bisect.bisect_right(fo, S_o)
+    return vals[max(0, i - n):i]
+
+
+def pf_reliable(firm, S_o, pf_val):
+    """浮動株時価が過去の値と桁で合うか（Hexcel・Advance Auto Parts は浮動株時価そのものが 1e3〜1e6 倍の誤り）"""
+    if not pf_val:
+        return False
+    h = sorted(pit_hist(firm.pf, S_o, 5))
+    if len(h) < 2:
+        return True
+    med = h[len(h) // 2]
+    return med > 0 and 0.05 <= pf_val / med <= 20
+
+
+MCAP_MAX = 6e12       # これを超える時価総額は誤り（世界最大でも約4兆ドル）
+WIN_DAYS = 270
+TURNOVER_MIN = 1e-4     # 平均売買代金÷時価総額の下限（これ未満は株数の桁の誤り）
+PS_MAX = 300            # 価格なし社: 浮動株時価÷LTM売上の上限（浮動株時価の桁の誤りを避ける）
+
+
+def split_between(splits, a_o, b_o):
+    """a_o から b_o の間（a<日付<=b）の分割の比の積"""
+    f = 1.0
+    for d, r in splits:
+        if a_o < d <= b_o:
+            f *= r
+    return f
+
+
+def shares_at(firm, S_o, price, pf_val, splits=()):
+    """株数（表紙 sh → 貸借対照表 bs → 基本加重平均 wa の順に、S までに提出された最新の値）。
+    XBRL の初期（〜2013）は桁の誤りが多い（Advance Auto Parts は表紙 1000倍・貸借対照表 千株・浮動株時価も1000倍、
+    Black Hills は表紙と貸借対照表が 1000倍、Huntington・Moog・Repay も）ので、『相場』と照らす:
+    相場＝3つの出所の 前後 270日 の全ての値（分割で S の基準へ直したもの）の中央値（前後の値は桁の誤りの検出にだけ使う）。
+    候補が相場の3倍以内のものだけ採り、浮動株時価が過去と桁で合うときはそれとの比（0.25〜12）も要る。戻り (株数, 出所) か (None, 理由)"""
+    cur, pool = [], []
     for k in ("sh", "bs", "wa"):
-        v, e = pit_val(getattr(firm, k), S_o)
+        tri = getattr(firm, k)
+        fo, vals, ends = tri
+        v, e = pit_val(tri, S_o)
         if v and v > 0 and e is not None and S_o - e <= 500:
-            cands.append((k, v))
-    if not cands:
+            cur.append((k, v))
+        i0 = bisect.bisect_left(fo, S_o - WIN_DAYS)
+        i1 = bisect.bisect_right(fo, S_o + WIN_DAYS + 100)
+        for j in range(i0, i1):
+            x, e2 = vals[j], ends[j]
+            if x and x > 0 and abs(e2 - S_o) <= WIN_DAYS:
+                pool.append(x * (split_between(splits, e2, S_o) if e2 < S_o else 1.0 / split_between(splits, S_o, e2)))
+    if not cur:
         return None, "株数なし"
-    if pf_val and price:
-        for k, v in cands:
-            r = v * price / pf_val
-            if 0.25 <= r <= 12:
-                return v, k
-        return None, "株数が浮動株時価と合わない"
-    return cands[0][1], cands[0][0]
+    lg = sorted(math.log(x) for x in pool) if pool else [math.log(cur[0][1])]
+    med = math.exp(lg[len(lg) // 2])
+    pf_ok = bool(pf_val and price and pf_reliable(firm, S_o, pf_val))
+    pick = None
+    for k, v in cur:
+        if 1 / 3 <= v / med <= 3 and (not pf_ok or 0.25 <= v * price / pf_val <= 12):
+            pick = (v, k)
+            break
+    if pick is None:
+        return None, "株数が相場・浮動株時価と合わない"
+    if pick[0] * price > MCAP_MAX:
+        return None, "時価総額が異常(6兆ドル超)"
+    return pick
 
 
 def adv_at(px, Sym):
@@ -231,6 +281,51 @@ def adv_at(px, Sym):
         if b and b[2] is not None and b[2] > 0:
             vals.append(b[2] / 21.0 * b[1])
     return sum(vals) / len(vals) if len(vals) >= 2 else None
+
+
+def mcap_table(firms, px, dates):
+    """価格つき社の 選定日ごとの時価総額（資格の閾値は見ない）。→ {cik: {S: (時価総額, 株数, 出所)}}"""
+    tab = {}
+    for S in dates:
+        S_o = o(S)
+        Sym = int(S[:4]) * 100 + int(S[5:7])
+        for cik, p in px.items():
+            fm = firms.get(cik)
+            if fm is None:
+                continue
+            b = p["bars"].get(Sym)
+            if not b:
+                continue
+            price = b[1] * split_after(p, S_o)
+            pf_val, _pe = pit_val(fm.pf, S_o)
+            sh, why = shares_at(fm, S_o, price, pf_val, p["splits"])
+            if sh is None:
+                continue
+            adv = adv_at(p, Sym)
+            if adv is not None and adv / (sh * price) < TURNOVER_MIN:
+                continue                                  # 1日の売買代金が時価総額の0.01%未満＝桁の誤り（Repay・Moog の株数は全期間が千倍）
+            tab.setdefault(cik, {})[S] = (sh * price, sh, why)
+    return tab
+
+
+def flag_scale_errors(tab, dates, ratio=6.0, span=3):
+    """時価総額が前後の選定日（±span 期）の中央値の ratio 倍を超えて外れ、前後が互いに3倍以内で一致するとき、その日を誤りとして外す
+    （XBRL の桁の誤り: Advance Auto Parts・Moog・Huntington・Repay など）。データの掃除であって信号ではない。前後を見るので
+    将来の値を『桁の誤りの検出』にだけ使う（採用や重みには使わない）"""
+    bad = set()
+    idx = {S: i for i, S in enumerate(dates)}
+    for cik, d in tab.items():
+        ks = sorted(d, key=lambda S: idx[S])
+        for S in ks:
+            i = idx[S]
+            nb = [d[T][0] for T in ks if T != S and abs(idx[T] - i) <= span]
+            if len(nb) < 2:
+                continue
+            nb.sort()
+            med = nb[len(nb) // 2]
+            if med > 0 and max(nb) / min(nb) <= 3.0 and not (1 / ratio <= d[S][0] / med <= ratio):
+                bad.add((cik, S))
+    return bad
 
 
 def fut_ltm(firm):
@@ -246,7 +341,7 @@ def fut_ltm(firm):
     return firm.fut
 
 
-def stage_a(firms, px, bench, tick_ciks, dates, verbose=True):
+def stage_a(firms, px, bench, tick_ciks, dates, verbose=True, bad=frozenset()):
     """各選定日 → {cik: 記録}（資格を満たす社だけ）と 診断"""
     out, diag = {}, {}
     for S in dates:
@@ -263,8 +358,11 @@ def stage_a(firms, px, bench, tick_ciks, dates, verbose=True):
                 if not b:
                     dg["価格なし(その月)"] += 1
                     continue
+                if (cik, S) in bad:
+                    dg["桁の誤りとして除外"] += 1
+                    continue
                 price = b[1] * split_after(p, S_o)
-                sh, why = shares_at(fm, S_o, price, pf_val)
+                sh, why = shares_at(fm, S_o, price, pf_val, p["splits"])
                 if sh is None:
                     dg[why] += 1
                     continue
@@ -275,11 +373,17 @@ def stage_a(firms, px, bench, tick_ciks, dates, verbose=True):
                 if adv is None or adv < ADV_MIN:
                     dg["売買代金不足/欠測"] += 1
                     continue
+                if adv / mcap < TURNOVER_MIN:
+                    dg["売買代金/時価総額が不自然(桁の誤り)"] += 1
+                    continue
                 base_w, priced = mcap, True
             else:
                 if int(cik) in tick_ciks:
                     continue                       # 今日の記号があるのに価格が取れない社（非株式・取得失敗）は入れない
                 if pf_val is None or pf_val < MCAP_MIN:
+                    continue
+                if pf_val > MCAP_MAX or not pf_reliable(fm, S_o, pf_val):
+                    dg["浮動株時価が当てにならない(価格なし)"] += 1
                     continue
                 base_w, mcap, priced = pf_val, pf_val, False
             # LTM（S までに分かっていた値）
@@ -296,12 +400,18 @@ def stage_a(firms, px, bench, tick_ciks, dates, verbose=True):
             ni_P = [ltm_ni.get(e) if e is not None else None for e in ce]
             ends_oi, ltm_oi = ltm_map(quarters(fm.rows["oi"], S_o))
             ends_rv, ltm_rv = ltm_map(quarters(fm.rows["rev"], S_o))
-            om_P = []
+            om_P, om_pt = [], []
+            ends_pt, ltm_pt = ltm_map(quarters(fm.rows["pt"], S_o)) if not fm.rows["oi"] else ([], {})
             for e in ce:
                 a, r = (ltm_oi.get(e), ltm_rv.get(e)) if e is not None else (None, None)
                 om_P.append(a / r if (a is not None and r is not None and r > 0) else None)
+                a2 = ltm_pt.get(e) if e is not None else None
+                om_pt.append(a2 / r if (a2 is not None and r is not None and r > 0) else om_P[-1])
             ni_T = ni_P[0]
             rvT = ltm_rv.get(eT)
+            if not priced and not (rvT and rvT > 0 and base_w / rvT <= PS_MAX):
+                dg["浮動株時価÷売上が異常(価格なし)"] += 1
+                continue
             margin = ni_T / rvT if (ni_T is not None and rvT is not None and rvT > 0) else None
             # 過去8評価期間の赤字（C1）: 直近8個の LTM 純利益のどこかが負
             neg8 = False
@@ -334,11 +444,17 @@ def stage_a(firms, px, bench, tick_ciks, dates, verbose=True):
                     m1, m2 = om_at(e1), om_at(e2)
                     if m1 is not None and m2 is not None:
                         fut_om = (m2, m1)
-            cand[cik] = {"priced": priced, "mcap": mcap, "w": base_w, "ni_P": ni_P, "om_P": om_P, "ni_T": ni_T,
+            cand[cik] = {"priced": priced, "mcap": mcap, "w": base_w, "ni_P": ni_P, "om_P": om_P, "om_pt": om_pt, "ni_T": ni_T,
                          "margin": margin, "neg8": neg8, "fut_ni": fut_ni, "fut_om": fut_om, "T": eT,
                          "last_o": fm.last_o}
             dg["資格あり"] += 1
             dg["資格あり・価格つき" if priced else "資格あり・価格なし"] += 1
+        pm = sorted(((x["mcap"], k) for k, x in cand.items() if x["priced"]), reverse=True)
+        tot_pm = sum(m for m, _k in pm)
+        dg["priced_mcap_total_T"] = round(tot_pm / 1e12, 2)
+        if pm:
+            dg["top1_share_pct"] = round(pm[0][0] / tot_pm * 100, 2)
+            dg["top1_cik"] = pm[0][1]
         out[S] = cand
         diag[S] = dict(dg)
         if verbose:
@@ -350,8 +466,9 @@ def stage_a(firms, px, bench, tick_ciks, dates, verbose=True):
 def scores(c, variant):
     """(純利益スコア, 営業利益率スコア)"""
     ni3, ni4 = c["ni_P"][0], c["ni_P"][1]
-    om3, om4 = c["om_P"][0], c["om_P"][1]
-    if variant in ("V1", "V1b"):
+    omP = c["om_pt"] if variant == "V1pt" else c["om_P"]
+    om3, om4 = omP[0], omP[1]
+    if variant in ("V1", "V1b", "V1pt"):
         if variant == "V1b" and c["mcap"] < COVER_MCAP:
             f_ni = f_om = (None, None)
         else:
@@ -363,7 +480,7 @@ def scores(c, variant):
     else:
         raise ValueError(variant)
     Pn = [f_ni[0], f_ni[1]] + list(c["ni_P"])
-    Po = [f_om[0], f_om[1]] + list(c["om_P"])
+    Po = [f_om[0], f_om[1]] + list(omP)
     return trend_score(Pn), trend_score(Po)
 
 
@@ -403,7 +520,7 @@ def select_variant(cands, dates, variant, topn=TOPN):
         else:
             ranked = sorted(wl, key=lambda x: -cand[x]["margin"])[:topn]
         res.append({"S": S, "names": {cik: cand[cik]["w"] for cik in ranked}, "wl": len(wl), "p1": len(p1s), "p2": len(p2s),
-                    "sel": ranked})
+                    "sel": ranked, "wl_names": {cik: cand[cik]["w"] for cik in wl} if variant == "V1" else None})
     return res
 
 
@@ -414,7 +531,7 @@ def ym_of_ord(x):
 
 
 def simulate(sel, cands, px, dates, c0ret=None, mode="base", early=False, weighting="cap", exclude=None,
-             fee=0.0, cost=0.0, count_from=0, priced_only=False, capped=True):
+             fee=0.0, cost=0.0, count_from=0, priced_only=False, capped=True, lb_hit=LB_HIT):
     """月次の買い持ち。→ (月次リターン {ym: r}, 寄与 {cik: 累計}, 診断)。mode: base｜lb（事前登録の delisting_and_unpriced_treatment）
     採用: 選定日 S が月 m の末なら 月 m+2 の月初から3か月（early なら m+1 から）。開始時の重み＝S の重み×（S→開始の価格変化）"""
     rets, contrib, turn_log = {}, defaultdict(float), []
@@ -485,7 +602,7 @@ def simulate(sel, cands, px, dates, c0ret=None, mode="base", early=False, weight
                         r[c] = b1[0] / b0[0] - 1.0
                     elif px[c]["last"] < mm:                    # 系列が途切れた
                         if mode == "lb":
-                            r[c] = LB_HIT
+                            r[c] = lb_hit
                             st[c] = "cash"
                         else:
                             st[c] = "out"
@@ -499,7 +616,7 @@ def simulate(sel, cands, px, dates, c0ret=None, mode="base", early=False, weight
                         if Sym <= lym < months[-1]:
                             hit = max(ym_add(lym, 1), start)
                     if hit is not None and mm == hit:
-                        r[c] = LB_HIT
+                        r[c] = lb_hit
                         st[c] = "cash"
                     elif hit is not None and mm > hit:
                         st[c] = "cash"
@@ -592,6 +709,50 @@ def yr1_stats(s, a=202106, z=202605):
     return {"n": len(out), "max": round(max(out), 1), "min": round(min(out), 1), "mean": round(sum(out) / len(out), 1)}
 
 
+def ols_nw(y, X, lag=6):
+    """最小二乗＋Newey-West の標準誤差。y は長さ n・X は n×k（定数項を先頭に足して使う）→ (係数, t値)"""
+    import numpy as np
+    y = np.array(y, dtype=float)
+    X = np.array(X, dtype=float)
+    n, k = X.shape
+    b = np.linalg.lstsq(X, y, rcond=None)[0]
+    u = y - X @ b
+    Xu = X * u[:, None]
+    S = Xu.T @ Xu
+    for L in range(1, lag + 1):
+        w = 1 - L / (lag + 1.0)
+        G = Xu[L:].T @ Xu[:-L]
+        S += w * (G + G.T)
+    XtXi = np.linalg.inv(X.T @ X)
+    V = XtXi @ S @ XtXi
+    se = np.sqrt(np.diag(V))
+    return b, b / se
+
+
+def factor_alpha(usd, months):
+    """円でなくドルで、French 5因子＋モメンタム（と 単独の QQQ・SPX）に回帰した切片（年率%）と因子の傾き"""
+    import nx_common as N
+    t5 = [x for x in N.french_tables("F-F_Research_Data_5_Factors_2x3").values() if x["freq"] == "monthly"][0]
+    mo = [x for x in N.french_tables("F-F_Momentum_Factor").values() if x["freq"] == "monthly"][0]
+    cols = [c.strip() for c in t5["cols"]]
+    fac = {}
+    for m, row in t5["data"].items():
+        d = {c: (v / 100 if v is not None else None) for c, v in zip(cols, row)}
+        if m in mo["data"] and mo["data"][m][0] is not None:
+            d["Mom"] = mo["data"][m][0] / 100
+        fac[m] = d
+    ks = [m for m in sorted(usd) if m in fac and all(fac[m].get(c) is not None for c in ("Mkt-RF", "SMB", "HML", "RMW", "CMA", "RF", "Mom"))
+          and COUNT_FROM <= m <= 202608]
+    y = [usd[m] - fac[m]["RF"] for m in ks]
+    out = {"n": len(ks)}
+    for name, cs in (("FF5+Mom", ["Mkt-RF", "SMB", "HML", "RMW", "CMA", "Mom"]), ("Mkt", ["Mkt-RF"])):
+        X = [[1.0] + [fac[m][c] for c in cs] for m in ks]
+        b, t = ols_nw(y, X, 6)
+        out[name] = {"alpha_ann_pct": round(b[0] * 12 * 100, 2), "alpha_t": round(float(t[0]), 2),
+                     "betas": {c: [round(float(b[i + 1]), 2), round(float(t[i + 1]), 2)] for i, c in enumerate(cs)}}
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--stage", default="all", choices=["select", "all"])
@@ -604,9 +765,13 @@ def main():
     tick, _ = G.ticker_table()
     tick = set(tick)
     dates = a.dates.split(",") if a.dates else sel_dates()
-    cands, diag = stage_a(firms, px, bench, tick, dates)
+    tab = mcap_table(firms, px, dates)
+    bad = flag_scale_errors(tab, dates)
+    print(f"   桁の誤りとして外した (社, 日) {len(bad)}件", flush=True)
+    cands, diag = stage_a(firms, px, bench, tick, dates, bad=bad)
     variants = ["V1", "V1b", "V2", "C1", "C0"]
     sels = {v: select_variant(cands, dates, v) for v in variants}
+    sels["V1pt"] = select_variant(cands, dates, "V1pt")
     sels["V1_top50"] = select_variant(cands, dates, "V1", 50)
     sels["V1_top100"] = select_variant(cands, dates, "V1", 100)
     names = {c: f.name for c, f in firms.items()}
@@ -649,12 +814,46 @@ def main():
         extra[nm + "_lb"] = simulate(sels[nm], cands, px, dates, c0ret=c0all, mode="lb", count_from=COUNT_FROM)[0]
         extra[nm + "_priced_only"] = simulate(sels[nm], cands, px, dates, c0ret=c0all, mode="base", priced_only=True, count_from=COUNT_FROM)[0]
         extra[nm + "_net"] = simulate(sels[nm], cands, px, dates, c0ret=c0all, mode="base", fee=FEE, cost=TRADE_COST, count_from=COUNT_FROM)[0]
+    # 事後（結果を見た後に足した・報告のみ）: 下限版の厳しさ、上位の寄与を3社・5社抜く
+    post = {}
+    post["V1_lb100"] = simulate(sels["V1"], cands, px, dates, c0ret=c0all, mode="lb", lb_hit=-1.0, count_from=COUNT_FROM)[0]
+    post["V1pt"] = simulate(sels["V1pt"], cands, px, dates, c0ret=c0all, mode="base", count_from=COUNT_FROM)[0]
+    post["V2_lb100"] = simulate(sels["V2"], cands, px, dates, c0ret=c0all, mode="lb", lb_hit=-1.0, count_from=COUNT_FROM)[0]
+    # 事後（報告のみ）: 選別の効果か、同じ母集団から適当に75社を選んでも出るか（乱数は固定）
+    import random
+    def placebo(pool_key, n_draw=200):
+        cg, ex = [], []
+        for seed in range(n_draw):
+            rnd = random.Random(1000 + seed)
+            sel_p = []
+            for it_c0, it_v1 in zip(sels["C0"], sels["V1"]):
+                pool = list(it_v1["wl_names"]) if pool_key == "wl" else list(it_c0["names"])
+                pool.sort()
+                pick = rnd.sample(pool, min(TOPN, len(pool))) if pool else []
+                base = (it_v1["wl_names"] if pool_key == "wl" else it_c0["names"])
+                sel_p.append({"S": it_c0["S"], "names": {c: base[c] for c in pick}})
+            r_u = simulate(sel_p, cands, px, dates, c0ret=c0all, mode="base", count_from=COUNT_FROM)[0]
+            r_j = J(r_u)
+            cg.append(N.cagr(r_j) * 100)
+            e = N.excess_stats(r_j, spx)
+            ex.append(e["ex_ann"] if e else None)
+        cg.sort()
+        return {"n": n_draw, "cagr_mean": round(sum(cg) / len(cg), 2), "cagr_p5": round(cg[int(0.05 * n_draw)], 2),
+                "cagr_median": round(cg[n_draw // 2], 2), "cagr_p95": round(cg[int(0.95 * n_draw)], 2), "cagr_max": round(cg[-1], 2),
+                "cagr_values_sorted": [round(x, 2) for x in cg]}
+    out["placebo"] = {"pool_watchlist_V1": placebo("wl"), "pool_eligible_universe": placebo("uni"), "note": "事後・報告のみ。各選定日に同じ母集団から無作為に75社（時価加重・6%上限・同じ買い持ちの計算）。V1 の年率（円）が乱数の分布のどこにあるか"}
     # 1社抜き（V1 の寄与最大）
-    top_c = sorted(series_u["V1"][1].items(), key=lambda kv: -kv[1])[:5]
+    top_c = sorted(series_u["V1"][1].items(), key=lambda kv: -kv[1])[:15]
+    tot_contrib = sum(series_u["V1"][1].values())
+    for nx_ in (3, 5, 10):
+        post[f"V1_drop_top{nx_}"] = simulate(sels["V1"], cands, px, dates, c0ret=c0all, mode="base",
+                                              exclude={c for c, _v in top_c[:nx_]}, count_from=COUNT_FROM)[0]
     drop = {}
     for c, _v in top_c[:3]:
         drop[c] = simulate(sels["V1"], cands, px, dates, c0ret=c0all, mode="base", exclude={c}, count_from=COUNT_FROM)[0]
-    out["top_contributors_V1"] = [{"cik": c, "name": names[c], "cum_contribution_pct": round(v * 100, 1)} for c, v in top_c]
+    out["top_contributors_V1"] = [{"cik": c, "name": names[c], "cum_contribution_pct": round(v * 100, 1),
+                                   "share_of_total_pct": round(v / tot_contrib * 100, 1)} for c, v in top_c]
+    out["total_contribution_pct_V1"] = round(tot_contrib * 100, 1)
     opp = {"C0": c0, "SPX": spx, "QQQ": qqq, "IWM": iwm}
     pack = {}
     for nm, (s_u, contrib, dd) in series_u.items():
@@ -669,6 +868,14 @@ def main():
     for nm, s_u in extra.items():
         s = J(s_u)
         pack[nm] = {"vs": {o_: N.excess_stats(s, b) for o_, b in (("C0", c0), ("SPX", spx))}}
+    for nm, s_u in post.items():
+        s = J(s_u)
+        pack[nm] = {"post_hoc": True, "vs": {o_: N.excess_stats(s, b) for o_, b in (("C0", c0), ("SPX", spx), ("QQQ", qqq))}}
+    try:
+        out["factor_regression_usd"] = {nm: factor_alpha(series_u[nm][0], months) for nm in ("V1", "V2", "C1")}
+        out["factor_regression_usd"]["SPX_excess_QQQ"] = None
+    except Exception as e:  # noqa
+        out["factor_regression_usd"] = {"error": repr(e)}
     for c, s_u in drop.items():
         s = J(s_u)
         pack["V1_drop_" + names[c][:12].replace(" ", "_")] = {"cik": c, "vs": {o_: N.excess_stats(s, b) for o_, b in (("C0", c0), ("SPX", spx))}}
@@ -680,6 +887,17 @@ def main():
     pack["QQQ"] = {"cagr_jpy": round(N.cagr(qqq) * 100, 2), "yr1_2021-06_2026-05": yr1_stats(qqq)}
     pack["IWM"] = {"cagr_jpy": round(N.cagr(iwm) * 100, 2), "yr1_2021-06_2026-05": yr1_stats(iwm)}
     out["portfolios"] = pack
+    out["deviations_and_post_hoc"] = [
+        "【データの掃除・結果を見た後】C0（時価加重の母集団）の2025年が −4% と S&P500 から大きく外れた検査で、Hexcel の浮動株時価と表紙の株数が同じ 1e6 倍の誤りで時価総額の99%を占めていたと判明。以後、株数の桁の誤り対策を足した（前後270日の全出所の中央値との照合・売買代金÷時価総額≥1e-4・前後の選定日の時価総額との比較 6倍・時価総額6兆ドル上限・価格なし社は浮動株時価÷売上≤300）。規則の中身（スコア・Path・順位・重み・採用の時期）は動かしていない。この修正の前後で V1 の格付けは S→A に動いた（境界にある）",
+        "【為替の是正】Yahoo の為替の月足は夏時間で4〜10月の足が1か月早いラベルになり毎年10月が欠けていた。日足の月末値に替えた（初回の円建ては10月の欠けた歪んだ系列だった）",
+        "【事後に足したもの・格付けに使わない】下限版−100%（V1_lb100）・上位3/5/10社を抜く・FF5+モメンタム回帰・営業利益の代わりに税引前利益を使う感度（V1pt）",
+        "【未対応の再現の穴】営業利益の事実が無い社（Robinhood・銀行・証券）は営業利益率が欠測=0点で採用されない（Bloomberg は標準化データで補う可能性）。今日のティッカー表に無い『同じ会社の旧CIK』（持株会社化など）は価格なし社として二重に数えうる",
+    ]
+    ser = {nm: series_u[nm][0] for nm in series_u}
+    ser.update({nm: v for nm, v in extra.items()})
+    ser.update({"C0": c0_u, "C0EW": c0ew_u, "SPX": spx_u, "QQQ": qqq_u, "IWM": iwm_u})
+    out["series_usd"] = {nm: {str(m): round(v, 6) for m, v in sorted(x.items()) if m >= COUNT_FROM} for nm, x in ser.items()}
+    out["fx_usdjpy_month_end"] = {str(m): round(v, 3) for m, v in sorted(fxb.items()) if m >= 201200}
     # 格付け（V1・短標本）
     fam = {}
     for o_ in ("C0", "SPX"):

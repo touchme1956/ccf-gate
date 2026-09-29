@@ -45,10 +45,10 @@ def bars_full(r):
     out = {}
     for i, t in enumerate(ts):
         a, c = adj[i], cl[i]
-        if a is None or c is None or a <= 0 or c <= 0:
+        if not isinstance(a, (int, float)) or not isinstance(c, (int, float)) or a <= 0 or c <= 0:
             continue
         d = datetime.datetime.utcfromtimestamp(t)
-        v = vo[i] if vo is not None and i < len(vo) else None
+        v = vo[i] if vo is not None and i < len(vo) and isinstance(vo[i], (int, float)) else None
         out[d.year * 100 + d.month] = [a, c, v]
     sp = []
     for k, v in ((r.get("events") or {}).get("splits") or {}).items():
@@ -61,6 +61,30 @@ def bars_full(r):
             pass
     meta = r.get("meta") or {}
     return {"bars": out, "splits": sorted(sp), "ccy": meta.get("currency"), "type": meta.get("instrumentType")}
+
+
+def fx_month_end(t="JPY=X"):
+    """為替は Yahoo の月足の時刻が夏時間で1か月ずれて（4〜10月の足が1か月早いラベルになり毎年10月が欠ける）使えない。
+    日足を取り、その月の最後の日の終値を月末値にする（日付は UTC+3 で丸める＝ロンドンの午前0時の足も同じ日に入る）"""
+    p = os.path.join(G.NXC, "yh_JPY_X_1d.json")
+    if not (os.path.exists(p) and os.path.getsize(p) > 0 and time.time() - os.path.getmtime(p) < 3 * 86400):
+        import urllib.parse
+        import urllib.request
+        u = (f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(t)}?period1=0&period2={int(time.time())}"
+             f"&interval=1d")
+        ua = {"User-Agent": "Mozilla/5.0 (ccf-gate research; contact via github touchme1956/ccf-gate)"}
+        b = urllib.request.urlopen(urllib.request.Request(u, headers=ua), timeout=90).read()
+        open(p, "wb").write(b)
+    r = json.load(open(p))["chart"]["result"][0]
+    ts = r["timestamp"]
+    cl = r["indicators"]["quote"][0]["close"]
+    last = {}
+    for a, c in zip(ts, cl):
+        if not isinstance(c, (int, float)) or c <= 0:
+            continue
+        d = datetime.datetime.utcfromtimestamp(a + 3 * 3600)
+        last[d.year * 100 + d.month] = (d.day, c)   # 昇順に並んでいる前提で上書き＝月内で最後の日
+    return {k: v[1] for k, v in last.items()}
 
 
 def one(args):
@@ -95,6 +119,9 @@ def main():
                 print(f"   {i}/{len(todo)} {time.time() - t0:.0f}s 価格あり{len(firms)} 価格なし{miss} 非株式{nonequity}", flush=True)
     bench = {}
     for name in BENCH:
+        if name == "JPY=X":
+            bench[name] = fx_month_end(name)
+            continue
         b = bars_full(G.yahoo_raw(name, fetch=True))
         if b:
             bench[name] = {k: v[0] for k, v in b["bars"].items()}
