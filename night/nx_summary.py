@@ -135,6 +135,12 @@ def main():
             'ユーザーの ETF 側の主力（NASDAQ-100）には、2009年以降どの規則も勝っていない（業種ETFの勢い −3.4%/年・ブランド価値 −1.9）',
             '他セッションと同時に同じデータに行き着いた角度（TSMOM の重ね・JST・OSAP・Lazy Prices）は、結論の向きが一致した＝独立の再現',
         ],
+        'forward': {
+            'prereg': 'out/nx_forward_prereg.json', 'state': 'out/nx_forward.json', 'update': 'python3 night/nx_forward.py --update（毎月）',
+            'hypotheses': 'F1 楽天の業種ETF の勢い 対 SPY／F2 ブランド価値の上位10社 対 SPY／F3 国内株式の能動の投信の過去1年の上位1/4（楽天で売るもの）対 TOPIX の指数型（主 K=3・線 e≥60・毎年10月に見る・2046-09 で打ち切り）',
+            'power': '真の上乗せが年3%でも20年のうちに線に届く確率は F1 7%・F3 5%・F2 ほぼ0＝『勝ちが出ない』は『勝ちが無い』ではない（追従のぶれが年6〜9%あるため）',
+        },
+        'lse_validate': 'out/nx_lse_validate.json: LSE 1870-1929 の読み込みは事前登録の線（Grossman 2002 との年次の相関 ≥0.80）に届かず『検定不能』＝nx_pre1926x の LSE の11単位は格付けしない',
         'rounding_fix_2026_09_29': 'nx_common.rolling/dca の勝ちの数え方を是正（丸める前の差で数える）。影響する7角度を走らせ直し、格付けの変化は regrade 欄を見よ',
     }
     rg = os.path.join(OUT, 'nx_regrade.json')
