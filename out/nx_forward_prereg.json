@@ -1,0 +1,1439 @@
+{
+ "angle": "nx_forward",
+ "generated": "2026-09-29",
+ "registered_before_measuring": true,
+ "what_exists_at_registration": "前向きの月（2026-10 以降）のデータはまだ1か月も無い（2026-10 の月末は 2026-10-30）。2026-09 も途中（登録は 2026-09-29・9月の月末は 9-30）。登録の前に見たのは ≤2026-08 の歴史だけで、設計（追従のぶれ σ_d・相手の上乗せ）と、規則を正しく写したかの検算（元の角度の結果の再現・過去での通し稽古）にだけ使った",
+ "asked_by": "ワークフローの課題文 nx_forward（2026-09-29）。元はユーザーの依頼「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して…探し続けて」（2026-09-28）。課題文: 「歴史の検証は全セッションで出尽くしつつあり、誰も見ていないデータは未来だけ。out/nx_summary.json の winners のうち、日本の個人（楽天証券・NISA/課税口座）が実際に持てる形の規則を、2026-10 の月末から毎月の実績で検定する事前登録と道具を作る」",
+ "question": "nx の歴史の検証（434本を格付け）を生き残った勝ちのうち、日本の個人が楽天証券で実際に持てる形の規則は、登録の後の月でも相手（SPY・TOPIX の指数型）に勝つか。いつ見ても有効な検定（e過程）で毎月追い、主の族（3本）は e ≥ 60（=20×3・族の Bonferroni）で『勝ち』とする",
+ "why_forward": [
+  "nx の歴史の検証は 434本を格付けした（全体の Bonferroni t≈3.86）。保有期間（2007〜）の結果も勝ちを選ぶのに使った＝知識の漏れは消せない。課題文の5つの候補そのものが、結果を見た後に選ばれている",
+  "前向きの月は誰も見ていない。規則・相手・賭けの大きさ・打ち切りを今日固定すれば、結果は漏れなく読める",
+  "e過程（賭けの資産）は毎月のぞいても・いつ止めても α を守る（Ville の不等式 P(sup E ≥ 1/α) ≤ α）"
+ ],
+ "same_conventions_as": {
+  "source": "eknzbh の枝の out/mw_forward_prereg.json（19e8ce23・2026-09-28・git show で読んだ）と night/mw_forward.py",
+  "copied": "賭け E_t = Π(1 + λ x̃_s)・λ = min(μ_d/σ_d², 1/(2B))・切り詰め B = 4σ_m を 0.5% 単位で切り上げ・μ_d = 相手の登録前の上乗せ × 0.5 を [0.5, 3.0]%/年・逆向きの e_f（見込みなし・拘束しない）・20年の打ち切り・切り詰めた平均のいつ見ても有効な帯（−10〜+10%/年・0.1刻み）・e-BH と Bonferroni と平均e・一度取り込んだ月は固定・3か月待って出ない月は欠測・値の完了は『当月より前 ∧ 最後の足が月末の5日以内』",
+  "different": [
+   "判定の線: eknzbh は各仮説 e≥20（族は併記）。ここは課題文の『仮説の数で e の線を上げる』に従い、主の族の判定そのものを e ≥ 20×K（K=3 → 60）にした。e≥20 は『族の調整の前の参考』として報告だけ",
+   "正式に見る月: eknzbh は毎年9月（castle_rule と同じ）。ここは課題文どおり毎年10月（日本の投信の選び直しが 9月末・9月の月次がそろった後）",
+   "μ_d の相手: 歴史の相手（≤2006-12）がある仮説はそれ（F1: French 49 業種・F4: AQR の時系列の勢い・F5: JST 1871-1949）。無い仮説（F2・F3）は登録前の 2007年以降の同じ規則の算術の超過 × 0.5（★歴史の勝ちを選ぶのに使ったのと同じ期間。λ＝賭けの大きさにだけ効き、e過程の有効性には効かない）",
+   "完了の判定を1つ足した: 最後の足が月末の5日以内に加え、その後の月の足がある か 月末から5日以上たった（月末の翌日に回したとき、月末の値がまだ出ていないのに完了とみなさないため）。日本の投信は『その後の月の行がある』だけで完了とする"
+  ]
+ },
+ "overlap_check": {
+  "checked_at": "2026-09-29 05:00 UTC（git fetch --all の後、すべての origin の枝の git ls-tree で forward|_fwd|prospective を探した）",
+  "found": "eknzbh だけ（night/mw_forward.py・out/mw_forward_prereg.json・out/mw_forward.json）。hbm38n・q07leu・main に前向きの登録は無い",
+  "eknzbh_hypotheses": "H1 ETF 側（QQQM75/SMH25）対 SPY／H2・H3 城（門の名簿の等分）対 SPY・QQQM／H4 米国外の割安＋勢い（PXF/IMTM）対 VEA／H5 新興国（AVEM）対 IEMG／H6 米国の質（QUAL）対 SPY／H7 SEC の cop_at 上位1/3／H8 新興国の紙（French BIG 4本）",
+  "verdict": "同じ規則は1本も無い（業種 ETF の勢い・ブランド価値の上位10社・日本の能動の投信の上位1/4・RSST・国の配当利回りは eknzbh の前向きに無い）。相手が同じ SPY の仮説はあるが、規則が違う＝別の仮説。全セッションの多重性は families.cross_session で併記する"
+ },
+ "candidates_checked": {
+  "(1) 業種の勢い（nx_indmom_real P2）": {
+   "real_prices": "はい（Yahoo の日足の調整後終値・20本と SPY・QQQ は 1998〜2012 から 2026-09-28 まで取得を確かめた）",
+   "monthly_data": "Yahoo の日足（鍵なし）",
+   "rakuten": "20本・SPY・QQQ すべて楽天の海外 ETF の一覧（ETFD.csv を 2026-09-28 に取り直した）にある",
+   "decision": "主の族 F1（相手 SPY）＋副 F1b（相手 QQQ）"
+  },
+  "(2) ブランド価値の上位10社（nx_brand P2 の実装できる版）": {
+   "real_prices": "はい（10社とも米国の超大型株）",
+   "monthly_data": "Yahoo の日足。一覧は Interbrand の API（year=Y・毎年秋）。★year=2026 は 2026-09-29 時点で未公開で、API は year=2026 を頼むと 2025 年の行（year: 2025）をそのまま返す＝行の year がすべて Y で100行のときだけ新しい一覧とみなす",
+   "rakuten": "楽天の米国株で買える（一覧の機械的な写しは取れなかった＝未確認だが、10社は S&P500 の最上位の普通株で、ユーザーは MSFT を実際に保有）",
+   "decision": "主の族 F2（相手 SPY）＋副 F2b（相手 QQQ）"
+  },
+  "(3) 日本の能動の投信の過去1年の上位1/4（nx_jpfunds X1・国内株式）": {
+   "real_prices": "はい（基準価額・分配金再投資・費用後の本物の器）",
+   "monthly_data": "投信総合検索ライブラリーの基準価額 CSV（鍵なし・1.1秒あけ）と検索 API（販売会社の名前 institutionInfo.instName で楽天証券の取扱を判定）",
+   "rakuten": "2026-09-28 の一覧で国内株式の能動の投信 414本（フィルター後）のうち楽天証券が売るのは 285本（69%）。そのうち NISA 成長投資枠の対象は 194本",
+   "decision": "主の族 F3（X1 の選び方のまま・楽天が売る器だけを持つ・相手は楽天で買える最も安い TOPIX の指数型）＋副 F3b（X1 そのまま全部・相手は最も安い TOPIX の指数型）"
+  },
+  "(4) 市場＋マネージド・フューチャーズの重ね": {
+   "real_prices": "はい（RSST 2023-09〜・DBMF 2019-05〜・KMLM 2020-12〜・CTA 2022-03〜）",
+   "monthly_data": "Yahoo の日足",
+   "rakuten": "★無い（RSST・RSSB・DBMF・KMLM・CTA は ETFD.csv〔2026-09-28〕に1本も無い）＝楽天では NISA でも課税口座でも持てない。重ねる形を日本の投信で作るには借入が要り、NISA ではできない",
+   "decision": "課題文の主の条件（楽天で持てる形）を満たさない＝判定の族から外し、参考の族 F4（RSST 対 SPY）として同じ作法で記録だけする（nx_stack P6 の実物での答え合わせとして情報がある）"
+  },
+  "(5) 国の配当利回りの上位1/3（nx_jst P1）": {
+   "real_prices": "はい（iShares の国別 ETF。PGAL〔ポルトガル〕は Yahoo に無い〔404〕＝15本）",
+   "monthly_data": "Yahoo の日足と分配の記録（信号＝直近の暦年の分配 ÷ 12月末の終値・nx_jst の器の答え合わせと同じ）",
+   "rakuten": "★15本のうち楽天にあるのは EWJ・EWG・SPY だけ（ACWI はある）＝規則は組めない",
+   "decision": "判定の族から外し、参考の族 F5（対 ACWI）として記録だけする"
+  }
+ },
+ "hypotheses": {
+  "F1_indmom_vs_SPY": {
+   "definition": "楽天の業種 ETF 20本（1業種1本）で 12か月（t−11〜t）の上位5本を等分・毎月の入れ替え（nx_indmom_real P2 そのまま）対 SPY",
+   "family": "主の族（判定）",
+   "portfolio": "indmom",
+   "benchmark": "SPY",
+   "currency": "USD",
+   "holdable_by_japanese_individual": "楽天で全部買える（20本と SPY は楽天の海外 ETF の一覧〔ETFD.csv 2026-09-28〕にある）。NISA 成長投資枠でも課税口座でも可。ただし毎月の入れ替えで NISA の枠を食う",
+   "cost_rule": "片道の回転 100% あたり 0.10%（その月の回転は 前月末の形成の持ち物を当月の値動きで流した重み と新しい等分の差の半分）",
+   "mu_d_rule": "相手 fr49_P2 の登録前の算術の超過 × 0.5（公表後の縮み）を [0.5, 3.0]%/年 に収める",
+   "frozen": {
+    "sigma_d": 7.812,
+    "sigma_window": [
+     200108,
+     202608
+    ],
+    "n_months": 301,
+    "sigma_source": "楽天の業種 ETF 20本の P2 を日足の月末から作り直した（2001-08〜2026-08・etf_only）",
+    "mu_d": 3.0,
+    "mu_source": "fr49_P2",
+    "B": 0.095,
+    "lambda_kelly": 4.916,
+    "lambda": 4.916,
+    "lambda_capped": false,
+    "mu_f": 3.0,
+    "clipped_months_hist": 1,
+    "hist_mean_ann_pct": 2.863,
+    "hist_nw_t": 2.0
+   }
+  },
+  "F1b_indmom_vs_QQQ": {
+   "definition": "同じ規則 対 QQQ（副・判定に使わない）",
+   "family": "副の族（報告・判定に使わない）",
+   "portfolio": "indmom",
+   "benchmark": "QQQ",
+   "currency": "USD",
+   "holdable_by_japanese_individual": "同上",
+   "cost_rule": "片道の回転 100% あたり 0.10%（その月の回転は 前月末の形成の持ち物を当月の値動きで流した重み と新しい等分の差の半分）",
+   "mu_d_rule": "固定 1.0%/年（相手 QQQ に対する検証済みの上乗せは無い＝検出したい最小の上乗せ）",
+   "frozen": {
+    "sigma_d": 13.366,
+    "sigma_window": [
+     200108,
+     202608
+    ],
+    "n_months": 301,
+    "sigma_source": "楽天の業種 ETF 20本の P2 を日足の月末から作り直した（2001-08〜2026-08・etf_only）",
+    "mu_d": 1.0,
+    "mu_source": "fixed 1.0",
+    "B": 0.155,
+    "lambda_kelly": 0.56,
+    "lambda": 0.56,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 1,
+    "hist_mean_ann_pct": -1.002,
+    "hist_nw_t": -0.4
+   }
+  },
+  "F2_brand10_vs_SPY": {
+   "definition": "Interbrand の最新の一覧の米国の親会社の上位10社をブランド価値で加重・公開の翌月末に年1回組み替え（間は買って持つ）対 SPY（nx_brand P2 の実装できる版）",
+   "family": "主の族（判定）",
+   "portfolio": "brand",
+   "benchmark": "SPY",
+   "currency": "USD",
+   "holdable_by_japanese_individual": "楽天の米国株で10社とも買える（米国の超大型株）。NISA 成長投資枠でも課税口座でも可",
+   "cost_rule": "組み替えの月に 片道の回転 × 0.20%（nx_brand の米国版と同じ）",
+   "mu_d_rule": "相手 nx_brand P2 の登録前の算術の超過 × 0.5（公表後の縮み）を [0.5, 3.0]%/年 に収める",
+   "frozen": {
+    "sigma_d": 8.917,
+    "sigma_window": [
+     200710,
+     202608
+    ],
+    "n_months": 227,
+    "sigma_source": "nx_brand の凍結の一覧（2007〜2025・2015/2017 は持ち越し）で上位10社版を作り直した（公開の翌月末に組み替え）",
+    "mu_d": 1.535,
+    "mu_source": "nx_brand P2",
+    "B": 0.105,
+    "lambda_kelly": 1.93,
+    "lambda": 1.93,
+    "lambda_capped": false,
+    "mu_f": 1.535,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 3.85,
+    "hist_nw_t": 2.04
+   }
+  },
+  "F2b_brand10_vs_QQQ": {
+   "definition": "同じ規則 対 QQQ（副・判定に使わない）",
+   "family": "副の族（報告・判定に使わない）",
+   "portfolio": "brand",
+   "benchmark": "QQQ",
+   "currency": "USD",
+   "holdable_by_japanese_individual": "同上",
+   "cost_rule": "組み替えの月に 片道の回転 × 0.20%（nx_brand の米国版と同じ）",
+   "mu_d_rule": "固定 1.0%/年（相手 QQQ に対する検証済みの上乗せは無い＝検出したい最小の上乗せ）",
+   "frozen": {
+    "sigma_d": 8.553,
+    "sigma_window": [
+     200710,
+     202608
+    ],
+    "n_months": 227,
+    "sigma_source": "nx_brand の凍結の一覧（2007〜2025・2015/2017 は持ち越し）で上位10社版を作り直した（公開の翌月末に組み替え）",
+    "mu_d": 1.0,
+    "mu_source": "fixed 1.0",
+    "B": 0.1,
+    "lambda_kelly": 1.367,
+    "lambda": 1.367,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 2,
+    "hist_mean_ann_pct": -1.159,
+    "hist_nw_t": -0.93
+   }
+  },
+  "F3_jpX1_rakuten_vs_TOPIX": {
+   "definition": "国内株式の能動の投信の過去1年の上位1/4（nx_jpfunds X1 の選び方そのまま・母集団は全部）のうち楽天証券が売るものを等分（毎月等分に戻す）・毎年9月末に選び直し 対 楽天で買える最も安い TOPIX の指数型の投信（円）",
+   "family": "主の族（判定）",
+   "portfolio": "jpx1_rakuten",
+   "benchmark": "楽天証券が売る TOPIX の指数型の投信のうち信託報酬が最も安いもの（同じなら設定が古いもの）・毎年9月末に選び直し",
+   "currency": "JPY",
+   "holdable_by_japanese_individual": "楽天で全部買える（選んだものから楽天が売らない器を外す）。NISA 成長投資枠の対象は約7割（毎月分配型などは対象外＝課税口座）",
+   "cost_rule": "10月（選び直した後の最初の月）に、新しく入る器の楽天の購入時手数料（税抜）×1.1 ÷ 本数、出る器に信託財産留保額の印があれば 0.3% ÷ 前の年の本数。相手の器が替われば相手にも同じ規則",
+   "mu_d_rule": "相手 nx_jpfunds X1 国内株式 の登録前の算術の超過 × 0.5（公表後の縮み）を [0.5, 3.0]%/年 に収める",
+   "frozen": {
+    "sigma_d": 5.946,
+    "sigma_window": [
+     200710,
+     202608
+    ],
+    "n_months": 227,
+    "sigma_source": "nx_jpfunds の X1 の凍結の選択の国内株式だけ・相手は最も安い TOPIX の指数型の鎖（費用前・楽天の絞り込みは過去に遡れないので同じ系列）",
+    "mu_d": 1.75,
+    "mu_source": "nx_jpfunds X1 国内株式",
+    "B": 0.07,
+    "lambda_kelly": 4.95,
+    "lambda": 4.95,
+    "lambda_capped": false,
+    "mu_f": 1.75,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 3.503,
+    "hist_nw_t": 3.12
+   }
+  },
+  "F3b_jpX1_all_vs_TOPIX": {
+   "definition": "同じ選び方の全部（楽天で買えない器も含む・nx_jpfunds X1 そのまま）対 最も安い TOPIX の指数型（副・判定に使わない）",
+   "family": "副の族（報告・判定に使わない）",
+   "portfolio": "jpx1_all",
+   "benchmark": "TOPIX の指数型の投信のうち信託報酬が最も安いもの（nx_jpfunds の RULES.comparator そのまま）・毎年9月末に選び直し",
+   "currency": "JPY",
+   "holdable_by_japanese_individual": "一部は楽天で買えない（約3割）",
+   "cost_rule": "同上（購入時手数料は今の販売会社の最小・nx_jpfunds の RULES.costs そのまま）",
+   "mu_d_rule": "相手 nx_jpfunds X1 国内株式 の登録前の算術の超過 × 0.5（公表後の縮み）を [0.5, 3.0]%/年 に収める",
+   "frozen": {
+    "sigma_d": 5.946,
+    "sigma_window": [
+     200710,
+     202608
+    ],
+    "n_months": 227,
+    "sigma_source": "nx_jpfunds の X1 の凍結の選択の国内株式だけ・相手は最も安い TOPIX の指数型の鎖（費用前・楽天の絞り込みは過去に遡れないので同じ系列）",
+    "mu_d": 1.75,
+    "mu_source": "nx_jpfunds X1 国内株式",
+    "B": 0.07,
+    "lambda_kelly": 4.95,
+    "lambda": 4.95,
+    "lambda_capped": false,
+    "mu_f": 1.75,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 3.503,
+    "hist_nw_t": 3.12
+   }
+  },
+  "F4_RSST_vs_SPY": {
+   "definition": "市場＋マネージド・フューチャーズの重ね（実在: RSST＝米国株100%＋マネージド・フューチャーズ100%）対 SPY（参考・楽天で持てない）",
+   "family": "参考の族（楽天で持てない・判定の族の外）",
+   "portfolio": "rsst",
+   "benchmark": "SPY",
+   "currency": "USD",
+   "holdable_by_japanese_individual": "★楽天では持てない（RSST・DBMF・KMLM・CTA は楽天の海外 ETF の一覧〔2026-09-28〕に無い）。NISA では持てない",
+   "cost_rule": "なし（信託報酬は値段の中）",
+   "mu_d_rule": "相手 nx_stack P6 の登録前の算術の超過 × 0.5（公表後の縮み）を [0.5, 3.0]%/年 に収める",
+   "frozen": {
+    "sigma_d": 11.26,
+    "sigma_window": [
+     201906,
+     202608
+    ],
+    "n_months": 87,
+    "sigma_source": "RSST の履歴（2023-10〜）は35か月しか無いので、追従のぶれの大きい方＝DBMF − BIL（重ねる部分の代わり・2019-06〜）を使う",
+    "mu_d": 3.0,
+    "mu_source": "nx_stack P6",
+    "B": 0.135,
+    "lambda_kelly": 2.366,
+    "lambda": 2.366,
+    "lambda_capped": false,
+    "mu_f": 3.0,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 6.795,
+    "hist_nw_t": 1.6
+   }
+  },
+  "F5_countryDY_vs_ACWI": {
+   "definition": "国の配当利回り（直近の暦年の分配÷年末の値）の上位1/3の国別 ETF（15本）を等分・毎年12月末に組み替え（間は買って持つ）対 ACWI（参考・楽天で持てない）",
+   "family": "参考の族（楽天で持てない・判定の族の外）",
+   "portfolio": "country",
+   "benchmark": "ACWI",
+   "currency": "USD",
+   "holdable_by_japanese_individual": "★楽天では持てない（15本のうち楽天にあるのは EWJ・EWG・SPY だけ）",
+   "cost_rule": "12月末の組み替えで 片道の回転 × 0.10%",
+   "mu_d_rule": "相手 nx_jst P1 の登録前の算術の超過 × 0.5（公表後の縮み）を [0.5, 3.0]%/年 に収める",
+   "frozen": {
+    "sigma_d": 7.998,
+    "sigma_window": [
+     200901,
+     202608
+    ],
+    "n_months": 212,
+    "sigma_source": "15本の国別 ETF で 2008年末から毎年組み直した（直近の暦年の分配 ÷ 12月末の終値）",
+    "mu_d": 1.465,
+    "mu_source": "nx_jst P1",
+    "B": 0.095,
+    "lambda_kelly": 2.29,
+    "lambda": 2.29,
+    "lambda_capped": false,
+    "mu_f": 1.465,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": -1.85,
+    "hist_nw_t": -1.09
+   }
+  }
+ },
+ "families_and_multiplicity": {
+  "main": {
+   "members": [
+    "F1_indmom_vs_SPY",
+    "F2_brand10_vs_SPY",
+    "F3_jpX1_rakuten_vs_TOPIX"
+   ],
+   "line": 60.0,
+   "why": "課題文『仮説の数で e の線を上げる』: 主の族は K=3、Bonferroni で各 e ≥ 20×3 = 60（族の誤りの確率 ≤ 5%）。判定（『勝ち』）はこの線だけ"
+  },
+  "sub": {
+   "members": [
+    "F1b_indmom_vs_QQQ",
+    "F2b_brand10_vs_QQQ",
+    "F3b_jpX1_all_vs_TOPIX"
+   ],
+   "line": 60.0,
+   "why": "副（相手 QQQ・楽天の絞り込み無しの X1）。線は同じ作法で 60 を併記するが、ここが越えても『勝ち』とは言わない（報告）"
+  },
+  "ref": {
+   "members": [
+    "F4_RSST_vs_SPY",
+    "F5_countryDY_vs_ACWI"
+   ],
+   "line": 40.0,
+   "why": "楽天で持てない参考。K=2 で 40 を併記（報告）"
+  },
+  "all_registered": {
+   "K": 8,
+   "line": 160.0,
+   "why": "この登録の8本すべてを1つの族とみなした最も厳しい線（報告）"
+  },
+  "cross_session": {
+   "K": 16,
+   "line": 320.0,
+   "why": "eknzbh の mw_forward の8本と合わせた全セッションの線（参考）"
+  },
+  "e_bh": "各族で e-BH（偽発見率5%・Wang & Ramdas 2022）を今の e で併記。平均e ≥ 20 で『族のどれも勝たない』を退ける（報告）",
+  "individual_20": "e≥20 は1本ずつの α=0.05 の線。主の族では『族の調整の前の参考』とだけ書き、勝ちとは言わない"
+ },
+ "e_process": {
+  "active_return": "x_t = r_規則,t − r_相手,t − 費用_t（月次・同じ通貨の総リターンどうし）。t は 2026-10 から",
+  "clip": "x̃_t = min(B, max(−B, x_t))。B = 4 × σ_d/√12 を 0.005 刻みで切り上げ（σ_d＝登録前の月次追従差の標準偏差×√12・費用後）",
+  "null": "H0: 各月、過去を条件とした E[x̃_t] ≤ 0",
+  "bet": "E_t = Π_{s≤t} (1 + λ x̃_s)。λ = min(μ_d/σ_d², 1/(2B))（年率の小数）。1+λx̃ ≥ 0.5",
+  "reject": "主の族: E_t ≥ 60 に一度でも達したら『勝ち』（族で調整・α=0.05）。達した月を記録し、以後も記録は続ける（結論は変えない）",
+  "futility": "逆向きの e過程 F_t = Π (1 + λ (μ_d/12 − x̃_s))。F_t ≥ 20 で『設計の上乗せ μ_d 以上は無い』＝見込みなし（拘束しない＝追跡は続けてよい。E の有効性は変わらない）",
+  "horizon": "最長 2046-09（20年）。それまでにどちらにも達しなければ『証明できず（未決）』で打ち切る",
+  "confidence_sequence": "参考（判定に使わない）: 同じ λ で μ0 の格子（−10〜+10%/年・0.1刻み）を退けた範囲から、切り詰めた平均の年率の、いつ見ても有効な下限・上限（12か月以上たってから）",
+  "no_change": "e過程なので毎月更新して見てよい。規則・相手・λ・B・μ_d・線は変えない（変えたら別の新しい登録として e=1 から）"
+ },
+ "stopping_rules": [
+  "勝ち: 主の族の仮説の E_t が 60 に達した月で結論を固定する（その後の月も記録するが結論は変えない）",
+  "見込みなし: F_t ≥ 20（設計の上乗せ μ_d が無いと言える）。拘束しない＝記録は続けてよいが、ユーザーに『この規則で上乗せ μ_d は期待できない』と報告する",
+  "打ち切り: 2046-09（20年）で未決なら『証明できず』",
+  "器の終わり: RSST が償還されたら F4 はそこで止める（別の ETF に差し替えない）。業種 ETF が上場廃止なら F1 の候補から外す（19本で続ける・差し替えない）。ブランドの親会社が買収・上場廃止なら次の組み替えまで現金（0%）。国別 ETF も同じ。日本の投信が償還・取扱終了（最後の行から10日以上増えない）ならその月は最後の行までの部分の月・以後は外して残りで等分",
+  "一覧の終わり: Interbrand の新しい年の一覧が、最後の形成から24か月たっても観測されなければ F2 はそこで止める（古い一覧を持ち続けない）",
+  "データの源が3か月を超えて取れない月は欠測として飛ばす（0 で埋めない）。欠測の月は e を動かさない（賭けない）",
+  "楽天が器の取扱をやめても、規則の検定はそのまま続ける（持てるかは報告する）"
+ ],
+ "review": {
+  "monthly": "毎月（CI に1段足せば自動・下の ci_suggestion）。e過程なので毎月のぞいても有効",
+  "formal": "毎年10月（REVIEW_MONTH=10）。9月までの前向きの12か月がそろい、日本の投信の選び直しが済んだ後に、各仮説の e・e_f・帯・累積の追従差・族の e-BH を報告する。最初の正式の見る日は 2027-10（前向きの 12か月＝2026-10〜2027-09）",
+  "event": "どれかが主の族の線 60 か e_f≥20 に達したら、その月に報告する",
+  "who_decides": "判定は報告だけ。門・採点・配分・網の比率を動かすかはユーザーの明示指示の領分"
+ },
+ "update_procedure": {
+  "command": "python3 night/nx_forward.py --update",
+  "steps": [
+   "1. 保留の持ち物を確定（一度確定したら変えない）: F1 は各月末の形成（20本の月末がそろってから）／F2 は新しい年の一覧を API で観測したら観測日を記録し、形成＝観測した月の月末（観測が26日以降なら翌月末）／F5 は12月末の形成／F3 は毎年10月の最初の実行で、国内株式の能動と TOPIX の指数型の基準価額 約800本を取り直して 9月末の選択を確定",
+   "2. 前向きの月を古い順に取り込む（完了した月だけ・途中の月が未完なら先へ進まない・3か月待って出ない月は欠測）。一度取り込んだ月の x は固定",
+   "3. e・e_f・帯・族の e-BH を計算して out/nx_forward.json へ"
+  ],
+  "first_runs": "2026-10-01 以降の最初の実行で F1 の 2026-09 末の形成と F2 の 2025-11 形成の 2026-09 までの流しを、2026-10-02 以降（10月の最初の基準価額の行が出た後）の最初の実行で F3 の 2026年9月の選択を確定する。最初の成績（2026-10）は 2026-11 の最初の実行で入る",
+  "runtime": "平月は 1〜3分。10月（日本の投信の選び直し）は基準価額を約800本取るので 15〜20分"
+ },
+ "data_rules": {
+  "month_complete_yahoo": "当月より前 ∧ その月の最後の日足が月末の5日以内 ∧（その後の月の足がある か 月末から5日以上たった）",
+  "month_complete_jp_fund": "その後の月の基準価額の行がある月だけ（月末の基準価額が確定して公表された後）",
+  "lock": "一度取り込んだ月の x・持ち物・重みは固定（後のデータ改訂は反映しない）",
+  "order": "月は順番に取り込む。途中の月が未完なら先へ進まない。3か月待っても出ない月は欠測（0 で埋めない・絶対のルール7）",
+  "brand_new_list": "API の year=Y の100行がすべて year: Y のときだけ新しい一覧（それ以外は未公開）。親会社への対応は nx_brand_data.ib_owner（形成の月で）、米国版＝nx_brand_data.P の us=True。形成の月末に Yahoo の値が無い親会社は飛ばして次へ（常に10社）",
+  "jp_selection": "nx_jpfunds_data の universe_filter・category・kind・comparator_candidates をそのまま使う（RULES の版 2026-09-28）。振り返り＝前の年の10月〜その年の9月の12か月すべてに月次がある能動の投信。同じ委託会社で振り返りの相関 ≥0.995 を単連結で束ね9月末の純資産が最大の1本。上位 ceil(n/4)（同点は純資産の大きい順・コードの順）。楽天の判定は選択の日の一覧の institutionInfo に『楽天証券』があるか",
+  "jp_nav_timing": "9月の月次が出そろう前（10月の行が無い器が能動の5%を超える）は選択を待つ。WAIT を超えたら出ている器だけで選ぶ",
+  "currency": "F1・F2・F4・F5 は米ドル（相手も米ドル）。F3 は円（相手も円）",
+  "registration_holdings": "2026-09 末の持ち物: F1＝2026-09 末の形成（10月に持つ・保留）／F2＝2025-11 末の形成（2025年の一覧）を値動きで流したもの／F3＝2026年9月末の選択（保留）・参考に 2025年9月の選択（今持っている物）を前の年として置く＝最初の10月の手数料は続けて持つ器には掛けない／F4＝RSST／F5＝2025年12月末の形成を値動きで流したもの"
+ },
+ "counterparts_for_mu_d": {
+  "fr49_P2": {
+   "mu_pre": 8.058,
+   "from": 192708,
+   "to": 200612,
+   "n": 953,
+   "te_pre": 12.006,
+   "t_nw": 5.61,
+   "what": "French 49 業種（Average Value Weighted Returns -- Monthly）に F1 と同じ規則（13か月の条件・12か月＝t−11〜t の上位5・等分・毎月・候補10以上）− French Mkt（Mkt-RF + RF）。費用前"
+  },
+  "nx_brand P2": {
+   "mu_pre": 3.07,
+   "from": 200709,
+   "to": 202608,
+   "what": "nx_brand P2（米国の親会社の全部をブランド価値で加重・2007-09〜2026-08）の算術の超過。★登録前の2007年以降のデータ（歴史の勝ちを選ぶのに使ったのと同じ期間）＝賭けの大きさにだけ効く（有効性には効かない）"
+  },
+  "nx_jpfunds X1 国内株式": {
+   "mu_pre": 3.5,
+   "from": 200710,
+   "to": 202608,
+   "te": 5.95,
+   "what": "nx_jpfunds X1 の国内株式だけ（PH9・事後の部分集合・2007-10〜2026-08）の算術の超過。★登録前の同じ期間＝賭けの大きさにだけ効く"
+  },
+  "nx_stack P6": {
+   "mu_pre": 15.58,
+   "from": 198501,
+   "to": 200612,
+   "te_pre": 10.0,
+   "what": "nx_stack P6（AQR の時系列の勢い 58先物・訓練のぶれで10%に合わせて市場に重ねる）の訓練期間 1985-01〜2006-12 の算術の超過（費用前）"
+  },
+  "nx_jst P1": {
+   "mu_pre": 2.93,
+   "from": 1871,
+   "to": 1949,
+   "te_pre": 6.26,
+   "what": "nx_jst P1（JST 16か国・年末の配当利回りの上位1/3・等分・実質）の訓練期間 1871〜1949 の算術の超過（費用前・年次）"
+  }
+ },
+ "frozen": {
+  "design": {
+   "F1_indmom_vs_SPY": {
+    "sigma_d": 7.812,
+    "sigma_window": [
+     200108,
+     202608
+    ],
+    "n_months": 301,
+    "sigma_source": "楽天の業種 ETF 20本の P2 を日足の月末から作り直した（2001-08〜2026-08・etf_only）",
+    "mu_d": 3.0,
+    "mu_source": "fr49_P2",
+    "B": 0.095,
+    "lambda_kelly": 4.916,
+    "lambda": 4.916,
+    "lambda_capped": false,
+    "mu_f": 3.0,
+    "clipped_months_hist": 1,
+    "hist_mean_ann_pct": 2.863,
+    "hist_nw_t": 2.0
+   },
+   "F1b_indmom_vs_QQQ": {
+    "sigma_d": 13.366,
+    "sigma_window": [
+     200108,
+     202608
+    ],
+    "n_months": 301,
+    "sigma_source": "楽天の業種 ETF 20本の P2 を日足の月末から作り直した（2001-08〜2026-08・etf_only）",
+    "mu_d": 1.0,
+    "mu_source": "fixed 1.0",
+    "B": 0.155,
+    "lambda_kelly": 0.56,
+    "lambda": 0.56,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 1,
+    "hist_mean_ann_pct": -1.002,
+    "hist_nw_t": -0.4
+   },
+   "F2_brand10_vs_SPY": {
+    "sigma_d": 8.917,
+    "sigma_window": [
+     200710,
+     202608
+    ],
+    "n_months": 227,
+    "sigma_source": "nx_brand の凍結の一覧（2007〜2025・2015/2017 は持ち越し）で上位10社版を作り直した（公開の翌月末に組み替え）",
+    "mu_d": 1.535,
+    "mu_source": "nx_brand P2",
+    "B": 0.105,
+    "lambda_kelly": 1.93,
+    "lambda": 1.93,
+    "lambda_capped": false,
+    "mu_f": 1.535,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 3.85,
+    "hist_nw_t": 2.04
+   },
+   "F2b_brand10_vs_QQQ": {
+    "sigma_d": 8.553,
+    "sigma_window": [
+     200710,
+     202608
+    ],
+    "n_months": 227,
+    "sigma_source": "nx_brand の凍結の一覧（2007〜2025・2015/2017 は持ち越し）で上位10社版を作り直した（公開の翌月末に組み替え）",
+    "mu_d": 1.0,
+    "mu_source": "fixed 1.0",
+    "B": 0.1,
+    "lambda_kelly": 1.367,
+    "lambda": 1.367,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 2,
+    "hist_mean_ann_pct": -1.159,
+    "hist_nw_t": -0.93
+   },
+   "F3_jpX1_rakuten_vs_TOPIX": {
+    "sigma_d": 5.946,
+    "sigma_window": [
+     200710,
+     202608
+    ],
+    "n_months": 227,
+    "sigma_source": "nx_jpfunds の X1 の凍結の選択の国内株式だけ・相手は最も安い TOPIX の指数型の鎖（費用前・楽天の絞り込みは過去に遡れないので同じ系列）",
+    "mu_d": 1.75,
+    "mu_source": "nx_jpfunds X1 国内株式",
+    "B": 0.07,
+    "lambda_kelly": 4.95,
+    "lambda": 4.95,
+    "lambda_capped": false,
+    "mu_f": 1.75,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 3.503,
+    "hist_nw_t": 3.12
+   },
+   "F3b_jpX1_all_vs_TOPIX": {
+    "sigma_d": 5.946,
+    "sigma_window": [
+     200710,
+     202608
+    ],
+    "n_months": 227,
+    "sigma_source": "nx_jpfunds の X1 の凍結の選択の国内株式だけ・相手は最も安い TOPIX の指数型の鎖（費用前・楽天の絞り込みは過去に遡れないので同じ系列）",
+    "mu_d": 1.75,
+    "mu_source": "nx_jpfunds X1 国内株式",
+    "B": 0.07,
+    "lambda_kelly": 4.95,
+    "lambda": 4.95,
+    "lambda_capped": false,
+    "mu_f": 1.75,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 3.503,
+    "hist_nw_t": 3.12
+   },
+   "F4_RSST_vs_SPY": {
+    "sigma_d": 11.26,
+    "sigma_window": [
+     201906,
+     202608
+    ],
+    "n_months": 87,
+    "sigma_source": "RSST の履歴（2023-10〜）は35か月しか無いので、追従のぶれの大きい方＝DBMF − BIL（重ねる部分の代わり・2019-06〜）を使う",
+    "mu_d": 3.0,
+    "mu_source": "nx_stack P6",
+    "B": 0.135,
+    "lambda_kelly": 2.366,
+    "lambda": 2.366,
+    "lambda_capped": false,
+    "mu_f": 3.0,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 6.795,
+    "hist_nw_t": 1.6
+   },
+   "F5_countryDY_vs_ACWI": {
+    "sigma_d": 7.998,
+    "sigma_window": [
+     200901,
+     202608
+    ],
+    "n_months": 212,
+    "sigma_source": "15本の国別 ETF で 2008年末から毎年組み直した（直近の暦年の分配 ÷ 12月末の終値）",
+    "mu_d": 1.465,
+    "mu_source": "nx_jst P1",
+    "B": 0.095,
+    "lambda_kelly": 2.29,
+    "lambda": 2.29,
+    "lambda_capped": false,
+    "mu_f": 1.465,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": -1.85,
+    "hist_nw_t": -1.09
+   }
+  },
+  "constants": {
+   "first_forward_month": 202610,
+   "registration_month": 202609,
+   "design_end": 202608,
+   "max_end": 204609,
+   "e_individual": 20.0,
+   "lines": {
+    "main": 60.0,
+    "sub": 60.0,
+    "ref": 40.0,
+    "all_registered": 160.0
+   },
+   "clip_k_sigma": 4.0,
+   "mu_haircut": 0.5,
+   "mu_range_pct": [
+    0.5,
+    3.0
+   ],
+   "mu_fixed_sub_pct": 1.0,
+   "wait_months": 3,
+   "review_month": 10
+  },
+  "indmom_universe": {
+   "node_to_etf": {
+    "INTERNET": "FDN",
+    "S_REALEST": "IYR",
+    "S_TECH": "XLK",
+    "BIOTECH": "IBB",
+    "SEMI": "SMH",
+    "S_DISCR": "XLY",
+    "S_UTIL": "XLU",
+    "S_ENERGY": "XLE",
+    "S_MATER": "XLB",
+    "S_FIN": "XLF",
+    "AERODEF": "ITA",
+    "S_HEALTH": "XLV",
+    "S_STAPLES": "XLP",
+    "S_COMM": "VOX",
+    "S_INDU": "XLI",
+    "RETAIL": "RTH",
+    "OILSVC": "OIH",
+    "MLP": "MLPA",
+    "PHARMA": "PPH",
+    "MREIT": "REM"
+   },
+   "etf_only_start": {
+    "SMH": 201201,
+    "OIH": 201201,
+    "PPH": 201201,
+    "RTH": 201201
+   },
+   "K": 5,
+   "lookback_months": 12,
+   "eligibility_months": 13,
+   "min_candidates": 10,
+   "cost_per_turnover": 0.001
+  },
+  "brand": {
+   "top_n": 10,
+   "cost_per_turnover": 0.002,
+   "first_formation_month": 202511,
+   "first_list_year": 2025,
+   "first_release_date": "2025-10-15",
+   "first_release_source": "https://www.prnewswire.com/news-releases/brands-adapting-to-market-challenges-increases-the-total-value-of-interbrands-2025-best-global-brands-by-150-billion-302583746.html（nx_brand の日程表）",
+   "initial_top10_values_musd": {
+    "AAPL": 470934,
+    "MSFT": 398933,
+    "GOOGL": 365451,
+    "AMZN": 319932,
+    "META": 98543,
+    "KO": 60051,
+    "MCD": 53040,
+    "CSCO": 48698,
+    "NVDA": 43176,
+    "ORCL": 42092
+   },
+   "initial_top10_note": "MSFT＝Microsoft＋LinkedIn、GOOGL＝Google＋YouTube、META＝Instagram＋Facebook（親会社ごとの合計）。上位10社は米国の親会社45社のブランド価値の 73.5%。重み AAPL 24.8%・MSFT 21.0%・GOOGL 19.2%・AMZN 16.8%・META 5.2%・KO 3.2%・MCD 2.8%・CSCO 2.6%・NVDA 2.3%・ORCL 2.2%"
+  },
+  "brand_list_2025_rows": [
+   {
+    "rank": 1,
+    "name": "Apple",
+    "value": 470934
+   },
+   {
+    "rank": 2,
+    "name": "Microsoft",
+    "value": 388546
+   },
+   {
+    "rank": 3,
+    "name": "Amazon",
+    "value": 319932
+   },
+   {
+    "rank": 4,
+    "name": "Google",
+    "value": 317088
+   },
+   {
+    "rank": 5,
+    "name": "Samsung",
+    "value": 90542
+   },
+   {
+    "rank": 6,
+    "name": "Toyota",
+    "value": 74226
+   },
+   {
+    "rank": 7,
+    "name": "Coca-Cola",
+    "value": 60051
+   },
+   {
+    "rank": 8,
+    "name": "Instagram",
+    "value": 57293
+   },
+   {
+    "rank": 9,
+    "name": "McDonald's",
+    "value": 53040
+   },
+   {
+    "rank": 10,
+    "name": "Mercedes-Benz",
+    "value": 50074
+   },
+   {
+    "rank": 11,
+    "name": "Cisco",
+    "value": 48698
+   },
+   {
+    "rank": 12,
+    "name": "Louis Vuitton",
+    "value": 48382
+   },
+   {
+    "rank": 13,
+    "name": "YouTube",
+    "value": 48363
+   },
+   {
+    "rank": 14,
+    "name": "BMW",
+    "value": 46800
+   },
+   {
+    "rank": 15,
+    "name": "NVIDIA",
+    "value": 43176
+   },
+   {
+    "rank": 16,
+    "name": "Oracle",
+    "value": 42092
+   },
+   {
+    "rank": 17,
+    "name": "Disney",
+    "value": 41399
+   },
+   {
+    "rank": 18,
+    "name": "SAP",
+    "value": 41307
+   },
+   {
+    "rank": 19,
+    "name": "Facebook",
+    "value": 41250
+   },
+   {
+    "rank": 20,
+    "name": "Adobe",
+    "value": 40952
+   },
+   {
+    "rank": 21,
+    "name": "Hermès",
+    "value": 40867
+   },
+   {
+    "rank": 22,
+    "name": "IBM",
+    "value": 39396
+   },
+   {
+    "rank": 23,
+    "name": "Nike",
+    "value": 33660
+   },
+   {
+    "rank": 24,
+    "name": "Chanel",
+    "value": 30461
+   },
+   {
+    "rank": 25,
+    "name": "Tesla",
+    "value": 29494
+   },
+   {
+    "rank": 26,
+    "name": "J.P. Morgan",
+    "value": 29188
+   },
+   {
+    "rank": 27,
+    "name": "Allianz",
+    "value": 28180
+   },
+   {
+    "rank": 28,
+    "name": "Netflix",
+    "value": 28030
+   },
+   {
+    "rank": 29,
+    "name": "Honda",
+    "value": 24763
+   },
+   {
+    "rank": 30,
+    "name": "Hyundai",
+    "value": 24591
+   },
+   {
+    "rank": 31,
+    "name": "BlackRock",
+    "value": 23712
+   },
+   {
+    "rank": 32,
+    "name": "Booking.com",
+    "value": 23511
+   },
+   {
+    "rank": 33,
+    "name": "Visa",
+    "value": 22969
+   },
+   {
+    "rank": 34,
+    "name": "Sony",
+    "value": 22291
+   },
+   {
+    "rank": 35,
+    "name": "IKEA",
+    "value": 22211
+   },
+   {
+    "rank": 36,
+    "name": "MasterCard",
+    "value": 21081
+   },
+   {
+    "rank": 37,
+    "name": "Accenture",
+    "value": 20914
+   },
+   {
+    "rank": 38,
+    "name": "Pepsi",
+    "value": 20330
+   },
+   {
+    "rank": 39,
+    "name": "Qualcomm",
+    "value": 20090
+   },
+   {
+    "rank": 40,
+    "name": "PayPal",
+    "value": 19758
+   },
+   {
+    "rank": 41,
+    "name": "Zara",
+    "value": 19415
+   },
+   {
+    "rank": 42,
+    "name": "Salesforce",
+    "value": 19237
+   },
+   {
+    "rank": 43,
+    "name": "AXA",
+    "value": 18297
+   },
+   {
+    "rank": 44,
+    "name": "GE Aerospace",
+    "value": 18198
+   },
+   {
+    "rank": 45,
+    "name": "Airbnb",
+    "value": 17926
+   },
+   {
+    "rank": 46,
+    "name": "UPS",
+    "value": 17917
+   },
+   {
+    "rank": 47,
+    "name": "UNIQLO",
+    "value": 17668
+   },
+   {
+    "rank": 48,
+    "name": "Siemens",
+    "value": 17645
+   },
+   {
+    "rank": 49,
+    "name": "adidas",
+    "value": 17420
+   },
+   {
+    "rank": 50,
+    "name": "LEGO",
+    "value": 16578
+   },
+   {
+    "rank": 51,
+    "name": "Dell",
+    "value": 16267
+   },
+   {
+    "rank": 52,
+    "name": "Audi",
+    "value": 15447
+   },
+   {
+    "rank": 53,
+    "name": "Nintendo",
+    "value": 15438
+   },
+   {
+    "rank": 54,
+    "name": "Ferrari",
+    "value": 15428
+   },
+   {
+    "rank": 55,
+    "name": "Goldman Sachs",
+    "value": 15327
+   },
+   {
+    "rank": 56,
+    "name": "Volkswagen",
+    "value": 14999
+   },
+   {
+    "rank": 57,
+    "name": "Porsche",
+    "value": 14982
+   },
+   {
+    "rank": 58,
+    "name": "Spotify",
+    "value": 14868
+   },
+   {
+    "rank": 59,
+    "name": "L'Oréal Paris",
+    "value": 14667
+   },
+   {
+    "rank": 60,
+    "name": "Pampers",
+    "value": 13787
+   },
+   {
+    "rank": 61,
+    "name": "eBay",
+    "value": 13665
+   },
+   {
+    "rank": 62,
+    "name": "Citi",
+    "value": 13140
+   },
+   {
+    "rank": 63,
+    "name": "Nescafé",
+    "value": 12877
+   },
+   {
+    "rank": 64,
+    "name": "Uber",
+    "value": 12750
+   },
+   {
+    "rank": 65,
+    "name": "Schneider Electric",
+    "value": 12674
+   },
+   {
+    "rank": 66,
+    "name": "Budweiser",
+    "value": 12031
+   },
+   {
+    "rank": 67,
+    "name": "HP",
+    "value": 11972
+   },
+   {
+    "rank": 68,
+    "name": "H&M",
+    "value": 11867
+   },
+   {
+    "rank": 69,
+    "name": "Gucci",
+    "value": 11627
+   },
+   {
+    "rank": 70,
+    "name": "Monster",
+    "value": 11535
+   },
+   {
+    "rank": 71,
+    "name": "Intel",
+    "value": 11481
+   },
+   {
+    "rank": 72,
+    "name": "HSBC",
+    "value": 11477
+   },
+   {
+    "rank": 73,
+    "name": "Cartier",
+    "value": 11172
+   },
+   {
+    "rank": 74,
+    "name": "Philips",
+    "value": 10639
+   },
+   {
+    "rank": 75,
+    "name": "LinkedIn",
+    "value": 10387
+   },
+   {
+    "rank": 76,
+    "name": "Colgate",
+    "value": 10360
+   },
+   {
+    "rank": 77,
+    "name": "Santander",
+    "value": 10343
+   },
+   {
+    "rank": 78,
+    "name": "Gillette",
+    "value": 10206
+   },
+   {
+    "rank": 79,
+    "name": "Nestlé",
+    "value": 9755
+   },
+   {
+    "rank": 80,
+    "name": "Corona",
+    "value": 9731
+   },
+   {
+    "rank": 81,
+    "name": "Xiaomi",
+    "value": 9476
+   },
+   {
+    "rank": 82,
+    "name": "Nissan",
+    "value": 9376
+   },
+   {
+    "rank": 83,
+    "name": "Dior",
+    "value": 9348
+   },
+   {
+    "rank": 84,
+    "name": "Caterpillar",
+    "value": 9228
+   },
+   {
+    "rank": 85,
+    "name": "Nasdaq",
+    "value": 9157
+   },
+   {
+    "rank": 86,
+    "name": "Prada",
+    "value": 8994
+   },
+   {
+    "rank": 87,
+    "name": "3M",
+    "value": 8945
+   },
+   {
+    "rank": 88,
+    "name": "John Deere",
+    "value": 8796
+   },
+   {
+    "rank": 89,
+    "name": "Kia",
+    "value": 8546
+   },
+   {
+    "rank": 90,
+    "name": "BYD",
+    "value": 8148
+   },
+   {
+    "rank": 91,
+    "name": "Danone",
+    "value": 8092
+   },
+   {
+    "rank": 92,
+    "name": "FedEx",
+    "value": 7788
+   },
+   {
+    "rank": 93,
+    "name": "Sephora",
+    "value": 7687
+   },
+   {
+    "rank": 94,
+    "name": "Tiffany & Co.",
+    "value": 7616
+   },
+   {
+    "rank": 95,
+    "name": "Pandora",
+    "value": 7576
+   },
+   {
+    "rank": 96,
+    "name": "Huawei",
+    "value": 7558
+   },
+   {
+    "rank": 97,
+    "name": "Range Rover",
+    "value": 7178
+   },
+   {
+    "rank": 98,
+    "name": "Nespresso",
+    "value": 7047
+   },
+   {
+    "rank": 99,
+    "name": "Shopify",
+    "value": 6903
+   },
+   {
+    "rank": 100,
+    "name": "DHL",
+    "value": 6887
+   }
+  ],
+  "jp": {
+   "rakuten_inst_name": "楽天証券",
+   "dedupe_rho": 0.995,
+   "min_group": 8,
+   "retention": 0.003,
+   "first_selection_year": 2026,
+   "rules_source": "night/nx_jpfunds_data.py の RULES（version 2026-09-28）"
+  },
+  "country": {
+   "etf": {
+    "AUS": "EWA",
+    "BEL": "EWK",
+    "CHE": "EWL",
+    "DEU": "EWG",
+    "ESP": "EWP",
+    "FRA": "EWQ",
+    "GBR": "EWU",
+    "ITA": "EWI",
+    "JPN": "EWJ",
+    "NLD": "EWN",
+    "SWE": "EWD",
+    "DNK": "EDEN",
+    "FIN": "EFNL",
+    "NOR": "ENOR",
+    "USA": "SPY"
+   },
+   "cost_per_turnover": 0.001,
+   "min_n": 6,
+   "first_formation_year": 2025,
+   "top": "ceil(n/3)",
+   "dropped": {
+    "PRT": "PGAL は Yahoo に無い（404）"
+   }
+  },
+  "rakuten_lineup_check_2026_09_28": {
+   "source": "https://www.rakuten-sec.co.jp/web/market/search/etf_search/ETFD.csv（1,366行・2026-09-28 取得）",
+   "present": [
+    "ACWI",
+    "EWG",
+    "EWJ",
+    "FDN",
+    "IBB",
+    "ITA",
+    "IYR",
+    "MLPA",
+    "OIH",
+    "PPH",
+    "QQQ",
+    "REM",
+    "RTH",
+    "SMH",
+    "SPY",
+    "VOX",
+    "XLB",
+    "XLE",
+    "XLF",
+    "XLI",
+    "XLK",
+    "XLP",
+    "XLU",
+    "XLV",
+    "XLY"
+   ],
+   "absent": [
+    "RSST",
+    "RSSB",
+    "DBMF",
+    "KMLM",
+    "CTA",
+    "EWU",
+    "EWQ",
+    "EWA",
+    "EWC",
+    "EWL",
+    "EWN",
+    "EWD",
+    "EWK",
+    "EDEN",
+    "EFNL",
+    "ENOR",
+    "EWI",
+    "EWP"
+   ]
+  },
+  "tool_sha256_at_registration": "d828b68ff7f2249897bbd8c06543a2b944ab49ca57852f72d9bfa0e4ef684974"
+ },
+ "power_analysis_spec": {
+  "method": "各仮説の登録前の月次追従差（費用後・F4 は DBMF−BIL）から平均を引き、12か月の塊で円環ブロック・ブートストラップ（4,000本×40年）。真の上乗せ μ ∈ {0, 0.5, 1, 2, 3}%/年 を足し、上と同じ切り詰め・λ・B で e と e_f を回す",
+  "outputs": "3・5・10・20年以内に e≥20・族の線に達する確率、族の線に達するまでの年数の中央、見込みなし（e_f≥20）の確率、理想の賭け（真の μ でケリー）の目安 6/IR² 年、5・10・20年で50%の確率で族の線に届くのに要る真の上乗せ",
+  "note": "検出力は前向きのデータを使わない（登録前の歴史と仮の上乗せだけ）。結果は out/nx_forward.json の power（--init が計算）",
+  "expected_before_computing": "理想の賭けでも e≥20 までの年数は 6/IR²。IR = μ_d/σ_d で F1 0.38（約41年）・F2 0.17（約200年）・F3 0.29（約69年）・F4 0.27（約85年）・F5 0.18（約180年）。★真の上乗せが設計の μ_d 程度なら、20年のうちに『勝ち』が出る見込みは小さい。決着が付くのは真の上乗せが歴史の値（F1 +2.9・F2 +3.9・F3 +3.5%/年）に近い場合だけ"
+ },
+ "sanity_checks_at_registration": {
+  "replication_F1_vs_nx_indmom_real_P2": {
+   "this_tool_gross_2001_08_2026_08": {
+    "from": 200108,
+    "to": 202608,
+    "years": 25.1,
+    "ex_ann": 3.09,
+    "t": 2.16,
+    "p": 0.0307,
+    "cagr_s": 12.95,
+    "cagr_b": 9.58,
+    "cagr_diff": 3.37,
+    "te": 7.81,
+    "ir": 0.4,
+    "beta": 0.88,
+    "vol_s": 15.2,
+    "vol_b": 14.9
+   },
+   "nx_indmom_real_reported": {
+    "cagr_diff": 3.37,
+    "ex_ann": 3.09,
+    "t": 2.16,
+    "te": 7.81,
+    "months": 301
+   },
+   "note": "nx_indmom_real は月足の凍結の抽出・ここは今日の日足の月末（配当の調整の差が出うる）"
+  },
+  "replication_F3_vs_nx_jpfunds_X1_JP": {
+   "this_tool_gross": {
+    "from": 200710,
+    "to": 202608,
+    "years": 18.9,
+    "ex_ann": 3.5,
+    "t": 3.12,
+    "p": 0.0018,
+    "cagr_s": 10.76,
+    "cagr_b": 7.07,
+    "cagr_diff": 3.69,
+    "te": 5.95,
+    "ir": 0.59,
+    "beta": 0.97,
+    "vol_s": 17.6,
+    "vol_b": 17.1
+   },
+   "nx_jpfunds_PH9_reported": {
+    "ex_ann": 3.5,
+    "t": 3.12,
+    "te": 5.95,
+    "cagr_diff": 3.69,
+    "months": 227
+   },
+   "n_held_2025_JP": 71
+  },
+  "replication_F5_annual_vs_nx_jst_real_etf": {
+   "from": 1997,
+   "to": 2025,
+   "n": 29,
+   "ex_ann": -0.39,
+   "cagr_diff": -0.73,
+   "nx_jst_reported": {
+    "ex_ann": -0.39,
+    "cagr_diff": -0.73,
+    "from": 1997,
+    "to": 2025,
+    "n": 29
+   },
+   "note": "nx_jst は PGAL（ポルトガル）を含む16本・月足・分配は Yahoo の月足の events。ここは PGAL が Yahoo から消えた15本・日足"
+  },
+  "history_F2_top10_design_only": {
+   "vs_SPY": {
+    "from": 200710,
+    "to": 202608,
+    "years": 18.9,
+    "ex_ann": 3.88,
+    "t": 2.05,
+    "p": 0.0405,
+    "cagr_s": 14.83,
+    "cagr_b": 10.91,
+    "cagr_diff": 3.92,
+    "te": 8.92,
+    "ir": 0.43,
+    "beta": 1.0,
+    "vol_s": 17.9,
+    "vol_b": 15.6
+   },
+   "vs_QQQ": {
+    "from": 200710,
+    "to": 202608,
+    "years": 18.9,
+    "ex_ann": -1.13,
+    "t": -0.9,
+    "p": 0.3663,
+    "cagr_s": 14.83,
+    "cagr_b": 15.88,
+    "cagr_diff": -1.05,
+    "te": 8.55,
+    "ir": -0.13,
+    "beta": 0.84,
+    "vol_s": 17.9,
+    "vol_b": 19.0
+   },
+   "nx_brand_P2_all_US_reported": {
+    "cagr_diff": 3.1,
+    "ex_ann": 3.07,
+    "te": 6.19
+   },
+   "note": "上位10社版は歴史の角度で測っていない形（課題文の実装できる版）。設計のぶれを出すためだけに作った＝この数字で規則を選んでいない（規則は課題文が先に決めた）"
+  },
+  "history_F5_vs_ACWI_design_only": {
+   "from": 200901,
+   "to": 202608,
+   "years": 17.7,
+   "ex_ann": -1.8,
+   "t": -1.06,
+   "p": 0.2874,
+   "cagr_s": 8.93,
+   "cagr_b": 11.65,
+   "cagr_diff": -2.72,
+   "te": 8.0,
+   "ir": -0.23,
+   "beta": 1.15,
+   "vol_s": 19.4,
+   "vol_b": 15.5
+  },
+  "F4_design_series": {
+   "rsst_minus_spy": {
+    "n": 35,
+    "sd_ann_pct": 10.558,
+    "from": 202310,
+    "to": 202608
+   },
+   "dbmf_minus_bil": {
+    "n": 87,
+    "sd_ann_pct": 11.26,
+    "from": 201906,
+    "to": 202608
+   }
+  },
+  "spy_vs_french_mkt": {
+   "from": 199302,
+   "to": 202608,
+   "corr": 0.9874
+  },
+  "dry_run_past": {
+   "what": "登録が 2025-09 だったとして 2025-10〜2026-08 の11か月を同じ道具（持ち物の確定 → 月次 → e）に通し、設計の歴史の系列と月ごとに突き合わせた（python3 night/nx_forward.py --dryrun-past DIR）",
+   "max_abs_diff_per_hypothesis": {
+    "F1_indmom_vs_SPY": 4.7e-07,
+    "F1b_indmom_vs_QQQ": 4.6e-07,
+    "F2_brand10_vs_SPY": 3.7e-07,
+    "F2b_brand10_vs_QQQ": 4.1e-07,
+    "F3_jpX1_rakuten_vs_TOPIX": 0.01646188,
+    "F3b_jpX1_all_vs_TOPIX": 0.00743188,
+    "F4_RSST_vs_SPY": 0.02998458,
+    "F5_countryDY_vs_ACWI": 5e-07
+   },
+   "explained": "F1・F1b・F2・F2b・F5 は丸めの差だけ（<5e-7）。F3b は 2025-10 の1か月だけ −0.74%＝事前に決めた入る器の購入時手数料・出る器の留保額（設計の歴史は費用前）。F3 は楽天の絞り込み（58/71本）と楽天の相手（ニッセイ TOPIX）で設計の歴史（全部・SBI の TOPIX）と違う系列＝差が出て当然。F4 は設計が DBMF−BIL（代わり）・前向きが RSST−SPY＝違う系列",
+   "jp_selection_2025_reproduced": {
+    "this_tool": 71,
+    "nx_jpfunds": 71,
+    "same_set": true,
+    "only_this": [],
+    "only_nx_jpfunds": [],
+    "rakuten": 58,
+    "comp_all": "89312237",
+    "comp_rakuten": "29312154"
+   },
+   "bug_found_and_fixed": "通し稽古で、設計の歴史のブランドと国の組み替えの回転が同じ月の値動きで二度流していた（前向きの道具は正しい）。直して --design を回し直した（σ_d は4桁目まで不変）"
+  },
+  "selftest": "python3 night/nx_forward.py --selftest（8項目 OK: 先読みなし・始まりの規則・回転0/1・賭けの係数の下限・Ville の模擬〔帰無で20年のうちに e≥20 に達した割合 2.05% ≤ 5%〕・値の無い器は現金・月の足し算）"
+ },
+ "contamination": [
+  "★5つの候補そのものが、nx の歴史の検証の結果（winners）を見た後に課題文が選んだ。だから歴史の数字（勝ちの大きさ）はこの前向きの検定の証拠にならない。前向きの月だけが証拠",
+  "F3 の『国内株式だけ』は nx_jpfunds の事後の部分集合（PH9・5分類×9規則から選んだ）。前向きの検定はこの事後の選択そのものを答え合わせする",
+  "F2 の上位10社版は歴史の角度で測っていない形（課題文が実装できる版として先に決めた）。設計のためにその歴史（2007-10〜2026-08 の SPY に +3.92%/年・t 2.05・QQQ に −1.05%/年）を計算して見た。規則は見る前に課題文が決めており、見た後に変えていない",
+  "μ_d の出どころのうち F2・F3 は、歴史の勝ちを選ぶのに使ったのと同じ 2007年以降のデータ（×0.5）。これは賭けの大きさ（検出力）にだけ効き、e過程の有効性（α）には効かない",
+  "設計のぶれ σ_d と B を決めるのに、登録前の歴史（≤2026-08）を見た（eknzbh と同じ）。2026-09 の途中の値は見ていない（9月は未完）",
+  "F1 の 2026-08 末の形成（9月に持っている物）は --init で計算して記録する＝前向きの月の持ち物ではない（参考）"
+ ],
+ "known_limits": [
+  "★検出力が低い: 追従のぶれが 6〜13%/年あると、真の上乗せが年2〜3%でも決着まで数十年かかる（理想の賭けでも 6/IR² 年・族の線 60 は e≥20 の約1.37倍の時間）。『勝ちが出ない』は『勝ちが無い』ではない。power の表で年ごとの確率を出す",
+  "e過程の帰無は『切り詰めた平均』。負の裾が B を超える月が多いと甘くなる（切られた月の数を毎回報告する）",
+  "F1 は毎月の入れ替え（年の片道の回転 約2.2）。NISA 成長投資枠では売った枠が翌年まで戻らない（年240万円）＝回せる額に上限がある。課税口座では売るたびに利益に 20.315%（nx_indmom_real の税引後は +0.9〜+1.5%/年に縮んだ）。検定は税の前の米ドルの総リターン",
+  "F3 は 約50〜60本の投信を等分に持ち毎月等分に戻す規則（個人には手間が大きい）。10月ごとに約7割が入れ替わる。毎月分配型などは NISA 成長投資枠の対象外（課税口座）。分配金は税引前で再投資（NISA なら非課税でそろう）",
+  "F2 は10社・上位4社で重みの8割（巨大テックへの集中）。nx_brand の歴史では勝ちの大半が巨大テックの傾きで説明され、QQQ には負けた（副 F2b で見る）",
+  "F4・F5 は楽天で持てない（参考）。F4 の RSST は 2023-09 設定の若い器で、設計のぶれは代わり（DBMF−BIL）で決めた",
+  "8本の登録・主の族は3本。1本の線 e≥20 は族の調整の前で、3本のうち少なくとも1本が偶然 e≥20 に達する確率は最大で約14%（独立なら 1−0.95^3）。だから判定は e≥60",
+  "円の投資家にとって F1・F2・F4・F5 の追従差はほぼ同じ（両方に同じ為替が掛かる）。税・NISA の枠は入れていない",
+  "日本の投信の基準価額 CSV は償還の後しばらくで消える（nx_jpfunds の検証）。毎月の実行で取り込めば、償還の月は最後の行までの部分の月で記録できる。3か月以上実行しないと、その間に償還した器の値を失うことがある"
+ ],
+ "ci_suggestion": "ops.yml（毎月2日）に2か所: (1) steps に1段 `- name: 前向きの検定（nx_forward・判定に不使用）` / `continue-on-error: true` / `run: timeout 1800 python3 night/nx_forward.py --update | tail -14`（日本の投信の選び直しの月＝10月は約500本の基準価額を取るので 15分前後）。(2) 最後の `ccf_git_add ...` の行の末尾に `out/nx_forward.json` を足す（足さないと『回っているのに残らない』）",
+ "grade": "N/A（前向きの検定のインフラと設計。歴史の C1〜C8・S/A/B/C の格付けは付けない）",
+ "tool": "night/nx_forward.py（--design / --init / --update / --selftest / --dryrun-past）→ out/nx_forward.json"
+}
