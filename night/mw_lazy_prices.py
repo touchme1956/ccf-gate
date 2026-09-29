@@ -1039,13 +1039,15 @@ class Book:
             s, r = st(c, m)
             if s == 'ok':
                 obs[c] = (x, r)
+            # M（診断）: 観測できない社・月に French Mkt を置く。L で消えた社でも M では置く（2026-09-29・リターンを見る前に直した:
+            # 旧版は L の『消えた』判定の後で M を足していたので、消えた社の重みが M で 0 のリターン＝0 埋めになっていた）
+            num_M += x * (r if s == 'ok' else (mkt_m if s == 'missing' else 0.0))
             if c in self.dead:
                 continue
             if s == 'ok':
                 num_L += x * r; den_L += x
             elif s == 'missing':
                 num_L += x * -1.0; den_L += x; self.dead.add(c)
-            num_M += x * (r if s == 'ok' else (mkt_m if s == 'missing' else 0.0))
         so = sum(x for x, _ in obs.values())
         self.nobs[m] = (len(w), len(obs), round(so / tot, 4) if tot else 0.0)
         if so > 0:
