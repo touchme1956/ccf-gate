@@ -5,6 +5,7 @@
 データ: night/nx_lazy_data.py が作った out/_nx_cache/nx_lazy_members.json（月末ごとの構成の CIK）と
         out/_nx_cache/nx_lazy_signals.csv（10-K ごとの特徴量と並べる月）。株価はここで初めて Yahoo から取る。
 出力: out/nx_lazy.json（tested に全50本・負けも。格付けは nx_common.grade_short）。
+走らせ方: python3 night/nx_lazy.py（測定・約2分）→ python3 night/nx_lazy.py --post-hoc（事後の診断を post_hoc に足す・格付けに使わない）
 約束
 - 規則の中身は事前登録のまま（結果を見て変えない）。事前登録どおりにできない所は deviations_from_prereg に書く
 - 結果を見た後の分析は post_hoc に『事後』と明記し、格付けに使わない
@@ -51,6 +52,8 @@ def ym_of(d):
 
 # ───────────────────────── 株価（Yahoo 月足・調整後終値と分割だけ調整した終値） ─────────────────────────
 MONTH_CHECK = collections.Counter()
+from zoneinfo import ZoneInfo
+NY = ZoneInfo('America/New_York')
 
 
 def yahoo_monthly(ticker):
@@ -99,13 +102,12 @@ def yahoo_monthly(ticker):
     for t, a, c in zip(ts, adj, cl):
         d = datetime.datetime.utcfromtimestamp(t)
         ym = d.year * 100 + d.month
-        dny = datetime.datetime.utcfromtimestamp(t - 5 * 3600)  # ニューヨーク（UTC−5/−4）で読んだ月
-        dny4 = datetime.datetime.utcfromtimestamp(t - 4 * 3600)
+        dny = datetime.datetime.fromtimestamp(t, NY)  # ニューヨーク時間（夏時間込み）で読んだ月
         if ym <= END:
             MONTH_CHECK['bars'] += 1
             if d.day != 1:
                 MONTH_CHECK['bar_not_on_day1_utc'] += 1
-            if dny.year * 100 + dny.month != ym or dny4.year * 100 + dny4.month != ym:
+            if dny.year * 100 + dny.month != ym:
                 MONTH_CHECK['month_differs_in_new_york'] += 1
             if ym in out:
                 MONTH_CHECK['duplicate_month'] += 1
@@ -342,14 +344,43 @@ def load_signals():
 
 
 # ───────────────────────── 浮動株 ─────────────────────────
+FLOAT_FIX = collections.Counter()
+FLOAT_RANGE = (1e6, 1e13)   # nx_lazy_data.cover_float が本文の値に掛けている範囲（100万〜10兆ドル）を、XBRL・iXBRL の値にも同じく掛ける
+
+
+def _scale_error(tag, txt):
+    """XBRL/iXBRL の値と本文の値の比が 1000 の整数乗（×1000・×100万…）から 2.5 倍以内＝単位（scale）の付け違い"""
+    if not (tag and txt):
+        return False
+    l = math.log10(tag / txt)
+    k = round(l / 3)
+    return k != 0 and abs(l - 3 * k) < math.log10(2.5)
+
+
 def float_of(r):
-    """(浮動株, 基準日, 出どころ)。出どころの順: XBRL → iXBRL → 本文。基準日: XBRL の end → 本文の日付 → 規則"""
+    """(浮動株, 基準日, 出どころ)。出どころの順: XBRL → iXBRL → 本文。基準日: XBRL の end → 本文の日付 → 規則。
+    検問（事前登録に無い・株価と成績を見る前に、U の時価加重と SPY の相関 0.706 の原因として決めた）:
+      (a) どの出どころも 100万〜10兆ドルの外なら欠測（本文の値に取得器が掛けていた範囲を XBRL・iXBRL にも掛ける）
+      (b) XBRL（無ければ iXBRL）の値と本文の値の比が 1000 の整数乗から 2.5 倍以内なら、タグの単位の付け違いとみて本文の値を使う"""
+    lo, hi = FLOAT_RANGE
     fx, fi, ft = fnum(r['float_xbrl']), fnum(r['float_ix']), fnum(r['float_text'])
-    if fx and fx > 0:
+    for nm, v in (('xbrl', fx), ('ix', fi), ('text', ft)):
+        if v is not None and v > 0 and not (lo <= v <= hi):
+            FLOAT_FIX[f'{nm}_out_of_range_dropped'] += 1
+    fx = fx if (fx and lo <= fx <= hi) else None
+    fi = fi if (fi and lo <= fi <= hi) else None
+    ft = ft if (ft and lo <= ft <= hi) else None
+    if fx and _scale_error(fx, ft):
+        FLOAT_FIX['xbrl_scale_error_used_text'] += 1
+        fx = fi = None
+    elif not fx and fi and _scale_error(fi, ft):
+        FLOAT_FIX['ix_scale_error_used_text'] += 1
+        fi = None
+    if fx:
         F, src = fx, 'xbrl'
-    elif fi and fi > 0:
+    elif fi:
         F, src = fi, 'ix'
-    elif ft and ft > 0:
+    elif ft:
         F, src = ft, 'text'
     else:
         return None
@@ -440,7 +471,10 @@ def build(log):
             missing.append(t)
         if k % 100 == 0:
             print('  ', k, t, round(time.time() - t0), 's', flush=True)
-    log['yahoo'] = {'tickers_requested': len(need), 'got': len(px), 'missing': sorted(missing), 'month_reading': dict(MONTH_CHECK)}
+    mc = {'bars': 0, 'bar_not_on_day1_utc': 0, 'month_differs_in_new_york': 0, 'duplicate_month': 0}
+    mc.update(MONTH_CHECK)
+    log['yahoo'] = {'tickers_requested': len(need), 'got': len(px), 'missing': sorted(missing), 'month_reading': mc,
+                    'month_reading_note': 'Yahoo の月足の時刻は各月1日 00:00（ニューヨーク時間）＝ UTC 04:00/05:00。UTC で読んでもニューヨーク時間で読んでも同じ月（食い違い 0）。2026-09 の途中の足は END=202608 で切った'}
     P.px = px
     P.rets = {t: returns_of(d) for t, d in px.items()}
     # 月の格子
@@ -468,6 +502,9 @@ def build(log):
             else:
                 tick[ti][i] = ptk_fixed.get(c)
     P.member, P.tick, P.how = member, tick, how
+    P.spsize = spsize
+    P.link_counts, P.conflicts = mem_file.get('link_counts'), mem_file.get('ticker_conflicts_dropped')
+    P.is_c = is_c
     # R[t, i] = 月 t のリターン（月末 t−1 の記号で）、CL[t, i] = 月末 t の終値（分割だけ調整）、ADJOK[t, i] = 月末 t の調整後終値があるか
     R = np.full((T, n), np.nan)
     CLprev = np.full((T, n), np.nan)
@@ -501,6 +538,41 @@ def build(log):
             fo = float_of(r)
             L.append((int(r['formation_ym']), fo))
         ann[c] = L
+    # (c) 時系列の検問: 浮動株 ÷ 基準日の終値（分割だけ調整）＝株数に当たる値が、同じ会社の前後3年の他の年次報告の中央値と
+    #     1000 の整数乗から 2.5 倍以内だけずれていたら、単位の付け違い（本文が千ドル単位の表を $ で読んだ等）とみて欠測にする
+    #     （事前登録の『無ければその前の年次報告の値（24か月以内）』の道へ回す）
+    tk_of = {}
+    for i in range(n):
+        cnt = collections.Counter(tick[ti][i] for ti in range(T) if tick[ti][i])
+        if cnt:
+            tk_of[ciks[i]] = cnt.most_common(1)[0][0]
+    for c, L in ann.items():
+        t = tk_of.get(c)
+        if not t or t not in px:
+            continue
+        sh = []
+        for j, (f_, fo) in enumerate(L):
+            pb = px[t].get(fo[1]) if fo else None
+            sh.append(fo[0] / pb[1] if (fo and pb) else None)
+        newL = list(L)
+        for j, (f_, fo) in enumerate(L):
+            if sh[j] is None:
+                continue
+            ref = [sh[k] for k in range(len(L)) if k != j and sh[k] is not None and abs((L[k][0] // 100) - (f_ // 100)) <= 3]
+            if not ref:
+                continue
+            med = float(np.median(ref))
+            if _scale_error(sh[j], med):
+                FLOAT_FIX['time_series_scale_error_dropped'] += 1
+                newL[j] = (f_, None)
+                continue
+            # (d) 1年だけの飛び: 前後の年次報告の株数に当たる値がたがいに2倍以内で一致しているのに、この報告だけ両方から5倍を超えて離れている
+            pj = next((sh[k] for k in range(j - 1, -1, -1) if sh[k] is not None), None)
+            nj = next((sh[k] for k in range(j + 1, len(L)) if sh[k] is not None), None)
+            if pj and nj and max(pj, nj) / min(pj, nj) <= 2 and min(sh[j] / pj, pj / sh[j]) < 0.2 and min(sh[j] / nj, nj / sh[j]) < 0.2:
+                FLOAT_FIX['one_year_spike_dropped'] += 1
+                newL[j] = (f_, None)
+        ann[c] = newL
     for ti in range(1, T):
         m_prev = months[ti - 1]
         for i in range(n):
@@ -530,7 +602,9 @@ def build(log):
             if got is not None and got > 0:
                 CAP[ti, i] = got
     P.CAP = CAP
+    P.ann = ann
     log['float_sources_stock_months'] = dict(fsrc)
+    log['float_checks_reports'] = dict(FLOAT_FIX)
     # 業種
     f12, rng = ff12_map()
     sic = {}
@@ -732,6 +806,9 @@ def run(P, spec, SIG, F, start, drop=None, lb=False, trunc=False, keep_w=False):
         prev_s = drift(ws, rr)
         prev_b = drift(wbb, rb_vec)
         info['months'] += 1
+        if lb:
+            info['lb_hit_s'] += int(((ws > 0) & P.ended[ti]).sum())
+            info['lb_hit_b'] += int(((wbb > 0) & P.ended[ti]).sum())
         info['n_s_sum'] += int((ws > 0).sum())
         info['n_b_sum'] += int((wbb > 0).sum())
         if keep_w:
@@ -792,3 +869,582 @@ def rule_specs():
     add('X10_JAC_TOP30_EW_12', 'X10', ['JAC'], 'TOP30', False, 12)
     add('X10_COS_TOP30_EW_12', 'X10', ['COS'], 'TOP30', False, 12)
     return R
+
+
+# ───────────────────────── 統計（丸める前の差で勝ちを数える） ─────────────────────────
+def rolling_u(s, b, years=20, start_month=7):
+    """nx_common.rolling と同じ窓（毎年7月起点・一括）。勝ちは丸める前の差で数える（丸めた差が 0.00 になる窓を負けにしない）"""
+    ks = sorted(set(s) & set(b))
+    if not ks:
+        return None
+    out = []
+    for y in range(ks[0] // 100, 2100):
+        a, z = y * 100 + start_month, (y + years) * 100 + start_month - 1
+        if z > ks[-1]:
+            break
+        w = [k for k in ks if a <= k <= z]
+        if len(w) < years * 12 * 0.97:
+            continue
+        gs = math.exp(math.fsum(math.log1p(s[k]) for k in w) / years) - 1
+        gb = math.exp(math.fsum(math.log1p(b[k]) for k in w) / years) - 1
+        out.append((y, (gs - gb) * 100))
+    if not out:
+        return None
+    v = sorted(c for _, c in out)
+    wins = sum(1 for _, c in out if c > 0)
+    return {'windows': len(out), 'wins': wins, 'win_rate': round(wins / len(out), 3), 'median': round(v[len(v) // 2], 2),
+            'worst': [out[min(range(len(out)), key=lambda i: out[i][1])][0], round(min(v), 2)],
+            'best': [out[max(range(len(out)), key=lambda i: out[i][1])][0], round(max(v), 2)],
+            'by_start_year': [[y, round(c, 3)] for y, c in out]}
+
+
+def dca_u(s, b, years=20, step=12):
+    ks = sorted(set(s) & set(b))
+    n = years * 12
+    out = []
+    for i in range(0, len(ks) - n + 1, step):
+        w = ks[i:i + n]
+        ws = wb = 0.0
+        for k in w:
+            ws = (ws + 1) * (1 + s[k]); wb = (wb + 1) * (1 + b[k])
+        out.append((w[0], ws / wb))
+    if not out:
+        return None
+    v = sorted(r for _, r in out)
+    return {'windows': len(out), 'win_rate': round(sum(1 for r in v if r > 1) / len(v), 3), 'median_ratio': round(v[len(v) // 2], 4),
+            'worst': [min(out, key=lambda x: x[1])[0], round(min(v), 4)], 'best': [max(out, key=lambda x: x[1])[0], round(max(v), 4)],
+            'by_start': [[a, round(r, 4)] for a, r in out]}
+
+
+def ex(s, b, a=None, z=None, months=None):
+    if months is not None:
+        s = {k: v for k, v in s.items() if k in months}
+    return N.excess_stats(s, b, a, z)
+
+
+def sub_months(ms, drop_years):
+    return {m for m in ms if m // 100 not in drop_years}
+
+
+def cost_series(res, kind, c):
+    s = {m: v - res['to_s'].get(m, 0.0) * c for m, v in res['s'].items()}
+    if kind == 'LS':
+        b = {m: v + res['to_b'].get(m, 0.0) * c + BORROW / 12 for m, v in res['b'].items()}
+    else:
+        b = dict(res['b'])
+    return s, b
+
+
+def compact(e):
+    return None if e is None else {k: e[k] for k in ('from', 'to', 'years', 'ex_ann', 't', 'p', 'cagr_diff', 'te', 'beta')}
+
+
+# ───────────────────────── 本体 ─────────────────────────
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--only', default='', help='規則の名前（カンマ区切り）。試しだけ')
+    a = ap.parse_args()
+    t0 = time.time()
+    pre = json.load(open(PRE))
+    log = {}
+    P = build(log)
+    SIG, F = signal_mats(P)
+    print('signals', round(time.time() - t0), 's', flush=True)
+    ff = N.ff_factors()
+    rf, mkt = ff['rf'], ff['mkt']
+    spy = returns_of(P.px['SPY']) if 'SPY' in P.px else {}
+    rsp = returns_of(P.px['RSP']) if 'RSP' in P.px else {}
+
+    # 始まりの月（JAC の 12か月の信号が U に 50社以上そろう最初の7月）
+    def first_july(sig, frm=FULL_START0):
+        for m in P.months:
+            if m < frm or m % 100 != 7:
+                continue
+            ti = P.mi[m]
+            U = P.member[ti - 1] & ~np.isnan(P.R[ti])
+            if (U & ~np.isnan(SIG[sig][ti])).sum() >= MIN_RANK:
+                return m, int((U & ~np.isnan(SIG[sig][ti])).sum())
+        return None, 0
+    FULL_START, n0 = first_july('JAC')
+    IT1A_START, n1 = first_july('IT1A_COS')
+    log['start'] = {'full_start': FULL_START, 'jac_ranked_at_start': n0, 'it1a_start': IT1A_START, 'it1a_ranked_at_start': n1,
+                    'why': '事前登録 criteria.full: 12か月の窓に信号が50社以上そろう最初の7月（1997-07 で足りればそのまま）。IT1A は Item 1A の信号が50社以上そろう最初の7月'}
+    print('start', log['start'], flush=True)
+
+    specs = rule_specs()
+    if a.only:
+        specs = [s for s in specs if s['name'] in a.only.split(',')]
+    SIGd, Fd = signal_mats(P, delay=1)
+    SIGf, Ff = signal_mats(P, drop_fs=True)
+    results = []
+    for sp in specs:
+        st = IT1A_START if sp['start_rule'] == 'it1a' else FULL_START
+        kind = sp['kind']
+        res = run(P, sp, SIG, F, st)
+        s, b = res['s'], res['b']
+        ms = sorted(set(s) & set(b))
+        e_full = ex(s, b, st, END)
+        e_train = ex(s, b, st, N.TRAIN_END)
+        e_hold = ex(s, b, N.HOLD_START, END)
+        e_h1 = ex(s, b, st, FIRST_HALF_END)
+        e_h2 = ex(s, b, SECOND_HALF_START, END)
+        sc, bc = cost_series(res, kind, COST)
+        sc2, bc2 = cost_series(res, kind, COST_HI)
+        e_cost_full, e_cost_train, e_cost_hold = ex(sc, bc, st, END), ex(sc, bc, st, N.TRAIN_END), ex(sc, bc, N.HOLD_START, END)
+        # 最大寄与の1社を除く
+        top = int(np.argmax(res['contrib']))
+        res_d = run(P, sp, SIG, F, st, drop=top)
+        e_drop = ex(res_d['s'], res_d['b'], st, END)
+        # 下限版
+        res_lb = run(P, sp, SIG, F, st, lb=True)
+        e_lb = ex(res_lb['s'], res_lb['b'], st, END)
+        # 報告のみの感度
+        res_tr = run(P, sp, SIG, F, st, trunc=True)
+        res_dl = run(P, sp, SIGd, Fd, st)
+        res_fs = run(P, sp, SIGf, Ff, st)
+        # 族の格付けのための片側 p は下で Holm
+        tk = next((P.tick[ti][top] for ti in range(P.T - 1, -1, -1) if P.tick[ti][top]), None)
+        roll = rolling_u(s, b, 20)
+        dcar = dca_u(s, b, 20)
+        units = {'out_of_paper_2015_01': ex(s, b, 201501, END), 'post_ssrn_2017_01': ex(s, b, 201701, END), 'post_jf_2020_07': ex(s, b, 202007, END)}
+        sens = {
+            'formation_delayed_1m': compact(ex(res_dl['s'], res_dl['b'], st, END)),
+            'cost_0.25pct_full': compact(ex(sc2, bc2, st, END)),
+            'returns_truncated_-40_+100': compact(ex(res_tr['s'], res_tr['b'], st, END)),
+            'excl_2000_2002_2008_2009': compact(ex(s, b, st, END, months=sub_months(ms, {2000, 2001, 2002, 2008, 2009}))),
+            'period_1997_07_2014_12': compact(ex(s, b, st, 201412)),
+            'period_2015_01_end': compact(units['out_of_paper_2015_01']),
+            'period_2017_01_end': compact(units['post_ssrn_2017_01']),
+            'period_2020_07_end': compact(units['post_jf_2020_07']),
+            'no_format_switch_signals': compact(ex(res_fs['s'], res_fs['b'], st, END)),
+            'start_2001_07': compact(ex(s, b, 200107, END)),
+            'recent_2013_07_end': compact(ex(s, b, N.RECENT_START, END)),
+        }
+        if kind == 'LS':
+            pass
+        elif sp['vw']:
+            sens['vs_SPY'] = compact(ex(s, spy, st, END))
+            sens['vs_French_Mkt'] = compact(ex(s, mkt, st, END))
+            sens['benchmark_U_vw_vs_SPY'] = compact(ex(b, spy, st, END))
+        else:
+            sens['vs_RSP_2003_05'] = compact(ex(s, rsp, 200305, END))
+            sens['benchmark_U_ew_vs_RSP'] = compact(ex(b, rsp, 200305, END))
+        months_n = res['info'].get('months', 0) or 1
+        r = {'rule': sp['name'], 'family': sp['family'], 'spec': {k: sp[k] for k in ('signals', 'kind', 'vw', 'window', 'industry')},
+             'role': 'primary' if sp['family'] == 'P' else 'exploratory',
+             'note': sp['note'], 'start': st, 'end': END,
+             'full': e_full, 'train': e_train, 'hold': e_hold, 'first_half': e_h1, 'second_half': e_h2,
+             'cost_0.10pct': {'full': e_cost_full, 'train': e_cost_train, 'hold': e_cost_hold,
+                              'turnover_oneway_annual_rule': round(12 * S_mean(res['to_s']), 3),
+                              'turnover_oneway_annual_other_side' if kind == 'LS' else 'turnover_oneway_annual_benchmark_not_charged': round(12 * S_mean(res['to_b']), 3)},
+             'drop_top': {'cik': P.ciks[top], 'name': P.cand[P.ciks[top]].get('name'), 'ticker': tk,
+                          'contrib_sum': round(float(res['contrib'][top]), 4), 'full': e_drop},
+             'lower_bound_-30pct': {'full': e_lb, 'stock_months_hit_in_rule': res_lb['info'].get('lb_hit_s', 0),
+                                    'stock_months_hit_in_other': res_lb['info'].get('lb_hit_b', 0)},
+             'roll20_lump_sum': roll, 'dca20_ratio': dcar,
+             'maxdd': {'rule': round(N.maxdd({k: s[k] for k in ms}) * 100, 1), 'benchmark': round(N.maxdd({k: b[k] for k in ms}) * 100, 1)},
+             'sharpe': {p: {'rule': N.sharpe(s, rf, a_, z_), 'benchmark': N.sharpe(b, rf, a_, z_)}
+                        for p, (a_, z_) in {'train': (st, N.TRAIN_END), 'hold': (N.HOLD_START, END), 'full': (st, END)}.items()},
+             'independent_units_report': {k: compact(v) for k, v in units.items()},
+             'report_only_sensitivities': sens,
+             'holdings': {'avg_rule': round(res['info'].get('n_s_sum', 0) / months_n, 1), 'avg_other': round(res['info'].get('n_b_sum', 0) / months_n, 1),
+                          'months': res['info'].get('months'), 'months_rule_held_U': res['info'].get('held_U', 0),
+                          'months_long_side_held_U': res['info'].get('long_held_U', 0), 'months_short_side_held_U': res['info'].get('short_held_U', 0)}}
+        r['_series'] = (s, b)
+        results.append(r)
+        print(f"{sp['name']:36s} full {e_full['ex_ann'] if e_full else None} t {e_full['t'] if e_full else None} hold {e_hold['ex_ann'] if e_hold else None} "
+              f"cost {e_cost_full['cagr_diff'] if e_cost_full else None} drop {e_drop['cagr_diff'] if e_drop else None} lb {e_lb['cagr_diff'] if e_lb else None} "
+              f"({round(time.time() - t0)}s)", flush=True)
+    # 族ごとの Holm と格付け
+    fams = collections.defaultdict(list)
+    for r in results:
+        fams[r['family']].append(r)
+    for fam, lst in fams.items():
+        p1 = {r['rule']: N.p_one(r['full']['t']) if r['full'] and r['full']['t'] is not None else None for r in lst}
+        h1 = N.holm(p1)
+        p2 = {r['rule']: (r['hold']['p'] if r['hold'] else None) for r in lst}
+        h2 = N.holm(p2)
+        for r in lst:
+            g, c = N.grade_short(r['full'], r['first_half'], r['second_half'], r['drop_top']['full'], r['cost_0.10pct']['full'],
+                                 r['lower_bound_-30pct']['full'], h1.get(r['rule']))
+            r['family_holm_p_one_full'] = h1.get(r['rule'])
+            r['grade'] = g
+            r['criteria_short_sample'] = c
+            u = r['independent_units_report']
+            repl = {'regions': 3, 'positive': sum(1 for v in u.values() if v and v['ex_ann'] > 0 and v['cagr_diff'] > 0)}
+            gl, cl = N.grade(r['full'], r['train'], r['hold'], r['roll20_lump_sum'], r['cost_0.10pct']['hold'], repl, h2.get(r['rule']))
+            r['C1_C8_long_history_reference'] = {'grade_if_long_history': gl, 'criteria': cl, 'family_holm_p_hold_two_sided': h2.get(r['rule']),
+                                                 'C5_units': '2015-01〜・2017-01〜・2020-07〜（重なっている＝独立ではない・参考）',
+                                                 'note': '参考。この角度は事前登録で criteria_short_sample（grade_short）を使うと決めた。C4 は丸める前の差で勝ちを数えた'}
+    log['elapsed_s_rules'] = round(time.time() - t0)
+    return P, SIG, F, results, log, (FULL_START, IT1A_START), (rf, mkt, spy, rsp), pre
+
+
+def S_mean(d):
+    v = list(d.values())
+    return sum(v) / len(v) if v else 0.0
+
+
+# ───────────────────────── 測る前の点検（事前登録 sanity_checks_before_results） ─────────────────────────
+KNOWN = [('AutoNation', 350698, '2003-02〜2017-07 だけ構成'), ('Applied Industrial', 109563, '一度も入らない'),
+         ('Google Inc.', 1288776, '2006-04〜2016-01'), ('AT&T (旧SBC)', 732717, '1996-01〜'), ('Elevance', 1156039, '2002-07〜'),
+         ('Meta', 1326801, '2013-12〜'), ('Lumen', 18926, '1999-03〜2023-02'), ('Visa', 1403161, '2009-12〜'), ('Qwest', 1037949, '2000-07〜2011-03（株価は引けない）')]
+
+
+def bench_series(P, start, vw=True):
+    out = {}
+    for ti in range(P.mi[start], P.mi[END] + 1):
+        r = P.R[ti]
+        U = P.member[ti - 1] & ~np.isnan(r)
+        if vw:
+            U = U & ~np.isnan(P.CAP[ti])
+            w = np.where(U, np.nan_to_num(P.CAP[ti]), 0.0)
+        else:
+            w = U.astype(float)
+        if w.sum() > 0:
+            out[P.months[ti]] = float((w / w.sum()) @ np.nan_to_num(r))
+    return out
+
+
+def sanity(P, SIG, F, start, spy, mkt, log):
+    out = {}
+    # 1 被覆（毎年6月末の構成 → 7月の保有）
+    cov = {}
+    for m in P.months:
+        if m % 100 != 6 or m < 199606:
+            continue
+        ti = P.mi[m]
+        if ti + 1 >= P.T:
+            continue
+        tn = ti + 1
+        mem = P.member[ti]
+        U = mem & ~np.isnan(P.R[tn])
+        Uvw = U & ~np.isnan(P.CAP[tn])
+        sig = U & ~np.isnan(SIG['JAC'][tn])
+        # 浮動株の無い会社の時価の近似（年齢を問わず最新の浮動株を終値で転がす）で、時価加重の重みの被覆を見積もる
+        approx, nofloat = 0.0, 0
+        for i in np.where(U & ~Uvw)[0]:
+            L = [x for x in (P.ann.get(P.ciks[i]) or []) if x[0] <= m and x[1]]
+            if not L:
+                nofloat += 1
+                continue
+            Fv, bm, _ = L[-1][1]
+            t = P.tick[ti][i]
+            pb = P.px.get(t, {}).get(bm) if t else None
+            approx += Fv * (P.CLprev[tn, i] / pb[1] if pb else 1.0)
+        capsum = float(np.nansum(np.where(Uvw, P.CAP[tn], 0)))
+        cov[m] = {'sp_members': P.spsize.get(m), 'linked_ciks': int(mem.sum()), 'priced': int(U.sum()),
+                  'priced_share_of_sp': round(U.sum() / P.spsize.get(m, 1), 3), 'with_float_vw': int(Uvw.sum()),
+                  'float_count_share_of_priced': round(Uvw.sum() / max(1, U.sum()), 3),
+                  'float_weight_share_of_priced_approx': round(capsum / (capsum + approx), 3) if capsum else None,
+                  'priced_without_any_float': nofloat, 'with_jac_signal_12m': int(sig.sum()),
+                  'vw_cap_sum_bn_usd': round(capsum / 1e9, 1)}
+    out['coverage_june'] = cov
+    out['link_paths_cik_months'] = P.link_counts
+    out['ticker_conflicts_dropped'] = P.conflicts
+    out['relink_check'] = log.get('relink_check')
+    # C（前身）の株価
+    cm = cp = 0
+    for ti in range(P.T):
+        for i in np.where(P.member[ti])[0]:
+            if P.ciks[i] in P.is_c:
+                cm += 1
+                if P.tick[ti][i]:
+                    cp += 1
+    out['C_predecessor_cik_months'] = {'linked': cm, 'with_successor_price_ticker': cp}
+    # 2 同定の既知の例
+    ident = {}
+    for nm, c, exp in KNOWN:
+        i = P.idx.get(c)
+        if i is None:
+            ident[nm] = {'expected': exp, 'got': '候補に無い'}
+            continue
+        ms = [P.months[ti] for ti in range(P.T) if P.member[ti, i]]
+        spells, cur = [], None
+        for m in ms:
+            if cur and ym_add(cur[1], 1) == m:
+                cur[1] = m
+            else:
+                if cur:
+                    spells.append(cur)
+                cur = [m, m]
+        if cur:
+            spells.append(cur)
+        priced = sum(1 for ti in range(1, P.T) if P.member[ti - 1, i] and not np.isnan(P.R[ti, i]))
+        ident[nm] = {'expected': exp, 'spells': spells, 'priced_months': priced}
+    out['identity_examples'] = ident
+    # 3 相手（U の時価加重）と SPY
+    bv, be = bench_series(P, start, True), bench_series(P, start, False)
+    ks = sorted(set(bv) & set(spy))
+    out['benchmark_vs_SPY'] = {'corr_monthly': round(N.corr([bv[k] for k in ks], [spy[k] for k in ks]), 4),
+                               'U_vw_minus_SPY': N.excess_stats(bv, spy, start, END),
+                               'U_vw_minus_French_Mkt': N.excess_stats(bv, mkt, start, END),
+                               'U_ew_minus_SPY': N.excess_stats(be, spy, start, END),
+                               'by_period_U_vw_minus_SPY': {p: compact(N.excess_stats(bv, spy, a_, z_)) for p, (a_, z_) in
+                                                           {'1997_07_2006_12': (start, 200612), '2007_01_2016_12': (200701, 201612), '2017_01_end': (201701, END)}.items()},
+                               'note': '差は『生き残りの偏り（株価の取れる現存の会社だけ）と同定の誤り・浮動株の近似』の大きさ。相関 0.97 未満なら原因を書く'}
+    # 4 信号（年ごと）
+    by_year = collections.defaultdict(lambda: collections.defaultdict(list))
+    fs_year = collections.Counter(); n_year = collections.Counter()
+    for c, lst in P.per_cik.items():
+        for x in lst:
+            y = x['year']
+            n_year[y] += 1
+            fs_year[y] += x['fs']
+            for s_ in SIGS:
+                v = x['v'].get(s_)
+                if v is not None:
+                    by_year[y][s_].append(v)
+    out['signals_by_filing_year'] = {y: {'valid_signals': n_year[y], 'format_switch_share': round(fs_year[y] / n_year[y], 3),
+                                         'median': {s_: round(float(np.median(v)), 4) for s_, v in by_year[y].items()},
+                                         'count': {s_: len(v) for s_, v in by_year[y].items()}} for y in sorted(n_year)}
+    # 五分位ごとの社数・恒等式・大きな動き・様式の切り替わり（JAC・12か月・U の中）
+    qcnt = collections.defaultdict(lambda: np.zeros(6))
+    ident_dev = 0.0
+    big = []
+    bigcnt = collections.Counter()
+    fsq = collections.defaultdict(lambda: [0, 0])
+    fs_of = {}
+    for c, lst in P.per_cik.items():
+        for x in lst:
+            fs_of[(P.idx.get(c), x['f'])] = x['fs']
+    for ti in range(P.mi[start], P.mi[END] + 1):
+        m = P.months[ti]
+        r = P.R[ti]
+        U = P.member[ti - 1] & ~np.isnan(r)
+        v = SIG['JAC'][ti]
+        ok = U & ~np.isnan(v)
+        q = quintiles(np.where(ok, np.nan_to_num(v), -np.inf), ok)
+        if q is None:
+            continue
+        for k in range(1, 6):
+            qcnt[m // 100][k] += (q == k).sum()
+        qcnt[m // 100][0] += 1
+        Uvw = U & ~np.isnan(P.CAP[ti])
+        capU = np.nansum(np.where(Uvw, P.CAP[ti], 0))
+        cx = np.nansum(np.where(Uvw & ~(q == 1), P.CAP[ti], 0)) + np.nansum(np.where(Uvw & (q == 1), P.CAP[ti], 0))
+        ident_dev = max(ident_dev, abs(cx - capU) / capU)
+        for i in np.where(U)[0]:
+            rv = r[i]
+            grp = 'Q1' if q[i] == 1 else ('Q5' if q[i] == 5 else ('unranked' if q[i] == 0 else 'Q2_4'))
+            if rv < -0.40 or rv > 1.00:
+                bigcnt[grp] += 1
+                big.append((abs(rv), P.tick[ti - 1][i], P.ciks[i], m, round(float(rv), 4), grp))
+            if q[i] > 0:
+                key = (i, int(F[ti, i]))
+                fsq[int(q[i])][0] += 1
+                fsq[int(q[i])][1] += bool(fs_of.get(key, False))
+    out['quintile_counts_avg_per_month_JAC12'] = {y: [round(float(a[k] / a[0]), 1) for k in range(1, 6)] for y, a in sorted(qcnt.items())}
+    out['identity_XQ1_plus_Q1_equals_U_vw_max_rel_dev'] = ident_dev
+    big.sort(reverse=True)
+    out['extreme_stock_months_lt_-40_or_gt_+100'] = {'count_by_group': dict(bigcnt),
+                                                     'top50': [{'ticker': b_[1], 'cik': b_[2], 'month': b_[3], 'ret': b_[4], 'group_JAC12': b_[5]} for b_ in big[:50]]}
+    out['format_switch_share_by_quintile_JAC12'] = {q: round(v[1] / v[0], 4) if v[0] else None for q, v in sorted(fsq.items())}
+    # 6 取得の失敗の印（提出年ごと）
+    fl = collections.defaultdict(collections.Counter)
+    for r in P.rows:
+        for f in (r['flags'] or '').split('|'):
+            if f:
+                fl[int(r['filed'][:4])][f] += 1
+    out['flags_by_filing_year'] = {y: dict(c) for y, c in sorted(fl.items())}
+    # 途切れた系列
+    out['series_ended_stock_months_in_sample'] = int(sum(P.ended[ti].sum() for ti in range(P.mi[start], P.mi[END] + 1)))
+    return out, bv, be
+
+
+# ───────────────────────── 事前登録の外の報告（格付けに使わない）: 五分位ごとの成績 ─────────────────────────
+def quintile_table(P, SIG, F, start, sig='JAC', vw=True):
+    """各五分位（12か月・U の中の境目）を時価加重（または等分）で持った月次 − U の時価加重（等分）。単調かを見る（報告のみ）"""
+    qs = {k: {} for k in range(1, 6)}
+    bb = {}
+    sign = -1.0 if sig in SIGS_LOW else 1.0
+    for ti in range(P.mi[start], P.mi[END] + 1):
+        m = P.months[ti]
+        r = P.R[ti]
+        U = P.member[ti - 1] & ~np.isnan(r)
+        cap = P.CAP[ti]
+        base = U & ~np.isnan(cap) if vw else U
+        v = SIG[sig][ti]
+        ok = U & ~np.isnan(v)
+        q = quintiles(np.where(ok, sign * np.nan_to_num(v), -np.inf), ok)
+        wb = weights(base, np.nan_to_num(cap), vw)
+        if q is None or wb is None:
+            continue
+        rr = np.nan_to_num(r)
+        bb[m] = float(wb @ rr)
+        for k in range(1, 6):
+            w = weights(base & (q == k), np.nan_to_num(cap), vw)
+            if w is not None:
+                qs[k][m] = float(w @ rr)
+    out = {}
+    for k in range(1, 6):
+        out[f'Q{k}'] = {p: compact(N.excess_stats(qs[k], bb, a_, z_)) for p, (a_, z_) in
+                        {'full': (start, END), 'train': (start, N.TRAIN_END), 'hold': (N.HOLD_START, END),
+                         'first_half': (start, FIRST_HALF_END), 'second_half': (SECOND_HALF_START, END), 'post_2015': (201501, END)}.items()}
+    return out
+
+
+DEVIATIONS = [
+    {'what': '浮動株の検問を足した（(a) XBRL・iXBRL の値にも 100万〜10兆ドルの範囲 ／ (b) XBRL（無ければ iXBRL）と本文の比が 1000 の整数乗から 2.5 倍以内なら本文 ／ (c) 株数に当たる値（浮動株÷基準日の終値）が同じ会社の前後3年の中央値から 1000 の整数乗だけずれたら欠測 ／ (d) 前後の報告が2倍以内で一致しているのに1年だけ両方から5倍を超えて離れたら欠測。(c)(d) の欠測は事前登録の『その前の年次報告（24か月以内）』の道へ回す）',
+     'why': '事前登録の点検『U_t の時価加重と SPY の相関（0.97 未満なら浮動株か同定に誤り）』が 0.706 だった。原因は XBRL の dei:EntityPublicFloat の単位の付け違い（MTB・ZBH・HST・PKG・NEM・IQV・QCOM は ×100万、WAT・DPZ・GRMN・SHW・TKO・HBAN は ×1000、ALB は 1e18）で、1社が U の重みの 99% を持つ月があった。本文の値には取得器が 100万〜10兆ドルの範囲を掛けていたが XBRL・iXBRL の値には掛けていなかった。(c)(d) は本文の千ドル単位の表を $ として読んだ年（PEP・BAC・DUK ほか）と1年だけの飛び（EXC 2009 ほか）。検問は浮動株の値と相手の相関だけを見て決め、規則の成績は1つも計算する前。検問後の相関 0.9933',
+     'affects_grading': '時価加重の規則すべて（主の族 P を含む）の重み。規則の中身・線は不変'},
+    {'what': '株価の記号: 今の SEC の記号が優先株だけの会社（811830 Santander Holdings USA〔旧 Sovereign〕・1527469 Athene）は普通株の株価が無いとして外した。EIDP（旧 DuPont・C と D の両方）は C の約束（その月の記号 k が後継の記号なら k の株価）で扱った',
+     'why': '事前登録は A・B・D に『今の SEC の記号』を当てるが、優先株の値動きを普通株の代わりに使うのは誤り', 'affects_grading': '小さい（3社）'},
+    {'what': 'C（前身）の株価の記号は、その月に構成表と結んだ記号 k が後継の記号のどれかなら k そのもの（GOOGL/GOOG のような種類株を取り違えない）', 'why': '事前登録『C は後継の記号を、その月の前身の自分の記号が後継の記号と同じとき』の最も近い形', 'affects_grading': '無し〜小さい'},
+    {'what': '浮動株の『無ければその前の年次報告の値（24か月以内）』の 24か月の制限を、最新の年次報告にも掛けた（並べる月が t−1 の24か月より前の報告の浮動株は使わない）', 'why': '構成に居るのに2年以上年次報告が無い会社の古い浮動株で重みを作らないため', 'affects_grading': '小さい'},
+    {'what': '同じ CIK で『並べる月が 60 日以内の2件』は提出日の差で測った', 'why': '並べる月は月の単位なので、日数は提出日で測るのが最も近い', 'affects_grading': '無し（該当 0 件）'},
+    {'what': '下限版（途切れた次の月に −30%）: 株価のある会社で、標本の終わりより前に系列が途切れたものが 0 件だった（Yahoo は今ある記号の履歴しか返さない）。したがって下限版は全期間の結果と同じになった',
+     'why': '事前登録どおりに実装した結果。事前登録も『株価がはじめから無い会社はこの方法では入れられない（被覆で報告）』と書いている', 'affects_grading': 'grade_short の lower_bound は full と同じ判定になる（生き残りの偏りを挟む役には立っていない）'},
+    {'what': '費用: 毎月の実際の片道の回転 × 0.10% をその月に引いた（nx_common.apply_cost の年率を均して引く形ではない）。最初の月の組み入れは費用を取らない（相手も同じく最初に買う）', 'why': '事前登録『毎月 ½Σ|w_t − w̃_{t−1}| × 0.10%』の字面どおり', 'affects_grading': '無し（総額は同じ）'},
+    {'what': '五分位の境目は numpy.percentile（線形補間）。境目ちょうどは下の五分位（低い＝悪い側の向きに直した値で）', 'why': '事前登録に補間の方法の指定が無い', 'affects_grading': '無し〜小さい'},
+    {'what': '『株価のある会社が10社未満なら U_t を持つ』を 12か月の規則にも当て、時価加重の規則では浮動株のある会社で数えた。買い−売り（X2）は足りない側だけ U を持つ。30社（X10）は並べる会社が50社未満の月は U', 'why': '事前登録の Q5_rule の一般の約束を同じ形で当てた', 'affects_grading': '無し〜小さい'},
+    {'what': 'X7 の業種は French の Siccodes12（EDGAR の今の SIC）。SIC が無い・どの範囲にも入らない会社は 12（Other）。業種の中の信号が10社未満の業種は並べない。並べる会社が全体で50社未満の月は U', 'why': '事前登録どおり（Other の扱いの指定が無いので French の既定に従った）', 'affects_grading': '無し'},
+    {'what': 'drop_top は最大寄与の1社を U から全期間除いた（境目の計算からも消える）', 'why': '『母集団から全期間除いて（規則と相手の両方から）』の字面どおり', 'affects_grading': '無し'},
+    {'what': '月次リターンは連続した月の調整後終値どうしだけで作り、間の月が抜けた系列は抜けた月を外した（0 で埋めない・つながない）', 'why': '絶対のルール7', 'affects_grading': '無し〜小さい'},
+    {'what': 'C4（転がる20年窓）と20年積立は丸める前の差・比で勝ちを数えた（nx_common.rolling/dca は丸めた後に数える）', 'why': 'まとめ役の指示（丸めた差 0.00 を負けにしない）', 'affects_grading': 'grade_short は C4 を使わない。参考の C1〜C8 だけ'},
+    {'what': '参考の長期の格付け（grade）の C5 は 2015-01〜・2017-01〜・2020-07〜 の3単位（重なっている）、C7 の Holm は保有期間の両側 p で族ごと', 'why': 'この角度の格付けは事前登録で grade_short と決まっている。C1〜C8 は参考に並べるだけ', 'affects_grading': '無し（参考）'},
+    {'what': '会社の同定の既知の例のうち Google Inc. は 2006-04〜2014-10（事前登録の試しでは〜2016-01）。2014-11 以降は後継 Alphabet（A）が同じ記号 GOOGL を最初の年次報告（2016-02-11）で名乗り、L1 の取り合いで新しい名乗りが勝った',
+     'why': 'nx_lazy_data.build_panel の約束どおりの結果（panel は再現で1か月の違いも無い）。株価は同じ GOOGL なので値動きは途切れない。その15か月は Alphabet に前年の 10-K が無く信号は無い（並べない）', 'affects_grading': '無し〜小さい'},
+    {'what': 'X6 の IT7（MD&A）の規則は全期間と同じ 1997-07 から（事前登録が遅らせる約束を書いたのは IT1A だけ）。信号が50社に満たない月は U をそのまま持つ（該当 5 か月）', 'why': '事前登録 criteria.full の字面どおり', 'affects_grading': '無し'},
+    {'what': 'X11（10-Q）・X12（S&P 500 の外）は未測定', 'why': 'out/_nx_cache/nx_lazy_manifest.json（2026-09-28T23:09:46Z・株価を読み込む前・成績を計算する前に記録）', 'affects_grading': '族に入らない（事前登録の total_graded 50 本は変わらない）'},
+]
+
+
+def write_out(P, results, log, starts, sanity_out, extra, pre, t_start):
+    import subprocess
+    try:
+        pc = subprocess.run(['git', '-C', BASE, 'log', '-1', '--format=%h %cI', '--', 'out/nx_lazy_prereg.json'], capture_output=True, text=True).stdout.strip()
+    except Exception:  # noqa
+        pc = None
+    man = json.load(open(os.path.join(CACHE, 'nx_lazy_manifest.json'))) if os.path.exists(os.path.join(CACHE, 'nx_lazy_manifest.json')) else None
+    fams = collections.defaultdict(list)
+    for r in results:
+        fams[r['family']].append(r)
+    fam_out = {}
+    for f, lst in fams.items():
+        fam_out[f] = {'n': len(lst), 'grades': collections.Counter(r['grade'] for r in lst),
+                      'holm_p_one_full': {r['rule']: r['family_holm_p_one_full'] for r in lst}}
+    gc = collections.Counter(r['grade'] for r in results)
+    order = {'S': 0, 'A': 1, 'B': 2, 'C': 3}
+    ranked = sorted(results, key=lambda r: (order[r['grade']], -(r['full']['t'] if r['full'] and r['full']['t'] is not None else -99)))
+    best = ranked[0]
+    tested = []
+    for r in results:
+        r2 = {k: v for k, v in r.items() if k != '_series'}
+        tested.append(r2)
+    primary = [{'rule': r['rule'], 'grade': r['grade'], 'full_ex_ann': r['full']['ex_ann'], 'full_t': r['full']['t'], 'full_cagr_diff': r['full']['cagr_diff'],
+                'train_cagr_diff': r['train']['cagr_diff'] if r['train'] else None, 'hold_cagr_diff': r['hold']['cagr_diff'] if r['hold'] else None,
+                'cost_full_cagr_diff': r['cost_0.10pct']['full']['cagr_diff'] if r['cost_0.10pct']['full'] else None,
+                'holm_p_one': r['family_holm_p_one_full']} for r in results if r['family'] == 'P']
+    obj = {
+        'generated': datetime.date.today().isoformat(),
+        'angle': 'nx_lazy',
+        'title': pre.get('title'),
+        'prereg': 'out/nx_lazy_prereg.json', 'prereg_commit': pc, 'global_prereg': 'out/nx_prereg.json（criteria_short_sample）',
+        'script': 'night/nx_lazy.py', 'data_script': 'night/nx_lazy_data.py',
+        'run': {'started_utc': t_start, 'finished_utc': datetime.datetime.utcnow().isoformat(timespec='seconds') + 'Z', 'elapsed_s': log.get('elapsed_s_rules')},
+        'grading': 'nx_common.grade_short(full, first_half, second_half, drop_top, cost_full, lower_bound, 族の中の Holm 補正後の片側 p)。事前登録 criteria.which のとおり。C1〜C8（grade）は参考として各規則に並べた',
+        'periods': {'full': [starts[0], END], 'train': [starts[0], N.TRAIN_END], 'hold': [N.HOLD_START, END], 'first_half': [starts[0], FIRST_HALF_END],
+                    'second_half': [SECOND_HALF_START, END], 'it1a_start': starts[1], 'start_check': log.get('start')},
+        'benchmark': '同じ母集団 U_t（月末 t−1 の構成の CIK のうち t−1 と t の株価がある会社）の時価加重（浮動株のある会社）／等分。買い−売り（X2）は s=Q5・b=Q1',
+        'survivorship': '株価は Yahoo の今ある記号だけ＝上場廃止・買収で消えた会社は入らない（生き残りの偏りあり）。構成の記号のうち株価の取れる割合は 1997年6月 38.7%・2006年 56.5%・2016年 79.6%・2026年 98.6%（sanity_checks_before_results.coverage_june）',
+        'deviations_from_prereg': DEVIATIONS,
+        'x11_x12_decision': man,
+        'overlap_with_q07leu_lmtext': {'what': 'q07leu（ratio-evaluation-q07leu 枝）の第10回 lmtext は 10-K の否定語の割合の変化が小さい五分位（dneg|q5・等分・選定 1995-04〜2000-12・保有 2001-01〜2026-08）を検定し不合格（保有 −0.72%/年 t−1.18・Holm p 0.88）',
+                                       'which_rules_here': 'X4_DNEG_Q5_VW_12・X4_DNEG_XQ1_VW_12（同じ特徴量 DNEG）と X5（DNEG を使う組み合わせ）',
+                                       'difference': 'ここは S&P 500 の時点の構成に限った時価加重・自前で 10-K の本文から数えた LM の2009年版の否定語・12か月の窓。q07leu は Loughran-McDonald の公開の 10-K 集計（全上場・等分）。同じ仮説の別の実装なので独立の追試ではなく、多重検定の数では同じ族に数えるべき'},
+        'sanity_checks_before_results': sanity_out,
+        'data_log': {k: v for k, v in log.items() if k not in ('start',)},
+        'families': fam_out,
+        'summary': {'n_tested': len(results), 'grade_counts': dict(gc), 'primary_family_P': primary,
+                    'best_by_grade_then_full_t': {'rule': best['rule'], 'grade': best['grade'], 'full': best['full'], 'hold': best['hold']}},
+        'tested': tested,
+        'extra_report_not_in_prereg': extra,
+        'post_hoc': {},
+    }
+    p = os.path.join(BASE, 'out', 'nx_lazy.json')
+    json.dump(obj, open(p, 'w'), ensure_ascii=False, indent=1, default=lambda o: int(o) if isinstance(o, (np.integer,)) else float(o) if isinstance(o, np.floating) else str(o))
+    return p
+
+
+def post_hoc():
+    """『事後』の診断（結果を見た後に足した・格付けに使わない）。out/nx_lazy.json の post_hoc に書く"""
+    p = os.path.join(BASE, 'out', 'nx_lazy.json')
+    obj = json.load(open(p))
+    log = {}
+    P = build(log)
+    SIG, F = signal_mats(P)
+    specs = {s['name']: s for s in rule_specs()}
+    t_by = {r['rule']: r for r in obj['tested']}
+    out = {'label': '事後（結果を見た後に足した分析・格付けに使わない・規則は1本も足していない）', 'run_utc': datetime.datetime.utcnow().isoformat(timespec='seconds') + 'Z'}
+    # (1) いちばん成績のよかった規則（B の中で全期間の t が最大）の中身: 寄与の集中
+    best = obj['summary']['best_by_grade_then_full_t']['rule']
+    sp = specs[best]
+    st = t_by[best]['start']
+    res = run(P, sp, SIG, F, st)
+    order = np.argsort(-res['contrib'])
+    top10 = [{'ticker': next((P.tick[ti][i] for ti in range(P.T - 1, -1, -1) if P.tick[ti][i]), None), 'cik': P.ciks[i],
+              'contrib_sum': round(float(res['contrib'][i]), 4)} for i in order[:10]]
+    bot5 = [{'ticker': next((P.tick[ti][i] for ti in range(P.T - 1, -1, -1) if P.tick[ti][i]), None), 'cik': P.ciks[i],
+             'contrib_sum': round(float(res['contrib'][i]), 4)} for i in order[::-1][:5]]
+    drops = {}
+    for k in (1, 3, 5, 10):
+        rd = run(P, sp, SIG, F, st, drop=list(order[:k]))
+        drops[f'drop_top{k}'] = compact(N.excess_stats(rd['s'], rd['b'], st, END))
+    out['best_rule_concentration'] = {'rule': best, 'contrib_sum_total': round(float(res['contrib'].sum()), 4),
+                                      'top10_contributors': top10, 'bottom5': bot5, 'excess_after_dropping_top_k': drops,
+                                      'reading': '寄与の合計（月次の (w規則−w相手)×r の総和）に対する上位の会社の割合と、上位 k 社を母集団から除いた全期間の超過'}
+    # (2) 株価の無い構成の会社（生き残りの偏り）が五分位のどこに居たか（JAC・12か月の境目を当てる）
+    tab = collections.defaultdict(lambda: np.zeros((6, 2)))
+    for ti in range(P.mi[obj['periods']['full'][0]], P.mi[END] + 1):
+        m = P.months[ti]
+        r = P.R[ti]
+        U = P.member[ti - 1] & ~np.isnan(r)
+        v = SIG['JAC'][ti]
+        ok = U & ~np.isnan(v)
+        if ok.sum() < MIN_RANK:
+            continue
+        bps = np.percentile(v[ok], [20, 40, 60, 80])
+        mem = P.member[ti - 1] & ~np.isnan(v)
+        q = 1 + np.searchsorted(bps, v, side='left')
+        per = 'A_1997_2006' if m <= 200612 else ('B_2007_2016' if m <= 201612 else 'C_2017_end')
+        for k in range(1, 6):
+            sel = mem & (q == k)
+            tab[per][k, 0] += sel.sum()
+            tab[per][k, 1] += (sel & ~U).sum()
+    out['unpriced_members_by_JAC_quintile'] = {per: {f'Q{k}': round(float(a[k, 1] / a[k, 0]), 4) if a[k, 0] else None for k in range(1, 6)}
+                                               for per, a in sorted(tab.items())}
+    out['unpriced_reading'] = ('構成に居て 10-K の信号もあるのに株価が無い（上場廃止・買収で Yahoo に無い）会社の割合を、U の境目で五分位に当てたもの。'
+                               'Q1 の割合が Q5 より高ければ、生き残りの偏りは Q1 の悪い結果を落としている向き（Q1 を外す規則の超過は真の値より小さく出る）')
+    # (3) 仮説と逆向きの五分位の数字（extra の表から）
+    ex_ = obj.get('extra_report_not_in_prereg') or {}
+    dq = (ex_.get('quintiles_DNEG_VW_12') or {})
+    out['opposite_sign_notes'] = {
+        'DNEG_Q1_minus_U_vw_full': dq.get('Q1', {}).get('full'),
+        'DNEG_Q5_minus_U_vw_full': dq.get('Q5', {}).get('full'),
+        'reading': '否定語の割合が最も増えた五分位（DNEG の Q1・論文と LM の向きでは避ける側）が、同じ母集団の時価加重に全期間で年 +3% 前後勝っていた（t 2.1 前後）。仮説と逆向きで、事前登録に無い規則なので勝ちとしては数えない（五分位 5×信号 4 の表の中の1マスで、多重比較の補正もしていない）'}
+    # (4) 論文との比較
+    ls = {r['rule']: compact(r['full']) for r in obj['tested'] if r['family'] == 'X2'}
+    out['paper_comparison'] = {'X2_long_short_full': ls,
+                               'reading': 'CMN (2020) の時価加重の Q5−Q1 は月 最大 58bp（年 約 7%・t 3.59・1995〜2014・全上場・10-K と 10-Q）。ここ（S&P 500 の株価の取れる会社・10-K だけ・1997-07〜2026-08）の買い−売りは 8本とも全期間の t が 1 未満〜負で、論文の大きさは出なかった'}
+    obj['post_hoc'] = out
+    json.dump(obj, open(p, 'w'), ensure_ascii=False, indent=1, default=lambda o: int(o) if isinstance(o, (np.integer,)) else float(o) if isinstance(o, np.floating) else str(o))
+    return out
+
+
+if __name__ == '__main__' and '--post-hoc' in sys.argv:
+    o = post_hoc()
+    print(json.dumps(o, ensure_ascii=False, indent=1, default=str)[:6000])
+    sys.exit(0)
+
+if __name__ == '__main__':
+    t_start = datetime.datetime.utcnow().isoformat(timespec='seconds') + 'Z'
+    P, SIG, F, results, log, starts, (rf, mkt, spy, rsp), pre = main()
+    san, bv, be = sanity(P, SIG, F, starts[0], spy, mkt, log)
+    extra = {'note': '事前登録の外（報告のみ・格付けに使わない）。五分位ごとの成績 − 同じ母集団の相手。単調かを見るため',
+             'quintiles_JAC_VW_12': quintile_table(P, SIG, F, starts[0], 'JAC', True),
+             'quintiles_COS_VW_12': quintile_table(P, SIG, F, starts[0], 'COS', True),
+             'quintiles_JAC_EW_12': quintile_table(P, SIG, F, starts[0], 'JAC', False),
+             'quintiles_DNEG_VW_12': quintile_table(P, SIG, F, starts[0], 'DNEG', True)}
+    p = write_out(P, results, log, starts, san, extra, pre, t_start)
+    print('→', p)
