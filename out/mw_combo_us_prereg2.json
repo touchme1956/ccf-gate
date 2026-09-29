@@ -1,0 +1,139 @@
+{
+ "angle": "combo_us",
+ "stage": 2,
+ "title": "探索の第2段（事前登録2）: 質の混合を別のデータ（French の CRSP 大型株）で作り直す／JKP の混合を広げる",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "why_now": "第1段（out/mw_combo_us_prereg.json）で C6_QUAL5（JKP vw の質5信号）が S。S が JKP のデータの作り方に依存していないか（French の CRSP で同じ考え方を作ると？）と、同じ考え方を少し変えても続くか（広げる・勢い/割安/低リスクを足す）を測る。第1段の結果は見た後なので、この族は『探索』として別に数え、第1段の格付けは動かさない",
+ "seen_before_registering": "第1段の全結果（out/mw_combo_us.json）と C6 の事後の診断（vw_cap では 2007〜 +0.43・袖ごとの成績・1袖抜き）。この知識が族の選び方に漏れている（特に『質は 2007〜 も効いた』ことを知っている）。線は動かさず、探索の族として Holm を別に数える",
+ "primary": false,
+ "benchmark": "第1段と同じ（French Mkt・総リターンどうし）",
+ "families": {
+  "D_frbig": {
+   "desc": "French（CRSP・上場廃止も含む）の規模5分位の最上位（ME5＝BIG）の行の良い側を等分に混ぜる。1963-07〜2026-08。毎月組み直し。JKP とは別の業者・別の作り方＝C6 の考え方の独立の作り直し",
+   "strategies": {
+    "D1_BIG_QUAL3": {
+     "rule": "BIG HiOP（25_ME_OP）+ BIG LoAC（25_ME_AC・発生主義の利益が最下位5分位）+ BIG NegNI（25_ME_NI・株数が純減＝自社株買いの会社）を 1/3 ずつ",
+     "theory": "C6 の袖のうち French にある3つ（収益性・発生主義・株数）",
+     "expected_sign": "+"
+    },
+    "D2_BIG_QUAL4": {
+     "rule": "D1 + BIG LoINV（25_ME_INV）を 1/4 ずつ",
+     "expected_sign": "+"
+    },
+    "D3_BIG_QUAL4_MOM": {
+     "rule": "D2 + BIG HiPRIOR（25_ME_Prior_12_2）を 1/5 ずつ",
+     "expected_sign": "+"
+    },
+    "D4_BIG_QUAL4_VAL": {
+     "rule": "D2 + BIG HiBM（25_Portfolios_5x5）を 1/5 ずつ",
+     "expected_sign": "+"
+    },
+    "D5_BIG_QUAL4_VAL_MOM": {
+     "rule": "D2 + BIG HiBM + BIG HiPRIOR を 1/6 ずつ",
+     "expected_sign": "+"
+    },
+    "D6_MEGA_OP_INV": {
+     "rule": "100_Portfolios_ME_OP_10x10 の ME10（規模の最上位10分位）× OP 上位3分位（8〜10）を前月の社数×平均時価総額で合成したもの と、100_Portfolios_ME_INV_10x10 の ME10 × INV 下位3分位（1〜3）を同じく合成したもの を 1/2 ずつ。社数0の月はその箱の重み0（空の箱＝測った0であって欠測ではない）。社数>0なのにリターンが欠けた月は出さない",
+     "theory": "最大級の会社だけ（数十社）に絞った FF5 の収益性+投資の控えめ＝個人が実際に持てる集中に近い版",
+     "expected_sign": "+"
+    },
+    "D7_MEGA_HiOP3": {
+     "rule": "D6 の OP 側だけ（ME10 × OP 8〜10）",
+     "expected_sign": "+"
+    }
+   },
+   "replication_C5": "米国外の French の地域には AC・NI・10x10 の表が無いので N/A。参考として、地域にある袖（OP・INV・BM・Prior）だけの混合を出す（数えない）",
+   "turnover": "袖: OP/AC/INV/BM 50%/年・NegNI 60%/年・Prior 400%/年、混合は平均+10%/年。D6/D7 は 60%/年（+混合10%）。単価は大型だけなので 0.10%"
+  },
+  "E_jkp2": {
+   "desc": "JKP 米国 vw 三分位の良い側（2006-12 までのデータで機械的に決める）を等分に混ぜる。1963-07〜2025-12。第1段の C と同じ作り方",
+   "strategies": {
+    "E1_QUAL5_MOM": {
+     "keys": [
+      "ope_be",
+      "gp_at",
+      "qmj",
+      "chcsho_12m",
+      "oaccruals_at",
+      "ret_12_1"
+     ],
+     "expected_sign": "+"
+    },
+    "E2_QUAL5_VAL": {
+     "keys": [
+      "ope_be",
+      "gp_at",
+      "qmj",
+      "chcsho_12m",
+      "oaccruals_at",
+      "be_me"
+     ],
+     "expected_sign": "+"
+    },
+    "E3_PROF3": {
+     "keys": [
+      "gp_at",
+      "ope_be",
+      "cop_at"
+     ],
+     "theory": "収益性の3つの測り方（Novy-Marx 2013・FF 2015・Ball et al. 2016）",
+     "expected_sign": "+"
+    },
+    "E4_CAPDISC4": {
+     "keys": [
+      "chcsho_12m",
+      "at_gr1",
+      "noa_at",
+      "eqnpo_12m"
+     ],
+     "theory": "資本の規律（株数を増やさない・資産を膨らませない・純営業資産が小さい・株主への純還元が大きい）",
+     "expected_sign": "+"
+    },
+    "E5_QUAL5_LOWRISK": {
+     "keys": [
+      "ope_be",
+      "gp_at",
+      "qmj",
+      "chcsho_12m",
+      "oaccruals_at",
+      "betabab_1260d",
+      "ivol_capm_252d"
+     ],
+     "theory": "質+低リスク（低ベータは市場との生の差では不利になりうる＝符号は理論上あいまい）",
+     "expected_sign": "?"
+    },
+    "E6_QMJ3": {
+     "keys": [
+      "qmj_prof",
+      "qmj_growth",
+      "qmj_safety"
+     ],
+     "theory": "AFP の質の3つの柱を別々の袖に",
+     "expected_sign": "+"
+    },
+    "E7_QUAL8": {
+     "keys": [
+      "ope_be",
+      "gp_at",
+      "qmj",
+      "chcsho_12m",
+      "oaccruals_at",
+      "cop_at",
+      "at_gr1",
+      "noa_at"
+     ],
+     "expected_sign": "+"
+    }
+   },
+   "replication_C5": "第1段の C と同じ（JKP の7か国・各袖10社以上・120か月以上・2/3以上が正）",
+   "turnover": "第1段の値に加えて cop_at 40%・at_gr1 80%・noa_at 60%・eqnpo_12m 80%・betabab_1260d 60%・ivol_capm_252d 100%・qmj_prof 40%・qmj_growth 80%・qmj_safety 50%（/年）、混合は平均+10%。単価 0.20%"
+  }
+ },
+ "multiple_testing": "D_frbig（7本）・E_jkp2（7本）をそれぞれ別の族として Holm。第1段の3族とは混ぜない（探索の族）。格付けは mw_common.grade そのまま、ただし『探索』の印を付ける",
+ "known_limits": [
+  "第1段の C6 の結果を見た後の探索。『質は 2007〜 も効いた』という知識が族の選び方に漏れている",
+  "D6/D7 は1箱10〜24社の薄い箱。1社の出来で動く",
+  "French の ME_NI の NegNI は『株数が純減』の会社（自社株買い）。JKP の chcsho_12m の下位3分位と同じではない"
+ ]
+}

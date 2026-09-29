@@ -1,0 +1,122 @@
+{
+ "generated": "2026-09-28",
+ "angle": "momentum（勢い）",
+ "registered_before_measuring": true,
+ "note_on_what_was_seen": "登録の前に見たのはデータの有無・期間・列名・銘柄数だけ（戦略と市場を比べた数字は一つも計算していない）。私（Claude）は論文の結論と2007年以降の大きな出来事（2009年の勢いの崩れ・巨大テックの勝ち）を知識として知っている。この漏れは消せないので、米国外の地域・公表後の期間を独立の答え合わせに使う",
+ "question": "過去に値上がりした株（勢い）・業種・国を買うだけの規則は、上限なしの時価加重の市場（French Mkt）に、費用を引いた後も、2007年以降の保有期間でも勝つか。全体の線 out/mw_prereg.json（C1〜C8）で裁き、線は動かさない",
+ "global_criteria": "out/mw_prereg.json の C1〜C8 と格付け S/A/B/C をそのまま使う（night/mw_common.grade）",
+ "tool": "night/mw_momentum.py → out/mw_momentum.json",
+ "data": {
+  "french": "Ken French: 10_Portfolios_Prior_12_2 / 6_Portfolios_ME_Prior_12_2 / 25_Portfolios_ME_Prior_12_2（月次・時価加重・1927-01〜2026-08）、同 _Daily（日次）、49/30/17/12/10_Industry_Portfolios（月次・時価加重）、F-F_Research_Data_Factors（月次・日次）、地域別 {Europe, Japan, Asia_Pacific_ex_Japan, North_America, Developed, Developed_ex_US}_{25,6}_Portfolios_ME_Prior_12_2 と _3_Factors（1990-11〜）、Emerging_Markets_6_Portfolios_ME_Prior_12_2 と Emerging_5_Factors",
+  "jkp": "jkpfactors.com: 三分位ポートフォリオ（weighting='vw'＝上限なし時価加重・超過リターン・〜2025-12）、国別の市場（mkt・vw）、国別の GICS 11業種（industry/[国]_[gics]_[monthly]_[vw]・1999-07〜）",
+  "yahoo": "Select Sector SPDR（XLB XLE XLF XLI XLK XLP XLU XLV XLY、XLRE・XLC は出てから）・SPY・MTUM・PDP・IMTM・EFA（配当込み adjclose・生き残りの偏りあり・2026-09 は月の途中なので 2026-08 で切る）",
+  "rf": "French の RF（米国1か月T-bill）"
+ },
+ "benchmark": {
+  "US": "French Mkt = Mkt-RF + RF（上限なし時価加重・CRSP 全上場）。French のポートフォリオは総リターンなので総リターンどうしで比べる",
+  "region_french": "同じ地域の French Mkt（地域の Mkt-RF + RF・ドル建て）",
+  "jkp": "同じ国・地域の JKP mkt（weighting='vw'）。JKP は超過リターンなので、戦略と相手の両方に French RF を足して総リターンに揃える（算術の差は変わらない。幾何・積立・転がる窓を総リターンで出すため）",
+  "etf": "SPY（米国の業種ETF・MTUM・PDP）、EFA（IMTM）",
+  "timing_leverage": "F4 は French Mkt を相手に格付け（ユーザーの目的は市場に勝つこと）。C8 のシャープレシオも Mkt と比べる。参考として元の勝者ポートフォリオ（管理なし）との比較も出す"
+ },
+ "periods": {
+  "train": "データの始まり〜2006-12（米国は1927〜。地域は1990-11〜、JKP 国別は1987前後〜、GICS と業種ETFは1999〜で15年に満たない＝その旨を明記）",
+  "hold": "2007-01〜データの終わり（French 2026-08・JKP 2025-12・Yahoo 2026-08）",
+  "recent": "2013-07〜（報告のみ）",
+  "post_publication": "出典の公表年の翌年から（報告のみ）: 株の勢い Jegadeesh-Titman 1993→1994〜、業種の勢い Moskowitz-Grinblatt 1999→2000〜、国の勢い Asness-Liew-Stevens 1997→1998〜、52週高値 George-Hwang 2004→2005〜、残差の勢い Blitz-Huij-Martens 2011→2012〜、12-7 Novy-Marx 2012→2013〜、季節性 Heston-Sadka 2008→2009〜、変動管理 Barroso-Santa-Clara 2015→2016〜、弱気相場の切替 Daniel-Moskowitz 2016→2017〜"
+ },
+ "decision_details": {
+  "family_holm": "族ごとに、保有期間（総額・費用前）の excess_stats の p（両側）を Holm で補正する。保有期間の t≤0 の戦略は p=1 として入れる（負けを有意な勝ちと数えない）。族は下の F1〜F8。F1 が主（primary）、F2〜F8 は探索（exploratory）とラベルする",
+  "c5_positive": "C5 の『超過が正』= その地域・国のデータの全期間（算術平均の超過）> 0。保有期間だけの正負も報告する",
+  "c5_units": {
+   "F1_stock": "独立の米国外の地域 = French Europe・Japan・Asia_Pacific_ex_Japan（6分割の規則は Emerging も加えて4地域）。同じ規則をその地域の同じ表に当てる",
+   "F1_top_decile": "地域には十分位の表が無いので、25分割（規模5×勢い5）の勢い第5列を規模5つにまたがって時価加重した『勢い上位20%』で代える（重み = 前月の社数 × 平均時価総額＝後知恵なし。構成が1か月ずれる近似）",
+   "F1_industry": "JKP の国別 GICS 11業種に同じ規則（MG 6-6・上位 K=max(2, 15%)=2）を当てる。国 = jpn, gbr, deu, fra, can, aus, che（7か国）",
+   "F5_jkp_signal": "同じ信号の良い側の三分位を JKP の jpn, gbr, deu, fra, can, aus, che, emerging（8単位）に当てる",
+   "F2": "French の地域戦略は同じ規則の Europe・Japan・Asia_Pacific_ex_Japan（＋6分割は Emerging）で数える。JKP の地域戦略は F5 と同じ8単位",
+   "F3": "F1_industry と同じ（業種の規則は GICS 11業種で近似。形成・保有・K はその変種のものを当てる）",
+   "F4_F6_F7_F8": "N/A（F6 の国別 GICS は F1 業種の再現そのもの。F4 は米国のみ。F7 は国の選別で既に国際。F8 は実在ETF）"
+  },
+  "good_side_jkp": "JKP の三分位のどちらが良い側かは mw_common.jkp_good_side(…, upto=200612)＝2006年までのデータだけで機械的に決める",
+  "jkp_min_n": "JKP 三分位の銘柄数 n<10 の月は使わない（0で埋めない・その月を落とす）",
+  "missing": "欠測は0と読まない。業種・国が形成期間の全月のリターンを持たないときは順位に入れない。保有中の月にリターンが無い構成要素は、その月だけ残りで割り直す（件数を記録する）",
+  "rolling_dca": "転がる20年窓（毎年7月起点・一括）と毎月積立20年は費用前の総額で出す（費用後も参考に出す）",
+  "cost_convention": "片道売買100%（ポートフォリオを丸ごと入れ替え）あたりの費用 = 単価。月の費用 = 片道の回転 × 単価。保有期間の費用後（C6）はこれを引いた系列で判定。参考として単価2倍・回転1.5倍の厳しめも出す（判定には使わない）"
+ },
+ "families": {
+  "F1_primary": {
+   "label": "主（primary）: 米国の勢い・買いだけ",
+   "strategies": {
+    "F1a1_us_top_decile": {"rule": "French 10_Portfolios_Prior_12_2 の Hi PRIOR（前年12か月〜前月の2か月前まで＝12-2の上位10%・毎月組替え・時価加重）", "cost": "片道 400%/年（Novy-Marx & Velikov 2016 の十分位の月35%前後）× 0.20%（時価加重で大型中心だが中小型も含む）"},
+    "F1a2_us_big_winners": {"rule": "French 6_Portfolios_ME_Prior_12_2 の BIG HiPRIOR（NYSE中央値より大きい株の勢い上位30%・時価加重）", "cost": "片道 250%/年 × 0.10%"},
+    "F1a3_us_me5_prior5": {"rule": "French 25_Portfolios_ME_Prior_12_2 の ME5 PRIOR5（列名 BIG HiPRIOR＝NYSE 規模上位20% × 勢い上位20%・時価加重）", "cost": "片道 300%/年 × 0.10%"},
+    "F1a4_us_me45_prior5": {"rule": "25分割の ME4 PRIOR5 と ME5 PRIOR5 の等分（毎月等分に戻す）", "cost": "片道 300%/年 × 0.15%"},
+    "F1b_us_industry_MG_6_6": {"rule": "Moskowitz-Grinblatt 1999 の既定: 各月末 t に、過去6か月（t−5〜t・飛ばしなし）の累積リターンで業種を並べ、上位 K 業種を等分で買い、6か月持つ（Jegadeesh-Titman の重ね持ち＝6つの組を 1/6 ずつ・各組の中は毎月等分に戻す）。K = max(2, 四捨五入(0.15N))（MG の 20業種中3＝15%）。N ごとに1戦略: 49業種 K=7 / 30業種 K=5 / 17業種 K=3 / 12業種 K=2 / 10業種 K=2", "cost": "毎月の目標の重みと、前月の重みが値動きで流れた後の重みの差から正確な回転（片道 = ½Σ|Δw|）を出し × 0.05%（業種ETFの売買を想定）", "ids": ["F1b_ind49", "F1b_ind30", "F1b_ind17", "F1b_ind12", "F1b_ind10"]}
+   },
+   "n_tests": 9
+  },
+  "F2_exploratory_international": {
+   "label": "探索: 地域・国の株の勢い（買いだけ）",
+   "strategies": {
+    "French_region_big_winners": "地域 R ∈ {Europe, Japan, Asia_Pacific_ex_Japan, North_America, Developed, Developed_ex_US, Emerging} の 6分割 BIG HiPRIOR vs 地域 Mkt（7戦略）。費用 片道 250%/年 × 0.20%",
+    "French_region_me5_prior5": "R ∈ {Europe, Japan, Asia_Pacific_ex_Japan, North_America, Developed, Developed_ex_US} の 25分割 ME5 PRIOR5 vs 地域 Mkt（6戦略）。費用 片道 300%/年 × 0.20%",
+    "JKP_ret_12_1_vw_good_tercile": "JKP ret_12_1（12-1の勢い）三分位の良い側（vw）vs 同じ地域の JKP mkt vw。地域 ∈ {world_ex_us, developed, emerging, jpn}（4戦略・usa は F5）。費用 片道 200%/年 × 0.20%"
+   },
+   "n_tests": 17
+  },
+  "F3_exploratory_industry_grid": {
+   "label": "探索: 業種の勢いの変種の総当たりと、訓練期間だけで選んだ規則",
+   "grid": "N ∈ {49,30,17,12,10} × 形成 ∈ {1-0, 3-0, 6-0, 9-0, 12-0, 12-1（t−11〜t−1・直近1か月を飛ばす）} × 保有 H ∈ {1,3,6,12}（重ね持ち）× K の割合 ∈ {15%, 30%}（K = max(2, 四捨五入(割合×N))）= 240 規則。費用は F1b と同じ（正確な回転 × 0.05%）。F1b の5つもこの中に含まれる。グリッド全体を一つの族として Holm（240）",
+   "train_selected": "N ごとに、48 規則のうち訓練期間（〜2006-12）の費用後の超過の NW t が最大のもの（同点は並び順の先）を選ぶ＝5戦略。さらに 240 全体から訓練の t が最大の1つ＝計6戦略を族 F3s とし、Holm（6）。選ぶのに保有期間のデータは一切使わない",
+   "n_tests": "240（グリッド）+ 6（訓練で選んだ規則・グリッドと重複）"
+  },
+  "F4_exploratory_crash_protection": {
+   "label": "探索: 勢いの崩れへの備え（タイミング・レバレッジ型＝C8 を当てる）",
+   "strategies": {
+    "F4v1_volmanaged_top_decile": "Barroso & Santa-Clara 2015 型: 月末 t に、勝者（10分割 Hi PRIOR）の日次リターンの直近126営業日の二乗平均から年率の実現ボラ σ̂ = √(252·mean(r²)) を出し、翌月の勝者への比率 w = min(1.5, σ*/σ̂)。σ* = 訓練期間（1927-01〜2006-12）の French Mkt の月次リターンの年率標準偏差（訓練データだけで決まる定数）。残り (1−w) は T-bill、w>1 の借入は RF + 0.5%/年。費用 = (|w_t − w_{t−1}| + w_t × 400%/12) × 0.20%",
+    "F4v2_volmanaged_big_winners": "同じ規則を 6分割 BIG HiPRIOR（日次は 6_Portfolios_ME_Prior_12_2_Daily）に。費用 = (|Δw| + w × 250%/12) × 0.10%",
+    "F4v3_volmanaged_market_control": "対照: 同じ規則を市場そのもの（French 日次 Mkt-RF+RF）に（Moreira-Muir 型）。勢いの効果と変動管理の効果を分けるため。費用 = |Δw| × 0.05%",
+    "F4d1_bear_switch_big_winners": "Daniel & Moskowitz 2016 の弱気相場の指標: 月末 t に市場の過去24か月（t−23〜t）の累積総リターンが負なら翌月は市場（Mkt）を持ち、そうでなければ BIG HiPRIOR を持つ。費用 = 切替月に 100% × 0.10% ＋ 勝者を持つ月は 250%/12 × 0.10%",
+    "F4d2_bear_switch_top_decile": "同じ切替を 10分割 Hi PRIOR に。費用 = 切替 100% × 0.20% ＋ 勝者を持つ月 400%/12 × 0.20%"
+   },
+   "n_tests": 5
+  },
+  "F5_exploratory_jkp_momentum_signals_us": {
+   "label": "探索: JKP の勢い系の信号（米国・三分位の良い側・上限なし時価加重 vw）vs JKP 米国 mkt vw",
+   "signals_cost": {"ret_12_1": "片道200%/年", "ret_9_1": "250%", "ret_6_1": "300%", "ret_3_1": "600%", "ret_12_7": "200%", "resff3_12_1": "200%（残差の勢い）", "resff3_6_1": "300%", "prc_highprc_252d": "150%（52週高値への近さ）", "seas_1_1an": "1200%（前年同月の季節性）"},
+   "unit_cost": "0.10%（三分位の時価加重は大型中心）",
+   "n_tests": 9
+  },
+  "F6_exploratory_sector_rotation_implementable": {
+   "label": "探索: 実装できる業種の回転（MG 6-6・上位2）",
+   "strategies": {
+    "F6_spdr": "Select Sector SPDR 9本（XLRE は2015-11〜・XLC は2018-07〜、形成の6か月がそろってから順位に入れる）で MG 6-6・上位2・重ね持ち vs SPY（Yahoo・生き残りの偏りほぼ無し＝業種は消えない）。費用 正確な回転 × 0.05%",
+    "F6_jkp_gics_usa": "JKP 米国 GICS 11業種で同じ規則 vs JKP usa mkt vw",
+    "F6_jkp_gics_country": "JKP の国別 GICS 11業種で同じ規則 vs その国の JKP mkt vw（jpn, gbr, deu, fra, can, aus, che の7戦略。F1b の C5 の再現単位と同じもの）"
+   },
+   "n_tests": 9
+  },
+  "F7_exploratory_country_momentum": {
+   "label": "探索: 国の勢い（国別の株価指数を買う）",
+   "strategies": {
+    "F7c1_developed_12_1_top_third": "JKP 先進23か国（aus aut bel can che deu dnk esp fin fra gbr hkg irl isr ita jpn nld nor nzl prt sgp swe usa）の国の市場（mkt vw・ドル建て）を、月末に 12-1（t−11〜t−1）の累積リターンで並べ、上位 1/3（切り上げ）を等分で買い毎月組替え vs JKP developed mkt vw。費用 正確な回転 × 0.15%。対照として同じ国々の等分（毎月等分に戻す）との差も報告",
+    "F7c2_allcountries_12_1_top_quarter": "上の23か国＋新興14か国（bra chl chn ind idn kor mex mys phl pol tha tur twn zaf）で、上位 1/4（切り上げ）を等分 vs JKP world mkt vw。費用 正確な回転 × 0.20%"
+   },
+   "n_tests": 2
+  },
+  "F8_report_real_etfs": {
+   "label": "報告: 実在の勢いETF（訓練期間が無いので C1 は満たせない＝格付けは計算するが参考）",
+   "strategies": {"MTUM_vs_SPY": "2013-05〜", "PDP_vs_SPY": "2007-04〜", "IMTM_vs_EFA": "2015-02〜"},
+   "n_tests": 3
+  }
+ },
+ "prior_expectation": "予想（測る前）: 米国の株の勢いは訓練期間では強い（t≥2）が、2009年の崩れで保有期間の超過は弱く、主の族で A 以上は出ないかもしれない。国際では日本の勢いがほぼ0で C5 は 2/3 ぎりぎり。業種の勢いは費用が小さいぶん有望だが保有期間は不明。変動管理は崩れを避けるので保有期間のシャープレシオが上がると予想するが、市場を超えるかは不明",
+ "known_limits": [
+  "French/JKP のポートフォリオは数十〜数千社の分散した集合で、個人が4〜5社で真似るとぶれが大きい",
+  "勢いは回転が大きく、費用の見積りが結果を左右する（単価2倍・回転1.5倍の厳しめを併記）。課税口座では売買ごとに税がかかる（NISA は非課税）",
+  "2009年の勢いの崩れ・2020年代の巨大テックの上昇を私は知っている（保有期間の知識の漏れ）",
+  "GICS 業種と業種ETFは1999年からで、訓練期間が15年に満たない",
+  "業種の勢いのグリッド（240）は多重検定そのもの。格付けの本命は F1（主）と F3s（訓練期間だけで選んだ規則）",
+  "地域の十分位の代用（25分割からの時価加重の上位20%）は重みが1か月ずれる近似"
+ ]
+}

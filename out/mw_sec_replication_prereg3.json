@@ -1,0 +1,31 @@
+{
+ "angle": "sec_replication",
+ "stage": "prereg3（探索の第2族・prereg2 の結果を見た後に登録）",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "global_prereg": "out/mw_prereg.json（線はそのまま。訓練期間が無いので格は最高でも C）",
+ "why": "prereg2 で最も強かったのは『浮動株時価の上位100社のうち cop_at の上位1/3・時価加重』（相手 M100 に +3.22%/年 t2.10・2つの半分とも正・SPY に +4.18 t2.16）。同じ族で『技術を除くと cop_at の上乗せは消えた（−0.14）』『主の cop_at_T3VW の上乗せ +1.07 のうち配分（技術の比重）が約3/4』だった。ここでは、上位100社の結果が (1) 100 という切り方の偶然か (2) 技術株への賭けか (3) 1〜数社の偶然か を、測る前に決めた規則で確かめる",
+ "leak": "prereg2 の結果（上位100社の cop_at が強い・技術を除くと消える）を見た後の登録。私たちは 2010〜2026 に巨大テックが市場を引っぱったことを知っている。ここの族は『勝ちの証拠』ではなく『上乗せがどこから来たか』の点検",
+ "measured_before_registration": "prereg2 までの結果だけ。この族の戦略のリターンは1つも計算していない",
+ "data_and_rules": "主の事前登録と prereg2 と同じ（データ・母集団 U_t・信号・順位 z・保有・費用・統計）。Mk = その年の U_t の浮動株時価の上位 k 社（金融も含めて数える）。順位づけは Mk のうち金融を除いた社（Mk の中で z を作り直す）",
+ "family": {
+  "cop_at_M50_T3VW": "上位50社の cop_at 上位1/3・時価加重。相手 M50",
+  "cop_at_M200_T3VW": "上位200社の cop_at 上位1/3・時価加重。相手 M200",
+  "cop_at_M100_T3VW_exBusEq": "上位100社のうち技術（FF12 BusEq）と金融を除いた社の cop_at 上位1/3・時価加重。相手 M100_exfin_exBusEq（その社たちの時価加重）",
+  "cop_at_M100_IN_T3SM": "上位100社の中で業種中立: FF12 業種ごとに cop_at 上位 ⌈n_k/3⌉ 社・業種の中は時価加重・業種の重みは上位100社（金融を除く）の業種比。相手 M100_exfin",
+  "gp_at_M100_T3VW": "上位100社の gp_at 上位1/3・時価加重。相手 M100",
+  "ope_be_M100_T3VW": "上位100社の ope_be 上位1/3・時価加重。相手 M100"
+ },
+ "n": 6,
+ "holm": "6本の全期間の p（それぞれの相手に対して）を mw_common.holm で補正",
+ "grade": "mw_common.grade（それぞれの相手・train=None なので C が上限）。U_all・SPY・French Mkt に対する数字も報告",
+ "diagnostics": "浮動株そのままの上位100社（価格を問わない）のうち価格が取れない社の数（年ごと）",
+ "post_hoc_事後": {
+  "brinson": "cop_at_M100_T3VW を M100_exfin 相手に業種（FF12）の配分と選択に分ける",
+  "contributors": "cop_at_M100_T3VW の M100 に対する上乗せへの銘柄ごとの寄与（Σ 月初の重みの差 × その月のリターン、年率）の上位10社と下位5社",
+  "leave_out_top1": "寄与が最大の1社を U_t から除いてから上位100社を作り直し（101位が繰り上がる）、戦略と相手の両方を計り直す",
+  "leave_out_mega6": "AAPL・MSFT・GOOGL・AMZN・META・NVDA の6社を U_t から除いてから上位100社を作り直し、戦略と相手の両方を計り直す（名前の選び方が後知恵＝事後）",
+  "note": "どれも結果を見た後の説明の道具で、格付けしない"
+ },
+ "honesty": "6本と診断・事後はすべて out/mw_sec_replication.json の exploratory_prereg3 に残す"
+}

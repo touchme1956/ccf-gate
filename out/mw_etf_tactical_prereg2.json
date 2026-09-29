@@ -1,0 +1,93 @@
+{
+ "angle": "etf_tactical",
+ "prereg": 2,
+ "title": "探索の第2族: 業種の勢いを『実在の細かい業種ファンド』（Fidelity Select 約32本・1985年〜）で試す——紙の上の勝ちは実物に移るか",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "why_now": "第1族の結果（事前登録 out/mw_etf_tactical_prereg.json・コミット c1e57d3）: セクターの勢いは French の9業種（CRSP・紙の上）では A〜S になったが、同じ規則を実在の SPDR 9セクター（と1999年以前の Fidelity Select 9本）で動かすと 2007〜 で市場に負けた（上位3・12か月: French +2.5%/年 対 SPDR −0.2%/年）。業種の角度（mw_industry）でも GICS 11 の米国版は弱かった。粗い9〜11の区分だと勢いが薄まる可能性がある。そこで、より細かい『実在の業種ファンド』で同じ型の規則を試す。規則の中身（上位 K・12か月・毎月）は第1族と同じ型で、K は業種数に対する割合（約10%・約20%）で結果を見る前に固定する",
+ "what_was_looked_at_before_registering": [
+  "データの有無だけ（Fidelity Select の各ファンドの Yahoo 月次の最初の月）。Fidelity Select のリターンと市場を比べた数字は一つも見ていない",
+  "Yahoo にある Select（業種）ファンド: FSPTX FSENX FIDSX FSUTX FSPHX FSDAX FDLSX 1985-02／FSLBX FSCHX FDFAX FSELX FSTCX FSCSX FDCPX 1985-08／FSAGX FBIOX FSVLX FSPCX FSRPX 1986-01／FSAVX FSHCX FBMPX FSRBX 1986-07／FSHOX FSDPX FSRFX 1986-10／FSLEX 1989-07／FSCPX 1990-07／FNARX 1997-03／FBSOX 1998-03／FSMEX 1998-05／FWRLX 2000-10／FPHAX 2001-07（計32本）",
+  "Yahoo に無い（合併・廃止か系列なし）Select: FSAIX（航空）・FSNGX（天然ガス）・FSESX（エネルギー・サービス）・FSDCX（通信機器）・FCYIX（資本財）・FSCGX（産業機械）・FSPFX（紙・林産）ほか＝生き残りの偏り",
+  "JKP の業種の国別ファイルは GICS 11 だけ（ff49 は米国のみ）",
+  "第1族の結果（上の why_now）は見ている。第2族の規則はそれを受けて作った探索＝『探索』と明記し、判定の線は変えない"
+ ],
+ "global_criteria": "out/mw_prereg.json（変更しない）。判定は night/mw_common.grade()",
+ "question": "Fidelity Select の業種ファンド（実在・信託報酬後・約32本）を、過去12か月（または 1・3・6・12 か月の平均）の成績で上位 K 本だけ等分で持ち毎月入れ替えると、French Mkt に訓練期間（〜2006）でも保有期間（2007〜）でも費用後に勝つか。同じ月の French 30業種（紙の上の類似）と比べて、実物でどれだけ目減りするか",
+ "universe": {
+  "funds": [
+   "FSPTX",
+   "FSENX",
+   "FIDSX",
+   "FSUTX",
+   "FSPHX",
+   "FSDAX",
+   "FDLSX",
+   "FSLBX",
+   "FSCHX",
+   "FDFAX",
+   "FSELX",
+   "FSTCX",
+   "FSCSX",
+   "FDCPX",
+   "FSAGX",
+   "FBIOX",
+   "FSVLX",
+   "FSPCX",
+   "FSRPX",
+   "FSAVX",
+   "FSHCX",
+   "FBMPX",
+   "FSRBX",
+   "FSHOX",
+   "FSDPX",
+   "FSRFX",
+   "FSLEX",
+   "FSCPX",
+   "FNARX",
+   "FBSOX",
+   "FSMEX",
+   "FWRLX",
+   "FPHAX"
+  ],
+  "note": "33本を列挙（FPHAX を含む）。各月、12か月の窓がそろったファンドだけが順位の対象（途中から加わるファンドは窓がそろった月から）。対象が20本以上になった最初の月の翌月から始める",
+  "survivor_bias": "今も Yahoo に系列があるファンドだけ。合併・廃止された Select（上の一覧）は入らない。符号の分からない偏り（勢いの規則は2005〜2008年の天然ガス・エネルギーサービスを選んだかもしれない）"
+ },
+ "strategies": {
+  "G1_FSEL_K3_R12": "12か月リターン上位3本を1/3ずつ（約10%）",
+  "G2_FSEL_K6_R12": "12か月リターン上位6本を1/6ずつ（約20%）",
+  "G3_FSEL_K3_BL": "(r1+r3+r6+r12)/4 の上位3本",
+  "G4_FSEL_K6_BL": "(r1+r3+r6+r12)/4 の上位6本",
+  "G6_FR30_K3_R12": "紙の上の類似: French 30業種（時価加重・Other を除く29）の12か月上位3を、G1 と同じ月（Fidelity の開始月から）で",
+  "G7_FR30_K6_R12": "同 上位6",
+  "G5_FSEL_EW": "参照（候補ではない）: 対象のファンドを全部等分（毎月）＝勢いを除いた『業種ファンドを等分で持つ』の比較"
+ },
+ "families": {
+  "exploratory2": "G1〜G4・G6・G7 の6本（Holm はこの6本の中で・保有期間・費用後・両側 p）",
+  "reference2": "G5"
+ },
+ "timing_classification": "常に株100%（金鉱株 FSAGX も株）→ C8 は掛けない",
+ "benchmark": "French Mkt（総リターン）。報告: VFINX→SPY",
+ "periods": "訓練〜2006-12・保有 2007-01〜2026-08・最近 2013-07〜（報告）・公表後（Faber 2010 → 2011-01〜・報告）",
+ "costs": {
+  "graded": "第1族と同じ: 売り・買いそれぞれ 0.05%（片道100%あたり 0.10%）を各月の実額に",
+  "stress": [
+   "片道 0.30%",
+   "Fidelity の短期売買手数料を想定: 売りのたびに 0.75%（30日未満の解約手数料が全部の売りに掛かる最悪ケース）"
+  ],
+  "not_included": "1990年代まであった Select の 3% の販売手数料・交換手数料は入れない（限界）"
+ },
+ "C5": "JKP GICS 11セクター（vw・超過＋French RF）の7か国（jpn gbr can fra deu aus che）で、K=3 の規則は GICS 上位1、K=6 の規則は上位2（業種数に対する割合 約10%・約20% を11に当てる）、点は同じ（r12 か平均）。その国の JKP mkt（vw）との差の算術平均が正の国の数。French 30 の類似（G6・G7）も同じ再現を使う",
+ "reported_not_graded": [
+  "French 30業種の全期間（1927〜）の同じ規則",
+  "各戦略の保有期間の中で、どの業種ファンドを何割の月で持ったか",
+  "日本の課税口座の税引後"
+ ],
+ "expectations_before_results": "分からない。業種の勢いは French の細かい業種では強いが、実在のファンドは信託報酬（年0.7〜1%）と生き残りの偏りがあり、SPDR 9セクターでは消えた。Fidelity で残るなら『粗さ』が原因、消えるなら『紙と実物の差』が原因と読める（どちらも事後の解釈として扱う）",
+ "known_limits": [
+  "生き残りの偏り（合併・廃止されたファンドが無い）",
+  "Select はアクティブ運用（業種の中で銘柄を選ぶ）＝業種の指数そのものではない",
+  "昔の販売手数料・短期売買の制限は入れていない",
+  "French 30 は CRSP 全上場（小型株を含む）で、Fidelity は大型寄り"
+ ]
+}

@@ -1,0 +1,95 @@
+{
+ "angle": "industry",
+ "generated": "2026-09-28",
+ "registered_before_measuring": true,
+ "asked_by": "ユーザー（2026-09-28）「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して」→ 角度 industry を担当",
+ "question": "French の49業種（業種ごとの時価加重ポートフォリオ・CRSP 全上場・1926〜）を部品にして、買いだけで業種を選ぶ規則は、純粋な時価加重の市場（French Mkt）に勝てるか。勝ちは out/mw_prereg.json の線（C1〜C8・格付け S/A/B/C）で裁き、線は結果を見て動かさない",
+ "global_criteria": "out/mw_prereg.json（変更しない）。判定は night/mw_common.grade() をそのまま使う",
+ "what_was_checked_before_registering": [
+  "データの有無と期間だけ（結果の数字は見ていない）: 49業種の時価加重月次リターン 1926-07〜2026-08。Soda・FabPr・Guns・Gold は 1963-07〜、Hlth は 1969-07〜、Softw は 1965-07〜、Rubbr 1930-07〜、Paper 1929-07〜、PerSv 1927-07〜（それ以前は欠測＝その業種は候補に入れない・0で埋めない）",
+  "『Average Firm Size』の月 m の値は m の月初（m−1 の月末）の時価総額: 49業種を 社数×平均規模 で加重した月次リターンが French Mkt と月あたり平均絶対差 0.044%（同じ月の重み）vs 0.071%（1か月前の重み）、年率の平均差 +0.10%（後知恵の重みなら年2〜4%の上振れが出るはず）→ 月 m の重みは m の月初に分かっている値として使う（業種の重み付けの向きの確認であって、戦略の成績ではない）",
+  "Sum of BE / Sum of ME（年次）は 1926〜2026。行 t は『会計年度 t−1 の BE ÷ t−1 年12月の ME』で、t 年7月〜t+1 年6月に使う（French の作り方）。BE/ME ≤ 0 の業種年が10件（Softw 1977-78・Smoke 2014〜2024 など）→ 価値の順位からは外す",
+  "49_Industry_Portfolios_Wout_Div（配当を除く）が同じ期間で取れる → 業種の配当利回りを作れる",
+  "JKP の業種（GICS 11セクター・各国・時価加重 vw・1999-07〜2025-12・米国T-billを引いた超過）が取れる → C5（米国外での再現）の材料。JKP の業種リターンが超過であることは米国 ff49 版と French の比較で確認（差の年率 −0.0〜+0.7% vs 総リターンとの差 −3〜−6%）"
+ ],
+ "data": {
+  "us": "Ken French『49_Industry_Portfolios』（Average Value Weighted Returns -- Monthly＝総リターン・Number of Firms・Average Firm Size・Sum of BE / Sum of ME）と『49_Industry_Portfolios_Wout_Div』（配当を除く時価加重リターン）。取得は mw_common.french_tables",
+  "benchmark": "French Mkt = Mkt−RF + RF（総リターン・上限なし時価加重）。業種の時価加重リターンも総リターンなので、総リターンどうしで比べる",
+  "replication": "JKP『industry』GICS 11セクター（vw・超過）と同じ国の JKP mkt（vw・超過）。国: jpn, gbr, can, fra, deu, aus, che（米国外の先進国の大きい7市場・結果を見る前に固定）",
+  "cache": "out/_mw_cache/（gitignore）"
+ },
+ "periods": {"train": "開始〜2006-12", "holdout": "2007-01〜2026-08", "recent": "2013-07〜（報告のみ）", "post_publication": "出典の公表年の翌年1月〜（報告のみ）"},
+ "common_rules": {
+  "timing": "年1回の規則は t 年6月末までに分かる値だけで決め、t 年7月〜t+1 年6月に持つ（重みは月ごとに値動きでずれるまま・途中で直さない）。月次の規則は m−1 月末までの値で m 月を決める。業種の時価総額 ME_i(m) = 社数(m) × 平均規模(m)（m の月初の値）",
+  "selectable": "選ぶ規則（上位K・固定の組）で選べるのは『Other』を除く48業種（『分類不能』は買える業種ETFにならない）。『市場から除く』型の規則では Other も残りに入れる",
+  "weighting": "EW＝選んだ業種に等分（業種の中は時価加重）。VW＝選んだ業種を毎月の月初の ME で加重",
+  "missing": "信号の窓に欠測が1か月でもある業種はその回の順位に入れない（0で埋めない）。持っている業種のリターンが欠測になったら残りで按分し直す（起きないことを確認済み）",
+  "K": "上位/下位 K は論文の既定値ではなく 49業種の約1割と2割として K=5 と K=10 を固定（課題文の指定どおり・結果を見る前）",
+  "ties": "同点は業種名の辞書順（決めておくだけ）"
+ },
+ "cost": {
+  "turnover": "毎月の売買 = Σ|目標の重み − 値動きでずれた重み|（買い＋売りの両側）。最初の買付は数えない（市場の側も買う）",
+  "unit": "両側の売買 100% あたり 0.05%（業種ETFの売買の想定＝課題文の指定。片側に直すと 0.10% で、全体の既定の大型株0.10%と同じ）",
+  "graded": "保有期間の平均の年間売買で mw_common.apply_cost を当てた保有期間の成績で C6 を裁く",
+  "report_only": "業種ETFの信託報酬の目安として年0.30%を追加で引いた保有期間の超過も並べる（判定には使わない）。49業種と同じ細かさのETFは実在しない（米国の業種ETFはセクター11・産業グループ程度）ことも限界に書く"
+ },
+ "strategies": [
+  {"id": "A1_sin_vw", "family": "a_static", "primary": true, "rule": "罪の株: Smoke（たばこ）＋ Beer（酒）を時価加重（毎月）", "source": "Hong & Kacperczyk (2009, JFE)", "pub_year": 2009, "note": "ギャンブル（カジノ）は Fun（娯楽）の中にあって切り出せないので入れない", "repl": null},
+  {"id": "A2_sin_ew", "family": "a_static", "primary": true, "rule": "Smoke と Beer を等分（毎年7月に等分へ戻す）", "source": "Hong & Kacperczyk (2009)", "pub_year": 2009, "repl": null},
+  {"id": "A3_def_vw", "family": "a_static", "primary": true, "rule": "守りの業種: Food, Hshld, Util, Drugs, Hlth, MedEq を時価加重（毎月）。Hlth は1969-07から", "source": "守りの業種（生活必需品・公益・医療）の通説", "pub_year": null, "repl": "def: 生活必需品30・ヘルスケア35・公益55 を等分（JKP に時価総額が無いので等分で代用）"},
+  {"id": "A4_def_ew", "family": "a_static", "primary": true, "rule": "上の6業種を等分（毎年7月）", "source": "同上", "pub_year": null, "repl": "def"},
+  {"id": "A5_neglect_ew", "family": "a_static", "primary": true, "rule": "注目されにくい業種: 7月の時価総額の比重が最も小さい10業種を等分（毎年7月）", "source": "Merton (1987) の投資家の認知・無視された株の考え方を業種に当てる", "pub_year": 1987, "repl": null},
+  {"id": "A6_siegel_vw", "family": "a_static", "primary": true, "rule": "シーゲルの業種: 生活必需品と医療 Food, Soda, Beer, Smoke, Hshld, Drugs, MedEq, Hlth を時価加重（毎月）", "source": "Siegel『The Future for Investors』(2005)（1957〜2003年の最良の業種＝医療と生活必需品）", "pub_year": 2005, "repl": "siegel: 生活必需品30・ヘルスケア35 を等分"},
+  {"id": "B1_value5", "family": "b_value", "primary": true, "rule": "業種の BE/ME（行 t）の上位5業種を等分（t年7月〜t+1年6月）", "source": "Fama-French (1992) の価値を業種に当てる", "pub_year": 1992, "repl": null},
+  {"id": "B2_value10", "family": "b_value", "primary": true, "rule": "BE/ME 上位10業種を等分", "source": "同上", "pub_year": 1992, "repl": null},
+  {"id": "C1_lowvol5", "family": "c_lowvol", "primary": true, "rule": "6月末までの60か月の月次リターンの標準偏差が最も小さい5業種を等分（毎年7月）", "source": "Haugen & Heins (1975)・Blitz & van Vliet (2007) の低ボラを業種に当てる", "pub_year": 2007, "repl": "lowvol: 60か月の標準偏差が最も小さい3セクター（11のうち）を等分・毎年7月"},
+  {"id": "C2_lowvol10", "family": "c_lowvol", "primary": true, "rule": "同じく最も小さい10業種を等分", "source": "同上", "pub_year": 2007, "repl": "lowvol"},
+  {"id": "D1_rev60_5", "family": "d_reversal", "primary": true, "rule": "6月末までの60か月の累積リターンが最も低い5業種を等分（毎年7月）", "source": "DeBondt & Thaler (1985) の長期の反転を業種に当てる", "pub_year": 1985, "repl": "rev60: 60か月の累積が最も低い3セクター"},
+  {"id": "D2_rev60_10", "family": "d_reversal", "primary": true, "rule": "60か月の累積が最も低い10業種を等分", "source": "同上", "pub_year": 1985, "repl": "rev60"},
+  {"id": "D3_rev120_5", "family": "d_reversal", "primary": true, "rule": "120か月の累積が最も低い5業種を等分（毎年7月）。この台帳の tech_persist（過去10年の勝ち業種は反転しがち）の裏返し", "source": "DeBondt & Thaler (1985)・out/tech_persist.json", "pub_year": 1985, "repl": "rev120: 120か月の累積が最も低い3セクター"},
+  {"id": "D4_rev120_10", "family": "d_reversal", "primary": true, "rule": "120か月の累積が最も低い10業種を等分", "source": "同上", "pub_year": 1985, "repl": "rev120"},
+  {"id": "E1_exrecord", "family": "e_record", "primary": true, "rule": "市場から『比重が過去最大』の業種を除いた残りを時価加重（毎月）。t年7月の比重（ME÷全業種ME）が、その業種のそれまでのどの7月よりも大きく（前に10回以上の7月が必要）、かつ5%以上なら、t年7月〜t+1年6月は除く", "source": "この台帳の industry_peak（記録の後10年の中央値 −1.5%/年・勝った山5/19）", "pub_year": null, "repl": null},
+  {"id": "F1_exfin", "family": "f_exfin", "primary": true, "rule": "市場から金融（Banks, Insur, RlEst, Fin）を除いた残りを時価加重（毎月）", "source": "課題文の指定（金融を除く指数）", "pub_year": null, "repl": null},
+  {"id": "G1_mom6_5", "family": "g_momentum", "primary": true, "rule": "m−6〜m−1 月の6か月の累積リターンが最も高い5業種を等分（毎月入れ替え）", "source": "Moskowitz & Grinblatt (1999, JF) の業種モメンタム（6か月・直近月を飛ばさない）", "pub_year": 1999, "repl": "mom6: 6か月の累積が最も高い3セクター・毎月"},
+  {"id": "G2_mom6_10", "family": "g_momentum", "primary": true, "rule": "6か月の累積が最も高い10業種を等分（毎月）", "source": "同上", "pub_year": 1999, "repl": "mom6"},
+  {"id": "G3_mom12_5", "family": "g_momentum", "primary": true, "rule": "m−12〜m−1 月の12か月の累積が最も高い5業種を等分（毎月）", "source": "同上（12か月版）", "pub_year": 1999, "repl": "mom12: 12か月の累積が最も高い3セクター・毎月"},
+  {"id": "G4_mom12_10", "family": "g_momentum", "primary": true, "rule": "12か月の累積が最も高い10業種を等分（毎月）", "source": "同上", "pub_year": 1999, "repl": "mom12"},
+  {"id": "G5_avoidlosers", "family": "g_momentum", "primary": true, "rule": "市場から12か月の累積が最も低い10業種（Other も対象）を除いた残りを時価加重（毎月）。12か月の窓がそろわない業種は除かない", "source": "同上（負け業種を避けるだけ＝追従のぶれが小さい版）", "pub_year": 1999, "repl": null},
+  {"id": "H1_seas5", "family": "h_seasonality", "primary": true, "rule": "月 m と同じ暦月の過去20年（y−1〜y−20）の平均リターンが最も高い5業種を等分（毎月）。10年分以上が必要", "source": "Heston & Sadka (2008, JFE)・Keloharju, Linnainmaa & Nyberg (2016, JF) の業種の季節性", "pub_year": 2008, "repl": "seas: 同じ規則で3セクター（10年以上の履歴が要るので2009-07〜）"},
+  {"id": "H2_seas10", "family": "h_seasonality", "primary": true, "rule": "同じく上位10業種を等分（毎月）", "source": "同上", "pub_year": 2008, "repl": "seas"},
+  {"id": "I1_dy5", "family": "i_payout", "primary": true, "rule": "業種の配当利回り＝ t−1年7月〜t年6月の Σ(総リターン − 配当なしリターン) の上位5業種を等分（毎年7月）", "source": "配当利回り（Siegel 2005・Fama-French 1988）を業種に当てる", "pub_year": 2005, "repl": null},
+  {"id": "I2_dy10", "family": "i_payout", "primary": true, "rule": "配当利回りの上位10業種を等分", "source": "同上", "pub_year": 2005, "repl": null},
+  {"id": "I3_npy5", "family": "i_payout", "primary": true, "rule": "業種の純還元利回り NPY = ln(12か月の総リターンの積) − ln(ME(t年7月)÷ME(t−1年7月))（＝配当＋自社株買い＋現金買収 − 新株発行・新規上場）の上位5業種を等分（毎年7月）", "source": "Boudoukh, Michaely, Richardson & Roberts (2007, JF) の純還元利回りを業種の時価総額の動きから作る", "pub_year": 2007, "note": "業種の間の会社の移動（分類替え）も発行・還元に混ざる＝雑音", "repl": null},
+  {"id": "I4_npy10", "family": "i_payout", "primary": true, "rule": "NPY の上位10業種を等分", "source": "同上", "pub_year": 2007, "repl": null},
+  {"id": "X1_value5_vw", "family": "b_value", "primary": false, "rule": "B1 を時価加重で（毎月）", "source": "B1 の変形", "pub_year": 1992, "repl": null},
+  {"id": "X2_value10_vw", "family": "b_value", "primary": false, "rule": "B2 を時価加重で", "source": "B2 の変形", "pub_year": 1992, "repl": null},
+  {"id": "X3_exrecord_any", "family": "e_record", "primary": false, "rule": "E1 の比重5%以上の条件を外す（記録なら小さい業種も除く）", "source": "E1 の変形", "pub_year": null, "repl": null},
+  {"id": "X4_exrecord_5y", "family": "e_record", "primary": false, "rule": "直近5回の7月（t−4〜t）のどこかで記録（比重5%以上）を付けた業種を除く", "source": "E1 の変形（記録は続きやすい＝industry_peak の73%）", "pub_year": null, "repl": null},
+  {"id": "X5_mom12_annual5", "family": "g_momentum", "primary": false, "rule": "年1回（7月）: 6月末までの12か月の累積が最も高い5業種を等分し1年持つ（売買を減らした版）", "source": "G3 の変形", "pub_year": 1999, "repl": "mom12a: 12か月の累積が最も高い3セクター・毎年7月"},
+  {"id": "X6_mom12_annual10", "family": "g_momentum", "primary": false, "rule": "同じく上位10業種", "source": "G4 の変形", "pub_year": 1999, "repl": "mom12a"},
+  {"id": "X7_hi52_5", "family": "g_momentum", "primary": false, "rule": "52週高値への近さ: 配当なしの価格指数の m−1 月末の値 ÷ m−12〜m−1 月末の最大値 が最も高い5業種を等分（毎月）", "source": "George & Hwang (2004, JF)", "pub_year": 2004, "repl": null},
+  {"id": "X8_hi52_10", "family": "g_momentum", "primary": false, "rule": "同じく上位10業種", "source": "同上", "pub_year": 2004, "repl": null},
+  {"id": "X9_avoid_seas", "family": "h_seasonality", "primary": false, "rule": "市場から季節性の信号（H1 と同じ）が最も低い10業種を除いた残りを時価加重（毎月）", "source": "H1 の変形（追従のぶれが小さい版）", "pub_year": 2008, "repl": null}
+ ],
+ "multiple_testing": {
+  "primary_family": "primary=true の27本。C7 の Holm は保有期間の両側 p をこの27本で補正",
+  "exploratory": "primary=false の9本（同じ事前登録の中の変形）。Holm は 27+9=36本で補正した値を使う（厳しい側）。探索と明記し、格付けはするが『主』と区別して報告",
+  "later": "主と探索に A・S が無ければ、追加の族を out/mw_industry_prereg2.json 以降で同じように測る前に登録する。線は下げない"
+ },
+ "replication_C5": {
+  "rule": "同じ規則を JKP の GICS 11セクターに当て、各国の JKP 市場（vw）との差（超過どうし）の月次の算術平均が正の国を数える。上位/下位は 11 のうち 3（K=5 と K=10 の両方とも同じ3を使う＝セクターが少ないため）。期間は信号がそろう月〜2025-12。60か月未満の国は数えない",
+  "countries": ["jpn", "gbr", "can", "fra", "deu", "aus", "che"],
+  "not_applicable": "BE/ME・配当・時価総額（ME）を使う規則と、たばこ・酒を切り出す規則は JKP の業種データに材料が無い → C5 は N/A（格付けでは N/A＝S の妨げにならないが、A には C3 が要る）"
+ },
+ "reported_per_strategy": ["全期間・訓練・保有・直近・公表後の excess_stats", "費用後の保有期間（格付け用）と信託報酬0.30%も引いた参考値", "年間の売買（両側）", "転がる20年（一括）と毎月積立20年", "C5 の国別", "Holm 補正後 p", "格付けと C1〜C8"],
+ "sanity_checks": ["French Mkt の CAGR 1926〜 ≈ 10.4%・2007〜 ≈ 11.1%（mw_common の既知値）を再現", "49業種全部を月初の ME で加重した合成が French Mkt とほぼ一致（年率の差 ±0.2% 以内）", "信号は m−1 月末以前のデータだけを見る（コードで検査）", "意図的な後知恵（その月のリターンで選ぶ）が桁違いの成績になることを示し、道具が後知恵を検出できることの確認（戦略ではない・tested に入れない）"],
+ "expectations_before_results": "予想（外れても線は動かさない）: 保有期間（2007〜）は巨大テックの時代で、価値・低ボラ・配当・守りの業種・『比重が過去最大を除く』は負けやすい。勝つ可能性があるのはモメンタム・季節性・金融を除く（2008年の金融危機を避ける）あたり。全期間 t≥3 は追従のぶれの小さい『市場から除く』型でないと難しい",
+ "known_limits": [
+  "49業種と同じ細かさの業種ETFは実在しない（米国の業種ETFはセクター11・産業グループ・一部の業種）。等分の規則は小さい業種（Coal・Ships・Guns 等）にも同じ重みを置く＝実行できる形より楽観的になりうる",
+  "業種の中は時価加重＝数百社の分散。門の4〜5社の集中とは別物",
+  "費用は業種の入れ替えの分だけ（業種の中の入れ替えはポートフォリオのリターンに含まれ、市場の側も同じ）。課税口座の売却益課税は入れていない",
+  "業種の分類（SIC）は時代で中身が変わる（例: Apple は French の分類では Chips＝半導体・電子部品に入る）",
+  "私たちは2007年以降の業種の歴史（金融危機・テックの勝ち）を知っている。だから規則は論文の既定値と課題文の指定で固定し、保有期間を見て変えない",
+  "JKP の GICS は1999-07〜で、セクター11と粗い。C5 は『同じ考え方の粗い版』の再現で、49業種の規則そのものではない"
+ ]
+}

@@ -1,0 +1,87 @@
+{
+ "angle": "where_edge",
+ "generated": "2026-09-28",
+ "registered_before_measuring": true,
+ "what_was_looked_at_before": "データの有無・範囲・件数だけ（night/mw_where_edge.py check: 各年の母集団の社数・BusEq と BusEq 以外の社数・FF49 の業種の数・組み方中立で選ばれる社数・得点のある社がいる業種の時価の割合〔ほぼ100%〕、French 12/49業種と ME の月の範囲、JKP 各国の GICS セクターの数と良い三分位の社数）。戦略と市場を比べる数字はまだ一つも計算していない。ただし前の角度の結果（sec_replication・reality_gap・mega_tilt の数字）は既に知っている＝下の『事前の見込み』はそれを踏まえている",
+ "global_prereg": "out/mw_prereg.json（C1〜C8）。この角度は監査で、事前登録どおり格付け（S/A）はしない。記述のラベルだけ",
+ "question": "現金ベースの営業収益性 cop_at（Ball et al. 2016）の上乗せは『どこにあるのか』。JKP（CRSP/Compustat・上限なし時価加重の上位1/3）は業種で調整しても2007年以降に上乗せが残ると言い、SEC の株ごとの作り直し（上位500社・2010-07〜2026-08）は上乗せの約3/4が技術（FF12 BusEq）の比重で技術を除くと0前後と言う。この食い違いを『方法 × データ』の2×2で監査し、(a) 主に技術の比重 (b) 技術の中の選別 (c) 技術の外にも上乗せ のどれかを決める",
+ "why_it_matters": "(a) なら上乗せは業種の賭けで、100年の基礎率（直近10年の1位の業種が次の10年に勝つのは26%・技術3業種は1965年から+0.1%/年）は支持しない。(b) なら NASDAQ-100 の中での傾けで取れる。(c) なら分散した質の袖に根拠がある",
+ "datasets": {
+  "JKP": "JKP usa cop_at の三分位（vw＝上限なし時価加重・超過）。良い側は mw_common.jkp_good_side(upto=2006-12)（=3.0 のはず）。窓 1963-07〜2025-12",
+  "SEC": "night/mw_sec_replication.py の母集団をそのまま（SR.build_panel・SR.build_universe(fetch=False)・SR.scores・SR.simulate）: 毎年6月末の浮動株時価の上位500社、7月に組み直し翌6月まで保有（重みは値動きで漂う）、Yahoo 配当込み、金融（FF12 Money）は順位づけから除く。窓 2010-07〜2026-08（全部が保有期間＝訓練期間なし）"
+ },
+ "industry_maps": "FF12 = French Siccodes12（SR.ff12_fn）、FF49 = French Siccodes49（同じ形式の対応表・範囲に無い SIC は Other）。技術 = FF12 の BusEq。FF49 で技術の寄与を数えるときは Hardw・Softw・Chips・LabEq",
+ "methods": {
+  "M1_regression": "回帰α: y = 組の月次の差（JKP: P3−Mkt-RF／SEC: 組−U_exfin）を、French Mkt-RF と French の VW 業種リターン−French Mkt（FF12 は12本・FF49 は49本、全部）に回帰。α は切片×12、t は Newey-West（ラグ12）。説明変数は両方のデータで同じ（方法を固定してデータだけを変えるため）",
+  "M2_construction_neutral": "組み方で業種をそろえる（CN）: 業種ごと（FF12 または FF49）に cop_at の上位 ceil(n/3) 社（得点のある社の中）を浮動株時価で加重し、業種の重みは母集団（得点の有無を問わず全社）の業種の時価の比。得点のある社が1社もいない業種は外して按分し直す（0で埋めない。点検では外れる時価は ≤0.1%）。SEC でだけ作れる"
+ },
+ "registered_statistics_family_holm": {
+  "note": "Holm は下の8本で補正（p は NW t からの両側）。仮説の判定は下の仮説の線（t≥1.65 等）で行い、Holm 後の p は並べて報告する",
+  "JKP_reg12_hold": "JKP × M1（FF12）・保有 2007-01〜2025-12 の α",
+  "JKP_reg49_hold": "JKP × M1（FF49）・保有 2007-01〜2025-12 の α",
+  "SEC_reg12": "SEC × M1（FF12）: y = cop_at_T3VW − U_exfin・2010-07〜2026-08 の α。cop_at_T3VW = 金融を除く母集団の cop_at 上位1/3（floor）を浮動株時価加重（sec_replication と同じ）",
+  "SEC_reg49": "SEC × M1（FF49）・同じ y",
+  "SEC_CN12": "SEC × M2（FF12）: CN12 − U_exfin の算術平均（年率）と NW t",
+  "SEC_CN49": "SEC × M2（FF49）: CN49 − U_exfin",
+  "H2_within_BusEq": "BusEq の中の cop_at 上位1/3（floor・時価加重）− BusEq 全社（時価加重）",
+  "H3_CN49_exBusEq": "BusEq と金融を除いた母集団で FF49 の組み方中立（CN49_exB）− 除いた全社の時価加重（U_exfin_exBusEq）"
+ },
+ "hypotheses_fixed_ex_ante": {
+  "H1_regression_inflation": "SEC_reg12 の α > 0 かつ α ≥ 2 × SEC_CN12 の超過（CN12 が0以下なら α>0 だけで成立）。FF49 版（SEC_reg49 と SEC_CN49）は副の読みとして同じ線で報告",
+  "H2_selection_within_tech": "H2_within_BusEq の超過 > 0 かつ NW t ≥ 1.65、かつ BusEq を除いた版（金融・BusEq を除いた母集団の cop_at 上位1/3 時価加重 − U_exfin_exBusEq＝sec_replication の cop_at_T3VW_exBusEq と同じ）の超過 ≤ 0",
+  "H3_edge_outside_tech": "H3_CN49_exBusEq の超過 > 0 かつ NW t ≥ 1.65"
+ },
+ "outcome_mapping_fixed_ex_ante": {
+  "(c)": "H3 が成立 → 技術の外にも上乗せがある（H2 も成立なら (b)+(c)）",
+  "(b)": "H3 不成立・H2 成立 → 技術の中での選別",
+  "(a)": "H3・H2 とも不成立 かつ SEC の cop_at_T3VW 対 U_exfin の Brinson（FF12）で配分効果が（配分+選択）の50%以上 → 主に技術の比重",
+  "判定なし": "上のどれにも当たらない"
+ },
+ "report_only": {
+  "JKP_other_windows": "JKP の M1（FF12/FF49）を 全期間・訓練（1963-07〜2006-12）・直近（2013-07〜）・共通窓（2010-07〜2025-12＝SEC と同じ窓）で。窓の違いとデータの違いを分けるため",
+  "JKP_raw": "JKP P3 対 Mkt-RF の生の差（excess_stats）と、総リターンどうし（P3+RF 対 Mkt）の転がる20年・20年積立",
+  "JKP_cn_proxy": "JKP × M2 は株ごとのデータが無く作れない。代理として直前60/120か月の係数で市場・FF12 業種の成分を引いた差（SN60/SN120・後知恵なし・reality_gap と同じ作り方）の平均と t。家族に入れない",
+  "JKP_decade_split": "JKP の M1（FF12）を年代ごと（1963-07〜1969・1970年代・1980年代・1990年代・2000〜2006・2007〜2016・2017〜2025）と訓練/保有で回し、生の差 = α + 市場の寄与 + Σ 業種の係数 × 業種−市場の平均 に分解。技術の寄与 = BusEq の係数 × (BusEq−Mkt) の平均。『2007年以降に技術の比重が跳ねた』の線: 保有の技術の寄与の比（技術の寄与÷生の差）≥ 2×訓練の比 かつ ≥1/3。共線性の点検に VIF を出す",
+  "SEC_sensitivity": "SEC の M1 を 相手 U_all で／ME10−Mkt（French の時価最大10%−市場）を足して／自前の業種（同じ母集団の FF12 業種の時価加重−U_exfin、Other を落とす）で。CN12・CN49 自身の回帰α（組み方と回帰の整合の点検）。H3 の組の FF49 回帰α",
+  "SEC_brinson": "実際の持ち高で配分と選択に分ける（SR.brinson・FF12 と FF49）。cop_at_T3VW 対 U_exfin と、CN12・CN49（配分≈0 のはず＝組み方の点検）",
+  "SEC_other": "各組の 前半（2010-07〜2018-06）・後半（2018-07〜2026-08）・直近・共通窓・費用後・U_all と SPY に対する差・回転率。CN12_exB（BusEq を除き FF12 で中立）も報告",
+  "regional_oos": "米国外の答え合わせ: JKP の先進国（米国を除く22か国: aus aut bel can che deu dnk esp fin fra gbr hkg irl isr ita jpn nld nor nzl prt sgp swe）の各国で、cop_at 良い三分位（vw・良い側は米国と同じ）− その国の vw 市場 を、その国の JKP GICS セクター（−市場）と市場に回帰（保有 2007-01〜2025-12）。含める国は 良い三分位の社数の中央 ≥10 かつ 保有の月 ≥120。セクターは保有の月の95%以上にあるものだけ。要約 = α が正の国の数/測れた国の数・α の中央・t≥1.65 の国の数。地域全体（developed・world_ex_us）は JKP に地域の業種リターンが無いので、業種調整なしの生の差と CAPM α だけ",
+  "ex27": "1996〜2001 の株ごとのパネルは別の角度（ex27）が作る。実行時に out/mw_ex27.json があれば、その技術の比重・BusEq を除いた版の数字を引用するだけ（ここでは再計算しない）。無ければ『未実施』"
+ },
+ "benchmarks": {
+  "JKP": "French Mkt-RF（超過どうし）",
+  "SEC": "U_exfin（主・金融を除く同じ母集団の時価加重）、U_all と SPY は報告",
+  "H2": "BusEq 全社の時価加重",
+  "H3": "U_exfin_exBusEq"
+ },
+ "periods": {
+  "JKP_hold": "2007-01〜2025-12",
+  "JKP_train": "1963-07〜2006-12",
+  "SEC": "2010-07〜2026-08（全部が保有期間・訓練なし）",
+  "common": "2010-07〜2025-12",
+  "recent": "2013-07〜"
+ },
+ "cost": "SEC の組は SR.simulate の年ごとの片道回転率 × 0.10%（大型株・mw_prereg の既定）を月割りで引いた差も報告",
+ "grading": "格付け（S/A/B/C）はしない（事前登録どおり・記述のラベル）。SEC の組は訓練期間が無いので mw_common.grade を当てても構造的に C",
+ "sanity_checks": [
+  "French Mkt の CAGR（1926〜 ≈10.4%・2007〜 ≈11.1%）",
+  "SEC cop_at_T3VW 対 U_all が sec_replication の結果（+1.90%/年 t1.48）を再現、BusEq を除いた版 対 U_exfin_exBusEq が −0.13 t−0.14 を再現",
+  "JKP の FF12 回帰α（保有）が reality_gap の P1_cop_at M2_ind12 と一致",
+  "α + Σ 寄与 = 生の差（最小二乗の恒等式）",
+  "CN12・CN49 の Brinson の配分効果 ≈ 0（組み方で業種がそろっていること）"
+ ],
+ "prior_expectation_not_used_for_judgement": "前の角度の数字を踏まえた見込み（判定には使わない）: H1 は成立しそう（前の結果で回帰の業種調整αは +0.8〜0.9 だが、組み方の業種中立 IN_T3SM は +0.3 前後）。H2 は不成立寄り（Brinson の BusEq の中の選択は +0.3%/年程度）。H3 は不成立寄り（技術を除いた上位1/3は −0.1）。ゆえに (a) を見込む",
+ "known_limits": [
+  "SEC の窓は16年（2010-07〜2026-08）で、巨大テックの時代の1回だけ。独立の試行は少ない",
+  "SEC の母集団は Yahoo の現存銘柄で作る＝生き残りの偏り（sec_replication の点検では上位500の浮動株の数%が価格なし）",
+  "JKP の業種と French の業種の分類は SIC の時点が違いうる（French は CRSP の SIC、SEC は現在の SIC）",
+  "回帰の業種係数は共線性で個別には不安定になりうる（合計の業種の寄与は識別される）。VIF を出す",
+  "JKP × 組み方中立は作れず代理（SN）。2×2 の1セルは代理",
+  "米国外は国ごと（地域の業種リターンが無い）。小さい国の三分位は社数が少ない",
+  "FF49 の上位500社では1〜3社しかいない業種が多い（ceil(n/3) なら業種の全体か1社）＝組み方中立の選別は大きな業種でだけ効く"
+ ],
+ "files": {
+  "tool": "night/mw_where_edge.py",
+  "result": "out/mw_where_edge.json"
+ }
+}

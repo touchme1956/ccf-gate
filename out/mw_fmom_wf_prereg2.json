@@ -1,0 +1,88 @@
+{
+ "generated": "2026-09-28",
+ "angle": "fmom_wf・第2次の事前登録",
+ "registered_before_measuring": true,
+ "global_prereg": "out/mw_prereg.json（線 C1〜C8・格付けは変えない）",
+ "tool": "night/mw_fmom_wf.py（第2次の族を足す）→ out/mw_fmom_wf.json",
+ "what_i_have_seen": "第1次（out/mw_fmom_wf_prereg.json・56d4cf2）の全24本の結果を見た後の登録。見たもの: 米国は全部 C。訓練（〜2006）は全部 C1 合格（例 P1 +3.82%/年 t5.0）、保有期間（2007〜2025）の費用前の超過は小さい正（P1 +0.72 t0.7・P2 +0.48 t1.2・P3 +0.03・一番強いのは E3_ts1 +1.06 t1.8 と E2_cs_both +1.83 t1.5）で、費用（三分位の中の入れ替え 約200%/年＋組み直し 170〜1000%/年 × 0.30%）を引くと全部負け＝C6 で落ちた。C4（転がる20年窓）・C5（地域4/4）・C7 はほぼ全部合格。米国外（JKP の world_ex_us・developed・emerging）は保有期間も費用前で +1〜+3%/年・t 3〜7、費用後も正。日本は弱い（P1 +0.96 t0.9・費用後 −0.76）。この第2次の新しい族（下の Q1〜Q3）の数字は一度も計算していない。JKP の国ごとの数字は、データの有無（保有期間に30特性以上がそろう月の数）だけを数えた（49か国が120か月以上）",
+ "why": "第1次の米国の負けの直接の理由は費用（C6）だった。費用前の保有期間の超過は正だったので、(1) 個人が実際に持てる回転の少ない形（入れ替えの少ない特性だけ・順位の緩衝帯）と (2) 大型株だけで作った安い形（French の最大五分位）で、同じ勢いの規則が費用に勝てるかを測る。(3) 米国外の強さが本物かを、まだ見ていない独立のデータ（French の地域ポートフォリオ＝別の業者の作り方・JKP の各国）で確かめる。線は下げない",
+ "families": {
+  "Q1_us_cost_aware": {
+   "primary": false,
+   "label": "探索: 米国 JKP の回転を減らした版（第1次の結果＝費用で負けを見た後に作った）",
+   "universe_lowTO": "三分位の中の入れ替えの目安（mw_factor_us の事前登録 55cd4c0 の turnover_pct）が 100%/年以下の特性だけ（112本）。1か月の信号（800）・ret_3_1（350）・四半期の変化/驚き（250）・価格の勢い6-12か月/残差の勢い（200）・52週高値比等（150）を除く。根拠: Novy-Marx & Velikov 2016（回転の大きい特性は費用に負ける）＝個人の買いだけには持てない",
+   "buffer": "順位の緩衝帯（Novy-Marx & Velikov 2016 の buy/hold spread）: 上位 K に入ったら買い、順位が 2K より下がるまで持ち続ける。空いた席は持っていないものの中の順位の高い順に埋める",
+   "list": {
+    "Q1a_cs_L12_K10_H1_lowTO": "回転の少ない112特性の良い側で P1（過去12か月の超過の和で上位10本・毎月）",
+    "Q1b_cs_L12_K10_H1_lowTO_buf20": "同じく緩衝帯つき（上位10で買い、20位より下で売る）",
+    "Q1c_ts12_lowTO": "回転の少ない112特性で P2（過去12か月の F がプラスの良い側をすべて等分・無ければ市場）",
+    "Q1d_ew_lowTO": "回転の少ない112特性の良い側をすべて等分（比較の基準）",
+    "Q1e_cs_L12_K10_H1_buf20": "全153特性で P1 に緩衝帯（上位10で買い、20位より下で売る）"
+   },
+   "min_candidates": "30本（第1次と同じ）",
+   "cost": "第1次と同じ（三分位の中の入れ替えは同じ一覧・組み直しは別の株の集合として数える・片道100%あたり0.30%）",
+   "C5": "第1次と同じ4地域（world_ex_us・developed・emerging・jpn）に同じ規則（同じ112特性・同じ緩衝帯）。全期間の費用前の超過が正の地域が3以上で合格",
+   "holm_family": "Q1 の5本で Holm"
+  },
+  "Q2_us_french_megacap": {
+   "primary": false,
+   "label": "探索: 大型株だけの安い形。French の米国25分割（規模5×特性5）の最大五分位（NYSE 80%点超＝巨大株）の中で、11特性の良い側五分位の間を勢いで選ぶ",
+   "universe": "French の 25_Portfolios（時価加重・総リターン）の11特性: BE/ME（BIG HiBM／悪い側 BIG LoBM）・OP（BIG HiOP／BIG LoOP）・INV（BIG LoINV／BIG HiINV）・Prior 12-2（BIG HiPRIOR／BIG LoPRIOR）・Prior 1-0（BIG LoPRIOR／BIG HiPRIOR）・Prior 60-13（BIG LoPRIOR／BIG HiPRIOR）・AC（BIG LoAC／BIG HiAC）・BETA（BIG LoBETA／BIG HiBETA）・NI（BIG NegNI／BIG HiNI）・VAR（BIG LoVAR／BIG HiVAR）・RESVAR（BIG LoVAR／BIG HiVAR）。良い側は原論文の理論の向き（mw_factor_us の族 c と同じ）。French の RF を引いて超過にする。欠測（−99.99）は欠測のまま",
+   "list": {
+    "Q2a_ts12_me5": "過去12か月の F（最大五分位の良い側−悪い側）の複利がプラスの特性の良い側をすべて等分（無ければ市場）・毎月（Ehsani-Linnainmaa）",
+    "Q2b_cs_L12_Kq_me5": "過去12か月の超過の和で上位 K＝ceil(特性数/4)（米国11特性で3本）を等分・毎月",
+    "Q2c_ew_me5": "11本の良い側をすべて等分・毎月（比較の基準）",
+    "Q2d_ts_lo12_me5": "過去12か月の総リターンの複利が市場（French Mkt）を上回った良い側をすべて等分（無ければ市場）・毎月",
+    "Q2e_ts1_me5": "過去1か月の F がプラスの特性の良い側をすべて等分（無ければ市場）・毎月（Gupta-Kelly の1か月の形成）。注: 第1次の E3_ts1（JKP 版）の保有期間の結果（費用前 +1.06 t1.8・費用後 −1.40）を見た後に入れた"
+   },
+   "min_candidates": "11特性のうち8本以上に要る履歴がそろった月から（1963-07 から始まる特性が7本あるため、実質 1964年以降）",
+   "cost": "三分位の中の入れ替えは mw_factor_us の事前登録の族 c の ME5 行（bm 30・op 30・inv 50・mom 150・str 800・ltr 60・ac 60・beta 50・ni 50・var 120・resvar 120 %/年）。片道100%あたり 0.10%（大型株）。組み直しは別の株の集合として数える",
+   "periods": "French は 2026-08 まで（保有期間 2007-01〜2026-08）",
+   "C5": "同じ規則を French の地域の25分割（ME×BE-ME・ME×OP・ME×INV・ME×Prior 12-2 の BIG 行＝4特性）で Europe・Japan・Asia_Pacific_ex_Japan に当てる（相手は各地域の <地域>_3_Factors の Mkt-RF、RF も同じファイル）。K＝ceil(4/4)＝1。全期間（1990〜）の費用前の算術の超過が正の地域が2以上で合格",
+   "holm_family": "Q2 の5本で Holm"
+  },
+  "Q2R_french_regions": {
+   "primary": false,
+   "label": "探索: Q2 の5本の規則を French の地域でそれぞれ一つの戦略として格付け（別の業者の作り方での米国外の答え合わせ）",
+   "regions": {
+    "Europe": "25分割の BIG 行・4特性（BE-ME・OP・INV・Prior 12-2）・相手 Europe_3_Factors の Mkt",
+    "Japan": "同じ・相手 Japan_3_Factors",
+    "Asia_Pacific_ex_Japan": "同じ・相手 Asia_Pacific_ex_Japan_3_Factors",
+    "Developed_ex_US": "同じ・相手 Developed_ex_US_3_Factors（上の3地域を含む＝独立ではない）",
+    "Emerging": "Emerging_Markets_6_Portfolios（2×3）の BIG（中央値超）の良い側30%・4特性・相手 Emerging_5_Factors の Mkt"
+   },
+   "min_candidates": "4特性のうち3本以上",
+   "cost": "先進: BIG 五分位の入れ替え bm 30・op 30・inv 50・mom 150 %/年、片道0.10%。新興: 族 c の BIG 行（bm 25・op 25・inv 40・mom 120 %/年）、片道0.30%（新興国の大型株は米国の大型株より高いとみる）",
+   "C5": "その地域以外の独立な地域（Europe・Japan・Asia_Pacific_ex_Japan・Emerging・米国の Q2 の同じ規則）の全期間の費用前の超過が正の割合が2/3以上。Developed_ex_US の C5 は 米国と Emerging（2/2 が要る）",
+   "periods": "訓練 1990〜2006（15年少し）・保有 2007-01〜2026-08",
+   "holm_family": "Q2R の25本で Holm"
+  },
+  "Q3_jkp_country_panel": {
+   "primary": false,
+   "label": "探索（再現パネル）: 第1次の主の3本（P1・P2・P3・全153特性・同じ費用）を JKP の各国（米国と日本を除く）にそのまま当てる。国ごとの数字はまだ一度も計算していない（地域の集計は見た）",
+   "universe": "JKP の国（地域の集計・usa・jpn を除く69か国）のうち、その規則の戦略の月が保有期間（2007-01〜2025-12）に120以上ある国。データの有無だけで決まる（数えたところ 30特性以上そろう月が120以上ある国は49）",
+   "rule": "第1次と同じ（良い側は向き・銘柄数10未満は欠測・候補30本未満の月は作らない）。相手はその国の JKP mkt vw（超過）。French RF を足して総リターン",
+   "tests": {
+    "panel_sign": "保有期間の算術の超過（費用前・費用後）が正の国の数と割合、片側の符号検定の p（報告のみ）",
+    "panel_ew": "毎月、その月にそろう国々の『戦略の総リターン』の等分と『その国の市場の総リターン』の等分を作り、一つの戦略として mw_common.grade で格付けする（相手は国々の市場の等分＝地域の時価加重ではない）。C5 は N/A（パネルそのものが再現）。費用後は各国の費用の等分",
+    "split": "先進21か国（aus aut bel can che deu dnk esp fin fra gbr hkg irl isr ita nld nor nzl prt sgp swe）とそれ以外に分けた同じ集計を報告",
+    "cost_sensitivity": "小さな国は費用が高いので、費用を2倍（片道0.60%）にした費用後の保有期間も報告"
+   },
+   "holm_family": "Q3 の3本（P1・P2・P3 のパネル）で Holm"
+  },
+  "X_posthoc_regions": {
+   "primary": false,
+   "label": "事後（格付けしない）: 第1次の主の3本を JKP の地域（world_ex_us・developed・emerging・jpn）で一つの戦略として見た数字。第1次で C5 の答え合わせとして既に見た数字を並べ直すだけなので判定には使わない",
+   "report": "全期間・訓練・保有・費用後・転がる20年窓（その地域の市場の総リターン対）"
+  }
+ },
+ "unchanged": "線（C1〜C8）・第1次の規則・費用・期間・Holm の作法は変えない",
+ "counting": "第2次で新しく試すのは Q1 5本・Q2 5本・Q2R 25本・Q3 3本＝38本（第1次と合わせて62本）。X は事後の報告で本数に数えない",
+ "known_limits": [
+  "第2次は第1次の結果（米国は費用で負け・米国外は強い）を見た後に作った。規則そのものは論文の既定値か第1次と同じだが、『どこを測るか』は結果に影響されている",
+  "French の地域ポートフォリオは 1990-07 からで、訓練期間は約15年と短い。4特性しかない",
+  "French の最大五分位は銘柄数が少ない（特に地域）。組み直しは別の株の集合として数えるので費用は多めに出る",
+  "JKP の国々は互いに相関する（2008年など）。符号検定は独立を仮定するので楽観側に出うる。小さな国は実際には買えない",
+  "国々の等分パネルの相手は国々の市場の等分で、世界の時価加重ではない"
+ ]
+}

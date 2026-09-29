@@ -1,0 +1,32 @@
+{
+ "angle": "intl",
+ "prereg_no": 6,
+ "title": "探索の族（事前登録6）: 3つ目の業者（AQR『Value and Momentum Everywhere』の買いだけの三分位・DataStream→XpressFeed）で、英国・欧州・日本の割安＋勢いを1974/1981年から確かめる",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "global_criteria": "out/mw_prereg.json（C1〜C8・格付け）。線は動かさない",
+ "why_this_exists": "JKP（事前登録2）では米国外の割安＋勢い（val_mom）が S、French の地域版（事前登録3）では B だった。AQR は Asness-Moskowitz-Pedersen（2013）の定義で、英国・大陸欧州・日本それぞれの中で並べた『買いだけの三分位』（VAL1〜3・MOM1〜3）を 1974/1981年から 2026-07 まで公開している。1990年より前（JKP の被覆の規則で使えなかった時期）を含むので訓練期間が長く、業者も別",
+ "what_i_have_already_seen": "事前登録1〜5の結果と事後の診断。AQR の三分位と市場の比較の数字はまだ計算していない（ファイルの列名・始まり・終わりだけ確認: VAL は 1981-07〜、MOM は英国 1972-01・欧州/日本 1974-02〜、いずれも 2026-07 まで）。AMP（2013）の論文の結論（英国・欧州・日本で割安も勢いも正・組み合わせが良い）は知っている",
+ "data": {
+  "portfolios": "AQR『Value-and-Momentum-Everywhere-Portfolios-Monthly.xlsx』の VAL3{UK,EU,JP}（割安の上位1/3）・MOM3{UK,EU,JP}（勢いの上位1/3）。AQR の説明どおり月次の超過リターン（米国T-bill超過・米ドルとみなす）。French の RF を足して総リターンにする",
+  "market": "Ken French『F-F_International_Countries』の UK の Mkt、Japan の Mkt、『F-F_International_Indices』の Ind_Eur_WOut_UK の Mkt（MSCI 1975-2006・Bloomberg 2007〜・米ドル総リターン・〜2025-12）",
+  "sanity": "AQR の VAL1〜3 の単純平均（＋RF）と French の Mkt の相関・年率差を報告（相手の範囲がずれていないかの確認）"
+ },
+ "families": {
+  "F6a_aqr_eafe3": {
+   "series": "英国・大陸欧州・日本を等分（毎月戻す）した良い側 vs 同じ等分の3市場",
+   "members": {"aqr_value": "VAL3 の3地域等分", "aqr_mom": "MOM3 の3地域等分", "aqr_val_mom": "各地域で VAL3 50%＋MOM3 50%、それを3地域等分"},
+   "holm": "3本の保有期間 p",
+   "C5": "英国・大陸欧州・日本それぞれ（その地域の良い側 vs その地域の市場）で全期間の超過が正の地域 ≥ 2/3",
+   "periods": "訓練 始まり（value 系は 1981-07、mom は 1975-01＝市場の始まり）〜2006-12・保有 2007-01〜2025-12・近年 2013-07〜・公表後 2014-01〜（AMP 2013）",
+   "cost": "片道100%あたり 0.30%・年間片道回転率 value 0.3・mom 1.5・val_mom 0.9"
+  }
+ },
+ "reported_not_graded": ["英国・大陸欧州・日本それぞれの3本", "米国の AQR 三分位（VAL3US・MOM3US・50/50）vs French の米国市場（Mkt）", "角度全体（事前登録1〜6）の Holm（参考）"],
+ "limits": [
+  "AQR の説明タブの本文が取れず、超過リターンの基準（米ドル・米国T-bill）は AMP 2013 の記述に拠る。相手（MSCI）と範囲が少しずれる（検算を報告）",
+  "1981-1990 の会計データは DataStream の固定値（AQR が更新していない）",
+  "英国・欧州・日本は JKP・French と同じ株を見ている（リターンは独立ではない）。独立なのは業者・作り方・1990年より前の期間",
+  "AMP 2013 の標本（〜2011）と保有期間が重なる。論文の外は 2012年以降"
+ ]
+}

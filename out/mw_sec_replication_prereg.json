@@ -1,0 +1,135 @@
+{
+ "angle": "sec_replication",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "global_prereg": "out/mw_prereg.json（線 C1〜C8・格付け S/A/B/C をそのまま使う。ここでは動かさない）",
+ "question": "『質（収益性）で選んだ米国大型株』を、原本（SEC の XBRL・提出日つき）と実際の値動き（Yahoo の配当込み終値）から、個人が実際に組める形（年1回7月に組み直す・大型株だけ・買いだけ）で作り直すと、2010-07〜2026-08 に市場（同じ母集団の時価加重・SPY・French Mkt）に勝ったか。JKP の論文データ（CRSP/Compustat）で 2007年以降に出ていた上乗せ（上限なし時価加重の良い側1/3で年 +1.8〜2.9%）が、実装できる形でも再現するか。投資家の集中した形（5社）と、上位1/3から無作為に5社を引いたときのばらつきも出す。業種中立の版で、上乗せが『技術株への賭け』だったかを分ける",
+ "measured_before_registration": "データの有無だけ（night/mw_sec_replication.py check の出力: SEC 一括ファイルから浮動株15億ドル以上の3,328社・各年の母集団の大きさ（2010年は XBRL の段階導入で271社・2011年以降500社・500位の浮動株時価 2011年21億ドル→2026年140億ドル）・特性が取れた社数（金融を除く約400社のうち cop_at 約470/500・gp_at 約320・ope_be 約440・株数 約460）・価格が取れない社の数（浮動株そのままの上位500のうち 2011年149社・2016年104社・2020年58社・2025年13社）・最大の社の顔ぶれ・浮動株の検算で直した件数）。この点検で見つけた採取の穴（浮動株の桁違い・共同提出者の写しの CIK・名前の空白・営業利益の行が無い大企業）は、戦略のリターンを1つも計算する前に直した。戦略と市場を比べた数字・戦略のリターンは1つも計算していない",
+ "known_before_registration_leak": [
+  "mw_factor_us（2026-09-28・JKP usa・上限なし時価加重 vw の良い側1/3・2007-01〜2025-12）: cop_at +2.88%/年 t3.22 ／ gp_at +2.41 t2.40 ／ ope_be +1.80 t2.54 ／ chcsho_12m（株数の増え方）+0.31 t0.44。つまり同じ特性の保有期間の符号と大きさを知ったうえで登録している（後知恵の漏れ・消せない）",
+  "CLAUDE.md 2026-09-26 longonly_test: 質の上位三分位（JKP vw_cap の上限つき）は純粋な時価加重（French Mkt）に 2007〜 +0.43%/年 t0.5。実在の質ETF（SPHQ・QUAL・MOAT 等）は設定来 SPY に年 0.5〜2.2pt 負け",
+  "私たちは 2010〜2026 に巨大テック（AAPL・MSFT・NVDA・GOOGL・AMZN・META）が市場を引っぱったことを知っている。これらは高収益の会社でもある。業種中立の版と、上位1/3 対 同じ母集団の比較を、この漏れへの答え合わせに使う"
+ ],
+ "data": {
+  "fundamentals": "SEC の companyfacts 一括ファイル（https://www.sec.gov/Archives/edgar/daily-index/xbrl/companyfacts.zip・2026-09-26 版・20,411社）。上場廃止した会社も入っている。各値に提出日（filed）と様式（10-K 等）が付く。10-K 系（10-K・10-K/A・10-KT・10-KT/A・10-K405）の値だけを使い、期間の項目は約1年（330〜400日）の期間だけ",
+  "tickers": "SEC company_tickers.json（2026-09-28 取得・現在の一覧）。CIK ごとにファイルの並び順で最初のティッカー（BRK-B・GOOGL 等）",
+  "sic": "SEC submissions API の各社の SIC（今の値＝過去の業種の変更は反映しない）。既存の out/sic_by_cik.json・out/_sic_cache.json を読むだけで使い、足りない社は取りに行って out/_mw_cache/mw_sec_sic.json に貯める",
+  "industries": "Ken French の Siccodes12（SIC→12業種）。Money（SIC 6000-6999）が金融",
+  "prices": "Yahoo の月次（mw_common.yahoo と同じ URL）。総リターンは adjclose（配当込み）の隣り合う月の比、浮動株時価の換算は close（分割調整済み・配当なし）の比。価格が無い月は0で埋めない",
+  "benchmarks": "SPY（Yahoo adjclose・総リターン）、French Mkt（Mkt-RF + RF・総リターン）、JKP usa mkt vw（超過・JKP との照合のみ）",
+  "jkp_reference": "JKP usa の三分位（weighting='vw'＝上限なし時価加重）: cop_at・gp_at・ope_be・chcsho_12m。良い側は mw_common.jkp_good_side(upto=200612)（訓練期間だけで機械的に決める）"
+ },
+ "universe": {
+  "formation": "各年 t の6月末（t = 2010〜2026）。7月から翌年6月まで保有（最後の t=2026 は 2026-07〜08 の2か月）",
+  "size_measure": "浮動株時価 = EntityPublicFloat（6月30日までに提出された最新の10-Kの表紙の値・基準日は第2四半期末）× close(t年6月) ÷ close(基準日の月)。基準日が15日以降ならその月、14日以前なら前月の月末終値。表紙の基準日は形成日から30か月以内、その10-Kの提出は16か月以内（提出をやめた社を残さない）",
+  "why_float_not_shares_times_price": "株数×株価は、(1) 株数は提出時点の生の数・Yahoo の終値は後の分割で調整済み＝基準の違う二つを掛けることになる（KLAC・NVDA の分割事故と同型）(2) 複数の株式クラス（GOOGL/GOOG・BRK-A/B・META 等）の株数が次元つきで一括ファイルに入らない。浮動株の金額×価格の比は分割に左右されず、S&P500 の浮動株調整にも近い",
+  "eligibility": "事業会社でない SIC を除く: 6221（商品信託）・6189（資産担保）・6722/6726（投信）・6770（SPAC）・6792/6795（ロイヤルティ信託）",
+  "ticker_rule": "CIK が現在の一覧にあればそのティッカー。無ければ、社名を正規化（大文字・記号除去・INC/CORP/CO/LTD/PLC/HOLDINGS/GROUP 等を除く・'/'以降を除く・空白も除く）して現在の一覧の1社とだけ一致する場合に限りそのティッカーを当てる（組織再編で CIK が変わった社の救済: 例 Exxon Mobil Corporation → ExxonMobil Holdings Corp の XOM。記憶で手当てはしない）。同じ年に同じティッカーが2つの CIK に当たったら、CIK が一覧に載っている方、次に新しい10-Kを出した方だけ残す",
+  "price_rule": "Yahoo に close(t年6月)・close(基準日の月)・t年7月のリターンが揃う社だけが母集団に入れる（揃わない社は『価格なし』として数える＝生き残りの偏りの測定）",
+  "size": "浮動株そのまま（検算を通った値）の上位1100社を候補にし、価格で換算した浮動株時価の上位500社 = U_t（換算で順位が入れ替わる余地を残す）。2010年は XBRL の段階導入で候補が足りず約270社",
+  "rankable": "U_t のうち FF12 が Money（金融・SIC 6000-6999）でなく SIC が分かる社（Ball et al.・Novy-Marx の作法で金融を除く）",
+  "size_validation": {
+   "why": "点検で EntityPublicFloat の桁違い（例: 2010 SHW 6.2兆ドル・2015 SMP 713兆ドル・2020 EBAY 41兆ドル・小さな銀行が数千億ドル）が見つかった。時価加重では1社がポートフォリオ全体を占めてしまうので、測る前に検算の規則を決めた",
+   "rule_1_shares": "同じ10-Kの表紙の発行済株数（dei:EntityCommonStockSharesOutstanding・複数の値なら最大）× 表紙の日付の月の生の株価（分割調整済み終値 × その月より後の分割の比の積）＝ cap。浮動株（同じ月へ価格で換算）÷ cap が 0.02〜4 なら浮動株を使う",
+   "rule_2_conflict": "0.02〜4 の外なら、損益計算書の加重平均株数（基本・同じ10-Kの当期）× 提出月の生の株価 ＝ cap_ws で裁く: cap_ws が cap と 0.5〜2 倍で合えば浮動株の誤り → cap（6月へ価格で換算）を大きさに使う／浮動株が cap_ws の 0.3〜2.5 倍なら表紙の株数の誤り → 浮動株を使う／どちらでもなければ除く（欠測）",
+   "rule_3_no_shares": "表紙の株数が無い社（複数クラスが次元つきの GOOGL・META・BRK・V 等）: 前年の浮動株と比べて20倍を超えて違えば除く。前年も無ければ加重平均株数×生の株価と比べ 0.02〜4 の外なら除く。どれも無ければ検算なしで使う（件数を出す）",
+   "rule_4_sanity": "最後に 6兆ドル以下 かつ 総資産の200倍以下（総資産が分かるとき）でなければ除く",
+   "raw_ranking": "浮動株そのままの並び（候補の上位1100社と、生き残りの偏りの診断の上位500社）でも、前年と20倍を超えて違う値と rule_4 に落ちる値は除く。同じ浮動株の値・同じ基準日を持つ別の CIK（共同提出者の写し: 例 JPMorgan 1665650・Citigroup 200245）は1社にまとめ、現在の一覧に載る CIK を残す"
+  }
+ },
+ "signals": {
+  "timing": "Fama-French の作法: t−1 年の決算（期末が t−1年1月8日〜t年1月7日＝52/53週決算で1月初めに終わる年も t−1 年として拾う）の年次の値で、その10-Kが t 年6月30日までに提出されたものだけ（提出日で後知恵を断つ）。期末 E はその条件を満たす年次の値（営業利益・売上・純利益・営業CF・粗利）の最も遅い期末。各値は期末 E の±3日の値のうち、6月30日までに提出された最新のもの",
+  "cop_at": "現金ベースの営業収益性÷総資産（Ball, Gerakos, Linnainmaa, Nikolaev 2016）。OP = OperatingIncomeLoss + 償却（DepreciationDepletionAndAmortization → DepreciationAndAmortization → DepreciationAmortizationAndAccretionNet の順の代替、無ければ Depreciation ＋ AmortizationOfIntangibleAssets の構成要素）＋ 研究開発費（ResearchAndDevelopmentExpense → …ExcludingAcquiredInProcessCost）。COP = OP − ΔAR − Δ在庫 − Δ前払 ＋ Δ前受収益 ＋（ΔAP＋Δ未払）。Δはキャッシュフロー計算書の IncreaseDecreaseIn… の値（ΔAR: AccountsReceivable → Receivables → AccountsAndNotesReceivable ／ 前払: PrepaidDeferredExpenseAndOtherAssets → PrepaidExpense → OtherCurrentAssets ／ 前受: ContractWithCustomerLiability → DeferredRevenue ／ AP と未払: AccountsPayableAndAccruedLiabilities が在ればそれ、無ければ（AccountsPayable → AccountsPayableTrade）＋（AccruedLiabilities → OtherCurrentLiabilities））。分母は期末 E の Assets（> 0）",
+  "gp_at": "粗利÷総資産（Novy-Marx 2013）。GrossProfit が在ればそれ、無ければ 売上 − 売上原価。売上 = Revenues・RevenueFromContractWithCustomerExcludingAssessedTax・…IncludingAssessedTax・SalesRevenueNet のうち最大（無ければ SalesRevenueGoodsNet＋SalesRevenueServicesNet）。原価 = CostOfRevenue → CostOfGoodsAndServicesSold → CostOfGoodsAndServiceExcludingDDA の順の代替、無ければ（CostOfGoodsSold または …ExcludingDDA）＋ CostOfServices の構成要素。粗利 > 売上×1.01 は誤りとして欠測",
+  "ope_be": "営業利益（利払い後）÷自己資本（Fama-French 2015 の OP）。(OperatingIncomeLoss + 償却 − 利払い) ÷ StockholdersEquity（無ければ …IncludingPortionAttributableToNoncontrollingInterest）。自己資本 ≤ 0 は欠測（Fama-French の作法）。利払い = InterestExpense → InterestExpenseDebt → InterestAndDebtExpense → InterestExpenseNonoperating",
+  "lowiss": "発行の少なさ = −log(加重平均株数(基本)_E ÷ 同じ10-Kの前年の値)（Pontiff-Woodgate 型。同じ提出書類の中の前年の値は分割で遡って調整済み＝分割をまたいで割らない）",
+  "missing_rule": "無い値は欠測（0で埋めない・絶対のルール7）。原論文の作法で『行が無い＝0』とするのは 研究開発費・運転資本の各増減・利払い の3つだけ（足し戻し/差し引きの項で分母ではない。GAAP ASC730 は研究開発費の開示を求めるので、行が無い＝重要な額が無いと読む）。件数は出力に残す",
+  "bounds": "cop_at ∈ [−1, 2]・gp_at ∈ [−0.5, 3]・lowiss の対数比 ∈ [−2, 2] の外は採取の誤り（桁違い等）として欠測。ope_be は上限なし（自己資本が小さい社で大きく出るのは原論文どおり）",
+  "comp": "rankable の中で各信号を順位の z（(順位−平均順位)/順位の標準偏差・同順位は平均順位）にし、cop_at・gp_at・ope_be・lowiss の4つのうち3つ以上ある社について平均",
+  "operating_income": "OperatingIncomeLoss。この行が無い社（JNJ・CVX・IBM 等の大企業に多い・毎年約100社）は 税引前利益（IncomeLossFromContinuingOperationsBeforeIncomeTaxes…NoncontrollingInterest → …MinorityInterestAndIncomeLossFromEquityMethodInvestments）＋ 利払い で代える（営業外の損益が混じる近似・件数を出す）"
+ },
+ "portfolios": {
+  "forms": {
+   "T3VW": "信号の上位1/3（rankable のうち信号がある社の数 n について上位 ⌊n/3⌋ 社）・浮動株時価加重（論文の三分位の類似）",
+   "T50EW": "上位50社・等分",
+   "T20EW": "上位20社・等分",
+   "T5EW": "上位5社・等分（投資家の個別枠は4〜5社）"
+  },
+  "industry_neutral": {
+   "neutral_score": "得点（comp は合成、cop_at は順位 z）− 業種の平均。業種 = SIC 2桁（その年に得点のある社が5社以上）、5社未満の SIC 2桁の社は FF12 業種ごとにまとめた群",
+   "IN_T3SM": "FF12 業種ごとに中立化した得点の上位 ⌈n_k/3⌉ 社・業種の中は浮動株時価加重・業種の重みは rankable（金融を除く母集団）の浮動株時価の業種比（選ばれた業種で按分し直す）＝業種の比重は母集団と同じ",
+   "IN_T20EW": "中立化した得点の上位20社・等分"
+  },
+  "ties": "得点が同じなら浮動株時価の大きい順",
+  "holding": "7月に組み、翌年6月まで買って持つ（重みは値動きで漂う）。途中で月のリターンが無い銘柄はその月から外し、残りで按分（0で埋めない）。外れた件数は出力に残す",
+  "turnover_cost": "毎年7月の組み直しの片道売買率 = ½Σ|新しい重み − 漂った旧重み|（最初の購入は除く）を実測し、その平均 × 0.10%（片道100%あたり・大型株・mw_prereg の既定）を毎月に割って引く（mw_common.apply_cost）。税は含めない"
+ },
+ "primary_family": {
+  "list": [
+   "cop_at_T3VW",
+   "cop_at_T50EW",
+   "cop_at_T20EW",
+   "cop_at_T5EW",
+   "gp_at_T3VW",
+   "gp_at_T50EW",
+   "gp_at_T20EW",
+   "gp_at_T5EW",
+   "ope_be_T3VW",
+   "ope_be_T50EW",
+   "ope_be_T20EW",
+   "ope_be_T5EW",
+   "comp_T3VW",
+   "comp_T50EW",
+   "comp_T20EW",
+   "comp_T5EW",
+   "comp_IN_T3SM",
+   "comp_IN_T20EW",
+   "cop_at_IN_T3SM",
+   "cop_at_IN_T20EW"
+  ],
+  "n": 20,
+  "holm": "20本の保有期間（=全期間 2010-07〜2026-08）の p を mw_common.holm で補正（相手ごとに別々）"
+ },
+ "benchmarks": {
+  "primary": "U_all = 同じ母集団 U_t（金融も含む）の浮動株時価加重・同じ年1回の組み直し。生き残りの偏り（Yahoo に今ある銘柄だけ）が戦略と相手の両方に同じようにかかるので、差はその偏りをおおむね相殺する。判定（mw_common.grade）はこの相手で出す",
+  "reported": "SPY（実際に買える相手・生き残りの偏りで戦略側が有利になる向き）・French Mkt（プログラム全体の相手・CRSP 全上場）・U_exfin（金融を除いた母集団の時価加重＝業種中立の版の自然な相手）・U_exfin_EW（等分の戦略の報告用）。相手ごとの格も参考に出す",
+  "basis": "すべて総リターンどうし（Yahoo adjclose 対 SPY adjclose・French Mkt-RF+RF）。JKP との照合だけ超過どうし（JKP の三分位 − JKP mkt vw）"
+ },
+ "periods": {
+  "full": "2010-07〜2026-08（すべて保有期間 2007〜 の内側）",
+  "train": "無し（XBRL は2009年から。C1 は構造的に不合格、転がる20年窓も作れず C4 も不合格＝格は最高でも C。正直にそう報告する）",
+  "recent": "2013-07〜2026-08（報告）",
+  "halves": "2010-07〜2018-06 と 2018-07〜2026-08（報告・安定性）",
+  "jkp_window": "2010-07〜2025-12（JKP の終わりに合わせた同じ窓での照合）"
+ },
+ "stats": "mw_common.excess_stats（算術平均×12・Newey-West t ラグ12・幾何の年率差・追従のぶれ・β）・rolling(10年/20年)・dca(10年/20年)・maxdd。grade(full=全期間, train=None, hold=全期間, roll20, cost_hold=費用控除後, repl=None（地域の再現なし＝C5 N/A）, family_holm_p)",
+ "random_draws": {
+  "rule": "毎年7月に集合から5社を無作為に引いて等分・翌年6月まで買って持つ、を2010〜2026年つないだ道を 2000本（乱数の種 20260928）。全期間の CAGR 差（対 U_all・対 SPY）の分布（5/25/50/75/95%点・勝った割合）",
+  "sets": [
+   "top_third_comp（合成の上位1/3）",
+   "top_third_cop_at（cop_at の上位1/3）",
+   "universe_exfin（金融を除く母集団全部＝比較の基準）"
+  ],
+  "role": "報告（格付けしない）。5社に集中したときに、結果が選び方よりも運で決まる幅を見る"
+ },
+ "survivorship_diagnostics": "(1) 浮動株そのままの上位500（価格を問わない・一括ファイルは上場廃止も含む）のうち、ティッカーが無い／Yahoo に無い／その年の価格が無い社の数と浮動株の比率を年ごとに。(2) それらを合成得点の三分位に分けたときの欠けた割合（偏りの向き: 質の低い側が多く欠ければ、残った低質の社は実際より良く見える＝上位1/3 対 母集団の差を小さく見せる向き）。(3) U_all 対 SPY・French Mkt の差（偏り＋作り方の差の合計）",
+ "jkp_replication": "JKP の同じ特性（cop_at・gp_at・ope_be・chcsho_12m）の vw 良い側1/3 − JKP mkt vw を 2007-01〜2025-12 と 2010-07〜2025-12 で。私たちの T3VW − U_all との月次の相関も出す（同じものを測れているかの答え合わせ）",
+ "expectation_before_measuring": "上の漏れ（JKP の 2007〜 +1.8〜2.9%/年）から、T3VW は U_all に対して +0.5〜2%/年・t は1〜2程度（16年しかない）と予想する。業種中立の版は、上乗せが技術株への賭けなら小さくなる。5社は結果の幅が年±5pt 以上に広がる。いずれにせよ訓練期間が無いので格は C",
+ "known_limits": [
+  "XBRL の値は Compustat の標準化と違う（例: GAAP の売上原価は償却を含むが Compustat は除く→粗利が小さく出る／OperatingIncomeLoss は減損・リストラ費を含むが Compustat の OIADP は特別項目を除く）。順位の近似であって同じ数字ではない",
+  "生き残りの偏り: 価格は Yahoo の今ある銘柄だけ。買収・倒産で消えた社は母集団に入れない（2010年ほど多く欠ける）。上位1/3 対 同じ母集団 の差がおおむね相殺するが、欠け方が質の三分位で違えば残る（診断で向きを出す）",
+  "組織再編で CIK が変わった社（例: Google Inc.→Alphabet、Avago→Broadcom）は社名が一致しなければ『ティッカー無し』として欠ける。記憶で手当てしない（勝った社だけを思い出して足す後知恵を避ける）",
+  "SIC は今の値。浮動株は内部者の持分を除く（S&P500 の浮動株調整に近いが、創業者の持分が大きい社の時価は小さく出る）",
+  "16年・独立な窓が少ない。巨大テックの時代の中だけ。転がる20年窓は作れない",
+  "費用は概算（回転率×0.10%）。税は含めない",
+  "浮動株の検算は大きな桁違いだけを捕まえる。2倍程度の誤りは残りうる。検算できなかった社（毎年0〜6社）はそのまま使う",
+  "2010年の母集団は XBRL の段階導入で約270社（最大級だけ）。MSFT は2010年、Google Inc.（CIK 1288776）は2010〜2015年、META は上場前の年が欠ける",
+  "FF12 の Money（SIC 6000-6999）には保険型の医療（UNH 等）と REIT も入り、順位づけから外れる（相手の U_all には入る）"
+ ],
+ "deviations_from_task_text": [
+  "課題文は SEC frames API を挙げていたが、frames は各期間について『最後に提出された値』（後の年の10-Kの比較欄＝組替え・修正後の値）を返すので、6月30日時点で知り得た値にならない（後知恵）。同じ SEC XBRL の一括ファイル（companyfacts.zip・提出日つき）を使い、提出日で断った",
+  "規模は 株数×株価 ではなく 浮動株時価（EntityPublicFloat を価格の比で形成月へ換算）。理由は universe.why_float_not_shares_times_price",
+  "SEC への User-Agent は mw_common.UA では 403 で拒否されたので、このリポジトリの SEC 用の設定（CLAUDE.md 絶対のルール5）どおり連絡先つきの User-Agent を使った"
+ ],
+ "honesty": "試したものは全部 out/mw_sec_replication.json の tested に残す。規則は結果を見て変えない。結果を見た後に足すものは『事後』と書き、格付けしない"
+}
