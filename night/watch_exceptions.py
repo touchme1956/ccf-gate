@@ -170,6 +170,22 @@ def main():
             for t in (it.get('tickers') or []):
                 if t not in [x[0] for x in targets]:
                     targets.append((t, it.get('id'), it.get('title', '')))
+    # ★2026-09-29: **按分に入っている門外例外（gate_exceptions.json の in_castle_split:true）は必ず見張る**。
+    #   todo の gate_exception_* が全部 done になり、2026-09-26 に按分へ戻した TDG が見張られていなかった
+    #   （点検で発覚）。あわせて出口条件の数字の線（exit_intcov_min）をここで判定する。
+    exits = {}
+    try:
+        gx = json.load(open('gate_exceptions.json', encoding='utf-8'))
+    except Exception:
+        gx = {}
+    for it in gx.get('items', []):
+        t = str(it.get('t') or '').upper()
+        if not t:
+            continue
+        if it.get('exit_intcov_min') is not None:
+            exits[t] = float(it['exit_intcov_min'])
+        if it.get('in_castle_split') and t not in [x[0] for x in targets]:
+            targets.append((t, 'gate_exceptions.json', '按分に入っている門外例外'))
     if not targets:
         print('■ 門外例外は登録されていない（todo_list.json の gate_exception_* に tickers を持たせる）')
         return 0
@@ -276,6 +292,18 @@ def main():
                 rec['verdict'] += '／債務超過（パックに反映ずみ）'
         if rec.get('debt_chg') is not None and rec['debt_chg'] > 0.10:
             rec['verdict'] += f"／⚠新規借入 前四半期比 +{rec['debt_chg']*100:.0f}%"
+        # ★出口条件の数字の線（gate_exceptions.json の exit_intcov_min）。割ったら**新規の買付を止める**（売りではない）。
+        #   index.html の注文書がこの exit_stop を読んで、その社を今月の注文から外す（表示と注文だけ・採点は不変）
+        mn = exits.get(t.upper())
+        if mn is not None:
+            rec['exit_intcov_min'] = mn
+            ic = rec.get('intcov_ttm')
+            if isinstance(ic, (int, float)):
+                rec['exit_stop'] = ic < mn
+                rec['verdict'] = ((f"⛔出口条件: 利払いの余裕 {ic:.2f}倍 < {mn:.1f}倍＝新規の買付を止める（売りではない）／"
+                                   if ic < mn else f"出口条件の線 {mn:.1f}倍の上（{ic:.2f}倍）／") + rec.get('verdict', ''))
+            else:
+                rec['verdict'] = f"⚠出口条件（利払いの余裕 {mn:.1f}倍）が測れない／" + rec.get('verdict', '')
         rows.append(rec)
 
     print(f'■ 門外例外の四半期監視　対象 {len(rows)}社　線 nde>{LINE}')
