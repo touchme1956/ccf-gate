@@ -14,8 +14,8 @@
   段1（名前）: out/broker_lineup.json（楽天の米国上場 ETF 742本・2026-08-24 の写真）の名前から、発行会社の語
        （Global X・iShares・State Street SPDR…）を先に外し、次の順で除く: 名前が空（取扱終了の残骸）→
        レバレッジ・インバース・単一銘柄の上乗せ → 債券・現金 → 商品・ETN・暗号資産 → オプション・インカムの上乗せ →
-       スマートベータ・能動運用 → 米国外・地域 → 市場全体・規模。残りを『細かい業種の語』（INDUSTRY）→
-       『GICS セクターの語』（SECTOR）→『テーマの語』（THEME・除く）の順に当てる。どれにも当たらなければ除く。
+       スマートベータ・能動運用 → 米国外・地域 → 市場全体・規模 →『テーマの語』（THEME）。残りに『細かい業種の語』（INDUSTRY）→
+       『GICS セクターの語』（SECTOR）の順に当てる。どれにも当たらなければ除く。
   段2（中身）: SEC の N-PORT（最新の公開分）で、株の買い（assetCat EC/EP・payoffProfile Long）が純資産の 90% 以上、
        その株のうち『US』のものが 50% 超、デリバティブと売りが純資産の 5% 以下。US ＝ invCountry が US かつ ISIN の頭が US
        （ISIN が無い株は invCountry だけ）＝二つの印の両方（理由は nport_parse の注）。
@@ -23,8 +23,8 @@
   段3（重複）: 同じ業種・セクター（node）に複数あれば、Yahoo の月足の最初の完全な月が最も早い1本を代表にする
        （同じなら信託報酬の低いほう→記号の順）。版は二つ: etf_only（前身の HOLDRS の期間を切る・主）と
        spliced（Yahoo の系列そのまま・報告）。
-  段3b（中身の重なり）: 代表どうしの今日の中身（N-PORT の株の重み）の重なり Σmin(w_A, w_B) が 50% 以上の組は、始まりの早い
-       ほうだけ残す（同じ中身の node を二重に数えない。例: 不動産セクターと REIT）。
+  段3a（node の統合・分類の事実）: 株式の REIT の器は不動産セクターの器と同じ node（NODE_MERGE）。
+  段3b（中身の重なり）は報告 R13 だけ（主には掛けない＝今日の中身の重なりは後知恵を含む。NODE_MERGE と dedup_overlap の注）。
 
 使うデータ（キャッシュ out/_nx_cache/・gitignore）
   - out/broker_lineup.json（リポジトリ内）
@@ -133,6 +133,11 @@ FR49 = {'SEMI': ['Chips'], 'BIOTECH': ['Drugs'], 'PHARMA': ['Drugs'], 'OILSVC': 
         'STEEL': ['Steel'], 'GOLDMIN': ['Gold'], 'INTERNET': [], 'EQREIT': [], 'MREIT': [], 'MLP': [], 'URANIUM': [], 'SILVERMIN': [],
         'COPPERMIN': []}
 
+# node の統合（分類の事実・結果を見る前に固定）: 株式の REIT は GICS の不動産セクター（60）の大部分そのもの＝REIT の器と不動産セクターの器は
+# 同じ node として扱い、1本（始まりの早いほう）だけを代表にする。半導体（IT セクターの中の一つの産業）・生物工学（ヘルスケアの中の一つ）の
+# ような『セクターの一部の産業』は統合しない。住宅ローンの REIT（MREIT）は 2023 年から GICS の金融セクターで、別の node のまま
+NODE_MERGE = {'EQREIT': 'S_REALEST'}
+
 # ───────────────────────── 規則の台帳（宣言だけ・測る道具が組む） ─────────────────────────
 # 記法: 形成の月末 t に、t−(skip+L−1)〜t−skip の L か月の累積リターンで並べ、t+1 月を持つ。
 RULES = {
@@ -216,7 +221,10 @@ def stage1(lineup=None):
     for t in sorted(lineup):
         v = lineup[t]
         s1, node, why = classify_name(v.get('nm', ''))
-        out[t] = {'nm': v.get('nm', ''), 'er': v.get('er', ''), 'mkt': v.get('mkt', ''), 'stage1': s1, 'node': node, 'why': why}
+        node_raw = node
+        if node in NODE_MERGE:
+            node, s1 = NODE_MERGE[node], 'sector'
+        out[t] = {'nm': v.get('nm', ''), 'er': v.get('er', ''), 'mkt': v.get('mkt', ''), 'stage1': s1, 'node': node, 'node_by_name': node_raw, 'why': why}
     return out
 
 
@@ -400,8 +408,10 @@ def yahoo_shape(ticker):
         dl = datetime.datetime.utcfromtimestamp(t + gmt)
         utc_keys.append(du.year * 100 + du.month)
         loc_keys.append(dl.year * 100 + dl.month)
-        if i < len(ts) - 1 and not (dl.day == 1 and dl.hour == 0 and dl.minute == 0):
-            odd.append(dl.strftime('%Y-%m-%d %H:%M'))
+        # 月足の時刻は New York の月初0時＝UTC の 4時（夏時間）か 5時（冬時間）。meta.gmtoffset は今の時差（夏時間の −4h）なので
+        # 冬の足は 01:00 に見える＝時差の違いであって月のずれではない。UTC で『1日の 4〜5時』でない足を数える（最後の進行中の足は除く）
+        if i < len(ts) - 1 and not (du.day == 1 and du.hour in (4, 5) and du.minute == 0):
+            odd.append(du.strftime('%Y-%m-%d %H:%M UTC'))
     mism = sum(1 for a, b in zip(utc_keys, loc_keys) if a != b)
     dup = [k for k, c in collections.Counter(utc_keys).items() if c > 1]
     none_adj = sum(1 for a in adj if a is None)
@@ -416,8 +426,8 @@ def yahoo_shape(ticker):
         kf = None
     return {'first_bar': first_bar, 'firstTradeDate': datetime.datetime.utcfromtimestamp(ftd + gmt).strftime('%Y-%m-%d') if ftd else None,
             'last_bar': datetime.datetime.utcfromtimestamp(ts[-1] + gmt).strftime('%Y-%m-%d %H:%M') if ts else None,
-            'n_bars': len(ts), 'utc_vs_market_month_mismatch': mism, 'dup_months': dup, 'bars_not_at_market_midnight_excl_last': odd[:5],
-            'n_bars_not_at_market_midnight_excl_last': len(odd), 'adjclose_none': none_adj, 'n_dividends': len(divs), 'n_splits': len(splits),
+            'n_bars': len(ts), 'utc_vs_market_month_mismatch': mism, 'dup_months': dup, 'bars_not_at_ny_midnight_utc_excl_last': odd[:5],
+            'n_bars_not_at_ny_midnight_utc_excl_last': len(odd), 'adjclose_none': none_adj, 'n_dividends': len(divs), 'n_splits': len(splits),
             'currency': meta.get('currency'), 'instrumentType': meta.get('instrumentType'), 'exchangeTimezoneName': meta.get('exchangeTimezoneName'),
             'gmtoffset': gmt, 'px_guard_known_first': kf}
 
@@ -494,7 +504,10 @@ def choose_reps(cands, starts, er):
     return reps
 
 
-OVERLAP_MAX = 0.50   # 二つの代表の中身の重なり Σ min(w_A, w_B)（今日の N-PORT）が 50% 以上なら同じ node とみなす（過半）
+OVERLAP_MAX = 0.50   # 報告 R13 だけ: 二つの代表の今日の中身の重なり Σ min(w_A, w_B) が 50% 以上なら同じ node とみなした版
+# ★主の母集団には掛けない（形を見た後の決定）: 今日の N-PORT の重なりは今日の市場の形の後知恵を含む。実測で SMH と XLK の重なりが
+#   50.7%（NVDA などの今の大きな重み＝過去の値上がりの結果）で、これで半導体の器を全期間から落とすと、測る現象（勢い）の結果で
+#   母集団を削ることになる。重なりを測れるのは N-PORT のある 2019 年以降だけで、その時点ごとの重なりは作れない
 
 
 def overlap(ha, hb):
@@ -554,7 +567,8 @@ def build(verbose=True):
     hold = {t: (NP[t].get('latest') or {}).get('holdings_w') or {} for t in passed}
     reps, dropped_overlap = {}, {}
     for v in ('etf_only', 'spliced'):
-        reps[v], dropped_overlap[v] = dedup_overlap(reps0[v], starts[v], er, hold)
+        _, dropped_overlap[v] = dedup_overlap(reps0[v], starts[v], er, hold)   # 報告 R13 用（主には掛けない）
+        reps[v] = reps0[v]
     ov_matrix = {}
     rset = sorted({x['rep'] for v in reps0.values() for x in v.values()})
     for i, a in enumerate(rset):
@@ -597,7 +611,7 @@ def build(verbose=True):
                        'oldest': {k: (NP[t].get('oldest') or {}).get(k) for k in ('repPdDate', 'eq_long_pct', 'us_share_of_eq', 'us_share_invcountry_only', 'us_share_isin_only', 'deriv_short_abs_pct', 'n_hold')},
                        'error': NP[t].get('error')} for t in sorted(cand)},
         'passed_nodes': passed,
-        'reps_before_overlap': reps0, 'reps': reps, 'dropped_by_overlap': dropped_overlap, 'overlap_ge_10pct_between_candidate_reps': ov_matrix,
+        'reps_before_overlap': reps0, 'reps': reps, 'dropped_by_overlap_R13_only': dropped_overlap, 'overlap_ge_10pct_between_candidate_reps': ov_matrix,
         'starts': starts, 'menu': menu, 'inception_flags': incep_flags,
         'yahoo_shape': SHAPE,
     }
@@ -632,8 +646,8 @@ def build_extract():
     data = {
         'end': END, 'rules': RULES, 'min_n': MIN_N, 'elig_months': ELIG_MONTHS,
         'universe': {'stage1': X['S1'], 'stage2': X['S2'], 'passed_nodes': X['passed'], 'reps_before_overlap': X['reps0'], 'reps': X['reps'],
-                     'dropped_by_overlap': X['dropped_overlap'], 'overlap_matrix': X['overlap'], 'starts': X['starts'],
-                     'predecessor': PREDECESSOR, 'overlap_max': OVERLAP_MAX,
+                     'dropped_by_overlap_R13_only': X['dropped_overlap'], 'overlap_matrix': X['overlap'], 'starts': X['starts'],
+                     'predecessor': PREDECESSOR, 'overlap_max_R13': OVERLAP_MAX, 'node_merge': NODE_MERGE,
                      'nport_latest': {t: {k: v for k, v in (X['NP'][t].get('latest') or {}).items() if k != 'holdings_w'} for t in X['NP']}},
         'ret_m': {t: {str(k): v for k, v in X['RET'][t].items()} for t in X['RET']},
         'close_ret_m': {t: {str(k): v for k, v in X['CRET'][t].items()} for t in X['CRET']},
