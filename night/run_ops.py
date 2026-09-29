@@ -31,6 +31,9 @@ ops.yml を直せばこの器も自動で追随する。
   「鍵が無いから未実行」という**もっともらしい嘘**になる。判断はワークフローに任せる。
 - 実行後に **score_all を回して投下可の顔ぶれが変わっていないかを必ず出す**。
   変わったら「変わった」と言う（黙って変えない）。
+- **セッションからは回さない段**（2026-09-29）: job か段の env に CCF_CI_ONLY がある段（ops.yml の forward ジョブ
+  ＝前向きの検定の書き手は CI だけ）と、main へ push する段（`git push`・`ccf_git_push`）は skip として理由つきで残す。
+  段の timeout-minutes に従い、時間切れは段のセッションごと止める（孫のプロセスを孤児にしない）。
 
 実行: python3 night/run_ops.py [--wf ops.yml] [--only 3,7] [--skip 17] [--dry-run]
       --wf で **fix.yml / gate0.yml** も同じ器で回せる（どちらも実行0回のまま）
@@ -51,8 +54,21 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TODAY = datetime.date.today()
 
 
+# 2026-09-29（検査役の指摘）: **セッションからは回さない段**を機構で分ける。
+#   (1) job または段の env に CCF_CI_ONLY がある段——前向きの検定（ops.yml の forward ジョブ）は
+#       「書き手は CI だけ」（手元で回した出力で固定した月が割れる）。旧版はジョブを見分けずに全段を拾い、
+#       900秒で bash だけを殺して nx を孤児のまま書き続けさせていた。
+#   (2) main へ push する段（`git push`・`ccf_git_push` を含む）——セッションから main へ自動で push しない
+#       （2026-09-23 に Routine の自動 push がアカウント停止の原因になった）。2026-08-17 はコミット段を人が
+#       手で --skip していた＝機構では守られていなかった。
+#   どちらも「実行した」とは数えず skip として理由つきで残す（黙って消さない）。
+CI_ONLY_WHY = "CI だけで回す段（env の CCF_CI_ONLY）——書き手は CI だけ"
+PUSH_WHY = "main へ push する段——セッションからは回さない（コミットと push は人か CI の仕事）"
+
+
 def steps_from_workflow(wf):
-    """ワークフローから (番号, 名前, run, env, timeout) を取り出す。**書き写さない**。"""
+    """ワークフローから (番号, 名前, run, env, timeout, CI 専用の理由) を取り出す。**書き写さない**。
+    番号はファイル全体の通し番号（2026-09-29 から。旧版はジョブごとに 1 から数え直し、ジョブが2つになると重なった）"""
     try:
         import yaml
     except ImportError:
@@ -60,17 +76,90 @@ def steps_from_workflow(wf):
         return []
     doc = yaml.safe_load(open(wf, encoding="utf-8"))
     out = []
-    for job in (doc.get("jobs") or {}).values():
-        for i, st in enumerate(job.get("steps") or [], 1):
+    n = 0
+    for jid, job in (doc.get("jobs") or {}).items():
+        job_env = {k: v for k, v in ((job or {}).get("env") or {}).items()}
+        for st in (job or {}).get("steps") or []:
+            n += 1
             run = st.get("run")
             if not run:
-                continue  # checkout / setup-python 等
+                continue  # checkout / setup-python / actions/cache 等
+            env = {k: v for k, v in (st.get("env") or {}).items()}
+            ci_only = None
+            if "CCF_CI_ONLY" in env or "CCF_CI_ONLY" in job_env:
+                ci_only = CI_ONLY_WHY + f"・job {jid}"
+            elif re.search(r"(?m)^\s*(?:git\s+push|ccf_git_push)\b", str(run)):
+                ci_only = PUSH_WHY
             out.append({
-                "n": i, "name": st.get("name") or f"step{i}", "run": run,
-                "env": {k: v for k, v in (st.get("env") or {}).items()},
-                "timeout": int(st.get("timeout-minutes", 0)) * 60 or None,
+                "n": n, "job": jid, "name": st.get("name") or f"step{n}", "run": run,
+                "env": {**job_env, **env},
+                "timeout": int(st.get("timeout-minutes", 0) or 0) * 60 or None,
+                "ci_only": ci_only,
             })
     return out
+
+
+def _session_pids(sid):
+    """セッション sid に属するプロセス（Linux の /proc から）。読めなければ空"""
+    pids = []
+    try:
+        for d in os.listdir("/proc"):
+            if not d.isdigit():
+                continue
+            try:
+                st = open(f"/proc/{d}/stat").read()
+                # 2番目の欄（コマンド名）は括弧つきで空白を含みうるので、最後の ')' の後ろから数える
+                f = st[st.rfind(")") + 2:].split()
+                if int(f[3]) == sid and f[0] != "Z":   # state ppid pgrp session …（ゾンビは数えない＝もう走っていない）
+                    pids.append(int(d))
+            except (OSError, ValueError, IndexError):
+                continue
+    except OSError:
+        pass
+    return pids
+
+
+def _kill_session(sid, sig):
+    """セッションの全プロセスへ sig を送る。GNU timeout は自分のプロセスグループを作るので、
+    bash のグループ（killpg）だけでは `timeout … python3` の python に届かない——セッションで拾う"""
+    sent = False
+    for pid in _session_pids(sid):
+        try:
+            os.kill(pid, sig)
+            sent = True
+        except (ProcessLookupError, PermissionError):
+            pass
+    try:
+        os.killpg(sid, sig)
+        sent = True
+    except (ProcessLookupError, PermissionError):
+        pass
+    return sent
+
+
+def run_group(cmd, timeout, env):
+    """subprocess.run と同じ戻り値（returncode・stdout・stderr）。時間切れなら**段のセッションごと**止めて
+    TimeoutExpired を投げる（孫のプロセスを孤児にしない）"""
+    import signal
+    p = subprocess.Popen(cmd, cwd=BASE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                         env=env, start_new_session=True)       # 段は新しいセッション＝sid は bash の pid
+    try:
+        out, err = p.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        for sig in (signal.SIGTERM, signal.SIGKILL):
+            if not _kill_session(p.pid, sig):
+                break
+            deadline = time.time() + 10
+            while time.time() < deadline and _session_pids(p.pid):
+                time.sleep(0.2)
+            if not _session_pids(p.pid):
+                break
+        try:
+            p.communicate(timeout=10)
+        except Exception:  # noqa: BLE001
+            pass
+        raise
+    return subprocess.CompletedProcess(cmd, p.returncode, out, err)
 
 
 def needed_keys(st):
@@ -118,6 +207,10 @@ def main():
             recs.append({"n": n, "name": name, "state": "skip", "why": "--skip 指定"})
             print(f"  ⏭  {n:2}. {name[:46]}  （--skip）")
             continue
+        if st.get("ci_only"):
+            recs.append({"n": n, "name": name, "state": "skip", "why": st["ci_only"]})
+            print(f"  ⏭  {n:2}. {name[:46]}  （{st['ci_only']}）")
+            continue
         miss = needed_keys(st)
         # ⚠ 初版は「鍵が無ければ実行しない」にして**ワークフローの判断を勝手に上書きしていた**。
         #   実測 ops.yml ステップ3 は `if [ -n "$AV_KEY" ]; then echo …; else echo …; fi` の**後**に
@@ -137,11 +230,14 @@ def main():
         if not miss:
             print(f"  ▶  {n:2}. {name[:46]} …", flush=True)
         try:
-            p = subprocess.run(["bash", "-o", "pipefail", "-c", st["run"]], cwd=BASE,
-                               capture_output=True, text=True,
-                               timeout=st["timeout"] or a.timeout,
-                               env={**os.environ, **{k: str(v) for k, v in st["env"].items()
-                                                     if "secrets." not in str(v)}})
+            # 2026-09-29: 段は**自分のセッション**で走らせ、時間切れなら**セッションごと**止める。
+            #   subprocess.run の timeout は子の bash だけを殺すので、`timeout … python3 … | tail` の python は
+            #   孤児のまま走り続け、TimeoutExpired の後もファイルを書いていた（実測: 6秒後に孫が書いた）。
+            #   プロセスグループ（killpg）でも足りない——GNU timeout は自分のグループを作るので python に届かない（実測）
+            p = run_group(["bash", "-o", "pipefail", "-c", st["run"]],
+                          timeout=st["timeout"] or a.timeout,
+                          env={**os.environ, **{k: str(v) for k, v in st["env"].items()
+                                                if "secrets." not in str(v) and "${{" not in str(v)}})
             dt = round(time.time() - t0, 1)
             tail = "\n".join((p.stdout or "").strip().splitlines()[-6:])
             if p.returncode == 0:

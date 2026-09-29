@@ -348,7 +348,8 @@ def castle_rule_block(st, positions, sers, fx, t0, t1):
             iq *= q1 / q0
         prev = day
         # 月ごとに最後の日の値を1点だけ残す（のちの「直近5年」の窓をここから切れるように）
-        if monthly[-1][0][:7] == day[:7]:
+        # 起点の点（monthly[0]）は上書きしない＝起点の月の途中の日で起点が消えると、年率と z の起点がずれる
+        if len(monthly) > 1 and monthly[-1][0][:7] == day[:7]:
             monthly[-1] = [day, round(ic, 6), round(io, 6), round(iq, 6)]
         else:
             monthly.append([day, round(ic, 6), round(io, 6), round(iq, 6)])
@@ -370,7 +371,95 @@ def castle_rule_block(st, positions, sers, fx, t0, t1):
                    diff_ann_vs_qqqm_pt=(ann(ic) - ann(iq)) * 100)
     else:
         out["annualize_why"] = f"起点から {days} 日＝1年未満なので年率にしない（最初の判定は 2029-09）"
+    out["rule"] = castle_rule_eval(monthly, cal[-1], (pfj.get("target") or {}).get("castle_rule_params") or {})
     return out
+
+
+def castle_rule_eval(monthly, asof, prm):
+    """castle_rule の判定（2026-09-29 ユーザー指示「どちらも進めて」で形を直した・表示専用）。
+    線は portfolio.json target.castle_rule_params から読む（写さない）。定義は模擬（x1＋0%）と同じ:
+      d＝期間の年率の差（個別のCAGR−袖のCAGR, pt）／ぶれ＝月次の差（個別−袖）の標準偏差×√12（下限 sigma_floor_pt）
+      z＝d×√年数÷ぶれ。z_cum は起点から・z_recent は直近 min(年数, recent_years) 年。
+      水準＝start から、z_cum が up の線以上ならその水準／down の線以下ならその水準、
+            z_recent が down の線以下なら min(水準, その水準)、z_cum≤zero_at なら0%。上限 cap。
+    月次の差は monthly の点どうし（月末の値）で取り、20日未満の端の区間（起点の月・今月の途中）は
+    ぶれの推定から外す。1年未満は年率も z も出さない。比率を動かすのは人（9月に1回・売らない）。"""
+    if not prm:
+        return {"ok": False, "why": "portfolio.json に target.castle_rule_params が無い"}
+    floor = float(prm.get("sigma_floor_pt", 12))
+    start_lv = float(prm.get("start_level_pct", 20))
+    cap = float(prm.get("cap_pct", 30))
+    rec_y = float(prm.get("recent_years", 10))
+    ups = sorted((float(a), float(b)) for a, b in (prm.get("up") or []))
+    downs = sorted(((float(a), float(b)) for a, b in (prm.get("down") or [])), reverse=True)
+    zero_at = prm.get("zero_at")
+    first = str(prm.get("first_review") or "2029-09")
+    base = {"ok": False, "first_review": first, "params": "portfolio.json target.castle_rule_params"}
+    pts = [(datetime.date.fromisoformat(p[0]), float(p[1]), float(p[2])) for p in (monthly or []) if p and p[1] and p[2]]
+    if not pts:
+        return dict(base, why="月次の点がまだ無い")
+    if len(pts) < 2 or (datetime.date.fromisoformat(str(asof)[:10]) - pts[0][0]).days < 365:
+        yrs = (datetime.date.fromisoformat(str(asof)[:10]) - pts[0][0]).days / 365.25
+        return dict(base, ok=True, judged=False, level_if_judged_now=None, start_level_pct=start_lv, years=round(yrs, 3),
+                    note=f"起点から1年未満（{yrs:.2f}年）なので z を出さない。判定は {first} から・それまでは {start_lv:g}%")
+
+    def window(i0):
+        d0, c0, s0 = pts[i0]
+        d1, c1, s1 = pts[-1]
+        yrs = (d1 - d0).days / 365.25
+        if yrs < 1:
+            return None
+        dpt = ((c1 / c0) ** (1 / yrs) - (s1 / s0) ** (1 / yrs)) * 100
+        act = [(pts[j][1] / pts[j - 1][1] - 1) - (pts[j][2] / pts[j - 1][2] - 1)
+               for j in range(i0 + 1, len(pts)) if (pts[j][0] - pts[j - 1][0]).days >= 20]
+        sig = None
+        if len(act) >= 3:
+            m = sum(act) / len(act)
+            sig = (sum((a - m) ** 2 for a in act) / (len(act) - 1)) ** 0.5 * (12 ** 0.5) * 100
+        used = max(floor, sig) if sig is not None else floor
+        return {"years": round(yrs, 3), "d_pt": round(dpt, 3), "sigma_pt": None if sig is None else round(sig, 3),
+                "sigma_used_pt": round(used, 3), "z": round(dpt * yrs ** 0.5 / used, 3), "from": d0.isoformat(),
+                "months": len(act), "_z": dpt * yrs ** 0.5 / used, "_sig": used}
+
+    cum = window(0)
+    if cum is None:
+        yrs = (pts[-1][0] - pts[0][0]).days / 365.25
+        return dict(base, ok=True, judged=False, level_if_judged_now=None, start_level_pct=start_lv, years=round(yrs, 3),
+                    note=f"起点から1年未満（{yrs:.2f}年）なので z を出さない。判定は {first} から・それまでは {start_lv:g}%")
+    if cum["years"] > rec_y:
+        cut = pts[-1][0] - datetime.timedelta(days=round(rec_y * 365.25))
+        i0 = next(i for i, p in enumerate(pts) if p[0] >= cut)
+        rec = window(i0) or cum
+    else:
+        rec = dict(cum, note=f"{rec_y:g}年以内なので累計と同じ")
+    zc, zr = cum.pop("_z"), rec.pop("_z", None)   # 判定は丸める前の z で（表示の z は3桁に丸めてある）
+    if zr is None:
+        zr = zc
+    sig_used = cum.pop("_sig")
+    rec.pop("_sig", None)
+    lv = start_lv
+    for a, b in ups:
+        if zc >= a:
+            lv = b
+    for a, b in downs:
+        if zc <= a:
+            lv = b
+    for a, b in downs:
+        if zr <= a:
+            lv = min(lv, b)
+    if zero_at is not None and zc <= float(zero_at):
+        lv = 0.0
+    lv = min(lv, cap)
+    judged = pts[-1][0].isoformat()[:7] >= first
+    sq = cum["years"] ** 0.5
+    lines = {f"{b:g}%": round(a * sig_used / sq, 2) for a, b in ups + downs}
+    if zero_at is not None:
+        lines["0%"] = round(float(zero_at) * sig_used / sq, 2)
+    return dict(base, ok=True, judged=judged, asof=asof, cum=cum, recent=rec,
+                level_if_judged_now=lv, start_level_pct=start_lv,
+                lines_d_pt_per_year=lines,
+                note=("判定の月（毎年9月）にだけ比率を動かす。" if judged else f"判定は {first} から（それまでは {start_lv:g}%）。")
+                     + "lines は今の年数とぶれで、その水準になる累計の年率の差（pt/年）")
 
 
 def main():

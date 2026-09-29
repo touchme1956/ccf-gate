@@ -1,0 +1,410 @@
+{
+ "generated": "2026-09-28",
+ "angle": "nx_stack（リターンの積み重ね）",
+ "title": "市場（French Mkt）を100%持ったうえに、市場とほぼ独立の上乗せ（自己資金のいらない先物の買い−売りや超過リターン）を重ねると、市場に勝つか",
+ "question": "株式市場を丸ごと100%持ち、その上に株以外の資産クラス（株価指数の国選び・国債・為替・商品）の割安・勢い・キャリー・守り、時系列の勢い（トレンド）、商品先物の買い持ち、信用の上乗せ を、ぶれ10%の大きさで借入なしの先物として重ねたとき、費用を引いても市場より高い複利になるか。それは『β を増やしただけ』（シャープレシオが上がらない）ではないか。",
+ "asked_by": "ユーザー「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して。…今別のSessionでこの内容を2つ回してる。別のSessionで検証していない新たな分析を同じ内容でしてほしい」（2026-09-28）。全体の事前登録 out/nx_prereg.json の wave1 の nx_stack",
+ "registered_before_measuring": true,
+ "global_prereg": "out/nx_prereg.json（線 C1〜C8・格付け S/A/B/C・criteria_short_sample。この角度では一切動かさない）",
+ "grading_call": "nx_common.grade(full=費用前の全期間, train=費用前の訓練, hold=費用前の保有, roll20=費用後, cost_hold=費用後の保有, repl=C5, family_holm_p=族の中の Holm 補正後 p〔保有・費用前・両側〕, sharpe_pair={訓練:(s_net, Mkt), 保有:(s_net, Mkt)}, leveraged_or_timing=True)",
+ "tools": {
+  "data": "night/nx_stack_data.py → out/_nx_cache/nx_stack_series.json（取得と整形だけ・成績は計算しない）",
+  "measure_next": "night/nx_stack.py → out/nx_stack.json（この事前登録を commit した後に書く。tested に下の全規則を1本残らず残す）"
+ },
+ "stance_before_results": "重ねる型の超過は定義上『上乗せ − 費用』だけで、市場の部分は相手と打ち消し合う。したがって問いは『上乗せの系列そのものが、費用と分散の引きずり（ぶれ10%なら年約0.5%）を上回って正か、しかも2007年以降も』に尽きる。理論上、上乗せが市場と無相関でシャープが正なら重ねた組のシャープは市場より上がりうる（C8 を通りうる）。一方で紙の系列（AQR）は費用前で、実在のファンドは紙に大きく負けた年がある——主の判定は費用（年0.8〜1.8%）を引いた後で行い、実物の答え合わせを必ず並べる。探し続けるが、線は結果を見て動かさない",
+ "why_new": {
+  "vs_q07leu_tsmom_multi": "q07leu の tsmom_multi は米国株・米国外株・米10年債の3資産だけを、勢いが負なら売って短期金利へ移す『置き換え』（株を持たない月がある）。ここは市場を常に100%持ち、58の先物（為替・商品を含む）の時系列の勢いを『上に足す』。株の部分の時期選びはしない",
+  "vs_q07leu_riskparity": "q07leu の riskparity は株と10年債をぶれの逆数で持ち株のぶれまで借りる『置き換え』。ここは株を100%のまま残し、国債は（国債の中の）割安・勢い・キャリー・守りの買い−売りとしてだけ入る＝債券の方向の賭け（素の債券の先物）は主の族に入れない",
+  "vs_q07leu_macro": "q07leu の macro は逆イールド等の景気指標で米国株を売り買いする時期選び。ここでの『マクロ』は AQR の用語で『株以外の資産クラス』の意味で、景気の指標は使わない",
+  "vs_eknzbh_levdca": "eknzbh の levdca は市場の一定倍・ライフサイクル・株＋長期国債の固定配合（E1）の借入。重ねるのは株か素の国債の方向だけ。ここの主の族は方向に賭けない買い−売り（P1〜P6・P8）と商品の買い持ち（P7）で、素の国債・株の方向の上乗せは探索族 X3 に『重なり』と明記して置くだけ",
+  "vs_eknzbh_mega_tilt": "eknzbh の mega_tilt は市場＋米国株の中の買い−売り（JKP の特性）。ここは株の銘柄選びを主の族から外した（AQR の US/Intl Stock Selection・BAB 株式は探索族 X4 に『重なり』と明記）",
+  "vs_others_country": "eknzbh の国選び（配当利回り・CAPE）と q07leu の国の勢いは米国外の株を買う（持ち高を置き換える）形。ここの株価指数の割安・勢いは国の先物の買い−売りを市場の上に重ねる形で、単独では主の族に入れていない（P1〜P4 の合成の一部としてだけ入り、単独は探索族 X2 に『重なり』と明記）",
+  "new_data": "AQR の百年の因子（1926〜・為替は1974〜）・時系列の勢い（1985〜）・商品の百五十年（1877〜）・信用の上乗せ（1926〜2014）は、他の2セッションと main のどの道具も読んでいない（2026-09-28 に origin の枝で確認）"
+ },
+ "data": {
+  "market": {
+   "source": "Ken French F-F_Research_Data_Factors（月次）: Mkt = Mkt-RF + RF（CRSP 全上場・上場廃止も含む・上限なしの時価加重）、RF（シャープ用）",
+   "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors_CSV.zip",
+   "span": "1926-07〜2026-08（欠け0）"
+  },
+  "aqr_century": {
+   "source": "AQR『Century of Factor Premia』月次（Ilmanen-Israel-Lee-Moskowitz-Thapar 2021 の更新版）",
+   "url": "https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Century-of-Factor-Premia-Monthly.xlsx",
+   "span": "1926-07〜2026-02。株価指数・国債は 1926-07〜欠け0／為替は 1974-02〜（Value は 1974-04〜）／商品の4スタイルは 1943-08〜1949-08 の73か月が欠け（原本の脚注: 信頼できる商品が少なすぎた）／US Stock Selection は 1926〜・Intl は 1984〜",
+   "definition_read": "Definition シートの画像を読んだ: 「$1 買い・$1 売りの自己資金ゼロの買い−売り」（守りだけはベータを釣り合わせるので金額は同じでない）。資産クラスの合成は直近36か月のぶれの逆数の重み。**全体のぶれを10%に揃えてはいない**。手数料・売買費用の前。原本のヘッダー: 『monthly self-financing excess returns』",
+   "universe": "株価指数 23か国（MSCI World に 1920〜2020 に入った国）・国債 13か国（原本本文は 26 か国とも書く）・為替 20（G10＋ユーロ以前の10）・商品 30",
+   "vintage": "sha1 390b1230a13a（2026-09-28 取得）。AQR は更新のたびに全履歴を作り直すので、測定はこの版で行う。版が変わっていたら両方を報告",
+   "survivorship": "指数・先物なので上場廃止の偏りは小さい。ただし国の母集団は後から見て MSCI World に入った国（後知恵の選択が少し入る）、商品は今も取引される30品目"
+  },
+  "aqr_tsmom": {
+   "source": "AQR『Time Series Momentum: Factors, Monthly』（Moskowitz-Ooi-Pedersen 2012 の更新版）",
+   "url": "https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Time-Series-Momentum-Factors-Monthly.xlsx",
+   "span": "1985-01〜2026-05（欠け0）。列 TSMOM・TSMOM^CM・^EQ・^FI・^FX",
+   "definition_read": "Definitions の図（EMF の文字を抜いて読んだ）: 各玉を事前のぶれ 40% に揃え（ぶれは日次の指数加重・重心60日・t−1 の推定を t に使う）、58の先物で等分平均。原本の記述『全体のぶれは標本期間で年約12%』。超過（資金調達込み）",
+   "vintage": "sha1 c137da64d22c"
+  },
+  "aqr_vme": {
+   "source": "AQR『Value and Momentum Everywhere: Factors, Monthly』",
+   "url": "https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Value-and-Momentum-Everywhere-Factors-Monthly.xlsx",
+   "span": "VAL・MOM 1972-01〜2026-07／VAL^AA・MOM^AA（資産配分の4クラス）1972-01〜2025-01／資産クラス別 1972〜1983 開始〜2025-01",
+   "vintage": "sha1 df8b2445ec5a"
+  },
+  "aqr_bab": {
+   "source": "AQR『Betting Against Beta: Equity Factors, Monthly』（株式の BAB。探索族 X4 だけ）",
+   "url": "https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Betting-Against-Beta-Equity-Factors-Monthly.xlsx",
+   "span": "USA 1930-12〜2026-07／Global・Global Ex USA 1987-02〜2026-07",
+   "vintage": "sha1 465f482cd975"
+  },
+  "aqr_clr": {
+   "source": "AQR『Commodities for the Long Run: Index Level Data, Monthly』（Levine-Ooi-Richardson-Sasseville 2018 FAJ）",
+   "url": "https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Commodities-for-the-Long-Run-Index-Level-Data-Monthly.xlsx",
+   "span": "1877-02〜2025-05（欠け0）。列: 等分の買いの超過（EW_excess）・後退/順ざやの上位1/3買い−下位1/3売り（LS_excess）ほか",
+   "units_check": "⚠ データ集の名前は『Index Level Data』だが、中身は月次リターン（小数）と形で確かめた（負の値がある・|x|>0.5 が0件・1か月ずれの自己相関 0.13/0.05＝水準なら1に近い）。道具はリターンとしてそのまま使う",
+   "vintage": "sha1 e65d093c1177"
+  },
+  "aqr_credit": {
+   "source": "AQR『Credit Risk Premium: Preliminary Paper Data』（Asvanunt-Richardson 2015 WP → 2017 JFI）",
+   "url": "https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Credit-Risk-Premium-Preliminary-Paper-Data.xlsx",
+   "span": "1926-01〜2014-12（CORP_XS・GOVT_XS・SP500_XS）",
+   "definition_check": "CORP_XS は『同じデュレーションの国債を引いた社債の超過』と読む。形の確認として GOVT_XS との全期間の相関だけを計算した: 0.01（金利の部分は抜けている）",
+   "vintage": "sha1 9ccc1a36e128"
+  },
+  "cboe": {
+   "source": "CBOE PUT（S&P500 のプット売り・担保つき）・BXM（カバードコール）の日次の水準 → 月末の水準の比",
+   "url": [
+    "https://cdn.cboe.com/api/global/us_indices/daily_prices/PUT_History.csv",
+    "https://cdn.cboe.com/api/global/us_indices/daily_prices/BXM_History.csv"
+   ],
+   "span": "PUT は 1991〜2004 に飛び飛びの5点しか無く、使えるのは 2007-02〜（月に15取引日以上ある月だけ）。BXM は 2002-05〜。旧 URL（www.cboe.com/micro/put/putdailyprice.csv）は今は HTML が返り、1986 年からの履歴は取れなかった",
+   "vintage": "PUT sha1 ddc2632a67d5 / BXM 30031c151777"
+  },
+  "shiller": {
+   "source": "Shiller ie_data.xls: 名目の総リターン = (P_t + D_t/12)/P_{t−1} − 1（P は月平均・D は年率の配当）",
+   "url": "http://www.econ.yale.edu/~shiller/data/ie_data.xls",
+   "use": "P7 の C5（1877-02〜1926-06 の独立の時代）の土台だけ",
+   "span": "1871-02〜2023-06",
+   "vintage": "sha1 0dc5f39d6ba7"
+  },
+  "fred_not_used": "FRED の ICE BofA（BAMLHYH0A0HYM2TRIV・BAMLCC0A0CMTRIV・BAMLC0A0CM）は 2023-09-29 以降の約3年しか返らない（配布の制限）＝履歴の検定に使えないので使わない",
+  "real_funds": {
+   "source": "Yahoo の月次の調整後終値（配当込み）",
+   "tickers_and_start": {
+    "AQMIX": "2010-02",
+    "QMHIX": "2013-08",
+    "QSPIX": "2013-11",
+    "QRPRX": "2017-10",
+    "ASFYX": "2010-09",
+    "PQTIX": "2014-02",
+    "DBMF": "2019-06",
+    "KMLM": "2021-01",
+    "CTA": "2022-04",
+    "RSST": "2023-10",
+    "RSSB": "2024-01",
+    "RSBT": "2023-03",
+    "RSSY": "2024-06",
+    "NTSX": "2018-09",
+    "GDE": "2022-04",
+    "COM": "2017-04",
+    "HYZD": "2014-01",
+    "DBC": "2006-03",
+    "GSG": "2006-08",
+    "SPY": "1993-02",
+    "PUTW": "取得できず（404）"
+   },
+   "survivorship": "今も存在するファンドだけ＝閉じた代替ファンド・マネージドフューチャーズのファンドは入っていない（生き残りの偏りあり）。月の中でちょうど0のリターンが1〜4か月あるファンドがある（Yahoo の欠けの疑い＝答え合わせでは欠けとして落とす）。最後の月（2026-09）は月の途中なので落とす"
+  }
+ },
+ "criteria": {
+  "which": "criteria_long_history（訓練〜2006-12・保有 2007-01〜データの終わり・C1〜C8）を主の族 P と探索族 X1〜X4 に使う。訓練期間は P1〜P5・P7・P8 が 1926-07〜2006-12（80年）、P6 が 1985-01〜2006-12（22年）で、どれも15年以上。探索族 X5（CBOE のプット売り・カバードコール）だけはデータが 2002/2007 からなので criteria_short_sample",
+  "series_used_per_criterion": {
+   "s_gross": "s = Mkt + k×F（費用前）、b = Mkt（どちらも総リターン）。超過 = k×F",
+   "s_net": "s_net = Mkt + k×F − c/12（c = 年の費用）",
+   "C1_C2_C3_C7": "費用前（s_gross 対 b）。eknzbh の mega_tilt と同じ約束",
+   "C4_roll20": "費用後（s_net 対 b）の転がる20年窓（一括・毎年7月起点・nx_common.rolling）",
+   "C6_net_cost": "費用後の保有期間（s_net 対 b）で C2 が成り立つか",
+   "C8_sharpe": "費用後の s_net のシャープ と Mkt のシャープ（どちらも French RF を引く）を 訓練・保有 の両方で比べる。重ねる型なので必須（leveraged_or_timing=True）",
+   "C7_multi": "全期間の t ≥ 3.0（費用前）または 族の中の Holm 補正後 p（保有期間・費用前・両側）< 0.05"
+  },
+  "C5_independent_unit": "上乗せは市場と打ち消し合うので、土台を別の国の市場に替えても超過は同じ＝地域では独立の再現にならない。そこで独立の単位を『同じスタイルの資産クラス別の系列（株価指数・国債・為替・商品）』とする（P1〜P5）。P6 は TSMOM の4資産クラス別。P7 は 1877-02〜1926-06 の独立の時代（土台 Shiller の名目の総リターン）。P8 は独立の単位が無く N/A。各単位には親の規則と同じ作り方（その単位自身の訓練期間のぶれで k を決めて10%・親と同じ費用）を当て、『正』＝その単位の使えるデータの全期間で、費用後の超過の算術平均が正 かつ 幾何の年率差が正（eknzbh levdca の約束）。欠けた月は落とす（0と読まない）",
+  "cost_assumption": "年の費用 c = 上乗せの運用費用（ぶれ10%あたり）＋重ねる資金調達 0.3%。運用費用: 多スタイルの合成 1.5%・単一スタイル／時系列の勢い／株の選び以外の買い−売り 1.0%・単純な商品指数と信用の指数 0.5%。資金調達 0.3% は、100% の株を持ったまま先物の証拠金を積むために株を先物・スワップで持つ（または少し現金を残す）ときの上乗せの目安。株の銘柄選びの買い−売り（X4）は空売りの費用が掛かるので 1.5%。ぶれを 5%/15% にする変形は運用費用だけをぶれに比例させる（資金調達は 0.3% のまま）。感度（報告のみ）: 運用費用 ×{0, 0.5, 1, 1.5, 2} × 資金調達 {0, 0.3, 0.6}%",
+  "holm": "族ごとに Holm（P の8本・X1 の各変形8本ずつ・X2 22本・X3 10本・X4 5本・X5 2本は片側）",
+  "short_sample_for_X5": "nx_common.grade_short をそのまま使う。ただし2か所を指数の系列向けに置き換える（測る前に決めた）: 『最大寄与の1銘柄を抜いても正』→『超過が最も大きかった1か月を抜いても正』／『上場廃止の下限版』→『費用2倍でも正』。さらに重ねる型なので『全期間・前半・後半のすべてで s_net のシャープが Mkt のシャープを上回る』が満たされなければ格付けを C に落とす（βを足しただけの勝ちを除く・C8 の短い標本版）"
+ },
+ "scaling": {
+  "main": "固定の倍率 k = 0.10 ÷（その規則の訓練期間の上乗せの月次リターンの標準偏差×√12）。訓練期間の最後で決めて、保有期間はその k のまま動かさない＝保有期間の情報は倍率に一切入らない。訓練期間の中では同じ期間のぶれで倍率を決めている（大きさだけで、符号・平均・t には効かない）ことを明記する",
+  "why_10pct": "実在の代替ファンドの多くは年10%前後のぶれを目安にしている（マネージドフューチャーズの標準的な大きさ・MOP 2012 の TSMOM も標本期間で約12%）。市場のぶれ（約15〜20%）の上に10%を無相関で足すと組のぶれは約18〜22%。5%と15%は探索族 X1 で",
+  "not_computed_yet": "各系列のぶれ・k の値は、この事前登録の時点では計算していない（計算すると形を超えるので、測る道具が最初に出す）",
+  "monthly_reset": "毎月末に上乗せの金額を 持ち分×k に戻す（先物の元本を持ち分に合わせる）"
+ },
+ "families": {
+  "P_primary": {
+   "role": "主の族（格付けする・Holm はこの8本で）",
+   "common": "上乗せ F（自己資金ゼロの超過）を k 倍して French Mkt の上に重ねる。k は訓練期間のぶれで年10%に揃えた固定値。s_net = Mkt + k×F − c/12",
+   "rules": {
+    "P1_macro_multistyle": {
+     "overlay": "CFP|All Macro Multi-style（AQR 百年の因子: 株価指数・国債・為替・商品の中の 割安・勢い・キャリー・守り を平均順位で合成し、資産クラスを直近36か月のぶれの逆数で配分した買い−売り）",
+     "span": "1926-07〜2026-02（為替は 1974〜 から加わる）",
+     "train": "1926-07〜2006-12",
+     "hold": "2007-01〜2026-02",
+     "cost_pct_per_year": 1.8,
+     "cost_breakdown": "運用費用 1.5%（多スタイルの代替ファンド並み・売買費用込み）＋重ねる資金調達 0.3%",
+     "C5_units": [
+      "CFP|Equity indices Multi-style",
+      "CFP|Fixed income Multi-style",
+      "CFP|Currencies Multi-style（1974〜）",
+      "CFP|Commodities Multi-style（1943-08〜1949-08 の欠けは落とす）"
+     ],
+     "C5_need": "4単位のうち3以上",
+     "post_publication_from": "2020-01（Ilmanen ほか SSRN 2019）"
+    },
+    "P2_macro_value": {
+     "overlay": "CFP|All Macro Value（株価指数=CAPE・国債=実質利回り・為替=購買力平価からの乖離・商品=5年の価格変化の負）",
+     "span": "1926-07〜2026-02",
+     "train": "1926-07〜2006-12",
+     "hold": "2007-01〜2026-02",
+     "cost_pct_per_year": 1.3,
+     "cost_breakdown": "運用費用 1.0%（単一スタイル）＋重ねる資金調達 0.3%",
+     "C5_units": [
+      "CFP|Equity indices Value",
+      "CFP|Fixed income Value",
+      "CFP|Currencies Value（1974〜）",
+      "CFP|Commodities Value（欠けは落とす）"
+     ],
+     "C5_need": "4単位のうち3以上",
+     "post_publication_from": "2014-01（Asness-Moskowitz-Pedersen 2013）"
+    },
+    "P3_macro_momentum": {
+     "overlay": "CFP|All Macro Momentum（資産クラスの中で直近12か月〔最新1か月を除く〕の超過リターンの順位で買い−売り＝横断の勢い）",
+     "span": "1926-07〜2026-02",
+     "train": "1926-07〜2006-12",
+     "hold": "2007-01〜2026-02",
+     "cost_pct_per_year": 1.3,
+     "cost_breakdown": "運用費用 1.0%＋重ねる資金調達 0.3%",
+     "C5_units": [
+      "CFP|Equity indices Momentum",
+      "CFP|Fixed income Momentum",
+      "CFP|Currencies Momentum（1974〜）",
+      "CFP|Commodities Momentum（欠けは落とす）"
+     ],
+     "C5_need": "4単位のうち3以上",
+     "post_publication_from": "2014-01（Asness-Moskowitz-Pedersen 2013）"
+    },
+    "P4_macro_carry": {
+     "overlay": "CFP|All Macro Carry（株価指数=先物の割引〔1990年より前は配当利回り−現金〕・国債=10年−3か月の傾き・為替=3か月金利差・商品=期近と次限の価格差）",
+     "span": "1926-07〜2026-02",
+     "train": "1926-07〜2006-12",
+     "hold": "2007-01〜2026-02",
+     "cost_pct_per_year": 1.3,
+     "cost_breakdown": "運用費用 1.0%＋重ねる資金調達 0.3%",
+     "C5_units": [
+      "CFP|Equity indices Carry",
+      "CFP|Fixed income Carry",
+      "CFP|Currencies Carry（1974〜）",
+      "CFP|Commodities Carry（欠けは落とす）"
+     ],
+     "C5_need": "4単位のうち3以上",
+     "post_publication_from": "2019-01（Koijen-Moskowitz-Pedersen-Vrugt 2018 JFE）"
+    },
+    "P5_macro_defensive": {
+     "overlay": "CFP|All Macro Defensive（株価指数と国債の中で36か月のベータの低い側を買い高い側を売る。金額は同じでなくベータが釣り合う＝Frazzini-Pedersen の BAB の資産配分版。為替・商品には無い）",
+     "span": "1926-07〜2026-02",
+     "train": "1926-07〜2006-12",
+     "hold": "2007-01〜2026-02",
+     "cost_pct_per_year": 1.3,
+     "cost_breakdown": "運用費用 1.0%＋重ねる資金調達 0.3%",
+     "C5_units": [
+      "CFP|Equity indices Defensive",
+      "CFP|Fixed income Defensive"
+     ],
+     "C5_need": "2単位の両方（2/3 以上＝2/2）",
+     "post_publication_from": "2015-01（Frazzini-Pedersen 2014 JFE）"
+    },
+    "P6_tsmom": {
+     "overlay": "TSMOM|TSMOM（AQR 時系列の勢い: 58の先物それぞれについて直近12か月の超過リターンの符号で買い/売り、各玉を事前のぶれ40%に揃えて等分平均。保有1か月）",
+     "span": "1985-01〜2026-05",
+     "train": "1985-01〜2006-12（22年＝15年以上）",
+     "hold": "2007-01〜2026-05",
+     "cost_pct_per_year": 1.3,
+     "cost_breakdown": "運用費用 1.0%（DBMF 0.85%・KMLM 0.90% ＋売買費用）＋重ねる資金調達 0.3%",
+     "C5_units": [
+      "TSMOM|TSMOM^EQ",
+      "TSMOM|TSMOM^FI",
+      "TSMOM|TSMOM^FX",
+      "TSMOM|TSMOM^CM"
+     ],
+     "C5_need": "4単位のうち3以上",
+     "post_publication_from": "2013-01（Moskowitz-Ooi-Pedersen 2012 JFE）"
+    },
+    "P7_commodity_long": {
+     "overlay": "CLR|EW_excess（AQR Commodities for the Long Run: 商品先物の等分の買いだけ・現金を引いた超過。原本の定義は『各時点の商品の平均リターンをとらえる等分のポートフォリオ』）",
+     "span": "判定は French Mkt と重なる 1926-07〜2025-05。1877-02〜1926-06 は C5 の独立の時代だけに使う",
+     "train": "1926-07〜2006-12",
+     "hold": "2007-01〜2025-05",
+     "cost_pct_per_year": 0.8,
+     "cost_breakdown": "運用費用 0.5%（単純な商品指数）＋重ねる資金調達 0.3%",
+     "C5_units": [
+      "1877-02〜1926-06 の独立の時代（土台は Shiller の名目の総リターン・同じ k と同じ費用）"
+     ],
+     "C5_need": "1単位（それが正）",
+     "post_publication_from": "2007-01（Gorton-Rouwenhorst 2006 FAJ＝保有期間と同じ）。参考に 2019-01〜（Levine ほか 2018 FAJ）"
+    },
+    "P8_credit": {
+     "overlay": "CRP|CORP_XS（Asvanunt-Richardson の信用の超過: 社債から同じデュレーションの国債を引いた月次。形で確認: GOVT_XS との相関 0.01＝金利の部分は抜けている）",
+     "span": "1926-07〜2014-12（データが 2014 で終わる）",
+     "train": "1926-07〜2006-12",
+     "hold": "2007-01〜2014-12（8年だけ）",
+     "cost_pct_per_year": 0.8,
+     "cost_breakdown": "運用費用 0.5%（CDX 等の指数で重ねる想定）＋重ねる資金調達 0.3%",
+     "C5_units": [],
+     "C5_need": "N/A（独立の単位が無い。FRED の ICE BofA の社債指数は 2023-09 以降しか公開されていない＝履歴が使えない）",
+     "post_publication_from": "N/A（論文 2015・データは 2014 で終わる）"
+    }
+   }
+  },
+  "X1_scale": {
+   "role": "探索（格付けするが『探索』と明記）: P1〜P8 と同じ8本を大きさだけ変える。Holm は変形ごとに8本で",
+   "X1a_vol5": "訓練期間のぶれで年5%に揃えた固定の k（運用費用は半分・資金調達 0.3%）",
+   "X1b_vol15": "訓練期間のぶれで年15%に揃えた固定の k（運用費用は1.5倍・資金調達 0.3%）",
+   "X1c_trailing36": "毎月末に直近36か月（t−36〜t−1）のぶれで年10%に揃える k_t（k_t は P の固定の k の 1/3〜3倍に制限）。最初の36か月は重ねない（その月は落とす）。費用は P と同じ",
+   "X1d_notional1": "AQR の系列をそのまま1倍（$1 買い・$1 売り）で重ねる。運用費用は（訓練期間のぶれ ÷ 10%）に比例させる＋資金調達 0.3%"
+  },
+  "X2_single_asset_class": {
+   "role": "探索: 資産クラス別の単体（P の C5 の単位と同じ系列を単独の規則として格付け）。k は各自の訓練期間のぶれで10%。Holm は22本で",
+   "rules": [
+    "CFP|Equity indices Value ⚠eknzbh の国選び（CAPE）と信号が同じ",
+    "CFP|Equity indices Momentum ⚠q07leu の国の勢いと信号が同じ",
+    "CFP|Equity indices Carry",
+    "CFP|Equity indices Defensive",
+    "CFP|Equity indices Multi-style",
+    "CFP|Fixed income Value",
+    "CFP|Fixed income Momentum",
+    "CFP|Fixed income Carry",
+    "CFP|Fixed income Defensive",
+    "CFP|Fixed income Multi-style",
+    "CFP|Currencies Value",
+    "CFP|Currencies Momentum",
+    "CFP|Currencies Carry",
+    "CFP|Currencies Multi-style",
+    "CFP|Commodities Value",
+    "CFP|Commodities Momentum",
+    "CFP|Commodities Carry",
+    "CFP|Commodities Multi-style",
+    "TSMOM|TSMOM^EQ ⚠株価指数の方向の時期選び＝eknzbh・q07leu のトレンドと信号が近い（ただし置き換えでなく重ね）",
+    "TSMOM|TSMOM^FI",
+    "TSMOM|TSMOM^FX",
+    "TSMOM|TSMOM^CM"
+   ],
+   "cost": "Multi-style は 1.5%＋0.3%、それ以外は 1.0%＋0.3%",
+   "C5": "N/A（単体そのものが P の再現の単位なので）"
+  },
+  "X3_other_constructions": {
+   "role": "探索: 別の作り方・別の版・方向の上乗せ。k は各自の訓練期間のぶれで10%。Holm は10本で",
+   "rules": {
+    "X3a_vme_val_aa": "VME|VAL^AA（AMP 2013 の資産配分4クラスの割安・1972-01〜2025-01）・費用 1.0+0.3%",
+    "X3b_vme_mom_aa": "VME|MOM^AA（同じく勢い）・費用 1.0+0.3%",
+    "X3c_vme_valmom_aa": "（VAL^AA + MOM^AA）÷2 を作ってから10%に揃える・費用 1.5+0.3%",
+    "X3d_clr_ls_carry": "CLR|LS_excess（商品の後退上位1/3買い−順ざや下位1/3売り・1877〜）。判定は 1926-07〜2025-05、1877〜1926 は報告・費用 1.0+0.3%",
+    "X3e_cfp_commodity_market": "CFP|Commodities Market（AQR 百年の因子の商品の買い持ち・P7 の別の版）・費用 0.5+0.3%",
+    "X3f_cfp_allmacro_market": "CFP|All Macro Market（株価指数・国債・商品の買い持ちの合成）⚠株と国債の方向を足す＝eknzbh levdca E1 と重なる・費用 0.3+0.3%",
+    "X3g_cfp_fi_market": "CFP|Fixed income Market（国債の先物の買い持ち）⚠eknzbh levdca E1（株＋長期国債の借入）と重なる・費用 0.2+0.3%",
+    "X3h_cfp_eq_market": "CFP|Equity indices Market（世界の株価指数の買い持ち＝株のβを足すだけ）⚠eknzbh levdca P（市場の一定倍）と重なる・C8 で落ちると予想・費用 0.2+0.3%",
+    "X3i_styles_plus_trend": "P1 と P6 の上乗せ（どちらも k で10%に揃えた後）を半分ずつ足し、1985-01〜2006-12 のぶれで10%に揃え直す（1985-01〜2026-02）・費用 1.5+0.3%",
+    "X3j_four_styles_plus_trend": "P2・P3・P4・P5・P6 の上乗せ（各10%）を等分に平均し、1985-01〜2006-12 のぶれで10%に揃え直す（1985-01〜2026-02）・費用 1.5+0.3%"
+   },
+   "C5": "X3d だけ 1877-02〜1926-06 の独立の時代（P7 と同じ作り方）。他は N/A"
+  },
+  "X4_stock_selection_reference": {
+   "role": "探索・参考: 株の銘柄選びの買い−売りを重ねる。⚠eknzbh の mega_tilt（市場＋米国株の中の買い−売り）と q07leu の JKP 合成と重なるので、ここでは参考の格付けだけ。Holm は5本で",
+   "rules": [
+    "CFP|US Stock Selection Multi-style（1926-07〜）",
+    "CFP|Intl Stock Selection Multi-style（1984-07〜・訓練 22年）",
+    "CFP|All asset classes Multi-style（株の選び＋マクロの全部）",
+    "BAB|USA（1930-12〜）",
+    "BAB|Global Ex USA（1987-02〜・訓練 約20年）"
+   ],
+   "cost": "1.5%＋0.3%",
+   "C5": "US SS MS と Intl SS MS は互いを、BAB USA と BAB Global Ex USA は互いを1単位とする（1/1 が正）。All asset classes MS は N/A"
+  },
+  "X5_option_writing_short": {
+   "role": "探索・短い標本（criteria_short_sample）: S&P500 のオプション売りの上乗せ。市場と独立ではない（プット売りはβ約0.5）ので C8 の短い版を必須にした",
+   "rules": {
+    "X5a_put": "上乗せ = CBOE PUT の月次 − French RF（担保つきプット売りの超過）を1倍で重ねる（2007-02〜2026-08）。費用 0.45%（PUTW の信託報酬並み）＋0.3%",
+    "X5b_bxm": "上乗せ = CBOE BXM の月次 − French RF を1倍で重ねる（2002-06〜2026-08）。費用 0.6%（XYLD 並み）＋0.3%"
+   },
+   "halves": "前半・後半はデータの月数で二等分",
+   "holm": "2本で片側"
+  }
+ },
+ "benchmark": {
+  "main": "French Mkt（Mkt-RF + RF）＝上限なしの時価加重・CRSP 全上場（S&P500 にほぼ等しい）。s と b はどちらも総リターン",
+  "pre_1926": "P7 と X3d の C5 だけ Shiller の名目の総リターン（月平均の株価＝月末ではないので、なめらかさが入る）",
+  "reported_not_graded": "シャープ・最大下落・上乗せと市場の相関（訓練・保有）・積立20年の最終額の比（nx_common.dca）・直近（2013-07〜）・公表後・費用の感度"
+ },
+ "timing": {
+  "what_is_known_when": "AQR の系列の月 t のリターンは、月 t−1 の末までの情報で組んだ持ち高の結果（原本の作り方: 勢いは直近12か月〔最新1か月を除く〕、ぶれの推定は t−1 のものを t に使う）。重ねる側は固定の k なので、こちらが月 t の前に知る必要のある値は無い",
+  "X1c": "直近36か月のぶれは t−36〜t−1 の月だけで測り、月 t の倍率に使う",
+  "publication_lag": "イベントの公表は無い（常に持つ）ので『公表後の最初の月末』の約束は該当しない",
+  "data_lag_caveat": "AQR は更新のたびに全履歴を作り直す＝過去の月の数字が、その時点で実際に知られていた数字と同じ保証は無い（紙の再構成）"
+ },
+ "real_instrument_check": {
+  "role": "格付けに入れない報告。紙（AQR）と実物の差、実物で重ねた場合の結果",
+  "pairs": {
+   "managed_futures_vs_P6": "AQMIX・QMHIX・ASFYX・PQTIX・DBMF・KMLM・CTA の（ファンド − RF）と、P6 の紙の上乗せ（同じ月・ファンドの実現のぶれに合わせた大きさ）の年率差と相関",
+   "style_premia_vs_P1": "QSPIX（株の選びも含む多スタイル）・QRPRX（代替リスクプレミアム）の（ファンド − RF）と、P1 と X4 の All asset classes Multi-style の紙",
+   "commodity": "DBC・GSG の（ファンド − RF）と P7（CLR 等分）の紙（2006〜2025）。COM（商品のトレンドの買い/休み）と TSMOM^CM",
+   "credit": "HYZD（金利をヘッジしたハイイールド・2014-01〜）は P8 のデータ（〜2014-12）と重ならないので、ファンド単独の超過だけ報告",
+   "stacked_etfs": "RSST（株100＋マネージドフューチャーズ100）・RSSB（株100＋国債100）・RSBT（国債100＋MF100）・RSSY（株100＋キャリー100）・NTSX（株90＋国債60）・GDE（株90＋金90）の実物の総リターンを SPY と French Mkt に対して（どれも 2018〜2024 開始で短い）",
+   "paper_stack_with_real_fund": "Mkt + 1.0×（ファンド − RF）を Mkt と比べる（RSST 型の100/100 を各ファンドで作ったら）"
+  },
+  "rakuten": "out/broker_lineup.json（楽天の海外ETF 742本・2026-09）には RSST・RSSB・RSBT・RSSY・NTSX・GDE・DBMF・KMLM・CTA・PUTW のどれも無い。あるのは DBC・GSG（商品の買い持ち・資金を全部使う型＝重ねるには信用取引が要る）、COM（商品のトレンド）、FTGC（商品の戦術配分）、HYG・JNK・LQD・HYZD（金利ヘッジつきハイイールド）、XYLD・QYLD・JEPI（カバードコール）。米国の投信（AQMIX・QSPIX 等）は日本の居住者は原則買えない。⇒ 主の族の上乗せを日本の個人が NISA で持つ手段は無く、課税口座の先物・信用取引でも数十市場の買い−売りは作れない（測った結果がどうでも、実装できるかは別に書く）"
+ },
+ "prior": {
+  "Ilmanen_Israel_Lee_Moskowitz_Thapar_2021": "『How Do Factor Premia Vary Over Time? A Century of Evidence』（Journal of Investment Management 2021・SSRN 2019）: 割安・勢い・キャリー・守りは株価指数・国債・為替・商品のどこでも100年近く正で、以前の研究の標本より前の時代（1926〜1970年代）でも再現し、株式市場との相関は低い、と主張。費用前",
+  "Moskowitz_Ooi_Pedersen_2012": "『Time Series Momentum』JFE 2012: 58の先物で 1985〜2009 に正で有意（1965年からも報告）",
+  "Hurst_Ooi_Pedersen_2017": "『A Century of Evidence on Trend-Following Investing』JPM 2017: 1880年以降のどの10年でもトレンドは正、2%と20%の報酬を引いても正、と主張",
+  "Asness_Moskowitz_Pedersen_2013": "『Value and Momentum Everywhere』JF 2013: 8つの資産クラスで割安と勢いが正で、両者は負の相関",
+  "Koijen_Moskowitz_Pedersen_Vrugt_2018": "『Carry』JFE 2018: キャリーは資産クラスをまたいで正",
+  "Frazzini_Pedersen_2014": "『Betting Against Beta』JFE 2014: 株だけでなく国債・信用・先物でも低ベータ側が高いリスク調整後リターン",
+  "Gorton_Rouwenhorst_2006_and_Levine_et_al_2018": "商品先物の等分の買い持ちの超過は長期で正（1959〜2004・FAJ 2006）、1877〜2015 でも正で、後退（バックワーデーション）と予想外のインフレ上昇の局面で高い（FAJ 2018）",
+  "Asvanunt_Richardson_2017": "『The Credit Risk Premium』JFI 2017: 1926〜2014 の信用の超過（同じデュレーションの国債を引いた）は正だが小さい、と主張",
+  "return_stacking_practitioners": "Newfound Research・ReSolve『Return Stacking』（2021〜・実務家の白書）: 株・債券の上に代替の上乗せを先物で重ねる考え方。2023年から RSST 等の ETF が出た（学術の検定ではない）",
+  "post_publication_general": "McLean-Pontiff（2016 JF）: 株の特性の上乗せは公表後に平均で3〜5割縮む。資産配分の因子についての同じ規模の検定は知らない"
+ },
+ "contamination": {
+  "what_i_looked_at": "この事前登録を書く前に見たのは: 各系列の列名・始まりと終わり・月数・途中の欠け・ちょうど0の数、原本の定義の図（Definition シートの画像と EMF の文字）、CLR の最初の1か月の値と『|x|>0.5 の割合』『1か月ずれの自己相関』（水準かリターンかを決めるため）、CORP_XS と GOVT_XS の全期間の相関 0.01（信用の系列の定義を確かめるため）。平均・t・シャープ・累積・勝率・ぶれは、どの上乗せについても計算していない",
+  "other_sessions_results_read": "⚠ q07leu の spec_tsmom_multi・spec_riskparity・spec_macro の rationale を読み、そこに書かれた選定期間の成績を見てしまった（米国株・米国外株・米10年債の時系列の勢いの置き換えは 1954〜2000 に米国株に −0.8%/年で負けた／株＋10年債のリスクパリティは −3.9%/年で負けた／逆イールドで降りる規則は +1.4%/年・t 1.2）。どれも置き換えの型で資産も違う（為替・商品が無い）が、関連する知識として書いておく。eknzbh の levdca・mega_tilt は事前登録の定義だけを読み、結果は読んでいない",
+  "world_knowledge": "私（Claude）は2007年以降の大まかな歴史を知っている: マネージドフューチャーズは 2008・2014・2022 年に強く、2012〜2019 年ごろは弱かった／AQR の代替スタイルのファンドは 2018〜2020 年に大きく負け（割安の冬）、2022〜2023 年に戻した／商品は 2008〜2020 年に長く弱く 2021〜2022 年に強かった／信用のスプレッドは 2008 年と 2020 年に大きく開いた。論文の結果の向き（上の prior）も知っている。この知識は消せないので、保有期間（2007〜）・資産クラス別の再現・1926年より前の時代・公表後・実物のファンドを答え合わせに使う。規則の中身（系列の選び方・10%・費用）は論文の既定値と実在のファンドの値で先に決め、結果を見て動かさない"
+ },
+ "sanity_checks_before_results": [
+  "恒等式: s_gross − Mkt = k×F を全月で確かめる（誤差 1e-12 未満）",
+  "訓練期間の k×F の実現のぶれ = 10.0%（作り方の確認）",
+  "上乗せと Mkt の相関（訓練・保有）を報告し、|相関| > 0.3 の規則には『市場とほぼ独立ではない』と印をつける（格付けは変えない）",
+  "商品の4スタイルの 1943-08〜1949-08 は落ちていること（0で埋めていないこと）",
+  "CLR をリターンとして読んでいること（水準として割っていない）",
+  "取得した原本の sha1 が data の vintage と一致すること（違えば両方の版で測って報告）",
+  "French Mkt の最後の月（2026-08）より後に AQR の月が無いこと（無い月は落とす）"
+ ],
+ "known_limits": [
+  "AQR の系列は紙の上の仮想ポートフォリオで、手数料・売買費用の前。更新のたびに全履歴が作り直される。実在のファンドは紙に大きく負けた年がある",
+  "重ねる型は先物・信用取引が要る。日本の個人が NISA で持つ手段は無く、楽天の海外ETF 742本にも重ね型・マネージドフューチャーズの ETF は無い（上の rakuten）",
+  "主の族の上乗せは数十の市場の先物の買い−売りで、個人が自分で作ることはできない＝実在のファンド経由（費用 1〜2%）でしか持てない",
+  "保有期間 2007〜 は約19年で、独立の試行は少ない（20年窓は重なる）。信用（P8）の保有期間は 2007〜2014 の8年しかない",
+  "1974年より前の All Macro には為替が無く、1943〜1949 年は商品も無い＝合成の中身は時代で変わる",
+  "株価指数の国の母集団は後から見て MSCI World に入った国で、商品は今も取引される品目（小さな後知恵）",
+  "k を訓練期間のぶれで決めるので、訓練期間の中では同じ期間のぶれを使っている（大きさだけで、符号・t には効かない）",
+  "米ドル建て。日本の投資家の円での結果は為替で変わる（この角度では扱わない）",
+  "P7 の 1926年より前の土台（Shiller）は月平均の株価で月末ではない",
+  "Yahoo のファンドは今も存在するものだけ（閉じたファンドは入らない）",
+  "CBOE のプット売りは 2007-02 から、カバードコールは 2002-05 からしか取れず、短い標本の基準でしか裁けない"
+ ],
+ "test_count": {
+  "P": 8,
+  "X1": 32,
+  "X2": 22,
+  "X3": 10,
+  "X4": 5,
+  "X5": 2,
+  "total_graded": 79,
+  "note": "これで全部。測った後に規則を足したら『事後』と明記し、格付けに使わない"
+ }
+}

@@ -306,6 +306,10 @@ HELPER_ANCHORS = {
     "backtest": (lambda: _newest("out/backtest_*.json", "generated"),
                  lambda: max((ops_status.json_field(os.path.relpath(f, BASE), "generated") or ""
                               for f in glob.glob(os.path.join(BASE, "out", "backtest_*.json"))), default=None) or None),
+    # 2026-09-29: 前向きの検定 SEC版の組み直し（年1・手動）。盤の日付は最新の組入れの年の7月1日。
+    #   代表ファイルは最新の out/mw_forward_sec_formation_Y.json、無ければ 2026年分を凍結した事前登録。
+    "mwformsec": (lambda: _newest("out/mw_forward_sec_formation_*.json") or "out/mw_forward_prereg.json",
+                  lambda: ops_status.mw_formation_anchor()),
 }
 
 

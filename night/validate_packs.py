@@ -49,7 +49,10 @@ JUDGE = ["dom", "moatW", "irr", "rep", "dur", "p1", "p2", "p3", "p4",
          "expiry", "geopol", "nrr"]
 # 機械項目＝採取器が算出する。「機械の出力だから正しい」が誤りだったのでこちらも出典が要る。
 MACHINE = ["roic", "roicg", "roicEx", "roict", "gm", "gmt", "cagr", "nde", "fcf", "ni",
-           "accr", "gpa", "dilNet", "eps"]
+           "accr", "gpa", "dilNet", "eps", "acqS5"]
+# 2026-09-29: acqS5 を足した——v9.9.181 で採点に入った（ccfAcqBand・+2/+1/0/−1）機械項目で、
+#   night/fill_acqS5.py が式と実額を _meta.evidence に、provenance="machine" を刻む。
+#   一覧に無かったので「値はあるのに根拠が無い」パックが来ても黙って通っていた（実測: 値のある270社は全社 evidence あり）。
 # 市場項目＝外部APIで日々動く。根拠は「いつ・どこから」で足りるので警告どまり。
 MARKET = ["per", "perF", "px", "shy", "evebit", "beta", "analysts", "instOwn"]
 

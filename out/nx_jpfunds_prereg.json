@@ -1,0 +1,1734 @@
+{
+ "generated": "2026-09-28",
+ "angle": "nx_jpfunds",
+ "title": "日本の投資信託の全体: 過去3年・5年の成績（費用後）の上位1/4を毎年選んで持つと、同じ分類の指数型の投信に勝つか（Carhart の持続の日本版）",
+ "question": "(1) 日本の公募投信（追加型・ETF 除く）の株式の5分類（国内株式・米国株式・日本を除く世界・日本を含む世界・新興国）の中で、毎年9月末に過去3年（または5年）の分配金再投資の累積リターン（信託報酬を引いた後の基準価額）が分類の中で上位1/4の能動の投信を等分で1年持つと、同じ分類の指数型の投信（その時点で買えた器のうち今の信託報酬が最も安いもの）に、販売手数料・留保額を引いた後も勝つか。対照として、今の信託報酬が安い1/4・能動の全部・下位1/4 を同じ形で測る。(2) 報告の族（後知恵）: nx の他の角度で紙の上で勝った型（時系列の勢い＝マネージド・フューチャーズ／高配当／ブランド）に名前の近い日本の投信が、費用後に同じ分類の指数型に勝ったか",
+ "asked_by": "ユーザー「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して。限界までやって途中報告を入れながら結果が出るまで分析を止めずに。トークンの限界までやってほしい。今まではそんなものはないという報告で終わってたけどそれはなしで探し続ける努力をしてほしい。今別のSessionでこの内容を2つ回してる。別のSessionで検証していない新たな分析を同じ内容でしてほしい」（2026-09-28）。全体の事前登録 out/nx_prereg.json の追加の角度 nx_jpfunds（ワークフローの指示: 日本の投資信託の全体・投信総合検索ライブラリー）",
+ "registered_before_measuring": true,
+ "global_prereg": "out/nx_prereg.json（criteria_short_sample・誠実さの約束）。統計と格付けは night/nx_common.py の excess_stats / grade_short / p_one / holm / dca をそのまま使う",
+ "tools": {
+  "data": "night/nx_jpfunds_data.py（取得と整形だけ・成績は計算しない）。規則の台帳 RULES もこのファイルにあり、測る道具は import する（写さない）。キャッシュは out/_nx_cache/（gitignore）: nx_jpfunds_universe.json（一覧の凍結）・nx_jpfunds_nav/<協会コード>.csv（基準価額の CSV）・nx_jpfunds_support.json・nx_jpfunds_mufg/<ファンドコード>.json・jpf_msci_*.json・jpf_jita_I0112B_pub_y.xlsx",
+  "universe_sha256": "d4aba7378ecec9ee18d3d1a581700171ce52d8052b7952c4e47d9a3071c3f6a0（nx_jpfunds_universe.json の rows を sort_keys・区切り詰めで直列化した sha256。一覧は毎日変わるので**この凍結を使い、測るときに取り直さない**）",
+  "rules_sha256": "c3ae4796df1b6a9c5f638522fef2c32424c5f7bd779617f93b63a5cbd7b9bcf1（RULES を sort_keys・区切り詰めで直列化した sha256。測った後に RULES を変えたら『事後』）",
+  "extract_sha256": "ea4a36f9b5bc2bd7d8f2fcc9b0fc13a6ab64f9c1d8e1ec0e2b6361e4e0cd4603（nx_jpfunds_nav/ の 2070 本の CSV を parse_csv で 2026-08-31 までに切った行〔日付・基準価額・純資産・分配金〕を協会コード順に直列化した sha256。測る道具は最初にこの値を確かめ、違えば止まる。ライブラリーが過去の行を直したら値が変わる＝取り直した理由を記録してから進む）",
+  "measure_next": "night/nx_jpfunds.py → out/nx_jpfunds.json（この事前登録の後に書く。tested に下の全規則を1本残らず残す）"
+ },
+ "stance_before_results": "測定器。門・採点・四関門・席・配分・売却規律には入れない。線（criteria_short_sample）は結果を見て動かさない。★予想（測る前）: P1・P2 は C か B。上位1/4 は費用後に指数型の投信に届かない年のほうが多い。分類別では米国株式がいちばん悪く（S&P500 の指数型は安く強い）、国内株式は時期によって勝つ（2012〜2017 の小型・成長の強い時期）と予想する。C1（安い1/4）は能動の平均（C2）よりよいが指数型には負ける、C3（下位1/4）がいちばん悪い。生き残りの下限（lower_bound）は年1〜2% を引くので、P1・P2 が S に届く見込みはほぼ無い。★生き残りの偏りの向き: このライブラリーは今残っている投信だけ（2009年末に運用中だった株式投信〔追加型・ETF 除く〕のうち今も残るのは約 48%）。選んだ上位のファンドのうちその後に崩れて償還されたものが消えているので、偏りは**能動の側に有利**。したがって負けは頑丈な負け、勝ちは疑ってかかる（lower_bound と B 族で挟む）。これらの予想は日本の投信の成績の既知の研究と、2009〜2026 の相場を知っていることによる（contamination）",
+ "why_new": {
+  "difference": "並走の3セッションは、日本の投信を『決めた器の成績』として使っただけで、**投信の全体（数千本）を母集団にして過去の成績で選ぶ規則**は誰も測っていない。2026-09-28 に origin の3枝の night/mw_*・night/edge/*・night/ev5*・out/mw_*・out/edge/*・out/ev5* を toushin-lib・fundDataSearch・csv-file-download・associFundCd・投信総合検索・協会コード・FDST・Carhart・fund persistence・投信の持続・SPIVA で git grep した",
+  "overlap_found": {
+   "eknzbh_mw_investable_valmom": "手で選んだ日本の投信・東証ETF 約32本（割安・高配当・バリュー・新興国 RAFI など）を投信総合検索ライブラリーの CSV で取り、『割安＋勢い』の紙の上乗せが買える器で取れるかを測った＝器を固定した答え合わせ。母集団の選び方の規則ではない",
+   "eknzbh_mw_jp_nisa_bridge": "日本の中の上乗せ（配当・割安＋勢い）を東証ETF・日本の投信で NISA の中に持てるか（器を固定）",
+   "eknzbh_mw_overlay": "紙の時系列の勢いの上乗せを実在のマネージド・フューチャーズで答え合わせし、日本で買えるかを検索API で名前を引いて記録（名前・信託報酬・純資産・ライブラリーが出す騰落率の**その時の値**だけ。基準価額の履歴で指数型と比べてはいない）",
+   "eknzbh_mw_own_exposure": "iFreeNEXT NASDAQ100 の CSV を1本取っただけ",
+   "eknzbh_reality_gap_etf_tactical": "米国の投信・ETF・Fidelity Select（ワークフローの指示どおり日本の投信は扱っていない）",
+   "q07leu_verify_japan_yen_etf": "日本株の割安・高配当の投信18本（成長投資枠の対象のうち名前に配当/バリューを含む国内株で2009年以前設定）を TOPIX と比べた＝器を固定した答え合わせ",
+   "hbm38n": "該当なし（13F・スピンオフ・指数の除外・働きがい）"
+  },
+  "how_this_avoids_overlap": "(1) の主の族・対照・探索は、母集団（5分類の能動の投信 数百〜千本）から毎年**規則で**選ぶ持続の検定で、上の誰とも重ならない。(2) の報告の族のうち、国内株式の高配当は q07leu と eknzbh が測ったので結論に使わず検算だけ（Q3b）。マネージド・フューチャーズは eknzbh が名前と騰落率の点だけを記録したのに対し、こちらは月次の全履歴で指数型と比べる。ブランドは誰も測っていない",
+  "checked_refs": "origin/claude/market-winning-backtest-eknzbh 5de34e87（2026-09-28 21:42 UTC）・origin/claude/ratio-evaluation-q07leu 6c8bf4f1・origin/claude/market-winning-backtest-hbm38n 30cb0b43・origin/main 4afe96d5"
+ },
+ "data": {
+  "sources": {
+   "library": "資産運用業協会（2026-04 に投資信託協会と日本投資顧問業協会が統合）の投信総合検索ライブラリー https://toushin-lib.fwg.ne.jp/ 。検索API POST /FdsWeb/FDST999900/fundDataSearch（トップ /FdsWeb/FDST000000 を先に読んでセッションを作らないと『不正操作エラー』）と、基準価額の CSV GET /FdsWeb/FDST030000/csv-file-download?isinCd=<ISIN>&associFundCd=<協会コード>",
+   "jita_stats": "投資信託協会の統計 https://www.toushin.or.jp/tws/toukei_dw/I0112B_pub_y.xlsx（公募投信の資産増減状況・年次・ファンド数）の『株式 追加型』と『株式 追加型 ＥＴＦ』の年末の本数",
+   "mufg_redeemed": "三菱UFJアセットマネジメントの償還ファンド一覧の API https://www.am.mufg.jp/mukamapi/fund_repayment/?site_type=1（2021-02〜2026-09 の償還 244本・協会コード・ISIN・設定日・分類）と、各ファンドの基準価額の全履歴 https://www.am.mufg.jp/fund_file/chart/chart_data_<ファンドコード>.js（BASE_PRICE・PROFIT_DISTRIBUTION・NET_ASSET_VALUE）",
+   "msci": "MSCI の指数の水準 app2.msci.com/products/service/index/indexmaster/getLevelDataForGraph（円と米ドル・NETR＝配当込み〔税引後〕・月末・2000-12〜2026-08）。Japan 939200・USA 984000・Kokusai 991200・ACWI 892400・EM 891800・World 990100（円／米ドルの変化を作るためだけ）",
+   "aqr_tsmom": "AQR Time-Series-Momentum-Factors-Monthly.xlsx の TSMOM（night/nx_stack_data.aqr_generic で読む・米ドルの超過）。報告の族 Q1 の紙との差だけ"
+  },
+  "what_was_verified_on_2026_09_28": {
+   "search_api": "条件なしの検索で 5,845本（基準日 2026-09-28）。★pageSize を 1000 にすると1回で1000本返る（画面は20本）。応答は1本あたり約100欄で、成績の欄（騰落率・リスク・シャープ・順位・資金流出入・分配金の実績・純資産）は道具が保存しない",
+   "csv_key": "★CSV の鍵は協会コード。isinCd は空でなければ何でも通り、違う協会コードを渡すと別のファンドの履歴が返る（実際に iFreeNEXT NASDAQ100 の ISIN に別の協会コードを付けて別のファンドの CSV が返った）。道具は一覧の組（ISIN・協会コード）をそのまま使う",
+   "csv_columns": "年月日（YYYY年MM月DD日）・基準価額(円)・純資産総額（百万円）・分配金（決算日の行だけ・税引前・1万口あたり）・決算期。Shift_JIS（cp932）",
+   "history_start": "★履歴は 2006-09-29 より前が無い。1961年設定の公社債投信も 1985年設定の日経225の指数型も 1998年設定の日本株の能動の投信も、CSV の最初の行は 2006-09-29",
+   "redeemed_funds": "★償還済みのファンドは取れない。(a) 検索に出ない（今の5,845本の redemptionDate はすべて未来か無期限）。(b) 三菱UFJ の償還ファンドの協会コードで CSV を叩くと、2021-02〜2026-03 に償還した11本はすべて HTTP 500、2026-09-08 に償還した1本（20日前）だけまだ返った＝償還の後しばらくで消える。(c) 今あるファンドの協会コードの並び（委託会社2文字＋種類2文字＋連番1文字＋設定の年2桁＋月1文字）の空き番号11本を叩くと、見出しだけの空の CSV が返った。(d) Wayback Machine（web.archive.org）はこの環境の出口の規則で使えない。⇒ **この母集団は生き残りだけ**。偏りの大きさは JITA の本数で数え（jita_survival）、1社・5年ぶんは三菱UFJ の償還ファンドの全履歴で直に測る（B 族）",
+   "other_redeemed_sources_not_used": "野村アセットマネジメント（/lineup/redemption/）と大和アセットマネジメント（/funds/redemption/）も償還ファンドの一覧（名前・償還日・償還価額）を公開していると検索で分かったが、基準価額の全履歴が取れるかは確かめていない＝この登録では使わない（後で足したら『事後』）",
+   "jita_count_match": "JITA の 2025年末の『株式 追加型』−『ETF』= 5,250本、ライブラリーの今の追加型・ETF 以外 約5,340本（2026-09・その後の設定を含む）＝ライブラリーは今の公募投信のほぼ全部を持つ"
+  },
+  "shape": {
+   "universe_snapshot": {
+    "standardDate": "2026-09-28 00:00:00",
+    "fetched_at": "2026-09-28T21:56:19Z",
+    "n_funds_all": 5845,
+    "five_categories_before_filter": {
+     "EM|active": 60,
+     "EM|index": 43,
+     "GLW|active": 600,
+     "GLW|index": 75,
+     "GLW|other": 5,
+     "GLX|active": 113,
+     "GLX|index": 108,
+     "JP|active": 561,
+     "JP|index": 209,
+     "JP|other": 25,
+     "US|active": 179,
+     "US|index": 117,
+     "US|other": 18
+    },
+    "five_categories_after_filter": {
+     "EM|active": 44,
+     "EM|index": 27,
+     "GLW|active": 395,
+     "GLW|index": 69,
+     "GLX|active": 59,
+     "GLX|index": 54,
+     "JP|active": 414,
+     "JP|index": 144,
+     "US|active": 128,
+     "US|index": 97
+    },
+    "exclusion_flags_in_five_categories_overlapping": {
+     "dc_only": 226,
+     "wrap_only": 187,
+     "hedged": 193,
+     "currency_course": 36,
+     "special_name": 25
+    }
+   },
+   "csv": {
+    "requested": 2070,
+    "got": 2070,
+    "http500": 0,
+    "empty_after_parse": 23,
+    "first_year_of_csv": {
+     "2006": 440,
+     "2007": 39,
+     "2008": 25,
+     "2009": 38,
+     "2010": 25,
+     "2011": 33,
+     "2012": 24,
+     "2013": 74,
+     "2014": 49,
+     "2015": 81,
+     "2016": 108,
+     "2017": 129,
+     "2018": 112,
+     "2019": 90,
+     "2020": 98,
+     "2021": 149,
+     "2022": 87,
+     "2023": 129,
+     "2024": 116,
+     "2025": 104,
+     "2026": 97
+    },
+    "last_month_of_csv_up_to_cutoff": {
+     "202608": 2047
+    },
+    "gaps_over_31_days": 0,
+    "unparseable_rows": 0,
+    "rows_with_distribution": 27277,
+    "median_rows": 2196,
+    "funds_whose_first_usable_month_is_200610": 428
+   },
+   "eligible_active_after_filter_before_dedupe_and_fx_check": {
+    "L1": {
+     "2007": {
+      "JP": 167,
+      "US": 9,
+      "GLX": 13,
+      "GLW": 36,
+      "EM": 10
+     },
+     "2008": {
+      "JP": 170,
+      "US": 10,
+      "GLX": 13,
+      "GLW": 46,
+      "EM": 15
+     },
+     "2009": {
+      "JP": 177,
+      "US": 10,
+      "GLX": 14,
+      "GLW": 49,
+      "EM": 17
+     },
+     "2010": {
+      "JP": 187,
+      "US": 11,
+      "GLX": 14,
+      "GLW": 59,
+      "EM": 17
+     },
+     "2011": {
+      "JP": 188,
+      "US": 11,
+      "GLX": 16,
+      "GLW": 64,
+      "EM": 17
+     },
+     "2012": {
+      "JP": 192,
+      "US": 13,
+      "GLX": 16,
+      "GLW": 65,
+      "EM": 17
+     },
+     "2013": {
+      "JP": 198,
+      "US": 17,
+      "GLX": 16,
+      "GLW": 75,
+      "EM": 18
+     },
+     "2014": {
+      "JP": 208,
+      "US": 31,
+      "GLX": 20,
+      "GLW": 81,
+      "EM": 19
+     },
+     "2015": {
+      "JP": 226,
+      "US": 35,
+      "GLX": 20,
+      "GLW": 86,
+      "EM": 21
+     },
+     "2016": {
+      "JP": 243,
+      "US": 40,
+      "GLX": 21,
+      "GLW": 92,
+      "EM": 21
+     },
+     "2017": {
+      "JP": 263,
+      "US": 48,
+      "GLX": 26,
+      "GLW": 117,
+      "EM": 23
+     },
+     "2018": {
+      "JP": 273,
+      "US": 55,
+      "GLX": 28,
+      "GLW": 139,
+      "EM": 26
+     },
+     "2019": {
+      "JP": 291,
+      "US": 58,
+      "GLX": 30,
+      "GLW": 163,
+      "EM": 30
+     },
+     "2020": {
+      "JP": 303,
+      "US": 59,
+      "GLX": 32,
+      "GLW": 192,
+      "EM": 31
+     },
+     "2021": {
+      "JP": 315,
+      "US": 65,
+      "GLX": 37,
+      "GLW": 216,
+      "EM": 32
+     },
+     "2022": {
+      "JP": 324,
+      "US": 72,
+      "GLX": 38,
+      "GLW": 266,
+      "EM": 34
+     },
+     "2023": {
+      "JP": 335,
+      "US": 75,
+      "GLX": 40,
+      "GLW": 299,
+      "EM": 35
+     },
+     "2024": {
+      "JP": 342,
+      "US": 86,
+      "GLX": 45,
+      "GLW": 316,
+      "EM": 38
+     },
+     "2025": {
+      "JP": 360,
+      "US": 101,
+      "GLX": 46,
+      "GLW": 336,
+      "EM": 40
+     }
+    },
+    "L3": {
+     "2009": {
+      "JP": 167,
+      "US": 9,
+      "GLX": 13,
+      "GLW": 36,
+      "EM": 10
+     },
+     "2010": {
+      "JP": 170,
+      "US": 10,
+      "GLX": 13,
+      "GLW": 46,
+      "EM": 15
+     },
+     "2011": {
+      "JP": 177,
+      "US": 10,
+      "GLX": 14,
+      "GLW": 49,
+      "EM": 17
+     },
+     "2012": {
+      "JP": 187,
+      "US": 11,
+      "GLX": 14,
+      "GLW": 59,
+      "EM": 17
+     },
+     "2013": {
+      "JP": 188,
+      "US": 11,
+      "GLX": 16,
+      "GLW": 64,
+      "EM": 17
+     },
+     "2014": {
+      "JP": 192,
+      "US": 13,
+      "GLX": 16,
+      "GLW": 65,
+      "EM": 17
+     },
+     "2015": {
+      "JP": 198,
+      "US": 17,
+      "GLX": 16,
+      "GLW": 75,
+      "EM": 18
+     },
+     "2016": {
+      "JP": 208,
+      "US": 31,
+      "GLX": 20,
+      "GLW": 81,
+      "EM": 19
+     },
+     "2017": {
+      "JP": 226,
+      "US": 35,
+      "GLX": 20,
+      "GLW": 86,
+      "EM": 21
+     },
+     "2018": {
+      "JP": 243,
+      "US": 40,
+      "GLX": 21,
+      "GLW": 92,
+      "EM": 21
+     },
+     "2019": {
+      "JP": 263,
+      "US": 48,
+      "GLX": 26,
+      "GLW": 117,
+      "EM": 23
+     },
+     "2020": {
+      "JP": 273,
+      "US": 55,
+      "GLX": 28,
+      "GLW": 139,
+      "EM": 26
+     },
+     "2021": {
+      "JP": 291,
+      "US": 58,
+      "GLX": 30,
+      "GLW": 163,
+      "EM": 30
+     },
+     "2022": {
+      "JP": 303,
+      "US": 59,
+      "GLX": 32,
+      "GLW": 192,
+      "EM": 31
+     },
+     "2023": {
+      "JP": 315,
+      "US": 65,
+      "GLX": 37,
+      "GLW": 216,
+      "EM": 32
+     },
+     "2024": {
+      "JP": 324,
+      "US": 72,
+      "GLX": 38,
+      "GLW": 266,
+      "EM": 34
+     },
+     "2025": {
+      "JP": 335,
+      "US": 75,
+      "GLX": 40,
+      "GLW": 299,
+      "EM": 35
+     }
+    },
+    "L5": {
+     "2011": {
+      "JP": 167,
+      "US": 9,
+      "GLX": 13,
+      "GLW": 36,
+      "EM": 10
+     },
+     "2012": {
+      "JP": 170,
+      "US": 10,
+      "GLX": 13,
+      "GLW": 46,
+      "EM": 15
+     },
+     "2013": {
+      "JP": 177,
+      "US": 10,
+      "GLX": 14,
+      "GLW": 49,
+      "EM": 17
+     },
+     "2014": {
+      "JP": 187,
+      "US": 11,
+      "GLX": 14,
+      "GLW": 59,
+      "EM": 17
+     },
+     "2015": {
+      "JP": 188,
+      "US": 11,
+      "GLX": 16,
+      "GLW": 64,
+      "EM": 17
+     },
+     "2016": {
+      "JP": 192,
+      "US": 13,
+      "GLX": 16,
+      "GLW": 65,
+      "EM": 17
+     },
+     "2017": {
+      "JP": 198,
+      "US": 17,
+      "GLX": 16,
+      "GLW": 75,
+      "EM": 18
+     },
+     "2018": {
+      "JP": 208,
+      "US": 31,
+      "GLX": 20,
+      "GLW": 81,
+      "EM": 19
+     },
+     "2019": {
+      "JP": 226,
+      "US": 35,
+      "GLX": 20,
+      "GLW": 86,
+      "EM": 21
+     },
+     "2020": {
+      "JP": 243,
+      "US": 40,
+      "GLX": 21,
+      "GLW": 92,
+      "EM": 21
+     },
+     "2021": {
+      "JP": 263,
+      "US": 48,
+      "GLX": 26,
+      "GLW": 117,
+      "EM": 23
+     },
+     "2022": {
+      "JP": 273,
+      "US": 55,
+      "GLX": 28,
+      "GLW": 139,
+      "EM": 26
+     },
+     "2023": {
+      "JP": 291,
+      "US": 58,
+      "GLX": 30,
+      "GLW": 163,
+      "EM": 30
+     },
+     "2024": {
+      "JP": 303,
+      "US": 59,
+      "GLX": 32,
+      "GLW": 192,
+      "EM": 31
+     },
+     "2025": {
+      "JP": 315,
+      "US": 65,
+      "GLX": 37,
+      "GLW": 216,
+      "EM": 32
+     }
+    }
+   },
+   "comparator_assignment_before_fx_check": {
+    "JP": {
+     "n_candidates": 30,
+     "by_selection_year_before_fx_check": {
+      "2007": "0231N01A インデックスファンドTOPIX(日本株式)（信託報酬 0.43%・設定 2001-10-31）",
+      "2008": "64313081 SMT TOPIXインデックス・オープン（信託報酬 0.37%・設定 2008-01-09）",
+      "2009": "64313081 SMT TOPIXインデックス・オープン（信託報酬 0.37%・設定 2008-01-09）",
+      "2010": "7931809A 国内株式指数ファンド(TOPIX)（信託報酬 0.36%・設定 2009-10-19）",
+      "2011": "7931809A 国内株式指数ファンド(TOPIX)（信託報酬 0.36%・設定 2009-10-19）",
+      "2012": "7931809A 国内株式指数ファンド(TOPIX)（信託報酬 0.36%・設定 2009-10-19）",
+      "2013": "7931809A 国内株式指数ファンド(TOPIX)（信託報酬 0.36%・設定 2009-10-19）",
+      "2014": "7931809A 国内株式指数ファンド(TOPIX)（信託報酬 0.36%・設定 2009-10-19）",
+      "2015": "29312154 ニッセイTOPIXインデックスファンド<購入・換金手数料なし（信託報酬 0.13%・設定 2015-04-27）",
+      "2016": "29312154 ニッセイTOPIXインデックスファンド<購入・換金手数料なし（信託報酬 0.13%・設定 2015-04-27）",
+      "2017": "29312154 ニッセイTOPIXインデックスファンド<購入・換金手数料なし（信託報酬 0.13%・設定 2015-04-27）",
+      "2018": "29312154 ニッセイTOPIXインデックスファンド<購入・換金手数料なし（信託報酬 0.13%・設定 2015-04-27）",
+      "2019": "29312154 ニッセイTOPIXインデックスファンド<購入・換金手数料なし（信託報酬 0.13%・設定 2015-04-27）",
+      "2020": "29312154 ニッセイTOPIXインデックスファンド<購入・換金手数料なし（信託報酬 0.13%・設定 2015-04-27）",
+      "2021": "29312154 ニッセイTOPIXインデックスファンド<購入・換金手数料なし（信託報酬 0.13%・設定 2015-04-27）",
+      "2022": "29312154 ニッセイTOPIXインデックスファンド<購入・換金手数料なし（信託報酬 0.13%・設定 2015-04-27）",
+      "2023": "89312237 SBI・iシェアーズ・TOPIXインデックス・ファンド（信託報酬 0.058%・設定 2023-07-12）",
+      "2024": "89312237 SBI・iシェアーズ・TOPIXインデックス・ファンド（信託報酬 0.058%・設定 2023-07-12）",
+      "2025": "89312237 SBI・iシェアーズ・TOPIXインデックス・ファンド（信託報酬 0.058%・設定 2023-07-12）"
+     }
+    },
+    "US": {
+     "n_candidates": 19,
+     "by_selection_year_before_fx_check": {
+      "2007": "MSCI 984000 円・NETR − 0.50%",
+      "2008": "MSCI 984000 円・NETR − 0.50%",
+      "2009": "MSCI 984000 円・NETR − 0.50%",
+      "2010": "MSCI 984000 円・NETR − 0.50%",
+      "2011": "MSCI 984000 円・NETR − 0.50%",
+      "2012": "MSCI 984000 円・NETR − 0.50%",
+      "2013": "MSCI 984000 円・NETR − 0.50%",
+      "2014": "4831C139 iシェアーズ米国株式(S&P500)インデックス・ファンド（信託報酬 0.058%・設定 2013-09-03）",
+      "2015": "4831C139 iシェアーズ米国株式(S&P500)インデックス・ファンド（信託報酬 0.058%・設定 2013-09-03）",
+      "2016": "4831C139 iシェアーズ米国株式(S&P500)インデックス・ファンド（信託報酬 0.058%・設定 2013-09-03）",
+      "2017": "4831C139 iシェアーズ米国株式(S&P500)インデックス・ファンド（信託報酬 0.058%・設定 2013-09-03）",
+      "2018": "4831C139 iシェアーズ米国株式(S&P500)インデックス・ファンド（信託報酬 0.058%・設定 2013-09-03）",
+      "2019": "4831C139 iシェアーズ米国株式(S&P500)インデックス・ファンド（信託報酬 0.058%・設定 2013-09-03）",
+      "2020": "4831C139 iシェアーズ米国株式(S&P500)インデックス・ファンド（信託報酬 0.058%・設定 2013-09-03）",
+      "2021": "4831C139 iシェアーズ米国株式(S&P500)インデックス・ファンド（信託報酬 0.058%・設定 2013-09-03）",
+      "2022": "4831C139 iシェアーズ米国株式(S&P500)インデックス・ファンド（信託報酬 0.058%・設定 2013-09-03）",
+      "2023": "4831C139 iシェアーズ米国株式(S&P500)インデックス・ファンド（信託報酬 0.058%・設定 2013-09-03）",
+      "2024": "4831123B つみたてiシェアーズ米国株式(S&P500)インデックス・フ（信託報酬 0.0552%・設定 2023-11-17）",
+      "2025": "4831123B つみたてiシェアーズ米国株式(S&P500)インデックス・フ（信託報酬 0.0552%・設定 2023-11-17）"
+     }
+    },
+    "GLX": {
+     "n_candidates": 29,
+     "by_selection_year_before_fx_check": {
+      "2007": "04313004 ダイワ投信倶楽部外国株式インデックス（信託報酬 0.25%・設定 2000-04-28）",
+      "2008": "04313004 ダイワ投信倶楽部外国株式インデックス（信託報酬 0.25%・設定 2000-04-28）",
+      "2009": "04313004 ダイワ投信倶楽部外国株式インデックス（信託報酬 0.25%・設定 2000-04-28）",
+      "2010": "49313104 東京海上セレクション・外国株式インデックス（信託報酬 0.2%・設定 2010-04-28）",
+      "2011": "49313104 東京海上セレクション・外国株式インデックス（信託報酬 0.2%・設定 2010-04-28）",
+      "2012": "49313104 東京海上セレクション・外国株式インデックス（信託報酬 0.2%・設定 2010-04-28）",
+      "2013": "49313104 東京海上セレクション・外国株式インデックス（信託報酬 0.2%・設定 2010-04-28）",
+      "2014": "2931113C ニッセイ外国株式インデックスファンド<購入・換金手数料なし>（信託報酬 0.0899%・設定 2013-12-10）",
+      "2015": "2931113C ニッセイ外国株式インデックスファンド<購入・換金手数料なし>（信託報酬 0.0899%・設定 2013-12-10）",
+      "2016": "2931113C ニッセイ外国株式インデックスファンド<購入・換金手数料なし>（信託報酬 0.0899%・設定 2013-12-10）",
+      "2017": "2931113C ニッセイ外国株式インデックスファンド<購入・換金手数料なし>（信託報酬 0.0899%・設定 2013-12-10）",
+      "2018": "2931113C ニッセイ外国株式インデックスファンド<購入・換金手数料なし>（信託報酬 0.0899%・設定 2013-12-10）",
+      "2019": "2931113C ニッセイ外国株式インデックスファンド<購入・換金手数料なし>（信託報酬 0.0899%・設定 2013-12-10）",
+      "2020": "01319203 野村スリーゼロ先進国株式投信（信託報酬 0.0%・設定 2020-03-16）",
+      "2021": "01319203 野村スリーゼロ先進国株式投信（信託報酬 0.0%・設定 2020-03-16）",
+      "2022": "01319203 野村スリーゼロ先進国株式投信（信託報酬 0.0%・設定 2020-03-16）",
+      "2023": "01319203 野村スリーゼロ先進国株式投信（信託報酬 0.0%・設定 2020-03-16）",
+      "2024": "01319203 野村スリーゼロ先進国株式投信（信託報酬 0.0%・設定 2020-03-16）",
+      "2025": "01319203 野村スリーゼロ先進国株式投信（信託報酬 0.0%・設定 2020-03-16）"
+     }
+    },
+    "GLW": {
+     "n_candidates": 18,
+     "by_selection_year_before_fx_check": {
+      "2007": "MSCI 892400 円・NETR − 0.50%",
+      "2008": "MSCI 892400 円・NETR − 0.50%",
+      "2009": "MSCI 892400 円・NETR − 0.50%",
+      "2010": "MSCI 892400 円・NETR − 0.50%",
+      "2011": "MSCI 892400 円・NETR − 0.50%",
+      "2012": "MSCI 892400 円・NETR − 0.50%",
+      "2013": "MSCI 892400 円・NETR − 0.50%",
+      "2014": "MSCI 892400 円・NETR − 0.50%",
+      "2015": "MSCI 892400 円・NETR − 0.50%",
+      "2016": "MSCI 892400 円・NETR − 0.50%",
+      "2017": "MSCI 892400 円・NETR − 0.50%",
+      "2018": "8931217C SBI・全世界株式インデックス・ファンド（信託報酬 0.062%・設定 2017-12-06）",
+      "2019": "0331418A eMAXIS Slim全世界株式(オール・カントリー)（信託報酬 0.0525%・設定 2018-10-31）",
+      "2020": "0331418A eMAXIS Slim全世界株式(オール・カントリー)（信託報酬 0.0525%・設定 2018-10-31）",
+      "2021": "0331418A eMAXIS Slim全世界株式(オール・カントリー)（信託報酬 0.0525%・設定 2018-10-31）",
+      "2022": "0331418A eMAXIS Slim全世界株式(オール・カントリー)（信託報酬 0.0525%・設定 2018-10-31）",
+      "2023": "0331418A eMAXIS Slim全世界株式(オール・カントリー)（信託報酬 0.0525%・設定 2018-10-31）",
+      "2024": "0331418A eMAXIS Slim全世界株式(オール・カントリー)（信託報酬 0.0525%・設定 2018-10-31）",
+      "2025": "0331418A eMAXIS Slim全世界株式(オール・カントリー)（信託報酬 0.0525%・設定 2018-10-31）"
+     }
+    },
+    "EM": {
+     "n_candidates": 25,
+     "by_selection_year_before_fx_check": {
+      "2007": "MSCI 891800 円・NETR − 0.50%",
+      "2008": "02311084 インデックスファンド海外新興国(エマージング)株式（信託報酬 0.25%・設定 2008-04-01）",
+      "2009": "02311084 インデックスファンド海外新興国(エマージング)株式（信託報酬 0.25%・設定 2008-04-01）",
+      "2010": "02311084 インデックスファンド海外新興国(エマージング)株式（信託報酬 0.25%・設定 2008-04-01）",
+      "2011": "02311084 インデックスファンド海外新興国(エマージング)株式（信託報酬 0.25%・設定 2008-04-01）",
+      "2012": "02311084 インデックスファンド海外新興国(エマージング)株式（信託報酬 0.25%・設定 2008-04-01）",
+      "2013": "02311084 インデックスファンド海外新興国(エマージング)株式（信託報酬 0.25%・設定 2008-04-01）",
+      "2014": "02311084 インデックスファンド海外新興国(エマージング)株式（信託報酬 0.25%・設定 2008-04-01）",
+      "2015": "02311084 インデックスファンド海外新興国(エマージング)株式（信託報酬 0.25%・設定 2008-04-01）",
+      "2016": "47311163 たわらノーロード新興国株式（信託報酬 0.169%・設定 2016-03-14）",
+      "2017": "0331C177 eMAXIS Slim新興国株式インデックス（信託報酬 0.138%・設定 2017-07-31）",
+      "2018": "8931117C SBI・新興国株式インデックス・ファンド（信託報酬 0.06%・設定 2017-12-06）",
+      "2019": "8931117C SBI・新興国株式インデックス・ファンド（信託報酬 0.06%・設定 2017-12-06）",
+      "2020": "8931117C SBI・新興国株式インデックス・ファンド（信託報酬 0.06%・設定 2017-12-06）",
+      "2021": "8931117C SBI・新興国株式インデックス・ファンド（信託報酬 0.06%・設定 2017-12-06）",
+      "2022": "8931117C SBI・新興国株式インデックス・ファンド（信託報酬 0.06%・設定 2017-12-06）",
+      "2023": "89315236 SBI・V・新興国株式インデックス・ファンド（信託報酬 0.058%・設定 2023-06-08）",
+      "2024": "89315236 SBI・V・新興国株式インデックス・ファンド（信託報酬 0.058%・設定 2023-06-08）",
+      "2025": "89315236 SBI・V・新興国株式インデックス・ファンド（信託報酬 0.058%・設定 2023-06-08）"
+     }
+    }
+   },
+   "report_family_members": {
+    "Q1_managed_futures": [
+     {
+      "assoc": "0131122C",
+      "name": "野村PIMCO・トレンド戦略ファンドAコース",
+      "category": "11",
+      "established": "2022-12-14",
+      "first_month": 202301,
+      "months_to_cutoff": 44,
+      "trustReward": "0.92"
+     },
+     {
+      "assoc": "0131222C",
+      "name": "野村PIMCO・トレンド戦略ファンドBコース",
+      "category": "11",
+      "established": "2022-12-14",
+      "first_month": 202301,
+      "months_to_cutoff": 44,
+      "trustReward": "0.92"
+     },
+     {
+      "assoc": "0431119B",
+      "name": "マンAHLスマート・レバレッジ戦略ファンド",
+      "category": "11",
+      "established": "2019-11-12",
+      "first_month": 201912,
+      "months_to_cutoff": 81,
+      "trustReward": "1.125"
+     },
+     {
+      "assoc": "12312267",
+      "name": "S&P500/ゴールド・プラス・Manトレンドフォロー戦略",
+      "category": "11",
+      "established": "2026-07-23",
+      "first_month": 202608,
+      "months_to_cutoff": 1,
+      "trustReward": "0.48"
+     },
+     {
+      "assoc": "89311248",
+      "name": "SBI-Manリキッド・トレンド・ファンド",
+      "category": "11",
+      "established": "2024-08-16",
+      "first_month": 202409,
+      "months_to_cutoff": 24,
+      "trustReward": "0.38"
+     }
+    ],
+    "Q2_brand": [
+     {
+      "assoc": "01311094",
+      "name": "野村日本ブランド株投資(円コース)毎月分配型(野村日本ブランド株投資(通貨選択型))",
+      "category": "JP",
+      "established": "2009-04-23",
+      "first_month": 200905,
+      "months_to_cutoff": 208,
+      "trustReward": "0.88"
+     },
+     {
+      "assoc": "01312068",
+      "name": "野村ピクテ・プレミアム・ブランド・ファンドAコース",
+      "category": "GLW",
+      "established": "2006-08-28",
+      "first_month": 200610,
+      "months_to_cutoff": 239,
+      "trustReward": "1.7"
+     },
+     {
+      "assoc": "01313068",
+      "name": "野村ピクテ・プレミアム・ブランド・ファンドBコース",
+      "category": "GLW",
+      "established": "2006-08-28",
+      "first_month": 200610,
+      "months_to_cutoff": 239,
+      "trustReward": "1.7"
+     },
+     {
+      "assoc": "01316094",
+      "name": "野村日本ブランド株投資(円コース)年2回決算型(野村日本ブランド株投資(通貨選択型))",
+      "category": "JP",
+      "established": "2009-04-23",
+      "first_month": 200905,
+      "months_to_cutoff": 208,
+      "trustReward": "0.88"
+     },
+     {
+      "assoc": "42311066",
+      "name": "ピクテ・プレミアム・ブランド・ファンド(3ヵ月決算型)",
+      "category": "GLW",
+      "established": "2006-06-30",
+      "first_month": 200610,
+      "months_to_cutoff": 239,
+      "trustReward": "1.5"
+     },
+     {
+      "assoc": "42313177",
+      "name": "iTrustプレミアム・ブランド",
+      "category": "GLW",
+      "established": "2017-07-31",
+      "first_month": 201708,
+      "months_to_cutoff": 109,
+      "trustReward": "0.9"
+     },
+     {
+      "assoc": "47311004",
+      "name": "ブランドエクイティ",
+      "category": "JP",
+      "established": "2000-04-28",
+      "first_month": 200610,
+      "months_to_cutoff": 239,
+      "trustReward": "1.5"
+     }
+    ],
+    "Q3_high_dividend_foreign": [
+     {
+      "assoc": "0131211B",
+      "name": "野村グローバル高配当株プレミアム(通貨セレクトコース)毎月分配型(野村グローバル高配当株プレミアム(通貨選択型))",
+      "category": "GLW",
+      "established": "2011-11-18",
+      "first_month": 201112,
+      "months_to_cutoff": 177,
+      "trustReward": "0.88"
+     },
+     {
+      "assoc": "0131411B",
+      "name": "野村グローバル高配当株プレミアム(通貨セレクトコース)年2回決算型(野村グローバル高配当株プレミアム(通貨選択型))",
+      "category": "GLW",
+      "established": "2011-11-18",
+      "first_month": 201112,
+      "months_to_cutoff": 177,
+      "trustReward": "0.88"
+     },
+     {
+      "assoc": "02311052",
+      "name": "世界高配当株式ファンド(毎月分配型)",
+      "category": "GLW",
+      "established": "2005-02-15",
+      "first_month": 200610,
+      "months_to_cutoff": 239,
+      "trustReward": "1.1"
+     },
+     {
+      "assoc": "0231105B",
+      "name": "グローバル高配当株式ファンド(奇数月分配型)",
+      "category": "GLW",
+      "established": "2005-11-22",
+      "first_month": 200610,
+      "months_to_cutoff": 239,
+      "trustReward": "1.31"
+     },
+     {
+      "assoc": "02311265",
+      "name": "グローバル高配当株式ファンド(1年決算型)",
+      "category": "GLW",
+      "established": "2026-05-26",
+      "first_month": 202606,
+      "months_to_cutoff": 3,
+      "trustReward": "1.31"
+     },
+     {
+      "assoc": "02312255",
+      "name": "Tracers DJ USディビデンド100(米国高配当株式)年4回分配型",
+      "category": "US",
+      "established": "2025-05-29",
+      "first_month": 202506,
+      "months_to_cutoff": 15,
+      "trustReward": "0.0975"
+     },
+     {
+      "assoc": "0231408B",
+      "name": "世界高配当株式ファンド(資産成長型)",
+      "category": "GLW",
+      "established": "2008-11-12",
+      "first_month": 200812,
+      "months_to_cutoff": 213,
+      "trustReward": "1.1"
+     },
+     {
+      "assoc": "03311231",
+      "name": "eMAXIS S&P500クオリティ高配当インデックス",
+      "category": "US",
+      "established": "2023-01-12",
+      "first_month": 202302,
+      "months_to_cutoff": 43,
+      "trustReward": "0.3"
+     },
+     {
+      "assoc": "03312269",
+      "name": "eMAXIS高配当全世界株式(オール・カントリー)配当払出型",
+      "category": "GLW",
+      "established": "2026-09-30",
+      "first_month": null,
+      "months_to_cutoff": 0,
+      "trustReward": "0.15"
+     },
+     {
+      "assoc": "03313269",
+      "name": "eMAXIS高配当全世界株式(オール・カントリー)資産成長型",
+      "category": "GLW",
+      "established": "2026-09-30",
+      "first_month": null,
+      "months_to_cutoff": 0,
+      "trustReward": "0.15"
+     },
+     {
+      "assoc": "17311134",
+      "name": "JPM北米高配当・成長株ファンド(為替ヘッジなし、3ヵ月決算型)",
+      "category": "US",
+      "established": "2013-04-11",
+      "first_month": 201305,
+      "months_to_cutoff": 160,
+      "trustReward": "1.55"
+     },
+     {
+      "assoc": "17313134",
+      "name": "JPM北米高配当・成長株ファンド(為替ヘッジなし、年2回決算型)",
+      "category": "US",
+      "established": "2013-04-11",
+      "first_month": 201305,
+      "months_to_cutoff": 160,
+      "trustReward": "1.55"
+     },
+     {
+      "assoc": "29312267",
+      "name": "ニッセイNYダウ高配当株式トップ10インデックスファンド(年4回決算型)<購入・換金手数料なし>",
+      "category": "US",
+      "established": "2026-07-07",
+      "first_month": 202608,
+      "months_to_cutoff": 1,
+      "trustReward": "0.29"
+     },
+     {
+      "assoc": "35311258",
+      "name": "GSグローバル(除く米国)割安高配当株式ファンド年1回決算コース",
+      "category": "GLW",
+      "established": "2025-08-19",
+      "first_month": 202509,
+      "months_to_cutoff": 12,
+      "trustReward": "1.52"
+     },
+     {
+      "assoc": "35312258",
+      "name": "GSグローバル(除く米国)割安高配当株式ファンド年4回決算コース",
+      "category": "GLW",
+      "established": "2025-08-19",
+      "first_month": 202509,
+      "months_to_cutoff": 12,
+      "trustReward": "1.52"
+     },
+     {
+      "assoc": "4731512C",
+      "name": "世界高配当株セレクト(目標払出し型)毎月決算・為替ヘッジなしコース",
+      "category": "GLW",
+      "established": "2012-12-17",
+      "first_month": 201301,
+      "months_to_cutoff": 164,
+      "trustReward": "1.18"
+     },
+     {
+      "assoc": "58312246",
+      "name": "(アムンディ・インデックスシリーズ)オールカントリー・高配当株",
+      "category": "GLW",
+      "established": "2024-06-28",
+      "first_month": 202407,
+      "months_to_cutoff": 26,
+      "trustReward": "0.15"
+     },
+     {
+      "assoc": "64311268",
+      "name": "SMTグローバル高配当株50インデックス・オープン(年4回決算型)",
+      "category": "GLX",
+      "established": "2026-08-06",
+      "first_month": null,
+      "months_to_cutoff": 0,
+      "trustReward": "0.45"
+     },
+     {
+      "assoc": "6431225A",
+      "name": "SMT米国高配当&自社株買いファンド(年4回決算型)",
+      "category": "US",
+      "established": "2025-10-31",
+      "first_month": 202511,
+      "months_to_cutoff": 10,
+      "trustReward": "0.9"
+     },
+     {
+      "assoc": "7931C136",
+      "name": "北米高配当株ファンド(毎月決算型)",
+      "category": "US",
+      "established": "2013-06-28",
+      "first_month": 201307,
+      "months_to_cutoff": 158,
+      "trustReward": "1.64"
+     },
+     {
+      "assoc": "7931D136",
+      "name": "北米高配当株ファンド(年2回決算型)",
+      "category": "US",
+      "established": "2013-06-28",
+      "first_month": 201307,
+      "months_to_cutoff": 158,
+      "trustReward": "1.64"
+     },
+     {
+      "assoc": "89311241",
+      "name": "SBI・V・米国高配当株式インデックス・ファンド(年4回決算型)",
+      "category": "US",
+      "established": "2024-01-30",
+      "first_month": 202402,
+      "months_to_cutoff": 31,
+      "trustReward": "0.058"
+     },
+     {
+      "assoc": "8931124A",
+      "name": "SBI全世界高配当株式ファンド(年4回決算型)",
+      "category": "GLW",
+      "established": "2024-10-01",
+      "first_month": 202411,
+      "months_to_cutoff": 22,
+      "trustReward": "0.05"
+     },
+     {
+      "assoc": "8931125B",
+      "name": "SBIネクスト・フロンティア高配当株式ファンド(年1回決算型)",
+      "category": "EM",
+      "established": "2025-11-05",
+      "first_month": 202512,
+      "months_to_cutoff": 9,
+      "trustReward": "0.09"
+     },
+     {
+      "assoc": "89312216",
+      "name": "SBI・V・米国高配当株式インデックス・ファンド",
+      "category": "US",
+      "established": "2021-06-29",
+      "first_month": 202107,
+      "months_to_cutoff": 62,
+      "trustReward": "0.058"
+     },
+     {
+      "assoc": "89312241",
+      "name": "SBI・SPDR・S&P500高配当株式インデックス・ファンド(年4回決算型)",
+      "category": "US",
+      "established": "2024-01-30",
+      "first_month": 202402,
+      "months_to_cutoff": 31,
+      "trustReward": "0.058"
+     },
+     {
+      "assoc": "8931224A",
+      "name": "SBI全世界高配当株式ファンド(年1回決算型)",
+      "category": "GLW",
+      "established": "2024-10-16",
+      "first_month": 202411,
+      "months_to_cutoff": 22,
+      "trustReward": "0.05"
+     },
+     {
+      "assoc": "8931224C",
+      "name": "SBI・S・米国高配当株式ファンド(年4回決算型)",
+      "category": "US",
+      "established": "2024-12-20",
+      "first_month": 202501,
+      "months_to_cutoff": 20,
+      "trustReward": "0.057"
+     },
+     {
+      "assoc": "89312259",
+      "name": "SBI・S・米国高配当株式ファンド(年1回決算型)",
+      "category": "US",
+      "established": "2025-09-12",
+      "first_month": 202510,
+      "months_to_cutoff": 11,
+      "trustReward": "0.057"
+     },
+     {
+      "assoc": "89314256",
+      "name": "SBIネクスト・フロンティア高配当株式ファンド(年4回決算型)",
+      "category": "EM",
+      "established": "2025-06-24",
+      "first_month": 202507,
+      "months_to_cutoff": 14,
+      "trustReward": "0.09"
+     },
+     {
+      "assoc": "9I311181",
+      "name": "楽天・米国高配当株式インデックス・ファンド",
+      "category": "US",
+      "established": "2018-01-10",
+      "first_month": 201802,
+      "months_to_cutoff": 103,
+      "trustReward": "0.12"
+     },
+     {
+      "assoc": "9I312249",
+      "name": "楽天・シュワブ・高配当株式・米国ファンド(四半期決算型)",
+      "category": "US",
+      "established": "2024-09-18",
+      "first_month": 202410,
+      "months_to_cutoff": 23,
+      "trustReward": "0.1125"
+     },
+     {
+      "assoc": "9I312253",
+      "name": "楽天・高配当株式・米国VYMファンド(四半期決算型)",
+      "category": "US",
+      "established": "2025-03-05",
+      "first_month": 202504,
+      "months_to_cutoff": 17,
+      "trustReward": "0.12"
+     },
+     {
+      "assoc": "9I316257",
+      "name": "楽天・シュワブ・高配当株式・米国ファンド(資産成長型)",
+      "category": "US",
+      "established": "2025-07-25",
+      "first_month": 202508,
+      "months_to_cutoff": 13,
+      "trustReward": "0.1125"
+     }
+    ],
+    "Q3b_high_dividend_domestic_crosscheck": [
+     {
+      "assoc": "01311126",
+      "name": "野村日本高配当株プレミアム(円コース)毎月分配型(野村日本高配当株プレミアム(通貨選択型))",
+      "category": "JP",
+      "established": "2012-06-19",
+      "first_month": 201207,
+      "months_to_cutoff": 170,
+      "trustReward": "0.88"
+     },
+     {
+      "assoc": "01312126",
+      "name": "野村日本高配当株プレミアム(通貨セレクトコース)毎月分配型(野村日本高配当株プレミアム(通貨選択型))",
+      "category": "JP",
+      "established": "2012-06-19",
+      "first_month": 201207,
+      "months_to_cutoff": 170,
+      "trustReward": "0.88"
+     },
+     {
+      "assoc": "01313126",
+      "name": "野村日本高配当株プレミアム(円コース)年2回決算型(野村日本高配当株プレミアム(通貨選択型))",
+      "category": "JP",
+      "established": "2012-06-19",
+      "first_month": 201207,
+      "months_to_cutoff": 170,
+      "trustReward": "0.88"
+     },
+     {
+      "assoc": "01314126",
+      "name": "野村日本高配当株プレミアム(通貨セレクトコース)年2回決算型(野村日本高配当株プレミアム(通貨選択型))",
+      "category": "JP",
+      "established": "2012-06-19",
+      "first_month": 201207,
+      "months_to_cutoff": 170,
+      "trustReward": "0.88"
+     },
+     {
+      "assoc": "02311059",
+      "name": "株ちょファンド日本(高配当株・割安株・成長株)毎月分配型",
+      "category": "JP",
+      "established": "2005-09-22",
+      "first_month": 200610,
+      "months_to_cutoff": 239,
+      "trustReward": "0.985"
+     },
+     {
+      "assoc": "02311085",
+      "name": "日興ジャパン高配当株式ファンド",
+      "category": "JP",
+      "established": "2008-05-30",
+      "first_month": 200806,
+      "months_to_cutoff": 219,
+      "trustReward": "1.08"
+     },
+     {
+      "assoc": "02312241",
+      "name": "インデックスファンド日経平均高配当株50(奇数月分配型)",
+      "category": "JP",
+      "established": "2024-01-31",
+      "first_month": 202402,
+      "months_to_cutoff": 31,
+      "trustReward": "0.435"
+     },
+     {
+      "assoc": "02313241",
+      "name": "Tracers日経平均高配当株50インデックス(奇数月分配型)",
+      "category": "JP",
+      "established": "2024-01-31",
+      "first_month": 202402,
+      "months_to_cutoff": 31,
+      "trustReward": "0.0975"
+     },
+     {
+      "assoc": "0331118B",
+      "name": "日経平均高配当利回り株ファンド",
+      "category": "JP",
+      "established": "2018-11-09",
+      "first_month": 201812,
+      "months_to_cutoff": 93,
+      "trustReward": "0.63"
+     },
+     {
+      "assoc": "0331124B",
+      "name": "日経平均高配当利回り株ファンドII",
+      "category": "JP",
+      "established": "2024-11-29",
+      "first_month": 202412,
+      "months_to_cutoff": 21,
+      "trustReward": "0.63"
+     },
+     {
+      "assoc": "04319267",
+      "name": "iFreePlus増配・高配当日本株(年4回決算型)",
+      "category": "JP",
+      "established": "2026-07-24",
+      "first_month": 202608,
+      "months_to_cutoff": 1,
+      "trustReward": "0.25"
+     },
+     {
+      "assoc": "2931226A",
+      "name": "ニッセイ・S日本超大型高配当株式トップ10インデックスファンド(年4回決算型)<購入・換金手数料なし>",
+      "category": "JP",
+      "established": "2026-10-06",
+      "first_month": null,
+      "months_to_cutoff": 0,
+      "trustReward": "0.29"
+     },
+     {
+      "assoc": "4731119B",
+      "name": "One高配当利回り厳選ジャパン",
+      "category": "JP",
+      "established": "2019-11-13",
+      "first_month": 201912,
+      "months_to_cutoff": 81,
+      "trustReward": "0.999"
+     },
+     {
+      "assoc": "58311254",
+      "name": "(アムンディ・インデックスシリーズ)日本・高配当株",
+      "category": "JP",
+      "established": "2025-04-18",
+      "first_month": 202505,
+      "months_to_cutoff": 16,
+      "trustReward": "0.18"
+     },
+     {
+      "assoc": "8931123C",
+      "name": "SBI日本高配当株式(分配)ファンド(年4回決算型)",
+      "category": "JP",
+      "established": "2023-12-12",
+      "first_month": 202401,
+      "months_to_cutoff": 32,
+      "trustReward": "0.09"
+     },
+     {
+      "assoc": "89313259",
+      "name": "SBI日本高配当株式ファンド(年1回決算型)",
+      "category": "JP",
+      "established": "2025-09-26",
+      "first_month": 202510,
+      "months_to_cutoff": 11,
+      "trustReward": "0.09"
+     },
+     {
+      "assoc": "89313265",
+      "name": "SBI地方創生・日本高配当株式ファンド(成長型)",
+      "category": "JP",
+      "established": "2026-05-27",
+      "first_month": 202606,
+      "months_to_cutoff": 3,
+      "trustReward": "0.88"
+     },
+     {
+      "assoc": "89314265",
+      "name": "SBI地方創生・日本高配当株式ファンド(年4回決算型)",
+      "category": "JP",
+      "established": "2026-05-27",
+      "first_month": 202606,
+      "months_to_cutoff": 3,
+      "trustReward": "0.88"
+     },
+     {
+      "assoc": "9I312252",
+      "name": "楽天・高配当株式・日本ファンド(四半期決算型)",
+      "category": "JP",
+      "established": "2025-02-07",
+      "first_month": 202503,
+      "months_to_cutoff": 18,
+      "trustReward": "0.27"
+     },
+     {
+      "assoc": "9I314257",
+      "name": "楽天・高配当株式・日本ファンド(資産成長型)",
+      "category": "JP",
+      "established": "2025-07-18",
+      "first_month": 202508,
+      "months_to_cutoff": 13,
+      "trustReward": "0.27"
+     }
+    ]
+   },
+   "msci": {
+    "JP_JPY": {
+     "code": 939200,
+     "first": 200101,
+     "last": 202608,
+     "n": 308
+    },
+    "JP_USD": {
+     "code": 939200,
+     "first": 200101,
+     "last": 202608,
+     "n": 308
+    },
+    "US_JPY": {
+     "code": 984000,
+     "first": 200101,
+     "last": 202608,
+     "n": 308
+    },
+    "US_USD": {
+     "code": 984000,
+     "first": 200101,
+     "last": 202608,
+     "n": 308
+    },
+    "GLX_JPY": {
+     "code": 991200,
+     "first": 200101,
+     "last": 202608,
+     "n": 308
+    },
+    "GLX_USD": {
+     "code": 991200,
+     "first": 200101,
+     "last": 202608,
+     "n": 308
+    },
+    "GLW_JPY": {
+     "code": 892400,
+     "first": 200101,
+     "last": 202608,
+     "n": 308
+    },
+    "GLW_USD": {
+     "code": 892400,
+     "first": 200101,
+     "last": 202608,
+     "n": 308
+    },
+    "EM_JPY": {
+     "code": 891800,
+     "first": 200101,
+     "last": 202608,
+     "n": 308
+    },
+    "EM_USD": {
+     "code": 891800,
+     "first": 200101,
+     "last": 202608,
+     "n": 308
+    },
+    "WORLD_for_fx_JPY": {
+     "code": 990100,
+     "first": 200101,
+     "last": 202608,
+     "n": 308
+    },
+    "WORLD_for_fx_USD": {
+     "code": 990100,
+     "first": 200101,
+     "last": 202608,
+     "n": 308
+    },
+    "USDJPY_change_from_MSCI_World": {
+     "first": 200101,
+     "last": 202608,
+     "n": 308
+    }
+   },
+   "jita_survival": {
+    "2005": {
+     "jita_open_ex_etf": 2106,
+     "library_survivors_established_by_year_end": 926,
+     "s": 0.4397,
+     "years_to_now": 20.74,
+     "q_per_year": 0.0388
+    },
+    "2006": {
+     "jita_open_ex_etf": 2271,
+     "library_survivors_established_by_year_end": 1067,
+     "s": 0.4698,
+     "years_to_now": 19.74,
+     "q_per_year": 0.0375
+    },
+    "2007": {
+     "jita_open_ex_etf": 2527,
+     "library_survivors_established_by_year_end": 1199,
+     "s": 0.4745,
+     "years_to_now": 18.74,
+     "q_per_year": 0.039
+    },
+    "2008": {
+     "jita_open_ex_etf": 2706,
+     "library_survivors_established_by_year_end": 1308,
+     "s": 0.4834,
+     "years_to_now": 17.74,
+     "q_per_year": 0.0401
+    },
+    "2009": {
+     "jita_open_ex_etf": 3003,
+     "library_survivors_established_by_year_end": 1449,
+     "s": 0.4825,
+     "years_to_now": 16.74,
+     "q_per_year": 0.0426
+    },
+    "2010": {
+     "jita_open_ex_etf": 3289,
+     "library_survivors_established_by_year_end": 1569,
+     "s": 0.477,
+     "years_to_now": 15.74,
+     "q_per_year": 0.0459
+    },
+    "2011": {
+     "jita_open_ex_etf": 3629,
+     "library_survivors_established_by_year_end": 1685,
+     "s": 0.4643,
+     "years_to_now": 14.74,
+     "q_per_year": 0.0507
+    },
+    "2012": {
+     "jita_open_ex_etf": 3866,
+     "library_survivors_established_by_year_end": 1782,
+     "s": 0.4609,
+     "years_to_now": 13.74,
+     "q_per_year": 0.0548
+    },
+    "2013": {
+     "jita_open_ex_etf": 4440,
+     "library_survivors_established_by_year_end": 2087,
+     "s": 0.47,
+     "years_to_now": 12.74,
+     "q_per_year": 0.0575
+    },
+    "2014": {
+     "jita_open_ex_etf": 4824,
+     "library_survivors_established_by_year_end": 2248,
+     "s": 0.466,
+     "years_to_now": 11.74,
+     "q_per_year": 0.063
+    },
+    "2015": {
+     "jita_open_ex_etf": 5180,
+     "library_survivors_established_by_year_end": 2459,
+     "s": 0.4747,
+     "years_to_now": 10.74,
+     "q_per_year": 0.067
+    },
+    "2016": {
+     "jita_open_ex_etf": 5400,
+     "library_survivors_established_by_year_end": 2731,
+     "s": 0.5057,
+     "years_to_now": 9.74,
+     "q_per_year": 0.0676
+    },
+    "2017": {
+     "jita_open_ex_etf": 5539,
+     "library_survivors_established_by_year_end": 3068,
+     "s": 0.5539,
+     "years_to_now": 8.74,
+     "q_per_year": 0.0653
+    },
+    "2018": {
+     "jita_open_ex_etf": 5600,
+     "library_survivors_established_by_year_end": 3330,
+     "s": 0.5946,
+     "years_to_now": 7.74,
+     "q_per_year": 0.0649
+    },
+    "2019": {
+     "jita_open_ex_etf": 5571,
+     "library_survivors_established_by_year_end": 3526,
+     "s": 0.6329,
+     "years_to_now": 6.74,
+     "q_per_year": 0.0656
+    },
+    "2020": {
+     "jita_open_ex_etf": 5487,
+     "library_survivors_established_by_year_end": 3703,
+     "s": 0.6749,
+     "years_to_now": 5.74,
+     "q_per_year": 0.0662
+    },
+    "2021": {
+     "jita_open_ex_etf": 5514,
+     "library_survivors_established_by_year_end": 3995,
+     "s": 0.7245,
+     "years_to_now": 4.74,
+     "q_per_year": 0.0657
+    },
+    "2022": {
+     "jita_open_ex_etf": 5461,
+     "library_survivors_established_by_year_end": 4195,
+     "s": 0.7682,
+     "years_to_now": 3.74,
+     "q_per_year": 0.068
+    },
+    "2023": {
+     "jita_open_ex_etf": 5447,
+     "library_survivors_established_by_year_end": 4514,
+     "s": 0.8287,
+     "years_to_now": 2.74,
+     "q_per_year": 0.0662
+    },
+    "2024": {
+     "jita_open_ex_etf": 5299,
+     "library_survivors_established_by_year_end": 4779,
+     "s": 0.9019,
+     "years_to_now": 1.74,
+     "q_per_year": 0.0576
+    },
+    "2025": {
+     "jita_open_ex_etf": 5250,
+     "library_survivors_established_by_year_end": 5064,
+     "s": 0.9646,
+     "years_to_now": 0.74,
+     "q_per_year": 0.0475
+    }
+   },
+   "mufg_redeemed": {
+    "listed_2021_02_to_2026_09": 244,
+    "usable_active_in_five_categories_after_filter": 21,
+    "by_category": {
+     "JP": 19,
+     "GLX": 2
+    },
+    "history_spans_yyyymmdd": {
+     "03312164": [
+      20160418,
+      20210928,
+      1329
+     ],
+     "03311834": [
+      20000104,
+      20220407,
+      5458
+     ],
+     "03311032": [
+      20030228,
+      20220421,
+      4691
+     ],
+     "03311001": [
+      20000128,
+      20220817,
+      5532
+     ],
+     "03311162": [
+      20160205,
+      20221110,
+      1652
+     ],
+     "0331213M": [
+      20131024,
+      20231012,
+      2436
+     ],
+     "0331313M": [
+      20131024,
+      20231012,
+      2436
+     ],
+     "0331194A": [
+      19941014,
+      20240913,
+      7345
+     ],
+     "03311145": [
+      20140501,
+      20240920,
+      2542
+     ],
+     "0331109B": [
+      20091106,
+      20241015,
+      3656
+     ],
+     "0331514C": [
+      20141211,
+      20241205,
+      2441
+     ],
+     "03313003": [
+      20000331,
+      20241210,
+      6055
+     ],
+     "03314003": [
+      20000331,
+      20241210,
+      6055
+     ],
+     "03315003": [
+      20000331,
+      20241210,
+      6055
+     ],
+     "03316003": [
+      20000331,
+      20241210,
+      6055
+     ],
+     "03317003": [
+      20000331,
+      20241210,
+      6055
+     ],
+     "03313184": [
+      20180427,
+      20250327,
+      1686
+     ],
+     "0331107A": [
+      20071031,
+      20250717,
+      4333
+     ],
+     "0331407A": [
+      20071031,
+      20250717,
+      4333
+     ],
+     "03311159": [
+      20150925,
+      20250919,
+      2441
+     ],
+     "03311061": [
+      20060120,
+      20251017,
+      4835
+     ]
+    }
+   }
+  },
+  "survivorship_summary": "2009年末に運用中だった株式投信（追加型・ETF 除く）3003本のうち、今ライブラリーに残るのは 1449本（48.2%）。年あたりの償還率 q は 2005〜2025 の年末で 0.0375〜0.068（本数から逆算・成績ではない）"
+ },
+ "criteria": {
+  "which": "criteria_short_sample（out/nx_prereg.json）。履歴が 2006-09 からで、振り返り3年なら評価は 2009-10〜（訓練15年を取れない）。long_history の C1〜C8 は使わない",
+  "grade_call": "nx_common.grade_short(full, first_half, second_half, drop_top, cost_full, lower_bound, family_holm_p_one)",
+  "definitions": {
+   "full": "費用前（＝信託報酬を引いた後の基準価額・販売手数料と留保額の前）の s（選んだファンドの月次の総リターンの平均）と b（同じ重みでのそれぞれの分類の相手の平均）を excess_stats（NW ラグ12）。片側 p = p_one(t)",
+   "first_half_second_half": "評価の月を数で半分（奇数なら後半に1か月多く）。P1: 2009-10〜2018-02 / 2018-03〜2026-08（101 / 102か月）。P2: 2011-10〜2019-02 / 2019-03〜2026-08（89 / 90か月）",
+   "drop_top": "RULES.evaluation.drop_top（寄与が最大の1本を全期間から除く）",
+   "cost_full": "RULES.costs（今の販売会社の最安の購入時手数料×1.1 を組み入れの月に・留保額の印があれば外れる月に 0.3%・相手も同じ）を引いた版の全期間",
+   "lower_bound": "RULES.lower_bound（保有年ごとに h_y/12 を月の超過から引く。h_y = q_y × 0.30）",
+   "holm": "族ごとに片側 p で Holm（α=0.05）: P 2本・C 3本・X 4本。C と X の格付けには『対照』『探索』と明記し、主の結論には使わない"
+  },
+  "lower_bound_values_before_results": {
+   "2006": 1.16,
+   "2007": 1.12,
+   "2008": 1.17,
+   "2009": 1.2,
+   "2010": 1.28,
+   "2011": 1.38,
+   "2012": 1.52,
+   "2013": 1.64,
+   "2014": 1.73,
+   "2015": 1.89,
+   "2016": 2.01,
+   "2017": 2.03,
+   "2018": 1.96,
+   "2019": 1.95,
+   "2020": 1.97,
+   "2021": 1.99,
+   "2022": 1.97,
+   "2023": 2.04,
+   "2024": 1.99,
+   "2025": 1.73
+  },
+  "lower_bound_values_note": "上の表は保有年 y（y 年10月〜翌9月）に引く年率（%）＝ q_(y−1) × 30%。本数だけから事前に決まる（結果を見て動かさない）",
+  "missing_rules": {
+   "fund_month_missing": "31日を超える空きの後の月は値なし（0 と読まない）。その月は平均から外して残りで割り直す",
+   "comparator_missing": "相手の器にその月の値が無ければ、その分類の MSCI（円・NETR）− 0.50%/12 で埋め、埋めた月の数を記録する",
+   "min_group": "重複を除いた後の対象が8本未満の分類・年は使わない",
+   "outliers": "ファンドの月次リターンが同じ分類の MSCI（円）と 30% 以上離れた月は一覧にし、単位の変更（口数の単位・分割）など**データの誤り**と確かめられたときだけ値なしにする（結果を見て規則を変えるのではない）"
+  },
+  "c5_independent_unit": "短い標本の格付けに C5 は無い。代わりに R1（分類ごと）で同じ向きかを見る（格付けには使わない）"
+ },
+ "rules_ledger": "night/nx_jpfunds_data.py の RULES（rules_sha256 で凍結）。下の families はその要約",
+ "families": {
+  "P_primary": {
+   "role": "主の族（criteria_short_sample で格付け・Holm は P の2本で）",
+   "P1_top_q_3y": "振り返り3年・上位1/4・12か月保有・5分類をまとめて・相手は分類ごとの指数型の投信。評価 2009-10〜2026-08（203か月）",
+   "P2_top_q_5y": "振り返り5年・上位1/4・同じ。評価 2011-10〜2026-08（179か月）"
+  },
+  "C_control": {
+   "role": "対照の族（格付けはするが『対照』と明記・Holm は C の3本で）",
+   "C1_cheap_q_fee": "同じ選択の日・同じ適格（振り返り3年がそろう能動の投信・重複を除いた後）のうち、今の信託報酬（trustReward）が安い1/4（k = ceil(n/4)・同じなら純資産の大きい順）。評価 2009-10〜2026-08。★今の信託報酬で過去を選ぶ後知恵（能動の投信の信託報酬はあまり変わらないが、下げた器が上に来る）",
+   "C2_all_active": "同じ適格の能動の投信を全部等分（上位を選ぶことに意味があるかの基準）。評価 2009-10〜2026-08",
+   "C3_bottom_q_3y": "振り返り3年の下位1/4（Carhart の持続の反対側）。評価 2009-10〜2026-08。★生き残りの偏りは下位にいちばん強く効く（下位で崩れたファンドほど償還される）"
+  },
+  "X_exploratory": {
+   "role": "探索の族（格付けはするが『探索』と明記・Holm は X の4本で・主の結論には使わない）",
+   "X1_top_q_1y": "振り返り1年（Carhart 1997 の元の形）。選択 2007-09〜2025-09・評価 2007-10〜2026-08",
+   "X2_top_q_3y_ir": "振り返り3年の、相手に対する月次の超過の平均 ÷ 超過の標準偏差（情報比）の上位1/4",
+   "X3_top_q_3y_big": "P1 と同じだが、t の純資産が 100億円以上のファンドだけで並べる（償還されにくい器）。min_group と ceil(n/4) は同じ",
+   "X4_top_d_3y": "振り返り3年の上位1/10（k = ceil(n/10)・最低2本）"
+  },
+  "R_report": {
+   "role": "報告（格付けしない）",
+   "R1_by_category": "P1・P2・C1・C2 を分類ごと（JP/US/GLX/GLW/EM）に",
+   "R2_spread": "P1 − C3（上位1/4 − 下位1/4＝Carhart の持続の差）",
+   "R3_paper": "相手を MSCI の円・配当込み（費用なし）にした版と、相手を分類の指数型の全部の等分にした版と、相手の器を今の販売会社が5社以上のもの（nInstitutions ≥ 5）に限った版（野村スリーゼロ先進国株式投信〔信託報酬 0%・販売会社1社〕のような、多くの投資家が買えない器を相手にしない感度）",
+   "R4_costs": "購入時手数料の上限版・手数料なし版・課税口座の版（costs.tax_report）",
+   "R5_lower_mild": "lower_bound の mild_report",
+   "R6_dca": "20年がそろわないので、毎月同額の積立の最終額の比（規則 ÷ 相手）を 10年窓（nx_common.dca(years=10)）で",
+   "R7_comparator_drag": "相手の指数型の投信 − MSCI の紙（指数型の器の費用と追従のずれ）",
+   "R8_fund_count": "選択の日ごとの分類別の本数（重複を除く前・後）・選ばれた本数・相手の器の名前と信託報酬・為替の係数の検査で外した本数・今の NISA の印（成長投資枠 nisaGrowthFlg・つみたて投資枠 nisaFlg）の割合",
+   "R9_single_alternative": "選んだファンドの平均 − （MSCI ACWI の円・NETR − 0.10%/年）＝日本の NISA の投資家の典型の代わり（オール・カントリーの指数型）ひとつと比べる"
+  },
+  "B_survivorship_check": {
+   "role": "生き残りの偏りの部分的な答え合わせ（報告・格付けしない）。三菱UFJアセットマネジメントの2021-02〜2026-09 の償還ファンド（全履歴が同社のサイトにある）を足し戻す",
+   "B1_add_back_mufg": "P1・P2・C2・C3 を選択 2021-09〜2025-09 に限り、(a) ライブラリーの生き残りだけ と (b) (a) に三菱UFJの償還ファンドを分類の規則（mufg_category）で足し戻した版を並べる（差＝1社ぶんの生き残りの偏り）",
+   "B2_mufg_only": "母集団を三菱UFJの能動の投信だけにして、(a) 生き残りだけ と (b) 償還も含む（2021-09 以降の選択では完全な母集団）を並べる",
+   "mufg_filter": "universe_filter の正規表現（wrap/special/hedged/currency）＋ 外国の資産の円コース ＋ 名前に DC/確定拠出（MUFG の一覧に DC の印が無いため）＋ 名前に 上場投信 か cff_type が PublicFund 以外（ETF・DC 型）を除く。為替の係数の検査（fx_exposure_check）も同じく当てる",
+   "mufg_category": "MUFG の cff_fund_type_name が 国内株式 → JP。海外株式 → 名前に 米国/北米/アメリカ/S&P/ダウ/NASDAQ/ナスダック → US、新興国/エマージング/BRICs/ブリックス → EM、先進国/グローバル/世界/外国/海外/コクサイ → GLX、それ以外（単一国・地域）は入れない。内外株式 → 名前に グローバル/世界/全世界/オール → GLW。名前に インデックス → 指数型（能動から外す）。universe_filter の正規表現も同じく当てる"
+  },
+  "Q_real_instrument_hindsight": {
+   "role": "報告の族（格付けしない）。★nx の他の角度（nx_stack の時系列の勢い・nx_jst の高配当の国・nx_brand のブランド）が紙の上で勝ったと聞いた**後に**決めた後知恵の答え合わせ",
+   "membership": "ライブラリーの今の一覧から名前（NFKC の fundNm＋愛称）で機械的に拾う。universe_filter の DC 専用・SMA/ラップ専用・為替ヘッジあり・通貨選択は除く（特殊型は MF のために残す）。12か月以上の月次がある器だけ",
+   "Q1_managed_futures": "名前に マネージド・フューチャーズ / マネージドフューチャーズ / フューチャーズ / トレンドフォロー / トレンド・フォロー / AHL / CTA / ウィントン / アルファシンプレックス / トレンド戦略 / リキッド・トレンド のどれか ∧ fundCategory が '11'（資産複合）か空欄（その他資産）。相手 = GLW の相手（全世界の指数型）と、円の現金（0%）。紙との差 = 同じ月の AQR TSMOM（米ドルの超過・為替ヘッジした円の超過の近似）",
+   "Q2_brand": "名前に ブランド ∧ 分類が JP/US/GLX/GLW/EM のどれか。相手 = その分類の相手",
+   "Q3_high_dividend_foreign": "名前に 高配当 ∧ 分類が US/GLX/GLW/EM（国内株式は q07leu の verify_japan_yen_etf〔18本〕と eknzbh の mw_investable_valmom が既に測ったので外す）。相手 = その分類の相手。★nx_jst の『高配当の国（国を選ぶ）』とは別物（これは国の中の銘柄を選ぶ）",
+   "Q3b_high_dividend_domestic_crosscheck": "名前に 高配当 ∧ JP。他セッションと重なるので答え合わせの検算としてだけ（結論に使わない）",
+   "portfolio": "各グループの器を、器の2か月目から等分（月ごとに持ち直す）。器ごとの超過も一覧にする",
+   "keyword_note": "指示の例の『トレンド』単独は使わない: ライブラリーで『トレンド』を含む器 32本の大半は テーマ株（メガトレンド・未来トレンド発見・ギガトレンド・トレンドランキング〔SMT のモメンタム株〕など）で、先物の時系列の勢いではない。マネージド・フューチャーズは RULES の語の組（トレンドフォロー・トレンド戦略・リキッド・トレンド・AHL など）∧ 資産複合/その他資産 の分類で拾う（株の分類の『米国株式デイリートレンド戦略ファンド』は入らない）。『ラグジュアリー』（日興エドモン・ドゥ・ロスチャイルド・ラグジュアリーファンド）は『ブランド』の語に当たらないので入れない。ライブラリーのマネージド・フューチャーズは 2019-11 設定が最古（それより前に日本で売られた器は償還されて残っていない＝ここにも生き残りの偏り）"
+  }
+ },
+ "benchmark": {
+  "main": "分類ごとの指数型の投信の鎖（RULES.comparator）。円・費用後（信託報酬を引いた基準価額・分配金再投資）の**本物の器**どうしの比較。指数型が1本も無い分類・年は MSCI（円・NETR）− 0.50%/年",
+  "why_not_paper_main": "能動の投信の成績は費用後なので、費用の無い紙の指数を主の相手にすると能動の側に厳しすぎる。紙は R3 で並べる",
+  "reported_not_graded": "MSCI の紙（R3）・分類の指数型の全部の等分（R3）・オール・カントリーひとつ（R9）・相手の器の費用と追従のずれ（R7）",
+  "fallback_years_known_before_results": "指数型の器が無い年: 米国株式（S&P500 の指数型は 2013-09 設定が最初＝選択 2013 年まで）と日本を含む世界（オール・カントリーの指数型は 2017-09 設定が最初＝選択 2017 年まで）、新興国の 2007。shape.comparator_assignment_before_fx_check を見よ",
+  "single_distributor_comparator": "日本を除く世界の 2020 年以後の相手は 野村スリーゼロ先進国株式投信（信託報酬 0%・今の販売会社は1社）。主の規則どおり残し、R3 で販売会社5社以上に限った版を並べる"
+ },
+ "timing": {
+  "what_is_known_when": "選択の日 t（9月の最後の基準価額の日）に使うのは、t までの基準価額・分配金・純資産（CSV）と、振り返りの月の MSCI（為替の係数の検査）だけ。保有は翌月（10月）から。月次リターンは月の最後の基準価額の日で区切る",
+  "look_ahead_known": [
+   "★母集団が生き残りだけ（2026-09 に残っているファンドだけ）＝最大の後知恵。lower_bound と B 族で挟む",
+   "分類（fundCategory・地域の印）・指数型か能動か（supplementKindCd）・DC 専用の印・今の信託報酬・今の販売会社の手数料は**今の値**。過去の履歴は無い。能動の投信の信託報酬はあまり変わらないが、指数型は何度も下げた（相手の選び方と C1 に効く。相手を今いちばん安い器にするのは相手を強くする向き）",
+   "外国の株式の投信の基準価額は前日の海外の終値と当日の為替で計算される（1日遅れ）。能動と相手は同じ遅れなので本物どうしの比較は揃うが、MSCI の紙（月末）とは1日ずれる（R3・R7 の雑音）",
+   "分配金は税引前で再投資（NISA の中なら非課税で揃う。課税口座は R4）"
+  ],
+  "our_estimation": "データから推定するのは、振り返りの月だけで作る重複の除去（相関）と為替の係数（回帰）だけ。閾値（0.995・0.5）は測る前に固定"
+ },
+ "real_instrument_check": {
+  "role": "格付けに入れない報告",
+  "direct_instrument": "この角度はそもそも本物の器（日本の公募投信）どうしの比較で、紙の上の仮想のポートフォリオではない",
+  "nisa_frictions": "★NISA の成長投資枠は年240万円（生涯1,800万円）で、売った分の枠は翌年にしか戻らない。毎年全部を入れ替える規則は、大きな NISA の残高では同じ年に買い直せない。また成長投資枠は毎月分配型・デリバティブを主に使う投信などを対象から外し、つみたて投資枠は金融庁の届出の器だけ。報告として、選んだファンドのうち今の印で成長投資枠の対象（nisaGrowthFlg）・つみたて投資枠の対象（nisaFlg）の割合を年ごとに出す（今の印＝後知恵）",
+  "taxable_account": "課税口座では入れ替えのたびに含み益に 20.315%（R4）",
+  "user_context": "この投資家は つみたて枠で iFreeNEXT NASDAQ100・成長枠で米国株/ETF を持つ。能動の投信の選び方が指数型に勝たないなら、今の置き方（指数型）を変える理由は無い、というのが答えの形"
+ },
+ "prior": {
+  "Carhart_1997": "『On Persistence in Mutual Fund Performance』JF 1997: 米国の投信の成績の持続はほぼ株の勢いと費用で説明され、残る持続は最悪の投信が悪いままでいることが中心",
+  "Hendricks_Patel_Zeckhauser_1993": "『Hot Hands in Mutual Funds』JF 1993: 短期（1年）の持続を報告",
+  "Brown_Goetzmann_1995": "『Performance Persistence』JF 1995: 持続は負け組が負け続けることが主で、年によって向きが変わる",
+  "Elton_Gruber_Blake_1996": "『Survivor Bias and Mutual Fund Performance』RFS 1996: 生き残りの偏りは年 0.9% 程度",
+  "Carhart_Carpenter_Lynch_Musto_2002": "『Mutual Fund Survivorship』RFS 2002: 標本の長さとともに偏りが大きくなる。持続の検定は生き残りだけだと歪む",
+  "Berk_Green_2004": "『Mutual Fund Flows and Performance in Rational Markets』JPE 2004: 資金が成績を追って流れ込み、持続が消える",
+  "Cai_Chan_Yamada_1997": "『The Performance of Japanese Mutual Funds』RFS 1997: 日本の投信（1981〜1992）は市場に負けた",
+  "Brown_Goetzmann_Hiraki_Otsuki_Shiraishi_2001": "『The Japanese Open-End Fund Puzzle』Journal of Business 2001: 日本の追加型の投信は大きく負けた",
+  "SPIVA_Japan": "S&P Dow Jones Indices の SPIVA 日本版: 長い期間では日本の能動の投信の多くが指数に負けると報告している（数字はここに書かない＝記憶の数字を置かない）",
+  "this_ledger_known_before": "CLAUDE.md に記録済み: つみたて枠の S&P500・オール・カントリーの指数型 38本では信託報酬が 1pt につき約 1pt 取られ、最安の器が最良ではない（0.09〜0.11pt/年）、iFreeNEXT NASDAQ100 は同じ指数の最安の器より年 0.2〜0.4pt 重い、2つの器で説明できない追従のずれ（インデックスオープン・世界株式 1.474pt/年ほか）。＝指数型の器どうしの差は小さいが、器によっては壊れている（相手の選び方の感度 R3・R7 で見る）"
+ },
+ "contamination": {
+  "what_i_looked_at": "この事前登録を書く前に見たのは: 検索の応答の欄の名前と、分類の欄（fundCategory・地域の印・supplementKindCd・dcFundFlg・unitOpenDiv・retentionMoneyCd・buyFee・販売会社の手数料）の分布、ファンドの名前・設定日・信託報酬、CSV の列・最初と最後の日・行数・空き・分配金のある行の数、三菱UFJ の償還ファンドの一覧の欄と5分類に入る償還ファンドの名前・償還日、選択の日ごとの分類別の適格の本数（振り返りの月がそろう数）、分類ごとの相手の器の割り当て（協会コード・名前・今の信託報酬・設定日）、報告の族の器の名前と月数、MSCI の系列の最初と最後の月、JITA の本数。規則の成績（平均・t・シャープ・累積・勝率・相手との差）は、どの規則についても計算していない・表示していない",
+  "accidental": [
+   "⚠ 最初の検索の試し打ちで、応答の1行目（あおぞら・徹底分散グローバル・サステナビリティ株式ファンド『満天観測』・2022-05 設定・能動の内外株式）の全欄を表示し、その 1年・3年・6か月の騰落率とリスク・シャープ・順位（ライブラリーの値）が画面に出た。この投信は3年の振り返りの最初の選択（2025-09）で並ぶ候補の1本になりうる",
+   "⚠ CSV の列を確かめたとき、iFreeNEXT NASDAQ100（04317188）と別のファンド（04311181）の先頭2行の基準価額（設定時の 10,000 円前後）が画面に出た",
+   "⚠ 三菱UFJ の償還ファンドの一覧の最初の6行を全欄表示し、その償還の日の基準価額・前日比・純資産（欧州リート・US 短期ハイ・イールド・メキシコ・ペソ債券）が出た（どれも5分類の外）",
+   "⚠ JITA の商品分類別の統計（I011V1_y）の『国内 株式』の 2010〜2013 年の行を表示し、分類全体の運用増減額（市場の動きの合計）が出た",
+   "⚠ 並走セッションとの重なりを確かめる途中で、eknzbh の mw_etf_tactical のコミットの見出し（Fidelity Select の業種の勢いが S・GEM/GTAA などは C）を読んだ。mw_overlay・mw_jp_nisa_bridge・mw_investable_valmom・q07leu の verify_japan_yen_etf は定義と器の一覧だけを読み、結果の数字は読んでいない"
+  ],
+  "told_by_orchestrator": "ワークフローの指示文で、nx の他の角度（nx_stack の時系列の勢い＝マネージド・フューチャーズ・nx_jst の高配当の国・nx_brand のブランド）が紙の上で勝ったと知らされた。その結果のファイル（out/nx_stack.json・nx_jst.json・nx_brand.json）は開いていない。報告の族 Q はこの後知恵の上に立つ",
+  "shape_based_choices": "形を見た後に決めたもの（成績は見ていない）: 評価の始まり（CSV が 2006-09-29 からなので選択は9月末・3年なら 2009-09〜）、5分類の境界（地域の印が1つだけの分類）、DC 専用・SMA/ラップ専用・通貨選択・名前の為替ヘッジ・特殊型の除外の正規表現（名前を見て、ブランド の ランド が南アフリカ・ランドに当たる誤り、ブルーチップ の ブル が特殊型に当たる誤り、通貨選択型の円コースを直した）、DC の名前の規則（相手の割り当てを表示したら国内株式の 2007〜2014 の相手が『TOPIXインデックスファンド(個人型年金向け)』〔iDeCo 向けで NISA では買えない〕だったので、名前に DC/確定拠出/年金 を含む器を能動・相手の両方から外した）、相手の感度 R3 の『販売会社5社以上』（日本を除く世界の 2020 年以後の相手が 野村スリーゼロ先進国株式投信〔信託報酬 0%・販売会社1社〕になると分かったため。主の規則は変えていない）、名前に出ない為替ヘッジ（野村の Aコース/Bコース）を振り返りの回帰で見分けること、相手の器の名前の規則、報告の族の器の一覧、最低本数 8",
+  "world_knowledge": "私（Claude）は 2009〜2026 の相場を知っている: アベノミクス（2012-11〜2015）で日本株、とくに小型・成長が大きく上がった／2012〜2015 と 2021〜2024 の大きな円安で為替ヘッジなしの外国株の投信が円で大きく上がった／米国株（S&P500・巨大テック）が世界の中で最も強かった／新興国株は 2011〜2020 に弱かった／2020 年に成長・テーマ株が急騰し 2022 年に崩れた／2022〜2024 に日本の割安株が戻った。日本の有名な能動の投信（ひふみ・さわかみ・スパークス など）のおおまかな評判（2010年代前半に強く、その後に失速したものがある）も知っている。これらは上位1/4 の持続の結果の向きをある程度予想させる（テーマ型が多い内外株式は持続しにくい、国内株式の小型寄りは 2013〜2017 に持続しやすい）",
+  "claude_md": "CLAUDE.md（会話の最初に読み込まれる）の、つみたて枠の指数型の器の費用と追従の結果（prior.this_ledger_known_before）を読んだ"
+ },
+ "sanity_checks_before_results": [
+  "universe_sha256・rules_sha256・extract_sha256 が tools の値と一致すること（違えば止まる）",
+  "凍結した一覧の redemptionDate がすべて 2026-09-28 より後（生き残りだけであることの確認）",
+  "CSV の最初の日がすべて 2006-09-29 以後で、2026-08-31 より後の行が測定に入っていないこと",
+  "各分類の相手の器の月次と、その分類の MSCI（円・NETR）の月次の相関が 0.90 以上（分類の割り当てと日付の区切りの検算。下回ったら器・分類・日付を調べ、原因がデータの誤りなら直す）",
+  "為替の係数の検査でヘッジありとみなした本数を年ごとに記録し、名前に ヘッジあり のある器（除外済み）を試しに通すと 0.5 未満になることを数本で確かめる（検査が効いていることの確認）",
+  "重複の除去で束ねた組の数を年ごとに記録し、同じ親ファンドの 毎月分配型／年1回決算型 が同じ組になることを数本で確かめる",
+  "選択の日ごとに、分類ごとの本数が 8本以上のものだけが使われ、選ばれた本数が ceil(n/4) であること",
+  "費用の版で、最初の年はすべての器に購入時手数料が掛かり、2年目以降は入れ替わった器だけに掛かること",
+  "lower_bound の h_y が criteria.lower_bound_values_before_results と一致すること",
+  "三菱UFJ の償還ファンドの全履歴の最後の日が償還日（一覧の cfm_base_date）の前後5営業日に入ること"
+ ],
+ "known_limits": [
+  "★母集団は生き残りだけ（2009年末の株式投信のうち今も残るのは 48.2%）。偏りは能動の側に有利。lower_bound（q×30%）は仮定で、本当の偏りより大きいか小さいかは分からない。B 族は1社（三菱UFJ・今の本数の約9%）・2021年以後の償還だけ",
+  "履歴は 2006-09 から＝評価は最長で 2009-10〜2026-08 の約17年。独立な年は17、転がる20年窓は取れない（R6 は10年の積立）",
+  "分類・指数型の印・信託報酬・販売手数料・DC の印は今の値（timing.look_ahead_known）",
+  "同じ親ファンドの別コース（重複）と名前に出ない為替ヘッジは、振り返りの月の統計で見分ける（完全ではない）",
+  "5分類の外（欧州・アジア・単一国・テーマの細かい地域・債券・REIT・バランス）は測らない",
+  "NISA の枠の制約で、毎年の全部の入れ替えは大きな残高ではできない（real_instrument_check）",
+  "報告の族 Q は、紙の上で勝った型を知った後に名前で拾った後知恵で、器の数も少なく（マネージド・フューチャーズは 2019 年以後の数本）結論に使えない",
+  "私たちは 2009〜2026 の相場と日本の投信の研究の結果を知っている（contamination）"
+ ],
+ "test_count": {
+  "P": 2,
+  "C": 3,
+  "X": 4,
+  "total_graded": 9,
+  "report_only": "R1〜R9・B1〜B2・Q1〜Q3b（格付けしない）",
+  "note": "これで全部。測った後に規則を足したら『事後』と明記し、格付けに使わない"
+ }
+}

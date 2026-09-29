@@ -309,10 +309,11 @@ def build():
                           'Ω%.1f・納品検査FAIL %s件' % (r.get('s') or 0, r.get('vFail')),
                           'python3 night/validate_packs.py ' + str(r.get('t')), '繰り上がり'))
     ta = data.get('todo_audit') or {}
-    n_ta = sum(len(ta.get(k) or []) for k in ('resolved', 'drifted', 'duplicates', 'gate_exception_mismatch'))
+    n_ta = sum(len(ta.get(k) or []) for k in ('resolved', 'drifted', 'duplicates', 'gate_exception_mismatch',
+                                                 'owner_unknown'))
     if n_ta:
         month.append(item('todoaudit', 'month', 'やることリストの点検で %d件' % n_ta,
-                          '解決済みなのに未完のまま／件数のずれ／重複／例外との食い違い',
+                          '解決済みなのに未完のまま／件数のずれ／重複／例外との食い違い／担当(owner)がどの欄にも入らない',
                           'python3 night/audit_todo.py', 'todo点検'))
     month.append(item('dca', 'month', '今月の買付（DCA）',
                       '🛒買付順位の「今月の入金額」に金額を入れると注文書が出る',
@@ -325,7 +326,18 @@ def build():
     #   残りは (a)原本読解＝**頼んだときにセッションで審査する**（日次Routineは2026-09-23に停止） (b)採取器・検査器のバグ＝実装
     #   (c)データ経路が無い＝**「終わる」ことがない立ち位置の記録**。
     #   → `owner` で割り、**人のものだけ名前を出す**。他は数だけ。**リストからは何も消していない**。
-    for t in (((ops or {}).get('todos') or {}).get('items') or []):
+    # 2026-09-29（検査役の指摘・既存の穴）: todo_list.json が壊れていると ops_status.build() は todos=None を返す
+    #   （読み込みの失敗を except で飲み込む）。旧版はそれを「決断 0件」と数え、読めなかった入力にも積まなかった
+    #   ＝『【読めなかった入力】0件 — すべて読めた』と出して**決断が消えたことを隠していた**（fail-open）。
+    #   ⚙自動化タブは「todo_list.json が読めない」と出すのに、この画面だけが黙っていた。
+    tds = (ops or {}).get('todos')
+    tds_items = tds.get('items') if isinstance(tds, dict) else None
+    if ops is not None and not isinstance(tds_items, list):
+        blind.append(dict(key='todo_list', path='todo_list.json', label='人のやるべきこと（宿題・決断待ち）',
+                          why='ops_status が読めなかった（JSON が壊れている・items が無い）＝決断・宿題の件数は「0件」ではなく「測っていない」'))
+    for t in (tds_items or []):
+        if not isinstance(t, dict):
+            continue
         if not t.get('done'):
             waiting.append(dict(k='todo:' + str(t.get('id')), kind=t.get('kind') or '',
                                 title=t.get('title') or '', due=t.get('due'),

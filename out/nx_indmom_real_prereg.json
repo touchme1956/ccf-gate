@@ -1,0 +1,2247 @@
+{
+ "generated": "2026-09-29",
+ "angle": "nx_indmom_real",
+ "title": "楽天証券で実際に買える米国上場の業種・セクター ETF（1業種1本）で『業種の勢い』を毎月回したら、SPY（配当込み）に勝ったか——他セッションで生き残った形を、実物の器・実物の品ぞろえ・日本の課税口座で答え合わせする",
+ "question": "業種の勢い（過去に強かった業種を持つ）は、全セッションを通じて最も繰り返し現れた勝ち（eknzbh: French 49業種で A、Fidelity Select で A／この nx: 1889〜1926 の Cowles の業種で A）。だが粗い11セクターの SPDR（q07leu）・世界の業種 ETF・TOPIX-17 では崩れた（原因は業種の粗さ: 10業種 t0.84 → 49業種 t1.73＝課題文の要約）。日本の個人が楽天証券で実際に取れる器は、細かい業種 ETF の品ぞろえが薄い（XBI・KRE・IGV・XOP・XME・ITB・XHB・KBE・IHI・IYT・XRT・PBJ・SOXX は一覧に無い）。その実物の品ぞろえ（楽天の一覧から機械的に選んだ『一つの業種・セクターに絞った米国株の ETF』を1業種1本）で、eknzbh の生き残りと同じ形の規則を毎月回すと、SPY（配当込み）に費用後も勝つか。紙（French 49 業種・同じ月・同じ規則）との差＝実物に移すとどれだけ目減りするかも報告する",
+ "asked_by": "ユーザー「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して。限界までやって途中報告を入れながら結果が出るまで分析を止めずに。トークンの限界までやってほしい。今まではそんなものはないという報告で終わってたけどそれはなしで探し続ける努力をしてほしい。今別のSessionでこの内容を2つ回してる。別のSessionで検証していない新たな分析を同じ内容でしてほしい」（2026-09-28）。ユーザーは日本在住の個人で楽天証券を使う（成長投資枠で米国 ETF）。全体の事前登録 out/nx_prereg.json の追加の角度（ワークフローの課題文 nx_indmom_real）",
+ "registered_before_measuring": true,
+ "global_prereg": "out/nx_prereg.json（誠実さの約束・相手の考え方・criteria_short_sample）。統計は night/nx_common.py の excess_stats（NW ラグ12）・sharpe・rolling・dca・holm・p_one・grade_short をそのまま使う",
+ "grading_call": "nx_common.grade_short(full, first_half, second_half, drop_top, cost_full, lower_bound, family_holm_p_one)。各引数の作り方は criteria.definitions。族の中の Holm は nx_common.holm に P1〜P5 の nx_common.p_one(full[\"t\"]) を渡した補正後の片側 p",
+ "tools": {
+  "data": "night/nx_indmom_real_data.py（取得と整形・母集団の3段の規則・規則の台帳 RULES〔宣言だけ〕。成績は計算しない。組み立ての関数は持たない）",
+  "data_tool_sha256": "d3a8a403c8873ccf6768898cc561b81b7599447152360d1a61f07e05b3b72154",
+  "extract": "out/_nx_cache/nx_indmom_real_extract.json（gitignore・6,666,598 バイト）。python3 night/nx_indmom_real_data.py --extract で作り直せる（ただし Yahoo・SEC・French・FRED の今日の値で作るので sha は変わりうる＝測る道具は登録の sha と一致する抽出だけを使う）",
+  "extract_sha256": "14f5df4a914e49be067a1d7fcb541c945504063104b9ac311cd3aaca7daed47a",
+  "extract_sha_rule": "抽出の 'data' を json.dumps(sort_keys=True, separators=(',',':')) した sha256（nx_indmom_real_data.load_extract が計算し直す）",
+  "rules_sha256": "deaee94ff83cb666a247c50fa401489ffa9b8b556e71eeea261e0c07ad823f25",
+  "measure_next": "night/nx_indmom_real.py → out/nx_indmom_real.json（この事前登録の後に書く）。最初に extract_sha256・rules_sha256・data_tool_sha256 が上の値と一致することを確かめ、違えば止まる。規則の組み立て（ポートフォリオのリターン・回転・費用）は測る道具に書き、書いたら合成データで先読みの無いこと・回転の計算・K の本数を先に点検してから実データに当てる。data 道具を直す必要が出たら、直した理由と差分を『事後』として記録し、直す前の版の結果も並べる（格付けは登録の版）。tested に下の全部を1つ残らず残す",
+  "selftest": "python3 night/nx_indmom_real_data.py --selftest（9項目すべて OK を登録時に確認: 名前の規則20例・適格は先を見ない・13か月の条件・前身の切り・K の式・代表の選び方・N-PORT の解析・段2の線・中身の重なりでの重複落とし）"
+ },
+ "stance_before_results": "測定器。門・採点・四関門・席・配分・売却規律には入れない。線（criteria_short_sample）は結果を見て動かさない。母集団の規則・代表・K・費用・評価の始まりはこの登録で固定し、測った後に変えたらそれは『事後』と明記して格付けに使わない。★予想（測る前・他セッションの結果の一部を知っていることによる汚れを含む）: 主の5本の費用前の超過は 0〜+2%/年の正の側に出るが、NW t は 1.65 に届かず、片側 p<0.05 と前半・後半の両方の正を同時に満たす A は多くて1本、S は0本。B か C が中心。紙（French 49・同じ月）との差（実物−紙）は −1〜−4%/年の負（品ぞろえの粗さ・ETF の信託報酬・ETF の指数と CRSP の業種のずれ）。QQQ には 2009年以降の多くの窓で負ける。課税口座の毎月の入れ替えは税の繰り延べを失うので、税引後の差は税引前より年0.5〜1.5%ほど悪くなる。1日遅れの約定の影響は小さい（年±0.5%以内）。★予想が当たっても外れても、線と規則は変えない",
+ "why_new": {
+  "overlap_found_by_git_grep": {
+   "checked_at": "2026-09-29 02:00 UTC（git fetch の後、origin の eknzbh・hbm38n・q07leu・main を XBI|IGV|KRE|XOP|XME|ITB|XHB|KBE|IHI|IYT|XRT|PBJ|SOXX|OIH|FDN|BBH|FBT|PPH|RTH|SLX で git grep）",
+   "eknzbh_etf_tactical_family7": "★課題文は『他のセッションは試していない』と書くが、正確ではない。eknzbh の out/mw_etf_tactical_prereg5.json（2026-09-28 登録）の第7族が、同じ out/broker_lineup.json から名前に業種・テーマの語を含む 101本（業種＋テーマ〔AI・ロボット・宇宙・ブロックチェーン・クリーンエネルギー〕＋世界のセクター〔IXC・IXG・IXJ…〕＋中国ネット KWEB＋SPDR と Vanguard の同じセクターの重複）を選び、12か月（t−11〜t）の上位3・上位6、(r1+r3+r6+r12)/4 の上位3・上位6 を等分・毎月で回している（対象が20本以上になった月の翌月から）。結果のファイル（mw_etf_tactical.json）は読んでいない",
+   "eknzbh_etf_tactical_family4": "eknzbh 第4族: iShares・SPDR の米国の業種 ETF 44本（IYW…XSW。XBI・KRE・IGV など楽天に無いものが多い）で同じ4規則。★結果の一部を見た（prereg5 の見出し『業種 ETF 44本の第4族は保有期間 +1.2〜+3.4%/年・t<1』）",
+   "eknzbh_momentum_F6_spdr": "eknzbh mw_momentum_prereg3 の F6_spdr: Select Sector SPDR 9本で MG 6-6・上位2（粗い9セクター）",
+   "eknzbh_etf_tactical_family1": "eknzbh 第1族: SPDR 9セクター（★結果を見た: 2007〜 French 9業種 +2.5%/年 対 SPDR −0.2%/年）",
+   "q07leu_fam_indmom": "q07leu night/edge/fam_indmom.py は French の業種で回し、実装の文（implement）に業種 ETF の名前を挙げただけ（ETF で回していない）。fam_minvar_ind も同じ",
+   "hbm38n": "該当なし（ETF の業種の規則は無い）"
+  },
+  "difference_from_family7": [
+   "母集団: テーマ・世界/地域・スマートベータ・能動・オプション上乗せを名前で外し（段1）、SEC の N-PORT の中身で『株の買い≥90%・US（invCountry と ISIN の両方）が過半・デリバティブ≤5%』を確かめ（段2）、同じ業種・セクターは1本（最初の完全な月が最も早いもの）にまとめ、REIT は不動産セクターと同じ node にする（段3・3a）＝『1業種1本の実物の品ぞろえ』20本。第7族の 101本は同じ業種の器が何本も入り（XLK と VGT、XLE と VDE と IXC）、上位3が同じ業種の重複になりうる",
+   "規則: eknzbh が French 49 で生き残った形（G3 の12か月上位5・P9 の複数期間・MG 6-6 の重ね持ち・F3g の 12-1 上位30%）と課題文の 12-1 上位5（1か月あけ）。第7族の K3/K6 は橋渡しとして報告だけ（REF_bridge）",
+   "前身の器: Yahoo は SMH・BBH・OIH・PPH・RTH を 2000〜2001年の HOLDRS（固定の籠）へつないでいる。主の版はつなぎを切る（ETF になった 2011-12-20 から）。第7族はつないだまま（と推定・確かめていない）",
+   "紙の双子: 同じ月・同じ規則を French 49（と 30）に当てた結果との差（実物−紙）を主の報告にする（C5 の代わり）",
+   "日本の個人の現実: 課税口座（特定口座）の税を円建て・平均取得・年の通算・3年の繰越で計算し、1営業日遅れの約定、NISA の枠で続けられるかを報告する"
+  ],
+  "what_remains_new": "楽天の実物の品ぞろえを『1業種1本』に機械的に絞った母集団（20本）で、French 49 で生き残った形を回し、紙との差・税・約定の遅れまで並べる答え合わせは、他セッションに無い。ただし第7族とは器が大きく重なる（この角度の代表20本のうち17本〔9つの SPDR セクター・IYR・IBB・FDN・ITA・OIH・PPH・RTH・SMH〕が第7族の101本に入っている。VOX・REM・MLPA は第7族に無い。第7族は残りの84本にテーマ・世界のセクター・同じセクターの別の器を持つ）。測った後に第7族の結果を読み、同じ向きかを報告する（読むのは測った後・R4）"
+ },
+ "data": {
+  "sources": {
+   "lineup": "out/broker_lineup.json（楽天証券 ETFD.csv の 2026-08-24 の写真・742本・名前／市場／信託報酬だけ）",
+   "nport": "SEC: https://www.sec.gov/files/company_tickers_mf.json（記号→系列 ID）→ browse-edgar の atom（系列の NPORT-P の一覧・最新と一覧の最も古いもの）→ Archives/edgar/data/{cik}/{acc}/primary_doc.xml。User-Agent は hachimon_fetch.py の EMAIL（ルール5）・4 req/s",
+   "yahoo": "query1.finance.yahoo.com/v8/finance/chart/{記号}?period1=0&interval=1mo|1d&events=div,split（nx_common.yahoo と同じ URL・キャッシュ名）。月次の調整後終値（配当込み・信託報酬は価格の中）、終値（分割調整済み・配当は未調整）、配当の日と額",
+   "french": "Ken French: F-F_Research_Data_Factors（Mkt＝Mkt-RF＋RF・RF）・49_Industry_Portfolios・30_Industry_Portfolios の Average Value Weighted Returns -- Monthly（1998-01〜2026-08 を抽出に凍結）",
+   "fx": "FRED DEXJPUS（日次の円/ドル）→ 月の最後の値（税の報告だけ）"
+  },
+  "shape_stage1": {
+   "counts_by_reason": {
+    "non_us": 83,
+    "leveraged_inverse_single": 236,
+    "bond_cash": 85,
+    "smart_beta_active": 97,
+    "option_income_overlay": 40,
+    "theme": 49,
+    "name_empty": 59,
+    "industry_word": 24,
+    "commodity_etn_crypto": 14,
+    "broad_market_size": 33,
+    "sector_word": 22
+   },
+   "candidates": {
+    "AUAU": {
+     "node": "GOLDMIN",
+     "stage1": "industry",
+     "nm": "Global X Gold Miners ETF",
+     "er": ""
+    },
+    "BBH": {
+     "node": "BIOTECH",
+     "stage1": "industry",
+     "nm": "VanEck Biotech ETF",
+     "er": "0.35"
+    },
+    "BBRE": {
+     "node": "S_REALEST",
+     "stage1": "sector",
+     "nm": "JPMorgan BetaBuilders MSCI US REIT ETF",
+     "er": "0.11"
+    },
+    "COPX": {
+     "node": "COPPERMIN",
+     "stage1": "industry",
+     "nm": "Global X Copper Miners ETF",
+     "er": "0.65"
+    },
+    "FBT": {
+     "node": "BIOTECH",
+     "stage1": "industry",
+     "nm": "First Trust NYSE Arca Biotechnology Index Fund",
+     "er": "0.56"
+    },
+    "FDN": {
+     "node": "INTERNET",
+     "stage1": "industry",
+     "nm": "First Trust Dow Jones Internet Index Fund",
+     "er": "0.50"
+    },
+    "FRI": {
+     "node": "S_REALEST",
+     "stage1": "sector",
+     "nm": "First Trust S&P REIT Index Fund",
+     "er": "0.51"
+    },
+    "FTXL": {
+     "node": "SEMI",
+     "stage1": "industry",
+     "nm": "First Trust Nasdaq Semiconductor ETF",
+     "er": "0.60"
+    },
+    "GDX": {
+     "node": "GOLDMIN",
+     "stage1": "industry",
+     "nm": "VanEck Gold Miners ETF",
+     "er": "0.51"
+    },
+    "GDXJ": {
+     "node": "GOLDMIN",
+     "stage1": "industry",
+     "nm": "VanEck Junior Gold Miners ETF",
+     "er": "0.52"
+    },
+    "IBB": {
+     "node": "BIOTECH",
+     "stage1": "industry",
+     "nm": "iShares Biotechnology ETF",
+     "er": "0.44"
+    },
+    "ITA": {
+     "node": "AERODEF",
+     "stage1": "industry",
+     "nm": "iShares US Aerospace & Defense ETF",
+     "er": "0.37"
+    },
+    "IYR": {
+     "node": "S_REALEST",
+     "stage1": "sector",
+     "nm": "iShares US Real Estate ETF",
+     "er": "0.37"
+    },
+    "MISL": {
+     "node": "AERODEF",
+     "stage1": "industry",
+     "nm": "First Trust Indxx Aerospace & Defense ETF",
+     "er": "0.61"
+    },
+    "MLPA": {
+     "node": "MLP",
+     "stage1": "industry",
+     "nm": "Global X MLP ETF",
+     "er": "0.53"
+    },
+    "OIH": {
+     "node": "OILSVC",
+     "stage1": "industry",
+     "nm": "VanEck Oil Services ETF",
+     "er": "0.35"
+    },
+    "PPH": {
+     "node": "PHARMA",
+     "stage1": "industry",
+     "nm": "VanEck Pharmaceutical ETF",
+     "er": "0.35"
+    },
+    "REM": {
+     "node": "MREIT",
+     "stage1": "industry",
+     "nm": "iShares Mortgage Real Estate ETF",
+     "er": "0.48"
+    },
+    "RTH": {
+     "node": "RETAIL",
+     "stage1": "industry",
+     "nm": "VanEck Retail ETF",
+     "er": "0.35"
+    },
+    "RWR": {
+     "node": "S_REALEST",
+     "stage1": "sector",
+     "nm": "State Street SPDR Dow Jones REIT ETF",
+     "er": "0.25"
+    },
+    "SIL": {
+     "node": "SILVERMIN",
+     "stage1": "industry",
+     "nm": "Global X Silver Miners ETF",
+     "er": "0.65"
+    },
+    "SILJ": {
+     "node": "SILVERMIN",
+     "stage1": "industry",
+     "nm": "Amplify Junior Silver Miners ETF",
+     "er": "0.69"
+    },
+    "SLX": {
+     "node": "STEEL",
+     "stage1": "industry",
+     "nm": "VanEck Steel ETF",
+     "er": "0.55"
+    },
+    "SMH": {
+     "node": "SEMI",
+     "stage1": "industry",
+     "nm": "VanEck Semiconductor ETF",
+     "er": "0.35"
+    },
+    "URA": {
+     "node": "URANIUM",
+     "stage1": "industry",
+     "nm": "Global X Uranium ETF",
+     "er": "0.69"
+    },
+    "VAW": {
+     "node": "S_MATER",
+     "stage1": "sector",
+     "nm": "Vanguard Materials Index Fund ETF",
+     "er": "0.09"
+    },
+    "VCR": {
+     "node": "S_DISCR",
+     "stage1": "sector",
+     "nm": "Vanguard Consumer Discretionary Index Fund ETF",
+     "er": "0.09"
+    },
+    "VDC": {
+     "node": "S_STAPLES",
+     "stage1": "sector",
+     "nm": "Vanguard Consumer Staples Index Fund ETF",
+     "er": "0.09"
+    },
+    "VDE": {
+     "node": "S_ENERGY",
+     "stage1": "sector",
+     "nm": "Vanguard Energy Index Fund ETF",
+     "er": "0.09"
+    },
+    "VFH": {
+     "node": "S_FIN",
+     "stage1": "sector",
+     "nm": "Vanguard Financials Index Fund ETF",
+     "er": "0.09"
+    },
+    "VGT": {
+     "node": "S_TECH",
+     "stage1": "sector",
+     "nm": "Vanguard Information Technology Index Fund ETF",
+     "er": "0.09"
+    },
+    "VHT": {
+     "node": "S_HEALTH",
+     "stage1": "sector",
+     "nm": "Vanguard Health Care Index Fund ETF",
+     "er": "0.09"
+    },
+    "VIS": {
+     "node": "S_INDU",
+     "stage1": "sector",
+     "nm": "Vanguard Industrials Index Fund ETF",
+     "er": "0.09"
+    },
+    "VOX": {
+     "node": "S_COMM",
+     "stage1": "sector",
+     "nm": "Vanguard Communication Services Index Fund ETF",
+     "er": "0.09"
+    },
+    "VPU": {
+     "node": "S_UTIL",
+     "stage1": "sector",
+     "nm": "Vanguard Utilities Index Fund ETF",
+     "er": "0.09"
+    },
+    "XLB": {
+     "node": "S_MATER",
+     "stage1": "sector",
+     "nm": "State Street Materials Select Sector SPDR ETF",
+     "er": "0.08"
+    },
+    "XLC": {
+     "node": "S_COMM",
+     "stage1": "sector",
+     "nm": "State Street Com Svc Sel Sec SPDR ETF",
+     "er": "0.08"
+    },
+    "XLE": {
+     "node": "S_ENERGY",
+     "stage1": "sector",
+     "nm": "State Street Energy Select Sector SPDR ETF",
+     "er": "0.08"
+    },
+    "XLF": {
+     "node": "S_FIN",
+     "stage1": "sector",
+     "nm": "State Street Financial Sel Sec SPDR ETF",
+     "er": "0.08"
+    },
+    "XLI": {
+     "node": "S_INDU",
+     "stage1": "sector",
+     "nm": "State Street Industrial Select Sector SPDR ETF",
+     "er": "0.08"
+    },
+    "XLK": {
+     "node": "S_TECH",
+     "stage1": "sector",
+     "nm": "State Street Technology Select Sector SPDR ETF",
+     "er": "0.08"
+    },
+    "XLP": {
+     "node": "S_STAPLES",
+     "stage1": "sector",
+     "nm": "State Street Consumer Staples Sel Sect SPDR ETF",
+     "er": "0.08"
+    },
+    "XLRE": {
+     "node": "S_REALEST",
+     "stage1": "sector",
+     "nm": "State Street Real Estate Select Sector SPDR ETF",
+     "er": "0.08"
+    },
+    "XLU": {
+     "node": "S_UTIL",
+     "stage1": "sector",
+     "nm": "State Street Utilities Select Sector SPDR ETF",
+     "er": "0.08"
+    },
+    "XLV": {
+     "node": "S_HEALTH",
+     "stage1": "sector",
+     "nm": "State Street Health Care Select Sector SPDR ETF",
+     "er": "0.08"
+    },
+    "XLY": {
+     "node": "S_DISCR",
+     "stage1": "sector",
+     "nm": "State Street Consumer Disc Sel Sect SPDR ETF",
+     "er": "0.08"
+    }
+   }
+  },
+  "shape_stage2_nport": {
+   "AUAU": {
+    "node": "GOLDMIN",
+    "pass": false,
+    "why": "株のうち US の発行体が 24.6% ≤ 50.0%",
+    "eq_long_pct": 99.93,
+    "us_share_both": 24.6,
+    "us_share_invcountry_only": 76.49,
+    "us_share_isin_only": 24.6,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-04-30",
+    "oldest_repPdDate": "2026-01-31",
+    "oldest_us_share_both": 23.06
+   },
+   "BBH": {
+    "node": "BIOTECH",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.96,
+    "us_share_both": 87.31,
+    "us_share_invcountry_only": 87.31,
+    "us_share_isin_only": 97.03,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 85.85
+   },
+   "BBRE": {
+    "node": "S_REALEST",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 98.94,
+    "us_share_both": 100.0,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 100.0,
+    "deriv_short_abs_pct": 0.03,
+    "repPdDate": "2026-05-31",
+    "oldest_repPdDate": "2019-11-30",
+    "oldest_us_share_both": 100.0
+   },
+   "COPX": {
+    "node": "COPPERMIN",
+    "pass": false,
+    "why": "株のうち US の発行体が 10.6% ≤ 50.0%",
+    "eq_long_pct": 99.76,
+    "us_share_both": 10.6,
+    "us_share_invcountry_only": 11.83,
+    "us_share_isin_only": 10.6,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-04-30",
+    "oldest_repPdDate": "2019-10-31",
+    "oldest_us_share_both": 9.73
+   },
+   "FBT": {
+    "node": "BIOTECH",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 100.01,
+    "us_share_both": 84.9,
+    "us_share_invcountry_only": 84.9,
+    "us_share_isin_only": 95.76,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 90.49
+   },
+   "FDN": {
+    "node": "INTERNET",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.92,
+    "us_share_both": 99.27,
+    "us_share_invcountry_only": 99.27,
+    "us_share_isin_only": 99.27,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 100.0
+   },
+   "FRI": {
+    "node": "S_REALEST",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 92.97,
+    "us_share_both": 100.0,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 100.0,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 99.89
+   },
+   "FTXL": {
+    "node": "SEMI",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.41,
+    "us_share_both": 96.63,
+    "us_share_invcountry_only": 96.63,
+    "us_share_isin_only": 96.63,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 98.38
+   },
+   "GDX": {
+    "node": "GOLDMIN",
+    "pass": false,
+    "why": "株のうち US の発行体が 16.13% ≤ 50.0%",
+    "eq_long_pct": 99.94,
+    "us_share_both": 16.13,
+    "us_share_invcountry_only": 16.13,
+    "us_share_isin_only": 22.06,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 16.81
+   },
+   "GDXJ": {
+    "node": "GOLDMIN",
+    "pass": false,
+    "why": "株のうち US の発行体が 9.12% ≤ 50.0%",
+    "eq_long_pct": 99.92,
+    "us_share_both": 9.12,
+    "us_share_invcountry_only": 9.12,
+    "us_share_isin_only": 12.97,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 2.17
+   },
+   "IBB": {
+    "node": "BIOTECH",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.88,
+    "us_share_both": 84.41,
+    "us_share_invcountry_only": 84.41,
+    "us_share_isin_only": 93.71,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 89.14
+   },
+   "ITA": {
+    "node": "AERODEF",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.93,
+    "us_share_both": 98.05,
+    "us_share_invcountry_only": 98.05,
+    "us_share_isin_only": 98.05,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 100.0
+   },
+   "IYR": {
+    "node": "S_REALEST",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.46,
+    "us_share_both": 100.0,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 100.0,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 100.0
+   },
+   "MISL": {
+    "node": "AERODEF",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.86,
+    "us_share_both": 97.11,
+    "us_share_invcountry_only": 97.11,
+    "us_share_isin_only": 97.11,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2022-12-30",
+    "oldest_us_share_both": 100.0
+   },
+   "MLPA": {
+    "node": "MLP",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 108.97,
+    "us_share_both": 100.0,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 100.0,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-05-31",
+    "oldest_repPdDate": "2019-11-30",
+    "oldest_us_share_both": 100.0
+   },
+   "OIH": {
+    "node": "OILSVC",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.99,
+    "us_share_both": 51.34,
+    "us_share_invcountry_only": 51.34,
+    "us_share_isin_only": 56.46,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 54.83
+   },
+   "PPH": {
+    "node": "PHARMA",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.51,
+    "us_share_both": 60.8,
+    "us_share_invcountry_only": 60.8,
+    "us_share_isin_only": 94.4,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 49.28
+   },
+   "REM": {
+    "node": "MREIT",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 98.04,
+    "us_share_both": 100.0,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 100.0,
+    "deriv_short_abs_pct": 0.03,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 100.0
+   },
+   "RTH": {
+    "node": "RETAIL",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.93,
+    "us_share_both": 97.96,
+    "us_share_invcountry_only": 97.96,
+    "us_share_isin_only": 100.0,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 97.58
+   },
+   "RWR": {
+    "node": "S_REALEST",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.08,
+    "us_share_both": 100.0,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 100.0,
+    "deriv_short_abs_pct": 0.01,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 100.0
+   },
+   "SIL": {
+    "node": "SILVERMIN",
+    "pass": false,
+    "why": "株のうち US の発行体が 18.02% ≤ 50.0%",
+    "eq_long_pct": 99.59,
+    "us_share_both": 18.02,
+    "us_share_invcountry_only": 58.56,
+    "us_share_isin_only": 18.02,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-04-30",
+    "oldest_repPdDate": "2019-10-31",
+    "oldest_us_share_both": 10.99
+   },
+   "SILJ": {
+    "node": "SILVERMIN",
+    "pass": false,
+    "why": "N-PORT が取れない（空欄を合格にしない）",
+    "eq_long_pct": null,
+    "us_share_both": null,
+    "us_share_invcountry_only": null,
+    "us_share_isin_only": null,
+    "deriv_short_abs_pct": null,
+    "repPdDate": null,
+    "oldest_repPdDate": null,
+    "oldest_us_share_both": null
+   },
+   "SLX": {
+    "node": "STEEL",
+    "pass": false,
+    "why": "株のうち US の発行体が 20.08% ≤ 50.0%",
+    "eq_long_pct": 100.02,
+    "us_share_both": 20.08,
+    "us_share_invcountry_only": 20.08,
+    "us_share_isin_only": 58.91,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 41.34
+   },
+   "SMH": {
+    "node": "SEMI",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.95,
+    "us_share_both": 82.09,
+    "us_share_invcountry_only": 82.09,
+    "us_share_isin_only": 98.85,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 73.6
+   },
+   "URA": {
+    "node": "URANIUM",
+    "pass": false,
+    "why": "株のうち US の発行体が 18.52% ≤ 50.0%",
+    "eq_long_pct": 99.98,
+    "us_share_both": 18.52,
+    "us_share_invcountry_only": 19.05,
+    "us_share_isin_only": 23.33,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-04-30",
+    "oldest_repPdDate": "2019-10-31",
+    "oldest_us_share_both": 2.43
+   },
+   "VAW": {
+    "node": "S_MATER",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.81,
+    "us_share_both": 73.97,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 73.97,
+    "deriv_short_abs_pct": 0.01,
+    "repPdDate": "2026-05-31",
+    "oldest_repPdDate": "2019-11-30",
+    "oldest_us_share_both": 81.94
+   },
+   "VCR": {
+    "node": "S_DISCR",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.87,
+    "us_share_both": 96.48,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 96.48,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-05-31",
+    "oldest_repPdDate": "2019-11-30",
+    "oldest_us_share_both": 96.65
+   },
+   "VDC": {
+    "node": "S_STAPLES",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.7,
+    "us_share_both": 98.95,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 98.95,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-05-31",
+    "oldest_repPdDate": "2019-11-30",
+    "oldest_us_share_both": 99.16
+   },
+   "VDE": {
+    "node": "S_ENERGY",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.51,
+    "us_share_both": 93.54,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 93.54,
+    "deriv_short_abs_pct": 0.01,
+    "repPdDate": "2026-05-31",
+    "oldest_repPdDate": "2019-11-30",
+    "oldest_us_share_both": 94.5
+   },
+   "VFH": {
+    "node": "S_FIN",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 96.34,
+    "us_share_both": 95.95,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 95.95,
+    "deriv_short_abs_pct": 0.06,
+    "repPdDate": "2026-05-31",
+    "oldest_repPdDate": "2019-11-30",
+    "oldest_us_share_both": 94.41
+   },
+   "VGT": {
+    "node": "S_TECH",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.84,
+    "us_share_both": 97.03,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 97.03,
+    "deriv_short_abs_pct": 0.01,
+    "repPdDate": "2026-05-31",
+    "oldest_repPdDate": "2019-11-30",
+    "oldest_us_share_both": 96.81
+   },
+   "VHT": {
+    "node": "S_HEALTH",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.8,
+    "us_share_both": 97.33,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 97.33,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-05-31",
+    "oldest_repPdDate": "2019-11-30",
+    "oldest_us_share_both": 93.49
+   },
+   "VIS": {
+    "node": "S_INDU",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.62,
+    "us_share_both": 93.45,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 93.45,
+    "deriv_short_abs_pct": 0.01,
+    "repPdDate": "2026-05-31",
+    "oldest_repPdDate": "2019-11-30",
+    "oldest_us_share_both": 93.57
+   },
+   "VOX": {
+    "node": "S_COMM",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.66,
+    "us_share_both": 99.37,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 99.37,
+    "deriv_short_abs_pct": 0.03,
+    "repPdDate": "2026-05-31",
+    "oldest_repPdDate": "2019-11-30",
+    "oldest_us_share_both": 98.44
+   },
+   "VPU": {
+    "node": "S_UTIL",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.56,
+    "us_share_both": 99.97,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 99.97,
+    "deriv_short_abs_pct": 0.02,
+    "repPdDate": "2026-05-31",
+    "oldest_repPdDate": "2019-11-30",
+    "oldest_us_share_both": 99.96
+   },
+   "XLB": {
+    "node": "S_MATER",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.84,
+    "us_share_both": 73.48,
+    "us_share_invcountry_only": 73.48,
+    "us_share_isin_only": 73.48,
+    "deriv_short_abs_pct": 0.01,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 78.54
+   },
+   "XLC": {
+    "node": "S_COMM",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.83,
+    "us_share_both": 100.0,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 100.0,
+    "deriv_short_abs_pct": 0.01,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 100.0
+   },
+   "XLE": {
+    "node": "S_ENERGY",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.83,
+    "us_share_both": 95.9,
+    "us_share_invcountry_only": 95.9,
+    "us_share_isin_only": 95.9,
+    "deriv_short_abs_pct": 0.01,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 94.8
+   },
+   "XLF": {
+    "node": "S_FIN",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.83,
+    "us_share_both": 96.33,
+    "us_share_invcountry_only": 96.33,
+    "us_share_isin_only": 96.33,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 94.95
+   },
+   "XLI": {
+    "node": "S_INDU",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.91,
+    "us_share_both": 93.27,
+    "us_share_invcountry_only": 93.27,
+    "us_share_isin_only": 93.27,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 93.5
+   },
+   "XLK": {
+    "node": "S_TECH",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.93,
+    "us_share_both": 97.31,
+    "us_share_invcountry_only": 97.31,
+    "us_share_isin_only": 97.31,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 96.93
+   },
+   "XLP": {
+    "node": "S_STAPLES",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.63,
+    "us_share_both": 99.06,
+    "us_share_invcountry_only": 99.06,
+    "us_share_isin_only": 99.06,
+    "deriv_short_abs_pct": 0.01,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 100.0
+   },
+   "XLRE": {
+    "node": "S_REALEST",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.45,
+    "us_share_both": 100.0,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 100.0,
+    "deriv_short_abs_pct": 0.01,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 100.0
+   },
+   "XLU": {
+    "node": "S_UTIL",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.67,
+    "us_share_both": 100.0,
+    "us_share_invcountry_only": 100.0,
+    "us_share_isin_only": 100.0,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 100.0
+   },
+   "XLV": {
+    "node": "S_HEALTH",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.68,
+    "us_share_both": 97.89,
+    "us_share_invcountry_only": 97.89,
+    "us_share_isin_only": 97.89,
+    "deriv_short_abs_pct": 0.01,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 93.51
+   },
+   "XLY": {
+    "node": "S_DISCR",
+    "pass": true,
+    "why": "pass",
+    "eq_long_pct": 99.9,
+    "us_share_both": 95.58,
+    "us_share_invcountry_only": 95.58,
+    "us_share_isin_only": 95.58,
+    "deriv_short_abs_pct": 0.0,
+    "repPdDate": "2026-06-30",
+    "oldest_repPdDate": "2019-09-30",
+    "oldest_us_share_both": 96.18
+   }
+  },
+  "shape_reps_etf_only": {
+   "AERODEF": {
+    "rep": "ITA",
+    "others_same_node": [
+     "MISL"
+    ],
+    "first_full_month": "2006-06",
+    "first_formation_month_as_candidate": "2007-06",
+    "er_pct": "0.37"
+   },
+   "BIOTECH": {
+    "rep": "IBB",
+    "others_same_node": [
+     "FBT",
+     "BBH"
+    ],
+    "first_full_month": "2001-03",
+    "first_formation_month_as_candidate": "2002-03",
+    "er_pct": "0.44"
+   },
+   "INTERNET": {
+    "rep": "FDN",
+    "others_same_node": [],
+    "first_full_month": "2006-07",
+    "first_formation_month_as_candidate": "2007-07",
+    "er_pct": "0.50"
+   },
+   "MLP": {
+    "rep": "MLPA",
+    "others_same_node": [],
+    "first_full_month": "2012-05",
+    "first_formation_month_as_candidate": "2013-05",
+    "er_pct": "0.53"
+   },
+   "MREIT": {
+    "rep": "REM",
+    "others_same_node": [],
+    "first_full_month": "2007-06",
+    "first_formation_month_as_candidate": "2008-06",
+    "er_pct": "0.48"
+   },
+   "OILSVC": {
+    "rep": "OIH",
+    "others_same_node": [],
+    "first_full_month": "2012-01",
+    "first_formation_month_as_candidate": "2013-01",
+    "er_pct": "0.35"
+   },
+   "PHARMA": {
+    "rep": "PPH",
+    "others_same_node": [],
+    "first_full_month": "2012-01",
+    "first_formation_month_as_candidate": "2013-01",
+    "er_pct": "0.35"
+   },
+   "RETAIL": {
+    "rep": "RTH",
+    "others_same_node": [],
+    "first_full_month": "2012-01",
+    "first_formation_month_as_candidate": "2013-01",
+    "er_pct": "0.35"
+   },
+   "SEMI": {
+    "rep": "SMH",
+    "others_same_node": [
+     "FTXL"
+    ],
+    "first_full_month": "2012-01",
+    "first_formation_month_as_candidate": "2013-01",
+    "er_pct": "0.35"
+   },
+   "S_COMM": {
+    "rep": "VOX",
+    "others_same_node": [
+     "XLC"
+    ],
+    "first_full_month": "2004-10",
+    "first_formation_month_as_candidate": "2005-10",
+    "er_pct": "0.09"
+   },
+   "S_DISCR": {
+    "rep": "XLY",
+    "others_same_node": [
+     "VCR"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_ENERGY": {
+    "rep": "XLE",
+    "others_same_node": [
+     "VDE"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_FIN": {
+    "rep": "XLF",
+    "others_same_node": [
+     "VFH"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_HEALTH": {
+    "rep": "XLV",
+    "others_same_node": [
+     "VHT"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_INDU": {
+    "rep": "XLI",
+    "others_same_node": [
+     "VIS"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_MATER": {
+    "rep": "XLB",
+    "others_same_node": [
+     "VAW"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_REALEST": {
+    "rep": "IYR",
+    "others_same_node": [
+     "RWR",
+     "FRI",
+     "XLRE",
+     "BBRE"
+    ],
+    "first_full_month": "2000-07",
+    "first_formation_month_as_candidate": "2001-07",
+    "er_pct": "0.37"
+   },
+   "S_STAPLES": {
+    "rep": "XLP",
+    "others_same_node": [
+     "VDC"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_TECH": {
+    "rep": "XLK",
+    "others_same_node": [
+     "VGT"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_UTIL": {
+    "rep": "XLU",
+    "others_same_node": [
+     "VPU"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   }
+  },
+  "shape_reps_spliced": {
+   "AERODEF": {
+    "rep": "ITA",
+    "others_same_node": [
+     "MISL"
+    ],
+    "first_full_month": "2006-06",
+    "first_formation_month_as_candidate": "2007-06",
+    "er_pct": "0.37"
+   },
+   "BIOTECH": {
+    "rep": "BBH",
+    "others_same_node": [
+     "IBB",
+     "FBT"
+    ],
+    "first_full_month": "1999-12",
+    "first_formation_month_as_candidate": "2000-12",
+    "er_pct": "0.35"
+   },
+   "INTERNET": {
+    "rep": "FDN",
+    "others_same_node": [],
+    "first_full_month": "2006-07",
+    "first_formation_month_as_candidate": "2007-07",
+    "er_pct": "0.50"
+   },
+   "MLP": {
+    "rep": "MLPA",
+    "others_same_node": [],
+    "first_full_month": "2012-05",
+    "first_formation_month_as_candidate": "2013-05",
+    "er_pct": "0.53"
+   },
+   "MREIT": {
+    "rep": "REM",
+    "others_same_node": [],
+    "first_full_month": "2007-06",
+    "first_formation_month_as_candidate": "2008-06",
+    "er_pct": "0.48"
+   },
+   "OILSVC": {
+    "rep": "OIH",
+    "others_same_node": [],
+    "first_full_month": "2001-03",
+    "first_formation_month_as_candidate": "2002-03",
+    "er_pct": "0.35"
+   },
+   "PHARMA": {
+    "rep": "PPH",
+    "others_same_node": [],
+    "first_full_month": "2000-03",
+    "first_formation_month_as_candidate": "2001-03",
+    "er_pct": "0.35"
+   },
+   "RETAIL": {
+    "rep": "RTH",
+    "others_same_node": [],
+    "first_full_month": "2001-06",
+    "first_formation_month_as_candidate": "2002-06",
+    "er_pct": "0.35"
+   },
+   "SEMI": {
+    "rep": "SMH",
+    "others_same_node": [
+     "FTXL"
+    ],
+    "first_full_month": "2000-07",
+    "first_formation_month_as_candidate": "2001-07",
+    "er_pct": "0.35"
+   },
+   "S_COMM": {
+    "rep": "VOX",
+    "others_same_node": [
+     "XLC"
+    ],
+    "first_full_month": "2004-10",
+    "first_formation_month_as_candidate": "2005-10",
+    "er_pct": "0.09"
+   },
+   "S_DISCR": {
+    "rep": "XLY",
+    "others_same_node": [
+     "VCR"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_ENERGY": {
+    "rep": "XLE",
+    "others_same_node": [
+     "VDE"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_FIN": {
+    "rep": "XLF",
+    "others_same_node": [
+     "VFH"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_HEALTH": {
+    "rep": "XLV",
+    "others_same_node": [
+     "VHT"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_INDU": {
+    "rep": "XLI",
+    "others_same_node": [
+     "VIS"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_MATER": {
+    "rep": "XLB",
+    "others_same_node": [
+     "VAW"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_REALEST": {
+    "rep": "IYR",
+    "others_same_node": [
+     "RWR",
+     "FRI",
+     "XLRE",
+     "BBRE"
+    ],
+    "first_full_month": "2000-07",
+    "first_formation_month_as_candidate": "2001-07",
+    "er_pct": "0.37"
+   },
+   "S_STAPLES": {
+    "rep": "XLP",
+    "others_same_node": [
+     "VDC"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_TECH": {
+    "rep": "XLK",
+    "others_same_node": [
+     "VGT"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   },
+   "S_UTIL": {
+    "rep": "XLU",
+    "others_same_node": [
+     "VPU"
+    ],
+    "first_full_month": "1999-01",
+    "first_formation_month_as_candidate": "2000-01",
+    "er_pct": "0.08"
+   }
+  },
+  "shape_node_merge": {
+   "EQREIT": "S_REALEST"
+  },
+  "shape_dropped_by_overlap_R13_only": {
+   "etf_only": {
+    "SEMI": {
+     "rep": "SMH",
+     "overlap_with": "S_TECH",
+     "kept_rep": "XLK",
+     "overlap": 0.507
+    }
+   },
+   "spliced": {
+    "SEMI": {
+     "rep": "SMH",
+     "overlap_with": "S_TECH",
+     "kept_rep": "XLK",
+     "overlap": 0.507
+    }
+   }
+  },
+  "shape_overlap_ge_10pct_between_candidate_reps": {
+   "BBH-IBB": 0.588,
+   "BBH-XLV": 0.117,
+   "FDN-RTH": 0.119,
+   "FDN-VOX": 0.251,
+   "FDN-XLY": 0.191,
+   "IBB-XLV": 0.111,
+   "ITA-XLI": 0.241,
+   "PPH-XLV": 0.389,
+   "RTH-XLP": 0.279,
+   "RTH-XLY": 0.405,
+   "SMH-XLK": 0.507
+  },
+  "shape_menu_and_eval_windows": {
+   "etf_only:U_all": {
+    "n_nodes": 20,
+    "first_formation_month_N_ge_10": "2001-07",
+    "eval_from": "2001-08",
+    "eval_to": "2026-08",
+    "eval_months": 301,
+    "N_eligible_by_year_end": {
+     "1999": 0,
+     "2000": 9,
+     "2001": 10,
+     "2002": 11,
+     "2003": 11,
+     "2004": 11,
+     "2005": 12,
+     "2006": 12,
+     "2007": 14,
+     "2008": 15,
+     "2009": 15,
+     "2010": 15,
+     "2011": 15,
+     "2012": 15,
+     "2013": 20,
+     "2014": 20,
+     "2015": 20,
+     "2016": 20,
+     "2017": 20,
+     "2018": 20,
+     "2019": 20,
+     "2020": 20,
+     "2021": 20,
+     "2022": 20,
+     "2023": 20,
+     "2024": 20,
+     "2025": 20
+    },
+    "N_at_last_formation": 20
+   },
+   "etf_only:U_narrow": {
+    "n_nodes": 9,
+    "first_formation_month_N_ge_10": null,
+    "eval_from": null,
+    "eval_to": "2026-08",
+    "eval_months": 0,
+    "N_eligible_by_year_end": {
+     "1999": 0,
+     "2000": 0,
+     "2001": 0,
+     "2002": 1,
+     "2003": 1,
+     "2004": 1,
+     "2005": 1,
+     "2006": 1,
+     "2007": 3,
+     "2008": 4,
+     "2009": 4,
+     "2010": 4,
+     "2011": 4,
+     "2012": 4,
+     "2013": 9,
+     "2014": 9,
+     "2015": 9,
+     "2016": 9,
+     "2017": 9,
+     "2018": 9,
+     "2019": 9,
+     "2020": 9,
+     "2021": 9,
+     "2022": 9,
+     "2023": 9,
+     "2024": 9,
+     "2025": 9
+    },
+    "N_at_last_formation": 9
+   },
+   "etf_only:U_sector": {
+    "n_nodes": 11,
+    "first_formation_month_N_ge_10": "2001-07",
+    "eval_from": "2001-08",
+    "eval_to": "2026-08",
+    "eval_months": 301,
+    "N_eligible_by_year_end": {
+     "1999": 0,
+     "2000": 9,
+     "2001": 10,
+     "2002": 10,
+     "2003": 10,
+     "2004": 10,
+     "2005": 11,
+     "2006": 11,
+     "2007": 11,
+     "2008": 11,
+     "2009": 11,
+     "2010": 11,
+     "2011": 11,
+     "2012": 11,
+     "2013": 11,
+     "2014": 11,
+     "2015": 11,
+     "2016": 11,
+     "2017": 11,
+     "2018": 11,
+     "2019": 11,
+     "2020": 11,
+     "2021": 11,
+     "2022": 11,
+     "2023": 11,
+     "2024": 11,
+     "2025": 11
+    },
+    "N_at_last_formation": 11
+   },
+   "spliced:U_all": {
+    "n_nodes": 20,
+    "first_formation_month_N_ge_10": "2000-12",
+    "eval_from": "2001-01",
+    "eval_to": "2026-08",
+    "eval_months": 308,
+    "N_eligible_by_year_end": {
+     "1999": 0,
+     "2000": 10,
+     "2001": 13,
+     "2002": 15,
+     "2003": 15,
+     "2004": 15,
+     "2005": 16,
+     "2006": 16,
+     "2007": 18,
+     "2008": 19,
+     "2009": 19,
+     "2010": 19,
+     "2011": 19,
+     "2012": 19,
+     "2013": 20,
+     "2014": 20,
+     "2015": 20,
+     "2016": 20,
+     "2017": 20,
+     "2018": 20,
+     "2019": 20,
+     "2020": 20,
+     "2021": 20,
+     "2022": 20,
+     "2023": 20,
+     "2024": 20,
+     "2025": 20
+    },
+    "N_at_last_formation": 20
+   },
+   "spliced:U_narrow": {
+    "n_nodes": 9,
+    "first_formation_month_N_ge_10": null,
+    "eval_from": null,
+    "eval_to": "2026-08",
+    "eval_months": 0,
+    "N_eligible_by_year_end": {
+     "1999": 0,
+     "2000": 1,
+     "2001": 3,
+     "2002": 5,
+     "2003": 5,
+     "2004": 5,
+     "2005": 5,
+     "2006": 5,
+     "2007": 7,
+     "2008": 8,
+     "2009": 8,
+     "2010": 8,
+     "2011": 8,
+     "2012": 8,
+     "2013": 9,
+     "2014": 9,
+     "2015": 9,
+     "2016": 9,
+     "2017": 9,
+     "2018": 9,
+     "2019": 9,
+     "2020": 9,
+     "2021": 9,
+     "2022": 9,
+     "2023": 9,
+     "2024": 9,
+     "2025": 9
+    },
+    "N_at_last_formation": 9
+   },
+   "spliced:U_sector": {
+    "n_nodes": 11,
+    "first_formation_month_N_ge_10": "2001-07",
+    "eval_from": "2001-08",
+    "eval_to": "2026-08",
+    "eval_months": 301,
+    "N_eligible_by_year_end": {
+     "1999": 0,
+     "2000": 9,
+     "2001": 10,
+     "2002": 10,
+     "2003": 10,
+     "2004": 10,
+     "2005": 11,
+     "2006": 11,
+     "2007": 11,
+     "2008": 11,
+     "2009": 11,
+     "2010": 11,
+     "2011": 11,
+     "2012": 11,
+     "2013": 11,
+     "2014": 11,
+     "2015": 11,
+     "2016": 11,
+     "2017": 11,
+     "2018": 11,
+     "2019": 11,
+     "2020": 11,
+     "2021": 11,
+     "2022": 11,
+     "2023": 11,
+     "2024": 11,
+     "2025": 11
+    },
+    "N_at_last_formation": 11
+   }
+  },
+  "shape_inception_flags": {
+   "BBH": {
+    "inception": "2011-12-20",
+    "yahoo_first_bar": "1999-11-01",
+    "days_yahoo_earlier": 4432,
+    "handled_by_PREDECESSOR": true
+   },
+   "OIH": {
+    "inception": "2011-12-20",
+    "yahoo_first_bar": "2001-02-01",
+    "days_yahoo_earlier": 3974,
+    "handled_by_PREDECESSOR": true
+   },
+   "PPH": {
+    "inception": "2011-12-20",
+    "yahoo_first_bar": "2000-02-01",
+    "days_yahoo_earlier": 4340,
+    "handled_by_PREDECESSOR": true
+   },
+   "RTH": {
+    "inception": "2011-12-20",
+    "yahoo_first_bar": "2001-05-01",
+    "days_yahoo_earlier": 3885,
+    "handled_by_PREDECESSOR": true
+   },
+   "RWR": {
+    "inception": "2001-04-23",
+    "yahoo_first_bar": "2001-08-01",
+    "days_yahoo_earlier": -100,
+    "handled_by_PREDECESSOR": false
+   },
+   "SMH": {
+    "inception": "2011-12-20",
+    "yahoo_first_bar": "2000-06-01",
+    "days_yahoo_earlier": 4219,
+    "handled_by_PREDECESSOR": true
+   }
+  },
+  "predecessor_evidence": "HOLDRS→ETF の切り替え（2011-12-20）は記憶による公開の事実（日付の細部は一次の資料で確かめていない）。機械の裏付け: SEC の系列 ID が BBH S000034406・OIH S000034408・PPH S000034409・RTH S000034410・SMH S000034411 と連番＝同じ時に登録された系列で、Yahoo の最初の足（1999-11〜2001-05）は系列の登録よりずっと前＝前身のつなぎ。他の代表は Yahoo の最初の足と INCEPTION の表が 62 日以内で一致（RWR だけ Yahoo が 100 日遅く始まる＝Yahoo の系列の欠けで、前身ではない。RWR は代表ではない）",
+  "sec_fetch_note": "SEC の browse-edgar の atom は1件 5〜50 秒かかり、1回目の取得で SLX だけ HTTP 429（Too Many Requests）で取れず段2で『取れない』に落ちた。2回目で取れ、中身（US 20.1%）で落ちた。登録の抽出は2回目（全候補の N-PORT が取れた状態）で作った。SILJ は company_tickers_mf に記号が無く取れない（銀鉱株で段2の結果は変わらないと見込む）",
+  "shape_yahoo_month_cut": {
+   "BBH": {
+    "first_bar": "1999-11-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "BBRE": {
+    "first_bar": "2018-06-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 15:59"
+   },
+   "FBT": {
+    "first_bar": "2006-06-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "FDN": {
+    "first_bar": "2006-06-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "FRI": {
+    "first_bar": "2007-05-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 15:59"
+   },
+   "FTXL": {
+    "first_bar": "2016-09-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "IBB": {
+    "first_bar": "2001-02-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "ITA": {
+    "first_bar": "2006-05-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": "2006-05-01",
+    "last_bar": "2026-09-28 16:00"
+   },
+   "IYR": {
+    "first_bar": "2000-06-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "MISL": {
+    "first_bar": "2022-10-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "MLPA": {
+    "first_bar": "2012-04-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "OIH": {
+    "first_bar": "2001-02-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "PPH": {
+    "first_bar": "2000-02-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "QQQ": {
+    "first_bar": "1999-03-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": "1999-03-01",
+    "last_bar": "2026-09-28 13:13"
+   },
+   "REM": {
+    "first_bar": "2007-05-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "RTH": {
+    "first_bar": "2001-05-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "RWR": {
+    "first_bar": "2001-08-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "SMH": {
+    "first_bar": "2000-06-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": "2000-06-01",
+    "last_bar": "2026-09-28 16:00"
+   },
+   "SPY": {
+    "first_bar": "1993-01-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": "1993-01-01",
+    "last_bar": "2026-09-28 10:27"
+   },
+   "VAW": {
+    "first_bar": "2004-01-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "VCR": {
+    "first_bar": "2004-01-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "VDC": {
+    "first_bar": "2004-01-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "VDE": {
+    "first_bar": "2004-09-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "VFH": {
+    "first_bar": "2004-01-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "VGT": {
+    "first_bar": "2004-01-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "VHT": {
+    "first_bar": "2004-01-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "VIS": {
+    "first_bar": "2004-09-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "VOX": {
+    "first_bar": "2004-09-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "VPU": {
+    "first_bar": "2004-01-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 16:00"
+   },
+   "XLB": {
+    "first_bar": "1998-12-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 10:49"
+   },
+   "XLC": {
+    "first_bar": "2018-06-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 10:49"
+   },
+   "XLE": {
+    "first_bar": "1998-12-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 10:49"
+   },
+   "XLF": {
+    "first_bar": "1998-12-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 10:49"
+   },
+   "XLI": {
+    "first_bar": "1998-12-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 10:49"
+   },
+   "XLK": {
+    "first_bar": "1998-12-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": "1998-12-01",
+    "last_bar": "2026-09-28 10:49"
+   },
+   "XLP": {
+    "first_bar": "1998-12-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 10:49"
+   },
+   "XLRE": {
+    "first_bar": "2015-10-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 10:49"
+   },
+   "XLU": {
+    "first_bar": "1998-12-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 10:49"
+   },
+   "XLV": {
+    "first_bar": "1998-12-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 10:49"
+   },
+   "XLY": {
+    "first_bar": "1998-12-01",
+    "utc_vs_market_month_mismatch": 0,
+    "bars_not_at_market_midnight_excl_last": null,
+    "dup_months": [
+     202609
+    ],
+    "adjclose_none": 0,
+    "px_guard_known_first": null,
+    "last_bar": "2026-09-28 10:49"
+   }
+  },
+  "yahoo_month_cut_verdict": "月の切り方の点検: 全 40 記号で、UTC で切った月と市場の時差（gmtoffset）で切った月の食い違い 0 件、最後の足を除いて市場時刻の月初0時でない足 0 件、END までの月の足の重複 0 記号 {}（進行中の 2026-09 だけが月の足と当日の足で二重になる記号が 40＝END で切るので無関係）。米国 ETF の月足の時刻は New York の月初0時（UTC 4〜5時）なので、nx_common.yahoo の UTC の切り方で月がずれない。最後の足は進行中の 2026-09（時刻がその日）＝END=2026-08 で切るので使わない",
+  "sanity_spy_vs_french_mkt": {
+   "months": 392,
+   "corr": 0.9875,
+   "max_abs_monthly_diff_pct": 4.41
+  },
+  "sanity_month_alignment": "SPY と French Mkt の月次の相関（1998-01〜2026-08・344か月）: 同じ月 0.989、SPY の月 t と Mkt の月 t−1 では 0.021＝月の並びはずれていない。差が大きい月は 2000-02・03・04・06・11（ネットの天井の前後で大型の S&P500 と小型・ナスダックを含む CRSP 全上場が離れた月）。1998〜2007 0.976・2008〜2026 0.996",
+  "extract_facts": {
+   "daily_first_day": {
+    "BBH": 19991124,
+    "FDN": 20060626,
+    "IBB": 20010213,
+    "ITA": 20060508,
+    "IYR": 20000620,
+    "MLPA": 20120420,
+    "OIH": 20010227,
+    "PPH": 20000202,
+    "REM": 20070507,
+    "RTH": 20010518,
+    "SMH": 20000606,
+    "VOX": 20040930,
+    "XLB": 19981223,
+    "XLE": 19981223,
+    "XLF": 19981223,
+    "XLI": 19981223,
+    "XLK": 19981223,
+    "XLP": 19981223,
+    "XLU": 19981223,
+    "XLV": 19981223,
+    "XLY": 19981223,
+    "SPY": 19930201,
+    "QQQ": 19990311
+   },
+   "french_last_month": {
+    "mkt": 202608,
+    "ind49": 202608,
+    "ind30": 202608
+   },
+   "fx_months": [
+    199801,
+    202608,
+    344
+   ]
+  }
+ },
+ "universe": {
+  "rule_stage1_name": "broker_lineup の名前から発行会社の語（State Street SPDR・iShares・VanEck・First Trust・Invesco・Vanguard・Global X ほか）を先に外し、次の順で除く: 名前が空 → レバレッジ・インバース・単一銘柄の上乗せ（2x・3x・Bull・Bear・Daily・YieldBOOST・WeeklyPay・Autocallable…）→ 債券・現金 → 商品・ETN・暗号資産 → オプション・インカムの上乗せ → スマートベータ・能動（AlphaDEX・Dividend・Quality・Momentum・Value・Growth・Equal Weight・Moat・ESG・Active・Strategy…）→ 米国外・地域（Global・International・World・Emerging・国名・Hedged・North American…）→ 市場全体・規模（S&P 500・Nasdaq-100・Russell・Mid/Small Cap…）→ テーマ（Cybersecurity・Cloud・AI・Robotics・Blockchain・Clean・Solar・Infrastructure・Water・Nuclear・Space・Memory・Defense Tech…）。残りに細かい業種の語（Semiconductor・Biotech・Pharmaceutical・Oil Services・Retail・Aerospace/Defense・Steel・Gold/Silver/Copper Miners・Uranium・Internet・Mortgage Real Estate・REIT・MLP）を当て、当たらなければ GICS セクターの語（Technology・Health Care・Financial・Energy・Industrial・Materials・Utilities・Consumer Staples・Consumer Discretionary・Communication Services・Real Estate）。どれにも当たらなければ除く。正規表現は night/nx_indmom_real_data.py の EXCLUDE_ORDER・THEME・INDUSTRY・SECTOR（凍結）",
+  "rule_stage2_contents": "SEC の N-PORT（最新の公開分・2026-04〜06 末の報告）で、株の買い（assetCat EC/EP・payoffProfile Long）≥ 純資産の 90%、その株のうち US ＞ 50%、デリバティブと売り ≤ 5%。US ＝ invCountry が US かつ ISIN の頭が US（ISIN が無い株は invCountry だけ）。N-PORT が取れない ETF は落とす（空欄を合格にしない）",
+  "rule_stage3_one_per_node": "node（業種・セクター）ごとに1本: その版の始まり（最初の完全な月）が最も早い → 信託報酬が低い → 記号の順。代表は全期間で固定（後から出た安い器に乗り換えない）",
+  "rule_stage3a_node_merge": "株式の REIT の器（RWR・FRI・BBRE）は不動産セクターの器（IYR・XLRE）と同じ node（NODE_MERGE＝GICS の不動産セクターの大部分が株式の REIT という分類の事実）。半導体・生物工学・医薬・石油サービス・小売・航空宇宙防衛・インターネットのような『セクターの一部の産業』は統合しない。住宅ローンの REIT（REM）は別の node",
+  "rule_stage3b_overlap_report_only": "代表どうしの今日の中身の重なり Σmin(w_A, w_B)（N-PORT の株の重み）が 50% 以上の組を1本にする規則は、主には掛けず報告 R13 だけ。理由: 今日の重なりは今日の市場の形（＝過去の値上がりの結果）の後知恵を含む。実測で SMH と XLK の重なりが 50.7%（NVDA などの今の大きな重み）で、これで半導体の器を全期間から落とすと、測る現象の結果で母集団を削ることになる。重なりは N-PORT のある 2019 年以降しか測れず、その時点ごとの重なりは作れない",
+  "variants": {
+   "etf_only（主）": "PREDECESSOR（SMH・BBH・OIH・PPH・RTH）は 2012-01 のリターンから（2011-12-20 に HOLDRS から ETF へ）。前身の期間は使わない",
+   "spliced（報告）": "Yahoo の系列そのまま（HOLDRS の 1999〜2011 を含む）。代表は同じ規則で選び直す（例: 生物工学は BBH）"
+  },
+  "why_etf_only_is_primary": "課題は『今日の器で取れたか』。HOLDRS は指数の ETF ではない別の器（固定の籠・入れ替え無し・買収の現金の払い出し・100口単位）で、Yahoo のつなぎの調整（組み入れ会社の分離〔スピンオフ〕の株の現物の配布など）も確かめられない。つないだ版は報告に回す",
+  "universes": {
+   "U_all（主）": "段3・3a を通った代表の全部＝20本（GICS の11セクターの器と、9つの細かい業種の器が並ぶ＝楽天で実際に並べられる品ぞろえ）",
+   "U_sector（探索）": "その中の11セクターの器だけ（q07leu・eknzbh 第1族・F6_spdr と同じ粗さの対照）",
+   "U_narrow（格付けしない）": "その中の細かい業種の器だけ＝9本（ITA・IBB・FDN・REM・MLPA・OIH・PPH・RTH・SMH）。★9本しか無く、そろうのは 2013 年から（2012 年までは4本以下）＝候補10本の条件に届かず上位5の規則を定義できない。割合の規則（P3・P5）を候補5本以上の月で回した版を報告 R15 に出すが、評価の月が 180 に届かないので格付けしない（NA_short）"
+  },
+  "eligibility": "形成の月末 t に、t−12〜t の13か月すべてにリターンがあり、その版の始まり以降である代表だけが候補（全規則で同じ候補＝同じ土俵。『その月までに上場して12か月以上の履歴』を満たす）。t より後の月は見ない（selftest）",
+  "eval_window_rule": "評価の始まり＝候補が10本以上（上位5の規則の 2K）になった最初の形成の月の翌月。主の5本・対照・紙の双子はすべてこの同じ月で評価する（規則ごとに窓を変えない）。終わり＝2026-08",
+  "rakuten_absent_industry_etfs": "課題文の例のうち楽天の一覧に無い: IGV・XBI・KRE・XOP・XME・ITB・XHB・KBE・IHI・IYT・XRT・PBJ（SOXX・XSD・PSI も無い）。在るのは SMH・IBB・ITA と VanEck の業種（BBH・PPH・OIH・RTH・SLX〔SLX は段2で落ちる＝鉄鋼は米国外が8割〕）・FDN・REIT（RWR・FRI・BBRE）・REM・MLPA など。＝楽天の品ぞろえは段1〜3 の後で『11セクター＋9つの業種』の20本で、French 49 の細かさに届かない（銀行・保険・住宅・ソフトウェア・運輸・医療機器・食品・鉱業の器が無い）",
+  "survivorship": {
+   "what": "一覧は 2026-08-24 の写真＝今も取扱のある ETF だけ（名前が空の行は取扱終了の残骸で、段1で落ちる）。途中で消えた業種 ETF は母集団に居ない",
+   "closed_examples_known": [
+    "Merrill Lynch の HOLDRS: 2011-12 に5本（半導体・生物工学・石油サービス・医薬・小売）だけが VanEck の ETF へ引き継がれ、Internet・B2B Internet・Broadband・Internet Infrastructure・Internet Architecture・Software・Telecom・Wireless・Regional Bank・Utilities などの HOLDRS は 2011 年に終わった（記憶・日付の細部は確かめていない）",
+    "VanEck Coal ETF（KOL・2020 年に閉鎖）＝一覧に名前が空の行として残っている",
+    "PowerShares（Invesco）Dynamic の業種 ETF の一部（銀行・保険・小売・ネットワーク・通信など）が 2010〜2020 年代に閉鎖・合併された（記憶・未確認）",
+    "Guggenheim/Claymore の業種 ETF の一部（航空・海運など）も閉鎖された（記憶・未確認）"
+   ],
+   "direction": "勢いの規則には上向きの偏りと読む: 消えた器は、流行の後に崩れた業種（2000年のネット・通信、2008年と2011年の石炭・海運）に多く、規則はその崩れの前に上位で持ちやすいのに、その崩れの月が母集団に無い。加えて、今も楽天が扱う器は人気（＝過去に上がった業種）で選ばれやすい＝品ぞろえそのものが後知恵を含む（相手の SPY には無い偏り）。偏りの大きさは測れないので、下限版（lower_bound）で年 1.5% を引いて挟む",
+   "rakuten_history": "楽天証券が過去のどの時点で何を扱っていたかは分からない（米国株・米国 ETF の取扱の開始は 2010 年前後と記憶）。2010 年より前の月は『今日の器をその器の歴史へ当てた』仮の実行"
+  }
+ },
+ "timing": {
+  "signal": "形成の月末 t の調整後終値までのリターンだけで t+1 月の持ち物を決め、t 月末の引けで入れ替えて t+1 月末まで持つ（主の格付けはこの月末の約定）",
+  "realistic_execution": "日本の個人は t 月末の米国の引け（日本時間の翌朝）を見てから注文するので、実際の約定は早くて t+1 月の最初の営業日の米国の立会い。報告 R5 で『t+1 月の最初の営業日の引け → t+2 月の最初の営業日の引け』の区間（日足の調整後終値）で同じ規則を回し、SPY も同じ区間で比べる",
+  "no_lookahead": "候補の判定・順位はその月末までのリターンだけ。代表の選び方（始まりの早さ）は各 ETF の上場日＝その時点で分かる事実。ただし母集団そのもの（今日の楽天の一覧・今日の N-PORT の中身の国）は今日の写真＝母集団の後知恵（known_limits）"
+ },
+ "families": {
+  "primary（主・格付けする・Holm はこの5本で）": {
+   "P1_G3_12_1_top5": "12か月（t−12〜t−1＝直近1か月をあける）の累積の上位5本を等分・毎月（課題文の形・nx_pre1926x の A_G3 の1か月あけた版と同じ）",
+   "P2_G3_12_0_top5": "12か月（t−11〜t）の累積の上位5本を等分・毎月（eknzbh の G3_mom12_5 そのまま＝『m−12〜m−1』）",
+   "P3_MG_6_6": "Moskowitz-Grinblatt 6-6（eknzbh の F1b そのまま）: 6か月（t−5〜t）の上位 K=max(2, floor(0.15N+0.5)) 本を等分し6か月持つ重ね持ち（6つの組を1/6ずつ・組の中は毎月等分に戻す・組がそろうまでは既にある組で等分）",
+   "P4_P9_multi_top5": "1・3・6・12か月（どれも t で終わる）の累積の百分位（(順位−1)/(N−1)・同順位は平均）の平均の上位5本を等分・毎月（eknzbh の P9_multi_5）",
+   "P5_F3g_12_1_K30": "12-1（t−11〜t−1）の上位 K=max(2, floor(0.30N+0.5)) 本を等分・毎月（eknzbh の F3g_ind30_12-1_H1_K30 の形）"
+  },
+  "common": {
+   "universe": "U_all・etf_only の代表20本（段3・3a の後）。候補は eligibility のとおり",
+   "K": "P1・P2・P4 は固定 K=5。P3 は max(2, floor(0.15N+0.5))、P5 は max(2, floor(0.30N+0.5))（N＝その月の候補の数・偶数丸めを使わない）",
+   "ties": "同じ値は記号の順（アルファベット）",
+   "weights": "選んだ本数で等分（業種 ETF の時価の重みは使わない）。P3 は6つの組を1/6ずつ（組がそろうまでは既にある組で等分）・組の中は毎月等分に戻す",
+   "returns": "持つ月のリターンは Yahoo の調整後終値の月次（配当込み・信託報酬は価格の中）",
+   "missing": "この母集団は全部が今も生きているので、持っている器の翌月が欠けることは無い見込み。欠けたら 0 と読まず、その器を外して残りで等分し件数を記録する（絶対のルール7）"
+  },
+  "exploratory（探索・格付けするが『探索』と明記・Holm は族の中で）": {
+   "E1〜E5": "P1〜P5 を U_sector（etf_only・11セクター）で。評価の月は U_all と同じ 2001-08〜2026-08（U_sector の候補が10本以上になる月も同じ 2001-07）。粗い11セクターの対照＝U_all との差が『細かい業種の器を足した分』の見当"
+  },
+  "reference（格付けしない）": {
+   "REF_EW_menu": "同じ月の候補（代表 ETF）を全部等分・毎月（勢いを除いた『業種 ETF を並べて持つだけ』）",
+   "REF_bridge_eknzbh_K3_R12": "eknzbh 第7族の K1 の形（12か月＝t−11〜t の上位3・等分・毎月）を同じ母集団で（橋渡し・報告）",
+   "REF_bridge_eknzbh_K3_BL": "eknzbh 第7族の K3 の形（(r1+r3+r6+r12)/4 の上位3）を同じ母集団で（橋渡し・報告）"
+  }
+ },
+ "benchmark": {
+  "graded": "SPY（Yahoo の調整後終値＝配当込み・信託報酬 0.0945% は価格の中）。規則も ETF の調整後終値なので総リターンどうし",
+  "reported": [
+   "QQQ（同じく調整後終値）",
+   "French Mkt（CRSP の時価加重・紙の相手）",
+   "REF_EW_menu（同じ候補を全部等分）"
+  ]
+ },
+ "criteria": {
+  "which": "criteria_short_sample（out/nx_prereg.json）。評価は候補が10本になる 2001-08 から 2026-08 まで（301か月・前半 2001-08〜2014-01 の150か月／後半 2014-02〜2026-08 の151か月）。訓練期間（〜2006-12）が15年に届かないため long_history の C1〜C8 は使わない",
+  "definitions": {
+   "full": "費用前の規則の月次リターン − SPY の月次リターン（同じ月だけ）を、評価の全期間で nx_common.excess_stats（NW ラグ12）。片側 p = nx_common.p_one(t)",
+   "first_half_second_half": "評価の月を時間の順に数で二分（奇数は後半が1か月多い）。それぞれ費用前の excess_stats の cagr_diff（幾何の年率差）が正か",
+   "drop_top": "寄与 Σ_t w_{i,t}·(r_{i,t} − SPY_t)（費用前・評価の全期間）が最大の代表を母集団から全期間除き、同じ規則・同じ評価の月で作り直した費用前の cagr_diff が正か（P3 は各組の重み w を合算）",
+   "cost_full": "費用後（片道の回転 100% あたり 0.10%）の全期間の cagr_diff が正か",
+   "lower_bound": "費用後の月次リターンから、生き残りの偏りの見当 h/12 を毎月引いた版の全期間の cagr_diff が正か。h = q × 30% = 1.5%/年（q＝米国の ETF の年あたりの閉鎖率の目安 5%〔記憶・この登録では測っていない〕×閉鎖の前に失う割合 30%〔nx_jpfunds・Shumway 1997 の業績による上場廃止の平均と同じ置き方〕）。勢いの規則は閉鎖直前の負け組を持ちにくいので、本当の偏りより大きめ（厳しい側）と見込む",
+   "holm": "P1〜P5 の片側 p で Holm（α=0.05）。E1〜E5 は5本の中で別に Holm（探索）",
+   "min_months": "評価の月が 180 未満の単位は NA_short（格付けしない・Holm には p=1 で入れる）"
+  },
+  "c5_replacement_paper_twin": "短い標本の格付けに C5 は無い。代わりに（課題文の指定）同じ規則を French 49 業種（VW・CRSP 全上場）で同じ評価の月に回した紙の結果との差を主の報告 R1 にする: 月次の差 g_t = (実物_t − SPY_t) − (紙_t − French Mkt_t) の算術平均×12・NW t・前半/後半・幾何の年率の差。紙の K は規則の定義どおり（上位5・floor(0.15·49+0.5)=7・floor(0.30·49+0.5)=15）。紙の費用も同じ 0.10%。格付けには使わない"
+ },
+ "costs": {
+  "graded": "片道の回転 = ½Σ|新しい重み − 前月の重みを当月のリターンで流した重み|（最初の月は 1＝全額を買う・SPY も最初に買うのは同じだが相手には引かない）。毎月その月の回転 × 0.10% を引く",
+  "why_0_10": "楽天証券の米国 ETF の売買手数料は 0 円（2023-12〜）。ドルのまま器を入れ替えれば為替の手数料は掛からない（最初の円→ドルは SPY と同じ）。残るのは売買のスプレッドと値の動き（大きな器で片道 0.01〜0.05%、小さな器で 0.1〜0.3%）＝0.10% は大きな器にはやや厳しく、小さな器（MLPA・REM・PPH・RTH 等）には甘い",
+  "sensitivity": "片道 0.30%（報告 R6）",
+  "expense_ratio": "各 ETF の信託報酬（XL* 0.08%〜MLPA 0.53%）と SPY の 0.0945% は調整後終値の中に入っている＝別に引かない"
+ },
+ "tax_report_R7": {
+  "role": "報告のみ（格付けしない）。日本の課税口座（特定口座・源泉徴収あり）で毎月入れ替えると税の繰り延べを失う大きさを測る",
+  "model": [
+   "円建て: 株数 × 終値（Yahoo の close・分割調整済み・配当は未調整）× その月末の円/ドル（FRED DEXJPUS の月の最後の値）",
+   "取得価額は移動平均（買うたびに円の取得価額を足す）。売るたびに 実現益 = 売った株数 ×（終値 × 円/ドル − 平均の円の取得価額）",
+   "年の中は実現益と実現損を通算し、年の累計の正の分に 20.315% を売った月に引く（年の中で損が出たら引いた税を戻す＝特定口座の源泉徴収の動き）。年をまたぐ損は確定申告で3年繰り越す版（最良）と繰り越さない版（最悪）の両方",
+   "配当: 米国の源泉 10% の後に 20.315%（外国税額控除なし）＝配当の 71.7% を受け取り、その月末に同じ器へ買い足す（取得価額に足す）。SPY も同じ",
+   "SPY: 最初に買って持ち続ける（税は配当だけ）。終わりは『持ったまま（含み益に課税しない）』と『2026-08 に全部売る』の両方",
+   "出すもの: 税引後の最終の円の比（規則 ÷ SPY）・税引後の年率の差・税引前の差との差（税の引きずり）。あわせてドル建て（為替を税の元に入れない）の版"
+  ],
+  "nisa": "NISA の成長投資枠（年 240 万円・生涯 1,200 万円・売った枠は翌年に戻る）は、毎月の全額の入れ替えで買うたびに枠を使う。報告に『年間の買付額（最初の 100 万円あたり）』を出し、枠の中で続けられる金額の目安を書く"
+ },
+ "reports_not_graded": {
+  "R1_paper_twin_49": "c5_replacement_paper_twin（主の5本と E1〜E5）",
+  "R1b_paper_twin_same_fraction": "紙の K を『実物の上位 K ÷ その月の候補 N』と同じ割合で French 49 に当てた版（K の集中の差と業種の細かさの差を分ける）",
+  "R2_paper_twin_30": "French 30 業種（eknzbh が Fidelity の双子に使った粗さ）で同じ差",
+  "R3_spliced": "spliced の版（HOLDRS の期間を含む）で主の5本",
+  "R4_bridge_family7": "REF_bridge_eknzbh_K3_R12・K3_BL（第7族の形）を U_all で。測った後に eknzbh の第7族の結果（mw_etf_tactical.json）を読み、母集団の違いで同じ向きかを並べる",
+  "R5_lag1": "1営業日遅れの約定（timing.realistic_execution）",
+  "R6_cost_0_30": "片道 0.30%",
+  "R7_tax": "tax_report_R7",
+  "R8_turnover_holdings": "年の片道の回転・持った器の月の割合（どの業種を何割の月で持ったか）・年あたりの入れ替えの回数",
+  "R9_rolling_dca": "転がる10年・20年窓（一括・nx_common.rolling）と10年・20年の毎月の積立（nx_common.dca）の SPY との比",
+  "R10_recent_post": "2013-07〜（最近）。Moskowitz-Grinblatt 1999 の後なので評価の全体が公表後",
+  "R11_vs_QQQ": "QQQ との差（全期間・前半・後半・2009-04〜）",
+  "R12_lower_bound_sensitivity": "h = 0.75%・3.0%/年",
+  "R13_overlap_dedup": "段3b（今日の中身の重なり ≥50% の組を1本に）を掛けた版の主の5本（SMH が XLK と重なって落ちる＝半導体の器を除いた品ぞろえ）",
+  "R14_node_entry": "各 node が候補に入った月と、評価の中の候補の数の推移（形・data.shape_reps_etf_only）",
+  "R15_narrow_only": "U_narrow（9本・2013年から）で P3・P5（割合の規則）を候補5本以上の月で。NA_short（格付けしない）",
+  "R16_node_merge_off": "NODE_MERGE を外した版（REIT の器 RWR を別の node にする）の主の5本"
+ },
+ "prior": {
+  "Moskowitz_Grinblatt_1999": "『Do Industries Explain Momentum?』JF 54(4): 業種の勢いは株の勢いの大きな部分を説明し、業種では1か月でも反転せず続く（記憶。数字は確かめていない）",
+  "Faber_2010": "『Relative Strength Strategies for Investing』: French の10業種（と実在のセクターファンド）で12か月などの上位を持つと市場を上回った（記憶）",
+  "Andreu_Swinkels_TjongATjoe_2013": "『Can exchange traded funds be used to exploit industry momentum?』（Financial Markets and Portfolio Management）: 米国の業種 ETF で業種の勢いが実行できるかを調べた研究があった（記憶・結論の細部は確かめていない）",
+  "this_program_known_before": [
+   "eknzbh: French 49 の業種の勢い（G3・P9・F1b・F3g）が A/S で生き残り、Fidelity Select（米国籍の投信・日本では買えない）で H3 が S・1日遅れ D3 が S（保有 +5.1%/年 t2.35）・3か月ごと Q3 −1.7%/年・合併/廃止を足した H3 は保有 +4.4%/年 t1.89（売りごとの 0.75% の手数料なら +0.9）",
+   "eknzbh 第1族: 2007〜 French 9業種 +2.5%/年 対 SPDR 9セクター −0.2%/年",
+   "eknzbh 第4族: iShares/SPDR の業種 ETF 44本 保有期間 +1.2〜+3.4%/年・t<1",
+   "nx_pre1926x（この枝）: Cowles の業種で A（課題文）。課題文の要約: 粗い10業種 t0.84 → 49業種 t1.73",
+   "CLAUDE_ARCHIVE の etf_beat_spy（2026-08-24）: 楽天の 742本で SPY に勝った器は窓によって10〜19%、20年勝者の多くはテック・半導体（SMH が年 19.93% で1位）、5年の脚ごとに勝者が総入れ替え（バイオ 2011-16・クリーンエネと半導体 2016-21・半導体とエネルギー 2021-26）、persistence は正だが過半は続かない"
+  ]
+ },
+ "contamination": {
+  "what_i_looked_at": "この事前登録を書く前に見たのは: broker_lineup の742本の名前・市場・信託報酬、段1の分類、候補の N-PORT の中身の割合（株・US・デリバティブ・国の上位）、中身の重なり、Yahoo の月足の時刻・最初の足・firstTradeDate・配当の件数・px_guard の台帳の最初の月、各月の候補の数と評価の始まり、SPY と French Mkt の月次の相関と差の最大（相手どうしの形）。規則のリターン・SPY との差・t・シャープ・勝率は、どの規則についても計算していない・表示していない",
+  "rule_changed_after_seeing_shape": "★段2の US の判定を、中身の割合を一度見た後に直した: 最初の版は invCountry だけで、Global X の金鉱株（AUAU）76.5%・銀鉱株（SIL）58.6% が US と出た（VanEck の GDX 16.1%・GDXJ 9.1%）。届け出る会社で invCountry の意味がずれると分かったので、ISIN の頭も US であることを足した（AUAU 24.6%・SIL 18.0% に下がり落ちた）。リターンは見ていない。この直しで結果が動いたのは AUAU・SIL の2本（どちらも米国株の器ではない）。★段3も形を見た後に決めた: 最初は『今日の中身の重なり ≥50% の組を1本に』を主に入れたが、重なりを表示すると IYR と RWR 74.5%（意図どおり）に加えて SMH と XLK 50.7% が落ちた。今日の重なりは今日の市場の形の後知恵なので主から外して報告 R13 に回し、代わりに分類の事実だけで REIT を不動産セクターと同じ node にした（NODE_MERGE）。重なりの表（10% 以上の組）も見た: BBH-IBB 0.59・PPH-XLV 0.39・RTH-XLY 0.41・RTH-XLP 0.28・FDN-VOX 0.25・ITA-XLI 0.24・FDN-XLY 0.19 など。リターンは見ていない",
+  "shape_seen_counts": "抽出の点検で、代表の月次リターンの絶対値が 40% を超える月の数だけを数えた（MLPA 2・OIH 3・REM 1。値と月は表示していない）",
+  "other_sessions_results_read": [
+   "eknzbh の mw_etf_tactical_prereg2〜6 の why_now と what_was_looked_at（上の prior の数字）",
+   "eknzbh の mw_momentum_prereg3 の what_i_have_seen（株の勢い 42か国中41で正・GICS MG6-6 は13か国中11で正・米国の三分位は保有期間 −0.02%/年・勢いの ETF は相手に明確に勝っていない）",
+   "eknzbh の mw_industry_prereg・prereg3 の規則の定義（成績の数字は無い）",
+   "この枝の git log の見出し（nx_gpr・nx_regime_ind・nx_pre1926x の結果の見出し）",
+   "docs/CLAUDE_ARCHIVE.md の 11884 行の節（楽天 742本の SPY との比較・上の prior）",
+   "CLAUDE.md（会話の最初に読み込まれる）: SMH・QQQ・XLK の20年の積立の結果、業種の比重の記録と反転の基礎率（過去10年の上位業種が次の10年に勝つのは 20%）、質の ETF の実績など"
+  ],
+  "task_text": "課題文そのものが eknzbh・nx_pre1926x の格付けと t（10業種 t0.84 → 49業種 t1.73）を含む",
+  "world_knowledge": "私（Claude）は 2001〜2026 年の相場を知っている: 2000〜02 のテックの崩れ、2003〜07 のエネルギー・素材・新興国、2008 の金融危機（金融・不動産の崩れ）、2009 以降の回復、2011〜15 のバイオ、2014〜20 のエネルギーの崩れと 2021〜22 の急騰、2020 の急落と回復、2023〜26 の AI と半導体（SMH が最良の器）。この漏れは消せない。規則・K・母集団の規則はすべて他セッションの定義と課題文と機械の規則から決め、どの業種が勝ったかで選んでいない（テーマを外す規則は半導体・防衛のような勝った業種も同じ語の規則で扱う）"
+ },
+ "sanity_checks_before_results": [
+  "extract_sha256・rules_sha256・data_tool_sha256 が tools の値と一致（違えば止まる）。python3 night/nx_indmom_real_data.py --selftest が9項目すべて OK",
+  "組み立ての関数（測る道具）を合成データで先に点検: t より後のリターンを書き換えても t までの持ち物が変わらない・回転は 0〜1・選んだ本数が K・等分の和が 1・P3 の組の重ねが 1/6 ずつ",
+  "評価の始まりと各月の候補の数が data.shape_menu_and_eval_windows と一致（±0）",
+  "SPY と French Mkt の月次の相関 ≥ 0.98（data.sanity_spy_vs_french_mkt・相手どうしの形）",
+  "代表の月次リターンの絶対値が 40% を超える月を一覧にし、日足と突き合わせてデータの誤りと確かめられたときだけ値の無い月として扱う（結果を見て規則を変えるのではない）",
+  "欠測を 0 で埋めていないこと（候補は13か月すべてがそろう器だけ・持った器の翌月の欠けは件数を記録）"
+ ],
+ "known_limits": [
+  "★母集団は楽天の今日の写真（生き残り・人気の後知恵）。途中で消えた業種 ETF（HOLDRS の大半・KOL ほか）は入らない。lower_bound の 1.5%/年は仮定で、本当の偏りより大きいか小さいかは分からない",
+  "★段2 は今日（2026-04〜06 末）の N-PORT の中身で決めた。20 年前の中身は違う（例: VOX は 2018 年まで通信サービス＝電話会社だった。XLK は 2018 年に GOOGL・META を XLC へ出した）。今日の XLK と SMH は中身の 51% が重なる（NVDA などの重み）＝上位5 に XLK と SMH が並ぶ月は半導体に厚く張る",
+  "品ぞろえは 11セクター＋9つの業種（段1〜3 の後の20本）で、French 49 の細かさに届かない（銀行・保険・住宅・ソフトウェア・運輸・医療機器・食品・鉱業の器が無い）。セクターの器と業種の器の中身は一部重なる（XLK と SMH、XLV と IBB、XLE と OIH・MLPA）",
+  "主の版は HOLDRS の期間を切るので、半導体・医薬・石油サービス・小売の器は 2013-01 の形成からしか候補に入らない（その前の 11 年半はそれらの業種を持てない）。候補の数は 2001-07 に10 → 2002 に11 → 2005 に12 → 2007 に14 → 2008 に15 → 2013 に20。2012 年までは実質『11セクター＋数本の業種』の勢い",
+  "楽天の細かい業種の器は9本しかなく（段1〜3 の後）、細かい業種だけの規則は検定できない（U_narrow は格付けしない）",
+  "2010 年より前の月は、楽天で実際に買えたかに関係なく今日の器をその歴史へ当てた仮の実行",
+  "評価は約25年の1本（独立の試行は少ない）。前半・後半の二分は2本",
+  "費用は片道 0.10% の近似（小さな器のスプレッドには甘い）。税は報告だけ（格付けに入れない）",
+  "MLPA は米国の法人税を払うファンド（C 法人）で、基準価額は繰延税金の負債を引いた値＝MLP そのもののリターンとは違う（器の現実としてそのまま使う）",
+  "紙の双子（French 49）は CRSP の会社の主たる SIC で業種を分け、ETF の指数（GICS・独自の規則・時価の上限）とは中身が違う＝差には品ぞろえと器の違いの両方が入る"
+ ],
+ "test_count": {
+  "primary": 5,
+  "exploratory": 5,
+  "reference": 3,
+  "report_only": "R1〜R16（格付けしない）",
+  "note": "試したものは全部 out/nx_indmom_real.json の tested に残す（負けも落とさない）。測った後に単位・規則・線を足したり変えたりしたら『事後』と明記し、格付けに使わない"
+ }
+}

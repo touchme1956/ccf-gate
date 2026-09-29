@@ -45,7 +45,9 @@ JUDGE = ["dom", "moatW", "irr", "rep", "dur", "p1", "p2", "p3", "p4",
          "expiry", "geopol", "founder", "idx"]
 # 機械項目＝採取器が算出する。「機械だから正しい」が誤りだったので、こちらも出典が要る
 MACHINE = ["roic", "roicg", "roicEx", "gm", "cagr", "nde", "fcf", "ni",
-           "accr", "gpa", "z", "sbc", "dilNet", "acq5", "eps", "nrr"]
+           "accr", "gpa", "z", "sbc", "dilNet", "acq5", "acqS5", "eps", "nrr"]
+# 2026-09-29: acqS5（v9.9.181・買収の強度・night/fill_acqS5.py が provenance="machine" と式・実額を刻む）を足した。
+#   validate_packs.py の MACHINE と同時に（片方だけだと二つの検査器が違うことを言う）。
 # 市場項目＝外部APIで日々動く。根拠は「いつ・どこから」で足りる
 MARKET = ["per", "perF", "px", "shy", "evebit", "beta", "analysts", "instOwn"]
 

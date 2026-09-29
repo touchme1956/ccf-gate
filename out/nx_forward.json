@@ -1,0 +1,2913 @@
+{
+ "angle": "nx_forward",
+ "role": "前向きの検定（登録 2026-09-29・最初の月 2026-10）。読むだけ・門の判定・採点・配分には不使用",
+ "prereg": "out/nx_forward_prereg.json",
+ "prereg_commit": null,
+ "first_forward_month": 202610,
+ "max_end": 204609,
+ "review_month": 10,
+ "rule": "主の族（F1・F2・F3）は e ≥ 60（=20×3・Bonferroni）に一度でも達したら『勝ち』。1本の線 e≥20 は族の調整の前の参考。逆向きの e_f≥20 で見込みなし（拘束しない）",
+ "hypotheses": {
+  "F1_indmom_vs_SPY": {
+   "definition": "楽天の業種 ETF 20本（1業種1本）で 12か月（t−11〜t）の上位5本を等分・毎月の入れ替え（nx_indmom_real P2 そのまま）対 SPY",
+   "family": "main",
+   "holdable": "楽天で全部買える（20本と SPY は楽天の海外 ETF の一覧〔ETFD.csv 2026-09-28〕にある）。NISA 成長投資枠でも課税口座でも可。ただし毎月の入れ替えで NISA の枠を食う",
+   "ccy": "USD",
+   "frozen": {
+    "sigma_d": 7.812,
+    "sigma_window": [
+     200108,
+     202608
+    ],
+    "n_months": 301,
+    "sigma_source": "楽天の業種 ETF 20本の P2 を日足の月末から作り直した（2001-08〜2026-08・etf_only）",
+    "mu_d": 3.0,
+    "mu_source": "fr49_P2",
+    "B": 0.095,
+    "lambda_kelly": 4.916,
+    "lambda": 4.916,
+    "lambda_capped": false,
+    "mu_f": 3.0,
+    "clipped_months_hist": 1,
+    "hist_mean_ann_pct": 2.863,
+    "hist_nw_t": 2.0
+   },
+   "forward": {
+    "n_months": 0,
+    "first_month": null,
+    "last_month": null,
+    "e_now": 1.0,
+    "e_max": 1.0,
+    "line_individual": 20.0,
+    "line_family": 60.0,
+    "crossed_individual_at": null,
+    "crossed_family_at": null,
+    "futility_now": 1.0,
+    "futility_at": null,
+    "mean_active_ann_pct": null,
+    "cum_active_geo_pct": null,
+    "clipped_months": 0,
+    "missing_months": [],
+    "waiting_for": [],
+    "months": []
+   },
+   "status": "追跡中"
+  },
+  "F1b_indmom_vs_QQQ": {
+   "definition": "同じ規則 対 QQQ（副・判定に使わない）",
+   "family": "sub",
+   "holdable": "同上",
+   "ccy": "USD",
+   "frozen": {
+    "sigma_d": 13.366,
+    "sigma_window": [
+     200108,
+     202608
+    ],
+    "n_months": 301,
+    "sigma_source": "楽天の業種 ETF 20本の P2 を日足の月末から作り直した（2001-08〜2026-08・etf_only）",
+    "mu_d": 1.0,
+    "mu_source": "fixed 1.0",
+    "B": 0.155,
+    "lambda_kelly": 0.56,
+    "lambda": 0.56,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 1,
+    "hist_mean_ann_pct": -1.002,
+    "hist_nw_t": -0.4
+   },
+   "forward": {
+    "n_months": 0,
+    "first_month": null,
+    "last_month": null,
+    "e_now": 1.0,
+    "e_max": 1.0,
+    "line_individual": 20.0,
+    "line_family": 60.0,
+    "crossed_individual_at": null,
+    "crossed_family_at": null,
+    "futility_now": 1.0,
+    "futility_at": null,
+    "mean_active_ann_pct": null,
+    "cum_active_geo_pct": null,
+    "clipped_months": 0,
+    "missing_months": [],
+    "waiting_for": [],
+    "months": []
+   },
+   "status": "追跡中"
+  },
+  "F2_brand10_vs_SPY": {
+   "definition": "Interbrand の最新の一覧の米国の親会社の上位10社をブランド価値で加重・公開の翌月末に年1回組み替え（間は買って持つ）対 SPY（nx_brand P2 の実装できる版）",
+   "family": "main",
+   "holdable": "楽天の米国株で10社とも買える（米国の超大型株）。NISA 成長投資枠でも課税口座でも可",
+   "ccy": "USD",
+   "frozen": {
+    "sigma_d": 8.917,
+    "sigma_window": [
+     200710,
+     202608
+    ],
+    "n_months": 227,
+    "sigma_source": "nx_brand の凍結の一覧（2007〜2025・2015/2017 は持ち越し）で上位10社版を作り直した（公開の翌月末に組み替え）",
+    "mu_d": 1.535,
+    "mu_source": "nx_brand P2",
+    "B": 0.105,
+    "lambda_kelly": 1.93,
+    "lambda": 1.93,
+    "lambda_capped": false,
+    "mu_f": 1.535,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 3.85,
+    "hist_nw_t": 2.04
+   },
+   "forward": {
+    "n_months": 0,
+    "first_month": null,
+    "last_month": null,
+    "e_now": 1.0,
+    "e_max": 1.0,
+    "line_individual": 20.0,
+    "line_family": 60.0,
+    "crossed_individual_at": null,
+    "crossed_family_at": null,
+    "futility_now": 1.0,
+    "futility_at": null,
+    "mean_active_ann_pct": null,
+    "cum_active_geo_pct": null,
+    "clipped_months": 0,
+    "missing_months": [],
+    "waiting_for": [],
+    "months": []
+   },
+   "status": "追跡中"
+  },
+  "F2b_brand10_vs_QQQ": {
+   "definition": "同じ規則 対 QQQ（副・判定に使わない）",
+   "family": "sub",
+   "holdable": "同上",
+   "ccy": "USD",
+   "frozen": {
+    "sigma_d": 8.553,
+    "sigma_window": [
+     200710,
+     202608
+    ],
+    "n_months": 227,
+    "sigma_source": "nx_brand の凍結の一覧（2007〜2025・2015/2017 は持ち越し）で上位10社版を作り直した（公開の翌月末に組み替え）",
+    "mu_d": 1.0,
+    "mu_source": "fixed 1.0",
+    "B": 0.1,
+    "lambda_kelly": 1.367,
+    "lambda": 1.367,
+    "lambda_capped": false,
+    "mu_f": 1.0,
+    "clipped_months_hist": 2,
+    "hist_mean_ann_pct": -1.159,
+    "hist_nw_t": -0.93
+   },
+   "forward": {
+    "n_months": 0,
+    "first_month": null,
+    "last_month": null,
+    "e_now": 1.0,
+    "e_max": 1.0,
+    "line_individual": 20.0,
+    "line_family": 60.0,
+    "crossed_individual_at": null,
+    "crossed_family_at": null,
+    "futility_now": 1.0,
+    "futility_at": null,
+    "mean_active_ann_pct": null,
+    "cum_active_geo_pct": null,
+    "clipped_months": 0,
+    "missing_months": [],
+    "waiting_for": [],
+    "months": []
+   },
+   "status": "追跡中"
+  },
+  "F3_jpX1_rakuten_vs_TOPIX": {
+   "definition": "国内株式の能動の投信の過去1年の上位1/4（nx_jpfunds X1 の選び方そのまま・母集団は全部）のうち楽天証券が売るものを等分（毎月等分に戻す）・毎年9月末に選び直し 対 楽天で買える最も安い TOPIX の指数型の投信（円）",
+   "family": "main",
+   "holdable": "楽天で全部買える（選んだものから楽天が売らない器を外す）。NISA 成長投資枠の対象は約7割（毎月分配型などは対象外＝課税口座）",
+   "ccy": "JPY",
+   "frozen": {
+    "sigma_d": 5.946,
+    "sigma_window": [
+     200710,
+     202608
+    ],
+    "n_months": 227,
+    "sigma_source": "nx_jpfunds の X1 の凍結の選択の国内株式だけ・相手は最も安い TOPIX の指数型の鎖（費用前・楽天の絞り込みは過去に遡れないので同じ系列）",
+    "mu_d": 1.75,
+    "mu_source": "nx_jpfunds X1 国内株式",
+    "B": 0.07,
+    "lambda_kelly": 4.95,
+    "lambda": 4.95,
+    "lambda_capped": false,
+    "mu_f": 1.75,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 3.503,
+    "hist_nw_t": 3.12
+   },
+   "forward": {
+    "n_months": 0,
+    "first_month": null,
+    "last_month": null,
+    "e_now": 1.0,
+    "e_max": 1.0,
+    "line_individual": 20.0,
+    "line_family": 60.0,
+    "crossed_individual_at": null,
+    "crossed_family_at": null,
+    "futility_now": 1.0,
+    "futility_at": null,
+    "mean_active_ann_pct": null,
+    "cum_active_geo_pct": null,
+    "clipped_months": 0,
+    "missing_months": [],
+    "waiting_for": [],
+    "months": []
+   },
+   "status": "追跡中"
+  },
+  "F3b_jpX1_all_vs_TOPIX": {
+   "definition": "同じ選び方の全部（楽天で買えない器も含む・nx_jpfunds X1 そのまま）対 最も安い TOPIX の指数型（副・判定に使わない）",
+   "family": "sub",
+   "holdable": "一部は楽天で買えない（約3割）",
+   "ccy": "JPY",
+   "frozen": {
+    "sigma_d": 5.946,
+    "sigma_window": [
+     200710,
+     202608
+    ],
+    "n_months": 227,
+    "sigma_source": "nx_jpfunds の X1 の凍結の選択の国内株式だけ・相手は最も安い TOPIX の指数型の鎖（費用前・楽天の絞り込みは過去に遡れないので同じ系列）",
+    "mu_d": 1.75,
+    "mu_source": "nx_jpfunds X1 国内株式",
+    "B": 0.07,
+    "lambda_kelly": 4.95,
+    "lambda": 4.95,
+    "lambda_capped": false,
+    "mu_f": 1.75,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 3.503,
+    "hist_nw_t": 3.12
+   },
+   "forward": {
+    "n_months": 0,
+    "first_month": null,
+    "last_month": null,
+    "e_now": 1.0,
+    "e_max": 1.0,
+    "line_individual": 20.0,
+    "line_family": 60.0,
+    "crossed_individual_at": null,
+    "crossed_family_at": null,
+    "futility_now": 1.0,
+    "futility_at": null,
+    "mean_active_ann_pct": null,
+    "cum_active_geo_pct": null,
+    "clipped_months": 0,
+    "missing_months": [],
+    "waiting_for": [],
+    "months": []
+   },
+   "status": "追跡中"
+  },
+  "F4_RSST_vs_SPY": {
+   "definition": "市場＋マネージド・フューチャーズの重ね（実在: RSST＝米国株100%＋マネージド・フューチャーズ100%）対 SPY（参考・楽天で持てない）",
+   "family": "ref",
+   "holdable": "★楽天では持てない（RSST・DBMF・KMLM・CTA は楽天の海外 ETF の一覧〔2026-09-28〕に無い）。NISA では持てない",
+   "ccy": "USD",
+   "frozen": {
+    "sigma_d": 11.26,
+    "sigma_window": [
+     201906,
+     202608
+    ],
+    "n_months": 87,
+    "sigma_source": "RSST の履歴（2023-10〜）は35か月しか無いので、追従のぶれの大きい方＝DBMF − BIL（重ねる部分の代わり・2019-06〜）を使う",
+    "mu_d": 3.0,
+    "mu_source": "nx_stack P6",
+    "B": 0.135,
+    "lambda_kelly": 2.366,
+    "lambda": 2.366,
+    "lambda_capped": false,
+    "mu_f": 3.0,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": 6.795,
+    "hist_nw_t": 1.6
+   },
+   "forward": {
+    "n_months": 0,
+    "first_month": null,
+    "last_month": null,
+    "e_now": 1.0,
+    "e_max": 1.0,
+    "line_individual": 20.0,
+    "line_family": 40.0,
+    "crossed_individual_at": null,
+    "crossed_family_at": null,
+    "futility_now": 1.0,
+    "futility_at": null,
+    "mean_active_ann_pct": null,
+    "cum_active_geo_pct": null,
+    "clipped_months": 0,
+    "missing_months": [],
+    "waiting_for": [],
+    "months": []
+   },
+   "status": "追跡中"
+  },
+  "F5_countryDY_vs_ACWI": {
+   "definition": "国の配当利回り（直近の暦年の分配÷年末の値）の上位1/3の国別 ETF（15本）を等分・毎年12月末に組み替え（間は買って持つ）対 ACWI（参考・楽天で持てない）",
+   "family": "ref",
+   "holdable": "★楽天では持てない（15本のうち楽天にあるのは EWJ・EWG・SPY だけ）",
+   "ccy": "USD",
+   "frozen": {
+    "sigma_d": 7.998,
+    "sigma_window": [
+     200901,
+     202608
+    ],
+    "n_months": 212,
+    "sigma_source": "15本の国別 ETF で 2008年末から毎年組み直した（直近の暦年の分配 ÷ 12月末の終値）",
+    "mu_d": 1.465,
+    "mu_source": "nx_jst P1",
+    "B": 0.095,
+    "lambda_kelly": 2.29,
+    "lambda": 2.29,
+    "lambda_capped": false,
+    "mu_f": 1.465,
+    "clipped_months_hist": 0,
+    "hist_mean_ann_pct": -1.85,
+    "hist_nw_t": -1.09
+   },
+   "forward": {
+    "n_months": 0,
+    "first_month": null,
+    "last_month": null,
+    "e_now": 1.0,
+    "e_max": 1.0,
+    "line_individual": 20.0,
+    "line_family": 40.0,
+    "crossed_individual_at": null,
+    "crossed_family_at": null,
+    "futility_now": 1.0,
+    "futility_at": null,
+    "mean_active_ann_pct": null,
+    "cum_active_geo_pct": null,
+    "clipped_months": 0,
+    "missing_months": [],
+    "waiting_for": [],
+    "months": []
+   },
+   "status": "追跡中"
+  }
+ },
+ "families": {
+  "main": {
+   "K": 3,
+   "line_bonferroni": 60.0,
+   "mean_e_now": 1.0,
+   "global_null_rejected_mean_e": false,
+   "e_bh_rejected_now": []
+  },
+  "sub": {
+   "K": 3,
+   "line_bonferroni": 60.0,
+   "mean_e_now": 1.0,
+   "global_null_rejected_mean_e": false,
+   "e_bh_rejected_now": []
+  },
+  "ref": {
+   "K": 2,
+   "line_bonferroni": 40.0,
+   "mean_e_now": 1.0,
+   "global_null_rejected_mean_e": false,
+   "e_bh_rejected_now": []
+  },
+  "all_registered": {
+   "K": 8,
+   "line_bonferroni": 160.0,
+   "e_bh_rejected_now": [],
+   "above_line_now": []
+  },
+  "cross_session_reference": {
+   "K": 16,
+   "line_bonferroni": 320.0,
+   "note": "eknzbh の mw_forward（8本）と合わせた全セッションの線（参考）"
+  }
+ },
+ "portfolios": {
+  "indmom": {
+   "forms": {
+    "202608": {
+     "sel": [
+      "SMH",
+      "OIH",
+      "IBB",
+      "XLE",
+      "XLK"
+     ],
+     "n_candidates": 20,
+     "score_12m_pct": {
+      "SMH": 92.35,
+      "OIH": 69.99,
+      "IBB": 51.63,
+      "XLE": 45.93,
+      "XLK": 42.87,
+      "PPH": 29.96,
+      "XLV": 26.26,
+      "MLPA": 23.49,
+      "XLI": 16.69,
+      "XLB": 16.28,
+      "ITA": 15.67,
+      "XLF": 8.55,
+      "XLP": 8.12,
+      "IYR": 7.57,
+      "RTH": 6.58,
+      "FDN": 5.77,
+      "VOX": 4.6,
+      "REM": 3.7,
+      "XLU": 2.96,
+      "XLY": 1.4
+     },
+     "turnover_vs_previous": null,
+     "dropped_lagging": [],
+     "data_through": 202608,
+     "locked_on": "2026-09-29"
+    }
+   }
+  },
+  "brand": {
+   "forms": {
+    "202511": {
+     "list_year": 2025,
+     "release_date": "2025-10-15",
+     "values_musd": {
+      "AAPL": 470934,
+      "MSFT": 398933,
+      "GOOGL": 365451,
+      "AMZN": 319932,
+      "META": 98543,
+      "KO": 60051,
+      "MCD": 53040,
+      "CSCO": 48698,
+      "NVDA": 43176,
+      "ORCL": 42092
+     },
+     "weights": {
+      "AAPL": 0.247749,
+      "MSFT": 0.209871,
+      "GOOGL": 0.192257,
+      "AMZN": 0.16831,
+      "META": 0.051842,
+      "KO": 0.031592,
+      "MCD": 0.027903,
+      "CSCO": 0.025619,
+      "NVDA": 0.022714,
+      "ORCL": 0.022144
+     },
+     "parent_to_ticker": {
+      "AAPL": "AAPL",
+      "MSFT": "MSFT",
+      "GOOGL": "GOOGL",
+      "AMZN": "AMZN",
+      "META": "META",
+      "KO": "KO",
+      "MCD": "MCD",
+      "CSCO": "CSCO",
+      "NVDA": "NVDA",
+      "ORCL": "ORCL"
+     },
+     "locked_on": "2026-09-29"
+    }
+   },
+   "observed_lists": {}
+  },
+  "country": {
+   "forms": {
+    "2025": {
+     "sel": [
+      "NLD",
+      "JPN",
+      "GBR",
+      "FIN",
+      "SWE"
+     ],
+     "dy_pct": {
+      "AUS": 3.211,
+      "BEL": 1.737,
+      "CHE": 1.706,
+      "DEU": 1.598,
+      "ESP": 2.27,
+      "FRA": 2.627,
+      "GBR": 3.729,
+      "ITA": 2.805,
+      "JPN": 4.523,
+      "NLD": 5.032,
+      "SWE": 3.272,
+      "DNK": 2.786,
+      "FIN": 3.398,
+      "NOR": 2.953,
+      "USA": 1.068
+     },
+     "tickers": {
+      "NLD": "EWN",
+      "JPN": "EWJ",
+      "GBR": "EWU",
+      "FIN": "EFNL",
+      "SWE": "EWD"
+     },
+     "locked_on": "2026-09-29"
+    }
+   }
+  },
+  "jp": {
+   "holdings_during_registration_month": {
+    "selection_month": 202509,
+    "n_all_categories": 159,
+    "n_JP": 71,
+    "n_JP_rakuten": 58,
+    "JP": [
+     [
+      "9Y316203",
+      "未来の光日本小型株式ファンド"
+     ],
+     [
+      "47313179",
+      "厳選ジャパン"
+     ],
+     [
+      "04314239",
+      "日本企業PBR向上ファンド"
+     ],
+     [
+      "8931105A",
+      "ソフトバンク&SBIグループ株式ファンド"
+     ],
+     [
+      "01311842",
+      "情報エレクトロニクスファンド"
+     ],
+     [
+      "04314065",
+      "ダイワ金融新時代ファンド"
+     ],
+     [
+      "0131218B",
+      "日本新興成長企業株ファンド"
+     ],
+     [
+      "0231223C",
+      "ジャパン半導体株式ファンド"
+     ],
+     [
+      "35312066",
+      "GS日本株・プラス(通貨分散コース)"
+     ],
+     [
+      "AL312206",
+      "マネックス・アクティビスト・ファンド"
+     ],
+     [
+      "64311006",
+      "キャッシュフロー経営評価オープン"
+     ],
+     [
+      "4731499C",
+      "ファンド“メガ・テック”"
+     ],
+     [
+      "9Y31813A",
+      "21世紀東京日本株式ファンド"
+     ],
+     [
+      "34311994",
+      "グローイング・エンジェル"
+     ],
+     [
+      "9Y315202",
+      "カレラ改日本株式ファンド"
+     ],
+     [
+      "09311143",
+      "中小型成長株オープン"
+     ],
+     [
+      "01312918",
+      "ミリオン(ジャパンドリームポートフォリオ)"
+     ],
+     [
+      "01311962",
+      "ノムラ・ジャパン・オープン"
+     ],
+     [
+      "35311177",
+      "GSビッグデータ・ストラテジー(日本株)"
+     ],
+     [
+      "4931108C",
+      "ダイヤセレクト日本株オープン"
+     ],
+     [
+      "04311244",
+      "日本株厳選バリュー投資"
+     ],
+     [
+      "7931500B",
+      "大和住銀日本グロース株ファンド"
+     ],
+     [
+      "01316967",
+      "小型ブルーチップオープン"
+     ],
+     [
+      "32314239",
+      "フィデリティ・日本バリューアップ・ファンド"
+     ],
+     [
+      "01315164",
+      "ロボ・ジャパン(円投資型)"
+     ],
+     [
+      "79314144",
+      "日本株アルファ・カルテット(毎月分配型)"
+     ],
+     [
+      "47313994",
+      "MHAMジャパンオープン"
+     ],
+     [
+      "79313046",
+      "大和住銀日本小型株ファンド"
+     ],
+     [
+      "79314997",
+      "三井住友DS日本バリュー株ファンド"
+     ],
+     [
+      "4731119B",
+      "One高配当利回り厳選ジャパン"
+     ],
+     [
+      "25311083",
+      "NZAM日本好配当株オープン(3ヵ月決算型)"
+     ],
+     [
+      "03311125",
+      "好配当優良株ジャパン・オープン(日本株セレクション)"
+     ],
+     [
+      "02311935",
+      "低位株オープン"
+     ],
+     [
+      "64318056",
+      "日本株配当オープン"
+     ],
+     [
+      "01311182",
+      "野村日本割安低位株オープン"
+     ],
+     [
+      "04311999",
+      "デジタル情報通信革命"
+     ],
+     [
+      "79313142",
+      "ニッポン中小型株ファンド"
+     ],
+     [
+      "3531105A",
+      "GS日本株式インデックス・プラス"
+     ],
+     [
+      "09311184",
+      "インフラ関連日本株式ファンド"
+     ],
+     [
+      "03311093",
+      "優良日本株ファンド"
+     ],
+     [
+      "0331199A",
+      "三菱UFJ日本株グロースオープン"
+     ],
+     [
+      "47311989",
+      "Oneジャパン・セレクション"
+     ],
+     [
+      "0231197A",
+      "日興アクティブバリュー"
+     ],
+     [
+      "9Y313228",
+      "カレラ成長日本列島株式ファンド"
+     ],
+     [
+      "03317004",
+      "J・エクイティ"
+     ],
+     [
+      "09312136",
+      "新経済成長ジャパン"
+     ],
+     [
+      "58311008",
+      "アムンディ・ターゲット・ジャパン・ファンド"
+     ],
+     [
+      "4831B987",
+      "ブラックロック日本小型株オープン"
+     ],
+     [
+      "0331400A",
+      "三菱UFJ日本株アクティブ・ファンド"
+     ],
+     [
+      "8931123C",
+      "SBI日本高配当株式(分配)ファンド(年4回決算型)"
+     ],
+     [
+      "1231100C",
+      "明治安田セレクト日本株式ファンド"
+     ],
+     [
+      "0231396C",
+      "日本新興株オープン"
+     ],
+     [
+      "01311151",
+      "ジャパン・ストラテジック・バリュー"
+     ],
+     [
+      "03314004",
+      "三菱UFJ日本株式オープン"
+     ],
+     [
+      "79311949",
+      "三井住友・日本株オープン"
+     ],
+     [
+      "03311056",
+      "日本好配当利回り株オープン(3ヵ月決算型)"
+     ],
+     [
+      "01311902",
+      "スーパートレンドオープン"
+     ],
+     [
+      "64319241",
+      "半導体関連日本株式戦略ファンド"
+     ],
+     [
+      "80311071",
+      "スパークス・M&S・ジャパン・ファンド"
+     ],
+     [
+      "21311979",
+      "アバディーン・ジャパン・オープン"
+     ],
+     [
+      "10311962",
+      "アクティブバリューオープン"
+     ],
+     [
+      "4931118A",
+      "東京海上・ジャパン・レジリエンス株式オープン"
+     ],
+     [
+      "0431199C",
+      "新世代成長株ファンド"
+     ],
+     [
+      "32311022",
+      "フィデリティ・日本バリュー・ファンド"
+     ],
+     [
+      "79311192",
+      "アクティブ元年・日本株ファンド"
+     ],
+     [
+      "02311059",
+      "株ちょファンド日本(高配当株・割安株・成長株)毎月分配型"
+     ],
+     [
+      "03311069",
+      "三菱UFJジャパン・アクティブ・プラス"
+     ],
+     [
+      "49311026",
+      "東海3県ファンド"
+     ],
+     [
+      "83311148",
+      "イーストスプリング・ジャパン中小型厳選バリュー株ファンド"
+     ],
+     [
+      "01311002",
+      "野村国内株式アクティブオープン"
+     ],
+     [
+      "0331114D",
+      "日本厳選プレミアム株式オープン(年2回決算型)"
+     ]
+    ],
+    "JP_rakuten": [
+     "47313179",
+     "04314239",
+     "8931105A",
+     "01311842",
+     "04314065",
+     "0131218B",
+     "0231223C",
+     "35312066",
+     "AL312206",
+     "64311006",
+     "4731499C",
+     "9Y31813A",
+     "09311143",
+     "01311962",
+     "4931108C",
+     "7931500B",
+     "01316967",
+     "01315164",
+     "79314144",
+     "47313994",
+     "79313046",
+     "79314997",
+     "4731119B",
+     "25311083",
+     "03311125",
+     "02311935",
+     "64318056",
+     "04311999",
+     "79313142",
+     "09311184",
+     "03311093",
+     "0331199A",
+     "47311989",
+     "0231197A",
+     "03317004",
+     "09312136",
+     "58311008",
+     "4831B987",
+     "0331400A",
+     "1231100C",
+     "0231396C",
+     "79311949",
+     "03311056",
+     "01311902",
+     "64319241",
+     "80311071",
+     "21311979",
+     "10311962",
+     "4931118A",
+     "0431199C",
+     "32311022",
+     "79311192",
+     "02311059",
+     "03311069",
+     "49311026",
+     "83311148",
+     "01311002",
+     "0331114D"
+    ],
+    "note": "2026-09 に持っている物（2025年9月末の選択・参考）。前向きの最初の月（2026-10）の持ち物は 2026年9月末の選択で、--update が確定する"
+   },
+   "forms": {
+    "2025": {
+     "selection_month": 202509,
+     "sel_all": [
+      "01311002",
+      "01311151",
+      "01311182",
+      "01311842",
+      "01311902",
+      "01311962",
+      "0131218B",
+      "01312918",
+      "01315164",
+      "01316967",
+      "02311059",
+      "02311935",
+      "0231197A",
+      "0231223C",
+      "0231396C",
+      "03311056",
+      "03311069",
+      "03311093",
+      "03311125",
+      "0331114D",
+      "0331199A",
+      "03314004",
+      "0331400A",
+      "03317004",
+      "04311244",
+      "04311999",
+      "0431199C",
+      "04314065",
+      "04314239",
+      "09311143",
+      "09311184",
+      "09312136",
+      "10311962",
+      "1231100C",
+      "21311979",
+      "25311083",
+      "32311022",
+      "32314239",
+      "34311994",
+      "3531105A",
+      "35311177",
+      "35312066",
+      "4731119B",
+      "47311989",
+      "47313179",
+      "47313994",
+      "4731499C",
+      "4831B987",
+      "49311026",
+      "4931108C",
+      "4931118A",
+      "58311008",
+      "64311006",
+      "64318056",
+      "64319241",
+      "79311192",
+      "79311949",
+      "79313046",
+      "79313142",
+      "79314144",
+      "79314997",
+      "7931500B",
+      "80311071",
+      "83311148",
+      "8931105A",
+      "8931123C",
+      "9Y313228",
+      "9Y315202",
+      "9Y316203",
+      "9Y31813A",
+      "AL312206"
+     ],
+     "sel_rakuten": [
+      "01311002",
+      "01311842",
+      "01311902",
+      "01311962",
+      "0131218B",
+      "01315164",
+      "01316967",
+      "02311059",
+      "02311935",
+      "0231197A",
+      "0231223C",
+      "0231396C",
+      "03311056",
+      "03311069",
+      "03311093",
+      "03311125",
+      "0331114D",
+      "0331199A",
+      "0331400A",
+      "03317004",
+      "04311999",
+      "0431199C",
+      "04314065",
+      "04314239",
+      "09311143",
+      "09311184",
+      "09312136",
+      "10311962",
+      "1231100C",
+      "21311979",
+      "25311083",
+      "32311022",
+      "35312066",
+      "4731119B",
+      "47311989",
+      "47313179",
+      "47313994",
+      "4731499C",
+      "4831B987",
+      "49311026",
+      "4931108C",
+      "4931118A",
+      "58311008",
+      "64311006",
+      "64318056",
+      "64319241",
+      "79311192",
+      "79311949",
+      "79313046",
+      "79313142",
+      "79314144",
+      "79314997",
+      "7931500B",
+      "80311071",
+      "83311148",
+      "8931105A",
+      "9Y31813A",
+      "AL312206"
+     ],
+     "comp_all": "89312237",
+     "comp_rakuten": "29312154",
+     "seeded_from": "nx_jpfunds X1 の 2025 年9月の選択（凍結）の国内株式。楽天の印・手数料は 2026-09-28 00:00:00 の一覧",
+     "info": {
+      "01312918": {
+       "name": "ミリオン(ジャパンドリームポートフォリオ)",
+       "fee_rakuten": null,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": false,
+       "isin": "JP90C0002PL2",
+       "trust_fee_pct": "0.77"
+      },
+      "0231396C": {
+       "name": "日本新興株オープン",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C00027X1",
+       "trust_fee_pct": "1.52"
+      },
+      "04311244": {
+       "name": "日本株厳選バリュー投資",
+       "fee_rakuten": null,
+       "fee_min": 0.033,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C000QQ11",
+       "trust_fee_pct": "1.23"
+      },
+      "9Y316203": {
+       "name": "未来の光日本小型株式ファンド",
+       "fee_rakuten": null,
+       "fee_min": 0.0308,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C000JTE7",
+       "trust_fee_pct": "1.535"
+      },
+      "09311184": {
+       "name": "インフラ関連日本株式ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.033,
+       "retention": false,
+       "nisa_growth": false,
+       "isin": "JP90C000G8C3",
+       "trust_fee_pct": "1.44"
+      },
+      "83311148": {
+       "name": "イーストスプリング・ジャパン中小型厳選バリュー株ファンド",
+       "fee_rakuten": 0.0,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C000ANR1",
+       "trust_fee_pct": "1.53"
+      },
+      "03314004": {
+       "name": "三菱UFJ日本株式オープン",
+       "fee_rakuten": null,
+       "fee_min": 0.022000000000000002,
+       "retention": false,
+       "nisa_growth": false,
+       "isin": "JP90C0000SQ9",
+       "trust_fee_pct": "1.5"
+      },
+      "03311125": {
+       "name": "好配当優良株ジャパン・オープン(日本株セレクション)",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": false,
+       "isin": "JP90C0008CQ6",
+       "trust_fee_pct": "1.05"
+      },
+      "47311989": {
+       "name": "Oneジャパン・セレクション",
+       "fee_rakuten": 0.0308,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": false,
+       "isin": "JP90C0001589",
+       "trust_fee_pct": "1.6"
+      },
+      "80311071": {
+       "name": "スパークス・M&S・ジャパン・ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C0004CS1",
+       "trust_fee_pct": "1.87"
+      },
+      "04311999": {
+       "name": "デジタル情報通信革命",
+       "fee_rakuten": 0.0308,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": false,
+       "isin": "JP90C0003PH8",
+       "trust_fee_pct": "1.11"
+      },
+      "47313179": {
+       "name": "厳選ジャパン",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C000FBE3",
+       "trust_fee_pct": "1.54"
+      },
+      "25311083": {
+       "name": "NZAM日本好配当株オープン(3ヵ月決算型)",
+       "fee_rakuten": 0.0165,
+       "fee_min": 0.0165,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C0005CC2",
+       "trust_fee_pct": "0.96"
+      },
+      "64318056": {
+       "name": "日本株配当オープン",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C00003G7",
+       "trust_fee_pct": "1.0"
+      },
+      "8931123C": {
+       "name": "SBI日本高配当株式(分配)ファンド(年4回決算型)",
+       "fee_rakuten": null,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C000Q9K2",
+       "trust_fee_pct": "0.09"
+      },
+      "01311182": {
+       "name": "野村日本割安低位株オープン",
+       "fee_rakuten": null,
+       "fee_min": 0.033,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C000G1E4",
+       "trust_fee_pct": "1.05"
+      },
+      "02311935": {
+       "name": "低位株オープン",
+       "fee_rakuten": 0.022000000000000002,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C00020G1",
+       "trust_fee_pct": "0.92"
+      },
+      "47313994": {
+       "name": "MHAMジャパンオープン",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": false,
+       "isin": "JP90C00034K4",
+       "trust_fee_pct": "0.9"
+      },
+      "8931105A": {
+       "name": "ソフトバンク&SBIグループ株式ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.033,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0001AH4",
+       "trust_fee_pct": "0.1"
+      },
+      "89312237": {
+       "name": "SBI・iシェアーズ・TOPIXインデックス・ファンド",
+       "fee_rakuten": null,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C000PPX2",
+       "trust_fee_pct": "0.058"
+      },
+      "03311056": {
+       "name": "日本好配当利回り株オープン(3ヵ月決算型)",
+       "fee_rakuten": 0.022000000000000002,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C0000W74",
+       "trust_fee_pct": "1.0"
+      },
+      "03311093": {
+       "name": "優良日本株ファンド",
+       "fee_rakuten": 0.022000000000000002,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C00063B2",
+       "trust_fee_pct": "1.0"
+      },
+      "10311962": {
+       "name": "アクティブバリューオープン",
+       "fee_rakuten": 0.027500000000000004,
+       "fee_min": 0.027500000000000004,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0003A28",
+       "trust_fee_pct": "0.95"
+      },
+      "7931500B": {
+       "name": "大和住銀日本グロース株ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0002LX6",
+       "trust_fee_pct": "1.52"
+      },
+      "79313142": {
+       "name": "ニッポン中小型株ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C000A1N1",
+       "trust_fee_pct": "1.65"
+      },
+      "0331114D": {
+       "name": "日本厳選プレミアム株式オープン(年2回決算型)",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0009ZP7",
+       "trust_fee_pct": "1.5"
+      },
+      "79311949": {
+       "name": "三井住友・日本株オープン",
+       "fee_rakuten": 0.0,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C00006W7",
+       "trust_fee_pct": "0.8"
+      },
+      "01311962": {
+       "name": "ノムラ・ジャパン・オープン",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C0003D41",
+       "trust_fee_pct": "1.52"
+      },
+      "32311022": {
+       "name": "フィデリティ・日本バリュー・ファンド",
+       "fee_rakuten": 0.0,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C00035L9",
+       "trust_fee_pct": "1.5"
+      },
+      "0131218B": {
+       "name": "日本新興成長企業株ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.033,
+       "retention": true,
+       "nisa_growth": false,
+       "isin": "JP90C000H2Y9",
+       "trust_fee_pct": "1.65"
+      },
+      "0231223C": {
+       "name": "ジャパン半導体株式ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C000QB75",
+       "trust_fee_pct": "1.44"
+      },
+      "21311979": {
+       "name": "アバディーン・ジャパン・オープン",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.033,
+       "retention": true,
+       "nisa_growth": false,
+       "isin": "JP90C0002918",
+       "trust_fee_pct": "1.5"
+      },
+      "09312136": {
+       "name": "新経済成長ジャパン",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C00098Z7",
+       "trust_fee_pct": "1.55"
+      },
+      "4931108C": {
+       "name": "ダイヤセレクト日本株オープン",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0005YM5",
+       "trust_fee_pct": "0.95"
+      },
+      "0231197A": {
+       "name": "日興アクティブバリュー",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C00020W8",
+       "trust_fee_pct": "1.52"
+      },
+      "9Y313228": {
+       "name": "カレラ成長日本列島株式ファンド",
+       "fee_rakuten": null,
+       "fee_min": 0.033,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C000NMX4",
+       "trust_fee_pct": "1.285"
+      },
+      "4931118A": {
+       "name": "東京海上・ジャパン・レジリエンス株式オープン",
+       "fee_rakuten": 0.0,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": false,
+       "isin": "JP90C000H1F0",
+       "trust_fee_pct": "1.43"
+      },
+      "79314144": {
+       "name": "日本株アルファ・カルテット(毎月分配型)",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": false,
+       "isin": "JP90C000A931",
+       "trust_fee_pct": "1.025"
+      },
+      "3531105A": {
+       "name": "GS日本株式インデックス・プラス",
+       "fee_rakuten": null,
+       "fee_min": 0.027500000000000004,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0000WR9",
+       "trust_fee_pct": "1.0"
+      },
+      "9Y315202": {
+       "name": "カレラ改日本株式ファンド",
+       "fee_rakuten": null,
+       "fee_min": 0.033,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C000JQK0",
+       "trust_fee_pct": "1.285"
+      },
+      "0331199A": {
+       "name": "三菱UFJ日本株グロースオープン",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.033,
+       "retention": true,
+       "nisa_growth": false,
+       "isin": "JP90C0000V34",
+       "trust_fee_pct": "1.5"
+      },
+      "03311069": {
+       "name": "三菱UFJジャパン・アクティブ・プラス",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.029700000000000004,
+       "retention": false,
+       "nisa_growth": false,
+       "isin": "JP90C00011N6",
+       "trust_fee_pct": "1.5"
+      },
+      "1231100C": {
+       "name": "明治安田セレクト日本株式ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.033,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0000L51",
+       "trust_fee_pct": "1.8"
+      },
+      "35311177": {
+       "name": "GSビッグデータ・ストラテジー(日本株)",
+       "fee_rakuten": null,
+       "fee_min": 0.033,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C000F1R7",
+       "trust_fee_pct": "1.2"
+      },
+      "29312154": {
+       "name": "ニッセイTOPIXインデックスファンド<購入・換金手数料なし>",
+       "fee_rakuten": 0.0,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C000BRT6",
+       "trust_fee_pct": "0.13"
+      },
+      "9Y31813A": {
+       "name": "21世紀東京日本株式ファンド",
+       "fee_rakuten": 0.0,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C0009PE2",
+       "trust_fee_pct": "1.495"
+      },
+      "34311994": {
+       "name": "グローイング・エンジェル",
+       "fee_rakuten": null,
+       "fee_min": 0.033,
+       "retention": true,
+       "nisa_growth": false,
+       "isin": "JP90C00042F7",
+       "trust_fee_pct": "1.7"
+      },
+      "49311026": {
+       "name": "東海3県ファンド",
+       "fee_rakuten": 0.0,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0000JQ8",
+       "trust_fee_pct": "0.98"
+      },
+      "64319241": {
+       "name": "半導体関連日本株式戦略ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C000QBT8",
+       "trust_fee_pct": "1.42"
+      },
+      "79313046": {
+       "name": "大和住銀日本小型株ファンド",
+       "fee_rakuten": 0.0,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0002M58",
+       "trust_fee_pct": "1.52"
+      },
+      "01311842": {
+       "name": "情報エレクトロニクスファンド",
+       "fee_rakuten": 0.022000000000000002,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0002H06",
+       "trust_fee_pct": "1.42"
+      },
+      "01311902": {
+       "name": "スーパートレンドオープン",
+       "fee_rakuten": 0.022000000000000002,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": false,
+       "isin": "JP90C0002PH0",
+       "trust_fee_pct": "0.82"
+      },
+      "79311192": {
+       "name": "アクティブ元年・日本株ファンド",
+       "fee_rakuten": 0.0,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C000HBL4",
+       "trust_fee_pct": "0.98"
+      },
+      "03317004": {
+       "name": "J・エクイティ",
+       "fee_rakuten": 0.027500000000000004,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C0001ED5",
+       "trust_fee_pct": "1.6"
+      },
+      "0431199C": {
+       "name": "新世代成長株ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0003PJ4",
+       "trust_fee_pct": "1.52"
+      },
+      "35312066": {
+       "name": "GS日本株・プラス(通貨分散コース)",
+       "fee_rakuten": 0.038500000000000006,
+       "fee_min": 0.038500000000000006,
+       "retention": false,
+       "nisa_growth": false,
+       "isin": "JP90C0000Z55",
+       "trust_fee_pct": "1.5"
+      },
+      "58311008": {
+       "name": "アムンディ・ターゲット・ジャパン・ファンド",
+       "fee_rakuten": 0.0308,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C00013G6",
+       "trust_fee_pct": "1.7"
+      },
+      "01311151": {
+       "name": "ジャパン・ストラテジック・バリュー",
+       "fee_rakuten": null,
+       "fee_min": null,
+       "retention": true,
+       "nisa_growth": false,
+       "isin": "JP90C000BAP0",
+       "trust_fee_pct": "1.5"
+      },
+      "64311006": {
+       "name": "キャッシュフロー経営評価オープン",
+       "fee_rakuten": 0.022000000000000002,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C0000LE0",
+       "trust_fee_pct": "1.5"
+      },
+      "04314239": {
+       "name": "日本企業PBR向上ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.022000000000000002,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C000Q0U0",
+       "trust_fee_pct": "1.43"
+      },
+      "4731499C": {
+       "name": "ファンド“メガ・テック”",
+       "fee_rakuten": 0.022000000000000002,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0001K28",
+       "trust_fee_pct": "1.5"
+      },
+      "01311002": {
+       "name": "野村国内株式アクティブオープン",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C0003E16",
+       "trust_fee_pct": "1.52"
+      },
+      "4831B987": {
+       "name": "ブラックロック日本小型株オープン",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.033,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0002D42",
+       "trust_fee_pct": "1.63"
+      },
+      "32314239": {
+       "name": "フィデリティ・日本バリューアップ・ファンド",
+       "fee_rakuten": null,
+       "fee_min": 0.033,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C000PXQ0",
+       "trust_fee_pct": "1.415"
+      },
+      "AL312206": {
+       "name": "マネックス・アクティビスト・ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C000KAF2",
+       "trust_fee_pct": "2.0"
+      },
+      "04314065": {
+       "name": "ダイワ金融新時代ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.027500000000000004,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0003KJ5",
+       "trust_fee_pct": "1.52"
+      },
+      "09311143": {
+       "name": "中小型成長株オープン",
+       "fee_rakuten": 0.0,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C000A7B3",
+       "trust_fee_pct": "0.85"
+      },
+      "79314997": {
+       "name": "三井住友DS日本バリュー株ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C0002LS6",
+       "trust_fee_pct": "1.52"
+      },
+      "02311059": {
+       "name": "株ちょファンド日本(高配当株・割安株・成長株)毎月分配型",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": false,
+       "isin": "JP90C0003UP1",
+       "trust_fee_pct": "0.985"
+      },
+      "4731119B": {
+       "name": "One高配当利回り厳選ジャパン",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": false,
+       "nisa_growth": true,
+       "isin": "JP90C000JA42",
+       "trust_fee_pct": "0.999"
+      },
+      "01316967": {
+       "name": "小型ブルーチップオープン",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C0003D90",
+       "trust_fee_pct": "1.52"
+      },
+      "01315164": {
+       "name": "ロボ・ジャパン(円投資型)",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.033,
+       "retention": true,
+       "nisa_growth": false,
+       "isin": "JP90C000D117",
+       "trust_fee_pct": "1.45"
+      },
+      "0331400A": {
+       "name": "三菱UFJ日本株アクティブ・ファンド",
+       "fee_rakuten": 0.033,
+       "fee_min": 0.0,
+       "retention": true,
+       "nisa_growth": true,
+       "isin": "JP90C0000SC9",
+       "trust_fee_pct": "1.5"
+      }
+     },
+     "locked_on": "2026-09-29"
+    }
+   }
+  }
+ },
+ "log": [
+  "indmom: 形成 202608 を確定 ['SMH', 'OIH', 'IBB', 'XLE', 'XLK']",
+  "brand: year=2026 の一覧は未公開（行 100・year の値 [2025]）",
+  "country: 形成 2025-12 を確定 ['NLD', 'JPN', 'GBR', 'FIN', 'SWE']"
+ ],
+ "registration_month_holdings": {
+  "F1_indmom": {
+   "held_during_2026_09（2026-08 末の形成）": [
+    "SMH",
+    "OIH",
+    "IBB",
+    "XLE",
+    "XLK"
+   ],
+   "held_during_2026_10（2026-09 末の形成）": "保留（2026-09-30 の引けの後の最初の --update で確定）"
+  },
+  "F2_brand10": {
+   "formation_2025_11（2025年の一覧・公開 2025-10-15 の翌月末）": {
+    "AAPL": 0.247749,
+    "MSFT": 0.209871,
+    "GOOGL": 0.192257,
+    "AMZN": 0.16831,
+    "META": 0.051842,
+    "KO": 0.031592,
+    "MCD": 0.027903,
+    "CSCO": 0.025619,
+    "NVDA": 0.022714,
+    "ORCL": 0.022144
+   },
+   "held_during_2026_10": "2025-11 末の重みを 2026-09 まで値動きで流したもの（2026年の一覧が 2026-10 に観測されれば 2026-10 末に組み替え）"
+  },
+  "F5_country": {
+   "formation_2025_12": [
+    "NLD",
+    "JPN",
+    "GBR",
+    "FIN",
+    "SWE"
+   ],
+   "dy_pct": {
+    "AUS": 3.211,
+    "BEL": 1.737,
+    "CHE": 1.706,
+    "DEU": 1.598,
+    "ESP": 2.27,
+    "FRA": 2.627,
+    "GBR": 3.729,
+    "ITA": 2.805,
+    "JPN": 4.523,
+    "NLD": 5.032,
+    "SWE": 3.272,
+    "DNK": 2.786,
+    "FIN": 3.398,
+    "NOR": 2.953,
+    "USA": 1.068
+   }
+  },
+  "F4_RSST": {
+   "held": {
+    "RSST": 1.0
+   }
+  },
+  "F3_jpX1": {
+   "held_during_2026_09": {
+    "n_JP": 71,
+    "n_JP_rakuten": 58,
+    "selection_month": 202509
+   },
+   "selection_2026_09（2026-10〜2027-09 に持つ）": "保留（2026-09-30 の基準価額が出た後の最初の --update で確定）"
+  }
+ },
+ "design_recheck_vs_prereg": {},
+ "power": {
+  "F1_indmom_vs_SPY": {
+   "sigma_d": 7.812,
+   "lambda": 4.916,
+   "B": 0.095,
+   "mu_d": 3.0,
+   "family_line": 60.0,
+   "hist_months_bootstrapped": 301,
+   "by_true_edge_pct": {
+    "0": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.001,
+      "20y": 0.007
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.001
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.001,
+      "10y": 0.03,
+      "20y": 0.258
+     },
+     "oracle_years_6_over_IR2": null
+    },
+    "0.5": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.003,
+      "20y": 0.016
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.002
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.017,
+      "20y": 0.17
+     },
+     "oracle_years_6_over_IR2": 1464.7
+    },
+    "1": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.004,
+      "20y": 0.029
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.004
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.009,
+      "20y": 0.105
+     },
+     "oracle_years_6_over_IR2": 366.2
+    },
+    "2": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.001,
+      "10y": 0.01,
+      "20y": 0.1
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.001,
+      "20y": 0.022
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.002,
+      "20y": 0.031
+     },
+     "oracle_years_6_over_IR2": 91.5
+    },
+    "3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.002,
+      "10y": 0.035,
+      "20y": 0.241
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.003,
+      "20y": 0.072
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.007
+     },
+     "oracle_years_6_over_IR2": 40.7
+    }
+   },
+   "edge_needed_for_50pct_family_line_by_pct_per_year": {
+    "5y": 19.0,
+    "10y": 10.0,
+    "20y": 5.5
+   }
+  },
+  "F1b_indmom_vs_QQQ": {
+   "sigma_d": 13.366,
+   "lambda": 0.56,
+   "B": 0.155,
+   "mu_d": 1.0,
+   "family_line": 60.0,
+   "hist_months_bootstrapped": 301,
+   "by_true_edge_pct": {
+    "0": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": null
+    },
+    "0.5": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 4287.6
+    },
+    "1": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 1071.9
+    },
+    "2": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 268.0
+    },
+    "3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 119.1
+    }
+   },
+   "edge_needed_for_50pct_family_line_by_pct_per_year": {
+    "5y": ">30",
+    "10y": ">30",
+    "20y": ">30"
+   }
+  },
+  "F2_brand10_vs_SPY": {
+   "sigma_d": 8.917,
+   "lambda": 1.93,
+   "B": 0.105,
+   "mu_d": 1.535,
+   "family_line": 60.0,
+   "hist_months_bootstrapped": 227,
+   "by_true_edge_pct": {
+    "0": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": null
+    },
+    "0.5": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 1908.3
+    },
+    "1": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 477.1
+    },
+    "2": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.001
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 119.3
+    },
+    "3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.002
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 53.0
+    }
+   },
+   "edge_needed_for_50pct_family_line_by_pct_per_year": {
+    "5y": ">30",
+    "10y": 22.5,
+    "20y": 11.5
+   }
+  },
+  "F2b_brand10_vs_QQQ": {
+   "sigma_d": 8.553,
+   "lambda": 1.367,
+   "B": 0.1,
+   "mu_d": 1.0,
+   "family_line": 60.0,
+   "hist_months_bootstrapped": 227,
+   "by_true_edge_pct": {
+    "0": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": null
+    },
+    "0.5": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 1755.7
+    },
+    "1": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 438.9
+    },
+    "2": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 109.7
+    },
+    "3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 48.8
+    }
+   },
+   "edge_needed_for_50pct_family_line_by_pct_per_year": {
+    "5y": ">30",
+    "10y": ">30",
+    "20y": 16.5
+   }
+  },
+  "F3_jpX1_rakuten_vs_TOPIX": {
+   "sigma_d": 5.946,
+   "lambda": 4.95,
+   "B": 0.07,
+   "mu_d": 1.75,
+   "family_line": 60.0,
+   "hist_months_bootstrapped": 227,
+   "by_true_edge_pct": {
+    "0": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.001
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.001,
+      "20y": 0.044
+     },
+     "oracle_years_6_over_IR2": null
+    },
+    "0.5": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.002
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.014
+     },
+     "oracle_years_6_over_IR2": 848.5
+    },
+    "1": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.001,
+      "20y": 0.008
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.003
+     },
+     "oracle_years_6_over_IR2": 212.1
+    },
+    "2": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.003,
+      "20y": 0.065
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.005
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 53.0
+    },
+    "3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.013,
+      "20y": 0.258
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.046
+     },
+     "median_years_to_family_line": 36.8,
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 23.6
+    }
+   },
+   "edge_needed_for_50pct_family_line_by_pct_per_year": {
+    "5y": 18.0,
+    "10y": 9.5,
+    "20y": 5.0
+   }
+  },
+  "F3b_jpX1_all_vs_TOPIX": {
+   "sigma_d": 5.946,
+   "lambda": 4.95,
+   "B": 0.07,
+   "mu_d": 1.75,
+   "family_line": 60.0,
+   "hist_months_bootstrapped": 227,
+   "by_true_edge_pct": {
+    "0": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.045
+     },
+     "oracle_years_6_over_IR2": null
+    },
+    "0.5": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.003
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.014
+     },
+     "oracle_years_6_over_IR2": 848.5
+    },
+    "1": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.009
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.003
+     },
+     "oracle_years_6_over_IR2": 212.1
+    },
+    "2": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.001,
+      "20y": 0.063
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.005
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 53.0
+    },
+    "3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.01,
+      "20y": 0.26
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.045
+     },
+     "median_years_to_family_line": 36.8,
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 23.6
+    }
+   },
+   "edge_needed_for_50pct_family_line_by_pct_per_year": {
+    "5y": 18.5,
+    "10y": 9.5,
+    "20y": 5.0
+   }
+  },
+  "F4_RSST_vs_SPY": {
+   "sigma_d": 11.26,
+   "lambda": 2.366,
+   "B": 0.135,
+   "mu_d": 3.0,
+   "family_line": 40.0,
+   "hist_months_bootstrapped": 87,
+   "by_true_edge_pct": {
+    "0": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.004
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.002,
+      "20y": 0.051
+     },
+     "oracle_years_6_over_IR2": null
+    },
+    "0.5": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.006
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.001,
+      "20y": 0.03
+     },
+     "oracle_years_6_over_IR2": 3042.9
+    },
+    "1": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.009
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.001
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.001,
+      "20y": 0.018
+     },
+     "oracle_years_6_over_IR2": 760.7
+    },
+    "2": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.023
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.004
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.007
+     },
+     "oracle_years_6_over_IR2": 190.2
+    },
+    "3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.002,
+      "20y": 0.055
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.014
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.003
+     },
+     "oracle_years_6_over_IR2": 84.5
+    }
+   },
+   "edge_needed_for_50pct_family_line_by_pct_per_year": {
+    "5y": ">30",
+    "10y": 17.0,
+    "20y": 9.0
+   }
+  },
+  "F5_countryDY_vs_ACWI": {
+   "sigma_d": 7.998,
+   "lambda": 2.29,
+   "B": 0.095,
+   "mu_d": 1.465,
+   "family_line": 40.0,
+   "hist_months_bootstrapped": 212,
+   "by_true_edge_pct": {
+    "0": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": null
+    },
+    "0.5": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 1535.2
+    },
+    "1": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.001
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 383.8
+    },
+    "2": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.001
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 96.0
+    },
+    "3": {
+     "p_cross20_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.005
+     },
+     "p_cross_family_line_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.001
+     },
+     "median_years_to_family_line": ">40",
+     "p_futility_by": {
+      "3y": 0.0,
+      "5y": 0.0,
+      "10y": 0.0,
+      "20y": 0.0
+     },
+     "oracle_years_6_over_IR2": 42.6
+    }
+   },
+   "edge_needed_for_50pct_family_line_by_pct_per_year": {
+    "5y": ">30",
+    "10y": 17.5,
+    "20y": 9.0
+   }
+  }
+ },
+ "sanity": {
+  "F1_vs_nx_indmom_real_P2": {
+   "this_tool_gross_2001_08_2026_08": {
+    "from": 200108,
+    "to": 202608,
+    "years": 25.1,
+    "ex_ann": 3.09,
+    "t": 2.16,
+    "p": 0.0307,
+    "cagr_s": 12.95,
+    "cagr_b": 9.58,
+    "cagr_diff": 3.37,
+    "te": 7.81,
+    "ir": 0.4,
+    "beta": 0.88,
+    "vol_s": 15.2,
+    "vol_b": 14.9
+   },
+   "nx_indmom_real_reported": {
+    "cagr_diff": 3.37,
+    "ex_ann": 3.09,
+    "t": 2.16,
+    "te": 7.81,
+    "months": 301
+   },
+   "note": "nx_indmom_real は月足の凍結の抽出・ここは今日の日足の月末（配当の調整の差が出うる）"
+  },
+  "F3_vs_nx_jpfunds_X1_JP": {
+   "this_tool_gross": {
+    "from": 200710,
+    "to": 202608,
+    "years": 18.9,
+    "ex_ann": 3.5,
+    "t": 3.12,
+    "p": 0.0018,
+    "cagr_s": 10.76,
+    "cagr_b": 7.07,
+    "cagr_diff": 3.69,
+    "te": 5.95,
+    "ir": 0.59,
+    "beta": 0.97,
+    "vol_s": 17.6,
+    "vol_b": 17.1
+   },
+   "nx_jpfunds_PH9_reported": {
+    "ex_ann": 3.5,
+    "t": 3.12,
+    "te": 5.95,
+    "cagr_diff": 3.69,
+    "months": 227
+   },
+   "n_held_2025_JP": 71
+  },
+  "F2_top10_history_design_only": {
+   "vs_SPY": {
+    "from": 200710,
+    "to": 202608,
+    "years": 18.9,
+    "ex_ann": 3.88,
+    "t": 2.05,
+    "p": 0.0405,
+    "cagr_s": 14.83,
+    "cagr_b": 10.91,
+    "cagr_diff": 3.92,
+    "te": 8.92,
+    "ir": 0.43,
+    "beta": 1.0,
+    "vol_s": 17.9,
+    "vol_b": 15.6
+   },
+   "vs_QQQ": {
+    "from": 200710,
+    "to": 202608,
+    "years": 18.9,
+    "ex_ann": -1.13,
+    "t": -0.9,
+    "p": 0.3663,
+    "cagr_s": 14.83,
+    "cagr_b": 15.88,
+    "cagr_diff": -1.05,
+    "te": 8.55,
+    "ir": -0.13,
+    "beta": 0.84,
+    "vol_s": 17.9,
+    "vol_b": 19.0
+   },
+   "nx_brand_P2_all_US_reported": {
+    "cagr_diff": 3.1,
+    "ex_ann": 3.07,
+    "te": 6.19
+   },
+   "note": "上位10社版は歴史の角度で測っていない形（課題文の実装できる版）。設計のぶれを出すためだけに作った＝この数字で規則を選んでいない（規則は課題文が先に決めた）"
+  },
+  "F5_history_design_only": {
+   "vs_ACWI": {
+    "from": 200901,
+    "to": 202608,
+    "years": 17.7,
+    "ex_ann": -1.8,
+    "t": -1.06,
+    "p": 0.2874,
+    "cagr_s": 8.93,
+    "cagr_b": 11.65,
+    "cagr_diff": -2.72,
+    "te": 8.0,
+    "ir": -0.23,
+    "beta": 1.15,
+    "vol_s": 19.4,
+    "vol_b": 15.5
+   },
+   "annual_check_vs_equal_etfs": {
+    "from": 1997,
+    "to": 2025,
+    "n": 29,
+    "ex_ann": -0.39,
+    "cagr_diff": -0.73,
+    "nx_jst_reported": {
+     "ex_ann": -0.39,
+     "cagr_diff": -0.73,
+     "from": 1997,
+     "to": 2025,
+     "n": 29
+    },
+    "note": "nx_jst は PGAL（ポルトガル）を含む16本・月足・分配は Yahoo の月足の events。ここは PGAL が Yahoo から消えた15本・日足"
+   }
+  },
+  "F4_design_series": {
+   "rsst_minus_spy": {
+    "n": 35,
+    "sd_ann_pct": 10.558,
+    "from": 202310,
+    "to": 202608
+   },
+   "dbmf_minus_bil": {
+    "n": 87,
+    "sd_ann_pct": 11.26,
+    "from": 201906,
+    "to": 202608
+   }
+  },
+  "spy_vs_french_mkt": {
+   "from": 199302,
+   "to": 202608,
+   "corr": 0.9874
+  }
+ },
+ "ci_suggestion": "ops.yml（毎月2日）に2か所: (1) steps に1段 `- name: 前向きの検定（nx_forward・判定に不使用）` / `continue-on-error: true` / `run: timeout 1800 python3 night/nx_forward.py --update | tail -14`（日本の投信の選び直しの月＝10月は約500本の基準価額を取るので 15分前後）。(2) 最後の `ccf_git_add ...` の行の末尾に `out/nx_forward.json` を足す（足さないと『回っているのに残らない』）",
+ "tool_sha256": "d828b68ff7f2249897bbd8c06543a2b944ab49ca57852f72d9bfa0e4ef684974",
+ "tool_sha256_matches_prereg": true,
+ "runtime_s": 38.5,
+ "generated": "2026-09-29"
+}

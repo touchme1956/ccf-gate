@@ -114,7 +114,33 @@ def _sht_blank():
     return (blank == 0), f"sht が空欄: {blank}/{tot}社（空欄は門が 'flat' に化かす）"
 
 
+def _p4_rubric_mismatch():
+    """p4（会計健全）が正本の刻みと合わないパック（2026-09-29新設・検査役の指摘「題の『154社』を機械が見張っていない」）。
+    刻みは門の刻みの写し night/omega_retro_judg.p4_of(accr) をそのまま呼ぶ（二重実装しない）。p4・accr のどちらかが
+    数でない社は数えない（todo の数え方と同じ）。再審査が進むと数が動く＝件数のずれの検査が拾う"""
+    if os.path.join(ROOT, "night") not in sys.path:
+        sys.path.insert(0, os.path.join(ROOT, "night"))
+    from omega_retro_judg import p4_of
+    n = strict = loose = 0
+    for t, x in packs():
+        d = x.get("data") or x
+        try:
+            p4, accr = float(d.get("p4")), float(d.get("accr"))
+        except (TypeError, ValueError):
+            continue
+        g, _ = p4_of(accr)
+        if g is None or p4 == g:
+            continue
+        n += 1
+        if p4 < g:
+            strict += 1
+        else:
+            loose += 1
+    return (n == 0), f"p4 が正本の刻みと合わない: {n}社（刻みより厳しい {strict}・甘い {loose}）"
+
+
 CHECKS = {
+    "p4_rubric_mismatch_0929": _p4_rubric_mismatch,
     "nde_kill_monotonicity": _nde_monotonic,
     "single_year_25":        _single_year,
     "vfail_worklist_5":      _vfail_promotion,
@@ -240,13 +266,21 @@ def main():
             exc.append({"t": t, "問題": "todo_list.json にあるが gate_exceptions.json に無い＝"
                                         "門のⅥが名指しせず按分にも入らない（黙って消える・v9.9.52型）"})
 
+    # (5) owner の値（2026-09-29新設・検査役の指摘）。📋今日（night/today.py）は owner で人／審査／道具／穴に割り、
+    #   空欄は『人』として数える。**それ以外の値は誰の欄にも数えられず、黙って見えなくなる**
+    #   （実害: p4_rubric_mismatch_0929 が owner 'ユーザー' で『あなたの決断』に1件も数えられていなかった）。
+    #   enqueue_reaudit.py が待ち行列へ流すのも owner '審査' だけ。表示だけ（CI を落とさない）
+    known_owners = {"人", "審査", "道具", "穴"}
+    owner_bad = [{"id": i.get("id"), "owner": i.get("owner"), "title": i.get("title", "")[:60]}
+                 for i in open_items if (i.get("owner") or "") not in known_owners | {""}]
+
     doc = {"generated": __import__("datetime").date.today().isoformat(),
            "note": "todo_list.json（人の作業と判断の正本）自身の健康診断。"
                    "**判定も値も変えない。** 総花的な陳腐化検出ではなく、"
                    "**id ごとに『何を測れば決着するか』を明示した検査**だけを持つ（測れないものは測らない）。",
            "open": len(open_items), "checked": len(CHECKS),
            "resolved": resolved, "drifted": drifted, "duplicates": dup, "duplicates_maybe": dup_maybe,
-           "gate_exception_mismatch": exc, "notes": notes}
+           "gate_exception_mismatch": exc, "owner_unknown": owner_bad, "notes": notes}
     if AS_JSON:
         json.dump(doc, open("out/todo_audit.json", "w", encoding="utf-8"),
                   ensure_ascii=False, indent=1)
@@ -271,6 +305,10 @@ def main():
           + ("（gate_exceptions.json と todo_list.json は互いを参照しない）" if exc else "  ✓ 一致"))
     for r in exc:
         print(f"   ⚠ {r['t']}: {r['問題']}")
+    print(f"\n▶ **担当(owner)の値が今日の画面のどの欄にも入らない** {len(owner_bad)}件"
+          + ("" if owner_bad else "  ✓ すべて 人／審査／道具／穴／空欄（＝人）"))
+    for r in owner_bad:
+        print(f"   ⚠ {r['id']}: owner={r['owner']!r} → 人／審査／道具／穴のどれかへ（空欄は人）　{r['title']}")
     if notes:
         print(f"\n▶ 測れなかったもの {len(notes)}件")
         for r in notes:

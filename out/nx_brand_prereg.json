@@ -1,0 +1,591 @@
+{
+ "generated": "2026-09-28",
+ "angle": "nx_brand",
+ "title": "外部の格付けの一覧（ブランド価値・賞賛される会社・革新的な会社）に載った会社を、公開の後に買う",
+ "question": "Interbrand『Best Global Brands』（世界のブランド価値の上位100）・Fortune『World's Most Admired Companies』（経営者・アナリストが選ぶ賞賛される会社 All-Stars 50）・Forbes『World's Most Innovative Companies』（革新の上乗せ上位100）の一覧に載った会社の株を、一覧が公開された後の最初の月末に買って次の一覧まで持つと、市場（SPY ≒ S&P500、または先進国の市場）に勝てるか。一覧は当時の原本だけで組み（今のデータベースに残った生き残りでは組まない）、規則・相手・費用・格付けを測る前にここで固定する",
+ "asked_by": "ユーザー「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して。限界までやって途中報告を入れながら結果が出るまで分析を止めずに。トークンの限界までやってほしい。今まではそんなものはないという報告で終わってたけどそれはなしで探し続ける努力をしてほしい。今別のSessionでこの内容を2つ回してる。別のSessionで検証していない新たな分析を同じ内容でしてほしい」（2026-09-28）。全体の事前登録 out/nx_prereg.json の wave2 の nx_brand",
+ "registered_before_measuring": true,
+ "global_prereg": "out/nx_prereg.json（criteria_short_sample・誠実さの約束）。統計と格付けは night/nx_common.py の excess_stats / holm / p_one / grade_short / apply_cost をそのまま使う",
+ "tools": {
+  "data": "night/nx_brand_data.py（一覧の取得と対応表づくりだけ・株価は取らない）→ out/_nx_cache/nx_brand_lists.json（gitignore）",
+  "lists_sha256": "037a5b6c3b6b5d88dfa3a64b3a5ce9861759f02aa333c2b867555a22e883b434",
+  "lists_sha256_how": "nx_brand_data.lists_sha(): Interbrand の各年の (順位, 名前, 親会社)・買う月・持つ最後の月、WMAC の (名前, All-Star 順位, 業種内順位, 記号, 米国か)・買う月、Forbes の (順位, 名前, 国)・買う月 を sort_keys・区切り詰めで直列化した sha256。測る道具は最初にこの値と一致するかを確かめ、違えば止まる（一覧や対応表を結果を見てから作り直していないことの証明）",
+  "measure": "night/nx_brand.py（これから書く）→ out/nx_brand.json。試したものは全部 tested に残す"
+ },
+ "stance_before_results": "測定器。門・採点・四関門・席・配分・売却規律には入れない。線（criteria_short_sample）は結果を見て動かさない。一覧・対応表・公開日・買う月・重み・相手・費用はこの登録で固定し、測った後に変えたらそれは『事後』と明記して格付けに使わない。負けも全部記録する",
+ "why_new": {
+  "difference": "並走中の他セッションは、因子・時期選び・配分（eknzbh の mw_*）、出来事と売買の主体（hbm38n の ev5_*: Berkshire の 13F・13F の最良の考え・スピンオフ・S&P500 から外された会社・働きがいのある会社100）、41系統の因子と配分（q07leu）を扱っている。『外部の第三者が公表した会社の格付けの一覧』を買いの信号にする角度は、hbm38n の『働きがいのある会社100』（従業員の満足）だけで、ブランド価値（Interbrand）・経営者の評判（Fortune WMAC）・革新の上乗せ（Forbes）は誰も扱っていない。2026-09-28 に origin の eknzbh・hbm38n・q07leu の枝の night/*.py・out/*prereg* を interbrand・most admired・brandz・innovative compan・best global brands・acsi で grep して1件も無いことを確かめた",
+  "relation_to_main": "main の過去の検証（CLAUDE.md）には、Morningstar の堀の評価に基づく MOAT ETF の実績（設定来で SPY に年 −0.6%）と、質の ETF の実績がある。ブランド価値や評判の一覧は、同じ『見えない資産・堀』を別の第三者の物差しで測るもので、堀（irr/dom）とは入力が違う",
+  "not_wmac_as_workplace": "Fortune の『100 Best Companies to Work For』（hbm38n E5）とは別の一覧（World's Most Admired Companies は経営者・取締役・アナリストの投票による会社の評判）。WMAC は使うが Best Companies は使わない"
+ },
+ "data": {
+  "interbrand_best_global_brands": {
+   "what": "Interbrand が毎年秋に公表する世界のブランド価値の上位100（2000〜）。ブランドの値は Interbrand の評価（財務の予想・ブランドの役割・ブランドの強さ）で、百万ドル",
+   "primary_sources": [
+    "Interbrand 自身の API: https://interbrand.com/api/getBrandData/?region=global&first=100&url=/best-global-brands/global/&year={年}（2020〜2025 は100そろう）",
+    "Interbrand の報告書 PDF の原本（Adobe InDesign 製・作成日つき。rankingthebrands.com/PDF/ に置かれた写しを取得: 2007〜2014・2016・2018・2019）",
+    "Interbrand の PR Newswire の発表（2010・2012 は100行の表つき。発表日も）",
+    "掲載ブランドの会社自身の発表（Honda 2014・Toyota 2016・Samsung の報道発表一覧 2018/2022）は公開日の出所としてだけ"
+   ],
+   "survivor_bias_found": "★Interbrand の今の API は、2019年以前の年について**今のデータベースに残っているブランドしか返さない**（2000年 41/100・2005年 65/100・2010年 74/100・2015年 86/100・2019年 96/100。Nokia・Marlboro・AT&T・Motorola は getBrandHistory でも空）。そのまま使うと、後に一覧から消えた（多くは株価も沈んだ）ブランドが抜けた＝**後知恵の一覧**になる。Kantar BrandZ のページに埋め込まれた履歴も同じ（2026年の上位100の過去だけ）",
+   "reconstruction": "API の生き残りに、抜けた順位を原本で足す。報告書の表はロゴ（画像）で名前が文字にない年が多いので、抜けた順位の名前は rankingthebrands.com の一覧を**手がかり（finding aid）にだけ**使い、(a) 原本 PDF の本文にその名前（別名）と価値の数字（±2百万ドル）がそろって出る（pdf_name_value）、または (b) 原本 PDF の表の100個の価値を大きい順に並べた順位と価値が手がかりと一致する（pdf_grid_value）ことで確かめた。確かめられない行は0（全17年で100行そろった）。二次の寄せ集めの一覧で代えてはいない（名前の札以外はすべて原本の数字）",
+   "rows_by_source_all_used_years": "17年×100＝1,700行のうち api（Interbrand の API）1,329行・prn（PR Newswire の表）200行・pdf_name_value 156行・pdf_grid_value 15行（2016 の9・2018 の4・2019 の2。名前はロゴ）",
+   "years_obtained": "完全な100の一覧が 17年分（2007・2008・2009・2010・2011・2012・2013・2014・2016・2018・2019・2020・2021・2022・2023・2024・2025）。2015・2017 は原本の PDF の写しが無く API も 86/92 ＝使わない（前の一覧を持ち続ける）。2000〜2006 は原本（BusinessWeek 掲載・Interbrand の PDF）が取れない＝使わない（生き残りの API の一覧は後知恵の対照としてだけ報告）",
+   "api_errors_found": "2016年の API は Oracle を16位（原本の表では17位・16位は Cisco）としている＝順位の誤り1件（どちらも一覧には入っているので顔ぶれは変わらない。価値は原本の表の値を使う）",
+   "shape": "親会社（非上場を除く）は全17年で149社、そのうち米国版（普通株の主な上場が NYSE/Nasdaq）は81社。1年あたりの米国の親会社で Yahoo の記号の候補があるもの 41〜48社、全体 78〜87社。非上場（Chanel・IKEA・LEGO・Rolex・Armani・Red Bull・Huawei・Prada 2011年以前・Wrigley 2008年以後 等）のブランド価値の割合 0.9〜3.1%。上場していたのに Yahoo に値が無い見込みの親会社（Dell 2007-2013・Heinz 2007-2012・Yahoo! 2007-2012・Tiffany 2007-2020・Viacom〔MTV〕2007-2016・Merrill Lynch・Anheuser-Busch 2007-2008・Wrigley・Kodak・Hertz・Reuters 2007・Burger King 2009・Grupo Modelo 2010-2012）のブランド価値の割合は 2007年 6.7% → 2013年 1.2% → 2019年以後 0%",
+   "survivorship_of_prices": "一覧は当時の原本なので選び方に生き残りの偏りは無い。株価は Yahoo の現存銘柄が中心で、上場廃止した親会社の値が無い＝下の lower_bound（途切れた月に −30%）と neutral（相手と同じリターン）で挟む"
+  },
+  "fortune_wmac": {
+   "what": "Fortune『World's Most Admired Companies』。約3,000〜3,800人の経営者・取締役・アナリストの投票で、業種ごとの順位（honorable mentions＝候補・約320〜355社）と全体の All-Stars 50（順位つき）",
+   "primary_source": "https://fortune.com/ranking/worlds-most-admired-companies/{年}/ のページに埋め込まれた一覧（franchiseSearch.items）と、各社の Fortune の会社ページ https://fortune.com/company/{slug}/ の Ticker・取引所・会社の種類・国・脚注（買収された日）",
+   "years_obtained": "13年分（2014〜2026）。2013年以前は同じ URL が 404（CNN Money の旧ページは 503）＝使わない",
+   "completeness": "消えた会社（Starwood・EMC・DirecTV・St. Jude Medical・Whole Foods 等）も当時の一覧に残っている＝生き残りの選び方ではない。社名は今の名前に書き換えられている（Google → Alphabet、GE → GE Aerospace、Facebook → Meta）が会社の対応は同じ",
+   "industry_rank": "業種内の順位（Industry Rank）は 2016〜2026 だけ（2014・2015 のページには無い）",
+   "shape": "All-Stars は 49〜51社（同順位あり）、うち米国（本社）41〜45社、そのうち記号あり 39〜43社。候補の米国の会社 188〜208社（記号あり 174〜189社）。業種 45〜54"
+  },
+  "forbes_innovative": {
+   "what": "Forbes『World's Most Innovative Companies』（2011〜2018）。Credit Suisse HOLT の『innovation premium（今の事業の現在価値を超える時価の割合）』で並べた上位100＝実質は市場の評価（高いバリュエーション）で選んだ一覧",
+   "primary_source": "https://www.forbes.com/forbesapi/org/innovative-companies/{年}/position/true.json?limit=200",
+   "years_obtained": "7年分（2012〜2018）。2011年は 69/100 しか返らない＝使わない。2015年は 99/100（96位が1社抜け）",
+   "mapping": "米国の会社だけを使う（1年 39〜51社）。記号は SEC の company_tickers.json（今の上場会社・User-Agent は hachimon_fetch.py の HDRS と同じ形）と名前で合わせ、合わないものは手の表 FORBES_US_MANUAL（上場廃止は None）。記号あり 28〜47社"
+  },
+  "not_used": {
+   "kantar_brandz": "一次（kantar.com）の履歴は 2026年の上位100の過去だけ＝生き残り。報告書はフォーム登録。原本 PDF の写しは 20年のうち10年分だけ＝使わない",
+   "acsi": "theacsi.org / theacsi.com が 403＝使わない（二次で代えない）",
+   "fortune_best_companies_to_work_for": "hbm38n の E5 が扱う＝重ねない",
+   "interbrand_2000_2006": "原本が取れない（web.archive.org は接続が切られる・businessweek.com は 403）"
+  },
+  "prices": {
+   "source": "Yahoo の月次の調整後終値（配当込み・nx_common.yahoo(記号, '1mo')）。記号は対応表の候補を先頭から試し、買う月の値がある最初のものを使う（データの有無で選ぶのは後知恵ではないが、Yahoo が生き残りに偏っていることは下の known_limits）",
+   "fx": "米国外の記号は現地通貨のリターンを Yahoo の為替（{通貨}USD=X の月末値、無ければ USD{通貨}=X の逆数）でドルに直す: r_usd = (1+r_local)×(FX_t/FX_{t−1}) − 1。ロンドンのペンス建ては比率なので影響しない",
+   "delisted_fallback": "上場廃止で Yahoo に値の無い米国の親会社は、Alpha Vantage の月次調整後（TIME_SERIES_MONTHLY_ADJUSTED）を当時の記号（OLD_TICKER）で当たる。記号が別会社に再利用されたもの（BUD・DELL・HTZ・DD）は使わず、系列の最後の月が OLD_TICKER の上場廃止月と ±1か月で一致するときだけ採用。それでも無ければ下の missing の約束",
+   "period": "2007-08（最初の買い）〜2026-08（French と揃える。2026-09 は月の途中で使わない）"
+  }
+ },
+ "criteria": {
+  "which": "criteria_short_sample（out/nx_prereg.json）。一覧のデータが 2007年（Interbrand）・2014年（WMAC）・2012年（Forbes）からで、訓練15年を取れないため",
+  "grade_call": "nx_common.grade_short(full, first_half, second_half, drop_top, cost_full, lower_bound, family_holm_p_one)",
+  "definitions": {
+   "full": "費用前の規則の月次リターン − 相手の月次リターン（同じ月だけ）を、評価の全期間で excess_stats（NW ラグ12）。片側 p = p_one(t)",
+   "first_half_second_half": "評価の月を数で半分に分ける（奇数なら後半に1か月多く）。Interbrand 2007-09〜2017-02 / 2017-03〜2026-08（各114か月）、WMAC 2014-06〜2020-06 / 2020-07〜2026-08、Forbes 2012-10〜2016-01 / 2016-02〜2019-05。それぞれの幾何の年率差（cagr_diff）が正か",
+   "drop_top": "評価の全期間での寄与 Σ_t w_{i,t−1}·(r_{i,t} − r_{b,t}) が最大の1社（親会社）を全期間から除き（残りで重みを割り直す）、cagr_diff が正か",
+   "cost_full": "費用後の全期間の cagr_diff が正か",
+   "lower_bound": "上場廃止・値が無い親会社を『途切れた月に −30%・以後0%（現金）』とした版の全期間の cagr_diff が正か（hbm38n の ev5 と同じ）",
+   "holm": "主の族4本の片側 p で Holm（α=0.05）。探索の族12本は探索の中で別に Holm（格付けはするが『探索』と明記）"
+  },
+  "c5_independent_unit": "短い標本の格付けに C5 は無い。代わりに報告として、同じ『一覧に載った会社を買う』を3つの独立の一覧（Interbrand・Fortune WMAC・Forbes）と2つの地域（米国・米国外の会社）で並べ、同じ向きに出るかを見る（格付けには使わない）",
+  "cost_assumption": "年1回（次の一覧の月）に目標の重みへ戻す。片道の回転 = ½Σ|新しい重み − 持っていた重みをその月までのリターンで流した重み|（最初の買いは1）。費用は片道の回転100%あたり 米国版 0.20%（ev5 と同じ）・米国外を含む版 0.30%（為替・ADR のスプレッド込みの目安）。感度として 米国版 0.495%（楽天証券の米国株の手数料率）・米国外を含む版 0.60% も報告。税は入れない（課税口座なら売った利益の20.315%）",
+  "missing_rules": {
+   "base": "買う月に値の無い親会社は除いて残りで割り直す（ev5 と同じ）。持っている間に系列が途切れたら、その月末で現金（0%）にして次の買い直しまで持つ",
+   "lower_bound": "買う月に値の無い（上場していた）親会社も重みに入れ、最初の月に −30%・以後0%。持っている間に途切れたら途切れた月に −30%・以後0%",
+   "neutral": "値の無い親会社・途切れた後の月は相手（SPY または French Developed）と同じリターン（報告のみ）",
+   "private": "非上場の親会社（PRIVATE）は買えないので、どの版でも母集団から外す（生き残りの問題ではない）"
+  },
+  "spin_offs": "対応表の EVENTS（Altria→PMI 2008-03・eBay→PayPal 2015-07・HP→HPE 2015-11・Yum→Yum China 2016-11・GE→GEHC 2023-01/GEV 2024-04 ほか19件）の月は、Yahoo の調整後終値が分離を反映しているかを終値との比で確かめる。反映していなければ、分離の比率を一次の出所（SEC の 8-K・Form 10 の情報書、米国外は会社の発表）で確かめ、親会社＋受け取った株の価値でその月のリターンを作り、受け取った株は翌月末に売って親会社に戻す。比率が確かめられなければ、その銘柄のその月を値の無い月として missing の約束に回す",
+  "outliers": "月次リターンが +100% 超か −60% 未満の月は一覧にして日次（interval='1d'）と突き合わせ、データの誤りと確かめられたときだけ値の無い月として扱う（結果を見て規則を変えるのではなく、データの誤りの訂正）"
+ },
+ "families": {
+  "common": {
+   "timing": "買う月 M = 公開日の月（公開日がその月の最終日なら翌月）。M の月末の終値で買い、M+1 月から、次の一覧の買う月の月末まで持つ（その月のリターンまで）。最後の一覧はデータの終わり（2026-08）まで。Forbes は 2018年で一覧が終わったので最後は12か月（2019-05 まで）",
+   "universe_us": "米国版 = 親会社の普通株の主な上場が NYSE/Nasdaq（本社が米国の上場会社と、Accenture・Spotify のように NYSE だけに上場する会社）。Interbrand は対応表 P の us、WMAC は Fortune の国が米国＋Accenture、Forbes は国が United States/USA",
+   "universe_global": "全体版 = 上場している親会社すべて（米国外は現地の上場か米国の ADR をドルに直す）",
+   "unit": "同じ親会社の複数のブランド（P&G の Gillette と Pampers、LVMH の Louis Vuitton・Hennessy・Moët・Sephora 等）は1社として持つ",
+   "weights_ew": "買う月に親会社を等分。持っている間は重みを流す（毎月は戻さない）",
+   "weights_bvw": "買う月に親会社の重み ∝ その一覧でのそのブランド価値の合計（Interbrand の百万ドル。PDF の表から取った行は原本の値）",
+   "rebalance": "次の一覧の買う月に目標の重みへ戻す（入れ替えを含む）"
+  },
+  "primary": {
+   "role": "主の族（格付けする・Holm はこの4本で）",
+   "P1_IB_US_EW": {
+    "list": "Interbrand 17年分（2015・2017 は持ち越し）",
+    "universe": "米国版",
+    "weights": "等分",
+    "benchmark": "SPY（Yahoo 調整後終値）",
+    "window": "2007-09〜2026-08",
+    "paper": "Madden, Fehle & Fournier (2006) の再現（公表後の標本）"
+   },
+   "P2_IB_US_BVW": {
+    "list": "同上",
+    "universe": "米国版",
+    "weights": "ブランド価値の加重",
+    "benchmark": "SPY",
+    "window": "2007-09〜2026-08",
+    "note": "ブランド価値が大きいほど多く持つ＝『ブランドの量』の用量反応。★Apple・Google・Microsoft・Amazon・Coca-Cola に重みが集まる（contamination を見よ）"
+   },
+   "P3_IB_GL_EW": {
+    "list": "同上",
+    "universe": "全体版（米国外を含む・ドル建て）",
+    "weights": "等分",
+    "benchmark": "Ken French の Developed 市場（Developed_3_Factors の Mkt-RF + RF・ドル建て・総リターン）",
+    "window": "2007-09〜2026-08",
+    "note": "一覧そのものが世界の一覧なので、相手も世界（米国と米国外の国の差を『ブランド』の差と読まないため）。SPY との比較は報告"
+   },
+   "P4_WMAC_US_EW": {
+    "list": "Fortune WMAC の All-Stars（順位 1〜50）13年分",
+    "universe": "米国版",
+    "weights": "等分",
+    "benchmark": "SPY",
+    "window": "2014-06〜2026-08",
+    "paper": "Anderson & Smith (2006) の向き（賞賛される会社が勝つ）"
+   }
+  },
+  "exploratory": {
+   "role": "探索の族（格付けはするが『探索』と明記。Holm は探索の12本の中で）",
+   "E1_IB_US_EW_top50": "P1 を Interbrand の順位 1〜50 のブランドの親会社だけで",
+   "E2_IB_US_EW_risers": "P1 の母集団のうち、その年のブランド価値の前年比（Interbrand の公表値。無い行は我々の前年の完全な一覧か API の前年の値から計算。NEW と計算できない行は除く）が上位 1/3 のブランドの親会社（親会社に複数のブランドがあれば価値で加重した前年比）",
+   "E3_IB_US_EW_fallers": "同じく下位 1/3（Dutordoir ほか (2015) のブランド価値の変化の向きの対照）",
+   "E4_IB_GL_BVW": "P3 をブランド価値の加重で（相手 French Developed）",
+   "E5_IB_US_EW_uniform_nov": "P1 を、どの年も11月末に買い直す形で（公開日の読み方の頑健性。一次の公開日がある13年はすべて11月21日まで、残る4年も原本 PDF の作成は7〜9月＝先読みなし）",
+   "E6_WMAC_US_top10": "P4 を All-Star 順位 1〜10 だけで（Anderson & Smith は上位10）",
+   "E7_WMAC_GL_EW": "P4 を全体版で（米国外は Fortune の記号＝多くは ADR・OTC をドル建てのまま。Samsung は 005930.KS）。相手 French Developed",
+   "E8_WMAC_US_contenders": "その年の WMAC の候補（業種別の一覧）のうち All-Stars でない米国の会社を等分、相手 SPY（Anginer & Statman の『あまり賞賛されない側』に近い）",
+   "E9_WMAC_US_allstars_vs_contenders": "P4 の All-Stars（米国）を相手 E8 の候補の等分と比べる（同じ投票の母集団の中で、賞賛されることが効くか）",
+   "E10_WMAC_US_industry_leaders": "業種内順位が1位の米国の会社を等分、相手 SPY（2016〜・業種内順位がある年だけ）",
+   "E11_WMAC_US_industry_laggards": "業種内順位がその業種の最下位の米国の会社を等分、相手 SPY（2016〜・Anginer & Statman の spurned の向き）",
+   "E12_FORBES_US_EW": "Forbes の一覧の米国の会社を等分、相手 SPY（2012-10〜2019-05・約6.7年）"
+  },
+  "report_only": {
+   "R1_hindsight_api": "P1 を Interbrand の API の生き残りの一覧（2007〜2019 の抜けた一覧・2015/2017 を含む）で組んだ版＝後知恵の偏りの大きさ（格付けしない）",
+   "R2_hindsight_2001_2006": "2001〜2006 の一覧を API の生き残りだけで組んだ版（後知恵・格付けしない）",
+   "R3_other_benchmarks": "P1・P2・P4 を OEF（S&P100・巨大株）・RSP（S&P500 等分）・MGC・QQQ・French Mkt と、P3・E4・E7 を IOO（S&P Global 100）・ACWI（2008-03〜）・SPY と比べる（実在の ETF の答え合わせ）",
+   "R4_factor_alpha": "米国版は French の5因子＋勢い（米国）、全体版は Developed の5因子＋勢いに回帰した切片（NW t）＝規模・質・割安・投資・勢いで説明される分を除いた上乗せ",
+   "R5_neutral": "missing の neutral 版",
+   "R6_provenance_strict": "名前が手がかり由来の15行（pdf_grid_value）を相手と同じリターンに置き換えた版",
+   "R7_cost_sensitivity": "米国版 0.495%・全体版 0.60%",
+   "R8_by_list_year": "一覧の年ごとの超過（買う月〜次の買う月）の表",
+   "R9_p2_vs_megacap": "P2 − OEF（巨大株の時価加重との差＝ブランドの量ではなく巨大テックへの集中で勝ったのかを見る）"
+  }
+ },
+ "benchmark": {
+  "us_versions": "SPY（Yahoo の調整後終値・配当込み・同じ月だけ）。out/nx_prereg.json の stock_level_survivor は『同じ現存銘柄の母集団の平均』を主の相手に挙げているが、この角度の一覧は当時の原本（選び方に生き残りの偏りが無い）で、価格の生き残りは lower_bound/neutral で挟むので、実在の SPY を主の相手にする（ev5 と同じ）",
+  "global_versions": "Ken French の Developed 市場（Mkt-RF + RF・ドル建て）",
+  "wmac_within_pool": "E9 だけは同じ投票の候補（E8）が相手"
+ },
+ "timing": {
+  "rule": "公開日の後の最初の月末に買う（公開日がその月の最終日なら翌月末）。値はその月末までに分かるものだけ（一覧・ブランド価値・前年比・業種内順位はすべて一覧と同時に公表）",
+  "interbrand_schedule": [
+   {
+    "list_year": 2007,
+    "buy_month": 200708,
+    "hold_through": 200810,
+    "release_date": null,
+    "date_source": "一次の公開日が見つからない＝原本 PDF の作成日 D:20070723222109+01'00' の翌月の月末（保守的）",
+    "rows_by_source": {
+     "api": 68,
+     "pdf_name_value": 32
+    }
+   },
+   {
+    "list_year": 2008,
+    "buy_month": 200810,
+    "hold_through": 200910,
+    "release_date": null,
+    "date_source": "一次の公開日が見つからない＝原本 PDF の作成日 D:20080918171143-04'00' の翌月の月末（保守的）",
+    "rows_by_source": {
+     "api": 70,
+     "pdf_name_value": 30
+    }
+   },
+   {
+    "list_year": 2009,
+    "buy_month": 200910,
+    "hold_through": 201009,
+    "release_date": null,
+    "date_source": "一次の公開日が見つからない＝原本 PDF の作成日 D:20090911132114-04'00' の翌月の月末（保守的）",
+    "rows_by_source": {
+     "api": 70,
+     "pdf_name_value": 30
+    }
+   },
+   {
+    "list_year": 2010,
+    "buy_month": 201009,
+    "hold_through": 201110,
+    "release_date": "2010-09-15",
+    "date_source": "https://www.prnewswire.com/news-releases/interbrand-releases-11th-annual-ranking-of-the-100-best-global-brands-103006449.html",
+    "rows_by_source": {
+     "prn": 100
+    }
+   },
+   {
+    "list_year": 2011,
+    "buy_month": 201110,
+    "hold_through": 201210,
+    "release_date": "2011-10-04",
+    "date_source": "https://www.prnewswire.com/news-releases/interbrand-releases-12th-annual-best-global-brands-report-131065533.html",
+    "rows_by_source": {
+     "api": 76,
+     "pdf_name_value": 24
+    }
+   },
+   {
+    "list_year": 2012,
+    "buy_month": 201210,
+    "hold_through": 201310,
+    "release_date": "2012-10-02",
+    "date_source": "https://www.prnewswire.com/news-releases/interbrand-releases-13th-annual-best-global-brands-report-172256731.html",
+    "rows_by_source": {
+     "prn": 100
+    }
+   },
+   {
+    "list_year": 2013,
+    "buy_month": 201310,
+    "hold_through": 201410,
+    "release_date": null,
+    "date_source": "一次の公開日が見つからない＝原本 PDF の作成日 D:20130927163352-04'00' の翌月の月末（保守的）",
+    "rows_by_source": {
+     "api": 81,
+     "pdf_name_value": 19
+    }
+   },
+   {
+    "list_year": 2014,
+    "buy_month": 201410,
+    "hold_through": 201610,
+    "release_date": "2014-10-09",
+    "date_source": "https://global.honda/en/newsroom/news/2014/c141009eng.html",
+    "rows_by_source": {
+     "api": 84,
+     "pdf_name_value": 16
+    }
+   },
+   {
+    "list_year": 2015,
+    "used": false,
+    "why": "完全な原本が無い（API は生き残りだけ）＝前の一覧を持ち続ける"
+   },
+   {
+    "list_year": 2016,
+    "buy_month": 201610,
+    "hold_through": 201810,
+    "release_date": "2016-10-11",
+    "date_source": "https://pressroom.toyota.com/toyota-interbrand-global-brands-2016/",
+    "rows_by_source": {
+     "api": 89,
+     "pdf_name_value": 2,
+     "pdf_grid_value": 9
+    }
+   },
+   {
+    "list_year": 2017,
+    "used": false,
+    "why": "完全な原本が無い（API は生き残りだけ）＝前の一覧を持ち続ける"
+   },
+   {
+    "list_year": 2018,
+    "buy_month": 201810,
+    "hold_through": 201910,
+    "release_date": "2018-10-04",
+    "date_source": "https://news.samsung.com/global/tag/interbrand/ → samsung-electronics-ranks-6th-in-interbrands-best-global-brands-2018",
+    "rows_by_source": {
+     "api": 95,
+     "pdf_grid_value": 4,
+     "pdf_name_value": 1
+    }
+   },
+   {
+    "list_year": 2019,
+    "buy_month": 201910,
+    "hold_through": 202010,
+    "release_date": "2019-10-17",
+    "date_source": "https://www.prnewswire.com/news-releases/interbrand-celebrates-20-years-of-best-global-brands-report-highlights-fastest-growing-sectors-300940156.html",
+    "rows_by_source": {
+     "api": 96,
+     "pdf_name_value": 2,
+     "pdf_grid_value": 2
+    }
+   },
+   {
+    "list_year": 2020,
+    "buy_month": 202010,
+    "hold_through": 202110,
+    "release_date": "2020-10-20",
+    "date_source": "https://www.prnewswire.com/news-releases/zoom-and-tesla-enter-the-ranks-of-interbrands-2020-best-global-brands-report-301153094.html",
+    "rows_by_source": {
+     "api": 100
+    }
+   },
+   {
+    "list_year": 2021,
+    "buy_month": 202110,
+    "hold_through": 202211,
+    "release_date": "2021-10-20",
+    "date_source": "https://www.prnewswire.com/news-releases/tesla-leapfrogs-the-competition-in-interbrands-2021-best-global-brands-report-301401379.html",
+    "rows_by_source": {
+     "api": 100
+    }
+   },
+   {
+    "list_year": 2022,
+    "buy_month": 202211,
+    "hold_through": 202311,
+    "release_date": "2022-11-03",
+    "date_source": "https://news.samsung.com/global/tag/interbrand/ → samsung-electronics-brand-value-makes-double-digit-increase-taking-a-spot-in-the-list-of-top-five-best-global-brands-2022",
+    "rows_by_source": {
+     "api": 100
+    }
+   },
+   {
+    "list_year": 2023,
+    "buy_month": 202311,
+    "hold_through": 202410,
+    "release_date": "2023-11-21",
+    "date_source": "https://www.prnewswire.com/news-releases/brand-growth-slows-finds-interbrands-best-global-brands-report-2023-301990979.html",
+    "rows_by_source": {
+     "api": 100
+    }
+   },
+   {
+    "list_year": 2024,
+    "buy_month": 202410,
+    "hold_through": 202510,
+    "release_date": "2024-10-10",
+    "date_source": "https://www.prnewswire.com/news-releases/growth-at-what-cost-the-worlds-100-most-valuable-brands-have-missed-out-on-3-5-trillion-of-value-creation-since-2000--reveals-interbrands-best-global-brands-report-302271433.html",
+    "rows_by_source": {
+     "api": 100
+    }
+   },
+   {
+    "list_year": 2025,
+    "buy_month": 202510,
+    "hold_through": 202608,
+    "release_date": "2025-10-15",
+    "date_source": "https://www.prnewswire.com/news-releases/brands-adapting-to-market-challenges-increases-the-total-value-of-interbrands-2025-best-global-brands-by-150-billion-302583746.html",
+    "rows_by_source": {
+     "api": 100
+    }
+   }
+  ],
+  "interbrand_dates_note": "一次の公開日（Interbrand の PR Newswire・掲載ブランドの会社自身の発表）が見つからない 2007・2008・2009・2013 は、原本 PDF の作成日の翌月の月末に買う（作成日 ≤ 公開日なので保守的＝早すぎることは無い）。2016 は Toyota の発表日（10-11）を使う（Interbrand の公開はそれより前でも、買う月は同じ10月）",
+  "wmac_schedule": [
+   {
+    "list_year": 2014,
+    "published_gmt": "2014-05-27",
+    "buy_month": 201405,
+    "hold_through": 201502,
+    "allstars": 49,
+    "contenders_total": 355
+   },
+   {
+    "list_year": 2015,
+    "published_gmt": "2015-02-19",
+    "buy_month": 201502,
+    "hold_through": 201602,
+    "allstars": 50,
+    "contenders_total": 348
+   },
+   {
+    "list_year": 2016,
+    "published_gmt": "2016-02-19",
+    "buy_month": 201602,
+    "hold_through": 201702,
+    "allstars": 50,
+    "contenders_total": 339
+   },
+   {
+    "list_year": 2017,
+    "published_gmt": "2017-02-16",
+    "buy_month": 201702,
+    "hold_through": 201801,
+    "allstars": 50,
+    "contenders_total": 321
+   },
+   {
+    "list_year": 2018,
+    "published_gmt": "2018-01-19",
+    "buy_month": 201801,
+    "hold_through": 201901,
+    "allstars": 50,
+    "contenders_total": 330
+   },
+   {
+    "list_year": 2019,
+    "published_gmt": "2019-01-22",
+    "buy_month": 201901,
+    "hold_through": 202001,
+    "allstars": 51,
+    "contenders_total": 329
+   },
+   {
+    "list_year": 2020,
+    "published_gmt": "2020-01-21",
+    "buy_month": 202001,
+    "hold_through": 202102,
+    "allstars": 50,
+    "contenders_total": 330
+   },
+   {
+    "list_year": 2021,
+    "published_gmt": "2021-02-01",
+    "buy_month": 202102,
+    "hold_through": 202202,
+    "allstars": 50,
+    "contenders_total": 330
+   },
+   {
+    "list_year": 2022,
+    "published_gmt": "2022-02-02",
+    "buy_month": 202202,
+    "hold_through": 202302,
+    "allstars": 50,
+    "contenders_total": 332
+   },
+   {
+    "list_year": 2023,
+    "published_gmt": "2023-02-01",
+    "buy_month": 202302,
+    "hold_through": 202402,
+    "allstars": 50,
+    "contenders_total": 324
+   },
+   {
+    "list_year": 2024,
+    "published_gmt": "2024-01-31",
+    "buy_month": 202402,
+    "hold_through": 202503,
+    "allstars": 50,
+    "contenders_total": 317
+   },
+   {
+    "list_year": 2025,
+    "published_gmt": "2025-03-03",
+    "buy_month": 202503,
+    "hold_through": 202601,
+    "allstars": 50,
+    "contenders_total": 321
+   },
+   {
+    "list_year": 2026,
+    "published_gmt": "2026-01-21",
+    "buy_month": 202601,
+    "hold_through": 202608,
+    "allstars": 50,
+    "contenders_total": 325
+   }
+  ],
+  "wmac_dates_note": "Fortune の各年のページの dateGmt（Fortune 自身の公開時刻）。2014 は 5-27（実際の公開は2月末ごろだが一次で確かめられる日付を使う＝遅い側）・2025 は 3-03",
+  "forbes_schedule": [
+   {
+    "list_year": 2011,
+    "published": "2011-08-08",
+    "usable": false,
+    "buy_month": null,
+    "hold_through": null,
+    "n": 69
+   },
+   {
+    "list_year": 2012,
+    "published": "2012-09-05",
+    "usable": true,
+    "buy_month": 201209,
+    "hold_through": 201308,
+    "n": 100
+   },
+   {
+    "list_year": 2013,
+    "published": "2013-08-14",
+    "usable": true,
+    "buy_month": 201308,
+    "hold_through": 201408,
+    "n": 100
+   },
+   {
+    "list_year": 2014,
+    "published": "2014-08-20",
+    "usable": true,
+    "buy_month": 201408,
+    "hold_through": 201508,
+    "n": 100
+   },
+   {
+    "list_year": 2015,
+    "published": "2015-08-19",
+    "usable": true,
+    "buy_month": 201508,
+    "hold_through": 201608,
+    "n": 99
+   },
+   {
+    "list_year": 2016,
+    "published": "2016-08-24",
+    "usable": true,
+    "buy_month": 201608,
+    "hold_through": 201708,
+    "n": 100
+   },
+   {
+    "list_year": 2017,
+    "published": "2017-08-08",
+    "usable": true,
+    "buy_month": 201708,
+    "hold_through": 201805,
+    "n": 100
+   },
+   {
+    "list_year": 2018,
+    "published": "2018-05-29",
+    "usable": true,
+    "buy_month": 201805,
+    "hold_through": 201905,
+    "n": 100
+   }
+  ]
+ },
+ "real_instrument_check": {
+  "us_versions": "構成銘柄はすべて NYSE/Nasdaq の株＝楽天証券の米国株で買える見込み（個別に確かめるのは測る道具で: 楽天の米国株の取扱一覧は out/broker_lineup.json に無い＝ETF だけ）。手数料は約定代金の0.495%（上限22ドル）。年1回の入れ替えで40〜48社を持つ＝課税口座が現実的（NISA の成長投資枠は売っても枠が翌年まで戻らない）",
+  "global_versions": "欧州・韓国・台湾・インドの株と OTC の ADR は楽天では買えないものが多い（楽天の外国株は米国・中国（香港）・ASEAN）＝全体版は実装できない。証拠としてだけ",
+  "etfs": "一覧をそのまま持つ ETF は楽天の海外ETF 742本（out/broker_lineup.json）に無い。近いものとして OEF（S&P100）・IOO（S&P Global 100）・MGC（メガキャップ）・MOAT（ワイドモート）・KXI/RXI（世界の生活必需品/一般消費財）・RSP・QQQ があり、R3 で並べる",
+  "japan_investor": "円で持つ人の為替は、米国版・全体版とも SPY・先進国の相手と同じようにかかる＝超過の比較には効かない（報告で触れる）"
+ },
+ "prior": {
+  "madden_fehle_fournier_2006": "Madden, T.J., Fehle, F. & Fournier, S. (2006) Brands Matter: An Empirical Demonstration of the Creation of Shareholder Value Through Branding. Journal of the Academy of Marketing Science 34(2), 224-235（SSRN 346953・2002年版）。Interbrand の一覧に載ったブランドを持つ会社のポートフォリオは Fama-French の基準より高いリターンを低いリスクで出した（要旨で確認。標本は Interbrand の初期の一覧の1990年代後半と記憶・本文は未読）",
+  "fehle_et_al_2008": "Fehle, F., Fournier, S., Madden, T.J. & Shrider, D. (2008) Brand Value and Asset Pricing. Quarterly Journal of Finance and Accounting 47(1)（書誌は記憶・本文未読）",
+  "johansson_dimofte_mazvancheryl_2012": "Johansson, J.K., Dimofte, C.V. & Mazvancheryl, S.K. (2012) The performance of global brands in the 2008 financial crisis: A test of two brand value measures. International Journal of Research in Marketing 29(3)（Interbrand と BrandZ の一覧の会社の危機の時の株価。結論は読んでいない）",
+  "dutordoir_et_al_2015": "Dutordoir, M., Verbeeten, F.H.M. & De Beijer, D. (2015) Stock price reactions to brand value announcements: Magnitude and moderators. International Journal of Research in Marketing 32(1)（ブランド価値の発表への株価の反応。細部は読んでいない）",
+  "anderson_smith_2006": "Anderson, J. & Smith, G. (2006) A Great Company Can Be a Great Investment. Financial Analysts Journal 62(4), 86-93。Fortune の America's Most Admired の上位10社は S&P500 に勝った（1983〜2004・記憶）",
+  "anginer_statman_2010": "Anginer, D. & Statman, M. (2010) Stocks of Admired and Spurned Companies. Journal of Portfolio Management 36(3)。Fortune の評判が低い（spurned）会社のほうが賞賛される会社より高いリターン（1983〜2007・記憶）",
+  "statman_fisher_anginer_2008": "Statman, M., Fisher, K.L. & Anginer, D. (2008) Affect in a Behavioral Asset-Pricing Model. Financial Analysts Journal 64(2)（賞賛される会社の株は期待リターンが低い、という主張・記憶）",
+  "antunovich_laster_mitnick_2000": "Antunovich, P., Laster, D. & Mitnick, S. (2000) Are High-Quality Firms Also High-Quality Investments? Federal Reserve Bank of New York Current Issues 6(1)（賞賛される会社が翌年勝った・記憶）",
+  "forbes_innovative": "Dyer, Gregersen ほか（The Innovator's DNA の著者）と Credit Suisse HOLT が作った一覧。一覧の会社が市場に勝ったという主張は Forbes の記事にあると記憶するが、査読つきの検証は知らない",
+  "vendor_claims": "Kantar BrandZ（『Strong Brands Portfolio が S&P500 と MSCI World に勝った』）と Interbrand は自分の一覧が市場に勝ったと宣伝している（数字は見ていない）。売り手の主張で、標本も方法も確かめていない",
+  "decay": "McLean & Pontiff (2016, JF): 公表後に上乗せは平均で約半分。このリポジトリの JKP の実測でも 2007年以後は中央値で 0.44 倍（米国）",
+  "this_repo": "MOAT ETF は設定来で SPY に年 −0.6%、質の ETF（SPHQ・QUAL・DGRW 等）も2007年以後の SPY にほぼ勝っていない（CLAUDE.md の記録）。米国の大型株の質・収益性の因子は2007年以後も正だが、買いだけの上乗せは S&P500 型の市場に対して0前後",
+  "expectation_before_measuring": "一覧の会社は大型・高収益・消費者向けに偏る。等分（P1・P3・P4）は巨大テックの比重が SPY より小さいので、2007〜2026 の巨大テック主導の相場では SPY に負けやすいと予想。P2 はその逆。全体版は米国外の比重が相手と近い。主の族のどれかが A 以上になる確率を測る前に 10〜15% と見積もる。予想は判定に使わない"
+ },
+ "contamination": [
+  "一覧の中身（Interbrand の 2000〜2025 の API の順位・名前・ブランド価値・前年比、2007〜2019 の手がかりの一覧、原本 PDF の本文と表、PR Newswire の表、Fortune WMAC 2014〜2026 の All-Stars と候補と業種内順位、Forbes 2011〜2018 の一覧と innovation premium・売上成長・ROE の欄）を見た。株価・リターンは一度も取っていない・見ていない",
+  "Fortune の会社ページには今（2026年）の売上・利益・時価総額が載っていて、取得の途中の表示で Apple の時価（2026-07-13 時点 4.66兆ドル）ほか数社の脚注を見た。道具は Ticker・取引所・会社の種類・国・脚注だけを残す",
+  "一般の知識として、2007〜2026 に米国の巨大テック（Apple・Microsoft・Google・Amazon・NVIDIA）が大きく上がったこと、Nokia・BlackBerry・Kodak・Yahoo!・Merrill Lynch・Credit Suisse が沈んだり消えたりしたこと、2008年の金融危機・2020年の急落・2022年の下落を知っている。★P2（ブランド価値の加重）は上位のブランド＝巨大テックに重みが集まるので、この知識からは有利に見える。P2 を主に入れたのは『ブランドの量の用量反応』という理論の理由だが、P2 だけが勝った場合は R9（巨大株の時価加重 OEF との差）と R4（因子の切片）で『巨大テックへの集中』と区別する",
+  "並走セッションとの重なりを確かめる途中で、hbm38n の ev5_prereg.json（5本の規則と格付けの形）を読んだ。成績は見ていない（まだ無い）",
+  "文献の結果（Madden ほか・Anderson & Smith・Anginer & Statman の要旨と記憶）と、売り手（Kantar・Interbrand）が自分の一覧の勝ちを宣伝していることを知っている",
+  "規則の成績（平均・t・シャープ・累積・勝率）は一度も計算・表示していない"
+ ],
+ "sanity_checks_before_results": [
+  "測る道具は最初に out/_nx_cache/nx_brand_lists.json の lists_sha256 がこの登録の値と一致するかを確かめ、違えば止まる",
+  "どの一覧も buy_month ≥ purchase_month(公開日)（先読みの検査）、持つ期間が重ならず隙間も無いことを assert",
+  "等分・価値加重の重みは買う月に和が1、回転は0〜1",
+  "記号の候補の系列が買う月より後に始まるものは『値が無い』として扱う（将来の上場を先に使わない）",
+  "EVENTS の月の調整を確かめた記録と、+100%超/−60%未満の月の一覧を out/nx_brand.json に残す",
+  "SPY と French Developed は同じ月だけで比べる（総リターンどうし）"
+ ],
+ "known_limits": [
+  "株価は Yahoo が中心で、上場廃止した会社の値が無い（Interbrand の米国の親会社では Dell 2007-2013・Heinz・Yahoo!・Tiffany 2007-2020・Viacom 2007-2016 など。価値の割合は 2007年 6.7% → 2013年 1.2% → 2019年以後 0%）。lower_bound（−30%）は買収の上乗せで終わった会社には厳しすぎ、neutral は沈んだ会社には甘い＝両方を並べる",
+  "名前がロゴで、原本の表の順位と価値の一致だけで手がかりの名前を当てた行が15行（2016・2018・2019）。R6 で頑健性を見る",
+  "2015・2017 は持ち越し（前の一覧を2年持つ）。2007・2008・2009・2013 は公開日を原本 PDF の作成日から保守的に決めた",
+  "Interbrand の評価そのものが財務の予想と市場のデータを使う＝一覧は大きく収益性の高い会社に偏る。勝っても『ブランド』ではなく規模・質・収益性の因子かもしれない（R4 で見る）",
+  "Fortune WMAC の投票者は過去の株価と業績を知っている（後光）＝一覧は過去の勝者に寄る（勢いに近い）",
+  "Forbes の一覧は市場の評価（innovation premium）で選ぶ＝高いバリュエーションの成長株の網。標本は約6.7年しか無い",
+  "親会社の対応（買収・分離・上場の月）は Interbrand・Fortune の一覧の外の知識（会社の歴史）で決めた。誤りがあれば測る道具の記録（値が無い・分離の月）で見つかるようにしてある",
+  "Fortune の記号は今の記号（社名変更は追えるが、最近上場廃止した会社は記号が無い）。WMAC の候補（E8〜E11）の米国外の会社は対応していない＝米国だけ",
+  "独立の試行は少ない（Interbrand 19年・WMAC 12年・Forbes 6.7年、どれも大型米国株が主導した一つの時代）。3つの一覧はどれも大型の優良企業に寄り、互いに独立ではない（Apple・Microsoft・Coca-Cola 等は3つすべてに載る）",
+  "費用は近似。年1回の入れ替えの売買スプレッド・為替の手数料・税は入れていない",
+  "Yahoo の米国外の調整後終値の配当の扱いは市場によって揃っていないことがある"
+ ],
+ "test_count": {
+  "primary": 4,
+  "exploratory": 12,
+  "report_only": "R1〜R9（格付けしない）",
+  "note": "試したものは全部 out/nx_brand.json の tested に残す（負けも落とさない）"
+ }
+}

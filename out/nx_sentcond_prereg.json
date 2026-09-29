@@ -1,0 +1,247 @@
+{
+ "generated": "2026-09-28",
+ "angle": "nx_sentcond",
+ "title": "投資家の心理（Baker-Wurgler の心理指数）が高い月の翌月だけ『堅い株』を持ち、それ以外は市場を持つ（買いだけ・常に株100%）",
+ "question": "Baker-Wurgler の心理指数（閉鎖型ファンドの割引・IPO の数・IPO の初日の上昇・配当の割増し・株式の発行割合の5成分の第1主成分）を、公開値（全期間の主成分＝後知恵あり）ではなく、月末 t までに分かる成分だけの拡大窓の主成分で毎月作り直し、その値が正（窓の平均より上＝心理が高い）なら翌月は堅い株（大型の高収益・低ボラ・低ベータ・高配当の French の既成のポートフォリオ）を、それ以外なら市場（French Mkt）を持つ規則は、訓練期間（1970-08〜2006-12）でも保有期間（2007-01〜2026-02）でも費用後に市場に勝ち、シャープレシオでも市場を上回るか",
+ "asked_by": "ユーザー「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して。限界までやって途中報告を入れながら結果が出るまで分析を止めずに。トークンの限界までやってほしい。今まではそんなものはないという報告で終わってたけどそれはなしで探し続ける努力をしてほしい。今別のSessionでこの内容を2つ回してる。別のSessionで検証していない新たな分析を同じ内容でしてほしい」（2026-09-28）。全体の事前登録 out/nx_prereg.json の追加の角度（斥候 out/nx_scout.json の rank 2）",
+ "registered_before_measuring": true,
+ "global_prereg": "out/nx_prereg.json（C1〜C8・格付け S/A/B/C・誠実さの約束）。統計と格付けは night/nx_common.py（mw_common.py と同一の定義）の excess_stats / rolling / dca / sharpe / holm / grade をそのまま使う",
+ "tools": {
+  "data": "night/nx_sentcond_data.py（取得と整形だけ・リターンは一切読まない）→ out/_nx_cache/nx_sentcond_signals.json（gitignore）。成分から拡大窓の主成分で各型の信号を作る。--selftest で先読みの検査（t より後の成分を乱数に替えても t までの信号が1つも変わらないこと・わざと先読みさせた版は変わること）を通過済み",
+  "data_tool_sha256": "3e5fe1e074d1ca04c7a4622a1f516e3d0187ba83435cd2cf7233ddc0b25bdbff（night/nx_sentcond_data.py・この登録の時点）",
+  "regime_sha256": "395866ae5e571414145478314b5e06e57988679411fa1ba51810c63ea6c2a0bd（nx_sentcond_signals.json の信号 main・lag0・nobwlag・orth・practical の「月 → [S>0, 窓の中央値より上]」を sort_keys・区切り詰めで直列化した sha256。測る道具は最初にこの値と一致するかを確かめ、違えば止まる＝結果を見てから信号を作り直していない証明）",
+  "regime_sha256_2019": "1efc088cfcfbfe4a49bf8dc5cf6266402ced03c901c5302913f705b306ff7537（2019-03 版の成分で作った main_2019・報告用）",
+  "measure": "night/nx_sentcond.py（これから書く）→ out/nx_sentcond.json。試したものは全部 tested に残す（負けも落とさない）"
+ },
+ "stance_before_results": "測定器。門・採点・四関門・席・配分・売却規律には入れない。線（C1〜C8）は結果を見て動かさない。信号の作り方・閾値・堅い株の組・費用・C5 の単位はこの登録で固定し、測った後に変えたらそれは『事後』と明記して格付けに使わない。予想（測る前）: Stambaugh-Yu-Yuan (2012) は『異常の買いの側は心理と関係しない』と報告し、BW (2006) 自身も『時価加重では型が薄まる』と書いている。ここは時価加重の買いだけで、堅い組の多くは市場の大きな部分と重なる＝効きは小さい見込み。多くは B か C と予想する。理屈で最も有望なのは P3（楽観の後の低ベータ・Antoniou ほか 2016）と P2（低ボラ）",
+ "why_new": {
+  "difference": "並走中の他セッションの『時期で持ち方を変える』規則は、どれも**株の比率（株↔現金・倍率）**を変える: eknzbh の mw_macro_timing（Goyal-Welch の12変数＋新しい9変数の再帰的な予言で株の割合 0〜1.5）・mw_volmanaged（直近の分散の逆数で倍率）・mw_trend（10か月線などで株↔現金）、q07leu の fam_macro（景気の信号で降りる）・fam_valtime（CAPE などの百分位で株の比率 0.5〜1.5）・fam_voltarget。ここは**株の比率を常に100%に保ち、心理を条件に『何を持つか』（堅い株か市場か）を替える**＝Baker-Wurgler (2006) の横断の予言そのもの。また堅い株を**いつも**持つ規則（eknzbh の mw_risk_matched〔BETA・VAR・OP の低リスク・質を借入でふくらませる〕・mw_mega_tilt・mw_combo_us・mw_fmom_wf〔特性の勢いで選び直す〕、q07leu の fam_lowbeta_lev）は無条件の傾きか、自分の過去のリターンで選ぶ規則で、心理を条件にしたものは無い",
+  "grep_checked": "2026-09-28 17:20 UTC ごろ origin の eknzbh（6d67f9bc）・q07leu（6c8bf4f1）・hbm38n（30cb0b43）を fetch し、night/・out/ を wurgler・sentiment・SENTIMENT.xlsx・sntm・心理・stambaugh・antoniou・ripo・nipo・pdnd・cefd・closed-end で git grep した。Baker-Wurgler の指数・成分を使う規則は無かった（Wurgler は q07leu の fam_lowbeta_lev の文献の引用だけ、sentiment は eknzbh の mw_macro_timing_prereg4 が 『sntm〔Huang ほかの aligned 指数〕は全期間で作り直す必要がある』として外した記述だけ、Stambaugh は eknzbh の mw_factor_us_verify の公表年の表だけ）",
+  "overlap_left": "堅い組そのもの（BIG HiOP・VAR Lo 20・BETA Lo 20・D-P Hi 30）を無条件に持つ成績は他セッションが測っている。ここで新しいのは『心理で持つ月を選ぶ』部分だけなので、無条件に持つ対照（CTRL_static）と、堅い組の市場に対する超過を心理の高い月・低い月で分けた差（COND_SPREAD）を必ず並べ、規則の勝ちが無条件の傾きの勝ちでないかを切り分けて報告する"
+ },
+ "data": {
+  "sentiment": {
+   "source": "Baker & Wurgler の投資家心理のデータ（NYU Stern Jeffrey Wurgler のページ）",
+   "url": "https://pages.stern.nyu.edu/~jwurgler/data/SENTIMENT.xlsx",
+   "sha256": "3580398aaba6b72ad988844416c7b0ac9caca24fd2ab1d9149a983ec63b9f7a2（out/_nx_cache/bw_SENTIMENT.xlsx・2026-09-28 取得）",
+   "vintage": "README『UPDATED: March, 2026』。GitHub の BWInvestorSentimentIndex/BakerandWurglerInvestorSentimentIndex（7a0165f・2026-04-21）の SENTIMENT.xlsx（sha256 786bb263…・ファイルの形式が違うだけ）と、成分5つと SENT の全月が一致することを確かめた",
+   "columns": "yearmo・SENT・SENT_ORTH・pdnd・ripo・nipo・cefd・s・indpro・consdur・consnon・consserv・recess・employ・cpi（README『All variable values are as of end of the indicated period』）",
+   "spans": "SENT 1965-07〜2025-12（726か月・欠け0）／SENT_ORTH 1965-07〜2025-12（1か月欠け）／pdnd 1960-04〜（欠け0）／ripo 1960-01〜（途中の欠け31か月。うち18か月は nipo=0、13か月は nipo>0 なのに ripo が無い）／nipo 1960-01〜（欠け0）／cefd 1965-07〜（欠け0）／s 1958-12〜（欠け0）／マクロ 1958〜（cpi は 2025-10 が政府閉鎖で欠け）。どの成分も毎月値が変わる（年次の値を月へ引き延ばした型は無い）",
+   "definitions_read": "README と Stata コード（2019-03 版の STATA CODE の枚・2026-01 版の GitHub『1. Create Baker-Wurgler Sentiment.do』）と pdnd の SAS（divpremmonth.sas）を読んだ: 指数の月 m の成分は CEFD(m)・NIPO12(m)=nipo の直近12か月の和・RIPO=nipo 加重の直近12か月の平均の12か月前・PDND の12か月前・S(m)（S 自体が直近12か月の株式÷〔株式＋社債〕）。Stata の pca（相関行列）の第1主成分を標準化し、2000-12 が正になる向きにそろえる。pdnd の会計値は決算期末の4か月後から15か月後まで使う（CRSP/Compustat）。2026年版の SENT_ORTH はマクロを『ln − 直前12か月の ln の移動平均』に変え、景気後退の印（NBER）も説明変数に入れる",
+   "construction_check": "リターンを使わない構成の検算: BW どおりの成分（ripo の欠けを BW のコードどおり 0 と置く）で 1965-07〜2025-12 の全期間の主成分を作ると、公開の SENT と相関 1.00000・最大の差 0.0000（726か月）＝作り方の理解は正しい。ripo の欠けを外す版（主の型）でも相関 0.99998。全期間の載荷量は cefd −0.50・nipo +0.47・ripo +0.44・pdnd −0.57・s −0.01（第1主成分の説明割合 46%）＝今の5成分の指数では s はほぼ効いていない",
+   "vintage_differences": "2019-03 版と 2026-03 版で重なる月の成分を比べると、pdnd は全696か月が違う（CRSP/Compustat の結合の作り直し）、ripo 184/678・nipo 118/708・s 191/721・cefd 80/642（2011年以降）か月が違う。＝どの版も後から改訂された値で、当時の投資家が見た値（実時間の版）ではない。2019 版で作った信号 main_2019 を報告に使う",
+   "makers": "2011-01 以降の成分は HBS の Zeitler・Beauregard、2022-07 以降は HBS の Ryu・Mangoubi が作った（README）。cefd の出典は 1965〜1985 LSV・1986 CDA/Wiesenberger・1987〜2010 Herzfeld・2011〜 Morningstar",
+   "survivorship": "指数の成分（市場全体の集計）なので生き残りの偏りは無い"
+  },
+  "portfolios_us": {
+   "source": "Kenneth R. French Data Library（https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/{名前}_CSV.zip）。すべて Value Weighted の月次・総リターン",
+   "files": {
+    "6_Portfolios_ME_OP_2x3": "BIG HiOP（堅い）・SMALL LoOP（投機的）1963-07〜2026-08 欠け0。毎年6月末に組む（規模は NYSE の中央値、OP＝前年の決算の〔売上−売上原価−支払利息−販管費〕÷自己資本、NYSE の30%・70%点）。sha256 5974ba70b4e2…",
+    "Portfolios_Formed_on_VAR": "Lo 20（堅い）・Hi 20（投機的）1963-07〜2026-08 欠け0。毎月、前月末までの直近60営業日（最低20）の日次リターンの分散で組む（月 t の組は t−1 月末に作る）。sha256 232fdeace7cb…",
+    "Portfolios_Formed_on_BETA": "Lo 20（堅い）・Hi 20（投機的）1963-07〜2026-08 欠け0。毎年6月末に、直前5年（最低2年）の月次リターンのベータで組む。sha256 fb317445a016…",
+    "Portfolios_Formed_on_D-P": "Hi 30（堅い）・<= 0（無配＝投機的）・Lo 30・Med 40（配当のある会社の組を作る探索 E14 用）1927-07〜2026-08 欠け0。毎年6月末に、前年7月〜当年6月の配当÷6月の時価で組む。sha256 87b9d946bd7c…",
+    "Portfolios_Formed_on_RESVAR": "Lo 20（探索 E13）1963-07〜2026-08 欠け0。毎月、直近60営業日の FF3 残差の分散で組む。sha256 d5aa0c4ada46…",
+    "F-F_Research_Data_Factors": "Mkt = Mkt-RF + RF（相手）・RF（シャープ用）1926-07〜2026-08 欠け0。sha256 593f4fbef031…"
+   },
+   "survivorship": "CRSP 全上場（NYSE・AMEX・NASDAQ）で上場廃止した会社も入る＝生き残りの偏り無し",
+   "definitions_read": "French の説明ページ det_port_form_VAR・det_port_form_BETA・det_port_form_dp・six_portfolios_me_op・det_port_form_RESVAR（2026-09-28 取得）"
+  },
+  "portfolios_c5": {
+   "source": "Jensen-Kelly-Pedersen（jkpfactors.com）の国別の三分位ポートフォリオ（capped value weight・USD・米国 T-bill を引いた超過）と国別の市場（mkt・vw_cap）。nx_common.jkp_portfolios / jkp_mkt",
+   "countries": "jpn・gbr・can・fra・deu・aus・che（leadlag と同じ7か国）",
+   "characteristics": "ope_be（営業利益÷自己資本・高い側）・rvol_21d（21日の値動きの大きさ・低い側）・beta_60m（60か月のベータ・低い側）・div12m_me（直近12か月の配当÷時価・高い側）。★JKP の特性は主の族には入れない（eknzbh の factor_us が153特性を全部試した）。ここでは C5 の独立の単位の『堅い側』としてだけ使う",
+   "spans": "mkt: jpn・gbr・fra・deu・che 1986-01〜2025-12、can 1982-03〜、aus 1985-11〜。ope_be 高: jpn・gbr 1986-01〜、can 1982-03〜、fra・deu 1989-05〜、aus 1989-06〜、che 1990-05〜。rvol_21d 低: 1986-02〜（can 1984-02〜）。beta_60m 低: 1989-01〜（can 1985-03〜）。div12m_me 高: 1986-12〜（can 1982-06〜・che 1990-01〜）。終わりはすべて 2025-12",
+   "side_labels": "JKP の pf は特性の小さい順（1.0 が小さい・3.0 が大きい）と理解している。堅い側 = ope_be 3.0・rvol_21d 1.0・beta_60m 1.0・div12m_me 3.0 を理論で先に決めた。測るときに nx_common.jkp_good_side(国, 特性, vw_cap, upto=200612)（JKP の符号つき因子との向き合わせ）で機械的に確かめ、1つでも食い違えば止まって報告する（食い違いを見てから側を替えない）",
+   "survivorship": "上場廃止も入る（JKP の作り方）"
+  },
+  "etf_check": {
+   "source": "Yahoo の月次の調整後終値（配当込み）nx_common.yahoo",
+   "spans": "VIG 2006-06〜・DVY 2003-12〜・USMV 2011-11〜・SPY 1993-02〜（いずれも 2026-09 まで）",
+   "survivorship": "今も在る ETF だけ（選んだ ETF は生き残り）"
+  }
+ },
+ "signal": {
+  "proxies": {
+   "CEFD(m)": "cefd(m)（閉鎖型の株式ファンドの割引・等分）",
+   "NIPO12(m)": "nipo(m−11..m) の和（12か月そろう時だけ）",
+   "RIPOAM(m)": "ripo の nipo 加重の平均（m−11..m・nipo が12か月そろう時だけ）。★BW のコードは nipo>0 なのに ripo が無い13か月を 0 と置くが、ここは絶対のルール7（欠測を0と読まない）に従いその月を分子・分母から外す。公開値の再現（相関 0.99998）はこの違いの影響が小さいことを示す",
+   "PDND(m)": "pdnd(m)（配当を払う会社と払わない会社の時価÷簿価の時価加重平均の対数の差）",
+   "S(m)": "s(m)（直近12か月の株式発行÷〔株式＋社債〕）"
+  },
+  "theory_sign": "nipo・ripo・s は＋、cefd・pdnd は−（BW 2006 の式(2)の符号と、それぞれの成分の理屈）",
+  "publication_lags": {
+   "main（主）": "判断の月末 t に使うベクトル X(t) = ( CEFD(t−1), NIPO12(t−1), RIPOAM(t−13), PDND(t−13), S(t−3) )",
+   "why": "閉鎖型ファンドの割引は週次で新聞・データ業者に出るが月末の値が月末の引けに手元にある保証は無いので1か月遅らせる。IPO の数・初日の上昇は公開の出来事だが、Ritter の集計は後から整えられるので1か月遅らせる。株式の発行割合は連邦準備制度の新規発行の統計（Federal Reserve Bulletin）で、公表が2〜3か月遅れるので3か月遅らせる。ripo・pdnd は BW の指数がもともと12か月前の値を使う（公表の遅れより長い）が、他とそろえてさらに1か月足す。pdnd の会計値は決算期末の4か月後から使う作り（SAS）なので、12か月前の値は必ず分かっている",
+   "effective_first_month": "X(t) がそろう最初の月は 1965-08（cefd が 1965-07 から）"
+  },
+  "pca": "月末 t に、X(τ)（τ = 1965-08〜t のそろう月すべて）の各成分を窓の中の平均・標本標準偏差で標準化し、相関行列の第1固有ベクトル w を取る。w の向きは Σ 理論の符号×w > 0 にそろえる（公開値の『2000-12 が正』は 2000年以降にしか分からないので使わない）。S_rt(t) = w·z(t) ÷ 窓の中の w·z の標本標準偏差。窓の平均は0なので S_rt(t) > 0 は『その時点までの平均より心理が高い』と同じ。窓は最低60か月＝最初の判断は 1970-07 末、最初に持つ月は 1970-08。載荷量・平均・標準偏差は毎月作り直す（その月までのデータだけ）",
+  "regime": "high(t) = S_rt(t) > 0（BW 2006 の Table III と同じ『正か負か』）。high なら t+1 月は堅い組、そうでなければ市場",
+  "missing": "信号が作れない月（成分が欠けた月）は high でも low でもなく『信号なし』＝市場を持つ（欠測を『心理が低い』と読まない）。主の型 main は 1970-07〜2026-01 の667か月すべて作れる（途中の欠け無し）",
+  "span": "主の型の判断の月 1970-07〜2026-01（最後の判断は 2025-12 までの成分で作る）→ 持つ月 1970-08〜2026-02"
+ },
+ "criteria": {
+  "which": "criteria_long_history（訓練〜2006-12・保有 2007-01〜・C1〜C8）。主の族の訓練期間は 1970-08〜2006-12（36.4年）で15年以上。保有期間は 2007-01〜2026-02（19.2年・BW 2006〔JF 2006年8月号〕の公表後とほぼ一致）。全期間 = 1970-08〜2026-02",
+  "series_used_per_criterion": {
+   "C1_C2_C3_C7": "費用前の規則のリターン 対 French Mkt（どちらも総リターン）",
+   "C4_roll20": "費用後（判定の費用）の転がる20年窓（一括・毎年7月起点・nx_common.rolling）",
+   "C6_net_cost": "費用後の保有期間で C2 が成り立つか",
+   "C8_sharpe": "切替えの型なので必須（leveraged_or_timing=True）。費用後の規則のシャープ（French RF を引く）と Mkt のシャープを、訓練（1970-08〜2006-12）と保有（2007-01〜2026-02）の両方で比べる（nx_common.sharpe）"
+  },
+  "C5_independent_unit": {
+   "unit": "米国外の7か国（jpn・gbr・can・fra・deu・aus・che）。信号は同じ米国の実時間の心理 S_rt（Baker-Wurgler-Yuan 2012 は世界の心理が米国の心理と強く一緒に動くと報告〔記憶・原本の数字は確かめていない〕＝米国の心理で他の国の横断を切り替える前提）。各国の JKP の堅い側（P1→ope_be 高・P2→rvol_21d 低・P3→beta_60m 低・P4→div12m_me 高・P5→この4つの等分）",
+   "rule": "high(t) なら t+1 月はその国の堅い側、そうでなければその国の JKP 市場（vw_cap）。どちらも JKP の超過（USD・米国 T-bill を引いた値）なので超過どうしで比べる",
+   "period": "各国・各規則で、堅い側の系列が始まる月（P5 は4つそろう月）と 1970-08 の遅いほうから 2025-12 まで",
+   "positive": "その国の評価期間の全体で、費用前の規則の超過（対その国の JKP 市場）の幾何の年率差が正",
+   "pass": "7か国のうち5以上（2/3 以上）が正",
+   "missing": "持つはずの堅い側がその月に欠けたら市場を持つ（0 と置かない）",
+   "caveat": "信号が米国と同じなので、時期の選び方は独立でない（半分だけ独立の単位）。株と国は独立"
+  },
+  "cost_assumption": {
+   "rule": "片側の売買（売りか買い）100% あたり c。判定は c=0.10%（大型株・市場の ETF の目安）、感度 0.30%。投機的な組（SMALL LoOP・VAR Hi 20・BETA Hi 20・D-P <=0・その混合）は c=0.30%（感度 0.50%）。切替え（市場↔堅い組など）1回 = 売る側の c ＋ 買う側の c（重なっている株も全部売り買いしたとみなす＝保守側）を、新しい組を持つ最初の月のリターンから引く。組の中の入れ替え: 持っている月ごとに 2×c×f/12（f = 1年に中身が入れ替わる割合の仮置き）。市場（相手）には費用を掛けない",
+   "f_assumed": "BIG HiOP 0.30・VAR Lo 20 1.00（毎月組み直す）・BETA Lo 20 0.40・D-P Hi 30 0.35・HARD4 は4つの平均 0.51・RESVAR Lo 20 1.00・配当のある会社 0.10・SMALL LoOP 0.60・VAR Hi 20 2.00・BETA Hi 20 0.50・D-P <=0 0.40・SPEC4 は平均 0.875。市場の中の入れ替えは0とみなす",
+   "sensitivity_report": "c を 0（費用なし）・判定値・感度値・判定値の2倍 で報告（格付けは判定値だけ）",
+   "blend_rebalance": "HARD4・SPEC4 の4つの等分を毎月そろえ直す費用は入れない（4つとも同じ種類の大きな組で、そろえ直しの売買は小さい）。報告で触れる"
+  },
+  "C7_family": "主の族5本（P1〜P5）で Holm（保有期間・費用前・両側 p＝nx_common.p_two(NW t)）。探索の族14本は探索の中で別に Holm（格付けはするが『探索』と明記）",
+  "grading_call": "nx_common.grade(full, train, hold, roll20, cost_hold, repl, family_holm_p, sharpe_pair={\"train\": (規則の費用後のシャープ, Mkt のシャープ), \"hold\": (…)}, leveraged_or_timing=True)。探索の族は repl=None（C5 は測らない＝N/A。したがって探索の A には C3 が要る）"
+ },
+ "families": {
+  "common": {
+   "timing": "月末 t に分かる S_rt(t)（上の publication_lags と拡大窓）で t+1 月の持ち物を決め、t+1 月の1か月持つ。毎月判断するが、持ち物が変わるのは high/low が入れ替わる月だけ",
+   "returns": "持つ月のリターンは French の VW の総リターン（HARD4・SPEC4 は4つの等分を毎月そろえ直した平均）。相手は French Mkt（総リターン）",
+   "hard_legs": "BIG HiOP（6_Portfolios_ME_OP_2x3）・VAR Lo 20・BETA Lo 20・D-P Hi 30。HARD4 = この4つの等分",
+   "spec_legs": "SMALL LoOP・VAR Hi 20・BETA Hi 20・D-P <= 0（無配）。SPEC4 = この4つの等分（探索だけ）"
+  },
+  "P_primary": {
+   "role": "主の族（格付けする・Holm はこの5本で・C5 を測る）",
+   "P1_BIGHiOP": {
+    "high": "BIG HiOP（大型の高収益）",
+    "else": "Mkt",
+    "paper": "BW 2006 の『収益のある会社』・Stambaugh-Yu-Yuan 2012 の異常（収益性）の買いの側",
+    "post_publication_from": "2007-01"
+   },
+   "P2_VARLo20": {
+    "high": "VAR Lo 20（値動きの小さい株）",
+    "else": "Mkt",
+    "paper": "BW 2006 の σ（Table III で心理が正の年の後、低ボラの十分位 1.44%/月・高ボラ 0.30%/月）",
+    "post_publication_from": "2007-01"
+   },
+   "P3_BETALo20": {
+    "high": "BETA Lo 20（ベータの低い株）",
+    "else": "Mkt",
+    "paper": "Antoniou-Doukas-Subrahmanyam 2016（楽観の時期は証券市場線が右下がり）",
+    "post_publication_from": "2017-01"
+   },
+   "P4_DPHi30": {
+    "high": "D-P Hi 30（配当利回りの高い株）",
+    "else": "Mkt",
+    "paper": "BW 2006 の配当を払う会社（Table III で心理が正の年の後、無配 0.44%/月・配当のある会社の十分位 1.08〜1.31%/月）",
+    "post_publication_from": "2007-01"
+   },
+   "P5_HARD4": {
+    "high": "HARD4（P1〜P4 の堅い組の等分）",
+    "else": "Mkt",
+    "paper": "4つの堅い特性をまとめた版（一つの特性の選び方の運を薄める）",
+    "post_publication_from": "2007-01"
+   }
+  },
+  "X_exploratory": {
+   "role": "探索の族（格付けはするが『探索』と明記。Holm は探索の14本の中で。C5 は測らない。すべて切替えの型なので C8 必須）",
+   "E1_BOTH_BIGHiOP": "high → BIG HiOP、low → SMALL LoOP（BW 2006 の両側の予言をそのまま買いだけで）",
+   "E2_BOTH_VAR": "high → VAR Lo 20、low → VAR Hi 20",
+   "E3_BOTH_BETA": "high → BETA Lo 20、low → BETA Hi 20",
+   "E4_BOTH_DP": "high → D-P Hi 30、low → D-P <= 0（無配）",
+   "E5_BOTH_HARD4": "high → HARD4、low → SPEC4",
+   "E6_LOWSPEC_ONLY": "high → Mkt、low → SPEC4（心理が低い後だけ投機的な株を持つ）",
+   "E7_MEDIAN_HARD4": "P5 の閾値を『その時点の窓の中の S の中央値』に（Stambaugh-Yu-Yuan 2012 の『中央値より上の月』を実時間で）",
+   "E8_ANNUAL_HARD4": "P5 を BW 2006 の Table III の時間割で: 暦年 Y の12か月は、前年12月末の判断 S_rt(Y−1年12月) で決める（年に1回だけ切り替える）",
+   "E9_ORTH_HARD4": "P5 の信号を実時間の SENT_ORTH に: 各成分を、その成分の日付（ただし t−2 より新しくしない）のマクロ5系列（鉱工業生産・雇用・CPI で実質化した耐久財/非耐久財/サービス消費。2026年版 BW と同じ『ln − 直前12か月の ln の平均』）と定数へ拡大窓で回帰した残差で主成分。景気後退の印（NBER）は発表が6〜21か月遅れるので入れない。マクロは改訂後の値（実時間の版ではない）。2025-10 の CPI の欠けで 2025-12・2026-01 の判断は信号なし＝市場",
+   "E10_PRACTICAL_HARD4": "P5 を『BW の公開ファイルだけを使う個人』の遅れで: ファイルは年1回（3月）の更新なので、判断の月 t が4〜12月なら前年12月まで、1〜3月なら前々年12月までの成分しか無い。その打ち切りの月 m* までの BW どおりの成分（遅れを足さない lag0 の型）で拡大窓の主成分を作り、m* の値の符号を使う。持つ月 1971-05〜2026-08（French の終わりまで）",
+   "E11_NOBWLAG_HARD4": "P5 の ripo・pdnd を12か月遅れではなく他と同じ1か月遅れに（BW 2006 が 1962〜2001 の標本の中で選んだ遅れの構造＝訓練期間の後知恵を使わない版）",
+   "E12_LAG0_HARD4": "P5 を BW の指数どおりの成分（公表の遅れを足さない: CEFD(t)・NIPO12(t)・RIPOAM(t−12)・PDND(t−12)・S(t)）で＝遅れの感度。月末 t の値が t の引けに分かるという楽観の仮定",
+   "E13_RESVAR": "high → RESVAR Lo 20（固有の値動きの小さい株・Stambaugh-Yu-Yuan 2015）、low → Mkt",
+   "E14_PAYERS": "high → 配当を払う会社全体（D-P の Lo 30・Med 40・Hi 30 を、判断の月 t の行の社数×平均の時価で時価加重して t+1 月に持つ。French のこの行が t 月末・t−1 月末のどちらの時価でも t 月末には分かっている＝先読みにならない）、low → Mkt（BW 2006 の配当の有無そのもの）"
+  },
+  "controls_report_only": {
+   "CTRL_static": "P1〜P5 の堅い組・SPEC4 をいつも持つ（無条件の傾き。他セッションが測った種類）。規則との差＝『心理で選んだ』分",
+   "COND_SPREAD": "堅い組ごとに (堅い組 − Mkt) の月次を high の月と low の月で分けた平均と、その差（high の月のダミーへの回帰・NW t・ラグ12）を訓練・保有・全期間で＝BW の予言そのものの検算",
+   "CTRL_invert_HARD4": "逆（low の後に HARD4、high の後に Mkt）",
+   "CTRL_pub_SENT_HARD4": "公開の SENT（全期間の主成分＝後知恵あり）の t 月の値 > 0 で t+1 月に HARD4。後知恵がどれだけ効くかの目安・格付けしない",
+   "CTRL_pub_ORTH_HARD4": "公開の SENT_ORTH で同じ（後知恵あり・NBER の印あり）",
+   "CTRL_vintage2019_HARD4": "2019-03 版の成分で作った main_2019 で P5（持つ月 1970-08〜2019-02）。同じ期間の main の P5 と並べ、成分の改訂が結果をどれだけ動かすかの目安",
+   "PLACEBO_shift_HARD4": "main の high/low の並びを k か月ずらして巻き戻した（循環ずらし・k = 24〜N−24 のすべて・乱数なし）偽の信号で P5 を作り、全期間の費用前の超過の分布の中で本物がどこにいるか（心理の持続の長さと high の割合を保ったまま、時期だけを壊す）",
+   "SWITCH_COUNT": "訓練・保有での切替えの回数・high の割合・high の連続の長さ（独立な試行の少なさを見せる）"
+  },
+  "reported_for_every_rule": "全期間・訓練・保有・2013-07〜・公表後（P3 は 2017-01〜 も）・1970-1989・1990-2006 の超過（算術・NW t・幾何の差・追従のぶれ・β）、シャープ（規則と Mkt）、最大下落、年あたりの切替え回数、費用 0／0.10%／0.30%／0.20% 後、20年積立の倍率（nx_common.dca）"
+ },
+ "benchmark": {
+  "graded": "French Mkt（Mkt-RF＋RF・上限なしの時価加重・CRSP 全上場＝S&P500 にほぼ等しい）。規則は French のポートフォリオの総リターンなので総リターンどうし",
+  "C5": "各国の JKP 市場（vw_cap・USD・超過）。規則も JKP の超過なので超過どうし",
+  "real_etf": "SPY（配当込み）"
+ },
+ "timing": {
+  "signal": "月末 t の判断に使う成分は main の遅れ（cefd・nipo は t−1、ripo・pdnd は t−13、s は t−3 までの値）。主成分の載荷量・標準化もその月までの窓だけ。t+1 月の値は一切使わない。先読みの検査（--selftest）を 1985-12・2006-12・2015-12 で通過: その月より後の成分をでたらめに替えても、各型のその月（main・nobwlag・orth は次の月の判断）までの信号は1つも変わらず、わざと1か月先の cefd を使わせた版は変わる",
+  "data_maker_lags": "BW の公開の指数自体は ripo・pdnd に12か月前の値を使う（公表の遅れのためではなく『先に動く成分』を合わせるため）。nipo・cefd・s は当月の値を使う＝公開の指数はそのままでは当月末に分からない値を含みうる（連銀の統計の遅れ）。ここではそれに上の遅れを足した。公開ファイル自体の更新は年1回（3月）なので、ファイルだけを使う人は E10 の遅れになる",
+  "portfolio_formation": "French の VAR・RESVAR は t−1 月末に組んだ組の t 月のリターン、BETA・D-P・ME×OP は毎年6月末に前年の決算・過去のリターンで組む（会計は決算の6か月以上後）＝作り手が先読みしないように遅らせている（説明ページで確かめた）。JKP も t−1 月末までに分かる特性で組む（会計は4か月遅れ）と理解している",
+  "revisions": "成分もマクロも改訂後の値（実時間の版ではない）。2019 版との違いは data.sentiment.vintage_differences",
+  "etf": "ETF の答え合わせも同じ（月末の信号で翌月）"
+ },
+ "real_instrument_check": {
+  "report_only": true,
+  "R1_VIG": "high → VIG（配当を増やし続ける大型株・Vanguard・2006-05〜・経費 0.05%）、それ以外 → SPY。楽天の海外ETF にある（out/broker_lineup.json）",
+  "R2_DVY": "high → DVY（高配当・2003-11〜）、それ以外 → SPY。楽天にある",
+  "R3_USMV": "high → USMV（最小分散・2011-10〜）、それ以外 → SPY。★楽天の海外ETF 一覧に無い（SPLV も無い）＝参考",
+  "signals": "main（判断〜2026-01）と E10 practical（〜2026-08）の両方で",
+  "cost": "切替え1回 = 0.20%（片側 0.10%×2）。信託報酬は ETF の価格に入っている",
+  "nisa_tax": "切替えのたびに売るので、NISA の成長投資枠は買うたびに消費され売った枠は翌年まで戻らない＝NISA では続けにくい。課税口座では売るたびに利益の 20.315%。税は格付けに入れない（報告で触れる）",
+  "practical_source": "個人が実際に使える信号は BW の公開ファイル（年1回更新）＝E10 の型。成分を自分で毎月集めるなら main の型に近づくが、pdnd は CRSP/Compustat が要る"
+ },
+ "prior": {
+  "baker_wurgler_2006": "Baker, M. & Wurgler, J. (2006) Investor Sentiment and the Cross-Section of Stock Returns, Journal of Finance 61(4), 1645-1680（2006年8月号・NBER WP 2004）。原本 PDF（pages.stern.nyu.edu/~jwurgler/papers/wurgler_baker_cross_section.pdf・sha256 79e8b604…）を読んだ。要旨: 期首の心理が低いと、小型・若い・高ボラ・赤字・無配・極端な成長・財務の苦しい株のその後のリターンが相対的に高く、心理が高いとそれらが相対的に低い。Table III（1963〜2001・NYSE 十分位の等分〔equal-weighted〕・前年末の SENTIMENT⊥ の符号で月を分ける）: σ 最下位の十分位（低ボラ）は心理が正の後 1.44%/月・負の後 1.01%/月、最上位（高ボラ）は正の後 0.30%/月・負の後 2.41%/月。ME 最小の十分位は正の後 0.73・負の後 2.37、最大は 0.98・0.92。無配は正の後 0.44・負の後 2.32、配当のある会社の十分位は正の後 1.08〜1.31。赤字は正の後 0.35・負の後 2.59。SENTIMENT⊥ が正の年: 1968〜1970・1972・1979〜1987・1994・1996〜1997・1999〜2001。式(2)の載荷: −0.241 CEFD + 0.242 TURN(t−1) + 0.253 NIPO + 0.257 RIPO(t−1) + 0.112 S − 0.283 PDND(t−1)（第1主成分の説明割合 49%）。遅れの構造は 1962〜2001 の標本の中で『第1段の指数との相関が高い方』を選んだ（＝訓練期間の後知恵・E11 で外す）。★本人たちも『等分の組にしたのは小型ほど心理の影響が大きいから。時価加重だと型が見えにくくなる』と書いている（ここは時価加重）",
+  "baker_wurgler_2007": "Baker, M. & Wurgler, J. (2007) Investor Sentiment in the Stock Market, Journal of Economic Perspectives 21(2), 129-152。月次の指数と『投機的な株と安全な株のシーソー』（数字は原本で確かめていない）",
+  "stambaugh_yu_yuan_2012": "Stambaugh, R., Yu, J. & Yuan, Y. (2012) The Short of It: Investor Sentiment and Anomalies, Journal of Financial Economics 104(2), 288-302。要旨（記憶・原本は取れなかった）: 11の異常の買い−売りは心理が高い（前月の BW 指数が標本の中央値より上）後に大きい。売りの側は心理が高い後に儲かる。**買いの側のリターンは心理と関係しない**＝買いだけのこの規則には不利な証拠",
+  "antoniou_doukas_subrahmanyam_2016": "Antoniou, C., Doukas, J. & Subrahmanyam, A. (2016) Investor Sentiment, Beta, and the Cost of Equity Capital, Management Science 62(2), 347-367。要旨（記憶）: 楽観の時期は証券市場線が右下がり（高ベータが報われない）、悲観の時期は右上がり＝P3 の理屈",
+  "stambaugh_yu_yuan_2015": "Stambaugh, Yu & Yuan (2015) Arbitrage Asymmetry and the Idiosyncratic Volatility Puzzle, Journal of Finance 70(5)。要旨（記憶）: 固有の値動きが大きい株の割高は心理が高い後に強い＝E13 の理屈",
+  "baker_wurgler_yuan_2012": "Baker, M., Wurgler, J. & Yuan, Y. (2012) Global, Local, and Contagious Investor Sentiment, Journal of Financial Economics 104(2), 272-287。6か国（米・加・英・仏・独・日）の世界と国ごとの心理。世界の心理は米国の心理と強く一緒に動き、心理が高い後は裁定しにくい株の国の中のリターンが低い（数字は原本で確かめていない）。国別の指数は公開ページに無い＝C5 は米国の指数で代える",
+  "mclean_pontiff_2016": "McLean & Pontiff (2016, JF): 公表後に異常の上乗せは平均で約3割〜6割小さくなる（標本外で約26%・公表後で約58%）。ここの保有期間は BW 2006 の公表後",
+  "expected_size": "先行研究の数字はどれも等分の十分位・買い−売りで、時価加重の五分位・三分位の買いだけ・相手が市場の規則には直接は当てはまらない。等分の十分位の差（例: σ の低ボラ−高ボラが心理の後で ±1%/月超）の何分の一かしか残らない見込み"
+ },
+ "contamination": [
+  "BW 2006 の原本（PDF）を読み、Table III の数字（上の prior）を見た。これは公表された先行研究の数字で、この台帳の測定ではない",
+  "BW のデータ: 列名・各成分の期間・欠けの数・年の中で値が動くか（どの成分も毎月動く）・2019 版と 2026 版で違う月の数・README・Stata と SAS のコードを見た。構成の検算として、全期間の主成分（BW どおり）と公開の SENT の相関（1.00000）と全期間の載荷量（s がほぼ0）を計算して見た。リターンとの関係は一切計算していない",
+  "実時間の信号は作って保存したが、表示したのは各型の最初と最後の判断の月・月数・sha256 だけ。信号の値・high の月の割合・切替えの回数・high の時期は表示していない・見ていない",
+  "斥候の報告（out/nx_scout.json）に書かれた最後の行（2025-12 の SENT 0.126・SENT_ORTH 0.066）を読んだ＝今が『心理が平均より少し高い』側だと知っている",
+  "JKP の国別ポートフォリオの列名を確かめるとき、最初の1行（jpn・rvol_21d・pf 1.0・1986-02 のリターン 0.1586）を表示してしまった。規則の成績ではない1か月1組の値",
+  "並走セッション: eknzbh の最新コミットの見出し（『新規採用銘柄を外す規則 t4.39 は上限の数字で、観測できる社だけなら +0.01%/年 t0.35』）を git log で見た。mw_macro_timing_prereg4.json の sntm の文脈を読むとき、同じ文字列の中にあった以前の結果（公定歩合の向きの規則が 2010-02〜2019-07 を現金で過ごした・信用スプレッドの拡大×トレンドの訓練の t が1前後）を見た。mw_macro_timing・mw_volmanaged・mw_trend・mw_mega_tilt・mw_risk_matched・mw_combo_us・mw_fmom_wf と q07leu の fam_macro・fam_valtime・fam_voltarget は冒頭の説明（規則の定義）だけを読んだ。q07leu の spec_trend・spec_lottery の rationale の冒頭（規則の定義の部分）が grep の結果に出た",
+  "斥候の報告の contamination 欄に書かれた他セッションの結果（eknzbh: macro_timing の主21本がすべて C・X6a の S が再現しない、q07leu: 第10回の lmtext −0.72%/年 t−1.18 ほか）を読んだ。どれも時期選び・別の角度の結果で、この規則の成績ではないが、時期選びが勝ちにくいという期待に影響しうる",
+  "世の中の知識として、1999〜2000年の IT バブル（心理が高い）とその後の小型成長株の崩れ、2008年の下落、2020〜2021年の SPAC・IPO・個人投資家の熱狂（心理が高い）と 2022年の投機的な株の急落、2023〜2025年の巨大テック主導の上昇、2007年以降の低ボラ・高配当の ETF（USMV・DVY など）が S&P500 に負けた年が多いことを知っている。これは消せない漏れ。2022年は規則に有利、2023〜2025年は堅い組に不利に働いたと推測できてしまう。保有期間・米国外（C5）・偽の信号（PLACEBO）で答え合わせする",
+  "規則の成績（平均・t・シャープ・累積・勝率）は、どの規則・どの対照・どの国についても一度も計算・表示していない"
+ ],
+ "sanity_checks_before_results": [
+  "測る道具は最初に nx_sentcond_signals.json の regime_sha256 がこの登録の値（395866ae…）と一致するかを確かめ、違えば止まる",
+  "各月の判断に使った成分の月を記録し、main では cefd・nipo ≤ t−1、ripo・pdnd ≤ t−13、s ≤ t−3、窓の終わり = t を assert する",
+  "持つ月のリターンは t+1 月だけ（判断の月 t のリターンを持つ月に入れない）を assert",
+  "French の総リターンと Mkt（Mkt-RF+RF）、JKP の超過と JKP 市場を取り違えない: 米国の規則は総リターン対総リターン、C5 は超過対超過",
+  "JKP の堅い側の pf ラベルは jkp_good_side(upto=200612) で確かめ、1つでも食い違えば止まる",
+  "費用: 切替えの月の数 × (c_売る + c_買う) と組の中の入れ替えの合計が、規則の費用前と費用後の差に一致することを確かめる"
+ ],
+ "known_limits": [
+  "心理の高低は何年も続く＝独立な切替えの数は少ない（保有期間の約19年に数回〜十数回と見込む）。保有期間の結果は少数の局面（2007〜2008・2020〜2022 など）で決まりうる。SWITCH_COUNT と PLACEBO_shift で見せる",
+  "成分は改訂後の値で、当時の投資家が見た値ではない（2019 版と比べ pdnd は全月、ripo・nipo・s は1〜3割の月が違う）。拡大窓の主成分は載荷量・標準化の後知恵を除くが、改訂の後知恵は除けない。CTRL_vintage2019 で大きさの目安を出す",
+  "BW 2006 の遅れの構造（ripo・pdnd を12か月前）と成分の選び方（2006年の6成分から、遅くとも 2019 版までに NYSE の売買回転を外して5成分）は 1962〜2001 の標本を見て決めた＝訓練期間の中には設計の後知恵がある。保有期間（2007〜）はこの設計の公表後。E11 で遅れの構造を外した版を報告",
+  "今の5成分の全期間の載荷では s がほぼ0（−0.01）＝実質4成分の指数",
+  "時価加重の堅い組は市場の大きな部分と重なる（BIG HiOP など）＝切り替えても市場との差は小さい。BW 本人たちも時価加重では型が薄まると書いている",
+  "Stambaugh-Yu-Yuan 2012 は買いの側が心理と関係しないと報告＝買いだけのこの角度の見込みは小さい",
+  "C5 の7か国は米国の心理で切り替える（国ごとの心理指数は公開されていない）＝時期は独立でない。JKP の特性は French の組と作り方が違う（単一の三分位・capped value weight）",
+  "費用は仮置きの近似（切替え 0.20%・組の中の入れ替え）。税は入れていない。切替えのたびに売るので、日本の個人は NISA で続けにくく、課税口座では売るたびに課税される",
+  "個人が実際に使える形は BW の公開ファイル（年1回更新）＝E10 の遅れ。main の遅れで持つには成分を自分で集める必要があり、pdnd は CRSP/Compustat が要る＝現実には難しい",
+  "独立の試行は少ない（20年窓は重なる・保有期間は約19年の1本）"
+ ],
+ "test_count": {
+  "primary": 5,
+  "exploratory": 14,
+  "c5_units": "7か国 × 主の5本 = 35（C5 の判定にだけ使う）",
+  "report_only": "無条件の対照6本・COND_SPREAD 5組×3期間・逆1本・後知恵2本・2019年版1本・偽の信号（循環ずらし 約620通り）・切替えの数・実在の ETF 3本×信号2つ・費用の感度4通り",
+  "note": "試したものは全部 out/nx_sentcond.json の tested に残す（負けも落とさない）。測った後に規則を足したら『事後』と明記し、格付けに使わない"
+ }
+}

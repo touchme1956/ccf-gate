@@ -8,15 +8,31 @@
 #   門0発掘(companyfacts.zip 1.4GB)・年次較正の判定・審査そのもの。
 # 各ステップは continue-on-error——1本の失敗で他を止めない。失敗は隠れない:
 #   ops_status.py が最終実行日を実測するので、止まった作業は門の⚙自動化タブで⚠になる。
+# 前向きの検定（mw_forward・nx_forward）は**別のジョブ forward**（このファイルの末尾）で回し、結果は他の成果と
+#   別のコミットで先に push する（2026-09-29・検査役の指摘: 同じコミットに乗せると、他の workflow と同じ時間帯に
+#   書き換えるファイルの rebase が解けないとき、その月の確定がまるごと捨てられる）。
 name: monthly ops
 on:
   schedule:
-    - cron: '0 23 2 * *'   # 毎月2日 23:00 UTC（market.yml/events.ymlと時間をずらす）
+    # 2026-09-29: 分を 0 から 17 へずらした——GitHub は毎時0分を高負荷の時間として遅延・取りこぼしを挙げている
+    #   （実測でも events.yml は2〜4時間遅れていた）。月1回の実行が落ちると次は翌月になる。
+    - cron: '17 23 2 * *'   # 毎月2日 23:17 UTC（market.yml/events.ymlと時間をずらす）
+    # 予備: 3日は forward ジョブだけが動き、今月すでに取り込んだ群は回さない（ops ジョブは回らない＝下の if）。
+    #   ⚠ この文字列は下の2か所（ops ジョブの if・forward ジョブの「要るか」）と一字一句同じにすること
+    - cron: '17 23 3 * *'
   workflow_dispatch:
+    inputs:
+      forward:
+        description: '前向きの検定（auto＝今月まだ取り込んでいない群だけ回す／force＝必ず回す／skip＝回さない）。月の途中に force で回すと nx の F2 の形成月が変わりうる（forward ジョブの注記）'
+        type: choice
+        options: [auto, force, skip]
+        default: auto
 permissions:
   contents: write
 jobs:
   ops:
+    # 予備の3日（前向きの検定の取りこぼしを拾うだけ）では、月次の作業は回さない
+    if: github.event.schedule != '17 23 3 * *'
     runs-on: ubuntu-latest
     # v9.9.140: **`| tail` が失敗を緑に化かすのを止める。**
     #   宣言が無いと pipefail が付かず、`検査 | tail -25` は tail の成功だけを見る
@@ -322,6 +338,9 @@ jobs:
       - name: WACC既定のズレ検出 audit_wacc_stale
         continue-on-error: true
         run: timeout 300 python3 night/audit_wacc_stale.py --write
+      # 前向きの検定（mw_forward・nx_forward）はこのジョブでは回さない——末尾の forward ジョブを見よ。
+      #   ⚠ このジョブの ops_status は forward ジョブと並んで走るので、その日の前向きの結果より先に盤を書くことがある
+      #     （翌営業日の events.yml の ops_status が直す。期限は40日なので状態は変わらない）。
       # ⚠2026-08-10: **ops_status を最後へ移した。** 以前は wacc の**前**に居たので、
       #   コミットされる out/ops_status.json は必ず1ヶ月前の wacc 日付を載せていた
       #   ——盤が自分より後の作業を測れない、という順序の誤り。
@@ -371,9 +390,154 @@ jobs:
           #   ⚠ `out/market_data.json` は**存在しない**（market_fetch.py は repo 直下の
           #     `market_data.json` に書く）。これが38パス全部を巻き添えにしていた元凶なので外した。
           ccf_git_add out/next_earnings.json kessan_calendar.ics kanshi_list.json gate1_x_watch.json out/kessan out/divy.json out/v10_shadow.json out/v11_shadow.json out/v11_facts.json out/v11_backtest.json out/ops_status.json out/hist_val_now.json out/irr85_history.json out/irr85_mech_test.json out/profiles.json out/exception_watch.json out/castle_correlation.json out/irr85_scope_life.json out/new_listings_irr.json out/wacc_drift.json out/net_plan.json out/backfill_diff.json out/backfill_stamps.json out/sp500_pe_monthly.json out/growth_trend.json out/calibration.json out/sht_report.json out/_sic_cache.json out/packs_index.json out/logos 'night/chunk*.txt' 'night/rechunk*.txt' night/reaudit_queue.json night/progress.json out/er_ledger.json market_data.json 'out/shadow_*.json' out/gate0_run.json out/industry_trends.json out/industry_long.json out/sic_by_cik.json out/industry_peak.json out/industry_exposure.json
+          # ⚠ 前向きの検定の出力（out/mw_forward.json・out/nx_forward.json・out/forward_run.json）はここで add しない
+          #   ——forward ジョブが別のコミットで先に push する（同じコミットに乗せると rebase の衝突で道連れに捨てられる）。
           git diff --staged --quiet || git commit -m "$MSG"
           # ⚠2026-08-18: 素の `git push` は remote が進んだだけで弾かれ、
           #   **作ったコミットがまるごと捨てられる**（market.yml が2営業日連続で70ファイル失った）。
           #   cron は10〜40分ふつうに遅れるので「時間をずらす」では防げない。rebase して再試行する。
+          . night/git_push_safe.sh
+          ccf_git_push
+
+  # ── 前向きの検定（2026-09-29接続・同日 検査役の指摘で別ジョブ・別コミットにした）────────────────────────
+  #   読むだけ・判定・採点・配分には不使用。事前登録 out/mw_forward_prereg.json（eknzbh 19e8ce23）・
+  #   out/nx_forward_prereg.json（b8579d18）どおりに、終わった月だけを順に取り込んで e過程を更新する。
+  #   一度取り込んだ月は固定＝同じ月に2回走っても、取り込み済みの月の答えは同じ。
+  #   ⚠ **別ジョブ・別コミットにした理由**: ops ジョブのコミットは、market.yml も add するパック・market_data.json・
+  #     er_ledger.json と、events.yml も add する ops_status.json を含む。遅れた cron が同じ時間帯に重なると
+  #     ccf_git_push の rebase が解けずに abort し、**その月の確定がまるごと捨てられる**。nx は観測した日で F2 の
+  #     形成月と F3 の母集団の日付が決まるので、翌月に取り直しても同じ答えにならない。このジョブは前向きの3ファイル
+  #     しか書かない（誰とも衝突しない）＝rebase が必ず解ける。
+  #   ⚠ 道具とその依存は凍結してある——night/check_forward_frozen.py が out/forward_frozen.json と突き合わせ、
+  #     合わなければ**更新しない**（段は失敗＝赤になる）。変わった道具で回すと、事前登録の規則が黙って変わるため。
+  #   ⚠ 段は continue-on-error にしない——落ちた・時間切れは workflow の失敗として ci_health（📋今日）に出る。
+  #     段ごとに out/forward_run.json へ印を書き（night/forward_run_mark.py）、盤の見張り (d) も読む。
+  #   ⚠ nx の10月は国内株式の投信 約770本の基準価額を取る（sandbox の実測 1本 約2.2秒＝約28分。**runner（米国）では未計測**・
+  #     失敗1回ごとに 2/4/8/16秒待ち、1回の要求は最大120秒）→ timeout 5400（90分・段 95分・ジョブ 125分）。
+  #     道具の CI_LINE（timeout 1800）は過小だが、道具は凍結なので直さずここで長くする。時間切れに当たると
+  #     8本すべてがその月は進まない（道具は最後にまとめて書く）。CSV の写しは同じ月の中だけ actions/cache で持ち回す
+  #     ＝同じ月の手動の再実行は、12時間以内なら取り終えた分を取り直さない（道具は12時間より古い写しを取り直す）。
+  #   ⚠ 値の出ない月は3か月待つと『欠測』として固定され戻せない。待ちが2か月に達したら ops_status が⚠にする。
+  #   ⚠ CI では投信の CSV の写しが月をまたいで残らない（償還した投信の最後の部分の月を取り逃しうる）。
+  #     重い仕組みを足さずに受け入れた——理由と影響は out/forward_frozen.json の deviations_in_ci。
+  #   ⚠ 書き手は CI だけ。セッションで回した出力はコミットしない（固定した月が割れる）。night/run_ops.py は
+  #     このジョブを回さない（env の CCF_CI_ONLY）。
+  #   ⚠ 手で回し直すとき（Actions → monthly ops → Run workflow・forward=auto）:
+  #     ・今月の定期実行（2日・予備の3日）が落ちた／時間切れで、新しいブランドの一覧が**前の月までに**出ていたなら、
+  #       **その月の25日までに**回す（26日以降だと nx の F2 の形成が『公開の翌月末』より1か月遅れる）。
+  #     ・**今月の2日より後に**新しい一覧が出たなら、26日以降に回すか次の2日を待つ（25日までに回すと1か月早まる）。
+  #     ＝nx の F2 は一覧を初めて観測した日の月末で組む（26日以降なら翌月末）。mw は回す日で答えが変わらない。
+  forward:
+    # 本番（2日）・予備（3日）・手動のどれでも動く。予備と手動の auto は「今月まだ取り込んでいない群」だけを回す
+    runs-on: ubuntu-latest
+    timeout-minutes: 125
+    env:
+      CCF_CI_ONLY: "前向きの検定の書き手は CI だけ（night/run_ops.py はこのジョブを回さない）"
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}   # mw の城の名簿は git の履歴から引く（roster_at）
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: 今月の前向きの更新が要るか
+        id: need
+        env:
+          EV: ${{ github.event_name }}
+          SCHED: ${{ github.event.schedule }}
+          MODE: ${{ github.event.inputs.forward }}
+        run: |
+          python3 - <<'PY'
+          import datetime, json, os
+          ym = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m')
+          ev, sched, mode = os.environ.get('EV', ''), os.environ.get('SCHED', ''), (os.environ.get('MODE') or 'auto')
+          # 本番の2日は必ず回す。予備の3日（と手動の auto）は、今月すでに取り込んだ群を回さない
+          if ev == 'schedule':
+              mode = 'force' if sched == '17 23 2 * *' else 'auto'
+          out = {}
+          for g, p in (('mw', 'out/mw_forward.json'), ('nx', 'out/nx_forward.json')):
+              try:
+                  gen = str(json.load(open(p, encoding='utf-8')).get('generated') or '')
+              except Exception:
+                  gen = ''
+              need = mode == 'force' or (mode == 'auto' and gen[:7] != ym)
+              out[g] = '1' if need else '0'
+              print(f"{g}: generated={gen or '?'} mode={mode} → {'回す' if need else '回さない（今月は取り込み済み・または skip）'}")
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"mw={out['mw']}\nnx={out['nx']}\nany={'1' if '1' in out.values() else '0'}\nym={ym.replace('-', '')}\n")
+          PY
+      - name: 投信の CSV の写しを戻す（同じ月の再実行だけ・判定に不使用）
+        if: steps.need.outputs.nx == '1'
+        continue-on-error: true
+        uses: actions/cache/restore@v4
+        with:
+          path: out/_nx_cache/nx_forward
+          key: nxfwd-${{ steps.need.outputs.ym }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            nxfwd-${{ steps.need.outputs.ym }}-
+      - name: 前向きの検定（mw_forward・判定に不使用）
+        if: steps.need.outputs.mw == '1'
+        timeout-minutes: 20
+        run: |
+          python3 night/forward_run_mark.py mw started
+          if ! python3 night/check_forward_frozen.py --group mw; then
+            python3 night/forward_run_mark.py mw frozen 1
+            exit 1
+          fi
+          rc=0
+          timeout 900 python3 night/mw_forward.py update > /tmp/mw_forward.log 2>&1 || rc=$?
+          if [ "$rc" = "0" ]; then tail -12 /tmp/mw_forward.log; else tail -40 /tmp/mw_forward.log; fi
+          python3 night/forward_run_mark.py mw auto "$rc" "$SECONDS"
+          exit "$rc"
+      - name: 前向きの検定（nx_forward・判定に不使用）
+        if: ${{ !cancelled() && steps.need.outputs.nx == '1' }}
+        timeout-minutes: 95
+        run: |
+          python3 night/forward_run_mark.py nx started
+          if ! python3 night/check_forward_frozen.py --group nx; then
+            python3 night/forward_run_mark.py nx frozen 1
+            exit 1
+          fi
+          rc=0
+          timeout 5400 python3 night/nx_forward.py --update > /tmp/nx_forward.log 2>&1 || rc=$?
+          if [ "$rc" = "0" ]; then tail -14 /tmp/nx_forward.log; else tail -40 /tmp/nx_forward.log; fi
+          python3 night/forward_run_mark.py nx auto "$rc" "$SECONDS"
+          exit "$rc"
+      - name: 投信の CSV の写しを残す（同じ月の再実行が続きから回る）
+        if: ${{ !cancelled() && steps.need.outputs.nx == '1' }}
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: out/_nx_cache/nx_forward
+          key: nxfwd-${{ steps.need.outputs.ym }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: 前向きの結果を先にコミット（他の成果と同じコミットに乗せない）
+        # 取り消し（cancel）のときは push しない。段の時間切れ・失敗のときは、取れた群の結果と印を残す
+        if: ${{ !cancelled() && steps.need.outputs.any == '1' }}
+        run: |
+          git config user.name  "ccf-gate bot"
+          git config user.email "noreply@github.com"
+          # 2本とも道具が最後に json.dump で直接書く（原子的でない）。時間切れの SIGTERM が書き込みの途中に当たると
+          #   壊れた JSON が残り、それをコミットすると以後の実行が毎回 json.load で落ちる（前向きの月が一つも入らない）。
+          #   → JSON として読めなければ add しない（その月は次の実行が取り直す・3か月以内なら失わない）。
+          #   ⚠ 追跡中のファイルは**消さない**（旧版は checkout に失敗すると rm していた＝削除がステージされうる。
+          #     main から消えると nx_forward.py --update は以後毎月「先に --init を回す」で止まる）。index の版へ戻すだけ
+          #     （push の rebase の前に作業ツリーをきれいにするため）。戻せなければ add しないだけ。
+          for g in mw nx; do
+            f="out/${g}_forward.json"
+            [ -f "$f" ] || continue
+            if python3 -c "import json,sys;json.load(open(sys.argv[1],encoding='utf-8'))" "$f" 2>/dev/null; then
+              git add -- "$f"
+              continue
+            fi
+            echo "::warning::$f が JSON として読めない（書き込みの途中で切れた疑い）→ コミットしない"
+            python3 night/forward_run_mark.py "$g" broken_output
+            if git ls-files --error-unmatch -- "$f" >/dev/null 2>&1; then
+              git checkout -- "$f" || echo "::warning::$f を index の版へ戻せない → add しない"
+            fi
+          done
+          git add -- out/forward_run.json
+          if git diff --staged --quiet; then echo "前向きの結果に変化なし"; exit 0; fi
+          git commit -m "forward tests $(date -u +%Y-%m-%d)｜mw=${{ steps.need.outputs.mw }} nx=${{ steps.need.outputs.nx }}（判定に不使用）"
           . night/git_push_safe.sh
           ccf_git_push

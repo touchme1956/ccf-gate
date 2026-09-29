@@ -28,6 +28,8 @@ night/audit_docs.py — **説明文とコードの整合検査**（2026-08-06新
 使い方:
   python3 night/audit_docs.py           # 検査（失敗があれば終了コード1）
   python3 night/audit_docs.py --list    # 該当箇所の本文を出す
+  python3 night/audit_docs.py --templates-only / --no-templates
+                                        # 夜間審査の指示書の検査だけ／それ以外だけ（ci.yml は別の段で回す）
 """
 import re
 import sys
@@ -37,6 +39,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HTML = os.path.join(ROOT, 'index.html')
 
 VERBOSE = '--list' in sys.argv
+# 2026-09-29: 指示書の検査（check_templates）だけ／それ以外だけを回す旗。ci.yml はこの2つを別の段にする——
+#   指示書のずれは下流の検査の正しさを損なわないので、下流を skip させずに最後で赤くする（ci.yml の frozen・wfadd と同じ作法）
+ONLY_TEMPLATES = '--templates-only' in sys.argv
+NO_TEMPLATES = '--no-templates' in sys.argv
 
 
 def load():
@@ -126,6 +132,162 @@ def read_code_facts(h):
     f['max_version'] = '9.9.%d' % max(vs) if vs else None
 
     return f
+
+
+# ─────────────────────────────────────────────────────────────────────
+# 夜間審査の指示書（night/agent_prompt_template*.txt）の刻みを正本と突き合わせる（2026-09-29新設）
+# ─────────────────────────────────────────────────────────────────────
+#   なぜ要るか: 指示書は審査官（セッション）がパックを作るときに読む写しで、**中身を読む検査が1本も無かった**。
+#   実測: 91c7e1f3^ の指示書（堀の線『75未満』・p4『正でも小さく→75』・『irr=85は別枠』・gwg5 の採取の節）へ
+#   戻しても、check_html・audit_docs・check_frozen_dates・check_workflow_add の4本とも exit 0 だった。
+#   p4 の刻みは正本が 2026-08-05 に 80/65/45 を明記した後も、指示書は 07-17 の初版のまま2か月ずれていた
+#   （その間の審査官は正本に無い 75 を置き続けた＝todo p4_rubric_mismatch_0929 の154社）。
+#   比べるもの（どれも「式の形」＝値の grep では追えない）:
+#     (1) p1〜p4・f1〜f5 の**刻み**——「→N」の点と、その条件に書かれた数（閾値）。条件の言い回しは比べない
+#     (2) 刻みの後ろの注のうち**規則の数**——「で+5」「で−10」の加減点と「N上限」。日付・版・『』の引用・〔〕は除く
+#     (3) 注の中の「…禁止」の語（例: p2 の『COVID一本足禁止』＝07-17 の指示書に無かった規則）
+#     (4) 堀の関門の線（「絶対MOAT指数…N未満」「堀N+」）＝ CCF_MOAT_GATE
+#     (5) 撤去済みの仕組みを操作指示として書いていないか（「irr=85は別枠」）と、門が受け取らない欄の採取の節
+#         （「■ 欄名」の欄が門の applyFields に無く、同じ行に廃止・撤去が無い＝例: gwg5）
+#   正本は Ⅱ手順3（本文の審査プロトコル）と ccfAskText（依頼文）。両者が食い違えばそれ自体も落とす。
+#   日本株の指示書は p1-p4・f1-f5 を本体の指示書に委ねる（「…の刻みに従う」）ので、刻みの行が無くてよい。
+TEMPLATES = ('night/agent_prompt_template.txt', 'night/agent_prompt_template_jp.txt')
+RUBRIC_KEYS = ('p1', 'p2', 'p3', 'p4', 'f1', 'f2', 'f3', 'f4', 'f5')
+# 既知の食い違い（理由つき・名指し）。ここに無い食い違いは FAIL。
+TEMPLATE_KNOWN = {
+    ('p3', 'band0'): '指示書の p3 は『純現金→95』で、正本の『かつインタレストカバレッジ>20』が無い。'
+                     'p3 は nde を埋めれば門が同じ表で機械導出し、指示書の p3 は逸脱評価のときだけ使う（利払いの余裕は intcov が別に受け持つ）',
+    ('f1', 'label'): '指示書の f1 は ROIIC を『直近2-3年ΔNOPAT/ΔIC』と書き、正本は ROIIC³（3年）。'
+                     '刻みの点と閾値は同じ（ラベルはこの検査では比べない＝ここは記録のためだけ）',
+}
+
+
+def _rub_norm(s):
+    import html as _html
+    import unicodedata
+    s = s.replace('\\n', '\n')                      # ccfAskText はテンプレート文字列の中の \n（2文字）
+    s = re.sub(r'<br\s*/?>', '\n', s)
+    s = re.sub(r'</?(?:b|u|i|br|span|code|em|strong|small|sup|sub)(?:\s[^<>]*)?/?>', '', s)
+    s = _html.unescape(s).replace('**', '').replace('³', '')
+    s = unicodedata.normalize('NFKC', s)
+    return s.replace('−', '-').replace('–', '-').replace('〜', '~').replace('～', '~')
+
+
+def _rub_lines(text):
+    """{p1..f5: 行の本文（鍵の後ろ）}。行＝改行・<br>・\n で区切った1行で、『→』を含む最初のもの"""
+    out = {}
+    for line in _rub_norm(text).split('\n'):
+        m = re.match(r'\s*(p[1-4]|f[1-5])(?:\s+|[:：]\s*)(.*)$', line)
+        if m and m.group(1) not in out and '→' in line:
+            out[m.group(1)] = m.group(2)
+    return out
+
+
+def _rub_sig(body):
+    """→ (刻み [(条件の数, 点)], 規則の数 [+5, 70上限 …], 禁止の語 {…})"""
+    arrow, colon = body.find('→'), body.find(':')
+    core = body[colon + 1:] if 0 <= colon < arrow else body
+    m = re.search(r'→\s*\d+(?:以下|以上)?\s*[(（。]', core)
+    note = ''
+    if m:
+        note, core = core[m.end() - 1:], core[:m.end() - 1]
+    bands = []
+    for seg in core.split('/'):
+        if '→' not in seg:
+            continue
+        cond, _, sc = seg.rpartition('→')
+        mm = re.match(r'\s*(\d+)', sc)
+        bands.append((tuple(re.findall(r'\d+(?:\.\d+)?', cond)), mm.group(1) if mm else sc.strip()))
+    nn = re.sub(r'\d{4}-\d\d-\d\d', '', note)
+    nn = re.sub(r'v\d+\.\d+\.\d+', '', nn)
+    nn = re.sub(r'『[^』]*』', '', nn)
+    nn = re.sub(r'〔[^〕]*〕', '', nn)
+    mods = sorted(re.findall(r'で\s*([+-]\d+)', nn) + [x + '上限' for x in re.findall(r'(\d+)\s*上限', nn)])
+    bans = set(re.findall(r'([^\s、。・=＝()（）]{2,16}禁止)', nn))
+    return bands, mods, bans
+
+
+def _gate_keys(h):
+    i = h.find('function applyFields(d)')
+    j = h.find('const map={', i)
+    if i < 0 or j < 0:
+        return None
+    return set(re.findall(r"(\w+):'", h[j + 10:h.find('};', j)]))
+
+
+def check_templates(h, f):
+    """指示書の刻み・堀の線・撤去済みの仕組みを正本と突き合わせる → [(sev, key, msg, hits)]"""
+    out = []
+    lines = h.split('\n')
+    ask = next((l for l in lines if 'function ccfAskText(' in l), None)
+    ii3 = next((l for l in lines if 'p1 ROIC安定性=' in l and 'function ccfAskText(' not in l), None)
+    if not ask or not ii3:
+        out.append(('FAIL', 'template_canon_unreadable',
+                    '正本の刻み（Ⅱ手順3・ccfAskText）を index.html から読めない——指示書の検査が眠る', []))
+        return out
+    canon, canon_ask = _rub_lines(ii3), _rub_lines(ask)
+    miss = [k for k in RUBRIC_KEYS if k not in canon]
+    if miss:
+        out.append(('FAIL', 'template_canon_unreadable',
+                    '正本（Ⅱ手順3）の刻みの行を読めない: %s——指示書の検査が眠る' % ' '.join(miss), []))
+    bad = []
+    for k in RUBRIC_KEYS:
+        if k in canon and k in canon_ask and _rub_sig(canon[k]) != _rub_sig(canon_ask[k]):
+            bad.append((0, 'index.html: %s の刻みが Ⅱ手順3 と ccfAskText で違う（%s ／ %s）'
+                        % (k, _rub_sig(canon[k])[:2], _rub_sig(canon_ask[k])[:2])))
+    if bad:
+        out.append(('FAIL', 'rubric_canon_split', '正本の2箇所（Ⅱ手順3・ccfAskText）で刻みが食い違う', bad))
+    gk = _gate_keys(h)
+    for rel in TEMPLATES:
+        try:
+            txt = open(os.path.join(ROOT, rel), encoding='utf-8').read()
+        except OSError as e:
+            out.append(('FAIL', 'template_unreadable', '%s を読めない（%s）' % (rel, type(e).__name__), []))
+            continue
+        delegates = 'agent_prompt_template.txt の刻みに従う' in txt
+        tl = _rub_lines(txt)
+        drift = []
+        for k in RUBRIC_KEYS:
+            if k not in canon:
+                continue
+            if k not in tl:
+                if not delegates:
+                    drift.append((0, '%s: %s の刻みの行が無い' % (rel, k)))
+                continue
+            (cb, cm, cn), (tb, tm, tn) = _rub_sig(canon[k]), _rub_sig(tl[k])
+            if [x[1] for x in cb] != [x[1] for x in tb]:
+                drift.append((0, '%s: %s の点が正本と違う 正本%s／指示書%s'
+                              % (rel, k, [x[1] for x in cb], [x[1] for x in tb])))
+            else:
+                for bi, (c, t) in enumerate(zip(cb, tb)):
+                    if c[0] != t[0] and (k, 'band%d' % bi) not in TEMPLATE_KNOWN:
+                        drift.append((0, '%s: %s の%d段目（→%s）の条件の数が正本と違う 正本%s／指示書%s'
+                                      % (rel, k, bi + 1, c[1], list(c[0]), list(t[0]))))
+            if cm != tm:
+                drift.append((0, '%s: %s の加減点・上限が正本と違う 正本%s／指示書%s' % (rel, k, cm, tm)))
+            for w in sorted(cn - tn):
+                drift.append((0, '%s: %s に正本の規則『%s』が無い' % (rel, k, w)))
+        for ln, l in enumerate(txt.split('\n'), 1):
+            if f.get('moat_gate'):
+                for m in re.finditer(r'絶対MOAT指数[^\n]{0,20}?(\d+)\s*\**\s*未満|堀(\d+)\+', l):
+                    v = int(m.group(1) or m.group(2))
+                    # 形を『N未満』『堀N+』に限っているので、「線は v9.9.49 で75→70」のような経緯の記述は掛からない
+                    if v != f['moat_gate']:
+                        drift.append((ln, '%s: 堀の線が %d（正本 CCF_MOAT_GATE=%d）: %s'
+                                      % (rel, v, f['moat_gate'], l.strip()[:80])))
+            if re.search(r'irr\s*=\s*85\s*は別枠', l) and not re.search(r'撤去|廃止', l):
+                drift.append((ln, '%s: 撤去済みの『irr=85 は別枠』が操作指示として残る（v9.9.178 で撤去）: %s'
+                              % (rel, l.strip()[:80])))
+            m = re.match(r'\s*■\s*([A-Za-z][A-Za-z0-9]*)', l)
+            if m and gk is not None and m.group(1) not in gk and not re.search(r'廃止|撤去', l):
+                drift.append((ln, '%s: 門が受け取らない欄 %s の採取の節（廃止・撤去の断り無し）: %s'
+                              % (rel, m.group(1), l.strip()[:70])))
+        if drift:
+            out.append(('FAIL', 'template_rubric_drift',
+                        '夜間審査の指示書（%s）が正本（index.html の Ⅱ手順3・ccfAskText・CCF_MOAT_GATE・applyFields）とずれている'
+                        '——審査官はこの写しを読んでパックを作る。既知の食い違いは audit_docs.TEMPLATE_KNOWN に理由つきで名指しする'
+                        % rel, drift))
+    return out
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -406,6 +568,10 @@ def check(h, f):
                         '関門(絶対MOAT指数%d+)＝格下げされていない'
                         % (f['omega_weights'][3], f['moat_gate']), hits))
 
+    # ⑭ 夜間審査の指示書が正本の刻みとずれていないか（2026-09-29新設・上の check_templates）
+    if not NO_TEMPLATES:
+        out.extend(check_templates(h, f))
+
     return out
 
 
@@ -424,7 +590,7 @@ def main():
     print('    表示バージョン   v%s（ファイル内最新 v%s）' % (f['badge_version'], f['max_version']))
     print()
 
-    res = check(h, f)
+    res = check_templates(h, f) if ONLY_TEMPLATES else check(h, f)
     fails = [r for r in res if r[0] == 'FAIL']
     warns = [r for r in res if r[0] == 'WARN']
 

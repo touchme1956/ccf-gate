@@ -1,0 +1,2702 @@
+{
+ "generated": "2026-09-28",
+ "angle": "nx_osap_info",
+ "title": "情報の仲介者の信号（空売り残高・格下げ・アナリストの予想修正・予想のばらつき・長期成長予想・推奨・オプションの歪み）の良い側を買いだけで持つ",
+ "question": "他人の情報の読み——空売りの少なさ・直近の格下げの無さ・アナリストの予想の上方修正・予想のばらつきの小ささ・長期成長予想の低さ・強い買いの推奨・推奨の引き上げ・オプションの歪みの小ささ——の「良い側の五分位」を上限なしの時価加重で買いだけ持ち毎月入れ替える規則は、French Mkt（≒S&P500）に、訓練期間（〜2006）でも保有期間（2007〜2024）でも、その入れ替えの売買費用を引いた後に勝つか。データは OSAP（Chen-Zimmermann の公開データ・CRSP/Compustat/I/B/E/S/OptionMetrics から作った学術の再現）で、JKP の153特性に無い信号だけを使う",
+ "asked_by": "ユーザー「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して。限界までやって途中報告を入れながら結果が出るまで分析を止めずに。トークンの限界までやってほしい。今まではそんなものはないという報告で終わってたけどそれはなしで探し続ける努力をしてほしい。今別のSessionでこの内容を2つ回してる。別のSessionで検証していない新たな分析を同じ内容でしてほしい」（2026-09-28）。全体の事前登録 out/nx_prereg.json の追加の角度（斥候 out/nx_scout.json の rank 4 nx_osap_info の下書きを確かめ直して作った）",
+ "registered_before_measuring": true,
+ "global_prereg": "out/nx_prereg.json（C1〜C8・格付け S/A/B/C・criteria_short_sample・誠実さの約束）。統計と格付けは night/nx_common.py（mw_common.py と同一の定義）の excess_stats / rolling / dca / holm / grade / grade_short / p_two / p_one をそのまま使う",
+ "tools": {
+  "data": "night/nx_osap_info_data.py（取得と整形だけ・成績は計算しない）。fetch＝OSAP のファイルを out/_nx_cache/ へ／ports＝規則の台帳 RULES が使う組の月次リターン（%のまま）と銘柄数を nx_osap_info_ports.json へ／turnover＝銘柄ごとの信号から良い側の組の回転を nx_osap_info_turnover.json へ／shape＝期間・欠け・銘柄数だけ",
+  "rules_registry": "night/nx_osap_info_data.py の RULES（このファイルの families と同じ中身）。測る道具は RULES を import する（写さない）",
+  "rules_sha256": "2072f758f992de7b947a6798ead6c0074fab6538c8d8dfb93a4a706eacc0f0c3",
+  "series_sha256": "9ec58b49ba024fe568c1aa5688870d007b9d212306211b3694517d2421cb1804",
+  "sha_note": "rules_sha256 = RULES を json.dumps(sort_keys=True, ensure_ascii=False, separators=(\",\",\":\")) した sha256。series_sha256 = nx_osap_info_ports.json の series を json.dumps(sort_keys=True, separators=(\",\",\":\")) した sha256。測る道具は最初に両方を計算し直し、この値と違えば止まる（台帳と数字を結果を見てから作り直していないことの証明）",
+  "measure": "night/nx_osap_info.py（これから書く）→ out/nx_osap_info.json。試したものは全部 tested に残す（負けも落とさない）"
+ },
+ "stance_before_results": "測定器。門・採点・四関門・席・配分・売却規律には入れない。線（C1〜C8・短い標本の線）は結果を見て動かさない。良い側の組・評価の期間・費用の置き方はこの登録で固定し、測った後に変えたらそれは「事後」と明記して格付けに使わない。予想（判定には使わない）: この族の論文の利益の大半は売りの側（格下げされた・担当の少ない・ばらつきの大きい小型株）にあり、買いだけ・時価加重・市場比では1/4〜1/2以下に縮む。主の9本のうち A 以上が出る確率は測る前に 10% 前後と見積もる。望みは (a) 格下げの除外（P2：市場との差は小さいが追従のぶれも極めて小さい）、(b) 空売りの少ない側（P1：Boehmer ほか 2010 が買いの側の効果を報告）、(c) 長期成長予想の低い側（P6：回転が年0.4と低く費用に強い）。毎月の入れ替えが年8〜12回分になる推奨・予想修正・オプションの規則（P4・Q1〜Q3）は費用で消える見込み",
+ "why_new": {
+  "difference": "並走中の3セッションの株の特徴はすべて JKP 153（jkpfactors.com・eknzbh の mw_factor_us_prereg.json の一覧で確かめた）か French か Yahoo/SEC の自作だった。JKP 153 には I/B/E/S のアナリストの変数（予想・修正・ばらつき・長期成長・推奨）、空売り残高、格付け、OptionMetrics のオプションの変数、13F の変数が一つも無い（一覧は age〜zero_trades_252d・会計と株価と出来高だけ）。2026-09-28 17:00 UTC ごろ origin の eknzbh・q07leu・hbm38n の枝を fetch し、night/mw_*・night/edge/*・night/ev5*・out/mw_*prereg*・out/edge*・out/ev5* を openassetpricing・ShortInterest・short interest・shtint・CredRat・credit rating・REV6・AnalystRevision・ForecastDispersion・fgr5yr・ConsRecomm・ChangeInRecomm・skew1・I/B/E/S・IBES・analyst・空売り・格下げ・アナリスト で git grep した: 株ごとの空売り・格付け・アナリスト・オプションの規則は一つも無く、見つかったのは文章の中の一般語（「空売りできない」「格下げ（格付けの判定の意味）」）だけ",
+  "per_signal_overlap": {
+   "ShortInterest": "JKP 無し／eknzbh: 株ごとは無し（mw_macro_timing の shtint は市場全体の空売り残高で株の比率を傾ける時期選び＝別物。しかも eknzbh は「全期間で作り直す必要」と外した）／q07leu・hbm38n: 無し",
+   "CredRatDG": "JKP 無し（o_score・z_score は会計から作る倒産の確率で、格付け機関の判断ではない）／3枝とも無し",
+   "REV6・AnalystRevision": "JKP 無し／いちばん近いのは eknzbh の F13 業績の勢い（JKP の niq_su・saleq_su・ni_inc8q・niq_at_chg1・niq_be_chg1・ocf_at_chg1）と q07leu の fam_pead（JKP niq_su）＝どれも会計の実績の驚き。こちらはアナリストの予想の修正で、実績が出る前に動く。重なりは報告 R7（niq_su の良い側・French UMD との相関）と R6（FF5＋UMD のアルファ）で切り分ける",
+   "ForecastDispersion": "JKP 無し（JKP の ivol・rvol・earnings_variability は株価や実績のぶれで、予想のばらつきではない）／3枝とも無し",
+   "fgr5yrLag": "JKP 無し（sale_gr・qmj_growth は実績の成長）／3枝とも無し",
+   "ConsRecomm・ChangeInRecommendation": "JKP 無し／3枝とも無し（hbm38n の 13F の最良の考え・Berkshire は保有の開示で推奨ではない）",
+   "skew1": "JKP 無し（iskew_*・rskew_21d・coskew_21d は株価の実現の歪みで、オプションの IV の歪みではない）／3枝とも無し",
+   "DelBreadth（探索のみ）": "main の angles4（13F の保有機関数の水準を規模で調整した残差）と近いので主に入れず探索 XL15 に置く",
+   "nx_osap_intang（同じ OSAP を使う兄弟の角度）": "OrgCap・AdExp・BrandInvest・RDAbility・SurpriseRD・Herf・MS・FR ほか＝無形資産・革新・集中度で、この角度の信号とは1本も重ならない（night/nx_osap_intang_data.py の RULES で確かめた）"
+  },
+  "why_this_matters_for_the_user": "アナリスト・格付け・空売りは「他人がすでに調べた情報」。個人が無料で近いものを見られる（Yahoo の推奨・FINRA の空売り残高）ので、もし買いの側で勝つなら門の外の補助の目になりうる。勝たないなら「他人の読みに乗る」ことに上乗せが無いという記録になる"
+ },
+ "data": {
+  "source": "Open Source Asset Pricing（Chen & Zimmermann・openassetpricing.com）2025年10月版（データ v2.0.0・コード https://github.com/OpenSourceAP/CrossSection）。データのページ https://www.openassetpricing.com/data/ → Google Drive フォルダ 1qQDuTsnyvWfEJR6nPBQZ8xxlq6bkLG_y（ポートフォリオは 1RrKj_SjK4RGfuo6EFjCViEZ5Itv2rEFk）。取得は https://drive.usercontent.google.com/download?id=<id>&export=download&confirm=t（鍵なし）",
+  "files": {
+   "doc": {
+    "google_drive_id": "1Sev9s6cPFUGgxp1pFiej0lGzpsMqJCI2",
+    "cache": "out/_nx_cache/osap_SignalDoc.csv",
+    "bytes": 181581,
+    "sha256": "590a308e40483fa87c0cbb95f73c010d09a61e22a3e2059627d2b3de9b77e0d9"
+   },
+   "q5vw": {
+    "google_drive_id": "1ef905SSlCDyh1KU9W1tJs5sfBFz0HPUt",
+    "cache": "out/_nx_cache/osap_PredictorAltPorts_QuintilesVW.zip",
+    "bytes": 18947238,
+    "sha256": "03c2358f223670b6ce21853f2f9d86404012f6cea9a14e76d116ca05f20d5070"
+   },
+   "d10vw": {
+    "google_drive_id": "1_1WWZqilrt1gleeyAFwjv5aobd0QRbS3",
+    "cache": "out/_nx_cache/osap_PredictorAltPorts_DecilesVW.zip",
+    "bytes": 34654393,
+    "sha256": "d1790e831b621069379d5584d3114292ac52e8cdc36e44e302e880bd0c972b7c"
+   },
+   "vwf": {
+    "google_drive_id": "1KZE3FgBxFPaNOyxoRw63ubZHOlkR9kZW",
+    "cache": "out/_nx_cache/osap_PredictorAltPorts_LiqScreen_VWforce.zip",
+    "bytes": 25962554,
+    "sha256": "53d3ae1f3de7a17d051de0125da2c42e4d4cf664faf6e4f6cfdd3b4994675a2a"
+   },
+   "op": {
+    "google_drive_id": "1g7w-yQ6Cg2qbMEkER9Q3vgns4JszXQo6",
+    "cache": "out/_nx_cache/osap_PredictorPortsFull.csv",
+    "bytes": 77651932,
+    "sha256": "6cdaf0ff051222b813e6f8404d7a30b94e146b421625f202bd04473fe97a1817"
+   },
+   "ff93": {
+    "google_drive_id": "1pDRMNTOvRfvooAzYOmG9sBBz74mUO80Q",
+    "cache": "out/_nx_cache/osap_PredictorAltPorts_FF93style.zip",
+    "bytes": 22036534,
+    "sha256": "4b1e9333687368004de2a14ff759b6794fcc5f629403012e396a722fc36ae0e1"
+   },
+   "placebo": {
+    "google_drive_id": "1ciopYrT7e9tzKCt8f1he6uwJFiaD1ZkE",
+    "cache": "out/_nx_cache/osap_PlaceboPortsFull.zip",
+    "bytes": 10732490,
+    "sha256": "ceeb5885005611d6231479e3aae67eeaced33c53990c93081a7bcd64b08c0eeb"
+   },
+   "firm": {
+    "google_drive_id": "1avFIMjz_7LoF3p3nO26eqLW5KdRTOdhW",
+    "cache": "out/_nx_cache/osap_signed_predictors_dl_wide.zip",
+    "bytes": 2362401056,
+    "sha256": "aae101c1fd4749c5a68d83734b6ce5e90a0f2f18b456f498e6f3b803081f6ee3"
+   }
+  },
+  "construction_read": "OSAP のコードを読んで確かめた: Portfolios/Code/01_PortfolioFunction.R（信号に Sign を掛けてから並べる・番号の大きい組が買いの側・信号は1か月遅らせる・時価加重は前月末の時価 melag・分位点は R の quantile の既定＝type 7・端の組は同値を取る・両端の分位点が等しい月は捨てる）、11_ProcessCRSP.R（ret は CRSP の ret と上場廃止のリターンの合成・欠けた業績理由の上場廃止は NYSE/AMEX −35%・Nasdaq −55%・%表記）、30_PredictorAltPorts.R（五分位・十分位・VWforce は論文の期間〔Portfolio Period〕・開始月・フィルタをそのまま使う）、32_Predictor2x3Ports.R（2×3 は6月の信号・NYSE の30/70%点と時価の中央値・shrcd 10/11）、Signals/pyCode/SignalMasterTable.py（shrcd 10/11/12・exchcd 1/2/3）、各信号の Predictors/*.py、v1.4.0 の Stata の DataDownloads（時点の定義）",
+  "units": "ret は % の総リターン（無リスク金利を引いていない）→ /100 して French の Mkt（Mkt-RF＋RF・総リターン）とそのまま比べる",
+  "universe": "CRSP の普通株（shrcd 10/11/12・NYSE/AMEX/Nasdaq）のうちその信号がある会社。French の Mkt は shrcd 10/11 の全上場＝信号の被覆（アナリストが付いている・空売りが報告される・オプションがある）そのものが相手との違いを作る（known_limits）",
+  "benchmark_data": "Ken French F-F_Research_Data_Factors（1926-07〜2026-08）。比べるのは両方がある月（OSAP の終わり 2024-12 まで）",
+  "survivorship": "無し（CRSP の上場廃止を含む・上場廃止のリターンを合成済み）",
+  "ibes_and_other_coverage": {
+   "no_missing_months": "すべての規則で、評価の最初の月から最後の月まで月の欠けは無い（XL13 ChNAnalyst だけ組の欠けが3か月）",
+   "ibes_eps_summary": "I/B/E/S の未調整の要約（statsumu_epsus・FY1）: AnalystRevision・ForecastDispersion・FEPS は 1976-02/03 から、REV6 は7か月の修正が要るので 1976-09 から。組の銘柄数（良い側の五分位の中央値）は REV6 で 1977年174 → 1990年562 → 2000年835 → 2003年634（ITバブル後の上場廃止）→ 2024年698。月の欠けは無い",
+   "ibes_long_term_growth": "FPI=0（長期成長予想）は fgr5yrLag が 1982-07 から（6月の信号・6か月前の値）。Compustat の7項目がそろう会社だけ。良い側の組は 2000年約500 → 2015年約300 → 2020年194 → 2024年133 と細る（長期成長予想を出すアナリストの減少と項目の欠け）。EarningsForecastDisparity も同じく 2024年164",
+   "ibes_recommendations": "recddet は 1993-11 から（OSAP の注記: 論文は Zacks で1985年から＝OSAP には1993年より前が無い）。ConsRecomm・ChangeInRecommendation・UpRecomm・DownRecomm・Recomm_ShortInterest は 1993-11/12 から＝訓練が15年に届かない（短い標本の族）",
+   "short_interest": "Compustat sec_shortint（月の最初の観測＝月央の決済日）。1973-02 から。良い側の五分位は 1974年151 → 2000年394 → 2003年377 → 2005年942（Nasdaq の空売りが加わる）",
+   "credit_ratings": "S&P の格付け（Compustat adsprate・1985〜2017-02）と CIQ の格付け。格下げの組（01）は 1970年2社・1980年20社・1984年53社・1985年64社・1986年117社（Compustat の S&P が入った後）・2017年113社 → 2022年52社（Compustat の S&P が終わった後は CIQ だけ）。良い側（02＝格下げの無い全社）は1951年から在るが、格下げが数えられない年は市場とほぼ同じなので 1985-01 から評価する",
+   "options": "OptionMetrics。OSAP の注記どおり IV の信号は 2022-12 まで（2023年版の値）＝組は 1996-02〜2023-01、出来高の信号（OptionVolume1/2）は 2023-09 まで",
+   "history_rewriting_risk": "I/B/E/S の推奨の履歴は後から書き換えられた例がある（Ljungqvist, Malloy & Marston 2009, JF「Rewriting History」）。OSAP の2025年の取得はその後の版＝過去の推奨に後知恵が混じる可能性は消せない（known_limits）"
+  },
+  "replication_check": "銘柄ごとの信号（signed_predictors_dl_wide・541万行）から OSAP の組み方（分位点・同値・退化した月・組替えの月の引き継ぎ）を写して良い側の組の銘柄を作り直し、その銘柄数と OSAP の Nlong（翌月にリターンがある銘柄の数）の比の中央値は主の9本で 0.98〜1.00＝組の中身を正しく写せている（回転の計算の土台）。価格のフィルタを写せない探索の信号（FEPS 0.87・ChNAnalyst 0.52・オプションの一部 0.90）と Recomm_ShortInterest（1.30）は回転が近似"
+ },
+ "criteria": {
+  "P_main_long": {
+   "which": "criteria_long_history（C1〜C8）。訓練＝各規則の eval_from〜2006-12（P の6本は 22.0〜33.9年）、保有＝2007-01〜eval_to（2024-12・18年）、全期間＝eval_from〜eval_to",
+   "series": "規則の月次の総リターン r_t = OSAP の良い側の組の ret_t/100（t は保有の月）。相手 b_t = French の Mkt-RF＋RF",
+   "C1_C2_C3": "excess_stats(r, b)（費用前）の訓練・保有",
+   "C4_roll20": "rolling(r_cost, b, years=20, start_month=7)（費用後 0.10%・全期間）",
+   "C5_repl": "N/A。OSAP は米国だけで、JKP の各国のデータにはアナリスト・空売り・格付け・オプションの変数が無い＝独立の地域が無い。独立の時代（1976年より前）にも I/B/E/S は無い。したがって A には C3 が要る",
+   "C6_net_cost": "excess_stats(r_cost, b) の保有で C2（算術の超過が正 かつ 幾何の年率差が正）",
+   "C7_multi": "全期間の NW t≥3.0 または 主の族 P の6本の中の Holm（保有期間・費用前・両側 p＝p_two(NW t)）< 0.05",
+   "C8_sharpe": "N/A（常に株100%・借入なし・時期選びなし）",
+   "call": "grade(full, train, hold, roll20, cost_hold, repl=None, family_holm_p=Holm_P[id], sharpe_pair=None, leveraged_or_timing=False)"
+  },
+  "Q_main_short": {
+   "which": "criteria_short_sample（訓練が15年に満たない: 推奨は1993年から・オプションは1996年から）",
+   "full": "excess_stats(r, b)（費用前・eval_from〜eval_to）",
+   "halves": "全期間を月数で二等分（前半 = 最初の floor(n/2) か月・後半 = 残り）した費用前の幾何の年率差がどちらも正",
+   "drop_top": "【代用】OSAP は組のリターンだけで銘柄ごとのリターンが無いので「最大寄与の1銘柄を抜く」はできない。代わりに「規則の年間の幾何の超過（暦年・(1+r)の積 − (1+b)の積）が最も大きい1暦年を抜いた」全期間の費用前の excess_stats で幾何の年率差が正か。この代用で S が出たら「S（代用あり）」と書く",
+   "cost": "費用後（0.10%）の全期間で幾何の年率差が正",
+   "lower_bound": "【代用】上場廃止の下限は OSAP が既に合成している（欠けた業績理由の上場廃止に −35%／−55%）ので、下限版は「費用 0.30%（3倍）の全期間」で幾何の年率差が正か",
+   "holm": "主の族 Q の3本の中の Holm（全期間・費用前・片側 p＝p_one(NW t)）< 0.05",
+   "call": "grade_short(full, first_half, second_half, drop_top, cost_full, lower_bound, family_holm_p_one=Holm_Q[id])"
+  },
+  "XL_exploratory_long": "探索（格付けはするが「探索」と明記）。P と同じ線・同じ呼び出し。Holm は XL の21本の中で。C5 は N/A",
+  "XS_exploratory_short": "探索。Q と同じ線・同じ呼び出し（代用も同じ）。Holm は XS の16本の中で",
+  "cost_assumption": {
+   "unit": "片道の売買100%あたり 0.10%（時価加重＝大型株中心の目安・nx_prereg の既定）を判定に使い、0.30% を感度として報告（Q・XS では 0.30% が lower_bound の代用）",
+   "turnover_source": "OSAP は回転を出さないので、OSAP の銘柄ごとの信号（signed_predictors_dl_wide）から良い側の組を毎月作り直して測った（nx_osap_info_turnover.json）。主の数字＝「時価の代わりの重み」（2か月前の売買代金 DolVol・OSAP の信号のファイルに Size が無いため）で重みづけした組の出入りの回転 ½Σ|w_new − w_old|（新旧の重みは同じ月の代わりの重みで比べる＝時価加重の組で価格の変化だけでは売買が要らないことを写す）。感度＝銘柄数で等分した回転",
+   "monthly_charge": "保有の月 t の費用 = その月の回転（月次・片道）× 単価。最初の月は回転1.0（買い付け）。回転の値が無い月は、その規則の全期間の月次の回転の中央値",
+   "ff93_BH": "2×3 の BH は年1回（6月末）の組替えで、大型・小型の分け目に時価が要るので実測できない＝理屈で年1.0（全入れ替えの上限）と置く。月あたり 1.0×単価/12 を毎月引く",
+   "mix": "MIX6・MIX3 は構成の規則の毎月の費用の平均（袖どうしの相殺を数えない＝保守的）",
+   "measured_turnover_main": {
+    "P1_ShortInterest_q5vw": {
+     "vw_proxy": {
+      "all": 4.706,
+      "train": 5.365,
+      "hold": 3.474
+     },
+     "ew_names": {
+      "all": 3.457,
+      "train": 4.694,
+      "hold": 1.141
+     }
+    },
+    "P2_CredRatDG_notDG_vwf": {
+     "vw_proxy": {
+      "all": 0.19,
+      "train": 0.192,
+      "hold": 0.181
+     },
+     "ew_names": {
+      "all": 0.185,
+      "train": 0.186,
+      "hold": 0.179
+     }
+    },
+    "P3_REV6_q5vw": {
+     "vw_proxy": {
+      "all": 3.428,
+      "train": 3.327,
+      "hold": 3.596
+     },
+     "ew_names": {
+      "all": 2.881,
+      "train": 2.993,
+      "hold": 2.693
+     }
+    },
+    "P4_AnalystRevision_q5vw": {
+     "vw_proxy": {
+      "all": 8.518,
+      "train": 8.185,
+      "hold": 9.108
+     },
+     "ew_names": {
+      "all": 8.894,
+      "train": 8.752,
+      "hold": 9.144
+     }
+    },
+    "P5_ForecastDispersion_q5vw": {
+     "vw_proxy": {
+      "all": 2.664,
+      "train": 2.805,
+      "hold": 2.423
+     },
+     "ew_names": {
+      "all": 3.216,
+      "train": 3.398,
+      "hold": 2.905
+     }
+    },
+    "P6_fgr5yrLag_q5vw": {
+     "vw_proxy": {
+      "all": 0.377,
+      "train": 0.27,
+      "hold": 0.518
+     },
+     "ew_names": {
+      "all": 0.458,
+      "train": 0.374,
+      "hold": 0.568
+     }
+    },
+    "Q1_ConsRecomm_strongbuy_op": {
+     "vw_proxy": {
+      "all": 10.452,
+      "train": 9.851,
+      "hold": 10.888
+     },
+     "ew_names": {
+      "all": 10.933,
+      "train": 10.531,
+      "hold": 11.225
+     }
+    },
+    "Q2_ChangeInRecommendation_q5vw": {
+     "vw_proxy": {
+      "all": 11.566,
+      "train": 11.573,
+      "hold": 11.561
+     },
+     "ew_names": {
+      "all": 11.607,
+      "train": 11.605,
+      "hold": 11.609
+     }
+    },
+    "Q3_skew1_q5vw": {
+     "vw_proxy": {
+      "all": 7.639,
+      "train": 8.947,
+      "hold": 6.758
+     },
+     "ew_names": {
+      "all": 8.412,
+      "train": 9.186,
+      "hold": 7.891
+     }
+    }
+   },
+   "what_the_numbers_mean_before_results": "年間の片道の回転 × 0.10% が年あたりの費用の目安: P2 0.02%・P6 0.04%・P5 0.27%・P3 0.34%・P1 0.47%・P4 0.85%・Q3 0.76%・Q1 1.05%・Q2 1.16%（0.30% ならその3倍＝P4 2.6%・Q2 3.5%）。回転は成績ではないので測る前に見てよいと判断した"
+  }
+ },
+ "families": {
+  "common": {
+   "good_side": "OSAP は信号に論文の符号（SignalDoc の Sign）を掛けてから並べるので、番号の最も大きい組（五分位の05・十分位の10・離散の最大の値・2×3 の BH）が論文の予言する良い側。こちらで訓練期間のリターンを見て選び直すことはしない（論文の既定値）",
+   "weights": "時価加重（前月末の時価 melag）。ConsRecomm（Q1）は論文自体が時価加重なので PortsFull の組をそのまま使う",
+   "rebalance": "五分位・十分位・VWforce は OSAP のとおり（主の9本は fgr5yrLag を除き毎月。fgr5yrLag は信号が年1回しか変わらない）。2×3 は年1回",
+   "start_rule": "評価の開始 = 良い側の組の銘柄数が20未満の月が最後に現れた月の翌月（形だけで機械的に決めた）。ただし P2 は 1985-01（S&P の格付けが Compustat に入る年・格下げの組が数えられる年）",
+   "end_rule": "OSAP の最後の月（2024-12・オプションの IV は 2023-01・出来高は 2023-09）。XS16 だけ 2023-06",
+   "missing": "組の欠けた月はその月を比較から外す（0 と読まない）。主の9本では起きない"
+  },
+  "P_primary_long": [
+   {
+    "id": "P1_ShortInterest_q5vw",
+    "signal": "ShortInterest",
+    "good_side": "空売り残高÷発行済株式数が最も小さい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 197302,
+    "eval_to": 202412,
+    "months": 623,
+    "missing_months_inside": 0,
+    "train_years": 33.9,
+    "names_in_good_port_min": 23,
+    "names_in_good_port_median": 384,
+    "names_in_good_port_by_year_median": {
+     "1974": 155,
+     "1977": 178,
+     "1980": 211,
+     "1985": 237,
+     "1990": 282,
+     "1995": 376,
+     "2000": 397,
+     "2003": 384,
+     "2006": 935,
+     "2010": 823,
+     "2015": 776,
+     "2020": 750,
+     "2024": 854
+    },
+    "op": {
+     "paper": "Dechow et al. (2001, JFE)",
+     "op_sample": "1976-1993",
+     "osap_sign": -1,
+     "osap_category": "Trading",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200201
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 4.706,
+      "train": 5.365,
+      "hold": 3.474
+     },
+     "ew_names_sensitivity": {
+      "all": 3.457,
+      "train": 4.694,
+      "hold": 1.141
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 0.998
+    }
+   },
+   {
+    "id": "P2_CredRatDG_notDG_vwf",
+    "signal": "CredRatDG",
+    "good_side": "直近6か月（当月を含む）に格下げが無い会社（格付けの無い会社も含む）＝格下げされた会社を除いた市場",
+    "osap_file": "PredictorAltPorts_LiqScreen_VWforce（論文の組み方のまま・時価加重に強制）",
+    "good_port": "02",
+    "eval_from": 198501,
+    "eval_to": 202412,
+    "months": 480,
+    "missing_months_inside": 0,
+    "train_years": 22.0,
+    "names_in_good_port_min": 3390,
+    "names_in_good_port_median": 4492,
+    "names_in_good_port_by_year_median": {
+     "1974": 3459,
+     "1977": 3553,
+     "1980": 3720,
+     "1985": 4509,
+     "1990": 4584,
+     "1995": 6135,
+     "2000": 5941,
+     "2003": 4872,
+     "2006": 4548,
+     "2010": 3996,
+     "2015": 3736,
+     "2020": 3598,
+     "2024": 4201
+    },
+    "op": {
+     "paper": "Dichev and Piotroski (2001, JF)",
+     "op_sample": "1986-1998",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "4_lack_data",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200201
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 0.19,
+      "train": 0.192,
+      "hold": 0.181
+     },
+     "ew_names_sensitivity": {
+      "all": 0.185,
+      "train": 0.186,
+      "hold": 0.179
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 0.998
+    }
+   },
+   {
+    "id": "P3_REV6_q5vw",
+    "signal": "REV6",
+    "good_side": "直近7か月の予想修正（株価で割った合計）が最も上向きの組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 197609,
+    "eval_to": 202412,
+    "months": 580,
+    "missing_months_inside": 0,
+    "train_years": 30.3,
+    "names_in_good_port_min": 160,
+    "names_in_good_port_median": 630,
+    "names_in_good_port_by_year_median": {
+     "1977": 175,
+     "1980": 334,
+     "1985": 517,
+     "1990": 562,
+     "1995": 744,
+     "2000": 838,
+     "2003": 635,
+     "2006": 672,
+     "2010": 630,
+     "2015": 651,
+     "2020": 634,
+     "2024": 699
+    },
+    "op": {
+     "paper": "Chan, Jegadeesh and Lakonishok (1996, JF)",
+     "op_sample": "1977-1992",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 199701
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 3.428,
+      "train": 3.327,
+      "hold": 3.596
+     },
+     "ew_names_sensitivity": {
+      "all": 2.881,
+      "train": 2.993,
+      "hold": 2.693
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "P4_AnalystRevision_q5vw",
+    "signal": "AnalystRevision",
+    "good_side": "今月の平均予想÷先月の平均予想が最も大きい組（上方修正）",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 197603,
+    "eval_to": 202412,
+    "months": 586,
+    "missing_months_inside": 0,
+    "train_years": 30.8,
+    "names_in_good_port_min": 171,
+    "names_in_good_port_median": 681,
+    "names_in_good_port_by_year_median": {
+     "1977": 195,
+     "1980": 348,
+     "1985": 556,
+     "1990": 618,
+     "1995": 824,
+     "2000": 937,
+     "2003": 689,
+     "2006": 740,
+     "2010": 695,
+     "2015": 695,
+     "2020": 674,
+     "2024": 747
+    },
+    "op": {
+     "paper": "Hawkins, Chamberlin, Daniel (1984, FAJ)",
+     "op_sample": "1975-1980",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 198501
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 8.518,
+      "train": 8.185,
+      "hold": 9.108
+     },
+     "ew_names_sensitivity": {
+      "all": 8.894,
+      "train": 8.752,
+      "hold": 9.144
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "P5_ForecastDispersion_q5vw",
+    "signal": "ForecastDispersion",
+    "good_side": "予想のばらつき（標準偏差÷|平均|）が最も小さい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 197602,
+    "eval_to": 202412,
+    "months": 587,
+    "missing_months_inside": 0,
+    "train_years": 30.9,
+    "names_in_good_port_min": 126,
+    "names_in_good_port_median": 591,
+    "names_in_good_port_by_year_median": {
+     "1977": 147,
+     "1980": 275,
+     "1985": 448,
+     "1990": 495,
+     "1995": 681,
+     "2000": 767,
+     "2003": 563,
+     "2006": 646,
+     "2010": 587,
+     "2015": 624,
+     "2020": 614,
+     "2024": 653
+    },
+    "op": {
+     "paper": "Diether, Malloy and Scherbina (2002, JF)",
+     "op_sample": "1976-2000",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200301
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 2.664,
+      "train": 2.805,
+      "hold": 2.423
+     },
+     "ew_names_sensitivity": {
+      "all": 3.216,
+      "train": 3.398,
+      "hold": 2.905
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "P6_fgr5yrLag_q5vw",
+    "signal": "fgr5yrLag",
+    "good_side": "長期（5年）成長予想が最も低い組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 198207,
+    "eval_to": 202412,
+    "months": 510,
+    "missing_months_inside": 0,
+    "train_years": 24.5,
+    "names_in_good_port_min": 123,
+    "names_in_good_port_median": 337,
+    "names_in_good_port_by_year_median": {
+     "1985": 301,
+     "1990": 330,
+     "1995": 433,
+     "2000": 512,
+     "2003": 430,
+     "2006": 419,
+     "2010": 444,
+     "2015": 302,
+     "2020": 201,
+     "2024": 142
+    },
+    "op": {
+     "paper": "La Porta (1996, JF)",
+     "op_sample": "1983-1990",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "3",
+     "op_filter": "NA",
+     "post_publication_from": 199701
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 0.377,
+      "train": 0.27,
+      "hold": 0.518
+     },
+     "ew_names_sensitivity": {
+      "all": 0.458,
+      "train": 0.374,
+      "hold": 0.568
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 0.984
+    }
+   }
+  ],
+  "Q_primary_short": [
+   {
+    "id": "Q1_ConsRecomm_strongbuy_op",
+    "signal": "ConsRecomm",
+    "good_side": "推奨の平均が1.5以下（強い買いの合意）の組",
+    "osap_file": "PredictorPortsFull（論文の組み方のまま・重みも論文どおり＝ConsRecomm は時価加重）",
+    "good_port": "02",
+    "eval_from": 199311,
+    "eval_to": 202412,
+    "months": 374,
+    "missing_months_inside": 0,
+    "train_years": 13.2,
+    "names_in_good_port_min": 41,
+    "names_in_good_port_median": 231,
+    "names_in_good_port_by_year_median": {
+     "1995": 362,
+     "2000": 481,
+     "2003": 236,
+     "2006": 253,
+     "2010": 290,
+     "2015": 177,
+     "2020": 146,
+     "2024": 124
+    },
+    "op": {
+     "paper": "Barber et al. (2001, JF)",
+     "op_sample": "1985-1997",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "4_lack_data",
+     "op_stock_weight": "VW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200201
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 10.452,
+      "train": 9.851,
+      "hold": 10.888
+     },
+     "ew_names_sensitivity": {
+      "all": 10.933,
+      "train": 10.531,
+      "hold": 11.225
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "Q2_ChangeInRecommendation_q5vw",
+    "signal": "ChangeInRecommendation",
+    "good_side": "推奨の平均の前月からの引き上げ幅が最も大きい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 199401,
+    "eval_to": 202412,
+    "months": 372,
+    "missing_months_inside": 0,
+    "train_years": 13.0,
+    "names_in_good_port_min": 161,
+    "names_in_good_port_median": 317,
+    "names_in_good_port_by_year_median": {
+     "1995": 339,
+     "2000": 318,
+     "2003": 361,
+     "2006": 405,
+     "2010": 343,
+     "2015": 280,
+     "2020": 267,
+     "2024": 214
+    },
+    "op": {
+     "paper": "Jegadeesh et al. (2004, JF)",
+     "op_sample": "1985-1998",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "4_lack_data",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200501
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 11.566,
+      "train": 11.573,
+      "hold": 11.561
+     },
+     "ew_names_sensitivity": {
+      "all": 11.607,
+      "train": 11.605,
+      "hold": 11.609
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "Q3_skew1_q5vw",
+    "signal": "skew1",
+    "good_side": "オプションの歪み（OTM プットの IV − ATM コールの IV）が最も小さい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 199602,
+    "eval_to": 202301,
+    "months": 324,
+    "missing_months_inside": 0,
+    "train_years": 10.9,
+    "names_in_good_port_min": 119,
+    "names_in_good_port_median": 272,
+    "names_in_good_port_by_year_median": {
+     "2000": 262,
+     "2003": 189,
+     "2006": 240,
+     "2010": 285,
+     "2015": 351,
+     "2020": 376
+    },
+    "op": {
+     "paper": "Xing, Zhang and Zhao (2010, JFQA)",
+     "op_sample": "1996-2005",
+     "osap_sign": -1,
+     "osap_category": "Options",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 201101
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 7.639,
+      "train": 8.947,
+      "hold": 6.758
+     },
+     "ew_names_sensitivity": {
+      "all": 8.412,
+      "train": 9.186,
+      "hold": 7.891
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   }
+  ],
+  "XL_exploratory_long": [
+   {
+    "id": "XL1_ShortInterest_d10vw",
+    "signal": "ShortInterest",
+    "good_side": "空売り残高÷発行済株式数が最も小さい組",
+    "osap_file": "PredictorAltPorts_DecilesVW（十分位・時価加重）",
+    "good_port": "10",
+    "eval_from": 197303,
+    "eval_to": 202412,
+    "months": 622,
+    "missing_months_inside": 0,
+    "train_years": 33.8,
+    "names_in_good_port_min": 50,
+    "names_in_good_port_median": 193,
+    "names_in_good_port_by_year_median": {
+     "1974": 77,
+     "1977": 90,
+     "1980": 106,
+     "1985": 118,
+     "1990": 141,
+     "1995": 188,
+     "2000": 199,
+     "2003": 193,
+     "2006": 468,
+     "2010": 412,
+     "2015": 388,
+     "2020": 375,
+     "2024": 427
+    },
+    "op": {
+     "paper": "Dechow et al. (2001, JFE)",
+     "op_sample": "1976-1993",
+     "osap_sign": -1,
+     "osap_category": "Trading",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200201
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 5.302,
+      "train": 7.4,
+      "hold": 1.376
+     },
+     "ew_names_sensitivity": {
+      "all": 4.772,
+      "train": 6.25,
+      "hold": 2.006
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XL2_REV6_d10vw",
+    "signal": "REV6",
+    "good_side": "直近7か月の予想修正（株価で割った合計）が最も上向きの組",
+    "osap_file": "PredictorAltPorts_DecilesVW（十分位・時価加重）",
+    "good_port": "10",
+    "eval_from": 197609,
+    "eval_to": 202412,
+    "months": 580,
+    "missing_months_inside": 0,
+    "train_years": 30.3,
+    "names_in_good_port_min": 80,
+    "names_in_good_port_median": 315,
+    "names_in_good_port_by_year_median": {
+     "1977": 87,
+     "1980": 167,
+     "1985": 259,
+     "1990": 281,
+     "1995": 372,
+     "2000": 419,
+     "2003": 318,
+     "2006": 337,
+     "2010": 315,
+     "2015": 326,
+     "2020": 317,
+     "2024": 350
+    },
+    "op": {
+     "paper": "Chan, Jegadeesh and Lakonishok (1996, JF)",
+     "op_sample": "1977-1992",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 199701
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 3.694,
+      "train": 3.642,
+      "hold": 3.781
+     },
+     "ew_names_sensitivity": {
+      "all": 3.158,
+      "train": 3.269,
+      "hold": 2.971
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XL3_AnalystRevision_d10vw",
+    "signal": "AnalystRevision",
+    "good_side": "今月の平均予想÷先月の平均予想が最も大きい組（上方修正）",
+    "osap_file": "PredictorAltPorts_DecilesVW（十分位・時価加重）",
+    "good_port": "10",
+    "eval_from": 197603,
+    "eval_to": 202412,
+    "months": 586,
+    "missing_months_inside": 0,
+    "train_years": 30.8,
+    "names_in_good_port_min": 86,
+    "names_in_good_port_median": 338,
+    "names_in_good_port_by_year_median": {
+     "1977": 98,
+     "1980": 174,
+     "1985": 277,
+     "1990": 309,
+     "1995": 412,
+     "2000": 471,
+     "2003": 345,
+     "2006": 370,
+     "2010": 349,
+     "2015": 348,
+     "2020": 337,
+     "2024": 372
+    },
+    "op": {
+     "paper": "Hawkins, Chamberlin, Daniel (1984, FAJ)",
+     "op_sample": "1975-1980",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 198501
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 10.147,
+      "train": 10.085,
+      "hold": 10.255
+     },
+     "ew_names_sensitivity": {
+      "all": 10.11,
+      "train": 10.121,
+      "hold": 10.091
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XL4_ForecastDispersion_d10vw",
+    "signal": "ForecastDispersion",
+    "good_side": "予想のばらつき（標準偏差÷|平均|）が最も小さい組",
+    "osap_file": "PredictorAltPorts_DecilesVW（十分位・時価加重）",
+    "good_port": "10",
+    "eval_from": 197602,
+    "eval_to": 202412,
+    "months": 587,
+    "missing_months_inside": 0,
+    "train_years": 30.9,
+    "names_in_good_port_min": 63,
+    "names_in_good_port_median": 296,
+    "names_in_good_port_by_year_median": {
+     "1977": 74,
+     "1980": 138,
+     "1985": 225,
+     "1990": 248,
+     "1995": 340,
+     "2000": 384,
+     "2003": 284,
+     "2006": 324,
+     "2010": 294,
+     "2015": 312,
+     "2020": 307,
+     "2024": 327
+    },
+    "op": {
+     "paper": "Diether, Malloy and Scherbina (2002, JF)",
+     "op_sample": "1976-2000",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200301
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 3.933,
+      "train": 4.176,
+      "hold": 3.517
+     },
+     "ew_names_sensitivity": {
+      "all": 4.298,
+      "train": 4.533,
+      "hold": 3.894
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XL5_fgr5yrLag_d10vw",
+    "signal": "fgr5yrLag",
+    "good_side": "長期（5年）成長予想が最も低い組",
+    "osap_file": "PredictorAltPorts_DecilesVW（十分位・時価加重）",
+    "good_port": "10",
+    "eval_from": 198207,
+    "eval_to": 202412,
+    "months": 510,
+    "missing_months_inside": 0,
+    "train_years": 24.5,
+    "names_in_good_port_min": 60,
+    "names_in_good_port_median": 167,
+    "names_in_good_port_by_year_median": {
+     "1985": 156,
+     "1990": 155,
+     "1995": 215,
+     "2000": 252,
+     "2003": 215,
+     "2006": 208,
+     "2010": 180,
+     "2015": 165,
+     "2020": 101,
+     "2024": 71
+    },
+    "op": {
+     "paper": "La Porta (1996, JF)",
+     "op_sample": "1983-1990",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "3",
+     "op_filter": "NA",
+     "post_publication_from": 199701
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 0.454,
+      "train": 0.317,
+      "hold": 0.635
+     },
+     "ew_names_sensitivity": {
+      "all": 0.505,
+      "train": 0.385,
+      "hold": 0.664
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 0.986
+    }
+   },
+   {
+    "id": "XL6_EarningsForecastDisparity_q5vw",
+    "signal": "EarningsForecastDisparity",
+    "good_side": "長期成長予想 − 短期の予想成長 が最も小さい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 198201,
+    "eval_to": 202412,
+    "months": 516,
+    "missing_months_inside": 0,
+    "train_years": 25.0,
+    "names_in_good_port_min": 34,
+    "names_in_good_port_median": 391,
+    "names_in_good_port_by_year_median": {
+     "1985": 383,
+     "1990": 410,
+     "1995": 580,
+     "2000": 656,
+     "2003": 517,
+     "2006": 525,
+     "2010": 427,
+     "2015": 372,
+     "2020": 220,
+     "2024": 166
+    },
+    "op": {
+     "paper": "Da and Warachka (2011, JFE)",
+     "op_sample": "1983-2006",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 201201
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 3.166,
+      "train": 2.906,
+      "hold": 3.527
+     },
+     "ew_names_sensitivity": {
+      "all": 3.232,
+      "train": 2.952,
+      "hold": 3.618
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XL7_sfe_q5vw",
+    "signal": "sfe",
+    "good_side": "予想EPS÷株価が最も大きい組（12月決算・3月の予想・担当の少ない会社だけ・年1回）",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 197704,
+    "eval_to": 202412,
+    "months": 573,
+    "missing_months_inside": 0,
+    "train_years": 29.8,
+    "names_in_good_port_min": 64,
+    "names_in_good_port_median": 221,
+    "names_in_good_port_by_year_median": {
+     "1977": 64,
+     "1980": 107,
+     "1985": 140,
+     "1990": 142,
+     "1995": 225,
+     "2000": 252,
+     "2003": 225,
+     "2006": 241,
+     "2010": 226,
+     "2015": 240,
+     "2020": 221,
+     "2024": 238
+    },
+    "op": {
+     "paper": "Elgers, Lo and Pfeiffer (2001, AR)",
+     "op_sample": "1982-1998",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "12",
+     "op_filter": "abs(prc)>1",
+     "post_publication_from": 200201
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 0.583,
+      "train": 0.612,
+      "hold": 0.537
+     },
+     "ew_names_sensitivity": {
+      "all": 0.55,
+      "train": 0.583,
+      "hold": 0.497
+     },
+     "op_price_filter_reproduced": false,
+     "osap_nlong_over_own_names_median": 0.956
+    }
+   },
+   {
+    "id": "XL8_FEPS_q5vw",
+    "signal": "FEPS",
+    "good_side": "予想EPSが最も大きい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 197602,
+    "eval_to": 202412,
+    "months": 587,
+    "missing_months_inside": 0,
+    "train_years": 30.9,
+    "names_in_good_port_min": 170,
+    "names_in_good_port_median": 567,
+    "names_in_good_port_by_year_median": {
+     "1977": 201,
+     "1980": 340,
+     "1985": 519,
+     "1990": 531,
+     "1995": 765,
+     "2000": 808,
+     "2003": 586,
+     "2006": 673,
+     "2010": 574,
+     "2015": 599,
+     "2020": 549,
+     "2024": 563
+    },
+    "op": {
+     "paper": "Cen, Wei, and Zhang (2006, WP)",
+     "op_sample": "1983-2002",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "abs(prc)>5",
+     "post_publication_from": 200701
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 0.42,
+      "train": 0.482,
+      "hold": 0.315
+     },
+     "ew_names_sensitivity": {
+      "all": 0.573,
+      "train": 0.664,
+      "hold": 0.417
+     },
+     "op_price_filter_reproduced": false,
+     "osap_nlong_over_own_names_median": 0.87
+    }
+   },
+   {
+    "id": "XL9_AnalystValue_q5vw",
+    "signal": "AnalystValue",
+    "good_side": "アナリスト予想から作る残余利益の価値÷株価が最も大きい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 197607,
+    "eval_to": 202412,
+    "months": 582,
+    "missing_months_inside": 0,
+    "train_years": 30.5,
+    "names_in_good_port_min": 76,
+    "names_in_good_port_median": 470,
+    "names_in_good_port_by_year_median": {
+     "1977": 89,
+     "1980": 183,
+     "1985": 323,
+     "1990": 351,
+     "1995": 570,
+     "2000": 591,
+     "2003": 497,
+     "2006": 545,
+     "2010": 500,
+     "2015": 493,
+     "2020": 452,
+     "2024": 501
+    },
+    "op": {
+     "paper": "Frankel and Lee (1998, JAE)",
+     "op_sample": "1975-1993",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "12",
+     "op_filter": "abs(prc) > 1",
+     "post_publication_from": 199901
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 0.56,
+      "train": 0.628,
+      "hold": 0.448
+     },
+     "ew_names_sensitivity": {
+      "all": 0.577,
+      "train": 0.642,
+      "hold": 0.47
+     },
+     "op_price_filter_reproduced": false,
+     "osap_nlong_over_own_names_median": 0.975
+    }
+   },
+   {
+    "id": "XL10_AOP_q5vw",
+    "signal": "AOP",
+    "good_side": "アナリストの予想による価値の楽観度が最も小さい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 197607,
+    "eval_to": 202412,
+    "months": 582,
+    "missing_months_inside": 0,
+    "train_years": 30.5,
+    "names_in_good_port_min": 76,
+    "names_in_good_port_median": 468,
+    "names_in_good_port_by_year_median": {
+     "1977": 89,
+     "1980": 183,
+     "1985": 321,
+     "1990": 356,
+     "1995": 568,
+     "2000": 590,
+     "2003": 492,
+     "2006": 544,
+     "2010": 491,
+     "2015": 488,
+     "2020": 454,
+     "2024": 487
+    },
+    "op": {
+     "paper": "Frankel and Lee (1998, JAE)",
+     "op_sample": "1975-1993",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "12",
+     "op_filter": "abs(prc) > 1",
+     "post_publication_from": 199901
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 0.681,
+      "train": 0.678,
+      "hold": 0.685
+     },
+     "ew_names_sensitivity": {
+      "all": 0.682,
+      "train": 0.681,
+      "hold": 0.682
+     },
+     "op_price_filter_reproduced": false,
+     "osap_nlong_over_own_names_median": 0.97
+    }
+   },
+   {
+    "id": "XL11_PredictedFE_q5vw",
+    "signal": "PredictedFE",
+    "good_side": "会計から予測した予想の誤りが最も小さい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 198307,
+    "eval_to": 202412,
+    "months": 498,
+    "missing_months_inside": 0,
+    "train_years": 23.5,
+    "names_in_good_port_min": 102,
+    "names_in_good_port_median": 252,
+    "names_in_good_port_by_year_median": {
+     "1985": 221,
+     "1990": 220,
+     "1995": 262,
+     "2000": 302,
+     "2003": 314,
+     "2006": 347,
+     "2010": 272,
+     "2015": 251,
+     "2020": 157,
+     "2024": 109
+    },
+    "op": {
+     "paper": "Frankel and Lee (1998, JAE)",
+     "op_sample": "1979-1993",
+     "osap_sign": -1,
+     "osap_category": "Accounting",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "3_distant",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "12",
+     "op_filter": "abs(prc) > 1",
+     "post_publication_from": 199901
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 0.601,
+      "train": 0.55,
+      "hold": 0.666
+     },
+     "ew_names_sensitivity": {
+      "all": 0.6,
+      "train": 0.531,
+      "hold": 0.688
+     },
+     "op_price_filter_reproduced": false,
+     "osap_nlong_over_own_names_median": 0.985
+    }
+   },
+   {
+    "id": "XL12_ExclExp_q5vw",
+    "signal": "ExclExp",
+    "good_side": "I/B/E/S の実績 − 会計のEPS（除外した費用）が最も小さい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 198407,
+    "eval_to": 202412,
+    "months": 486,
+    "missing_months_inside": 0,
+    "train_years": 22.5,
+    "names_in_good_port_min": 51,
+    "names_in_good_port_median": 775,
+    "names_in_good_port_by_year_median": {
+     "1985": 519,
+     "1990": 594,
+     "1995": 878,
+     "2000": 1029,
+     "2003": 800,
+     "2006": 817,
+     "2010": 908,
+     "2015": 782,
+     "2020": 1623,
+     "2024": 720
+    },
+    "op": {
+     "paper": "Doyle, Lundholm and Soliman (2003, RAS)",
+     "op_sample": "1988-1999",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "12",
+     "op_filter": "NA",
+     "post_publication_from": 200401
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 0.632,
+      "train": 0.723,
+      "hold": 0.52
+     },
+     "ew_names_sensitivity": {
+      "all": 0.728,
+      "train": 0.757,
+      "hold": 0.692
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 0.974
+    }
+   },
+   {
+    "id": "XL13_ChNAnalyst_notdecl_vwf",
+    "signal": "ChNAnalyst",
+    "good_side": "担当アナリストの数が3か月前から減っていない会社",
+    "osap_file": "PredictorAltPorts_LiqScreen_VWforce（論文の組み方のまま・時価加重に強制）",
+    "good_port": "02",
+    "eval_from": 197809,
+    "eval_to": 202412,
+    "months": 553,
+    "missing_months_inside": 3,
+    "train_years": 28.1,
+    "names_in_good_port_min": 23,
+    "names_in_good_port_median": 283,
+    "names_in_good_port_by_year_median": {
+     "1977": 9,
+     "1980": 74,
+     "1985": 102,
+     "1990": 109,
+     "1995": 333,
+     "2000": 431,
+     "2003": 228,
+     "2006": 436,
+     "2010": 379,
+     "2015": 437,
+     "2020": 342,
+     "2024": 198
+    },
+    "op": {
+     "paper": "Scherbina (2008, ROF)",
+     "op_sample": "1982-2005",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "VW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "abs(prc) > 5",
+     "post_publication_from": 200901
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 3.37,
+      "train": 3.404,
+      "hold": 3.313
+     },
+     "ew_names_sensitivity": {
+      "all": 2.181,
+      "train": 2.221,
+      "hold": 2.114
+     },
+     "op_price_filter_reproduced": false,
+     "osap_nlong_over_own_names_median": 0.518
+    }
+   },
+   {
+    "id": "XL14_ChForecastAccrual_vwf",
+    "signal": "ChForecastAccrual",
+    "good_side": "発生主義の大きい半分の会社の中で、今月の平均予想が上方修正された会社（Barth-Hutton の二値・下方修正＝0 の反対側）",
+    "osap_file": "PredictorAltPorts_LiqScreen_VWforce（論文の組み方のまま・時価加重に強制）",
+    "good_port": "02",
+    "eval_from": 197607,
+    "eval_to": 202412,
+    "months": 582,
+    "missing_months_inside": 0,
+    "train_years": 30.5,
+    "names_in_good_port_min": 88,
+    "names_in_good_port_median": 349,
+    "names_in_good_port_by_year_median": {
+     "1977": 122,
+     "1980": 260,
+     "1985": 274,
+     "1990": 348,
+     "1995": 400,
+     "2000": 394,
+     "2003": 333,
+     "2006": 432,
+     "2010": 427,
+     "2015": 399,
+     "2020": 502,
+     "2024": 493
+    },
+    "op": {
+     "paper": "Barth and Hutton (2004, RAS)",
+     "op_sample": "1981-1996",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "12",
+     "op_filter": "NA",
+     "post_publication_from": 200501
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 3.903,
+      "train": 3.663,
+      "hold": 4.309
+     },
+     "ew_names_sensitivity": {
+      "all": 5.432,
+      "train": 4.98,
+      "hold": 6.197
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XL15_DelBreadth_q5vw",
+    "signal": "DelBreadth",
+    "good_side": "13F の保有機関数の変化（広がり）が最も大きい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 198007,
+    "eval_to": 202412,
+    "months": 534,
+    "missing_months_inside": 0,
+    "train_years": 26.5,
+    "names_in_good_port_min": 340,
+    "names_in_good_port_median": 406,
+    "names_in_good_port_by_year_median": {
+     "1980": 405,
+     "1985": 461,
+     "1990": 416,
+     "1995": 505,
+     "2000": 585,
+     "2003": 434,
+     "2006": 384,
+     "2010": 368,
+     "2015": 400,
+     "2020": 413,
+     "2024": 386
+    },
+    "op": {
+     "paper": "Chen, Hong and Stein (2002, JFE)",
+     "op_sample": "1979-1998",
+     "osap_sign": 1,
+     "osap_category": "13F",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "3",
+     "op_filter": "NA",
+     "post_publication_from": 200301
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 2.348,
+      "train": 2.341,
+      "hold": 2.357
+     },
+     "ew_names_sensitivity": {
+      "all": 2.901,
+      "train": 2.858,
+      "hold": 2.964
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XL17_ShortInterest_BH",
+    "signal": "ShortInterest",
+    "good_side": "空売り残高÷発行済株式数が最も小さい組",
+    "osap_file": "PredictorAltPorts_FF93style（毎年6月末の信号だけで組み7月〜翌6月持つ・NYSE の時価の中央値より大きく、NYSE の70%点より良い側＝BH・時価加重）",
+    "good_port": "BH",
+    "eval_from": 197307,
+    "eval_to": 202412,
+    "months": 618,
+    "missing_months_inside": 0,
+    "train_years": 33.5,
+    "names_in_good_port_min": 51,
+    "names_in_good_port_median": 150,
+    "names_in_good_port_by_year_median": {
+     "1974": 108,
+     "1977": 116,
+     "1980": 161,
+     "1985": 124,
+     "1990": 150,
+     "1995": 94,
+     "2000": 114,
+     "2003": 137,
+     "2006": 345,
+     "2010": 344,
+     "2015": 334,
+     "2020": 293,
+     "2024": 308
+    },
+    "op": {
+     "paper": "Dechow et al. (2001, JFE)",
+     "op_sample": "1976-1993",
+     "osap_sign": -1,
+     "osap_category": "Trading",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200201
+    },
+    "turnover_oneway_per_year": {
+     "used_for_cost": 1.0,
+     "basis": "理屈で置いた値（年1回の組替えの片道の上限＝全入れ替え）。大型・小型の分け目に時価が要り、公開の銘柄ごとの信号に時価が無いので実測できない"
+    }
+   },
+   {
+    "id": "XL18_REV6_BH",
+    "signal": "REV6",
+    "good_side": "直近7か月の予想修正（株価で割った合計）が最も上向きの組",
+    "osap_file": "PredictorAltPorts_FF93style（毎年6月末の信号だけで組み7月〜翌6月持つ・NYSE の時価の中央値より大きく、NYSE の70%点より良い側＝BH・時価加重）",
+    "good_port": "BH",
+    "eval_from": 197707,
+    "eval_to": 202412,
+    "months": 570,
+    "missing_months_inside": 0,
+    "train_years": 29.5,
+    "names_in_good_port_min": 91,
+    "names_in_good_port_median": 205,
+    "names_in_good_port_by_year_median": {
+     "1977": 91,
+     "1980": 178,
+     "1985": 206,
+     "1990": 194,
+     "1995": 241,
+     "2000": 245,
+     "2003": 229,
+     "2006": 216,
+     "2010": 267,
+     "2015": 236,
+     "2020": 394,
+     "2024": 218
+    },
+    "op": {
+     "paper": "Chan, Jegadeesh and Lakonishok (1996, JF)",
+     "op_sample": "1977-1992",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 199701
+    },
+    "turnover_oneway_per_year": {
+     "used_for_cost": 1.0,
+     "basis": "理屈で置いた値（年1回の組替えの片道の上限＝全入れ替え）。大型・小型の分け目に時価が要り、公開の銘柄ごとの信号に時価が無いので実測できない"
+    }
+   },
+   {
+    "id": "XL19_AnalystRevision_BH",
+    "signal": "AnalystRevision",
+    "good_side": "今月の平均予想÷先月の平均予想が最も大きい組（上方修正）",
+    "osap_file": "PredictorAltPorts_FF93style（毎年6月末の信号だけで組み7月〜翌6月持つ・NYSE の時価の中央値より大きく、NYSE の70%点より良い側＝BH・時価加重）",
+    "good_port": "BH",
+    "eval_from": 197607,
+    "eval_to": 202412,
+    "months": 582,
+    "missing_months_inside": 0,
+    "train_years": 30.5,
+    "names_in_good_port_min": 103,
+    "names_in_good_port_median": 246,
+    "names_in_good_port_by_year_median": {
+     "1977": 117,
+     "1980": 229,
+     "1985": 240,
+     "1990": 233,
+     "1995": 338,
+     "2000": 367,
+     "2003": 247,
+     "2006": 238,
+     "2010": 262,
+     "2015": 256,
+     "2020": 246,
+     "2024": 304
+    },
+    "op": {
+     "paper": "Hawkins, Chamberlin, Daniel (1984, FAJ)",
+     "op_sample": "1975-1980",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 198501
+    },
+    "turnover_oneway_per_year": {
+     "used_for_cost": 1.0,
+     "basis": "理屈で置いた値（年1回の組替えの片道の上限＝全入れ替え）。大型・小型の分け目に時価が要り、公開の銘柄ごとの信号に時価が無いので実測できない"
+    }
+   },
+   {
+    "id": "XL20_ForecastDispersion_BH",
+    "signal": "ForecastDispersion",
+    "good_side": "予想のばらつき（標準偏差÷|平均|）が最も小さい組",
+    "osap_file": "PredictorAltPorts_FF93style（毎年6月末の信号だけで組み7月〜翌6月持つ・NYSE の時価の中央値より大きく、NYSE の70%点より良い側＝BH・時価加重）",
+    "good_port": "BH",
+    "eval_from": 197607,
+    "eval_to": 202412,
+    "months": 582,
+    "missing_months_inside": 0,
+    "train_years": 30.5,
+    "names_in_good_port_min": 90,
+    "names_in_good_port_median": 289,
+    "names_in_good_port_by_year_median": {
+     "1977": 92,
+     "1980": 197,
+     "1985": 268,
+     "1990": 255,
+     "1995": 301,
+     "2000": 350,
+     "2003": 285,
+     "2006": 291,
+     "2010": 332,
+     "2015": 375,
+     "2020": 370,
+     "2024": 370
+    },
+    "op": {
+     "paper": "Diether, Malloy and Scherbina (2002, JF)",
+     "op_sample": "1976-2000",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200301
+    },
+    "turnover_oneway_per_year": {
+     "used_for_cost": 1.0,
+     "basis": "理屈で置いた値（年1回の組替えの片道の上限＝全入れ替え）。大型・小型の分け目に時価が要り、公開の銘柄ごとの信号に時価が無いので実測できない"
+    }
+   },
+   {
+    "id": "XL21_fgr5yrLag_BH",
+    "signal": "fgr5yrLag",
+    "good_side": "長期（5年）成長予想が最も低い組",
+    "osap_file": "PredictorAltPorts_FF93style（毎年6月末の信号だけで組み7月〜翌6月持つ・NYSE の時価の中央値より大きく、NYSE の70%点より良い側＝BH・時価加重）",
+    "good_port": "BH",
+    "eval_from": 198207,
+    "eval_to": 202412,
+    "months": 510,
+    "missing_months_inside": 0,
+    "train_years": 24.5,
+    "names_in_good_port_min": 100,
+    "names_in_good_port_median": 164,
+    "names_in_good_port_by_year_median": {
+     "1985": 170,
+     "1990": 144,
+     "1995": 196,
+     "2000": 210,
+     "2003": 184,
+     "2006": 169,
+     "2010": 173,
+     "2015": 181,
+     "2020": 137,
+     "2024": 114
+    },
+    "op": {
+     "paper": "La Porta (1996, JF)",
+     "op_sample": "1983-1990",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "3",
+     "op_filter": "NA",
+     "post_publication_from": 199701
+    },
+    "turnover_oneway_per_year": {
+     "used_for_cost": 1.0,
+     "basis": "理屈で置いた値（年1回の組替えの片道の上限＝全入れ替え）。大型・小型の分け目に時価が要り、公開の銘柄ごとの信号に時価が無いので実測できない"
+    }
+   },
+   {
+    "id": "XL16_MIX6",
+    "definition": "構成の規則の良い側を毎月等分（1/構成数）に組み直して持つ（全構成がそろう月だけ）",
+    "parts": [
+     "P1_ShortInterest_q5vw",
+     "P2_CredRatDG_notDG_vwf",
+     "P3_REV6_q5vw",
+     "P4_AnalystRevision_q5vw",
+     "P5_ForecastDispersion_q5vw",
+     "P6_fgr5yrLag_q5vw"
+    ],
+    "eval_from": 198501,
+    "eval_to": 202412,
+    "cost": "構成の規則の毎月の費用の平均（袖どうしで売買が相殺される分は数えない＝保守的）"
+   }
+  ],
+  "XS_exploratory_short": [
+   {
+    "id": "XS1_UpRecomm_vwf",
+    "signal": "UpRecomm",
+    "good_side": "今月推奨が引き上げられた会社",
+    "osap_file": "PredictorAltPorts_LiqScreen_VWforce（論文の組み方のまま・時価加重に強制）",
+    "good_port": "02",
+    "eval_from": 199312,
+    "eval_to": 202412,
+    "months": 373,
+    "missing_months_inside": 0,
+    "train_years": 13.1,
+    "names_in_good_port_min": 26,
+    "names_in_good_port_median": 443,
+    "names_in_good_port_by_year_median": {
+     "1995": 487,
+     "2000": 471,
+     "2003": 520,
+     "2006": 508,
+     "2010": 465,
+     "2015": 376,
+     "2020": 354,
+     "2024": 294
+    },
+    "op": {
+     "paper": "Barber et al. (2001, JF)",
+     "op_sample": "1985-1997",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "4_lack_data",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200201
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 10.337,
+      "train": 10.073,
+      "hold": 10.528
+     },
+     "ew_names_sensitivity": {
+      "all": 10.989,
+      "train": 10.903,
+      "hold": 11.052
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XS2_DownRecomm_notDG_vwf",
+    "signal": "DownRecomm",
+    "good_side": "今月推奨が引き下げられていない会社",
+    "osap_file": "PredictorAltPorts_LiqScreen_VWforce（論文の組み方のまま・時価加重に強制）",
+    "good_port": "02",
+    "eval_from": 199311,
+    "eval_to": 202412,
+    "months": 374,
+    "missing_months_inside": 0,
+    "train_years": 13.2,
+    "names_in_good_port_min": 84,
+    "names_in_good_port_median": 782,
+    "names_in_good_port_by_year_median": {
+     "1995": 861,
+     "2000": 861,
+     "2003": 857,
+     "2006": 872,
+     "2010": 783,
+     "2015": 686,
+     "2020": 608,
+     "2024": 553
+    },
+    "op": {
+     "paper": "Barber et al. (2001, JF)",
+     "op_sample": "1985-1997",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "4_lack_data",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200201
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 8.486,
+      "train": 8.323,
+      "hold": 8.604
+     },
+     "ew_names_sensitivity": {
+      "all": 9.551,
+      "train": 9.47,
+      "hold": 9.61
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XS3_Recomm_ShortInterest_vwf",
+    "signal": "Recomm_ShortInterest",
+    "good_side": "推奨が最良の五分位かつ空売りが最少の五分位（Drake-Rees-Swanson の二値）",
+    "osap_file": "PredictorAltPorts_LiqScreen_VWforce（論文の組み方のまま・時価加重に強制）",
+    "good_port": "02",
+    "eval_from": 199312,
+    "eval_to": 202412,
+    "months": 373,
+    "missing_months_inside": 0,
+    "train_years": 13.1,
+    "names_in_good_port_min": 51,
+    "names_in_good_port_median": 121,
+    "names_in_good_port_by_year_median": {
+     "1995": 65,
+     "2000": 78,
+     "2003": 103,
+     "2006": 183,
+     "2010": 127,
+     "2015": 125,
+     "2020": 129,
+     "2024": 126
+    },
+    "op": {
+     "paper": "Drake, Rees and Swanson (2011, AR)",
+     "op_sample": "1994-2006",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "4_lack_data",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "6",
+     "op_filter": "NA",
+     "post_publication_from": 201201
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 5.567,
+      "train": 6.349,
+      "hold": 5.01
+     },
+     "ew_names_sensitivity": {
+      "all": 4.14,
+      "train": 4.339,
+      "hold": 3.999
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.3
+    }
+   },
+   {
+    "id": "XS4_SmileSlope_q5vw",
+    "signal": "SmileSlope",
+    "good_side": "プットの IV − コールの IV（30日・デルタ50）が最も小さい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 199602,
+    "eval_to": 202301,
+    "months": 324,
+    "missing_months_inside": 0,
+    "train_years": 10.9,
+    "names_in_good_port_min": 318,
+    "names_in_good_port_median": 484,
+    "names_in_good_port_by_year_median": {
+     "2000": 448,
+     "2003": 378,
+     "2006": 455,
+     "2010": 488,
+     "2015": 573,
+     "2020": 551
+    },
+    "op": {
+     "paper": "Yan (2011, JFE)",
+     "op_sample": "1996-2005",
+     "osap_sign": -1,
+     "osap_category": "Options",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 201201
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 9.994,
+      "train": 9.968,
+      "hold": 10.011
+     },
+     "ew_names_sensitivity": {
+      "all": 8.071,
+      "train": 8.479,
+      "hold": 7.797
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XS5_CPVolSpread_q5vw",
+    "signal": "CPVolSpread",
+    "good_side": "ATM コールの IV − ATM プットの IV が最も大きい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 199602,
+    "eval_to": 202301,
+    "months": 324,
+    "missing_months_inside": 0,
+    "train_years": 10.9,
+    "names_in_good_port_min": 258,
+    "names_in_good_port_median": 376,
+    "names_in_good_port_by_year_median": {
+     "2000": 380,
+     "2003": 318,
+     "2006": 373,
+     "2010": 372,
+     "2015": 388,
+     "2020": 399
+    },
+    "op": {
+     "paper": "Bali and Hovakimian (2009, MS)",
+     "op_sample": "1996-2004",
+     "osap_sign": 1,
+     "osap_category": "Options",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "VW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "shrcd%in%c(10,11)",
+     "post_publication_from": 201001
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 9.66,
+      "train": 9.588,
+      "hold": 9.708
+     },
+     "ew_names_sensitivity": {
+      "all": 8.59,
+      "train": 8.53,
+      "hold": 8.629
+     },
+     "op_price_filter_reproduced": false,
+     "osap_nlong_over_own_names_median": 0.909
+    }
+   },
+   {
+    "id": "XS6_RIVolSpread_q5vw",
+    "signal": "RIVolSpread",
+    "good_side": "実現ボラ − IV が最も小さい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 199602,
+    "eval_to": 202301,
+    "months": 324,
+    "missing_months_inside": 0,
+    "train_years": 10.9,
+    "names_in_good_port_min": 295,
+    "names_in_good_port_median": 409,
+    "names_in_good_port_by_year_median": {
+     "2000": 400,
+     "2003": 340,
+     "2006": 394,
+     "2010": 398,
+     "2015": 436,
+     "2020": 439
+    },
+    "op": {
+     "paper": "Bali and Hovakimian (2009, MS)",
+     "op_sample": "1996-2004",
+     "osap_sign": -1,
+     "osap_category": "Options",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "VW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "shrcd%in%c(10,11)",
+     "post_publication_from": 201001
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 9.399,
+      "train": 9.497,
+      "hold": 9.332
+     },
+     "ew_names_sensitivity": {
+      "all": 7.723,
+      "train": 7.741,
+      "hold": 7.71
+     },
+     "op_price_filter_reproduced": false,
+     "osap_nlong_over_own_names_median": 0.911
+    }
+   },
+   {
+    "id": "XS7_dVolCall_q5vw",
+    "signal": "dVolCall",
+    "good_side": "コールの IV の前月からの上昇が最も大きい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 199603,
+    "eval_to": 202301,
+    "months": 323,
+    "missing_months_inside": 0,
+    "train_years": 10.8,
+    "names_in_good_port_min": 316,
+    "names_in_good_port_median": 479,
+    "names_in_good_port_by_year_median": {
+     "2000": 442,
+     "2003": 374,
+     "2006": 450,
+     "2010": 484,
+     "2015": 567,
+     "2020": 545
+    },
+    "op": {
+     "paper": "An, Ang, Bali, Cakici (2014, JF)",
+     "op_sample": "1996-2011",
+     "osap_sign": 1,
+     "osap_category": "Options",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 201501
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 11.015,
+      "train": 10.961,
+      "hold": 11.051
+     },
+     "ew_names_sensitivity": {
+      "all": 10.247,
+      "train": 10.283,
+      "hold": 10.222
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XS8_dVolPut_q5vw",
+    "signal": "dVolPut",
+    "good_side": "プットの IV の前月からの上昇が最も小さい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 199603,
+    "eval_to": 202301,
+    "months": 323,
+    "missing_months_inside": 0,
+    "train_years": 10.8,
+    "names_in_good_port_min": 315,
+    "names_in_good_port_median": 478,
+    "names_in_good_port_by_year_median": {
+     "2000": 443,
+     "2003": 374,
+     "2006": 452,
+     "2010": 484,
+     "2015": 569,
+     "2020": 545
+    },
+    "op": {
+     "paper": "An, Ang, Bali, Cakici (2014, JF)",
+     "op_sample": "1996-2011",
+     "osap_sign": -1,
+     "osap_category": "Options",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 201501
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 11.091,
+      "train": 10.874,
+      "hold": 11.236
+     },
+     "ew_names_sensitivity": {
+      "all": 10.367,
+      "train": 10.251,
+      "hold": 10.444
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XS9_dCPVolSpread_q5vw",
+    "signal": "dCPVolSpread",
+    "good_side": "プットの IV の変化 − コールの IV の変化 が最も小さい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 199603,
+    "eval_to": 202301,
+    "months": 323,
+    "missing_months_inside": 0,
+    "train_years": 10.8,
+    "names_in_good_port_min": 316,
+    "names_in_good_port_median": 478,
+    "names_in_good_port_by_year_median": {
+     "2000": 441,
+     "2003": 374,
+     "2006": 450,
+     "2010": 484,
+     "2015": 568,
+     "2020": 545
+    },
+    "op": {
+     "paper": "An, Ang, Bali, Cakici (2014, JF)",
+     "op_sample": "1996-2011",
+     "osap_sign": -1,
+     "osap_category": "Options",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 201501
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 11.233,
+      "train": 11.346,
+      "hold": 11.157
+     },
+     "ew_names_sensitivity": {
+      "all": 10.342,
+      "train": 10.602,
+      "hold": 10.168
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XS10_OptionVolume1_q5vw",
+    "signal": "OptionVolume1",
+    "good_side": "オプションの出来高÷株の出来高が最も小さい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 199603,
+    "eval_to": 202309,
+    "months": 331,
+    "missing_months_inside": 0,
+    "train_years": 10.8,
+    "names_in_good_port_min": 279,
+    "names_in_good_port_median": 413,
+    "names_in_good_port_by_year_median": {
+     "2000": 388,
+     "2003": 323,
+     "2006": 394,
+     "2010": 410,
+     "2015": 450,
+     "2020": 482
+    },
+    "op": {
+     "paper": "Johnson and So (2012, JFE)",
+     "op_sample": "1996-2010",
+     "osap_sign": -1,
+     "osap_category": "Options",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "abs(prc)>1, shrcd<=11",
+     "post_publication_from": 201301
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 5.789,
+      "train": 6.185,
+      "hold": 5.535
+     },
+     "ew_names_sensitivity": {
+      "all": 5.727,
+      "train": 6.162,
+      "hold": 5.448
+     },
+     "op_price_filter_reproduced": false,
+     "osap_nlong_over_own_names_median": 0.9
+    }
+   },
+   {
+    "id": "XS11_OptionVolume2_q5vw",
+    "signal": "OptionVolume2",
+    "good_side": "オプションの出来高÷株の出来高の異常な増加が最も小さい組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 199604,
+    "eval_to": 202309,
+    "months": 330,
+    "missing_months_inside": 0,
+    "train_years": 10.8,
+    "names_in_good_port_min": 267,
+    "names_in_good_port_median": 407,
+    "names_in_good_port_by_year_median": {
+     "2000": 379,
+     "2003": 320,
+     "2006": 389,
+     "2010": 406,
+     "2015": 445,
+     "2020": 479
+    },
+    "op": {
+     "paper": "Johnson and So (2012, JFE)",
+     "op_sample": "1996-2010",
+     "osap_sign": -1,
+     "osap_category": "Options",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "abs(prc)>1, shrcd<=11",
+     "post_publication_from": 201301
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 8.156,
+      "train": 8.408,
+      "hold": 7.996
+     },
+     "ew_names_sensitivity": {
+      "all": 7.57,
+      "train": 7.769,
+      "hold": 7.443
+     },
+     "op_price_filter_reproduced": false,
+     "osap_nlong_over_own_names_median": 0.9
+    }
+   },
+   {
+    "id": "XS12_ChangeInRecommendation_d10vw",
+    "signal": "ChangeInRecommendation",
+    "good_side": "推奨の平均の前月からの引き上げ幅が最も大きい組",
+    "osap_file": "PredictorAltPorts_DecilesVW（十分位・時価加重）",
+    "good_port": "10",
+    "eval_from": 199401,
+    "eval_to": 202412,
+    "months": 372,
+    "missing_months_inside": 0,
+    "train_years": 13.0,
+    "names_in_good_port_min": 73,
+    "names_in_good_port_median": 185,
+    "names_in_good_port_by_year_median": {
+     "1995": 139,
+     "2000": 318,
+     "2003": 155,
+     "2006": 156,
+     "2010": 134,
+     "2015": 226,
+     "2020": 213,
+     "2024": 214
+    },
+    "op": {
+     "paper": "Jegadeesh et al. (2004, JF)",
+     "op_sample": "1985-1998",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "4_lack_data",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200501
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 11.833,
+      "train": 11.832,
+      "hold": 11.833
+     },
+     "ew_names_sensitivity": {
+      "all": 11.854,
+      "train": 11.847,
+      "hold": 11.859
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XS13_skew1_d10vw",
+    "signal": "skew1",
+    "good_side": "オプションの歪み（OTM プットの IV − ATM コールの IV）が最も小さい組",
+    "osap_file": "PredictorAltPorts_DecilesVW（十分位・時価加重）",
+    "good_port": "10",
+    "eval_from": 199602,
+    "eval_to": 202301,
+    "months": 324,
+    "missing_months_inside": 0,
+    "train_years": 10.9,
+    "names_in_good_port_min": 60,
+    "names_in_good_port_median": 136,
+    "names_in_good_port_by_year_median": {
+     "2000": 131,
+     "2003": 95,
+     "2006": 120,
+     "2010": 143,
+     "2015": 176,
+     "2020": 188
+    },
+    "op": {
+     "paper": "Xing, Zhang and Zhao (2010, JFQA)",
+     "op_sample": "1996-2005",
+     "osap_sign": -1,
+     "osap_category": "Options",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 201101
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 9.616,
+      "train": 10.304,
+      "hold": 9.152
+     },
+     "ew_names_sensitivity": {
+      "all": 9.875,
+      "train": 10.355,
+      "hold": 9.551
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 1.0
+    }
+   },
+   {
+    "id": "XS15_ChangeInRecommendation_BH",
+    "signal": "ChangeInRecommendation",
+    "good_side": "推奨の平均の前月からの引き上げ幅が最も大きい組",
+    "osap_file": "PredictorAltPorts_FF93style（毎年6月末の信号だけで組み7月〜翌6月持つ・NYSE の時価の中央値より大きく、NYSE の70%点より良い側＝BH・時価加重）",
+    "good_port": "BH",
+    "eval_from": 199407,
+    "eval_to": 202412,
+    "months": 366,
+    "missing_months_inside": 0,
+    "train_years": 12.5,
+    "names_in_good_port_min": 87,
+    "names_in_good_port_median": 160,
+    "names_in_good_port_by_year_median": {
+     "1995": 117,
+     "2000": 229,
+     "2003": 160,
+     "2006": 180,
+     "2010": 156,
+     "2015": 186,
+     "2020": 164,
+     "2024": 158
+    },
+    "op": {
+     "paper": "Jegadeesh et al. (2004, JF)",
+     "op_sample": "1985-1998",
+     "osap_sign": 1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "4_lack_data",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200501
+    },
+    "turnover_oneway_per_year": {
+     "used_for_cost": 1.0,
+     "basis": "理屈で置いた値（年1回の組替えの片道の上限＝全入れ替え）。大型・小型の分け目に時価が要り、公開の銘柄ごとの信号に時価が無いので実測できない"
+    }
+   },
+   {
+    "id": "XS16_skew1_BH",
+    "signal": "skew1",
+    "good_side": "オプションの歪み（OTM プットの IV − ATM コールの IV）が最も小さい組",
+    "osap_file": "PredictorAltPorts_FF93style（毎年6月末の信号だけで組み7月〜翌6月持つ・NYSE の時価の中央値より大きく、NYSE の70%点より良い側＝BH・時価加重）",
+    "good_port": "BH",
+    "eval_from": 199607,
+    "eval_to": 202306,
+    "months": 324,
+    "missing_months_inside": 0,
+    "train_years": 10.5,
+    "names_in_good_port_min": 53,
+    "names_in_good_port_median": 182,
+    "names_in_good_port_by_year_median": {
+     "2000": 152,
+     "2003": 137,
+     "2006": 182,
+     "2010": 219,
+     "2015": 282,
+     "2020": 299,
+     "2024": 305
+    },
+    "op": {
+     "paper": "Xing, Zhang and Zhao (2010, JFQA)",
+     "op_sample": "1996-2005",
+     "osap_sign": -1,
+     "osap_category": "Options",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "2_fair",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 201101
+    },
+    "turnover_oneway_per_year": {
+     "used_for_cost": 1.0,
+     "basis": "理屈で置いた値（年1回の組替えの片道の上限＝全入れ替え）。大型・小型の分け目に時価が要り、公開の銘柄ごとの信号に時価が無いので実測できない"
+    },
+    "end_reason": "最後の6月の組（2022-06・OptionMetrics の IV は 2022-12 まで）を1年持った所まで。その後の OSAP の数字は古い組が引き継がれているだけなので使わない"
+   },
+   {
+    "id": "XS14_MIX3",
+    "definition": "構成の規則の良い側を毎月等分（1/構成数）に組み直して持つ（全構成がそろう月だけ）",
+    "parts": [
+     "Q1_ConsRecomm_strongbuy_op",
+     "Q2_ChangeInRecommendation_q5vw",
+     "Q3_skew1_q5vw"
+    ],
+    "eval_from": 199602,
+    "eval_to": 202301,
+    "cost": "構成の規則の毎月の費用の平均（袖どうしで売買が相殺される分は数えない＝保守的）"
+   }
+  ],
+  "R_report_only_rules": [
+   {
+    "id": "R_CredRatDG_from1970_vwf",
+    "signal": "CredRatDG",
+    "good_side": "直近6か月（当月を含む）に格下げが無い会社（格付けの無い会社も含む）＝格下げされた会社を除いた市場",
+    "osap_file": "PredictorAltPorts_LiqScreen_VWforce（論文の組み方のまま・時価加重に強制）",
+    "good_port": "02",
+    "eval_from": 197003,
+    "eval_to": 202412,
+    "months": 658,
+    "missing_months_inside": 0,
+    "train_years": 36.8,
+    "names_in_good_port_min": 1815,
+    "names_in_good_port_median": 4176,
+    "names_in_good_port_by_year_median": {
+     "1974": 3459,
+     "1977": 3553,
+     "1980": 3720,
+     "1985": 4509,
+     "1990": 4584,
+     "1995": 6135,
+     "2000": 5941,
+     "2003": 4872,
+     "2006": 4548,
+     "2010": 3996,
+     "2015": 3736,
+     "2020": 3598,
+     "2024": 4201
+    },
+    "op": {
+     "paper": "Dichev and Piotroski (2001, JF)",
+     "op_sample": "1986-1998",
+     "osap_sign": -1,
+     "osap_category": "Analyst",
+     "osap_predictability_in_op": "1_clear",
+     "osap_replication_quality": "4_lack_data",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "NA",
+     "post_publication_from": 200201
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 0.19,
+      "train": 0.192,
+      "hold": 0.181
+     },
+     "ew_names_sensitivity": {
+      "all": 0.185,
+      "train": 0.186,
+      "hold": 0.179
+     },
+     "op_price_filter_reproduced": true,
+     "osap_nlong_over_own_names_median": 0.998
+    }
+   },
+   {
+    "id": "R_IO_ShortInterest_q5vw",
+    "signal": "IO_ShortInterest",
+    "good_side": "空売り残高が上位1%の会社の中で機関の保有比率が最も高い組",
+    "osap_file": "PredictorAltPorts_QuintilesVW（五分位・全銘柄の分位点・前月末の時価で加重）",
+    "good_port": "05",
+    "eval_from": 197910,
+    "eval_to": 202412,
+    "months": 543,
+    "missing_months_inside": 0,
+    "train_years": 27.2,
+    "names_in_good_port_min": 1,
+    "names_in_good_port_median": 3,
+    "names_in_good_port_by_year_median": {
+     "1980": 1,
+     "1985": 3,
+     "1990": 2,
+     "1995": 4,
+     "2000": 4,
+     "2003": 4,
+     "2006": 3,
+     "2010": 3,
+     "2015": 4,
+     "2020": 4,
+     "2024": 3
+    },
+    "op": {
+     "paper": "Asquith Pathak and Ritter (2005, JFE)",
+     "op_sample": "1980-2002",
+     "osap_sign": 1,
+     "osap_category": "13F",
+     "osap_predictability_in_op": "2_likely",
+     "osap_replication_quality": "1_good",
+     "op_stock_weight": "EW",
+     "op_portfolio_period_months": "1",
+     "op_filter": "exchcd==1",
+     "post_publication_from": 200601
+    },
+    "turnover_oneway_per_year": {
+     "vw_proxy_used_for_cost": {
+      "all": 4.765,
+      "train": 5.565,
+      "hold": 3.574
+     },
+     "ew_names_sensitivity": {
+      "all": 3.8,
+      "train": 4.337,
+      "hold": 3.002
+     },
+     "op_price_filter_reproduced": false,
+     "osap_nlong_over_own_names_median": 0.625
+    }
+   }
+  ],
+  "R_report_only_other": {
+   "R1_LS": "主の9本の OSAP の買い−売り（五分位の05−01・P2 と Q1 は離散の02−01）の平均と NW t（全期間・訓練・保有）を論文（prior）と並べる＝データが論文の効果を再現しているかの確認だけ",
+   "R2_op_style": "主の9本の論文どおりの組（PredictorPortsFull・重みは論文どおり＝多くは等分）の良い側 対 French Mkt。等分は小型株に傾くので「小型株込みなら」の参考",
+   "R3_placebo_base_rate": "OSAP の偽物114本（PlaceboPortsFull・最大の番号の組）に同じ手続き（対 French Mkt・費用なし）を当て、訓練が15年以上あるものの中で C1 と C2 がともに成り立つ割合＝偶然の基礎率。情報系（Analyst 3本・Trading 7本）の小計も出す。格付けしない",
+   "R4_factor_alpha": "全規則の (r − RF) を French の Mkt-RF・SMB・HML・RMW・CMA・UMD に回帰したアルファ（年率・NW t）と係数を全期間・訓練・保有で",
+   "R5_pre_post_publication": "論文の公表年の翌年1月より前と後で (r − b) を分けて報告（McLean-Pontiff の減衰の確認）",
+   "R6_recent": "2013-07〜（nx_prereg の recent）",
+   "R7_overlap_with_earnings_momentum": "P3・P4・XL2・XL3 の月次の超過 (r − b) と、JKP 米国 niq_su の良い側の三分位（vw_cap・jkp_good_side で訓練期間だけで決める）の超過（対 JKP mkt）・French UMD との相関（全期間・保有）＝他セッションの「業績の勢い」とどれだけ同じものかの確認",
+   "R8_break_even_cost": "保有期間の費用前の幾何の年率差 ÷ 年間の回転 ＝ 勝ちが消える単価（%）",
+   "R9_dca20": "dca(r_cost, b, 20)（毎月積立20年の倍率）"
+  }
+ },
+ "benchmark": {
+  "graded": "French Mkt（Mkt-RF＋RF・上限なしの時価加重・CRSP 全上場＝S&P500 にほぼ等しい）。OSAP の組も総リターンなので総リターンどうし",
+  "not_graded": "OSAP の LS（R1）・論文の組（R2）・偽物（R3）・因子のアルファ（R4）"
+ },
+ "timing": {
+  "osap_lag": "OSAP の組は、信号の月 t の値で t+1 月のリターンを持つ（01_PortfolioFunction.R の signallag：yyyymm+1 に付け替えてから CRSP のリターンに結ぶ）。こちらでは先読みを足さない（OSAP の ret をそのまま保有の月の値として使う）",
+  "ibes": "I/B/E/S の要約は statpers（毎月の第3木曜の前の木曜ごろ）の月を time_avail_m にする＝月 t の途中で分かる値を t+1 月に使う",
+  "short_interest": "Compustat の空売り残高は月の最初の観測（月央の決済日）を使う（OSAP の注記: 2週ごとに報告され数日遅れで公表＝Rapach ほか 2016 と同じく月央の値なら当月中に分かる）。t+1 月に使う",
+  "ratings": "Compustat adsprate は月末時点の格付け・CIQ は格付けの日付の月。当月末までに分かる引き下げを t+1 月に使う",
+  "recommendations": "推奨の公表日（anndats）の月。月内の最後の値。t+1 月に使う",
+  "options": "OptionMetrics の月の値（OSAP の R1_OptionMetrics.R）を t+1 月に使う",
+  "accounting_parts": "fgr5yrLag の Compustat の項目は OSAP の月次の Compustat（会計期末から6か月以上遅らせた m_aCompustat）。長期成長予想は6月に、その6か月前（12月）の値を使い7月から持つ",
+  "ff93": "6月末の信号で7月から翌6月まで持つ（32_Predictor2x3Ports.R の lag）",
+  "benchmark": "French の Mkt は同じ月の総リターン"
+ },
+ "real_instrument_check": {
+  "etf": "楽天の海外ETF 742本（out/broker_lineup.json）を revision・analyst・short・sentiment・upgrade・estimate・consensus で探した: アナリストの予想修正・推奨・空売りの少なさで銘柄を選ぶ ETF は無い（当たったのは Short＝インバース・短期債・Quality の配当 ETF など無関係のもの）。直接の器は無い",
+  "data_cost": "この規則は毎月、数百銘柄の信号（I/B/E/S・Compustat・OptionMetrics＝有料）が要る。個人が無料で見られるのは FINRA の空売り残高（2週ごと・直近）と Yahoo のアナリストの推奨・予想（今の値だけ・過去の履歴は無い）＝この検証の規則そのものは無料では実行できない。勝つ規則が出たら、無料のデータで作れる近い形（例: FINRA の空売り残高の少ない大型株）を別の事前登録で答え合わせする",
+  "nisa": "毎月の入れ替えは NISA の成長投資枠では続けられない（売った枠は翌年まで戻らない）＝課税口座（売るたびに利益の20.315%）。税は格付けに入れない（報告で触れる）",
+  "practical": "P の多くは良い側の組に数百銘柄が入る。個人が持つなら上位の時価の銘柄だけで近似することになり、その近似はこのデータでは測れない（OSAP に銘柄ごとのリターンが無い）"
+ },
+ "prior": {
+  "op_reported": {
+   "source": "OSAP の SignalDoc.csv（原論文の表から OSAP が手で集めた値・この台帳の測定ではない）。Return は%/月・買い−売り",
+   "ShortInterest": "Dechow, Hutton, Meulbroek & Sloan (2001, JFE)・標本1976-1993・五分位の等分の買い−売り 0.35%/月（t 記載なし）・OSAP の評価「2_likely」「2_fair」",
+   "CredRatDG": "Dichev & Piotroski (2001, JF)・1986-1998・格下げ後3か月の規模と簿価時価比で調整した超過 1.32%/月 t 11.0（事象研究・等分）・OSAP「4_lack_data」（論文と同じデータが無い）",
+   "REV6": "Chan, Jegadeesh & Lakonishok (1996, JF)・1977-1992・回帰の t 4.07",
+   "AnalystRevision": "Hawkins, Chamberlin & Daniel (1984, FAJ)・1975-1980・買いだけの組の CAPM アルファ 0.46%/月 t 3.17（等分）＝この族で唯一「買いだけ」で報告された",
+   "ForecastDispersion": "Diether, Malloy & Scherbina (2002, JF)・1976-2000・五分位の等分の買い−売り 0.79%/月 t 2.88（効果は小型株とばらつきの大きい側＝売りの側に集中）",
+   "fgr5yrLag": "La Porta (1996, JF)・1983-1990・回帰の t 4.9（長期成長予想の高い株の期待外れ）",
+   "ConsRecomm": "Barber, Lehavy, McNichols & Trueman (2001, JF)・1985-1997・時価加重の買い−売り 0.79%/月 t 3.20。同じ論文が「売買費用を引くと利益は残らない」と報告・OSAP「4_lack_data」（1993年より前が無い）",
+   "ChangeInRecommendation": "Jegadeesh, Kim, Krische & Lee (2004, JF)・1985-1998・0.225%/月（等分）",
+   "skew1": "Xing, Zhang & Zhao (2010, JFQA)・1996-2005・週次の組の 0.64%/月 t 2.19"
+  },
+  "literature": {
+   "mclean_pontiff_2016": "McLean & Pontiff (2016, JF): 予言変数の利益は標本外で約26%・公表後で約58%小さくなる",
+   "chen_zimmermann_2022": "Chen & Zimmermann (2022, Critical Finance Review): 原論文の結果の大半は OSAP で再現する（ただし買い−売り・論文の重み）",
+   "stambaugh_yu_yuan_2012": "Stambaugh, Yu & Yuan (2012, JFE): 異常の利益は売りの側に偏る（空売りの制約）＝買いだけでは小さい見込み",
+   "avramov_chordia_jostova_philipov_2013": "Avramov, Chordia, Jostova & Philipov (2013, JFE)「Anomalies and financial distress」: 予想のばらつき・予想修正・格下げなどの利益は格付けの低い会社の格下げの前後に集中し、それを除くと大きく消える（数字は本文未確認・記憶による要旨）",
+   "boehmer_huszar_jordan_2010": "Boehmer, Huszar & Jordan (2010, JFE)「The good news in short interest」: 空売りの少ない株はその後に正の異常リターン＝買いの側に効く数少ない証拠（数字は本文未確認）",
+   "novy_marx_velikov_2016": "Novy-Marx & Velikov (2016, RFS): 回転が月50%を超える戦略は費用を引くとほとんど残らない",
+   "chen_velikov_2023": "Chen & Velikov (2023, JFQA)「Zeroing in on the expected returns of anomalies」: OSAP の異常に売買費用と公表後の減衰を入れると期待リターンは平均でほぼ0（数字は本文未確認）",
+   "this_repo": "この台帳の既知（out/jkp_evidence.json・CLAUDE.md）: 2006年までに効いた JKP の因子は2007年以降に中央値で0.44倍に縮んだ。買いだけ・時価加重・市場比では売りの側と小型株の寄与が抜ける"
+  },
+  "expectation_before_measuring": "stance_before_results に書いた。判定には使わない"
+ },
+ "contamination": [
+  "OSAP の SignalDoc.csv の原論文の数字（prior の op_reported）を読んだ。公表された先行研究の数字で、この台帳の測定ではない",
+  "OSAP のコード（ポートフォリオの関数・CRSP の処理・2×3・各信号の Python・v1.4.0 の Stata のデータ取得）を読んだ。方法の文書だけ",
+  "OSAP のポートフォリオのファイルは、信号ごと・組ごとの日付の範囲・月の数・銘柄数（Nlong）の年ごとの中央値だけを数えた。ret の列の平均・累積・市場との差・t は一度も計算していない",
+  "同じ定義のはずの2つのファイル（ShortInterest の五分位VW の05 と VWforce の05）の ret の差の最大（0.0）を表示した。恒等の点検で、成績ではない",
+  "銘柄ごとの信号から良い側の組の回転（片道・年率）と銘柄数を計算して見た（最初は先頭30万行の試し、次に全541万行）。回転は費用の入力で、リターンは使っていない（ファイルにリターンは無い）",
+  "並走セッションの重なりを確かめる途中で、他セッションの結果の断片を読んだ: eknzbh の最新コミットの見出し（29角度・3,613本・反証後に全体の線を越えたのは3本）、eknzbh の night/mw_combo_us_verify.py の判定の注記（C6_QUAL5・E3_PROF3 ほかが B へ格下げ・B2_HiOP_LoINV が C・保有期間の t の値など）、night/mw_etf_tactical_verify.py の判定の注記（Fidelity 系の S/A が B へ・French 10業種の X3 が A）、eknzbh の out/mw_momentum_prereg4.json の一文（ある規則が +3.27%/年 t2.96・費用1.2%/年を引いて +2.07／業績の勢い ocf_at_chg1 が A）、q07leu の最新コミットの見出し（第10回の記録）。どれもこの角度の規則の成績ではないが、「質・業績の勢いは効いた例がある」という期待に影響しうるので書いておく",
+  "斥候の報告 out/nx_scout.json を読んだ。その contamination 欄に他セッションの結果（q07leu 第10回の lmtext −0.72%/年 t−1.18 ほか・eknzbh の macro_timing の主21本がすべて C など）が書かれていた",
+  "他の nx 角度の測定の結果ファイル（out/nx_stack.json・nx_jst.json・nx_activist.json）が作業場に在ることは git status で見たが、中身は読んでいない",
+  "一般的な知識として、2007年以降の米国の相場が巨大テックに主導されたこと、2008-09年の下落、2009年の勢いの崩れ、2020年の急落と回復、2022年の下落、アナリストの推奨の利益は費用で消えるという通説、空売りの多い株が負けやすいという通説を知っている。消せない漏れとして保有期間・公表後で答え合わせする",
+  "規則の成績（平均・t・シャープ・累積・勝率）は一度も計算・表示していない"
+ ],
+ "sanity_checks_before_results": {
+  "identity": "ShortInterest の QuintilesVW の05 と LiqScreen_VWforce の05 は同じ定義（論文の分位 0.2・時価加重）で、ret の差の最大 0.0",
+  "replication_of_membership": "data.replication_check を見よ（主の9本で OSAP の Nlong ÷ 自前の銘柄数の中央値 0.98〜1.00）",
+  "signed_file": "銘柄ごとの信号のファイルの DolVol は負の値（符号 −1 を掛けた −log(売買代金)）で、OSAP の説明「将来のリターンが特徴とともに増えるように符号をつけた」と一致。出来高0の月の10,079行は −∞ のログ＝重みにできないので欠け扱い",
+  "no_gaps": "主の9本は評価の期間の中に欠けた月が無い"
+ },
+ "known_limits": [
+  "OSAP は 2024-12 で終わる（オプションの IV は 2023-01）。保有期間は18年（オプションは16年）で、French の最後の20か月は測れない",
+  "米国だけ＝C5 は N/A（A には C3 が要る）。独立の試行は保有期間の1本と重なる20年窓だけ",
+  "OSAP は学術の再現で、CredRatDG・ConsRecomm・ChangeInRecommendation は OSAP 自身が「論文と同じデータが無い（4_lack_data）」と評価している（推奨は Zacks ではなく I/B/E/S で1993年から、格付けは Compustat の S&P 1985〜2017 と CIQ）",
+  "I/B/E/S の推奨の履歴は後から書き換えられた例がある（Ljungqvist-Malloy-Marston 2009）＝過去の推奨の値に後知恵が混じる可能性",
+  "信号の被覆が時代で変わる: 空売りは2003〜2005年に Nasdaq が加わり組が2.5倍に、長期成長予想は2015年以降に細る（2024年の良い側は133社）、格付けは2017年以降 CIQ だけになり格下げの数が半分に",
+  "相手（French Mkt）との違いの一部は「信号がある会社」という被覆そのもの（アナリストが付く・オプションがある＝大きい・よく見られている会社）から来る。被覆の中の時価加重の平均は OSAP の組から作れない（組の時価が無い）ので、被覆の効果と信号の効果は切り分けられない。R1（買い−売り）で信号の効果の向きだけを見る",
+  "回転は近似: 時価の代わりに2か月前の売買代金（Nasdaq は2004年より前の出来高が二重に数えられている）で重みづけし、価格の変化による重みのずれは無視した。価格のフィルタ（|株価|>1/5）を写せない探索の信号は回転が近似。2×3 の BH は実測できず理屈で年1.0",
+  "費用 0.10% は時価加重の大型株の目安。良い側の組にも小型株が入る（重みは小さい）。0.30% を感度・短い標本の下限の代用として並べる",
+  "短い標本の格付けの「最大寄与の1銘柄を抜く」と「上場廃止の下限」は OSAP のデータでは作れず代用（最大の1暦年を抜く・費用3倍）。代用で出た S は「S（代用あり）」",
+  "主の6本の信号は互いに似ている（REV6 と AnalystRevision はどちらも予想の修正、P1〜P6 は多くが大型でよく見られている会社を選ぶ）＝独立の本数は9より少ない。Holm は族の中で掛ける",
+  "勝っても、実行には有料のデータ（I/B/E/S・Compustat・OptionMetrics）と毎月の数百銘柄の売買が要り、NISA では続けられない。この結果は「無料のデータで作れる近い形」の成績ではない",
+  "私たちは2007年以降の歴史と各論文の結果を知っている。訓練期間の多くは論文の標本と重なる（C1 は通りやすい）。保有期間・公表後で答え合わせする"
+ ],
+ "test_count": {
+  "primary": 9,
+  "primary_breakdown": "P（長い歴史）6本・Q（短い標本）3本。Holm は P の6本の中と Q の3本の中で別々",
+  "exploratory": 37,
+  "exploratory_breakdown": "XL（長い歴史の線）21本・XS（短い標本の線）16本。Holm は XL・XS の中で別々",
+  "report_only": "R の規則2本（CredRatDG の1970年からの版・IO_ShortInterest〔組が中央値3銘柄〕）、R1 買い−売り9本、R2 論文どおりの組9本、R3 偽物114本、R4 因子のアルファ（全規則）、R5 公表の前後、R6 2013-07〜、R7 業績の勢いとの相関4本、R8 損益分岐の単価、R9 積立20年",
+  "note": "試したものは全部 out/nx_osap_info.json の tested に残す（負けも落とさない）"
+ }
+}

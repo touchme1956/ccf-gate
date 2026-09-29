@@ -1,0 +1,1029 @@
+{
+ "generated": "2026-09-28",
+ "angle": "nx_pre1926x",
+ "title": "独立の時代の答え合わせ: 他セッションで検証を生き残った『業種の勢い・業種ごとのトレンド・株の勢い・株の季節性・ハロウィーン』を、規則を作った人も論文も使っていない 1709〜1929 年の米国（Cowles の業種・Old NYSE の株）と英国（LSE の株と業種・イングランド銀行の指数）へ、作り直さずにそのまま当てる",
+ "question": "eknzbh 枝（mw_*）で反証の後も S/A として残った規則のうち、価格だけで作れるもの——業種の勢い（G3_mom12_5・G4_mom12_10・P9_multi_5・F1b_ind*・F3g の4つ）、業種ごとの10か月線（S3_US_IND49_FABER_L2/L3）、株の勢い（F1a1_us_top_decile・intl の F2a:ret_12_1）、株の季節性（F14_usa_seas_6_10an）、ハロウィーン1.5倍（X06_HAL_OV15_WORLD・Y03_HAL_OV15_WXUS）——は、1926-07 以降の CRSP・1975/1990 年以降の国際データ（規則が作られ選ばれたデータ）と重ならない時代で、同じ時代の市場（Cowles の全体指数・同じ母集団の等分・イングランド銀行の指数）に、規則の費用を引いた後も勝つか。『勝てる規則を新しく探す』のではなく、残った候補が『一つの時代の偶然』か『時代をまたぐ性質』かを決める（全体の事前登録 C5 の独立の単位を作る仕事）",
+ "asked_by": "ユーザー「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して。限界までやって途中報告を入れながら結果が出るまで分析を止めずに。トークンの限界までやってほしい。今まではそんなものはないという報告で終わってたけどそれはなしで探し続ける努力をしてほしい。今別のSessionでこの内容を2つ回してる。別のSessionで検証していない新たな分析を同じ内容でしてほしい」（2026-09-28）。全体の事前登録 out/nx_prereg.json の追加の角度（斥候 out/nx_scout.json の key nx_pre1926x）。前の担当者がセッションの上限で data 道具の途中で止まったのを引き継いだ（同じ日）",
+ "registered_before_measuring": true,
+ "global_prereg": "out/nx_prereg.json（誠実さの約束・相手の考え方）。★格付けの線は nx_prereg の criteria_long_history（C1〜C8）を読み替えずに、この角度のために下の criteria_independent_era を先に決めた（理由は criteria.why_not_long_history）。統計は night/nx_common.py の excess_stats（NW ラグ12）・sharpe・rolling・dca・holm・p_one をそのまま使う",
+ "grading_call": "nx_pre1926x_data.grade_era(full_net=nx_common.excess_stats(s_net, b)〔その単位の定義できる月＝s と b の両方がある月の全部〕, h1_net/h2_net=同じく前半/後半〔nx_pre1926x_data.halves で月を数で二分〕, holm_p_one=族の中の Holm 補正後の片側 p〔nx_common.holm に nx_common.p_one(full_net['t']) を渡す〕, drop_top_net=最大寄与の構成要素を抜いて作り直した費用後の excess_stats, sharpe_halves={'h1': (s_net のシャープ, b のシャープ), 'h2': …}〔nx_common.sharpe・その単位の現金の金利を引いた年率・timing の規則だけ〕, timing=規則の timing, drop_top_applies=(kind != 'halloween'), months=定義できる月数)。規則の単位ごとの判定をまとめるのは nx_pre1926x_data.rule_verdict",
+ "tools": {
+  "data": "night/nx_pre1926x_data.py（取得と整形・規則の台帳 RULES・格付け grade_era・組み立て build_*。成績は計算しない。組み立ての関数は --selftest の合成データでだけ動かした）",
+  "data_tool_sha256": "24b4ee873dc3d6ccd4f06e11a894bd8d88345f33d14b46e9420fcef145f4520e",
+  "extract": "out/_nx_cache/nx_pre1926x_extract.json（gitignore・48,823,787 バイト）。python3 night/nx_pre1926x_data.py --extract で作り直せる",
+  "extract_sha256": "303372624a3ff1620e6bbb4652d8b4d70e2ec6945be93b629b85b1a87da93fbe",
+  "extract_sha_rule": "extract の 'data' を json.dumps(sort_keys=True, separators=(',',':')) した sha256（nx_pre1926x_data.load_extract が計算し直す）",
+  "rules_sha256": "a69fdeae0349878c07e7db76d7999fa3fb85bc44a0fbdc5f89d58cc12f125fbd",
+  "measure_next": "night/nx_pre1926x.py → out/nx_pre1926x.json（この事前登録の後に書く）。最初に extract_sha256・rules_sha256・data_tool_sha256 の3つが上の値と一致することを確かめ、違えば止まる。data 道具の関数を直す必要が出たら、直した理由と差分を『事後』として記録し、直す前の版の結果も並べる（格付けは登録の版）。tested に下の全単位を1つ残らず残す",
+  "selftest": "python3 night/nx_pre1926x_data.py --selftest（17項目すべて OK を登録時に確認: 先読みなし6・1か月あけた版が直前の月を見ない・植えた勢いを拾う・同じ組を持ち続ければ費用0・ハロウィーンの夏と冬・grade_era の線6・rule_verdict）"
+ },
+ "stance_before_results": "測定器。門・採点・四関門・席・配分・売却規律には入れない。線（criteria_independent_era）は結果を見て動かさない。★予想（測る前・文献を知っていることによる汚れを含む）: (A) Cowles の業種の勢いは7本とも費用後の超過が正の向きに出る見込みが高いが、1か月あけた版では NW t≥2 に届くのは多くて2〜3本（1870〜80年代は業種が6〜7しか無く、上位2つ＝市場の3分の1を持つだけ）。業種ごとの10か月線の2倍・3倍は、当時の短期金利が年4〜6%で借入の代金が重く、前半・後半の両方でシャープが相手を上回る（E5）のは難しい＝C か B。(B) LSE の株の勢い（十分位・三分位）は Chabot-Ghysels-Jagannathan（ヴィクトリア朝の IMM で勢いを報告）から A 以上になりうる。季節性は分からない（B か C）。(C) Old NYSE の三分位の勢いは銘柄が30〜80しかなく B か C。(D) LSE の業種の勢いは業種が14〜16で向きは正・t は2未満が多い（B）。(H) 英国のハロウィーン1.5倍は Zhang-Jacobsen が英国 1693〜 で報告しており正の見込み・A もありうる。全体では 22 単位のうち S は0〜2、A は1〜4 と予想。★予想が当たっても外れても、線と規則は変えない",
+ "why_new": {
+  "difference": "他セッションの独立の時代の答え合わせは (1) eknzbh の mw_deep_history＝JST の国の年次（国の割安・勢い・トレンドの回転 1870〜1925 を訓練に）・BSV（Baltussen-Swinkels-van Vliet）の株価指数の買い−売りの上乗せ 1800〜1925・Shiller の米国市場のハロウィーン 1871〜1925、(2) q07leu の第9回＝Shiller の米国『市場』の dip_lever と trend 1871〜1925。どちらも『市場』か『国』の単位で、業種の横断（Cowles の業種・LSE の業種）・株の横断（Old NYSE・LSE の IMM）・英国の指数は誰も使っていない（2026-09-28 に origin の eknzbh・hbm38n・q07leu・main と作業ツリーの out/nx_*・night/nx_* を cowles・Investor's Monthly・Old NYSE・Goetzmann・Railways_new・millennium で git grep／grep し、研究ファイルには該当なし〔会社の審査パックの別の語だけ〕を確かめた。斥候 out/nx_scout.json も同じ結論）",
+  "not_repeated": [
+   "米国の Shiller 市場の dip_lever・trend（q07leu 第9回）・ハロウィーン（eknzbh mw_deep_history の Z）は重ねない。ここの S3（業種ごとの10か月線）は業種ごとに出入りする規則で、市場全体の出入りとは別物（業種の数に応じて持つ割合が段階的に変わる）",
+   "JST の国の年次（eknzbh mw_deep_history・nx_jst）は使わない",
+   "BSV の上乗せ（eknzbh mw_deep_history の B・BM）は使わない"
+  ],
+  "survivor_source": "origin/claude/market-winning-backtest-eknzbh の out/mw_summary.json の angles[].survivors_SA_after_verify（ID だけを表示して読んだ・数字は表示していない）。規則の定義は同じ枝の事前登録（mw_industry_prereg.json・mw_industry_prereg3.json・mw_momentum_prereg.json・mw_momentum_prereg3.json・mw_momentum_prereg5.json・mw_trend_prereg5.json・mw_intl_prereg.json・mw_intl_prereg2.json・mw_calendar_prereg2/3.json）と night/mw_momentum_verify.py の ind_momentum（組み立て方）から写した",
+  "survivor_to_unit": {
+   "industry:G3_mom12_5": [
+    "A_G3_mom12_5",
+    "D_G3_mom12_5"
+   ],
+   "industry:G4_mom12_10": [
+    "A_G4_mom12_10",
+    "D_G4_mom12_10（形で作れない）"
+   ],
+   "industry:P9_multi_5": [
+    "A_P9_multi_5",
+    "D_P9_multi_5"
+   ],
+   "momentum:F1b_ind10/12/17/30/49": [
+    "A_F1b_MG_6_6",
+    "D_F1b_MG_6_6"
+   ],
+   "momentum:F3g_ind17_12-1_H1_K15": [
+    "A_F3g_12-1_H1_K15",
+    "D_F3g_12-1_H1_K15"
+   ],
+   "momentum:F3g_ind30_12-1_H1_K30": [
+    "A_F3g_12-1_H1_K30",
+    "D_F3g_12-1_H1_K30"
+   ],
+   "momentum:F3g_ind17_9-0_H1_K30・F3g_ind30_9-0_H1_K30": [
+    "A_F3g_9-0_H1_K30",
+    "D_F3g_9-0_H1_K30"
+   ],
+   "trend:S3_US_IND49_FABER_L2": [
+    "A_S3_FABER_L2",
+    "D_S3_FABER_L2"
+   ],
+   "trend:S3_US_IND49_FABER_L3": [
+    "A_S3_FABER_L3",
+    "D_S3_FABER_L3"
+   ],
+   "momentum:F1a1_us_top_decile": [
+    "B_F1a1_top_decile"
+   ],
+   "intl:F2a:ret_12_1": [
+    "B_ret_12_1_tercile",
+    "C_ret_12_1_tercile"
+   ],
+   "momentum:F14_usa_seas_6_10an": [
+    "B_seas_6_10an_tercile",
+    "C_seas_6_10an_tercile（形で作れない）"
+   ],
+   "calendar:X06_HAL_OV15_WORLD・Y03_HAL_OV15_WXUS": [
+    "H_HAL_OV15_UK"
+   ]
+  },
+  "granularity_note": "F1b_ind10/12/17/30/49 と F3g の ind17/ind30 は『French の何業種で数えるか』だけが違う同じ規則。Cowles・LSE の業種の分け方は一つしか無いので、K の割合（15%・30%）と形成・保有の長さで1つの規則にまとめた（G3・G4 は K が固定の 5・10 なので固定のまま）",
+  "not_applicable_survivors": {
+   "momentum:A_grid_F3g_F16g_group": "グリッド（F3g 240・F16g 70）の A の束。どの格子が A だったかは結果のファイルにあり読んでいない。代わりにグリッド全体を Cowles と LSE の業種に当てて『正の格子の割合』を報告 R4 に出す（格付けしない）",
+   "momentum:F3s_*_trainbest（6本）": "1927〜2006 の訓練で選ばれた格子の番号は結果のファイル（mw_momentum.json）にあり読んでいない＝そのままは当てられない。選ばれた格子はどれも R4 のグリッドの中にある",
+   "momentum:F2_Emerging_big_winners": "1926年以前の新興国の株のデータが無い",
+   "etf_tactical:P5_SECT3_L・X3_SECT3BL_L・X7_SECTK4_L": "French 10業種の Other を除く9つの広い業種が要る。Cowles・LSE にはその9つを作る重み（業種の時価）が無く、業種を寄せ集めると新しい規則を作ることになる。形の最も近い格子（12-0・H1・上位およそ3分の1）は R4 のグリッドにある",
+   "overlay:E2_SSms_v10_k50・X2_CEN_INTLss_v10_k50": "Century/AQR の銘柄選択の系列は1980年代から。1926年以前の同じもの（BSV の株価指数の買い−売り）は eknzbh mw_deep_history が使った",
+   "calendar:Y04_SANTA_OV15_DXUS": "日次のデータが要る（Cowles・LSE・NYSE・イングランド銀行は月次）",
+   "calendar:ハロウィーンの米国 1871〜1925": "eknzbh mw_deep_history が Shiller で測った（重ねない）",
+   "factor_us・intl の会計の特性（cop_at・ni_me・ocf_me ほか）・resff3_12_1・japan・jp_aftertax・mega_tilt・reality_gap・gate_proxy": "会計の数字か Fama-French の因子が要る（1926年以前に無い）",
+   "fmom_wf（因子の勢い）": "1926年以前の因子の系列は BSV だけで、eknzbh mw_deep_history が使った",
+   "postpub:ZT_dnk・ZT_kor・Z_kor": "現代の特定の国の規則"
+  }
+ },
+ "data": {
+  "sources": {
+   "cowles_P": {
+    "url": "https://som.yale.edu/sites/default/files/2021-12/Stock_Prices-Cowles.xls",
+    "cache": "yale_cowles_stock_prices_monthly.xls",
+    "bytes": 290816,
+    "sha256": "45b9f2b6501d404b7ac695f494f047de83ffe82e5fadde366ce94cbc06b8e7eb"
+   },
+   "cowles_C": {
+    "url": "https://som.yale.edu/sites/default/files/2021-12/Stock_PricesincDvds-Cowles.xls",
+    "cache": "yale_cowles_prices_incdvds.xls",
+    "bytes": 573440,
+    "sha256": "1f2716ace7d5a8433f20cb87c38bceb3029c11f427837733bacba6bc19315c31"
+   },
+   "nyse": {
+    "url": "https://som.yale.edu/sites/default/files/2022-02/nyse-monthly-price-1815-1925-updated-2021-09-04-with-labels.csv",
+    "cache": "yale_nyse_monthly_1815_1925.csv",
+    "bytes": 2848762,
+    "sha256": "6abd5ff91733fb607c6fde687e127cb19b1991675c72759b2fe25a64b2294aeb"
+   },
+   "nyse_pw": {
+    "url": "https://som.yale.edu/sites/default/files/2021-12/Price-Weighted-Index-Returns-2020-08-20.xls",
+    "cache": "yale_nyse_pw_index_returns.xls",
+    "bytes": 66816,
+    "sha256": "c47d2d4fb14aa1ea05241624d7e8c46e01667c623c899b14609647c7f4b9269e",
+    "note": "拡張子は .xls だが中身は CSV"
+   },
+   "lse_rail": {
+    "url": "https://som.yale.edu/sites/default/files/2021-12/Railways_new.csv.zip",
+    "cache": "yale_lse_Railways_new.csv.zip",
+    "bytes": 35483794,
+    "sha256": "a0a4203d79322e6f6b2e28a1ea44b75a1cacfb84db89e7cab3885a27af809c26"
+   },
+   "lse_bank": {
+    "url": "https://som.yale.edu/sites/default/files/2021-12/Banks_new.csv.zip",
+    "cache": "yale_lse_Banks_new.csv.zip",
+    "bytes": 11560408,
+    "sha256": "16cbe9e38bf7809679c0c357b249d2959e2652b9ea62d1523919744b448b48fc"
+   },
+   "lse_misc": {
+    "url": "https://som.yale.edu/sites/default/files/2021-12/Misc_new.csv.zip",
+    "cache": "yale_lse_Misc_new.csv.zip",
+    "bytes": 90065248,
+    "sha256": "4aa699f93da0ce3a56ee2022844bd98485c43f47574909b8436823115b52c4b5"
+   },
+   "lse_total": {
+    "url": "https://som.yale.edu/sites/default/files/2021-12/Totaldata.zip",
+    "cache": "yale_lse_Totaldata.zip",
+    "bytes": 10316931,
+    "sha256": "8d8a1fc43800924be18bb2031a93a6a17475fc071aa5389a0216713e5155a2d6",
+    "note": "Excel の行の上限で ID 40407 の 1895-08 までで切れている＝証券の型の照合にだけ使う"
+   },
+   "boe": {
+    "url": "https://www.bankofengland.co.uk/-/media/boe/files/statistics/research-datasets/a-millennium-of-macroeconomic-data-for-the-uk.xlsx",
+    "cache": "boe_millennium.xlsx",
+    "bytes": 27533690,
+    "sha256": "4c23dd392a498691eac92659aec283fb43f28118bd80511dc87fc595974195eb"
+   },
+   "nber_cp": {
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=M13002US35620M156NNBR",
+    "cache": "fred_M13002US35620M156NNBR.csv",
+    "bytes": 22143,
+    "sha256": "b027324556f781b0e239848a04320820d07f1331063a95b59ef399ec04f2c153"
+   }
+  },
+  "shape_differences": {
+   "cowles": "★各月の値は『その月の最高値と最安値の算術平均』（Cowles 1938 の Introduction 式(9)）。1871〜1917 の鉄道は Macaulay（NBER）の指数の一部、1918〜 の一部は Standard Statistics の週次の指数の月平均。各株の重み＝株価×発行済み株数（Introduction）＝時価加重。Series C は現金配当を受け取るたびにその指数の株へ再投資した値＝総リターン。★月中の平均は、元の値動きが自己相関なしでも、平均どうしの差に +0.25 の1次の自己相関を作る（Working 1960・Cowles-Jones 1937 の連の発見はこれで説明された）→ 形成の窓が保有の直前の月まで入っている規則は、見かけの勢いを拾う",
+   "lse": "IMM の pricemonthlate＝月の終わりごろの気配（月平均ではない）。薄商いの株は値が動かない月がある（古い値）。配当は含まない（価格だけ）。1908-01〜1914-12 の価格が無い（生の IMM の形で確認）＝2つの区間に分けて組み立てる",
+   "nyse": "GIP の月次の価格＝買い気配と売り気配の平均。新聞が欠けた月は前後の月の平均で埋めてある（Yale のページの説明）＝ちょうど前後の平均に一致する月が 937（普通株の 47,504 の連続した対のうち）。配当は含まない（価格だけ）。時価（株数）が無い",
+   "uk_index": "イングランド銀行 M13 の列 23（つないだ月次の指数・価格だけ）: 1709-05〜1811-08 Neal（Bank of England・East India・South Sea の3社の単純平均・月末）、1811-09〜1825-03 Gayer-Rostow-Schwartz（鉱山を除く63社・払込資本で加重・形で列4と一致を確認）、1825-06〜1870-12 Acheson ほか（681社・時価加重・月末）、1871-01〜1914-02 Smith-Horne（25〜82証券・月末）。その後は Morgan（20日ごろ）と Banker's Magazine",
+   "working_1960_guard": "★主の版は『形成の窓と保有の月のあいだを1か月あける』（形成の月末 f の組を f+1 に持つとき、窓は f−1 で終わる）。元の規則が直近の月を窓に入れているもの（G3・G4・P9・F1b・F3g 9-0・S3）だけを1か月ずらし、元から直近1か月を飛ばしているもの（F3g 12-1・F1a1・ret_12_1）と季節性（6〜10年前）はそのまま。元のままの版は報告 R1。Cowles（月平均）だけでなく LSE・NYSE（薄商い・埋めた月）にも同じ版を当てる（単位で規則を変えない）。合成データで『1か月あけた版は直前の月のリターンを書き換えても組が変わらない』を確かめた（selftest）"
+  },
+  "periods": {
+   "cowles": "1871-01〜1926-06（1926-07 から French＝CRSP で、他セッションの規則が作られたデータと重なるので使わない）。1914-08〜11（NYSE の閉鎖）は取引月から外し、1914-12 の値は 1914-07 からの1期間",
+   "lse": "区間1 1869-02〜1907-12・区間2 1915-02〜1929-12（1908〜1914 は価格が無い・LSE は 1914-07-31〜1915-01-04 閉鎖）。組み立ては区間ごと（窓も保有も区間をまたがない）",
+   "nyse": "1815-02〜1925-12（1914-08〜12 は価格が無い）",
+   "uk_halloween_main": "1709-05〜1914-06（第一次大戦の閉鎖の前まで・2,462 か月）。1915-02〜1925-12 は報告"
+  },
+  "cowles": {
+   "return_rule": "D.cowles_returns: Series C を主。C と P の月の対数リターンの差 d が [−0.01, 0.05] の外なら点検し、C だけが跳ねて戻るなら P の値動き＋直前12の有効な月の d の中央値、P だけなら C、決まらなければ欠測（0 と読まない）。1926-06 までの件数: 一致 17,872・不一致 76（C の写し誤り 4・P の写し誤り 4・決まらず欠測 68）・P だけで欠測 13。文字の数字のセル（'1465.' 等）を P 743・C 7,859 読んだ",
+   "industry_universe": "69 の指数のうち、市場・部門の集計（1 All Stocks・2 Industrials・4 Utilities）と『親—子』の子を外した業種（Utilities の子 9・11・16・20 は業種として残す）。Tobacco は親 39 の無い月（1901〜1911）を子 30（葉巻）で埋める唯一のつなぎ。1926-06 までに一度でもリターンがある業種 47",
+   "industries_with_return_june": {
+    "1872": 6,
+    "1880": 7,
+    "1888": 10,
+    "1890": 12,
+    "1894": 15,
+    "1898": 18,
+    "1900": 20,
+    "1902": 26,
+    "1910": 27,
+    "1914": 31,
+    "1920": 40,
+    "1924": 41,
+    "1926": 47
+   },
+   "market": "C-1 All Stocks（Series C・総リターン・時価加重）の月次リターン 659 か月（1871-02〜1926-06）"
+  },
+  "lse": {
+   "common_rule": "D.lse_is_common: 固定の率（percentfrmsecdes）が無く、証券の説明（secdes）に優先・社債・保証・借入・率・権利などの語（D.LSE_NONCOMMON）が無く、かつ（secdes に ordinary・ord・common・shares がある か 会社名の行にもそれらの語が無い）。★Totaldata の Type（1895-08 までの 4,474 証券）との一致 93.0%（両方普通株 1,361・両方ちがう 2,797・こちらだけ普通株 69・Totaldata だけ普通株 247）。前の担当者の規則は 90.2%（'Land Mortgage' の会社名や 'Do shares' の行を落としていた）。照合は型のラベルだけで、リターンは見ていない",
+   "sector_map": "D.LSE_SECTOR_RULES（見出しの全 244 種を列挙して形だけで決めた・上から順に最初に当たったもの）: 鉄道のファイルは全部 RAIL（1869〜1894 は英国・植民地・外国の鉄道が一つの見出し・'BOND' を含む見出しは EXCLUDE）、銀行のファイルは INSURANCE と BANK。Misc は EXCLUDE（自治体・公共団体の証券・'RUB. BDS.'＝'PUB. BDS.' の読み取り誤りを含む）→ SHIPPING → TEA_RUBBER → BREWERIES → MINES → CANALS_DOCKS → UTIL_GAS_WATER_ELEC → IRON_COAL_STEEL → LAND_MORTGAGE_FIN → TRUSTS → TELEGRAPH → TRAMWAYS → TEXTILES → WAGONS → NITRATE → OIL → OTHER。時代で見出しが合わさる業種（ガスと水道・運河とドックと港・茶とコーヒーとゴム）は一番粗い共通の分け方にした。選べる業種は OTHER・UNMAPPED・EXCLUDE 以外の18（1869〜1874 は『MISCELLANEOUS COMPANIES』が多く、3社以上の業種は1870年6月に4つ）",
+   "industry_return": "D.lse_industries: 月 t に、t−1 の見出しでその業種に居て月 t のリターンがある株の等分の平均。3社未満の月は欠測。3社以上の業種の数は 1870-06 4・1875-06 14・1885-06 15・1890〜1929 の6月 16（最大16）",
+   "cleaning": "D.lse_panel → D.clean_returns: 連続する2か月の pricemonthlate の比だけ（間が欠ければ作らない）。払込額・1株の額面（amntshare・sharestock）が両方分かっていて変わった対は落とす（払込の呼び出し・併合と分割＝リターンではない・2,175 対）。t−1 の業種が EXCLUDE の対は作らない（3,535 対）。跳ねて戻る写し誤り（Hou-Karolyi-Kho 2011: 連続する2か月の片方が +300% 超で2か月の合計が +50% 未満→両方を欠測・411 か月）と +990% 超（69 か月）を欠測。残った普通株 4,501・連続した対 693,615（掃除の前）",
+   "stocks_with_return_june": {
+    "1870": 600,
+    "1875": 731,
+    "1880": 853,
+    "1885": 1036,
+    "1890": 1122,
+    "1895": 1180,
+    "1900": 1258,
+    "1905": 1303,
+    "1907": 1309,
+    "1916": 1197,
+    "1920": 1222,
+    "1925": 1223,
+    "1929": 1242
+   },
+   "caps_for_report_only": "時価＝p_{t−1}×株数（capitalnumshare か 払込の対象の資本÷1株の額面・直近12か月以内に分かった値）。1887年まで株の約9割に分かるが 1888年以降は約1割（IMM の書式の変更）→ 時価加重は 1870〜1887 の報告 R7 だけ（6月の株数: 1870 526・1880 787・1887 1,005・1890 205・1907 229・1920 0）",
+   "dividend_for_report_only": "月の配当利回りの近似＝直近4回の配当率（%・年）の平均×払込額（無ければ額面）÷12÷p_{t−1}。6月に分かる株 1870 464・1890 906・1907 1,010・1920 889。報告 R7 だけ"
+  },
+  "nyse": {
+   "common_rule": "D.nyse_is_common: 標識つきは Class=Equity・Type=common だけ（224）。標識の無い 420 は名前に優先株・書付・権利・保証・債券・『, new/old』・'State of' の語（D.NYSE_NONCOMMON）が無いものを普通株。計 549 普通株",
+   "cleaning": "連続する2か月の比だけ→ clean_returns（跳ねて戻る 12 か月・+990% 超 1 か月を欠測）。前後の平均で埋めたと見込まれる月 937 は印をつけるだけ（報告 R9 で欠測にした版）",
+   "stocks_with_return_june": {
+    "1815": 8,
+    "1830": 21,
+    "1840": 27,
+    "1850": 39,
+    "1860": 32,
+    "1870": 57,
+    "1880": 40,
+    "1890": 66,
+    "1900": 49,
+    "1910": 59,
+    "1915": 32,
+    "1920": 44,
+    "1925": 50
+   }
+  },
+  "rates": {
+   "us_cash": "NBER 商業手形（4〜6か月・ニューヨーク・年率%・月平均・1857-01〜）÷1200 を月 t の現金に（eknzbh mw_deep_history と同じ）",
+   "uk_cash": "M9 列 9（3か月の銀行手形・月末・1870-01〜）の t−1 の値÷1200、無い月は列 6（3か月の一流手形の割引率・月平均・1824〜1939）の t の値",
+   "uk_hal": "M9 列 14（一流の短期の手形のつないだ系列・1718-03〜）、無い月は列 2（Bank Rate・月末・1694〜）の t の値÷1200。主の期間に欠けは無い（形で確認）"
+  },
+  "definable_months_by_shape": {
+   "note": "リターンの有無だけで数えた『組を作れる月』（値は使っていない）。s と b の両方がある月だけで比べるので、実際の月数はこれ以下",
+   "A_G3_mom12_5": "433（1889-03〜1926-06）",
+   "A_G4_mom12_10": "300（1901-03〜）",
+   "A_P9_multi_5": "433（1889-03〜）",
+   "A_F1b_MG_6_6": "649（1872-02〜）",
+   "A_F3g_12-1_H1_K15": "649（1872-02〜）",
+   "A_F3g_12-1_H1_K30": "649",
+   "A_F3g_9-0_H1_K30": "651（1871-12〜）",
+   "A_S3_FABER_L2/L3": "約 657（1871-04〜1926-06）",
+   "B_F1a1_top_decile": "622（区間1 455: 1870-02〜1907-12・区間2 167: 1916-02〜1929-12）",
+   "B_ret_12_1_tercile": "622",
+   "B_seas_6_10an_tercile": "406（347: 1879-02〜・59: 1925-02〜）",
+   "C_ret_12_1_tercile": "282（1871-02〜1925-09・途中に欠け）",
+   "D_G3_mom12_5": "535（369: 1876-03〜・166: 1916-03〜）",
+   "D_P9_multi_5": "535",
+   "D_F1b_MG_6_6": "580（413: 1873-08〜・167）",
+   "D_F3g_12-1_H1_K15/K30": "580",
+   "D_F3g_9-0_H1_K30": "584",
+   "D_S3_FABER_L2/L3": "約 646（467・179）",
+   "H_HAL_OV15_UK": "2,462（1709-05〜1914-06）"
+  },
+  "not_testable_by_shape": {
+   "D_G4_mom12_10": "LSE の選べる業種（3社以上）は どの月も最大16（2K=20 に届く月が無い＝定義できる月 0）",
+   "C_seas_6_10an_tercile": "Old NYSE で 6〜10 年前の同じ暦月がそろう株が少なく、上位3分の1が10社以上になる月は 76（1898-07〜1922-04・MIN_MONTHS=180 未満）",
+   "C_F1a1_top_decile（台帳に無い）": "Old NYSE は普通株が同時に30〜80しかなく、十分位が10社以上になる月は 0"
+  },
+  "survivor_bias": "Cowles は NYSE の上場株を上場廃止まで含む（生き残りだけではない）が、指数に使った株の選び方は Cowles の判断。GIP の NYSE は新聞に載った株の標本。IMM は LSE の一覧の全証券（上場廃止した株も途中まで入る）。どれも上場廃止の最後の値（清算・倒産）が無い→ 報告 R8 で『消えた翌月に −30%』の下限版"
+ },
+ "criteria": {
+  "which": "criteria_independent_era（この角度のために結果を見る前に決めた・nx_pre1926x_data.grade_era）",
+  "why_not_long_history": "criteria_long_history（C1〜C8）は『訓練で見つけ、保有（2007〜）で確かめる』作りで、C2・C3 は 2007年以降に結びつき、C4 は20年窓。ここの規則はすでに他の時代で選ばれて凍結されている（訓練するものが無い）ので、時代を訓練と保有に割るのは意味が無い。1871〜1926 の20年窓は独立に2〜3しか無い。そこで、全期間の t（E2）・前半と後半の両方（E3）・族の中の多重検定（E4）・最大寄与を抜いても（E7）を線にした＝課題文の『費用後の超過が正で t≥2、前半・後半とも正、族の中で Holm』の形。結果は全体の事前登録の C5（独立の単位で超過が正）の材料で、eknzbh の元の S/A を格付けし直すものではない",
+  "E1_sign": "費用後の算術の超過 > 0 かつ 幾何の年率差 > 0（その単位の定義できる月の全部）",
+  "E2_t": "費用後の超過の NW t（ラグ12）≥ 2.0",
+  "E3_halves": "定義できる月を数で二分した前半・後半の両方で、費用後の幾何の年率差 > 0",
+  "E4_holm": "族の中の Holm 補正後の片側 p（費用後の全期間の NW t から）< 0.05",
+  "E5_sharpe": "timing・借入の型（S3 の L2・L3 と ハロウィーン）だけ: 前半・後半の両方で、費用後の戦略のシャープ（その単位の現金を引いた年率）が相手のシャープを上回る（β を増やしただけの勝ちを除く）",
+  "E7_drop_top": "最大寄与の構成要素（業種・株）を母集団から抜いて作り直しても、費用後の幾何の年率差 > 0。寄与＝Σ_t w_{i,t}(r_{i,t} − b_t)（D.contributions）、S3 は Σ_t (W_{i,t} − 1/N_t)(r_{i,t} − rf_t)（D.contributions_trend）。相手は変えない（市場は市場）。ただし S3 の相手（同じ業種の等分）だけは相手からも抜く。ハロウィーンは N/A",
+  "grades": {
+   "S（独立の時代で再現・頑丈）": "E1・E2・E3・E4・E7 すべて合格、E5 は該当なら合格",
+   "A（独立の時代で再現）": "E1・E2・E3 合格、E5 は該当なら合格",
+   "B（向きは同じ・弱い）": "E1 合格、E5 は該当なら合格",
+   "C（再現せず）": "上のどれでもない",
+   "NA_short": "s と b の両方がある月が 180 未満（格付けしない・Holm には p=1 で入れる）"
+  },
+  "rule_level_verdict": "同じ元の規則を当てた単位（例: A_G3 と D_G3）の格付けを D.rule_verdict でまとめる: 全部 B 以上で S が1つ以上＝『再現（強）』、全部 B 以上で A 以上が1つ以上＝『再現』、全部 B＝『向きだけ』、B 以上と C が混ざる＝『割れた』、全部 C＝『再現せず』、格付けできる単位が無い＝『検定不能』",
+  "series_used": {
+   "s_gross": "組み立ての関数の 's'（費用前）",
+   "s_net": "組み立ての関数の 'net'（その月の実際の回転×単価、S3 は出入りの費用と借入の代金を含む）。E1〜E7 はすべて費用後",
+   "b": "下の benchmark.graded"
+  },
+  "holm_families": {
+   "A（Cowles の業種・米国）": [
+    "A_G3_mom12_5",
+    "A_G4_mom12_10",
+    "A_P9_multi_5",
+    "A_F1b_MG_6_6",
+    "A_F3g_12-1_H1_K15",
+    "A_F3g_12-1_H1_K30",
+    "A_F3g_9-0_H1_K30",
+    "A_S3_FABER_L2",
+    "A_S3_FABER_L3"
+   ],
+   "B（LSE の株・英国）": [
+    "B_F1a1_top_decile",
+    "B_ret_12_1_tercile",
+    "B_seas_6_10an_tercile"
+   ],
+   "C（Old NYSE の株・米国）": [
+    "C_ret_12_1_tercile"
+   ],
+   "D（LSE の業種・英国）": [
+    "D_G3_mom12_5",
+    "D_P9_multi_5",
+    "D_F1b_MG_6_6",
+    "D_F3g_12-1_H1_K15",
+    "D_F3g_12-1_H1_K30",
+    "D_F3g_9-0_H1_K30",
+    "D_S3_FABER_L2",
+    "D_S3_FABER_L3"
+   ],
+   "H（英国の指数）": [
+    "H_HAL_OV15_UK"
+   ],
+   "note": "族はデータの単位ごと（結果を見る前に決めた）。報告として22単位ぜんぶの Holm も並べる（R11・厳しい側）"
+  },
+  "costs": {
+   "rule": "元の規則の費用の決まりをそのまま使う（現代の業種ETF・株の実行を想定した値）＝現象が別の時代にもあるかを問う。当時の実際の費用（Jones 2002 によれば20世紀初めのダウ銘柄の片道の費用は今より一桁高い）で実行できたかは別の問いで、報告 R3",
+   "industry_topk_multi": "G3・G4・P9: 両側の売買 Σ|Δw| × 0.05%（mw_industry）。F1b・F3g: 片道 ½Σ|Δw| × 0.05%（mw_momentum）。目標の重みと前月の重みが値動きで流れた後の差から毎月（最初の月・途切れた後の月は0）",
+   "industry_trend": "出入りした業種の重み × L × 0.10%。E>1 の月は (E−1)×0.5% + 0.9% を年率で引く（mw_trend 第1族の式）。借入の基準は現金の金利",
+   "stock": "片道 ½Σ|Δw| × 単価。英国 0.30%（元の単価 F1a1 0.20%・ret_12_1 は mw_intl の先進国 0.30%・seas 0.10% を、英国では mw_intl の米国外の 0.30% を下限にした）。米国の NYSE は 0.10%（mw_intl の米国の参考値・F14 の単価）。元の規則の回転の置き値（年 400%・150%・1200%）は使わず、作った組の実際の回転を使う（置き値の版は R3）",
+   "halloween": "|ΔL| × 0.10%（年に 0.5+0.5）。借入 0.5×(短期金利 + 0.5%/年)"
+  },
+  "min_months": 180,
+  "halves_rule": "D.halves: s と b の両方がある月を時間の順に並べ、数で二分（奇数は後半が1か月多い）"
+ },
+ "families": {
+  "A": [
+   {
+    "key": "G3_mom12_5",
+    "src": [
+     "industry:G3_mom12_5"
+    ],
+    "kind": "ind_topk",
+    "L": 12,
+    "skip": 1,
+    "asis_skip": 0,
+    "H": 1,
+    "K": 5,
+    "minN": 10,
+    "cost": [
+     "two",
+     0.0005
+    ],
+    "what": "12か月（形成の月末 f の f−12〜f−1＝1か月あけた版）の累積が最も高い5業種を等分・毎月。候補が 2K=10 未満の月は定義しない",
+    "id": "A_G3_mom12_5",
+    "data": "cowles_ind",
+    "bench": "cowles_mkt",
+    "rf": "us_cash"
+   },
+   {
+    "key": "G4_mom12_10",
+    "src": [
+     "industry:G4_mom12_10"
+    ],
+    "kind": "ind_topk",
+    "L": 12,
+    "skip": 1,
+    "asis_skip": 0,
+    "H": 1,
+    "K": 10,
+    "minN": 20,
+    "cost": [
+     "two",
+     0.0005
+    ],
+    "what": "同じく上位10業種。候補が20未満の月は定義しない",
+    "id": "A_G4_mom12_10",
+    "data": "cowles_ind",
+    "bench": "cowles_mkt",
+    "rf": "us_cash"
+   },
+   {
+    "key": "P9_multi_5",
+    "src": [
+     "industry:P9_multi_5"
+    ],
+    "kind": "ind_multi",
+    "windows": [
+     1,
+     3,
+     6,
+     12
+    ],
+    "skip": 1,
+    "asis_skip": 0,
+    "K": 5,
+    "minN": 10,
+    "cost": [
+     "two",
+     0.0005
+    ],
+    "what": "1・3・6・12か月の累積の百分位の平均が最も高い5業種を等分・毎月（4本そろう業種だけ・1か月あけた版）",
+    "id": "A_P9_multi_5",
+    "data": "cowles_ind",
+    "bench": "cowles_mkt",
+    "rf": "us_cash"
+   },
+   {
+    "key": "F1b_MG_6_6",
+    "src": [
+     "momentum:F1b_ind10",
+     "momentum:F1b_ind12",
+     "momentum:F1b_ind17",
+     "momentum:F1b_ind30",
+     "momentum:F1b_ind49"
+    ],
+    "kind": "ind_topk",
+    "L": 6,
+    "skip": 1,
+    "asis_skip": 0,
+    "H": 6,
+    "frac": 0.15,
+    "minN": 5,
+    "cost": [
+     "one",
+     0.0005
+    ],
+    "what": "Moskowitz-Grinblatt 6-6: 6か月の累積の上位 K=max(2, 四捨五入(0.15N)) 業種を等分、6か月の重ね持ち（1か月あけた版）",
+    "id": "A_F1b_MG_6_6",
+    "data": "cowles_ind",
+    "bench": "cowles_mkt",
+    "rf": "us_cash"
+   },
+   {
+    "key": "F3g_12-1_H1_K15",
+    "src": [
+     "momentum:F3g_ind17_12-1_H1_K15"
+    ],
+    "kind": "ind_topk",
+    "L": 11,
+    "skip": 1,
+    "asis_skip": 1,
+    "H": 1,
+    "frac": 0.15,
+    "minN": 5,
+    "cost": [
+     "one",
+     0.0005
+    ],
+    "what": "12-1（f−11〜f−1・元から直近1か月を飛ばす）の上位15%・毎月",
+    "id": "A_F3g_12-1_H1_K15",
+    "data": "cowles_ind",
+    "bench": "cowles_mkt",
+    "rf": "us_cash"
+   },
+   {
+    "key": "F3g_12-1_H1_K30",
+    "src": [
+     "momentum:F3g_ind30_12-1_H1_K30"
+    ],
+    "kind": "ind_topk",
+    "L": 11,
+    "skip": 1,
+    "asis_skip": 1,
+    "H": 1,
+    "frac": 0.3,
+    "minN": 5,
+    "cost": [
+     "one",
+     0.0005
+    ],
+    "what": "12-1 の上位30%・毎月",
+    "id": "A_F3g_12-1_H1_K30",
+    "data": "cowles_ind",
+    "bench": "cowles_mkt",
+    "rf": "us_cash"
+   },
+   {
+    "key": "F3g_9-0_H1_K30",
+    "src": [
+     "momentum:F3g_ind17_9-0_H1_K30",
+     "momentum:F3g_ind30_9-0_H1_K30"
+    ],
+    "kind": "ind_topk",
+    "L": 9,
+    "skip": 1,
+    "asis_skip": 0,
+    "H": 1,
+    "frac": 0.3,
+    "minN": 5,
+    "cost": [
+     "one",
+     0.0005
+    ],
+    "what": "9か月（1か月あけた版＝f−9〜f−1）の上位30%・毎月",
+    "id": "A_F3g_9-0_H1_K30",
+    "data": "cowles_ind",
+    "bench": "cowles_mkt",
+    "rf": "us_cash"
+   },
+   {
+    "key": "S3_FABER_L2",
+    "src": [
+     "trend:S3_US_IND49_FABER_L2"
+    ],
+    "kind": "ind_trend",
+    "sma": 10,
+    "Lev": 2.0,
+    "skip": 1,
+    "asis_skip": 0,
+    "cost": [
+     "moved",
+     0.001
+    ],
+    "spread": 0.005,
+    "fee": 0.009,
+    "timing": true,
+    "what": "業種ごとに総リターン指数の月末値＞直近10個の平均なら持ち、下なら現金。業種は等分（時価が無い）・2倍（1か月あけた版＝月 t−1 末の信号で月 t+1）",
+    "id": "A_S3_FABER_L2",
+    "data": "cowles_ind",
+    "bench": "cowles_ew_ind",
+    "rf": "us_cash"
+   },
+   {
+    "key": "S3_FABER_L3",
+    "src": [
+     "trend:S3_US_IND49_FABER_L3"
+    ],
+    "kind": "ind_trend",
+    "sma": 10,
+    "Lev": 3.0,
+    "skip": 1,
+    "asis_skip": 0,
+    "cost": [
+     "moved",
+     0.001
+    ],
+    "spread": 0.005,
+    "fee": 0.009,
+    "timing": true,
+    "what": "同じく3倍",
+    "id": "A_S3_FABER_L3",
+    "data": "cowles_ind",
+    "bench": "cowles_ew_ind",
+    "rf": "us_cash"
+   }
+  ],
+  "B": [
+   {
+    "key": "F1a1_top_decile",
+    "src": [
+     "momentum:F1a1_us_top_decile"
+    ],
+    "kind": "stk_mom",
+    "L": 11,
+    "skip": 1,
+    "asis_skip": 1,
+    "frac": 0.1,
+    "min_port": 10,
+    "what": "12-2（保有の月の t−12〜t−2＝形成の月末 f の f−11〜f−1）の上位10%を等分・毎月（元は時価加重。時価が無いので等分）",
+    "id": "B_F1a1_top_decile",
+    "data": "lse_stk",
+    "bench": "lse_ew",
+    "weight": "ew",
+    "cost": [
+     "one",
+     0.003
+    ]
+   },
+   {
+    "key": "ret_12_1_tercile",
+    "src": [
+     "intl:F2a:ret_12_1"
+    ],
+    "kind": "stk_mom",
+    "L": 11,
+    "skip": 1,
+    "asis_skip": 1,
+    "frac": 0.3333333333333333,
+    "min_port": 10,
+    "what": "JKP の ret_12_1（f−11〜f−1）の上位3分の1を等分・毎月（元は時価加重の三分位）",
+    "id": "B_ret_12_1_tercile",
+    "data": "lse_stk",
+    "bench": "lse_ew",
+    "weight": "ew",
+    "cost": [
+     "one",
+     0.003
+    ]
+   },
+   {
+    "key": "seas_6_10an_tercile",
+    "src": [
+     "momentum:F14_usa_seas_6_10an"
+    ],
+    "kind": "stk_seas",
+    "years": [
+     6,
+     7,
+     8,
+     9,
+     10
+    ],
+    "frac": 0.3333333333333333,
+    "min_port": 10,
+    "what": "保有の月と同じ暦月の 6〜10 年前のリターンの平均（5年すべてそろう株だけ）の上位3分の1を等分・毎月（元は時価加重の三分位）",
+    "id": "B_seas_6_10an_tercile",
+    "data": "lse_stk",
+    "bench": "lse_ew",
+    "weight": "ew",
+    "cost": [
+     "one",
+     0.003
+    ]
+   }
+  ],
+  "C": [
+   {
+    "key": "ret_12_1_tercile",
+    "src": [
+     "intl:F2a:ret_12_1"
+    ],
+    "kind": "stk_mom",
+    "L": 11,
+    "skip": 1,
+    "asis_skip": 1,
+    "frac": 0.3333333333333333,
+    "min_port": 10,
+    "what": "JKP の ret_12_1（f−11〜f−1）の上位3分の1を等分・毎月（元は時価加重の三分位）",
+    "id": "C_ret_12_1_tercile",
+    "data": "nyse_stk",
+    "bench": "nyse_ew",
+    "weight": "ew",
+    "cost": [
+     "one",
+     0.001
+    ]
+   },
+   {
+    "key": "seas_6_10an_tercile",
+    "src": [
+     "momentum:F14_usa_seas_6_10an"
+    ],
+    "kind": "stk_seas",
+    "years": [
+     6,
+     7,
+     8,
+     9,
+     10
+    ],
+    "frac": 0.3333333333333333,
+    "min_port": 10,
+    "what": "保有の月と同じ暦月の 6〜10 年前のリターンの平均（5年すべてそろう株だけ）の上位3分の1を等分・毎月（元は時価加重の三分位）",
+    "id": "C_seas_6_10an_tercile",
+    "data": "nyse_stk",
+    "bench": "nyse_ew",
+    "weight": "ew",
+    "cost": [
+     "one",
+     0.001
+    ]
+   }
+  ],
+  "D": [
+   {
+    "key": "G3_mom12_5",
+    "src": [
+     "industry:G3_mom12_5"
+    ],
+    "kind": "ind_topk",
+    "L": 12,
+    "skip": 1,
+    "asis_skip": 0,
+    "H": 1,
+    "K": 5,
+    "minN": 10,
+    "cost": [
+     "two",
+     0.0005
+    ],
+    "what": "12か月（形成の月末 f の f−12〜f−1＝1か月あけた版）の累積が最も高い5業種を等分・毎月。候補が 2K=10 未満の月は定義しない",
+    "id": "D_G3_mom12_5",
+    "data": "lse_ind",
+    "bench": "lse_ew",
+    "rf": "uk_cash"
+   },
+   {
+    "key": "G4_mom12_10",
+    "src": [
+     "industry:G4_mom12_10"
+    ],
+    "kind": "ind_topk",
+    "L": 12,
+    "skip": 1,
+    "asis_skip": 0,
+    "H": 1,
+    "K": 10,
+    "minN": 20,
+    "cost": [
+     "two",
+     0.0005
+    ],
+    "what": "同じく上位10業種。候補が20未満の月は定義しない",
+    "id": "D_G4_mom12_10",
+    "data": "lse_ind",
+    "bench": "lse_ew",
+    "rf": "uk_cash"
+   },
+   {
+    "key": "P9_multi_5",
+    "src": [
+     "industry:P9_multi_5"
+    ],
+    "kind": "ind_multi",
+    "windows": [
+     1,
+     3,
+     6,
+     12
+    ],
+    "skip": 1,
+    "asis_skip": 0,
+    "K": 5,
+    "minN": 10,
+    "cost": [
+     "two",
+     0.0005
+    ],
+    "what": "1・3・6・12か月の累積の百分位の平均が最も高い5業種を等分・毎月（4本そろう業種だけ・1か月あけた版）",
+    "id": "D_P9_multi_5",
+    "data": "lse_ind",
+    "bench": "lse_ew",
+    "rf": "uk_cash"
+   },
+   {
+    "key": "F1b_MG_6_6",
+    "src": [
+     "momentum:F1b_ind10",
+     "momentum:F1b_ind12",
+     "momentum:F1b_ind17",
+     "momentum:F1b_ind30",
+     "momentum:F1b_ind49"
+    ],
+    "kind": "ind_topk",
+    "L": 6,
+    "skip": 1,
+    "asis_skip": 0,
+    "H": 6,
+    "frac": 0.15,
+    "minN": 5,
+    "cost": [
+     "one",
+     0.0005
+    ],
+    "what": "Moskowitz-Grinblatt 6-6: 6か月の累積の上位 K=max(2, 四捨五入(0.15N)) 業種を等分、6か月の重ね持ち（1か月あけた版）",
+    "id": "D_F1b_MG_6_6",
+    "data": "lse_ind",
+    "bench": "lse_ew",
+    "rf": "uk_cash"
+   },
+   {
+    "key": "F3g_12-1_H1_K15",
+    "src": [
+     "momentum:F3g_ind17_12-1_H1_K15"
+    ],
+    "kind": "ind_topk",
+    "L": 11,
+    "skip": 1,
+    "asis_skip": 1,
+    "H": 1,
+    "frac": 0.15,
+    "minN": 5,
+    "cost": [
+     "one",
+     0.0005
+    ],
+    "what": "12-1（f−11〜f−1・元から直近1か月を飛ばす）の上位15%・毎月",
+    "id": "D_F3g_12-1_H1_K15",
+    "data": "lse_ind",
+    "bench": "lse_ew",
+    "rf": "uk_cash"
+   },
+   {
+    "key": "F3g_12-1_H1_K30",
+    "src": [
+     "momentum:F3g_ind30_12-1_H1_K30"
+    ],
+    "kind": "ind_topk",
+    "L": 11,
+    "skip": 1,
+    "asis_skip": 1,
+    "H": 1,
+    "frac": 0.3,
+    "minN": 5,
+    "cost": [
+     "one",
+     0.0005
+    ],
+    "what": "12-1 の上位30%・毎月",
+    "id": "D_F3g_12-1_H1_K30",
+    "data": "lse_ind",
+    "bench": "lse_ew",
+    "rf": "uk_cash"
+   },
+   {
+    "key": "F3g_9-0_H1_K30",
+    "src": [
+     "momentum:F3g_ind17_9-0_H1_K30",
+     "momentum:F3g_ind30_9-0_H1_K30"
+    ],
+    "kind": "ind_topk",
+    "L": 9,
+    "skip": 1,
+    "asis_skip": 0,
+    "H": 1,
+    "frac": 0.3,
+    "minN": 5,
+    "cost": [
+     "one",
+     0.0005
+    ],
+    "what": "9か月（1か月あけた版＝f−9〜f−1）の上位30%・毎月",
+    "id": "D_F3g_9-0_H1_K30",
+    "data": "lse_ind",
+    "bench": "lse_ew",
+    "rf": "uk_cash"
+   },
+   {
+    "key": "S3_FABER_L2",
+    "src": [
+     "trend:S3_US_IND49_FABER_L2"
+    ],
+    "kind": "ind_trend",
+    "sma": 10,
+    "Lev": 2.0,
+    "skip": 1,
+    "asis_skip": 0,
+    "cost": [
+     "moved",
+     0.001
+    ],
+    "spread": 0.005,
+    "fee": 0.009,
+    "timing": true,
+    "what": "業種ごとに総リターン指数の月末値＞直近10個の平均なら持ち、下なら現金。業種は等分（時価が無い）・2倍（1か月あけた版＝月 t−1 末の信号で月 t+1）",
+    "id": "D_S3_FABER_L2",
+    "data": "lse_ind",
+    "bench": "lse_ew_ind",
+    "rf": "uk_cash"
+   },
+   {
+    "key": "S3_FABER_L3",
+    "src": [
+     "trend:S3_US_IND49_FABER_L3"
+    ],
+    "kind": "ind_trend",
+    "sma": 10,
+    "Lev": 3.0,
+    "skip": 1,
+    "asis_skip": 0,
+    "cost": [
+     "moved",
+     0.001
+    ],
+    "spread": 0.005,
+    "fee": 0.009,
+    "timing": true,
+    "what": "同じく3倍",
+    "id": "D_S3_FABER_L3",
+    "data": "lse_ind",
+    "bench": "lse_ew_ind",
+    "rf": "uk_cash"
+   }
+  ],
+  "H": [
+   {
+    "id": "H_HAL_OV15_UK",
+    "key": "HAL_OV15",
+    "data": "uk_index",
+    "kind": "halloween",
+    "src": [
+     "calendar:X06_HAL_OV15_WORLD",
+     "calendar:Y03_HAL_OV15_WXUS"
+    ],
+    "winter": [
+     11,
+     12,
+     1,
+     2,
+     3,
+     4
+    ],
+    "Lev": 1.5,
+    "spread": 0.005,
+    "cost": [
+     "dL",
+     0.001
+    ],
+    "timing": true,
+    "bench": "uk_index",
+    "rf": "uk_hal",
+    "period": [
+     170905,
+     191406
+    ],
+    "what": "英国の株価指数（イングランド銀行 M13 の列 23・価格だけ）に 11〜4月は1.5倍・5〜10月は1倍。借入 0.5×(短期金利+0.5%)"
+   }
+  ]
+ },
+ "benchmark": {
+  "graded": {
+   "A_G3〜A_F3g（7本）": "Cowles C-1 All Stocks（総リターン・時価加重）",
+   "A_S3_FABER_L2/L3": "同じ Cowles の業種の等分（毎月等分へ戻す）＝eknzbh mw_trend 第5族の C5 の作り方（業種の時価が無いとき）",
+   "B（LSE の株）・D_G3〜D_F3g（6本）": "LSE の普通株（EXCLUDE 以外・OTHER を含む）でその月にリターンがある全部の等分（価格だけ）＝同じ母集団の等分（nx_prereg の stock_level_survivor の作法・時価が無いので時価加重は報告）",
+   "D_S3_FABER_L2/L3": "同じ LSE の業種の等分",
+   "C（Old NYSE の株）": "Old NYSE の普通株でその月にリターンがある全部の等分（価格だけ）",
+   "H": "イングランド銀行の指数を買って持つだけ（価格だけ）"
+  },
+  "reported_not_graded": "Cowles の業種の等分（A1〜A7 の等分の傾きの対照）・Cowles C-1（A8・A9）・イングランド銀行の指数（B・D）・LSE の業種の等分（D1〜D6）・GIP の価格加重の指数 2020 と Cowles P-1（価格だけ・C）",
+  "why_equal_weight": "Cowles の業種・LSE の業種・株は時価の重みが無いか一部の年しか無い。元の規則の業種の勢い（G3〜F3g）はもともと業種を等分で持つ。株の規則（元は時価加重）は等分に替えた＝規則の芯（何を選ぶか）は同じで重みだけ違う。報告 R7 で LSE の時価加重（1870〜1887）を並べる"
+ },
+ "timing": {
+  "what_is_known_when": "形成の月末 f に分かるのは、その月までのリターン（Cowles は月 f の平均の値＝月 f の終わりに分かる）。組は f+1 に持つ。1か月あけた版は窓が f−1 で終わる。S3 は月 j−2 の末の信号で月 j（1か月あけた版）。ハロウィーンは暦だけ",
+  "execution_note": "Cowles の保有のリターンは平均から平均（おおむね月の半ばから翌月の半ば）で、実際に月末に売買した値とは半月ずれる。1か月あけた版なら形成の窓の最後の平均（月 f−1）と保有の最初の平均（月 f）は重ならない",
+  "known_look_ahead_risks": [
+   "Cowles の指数は 1938 年に作られた（どの株を入れるかは当時の後の判断）",
+   "LSE の業種の分け方は見出しの全 244 種を見て決めた（リターンは見ていない）。業種は t−1 の見出しで決める",
+   "物価・戦争の年を外すような後知恵の除外はしない（1914 の閉鎖はデータ自体が無い）"
+  ]
+ },
+ "real_instrument_check": {
+  "role": "格付けに入れない",
+  "note": "1709〜1929 年の規則は今は売買できない。この角度は『現象が時代をまたぐか』を問う。現代の実行の器（業種ETF・勢いのETF・借入）は eknzbh の各角度が扱った。当時の実行の費用は R3 の感度で見る"
+ },
+ "reports_not_graded": {
+  "R1_asis": "元のままの版（1か月あけない）: A_G3・A_G4・A_P9・A_F1b・A_F3g_9-0・A_S3 L2/L3 と D の同じもの。grade_era を同じく当てて『報告』と明記。1か月あけた版との差は Working の見かけの自己相関の見当",
+  "R2_alt_benchmarks": "benchmark.reported_not_graded",
+  "R3_costs": "単価を片道 0.50%・1.00% にした版（業種・株とも）、株の規則の元の回転の置き値の版、S3 の借入の上乗せ 0.5%→1.0%",
+  "R4_grid_breadth": "A_grid の代わり: Cowles の業種と LSE の業種（区間ごと）に、F3g の格子（形成 1-0・3-0・6-0・9-0・12-0・12-1 × 保有 1・3・6・12 × K 15%・30% ＝48・元のまま）と F16g の格子（同じ暦月の a〜b 年前 1〜1・2〜5・6〜10・11〜15・16〜20・1〜10・1〜20 × K 15%・30% ＝14・その年数ぶん全部そろう業種だけ）を当て、費用後の超過が正の格子の割合と t≥2 の割合（帰無なら約50%・約2.5%）",
+  "R5_subperiods": "Cowles 1871〜1898・1899〜1926-06、1914-07〜1918-12 を抜いた版／LSE 区間1・区間2、1869〜1887・1888〜1907／NYSE 1871〜1898・1899〜1925／英国の指数 1709〜1811・1811〜1870・1871〜1914・1915〜1925",
+  "R6_rolling": "転がる20年窓（一括・nx_common.rolling）の勝率と20年の毎月積立の比（nx_common.dca）",
+  "R7_lse_variants": "時価加重（1870〜1887・株数の分かる株だけ）、p_{t−1} < £1 の株を外した等分、配当の近似を両側に足した版と、良い側と母集団の配当利回りの差（勢いの勝者は利回りが低くなりやすく、価格だけの比較は勝者に有利に偏る）",
+  "R8_delisting_lower_bound": "区間の終わりより前に価格が途切れて戻らない株に、途切れた翌月 −30% を置いた版（戦略と相手の両方）",
+  "R9_nyse_filled": "前後の平均で埋めたと見込まれる月（937）を欠測にした版",
+  "R10_working_diagnostics": "相手の系列（Cowles C-1・LSE の等分・NYSE の等分・英国の指数）と業種の平均の1次の自己相関（規則の成績ではない）",
+  "R11_program_holm": "22 単位ぜんぶで Holm（片側）",
+  "R12_turnover": "各規則の年間の片道回転の実測"
+ },
+ "prior": {
+  "literature_same_era": {
+   "Chabot_Ghysels_Jagannathan": "『Price Momentum in Stocks: Insights from Victorian Age Data』（NBER WP 14500・2008）: IMM の LSE 1866〜1907 で株の勢いが現代と同程度にあったと報告（記憶。数字は確かめていない）＝B_F1a1・B_ret_12_1 は学界には新しくない",
+   "Geczy_Samonov_2016": "『Two Centuries of Price-Return Momentum』FAJ 2016: 米国の株 1801〜1926 で勢いが正（1927年以降より弱い）と報告（記憶）＝C_ret_12_1 も学界には新しくない",
+   "Goetzmann_Huang_2018": "『Momentum in Imperial Russia』JFE 2018（ここでは使わない）",
+   "Zhang_Jacobsen_2021": "『The Halloween indicator, \"Sell in May and Go Away\": everywhere and all the time』J. Int. Money and Finance 2021: 英国 1693〜 でハロウィーンを報告（記憶）＝H は学界には新しくない",
+   "industry_level_pre1926": "Cowles・LSE の業種の勢い・業種ごとの10か月線を 1926 年以前で測った研究を私は知らない（Geczy-Samonov の資産横断の研究に米国の業種が入っていたかは確かめていない）",
+   "Working_1960・Cowles_Jones_1937": "月平均の差の見かけの自己相関（+0.25）。Cowles-Jones の連の発見は平均の人工物と後に説明された",
+   "Jones_2002": "『A Century of Stock Market Liquidity and Trading Costs』: 20世紀初めの売買の費用は今より一桁高い（記憶）"
+  },
+  "this_program_known_before": "eknzbh の規則そのものは 1926〜2026 で選ばれて残ったもの（生き残りの選択）。ここで当てるのは格付けの結果ではなく定義だけ。予想の大きさ: 業種の勢いは現代の論文で年2〜5%の上乗せ（等分・上位業種・対 市場）。1か月あけると半分ほどに縮むことがある"
+ },
+ "contamination": {
+  "what_i_looked_at": "この事前登録を書く前に見たのは: 各データの列・期間・欠け・銘柄数・業種数・掃除で落ちた件数・規則が組を作れる月数（リターンの有無だけで数えた）、LSE の見出しの全 244 種と件数、Totaldata の型との一致の件数、Cowles の Introduction の作り方の文、GIP の修正の注記（写し誤りの例の価格）。規則のリターン・市場との差・t・シャープ・勝率は、どの規則についても計算していない・表示していない。組み立ての関数は合成の乱数データでだけ動かした",
+  "accidental": [
+   "GIP の価格加重の指数の最初の値（1815-02 の −2.42%）をファイルの形を調べたときに見た",
+   "イングランド銀行の指数の前月比を 1811〜1825 の7か月ぶん（つなぎの出典を決めるため・例 1811-09 +1.37%・1825-06 +2.26%）見た",
+   "LSE の個々の証券の価格の水準（例 Atlantic and St. Lawrence 61・Young's Paraffin 1.75）と配当率の欄を型の確認で見た",
+   "斥候（前のセッション）が Cowles の業種の指数の最初の5行（1871年1〜5月の水準）を表示した（out/nx_scout.json に記録）"
+  ],
+  "other_sessions_results_read": [
+   "⚠ eknzbh の git log の見出しを読んだ: 9b52b99b『mw_deep_history: 結果（1872〜1925 の独立期間でも国の割安＋勢い 上位3か国が等分に +2.8%/年 t4.5・1926〜2020 +2.7 t4.0 で S…だが 2007〜2020 は国の回転の全規則が負け〔VM −2.4%/年 t−2.6〕…ハロウィーンは 1871〜1925 で t1.5＝C）』、6b73376b（mw_oap_signals の結果）、cf61cb35（mw_investable_valmom の結果）、2e17443a（mw_forward）、9b3c5253（mw_macro_timing）ほか同じ画面の見出し",
+   "⚠ q07leu の git log の見出しを読んだ: e39525b2『第9回——1871-1925年の米国で dip_lever は発動0（検定不能）・trend +1.09 t0.79（月平均の自己相関を外すと −0.18）＝再現せず／日本の大型割安…』、439ce8ed・2989e69d・d4f68b10（24系統の結果の見出し）",
+   "⚠ eknzbh の mw_deep_history_prereg2.json の why_now（第1族の結果: JST の国の回転で S 15本・2007〜2020 は負け・1872〜1925 の国の相対リターンの1年の自己相関の中央 +0.15〔1926〜2006 +0.06〕）",
+   "⚠ eknzbh の mw_momentum_prereg4.json の what_i_have_seen（米国の株の季節性 seas_6_10an が S・保有 +3.27%/年 t2.96・費用1.2%/年を引いて +2.07、ocf_at_chg1 が A +1.77 t1.58）と prereg5（季節性は未見の36か国で29か国が正・国の等分のパネルは費用後に負・EEMO −1.9%/年）",
+   "⚠ eknzbh の mw_industry_prereg2.json の what_was_checked（G3 の全期間 +6.97%/年・48業種の等分 +1.36%/年 t2.29・保有 +0.15・G3 の年ごとの超過 2009 −11・2023 −17・2024 −30・2007 +33・2020 +33・2022 +37）",
+   "⚠ eknzbh の mw_trend_prereg5.json の why_this_family（第1〜4族はすべて C・保有期間の Faber 10か月線のシャープ 0.744 対 0.652）",
+   "⚠ eknzbh の night/mw_momentum_verify.py を grep したとき、1031〜1046 行の文『A のグリッド（F3g・F16g の A 179本）』『F16g の主の5本（F16p）はすべて C（保有期間 −3.6〜+0.7）』が出た",
+   "eknzbh の out/mw_summary.json は survivors_SA_after_verify の ID だけを表示した（研究の格付けの件数・verdicts は表示していない）",
+   "⚠ 登録の直前に、この枝の git log の見出し 2fba1c64（兄弟の角度 nx_stack の結果: AQR の時系列の勢いを市場に重ねる P6 が S ほか）を見た（この角度の規則とは無関係）。この枝のコミット dbbdb531 が前の担当者の data 道具の作りかけを記録している（この登録の版は tools.data_tool_sha256）"
+  ],
+  "claude_md": "CLAUDE.md（会話の最初に読み込まれる）の同じ台帳の結果を読んだ: 1926年以降の業種の比重の記録・業種の勝者の反転の基礎率（過去10年の上位業種が次の10年に勝つのは 20% 前後）・JKP の因子の縮み・Ken French の百年の割安と配当など。どれも 1926年以降の米国と現代の国際",
+  "world_knowledge": "私（Claude）は 1871〜1929 年の大まかな歴史を知っている: 米国の鉄道の時代と 1873・1893・1907 年の恐慌、1914 年の取引所の閉鎖、1920〜21 年の不況、1920 年代の自動車・ラジオ・電力の上昇、英国の 1866 年（Overend Gurney）・1890 年（Baring）・1900 年代の鉱山と茶・ゴムのブーム（1910 年のゴム）、第一次大戦。ゴム・ラジオ・自動車のように後から伸びた業種を知っていることは、規則の定義を先に凍結しても消せない漏れ。線と規則は論文と他セッションの既定値で決め、結果を見て変えない",
+  "shape_based_choices": [
+   "1か月あける版を主にしたこと（Working 1960 を先に知っていた・Cowles の作り方の文で確かめた）",
+   "LSE の普通株の判定（Totaldata の型との一致 93.0% の規則・型のラベルだけで決めた）と業種の分け方（見出しの一覧だけで決めた）",
+   "LSE の業種の最小社数 3・株の組の最小 10（JKP の n≥10）・業種の候補の下限（固定 K は 2K、割合 K は 5）・格付けの最小月数 180",
+   "D_G4（業種が最大16で作れない）と C_seas（組を作れる月 76）と NYSE の十分位（0 か月）を族から外したこと",
+   "LSE を 1869〜1907 と 1915〜1929 の2区間に分けたこと、時価加重を 1870〜1887 の報告にしたこと（株数の分かる割合を数えて決めた）"
+  ]
+ },
+ "sanity_checks_before_results": [
+  "extract_sha256・rules_sha256・data_tool_sha256 が tools の値と一致（違えば止まる）。python3 night/nx_pre1926x_data.py --selftest が17項目すべて OK",
+  "Cowles C-1（総リターン）と P-1（価格）の月の差の平均が年の配当利回り 3〜7% の範囲（月 0.25〜0.6%）に入ること（読み込みの検算）",
+  "Cowles P-1 と Shiller の 1871〜1926 の株価（Shiller は Cowles をつないでいる）の月の変化の相関 ≥ 0.99（Shiller の ie_data.xls を取れた場合）",
+  "Cowles の業種の等分と C-1 の月次の相関 ≥ 0.85、LSE の等分とイングランド銀行の指数（Smith-Horne 1871〜1914）の相関 ≥ 0.6、NYSE の等分と GIP の価格加重の指数の相関 ≥ 0.8。下回れば読み込みを疑って止まる（成績ではなく相手どうしの形）",
+  "先読みなし: 各規則で、月 j より後のリターンをでたらめに書き換えても月 j までの戦略の費用後のリターンが変わらないことを実データでも確かめる（selftest と同じ手順）",
+  "組を作れる月数が data.definable_months_by_shape と一致（±1）",
+  "Holm の族の数: A 9・B 3・C 1・D 8・H 1（計 22）",
+  "欠測を 0 で埋めていないこと（s と b の両方がある月だけで比べ、落ちた月の数を記録）。LSE の区間をまたいだ窓・保有が無いこと"
+ ],
+ "known_limits": [
+  "独立の時代だが、株の勢い（英国・米国）とハロウィーン（英国）は学界ではすでに報告がある（prior）＝このプログラムにとって新しいだけ",
+  "Cowles は月中の平均（1か月あけた版で備えるが、平均は保有のリターンのぶれも小さく見せる）。1918 年以降の一部は Standard Statistics の週次の平均へのつなぎ",
+  "1870〜1880 年代の Cowles の業種は6〜7しかなく、上位 K は市場の大きな部分になる（業種の中の株も数社のことがある）",
+  "株の規則は元の時価加重ではなく等分（時価が無い）。LSE・NYSE は配当が入らない（価格だけ）＝勢いの勝者は利回りが低いので、価格だけの比較は勝者に有利に偏りうる（R7 で見当）",
+  "上場廃止の最後の値が無い（R8 の下限版）",
+  "LSE の普通株と業種の判定は規則による（型の一致 93%）。外国通貨で気配の出た証券（米国の鉄道のドルなど）が混ざりうる（金本位の 1879〜1914 は為替がほぼ固定）",
+  "薄商いの古い値（LSE・NYSE）は見かけの自己相関と遅れを作る",
+  "Old NYSE は同時に30〜80社の標本で、1871 年以降しか組を作れない＝Cowles と同じ時代（データは別）",
+  "当時の売買の費用は今より一桁高く、借入（S3 の2倍・3倍）の条件も違う＝格付けは元の規則の費用で『現象』を問う（R3 で当時の費用）",
+  "独立の試行は多くない（米国 1871〜1926 の約55年・英国 1869〜1907 と 1915〜1929 の2区間で約54年）。t は NW で補正するが、それでも楽観側に出うる",
+  "私たちは 1871〜1929 年の歴史（伸びた業種・恐慌）を知っている（contamination）"
+ ],
+ "test_count": {
+  "A": 9,
+  "B": 3,
+  "C": 1,
+  "D": 8,
+  "H": 1,
+  "total_graded": 22,
+  "not_testable_by_shape": [
+   "D_G4_mom12_10",
+   "C_seas_6_10an_tercile",
+   "C_F1a1_top_decile（台帳に無い）"
+  ],
+  "report_only": "R1〜R12（格付けしない）。R4 のグリッドは Cowles 48+14・LSE の2区間それぞれ 48+14",
+  "note": "これで全部。測った後に単位・規則・線を足したり変えたりしたら『事後』と明記し、格付けに使わない"
+ }
+}
