@@ -20,11 +20,15 @@ BASE = M.BASE
 ANGLE = 'holdable_breakeven'
 PRE = 'out/mw_holdable_breakeven_prereg.json'
 PRE2 = 'out/mw_holdable_breakeven_prereg2.json'
+PRE3 = 'out/mw_holdable_breakeven_prereg3.json'
 DEVIATIONS = [
     '【データの直し・主の初回の実行の後】1306.T（TOPIX ETF）の Yahoo 月足に分割の未反映（2015-01 −90%・2015-07 +17%）があり、JMKT の袖のずれの sd が 22.5%/年（平均 −5.0%/年・相関 0.57）になっていた。|器 − 日本の市場（円）| > 8% の月を欠測として外した（2か月・prereg2 に記録してから出し直した）。直す前の数字は fits.JMKT.before_fix。効くのは JPN のクラスの JMKT の袖だけ（JHD の ε は jp_nisa_bridge の te を読むので無関係）',
     '事前登録の sleeves.JMKT は『2009-03〜』と書いたが、直した後の sd も同じ窓で測った（欠測の2か月を除く）',
     'EAFE・日本・新興国のクラスの late のプールは French の国別・地域の表が 2025-12 で終わるため 2007-01〜2025-12（228か月）。US・金は 2026-08 まで',
     'MOAT の載り k（qmj の良い側への回帰の傾き）は −0.60 と負になった。登録どおりそのまま使った（前向きの上乗せ −0.33%/年）。平均の載り（capture 0.15）の感度は BR_kmean',
+    '再開: 前の担当は prereg2 の後の本番の実行の途中でセッションの上限で止まった（2026-09-28 23:32）。2026-09-29 に同じコードで本番を回し直した（乱数の種は固定なので主の族の数字は初回と同じ〔JMKT の袖を除く〕）',
+    'prereg3（X6 判別の限界・X7 歴史と基礎率の重みづけ平均・報告のみ）は、主の族の初回の数字を見た後に登録した（leak 欄に見たものを明記）。本番の出し直しの出力を見る前にコミットした',
+    '手順の順番: prereg2 のコミット（c8566c1）は、探索の族を含む試運転（道 400/200 本・出力はキャッシュのみ）を始めた直後で、その出力を見る前だった。本番の数字は prereg2 のコミットの後に回した',
     'mw_common.py は変更していない',
 ]
 OUT = 'mw_holdable_breakeven.json'
@@ -820,6 +824,7 @@ def main():
     ap.add_argument('--selftest', action='store_true')
     ap.add_argument('--quick', action='store_true')
     ap.add_argument('--procs', type=int, default=3)
+    ap.add_argument('--from-cache', action='store_true', help='模擬はせず、キャッシュした升の結果からまとめだけ作り直す')
     a = ap.parse_args()
     st = selftest()
     for x in st:
@@ -839,6 +844,10 @@ def main():
     MX = mixes()
     fx_alt = load_fx_jst()
     n_main, n_grid = (400, 200) if a.quick else (4000, 2000)
+    if a.from_cache:
+        cc = json.load(open(os.path.join(M.CACHE, 'mw_holdable_breakeven_cells.json')))
+        finish(S, FX, fx_me, F, Y, INP, SL, MX, cc['cells'], cc['xcells'], st, t0)
+        return
     tasks, xtasks = [], []
     for cls_name in ('US', 'GOLD', 'EAFE', 'JPN', 'EM'):
         mxc = {k: v for k, v in MX.items() if v['class'] == cls_name}
@@ -952,8 +961,11 @@ def finish(S, FX, fx_me, F, Y, INP, SL, MX, cells, xcells, st, t0, quick=False):
                            'p_beat': v})
     for mn, v in EX['X2']['by_mix'].items():
         tested.append({'name': f'X2:{mn}', 'family': 'X2_exploratory', 'grade': None, 'report_only': True, 'exploratory': True, 'p_beat': v})
+    X67 = x6_x7(by, cross, S, SL, MX)
+    for mn, v in X67['X6']['by_mix'].items():
+        tested.append({'name': f'X6:{mn}', 'family': 'X6_exploratory', 'grade': None, 'report_only': True, 'exploratory': True, 'x6': v})
     summary = build_summary(by, cur, verdict, cross, BRt, AW, G, INP, SL, F)
-    summary['exploratory_lines'] = EX.get('lines', [])
+    summary['exploratory_lines'] = EX.get('lines', []) + X67['lines']
     obj = {'angle': ANGLE, 'tool': 'night/mw_holdable_breakeven.py', 'prereg': PRE, 'prereg_commit': pre_sha, 'global_prereg': 'out/mw_prereg.json',
            'kind': '総合（意思決定の分析）。器の載り・公表後の目減りは入力で、上乗せ探しではない',
            'inputs': INP, 'fits': {k: v for k, v in F.items() if not k.startswith('_')}, 'yahoo_ranges': F.get('_yahoo_ranges'),
@@ -963,7 +975,9 @@ def finish(S, FX, fx_me, F, Y, INP, SL, MX, cells, xcells, st, t0, quick=False):
            'mixes': {k: {'w': v['w'], 'class': v['class'], 'primary': v['primary'], 'buyable': v['buyable']} for k, v in MX.items()},
            'pools': pools, 'current': cur, 'results': by, 'verdict': verdict, 'break_even': cross,
            'base_rates': BRt, 'actual_windows_H': AW, 'grading': {k: {kk: v[kk] for kk in ('grade', 'criteria', 'holm_p', 'from')} for k, v in G.items()},
-           'exploratory': EX, 'preregs': {'1': {'file': PRE, 'commit': pre_sha}, '2': {'file': PRE2, 'commit': git_sha(PRE2), 'exploratory': True}},
+           'exploratory': EX, 'exploratory_prereg3': X67,
+           'preregs': {'1': {'file': PRE, 'commit': pre_sha}, '2': {'file': PRE2, 'commit': git_sha(PRE2), 'exploratory': True},
+                       '3': {'file': PRE3, 'commit': git_sha(PRE3), 'exploratory': True, 'report_only': True}},
            'sanity': san, 'tested': tested, 'n_tested': len(tested), 'n_graded': len(G),
            'grade_counts': {g: sum(1 for v in G.values() if v['grade'] == g) for g in 'SABC'},
            'deviations': DEVIATIONS, 'summary': summary, 'runtime_sec': round(time.time() - t0, 1)}
@@ -1060,6 +1074,86 @@ def exploratory(xcells, cells, MX, S):
         f"X5 実現の損益分岐 r*: {json.dumps(EX['X5_summary'], ensure_ascii=False)}",
     ]
     return EX
+
+
+def norm_cdf(x):
+    return 0.5 * (1 + math.erf(x / math.sqrt(2)))
+
+
+def x6_x7(by, cross, S, SL, MX):
+    """prereg3 の探索（報告のみ）: X6 判別の限界・X7 歴史と基礎率の重みづけ平均"""
+    out = {'label': '探索（prereg3・報告のみ・格付けに使わない）', 'X6': {}, 'X7': {}}
+    CELLS = [f'{e}_L{L}' for e in ('early', 'late') for L in (60, 120)]
+    # ── X6: s_T（TECH3−MKT の月次の対数の差の年率 sd）
+    def sd_log(a, b, lo, hi):
+        ms = [m for m in sorted(set(a) & set(b)) if lo <= m <= hi]
+        d = np.array([math.log1p(a[m]) - math.log1p(b[m]) for m in ms])
+        return {'sd_ann_pct': round(float(d.std(ddof=1) * math.sqrt(12) * 100), 3), 'n_months': len(ms), 'from': ms[0], 'to': ms[-1]}
+    sT = {'full': sd_log(S['TECH3'], S['MKT'], 192607, END), 'train': sd_log(S['TECH3'], S['MKT'], 192607, 200612),
+          'hold': sd_log(S['TECH3'], S['MKT'], 200701, END)}
+    out['X6']['s_T'] = sT
+    zz = 1.645 + 0.842
+    s_full = sT['full']['sd_ann_pct']
+    cur_s = static_series(CUR_W, SL, S)
+    rows = {}
+    for mn, mx in MX.items():
+        if mn == 'SPX100':
+            continue
+        pt = cross['T'].get(mn)
+        r = {'pi_T_star_median': pt}
+        if isinstance(pt, (int, float)):
+            D = abs(pt - (-1.0))
+            r['delta_vs_base_rate'] = round(D, 3)
+            if D > 0:
+                r['n80_years_tech'] = round((zz * s_full / D) ** 2, 1)
+                r['n_t2_years_tech'] = round((2 * s_full / D) ** 2, 1)
+                r['p_20y_realized_on_wrong_side'] = round(norm_cdf(-D * math.sqrt(20) / s_full), 3)
+        ms_ = static_series(mx['w'], SL, S)
+        ks = sorted(set(ms_) & set(cur_s))
+        d = np.array([math.log1p(ms_[k]) - math.log1p(cur_s[k]) for k in ks])
+        smix = float(d.std(ddof=1) * math.sqrt(12) * 100)
+        r['s_mix_vs_cur_ann_pct'] = round(smix, 3); r['s_mix_from'] = ks[0]; r['s_mix_n'] = len(ks)
+        rm = [by[mn]['BR'][c]['ratio_med'] for c in CELLS if mn in by and 'BR' in by[mn] and c in by[mn]['BR']]
+        if len(rm) == 4:
+            lr = float(np.median([abs(math.log(x)) for x in rm]))
+            for div in (10, 20):
+                Dm = lr / div * 100
+                r[f'delta_mix_ann_pct_div{div}'] = round(Dm, 3)
+                r[f'n80_years_mix_div{div}'] = round((zz * smix / Dm) ** 2, 1) if Dm > 0 else None
+        rows[mn] = r
+    out['X6']['by_mix'] = rows
+    # ── X7: P_avg = w·P_H + (1−w)·P_BR
+    prim = [mn for mn, mx in MX.items() if mx['primary']]
+    for w in (0.25, 0.5, 0.75):
+        gt, ge, best = [], [], []
+        for mn in prim:
+            pa = [w * by[mn]['H'][c]['p_beat'] + (1 - w) * by[mn]['BR'][c]['p_beat'] for c in CELLS]
+            if min(pa) > 0.5:
+                gt.append(mn)
+            if min(pa) >= 0.6:
+                ge.append(mn)
+            best.append((round(min(pa), 3), mn, [round(x, 3) for x in pa]))
+        best.sort(reverse=True)
+        out['X7'][f'w_H_{w}'] = {'beat_gt_0.5_all_4_cells': gt, 'robust_ge_0.6_all_4_cells': ge, 'top5_by_min_p': best[:5]}
+    need = {}
+    for mn in prim:
+        v = None
+        for k in range(0, 21):
+            wbr = k / 20
+            pa = [(1 - wbr) * by[mn]['H'][c]['p_beat'] + wbr * by[mn]['BR'][c]['p_beat'] for c in CELLS]
+            if min(pa) > 0.5:
+                v = wbr
+                break
+        need[mn] = v
+    out['X7']['min_weight_on_base_rate_for_all_4_cells_gt_0.5'] = need
+    out['lines'] = [
+        f"X6 判別の限界: TECH3−MKT の年率のぶれ s_T {sT['full']['sd_ann_pct']}%（〜2006 {sT['train']['sd_ann_pct']}・2007〜 {sT['hold']['sd_ann_pct']}）。"
+        + '・'.join(f"{mn}: π_T* {rows[mn].get('pi_T_star_median')} → 80%で見分けるのに {rows[mn].get('n80_years_tech')} 年・20年で逆に出る確率 {rows[mn].get('p_20y_realized_on_wrong_side')}"
+                    for mn in ('SPX_w20', 'SPX_ONLY', 'EMM_w20', 'EMR_w20', 'GOLD_w20') if mn in rows),
+        f"X7 歴史と基礎率の半々（w=0.5）: 4升すべてで P>0.5 {out['X7']['w_H_0.5']['beat_gt_0.5_all_4_cells']}・上位 {out['X7']['w_H_0.5']['top5_by_min_p'][:3]}",
+        f"X7 基礎率の重みがいくつ以上なら4升すべてで P>0.5: " + json.dumps({k: v for k, v in need.items() if k in ('SPX_w20', 'SPX_ONLY', 'DEV_w20', 'PXF_w20', 'EMM_w20', 'EMR_w20', 'GOLD_w20', 'JHD_w20', 'ALL_EDGE_w20')}, ensure_ascii=False),
+    ]
+    return out
 
 
 def build_summary(by, cur, verdict, cross, BRt, AW, G, INP, SL, F):
