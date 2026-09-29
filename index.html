@@ -5630,6 +5630,12 @@ async function ccfEvents(btn){
   // ⚙ 運用サイクル（v9.9.80「すべて回るように」・v9.9.81でカード型へ再設計）: 周期作業14本の回転状態。
   //   止まった作業を黙らせない。周期でグループ化し、1本=1カード2行（狭い画面でも折り返しで読める）
   if(ops&&Array.isArray(ops.items)){
+    // 2026-09-29: カードの文字は**必ずエスケープしてから** innerHTML へ入れる。
+    //   how はもう ops_status.py の固定の文だけではない——前向きの検定の見張りが、道具のログ（例外の文そのもの）を
+    //   how の先頭につなぐ。山括弧で始まる urlopen の例外の文は開始タグとして読まれて理由が画面から消え、
+    //   HTTP エラーの理由句に onerror 付きの img が入れば実行される（このページは repo の書き込み鍵を localStorage に持つ）。
+    //   📋今日の行（ccfCheck）は既に esc 済み。既存の how・what に HTML は無いので表示は変わらない。
+    const esc=t=>String(t==null?'':t).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
     const due=ops.items.filter(x=>x.state==='due'), unk=ops.items.filter(x=>x.state==='unknown');
     const nokey=ops.items.filter(x=>x.state==='nokey');
     const chip=(txt,fg,bg)=>`<span style="font-size:10px;padding:1px 8px;border-radius:9px;background:${bg};color:${fg};white-space:nowrap">${txt}</span>`;
@@ -5648,11 +5654,11 @@ async function ccfEvents(btn){
     const helpBtn=x=>(x.auto===true)?'':`<button onclick="const e=document.getElementById('evhelp-${x.id}');if(e){e.open=true;e.scrollIntoView({behavior:'smooth',block:'start'});}" style="padding:2px 9px;background:linear-gradient(180deg,rgba(93,140,194,.22),rgba(93,140,194,.08));border:1px solid rgba(93,140,194,.45);border-radius:6px;color:#8fb4dd;font-size:10.5px;cursor:pointer;white-space:nowrap">説明↓</button>`;
     const card=x=>`<div style="border:1px solid var(--line);border-left:3px solid ${x.state==='due'?'#cf5f48':(x.state==='unknown'||x.state==='nokey')?'#d69a3c':'rgba(84,184,138,.55)'};border-radius:8px;padding:8px 12px;margin:6px 0;background:rgba(255,255,255,.015)">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <b style="font-size:13px;color:var(--ink)">${x.name}</b>${autoChip(x)}${stChip(x)}${helpBtn(x)}
+          <b style="font-size:13px;color:var(--ink)">${esc(x.name)}</b>${autoChip(x)}${stChip(x)}${helpBtn(x)}
           <span style="margin-left:auto;font-size:11.5px;color:${x.state==='due'?'#ff9d8a':'var(--dim)'};white-space:nowrap">最終 ${x.last||'不明'}${x.days!=null?`（${x.days}日前）`:''}</span>
         </div>
         ${whatLine(x)}
-        <div style="font-size:10.5px;color:var(--dim);margin-top:4px">回し方: ${x.how}</div>
+        <div style="font-size:10.5px;color:var(--dim);margin-top:4px">回し方: ${esc(x.how)}</div>
       </div>`;
     // v9.9.150(2026-08-17 ユーザー指示「説明がないせいでなにがなにをしているのか分からない」):
     //   旧カードは **回し方(コマンド)しか出していなかった**ので、名前だけでは何の作業か判らなかった。
@@ -5660,10 +5666,10 @@ async function ccfEvents(btn){
     //   ⚠ 文は night/ops_status.py の WHAT が正本——**門に写さない**（写した時点で必ず割れる・v9.9.65）。
     //   ⚠ 説明が無い項は黙って空けず「説明がまだ書かれていない」と出す（ルール7）。
     const whatLine=x=>x.what
-      ? `<div style="font-size:11.5px;color:var(--ink-soft);margin-top:5px;line-height:1.65">${x.what}</div>`
+      ? `<div style="font-size:11.5px;color:var(--ink-soft);margin-top:5px;line-height:1.65">${esc(x.what)}</div>`
       : `<div style="font-size:11.5px;color:#d6b06c;margin-top:5px">説明がまだ書かれていない（night/ops_status.py の WHAT へ）</div>`;
     let inner=(due.length||unk.length)
-      ?`<div style="font-size:12.5px;color:#ff9d8a;margin-bottom:4px"><b>${due.length?`⚠ 停止疑い ${due.length}本: ${due.map(x=>x.name).join('・')}`:''}${unk.length?`${due.length?'／':''}？日付不明 ${unk.length}本`:''}</b>——回っていない作業は「無い」のと同じ。カードの回し方で復旧させること</div>`
+      ?`<div style="font-size:12.5px;color:#ff9d8a;margin-bottom:4px"><b>${due.length?`⚠ 停止疑い ${due.length}本: ${due.map(x=>esc(x.name)).join('・')}`:''}${unk.length?`${due.length?'／':''}？日付不明 ${unk.length}本`:''}</b>——回っていない作業は「無い」のと同じ。カードの回し方で復旧させること</div>`
       :`<div style="font-size:12.5px;color:var(--jade);margin-bottom:4px">✓ ${ops.items.length-nokey.length}本が期限内で回っている（実測 ${ops.asof}）</div>`;
     // 鍵待ちは**別行で必ず出す**。停止疑いの赤に混ぜないが、緑の「全部回っている」にも混ぜない
     //   ——鍵が無いのは止まったのではないが、健全でもない（穴は明示する・ルール7の作法）

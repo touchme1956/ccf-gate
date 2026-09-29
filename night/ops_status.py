@@ -17,7 +17,7 @@ ops_status.py — 運用サイクルの回転状態を機械で出す（2026-08-
 使い方: python3 night/ops_status.py  → out/ops_status.json ＋ 標準出力に一覧
 """
 import glob
-import json, os, subprocess, sys
+import json, os, re, subprocess, sys
 from datetime import date
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -51,6 +51,194 @@ def er_last_obs():
         return max((o.get("date", "") for o in d.get("observations", [])), default=None)
     except Exception:
         return None
+
+
+def mw_formation_years():
+    """前向きの検定（mw）の SEC 版（H7）の組入れがある年の集合。2026年は事前登録に凍結
+    （out/mw_forward_prereg.json の frozen.sec_formation_2026）、以後は form_sec が書く out/mw_forward_sec_formation_Y.json。
+    読めない・weights_fcap が空のファイルは数えない（道具もそれを組入れとして使えない）"""
+    ys = set()
+    try:
+        pr = json.load(open(os.path.join(BASE, "out", "mw_forward_prereg.json"), encoding="utf-8"))
+        if ((pr.get("frozen") or {}).get("sec_formation_2026") or {}).get("weights_fcap"):
+            ys.add(2026)
+    except Exception:
+        pass
+    for f in glob.glob(os.path.join(BASE, "out", "mw_forward_sec_formation_*.json")):
+        m = re.search(r"_(\d{4})\.json$", f)
+        if not m:
+            continue
+        try:
+            if json.load(open(f, encoding="utf-8")).get("weights_fcap"):
+                ys.add(int(m.group(1)))
+        except Exception:
+            pass
+    return ys
+
+
+def mw_formation_anchor():
+    """SEC 版の最新の組入れの年 Y → "Y-07-01"（Y年7月〜翌6月に持つ組入れ）。無ければ None（不明を健全と読まない）"""
+    ys = mw_formation_years()
+    return f"{max(ys)}-07-01" if ys else None
+
+
+# ── 前向きの検定の見張り（2026-09-29新設・同日 検査役の指摘で (a')(d)・外し方・外来の文の無害化を足した）────
+#   盤は日付しか見ないので、『毎月走るのに月を取れない』（Yahoo・French・投信の CSV に弾かれ続ける）は
+#   緑のまま進む。道具は値の出ない月を3か月待つと『欠測』として固定し、**固定した月は後から戻せない**
+#   （20年の検定に永久の穴が空く）。錨の日付が期限内でも、次のどれかで ⚠ にする:
+#     (a)  値の出ない月が、最後の実行の時点で2か月以上待ちになっている（道具は3を超えると固定する）
+#     (a') 最後の実行が月を『欠測』として固定した——固定した次の実行から (a) は黙るので、取り返しのつかない出来事
+#          そのものが盤にも Issue にも一度も出ないまま消えていた。固定した月（locked_on）の実行のあいだ出す
+#     (b)  最後の実行の記録（nx の log）に『失敗』がある（mw の出力は log を持たない＝(a) だけで見る）
+#     (c)  道具が凍結の記録と違う（night/check_forward_frozen.py の check をそのまま呼ぶ＝二重実装しない）。
+#          ops.yml はそのとき更新を回さない＝月が進まないので、日付の期限（40日）より先にここで知らせる
+#     (d)  最後の実行が失敗・時間切れ・途中で止まった（out/forward_run.json＝ops.yml の forward ジョブが段ごとに
+#          書く印）。落ちた実行は出力を書かないので、印が無いと 40日の期限（最大で約40日後）まで誰も気づけない
+#   ⚠ 月は**今日ではなく最後の実行の日（generated）で数える**——道具と同じ数え方。今日で数えると、毎月2日の
+#     実行の前日に、正常な1か月待ち（French は約1か月遅れで出る）を2か月待ちと数えて鳴らしてしまう。
+#     実行そのものが止まったことは、錨の日付の期限（40日）と (d) が見る。
+#   ⚠ 外し方（鳴りっぱなしは鳴らないのと同じ）: FORWARD_WATCH_ACK に理由を書く。理由の無い行は効かない。
+#     (出力のパス, 仮説) は (a)(a') をその仮説だけ、(出力のパス, "log:<種類>") は (b) の『失敗』をその種類だけ外す
+#     （種類＝ログの行の先頭の語: 'brand:'・'jp:'・'indmom:'・'F2_brand10_vs_SPY 202610:' なら F2_brand10_vs_SPY）。
+#     lock_brand は次の年の一覧を観測するまで毎月 API を呼ぶので、API が恒久的に変われば毎月『brand: 取得失敗』が残る。
+#   ⚠ 所見に入れる外来の文（例外の文・ログ・待ちの理由）は _plain() を通す——山括弧を似た字へ替え、長さを切る。
+#     how は ⚙カード（innerHTML）・📋今日・Issue（Markdown）へそのまま届く。例外の文の山括弧（urlopen error 等）が
+#     タグとして読まれて理由が消えたり、HTTP の理由句に仕込まれた HTML が実行されたりしないように（門の側でも esc する＝二重に守る）
+#   ⚠ 所見を作る部分は丸ごと try で包む——出力の形が想定と違って例外を投げると ops_status.py ごと落ち、
+#     ops.yml と events.yml のコミット段（ops_status の後ろ）まで止まる。例外は「見張りを回せない（型名）」という所見にする
+FORWARD_WATCH = {"mwforward": ("out/mw_forward.json", "mw"), "nxforward": ("out/nx_forward.json", "nx")}
+FORWARD_RUN = "out/forward_run.json"
+FORWARD_WAIT_WARN = 2
+FORWARD_TEXT_MAX = 120
+FORWARD_WATCH_ACK = {
+    # (出力のパス, 仮説): "理由（いつ・何が終わったか・事前登録のどの規則で止まるか）",
+    # 例 ("out/nx_forward.json", "F4_RSST_vs_SPY"): "20XX-XX に RSST が償還（stopping_rules どおり F4 はここで止まる）",
+    # (出力のパス, "log:<種類>"): "理由（いつ・何が変わったか・その規則はどう扱われるか）",
+    # 例 ("out/nx_forward.json", "log:brand"): "20XX-XX に Interbrand の API が廃止（F2 は最後の形成のまま流れる）",
+}
+FORWARD_RUN_JA = {"started": "途中で止まった（時間切れ・中断の疑い）", "failed": "失敗した",
+                  "timeout": "時間切れで止めた", "frozen": "凍結の検査に落ちて回さなかった",
+                  "broken_output": "出力が JSON として読めず、戻してコミットしなかった"}
+# 手で回し直すときの案内（2026-09-29 検査役の指摘: 「26日以降か次の2日」だけでは、定期実行が落ちたときの回復で逆向きになる）。
+#   nx の F2 は、次の年のブランドの一覧を**初めて観測した日**の月末で組む（26日以降なら翌月末）＝月1回の実行なら
+#   『公開の翌月末』。一覧が出た月の 26日〜翌月25日に観測すれば形成は正しい月になる。
+FORWARD_RERUN_HINT = {
+    "mwforward": "手で回し直すなら Actions → monthly ops → Run workflow（forward=auto）。mw は回す日で答えが変わらない"
+                 "（取り込むのは終わった月だけ）ので、いつ回してもよい。",
+    "nxforward": "手で回し直すなら Actions → monthly ops → Run workflow（forward=auto）: 今月の定期実行（2日・予備の3日）が"
+                 "落ちた／時間切れで、新しいブランドの一覧が**前の月までに**出ていたなら**その月の25日までに**回す"
+                 "（26日以降に回すと F2 の形成が『公開の翌月末』より1か月遅れる。F3 の選択も早いほうがよい）。"
+                 "**今月の2日より後に**新しい一覧が出たなら26日以降に回すか次の2日を待つ（25日までに回すと形成が1か月早まる）。"
+                 "一覧が出たかは nx の log（brand: の行）か Interbrand の発表で分かる。",
+}
+
+
+def _plain(s, n=FORWARD_TEXT_MAX):
+    """外から来た文を所見に入れる形へ: 空白を詰め、山括弧を似た字へ替え（HTML・Markdown でタグとして読まれない）、長さを切る"""
+    s = " ".join(str(s).split()).replace("<", "‹").replace(">", "›")
+    return s if len(s) <= n else s[:n - 1] + "…"
+
+
+def _acked(path, key):
+    return bool(str(FORWARD_WATCH_ACK.get((path, key)) or "").strip())
+
+
+def _log_kind(line):
+    """ログの行の種類＝先頭の語（'brand: 取得失敗 …' → 'brand'／'F2_brand10_vs_SPY 202610: 取得の失敗 …' → 'F2_brand10_vs_SPY'）"""
+    m = re.match(r"\s*([^\s:：]+)", line)
+    return m.group(1) if m else ""
+
+
+def _ym_label(m):
+    try:
+        m = int(m)
+    except (TypeError, ValueError):
+        return None, None
+    return m, f"{m // 100}-{m % 100:02d}"
+
+
+def forward_watch(path, group):
+    """前向きの検定の出力を読み、見張りの所見の文のリストを返す（空なら何も無い）。
+    出力が読めなければ (c) だけを見る——そのときは錨の日付が取れず、盤は unknown（健全と読まない）になる"""
+    found = []
+    try:
+        here = os.path.dirname(os.path.abspath(__file__))
+        if here not in sys.path:                   # どこから import されても同じ night/ の本体を読む
+            sys.path.insert(0, here)
+        import check_forward_frozen as CF          # 凍結の検査の本体をそのまま使う（二重実装しない）
+        bad, _ = CF.check([group])
+        if bad:
+            found.append(f"道具が凍結の記録と違う {len(bad)}件（例: {_plain(bad[0].get('path'), 60)}・{_plain(bad[0].get('why'), 60)}）"
+                         "＝ops.yml は更新を回していない → python3 night/check_forward_frozen.py で名指しと戻し方を見る")
+    except Exception as e:
+        found.append(f"凍結の検査を回せない（{type(e).__name__}）＝道具が記録どおりか分からない")
+    try:
+        d = json.load(open(os.path.join(BASE, path), encoding="utf-8"))
+        g = str(d.get("generated") or "")
+        gym = int(g[:4]) * 12 + int(g[5:7])
+    except Exception:
+        return found
+    try:
+        found += _forward_findings(path, group, d, g, gym)
+    except Exception as e:
+        found.append(f"見張りを回せない（{type(e).__name__}）＝{path} の形が想定と違う"
+                     "（道具の出力の形が変わった／壊れた？）→ 中身を確かめる")
+    return found
+
+
+def _forward_findings(path, group, d, g, gym):
+    """(a)(a')(b)(d) の所見。形が想定と違えば例外を投げる（呼び手が『見張りを回せない』にする）"""
+    found = []
+    hyps = d.get("hypotheses") or {}
+    if not isinstance(hyps, dict):
+        raise TypeError(f"hypotheses が {type(hyps).__name__}")
+    for h, v in sorted(hyps.items()):
+        if _acked(path, h):
+            continue
+        fw = (v or {}).get("forward") or {}
+        for w in fw.get("waiting_for") or []:
+            m, lab = _ym_label(w.get("m") if isinstance(w, dict) else w)
+            if m is None:
+                continue
+            age = gym - (m // 100 * 12 + m % 100)
+            if age >= FORWARD_WAIT_WARN:
+                why = (w.get("why") if isinstance(w, dict) else None) or ""
+                # mw の出力は待ちの理由を残さない。SEC 版（H7）だけは理由が機械で分かる＝その年の組入れが無い
+                if not why and h.startswith("H7_"):
+                    y = m // 100 if m % 100 >= 7 else m // 100 - 1
+                    if y not in mw_formation_years():
+                        why = f"{y}年7月の組入れが無い＝form_sec {y} を回してコミットする（手順は『前向きの検定 SEC版の組み直し』）"
+                found.append(f"{h} の {lab} が{age}か月待ち" + (f"（{_plain(why)}）" if why else ""))
+        # (a') 最後の実行が欠測として固定した月（固定した月の実行のあいだ出す＝一度は必ず見える）
+        for r in fw.get("months") or []:
+            if not (isinstance(r, dict) and r.get("missing")):
+                continue
+            if str(r.get("locked_on") or "")[:7] != g[:7]:
+                continue
+            m, lab = _ym_label(r.get("m"))
+            if m is None:
+                continue
+            note = r.get("note") or ""
+            found.append(f"{h} の {lab} を欠測として固定した（{str(r.get('locked_on'))[:10]}・戻せない）"
+                         + (f"（{_plain(note)}）" if note else ""))
+    fails = [x for x in (d.get("log") or []) if isinstance(x, str) and "失敗" in x
+             and not _acked(path, "log:" + _log_kind(x))]
+    if fails:
+        found.append(f"最後の実行の記録に『失敗』が{len(fails)}行（例: {_plain(fails[0], 100)}）")
+    # (d) 最後の実行の印。読めなければ何も言わない（錨の日付と (a)(b) が見る）
+    try:
+        runs = json.load(open(os.path.join(BASE, FORWARD_RUN), encoding="utf-8")).get("runs") or {}
+    except Exception:
+        runs = {}
+    r = runs.get(group) if isinstance(runs, dict) else None
+    if isinstance(r, dict):
+        oc, rd = str(r.get("outcome") or ""), str(r.get("date") or "")[:10]
+        if oc and oc != "ok" and rd >= g[:10]:
+            found.append(f"最後の実行（{_plain(rd, 12)}・{_plain(r.get('trigger') or '?', 24)}）が"
+                         f"{FORWARD_RUN_JA.get(oc) or _plain(oc, 30)}"
+                         + (f"（終了コード {_plain(r.get('rc'), 12)}）" if str(r.get("rc") or "0") != "0" else "")
+                         + "＝その回は月を取り込んでいない")
+    return found
 
 
 def kessan_last(suffix):
@@ -119,6 +307,9 @@ WHAT = {
     "gate0": "全上場企業から審査候補を絞る年1回の一次ふるい。1.4GBの財務データが要るのでCIでは回せない",
     "gate0jp": "同じ一次ふるいを日本株で行う。母集団そのものの更新にはEDINETの鍵が要る（鍵なしでできるのは順位の付け直しまで）",
     "state": "株数・売却記録・目標ウェイトなど、ブラウザにしかない『人が決めたこと』をrepoへ書き出す。門はブラウザからrepoへ書けないので人の手が要り、**忘れると消えたとき戻らない**",
+    "mwforward": "登録した後の月（2026-10〜）でしか答え合わせできない8本の仮説（ETF側の配合・城×2・米国外の割安＋勢い・新興国の多因子・米国の質・SEC版の質・新興国の紙）を、終わった月ごとに e過程（いつ見ても有効な検定）で更新する。判定には使わない。止まると、値を取れない月が3か月で『欠測』として固定され、20年の検定に戻せない穴が空く（待ちが2か月に達した月・欠測を固定した月・最後の実行の失敗があれば⚠にする）",
+    "nxforward": "楽天で持てる規則（業種ETFの勢い・ブランド上位10社・国内株式の能動の投信の上位1/4）とその副・参考の8本を、終わった月ごとに e過程で更新する。10月は投信の選び直しで約30分かかる。判定には使わない。止まると、値を取れない月が3か月で『欠測』として固定される（待ちが2か月に達した月・欠測を固定した月・最後の実行の記録の『失敗』・実行そのものの失敗や時間切れがあれば⚠にする）",
+    "mwformsec": "前向きの検定の SEC 版（H7）の組入れを毎年7月に作り直す。1.4GB の一括ファイルが要るので CI では回せない人の作業。遅れると、その年の11月2日の ops の実行で7月が『欠測』として固定され、以後1か月ずつ失われる（固定した欠測は戻せない）",
     "backtest": "『当時読めた数字だけ』で過去に遡って採点し、その後の実際のリターンと突き合わせる。成長の減衰など、予実台帳の答えを先取りするための材料",
 }
 
@@ -447,6 +638,29 @@ def build():
         ("state",   "人の決定の書き出し(state.json)", "月次", 40,
          (json_field("state.json", "savedAt") or "")[:10] or None,
          "門の🏦保有「📤 state.json」→ repo直下へ置いてコミット（検査 python3 night/validate_state.py）", False),
+        # 2026-09-29: **前向きの検定**（事前登録どおり毎月・判定に不使用。mw は eknzbh の 19e8ce23、nx は b8579d18 で登録）。
+        #   錨は出力の generated（道具が毎回その日に書く）。⚠ generated は月を1つも取れない実行でも動くので、
+        #   『走るが月を取れない』は上の FORWARD_WATCH の見張りが別に見る。
+        #   ⚠ 書き手は ops.yml だけ——手元で回した出力をコミットすると、固定した月が割れる。
+        ("mwforward", "前向きの検定（mw・8本）", "月1", 40,
+         json_field("out/mw_forward.json", "generated"),
+         "ops.yml の forward ジョブ（毎月2日 23:17 UTC・落ちたら3日に予備・凍結の検査 check_forward_frozen が通ったときだけ・"
+         "結果は他の成果と別のコミットで先に push）／手動 python3 night/mw_forward.py update"
+         "（手元の出力はコミットしない＝書き手は CI だけ）", True),
+        ("nxforward", "前向きの検定（nx・8本）", "月1", 40,
+         json_field("out/nx_forward.json", "generated"),
+         "ops.yml の forward ジョブ（毎月2日 23:17 UTC・落ちたら3日に予備・凍結の検査が通ったときだけ・10月は投信の選び直しで"
+         "約30分）／手動 python3 night/nx_forward.py --update（手元の出力はコミットしない）", True),
+        # 年1の手作業: SEC 版（H7）の組入れ。**期限はその年の11月2日の ops より前**——その回で7月が
+        #   『経過4か月＞3』として欠測に固定され、以後1か月ずつ失われる（戻せない）。錨は最新の組入れの年の
+        #   7月1日なので、期限410日で翌年の8月16日から ⚠（欠測の固定まで約2.5か月の余裕）。
+        ("mwformsec", "前向きの検定 SEC版の組み直し", "年1(7-10月)", 410,
+         mw_formation_anchor(),
+         "手動（CI外・その年の11月2日の ops より前に）: 7月以降に out/_mw_cache/ へ sec_companyfacts.zip"
+         "（SEC の一括 companyfacts.zip・repo 直下の門0用とは別のパス）と sec_company_tickers.json"
+         "（https://www.sec.gov/files/company_tickers.json・道具は自分で取らない）を置き直す → "
+         "python3 night/mw_forward.py form_sec 〈年〉 → out/mw_forward_sec_formation_〈年〉.json をコミット"
+         "（一度だけ。回し直すと、取り込んだ後の月の持ち物が後のデータで変わる）", False),
         ("backtest","疑似バックテスト",        "年1",     430,
          max((json_field(os.path.relpath(f, BASE), "generated")
               or git_date(os.path.relpath(f, BASE)) or "" for f in
@@ -470,14 +684,28 @@ def build():
         #   ⚠**健全と読ませない**ためにラベルは残す＝「穴を明示する」の作法。
         if state == "due" and auto == "key":
             state = "nokey"
-        rows.append({"id": id_, "name": name, "cadence": cad, "due_days": due,
-                     "last": last, "days": days, "state": state, "how": how, "auto": auto,
-                     # 2026-08-17(ユーザー指示「説明がないせいでなにがなにをしているのか分からない」):
-                     #   カードは `how`（回し方＝コマンド）しか出しておらず、**何をしているか**が無かった。
-                     #   WHAT に「何をする／止まると何が起きる」を持たせ、門は出すだけにする。
-                     #   ⚠ 説明が無い項は **null** にして門が「説明がまだ書かれていない」と出す
-                     #     ——空文字で埋めると「説明が無い」と「説明が空」が区別できなくなる（ルール7）。
-                     "what": WHAT.get(id_)})
+        # 2026-09-29: 前向きの検定は日付が期限内でも、固定される前の欠測の芽（上の FORWARD_WATCH）で ⚠ にする。
+        #   理由は `how` の先頭に書く——⚙自動化タブのカード・📋今日・Issue（notify_issues）がどれも `how` を出すので、
+        #   門や他の道具を変えずに「なぜ⚠か」と「何をすればよいか」が届く。
+        watch = forward_watch(*FORWARD_WATCH[id_]) if id_ in FORWARD_WATCH else None
+        if watch:
+            if state == "ok":
+                state = "due"
+            how = ("⚠ 見張り: " + "／".join(watch[:3]) + (f" ほか{len(watch) - 3}件" if len(watch) > 3 else "")
+                   + " → 取れない理由を確かめる（配信元の遅れなら次の2日の定期実行が取り直す）。"
+                   + FORWARD_RERUN_HINT.get(id_, "")
+                   + "3か月を超えた月は欠測として固定され戻せない｜" + how)
+        row = {"id": id_, "name": name, "cadence": cad, "due_days": due,
+               "last": last, "days": days, "state": state, "how": how, "auto": auto,
+               # 2026-08-17(ユーザー指示「説明がないせいでなにがなにをしているのか分からない」):
+               #   カードは `how`（回し方＝コマンド）しか出しておらず、**何をしているか**が無かった。
+               #   WHAT に「何をする／止まると何が起きる」を持たせ、門は出すだけにする。
+               #   ⚠ 説明が無い項は **null** にして門が「説明がまだ書かれていない」と出す
+               #     ——空文字で埋めると「説明が無い」と「説明が空」が区別できなくなる（ルール7）。
+               "what": WHAT.get(id_)}
+        if watch is not None:
+            row["watch"] = watch
+        rows.append(row)
     # 人のやるべきこと（宿題・決断待ち・機械で測れない定期ルーチン）は todo_list.json が正本。
     # 盤と同じJSONに同梱して門が1回のfetchで両方読めるようにする（v9.9.83）
     todos = None
@@ -513,6 +741,8 @@ def main():
         mark = {"ok": "🟢", "due": "⚠", "unknown": "？", "nokey": "🔑"}[r["state"]]
         ago = "" if r["days"] is None else f"（{r['days']}日前・期限{r['due_days']}日）"
         print(f"  {mark} {r['name']:<14}（{r['cadence']}）最終 {r['last'] or '不明'}{ago}")
+        for w in r.get("watch") or []:
+            print(f"      ⚠ 見張り: {w}")
     return 0
 
 

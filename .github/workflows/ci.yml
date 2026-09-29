@@ -114,7 +114,17 @@ jobs:
 
       # ── 2. 説明文とコードの整合（この repo の再発する失敗の型）────────────────
       - name: 説明とコードの齟齬 audit_docs
-        run: python3 night/audit_docs.py
+        run: python3 night/audit_docs.py --no-templates
+
+      # ── 2-b. 夜間審査の指示書の刻み（2026-09-29新設・検査役の指摘）──────────────────
+      #   night/agent_prompt_template*.txt（審査官が読む写し）の p1〜p4・f1〜f5 の刻み・堀の線・撤去済みの仕組みを
+      #   正本（index.html の Ⅱ手順3・ccfAskText・CCF_MOAT_GATE・applyFields）と突き合わせる。
+      #   これまで指示書の中身を読む検査は1本も無く、p4 の刻みは2か月ずれたまま154社のパックに届いていた。
+      #   ⚠ 下流の検査の正しさは損なわないので止めない（continue-on-error）——最後の「再表明」で赤くする。
+      - name: 夜間審査の指示書の刻み audit_docs --templates-only
+        id: tplsync
+        continue-on-error: true
+        run: python3 night/audit_docs.py --templates-only --list
 
       # ── 1-c. 日付が凍っているツール（2026-08-17新設・**同じ事故を二度踏んだので機構で塞ぐ**）──
       #   1回目 backfill_machine_evidence.py: TODAY="2026-07-29" が2週間残り「いつ検算したか」が消えた。
@@ -154,6 +164,19 @@ jobs:
         id: wfadd
         continue-on-error: true
         run: python3 night/check_workflow_add.py
+
+      # ── 1-c3. 前向きの検定の道具が事前登録のときのままか（2026-09-29新設）──────────
+      #   前向きの検定（mw_forward・nx_forward）は、測る前に固定した規則を最長20年回して初めて意味を持つ。
+      #   規則の実体は道具の中にあるので、**道具や依存が1文字変われば規則が黙って変わる**（nx の事前登録の指紋は
+      #   nx_forward.py の1本だけ・mw には1つも無かった）。blob を out/forward_frozen.json と突き合わせ、
+      #   違えば名指しする（研究の道具が多数 import する共有の部品 mw_common・nx_common だけは、前向きの道具が
+      #   使う部分の ast の指紋で見る＝使わない関数の直しで鳴らない）。ops.yml は同じ検査が通ったときだけ更新を回す
+      #   （ここは変えたコミットをその日に赤くする役）。
+      #   ⚠ frozen・wfadd と同じ扱い——採点・配分の数字には効かないので下流は止めず、最後に必ず赤くする。
+      - name: 前向きの検定の道具の凍結 check_forward_frozen
+        id: fwdfrozen
+        continue-on-error: true
+        run: python3 night/check_forward_frozen.py
 
       # ── 1-c2. パックの ni/fcf の単位（2026-08-20新設）───────────────────────
       #   `ccfMcapUSD`(v9.9.146) は `px × ni ÷ eps` で**絶対値**を使う。ni が百万$のまま残っていると
@@ -640,5 +663,13 @@ jobs:
             echo "::error::git add の巻き添え／main への素の push がある（上の check_workflow_add を見よ）"
             bad=1
           fi
-          [ "$bad" = "0" ] && echo "✓ 凍った日付なし・巻き添えなし"
+          if [ "${{ steps.fwdfrozen.outcome }}" = "failure" ]; then
+            echo "::error::前向きの検定の道具が事前登録のときと違う（上の check_forward_frozen を見よ）——ops.yml はこのままでは前向きの更新を回さない"
+            bad=1
+          fi
+          if [ "${{ steps.tplsync.outcome }}" = "failure" ]; then
+            echo "::error::夜間審査の指示書が正本の刻みとずれている（上の audit_docs --templates-only を見よ）"
+            bad=1
+          fi
+          [ "$bad" = "0" ] && echo "✓ 凍った日付なし・巻き添えなし・前向きの検定の道具は凍結のまま・指示書は正本どおり"
           exit $bad

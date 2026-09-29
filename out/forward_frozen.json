@@ -1,0 +1,315 @@
+{
+ "role": "前向きの検定（mw_forward・nx_forward）の道具・依存・事前登録の git blob の記録。night/check_forward_frozen.py が毎回ここと突き合わせる（ops.yml は一致したときだけ前向きの更新を回す・ci.yml は毎回確かめる）。読むだけ・門の判定・採点・配分には不使用",
+ "recorded_on": "2026-09-29",
+ "recorded_at": {
+  "branch": "claude/market-winning-backtest-k8jk08",
+  "commit": "c20e715f0b50ee8a18500b729bd86fd7d74ab5b6",
+  "what": "eknzbh の枝（mw の研究・mw_forward）を c20e715f で取り込んだ後"
+ },
+ "why": "規則の実体は道具の中にある。道具が1文字変われば事前登録の規則が黙って変わる。nx の事前登録の指紋は nx_forward.py の1本だけ（F3 の母集団を決める nx_jpfunds_data・ブランドの親会社の表 nx_brand_data・nx_common は見ていない）、mw の事前登録には道具の指紋が1つも無い。書き手が CI になると、merge や手直しで変わっても誰も気づかない",
+ "blob_definition": "git hash-object <パス>（この repo には .gitattributes が無いので sha1(\"blob <長さ>\\0\"+中身) と同じ。2026-09-29 に git hash-object・--no-filters・Python の3通りで一致を確かめた）。ただし共有の部品 mw_common.py・nx_common.py は blob ではなく fingerprint（ast の閉包の指紋）で見る（下の各 files の fingerprint）",
+ "how_verified": "記録した blob は、2026-09-29 に git rev-parse <登録のコミット>:<パス> と突き合わせてから書いた（下の verified）。違いがあったもの（mw_forward.py・mw_common.py）は、ast で関数ごとに比べて何が変わったかを note に書いた。登録のコミットはどれもこの枝の HEAD の祖先（git merge-base --is-ancestor）。2026-09-29（同日・検査役の指摘の是正）: 共有の部品2本の閉包の指紋を、登録の版と今の版の両方で計算して一致を確かめた（mw_common: e87f7b4・b10682d・baecc53 が同じ a11ab9c4… ／ nx_common: b8579d18 の版と今が同じ 96c54294…）",
+ "groups": {
+  "mw": {
+   "registration": {
+    "commit": "19e8ce233a09451dabf2fb3a75b9774b424f3f36",
+    "date": "2026-09-28T16:07:15+00:00",
+    "what": "事前登録（測る前）"
+   },
+   "result_commit": {
+    "commit": "2e17443ae73d26fff563694474861b5b199dadee",
+    "date": "2026-09-28T16:10:37+00:00",
+    "what": "結果（前向きの月0・e=1で初期化）。登録の後の直しは道具の DEVIATIONS に記録"
+   },
+   "prereg": "out/mw_forward_prereg.json",
+   "files": {
+    "night/mw_forward.py": {
+     "blob": "545fbd144747dc25df1ee4c0d0cabd730ac3a276",
+     "role": "前向きの更新（update）と年1の組み直し（form_sec）の本体",
+     "verified": [
+      {
+       "commit": "19e8ce233a09451dabf2fb3a75b9774b424f3f36",
+       "blob": "cdc0978f8d62e19dd8c19801a7a0d7526f39641b",
+       "equal": false
+      },
+      {
+       "commit": "2e17443ae73d26fff563694474861b5b199dadee",
+       "blob": "545fbd144747dc25df1ee4c0d0cabd730ac3a276",
+       "equal": true
+      }
+     ],
+     "note": "2e17443a の版（DEVIATIONS 記録つきの直し）。登録 19e8ce23 → 2e17443a で変わったのは（ast で関数ごとに比べた）: today_ym・yh_daily（utcnow()/utcfromtimestamp() を timezone.utc 付きへ＝同じ UTC の日付で値は不変）、power（edge_needed を追加）、castle_rule_power（D0b・D3 を追加）、main（headline・deviations を持ち越す）、CI_LINE の文、DEVIATIONS と headline の新設。前向きの月を作る forward_x・update・run_e・cs_bounds・e_bh・yh_monthly・usd_monthly・mix_series・castle_month・roster_at・sec_formation・sec_series は1文字も変わっていない（関数の本文を文字で比べて同一。HYP・FIRST_FWD・WAIT_MONTHS・E_REJECT などの定数も同一）。検出力の表の追加は道具の DEVIATIONS[3] に記録済み（today_ym・yh_daily の書き換えは値が変わらないので書かれていない）"
+    },
+    "night/mw_common.py": {
+     "blob_at_record": "baecc53da3d414d740bdf44e9013b2faafe60869",
+     "fingerprint": {
+      "method": "ast_closure_v1",
+      "users": {
+       "night/mw_forward.py": "M",
+       "night/mw_sec_replication.py": "M"
+      },
+      "roots": [
+       "BASE",
+       "CACHE",
+       "HOLD_START",
+       "RECENT_START",
+       "TRAIN_END",
+       "UA",
+       "apply_cost",
+       "cagr",
+       "corr",
+       "dca",
+       "excess_stats",
+       "ff_factors",
+       "french_series",
+       "french_tables",
+       "get",
+       "grade",
+       "holm",
+       "jkp_good_side",
+       "jkp_mkt",
+       "maxdd",
+       "nw_t",
+       "rolling",
+       "save",
+       "window"
+      ],
+      "closure": [
+       "BASE",
+       "CACHE",
+       "FR",
+       "HOLD_START",
+       "JKP",
+       "RECENT_START",
+       "TRAIN_END",
+       "UA",
+       "_num",
+       "_ym",
+       "apply_cost",
+       "cagr",
+       "corr",
+       "dca",
+       "excess_stats",
+       "ff_factors",
+       "french_series",
+       "french_tables",
+       "get",
+       "grade",
+       "holm",
+       "jkp_factor",
+       "jkp_good_side",
+       "jkp_mkt",
+       "jkp_portfolios",
+       "jkp_rows",
+       "maxdd",
+       "nw_t",
+       "p_two",
+       "rolling",
+       "save",
+       "window"
+      ],
+      "sha256": "a11ab9c49cb1fc2484b688f0cd70f94f392ce14a099b98206786020615574594",
+      "what": "blob ではなく、前向きの道具が使う部分（根＝利用者が触る名前から、最上位の定義を名前の参照でたどった閉包＋最上位で走る文）の ast を正規化した文字列の sha256。night/check_forward_frozen.py の closure_fingerprint。Python 3.10〜3.13 で同じ値になることを 2026-09-29 に確かめた"
+     },
+     "role": "共通部品（update が使うのは get・french_series・french_tables・save ほか。form_sec も get・save を使う）",
+     "verified": [
+      {
+       "commit": "19e8ce233a09451dabf2fb3a75b9774b424f3f36",
+       "blob": "e87f7b49f5ecc15d23650358e22e0974eef6d636",
+       "equal": false
+      },
+      {
+       "commit": "2e17443ae73d26fff563694474861b5b199dadee",
+       "blob": "e87f7b49f5ecc15d23650358e22e0974eef6d636",
+       "equal": false
+      },
+      {
+       "commit": "e5233ad5383db43e1ad3888783250442c90a49cd",
+       "blob": "b10682db097b86e5e8ea78d088766bf0f995afd4",
+       "equal": false
+      },
+      {
+       "commit": "3b4c5924a8fca9816d38fc7634ba50d1d4b55955",
+       "blob": "baecc53da3d414d740bdf44e9013b2faafe60869",
+       "equal": true
+      }
+     ],
+     "note": "★登録のとき（19e8ce23・2e17443a）の版 e87f7b4 と違う。登録の後に e5233ad5（月足の途中の今月を落とす）と 3b4c5924（月と日を取引所の現地時刻で切る・抜けた月をまたぐ変化を1か月にしない）が入った。差分は yahoo() の中だけ（git diff と ast で確認）。mw_forward.py は M.yahoo を一度も参照しない（使うのは BASE・CACHE・cagr・corr・ff_factors・french_series・french_tables・get・jkp_good_side・nw_t・save・window）。mw_common の中にも yahoo() を呼ぶ関数は無く、form_sec が使う mw_sec_replication は自前の yahoo_raw/yahoo_series で価格を取る＝update と form_sec の値は変わらない。道具（mw_forward.py）は凍結なので DEVIATIONS に書き足せない→ここに記録し、この版（3b4c5924 と同じ blob）を凍結の基準にした。★2026-09-29（検査役の指摘）から blob ではなく閉包の指紋で見る——mw_common は約80本の研究の道具が import し、別の枝（eknzbh）は今も直しているので、blob まるごとだと前向きの検定が使わない関数の1行でも mw の更新が止まる（鳴りすぎる警報）。閉包の指紋は登録の版 e87f7b4・e5233ad5 の版 b10682d・今の baecc53 の3つで同じ（a11ab9c4…）＝登録の後の直し（yahoo だけ）が前向きの値を変えないことを機械で確かめた（yahoo は閉包に入らない）"
+    },
+    "night/mw_sec_replication.py": {
+     "blob": "957773ab2df260a1c60397b5610ac6960ac32c79",
+     "role": "年1の組み直し（form_sec）が使う抽出・パネル・母集団・m100_cohorts（update は通らない）",
+     "verified": [
+      {
+       "commit": "19e8ce233a09451dabf2fb3a75b9774b424f3f36",
+       "blob": "957773ab2df260a1c60397b5610ac6960ac32c79",
+       "equal": true
+      },
+      {
+       "commit": "2e17443ae73d26fff563694474861b5b199dadee",
+       "blob": "957773ab2df260a1c60397b5610ac6960ac32c79",
+       "equal": true
+      }
+     ]
+    },
+    "out/mw_forward_prereg.json": {
+     "blob": "073972dd5c12083fe9e3e40cc4060d8c62336268",
+     "role": "事前登録そのもの（λ・B・μ_d・μ_f・2026年の組入れ・城の名簿の規則）",
+     "verified": [
+      {
+       "commit": "19e8ce233a09451dabf2fb3a75b9774b424f3f36",
+       "blob": "073972dd5c12083fe9e3e40cc4060d8c62336268",
+       "equal": true
+      },
+      {
+       "commit": "2e17443ae73d26fff563694474861b5b199dadee",
+       "blob": "073972dd5c12083fe9e3e40cc4060d8c62336268",
+       "equal": true
+      }
+     ]
+    }
+   }
+  },
+  "nx": {
+   "registration": {
+    "commit": "b8579d18c252df0f10bff08fb57760c98751692f",
+    "date": "2026-09-29T05:31:00+00:00",
+    "what": "事前登録と --init（測る前）"
+   },
+   "prereg": "out/nx_forward_prereg.json",
+   "files": {
+    "night/nx_forward.py": {
+     "blob": "2c344a6cfcc7c1c5266fc82445adf30c3e7c95fd",
+     "role": "前向きの更新（--update）の本体",
+     "verified": [
+      {
+       "commit": "b8579d18c252df0f10bff08fb57760c98751692f",
+       "blob": "2c344a6cfcc7c1c5266fc82445adf30c3e7c95fd",
+       "equal": true
+      }
+     ],
+     "note": "誤った CI_LINE（timeout 1800・約500本）を含むが、変えると事前登録の tool_sha256 と合わなくなるので変えない。ops.yml の forward ジョブは timeout 5400 で回す（10月は約770本の基準価額で sandbox の実測 約28分・runner では未計測なので余裕を約3倍に。2026-09-29 に 3600 から広げた）"
+    },
+    "night/nx_common.py": {
+     "blob_at_record": "3023fb5c00b8b815f6d55eadac10c0d1943791b7",
+     "fingerprint": {
+      "method": "ast_closure_v1",
+      "users": {
+       "night/nx_forward.py": "N",
+       "night/nx_brand_data.py": "N",
+       "night/nx_jpfunds_data.py": "N"
+      },
+      "roots": [
+       "BASE",
+       "CACHE",
+       "UA",
+       "corr",
+       "excess_stats",
+       "ff_factors",
+       "french_series",
+       "get",
+       "nw_t",
+       "save"
+      ],
+      "closure": [
+       "BASE",
+       "CACHE",
+       "FR",
+       "UA",
+       "_num",
+       "cagr",
+       "corr",
+       "excess_stats",
+       "ff_factors",
+       "french_series",
+       "french_tables",
+       "get",
+       "nw_t",
+       "p_two",
+       "save"
+      ],
+      "sha256": "96c54294875a8a0525e6f293ba127a3458fa5a7b07de145d321d7ce91ef44086",
+      "what": "blob ではなく、前向きの道具が使う部分（根＝利用者が触る名前から、最上位の定義を名前の参照でたどった閉包＋最上位で走る文）の ast を正規化した文字列の sha256。night/check_forward_frozen.py の closure_fingerprint。Python 3.10〜3.13 で同じ値になることを 2026-09-29 に確かめた"
+     },
+     "role": "共通部品（get・save・UA・CACHE）",
+     "verified": [
+      {
+       "commit": "b8579d18c252df0f10bff08fb57760c98751692f",
+       "blob": "3023fb5c00b8b815f6d55eadac10c0d1943791b7",
+       "equal": true
+      }
+     ],
+     "note": "★2026-09-29（検査役の指摘）から blob ではなく閉包の指紋で見る——nx_common は約34本の研究の道具が import する。閉包の指紋は登録のコミット b8579d18 の版と今の版で同じ（96c54294…）。登録の前日の直し（rolling・dca・grade_short）は閉包に入らない"
+    },
+    "night/nx_brand_data.py": {
+     "blob": "1556566fd959458014519e6b78482e289b9a23cf",
+     "role": "F2 のブランドの一覧の API と親会社の表（BRAND_OWNER）",
+     "verified": [
+      {
+       "commit": "b8579d18c252df0f10bff08fb57760c98751692f",
+       "blob": "1556566fd959458014519e6b78482e289b9a23cf",
+       "equal": true
+      }
+     ]
+    },
+    "night/nx_jpfunds_data.py": {
+     "blob": "4d097c1def4d75c677a2b0db56b90819a89b7f37",
+     "role": "F3 の母集団と分類（category・kind・passes_filter）・投信総合検索ライブラリーの取得",
+     "verified": [
+      {
+       "commit": "b8579d18c252df0f10bff08fb57760c98751692f",
+       "blob": "4d097c1def4d75c677a2b0db56b90819a89b7f37",
+       "equal": true
+      }
+     ]
+    },
+    "out/nx_forward_prereg.json": {
+     "blob": "190ac700da8b4bd119ac192829163b2dd88faacc",
+     "role": "事前登録そのもの（λ・B・μ_d・規則・2025年の一覧）",
+     "verified": [
+      {
+       "commit": "b8579d18c252df0f10bff08fb57760c98751692f",
+       "blob": "190ac700da8b4bd119ac192829163b2dd88faacc",
+       "equal": true
+      }
+     ]
+    }
+   },
+   "prereg_sha256_checks": [
+    {
+     "file": "night/nx_forward.py",
+     "prereg": "out/nx_forward_prereg.json",
+     "key": "frozen.tool_sha256_at_registration",
+     "value_at_record": "d828b68ff7f2249897bbd8c06543a2b944ab49ca57852f72d9bfa0e4ef684974",
+     "note": "事前登録が自分で持つ指紋。道具の出力の tool_sha256_matches_prereg と同じ比べ方"
+    }
+   ]
+  }
+ },
+ "not_frozen": [
+  {
+   "path": "out/mw_forward.json・out/nx_forward.json",
+   "why": "前向きの出力。毎月変わるのが正常（書き手は ops.yml だけ・手元の出力はコミットしない）"
+  },
+  {
+   "path": "out/mw_forward_sec_formation_Y.json",
+   "why": "年1で増える組入れ（2027年から）。まだ無いので記録できない。⚠ 一度コミットしたら回し直さない——回し直すと、既に取り込んだ月の後の持ち物が後のデータで変わる"
+  },
+  {
+   "path": "night/nx_jpfunds.py・out/nx_jpfunds.json",
+   "why": "nx の design・init（jp_hist_x1_jp・seed_jp_prev）だけが読む。--update は通らない"
+  }
+ ],
+ "deviations_in_ci": [
+  {
+   "date": "2026-09-29",
+   "group": "nx",
+   "what": "CI（ops.yml）では投信の基準価額 CSV の写し（out/_nx_cache/nx_forward/jpnav）が実行の間に残らない。jp_nav は償還で HTTP 500 になった投信について『前に取った写し』へ戻るが、CI にはその写しが無い",
+   "effect": "F3 の持ち物が月の下旬（最後の行がおおむね23日以降）に償還されると、翌月2日の実行では『最後の行から10日』に届かず待ちになる。その次の実行（償還から5〜6週間後）までに CSV が消えると（償還から20日後にはまだ在った・2021〜2026年3月に償還した11本はすべて消えていた）、その器の最後の部分の月は取れず、3か月待った後に『欠けた器は外して残りで等分』として扱われる（事前登録の stopping_rules の『その月は最後の行までの部分の月』の代わりに）。持ち物は約60〜70本なので、その月の値への影響は1本ぶんの部分の月÷約60（月次の追従のぶれ 約1.7% の数%）。F3 の月はその間最大3か月遅れるが失われない。待ちが2か月に達すると ops_status の見張りが ⚠ にする",
+   "why_accepted": "残すための仕組みが重い: actions/cache は7日触られないと消えるので毎月の実行の間に残らない。artifact（保存90日）なら残るが、前回の実行を探して取り戻す段・権限（actions: read）・写しの更新時刻を古く戻す手当てが要る（戻さないと jp_nav が写しを12時間以内の新しい物と読み、取り直さない）。repo にコミットすると月に約5MB（10月は約770本で約50MB・1本約70KB）ずつ履歴が太る。月の途中にもう一度回すと F2 の形成の月が変わる（『公開の翌月末』でなくなる）ので回数でも補えない。効果（1本ぶんの部分の月・まれ）に比べて重い。★2026-09-29（同日・検査役の指摘「10月の nx は全部か無しか」）: **同じ月の中の再実行だけ**は actions/cache で写しを持ち回すようにした（ops.yml の forward ジョブ・鍵は年月＋run_id）＝時間切れの後の手動の再実行が、12時間以内なら取り終えた分を取り直さない（道具は12時間より古い写しを取り直す・actions/cache は更新時刻を保つので古い写しを新しいと読ませない）。月をまたぐ持ち回しは引き続き無い（上の理由のまま）",
+   "revisit_if": "償還が実際に起きて部分の月を失ったら（nx_forward.json の portfolios.jpx1_*.ended と missing_or_ended で分かる）、artifact で写しを残す案を再検討する"
+  }
+ ],
+ "changes": [],
+ "changes_format": "意図して道具・依存・事前登録を変えたときだけ追記する: {date, path, old_blob, new_blob, what, why, months_affected}。追記してから files の blob を書き換える。規則そのもの（相手・λ・B・μ_d・規則の文言）を変えるなら別の新しい登録（e=1 から）"
+}
