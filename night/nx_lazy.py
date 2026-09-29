@@ -732,8 +732,12 @@ def build(log, owner_first=False):
                 CAP[ti, i] = got
     P.CAP = CAP
     P.ann = ann
-    FLOAT_FIX['time_series_scale_error_dropped_past_only'] = len(dropped_c)
-    FLOAT_FIX['one_year_spike_dropped_past_two'] = len(dropped_d)
+    if old_ver is not None:  # 旧版（前後の比較だけ）は旧版の名前で数える
+        FLOAT_FIX['time_series_scale_error_dropped'] = len(dropped_c)
+        FLOAT_FIX['one_year_spike_dropped'] = len(dropped_d)
+    else:
+        FLOAT_FIX['time_series_scale_error_dropped_past_only'] = len(dropped_c)
+        FLOAT_FIX['one_year_spike_dropped_past_two'] = len(dropped_d)
     log['float_sources_stock_months'] = dict(fsrc)
     log['float_checks_reports'] = dict(FLOAT_FIX)
     # 業種
@@ -1394,7 +1398,8 @@ def sanity(P, SIG, F, start, spy, mkt, log):
         'pairs': [{'cik': c, 'name': n, 'ticker': t_, 'path': h, 'months': v} for (c, n, t_, h), v in pairs2.most_common()],
         'reading': ('月末の構成の記号 k が、k を今の自分の記号に持たない会社に結ばれ、k を今持つ会社も候補に居ない件数（報告のみ・格付けは事前登録の同定のまま）。'
                     '昔の自分の記号の正しい名乗りと、本文の記号の抜き出しの誤り（他社の記号を自分の記号と読んだもの）の両方が入る。'
-                    '誤りの例: Novanta（CIK 1076930・旧 GSI Group）が LSI（1996〜2014 の LSI Logic）に結ばれ、Novanta の株価（NOVT）と信号が入っていた')}
+                    '誤りの例: Novanta（CIK 1076930・旧 GSI Group）が LSI（1996〜2014 の LSI Logic）に結ばれ、Novanta の株価（NOVT）と信号が入っていた。'
+                    'Albemarle（CIK 915913）は FY2009 の 10-K が MWV を ALB と同じ回数（2回）書いていたため、L2 で MeadWestvaco（MWV）の連続した構成の期間（1996〜2015）全体に結ばれていた')}
     # 3 相手（U の時価加重）と SPY
     bv, be = bench_series(P, start, True), bench_series(P, start, False)
     ks = sorted(set(bv) & set(spy))
@@ -1528,7 +1533,7 @@ def quintile_table(P, SIG, F, start, sig='JAC', vw=True):
 
 
 DEVIATIONS = [
-    {'what': '浮動株の検問を足した（(a) XBRL・iXBRL の値にも 100万〜10兆ドルの範囲 ／ (b) XBRL（無ければ iXBRL）と本文の比が 1000 の整数乗から 2.5 倍以内なら本文 ／ (c) 株数に当たる値（浮動株÷基準日の終値）が、その報告より前に提出された同じ会社の報告（並べる年の差3年以内）の中央値から 1000 の整数乗だけずれたら欠測 ／ (d) 直前の2つの報告が2倍以内で一致しているのにこの報告だけ両方から5倍を超えて離れたら欠測。(c)(d) の欠測は事前登録の『その前の年次報告（24か月以内）』の道へ回す。基準日の終値の記号はその値を使う月末 t−1 の記号）。2026-09-29 に (c)(d) の先読みを是正した: 旧版は (c) に後から提出される報告も入れ、(d) に次の報告を使い、記号を全期間の最頻の記号で決めていた＝月末 t−1 にはまだ無い報告が時価加重の重みを決めていた（事前登録 timing.weights に反する・検査役の指摘。前後の数は fixes）',
+    {'what': '浮動株の検問を足した（(a) XBRL・iXBRL の値にも 100万〜10兆ドルの範囲 ／ (b) XBRL（無ければ iXBRL）と本文の比が 1000 の整数乗から 2.5 倍以内なら本文 ／ (c) 株数に当たる値（浮動株÷基準日の終値）が、その報告より前に提出された同じ会社の報告（並べる年の差3年以内）の中央値と、直前に採った値（3年以内）の両方から 1000 の整数乗だけずれたら欠測 ／ (d) 直前の2つの報告が2倍以内で一致しているのにこの報告だけ両方から5倍を超えて離れたら欠測（元の値の直前の2つと、採った値の直前の2つの両方で同じ形のときだけ）。(c)(d) の欠測は事前登録の『その前の年次報告（24か月以内）』の道へ回す。基準日の終値の記号はその値を使う月末 t−1 の記号）。2026-09-29 に (c)(d) の先読みを是正した: 旧版は (c) に後から提出される報告も入れ、(d) に次の報告を使い、記号を全期間の最頻の記号で決めていた＝月末 t−1 にはまだ無い報告が時価加重の重みを決めていた（事前登録 timing.weights に反する・検査役の指摘。前後の数は fixes）',
      'why': '事前登録の点検『U_t の時価加重と SPY の相関（0.97 未満なら浮動株か同定に誤り）』が 0.706 だった。原因は XBRL の dei:EntityPublicFloat の単位の付け違い（MTB・ZBH・HST・PKG・NEM・IQV・QCOM は ×100万、WAT・DPZ・GRMN・SHW・TKO・HBAN は ×1000、ALB は 1e18）で、1社が U の重みの 99% を持つ月があった。本文の値には取得器が 100万〜10兆ドルの範囲を掛けていたが XBRL・iXBRL の値には掛けていなかった。(c)(d) は本文の千ドル単位の表を $ として読んだ年（PEP・BAC・DUK ほか）と1年だけの飛び（EXC 2009 ほか）。検問は浮動株の値と相手の相関だけを見て決め、規則の成績は1つも計算する前。検問後の相関 0.9933',
      'affects_grading': '時価加重の規則すべて（主の族 P を含む）の重み。規則の中身・線は不変'},
     {'what': '株価の記号: 今の SEC の記号が優先株だけの会社（811830 Santander Holdings USA〔旧 Sovereign〕・1527469 Athene）は普通株の株価が無いとして外した。EIDP（旧 DuPont・C と D の両方）は C の約束（その月の記号 k が後継の記号なら k の株価）で扱った',
@@ -1560,7 +1565,9 @@ DEVIATIONS = [
      'affects_grading': 'X6 の4本（IT1A_COS・IT7_COS）の信号。ほかの規則の信号は不変（主文書の語数・類似度は変えていない）。前後の数は fixes'},
     {'what': '【2026-09-29 の是正・結果を見た後】会社の同定で、自分の記号を『同じ発行体の種類株』へ広げる約束（事前登録『その会社の他の種類株の記号も自分の記号とみなす（GOOG と GOOGL）』）を、その会社の今の記号の組と、前身なら後継の会社それぞれの今の記号の組に限った（night/nx_lazy.py の relink と night/nx_lazy_data.py の build_panel の両方）',
      'why': '旧版は price_tickers（前身が後継から受け継いだ記号で、後継の後継の記号まで連なる）を1つの組に混ぜていたため、Breeze-Eastern（CIK 99359・旧 TransTechnology・10-K が名乗る記号は TT だけ・S&P 500 に入ったことは無い）が、後継 Trane の後継と誤って結ばれた Ingersoll Rand Inc の IR を兄弟とみなし、1996〜2008 の S&P の IR の枠に結ばれ、2002-05〜2008-01 は Breeze の信号と小さい浮動株に Yahoo の TT（旧 Ingersoll-Rand plc）の株価が付いていた（検査役の指摘）。panel の同じ記号の取り合いの並びも集合の並び（ハッシュの種）に依らないように揃えた（relink と同じ）',
-     'affects_grading': '小さい（その1社の76か月）。前後の数は fixes'},
+     'affects_grading': ('小さい。(1) Breeze は 1996-01〜2002-04 の IR の枠から外れた（その期間の Breeze の株価の記号 IR は Yahoo に 2017年からしか無く、U には入っていなかった）。'
+                         '(2) 同じ誤りのもう一つの形: EIDP（旧 DuPont・C）が後継 DuPont の DD を兄弟とみなして DuPont と同じ道・同じ提出日で DD を取り合い、2020〜2026 の 24か月 DD の枠が両方外れていた→ DuPont（CIK 1666700）が戻った。'
+                         '(3) Breeze は自分の記号 TT で 2002-05〜2008-05 の TT の枠に残る（記号の再利用・事前登録の約束どおり・known_issues_found_after_results）。前後の数は fixes')},
     {'what': '【2026-09-29 の是正・結果を見た後】株価の誤り: JCI（CIK 833444・当時 Tyco International）の 2007-07 の株月を欠測にした（U から外す・0 で埋めない）',
      'why': 'Yahoo の調整後終値が 2007-06-29 の Covidien と Tyco Electronics の分離（1株を4株にまとめる株式併合つき）を調整しておらず −58.7%（本当は約 −4%）。事前登録の点検『−40% 未満か +100% 超の株月の上位50件』に載っていたが直していなかった（検査役の指摘）。同じ月に Yahoo の記録に分割か大きな特別配当がある極端な株月を全部見て（3件）、誤りはこの1件だけと確かめた（sanity_checks_before_results.price_errors_scan）',
      'affects_grading': '小さい（1株月）。前後の数は fixes'},
@@ -1614,9 +1621,15 @@ def write_out(P, results, log, starts, sanity_out, extra, pre, t_start):
              'found': '2026-09-29・前の実装者の途中の結果（格付けまで出ていた）を読んだ後に、同定の既知の例（XOM が 2008-02〜2009-01・2012-02〜2015-01 に構成から消える／JPM が 2016-02〜2019-01 に消える）を点検して見つけた',
              'treatment': '格付けは事前登録の同定のまま（結果を見た後に同定を変えて格付けし直すことはしない）。件数は sanity_checks_before_results.identity_ticker_linked_to_non_owner、持ち主を先に採る版の全50本の grade_short は post_hoc.identity_owner_first（事後・格付けに使わない）',
              'direction': '外れた会社は規則と相手の両方から同じく外れるので、片側に有利な誤りではない。U が S&P 500 から少し遠くなる'},
-            {'what': '同じ型の誤りのもう一つの形（2026-09-29 の点検で見つけた・直していない）: 記号の持ち主が候補に居ない記号（上場廃止した会社の記号）に、本文の記号の抜き出しが他社の記号を自分の記号と読んだ会社が結ばれる。例: Novanta（CIK 1076930・旧 GSI Group）の 10-K の抜き出しが LSI を名乗りと読み、1996〜2014 の S&P の LSI（LSI Logic）の枠に Novanta の株価（NOVT）と信号が入っていた',
+            {'what': '同じ型の誤りのもう一つの形（2026-09-29 の点検で見つけた・直していない）: 記号の持ち主が候補に居ない記号（上場廃止した会社の記号）に、本文の記号の抜き出しが他社の記号を自分の記号と読んだ会社が結ばれる。例: Novanta（CIK 1076930・旧 GSI Group）の 10-K の抜き出しが LSI を名乗りと読み、1996〜2014 の S&P の LSI（LSI Logic）の枠に Novanta の株価（NOVT）と信号が入っていた。Albemarle（CIK 915913）は FY2009 の 10-K だけが MWV を ALB と同じ回数書いていたため、L2 で MeadWestvaco（MWV）の枠（1996〜2015 の連続した構成の期間全体・222か月）に結ばれていた',
              'treatment': '格付けは事前登録の同定のまま。件数は sanity_checks_before_results.identity_ticker_not_own_now_owner_not_candidate（昔の自分の記号の正しい名乗りも入る一覧）',
-             'direction': '入った会社は規則と相手の両方に同じく入る（片側に有利な誤りではない）。U が S&P 500 から少し遠くなる'}],
+             'direction': '入った会社は規則と相手の両方に同じく入る（片側に有利な誤りではない）。U が S&P 500 から少し遠くなる'},
+            {'what': '記号の再利用による同定の誤り（2026-09-29 の点検で確かめた・直していない）: Breeze-Eastern（CIK 99359・旧 TransTechnology・S&P 500 に入ったことは無い）は、後継の記号 TT の全文検索で Trane Technologies の前身（C）と誤って同定され、自分の記号 TT（TransTechnology の NYSE の記号）を名乗るので、2002-05〜2008-05 の S&P の TT の枠（構成表が後の記号 TT で書く American Standard／Trane Inc.）に L1 で結ばれ、株価は後継の記号 TT（Yahoo＝旧 Ingersoll-Rand plc）になる。兄弟の記号の是正（fixes の F3）で IR の枠からは外れたが、この枠は事前登録の同定の約束（L1・C の株価の記号）どおりの結果なので残した',
+             'treatment': '格付けは変えない。99359 を全期間外した版の全50本の全期間の幾何の差は fixes.panel_diagnostics.F3_breeze_remaining_report_only（報告のみ）',
+             'direction': '規則と相手の両方に同じく入る。時価加重の重みは Breeze の小さい浮動株で約 1e-5、等分では 1/500 前後'},
+            {'what': '同じ記号の取り合いで枠ごと外れる例（2026-09-29 の点検で気づいた・直していない）: Corteva（CIK 1755672）と子会社 EIDP（CIK 30554・旧 DuPont）は同じ日に同じ内容の年次報告（合同の 10-K）を出し、どちらも CTVA を名乗るので、事前登録の約束（同じ道・同じ提出日なら全部外す）で 2020-02 以降の S&P の CTVA の枠が外れている（Corteva が U に居るのは 2019-06〜2020-01 の8か月だけ）',
+             'treatment': '事前登録の同定の約束どおり（格付けは変えない）。取り合いで外した件数は sanity_checks_before_results.ticker_conflicts_dropped',
+             'direction': '規則と相手の両方から同じく外れる（片側に有利な誤りではない）'}],
         'x11_x12_decision': man,
         'overlap_with_q07leu_lmtext': {'what': 'q07leu（ratio-evaluation-q07leu 枝）の第10回 lmtext は 10-K の否定語の割合の変化が小さい五分位（dneg|q5・等分・選定 1995-04〜2000-12・保有 2001-01〜2026-08）を検定し不合格（保有 −0.72%/年 t−1.18・Holm p 0.88）',
                                        'which_rules_here': 'X4_DNEG_Q5_VW_12・X4_DNEG_XQ1_VW_12（同じ特徴量 DNEG）と X5（DNEG を使う組み合わせ）',
@@ -1879,8 +1892,6 @@ def fix_diagnostics():
                          'median_v3': round(float(np.median([v for v in a.values() if v is not None])), 4),
                          'median_v4': round(float(np.median([v for v in b.values() if v is not None])), 4)}
         # 検査役の数え方: 節の語数が前年の半分未満か2倍超の組（取り出しの誤りの印）
-        rows = list(csv.DictReader(open(os.path.join(CACHE, 'nx_lazy_signals.csv'))))
-        by_acc = {r['acc']: r for r in rows}
         recs = {}
         for fn in os.listdir(D.OUTDIR):
             if fn.endswith('.json'):
@@ -1905,6 +1916,28 @@ def fix_diagnostics():
             flag[key] = {'pairs_v3': n, 'len_ratio_outside_0.5_2_v3': f3, 'len_ratio_outside_0.5_2_v4': f4}
         stats['section_length_jumps'] = flag
         out['F4_sections'] = stats
+        # F3 の残り: Breeze-Eastern（99359）は兄弟の記号を直した後も、自分の記号 TT を名乗るので 2002-05〜2008-05 の S&P の TT
+        # （American Standard／Trane Inc.・構成表は後の記号 TT で書く）の枠に L1 で結ばれ、株価は後継の記号 TT（Yahoo＝旧 Ingersoll-Rand plc）になる。
+        # これは事前登録の同定の約束（L1・C の株価の記号）どおりの結果（記号の再利用）なので格付けは変えず、99359 を全期間外した版を報告だけする
+        try:
+            per = json.load(open(OUT_PATH)).get('periods') or {}
+        except Exception:  # noqa
+            per = {}
+        st0, st1 = (per.get('full') or [FULL_START0])[0], per.get('it1a_start') or FULL_START0
+        SIGc, Fc = signal_mats(PC)
+        i_b = PC.idx.get(99359)
+        bm = [PC.months[ti] for ti in range(1, PC.T) if i_b is not None and PC.member[ti - 1, i_b] and not np.isnan(PC.R[ti, i_b])] if i_b is not None else []
+        rows_b = []
+        for sp in rule_specs():
+            st = st1 if sp['start_rule'] == 'it1a' else st0
+            r0 = run(PC, sp, SIGc, Fc, st)
+            r1 = run(PC, sp, SIGc, Fc, st, drop=i_b) if i_b is not None else r0
+            e0, e1 = N.excess_stats(r0['s'], r0['b'], st, END), N.excess_stats(r1['s'], r1['b'], st, END)
+            rows_b.append({'rule': sp['name'], 'full_cagr_diff': e0['cagr_diff'] if e0 else None, 'full_cagr_diff_without_99359': e1['cagr_diff'] if e1 else None,
+                           'full_t': e0['t'] if e0 else None, 'full_t_without_99359': e1['t'] if e1 else None})
+        out['F3_breeze_remaining_report_only'] = {'priced_months_in_U_after_fix': [bm[0], bm[-1], len(bm)] if bm else None, 'rules': rows_b,
+                                                  'reading': ('兄弟の記号の是正の後も 99359 は自分の記号 TT で S&P の TT の枠（2002-05〜2008-05・American Standard／Trane Inc.）に結ばれる'
+                                                              '（記号の再利用・事前登録の同定のまま）。全期間外した版は報告だけ（格付けに使わない）')}
     finally:
         FIXES_OFF, SECTION_VARIANT = keep
     return out

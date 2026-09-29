@@ -1203,7 +1203,6 @@ def merge_sections(dry=False):
     for fn in sorted(os.listdir(OUTDIR)):
         if not fn.endswith('.json'):
             continue
-        cik = int(fn[:-5])
         ps = os.path.join(SECDIR, fn)
         if not os.path.exists(ps):
             stat['cik_without_resection'] += 1
