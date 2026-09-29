@@ -1,0 +1,42 @@
+{
+ "angle": "industry",
+ "part": "prereg2（探索・第2の族）",
+ "generated": "2026-09-28",
+ "registered_before_measuring": true,
+ "honest_context": "★この族は第1の族（out/mw_industry_prereg.json・a2a91d9）の結果を見た後に作った。第1の族では業種モメンタム G1〜G4 が格付け A（保有期間は正だが t 0.5〜0.9 で C3 は不合格・C5 は7/7か国で合格）。だから第2の族は『新しい発見』ではなく、(1) A の結果が49業種・等分・小さい業種に頼っていないか（頑丈さ）、(2) 実際に買える形（セクターETF）でも出るか、(3) 論文の既定の手当て（下げ相場の後はモメンタムを休む）で保有期間の t が C3 に届くか、を測る。保有期間の結果を知ったうえで作った族なので、ここの格付けは『探索』として第1の族と分けて報告し、第1の族の格付けを置き換えない",
+ "what_was_checked_before_registering": [
+  "French の 10/12/17/30/38/48 業種ファイル（1926-07〜2026-08・Average Firm Size あり）が取れる",
+  "Yahoo の SPY と Select Sector SPDR 9本（XLB XLE XLF XLI XLK XLP XLU XLV XLY）の月次（配当込み調整後）が 1999-01〜 取れる。最後の月 2026-09 は月の途中なので使わない（2026-08 まで）",
+  "第1の族の診断（事後・判定しない）: 48業種を等分しただけで全期間 +1.36%/年（t 2.29）・保有期間 +0.15%/年。モメンタム上位5（G3）の全期間 +6.97%/年はこれを大きく超える。G3 の保有期間の年ごとの超過は 2009 −11・2023 −17・2024 −30 と 2007 +33・2020 +33・2022 +37 で、塊が大きい"
+ ],
+ "common": "第1の族と同じ（Other は選ばない・等分は毎月・信号は m−1 月末まで・欠測は順位に入れない・費用は両側の売買100%あたり0.05%・相手は French Mkt）。格付けは mw_common.grade。Holm はこの族の24本で補正し、参考に第1の族と合わせた60本の補正も並べる",
+ "strategies": [
+  {"id": "R1_n10_mom6", "group": "granularity", "rule": "French 10業種・6か月の累積の上位 K=2（N÷5）を等分・毎月", "repl": "mom6"},
+  {"id": "R1_n10_mom12", "group": "granularity", "rule": "French 10業種・12か月の上位2", "repl": "mom12"},
+  {"id": "R1_n12_mom6", "group": "granularity", "rule": "French 12業種・6か月の上位2", "repl": "mom6"},
+  {"id": "R1_n12_mom12", "group": "granularity", "rule": "French 12業種・12か月の上位2", "repl": "mom12"},
+  {"id": "R1_n17_mom6", "group": "granularity", "rule": "French 17業種・6か月の上位3", "repl": "mom6"},
+  {"id": "R1_n17_mom12", "group": "granularity", "rule": "French 17業種・12か月の上位3", "repl": "mom12"},
+  {"id": "R1_n30_mom6", "group": "granularity", "rule": "French 30業種・6か月の上位6", "repl": "mom6"},
+  {"id": "R1_n30_mom12", "group": "granularity", "rule": "French 30業種・12か月の上位6", "repl": "mom12"},
+  {"id": "R1_n38_mom6", "group": "granularity", "rule": "French 38業種・6か月の上位8", "repl": "mom6"},
+  {"id": "R1_n38_mom12", "group": "granularity", "rule": "French 38業種・12か月の上位8", "repl": "mom12"},
+  {"id": "R1_n48_mom6", "group": "granularity", "rule": "French 48業種・6か月の上位10", "repl": "mom6"},
+  {"id": "R1_n48_mom12", "group": "granularity", "rule": "French 48業種・12か月の上位10", "repl": "mom12"},
+  {"id": "R2_mom6_5_vw", "group": "weighting", "rule": "G1 の選び方で、選んだ5業種を月初の ME で時価加重（小さい業種に頼っていないか）", "repl": null},
+  {"id": "R2_mom6_10_vw", "group": "weighting", "rule": "G2 を時価加重で", "repl": null},
+  {"id": "R2_mom12_5_vw", "group": "weighting", "rule": "G3 を時価加重で", "repl": null},
+  {"id": "R2_mom12_10_vw", "group": "weighting", "rule": "G4 を時価加重で", "repl": null},
+  {"id": "R3_mom12_5_inv", "group": "investable", "rule": "月初の比重が1%以上の業種（ETF になりうる大きさ）だけから、12か月の累積の上位5を等分・毎月", "repl": null},
+  {"id": "R3_mom12_10_inv", "group": "investable", "rule": "同じく上位10", "repl": null},
+  {"id": "R4_spdr_mom12", "group": "real_etf", "rule": "Select Sector SPDR 9本（1999〜・配当込み）から12か月の累積の上位3本を等分・毎月。相手は SPY（配当込み）。生き残りの偏りは小さい（9本とも存続）が、訓練期間は 2000〜2006 の7年しかない（全体の線の『最低15年』に届かない）", "repl": null, "benchmark": "SPY"},
+  {"id": "R4_spdr_mom6", "group": "real_etf", "rule": "同じく6か月の累積の上位3本", "repl": null, "benchmark": "SPY"},
+  {"id": "R5_mom6_5_state", "group": "state_filter", "rule": "Cooper, Gutierrez & Hameed (2004, JF): 市場（French Mkt）の m−36〜m−1 月の36か月の累積が負（下げ相場の後）なら m 月は市場（49業種の時価加重）を持ち、そうでなければ G1（6か月の上位5・等分）を持つ", "source": "CGH 2004 の既定値（36か月）", "repl": "mom6_state: 国の市場の36か月が負ならその国の市場、そうでなければ6か月の上位3セクター"},
+  {"id": "R5_mom12_5_state", "group": "state_filter", "rule": "同じ手当てを G3（12か月の上位5）に", "source": "同上", "repl": "mom12_state"},
+  {"id": "R6_combo_5", "group": "combo_train_only", "rule": "訓練期間だけで決めた合成: 第1の族で上位5の版の訓練期間 t が 2.0 以上だった順位の信号8本（BE/ME 高・120か月の累積 低・6か月 高・12か月 高・季節性 高・配当利回り 高・純還元利回り 高・52週高値への近さ 高）の百分位の平均（年次の信号は7月の値を翌年6月まで使う・8本中6本以上がそろう業種だけ）の上位5業種を等分・毎月", "source": "第1の族の訓練期間の t（機械的な線 2.0 = C1 と同じ）", "repl": null},
+  {"id": "R6_combo_10", "group": "combo_train_only", "rule": "同じ合成の上位10業種", "repl": null}
+ ],
+ "replication_C5": "mom6/mom12 は第1の族と同じ（GICS 11 の上位3・毎月）。mom6_state/mom12_state は各国の JKP 市場（vw）の36か月の累積が負の月は超過0（国の市場そのもの）とする。それ以外は N/A",
+ "diagnostics_not_graded": ["48業種の等分（毎年7月・毎月）", "無作為に5業種を選ぶ偽物（200回）の分布＝等分と追従のぶれだけでどれだけ出るか"],
+ "known_limits": ["この族は第1の族の保有期間の結果を見た後に作った（知識の漏れ）", "業種の細かさの違う French のファイルは同じ CRSP の会社を別の切り方で束ねたもの＝独立の再現ではない", "SPDR は1999年からで、訓練期間が短く転がる20年の窓は数本しかない"]
+}

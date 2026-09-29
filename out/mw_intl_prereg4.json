@@ -1,0 +1,40 @@
+{
+ "angle": "intl",
+ "prereg_no": 4,
+ "title": "探索の族（事前登録4）: 1975年からの長い歴史と別の業者（MSCI→Bloomberg・Ken French の国別割安ポートフォリオ）で、国の中で選ぶ割安の買いだけが市場に勝つか",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "global_criteria": "out/mw_prereg.json（C1〜C8・格付け）。線は動かさない",
+ "why_this_exists": "事前登録2・3で、JKP（国の中で並べる・三分位）では米国外の割安＋勢いが強く、French の地域の中で並べる版（大型株の30%）では弱かった（事後の診断: JKP を B/M だけにしても保有期間 +2.08%/年・t3.5、先進国だけの国の単純平均でも +2.40%/年・t4.2＝差は割安の測り方や新興国ではなく、国の中で並べるか地域の中で並べるかの作り方の差の疑い）。French には国の中で並べた割安（上位30%）の国別と、それを EAFE の国の重みで束ねた指数が 1975年からある（MSCI 1975-2006・Bloomberg 2007〜）。訓練期間が32年あり、業者も JKP と別なので、割安の側だけでも独立に確かめられる",
+ "what_i_have_already_seen": "事前登録1〜3の結果と事後の診断。この French の国別・指数の割安ポートフォリオと市場の比較の数字はまだ計算していない（ファイルの形・始まり1975-01・終わり2025-12・列名だけ確認）",
+ "data": {
+  "file": "Ken French『F-F_International_Countries』（国別21）と『F-F_International_Indices』（Ind_all＝EAFEの国の重みで束ねた全体・Ind_Eur_With_UK・Ind_Eur_WOut_UK・Ind_UK・Ind_Scandanavia・Ind_Asia_Pacific）",
+  "table": "最初の表『Value-Weight Dollar Returns / All 4 Data Items Not Reqd』（米ドル・配当込み・月次）。列: Mkt・BE/ME High・Low・E/P High・Low・CE/P High・Low・Yld High・Low・Zero",
+  "construction": "French の説明: 各国の中で B/M・E/P・CE/P・D/P の上位30%（High）と下位30%（Low）を時価加重。指数は各国を EAFE の重みで束ねる。元データ MSCI（1975-2006）・Bloomberg（2007〜）",
+  "missing": "-99.99 は欠測（0で埋めない）"
+ },
+ "families": {
+  "F4a_eafe_value": {
+   "series": "Ind_all の High vs Ind_all の Mkt",
+   "members": {"f4_bm": "B/M 上位30%", "f4_ep": "E/P 上位30%", "f4_cep": "CE/P 上位30%", "f4_dp": "配当利回り 上位30%", "f4_value4": "上の4本を等分（4本とも使える月・毎月戻す）"},
+   "good_side": "米国の2006年までで決めた向き（be_me・ni_me・ocf_me・div12m_me いずれも高いほう）と同じ High",
+   "holm": "5本の保有期間 p",
+   "C5": "国別ファイルのうち使える月が240か月以上の国（米国を含まない）で、全期間の超過（算術）が正の国 ≥ 2/3",
+   "periods": "訓練 1975-01〜2006-12（32年）・保有 2007-01〜2025-12・近年 2013-07〜",
+   "cost": "年1回の組み替えとして年間片道回転率 0.3（value4 も 0.3）・片道100%あたり 0.30%"
+  },
+  "F4b_japan_value": {
+   "series": "Japan の High vs Japan の Mkt（同じ5本）",
+   "holm": "5本の保有期間 p",
+   "C5": "日本以外の国別（240か月以上）で全期間の超過が正の国 ≥ 2/3",
+   "why": "たっちみーさんは日本の投資家。事前登録2（JKP）で日本の割安（be_me）が S だった。別の業者・別の作り方・1975年からで再現するか"
+  }
+ },
+ "reported_not_graded": ["Ind_Eur_With_UK・Ind_Eur_WOut_UK・Ind_UK・Ind_Scandanavia・Ind_Asia_Pacific の5本", "国別21か国それぞれの5本（全期間・訓練・保有）", "角度全体（事前登録1〜4）の Holm（参考）"],
+ "limits": [
+  "業者の切り替え（MSCI→Bloomberg）が 2007年＝保有期間の始まりと重なる。保有期間の数字には作り方の変化も混ざる",
+  "MSCI の銘柄の範囲（大型・中型）で、JKP より狭い",
+  "割安しか無い（勢い・質は無い）",
+  "国どうしは相関しており、同じ期間の同じ株を JKP と French の両方が見ている（リターンは独立ではない）"
+ ]
+}

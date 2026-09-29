@@ -1,0 +1,123 @@
+{
+ "generated": "2026-09-28",
+ "angle": "own_exposure",
+ "title": "今の配分（ETF側＝iFreeNEXT NASDAQ100 60 / SMH 20・個別20＝CW・MSFT・LRCX・ASML・TDG 等分）は、検証済みの割増（質）をどれだけ既に持ち、どれだけが割増の検証されていない業種の賭けか——リターンからの分解（記述・格付けなし）",
+ "registered_before_measuring": true,
+ "global_prereg": "out/mw_prereg.json（線 C1〜C8・格付けはここでは結論に使わない。記述の角度）",
+ "tool": "night/mw_own_exposure.py → out/mw_own_exposure.json",
+ "brief": "out/_mw_cache/r4_briefs.json の own_exposure（批評役の提案）に従う",
+ "what_was_checked_before_registering": "データの有無と期間だけを見た（戦略と市場を比べた数字は一つも計算していない）: Yahoo 月次 ^NDX 1985-11〜（価格のみ）・QQQ 1999-04〜・^SOX 1994-06〜（価格のみ）・SMH 2000-07〜・XLK 1999-01〜・CW 1985-02〜・MSFT 1986-04〜・LRCX 1984-06〜・ASML 1995-04〜・TDG 2006-04〜（いずれも最初のリターンの月）。^XNDX（NASDAQ100 配当込み）は Yahoo に無い。JKP usa cop_at 三分位 'vw' 1951-11〜2025-12・JKP 市場 vw 1926-01〜2025-12。French 12業種・49業種（Hardw/Softw/Chips/LabEq の列あり）・規模十分位（Hi 10）・3因子はいずれも 1926-07〜2026-08。FRED DEXJPUS 日次 1971-01-04〜2026-09-18。投資信託協会の iFreeNEXT NASDAQ100（ISIN JP90C000GUN2・協会コード 04317188）の基準価額の CSV は 2018-08-31〜2026-09-25（列: 年月日・基準価額・純資産・分配金・決算期）。out/score_all.json の投下可は CW・MSFT・LRCX・ASML、gate_exceptions.json の in_castle_split は TDG、portfolio.json の castle_weighting は equal、ami_weights は IFREE-NDX 60 / SMH 20（他は0）",
+ "knowledge_before_registering": [
+  "out/mw_reality_gap.json（見た）: QQQ 対 French Mkt の保有期間（2007-01〜2026-08）の超過 +5.06%/年 t3.47・紙の質の上乗せ P5（5信号の合成）への載り 1.62（t3.24）・それを引いた α −2.29・12業種の回帰の α +0.21 t0.22（BusEq の載り 0.91）・5因子＋勢いでは α +4.80 t3.29（RMW −0.40・HML −0.50＝因子で見ると『低収益・成長』側に見える）。批評役の要約のとおり VUG 1.51・SCHG 1.56・MGK 1.78・IWY 2.07",
+  "out/mw_reality_gap.json（見た）: cop_at の良い側（JKP usa vw）の対 Mkt は 1963-07〜2025-12 +2.23%/年 t3.92・〜2006 +1.95 t2.71・2007〜 +2.88 t3.22",
+  "out/mw_gate_proxy.json（見た）: 門の写し P1_GATE_ALL は 2007〜 +0.98%/年 t2.36・全期間 t3.91（格付け S）",
+  "CLAUDE.md（jkp_evidence）: 2006年までに効いた因子は 2007年以降に平均で半分前後へ縮む（米国の縮み率の中央 0.44・世界 0.56）＝この角度の割り引き h の出所",
+  "CLAUDE.md（tech_persist）: テック3業種の超過は時代で大きく振れ、1965年からの全期間では +0.1%/年（市場並み）。直近10年の1位の業種が次の10年に市場に勝ったのは 26%＝業種の上乗せに検証された割増は無い",
+  "CLAUDE.md（etf_long_windows 等）: QQQ・XLK・SMH は 2000-06 以降の毎月積立20年で SPY に全勝・一括の20年窓では負ける窓がある。私たちは 2007年以降の巨大テックの勝ちを知っている（消せない後知恵）"
+ ],
+ "question": "(a) NASDAQ100・半導体（SOX/SMH）・XLK・今の配合（ETF側 NDX75/SEMI25・全体 NDX60/SEMI20/城20）・城5社の『市場に対する超過』は、質の割増（Q＝cop_at の良い側−市場・G＝門の写し P1−市場）・業種・超大型株にどう載っていたか。1985-2006（2000-02年の NDX の崩れを含む）と 2007-2025 で載りは安定していたか。(b) 検証済みの割増（質）から期待できる超過（載り×割増×公表後の割り引き）はいくらで、業種だけで説明される部分（実現）はいくらか。(c) 城は NASDAQ100（と半導体）を持った上で、質の載りを足しているか。(d) 城が ETF側と独立でないなら、castle_rule の相手は何がよいか。米ドルと円で",
+ "stance": "記述の角度（格付けなし）。勝ち負けの判定はしない。実在の手段・城の5社は今日の知識で選んだ（生き残り・後知恵の選択）ので、α（説明できない部分）ではなく載りだけを読む",
+ "data": {
+  "vehicles_usd_total": {
+   "NDX_TR": "主の NASDAQ100: ^NDX（価格のみ）1985-11〜1999-03 と QQQ（調整後終値＝配当込み・信託報酬 0.20% 込み）1999-04〜 をつなぐ。1999-03 以前は配当が無い＝下限（利回りの分だけ低く出る）",
+   "NDX_PR": "^NDX 価格のみ 1985-11〜（全期間の下限・比較用）",
+   "SEMI": "主の半導体: ^SOX（価格のみ）1994-06〜2000-06 と SMH（配当込み・信託報酬込み・2011-12 以前は HOLDRS＝固定20社）2000-07〜 をつなぐ",
+   "SEMI_CHIPS": "副の半導体: French 49業種の Chips（CRSP・時価加重・配当込み）1985-11〜（1994年より前も覆う）",
+   "XLK": "XLK（配当込み）1999-01〜（今の目標は0%・記述のため）",
+   "NET": "ETF側の今の目標 = 0.75×NDX_TR + 0.25×SEMI（iFreeNEXT 60 / SMH 20 を ETF側80%の中で正規化）・毎月組み直し。1994-06〜",
+   "NET_CHIPS": "0.75×NDX_TR + 0.25×SEMI_CHIPS（1985-11〜・訓練期間を全部覆う副の版）",
+   "CASTLE": "城 = CW・MSFT・LRCX・ASML・TDG のうちその月にリターンがある社の等分（毎月組み直し）。3社以上の月だけ（1986-04〜は CW/MSFT/LRCX の3社・1995-04〜 ASML・2006-04〜 TDG）",
+   "CASTLE5": "5社すべてがそろう月だけ（2006-04〜）＝今の城そのもの",
+   "MIX": "投資家の配合 = 0.60×NDX_TR + 0.20×SEMI + 0.20×CASTLE（毎月組み直し）。保有期間は CASTLE5",
+   "names": "城の5社それぞれ（載りだけの記述）"
+  },
+  "regressors_monthly": {
+   "MktRF": "French Mkt-RF（超過）",
+   "Q": "JKP usa cop_at の良い側の三分位（'vw' 上限なし時価加重・超過）− MktRF。良い側は mw_common.jkp_good_side(upto=2006-12) で機械的に決める",
+   "G": "門の写し P1_GATE_ALL（night/mw_gate_proxy.py の composite(load('usa','vw'), MEASURES, 'good')＝16物差しの良い側の三分位の等分・超過）− MktRF",
+   "IND12": "French 12業種の時価加重（総リターン）− French Mkt（総リターン）の12本",
+   "IND12x": "副: 12業種のうち BusEq を 49業種の Hardw・Softw・Chips・LabEq に割った15本（− Mkt）",
+   "ME10a": "French 規模十分位の Hi 10（時価加重・総リターン）− Mkt＝超大型株の傾き"
+  },
+  "benchmark": "French Mkt（Mkt-RF + RF・総リターン）。被説明変数は y = 手段の総リターン − Mkt（総リターンどうし）。Q・G は超過どうしの差（JKP 超過 − Mkt-RF）＝基準がそろう",
+  "fx": "FRED DEXJPUS（1ドル=円・ニューヨーク正午）の月末（その月の最後の値）。円建て = (1+米ドルのリターン)×(当月末の円/前月末の円) − 1。回帰の説明変数（Q・G・業種・規模）は米ドルのまま",
+  "fund_nav": "投資信託協会 投信総合検索ライブラリーの CSV（基準価額・分配金）。月末（その月の最後の基準価額）。分配金があれば再投資とみなして足す（0 で埋めない・欠けた月は欠測）"
+ },
+ "windows": {
+  "train": "各系列の始まり〜2006-12（NDX は 1985-11〜・NET は 1994-06〜・CASTLE は 1986-04〜）。ブリーフの 1985-10 は ^NDX の最初の値の月で、最初のリターンは 1985-11",
+  "hold": "2007-01〜2025-12（Q・G のある JKP の終わりまで。固定）",
+  "full": "始まり〜2025-12",
+  "recent": "2013-07〜2025-12（報告のみ）",
+  "post2025": "2026-01〜 JKP の終わり（今は無い。JKP が 2026 を公開したら自動でこの窓に入る。hold は動かさない）",
+  "ind2026": "2026-01〜2026-08（業種・規模・MktRF だけの版 A4 を hold の係数で当てた予測と実現の比較＝業種だけの答え合わせ）",
+  "vehicle_excess": "手段の対 Mkt の超過（excess_stats）は French の終わり 2026-08 まで（Yahoo の 2026-09 は途中の月なので使わない）"
+ },
+ "models": {
+  "A0_raw": "y = a（超過の平均そのもの）",
+  "A1_capm": "y = a + c·MktRF（c = β−1）",
+  "A2_q": "y = a + c·MktRF + b_q·Q",
+  "A3_g": "y = a + c·MktRF + b_g·G",
+  "A4_ind": "y = a + c·MktRF + Σ b_k·IND12_k + b_m·ME10a（業種と超大型だけ）",
+  "A5_full": "y = a + c·MktRF + b_q·Q + b_g·G + Σ b_k·IND12_k + b_m·ME10a（ブリーフの式・主）",
+  "A5q": "A5 から G を抜く（Q と G は強く相関するので、分けた版も出す）",
+  "A5g": "A5 から Q を抜く",
+  "A6_full_x": "A5 の IND12 を IND12x（BusEq を Hardw/Softw/Chips/LabEq に割る）に替える",
+  "estimation": "OLS・Newey-West（ラグ12）の t。全部の変数がそろう月だけ（欠測は0にしない）。月数が max(36, 変数の数+24) 未満の窓は出さない",
+  "reported": "係数・NW t・R²・α（年率%）。Q と G の相関と VIF。実現の分解: 窓の中の平均で 超過の平均 = α + c·平均MktRF + b_q·平均Q + b_g·平均G + Σ b_k·平均IND_k + b_m·平均ME10a（OLS の恒等式）を項目ごとに年率%で"
+ },
+ "outputs": {
+  "a_stability": "A2・A3・A4・A5・A6 の係数を train と hold で並べ、差の t = (b_hold − b_train)/√(se_train² + se_hold²)（NW の標準誤差）",
+  "b_expected": {
+   "premia": "E[Q] = Q の 1963-07〜2006-12 の算術平均（年率）、E[G] = G の同じ窓の平均。割り引き h = 0.44（米国の縮み率の中央）・0.50（中心）・0.56（世界）",
+   "b1_upper": "A2 の b_q × E[Q] × h（業種の載りのうち Q と相関する分まで Q の手柄に数える＝上限）。A3 の b_g × E[G] × h も",
+   "b2_ind_controlled": "A5 の b_q × E[Q] × h + b_g × E[G] × h。あわせて E[Q]・E[G] を業種中立の割増（1963-07〜2006-12 に Q・G を MktRF+IND12+ME10a へ回帰した切片）に替えた版",
+   "pure_quality_reference": "cop_at の良い側そのもの（b_q=1）の期待 = E[Q] × h。配合が質の割増を『何単位』持つか = b_q",
+   "industry_part": "業種だけで説明される部分 = A4 の Σ b_k × 平均IND_k（窓の中の実現・train と hold）。A5 の同じ項も。業種の期待の割増は0（検証された業種の割増は無い）とし、参考に 1926-07〜2006-12 の業種の平均 × 載り も並べる",
+   "other_parts": "β の分 = c × 平均MktRF（窓の実現）と c × MktRF の 1926-07〜2006-12 の平均（参考・低β異常のため割増として数えない）。超大型の分 = b_m × 平均ME10a（同じく）。α は期待0（説明できない部分・生き残りと後知恵を含む）"
+  },
+  "c_castle_incremental": {
+   "C_NDX": "CASTLE − Mkt = a + c·MktRF + d·(NDX_TR − Mkt) + b_q·Q + b_g·G",
+   "C_NET": "C_NDX に e·(SEMI − Mkt) を足す（ETF側の2本を両方持った上での城の載り・主）",
+   "C_NETq": "C_NET から G を抜く",
+   "C_NETg": "C_NET から Q を抜く",
+   "C_NET_ind": "C_NET に IND12 と ME10a を足す（業種を除いても質の載りが残るか）",
+   "windows": "hold（CASTLE5）・full と train（CASTLE＝3〜4社）",
+   "report": "b_q・b_g（NW t）と、その期待の上乗せ b_q×E[Q]×h + b_g×E[G]×h。城の各社（CW・MSFT・LRCX・ASML・TDG）の C_NET の載りも記述"
+  },
+  "d_castle_benchmark": {
+   "candidates": "French Mkt（≈S&P500）・NDX_TR（≈QQQM・今の castle_rule の相手）・SEMI（SMH）・NET（ETF側の今の目標 NDX75/SEMI25＝城のお金の実際の代わり）",
+   "measure": "CASTLE5 と各候補の差の年率標準偏差（追従のぶれ TE）・相関・β。窓 2006-04〜2026-08（CASTLE5 がそろう全月）と hold。米ドルと円",
+   "orthogonality": "城の対 Mkt の超過と NET の対 Mkt の超過の相関と R²（|相関| ≥ 0.3 なら『独立でない』）",
+   "decision_rule_fixed_before_results": "推奨の相手 = {Mkt, NDX_TR, NET} のうち 2006-04〜2026-08 の TE が最も小さいもの。ただし NET の TE が最小との差 0.5pt 以内なら NET（城のお金の実際の代わりだから）。SEMI は単独の相手としては推奨しない（城の一部しか写さない）が数字は出す",
+   "noise": "castle_rule の線 +3pt/年について、上乗せが本当は0のとき T 年の平均の差が +3pt 以上になる確率 Φ(−3√T/TE)、本当に +3pt あるとき T 年で負けて見える確率 Φ(−3√T/TE)（T=3・5・10）、t=2 に要る年数 (2·TE/3)²"
+  },
+  "jpy": "NDX_TR・SEMI・NET・MIX・CASTLE5・Mkt の年率（米ドル・円）を train・hold・full で。円建ての対 Mkt 円建ての超過（平均・t）。A5 を円建ての y で当てた NET と MIX の載りと α。毎月積立20年（円）NET 対 Mkt・MIX 対 Mkt",
+  "oos": {
+   "ind2026": "A4 を hold（2007-01〜2025-12）で推定した係数で 2026-01〜2026-08 の超過を予測し、実現と並べる（NDX_TR・SEMI・NET・MIX・CASTLE5）",
+   "post2025_jkp": "JKP が 2026 年を公開したら A5 を post2025 窓で（今は『データ無し』と記録）",
+   "ifree_nav": "iFreeNEXT NASDAQ100 の基準価額（円・2018-09〜2026-08 の月次）: (1) QQQ の円建て（同じ暦月）との差の平均（年率）・TE・相関・β。(2) 日本の投信の基準価額は前営業日の米国の終値で決まるので、Yahoo の日次の QQQ（配当込み）を『各月末の基準価額の日より前の最後の米国営業日』の終値と、その米国の日の DEXJPUS で月次にした版とも比べる（副）。(3) A5 を (iFree 円 − Mkt 円) の 2018-09〜2025-12 に当て、同じ月の QQQ 円の A5 と載りを並べる"
+  }
+ },
+ "sanity_checks": [
+  "French Mkt の年率 1926〜 ≈ 10.4%・2007〜 ≈ 11.1%（mw_common の検算）",
+  "Yahoo の月の合わせ方: ^GSPC（価格）の月次と French Mkt の相関を 同じ月・1か月ずらし で比べる（同じ月が最大であること）",
+  "Q の再現: 1963-07〜2025-12 の平均 ≈ +2.23%/年（mw_reality_gap の P1_cop_at）・hold ≈ +2.88",
+  "G の再現: hold の平均 ≈ +0.98%/年 t2.36（mw_gate_proxy の P1_GATE_ALL）",
+  "QQQ の hold（2007-01〜2026-08）対 Mkt ≈ +5.06%/年 t3.47（mw_reality_gap）",
+  "^NDX（価格のみ）と QQQ の重なる月（1999-04〜2026-08）の差＝配当利回り−信託報酬の大きさ（1999-03 以前の下限の幅の目安）",
+  "欠測を0にしない: 各系列の月数と、回帰でそろわず落ちた月数を記録"
+ ],
+ "reference_grades": "記述の角度なので結論に格付けは使わない。ただし他の角度と並べるため、NDX_TR・SEMI・XLK・NET・NET_CHIPS・MIX・CASTLE・CASTLE5 に mw_common.grade を当てた結果を『参考』として記録する（相手 French Mkt・C5 は N/A・Holm はこの8本の中・費用: 実在の手段は信託報酬が値に入っているので追加なし、城は年40%の片道回転×0.10%、配合の組み直しは年15%×0.10%）。生き残りと後知恵で選んだ手段なので、参考の格付けは勝ちの証拠に数えない",
+ "expectations_written_before_measuring": "予想: (1) NDX の Q への載りは hold で 1.0〜1.6 と正、train（1985-2006）では 0 前後か負（1990年代末の赤字のネット企業）＝載りは不安定。BusEq の載りは両方の窓で 0.8〜1.0 と安定。(2) SEMI は β が大きく、Q の載りは train で負・hold で正に振れる。(3) 業種の実現の寄与は hold で大きな正（+3〜5%/年）、train では 2000-02 年の崩れで小さいか負。検証済みの割増から期待できるのは年 +1% 前後（b_q≈1 × E[Q]≈2% × h≈0.5）で、hold の実現の超過の大半は業種（とβ）で説明される。(4) 城は NDX と SEMI を持った上でも Q の載りが正（0.3〜1.0）だが t は 2 に届かないかもしれない。(5) 城の TE は Mkt 相手で 12〜15%、NET 相手で 10〜13%。NET が推奨になると予想。t=2 に要る年数は数十年",
+ "known_limits": [
+  "実在の手段（QQQ・SMH・XLK）と城の5社は 2026年の知識で選んだ生き残り（後知恵の選択）。α と実現の超過の大きさは楽観側に偏る。載り（どちらを向いているか）だけを読む",
+  "1999-03 以前の NDX と 2000-06 以前の SOX は配当の無い価格指数＝超過は下限。SMH は 2011-12 まで HOLDRS（固定20社）で今の SMH（MVIS 25社）とは中身が違う",
+  "Q・G は分散した三分位（数百〜数千社）の上乗せ。載りは『同じ月に同じ向きに動いたか』で、配合がその会社を持っているかではない",
+  "Q と G は強く相関する（どちらも質）ので、A5 で両方を入れると分け方は不安定。A5q・A5g・A2・A3 を並べて読む",
+  "業種の回帰は 12業種の超過どうしでほぼ多重共線（市場の重みで足すと0）。個々の業種の係数より、業種の項の合計（実現の寄与）を読む",
+  "公表後の割り引き h（0.44〜0.56）は JKP の因子の平均の縮み。cop_at そのものの縮みではない",
+  "castle_rule の相手の推奨は追従のぶれ（ノイズ）の大きさで決める。城の上乗せがあるかは測らない（城の5社は後知恵）",
+  "円建ては為替の水準の運を含む（1985年の 1ドル=240円台から今の 150円台）",
+  "iFreeNEXT の基準価額は 2018-09〜の約8年で短い。基準価額の日と米国の終値の日は1営業日ずれる"
+ ]
+}

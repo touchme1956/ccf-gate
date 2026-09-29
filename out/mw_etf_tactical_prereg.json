@@ -1,0 +1,300 @@
+{
+ "angle": "etf_tactical",
+ "title": "公表済みの戦術的資産配分・ローテーション規則を、実在のファンド（ETF・投信）と長い代理で試す",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "asked_by": "ユーザー（2026-09-28）「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して」→ 角度 etf_tactical を担当",
+ "what_was_looked_at_before_registering": [
+  "データの有無と期間だけ。戦略と市場を比べた数字は一つも計算していない",
+  "Yahoo 月次（調整後終値・配当込み）の最初の月: VFINX 1985-02・VUSTX 1986-06・VFITX 1991-11・VBMFX 1987-01・VGTSX 1996-05・VEIEX 1994-06・VGSIX 1996-06・FRESX 1986-12・VWESX 1985-02・VWEHX 1985-02・VFISX 1991-11・NAESX 1985-02・VEURX 1990-07・VTMGX 1999-09・RYOCX 1994-03・PCRIX 2002-08・^NDX 1985-11（価格のみ）・Fidelity Select: FSPTX/FSENX/FIDSX/FSUTX/FSPHX/FSDAX 1985-02・FDFAX 1985-08・FSDPX/FSRFX 1986-10・FSCPX 1990-07（FCYIX〔Select Industrials〕は Yahoo に無い）・ETF: SPY 1993-02・QQQ 1999-04・XL* 9本 1999-01・EWJ 1996-04・IWM 2000-06・EFA 2001-09・TLT/IEF/SHY/LQD 2002-08・EEM 2003-05・AGG 2003-10・VNQ 2004-10・GLD 2004-12・VWO/VGK 2005-04・GSG 2006-08・BND/HYG 2007-05・VEU 2007-04（いずれも最初のリターンの月）",
+  "Yahoo は投信の月次を 1985-02 より前には返さない（VFINX の設定は1976年だが Yahoo の系列は 1985 から）",
+  "French: F-F_International_Indices の Ind_all（EAFE 相当・ドル建て・1975-01〜2025-12）・Ind_Eur_With_UK（欧州）・F-F_International_Countries の Japan（1975-01〜2025-12）・Emerging_5_Factors（月次 1989-07〜2026-08）・10_Industry_Portfolios（1926-07〜）・3因子の Mkt と RF（1926-07〜2026-08）",
+  "FRED の日次の国債利回り DGS2（1976-06〜）・DGS5・DGS10・DGS20（1962〜・DGS20 は 1987〜1993 が欠け）",
+  "AQR『Commodities for the Long Run』の等加重商品先物の超過リターン（1877-02〜2025-05）",
+  "LBMA 金 PM 価格（日次・1968-04〜2026-09）＝月末値が取れる（世界銀行の月平均は平均による見かけの自己相関が勢いの規則を有利にするので使わない）",
+  "JKP の GICS 11セクター（国別・vw・超過・1999-07〜2025-12）が jpn/gbr/can/fra/deu/aus/che で取れること（他の角度のキャッシュで確認）"
+ ],
+ "global_criteria": "out/mw_prereg.json（C1〜C8・格付け S/A/B/C）をそのまま使う。判定は night/mw_common.grade()。線は動かさない",
+ "question": "公表された戦術的資産配分・ローテーションの規則（Antonacci の GEM・Faber の GTAA-5・Keller の VAA-G4 と DAA-G12・Faber 2010 のセクターの勢い）を、実在の ETF・投信（生き残りの偏りあり）と、それより前へ延ばす長い代理でそのまま動かすと、純粋な時価加重の米国株（French Mkt ≒ S&P500）に、訓練期間（〜2006）でも保有期間（2007〜）でも費用後に勝つか",
+ "sources": {
+  "GEM": "Antonacci, G. (2014) 'Dual Momentum Investing', McGraw-Hill（原型 SSRN 2012 'Risk Premia Harvesting Through Dual Momentum'）。公表年 2014 → 公表後 2015-01〜",
+  "GTAA5": "Faber, M. (2007) 'A Quantitative Approach to Tactical Asset Allocation', Journal of Wealth Management。公表年 2007 → 公表後 2008-01〜",
+  "VAA": "Keller, W. & Keuning, J. (2017) 'Breadth Momentum and Vigilant Asset Allocation (VAA): Winning More by Losing Less', SSRN 3002624。公表年 2017 → 公表後 2018-01〜",
+  "DAA": "Keller, W. & Keuning, J. (2018) 'Breadth Momentum and the Canary Universe: Defensive Asset Allocation (DAA)', SSRN 3212862。公表年 2018 → 公表後 2019-01〜",
+  "SECTOR": "Faber, M. (2010) 'Relative Strength Strategies for Investing', SSRN 1585517（French 10業種で上位1〜3業種を買う）。公表年 2010 → 公表後 2011-01〜"
+ },
+ "versions": {
+  "E": "ETF だけ（論文や実務で名指しされる ETF）。ETF が全部そろってから始まる＝訓練期間が短いか無い＝C1・C4 は原理的にほぼ通らない（B 止まりが設計上の上限）",
+  "F": "実在のファンドだけ（ETF があればETF、無い期間はいちばん長く続く同じ資産クラスの投信）。代理の指数は使わない",
+  "L": "長い代理（ETF ← 投信 ← 指数の代理 の順に、その月に値のある最初のものをつなぐ）。訓練期間を延ばして C1・C4 に検出力を持たせるための版",
+  "splice_rule": "各枠の月次リターンは、その版で使える源のうち優先順位の最も高い、その月に値のある源から取る（ETF > 投信 > 代理）。信号（過去のリターン・移動平均）もつないだ系列から計算する。版の開始は、必要な全ての枠が信号の窓を満たした最初の月の翌月"
+ },
+ "slots": {
+  "US": {
+   "etf": [
+    "SPY"
+   ],
+   "fund": [
+    "VFINX"
+   ],
+   "proxy": "French Mkt（Mkt-RF+RF）"
+  },
+  "NDX": {
+   "etf": [
+    "QQQ"
+   ],
+   "fund": [
+    "RYOCX"
+   ],
+   "proxy": "^NDX の月次価格リターン＋推定配当 年0.5%（月 0.5%/12・配当の欠測を0と読まない）"
+  },
+  "SMALL": {
+   "etf": [
+    "IWM"
+   ],
+   "fund": [
+    "NAESX"
+   ],
+   "proxy": null
+  },
+  "EAFE": {
+   "etf": [
+    "EFA"
+   ],
+   "fund": [
+    "VTMGX"
+   ],
+   "proxy": "French Ind_all Mkt（ドル建て・EAFE 相当）"
+  },
+  "ACWXUS": {
+   "etf": [
+    "VEU"
+   ],
+   "fund": [
+    "VGTSX"
+   ],
+   "proxy": "French Ind_all Mkt（EAFE 相当・新興国とカナダを含まない代理）"
+  },
+  "EUROPE": {
+   "etf": [
+    "VGK"
+   ],
+   "fund": [
+    "VEURX"
+   ],
+   "proxy": "French Ind_Eur_With_UK Mkt"
+  },
+  "JAPAN": {
+   "etf": [
+    "EWJ"
+   ],
+   "fund": [],
+   "proxy": "French International Countries Japan Mkt"
+  },
+  "EM_EEM": {
+   "etf": [
+    "EEM"
+   ],
+   "fund": [
+    "VEIEX"
+   ],
+   "proxy": "French Emerging（Mkt-RF+RF）"
+  },
+  "EM_VWO": {
+   "etf": [
+    "VWO"
+   ],
+   "fund": [
+    "VEIEX"
+   ],
+   "proxy": "French Emerging（Mkt-RF+RF）"
+  },
+  "AGG": {
+   "etf": [
+    "AGG"
+   ],
+   "fund": [
+    "VBMFX"
+   ],
+   "proxy": "5年国債の構成（FRED DGS5）"
+  },
+  "BND": {
+   "etf": [
+    "BND",
+    "AGG"
+   ],
+   "fund": [
+    "VBMFX"
+   ],
+   "proxy": "5年国債の構成（FRED DGS5）"
+  },
+  "LQD": {
+   "etf": [
+    "LQD"
+   ],
+   "fund": [
+    "VWESX"
+   ],
+   "proxy": null
+  },
+  "IEF": {
+   "etf": [
+    "IEF"
+   ],
+   "fund": [
+    "VFITX"
+   ],
+   "proxy": "10年国債の構成（FRED DGS10）"
+  },
+  "SHY": {
+   "etf": [
+    "SHY"
+   ],
+   "fund": [
+    "VFISX"
+   ],
+   "proxy": "2年国債の構成（FRED DGS2）"
+  },
+  "TLT": {
+   "etf": [
+    "TLT"
+   ],
+   "fund": [
+    "VUSTX"
+   ],
+   "proxy": "20年国債の構成（FRED DGS20）"
+  },
+  "HYG": {
+   "etf": [
+    "HYG"
+   ],
+   "fund": [
+    "VWEHX"
+   ],
+   "proxy": null
+  },
+  "VNQ": {
+   "etf": [
+    "VNQ"
+   ],
+   "fund": [
+    "VGSIX",
+    "FRESX"
+   ],
+   "proxy": null
+  },
+  "GSG": {
+   "etf": [
+    "GSG"
+   ],
+   "fund": [
+    "PCRIX"
+   ],
+   "proxy": "AQR 等加重商品先物の超過リターン＋French RF（担保つき先物の総リターンの代理）"
+  },
+  "GLD": {
+   "etf": [
+    "GLD"
+   ],
+   "fund": [],
+   "proxy": "LBMA 金 PM の月末値のリターン"
+  },
+  "TBILL": "French RF（1か月 T-bill）を全ての版で現金とする（E でも BIL は2007年からなので RF。現金の手数料は無視）",
+  "SECTORS_EF": {
+   "XLB": "FSDPX",
+   "XLE": "FSENX",
+   "XLF": "FIDSX",
+   "XLI": "FSDAX と FSRFX の 50/50（毎月リバランス・Select Industrials は Yahoo に無いための合成）",
+   "XLK": "FSPTX",
+   "XLP": "FDFAX",
+   "XLU": "FSUTX",
+   "XLV": "FSPHX",
+   "XLY": "FSCPX"
+  },
+  "SECTORS_L": "French 10_Industry_Portfolios（時価加重）の Other を除く9業種 NoDur Durbl Manuf Enrgy HiTec Telcm Shops Hlth Utils（CRSP・上場廃止も含む・1926-07〜）。L 版はこの9業種だけで、実在のファンドにはつながない",
+  "TECH": {
+   "etf": [
+    "XLK"
+   ],
+   "fund": [
+    "FSPTX"
+   ],
+   "proxy_L": "French 10業種 HiTec（L 版は French HiTec 対 French Mkt）"
+  },
+  "treasury_construction": "月末の利回り y（その月の最後の観測日の値）で、満期 N 年・利率 y_{t-1}・半年払いの額面債を t−1 月末に買い、t 月末に残存 N−1/12 年・利回り y_t で値付けする: r_t = P(y_t; c=y_{t-1}, n=N−1/12) − 1 + y_{t-1}/12、P = c/y·(1−(1+y/2)^(−2n)) + (1+y/2)^(−2n)。費用なし"
+ },
+ "rules": {
+  "common": "信号は t 月末までに分かるリターンだけで作り、t+1 月の1か月間保有する（毎月末にリバランス）。r_k(t) = t−k+1〜t 月の k か月の複利リターン（つないだ総リターン系列）。13612W(t) = 12·r_1 + 4·r_3 + 2·r_6 + r_12（Keller の定義）。SMA10 = 総リターン指数の月末値の直近10個（t を含む）の平均（Faber は価格指数だが、投信の分配落ちで偽の売り信号が出ないよう総リターン指数を使う＝事前に決めた逸脱）。同点は枠の並び順。欠測を0で埋めない（信号の窓に欠けがある月は始めない）",
+  "P1_GEM": "t 月末に r_12(US) > r_12(TBILL) なら US と ACWXUS のうち r_12 の大きい方（同点は US）を100%、そうでなければ AGG を100%",
+  "P2_GTAA5": "US・EAFE・IEF・GSG・VNQ を各20%。各枠は t 月末の総リターン指数が SMA10 より上なら保有、以下ならその20%を TBILL",
+  "P3_VAA_G4": "攻め US・EAFE・EM_EEM・AGG、守り LQD・IEF・SHY。攻めの4つすべての 13612W > 0 なら攻めのうち 13612W が最大の1つを100%、1つでも ≤ 0 なら守りのうち 13612W が最大の1つを100%（負でも選ぶ）",
+  "P4_DAA_G12": "攻め US・SMALL・NDX・EUROPE・JAPAN・EM_VWO・VNQ・GSG・GLD・TLT・HYG・LQD（12）、カナリア EM_VWO・BND、守り SHY・IEF・LQD。b = 13612W ≤ 0 のカナリアの数、現金比率 CF = b/2。攻めの 13612W の上位6つに (1−CF)/6 ずつ、守りの 13612W 最大の1つに CF。逸脱: 論文の守りは SHY・IEF・UST（2倍の7-10年国債 ETF・2010年〜）だが、長い代理が無いので VAA と同じ LQD に置き換える",
+  "P5_SECTOR3_12": "9セクターを t 月末の r_12 で順位付けし、上位3つを1/3ずつ。L=French 9業種、F=Fidelity Select→SPDR、E=SPDR",
+  "R1_6040": "参照: US 60%・AGG 40%、毎月リバランス",
+  "R2_RP": "参照: 逆ボラの株債（US と IEF）。重み ∝ 1/σ（直近12か月の月次リターンの標準偏差）、合計1、毎月",
+  "R3_EW9": "参照: 9セクター等分（毎月リバランス）＝セクターの勢いから『等分の傾き』を切り離すための比較",
+  "R4_BH": "参照: US 枠を買って持つ（F=VFINX→SPY、E=SPY）。費用と French Mkt との差の確認",
+  "X1_NDX_US": "探索: r_12(NDX) > r_12(US) なら NDX、そうでなければ US（常に株100%）",
+  "X2_TECH_US": "探索: r_12(TECH) > r_12(US) なら TECH、そうでなければ US（L=French HiTec 対 French Mkt、F=FSPTX→XLK 対 VFINX→SPY、E=XLK 対 SPY）",
+  "X3_SECTOR3_BLEND": "探索: セクター上位3つ、順位の点 = (r_1 + r_3 + r_6 + r_12)/4（Faber 2010 の組み合わせに近い形。論文の正確な重みは確認できないので、この形を事前に固定）",
+  "X4_SECTOR3_ABS": "探索: セクター上位3つ（r_12）、ただし選んだセクターの r_12 が r_12(TBILL) 以下ならその1/3は TBILL（Faber 2010 の絶対の条件つき版に近い形）",
+  "X5_GEM_REL": "探索: GEM の相対だけ（r_12 の大きい方の US か ACWXUS を100%・債券へ逃げない）",
+  "X6_EQ5_TOP1": "探索: 株の5枠 US・NDX・SMALL・EAFE・EM_EEM のうち r_12 最大の1つを100%",
+  "X7_SECTOR_K": "探索（感度）: セクター上位 K=1・2・4（r_12・等分）"
+ },
+ "families": {
+  "primary": "P1〜P5 × {L,F,E}＝15本。Holm はこの15本の中で（保有期間・費用後・両側 p）",
+  "exploratory": "X1〜X6 × {L,F,E}＝18本 ＋ X7 の K=1,2,4 × {L,F,E}＝9本、計27本。Holm はこの27本の中で。結果には『探索』と明記",
+  "reference": "R1〜R3 × {L,F,E}＋R4 × {F,E}＝11本。勝ちの候補ではなく比較の物差し。判定はするが候補に数えない（Holm は参照11本の中で）"
+ },
+ "timing_classification": "株以外（債券・現金・商品・金・REIT）を持つことがある規則は『タイミング・配分型』として C8（訓練と保有の両方でシャープレシオが French Mkt を上回る）を掛ける: P1〜P4・X4・R1・R2。常に株100%の規則（P5・X1〜X3・X5〜X7・R3・R4）は C8 を掛けない（mw_prereg の定義どおり）。シャープは全部に報告する",
+ "benchmark": {
+  "graded": "French Mkt（Mkt-RF+RF・総リターン・上限なしの時価加重）。戦略も総リターンなので総リターンどうし。French の終わり 2026-08 で切る（Yahoo の 2026-09 は途中の月なので使わない）",
+  "reported": "VFINX→SPY のつないだ系列（実際に買える S&P500）、60/40（R1 の同じ版）を配分型（P2・P3・P4・R2）に報告",
+  "note": "ETF・投信のリターンは信託報酬を引いた後、French Mkt は費用なし＝戦略に不利な側"
+ },
+ "periods": {
+  "train": "開始〜2006-12",
+  "holdout": "2007-01〜2026-08",
+  "recent": "2013-07〜（報告）",
+  "post_publication": "出典の公表年の翌年1月〜（報告・判定には使わない。課題文は公表後を主の保有期間と書くが、全角度で共通の mw_prereg が 2007〜 を保有期間と定めているので判定は 2007〜、公表後は並べて報告する＝事前に決めた扱い）"
+ },
+ "costs": {
+  "graded": "片道売買100%あたり 0.10%（= 1回の売り・買いそれぞれ 0.05%）。各月の実際の売買量 Σ|目標の重み − 値動き後の重み| × 0.05% をその月に引く（mw_common.apply_cost と同じ単価を、平均でなく各月の実額に掛ける）。最初の購入は相手の買って持つと同じなので数えない",
+  "stress": "報告: 片道 0.30%",
+  "not_included": "投信期間のロード（Fidelity Select は昔 3% の販売手数料と短期売買の 0.75% 解約手数料があった）・頻繁な売買の制限（Vanguard の30〜60日ルール）は入れない＝F・L 版の投信期間は実際には同じ費用で執行できなかった可能性がある（限界として明記）",
+  "tax": "報告のみ: 日本の課税口座（売却益に20.315%・年内の損益通算・損失の3年繰越・平均取得単価）で保有期間を回し、最後に全部売った税引後の年率を、買って持つ（最後に売る）と比べる。配当課税は両方にかかるので入れない（近似）"
+ },
+ "grading_inputs": {
+  "full": "excess_stats(戦略・費用前, French Mkt)（全期間）",
+  "train": "同 〜2006-12",
+  "hold": "同 2007-01〜",
+  "recent": "同 2013-07〜",
+  "cost_hold": "excess_stats(戦略・費用後, French Mkt, 2007-01〜)",
+  "roll20": "rolling(戦略・費用後, French Mkt, 20)",
+  "dca": "dca(戦略・費用後, French Mkt, 20)",
+  "holm": "族の中の Holm（保有期間・費用後の excess_stats の両側 p）",
+  "sharpe_pair": "sharpe(費用後, RF) と sharpe(French Mkt, RF) を訓練・保有で",
+  "repl": "C5: セクター規則（P5・X3・X4・X7）だけ、JKP GICS 11セクター（vw・超過＋French RF で総リターン）で同じ規則（上位 K をその月に値のあるセクターから・等分・毎月）を jpn・gbr・can・fra・deu・aus・che の7か国に当て、その国の JKP mkt（vw）との差の算術平均が正の国の数（期間は各国の取れる全期間）。GICS は11なので9とは違う（限界）。他の規則は地域版が無いので N/A"
+ },
+ "sanity_checks": [
+  "French Mkt の年率 1926-2026 ≈ 10.4%・2007〜 ≈ 11.1%（mw_common の検算）",
+  "VFINX 対 French Mkt・^SP500TR（年率差が信託報酬程度か）",
+  "代理と実物の重なる期間の相関と年率差（構成国債 対 VFITX/IEF/VUSTX/VFISX/VBMFX、French EAFE 対 VTMGX/EFA、French EM 対 VEIEX、French 欧州 対 VEURX、French 日本 対 EWJ、AQR 商品＋RF 対 GSG/DBC、LBMA 金 対 GLD、NDX+0.5% 対 QQQ、Fidelity Select 対 SPDR）",
+  "Yahoo の月次の外れ値（|r|>40%）の一覧",
+  "信号が t までのデータしか使わないこと（関数に t までの系列しか渡さない作り）"
+ ],
+ "expectations_before_results": [
+  "GTAA-5・VAA・DAA・60/40・逆ボラは債券・現金を持つ時期があるので、2007〜 の株の上げ相場では年率で市場に負けると予想（シャープは上回るかもしれない）",
+  "GEM は 2008 年の下落を避けるが、2015 年以降のだましで負けると予想（不確か）",
+  "セクターの勢いは他の角度（French の業種）で A〜S が出ているが、実在の SPDR・Fidelity では費用と9つという粗さで弱まると予想",
+  "X1（NASDAQ100 対 S&P500）は 2007〜 に NASDAQ100 が勝った事実を私たちは知っている＝後知恵が混ざる。勝っても割り引いて読む"
+ ],
+ "known_limits": [
+  "ETF・投信は今も存続するものだけ（生き残りの偏り）。French 代理は CRSP 由来で偏りなし",
+  "Yahoo は投信を 1985-02 より前に返さないので、F 版の訓練期間は最長でも約20年、E 版はほぼ無い＝C1・C4 は L 版でしか検出力を持たない",
+  "代理はそれぞれ近似（French EAFE は新興国とカナダを含まない・構成国債は信用も凸性も簡略・AQR 商品は等加重で GSCI ではない・NDX の配当は推定）",
+  "20年窓は重なる。独立な試行は少ない",
+  "私たちは 2007 年以降の結果（リーマン・巨大テック）を知っている。規則は論文の既定値で固定したが、どの論文・どの規則を選んだかに後知恵が混ざりうる"
+ ]
+}

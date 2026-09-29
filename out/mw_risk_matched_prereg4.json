@@ -1,0 +1,25 @@
+{
+ "angle": "risk_matched",
+ "prereg_no": 4,
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "kind": "現実の答え合わせ（探索・報告が主）。紙の上の『低リスク・質を市場と同じぶれに合わせる』を、個人が実際に買える ETF でやったらどうだったか",
+ "what_was_seen_before_registering": "第1族・第2族の全結果と、頑健性の点検（事前登録3）の途中まで（P の営業CF÷総資産の上位三分位: 未使用の国 25/32 が正、French の OP 上位30% でも保有期間 +1.5〜2.2%/年、上限つき vw_cap で作ると保有期間 −0.2〜−0.5%/年）。ETF の成績は一つも計算していない。データの有無だけ（Yahoo の月次の始まり: USMV 2011-11・SPLV 2011-06・QUAL 2013-08・SPHQ 2006-01・JQUA 2017-12・DGRW 2013-06・XMLV 2013-03・LGLV 2013-03・FDLO 2016-10・EFAV 2011-11・EEMV 2011-11・ACWV 2011-11・SPY 1993-02・EFA 2001-09・EEM 2003-05・ACWI 2008-04）。CLAUDE.md に『実在の質ETF（SPHQ −1.1 / QUAL −0.5 %/年 vs SPY）』が既に書いてある（後知恵の漏れ）",
+ "vehicles": {
+  "US_lowvol": {"USMV": "SPY", "SPLV": "SPY", "LGLV": "SPY", "FDLO": "SPY", "XMLV": "SPY（中型の低ボラ。相手は参考として SPY）"},
+  "US_quality": {"QUAL": "SPY", "SPHQ": "SPY", "JQUA": "SPY", "DGRW": "SPY"},
+  "intl_lowvol": {"EFAV": "EFA", "EEMV": "EEM", "ACWV": "ACWI"},
+  "_note": "ETF: 相手の ETF（どちらも Yahoo の調整後終値＝分配込み・信託報酬は価格に入っている）"
+ },
+ "rules": {
+  "dynamic": "第1族と同じ: 毎月 t の倍率 = min(2, σ(相手の月次超過, t−36〜t−1) ÷ σ(ETF の月次超過, 同じ36か月))。最初の36か月は持たない",
+  "beta_dynamic": "第2族と同じ: min(2, 1 ÷ β̂(36か月))、β̂ ≤ 0 なら 2",
+  "unlevered": "倍率1（そのまま持つ）",
+  "no_static": "ETF には 2006年以前の訓練期間が無い（SPHQ も 2006-01〜の12か月だけ）ので、訓練で決める固定倍率は作らない",
+  "financing_costs": "借入 RF+1%/年（RF は French の月次）。売買の費用は倍率の戻しの売買 × 0.10% だけ（ETF の中の売買と信託報酬は価格に入っている）",
+  "months": "ETF と相手の両方がそろい、French の RF がある月だけ（Yahoo の最後の月は途中までなので 2026-08 まで）"
+ },
+ "paper_twin": "同じ月の窓で、紙の上の対応（JKP 'vw' 三分位・同じ規則）を相手（米国は French Mkt・米国外は JKP 地域の vw 市場）に当てた成績を並べる。対応: 米国の低ボラ ETF → JKP usa rvol_21d の三分位1／米国の質 ETF → JKP usa ocf_at の三分位3（第1族 P の勝ち）／EFAV → JKP world_ex_us rvol_21d の1／EEMV → JKP emerging rvol_21d の1／ACWV → JKP world rvol_21d の1。紙と現実の差（ギャップ）を年率で出す",
+ "grading": "mw_common.grade にそのまま渡す（訓練期間が無いので C1 は不合格＝C になる。これは『線を下げない』ための機械的な結果で、判定よりも保有期間の数字そのものを報告の主にする）。族 R（12本 × 3 規則 = 36本）に独自の Holm",
+ "limits": ["ETF は生き残ったものだけ・有名なものを今の知識で選んでいる（後知恵の選択）", "窓は 2011〜2026 の約11〜15年（準備36か月を引くと 8〜12年）で短い。巨大テックが勝った時代とほぼ重なる", "日本の個人が米国ETFを信用で2倍近く持つのは現実には難しい（信用取引の金利は RF+1% より高い）"]
+}

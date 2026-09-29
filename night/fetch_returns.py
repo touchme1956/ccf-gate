@@ -239,6 +239,140 @@ def build_series(rows, sers, bench, fx, compared, compared_tr, benchmark):
             "endpoint_gap": gap, "downsampled": thin}
 
 
+def castle_rule_block(st, positions, sers, fx, t0, t1):
+    """個別の比率の規則（portfolio.json target.castle_rule）の物差し（v9.9.196・2026-09-29
+    ユーザー明示指示「今までの検証で必要なものを実装してほしい」）。
+    ★規則は「個別株だけ 対 置き換えるETFの袖」の**年率の差**で判定するのに、📈成績の castle は
+      買付日から数えた**累計**しか出さず、起点に規則より前の先行（+10.4pt）が入り、売った株は消えていた
+      （2026-09-29 の点検・検証役2人が確認）。ここで規則の文言どおりに測る:
+      ① 起点は規則の日（target.castle_rule_measure.start）。それより前の値動きは数えない
+      ② 時間加重（日次・配当込み adjclose・円建て）＝入金の時期や推定の買付日に左右されない
+      ③ 売った個別株も売った日まで数える（pf:sold の date と sh）
+      ④ 相手は置き換えるETFの袖（target.castle_rule_measure.sleeve・日次で比を保つ）。QQQM 単体も並べる
+      ⑤ 年率は起点から1年たってから（1年未満の年率は桁が暴れる）
+    表示専用——Ω・四関門・売却規律・配分には触れない。比率を動かすのは人が年1回この数字を見て決める。"""
+    try:
+        pfj = json.load(open(os.path.join(BASE, "portfolio.json"), encoding="utf-8"))
+    except Exception:
+        pfj = {}
+    cfg = ((pfj.get("target") or {}).get("castle_rule_measure") or {})
+    start = str(cfg.get("start") or "2026-09-25")
+    mix = {str(k).upper(): float(v) for k, v in (cfg.get("sleeve") or {"QQQM": 75, "SMH": 25}).items() if float(v) > 0}
+    msum = sum(mix.values()) or 1.0
+    base = {"start": start, "sleeve_mix": mix, "ok": False}
+    if not fx:
+        return dict(base, why="ドル円が取れない")
+    try:
+        sold = json.loads((st.get("data") or {}).get("pf:sold") or "[]")
+    except Exception:
+        sold = []
+    names = {}
+    for p in positions:
+        if p.get("sleeve") != "castle":
+            continue
+        t = p["t"]
+        n = names.setdefault(t, {"sh_now": 0.0, "buys": [], "sells": [], "ccy": p.get("ccy")})
+        n["sh_now"] += float(p.get("sh") or 0)
+        n["buys"] += [(l["bd"], float(l.get("sh") or 0)) for l in (p.get("bdLots") or [])
+                      if l.get("bd") and str(l["bd"]) > start]
+    for s in sold or []:
+        pos = s.get("pos") or {}
+        if (s.get("sleeve") or pos.get("sleeve")) != "castle":
+            continue
+        d = str(s.get("date") or "")
+        if not d or d <= start:          # 規則の前に売った社は物差しの外（起点に居ない）
+            continue
+        t = s.get("t")
+        n = names.setdefault(t, {"sh_now": 0.0, "buys": [], "sells": [], "ccy": pos.get("ccy")})
+        n["sells"].append((d, float(s.get("sh") or pos.get("sh") or 0)))
+    if not names:
+        return dict(base, why="個別株の保有が無い")
+
+    def shares(t, day):
+        n = names[t]
+        v = n["sh_now"] - sum(q for d, q in n["buys"] if d > day) + sum(q for d, q in n["sells"] if d > day)
+        return max(0.0, v)
+
+    ser, miss = {}, []
+    for t, n in names.items():
+        jp = (n.get("ccy") == "JPY") or str(t)[:1].isdigit()
+        s = sers.get(t) or yahoo(f"{t}.T" if jp else t, t0, t1)
+        if s:
+            ser[t] = (s, jp)
+        else:
+            miss.append(t)
+    if miss:
+        return dict(base, why="株価が取れない個別株: " + ",".join(miss))
+    opp = {}
+    for k in set(mix) | {"QQQM"}:
+        s = sers.get(k) or yahoo(k, t0, t1)
+        if not s:
+            return dict(base, why=f"{k} の株価が取れない")
+        opp[k] = s
+    cal = sorted(d for d in opp["QQQM"] if d >= start)
+    if len(cal) < 2:
+        return dict(base, why="起点のあとの取引日がまだ無い", days=0)
+
+    def yen_of(s, jp, day):
+        a = on_or_before(s, day)
+        if not a:
+            return None
+        if jp:
+            return a[1]
+        k = on_or_before(fx, day)
+        return a[1] * k[0] if k else None
+
+    ic = io = iq = 1.0
+    monthly = [[cal[0], 1.0, 1.0, 1.0]]
+    prev = cal[0]
+    for day in cal[1:]:
+        num = den = 0.0
+        for t, (s, jp) in ser.items():
+            q = shares(t, prev)
+            if q <= 0:
+                continue
+            p0, p1 = yen_of(s, jp, prev), yen_of(s, jp, day)
+            if p0 and p1:
+                num += q * p1
+                den += q * p0
+        if den > 0:
+            ic *= num / den
+        ro = 0.0
+        for k, w in mix.items():
+            a0, a1 = yen_of(opp[k], False, prev), yen_of(opp[k], False, day)
+            if a0 and a1:
+                ro += (w / msum) * (a1 / a0 - 1)
+        io *= 1 + ro
+        q0, q1 = yen_of(opp["QQQM"], False, prev), yen_of(opp["QQQM"], False, day)
+        if q0 and q1:
+            iq *= q1 / q0
+        prev = day
+        # 月ごとに最後の日の値を1点だけ残す（のちの「直近5年」の窓をここから切れるように）
+        if monthly[-1][0][:7] == day[:7]:
+            monthly[-1] = [day, round(ic, 6), round(io, 6), round(iq, 6)]
+        else:
+            monthly.append([day, round(ic, 6), round(io, 6), round(iq, 6)])
+    d0 = datetime.date.fromisoformat(cal[0])
+    d1 = datetime.date.fromisoformat(cal[-1])
+    days = (d1 - d0).days
+    out = dict(base, ok=True, asof=cal[-1], days=days,
+               names=sorted(names), sold_after_start=sorted(t for t, n in names.items() if n["sells"]),
+               castle_cum=ic - 1, sleeve_cum=io - 1, qqqm_cum=iq - 1,
+               diff_cum_vs_sleeve_pt=(ic - io) * 100, diff_cum_vs_qqqm_pt=(ic - iq) * 100,
+               monthly=monthly, annualized=False,
+               how=("時間加重・日次・配当込み(adjclose)・円建て。起点の日の終値から数える。"
+                    "ETFの袖は日次で比を保つ（QQQM を NASDAQ100 の代わりに使う＝iFreeNEXT の信託報酬の差 年約0.35pt は相手に有利なまま）"))
+    if days >= 365:
+        yrs = days / 365.25
+        ann = lambda x: x ** (1 / yrs) - 1
+        out.update(annualized=True, castle_ann=ann(ic), sleeve_ann=ann(io), qqqm_ann=ann(iq),
+                   diff_ann_vs_sleeve_pt=(ann(ic) - ann(io)) * 100,
+                   diff_ann_vs_qqqm_pt=(ann(ic) - ann(iq)) * 100)
+    else:
+        out["annualize_why"] = f"起点から {days} 日＝1年未満なので年率にしない（最初の判定は 2029-09）"
+    return out
+
+
 def main():
     st_path = os.path.join(BASE, "state.json")
     if not os.path.exists(st_path):
@@ -636,6 +770,11 @@ def main():
         "notes": notes,
         "blind": blind,
     }
+    # ★個別の比率の規則の物差し（v9.9.196）。取れなくても他の成績は書く（取れない理由を名指しで残す）
+    try:
+        out["castle_rule"] = castle_rule_block(st, positions, sers, fx, t0, t1)
+    except Exception as e:
+        out["castle_rule"] = {"ok": False, "why": f"計算で例外: {e}"}
     if span is not None and span >= ANNUALIZE_MIN_DAYS:
         out["annualized"] = True
         if any(r.get("bd_est") for r in rows):

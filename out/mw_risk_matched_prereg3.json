@@ -1,0 +1,19 @@
+{
+ "angle": "risk_matched",
+ "prereg_no": 3,
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "kind": "頑健性の点検（格付けは変えない）。勝ちを疑うための追加の答え合わせ",
+ "what_was_seen_before_registering": "第1族（P・U・X1・XU・S）の全結果。第2族（X2・X3・X4）の結果はまだ見ていない（計算中にこの登録を書いた）。点検の数字は一つも計算していない。データの有無だけ: JKP の国別 'vw' 三分位があるのは78地域（availability.json の portfolios）",
+ "targets": "格付けが S または A になった全部（P・U・X1・XU・X2・X3・X3U・X4・X4U のどの族でも）。S・S2 族（報告のみ）は対象外",
+ "grade_unchanged": "点検の結果で格付け（S/A/B/C）は変えない。点検は『どれだけ頑丈か』を足す情報で、結果の文（summary）にそのまま書く",
+ "checks": {
+  "K1_subperiods": "保有期間を 2007-01〜2012-12 ／ 2013-01〜2019-12 ／ 2020-01〜データの終わり の3つに分け、費用後の超過（算術・年率）の符号を数える。『3つのうち2つ以上が正』を頑丈とみなす",
+  "K2_unseen_countries": "C5 に使わなかった国35か国（先進国21: gbr, deu, fra, che, aus, can, swe, nld, dnk, hkg, sgp, ita, esp, bel, nor, fin, isr, nzl, aut, irl, prt ／ 新興国14: kor, twn, ind, chn, bra, zaf, mex, mys, tha, idn, tur, pol, chl, phl）に同じ特徴・同じ三分位・同じ規則を当て、その国の 'vw' 市場（超過）に対する全期間の費用後の超過の算術平均の符号を数える。その三分位の銘柄数 n ≥ 10 の月だけ使い、120か月以上そろう国だけ数える。static は訓練（始まり〜200612）が60か月以上ある国だけ。費用は先進国 0.10%・新興国 0.30%。『正の国が 2/3 以上 かつ 片側の符号検定 p < 0.05』を頑丈とみなす。保有期間（2007〜）の正の国の数も併記。French の源（FR_*）は C5 と同じ対応表で JKP の特徴に置き換える。混合は構成要素の対応先を同じ重みで（欠けた重み ≤ 50% なら正規化）",
+  "K3_independent_data": "JKP の候補を、作り方の違う French のポートフォリオで作り直して同じ規則で当てる（保有期間の費用後の超過と t）。対応: 収益性・質（ocf_at, cop_at, cop_atl1, gp_at, gp_atl1, op_at, op_atl1, ope_be, ope_bel1, ebit_bev, ebit_sale, ni_be, niq_at, niq_be, qmj, qmj_prof, qmj_growth, qmj_safety, sale_bev, at_turnover, f_score, mispricing_perf）→ Portfolios_Formed_on_OP（三分位1→'Lo 30'・2→'Med 40'・3→'Hi 30'）と 6_Portfolios_ME_OP_2x3 の BIG 行（1→BIG LoOP・2→ME2 OP2・3→BIG HiOP）。o_score は向きが逆（高い＝倒産しやすい）なので 1↔3 を入れ替える。ボラ・最大リターン（rvol_21d, rmax1_21d, rmax5_21d, earnings_variability, ocfq_saleq_std, turnover_126d, zero_trades_*）→ Portfolios_Formed_on_VAR（1→'Lo 20' と 'Qnt 2' の平均・2→'Qnt 3'・3→'Qnt 4' と 'Hi 20' の平均）。固有ボラ（ivol_*）→ RESVAR（同じ）。ベータ（beta_60m, betabab_1260d, betadown_252d, beta_dimson_21d）→ BETA（同じ）。seas_6_10na・dolvol_var_126d・turnover_var_126d は対応なし（N/A）。French の源の候補と混合は対象外（すでに French）。『保有期間の費用後の超過が正』を頑丈とみなす",
+  "K4_drop_best_months": "保有期間の月次の差（戦略−市場・費用後）の大きい方から12か月を除いた平均（年率）。『それでも正』を頑丈とみなす",
+  "K5_capped": "JKP の候補を 'vw_cap'（最大級の会社の重みを NYSE 80%点で抑えた時価加重）の同じ三分位で作り直し、同じ規則で French Mkt に当てた保有期間の費用後の超過。報告のみ（巨大株への依存の度合いを見る）",
+  "K6_same_universe": "JKP の候補について、相手を JKP 米国の 'vw' 市場（同じ母集団・超過）に替えた保有期間の費用後の超過。報告のみ"
+ },
+ "how": "night/mw_risk_matched.py --checks（out/mw_risk_matched.json の S・A を読み、同じ関数で点検して同じファイルの robustness_checks に書き足す）"
+}

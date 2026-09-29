@@ -1,0 +1,56 @@
+{
+ "angle": "oap_signals",
+ "part": 2,
+ "title": "探索の族（主の族に A・S が無かったため）: OAP の良い側の端を『因子の勢い』『歩きながらの選抜』で選ぶ／大型株に絞った原論文の作り方／主の結果の頑丈さの報告",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "exploratory": true,
+ "written_after": "第1の事前登録（out/mw_oap_signals_prereg.json・a52656d）の結果を見た後。見た結果: 主の族 P（JKP に無い情報源の45本）は A・S なし（B は REV6 の1本だけ）・束ねた9本は保有期間でどれも市場に負け（−0.1〜−1.0%/年）。副の族では S が ShareIss1Y・ShareIss5Y（第10十分位）と MomOffSeason06YrPlus（第5五分位）、A が Mom12m・Mom6m・Mom12mOffSeason・IntMom（五分位）＝JKP の別の角度で既に A・S が出ている主題（株数の減少・勢い・季節性）。ここに足す族は結果を見た後に考えたもの＝探索として別に数え、線は下げない",
+ "families": {
+  "E_FM_factor_momentum": {
+   "graded": true,
+   "exploratory": true,
+   "holm": "この族の3本で",
+   "rule": "毎月 t、その月に値があり t−12〜t−1 の12か月がすべてそろう良い側の端（第1の登録と同じ: 連続は DecilesVW 第10十分位・離散は VWforce の最大番号・Nlong≥20）を、12か月の市場（French Mkt）に対する累積の超過 Π(1+r)/Π(1+m)−1 で並べ、上位 k=max(3, ceil(n/5)) 本を等分に持つ（n<2k の月は欠測）。t の値は t−1 月末までに分かる",
+   "members": {
+    "E_FM_new": "主の族（45本）の端から選ぶ",
+    "E_FM_all": "全212本の端から選ぶ",
+    "E_FM_all_rt": "全212本・ただし公表年 Year の翌年1月以降の端だけを候補にする（実時間）"
+   },
+   "turnover": "選ばれた端の回転率の平均 ＋ 端の入れ替え（毎月の Σ|w_t−w_{t−1}|/2 を年換算・端どうしの銘柄の重なりを無視＝多めに見積もる）"
+  },
+  "E_WF_walk_forward": {
+   "graded": true,
+   "exploratory": true,
+   "holm": "この族の4本で",
+   "rule": "毎年12月末 Y に、その時点までの各端の市場に対する月次の超過（Y 以前の全履歴・60か月以上）の平均が正かつ NW t≥2.0 の端を選び、Y+1 年の12か月を等分に持つ（その月に値の無い端は外して残りで等分・3本未満の月は欠測）。Y 以前のデータだけで決める",
+   "members": {
+    "E_WF_new": "主の族の端から選ぶ",
+    "E_WF_all": "全212本の端から選ぶ",
+    "E_WF_all_rt": "全212本・Y の時点で公表済み（Year < Y+1）の端だけ",
+    "E_WF_all_top10": "全212本・60か月以上の履歴のある端を NW t の大きい順に10本（t>0 のものだけ）"
+   },
+   "turnover": "E_FM と同じ式（端の回転率の平均＋入れ替え）"
+  },
+  "E_LC_large_cap_OP": {
+   "graded": true,
+   "exploratory": true,
+   "holm": "この族（主の族45本）で",
+   "rule": "OAP の PredictorAltPorts_LiqScreen_ME_gt_NYSE20pct（NYSE の20%点より時価の大きい株だけ・原論文の分位と重み〔多くは等加重〕）の最大番号（良い側）。主の族45本。Nlong≥20",
+   "why": "個人が買える大型寄りの版。原論文の重みが等加重の予言因子は、大型株の中の等加重になる"
+  }
+ },
+ "reports_not_graded": {
+  "R1_subperiods": "第1の登録で S・A になったもの・E の族で S・A・B になったものの 2007-2015 と 2016-2024 の超過（報告のみ）",
+  "R2_french_independent": "独立の作り方で 2026-08 まで延ばす: French Portfolios_Formed_on_NI の時価加重 '< 0'（株数を減らした会社）を ShareIss1Y/5Y の、10_Portfolios_Prior_12_2 の時価加重 'Hi PRIOR' を Mom12m の対応として、French Mkt に対する 2007-01〜2026-08 と OAP の後の 2025-01〜2026-08（報告のみ・格付けしない）",
+  "R3_jkp_us_counterpart": "C5 の相手の JKP 特徴の米国の良い側の三分位（vw・超過＋French RF）の French Mkt に対する 2007-01〜2025-12（報告のみ）",
+  "R4_multiplicity": "P・PQ・S・SQ を合わせた特徴ごとの全本数での Holm（保有期間）と、全期間 t の分布（報告のみ）"
+ },
+ "criteria": "out/mw_prereg.json の C1〜C8 と格付け（mw_common.grade）。E の族の C5 は米国外の同じ規則が無いので N/A",
+ "costs": "第1の登録と同じ（片道売買100%あたり 0.30% で判定・0.10% を参考）",
+ "known_limits": [
+  "結果を見た後に考えた族＝探索。勝ちに数えるときも『探索』と明記する",
+  "因子の勢い・歩きながらの選抜は端どうしの銘柄の重なりを無視して入れ替えの費用を多めに見積もる。逆に、端の中の銘柄の入れ替えは第1の登録の仮定のまま",
+  "OAP のデータは 2024-12 まで（オプションは 2022-12 前後まで）"
+ ]
+}

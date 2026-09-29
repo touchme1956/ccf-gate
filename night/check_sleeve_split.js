@@ -138,6 +138,52 @@ const srv = http.createServer((q, r) => {
   sp = await pg.evaluate(() => { window.__ccfNameGap = undefined; return ccfSleeveSplit(); });
   ok(sp && sp.mode === 'gap_fallback', "   材料が無ければ 'gap_fallback' と名乗って gap へ倒す（黙って別の割り方にしない）");
 
+  // ⑦ 1株単位の注文（v9.9.196・2026-09-29）: 合成の数字で判定そのものを見る
+  //   総資産 242万・入金17万。CW/LRCX/TDG は保有0・目標4%、MSFT は目標4%に対し26%、SMH は目標20%に対し15.7%、
+  //   iFreeNEXT（金額で買える）は目標60%。期待: 不足÷目標の大きい CW・LRCX を1株ずつ（安い LRCX が先）、
+  //   SMH は残りが1株に届かず来月、TDG は1株(17.7万)が入金より高い、残り ¥34,400 は全部 iFreeNEXT、現金は残さない
+  const ws = await pg.evaluate(() => ccfWholeSharePlan([
+    { k: 'CW', tw: 4, pos: 0, jpy: 85600 }, { k: 'LRCX', tw: 4, pos: 0, jpy: 50000 },
+    { k: 'TDG', tw: 4, pos: 0, jpy: 177000 }, { k: 'MSFT', tw: 4, pos: 26, jpy: 79000 },
+    { k: 'SMH', tw: 20, pos: 15.7, jpy: 95800 }, { k: 'IFREE', tw: 60, pos: 16, frac: true }], 170000, 2420000));
+  ok(ws && ws.buy.CW && ws.buy.CW.sh === 1 && ws.buy.LRCX && ws.buy.LRCX.sh === 1 && !ws.buy.MSFT && !ws.buy.SMH,
+     '⑦ 1株単位: 保有0の CW・LRCX を1株ずつ・目標超過の MSFT は買わない（' + JSON.stringify(ws && ws.buy) + '）');
+  ok(ws && ws.big.some(x => x.k === 'TDG') && ws.short.some(x => x.k === 'SMH'),
+     '   TDG は「1株が入金より高い」・SMH は「今月は先の銘柄で尽きた」と名指し');
+  ok(ws && ws.frac.IFREE === 34400 && ws.rest === 0,
+     '   残り ¥34,400 は全部 iFreeNEXT へ・現金は残さない（frac ' + (ws && ws.frac.IFREE) + ' / rest ' + (ws && ws.rest) + '）');
+  const ws2 = await pg.evaluate(() => ccfWholeSharePlan([
+    { k: 'A', tw: 4, pos: 3.9, jpy: 50000 }, { k: 'F', tw: 60, pos: 70, frac: true }], 170000, 2420000));
+  ok(ws2 && !ws2.buy.A && ws2.wait.some(x => x.k === 'A') && ws2.frac.F === 170000,
+     '   不足が1株の半分未満なら待つ・投資信託が目標超過でも残りの円はそこへ（現金で残さない）');
+  // ⑧ 注文書の表示: 口座（NISA のどの枠か）と「特定口座では買わない」が出る
+  const html = await pg.evaluate(() => {
+    const px = { CW: 85600, LRCX: 50000 };
+    const pass = [{ nm: 'CW', t: 'CW', pos: 0 }, { nm: 'LRCX', t: 'LRCX', pos: 0 }, { nm: 'VRSK', t: 'VRSK', pos: 0 }];
+    const tw = r => (r.t === 'VRSK' ? 0 : 4);
+    const pxInfo = r => px[r.t] ? { jpy: px[r.t], px: px[r.t] / 150, ccy: 'USD', label: '$' + (px[r.t] / 150).toFixed(2) } : null;
+    const NO = { tot: 2420000, rows: [{ t: 'IFREE-NDX', nm: 'iFreeNEXT', tw: 60, pos: 16, jpy: 5.8, fund: { navPer: 10000 }, alias: [] },
+      { t: 'SMH', tw: 20, pos: 15.7, jpy: 95800, label: '1株 ¥95,800' }, { t: 'XLK', tw: 0, pos: 30, jpy: 30000 }] };
+    return ccfWholeShareBody(pass, tw, pxInfo, NO, 170000);
+  });
+  ok(html && /NISA成長/.test(html.html) && /NISAつみたて/.test(html.html) && /特定口座では買わない/.test(html.html),
+     '⑧ 注文書に口座（NISA成長／NISAつみたて）と「特定口座では買わない」が出る');
+  ok(html && !/VRSK/.test(html.html) && /XLK：目標0%/.test(html.html.replace(/<[^>]+>/g, '')),
+     '   目標0%の門外例外（VRSK）は出さない・目標0%の ETF は「目標0%（売らない）」とまとめる');
+  ok(html && (html.castle + html.net + html.rest) === 170000,
+     '   個別＋ETF＋残り＝入金額にぴったり（個別 ' + (html && html.castle) + ' / ETF ' + (html && html.net) + ' / 残り ' + (html && html.rest) + '）');
+  // ⑨ 門外例外の出口条件（watch_exceptions の exit_stop）が立った社は今月の注文から外す（売りではない）
+  const stop = await pg.evaluate(() => {
+    const keep = window.__ccfExWatch;
+    window.__ccfExWatch = { CW: { t: 'CW', exit_stop: true, intcov_ttm: 1.8, exit_intcov_min: 2, asof: '2026-06-27' } };
+    const pxInfo = r => ({ jpy: 85600, px: 570, ccy: 'USD', label: '$570' });
+    const o = ccfWholeShareBody([{ nm: 'CW', t: 'CW', pos: 0 }], () => 4, pxInfo,
+      { tot: 2420000, rows: [{ t: 'IFREE-NDX', nm: 'iFreeNEXT', tw: 60, pos: 16, jpy: 5.8, fund: { navPer: 10000 }, alias: [] }] }, 170000);
+    window.__ccfExWatch = keep; return o;
+  });
+  ok(stop && stop.castle === 0 && /出口条件/.test(stop.html) && stop.net === 170000,
+     '⑨ 出口条件の線を割った社は注文から外し、名指しする（個別 ' + (stop && stop.castle) + ' / ETF ' + (stop && stop.net) + '）');
+
   ok(errs.length === 0, 'pageerror 0件' + (errs.length ? '（' + errs[0].slice(0, 120) + '）' : ''));
   await pg.evaluate(() => localStorage.removeItem('pf:monthly_total'));
   await b.close(); srv.close();

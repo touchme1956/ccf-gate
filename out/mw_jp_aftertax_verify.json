@@ -1,0 +1,5620 @@
+{
+ "angle": "jp_aftertax",
+ "role": "adversarial verifier（反証の検証）",
+ "generated": "2026-09-28",
+ "researcher_files": [
+  "night/mw_jp_aftertax.py",
+  "out/mw_jp_aftertax_prereg.json",
+  "out/mw_jp_aftertax_prereg2.json",
+  "out/mw_jp_aftertax.json"
+ ],
+ "independence": "mw_common からは取得の関数（ff_factors・jkp_rows・get・french_tables・yahoo・CACHE）だけ。三分位 LS・門の16本の合成・Fidelity の順位と帯・費用・超過・NW t・CAGR・20年窓・積立・格付けは自前。Fidelity の生きた33本は Yahoo 日次から月末を作り直した",
+ "benchmarks": {
+  "pure": "French Mkt（Mkt-RF+RF・上限なしの時価加重）＝全体の事前登録の相手",
+  "fee": "研究側の相手: French Mkt − 年0.10%（指数ファンドの費用）。戦略側（個別株の直接保有）は費用0"
+ },
+ "scope": "検証したのは一括の格付け（R0 税前・R1 枠なし非課税）と税前の積立20年。研究側の税と NISA の模擬（R2・R3・X1 置き場所・損出し）は作り直していない（主張の S/A はどれも R0/R1 の行で、税を入れた行は研究側でも C か B）",
+ "sources_fees": {
+  "fidelity_select_load": "https://www.sec.gov/Archives/edgar/data/0000320351/000035705703000016/main.htm（Form 497・2003: 2003-09-22 から申込手数料 3% を廃止・1990-10-12 以前は 2%＋解約時 1%・Select 間の交換には後払いの手数料なし・30日未満の売り 0.75%・交換 $7.50）。ここでは申込手数料を窓の最初の1回だけ掛けた（交換には掛からないと置いた＝戦略に甘い側）",
+  "jp_us_stock_commission": "楽天証券・SBI証券の米国株の約定代金の 0.495%（上限 22ドル）＝事前登録の外の試験に使った仮定"
+ },
+ "e1_ls_check": {
+  "my_ls_vs_jkp_factor_corr": 1.0,
+  "my_ls_mean_ann": 4.95,
+  "jkp_factor_mean_ann": 4.95,
+  "months": 750,
+  "direction": 1
+ },
+ "e2_realization_per_year": 0.931,
+ "e1_selection": {
+  "features_at_lambda_0.11_vs_pure_net": {
+   "gp_at": {
+    "train_ex": 0.19,
+    "train_t": 1.16,
+    "hold_ex": 0.69,
+    "hold_t": 2.5,
+    "post2017_ex": 0.8,
+    "post2017_t": 1.82
+   },
+   "ope_be": {
+    "train_ex": 0.35,
+    "train_t": 1.97,
+    "hold_ex": 0.62,
+    "hold_t": 2.6,
+    "post2017_ex": 0.8,
+    "post2017_t": 2.06
+   },
+   "qmj": {
+    "train_ex": 0.18,
+    "train_t": 1.24,
+    "hold_ex": 0.57,
+    "hold_t": 1.93,
+    "post2017_ex": 0.51,
+    "post2017_t": 1.49
+   },
+   "qmj_prof": {
+    "train_ex": 0.23,
+    "train_t": 1.78,
+    "hold_ex": 0.63,
+    "hold_t": 2.37,
+    "post2017_ex": 0.71,
+    "post2017_t": 2.09
+   },
+   "cop_at": {
+    "train_ex": 0.41,
+    "train_t": 3.1,
+    "hold_ex": 0.81,
+    "hold_t": 3.22,
+    "post2017_ex": 0.95,
+    "post2017_t": 2.76
+   },
+   "chcsho_12m": {
+    "train_ex": 0.4,
+    "train_t": 2.38,
+    "hold_ex": 0.06,
+    "hold_t": 0.2,
+    "post2017_ex": -0.08,
+    "post2017_t": -0.17
+   },
+   "oaccruals_at": {
+    "train_ex": 0.55,
+    "train_t": 3.26,
+    "hold_ex": 0.5,
+    "hold_t": 2.49,
+    "post2017_ex": 0.46,
+    "post2017_t": 1.42
+   },
+   "ret_12_1": {
+    "train_ex": 0.66,
+    "train_t": 2.71,
+    "hold_ex": 0.07,
+    "hold_t": 0.18,
+    "post2017_ex": 0.04,
+    "post2017_t": 0.09
+   },
+   "be_me": {
+    "train_ex": 0.4,
+    "train_t": 1.74,
+    "hold_ex": -0.43,
+    "hold_t": -1.28,
+    "post2017_ex": -0.72,
+    "post2017_t": -1.32
+   },
+   "ni_me": {
+    "train_ex": 0.64,
+    "train_t": 1.93,
+    "hold_ex": -0.38,
+    "hold_t": -0.93,
+    "post2017_ex": -0.84,
+    "post2017_t": -1.05
+   },
+   "at_gr1": {
+    "train_ex": 0.38,
+    "train_t": 1.83,
+    "hold_ex": -0.27,
+    "hold_t": -1.02,
+    "post2017_ex": -0.55,
+    "post2017_t": -1.08
+   },
+   "ivol_capm_252d": {
+    "train_ex": 0.11,
+    "train_t": 0.31,
+    "hold_ex": -0.24,
+    "hold_t": -0.48,
+    "post2017_ex": -0.77,
+    "post2017_t": -0.93
+   },
+   "betabab_1260d": {
+    "train_ex": 0.16,
+    "train_t": 0.58,
+    "hold_ex": -0.28,
+    "hold_t": -0.58,
+    "post2017_ex": -0.97,
+    "post2017_t": -1.38
+   },
+   "niq_su": {
+    "train_ex": 0.41,
+    "train_t": 3.86,
+    "hold_ex": 0.17,
+    "hold_t": 1.03,
+    "post2017_ex": 0.39,
+    "post2017_t": 1.56
+   }
+  },
+  "rank_by_hold_t": [
+   "cop_at",
+   "ope_be",
+   "gp_at",
+   "oaccruals_at",
+   "qmj_prof",
+   "qmj",
+   "niq_su",
+   "chcsho_12m",
+   "ret_12_1",
+   "ivol_capm_252d",
+   "betabab_1260d",
+   "ni_me",
+   "at_gr1",
+   "be_me"
+  ],
+  "rank_by_train_t": [
+   "niq_su",
+   "oaccruals_at",
+   "cop_at",
+   "ret_12_1",
+   "chcsho_12m",
+   "ope_be",
+   "ni_me",
+   "at_gr1",
+   "qmj_prof",
+   "be_me",
+   "qmj",
+   "gp_at",
+   "betabab_1260d",
+   "ivol_capm_252d"
+  ],
+  "cop_at_rank_hold": 1,
+  "cop_at_rank_train": 3,
+  "mean_hold_t_of_all": 0.87,
+  "note": "mega_tilt の P-B 14特徴（Q5/QM/QMV の合成3本は除く）を同じ λ・費用で。cop_at は 2016 年公表（標本〜2013）＝保有期間の前半は論文の標本の中"
+ },
+ "e1_neighbors_lambda_0.11_vs_pure_net": {
+  "cop_atl1": {
+   "hold": {
+    "from": 200701,
+    "to": 202512,
+    "n": 228,
+    "ex": 0.77,
+    "t": 2.89,
+    "p": 0.00387,
+    "cagr_diff": 0.88
+   },
+   "post2017": {
+    "from": 201701,
+    "to": 202512,
+    "n": 108,
+    "ex": 0.94,
+    "t": 2.51,
+    "p": 0.01203,
+    "cagr_diff": 1.06
+   },
+   "full": {
+    "from": 196307,
+    "to": 202512,
+    "n": 750,
+    "ex": 0.45,
+    "t": 3.47,
+    "p": 0.00051,
+    "cagr_diff": 0.51
+   }
+  },
+  "op_at": {
+   "hold": {
+    "from": 200701,
+    "to": 202512,
+    "n": 228,
+    "ex": 0.67,
+    "t": 2.46,
+    "p": 0.01393,
+    "cagr_diff": 0.8
+   },
+   "post2017": {
+    "from": 201701,
+    "to": 202512,
+    "n": 108,
+    "ex": 0.68,
+    "t": 1.71,
+    "p": 0.08761,
+    "cagr_diff": 0.79
+   },
+   "full": {
+    "from": 196307,
+    "to": 202512,
+    "n": 750,
+    "ex": 0.3,
+    "t": 2.21,
+    "p": 0.02731,
+    "cagr_diff": 0.33
+   }
+  },
+  "ocf_at": {
+   "hold": {
+    "from": 200701,
+    "to": 202512,
+    "n": 228,
+    "ex": 0.78,
+    "t": 2.62,
+    "p": 0.00883,
+    "cagr_diff": 0.94
+   },
+   "post2017": {
+    "from": 201701,
+    "to": 202512,
+    "n": 108,
+    "ex": 0.98,
+    "t": 2.55,
+    "p": 0.01072,
+    "cagr_diff": 1.17
+   },
+   "full": {
+    "from": 196307,
+    "to": 202512,
+    "n": 750,
+    "ex": 0.55,
+    "t": 4.07,
+    "p": 5e-05,
+    "cagr_diff": 0.67
+   }
+  },
+  "ope_be": {
+   "hold": {
+    "from": 200701,
+    "to": 202512,
+    "n": 228,
+    "ex": 0.62,
+    "t": 2.6,
+    "p": 0.00937,
+    "cagr_diff": 0.74
+   },
+   "post2017": {
+    "from": 201701,
+    "to": 202512,
+    "n": 108,
+    "ex": 0.8,
+    "t": 2.06,
+    "p": 0.03983,
+    "cagr_diff": 0.95
+   },
+   "full": {
+    "from": 196307,
+    "to": 202512,
+    "n": 750,
+    "ex": 0.43,
+    "t": 3.0,
+    "p": 0.00266,
+    "cagr_diff": 0.49
+   }
+  },
+  "gp_at": {
+   "hold": {
+    "from": 200701,
+    "to": 202512,
+    "n": 228,
+    "ex": 0.69,
+    "t": 2.5,
+    "p": 0.01238,
+    "cagr_diff": 0.8
+   },
+   "post2017": {
+    "from": 201701,
+    "to": 202512,
+    "n": 108,
+    "ex": 0.8,
+    "t": 1.82,
+    "p": 0.0688,
+    "cagr_diff": 0.91
+   },
+   "full": {
+    "from": 196307,
+    "to": 202512,
+    "n": 750,
+    "ex": 0.34,
+    "t": 2.37,
+    "p": 0.01774,
+    "cagr_diff": 0.35
+   }
+  },
+  "ebit_bev": {
+   "hold": {
+    "from": 200701,
+    "to": 202512,
+    "n": 228,
+    "ex": 0.63,
+    "t": 2.46,
+    "p": 0.0137,
+    "cagr_diff": 0.76
+   },
+   "post2017": {
+    "from": 201701,
+    "to": 202512,
+    "n": 108,
+    "ex": 0.59,
+    "t": 1.66,
+    "p": 0.09642,
+    "cagr_diff": 0.72
+   },
+   "full": {
+    "from": 196307,
+    "to": 202512,
+    "n": 750,
+    "ex": 0.38,
+    "t": 2.7,
+    "p": 0.00697,
+    "cagr_diff": 0.44
+   }
+  },
+  "qmj_prof": {
+   "hold": {
+    "from": 200701,
+    "to": 202512,
+    "n": 228,
+    "ex": 0.63,
+    "t": 2.37,
+    "p": 0.01798,
+    "cagr_diff": 0.76
+   },
+   "post2017": {
+    "from": 201701,
+    "to": 202512,
+    "n": 108,
+    "ex": 0.71,
+    "t": 2.09,
+    "p": 0.03625,
+    "cagr_diff": 0.84
+   },
+   "full": {
+    "from": 196307,
+    "to": 202512,
+    "n": 750,
+    "ex": 0.35,
+    "t": 2.86,
+    "p": 0.00426,
+    "cagr_diff": 0.42
+   }
+  },
+  "cop_at_vw_cap": {
+   "hold": {
+    "from": 200701,
+    "to": 202512,
+    "n": 228,
+    "ex": 0.54,
+    "t": 3.17,
+    "p": 0.00152,
+    "cagr_diff": 0.61
+   },
+   "post2017": {
+    "from": 201701,
+    "to": 202512,
+    "n": 108,
+    "ex": 0.56,
+    "t": 2.36,
+    "p": 0.01826,
+    "cagr_diff": 0.64
+   },
+   "full": {
+    "from": 196307,
+    "to": 202512,
+    "n": 750,
+    "ex": 0.69,
+    "t": 6.82,
+    "p": 0.0,
+    "cagr_diff": 0.78
+   }
+  },
+  "cop_at_ew": {
+   "hold": {
+    "from": 200701,
+    "to": 202512,
+    "n": 228,
+    "ex": 0.73,
+    "t": 3.46,
+    "p": 0.00053,
+    "cagr_diff": 0.78
+   },
+   "post2017": {
+    "from": 201701,
+    "to": 202512,
+    "n": 108,
+    "ex": 0.68,
+    "t": 2.02,
+    "p": 0.04365,
+    "cagr_diff": 0.74
+   },
+   "full": {
+    "from": 196307,
+    "to": 202512,
+    "n": 750,
+    "ex": 1.07,
+    "t": 8.68,
+    "p": 0.0,
+    "cagr_diff": 1.18
+   }
+  }
+ },
+ "e2_leave_one_measure_out_vs_pure_net": {
+  "detail": {
+   "M01_roic": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.75,
+     "t": 1.83,
+     "p": 0.06671,
+     "cagr_diff": 0.81
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.84,
+     "t": 3.18,
+     "p": 0.00146,
+     "cagr_diff": 0.94
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.88,
+     "t": 2.62,
+     "p": 0.00867,
+     "cagr_diff": 1.0
+    }
+   },
+   "M02_opm": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.85,
+     "t": 1.98,
+     "p": 0.04827,
+     "cagr_diff": 0.92
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.93,
+     "t": 3.36,
+     "p": 0.00078,
+     "cagr_diff": 1.03
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.97,
+     "t": 2.75,
+     "p": 0.00601,
+     "cagr_diff": 1.07
+    }
+   },
+   "M03_gpa": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.69,
+     "t": 1.73,
+     "p": 0.08319,
+     "cagr_diff": 0.74
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.82,
+     "t": 3.11,
+     "p": 0.00185,
+     "cagr_diff": 0.92
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.87,
+     "t": 2.6,
+     "p": 0.00921,
+     "cagr_diff": 0.99
+    }
+   },
+   "M04_conv": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.82,
+     "t": 1.82,
+     "p": 0.06877,
+     "cagr_diff": 0.92
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.84,
+     "t": 3.01,
+     "p": 0.0026,
+     "cagr_diff": 0.95
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.85,
+     "t": 2.42,
+     "p": 0.01547,
+     "cagr_diff": 0.96
+    }
+   },
+   "M05_accr": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.73,
+     "t": 1.79,
+     "p": 0.0731,
+     "cagr_diff": 0.81
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.79,
+     "t": 2.91,
+     "p": 0.00362,
+     "cagr_diff": 0.89
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.81,
+     "t": 2.34,
+     "p": 0.01907,
+     "cagr_diff": 0.92
+    }
+   },
+   "M06_lev": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.65,
+     "t": 1.65,
+     "p": 0.09846,
+     "cagr_diff": 0.72
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.82,
+     "t": 3.31,
+     "p": 0.00093,
+     "cagr_diff": 0.93
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.89,
+     "t": 2.87,
+     "p": 0.00415,
+     "cagr_diff": 1.02
+    }
+   },
+   "M07_z": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.71,
+     "t": 1.9,
+     "p": 0.05794,
+     "cagr_diff": 0.78
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.9,
+     "t": 3.72,
+     "p": 0.0002,
+     "cagr_diff": 1.02
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.99,
+     "t": 3.21,
+     "p": 0.00132,
+     "cagr_diff": 1.13
+    }
+   },
+   "M08_intcov": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.8,
+     "t": 1.99,
+     "p": 0.04663,
+     "cagr_diff": 0.88
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.92,
+     "t": 3.47,
+     "p": 0.00051,
+     "cagr_diff": 1.02
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.97,
+     "t": 2.87,
+     "p": 0.00407,
+     "cagr_diff": 1.08
+    }
+   },
+   "M09_p1": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.91,
+     "t": 1.98,
+     "p": 0.04715,
+     "cagr_diff": 0.99
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.93,
+     "t": 3.15,
+     "p": 0.00165,
+     "cagr_diff": 1.02
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.94,
+     "t": 2.5,
+     "p": 0.01242,
+     "cagr_diff": 1.03
+    }
+   },
+   "M10_p2": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.88,
+     "t": 2.11,
+     "p": 0.03524,
+     "cagr_diff": 0.95
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.91,
+     "t": 3.51,
+     "p": 0.00044,
+     "cagr_diff": 1.0
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.92,
+     "t": 2.84,
+     "p": 0.00458,
+     "cagr_diff": 1.03
+    }
+   },
+   "M11_growth": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.73,
+     "t": 1.88,
+     "p": 0.05956,
+     "cagr_diff": 0.82
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.91,
+     "t": 3.42,
+     "p": 0.00062,
+     "cagr_diff": 1.04
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.99,
+     "t": 2.89,
+     "p": 0.00389,
+     "cagr_diff": 1.14
+    }
+   },
+   "M12_roiic": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.77,
+     "t": 1.95,
+     "p": 0.05153,
+     "cagr_diff": 0.85
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.84,
+     "t": 3.09,
+     "p": 0.00202,
+     "cagr_diff": 0.94
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.87,
+     "t": 2.48,
+     "p": 0.01327,
+     "cagr_diff": 0.97
+    }
+   },
+   "M13_shy": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.82,
+     "t": 1.79,
+     "p": 0.07269,
+     "cagr_diff": 0.89
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.81,
+     "t": 2.74,
+     "p": 0.00607,
+     "cagr_diff": 0.88
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.81,
+     "t": 2.14,
+     "p": 0.03202,
+     "cagr_diff": 0.88
+    }
+   },
+   "M14_dil": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.84,
+     "t": 1.89,
+     "p": 0.05858,
+     "cagr_diff": 0.91
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.84,
+     "t": 2.84,
+     "p": 0.00452,
+     "cagr_diff": 0.92
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.84,
+     "t": 2.21,
+     "p": 0.02679,
+     "cagr_diff": 0.93
+    }
+   },
+   "M15_roict": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.84,
+     "t": 2.0,
+     "p": 0.04602,
+     "cagr_diff": 0.92
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.87,
+     "t": 3.11,
+     "p": 0.00185,
+     "cagr_diff": 0.97
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.88,
+     "t": 2.47,
+     "p": 0.01362,
+     "cagr_diff": 0.99
+    }
+   },
+   "M16_moat": {
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.84,
+     "t": 2.04,
+     "p": 0.04124,
+     "cagr_diff": 0.93
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.91,
+     "t": 3.27,
+     "p": 0.00107,
+     "cagr_diff": 1.01
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.94,
+     "t": 2.63,
+     "p": 0.00857,
+     "cagr_diff": 1.05
+    }
+   }
+  },
+  "hold_t_min": 1.65,
+  "hold_t_median": 1.9,
+  "hold_t_max": 2.11,
+  "share_hold_t_ge_1.65": 1.0,
+  "share_full_t_ge_3": 0.812
+ },
+ "fidelity_data": {
+  "live_from_daily": {
+   "FSPTX": {
+    "from": 198108,
+    "n": 541,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSENX": {
+    "from": 198108,
+    "n": 541,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FIDSX": {
+    "from": 198201,
+    "n": 536,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSUTX": {
+    "from": 198201,
+    "n": 536,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSPHX": {
+    "from": 198108,
+    "n": 541,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSDAX": {
+    "from": 198406,
+    "n": 507,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FDLSX": {
+    "from": 198406,
+    "n": 507,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSLBX": {
+    "from": 198508,
+    "n": 493,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSCHX": {
+    "from": 198508,
+    "n": 493,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FDFAX": {
+    "from": 198508,
+    "n": 493,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSELX": {
+    "from": 198508,
+    "n": 493,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSTCX": {
+    "from": 198508,
+    "n": 493,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSCSX": {
+    "from": 198508,
+    "n": 493,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FDCPX": {
+    "from": 198508,
+    "n": 493,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSAGX": {
+    "from": 198601,
+    "n": 488,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FBIOX": {
+    "from": 198601,
+    "n": 488,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSVLX": {
+    "from": 198601,
+    "n": 488,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSPCX": {
+    "from": 198601,
+    "n": 488,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSRPX": {
+    "from": 198601,
+    "n": 488,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSAVX": {
+    "from": 198607,
+    "n": 482,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSHCX": {
+    "from": 198607,
+    "n": 482,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FBMPX": {
+    "from": 198607,
+    "n": 482,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSRBX": {
+    "from": 198607,
+    "n": 482,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSHOX": {
+    "from": 198610,
+    "n": 479,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSDPX": {
+    "from": 198610,
+    "n": 479,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSRFX": {
+    "from": 198610,
+    "n": 479,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSLEX": {
+    "from": 198907,
+    "n": 446,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSCPX": {
+    "from": 199007,
+    "n": 434,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FNARX": {
+    "from": 199703,
+    "n": 354,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FBSOX": {
+    "from": 199803,
+    "n": 342,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FSMEX": {
+    "from": 199805,
+    "n": 340,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FWRLX": {
+    "from": 200010,
+    "n": 311,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   },
+   "FPHAX": {
+    "from": 200107,
+    "n": 302,
+    "mean_abs_diff_vs_yahoo_monthly_pct": 0.0
+   }
+  },
+  "dead_from_av": {
+   "FSESX": [
+    200001,
+    202111
+   ],
+   "FSNGX": [
+    200001,
+    202111
+   ],
+   "FSAIX": [
+    200001,
+    202111
+   ],
+   "FSDCX": [
+    200001,
+    202111
+   ],
+   "FCYIX": [
+    200001,
+    202510
+   ],
+   "FSCGX": [
+    200001,
+    201801
+   ]
+  }
+ },
+ "fidelity_neighbor_grid_vs_pure_net": {
+  "grid": {
+   "blend_K2_E2": {
+    "grade": "C",
+    "full_t": 2.36,
+    "train_t": 1.75,
+    "hold_ex": 4.27,
+    "hold_t": 1.69,
+    "turnover": 4.98
+   },
+   "blend_K2_E3": {
+    "grade": "C",
+    "full_t": 2.13,
+    "train_t": 1.73,
+    "hold_ex": 4.02,
+    "hold_t": 1.28,
+    "turnover": 3.7
+   },
+   "blend_K2_E4": {
+    "grade": "C",
+    "full_t": 2.68,
+    "train_t": 1.88,
+    "hold_ex": 6.6,
+    "hold_t": 1.91,
+    "turnover": 2.87
+   },
+   "blend_K2_E6": {
+    "grade": "B",
+    "full_t": 2.57,
+    "train_t": 2.38,
+    "hold_ex": 4.14,
+    "hold_t": 1.23,
+    "turnover": 2.12
+   },
+   "blend_K3_E3": {
+    "grade": "B",
+    "full_t": 2.94,
+    "train_t": 2.47,
+    "hold_ex": 3.92,
+    "hold_t": 1.69,
+    "turnover": 4.57
+   },
+   "blend_K3_E4": {
+    "grade": "B",
+    "full_t": 2.94,
+    "train_t": 2.37,
+    "hold_ex": 4.73,
+    "hold_t": 1.77,
+    "turnover": 3.36
+   },
+   "blend_K3_E5": {
+    "grade": "B",
+    "full_t": 2.87,
+    "train_t": 2.36,
+    "hold_ex": 4.31,
+    "hold_t": 1.71,
+    "turnover": 2.79
+   },
+   "blend_K3_E6": {
+    "grade": "B",
+    "full_t": 2.97,
+    "train_t": 2.52,
+    "hold_ex": 4.39,
+    "hold_t": 1.67,
+    "turnover": 2.34
+   },
+   "blend_K3_E7": {
+    "grade": "B",
+    "full_t": 2.77,
+    "train_t": 2.54,
+    "hold_ex": 3.22,
+    "hold_t": 1.32,
+    "turnover": 2.2
+   },
+   "blend_K3_E9": {
+    "grade": "B",
+    "full_t": 2.88,
+    "train_t": 2.69,
+    "hold_ex": 3.04,
+    "hold_t": 1.33,
+    "turnover": 1.79
+   },
+   "blend_K4_E4": {
+    "grade": "B",
+    "full_t": 2.89,
+    "train_t": 2.65,
+    "hold_ex": 3.24,
+    "hold_t": 1.38,
+    "turnover": 4.3
+   },
+   "blend_K4_E6": {
+    "grade": "B",
+    "full_t": 3.02,
+    "train_t": 2.67,
+    "hold_ex": 3.6,
+    "hold_t": 1.58,
+    "turnover": 2.68
+   },
+   "blend_K4_E8": {
+    "grade": "B",
+    "full_t": 3.1,
+    "train_t": 2.87,
+    "hold_ex": 3.22,
+    "hold_t": 1.48,
+    "turnover": 2.18
+   },
+   "blend_K4_E12": {
+    "grade": "B",
+    "full_t": 2.95,
+    "train_t": 2.79,
+    "hold_ex": 2.86,
+    "hold_t": 1.33,
+    "turnover": 1.45
+   },
+   "blend_K5_E10": {
+    "grade": "B",
+    "full_t": 2.84,
+    "train_t": 3.0,
+    "hold_ex": 2.02,
+    "hold_t": 0.93,
+    "turnover": 1.85
+   },
+   "blend_K6_E12": {
+    "grade": "B",
+    "full_t": 3.28,
+    "train_t": 3.06,
+    "hold_ex": 2.85,
+    "hold_t": 1.55,
+    "turnover": 1.59
+   },
+   "r12_K2_E2": {
+    "grade": "B",
+    "full_t": 2.4,
+    "train_t": 2.43,
+    "hold_ex": 3.2,
+    "hold_t": 0.89,
+    "turnover": 3.8
+   },
+   "r12_K2_E3": {
+    "grade": "B",
+    "full_t": 2.26,
+    "train_t": 2.4,
+    "hold_ex": 3.01,
+    "hold_t": 0.77,
+    "turnover": 2.58
+   },
+   "r12_K2_E4": {
+    "grade": "B",
+    "full_t": 2.25,
+    "train_t": 2.31,
+    "hold_ex": 2.93,
+    "hold_t": 0.84,
+    "turnover": 2.1
+   },
+   "r12_K2_E6": {
+    "grade": "B",
+    "full_t": 2.4,
+    "train_t": 2.15,
+    "hold_ex": 3.96,
+    "hold_t": 1.21,
+    "turnover": 1.49
+   },
+   "r12_K3_E3": {
+    "grade": "B",
+    "full_t": 2.85,
+    "train_t": 3.1,
+    "hold_ex": 2.71,
+    "hold_t": 0.9,
+    "turnover": 3.38
+   },
+   "r12_K3_E4": {
+    "grade": "B",
+    "full_t": 2.7,
+    "train_t": 3.04,
+    "hold_ex": 2.28,
+    "hold_t": 0.76,
+    "turnover": 2.43
+   },
+   "r12_K3_E5": {
+    "grade": "B",
+    "full_t": 2.46,
+    "train_t": 2.77,
+    "hold_ex": 1.92,
+    "hold_t": 0.63,
+    "turnover": 1.92
+   },
+   "r12_K3_E6": {
+    "grade": "B",
+    "full_t": 2.43,
+    "train_t": 2.52,
+    "hold_ex": 2.51,
+    "hold_t": 0.84,
+    "turnover": 1.65
+   },
+   "r12_K3_E7": {
+    "grade": "B",
+    "full_t": 2.4,
+    "train_t": 2.67,
+    "hold_ex": 2.05,
+    "hold_t": 0.69,
+    "turnover": 1.5
+   },
+   "r12_K3_E9": {
+    "grade": "B",
+    "full_t": 2.09,
+    "train_t": 2.38,
+    "hold_ex": 1.22,
+    "hold_t": 0.44,
+    "turnover": 1.29
+   },
+   "r12_K4_E4": {
+    "grade": "B",
+    "full_t": 2.52,
+    "train_t": 2.79,
+    "hold_ex": 1.78,
+    "hold_t": 0.68,
+    "turnover": 3.26
+   },
+   "r12_K4_E6": {
+    "grade": "B",
+    "full_t": 2.19,
+    "train_t": 2.45,
+    "hold_ex": 1.44,
+    "hold_t": 0.54,
+    "turnover": 1.86
+   },
+   "r12_K4_E8": {
+    "grade": "C",
+    "full_t": 1.93,
+    "train_t": 2.48,
+    "hold_ex": 0.48,
+    "hold_t": 0.18,
+    "turnover": 1.52
+   },
+   "r12_K4_E12": {
+    "grade": "B",
+    "full_t": 2.47,
+    "train_t": 2.72,
+    "hold_ex": 2.16,
+    "hold_t": 0.79,
+    "turnover": 0.96
+   },
+   "r12_K5_E10": {
+    "grade": "B",
+    "full_t": 2.42,
+    "train_t": 2.79,
+    "hold_ex": 1.29,
+    "hold_t": 0.54,
+    "turnover": 1.22
+   },
+   "r12_K6_E12": {
+    "grade": "B",
+    "full_t": 2.49,
+    "train_t": 2.9,
+    "hold_ex": 1.48,
+    "hold_t": 0.63,
+    "turnover": 1.06
+   }
+  },
+  "n": 32,
+  "hold_t_median": 1.21,
+  "share_grade_S": 0.0,
+  "share_grade_A_or_S": 0.0,
+  "blend_only_share_S": 0.0
+ },
+ "x2_leave_one_fund_out_vs_pure_net": {
+  "worst_hold": [
+   "FBIOX",
+   {
+    "hold_ex": 2.65,
+    "hold_t": 1.03,
+    "full_t": 2.51
+   }
+  ],
+  "share_full_t_ge_3": 0.462,
+  "share_hold_t_ge_1.65": 0.462,
+  "detail": {
+   "FSPTX": {
+    "hold_ex": 3.83,
+    "hold_t": 1.46,
+    "full_t": 2.92
+   },
+   "FSENX": {
+    "hold_ex": 2.7,
+    "hold_t": 1.09,
+    "full_t": 2.64
+   },
+   "FIDSX": {
+    "hold_ex": 4.22,
+    "hold_t": 1.63,
+    "full_t": 2.84
+   },
+   "FSUTX": {
+    "hold_ex": 5.16,
+    "hold_t": 2.0,
+    "full_t": 3.18
+   },
+   "FSPHX": {
+    "hold_ex": 3.64,
+    "hold_t": 1.4,
+    "full_t": 2.89
+   },
+   "FSDAX": {
+    "hold_ex": 3.96,
+    "hold_t": 1.52,
+    "full_t": 2.94
+   },
+   "FDLSX": {
+    "hold_ex": 4.37,
+    "hold_t": 1.67,
+    "full_t": 2.92
+   },
+   "FSLBX": {
+    "hold_ex": 4.38,
+    "hold_t": 1.68,
+    "full_t": 3.02
+   },
+   "FSCHX": {
+    "hold_ex": 4.17,
+    "hold_t": 1.61,
+    "full_t": 2.87
+   },
+   "FDFAX": {
+    "hold_ex": 4.45,
+    "hold_t": 1.75,
+    "full_t": 3.08
+   },
+   "FSELX": {
+    "hold_ex": 3.26,
+    "hold_t": 1.35,
+    "full_t": 2.99
+   },
+   "FSTCX": {
+    "hold_ex": 4.07,
+    "hold_t": 1.48,
+    "full_t": 3.02
+   },
+   "FSCSX": {
+    "hold_ex": 4.15,
+    "hold_t": 1.6,
+    "full_t": 3.04
+   },
+   "FDCPX": {
+    "hold_ex": 3.7,
+    "hold_t": 1.52,
+    "full_t": 3.04
+   },
+   "FSAGX": {
+    "hold_ex": 4.51,
+    "hold_t": 1.9,
+    "full_t": 3.17
+   },
+   "FBIOX": {
+    "hold_ex": 2.65,
+    "hold_t": 1.03,
+    "full_t": 2.51
+   },
+   "FSVLX": {
+    "hold_ex": 4.59,
+    "hold_t": 1.77,
+    "full_t": 3.0
+   },
+   "FSPCX": {
+    "hold_ex": 4.04,
+    "hold_t": 1.57,
+    "full_t": 2.97
+   },
+   "FSRPX": {
+    "hold_ex": 4.41,
+    "hold_t": 1.68,
+    "full_t": 2.98
+   },
+   "FSAVX": {
+    "hold_ex": 3.84,
+    "hold_t": 1.4,
+    "full_t": 2.82
+   },
+   "FSHCX": {
+    "hold_ex": 4.2,
+    "hold_t": 1.62,
+    "full_t": 2.82
+   },
+   "FBMPX": {
+    "hold_ex": 4.25,
+    "hold_t": 1.61,
+    "full_t": 3.11
+   },
+   "FSRBX": {
+    "hold_ex": 4.57,
+    "hold_t": 1.75,
+    "full_t": 2.89
+   },
+   "FSHOX": {
+    "hold_ex": 4.01,
+    "hold_t": 1.48,
+    "full_t": 2.82
+   },
+   "FSDPX": {
+    "hold_ex": 4.58,
+    "hold_t": 1.72,
+    "full_t": 3.13
+   },
+   "FSRFX": {
+    "hold_ex": 4.27,
+    "hold_t": 1.64,
+    "full_t": 3.17
+   },
+   "FSLEX": {
+    "hold_ex": 4.52,
+    "hold_t": 1.72,
+    "full_t": 3.02
+   },
+   "FSCPX": {
+    "hold_ex": 4.13,
+    "hold_t": 1.56,
+    "full_t": 2.97
+   },
+   "FNARX": {
+    "hold_ex": 3.29,
+    "hold_t": 1.36,
+    "full_t": 2.76
+   },
+   "FBSOX": {
+    "hold_ex": 4.2,
+    "hold_t": 1.57,
+    "full_t": 2.91
+   },
+   "FSMEX": {
+    "hold_ex": 4.55,
+    "hold_t": 1.76,
+    "full_t": 3.2
+   },
+   "FWRLX": {
+    "hold_ex": 4.12,
+    "hold_t": 1.51,
+    "full_t": 2.98
+   },
+   "FPHAX": {
+    "hold_ex": 4.76,
+    "hold_t": 1.83,
+    "full_t": 3.07
+   },
+   "AV_FSESX": {
+    "hold_ex": 4.89,
+    "hold_t": 1.91,
+    "full_t": 3.07
+   },
+   "AV_FSNGX": {
+    "hold_ex": 4.89,
+    "hold_t": 1.85,
+    "full_t": 3.03
+   },
+   "AV_FSAIX": {
+    "hold_ex": 4.51,
+    "hold_t": 1.74,
+    "full_t": 3.05
+   },
+   "AV_FSDCX": {
+    "hold_ex": 4.42,
+    "hold_t": 1.68,
+    "full_t": 3.03
+   },
+   "AV_FCYIX": {
+    "hold_ex": 4.39,
+    "hold_t": 1.67,
+    "full_t": 2.97
+   },
+   "AV_FSCGX": {
+    "hold_ex": 4.42,
+    "hold_t": 1.68,
+    "full_t": 2.99
+   }
+  }
+ },
+ "x2_live_only_vs_pure_net": {
+  "hold": {
+   "from": 200701,
+   "to": 202608,
+   "n": 236,
+   "ex": 5.48,
+   "t": 2.13,
+   "p": 0.03304,
+   "cagr_diff": 5.42
+  },
+  "full": {
+   "from": 198707,
+   "to": 202608,
+   "n": 470,
+   "ex": 7.21,
+   "t": 3.27,
+   "p": 0.00109,
+   "cagr_diff": 6.99
+  }
+ },
+ "calendar_offsets_live33_vs_pure_net": {
+  "what": "区切りの日を月の k 営業日目 / 最後から n 番目の営業日へ。生きた33本だけ（死んだ6本は日次が無い）",
+  "summary": {
+   "X2": {
+    "n_offsets": 20,
+    "hold_ex_mean": 3.27,
+    "hold_t_mean": 1.28,
+    "share_hold_t_ge_1.65": 0.2,
+    "share_full_t_ge_3": 0.05,
+    "share_train_t_ge_2": 0.8,
+    "month_end_hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 5.42,
+     "t": 2.13,
+     "p": 0.03354,
+     "cagr_diff": 5.37
+    },
+    "month_end_full_t": 3.29,
+    "month_end_rank_of_hold_t": 2
+   },
+   "E4": {
+    "n_offsets": 20,
+    "hold_ex_mean": 3.16,
+    "hold_t_mean": 1.29,
+    "share_hold_t_ge_1.65": 0.25,
+    "share_full_t_ge_3": 0.15,
+    "share_train_t_ge_2": 0.9,
+    "month_end_hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 5.12,
+     "t": 2.22,
+     "p": 0.02616,
+     "cagr_diff": 5.14
+    },
+    "month_end_full_t": 3.14,
+    "month_end_rank_of_hold_t": 1
+   }
+  },
+  "by_offset": {
+   "n1_month_end": {
+    "X2": {
+     "full": {
+      "from": 198707,
+      "to": 202608,
+      "n": 470,
+      "ex": 7.22,
+      "t": 3.29,
+      "p": 0.00099,
+      "cagr_diff": 7.0
+     },
+     "train": {
+      "from": 198707,
+      "to": 200612,
+      "n": 234,
+      "ex": 9.03,
+      "t": 2.57,
+      "p": 0.01017,
+      "cagr_diff": 8.65
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 5.42,
+      "t": 2.13,
+      "p": 0.03354,
+      "cagr_diff": 5.37
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198707,
+      "to": 202608,
+      "n": 470,
+      "ex": 6.9,
+      "t": 3.14,
+      "p": 0.00169,
+      "cagr_diff": 6.56
+     },
+     "train": {
+      "from": 198707,
+      "to": 200612,
+      "n": 234,
+      "ex": 8.7,
+      "t": 2.34,
+      "p": 0.0193,
+      "cagr_diff": 8.01
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 5.12,
+      "t": 2.22,
+      "p": 0.02616,
+      "cagr_diff": 5.14
+     }
+    }
+   },
+   "k1": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.66,
+      "t": 2.82,
+      "p": 0.00482,
+      "cagr_diff": 6.47
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.82,
+      "t": 2.33,
+      "p": 0.01994,
+      "cagr_diff": 8.55
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 4.54,
+      "t": 1.67,
+      "p": 0.09485,
+      "cagr_diff": 4.44
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 7.2,
+      "t": 3.01,
+      "p": 0.00264,
+      "cagr_diff": 7.01
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 9.28,
+      "t": 2.32,
+      "p": 0.02032,
+      "cagr_diff": 8.89
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 5.13,
+      "t": 2.04,
+      "p": 0.04156,
+      "cagr_diff": 5.17
+     }
+    }
+   },
+   "k2": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.29,
+      "t": 2.7,
+      "p": 0.00687,
+      "cagr_diff": 6.08
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 9.39,
+      "t": 2.57,
+      "p": 0.01029,
+      "cagr_diff": 9.35
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 3.23,
+      "t": 1.21,
+      "p": 0.22572,
+      "cagr_diff": 2.92
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.74,
+      "t": 2.53,
+      "p": 0.01142,
+      "cagr_diff": 5.34
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 9.17,
+      "t": 2.49,
+      "p": 0.0128,
+      "cagr_diff": 8.92
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 2.35,
+      "t": 0.99,
+      "p": 0.32267,
+      "cagr_diff": 1.89
+     }
+    }
+   },
+   "k3": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.25,
+      "t": 2.69,
+      "p": 0.00723,
+      "cagr_diff": 6.02
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 9.91,
+      "t": 2.71,
+      "p": 0.00676,
+      "cagr_diff": 9.89
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 2.63,
+      "t": 1.02,
+      "p": 0.30751,
+      "cagr_diff": 2.3
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 7.13,
+      "t": 2.77,
+      "p": 0.00563,
+      "cagr_diff": 6.88
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 10.41,
+      "t": 2.46,
+      "p": 0.01396,
+      "cagr_diff": 10.3
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 3.89,
+      "t": 1.45,
+      "p": 0.1466,
+      "cagr_diff": 3.59
+     }
+    }
+   },
+   "k4": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.47,
+      "t": 2.38,
+      "p": 0.01751,
+      "cagr_diff": 5.15
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.53,
+      "t": 2.21,
+      "p": 0.02732,
+      "cagr_diff": 8.18
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 2.45,
+      "t": 1.06,
+      "p": 0.29,
+      "cagr_diff": 2.21
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.18,
+      "t": 2.41,
+      "p": 0.01607,
+      "cagr_diff": 5.86
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 9.33,
+      "t": 2.21,
+      "p": 0.02714,
+      "cagr_diff": 8.91
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 3.07,
+      "t": 1.13,
+      "p": 0.25981,
+      "cagr_diff": 2.9
+     }
+    }
+   },
+   "k5": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.25,
+      "t": 2.24,
+      "p": 0.02487,
+      "cagr_diff": 4.92
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 7.86,
+      "t": 1.98,
+      "p": 0.04718,
+      "cagr_diff": 7.55
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 2.67,
+      "t": 1.13,
+      "p": 0.25977,
+      "cagr_diff": 2.37
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.54,
+      "t": 2.23,
+      "p": 0.0257,
+      "cagr_diff": 5.25
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.05,
+      "t": 1.93,
+      "p": 0.0541,
+      "cagr_diff": 7.71
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 3.07,
+      "t": 1.21,
+      "p": 0.22706,
+      "cagr_diff": 2.86
+     }
+    }
+   },
+   "k6": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 4.79,
+      "t": 1.93,
+      "p": 0.05362,
+      "cagr_diff": 4.3
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 6.82,
+      "t": 1.67,
+      "p": 0.09536,
+      "cagr_diff": 6.13
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 2.79,
+      "t": 1.02,
+      "p": 0.30796,
+      "cagr_diff": 2.5
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.39,
+      "t": 2.18,
+      "p": 0.0289,
+      "cagr_diff": 5.11
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.2,
+      "t": 2.08,
+      "p": 0.03798,
+      "cagr_diff": 7.79
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 2.6,
+      "t": 0.95,
+      "p": 0.34339,
+      "cagr_diff": 2.5
+     }
+    }
+   },
+   "k7": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.64,
+      "t": 2.24,
+      "p": 0.02485,
+      "cagr_diff": 5.15
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.42,
+      "t": 2.06,
+      "p": 0.03965,
+      "cagr_diff": 7.86
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 2.89,
+      "t": 1.06,
+      "p": 0.28938,
+      "cagr_diff": 2.51
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.15,
+      "t": 2.59,
+      "p": 0.00964,
+      "cagr_diff": 5.8
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.27,
+      "t": 2.14,
+      "p": 0.03267,
+      "cagr_diff": 7.76
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 4.05,
+      "t": 1.55,
+      "p": 0.12056,
+      "cagr_diff": 3.88
+     }
+    }
+   },
+   "k8": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.51,
+      "t": 2.71,
+      "p": 0.00683,
+      "cagr_diff": 5.91
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 7.39,
+      "t": 1.82,
+      "p": 0.06844,
+      "cagr_diff": 6.15
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 5.64,
+      "t": 2.21,
+      "p": 0.02733,
+      "cagr_diff": 5.67
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.9,
+      "t": 2.86,
+      "p": 0.00426,
+      "cagr_diff": 6.46
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.95,
+      "t": 2.22,
+      "p": 0.02638,
+      "cagr_diff": 8.14
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 4.87,
+      "t": 1.92,
+      "p": 0.05468,
+      "cagr_diff": 4.81
+     }
+    }
+   },
+   "k9": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.16,
+      "t": 2.66,
+      "p": 0.00778,
+      "cagr_diff": 5.67
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.47,
+      "t": 2.17,
+      "p": 0.03024,
+      "cagr_diff": 7.79
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 3.89,
+      "t": 1.67,
+      "p": 0.0958,
+      "cagr_diff": 3.61
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.92,
+      "t": 2.64,
+      "p": 0.00835,
+      "cagr_diff": 5.5
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 9.12,
+      "t": 2.49,
+      "p": 0.01271,
+      "cagr_diff": 8.77
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 2.77,
+      "t": 1.2,
+      "p": 0.22836,
+      "cagr_diff": 2.34
+     }
+    }
+   },
+   "k10": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.75,
+      "t": 2.58,
+      "p": 0.00991,
+      "cagr_diff": 5.39
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.84,
+      "t": 2.46,
+      "p": 0.01387,
+      "cagr_diff": 8.46
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 2.71,
+      "t": 1.13,
+      "p": 0.25903,
+      "cagr_diff": 2.41
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.68,
+      "t": 3.15,
+      "p": 0.00163,
+      "cagr_diff": 6.6
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 10.08,
+      "t": 2.93,
+      "p": 0.00339,
+      "cagr_diff": 10.08
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 3.33,
+      "t": 1.56,
+      "p": 0.11842,
+      "cagr_diff": 3.24
+     }
+    }
+   },
+   "k11": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.42,
+      "t": 2.75,
+      "p": 0.00605,
+      "cagr_diff": 6.15
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 9.16,
+      "t": 2.39,
+      "p": 0.01705,
+      "cagr_diff": 9.11
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 3.72,
+      "t": 1.5,
+      "p": 0.13273,
+      "cagr_diff": 3.28
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.38,
+      "t": 2.72,
+      "p": 0.00645,
+      "cagr_diff": 6.33
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 10.69,
+      "t": 2.85,
+      "p": 0.00432,
+      "cagr_diff": 11.25
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 2.14,
+      "t": 0.9,
+      "p": 0.3662,
+      "cagr_diff": 1.64
+     }
+    }
+   },
+   "k12": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.43,
+      "t": 2.86,
+      "p": 0.00428,
+      "cagr_diff": 6.14
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 9.68,
+      "t": 2.64,
+      "p": 0.00835,
+      "cagr_diff": 9.57
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 3.22,
+      "t": 1.36,
+      "p": 0.1745,
+      "cagr_diff": 2.83
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.43,
+      "t": 2.38,
+      "p": 0.01731,
+      "cagr_diff": 5.09
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 9.57,
+      "t": 2.55,
+      "p": 0.01068,
+      "cagr_diff": 9.45
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 1.35,
+      "t": 0.62,
+      "p": 0.53518,
+      "cagr_diff": 0.91
+     }
+    }
+   },
+   "k13": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.23,
+      "t": 2.23,
+      "p": 0.0255,
+      "cagr_diff": 4.88
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 7.36,
+      "t": 1.88,
+      "p": 0.06,
+      "cagr_diff": 7.18
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 3.13,
+      "t": 1.27,
+      "p": 0.20513,
+      "cagr_diff": 2.64
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.4,
+      "t": 2.29,
+      "p": 0.02226,
+      "cagr_diff": 5.22
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.96,
+      "t": 2.26,
+      "p": 0.0236,
+      "cagr_diff": 9.0
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 1.89,
+      "t": 0.83,
+      "p": 0.40406,
+      "cagr_diff": 1.58
+     }
+    }
+   },
+   "k14": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.2,
+      "t": 2.64,
+      "p": 0.00819,
+      "cagr_diff": 5.99
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 9.15,
+      "t": 2.46,
+      "p": 0.01373,
+      "cagr_diff": 9.32
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 3.3,
+      "t": 1.24,
+      "p": 0.21452,
+      "cagr_diff": 2.77
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.13,
+      "t": 2.18,
+      "p": 0.02915,
+      "cagr_diff": 4.98
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.45,
+      "t": 2.28,
+      "p": 0.02254,
+      "cagr_diff": 8.55
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 1.86,
+      "t": 0.7,
+      "p": 0.48285,
+      "cagr_diff": 1.54
+     }
+    }
+   },
+   "k15": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 4.51,
+      "t": 1.92,
+      "p": 0.05507,
+      "cagr_diff": 4.14
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 7.68,
+      "t": 2.07,
+      "p": 0.03865,
+      "cagr_diff": 7.6
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 1.38,
+      "t": 0.51,
+      "p": 0.60731,
+      "cagr_diff": 0.79
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.3,
+      "t": 2.39,
+      "p": 0.01708,
+      "cagr_diff": 5.19
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.14,
+      "t": 2.29,
+      "p": 0.02214,
+      "cagr_diff": 8.25
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 2.5,
+      "t": 1.0,
+      "p": 0.3172,
+      "cagr_diff": 2.23
+     }
+    }
+   },
+   "n2": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 6.54,
+      "t": 2.72,
+      "p": 0.00645,
+      "cagr_diff": 6.19
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.72,
+      "t": 2.28,
+      "p": 0.02278,
+      "cagr_diff": 8.37
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 4.4,
+      "t": 1.57,
+      "p": 0.11649,
+      "cagr_diff": 4.06
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.98,
+      "t": 2.61,
+      "p": 0.00916,
+      "cagr_diff": 5.58
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 7.78,
+      "t": 2.02,
+      "p": 0.04348,
+      "cagr_diff": 7.21
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 4.2,
+      "t": 1.72,
+      "p": 0.08541,
+      "cagr_diff": 3.98
+     }
+    }
+   },
+   "n3": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.61,
+      "t": 2.65,
+      "p": 0.0081,
+      "cagr_diff": 5.29
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 7.8,
+      "t": 2.45,
+      "p": 0.0142,
+      "cagr_diff": 7.48
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 3.45,
+      "t": 1.28,
+      "p": 0.19881,
+      "cagr_diff": 3.17
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.89,
+      "t": 2.68,
+      "p": 0.00737,
+      "cagr_diff": 5.58
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 7.39,
+      "t": 2.0,
+      "p": 0.04513,
+      "cagr_diff": 6.85
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 4.41,
+      "t": 1.86,
+      "p": 0.06345,
+      "cagr_diff": 4.34
+     }
+    }
+   },
+   "n5": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.38,
+      "t": 2.31,
+      "p": 0.021,
+      "cagr_diff": 5.15
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.7,
+      "t": 2.3,
+      "p": 0.02165,
+      "cagr_diff": 8.71
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 2.11,
+      "t": 0.85,
+      "p": 0.39309,
+      "cagr_diff": 1.72
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 4.52,
+      "t": 2.01,
+      "p": 0.04445,
+      "cagr_diff": 4.27
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 7.35,
+      "t": 1.96,
+      "p": 0.05029,
+      "cagr_diff": 7.18
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 1.73,
+      "t": 0.75,
+      "p": 0.45492,
+      "cagr_diff": 1.46
+     }
+    }
+   },
+   "n8": {
+    "X2": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.15,
+      "t": 2.17,
+      "p": 0.02978,
+      "cagr_diff": 4.77
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.59,
+      "t": 2.26,
+      "p": 0.02388,
+      "cagr_diff": 8.39
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 1.74,
+      "t": 0.68,
+      "p": 0.49524,
+      "cagr_diff": 1.29
+     }
+    },
+    "E4": {
+     "full": {
+      "from": 198708,
+      "to": 202608,
+      "n": 469,
+      "ex": 5.53,
+      "t": 2.48,
+      "p": 0.01298,
+      "cagr_diff": 5.36
+     },
+     "train": {
+      "from": 198708,
+      "to": 200612,
+      "n": 233,
+      "ex": 8.16,
+      "t": 2.24,
+      "p": 0.02511,
+      "cagr_diff": 7.98
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 2.94,
+      "t": 1.25,
+      "p": 0.21186,
+      "cagr_diff": 2.81
+     }
+    }
+   }
+  }
+ },
+ "stress_jp_retail_commission_vs_pure": {
+  "E1_cop_tilt": {
+   "cost_per_year_pct": 0.127,
+   "grade_vs_pure": "S",
+   "full": {
+    "from": 196307,
+    "to": 202512,
+    "n": 750,
+    "ex": 0.42,
+    "t": 3.44,
+    "p": 0.00059,
+    "cagr_diff": 0.49
+   },
+   "train": {
+    "from": 196307,
+    "to": 200612,
+    "n": 522,
+    "ex": 0.29,
+    "t": 2.23,
+    "p": 0.02548,
+    "cagr_diff": 0.34
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202512,
+    "n": 228,
+    "ex": 0.7,
+    "t": 2.77,
+    "p": 0.00565,
+    "cagr_diff": 0.81
+   }
+  },
+  "E1m_cop_mega": {
+   "cost_per_year_pct": 0.071,
+   "grade_vs_pure": "B",
+   "full": {
+    "from": 196307,
+    "to": 202512,
+    "n": 750,
+    "ex": 0.11,
+    "t": 2.85,
+    "p": 0.00432,
+    "cagr_diff": 0.12
+   },
+   "train": {
+    "from": 196307,
+    "to": 200612,
+    "n": 522,
+    "ex": 0.1,
+    "t": 2.46,
+    "p": 0.01384,
+    "cagr_diff": 0.11
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202512,
+    "n": 228,
+    "ex": 0.12,
+    "t": 1.48,
+    "p": 0.13786,
+    "cagr_diff": 0.14
+   }
+  },
+  "E2_gate_P1": {
+   "cost_per_year_pct": 0.921,
+   "grade_vs_pure": "C",
+   "full": {
+    "from": 196307,
+    "to": 202512,
+    "n": 750,
+    "ex": 0.13,
+    "t": 0.49,
+    "p": 0.62313,
+    "cagr_diff": 0.16
+   },
+   "train": {
+    "from": 196307,
+    "to": 200612,
+    "n": 522,
+    "ex": 0.17,
+    "t": 0.48,
+    "p": 0.62794,
+    "cagr_diff": 0.2
+   },
+   "hold": {
+    "from": 200701,
+    "to": 202512,
+    "n": 228,
+    "ex": 0.05,
+    "t": 0.13,
+    "p": 0.89506,
+    "cagr_diff": 0.05
+   }
+  }
+ },
+ "multiple_testing": {
+  "angle_tested_rows": 332,
+  "angle_distinct_strategies": 13,
+  "angle_lump_grade_rows": 39,
+  "program_tested_rows_all_mw": 3616,
+  "origin": {
+   "E1": "mega_tilt X3b の17本（λ_vw・探索の族）の中で保有期間 t が最大だったものを、この角度が E1 に選んだ",
+   "E1m": "mega_tilt X1_lamfeas（mega 34本の族の Holm は最良の cop_at でも 0.50・mega_tilt_verify）",
+   "E2": "gate_proxy P1（gate_proxy_verify で A へ格下げ・保有期間は登録前に H3 として既知）",
+   "X2_E4": "etf_tactical の探索の族 exploratory3（E4）＝角度全体で参照を除く76本・その角度の Holm 1.0。X2 はこの角度の主の族の結果を見た後の探索（事前登録2）"
+  },
+  "bonferroni_full_period_vs_pure": {
+   "E1_cop_tilt": {
+    "full_t_vs_pure": 4.37,
+    "full_p": 1.24e-05,
+    "bonferroni_program": 0.0449
+   },
+   "E1m_cop_mega": {
+    "full_t_vs_pure": 4.54,
+    "full_p": 5.63e-06,
+    "bonferroni_program": 0.0203
+   },
+   "E2_gate_P1": {
+    "full_t_vs_pure": 3.22,
+    "full_p": 0.00128,
+    "bonferroni_program": 1.0
+   },
+   "X2_fsel_bl_buf": {
+    "full_t_vs_pure": 2.97,
+    "full_p": 0.00298,
+    "bonferroni_program": 1.0
+   },
+   "E4_fsel_top3": {
+    "full_t_vs_pure": 2.94,
+    "full_p": 0.00328,
+    "bonferroni_program": 1.0
+   }
+  }
+ },
+ "candidates": {
+  "E1_cop_tilt__lump__R0_pretax": {
+   "claimed": {
+    "grade": "S",
+    "full": 0.63,
+    "full_t": 5.2,
+    "hold": 0.91,
+    "hold_t": 3.61
+   },
+   "reproduced_vs_fee_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.63,
+     "t": 5.2,
+     "p": 0.0,
+     "cagr_diff": 0.72
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.51,
+     "t": 3.85,
+     "p": 0.00012,
+     "cagr_diff": 0.58
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.91,
+     "t": 3.61,
+     "p": 0.0003,
+     "cagr_diff": 1.05
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.91,
+     "t": 3.61,
+     "p": 0.0003,
+     "cagr_diff": 1.05
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 0.85,
+     "t": 3.27,
+     "p": 0.00107,
+     "cagr_diff": 0.97
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 1.0,
+     "median": 0.75,
+     "worst": [
+      1974,
+      0.42
+     ],
+     "best": [
+      2004,
+      0.97
+     ]
+    }
+   },
+   "vs_pure_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.53,
+     "t": 4.37,
+     "p": 1e-05,
+     "cagr_diff": 0.61
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.41,
+     "t": 3.1,
+     "p": 0.00196,
+     "cagr_diff": 0.47
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.81,
+     "t": 3.22,
+     "p": 0.00129,
+     "cagr_diff": 0.94
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.81,
+     "t": 3.22,
+     "p": 0.00129,
+     "cagr_diff": 0.94
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 0.75,
+     "t": 2.89,
+     "p": 0.0039,
+     "cagr_diff": 0.85
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 1.0,
+     "median": 0.64,
+     "worst": [
+      1974,
+      0.31
+     ],
+     "best": [
+      2004,
+      0.86
+     ]
+    }
+   }
+  },
+  "E1_cop_tilt__lump__R1_nisa_unlimited": {
+   "claimed": {
+    "grade": "S",
+    "full": 0.63,
+    "full_t": 5.2,
+    "hold": 0.91,
+    "hold_t": 3.61
+   },
+   "reproduced_vs_fee_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.63,
+     "t": 5.2,
+     "p": 0.0,
+     "cagr_diff": 0.72
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.51,
+     "t": 3.85,
+     "p": 0.00012,
+     "cagr_diff": 0.58
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.91,
+     "t": 3.61,
+     "p": 0.0003,
+     "cagr_diff": 1.04
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.91,
+     "t": 3.61,
+     "p": 0.0003,
+     "cagr_diff": 1.04
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 0.85,
+     "t": 3.27,
+     "p": 0.00107,
+     "cagr_diff": 0.97
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 1.0,
+     "median": 0.75,
+     "worst": [
+      1974,
+      0.42
+     ],
+     "best": [
+      2004,
+      0.97
+     ]
+    }
+   },
+   "vs_pure_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.53,
+     "t": 4.37,
+     "p": 1e-05,
+     "cagr_diff": 0.61
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.41,
+     "t": 3.1,
+     "p": 0.00196,
+     "cagr_diff": 0.47
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.81,
+     "t": 3.22,
+     "p": 0.00129,
+     "cagr_diff": 0.93
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.81,
+     "t": 3.22,
+     "p": 0.00129,
+     "cagr_diff": 0.93
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 0.75,
+     "t": 2.89,
+     "p": 0.0039,
+     "cagr_diff": 0.85
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 1.0,
+     "median": 0.64,
+     "worst": [
+      1974,
+      0.31
+     ],
+     "best": [
+      2004,
+      0.86
+     ]
+    }
+   }
+  },
+  "E1m_cop_mega__lump__R0_pretax": {
+   "claimed": {
+    "grade": "S",
+    "full": 0.27,
+    "full_t": 7.16,
+    "hold": 0.28,
+    "hold_t": 3.52
+   },
+   "reproduced_vs_fee_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.27,
+     "t": 7.16,
+     "p": 0.0,
+     "cagr_diff": 0.3
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.27,
+     "t": 6.34,
+     "p": 0.0,
+     "cagr_diff": 0.29
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.28,
+     "t": 3.53,
+     "p": 0.00042,
+     "cagr_diff": 0.32
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.28,
+     "t": 3.53,
+     "p": 0.00042,
+     "cagr_diff": 0.32
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 0.24,
+     "t": 2.95,
+     "p": 0.00315,
+     "cagr_diff": 0.27
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 1.0,
+     "median": 0.31,
+     "worst": [
+      1973,
+      0.25
+     ],
+     "best": [
+      1981,
+      0.36
+     ]
+    }
+   },
+   "vs_pure_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.17,
+     "t": 4.54,
+     "p": 1e-05,
+     "cagr_diff": 0.19
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.17,
+     "t": 3.98,
+     "p": 7e-05,
+     "cagr_diff": 0.18
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.18,
+     "t": 2.28,
+     "p": 0.02253,
+     "cagr_diff": 0.21
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.18,
+     "t": 2.28,
+     "p": 0.02253,
+     "cagr_diff": 0.21
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 0.14,
+     "t": 1.75,
+     "p": 0.08072,
+     "cagr_diff": 0.16
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 1.0,
+     "median": 0.2,
+     "worst": [
+      1973,
+      0.13
+     ],
+     "best": [
+      1968,
+      0.24
+     ]
+    }
+   }
+  },
+  "E1m_cop_mega__lump__R1_nisa_unlimited": {
+   "claimed": {
+    "grade": "S",
+    "full": 0.27,
+    "full_t": 7.16,
+    "hold": 0.28,
+    "hold_t": 3.52
+   },
+   "reproduced_vs_fee_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.27,
+     "t": 7.16,
+     "p": 0.0,
+     "cagr_diff": 0.3
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.27,
+     "t": 6.34,
+     "p": 0.0,
+     "cagr_diff": 0.29
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.28,
+     "t": 3.53,
+     "p": 0.00042,
+     "cagr_diff": 0.32
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.28,
+     "t": 3.53,
+     "p": 0.00042,
+     "cagr_diff": 0.32
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 0.24,
+     "t": 2.95,
+     "p": 0.00315,
+     "cagr_diff": 0.27
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 1.0,
+     "median": 0.3,
+     "worst": [
+      1973,
+      0.25
+     ],
+     "best": [
+      1968,
+      0.35
+     ]
+    }
+   },
+   "vs_pure_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.17,
+     "t": 4.54,
+     "p": 1e-05,
+     "cagr_diff": 0.19
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.17,
+     "t": 3.98,
+     "p": 7e-05,
+     "cagr_diff": 0.18
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.18,
+     "t": 2.28,
+     "p": 0.02253,
+     "cagr_diff": 0.21
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.18,
+     "t": 2.28,
+     "p": 0.02253,
+     "cagr_diff": 0.21
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 0.14,
+     "t": 1.75,
+     "p": 0.08072,
+     "cagr_diff": 0.16
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 1.0,
+     "median": 0.2,
+     "worst": [
+      1973,
+      0.13
+     ],
+     "best": [
+      1968,
+      0.24
+     ]
+    }
+   }
+  },
+  "E2_gate_P1__lump__R0_pretax": {
+   "claimed": {
+    "grade": "S",
+    "full": 0.97,
+    "full_t": 3.59,
+    "hold": 0.89,
+    "hold_t": 2.15
+   },
+   "reproduced_vs_fee_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.97,
+     "t": 3.59,
+     "p": 0.00033,
+     "cagr_diff": 1.08
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 1.0,
+     "t": 2.92,
+     "p": 0.00353,
+     "cagr_diff": 1.12
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.89,
+     "t": 2.15,
+     "p": 0.03121,
+     "cagr_diff": 0.98
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.89,
+     "t": 2.15,
+     "p": 0.03121,
+     "cagr_diff": 0.98
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 1.06,
+     "t": 2.79,
+     "p": 0.00524,
+     "cagr_diff": 1.17
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 1.0,
+     "median": 0.97,
+     "worst": [
+      1974,
+      0.08
+     ],
+     "best": [
+      1989,
+      1.45
+     ]
+    }
+   },
+   "vs_pure_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.87,
+     "t": 3.22,
+     "p": 0.00128,
+     "cagr_diff": 0.97
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.9,
+     "t": 2.63,
+     "p": 0.00864,
+     "cagr_diff": 1.01
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.79,
+     "t": 1.91,
+     "p": 0.05584,
+     "cagr_diff": 0.87
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.79,
+     "t": 1.91,
+     "p": 0.05584,
+     "cagr_diff": 0.87
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 0.96,
+     "t": 2.53,
+     "p": 0.01147,
+     "cagr_diff": 1.06
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 0.977,
+     "median": 0.86,
+     "worst": [
+      1974,
+      -0.03
+     ],
+     "best": [
+      1989,
+      1.34
+     ]
+    }
+   }
+  },
+  "E2_gate_P1__lump__R1_nisa_unlimited": {
+   "claimed": {
+    "grade": "S",
+    "full": 0.97,
+    "full_t": 3.59,
+    "hold": 0.89,
+    "hold_t": 2.15
+   },
+   "reproduced_vs_fee_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.97,
+     "t": 3.59,
+     "p": 0.00033,
+     "cagr_diff": 1.08
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 1.0,
+     "t": 2.92,
+     "p": 0.00353,
+     "cagr_diff": 1.12
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.89,
+     "t": 2.15,
+     "p": 0.03121,
+     "cagr_diff": 0.97
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.89,
+     "t": 2.15,
+     "p": 0.03121,
+     "cagr_diff": 0.97
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 1.06,
+     "t": 2.79,
+     "p": 0.00524,
+     "cagr_diff": 1.17
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 1.0,
+     "median": 0.97,
+     "worst": [
+      1974,
+      0.08
+     ],
+     "best": [
+      1989,
+      1.45
+     ]
+    }
+   },
+   "vs_pure_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.87,
+     "t": 3.22,
+     "p": 0.00128,
+     "cagr_diff": 0.97
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.9,
+     "t": 2.63,
+     "p": 0.00864,
+     "cagr_diff": 1.01
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.79,
+     "t": 1.91,
+     "p": 0.05584,
+     "cagr_diff": 0.87
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.79,
+     "t": 1.91,
+     "p": 0.05584,
+     "cagr_diff": 0.87
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 0.96,
+     "t": 2.53,
+     "p": 0.01147,
+     "cagr_diff": 1.06
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 0.977,
+     "median": 0.86,
+     "worst": [
+      1974,
+      -0.03
+     ],
+     "best": [
+      1989,
+      1.34
+     ]
+    }
+   }
+  },
+  "X2_fsel_bl_buf__lump__R0_pretax": {
+   "claimed": {
+    "grade": "S",
+    "full": 6.93,
+    "full_t": 3.01,
+    "hold": 4.49,
+    "hold_t": 1.71
+   },
+   "reproduced_vs_fee_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 198707,
+     "to": 202608,
+     "n": 470,
+     "ex": 6.94,
+     "t": 3.01,
+     "p": 0.00257,
+     "cagr_diff": 6.52
+    },
+    "train": {
+     "from": 198707,
+     "to": 200612,
+     "n": 234,
+     "ex": 9.4,
+     "t": 2.55,
+     "p": 0.01088,
+     "cagr_diff": 8.97
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.49,
+     "t": 1.71,
+     "p": 0.08711,
+     "cagr_diff": 4.13
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.49,
+     "t": 1.71,
+     "p": 0.08711,
+     "cagr_diff": 4.13
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202608,
+     "n": 158,
+     "ex": 5.08,
+     "t": 1.49,
+     "p": 0.13703,
+     "cagr_diff": 4.82
+    },
+    "roll20": {
+     "n": 20,
+     "win_rate": 1.0,
+     "median": 6.98,
+     "worst": [
+      2002,
+      2.17
+     ],
+     "best": [
+      1988,
+      11.62
+     ]
+    }
+   },
+   "vs_pure_benchmark": {
+    "grade": "B",
+    "full": {
+     "from": 198707,
+     "to": 202608,
+     "n": 470,
+     "ex": 6.84,
+     "t": 2.97,
+     "p": 0.00297,
+     "cagr_diff": 6.41
+    },
+    "train": {
+     "from": 198707,
+     "to": 200612,
+     "n": 234,
+     "ex": 9.3,
+     "t": 2.52,
+     "p": 0.01175,
+     "cagr_diff": 8.86
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.39,
+     "t": 1.67,
+     "p": 0.09437,
+     "cagr_diff": 4.02
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.39,
+     "t": 1.67,
+     "p": 0.09437,
+     "cagr_diff": 4.02
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202608,
+     "n": 158,
+     "ex": 4.98,
+     "t": 1.46,
+     "p": 0.14492,
+     "cagr_diff": 4.71
+    },
+    "roll20": {
+     "n": 20,
+     "win_rate": 1.0,
+     "median": 6.87,
+     "worst": [
+      2002,
+      2.06
+     ],
+     "best": [
+      1988,
+      11.51
+     ]
+    }
+   }
+  },
+  "X2_fsel_bl_buf__lump__R1_nisa_unlimited": {
+   "claimed": {
+    "grade": "S",
+    "full": 6.93,
+    "full_t": 3.01,
+    "hold": 4.49,
+    "hold_t": 1.71
+   },
+   "reproduced_vs_fee_benchmark": {
+    "grade": "S",
+    "full": {
+     "from": 198707,
+     "to": 202608,
+     "n": 470,
+     "ex": 6.94,
+     "t": 3.01,
+     "p": 0.00257,
+     "cagr_diff": 6.51
+    },
+    "train": {
+     "from": 198707,
+     "to": 200612,
+     "n": 234,
+     "ex": 9.4,
+     "t": 2.55,
+     "p": 0.01088,
+     "cagr_diff": 8.95
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.49,
+     "t": 1.71,
+     "p": 0.08711,
+     "cagr_diff": 4.12
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.49,
+     "t": 1.71,
+     "p": 0.08711,
+     "cagr_diff": 4.12
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202608,
+     "n": 158,
+     "ex": 5.08,
+     "t": 1.49,
+     "p": 0.13703,
+     "cagr_diff": 4.82
+    },
+    "roll20": {
+     "n": 20,
+     "win_rate": 1.0,
+     "median": 6.96,
+     "worst": [
+      2002,
+      2.17
+     ],
+     "best": [
+      1988,
+      11.6
+     ]
+    }
+   },
+   "vs_pure_benchmark": {
+    "grade": "B",
+    "full": {
+     "from": 198707,
+     "to": 202608,
+     "n": 470,
+     "ex": 6.84,
+     "t": 2.97,
+     "p": 0.00297,
+     "cagr_diff": 6.4
+    },
+    "train": {
+     "from": 198707,
+     "to": 200612,
+     "n": 234,
+     "ex": 9.3,
+     "t": 2.52,
+     "p": 0.01175,
+     "cagr_diff": 8.84
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.39,
+     "t": 1.67,
+     "p": 0.09437,
+     "cagr_diff": 4.01
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.39,
+     "t": 1.67,
+     "p": 0.09437,
+     "cagr_diff": 4.01
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202608,
+     "n": 158,
+     "ex": 4.98,
+     "t": 1.46,
+     "p": 0.14492,
+     "cagr_diff": 4.7
+    },
+    "roll20": {
+     "n": 20,
+     "win_rate": 1.0,
+     "median": 6.86,
+     "worst": [
+      2002,
+      2.06
+     ],
+     "best": [
+      1988,
+      11.49
+     ]
+    }
+   }
+  },
+  "E4_fsel_top3__lump__R0_pretax": {
+   "claimed": {
+    "grade": "B",
+    "full": 6.76,
+    "full_t": 2.98,
+    "hold": 4.01,
+    "hold_t": 1.73
+   },
+   "reproduced_vs_fee_benchmark": {
+    "grade": "B",
+    "full": {
+     "from": 198707,
+     "to": 202608,
+     "n": 470,
+     "ex": 6.77,
+     "t": 2.98,
+     "p": 0.00289,
+     "cagr_diff": 6.31
+    },
+    "train": {
+     "from": 198707,
+     "to": 200612,
+     "n": 234,
+     "ex": 9.54,
+     "t": 2.5,
+     "p": 0.01241,
+     "cagr_diff": 8.92
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.02,
+     "t": 1.73,
+     "p": 0.08379,
+     "cagr_diff": 3.77
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.02,
+     "t": 1.73,
+     "p": 0.08379,
+     "cagr_diff": 3.77
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202608,
+     "n": 158,
+     "ex": 3.75,
+     "t": 1.21,
+     "p": 0.2275,
+     "cagr_diff": 3.56
+    },
+    "roll20": {
+     "n": 20,
+     "win_rate": 1.0,
+     "median": 7.43,
+     "worst": [
+      2005,
+      3.35
+     ],
+     "best": [
+      1988,
+      12.12
+     ]
+    }
+   },
+   "vs_pure_benchmark": {
+    "grade": "B",
+    "full": {
+     "from": 198707,
+     "to": 202608,
+     "n": 470,
+     "ex": 6.67,
+     "t": 2.94,
+     "p": 0.00333,
+     "cagr_diff": 6.2
+    },
+    "train": {
+     "from": 198707,
+     "to": 200612,
+     "n": 234,
+     "ex": 9.44,
+     "t": 2.47,
+     "p": 0.01336,
+     "cagr_diff": 8.81
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 3.92,
+     "t": 1.69,
+     "p": 0.09178,
+     "cagr_diff": 3.66
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 3.92,
+     "t": 1.69,
+     "p": 0.09178,
+     "cagr_diff": 3.66
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202608,
+     "n": 158,
+     "ex": 3.65,
+     "t": 1.17,
+     "p": 0.24015,
+     "cagr_diff": 3.44
+    },
+    "roll20": {
+     "n": 20,
+     "win_rate": 1.0,
+     "median": 7.32,
+     "worst": [
+      2005,
+      3.24
+     ],
+     "best": [
+      1988,
+      12.01
+     ]
+    }
+   }
+  },
+  "E4_fsel_top3__lump__R1_nisa_unlimited": {
+   "claimed": {
+    "grade": "B",
+    "full": 6.76,
+    "full_t": 2.98,
+    "hold": 4.01,
+    "hold_t": 1.73
+   },
+   "reproduced_vs_fee_benchmark": {
+    "grade": "B",
+    "full": {
+     "from": 198707,
+     "to": 202608,
+     "n": 470,
+     "ex": 6.77,
+     "t": 2.98,
+     "p": 0.00289,
+     "cagr_diff": 6.3
+    },
+    "train": {
+     "from": 198707,
+     "to": 200612,
+     "n": 234,
+     "ex": 9.54,
+     "t": 2.5,
+     "p": 0.01241,
+     "cagr_diff": 8.91
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.02,
+     "t": 1.73,
+     "p": 0.08379,
+     "cagr_diff": 3.76
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.02,
+     "t": 1.73,
+     "p": 0.08379,
+     "cagr_diff": 3.76
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202608,
+     "n": 158,
+     "ex": 3.75,
+     "t": 1.21,
+     "p": 0.2275,
+     "cagr_diff": 3.55
+    },
+    "roll20": {
+     "n": 20,
+     "win_rate": 1.0,
+     "median": 7.42,
+     "worst": [
+      2005,
+      3.34
+     ],
+     "best": [
+      1988,
+      12.1
+     ]
+    }
+   },
+   "vs_pure_benchmark": {
+    "grade": "B",
+    "full": {
+     "from": 198707,
+     "to": 202608,
+     "n": 470,
+     "ex": 6.67,
+     "t": 2.94,
+     "p": 0.00333,
+     "cagr_diff": 6.19
+    },
+    "train": {
+     "from": 198707,
+     "to": 200612,
+     "n": 234,
+     "ex": 9.44,
+     "t": 2.47,
+     "p": 0.01336,
+     "cagr_diff": 8.8
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 3.92,
+     "t": 1.69,
+     "p": 0.09178,
+     "cagr_diff": 3.65
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 3.92,
+     "t": 1.69,
+     "p": 0.09178,
+     "cagr_diff": 3.65
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202608,
+     "n": 158,
+     "ex": 3.65,
+     "t": 1.17,
+     "p": 0.24015,
+     "cagr_diff": 3.44
+    },
+    "roll20": {
+     "n": 20,
+     "win_rate": 1.0,
+     "median": 7.31,
+     "worst": [
+      2005,
+      3.23
+     ],
+     "best": [
+      1988,
+      11.99
+     ]
+    }
+   }
+  }
+ },
+ "cands_detail": {
+  "E1_cop_tilt": {
+   "R0_vs_pure_gross_C2C3_net_C6": {
+    "grade": "S",
+    "criteria": {
+     "C1_train": true,
+     "C2_hold_sign": true,
+     "C3_hold_t": true,
+     "C4_roll20": true,
+     "C5_repl": null,
+     "C6_net_cost": true,
+     "C7_multi": true
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.54,
+     "t": 4.48,
+     "p": 1e-05,
+     "cagr_diff": 0.63
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.42,
+     "t": 3.19,
+     "p": 0.0014,
+     "cagr_diff": 0.48
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.83,
+     "t": 3.27,
+     "p": 0.00108,
+     "cagr_diff": 0.95
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.81,
+     "t": 3.22,
+     "p": 0.00129,
+     "cagr_diff": 0.94
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 0.75,
+     "t": 2.89,
+     "p": 0.0039,
+     "cagr_diff": 0.85
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 1.0,
+     "median": 0.64,
+     "worst": [
+      1974,
+      0.31
+     ],
+     "best": [
+      2004,
+      0.86
+     ]
+    }
+   },
+   "dca20_vs_fee": {
+    "n": 43,
+    "win_rate": 1.0,
+    "median": 1.0901,
+    "worst": [
+     196401,
+     1.0535
+    ]
+   },
+   "dca20_vs_pure": {
+    "n": 43,
+    "win_rate": 1.0,
+    "median": 1.0749,
+    "worst": [
+     196401,
+     1.0411
+    ]
+   },
+   "robust_vs_pure_net": {
+    "hold_first_half_2007_2016H1": {
+     "from": 200701,
+     "to": 201606,
+     "n": 114,
+     "ex": 0.82,
+     "t": 2.17,
+     "p": 0.03005,
+     "cagr_diff": 0.95
+    },
+    "hold_second_half_2016H2_": {
+     "from": 201607,
+     "to": 202512,
+     "n": 114,
+     "ex": 0.81,
+     "t": 2.43,
+     "p": 0.01526,
+     "cagr_diff": 0.92
+    },
+    "drop_1998_2000_2020_2021": {
+     "full": {
+      "from": 196307,
+      "to": 202512,
+      "n": 690,
+      "ex": 0.47,
+      "t": 3.83,
+      "p": 0.00013,
+      "cagr_diff": 0.53
+     },
+     "train": {
+      "from": 196307,
+      "to": 200612,
+      "n": 486,
+      "ex": 0.36,
+      "t": 2.65,
+      "p": 0.0081,
+      "cagr_diff": 0.41
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "n": 204,
+      "ex": 0.72,
+      "t": 2.91,
+      "p": 0.0036,
+      "cagr_diff": 0.83
+     }
+    },
+    "drop_2008_2009_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 204,
+     "ex": 0.72,
+     "t": 3.16,
+     "p": 0.00159,
+     "cagr_diff": 0.83
+    },
+    "post_2017": {
+     "from": 201701,
+     "to": 202512,
+     "n": 108,
+     "ex": 0.95,
+     "t": 2.76,
+     "p": 0.00576,
+     "cagr_diff": 1.08
+    },
+    "cost_x3": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.79,
+     "t": 3.12,
+     "p": 0.00183,
+     "cagr_diff": 0.91
+    },
+    "industry12_hedged_train_beta": {
+     "alpha_hold": 0.66,
+     "t": 3.63,
+     "raw_hold": 0.81,
+     "train_intercept": 0.37
+    },
+    "hold_top3_years": {
+     "2008": 2.5,
+     "2007": 2.22,
+     "2023": 2.14
+    },
+    "hold_ex_drop_top3_years": {
+     "from": 200901,
+     "to": 202512,
+     "n": 192,
+     "ex": 0.54,
+     "t": 2.28,
+     "p": 0.02262,
+     "cagr_diff": 0.64
+    }
+   }
+  },
+  "E1m_cop_mega": {
+   "R0_vs_pure_gross_C2C3_net_C6": {
+    "grade": "S",
+    "criteria": {
+     "C1_train": true,
+     "C2_hold_sign": true,
+     "C3_hold_t": true,
+     "C4_roll20": true,
+     "C5_repl": null,
+     "C6_net_cost": true,
+     "C7_multi": true
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 0.18,
+     "t": 4.73,
+     "p": 0.0,
+     "cagr_diff": 0.2
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 0.18,
+     "t": 4.15,
+     "p": 3e-05,
+     "cagr_diff": 0.19
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.19,
+     "t": 2.37,
+     "p": 0.01775,
+     "cagr_diff": 0.22
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.18,
+     "t": 2.28,
+     "p": 0.02253,
+     "cagr_diff": 0.21
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 0.14,
+     "t": 1.75,
+     "p": 0.08072,
+     "cagr_diff": 0.16
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 1.0,
+     "median": 0.2,
+     "worst": [
+      1973,
+      0.13
+     ],
+     "best": [
+      1968,
+      0.24
+     ]
+    }
+   },
+   "dca20_vs_fee": {
+    "n": 43,
+    "win_rate": 1.0,
+    "median": 1.0362,
+    "worst": [
+     199701,
+     1.0257
+    ]
+   },
+   "dca20_vs_pure": {
+    "n": 43,
+    "win_rate": 1.0,
+    "median": 1.0228,
+    "worst": [
+     199701,
+     1.0139
+    ]
+   },
+   "robust_vs_pure_net": {
+    "hold_first_half_2007_2016H1": {
+     "from": 200701,
+     "to": 201606,
+     "n": 114,
+     "ex": 0.2,
+     "t": 1.69,
+     "p": 0.09025,
+     "cagr_diff": 0.24
+    },
+    "hold_second_half_2016H2_": {
+     "from": 201607,
+     "to": 202512,
+     "n": 114,
+     "ex": 0.17,
+     "t": 1.55,
+     "p": 0.12203,
+     "cagr_diff": 0.18
+    },
+    "drop_1998_2000_2020_2021": {
+     "full": {
+      "from": 196307,
+      "to": 202512,
+      "n": 690,
+      "ex": 0.14,
+      "t": 3.91,
+      "p": 9e-05,
+      "cagr_diff": 0.15
+     },
+     "train": {
+      "from": 196307,
+      "to": 200612,
+      "n": 486,
+      "ex": 0.13,
+      "t": 3.45,
+      "p": 0.00056,
+      "cagr_diff": 0.14
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "n": 204,
+      "ex": 0.16,
+      "t": 2.0,
+      "p": 0.0454,
+      "cagr_diff": 0.19
+     }
+    },
+    "drop_2008_2009_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 204,
+     "ex": 0.14,
+     "t": 2.02,
+     "p": 0.04311,
+     "cagr_diff": 0.16
+    },
+    "post_2017": {
+     "from": 201701,
+     "to": 202512,
+     "n": 108,
+     "ex": 0.21,
+     "t": 1.9,
+     "p": 0.05744,
+     "cagr_diff": 0.23
+    },
+    "cost_x3": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.17,
+     "t": 2.1,
+     "p": 0.03555,
+     "cagr_diff": 0.2
+    },
+    "industry12_hedged_train_beta": {
+     "alpha_hold": 0.12,
+     "t": 2.12,
+     "raw_hold": 0.18,
+     "train_intercept": 0.14
+    },
+    "hold_top3_years": {
+     "2008": 0.78,
+     "2020": 0.62,
+     "2023": 0.62
+    },
+    "hold_ex_drop_top3_years": {
+     "from": 200701,
+     "to": 202512,
+     "n": 192,
+     "ex": 0.09,
+     "t": 1.37,
+     "p": 0.17182,
+     "cagr_diff": 0.11
+    }
+   }
+  },
+  "E2_gate_P1": {
+   "R0_vs_pure_gross_C2C3_net_C6": {
+    "grade": "S",
+    "criteria": {
+     "C1_train": true,
+     "C2_hold_sign": true,
+     "C3_hold_t": true,
+     "C4_roll20": true,
+     "C5_repl": null,
+     "C6_net_cost": true,
+     "C7_multi": true
+    },
+    "full": {
+     "from": 196307,
+     "to": 202512,
+     "n": 750,
+     "ex": 1.05,
+     "t": 3.91,
+     "p": 9e-05,
+     "cagr_diff": 1.17
+    },
+    "train": {
+     "from": 196307,
+     "to": 200612,
+     "n": 522,
+     "ex": 1.09,
+     "t": 3.17,
+     "p": 0.00153,
+     "cagr_diff": 1.22
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.98,
+     "t": 2.36,
+     "p": 0.01813,
+     "cagr_diff": 1.07
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.79,
+     "t": 1.91,
+     "p": 0.05584,
+     "cagr_diff": 0.87
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202512,
+     "n": 150,
+     "ex": 0.96,
+     "t": 2.53,
+     "p": 0.01147,
+     "cagr_diff": 1.06
+    },
+    "roll20": {
+     "n": 43,
+     "win_rate": 0.977,
+     "median": 0.86,
+     "worst": [
+      1974,
+      -0.03
+     ],
+     "best": [
+      1989,
+      1.34
+     ]
+    }
+   },
+   "dca20_vs_fee": {
+    "n": 43,
+    "win_rate": 1.0,
+    "median": 1.0903,
+    "worst": [
+     199701,
+     1.0375
+    ]
+   },
+   "dca20_vs_pure": {
+    "n": 43,
+    "win_rate": 1.0,
+    "median": 1.0766,
+    "worst": [
+     197401,
+     1.0248
+    ]
+   },
+   "robust_vs_pure_net": {
+    "hold_first_half_2007_2016H1": {
+     "from": 200701,
+     "to": 201606,
+     "n": 114,
+     "ex": 0.25,
+     "t": 0.38,
+     "p": 0.70329,
+     "cagr_diff": 0.3
+    },
+    "hold_second_half_2016H2_": {
+     "from": 201607,
+     "to": 202512,
+     "n": 114,
+     "ex": 1.32,
+     "t": 3.11,
+     "p": 0.0019,
+     "cagr_diff": 1.48
+    },
+    "drop_1998_2000_2020_2021": {
+     "full": {
+      "from": 196307,
+      "to": 202512,
+      "n": 690,
+      "ex": 0.67,
+      "t": 2.45,
+      "p": 0.01438,
+      "cagr_diff": 0.75
+     },
+     "train": {
+      "from": 196307,
+      "to": 200612,
+      "n": 486,
+      "ex": 0.69,
+      "t": 2.0,
+      "p": 0.04503,
+      "cagr_diff": 0.78
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202512,
+      "n": 204,
+      "ex": 0.63,
+      "t": 1.43,
+      "p": 0.15409,
+      "cagr_diff": 0.68
+     }
+    },
+    "drop_2008_2009_hold": {
+     "from": 200701,
+     "to": 202512,
+     "n": 204,
+     "ex": 0.74,
+     "t": 1.77,
+     "p": 0.0768,
+     "cagr_diff": 0.82
+    },
+    "post_2017": {
+     "from": 201701,
+     "to": 202512,
+     "n": 108,
+     "ex": 1.45,
+     "t": 3.19,
+     "p": 0.00143,
+     "cagr_diff": 1.62
+    },
+    "cost_x3": {
+     "from": 200701,
+     "to": 202512,
+     "n": 228,
+     "ex": 0.42,
+     "t": 1.01,
+     "p": 0.31211,
+     "cagr_diff": 0.45
+    },
+    "industry12_hedged_train_beta": {
+     "alpha_hold": 0.19,
+     "t": 0.59,
+     "raw_hold": 0.79,
+     "train_intercept": 0.7
+    },
+    "hold_top3_years": {
+     "2007": 4.7,
+     "2023": 3.62,
+     "2025": 2.83
+    },
+    "hold_ex_drop_top3_years": {
+     "from": 200801,
+     "to": 202412,
+     "n": 192,
+     "ex": 0.24,
+     "t": 0.61,
+     "p": 0.54026,
+     "cagr_diff": 0.27
+    }
+   }
+  },
+  "X2_fsel_bl_buf": {
+   "turnover_oneway_per_year": 2.34,
+   "from": 198707,
+   "R0_vs_pure_gross_C2C3_net_C6": {
+    "grade": "S",
+    "criteria": {
+     "C1_train": true,
+     "C2_hold_sign": true,
+     "C3_hold_t": true,
+     "C4_roll20": true,
+     "C5_repl": null,
+     "C6_net_cost": true,
+     "C7_multi": true
+    },
+    "full": {
+     "from": 198707,
+     "to": 202608,
+     "n": 470,
+     "ex": 7.07,
+     "t": 3.08,
+     "p": 0.00204,
+     "cagr_diff": 6.68
+    },
+    "train": {
+     "from": 198707,
+     "to": 200612,
+     "n": 234,
+     "ex": 9.52,
+     "t": 2.59,
+     "p": 0.00964,
+     "cagr_diff": 9.12
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.64,
+     "t": 1.77,
+     "p": 0.07595,
+     "cagr_diff": 4.3
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.39,
+     "t": 1.67,
+     "p": 0.09437,
+     "cagr_diff": 4.02
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202608,
+     "n": 158,
+     "ex": 4.98,
+     "t": 1.46,
+     "p": 0.14492,
+     "cagr_diff": 4.71
+    },
+    "roll20": {
+     "n": 20,
+     "win_rate": 1.0,
+     "median": 6.87,
+     "worst": [
+      2002,
+      2.06
+     ],
+     "best": [
+      1988,
+      11.51
+     ]
+    }
+   },
+   "real_fees": {
+    "short_fee_0.75_only_vs_pure": {
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 4.3,
+      "t": 1.63,
+      "p": 0.10304,
+      "cagr_diff": 3.92
+     },
+     "full": {
+      "from": 198707,
+      "to": 202608,
+      "n": 470,
+      "ex": 6.75,
+      "t": 2.93,
+      "p": 0.0034,
+      "cagr_diff": 6.31
+     },
+     "train": {
+      "from": 198707,
+      "to": 200612,
+      "n": 234,
+      "ex": 9.23,
+      "t": 2.5,
+      "p": 0.01249,
+      "cagr_diff": 8.77
+     }
+    },
+    "share_exits_lt30d": 0.045,
+    "load_plus_short_fee_vs_pure": {
+     "full": {
+      "from": 198707,
+      "to": 202608,
+      "n": 470,
+      "ex": 6.7,
+      "t": 2.9,
+      "p": 0.00375,
+      "cagr_diff": 6.25
+     },
+     "train": {
+      "from": 198707,
+      "to": 200612,
+      "n": 234,
+      "ex": 9.11,
+      "t": 2.46,
+      "p": 0.01397,
+      "cagr_diff": 8.65
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 4.3,
+      "t": 1.63,
+      "p": 0.10304,
+      "cagr_diff": 3.92
+     }
+    },
+    "roll20_with_load_and_short_fee_vs_pure": {
+     "n": 20,
+     "win_rate": 1.0,
+     "median": 6.59,
+     "worst": [
+      2002,
+      1.79
+     ]
+    },
+    "grade_vs_pure_with_real_fees": [
+     "B",
+     {
+      "C1_train": true,
+      "C2_hold_sign": true,
+      "C3_hold_t": false,
+      "C4_roll20": true,
+      "C5_repl": null,
+      "C6_net_cost": true,
+      "C7_multi": false
+     }
+    ]
+   },
+   "dca20_vs_fee": {
+    "n": 19,
+    "win_rate": 1.0,
+    "median": 1.8946,
+    "worst": [
+     200201,
+     1.0241
+    ]
+   },
+   "dca20_vs_pure": {
+    "n": 19,
+    "win_rate": 1.0,
+    "median": 1.8727,
+    "worst": [
+     200201,
+     1.0113
+    ]
+   },
+   "dca20_vs_pure_with_load_and_short_fee": {
+    "n": 19,
+    "win_rate": 0.947,
+    "median": 1.8137,
+    "worst": [
+     200201,
+     0.9922
+    ]
+   },
+   "robust_vs_pure_net": {
+    "hold_first_half_2007_2016H1": {
+     "from": 200701,
+     "to": 201606,
+     "n": 114,
+     "ex": 5.24,
+     "t": 1.75,
+     "p": 0.07983,
+     "cagr_diff": 4.98
+    },
+    "hold_second_half_2016H2_": {
+     "from": 201607,
+     "to": 202608,
+     "n": 122,
+     "ex": 3.61,
+     "t": 0.8,
+     "p": 0.42349,
+     "cagr_diff": 3.06
+    },
+    "drop_1998_2000_2020_2021": {
+     "full": {
+      "from": 198707,
+      "to": 202608,
+      "n": 410,
+      "ex": 5.51,
+      "t": 2.56,
+      "p": 0.01039,
+      "cagr_diff": 5.08
+     },
+     "train": {
+      "from": 198707,
+      "to": 200612,
+      "n": 198,
+      "ex": 6.14,
+      "t": 1.88,
+      "p": 0.06022,
+      "cagr_diff": 5.68
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 212,
+      "ex": 4.92,
+      "t": 1.74,
+      "p": 0.08142,
+      "cagr_diff": 4.52
+     }
+    },
+    "train_drop_1999": {
+     "from": 198707,
+     "to": 200612,
+     "n": 222,
+     "ex": 7.42,
+     "t": 2.41,
+     "p": 0.0158,
+     "cagr_diff": 6.81
+    },
+    "hold_top3_years": {
+     "2022": 34.85,
+     "2025": 25.43,
+     "2026": 16.56
+    },
+    "hold_ex_drop_top3_years": {
+     "from": 200701,
+     "to": 202412,
+     "n": 204,
+     "ex": 0.56,
+     "t": 0.23,
+     "p": 0.8177,
+     "cagr_diff": -0.04
+    },
+    "hold_contribution_top5_funds_pct_of_total": {
+     "FSENX": 27.5,
+     "FNARX": 22.6,
+     "FBIOX": 20.7,
+     "FSELX": 19.9,
+     "FSPTX": 17.8
+    }
+   }
+  },
+  "E4_fsel_top3": {
+   "turnover_oneway_per_year": 4.57,
+   "from": 198707,
+   "R0_vs_pure_gross_C2C3_net_C6": {
+    "grade": "S",
+    "criteria": {
+     "C1_train": true,
+     "C2_hold_sign": true,
+     "C3_hold_t": true,
+     "C4_roll20": true,
+     "C5_repl": null,
+     "C6_net_cost": true,
+     "C7_multi": true
+    },
+    "full": {
+     "from": 198707,
+     "to": 202608,
+     "n": 470,
+     "ex": 7.13,
+     "t": 3.15,
+     "p": 0.00162,
+     "cagr_diff": 6.73
+    },
+    "train": {
+     "from": 198707,
+     "to": 200612,
+     "n": 234,
+     "ex": 9.89,
+     "t": 2.61,
+     "p": 0.00915,
+     "cagr_diff": 9.34
+    },
+    "hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 4.39,
+     "t": 1.89,
+     "p": 0.05816,
+     "cagr_diff": 4.19
+    },
+    "net_hold": {
+     "from": 200701,
+     "to": 202608,
+     "n": 236,
+     "ex": 3.92,
+     "t": 1.69,
+     "p": 0.09178,
+     "cagr_diff": 3.66
+    },
+    "recent": {
+     "from": 201307,
+     "to": 202608,
+     "n": 158,
+     "ex": 3.65,
+     "t": 1.17,
+     "p": 0.24015,
+     "cagr_diff": 3.44
+    },
+    "roll20": {
+     "n": 20,
+     "win_rate": 1.0,
+     "median": 7.32,
+     "worst": [
+      2005,
+      3.24
+     ],
+     "best": [
+      1988,
+      12.01
+     ]
+    }
+   },
+   "real_fees": {
+    "short_fee_0.75_only_vs_pure": {
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 3.49,
+      "t": 1.5,
+      "p": 0.13394,
+      "cagr_diff": 3.19
+     },
+     "full": {
+      "from": 198707,
+      "to": 202608,
+      "n": 470,
+      "ex": 6.24,
+      "t": 2.74,
+      "p": 0.00622,
+      "cagr_diff": 5.71
+     },
+     "train": {
+      "from": 198707,
+      "to": 200612,
+      "n": 234,
+      "ex": 9.01,
+      "t": 2.35,
+      "p": 0.01866,
+      "cagr_diff": 8.31
+     }
+    },
+    "share_exits_lt30d": 0.109,
+    "load_plus_short_fee_vs_pure": {
+     "full": {
+      "from": 198707,
+      "to": 202608,
+      "n": 470,
+      "ex": 6.19,
+      "t": 2.7,
+      "p": 0.00692,
+      "cagr_diff": 5.65
+     },
+     "train": {
+      "from": 198707,
+      "to": 200612,
+      "n": 234,
+      "ex": 8.9,
+      "t": 2.31,
+      "p": 0.02097,
+      "cagr_diff": 8.19
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 236,
+      "ex": 3.49,
+      "t": 1.5,
+      "p": 0.13394,
+      "cagr_diff": 3.19
+     }
+    },
+    "roll20_with_load_and_short_fee_vs_pure": {
+     "n": 20,
+     "win_rate": 1.0,
+     "median": 6.7,
+     "worst": [
+      2002,
+      2.65
+     ]
+    },
+    "grade_vs_pure_with_real_fees": [
+     "B",
+     {
+      "C1_train": true,
+      "C2_hold_sign": true,
+      "C3_hold_t": false,
+      "C4_roll20": true,
+      "C5_repl": null,
+      "C6_net_cost": true,
+      "C7_multi": false
+     }
+    ]
+   },
+   "dca20_vs_fee": {
+    "n": 19,
+    "win_rate": 1.0,
+    "median": 2.0653,
+    "worst": [
+     200501,
+     1.1976
+    ]
+   },
+   "dca20_vs_pure": {
+    "n": 19,
+    "win_rate": 1.0,
+    "median": 2.0415,
+    "worst": [
+     200501,
+     1.1822
+    ]
+   },
+   "dca20_vs_pure_with_load_and_short_fee": {
+    "n": 19,
+    "win_rate": 1.0,
+    "median": 1.9021,
+    "worst": [
+     200501,
+     1.1179
+    ]
+   },
+   "robust_vs_pure_net": {
+    "hold_first_half_2007_2016H1": {
+     "from": 200701,
+     "to": 201606,
+     "n": 114,
+     "ex": 5.37,
+     "t": 2.25,
+     "p": 0.02445,
+     "cagr_diff": 5.18
+    },
+    "hold_second_half_2016H2_": {
+     "from": 201607,
+     "to": 202608,
+     "n": 122,
+     "ex": 2.56,
+     "t": 0.63,
+     "p": 0.52881,
+     "cagr_diff": 2.14
+    },
+    "drop_1998_2000_2020_2021": {
+     "full": {
+      "from": 198707,
+      "to": 202608,
+      "n": 410,
+      "ex": 5.36,
+      "t": 2.5,
+      "p": 0.01257,
+      "cagr_diff": 5.01
+     },
+     "train": {
+      "from": 198707,
+      "to": 200612,
+      "n": 198,
+      "ex": 6.44,
+      "t": 1.8,
+      "p": 0.07265,
+      "cagr_diff": 6.03
+     },
+     "hold": {
+      "from": 200701,
+      "to": 202608,
+      "n": 212,
+      "ex": 4.36,
+      "t": 1.76,
+      "p": 0.0782,
+      "cagr_diff": 4.08
+     }
+    },
+    "train_drop_1999": {
+     "from": 198707,
+     "to": 200612,
+     "n": 222,
+     "ex": 7.13,
+     "t": 2.15,
+     "p": 0.03147,
+     "cagr_diff": 6.34
+    },
+    "hold_top3_years": {
+     "2022": 35.07,
+     "2025": 24.72,
+     "2007": 19.75
+    },
+    "hold_ex_drop_top3_years": {
+     "from": 200801,
+     "to": 202608,
+     "n": 200,
+     "ex": -0.15,
+     "t": -0.07,
+     "p": 0.94151,
+     "cagr_diff": -0.87
+    },
+    "hold_contribution_top5_funds_pct_of_total": {
+     "FNARX": 21.9,
+     "FSENX": 18.9,
+     "FSAVX": 18.9,
+     "FBIOX": 16.1,
+     "FSELX": 15.7
+    }
+   }
+  }
+ },
+ "verdicts": [
+  {
+   "name": "E1_cop_tilt__lump__R0_pretax",
+   "claimed_grade": "S",
+   "verified_grade": "S",
+   "verdict": "confirmed",
+   "reproduced": true,
+   "key_numbers": "研究側の相手（指数ファンド −0.10%/年）で再現: 全期間 +0.63 t5.2・訓練 +0.51 t3.85・保有 +0.91 t3.61・CAGR差 +1.05・20年窓 100%＝S（主張と一致）。純粋な French Mkt 相手: 全期間 +0.53 t4.37・訓練 +0.41 t3.1・保有 +0.81 t3.22・CAGR差 +0.94・費用後 +0.81 t3.22・最近(2013-07〜) +0.75 t2.89・20年窓 100%＝S。積立20年（名目・純粋な相手）100%・中央 1.0749",
+   "issues": [
+    "主張の数字は相手の側だけに年0.10%の費用を置いた分だけ甘い（保有 +0.91 t3.61 → 純粋な相手で +0.81 t3.22・全期間 t5.20 → 4.37）。事前登録の全体の線は純粋な時価加重を相手にするので、正しい数字は後者。格付けは S のまま",
+    "後知恵の選び方: cop_at は mega_tilt の同じ λ の14特徴のうち保有期間の t が1位（14本の平均 t 0.87）で、訓練期間だけなら3位。論文の公表は2016年（標本〜2013）で保有期間の前半は論文の標本の中。ただし14本で Bonferroni をかけても保有 t3.22 の片側 p×14 ≈ 0.01 で C3 は残る",
+    "近い定義9本（cop_atl1・op_at・ocf_at・ope_be・gp_at・ebit_bev・qmj_prof・vw_cap・ew）はどれも保有 t 2.37〜3.46＝『cop_at だけの当たり』ではなく収益性の傾け全体が効いている",
+    "頑丈さ（純粋な相手・費用後）: 保有の前半 +0.82 t2.17・後半 +0.81 t2.43・公表後2017〜 +0.95 t2.76・業種12でヘッジ（訓練の係数）+0.66 t3.63・最良3年を除く +0.54 t2.28・1998-2000/2020-21 を除く全期間 +0.47 t3.83・費用3倍 +0.79 t3.12。どれでも崩れない",
+    "多重検定: 全期間 p×プログラム全体 3616本 = 0.0449（ぎりぎり）。米国外の再現は mega_tilt で 9/10 地域が正（日本は −0.10 t−0.36）",
+    "実行の現実性: 『市場＋0.11×(良い三分位−悪い三分位)』を個別株で直接持つには数千銘柄が要り、日本の個人（月17万円）には作れない。λ=0.11 が買いだけに収まるかは French の OP（cop_at ではない）の悪い側の時価総額からの近似で、JKP の三分位の時価総額では確かめられていない",
+    "日本の米国株の手数料（0.495%×売り買い）を実現率に掛けても 保有 +0.70 t2.77＝S（回転が小さいので効かない）",
+    "R0 と R1 は同じ上乗せ（R1 は両側に同じ配当源泉を引くだけ）で、2本の独立の確認ではない"
+   ]
+  },
+  {
+   "name": "E1m_cop_mega__lump__R0_pretax",
+   "claimed_grade": "S",
+   "verified_grade": "A",
+   "verdict": "downgraded to A",
+   "reproduced": true,
+   "key_numbers": "研究側の相手（指数ファンド −0.10%/年）で再現: 全期間 +0.27 t7.16・訓練 +0.27 t6.34・保有 +0.28 t3.53・CAGR差 +0.32・20年窓 100%＝S（主張と一致）。純粋な French Mkt 相手: 全期間 +0.17 t4.54・訓練 +0.17 t3.98・保有 +0.18 t2.28・CAGR差 +0.21・費用後 +0.18 t2.28・最近(2013-07〜) +0.14 t1.75・20年窓 100%＝S。積立20年（純粋な相手）中央 1.0228",
+   "issues": [
+    "主張の保有 +0.28 t3.52 のうち +0.10 は相手の側だけの費用（純粋な相手なら +0.18 t2.28）。上乗せの36%・t の3分の1が作り方の非対称から来ている",
+    "C3（保有 t2.28）は選び方で割り引く: mega の特徴34本の族の中で cop_at を後から選んでおり、その族の Holm は最良の cop_at でも 0.50（mega_tilt_verify）。片側 p×14（この検証の近い族）でも ≈0.16",
+    "頑丈さ: 保有の前半 +0.20 t1.69・後半 +0.17 t1.55（どちらも1.65前後）・公表後2017〜 +0.21 t1.9・最良3年を除く +0.09 t1.37・業種ヘッジ +0.12 t2.12",
+    "C5 は mega_tilt の地域版（同じ cop_at・JKP vw）で 9/10 地域が正 → C3 を割り引いても A は残る。全期間 t4.54 で C7 も合格（プログラム全体の Bonferroni 0.0203）",
+    "大きさは +0.18%/年（20年の積立で最終額 +2%）。日本の米国株の手数料を入れると 保有 +0.12 t1.48＝B。mega の順位加重を数百銘柄で直接持つのは個人には作れない",
+    "R0 と R1 は同じ上乗せ"
+   ]
+  },
+  {
+   "name": "E2_gate_P1__lump__R0_pretax",
+   "claimed_grade": "S",
+   "verified_grade": "A",
+   "verdict": "downgraded to A",
+   "reproduced": true,
+   "key_numbers": "研究側の相手（指数ファンド −0.10%/年）で再現: 全期間 +0.97 t3.59・訓練 +1.00 t2.92・保有 +0.89 t2.15・CAGR差 +0.98・20年窓 100%＝S（主張と一致）。純粋な French Mkt 相手: 全期間 +0.87 t3.22・訓練 +0.90 t2.63・保有 +0.79 t1.91・CAGR差 +0.87・費用後 +0.79 t1.91・最近(2013-07〜) +0.96 t2.53・20年窓 98%＝S。自前の合成（16本・11本以上そろう月・良い三分位の等分）で実現率 0.931/年",
+   "issues": [
+    "主張の保有 +0.89 t2.15 は相手の側だけの費用込み。純粋な相手なら +0.79 t1.91（C3 すれすれ）・20年窓 97.7%",
+    "保有期間の上乗せは後半だけ: 前半 2007〜2016H1 +0.25 t0.38・後半 +1.32 t3.11。最良3年（2007, 2023, 2025）を除くと +0.24 t0.61",
+    "業種（French 12）を訓練期間の係数でヘッジすると保有 +0.19 t0.59＝上乗せの大半は業種の傾き",
+    "1998-2000・2020-21 を除くと 全期間 +0.67 t2.45（C7 の t≥3 を割る）・保有 +0.63 t1.43。費用3倍で保有 +0.42 t1.01",
+    "16本の1本抜き: 保有 t 1.65〜2.11（中央 1.9）・全期間 t≥3 は 81%",
+    "保有期間は新しい答え合わせではない（gate_proxy_verify: 登録前に見えていた H3 と相関0.895）。C3 を割り引き、C5 は gate_proxy_verify の国パネル 34/36（私は再計算していない）に頼って A",
+    "日本の個人が米国株を直接売買すると（0.495%×売り買い×実現率 0.931）年 0.921% かかり、保有 +0.05 t0.13＝C。数百銘柄の三分位は個人には作れない",
+    "R0 と R1 は同じ上乗せ"
+   ]
+  },
+  {
+   "name": "X2_fsel_bl_buf__lump__R0_pretax",
+   "claimed_grade": "S",
+   "verified_grade": "B",
+   "verdict": "downgraded to B",
+   "reproduced": true,
+   "key_numbers": "研究側の相手（指数ファンド −0.10%/年）で再現: 全期間 +6.94 t3.01・訓練 +9.40 t2.55・保有 +4.49 t1.71・CAGR差 +4.13・20年窓 100%＝S（主張と一致）。純粋な French Mkt 相手: 全期間 +6.84 t2.97・訓練 +9.30 t2.52・保有 +4.39 t1.67・CAGR差 +4.02・費用後 +4.39 t1.67・最近(2013-07〜) +4.98 t1.46・20年窓 100%＝B。回転 2.34/年（片道）",
+   "issues": [
+    "S は C7 の『全期間 t≥3.0』だけで通っていて、その t3.01 は相手の側だけの費用 0.10%/年で作られている。純粋な French Mkt 相手では 全期間 t2.97・族の Holm 0.35（研究側）で C7 不合格＝機械的に B",
+    "Fidelity Select の実在の費用（SEC Form 497・2003）を入れていない: 2003-09-22 まで申込手数料 3%（1990-10 以前は 2%＋解約時 1%）・30日未満の売り 0.75%。入れると 保有 +4.30 t1.63（C3 割れ）・全期間 +6.70 t2.9・訓練 +9.11 t2.46＝B。積立20年は勝率 95%",
+    "入れ替えの日をずらすと（生きた33本・20通り）保有の平均 +3.27 t1.28、t≥1.65 は 20%、全期間 t≥3 は 5%（月末だけ）。月末は20通り中 保有 t で2位＝分布の上の端",
+    "保有期間の上乗せは最良3年（2022, 2025, 2026）で全部: 除くと +0.56 t0.23。後半 2016H2〜 +3.61 t0.8。寄与の上位はエネルギー・天然資源（FSENX・FNARX）・バイオ・半導体",
+    "訓練は1999年とITバブル頼み: 1998-2000・2020-21 を除くと訓練 +6.14 t1.88（C1 割れ）",
+    "近い母数32通り（K2〜6・帯・順位の作り方）で S は 0%・A も0。12か月の順位にすると保有 t 0.18〜1.21。1本抜きで全期間 t≥3 は 46%、最悪（FBIOX抜き）保有 +2.65 t1.03",
+    "生き残りの偏り: 死んだ6本を足すと保有 +5.48→+4.39 に下がる。1999年以前に消えた Select と AV に無いものは入っていない＝真の上乗せはさらに小さい向き",
+    "多重検定: E4 は etf_tactical の探索の族（角度全体で参照を除く76本・Holm 1.0）から来ており、X2 はこの角度の主の族の結果を見た後の探索。日本の居住者は買えない",
+    "それでも保有期間の符号は20通りの日・39通りの1本抜き・費用のどの版でも正、訓練 t≥2 もずらしの80%で残る＝B（有望・弱い）までは支持する",
+    "R0 と R1 は同じ上乗せ"
+   ]
+  },
+  {
+   "name": "E4_fsel_top3__lump__R0_pretax",
+   "claimed_grade": "B",
+   "verified_grade": "B",
+   "verdict": "confirmed",
+   "reproduced": true,
+   "key_numbers": "研究側の相手（指数ファンド −0.10%/年）で再現: 全期間 +6.77 t2.98・訓練 +9.54 t2.5・保有 +4.02 t1.73・CAGR差 +3.77・20年窓 100%＝B（主張と一致）。純粋な French Mkt 相手: 全期間 +6.67 t2.94・訓練 +9.44 t2.47・保有 +3.92 t1.69・CAGR差 +3.66・費用後 +3.92 t1.69・最近(2013-07〜) +3.65 t1.17・20年窓 100%＝B。回転 4.57/年（片道）",
+   "issues": [
+    "B は純粋な相手でも同じ（全期間 t2.94 で C7 不合格・保有 t1.69）",
+    "実在の費用（申込手数料 3%・30日未満 0.75%）で 保有 +3.49 t1.5・訓練 +8.90 t2.31＝B（30日未満の売りは出口の 11%）",
+    "入れ替えの日のずらし20通りで保有の平均 +3.16 t1.29（t≥1.65 は 25%）、月末は保有 t で1位",
+    "最良3年（2022, 2025, 2007）を除くと保有 -0.15 t-0.07・後半 +2.56 t0.63・1998-2000/2020-21 抜きの訓練 +6.44 t1.8",
+    "etf_tactical_verify と同じ結論（弱い B）。日本の居住者は買えない。R0 と R1 は同じ上乗せ"
+   ]
+  },
+  {
+   "name": "E1_cop_tilt__lump__R1_nisa_unlimited",
+   "claimed_grade": "S",
+   "verified_grade": "S",
+   "verdict": "confirmed",
+   "reproduced": true,
+   "key_numbers": "研究側の相手（指数ファンド −0.10%/年）で再現: 全期間 +0.63 t5.2・訓練 +0.51 t3.85・保有 +0.91 t3.61・CAGR差 +1.04・20年窓 100%＝S（主張と一致）。純粋な French Mkt 相手: 全期間 +0.53 t4.37・訓練 +0.41 t3.1・保有 +0.81 t3.22・CAGR差 +0.93・費用後 +0.81 t3.22・最近(2013-07〜) +0.75 t2.89・20年窓 100%＝S。積立20年（名目・純粋な相手）100%・中央 1.0749",
+   "issues": [
+    "主張の数字は相手の側だけに年0.10%の費用を置いた分だけ甘い（保有 +0.91 t3.61 → 純粋な相手で +0.81 t3.22・全期間 t5.20 → 4.37）。事前登録の全体の線は純粋な時価加重を相手にするので、正しい数字は後者。格付けは S のまま",
+    "後知恵の選び方: cop_at は mega_tilt の同じ λ の14特徴のうち保有期間の t が1位（14本の平均 t 0.87）で、訓練期間だけなら3位。論文の公表は2016年（標本〜2013）で保有期間の前半は論文の標本の中。ただし14本で Bonferroni をかけても保有 t3.22 の片側 p×14 ≈ 0.01 で C3 は残る",
+    "近い定義9本（cop_atl1・op_at・ocf_at・ope_be・gp_at・ebit_bev・qmj_prof・vw_cap・ew）はどれも保有 t 2.37〜3.46＝『cop_at だけの当たり』ではなく収益性の傾け全体が効いている",
+    "頑丈さ（純粋な相手・費用後）: 保有の前半 +0.82 t2.17・後半 +0.81 t2.43・公表後2017〜 +0.95 t2.76・業種12でヘッジ（訓練の係数）+0.66 t3.63・最良3年を除く +0.54 t2.28・1998-2000/2020-21 を除く全期間 +0.47 t3.83・費用3倍 +0.79 t3.12。どれでも崩れない",
+    "多重検定: 全期間 p×プログラム全体 3616本 = 0.0449（ぎりぎり）。米国外の再現は mega_tilt で 9/10 地域が正（日本は −0.10 t−0.36）",
+    "実行の現実性: 『市場＋0.11×(良い三分位−悪い三分位)』を個別株で直接持つには数千銘柄が要り、日本の個人（月17万円）には作れない。λ=0.11 が買いだけに収まるかは French の OP（cop_at ではない）の悪い側の時価総額からの近似で、JKP の三分位の時価総額では確かめられていない",
+    "日本の米国株の手数料（0.495%×売り買い）を実現率に掛けても 保有 +0.70 t2.77＝S（回転が小さいので効かない）",
+    "R0 と R1 は同じ上乗せ（R1 は両側に同じ配当源泉を引くだけ）で、2本の独立の確認ではない"
+   ]
+  },
+  {
+   "name": "E1m_cop_mega__lump__R1_nisa_unlimited",
+   "claimed_grade": "S",
+   "verified_grade": "A",
+   "verdict": "downgraded to A",
+   "reproduced": true,
+   "key_numbers": "研究側の相手（指数ファンド −0.10%/年）で再現: 全期間 +0.27 t7.16・訓練 +0.27 t6.34・保有 +0.28 t3.53・CAGR差 +0.32・20年窓 100%＝S（主張と一致）。純粋な French Mkt 相手: 全期間 +0.17 t4.54・訓練 +0.17 t3.98・保有 +0.18 t2.28・CAGR差 +0.21・費用後 +0.18 t2.28・最近(2013-07〜) +0.14 t1.75・20年窓 100%＝S。積立20年（純粋な相手）中央 1.0228",
+   "issues": [
+    "主張の保有 +0.28 t3.52 のうち +0.10 は相手の側だけの費用（純粋な相手なら +0.18 t2.28）。上乗せの36%・t の3分の1が作り方の非対称から来ている",
+    "C3（保有 t2.28）は選び方で割り引く: mega の特徴34本の族の中で cop_at を後から選んでおり、その族の Holm は最良の cop_at でも 0.50（mega_tilt_verify）。片側 p×14（この検証の近い族）でも ≈0.16",
+    "頑丈さ: 保有の前半 +0.20 t1.69・後半 +0.17 t1.55（どちらも1.65前後）・公表後2017〜 +0.21 t1.9・最良3年を除く +0.09 t1.37・業種ヘッジ +0.12 t2.12",
+    "C5 は mega_tilt の地域版（同じ cop_at・JKP vw）で 9/10 地域が正 → C3 を割り引いても A は残る。全期間 t4.54 で C7 も合格（プログラム全体の Bonferroni 0.0203）",
+    "大きさは +0.18%/年（20年の積立で最終額 +2%）。日本の米国株の手数料を入れると 保有 +0.12 t1.48＝B。mega の順位加重を数百銘柄で直接持つのは個人には作れない",
+    "R0 と R1 は同じ上乗せ"
+   ]
+  },
+  {
+   "name": "E2_gate_P1__lump__R1_nisa_unlimited",
+   "claimed_grade": "S",
+   "verified_grade": "A",
+   "verdict": "downgraded to A",
+   "reproduced": true,
+   "key_numbers": "研究側の相手（指数ファンド −0.10%/年）で再現: 全期間 +0.97 t3.59・訓練 +1.00 t2.92・保有 +0.89 t2.15・CAGR差 +0.97・20年窓 100%＝S（主張と一致）。純粋な French Mkt 相手: 全期間 +0.87 t3.22・訓練 +0.90 t2.63・保有 +0.79 t1.91・CAGR差 +0.87・費用後 +0.79 t1.91・最近(2013-07〜) +0.96 t2.53・20年窓 98%＝S。自前の合成（16本・11本以上そろう月・良い三分位の等分）で実現率 0.931/年",
+   "issues": [
+    "主張の保有 +0.89 t2.15 は相手の側だけの費用込み。純粋な相手なら +0.79 t1.91（C3 すれすれ）・20年窓 97.7%",
+    "保有期間の上乗せは後半だけ: 前半 2007〜2016H1 +0.25 t0.38・後半 +1.32 t3.11。最良3年（2007, 2023, 2025）を除くと +0.24 t0.61",
+    "業種（French 12）を訓練期間の係数でヘッジすると保有 +0.19 t0.59＝上乗せの大半は業種の傾き",
+    "1998-2000・2020-21 を除くと 全期間 +0.67 t2.45（C7 の t≥3 を割る）・保有 +0.63 t1.43。費用3倍で保有 +0.42 t1.01",
+    "16本の1本抜き: 保有 t 1.65〜2.11（中央 1.9）・全期間 t≥3 は 81%",
+    "保有期間は新しい答え合わせではない（gate_proxy_verify: 登録前に見えていた H3 と相関0.895）。C3 を割り引き、C5 は gate_proxy_verify の国パネル 34/36（私は再計算していない）に頼って A",
+    "日本の個人が米国株を直接売買すると（0.495%×売り買い×実現率 0.931）年 0.921% かかり、保有 +0.05 t0.13＝C。数百銘柄の三分位は個人には作れない",
+    "R0 と R1 は同じ上乗せ"
+   ]
+  },
+  {
+   "name": "X2_fsel_bl_buf__lump__R1_nisa_unlimited",
+   "claimed_grade": "S",
+   "verified_grade": "B",
+   "verdict": "downgraded to B",
+   "reproduced": true,
+   "key_numbers": "研究側の相手（指数ファンド −0.10%/年）で再現: 全期間 +6.94 t3.01・訓練 +9.40 t2.55・保有 +4.49 t1.71・CAGR差 +4.12・20年窓 100%＝S（主張と一致）。純粋な French Mkt 相手: 全期間 +6.84 t2.97・訓練 +9.30 t2.52・保有 +4.39 t1.67・CAGR差 +4.01・費用後 +4.39 t1.67・最近(2013-07〜) +4.98 t1.46・20年窓 100%＝B。回転 2.34/年（片道）",
+   "issues": [
+    "S は C7 の『全期間 t≥3.0』だけで通っていて、その t3.01 は相手の側だけの費用 0.10%/年で作られている。純粋な French Mkt 相手では 全期間 t2.97・族の Holm 0.35（研究側）で C7 不合格＝機械的に B",
+    "Fidelity Select の実在の費用（SEC Form 497・2003）を入れていない: 2003-09-22 まで申込手数料 3%（1990-10 以前は 2%＋解約時 1%）・30日未満の売り 0.75%。入れると 保有 +4.30 t1.63（C3 割れ）・全期間 +6.70 t2.9・訓練 +9.11 t2.46＝B。積立20年は勝率 95%",
+    "入れ替えの日をずらすと（生きた33本・20通り）保有の平均 +3.27 t1.28、t≥1.65 は 20%、全期間 t≥3 は 5%（月末だけ）。月末は20通り中 保有 t で2位＝分布の上の端",
+    "保有期間の上乗せは最良3年（2022, 2025, 2026）で全部: 除くと +0.56 t0.23。後半 2016H2〜 +3.61 t0.8。寄与の上位はエネルギー・天然資源（FSENX・FNARX）・バイオ・半導体",
+    "訓練は1999年とITバブル頼み: 1998-2000・2020-21 を除くと訓練 +6.14 t1.88（C1 割れ）",
+    "近い母数32通り（K2〜6・帯・順位の作り方）で S は 0%・A も0。12か月の順位にすると保有 t 0.18〜1.21。1本抜きで全期間 t≥3 は 46%、最悪（FBIOX抜き）保有 +2.65 t1.03",
+    "生き残りの偏り: 死んだ6本を足すと保有 +5.48→+4.39 に下がる。1999年以前に消えた Select と AV に無いものは入っていない＝真の上乗せはさらに小さい向き",
+    "多重検定: E4 は etf_tactical の探索の族（角度全体で参照を除く76本・Holm 1.0）から来ており、X2 はこの角度の主の族の結果を見た後の探索。日本の居住者は買えない",
+    "それでも保有期間の符号は20通りの日・39通りの1本抜き・費用のどの版でも正、訓練 t≥2 もずらしの80%で残る＝B（有望・弱い）までは支持する",
+    "R0 と R1 は同じ上乗せ"
+   ]
+  },
+  {
+   "name": "E4_fsel_top3__lump__R1_nisa_unlimited",
+   "claimed_grade": "B",
+   "verified_grade": "B",
+   "verdict": "confirmed",
+   "reproduced": true,
+   "key_numbers": "研究側の相手（指数ファンド −0.10%/年）で再現: 全期間 +6.77 t2.98・訓練 +9.54 t2.5・保有 +4.02 t1.73・CAGR差 +3.76・20年窓 100%＝B（主張と一致）。純粋な French Mkt 相手: 全期間 +6.67 t2.94・訓練 +9.44 t2.47・保有 +3.92 t1.69・CAGR差 +3.65・費用後 +3.92 t1.69・最近(2013-07〜) +3.65 t1.17・20年窓 100%＝B。回転 4.57/年（片道）",
+   "issues": [
+    "B は純粋な相手でも同じ（全期間 t2.94 で C7 不合格・保有 t1.69）",
+    "実在の費用（申込手数料 3%・30日未満 0.75%）で 保有 +3.49 t1.5・訓練 +8.90 t2.31＝B（30日未満の売りは出口の 11%）",
+    "入れ替えの日のずらし20通りで保有の平均 +3.16 t1.29（t≥1.65 は 25%）、月末は保有 t で1位",
+    "最良3年（2022, 2025, 2007）を除くと保有 -0.15 t-0.07・後半 +2.56 t0.63・1998-2000/2020-21 抜きの訓練 +6.44 t1.8",
+    "etf_tactical_verify と同じ結論（弱い B）。日本の居住者は買えない。R0 と R1 は同じ上乗せ"
+   ]
+  }
+ ],
+ "log": [
+  "E1 LS の検算 {'my_ls_vs_jkp_factor_corr': 1.0, 'my_ls_mean_ann': 4.95, 'jkp_factor_mean_ann': 4.95, 'months': 750, 'direction': 1}",
+  "E1_cop_tilt R0 vs fee   S full 0.63 t5.2 | train 0.51 t3.85 | hold 0.91 t3.61 cd 1.05 | net 0.91 | r20 1.0",
+  "E1_cop_tilt R0 vs pure  S full 0.53 t4.37 | train 0.41 t3.1 | hold 0.81 t3.22 cd 0.94 | net 0.81 | r20 1.0",
+  "E1_cop_tilt R1 vs fee   S full 0.63 t5.2 | train 0.51 t3.85 | hold 0.91 t3.61 cd 1.04 | net 0.91 | r20 1.0",
+  "E1_cop_tilt R1 vs pure  S full 0.53 t4.37 | train 0.41 t3.1 | hold 0.81 t3.22 cd 0.93 | net 0.81 | r20 1.0",
+  "E1_cop_tilt dca {'n': 43, 'win_rate': 1.0, 'median': 1.0901, 'worst': (196401, 1.0535)} {'n': 43, 'win_rate': 1.0, 'median': 1.0749, 'worst': (196401, 1.0411)}",
+  "E1_cop_tilt robust {\"hold_first_half_2007_2016H1\": {\"from\": 200701, \"to\": 201606, \"n\": 114, \"ex\": 0.82, \"t\": 2.17, \"p\": 0.03005, \"cagr_diff\": 0.95}, \"hold_second_half_2016H2_\": {\"from\": 201607, \"to\": 202512, \"n\": 114, \"ex\": 0.81, \"t\": 2.43, \"p\": 0.01526, \"cagr_diff\": 0.92}, \"drop_1998_2000_2020_2021\": {\"full\": {\"from\": 196307, \"to\": 202512, \"n\": 690, \"ex\": 0.47, \"t\": 3.83, \"p\": 0.00013, \"cagr_diff\": 0.53}, \"train\": {\"from\": 196307, \"to\": 200612, \"n\": 486, \"ex\": 0.36, \"t\": 2.65, \"p\": 0.0081, \"cagr_diff\": 0.41}, \"hold\": {\"from\": 200701, \"to\": 202512, \"n\": 204, \"ex\": 0.72, \"t\": 2.91, \"p\": 0.0036, \"cagr_diff\": 0.83}}, \"drop_2008_2009_hold\": {\"from\": 200701, \"to\": 202512, \"n\": 204, \"ex\": 0.72, \"t\": 3.16, \"p\": 0.00159, \"cagr_diff\": 0.83}, \"post_2017\": {\"from\": 201701, \"to\": 202512, \"n\": 108, \"ex\": 0.95, \"t\": 2.76, \"p\": 0.00576, \"cagr_diff\": 1.08}, \"cost_x3\": {\"from\": 200701, \"to\": 202512, \"n\": 228, \"ex\": 0.79, \"t\": 3.12, \"p\": 0.00183, \"cagr_diff\": 0.91}, \"industry12_hedged_train_beta\": {\"alpha_hold\": 0.66, \"t\": 3.63, \"raw_hold\": 0.81, \"train_intercept\": 0.37}, \"hold_top3_years\": {\"2008\": 2.5, \"2007\": 2.22, \"2023\": 2.14}, \"hold_ex_drop_top3_years\": {\"from\": 200901, \"to\": 202512, \"n\": 192, \"ex\": 0.54, \"t\": 2.28, \"p\": 0.02262, \"cagr_diff\": 0.64}}",
+  "E1m_cop_mega R0 vs fee   S full 0.27 t7.16 | train 0.27 t6.34 | hold 0.28 t3.53 cd 0.32 | net 0.28 | r20 1.0",
+  "E1m_cop_mega R0 vs pure  S full 0.17 t4.54 | train 0.17 t3.98 | hold 0.18 t2.28 cd 0.21 | net 0.18 | r20 1.0",
+  "E1m_cop_mega R1 vs fee   S full 0.27 t7.16 | train 0.27 t6.34 | hold 0.28 t3.53 cd 0.32 | net 0.28 | r20 1.0",
+  "E1m_cop_mega R1 vs pure  S full 0.17 t4.54 | train 0.17 t3.98 | hold 0.18 t2.28 cd 0.21 | net 0.18 | r20 1.0",
+  "E1m_cop_mega dca {'n': 43, 'win_rate': 1.0, 'median': 1.0362, 'worst': (199701, 1.0257)} {'n': 43, 'win_rate': 1.0, 'median': 1.0228, 'worst': (199701, 1.0139)}",
+  "E1m_cop_mega robust {\"hold_first_half_2007_2016H1\": {\"from\": 200701, \"to\": 201606, \"n\": 114, \"ex\": 0.2, \"t\": 1.69, \"p\": 0.09025, \"cagr_diff\": 0.24}, \"hold_second_half_2016H2_\": {\"from\": 201607, \"to\": 202512, \"n\": 114, \"ex\": 0.17, \"t\": 1.55, \"p\": 0.12203, \"cagr_diff\": 0.18}, \"drop_1998_2000_2020_2021\": {\"full\": {\"from\": 196307, \"to\": 202512, \"n\": 690, \"ex\": 0.14, \"t\": 3.91, \"p\": 9e-05, \"cagr_diff\": 0.15}, \"train\": {\"from\": 196307, \"to\": 200612, \"n\": 486, \"ex\": 0.13, \"t\": 3.45, \"p\": 0.00056, \"cagr_diff\": 0.14}, \"hold\": {\"from\": 200701, \"to\": 202512, \"n\": 204, \"ex\": 0.16, \"t\": 2.0, \"p\": 0.0454, \"cagr_diff\": 0.19}}, \"drop_2008_2009_hold\": {\"from\": 200701, \"to\": 202512, \"n\": 204, \"ex\": 0.14, \"t\": 2.02, \"p\": 0.04311, \"cagr_diff\": 0.16}, \"post_2017\": {\"from\": 201701, \"to\": 202512, \"n\": 108, \"ex\": 0.21, \"t\": 1.9, \"p\": 0.05744, \"cagr_diff\": 0.23}, \"cost_x3\": {\"from\": 200701, \"to\": 202512, \"n\": 228, \"ex\": 0.17, \"t\": 2.1, \"p\": 0.03555, \"cagr_diff\": 0.2}, \"industry12_hedged_train_beta\": {\"alpha_hold\": 0.12, \"t\": 2.12, \"raw_hold\": 0.18, \"train_intercept\": 0.14}, \"hold_top3_years\": {\"2008\": 0.78, \"2020\": 0.62, \"2023\": 0.62}, \"hold_ex_drop_top3_years\": {\"from\": 200701, \"to\": 202512, \"n\": 192, \"ex\": 0.09, \"t\": 1.37, \"p\": 0.17182, \"cagr_diff\": 0.11}}",
+  "E2_gate_P1 R0 vs fee   S full 0.97 t3.59 | train 1.0 t2.92 | hold 0.89 t2.15 cd 0.98 | net 0.89 | r20 1.0",
+  "E2_gate_P1 R0 vs pure  S full 0.87 t3.22 | train 0.9 t2.63 | hold 0.79 t1.91 cd 0.87 | net 0.79 | r20 0.977",
+  "E2_gate_P1 R1 vs fee   S full 0.97 t3.59 | train 1.0 t2.92 | hold 0.89 t2.15 cd 0.97 | net 0.89 | r20 1.0",
+  "E2_gate_P1 R1 vs pure  S full 0.87 t3.22 | train 0.9 t2.63 | hold 0.79 t1.91 cd 0.87 | net 0.79 | r20 0.977",
+  "E2_gate_P1 dca {'n': 43, 'win_rate': 1.0, 'median': 1.0903, 'worst': (199701, 1.0375)} {'n': 43, 'win_rate': 1.0, 'median': 1.0766, 'worst': (197401, 1.0248)}",
+  "E2_gate_P1 robust {\"hold_first_half_2007_2016H1\": {\"from\": 200701, \"to\": 201606, \"n\": 114, \"ex\": 0.25, \"t\": 0.38, \"p\": 0.70329, \"cagr_diff\": 0.3}, \"hold_second_half_2016H2_\": {\"from\": 201607, \"to\": 202512, \"n\": 114, \"ex\": 1.32, \"t\": 3.11, \"p\": 0.0019, \"cagr_diff\": 1.48}, \"drop_1998_2000_2020_2021\": {\"full\": {\"from\": 196307, \"to\": 202512, \"n\": 690, \"ex\": 0.67, \"t\": 2.45, \"p\": 0.01438, \"cagr_diff\": 0.75}, \"train\": {\"from\": 196307, \"to\": 200612, \"n\": 486, \"ex\": 0.69, \"t\": 2.0, \"p\": 0.04503, \"cagr_diff\": 0.78}, \"hold\": {\"from\": 200701, \"to\": 202512, \"n\": 204, \"ex\": 0.63, \"t\": 1.43, \"p\": 0.15409, \"cagr_diff\": 0.68}}, \"drop_2008_2009_hold\": {\"from\": 200701, \"to\": 202512, \"n\": 204, \"ex\": 0.74, \"t\": 1.77, \"p\": 0.0768, \"cagr_diff\": 0.82}, \"post_2017\": {\"from\": 201701, \"to\": 202512, \"n\": 108, \"ex\": 1.45, \"t\": 3.19, \"p\": 0.00143, \"cagr_diff\": 1.62}, \"cost_x3\": {\"from\": 200701, \"to\": 202512, \"n\": 228, \"ex\": 0.42, \"t\": 1.01, \"p\": 0.31211, \"cagr_diff\": 0.45}, \"industry12_hedged_train_beta\": {\"alpha_hold\": 0.19, \"t\": 0.59, \"raw_hold\": 0.79, \"train_intercept\": 0.7}, \"hold_top3_years\": {\"2007\": 4.7, \"2023\": 3.62, \"2025\": 2.83}, \"hold_ex_drop_top3_years\": {\"from\": 200801, \"to\": 202412, \"n\": 192, \"ex\": 0.24, \"t\": 0.61, \"p\": 0.54026, \"cagr_diff\": 0.27}}",
+  "E1 の選び方 {\"features_at_lambda_0.11_vs_pure_net\": {\"gp_at\": {\"train_ex\": 0.19, \"train_t\": 1.16, \"hold_ex\": 0.69, \"hold_t\": 2.5, \"post2017_ex\": 0.8, \"post2017_t\": 1.82}, \"ope_be\": {\"train_ex\": 0.35, \"train_t\": 1.97, \"hold_ex\": 0.62, \"hold_t\": 2.6, \"post2017_ex\": 0.8, \"post2017_t\": 2.06}, \"qmj\": {\"train_ex\": 0.18, \"train_t\": 1.24, \"hold_ex\": 0.57, \"hold_t\": 1.93, \"post2017_ex\": 0.51, \"post2017_t\": 1.49}, \"qmj_prof\": {\"train_ex\": 0.23, \"train_t\": 1.78, \"hold_ex\": 0.63, \"hold_t\": 2.37, \"post2017_ex\": 0.71, \"post2017_t\": 2.09}, \"cop_at\": {\"train_ex\": 0.41, \"train_t\": 3.1, \"hold_ex\": 0.81, \"hold_t\": 3.22, \"post2017_ex\": 0.95, \"post2017_t\": 2.76}, \"chcsho_12m\": {\"train_ex\": 0.4, \"train_t\": 2.38, \"hold_ex\": 0.06, \"hold_t\": 0.2, \"post2017_ex\": -0.08, \"post2017_t\": -0.17}, \"oaccruals_at\": {\"train_ex\": 0.55, \"train_t\": 3.26, \"hold_ex\": 0.5, \"hold_t\": 2.49, \"post2017_ex\": 0.46, \"post2017_t\": 1.42}, \"ret_12_1\": {\"train_ex\": 0.66, \"train_t\": 2.71, \"hold_ex\": 0.07, \"hold_t\": 0.18, \"post2017_ex\": 0.04, \"post2017_t\": 0.09}, \"be_me\": {\"train_ex\": 0.4, \"train_t\": 1.74, \"hold_ex\": -0.43, \"hold_t\": -1.28, \"post2017_ex\": -0.72, \"post2017_t\": -1.32}, \"ni_me\": {\"train_ex\": 0.64, \"train_t\": 1.93, \"hold_ex\": -0.38, \"hold_t\": -0.93, \"post2017_ex\": -0.84, \"post2017_t\": -1.05}, \"at_gr1\": {\"train_ex\": 0.38, \"train_t\": 1.83, \"hold_ex\": -0.27, \"hold_t\": -1.02, \"post2017_ex\": -0.55, \"post2017_t\": -1.08}, \"ivol_capm_252d\": {\"train_ex\": 0.11, \"train_t\": 0.31, \"hold_ex\": -0.24, \"hold_t\": -0.48, \"post2017_ex\": -0.77, \"pos",
+  "E1 近隣 {\"cop_atl1\": {\"from\": 200701, \"to\": 202512, \"n\": 228, \"ex\": 0.77, \"t\": 2.89, \"p\": 0.00387, \"cagr_diff\": 0.88}, \"op_at\": {\"from\": 200701, \"to\": 202512, \"n\": 228, \"ex\": 0.67, \"t\": 2.46, \"p\": 0.01393, \"cagr_diff\": 0.8}, \"ocf_at\": {\"from\": 200701, \"to\": 202512, \"n\": 228, \"ex\": 0.78, \"t\": 2.62, \"p\": 0.00883, \"cagr_diff\": 0.94}, \"ope_be\": {\"from\": 200701, \"to\": 202512, \"n\": 228, \"ex\": 0.62, \"t\": 2.6, \"p\": 0.00937, \"cagr_diff\": 0.74}, \"gp_at\": {\"from\": 200701, \"to\": 202512, \"n\": 228, \"ex\": 0.69, \"t\": 2.5, \"p\": 0.01238, \"cagr_diff\": 0.8}, \"ebit_bev\": {\"from\": 200701, \"to\": 202512, \"n\": 228, \"ex\": 0.63, \"t\": 2.46, \"p\": 0.0137, \"cagr_diff\": 0.76}, \"qmj_prof\": {\"from\": 200701, \"to\": 202512, \"n\": 228, \"ex\": 0.63, \"t\": 2.37, \"p\": 0.01798, \"cagr_diff\": 0.76}, \"cop_at_vw_cap\": {\"from\": 200701, \"to\": 202512, \"n\": 228, \"ex\": 0.54, \"t\": 3.17, \"p\": 0.00152, \"cagr_diff\": 0.61}, \"cop_at_ew\": {\"from\": 200701, \"to\": 202512, \"n\": 228, \"ex\": 0.73, \"t\": 3.46, \"p\": 0.00053, \"cagr_diff\": 0.78}}",
+  "E2 1本抜き 1.65 1.9",
+  "X2_fsel_bl_buf R0 vs fee   S full 6.94 t3.01 | train 9.4 t2.55 | hold 4.49 t1.71 cd 4.13 | net 4.49 | r20 1.0",
+  "X2_fsel_bl_buf R0 vs pure  B full 6.84 t2.97 | train 9.3 t2.52 | hold 4.39 t1.67 cd 4.02 | net 4.39 | r20 1.0",
+  "X2_fsel_bl_buf R1 vs pure  B full 6.84 t2.97 | train 9.3 t2.52 | hold 4.39 t1.67 cd 4.01 | net 4.39 | r20 1.0",
+  "X2_fsel_bl_buf real fees {\"short_fee_0.75_only_vs_pure\": {\"hold\": {\"from\": 200701, \"to\": 202608, \"n\": 236, \"ex\": 4.3, \"t\": 1.63, \"p\": 0.10304, \"cagr_diff\": 3.92}, \"full\": {\"from\": 198707, \"to\": 202608, \"n\": 470, \"ex\": 6.75, \"t\": 2.93, \"p\": 0.0034, \"cagr_diff\": 6.31}, \"train\": {\"from\": 198707, \"to\": 200612, \"n\": 234, \"ex\": 9.23, \"t\": 2.5, \"p\": 0.01249, \"cagr_diff\": 8.77}}, \"share_exits_lt30d\": 0.045, \"load_plus_short_fee_vs_pure\": {\"full\": {\"from\": 198707, \"to\": 202608, \"n\": 470, \"ex\": 6.7, \"t\": 2.9, \"p\": 0.00375, \"cagr_diff\": 6.25}, \"train\": {\"from\": 198707, \"to\": 200612, \"n\": 234, \"ex\": 9.11, \"t\": 2.46, \"p\": 0.01397, \"cagr_diff\": 8.65}, \"hold\": {\"from\": 200701, \"to\": 202608, \"n\": 236, \"ex\": 4.3, \"t\": 1.63, \"p\": 0.10304, \"cagr_diff\": 3.92}}, \"roll20_with_load_and_short_fee_vs_pure\": {\"n\": 20, \"win_rate\": 1.0, \"median\": 6.59, \"worst\": [2002, 1.79]}, \"grade_vs_pure_with_real_fees\": [\"B\", {\"C1_train\": true, \"C2_hol",
+  "X2_fsel_bl_buf dca {'n': 19, 'win_rate': 1.0, 'median': 1.8946, 'worst': (200201, 1.0241)} {'n': 19, 'win_rate': 1.0, 'median': 1.8727, 'worst': (200201, 1.0113)} {'n': 19, 'win_rate': 0.947, 'median': 1.8137, 'worst': (200201, 0.9922)}",
+  "X2_fsel_bl_buf robust {\"hold_first_half_2007_2016H1\": {\"from\": 200701, \"to\": 201606, \"n\": 114, \"ex\": 5.24, \"t\": 1.75, \"p\": 0.07983, \"cagr_diff\": 4.98}, \"hold_second_half_2016H2_\": {\"from\": 201607, \"to\": 202608, \"n\": 122, \"ex\": 3.61, \"t\": 0.8, \"p\": 0.42349, \"cagr_diff\": 3.06}, \"drop_1998_2000_2020_2021\": {\"full\": {\"from\": 198707, \"to\": 202608, \"n\": 410, \"ex\": 5.51, \"t\": 2.56, \"p\": 0.01039, \"cagr_diff\": 5.08}, \"train\": {\"from\": 198707, \"to\": 200612, \"n\": 198, \"ex\": 6.14, \"t\": 1.88, \"p\": 0.06022, \"cagr_diff\": 5.68}, \"hold\": {\"from\": 200701, \"to\": 202608, \"n\": 212, \"ex\": 4.92, \"t\": 1.74, \"p\": 0.08142, \"cagr_diff\": 4.52}}, \"train_drop_1999\": {\"from\": 198707, \"to\": 200612, \"n\": 222, \"ex\": 7.42, \"t\": 2.41, \"p\": 0.0158, \"cagr_diff\": 6.81}, \"hold_top3_years\": {\"2022\": 34.85, \"2025\": 25.43, \"2026\": 16.56}, \"hold_ex_drop_top3_years\": {\"from\": 200701, \"to\": 202412, \"n\": 204, \"ex\": 0.56, \"t\": 0.23, \"p\": 0.8177, \"cagr_diff\": -0.04}, \"hold_contribution_top5_funds_pct_of_total\": {\"FSENX\": 27.5, \"FNARX\": 22.6, \"FBIOX\": 20.7, \"FSELX\": 19.9, \"FSPTX\": 17.8}}",
+  "E4_fsel_top3 R0 vs fee   B full 6.77 t2.98 | train 9.54 t2.5 | hold 4.02 t1.73 cd 3.77 | net 4.02 | r20 1.0",
+  "E4_fsel_top3 R0 vs pure  B full 6.67 t2.94 | train 9.44 t2.47 | hold 3.92 t1.69 cd 3.66 | net 3.92 | r20 1.0",
+  "E4_fsel_top3 R1 vs pure  B full 6.67 t2.94 | train 9.44 t2.47 | hold 3.92 t1.69 cd 3.65 | net 3.92 | r20 1.0",
+  "E4_fsel_top3 real fees {\"short_fee_0.75_only_vs_pure\": {\"hold\": {\"from\": 200701, \"to\": 202608, \"n\": 236, \"ex\": 3.49, \"t\": 1.5, \"p\": 0.13394, \"cagr_diff\": 3.19}, \"full\": {\"from\": 198707, \"to\": 202608, \"n\": 470, \"ex\": 6.24, \"t\": 2.74, \"p\": 0.00622, \"cagr_diff\": 5.71}, \"train\": {\"from\": 198707, \"to\": 200612, \"n\": 234, \"ex\": 9.01, \"t\": 2.35, \"p\": 0.01866, \"cagr_diff\": 8.31}}, \"share_exits_lt30d\": 0.109, \"load_plus_short_fee_vs_pure\": {\"full\": {\"from\": 198707, \"to\": 202608, \"n\": 470, \"ex\": 6.19, \"t\": 2.7, \"p\": 0.00692, \"cagr_diff\": 5.65}, \"train\": {\"from\": 198707, \"to\": 200612, \"n\": 234, \"ex\": 8.9, \"t\": 2.31, \"p\": 0.02097, \"cagr_diff\": 8.19}, \"hold\": {\"from\": 200701, \"to\": 202608, \"n\": 236, \"ex\": 3.49, \"t\": 1.5, \"p\": 0.13394, \"cagr_diff\": 3.19}}, \"roll20_with_load_and_short_fee_vs_pure\": {\"n\": 20, \"win_rate\": 1.0, \"median\": 6.7, \"worst\": [2002, 2.65]}, \"grade_vs_pure_with_real_fees\": [\"B\", {\"C1_train\": true, \"C2_ho",
+  "E4_fsel_top3 dca {'n': 19, 'win_rate': 1.0, 'median': 2.0653, 'worst': (200501, 1.1976)} {'n': 19, 'win_rate': 1.0, 'median': 2.0415, 'worst': (200501, 1.1822)} {'n': 19, 'win_rate': 1.0, 'median': 1.9021, 'worst': (200501, 1.1179)}",
+  "E4_fsel_top3 robust {\"hold_first_half_2007_2016H1\": {\"from\": 200701, \"to\": 201606, \"n\": 114, \"ex\": 5.37, \"t\": 2.25, \"p\": 0.02445, \"cagr_diff\": 5.18}, \"hold_second_half_2016H2_\": {\"from\": 201607, \"to\": 202608, \"n\": 122, \"ex\": 2.56, \"t\": 0.63, \"p\": 0.52881, \"cagr_diff\": 2.14}, \"drop_1998_2000_2020_2021\": {\"full\": {\"from\": 198707, \"to\": 202608, \"n\": 410, \"ex\": 5.36, \"t\": 2.5, \"p\": 0.01257, \"cagr_diff\": 5.01}, \"train\": {\"from\": 198707, \"to\": 200612, \"n\": 198, \"ex\": 6.44, \"t\": 1.8, \"p\": 0.07265, \"cagr_diff\": 6.03}, \"hold\": {\"from\": 200701, \"to\": 202608, \"n\": 212, \"ex\": 4.36, \"t\": 1.76, \"p\": 0.0782, \"cagr_diff\": 4.08}}, \"train_drop_1999\": {\"from\": 198707, \"to\": 200612, \"n\": 222, \"ex\": 7.13, \"t\": 2.15, \"p\": 0.03147, \"cagr_diff\": 6.34}, \"hold_top3_years\": {\"2022\": 35.07, \"2025\": 24.72, \"2007\": 19.75}, \"hold_ex_drop_top3_years\": {\"from\": 200801, \"to\": 202608, \"n\": 200, \"ex\": -0.15, \"t\": -0.07, \"p\": 0.94151, \"cagr_diff\": -0.87}, \"hold_contribution_top5_funds_pct_of_total\": {\"FNARX\": 21.9, \"FSENX\": 18.9, \"FSAVX\": 18.9, \"FBIOX\": 16.1, \"FSELX\": 15.7}}",
+  "Fidelity 近隣 {\"blend_K2_E2\": [\"C\", 2.36, 4.27, 1.69], \"blend_K2_E3\": [\"C\", 2.13, 4.02, 1.28], \"blend_K2_E4\": [\"C\", 2.68, 6.6, 1.91], \"blend_K2_E6\": [\"B\", 2.57, 4.14, 1.23], \"blend_K3_E3\": [\"B\", 2.94, 3.92, 1.69], \"blend_K3_E4\": [\"B\", 2.94, 4.73, 1.77], \"blend_K3_E5\": [\"B\", 2.87, 4.31, 1.71], \"blend_K3_E6\": [\"B\", 2.97, 4.39, 1.67], \"blend_K3_E7\": [\"B\", 2.77, 3.22, 1.32], \"blend_K3_E9\": [\"B\", 2.88, 3.04, 1.33], \"blend_K4_E4\": [\"B\", 2.89, 3.24, 1.38], \"blend_K4_E6\": [\"B\", 3.02, 3.6, 1.58], \"blend_K4_E8\": [\"B\", 3.1, 3.22, 1.48], \"blend_K4_E12\": [\"B\", 2.95, 2.86, 1.33], \"blend_K5_E10\": [\"B\", 2.84, 2.02, 0.93], \"blend_K6_E12\": [\"B\", 3.28, 2.85, 1.55], \"r12_K2_E2\": [\"B\", 2.4, 3.2, 0.89], \"r12_K2_E3\": [\"B\", 2.26, 3.01, 0.77], \"r12_K2_E4\": [\"B\", 2.25, 2.93, 0.84], \"r12_K2_E6\": [\"B\", 2.4, 3.96, 1.21], \"r12_K3_E3\": [\"B\", 2.85, 2.71, 0.9], \"r12_K3_E4\": [\"B\", 2.7, 2.28, 0.76], \"r12_K3_E5\": [\"B\", 2.46, 1.92, 0.63], \"r12_K3_E6\": [\"B\", 2.43, 2.51, 0.84], \"r12_K3_E7\": [\"B\", 2.4, 2.05, 0.69], \"r12_K3_E9\": [\"B\", 2.09, 1.22, 0.44], \"r12_K4_E4\": [\"B\", 2.52, 1.78, 0.68], \"r12_K4_E6\": [\"B\", 2.19, 1.44, 0.54], \"r12_K4_E8\": [\"C\", 1.93, 0.48, 0.18], \"r12_K4_E12\": [\"B\", 2.47, 2.16, 0.79], \"r12_K5_E10\": [\"B\", 2.42, 1.29, 0.54], \"r12_K6_E12\": [\"B\", 2.49, 1.48, 0.63]}",
+  "X2 1本抜き ('FBIOX', {'hold_ex': 2.65, 'hold_t': 1.03, 'full_t': 2.51}) 0.462",
+  "X2 生きた33本だけ {'hold': {'from': 200701, 'to': 202608, 'n': 236, 'ex': 5.48, 't': 2.13, 'p': 0.03304, 'cagr_diff': 5.42}, 'full': {'from': 198707, 'to': 202608, 'n': 470, 'ex': 7.21, 't': 3.27, 'p': 0.00109, 'cagr_diff': 6.99}}",
+  "ずらし n1_month_end X2 (5.42, 2.13) full t 3.29 | E4 (5.12, 2.22)",
+  "ずらし k1 X2 (4.54, 1.67) full t 2.82 | E4 (5.13, 2.04)",
+  "ずらし k2 X2 (3.23, 1.21) full t 2.7 | E4 (2.35, 0.99)",
+  "ずらし k3 X2 (2.63, 1.02) full t 2.69 | E4 (3.89, 1.45)",
+  "ずらし k4 X2 (2.45, 1.06) full t 2.38 | E4 (3.07, 1.13)",
+  "ずらし k5 X2 (2.67, 1.13) full t 2.24 | E4 (3.07, 1.21)",
+  "ずらし k6 X2 (2.79, 1.02) full t 1.93 | E4 (2.6, 0.95)",
+  "ずらし k7 X2 (2.89, 1.06) full t 2.24 | E4 (4.05, 1.55)",
+  "ずらし k8 X2 (5.64, 2.21) full t 2.71 | E4 (4.87, 1.92)",
+  "ずらし k9 X2 (3.89, 1.67) full t 2.66 | E4 (2.77, 1.2)",
+  "ずらし k10 X2 (2.71, 1.13) full t 2.58 | E4 (3.33, 1.56)",
+  "ずらし k11 X2 (3.72, 1.5) full t 2.75 | E4 (2.14, 0.9)",
+  "ずらし k12 X2 (3.22, 1.36) full t 2.86 | E4 (1.35, 0.62)",
+  "ずらし k13 X2 (3.13, 1.27) full t 2.23 | E4 (1.89, 0.83)",
+  "ずらし k14 X2 (3.3, 1.24) full t 2.64 | E4 (1.86, 0.7)",
+  "ずらし k15 X2 (1.38, 0.51) full t 1.92 | E4 (2.5, 1.0)",
+  "ずらし n2 X2 (4.4, 1.57) full t 2.72 | E4 (4.2, 1.72)",
+  "ずらし n3 X2 (3.45, 1.28) full t 2.65 | E4 (4.41, 1.86)",
+  "ずらし n5 X2 (2.11, 0.85) full t 2.31 | E4 (1.73, 0.75)",
+  "ずらし n8 X2 (1.74, 0.68) full t 2.17 | E4 (2.94, 1.25)",
+  "ずらしの要約 {\"X2\": {\"n_offsets\": 20, \"hold_ex_mean\": 3.27, \"hold_t_mean\": 1.28, \"share_hold_t_ge_1.65\": 0.2, \"share_full_t_ge_3\": 0.05, \"share_train_t_ge_2\": 0.8, \"month_end_hold\": {\"from\": 200701, \"to\": 202608, \"n\": 236, \"ex\": 5.42, \"t\": 2.13, \"p\": 0.03354, \"cagr_diff\": 5.37}, \"month_end_full_t\": 3.29, \"month_end_rank_of_hold_t\": 2}, \"E4\": {\"n_offsets\": 20, \"hold_ex_mean\": 3.16, \"hold_t_mean\": 1.29, \"share_hold_t_ge_1.65\": 0.25, \"share_full_t_ge_3\": 0.15, \"share_train_t_ge_2\": 0.9, \"month_end_hold\": {\"from\": 200701, \"to\": 202608, \"n\": 236, \"ex\": 5.12, \"t\": 2.22, \"p\": 0.02616, \"cagr_diff\": 5.14}, \"month_end_full_t\": 3.14, \"month_end_rank_of_hold_t\": 1}}",
+  "日本の手数料 E1_cop_tilt S full 0.42 t3.44 | train 0.29 t2.23 | hold 0.7 t2.77 cd 0.81 | net 0.7 | r20 1.0",
+  "日本の手数料 E1m_cop_mega B full 0.11 t2.85 | train 0.1 t2.46 | hold 0.12 t1.48 cd 0.14 | net 0.12 | r20 1.0",
+  "日本の手数料 E2_gate_P1 C full 0.13 t0.49 | train 0.17 t0.48 | hold 0.05 t0.13 cd 0.05 | net 0.05 | r20 0.558"
+ ]
+}

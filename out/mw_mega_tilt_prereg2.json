@@ -1,0 +1,33 @@
+{
+ "angle": "mega_tilt",
+ "part": "prereg2（探索の追加・測る前）",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "after": "prereg1（out/mw_mega_tilt_prereg.json・d1210bd）の結果を見た後に登録する。見た結果: 主の族 P で S が10本（mega の qmj・qmj_prof・cop_at・Q5・QM、vw の ope_be・qmj_prof・cop_at・oaccruals_at・Q5）。ただし (1) mega の順位加重 LS は λ=0.2 で約6%の売りが要る（Pareto 推定・λ_feas=0.04）、(2) vw の収益性も悪い側の時価総額が λ=0.2 より小さい（French 2x3 の OP で中央 0.16）＝どちらも厳密な買いだけでは作れない、(3) French の BIG/ME5（時価加重）の OP は訓練期間の t が 1.4/0.8 で独立の答え合わせが弱い。だからここでは『買いだけで本当に作れる形』と『頑丈さの点検』と『もっと大きい合成』を、線を変えずに足す",
+ "global_prereg": "out/mw_prereg.json（C1〜C8・格付けは不変）",
+ "families": {
+  "X3（探索・買いだけで作れる形）": {
+   "X3a French の除外ルール": "毎月、BIG（2x3）の悪い側を全部売り、そのお金を BIG の良い側へ時価の比で移す＝ s(t) = Mkt(t) + c(t−1) × (BIG良(t) − BIG悪(t))。c(t−1) = 前月の BIG悪 の時価総額 ÷ 市場全体（French の社数×平均時価総額・Portfolios_Formed_on_ME の Lo30+Med40+Hi30）。悪い側の重みはちょうど0＝構造的に買いだけ。特徴: OP, BE/ME, INV, Prior 12-2, E/P（5本）。同じことを 5x5 の ME5（mega）で: OP, BE/ME, INV, Prior, AC, NI, BETA, RESVAR（8本）。計13本。費用 = 回転率 × c の平均 × 2 × 0.10%（prereg1 と同じ回転率の区分）。C5 は prereg1 の X2 と同じ（French 米国外 6_Portfolios の BIG の行、無い特徴は JKP vw）を λ=その地域の c が無いので 0.2 で符号だけ見る",
+   "X3b JKP vw の縮小版": "prereg1 の P-B（米国 JKP vw 三分位 LS）17本を λ_vw で。λ_vw = 訓練期間（1963-07〜2006-12）の各月の French 2x3 の（BIG LoOP + SMALL LoOP）の時価総額 ÷ 市場全体 の5%点を 0.01 単位で切り捨て（収益性の悪い側の時価総額の近似。JKP の三分位は非マイクロ株の分位点で French の NYSE 30/70 と違うので近似であることを明記）。t と符号は λ によらないので主に大きさの報告"
+  },
+  "X4（探索・もっと大きい合成）": {
+   "X4a 訓練期間だけで選ぶ合成": "JKP の153特徴すべてについて、向きを掛けた LS の訓練期間（〜2006-12）の平均 > 0 かつ NW t ≥ 3.0（別案 ≥ 2.0）の特徴だけを選び、等分の平均を取る。月ごとに選んだ特徴の80%以上がそろう月だけ使い、そろった分で平均（欠けを0で埋めない）。mega（規模別の順位加重）と vw（全規模・時価加重）の2通り × 閾値2通り＝4本。λ=0.2、回転率 80%/年。C5 は同じ選んだ特徴の JKP vw 地域版（地域で80%以上そろう月）",
+   "X4b JKP の13テーマ": "JKP の Cluster Labels（github bkelly-lab/ReplicationCrisis GlobalFactors/Cluster Labels.csv）の13群。vw は JKP 公開の all_themes（usa・vw）をそのまま、mega は群に属する特徴の mega LS（向き済み）を等分に平均（80%以上そろう月）。13群 × 2通り＝26本。λ=0.2。回転率: short_term_reversal 1000%/年、seasonality 300%、momentum 150%、profit_growth 150%、low_risk・accruals・debt_issuance・investment 80%、quality・profitability・value・low_leverage・size 40%。C5 は all_themes の地域版（vw）"
+  }
+ },
+ "holm": "族ごと: X3（30本）、X4（30本）",
+ "diagnostics_not_graded": {
+  "対象": "P・X3・X4 で S か A の戦略すべて",
+  "D1 保有期間の前後半": "2007-01〜2015-12 と 2016-01〜2025-12 の excess_stats（費用前）",
+  "D2 金融危機を除く": "2008-01〜2009-12 を除いた保有期間の超過の算術平均と NW t",
+  "D3 CAPM のα": "保有期間の (s−b) を市場の超過（Mkt-RF）に回帰した切片（年率）と NW t（質の LS は β が負になりやすく、単純な超過より α が大きく出るか小さく出るかを見る）",
+  "D4 暦年": "保有期間の暦年で s が b に勝った年の数と、最も良い1年を除いた超過の年平均",
+  "note": "判定には使わない。勝ちが一つの時期（2008年・2022年など）に寄っていないかを見るため"
+ },
+ "known_limits": [
+  "X3a の c は French の NYSE 30/70 分位で作る BIG（NYSE 中央値超）の悪い側。JKP の特徴とは定義がずれる（OP は営業利益÷簿価、INV は総資産の伸び）",
+  "X4 の153特徴は JKP が既に文献から集めたもの＝文献の選択は保有期間より前の論文のものも後の論文のものも混ざる（公表年は特徴ごとに違う）",
+  "prereg1 と同じく、質・収益性が2007年以降に効いたことは登録前に知っていた（後知恵の漏れ）"
+ ],
+ "files": {"script": "night/mw_mega_tilt.py（--part2 を足す）", "result": "out/mw_mega_tilt.json（同じファイルに追記）"}
+}

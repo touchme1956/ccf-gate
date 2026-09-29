@@ -1,0 +1,133 @@
+{
+ "angle": "japan",
+ "title": "日本株（買いだけ）で純粋な日本の市場に勝てるか——配当・割安・還元・質・勢い・低ボラ",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "measured_before_registering": "データの有無だけ（期間・列名・銘柄数・ETF の上場日と配当込み終値の有無・JKP の予言の向き）。戦略と市場を比べた数字は1つも見ていない",
+ "global_criteria": "out/mw_prereg.json の C1〜C8 と格付け S/A/B/C をそのまま使う（動かさない）。判定は night/mw_common.grade()",
+ "question": "日本株を買いだけで持つ個人が、特徴（配当利回り・簿価時価比・益回り・CF利回り・純還元・株数の減少・収益性・質・勢い・低ボラ・資産の伸びの小ささ）の良い側1/3（または上位30%）を持てば、上限なしの時価加重の日本の市場に、訓練期間（〜2006）と保有期間（2007〜）の両方で勝てたか",
+ "context": "CLAUDE.md の記録: JKP 日本の配当利回り因子（買い−売り・vw_cap）+8.4%/年 t4.7・2007〜も +6.2 t3.0、日本は質・収益性が弱い（QMJ +1.0 t0.5）。ただしそれは売りの側を含む因子で、買いだけで市場に勝つかは測っていない",
+
+ "data": {
+  "JKP": {
+   "source": "jkpfactors.com（Jensen・Kelly・Pedersen 2023）の三分位ポートフォリオ（portfolios/[jpn]_[特徴]_[monthly]_[vw].zip）。CRSP 相当の全上場（上場廃止も含む）",
+   "weighting": "主＝'vw'（上限なしの時価加重）。報告＝'vw_cap'（上限つき）",
+   "currency": "米ドル建て・米国の短期国債を引いた超過。比べるときは両方に French の RF を足して米ドルの総リターンにする（超過と総リターンを混ぜない）",
+   "currency_note": "米ドル建ての (戦略−市場) は円建ての差 ×(1+為替の変化) で、一次の近似で同じ。同じ窓の富の比（戦略÷市場）は為替に依らず厳密に同じ（両方に同じ為替の積が掛かる）ので、転がる窓の勝ち負けの符号は円建てと一致する。毎月積立の比だけは近似",
+   "period": "ポートフォリオ 1986-12〜2025-12・市場 1986-01〜2025-12",
+   "good_side": "論文の予言の向き（JKP の usa all_factors の direction 列＝原論文の符号。日本のデータを一切見ずに決まる＝完全に標本外）。direction=+1 なら第3分位（特徴が高い）、−1 なら第1分位。日本の訓練期間（1987〜2006）の (第3−第1) の平均の符号も照合として記録し、食い違う特徴は E3 で『日本の訓練期間で選んだ側』を別の変種として試す",
+   "benchmark": "JKP jpn mkt 'vw'（上限なしの時価加重）。照合: French Japan_3_Factors の Mkt-RF+RF（1990-07〜・米ドル）"
+  },
+  "FR_INTL": {
+   "source": "Ken French『International Research Returns Data』F-F_International_Countries.zip の Japan.Dat（1975-01〜2025-12）。原データは MSCI（1975〜2006）と Bloomberg（2007〜）",
+   "block": "Value-Weight Local Returns・All 4 Data Items Not Reqd（円建ての総リターン）",
+   "portfolios": "各比率（BE/ME・E/P・CE/P・配当利回り Yld）の上位30%（High）・時価加重・年1回組み替え",
+   "benchmark": "同じ表の Mkt（同じ母集団の時価加重・円建て）",
+   "note": "母集団は 2006年まで MSCI の対象（225〜527社＝大型株）、2007年から Bloomberg の全社（約3,000社）へ広がる＝保有期間は母集団が違う（時価加重なので大型株が中心なのは同じ）"
+  },
+  "FR_6PF": {
+   "source": "Ken French の Japan_6_Portfolios_ME_BE-ME / ME_OP / ME_INV / ME_Prior_12_2（1990-07〜2026-08）と Japan_32_Portfolios_ME_BE-ME_OP_2x4x4。米ドル建ての総リターン",
+   "benchmark": "Japan_3_Factors の Mkt-RF + RF（米ドル建ての総リターン）",
+   "note": "BIG＝地域の時価の上位90%に入る大型株。年1回（6月末）組み替え（勢いは毎月）"
+  },
+  "ETF": {
+   "source": "Yahoo の調整後終値（配当込み・円建て・生き残りの偏りあり）",
+   "tickers": {"1489.T": "NEXT FUNDS 日経平均高配当株50（2017-01〜）", "1577.T": "NEXT FUNDS 野村日本株高配当70（2013-02〜）", "1698.T": "上場インデックスファンド日本高配当（2010-04〜）", "2529.T": "NEXT FUNDS 野村株主還元70（2019-03〜）", "1478.T": "iシェアーズ MSCI ジャパン高配当利回り（2015-09〜）", "1399.T": "上場MSCI日本株高配当低ボラティリティ（2015-10〜）", "1651.T": "iFreeETF TOPIX高配当40（2017-08〜）", "1494.T": "One ETF 高配当日本株（2017-04〜）", "2564.T": "グローバルX MSCIスーパーディビィデンド日本株（2020-07〜）"},
+   "benchmark": "1306.T（NEXT FUNDS TOPIX・Yahoo の履歴は 2008-12〜）",
+   "use": "報告のみ（格付けしない）。訓練期間が無く、窓が短く、生き残った ETF だけ"
+  },
+  "RF": "French F-F_Research_Data_Factors の RF（米国の短期国債・月次）"
+ },
+
+ "periods": {
+  "JKP": {"train": "1987-01〜2006-12（20年）", "hold": "2007-01〜2025-12（19年）", "recent": "2013-07〜2025-12"},
+  "FR_INTL": {"train": "1975-01〜2006-12（32年）", "hold": "2007-01〜2025-12", "recent": "2013-07〜2025-12"},
+  "FR_6PF": {"train": "1990-07〜2006-12（16.5年）", "hold": "2007-01〜2026-08", "recent": "2013-07〜2026-08"},
+  "roll20": "転がる20年窓（毎年7月起点・一括・mw_common.rolling）。JKP は 1987-07 起点から、FR_INTL は 1975-07 起点から",
+  "dca20": "毎月同額の20年積立（mw_common.dca・起点を12か月ずつずらす）"
+ },
+
+ "costs": {
+  "unit": "片道売買100%あたり 0.10%（大型株の既定・mw_prereg どおり）。感度として 0.30% も報告（格付けは 0.10%）",
+  "turnover_oneway_per_year": {
+   "div12m_me": 0.6, "be_me": 0.6, "ni_me": 0.6, "ocf_me": 0.6, "eqnpo_me": 0.6, "eqnpo_12m": 0.8,
+   "chcsho_12m": 1.0, "ope_be": 0.5, "gp_at": 0.5, "qmj": 0.6, "ret_12_1": 2.0, "ivol_capm_252d": 0.8, "at_gr1": 1.0,
+   "blends": "構成要素の平均（混ぜると回転は下がるので保守側）",
+   "FR_INTL（年1回）": 0.4, "FR_6PF の BM/OP/INV（年1回）": 0.4, "FR_6PF の PRIOR（毎月）": 2.0,
+   "E3 の全数（分類）": "短期の値動き系（ret_1_0, ret_3_1, rmax*, rskew_21d, iskew_*, ivol_*_21d, rvol_21d, beta_dimson_21d, coskew_21d, bidaskhl_21d, zero_trades_21d, seas_1_1*）6.0／勢い系（ret_6_1, ret_9_1, ret_12_1, ret_12_7, resff3_*, prc_highprc_252d, seas_* の残り）2.5／四半期の会計（niq_*, saleq_*, ocfq_*, ni_inc8q）1.5／その他（年次の会計・長期の市場の値）0.8"
+  },
+  "tax": "差の比較なので配当課税の違いは入れない（高配当は課税口座で配当の分だけ税が早く掛かる＝不利側の注記）"
+ },
+
+ "families": {
+  "P（主・格付け・Holm は P の20本で）": {
+   "JKP_singles（jpn・vw・論文の向きの良い側1/3 vs jpn vw 市場）": {
+    "div12m_me": "配当利回り（+1→高い1/3）", "be_me": "簿価÷時価（+1）", "ni_me": "益回り（+1）", "ocf_me": "営業CF÷時価（+1）",
+    "eqnpo_me": "純還元÷時価（配当＋買戻し−発行・会計・+1）", "eqnpo_12m": "純株主還元（12か月・市場データ・+1）",
+    "chcsho_12m": "株数の変化（−1→株数を増やさない1/3）", "ope_be": "営業利益÷自己資本（+1）", "gp_at": "粗利÷総資産（+1）",
+    "qmj": "質（QMJ・+1）", "ret_12_1": "勢い 12-1か月（+1）", "ivol_capm_252d": "固有ボラ（−1→低い1/3）", "at_gr1": "総資産の伸び（−1→小さい1/3）"
+   },
+   "JKP_blends（毎月等分に組み替え・構成要素がそろう月だけ）": {
+    "B1_div_value_payout": "配当＋割安＋還元＝ div12m_me・be_me・eqnpo_me の良い側を1/3ずつ",
+    "B2_quality_value": "質＋割安＝ qmj・be_me の良い側を1/2ずつ"
+   },
+   "FR_INTL_Japan（円建て・上位30% vs 同じ表の Mkt）": {
+    "FR_BM_H": "簿価時価比の上位30%", "FR_EP_H": "益回りの上位30%", "FR_CEP_H": "キャッシュ益回りの上位30%", "FR_YLD_H": "配当利回りの上位30%",
+    "FR_VAL4": "上の4つを1/4ずつ（毎月組み替え）"
+   }
+  },
+  "E1（探索・事前登録ずみ・格付けするが『探索』と明記・Holm は E1 の6本で）": {
+   "desc": "French Japan の大型株の角（米ドル・vs Japan Mkt）",
+   "FR6_BIG_HiBM": "大型の割安（Japan_6_Portfolios_ME_BE-ME の BIG HiBM）", "FR6_BIG_HiOP": "大型の高収益（ME_OP の BIG HiOP）",
+   "FR6_BIG_LoINV": "大型の投資控えめ（ME_INV の BIG LoINV）", "FR6_BIG_HiPRIOR": "大型の勢い（ME_Prior_12_2 の BIG HiPRIOR）",
+   "FR32_BIG_HiBM_HiOP": "大型・割安の上位1/4・高収益の上位1/4（32_Portfolios_ME_BE-ME_OP_2x4x4 の BIG HiBM HiOP）",
+   "FR6_BIG_VALQ": "BIG HiBM と BIG HiOP を1/2ずつ",
+   "C5": "同じ角を Asia_Pacific_ex_Japan と Europe の同じファイル（vs その地域の 3_Factors の Mkt）で。2地域中2で正なら合格（2/3以上）"
+  },
+  "E2（報告・格付けは付けるが族は別・Holm は E2 の15本で）": "P の JKP 15本を 'vw_cap'（上限つき）の三分位で作り、相手は同じ jpn 'vw' 市場（上限なし）",
+  "E3（探索・全数・Holm は E3 の全本数で）": {
+   "desc": "JKP が日本で公開する全153特徴について、論文の向きの良い側1/3（vw）vs jpn vw 市場。さらに日本の訓練期間（1987〜2006）の (第3−第1) の平均の符号が論文の向きと食い違う特徴は、日本の訓練期間で選んだ側も別の1本として足す（訓練期間だけで選ぶので後知恵ではない）",
+   "C5": "計算量を抑えるため、C1・C2・C6 のすべてに合格した（＝B以上になりうる）ものだけ C5 を計算する。C1・C2・C6 のどれかに落ちたものは C5 に関係なく C で確定するので格付けは変わらない"
+  },
+  "E4（探索・理論で選んだ組み合わせ・Holm は E4 の8本で）": {
+   "E4_def_value": "防御的割安＝ be_me ＋ 低い ivol_capm_252d",
+   "E4_value_mom": "割安＋勢い（Asness・Moskowitz・Pedersen 2013）＝ be_me ＋ ret_12_1",
+   "E4_payout_quality": "還元＋質＝ eqnpo_me ＋ qmj",
+   "E4_cheap_quality": "割安な質＝ qmj ＋ ni_me",
+   "E4_value5": "割安総合＝ div12m_me・be_me・ni_me・ocf_me・eqnpo_me を1/5ずつ",
+   "E4_value_quality_mom": "割安＋質＋勢い＝ be_me・qmj・ret_12_1 を1/3ずつ",
+   "E4_mispricing": "誤価格（Stambaugh・Yuan 2017）＝ mispricing_mgmt ＋ mispricing_perf",
+   "E4_lowrisk": "低リスク＝ 低い ivol_capm_252d ＋ 低い betabab_1260d"
+  },
+  "E5（報告のみ・格付けしない）": "日本の高配当・還元 ETF 9本 vs 1306.T（円・共通の窓）"
+ },
+
+ "replication_C5": {
+  "JKP": "同じ特徴・同じ向き・同じ分位（vw）を、先進国のアジア太平洋と欧州の19か国（aus, hkg, sgp, nzl, gbr, deu, fra, che, nld, swe, ita, esp, dnk, nor, bel, fin, aut, irl, prt）で、その国の vw 市場と比べ、全期間の超過の算術平均が正の国が2/3以上なら合格。取れない国は分母から外す（0と読まない）",
+  "FR_INTL": "同じ比率の上位30%を、同じファイルの日本以外の20か国（UK, Austria, Australia, Belgium, Canada, Denmark, Finland, France, Germany, HongKong, Ireland, Italy, Malaysia, Netherlands, NewZealand, Norway, Singapore, Spain, Sweden, Switzerland）で、各国の Mkt と比べ（現地通貨）、全期間の超過が正の国が2/3以上なら合格",
+  "blends": "同じ組み合わせを各国で作って同じ判定"
+ },
+
+ "reported_not_graded": [
+  "費用 0.30% の感度", "保有期間の区切り（2007-12・2013-19・2020〜）", "公表後の期間（原論文の公表年の翌年〜・主の JKP 単体）", "シャープレシオ（参考）", "最大下落", "日本の訓練期間で決めた側と論文の向きの一致"
+ ],
+ "publication_years": {"div12m_me": 1979, "be_me": 1992, "ni_me": 1977, "ocf_me": 2004, "eqnpo_me": 2007, "eqnpo_12m": 2006, "chcsho_12m": 2008, "ope_be": 2015, "gp_at": 2013, "qmj": 2019, "ret_12_1": 1993, "ivol_capm_252d": 2006, "at_gr1": 2008},
+
+ "sanity_checks": [
+  "米国市場の CAGR 1926〜 ≈ 10.4%・2007〜 ≈ 11.1%（mw_common の既知の数字）を再現",
+  "JKP jpn 配当利回り因子（vw_cap・買い−売り）の全期間平均 ≈ +8.4%/年 t≈4.7（CLAUDE.md の記録）を再現",
+  "JKP jpn vw 市場と French Japan Mkt の相関と CAGR（1990-07〜2025-12）",
+  "French Intl Japan の円建て Mkt と米ドル建て Mkt の差が為替（円ドル）で説明できること（相関のみ）",
+  "欠測は0で埋めない。組み合わせは構成要素がそろう月だけ"
+ ],
+
+ "known_limits": [
+  "JKP・French のポートフォリオは数百〜千社超の分散した集合で、個人が4〜5社で真似たものとは別物（集中のぶれは入らない）",
+  "JKP は米ドル建て（差の符号は円建てと同じ・大きさは為替で少し伸び縮みする）",
+  "French Intl は 2007年に原データが MSCI から Bloomberg へ替わり母集団も広がる＝保有期間は別の母集団",
+  "日本の訓練期間（1987〜2006）はバブル崩壊と長い下げの時代で、割安が大きく報われた時代として知られている（私たちはそれを知っている）",
+  "日本のデータの保有期間 2007〜2025 は 19年で、20年窓の数は少ない（重なる）",
+  "ETF は生き残りだけ・短い・報告のみ",
+  "費用は概算。高配当は課税口座で配当課税が早く掛かる（差の比較には入れていない）"
+ ]
+}

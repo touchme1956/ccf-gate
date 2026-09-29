@@ -1,0 +1,291 @@
+{
+ "angle": "country",
+ "title": "国を選ぶ（国の株価指数の勢い・割安・両方・米国と米国外の切替）は、時価加重の先進国市場に勝つか",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "what_was_looked_at_before_registering": [
+  "データの有無だけ: JKP 国別 mkt（vw）の始まり・終わり・月数・銘柄数（n_stocks）が20以上になる月（先進23か国・新興24か国・フロンティア約30か国）、JKP 地域 mkt（developed 1986-01〜・world 1985-11〜・world_ex_us 1986-01〜・emerging 1986-01〜・frontier 1993-08〜）の国数",
+  "French の International Research Returns（F-F_International_Countries と _Wout_Div・20か国＋マレーシア・1975-01〜2025-12・ドル建てと現地通貨建て・年次の B/M・E/P・CE/P・Yld の表）の列名と、年次の比率の表の『年』の意味（日本は1990年の B/M が最小・1991年に倍＝『年 Y の値は Y−1 年12月末の株価で測った比率』と確認。英国1975年 219.86・ドイツ1988年 62.38 も同じ向き）。香港など多くの国で2008年の値から社数が桁で増える（2007年に MSCI→Bloomberg へデータ元が替わった）",
+  "French の米国の Portfolios_Formed_on_BE-ME / E-P / CF-P（年次の Sum of X / Sum of ME・社数・平均規模）と Portfolios_Formed_on_ME（配当込み・配当抜き）の表の有無と期間、French の Developed / Developed_ex_US / Europe 3因子（1990-07〜）と F-F_International_Indices（EAFE 加重の Ind_all など）の有無",
+  "Yahoo の iShares 国別ETF 15本（EWJ EWG EWU EWC EWA EWQ EWL EWN EWD EWP EWI EWH EWS EWK EWO: 1996-04〜）と SPY・EFA（2001-09〜）・ACWI（2008-04〜）・URTH（2012-02〜）の月次がそろう期間（2026-09 は月の途中）",
+  "戦略と市場を比べた数字は一つも計算していない"
+ ],
+ "overlap_note": "mw_momentum の探索族 F7（国の勢い: 先進23か国・12-1・上位1/3・JKP developed vw 相手）と同じ規則が私の E1_mom12_T3 に入っている。mw_momentum の F7 の結果は見ていない（コミットの件名に出る要約以外）。同じ規則を別の実装で測る＝検算として使う",
+ "knowledge_leak_note": "私（Claude）は 2007年以降の出来事（米国が2010年代以降に米国外へ大きく勝ったこと・新興国の低迷・割安の不振・2009年の勢いの崩れ）を知っている。この漏れは消せない。規則は論文の既定値（Asness-Liew-Stevens 1997 / Asness-Moskowitz-Pedersen 2013 / Antonacci 2012）と課題の指定（K=3,5）で固定し、保有期間の結果を見て変えない。特に『米国と米国外の切替』は、米国の勝ちが長く続いた保有期間で有利に見えうる（規則は勢いの既定値で固定）",
+ "global_criteria": "out/mw_prereg.json の C1〜C8 と格付け S/A/B/C を night/mw_common.grade でそのまま当てる。線は動かさない",
+ "question": "国別の株価指数（ドル建て）を、過去の値動き（勢い）・割安さ（B/M ほか）・その両方・米国と米国外の相対の勢いで選んで持つ規則は、時価加重の先進国市場（JKP developed vw）に、費用と国別ETFの信託報酬の差を引いた後も、2007年以降の保有期間でも勝つか。等分の全か国平均（相手 i）と米国市場（相手 iii）との比較も必ず出す",
+ "data": {
+  "jkp_country": "JKP（jkpfactors.com）の国別 mkt・weighting='vw'（上限なしの時価加重）・月次・ドル建て・米国T-bill を引いた超過・〜2025-12。n_stocks（その月の銘柄数）つき",
+  "jkp_region": "JKP の developed / world / world_ex_us / emerging / frontier の mkt vw（超過・ドル建て）",
+  "french_intl_countries": "F-F_International_Countries（配当込み）と _Wout_Div（配当抜き）: 20か国（英・墺・豪・白・加・丁・芬・仏・独・香・愛・伊・日・蘭・新・諾・星・西・瑞典・瑞西。マレーシアは使わない）の市場（Mkt・『All 4 Data Items Not Reqd』の組）の月次・ドル建て／現地通貨建て、1975-01〜2025-12。年次の比率表（Average of Annual Value-Weight Averages・Annual Sum of Num / Annual Sum of Den・All 4 Data Items Not Reqd）の B/M・E/P・CE/P（×100）",
+  "french_intl_indices": "F-F_International_Indices の Ind_all.Dat（EAFE 加重の全体・Mkt・ドル建て配当込み）＝ E6 の相手",
+  "french_us": "Portfolios_Formed_on_BE-ME / E-P / CF-P の年次『Sum of X / Sum of ME』（<=0・Lo 30・Med 40・Hi 30 の4組）と、各組の7月の社数×平均規模（＝6月末の時価）で重みをつけて米国全体の B/M・E/P・CE/P を作る（年 Y の値は FY Y−1 の会計値 ÷ Y−1 年12月末の時価で、海外の表と同じ時点）。Portfolios_Formed_on_ME と _Wout_Div の Lo 30・Med 40・Hi 30 を社数×平均規模で時価加重して米国市場の配当込み・配当抜きの月次を作り、配当利回りと価格指数に使う",
+  "french_regions": "Developed_3_Factors・Developed_ex_US_3_Factors・North_America / Europe / Japan / Asia_Pacific_ex_Japan の 3_Factors（Mkt-RF と RF・ドル建て・1990-07〜2026-08）",
+  "french_rf": "F-F_Research_Data_Factors の RF（米国1か月T-bill）。JKP の超過に足して総リターンにそろえる（算術の超過の差は変わらない。幾何の年率差・20年窓・積立を正しく出すため）",
+  "yahoo_etf": "iShares MSCI 国別ETF 15本（EWJ EWG EWU EWC EWA EWQ EWL EWN EWD EWP EWI EWH EWS EWK EWO）＋ SPY、EFA、ACWI、URTH（配当込み調整後・月次・2026-09 は途中なので 2026-08 まで。生き残りの偏りは小さい〔1996年の15本は全部現存〕が、ETF の選び方は今日の知識）",
+  "cache": "out/_mw_cache/（gitignore）"
+ },
+ "universes": {
+  "DEV23": "JKP 先進23か国: usa jpn gbr deu fra che nld swe dnk nor fin bel aut ita esp irl prt can aus nzl hkg sgp isr",
+  "V21": "French の20か国＋米国（DEV23 から prt と isr を除いた21か国）。割安の値がある国だけ。リターンは JKP の国別 mkt vw",
+  "DXUS22": "DEV23 から usa を除いた22か国（E3）",
+  "F20": "French の20か国（E3 の割安・両方）",
+  "EAFE19": "French の20か国からカナダを除いた19か国（EAFE にカナダは入らない）。リターンは French の国別ドル建て（E6）",
+  "EM24": "JKP 新興24か国: bra chl chn col cze egy grc hun ind idn kor kwt mys mex per phl pol qat sau zaf twn tha tur are",
+  "FRONTIER": "JKP のフロンティア・単独市場: arg bgd bhr bgr hrv est isl jor ken kaz ltu lka mar mus nga omn pak rou srb svn tun vnm lva civ gha bwa jam tto zwe ukr（JKP の frontier 地域の構成と完全には一致しない可能性がある）",
+  "ALL47": "DEV23 ＋ EM24",
+  "REG4": "French の4地域: North_America・Europe・Japan・Asia_Pacific_ex_Japan（Mkt-RF＋RF）",
+  "ETF16": "iShares 国別ETF 15本＋SPY（米国）"
+ },
+ "eligibility": "国 c が月末 t の選定に入るのは、JKP の n_stocks（月 t）≥ 20 かつ その規則の信号が計算できる（参照期間のリターンが全部そろう・割安の値がある）とき。欠けた国は順位に入れない（0 と読まない）。選べる国が 2K 未満の月は、その月の戦略を空欄にする（等分で埋めない）。French 由来の国（E6）は n の代わりに年次表の社数 ≥ 20。ETF は価格がそろう月だけ",
+ "signals": {
+  "timing": "月末 t に分かる値だけで決め、月 t+1 のリターンに当てる（先読みなし）",
+  "mom12_1": "12-1 の勢い＝月末 t に、t−11〜t−1 の11か月の累積リターン（直近の月 t を飛ばす）。Asness-Liew-Stevens 1997 / AMP 2013 の既定",
+  "mom12_0": "12-0＝t−11〜t の12か月の累積（Antonacci 2012 の既定）",
+  "mom6_1": "6-1＝t−5〜t−1 の累積",
+  "rev60_13": "長期の反転＝t−59〜t−12 の累積が低い国を買う（Richards 1997・Balvers-Wu-Gilliland 2000）。48か月すべてそろう国だけ",
+  "seas": "季節性＝次の月（t+1）と同じ暦月の過去のリターンの平均（t+1−12k, k=1..20。5年以上そろう国だけ）が高い国（Keloharju-Linnainmaa-Nyberg 2016）",
+  "lowvol": "低ボラ＝t−35〜t の月次リターンの標準偏差（24か月以上）が低い国",
+  "value_label": "年次の割安（B/M・E/P・CE/P）: French の表の年 Y の値（Y−1年12月末の時価で測った値）を、Y 年6月末に使う（会計値の公表の遅れに6か月の余裕をもたせる）。E/P は負もそのまま順位へ",
+  "dp_ret": "配当利回り＝配当込みと配当抜きの現地通貨建て月次リターンの差を過去12か月足したもの（米国も海外も同じ定義）。年次の規則では Y−1 年12月末の値を Y 年6月末に使う（他の比率と時点をそろえる）",
+  "bm_monthly": "月次に更新した B/M（AMP 2013 の型）＝ 年 Y* の B/M × P(Y*−1年12月末) ÷ P(t)。Y* は t が6月以降なら t の年、1〜5月なら前年。P は現地通貨の配当抜きの価格指数（海外は French _Wout_Div の現地通貨 Mkt、米国は French の規模別10分割の配当抜きを時価加重）",
+  "comp4": "B/M・E/P・CE/P・配当利回り（dp_ret）の各順位（その月に値のある国の中の百分位）の平均。4つのうち3つ以上そろう国だけ",
+  "relval": "自分の過去に比べた割安: B/M・CE/P・配当利回り（いずれも正のときだけ）について ln(今年の値 ÷ 過去10年〔Y−10〜Y−1、5年以上〕の中央値) を出し、そろう2つ以上の平均。高いほど割安",
+  "vm_combo": "勢いと割安の両方（AMP 2013）: その月の mom12_1 の順位の百分位と bm_monthly の順位の百分位の平均が高い順。同点は勢いの順位で決める",
+  "usrow": "米国（JKP usa vw）と米国外（JKP world_ex_us vw）の過去の累積リターン（既定 12-0）を比べ、高いほうを翌月まるごと持つ"
+ },
+ "portfolio_rules": {
+  "weights": "選んだ K か国を等分。月次の規則は毎月末に等分へ戻す。年次の規則は6月末に選び直して等分にし、1年間は持ちっぱなし（重みは値動きで漂う）",
+  "turnover": "片道の回転＝Σ|目標の重み − 漂った重み|÷2 をその月ごとに測り、年率に直して記録する（想定の数字ではなく実測）",
+  "missing_in_holding": "持っている国のリターンが欠けた月は、残りで割り直す（件数を記録）"
+ },
+ "benchmarks": {
+  "primary_ii": "JKP developed mkt vw（時価加重の先進国・米国が約半分〜7割）＋RF。P・E1・E2・E5 の格付けの相手",
+  "report_i": "同じ選べる国々の等分（毎月等分に戻す）",
+  "report_iii": "米国市場（JKP usa vw＋RF。French Mkt との差も報告）",
+  "report_world": "JKP world vw＋RF（usrow の2本の足を時価で混ぜた姿に近い）",
+  "E3": "French Developed_ex_US の Mkt（Mkt-RF＋RF・1990-07〜）。参考に JKP world_ex_us",
+  "E4": "EM24 は JKP emerging vw、FRONTIER は JKP frontier vw、ALL47 は JKP world vw",
+  "E6": "French International Indices の Ind_all（EAFE 加重）Mkt（ドル建て配当込み）",
+  "E7": "French Developed の Mkt（Mkt-RF＋RF）",
+  "R": "JKP developed vw＋RF（指数・費用前）・ACWI（2008-04〜）・SPY・同じETFの等分"
+ },
+ "periods": {
+  "train": "データの始まり〜2006-12。JKP: 勢いは1987-01〜（信号に12か月）、年次の割安は1986-07〜、両方は1987-01〜（約20年）。E3 は相手（French Developed_ex_US）の始まり 1990-07〜（16.5年）、E7 は地域の信号に11か月要るので 1991-07〜（15.5年）。E6 は1976-01〜（31年）",
+  "hold": "2007-01〜2025-12（JKP・French 国別の終わり）。E7 と R の勢い・切替は 2026-08 まで",
+  "recent": "2013-07〜（報告のみ）",
+  "post_publication": "報告のみ: 国の勢い Asness-Liew-Stevens 1997→1998〜／国の割安 Fama-French 1998→1999〜／勢い＋割安 AMP 2013→2014〜／米国と米国外の切替 Antonacci 2012→2013〜／長期の反転 Richards 1997→1998〜／季節性 Keloharju et al 2016→2017〜"
+ },
+ "costs": {
+  "trading": "片道売買100%あたり: 先進国の国別ETF 0.15%・新興国の国別 0.30%・フロンティア 0.50%・広い指数（米国／米国外／地域のファンド）0.05%。mw_common.apply_cost に実測の年率回転を渡す",
+  "expense_ratio_diff": "国別ETFの信託報酬と、相手に当たる安い世界株ファンドの差を年率で引く: 先進国の国別 0.40%（iShares MSCI 国別 約0.50% − 世界株 約0.07〜0.10%）・新興国の国別 0.50%・フロンティア 0.70%・広い指数の切替と地域 0.00%。T-bill に逃げた部分も同じ差を引く（保守側）",
+  "C6": "費用後＝売買費用＋信託報酬の差の両方を引いた系列で C2 を判定。参考に信託報酬の差 0.10%（安い国別ETF: Franklin FTSE など）の場合も出す（判定には使わない）",
+  "R_family": "ETF の実績は信託報酬を既に含むので、売買費用だけ引く"
+ },
+ "families": {
+  "P_primary": {
+   "label": "主（primary）: 課題の4つの型（勢い K=3,5・割安 K=3,5・勢い＋割安 K=3,5・米国と米国外の切替）",
+   "holm": "この7本の保有期間の p（両側・excess_stats）で Holm。保有期間の t≤0 は p=1 として入れる",
+   "strategies": {
+    "P1_mom12_K3": {
+     "universe": "DEV23",
+     "rule": "mom12_1 の上位3か国を等分・毎月",
+     "cost": "先進国の国別",
+     "c5_units": [
+      "E4_em_mom12_K3",
+      "E4_fr_mom12_K3"
+     ]
+    },
+    "P2_mom12_K5": {
+     "universe": "DEV23",
+     "rule": "mom12_1 の上位5か国を等分・毎月",
+     "cost": "先進国の国別",
+     "c5_units": [
+      "E4_em_mom12_K5",
+      "E4_fr_mom12_K5"
+     ]
+    },
+    "P3_bm_K3": {
+     "universe": "V21",
+     "rule": "年次の B/M（value_label）の上位3か国を6月末に等分・1年持つ",
+     "cost": "先進国の国別",
+     "c5": "N/A（米国外の新興国などに割安の値が無い）"
+    },
+    "P4_bm_K5": {
+     "universe": "V21",
+     "rule": "同 上位5か国",
+     "cost": "先進国の国別",
+     "c5": "N/A"
+    },
+    "P5_vm_K3": {
+     "universe": "V21",
+     "rule": "vm_combo の上位3か国・毎月",
+     "cost": "先進国の国別",
+     "c5": "N/A"
+    },
+    "P6_vm_K5": {
+     "universe": "V21",
+     "rule": "vm_combo の上位5か国・毎月",
+     "cost": "先進国の国別",
+     "c5": "N/A"
+    },
+    "P7_usrow_12": {
+     "universe": "usa と world_ex_us",
+     "rule": "usrow（12-0）で勝っているほうを翌月まるごと",
+     "cost": "広い指数（0.05%・信託報酬の差 0）",
+     "c5": "N/A"
+    }
+   }
+  },
+  "E1_exploratory_dev": {
+   "label": "探索: 先進23か国の他の型（相手は JKP developed vw）",
+   "holm": "この族の中で Holm",
+   "strategies": {
+    "E1_mom6_K3": "mom6_1 上位3・毎月",
+    "E1_mom6_K5": "mom6_1 上位5・毎月",
+    "E1_mom12x_K3": "mom12_0 上位3・毎月",
+    "E1_mom12x_K5": "mom12_0 上位5・毎月",
+    "E1_mom12_T3": "mom12_1 上位1/3（切り上げ）・毎月（mw_momentum F7c1 と同じ規則）",
+    "E1_mom12_K1": "mom12_1 上位1か国・毎月",
+    "E1_rev60_K3": "rev60_13 の下位3（負けた国）・毎月",
+    "E1_rev60_K5": "rev60_13 の下位5・毎月",
+    "E1_seas_K3": "seas 上位3・毎月",
+    "E1_seas_K5": "seas 上位5・毎月",
+    "E1_lowvol_K3": "lowvol 下位3・毎月",
+    "E1_lowvol_K5": "lowvol 下位5・毎月",
+    "E1_usrow_12_1": "usrow を mom12_1 で",
+    "E1_usrow_6": "usrow を 6-0（t−5〜t）で"
+   },
+   "cost": "国別は先進国の国別、usrow は広い指数"
+  },
+  "E2_exploratory_value": {
+   "label": "探索: 割安の別の物差し（V21・相手は JKP developed vw）",
+   "holm": "この族の中で Holm",
+   "strategies": {
+    "E2_ep_K3": "年次 E/P 上位3",
+    "E2_ep_K5": "年次 E/P 上位5",
+    "E2_cep_K3": "年次 CE/P 上位3",
+    "E2_cep_K5": "年次 CE/P 上位5",
+    "E2_dp_K3": "年次 配当利回り（dp_ret・Y−1年12月末）上位3",
+    "E2_dp_K5": "同 上位5",
+    "E2_comp4_K3": "年次 comp4 上位3",
+    "E2_comp4_K5": "年次 comp4 上位5",
+    "E2_bmM_K3": "bm_monthly 上位3・毎月",
+    "E2_bmM_K5": "bm_monthly 上位5・毎月",
+    "E2_relval_K3": "年次 relval 上位3",
+    "E2_relval_K5": "年次 relval 上位5"
+   },
+   "cost": "先進国の国別"
+  },
+  "E3_exploratory_exus": {
+   "label": "探索: 米国外の部分だけを国選びで置き換える（相手は French Developed_ex_US Mkt・1991-07〜）",
+   "holm": "この族の中で Holm",
+   "strategies": {
+    "E3_mom12_K3": "DXUS22 で mom12_1 上位3・毎月",
+    "E3_mom12_K5": "DXUS22 で mom12_1 上位5・毎月",
+    "E3_bm_K3": "F20 で年次 B/M 上位3",
+    "E3_bm_K5": "F20 で年次 B/M 上位5",
+    "E3_vm_K3": "F20 で vm_combo 上位3・毎月",
+    "E3_vm_K5": "F20 で vm_combo 上位5・毎月"
+   },
+   "cost": "先進国の国別"
+  },
+  "E4_exploratory_em_frontier_all": {
+   "label": "探索: 新興国・フロンティア・全体での勢い（P1/P2 の C5 の再現単位を兼ねる）",
+   "holm": "この族の中で Holm",
+   "strategies": {
+    "E4_em_mom12_K3": "EM24 で mom12_1 上位3・毎月 vs JKP emerging vw（新興国の国別の費用）",
+    "E4_em_mom12_K5": "同 上位5",
+    "E4_fr_mom12_K3": "FRONTIER で mom12_1 上位3・毎月 vs JKP frontier vw（フロンティアの費用）",
+    "E4_fr_mom12_K5": "同 上位5",
+    "E4_all_mom12_K5": "ALL47 で mom12_1 上位5・毎月 vs JKP world vw（先進・新興の費用を国ごとに）",
+    "E4_all_mom12_Q": "ALL47 で mom12_1 上位1/4（切り上げ）・毎月 vs JKP world vw"
+   },
+   "c5_definition": "P1/P2 の C5 = E4_em と E4_fr の同じ K の、全期間の超過（算術平均・費用前）が正か。2単位中2つ正で合格（2/3以上）。保有期間の正負も報告"
+  },
+  "E5_exploratory_timing": {
+   "label": "探索: 逃げ場（T-bill）を持つ型＝タイミング（C8 を当てる）",
+   "holm": "この族の中で Holm",
+   "strategies": {
+    "E5_gem": "Antonacci の二重の勢い（現金版）: 米国の12-0 の超過（T-bill 超）が正なら usrow（12-0）の勝ちを持つ、負なら T-bill",
+    "E5_ctrend_ew": "DEV23 の各国を等分の枠で持ち、その国の12-0 の超過が正なら持つ・負ならその枠は T-bill",
+    "E5_mom3_abs": "P1 の上位3か国のうち、12-1 の超過が負の国の枠は T-bill"
+   },
+   "cost": "E5_gem は広い指数、他は先進国の国別",
+   "sharpe_pair": "訓練と保有でシャープレシオを JKP developed vw と比べる"
+  },
+  "E6_exploratory_french_long": {
+   "label": "探索: French の長い国別データ（1975〜・MSCI→2007年から Bloomberg）で同じ規則・米国外（EAFE19）",
+   "holm": "この族の中で Holm",
+   "strategies": {
+    "E6_mom12_K3": "EAFE19 で mom12_1 上位3・毎月",
+    "E6_mom12_K5": "同 上位5",
+    "E6_bm_K3": "EAFE19 で年次 B/M 上位3",
+    "E6_bm_K5": "同 上位5",
+    "E6_vm_K3": "EAFE19 で vm_combo 上位3・毎月",
+    "E6_vm_K5": "同 上位5"
+   },
+   "benchmark": "French Ind_all（EAFE 加重）Mkt",
+   "cost": "先進国の国別"
+  },
+  "E7_exploratory_regions": {
+   "label": "探索: 4地域の勢いの回転（地域ファンドは安い）",
+   "holm": "この族の中で Holm",
+   "strategies": {
+    "E7_reg4_K1": "REG4 で mom12_1 上位1地域・毎月 vs French Developed Mkt",
+    "E7_reg4_K2": "REG4 で mom12_1 上位2地域を等分・毎月 vs French Developed Mkt"
+   },
+   "cost": "広い指数（0.05%・信託報酬の差 0）"
+  },
+  "CONTROL": {
+   "label": "対照（格付けは計算するが候補ではない・Holm に入れない）",
+   "strategies": {
+    "C_ew_dev23": "DEV23 の等分 vs JKP developed vw",
+    "C_ew_v21": "V21 の等分 vs JKP developed vw",
+    "C_ew_dxus22": "DXUS22 の等分 vs French Developed_ex_US",
+    "C_ew_em24": "EM24 の等分 vs JKP emerging",
+    "C_ew_eafe19": "EAFE19 の等分 vs French Ind_all",
+    "C_usa": "JKP usa vw vs JKP developed vw"
+   }
+  },
+  "R_report_etf": {
+   "label": "報告: 実在の iShares 国別ETF での再生（2007-01〜。訓練期間が無いので C1 は満たせない＝格付けは参考）",
+   "strategies": {
+    "R_etf_mom12_K3": "ETF16 で mom12_1 上位3（信号は ETF 自身のリターン）",
+    "R_etf_mom12_K5": "同 上位5",
+    "R_etf_bm_K3": "ETF16 で年次 B/M 上位3（信号は French と米国の比率・2025-12 まで）",
+    "R_etf_bm_K5": "同 上位5",
+    "R_etf_vm_K3": "ETF16 で vm_combo 上位3（勢いは ETF・割安は bm_monthly・2025-12 まで）",
+    "R_etf_vm_K5": "同 上位5",
+    "R_etf_usrow": "SPY と EFA の 12-0 の切替",
+    "R_etf_ew16": "ETF16 の等分（対照）"
+   },
+   "benchmarks": "JKP developed vw＋RF（〜2025-12）・ACWI（2008-04〜）・SPY",
+   "also": "参考に 1997-2006（ETF の最初の10年）も出す"
+  }
+ },
+ "decision_details": {
+  "grade_inputs": "full/train/hold/cost_hold = mw_common.excess_stats（総リターンどうし）、roll20 = mw_common.rolling(総リターン, 20)、dca = mw_common.dca(20)、family_holm_p = 族の Holm 補正後の p、タイミング型は leveraged_or_timing=True と sharpe_pair",
+  "c5": "P1/P2 は E4 の再現単位（EM・フロンティア）。他は N/A（割安の値・同じ型の地域データが無い）",
+  "net_cost_sensitivity": "信託報酬の差 0.10% の場合も報告（判定に使わない）",
+  "grades_by_family": "P の格付けだけが主。E・R・CONTROL の格付けは『探索』『報告』と明記して分けて出す。保有期間の結果を見て作った規則は『事後』と明記し格付けしない"
+ },
+ "sanity_checks": [
+  "French Mkt の年率（1926〜2026 ≈ 10.4%・2007〜 ≈ 11.1%）を再現",
+  "JKP usa vw＋RF と French Mkt の年率差（同じ期間）",
+  "米国の規模別10分割を時価加重した配当込みの合成が French Mkt と合う（相関・年率差）",
+  "French の国別ドル建て（例: 日本・英国）と JKP の同じ国の年率差と相関（データ元の違いの大きさ）",
+  "年次の表の Yld と dp_ret（12月末）の国別の相関",
+  "EWJ と JKP jpn の年率差（≈ 信託報酬）",
+  "先読みの点検: 信号の月を1か月ずらした（未来を見る）版が不自然に良くならないかではなく、信号が月末 t までの値だけで作られていることをコードで確認する"
+ ],
+ "known_limits": [
+  "国を等分に持つ規則は、時価加重の相手（米国が約半分〜7割）から大きく外れる（追従のぶれが大きい）。保有期間に米国が勝った分だけ、国を選ぶ規則は相手に負けやすい（これは規則の中身より『米国を少なく持つ』ことの結果）。等分の対照（相手 i）を必ず並べる",
+  "French の国別データは2007年に MSCI から Bloomberg へ替わり、社数が桁で増えた国がある（比率の水準が段差をもつ）。米国の比率は CRSP/Compustat 由来で、海外の MSCI/Bloomberg と定義が少し違う（国をまたいで比べると米国の水準に偏りがありうる）",
+  "JKP の初期（1986〜1990）は国によって銘柄が少ない（n≥20 で絞る）",
+  "国別ETFの信託報酬の差（年0.40%）は2007年以降の iShares の水準。安い国別ETFのある国は限られる",
+  "独立の試行は少ない（先進国は約20か国・保有期間19年）。20年窓は重なる",
+  "税（課税口座で毎月入れ替えると売却益に課税）は入れていない。NISA では効かない",
+  "データの終わり: JKP と French 国別 2025-12、French 地域・Yahoo 2026-08"
+ ]
+}

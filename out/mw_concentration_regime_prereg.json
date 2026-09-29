@@ -1,0 +1,91 @@
+{
+ "angle": "concentration_regime",
+ "title": "巨大株の独走の後に、検証済みの上乗せ（上限つき加重・等加重・割安＋勢い・収益性・質）は純粋な時価加重の市場によく勝つか——約40か国の独立な局面で確かめる",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "global_criteria": "out/mw_prereg.json（C1〜C8・格付け S/A/B/C）をそのまま使う。線は動かさない。タイミング型なので C8（シャープレシオ）も当てる",
+ "tool": "night/mw_concentration_regime.py → out/mw_concentration_regime.json",
+ "what_was_looked_at_before_registering": "データの有無だけ: JKP の [all_countries]_[mkt]_[monthly]_[vw|vw_cap|ew] の国・始まり・終わり・銘柄数 n_stocks≥100 の月数、国ごとに『上限が効いている月（|vw−vw_cap|>1e-6）』の数（米国は全1200か月・カナダ526・豪仏英日480 など。スリランカ0・パキスタン20・NZ41）、JKP all_factors 三分位（フィンランドと米国）の特性の始まり（米国 be_me 1950-11・cop_at 1951-11・qmj 1955-11・ret_12_1 1927-01／フィンランド be_me 1990-05・cop_at 1991-05・qmj 1995-05）、French Portfolios_Formed_on_ME の表題と列（Number of Firms・Average Firm Size・Lo 10〜Hi 10）。戦略と市場を比べた数字・信号の分布（R の値）は一つも計算していない",
+ "knowledge_before_registering": "消せない後知恵: (1) 米国では上限つき市場が純粋な時価加重に 2007〜 −1.38%/年・2013〜 −2.83%/年 負けた（巨大テックの独走）。上限つきの質は訓練 +3.62 t4.66 → 保有 +0.43（mw_reality_gap）。(2) Nokia（フィンランド 2000〜）・Nortel（カナダ 2000〜）・Ericsson（スウェーデン）の巨大株の崩れ、日本の1989年の天井、Research Affiliates（Arnott ら）の『top dogs』＝国・業種の最大の会社はその後10年で市場に負けやすい、は既知。(3) mw_intl: 国の中の割安＋勢いは米国外で強かった（2007〜 +2.18%/年 t4.62）。(4) tech_persist: 米国の最大の1割が過去10年に勝った後に次の10年も勝ったのは 3/24。この漏れは消せないので、2006年より後に始まった独走の国・2018年以降（top dogs の公表後）を新しい答え合わせとして別に報告する。ここで新しいのは『集中の局面を条件にした』検定で、どの mw 角度もまだやっていない",
+ "question": "ある市場で最大級の会社が他を大きく引き離した後（純粋な時価加重 − 上限つき時価加重 の過去60か月の累積が、その国自身のそれまでの歴史で上位20%）、同じ市場の中の検証済みの上乗せ（上限つき加重・等加重・割安＋勢いの良い側・cop_at の良い側・qmj の良い側）を持つと、同じ市場の純粋な時価加重に勝ったか。その上乗せは、局面に関係なく持った平均より大きかったか。米国の2007年以降の負けは『いずれ戻る局面』なのか",
+ "data": {
+  "markets": "JKP [all_countries]_[mkt]_[monthly]_[vw|vw_cap|ew]（国ごとの location・n_stocks つき・米ドル建て・米国T-bill を引いた超過・〜2025-12）。vw＝上限なしの時価加重（相手）・vw_cap＝各社の時価を NYSE 80%点で頭打ちにした時価加重・ew＝等加重",
+  "portfolios": "JKP portfolios/[国]_[all_factors]_[monthly]_[vw] の三分位（上限なしの時価加重・各月の銘柄数 n つき）から be_me・ni_me・ocf_me・div12m_me・ret_12_1・cop_at・qmj を使う",
+  "us": "米国の相手は French Mkt（Mkt-RF + RF・F-F_Research_Data_Factors 月次・〜2026-08）。米国の水準の物差しは French Portfolios_Formed_on_ME の『Number of Firms』×『Average Firm Size』から出す最上位 NYSE 十分位（Hi 10）の時価の割合（1926-07〜）",
+  "rf": "French の RF を JKP の超過（戦略・市場の両方）に足して米ドルの総リターンにそろえる（超過どうし・総リターンどうしでだけ比べる）",
+  "gate_proxy_P1": "米国だけ: night/mw_gate_proxy.py の P1_GATE_ALL（16の物差しの良い側を等分）を同じ関数（composite(load('usa'), MEASURES, 'good')）で作る",
+  "cache": "out/_mw_cache/（gitignore）"
+ },
+ "universe": {
+  "countries": "JKP の国（地域の集計は除く）。米国は別の族（F3）。米国外の国は、信号の月 t に市場の銘柄数 n_stocks ≥ 100 の国・月だけ（翌月 t+1 に運用）",
+  "developed_list": ["aus", "aut", "bel", "can", "che", "deu", "dnk", "esp", "fin", "fra", "gbr", "hkg", "irl", "isr", "ita", "jpn", "nld", "nor", "nzl", "prt", "sgp", "swe"],
+  "missing": "欠けた月を0で埋めない（ルール7）。信号が作れない月・X が無い月・市場が無い月は、その国をその月の集計から外す"
+ },
+ "signals": {
+  "R_cap": "R(c,t) = Σ_{s=t−59..t} [ln(1+vw_s+rf_s) − ln(1+vw_cap_s+rf_s)]（過去60か月の累積の対数の差・60か月すべてそろうときだけ）。米国は vw の代わりに French Mkt（総リターン）",
+  "R_ew": "同じ式で vw_cap の代わりに ew（等加重）",
+  "binding": "上限が効いていること: 過去60か月のうち |vw−vw_cap|>1e-6 の月が48以上（上限に当たる巨大株がほとんどの月にある市場だけで R_cap を信号にする。上限に当たらない小さな市場の R≈0 の揺れを『独走』と読まないため・構造の条件で、リターンは見ていない）",
+  "A_own_pct": "状態A（主）: binding ∧ R_cap(t) > 0 ∧ R_cap(t) > その国の R_cap の t までの全履歴（t を含む）の80%点。履歴が120か月以上ある月だけ定義",
+  "B_abs_us": "状態B（副）: binding ∧ R_cap(t) > 閾値。閾値＝米国の R_cap（French Mkt − JKP vw_cap）の 1930-12〜2006-12 の80%点（2006年までの米国だけで決める一つの数。米国外の国に当てる。R が定義される月＝データ開始から60か月後から使える）",
+  "C_ew_own_pct": "状態C（副）: R_ew(t) > 0 ∧ R_ew(t) > その国の R_ew の t までの全履歴の80%点（履歴120か月以上）",
+  "D_us_level": "状態D（米国だけ・副）: 最上位 NYSE 十分位の時価の割合（French の月 t の表の値。月初の時価なので月 t の末には分かっているが、1か月余分に遅らせて月 t の値で t+1 を決める）> 1926-07 からの t までの全履歴の80%点（履歴120か月以上）",
+  "no_lookahead": "どの信号も月 t の末までに分かる値だけで作り、月 t+1 の保有を決める"
+ },
+ "X_candidates": {
+  "capped": "同じ国の JKP vw_cap 市場",
+  "equal": "同じ国の JKP ew 市場",
+  "valmom": "割安＋勢い: 割安4本（be_me・ni_me・ocf_me・div12m_me）の良い側の平均（その月に使えるものが2本以上）50% ＋ ret_12_1 の良い側 50%（mw_intl 事前登録2 の val_mom と同じ）",
+  "cop_at": "cop_at（現金ベースの営業利益÷総資産）の良い側の三分位",
+  "qmj": "qmj（質・総合）の良い側の三分位",
+  "P1": "米国だけ: 門の写し P1_GATE_ALL",
+  "good_side": "米国（usa・vw）の 2006-12 までの月だけで (第3−第1) と JKP の符号つき因子の相関の符号で決め（mw_common.jkp_good_side('usa', k, 'vw', upto=200612)）、全ての国にそのまま当てる",
+  "coverage_screen": "三分位の月は、被覆率（三分位3つの n の合計 ÷ その国の市場の n_stocks）≥ 0.4 かつ 良い側の n ≥ 10 かつ 1990-07 以降（米国は 1963-07 以降・ret_12_1 だけの月は使わない＝割安＋勢いは両方が要る）。mw_intl 事前登録2 と同じ規則"
+ },
+ "strategies": {
+  "rule_H0": "状態が t で成り立てば t+1 は X を持つ。成り立たなければその国の純粋な時価加重（vw）を持つ（ブリーフどおり）",
+  "rule_H60": "副: t 以前60か月（t−59..t）のどこかで状態が成り立っていれば t+1 は X を持つ（『独走の後の60か月』を持つ版）",
+  "pooled_series": "米国外の国を等分に混ぜた系列（各月、その月に信号と X と市場がそろう国だけの平均）: 戦略 s(t) = 平均_c[戦略_c(t)+rf]、相手 b(t) = 平均_c[vw_c(t)+rf]。状態に無い国の月は戦略＝市場（上乗せ0は本当の0＝その国は市場を持っている）。X が無い国・月は外す（0で埋めない）"
+ },
+ "families": {
+  "F1_primary": {"graded": true, "signal": "A_own_pct", "rule": "H0", "series": "米国外の国の等分の系列", "members": ["F1_capped", "F1_equal", "F1_valmom", "F1_cop_at", "F1_qmj"], "holm": "5本の保有期間 p"},
+  "F1b_H60": {"graded": true, "label": "副", "signal": "A_own_pct", "rule": "H60", "members": ["F1b_capped", "F1b_equal", "F1b_valmom", "F1b_cop_at", "F1b_qmj"], "holm": "5本"},
+  "F1c_absolute": {"graded": true, "label": "副", "signal": "B_abs_us", "rule": "H0", "members": ["F1c_capped", "F1c_equal", "F1c_valmom", "F1c_cop_at", "F1c_qmj"], "holm": "5本"},
+  "F1d_ew_signal": {"graded": true, "label": "副", "signal": "C_ew_own_pct", "rule": "H0", "members": ["F1d_capped", "F1d_equal", "F1d_valmom", "F1d_cop_at", "F1d_qmj"], "holm": "5本"},
+  "F3_us": {"graded": true, "signal": "A_own_pct（米国: French Mkt − JKP vw_cap）", "rule": "H0", "benchmark": "French Mkt", "members": ["F3_capped", "F3_equal", "F3_valmom", "F3_cop_at", "F3_qmj", "F3_P1"], "holm": "6本", "C5": "同じ X・同じ規則（状態A・H0）を米国外の国に当てて、状態の月が12以上ある国のうち状態の月の (X−vw) の平均が正の国の割合（P1 は米国外に作らないので N/A）", "periods": "全期間＝状態と X がそろう最初の月〜2025-12（JKP の終わり）"},
+  "F3b_us_level": {"graded": true, "label": "副", "signal": "D_us_level", "rule": "H0", "benchmark": "French Mkt", "members": ["F3b_capped", "F3b_equal", "F3b_valmom", "F3b_cop_at", "F3b_qmj", "F3b_P1"], "holm": "6本", "C5": "N/A（水準の物差しは米国にしか無い）"},
+  "F2_report": {"graded": false, "what": "状態A・B・C それぞれ、X 5本: y(c,t) = 次の60か月の (X−vw) の算術平均（年率・60か月すべてそろうときだけ）を 状態(c,t) のダミーに回帰（国と月をまたいでプール）。係数＝状態の月 − それ以外の月。標準誤差は Driscoll-Kraay（Bartlett・ラグ60＝重なりの分）。状態の月の平均・全体の平均（無条件）も出す。国ごとの符号の数え上げ（状態の月が12以上ある国で、状態の月の y の平均 > それ以外の月の平均 の国の数）。補足として次の12か月・36か月も同じ形で（報告のみ）。当月の上乗せ（t+1 の X−vw）で状態の月とそれ以外を比べる版も報告"},
+  "F0_context": {"graded": false, "what": "無条件に X を持ち続けた場合（同じ国・同じ月の集合）の X−vw。『局面つき』が『無条件』より良いかの比較の基準（既知の上乗せなので判定しない）"}
+ },
+ "grading_inputs": {
+  "full_train_hold_recent": "excess_stats(s, b) を 全期間／〜2006-12／2007-01〜／2013-07〜（参考）で。総リターンどうし",
+  "C4": "rolling(s, b, 20)（毎年7月起点の一括20年窓）",
+  "dca": "dca(s, b, 20)（報告）",
+  "C5": "F1 系: 状態の月が12以上ある米国外の国のうち、その国の戦略の全期間の上乗せ（状態の月の X−vw の和 ÷ 全月）が正の国の割合 ≥ 2/3。F3: 上に書いたとおり",
+  "C6": "費用を月ごとに引いた系列の保有期間で C2",
+  "C7": "全期間 t ≥ 3.0 または 族の中の Holm 補正後の保有期間 p < 0.05",
+  "C8": "sharpe(s, rf) と sharpe(b, rf) を訓練・保有の両方で（leveraged_or_timing=True）"
+ },
+ "cost": {
+  "switch": "vw と X を切り替える月に、片道100%（全部入れ替え）ぶんの費用を1回引く（上限つき市場は実際には重なりが大きいので費用は多めに出る）",
+  "holding": "X を持っている月は、X の中の入れ替えの年間片道回転率 ÷ 12 ぶんを引く: capped 0.10・equal 0.50・valmom 0.95・cop_at 0.40・qmj 0.50・P1 は mw_gate_proxy.turnover(MEASURES,'good')",
+  "unit_cost": "片道100%あたり: 米国 capped・三分位・P1 0.10%、米国 equal 0.30%／米国外の先進国 capped・三分位 0.30%、equal 0.60%／新興国 0.50%・1.00%（mw_intl の国の費用を踏襲し、等加重は小型株の分だけ2倍）",
+  "benchmark_cost": "相手（vw）は費用0"
+ },
+ "reported_not_graded": [
+  "独立な局面の数: 状態の続き（12か月未満の途切れはつなぐ）を国ごとに数え、始まり・終わり・その間の R の最大を一覧に。巨大株の名前は JKP からは分からないので、よく知られた例（Nokia 等）は『推定・後知恵』と明記して注記するだけ",
+  "一国ずつ外す（leave-one-country-out）: F1 系の各戦略で、全期間・保有期間の上乗せの最小・最大と、外すと最も下がる国",
+  "新しい答え合わせ: (i) 最初の独走（状態Aの最初の月）が 2007年以降に始まった国だけの等分の系列（保有期間）、(ii) 2018-01 以降（top dogs の研究の公表後）の F1 系",
+  "先進国だけ・新興国だけの等分の系列",
+  "米国の業者の点検: 信号と相手を JKP usa vw にそろえた版（状態の一致率と F3 の結果）",
+  "米国の今: 状態A（JKP の終わり 2025-12 時点）・状態D（French 2026-08）・RSP 対 SPY（Yahoo・等加重 vs 時価加重の代わり・2026-08 まで・履歴が短いので参考）で、規則がいま何と言うか（判定には使わない）",
+  "費用2倍の感応度"
+ ],
+ "known_limits_before_results": [
+  "状態A は R に60か月・履歴に120か月が要るので、1986〜1990年に始まる米国外の国では最初の状態が早くても2000〜2005年＝訓練期間（〜2006-12）の米国外の標本は数年しか無い。C1 は測れても弱くなりやすい（それも結果として受け入れる）。状態B はこの問題が小さい（1991年〜）代わりに米国の目盛りを他国に当てる",
+  "JKP の vw_cap の頭打ちは NYSE 80%点（米ドルの絶対額）なので、小さい国では頭打ちに当たる会社が数社しかない＝R はその数社の独走を測る。国ごとに意味が少し違う",
+  "独立な局面は多くない（国×時代で数十）。重なった60か月の窓の t は楽観側に出うる（Driscoll-Kraay でも局面が少なければ当てにならない）",
+  "Nokia・Nortel などの崩れは知っていて設計している（後知恵）。2007年以降に始まった国と 2018年以降を新しい答え合わせにする",
+  "三分位は数百社の分散した集合で、門の4〜5社とは別物。米ドル建て・税なし",
+  "JKP の終わりは 2025-12。米国の相手 French Mkt は 2026-08 まであるが、JKP の X が無い月は使わない"
+ ]
+}

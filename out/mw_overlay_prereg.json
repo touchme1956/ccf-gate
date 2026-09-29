@@ -1,0 +1,102 @@
+{
+ "angle": "overlay",
+ "part": 1,
+ "title": "株100%の上に『株とほぼ無相関のリターン源』を重ねる（リターン・スタッキング）: AQR の時系列モメンタム（トレンド・フォロー）と『1世紀の因子プレミア』を費用・成功報酬を引いて株式市場に上乗せすると、リターンとシャープレシオの両方で市場に勝つか。さらに実在のマネージド・フューチャーズ・ファンドで同じことが起きたか",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "what_was_looked_at_before_registering": "データの有無だけ（AQR Time-Series-Momentum-Factors-Monthly.xlsx: TSMOM・TSMOM^CM/EQ/FI/FX 1985-01〜2026-05・497か月／AQR Century-of-Factor-Premia-Monthly.xlsx: 45列 1926-07〜2026-02・1,196か月、列ごとの始まり〔Currencies は 1974、Intl Stock Selection は 1984〜1987、US Stock Selection Momentum は 1927-01、Defensive は 1930-12、空文字のセルあり〕／French 月次3因子 1926-07〜2026-08〔Mkt の年率 1926〜 10.38%・2007〜 11.13% を mw_common の検算どおり確認〕／French 地域3因子 Developed_ex_US・Japan・Europe・Asia_Pacific_ex_Japan 1990-07〜2026-08・434か月／Yahoo 月次の実在ファンドの有無と始まりの月〔下の reality_gap の一覧〕／楽天の海外ETF一覧 out/broker_lineup.json に DBMF・KMLM・CTA・RSST・NTSX・WTMF・FMF・ASMF が無いこと・名前に managed/futures/trend を含む取扱いが無いこと／CBOE PUT の日次は 2007-01 から毎日そろうが 1991〜2006 は7日しか無いこと）。戦略と市場を比べた数字は、この角度では一つも計算していない",
+ "knowledge_leak_before_registering": [
+  "指示書（完全性の批評役が走らせた未登録の下見）に次の数字が書かれていて、登録前に読んだ: AQR TSMOM と Mkt-RF の相関 −0.08（1985-01〜2026-05）／Mkt + 0.5×(TSMOM − 1%/年) が 訓練 +8.4%/年 NW t8.7・保有 +2.4 t1.79・2013-07〜 +2.0 t1.07・保有のシャープ 0.81 vs 0.655／Century『All asset classes Multi-style』が 訓練 +3.5 t13.5・保有 +1.8 t4.0（重ねる前の因子そのものと読める）／『Equity indices Momentum』保有 +3.8 t2.0／マクロだけのスタイルは 2007 年以降弱い",
+  "世間の知識: トレンド・フォローは 2008 年と 2022 年に大きく勝ち、2012〜2019 年ごろは長く振るわなかった（『CTA の冬』）。AQMIX などの実在ファンドは 2016〜2020 年に不振だった。論文（Moskowitz-Ooi-Pedersen 2012・Hurst-Ooi-Pedersen 2017・Ilmanen ほか 2021）は紙のリターンが強いと報告している",
+  "そのため主の族は指示書が決めた系列（TSMOM・Century の All asset classes Momentum と Multi-style）と重み（k = 0.25・0.5）をそのまま使い、何も選び直さない。『Equity indices Momentum』は下見で保有期間の数字を見た系列なので、探索族に入れるが leak=true と印を付け、勝っても結論には使わない"
+ ],
+ "global_criteria": "out/mw_prereg.json（C1〜C8・格付け S/A/B/C）をそのまま使う。線は動かさない。重ねる戦略は借入（先物の証拠金）で株100%を超える持ち高を作るので『レバレッジ型』＝ C8（訓練と保有の両方でシャープレシオが相手を上回る）を必ず掛ける（mw_common.grade の leveraged_or_timing=True）",
+ "question": "株式市場（French Mkt）を100%持ったまま、先物の証拠金で『株とほぼ無相関の別のリターン源』を k（資産に対する割合）だけ上乗せすると、運用報酬・成功報酬・売買費用・証拠金の目減りを引いた後でも、訓練期間（〜2006）と保有期間（2007〜）の両方で、リターン（超過の算術平均と年率の差）とシャープレシオの両方が市場を上回るか。その勝ちは実在のマネージド・フューチャーズ・ファンドで確かめても残るか。日本の個人が実際に作れるか",
+ "sources": {
+  "MOP2012": "Moskowitz, T., Ooi, Y.H. & Pedersen, L.H. (2012) 'Time Series Momentum', JFE 104(2)。AQR が公開する TSMOM 因子（12か月の時系列モメンタム・1か月保有・各資産を事前のぶれ40%にそろえて全資産で平均・超過リターン・費用前）",
+  "IILMT2021": "Ilmanen, A., Israel, R., Lee, R., Moskowitz, T. & Thapar, A. (2021) 'How Do Factor Premia Vary Over Time? A Century of Evidence'。AQR が公開する Century of Factor Premia（価値・モメンタム・キャリー・守り の買い−売り・株の銘柄選択とマクロ〔株価指数・債券・通貨・商品〕・自己資金ゼロの超過・ファイル自身が『費用・報酬を引く前』と明記）",
+  "HOP2017_known": "Hurst, Ooi & Pedersen (2017) 'A Century of Evidence on Trend-Following Investing' は 2/20 の報酬と売買費用を引いた後も強いと報告（結論は測る前から知っている）"
+ },
+ "data": {
+  "benchmark_US": "French F-F_Research_Data_Factors 月次: Mkt = (Mkt-RF) + RF（上限なしの時価加重・CRSP 全上場・配当込み）。RF = French の月次の短期国債",
+  "overlay_TSMOM": "AQR Time-Series-Momentum-Factors-Monthly.xlsx のシート『TSMOM Factors』: TSMOM（全資産）・TSMOM^CM・TSMOM^EQ・TSMOM^FI・TSMOM^FX。月末の日付（datetime）・小数・超過リターン。1985-01〜2026-05",
+  "overlay_Century": "AQR Century-of-Factor-Premia-Monthly.xlsx のシート『Century of Factor Premia』（見出しは19行目）: 日付は 'MM/DD/YYYY' の文字列、値は小数の超過リターン。空文字・None は欠測（0 で埋めない＝その月は戦略が無い）。1926-07〜2026-02",
+  "regions_C5": "French の Developed_ex_US_3_Factors・Japan_3_Factors・Europe_3_Factors の月次（米ドル建て・Mkt = Mkt-RF + RF・RF は米国の短期国債）1990-07〜",
+  "live_funds": "Yahoo 月次の調整後終値（分配込み・ファンドの報酬は引かれた後）→ mw_common.yahoo。生き残りだけ（今も上場・設定中のファンドだけ）の偏りあり",
+  "dead_funds": "Alpha Vantage（MCP）の TIME_SERIES_MONTHLY_ADJUSTED で、なくなったマネージド・フューチャーズのファンドを試す: MHFIX・MHFAX（Equinox MutualHedge Futures Strategy）・FUTS（ProShares Managed Futures Strategy ETF）・WFIIX（Altegris Winton Futures I）・PFFTX（Princeton Futures Strategy）・RTSIX（Ramius Trading Strategies Managed Futures）・WAVEX（Longboard Managed Futures）。取れたものだけ使い、取れなかったものは『取れなかった』と記録（0 や他のファンドで埋めない）。AV の値は手で out/_mw_cache/av_dead_mf_{T}.csv に写す（mw_etf_tactical と同じ作法）",
+  "japan_investability": "投資信託協会 投信総合検索ライブラリーの検索API（night/fetch_tsumitate_funds.py と同じ経路）で『マネージド・フューチャーズ』『マネージドフューチャーズ』『マン・AHL』『AHL』『フューチャーズ』『トレンド・フォロー』『トレンドフォロー』『ウィントン』『アルファシンプレックス』『リターン・スタック』を引き、名前・信託報酬・純資産・騰落率と、応答に NISA の印があればそれを記録。out/tsumitate_lineup.json（つみたて枠）と out/broker_lineup.json（楽天の海外ETF）に該当があるか",
+  "VRP_report_only": "CBOE PUT（S&P500 のプット売り・現金担保）の日次履歴 → 月末値の月次リターン。2007-01 から毎日そろうが訓練期間が無いので判定しない（報告のみ）"
+ },
+ "definitions": {
+  "stack": "月 t の戦略の総リターン s_t = m_t + k × (a_t − mgmt/12 − tc/12) − perf_t − drag/12。m_t = French Mkt（総リターン）、a_t = 重ねるリターン源の月次超過リターン（下の fund の定義）、k = 資産に対する上乗せの割合（毎月末に k に戻す）",
+  "fund": "a_t = c × o_t。o_t は AQR の系列そのもの。主の族は c = 1（系列そのまま）。探索族の『ぶれ10%』版は c = 0.10 ÷ σ_train(o)（σ_train = その系列の 2006-12 以前の月次の標準偏差 × √12。訓練期間のデータだけで決める定数）",
+  "mgmt": "運用報酬（ファンドの資産に対して年率）: 基本 1%、厳しめ 2%。『市場』系列（債券・商品の先物をそのまま重ねる E4）は 基本 0.2%・厳しめ 0.5%",
+  "tc": "売買費用（年率）= T × c × 単価。T は1単位の持ち高あたりの年間の片道売買（TSMOM 系・マクロだけの系列 5、株の銘柄選択を含む系列〔All asset classes *・All Stock Selection *〕10、『市場』系列 2）。単価は 基本 0.05%・厳しめ 0.10%（全体の事前登録の大型株 0.10% を厳しめに使う）。AQR の系列は費用前なので、指示書の 1%+20% に加えて明示的に引く（指示書より厳しい側への変更）",
+  "perf": "成功報酬 = 20% × max(0, その暦年の k × (a_t − mgmt/12 − tc/12) の合計)。その年の最後の月（12月、データの最後の年は最後の月）に引く。高値更新条件（ハイウォーターマーク）は付けない＝前年の負けを取り戻す前でも取られる（厳しい側）。『市場』系列には成功報酬なし",
+  "drag": "証拠金・現金の目減り 年 0.2%（k > 0 の戦略すべてに一律）",
+  "series_graded": "判定（C1〜C5・C7・C8）に使う系列 = 基本の費用（mgmt 1%・perf 20%・tc 単価0.05%・drag 0.2%）を引いた後",
+  "series_C6": "C6 に使う系列 = 厳しめの費用（mgmt 2%・perf 20%・tc 単価0.10%・drag 0.2%）を引いた後の保有期間",
+  "series_gross_report": "報告のみ: 費用ゼロの紙の上乗せ m + k × a（判定しない）",
+  "no_lookahead": "o_t は AQR が月 t の始めまでの情報で作った持ち高の月 t の成果（論文どおり）。k と c は定数（c は訓練期間だけで決める）。上乗せの持ち直しは月末（月 t の終値で k に戻し t+1 に適用）"
+ },
+ "primary_family": {
+  "note": "この6本で Holm 補正（保有期間の両側 p・判定用の系列）。指示書が決めた系列と重みを選び直さずに使う",
+  "P1_TSMOM_k25": "m + 0.25 × TSMOM（c = 1）。1985-01〜2026-05",
+  "P2_TSMOM_k50": "m + 0.50 × TSMOM（c = 1）",
+  "P3_CENmom_k25": "m + 0.25 × Century『All asset classes Momentum』（c = 1）。1926-07〜2026-02",
+  "P4_CENmom_k50": "m + 0.50 × 同じ",
+  "P5_CENms_k25": "m + 0.25 × Century『All asset classes Multi-style』（c = 1）",
+  "P6_CENms_k50": "m + 0.50 × 同じ"
+ },
+ "exploratory_family": {
+  "note": "探索（結果を見る前にここで固定）。判定は同じ線で出すが C7 の Holm は判定する全27本（主6＋探索21）で掛ける。『探索』と明記して報告する",
+  "E1_vol10": "ぶれ10%（c = 0.10/σ_train）にそろえたファンドを k = 0.5 と 1.0 で重ねる: TSMOM・Century All asset classes Momentum・Century All asset classes Multi-style（6本: E1_TSMOM_v10_k50 / _k100、E1_CENmom_v10_k50 / _k100、E1_CENms_v10_k50 / _k100）。k = 1.0 は実在の RSST（株100%＋マネージド・フューチャーズ100%）の形",
+  "E2_other_century": "ぶれ10%・k = 0.5 で Century の他の系列: All asset classes Value・All asset classes Carry・All asset classes Defensive・All Macro Momentum・All Macro Multi-style・All Stock Selection Multi-style・Equity indices Momentum（leak=true・下見で保有期間を見た系列）（7本）",
+  "E3_tsmom_parts": "ぶれ10%・k = 0.5 で TSMOM の資産別: TSMOM^CM・TSMOM^EQ・TSMOM^FI・TSMOM^FX（4本）",
+  "E4_market_stack": "c = 1（そのまま）で『市場』を重ねる（成功報酬なし・mgmt 0.2%）: Century『Fixed income Market』（債券先物の超過）k = 0.5・1.0（NTSX の 90/60 に近い形）、Century『Commodities Market』k = 0.5（3本）",
+  "E5_combo": "ぶれ10% の TSMOM ファンドと ぶれ10% の Century Multi-style ファンドを半分ずつ（a = 0.5×a_TSMOM + 0.5×a_CENms・両方がそろう月だけ・1985-01〜）を k = 1.0 で重ねる（1本）"
+ },
+ "C5_mapping": "同じ上乗せ（同じ k・c・費用）を French の Developed_ex_US・Japan・Europe の市場（米ドル建て総リターン）に重ね、その地域の市場と比べる。期間は各地域のデータの始まり（1990-07）〜上乗せ系列の終わり。『正』= 超過の算術平均 > 0 かつ 幾何の年率差 > 0。3地域中2以上で合格。★注意（測る前から分かっている構造）: 重ねる戦略の算術の超過は どの地域でも k×(a − 費用) − drag そのもので市場に依らない＝地域の複製は独立の証拠にならない（違いは期間と複利の効きだけ）。そのため地域ごとのシャープの比較も報告する（判定には使わない）",
+ "grading": "mw_common.grade(full, train, hold, roll20, cost_hold=厳しめの保有期間, repl=上の3地域, family_holm_p, sharpe_pair=判定用の系列の訓練・保有のシャープ, leveraged_or_timing=True)。C1〜C4・C7 は判定用（基本の費用後）の系列、C6 は厳しめの費用後の保有期間",
+ "sharpe_tests": "C8 は mw_common の定義どおり点推定で判定する。加えて、シャープの差（戦略 − 市場）の有意性を Jobson-Korkie（Memmel 補正）の z と、12か月の循環ブロック・ブートストラップ（2000回・種7）の片側 p で訓練・保有の両方について報告する（mw_volmanaged_verify と同じ式）。保有期間で 両方の片側 p < 0.05 なら『C8 有意』の印（判定の格は変えない・報告）",
+ "periods": {
+  "train": "上乗せ系列の始まり〜2006-12（TSMOM 1985-01〜・Century 1926-07〜。列の始まりが遅い系列はその列の始まりから）",
+  "hold": "2007-01〜 上乗せ系列の終わり（TSMOM 2026-05・Century 2026-02。French は 2026-08 まで）",
+  "recent": "2013-07〜（報告）",
+  "post_publication": "2013-01〜（MOP 2012 の翌年）と 2022-01〜（Ilmanen ほか 2021 の翌年）の両方を全戦略で報告",
+  "fresh_oos": "(1) 実在ファンドとの差（下の reality_gap）／(2) 保有期間から 2008 年と 2022 年の暦年を抜いた成績／(3) Century 系列の 1926-07〜1984-12（トレンドの文献・TSMOM のデータより前）だけの成績"
+ },
+ "report_only": {
+  "R01_gross": "判定する各本の中に: 費用ゼロの紙の上乗せの 全期間・訓練・保有",
+  "R02_vol_matched": "判定する各本の中に: 同じぶれの市場（訓練期間の戦略のぶれに合わせて市場を L 倍・借入 RF+0.5%/年）と比べた保有期間の超過（リターンの単位でのシャープの比較）",
+  "R03_corr": "上乗せ系列と Mkt-RF の相関（訓練・保有）、上乗せ系列のぶれ（訓練）と c",
+  "R04_jp_tax": "主の k=0.5 の3本と E1 の k=1.0 の3本: 日本の個人が 株を NISA・上乗せを課税口座 で持つ近似。相手（株だけ）は NISA で非課税。上乗せの暦年の損益（費用後）が正なら 20.315% を12月に引く（損失は3年繰越）＝先物の申告分離の形・悲観側。もう一つは 上乗せの累積の利益に最後に一度だけ課税（分配しない投信を持ち続ける形・楽観側）。保有期間の年率差",
+  "R05_vrp": "CBOE PUT（プット売り）を m + 0.5 × (PUT − RF) と、過去36か月の β で株の分を引いた m + 0.5 × ((PUT − RF) − β×(Mkt − RF))（β は月 t−36〜t−1 だけで推定）で重ねる。2007-01〜。訓練期間が無いので判定しない",
+  "R06_dca_roll": "判定する各本の中に: 毎月積立20年（mw_common.dca）と転がる20年窓（一括・mw_common.rolling）"
+ },
+ "reality_gap": {
+  "note": "紙の上乗せを実在のファンドに置き換える。判定はしない（どのファンドも 2007 年以降しかない＝訓練期間が無い）が、紙で A/S が出た場合、実在のファンドで『保有期間の超過 > 0 かつ シャープ > 市場』が起きていなければ『紙の上だけ』と結論に書く",
+  "funds_trend": "RYMFX（Guggenheim Managed Futures Strategy P・2007-02〜）・AQMIX（AQR Managed Futures I・2010-01〜）・ASFYX（Virtus AlphaSimplex Managed Futures I・2010-08〜）・WTMF（WisdomTree Managed Futures ETF・2011-01〜）・CSAIX（Mast〔旧 Credit Suisse〕Managed Futures I・2011-01〜）・MFTNX（Arrow Managed Futures I・2012-03〜）・EBSIX（Campbell Systematic Macro I・2013-03〜）・QMHIX（AQR Managed Futures HV I・2013-07〜）・FMF（First Trust Managed Futures ETF・2013-08〜）・PQTIX（PIMCO TRENDS Managed Futures I・2014-01〜）・ABYIX（Abbey Capital Futures I・2014-07〜）・AHLIX（American Beacon AHL Managed Futures R5・2014-08〜）・DBMF（iMGP DBi Managed Futures ETF・2019-05〜）・KMLM（KraneShares Mount Lucas MF ETF・2020-12〜）・CTA（Simplify Managed Futures ETF・2022-03〜）・FMFFX（FS Managed Futures・2023-04〜）・ASMF（Virtus AlphaSimplex MF ETF・2024-05〜）＋取れた死んだファンド",
+  "funds_multistyle": "QSPIX（AQR Style Premia Alternative I・2013-10〜＝Century Multi-style の実在版に近い）・QRPIX（AQR Alternative Risk Premia I・2017-09〜）・LFMIX（LoCorr Macro Strategies I・2011-04〜）",
+  "funds_stacked_direct": "RSST（Return Stacked US Stocks & Managed Futures・2023-09〜）・NTSX（WisdomTree US Efficient Core＝株90/債券60・2018-08〜）・BLNDX（Standpoint Multi-Asset I＝株＋トレンド・2020-01〜）を そのまま Mkt と比べる",
+  "per_fund": "(a) ファンドの超過 R_f − RF と、同じ月の紙の TSMOM（ぶれ10%・基本の費用後）の超過の 年率平均・ぶれ・シャープ・相関・差（紙 − 実在）。Multi-style のファンドは紙の Century Multi-style（ぶれ10%・基本の費用後）と比べる／(b) 重ねる: m + k × (R_f − RF) − 0.2%/12（k = 0.5・1.0・ファンドの報酬は既に引かれているので追加の報酬なし）を m と比べた 超過・t・年率差・シャープ・JK-Memmel",
+  "composite": "毎月、その月にリターンがあるトレンド系ファンド（上の funds_trend＋取れた死んだファンド）を等分に平均した合成（2007-03〜）を、同じく k = 0.5・1.0 で重ねる。生き残りだけの版と死んだファンド込みの版の両方"
+ },
+ "sanity_checks_planned": [
+  "French Mkt の年率（1926〜 ≈ 10.4%・2007〜 ≈ 11.1%）",
+  "指示書の下見の数字の再現: m + 0.5 × (TSMOM − 1%/年)（成功報酬・費用・drag なし）の訓練 +8.4%/年 t8.7・保有 +2.4 t1.79（別の計算で同じ数字が出るか＝パーサーの検算。判定には使わない）",
+  "超過どうし・総リターンどうしの取り違えが無いこと（戦略・相手とも総リターン。上乗せは超過リターンなので RF を足さない）",
+  "欠測の月を 0 で埋めていないこと（Century の空文字・ファンドの始まる前）",
+  "成功報酬が暦年ごとに1回だけ、正の年だけ引かれていること"
+ ],
+ "expectation_before_results": "紙の上では TSMOM の k=0.5 は訓練で大きく勝ち、保有でも正だが t は 1.65 前後（下見の数字から、成功報酬と費用を引くと下がる）＝ B か A の境目と予想。Century Multi-style はぶれが小さいので c=1・k≤0.5 では上乗せが小さすぎ、費用を引くとほぼ消えると予想（ぶれ10%にそろえた探索版のほうが強い）。実在のファンドは 2010 年代の不振で紙より年数%低く、重ねても市場にほとんど勝たないと予想",
+ "known_limits": [
+  "AQR の系列は紙のリターン（費用・報酬前・後から再構成）。AQR 自身が『全履歴を更新のたびに作り直す』と明記＝過去の値が変わりうる",
+  "上乗せは先物の証拠金で作る前提。日本の個人が数十の先物を自分で回すのは現実的でない（最低資金・手間）。実務ではファンド経由になり、報酬は 1〜2%＋成功報酬、日本の NISA の成長投資枠は『ヘッジ目的以外でデリバティブを使う投資信託』を対象外にしている（制度の知識・API の応答で確かめる）",
+  "C5 の地域の複製は構造上ほぼ同じ数字になる（上の C5_mapping）",
+  "実在のファンドは 2007 年以降だけ・生き残りの偏りあり（死んだファンドは取れた分だけ）",
+  "為替: すべて米ドル建て。日本の個人の円建ての成績は為替を含む（上乗せ自体は為替ヘッジされた超過リターンに近い）",
+  "独立の試行は少ない（20年窓は重なる・保有期間は約19年）",
+  "k を毎月末に戻す＝上乗せの持ち高と株の持ち高の比が月の中で漂う分は無視（小さい）"
+ ]
+}
