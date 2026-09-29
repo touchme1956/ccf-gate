@@ -21,6 +21,14 @@ import nx_lazy_data as D
 BASE = N.BASE
 CACHE = N.CACHE
 PRE = os.path.join(BASE, 'out', 'nx_lazy_prereg.json')
+# 是正（2026-09-29）の前後を並べるための切り替え（既定はすべて是正後。fixes 欄の段階ごとの数を作り直すときだけ使う）:
+#   NX_LAZY_FIXES_OFF = 'float_pit'（浮動株の検問を旧版＝後の報告も使う）・'float_d'（(d) を外す＝検査役の案）・'price_errors'（JCI を直さない）・
+#                       'siblings'（旧版の兄弟の記号）をカンマ区切り
+#   NX_LAZY_SECTION_VARIANT = 'v3'（旧版の節）・'nearest'（検査役の字面の節）。既定は v4
+#   NX_LAZY_OUT = 出力の置き場（既定 out/nx_lazy.json）
+FIXES_OFF = {x for x in os.environ.get('NX_LAZY_FIXES_OFF', '').split(',') if x}
+SECTION_VARIANT = os.environ.get('NX_LAZY_SECTION_VARIANT', 'v4')
+OUT_PATH = os.environ.get('NX_LAZY_OUT') or os.path.join(BASE, 'out', 'nx_lazy.json')
 END = 202608            # 株価の月次がそろう最後の月（2026-09 は途中）
 FULL_START0 = 199707
 FIRST_HALF_END, SECOND_HALF_START = 201112, 201201
@@ -117,6 +125,34 @@ def yahoo_monthly(ticker):
     return out or None
 
 
+# 株価の誤り（2026-09-29・検査役の指摘で確かめた）: Yahoo の調整後終値が会社の分離（スピンオフ）を調整していない株月。
+# 株価が無い月と同じに扱う（U から外す・0 で埋めない・系列は続くので途切れの印は立てない）。
+# 探し方: 事前登録の点検『−40% 未満か +100% 超の株月』（U の中の全株月）のうち、Yahoo の記録に同じ月の株式分割・大きな特別配当
+# （前月末の終値の 5% 以上）がある株月を全部見た（3件: JCI 2007-07・AIV 2008-10・AIG 2009-07）。AIV（2008年10月の REIT の暴落）と
+# AIG（1株を20株にまとめた月の後の本当の下げ）は本物の値動き。誤りは JCI だけ（sanity_checks_before_results.price_errors_scan）
+PRICE_ERRORS = {
+    ('JCI', 200707): ('Tyco International（CIK 833444・今の Johnson Controls International）の 2007-06-29 の Covidien と Tyco Electronics の分離'
+                      '（1株を4株にまとめる株式併合つき）を Yahoo の調整後終値が調整していない（200706 adj 35.34 → 200707 adj 14.58＝−58.7%。'
+                      '分離した2社の株を足した本当の月次は約 −4%＝検査役の再計算。分離した Covidien は Yahoo に無く直せないので欠測にする）'),
+}
+PRICE_FIX = collections.Counter()
+
+
+def yahoo_events(ticker):
+    """キャッシュの Yahoo の月足の記録から {yyyymm: [(種類, 値)]}（配当は金額・分割は比）。点検だけに使う"""
+    p = os.path.join(CACHE, f'yh_{ticker.replace("^", "IDX_").replace("=", "_")}_1mo.json')
+    try:
+        r = json.load(open(p))['chart']['result'][0]
+    except Exception:  # noqa
+        return {}
+    out = {}
+    for kind in ('dividends', 'splits'):
+        for k, v in ((r.get('events') or {}).get(kind) or {}).items():
+            d = datetime.datetime.utcfromtimestamp(int(v.get('date', k)))
+            out.setdefault(d.year * 100 + d.month, []).append((kind, v.get('amount') if kind == 'dividends' else v.get('splitRatio')))
+    return out
+
+
 def returns_of(px):
     """連続した月どうしだけでリターンを作る（間の月が抜けたら作らない＝0 で埋めない）"""
     ks = sorted(px)
@@ -158,8 +194,19 @@ def relink(owner_first=False):
              and 'B_former_member_same_ticker_now' not in c['via'] and 'D_fts_renamed_survivor' not in c['via']}
 
     def siblings(cik):
+        """同じ発行体の種類株の記号の組（GOOG と GOOGL）: その会社の今の記号（SEC の記号表・構成表）の組と、前身（C）なら後継の会社それぞれの
+        今の記号の組。2026-09-29 の是正: 旧版は price_tickers（前身が後継から受け継いだ記号で、後継の後継の記号まで連なる）を1つの組に混ぜていたため、
+        Breeze-Eastern（旧 TransTechnology・自分の記号は TT だけ）が後継 Trane の後継と誤って結ばれた Ingersoll Rand Inc の IR を兄弟とみなし、
+        S&P の IR の枠に結ばれていた（検査役の指摘）。事前登録『その会社の他の種類株の記号も自分の記号とみなす（GOOG と GOOGL）』の字面に戻した"""
         c = cand.get(cik) or {}
-        return {t for t in (c.get('price_tickers') or []) + (c.get('sec_tickers') or []) + (c.get('tickers') or []) if t in known_sp}
+        if 'siblings' in FIXES_OFF:  # 旧版（前後の比較だけ）
+            return [{t for t in (c.get('price_tickers') or []) + (c.get('sec_tickers') or []) + (c.get('tickers') or []) if t in known_sp}]
+        groups = [set((c.get('sec_tickers') or []) + (c.get('tickers') or []))]
+        if 'C_predecessor_of_current' in (c.get('via') or []):
+            for sc in c.get('successors') or []:
+                cs = cand.get(int(sc)) or {}
+                groups.append(set((cs.get('sec_tickers') or []) + (cs.get('tickers') or [])))
+        return [g & known_sp for g in groups if g & known_sp]
 
     def own(r, cik):
         if r.get('symbols_ix'):
@@ -170,9 +217,10 @@ def relink(owner_first=False):
                 return set()
             mx = max(cc.values())
             got = {k for k, v in cc.items() if v == mx}
-        sib = siblings(cik)
-        if got & sib:
-            got |= sib
+        base = set(got)
+        for sib in siblings(cik):
+            if base & sib:
+                got |= sib
         return got
     claims = {cik: [(r['filed'], own(r, cik)) for r in o['filings'] if 'fetch_err' not in ' '.join(r.get('flags', []))]
               for cik, o in recs.items()}
@@ -333,9 +381,12 @@ def load_signals():
         if fnum(r['sim_jac']) is None or fnum(r['sim_cos']) is None:
             stat['no_similarity'] += 1
             continue
+        sfx = '' if SECTION_VARIANT == 'v4' else '_' + SECTION_VARIANT
+        if sfx and f'item1a_cos{sfx}' not in r:
+            sfx = ''  # 節を取り直す前の signals.csv（item1a_cos がそのまま v3）
         v = {'JAC': fnum(r['sim_jac']), 'COS': fnum(r['sim_cos']), 'JAC_ALL': fnum(r['sim_jac_all']), 'COS_ALL': fnum(r['sim_cos_all']),
              'MINEDIT': fnum(r['sim_minedit']), 'SIMPLE': fnum(r['sim_simple']),
-             'IT1A_COS': fnum(r['item1a_cos']), 'IT7_COS': fnum(r['item7_cos'])}
+             'IT1A_COS': fnum(r[f'item1a_cos{sfx}']), 'IT7_COS': fnum(r[f'item7_cos{sfx}'])}
         ex = fnum(r['ex13_jac'])
         v['EX13_JAC'] = ex if ex is not None else v['JAC']  # どちらの年にも EX-13 が無ければ JAC と同じ
         ln, pln = fnum(r['lm_neg']), fnum(pr['lm_neg'])
@@ -426,6 +477,9 @@ class Panel:
 def build(log, owner_first=False):
     P = Panel()
     t0 = time.time()
+    FLOAT_FIX.clear()
+    PRICE_FIX.clear()
+    log['fix_switches'] = {'fixes_off': sorted(FIXES_OFF), 'section_variant': SECTION_VARIANT}
     link, spsize, cand = relink(owner_first)
     P.link = link
     mem_file = json.load(open(os.path.join(CACHE, 'nx_lazy_members.json')))
@@ -543,11 +597,15 @@ def build(log, owner_first=False):
                 continue
             CLprev[ti, i] = p0[1]
             r = P.rets[t].get(m1)
+            if (t, m1) in PRICE_ERRORS and r is not None and 'price_errors' not in FIXES_OFF:
+                PRICE_FIX[f'{t}_{m1}_set_missing'] += 1
+                continue
             if r is not None:
                 R[ti, i] = r
             elif lastm[t] == m0 and m0 < END:
                 ended[ti, i] = True
     P.R, P.CLprev, P.ended = R, CLprev, ended
+    log['price_errors_set_missing'] = {'applied_stock_months': dict(PRICE_FIX), 'list': {f'{k[0]} {k[1]}': v for k, v in PRICE_ERRORS.items()}}
     # 浮動株 → 月末 t−1 の時価（F × close_{t−1} ÷ close_{基準日の月末}）
     CAP = np.full((T, n), np.nan)
     fsrc = collections.Counter()
@@ -558,41 +616,92 @@ def build(log, owner_first=False):
             fo = float_of(r)
             L.append((int(r['formation_ym']), fo))
         ann[c] = L
-    # (c) 時系列の検問: 浮動株 ÷ 基準日の終値（分割だけ調整）＝株数に当たる値が、同じ会社の前後3年の他の年次報告の中央値と
-    #     1000 の整数乗から 2.5 倍以内だけずれていたら、単位の付け違い（本文が千ドル単位の表を $ で読んだ等）とみて欠測にする
-    #     （事前登録の『無ければその前の年次報告の値（24か月以内）』の道へ回す）
-    tk_of = {}
-    for i in range(n):
-        cnt = collections.Counter(tick[ti][i] for ti in range(T) if tick[ti][i])
-        if cnt:
-            tk_of[ciks[i]] = cnt.most_common(1)[0][0]
-    for c, L in ann.items():
-        t = tk_of.get(c)
+    # (c)(d) 時系列の検問（2026-09-29 に先読みを是正）。株数に当たる値 = 浮動株 ÷ 基準日の終値（分割だけ調整）。
+    #   (c) その報告より**前に**提出された同じ会社の報告（並べる年の差が3年以内）の株数に当たる値の中央値と、直前に採った値（3年以内）の
+    #       両方から、1000 の整数乗から 2.5 倍以内だけずれていたら、単位の付け違い（本文が千ドル単位の表を $ で読んだ等）とみて欠測にする
+    #   (d) 1年だけの飛び: **直前の2つ**の報告の株数に当たる値がたがいに2倍以内で一致しているのに、この報告だけ両方から5倍を超えて離れていたら欠測
+    #       （元の値の直前の2つと、採った値の直前の2つの両方で同じ形のときだけ）。先読みをしないので、本当の段差（合併・分離・浮動株の定義の変更）も
+    #       最初の1年は欠測になる（その年は前の報告の浮動株を値動きで転がす）。区別するには次の報告が要る＝旧版の先読みそのもの
+    #   欠測は事前登録の『無ければその前の年次報告の値（24か月以内）』の道へ回す。
+    #   基準日の終値の記号は、その値を使う月末 t−1 の記号（CAP を作るのと同じ記号）。旧版は (c) に後の報告も入れ、(d) に次の報告を使い、
+    #   記号を全期間の最頻の記号で決めていた＝月末 t−1 にはまだ無い報告が重みを決めていた（検査役の指摘・事前登録 timing.weights に反する）
+    ann_chk = {}
+    dropped_c, dropped_d = set(), set()
+
+    old_ver = None
+    if 'float_pit' in FIXES_OFF:  # 旧版（前後の比較だけ）: 全期間の最頻の記号・前後3年の他の報告の中央値・次の報告
+        old_ver = {}
+        tk_of = {}
+        for i in range(n):
+            cnt = collections.Counter(tick[ti][i] for ti in range(T) if tick[ti][i])
+            if cnt:
+                tk_of[ciks[i]] = cnt.most_common(1)[0][0]
+        for c, L in ann.items():
+            t = tk_of.get(c)
+            if not t or t not in px:
+                old_ver[c] = L
+                continue
+            sh = []
+            for f_, fo in L:
+                pb = px[t].get(fo[1]) if fo else None
+                sh.append(fo[0] / pb[1] if (fo and pb) else None)
+            newL = list(L)
+            for j, (f_, fo) in enumerate(L):
+                if sh[j] is None:
+                    continue
+                ref = [sh[k] for k in range(len(L)) if k != j and sh[k] is not None and abs((L[k][0] // 100) - (f_ // 100)) <= 3]
+                if not ref:
+                    continue
+                if _scale_error(sh[j], float(np.median(ref))):
+                    dropped_c.add((c, j)); newL[j] = (f_, None)
+                    continue
+                pj = next((sh[k] for k in range(j - 1, -1, -1) if sh[k] is not None), None)
+                nj = next((sh[k] for k in range(j + 1, len(L)) if sh[k] is not None), None)
+                if pj and nj and max(pj, nj) / min(pj, nj) <= 2 and min(sh[j] / pj, pj / sh[j]) < 0.2 and min(sh[j] / nj, nj / sh[j]) < 0.2:
+                    dropped_d.add((c, j)); newL[j] = (f_, None)
+            old_ver[c] = newL
+
+    def ann_checked(c, t):
+        if old_ver is not None:
+            return old_ver.get(c) or []
+        key = (c, t)
+        if key in ann_chk:
+            return ann_chk[key]
+        L = ann.get(c) or []
         if not t or t not in px:
-            continue
+            ann_chk[key] = L
+            return L
         sh = []
-        for j, (f_, fo) in enumerate(L):
+        for f_, fo in L:
             pb = px[t].get(fo[1]) if fo else None
             sh.append(fo[0] / pb[1] if (fo and pb) else None)
         newL = list(L)
+        last_kept, kept = None, []
         for j, (f_, fo) in enumerate(L):
             if sh[j] is None:
                 continue
-            ref = [sh[k] for k in range(len(L)) if k != j and sh[k] is not None and abs((L[k][0] // 100) - (f_ // 100)) <= 3]
-            if not ref:
-                continue
-            med = float(np.median(ref))
-            if _scale_error(sh[j], med):
-                FLOAT_FIX['time_series_scale_error_dropped'] += 1
+            ref = [sh[k] for k in range(j) if sh[k] is not None and (f_ // 100) - (L[k][0] // 100) <= 3]
+            # (c) は、過去3年の値の中央値とも、直前に採った値（3年以内）とも 1000 の整数乗だけずれるときだけ（どちらか一方だけで決めると、
+            #     過去の誤りの続き〔MAT・AJG の 2019〜2020〕の後の正しい値や、最初の報告の誤りの後の正しい値まで落とす）
+            lk = last_kept if (last_kept and (f_ // 100) - (last_kept[0] // 100) <= 3) else None
+            if ref and _scale_error(sh[j], float(np.median(ref))) and (lk is None or _scale_error(sh[j], lk[1])):
+                dropped_c.add((c, j))
                 newL[j] = (f_, None)
                 continue
-            # (d) 1年だけの飛び: 前後の年次報告の株数に当たる値がたがいに2倍以内で一致しているのに、この報告だけ両方から5倍を超えて離れている
-            pj = next((sh[k] for k in range(j - 1, -1, -1) if sh[k] is not None), None)
-            nj = next((sh[k] for k in range(j + 1, len(L)) if sh[k] is not None), None)
-            if pj and nj and max(pj, nj) / min(pj, nj) <= 2 and min(sh[j] / pj, pj / sh[j]) < 0.2 and min(sh[j] / nj, nj / sh[j]) < 0.2:
-                FLOAT_FIX['one_year_spike_dropped'] += 1
+            # (d) は、直前の2報告（元の値）でも、直前に採った2報告でも同じ形（2つが2倍以内で一致し、この報告だけ両方から5倍を超えて離れる）のときだけ
+            #     （元の値だけで決めると、過去の誤りが2年続いた後の正しい値〔MAT・AJG の 2021〕を落とす）
+            spike = lambda prv: len(prv) == 2 and max(prv) / min(prv) <= 2 and all(min(sh[j] / q, q / sh[j]) < 0.2 for q in prv)  # noqa
+            prv = [sh[k] for k in range(j - 1, -1, -1) if sh[k] is not None][:2]
+            prk = [x[1] for x in kept[-2:]]
+            if 'float_d' not in FIXES_OFF and spike(prv) and spike(prk):
+                dropped_d.add((c, j))
                 newL[j] = (f_, None)
-        ann[c] = newL
+                continue
+            last_kept = (f_, sh[j])
+            kept.append(last_kept)
+        ann_chk[key] = newL
+        return newL
+    P.ann_checked = ann_checked
     for ti in range(1, T):
         m_prev = months[ti - 1]
         for i in range(n):
@@ -600,7 +709,7 @@ def build(log, owner_first=False):
                 continue
             c = ciks[i]
             t = tick[ti - 1][i]
-            L = ann.get(c) or []
+            L = ann_checked(c, t)
             fs = [x for x in L if x[0] <= m_prev]
             if not fs:
                 continue
@@ -623,6 +732,8 @@ def build(log, owner_first=False):
                 CAP[ti, i] = got
     P.CAP = CAP
     P.ann = ann
+    FLOAT_FIX['time_series_scale_error_dropped_past_only'] = len(dropped_c)
+    FLOAT_FIX['one_year_spike_dropped_past_two'] = len(dropped_d)
     log['float_sources_stock_months'] = dict(fsrc)
     log['float_checks_reports'] = dict(FLOAT_FIX)
     # 業種
@@ -1200,7 +1311,7 @@ def sanity(P, SIG, F, start, spy, mkt, log):
         # 浮動株の無い会社の時価の近似（年齢を問わず最新の浮動株を終値で転がす）で、時価加重の重みの被覆を見積もる
         approx, nofloat = 0.0, 0
         for i in np.where(U & ~Uvw)[0]:
-            L = [x for x in (P.ann.get(P.ciks[i]) or []) if x[0] <= m and x[1]]
+            L = [x for x in P.ann_checked(P.ciks[i], P.tick[ti][i]) if x[0] <= m and x[1]]
             if not L:
                 nofloat += 1
                 continue
@@ -1270,6 +1381,20 @@ def sanity(P, SIG, F, start, spy, mkt, log):
                     '（Cincinnati Financial の XOM・JPM・AAPL・PG・FITB ほか、Mirion〔SPAC の 10-K〕の XOM・WMT・JNJ ほか、Gen Digital の DE、Abbott の ABBV、EPAM の CTSH）。'
                     '同じ道なら提出日が新しいほうが勝つので、持ち主（株価の取れる大型株）がその月の U から外れた。規則と相手の両方から同じく外れる（片側に有利な誤りではない）が、U は S&P 500 から遠くなる。'
                     '格付けは事前登録の同定のまま（変えない）。持ち主を先に採る版を post_hoc の identity_owner_first に『事後』として並べた')}
+    # 2c 記号の持ち主が候補に居ない記号に、その記号を今の自分の記号に持たない会社が結ばれた件数（2026-09-29 に足した・報告のみ）。
+    #    会社が昔の自分の記号を名乗った正しい例（上場廃止した持ち主は候補に居ない）も入る。誤りの型の例: Novanta（GSI Group）の 10-K の本文の記号の抜き出しが
+    #    LSI を名乗りと読み、1996〜2014 の S&P の LSI（LSI Logic）の枠に Novanta の株価と信号が入っていた
+    pairs2 = collections.Counter()
+    for ym, lk in P.link.items():
+        for c, (k, h) in lk.items():
+            for t_ in k.split('|'):
+                if not owners.get(t_) and t_ not in sib_all(P.cand, c):
+                    pairs2[(c, P.cand[c].get('name'), t_, h)] += 1
+    out['identity_ticker_not_own_now_owner_not_candidate'] = {
+        'pairs': [{'cik': c, 'name': n, 'ticker': t_, 'path': h, 'months': v} for (c, n, t_, h), v in pairs2.most_common()],
+        'reading': ('月末の構成の記号 k が、k を今の自分の記号に持たない会社に結ばれ、k を今持つ会社も候補に居ない件数（報告のみ・格付けは事前登録の同定のまま）。'
+                    '昔の自分の記号の正しい名乗りと、本文の記号の抜き出しの誤り（他社の記号を自分の記号と読んだもの）の両方が入る。'
+                    '誤りの例: Novanta（CIK 1076930・旧 GSI Group）が LSI（1996〜2014 の LSI Logic）に結ばれ、Novanta の株価（NOVT）と信号が入っていた')}
     # 3 相手（U の時価加重）と SPY
     bv, be = bench_series(P, start, True), bench_series(P, start, False)
     ks = sorted(set(bv) & set(spy))
@@ -1337,6 +1462,27 @@ def sanity(P, SIG, F, start, spy, mkt, log):
     out['extreme_stock_months_lt_-40_or_gt_+100'] = {'count_by_group': dict(bigcnt),
                                                      'top50': [{'ticker': b_[1], 'cik': b_[2], 'month': b_[3], 'ret': b_[4], 'group_JAC12': b_[5]} for b_ in big[:50]]}
     out['format_switch_share_by_quintile_JAC12'] = {q: round(v[1] / v[0], 4) if v[0] else None for q, v in sorted(fsq.items())}
+    # 5b 株価の誤りの探し方（2026-09-29・検査役の指摘〔JCI 2007-07〕の後に足した）: 構成の株月のうち、調整後終値の月次が −40% 未満か +100% 超で、
+    #    Yahoo の記録に同じ月の分割か大きな特別配当（前月末の終値の 5% 以上）がある株月を全部並べる（直す前の値で）
+    scan = []
+    for ti in range(P.mi[start], P.mi[END] + 1):
+        m = P.months[ti]
+        for i in np.where(P.member[ti - 1])[0]:
+            t = P.tick[ti - 1][i]
+            if not t or t not in P.rets or np.isnan(P.CLprev[ti, i]):
+                continue
+            rv = P.rets[t].get(m)
+            if rv is None or not (rv < -0.40 or rv > 1.00):
+                continue
+            ev = yahoo_events(t).get(m, [])
+            pc = P.px[t][P.months[ti - 1]][1]
+            big = [e for e in ev if (e[0] == 'dividends' and e[1] and e[1] / pc >= 0.05) or e[0] == 'splits']
+            if big:
+                scan.append({'ticker': t, 'cik': P.ciks[i], 'month': m, 'ret_yahoo_adj': round(float(rv), 4), 'events': big,
+                             'set_missing': (t, m) in PRICE_ERRORS and 'price_errors' not in FIXES_OFF})
+    out['price_errors_scan'] = {'rows': scan, 'reading': ('JCI 2007-07 は会社の分離の調整漏れ（欠測にした）。AIV 2008-10（REIT の暴落・前月末の終値が分割の調整で小さく、'
+                                                        '通常の配当が 5% を超えて見えた）と AIG 2009-07（1株を20株にまとめた後の本当の下げ・月末 $13.1）は本物の値動き。'
+                                                        '−40% に届かない分離の調整漏れはこの探し方では見つからない（事前登録 known_limits のとおり）')}
     # 6 取得の失敗の印（提出年ごと）
     fl = collections.defaultdict(collections.Counter)
     for r in P.rows:
@@ -1382,7 +1528,7 @@ def quintile_table(P, SIG, F, start, sig='JAC', vw=True):
 
 
 DEVIATIONS = [
-    {'what': '浮動株の検問を足した（(a) XBRL・iXBRL の値にも 100万〜10兆ドルの範囲 ／ (b) XBRL（無ければ iXBRL）と本文の比が 1000 の整数乗から 2.5 倍以内なら本文 ／ (c) 株数に当たる値（浮動株÷基準日の終値）が同じ会社の前後3年の中央値から 1000 の整数乗だけずれたら欠測 ／ (d) 前後の報告が2倍以内で一致しているのに1年だけ両方から5倍を超えて離れたら欠測。(c)(d) の欠測は事前登録の『その前の年次報告（24か月以内）』の道へ回す）',
+    {'what': '浮動株の検問を足した（(a) XBRL・iXBRL の値にも 100万〜10兆ドルの範囲 ／ (b) XBRL（無ければ iXBRL）と本文の比が 1000 の整数乗から 2.5 倍以内なら本文 ／ (c) 株数に当たる値（浮動株÷基準日の終値）が、その報告より前に提出された同じ会社の報告（並べる年の差3年以内）の中央値から 1000 の整数乗だけずれたら欠測 ／ (d) 直前の2つの報告が2倍以内で一致しているのにこの報告だけ両方から5倍を超えて離れたら欠測。(c)(d) の欠測は事前登録の『その前の年次報告（24か月以内）』の道へ回す。基準日の終値の記号はその値を使う月末 t−1 の記号）。2026-09-29 に (c)(d) の先読みを是正した: 旧版は (c) に後から提出される報告も入れ、(d) に次の報告を使い、記号を全期間の最頻の記号で決めていた＝月末 t−1 にはまだ無い報告が時価加重の重みを決めていた（事前登録 timing.weights に反する・検査役の指摘。前後の数は fixes）',
      'why': '事前登録の点検『U_t の時価加重と SPY の相関（0.97 未満なら浮動株か同定に誤り）』が 0.706 だった。原因は XBRL の dei:EntityPublicFloat の単位の付け違い（MTB・ZBH・HST・PKG・NEM・IQV・QCOM は ×100万、WAT・DPZ・GRMN・SHW・TKO・HBAN は ×1000、ALB は 1e18）で、1社が U の重みの 99% を持つ月があった。本文の値には取得器が 100万〜10兆ドルの範囲を掛けていたが XBRL・iXBRL の値には掛けていなかった。(c)(d) は本文の千ドル単位の表を $ として読んだ年（PEP・BAC・DUK ほか）と1年だけの飛び（EXC 2009 ほか）。検問は浮動株の値と相手の相関だけを見て決め、規則の成績は1つも計算する前。検問後の相関 0.9933',
      'affects_grading': '時価加重の規則すべて（主の族 P を含む）の重み。規則の中身・線は不変'},
     {'what': '株価の記号: 今の SEC の記号が優先株だけの会社（811830 Santander Holdings USA〔旧 Sovereign〕・1527469 Athene）は普通株の株価が無いとして外した。EIDP（旧 DuPont・C と D の両方）は C の約束（その月の記号 k が後継の記号なら k の株価）で扱った',
@@ -1409,6 +1555,15 @@ DEVIATIONS = [
     {'what': '時価加重の規則を IVV と並べる比較（事前登録 real_instrument_check.comparisons）は 2000-06 から（IVV の設定は 2000-05）。SPY・French Mkt・RSP は事前登録どおり', 'why': 'IVV の月次は設定の後からしか無い', 'affects_grading': '無し（報告のみ）'},
     {'what': '超過（s−b）の因子への傾き（French の5因子＋勢い・定数あり・Newey-West ラグ12）を各規則に報告のみで足した（factor_loadings_of_excess_report_only）', 'why': '事前登録 known_limits『β と因子への傾きは報告する』の約束（前の実装に無かった）', 'affects_grading': '無し（報告のみ）'},
     {'what': 'X11（10-Q）・X12（S&P 500 の外）は未測定', 'why': 'out/_nx_cache/nx_lazy_manifest.json（2026-09-28T23:09:46Z・株価を読み込む前・成績を計算する前に記録）', 'affects_grading': '族に入らない（事前登録の total_graded 50 本は変わらない）'},
+    {'what': '【2026-09-29 の是正・結果を見た後】節（Item 1A・Item 7）の取り出しを直した（night/nx_lazy_data.py の section_span の rule v4・全 17,914 件の主文書を取り直して作り直した）。見出しの行（行頭の Item の記号の直後が英大文字〔句読点・改行は飛ばす〕で、直前の行が『,』か機能語〔in・see・under・of …〕で終わっていない）だけを始まり・終わりにし、同じ終わりを共有する始まりの組の中で、最後の別の Item の見出し（壁）より後の最も早い始まりを採る。Item 1A の終わりに Item 1C（2023年12月以降の会計年度の新しい節）を足した',
+     'why': '（点検: 300件の無作為の試し〔1997〜2026 の各年10件・600の節〕で v3 と違った 37件を1件ずつ見て、37件とも v4 が見出しから次の見出しまでを取り、v3 は相互参照の行から始まるか相互参照の行で終わっていた）旧版（v3）は行頭の記号をすべて始まり・終わりにして組の中で最も早い始まりを採ったため、本文の前の相互参照の行（Apple FY2006『Item 1A of this Form 10-K.』・『Item 7 for the fiscal years ended…』、Mastercard FY2009、Cigna FY2014 ほか）から始まる区間を選び、Item 1 などをまるごと節に数えていた（検査役の指摘・Apple FY2006 で 18,813語→8,299語を確かめた）。本文の中の相互参照の『Item 8…』を終わりにして節を途中で切る逆の誤りもあった（Ventas FY2011 の MD&A 1,024語→16,340語、Intel FY2009 1,157語→11,585語）。検査役の案（組の中で終わりの直前の始まり）は、頁ごとに見出しを繰り返す提出（Mastercard 2020〜・Cigna 2013〜・Microsoft・Ford ほか）で節を最後の1頁に縮める（Mastercard FY2019 10,603語→206語）ので採らず、感度に残した。事前登録の定義『見出しの行から次の見出しの行まで』に合わせる是正で、規則は変えていない',
+     'affects_grading': 'X6 の4本（IT1A_COS・IT7_COS）の信号。ほかの規則の信号は不変（主文書の語数・類似度は変えていない）。前後の数は fixes'},
+    {'what': '【2026-09-29 の是正・結果を見た後】会社の同定で、自分の記号を『同じ発行体の種類株』へ広げる約束（事前登録『その会社の他の種類株の記号も自分の記号とみなす（GOOG と GOOGL）』）を、その会社の今の記号の組と、前身なら後継の会社それぞれの今の記号の組に限った（night/nx_lazy.py の relink と night/nx_lazy_data.py の build_panel の両方）',
+     'why': '旧版は price_tickers（前身が後継から受け継いだ記号で、後継の後継の記号まで連なる）を1つの組に混ぜていたため、Breeze-Eastern（CIK 99359・旧 TransTechnology・10-K が名乗る記号は TT だけ・S&P 500 に入ったことは無い）が、後継 Trane の後継と誤って結ばれた Ingersoll Rand Inc の IR を兄弟とみなし、1996〜2008 の S&P の IR の枠に結ばれ、2002-05〜2008-01 は Breeze の信号と小さい浮動株に Yahoo の TT（旧 Ingersoll-Rand plc）の株価が付いていた（検査役の指摘）。panel の同じ記号の取り合いの並びも集合の並び（ハッシュの種）に依らないように揃えた（relink と同じ）',
+     'affects_grading': '小さい（その1社の76か月）。前後の数は fixes'},
+    {'what': '【2026-09-29 の是正・結果を見た後】株価の誤り: JCI（CIK 833444・当時 Tyco International）の 2007-07 の株月を欠測にした（U から外す・0 で埋めない）',
+     'why': 'Yahoo の調整後終値が 2007-06-29 の Covidien と Tyco Electronics の分離（1株を4株にまとめる株式併合つき）を調整しておらず −58.7%（本当は約 −4%）。事前登録の点検『−40% 未満か +100% 超の株月の上位50件』に載っていたが直していなかった（検査役の指摘）。同じ月に Yahoo の記録に分割か大きな特別配当がある極端な株月を全部見て（3件）、誤りはこの1件だけと確かめた（sanity_checks_before_results.price_errors_scan）',
+     'affects_grading': '小さい（1株月）。前後の数は fixes'},
 ]
 
 
@@ -1458,7 +1613,10 @@ def write_out(P, results, log, starts, sanity_out, extra, pre, t_start):
             {'what': '会社の同定の誤り: 本文の記号の抜き出し（事前登録 linking_rule『回数が最も多い記号・同数ならすべて』）が、保有株の一覧や競合の名前を自分の記号と読み、同じ道（L1）で提出日が新しいほうが勝つ約束のために、記号の持ち主（株価の取れる大型株）がその月の U から外れていた（Cincinnati Financial が XOM・JPM・AAPL・MSFT・PG・FITB ほか、Mirion〔SPAC〕が XOM・WMT・JNJ ほか、Gen Digital が DE、Abbott が ABBV、EPAM が CTSH など）',
              'found': '2026-09-29・前の実装者の途中の結果（格付けまで出ていた）を読んだ後に、同定の既知の例（XOM が 2008-02〜2009-01・2012-02〜2015-01 に構成から消える／JPM が 2016-02〜2019-01 に消える）を点検して見つけた',
              'treatment': '格付けは事前登録の同定のまま（結果を見た後に同定を変えて格付けし直すことはしない）。件数は sanity_checks_before_results.identity_ticker_linked_to_non_owner、持ち主を先に採る版の全50本の grade_short は post_hoc.identity_owner_first（事後・格付けに使わない）',
-             'direction': '外れた会社は規則と相手の両方から同じく外れるので、片側に有利な誤りではない。U が S&P 500 から少し遠くなる'}],
+             'direction': '外れた会社は規則と相手の両方から同じく外れるので、片側に有利な誤りではない。U が S&P 500 から少し遠くなる'},
+            {'what': '同じ型の誤りのもう一つの形（2026-09-29 の点検で見つけた・直していない）: 記号の持ち主が候補に居ない記号（上場廃止した会社の記号）に、本文の記号の抜き出しが他社の記号を自分の記号と読んだ会社が結ばれる。例: Novanta（CIK 1076930・旧 GSI Group）の 10-K の抜き出しが LSI を名乗りと読み、1996〜2014 の S&P の LSI（LSI Logic）の枠に Novanta の株価（NOVT）と信号が入っていた',
+             'treatment': '格付けは事前登録の同定のまま。件数は sanity_checks_before_results.identity_ticker_not_own_now_owner_not_candidate（昔の自分の記号の正しい名乗りも入る一覧）',
+             'direction': '入った会社は規則と相手の両方に同じく入る（片側に有利な誤りではない）。U が S&P 500 から少し遠くなる'}],
         'x11_x12_decision': man,
         'overlap_with_q07leu_lmtext': {'what': 'q07leu（ratio-evaluation-q07leu 枝）の第10回 lmtext は 10-K の否定語の割合の変化が小さい五分位（dneg|q5・等分・選定 1995-04〜2000-12・保有 2001-01〜2026-08）を検定し不合格（保有 −0.72%/年 t−1.18・Holm p 0.88）',
                                        'which_rules_here': 'X4_DNEG_Q5_VW_12・X4_DNEG_XQ1_VW_12（同じ特徴量 DNEG）と X5（DNEG を使う組み合わせ）',
@@ -1472,14 +1630,14 @@ def write_out(P, results, log, starts, sanity_out, extra, pre, t_start):
         'extra_report_not_in_prereg': extra,
         'post_hoc': {},
     }
-    p = os.path.join(BASE, 'out', 'nx_lazy.json')
+    p = OUT_PATH
     json.dump(obj, open(p, 'w'), ensure_ascii=False, indent=1, default=lambda o: int(o) if isinstance(o, (np.integer,)) else float(o) if isinstance(o, np.floating) else str(o))
     return p
 
 
 def post_hoc():
     """『事後』の診断（結果を見た後に足した・格付けに使わない）。out/nx_lazy.json の post_hoc に書く"""
-    p = os.path.join(BASE, 'out', 'nx_lazy.json')
+    p = OUT_PATH
     obj = json.load(open(p))
     log = {}
     P = build(log)
@@ -1632,12 +1790,13 @@ def post_hoc():
     obj['conclusion_ja'] = (
         f"事前登録どおりの {len(obj['tested'])} 本（主の族 P 8本・探索 42本）の格付け（grade_short）は " + '・'.join(f'{k} {v}本' for k, v in sorted(gc.items())) +
         '。S と A は0本＝市場（同じ母集団の時価加重・等分）に勝つ規則は出なかった。'
-        f"主の族 P の全期間の超過は年 {min(r['full']['ex_ann'] for r in pr):+.2f}〜{max(r['full']['ex_ann'] for r in pr):+.2f}%（t {min(r['full']['t'] for r in pr)}〜{max(r['full']['t'] for r in pr)}・Holm 後の片側 p はすべて 1.0）。"
+        f"主の族 P の全期間の超過は年 {min(r['full']['ex_ann'] for r in pr):+.2f}〜{max(r['full']['ex_ann'] for r in pr):+.2f}%（t {min(r['full']['t'] for r in pr)}〜{max(r['full']['t'] for r in pr)}・Holm 後の片側 p の最小 {min(r['family_holm_p_one_full'] for r in pr)}）。"
         f"最もよかった {best}（探索 X6・Item 1A の類似度の Q5・{bst['start']}〜）は年 {bst['full']['ex_ann']:+.2f}%（t {bst['full']['t']}・片側 p {bst['criteria_short_sample']['p_one']}・族の Holm 後 {bst['family_holm_p_one_full']}）で B。"
         f"最大寄与の {bst['drop_top']['ticker']} を除くと幾何の差 {bst['drop_top']['full']['cagr_diff']:+.2f}%、上位3社を除くと {bc_['drop_top3']['cagr_diff']:+.2f}%（事後）。"
         f"論文の買い−売り（X2）は8本とも t が {out['paper_comparison']['reading'].split('t の最大は ')[1].split('。')[0]} 以下。"
         f"同定の誤り（本文の記号の抜き出しが持ち主の大型株を追い出した）を持ち主を先に採る版で直しても（事後）S・A は0本（B {out['identity_owner_first']['grade_counts_owner_first'].get('B', 0)}・C {out['identity_owner_first']['grade_counts_owner_first'].get('C', 0)}）。"
-        '株価は Yahoo の現存の記号だけ（生き残りの偏りあり・早い年ほど被覆が低い）。')
+        '株価は Yahoo の現存の記号だけ（生き残りの偏りあり・早い年ほど被覆が低い）。'
+        '2026-09-29 に検査役が見つけた4件の誤り（浮動株の検問の先読み・JCI 2007-07 の分離の調整漏れ・兄弟の記号の広げすぎ・節〔Item 1A・Item 7〕の取り出し）を直して走らせ直した（前後の数は fixes）。')
     json.dump(obj, open(p, 'w'), ensure_ascii=False, indent=1, default=lambda o: int(o) if isinstance(o, (np.integer,)) else float(o) if isinstance(o, np.floating) else str(o))
     return out
 
@@ -1645,7 +1804,7 @@ def post_hoc():
 def determinism_check(other_path, prev_impl_path=None):
     """再現性の点検: 別のハッシュの種で走らせた out/nx_lazy.json（other_path）と、tested の全規則の数（全期間・前半・後半・最大寄与を除く・費用後・下限版・格付け）が一致するか。
     prev_impl_path があれば、前の実装者の途中の結果（git の HEAD の out/nx_lazy.json）との格付けの差も並べる"""
-    p = os.path.join(BASE, 'out', 'nx_lazy.json')
+    p = OUT_PATH
     obj = json.load(open(p))
     oth = json.load(open(other_path))
     ob = {r['rule']: r for r in oth['tested']}
@@ -1664,6 +1823,158 @@ def determinism_check(other_path, prev_impl_path=None):
     json.dump(obj, open(p, 'w'), ensure_ascii=False, indent=1, default=lambda o: int(o) if isinstance(o, (np.integer,)) else float(o) if isinstance(o, np.floating) else str(o))
     return out
 
+
+def fix_diagnostics():
+    """2026-09-29 の是正（fixes）の中間の数: 浮動株の検問の先読み（F1）・JCI（F2）・兄弟の記号（F3）・節（F4）がパネルの何を変えたか。
+    成績は計算しない（どの株月・どの信号が変わったかだけ）。FIXES_OFF と SECTION_VARIANT を切り替えて作り直して比べる"""
+    global FIXES_OFF, SECTION_VARIANT
+    keep = (set(FIXES_OFF), SECTION_VARIANT)
+    out = {}
+    try:
+        FIXES_OFF = {'float_pit', 'price_errors', 'siblings'}
+        la = {}
+        PA = build(la)
+        FIXES_OFF = {'price_errors', 'siblings'}
+        lb = {}
+        PB = build(lb)
+        FIXES_OFF = set()
+        lc = {}
+        PC = build(lc)
+        # F1: 浮動株の検問（CAP が変わった株月・落とした報告の数）
+        ca, cb = PA.CAP, PB.CAP
+        both = ~np.isnan(ca) & ~np.isnan(cb)
+        chg = both & ~np.isclose(ca, cb, rtol=1e-9, atol=0)
+        out['F1_float_lookahead'] = {
+            'reports_dropped_before': {k: v for k, v in la['float_checks_reports'].items() if k.startswith(('time_series', 'one_year'))},
+            'reports_dropped_after': {k: v for k, v in lb['float_checks_reports'].items() if k.startswith(('time_series', 'one_year'))},
+            'stock_months_cap_changed': int(chg.sum()), 'stock_months_cap_appeared': int((np.isnan(ca) & ~np.isnan(cb)).sum()),
+            'stock_months_cap_disappeared': int((~np.isnan(ca) & np.isnan(cb)).sum()),
+            'companies_with_cap_changes': sorted({PA.ciks[i] for i in np.where(chg.any(axis=0) | (np.isnan(ca) != np.isnan(cb)).any(axis=0))[0]})}
+        # F2: JCI
+        out['F2_price_error_JCI_200707'] = lc.get('price_errors_set_missing')
+        # F3: 兄弟の記号（構成の CIK が変わった株月）
+        ma, mc = PB.member, PC.member
+        dif = ma != mc
+        changes = collections.Counter()
+        for ti, i in zip(*np.where(dif)):
+            changes[(PA.ciks[i], PA.cand[PA.ciks[i]].get('name'), 'removed' if ma[ti, i] else 'added')] += 1
+        out['F3_siblings'] = {'cik_months_changed': int(dif.sum()),
+                              'by_company': [{'cik': c, 'name': n, 'change': h, 'months': v} for (c, n, h), v in changes.most_common()],
+                              'U_stock_months_changed_incl_JCI_200707': int(((PB.member[:-1] & ~np.isnan(PB.R[1:])) != (PC.member[:-1] & ~np.isnan(PC.R[1:]))).sum())}
+        # F4: 節（IT1A_COS・IT7_COS）
+        stats = {}
+        vals = {}
+        for var in ('v3', 'v4', 'nearest'):
+            SECTION_VARIANT = var
+            per_cik, *_ = load_signals()
+            vals[var] = {(c, x['acc']): (x['v'].get('IT1A_COS'), x['v'].get('IT7_COS')) for c, lst in per_cik.items() for x in lst}
+        for j, nm in ((0, 'IT1A_COS'), (1, 'IT7_COS')):
+            a = {k: v[j] for k, v in vals['v3'].items()}
+            b = {k: v[j] for k, v in vals['v4'].items()}
+            ks = set(a) | set(b)
+            stats[nm] = {'valid_signals_v3': sum(1 for k in ks if a.get(k) is not None), 'valid_signals_v4': sum(1 for k in ks if b.get(k) is not None),
+                         'changed': sum(1 for k in ks if a.get(k) is not None and b.get(k) is not None and abs(a[k] - b[k]) > 1e-12),
+                         'v3_only': sum(1 for k in ks if a.get(k) is not None and b.get(k) is None),
+                         'v4_only': sum(1 for k in ks if a.get(k) is None and b.get(k) is not None),
+                         'median_v3': round(float(np.median([v for v in a.values() if v is not None])), 4),
+                         'median_v4': round(float(np.median([v for v in b.values() if v is not None])), 4)}
+        # 検査役の数え方: 節の語数が前年の半分未満か2倍超の組（取り出しの誤りの印）
+        rows = list(csv.DictReader(open(os.path.join(CACHE, 'nx_lazy_signals.csv'))))
+        by_acc = {r['acc']: r for r in rows}
+        recs = {}
+        for fn in os.listdir(D.OUTDIR):
+            if fn.endswith('.json'):
+                o = json.load(open(os.path.join(D.OUTDIR, fn)))
+                for r in o['filings']:
+                    recs[r['acc']] = r
+        flag = {}
+        for key in ('item1a', 'item7'):
+            n = f3 = f4 = 0
+            for acc, r in recs.items():
+                pa = r.get('prev_acc')
+                if not pa or pa not in recs or r.get('form') not in D.FORMS_SIGNAL:
+                    continue
+                p_ = recs[pa]
+                w3, pw3 = (r.get('sec_v3') or {}).get(f'{key}_words', r.get(f'{key}_words')), (p_.get('sec_v3') or {}).get(f'{key}_words', p_.get(f'{key}_words'))
+                w4, pw4 = r.get(f'{key}_words'), p_.get(f'{key}_words')
+                if w3 and pw3 and (r.get('sec_v3') or {}).get(f'{key}_cos', r.get(f'{key}_cos')) is not None:
+                    n += 1
+                    f3 += not (0.5 <= w3 / pw3 <= 2)
+                if w4 and pw4 and r.get(f'{key}_cos') is not None:
+                    f4 += not (0.5 <= w4 / pw4 <= 2)
+            flag[key] = {'pairs_v3': n, 'len_ratio_outside_0.5_2_v3': f3, 'len_ratio_outside_0.5_2_v4': f4}
+        stats['section_length_jumps'] = flag
+        out['F4_sections'] = stats
+    finally:
+        FIXES_OFF, SECTION_VARIANT = keep
+    return out
+
+
+def record_fixes(stage_paths, diag_path=None, sens_paths=(), items=None):
+    """out/nx_lazy.json（最終の走り）に fixes 欄を書く。stage_paths = [(名前, 走りの json か 'final', 説明)]（段階ごとに是正を1つずつ足した走り・
+    最後が是正後）、sens_paths = 同じ形の感度の走り（検査役の案など・格付けに使わない）、items = 誤りごとの確かめと是正の記録"""
+    p = OUT_PATH
+    obj = json.load(open(p))
+    st = []
+    for nm, path, desc in list(stage_paths) + list(sens_paths):
+        o = json.load(open(path)) if path != 'final' else obj
+        st.append((nm, desc, {r['rule']: r for r in o['tested']}, o['summary']['grade_counts'], o.get('run')))
+    rules = [r['rule'] for r in obj['tested']]
+    by_rule = {}
+    for rl in rules:
+        row = {}
+        for nm, desc, T_, gc, run_ in st:
+            r = T_.get(rl)
+            if not r:
+                continue
+            c = r.get('criteria_short_sample') or {}
+            row[nm] = {'grade': r['grade'], 'full_ex_ann': r['full']['ex_ann'], 'full_cagr_diff': r['full']['cagr_diff'], 'full_t': r['full']['t'],
+                       'p_one': c.get('p_one'), 'holm_p_one': r.get('family_holm_p_one_full'),
+                       'drop_top_cagr_diff': (r['drop_top']['full'] or {}).get('cagr_diff'),
+                       'cost_full_cagr_diff': (r['cost_0.10pct']['full'] or {}).get('cagr_diff'),
+                       'first_half_cagr_diff': (r['first_half'] or {}).get('cagr_diff'), 'second_half_cagr_diff': (r['second_half'] or {}).get('cagr_diff')}
+        by_rule[rl] = row
+    first, last = stage_paths[0][0], stage_paths[-1][0]
+    main_names = [x[0] for x in stage_paths]
+    changed_grade = [{'rule': rl, **{nm: by_rule[rl][nm]['grade'] for nm in main_names if nm in by_rule[rl]}} for rl in rules
+                     if len({by_rule[rl][nm]['grade'] for nm in main_names if nm in by_rule[rl]}) > 1]
+    sens_grade_diff = [{'rule': rl, 'after': by_rule[rl][last]['grade'], **{nm: by_rule[rl][nm]['grade'] for nm, *_ in sens_paths if nm in by_rule[rl]}}
+                       for rl in rules if any(nm in by_rule[rl] and by_rule[rl][nm]['grade'] != by_rule[rl][last]['grade'] for nm, *_ in sens_paths)]
+    moved = sorted(((rl, by_rule[rl][first]['full_cagr_diff'], by_rule[rl][last]['full_cagr_diff']) for rl in rules
+                    if by_rule[rl][first]['full_cagr_diff'] != by_rule[rl][last]['full_cagr_diff']), key=lambda x: -abs(x[2] - x[1]))
+    diag = json.load(open(diag_path)) if diag_path else None
+    obj['fixes'] = {
+        'date': '2026-09-29',
+        'what': '検査役の報告（4件）を1件ずつ確かめ、4件とも本当の誤りだったので直して走らせ直した。規則（事前登録）は1本も変えていない。段階ごとに是正を1つずつ足して走らせ、前後の数を並べた',
+        'items': items,
+        'stages': [{'stage': nm, 'what': desc, 'grade_counts': gc, 'run': run_} for nm, desc, T_, gc, run_ in st if nm in main_names],
+        'sensitivities_not_graded': [{'stage': nm, 'what': desc, 'grade_counts': gc, 'run': run_} for nm, desc, T_, gc, run_ in st if nm not in main_names],
+        'grade_changes_across_stages': changed_grade,
+        'grade_differences_in_sensitivities_vs_after': sens_grade_diff,
+        'full_cagr_diff_moved_before_to_after': [{'rule': rl, 'before': a, 'after': b} for rl, a, b in moved],
+        'by_rule': by_rule,
+        'panel_diagnostics': diag,
+        'how_to_reproduce': ('段階の走りは環境変数で切り替える: NX_LAZY_FIXES_OFF=float_pit,price_errors,siblings NX_LAZY_SECTION_VARIANT=v3（S0＝是正前・公開していた数と全50本で一致）→ '
+                             'NX_LAZY_FIXES_OFF=price_errors,siblings NX_LAZY_SECTION_VARIANT=v3（S1）→ NX_LAZY_FIXES_OFF=siblings NX_LAZY_SECTION_VARIANT=v3（S2）→ '
+                             'NX_LAZY_SECTION_VARIANT=v3（S3）→ 既定（S4＝是正後）。NX_LAZY_OUT で出力の置き場を変える。panel_diagnostics は python3 night/nx_lazy.py --fix-diagnostics'),
+    }
+    json.dump(obj, open(p, 'w'), ensure_ascii=False, indent=1, default=lambda o: int(o) if isinstance(o, (np.integer,)) else float(o) if isinstance(o, np.floating) else str(o))
+    return obj['fixes']
+
+
+if __name__ == '__main__' and '--fix-diagnostics' in sys.argv:
+    i = sys.argv.index('--fix-diagnostics')
+    o = fix_diagnostics()
+    json.dump(o, open(sys.argv[i + 1], 'w'), ensure_ascii=False, indent=1, default=lambda x: int(x) if isinstance(x, (np.integer,)) else float(x) if isinstance(x, np.floating) else str(x))
+    print(json.dumps(o, ensure_ascii=False, indent=1, default=str)[:6000])
+    sys.exit(0)
+
+if __name__ == '__main__' and '--record-fixes' in sys.argv:
+    i = sys.argv.index('--record-fixes')
+    spec = json.load(open(sys.argv[i + 1]))
+    o = record_fixes([tuple(x) for x in spec['stages']], spec.get('diag'), [tuple(x) for x in spec.get('sensitivities', [])], spec.get('items'))
+    print(json.dumps({k: o[k] for k in ('stages', 'grade_changes_across_stages')}, ensure_ascii=False, indent=1, default=str)[:6000])
+    sys.exit(0)
 
 if __name__ == '__main__' and '--determinism' in sys.argv:
     i = sys.argv.index('--determinism')

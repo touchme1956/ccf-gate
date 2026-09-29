@@ -511,20 +511,115 @@ _SEC = {
     'item1a': (re.compile(r'(?im)^\s*item[\s.]*1a\b'), re.compile(r'(?im)^\s*item[\s.]*(1b|2)\b')),
     'item7': (re.compile(r'(?im)^\s*item[\s.]*7(?![0-9a-z])'), re.compile(r'(?im)^\s*item[\s.]*(7a|8)\b')),
 }
+# v4（2026-09-29）: Item 1A の終わりに Item 1C（サイバーセキュリティ・2023年12月以降の会計年度の新しい節で 1B と 2 の間）を足す。
+# 事前登録の定義『見出しの行から次の見出しの行まで』のとおり（v3 の終わりの一覧は 1C ができる前に書いたもので、1B を書かない提出では 1C の本文を 1A に数えていた）
+_SEC_END_V4 = {'item1a': re.compile(r'(?im)^\s*item[\s.]*(1b|1c|2)\b'), 'item7': _SEC['item7'][1]}
 
 
-def section(text, key):
-    """見出しの行から次の見出しの行まで。目次の行を避けるため、最も長い区間を取る。200語未満は無いものとする"""
+_RE_ANY_ITEM = re.compile(r'(?im)^\s*item[\s.]*(\d{1,2}[a-c]?)(?![0-9a-z])')
+_RE_HEADLIKE = re.compile(r'[\s.:\-\u2014\u2013]*(?:[A-Z]|$)')
+_OWN_ITEM = {'item1a': '1a', 'item7': '7'}
+
+
+def _line_at(text, a, n=200):
+    z = text.find('\n', a)
+    return text[a:(z if (z != -1 and z - a < n) else a + n)]
+
+
+_FUNC_END = {'in', 'see', 'under', 'and', 'or', 'of', 'to', 'the', 'at', 'from', 'by', 'with', 'within', 'including', 'refer', 'also',
+             'our', 'this', 'captioned', 'entitled', 'heading', 'headings', 'described', 'discussed', 'set', 'forth', 'contained', 'on', 'as',
+             'into', 'is', 'are', 'was', 'were', 'be', 'been', 'its', 'their', 'for', 'such', 'which', 'that', 'herein', 'hereof', 'appearing',
+             'included', 'located', 'presented', 'reported', 'disclosed', 'found', 'further', 'also'}
+_RE_LASTWORD = re.compile(r'([A-Za-z]+)\W*$')
+
+
+def _headlike(text, end_of_marker):
+    """記号（Item 1A 等）の直後が、空白・句読点（. : - — –）と改行を飛ばして英大文字か文書の終わり。
+    『Item 1A of this Form 10-K』『Item 7, under…』『Item 1A (Risk Factors) of…』『Item 1A. "Risk Factors." Effective…』は見出しでない"""
+    return bool(_RE_HEADLIKE.match(text, end_of_marker))
+
+
+def _continues_sentence(text, start):
+    """行頭の記号の直前の行が文の途中で終わっている（最後が『,』か、機能語〔in・see・under・and・of …〕）＝本文の相互参照が折り返しで行頭に来たもの
+    （例: Con Edison FY2012『… “New York Energy Highway” in\nItem 1.』）"""
+    j = text.rfind('\n', 0, start)
+    if j <= 0:
+        return False
+    i = text.rfind('\n', 0, j)
+    prev = text[i + 1:j].rstrip()
+    if not prev:
+        return False
+    if prev.endswith(','):
+        return True
+    m = _RE_LASTWORD.search(prev)
+    return bool(m and prev[-1].isalpha() and m.group(1).lower() in _FUNC_END)
+
+
+def _is_heading(text, m):
+    return _headlike(text, m.end()) and not _continues_sentence(text, m.start())
+
+
+def section_span(text, key, rule='v4'):
+    """節の区間 (a, z) と点検の情報を返す。
+    rule='v4'（2026-09-29 の是正・既定）: 見出しの行（_is_heading: 行頭の Item の記号の直後が英大文字〔句読点・改行は飛ばす〕で、
+      直前の行が文の途中〔最後が『,』か機能語〕で終わっていない）だけを始まり・終わり・壁にする。見出しの始まりごとに次の見出しの終わり z を決め、
+      同じ z を共有する始まりを1つの組にする。組の最初の始まりから z までに**別の Item の見出し**（壁）があれば、最後の壁より前の始まりは
+      節の見出しではない（目次・本文の前の相互参照）。最後の壁より後の最も早い見出しの始まりを採る（頁ごとに繰り返す見出しの最初＝本物）。
+      後ろに始まりが残らない組は捨てる。組どうしでは最も長い区間（目次を避ける）。見出しの始まりが無ければ無し（欠測）。
+      旧版（v3）は行頭の記号をすべて始まり・終わりにし、組の中で最も早い始まりを採っていたため、本文の前の相互参照の行
+      （『Item 1A of this Form 10-K.』『Item 7 for the fiscal years ended…』〔Apple FY2006〕）から始まる区間を選び、Item 1 などを
+      まるごと節に数えていた（検査役の指摘）。検査役の案（組の中で z の直前の始まり）は、頁ごとに見出しを繰り返す提出
+      （Mastercard 2020〜・Cigna 2013〜・Ford・Microsoft ほか）で節を最後の1頁に縮めるので採らなかった（感度 rule='nearest' に残す）。
+    rule='v3': 旧版（再現の点検用）。 rule='nearest': 検査役の字面どおり（それぞれの終わりに直前の始まりを組ませ、最も長い区間・感度用）"""
+    import bisect as _b
     st, en = _SEC[key]
-    starts = [m.start() for m in st.finditer(text)]
-    ends = [m.start() for m in en.finditer(text)]
-    best = None
-    for a in starts:
-        z = next((e for e in ends if e > a), None)
-        if z is None:
+    sm = list(st.finditer(text))
+    starts = [m.start() for m in sm]
+    em = list(en.finditer(text))
+    ends = [m.start() for m in em]
+    best, grp = None, None
+    if rule == 'v3':
+        for a in starts:
+            z = next((e for e in ends if e > a), None)
+            if z is None:
+                continue
+            if best is None or z - a > best[1] - best[0]:
+                best = (a, z)
+        return best, None
+    if rule == 'nearest':
+        for z in ends:
+            j = _b.bisect_left(starts, z) - 1
+            if j < 0:
+                continue
+            a = starts[j]
+            if best is None or z - a > best[1] - best[0]:
+                best = (a, z)
+        return best, None
+    own = _OWN_ITEM[key]
+    hs = [m.start() for m in sm if _is_heading(text, m)]
+    he = [m.start() for m in _SEC_END_V4[key].finditer(text) if _is_heading(text, m)]
+    others = [m.start() for m in _RE_ANY_ITEM.finditer(text) if m.group(1).lower() != own and _is_heading(text, m)]  # 壁（別の Item の見出し）
+    groups = {}
+    for a in hs:
+        j = _b.bisect_right(he, a)
+        if j >= len(he):
             continue
+        groups.setdefault(he[j], []).append(a)
+    for z, lst in groups.items():
+        k = _b.bisect_left(others, z) - 1
+        barrier = others[k] if (k >= 0 and others[k] > lst[0]) else None
+        cands = [a for a in lst if barrier is None or a > barrier]
+        if not cands:
+            continue
+        a = cands[0]
         if best is None or z - a > best[1] - best[0]:
-            best = (a, z)
+            best, grp = (a, z), {'starts': lst, 'barrier': barrier, 'n_starts_all': len(starts), 'n_starts_heading': len(hs)}
+    return best, grp
+
+
+def section(text, key, rule='v4'):
+    """見出しの行から次の見出しの行まで（section_span の rule）。200語未満は無いものとする"""
+    best, _ = section_span(text, key, rule)
     if not best:
         return None
     sec = text[best[0]:best[1]]
@@ -968,6 +1063,207 @@ def run_build(ciks, workers=4, force=False, log_every=10):
     return done, log
 
 
+# ───────────────────────── 節（Item 1A・Item 7）の取り直し（2026-09-29 の是正） ─────────────────────────
+SECDIR = os.path.join(CACHE, 'nx_lazy_sec')
+SEC_VERSION = 'sections v4 (2026-09-29)'
+_SEC_KEYS = ('item1a', 'item7')
+_SEC_RULES = ('v4', 'v3', 'nearest')
+
+
+def _primary_map(cik):
+    j, blocks = submissions(cik)
+    pm = {}
+    for b in blocks:
+        for i, a in enumerate(b['accessionNumber']):
+            pm[a] = b['primaryDocument'][i] or None
+    return pm
+
+
+def _main_raw_again(cik, r, pm):
+    """build_cik と同じ主文書をもう一度取る。個別の文書の提出は提出一覧の primaryDocument を先に試し、語数が保存した値と
+    違えば build_cik と同じ道（提出の目録 → 様式が年次報告の最初の文書）で取り直す。完全提出の .txt から分けた提出はその道で。
+    戻り値 (本文の文字列 or None, 道, 語数が一致したか)"""
+    if 'full_txt' in (r.get('flags') or []):
+        b = sec_get(f'https://www.sec.gov/Archives/edgar/data/{cik}/{r["acc"]}.txt')
+        main = [p for p in split_full_txt(b) if p[0] in FORMS_ANNUAL]
+        if not main:
+            return None, 'full_txt_no_main', False
+        text, _, _ = to_text(main[0][1], True)
+        return text, 'full_txt', len(words(text)) == r.get('n_words')
+    pr = pm.get(r['acc'])
+    if pr and pr.lower().endswith(('.htm', '.html', '.txt')):
+        try:
+            raw = sec_get(f'{acc_path(cik, r["acc"])}/{pr}').decode('utf-8', 'ignore')
+            text, _, _ = to_text(raw, True)
+            if len(words(text)) == r.get('n_words'):
+                return text, 'primary', True
+        except Exception:  # noqa
+            pass
+    main_raw, _, fl = fetch_filing(cik, {'acc': r['acc']})
+    if main_raw is None:
+        return None, 'index_no_main', False
+    text, _, _ = to_text(main_raw, True)
+    return text, 'index', len(words(text)) == r.get('n_words')
+
+
+def resection_cik(cik, force=False):
+    """1社の 10-K の主文書を取り直し、Item 1A・Item 7 の節を3つの約束（v4＝是正・v3＝旧・nearest＝検査役の字面）で切り出して
+    前年との類似度を作る。本文は保存しない（点検用に、選んだ組の始まりの行の先頭 50 字だけを残す）→ out/_nx_cache/nx_lazy_sec/{cik}.json"""
+    p = os.path.join(SECDIR, f'{cik}.json')
+    if os.path.exists(p) and not force:
+        return p, 'skip'
+    o = json.load(open(os.path.join(OUTDIR, f'{cik}.json')))
+    pm = _primary_map(cik)
+    out, last = [], None   # last = (acc, {rule: {key: Counter}})
+    t0 = time.time()
+    for r in o['filings']:
+        rec = {'acc': r['acc']}
+        if r.get('n_words') is None or any(x.split(':')[0] in ('fetch_err', 'no_main_in_txt', 'main_not_text') for x in (r.get('flags') or [])):
+            rec['skip'] = 'no_text_in_original_build'
+            out.append(rec)
+            last = None
+            continue
+        try:
+            text, how, same = _main_raw_again(cik, r, pm)
+        except Exception as e:  # noqa
+            rec['err'] = f'{type(e).__name__}: {str(e)[:120]}'
+            out.append(rec)
+            last = None
+            continue
+        rec['how'], rec['n_words_same'] = how, same
+        if text is None:
+            rec['err'] = how
+            out.append(rec)
+            last = None
+            continue
+        cnts = {}
+        for rule in _SEC_RULES:
+            cnts[rule] = {}
+            for key in _SEC_KEYS:
+                span, grp = section_span(text, key, rule)
+                s = text[span[0]:span[1]] if span else None
+                w = words(s) if s else []
+                ok = s is not None and len(w) >= 200
+                rec[f'{key}_words_{rule}'] = len(w) if ok else None
+                cnts[rule][key] = drop_stop(collections.Counter(w)) if ok else None
+                if rule == 'v4' and grp and (len(grp['starts']) >= 2 or grp['barrier'] is not None):
+                    # 点検用: 組の始まり [選んだ始まりからの位置, 行の先頭 50 字, 選んだか, 見出しらしいか] と、壁（別の Item の見出し）の位置
+                    rec[f'{key}_grp'] = {'starts': [[a - span[0], _line_at(text, a, 50), a == span[0]] for a in grp['starts']],
+                                         'barrier': None if grp['barrier'] is None else [grp['barrier'] - span[0], _line_at(text, grp['barrier'], 50)]}
+        if r.get('prev_acc'):
+            if last is None or last[0] != r['prev_acc']:
+                rec['prev_missing'] = True
+            else:
+                for rule in _SEC_RULES:
+                    for key in _SEC_KEYS:
+                        a_, b_ = last[1][rule][key], cnts[rule][key]
+                        rec[f'{key}_cos_{rule}'] = cos_sim(a_, b_) if a_ and b_ else None
+                        rec[f'{key}_jac_{rule}'] = jac_sim(a_, b_) if a_ and b_ else None
+        out.append(rec)
+        last = (r['acc'], cnts)
+    obj = {'cik': cik, 'version': SEC_VERSION, 'built_at': datetime.datetime.utcnow().isoformat(timespec='seconds') + 'Z',
+           'seconds': round(time.time() - t0, 1), 'filings': out}
+    os.makedirs(SECDIR, exist_ok=True)
+    tmp = f'{p}.{os.getpid()}.tmp'
+    json.dump(obj, open(tmp, 'w'), ensure_ascii=False)
+    os.replace(tmp, p)
+    return p, 'built'
+
+
+def _sec_worker(args):
+    cik, force = args
+    try:
+        p, how = resection_cik(cik, force)
+        return cik, how, None
+    except Exception as e:  # noqa
+        return cik, 'error', f'{type(e).__name__}: {str(e)[:200]}'
+
+
+def run_resection(ciks, workers=4, force=False):
+    import multiprocessing as mp
+    stopwords()
+    lock, last = mp.Lock(), mp.Value('d', 0.0)
+    t0 = time.time()
+    done = []
+    with mp.Pool(workers, initializer=_init_limiter, initargs=(lock, last)) as pool:
+        for i, r in enumerate(pool.imap_unordered(_sec_worker, [(c, force) for c in ciks]), 1):
+            done.append(r)
+            if i % 10 == 0 or i == len(ciks):
+                el = time.time() - t0
+                print(f'  {i}/{len(ciks)}  経過 {el / 60:.1f} 分  見込みの残り {el / i * (len(ciks) - i) / 60:.1f} 分  誤り {sum(1 for d in done if d[1] == "error")}', flush=True)
+    return done
+
+
+def merge_sections(dry=False):
+    """nx_lazy_sec/{cik}.json の v4 の値を 1社1ファイルへ書き戻す（item1a/item7 の words・cos・jac）。
+    旧（v3）の値は rec['sec_v3'] に、検査役の字面の約束（nearest）は rec['sec_nearest'] に、点検の情報は rec['sec_v4_diag'] に残す。
+    書き戻す前に、取り直した本文で旧の約束（v3）の値が保存した値と一致するか（同じ本文か）を数える"""
+    stat = collections.Counter()
+    todo = []
+    for fn in sorted(os.listdir(OUTDIR)):
+        if not fn.endswith('.json'):
+            continue
+        cik = int(fn[:-5])
+        ps = os.path.join(SECDIR, fn)
+        if not os.path.exists(ps):
+            stat['cik_without_resection'] += 1
+            continue
+        o = json.load(open(os.path.join(OUTDIR, fn)))
+        s = {x['acc']: x for x in json.load(open(ps))['filings']}
+        for r in o['filings']:
+            x = s.get(r['acc'])
+            if x is None:
+                stat['filing_missing_in_resection'] += 1
+                continue
+            if 'skip' in x:
+                stat['skip_no_text'] += 1
+                continue
+            if 'err' in x:
+                stat['refetch_error'] += 1
+                r.setdefault('flags', []).append('sec_refetch_err')
+                old = {k: r.get(k) for k in ('item1a_words', 'item1a_cos', 'item1a_jac', 'item7_words', 'item7_cos', 'item7_jac')}
+                r['sec_v3'] = old
+                for k in old:
+                    r[k] = None   # 取り直せなかった節は欠測（旧の誤った値を残さない・0 で埋めない）
+                continue
+            stat['refetched'] += 1
+            stat['how_' + x['how']] += 1
+            stat['n_words_same'] += bool(x['n_words_same'])
+            for key in _SEC_KEYS:
+                w_old, w_v3 = r.get(f'{key}_words'), x.get(f'{key}_words_v3')
+                stat[f'{key}_words_v3_reproduced'] += (w_old == w_v3)
+                if r.get('prev_acc') and not x.get('prev_missing'):
+                    c_old, c_v3 = r.get(f'{key}_cos'), x.get(f'{key}_cos_v3')
+                    same = (c_old is None and c_v3 is None) or (c_old is not None and c_v3 is not None and abs(c_old - c_v3) < 1e-12)
+                    stat[f'{key}_cos_pairs'] += 1
+                    stat[f'{key}_cos_v3_reproduced'] += same
+                    if x.get(f'{key}_cos_v4') is not None and c_old is not None:
+                        stat[f'{key}_cos_changed_by_v4'] += abs(x[f'{key}_cos_v4'] - c_old) > 1e-12
+                g = x.get(f'{key}_grp')
+                if g:
+                    stat[f'{key}_v4_group_ge2_or_barrier'] += 1
+                    stat[f'{key}_v4_barrier_used'] += g['barrier'] is not None
+                    stat[f'{key}_v4_chosen_not_first_start'] += not g['starts'][0][2]
+            r['sec_v3'] = {k: r.get(k) for k in ('item1a_words', 'item1a_cos', 'item1a_jac', 'item7_words', 'item7_cos', 'item7_jac')}
+            r['sec_nearest'] = {f'{key}_{m}': x.get(f'{key}_{m}_nearest') for key in _SEC_KEYS for m in ('words', 'cos', 'jac')}
+            r['sec_v4_diag'] = {'how': x['how'], 'n_words_same': x['n_words_same'], 'prev_missing': x.get('prev_missing', False),
+                                **{f'{key}_grp': x.get(f'{key}_grp') for key in _SEC_KEYS}}
+            for key in _SEC_KEYS:
+                r[f'{key}_words'] = x.get(f'{key}_words_v4')
+                if r.get('prev_acc'):
+                    r[f'{key}_cos'] = None if x.get('prev_missing') else x.get(f'{key}_cos_v4')
+                    r[f'{key}_jac'] = None if x.get('prev_missing') else x.get(f'{key}_jac_v4')
+        o['sections_version'] = SEC_VERSION
+        todo.append((fn, o))
+    if not dry:
+        for fn, o in todo:
+            p = os.path.join(OUTDIR, fn)
+            tmp = f'{p}.{os.getpid()}.tmp'
+            json.dump(o, open(tmp, 'w'), ensure_ascii=False)
+            os.replace(tmp, p)
+    return dict(stat)
+
+
 # ───────────────────────── 形だけの表示 ─────────────────────────
 def shape(paths):
     fl = []
@@ -1068,8 +1364,15 @@ def build_panel():
              and 'B_former_member_same_ticker_now' not in c['via'] and 'D_fts_renamed_survivor' not in c['via']}
 
     def siblings(cik):
+        """同じ発行体の種類株の記号の組（その会社の今の記号の組と、前身なら後継の会社それぞれの今の記号の組）。
+        2026-09-29 の是正: price_tickers（後継から受け継ぎ、後継の後継まで連なる）を1つの組に混ぜない（Breeze-Eastern が IR に結ばれていた）"""
         c = cand.get(cik) or {}
-        return {t for t in (c.get('price_tickers') or []) + (c.get('sec_tickers') or []) + (c.get('tickers') or []) if t in known_sp}
+        groups = [set((c.get('sec_tickers') or []) + (c.get('tickers') or []))]
+        if 'C_predecessor_of_current' in (c.get('via') or []):
+            for sc in c.get('successors') or []:
+                cs = cand.get(int(sc)) or {}
+                groups.append(set((cs.get('sec_tickers') or []) + (cs.get('tickers') or [])))
+        return [g & known_sp for g in groups if g & known_sp]
 
     def own(r, cik):
         if r.get('symbols_ix'):
@@ -1080,9 +1383,10 @@ def build_panel():
                 return set()
             mx = max(cc.values())
             got = {k for k, v in cc.items() if v == mx}
-        sib = siblings(cik)
-        if got & sib:
-            got |= sib
+        base = set(got)
+        for sib in siblings(cik):
+            if base & sib:
+                got |= sib
         return got
     claims = {cik: [(r['filed'], own(r, cik)) for r in o['filings'] if 'fetch_err' not in ' '.join(r.get('flags', []))]
               for cik, o in recs.items()}
@@ -1130,9 +1434,9 @@ def build_panel():
             before = [(d, st) for d, st in cl if lo <= d <= me]
             after = [(d, st) for d, st in cl if me < d <= hi]
             near_d, near = (before[-1] if before else (after[0] if after else (None, set())))
-            for k in near & sp:
+            for k in sorted(near & sp):
                 cands_for[k].append((1, near_d, cik, 'L1_claim_near'))
-            for k in (set().union(*[st for _, st in cl]) & sp) - near:
+            for k in sorted((set().union(*[st for _, st in cl]) & sp) - near):
                 S = span_of(k, me)
                 if S:
                     ds = [d for d, st in cl if k in st and S[0] <= d < S[1]]
@@ -1145,10 +1449,10 @@ def build_panel():
                     if tk in sp and a0 <= me < z0:
                         cands_for[tk].append((4, '', cik, 'L4_B_fts'))
             if before and cik in c_fts:
-                for tk in c_fts[cik] & sp:
+                for tk in sorted(c_fts[cik] & sp):
                     cands_for[tk].append((4, '', cik, 'L5_C_fts'))
         mem, how = set(), {}
-        for k, lst in cands_for.items():
+        for k, lst in sorted(cands_for.items()):  # 並べる順を固定（集合の並び〔ハッシュの種〕に依らない・nx_lazy.relink と同じ）
             best = min(x[0] for x in lst)
             top = [x for x in lst if x[0] == best]
             if len({x[2] for x in top}) > 1:
@@ -1160,7 +1464,7 @@ def build_panel():
                 top = top2
             cik = top[0][2]
             mem.add(cik)
-            how.setdefault(cik, top[0][3])
+            how[cik] = min(how.get(cik, top[0][3]), top[0][3])  # 同じ会社が二つの記号で結ばれた月は優先の高い道（nx_lazy.relink と同じ）
         members[ym] = sorted(mem)
         how_by_month[ym] = how
         for c, h in how.items():
@@ -1177,6 +1481,10 @@ def build_panel():
                                          'item7_cos', 'item7_jac', 'ex13_cos', 'ex13_jac', 'n_ex13', 'lm_neg', 'lm_pos', 'lm_unc',
                                          'lm_lit', 'chg_words_added', 'chg_words_deleted', 'chg_neg_added', 'chg_neg_deleted',
                                          'chg_pos_added', 'chg_pos_deleted', 'float_xbrl', 'float_ix', 'float_text', 'float_text_asof')}
+            # 節の取り直し（2026-09-29）の前後を並べるための列（v3＝旧版の節・nearest＝検査役の字面の約束。主の item1a_cos/item7_cos は v4）
+            for key in ('item1a', 'item7'):
+                row[f'{key}_cos_v3'] = (r.get('sec_v3') or {}).get(f'{key}_cos') if 'sec_v3' in r else r.get(f'{key}_cos')
+                row[f'{key}_cos_nearest'] = (r.get('sec_nearest') or {}).get(f'{key}_cos')
             row['cik'] = cik
             row['flags'] = '|'.join(r.get('flags') or [])
             row['formation_ym'] = formation_ym(r['filed'])
@@ -1208,11 +1516,12 @@ TRIAL = [320193, 1326801, 21344, 34088, 732717, 350698, 1800, 19617, 92122, 7297
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('cmd', choices=['universe', 'build', 'trial', 'status', 'panel'])
+    ap.add_argument('cmd', choices=['universe', 'build', 'trial', 'status', 'panel', 'resection', 'merge_sections'])
     ap.add_argument('--ciks', default='')
     ap.add_argument('--limit', type=int, default=0)
     ap.add_argument('--workers', type=int, default=4)
     ap.add_argument('--force', action='store_true')
+    ap.add_argument('--dry', action='store_true')
     a = ap.parse_args()
     if a.cmd == 'universe':
         obj, p = build_universe()
@@ -1244,6 +1553,15 @@ def main():
         return
     if a.cmd == 'panel':
         print(json.dumps(build_panel(), ensure_ascii=False, indent=1)[:6000])
+    if a.cmd == 'resection':
+        # 2026-09-29 の是正: Item 1A・Item 7 の節を取り直す（本文は保存していないので主文書を取り直す）
+        ciks = [int(x) for x in a.ciks.split(',')] if a.ciks else sorted(int(f[:-5]) for f in os.listdir(OUTDIR) if f.endswith('.json'))
+        if a.limit:
+            ciks = ciks[:a.limit]
+        done = run_resection(ciks, a.workers, a.force)
+        print(json.dumps({'n': len(done), 'errors': [d for d in done if d[1] == 'error'][:50]}, ensure_ascii=False, indent=1))
+    if a.cmd == 'merge_sections':
+        print(json.dumps(merge_sections(dry=a.dry), ensure_ascii=False, indent=1))
 
 
 if __name__ == '__main__':
