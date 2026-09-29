@@ -3895,7 +3895,9 @@ function ccfWholeSharePlan(items, T, TOT){
   res.rest=money;
   return res;
 }
-/* 口座の置き場所（v9.9.196・2026-09-29 同上）——**新しいお金は全部 NISA へ**。
+/* 口座の名義の設定（v9.9.196・2026-09-29）。⚠ 注文書の NISA の文言（口座の行・各行の枠）は 2026-09-29 ユーザー指示「買付順位のNISAの文言は消して」で撤去——
+   この設定は 🏦保有 の売り買いの記録（名義）だけが読む。以下は当時の注記。
+   **新しいお金は全部 NISA へ**。
    根拠: out/mw_nisa_ops.json（NISA を先に埋める・NISA の中で売らない・株も NISA に置くのが既定でほぼ最善。
    個別株を特定口座に置くと20年後の資産が中央で −1.5〜−3.4%）。2人の NISA の年の枠は 720万円で、
    入金（月17万円＝年204万円）は全部入る。iFreeNEXT は1人のつみたて投資枠（年120万円）を超えるので2人に分ける。
@@ -3905,17 +3907,6 @@ function ccfNisaCfg(){
   const h=Array.isArray(n.holders)&&n.holders.length?n.holders.map(String):['1人目','2人目'];
   return {holders:h, tsuMonth:+n.tsumitate_month_cap||100000, tsuYear:+n.tsumitate_year_cap||1200000,
           growYear:+n.growth_year_cap||2400000};
-}
-function ccfFundRoute(y){
-  const c=ccfNisaCfg(), hs=c.holders.slice(0,2), cap=c.tsuMonth*hs.length;
-  if(!(y>0))return '';
-  const inT=Math.min(y,cap), over=y-inT, each=[];
-  let left=inT; hs.forEach(h=>{ const v=Math.min(left,c.tsuMonth); if(v>0)each.push(h+' '+ccfYen(v)); left-=v; });
-  return `<span style="white-space:nowrap;color:#15803d" title="つみたて投資枠は積立設定でしか買えない（1人 月${ccfYen(c.tsuMonth)}・年${ccfYen(c.tsuYear)}まで）。特定口座では買わない">NISAつみたて ${each.join('／')}</span>`
-    +(over>0?`　<span style="white-space:nowrap;color:#15803d">＋NISA成長 ${ccfYen(over)}</span>`:'');
-}
-function ccfGrowRoute(){
-  return `<span style="white-space:nowrap;color:#15803d" title="個別株と SMH は NISA の成長投資枠へ（1人 年${ccfYen(ccfNisaCfg().growYear)}まで）。特定口座では買わない">NISA成長</span>`;
 }
 function ccfWholeShareBody(pass, tw, pxInfo, NO, T){
   const items=[], ref={};
@@ -3929,7 +3920,7 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T){
     items.push({k, tw:+r.tw||0, pos:+r.pos||0, jpy:+r.jpy||0, frac:!!(r.fund||cx)}); ref[k]={c:0, r, nm:r.nm||r.t, cx}; });
   const P=ccfWholeSharePlan(items, T, NO.tot);
   const row=(name,right,sub,col)=>`<div class="planrow" style="padding:5px 7px;border-radius:7px;border-bottom:1px dashed rgba(201,166,74,.18)">`
-    +`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:12.5px;color:${col||'var(--ink)'}">${ccfIcon(name)}${name}</span>${right?`<span style="white-space:nowrap;font-size:12.5px">${right}</span>`:''}</div>`
+    +`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:12.5px;min-width:0;overflow-wrap:anywhere;color:${col||'var(--ink)'}">${ccfIcon(name)}${name}</span>${right?`<span style="white-space:nowrap;flex-shrink:0;font-size:12.5px">${right}</span>`:''}</div>`
     +(sub?`<div style="font-size:11px;margin-top:1px;line-height:1.55">${sub}</div>`:'')+`</div>`;
   const tgtTxt=it=>`<span style="white-space:nowrap">目標${(+it.tw).toFixed(1)}% / 保有${(+it.pos).toFixed(1)}%</span>`;
   const why={}; P.wait.forEach(w=>why[w.k]=`不足 ${ccfYen(w.need)}（1株 ${ccfYen(w.price)} の半分に届いたら買う）`);
@@ -3942,7 +3933,7 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T){
       if(b){ cs+=b.cost;
         const bb={x:{r:f.r,n:f.nm},pi:f.pi,sh:b.sh};
         ob+=row(f.nm,`<b style="color:var(--jade)">${b.sh}株</b>`,
-          `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(b.cost)}</span>　${ccfGrowRoute()}　<span style="white-space:nowrap">指値は当日の値の近く（成行でも可）</span>　${tgtTxt(it)}　<span style="white-space:nowrap">1株 ${f.pi.label}</span></span>`+ccfBoughtCtl(bb));
+          `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(b.cost)}</span>　<span style="white-space:nowrap">指値は当日の値の近く（成行でも可）</span>　${tgtTxt(it)}　<span style="white-space:nowrap">1株 ${f.pi.label}</span></span>`+ccfBoughtCtl(bb));
       }else if(why[it.k]){
         ob+=row(f.nm,`<span style="color:#d69a3c;font-size:11.5px">今月なし</span>`,`<span style="color:#d69a3c">${why[it.k]}</span>　<span style="color:var(--dim)">${tgtTxt(it)}</span>`,'var(--muted)');
       }else idle.push(f.nm);
@@ -3953,7 +3944,7 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T){
       if(y>0){ ns+=y;
         const per=+(r.fund&&r.fund.navPer)||10000, nav=(r.jpy>0)?r.jpy*per:0;
         nbh+=row(r.nm||r.t,`<b style="color:#6fa8c9">${ccfYen(y)} 金額で買う</b>`,
-          `<span style="color:var(--dim)">${r.fund?ccfFundRoute(y):ccfGrowRoute()}　${tgtTxt(it)}${(r.alias&&r.alias.length)?`（うち ${r.alias.join('・')} ${(+r.alPos).toFixed(1)}%＝同じ指数）`:''}`
+          `<span style="color:var(--dim)">${tgtTxt(it)}${(r.alias&&r.alias.length)?`（うち ${r.alias.join('・')} ${(+r.alPos).toFixed(1)}%＝同じ指数）`:''}`
           +(r.fund?`　<span style="white-space:nowrap">${nav>0?`基準価額 ¥${Math.round(nav).toLocaleString('ja-JP')}/1万口・約${Math.floor(y/r.jpy).toLocaleString('ja-JP')}口`:'基準価額 未取得'}</span>`:'')
           +`　<span style="white-space:nowrap">残りの円は全部ここへ（現金で残さない）</span></span>`
           +`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(r,(r.px>0?{px:r.px,ccy:r.ccy}:null))}</span>`);
@@ -3962,21 +3953,19 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T){
     }
     if(b){ ns+=b.cost;
       nbh+=row(r.t,`<b style="color:#6fa8c9">${b.sh}株</b>`,
-        `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(b.cost)}</span>　${ccfGrowRoute()}　${tgtTxt(it)}　<span style="white-space:nowrap">${r.label}</span></span>`
+        `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(b.cost)}</span>　${tgtTxt(it)}　<span style="white-space:nowrap">${r.label}</span></span>`
         +`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(r,(r.px>0?{px:r.px,ccy:r.ccy}:null))}</span>`);
     }else if(why[it.k]){
       nbh+=row(r.t,`<span style="color:#d69a3c;font-size:11.5px">今月なし</span>`,`<span style="color:#d69a3c">${why[it.k]}</span>　<span style="color:var(--dim)">${tgtTxt(it)}</span>`,'var(--muted)');
     }else if((+it.tw||0)>0) idle.push(r.t);
   });
   const zero=((NO&&NO.rows)||[]).filter(r=>!((+r.tw||0)>0)).map(r=>r.t);
-  const c=ccfNisaCfg(), yr=Math.round(T*12);
   const html=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
     <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書</b></div>
     ${(ob||stopped.length)?`<div style="font-size:11.5px;color:var(--gold-bright);margin:0 0 2px;font-weight:600">🏰 個別</div>${ob}${stopped.map(x=>`<div style="font-size:11px;color:#b91c1c;padding:3px 7px">${x}</div>`).join('')}`:''}
     ${nbh?`<div style="font-size:11.5px;color:#6fa8c9;margin:7px 0 2px;font-weight:600">◈ ETF</div>${nbh}`:''}
     ${(idle.length||zero.length)?`<div style="font-size:11px;color:var(--dim);padding:3px 7px">${idle.length?idle.join('・')+'：目標に届いているので今月なし':''}${idle.length&&zero.length?'　':''}${zero.length?zero.join('・')+'：目標0%（売らない・新規なし）':''}</div>`:''}
     <div style="font-size:11px;color:var(--dim);margin-top:5px"><b>合計 約${ccfYen(Math.round(cs+ns))}</b>（個別 ${ccfYen(Math.round(cs))}／ETF ${ccfYen(Math.round(ns))}）${P.rest>=100?`／残り${ccfYen(Math.floor(P.rest/100)*100)}`:''}</div>
-    <div style="font-size:11px;color:var(--dim);margin-top:3px">口座: <b style="color:#15803d">特定口座では買わない</b>（${c.holders.slice(0,2).join('・')}の NISA の年の枠 ${ccfYen((c.tsuYear+c.growYear)*Math.min(2,c.holders.length))} に対し、この入金なら年 約${ccfYen(yr)}）</div>
   </div>`;
   return {html, castle:Math.round(cs), net:Math.round(ns), rest:P.rest, plan:P};
 }
@@ -4044,7 +4033,6 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
         if(ov&&y>cap){ over=y-cap; y=cap; }          // つみたて投資枠の上限まで。超えた分は同じ指数の ETF へ
         nspent+=y;
         const per=+r.fund.navPer||10000, nav=(r.jpy>0)?r.jpy*per:0;
-        const capTxt=cap>0?`つみたて投資枠 月${ccfYen(cap)}まで${ov?`（超える分は ${ovT}）`:''}`:'つみたて投資枠は年120万円まで（超える分は成長投資枠か課税口座）';
         nb+=nrow(r.nm,`<b style="color:#6fa8c9">${ccfYen(y)} 金額で買う</b>`
           +(over>0?`<div style="font-size:10.5px;color:var(--dim);text-align:right">上限 ${ccfYen(cap)}（按分${fundAbs>0?'＋端数':''} ${ccfYen(y+over)}）</div>`
                   :(fundAbs>0?`<div style="font-size:10.5px;color:var(--dim);text-align:right">按分 ${ccfYen(r.yen)}＋端数 ${ccfYen(fundAbs)}</div>`:'')),
@@ -4052,7 +4040,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
           `<span style="color:var(--dim)"><span style="white-space:nowrap">目標${r.tw.toFixed(1)}% / 保有${r.pos.toFixed(1)}%</span>${(r.alias&&r.alias.length)?`（うち <span style="white-space:nowrap">${r.alias.join('・')} ${r.alPos.toFixed(1)}%</span>＝同じ指数）`:''}`
           +`　${nav>0?`<span style="white-space:nowrap">基準価額 ¥${Math.round(nav).toLocaleString('ja-JP')}/1万口</span>・<span style="white-space:nowrap">約${Math.floor(y/r.jpy).toLocaleString('ja-JP')}口</span>`:'基準価額 未取得'}`
           +`　投資信託（約定は翌営業日の基準価額）`
-          +`　<span style="color:#d69a3c">${capTxt}</span></span>`
+          +`</span>`
           +`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(r,(r.px>0?{px:r.px,ccy:r.ccy}:null))}</span>`);
         if(over>0){
           // ★超えた分＝同じ NASDAQ100 を QQQM で（成長投資枠 年240万まで、その先は特定口座）。丸株だけ買い、端数は残り
@@ -4063,7 +4051,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
                      :`<span style="color:var(--dim);font-size:11.5px">単価未取得</span>`),
             `<span style="color:var(--dim)"><span style="white-space:nowrap"><b style="color:var(--ink)">${ccfYen(cost)}</b></span>`
             +`　${r.fund.short||r.nm} の上限を超えた <span style="white-space:nowrap">${ccfYen(over)}</span>`
-            +`　同じ NASDAQ100（成長投資枠 年240万まで・その先は特定口座）`
+            +`　同じ NASDAQ100`
             +`　<span style="white-space:nowrap">${ov.label}</span></span>`
             +`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(ov,(ov.px>0?{px:ov.px,ccy:ov.ccy}:null))}</span>`);
         }
@@ -7306,8 +7294,8 @@ async function renderPlan(){
         //   今月いくら買うかは 📋今月の注文書 の一枚に集約した（ユーザー指示「表示はまとめてに」）。
         //   この節に残すのは「この本は何か・ETFの門はどう裁くか」という材料だけ。
         // ★つみたて枠の上限を超えた分（2026-09-28）は注文書の mkNb が window.__ccfNetOver に置いた数字を読む（二重に計算しない）
-        +((window.__ccfNetOver&&window.__ccfNetOver[r.t])?`<span style="white-space:nowrap;color:var(--gold-bright)">今月 買う（つみたて枠を超えた分）</span>`
-          :(r.fund&&+r.fund.tsumitate_monthly_cap_jpy>0&&y!=null&&y>0)?`<span style="white-space:nowrap;color:var(--gold-bright)">今月 買う（つみたて枠 月${ccfYen(+r.fund.tsumitate_monthly_cap_jpy)}まで）</span>`
+        +((window.__ccfNetOver&&window.__ccfNetOver[r.t])?`<span style="white-space:nowrap;color:var(--gold-bright)">今月 買う</span>`
+          :(r.fund&&+r.fund.tsumitate_monthly_cap_jpy>0&&y!=null&&y>0)?`<span style="white-space:nowrap;color:var(--gold-bright)">今月 買う</span>`
           :y!=null&&y>0?`<span style="white-space:nowrap;color:var(--gold-bright)">今月 買う</span>`
           :(y!=null?`<span style="white-space:nowrap">今月なし</span>`
                    :(NA>0?`<span style="white-space:nowrap">今月なし</span>`

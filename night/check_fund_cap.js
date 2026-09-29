@@ -99,7 +99,7 @@ const yenOf = s => +String(s).replace(/[¥,\s]/g, '');
   ok(!!orow && qq > 0 && Math.abs(orow.sh - orow.over / qq) < 1 && orow.cost <= orow.over && orow.over - orow.cost < qq + 1, `① 株数＝超えた額÷1株の円 の切り捨て（${orow ? orow.over : '?'}÷${qq ? Math.round(qq) : '?'}）`);
   const ov = p.over[OVT];
   ok(!!ov && orow && ov.sh === orow.sh && Math.abs(ov.cost - orow.cost) <= 1, '③ 注文書の数字と window.__ccfNetOver が一致');
-  ok(/今月 買う（つみたて枠を超えた分）/.test(p.txt), `③ ◈ ETF の節の ${OVT} が「つみたて枠を超えた分」と出る`);
+  ok(new RegExp(OVT+'[\\s\\S]{0,400}?今月 買う').test(p.txt) && !/つみたて枠/.test(p.txt), `③ ◈ ETF の節の ${OVT} が「今月 買う」と出る（つみたて枠の文言は 2026-09-29 に撤去）`);
   ok(!!tt && Math.abs(tt.all + tt.rest - 1000000) < 300, '② お金が消えない（合計＋残り ≒ 入金額・丸めの差 <300円）');
 
   // ④ 上限に届かない月（5万）
