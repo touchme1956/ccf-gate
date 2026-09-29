@@ -1,0 +1,382 @@
+{
+ "key": "qualvalue",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "legs": [
+   {
+    "file": "32_Portfolios_ME_BEME_OP_2x4x4",
+    "a": [
+     3,
+     4
+    ],
+    "b": [
+     3,
+     4
+    ],
+    "axes": [
+     "BM",
+     "OP"
+    ],
+    "size": 2
+   }
+  ],
+  "within": "ew",
+  "combine": "cap",
+  "turnover_yr": 1.0,
+  "cost": 0.0025,
+  "replicate": true
+ },
+ "rationale": "【規則】米国の大型株（NYSE の時価総額の中央値より上）のうち、簿価時価比率が上位半分（BM の四分位 3・4）かつ営業利益率（営業利益÷簿価）が上位半分（OP の四分位 3・4）の4つの升目を持つ。升目の中は1社ずつ等加重、升目どうしは前の月の升目の時価総額で重みづけ。組み替えは French のとおり毎年6月末（前の会計年度の簿価・営業利益と6月末の時価）。\n【なぜ】Novy-Marx（2013 \"The Other Side of Value\"）: 割安と高収益は互いに逆に相関するので、両方を同時に満たす会社は「価値の罠（安いが稼げない）」と「質の高値づかみ（稼ぐが高い）」を同時に避け、どちらか一方より高い上乗せを大型株でも得た。Fama-French（2015 五因子）でも大型の『割安×高収益』の隅は平均リターンが高い側。Asness・Frazzini・Pedersen（QMJ 2019）の「質を妥当な値段で」と同じ考え方。経済的な理由は二つの説がある——リスク（割安な会社は景気の悪い時に弱い）と行動（投資家は利益の持続性を過小に、過去の成長を過大に織り込む）。\n【升目の中を等加重にした理由】時価加重の大型の升目は少数の巨大株に支配され、規則の効き（割安×高収益）が薄まる。選定期間では同じ升目の時価加重（V04）が+3.06%/年（t 2.09）、等加重（V19）が +4.89%/年（t 3.40）。等加重の効きが「大型の中の小さめの会社」の効果だけではないことを診断で確かめた——大型の全升目を等加重にしただけでは +0.44%/年（t 0.9）しか上回らない。\n【選定期間の結果（1963-08〜2000-12・37.4年・費用後: 回転100%/年×0.25%）】年率 16.84% 対 米国市場 11.94%、超過 +4.89%/年、t 3.4（Newey-West 2.73）、ぶれ 17.0% 対 15.3%、最大下落 -39.4% 対 -46.5%、転がる10年の勝ち 26/28、38暦年のうち29年で勝ち。\n⚠ 効きは前半に偏る: 1963〜1980 は +6.75%/年（t 3.93）、1981〜2000 は +3.21%/年（t 1.4）。1998年 −26pt・1999年 −25pt（ITバブル）の後 2000年 +35pt。\n⚠ 国際版の同じ升目（1990-08〜2000-12・選定期間の中・参考）は弱い: Europe +1.1%/年（t 0.58）・Japan +3.1%/年（t 0.95）・Asia_Pacific_ex_Japan -1.1%/年（t -0.31）。\n【選び方】事前登録どおり、どの脚もどの月も10社以上の変種（少数の会社への賭けを除く・結果を見る前に固定）のうち、選定期間の超過が+1%/年以上で費用後の t が最大のもの＝V19。次点は同じ升目を1社ずつ等しく持つ素直な形 V27（+4.60%/年・t 3.20）で、ほぼ同じ。候補の変種27本（うち V27 は26本を見た後に足した）＋候補外の診断2本＝計29本を試した。",
+ "n_variants_tried": 29,
+ "selection_stats": {
+  "from": 196308,
+  "to": 200012,
+  "years": 37.4,
+  "cagr": 16.84,
+  "bench_cagr": 11.94,
+  "excess": 4.89,
+  "ex_arith": 4.57,
+  "t": 3.4,
+  "t_nw": 2.73,
+  "vol": 17.0,
+  "bench_vol": 15.3,
+  "maxdd": -39.4,
+  "bench_maxdd": -46.5,
+  "sharpe": 0.65,
+  "bench_sharpe": 0.42,
+  "roll10_win": "26/28"
+ },
+ "implement": "楽天証券の米国ETF（成長投資枠・NISA対象かは各ETFの画面で確かめる）で「大型の割安×高収益を、少数の巨大株に偏らずに」持つ形へ寄せる。楽天の取扱一覧（out/broker_lineup.json 2026-08-24）に在る近いもの: Global X US Cash Flow Kings 100（FLOW・0.25%・大中型からフリーCF利回りの高い100社）／VanEck Morningstar Wide Moat（MOAT・0.46%・堀のある会社を割安な順に・ほぼ等分）／Global X S&P 500 Quality Dividend（QDIV・0.20%）／Invesco S&P 500 Equal Weight（RSP・0.20%）と Vanguard Value（VTV・0.04%）の組合せ。COWZ・QUAL・VLUE・QVAL は一覧に無い。年1回（7月）に見直す。⚠ どのETFも French の升目そのものではない（選び方の定義・重み・経費 0.04〜0.46%/年が違う）＝検定するのは升目の規則で、ETFの成績ではない",
+ "lookahead_test": "(a) 前の方で切る検査: EDGE_SEL_END=199012 で走らせた規則・相手・国際3地域とその相手のリターンが、200012 で走らせたものと 1990-12 まで全月で一致（規則 329か月・相手 774か月・各地域 5〜6か月で食い違い0）。(b) 月 m0（1970-06/1985-06/1996-12）以降の社数・時価総額と m0 より後のリターンをでたらめに書き換えても、m0 までの規則のリターンは全月不変。(c) m0 の社数・時価総額だけを書き換えると m0 のリターンは不変・m0+1 だけが変わる＝升目の重みは確かに1か月遅れ（m−1 月）の値。升目の組入れ自体は French が6月末に前年度の会計値と6月末の時価で決めたもの（月 m のリターンは月初に決まった組入れの結果）。道具: scratchpad の qv_lookahead.py（リポジトリ外）",
+ "variants_table": [
+  {
+   "name": "V01 大型・BM4×OP4（割安かつ高収益の隅）",
+   "excess": -1.19,
+   "t": 0.19,
+   "t_nw": 0.17,
+   "min_firms": 1.0,
+   "eligible": false,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V02 大型・OP4×INV1（高収益かつ控えめな投資の隅）",
+   "excess": 2.4,
+   "t": 1.64,
+   "t_nw": 1.62,
+   "min_firms": 13.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V03 大型・BM4×INV1（割安かつ控えめな投資の隅）",
+   "excess": 3.59,
+   "t": 2.18,
+   "t_nw": 1.94,
+   "min_firms": 36.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V04 大型・BM3-4×OP3-4（割安な半分×高収益な半分）",
+   "excess": 3.06,
+   "t": 2.09,
+   "t_nw": 1.9,
+   "min_firms": 37.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V05 大型・OP3-4×INV1-2",
+   "excess": 1.88,
+   "t": 1.77,
+   "t_nw": 1.4,
+   "min_firms": 91.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V06 大型・BM3-4×INV1-2",
+   "excess": 1.38,
+   "t": 0.91,
+   "t_nw": 0.8,
+   "min_firms": 119.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V07 大型・BM4×OP2-4（割安から低収益を除く）",
+   "excess": 3.35,
+   "t": 1.97,
+   "t_nw": 1.68,
+   "min_firms": 30.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V08 大型・OP4×BM2-4（高収益から最も割高を除く）",
+   "excess": 1.24,
+   "t": 1.02,
+   "t_nw": 0.93,
+   "min_firms": 35.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V09 大型・OP3-4×INV1-3（高収益から攻めた投資を除く）",
+   "excess": 1.3,
+   "t": 1.55,
+   "t_nw": 1.29,
+   "min_firms": 150.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V10 V01・V02・V03 の等分",
+   "excess": 2.03,
+   "t": 1.49,
+   "t_nw": 1.3,
+   "min_firms": 1.0,
+   "eligible": false,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V11 V04・V05・V06 の等分",
+   "excess": 2.18,
+   "t": 1.85,
+   "t_nw": 1.56,
+   "min_firms": 37.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V12 大型・OP2-4×INV1-3（ジャンクを除く広い組）",
+   "excess": 0.89,
+   "t": 0.97,
+   "t_nw": 0.81,
+   "min_firms": 246.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V13 大型・BM2-4×OP2-4（最も割高と最も低収益を除く）",
+   "excess": 0.6,
+   "t": 0.47,
+   "t_nw": 0.39,
+   "min_firms": 215.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V14 5x5・HiBM×HiOP",
+   "excess": 1.48,
+   "t": 1.1,
+   "t_nw": 0.95,
+   "min_firms": 2.0,
+   "eligible": false,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V15 5x5・BM4-5×OP4-5",
+   "excess": 4.37,
+   "t": 2.54,
+   "t_nw": 2.43,
+   "min_firms": 40.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V16 5x5・BM3-5×OP3-5",
+   "excess": 3.27,
+   "t": 2.48,
+   "t_nw": 2.05,
+   "min_firms": 193.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V17 5x5・OP4-5×INV1-2",
+   "excess": 2.78,
+   "t": 2.49,
+   "t_nw": 2.0,
+   "min_firms": 116.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V18 5x5・BM4-5×INV1-2",
+   "excess": 3.91,
+   "t": 2.73,
+   "t_nw": 2.25,
+   "min_firms": 227.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V19 V04 を升目の中で等加重",
+   "excess": 4.89,
+   "t": 3.4,
+   "t_nw": 2.73,
+   "min_firms": 37.0,
+   "eligible": true,
+   "turnover_yr": 1.0
+  },
+  {
+   "name": "V20 V11 を升目の中で等加重",
+   "excess": 3.63,
+   "t": 3.09,
+   "t_nw": 2.53,
+   "min_firms": 37.0,
+   "eligible": true,
+   "turnover_yr": 1.0
+  },
+  {
+   "name": "V21 V04 を升目どうし等分",
+   "excess": 2.52,
+   "t": 1.75,
+   "t_nw": 1.54,
+   "min_firms": 37.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V22 V11 を升目どうし等分",
+   "excess": 2.19,
+   "t": 1.94,
+   "t_nw": 1.59,
+   "min_firms": 37.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V23 大型・BM3-4×OP4",
+   "excess": 3.15,
+   "t": 1.89,
+   "t_nw": 1.73,
+   "min_firms": 8.0,
+   "eligible": false,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V24 大型・BM4×OP3-4",
+   "excess": 3.7,
+   "t": 2.01,
+   "t_nw": 1.85,
+   "min_firms": 9.0,
+   "eligible": false,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V25 V07・V09 の等分（割安から低収益を除く＋質から攻めた投資を除く）",
+   "excess": 2.42,
+   "t": 2.16,
+   "t_nw": 1.75,
+   "min_firms": 30.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V26 V04・V09 の等分",
+   "excess": 2.26,
+   "t": 2.22,
+   "t_nw": 1.94,
+   "min_firms": 37.0,
+   "eligible": true,
+   "turnover_yr": 0.5
+  },
+  {
+   "name": "V27 V04 を1社ずつ等加重（升目の中は等加重・升目どうしは社数）",
+   "excess": 4.6,
+   "t": 3.2,
+   "t_nw": 2.55,
+   "min_firms": 37.0,
+   "eligible": true,
+   "turnover_yr": 1.0
+  }
+ ],
+ "diagnostics": [
+  {
+   "name": "D1 大型の全升目を1社ずつ等加重（規模の傾きだけ・候補外）",
+   "excess": 0.44,
+   "t": 0.9
+  },
+  {
+   "name": "D2 大型の全升目を時価加重（大型の市場・候補外）",
+   "excess": -0.17,
+   "t": -0.76
+  }
+ ],
+ "selection_rule_applied": "候補27本 → 社数10以上 ∧ 超過≥+1%/年 → t 最大 = V19 V04 を升目の中で等加重",
+ "selection_subperiods": {
+  "1963-198012": {
+   "from": 196308,
+   "to": 198012,
+   "years": 17.4,
+   "cagr": 15.23,
+   "bench_cagr": 8.48,
+   "excess": 6.75,
+   "ex_arith": 6.5,
+   "t": 3.93,
+   "t_nw": 3.71,
+   "vol": 18.0,
+   "bench_vol": 15.4,
+   "maxdd": -39.4,
+   "bench_maxdd": -46.5,
+   "sharpe": 0.56,
+   "bench_sharpe": 0.23,
+   "roll10_win": "8/8"
+  },
+  "198101-200012": {
+   "from": 198101,
+   "to": 200012,
+   "years": 20.0,
+   "cagr": 18.26,
+   "bench_cagr": 15.05,
+   "excess": 3.21,
+   "ex_arith": 2.89,
+   "t": 1.4,
+   "t_nw": 1.08,
+   "vol": 16.1,
+   "bench_vol": 15.3,
+   "maxdd": -38.6,
+   "bench_maxdd": -29.9,
+   "sharpe": 0.73,
+   "bench_sharpe": 0.58,
+   "roll10_win": "9/11"
+  }
+ },
+ "selection_markets_1990_2000": {
+  "Europe": {
+   "from": 199008,
+   "to": 200012,
+   "excess": 1.08,
+   "t": 0.58,
+   "vol": 15.1,
+   "bench_vol": 13.9
+  },
+  "Japan": {
+   "from": 199008,
+   "to": 200012,
+   "excess": 3.11,
+   "t": 0.95,
+   "vol": 25.5,
+   "bench_vol": 25.8
+  },
+  "Asia_Pacific_ex_Japan": {
+   "from": 199008,
+   "to": 200012,
+   "excess": -1.12,
+   "t": -0.31,
+   "vol": 21.6,
+   "bench_vol": 21.3
+  }
+ },
+ "markets": [
+  "Europe",
+  "Japan",
+  "Asia_Pacific_ex_Japan"
+ ],
+ "benchmark": "h.us_market()（Ken French 米国市場・CRSP 全上場の時価加重・配当込み）／国際は h.french_region(地域) の市場（米ドル）",
+ "cost": "回転1あたり 0.25%・回転 100%/年（事前登録の会計の信号 50%/年＋等加重を毎月戻す分）"
+}

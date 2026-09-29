@@ -1,0 +1,435 @@
+{
+ "key": "levtrend",
+ "frozen": "2026-09-28",
+ "phase": "select",
+ "sel_end": 200012,
+ "spec": {
+  "L": 3.0,
+  "signal": "d200",
+  "out": "1x",
+  "ma": 200,
+  "band": 0.0,
+  "delay": 0,
+  "spread": 0.004,
+  "fee": 0.009,
+  "cost": 0.001,
+  "warmup_months": 12
+ },
+ "rationale": "【なぜ】Gayed & Bilello (2016)『Leverage for the Long Run』（Dow Award）：株価が200日平均より上の局面はぶれが小さく上昇が続きやすく、下の局面はぶれが大きく下げが続きやすい（ぶれの塊・時系列の勢い＝Moskowitz, Ooi & Pedersen 2012・Faber 2007）。毎日リセットのレバレッジは ぶれが大きいほど複利で目減りする（ぶれの二乗に比例）ので、ぶれの大きい局面だけを避ければ、倍率の上乗せ（株式の上乗せ×(L−1)）を残したまま目減りと大きな下落を減らせる、という経済的な理由がある。「外=1倍」の版は、下の局面で倍率だけを外し株式の上乗せ（1倍ぶん）は持ち続ける＝ぶれの大きい局面の目減りだけを避ける形。【選定期間（1927-07〜2000-12・米国）】選んだのは「d200 L3.0 外=1倍」: 年率 23.41% vs 持ち続け 10.45%、費用後の超過 12.96%/年（t 5.83・Newey-West 5.7）、ぶれ 43.1% vs 19.3%、最大下落 -93.0% vs -83.9%、シャープ 0.61 vs 0.43、転がる10年の勝ち 63/64、切り替え 年5.27回。【注意】t は月次の算術の超過で測るので、倍率を上げるほど株式の上乗せ×(L−1) が超過に入り t も上がりやすい＝この系統の勝ちは原則「リスクを増やして」の勝ち。検定では ぶれ・最大下落を相手と並べて読むこと。【頑健さ（選定に不使用）】信号を1取引日遅らせる（日本からの現実の執行）と 超過 9.68%/年・t 5.08、5日遅らせると 6.88%/年・t 4.38。次点は「d200 L3.0 外=金利」（t 5.79・最大下落 -76.4%）で差は誤差の中。",
+ "n_variants_tried": 27,
+ "selection_stats": {
+  "from": 192707,
+  "to": 200012,
+  "years": 73.5,
+  "cagr": 23.41,
+  "bench_cagr": 10.45,
+  "excess": 12.96,
+  "ex_arith": 18.27,
+  "t": 5.83,
+  "t_nw": 5.7,
+  "vol": 43.1,
+  "bench_vol": 19.3,
+  "maxdd": -93.0,
+  "bench_maxdd": -83.9,
+  "sharpe": 0.61,
+  "bench_sharpe": 0.43,
+  "roll10_win": "63/64"
+ },
+ "implement": "課税口座（特定口座）で、S&P500 の前日の終値が200日平均の上にある間は 米国上場の3倍ETF（SPXL・UPRO など・経費 年0.9%前後・楽天証券の米国株口座での扱いは要確認）を持ち、割ったら全部売って1倍の S&P500 ETF（VOO・IVV など）へ移し、上へ戻ったら3倍へ戻す（spec の out が rf の版なら 1倍の代わりに 短期米国債ETF BIL/SGOV か MMF）。2倍なら SSO や国内投信 iFreeレバレッジ S&P500。1.25倍・1.5倍は単一の商品が無い。⚠ 日本からは米国の終値で同じ日に執行できない（信号は朝6時ごろに分かり、発注は当夜の米国の取引時間）＝現実には1日遅れ（spec の delay=1 の版を run の robust に併記）。⚠ NISA の成長投資枠はレバレッジ型を買えない（デリバティブで倍率を掛ける投資信託・ETFは対象外）＝売るたびに利益に 20.315% の税が掛かる。判定は事前登録どおり税の前",
+ "lookahead_test": "(1) 日次の信号（d200・d200±1%）: 日 d 以降のリターンを乱数へ書き換えても d 日までの持ち高が変わらないことを各6回確認。(2) 月次の信号（m10・m12）: 月 m の頭から書き換えても m 月までの持ち高が変わらないことを各6回確認。(3) d200 の持ち高が「前日の終値 > 前日までの200日の平均」と一致することを抜き取りで確認。結果: [('d200', '0/6'), ('d200b', '0/6'), ('m10', '0/6'), ('m12', '0/6')]・抜き取り True",
+ "variants_table": [
+  {
+   "name": "d200 L1.25 外=金利",
+   "eligible": true,
+   "excess": 3.12,
+   "t": 1.44,
+   "t_nw": 1.55,
+   "vol": 16.1,
+   "maxdd": -36.3,
+   "switches_per_year": 5.27
+  },
+  {
+   "name": "d200 L1.5 外=金利",
+   "eligible": true,
+   "excess": 5.12,
+   "t": 2.78,
+   "t_nw": 3.05,
+   "vol": 19.3,
+   "maxdd": -43.4,
+   "switches_per_year": 5.27
+  },
+  {
+   "name": "d200 L2.0 外=金利",
+   "eligible": true,
+   "excess": 8.92,
+   "t": 4.55,
+   "t_nw": 4.97,
+   "vol": 25.9,
+   "maxdd": -56.4,
+   "switches_per_year": 5.27
+  },
+  {
+   "name": "d200 L3.0 外=金利",
+   "eligible": true,
+   "excess": 15.62,
+   "t": 5.79,
+   "t_nw": 6.06,
+   "vol": 39.2,
+   "maxdd": -76.4,
+   "switches_per_year": 5.27
+  },
+  {
+   "name": "d200b±1% L1.25 外=金利",
+   "eligible": true,
+   "excess": 2.12,
+   "t": 0.87,
+   "t_nw": 0.9,
+   "vol": 16.2,
+   "maxdd": -37.6,
+   "switches_per_year": 2.41
+  },
+  {
+   "name": "d200b±1% L1.5 外=金利",
+   "eligible": true,
+   "excess": 3.83,
+   "t": 2.08,
+   "t_nw": 2.15,
+   "vol": 19.5,
+   "maxdd": -43.7,
+   "switches_per_year": 2.41
+  },
+  {
+   "name": "d200b±1% L2.0 外=金利",
+   "eligible": true,
+   "excess": 7.04,
+   "t": 3.72,
+   "t_nw": 3.77,
+   "vol": 26.2,
+   "maxdd": -55.7,
+   "switches_per_year": 2.41
+  },
+  {
+   "name": "d200b±1% L3.0 外=金利",
+   "eligible": true,
+   "excess": 12.45,
+   "t": 4.96,
+   "t_nw": 4.86,
+   "vol": 39.6,
+   "maxdd": -78.1,
+   "switches_per_year": 2.41
+  },
+  {
+   "name": "m10 L1.25 外=金利",
+   "eligible": true,
+   "excess": -0.19,
+   "t": -0.38,
+   "t_nw": -0.37,
+   "vol": 16.4,
+   "maxdd": -53.3,
+   "switches_per_year": 1.54
+  },
+  {
+   "name": "m10 L1.5 外=金利",
+   "eligible": true,
+   "excess": 0.96,
+   "t": 0.56,
+   "t_nw": 0.53,
+   "vol": 19.8,
+   "maxdd": -61.5,
+   "switches_per_year": 1.54
+  },
+  {
+   "name": "m10 L2.0 外=金利",
+   "eligible": true,
+   "excess": 2.97,
+   "t": 1.95,
+   "t_nw": 1.79,
+   "vol": 26.4,
+   "maxdd": -74.5,
+   "switches_per_year": 1.54
+  },
+  {
+   "name": "m10 L3.0 外=金利",
+   "eligible": true,
+   "excess": 5.63,
+   "t": 3.28,
+   "t_nw": 2.92,
+   "vol": 39.7,
+   "maxdd": -90.3,
+   "switches_per_year": 1.54
+  },
+  {
+   "name": "m12 L1.25 外=金利",
+   "eligible": true,
+   "excess": 0.23,
+   "t": -0.18,
+   "t_nw": -0.19,
+   "vol": 16.3,
+   "maxdd": -53.7,
+   "switches_per_year": 0.97
+  },
+  {
+   "name": "m12 L1.5 外=金利",
+   "eligible": true,
+   "excess": 1.47,
+   "t": 0.78,
+   "t_nw": 0.86,
+   "vol": 19.5,
+   "maxdd": -60.9,
+   "switches_per_year": 0.97
+  },
+  {
+   "name": "m12 L2.0 外=金利",
+   "eligible": true,
+   "excess": 3.68,
+   "t": 2.19,
+   "t_nw": 2.4,
+   "vol": 26.1,
+   "maxdd": -72.6,
+   "switches_per_year": 0.97
+  },
+  {
+   "name": "m12 L3.0 外=金利",
+   "eligible": true,
+   "excess": 6.81,
+   "t": 3.53,
+   "t_nw": 3.7,
+   "vol": 39.4,
+   "maxdd": -87.5,
+   "switches_per_year": 0.97
+  },
+  {
+   "name": "d200 L1.5 外=1倍",
+   "eligible": true,
+   "excess": 2.68,
+   "t": 4.54,
+   "t_nw": 4.4,
+   "vol": 24.6,
+   "maxdd": -86.2,
+   "switches_per_year": 5.27
+  },
+  {
+   "name": "d200 L2.0 外=1倍",
+   "eligible": true,
+   "excess": 6.4,
+   "t": 5.37,
+   "t_nw": 5.23,
+   "vol": 30.5,
+   "maxdd": -87.9,
+   "switches_per_year": 5.27
+  },
+  {
+   "name": "d200 L3.0 外=1倍",
+   "eligible": true,
+   "excess": 12.96,
+   "t": 5.83,
+   "t_nw": 5.7,
+   "vol": 43.1,
+   "maxdd": -93.0,
+   "switches_per_year": 5.27
+  },
+  {
+   "name": "参考 d200 L1 外=金利",
+   "eligible": false,
+   "excess": 1.79,
+   "t": 0.38,
+   "t_nw": 0.39,
+   "vol": 12.9,
+   "maxdd": -28.4,
+   "switches_per_year": 5.27
+  },
+  {
+   "name": "参考 d200b±1% L1 外=金利",
+   "eligible": false,
+   "excess": 1.06,
+   "t": -0.04,
+   "t_nw": -0.04,
+   "vol": 13.0,
+   "maxdd": -30.6,
+   "switches_per_year": 2.41
+  },
+  {
+   "name": "参考 m10 L1 外=金利",
+   "eligible": false,
+   "excess": -0.73,
+   "t": -1.0,
+   "t_nw": -0.98,
+   "vol": 13.2,
+   "maxdd": -43.7,
+   "switches_per_year": 1.54
+  },
+  {
+   "name": "参考 m12 L1 外=金利",
+   "eligible": false,
+   "excess": -0.42,
+   "t": -0.83,
+   "t_nw": -0.88,
+   "vol": 13.0,
+   "maxdd": -44.5,
+   "switches_per_year": 0.97
+  },
+  {
+   "name": "参考 持ち続け L1.25",
+   "eligible": false,
+   "excess": 0.15,
+   "t": 2.08,
+   "t_nw": 1.98,
+   "vol": 24.2,
+   "maxdd": -90.8,
+   "switches_per_year": 0.0
+  },
+  {
+   "name": "参考 持ち続け L1.5",
+   "eligible": false,
+   "excess": 1.1,
+   "t": 2.91,
+   "t_nw": 2.78,
+   "vol": 29.2,
+   "maxdd": -94.7,
+   "switches_per_year": 0.0
+  },
+  {
+   "name": "参考 持ち続け L2.0",
+   "eligible": false,
+   "excess": 2.4,
+   "t": 3.38,
+   "t_nw": 3.24,
+   "vol": 39.3,
+   "maxdd": -98.4,
+   "switches_per_year": 0.0
+  },
+  {
+   "name": "参考 持ち続け L3.0",
+   "eligible": false,
+   "excess": 2.51,
+   "t": 3.73,
+   "t_nw": 3.6,
+   "vol": 60.1,
+   "maxdd": -99.9,
+   "switches_per_year": 0.0
+  }
+ ],
+ "markets": [
+  "Japan",
+  "Europe",
+  "Asia_Pacific_ex_Japan",
+  "North_America",
+  "Developed_ex_US"
+ ],
+ "markets_selection_period": {
+  "Japan": {
+   "from": 199107,
+   "to": 200012,
+   "years": 9.5,
+   "cagr": 0.86,
+   "bench_cagr": -1.0,
+   "excess": 1.87,
+   "t": 1.01,
+   "vol": 48.9,
+   "bench_vol": 23.9,
+   "maxdd": -78.1,
+   "bench_maxdd": -53.6
+  },
+  "Europe": {
+   "from": 199107,
+   "to": 200012,
+   "years": 9.5,
+   "cagr": 16.24,
+   "bench_cagr": 13.32,
+   "excess": 2.93,
+   "t": 1.03,
+   "vol": 35.5,
+   "bench_vol": 12.7,
+   "maxdd": -42.0,
+   "bench_maxdd": -15.7
+  },
+  "Asia_Pacific_ex_Japan": {
+   "from": 199107,
+   "to": 200012,
+   "years": 9.5,
+   "cagr": 20.64,
+   "bench_cagr": 9.93,
+   "excess": 10.71,
+   "t": 1.72,
+   "vol": 53.7,
+   "bench_vol": 21.6,
+   "maxdd": -60.4,
+   "bench_maxdd": -49.9
+  },
+  "North_America": {
+   "from": 199107,
+   "to": 200012,
+   "years": 9.5,
+   "cagr": 28.84,
+   "bench_cagr": 16.16,
+   "excess": 12.67,
+   "t": 2.04,
+   "vol": 37.8,
+   "bench_vol": 13.5,
+   "maxdd": -44.8,
+   "bench_maxdd": -17.9
+  },
+  "Developed_ex_US": {
+   "from": 199107,
+   "to": 200012,
+   "years": 9.5,
+   "cagr": 6.99,
+   "bench_cagr": 7.41,
+   "excess": -0.43,
+   "t": 0.66,
+   "vol": 36.2,
+   "bench_vol": 14.5,
+   "maxdd": -43.2,
+   "bench_maxdd": -18.6
+  }
+ },
+ "dca_20y_selection": {
+  "about": "選定期間（〜2000-12）の転がる20年・毎月同額の積立の倍率（最終額÷積んだ総額）。規則は費用後・税の前",
+  "windows": 643,
+  "rule_median": 23.27,
+  "rule_min": 2.69,
+  "hold_median": 4.19,
+  "hold_min": 1.34,
+  "rule_beats_hold": "643/643",
+  "worst_start_rule": 196208,
+  "worst_start_hold": 195410
+ },
+ "bench_note": "相手＝同じ French 日次データ（Mkt-RF＋RF）を月へ複利でつないだ1倍の持ち続け。French の月次ファイルより 年0.14% 低く出る（日次の RF の丸め）ので、同じデータで比べて見かけの差を作らない",
+ "robustness_selection": {
+  "delay1": {
+   "cagr": 20.13,
+   "bench_cagr": 10.45,
+   "excess": 9.68,
+   "t": 5.08,
+   "vol": 42.2,
+   "maxdd": -92.5,
+   "sharpe": 0.56
+  },
+  "delay2": {
+   "cagr": 19.03,
+   "bench_cagr": 10.45,
+   "excess": 8.58,
+   "t": 4.8,
+   "vol": 42.7,
+   "maxdd": -94.5,
+   "sharpe": 0.54
+  },
+  "delay5": {
+   "cagr": 17.34,
+   "bench_cagr": 10.45,
+   "excess": 6.88,
+   "t": 4.38,
+   "vol": 42.3,
+   "maxdd": -96.4,
+   "sharpe": 0.51
+  },
+  "runner_up": {
+   "name": "d200 L3.0 外=金利",
+   "excess": 15.62,
+   "t": 5.79,
+   "maxdd": -76.4
+  }
+ },
+ "tax_note": "課税口座で売るたびに 20.315%。切り替えは年に数回で、利益の繰り延べが効かない分だけ持ち続けより不利（判定には入れない）",
+ "selection_rule": "選定期間の費用後の超過が +1%/年以上の変種のうち t が最大"
+}

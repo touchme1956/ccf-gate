@@ -1,0 +1,4187 @@
+{
+ "key": "intl_value",
+ "lens": "funds",
+ "as_of": "2026-09-28",
+ "question": "凍結した規則（21か国それぞれで E/P・CE/P・Yld の High を三等分・国は等加重）の勝ちは、実際に買えた器（投資信託・ETF・東証ETF）でも出たか",
+ "verdict": "弱まった",
+ "verdict_reason": "紙の勝ちを最も忠実に実行した器（DFA International Value・DFIVX）は検定期間 2001-01〜2025-12 で EFA に +2.28%/年（t 2.35・NW 2.11）、同じ会社の市場型 DFALX に +1.96%/年（t 2.26）で勝ち、超過は紙の規則の超過に β0.81・α≈0 で連動した＝賭けそのものは器で取れた。だが (1) その勝ちは 2001-2007 と 2021-2025 の二つの期間だけで、2007-07〜2020-12 の13.5年は DFIVX −1.49%/年（2009年を除くと −2.44）・紙の規則も +0.19（t0.53）。(2) 個人が買える ETF がそろった 2005-10〜2025-12 では、結果を見る前に固定した先進国の割安・高配当19器の等分は EFA に +0.20%/年（t0.44・転がる10年 1/11）、高配当の器だけなら −0.25、EFV −0.36（転がる10年 0/11）。同じ月の紙の規則は +1.69（t1.76）で、器はその 0.1〜0.2 しか取れていない。(3) 楽天で買える器（PXF +0.49 t0.78・FGD +1.16 t0.80〔米国込み〕・DEM +1.14 t0.43）と東証の高配当ETF（8本すべて正・等分 +1.40 t0.77・2013〜）はどれも t<1.5。⇒ 紙の +3.03%/年は DFA の機関投資家向けファンドでは 3/4 ほど再現したが、個人が今買える器の20年ではほぼ0〜+1%/年で統計的に区別できない。崩れたとまでは言えない（向きはほぼ全てで正・DFA は t>2）",
+ "method": {
+  "data": "Yahoo の月次 adjclose（harness.yahoo と同じ取り方・配当込み）。経費は adjclose に入っている。取得は scratchpad の専用キャッシュ（out/_edge_cache には書いていない）",
+  "window": "主の比較は規則（French 国別）の最後の月 2025-12 でそろえた。器だけ 2026-08 まで延ばした値も to_2026_08 に併記",
+  "splices": {
+   "EFA 継ぎ": "2001-08 以前は French Developed_ex_US 3因子の Mkt（紙・経費なし＝器に不利な側）",
+   "EEM 継ぎ": "2003-04 以前は VEIEX（Vanguard 新興国インデックス）"
+  },
+  "fixed_before_results": {
+   "先進国の割安": [
+    "DFIVX",
+    "VTRIX",
+    "EFV",
+    "PXF",
+    "FNDF",
+    "IVAL",
+    "IVLU",
+    "DFIV",
+    "AVIV"
+   ],
+   "先進国の高配当": [
+    "IDV",
+    "DWX",
+    "PID",
+    "DTH",
+    "FGD",
+    "VYMI",
+    "HDEF",
+    "IQDF",
+    "SCHY",
+    "DIVI"
+   ],
+   "新興国": [
+    "DFEVX",
+    "FNDE",
+    "PXH",
+    "DFEV",
+    "DEM",
+    "DVYE",
+    "EDIV"
+   ],
+   "日本の高配当": [
+    "1478.T",
+    "1489.T",
+    "1577.T",
+    "1698.T",
+    "1651.T",
+    "1494.T",
+    "2529.T",
+    "2564.T"
+   ],
+   "合成の作り方": "その月に在る器の等分（器が増えるたびに等分し直す）。顔ぶれはこの段で結果を見る前に固定",
+   "日本の開始": "2013-01（Yahoo の東証 TOPIX ETF は 2009-2012 の分配が記録に無い）"
+  },
+  "paper_bridge": "同じ月で紙の規則の超過と器の超過を並べ、器の超過を規則の超過に回帰（β・α）。加えて French International Indices（Ind_all）で「国を時価で重ねた」同じ特徴の紙の版を作り、等加重の国が勝ちの源かを分けた"
+ },
+ "data_checks": {
+  "取れなかった記号": {
+   "VDMIX": "Yahoo に無い（Vanguard Developed Markets の旧 Investor 口）"
+  },
+  "使えなかった記号": {
+   "1306.T": "Yahoo の値が壊れている（2015-01 に10分割が未調整で −90%、2026-03 に −91%→翌月 +961%）＋2010-2012 の分配が無い → 同じ TOPIX の 1348.T（主）と 1305.T（検査）で代えた。両者の結果はほぼ同じ"
+  },
+  "分配の記録の欠け": {
+   "1698.T": "2011-2012",
+   "1305.T/1348.T": "2009/2010-2012",
+   "EWJ": "2001-2002（実際に無配だった可能性）"
+  },
+  "投資信託のキャピタルゲイン分配の検査": {
+   "読み": "adjclose がキャピタルゲイン分配を落としていれば、分配の出る12月だけ器が大きく負けるはず。12月の超過は他の月と差が無い（t<1.2）＝漏れの形跡なし",
+   "結果": {
+    "DFIVX vs DFALX": {
+     "dec_mean_pct": 0.28,
+     "other_mean_pct": 0.12,
+     "diff_t": 0.67,
+     "n_dec": 32
+    },
+    "DFIVX vs EFA継ぎ": {
+     "dec_mean_pct": 0.39,
+     "other_mean_pct": 0.16,
+     "diff_t": 0.98,
+     "n_dec": 32
+    },
+    "DFIVX vs French DevexUS（紙・分配の問題なし）": {
+     "dec_mean_pct": 0.33,
+     "other_mean_pct": 0.1,
+     "diff_t": 0.91,
+     "n_dec": 32
+    },
+    "VTRIX vs French DevexUS": {
+     "dec_mean_pct": -0.11,
+     "other_mean_pct": -0.01,
+     "diff_t": -0.42,
+     "n_dec": 36
+    },
+    "DFEVX vs French Emerging（紙）": {
+     "dec_mean_pct": 0.44,
+     "other_mean_pct": 0.15,
+     "diff_t": 0.72,
+     "n_dec": 28
+    },
+    "DFEVX vs DFEMX": {
+     "dec_mean_pct": 0.15,
+     "other_mean_pct": 0.18,
+     "diff_t": -0.1,
+     "n_dec": 28
+    },
+    "EFV vs EFA（ETF・対照）": {
+     "dec_mean_pct": 0.16,
+     "other_mean_pct": -0.03,
+     "diff_t": 1.11,
+     "n_dec": 21
+    }
+   }
+  },
+  "キャッシュの衝突": "途中で同じ scratchpad の別の作業が yh/ に同名ファイルを書いていたので、専用のフォルダで全て取り直した。adjclose による結果は1件も変わらなかった（配当の記録の有無だけが違った）"
+ },
+ "headline": {
+  "DFIVX_vs_EFA継ぎ_検定期間": {
+   "fund": "DFIVX",
+   "bench": "EFA（2001-08以前は French Developed_ex_US Mkt）",
+   "note": "検定期間 2001-01〜 だけ",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 7.65,
+   "bench_cagr": 5.37,
+   "excess": 2.28,
+   "ex_arith": 2.55,
+   "t": 2.35,
+   "t_nw": 2.11,
+   "vol": 18.9,
+   "bench_vol": 16.8,
+   "maxdd": -61.7,
+   "bench_maxdd": -57.4,
+   "roll10_win": "12/16",
+   "to_2026_08": {
+    "to": 202608,
+    "years": 25.7,
+    "excess": 2.39,
+    "t": 2.45
+   },
+   "paper_same_months": {
+    "rule_equal_country": {
+     "from": 200101,
+     "to": 202512,
+     "excess": 3.03,
+     "t": 3.15,
+     "t_nw": 2.58
+    },
+    "paper_capweight_country": {
+     "from": 200101,
+     "to": 202512,
+     "excess": 2.89,
+     "t": 3.31,
+     "t_nw": 2.77
+    }
+   },
+   "fund_excess_on_rule_excess": {
+    "beta": 0.81,
+    "alpha_pct_yr": 0.03,
+    "alpha_t": 0.04,
+    "corr": 0.74
+   },
+   "fund_excess_on_paper_capweight_excess": {
+    "beta": 0.95,
+    "alpha_pct_yr": -0.2,
+    "alpha_t": -0.28,
+    "corr": 0.77
+   }
+  },
+  "DFIVX_vs_DFALX_検定期間": {
+   "fund": "DFIVX",
+   "bench": "DFALX",
+   "note": "検定期間 2001-01〜",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 7.65,
+   "bench_cagr": 5.68,
+   "excess": 1.96,
+   "ex_arith": 2.29,
+   "t": 2.26,
+   "t_nw": 1.95,
+   "vol": 18.9,
+   "bench_vol": 16.5,
+   "maxdd": -61.7,
+   "bench_maxdd": -56.0,
+   "roll10_win": "8/16",
+   "to_2026_08": {
+    "to": 202608,
+    "years": 25.7,
+    "excess": 2.04,
+    "t": 2.35
+   },
+   "paper_same_months": {
+    "rule_equal_country": {
+     "from": 200101,
+     "to": 202512,
+     "excess": 3.03,
+     "t": 3.15,
+     "t_nw": 2.58
+    },
+    "paper_capweight_country": {
+     "from": 200101,
+     "to": 202512,
+     "excess": 2.89,
+     "t": 3.31,
+     "t_nw": 2.77
+    }
+   },
+   "fund_excess_on_rule_excess": {
+    "beta": 0.78,
+    "alpha_pct_yr": -0.15,
+    "alpha_t": -0.22,
+    "corr": 0.76
+   },
+   "fund_excess_on_paper_capweight_excess": {
+    "beta": 0.92,
+    "alpha_pct_yr": -0.38,
+    "alpha_t": -0.61,
+    "corr": 0.8
+   }
+  },
+  "DFIVX_vs_EFA継ぎ_1994〜": {
+   "fund": "DFIVX",
+   "bench": "EFA（2001-08以前は French Developed_ex_US Mkt）",
+   "note": "課題の指定どおり",
+   "from": 199403,
+   "to": 202512,
+   "years": 31.8,
+   "cagr": 7.48,
+   "bench_cagr": 5.57,
+   "excess": 1.91,
+   "ex_arith": 2.13,
+   "t": 2.16,
+   "t_nw": 1.72,
+   "vol": 17.9,
+   "bench_vol": 16.0,
+   "maxdd": -61.7,
+   "bench_maxdd": -57.4,
+   "roll10_win": "16/22",
+   "to_2026_08": {
+    "to": 202608,
+    "years": 32.5,
+    "excess": 2.01,
+    "t": 2.26
+   },
+   "paper_same_months": {
+    "rule_equal_country": {
+     "from": 199403,
+     "to": 202512,
+     "excess": 2.86,
+     "t": 3.27,
+     "t_nw": 2.61
+    },
+    "paper_capweight_country": {
+     "from": 199403,
+     "to": 202512,
+     "excess": 3.12,
+     "t": 3.58,
+     "t_nw": 2.81
+    }
+   },
+   "fund_excess_on_rule_excess": {
+    "beta": 0.82,
+    "alpha_pct_yr": -0.24,
+    "alpha_t": -0.35,
+    "corr": 0.74
+   },
+   "fund_excess_on_paper_capweight_excess": {
+    "beta": 0.9,
+    "alpha_pct_yr": -0.6,
+    "alpha_t": -0.95,
+    "corr": 0.78
+   }
+  },
+  "合成_全器_ETF期": {
+   "fund": "合成: 割安＋高配当の全器（等分）",
+   "bench": "EFA",
+   "note": "2005-09 以降（ETF がそろってから）",
+   "from": 200509,
+   "to": 202512,
+   "years": 20.3,
+   "cagr": 5.98,
+   "bench_cagr": 5.79,
+   "excess": 0.19,
+   "ex_arith": 0.36,
+   "t": 0.44,
+   "t_nw": 0.38,
+   "vol": 18.0,
+   "bench_vol": 17.0,
+   "maxdd": -61.8,
+   "bench_maxdd": -57.4,
+   "roll10_win": "1/11",
+   "to_2026_08": {
+    "to": 202608,
+    "years": 21.0,
+    "excess": 0.34,
+    "t": 0.6
+   },
+   "paper_same_months": {
+    "rule_equal_country": {
+     "from": 200509,
+     "to": 202512,
+     "excess": 1.69,
+     "t": 1.77,
+     "t_nw": 1.56
+    },
+    "paper_capweight_country": {
+     "from": 200509,
+     "to": 202512,
+     "excess": 1.81,
+     "t": 2.0,
+     "t_nw": 1.79
+    }
+   },
+   "fund_excess_on_rule_excess": {
+    "beta": 0.53,
+    "alpha_pct_yr": -0.67,
+    "alpha_t": -1.13,
+    "corr": 0.7
+   },
+   "fund_excess_on_paper_capweight_excess": {
+    "beta": 0.67,
+    "alpha_pct_yr": -0.91,
+    "alpha_t": -1.7,
+    "corr": 0.77
+   }
+  },
+  "合成_高配当_ETF期": {
+   "fund": "合成: 先進国の高配当の器（等分）",
+   "bench": "EFA（2001-08以前は French Developed_ex_US Mkt）",
+   "note": "顔ぶれは結果を見る前に固定・その月に在る器の等分",
+   "from": 200510,
+   "to": 202512,
+   "years": 20.2,
+   "cagr": 5.37,
+   "bench_cagr": 5.62,
+   "excess": -0.25,
+   "ex_arith": -0.06,
+   "t": -0.06,
+   "t_nw": -0.05,
+   "vol": 17.9,
+   "bench_vol": 17.0,
+   "maxdd": -64.1,
+   "bench_maxdd": -57.4,
+   "roll10_win": "1/11",
+   "to_2026_08": {
+    "to": 202608,
+    "years": 20.9,
+    "excess": -0.18,
+    "t": -0.0
+   },
+   "paper_same_months": {
+    "rule_equal_country": {
+     "from": 200510,
+     "to": 202512,
+     "excess": 1.69,
+     "t": 1.76,
+     "t_nw": 1.56
+    },
+    "paper_capweight_country": {
+     "from": 200510,
+     "to": 202512,
+     "excess": 1.82,
+     "t": 2.01,
+     "t_nw": 1.8
+    }
+   },
+   "fund_excess_on_rule_excess": {
+    "beta": 0.52,
+    "alpha_pct_yr": -1.09,
+    "alpha_t": -1.16,
+    "corr": 0.53
+   },
+   "fund_excess_on_paper_capweight_excess": {
+    "beta": 0.66,
+    "alpha_pct_yr": -1.32,
+    "alpha_t": -1.45,
+    "corr": 0.57
+   },
+   "n_funds_range": [
+    1,
+    10
+   ]
+  },
+  "EFV_vs_EFA": {
+   "fund": "EFV",
+   "bench": "EFA",
+   "note": "",
+   "from": 200509,
+   "to": 202512,
+   "years": 20.3,
+   "cagr": 5.43,
+   "bench_cagr": 5.79,
+   "excess": -0.36,
+   "ex_arith": -0.15,
+   "t": -0.17,
+   "t_nw": -0.17,
+   "vol": 18.1,
+   "bench_vol": 17.0,
+   "maxdd": -59.7,
+   "bench_maxdd": -57.4,
+   "roll10_win": "0/11",
+   "to_2026_08": {
+    "to": 202608,
+    "years": 21.0,
+    "excess": -0.18,
+    "t": 0.02
+   },
+   "paper_same_months": {
+    "rule_equal_country": {
+     "from": 200509,
+     "to": 202512,
+     "excess": 1.69,
+     "t": 1.77,
+     "t_nw": 1.56
+    },
+    "paper_capweight_country": {
+     "from": 200509,
+     "to": 202512,
+     "excess": 1.81,
+     "t": 2.0,
+     "t_nw": 1.79
+    }
+   },
+   "fund_excess_on_rule_excess": {
+    "beta": 0.59,
+    "alpha_pct_yr": -1.32,
+    "alpha_t": -2.25,
+    "corr": 0.75
+   },
+   "fund_excess_on_paper_capweight_excess": {
+    "beta": 0.8,
+    "alpha_pct_yr": -1.67,
+    "alpha_t": -3.71,
+    "corr": 0.86
+   }
+  },
+  "紙_国を時価で重ねた版_検定期間": {
+   "fund": "紙: 国を時価で重ねた EP/CEP/YLD High",
+   "bench": "紙: 同じ21か国の時価加重 Mkt",
+   "note": "国の配分を器と同じ時価にした紙の版",
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 9.06,
+   "bench_cagr": 6.17,
+   "excess": 2.89,
+   "ex_arith": 2.89,
+   "t": 3.31,
+   "t_nw": 2.77,
+   "vol": 17.5,
+   "bench_vol": 16.3,
+   "maxdd": -58.0,
+   "bench_maxdd": -56.0,
+   "roll10_win": "14/16"
+  }
+ },
+ "capture_ratio_same_months": {
+  "読み": "器の超過 ÷ 同じ月の紙の規則の超過（幾何の年率どうし）",
+  "DFIVX vs EFA継ぎ 2001-01〜2025-12": 0.75,
+  "DFIVX vs DFALX 2001-01〜2025-12": 0.65,
+  "合成 全器 vs EFA 2005-09〜2025-12": 0.11,
+  "EFV vs EFA 2005-09〜2025-12": -0.21,
+  "合成 高配当 vs EFA 2005-10〜2025-12（紙の Yld 脚は同じ月 +1.86 等加重 / +2.14 時価）": -0.13
+ },
+ "subperiods": {
+  "紙: 凍結した規則（21か国等加重）": {
+   "2001-01〜2007-06": "+7.48 (t4.21, 78m)",
+   "2007-07〜2020-12": "+0.19 (t0.53, 162m)",
+   "2021-01〜2025-12": "+5.85 (t2.45, 60m)",
+   "2005-10〜2025-12（ETF期）": "+1.69 (t1.76, 243m)",
+   "2008-01〜2025-12": "+1.76 (t1.68, 216m)",
+   "2013-01〜2025-12": "+1.24 (t1.13, 156m)"
+  },
+  "紙: 国を時価で重ねた版": {
+   "2001-01〜2007-06": "+6.18 (t3.54, 78m)",
+   "2007-07〜2020-12": "+0.34 (t0.58, 162m)",
+   "2021-01〜2025-12": "+6.07 (t2.31, 60m)",
+   "2005-10〜2025-12（ETF期）": "+1.82 (t2.01, 243m)",
+   "2008-01〜2025-12": "+1.89 (t1.90, 216m)",
+   "2013-01〜2025-12": "+1.34 (t1.16, 156m)"
+  },
+  "DFIVX vs EFA継ぎ": {
+   "2001-01〜2007-06": "+7.35 (t3.75, 78m)",
+   "2007-07〜2020-12": "-1.49 (t-0.57, 162m)",
+   "2021-01〜2025-12": "+6.96 (t2.19, 60m)",
+   "2005-10〜2025-12（ETF期）": "+1.25 (t1.37, 243m)",
+   "2008-01〜2025-12": "+0.71 (t0.90, 216m)",
+   "2013-01〜2025-12": "+1.19 (t0.91, 156m)"
+  },
+  "DFIVX vs DFALX": {
+   "2001-01〜2007-06": "+7.69 (t4.22, 78m)",
+   "2007-07〜2020-12": "-1.82 (t-0.81, 162m)",
+   "2021-01〜2025-12": "+5.83 (t2.09, 60m)",
+   "2005-10〜2025-12（ETF期）": "+0.74 (t1.06, 243m)",
+   "2008-01〜2025-12": "+0.24 (t0.62, 216m)",
+   "2013-01〜2025-12": "+0.71 (t0.71, 156m)"
+  },
+  "DFIVX vs French DevexUS（紙）": {
+   "2001-01〜2007-06": "+5.07 (t2.79, 78m)",
+   "2007-07〜2020-12": "-2.55 (t-1.11, 162m)",
+   "2021-01〜2025-12": "+7.34 (t2.28, 60m)",
+   "2005-10〜2025-12（ETF期）": "+0.51 (t0.79, 243m)",
+   "2008-01〜2025-12": "+0.06 (t0.46, 216m)",
+   "2013-01〜2025-12": "+0.57 (t0.57, 156m)"
+  },
+  "EFV vs EFA": {
+   "2001-01〜2007-06": "+1.33 (t0.80, 22m)",
+   "2007-07〜2020-12": "-2.15 (t-1.86, 162m)",
+   "2021-01〜2025-12": "+4.41 (t1.75, 60m)",
+   "2005-10〜2025-12（ETF期）": "-0.37 (t-0.18, 243m)",
+   "2008-01〜2025-12": "-0.30 (t-0.07, 216m)",
+   "2013-01〜2025-12": "-0.13 (t0.04, 156m)"
+  },
+  "PXF vs EFA": {
+   "2001-01〜2007-06": null,
+   "2007-07〜2020-12": "-0.78 (t-0.25, 162m)",
+   "2021-01〜2025-12": "+4.23 (t2.14, 60m)",
+   "2005-10〜2025-12（ETF期）": "+0.49 (t0.78, 222m)",
+   "2008-01〜2025-12": "+0.42 (t0.72, 216m)",
+   "2013-01〜2025-12": "+0.90 (t1.01, 156m)"
+  },
+  "FGD vs EFA": {
+   "2001-01〜2007-06": null,
+   "2007-07〜2020-12": "+0.12 (t0.28, 157m)",
+   "2021-01〜2025-12": "+4.13 (t1.22, 60m)",
+   "2005-10〜2025-12（ETF期）": "+1.16 (t0.80, 217m)",
+   "2008-01〜2025-12": "+1.18 (t0.81, 216m)",
+   "2013-01〜2025-12": "+0.15 (t0.26, 156m)"
+  },
+  "合成 割安 vs EFA継ぎ": {
+   "2001-01〜2007-06": "+4.92 (t3.05, 78m)",
+   "2007-07〜2020-12": "-1.10 (t-0.81, 162m)",
+   "2021-01〜2025-12": "+3.63 (t1.58, 60m)",
+   "2005-10〜2025-12（ETF期）": "+0.42 (t0.78, 243m)",
+   "2008-01〜2025-12": "+0.14 (t0.44, 216m)",
+   "2013-01〜2025-12": "+0.34 (t0.45, 156m)"
+  },
+  "合成 高配当 vs EFA": {
+   "2001-01〜2007-06": "-1.33 (t-0.28, 21m)",
+   "2007-07〜2020-12": "-1.12 (t-0.57, 162m)",
+   "2021-01〜2025-12": "+2.62 (t1.14, 60m)",
+   "2005-10〜2025-12（ETF期）": "-0.25 (t-0.06, 243m)",
+   "2008-01〜2025-12": "-0.10 (t0.08, 216m)",
+   "2013-01〜2025-12": "-0.65 (t-0.51, 156m)"
+  },
+  "合成 全器 vs EFA継ぎ": {
+   "2001-01〜2007-06": "+4.58 (t2.79, 78m)",
+   "2007-07〜2020-12": "-1.10 (t-0.77, 162m)",
+   "2021-01〜2025-12": "+3.11 (t1.47, 60m)",
+   "2005-10〜2025-12（ETF期）": "+0.20 (t0.44, 243m)",
+   "2008-01〜2025-12": "+0.03 (t0.24, 216m)",
+   "2013-01〜2025-12": "-0.19 (t-0.11, 156m)"
+  },
+  "DFEVX vs EEM継ぎ": {
+   "2001-01〜2007-06": "+8.15 (t2.10, 78m)",
+   "2007-07〜2020-12": "-1.35 (t-0.44, 162m)",
+   "2021-01〜2025-12": "+6.41 (t2.20, 60m)",
+   "2005-10〜2025-12（ETF期）": "+1.56 (t1.27, 243m)",
+   "2008-01〜2025-12": "+0.81 (t0.81, 216m)",
+   "2013-01〜2025-12": "+1.19 (t0.77, 156m)"
+  },
+  "DFEVX vs DFEMX": {
+   "2001-01〜2007-06": "+8.63 (t5.39, 78m)",
+   "2007-07〜2020-12": "-1.82 (t-0.73, 162m)",
+   "2021-01〜2025-12": "+3.36 (t1.73, 60m)",
+   "2005-10〜2025-12（ETF期）": "+0.21 (t0.70, 243m)",
+   "2008-01〜2025-12": "-0.51 (t0.06, 216m)",
+   "2013-01〜2025-12": "-0.08 (t0.06, 156m)"
+  },
+  "合成 新興国 vs EEM継ぎ": {
+   "2001-01〜2007-06": "+8.15 (t2.10, 78m)",
+   "2007-07〜2020-12": "-1.19 (t-0.74, 162m)",
+   "2021-01〜2025-12": "+5.66 (t1.92, 60m)",
+   "2005-10〜2025-12（ETF期）": "+1.49 (t1.06, 243m)",
+   "2008-01〜2025-12": "+0.76 (t0.56, 216m)",
+   "2013-01〜2025-12": "-0.06 (t0.01, 156m)"
+  },
+  "合成 日本高配当 vs 1348": {
+   "2001-01〜2007-06": null,
+   "2007-07〜2020-12": "-2.39 (t-1.55, 127m)",
+   "2021-01〜2025-12": "+8.21 (t2.32, 60m)",
+   "2005-10〜2025-12（ETF期）": "+0.76 (t0.41, 187m)",
+   "2008-01〜2025-12": "+0.76 (t0.41, 187m)",
+   "2013-01〜2025-12": "+1.40 (t0.77, 156m)"
+  }
+ },
+ "paper_legs_holdout_and_etf_era": {
+  "EP": {
+   "等加重の国 2001〜": "+2.70 (t2.70, 300m)",
+   "等加重の国 ETF期": "+1.30 (t1.42, 243m)",
+   "時価の国 2001〜": "+2.86 (t3.06, 300m)",
+   "時価の国 ETF期": "+1.72 (t1.84, 243m)"
+  },
+  "CEP": {
+   "等加重の国 2001〜": "+3.29 (t3.26, 300m)",
+   "等加重の国 ETF期": "+1.89 (t1.95, 243m)",
+   "時価の国 2001〜": "+2.90 (t3.19, 300m)",
+   "時価の国 ETF期": "+1.96 (t2.13, 243m)"
+  },
+  "YLD": {
+   "等加重の国 2001〜": "+3.05 (t2.92, 300m)",
+   "等加重の国 ETF期": "+1.86 (t1.73, 243m)",
+   "時価の国 2001〜": "+3.27 (t3.40, 300m)",
+   "時価の国 ETF期": "+2.14 (t2.12, 243m)"
+  },
+  "BM": {
+   "等加重の国 2001〜": "+2.68 (t2.60, 300m)",
+   "等加重の国 ETF期": "+1.21 (t1.36, 243m)",
+   "時価の国 2001〜": "+2.42 (t2.45, 300m)",
+   "時価の国 ETF期": "+1.23 (t1.29, 243m)"
+  }
+ },
+ "capm_vs_bench_2001_2025": {
+  "紙: 凍結した規則": {
+   "beta": 1.07,
+   "alpha_pct_yr": 2.63,
+   "alpha_t": 2.7,
+   "corr": 0.97
+  },
+  "紙: 時価の国": {
+   "beta": 1.04,
+   "alpha_pct_yr": 2.67,
+   "alpha_t": 3.07,
+   "corr": 0.97
+  },
+  "DFIVX vs EFA継ぎ": {
+   "beta": 1.08,
+   "alpha_pct_yr": 2.13,
+   "alpha_t": 2.03,
+   "corr": 0.96
+  },
+  "DFIVX vs DFALX": {
+   "beta": 1.11,
+   "alpha_pct_yr": 1.72,
+   "alpha_t": 1.81,
+   "corr": 0.97
+  },
+  "合成 全器 vs EFA": {
+   "beta": 1.03,
+   "alpha_pct_yr": 0.72,
+   "alpha_t": 0.92,
+   "corr": 0.98
+  },
+  "DFEVX vs EEM継ぎ": {
+   "beta": 1.0,
+   "alpha_pct_yr": 2.45,
+   "alpha_t": 1.83,
+   "corr": 0.95
+  }
+ },
+ "calendar_year_excess_pct": {
+  "rule": {
+   "2001": 12.2,
+   "2002": 13.0,
+   "2003": 8.6,
+   "2004": 4.8,
+   "2005": 1.0,
+   "2006": 3.6,
+   "2007": -0.0,
+   "2008": -2.6,
+   "2009": 25.2,
+   "2010": -0.3,
+   "2011": 3.4,
+   "2012": 0.9,
+   "2013": -0.7,
+   "2014": 0.6,
+   "2015": -2.8,
+   "2016": 4.0,
+   "2017": -0.2,
+   "2018": 0.3,
+   "2019": -2.7,
+   "2020": -11.0,
+   "2021": 7.2,
+   "2022": 6.1,
+   "2023": 3.7,
+   "2024": -1.1,
+   "2025": 15.6
+  },
+  "paper_cw": {
+   "2001": 12.8,
+   "2002": 7.1,
+   "2003": 7.5,
+   "2004": 5.4,
+   "2005": -1.0,
+   "2006": 3.1,
+   "2007": 1.1,
+   "2008": -0.8,
+   "2009": 18.2,
+   "2010": 0.4,
+   "2011": 3.6,
+   "2012": 0.4,
+   "2013": 0.5,
+   "2014": 0.1,
+   "2015": -3.7,
+   "2016": 4.8,
+   "2017": -1.7,
+   "2018": 0.5,
+   "2019": -2.6,
+   "2020": -10.0,
+   "2021": 5.3,
+   "2022": 9.4,
+   "2023": 3.9,
+   "2024": 0.4,
+   "2025": 11.4
+  },
+  "DFIVX_vs_EFA": {
+   "2001": 5.2,
+   "2002": 6.9,
+   "2003": 9.6,
+   "2004": 9.9,
+   "2005": 4.3,
+   "2006": 9.4,
+   "2007": 1.8,
+   "2008": -4.6,
+   "2009": 14.6,
+   "2010": 2.4,
+   "2011": -4.7,
+   "2012": -2.2,
+   "2013": 1.7,
+   "2014": -0.8,
+   "2015": -5.3,
+   "2016": 7.1,
+   "2017": 1.0,
+   "2018": -3.7,
+   "2019": -6.4,
+   "2020": -9.7,
+   "2021": 7.3,
+   "2022": 10.9,
+   "2023": -0.5,
+   "2024": 3.4,
+   "2025": 13.7
+  },
+  "all_funds_vs_EFA": {
+   "2001": 5.9,
+   "2002": 4.5,
+   "2003": 5.6,
+   "2004": 5.3,
+   "2005": 2.7,
+   "2006": 4.3,
+   "2007": -0.5,
+   "2008": -5.4,
+   "2009": 16.5,
+   "2010": -0.0,
+   "2011": 2.1,
+   "2012": -2.5,
+   "2013": -2.2,
+   "2014": 0.6,
+   "2015": -7.6,
+   "2016": 6.6,
+   "2017": -3.6,
+   "2018": -0.1,
+   "2019": -1.9,
+   "2020": -9.2,
+   "2021": 1.6,
+   "2022": 7.3,
+   "2023": -1.5,
+   "2024": 0.3,
+   "2025": 7.3
+  }
+ },
+ "mid_period_without_2009": {
+  "紙の規則 2007-07〜2020-12（2009を除く）": "-1.09 (t-0.84, 150m)",
+  "DFIVX vs EFA継ぎ 同": "-2.44 (t-1.37, 150m)"
+ },
+ "emerging_same_family": {
+  "fund": "DFEVX",
+  "bench": "DFEMX",
+  "note": "検定期間 2001-01〜",
+  "from": 200101,
+  "to": 202512,
+  "years": 25.0,
+  "cagr": 10.3,
+  "bench_cagr": 8.72,
+  "excess": 1.59,
+  "ex_arith": 1.94,
+  "t": 2.18,
+  "t_nw": 1.62,
+  "vol": 22.0,
+  "bench_vol": 19.8,
+  "maxdd": -64.2,
+  "bench_maxdd": -59.2,
+  "roll10_win": "9/16",
+  "to_2026_08": {
+   "to": 202608,
+   "years": 25.7,
+   "excess": 1.5,
+   "t": 2.04
+  }
+ },
+ "japan_subperiods": {
+  "合成 日本高配当 vs 1348 2013-01〜2020-12": "-2.51 (t-1.50, 96m)",
+  "同 2021-01〜2025-12": "+8.21 (t2.32, 60m)",
+  "紙 規則の日本 2013-01〜2020-12": "-2.25 (t-1.27, 96m)",
+  "紙 規則の日本 2021-01〜2025-12": "+8.71 (t2.75, 60m)"
+ },
+ "implementability_for_this_user": {
+  "楽天の取扱（out/broker_lineup.json・2026-09）": {
+   "EFV": false,
+   "IVAL": false,
+   "FNDF": false,
+   "IDV": false,
+   "DWX": false,
+   "PID": false,
+   "DTH": false,
+   "FGD": true,
+   "PXF": true,
+   "IVLU": false,
+   "VYMI": false,
+   "HDEF": false,
+   "IQDF": false,
+   "DFIV": false,
+   "AVIV": false,
+   "SCHY": false,
+   "DIVI": false,
+   "DEM": true,
+   "DVYE": false,
+   "EDIV": false,
+   "FNDE": false,
+   "PXH": false,
+   "DFEV": false,
+   "EWJV": false
+  },
+  "読み": "DFIVX/DFEVX（DFA の投資信託）は日本の個人は買えない。楽天で買える割安・高配当の器は PXF・FGD・DEM だけ（EFV/IVAL/FNDF/IDV/DWX 等は無い）。PXF は EFA に +0.49%/年（t0.78）・VEA には ±0（t0.31）、FGD は +1.16（t0.80・米国を含む世界の高配当で相手とずれる）、DEM は EEM に +1.14（t0.43）。東証の高配当ETFは NISA 成長投資枠で買え、2013-01〜 の8本すべてが TOPIX を上回ったが等分 +1.40%/年（t0.77）・2013-2020 は −2.51・2021-2025 は +8.21 と一つの時期に偏る"
+ },
+ "tax_estimates_japanese_investor": {
+  "前提": "推定であって実測ではない。adjclose は器の中で源泉国に取られた税の後だが、日本の個人がさらに払う税は入っていない。",
+  "米国上場ETFをNISAで持つ（米国の源泉10%は取り戻せない）: 相手EFAに比べた追加の負担 ≈ 0.10×(分配利回りの差)": {
+   "PXF": 0.04,
+   "FGD": 0.25,
+   "EFV": 0.1,
+   "IDV": 0.28,
+   "DEM（相手EEM）": 0.28
+  },
+  "東証ETFを課税口座で持つ（分配に毎年20.315%・相手TOPIX ETFとの差）: ≈ 0.20315×(分配利回りの差)": {
+   "1478.T": 0.15,
+   "1489.T": 0.72,
+   "1577.T": 0.31,
+   "1698.T": 0.23,
+   "1651.T": 0.21
+  },
+  "分配利回り（%/年・Yahoo の分配の記録から）": {
+   "EFA": 2.71,
+   "VEA": 3.02,
+   "PXF": 3.07,
+   "FGD": 5.22,
+   "EFV": 3.75,
+   "IDV": 5.49,
+   "DWX": 4.85,
+   "DFIVX": 3.97,
+   "DFALX": 2.61,
+   "EEM": 1.96,
+   "DEM": 4.71,
+   "1348.T": 1.57,
+   "1478.T": 2.63,
+   "1489.T": 5.45,
+   "1577.T": 3.48,
+   "1698.T": 2.67,
+   "1348.T（2013〜）": 1.94,
+   "1478.T（2013〜）": 2.66,
+   "1489.T（2013〜）": 5.47,
+   "1577.T（2013〜）": 3.49,
+   "1698.T（2013〜）": 3.07,
+   "1651.T（2013〜）": 2.97
+  },
+  "読み": "米国上場の器は年0.05〜0.3pt、東証の高配当ETFを課税口座で持つと年0.2〜0.8pt が上乗せの負担。NISA の東証ETFならほぼ0。どれも上の超過（ETF期でほぼ0）を覆す大きさではない＝結論は税の前で既に決まっている"
+ },
+ "survivorship_note": "器の顔ぶれは2026年に Yahoo で取れる（＝生き残った）器だけ。閉じた国際配当・割安ETFは入っていない＝この偏りは器の側を良く見せる向きなので、器で勝っていないという結論は弱まらない",
+ "rows": {
+  "developed": [
+   {
+    "fund": "DFIVX",
+    "bench": "EFA（2001-08以前は French Developed_ex_US Mkt）",
+    "note": "課題の指定どおり",
+    "from": 199403,
+    "to": 202512,
+    "years": 31.8,
+    "cagr": 7.48,
+    "bench_cagr": 5.57,
+    "excess": 1.91,
+    "ex_arith": 2.13,
+    "t": 2.16,
+    "t_nw": 1.72,
+    "vol": 17.9,
+    "bench_vol": 16.0,
+    "maxdd": -61.7,
+    "bench_maxdd": -57.4,
+    "roll10_win": "16/22",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 32.5,
+     "excess": 2.01,
+     "t": 2.26
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 199403,
+      "to": 202512,
+      "excess": 2.86,
+      "t": 3.27,
+      "t_nw": 2.61
+     },
+     "paper_capweight_country": {
+      "from": 199403,
+      "to": 202512,
+      "excess": 3.12,
+      "t": 3.58,
+      "t_nw": 2.81
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.82,
+     "alpha_pct_yr": -0.24,
+     "alpha_t": -0.35,
+     "corr": 0.74
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.9,
+     "alpha_pct_yr": -0.6,
+     "alpha_t": -0.95,
+     "corr": 0.78
+    }
+   },
+   {
+    "fund": "DFIVX",
+    "bench": "EFA（2001-08以前は French Developed_ex_US Mkt）",
+    "note": "検定期間 2001-01〜 だけ",
+    "from": 200101,
+    "to": 202512,
+    "years": 25.0,
+    "cagr": 7.65,
+    "bench_cagr": 5.37,
+    "excess": 2.28,
+    "ex_arith": 2.55,
+    "t": 2.35,
+    "t_nw": 2.11,
+    "vol": 18.9,
+    "bench_vol": 16.8,
+    "maxdd": -61.7,
+    "bench_maxdd": -57.4,
+    "roll10_win": "12/16",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 25.7,
+     "excess": 2.39,
+     "t": 2.45
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200101,
+      "to": 202512,
+      "excess": 3.03,
+      "t": 3.15,
+      "t_nw": 2.58
+     },
+     "paper_capweight_country": {
+      "from": 200101,
+      "to": 202512,
+      "excess": 2.89,
+      "t": 3.31,
+      "t_nw": 2.77
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.81,
+     "alpha_pct_yr": 0.03,
+     "alpha_t": 0.04,
+     "corr": 0.74
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.95,
+     "alpha_pct_yr": -0.2,
+     "alpha_t": -0.28,
+     "corr": 0.77
+    }
+   },
+   {
+    "fund": "DFIVX",
+    "bench": "DFALX（DFA Large Cap International・同じ会社のカナダ込みの市場）",
+    "note": "同じ運用会社・同じ母集団の市場型",
+    "from": 199403,
+    "to": 202512,
+    "years": 31.8,
+    "cagr": 7.48,
+    "bench_cagr": 6.15,
+    "excess": 1.33,
+    "ex_arith": 1.59,
+    "t": 1.71,
+    "t_nw": 1.38,
+    "vol": 17.9,
+    "bench_vol": 15.9,
+    "maxdd": -61.7,
+    "bench_maxdd": -56.0,
+    "roll10_win": "15/22",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 32.5,
+     "excess": 1.4,
+     "t": 1.79
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 199403,
+      "to": 202512,
+      "excess": 2.86,
+      "t": 3.27,
+      "t_nw": 2.61
+     },
+     "paper_capweight_country": {
+      "from": 199403,
+      "to": 202512,
+      "excess": 3.12,
+      "t": 3.58,
+      "t_nw": 2.81
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.79,
+     "alpha_pct_yr": -0.69,
+     "alpha_t": -1.1,
+     "corr": 0.75
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.86,
+     "alpha_pct_yr": -1.03,
+     "alpha_t": -1.76,
+     "corr": 0.79
+    }
+   },
+   {
+    "fund": "DFIVX",
+    "bench": "DFALX",
+    "note": "検定期間 2001-01〜",
+    "from": 200101,
+    "to": 202512,
+    "years": 25.0,
+    "cagr": 7.65,
+    "bench_cagr": 5.68,
+    "excess": 1.96,
+    "ex_arith": 2.29,
+    "t": 2.26,
+    "t_nw": 1.95,
+    "vol": 18.9,
+    "bench_vol": 16.5,
+    "maxdd": -61.7,
+    "bench_maxdd": -56.0,
+    "roll10_win": "8/16",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 25.7,
+     "excess": 2.04,
+     "t": 2.35
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200101,
+      "to": 202512,
+      "excess": 3.03,
+      "t": 3.15,
+      "t_nw": 2.58
+     },
+     "paper_capweight_country": {
+      "from": 200101,
+      "to": 202512,
+      "excess": 2.89,
+      "t": 3.31,
+      "t_nw": 2.77
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.78,
+     "alpha_pct_yr": -0.15,
+     "alpha_t": -0.22,
+     "corr": 0.76
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.92,
+     "alpha_pct_yr": -0.38,
+     "alpha_t": -0.61,
+     "corr": 0.8
+    }
+   },
+   {
+    "fund": "DFIVX",
+    "bench": "French Developed_ex_US Mkt（紙・経費なし）",
+    "note": "相手に経費が無い分だけ器に不利",
+    "from": 199403,
+    "to": 202512,
+    "years": 31.8,
+    "cagr": 7.48,
+    "bench_cagr": 6.42,
+    "excess": 1.06,
+    "ex_arith": 1.38,
+    "t": 1.35,
+    "t_nw": 1.14,
+    "vol": 17.9,
+    "bench_vol": 15.7,
+    "maxdd": -61.7,
+    "bench_maxdd": -55.9,
+    "roll10_win": "12/22",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 32.5,
+     "excess": 1.18,
+     "t": 1.45
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 199403,
+      "to": 202512,
+      "excess": 2.86,
+      "t": 3.27,
+      "t_nw": 2.61
+     },
+     "paper_capweight_country": {
+      "from": 199403,
+      "to": 202512,
+      "excess": 3.12,
+      "t": 3.58,
+      "t_nw": 2.81
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.83,
+     "alpha_pct_yr": -1.0,
+     "alpha_t": -1.39,
+     "corr": 0.72
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.91,
+     "alpha_pct_yr": -1.39,
+     "alpha_t": -2.07,
+     "corr": 0.76
+    }
+   },
+   {
+    "fund": "VTRIX",
+    "bench": "EFA（2001-08以前は French Developed_ex_US Mkt）",
+    "note": "アクティブの割安（参考・規則ではない）",
+    "from": 199007,
+    "to": 202512,
+    "years": 35.5,
+    "cagr": 5.93,
+    "bench_cagr": 5.36,
+    "excess": 0.57,
+    "ex_arith": 0.52,
+    "t": 0.61,
+    "t_nw": 0.69,
+    "vol": 16.5,
+    "bench_vol": 16.6,
+    "maxdd": -56.0,
+    "bench_maxdd": -57.4,
+    "roll10_win": "18/26",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 36.2,
+     "excess": 0.67,
+     "t": 0.74
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 199007,
+      "to": 202512,
+      "excess": 2.83,
+      "t": 3.51,
+      "t_nw": 2.85
+     },
+     "paper_capweight_country": {
+      "from": 199007,
+      "to": 202512,
+      "excess": 2.97,
+      "t": 3.66,
+      "t_nw": 2.94
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.38,
+     "alpha_pct_yr": -0.57,
+     "alpha_t": -0.69,
+     "corr": 0.36
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.51,
+     "alpha_pct_yr": -0.94,
+     "alpha_t": -1.21,
+     "corr": 0.46
+    }
+   },
+   {
+    "fund": "EFV",
+    "bench": "EFA",
+    "note": "",
+    "from": 200509,
+    "to": 202512,
+    "years": 20.3,
+    "cagr": 5.43,
+    "bench_cagr": 5.79,
+    "excess": -0.36,
+    "ex_arith": -0.15,
+    "t": -0.17,
+    "t_nw": -0.17,
+    "vol": 18.1,
+    "bench_vol": 17.0,
+    "maxdd": -59.7,
+    "bench_maxdd": -57.4,
+    "roll10_win": "0/11",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 21.0,
+     "excess": -0.18,
+     "t": 0.02
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200509,
+      "to": 202512,
+      "excess": 1.69,
+      "t": 1.77,
+      "t_nw": 1.56
+     },
+     "paper_capweight_country": {
+      "from": 200509,
+      "to": 202512,
+      "excess": 1.81,
+      "t": 2.0,
+      "t_nw": 1.79
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.59,
+     "alpha_pct_yr": -1.32,
+     "alpha_t": -2.25,
+     "corr": 0.75
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.8,
+     "alpha_pct_yr": -1.67,
+     "alpha_t": -3.71,
+     "corr": 0.86
+    }
+   },
+   {
+    "fund": "PXF",
+    "bench": "EFA",
+    "note": "",
+    "from": 200707,
+    "to": 202512,
+    "years": 18.5,
+    "cagr": 4.57,
+    "bench_cagr": 4.08,
+    "excess": 0.49,
+    "ex_arith": 0.82,
+    "t": 0.78,
+    "t_nw": 0.78,
+    "vol": 19.4,
+    "bench_vol": 17.5,
+    "maxdd": -59.4,
+    "bench_maxdd": -57.4,
+    "roll10_win": "4/9",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 19.2,
+     "excess": 0.91,
+     "t": 1.16
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200707,
+      "to": 202512,
+      "excess": 1.64,
+      "t": 1.63,
+      "t_nw": 1.44
+     },
+     "paper_capweight_country": {
+      "from": 200707,
+      "to": 202512,
+      "excess": 1.8,
+      "t": 1.87,
+      "t_nw": 1.68
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.62,
+     "alpha_pct_yr": -0.42,
+     "alpha_t": -0.57,
+     "corr": 0.72
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.77,
+     "alpha_pct_yr": -0.68,
+     "alpha_t": -0.99,
+     "corr": 0.76
+    }
+   },
+   {
+    "fund": "FNDF",
+    "bench": "EFA",
+    "note": "",
+    "from": 201309,
+    "to": 202512,
+    "years": 12.3,
+    "cagr": 8.27,
+    "bench_cagr": 7.15,
+    "excess": 1.12,
+    "ex_arith": 1.16,
+    "t": 1.15,
+    "t_nw": 1.0,
+    "vol": 15.3,
+    "bench_vol": 14.5,
+    "maxdd": -29.5,
+    "bench_maxdd": -27.6,
+    "roll10_win": "3/3",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 13.0,
+     "excess": 1.77,
+     "t": 1.67
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 201309,
+      "to": 202512,
+      "excess": 1.3,
+      "t": 1.13,
+      "t_nw": 0.99
+     },
+     "paper_capweight_country": {
+      "from": 201309,
+      "to": 202512,
+      "excess": 1.42,
+      "t": 1.17,
+      "t_nw": 1.06
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.67,
+     "alpha_pct_yr": 0.21,
+     "alpha_t": 0.38,
+     "corr": 0.83
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.67,
+     "alpha_pct_yr": 0.16,
+     "alpha_t": 0.3,
+     "corr": 0.85
+    }
+   },
+   {
+    "fund": "IVAL",
+    "bench": "EFA",
+    "note": "",
+    "from": 201501,
+    "to": 202512,
+    "years": 11.0,
+    "cagr": 5.44,
+    "bench_cagr": 7.36,
+    "excess": -1.92,
+    "ex_arith": -1.41,
+    "t": -0.64,
+    "t_nw": -0.71,
+    "vol": 17.2,
+    "bench_vol": 14.8,
+    "maxdd": -35.4,
+    "bench_maxdd": -27.6,
+    "roll10_win": "0/2",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 11.7,
+     "excess": -1.32,
+     "t": -0.37
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 201501,
+      "to": 202512,
+      "excess": 1.45,
+      "t": 1.14,
+      "t_nw": 0.99
+     },
+     "paper_capweight_country": {
+      "from": 201501,
+      "to": 202512,
+      "excess": 1.54,
+      "t": 1.13,
+      "t_nw": 1.04
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.49,
+     "alpha_pct_yr": -2.18,
+     "alpha_t": -1.04,
+     "corr": 0.31
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.58,
+     "alpha_pct_yr": -2.34,
+     "alpha_t": -1.14,
+     "corr": 0.38
+    }
+   },
+   {
+    "fund": "IVLU",
+    "bench": "EFA",
+    "note": "",
+    "from": 201508,
+    "to": 202512,
+    "years": 10.4,
+    "cagr": 7.74,
+    "bench_cagr": 6.97,
+    "excess": 0.77,
+    "ex_arith": 0.92,
+    "t": 0.53,
+    "t_nw": 0.51,
+    "vol": 16.2,
+    "bench_vol": 15.0,
+    "maxdd": -32.6,
+    "bench_maxdd": -27.6,
+    "roll10_win": "1/1",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 11.1,
+     "excess": 1.1,
+     "t": 0.74
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 201508,
+      "to": 202512,
+      "excess": 1.8,
+      "t": 1.31,
+      "t_nw": 1.16
+     },
+     "paper_capweight_country": {
+      "from": 201508,
+      "to": 202512,
+      "excess": 1.87,
+      "t": 1.29,
+      "t_nw": 1.22
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.96,
+     "alpha_pct_yr": -0.91,
+     "alpha_t": -0.9,
+     "corr": 0.81
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 1.0,
+     "alpha_pct_yr": -0.99,
+     "alpha_t": -1.13,
+     "corr": 0.86
+    }
+   },
+   {
+    "fund": "DFIV",
+    "bench": "EFA",
+    "note": "",
+    "from": 202110,
+    "to": 202512,
+    "years": 4.2,
+    "cagr": 14.89,
+    "bench_cagr": 8.57,
+    "excess": 6.32,
+    "ex_arith": 5.75,
+    "t": 1.9,
+    "t_nw": 2.39,
+    "vol": 16.0,
+    "bench_vol": 15.8,
+    "maxdd": -21.8,
+    "bench_maxdd": -27.5,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 4.9,
+     "excess": 6.46,
+     "t": 2.02
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 202110,
+      "to": 202512,
+      "excess": 5.36,
+      "t": 2.16,
+      "t_nw": 2.65
+     },
+     "paper_capweight_country": {
+      "from": 202110,
+      "to": 202512,
+      "excess": 5.86,
+      "t": 2.08,
+      "t_nw": 2.96
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 1.12,
+     "alpha_pct_yr": 0.32,
+     "alpha_t": 0.18,
+     "corr": 0.83
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 1.05,
+     "alpha_pct_yr": 0.21,
+     "alpha_t": 0.14,
+     "corr": 0.88
+    }
+   },
+   {
+    "fund": "AVIV",
+    "bench": "EFA",
+    "note": "",
+    "from": 202110,
+    "to": 202512,
+    "years": 4.2,
+    "cagr": 12.32,
+    "bench_cagr": 8.57,
+    "excess": 3.75,
+    "ex_arith": 3.49,
+    "t": 1.58,
+    "t_nw": 1.94,
+    "vol": 16.3,
+    "bench_vol": 15.8,
+    "maxdd": -24.2,
+    "bench_maxdd": -27.5,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 4.9,
+     "excess": 4.1,
+     "t": 1.78
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 202110,
+      "to": 202512,
+      "excess": 5.36,
+      "t": 2.16,
+      "t_nw": 2.65
+     },
+     "paper_capweight_country": {
+      "from": 202110,
+      "to": 202512,
+      "excess": 5.86,
+      "t": 2.08,
+      "t_nw": 2.96
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.79,
+     "alpha_pct_yr": -0.32,
+     "alpha_t": -0.22,
+     "corr": 0.8
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.72,
+     "alpha_pct_yr": -0.27,
+     "alpha_t": -0.2,
+     "corr": 0.82
+    }
+   },
+   {
+    "fund": "IDV",
+    "bench": "EFA",
+    "note": "",
+    "from": 200707,
+    "to": 202512,
+    "years": 18.5,
+    "cagr": 4.37,
+    "bench_cagr": 4.08,
+    "excess": 0.29,
+    "ex_arith": 0.83,
+    "t": 0.54,
+    "t_nw": 0.44,
+    "vol": 20.2,
+    "bench_vol": 17.5,
+    "maxdd": -66.5,
+    "bench_maxdd": -57.4,
+    "roll10_win": "3/9",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 19.2,
+     "excess": 0.45,
+     "t": 0.62
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200707,
+      "to": 202512,
+      "excess": 1.64,
+      "t": 1.63,
+      "t_nw": 1.44
+     },
+     "paper_capweight_country": {
+      "from": 200707,
+      "to": 202512,
+      "excess": 1.8,
+      "t": 1.87,
+      "t_nw": 1.68
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.66,
+     "alpha_pct_yr": -0.47,
+     "alpha_t": -0.36,
+     "corr": 0.52
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.81,
+     "alpha_pct_yr": -0.73,
+     "alpha_t": -0.56,
+     "corr": 0.54
+    }
+   },
+   {
+    "fund": "DWX",
+    "bench": "EFA",
+    "note": "",
+    "from": 200803,
+    "to": 202512,
+    "years": 17.8,
+    "cagr": 2.18,
+    "bench_cagr": 4.79,
+    "excess": -2.61,
+    "ex_arith": -2.08,
+    "t": -1.12,
+    "t_nw": -0.98,
+    "vol": 19.9,
+    "bench_vol": 17.6,
+    "maxdd": -61.0,
+    "bench_maxdd": -53.3,
+    "roll10_win": "0/8",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 18.5,
+     "excess": -2.65,
+     "t": -1.17
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200803,
+      "to": 202512,
+      "excess": 1.76,
+      "t": 1.67,
+      "t_nw": 1.48
+     },
+     "paper_capweight_country": {
+      "from": 200803,
+      "to": 202512,
+      "excess": 1.93,
+      "t": 1.92,
+      "t_nw": 1.73
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.6,
+     "alpha_pct_yr": -3.36,
+     "alpha_t": -1.96,
+     "corr": 0.41
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.68,
+     "alpha_pct_yr": -3.49,
+     "alpha_t": -2.02,
+     "corr": 0.39
+    }
+   },
+   {
+    "fund": "PID",
+    "bench": "EFA",
+    "note": "",
+    "from": 200510,
+    "to": 202512,
+    "years": 20.2,
+    "cagr": 5.37,
+    "bench_cagr": 5.62,
+    "excess": -0.26,
+    "ex_arith": -0.07,
+    "t": -0.04,
+    "t_nw": -0.04,
+    "vol": 17.8,
+    "bench_vol": 17.0,
+    "maxdd": -62.0,
+    "bench_maxdd": -57.4,
+    "roll10_win": "3/11",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 20.9,
+     "excess": -0.6,
+     "t": -0.28
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200510,
+      "to": 202512,
+      "excess": 1.69,
+      "t": 1.76,
+      "t_nw": 1.56
+     },
+     "paper_capweight_country": {
+      "from": 200510,
+      "to": 202512,
+      "excess": 1.82,
+      "t": 2.01,
+      "t_nw": 1.8
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.43,
+     "alpha_pct_yr": -0.91,
+     "alpha_t": -0.63,
+     "corr": 0.32
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.56,
+     "alpha_pct_yr": -1.14,
+     "alpha_t": -0.8,
+     "corr": 0.35
+    }
+   },
+   {
+    "fund": "DTH",
+    "bench": "EFA",
+    "note": "",
+    "from": 200607,
+    "to": 202512,
+    "years": 19.5,
+    "cagr": 4.68,
+    "bench_cagr": 5.11,
+    "excess": -0.42,
+    "ex_arith": -0.2,
+    "t": -0.19,
+    "t_nw": -0.18,
+    "vol": 18.2,
+    "bench_vol": 17.2,
+    "maxdd": -59.6,
+    "bench_maxdd": -57.4,
+    "roll10_win": "0/10",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 20.2,
+     "excess": -0.29,
+     "t": -0.07
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200607,
+      "to": 202512,
+      "excess": 1.77,
+      "t": 1.79,
+      "t_nw": 1.58
+     },
+     "paper_capweight_country": {
+      "from": 200607,
+      "to": 202512,
+      "excess": 1.94,
+      "t": 2.08,
+      "t_nw": 1.86
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.38,
+     "alpha_pct_yr": -0.98,
+     "alpha_t": -1.01,
+     "corr": 0.41
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.57,
+     "alpha_pct_yr": -1.37,
+     "alpha_t": -1.5,
+     "corr": 0.53
+    }
+   },
+   {
+    "fund": "FGD",
+    "bench": "EFA",
+    "note": "世界（米国を含む）の高配当＝相手とずれる",
+    "from": 200712,
+    "to": 202512,
+    "years": 18.1,
+    "cagr": 5.18,
+    "bench_cagr": 4.02,
+    "excess": 1.16,
+    "ex_arith": 1.56,
+    "t": 0.8,
+    "t_nw": 0.77,
+    "vol": 20.0,
+    "bench_vol": 17.6,
+    "maxdd": -62.6,
+    "bench_maxdd": -55.8,
+    "roll10_win": "4/9",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 18.8,
+     "excess": 1.43,
+     "t": 0.94
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200712,
+      "to": 202512,
+      "excess": 1.76,
+      "t": 1.69,
+      "t_nw": 1.5
+     },
+     "paper_capweight_country": {
+      "from": 200712,
+      "to": 202512,
+      "excess": 1.89,
+      "t": 1.91,
+      "t_nw": 1.72
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.85,
+     "alpha_pct_yr": -0.24,
+     "alpha_t": -0.15,
+     "corr": 0.55
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 1.09,
+     "alpha_pct_yr": -0.65,
+     "alpha_t": -0.41,
+     "corr": 0.6
+    }
+   },
+   {
+    "fund": "VYMI",
+    "bench": "EFA",
+    "note": "新興国を含む（FTSE All-World ex US High Div）",
+    "from": 201604,
+    "to": 202512,
+    "years": 9.8,
+    "cagr": 9.8,
+    "bench_cagr": 8.75,
+    "excess": 1.05,
+    "ex_arith": 1.0,
+    "t": 0.7,
+    "t_nw": 0.7,
+    "vol": 14.8,
+    "bench_vol": 14.7,
+    "maxdd": -30.1,
+    "bench_maxdd": -27.6,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 10.4,
+     "excess": 1.5,
+     "t": 1.0
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 201604,
+      "to": 202512,
+      "excess": 2.05,
+      "t": 1.37,
+      "t_nw": 1.21
+     },
+     "paper_capweight_country": {
+      "from": 201604,
+      "to": 202512,
+      "excess": 2.26,
+      "t": 1.42,
+      "t_nw": 1.34
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.69,
+     "alpha_pct_yr": -0.46,
+     "alpha_t": -0.49,
+     "corr": 0.75
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.71,
+     "alpha_pct_yr": -0.59,
+     "alpha_t": -0.67,
+     "corr": 0.79
+    }
+   },
+   {
+    "fund": "HDEF",
+    "bench": "EFA",
+    "note": "",
+    "from": 201509,
+    "to": 202512,
+    "years": 10.3,
+    "cagr": 7.87,
+    "bench_cagr": 7.83,
+    "excess": 0.04,
+    "ex_arith": 0.01,
+    "t": 0.01,
+    "t_nw": 0.01,
+    "vol": 14.7,
+    "bench_vol": 14.8,
+    "maxdd": -24.7,
+    "bench_maxdd": -27.6,
+    "roll10_win": "1/1",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 11.0,
+     "excess": -0.08,
+     "t": -0.06
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 201509,
+      "to": 202512,
+      "excess": 1.81,
+      "t": 1.3,
+      "t_nw": 1.15
+     },
+     "paper_capweight_country": {
+      "from": 201509,
+      "to": 202512,
+      "excess": 1.91,
+      "t": 1.3,
+      "t_nw": 1.23
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.57,
+     "alpha_pct_yr": -1.06,
+     "alpha_t": -0.64,
+     "corr": 0.45
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.63,
+     "alpha_pct_yr": -1.2,
+     "alpha_t": -0.75,
+     "corr": 0.51
+    }
+   },
+   {
+    "fund": "IQDF",
+    "bench": "EFA",
+    "note": "新興国を含む・質の条件つき",
+    "from": 201305,
+    "to": 202512,
+    "years": 12.7,
+    "cagr": 5.97,
+    "bench_cagr": 6.74,
+    "excess": -0.77,
+    "ex_arith": -0.66,
+    "t": -0.58,
+    "t_nw": -0.67,
+    "vol": 14.9,
+    "bench_vol": 14.4,
+    "maxdd": -29.5,
+    "bench_maxdd": -27.6,
+    "roll10_win": "0/3",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 13.3,
+     "excess": -0.31,
+     "t": -0.2
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 201305,
+      "to": 202512,
+      "excess": 1.36,
+      "t": 1.21,
+      "t_nw": 1.05
+     },
+     "paper_capweight_country": {
+      "from": 201305,
+      "to": 202512,
+      "excess": 1.46,
+      "t": 1.23,
+      "t_nw": 1.11
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.39,
+     "alpha_pct_yr": -1.24,
+     "alpha_t": -1.18,
+     "corr": 0.42
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.38,
+     "alpha_pct_yr": -1.25,
+     "alpha_t": -1.19,
+     "corr": 0.42
+    }
+   },
+   {
+    "fund": "SCHY",
+    "bench": "EFA",
+    "note": "新興国を含む",
+    "from": 202105,
+    "to": 202512,
+    "years": 4.7,
+    "cagr": 8.0,
+    "bench_cagr": 8.06,
+    "excess": -0.06,
+    "ex_arith": -0.29,
+    "t": -0.11,
+    "t_nw": -0.13,
+    "vol": 13.6,
+    "bench_vol": 15.3,
+    "maxdd": -21.6,
+    "bench_maxdd": -27.6,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 5.3,
+     "excess": -0.11,
+     "t": -0.11
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 202105,
+      "to": 202512,
+      "excess": 5.13,
+      "t": 2.18,
+      "t_nw": 2.83
+     },
+     "paper_capweight_country": {
+      "from": 202105,
+      "to": 202512,
+      "excess": 5.45,
+      "t": 2.06,
+      "t_nw": 3.16
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.61,
+     "alpha_pct_yr": -3.14,
+     "alpha_t": -1.23,
+     "corr": 0.47
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.61,
+     "alpha_pct_yr": -3.28,
+     "alpha_t": -1.33,
+     "corr": 0.53
+    }
+   },
+   {
+    "fund": "DIVI",
+    "bench": "EFA",
+    "note": "",
+    "from": 201607,
+    "to": 202512,
+    "years": 9.5,
+    "cagr": 10.68,
+    "bench_cagr": 9.03,
+    "excess": 1.64,
+    "ex_arith": 1.2,
+    "t": 0.64,
+    "t_nw": 0.54,
+    "vol": 12.7,
+    "bench_vol": 14.9,
+    "maxdd": -17.6,
+    "bench_maxdd": -27.6,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 10.2,
+     "excess": 1.77,
+     "t": 0.75
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 201607,
+      "to": 202512,
+      "excess": 2.23,
+      "t": 1.44,
+      "t_nw": 1.25
+     },
+     "paper_capweight_country": {
+      "from": 201607,
+      "to": 202512,
+      "excess": 2.42,
+      "t": 1.48,
+      "t_nw": 1.37
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": -0.21,
+     "alpha_pct_yr": 1.67,
+     "alpha_t": 0.89,
+     "corr": -0.17
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": -0.13,
+     "alpha_pct_yr": 1.51,
+     "alpha_t": 0.8,
+     "corr": -0.11
+    }
+   },
+   {
+    "fund": "EFV",
+    "bench": "VEA",
+    "note": "相手を VEA（カナダ・小型込み）に替えた",
+    "from": 200708,
+    "to": 202512,
+    "years": 18.4,
+    "cagr": 3.75,
+    "bench_cagr": 4.63,
+    "excess": -0.88,
+    "ex_arith": -0.68,
+    "t": -0.69,
+    "t_nw": -0.66,
+    "vol": 18.7,
+    "bench_vol": 17.8,
+    "maxdd": -59.7,
+    "bench_maxdd": -57.1,
+    "roll10_win": "0/9",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 19.1,
+     "excess": -0.85,
+     "t": -0.64
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200708,
+      "to": 202512,
+      "excess": 1.65,
+      "t": 1.63,
+      "t_nw": 1.44
+     },
+     "paper_capweight_country": {
+      "from": 200708,
+      "to": 202512,
+      "excess": 1.82,
+      "t": 1.88,
+      "t_nw": 1.69
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.59,
+     "alpha_pct_yr": -1.85,
+     "alpha_t": -2.75,
+     "corr": 0.73
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.8,
+     "alpha_pct_yr": -2.25,
+     "alpha_t": -4.3,
+     "corr": 0.85
+    }
+   },
+   {
+    "fund": "PXF",
+    "bench": "VEA",
+    "note": "相手を VEA（カナダ・小型込み）に替えた",
+    "from": 200708,
+    "to": 202512,
+    "years": 18.4,
+    "cagr": 4.63,
+    "bench_cagr": 4.63,
+    "excess": -0.0,
+    "ex_arith": 0.31,
+    "t": 0.31,
+    "t_nw": 0.31,
+    "vol": 19.5,
+    "bench_vol": 17.8,
+    "maxdd": -59.4,
+    "bench_maxdd": -57.1,
+    "roll10_win": "1/9",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 19.1,
+     "excess": 0.25,
+     "t": 0.54
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200708,
+      "to": 202512,
+      "excess": 1.65,
+      "t": 1.63,
+      "t_nw": 1.44
+     },
+     "paper_capweight_country": {
+      "from": 200708,
+      "to": 202512,
+      "excess": 1.82,
+      "t": 1.88,
+      "t_nw": 1.69
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.62,
+     "alpha_pct_yr": -0.92,
+     "alpha_t": -1.35,
+     "corr": 0.75
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.77,
+     "alpha_pct_yr": -1.2,
+     "alpha_t": -1.92,
+     "corr": 0.79
+    }
+   },
+   {
+    "fund": "FNDF",
+    "bench": "VEA",
+    "note": "相手を VEA（カナダ・小型込み）に替えた",
+    "from": 201309,
+    "to": 202512,
+    "years": 12.3,
+    "cagr": 8.27,
+    "bench_cagr": 7.62,
+    "excess": 0.64,
+    "ex_arith": 0.68,
+    "t": 0.68,
+    "t_nw": 0.61,
+    "vol": 15.3,
+    "bench_vol": 14.7,
+    "maxdd": -29.5,
+    "bench_maxdd": -28.1,
+    "roll10_win": "3/3",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 13.0,
+     "excess": 1.04,
+     "t": 1.02
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 201309,
+      "to": 202512,
+      "excess": 1.3,
+      "t": 1.13,
+      "t_nw": 0.99
+     },
+     "paper_capweight_country": {
+      "from": 201309,
+      "to": 202512,
+      "excess": 1.42,
+      "t": 1.17,
+      "t_nw": 1.06
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.67,
+     "alpha_pct_yr": -0.27,
+     "alpha_t": -0.5,
+     "corr": 0.84
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.68,
+     "alpha_pct_yr": -0.33,
+     "alpha_t": -0.68,
+     "corr": 0.87
+    }
+   },
+   {
+    "fund": "IVAL",
+    "bench": "VEA",
+    "note": "相手を VEA（カナダ・小型込み）に替えた",
+    "from": 201501,
+    "to": 202512,
+    "years": 11.0,
+    "cagr": 5.44,
+    "bench_cagr": 7.89,
+    "excess": -2.44,
+    "ex_arith": -1.95,
+    "t": -0.92,
+    "t_nw": -0.99,
+    "vol": 17.2,
+    "bench_vol": 15.1,
+    "maxdd": -35.4,
+    "bench_maxdd": -28.1,
+    "roll10_win": "0/2",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 11.7,
+     "excess": -2.13,
+     "t": -0.76
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 201501,
+      "to": 202512,
+      "excess": 1.45,
+      "t": 1.14,
+      "t_nw": 0.99
+     },
+     "paper_capweight_country": {
+      "from": 201501,
+      "to": 202512,
+      "excess": 1.54,
+      "t": 1.13,
+      "t_nw": 1.04
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.49,
+     "alpha_pct_yr": -2.72,
+     "alpha_t": -1.34,
+     "corr": 0.32
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.59,
+     "alpha_pct_yr": -2.89,
+     "alpha_t": -1.46,
+     "corr": 0.39
+    }
+   },
+   {
+    "fund": "IDV",
+    "bench": "VEA",
+    "note": "相手を VEA（カナダ・小型込み）に替えた",
+    "from": 200708,
+    "to": 202512,
+    "years": 18.4,
+    "cagr": 4.44,
+    "bench_cagr": 4.63,
+    "excess": -0.19,
+    "ex_arith": 0.34,
+    "t": 0.23,
+    "t_nw": 0.18,
+    "vol": 20.3,
+    "bench_vol": 17.8,
+    "maxdd": -66.5,
+    "bench_maxdd": -57.1,
+    "roll10_win": "3/9",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 19.1,
+     "excess": -0.2,
+     "t": 0.19
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200708,
+      "to": 202512,
+      "excess": 1.65,
+      "t": 1.63,
+      "t_nw": 1.44
+     },
+     "paper_capweight_country": {
+      "from": 200708,
+      "to": 202512,
+      "excess": 1.82,
+      "t": 1.88,
+      "t_nw": 1.69
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.65,
+     "alpha_pct_yr": -0.97,
+     "alpha_t": -0.76,
+     "corr": 0.53
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.8,
+     "alpha_pct_yr": -1.24,
+     "alpha_t": -0.98,
+     "corr": 0.56
+    }
+   },
+   {
+    "fund": "DWX",
+    "bench": "VEA",
+    "note": "相手を VEA（カナダ・小型込み）に替えた",
+    "from": 200803,
+    "to": 202512,
+    "years": 17.8,
+    "cagr": 2.18,
+    "bench_cagr": 5.17,
+    "excess": -2.99,
+    "ex_arith": -2.49,
+    "t": -1.35,
+    "t_nw": -1.16,
+    "vol": 19.9,
+    "bench_vol": 17.9,
+    "maxdd": -61.0,
+    "bench_maxdd": -53.2,
+    "roll10_win": "0/8",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 18.5,
+     "excess": -3.21,
+     "t": -1.48
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200803,
+      "to": 202512,
+      "excess": 1.76,
+      "t": 1.67,
+      "t_nw": 1.48
+     },
+     "paper_capweight_country": {
+      "from": 200803,
+      "to": 202512,
+      "excess": 1.93,
+      "t": 1.92,
+      "t_nw": 1.73
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.6,
+     "alpha_pct_yr": -3.75,
+     "alpha_t": -2.22,
+     "corr": 0.41
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.68,
+     "alpha_pct_yr": -3.88,
+     "alpha_t": -2.27,
+     "corr": 0.39
+    }
+   },
+   {
+    "fund": "DTH",
+    "bench": "VEA",
+    "note": "相手を VEA（カナダ・小型込み）に替えた",
+    "from": 200708,
+    "to": 202512,
+    "years": 18.4,
+    "cagr": 3.59,
+    "bench_cagr": 4.63,
+    "excess": -1.04,
+    "ex_arith": -0.84,
+    "t": -0.75,
+    "t_nw": -0.71,
+    "vol": 18.6,
+    "bench_vol": 17.8,
+    "maxdd": -59.6,
+    "bench_maxdd": -57.1,
+    "roll10_win": "0/9",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 19.1,
+     "excess": -1.07,
+     "t": -0.74
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200708,
+      "to": 202512,
+      "excess": 1.65,
+      "t": 1.63,
+      "t_nw": 1.44
+     },
+     "paper_capweight_country": {
+      "from": 200708,
+      "to": 202512,
+      "excess": 1.82,
+      "t": 1.88,
+      "t_nw": 1.69
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.37,
+     "alpha_pct_yr": -1.59,
+     "alpha_t": -1.54,
+     "corr": 0.41
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.57,
+     "alpha_pct_yr": -1.96,
+     "alpha_t": -2.04,
+     "corr": 0.53
+    }
+   },
+   {
+    "fund": "VYMI",
+    "bench": "ACWX",
+    "note": "新興国込みの相手",
+    "from": 201604,
+    "to": 202512,
+    "years": 9.8,
+    "cagr": 9.8,
+    "bench_cagr": 8.59,
+    "excess": 1.21,
+    "ex_arith": 1.19,
+    "t": 0.89,
+    "t_nw": 0.73,
+    "vol": 14.8,
+    "bench_vol": 14.4,
+    "maxdd": -30.1,
+    "bench_maxdd": -28.3,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 10.4,
+     "excess": 1.38,
+     "t": 0.89
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 201604,
+      "to": 202512,
+      "excess": 2.05,
+      "t": 1.37,
+      "t_nw": 1.21
+     },
+     "paper_capweight_country": {
+      "from": 201604,
+      "to": 202512,
+      "excess": 2.26,
+      "t": 1.42,
+      "t_nw": 1.34
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.66,
+     "alpha_pct_yr": -0.2,
+     "alpha_t": -0.23,
+     "corr": 0.76
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.69,
+     "alpha_pct_yr": -0.34,
+     "alpha_t": -0.42,
+     "corr": 0.81
+    }
+   },
+   {
+    "fund": "IQDF",
+    "bench": "ACWX",
+    "note": "新興国込みの相手",
+    "from": 201305,
+    "to": 202512,
+    "years": 12.7,
+    "cagr": 5.97,
+    "bench_cagr": 6.26,
+    "excess": -0.29,
+    "ex_arith": -0.18,
+    "t": -0.21,
+    "t_nw": -0.22,
+    "vol": 14.9,
+    "bench_vol": 14.2,
+    "maxdd": -29.5,
+    "bench_maxdd": -28.3,
+    "roll10_win": "0/3",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 13.3,
+     "excess": -0.06,
+     "t": 0.03
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 201305,
+      "to": 202512,
+      "excess": 1.36,
+      "t": 1.21,
+      "t_nw": 1.05
+     },
+     "paper_capweight_country": {
+      "from": 201305,
+      "to": 202512,
+      "excess": 1.46,
+      "t": 1.23,
+      "t_nw": 1.11
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.34,
+     "alpha_pct_yr": -0.68,
+     "alpha_t": -0.88,
+     "corr": 0.48
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.33,
+     "alpha_pct_yr": -0.69,
+     "alpha_t": -0.9,
+     "corr": 0.48
+    }
+   },
+   {
+    "fund": "SCHY",
+    "bench": "ACWX",
+    "note": "新興国込みの相手",
+    "from": 202105,
+    "to": 202512,
+    "years": 4.7,
+    "cagr": 8.0,
+    "bench_cagr": 6.91,
+    "excess": 1.1,
+    "ex_arith": 0.88,
+    "t": 0.3,
+    "t_nw": 0.36,
+    "vol": 13.6,
+    "bench_vol": 14.7,
+    "maxdd": -21.6,
+    "bench_maxdd": -28.3,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 5.3,
+     "excess": 0.39,
+     "t": 0.06
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 202105,
+      "to": 202512,
+      "excess": 5.13,
+      "t": 2.18,
+      "t_nw": 2.83
+     },
+     "paper_capweight_country": {
+      "from": 202105,
+      "to": 202512,
+      "excess": 5.45,
+      "t": 2.06,
+      "t_nw": 3.16
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.45,
+     "alpha_pct_yr": -1.23,
+     "alpha_t": -0.43,
+     "corr": 0.34
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.5,
+     "alpha_pct_yr": -1.58,
+     "alpha_t": -0.57,
+     "corr": 0.41
+    }
+   },
+   {
+    "fund": "合成: 先進国の割安の器（等分）",
+    "bench": "EFA（2001-08以前は French Developed_ex_US Mkt）",
+    "note": "顔ぶれは結果を見る前に固定・その月に在る器の等分",
+    "from": 200101,
+    "to": 202512,
+    "years": 25.0,
+    "cagr": 6.66,
+    "bench_cagr": 5.37,
+    "excess": 1.29,
+    "ex_arith": 1.42,
+    "t": 1.87,
+    "t_nw": 1.78,
+    "vol": 17.9,
+    "bench_vol": 16.8,
+    "maxdd": -59.2,
+    "bench_maxdd": -57.4,
+    "roll10_win": "6/16",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 25.7,
+     "excess": 1.47,
+     "t": 2.08
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200101,
+      "to": 202512,
+      "excess": 3.03,
+      "t": 3.15,
+      "t_nw": 2.58
+     },
+     "paper_capweight_country": {
+      "from": 200101,
+      "to": 202512,
+      "excess": 2.89,
+      "t": 3.31,
+      "t_nw": 2.77
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.55,
+     "alpha_pct_yr": -0.3,
+     "alpha_t": -0.55,
+     "corr": 0.72
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.68,
+     "alpha_pct_yr": -0.53,
+     "alpha_t": -1.09,
+     "corr": 0.78
+    },
+    "n_funds_range": [
+     2,
+     9
+    ]
+   },
+   {
+    "fund": "合成: 先進国の割安の器（等分）",
+    "bench": "EFA",
+    "note": "2005-09 以降（ETF がそろってから）",
+    "from": 200509,
+    "to": 202512,
+    "years": 20.3,
+    "cagr": 6.2,
+    "bench_cagr": 5.79,
+    "excess": 0.41,
+    "ex_arith": 0.62,
+    "t": 0.77,
+    "t_nw": 0.74,
+    "vol": 18.3,
+    "bench_vol": 17.0,
+    "maxdd": -59.2,
+    "bench_maxdd": -57.4,
+    "roll10_win": "2/11",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 21.0,
+     "excess": 0.65,
+     "t": 1.05
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200509,
+      "to": 202512,
+      "excess": 1.69,
+      "t": 1.77,
+      "t_nw": 1.56
+     },
+     "paper_capweight_country": {
+      "from": 200509,
+      "to": 202512,
+      "excess": 1.81,
+      "t": 2.0,
+      "t_nw": 1.79
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.54,
+     "alpha_pct_yr": -0.44,
+     "alpha_t": -0.81,
+     "corr": 0.74
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.71,
+     "alpha_pct_yr": -0.72,
+     "alpha_t": -1.57,
+     "corr": 0.83
+    }
+   },
+   {
+    "fund": "合成: 先進国の高配当の器（等分）",
+    "bench": "EFA（2001-08以前は French Developed_ex_US Mkt）",
+    "note": "顔ぶれは結果を見る前に固定・その月に在る器の等分",
+    "from": 200510,
+    "to": 202512,
+    "years": 20.2,
+    "cagr": 5.37,
+    "bench_cagr": 5.62,
+    "excess": -0.25,
+    "ex_arith": -0.06,
+    "t": -0.06,
+    "t_nw": -0.05,
+    "vol": 17.9,
+    "bench_vol": 17.0,
+    "maxdd": -64.1,
+    "bench_maxdd": -57.4,
+    "roll10_win": "1/11",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 20.9,
+     "excess": -0.18,
+     "t": -0.0
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200510,
+      "to": 202512,
+      "excess": 1.69,
+      "t": 1.76,
+      "t_nw": 1.56
+     },
+     "paper_capweight_country": {
+      "from": 200510,
+      "to": 202512,
+      "excess": 1.82,
+      "t": 2.01,
+      "t_nw": 1.8
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.52,
+     "alpha_pct_yr": -1.09,
+     "alpha_t": -1.16,
+     "corr": 0.53
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.66,
+     "alpha_pct_yr": -1.32,
+     "alpha_t": -1.45,
+     "corr": 0.57
+    },
+    "n_funds_range": [
+     1,
+     10
+    ]
+   },
+   {
+    "fund": "合成: 先進国の高配当の器（等分）",
+    "bench": "EFA",
+    "note": "2005-09 以降（ETF がそろってから）",
+    "from": 200510,
+    "to": 202512,
+    "years": 20.2,
+    "cagr": 5.37,
+    "bench_cagr": 5.62,
+    "excess": -0.25,
+    "ex_arith": -0.06,
+    "t": -0.06,
+    "t_nw": -0.05,
+    "vol": 17.9,
+    "bench_vol": 17.0,
+    "maxdd": -64.1,
+    "bench_maxdd": -57.4,
+    "roll10_win": "1/11",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 20.9,
+     "excess": -0.18,
+     "t": -0.0
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200510,
+      "to": 202512,
+      "excess": 1.69,
+      "t": 1.76,
+      "t_nw": 1.56
+     },
+     "paper_capweight_country": {
+      "from": 200510,
+      "to": 202512,
+      "excess": 1.82,
+      "t": 2.01,
+      "t_nw": 1.8
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.52,
+     "alpha_pct_yr": -1.09,
+     "alpha_t": -1.16,
+     "corr": 0.53
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.66,
+     "alpha_pct_yr": -1.32,
+     "alpha_t": -1.45,
+     "corr": 0.57
+    }
+   },
+   {
+    "fund": "合成: 割安＋高配当の全器（等分）",
+    "bench": "EFA（2001-08以前は French Developed_ex_US Mkt）",
+    "note": "顔ぶれは結果を見る前に固定・その月に在る器の等分",
+    "from": 200101,
+    "to": 202512,
+    "years": 25.0,
+    "cagr": 6.48,
+    "bench_cagr": 5.37,
+    "excess": 1.11,
+    "ex_arith": 1.21,
+    "t": 1.55,
+    "t_nw": 1.37,
+    "vol": 17.6,
+    "bench_vol": 16.8,
+    "maxdd": -61.8,
+    "bench_maxdd": -57.4,
+    "roll10_win": "7/16",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 25.7,
+     "excess": 1.21,
+     "t": 1.67
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200101,
+      "to": 202512,
+      "excess": 3.03,
+      "t": 3.15,
+      "t_nw": 2.58
+     },
+     "paper_capweight_country": {
+      "from": 200101,
+      "to": 202512,
+      "excess": 2.89,
+      "t": 3.31,
+      "t_nw": 2.77
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.54,
+     "alpha_pct_yr": -0.48,
+     "alpha_t": -0.83,
+     "corr": 0.69
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.65,
+     "alpha_pct_yr": -0.67,
+     "alpha_t": -1.24,
+     "corr": 0.73
+    },
+    "n_funds_range": [
+     2,
+     19
+    ]
+   },
+   {
+    "fund": "合成: 割安＋高配当の全器（等分）",
+    "bench": "EFA",
+    "note": "2005-09 以降（ETF がそろってから）",
+    "from": 200509,
+    "to": 202512,
+    "years": 20.3,
+    "cagr": 5.98,
+    "bench_cagr": 5.79,
+    "excess": 0.19,
+    "ex_arith": 0.36,
+    "t": 0.44,
+    "t_nw": 0.38,
+    "vol": 18.0,
+    "bench_vol": 17.0,
+    "maxdd": -61.8,
+    "bench_maxdd": -57.4,
+    "roll10_win": "1/11",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 21.0,
+     "excess": 0.34,
+     "t": 0.6
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200509,
+      "to": 202512,
+      "excess": 1.69,
+      "t": 1.77,
+      "t_nw": 1.56
+     },
+     "paper_capweight_country": {
+      "from": 200509,
+      "to": 202512,
+      "excess": 1.81,
+      "t": 2.0,
+      "t_nw": 1.79
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.53,
+     "alpha_pct_yr": -0.67,
+     "alpha_t": -1.13,
+     "corr": 0.7
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.67,
+     "alpha_pct_yr": -0.91,
+     "alpha_t": -1.7,
+     "corr": 0.77
+    }
+   }
+  ],
+  "emerging": [
+   {
+    "fund": "DFEVX",
+    "bench": "EEM（2003-04以前は VEIEX）",
+    "note": "課題の指定どおり",
+    "from": 199804,
+    "to": 202512,
+    "years": 27.8,
+    "cagr": 9.43,
+    "bench_cagr": 6.71,
+    "excess": 2.73,
+    "ex_arith": 2.83,
+    "t": 1.92,
+    "t_nw": 1.66,
+    "vol": 23.4,
+    "bench_vol": 22.1,
+    "maxdd": -64.2,
+    "bench_maxdd": -60.4,
+    "roll10_win": "15/18",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 28.4,
+     "excess": 2.7,
+     "t": 1.92
+    }
+   },
+   {
+    "fund": "DFEVX",
+    "bench": "EEM（2003-04以前は VEIEX）",
+    "note": "検定期間 2001-01〜",
+    "from": 200101,
+    "to": 202512,
+    "years": 25.0,
+    "cagr": 10.3,
+    "bench_cagr": 7.93,
+    "excess": 2.37,
+    "ex_arith": 2.42,
+    "t": 1.82,
+    "t_nw": 1.66,
+    "vol": 22.0,
+    "bench_vol": 21.0,
+    "maxdd": -64.2,
+    "bench_maxdd": -60.4,
+    "roll10_win": "14/16",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 25.7,
+     "excess": 2.35,
+     "t": 1.81
+    }
+   },
+   {
+    "fund": "DFEVX",
+    "bench": "DFEMX（同じ会社の新興国の市場型）",
+    "note": "同じ運用会社",
+    "from": 199804,
+    "to": 202512,
+    "years": 27.8,
+    "cagr": 9.43,
+    "bench_cagr": 7.78,
+    "excess": 1.66,
+    "ex_arith": 2.07,
+    "t": 2.22,
+    "t_nw": 1.61,
+    "vol": 23.4,
+    "bench_vol": 20.9,
+    "maxdd": -64.2,
+    "bench_maxdd": -59.2,
+    "roll10_win": "10/18",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 28.4,
+     "excess": 1.58,
+     "t": 2.11
+    }
+   },
+   {
+    "fund": "DFEVX",
+    "bench": "French Emerging Mkt（紙・経費なし）",
+    "note": "",
+    "from": 199804,
+    "to": 202512,
+    "years": 27.8,
+    "cagr": 9.43,
+    "bench_cagr": 7.79,
+    "excess": 1.64,
+    "ex_arith": 2.14,
+    "t": 1.59,
+    "t_nw": 1.3,
+    "vol": 23.4,
+    "bench_vol": 20.5,
+    "maxdd": -64.2,
+    "bench_maxdd": -61.2,
+    "roll10_win": "8/18",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 28.4,
+     "excess": 1.7,
+     "t": 1.63
+    }
+   },
+   {
+    "fund": "FNDE",
+    "bench": "EEM",
+    "note": "",
+    "from": 201309,
+    "to": 202512,
+    "years": 12.3,
+    "cagr": 6.59,
+    "bench_cagr": 5.32,
+    "excess": 1.26,
+    "ex_arith": 1.41,
+    "t": 0.78,
+    "t_nw": 0.6,
+    "vol": 17.7,
+    "bench_vol": 16.5,
+    "maxdd": -36.9,
+    "bench_maxdd": -36.5,
+    "roll10_win": "3/3",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 13.0,
+     "excess": 0.82,
+     "t": 0.41
+    }
+   },
+   {
+    "fund": "FNDE",
+    "bench": "VWO",
+    "note": "",
+    "from": 201309,
+    "to": 202512,
+    "years": 12.3,
+    "cagr": 6.59,
+    "bench_cagr": 5.99,
+    "excess": 0.59,
+    "ex_arith": 0.88,
+    "t": 0.5,
+    "t_nw": 0.4,
+    "vol": 17.7,
+    "bench_vol": 15.8,
+    "maxdd": -36.9,
+    "bench_maxdd": -31.9,
+    "roll10_win": "3/3",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 13.0,
+     "excess": 0.9,
+     "t": 0.64
+    }
+   },
+   {
+    "fund": "PXH",
+    "bench": "EEM",
+    "note": "",
+    "from": 200710,
+    "to": 202512,
+    "years": 18.2,
+    "cagr": 3.11,
+    "bench_cagr": 2.72,
+    "excess": 0.39,
+    "ex_arith": 0.61,
+    "t": 0.44,
+    "t_nw": 0.4,
+    "vol": 21.9,
+    "bench_vol": 20.9,
+    "maxdd": -58.0,
+    "bench_maxdd": -60.4,
+    "roll10_win": "4/9",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 18.9,
+     "excess": 0.08,
+     "t": 0.15
+    }
+   },
+   {
+    "fund": "PXH",
+    "bench": "VWO",
+    "note": "",
+    "from": 200710,
+    "to": 202512,
+    "years": 18.2,
+    "cagr": 3.11,
+    "bench_cagr": 3.12,
+    "excess": -0.0,
+    "ex_arith": 0.29,
+    "t": 0.21,
+    "t_nw": 0.19,
+    "vol": 21.9,
+    "bench_vol": 20.6,
+    "maxdd": -58.0,
+    "bench_maxdd": -61.7,
+    "roll10_win": "2/9",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 18.9,
+     "excess": 0.18,
+     "t": 0.33
+    }
+   },
+   {
+    "fund": "DFEV",
+    "bench": "EEM",
+    "note": "",
+    "from": 202205,
+    "to": 202512,
+    "years": 3.7,
+    "cagr": 12.12,
+    "bench_cagr": 10.11,
+    "excess": 2.01,
+    "ex_arith": 1.55,
+    "t": 0.68,
+    "t_nw": 0.81,
+    "vol": 14.7,
+    "bench_vol": 16.6,
+    "maxdd": -16.7,
+    "bench_maxdd": -19.1,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 4.3,
+     "excess": 2.63,
+     "t": 1.01
+    }
+   },
+   {
+    "fund": "DFEV",
+    "bench": "VWO",
+    "note": "",
+    "from": 202205,
+    "to": 202512,
+    "years": 3.7,
+    "cagr": 12.12,
+    "bench_cagr": 9.89,
+    "excess": 2.23,
+    "ex_arith": 2.0,
+    "t": 0.89,
+    "t_nw": 0.93,
+    "vol": 14.7,
+    "bench_vol": 15.0,
+    "maxdd": -16.7,
+    "bench_maxdd": -17.1,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 4.3,
+     "excess": 5.11,
+     "t": 1.56
+    }
+   },
+   {
+    "fund": "DEM",
+    "bench": "EEM",
+    "note": "",
+    "from": 200708,
+    "to": 202512,
+    "years": 18.4,
+    "cagr": 4.5,
+    "bench_cagr": 3.37,
+    "excess": 1.14,
+    "ex_arith": 0.75,
+    "t": 0.43,
+    "t_nw": 0.36,
+    "vol": 19.3,
+    "bench_vol": 21.0,
+    "maxdd": -48.4,
+    "bench_maxdd": -60.4,
+    "roll10_win": "6/9",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 19.1,
+     "excess": 1.02,
+     "t": 0.31
+    }
+   },
+   {
+    "fund": "DEM",
+    "bench": "VWO",
+    "note": "",
+    "from": 200708,
+    "to": 202512,
+    "years": 18.4,
+    "cagr": 4.5,
+    "bench_cagr": 3.61,
+    "excess": 0.89,
+    "ex_arith": 0.57,
+    "t": 0.35,
+    "t_nw": 0.28,
+    "vol": 19.3,
+    "bench_vol": 20.6,
+    "maxdd": -48.4,
+    "bench_maxdd": -61.7,
+    "roll10_win": "4/9",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 19.1,
+     "excess": 1.27,
+     "t": 0.57
+    }
+   },
+   {
+    "fund": "DVYE",
+    "bench": "EEM",
+    "note": "",
+    "from": 201203,
+    "to": 202512,
+    "years": 13.8,
+    "cagr": 2.21,
+    "bench_cagr": 3.81,
+    "excess": -1.61,
+    "ex_arith": -1.41,
+    "t": -0.64,
+    "t_nw": -0.61,
+    "vol": 17.2,
+    "bench_vol": 16.3,
+    "maxdd": -42.3,
+    "bench_maxdd": -36.5,
+    "roll10_win": "0/4",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 14.5,
+     "excess": -1.99,
+     "t": -0.73
+    }
+   },
+   {
+    "fund": "DVYE",
+    "bench": "VWO",
+    "note": "",
+    "from": 201203,
+    "to": 202512,
+    "years": 13.8,
+    "cagr": 2.21,
+    "bench_cagr": 4.34,
+    "excess": -2.13,
+    "ex_arith": -1.82,
+    "t": -0.87,
+    "t_nw": -0.8,
+    "vol": 17.2,
+    "bench_vol": 15.7,
+    "maxdd": -42.3,
+    "bench_maxdd": -31.9,
+    "roll10_win": "0/4",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 14.5,
+     "excess": -1.86,
+     "t": -0.7
+    }
+   },
+   {
+    "fund": "EDIV",
+    "bench": "EEM",
+    "note": "",
+    "from": 201103,
+    "to": 202512,
+    "years": 14.8,
+    "cagr": 2.73,
+    "bench_cagr": 3.46,
+    "excess": -0.73,
+    "ex_arith": -0.78,
+    "t": -0.39,
+    "t_nw": -0.25,
+    "vol": 17.1,
+    "bench_vol": 17.6,
+    "maxdd": -48.1,
+    "bench_maxdd": -36.5,
+    "roll10_win": "2/5",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 15.5,
+     "excess": -1.51,
+     "t": -0.77
+    }
+   },
+   {
+    "fund": "EDIV",
+    "bench": "VWO",
+    "note": "",
+    "from": 201103,
+    "to": 202512,
+    "years": 14.8,
+    "cagr": 2.73,
+    "bench_cagr": 3.93,
+    "excess": -1.2,
+    "ex_arith": -1.15,
+    "t": -0.61,
+    "t_nw": -0.4,
+    "vol": 17.1,
+    "bench_vol": 17.0,
+    "maxdd": -48.1,
+    "bench_maxdd": -31.9,
+    "roll10_win": "1/5",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 15.5,
+     "excess": -1.37,
+     "t": -0.71
+    }
+   },
+   {
+    "fund": "合成: 新興国の割安＋高配当の器（等分）",
+    "bench": "EEM（2003-04以前は VEIEX）",
+    "note": "顔ぶれは事前に固定",
+    "from": 200101,
+    "to": 202512,
+    "years": 25.0,
+    "cagr": 10.25,
+    "bench_cagr": 7.93,
+    "excess": 2.31,
+    "ex_arith": 2.08,
+    "t": 1.65,
+    "t_nw": 1.5,
+    "vol": 20.7,
+    "bench_vol": 21.0,
+    "maxdd": -57.2,
+    "bench_maxdd": -60.4,
+    "roll10_win": "12/16",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 25.7,
+     "excess": 2.12,
+     "t": 1.41
+    }
+   }
+  ],
+  "japan": [
+   {
+    "fund": "1478.T",
+    "bench": "1348.T（MAXIS TOPIX）",
+    "note": "円建て・2013-01 から",
+    "from": 201511,
+    "to": 202512,
+    "years": 10.2,
+    "cagr": 11.94,
+    "bench_cagr": 10.44,
+    "excess": 1.5,
+    "ex_arith": 1.3,
+    "t": 0.66,
+    "t_nw": 0.75,
+    "vol": 13.2,
+    "bench_vol": 13.6,
+    "maxdd": -24.7,
+    "bench_maxdd": -20.2,
+    "roll10_win": "1/1",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 10.8,
+     "excess": 1.15,
+     "t": 0.43
+    }
+   },
+   {
+    "fund": "1489.T",
+    "bench": "1348.T（MAXIS TOPIX）",
+    "note": "円建て・2013-01 から",
+    "from": 201703,
+    "to": 202512,
+    "years": 8.8,
+    "cagr": 16.48,
+    "bench_cagr": 12.01,
+    "excess": 4.47,
+    "ex_arith": 4.28,
+    "t": 1.4,
+    "t_nw": 1.04,
+    "vol": 15.4,
+    "bench_vol": 13.0,
+    "maxdd": -30.0,
+    "bench_maxdd": -19.6,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 9.5,
+     "excess": 4.61,
+     "t": 1.4
+    }
+   },
+   {
+    "fund": "1577.T",
+    "bench": "1348.T（MAXIS TOPIX）",
+    "note": "円建て・2013-01 から",
+    "from": 201304,
+    "to": 202512,
+    "years": 12.8,
+    "cagr": 13.26,
+    "bench_cagr": 12.14,
+    "excess": 1.12,
+    "ex_arith": 1.11,
+    "t": 0.62,
+    "t_nw": 0.59,
+    "vol": 15.0,
+    "bench_vol": 14.2,
+    "maxdd": -31.3,
+    "bench_maxdd": -23.8,
+    "roll10_win": "2/3",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 13.4,
+     "excess": 1.21,
+     "t": 0.63
+    }
+   },
+   {
+    "fund": "1698.T",
+    "bench": "1348.T（MAXIS TOPIX）",
+    "note": "円建て・2013-01 から",
+    "from": 201301,
+    "to": 202512,
+    "years": 13.0,
+    "cagr": 14.57,
+    "bench_cagr": 13.56,
+    "excess": 1.02,
+    "ex_arith": 0.84,
+    "t": 0.51,
+    "t_nw": 0.46,
+    "vol": 13.9,
+    "bench_vol": 14.4,
+    "maxdd": -26.4,
+    "bench_maxdd": -23.8,
+    "roll10_win": "4/4",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 13.7,
+     "excess": 0.77,
+     "t": 0.32
+    }
+   },
+   {
+    "fund": "1651.T",
+    "bench": "1348.T（MAXIS TOPIX）",
+    "note": "円建て・2013-01 から",
+    "from": 201710,
+    "to": 202512,
+    "years": 8.2,
+    "cagr": 15.13,
+    "bench_cagr": 11.47,
+    "excess": 3.66,
+    "ex_arith": 3.46,
+    "t": 1.32,
+    "t_nw": 1.27,
+    "vol": 14.8,
+    "bench_vol": 13.4,
+    "maxdd": -26.7,
+    "bench_maxdd": -19.6,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 8.9,
+     "excess": 3.86,
+     "t": 1.27
+    }
+   },
+   {
+    "fund": "1494.T",
+    "bench": "1348.T（MAXIS TOPIX）",
+    "note": "円建て・2013-01 から",
+    "from": 201706,
+    "to": 202512,
+    "years": 8.6,
+    "cagr": 13.12,
+    "bench_cagr": 11.99,
+    "excess": 1.14,
+    "ex_arith": 1.08,
+    "t": 0.4,
+    "t_nw": 0.57,
+    "vol": 13.6,
+    "bench_vol": 13.2,
+    "maxdd": -24.9,
+    "bench_maxdd": -19.6,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 9.2,
+     "excess": 0.06,
+     "t": 0.04
+    }
+   },
+   {
+    "fund": "2529.T",
+    "bench": "1348.T（MAXIS TOPIX）",
+    "note": "円建て・2013-01 から",
+    "from": 201905,
+    "to": 202512,
+    "years": 6.7,
+    "cagr": 14.91,
+    "bench_cagr": 14.42,
+    "excess": 0.49,
+    "ex_arith": 0.51,
+    "t": 0.24,
+    "t_nw": 0.21,
+    "vol": 13.6,
+    "bench_vol": 13.0,
+    "maxdd": -20.4,
+    "bench_maxdd": -17.2,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 7.3,
+     "excess": 0.25,
+     "t": 0.09
+    }
+   },
+   {
+    "fund": "2564.T",
+    "bench": "1348.T（MAXIS TOPIX）",
+    "note": "円建て・2013-01 から",
+    "from": 202009,
+    "to": 202512,
+    "years": 5.3,
+    "cagr": 21.02,
+    "bench_cagr": 17.79,
+    "excess": 3.23,
+    "ex_arith": 2.68,
+    "t": 0.65,
+    "t_nw": 1.01,
+    "vol": 10.8,
+    "bench_vol": 11.4,
+    "maxdd": -6.6,
+    "bench_maxdd": -7.5,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 6.0,
+     "excess": 1.39,
+     "t": 0.23
+    }
+   },
+   {
+    "fund": "1478.T",
+    "bench": "1305.T（iFreeETF TOPIX）",
+    "note": "相手の取り違えの検査",
+    "from": 201511,
+    "to": 202512,
+    "years": 10.2,
+    "cagr": 11.94,
+    "bench_cagr": 10.44,
+    "excess": 1.49,
+    "ex_arith": 1.29,
+    "t": 0.64,
+    "t_nw": 0.74,
+    "vol": 13.2,
+    "bench_vol": 13.6,
+    "maxdd": -24.7,
+    "bench_maxdd": -20.0,
+    "roll10_win": "1/1",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 10.8,
+     "excess": 1.16,
+     "t": 0.44
+    }
+   },
+   {
+    "fund": "1489.T",
+    "bench": "1305.T（iFreeETF TOPIX）",
+    "note": "相手の取り違えの検査",
+    "from": 201703,
+    "to": 202512,
+    "years": 8.8,
+    "cagr": 16.48,
+    "bench_cagr": 12.03,
+    "excess": 4.45,
+    "ex_arith": 4.25,
+    "t": 1.39,
+    "t_nw": 1.04,
+    "vol": 15.4,
+    "bench_vol": 13.1,
+    "maxdd": -30.0,
+    "bench_maxdd": -19.8,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 9.5,
+     "excess": 4.61,
+     "t": 1.41
+    }
+   },
+   {
+    "fund": "1577.T",
+    "bench": "1305.T（iFreeETF TOPIX）",
+    "note": "相手の取り違えの検査",
+    "from": 201304,
+    "to": 202512,
+    "years": 12.8,
+    "cagr": 13.26,
+    "bench_cagr": 12.17,
+    "excess": 1.08,
+    "ex_arith": 1.07,
+    "t": 0.6,
+    "t_nw": 0.57,
+    "vol": 15.0,
+    "bench_vol": 14.3,
+    "maxdd": -31.3,
+    "bench_maxdd": -23.7,
+    "roll10_win": "2/3",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 13.4,
+     "excess": 1.19,
+     "t": 0.62
+    }
+   },
+   {
+    "fund": "1698.T",
+    "bench": "1305.T（iFreeETF TOPIX）",
+    "note": "相手の取り違えの検査",
+    "from": 201301,
+    "to": 202512,
+    "years": 13.0,
+    "cagr": 14.57,
+    "bench_cagr": 13.61,
+    "excess": 0.97,
+    "ex_arith": 0.78,
+    "t": 0.48,
+    "t_nw": 0.43,
+    "vol": 13.9,
+    "bench_vol": 14.4,
+    "maxdd": -26.4,
+    "bench_maxdd": -23.7,
+    "roll10_win": "4/4",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 13.7,
+     "excess": 0.74,
+     "t": 0.3
+    }
+   },
+   {
+    "fund": "合成: 日本の高配当ETF（等分）",
+    "bench": "1348.T",
+    "note": "顔ぶれは事前に固定",
+    "from": 201301,
+    "to": 202512,
+    "years": 13.0,
+    "cagr": 14.96,
+    "bench_cagr": 13.56,
+    "excess": 1.4,
+    "ex_arith": 1.19,
+    "t": 0.77,
+    "t_nw": 0.73,
+    "vol": 14.0,
+    "bench_vol": 14.4,
+    "maxdd": -26.3,
+    "bench_maxdd": -23.8,
+    "roll10_win": "4/4",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 13.7,
+     "excess": 1.21,
+     "t": 0.59
+    }
+   },
+   {
+    "fund": "EWJV",
+    "bench": "EWJ",
+    "note": "米ドル建て・日本の割安",
+    "from": 201904,
+    "to": 202512,
+    "years": 6.8,
+    "cagr": 11.05,
+    "bench_cagr": 8.37,
+    "excess": 2.68,
+    "ex_arith": 2.45,
+    "t": 1.02,
+    "t_nw": 1.09,
+    "vol": 14.1,
+    "bench_vol": 14.2,
+    "maxdd": -22.3,
+    "bench_maxdd": -28.9,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 7.4,
+     "excess": 2.73,
+     "t": 0.99
+    }
+   },
+   {
+    "fund": "紙: 規則の日本（French Japan の EP/CEP/YLD High・米ドル）",
+    "bench": "French Japan Mkt",
+    "note": "同じ規則の日本だけ・2013-01〜",
+    "from": 201301,
+    "to": 202512,
+    "years": 13.0,
+    "cagr": 10.49,
+    "bench_cagr": 8.56,
+    "excess": 1.93,
+    "ex_arith": 1.82,
+    "t": 1.21,
+    "t_nw": 1.06,
+    "vol": 13.4,
+    "bench_vol": 13.1,
+    "maxdd": -20.9,
+    "bench_maxdd": -29.0,
+    "roll10_win": "4/4"
+   },
+   {
+    "fund": "紙: 規則の日本",
+    "bench": "French Japan Mkt",
+    "note": "検定期間 2001-01〜",
+    "from": 200101,
+    "to": 202512,
+    "years": 25.0,
+    "cagr": 7.96,
+    "bench_cagr": 4.9,
+    "excess": 3.07,
+    "ex_arith": 2.87,
+    "t": 2.68,
+    "t_nw": 2.39,
+    "vol": 14.8,
+    "bench_vol": 14.9,
+    "maxdd": -41.4,
+    "bench_maxdd": -44.4,
+    "roll10_win": "13/16"
+   }
+  ],
+  "reference": [
+   {
+    "fund": "EFG（EAFE の成長）",
+    "bench": "EFA",
+    "note": "割安の器 EFV の裏側",
+    "from": 200509,
+    "to": 202512,
+    "years": 20.3,
+    "cagr": 5.76,
+    "bench_cagr": 5.79,
+    "excess": -0.02,
+    "ex_arith": -0.04,
+    "t": -0.04,
+    "t_nw": -0.04,
+    "vol": 16.9,
+    "bench_vol": 17.0,
+    "maxdd": -55.4,
+    "bench_maxdd": -57.4,
+    "roll10_win": "10/11",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 21.0,
+     "excess": -0.19,
+     "t": -0.21
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200509,
+      "to": 202512,
+      "excess": 1.69,
+      "t": 1.77,
+      "t_nw": 1.56
+     },
+     "paper_capweight_country": {
+      "from": 200509,
+      "to": 202512,
+      "excess": 1.81,
+      "t": 2.0,
+      "t_nw": 1.79
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": -0.57,
+     "alpha_pct_yr": 1.08,
+     "alpha_t": 1.84,
+     "corr": -0.74
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": -0.78,
+     "alpha_pct_yr": 1.44,
+     "alpha_t": 3.17,
+     "corr": -0.85
+    }
+   },
+   {
+    "fund": "EFV",
+    "bench": "EFG",
+    "note": "割安−成長（MSCI の定義）",
+    "from": 200509,
+    "to": 202512,
+    "years": 20.3,
+    "cagr": 5.43,
+    "bench_cagr": 5.76,
+    "excess": -0.34,
+    "ex_arith": -0.11,
+    "t": -0.07,
+    "t_nw": -0.06,
+    "vol": 18.1,
+    "bench_vol": 16.9,
+    "maxdd": -59.7,
+    "bench_maxdd": -55.4,
+    "roll10_win": "1/11",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 21.0,
+     "excess": 0.01,
+     "t": 0.12
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200509,
+      "to": 202512,
+      "excess": 1.69,
+      "t": 1.77,
+      "t_nw": 1.56
+     },
+     "paper_capweight_country": {
+      "from": 200509,
+      "to": 202512,
+      "excess": 1.81,
+      "t": 2.0,
+      "t_nw": 1.79
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 1.16,
+     "alpha_pct_yr": -2.41,
+     "alpha_t": -2.14,
+     "corr": 0.76
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 1.58,
+     "alpha_pct_yr": -3.11,
+     "alpha_t": -3.73,
+     "corr": 0.88
+    }
+   },
+   {
+    "fund": "DOL",
+    "bench": "EFA",
+    "note": "⚠ 途中で指数を替えた（旧 LargeCap Dividend）",
+    "from": 200607,
+    "to": 202512,
+    "years": 19.5,
+    "cagr": 4.96,
+    "bench_cagr": 5.11,
+    "excess": -0.14,
+    "ex_arith": -0.15,
+    "t": -0.21,
+    "t_nw": -0.19,
+    "vol": 17.1,
+    "bench_vol": 17.2,
+    "maxdd": -56.4,
+    "bench_maxdd": -57.4,
+    "roll10_win": "0/10",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 20.2,
+     "excess": 0.08,
+     "t": 0.12
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200607,
+      "to": 202512,
+      "excess": 1.77,
+      "t": 1.79,
+      "t_nw": 1.58
+     },
+     "paper_capweight_country": {
+      "from": 200607,
+      "to": 202512,
+      "excess": 1.94,
+      "t": 2.08,
+      "t_nw": 1.86
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.05,
+     "alpha_pct_yr": -0.24,
+     "alpha_t": -0.36,
+     "corr": 0.08
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.15,
+     "alpha_pct_yr": -0.46,
+     "alpha_t": -0.68,
+     "corr": 0.22
+    }
+   },
+   {
+    "fund": "DIM",
+    "bench": "EFA",
+    "note": "中型の配当＝大きさがずれる",
+    "from": 200607,
+    "to": 202512,
+    "years": 19.5,
+    "cagr": 5.74,
+    "bench_cagr": 5.11,
+    "excess": 0.63,
+    "ex_arith": 0.74,
+    "t": 0.87,
+    "t_nw": 0.9,
+    "vol": 17.8,
+    "bench_vol": 17.2,
+    "maxdd": -57.6,
+    "bench_maxdd": -57.4,
+    "roll10_win": "6/10",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 20.2,
+     "excess": 0.6,
+     "t": 0.83
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 200607,
+      "to": 202512,
+      "excess": 1.77,
+      "t": 1.79,
+      "t_nw": 1.58
+     },
+     "paper_capweight_country": {
+      "from": 200607,
+      "to": 202512,
+      "excess": 1.94,
+      "t": 2.08,
+      "t_nw": 1.86
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.17,
+     "alpha_pct_yr": 0.38,
+     "alpha_t": 0.46,
+     "corr": 0.23
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.23,
+     "alpha_pct_yr": 0.26,
+     "alpha_t": 0.32,
+     "corr": 0.27
+    }
+   },
+   {
+    "fund": "AVDV",
+    "bench": "EFA",
+    "note": "小型の割安＝大きさがずれる",
+    "from": 201910,
+    "to": 202512,
+    "years": 6.2,
+    "cagr": 14.27,
+    "bench_cagr": 9.68,
+    "excess": 4.59,
+    "ex_arith": 4.81,
+    "t": 1.72,
+    "t_nw": 1.93,
+    "vol": 20.0,
+    "bench_vol": 16.6,
+    "maxdd": -33.9,
+    "bench_maxdd": -27.6,
+    "roll10_win": null,
+    "to_2026_08": {
+     "to": 202608,
+     "years": 6.9,
+     "excess": 5.28,
+     "t": 1.89
+    },
+    "paper_same_months": {
+     "rule_equal_country": {
+      "from": 201910,
+      "to": 202512,
+      "excess": 3.01,
+      "t": 1.37,
+      "t_nw": 1.24
+     },
+     "paper_capweight_country": {
+      "from": 201910,
+      "to": 202512,
+      "excess": 3.25,
+      "t": 1.38,
+      "t_nw": 1.35
+     }
+    },
+    "fund_excess_on_rule_excess": {
+     "beta": 0.59,
+     "alpha_pct_yr": 3.03,
+     "alpha_t": 1.2,
+     "corr": 0.47
+    },
+    "fund_excess_on_paper_capweight_excess": {
+     "beta": 0.55,
+     "alpha_pct_yr": 3.07,
+     "alpha_t": 1.2,
+     "corr": 0.45
+    }
+   }
+  ],
+  "bench_checks": [
+   {
+    "fund": "EFA",
+    "bench": "French Developed_ex_US Mkt",
+    "note": "相手の継ぎ目の検査（EFA はカナダ無し・経費あり）",
+    "from": 200109,
+    "to": 202512,
+    "years": 24.3,
+    "cagr": 6.33,
+    "bench_cagr": 7.44,
+    "excess": -1.12,
+    "ex_arith": -0.98,
+    "t": -1.65,
+    "t_nw": -2.64,
+    "vol": 16.7,
+    "bench_vol": 16.2,
+    "maxdd": -57.4,
+    "bench_maxdd": -55.9,
+    "roll10_win": "0/15",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 25.0,
+     "excess": -1.09,
+     "t": -1.62
+    }
+   },
+   {
+    "fund": "VTMGX",
+    "bench": "EFA",
+    "note": "",
+    "from": 200109,
+    "to": 202512,
+    "years": 24.3,
+    "cagr": 6.66,
+    "bench_cagr": 6.33,
+    "excess": 0.34,
+    "ex_arith": 0.34,
+    "t": 1.08,
+    "t_nw": 1.55,
+    "vol": 16.8,
+    "bench_vol": 16.7,
+    "maxdd": -57.1,
+    "bench_maxdd": -57.4,
+    "roll10_win": "15/15",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 25.0,
+     "excess": 0.48,
+     "t": 1.35
+    }
+   },
+   {
+    "fund": "DFALX",
+    "bench": "French Developed_ex_US Mkt",
+    "note": "",
+    "from": 199108,
+    "to": 202512,
+    "years": 34.4,
+    "cagr": 6.33,
+    "bench_cagr": 6.63,
+    "excess": -0.3,
+    "ex_arith": -0.27,
+    "t": -0.58,
+    "t_nw": -0.6,
+    "vol": 15.9,
+    "bench_vol": 15.8,
+    "maxdd": -56.0,
+    "bench_maxdd": -55.9,
+    "roll10_win": "3/25",
+    "to_2026_08": {
+     "to": 202608,
+     "years": 35.1,
+     "excess": -0.26,
+     "t": -0.52
+    }
+   },
+   {
+    "fund": "紙: 国を時価で重ねた EP/CEP/YLD High",
+    "bench": "紙: 同じ21か国の時価加重 Mkt",
+    "note": "国の配分を器と同じ時価にした紙の版",
+    "from": 200101,
+    "to": 202512,
+    "years": 25.0,
+    "cagr": 9.06,
+    "bench_cagr": 6.17,
+    "excess": 2.89,
+    "ex_arith": 2.89,
+    "t": 3.31,
+    "t_nw": 2.77,
+    "vol": 17.5,
+    "bench_vol": 16.3,
+    "maxdd": -58.0,
+    "bench_maxdd": -56.0,
+    "roll10_win": "14/16"
+   },
+   {
+    "fund": "紙: 国を時価で重ねた EP/CEP/YLD High",
+    "bench": "紙: 時価加重 Mkt",
+    "note": "選定期間 1975〜2000",
+    "from": 197501,
+    "to": 200012,
+    "years": 26.0,
+    "cagr": 17.31,
+    "bench_cagr": 14.17,
+    "excess": 3.14,
+    "ex_arith": 2.7,
+    "t": 2.79,
+    "t_nw": 2.75,
+    "vol": 16.4,
+    "bench_vol": 16.7,
+    "maxdd": -27.3,
+    "bench_maxdd": -29.4,
+    "roll10_win": "17/17"
+   },
+   {
+    "fund": "紙: 凍結した規則（21か国等加重）",
+    "bench": "21か国等加重 Mkt",
+    "note": "再現",
+    "from": 200101,
+    "to": 202512,
+    "years": 25.0,
+    "cagr": 10.88,
+    "bench_cagr": 7.85,
+    "excess": 3.03,
+    "ex_arith": 3.12,
+    "t": 3.15,
+    "t_nw": 2.58,
+    "vol": 19.6,
+    "bench_vol": 17.8,
+    "maxdd": -65.4,
+    "bench_maxdd": -60.3,
+    "roll10_win": "14/16"
+   }
+  ]
+ },
+ "scripts_note": "計算は scratchpad の yf.py / funds.py / qc.py / extra.py / extra2.py（repo には置いていない）。source に全文を残す",
+ "source": {
+  "yf.py": "\"\"\"Yahoo の月次 adjclose を harness.yahoo と同じ取り方で取る（キャッシュは scratchpad だけ）。\nevents=div|split|capitalGain も一緒に取り、配当の記録と adjclose の整合を検査できるようにする。\"\"\"\nimport os, json, time, datetime, urllib.request\nSP = os.path.dirname(os.path.abspath(__file__))\nCD = os.path.join(SP, 'yh_ivf_only')\nUA = {'User-Agent': 'Mozilla/5.0 (ccf-gate research)'}\nos.makedirs(CD, exist_ok=True)\n\ndef raw(sym, days=3):\n    p = os.path.join(CD, sym + '.json')\n    if os.path.exists(p) and time.time() - os.path.getmtime(p) < days * 86400 and os.path.getsize(p) > 200:\n        return json.load(open(p))\n    url = (f'https://query1.finance.yahoo.com/v8/finance/chart/{sym}?period1=0&period2={int(time.time())}'\n           f'&interval=1mo&events=div%7Csplit%7CcapitalGain')\n    for a in range(3):\n        try:\n            b = urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=40).read()\n            j = json.loads(b)\n            json.dump(j, open(p, 'w'))\n            time.sleep(0.6)\n            return j\n        except urllib.error.HTTPError as e:\n            if e.code in (400, 404):\n                json.dump({'chart': {'result': None, 'error': str(e.code)}}, open(p, 'w'))\n                return None\n            time.sleep(3 * (a + 1))\n        except Exception:\n            time.sleep(3 * (a + 1))\n    return None\n\ndef monthly(sym):\n    \"\"\"→ dict(adj={YYYYMM: adjclose}, close={YYYYMM: close}, divs=[(YYYYMMDD, amt)], meta) or None\"\"\"\n    j = raw(sym)\n    try:\n        res = j['chart']['result'][0]\n    except Exception:\n        return None\n    if not res or not res.get('timestamp'):\n        return None\n    ind = res['indicators']\n    adj = (ind.get('adjclose') or [{}])[0].get('adjclose')\n    cl = ind['quote'][0]['close']\n    gmt = (res.get('meta') or {}).get('gmtoffset') or 0\n    A, C = {}, {}\n    for t, a, c in zip(res['timestamp'], adj or cl, cl):\n        d = datetime.datetime.utcfromtimestamp(t + gmt)\n        k = d.year * 100 + d.month\n        if a is not None:\n            A[k] = float(a)\n        if c is not None:\n            C[k] = float(c)\n    dv = []\n    for v in (res.get('events') or {}).get('dividends', {}).values():\n        d = datetime.datetime.utcfromtimestamp(v['date'] + gmt)\n        dv.append((d.year * 10000 + d.month * 100 + d.day, v['amount']))\n    cg = []\n    for v in (res.get('events') or {}).get('capitalGains', {}).values():\n        d = datetime.datetime.utcfromtimestamp(v['date'] + gmt)\n        cg.append((d.year * 10000 + d.month * 100 + d.day, v['amount']))\n    m = res.get('meta') or {}\n    return {'adj': A, 'close': C, 'divs': sorted(dv), 'cg': sorted(cg), 'has_adj': adj is not None,\n            'meta': {'type': m.get('instrumentType'), 'ccy': m.get('currency'), 'name': m.get('longName') or m.get('shortName'),\n                     'first': min(A) if A else None, 'last': max(A) if A else None}}\n",
+  "funds.py": "\"\"\"intl_value の『実際に買えた器』レンズ。読むだけ。書くのは out/edge/verify_intl_value_funds.json だけ。\n★比べる組と合成の顔ぶれは、結果を見る前（この段）に固定した。\"\"\"\nimport os, sys, json, math, zipfile, io, statistics as S\nos.environ['EDGE_PHASE'] = 'holdout'\nSP = os.path.dirname(os.path.abspath(__file__))\nsys.path.insert(0, SP)\nsys.path.insert(0, '/home/user/ccf-gate/night/edge')\nimport harness as h, fam_intl_value as F, yf\n\nEND = 202512          # 規則（French 国別）の最後の月にそろえる\nEND2 = 202608         # 器だけの延長（参考）\n\n# ── 規則（凍結どおり）──\nspec = json.load(open('/home/user/ccf-gate/out/edge/spec_intl_value.json'))['spec']\nR = F.run(spec)\nrule_net = {m: R['ret'][m] - R['turnover'].get(m, 0) * R['cost'] for m in R['ret']}\nrule_b = R['bench']\nrf = R['rf']\nper_country = R['markets']\n\n# ── 同じ特徴の『国を時価で重ねた』紙の版（French International Indices の Ind_all）──\nz = zipfile.ZipFile(os.path.join(SP, 'F-F_International_Indices.zip'))\nL = z.read('Ind_all.Dat').decode('latin-1').split('\\n')\ni0 = next(k for k, l in enumerate(L) if 'Value-Weight Dollar Returns' in l and 'Not Reqd' in l)\ncw = {c: {} for c in F.COLS}\nfor l in L[i0 + 3:]:\n    p = l.split()\n    if not p or not (p[0].isdigit() and len(p[0]) == 6):\n        if cw['Mkt']:\n            break\n        continue\n    for c, v in zip(F.COLS, p[1:]):\n        if float(v) > -99:\n            cw[c][int(p[0])] = float(v) / 100\ncw_val = {m: (cw['EP_H'][m] + cw['CEP_H'][m] + cw['YLD_H'][m]) / 3 - (F.TURN_YEAR * F.COST if m % 100 == 1 else 0)\n          for m in cw['Mkt'] if all(m in cw[k] for k in ('EP_H', 'CEP_H', 'YLD_H'))}\ncw_mkt = cw['Mkt']\n\n# ── 地域の市場（French・紙・経費なし）──\ndxu, _ = h.french_region('Developed_ex_US')\nd = h.french('Emerging_5_Factors'); t = next(iter(d))\nemk = {m: (d[t]['Mkt-RF'][m] + d[t]['RF'][m]) / 100 for m in d[t]['Mkt-RF'] if 99999 < m < 1000000 and m in d[t]['RF']}\n\n# ── 器 ──\ndef ret_of(sym):\n    x = yf.monthly(sym)\n    if not x:\n        return None\n    return h.px_to_ret(x['adj'])\n\ndef splice(first, second, switch):\n    \"\"\"switch 以降は second、それより前は first\"\"\"\n    o = {m: v for m, v in first.items() if m < switch}\n    o.update({m: v for m, v in second.items() if m >= switch})\n    return o\n\ndef stats(a, b, lo=None, hi=END):\n    ms = [m for m in sorted(set(a) & set(b)) if (lo is None or m >= lo) and m <= hi]\n    if len(ms) < 24:\n        return None\n    s = h.stats({m: a[m] for m in ms}, {m: b[m] for m in ms}, rf)\n    s['n_months'] = len(ms)\n    return s, ms\n\ndef reg(y, x):\n    n = len(y); mx, my = S.mean(x), S.mean(y)\n    sxx = sum((u - mx) ** 2 for u in x)\n    if sxx <= 0:\n        return None\n    b = sum((u - mx) * (v - my) for u, v in zip(x, y)) / sxx\n    a = my - b * mx\n    res = [v - a - b * u for u, v in zip(x, y)]\n    se = math.sqrt(sum(e * e for e in res) / (n - 2) * (1 / n + mx * mx / sxx))\n    corr = b * math.sqrt(sxx / sum((v - my) ** 2 for v in y))\n    return {'beta': round(b, 2), 'alpha_pct_yr': round(a * 1200, 2), 'alpha_t': round(a / se, 2) if se > 0 else None, 'corr': round(corr, 2)}\n\ndef paper_same_window(ms):\n    \"\"\"同じ月で: 凍結した規則（21か国等加重）と、国を時価で重ねた紙の版の超過\"\"\"\n    out = {}\n    r = h.stats({m: rule_net[m] for m in ms if m in rule_net}, {m: rule_b[m] for m in ms if m in rule_b}, rf)\n    if r:\n        out['rule_equal_country'] = {k: r[k] for k in ('from', 'to', 'excess', 't', 't_nw')}\n    c = h.stats({m: cw_val[m] for m in ms if m in cw_val}, {m: cw_mkt[m] for m in ms if m in cw_mkt}, rf)\n    if c:\n        out['paper_capweight_country'] = {k: c[k] for k in ('from', 'to', 'excess', 't', 't_nw')}\n    return out\n\ndef compare(fund, fr, bench_name, br, note='', paper=True, lo=None):\n    if fr is None or br is None:\n        return {'fund': fund, 'bench': bench_name, 'error': '取れない'}\n    s = stats(fr, br, lo)\n    if not s:\n        return {'fund': fund, 'bench': bench_name, 'error': '重なる月が24未満'}\n    st, ms = s\n    row = {'fund': fund, 'bench': bench_name, 'note': note}\n    row.update({k: st[k] for k in ('from', 'to', 'years', 'cagr', 'bench_cagr', 'excess', 'ex_arith', 't', 't_nw',\n                                   'vol', 'bench_vol', 'maxdd', 'bench_maxdd', 'roll10_win')})\n    s2 = stats(fr, br, lo, END2)\n    if s2 and s2[0]['to'] != st['to']:\n        row['to_2026_08'] = {k: s2[0][k] for k in ('to', 'years', 'excess', 't')}\n    if paper:\n        row['paper_same_months'] = paper_same_window(ms)\n        ex_f = [fr[m] - br[m] for m in ms if m in rule_net and m in rule_b]\n        ex_r = [rule_net[m] - rule_b[m] for m in ms if m in rule_net and m in rule_b]\n        if len(ex_f) >= 24:\n            row['fund_excess_on_rule_excess'] = reg(ex_f, ex_r)\n        ex_c = [cw_val[m] - cw_mkt[m] for m in ms if m in cw_val and m in cw_mkt]\n        ex_f2 = [fr[m] - br[m] for m in ms if m in cw_val and m in cw_mkt]\n        if len(ex_c) >= 24:\n            row['fund_excess_on_paper_capweight_excess'] = reg(ex_f2, ex_c)\n    return row\n\ndef composite(syms, rets):\n    \"\"\"その月に在る器の等分（途中で増える）。器の選び方は事前に固定\"\"\"\n    o, cnt = {}, {}\n    for m in sorted(set().union(*[set(rets[s]) for s in syms if rets.get(s)])):\n        xs = [rets[s][m] for s in syms if rets.get(s) and m in rets[s]]\n        if xs:\n            o[m] = sum(xs) / len(xs); cnt[m] = len(xs)\n    return o, cnt\n\n# ── 事前に固定した顔ぶれ ──\nDEV_VALUE = ['DFIVX', 'VTRIX', 'EFV', 'PXF', 'FNDF', 'IVAL', 'IVLU', 'DFIV', 'AVIV']\nDEV_DIV = ['IDV', 'DWX', 'PID', 'DTH', 'FGD', 'VYMI', 'HDEF', 'IQDF', 'SCHY', 'DIVI']\nEM_VALUE = ['DFEVX', 'FNDE', 'PXH', 'DFEV']\nEM_DIV = ['DEM', 'DVYE', 'EDIV']\nJP_DIV = ['1478.T', '1489.T', '1577.T', '1698.T', '1651.T', '1494.T', '2529.T', '2564.T']\nREF = ['DOL', 'DIM', 'AVDV', 'EFG', 'EWJV']\nBENCH = ['EFA', 'VEA', 'ACWX', 'DFALX', 'VTMGX', 'VGTSX', 'EEM', 'VWO', 'VEIEX', 'DFEMX', 'EWJ', '1306.T', '1305.T', '1348.T']\nALL = DEV_VALUE + DEV_DIV + EM_VALUE + EM_DIV + JP_DIV + REF + BENCH\nrets = {s: ret_of(s) for s in ALL}\n\nJP_START = 201301     # Yahoo の東証TOPIX ETF（1305/1306/1348）は 2009-2012 の分配が記録に無い → 2013-01 から（結果を見る前に固定）\n\ndef main():\n    efa = rets['EFA']\n    splice_dev = splice(dxu, efa, 200109)          # 2001-08 以前は French の Developed_ex_US 市場（紙・経費なし）\n    splice_em = splice(rets['VEIEX'], rets['EEM'], 200305)\n    rows = {'developed': [], 'emerging': [], 'japan': [], 'reference': [], 'bench_checks': []}\n    D = rows['developed']\n    D.append(compare('DFIVX', rets['DFIVX'], 'EFA（2001-08以前は French Developed_ex_US Mkt）', splice_dev, '課題の指定どおり'))\n    D.append(compare('DFIVX', rets['DFIVX'], 'EFA（2001-08以前は French Developed_ex_US Mkt）', splice_dev, '検定期間 2001-01〜 だけ', lo=200101))\n    D.append(compare('DFIVX', rets['DFIVX'], 'DFALX（DFA Large Cap International・同じ会社のカナダ込みの市場）', rets['DFALX'], '同じ運用会社・同じ母集団の市場型'))\n    D.append(compare('DFIVX', rets['DFIVX'], 'DFALX', rets['DFALX'], '検定期間 2001-01〜', lo=200101))\n    D.append(compare('DFIVX', rets['DFIVX'], 'French Developed_ex_US Mkt（紙・経費なし）', dxu, '相手に経費が無い分だけ器に不利'))\n    D.append(compare('VTRIX', rets['VTRIX'], 'EFA（2001-08以前は French Developed_ex_US Mkt）', splice_dev, 'アクティブの割安（参考・規則ではない）'))\n    for s in ['EFV', 'PXF', 'FNDF', 'IVAL', 'IVLU', 'DFIV', 'AVIV', 'IDV', 'DWX', 'PID', 'DTH', 'FGD', 'VYMI', 'HDEF', 'IQDF', 'SCHY', 'DIVI']:\n        note = {'FGD': '世界（米国を含む）の高配当＝相手とずれる', 'VYMI': '新興国を含む（FTSE All-World ex US High Div）',\n                'IQDF': '新興国を含む・質の条件つき', 'SCHY': '新興国を含む'}.get(s, '')\n        D.append(compare(s, rets[s], 'EFA', efa, note))\n    for s in ['EFV', 'PXF', 'FNDF', 'IVAL', 'IDV', 'DWX', 'DTH']:\n        D.append(compare(s, rets[s], 'VEA', rets['VEA'], '相手を VEA（カナダ・小型込み）に替えた'))\n    for s in ['VYMI', 'IQDF', 'SCHY']:\n        D.append(compare(s, rets[s], 'ACWX', rets['ACWX'], '新興国込みの相手'))\n    # 合成（事前に固定した顔ぶれの、その月に在る器の等分）\n    cv, nv = composite(DEV_VALUE, rets)\n    cd, nd = composite(DEV_DIV, rets)\n    ca, na = composite(DEV_VALUE + DEV_DIV, rets)\n    for nm, c, n in (('合成: 先進国の割安の器（等分）', cv, nv), ('合成: 先進国の高配当の器（等分）', cd, nd), ('合成: 割安＋高配当の全器（等分）', ca, na)):\n        r1 = compare(nm, c, 'EFA（2001-08以前は French Developed_ex_US Mkt）', splice_dev, '顔ぶれは結果を見る前に固定・その月に在る器の等分', lo=200101)\n        r1['n_funds_range'] = [min(n[m] for m in n if 200101 <= m <= END), max(n[m] for m in n if 200101 <= m <= END)]\n        D.append(r1)\n        r2 = compare(nm, c, 'EFA', efa, '2005-09 以降（ETF がそろってから）', lo=200509)\n        D.append(r2)\n    E = rows['emerging']\n    E.append(compare('DFEVX', rets['DFEVX'], 'EEM（2003-04以前は VEIEX）', splice_em, '課題の指定どおり', paper=False))\n    E.append(compare('DFEVX', rets['DFEVX'], 'EEM（2003-04以前は VEIEX）', splice_em, '検定期間 2001-01〜', paper=False, lo=200101))\n    E.append(compare('DFEVX', rets['DFEVX'], 'DFEMX（同じ会社の新興国の市場型）', rets['DFEMX'], '同じ運用会社', paper=False))\n    E.append(compare('DFEVX', rets['DFEVX'], 'French Emerging Mkt（紙・経費なし）', emk, '', paper=False))\n    for s in ['FNDE', 'PXH', 'DFEV', 'DEM', 'DVYE', 'EDIV']:\n        E.append(compare(s, rets[s], 'EEM', rets['EEM'], '', paper=False))\n        E.append(compare(s, rets[s], 'VWO', rets['VWO'], '', paper=False))\n    ce, ne = composite(EM_VALUE + EM_DIV, rets)\n    r = compare('合成: 新興国の割安＋高配当の器（等分）', ce, 'EEM（2003-04以前は VEIEX）', splice_em, '顔ぶれは事前に固定', paper=False, lo=200101)\n    E.append(r)\n    J = rows['japan']\n    for s in JP_DIV:\n        J.append(compare(s, rets[s], '1348.T（MAXIS TOPIX）', rets['1348.T'], '円建て・2013-01 から', paper=False, lo=JP_START))\n    for s in ['1478.T', '1489.T', '1577.T', '1698.T']:\n        J.append(compare(s, rets[s], '1305.T（iFreeETF TOPIX）', rets['1305.T'], '相手の取り違えの検査', paper=False, lo=JP_START))\n    cj, nj = composite(JP_DIV, rets)\n    J.append(compare('合成: 日本の高配当ETF（等分）', cj, '1348.T', rets['1348.T'], '顔ぶれは事前に固定', paper=False, lo=JP_START))\n    J.append(compare('EWJV', rets['EWJV'], 'EWJ', rets['EWJ'], '米ドル建て・日本の割安', paper=False))\n    # 紙の日本（規則の Japan の国別）を同じ月で\n    if 'Japan' in per_country:\n        pj = per_country['Japan']\n        pjn = {m: pj['ret'][m] - pj['turnover'].get(m, 0) * pj['cost'] for m in pj['ret']}\n        J.append(compare('紙: 規則の日本（French Japan の EP/CEP/YLD High・米ドル）', pjn, 'French Japan Mkt', pj['bench'], '同じ規則の日本だけ・2013-01〜', paper=False, lo=JP_START))\n        J.append(compare('紙: 規則の日本', pjn, 'French Japan Mkt', pj['bench'], '検定期間 2001-01〜', paper=False, lo=200101))\n    Rf = rows['reference']\n    Rf.append(compare('EFG（EAFE の成長）', rets['EFG'], 'EFA', efa, '割安の器 EFV の裏側'))\n    Rf.append(compare('EFV', rets['EFV'], 'EFG', rets['EFG'], '割安−成長（MSCI の定義）'))\n    Rf.append(compare('DOL', rets['DOL'], 'EFA', efa, '⚠ 途中で指数を替えた（旧 LargeCap Dividend）'))\n    Rf.append(compare('DIM', rets['DIM'], 'EFA', efa, '中型の配当＝大きさがずれる'))\n    Rf.append(compare('AVDV', rets['AVDV'], 'EFA', efa, '小型の割安＝大きさがずれる'))\n    B = rows['bench_checks']\n    B.append(compare('EFA', efa, 'French Developed_ex_US Mkt', dxu, '相手の継ぎ目の検査（EFA はカナダ無し・経費あり）', paper=False))\n    B.append(compare('VTMGX', rets['VTMGX'], 'EFA', efa, '', paper=False))\n    B.append(compare('DFALX', rets['DFALX'], 'French Developed_ex_US Mkt', dxu, '', paper=False))\n    B.append(compare('紙: 国を時価で重ねた EP/CEP/YLD High', cw_val, '紙: 同じ21か国の時価加重 Mkt', cw_mkt, '国の配分を器と同じ時価にした紙の版', paper=False, lo=200101))\n    B.append(compare('紙: 国を時価で重ねた EP/CEP/YLD High', cw_val, '紙: 同じ21か国の時価加重 Mkt', cw_mkt, '選定期間 1975〜2000', paper=False, lo=197502) | {})\n    B[-1] = compare('紙: 国を時価で重ねた EP/CEP/YLD High', {m: v for m, v in cw_val.items() if m <= 200012}, '紙: 時価加重 Mkt', cw_mkt, '選定期間 1975〜2000', paper=False)\n    B.append(compare('紙: 凍結した規則（21か国等加重）', rule_net, '21か国等加重 Mkt', rule_b, '再現', paper=False, lo=200101))\n    return rows, splice_dev\n\nif __name__ == '__main__':\n    rows, _ = main()\n    json.dump(rows, open(os.path.join(SP, 'rows.json'), 'w'), ensure_ascii=False, indent=1)\n    for g, rs in rows.items():\n        print('=====', g)\n        for r in rs:\n            if 'error' in r:\n                print(r['fund'], 'vs', r['bench'], r['error']); continue\n            p = r.get('paper_same_months', {})\n            print(f\"{r['fund']:<34} vs {r['bench'][:28]:<28} {r['from']}-{r['to']} {r['years']:>4}y  {r['cagr']:>6} vs {r['bench_cagr']:>6}  ex {r['excess']:>6}  t {r['t']:>5} nw {r['t_nw']:>5}  vol {r['vol']}/{r['bench_vol']} dd {r['maxdd']}/{r['bench_maxdd']} r10 {r['roll10_win']}\"\n                  + (f\"  | 規則 {p['rule_equal_country']['excess']} (t{p['rule_equal_country']['t']})\" if 'rule_equal_country' in p else '')\n                  + (f\"  紙時価 {p['paper_capweight_country']['excess']} (t{p['paper_capweight_country']['t']})\" if 'paper_capweight_country' in p else '')\n                  + (f\"  β規則 {r['fund_excess_on_rule_excess']}\" if r.get('fund_excess_on_rule_excess') else '')\n                  + (f\" [{r['note']}]\" if r.get('note') else ''))\n",
+  "qc.py": "import sys, os, math, statistics as S\nSP = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, SP)\nfrom funds import *\n\ndef qc(sym):\n    x = yf.monthly(sym)\n    if not x:\n        return {'sym': sym, 'error': '取れない'}\n    A, C = x['adj'], x['close']\n    ks = sorted(A)\n    miss = [m for m in h.month_range(ks[0], ks[-1]) if m not in A]\n    r = h.px_to_ret(A)\n    big = [(m, round(v * 100, 1)) for m, v in r.items() if abs(v) > 0.35]\n    # adj/close の比の変化（配当の調整）を年ごとに\n    yr_adj, yr_div = {}, {}\n    for a, b in zip(ks, ks[1:]):\n        if a in C and b in C and C[a] and C[b]:\n            f = (A[b] / C[b]) / (A[a] / C[a])\n            yr_adj[b // 100] = yr_adj.get(b // 100, 0) + math.log(f)\n    for dd, amt in x['divs']:\n        m = dd // 100\n        prev = h.add_months(m, -1)\n        p = C.get(prev) or C.get(m)\n        if p:\n            yr_div[dd // 10000] = yr_div.get(dd // 10000, 0) + amt / p\n    full = [y for y in range(ks[0] // 100 + 1, ks[-1] // 100)]\n    nodiv = [y for y in full if yr_div.get(y, 0) == 0]\n    adj_no = [y for y in full if abs(yr_adj.get(y, 0)) < 1e-4]\n    return {'sym': sym, 'first': ks[0], 'last': ks[-1], 'missing_months': len(miss), 'big_moves': big[:6],\n            'years_without_div_event': nodiv, 'years_adj_flat': adj_no,\n            'mean_div_yield_events': round(S.mean([yr_div.get(y, 0) for y in full]) * 100, 2) if full else None,\n            'mean_div_yield_adj': round(S.mean([yr_adj.get(y, 0) for y in full]) * 100, 2) if full else None}\n\nif __name__ == '__main__':\n    for s in ALL:\n        q = qc(s)\n        flag = '  ←要注意' if (q.get('missing_months') or q.get('big_moves') or q.get('years_without_div_event') or q.get('years_adj_flat')) else ''\n        print(q, flag)\n",
+  "extra.py": "import sys, os, math, statistics as S\nSP = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, SP)\nfrom funds import *\n\nefa = rets['EFA']\nsplice_dev = splice(dxu, efa, 200109)\nsplice_em = splice(rets['VEIEX'], rets['EEM'], 200305)\ncv, _ = composite(DEV_VALUE, rets); cd, _ = composite(DEV_DIV, rets); ca, _ = composite(DEV_VALUE + DEV_DIV, rets)\nce, _ = composite(EM_VALUE + EM_DIV, rets); cj, _ = composite(JP_DIV, rets)\n\ndef ex(a, b, lo, hi):\n    ms = [m for m in sorted(set(a) & set(b)) if lo <= m <= hi]\n    if len(ms) < 12:\n        return None\n    g1 = math.prod(1 + a[m] for m in ms) ** (12 / len(ms)) - 1\n    g2 = math.prod(1 + b[m] for m in ms) ** (12 / len(ms)) - 1\n    e = [a[m] - b[m] for m in ms]\n    t = S.mean(e) / (S.stdev(e) / math.sqrt(len(e)))\n    return f\"{(g1-g2)*100:+.2f} (t{t:.2f}, {len(ms)}m)\"\n\nPER = [('2001-01〜2007-06', 200101, 200706), ('2007-07〜2020-12', 200707, 202012), ('2021-01〜2025-12', 202101, 202512),\n       ('2005-10〜2025-12（ETF期）', 200510, 202512), ('2008-01〜2025-12', 200801, 202512), ('2013-01〜2025-12', 201301, 202512)]\nPAIRS = [('紙: 凍結した規則（21か国等加重）', rule_net, rule_b), ('紙: 国を時価で重ねた版', cw_val, cw_mkt),\n         ('DFIVX vs EFA継ぎ', rets['DFIVX'], splice_dev), ('DFIVX vs DFALX', rets['DFIVX'], rets['DFALX']),\n         ('DFIVX vs French DevexUS（紙）', rets['DFIVX'], dxu),\n         ('EFV vs EFA', rets['EFV'], efa), ('PXF vs EFA', rets['PXF'], efa), ('FGD vs EFA', rets['FGD'], efa),\n         ('合成 割安 vs EFA継ぎ', cv, splice_dev), ('合成 高配当 vs EFA', cd, efa), ('合成 全器 vs EFA継ぎ', ca, splice_dev),\n         ('DFEVX vs EEM継ぎ', rets['DFEVX'], splice_em), ('DFEVX vs DFEMX', rets['DFEVX'], rets['DFEMX']),\n         ('合成 新興国 vs EEM継ぎ', ce, splice_em), ('合成 日本高配当 vs 1348', cj, rets['1348.T'])]\nsub = {}\nfor nm, a, b in PAIRS:\n    sub[nm] = {p: ex(a, b, lo, hi) for p, lo, hi in PER}\n    print(nm, sub[nm])\n\n# 紙の各脚（等加重の国・時価の国）を ETF 期で\ndef leg_eq(k):\n    o, bb = {}, {}\n    for c, t in F.country_tables('Dollar', 'Not Reqd').items():\n        pass\n    return None\ntabs, mkt = F.load(spec)\nlegs = {}\nfor k in ['EP', 'CEP', 'YLD', 'BM']:\n    r_, b_, tu, _ = F.build(tabs, mkt, [k])\n    rn = {m: r_[m] - tu.get(m, 0) * F.COST for m in r_}\n    cwk = {m: cw[k + '_H'][m] for m in cw[k + '_H']}\n    legs[k] = {'等加重の国 2001〜': ex(rn, b_, 200101, 202512), '等加重の国 ETF期': ex(rn, b_, 200510, 202512),\n               '時価の国 2001〜': ex(cwk, cw_mkt, 200101, 202512), '時価の国 ETF期': ex(cwk, cw_mkt, 200510, 202512)}\n    print('leg', k, legs[k])\n\n# 市場の感応度（β）を取り除いた超過: (器−rf) を (相手−rf) に回帰\ndef capm(a, b, lo, hi):\n    ms = [m for m in sorted(set(a) & set(b) & set(rf)) if lo <= m <= hi]\n    y = [a[m] - rf[m] for m in ms]; x = [b[m] - rf[m] for m in ms]\n    r = reg(y, x)\n    return r\ncap = {}\nfor nm, a, b in [('紙: 凍結した規則', rule_net, rule_b), ('紙: 時価の国', cw_val, cw_mkt), ('DFIVX vs EFA継ぎ', rets['DFIVX'], splice_dev),\n                 ('DFIVX vs DFALX', rets['DFIVX'], rets['DFALX']), ('合成 全器 vs EFA', ca, efa), ('DFEVX vs EEM継ぎ', rets['DFEVX'], splice_em)]:\n    cap[nm] = capm(a, b, 200101, 202512)\n    print('capm', nm, cap[nm])\n\n# 暦年ごとの超過（規則 vs DFIVX vs 合成）\ndef yearly(a, b):\n    o = {}\n    for y in range(2001, 2026):\n        ms = [m for m in sorted(set(a) & set(b)) if m // 100 == y]\n        if len(ms) == 12:\n            o[y] = round((math.prod(1 + a[m] for m in ms) - math.prod(1 + b[m] for m in ms)) * 100, 1)\n    return o\nyr = {'rule': yearly(rule_net, rule_b), 'paper_cw': yearly(cw_val, cw_mkt), 'DFIVX_vs_EFA': yearly(rets['DFIVX'], splice_dev),\n      'all_funds_vs_EFA': yearly(ca, splice_dev)}\nfor k, v in yr.items():\n    print(k, v, 'pos', sum(1 for x in v.values() if x > 0), '/', len(v))\njson.dump({'sub': sub, 'legs': legs, 'capm': cap, 'yearly': yr}, open(os.path.join(SP, 'extra.json'), 'w'), ensure_ascii=False, indent=1)\n",
+  "extra2.py": "import sys, os, math, statistics as S\nSP = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, SP)\nfrom funds import *\nefa = rets['EFA']; splice_dev = splice(dxu, efa, 200109); splice_em = splice(rets['VEIEX'], rets['EEM'], 200305)\n\n# 1) 投資信託の12月の検査（キャピタルゲイン分配が adjclose から漏れていれば、12月だけ器が大きく負ける）\ndef dec_test(a, b, lo=199401, hi=END):\n    ms = [m for m in sorted(set(a) & set(b)) if lo <= m <= hi]\n    d = [a[m] - b[m] for m in ms if m % 100 == 12]; o = [a[m] - b[m] for m in ms if m % 100 != 12]\n    se = math.sqrt(S.variance(d) / len(d) + S.variance(o) / len(o))\n    return {'dec_mean_pct': round(S.mean(d) * 100, 2), 'other_mean_pct': round(S.mean(o) * 100, 2), 'diff_t': round((S.mean(d) - S.mean(o)) / se, 2), 'n_dec': len(d)}\ndec = {'DFIVX vs DFALX': dec_test(rets['DFIVX'], rets['DFALX']), 'DFIVX vs EFA継ぎ': dec_test(rets['DFIVX'], splice_dev),\n       'DFIVX vs French DevexUS（紙・分配の問題なし）': dec_test(rets['DFIVX'], dxu),\n       'VTRIX vs French DevexUS': dec_test(rets['VTRIX'], dxu, 199008),\n       'DFEVX vs French Emerging（紙）': dec_test(rets['DFEVX'], emk, 199804), 'DFEVX vs DFEMX': dec_test(rets['DFEVX'], rets['DFEMX'], 199804),\n       'EFV vs EFA（ETF・対照）': dec_test(rets['EFV'], efa, 200509)}\nfor k, v in dec.items(): print('dec', k, v)\n\n# 2) DFEVX vs DFEMX の検定期間\nr = compare('DFEVX', rets['DFEVX'], 'DFEMX', rets['DFEMX'], '検定期間 2001-01〜', paper=False, lo=200101)\nprint({k: r[k] for k in ('from', 'to', 'excess', 't', 't_nw', 'roll10_win')})\n\n# 3) 日本の合成を 2013-01 以降だけで区間に分ける\ncj, _ = composite(JP_DIV, rets)\ndef ex(a, b, lo, hi):\n    ms = [m for m in sorted(set(a) & set(b)) if lo <= m <= hi]\n    g1 = math.prod(1 + a[m] for m in ms) ** (12 / len(ms)) - 1; g2 = math.prod(1 + b[m] for m in ms) ** (12 / len(ms)) - 1\n    e = [a[m] - b[m] for m in ms]; t = S.mean(e) / (S.stdev(e) / math.sqrt(len(e)))\n    return f\"{(g1-g2)*100:+.2f} (t{t:.2f}, {len(ms)}m)\"\npj = per_country['Japan']; pjn = {m: pj['ret'][m] - pj['turnover'].get(m, 0) * pj['cost'] for m in pj['ret']}\njp = {'合成 日本高配当 vs 1348 2013-01〜2020-12': ex(cj, rets['1348.T'], 201301, 202012), '同 2021-01〜2025-12': ex(cj, rets['1348.T'], 202101, 202512),\n      '紙 規則の日本 2013-01〜2020-12': ex(pjn, pj['bench'], 201301, 202012), '紙 規則の日本 2021-01〜2025-12': ex(pjn, pj['bench'], 202101, 202512)}\nprint(jp)\n# 4) 2009 を除いた中間期（規則）\nmid = [m for m in rule_net if 200707 <= m <= 202012 and m // 100 != 2009]\nprint('rule mid ex2009', ex({m: rule_net[m] for m in mid}, rule_b, 200707, 202012))\nprint('DFIVX mid ex2009', ex({m: rets['DFIVX'][m] for m in mid}, splice_dev, 200707, 202012))\n# 5) 分配利回りの差（器の追加の税の見積もりの材料）\nimport qc\nyl = {s: qc.qc(s)['mean_div_yield_events'] for s in ['EFA', 'VEA', 'PXF', 'FGD', 'EFV', 'IDV', 'DWX', 'DFIVX', 'DFALX', 'EEM', 'DEM', '1348.T', '1478.T', '1489.T', '1577.T', '1698.T']}\nprint(yl)\njson.dump({'dec': dec, 'dfevx_vs_dfemx_holdout': r, 'jp_sub': jp, 'div_yield': yl,\n           'rule_mid_ex2009': ex({m: rule_net[m] for m in mid}, rule_b, 200707, 202012),\n           'dfivx_mid_ex2009': ex({m: rets['DFIVX'][m] for m in mid}, splice_dev, 200707, 202012)},\n          open(os.path.join(SP, 'extra2.json'), 'w'), ensure_ascii=False, indent=1)\n"
+ }
+}

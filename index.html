@@ -1049,7 +1049,8 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
    <b>年360万</b>、生涯非課税保有限度額 <b>1,800万</b>（うち成長投資枠は<b>1,200万</b>まで・簿価残高方式で
    売却分は翌年に復活・非課税期間は無期限）。ここで効く構造の制約は
    <b>個別株は成長投資枠にしか入らない</b>（つみたて枠は金融庁指定の投信・ETFのみ）ということ。
-   門の目標配分（比率の正本は <code>portfolio.json</code> の <code>target</code>）を生涯枠に当てると、個別は成長投資枠に収まるが、<u>米国上場ETF（QQQM/XLK/SMH）はつみたて枠の対象外</u>なので、ETFは成長投資枠の残りまでしかNISAに入らない。差は「つみたて枠対象の投信で埋める」か「課税口座で持つ」かの選択になる（<b>門の外＝DCA側の決断</b>・ここでは決めない）。<b style="color:#c4693f">★つみたて枠でも NASDAQ100 は持てる</b>——金融庁「つみたて投資枠対象商品届出一覧」（2026-09-18版）の<u>「指定インデックス投資信託以外」</u>に <b>iFreeNEXT NASDAQ100インデックス</b>（税込0.495%）がある（一覧は3枚に分かれているので枠をまたいで数えること）。同じ指数の最安クラスより年0.2〜0.4pt重いが、20年積立の試算では課税口座の QQQM（税引後）より手取りで勝つ（1.11〜1.14倍）。一次資料は <code>out/tsumitate_lineup.json</code>。<br>
+   門の目標配分（比率の正本は <code>portfolio.json</code> の <code>target</code>）を生涯枠に当てると、個別は成長投資枠に収まるが、<u>米国上場ETF（QQQM/XLK/SMH）はつみたて枠の対象外</u>なので、ETFは成長投資枠の残りまでしかNISAに入らない。差は「つみたて枠対象の投信で埋める」か「課税口座で持つ」かの選択になる（<b>門の外＝DCA側の決断</b>・ここでは決めない）。<b style="color:#c4693f">★つみたて枠でも NASDAQ100 は持てる</b>——金融庁「つみたて投資枠対象商品届出一覧」（2026-09-18版）の<u>「指定インデックス投資信託以外」</u>に <b>iFreeNEXT NASDAQ100インデックス</b>（税込0.495%）がある（一覧は3枚に分かれているので枠をまたいで数えること）。同じ指数の最安クラスより年0.2〜0.4pt重いが、20年積立の試算では課税口座の QQQM（税引後）より手取りで勝つ（1.11〜1.14倍）。一次資料は <code>out/tsumitate_lineup.json</code>。
+   <b>★つみたて枠を超えた分は QQQM</b>（2026-09-28 ユーザー指示）——注文書は iFreeNEXT をつみたて投資枠の月の上限（年120万÷12＝10万円）までにし、超えた分は同じ NASDAQ100 の QQQM（0.15%・成長投資枠 年240万→その先は特定口座）を丸株で買う。つみたて枠の外では iFreeNEXT（0.495%）より安いから（歴史検証の穴⑤ <code>out/gaps_cost.json</code>）。NASDAQ100 の目標の比率は同じ（器を分けるだけ）。上限と行き先は <code>portfolio.json</code> の <code>target.ami_funds</code>。<br>
    <b>枠が足りないときは個別を先に入れる</b>——期待リターンが高い資産ほど非課税の価値が大きいので、
    希少な枠は個別へ回すのが算術の答え。<u>ただし逆向きの力が2つあり、どちらも門の思想と直結する</u>——
    (i)<b>NISAは損益通算・繰越控除ができない</b>。歴史検証の実測では<b>通過群の6%が恒久毀損（CAGR≤−15%）</b>（⚠率は退場した社が母集団に居ない状態で測った<b>下限の側</b>。退場社を原本で戻すと2013年の質実証プールで4.2〜19.2%の幅がある——2026-09-23 に退場日の誤り〔社債の登録抹消を普通株の退場と数えていた〕を是正した後の値。是正前は2.0〜25.7%）で、
@@ -1159,7 +1160,7 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
 <header>
   <div class="wrap">
     <div class="ey">格 と 間 を 分 か つ</div>
-    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.196</span></h1>
+    <h1 class="serif">CCF <span class="o">Ω</span> 採点機 <span style="font-size:.5em;color:var(--mut)">v9.9.197</span></h1>
     <div style="margin:6px 0 2px"><button id="hintBtn" onclick="ccfToggleHints()" style="padding:5px 11px;background:none;border:1px solid var(--line);border-radius:7px;color:var(--dim);font-size:11.5px;cursor:pointer">欄の注記を出す</button></div>
   <div class="sub"><details class="why plain" data-fold="6"><summary>ℹ この画面について</summary><div class="why-body"><b>評価（格）</b>と<b>今買えるか（間）</b>を完全に分離する。価格は格を1点も動かさない。<b>20年バックテストの結論を反映</b>——最も頑健に複利を当てたのは"攻めの質"でなく<b>レバレッジ/金融を弾く守りのスクリーン</b>。守りを主柱に、ROIC水準を質の核に。<b>堀は格下げしていない</b>——絶対MOAT指数をΩの直接項に加え(実効≒22%)、<b>四関門の一つ（絶対MOAT指数70+）</b>にした。2026-08の歴史検証では、13年のリターンと生死を分けた唯一の変数が堀の移行障壁(irr)だった（irr=70群の恒久毀損率2% vs 全体8%。⚠率そのものは退場社の抜けた母集団で測った下限の側で、2013年の質実証プールでは4.2〜19.2%の幅がある〔2026-09-23 に退場日を是正した後の値・是正前は2.0〜25.7%〕）。</div></details></div>
   </div>
@@ -1223,8 +1224,8 @@ html[data-theme="light"] #scorer .f b,html[data-theme="light"] #scorer .flag b{c
     <div class="row"><div class="rl">買収支出の5年合計 ÷ 期初総資産 acqS5<span class="h"><b>買収の強度</b>＝Σ(直近5会計年度の買収支出) ÷ 総資産(審査年−5)。帯で点が付く（<b>0=買収しない −1 ／ 〜0.085=控えめ <u>+2</u> ／ 〜0.311=中 +1 ／ 0.311超=大きく買う 0</b>）。境界は2015-2021の7ビンテージの三分位の切れ目の<b>中央値</b>で、7年ぶんほとんど動かない（新しい定数ではない）。<b>のれん残高ではなく支出で測る</b>——残高は減損・売却・為替で汚れ、同じ661社でも読み方次第で最下位が入れ替わった。<b>空欄は0点＝加点も減点もしない</b>。⚠買収支出の行を切り出さない社（MSFT型）は0ではなく<b>空欄</b>にする。機械充填は <code>python3 night/fill_acqS5.py --write</code></span></div><div class="rc"><input type="text" id="acqS5" value="" placeholder="空欄=未測定" style="width:90px;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:13px;text-align:right"></div></div>
     <div class="row"><div class="rl">純有利子負債 / EBITDA<span class="h">2.5超から段階減点（(nde−2.5)×6・<b>上限なし</b>＝坂の上限 4 を撤廃）、&gt;4 で論外。<b>旧実装は 2.5〜4 でしか坂が効かず、4.00 を跨ぐとΩが+8.7pt<u>上がった</u></b>（キルは上限を掛けるだけで坂の罰から抜けるため。実測 OKE: nde3.99→Ω16.3 / 4.01→25.0 / 20→25.0）</span></div><div class="rc"><input type="number" id="nde" step="0.1" value="1.0"><span class="u">x</span></div></div>
     <div class="row"><div class="rl">利払カバー（営業利益÷支払利息）<span class="h"><b>3未満で財務キル</b>（nde&gt;4 と<b>OR</b>＝どちらかで発火。片方が測れなくても片方が効く）。★歴史の実測（2016-18ビンテージ・層0の653社）で、<b>止めた側の恒久毀損の濃縮は 11.0倍</b>（nde&gt;4 は 2.82倍）で<b>止めた群の中央値も低い＝両方向とも正しい</b>。nde が借金の<b>大きさ</b>を測るのに対し、こちらは<b>重さ（払えるか）</b>を測る——同じ4倍の借金でも金利2%と9%は別物で、nde は金利をまったく見ていない。⚠<b>必ず真正の利息だけ</b>で作ること（`intcov_strict`）——IFRSの `FinanceCosts` は為替差損・リース利息・引当の割引を含む<b>上位概念</b>で、これで作ると<b>純現金の会社が利払カバー3未満に見える</b>（実測8社）。⚠<b>空欄はキルが眠る＝未測定が有利</b>。日本株は SEC 経路の外なので<b>有報の支払利息から直接</b>入れる（2026-09-23: 68社中41社を実測・27社は理由つき空欄＝借入なし22・表示単位未満5）。測り直しは night/audit_intcov.py</span></div><div class="rc"><input type="number" id="intcov" step="0.1" value=""><span class="u">x</span></div></div>
-    <div class="row"><div class="rl">Altman Z''<span class="h">非製造業対応版：6.56X1+3.26X2+6.72X3+1.05X4。&lt;1.1論外、1.1〜2.6警戒帯</span></div><div class="rc"><input type="number" id="z" step="0.1" value=""></div></div>
-    <div class="row"><div class="rl">粗利益/総資産 GP/A<span class="h">Novy-Marx品質。&lt;15%で過去門減点</span></div><div class="rc"><input type="number" id="gpa" step="0.1" value="30"><span class="u">%</span></div></div>
+    <div class="row"><div class="rl">Altman Z''<span class="h">非製造業対応版：6.56X1+3.26X2+6.72X3+1.05X4。&lt;1.1でキル（灰色帯の減点は v9.9.197 で撤去）</span></div><div class="rc"><input type="number" id="z" step="0.1" value=""></div></div>
+    <div class="row"><div class="rl">粗利益/総資産 GP/A<span class="h">Novy-Marx品質。記録のみ（&lt;15%の減点は v9.9.197 で撤去・歴史検定で不合格）</span></div><div class="rc"><input type="number" id="gpa" step="0.1" value="30"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">アクルーアル比率<span class="h">(純利益−営業CF)÷総資産。&gt;+10%で会計警戒（利益に現金裏付けなし）</span></div><div class="rc"><input type="number" id="accr" step="0.1" value="-5"><span class="u">%</span></div></div>
     <div class="row"><div class="rl">会計基準</div><div class="rc"><select id="acc"><option value="usgaap" selected>US-GAAP</option><option value="ifrs">IFRS</option><option value="jgaap">日本基準</option></select></div></div>
     <div class="row"><div class="rl">業態<span class="h">門が誤読する3類型は採点せず手調整へ送る／金融は20年検証で最大の負の予測因子</span></div><div class="rc"><select id="fin"><option value="no" selected>事業会社（綺麗なP&L）</option><option value="acq">連続買収（のれん歪み）</option><option value="merger">合併直後（償却・債務歪み）</option><option value="thin">薄利複合（粗利proxy誤読）</option><option value="yes">金融・レバレッジ依存</option></select></div></div>
@@ -1869,7 +1870,8 @@ function compute(){
   if(icK!==null&&icK<3)kills.push('利払カバー&lt;3（稼ぎで利息を払えていない）');
   if($('eq').value==='neg')kills.push('債務超過');
   if(zV!==null&&zV<1.1)kills.push('Altman Z\'\'&lt;1.1（倒産圏）');
-  else if(zV!==null&&zV<2.6){amberPen+=6;ambers.push(`Z'' ${zV.toFixed(1)} グレーゾーン −6`);}
+  // v9.9.197（2026-09-23 ユーザー明示指示「外して」）: Z'' 灰色帯(1.1〜2.6) −6 を撤去——事前登録の歴史検定(out/retro_kills2_test.json)で
+  //   3ビンテージとも灰色帯のほうが毀損が薄く、向きが逆だった。Z''<1.1 のキルは残す（2013/2018 で毀損2.8〜2.9倍・2015 で不合格＝弱い）
   if(spreadNow<=0){
     // 提言1: 会計スプレッド負でも即キルしない。無形調整スプレッドも負 かつ 増分収益(ROIIC)も負 の二重条件でのみキル
     //   → Salesforce/ServiceNow型(R&D・S&M費用計上でROIC過小)を無差別排除しない。真の価値破壊企業のみ弾く
@@ -1968,7 +1970,7 @@ function compute(){
   //     （v9.9.99で営業利益率低下 単独を退けたのと同じ理由）。**0から罰すると74%が該当＝減速は常態**
   //   ・**−30pt で最大**: 止めた群の**中央値が負に転じる**深さ（−0.4%・毀損0.22＝3.1倍）＝「深刻」の端
   //   ・**最大 −4**: 質実証プールの効果はリターン中央値で約3.4pt/年・毀損の増加は無し。
-  //     既存の罰と並べると gls(−2) より強く、gpa<15(−5)・roicGap満額(−6)・roicg<WACC(−8) より弱い位置
+  //     既存の罰と並べると gls(−2・撤去済) より強く、gpa<15(−5・撤去済)・roicGap満額(−6)・roicg<WACC(−8) より弱い位置
   // 【未測定は罰されない】cagrT 空欄では発火しない＝**未測定が最良ケース**なので CCF_BLANK で 'best' に分類し、
   //   Ω72+ の社では点検が鳴る。SEC対象外(日本株70社)は _meta.nulls.cagrT に理由を刻んである。
   // ⚠ n() は欠測で **0** を返すので使えない（0＝『減速なし』と『未測定』が区別できない）。
@@ -1980,7 +1982,7 @@ function compute(){
     if(_dc>0.05){amberPen+=_dc;ambers.push(`成長が減速 ${cagrTv.toFixed(1)}pt（直近2年CAGR−その前3年CAGR）−${_dc.toFixed(1)}`);}
   }
   // Novy-Marx GP/A + accrual red flags
-  if(gpa&&gpa<15){amberPen+=5;ambers.push(`GP/A ${gpa.toFixed(0)}%＜15%——資産効率低位 −5`);}
+  // v9.9.197（同上）: GP/A<15 −5 を撤去——歴史検定で 2015 の中央値が逆・補助5ビンテージでも両方向は2/5。gpa 欄は記録のみ
   const accrBad=accr>10;
   // survival screen (most robust 20yr predictor): graduated leverage + financial-sector haircut
   // v7: acq is scored normally via dual-ROIC (roll-up protocol absorbed). merger/thin remain unscoreable.
@@ -3894,7 +3896,9 @@ function ccfWholeSharePlan(items, T, TOT){
   res.rest=money;
   return res;
 }
-/* 口座の置き場所（v9.9.196・2026-09-29 同上）——**新しいお金は全部 NISA へ**。
+/* 口座の名義の設定（v9.9.196・2026-09-29）。⚠ 注文書の NISA の文言（口座の行・各行の枠）は 2026-09-29 ユーザー指示「買付順位のNISAの文言は消して」で撤去——
+   この設定は 🏦保有 の売り買いの記録（名義）だけが読む。以下は当時の注記。
+   **新しいお金は全部 NISA へ**。
    根拠: out/mw_nisa_ops.json（NISA を先に埋める・NISA の中で売らない・株も NISA に置くのが既定でほぼ最善。
    個別株を特定口座に置くと20年後の資産が中央で −1.5〜−3.4%）。2人の NISA の年の枠は 720万円で、
    入金（月17万円＝年204万円）は全部入る。iFreeNEXT は1人のつみたて投資枠（年120万円）を超えるので2人に分ける。
@@ -3904,17 +3908,6 @@ function ccfNisaCfg(){
   const h=Array.isArray(n.holders)&&n.holders.length?n.holders.map(String):['1人目','2人目'];
   return {holders:h, tsuMonth:+n.tsumitate_month_cap||100000, tsuYear:+n.tsumitate_year_cap||1200000,
           growYear:+n.growth_year_cap||2400000};
-}
-function ccfFundRoute(y){
-  const c=ccfNisaCfg(), hs=c.holders.slice(0,2), cap=c.tsuMonth*hs.length;
-  if(!(y>0))return '';
-  const inT=Math.min(y,cap), over=y-inT, each=[];
-  let left=inT; hs.forEach(h=>{ const v=Math.min(left,c.tsuMonth); if(v>0)each.push(h+' '+ccfYen(v)); left-=v; });
-  return `<span style="white-space:nowrap;color:#15803d" title="つみたて投資枠は積立設定でしか買えない（1人 月${ccfYen(c.tsuMonth)}・年${ccfYen(c.tsuYear)}まで）。特定口座では買わない">NISAつみたて ${each.join('／')}</span>`
-    +(over>0?`　<span style="white-space:nowrap;color:#15803d">＋NISA成長 ${ccfYen(over)}</span>`:'');
-}
-function ccfGrowRoute(){
-  return `<span style="white-space:nowrap;color:#15803d" title="個別株と SMH は NISA の成長投資枠へ（1人 年${ccfYen(ccfNisaCfg().growYear)}まで）。特定口座では買わない">NISA成長</span>`;
 }
 function ccfWholeShareBody(pass, tw, pxInfo, NO, T){
   const items=[], ref={};
@@ -3928,7 +3921,7 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T){
     items.push({k, tw:+r.tw||0, pos:+r.pos||0, jpy:+r.jpy||0, frac:!!(r.fund||cx)}); ref[k]={c:0, r, nm:r.nm||r.t, cx}; });
   const P=ccfWholeSharePlan(items, T, NO.tot);
   const row=(name,right,sub,col)=>`<div class="planrow" style="padding:5px 7px;border-radius:7px;border-bottom:1px dashed rgba(201,166,74,.18)">`
-    +`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:12.5px;color:${col||'var(--ink)'}">${ccfIcon(name)}${name}</span>${right?`<span style="white-space:nowrap;font-size:12.5px">${right}</span>`:''}</div>`
+    +`<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font-size:12.5px;min-width:0;overflow-wrap:anywhere;color:${col||'var(--ink)'}">${ccfIcon(name)}${name}</span>${right?`<span style="white-space:nowrap;flex-shrink:0;font-size:12.5px">${right}</span>`:''}</div>`
     +(sub?`<div style="font-size:11px;margin-top:1px;line-height:1.55">${sub}</div>`:'')+`</div>`;
   const tgtTxt=it=>`<span style="white-space:nowrap">目標${(+it.tw).toFixed(1)}% / 保有${(+it.pos).toFixed(1)}%</span>`;
   const why={}; P.wait.forEach(w=>why[w.k]=`不足 ${ccfYen(w.need)}（1株 ${ccfYen(w.price)} の半分に届いたら買う）`);
@@ -3941,7 +3934,7 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T){
       if(b){ cs+=b.cost;
         const bb={x:{r:f.r,n:f.nm},pi:f.pi,sh:b.sh};
         ob+=row(f.nm,`<b style="color:var(--jade)">${b.sh}株</b>`,
-          `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(b.cost)}</span>　${ccfGrowRoute()}　<span style="white-space:nowrap">指値は当日の値の近く（成行でも可）</span>　${tgtTxt(it)}　<span style="white-space:nowrap">1株 ${f.pi.label}</span></span>`+ccfBoughtCtl(bb));
+          `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(b.cost)}</span>　<span style="white-space:nowrap">指値は当日の値の近く（成行でも可）</span>　${tgtTxt(it)}　<span style="white-space:nowrap">1株 ${f.pi.label}</span></span>`+ccfBoughtCtl(bb));
       }else if(why[it.k]){
         ob+=row(f.nm,`<span style="color:#d69a3c;font-size:11.5px">今月なし</span>`,`<span style="color:#d69a3c">${why[it.k]}</span>　<span style="color:var(--dim)">${tgtTxt(it)}</span>`,'var(--muted)');
       }else idle.push(f.nm);
@@ -3952,7 +3945,7 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T){
       if(y>0){ ns+=y;
         const per=+(r.fund&&r.fund.navPer)||10000, nav=(r.jpy>0)?r.jpy*per:0;
         nbh+=row(r.nm||r.t,`<b style="color:#6fa8c9">${ccfYen(y)} 金額で買う</b>`,
-          `<span style="color:var(--dim)">${r.fund?ccfFundRoute(y):ccfGrowRoute()}　${tgtTxt(it)}${(r.alias&&r.alias.length)?`（うち ${r.alias.join('・')} ${(+r.alPos).toFixed(1)}%＝同じ指数）`:''}`
+          `<span style="color:var(--dim)">${tgtTxt(it)}${(r.alias&&r.alias.length)?`（うち ${r.alias.join('・')} ${(+r.alPos).toFixed(1)}%＝同じ指数）`:''}`
           +(r.fund?`　<span style="white-space:nowrap">${nav>0?`基準価額 ¥${Math.round(nav).toLocaleString('ja-JP')}/1万口・約${Math.floor(y/r.jpy).toLocaleString('ja-JP')}口`:'基準価額 未取得'}</span>`:'')
           +`　<span style="white-space:nowrap">残りの円は全部ここへ（現金で残さない）</span></span>`
           +`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(r,(r.px>0?{px:r.px,ccy:r.ccy}:null))}</span>`);
@@ -3961,21 +3954,19 @@ function ccfWholeShareBody(pass, tw, pxInfo, NO, T){
     }
     if(b){ ns+=b.cost;
       nbh+=row(r.t,`<b style="color:#6fa8c9">${b.sh}株</b>`,
-        `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(b.cost)}</span>　${ccfGrowRoute()}　${tgtTxt(it)}　<span style="white-space:nowrap">${r.label}</span></span>`
+        `<span style="color:var(--dim)"><span style="white-space:nowrap">約${ccfYen(b.cost)}</span>　${tgtTxt(it)}　<span style="white-space:nowrap">${r.label}</span></span>`
         +`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(r,(r.px>0?{px:r.px,ccy:r.ccy}:null))}</span>`);
     }else if(why[it.k]){
       nbh+=row(r.t,`<span style="color:#d69a3c;font-size:11.5px">今月なし</span>`,`<span style="color:#d69a3c">${why[it.k]}</span>　<span style="color:var(--dim)">${tgtTxt(it)}</span>`,'var(--muted)');
     }else if((+it.tw||0)>0) idle.push(r.t);
   });
   const zero=((NO&&NO.rows)||[]).filter(r=>!((+r.tw||0)>0)).map(r=>r.t);
-  const c=ccfNisaCfg(), yr=Math.round(T*12);
   const html=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
     <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書</b></div>
     ${(ob||stopped.length)?`<div style="font-size:11.5px;color:var(--gold-bright);margin:0 0 2px;font-weight:600">🏰 個別</div>${ob}${stopped.map(x=>`<div style="font-size:11px;color:#b91c1c;padding:3px 7px">${x}</div>`).join('')}`:''}
     ${nbh?`<div style="font-size:11.5px;color:#6fa8c9;margin:7px 0 2px;font-weight:600">◈ ETF</div>${nbh}`:''}
     ${(idle.length||zero.length)?`<div style="font-size:11px;color:var(--dim);padding:3px 7px">${idle.length?idle.join('・')+'：目標に届いているので今月なし':''}${idle.length&&zero.length?'　':''}${zero.length?zero.join('・')+'：目標0%（売らない・新規なし）':''}</div>`:''}
     <div style="font-size:11px;color:var(--dim);margin-top:5px"><b>合計 約${ccfYen(Math.round(cs+ns))}</b>（個別 ${ccfYen(Math.round(cs))}／ETF ${ccfYen(Math.round(ns))}）${P.rest>=100?`／残り${ccfYen(Math.floor(P.rest/100)*100)}`:''}</div>
-    <div style="font-size:11px;color:var(--dim);margin-top:3px">口座: <b style="color:#15803d">特定口座では買わない</b>（${c.holders.slice(0,2).join('・')}の NISA の年の枠 ${ccfYen((c.tsuYear+c.growYear)*Math.min(2,c.holders.length))} に対し、この入金なら年 約${ccfYen(yr)}）</div>
   </div>`;
   return {html, castle:Math.round(cs), net:Math.round(ns), rest:P.rest, plan:P};
 }
@@ -4008,11 +3999,16 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
   // ★ETFの行は個別の注文書の**外**で組む（v9.9.164）——個別に配る先が無い月（nm.length===0）でも
   //   ETFは配れるので、注文書ごと消えると「今月いくらETFへ回すか」が画面から丸ごと消える。
   const NO=(netOrder&&netOrder.rows&&netOrder.rows.length)?netOrder:null;
-  let nb='', nspent=0, fundAbs=0;
+  let nb='', nspent=0, fundAbs=0, nrest=0;
   // ★投資信託は金額を自由に選べる（2026-09-26 ユーザー「買付プランでiFREENEXTNASDAQ100は金額を自由に選択して算出してもいいことになってない」）
   //   ＝丸株の制約が無い。だから**丸株で買えずに余った円（ETFの端数・個別の残枠）を投資信託の行へ寄せる**。
   //   寄せた分は fundAbs に持ち、合計・残りの表示に使う。按分の比率そのものは変えない（配った後の端数だけ）。
-  const mkNb=(extra)=>{ nb=''; nspent=0; fundAbs=0;
+  // ★つみたて投資枠の上限（2026-09-28 ユーザー明示指示「つみたて枠を超えた分はQQQMにして」）:
+  //   投資信託の行は target.ami_funds[本].tsumitate_monthly_cap_jpy（月の上限）まで。**超えた分は overflow_to（QQQM＝同じ
+  //   NASDAQ100・信託報酬0.15%）を丸株で**——根拠は歴史検証の穴⑤（out/gaps_cost.json・つみたて枠の外は iFreeNEXT 0.495% より
+  //   QQQM が安い）。按分の比率は変えない（NASDAQ100 の目標は同じ・器を分けるだけ）。QQQM の丸株に届かない端数は「残り」（nrest）。
+  //   超えた額は window.__ccfNetOver に置き、◈ ETF の節が同じ数字を読む（二重に計算しない）。
+  const mkNb=(extra)=>{ nb=''; nspent=0; fundAbs=0; nrest=0; window.__ccfNetOver={};
   if(NO){
     const hasFund=NO.rows.some(r=>r.fund&&(r.yen||0)>0);
     let etfLeft=0;
@@ -4027,21 +4023,42 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
       let y=r.yen||0; if(!(y>0))return;
       if(r.fund&&absorb>0){ fundAbs=absorb; y+=absorb; }
       else if(hasFund&&!r.fund&&r.jpy>0&&!/-USD$/.test(r.t)) y=Math.floor(y/r.jpy)*r.jpy;   // 端数は投資信託へ移した
-      nspent+=y;
       // ★暗号資産（BTC-USD 等・2026-09-25 ユーザー明示指示「BTCを5%いれる」）は1単位が高く小数で買うので、
       //   株数を整数に切り捨てず小数5桁の数量で出す（切り捨てると毎月「1株に届かない」になる）
       // ★投資信託（target.ami_funds・2026-09-26〜 iFreeNEXT NASDAQ100）は**金額で買う**——株数を作らない。
       //   口数は基準価額（1万口あたり）から出す目安だけ（約定は翌営業日の基準価額で決まる）。
       if(r.fund){
+        const cap=+r.fund.tsumitate_monthly_cap_jpy||0, ovT=String(r.fund.overflow_to||'').toUpperCase();
+        const ov=(cap>0&&ovT)?NO.rows.find(x=>x.t===ovT):null;
+        let over=0;
+        if(ov&&y>cap){ over=y-cap; y=cap; }          // つみたて投資枠の上限まで。超えた分は同じ指数の ETF へ
+        nspent+=y;
         const per=+r.fund.navPer||10000, nav=(r.jpy>0)?r.jpy*per:0;
-        nb+=nrow(r.nm,`<b style="color:#6fa8c9">${ccfYen(y)} 金額で買う</b>`+(fundAbs>0?`<div style="font-size:10.5px;color:var(--dim);text-align:right">按分 ${ccfYen(r.yen)}＋端数 ${ccfYen(fundAbs)}</div>`:''),
-          `<span style="color:var(--dim)"><span style="white-space:nowrap">目標${r.tw.toFixed(1)}% / 保有${r.pos.toFixed(1)}%${(r.alias&&r.alias.length)?`（うち ${r.alias.join('・')} ${r.alPos.toFixed(1)}%＝同じ指数）`:''}</span>`
-          +`　<span style="white-space:nowrap">${nav>0?`基準価額 ¥${Math.round(nav).toLocaleString('ja-JP')}/1万口・約${Math.floor(y/r.jpy).toLocaleString('ja-JP')}口`:'基準価額 未取得'}</span>`
-          +`　<span style="white-space:nowrap">投資信託（約定は翌営業日の基準価額）</span>`
-          +`　<span style="white-space:nowrap;color:#d69a3c">つみたて投資枠は年120万円まで（超える分は成長投資枠か課税口座）</span></span>`
+        nb+=nrow(r.nm,`<b style="color:#6fa8c9">${ccfYen(y)} 金額で買う</b>`
+          +(over>0?`<div style="font-size:10.5px;color:var(--dim);text-align:right">上限 ${ccfYen(cap)}（按分${fundAbs>0?'＋端数':''} ${ccfYen(y+over)}）</div>`
+                  :(fundAbs>0?`<div style="font-size:10.5px;color:var(--dim);text-align:right">按分 ${ccfYen(r.yen)}＋端数 ${ccfYen(fundAbs)}</div>`:'')),
+          // ⚠ 携帯の幅（320〜390px）で切れないよう、nowrap は数字の対だけに掛ける（v9.9.112 の作法・2026-09-28 check_fund_cap ⑥で発見）
+          `<span style="color:var(--dim)"><span style="white-space:nowrap">目標${r.tw.toFixed(1)}% / 保有${r.pos.toFixed(1)}%</span>${(r.alias&&r.alias.length)?`（うち <span style="white-space:nowrap">${r.alias.join('・')} ${r.alPos.toFixed(1)}%</span>＝同じ指数）`:''}`
+          +`　${nav>0?`<span style="white-space:nowrap">基準価額 ¥${Math.round(nav).toLocaleString('ja-JP')}/1万口</span>・<span style="white-space:nowrap">約${Math.floor(y/r.jpy).toLocaleString('ja-JP')}口</span>`:'基準価額 未取得'}`
+          +`　投資信託（約定は翌営業日の基準価額）`
+          +`</span>`
           +`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(r,(r.px>0?{px:r.px,ccy:r.ccy}:null))}</span>`);
+        if(over>0){
+          // ★超えた分＝同じ NASDAQ100 を QQQM で（成長投資枠 年240万まで、その先は特定口座）。丸株だけ買い、端数は残り
+          const oj=ov.jpy>0?ov.jpy:0, sh=oj>0?Math.floor(over/oj):null, cost=sh?sh*oj:0;
+          nspent+=cost; nrest+=over-cost; window.__ccfNetOver[ovT]={over,sh:sh||0,cost};
+          nb+=nrow(ovT,
+            (sh!=null?(sh>0?`<b style="color:#6fa8c9">${sh}株</b>`:`<span style="color:#d69a3c;font-size:11.5px">1株に届かない</span>`)
+                     :`<span style="color:var(--dim);font-size:11.5px">単価未取得</span>`),
+            `<span style="color:var(--dim)"><span style="white-space:nowrap"><b style="color:var(--ink)">${ccfYen(cost)}</b></span>`
+            +`　${r.fund.short||r.nm} の上限を超えた <span style="white-space:nowrap">${ccfYen(over)}</span>`
+            +`　同じ NASDAQ100`
+            +`　<span style="white-space:nowrap">${ov.label}</span></span>`
+            +`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(ov,(ov.px>0?{px:ov.px,ccy:ov.ccy}:null))}</span>`);
+        }
         return;
       }
+      nspent+=y;
       const cx=/-USD$/.test(r.t), unit=cx?r.t.replace(/-USD$/,''):'株';
       const sh=(r.jpy>0)?(cx?Math.floor(y/r.jpy*1e5)/1e5:Math.floor(y/r.jpy)):null;
       nb+=nrow(r.t,
@@ -4053,7 +4070,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
         +(r.kill?`　<span style="color:#d69a3c;white-space:nowrap">⛔ ${r.kill}</span>`:'')+`</span>`
         +`<span style="display:inline-flex;align-items:center;flex-wrap:wrap">${ccfNetBoughtCtl(r,(r.px>0?{px:r.px,ccy:r.ccy}:null))}</span>`);
     });
-    const full=NO.rows.filter(r=>!(r.yen>0)).map(r=>r.t);
+    const full=NO.rows.filter(r=>!(r.yen>0)&&!window.__ccfNetOver[r.t]).map(r=>r.t);
     if(nb&&full.length)nb+=`<div style="font-size:11px;color:var(--dim);padding:3px 7px">${full.join('・')}：目標超過のため今月なし</div>`;
   }};
   mkNb(0);
@@ -4172,6 +4189,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
         `<span style="color:var(--dim)"><span style="white-space:nowrap">${ccfYen(b.need)}</span>（株価未取得）${alloc(b)}</span>`,'var(--muted)'); });
       const spent=AMT-bud-unknown.reduce((a,b)=>a+b.need,0);
       mkNb(bud>0?bud:0); if(fundAbs>0)bud=0;   // 個別の残枠も投資信託へ（金額で買えるので端数が出ない）
+      bud+=nrest;                               // つみたて枠の上限で QQQM へ回した分の丸株の端数は「残り」
       order=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(201,166,74,.5);border-radius:8px;background:rgba(201,166,74,.06)">
         <div style="font-size:12.5px;color:var(--gold-bright);margin-bottom:4px"><b>📋 今月の注文書</b></div>
         ${nb?`<div style="font-size:11.5px;color:var(--gold-bright);margin:0 0 2px;font-weight:600">🏰 個別</div>`:''}
@@ -4200,6 +4218,7 @@ function ccfMonthPlanBox(pass,gap,passGap,tw,CITY,pxInfo,netOrder){
     body+=`<div style="margin-top:10px;padding:9px 12px;border:1px solid rgba(111,168,201,.5);border-radius:8px;background:rgba(111,168,201,.06)">`
       +nhead('0 0 4px')+nb
       +`<div style="font-size:11px;color:var(--dim);margin-top:5px">合計 ${ccfYen(nspent)}`
+      +(nrest>=100?`／残り${ccfYen(Math.floor(nrest/100)*100)}`:'')
       +`</div></div>`;
   }
   // ★今月の入金総額 → 個別/ETFへ「足りないほうから」配る（v9.9.163 で新設・v9.9.167 で割り方を規約へ）
@@ -7275,7 +7294,10 @@ async function renderPlan(){
         // ★円と株数はここに出さない（v9.9.164）——**同じ数字を二箇所に置かない**。
         //   今月いくら買うかは 📋今月の注文書 の一枚に集約した（ユーザー指示「表示はまとめてに」）。
         //   この節に残すのは「この本は何か・ETFの門はどう裁くか」という材料だけ。
-        +(y!=null&&y>0?`<span style="white-space:nowrap;color:var(--gold-bright)">今月 買う</span>`
+        // ★つみたて枠の上限を超えた分（2026-09-28）は注文書の mkNb が window.__ccfNetOver に置いた数字を読む（二重に計算しない）
+        +((window.__ccfNetOver&&window.__ccfNetOver[r.t])?`<span style="white-space:nowrap;color:var(--gold-bright)">今月 買う</span>`
+          :(r.fund&&+r.fund.tsumitate_monthly_cap_jpy>0&&y!=null&&y>0)?`<span style="white-space:nowrap;color:var(--gold-bright)">今月 買う</span>`
+          :y!=null&&y>0?`<span style="white-space:nowrap;color:var(--gold-bright)">今月 買う</span>`
           :(y!=null?`<span style="white-space:nowrap">今月なし</span>`
                    :(NA>0?`<span style="white-space:nowrap">今月なし</span>`
                          :`<span style="white-space:nowrap">入金額が未入力</span>`)))

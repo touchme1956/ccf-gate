@@ -1,0 +1,2640 @@
+{
+ "key": "indmom",
+ "lens": "etf",
+ "as_of": "2026-09-28",
+ "plan": "out/edge_verify_plan_r6.json の indmom_etf",
+ "question": "凍結した業種の勢い（spec_indmom.json: 過去12か月の上位3割を等加重・毎月入れ替え）は、第4回の確認で米国以外40か国中38か国で再現した（紙の GICS 11部門・ならし +3.64%/年 t4.53）。この利用者が実際に買える器——米国の SPDR 業種ETF（XLB〜XLY 9本＋XLRE・XLC）と日本の TOPIX-17 業種ETF（1617〜1633）——へ同じ規則を写すと、SPY／TOPIX に勝つか。税・NISA・楽天の取扱まで含めて取れるか",
+ "verdict": "崩れた",
+ "verdict_reason": "実物の器では上乗せがほぼ0か負になった。米国 SPDR 業種ETF（2001-01〜2026-08・費用0.1%/回転の後）は SPY に +0.27%/年・t0.09（2001〜2025 では −0.32%/年。2026年1〜8月の +16.7pt だけで符号が変わる）、1営業日遅れで執行すると −0.17%/年、転がる10年で SPY に勝った窓は 5/16。日本の TOPIX-17 業種ETF（NAV＋分配・2009-04〜2026-08）は TOPIX（1305）に −0.95%/年・t−0.45、市場価格でも −1.04%/年・t−0.46、ぶれ 16.4% vs 15.7%・最大下落 −29.3% vs −24.0% とリスクも増えた。★崩れた原因は器の摩擦ではなく『業種の粗さ』: SPDR の成績は同じ GICS 11部門の紙の版（JKP 米国・全上場）と月次の超過の相関 0.85 で、その紙の版自体が 2001〜2025 に +0.13%/年・t0.04 しか無い。French の業種で同じ規則を回すと（事後の比較）10業種 +1.64%/年 t0.84 → 12業種 +1.64 t0.91 → 17業種 +2.60 t1.46 → 49業種 +2.91 t1.73（凍結）と、業種が粗いほど弱い。日本は第4回の紙の版（GICS 11部門）でも40か国中5番目に弱い国（+1.24%/年 t0.67）だった。円・課税口座（月ごとの入れ替えは NISA では続けられない）で税と楽天の手数料を引くと、NISA で SPY を持ち続けるのに対し 100万円で −4.4〜−4.7%/年、1000万円で −2.1〜−2.4%/年。日本版も TOPIX を NISA で持つのに対し −3.3%/年。⚠ 検出力: 米国の追従のぶれは年約8.5%で、25年でも超過の95%幅は −3.1〜+3.4%/年（日本は17年で −4.1〜+2.6%/年）＝真の上乗せが +2%/年あっても否定しきれない。ただし点の推定は両方0前後で、紙の同じ粗さの版も0前後なので、『実物で取れる上乗せがある』と言える材料は無い",
+ "method": {
+  "frozen_rule": "fam_indmom.signal()・fam_indmom.weights() を import してそのまま呼ぶ（J=12・skip=0・等加重・同順位の決め方・『並べられる業種が max(k+1,3) 未満なら持たない』まで凍結のまま）。spec_indmom.json と fam_indmom.py は変えていない。k だけ課題どおり業種の数に比例: k＝max(1, round(N×15/49))（N＝その月に並べられる業種の数・confirm_indmom_world.k_of と同じ式）。SPDR は N=9〜11 → k=3、TOPIX-17 は N=16〜17 → k=5",
+  "us": "Yahoo 日足の adjclose（close＋分配で作り直した系列と 1999〜2026 で年0.005%以内で一致＝adjclose は壊れていない）。各ETFの最初の暦月（上場の途中）は捨てた。XLRE（2015-10上場）は 2016-11 から、XLC（2018-06上場）は 2019-07 から候補に入る（12か月の窓がそろった月＝凍結の信号のまま）。相手は SPY（adjclose・配当込み・経費込み）。最初に持つ月 2000-01。主の窓は French の最後の月 2026-08 まで",
+  "japan": "主は投資信託協会 投信総合検索ライブラリーの基準価額（NAV）＋分配金（決算日に再投資）の日次（2008-03-21〜・17本とも取得）。市場価格の版は Yahoo の終値（分割調整済み）に同じライブラリーの分配（NAV 比の利回り・決算日の前の営業日に掛ける）を足した。相手は 1305（iFreeETF TOPIX）の同じ作り（NAV 版と価格版）。1305 の NAV は 1348（MAXIS TOPIX）の NAV と 2009-07〜2026-08 で年 −0.008%・1306 の NAV と −0.026% で一致。最初に持つ月 2009-04",
+  "broken_months": "日次で ±40% を超える動き（業種指数ではありえない＝分割の記録漏れ・単位の変更）を含む月を『壊れた月』として捨てる（結果を見る前に決めた）。信号の窓にその月が入る業種は12か月並べない（凍結の信号のまま）。持っている業種の月が壊れていたら、その月は戦略と相手の両方から外す（主）。参考に 0 と置く（凍結の run と同じ）・相手の値で埋める版も出した",
+  "delay1": "1営業日遅れ: m−1 月末の信号で、m 月の最初の営業日の終値に入れ替え、m+1 月の最初の営業日の終値まで持つ（相手も同じ日付でずらす）。日本の夜に米国の引けを見てから翌日に発注する形",
+  "cost": "主は事前登録どおり片道の回転1あたり 0.1%。感度 0%・0.3%・0.5%",
+  "stats": "harness.stats（月次の算術の超過の t・Newey-West・幾何の年率の超過・ぶれ・最大下落は月次）",
+  "code": "scratchpad/indmom_etf/（load.py・nav.py・tl.py・common.py・us.py・jp.py・paper.py・xcheck.py・taxsim.py・tax_us.py・tax_jp.py・write_out.py）。repo には入れていない"
+ },
+ "us_spdr": {
+  "main_vs_SPY": {
+   "全期間": {
+    "from": 200001,
+    "to": 202608,
+    "years": 26.7,
+    "cagr": 8.73,
+    "bench_cagr": 8.28,
+    "excess": 0.45,
+    "ex_arith": 0.35,
+    "t": 0.22,
+    "t_nw": 0.23,
+    "vol": 14.7,
+    "bench_vol": 15.2,
+    "maxdd": -39.1,
+    "bench_maxdd": -50.8,
+    "sharpe": 0.52,
+    "bench_sharpe": 0.48,
+    "roll10_win": "6/17",
+    "turnover_pa": 2.83
+   },
+   "2001-": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 9.32,
+    "bench_cagr": 9.05,
+    "excess": 0.27,
+    "ex_arith": 0.15,
+    "t": 0.09,
+    "t_nw": 0.1,
+    "vol": 14.4,
+    "bench_vol": 15.1,
+    "maxdd": -39.1,
+    "bench_maxdd": -50.8,
+    "sharpe": 0.57,
+    "bench_sharpe": 0.54,
+    "roll10_win": "5/16",
+    "turnover_pa": 2.85
+   },
+   "2000-2008": {
+    "from": 200001,
+    "to": 200812,
+    "years": 9.0,
+    "cagr": 0.25,
+    "bench_cagr": -3.66,
+    "excess": 3.9,
+    "ex_arith": 4.0,
+    "t": 1.25,
+    "t_nw": 1.49,
+    "vol": 15.5,
+    "bench_vol": 15.2,
+    "maxdd": -32.0,
+    "bench_maxdd": -44.7,
+    "sharpe": -0.1,
+    "bench_sharpe": -0.37,
+    "roll10_win": null,
+    "turnover_pa": 3.01
+   },
+   "2009-2016": {
+    "from": 200901,
+    "to": 201612,
+    "years": 8.0,
+    "cagr": 10.53,
+    "bench_cagr": 14.36,
+    "excess": -3.82,
+    "ex_arith": -3.47,
+    "t": -1.43,
+    "t_nw": -1.64,
+    "vol": 13.8,
+    "bench_vol": 14.1,
+    "maxdd": -19.9,
+    "bench_maxdd": -18.1,
+    "sharpe": 0.79,
+    "bench_sharpe": 1.02,
+    "roll10_win": null,
+    "turnover_pa": 2.8
+   },
+   "2017-": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.7,
+    "cagr": 15.69,
+    "bench_cagr": 15.37,
+    "excess": 0.32,
+    "ex_arith": 0.12,
+    "t": 0.05,
+    "t_nw": 0.05,
+    "vol": 14.5,
+    "bench_vol": 15.5,
+    "maxdd": -18.1,
+    "bench_maxdd": -23.9,
+    "sharpe": 0.92,
+    "bench_sharpe": 0.85,
+    "roll10_win": null,
+    "turnover_pa": 2.68
+   },
+   "2001-2012": {
+    "from": 200101,
+    "to": 201212,
+    "years": 12.0,
+    "cagr": 3.87,
+    "bench_cagr": 2.6,
+    "excess": 1.27,
+    "ex_arith": 1.14,
+    "t": 0.44,
+    "t_nw": 0.46,
+    "vol": 15.3,
+    "bench_vol": 15.9,
+    "maxdd": -39.1,
+    "bench_maxdd": -50.8,
+    "sharpe": 0.21,
+    "bench_sharpe": 0.13,
+    "roll10_win": "3/3",
+    "turnover_pa": 3.04
+   },
+   "2013-": {
+    "from": 201301,
+    "to": 202608,
+    "years": 13.7,
+    "cagr": 14.34,
+    "bench_cagr": 15.04,
+    "excess": -0.7,
+    "ex_arith": -0.72,
+    "t": -0.37,
+    "t_nw": -0.39,
+    "vol": 13.5,
+    "bench_vol": 14.2,
+    "maxdd": -18.1,
+    "bench_maxdd": -23.9,
+    "sharpe": 0.94,
+    "bench_sharpe": 0.94,
+    "roll10_win": "0/4",
+    "turnover_pa": 2.69
+   }
+  },
+  "risk_2001": "同じリスクで（ぶれ 14.4% vs 15.1%・最大下落 −39.1% vs −50.8%）——ただし上乗せは0前後",
+  "N_k": [
+   [
+    9,
+    3
+   ],
+   [
+    10,
+    3
+   ],
+   [
+    11,
+    3
+   ]
+  ],
+  "held_months_2001": {
+   "XLK": 121,
+   "XLY": 116,
+   "XLU": 103,
+   "XLE": 99,
+   "XLB": 96,
+   "XLF": 93,
+   "XLV": 89,
+   "XLP": 73,
+   "XLI": 73,
+   "XLC": 45,
+   "XLRE": 16
+  },
+  "cost_sensitivity_2001": {
+   "0.0%/回転": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 9.63,
+    "bench_cagr": 9.05,
+    "excess": 0.58,
+    "ex_arith": 0.43,
+    "t": 0.28,
+    "t_nw": 0.28,
+    "vol": 14.4,
+    "bench_vol": 15.1,
+    "maxdd": -39.0,
+    "bench_maxdd": -50.8,
+    "sharpe": 0.59,
+    "bench_sharpe": 0.54,
+    "roll10_win": "6/16"
+   },
+   "0.1%/回転": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 9.32,
+    "bench_cagr": 9.05,
+    "excess": 0.27,
+    "ex_arith": 0.15,
+    "t": 0.09,
+    "t_nw": 0.1,
+    "vol": 14.4,
+    "bench_vol": 15.1,
+    "maxdd": -39.1,
+    "bench_maxdd": -50.8,
+    "sharpe": 0.57,
+    "bench_sharpe": 0.54,
+    "roll10_win": "5/16"
+   },
+   "0.3%/回転": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 8.7,
+    "bench_cagr": 9.05,
+    "excess": -0.34,
+    "ex_arith": -0.42,
+    "t": -0.27,
+    "t_nw": -0.27,
+    "vol": 14.4,
+    "bench_vol": 15.1,
+    "maxdd": -39.3,
+    "bench_maxdd": -50.8,
+    "sharpe": 0.53,
+    "bench_sharpe": 0.54,
+    "roll10_win": "3/16"
+   },
+   "0.5%/回転": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 8.09,
+    "bench_cagr": 9.05,
+    "excess": -0.96,
+    "ex_arith": -0.99,
+    "t": -0.63,
+    "t_nw": -0.64,
+    "vol": 14.4,
+    "bench_vol": 15.1,
+    "maxdd": -39.5,
+    "bench_maxdd": -50.8,
+    "sharpe": 0.49,
+    "bench_sharpe": 0.54,
+    "roll10_win": "2/16"
+   }
+  },
+  "delay1_vs_SPY": {
+   "全期間": {
+    "from": 200001,
+    "to": 202608,
+    "years": 26.7,
+    "cagr": 8.38,
+    "bench_cagr": 8.29,
+    "excess": 0.09,
+    "ex_arith": -0.12,
+    "t": -0.07,
+    "t_nw": -0.08,
+    "vol": 15.1,
+    "bench_vol": 16.4,
+    "maxdd": -42.2,
+    "bench_maxdd": -52.9,
+    "sharpe": 0.48,
+    "bench_sharpe": 0.45,
+    "roll10_win": "5/17"
+   },
+   "2001-": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 8.93,
+    "bench_cagr": 9.1,
+    "excess": -0.17,
+    "ex_arith": -0.38,
+    "t": -0.22,
+    "t_nw": -0.24,
+    "vol": 14.9,
+    "bench_vol": 16.4,
+    "maxdd": -42.2,
+    "bench_maxdd": -52.9,
+    "sharpe": 0.53,
+    "bench_sharpe": 0.51,
+    "roll10_win": "4/16"
+   },
+   "2001-2012": {
+    "from": 200101,
+    "to": 201212,
+    "years": 12.0,
+    "cagr": 3.8,
+    "bench_cagr": 2.98,
+    "excess": 0.83,
+    "ex_arith": 0.44,
+    "t": 0.16,
+    "t_nw": 0.18,
+    "vol": 15.6,
+    "bench_vol": 17.8,
+    "maxdd": -42.2,
+    "bench_maxdd": -52.9,
+    "sharpe": 0.2,
+    "bench_sharpe": 0.15,
+    "roll10_win": "2/3"
+   },
+   "2013-": {
+    "from": 201301,
+    "to": 202608,
+    "years": 13.7,
+    "cagr": 13.64,
+    "bench_cagr": 14.77,
+    "excess": -1.13,
+    "ex_arith": -1.11,
+    "t": -0.54,
+    "t_nw": -0.52,
+    "vol": 14.3,
+    "bench_vol": 15.0,
+    "maxdd": -22.1,
+    "bench_maxdd": -23.8,
+    "sharpe": 0.85,
+    "bench_sharpe": 0.89,
+    "roll10_win": "0/4"
+   }
+  },
+  "same_months_2001_2025_vs_SPY": {
+   "from": 200101,
+   "to": 202512,
+   "years": 25.0,
+   "cagr": 8.44,
+   "bench_cagr": 8.76,
+   "excess": -0.32,
+   "ex_arith": -0.39,
+   "t": -0.25,
+   "t_nw": -0.26,
+   "vol": 14.4,
+   "bench_vol": 15.1,
+   "maxdd": -39.1,
+   "bench_maxdd": -50.8,
+   "sharpe": 0.52,
+   "bench_sharpe": 0.52,
+   "roll10_win": "5/16"
+  },
+  "vs_French_mkt": {
+   "全期間": {
+    "from": 200001,
+    "to": 202608,
+    "years": 26.7,
+    "cagr": 8.73,
+    "bench_cagr": 8.54,
+    "excess": 0.19,
+    "ex_arith": 0.02,
+    "t": 0.01,
+    "t_nw": 0.02,
+    "vol": 14.7,
+    "bench_vol": 15.7,
+    "maxdd": -39.1,
+    "bench_maxdd": -50.3,
+    "sharpe": 0.52,
+    "bench_sharpe": 0.48,
+    "roll10_win": "4/17"
+   },
+   "2001-": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 9.32,
+    "bench_cagr": 9.41,
+    "excess": -0.09,
+    "ex_arith": -0.26,
+    "t": -0.16,
+    "t_nw": -0.16,
+    "vol": 14.4,
+    "bench_vol": 15.5,
+    "maxdd": -39.1,
+    "bench_maxdd": -50.3,
+    "sharpe": 0.57,
+    "bench_sharpe": 0.55,
+    "roll10_win": "3/16"
+   }
+  },
+  "SPY_vs_French_mkt（相手の違いの大きさ）": {
+   "全期間": {
+    "from": 199303,
+    "to": 202608,
+    "years": 33.5,
+    "cagr": 10.84,
+    "bench_cagr": 11.0,
+    "excess": -0.15,
+    "ex_arith": -0.22,
+    "t": -0.52,
+    "t_nw": -0.63,
+    "vol": 14.8,
+    "bench_vol": 15.3,
+    "maxdd": -50.8,
+    "bench_maxdd": -50.3,
+    "sharpe": 0.61,
+    "bench_sharpe": 0.6,
+    "roll10_win": "5/24"
+   },
+   "2001-": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 9.05,
+    "bench_cagr": 9.41,
+    "excess": -0.37,
+    "ex_arith": -0.41,
+    "t": -1.26,
+    "t_nw": -1.21,
+    "vol": 15.1,
+    "bench_vol": 15.5,
+    "maxdd": -50.8,
+    "bench_maxdd": -50.3,
+    "sharpe": 0.54,
+    "bench_sharpe": 0.55,
+    "roll10_win": "3/16"
+   }
+  },
+  "yearly_excess_pct（費用後 vs SPY）": {
+   "2000": 4.4,
+   "2001": -0.5,
+   "2002": 10.6,
+   "2003": -2.2,
+   "2004": 1.7,
+   "2005": 8.9,
+   "2006": -9.4,
+   "2007": 5.3,
+   "2008": 9.9,
+   "2009": -4.1,
+   "2010": 0.6,
+   "2011": -7.2,
+   "2012": -7.0,
+   "2013": 5.1,
+   "2014": -2.1,
+   "2015": -3.4,
+   "2016": -10.1,
+   "2017": -4.3,
+   "2018": -2.4,
+   "2019": -7.6,
+   "2020": -0.1,
+   "2021": -8.3,
+   "2022": 25.6,
+   "2023": -14.9,
+   "2024": -6.6,
+   "2025": -1.6,
+   "2026": 16.7
+  },
+  "diag_all_sectors_ew_vs_SPY（診断・規則ではない）": {
+   "全期間": {
+    "from": 200001,
+    "to": 202608,
+    "years": 26.7,
+    "cagr": 8.71,
+    "bench_cagr": 8.28,
+    "excess": 0.43,
+    "ex_arith": 0.32,
+    "t": 0.42,
+    "t_nw": 0.37,
+    "vol": 14.6,
+    "bench_vol": 15.2,
+    "maxdd": -49.1,
+    "bench_maxdd": -50.8,
+    "sharpe": 0.52,
+    "bench_sharpe": 0.48,
+    "roll10_win": "8/17"
+   },
+   "2001-": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 9.02,
+    "bench_cagr": 9.05,
+    "excess": -0.02,
+    "ex_arith": -0.1,
+    "t": -0.14,
+    "t_nw": -0.14,
+    "vol": 14.5,
+    "bench_vol": 15.1,
+    "maxdd": -49.1,
+    "bench_maxdd": -50.8,
+    "sharpe": 0.55,
+    "bench_sharpe": 0.54,
+    "roll10_win": "7/16"
+   }
+  },
+  "diag_top_minus_allEW（選ぶ腕）": {
+   "全期間": {
+    "from": 200001,
+    "to": 202608,
+    "years": 26.7,
+    "cagr": 8.73,
+    "bench_cagr": 8.71,
+    "excess": 0.02,
+    "ex_arith": 0.03,
+    "t": 0.02,
+    "t_nw": 0.02,
+    "vol": 14.7,
+    "bench_vol": 14.6,
+    "maxdd": -39.1,
+    "bench_maxdd": -49.1,
+    "sharpe": 0.52,
+    "bench_sharpe": 0.52,
+    "roll10_win": "4/17"
+   },
+   "2001-": {
+    "from": 200101,
+    "to": 202608,
+    "years": 25.7,
+    "cagr": 9.32,
+    "bench_cagr": 9.02,
+    "excess": 0.3,
+    "ex_arith": 0.25,
+    "t": 0.17,
+    "t_nw": 0.18,
+    "vol": 14.4,
+    "bench_vol": 14.5,
+    "maxdd": -39.1,
+    "bench_maxdd": -49.1,
+    "sharpe": 0.57,
+    "bench_sharpe": 0.55,
+    "roll10_win": "4/16"
+   },
+   "2001-2012": {
+    "from": 200101,
+    "to": 201212,
+    "years": 12.0,
+    "cagr": 3.87,
+    "bench_cagr": 4.7,
+    "excess": -0.83,
+    "ex_arith": -0.84,
+    "t": -0.37,
+    "t_nw": -0.39,
+    "vol": 15.3,
+    "bench_vol": 15.5,
+    "maxdd": -39.1,
+    "bench_maxdd": -49.1,
+    "sharpe": 0.21,
+    "bench_sharpe": 0.26,
+    "roll10_win": "2/3"
+   },
+   "2013-": {
+    "from": 201301,
+    "to": 202608,
+    "years": 13.7,
+    "cagr": 14.34,
+    "bench_cagr": 12.97,
+    "excess": 1.37,
+    "ex_arith": 1.2,
+    "t": 0.66,
+    "t_nw": 0.71,
+    "vol": 13.5,
+    "bench_vol": 13.6,
+    "maxdd": -18.1,
+    "bench_maxdd": -22.6,
+    "sharpe": 0.94,
+    "bench_sharpe": 0.84,
+    "roll10_win": "2/4"
+   }
+  },
+  "posthoc（事後・結果を見た後の感度。判定に使わない）": {
+   "最初の9本だけ（XLRE・XLC を入れない）": {
+    "全期間": {
+     "from": 200001,
+     "to": 202608,
+     "years": 26.7,
+     "cagr": 8.83,
+     "bench_cagr": 8.28,
+     "excess": 0.56,
+     "ex_arith": 0.45,
+     "t": 0.28,
+     "t_nw": 0.3,
+     "vol": 14.8,
+     "bench_vol": 15.2,
+     "maxdd": -39.1,
+     "bench_maxdd": -50.8,
+     "sharpe": 0.52,
+     "bench_sharpe": 0.48,
+     "roll10_win": "7/17"
+    },
+    "2001-": {
+     "from": 200101,
+     "to": 202608,
+     "years": 25.7,
+     "cagr": 9.43,
+     "bench_cagr": 9.05,
+     "excess": 0.38,
+     "ex_arith": 0.25,
+     "t": 0.16,
+     "t_nw": 0.16,
+     "vol": 14.5,
+     "bench_vol": 15.1,
+     "maxdd": -39.1,
+     "bench_maxdd": -50.8,
+     "sharpe": 0.58,
+     "bench_sharpe": 0.54,
+     "roll10_win": "6/16"
+    },
+    "2013-": {
+     "from": 201301,
+     "to": 202608,
+     "years": 13.7,
+     "cagr": 14.55,
+     "bench_cagr": 15.04,
+     "excess": -0.49,
+     "ex_arith": -0.52,
+     "t": -0.26,
+     "t_nw": -0.27,
+     "vol": 13.6,
+     "bench_vol": 14.2,
+     "maxdd": -15.9,
+     "bench_maxdd": -23.9,
+     "sharpe": 0.95,
+     "bench_sharpe": 0.94,
+     "roll10_win": "1/4"
+    }
+   },
+   "k=1": {
+    "全期間": {
+     "from": 200001,
+     "to": 202608,
+     "years": 26.7,
+     "cagr": 6.93,
+     "bench_cagr": 8.28,
+     "excess": -1.35,
+     "ex_arith": -0.34,
+     "t": -0.11,
+     "t_nw": -0.09,
+     "vol": 20.4,
+     "bench_vol": 15.2,
+     "maxdd": -48.4,
+     "bench_maxdd": -50.8,
+     "sharpe": 0.34,
+     "bench_sharpe": 0.48,
+     "roll10_win": "9/17"
+    },
+    "2001-": {
+     "from": 200101,
+     "to": 202608,
+     "years": 25.7,
+     "cagr": 8.17,
+     "bench_cagr": 9.05,
+     "excess": -0.87,
+     "ex_arith": -0.0,
+     "t": -0.0,
+     "t_nw": -0.0,
+     "vol": 19.8,
+     "bench_vol": 15.1,
+     "maxdd": -46.7,
+     "bench_maxdd": -50.8,
+     "sharpe": 0.41,
+     "bench_sharpe": 0.54,
+     "roll10_win": "8/16"
+    }
+   },
+   "k=2": {
+    "全期間": {
+     "from": 200001,
+     "to": 202608,
+     "years": 26.7,
+     "cagr": 9.83,
+     "bench_cagr": 8.28,
+     "excess": 1.56,
+     "ex_arith": 1.55,
+     "t": 0.79,
+     "t_nw": 0.73,
+     "vol": 15.9,
+     "bench_vol": 15.2,
+     "maxdd": -41.0,
+     "bench_maxdd": -50.8,
+     "sharpe": 0.55,
+     "bench_sharpe": 0.48,
+     "roll10_win": "7/17"
+    },
+    "2001-": {
+     "from": 200101,
+     "to": 202608,
+     "years": 25.7,
+     "cagr": 10.69,
+     "bench_cagr": 9.05,
+     "excess": 1.64,
+     "ex_arith": 1.57,
+     "t": 0.8,
+     "t_nw": 0.72,
+     "vol": 15.6,
+     "bench_vol": 15.1,
+     "maxdd": -41.0,
+     "bench_maxdd": -50.8,
+     "sharpe": 0.62,
+     "bench_sharpe": 0.54,
+     "roll10_win": "6/16"
+    }
+   },
+   "k=4": {
+    "全期間": {
+     "from": 200001,
+     "to": 202608,
+     "years": 26.7,
+     "cagr": 9.42,
+     "bench_cagr": 8.28,
+     "excess": 1.15,
+     "ex_arith": 0.9,
+     "t": 0.67,
+     "t_nw": 0.71,
+     "vol": 14.1,
+     "bench_vol": 15.2,
+     "maxdd": -41.9,
+     "bench_maxdd": -50.8,
+     "sharpe": 0.58,
+     "bench_sharpe": 0.48,
+     "roll10_win": "9/17"
+    },
+    "2001-": {
+     "from": 200101,
+     "to": 202608,
+     "years": 25.7,
+     "cagr": 10.0,
+     "bench_cagr": 9.05,
+     "excess": 0.95,
+     "ex_arith": 0.7,
+     "t": 0.52,
+     "t_nw": 0.54,
+     "vol": 13.8,
+     "bench_vol": 15.1,
+     "maxdd": -41.9,
+     "bench_maxdd": -50.8,
+     "sharpe": 0.63,
+     "bench_sharpe": 0.54,
+     "roll10_win": "8/16"
+    }
+   },
+   "k=5": {
+    "全期間": {
+     "from": 200001,
+     "to": 202608,
+     "years": 26.7,
+     "cagr": 9.51,
+     "bench_cagr": 8.28,
+     "excess": 1.24,
+     "ex_arith": 0.97,
+     "t": 0.85,
+     "t_nw": 0.88,
+     "vol": 14.0,
+     "bench_vol": 15.2,
+     "maxdd": -43.2,
+     "bench_maxdd": -50.8,
+     "sharpe": 0.59,
+     "bench_sharpe": 0.48,
+     "roll10_win": "9/17"
+    },
+    "2001-": {
+     "from": 200101,
+     "to": 202608,
+     "years": 25.7,
+     "cagr": 9.93,
+     "bench_cagr": 9.05,
+     "excess": 0.89,
+     "ex_arith": 0.62,
+     "t": 0.55,
+     "t_nw": 0.61,
+     "vol": 13.8,
+     "bench_vol": 15.1,
+     "maxdd": -43.2,
+     "bench_maxdd": -50.8,
+     "sharpe": 0.63,
+     "bench_sharpe": 0.54,
+     "roll10_win": "8/16"
+    }
+   },
+   "vs_QQQ（この利用者の中心の器・参考）": {
+    "2001-": "年率 9.32% vs 11.00%・超過 −1.68%/年 t−0.95（ぶれ 14.4% vs 21.7%・最大下落 −39.1% vs −67.8%）",
+    "2013-": "14.34% vs 20.16%・−5.82%/年 t−1.76",
+    "2009-": "13.33% vs 20.75%・−7.42%/年 t−2.54"
+   }
+  }
+ },
+ "japan_topix17": {
+  "nav_main_vs_1305": {
+   "全期間": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.4,
+    "cagr": 11.46,
+    "bench_cagr": 12.42,
+    "excess": -0.95,
+    "ex_arith": -0.77,
+    "t": -0.45,
+    "t_nw": -0.57,
+    "vol": 16.4,
+    "bench_vol": 15.7,
+    "maxdd": -29.3,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.66,
+    "bench_sharpe": 0.74,
+    "roll10_win": "4/8",
+    "turnover_pa": 2.67
+   },
+   "2009-2016": {
+    "from": 200904,
+    "to": 201612,
+    "years": 7.8,
+    "cagr": 7.76,
+    "bench_cagr": 11.13,
+    "excess": -3.37,
+    "ex_arith": -3.07,
+    "t": -1.15,
+    "t_nw": -1.54,
+    "vol": 18.3,
+    "bench_vol": 18.0,
+    "maxdd": -29.3,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.5,
+    "bench_sharpe": 0.67,
+    "roll10_win": null,
+    "turnover_pa": 2.96
+   },
+   "2017-": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.7,
+    "cagr": 14.52,
+    "bench_cagr": 13.46,
+    "excess": 1.06,
+    "ex_arith": 1.06,
+    "t": 0.48,
+    "t_nw": 0.6,
+    "vol": 14.7,
+    "bench_vol": 13.7,
+    "maxdd": -28.3,
+    "bench_maxdd": -19.8,
+    "sharpe": 0.84,
+    "bench_sharpe": 0.82,
+    "roll10_win": null,
+    "turnover_pa": 2.44
+   },
+   "2013-": {
+    "from": 201301,
+    "to": 202608,
+    "years": 13.7,
+    "cagr": 14.62,
+    "bench_cagr": 14.61,
+    "excess": 0.01,
+    "ex_arith": 0.09,
+    "t": 0.05,
+    "t_nw": 0.06,
+    "vol": 15.5,
+    "bench_vol": 14.8,
+    "maxdd": -28.3,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.85,
+    "bench_sharpe": 0.88,
+    "roll10_win": "3/4",
+    "turnover_pa": 2.53
+   },
+   "〜2025-12": {
+    "from": 200904,
+    "to": 202512,
+    "years": 16.8,
+    "cagr": 10.69,
+    "bench_cagr": 11.54,
+    "excess": -0.85,
+    "ex_arith": -0.73,
+    "t": -0.46,
+    "t_nw": -0.58,
+    "vol": 15.7,
+    "bench_vol": 15.5,
+    "maxdd": -29.3,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.65,
+    "bench_sharpe": 0.7,
+    "roll10_win": "3/7",
+    "turnover_pa": 2.66
+   }
+  },
+  "risk": "リスクを増やして（NAV: ぶれ 16.4% vs 15.7%・最大下落 −29.3% vs −24.0%）——しかも負け",
+  "nav_N_k": [
+   [
+    16,
+    5
+   ],
+   [
+    17,
+    5
+   ]
+  ],
+  "nav_held_months": {
+   "商社・卸売": 101,
+   "機械": 84,
+   "エネルギー資源": 82,
+   "医薬品": 82,
+   "電機・精密": 82,
+   "情報通信・サービスその他": 67,
+   "小売": 66,
+   "銀行": 65,
+   "鉄鋼・非鉄": 61,
+   "建設・資材": 53,
+   "金融（除く銀行）": 53,
+   "自動車・輸送機": 49,
+   "素材・化学": 47,
+   "不動産": 47,
+   "食品": 43,
+   "電力・ガス": 34,
+   "運輸・物流": 29
+  },
+  "nav_cost_sensitivity": {
+   "0.0%": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.4,
+    "cagr": 11.77,
+    "bench_cagr": 12.42,
+    "excess": -0.65,
+    "ex_arith": -0.5,
+    "t": -0.29,
+    "t_nw": -0.37,
+    "vol": 16.4,
+    "bench_vol": 15.7,
+    "maxdd": -28.8,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.68,
+    "bench_sharpe": 0.74,
+    "roll10_win": "4/8"
+   },
+   "0.1%": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.4,
+    "cagr": 11.46,
+    "bench_cagr": 12.42,
+    "excess": -0.95,
+    "ex_arith": -0.77,
+    "t": -0.45,
+    "t_nw": -0.57,
+    "vol": 16.4,
+    "bench_vol": 15.7,
+    "maxdd": -29.3,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.66,
+    "bench_sharpe": 0.74,
+    "roll10_win": "4/8"
+   },
+   "0.3%": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.4,
+    "cagr": 10.86,
+    "bench_cagr": 12.42,
+    "excess": -1.56,
+    "ex_arith": -1.32,
+    "t": -0.77,
+    "t_nw": -0.96,
+    "vol": 16.4,
+    "bench_vol": 15.7,
+    "maxdd": -30.4,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.63,
+    "bench_sharpe": 0.74,
+    "roll10_win": "2/8"
+   },
+   "0.5%": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.4,
+    "cagr": 10.26,
+    "bench_cagr": 12.42,
+    "excess": -2.15,
+    "ex_arith": -1.86,
+    "t": -1.08,
+    "t_nw": -1.34,
+    "vol": 16.4,
+    "bench_vol": 15.7,
+    "maxdd": -31.5,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.6,
+    "bench_sharpe": 0.74,
+    "roll10_win": "1/8"
+   }
+  },
+  "nav_yearly_excess_pct": {
+   "2009": -11.5,
+   "2010": -5.4,
+   "2011": -1.4,
+   "2012": 3.0,
+   "2013": -0.2,
+   "2014": -7.4,
+   "2015": -1.3,
+   "2016": -0.6,
+   "2017": 4.5,
+   "2018": 1.6,
+   "2019": -11.0,
+   "2020": 4.8,
+   "2021": -0.9,
+   "2022": 11.2,
+   "2023": -9.6,
+   "2024": 5.2,
+   "2025": 5.8,
+   "2026": -2.5
+  },
+  "nav_delay1": {
+   "全期間": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.4,
+    "cagr": 11.13,
+    "bench_cagr": 12.29,
+    "excess": -1.16,
+    "ex_arith": -0.87,
+    "t": -0.48,
+    "t_nw": -0.61,
+    "vol": 17.4,
+    "bench_vol": 16.2,
+    "maxdd": -31.6,
+    "bench_maxdd": -24.9,
+    "sharpe": 0.62,
+    "bench_sharpe": 0.71,
+    "roll10_win": "4/8",
+    "turnover_pa": 2.68
+   },
+   "2009-2016": {
+    "from": 200904,
+    "to": 201612,
+    "years": 7.8,
+    "cagr": 7.26,
+    "bench_cagr": 11.1,
+    "excess": -3.84,
+    "ex_arith": -3.43,
+    "t": -1.21,
+    "t_nw": -1.65,
+    "vol": 19.1,
+    "bench_vol": 18.4,
+    "maxdd": -31.6,
+    "bench_maxdd": -24.9,
+    "sharpe": 0.46,
+    "bench_sharpe": 0.66,
+    "roll10_win": null,
+    "turnover_pa": 2.97
+   },
+   "2017-": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.7,
+    "cagr": 14.33,
+    "bench_cagr": 13.26,
+    "excess": 1.07,
+    "ex_arith": 1.18,
+    "t": 0.5,
+    "t_nw": 0.66,
+    "vol": 16.0,
+    "bench_vol": 14.3,
+    "maxdd": -31.1,
+    "bench_maxdd": -23.6,
+    "sharpe": 0.77,
+    "bench_sharpe": 0.78,
+    "roll10_win": null,
+    "turnover_pa": 2.44
+   },
+   "2013-": {
+    "from": 201301,
+    "to": 202608,
+    "years": 13.7,
+    "cagr": 14.39,
+    "bench_cagr": 14.39,
+    "excess": 0.0,
+    "ex_arith": 0.22,
+    "t": 0.11,
+    "t_nw": 0.15,
+    "vol": 16.8,
+    "bench_vol": 15.3,
+    "maxdd": -31.1,
+    "bench_maxdd": -23.7,
+    "sharpe": 0.79,
+    "bench_sharpe": 0.85,
+    "roll10_win": "3/4",
+    "turnover_pa": 2.53
+   },
+   "〜2025-12": {
+    "from": 200904,
+    "to": 202512,
+    "years": 16.8,
+    "cagr": 10.48,
+    "bench_cagr": 11.5,
+    "excess": -1.02,
+    "ex_arith": -0.85,
+    "t": -0.51,
+    "t_nw": -0.64,
+    "vol": 16.8,
+    "bench_vol": 16.3,
+    "maxdd": -31.6,
+    "bench_maxdd": -24.9,
+    "sharpe": 0.6,
+    "bench_sharpe": 0.68,
+    "roll10_win": "3/7",
+    "turnover_pa": 2.67
+   }
+  },
+  "price_main_vs_1305_price": {
+   "全期間": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.3,
+    "cagr": 12.14,
+    "bench_cagr": 13.17,
+    "excess": -1.04,
+    "ex_arith": -0.79,
+    "t": -0.46,
+    "t_nw": -0.61,
+    "vol": 16.5,
+    "bench_vol": 15.6,
+    "maxdd": -29.4,
+    "bench_maxdd": -24.1,
+    "sharpe": 0.7,
+    "bench_sharpe": 0.79,
+    "roll10_win": "3/8",
+    "turnover_pa": 2.71
+   },
+   "2009-2016": {
+    "from": 200904,
+    "to": 201612,
+    "years": 7.8,
+    "cagr": 7.12,
+    "bench_cagr": 11.11,
+    "excess": -4.0,
+    "ex_arith": -3.61,
+    "t": -1.29,
+    "t_nw": -1.7,
+    "vol": 18.7,
+    "bench_vol": 18.2,
+    "maxdd": -29.4,
+    "bench_maxdd": -24.1,
+    "sharpe": 0.46,
+    "bench_sharpe": 0.67,
+    "roll10_win": null,
+    "turnover_pa": 2.89
+   },
+   "2017-": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.6,
+    "cagr": 16.36,
+    "bench_cagr": 14.86,
+    "excess": 1.5,
+    "ex_arith": 1.49,
+    "t": 0.71,
+    "t_nw": 1.09,
+    "vol": 14.6,
+    "bench_vol": 13.2,
+    "maxdd": -25.3,
+    "bench_maxdd": -19.9,
+    "sharpe": 0.95,
+    "bench_sharpe": 0.94,
+    "roll10_win": null,
+    "turnover_pa": 2.56
+   },
+   "2013-": {
+    "from": 201301,
+    "to": 202608,
+    "years": 13.6,
+    "cagr": 15.55,
+    "bench_cagr": 15.62,
+    "excess": -0.07,
+    "ex_arith": 0.05,
+    "t": 0.03,
+    "t_nw": 0.04,
+    "vol": 15.4,
+    "bench_vol": 14.5,
+    "maxdd": -25.3,
+    "bench_maxdd": -23.8,
+    "sharpe": 0.91,
+    "bench_sharpe": 0.96,
+    "roll10_win": "1/4",
+    "turnover_pa": 2.58
+   },
+   "〜2025-12": {
+    "from": 200904,
+    "to": 202512,
+    "years": 16.8,
+    "cagr": 10.17,
+    "bench_cagr": 11.53,
+    "excess": -1.36,
+    "ex_arith": -1.16,
+    "t": -0.69,
+    "t_nw": -0.92,
+    "vol": 16.1,
+    "bench_vol": 15.5,
+    "maxdd": -29.4,
+    "bench_maxdd": -24.1,
+    "sharpe": 0.61,
+    "bench_sharpe": 0.7,
+    "roll10_win": "2/7",
+    "turnover_pa": 2.7
+   }
+  },
+  "price_dropped_months": "2026-03（1629 の Yahoo の値が壊れた月に 1629 を持っていた）を戦略と相手の両方から外した——その月 TOPIX は −10.3% なので、価格版の相手の年率（13.17%）は NAV 版（12.42%）より高く見える。同じ月でそろえると 12.42% vs 12.40%",
+  "price_cost_sensitivity": {
+   "0.0%": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.3,
+    "cagr": 12.44,
+    "bench_cagr": 13.17,
+    "excess": -0.73,
+    "ex_arith": -0.51,
+    "t": -0.3,
+    "t_nw": -0.4,
+    "vol": 16.5,
+    "bench_vol": 15.6,
+    "maxdd": -28.9,
+    "bench_maxdd": -24.1,
+    "sharpe": 0.71,
+    "bench_sharpe": 0.79,
+    "roll10_win": "4/8"
+   },
+   "0.1%": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.3,
+    "cagr": 12.14,
+    "bench_cagr": 13.17,
+    "excess": -1.04,
+    "ex_arith": -0.79,
+    "t": -0.46,
+    "t_nw": -0.61,
+    "vol": 16.5,
+    "bench_vol": 15.6,
+    "maxdd": -29.4,
+    "bench_maxdd": -24.1,
+    "sharpe": 0.7,
+    "bench_sharpe": 0.79,
+    "roll10_win": "3/8"
+   },
+   "0.3%": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.3,
+    "cagr": 11.52,
+    "bench_cagr": 13.17,
+    "excess": -1.65,
+    "ex_arith": -1.34,
+    "t": -0.78,
+    "t_nw": -1.02,
+    "vol": 16.5,
+    "bench_vol": 15.6,
+    "maxdd": -30.5,
+    "bench_maxdd": -24.1,
+    "sharpe": 0.66,
+    "bench_sharpe": 0.79,
+    "roll10_win": "1/8"
+   },
+   "0.5%": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.3,
+    "cagr": 10.91,
+    "bench_cagr": 13.17,
+    "excess": -2.26,
+    "ex_arith": -1.89,
+    "t": -1.1,
+    "t_nw": -1.43,
+    "vol": 16.5,
+    "bench_vol": 15.6,
+    "maxdd": -31.6,
+    "bench_maxdd": -24.1,
+    "sharpe": 0.63,
+    "bench_sharpe": 0.79,
+    "roll10_win": "0/8"
+   }
+  },
+  "price_delay1": {
+   "全期間": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.3,
+    "cagr": 11.94,
+    "bench_cagr": 12.7,
+    "excess": -0.76,
+    "ex_arith": -0.53,
+    "t": -0.3,
+    "t_nw": -0.39,
+    "vol": 17.2,
+    "bench_vol": 16.2,
+    "maxdd": -29.4,
+    "bench_maxdd": -25.1,
+    "sharpe": 0.66,
+    "bench_sharpe": 0.74,
+    "roll10_win": "2/8",
+    "turnover_pa": 2.71
+   },
+   "2009-2016": {
+    "from": 200904,
+    "to": 201612,
+    "years": 7.8,
+    "cagr": 7.58,
+    "bench_cagr": 11.09,
+    "excess": -3.51,
+    "ex_arith": -3.1,
+    "t": -1.08,
+    "t_nw": -1.43,
+    "vol": 19.2,
+    "bench_vol": 18.4,
+    "maxdd": -29.4,
+    "bench_maxdd": -25.1,
+    "sharpe": 0.47,
+    "bench_sharpe": 0.66,
+    "roll10_win": null,
+    "turnover_pa": 2.9
+   },
+   "2017-": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.6,
+    "cagr": 15.6,
+    "bench_cagr": 14.02,
+    "excess": 1.59,
+    "ex_arith": 1.55,
+    "t": 0.71,
+    "t_nw": 0.99,
+    "vol": 15.4,
+    "bench_vol": 14.3,
+    "maxdd": -28.8,
+    "bench_maxdd": -23.6,
+    "sharpe": 0.87,
+    "bench_sharpe": 0.83,
+    "roll10_win": null,
+    "turnover_pa": 2.56
+   },
+   "2013-": {
+    "from": 201301,
+    "to": 202608,
+    "years": 13.6,
+    "cagr": 15.09,
+    "bench_cagr": 14.93,
+    "excess": 0.16,
+    "ex_arith": 0.28,
+    "t": 0.15,
+    "t_nw": 0.2,
+    "vol": 16.3,
+    "bench_vol": 15.2,
+    "maxdd": -28.8,
+    "bench_maxdd": -23.8,
+    "sharpe": 0.84,
+    "bench_sharpe": 0.88,
+    "roll10_win": "2/4",
+    "turnover_pa": 2.59
+   },
+   "〜2025-12": {
+    "from": 200904,
+    "to": 202512,
+    "years": 16.8,
+    "cagr": 10.34,
+    "bench_cagr": 11.5,
+    "excess": -1.16,
+    "ex_arith": -0.99,
+    "t": -0.59,
+    "t_nw": -0.77,
+    "vol": 16.7,
+    "bench_vol": 16.2,
+    "maxdd": -29.4,
+    "bench_maxdd": -25.1,
+    "sharpe": 0.6,
+    "bench_sharpe": 0.68,
+    "roll10_win": "1/7",
+    "turnover_pa": 2.7
+   }
+  },
+  "broken_policy_sensitivity": {
+   "zero": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.4,
+    "cagr": 11.46,
+    "bench_cagr": 12.42,
+    "excess": -0.95,
+    "ex_arith": -0.77,
+    "t": -0.45,
+    "t_nw": -0.57,
+    "vol": 16.4,
+    "bench_vol": 15.7,
+    "maxdd": -29.3,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.66,
+    "bench_sharpe": 0.74,
+    "roll10_win": "4/8"
+   },
+   "bench": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.4,
+    "cagr": 11.46,
+    "bench_cagr": 12.42,
+    "excess": -0.95,
+    "ex_arith": -0.77,
+    "t": -0.45,
+    "t_nw": -0.57,
+    "vol": 16.4,
+    "bench_vol": 15.7,
+    "maxdd": -29.3,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.66,
+    "bench_sharpe": 0.74,
+    "roll10_win": "4/8"
+   },
+   "note": "NAV 版では持っている業種の壊れた月が無かった（1629 の 2026-07 は持っていない）＝扱いで数字は変わらない"
+  },
+  "diag_all17_ew_vs_TOPIX（診断）": {
+   "全期間": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.3,
+    "cagr": 11.94,
+    "bench_cagr": 12.47,
+    "excess": -0.53,
+    "ex_arith": -0.52,
+    "t": -0.72,
+    "t_nw": -0.76,
+    "vol": 15.5,
+    "bench_vol": 15.8,
+    "maxdd": -24.4,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.72,
+    "bench_sharpe": 0.74,
+    "roll10_win": "1/8",
+    "turnover_pa": 0.16
+   },
+   "2017-": {
+    "from": 201701,
+    "to": 202608,
+    "years": 9.6,
+    "cagr": 12.82,
+    "bench_cagr": 13.56,
+    "excess": -0.74,
+    "ex_arith": -0.67,
+    "t": -0.55,
+    "t_nw": -0.56,
+    "vol": 13.7,
+    "bench_vol": 13.7,
+    "maxdd": -24.4,
+    "bench_maxdd": -19.8,
+    "sharpe": 0.78,
+    "bench_sharpe": 0.83,
+    "roll10_win": null,
+    "turnover_pa": 0.16
+   }
+  },
+  "diag_top_minus_all17（選ぶ腕）": {
+   "全期間": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.3,
+    "cagr": 11.73,
+    "bench_cagr": 11.94,
+    "excess": -0.21,
+    "ex_arith": -0.06,
+    "t": -0.04,
+    "t_nw": -0.05,
+    "vol": 16.4,
+    "bench_vol": 15.5,
+    "maxdd": -29.3,
+    "bench_maxdd": -24.4,
+    "sharpe": 0.68,
+    "bench_sharpe": 0.72,
+    "roll10_win": "5/8"
+   }
+  },
+  "fees": "信託報酬（税抜・投信協会）: TOPIX-17 の17本は各 0.32%、1305 は 0.06%、1306 は 0.088% ＝ 業種ETFを持つだけで年約0.26% 不利（NAV に入っている）",
+  "posthoc_k（事後）": {
+   "k=2": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.4,
+    "cagr": 9.53,
+    "bench_cagr": 12.42,
+    "excess": -2.89,
+    "ex_arith": -2.01,
+    "t": -0.74,
+    "t_nw": -0.71,
+    "vol": 19.5,
+    "bench_vol": 15.7,
+    "maxdd": -35.5,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.49,
+    "bench_sharpe": 0.74,
+    "roll10_win": "1/8"
+   },
+   "k=3": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.4,
+    "cagr": 11.34,
+    "bench_cagr": 12.42,
+    "excess": -1.08,
+    "ex_arith": -0.63,
+    "t": -0.28,
+    "t_nw": -0.27,
+    "vol": 17.9,
+    "bench_vol": 15.7,
+    "maxdd": -32.6,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.61,
+    "bench_sharpe": 0.74,
+    "roll10_win": "2/8"
+   },
+   "k=4": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.4,
+    "cagr": 11.8,
+    "bench_cagr": 12.42,
+    "excess": -0.62,
+    "ex_arith": -0.36,
+    "t": -0.18,
+    "t_nw": -0.19,
+    "vol": 17.0,
+    "bench_vol": 15.7,
+    "maxdd": -31.4,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.66,
+    "bench_sharpe": 0.74,
+    "roll10_win": "4/8"
+   },
+   "k=6": {
+    "from": 200904,
+    "to": 202608,
+    "years": 17.3,
+    "cagr": 12.53,
+    "bench_cagr": 12.47,
+    "excess": 0.06,
+    "ex_arith": 0.11,
+    "t": 0.07,
+    "t_nw": 0.09,
+    "vol": 16.2,
+    "bench_vol": 15.8,
+    "maxdd": -27.4,
+    "bench_maxdd": -24.0,
+    "sharpe": 0.73,
+    "bench_sharpe": 0.74,
+    "roll10_win": "5/8"
+   }
+  }
+ },
+ "paper_comparison_posthoc": {
+  "label": "事後の比較（結果を見た後に並べた・判定に使わない）。French の業種は米国 CRSP 全上場の時価加重・配当込み、相手は French 市場、費用 0.1%/回転。k＝round(N×15/49)。JKP の GICS 11部門は ret＋French RF（confirm_indmom_world と同じ約束）",
+  "rows": {
+   "French10_k3": {
+    "2000-": {
+     "from": 200001,
+     "to": 202608,
+     "excess": 2.08,
+     "ex_arith": 2.02,
+     "t": 1.06,
+     "vol": 16.4,
+     "bench_vol": 15.7,
+     "maxdd": -43.1,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.61
+    },
+    "2001-": {
+     "from": 200101,
+     "to": 202608,
+     "excess": 1.64,
+     "ex_arith": 1.6,
+     "t": 0.84,
+     "vol": 16.3,
+     "bench_vol": 15.5,
+     "maxdd": -43.1,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.62
+    },
+    "2001-2012": {
+     "from": 200101,
+     "to": 201212,
+     "excess": 1.96,
+     "ex_arith": 1.68,
+     "t": 0.62,
+     "vol": 15.0,
+     "bench_vol": 16.3,
+     "maxdd": -43.1,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.49
+    },
+    "2013-": {
+     "from": 201301,
+     "to": 202608,
+     "excess": 1.33,
+     "ex_arith": 1.53,
+     "t": 0.57,
+     "vol": 17.2,
+     "bench_vol": 14.7,
+     "maxdd": -22.1,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.73
+    },
+    "2009-04-": {
+     "from": 200904,
+     "to": 202608,
+     "excess": 1.21,
+     "ex_arith": 1.34,
+     "t": 0.6,
+     "vol": 16.9,
+     "bench_vol": 14.9,
+     "maxdd": -22.1,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.61
+    },
+    "2009-04-2025-12": {
+     "from": 200904,
+     "to": 202512,
+     "excess": 1.88,
+     "ex_arith": 1.91,
+     "t": 0.89,
+     "vol": 16.9,
+     "bench_vol": 14.9,
+     "maxdd": -22.1,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.57
+    }
+   },
+   "French12_k4": {
+    "2000-": {
+     "from": 200001,
+     "to": 202608,
+     "excess": 2.01,
+     "ex_arith": 1.77,
+     "t": 1.16,
+     "vol": 15.2,
+     "bench_vol": 15.7,
+     "maxdd": -40.5,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.24
+    },
+    "2001-": {
+     "from": 200101,
+     "to": 202608,
+     "excess": 1.64,
+     "ex_arith": 1.42,
+     "t": 0.91,
+     "vol": 15.1,
+     "bench_vol": 15.5,
+     "maxdd": -40.5,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.26
+    },
+    "2001-2012": {
+     "from": 200101,
+     "to": 201212,
+     "excess": 2.69,
+     "ex_arith": 2.29,
+     "t": 0.96,
+     "vol": 14.4,
+     "bench_vol": 16.3,
+     "maxdd": -40.5,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.25
+    },
+    "2013-": {
+     "from": 201301,
+     "to": 202608,
+     "excess": 0.63,
+     "ex_arith": 0.66,
+     "t": 0.32,
+     "vol": 15.5,
+     "bench_vol": 14.7,
+     "maxdd": -20.0,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.28
+    },
+    "2009-04-": {
+     "from": 200904,
+     "to": 202608,
+     "excess": 0.78,
+     "ex_arith": 0.76,
+     "t": 0.43,
+     "vol": 15.5,
+     "bench_vol": 14.9,
+     "maxdd": -20.0,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.13
+    },
+    "2009-04-2025-12": {
+     "from": 200904,
+     "to": 202512,
+     "excess": 0.6,
+     "ex_arith": 0.62,
+     "t": 0.36,
+     "vol": 15.6,
+     "bench_vol": 14.9,
+     "maxdd": -20.0,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.12
+    }
+   },
+   "French17_k5": {
+    "2000-": {
+     "from": 200001,
+     "to": 202608,
+     "excess": 3.22,
+     "ex_arith": 3.27,
+     "t": 1.81,
+     "vol": 17.6,
+     "bench_vol": 15.7,
+     "maxdd": -45.9,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.36
+    },
+    "2001-": {
+     "from": 200101,
+     "to": 202608,
+     "excess": 2.6,
+     "ex_arith": 2.68,
+     "t": 1.46,
+     "vol": 17.5,
+     "bench_vol": 15.5,
+     "maxdd": -45.9,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.38
+    },
+    "2001-2012": {
+     "from": 200101,
+     "to": 201212,
+     "excess": 4.17,
+     "ex_arith": 4.19,
+     "t": 1.39,
+     "vol": 17.6,
+     "bench_vol": 16.3,
+     "maxdd": -45.9,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.35
+    },
+    "2013-": {
+     "from": 201301,
+     "to": 202608,
+     "excess": 1.08,
+     "ex_arith": 1.36,
+     "t": 0.62,
+     "vol": 17.4,
+     "bench_vol": 14.7,
+     "maxdd": -23.6,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.4
+    },
+    "2009-04-": {
+     "from": 200904,
+     "to": 202608,
+     "excess": 0.45,
+     "ex_arith": 0.76,
+     "t": 0.4,
+     "vol": 17.3,
+     "bench_vol": 14.9,
+     "maxdd": -23.6,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.38
+    },
+    "2009-04-2025-12": {
+     "from": 200904,
+     "to": 202512,
+     "excess": 0.21,
+     "ex_arith": 0.52,
+     "t": 0.28,
+     "vol": 17.1,
+     "bench_vol": 14.9,
+     "maxdd": -23.6,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.38
+    }
+   },
+   "French30_k9": {
+    "2000-": {
+     "from": 200001,
+     "to": 202608,
+     "excess": 3.89,
+     "ex_arith": 3.72,
+     "t": 2.15,
+     "vol": 16.8,
+     "bench_vol": 15.7,
+     "maxdd": -43.2,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.31
+    },
+    "2001-": {
+     "from": 200101,
+     "to": 202608,
+     "excess": 3.33,
+     "ex_arith": 3.17,
+     "t": 1.83,
+     "vol": 16.5,
+     "bench_vol": 15.5,
+     "maxdd": -43.2,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.32
+    },
+    "2001-2012": {
+     "from": 200101,
+     "to": 201212,
+     "excess": 4.62,
+     "ex_arith": 4.47,
+     "t": 1.58,
+     "vol": 16.8,
+     "bench_vol": 16.3,
+     "maxdd": -43.2,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.33
+    },
+    "2013-": {
+     "from": 201301,
+     "to": 202608,
+     "excess": 2.07,
+     "ex_arith": 2.04,
+     "t": 0.97,
+     "vol": 16.3,
+     "bench_vol": 14.7,
+     "maxdd": -21.5,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.31
+    },
+    "2009-04-": {
+     "from": 200904,
+     "to": 202608,
+     "excess": 1.63,
+     "ex_arith": 1.64,
+     "t": 0.91,
+     "vol": 16.4,
+     "bench_vol": 14.9,
+     "maxdd": -21.5,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.28
+    },
+    "2009-04-2025-12": {
+     "from": 200904,
+     "to": 202512,
+     "excess": 1.63,
+     "ex_arith": 1.58,
+     "t": 0.95,
+     "vol": 16.1,
+     "bench_vol": 14.9,
+     "maxdd": -21.5,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.31
+    }
+   },
+   "French49_k15": {
+    "2000-": {
+     "from": 200001,
+     "to": 202608,
+     "excess": 3.47,
+     "ex_arith": 3.27,
+     "t": 2.08,
+     "vol": 16.3,
+     "bench_vol": 15.7,
+     "maxdd": -44.6,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.31
+    },
+    "2001-": {
+     "from": 200101,
+     "to": 202608,
+     "excess": 2.91,
+     "ex_arith": 2.74,
+     "t": 1.73,
+     "vol": 16.1,
+     "bench_vol": 15.5,
+     "maxdd": -44.6,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.32
+    },
+    "2001-2012": {
+     "from": 200101,
+     "to": 201212,
+     "excess": 5.58,
+     "ex_arith": 5.31,
+     "t": 1.97,
+     "vol": 16.4,
+     "bench_vol": 16.3,
+     "maxdd": -44.6,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.28
+    },
+    "2013-": {
+     "from": 201301,
+     "to": 202608,
+     "excess": 0.36,
+     "ex_arith": 0.49,
+     "t": 0.27,
+     "vol": 15.9,
+     "bench_vol": 14.7,
+     "maxdd": -21.7,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.37
+    },
+    "2009-04-": {
+     "from": 200904,
+     "to": 202608,
+     "excess": 0.23,
+     "ex_arith": 0.38,
+     "t": 0.24,
+     "vol": 16.1,
+     "bench_vol": 14.9,
+     "maxdd": -21.7,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.37
+    },
+    "2009-04-2025-12": {
+     "from": 200904,
+     "to": 202512,
+     "excess": 0.06,
+     "ex_arith": 0.19,
+     "t": 0.13,
+     "vol": 15.9,
+     "bench_vol": 14.9,
+     "maxdd": -21.7,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.4
+    }
+   },
+   "JKP_usa_GICS11": {
+    "2000-": {
+     "from": 200007,
+     "to": 202512,
+     "excess": 0.85,
+     "ex_arith": 0.73,
+     "t": 0.4,
+     "vol": 15.3,
+     "bench_vol": 15.6,
+     "maxdd": -43.7,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.57
+    },
+    "2001-": {
+     "from": 200101,
+     "to": 202512,
+     "excess": 0.13,
+     "ex_arith": 0.07,
+     "t": 0.04,
+     "vol": 15.2,
+     "bench_vol": 15.5,
+     "maxdd": -43.7,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.59
+    },
+    "2001-2012": {
+     "from": 200101,
+     "to": 201212,
+     "excess": 1.57,
+     "ex_arith": 1.47,
+     "t": 0.5,
+     "vol": 16.0,
+     "bench_vol": 16.3,
+     "maxdd": -43.7,
+     "bench_maxdd": -50.3,
+     "turnover_pa": 2.8
+    },
+    "2013-": {
+     "from": 201301,
+     "to": 202512,
+     "excess": -1.33,
+     "ex_arith": -1.22,
+     "t": -0.56,
+     "vol": 14.4,
+     "bench_vol": 14.7,
+     "maxdd": -18.0,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.4
+    },
+    "2009-04-": {
+     "from": 200904,
+     "to": 202512,
+     "excess": -2.01,
+     "ex_arith": -1.77,
+     "t": -0.92,
+     "vol": 14.9,
+     "bench_vol": 14.9,
+     "maxdd": -19.8,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.54
+    },
+    "2009-04-2025-12": {
+     "from": 200904,
+     "to": 202512,
+     "excess": -2.01,
+     "ex_arith": -1.77,
+     "t": -0.92,
+     "vol": 14.9,
+     "bench_vol": 14.9,
+     "maxdd": -19.8,
+     "bench_maxdd": -24.8,
+     "turnover_pa": 2.54
+    }
+   },
+   "JKP_jpn_GICS11_usd": {
+    "2000-": {
+     "from": 200007,
+     "to": 202512,
+     "excess": 1.94,
+     "ex_arith": 1.93,
+     "t": 1.04,
+     "vol": 15.7,
+     "bench_vol": 15.2,
+     "maxdd": -39.7,
+     "bench_maxdd": -54.5,
+     "turnover_pa": 2.61
+    },
+    "2001-": {
+     "from": 200101,
+     "to": 202512,
+     "excess": 1.51,
+     "ex_arith": 1.51,
+     "t": 0.81,
+     "vol": 15.4,
+     "bench_vol": 14.8,
+     "maxdd": -35.6,
+     "bench_maxdd": -46.4,
+     "turnover_pa": 2.62
+    },
+    "2001-2012": {
+     "from": 200101,
+     "to": 201212,
+     "excess": 1.4,
+     "ex_arith": 1.44,
+     "t": 0.45,
+     "vol": 17.0,
+     "bench_vol": 16.5,
+     "maxdd": -35.6,
+     "bench_maxdd": -46.4,
+     "turnover_pa": 2.59
+    },
+    "2013-": {
+     "from": 201301,
+     "to": 202512,
+     "excess": 1.61,
+     "ex_arith": 1.57,
+     "t": 0.76,
+     "vol": 13.7,
+     "bench_vol": 13.1,
+     "maxdd": -25.7,
+     "bench_maxdd": -28.8,
+     "turnover_pa": 2.65
+    },
+    "2009-04-": {
+     "from": 200904,
+     "to": 202512,
+     "excess": 0.37,
+     "ex_arith": 0.37,
+     "t": 0.19,
+     "vol": 13.4,
+     "bench_vol": 13.2,
+     "maxdd": -25.7,
+     "bench_maxdd": -28.8,
+     "turnover_pa": 2.73
+    },
+    "2009-04-2025-12": {
+     "from": 200904,
+     "to": 202512,
+     "excess": 0.37,
+     "ex_arith": 0.37,
+     "t": 0.19,
+     "vol": 13.4,
+     "bench_vol": 13.2,
+     "maxdd": -25.7,
+     "bench_maxdd": -28.8,
+     "turnover_pa": 2.73
+    }
+   }
+  },
+  "coarseness_reading": "2001-01〜2026-08: 10業種 +1.64%/年(t0.84)・12業種 +1.64(t0.91)・17業種 +2.60(t1.46)・30業種 +3.33(t1.83)・49業種 +2.91(t1.73)＝粗いほど弱い（単調ではない）。GICS 11部門（JKP 米国・2001〜2025）は +0.13%/年(t0.04)。SPDR の実物（同じ月）は −0.32%(t−0.25)＝紙の同じ粗さの版とほぼ同じ。2013年以降は 49業種でも +0.36%/年(t0.27)・日本の窓（2009-04〜）でも +0.23%/年＝米国では紙の上でも近年は0に近い",
+  "etf_vs_paper_same_classification": {
+   "SPDR と JKP 米国 GICS11 の月次超過の相関（2001〜2025・300か月）": 0.85,
+   "SPDR と French10 の相関": 0.69,
+   "SPDR と French49（凍結）の相関": 0.64,
+   "持った業種の重なり（SPDR vs JKP GICS）": 0.77
+  },
+  "japan_paper_vs_etf": "JKP 日本 GICS 11部門（米ドル・紙）: 2001〜2025 +1.51%/年(t0.81)、2009-04〜2025-12 +0.37%/年(t0.19)。同じ窓の TOPIX-17 ETF（NAV）は −0.85%/年(t−0.46)。差の約 0.26%/年は業種ETFの信託報酬の差",
+  "world_confirm_context": "第4回の確認（紙・GICS 11部門）: 先進国 20/20・+3.25%/年(t3.26)、新興国 18/20・+4.07%/年(t4.86)。だが日本は40か国中5番目に弱い（+1.24%/年 t0.67）。強かったのはペルー +16.0・UAE +12.0・ギリシャ +8.5・フィンランド +7.9・香港 +7.3 など小さな市場＝国ごとの業種ETFがほとんど無く、この利用者が器で取れない側"
+ },
+ "after_tax_jpy": {
+  "about": "一括・円建て（Yahoo JPY=X の月末）。課税口座（特定口座・源泉徴収あり＝同じ年の中は損益通算）: 米国ETFの分配は 米国10%→残りに20.315%（外国税額控除なし＝28.28%）、売るたびに円で測った売却益に20.315%（総平均）、最後に全部売って清算。carry3 は確定申告で損失を3年繰り越した場合。NISA: 分配は米国の10%だけ・売却益は非課税。楽天の米国株手数料（約定代金の0.495%・上限22ドル・2026-09-28 楽天の手数料の頁で確認）を売り買いそれぞれに、滑り 0.05%/片側（＝凍結の 0.1%/回転）。SPY の買いは楽天の買付手数料無料の指定銘柄（verify_levtrend_real_products.json の確認）。月末の価格で月1回（凍結の規則は保有中の業種も毎月等分へ戻すので、小口ほど手数料が効く）。日本: TOPIX-17 と 1305 の NAV＋分配。楽天の国内株はゼロコースで手数料0円（手数料の頁で確認）。分配・売却益とも20.315%。1629 の NAV の単位の変更（2026-07-16・9.912倍）は戻して計算",
+  "us_spdr": {
+   "200001〜202608": {
+    "fx_start": 102.18000030517578,
+    "fx_end": 160.1219940185547,
+    "100万円": {
+     "rule_pretax_nocomm": {
+      "cagr_jpy": 10.56,
+      "multiple": 14.56,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.218
+     },
+     "rule_taxable": {
+      "cagr_jpy": 5.51,
+      "multiple": 4.18,
+      "tax_paid_x_principal": 0.91,
+      "cost_paid_x_principal": 1.006
+     },
+     "rule_taxable_carry3": {
+      "cagr_jpy": 5.74,
+      "multiple": 4.43,
+      "tax_paid_x_principal": 0.88,
+      "cost_paid_x_principal": 1.022
+     },
+     "SPY_pretax": {
+      "cagr_jpy": 10.12,
+      "multiple": 13.06,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.0
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 9.92,
+      "multiple": 12.47,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.0
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 8.8,
+      "multiple": 9.47,
+      "tax_paid_x_principal": 1.97,
+      "cost_paid_x_principal": 0.004
+     },
+     "rule_taxable_vs_SPY_NISA_pa": -4.41,
+     "rule_taxable_carry3_vs_SPY_NISA_pa": -4.18,
+     "rule_taxable_vs_SPY_taxable_pa": -3.29,
+     "rule_pretax_vs_SPY_pretax_pa": 0.44
+    },
+    "1000万円": {
+     "rule_pretax_nocomm": {
+      "cagr_jpy": 10.56,
+      "multiple": 14.56,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.218
+     },
+     "rule_taxable": {
+      "cagr_jpy": 7.78,
+      "multiple": 7.37,
+      "tax_paid_x_principal": 1.61,
+      "cost_paid_x_principal": 0.31
+     },
+     "rule_taxable_carry3": {
+      "cagr_jpy": 8.01,
+      "multiple": 7.81,
+      "tax_paid_x_principal": 1.6,
+      "cost_paid_x_principal": 0.317
+     },
+     "SPY_pretax": {
+      "cagr_jpy": 10.12,
+      "multiple": 13.06,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.0
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 9.92,
+      "multiple": 12.47,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.0
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 8.8,
+      "multiple": 9.48,
+      "tax_paid_x_principal": 1.97,
+      "cost_paid_x_principal": 0.0
+     },
+     "rule_taxable_vs_SPY_NISA_pa": -2.14,
+     "rule_taxable_carry3_vs_SPY_NISA_pa": -1.91,
+     "rule_taxable_vs_SPY_taxable_pa": -1.02,
+     "rule_pretax_vs_SPY_pretax_pa": 0.44
+    }
+   },
+   "200101〜202608": {
+    "fx_start": 114.37999725341797,
+    "fx_end": 160.1219940185547,
+    "100万円": {
+     "rule_pretax_nocomm": {
+      "cagr_jpy": 10.75,
+      "multiple": 13.73,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.203
+     },
+     "rule_taxable": {
+      "cagr_jpy": 5.6,
+      "multiple": 4.05,
+      "tax_paid_x_principal": 0.88,
+      "cost_paid_x_principal": 0.958
+     },
+     "rule_taxable_carry3": {
+      "cagr_jpy": 5.83,
+      "multiple": 4.28,
+      "tax_paid_x_principal": 0.86,
+      "cost_paid_x_principal": 0.974
+     },
+     "SPY_pretax": {
+      "cagr_jpy": 10.49,
+      "multiple": 12.93,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.0
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 10.29,
+      "multiple": 12.35,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.0
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 9.12,
+      "multiple": 9.4,
+      "tax_paid_x_principal": 1.96,
+      "cost_paid_x_principal": 0.004
+     },
+     "rule_taxable_vs_SPY_NISA_pa": -4.69,
+     "rule_taxable_carry3_vs_SPY_NISA_pa": -4.46,
+     "rule_taxable_vs_SPY_taxable_pa": -3.52,
+     "rule_pretax_vs_SPY_pretax_pa": 0.26
+    },
+    "1000万円": {
+     "rule_pretax_nocomm": {
+      "cagr_jpy": 10.75,
+      "multiple": 13.73,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.203
+     },
+     "rule_taxable": {
+      "cagr_jpy": 7.87,
+      "multiple": 6.99,
+      "tax_paid_x_principal": 1.53,
+      "cost_paid_x_principal": 0.293
+     },
+     "rule_taxable_carry3": {
+      "cagr_jpy": 8.11,
+      "multiple": 7.4,
+      "tax_paid_x_principal": 1.52,
+      "cost_paid_x_principal": 0.3
+     },
+     "SPY_pretax": {
+      "cagr_jpy": 10.49,
+      "multiple": 12.93,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.0
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 10.29,
+      "multiple": 12.35,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.0
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 9.12,
+      "multiple": 9.4,
+      "tax_paid_x_principal": 1.96,
+      "cost_paid_x_principal": 0.0
+     },
+     "rule_taxable_vs_SPY_NISA_pa": -2.42,
+     "rule_taxable_carry3_vs_SPY_NISA_pa": -2.18,
+     "rule_taxable_vs_SPY_taxable_pa": -1.25,
+     "rule_pretax_vs_SPY_pretax_pa": 0.26
+    }
+   },
+   "201301〜202608": {
+    "fx_start": 85.95999908447266,
+    "fx_end": 160.1219940185547,
+    "100万円": {
+     "rule_pretax_nocomm": {
+      "cagr_jpy": 19.64,
+      "multiple": 11.59,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.139
+     },
+     "rule_taxable": {
+      "cagr_jpy": 13.86,
+      "multiple": 5.89,
+      "tax_paid_x_principal": 1.18,
+      "cost_paid_x_principal": 0.716
+     },
+     "rule_taxable_carry3": {
+      "cagr_jpy": 14.01,
+      "multiple": 6.0,
+      "tax_paid_x_principal": 1.15,
+      "cost_paid_x_principal": 0.717
+     },
+     "SPY_pretax": {
+      "cagr_jpy": 20.39,
+      "multiple": 12.63,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.0
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 20.19,
+      "multiple": 12.35,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.0
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 18.14,
+      "multiple": 9.76,
+      "tax_paid_x_principal": 2.08,
+      "cost_paid_x_principal": 0.004
+     },
+     "rule_taxable_vs_SPY_NISA_pa": -6.33,
+     "rule_taxable_carry3_vs_SPY_NISA_pa": -6.18,
+     "rule_taxable_vs_SPY_taxable_pa": -4.28,
+     "rule_pretax_vs_SPY_pretax_pa": -0.75
+    },
+    "1000万円": {
+     "rule_pretax_nocomm": {
+      "cagr_jpy": 19.64,
+      "multiple": 11.59,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.139
+     },
+     "rule_taxable": {
+      "cagr_jpy": 15.7,
+      "multiple": 7.34,
+      "tax_paid_x_principal": 1.49,
+      "cost_paid_x_principal": 0.204
+     },
+     "rule_taxable_carry3": {
+      "cagr_jpy": 15.87,
+      "multiple": 7.49,
+      "tax_paid_x_principal": 1.46,
+      "cost_paid_x_principal": 0.206
+     },
+     "SPY_pretax": {
+      "cagr_jpy": 20.39,
+      "multiple": 12.63,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.0
+     },
+     "SPY_NISA": {
+      "cagr_jpy": 20.19,
+      "multiple": 12.35,
+      "tax_paid_x_principal": 0.0,
+      "cost_paid_x_principal": 0.0
+     },
+     "SPY_taxable": {
+      "cagr_jpy": 18.14,
+      "multiple": 9.76,
+      "tax_paid_x_principal": 2.08,
+      "cost_paid_x_principal": 0.0
+     },
+     "rule_taxable_vs_SPY_NISA_pa": -4.49,
+     "rule_taxable_carry3_vs_SPY_NISA_pa": -4.32,
+     "rule_taxable_vs_SPY_taxable_pa": -2.44,
+     "rule_pretax_vs_SPY_pretax_pa": -0.75
+    }
+   }
+  },
+  "japan_topix17": {
+   "200904〜202608": {
+    "滑り0.05%/片側（=0.1%/回転）": {
+     "rule_pretax": {
+      "cagr_jpy": 11.44,
+      "multiple": 6.59,
+      "tax_paid_x_principal": 0.0
+     },
+     "rule_taxable": {
+      "cagr_jpy": 9.12,
+      "multiple": 4.57,
+      "tax_paid_x_principal": 0.8
+     },
+     "rule_taxable_carry3": {
+      "cagr_jpy": 9.5,
+      "multiple": 4.85,
+      "tax_paid_x_principal": 0.73
+     },
+     "TOPIX1305_pretax": {
+      "cagr_jpy": 12.39,
+      "multiple": 7.65,
+      "tax_paid_x_principal": 0.0
+     },
+     "TOPIX1305_NISA": {
+      "cagr_jpy": 12.39,
+      "multiple": 7.65,
+      "tax_paid_x_principal": 0.0
+     },
+     "TOPIX1305_taxable": {
+      "cagr_jpy": 10.88,
+      "multiple": 6.05,
+      "tax_paid_x_principal": 1.1
+     },
+     "rule_taxable_vs_TOPIX_NISA_pa": -3.27,
+     "rule_taxable_vs_TOPIX_taxable_pa": -1.76,
+     "rule_pretax_vs_TOPIX_pa": -0.95
+    },
+    "滑り0.15%/片側（=0.3%/回転）": {
+     "rule_pretax": {
+      "cagr_jpy": 10.83,
+      "multiple": 6.0,
+      "tax_paid_x_principal": 0.0
+     },
+     "rule_taxable": {
+      "cagr_jpy": 8.58,
+      "multiple": 4.19,
+      "tax_paid_x_principal": 0.72
+     },
+     "rule_taxable_carry3": {
+      "cagr_jpy": 8.98,
+      "multiple": 4.47,
+      "tax_paid_x_principal": 0.65
+     },
+     "TOPIX1305_pretax": {
+      "cagr_jpy": 12.39,
+      "multiple": 7.65,
+      "tax_paid_x_principal": 0.0
+     },
+     "TOPIX1305_NISA": {
+      "cagr_jpy": 12.39,
+      "multiple": 7.65,
+      "tax_paid_x_principal": 0.0
+     },
+     "TOPIX1305_taxable": {
+      "cagr_jpy": 10.88,
+      "multiple": 6.05,
+      "tax_paid_x_principal": 1.1
+     },
+     "rule_taxable_vs_TOPIX_NISA_pa": -3.81,
+     "rule_taxable_vs_TOPIX_taxable_pa": -2.3,
+     "rule_pretax_vs_TOPIX_pa": -1.56
+    }
+   },
+   "201301〜202608": {
+    "滑り0.05%/片側（=0.1%/回転）": {
+     "rule_pretax": {
+      "cagr_jpy": 14.6,
+      "multiple": 6.44,
+      "tax_paid_x_principal": 0.0
+     },
+     "rule_taxable": {
+      "cagr_jpy": 11.86,
+      "multiple": 4.62,
+      "tax_paid_x_principal": 0.78
+     },
+     "rule_taxable_carry3": {
+      "cagr_jpy": 12.09,
+      "multiple": 4.76,
+      "tax_paid_x_principal": 0.74
+     },
+     "TOPIX1305_pretax": {
+      "cagr_jpy": 14.58,
+      "multiple": 6.43,
+      "tax_paid_x_principal": 0.0
+     },
+     "TOPIX1305_NISA": {
+      "cagr_jpy": 14.58,
+      "multiple": 6.43,
+      "tax_paid_x_principal": 0.0
+     },
+     "TOPIX1305_taxable": {
+      "cagr_jpy": 12.79,
+      "multiple": 5.18,
+      "tax_paid_x_principal": 0.92
+     },
+     "rule_taxable_vs_TOPIX_NISA_pa": -2.72,
+     "rule_taxable_vs_TOPIX_taxable_pa": -0.93,
+     "rule_pretax_vs_TOPIX_pa": 0.02
+    },
+    "滑り0.15%/片側（=0.3%/回転）": {
+     "rule_pretax": {
+      "cagr_jpy": 14.01,
+      "multiple": 6.0,
+      "tax_paid_x_principal": 0.0
+     },
+     "rule_taxable": {
+      "cagr_jpy": 11.35,
+      "multiple": 4.35,
+      "tax_paid_x_principal": 0.72
+     },
+     "rule_taxable_carry3": {
+      "cagr_jpy": 11.6,
+      "multiple": 4.48,
+      "tax_paid_x_principal": 0.68
+     },
+     "TOPIX1305_pretax": {
+      "cagr_jpy": 14.58,
+      "multiple": 6.43,
+      "tax_paid_x_principal": 0.0
+     },
+     "TOPIX1305_NISA": {
+      "cagr_jpy": 14.58,
+      "multiple": 6.43,
+      "tax_paid_x_principal": 0.0
+     },
+     "TOPIX1305_taxable": {
+      "cagr_jpy": 12.79,
+      "multiple": 5.18,
+      "tax_paid_x_principal": 0.92
+     },
+     "rule_taxable_vs_TOPIX_NISA_pa": -3.23,
+     "rule_taxable_vs_TOPIX_taxable_pa": -1.44,
+     "rule_pretax_vs_TOPIX_pa": -0.57
+    }
+   },
+   "201701〜202608": {
+    "滑り0.05%/片側（=0.1%/回転）": {
+     "rule_pretax": {
+      "cagr_jpy": 14.49,
+      "multiple": 3.7,
+      "tax_paid_x_principal": 0.0
+     },
+     "rule_taxable": {
+      "cagr_jpy": 11.66,
+      "multiple": 2.91,
+      "tax_paid_x_principal": 0.41
+     },
+     "rule_taxable_carry3": {
+      "cagr_jpy": 11.92,
+      "multiple": 2.97,
+      "tax_paid_x_principal": 0.39
+     },
+     "TOPIX1305_pretax": {
+      "cagr_jpy": 13.45,
+      "multiple": 3.39,
+      "tax_paid_x_principal": 0.0
+     },
+     "TOPIX1305_NISA": {
+      "cagr_jpy": 13.45,
+      "multiple": 3.39,
+      "tax_paid_x_principal": 0.0
+     },
+     "TOPIX1305_taxable": {
+      "cagr_jpy": 11.43,
+      "multiple": 2.85,
+      "tax_paid_x_principal": 0.4
+     },
+     "rule_taxable_vs_TOPIX_NISA_pa": -1.79,
+     "rule_taxable_vs_TOPIX_taxable_pa": 0.23,
+     "rule_pretax_vs_TOPIX_pa": 1.04
+    },
+    "滑り0.15%/片側（=0.3%/回転）": {
+     "rule_pretax": {
+      "cagr_jpy": 13.91,
+      "multiple": 3.52,
+      "tax_paid_x_principal": 0.0
+     },
+     "rule_taxable": {
+      "cagr_jpy": 11.17,
+      "multiple": 2.78,
+      "tax_paid_x_principal": 0.39
+     },
+     "rule_taxable_carry3": {
+      "cagr_jpy": 11.45,
+      "multiple": 2.85,
+      "tax_paid_x_principal": 0.36
+     },
+     "TOPIX1305_pretax": {
+      "cagr_jpy": 13.45,
+      "multiple": 3.39,
+      "tax_paid_x_principal": 0.0
+     },
+     "TOPIX1305_NISA": {
+      "cagr_jpy": 13.45,
+      "multiple": 3.39,
+      "tax_paid_x_principal": 0.0
+     },
+     "TOPIX1305_taxable": {
+      "cagr_jpy": 11.43,
+      "multiple": 2.85,
+      "tax_paid_x_principal": 0.4
+     },
+     "rule_taxable_vs_TOPIX_NISA_pa": -2.28,
+     "rule_taxable_vs_TOPIX_taxable_pa": -0.26,
+     "rule_pretax_vs_TOPIX_pa": 0.46
+    }
+   }
+  }
+ },
+ "nisa_and_broker": {
+  "rakuten_us_listing（out/broker_lineup.json・2026-08-24 の写真）": "XLB・XLE・XLF・XLI・XLK・XLP・XLU・XLV・XLY・XLRE・XLC の11本すべて取扱あり（経費 0.08%）。SPY 0.09%・VOO/IVV 0.03%",
+  "rakuten_nisa_foreign_etf": "楽天証券の成長投資枠の頁（2026-09-28）: 海外ETFは成長投資枠の対象、ただし高レバレッジ型・毎月分配型などを除外。NISA の日米株式の取引手数料は0円。SPDR 業種ETFは四半期分配・レバレッジなしなので除外の条件に当たらない。⚠ 銘柄ごとの対象の表示（楽天のスーパースクリーナー）は確認していない",
+  "topix17_nisa": "資産運用業協会の成長投資枠対象商品リスト（上場ファンド）に 1617〜1633 の17本すべて（成長投資枠取扱可能日 2024-01-04・つみたて投資枠は非対象）。投信協会ライブラリーの nisaGrowthFlg も17本とも1",
+  "why_not_in_nisa": "毎月の入れ替えの買付は年に評価額の約2.7倍（米国 中央値 2.73倍・2001〜2025／日本 2.68倍）。成長投資枠は買うたびに年240万円を消費し、売った分の枠は翌年まで戻らない（楽天の頁『売却すると投資枠は翌年以降に再利用可能』）。240万円÷2.7 ≈ 89万円 ＝ 評価額がおよそ90万円を超えると1年の途中で枠が尽きる。この利用者は成長投資枠をつみたて枠からあふれた QQQM に使っているので実際の余地はもっと小さい ⇒ 実行は課税口座（特定口座）",
+  "taxable_turnover_tax": "課税口座では入れ替えのたびに利益へ 20.315%（円で測る＝為替の益も課税）。上の円の計算で、米国版は元本の0.9〜1.6倍の税を途中で払い、税を繰り延べて最後に払う SPY の持ち続けより不利になる"
+ },
+ "data_checks": {
+  "yahoo_range_max": "Yahoo の v8 chart で interval=1d&range=max は 月足（dataGranularity=1mo）しか返さない（2026-09-28 実測）。period1=0&period2=今 で日足を取り直した（自分で書いた月足のキャッシュ yhdi_* は消して取り直した）",
+  "us_adjclose": "SPDR 11本と SPY の adjclose は close＋分配の作り直しと年 −0.003〜+0.005% の差（0.3pt を超える月0）＝壊れていない。2025-12-05 の 2:1 分割（XLB・XLE・XLK・XLU・XLY）と XLF の 2016-09-19（不動産の切り出し・Yahoo は 1.231 の分割として記録）も整合",
+  "yahoo_tse_etf": "1629.T（商社・卸売）の Yahoo の値は壊れている: 2015-01-05 に 25,670→50.7（−99.8%・adjclose は負）、2026-03-30/31 に 0.57、2026-04-01 に 288.7（+52,410%）。価格版ではこの3か月を捨てた。Yahoo の東証ETFの分配の記録は 2013 年からしか無い（2008〜2012 の分配が欠ける）ので、分配は投信協会の記録を使った。2008年は17本とも Yahoo の出来高が0（出来高の記録の欠け。値は動いている）",
+  "library_nav": "投信協会ライブラリーの NAV は17本とも 2008-03-21〜2026-09-25・分配19回（2008〜2026 の毎年7月15日）。1629 だけ 2026-07-16 に NAV が 9.912 倍（単位の変更）＝2026-07 を捨てた。ほかに ±40% 超の日は無い",
+  "price_vs_nav": {
+   "月末の価格÷NAV の、前後半年の中央値からのはずれの中央値（2019〜・%）": {
+    "食品": 0.161,
+    "エネルギー資源": 0.188,
+    "建設・資材": 0.162,
+    "素材・化学": 0.17,
+    "医薬品": 0.15,
+    "自動車・輸送機": 0.16,
+    "鉄鋼・非鉄": 0.169,
+    "機械": 0.182,
+    "電機・精密": 0.155,
+    "情報通信・サービスその他": 0.165,
+    "電力・ガス": 0.166,
+    "運輸・物流": 0.144,
+    "商社・卸売": 0.149,
+    "小売": 0.192,
+    "銀行": 0.171,
+    "金融（除く銀行）": 0.179,
+    "不動産": 0.179
+   },
+   "月末の直前5営業日に出来高0が続いた月の数（2009-04〜）": {
+    "食品": 4,
+    "エネルギー資源": 0,
+    "建設・資材": 3,
+    "素材・化学": 3,
+    "医薬品": 0,
+    "自動車・輸送機": 0,
+    "鉄鋼・非鉄": 2,
+    "機械": 1,
+    "電機・精密": 2,
+    "情報通信・サービスその他": 3,
+    "電力・ガス": 0,
+    "運輸・物流": 8,
+    "商社・卸売": 0,
+    "小売": 9,
+    "銀行": 0,
+    "金融（除く銀行）": 1,
+    "不動産": 0
+   },
+   "reading": "はずれは中央値で 0.14〜0.19%＝片道の実質の滑りはこの程度はありうる。凍結の 0.1%/回転 は軽めで、0.3%/回転なら日本版は −1.56%/年"
+  },
+  "nomura_site": "nomura-am.co.jp の基準価額 CSV はエラー頁しか返さなかった（取れない）。同じ NAV を投信協会ライブラリーから取った",
+  "jkp_usa_gics": "JKP 米国 GICS 11部門（vw）は h.cached で out/_edge_cache/jkp_industry_usa_gics_vw.zip に新しく置いた"
+ },
+ "power_note": "米国: 算術の超過 +0.15%/年・t0.09 → 標準誤差 約1.7%/年（追従のぶれ 約8.5%/年×1/√25.7）→ 95%幅 −3.1〜+3.4%/年。日本: −0.77%/年・t−0.45 → 95%幅 −4.1〜+2.6%/年。紙の米国49業種の検定期間 +2.74%/年 は米国の器の 95%幅の中にある＝器の実測だけでは『上乗せ0』と『+2%/年』を見分けられない。それでも点の推定が0前後で、同じ粗さの紙の版（GICS 11部門）も0前後なので、実物で取れる上乗せを示す材料は無い",
+ "caveats": [
+  "SPDR は S&P500 の中の業種（上限つきの時価加重）、French・JKP は全上場。TOPIX-17 は TOPIX の中の業種",
+  "2000〜2026 の一つの時代だけ。SPDR の窓は2000年から・TOPIX-17 は2009年から（2008年の暴落の後）",
+  "米国の +0.27%/年 は 2026年1〜8月（+16.7pt・エネルギーなど）で 2001〜2025 の −0.32%/年 から符号が変わった＝数か月で動く大きさ。勝ちの年は 2002・2005・2008・2022・2026 に偏る",
+  "税の計算は月末の価格で月1回・一括投資・日本の今の税制を過去に当てた仮定。NISA の SPY は制度の無い年（2014年以前）にも当てた仮定",
+  "課税口座の米国版は保有中の業種も毎月等分へ戻す（凍結の規則どおり）ので小口ほど手数料が効く。入れ替える業種だけ売り買いする実務の形は測っていない（ただし税の前の上乗せが0前後なので、どの形でも税の後は負けと見込む）",
+  "世界の業種ETF（iShares Global 業種ETF など）や国ごとの業種ETF（新興国）は測っていない——第4回で強かった小さな市場の業種を買う器はほとんど無い",
+  "NISA の銘柄ごとの対象表示（楽天）は確認していない"
+ ],
+ "frozen_spec_untouched": "out/edge/spec_indmom.json と night/edge/fam_indmom.py は変えていない（import して呼ぶだけ）",
+ "files": {
+  "output": "out/edge/verify_indmom_etf.json",
+  "scripts": "scratchpad/indmom_etf/",
+  "cache_new": [
+   "out/_edge_cache/yhdi_{XLB..XLC,SPY,QQQ,1617.T..1633.T,1305.T,1348.T,1306.T,JPY=X}.json",
+   "out/_edge_cache/jkp_industry_usa_gics_vw.zip"
+  ],
+  "nav_csv": "scratchpad/indmom_etf/cache/tl_*.csv（投信協会ライブラリー）"
+ }
+}

@@ -1,0 +1,2419 @@
+{
+ "key": "japan",
+ "lens": "independent",
+ "asof": "2026-09-28",
+ "how": "凍結した spec_japan.json（F_val4＝French 国別の日本の BM_H・EP_H・CEP_H・Y_H を等分）と fam_japan.py は変えずに import し、EDGE_PHASE=holdout を自分のプロセスで立てて全期間を読んだ。独立のデータとして JKP（jkpfactors.com・Compustat Global 由来・会計値は決算から4か月遅らせ・毎月組み替え）の日本の三分位 \"3.0\"（予言の向きの端）を be_me・ni_me・ocf_me・div12m_me で等分（fcf_me 版も）。相手は JKP 日本の mkt（vw＝上限なしの時価加重）。JKP の ret は米国短期金利に対する超過なので組と相手の両方に French RF を足した（確認: 三分位の平均−mkt は rf と連動しない＝両方とも超過で揃っている）。組み立ては fam_japan.combine をそのまま使い、三分位が50社未満の月は使わない。業種と1社への集中は、NEXT FUNDS TOPIX-17 業種別ETF（1617〜1633・2008-03〜）と 1306（TOPIX）・大型8社の月次（Yahoo の終値＋分配から作り直した総リターン。Yahoo の adjclose は 1629.T で負の値になる壊れ方をしていたので使わない。分割が反映されていない月＝|月次|>35% の 1306 の 2015-01・1629 の 2015-01/07 は捨てた）への回帰で見た。JKP の追加分は scratchpad のキャッシュに取り、out/_edge_cache には書いていない",
+ "verdict": "持ちこたえた",
+ "verdict_why": "French と別の会社のデータ（JKP・4か月遅らせ・毎月組み替え）で同じ規則を組み直しても、2001-2025 に日本の市場へ +4.24%/年（t 3.91・NW 3.28・費用の置き方を凍結どおりにして +4.10 t 3.78）＝French 版（+3.66 t 3.13）より強い。β0.95・α+4.07（t 4.0）で下げ相場の低βではない。重みを vw_cap・ew に替えても同じ重みの市場に対し +3.7%/年前後（小さい株の効果ではない）、大型8社で説明できるのは年0.8%ほど、17業種の傾きで調整しても 2009-2025 の α +3.23%/年（t 4.2）。先読みの足跡も無い。⚠ ただし弱いところも同じ形で再現した: 2013-2025 は +2.58%/年（t 1.54）で有意でなく、2013-2020 は8年の合計 −18%（2020年 −13.9）、2021-2025 の +10.3%/年の約半分（+5.0/+9.35）は銀行の傾き（金利の正常化）。上位4年（2022・2001・2009・2002）が超過（対数）の60%。紙の上の主張は独立データで持ちこたえたが、「今後この規則で勝てる」ことを保証する強さではない",
+ "rows": {
+  "data_checks": {
+   "JKP_mkt_vw_plus_rf_vs_French_Japan_Mkt_2001_2025_corr": 0.993,
+   "JKP_mkt_minus_French_Mkt_pct_per_month": -0.0044,
+   "JKP_mkt_cagr_2001_2025": 4.85,
+   "French_Japan_Mkt_cagr_2001_2025": 4.9,
+   "monthly_excess_corr_JKP_val4_vs_French_F_val4_2001_2025": 0.87,
+   "JKP_minus_French_excess_pct_yr": 0.4,
+   "JKP_minus_French_t": 0.73,
+   "n_stocks_in_value_tercile_Dec": {
+    "be_me": {
+     "2001": 1694,
+     "2008": 1892,
+     "2013": 1649,
+     "2020": 1582,
+     "2025": 1533
+    },
+    "ni_me": {
+     "2001": 1226,
+     "2008": 1350,
+     "2013": 1425,
+     "2020": 1309,
+     "2025": 1364
+    },
+    "fcf_me": {
+     "2001": 1096,
+     "2008": 1157,
+     "2013": 1256,
+     "2020": 1130,
+     "2025": 1213
+    },
+    "div12m_me": {
+     "2001": 1610,
+     "2008": 1662,
+     "2013": 1563,
+     "2020": 1181,
+     "2025": 1287
+    }
+   },
+   "rf_note": "JKP の 'ret' は米ドルの米国短期金利に対する超過。組と相手の両方に French RF を足した（差には効かず、年率の水準にだけ効く）"
+  },
+  "JKP_val4_ocf_vw_vs_JKP_mkt_vw": {
+   "2001-2025": {
+    "pre_cost": {
+     "from": 200101,
+     "to": 202512,
+     "years": 25.0,
+     "cagr": 9.09,
+     "bench_cagr": 4.85,
+     "excess": 4.24,
+     "ex_arith": 4.01,
+     "t": 3.91,
+     "t_nw": 3.28,
+     "vol": 15.0,
+     "bench_vol": 14.8,
+     "maxdd": -39.9,
+     "bench_maxdd": -46.4,
+     "roll10_win": "14/16"
+    },
+    "frozen_cost_convention": {
+     "excess": 4.1,
+     "ex_arith": 3.88,
+     "t": 3.78,
+     "t_nw": 3.17
+    },
+    "flat_drag_0.5pct": {
+     "excess": 3.7,
+     "t": 3.42,
+     "t_nw": 2.87
+    },
+    "flat_drag_1.0pct": {
+     "excess": 3.16,
+     "t": 2.93,
+     "t_nw": 2.46
+    }
+   },
+   "2008-2025": {
+    "pre_cost": {
+     "from": 200801,
+     "to": 202512,
+     "years": 18.0,
+     "cagr": 8.49,
+     "bench_cagr": 5.4,
+     "excess": 3.09,
+     "ex_arith": 3.02,
+     "t": 2.41,
+     "t_nw": 2.09,
+     "vol": 15.1,
+     "bench_vol": 14.3,
+     "maxdd": -37.6,
+     "bench_maxdd": -39.7,
+     "roll10_win": "7/9"
+    },
+    "frozen_cost_convention": {
+     "excess": 2.95,
+     "ex_arith": 2.88,
+     "t": 2.31,
+     "t_nw": 2.0
+    },
+    "flat_drag_0.5pct": {
+     "excess": 2.55,
+     "t": 2.01,
+     "t_nw": 1.74
+    },
+    "flat_drag_1.0pct": {
+     "excess": 2.02,
+     "t": 1.61,
+     "t_nw": 1.4
+    }
+   },
+   "2013-2025": {
+    "pre_cost": {
+     "from": 201301,
+     "to": 202512,
+     "years": 13.0,
+     "cagr": 11.1,
+     "bench_cagr": 8.51,
+     "excess": 2.58,
+     "ex_arith": 2.47,
+     "t": 1.54,
+     "t_nw": 1.38,
+     "vol": 13.8,
+     "bench_vol": 13.1,
+     "maxdd": -22.0,
+     "bench_maxdd": -28.8,
+     "roll10_win": "4/4"
+    },
+    "frozen_cost_convention": {
+     "excess": 2.44,
+     "ex_arith": 2.34,
+     "t": 1.46,
+     "t_nw": 1.31
+    },
+    "flat_drag_0.5pct": {
+     "excess": 2.03,
+     "t": 1.23,
+     "t_nw": 1.1
+    },
+    "flat_drag_1.0pct": {
+     "excess": 1.49,
+     "t": 0.92,
+     "t_nw": 0.82
+    }
+   },
+   "2001-2007": {
+    "pre_cost": {
+     "from": 200101,
+     "to": 200712,
+     "years": 7.0,
+     "cagr": 10.67,
+     "bench_cagr": 3.46,
+     "excess": 7.2,
+     "ex_arith": 6.59,
+     "t": 3.75,
+     "t_nw": 3.2,
+     "vol": 15.0,
+     "bench_vol": 16.1,
+     "maxdd": -28.4,
+     "bench_maxdd": -38.5,
+     "roll10_win": null
+    },
+    "frozen_cost_convention": {
+     "excess": 7.05,
+     "ex_arith": 6.45,
+     "t": 3.67,
+     "t_nw": 3.14
+    },
+    "flat_drag_0.5pct": {
+     "excess": 6.66,
+     "t": 3.47,
+     "t_nw": 2.96
+    },
+    "flat_drag_1.0pct": {
+     "excess": 6.11,
+     "t": 3.18,
+     "t_nw": 2.72
+    }
+   },
+   "2007-2020": {
+    "pre_cost": {
+     "from": 200701,
+     "to": 202012,
+     "years": 14.0,
+     "cagr": 4.87,
+     "bench_cagr": 4.25,
+     "excess": 0.62,
+     "ex_arith": 0.74,
+     "t": 0.62,
+     "t_nw": 0.52,
+     "vol": 15.4,
+     "bench_vol": 14.4,
+     "maxdd": -39.9,
+     "bench_maxdd": -44.9,
+     "roll10_win": "4/5"
+    },
+    "frozen_cost_convention": {
+     "excess": 0.48,
+     "ex_arith": 0.6,
+     "t": 0.51,
+     "t_nw": 0.42
+    },
+    "flat_drag_0.5pct": {
+     "excess": 0.1,
+     "t": 0.2,
+     "t_nw": 0.17
+    },
+    "flat_drag_1.0pct": {
+     "excess": -0.42,
+     "t": -0.22,
+     "t_nw": -0.18
+    }
+   },
+   "2021-2025": {
+    "pre_cost": {
+     "from": 202101,
+     "to": 202512,
+     "years": 5.0,
+     "cagr": 16.45,
+     "bench_cagr": 6.11,
+     "excess": 10.34,
+     "ex_arith": 9.35,
+     "t": 3.17,
+     "t_nw": 4.57,
+     "vol": 13.0,
+     "bench_vol": 13.1,
+     "maxdd": -19.1,
+     "bench_maxdd": -28.8,
+     "roll10_win": null
+    },
+    "frozen_cost_convention": {
+     "excess": 10.19,
+     "ex_arith": 9.22,
+     "t": 3.12,
+     "t_nw": 4.5
+    },
+    "flat_drag_0.5pct": {
+     "excess": 9.76,
+     "t": 3.0,
+     "t_nw": 4.32
+    },
+    "flat_drag_1.0pct": {
+     "excess": 9.19,
+     "t": 2.83,
+     "t_nw": 4.08
+    }
+   },
+   "sel_1988-2000(参考)": {
+    "pre_cost": {
+     "from": 198808,
+     "to": 200012,
+     "years": 12.4,
+     "cagr": 0.62,
+     "bench_cagr": -2.27,
+     "excess": 2.89,
+     "ex_arith": 2.9,
+     "t": 1.36,
+     "t_nw": 1.3,
+     "vol": 25.6,
+     "bench_vol": 25.5,
+     "maxdd": -53.8,
+     "bench_maxdd": -58.2,
+     "roll10_win": "3/3"
+    },
+    "frozen_cost_convention": {
+     "excess": 2.74,
+     "ex_arith": 2.75,
+     "t": 1.29,
+     "t_nw": 1.23
+    },
+    "flat_drag_0.5pct": {
+     "excess": 2.38,
+     "t": 1.12,
+     "t_nw": 1.08
+    },
+    "flat_drag_1.0pct": {
+     "excess": 1.88,
+     "t": 0.89,
+     "t_nw": 0.85
+    }
+   }
+  },
+  "JKP_val4_fcf_vw_vs_JKP_mkt_vw": {
+   "2001-2025": {
+    "pre_cost": {
+     "from": 200101,
+     "to": 202512,
+     "years": 25.0,
+     "cagr": 9.32,
+     "bench_cagr": 4.85,
+     "excess": 4.47,
+     "ex_arith": 4.17,
+     "t": 4.4,
+     "t_nw": 3.52,
+     "vol": 14.7,
+     "bench_vol": 14.8,
+     "maxdd": -39.5,
+     "bench_maxdd": -46.4,
+     "roll10_win": "14/16"
+    }
+   },
+   "2008-2025": {
+    "pre_cost": {
+     "from": 200801,
+     "to": 202512,
+     "years": 18.0,
+     "cagr": 8.75,
+     "bench_cagr": 5.4,
+     "excess": 3.35,
+     "ex_arith": 3.2,
+     "t": 2.89,
+     "t_nw": 2.38,
+     "vol": 14.7,
+     "bench_vol": 14.3,
+     "maxdd": -37.0,
+     "bench_maxdd": -39.7,
+     "roll10_win": "7/9"
+    }
+   },
+   "2013-2025": {
+    "pre_cost": {
+     "from": 201301,
+     "to": 202512,
+     "years": 13.0,
+     "cagr": 11.34,
+     "bench_cagr": 8.51,
+     "excess": 2.83,
+     "ex_arith": 2.64,
+     "t": 1.86,
+     "t_nw": 1.61,
+     "vol": 13.4,
+     "bench_vol": 13.1,
+     "maxdd": -20.7,
+     "bench_maxdd": -28.8,
+     "roll10_win": "4/4"
+    }
+   },
+   "2001-2007": {
+    "pre_cost": {
+     "from": 200101,
+     "to": 200712,
+     "years": 7.0,
+     "cagr": 10.8,
+     "bench_cagr": 3.46,
+     "excess": 7.33,
+     "ex_arith": 6.66,
+     "t": 3.69,
+     "t_nw": 3.01,
+     "vol": 14.7,
+     "bench_vol": 16.1,
+     "maxdd": -27.5,
+     "bench_maxdd": -38.5,
+     "roll10_win": null
+    }
+   },
+   "2007-2020": {
+    "pre_cost": {
+     "from": 200701,
+     "to": 202012,
+     "years": 14.0,
+     "cagr": 5.3,
+     "bench_cagr": 4.25,
+     "excess": 1.05,
+     "ex_arith": 1.09,
+     "t": 1.06,
+     "t_nw": 0.8,
+     "vol": 15.0,
+     "bench_vol": 14.4,
+     "maxdd": -39.5,
+     "bench_maxdd": -44.9,
+     "roll10_win": "4/5"
+    }
+   },
+   "2021-2025": {
+    "pre_cost": {
+     "from": 202101,
+     "to": 202512,
+     "years": 5.0,
+     "cagr": 16.03,
+     "bench_cagr": 6.11,
+     "excess": 9.92,
+     "ex_arith": 8.97,
+     "t": 3.33,
+     "t_nw": 4.76,
+     "vol": 12.8,
+     "bench_vol": 13.1,
+     "maxdd": -19.1,
+     "bench_maxdd": -28.8,
+     "roll10_win": null
+    }
+   }
+  },
+  "French_F_val4_frozen_same_code_for_comparison": {
+   "2001-2025": {
+    "from": 200101,
+    "to": 202512,
+    "years": 25.0,
+    "cagr": 8.55,
+    "bench_cagr": 4.9,
+    "excess": 3.66,
+    "ex_arith": 3.48,
+    "t": 3.13,
+    "t_nw": 2.7,
+    "vol": 15.2,
+    "bench_vol": 14.9,
+    "maxdd": -39.3,
+    "bench_maxdd": -44.4,
+    "roll10_win": "13/16"
+   },
+   "2008-2025": {
+    "from": 200801,
+    "to": 202512,
+    "years": 18.0,
+    "cagr": 8.09,
+    "bench_cagr": 5.29,
+    "excess": 2.8,
+    "ex_arith": 2.7,
+    "t": 2.08,
+    "t_nw": 1.74,
+    "vol": 14.9,
+    "bench_vol": 14.4,
+    "maxdd": -34.6,
+    "bench_maxdd": -39.7,
+    "roll10_win": "6/9"
+   },
+   "2013-2025": {
+    "from": 201301,
+    "to": 202512,
+    "years": 13.0,
+    "cagr": 10.39,
+    "bench_cagr": 8.56,
+    "excess": 1.83,
+    "ex_arith": 1.75,
+    "t": 1.1,
+    "t_nw": 0.99,
+    "vol": 13.6,
+    "bench_vol": 13.1,
+    "maxdd": -22.4,
+    "bench_maxdd": -29.0,
+    "roll10_win": "4/4"
+   },
+   "2001-2007": {
+    "from": 200101,
+    "to": 200712,
+    "years": 7.0,
+    "cagr": 9.75,
+    "bench_cagr": 3.89,
+    "excess": 5.87,
+    "ex_arith": 5.47,
+    "t": 2.56,
+    "t_nw": 2.64,
+    "vol": 15.8,
+    "bench_vol": 16.1,
+    "maxdd": -29.9,
+    "bench_maxdd": -39.8,
+    "roll10_win": null
+   },
+   "2007-2020": {
+    "from": 200701,
+    "to": 202012,
+    "years": 14.0,
+    "cagr": 4.96,
+    "bench_cagr": 4.32,
+    "excess": 0.64,
+    "ex_arith": 0.72,
+    "t": 0.56,
+    "t_nw": 0.43,
+    "vol": 15.3,
+    "bench_vol": 14.5,
+    "maxdd": -39.3,
+    "bench_maxdd": -44.4,
+    "roll10_win": "3/5"
+   },
+   "2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "years": 5.0,
+    "cagr": 15.08,
+    "bench_cagr": 6.05,
+    "excess": 9.04,
+    "ex_arith": 8.2,
+    "t": 2.72,
+    "t_nw": 3.49,
+    "vol": 12.8,
+    "bench_vol": 13.1,
+    "maxdd": -19.3,
+    "bench_maxdd": -29.0,
+    "roll10_win": null
+   }
+  },
+  "JKP_val4_vs_US_market_French": {
+   "2001-2025": "-0.06%/年 (t -0.05, NW -0.06, 200101-202512)",
+   "2008-2025": "-2.64%/年 (t -0.84, NW -1.02, 200801-202512)",
+   "2013-2025": "-3.64%/年 (t -0.95, NW -1.19, 201301-202512)"
+  },
+  "French_Japan_Mkt_vs_US_market": {
+   "2001-2025": "-4.26%/年 (t -1.54, NW -2.09, 200101-202512)",
+   "2008-2025": "-5.84%/年 (t -2.03, NW -3.02, 200801-202512)",
+   "2013-2025": "-6.18%/年 (t -1.87, NW -2.79, 201301-202512)"
+  },
+  "lag_and_rebalance": {
+   "what": "JKP は会計値を決算から4か月遅らせ毎月組み替える（3月決算は7月末から使う＝決算短信45日・有報3か月の後）。French は12月末に年1回組み、会計の時点はページに書かれていない（日本は3月決算が多く12月には公表済み）。遅れを変えた JKP の組は公開されていないので、「遅らせ方を振った差」そのものは測れない。代わりに (a) 4か月遅らせた JKP で同じ主張が立つか (b) French−JKP の差が決算の後の月に偏るか（先読みの足跡）を見た",
+   "excess_by_calendar_month_pct_per_month_[mean,t]": {
+    "1-4月": {
+     "JKP": [
+      0.545,
+      3.33
+     ],
+     "French": [
+      0.515,
+      2.9
+     ],
+     "JKP-French": [
+      0.03,
+      0.55
+     ]
+    },
+    "5-7月": {
+     "JKP": [
+      0.273,
+      1.63
+     ],
+     "French": [
+      0.234,
+      1.46
+     ],
+     "JKP-French": [
+      0.038,
+      0.5
+     ]
+    },
+    "8-12月": {
+     "JKP": [
+      0.203,
+      1.67
+     ],
+     "French": [
+      0.17,
+      1.21
+     ],
+     "JKP-French": [
+      0.033,
+      0.37
+     ]
+    }
+   },
+   "reading": "4か月遅らせた JKP でも 2001-2025 は +4.24%/年（t 3.91）で French（+3.66・t 3.13）より少し強い。French−JKP の差は +0.40%/年（t 0.73）で、1-4月・5-7月・8-12月のどれにも偏らない（差 0.03〜0.04%/月・t<0.6）＝French 側の会計の時点の曖昧さが勝ちを作った形跡は無い。両方とも 1-4月に超過が厚い（0.55%/月）が、JKP は4か月遅らせているのでこれは先読みではなく季節の形。年1回組む French と毎月組む JKP の月次の超過の相関 0.87・年の超過の相関 0.92＝年1回の入れ替えで足りる"
+  },
+  "weighting": {
+   "vw": {
+    "2001-2025": {
+     "vs_vw_market": "+4.24%/年 (t 3.91, NW 3.28, 200101-202512)"
+    },
+    "2008-2025": {
+     "vs_vw_market": "+3.09%/年 (t 2.41, NW 2.09, 200801-202512)"
+    },
+    "2013-2025": {
+     "vs_vw_market": "+2.58%/年 (t 1.54, NW 1.38, 201301-202512)"
+    },
+    "2007-2020": {
+     "vs_vw_market": "+0.62%/年 (t 0.62, NW 0.52, 200701-202012)"
+    },
+    "2021-2025": {
+     "vs_vw_market": "+10.34%/年 (t 3.17, NW 4.57, 202101-202512)"
+    }
+   },
+   "vw_cap": {
+    "2001-2025": {
+     "vs_vw_market": "+4.68%/年 (t 4.23, NW 3.31, 200101-202512)",
+     "vs_vw_cap_market": "+3.73%/年 (t 3.78, NW 3.2, 200101-202512)"
+    },
+    "2008-2025": {
+     "vs_vw_market": "+3.13%/年 (t 2.44, NW 2.11, 200801-202512)",
+     "vs_vw_cap_market": "+2.60%/年 (t 2.22, NW 1.95, 200801-202512)"
+    },
+    "2013-2025": {
+     "vs_vw_market": "+2.24%/年 (t 1.39, NW 1.29, 201301-202512)",
+     "vs_vw_cap_market": "+2.19%/年 (t 1.45, NW 1.27, 201301-202512)"
+    },
+    "2007-2020": {
+     "vs_vw_market": "+1.18%/年 (t 1.08, NW 0.79, 200701-202012)",
+     "vs_vw_cap_market": "+0.40%/年 (t 0.49, NW 0.43, 200701-202012)"
+    },
+    "2021-2025": {
+     "vs_vw_market": "+8.72%/年 (t 2.72, NW 4.26, 202101-202512)",
+     "vs_vw_cap_market": "+9.08%/年 (t 3.33, NW 4.57, 202101-202512)"
+    }
+   },
+   "ew": {
+    "2001-2025": {
+     "vs_vw_market": "+8.28%/年 (t 5.23, NW 4.03, 200101-202512)",
+     "vs_ew_market": "+3.72%/年 (t 4.99, NW 4.29, 200101-202512)"
+    },
+    "2008-2025": {
+     "vs_vw_market": "+7.25%/年 (t 4.26, NW 4.04, 200801-202512)",
+     "vs_ew_market": "+3.09%/年 (t 3.54, NW 2.98, 200801-202512)"
+    },
+    "2013-2025": {
+     "vs_vw_market": "+4.81%/年 (t 2.59, NW 2.92, 201301-202512)",
+     "vs_ew_market": "+2.79%/年 (t 2.37, NW 1.96, 201301-202512)"
+    },
+    "2007-2020": {
+     "vs_vw_market": "+6.92%/年 (t 3.57, NW 2.99, 200701-202012)",
+     "vs_ew_market": "+1.63%/年 (t 1.73, NW 1.64, 200701-202012)"
+    },
+    "2021-2025": {
+     "vs_vw_market": "+5.42%/年 (t 1.77, NW 3.2, 202101-202512)",
+     "vs_ew_market": "+7.28%/年 (t 4.34, NW 5.26, 202101-202512)"
+    }
+   },
+   "market_size_tilt": {
+    "vw_cap_market_minus_vw_market": {
+     "2001-2025": "+0.95%/年 (t 2.07, NW 1.84, 200101-202512)",
+     "2008-2025": "+0.53%/年 (t 1.03, NW 1.1, 200801-202512)",
+     "2013-2025": "+0.04%/年 (t 0.1, NW 0.12, 201301-202512)"
+    },
+    "ew_market_minus_vw_market": {
+     "2001-2025": "+4.56%/年 (t 2.9, NW 2.27, 200101-202512)",
+     "2008-2025": "+4.16%/年 (t 2.5, NW 2.48, 200801-202512)",
+     "2013-2025": "+2.02%/年 (t 1.15, NW 1.19, 201301-202512)"
+    }
+   }
+  },
+  "legs": {
+   "be_me": {
+    "2001-2025": "+5.61%/年 (t 3.91, NW 3.26, 200101-202512)",
+    "2008-2025": "+3.69%/年 (t 2.25, NW 2.02, 200801-202512)",
+    "2013-2025": "+2.62%/年 (t 1.31, NW 1.25, 201301-202512)",
+    "2007-2020": "+1.22%/年 (t 0.91, NW 0.72, 200701-202012)"
+   },
+   "ni_me": {
+    "2001-2025": "+3.17%/年 (t 2.62, NW 2.21, 200101-202512)",
+    "2008-2025": "+2.57%/年 (t 1.84, NW 1.6, 200801-202512)",
+    "2013-2025": "+2.34%/年 (t 1.33, NW 1.17, 201301-202512)",
+    "2007-2020": "-0.52%/年 (t -0.15, NW -0.14, 200701-202012)"
+   },
+   "ocf_me": {
+    "2001-2025": "+2.83%/年 (t 2.87, NW 2.62, 200101-202512)",
+    "2008-2025": "+2.44%/年 (t 2.08, NW 1.91, 200801-202512)",
+    "2013-2025": "+2.14%/年 (t 1.38, NW 1.4, 201301-202512)",
+    "2007-2020": "+0.79%/年 (t 0.77, NW 0.63, 200701-202012)"
+   },
+   "fcf_me": {
+    "2001-2025": "+3.65%/年 (t 3.74, NW 3.15, 200101-202512)",
+    "2008-2025": "+3.38%/年 (t 3.17, NW 2.85, 200801-202512)",
+    "2013-2025": "+3.04%/年 (t 2.53, NW 2.53, 201301-202512)",
+    "2007-2020": "+2.44%/年 (t 2.1, NW 1.66, 200701-202012)"
+   },
+   "div12m_me": {
+    "2001-2025": "+5.19%/年 (t 4.08, NW 3.34, 200101-202512)",
+    "2008-2025": "+3.52%/年 (t 2.65, NW 2.28, 200801-202512)",
+    "2013-2025": "+3.15%/年 (t 1.87, NW 1.5, 201301-202512)",
+    "2007-2020": "+0.84%/年 (t 0.66, NW 0.61, 200701-202012)"
+   }
+  },
+  "leave_one_out": {
+   "without_be_me": {
+    "2001-2025": "+3.76%/年 (t 3.56, NW 2.98, 200101-202512)",
+    "2013-2025": "+2.56%/年 (t 1.6, NW 1.41, 201301-202512)"
+   },
+   "without_ni_me": {
+    "2001-2025": "+4.58%/年 (t 4.11, NW 3.45, 200101-202512)",
+    "2013-2025": "+2.66%/年 (t 1.58, NW 1.43, 201301-202512)"
+   },
+   "without_ocf_me": {
+    "2001-2025": "+4.70%/年 (t 4.05, NW 3.34, 200101-202512)",
+    "2013-2025": "+2.72%/年 (t 1.56, NW 1.36, 201301-202512)"
+   },
+   "without_div12m_me": {
+    "2001-2025": "+3.91%/年 (t 3.61, NW 3.11, 200101-202512)",
+    "2013-2025": "+2.39%/年 (t 1.39, NW 1.3, 201301-202512)"
+   }
+  },
+  "annual": {
+   "JKP_val4_excess_pct_by_year": {
+    "2001": 12.03,
+    "2002": 11.31,
+    "2003": 6.56,
+    "2004": 7.51,
+    "2005": -1.93,
+    "2006": 8.07,
+    "2007": 2.62,
+    "2008": 2.56,
+    "2009": 14.65,
+    "2010": 6.31,
+    "2011": 1.25,
+    "2012": -1.77,
+    "2013": -1.56,
+    "2014": 0.98,
+    "2015": 0.4,
+    "2016": 3.14,
+    "2017": -3.7,
+    "2018": -0.28,
+    "2019": -3.16,
+    "2020": -13.91,
+    "2021": 8.48,
+    "2022": 17.68,
+    "2023": 9.6,
+    "2024": 4.4,
+    "2025": 9.85
+   },
+   "French_F_val4_excess_pct_by_year": {
+    "2001": 7.13,
+    "2002": 6.84,
+    "2003": 15.71,
+    "2004": 7.11,
+    "2005": -5.11,
+    "2006": 8.34,
+    "2007": 2.37,
+    "2008": 3.21,
+    "2009": 20.34,
+    "2010": 4.18,
+    "2011": 1.99,
+    "2012": -1.54,
+    "2013": -1.73,
+    "2014": 0.22,
+    "2015": 0.39,
+    "2016": 2.0,
+    "2017": -4.22,
+    "2018": -0.13,
+    "2019": -3.52,
+    "2020": -13.57,
+    "2021": 10.07,
+    "2022": 16.05,
+    "2023": 8.94,
+    "2024": 3.48,
+    "2025": 5.32
+   },
+   "annual_corr_JKP_vs_French": 0.918,
+   "positive_years_JKP": "18/25",
+   "median_year_JKP": 3.14,
+   "top4_years_share_of_log_excess_pct": {
+    "years": [
+     2022,
+     2001,
+     2009,
+     2002
+    ],
+    "share": 59.8
+   },
+   "drop_best_years": {
+    "drop_top_0": {
+     "years_dropped": [],
+     "ex_arith_pct_yr": 4.01,
+     "t": 3.91
+    },
+    "drop_top_1": {
+     "years_dropped": [
+      2022
+     ],
+     "ex_arith_pct_yr": 3.4,
+     "t": 3.39
+    },
+    "drop_top_2": {
+     "years_dropped": [
+      2022,
+      2001
+     ],
+     "ex_arith_pct_yr": 2.87,
+     "t": 2.95
+    },
+    "drop_top_3": {
+     "years_dropped": [
+      2022,
+      2001,
+      2009
+     ],
+     "ex_arith_pct_yr": 2.4,
+     "t": 2.46
+    },
+    "drop_top_4": {
+     "years_dropped": [
+      2022,
+      2001,
+      2009,
+      2002
+     ],
+     "ex_arith_pct_yr": 1.97,
+     "t": 1.97
+    }
+   },
+   "sum_2013_2020_pct": -18.09
+  },
+  "sector_concentration_TOPIX17_ETFs": {
+   "excluded_bad_months": {
+    "商社・卸売": [
+     201501,
+     201507
+    ],
+    "TOPIX(1306)": [
+     201501
+    ]
+   },
+   "JKP_3業種_2009-2025": {
+    "from": 200902,
+    "to": 202512,
+    "n_months": 201,
+    "mean_excess_pct_yr": 2.99,
+    "alpha_pct_yr": 2.1,
+    "alpha_t": 2.41,
+    "r2": 0.58,
+    "legs": {
+     "銀行": {
+      "beta": 0.229,
+      "t": 13.58,
+      "spread_pct_yr": 0.49,
+      "contrib_pct_yr": 0.11
+     },
+     "商社・卸売": {
+      "beta": 0.112,
+      "t": 4.61,
+      "spread_pct_yr": 4.84,
+      "contrib_pct_yr": 0.54
+     },
+     "自動車・輸送機": {
+      "beta": 0.139,
+      "t": 6.83,
+      "spread_pct_yr": 1.74,
+      "contrib_pct_yr": 0.24
+     }
+    }
+   },
+   "JKP_17業種_2009-2025": {
+    "from": 200902,
+    "to": 202512,
+    "n_months": 201,
+    "mean_excess_pct_yr": 2.99,
+    "alpha_pct_yr": 3.23,
+    "alpha_t": 4.2,
+    "r2": 0.713,
+    "legs": {
+     "食品": {
+      "beta": 0.002,
+      "t": 0.07,
+      "spread_pct_yr": -2.75,
+      "contrib_pct_yr": -0.01
+     },
+     "エネルギー資源": {
+      "beta": 0.062,
+      "t": 4.43,
+      "spread_pct_yr": -0.19,
+      "contrib_pct_yr": -0.01
+     },
+     "建設・資材": {
+      "beta": 0.049,
+      "t": 1.63,
+      "spread_pct_yr": 1.67,
+      "contrib_pct_yr": 0.08
+     },
+     "素材・化学": {
+      "beta": 0.044,
+      "t": 1.25,
+      "spread_pct_yr": -1.71,
+      "contrib_pct_yr": -0.08
+     },
+     "医薬品": {
+      "beta": -0.031,
+      "t": -1.47,
+      "spread_pct_yr": -3.59,
+      "contrib_pct_yr": 0.11
+     },
+     "自動車・輸送機": {
+      "beta": 0.106,
+      "t": 5.05,
+      "spread_pct_yr": 1.74,
+      "contrib_pct_yr": 0.18
+     },
+     "鉄鋼・非鉄": {
+      "beta": 0.047,
+      "t": 2.43,
+      "spread_pct_yr": 0.72,
+      "contrib_pct_yr": 0.03
+     },
+     "機械": {
+      "beta": -0.072,
+      "t": -2.51,
+      "spread_pct_yr": 3.53,
+      "contrib_pct_yr": -0.25
+     },
+     "電機・精密": {
+      "beta": -0.06,
+      "t": -1.88,
+      "spread_pct_yr": 3.44,
+      "contrib_pct_yr": -0.21
+     },
+     "情報通信・サービス": {
+      "beta": -0.081,
+      "t": -2.8,
+      "spread_pct_yr": -0.03,
+      "contrib_pct_yr": 0.0
+     },
+     "電力・ガス": {
+      "beta": 0.034,
+      "t": 2.59,
+      "spread_pct_yr": -10.03,
+      "contrib_pct_yr": -0.34
+     },
+     "運輸・物流": {
+      "beta": 0.032,
+      "t": 1.29,
+      "spread_pct_yr": -5.31,
+      "contrib_pct_yr": -0.17
+     },
+     "商社・卸売": {
+      "beta": 0.05,
+      "t": 2.0,
+      "spread_pct_yr": 4.84,
+      "contrib_pct_yr": 0.24
+     },
+     "小売": {
+      "beta": -0.054,
+      "t": -1.97,
+      "spread_pct_yr": -0.93,
+      "contrib_pct_yr": 0.05
+     },
+     "銀行": {
+      "beta": 0.15,
+      "t": 7.02,
+      "spread_pct_yr": 0.49,
+      "contrib_pct_yr": 0.07
+     },
+     "金融（除く銀行）": {
+      "beta": 0.03,
+      "t": 1.18,
+      "spread_pct_yr": 2.12,
+      "contrib_pct_yr": 0.06
+     },
+     "不動産": {
+      "beta": -0.016,
+      "t": -0.91,
+      "spread_pct_yr": 1.1,
+      "contrib_pct_yr": -0.02
+     }
+    }
+   },
+   "JKP_3業種_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 94,
+    "mean_excess_pct_yr": -1.64,
+    "alpha_pct_yr": 0.45,
+    "alpha_t": 0.46,
+    "r2": 0.697,
+    "legs": {
+     "銀行": {
+      "beta": 0.201,
+      "t": 8.36,
+      "spread_pct_yr": -7.49,
+      "contrib_pct_yr": -1.5
+     },
+     "商社・卸売": {
+      "beta": 0.114,
+      "t": 3.73,
+      "spread_pct_yr": 0.53,
+      "contrib_pct_yr": 0.06
+     },
+     "自動車・輸送機": {
+      "beta": 0.23,
+      "t": 6.85,
+      "spread_pct_yr": -2.85,
+      "contrib_pct_yr": -0.66
+     }
+    }
+   },
+   "JKP_17業種_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 94,
+    "mean_excess_pct_yr": -1.64,
+    "alpha_pct_yr": 1.3,
+    "alpha_t": 1.44,
+    "r2": 0.832,
+    "legs": {
+     "食品": {
+      "beta": -0.025,
+      "t": -0.67,
+      "spread_pct_yr": -3.98,
+      "contrib_pct_yr": 0.1
+     },
+     "エネルギー資源": {
+      "beta": 0.054,
+      "t": 3.26,
+      "spread_pct_yr": -9.58,
+      "contrib_pct_yr": -0.52
+     },
+     "建設・資材": {
+      "beta": -0.003,
+      "t": -0.11,
+      "spread_pct_yr": -1.21,
+      "contrib_pct_yr": 0.0
+     },
+     "素材・化学": {
+      "beta": 0.011,
+      "t": 0.25,
+      "spread_pct_yr": 2.63,
+      "contrib_pct_yr": 0.03
+     },
+     "医薬品": {
+      "beta": -0.041,
+      "t": -1.74,
+      "spread_pct_yr": 0.2,
+      "contrib_pct_yr": -0.01
+     },
+     "自動車・輸送機": {
+      "beta": 0.153,
+      "t": 4.56,
+      "spread_pct_yr": -2.85,
+      "contrib_pct_yr": -0.44
+     },
+     "鉄鋼・非鉄": {
+      "beta": 0.018,
+      "t": 0.72,
+      "spread_pct_yr": -5.67,
+      "contrib_pct_yr": -0.1
+     },
+     "機械": {
+      "beta": -0.073,
+      "t": -2.14,
+      "spread_pct_yr": 3.11,
+      "contrib_pct_yr": -0.23
+     },
+     "電機・精密": {
+      "beta": -0.028,
+      "t": -0.73,
+      "spread_pct_yr": 6.11,
+      "contrib_pct_yr": -0.17
+     },
+     "情報通信・サービス": {
+      "beta": -0.078,
+      "t": -2.36,
+      "spread_pct_yr": 5.44,
+      "contrib_pct_yr": -0.42
+     },
+     "電力・ガス": {
+      "beta": 0.02,
+      "t": 0.98,
+      "spread_pct_yr": -9.7,
+      "contrib_pct_yr": -0.19
+     },
+     "運輸・物流": {
+      "beta": 0.011,
+      "t": 0.39,
+      "spread_pct_yr": -5.19,
+      "contrib_pct_yr": -0.06
+     },
+     "商社・卸売": {
+      "beta": 0.087,
+      "t": 2.67,
+      "spread_pct_yr": 0.53,
+      "contrib_pct_yr": 0.05
+     },
+     "小売": {
+      "beta": -0.082,
+      "t": -2.98,
+      "spread_pct_yr": -0.07,
+      "contrib_pct_yr": 0.01
+     },
+     "銀行": {
+      "beta": 0.136,
+      "t": 4.87,
+      "spread_pct_yr": -7.49,
+      "contrib_pct_yr": -1.02
+     },
+     "金融（除く銀行）": {
+      "beta": 0.045,
+      "t": 1.5,
+      "spread_pct_yr": -0.93,
+      "contrib_pct_yr": -0.04
+     },
+     "不動産": {
+      "beta": -0.011,
+      "t": -0.47,
+      "spread_pct_yr": -6.44,
+      "contrib_pct_yr": 0.07
+     }
+    }
+   },
+   "JKP_3業種_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "mean_excess_pct_yr": 9.35,
+    "alpha_pct_yr": 2.06,
+    "alpha_t": 1.16,
+    "r2": 0.717,
+    "legs": {
+     "銀行": {
+      "beta": 0.264,
+      "t": 10.01,
+      "spread_pct_yr": 18.9,
+      "contrib_pct_yr": 4.99
+     },
+     "商社・卸売": {
+      "beta": 0.175,
+      "t": 3.64,
+      "spread_pct_yr": 12.34,
+      "contrib_pct_yr": 2.16
+     },
+     "自動車・輸送機": {
+      "beta": 0.114,
+      "t": 3.28,
+      "spread_pct_yr": 1.3,
+      "contrib_pct_yr": 0.15
+     }
+    }
+   },
+   "JKP_17業種_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "mean_excess_pct_yr": 9.35,
+    "alpha_pct_yr": 3.54,
+    "alpha_t": 2.7,
+    "r2": 0.917,
+    "legs": {
+     "食品": {
+      "beta": 0.024,
+      "t": 0.5,
+      "spread_pct_yr": -4.94,
+      "contrib_pct_yr": -0.12
+     },
+     "エネルギー資源": {
+      "beta": 0.058,
+      "t": 2.26,
+      "spread_pct_yr": 15.88,
+      "contrib_pct_yr": 0.92
+     },
+     "建設・資材": {
+      "beta": 0.031,
+      "t": 0.52,
+      "spread_pct_yr": 3.28,
+      "contrib_pct_yr": 0.1
+     },
+     "素材・化学": {
+      "beta": 0.068,
+      "t": 1.29,
+      "spread_pct_yr": -10.2,
+      "contrib_pct_yr": -0.7
+     },
+     "医薬品": {
+      "beta": -0.029,
+      "t": -0.96,
+      "spread_pct_yr": -9.39,
+      "contrib_pct_yr": 0.27
+     },
+     "自動車・輸送機": {
+      "beta": 0.131,
+      "t": 3.57,
+      "spread_pct_yr": 1.3,
+      "contrib_pct_yr": 0.17
+     },
+     "鉄鋼・非鉄": {
+      "beta": 0.043,
+      "t": 1.61,
+      "spread_pct_yr": 13.26,
+      "contrib_pct_yr": 0.57
+     },
+     "機械": {
+      "beta": -0.04,
+      "t": -0.89,
+      "spread_pct_yr": 0.34,
+      "contrib_pct_yr": -0.01
+     },
+     "電機・精密": {
+      "beta": -0.026,
+      "t": -0.4,
+      "spread_pct_yr": -0.73,
+      "contrib_pct_yr": 0.02
+     },
+     "情報通信・サービス": {
+      "beta": -0.097,
+      "t": -1.5,
+      "spread_pct_yr": -5.79,
+      "contrib_pct_yr": 0.56
+     },
+     "電力・ガス": {
+      "beta": 0.059,
+      "t": 2.47,
+      "spread_pct_yr": 0.15,
+      "contrib_pct_yr": 0.01
+     },
+     "運輸・物流": {
+      "beta": 0.127,
+      "t": 2.99,
+      "spread_pct_yr": -4.63,
+      "contrib_pct_yr": -0.59
+     },
+     "商社・卸売": {
+      "beta": 0.075,
+      "t": 1.94,
+      "spread_pct_yr": 12.34,
+      "contrib_pct_yr": 0.93
+     },
+     "小売": {
+      "beta": -0.004,
+      "t": -0.09,
+      "spread_pct_yr": -3.74,
+      "contrib_pct_yr": 0.02
+     },
+     "銀行": {
+      "beta": 0.172,
+      "t": 5.59,
+      "spread_pct_yr": 18.9,
+      "contrib_pct_yr": 3.26
+     },
+     "金融（除く銀行）": {
+      "beta": 0.045,
+      "t": 0.98,
+      "spread_pct_yr": 8.85,
+      "contrib_pct_yr": 0.39
+     },
+     "不動産": {
+      "beta": 0.009,
+      "t": 0.28,
+      "spread_pct_yr": 1.61,
+      "contrib_pct_yr": 0.01
+     }
+    }
+   },
+   "French_3業種_2009-2025": {
+    "from": 200902,
+    "to": 202512,
+    "n_months": 201,
+    "mean_excess_pct_yr": 2.75,
+    "alpha_pct_yr": 1.86,
+    "alpha_t": 1.92,
+    "r2": 0.524,
+    "legs": {
+     "銀行": {
+      "beta": 0.211,
+      "t": 11.19,
+      "spread_pct_yr": 0.49,
+      "contrib_pct_yr": 0.1
+     },
+     "商社・卸売": {
+      "beta": 0.096,
+      "t": 3.52,
+      "spread_pct_yr": 4.84,
+      "contrib_pct_yr": 0.46
+     },
+     "自動車・輸送機": {
+      "beta": 0.182,
+      "t": 8.0,
+      "spread_pct_yr": 1.74,
+      "contrib_pct_yr": 0.32
+     }
+    }
+   },
+   "French_17業種_2009-2025": {
+    "from": 200902,
+    "to": 202512,
+    "n_months": 201,
+    "mean_excess_pct_yr": 2.75,
+    "alpha_pct_yr": 2.84,
+    "alpha_t": 3.31,
+    "r2": 0.677,
+    "legs": {
+     "食品": {
+      "beta": 0.005,
+      "t": 0.16,
+      "spread_pct_yr": -2.75,
+      "contrib_pct_yr": -0.01
+     },
+     "エネルギー資源": {
+      "beta": 0.053,
+      "t": 3.42,
+      "spread_pct_yr": -0.19,
+      "contrib_pct_yr": -0.01
+     },
+     "建設・資材": {
+      "beta": 0.1,
+      "t": 3.0,
+      "spread_pct_yr": 1.67,
+      "contrib_pct_yr": 0.17
+     },
+     "素材・化学": {
+      "beta": 0.058,
+      "t": 1.48,
+      "spread_pct_yr": -1.71,
+      "contrib_pct_yr": -0.1
+     },
+     "医薬品": {
+      "beta": -0.005,
+      "t": -0.21,
+      "spread_pct_yr": -3.59,
+      "contrib_pct_yr": 0.02
+     },
+     "自動車・輸送機": {
+      "beta": 0.154,
+      "t": 6.59,
+      "spread_pct_yr": 1.74,
+      "contrib_pct_yr": 0.27
+     },
+     "鉄鋼・非鉄": {
+      "beta": 0.096,
+      "t": 4.46,
+      "spread_pct_yr": 0.72,
+      "contrib_pct_yr": 0.07
+     },
+     "機械": {
+      "beta": -0.145,
+      "t": -4.54,
+      "spread_pct_yr": 3.53,
+      "contrib_pct_yr": -0.51
+     },
+     "電機・精密": {
+      "beta": -0.006,
+      "t": -0.17,
+      "spread_pct_yr": 3.44,
+      "contrib_pct_yr": -0.02
+     },
+     "情報通信・サービス": {
+      "beta": -0.072,
+      "t": -2.23,
+      "spread_pct_yr": -0.03,
+      "contrib_pct_yr": 0.0
+     },
+     "電力・ガス": {
+      "beta": 0.023,
+      "t": 1.57,
+      "spread_pct_yr": -10.03,
+      "contrib_pct_yr": -0.23
+     },
+     "運輸・物流": {
+      "beta": 0.013,
+      "t": 0.45,
+      "spread_pct_yr": -5.31,
+      "contrib_pct_yr": -0.07
+     },
+     "商社・卸売": {
+      "beta": 0.037,
+      "t": 1.33,
+      "spread_pct_yr": 4.84,
+      "contrib_pct_yr": 0.18
+     },
+     "小売": {
+      "beta": -0.025,
+      "t": -0.82,
+      "spread_pct_yr": -0.93,
+      "contrib_pct_yr": 0.02
+     },
+     "銀行": {
+      "beta": 0.134,
+      "t": 5.63,
+      "spread_pct_yr": 0.49,
+      "contrib_pct_yr": 0.07
+     },
+     "金融（除く銀行）": {
+      "beta": 0.042,
+      "t": 1.46,
+      "spread_pct_yr": 2.12,
+      "contrib_pct_yr": 0.09
+     },
+     "不動産": {
+      "beta": -0.018,
+      "t": -0.96,
+      "spread_pct_yr": 1.1,
+      "contrib_pct_yr": -0.02
+     }
+    }
+   },
+   "French_3業種_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 94,
+    "mean_excess_pct_yr": -2.02,
+    "alpha_pct_yr": -0.06,
+    "alpha_t": -0.06,
+    "r2": 0.636,
+    "legs": {
+     "銀行": {
+      "beta": 0.206,
+      "t": 8.16,
+      "spread_pct_yr": -7.49,
+      "contrib_pct_yr": -1.54
+     },
+     "商社・卸売": {
+      "beta": 0.121,
+      "t": 3.76,
+      "spread_pct_yr": 0.53,
+      "contrib_pct_yr": 0.06
+     },
+     "自動車・輸送機": {
+      "beta": 0.167,
+      "t": 4.73,
+      "spread_pct_yr": -2.85,
+      "contrib_pct_yr": -0.48
+     }
+    }
+   },
+   "French_17業種_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 94,
+    "mean_excess_pct_yr": -2.02,
+    "alpha_pct_yr": 0.94,
+    "alpha_t": 0.99,
+    "r2": 0.794,
+    "legs": {
+     "食品": {
+      "beta": 0.004,
+      "t": 0.1,
+      "spread_pct_yr": -3.98,
+      "contrib_pct_yr": -0.02
+     },
+     "エネルギー資源": {
+      "beta": 0.064,
+      "t": 3.62,
+      "spread_pct_yr": -9.58,
+      "contrib_pct_yr": -0.61
+     },
+     "建設・資材": {
+      "beta": -0.008,
+      "t": -0.24,
+      "spread_pct_yr": -1.21,
+      "contrib_pct_yr": 0.01
+     },
+     "素材・化学": {
+      "beta": 0.005,
+      "t": 0.12,
+      "spread_pct_yr": 2.63,
+      "contrib_pct_yr": 0.01
+     },
+     "医薬品": {
+      "beta": -0.058,
+      "t": -2.33,
+      "spread_pct_yr": 0.2,
+      "contrib_pct_yr": -0.01
+     },
+     "自動車・輸送機": {
+      "beta": 0.096,
+      "t": 2.69,
+      "spread_pct_yr": -2.85,
+      "contrib_pct_yr": -0.27
+     },
+     "鉄鋼・非鉄": {
+      "beta": 0.04,
+      "t": 1.5,
+      "spread_pct_yr": -5.67,
+      "contrib_pct_yr": -0.22
+     },
+     "機械": {
+      "beta": -0.084,
+      "t": -2.33,
+      "spread_pct_yr": 3.11,
+      "contrib_pct_yr": -0.26
+     },
+     "電機・精密": {
+      "beta": -0.031,
+      "t": -0.77,
+      "spread_pct_yr": 6.11,
+      "contrib_pct_yr": -0.19
+     },
+     "情報通信・サービス": {
+      "beta": -0.064,
+      "t": -1.82,
+      "spread_pct_yr": 5.44,
+      "contrib_pct_yr": -0.35
+     },
+     "電力・ガス": {
+      "beta": 0.016,
+      "t": 0.76,
+      "spread_pct_yr": -9.7,
+      "contrib_pct_yr": -0.16
+     },
+     "運輸・物流": {
+      "beta": -0.02,
+      "t": -0.67,
+      "spread_pct_yr": -5.19,
+      "contrib_pct_yr": 0.11
+     },
+     "商社・卸売": {
+      "beta": 0.087,
+      "t": 2.51,
+      "spread_pct_yr": 0.53,
+      "contrib_pct_yr": 0.05
+     },
+     "小売": {
+      "beta": -0.068,
+      "t": -2.3,
+      "spread_pct_yr": -0.07,
+      "contrib_pct_yr": 0.01
+     },
+     "銀行": {
+      "beta": 0.143,
+      "t": 4.82,
+      "spread_pct_yr": -7.49,
+      "contrib_pct_yr": -1.07
+     },
+     "金融（除く銀行）": {
+      "beta": 0.018,
+      "t": 0.56,
+      "spread_pct_yr": -0.93,
+      "contrib_pct_yr": -0.02
+     },
+     "不動産": {
+      "beta": -0.006,
+      "t": -0.23,
+      "spread_pct_yr": -6.44,
+      "contrib_pct_yr": 0.04
+     }
+    }
+   },
+   "French_3業種_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "mean_excess_pct_yr": 8.33,
+    "alpha_pct_yr": 1.09,
+    "alpha_t": 0.58,
+    "r2": 0.687,
+    "legs": {
+     "銀行": {
+      "beta": 0.266,
+      "t": 9.39,
+      "spread_pct_yr": 18.9,
+      "contrib_pct_yr": 5.03
+     },
+     "商社・卸売": {
+      "beta": 0.168,
+      "t": 3.25,
+      "spread_pct_yr": 12.34,
+      "contrib_pct_yr": 2.07
+     },
+     "自動車・輸送機": {
+      "beta": 0.113,
+      "t": 3.06,
+      "spread_pct_yr": 1.3,
+      "contrib_pct_yr": 0.15
+     }
+    }
+   },
+   "French_17業種_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "mean_excess_pct_yr": 8.33,
+    "alpha_pct_yr": 2.3,
+    "alpha_t": 1.75,
+    "r2": 0.919,
+    "legs": {
+     "食品": {
+      "beta": 0.045,
+      "t": 0.92,
+      "spread_pct_yr": -4.94,
+      "contrib_pct_yr": -0.22
+     },
+     "エネルギー資源": {
+      "beta": 0.069,
+      "t": 2.67,
+      "spread_pct_yr": 15.88,
+      "contrib_pct_yr": 1.1
+     },
+     "建設・資材": {
+      "beta": 0.121,
+      "t": 2.07,
+      "spread_pct_yr": 3.28,
+      "contrib_pct_yr": 0.4
+     },
+     "素材・化学": {
+      "beta": 0.048,
+      "t": 0.9,
+      "spread_pct_yr": -10.2,
+      "contrib_pct_yr": -0.48
+     },
+     "医薬品": {
+      "beta": -0.0,
+      "t": -0.0,
+      "spread_pct_yr": -9.39,
+      "contrib_pct_yr": 0.0
+     },
+     "自動車・輸送機": {
+      "beta": 0.165,
+      "t": 4.5,
+      "spread_pct_yr": 1.3,
+      "contrib_pct_yr": 0.22
+     },
+     "鉄鋼・非鉄": {
+      "beta": 0.052,
+      "t": 1.94,
+      "spread_pct_yr": 13.26,
+      "contrib_pct_yr": 0.69
+     },
+     "機械": {
+      "beta": -0.05,
+      "t": -1.09,
+      "spread_pct_yr": 0.34,
+      "contrib_pct_yr": -0.02
+     },
+     "電機・精密": {
+      "beta": 0.003,
+      "t": 0.05,
+      "spread_pct_yr": -0.73,
+      "contrib_pct_yr": -0.0
+     },
+     "情報通信・サービス": {
+      "beta": -0.004,
+      "t": -0.06,
+      "spread_pct_yr": -5.79,
+      "contrib_pct_yr": 0.02
+     },
+     "電力・ガス": {
+      "beta": 0.067,
+      "t": 2.82,
+      "spread_pct_yr": 0.15,
+      "contrib_pct_yr": 0.01
+     },
+     "運輸・物流": {
+      "beta": 0.143,
+      "t": 3.34,
+      "spread_pct_yr": -4.63,
+      "contrib_pct_yr": -0.66
+     },
+     "商社・卸売": {
+      "beta": 0.087,
+      "t": 2.23,
+      "spread_pct_yr": 12.34,
+      "contrib_pct_yr": 1.07
+     },
+     "小売": {
+      "beta": -0.033,
+      "t": -0.76,
+      "spread_pct_yr": -3.74,
+      "contrib_pct_yr": 0.12
+     },
+     "銀行": {
+      "beta": 0.166,
+      "t": 5.37,
+      "spread_pct_yr": 18.9,
+      "contrib_pct_yr": 3.14
+     },
+     "金融（除く銀行）": {
+      "beta": 0.082,
+      "t": 1.8,
+      "spread_pct_yr": 8.85,
+      "contrib_pct_yr": 0.73
+     },
+     "不動産": {
+      "beta": -0.041,
+      "t": -1.24,
+      "spread_pct_yr": 1.61,
+      "contrib_pct_yr": -0.07
+     }
+    }
+   }
+  },
+  "single_stock_concentration": {
+   "8社一緒_2006-2025": {
+    "from": 200601,
+    "to": 202512,
+    "n_months": 240,
+    "mean_excess_pct_yr": 3.24,
+    "alpha_pct_yr": 2.45,
+    "alpha_t": 2.72,
+    "r2": 0.423,
+    "legs": {
+     "三菱UFJ": {
+      "beta": 0.067,
+      "t": 3.13,
+      "spread_pct_yr": 2.27,
+      "contrib_pct_yr": 0.15
+     },
+     "三井住友FG": {
+      "beta": 0.05,
+      "t": 2.13,
+      "spread_pct_yr": 1.65,
+      "contrib_pct_yr": 0.08
+     },
+     "みずほFG": {
+      "beta": 0.011,
+      "t": 0.58,
+      "spread_pct_yr": -1.48,
+      "contrib_pct_yr": -0.02
+     },
+     "トヨタ": {
+      "beta": 0.036,
+      "t": 2.03,
+      "spread_pct_yr": 3.04,
+      "contrib_pct_yr": 0.11
+     },
+     "ホンダ": {
+      "beta": 0.04,
+      "t": 2.45,
+      "spread_pct_yr": 0.39,
+      "contrib_pct_yr": 0.02
+     },
+     "三菱商事": {
+      "beta": 0.025,
+      "t": 1.41,
+      "spread_pct_yr": 6.98,
+      "contrib_pct_yr": 0.18
+     },
+     "三井物産": {
+      "beta": 0.019,
+      "t": 0.98,
+      "spread_pct_yr": 9.22,
+      "contrib_pct_yr": 0.18
+     },
+     "伊藤忠": {
+      "beta": 0.009,
+      "t": 0.51,
+      "spread_pct_yr": 10.81,
+      "contrib_pct_yr": 0.09
+     }
+    }
+   },
+   "三菱UFJ_単独_2006-2025": {
+    "from": 200601,
+    "to": 202512,
+    "n_months": 240,
+    "mean_excess_pct_yr": 3.24,
+    "alpha_pct_yr": 2.95,
+    "alpha_t": 3.07,
+    "r2": 0.299,
+    "legs": {
+     "三菱UFJ": {
+      "beta": 0.13,
+      "t": 10.08,
+      "spread_pct_yr": 2.27,
+      "contrib_pct_yr": 0.29
+     }
+    }
+   },
+   "三井住友FG_単独_2006-2025": {
+    "from": 200601,
+    "to": 202512,
+    "n_months": 240,
+    "mean_excess_pct_yr": 3.24,
+    "alpha_pct_yr": 3.04,
+    "alpha_t": 3.08,
+    "r2": 0.259,
+    "legs": {
+     "三井住友FG": {
+      "beta": 0.124,
+      "t": 9.12,
+      "spread_pct_yr": 1.65,
+      "contrib_pct_yr": 0.2
+     }
+    }
+   },
+   "みずほFG_単独_2006-2025": {
+    "from": 200601,
+    "to": 202512,
+    "n_months": 240,
+    "mean_excess_pct_yr": 3.24,
+    "alpha_pct_yr": 3.39,
+    "alpha_t": 3.29,
+    "r2": 0.192,
+    "legs": {
+     "みずほFG": {
+      "beta": 0.104,
+      "t": 7.52,
+      "spread_pct_yr": -1.48,
+      "contrib_pct_yr": -0.15
+     }
+    }
+   },
+   "トヨタ_単独_2006-2025": {
+    "from": 200601,
+    "to": 202512,
+    "n_months": 240,
+    "mean_excess_pct_yr": 3.24,
+    "alpha_pct_yr": 3.0,
+    "alpha_t": 2.71,
+    "r2": 0.073,
+    "legs": {
+     "トヨタ": {
+      "beta": 0.08,
+      "t": 4.31,
+      "spread_pct_yr": 3.04,
+      "contrib_pct_yr": 0.24
+     }
+    }
+   },
+   "ホンダ_単独_2006-2025": {
+    "from": 200601,
+    "to": 202512,
+    "n_months": 240,
+    "mean_excess_pct_yr": 3.24,
+    "alpha_pct_yr": 3.2,
+    "alpha_t": 2.98,
+    "r2": 0.124,
+    "legs": {
+     "ホンダ": {
+      "beta": 0.095,
+      "t": 5.8,
+      "spread_pct_yr": 0.39,
+      "contrib_pct_yr": 0.04
+     }
+    }
+   },
+   "三菱商事_単独_2006-2025": {
+    "from": 200601,
+    "to": 202512,
+    "n_months": 240,
+    "mean_excess_pct_yr": 3.24,
+    "alpha_pct_yr": 2.74,
+    "alpha_t": 2.49,
+    "r2": 0.086,
+    "legs": {
+     "三菱商事": {
+      "beta": 0.071,
+      "t": 4.72,
+      "spread_pct_yr": 6.98,
+      "contrib_pct_yr": 0.5
+     }
+    }
+   },
+   "三井物産_単独_2006-2025": {
+    "from": 200601,
+    "to": 202512,
+    "n_months": 240,
+    "mean_excess_pct_yr": 3.24,
+    "alpha_pct_yr": 2.54,
+    "alpha_t": 2.3,
+    "r2": 0.091,
+    "legs": {
+     "三井物産": {
+      "beta": 0.076,
+      "t": 4.88,
+      "spread_pct_yr": 9.22,
+      "contrib_pct_yr": 0.7
+     }
+    }
+   },
+   "伊藤忠_単独_2006-2025": {
+    "from": 200601,
+    "to": 202512,
+    "n_months": 240,
+    "mean_excess_pct_yr": 3.24,
+    "alpha_pct_yr": 2.71,
+    "alpha_t": 2.37,
+    "r2": 0.034,
+    "legs": {
+     "伊藤忠": {
+      "beta": 0.049,
+      "t": 2.89,
+      "spread_pct_yr": 10.81,
+      "contrib_pct_yr": 0.53
+     }
+    }
+   },
+   "8社一緒_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "mean_excess_pct_yr": 9.35,
+    "alpha_pct_yr": 2.11,
+    "alpha_t": 1.06,
+    "r2": 0.684,
+    "legs": {
+     "三菱UFJ": {
+      "beta": 0.028,
+      "t": 0.55,
+      "spread_pct_yr": 25.61,
+      "contrib_pct_yr": 0.71
+     },
+     "三井住友FG": {
+      "beta": 0.147,
+      "t": 2.68,
+      "spread_pct_yr": 22.94,
+      "contrib_pct_yr": 3.37
+     },
+     "みずほFG": {
+      "beta": 0.062,
+      "t": 1.18,
+      "spread_pct_yr": 21.07,
+      "contrib_pct_yr": 1.3
+     },
+     "トヨタ": {
+      "beta": -0.02,
+      "t": -0.6,
+      "spread_pct_yr": 5.47,
+      "contrib_pct_yr": -0.11
+     },
+     "ホンダ": {
+      "beta": 0.122,
+      "t": 3.52,
+      "spread_pct_yr": 0.68,
+      "contrib_pct_yr": 0.08
+     },
+     "三菱商事": {
+      "beta": 0.027,
+      "t": 0.76,
+      "spread_pct_yr": 20.89,
+      "contrib_pct_yr": 0.57
+     },
+     "三井物産": {
+      "beta": 0.039,
+      "t": 0.96,
+      "spread_pct_yr": 23.27,
+      "contrib_pct_yr": 0.91
+     },
+     "伊藤忠": {
+      "beta": 0.029,
+      "t": 0.73,
+      "spread_pct_yr": 14.13,
+      "contrib_pct_yr": 0.41
+     }
+    }
+   },
+   "三菱UFJ_単独_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "mean_excess_pct_yr": 9.35,
+    "alpha_pct_yr": 4.33,
+    "alpha_t": 1.83,
+    "r2": 0.43,
+    "legs": {
+     "三菱UFJ": {
+      "beta": 0.196,
+      "t": 6.62,
+      "spread_pct_yr": 25.61,
+      "contrib_pct_yr": 5.02
+     }
+    }
+   },
+   "三井住友FG_単独_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "mean_excess_pct_yr": 9.35,
+    "alpha_pct_yr": 4.24,
+    "alpha_t": 1.87,
+    "r2": 0.479,
+    "legs": {
+     "三井住友FG": {
+      "beta": 0.223,
+      "t": 7.3,
+      "spread_pct_yr": 22.94,
+      "contrib_pct_yr": 5.11
+     }
+    }
+   },
+   "みずほFG_単独_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "mean_excess_pct_yr": 9.35,
+    "alpha_pct_yr": 5.12,
+    "alpha_t": 2.1,
+    "r2": 0.383,
+    "legs": {
+     "みずほFG": {
+      "beta": 0.201,
+      "t": 6.0,
+      "spread_pct_yr": 21.07,
+      "contrib_pct_yr": 4.23
+     }
+    }
+   },
+   "トヨタ_単独_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "mean_excess_pct_yr": 9.35,
+    "alpha_pct_yr": 8.95,
+    "alpha_t": 3.08,
+    "r2": 0.056,
+    "legs": {
+     "トヨタ": {
+      "beta": 0.074,
+      "t": 1.86,
+      "spread_pct_yr": 5.47,
+      "contrib_pct_yr": 0.4
+     }
+    }
+   },
+   "ホンダ_単独_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "mean_excess_pct_yr": 9.35,
+    "alpha_pct_yr": 9.27,
+    "alpha_t": 3.3,
+    "r2": 0.109,
+    "legs": {
+     "ホンダ": {
+      "beta": 0.112,
+      "t": 2.66,
+      "spread_pct_yr": 0.68,
+      "contrib_pct_yr": 0.08
+     }
+    }
+   },
+   "三菱商事_単独_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "mean_excess_pct_yr": 9.35,
+    "alpha_pct_yr": 7.76,
+    "alpha_t": 2.59,
+    "r2": 0.064,
+    "legs": {
+     "三菱商事": {
+      "beta": 0.076,
+      "t": 1.99,
+      "spread_pct_yr": 20.89,
+      "contrib_pct_yr": 1.59
+     }
+    }
+   },
+   "三井物産_単独_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "mean_excess_pct_yr": 9.35,
+    "alpha_pct_yr": 6.43,
+    "alpha_t": 2.24,
+    "r2": 0.156,
+    "legs": {
+     "三井物産": {
+      "beta": 0.125,
+      "t": 3.27,
+      "spread_pct_yr": 23.27,
+      "contrib_pct_yr": 2.92
+     }
+    }
+   },
+   "伊藤忠_単独_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "mean_excess_pct_yr": 9.35,
+    "alpha_pct_yr": 8.11,
+    "alpha_t": 2.7,
+    "r2": 0.046,
+    "legs": {
+     "伊藤忠": {
+      "beta": 0.088,
+      "t": 1.68,
+      "spread_pct_yr": 14.13,
+      "contrib_pct_yr": 1.24
+     }
+    }
+   },
+   "8社一緒_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 96,
+    "mean_excess_pct_yr": -1.83,
+    "alpha_pct_yr": -0.11,
+    "alpha_t": -0.11,
+    "r2": 0.75,
+    "legs": {
+     "三菱UFJ": {
+      "beta": 0.099,
+      "t": 3.69,
+      "spread_pct_yr": -6.1,
+      "contrib_pct_yr": -0.6
+     },
+     "三井住友FG": {
+      "beta": 0.002,
+      "t": 0.08,
+      "spread_pct_yr": -5.24,
+      "contrib_pct_yr": -0.01
+     },
+     "みずほFG": {
+      "beta": 0.064,
+      "t": 2.52,
+      "spread_pct_yr": -8.99,
+      "contrib_pct_yr": -0.58
+     },
+     "トヨタ": {
+      "beta": 0.122,
+      "t": 5.78,
+      "spread_pct_yr": 0.32,
+      "contrib_pct_yr": 0.04
+     },
+     "ホンダ": {
+      "beta": 0.042,
+      "t": 2.02,
+      "spread_pct_yr": -8.73,
+      "contrib_pct_yr": -0.37
+     },
+     "三菱商事": {
+      "beta": 0.028,
+      "t": 1.31,
+      "spread_pct_yr": -1.5,
+      "contrib_pct_yr": -0.04
+     },
+     "三井物産": {
+      "beta": 0.047,
+      "t": 1.92,
+      "spread_pct_yr": -1.78,
+      "contrib_pct_yr": -0.08
+     },
+     "伊藤忠": {
+      "beta": -0.01,
+      "t": -0.51,
+      "spread_pct_yr": 7.75,
+      "contrib_pct_yr": -0.08
+     }
+    }
+   },
+   "三菱UFJ_単独_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 96,
+    "mean_excess_pct_yr": -1.83,
+    "alpha_pct_yr": -0.72,
+    "alpha_t": -0.6,
+    "r2": 0.514,
+    "legs": {
+     "三菱UFJ": {
+      "beta": 0.182,
+      "t": 9.97,
+      "spread_pct_yr": -6.1,
+      "contrib_pct_yr": -1.11
+     }
+    }
+   },
+   "三井住友FG_単独_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 96,
+    "mean_excess_pct_yr": -1.83,
+    "alpha_pct_yr": -0.9,
+    "alpha_t": -0.69,
+    "r2": 0.438,
+    "legs": {
+     "三井住友FG": {
+      "beta": 0.179,
+      "t": 8.57,
+      "spread_pct_yr": -5.24,
+      "contrib_pct_yr": -0.94
+     }
+    }
+   },
+   "みずほFG_単独_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 96,
+    "mean_excess_pct_yr": -1.83,
+    "alpha_pct_yr": 0.04,
+    "alpha_t": 0.03,
+    "r2": 0.423,
+    "legs": {
+     "みずほFG": {
+      "beta": 0.209,
+      "t": 8.29,
+      "spread_pct_yr": -8.99,
+      "contrib_pct_yr": -1.88
+     }
+    }
+   },
+   "トヨタ_単独_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 96,
+    "mean_excess_pct_yr": -1.83,
+    "alpha_pct_yr": -1.89,
+    "alpha_t": -1.28,
+    "r2": 0.258,
+    "legs": {
+     "トヨタ": {
+      "beta": 0.189,
+      "t": 5.72,
+      "spread_pct_yr": 0.32,
+      "contrib_pct_yr": 0.06
+     }
+    }
+   },
+   "ホンダ_単独_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 96,
+    "mean_excess_pct_yr": -1.83,
+    "alpha_pct_yr": -0.26,
+    "alpha_t": -0.18,
+    "r2": 0.322,
+    "legs": {
+     "ホンダ": {
+      "beta": 0.181,
+      "t": 6.68,
+      "spread_pct_yr": -8.73,
+      "contrib_pct_yr": -1.58
+     }
+    }
+   },
+   "三菱商事_単独_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 96,
+    "mean_excess_pct_yr": -1.83,
+    "alpha_pct_yr": -1.66,
+    "alpha_t": -1.06,
+    "r2": 0.172,
+    "legs": {
+     "三菱商事": {
+      "beta": 0.113,
+      "t": 4.42,
+      "spread_pct_yr": -1.5,
+      "contrib_pct_yr": -0.17
+     }
+    }
+   },
+   "三井物産_単独_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 96,
+    "mean_excess_pct_yr": -1.83,
+    "alpha_pct_yr": -1.63,
+    "alpha_t": -1.02,
+    "r2": 0.14,
+    "legs": {
+     "三井物産": {
+      "beta": 0.112,
+      "t": 3.9,
+      "spread_pct_yr": -1.78,
+      "contrib_pct_yr": -0.2
+     }
+    }
+   },
+   "伊藤忠_単独_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 96,
+    "mean_excess_pct_yr": -1.83,
+    "alpha_pct_yr": -2.42,
+    "alpha_t": -1.44,
+    "r2": 0.065,
+    "legs": {
+     "伊藤忠": {
+      "beta": 0.076,
+      "t": 2.56,
+      "spread_pct_yr": 7.75,
+      "contrib_pct_yr": 0.59
+     }
+    }
+   }
+  },
+  "tse_high_dividend_etfs_vs_paper": {
+   "iシェアーズ MSCI ジャパン高配当利回り": {
+    "from": 201511,
+    "to": 202512,
+    "n_months": 122,
+    "bad_months_dropped": [],
+    "etf_minus_TOPIX_pct_yr": 1.26,
+    "t": 0.62,
+    "JKP_val4_same_months_pct_yr": 3.0,
+    "JKP_t": 1.5,
+    "beta_on_JKP_excess": 0.57,
+    "alpha_pct_yr": -0.45,
+    "r2": 0.32
+   },
+   "NEXT FUNDS 日経平均高配当株50": {
+    "from": 201703,
+    "to": 202512,
+    "n_months": 106,
+    "bad_months_dropped": [],
+    "etf_minus_TOPIX_pct_yr": 4.03,
+    "t": 1.34,
+    "JKP_val4_same_months_pct_yr": 3.23,
+    "JKP_t": 1.54,
+    "beta_on_JKP_excess": 1.18,
+    "alpha_pct_yr": 0.22,
+    "r2": 0.67
+   },
+   "NEXT FUNDS 野村日本株高配当70": {
+    "from": 201304,
+    "to": 202512,
+    "n_months": 152,
+    "bad_months_dropped": [],
+    "etf_minus_TOPIX_pct_yr": 0.05,
+    "t": 0.03,
+    "JKP_val4_same_months_pct_yr": 2.65,
+    "JKP_t": 1.61,
+    "beta_on_JKP_excess": 0.93,
+    "alpha_pct_yr": -2.4,
+    "r2": 0.52
+   },
+   "上場インデックスファンド日本高配当（東証配当フォーカス100）": {
+    "from": 201006,
+    "to": 202512,
+    "n_months": 186,
+    "bad_months_dropped": [],
+    "etf_minus_TOPIX_pct_yr": -0.5,
+    "t": -0.29,
+    "JKP_val4_same_months_pct_yr": 2.18,
+    "JKP_t": 1.6,
+    "beta_on_JKP_excess": 0.58,
+    "alpha_pct_yr": -1.77,
+    "r2": 0.22
+   },
+   "iFreeETF TOPIX高配当40": {
+    "from": 201710,
+    "to": 202512,
+    "n_months": 99,
+    "bad_months_dropped": [],
+    "etf_minus_TOPIX_pct_yr": 3.4,
+    "t": 1.28,
+    "JKP_val4_same_months_pct_yr": 3.72,
+    "JKP_t": 1.68,
+    "beta_on_JKP_excess": 1.07,
+    "alpha_pct_yr": -0.57,
+    "r2": 0.79
+   },
+   "等分_2013-2025": {
+    "from": 201301,
+    "to": 202512,
+    "n_months": 155,
+    "etf_minus_TOPIX_pct_yr": 0.63,
+    "t": 0.33,
+    "JKP_val4_same_months_pct_yr": 2.55,
+    "JKP_t": 1.58,
+    "beta_on_JKP_excess": 0.79,
+    "alpha_pct_yr": -1.39,
+    "r2": 0.45
+   },
+   "等分_2013-2020": {
+    "from": 201301,
+    "to": 202012,
+    "n_months": 95,
+    "etf_minus_TOPIX_pct_yr": -4.23,
+    "t": -1.87,
+    "JKP_val4_same_months_pct_yr": -1.75,
+    "JKP_t": -1.01,
+    "beta_on_JKP_excess": 0.49,
+    "alpha_pct_yr": -3.38,
+    "r2": 0.14
+   },
+   "等分_2021-2025": {
+    "from": 202101,
+    "to": 202512,
+    "n_months": 60,
+    "etf_minus_TOPIX_pct_yr": 8.33,
+    "t": 2.63,
+    "JKP_val4_same_months_pct_yr": 9.35,
+    "JKP_t": 3.17,
+    "beta_on_JKP_excess": 1.0,
+    "alpha_pct_yr": -1.06,
+    "r2": 0.88
+   },
+   "等分_2018-2025(5本そろう)": {
+    "from": 201710,
+    "to": 202512,
+    "n_months": 99,
+    "etf_minus_TOPIX_pct_yr": 2.59,
+    "t": 1.12,
+    "JKP_val4_same_months_pct_yr": 3.72,
+    "JKP_t": 1.68,
+    "beta_on_JKP_excess": 0.96,
+    "alpha_pct_yr": -0.99,
+    "r2": 0.86
+   }
+  },
+  "beta_alpha_vs_JKP_mkt_after_frozen_cost": {
+   "200101-202512": {
+    "beta": 0.95,
+    "alpha_pct_yr": 4.07,
+    "alpha_t": 4.0
+   },
+   "200801-202512": {
+    "beta": 0.99,
+    "alpha_pct_yr": 2.94,
+    "alpha_t": 2.36
+   },
+   "201301-202512": {
+    "beta": 0.96,
+    "alpha_pct_yr": 2.64,
+    "alpha_t": 1.65
+   }
+  }
+ },
+ "for_this_user": {
+  "NISA成長投資枠で買える器（東証の高配当ETF・2013〜）": "5本の等分は TOPIX(1306) に 2013-2025 で +0.63%/年（t 0.33）。同じ月の JKP の紙の規則は +2.55%/年（t 1.58）。器の超過は紙の超過に β0.79 で連動するが α −1.39%/年＝方向は取れても上乗せの大半を失う。2013-2020 は器 −4.23・紙 −1.75、2021-2025 は器 +8.33・紙 +9.35",
+  "器ごと（対 TOPIX・同じ月の紙の規則）": {
+   "iシェアーズ MSCI ジャパン高配当利回り": "+1.26%/年 t0.62（紙 +3.00・β0.57・α-0.45・201511〜）",
+   "NEXT FUNDS 日経平均高配当株50": "+4.03%/年 t1.34（紙 +3.23・β1.18・α+0.22・201703〜）",
+   "NEXT FUNDS 野村日本株高配当70": "+0.05%/年 t0.03（紙 +2.65・β0.93・α-2.40・201304〜）",
+   "上場インデックスファンド日本高配当（東証配当フォーカス100）": "-0.50%/年 t-0.29（紙 +2.18・β0.58・α-1.77・201006〜）",
+   "iFreeETF TOPIX高配当40": "+3.40%/年 t1.28（紙 +3.72・β1.07・α-0.57・201710〜）"
+  },
+  "つみたて投資枠": "届出一覧（out/tsumitate_lineup.json）に「One高配当利回り厳選ジャパン」「日経平均高配当利回り株ファンド」がある（アクティブ等の枠）。基準価額の系列は取っていない＝測っていない",
+  "米国上場の割安ETF": "EWJV（iShares MSCI Japan Value）は楽天の取扱に無い（verify_intl_value_funds.json の楽天の取扱表）",
+  "米国市場との比較": "JKP の紙の規則（米ドル）は米国市場に 2001-2025 −0.06%/年・2008-2025 −2.64・2013-2025 −3.64。日本の市場そのものは米国に −4.3〜−6.2%/年＝日本の中では勝つが、米国株の代わりにはならない",
+  "税": "東証のETFを NISA で持ち、配当の受け取りを株式数比例配分方式にすれば分配は非課税。課税口座なら分配に20.315%（高配当の器は TOPIX より年0.2〜0.7pt 余計に負担・verify_intl_value_funds の推定）"
+ },
+ "not_measurable": [
+  "会計値の遅らせ方を振った JKP の組（例: 6か月・12か月遅らせ）は公開されていない＝「遅れの長さで超過がどれだけ変わるか」そのものは測れない。測れたのは 4か月遅らせた版 vs French の年1回版の差だけ",
+  "JKP の三分位の構成銘柄は公開されていない＝1社の重みは直接見えない。大型8社の株価との回帰（能動的な重みの推定）で代用した",
+  "JKP の規模別（mega 等）の組は米国だけ＝日本の大型株だけの版は作れない。vw_cap（上限つき）と ew で代用",
+  "TOPIX-17 業種別ETFは 2008-03 から＝2001-2007 の業種への集中は測っていない",
+  "つみたて枠の日本高配当投信の基準価額は取っていない"
+ ],
+ "caveats": [
+  "独立なのはデータの作り手（会社の収集・会計の時点・組み替えの頻度）で、市場と銘柄は同じ＝月次の超過の相関 0.87 は当然の重なり。別の市場・別の時代の証拠ではない",
+  "JKP 日本の選定期間（1988-08〜2000-12）では同じ組み立てが +2.89%/年（t 1.36）で、French の同期間（+5.51・t 2.08）より弱かった。検定期間で強く出た",
+  "費用は凍結の置き方（片道0.25%×年50%＋戻し）で年0.14%ほど。毎月組み替える JKP の実際の回転はもっと多い。平らに年1.0%引くと 2001-2025 +3.16（t 2.93）・2008-2025 +2.02（t 1.61）・2013-2025 +1.49（t 0.92）",
+  "業種の回帰は業種ETF−TOPIX の円の差に米ドルの超過を当てた（為替は両側でほぼ打ち消す）。係数は「TOPIX より何割多く持っているか」の目安で、銀行は +0.23（2009-2025）",
+  "Yahoo の日本の銘柄・ETFの系列は分割・分配の単位で壊れている月があり、終値＋分配から作り直した。|月次|>35% の月を捨てた（3か月）"
+ ],
+ "bottom_line": [
+  "独立データ: JKP 日本の割安4本の等分は 2001-2025 +4.24%/年（t 3.91）・2008-2025 +3.09（t 2.41）・2013-2025 +2.58（t 1.54）。French 版 +3.66 / +2.80 / +1.83 と同じ向き・同じ時期の形",
+  "遅れ: 4か月遅らせても弱まらない（French との差 +0.40・t 0.73・季節の偏りなし）",
+  "小さい株: vw・vw_cap・ew のどれでも同じ重みの市場に +3.7%/年前後。小型株の効果ではない（ew の対 vw 市場 +8.3 の大半は日本の小型株そのものの +4.6）",
+  "集中: 大型8社で年0.8%ほど・17業種で調整すると α はむしろ上がる（+3.23・t 4.2）。ただし 2021-2025 は銀行の傾きが +5.0/+9.35 を説明＝最近の勝ちは金利の賭け",
+  "年の偏り: 25年中18年が正・中央値 +3.1%。上位4年が60%。上位4年を除いても +1.97%/年（t 1.97）。2013-2020 は8年で合計 −18%",
+  "取れるか: NISA で買える東証の高配当ETF5本の等分は 2013-2025 に TOPIX へ +0.63%/年（t 0.33）＝紙の上乗せ（+2.55）の大半を失う。米国市場には紙の規則でも勝っていない"
+ ],
+ "scripts": [
+  "scratchpad/vj/vjdata.py",
+  "scratchpad/vj/core.py",
+  "scratchpad/vj/clean.py",
+  "scratchpad/vj/conc2.py",
+  "scratchpad/vj/conc3.py",
+  "scratchpad/vj/etfcap.py",
+  "scratchpad/vj/main.py",
+  "scratchpad/vj/write.py"
+ ]
+}
