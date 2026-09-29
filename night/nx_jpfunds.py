@@ -215,11 +215,14 @@ def cum(mon, months):
 
 def base_pool(F, pool_keys, y, L, U, fx, fx_mode='rule', dedupe_mode='rule'):
     """y 年9月の選択の日: 適格（能動・フィルター・5分類・L×12 か月そろう）→ 外国は為替の検査 → 同じ委託会社で相関 ≥0.995 を束ねる（純資産最大を残す）。
+    重複の除去は RULES.selection.share_class_dedupe どおり**分類をまたいで**行う（規則は『同じ委託会社』だけで分類を限っていない）。
+    束の代表（t の純資産が最大）は自分の分類で並び、他の分類の構成員はその分類から外れる（規則はどの分類に残すかを書いていない＝代表の分類）。
+    ★2026-09-29 是正: 旧実装は分類ごとのループの中で束ねたので分類をまたぐ組（同じ委託会社・相関 ≥0.995）を束ねていなかった（FIXES を見よ）。
     fx_mode: 'rule'＝振り返りの月（事前登録どおり）／'36m'＝t までの最大36か月（事後の感度）／'none'＝為替の検査なし（事後の感度）"""
     months = lookback(y, L)
     fx_months = months if fx_mode == 'rule' else lookback(y, 3)
     t = y * 100 + 9
-    res = {}
+    elig_by, hedged_by = {}, {}
     for cat in CATS:
         elig = [a for a in pool_keys if F[a]['cat'] == cat and F[a]['kind'] == 'active' and F[a]['ok']
                 and all(m in F[a]['mon'] for m in months)]
@@ -233,48 +236,57 @@ def base_pool(F, pool_keys, y, L, U, fx, fx_mode='rule', dedupe_mode='rule'):
                 else:
                     keep.append(a)
             elig = keep
-        # 重複の除去（単連結）
-        parent = {a: a for a in elig}
+        elig_by[cat], hedged_by[cat] = elig, hedged
+    # 重複の除去（単連結・同じ委託会社の中で5分類をまとめて）
+    elig_all = [a for cat in CATS for a in elig_by[cat]]
+    parent = {a: a for a in elig_all}
 
-        def find(a):
-            while parent[a] != a:
-                parent[a] = parent[parent[a]]
-                a = parent[a]
-            return a
-        by_mgr = collections.defaultdict(list)
-        for a in elig:
-            by_mgr[F[a]['mgr']].append(a)
-        for mg, lst in by_mgr.items():
-            if len(lst) < 2:
-                continue
-            if dedupe_mode == 'rule':
-                M = np.array([[F[a]['mon'][m] for m in months] for a in lst])
-                C = np.corrcoef(M)
-            else:   # 事後の感度: t までの最大36か月の共通の月（12か月未満なら振り返りの月）
-                C = np.zeros((len(lst), len(lst)))
-                for i in range(len(lst)):
-                    for j in range(i + 1, len(lst)):
-                        cm = [m for m in lookback(y, 3) if m in F[lst[i]]['mon'] and m in F[lst[j]]['mon']]
-                        if len(cm) < 12:
-                            cm = months
-                        C[i, j] = N.corr([F[lst[i]]['mon'][m] for m in cm], [F[lst[j]]['mon'][m] for m in cm])
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+    by_mgr = collections.defaultdict(list)
+    for a in elig_all:
+        by_mgr[F[a]['mgr']].append(a)
+    for mg, lst in by_mgr.items():
+        if len(lst) < 2:
+            continue
+        if dedupe_mode == 'rule':
+            M = np.array([[F[a]['mon'][m] for m in months] for a in lst])
+            C = np.corrcoef(M)
+        else:   # 事後の感度: t までの最大36か月の共通の月（12か月未満なら振り返りの月）
+            C = np.zeros((len(lst), len(lst)))
             for i in range(len(lst)):
                 for j in range(i + 1, len(lst)):
-                    if C[i, j] >= DEDUPE_RHO:
-                        ri, rj = find(lst[i]), find(lst[j])
-                        if ri != rj:
-                            parent[ri] = rj
-        groups = collections.defaultdict(list)
-        for a in elig:
-            groups[find(a)].append(a)
-        after, clusters = [], []
-        for g in groups.values():
-            rep = max(g, key=lambda a: (F[a]['na'].get(t, -1.0) if F[a]['na'].get(t) is not None else -1.0, a))
-            after.append(rep)
-            if len(g) > 1:
-                clusters.append({'kept': rep, 'members': sorted(g)})
-        res[cat] = {'before_dedupe': len(elig), 'after': sorted(after), 'clusters': clusters, 'fx_hedged': hedged,
-                    'score': {a: cum(F[a]['mon'], months) for a in after}}
+                    cm = [m for m in lookback(y, 3) if m in F[lst[i]]['mon'] and m in F[lst[j]]['mon']]
+                    if len(cm) < 12:
+                        cm = months
+                    C[i, j] = N.corr([F[lst[i]]['mon'][m] for m in cm], [F[lst[j]]['mon'][m] for m in cm])
+        for i in range(len(lst)):
+            for j in range(i + 1, len(lst)):
+                if C[i, j] >= DEDUPE_RHO:
+                    ri, rj = find(lst[i]), find(lst[j])
+                    if ri != rj:
+                        parent[ri] = rj
+    groups = collections.defaultdict(list)
+    for a in elig_all:
+        groups[find(a)].append(a)
+    res = {cat: {'before_dedupe': len(elig_by[cat]), 'after': [], 'clusters': [], 'fx_hedged': hedged_by[cat],
+                 'absorbed_into_other_category': []} for cat in CATS}
+    for g in groups.values():
+        rep = max(g, key=lambda a: (F[a]['na'].get(t, -1.0) if F[a]['na'].get(t) is not None else -1.0, a))
+        rc = F[rep]['cat']
+        res[rc]['after'].append(rep)
+        if len(g) > 1:
+            cats_in = sorted({F[a]['cat'] for a in g})
+            res[rc]['clusters'].append({'kept': rep, 'members': sorted(g), 'cross_category': len(cats_in) > 1, 'member_categories': cats_in})
+            for a in g:
+                if a != rep and F[a]['cat'] != rc:
+                    res[F[a]['cat']]['absorbed_into_other_category'].append((a, rep))
+    for cat in CATS:
+        res[cat]['after'] = sorted(res[cat]['after'])
+        res[cat]['score'] = {a: cum(F[a]['mon'], months) for a in res[cat]['after']}
     return res
 
 
@@ -811,7 +823,8 @@ def run(checks_only=False):
             sel, d = pick(F, pools[(L, y)], y, how, comp=comp, L=L)
             hold[y] = sel
             dg[y] = {c: dict(d[c], before_dedupe=pools[(L, y)][c]['before_dedupe'], fx_hedged=len(pools[(L, y)][c]['fx_hedged']),
-                             clusters=len(pools[(L, y)][c]['clusters'])) for c in CATS}
+                             clusters=len(pools[(L, y)][c]['clusters']),
+                             absorbed_into_other_category=len(pools[(L, y)][c]['absorbed_into_other_category'])) for c in CATS}
         holds[rid], diags[rid] = hold, dg
     # 検査: 選ばれた本数 = k、使わない分類からは選ばない、min_group
     sel_err = []
@@ -833,6 +846,19 @@ def run(checks_only=False):
     chk['dedupe_examples_L3'] = ex
     chk['dedupe_clusters_by_year'] = {f'L{L}': {y: {cat: len(pools[(L, y)][cat]['clusters']) for cat in CATS} for (LL, y) in pools if LL == L}
                                       for L in (1, 3, 5)}
+    # 分類をまたぐ束（2026-09-29 の是正で事前登録どおり束ねるようになった分）
+    xc = {}
+    for (L, y), pl in sorted(pools.items()):
+        for cat in CATS:
+            for cl in pl[cat]['clusters']:
+                if cl['cross_category']:
+                    xc.setdefault(f'L{L}', []).append({'year': y, 'kept': [cl['kept'], F[cl['kept']]['name'][:40], F[cl['kept']]['cat']],
+                                                       'absorbed': [[a, F[a]['name'][:40], F[a]['cat']] for a in cl['members'] if F[a]['cat'] != F[cl['kept']]['cat']]})
+    chk['dedupe_cross_category'] = {
+        'what': 'RULES.selection.share_class_dedupe は同じ委託会社で分類をまたいで束ねる（2026-09-29 是正・FIXES）。代表は自分の分類に残り、他の分類の構成員はその分類から外れる',
+        'n_clusters_by_L': {k: len(v) for k, v in xc.items()},
+        'n_funds_absorbed_by_L': {k: sum(len(c['absorbed']) for c in v) for k, v in xc.items()},
+        'clusters': xc}
     chk['fx_hedged_by_year'] = {f'L{L}': {y: {cat: len(pools[(L, y)][cat]['fx_hedged']) for cat in FOREIGN} for (LL, y) in pools if LL == L}
                                 for L in (1, 3, 5)}
     chk['fx_hedged_examples_L3_2025'] = {cat: [[a, F[a]['name'][:50], c] for a, c in pools[(3, 2025)][cat]['fx_hedged'][:8]] for cat in FOREIGN}
@@ -1225,10 +1251,11 @@ DEVIATIONS = [
      'prereg': 'RULES.costs.comparator『相手の器が替わった年に新しい器の購入時手数料・古い器の留保額』',
      'done': '分類ごとの相手の器を1つの持ち物とみなし、保有に新しく入った相手の器（最初の年は全部・分類が新しく使われた年も含む）に購入時手数料、翌年に使われない相手の器に留保額（印があれば）。重みはその月の分類の重み。MSCI の補欠は費用なし',
      'affects_grade': '費用後の相手側（年 0.02〜0.03% 程度）'},
-    {'what': '重複の除去の範囲',
-     'prereg': 'RULES.selection.share_class_dedupe『同じ委託会社（協会コードの先頭2文字）で…相関が 0.995 以上の組』',
-     'done': '同じ委託会社 ∧ 同じ分類の中で束ねた（並べるのが分類の中なので）',
-     'affects_grade': 'ほぼなし（分類をまたぐ別コースの相関が 0.995 を超える例は想定しにくい）'},
+    {'what': '重複の除去で分類をまたぐ束の代表の置き場（解釈）',
+     'prereg': 'RULES.selection.share_class_dedupe『同じ委託会社（協会コードの先頭2文字）で…相関が 0.995 以上の組は…最大の1本だけ残す（単連結でつなぐ）。並べる前に行う』',
+     'done': '★2026-09-29 是正（FIXES の F1）: 事前登録どおり同じ委託会社の中で5分類をまたいで束ねる。規則はどの分類に残すかを書いていないので、'
+             '代表（t の純資産が最大）は自分の分類で並び、他の分類の構成員はその分類から外れるとした。為替の検査（外国の4分類）は束ねる前（その年は並べない器なので束の代表にもしない）',
+     'affects_grade': 'なし（9本の格付けは是正の前後で同じ・data_checks.dedupe_cross_category）'},
     {'what': '下位1/4（C3）と安い1/4（C1）の同点の扱い',
      'prereg': "RULES.selection.top_quartile『同点は純資産の大きい順』（上位の書き方）",
      'done': 'C3 は振り返りの累積が低い順・同点は純資産の大きい順。C1 は信託報酬の安い順・同点は純資産の大きい順（事前登録どおり）。どちらも最後は協会コード順で決める',
@@ -1238,6 +1265,49 @@ DEVIATIONS = [
      'done': 'nx_common.dca と同じ窓の作り方を写した dca_raw（勝ちを丸める前の比で数える・表示は同じ丸め）。10年の転がる窓（一括）も同じく rolling_raw で報告',
      'affects_grade': 'なし（報告のみ）'},
 ]
+
+# 検査役の報告で直した誤り（前＝コミット acc928ed の out/nx_jpfunds.json・後＝この版で走らせ直した値）
+FIXES_BEFORE_ACC928ED = {
+    'P1_top_q_3y': {'grade': 'B', 'full_cagr_diff': 1.33, 't': 0.91, 'after_cost': 0.86, 'lower_bound': -0.66, 'halves': [4.88, -2.2], 'drop_top': 1.2, 'holm_p_one': 0.234},
+    'P2_top_q_5y': {'grade': 'B', 'full_cagr_diff': 1.88, 't': 1.19, 'after_cost': 1.47, 'lower_bound': -0.24, 'halves': [4.47, -0.7], 'drop_top': 1.79, 'holm_p_one': 0.234},
+    'C1_cheap_q_fee': {'grade': 'C', 'full_cagr_diff': -0.64, 't': -1.65, 'after_cost': -0.8, 'lower_bound': -2.6, 'halves': [0.62, -1.92], 'drop_top': -0.74, 'holm_p_one': 1.0},
+    'C2_all_active': {'grade': 'C', 'full_cagr_diff': -0.36, 't': -0.47, 'after_cost': -0.5, 'lower_bound': -2.33, 'halves': [1.62, -2.36], 'drop_top': -0.4, 'holm_p_one': 1.0},
+    'C3_bottom_q_3y': {'grade': 'C', 'full_cagr_diff': -1.35, 't': -1.54, 'after_cost': -1.92, 'lower_bound': -3.3, 'halves': [-0.22, -2.5], 'drop_top': -1.38, 'holm_p_one': 1.0},
+    'X1_top_q_1y': {'grade': 'S', 'full_cagr_diff': 2.26, 't': 2.43, 'after_cost': 1.44, 'lower_bound': 0.4, 'halves': [2.36, 2.14], 'drop_top': 2.15, 'holm_p_one': 0.0302},
+    'X2_top_q_3y_ir': {'grade': 'B', 'full_cagr_diff': 0.94, 't': 0.77, 'after_cost': 0.43, 'lower_bound': -1.04, 'halves': [3.55, -1.68], 'drop_top': 0.8, 'holm_p_one': 0.4413},
+    'X3_top_q_3y_big': {'grade': 'B', 'full_cagr_diff': 0.32, 't': 0.29, 'after_cost': -0.25, 'lower_bound': -1.66, 'halves': [2.46, -1.86], 'drop_top': 0.21, 'holm_p_one': 0.4413},
+    'X4_top_d_3y': {'grade': 'B', 'full_cagr_diff': 1.94, 't': 1.13, 'after_cost': 1.35, 'lower_bound': -0.06, 'halves': [5.98, -2.06], 'drop_top': 1.64, 'holm_p_one': 0.3877},
+}
+
+
+# F1 で入れ替わった保有（選択の年・外れた器・入った器）。前＝acc928ed の holdings_by_rule・後＝この版
+HOLDINGS_CHANGED_BY_F1 = {"P1_top_q_3y": {"fund_years_before_after": [1463, 1463], "changed_years_out_in": [[2015, ["79313995"], ["42312075"]]]}, "P2_top_q_5y": {"fund_years_before_after": [1207, 1206], "changed_years_out_in": [[2017, ["9N311091"], []]]}, "C1_cheap_q_fee": {"fund_years_before_after": [1463, 1463], "changed_years_out_in": [[2010, ["7931197A"], ["0331205B"]], [2011, ["7931197A"], ["0331205B"]], [2012, ["7931197A"], ["02311052"]], [2013, ["7931197A"], ["0131203B"]], [2014, ["7931197A"], ["01311071"]]]}, "C2_all_active": {"fund_years_before_after": [5738, 5728], "changed_years_out_in": [[2010, ["7931197A"], []], [2011, ["7931197A"], []], [2012, ["7931197A"], []], [2013, ["7931197A"], []], [2014, ["7931197A"], []], [2015, ["79313995"], []], [2016, ["79313995"], []], [2017, ["79313995"], []], [2018, ["79313995"], []], [2019, ["79313995"], []]]}, "C3_bottom_q_3y": {"fund_years_before_after": [1463, 1463], "changed_years_out_in": [[2012, ["7931197A"], ["39311987"]], [2014, ["7931197A"], ["3431106C"]], [2019, ["79313995"], ["47318127"]]]}, "X1_top_q_1y": {"fund_years_before_after": [1669, 1668], "changed_years_out_in": [[2011, ["7931197A"], ["01314043"]], [2013, ["7931197A"], []], [2015, ["79313995"], ["5031109A"]]]}, "X2_top_q_3y_ir": {"fund_years_before_after": [1463, 1463], "changed_years_out_in": [[2015, ["79313995"], ["42312075"]]]}, "X3_top_q_3y_big": {"fund_years_before_after": [539, 539], "changed_years_out_in": []}, "X4_top_d_3y": {"fund_years_before_after": [620, 620], "changed_years_out_in": []}}
+
+def fixes_record(recs, chk, holds_before_note):
+    after = {rid: {'grade': r['grade'], 'full_cagr_diff': r['full']['cagr_diff'], 't': r['full']['t'],
+                   'after_cost': r['cost']['after_cost_full']['cagr_diff'], 'lower_bound': r['lower_bound']['cagr_diff'],
+                   'halves': [r['first_half']['cagr_diff'], r['second_half']['cagr_diff']], 'drop_top': r['drop_top']['stats']['cagr_diff'],
+                   'holm_p_one': r['holm_p_one']} for rid, r in recs.items()}
+    xc = chk['dedupe_cross_category']
+    return [{
+        'id': 'F1_dedupe_across_categories',
+        'date': '2026-09-29',
+        'reported_by': '検査役（事前登録との一致と先読みのレンズ・severity changes_numbers）',
+        'what': ('重複の除去（RULES.selection.share_class_dedupe）が事前登録より狭かった: 旧 base_pool は分類ごとのループの中で束ねたので、'
+                 '同じ委託会社で分類をまたぐ相関 0.995 以上の組を束ねていなかった。規則の文は『同じ委託会社』だけで分類を限っていない＝規則の誤読（規則そのものは変えていない）。'
+                 '旧 DEVIATIONS の根拠『分類をまたぐ別コースの相関が 0.995 を超える例は想定しにくい』は事実として誤りだった'),
+        'verified': ('独立に数え直して確認: 適格の能動の投信（為替の検査の後）で、同じ委託会社・違う分類・振り返りの相関 ≥0.995 の組は 131（振り返り1年 50・3年 43・5年 38）＝'
+                     '検査役の数と一致。組の中身は9通り（主に 79311949 三井住友・日本株オープン〔JP〕と 7931197A 三井住友・株式アナライザー・オープン／79313995 シナプス〔どちらも GLW に分類〕の相関 0.9998〜0.99994）'),
+        'fix': ('base_pool で5分類の適格（外国は為替の検査の後）をまとめ、同じ委託会社の中で単連結に束ねる。代表（t の純資産が最大）は自分の分類に残り、'
+                '他の分類の構成員はその分類から外れる（data_checks.dedupe_cross_category・selection_by_year の absorbed_into_other_category）。事後の感度（PH4・PH5・PH10・B 族）も同じ base_pool を通るので同時に変わる'),
+        'cross_category_clusters_after_fix': {'n_clusters_by_L': xc['n_clusters_by_L'], 'n_funds_absorbed_by_L': xc['n_funds_absorbed_by_L']},
+        'holdings_changed': holds_before_note,
+        'before_acc928ed': FIXES_BEFORE_ACC928ED,
+        'after': after,
+        'grades_changed': {rid: [FIXES_BEFORE_ACC928ED[rid]['grade'], after[rid]['grade']] for rid in after if FIXES_BEFORE_ACC928ED[rid]['grade'] != after[rid]['grade']},
+        'affects_grade': '9本の格付けは変わらない（X1 は S のまま: 費用前 +2.26→+2.29%/年・t 2.43→2.46・族の Holm 後の片側 p 0.0302→0.0278）',
+    }]
+
 
 IMPL_NOTES = [
     '凍結の3つの sha256（universe・rules・extract）を最初に確かめ、事前登録と一致した（frozen_verified）',
@@ -1314,6 +1384,7 @@ def main():
         'fund_years_selected_by_rule': {rid: sum(1 for y in holds[rid] for x in holds[rid][y] if x in gap) for rid in recs},
         'fund_years_total_by_rule': {rid: sum(len(v) for v in holds[rid].values()) for rid in recs}}
     obj['deviations_from_prereg'] = DEVIATIONS
+    obj['fixes'] = fixes_record(recs, chk, HOLDINGS_CHANGED_BY_F1)
     obj['implementation_notes'] = IMPL_NOTES
     obj['prediction_check'] = prediction_check(recs, rep)
     x1, p1, p2 = recs['X1_top_q_1y'], recs['P1_top_q_3y'], recs['P2_top_q_5y']
