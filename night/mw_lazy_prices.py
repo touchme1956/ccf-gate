@@ -42,6 +42,7 @@ LOOKBACK_M = 12                       # 提出の翌月から12か月持つ
 MIN_PER_Q = 30                        # 五分位ごとに最低30社（到達の検問）
 SEC_RATE = 5.6                        # 全体で毎秒の上限（6件未満）
 SECTION_MIN_TOK = 200                 # 節の余弦は両年とも200語以上のときだけ
+IXH_FROM = '2017-01-01'               # 事前登録3: これ以降の提出はインライン XBRL の隠れた見出しを除いて作り直す
 EDIT_BLOCK_CAP = 2000                 # 最小編集: 変わった塊の語数がどちらかで2000を超えたら語単位の比較をせず max(語数) を編集数とする
 
 # 停止語（英語の標準的な一覧・NLTK の english 179語を固定で写したもの・事前登録）
@@ -383,8 +384,17 @@ def split_docs(txt):
 BLOCK = re.compile(r'(?i)</?(?:p|div|br|tr|li|ul|ol|h[1-6]|table|center|blockquote|pre|hr|title)\b[^>]*>')
 
 
+IXH = re.compile(r'(?is)<ix:header\b.*?</ix:header>')
+IXH_V = 1        # 事前登録3（リターンを見る前）: インライン XBRL の隠れた見出しを除いた版
+
+
 def to_text(s):
-    """HTML でも平文でも → 段落を空行で区切った平文（moat_text の to_text を逐語で写したもの）"""
+    """HTML でも平文でも → 段落を空行で区切った平文（moat_text の to_text を逐語で写したもの）。
+    【事前登録3・2026-09-29・リターンを見る前】インライン XBRL（2017〜任意・2019〜大規模会社に義務）の
+    <ix:header>（表示されない XBRL の文脈・単位・隠れた値＝『us-gaap:…Member』等が数千語）を先に除く。
+    除かないと、インライン XBRL を始めた年の 10-K が機械的に『大きく書き換えた』ことになっていた
+    （2020年の提出の余弦の中央値 0.903・他の年は 0.97〜0.99。Wells Fargo 2020 は 0.069・見出しが本体 3.7MB のうち 3.2MB）"""
+    s = IXH.sub(' ', s)
     if re.search(r'(?i)<(?:html|p|div|table|font|br)\b', s[:200000]):
         s = re.sub(r'(?is)<(script|style)\b.*?</\1>', ' ', s)
         s = re.sub(r'(?i)</?t[dh]\b[^>]*>', ' ', s)
@@ -544,7 +554,9 @@ def crawl_one(cik, filings):
     n = 0
     for form, filed, acc, prim, rep in filings:
         if acc in meta and (meta[acc].get('ok') or meta[acc].get('src') == 'missing'):
-            continue
+            # 事前登録3: 2017年以降の提出（インライン XBRL の可能性がある）は隠れた見出しを除いた版で作り直す（moat_text のキャッシュは2012年まで＝対象外）
+            if not (filed >= IXH_FROM and meta[acc].get('src') != 'moat_cache' and meta[acc].get('ixh_v') != IXH_V):
+                continue
         try:
             mt, src = fetch_main(cik, acc, prim)
         except RuntimeError as e:
@@ -556,7 +568,8 @@ def crawl_one(cik, filings):
             seq, slen, sec, n_all = doc_features(mt)
             np.savez_compressed(doc_file(cik, acc), seq=seq, slen=slen)
             meta[acc] = {'form': form, 'filed': filed, 'report': rep, 'src': src, 'ok': len(seq) >= 500, 'n_tok': int(len(seq)),
-                         'n_all': int(n_all), 'n_sent': int(len(slen)), 'n_char': len(mt), 'sec': sec, 'float': cover_float(mt)}
+                         'n_all': int(n_all), 'n_sent': int(len(slen)), 'n_char': len(mt), 'sec': sec, 'float': cover_float(mt),
+                         'ixh_v': IXH_V}
         n += 1
         tmp = mp + f'.{os.getpid()}.tmp'
         json.dump(meta, open(tmp, 'w')); os.replace(tmp, mp)
@@ -895,6 +908,11 @@ def yh_series(sym):
     return out
 
 
+# 名前は続きだが Yahoo の系列の中身が別の会社の歴史（リターンを計算する前・会社の沿革で確かめた）
+YH_REJECT = {('20171', 'CB'): 'Chubb Corp（1997〜2016）。Yahoo の CB は買収した側の ACE Limited の歴史',
+             ('836102', 'TT'): 'Trane Inc（旧 American Standard・2002〜2008）。Yahoo の TT は Ingersoll-Rand の歴史'}
+
+
 def cmd_prices():
     U = json.load(open(UNIV))
     ys = yahoo_symbols(U)
@@ -1066,7 +1084,21 @@ def cmd_run():
     ff = M.ff_factors()
     mkt = ff['mkt']
     months = [m for m in mrange(FIRST_M, END_M) if m in mkt]
-    ser = {c: yh_series(v[0]) if v[0] else None for c, v in ysy.items()}
+    ser, ser_check = {}, Counter()
+    for c, (sym, via) in ysy.items():
+        x = yh_series(sym) if sym else None
+        if x is not None and not via.startswith('a_'):
+            # (b)(c) の経路の検問（2026-09-28・リターンを計算する前・Yahoo の社名と系列の始まりだけを見て決めた）:
+            # 社名が続き（cont_name）で、系列が名簿に入った月の12か月後までに始まっていること。記号を後から別の社が使った系列を除く
+            if (c, sym) in YH_REJECT:
+                x = None; ser_check['reject_manual'] += 1
+            elif not cont_name(U['names'].get(c) or '', x.get('name') or ''):
+                x = None; ser_check['reject_name'] += 1
+            elif x['first'] > madd(U['span'][c][0], 12):
+                x = None; ser_check['reject_late_start'] += 1
+            else:
+                ser_check['accept_b_c'] += 1
+        ser[c] = x
 
     def st(c, m):
         s = ser.get(c)
@@ -1108,6 +1140,7 @@ def cmd_run():
         return g
 
     fill_med = Counter()
+    dup_sym = Counter()
 
     def caps(cs, m):
         out, miss = {}, []
@@ -1141,6 +1174,18 @@ def cmd_run():
     avg_sim = defaultdict(list)
     for m in months:
         mem = U['months'].get(str(m)) or {}
+        # 同じ月に同じ Yahoo の記号へ当たる社が二つあれば（持株会社化の移行期など）、最新の 10-K の新しい方だけ残す
+        bysym = defaultdict(list)
+        for c in mem:
+            sy = (ysy.get(c) or [None])[0]
+            if sy and ser.get(c):
+                bysym[sy].append(c)
+        drop = set()
+        for sy, cs in bysym.items():
+            if len(cs) > 1:
+                cs = sorted(cs, key=lambda c: ((latest(c, m) or {}).get('filed') or '', int(c)))
+                drop |= set(cs[:-1]); dup_sym[m] += len(cs) - 1
+        mem = {c: t for c, t in mem.items() if c not in drop}
         L_ = {c: latest(c, m) for c in mem}
         for c, r in L_.items():
             if r and ym(r['filed']) > madd(m, -1):
@@ -1157,7 +1202,8 @@ def cmd_run():
                     avg_sim[m // 100].append(sorted(el.values())[len(el) // 2])
             if not ok:
                 for nm in [f'Q5_{x}', f'U_{x}'] + ([f'Q1_{x}', 'Q5_cos_ew', 'Q45_cos', 'Q5_cos_ex6', 'Q5_cos_ind', 'U_cos_ind', 'U_cos_ex6',
-                                                    'X1_avoid_Q1', 'X3_composite', 'X5_length', 'X7_top100_Q5', 'X_U_top100'] if x == 'cos' else []) + \
+                                                    'X1_avoid_Q1', 'X3_composite', 'X5_length', 'X7_top100_Q5', 'X_U_top100',
+                                                    'Z1_top100_avoid_Q1'] if x == 'cos' else []) + \
                           (['X6_avoid_Q1_item1a'] if x == 'cos_item1a' else []):
                     B(nm).step(m, None, st, mm)
                 if x == 'cos':
@@ -1204,8 +1250,11 @@ def cmd_run():
                 t100 = sorted(sorted(order, key=lambda c: -cap_all[c])[:100], key=lambda c: (el[c], int(c)))
                 B('X7_top100_Q5').step(m, {c: cap_all[c] for i, c in enumerate(t100) if 5 * i // 100 + 1 == 5}, st, mm)
                 B('X_U_top100').step(m, {c: cap_all[c] for c in t100}, st, mm)
+                # 事前登録3 の族 Z: 上位100社から、その中の余弦 Q1（20社）だけを外した80社
+                B('Z1_top100_avoid_Q1').step(m, {c: cap_all[c] for i, c in enumerate(t100) if 5 * i // 100 + 1 != 1}, st, mm)
             else:
                 B('X7_top100_Q5').step(m, None, st, mm); B('X_U_top100').step(m, None, st, mm)
+                B('Z1_top100_avoid_Q1').step(m, None, st, mm)
             B('Q1_cos').step(m, {c: cap_all[c] for c in order if q[c] == 1}, st, mm)
             B('Q5_cos_ew').step(m, {c: 1.0 for c in order if q[c] == 5}, st, mm)
             B('Q45_cos').step(m, {c: cap_all[c] for c in order if q[c] >= 4}, st, mm)
@@ -1250,7 +1299,7 @@ def cmd_run():
                     B('P2_cos').step(m, qm or None, st, mm); B('QUAL').step(m, qm or None, st, mm)
     print('組み立て', round(time.time() - t0), '秒', flush=True)
     return dict(U=U, P=P, ser=ser, st=st, books=books, mkt=mkt, months=months, reach=reach, elig_n=elig_n, tech=tech, avg_sim=avg_sim,
-                qinfo=qinfo, fill_med=fill_med, look_viol=look_viol, indc=indc, ysy=ysy, t0=t0)
+                qinfo=qinfo, fill_med=fill_med, look_viol=look_viol, indc=indc, ysy=ysy, t0=t0, ser_check=dict(ser_check), dup_sym=sum(dup_sym.values()))
 
 
 # ───────────────────────── 統計と判定 ─────────────────────────
@@ -1300,12 +1349,21 @@ def cmd_result():
         ('X5_length', 'X5_length', 'MKT', 'X', '【事前登録2】本文の長さが最も変わらなかった五分位 − French Mkt'),
         ('X6_avoid_Q1_item1a', 'X6_avoid_Q1_item1a', 'MKT', 'X', '【事前登録2】Item 1A の Q1 を外した残り − French Mkt（2007〜だけ）'),
         ('X7_top100_Q5', 'X7_top100_Q5', 'MKT', 'X', '【事前登録2】時価の上位100社の中の余弦の Q5（20社）− French Mkt'),
+        ('Z1_top100_avoid_Q1', 'Z1_top100_avoid_Q1', 'MKT', 'Z', '【事前登録3】上位100社から、その中の余弦 Q1（20社）を外した80社の時価加重 − French Mkt'),
+        # 事前登録3 の族 R: 相手＝同じ生き残りの扱いの観測できる母集団（French Mkt ではない＝市場に勝った判定ではなく信号の判定）
+        ('R_P1_cos', 'Q5_cos', 'U_cos', 'R', '【事前登録3・信号の検定】P1 − 余弦の対象全体の時価加重（同じ扱い）'),
+        ('R_P3_cos', 'Q5_cos_ind', 'U_cos_ind', 'R', '【事前登録3・信号の検定】P3 − 業種中立の対象全体（同じ扱い）'),
+        ('R_X1_avoid_Q1', 'X1_avoid_Q1', 'U_cos', 'R', '【事前登録3・信号の検定】X1（Q1 を外した残り）− 対象全体（同じ扱い）'),
+        ('R_X7_top100_Q5', 'X7_top100_Q5', 'X_U_top100', 'R', '【事前登録3・信号の検定】X7 − 上位100社の全体（同じ扱い）'),
+        ('R_Z1_top100_avoid_Q1', 'Z1_top100_avoid_Q1', 'X_U_top100', 'R', '【事前登録3・信号の検定】Z1 − 上位100社の全体（同じ扱い）'),
     ]
+    BM_LABEL = {'MKT': 'French Mkt（総リターン）', 'QUAL': '外さない質の良い側（同じ扱い）', 'U_cos': '余弦の対象全体 U_cos（同じ扱い・French Mkt ではない）',
+                'U_cos_ind': '業種中立の対象全体 U_cos_ind（同じ扱い・French Mkt ではない）', 'X_U_top100': '上位100社の全体 X_U_top100（同じ扱い・French Mkt ではない）'}
     diag = [('Q5_minus_Q1_cos', 'Q5_cos', 'Q1_cos'), ('Q1_cos_vs_U', 'Q1_cos', 'U_cos'), ('U_cos_vs_MKT', 'U_cos', 'MKT'),
             ('P2_cos_vs_MKT', 'P2_cos', 'MKT'), ('QUAL_vs_MKT', 'QUAL', 'MKT')]
     rel = {'P1_cos': 'U_cos', 'P3_cos': 'U_cos_ind', 'P1_jac': 'U_jac', 'P1_minedit': 'U_minedit', 'P1_simple': 'U_simple',
            'P1_cos_item7': 'U_cos_item7', 'P1_cos_item1a': 'U_cos_item1a', 'P1_cos_ew': 'U_cos', 'P1_cos_ex6': 'U_cos_ex6', 'P1_cos_top2': 'U_cos',
-           'X1_avoid_Q1': 'U_cos', 'X3_composite': 'U_cos', 'X5_length': 'U_cos', 'X6_avoid_Q1_item1a': 'U_cos_item1a', 'X7_top100_Q5': 'X_U_top100'}
+           'X1_avoid_Q1': 'U_cos', 'X3_composite': 'U_cos', 'X5_length': 'U_cos', 'X6_avoid_Q1_item1a': 'U_cos_item1a', 'X7_top100_Q5': 'X_U_top100', 'Z1_top100_avoid_Q1': 'X_U_top100'}
 
     def span(bk):
         ks = sorted(k for k in books[bk].r['S'])
@@ -1314,7 +1372,7 @@ def cmd_result():
     res = {}
     for nm, sr, bm, fam, desc in spec:
         bk = books[sr]
-        res[nm] = {'family': fam, 'description': desc, 'series': sr, 'benchmark': 'French Mkt（総リターン）' if bm == 'MKT' else '外さない質の良い側（同じ扱い）',
+        res[nm] = {'family': fam, 'description': desc, 'series': sr, 'benchmark': BM_LABEL[bm], 'benchmark_is_french_mkt': bm == 'MKT',
                    'months_holding_market_unreachable': bk.mkt_months, 'bounds': {}}
         a, z = span(sr)
         for b in ('S', 'L', 'M'):
@@ -1336,7 +1394,9 @@ def cmd_result():
             res[nm][f'observed_weight_share_{per}'] = round(sum(xs) / len(xs), 3) if xs else None
     # 族ごとの Holm（生き残りの扱いごと）
     fams = {'primary': ['P1_cos', 'P2_cos', 'P3_cos'], 'secondary': ['P1_jac', 'P1_minedit', 'P1_simple', 'P1_cos_item7', 'P1_cos_item1a'],
-            'X': ['X1_avoid_Q1', 'X3_composite', 'X5_length', 'X6_avoid_Q1_item1a', 'X7_top100_Q5']}
+            'X': ['X1_avoid_Q1', 'X3_composite', 'X5_length', 'X6_avoid_Q1_item1a', 'X7_top100_Q5'],
+            'Z': ['Z1_top100_avoid_Q1'],
+            'R': ['R_P1_cos', 'R_P3_cos', 'R_X1_avoid_Q1', 'R_X7_top100_Q5', 'R_Z1_top100_avoid_Q1']}
     holm = {}
     for b in ('S', 'L'):
         for f, names in fams.items():
@@ -1435,11 +1495,15 @@ def cmd_write():
         'angle': 'lazy_prices',
         'prereg': 'out/mw_lazy_prices_prereg.json',
         'prereg_commit': git_sha('out/mw_lazy_prices_prereg.json'),
+        'prereg_files': {f: git_sha(f) for f in ('out/mw_lazy_prices_prereg.json', 'out/mw_lazy_prices_prereg2.json', 'out/mw_lazy_prices_prereg3.json')},
+        'prereg_commits_all': ['72b0978（事前登録）', 'dd0b410（追補・リターンを見る前）', '18e0c9b（事前登録2・族 X）',
+                               git_sha('out/mw_lazy_prices_prereg3.json') + '（事前登録3・インライン XBRL の見出しの修正・族 R と Z）'],
         'question': json.load(open(PREREG))['question'],
         'periods': {'full': f'{FIRST_M}〜{END_M}', 'train': f'〜{TRAIN_Z}', 'hold': f'{HOLD_A}〜', 'recent': f'{RECENT_A}〜',
                     'post': {k: v for k, v in POST_WINDOWS}},
         'benchmark': 'French Mkt（Mkt-RF + RF・総リターン）。P2 は外さない質の良い側（同じ生き残りの扱い）',
-        'grading_rule': 'S と L のそれぞれで mw_common.grade。訓練と保有の超過の符号が S と L でそろうときだけ悪い方の格、割れたら判定不能＝C（課題文の規則）',
+        'grading_rule': 'S と L のそれぞれで mw_common.grade。訓練と保有の超過の符号が S と L でそろうときだけ悪い方の格、割れたら判定不能＝C（課題文の規則）。'
+                        '族 R は相手が同じ生き残りの扱いの観測できる母集団（French Mkt ではない）＝信号の判定で、市場に勝った判定ではない',
         'tested': tested,
         'n_tested': len(tested),
         'n_graded': sum(1 for t in tested if t['graded']),
@@ -1456,6 +1520,8 @@ def cmd_write():
                      'n_unmapped_tickers': len(Uu['unmapped'])},
         'yahoo_symbol_paths': dict(Counter(v[1] for v in ysy.values())),
         'yahoo_series_found': sum(1 for c in ysy if D['ser'].get(c)),
+        'yahoo_b_c_path_checks': D['ser_check'],
+        'same_yahoo_symbol_dropped_member_months': D['dup_sym'],
         'cap_filled_with_median_member_months': sum(D['fill_med'].values()),
         'quality_sets_P2': {str(k): v for k, v in sorted(D['qinfo'].items())},
         'runtime_s': round(time.time() - D['t0']),
