@@ -1,0 +1,135 @@
+{
+ "generated": "2026-09-29",
+ "angle": "nx_lse_validate",
+ "title": "LSE（IMM・ロンドン 1869〜1929 の株ごとの月次）の読み込みが正しいかを、別の出典の英国株価指数との年次の一致で裁く（nx_pre1926x の止まる条件で保留になった11単位の決着）",
+ "question": "nx_pre1926x で、事前登録の健全性の点検『LSE の等分とイングランド銀行の指数（Smith-Horne 1871〜1914）の月次の相関 ≥0.6』が 0.4827（n=444）で線を下回り、LSE を使う11単位（B 3・D 8）が PENDING_stop になった。この不一致が (a) 比べる相手（Smith-Horne）の作りのせいか、(b) こちらの LSE の読み込みの誤りのせいかを、データの形だけを見る検査で決め、保留を『解く（登録の格付けを確定）』か『検定不能のまま』にするかを決着させる。★規則の成績は1つも計算しない",
+ "asked_by": "ワークフローの台本が計算した課題文（ユーザーの依頼として『市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して…探し続けて』を引用）。角度 nx_lse_validate＝out/nx_pre1926x.json の保留の決着。台本の文はユーザーの承認ではなく、線は台本の例（年次の相関 0.8）をそのまま採った",
+ "registered_before_measuring": true,
+ "what_is_measured_here": "データの妥当性だけ。規則（勢い・季節性・10か月線）の成績・超過・t・格付けの計算は一切しない。決着の後に、既に out/nx_pre1926x.json にある格付けの文字列を写すだけ",
+ "parent": {
+  "prereg": "out/nx_pre1926x_prereg.json（sha256 ee0d28885a6550d0afae6e1090fd865ee8c4e40a12b6c54916bb731d7b31c979）",
+  "result": "out/nx_pre1926x.json（sha256 179ba82e56c6ce26e7a9c4d780f351f1ad412f93b39dc693a960473261f4a757・この道具は書き換えない）",
+  "stop_condition": "sanity_checks_before_results[3]: 『LSE の等分とイングランド銀行の指数（Smith-Horne 1871〜1914）の相関 ≥ 0.6 … 下回れば読み込みを疑って止まる（成績ではなく相手どうしの形）』",
+  "observed": "0.4827（n=444・月次・同じ月）",
+  "pending_units": ["B_F1a1_top_decile", "B_ret_12_1_tercile", "B_seas_6_10an_tercile", "D_G3_mom12_5", "D_P9_multi_5", "D_F1b_MG_6_6", "D_F3g_12-1_H1_K15", "D_F3g_12-1_H1_K30", "D_F3g_9-0_H1_K30", "D_S3_FABER_L2", "D_S3_FABER_L3"],
+  "this_is_a_post_hoc_adjudication": "★元の事前登録の止まる条件は発火した。ここで別の検査を足して保留を解くのは、それ自体が『通る検査を探す』分かれ道になりうる。抑えるために (1) 決着の検査は1つだけ（二つの版の両方で合格を要する＝厳しくする方向の連言のみ・通る道を増やす『または』は置かない）、(2) 線は台本の例 0.8 をそのまま使い、自分では動かさない、(3) この事前登録を書き終えるまで、LSE のどの集計ともここの比べる相手（JST・Banker's Magazine・Morgan・LCES）との相関を計算しない、(4) 保留を解いた格付けには『事後の検査で保留を解いた』の印を必ず付け、元から止まる条件に触れなかった単位と同じ扱いにしない"
+ },
+ "inputs_frozen": {
+  "note": "道具は最初にこれらの sha256 を計算し直し、1つでも違えば止まる",
+  "nx_pre1926x_data.py": "24b4ee873dc3d6ccd4f06e11a894bd8d88345f33d14b46e9420fcef145f4520e",
+  "extract_sha256（nx_pre1926x_data.load_extract が計算し直す data の sha）": "303372624a3ff1620e6bbb4652d8b4d70e2ec6945be93b629b85b1a87da93fbe",
+  "yale_lse_Railways_new.csv.zip": "a0a4203d79322e6f6b2e28a1ea44b75a1cacfb84db89e7cab3885a27af809c26",
+  "yale_lse_Banks_new.csv.zip": "16cbe9e38bf7809679c0c357b249d2959e2652b9ea62d1523919744b448b48fc",
+  "yale_lse_Misc_new.csv.zip": "4aa699f93da0ce3a56ee2022844bd98485c43f47574909b8436823115b52c4b5",
+  "boe_millennium.xlsx": "4c23dd392a498691eac92659aec283fb43f28118bd80511dc87fc595974195eb",
+  "jst_R6.xlsx": "c1bb91fe56ea50d4f27af5c0fc897d481e89ae38ce41eaecab62134c9354981d",
+  "nx_jst_series.json（night/nx_jst_data.py が jst_R6.xlsx から作った整形済み）": "1ac7923fb8720167b69a958c32725333976c923ddfe1c6e44fbdb432ca5559a7",
+  "out/nx_pre1926x.json": "179ba82e56c6ce26e7a9c4d780f351f1ad412f93b39dc693a960473261f4a757"
+ },
+ "literature_read_before_registering": {
+  "Campbell_Grossman_Turner_2019_WP（QUCEH WP 2019-01・ERER 2021 に掲載）": {
+   "smith_horne": "§3: Smith-Horne（1934）は『工業株だけ』25〜77社で、市場で最大の部門（鉄道・銀行・保険・鉱山・土地抵当金融）を除く。除かれた5部門は 1869年に銘柄の65%・時価の84%、1909年に45%・76%。長く上場し続けた社だけを選び、1890年に等分でその後は価格で重みが動く（価格加重に近い）。CGT の方法で Smith-Horne の構成銘柄を組み直すと元の指数に近い＝全株の指数との違いは主に構成から来る",
+   "imm_reading_pitfalls": "付録1: IMM の価格の末尾の 'd'・'dis'・'pm'・'p'（額面からの割引・上乗せの気配）は価格ではないので欠測にする／額面（par）が変わった月・株式分割の月・'x r'（権利落ち）の月の値上がりは欠測／ドル建ての米国の鉄道はドルで気配（1874年を境に 4.44→5.00 ドル＝1ポンドの慣行）／『株数』と『株式の額（stock）』の取り違え／1894年12月の頁が欠けている",
+   "same_source_as_ours": "CGT の 1869-01〜1929-12 は Yale ICF の IMM の電子化＝こちらと同じ原本の同じ電子化（ただし CGT はウェブ版から注記つきで取り直した）。指数の数値の公開ファイルは見つからなかった（著者のページ・QUB・CEPR を 2026-09-29 に確認）＝比べる相手には使えない",
+   "annual_agreement_between_broad_indices": "CGT の全株の指数と Dimson-Marsh-Staunton の年次の相関 0.88（1900〜1929）、Moore（2012）と 0.94（1900〜1925）＝作り方の違う英国の広い指数どうしの年次の一致の相場"
+  },
+  "Grossman_2002_JEH": "『New indices of British equity prices, 1870–1913』: IMM の年末の価格・520〜1,150 証券／年・時価加重と等分の両方を作った（検索結果の要約で確認）。CGT の脚注27: Grossman（2002）は 'stock' と書かれた証券をすべて負債と見なした（誤り）＝株式の額（stock）で気配の出る英国の鉄道の普通株などが抜けている可能性",
+  "JST_RORE_documentation_Table34": "JST（Jordà-Schularick-Taylor）の英国の株: 1870〜1907 = Grossman（2002）の全普通株・時価加重の総リターン、1908〜1963 = Barclays（2016）の大型30社の時価加重、1964〜 = FTSE。eq_capgain は値上がり分（年次）"
+ },
+ "comparators": {
+  "primary_decision": {
+   "series": "JST R6 の GBR の eq_capgain（年次の値上がり率・小数）。nx_jst_series.json の data.GBR から読む",
+   "P1": "1871〜1907 = Grossman（2002）＝同じ IMM を別の人が別の手順で読み・整えた全普通株の時価加重（こちらの読み込み・掃除の誤りには独立、IMM という原本の誤りには独立でない）",
+   "P2": "1916〜1929 = Barclays（2016）の大型30社＝原本も作り方も独立",
+   "why_this": "(1) 1871〜1907 と 1916〜1929 の両方の LSE の区間を1つの系列で覆える唯一の取れる出典、(2) Smith-Horne（工業株だけ）と違い広い、(3) このセッションで LSE のどの集計とも比べたことが無い（nx_jst は国の選び方に使っただけ）",
+   "timing_assumption": "年末から年末（Grossman・Barclays とも年末の価格の指数）。こちらの年 y = 月 y-01〜y-12 の lse_ew＝y−1 年12月の終わりごろ → y 年12月の終わりごろ"
+  },
+  "reports_only": {
+   "BoE_M13_col9": "Smith-Horne（1867-07〜1914-06・月末・工業株25〜82）＝元の点検の相手",
+   "BoE_M13_col12": "Banker's Magazine 1896〜1907（12月の年次 1896〜1905・1906 は月次・時価加重・証券の数は変わる）＝独立の原本。確定利付きを含むかは未確認",
+   "BoE_M13_col13": "Banker's Magazine 1907〜1921（月次・325〜387 の証券・時価加重・確定利付きを含む見込み）",
+   "BoE_M13_col14": "Morgan（1952）の工業株の指数 1914〜1925（毎月20日ごろ＝月末ではない）",
+   "BoE_M13_col17": "Banker's Magazine 1921〜1956 の配当の変わる証券 278（1921-12〜・月次）"
+  }
+ },
+ "lse_aggregates": {
+  "registered_lse_ew": "nx_pre1926x.py の BENCH['lse_ew']（登録の等分の相手・月次の算術平均）をそのまま使う（道具は nx_pre1926x を import して同じ物を得る）",
+  "annual_from_monthly": "年 y の対数の変化 = Σ_{m=1..12} ln(1+lse_ew[y,m])。12か月のうち1つでも無い年、または月の株数が100未満の月を含む年は使わない（欠測を0と読まない）。1915 は 1915-02 からなので使わない",
+  "why_ew": "止まる条件に触れたのは lse_ew そのもので、B・D の規則の相手も lse_ew。別の集計（時価加重・中央値）へ乗り換えると通る道を探すことになるので、決着は lse_ew で行う（他は報告）"
+ },
+ "panels": {
+  "registered": "nx_pre1926x の抽出（extract）の LSE の株のリターン＝登録の版。道具はこれを自分の写しの組み立て（旗をすべて切った版）で作り直し、1ビットも違わないことを確かめる。違えば止まる",
+  "cgt_clean": {
+   "what": "登録の組み立て（連続する2か月・EXCLUDE の業種・払込と1株の額の変化の除外）に、CGT 付録1の読みの規則を足した版。どの対を落とすかは結果を見る前にここで決めた（価格の注記の語彙は 2026-09-29 に数だけ数えた: x 34,205・d 699・£ 672・dis 173・p 123・xr 91・xb 83 …）",
+   "drop_pair_if": [
+    "c1 額面の変化: 両月の capitalpar が分かっていて違う（nx_pre1926x の F6 と同じ条件）",
+    "c2 割引・上乗せの気配: どちらかの月の価格の注記（npricemonthlate）の語に d・dis・ds・dx・p・pm・xp のどれかがある（注記は小文字・'Ã\\x82Â£' は '£' に直し・; と空白で区切り・末尾の . を外す）",
+    "c3 資本の出来事: どちらかの月の価格の注記の語に xr・r・xb・b・xn・n・xc のどれかがある（権利落ち・無償の新株など）",
+    "c4 通貨・単位の旗の切り替わり: '$' の有無、または '£' の有無が2か月で違う",
+    "c5 読めない価格: どちらかの月の価格の注記に '?'・'unreadable' を含む、または語が '...'・'..'・'a'・'l'・'7'・'x2'・'x3' のどれか"
+   ],
+   "then": "そのあと同じ clean_returns（跳ねて戻る形・+990% 超）。'x'・'xd'（配当落ち）と自由文の注記（'Calculated at 6 per cent' 等）は落とさない",
+   "lse_ew_clean": "cgt_clean の株から nx_pre1926x_data.build_ew_universe で同じ区間ごとに作った等分"
+  },
+  "par_only": "c1 だけを足した版（nx_pre1926x.lse_panel_variant(par=True) と同じ・報告だけ）"
+ },
+ "decision": {
+  "statistic": "Pearson の相関（nx_common.corr）: LSE の年の対数の変化 と JST の ln(1+eq_capgain) の同じ年どうし",
+  "V1_P1": "P1（1871〜1907）の相関 ≥ 0.80",
+  "V2_P2": "P2（1916〜1929）の相関 ≥ 0.80",
+  "V3_timing": "P1・P2 のそれぞれで、同じ年の相関 が 1年ずらした相関（LSE の y と JST の y−1、LSE の y と JST の y+1。両方がある年だけ）の両方より大きい（読み込みの時点のずれを捕まえる）",
+  "V4_n": "使える年が P1 で30以上、P2 で12以上",
+  "rule": "registered と cgt_clean の両方の版で V1・V2・V3・V4 がすべて合格 → 『妥当』。1つでも不合格 → 『検定不能』（保留のまま）。★線は丸めずに比べる（0.7999 は不合格）",
+  "thresholds_for_tool": {"V1_min_corr": 0.8, "V2_min_corr": 0.8, "V4_min_years_P1": 30, "V4_min_years_P2": 12, "min_stocks_per_month": 100, "P1_years": [1871, 1907], "P2_years": [1916, 1929]},
+  "what_valid_means": "LSE の等分（登録の読み込み）が、作り方の違う英国の広い指数と、年の単位で動きを共にしている＝月次の不一致（0.48）は、薄商いの古い気配が月をまたいでにじむことと、比べた相手（Smith-Horne＝工業株だけ）の作りから来たものとして扱ってよい。★株ごとの読みの誤りが規則の成績を動かしていないことまでは言わない（それは規則を計算しないと分からない・下の grades_after_decision）",
+  "what_unverifiable_means": "LSE の読み込みが正しいとも誤りとも言えない。11単位は格付けしない（『検定不能』）。LSE を使う規則のまとめは Cowles 等の単位だけで行う"
+ },
+ "grades_after_decision": {
+  "if_valid": "11単位の主の格付け = out/nx_pre1926x.json の tested[].grade_provisional_if_lse_reading_ok（登録の版＝元の事前登録 tools.measure_next の約束『格付けは登録の版』どおり・写すだけ）。印 'resolved_by_post_hoc_validation' を付ける。規則のまとめは nx_pre1926x_data.rule_verdict で作り直す（格付けの文字列だけから・成績は計算しない）。並べるもの（格付けではない）: provisional_grade_table_B_D の読みの変種（lse_par・lse_gt300・lse_par_x10sig・lse_par_x5・S3 の配当をそろえた版）と、その中の最も低い格付け（下限）。既知の注意: F3（D_S3 は株が価格だけ・現金が総リターンの単位の混ざりで E5 が有利）・F6・F7、そして cgt_clean の c2〜c5（割引・上乗せの気配など）で落ちる対の規則への効きは未計算（この道具の範囲外・続きの仕事として名指しする）",
+  "if_unverifiable": "11単位の主の格付け = '検定不能'（データの妥当性を確かめられない）。規則のまとめは LSE 以外の単位だけで nx_pre1926x_data.rule_verdict により作る。暫定の格付けは主にも要約にも使わない",
+  "summary_rule": "どちらの場合も、要約で LSE の単位を『勝ち』と書くときは、主の格付けと読みの変種の下限の両方を書き、『事後の検査で保留を解いた』と明記する"
+ },
+ "reports_not_decisive": {
+  "R1_comparator_vs_comparator": "Smith-Horne（col 9 の12月→12月）と JST の年次の相関 1871〜1913。Banker's Magazine（col 12）と JST 1897〜1906（n≈10）。LSE を使わない＝相手の側の問題かを見る",
+  "R2_original_comparator_annual": "lse_ew の年と Smith-Horne の年 1870〜1907。★汚れ: 月次で t−1・t・t+1 の相関の和 ≈0.86 を既に知っているので、年に束ねると上がることは予想できる＝決着に使わない",
+  "R3_like_for_like_industrials": "LSE の等分を Smith-Horne が除いた5部門（RAIL・BANK・INSURANCE・MINES・LAND_MORTGAGE_FIN）を抜いた株だけで作り（t−1 の業種）、Smith-Horne と月次（ずれ −1・0・+1）と年次で比べる",
+  "R4_value_weighted": "時価の分かる株（p_{t−1}×株数・1870〜1887）の時価加重。月の時価の分かる株が200未満の月は欠測。JST と年次（1871〜1887）・Smith-Horne と月次",
+  "R5_robust_aggregates": "年の買い持ちの等分（その年の12か月すべてにリターンがある株の Π(1+r)−1 の平均）と、株の年の対数の変化の中央値。JST と P1・P2",
+  "R6_other_panels": "par_only の版の V1〜V3 の値",
+  "R7_period2_monthly": "lse_ew と BoE col 13（1915-03〜1921-01）・col 14（1915-03〜1925-03・20日ごろ）・col 17（1922-01〜1929-12）の月次の相関（ずれ −1・0・+1 と和）",
+  "R8_staleness": "株の月のリターンがちょうど0の割合: 年ごと（登録の版）と、1870〜1887 の各月で時価の上位50社 対 それ以外",
+  "R9_defect_counts": "登録の版のリターンのうち、cgt_clean の c1〜c5 のどれかに当たる株×月の数（類ごと）と、そのうち |r|>100% の数、全株×月に占める割合",
+  "R10_registered_vs_clean": "月次の lse_ew（登録）と lse_ew_clean の相関と、年率の算術平均の差（1869-02〜1887-12・1888-01〜1907-12・1915-02〜1929-12）",
+  "R11_ci": "決着の相関の Fisher の z による90%の区間と Spearman の順位相関（参考）"
+ },
+ "prior_before_results": {
+  "honest_expectation": "決着は五分五分より少し『妥当』寄りと見る（主観 55%）。理由: (+) 月次のずれの和が 0.86 で、古い気配のにじみは年に束ねると消える、(+) Grossman は同じ IMM の年末の値、(−) こちらは等分・相手は時価加重（1869年は鉄道・銀行など5部門が時価の84%）で、等分の算術平均は株ごとの雑音で上振れ（1869〜1887 の算術 +8.75% 対 対数 −1.74%）、(−) 額面の変化などの読みの誤りが年の値にも雑音を足す、(−) P2 は14年しかなく1年の外れで動く、(−) Grossman（2002）は 'stock' で気配の出る株を抜いた可能性（CGT 脚注27）",
+  "expected_ranges": {"V1_P1": "0.70〜0.90", "V2_P2": "0.80〜0.95", "R1_smith_horne_vs_JST": "0.50〜0.80（工業株だけ）", "R3_industrials_vs_SH_monthly": "0.483 より高い（0.5〜0.7）", "R8_large_stock_zero_share": "15% 未満（大型株は毎月動くはず。これを大きく超えるなら写しの持ち越しを疑う）"},
+  "promise": "結果が予想と違っても、線・版・比べる相手・年の範囲は変えない。変えたくなったら『事後』として別に並べ、決着は登録どおり"
+ },
+ "contamination": {
+  "seen_before_this_prereg": [
+   "nx_pre1926x の sanity_checks: lse_ew と BoE（Smith-Horne）の月次の相関 0.4827（n=444）、Cowles・NYSE の点検は合格",
+   "post_hoc.sanity_stop_investigation: ずれの相関 t−1 0.174・t 0.483・t+1 0.201／1869〜1870 の lse_ew と Smith-Horne col 9 0.789（n=23）・Acheson col 23 0.703（n=23）／株の月の値動き0の割合 0.432／年率 1869-02〜1887-12 算術 8.75・対数 −1.74・BoE −0.08、1888〜1907 2.17・−4.56・2.11、1915-02〜1929-12 5.19・−1.48・1.81／大手の英国の鉄道9社の株どうしの相関の中央 0.32・BoE との相関 0.09〜0.37",
+   "fixes F1〜F7 の文面: 額面を直した版の相関 0.499（検査役）で線 0.6 に届かない／D の片道1%の費用での超過と t（例 D_G3 +1.86 t1.57・D_P9 −3.59）／額面を直すと B_ret・B_seas が B→S（暫定）／検査役の再計算の数字（D_G3 cd 4.31 t4.21・B_ret 1.30 t2.36 など）／+300% 超を落とした版の数字（D_G3 cd 5.38→3.41 t5.11・D_S3 L2 3.39→2.61・B_F1a1 3.89→3.95）／D_S3 は配当をそろえると C",
+   "out/nx_summary.json: 保留の単位の暫定の成績（業種の勢いなど）が良いこと。暫定の格付けの一覧表（provisional_grade_table_B_D・grade_provisional_if_lse_reading_ok の値）は開いていない（欄の名前だけ見た）",
+   "価格の注記の語彙の数（生データの全月の数え上げ・リターンとは結びつけていない）と、LSE の月ごとの株数（最小でも300以上）",
+   "JST の GBR の eq_capgain が 1871〜1932 にあること（値は見ていない）、BoE M13 の各列の期間と説明（値は見ていない）"
+  ],
+  "not_seen": "LSE のどの集計と JST・Banker's Magazine・Morgan・col 17 との相関も、Smith-Horne と JST の相関も、年次の LSE と Smith-Horne の相関も、cgt_clean の版の数字も計算していない",
+  "direction_of_bias": "保留の単位の暫定の成績が良いことを知っているので、『妥当』に倒したい誘因がある。だから (1) 線は台本の例 0.8 を動かさず、(2) 決着は1つの検査の連言（厳しくする方向だけ）、(3) 通りやすいと予想できる Smith-Horne の年次（R2）は決着に使わない、(4) 自分で見つけた読みの誤り（c2〜c5）を直した版でも合格を要する"
+ },
+ "known_limits": [
+  "P1 の比べる相手（Grossman 2002）は同じ IMM の年末の値＝読み込みと掃除の検査にはなるが、IMM そのものの誤りは捕まえない。完全に独立の原本（Banker's Magazine 1897〜1906）は10年しかない",
+  "等分 対 時価加重の構成の違いで、読みが正しくても相関が 0.8 を下回ることはありうる。その場合の『検定不能』は『誤り』ではなく『確かめられない』",
+  "P2 は14年しかない（相関の標準誤差 ≈0.1）",
+  "年に束ねると月の中の読みの誤り（1か月だけ跳ねて戻る等）は見えにくい。株ごとの誤りが規則の成績に効くかはこの検査では分からない（grades_after_decision の注意）",
+  "JST の eq_capgain の年の区切りは年末と仮定（出典の説明に明記は無い）。V3 がその仮定の点検を兼ねる"
+ ],
+ "tool": {
+  "path": "night/nx_lse_validate.py（この事前登録の後に書く）",
+  "does": "(1) inputs_frozen の sha を確かめる (2) 登録の版を自分の組み立てで1ビット再現できることを確かめる (3) 年次の変換・ずれの相関の自己検査（合成データ） (4) decision を登録の線（thresholds_for_tool をこのファイルから読む）で判定 (5) 報告 R1〜R11 (6) 決着に応じて out/nx_pre1926x.json から格付けの文字列を写し、規則のまとめを rule_verdict で作り直す",
+  "does_not": "規則の組み立て（build_*）・超過・t・シャープ・格付けの計算（grade_era）を呼ばない。out/nx_pre1926x.json を書き換えない",
+  "output": "out/nx_lse_validate.json"
+ }
+}
