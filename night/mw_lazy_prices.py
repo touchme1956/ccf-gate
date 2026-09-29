@@ -9,7 +9,11 @@
   crawl    : 各 CIK の 10-K / 10-K405 の本体（添付を除く）→ 語の列（小文字の英字・停止語を除く・crc32）と文の区切り・節の範囲だけを保存
   pairs    : 同じ CIK の連続する 10-K（提出日の差 270〜455 日）の類似度 4 種（余弦・Jaccard・最小編集・単純）＋節（Item 7・Item 1A）の余弦
   reach    : 月ごとの到達数（リターンを読まない）
-  （事前登録の後に prices・run を足す）
+  （事前登録の後に足した段）
+  prices   : Yahoo の月足（配当込み）
+  refloat  : 【事後】表紙の浮動株時価を読めなかった提出だけ読み直す（posthoc.float2 の診断用）
+  run      : 戦略・格付け → out/mw_lazy_prices.json（事前登録 72b0978・dd0b410・18e0c9b・事前登録3）。
+             事後の診断（格付けしない）: I の境界（業種で埋める）・float2・偽薬100回（LP_PLACEBO_N で回数）
 
 キャッシュ: out/_mw_cache/lazy_prices/（gitignore）。他の角度のキャッシュ（moat_text・ex27）は読むだけ。
 SEC: User-Agent は連絡先つき（絶対のルール5）、全体で毎秒6件以下。
@@ -938,6 +942,60 @@ def cmd_prices():
     print('系列あり', got, '/', len(todo))
 
 
+# ───────────────────────── 事後: 表紙の浮動株時価の読み直し（診断用・格付けしない） ─────────────────────────
+PER_SHARE = re.compile(r'(?i)\s*(?:per\s+(?:common\s+)?share|a\s+share|each)')
+AMT = re.compile(r'\$\s*([\d,]+(?:\.\d+)?)\s*(trillion|billion|million|thousand)?', re.I)
+
+
+def cover_float2(txt):
+    """【事後・2026-09-29 結果を見た後】事前登録の式（最初の $ の数）は1株の値段（『$75.00 per share』）や額面を拾い、
+    XOM・MSFT（2024）・MA・MRK・CRM 等の超大型株を含む毎年約1割の社が『読めない』→ 中央値の重みになっていた。
+    『aggregate market value』の後 1500 字の中で、1株あたりの値でない最初の 5千万〜5兆ドルの額を採る"""
+    head = txt[:120000]
+    for m in re.finditer(r'(?is)aggregate\s+market\s+value', head):
+        seg = head[m.end(): m.end() + 1500]
+        for a in AMT.finditer(seg):
+            try:
+                v = float(a.group(1).replace(',', ''))
+            except ValueError:
+                continue
+            v *= {'trillion': 1e12, 'billion': 1e9, 'million': 1e6, 'thousand': 1e3}.get((a.group(2) or '').lower(), 1.0)
+            if PER_SHARE.match(seg[a.end():a.end() + 30]):
+                continue
+            if 5e7 <= v <= 5e12:
+                return v
+    return None
+
+
+def cmd_refloat():
+    """事前登録の式で浮動株時価が読めなかった・範囲外だった提出だけ本体を取り直し、cover_float2 で読み直す → FL2（acc → ドル）"""
+    P = json.load(open(PAIRS))
+    todo = [(c, r['acc']) for c, v in P.items() for r in v if not (r.get('float') and 5e7 <= r['float'] <= 5e12)]
+    old = json.load(open(FL2)) if os.path.exists(FL2) else {}
+    todo = [x for x in todo if x[1] not in old]
+    print('読み直す提出', len(todo), flush=True)
+    import concurrent.futures as cf
+
+    def one(x):
+        c, acc = x
+        s_ = get_subs(c)
+        f = next((f for f in s_['f'] if f[2] == acc), None)
+        try:
+            mt, _ = fetch_main(c, acc, f[3] if f else '')
+        except RuntimeError:
+            return acc, None
+        return acc, (cover_float2(mt) if mt else None)
+    out = dict(old)
+    with cf.ThreadPoolExecutor(6) as ex:
+        for i, (acc, v) in enumerate(ex.map(one, todo)):
+            out[acc] = v
+            if (i + 1) % 200 == 0:
+                print(' ', i + 1, '/', len(todo), flush=True)
+                json.dump(out, open(FL2, 'w'))
+    json.dump(out, open(FL2, 'w'))
+    print('読めた', sum(1 for v in out.values() if v), '/', len(out))
+
+
 # ───────────────────────── 業種（French 49） ─────────────────────────
 def ff49():
     import zipfile
@@ -1010,9 +1068,11 @@ MEASURES = ['cos', 'jac', 'minedit', 'simple', 'cos_item7', 'cos_item1a']
 
 class Book:
     """ひとつの系列の持ち物を毎月作り替える。S・L・M の3つの生き残りの扱いを同時に出す"""
+    imp = None        # 事後の診断 I: 観測できない社・月の代わりのリターン（その社の French 49業種の時価加重）。None なら French Mkt
+
     def __init__(self, name):
         self.name = name
-        self.r = {'S': {}, 'L': {}, 'M': {}}
+        self.r = {'S': {}, 'L': {}, 'M': {}, 'I': {}}
         self.dead = set()
         self.prev = None          # 前月の漂った後の重み（S）
         self.turn = []
@@ -1024,7 +1084,7 @@ class Book:
     def step(self, m, w, st, mkt_m):
         """w = {cik: 重み（正規化前）} or None（到達しない月＝市場を持つ）。st(c, m) → ('ok', r) / ('missing', None) / ('spike', None)"""
         if not w:
-            for b in ('S', 'L', 'M'):
+            for b in ('S', 'L', 'M', 'I'):
                 self.r[b][m] = mkt_m
             cur = {'__MKT__': 1.0}
             self.turn.append(0.5 * sum(abs(cur.get(k, 0.0) - (self.prev or {}).get(k, 0.0)) for k in set(cur) | set(self.prev or {})) if self.prev is not None else 1.0)
@@ -1034,7 +1094,7 @@ class Book:
         tot = sum(w.values())
         obs = {}
         num_L = den_L = 0.0
-        num_M = 0.0
+        num_M = num_I = 0.0
         for c, x in w.items():
             s, r = st(c, m)
             if s == 'ok':
@@ -1042,6 +1102,11 @@ class Book:
             # M（診断）: 観測できない社・月に French Mkt を置く。L で消えた社でも M では置く（2026-09-29・リターンを見る前に直した:
             # 旧版は L の『消えた』判定の後で M を足していたので、消えた社の重みが M で 0 のリターン＝0 埋めになっていた）
             num_M += x * (r if s == 'ok' else (mkt_m if s == 'missing' else 0.0))
+            if s == 'missing':
+                ri = Book.imp(c, m) if Book.imp else None
+                num_I += x * (ri if ri is not None else mkt_m)
+            elif s == 'ok':
+                num_I += x * r
             if c in self.dead:
                 continue
             if s == 'ok':
@@ -1058,6 +1123,7 @@ class Book:
         self.r['L'][m] = num_L / den_L if den_L > 0 else mkt_m
         spk = sum(x for c, x in w.items() if st(c, m)[0] == 'spike')
         self.r['M'][m] = num_M / (tot - spk) if tot - spk > 0 else mkt_m
+        self.r['I'][m] = num_I / (tot - spk) if tot - spk > 0 else mkt_m
         if self.prev is not None:
             self.turn.append(0.5 * sum(abs(cur.get(k, 0.0) - self.prev.get(k, 0.0)) for k in set(cur) | set(self.prev)))
         else:
@@ -1079,10 +1145,19 @@ def load_all():
     return U, P, ysy
 
 
-def cmd_run():
+FL2 = os.path.join(LP, 'float2.json')     # 事後: 表紙の浮動株時価の読み直し（読めなかった・範囲外の提出だけ）
+
+
+def cmd_run(float_key='float', placebo=None, quiet=False):
+    """float_key='float' が事前登録どおり。'float2' は事後の読み直し（診断・格付けしない）。
+    placebo=整数 なら余弦の代わりに提出ごとの一様乱数（種つき・同じ提出は12か月同じ値）で五分位を作る（事後の偽薬・格付けしない）"""
     t0 = time.time()
     import math as _m
     U, P, ysy = load_all()
+    fl2 = json.load(open(FL2)) if float_key == 'float2' else None
+    PL = placebo is not None
+    if PL:
+        P = {c: [dict(r, cos=random.Random(f'{placebo}|{r["acc"]}').random()) if r.get('cos') is not None else r for r in v] for c, v in P.items()}
     ff = M.ff_factors()
     mkt = ff['mkt']
     months = [m for m in mrange(FIRST_M, END_M) if m in mkt]
@@ -1113,6 +1188,9 @@ def cmd_run():
 
     ind = ff49()
     indc = {c: ind(U['sic'].get(c)) for c in U['span']}
+    # 事後の診断 I: 観測できない社・月に、その社の French 49業種（CRSP の全上場・上場廃止を含む）の時価加重のリターンを置く
+    i49 = M.french_series('49_Industry_Portfolios')
+    Book.imp = staticmethod(lambda c, m: (i49.get(indc.get(c, 'Other')) or i49['Other']).get(m))
     # 提出（類似度の記録）を CIK ごとに提出日の順
     rows = {c: sorted(v, key=lambda r: r['filed']) for c, v in P.items()}
     ntok = {r['acc']: r.get('n_tok') for v in P.values() for r in v}
@@ -1147,7 +1225,11 @@ def cmd_run():
     def caps(cs, m):
         out, miss = {}, []
         for c in cs:
-            cand = [r for r in rows.get(c, []) if ym(r['filed']) <= madd(m, -1) and r.get('float') and 5e7 <= r['float'] <= 5e12]
+            if fl2 is None:
+                cand = [r for r in rows.get(c, []) if ym(r['filed']) <= madd(m, -1) and r.get('float') and 5e7 <= r['float'] <= 5e12]
+            else:
+                cand = [dict(r, float=fl2.get(r['acc'], r.get('float'))) for r in rows.get(c, []) if ym(r['filed']) <= madd(m, -1)]
+                cand = [r for r in cand if r.get('float') and 5e7 <= r['float'] <= 5e12]
             cand = [r for r in cand if (dd(month_end(madd(m, -1))) - dd(r['filed'])).days <= 3 * 366]
             if cand:
                 r = cand[-1]
@@ -1161,7 +1243,7 @@ def cmd_run():
             fill_med[m] += len(miss)
         return out
 
-    qsets, qinfo = quality_sets(U)
+    qsets, qinfo = quality_sets(U) if not PL else ({}, {})
     books = {}
 
     def B(name):
@@ -1194,7 +1276,7 @@ def cmd_run():
                 look_viol += 1
         cap_all = caps([c for c, r in L_.items() if r], m)
         mm = mkt[m]
-        for x in MEASURES:
+        for x in (MEASURES if not PL else ['cos']):
             el = {c: r[x] for c, r in L_.items() if r and r.get(x) is not None}
             elig_n[x][m] = len(el)
             ok = len(el) // 5 >= MIN_PER_Q
@@ -1299,7 +1381,8 @@ def cmd_run():
                     B('QUAL').step(m, qm, st, mm)
                 else:
                     B('P2_cos').step(m, qm or None, st, mm); B('QUAL').step(m, qm or None, st, mm)
-    print('組み立て', round(time.time() - t0), '秒', flush=True)
+    if not quiet:
+        print('組み立て', round(time.time() - t0), '秒', flush=True)
     return dict(U=U, P=P, ser=ser, st=st, books=books, mkt=mkt, months=months, reach=reach, elig_n=elig_n, tech=tech, avg_sim=avg_sim,
                 qinfo=qinfo, fill_med=fill_med, look_viol=look_viol, indc=indc, ysy=ysy, t0=t0, ser_check=dict(ser_check), dup_sym=sum(dup_sym.values()))
 
@@ -1330,8 +1413,8 @@ def sgn(x):
     return 0 if x is None or x == 0 else (1 if x > 0 else -1)
 
 
-def cmd_result():
-    D = cmd_run()
+def cmd_result(D=None):
+    D = D or cmd_run()
     books, mkt = D['books'], D['mkt']
     spec = [
         # (名前, 系列, 相手, 族, 説明)
@@ -1377,7 +1460,7 @@ def cmd_result():
         res[nm] = {'family': fam, 'description': desc, 'series': sr, 'benchmark': BM_LABEL[bm], 'benchmark_is_french_mkt': bm == 'MKT',
                    'months_holding_market_unreachable': bk.mkt_months, 'bounds': {}}
         a, z = span(sr)
-        for b in ('S', 'L', 'M'):
+        for b in ('S', 'L', 'M', 'I'):          # I は事後の診断（格付けには S と L だけを使う）
             s = bk.r[b]
             bench = mkt if bm == 'MKT' else books[bm].r[b]
             res[nm]['bounds'][b] = ev(s, bench, bk.turnover(), a, z)
@@ -1422,6 +1505,14 @@ def cmd_result():
             off = 'C'
             why = f'判定不能（S と L で符号が割れる: 訓練 S {tS} / L {tL}・保有 S {hS} / L {hL}）→C 扱い'
         res[nm]['grade_by_bound'] = g
+        # 事後の参考（格付けに使わない）: 観測できない社・月に French Mkt（M）・業種（I）を置いた系列に同じ線を当てたら
+        gp = {}
+        for b in ('M', 'I'):
+            x = res[nm]['bounds'][b]
+            hp = M.holm({n: (res[n]['bounds'][b]['hold'] or {}).get('p') for n in next((v for v in fams.values() if nm in v), [nm])})
+            gr, cr = M.grade(x['full'], x['train'], x['hold'], x['roll20'], cost_hold=x.get('cost_hold'), repl=None, family_holm_p=hp.get(nm))
+            gp[b] = {'grade': gr, 'criteria': cr}
+        res[nm]['grade_posthoc_reference_M_I'] = gp
         res[nm]['grade'] = off
         res[nm]['grade_note'] = why
     dg = {}
@@ -1434,6 +1525,57 @@ def cmd_result():
             dg[nm][b] = {k: M.excess_stats(s, bb, lo, hi) for k, lo, hi in (('full', ks[0], ks[-1]), ('train', ks[0], TRAIN_Z), ('hold', HOLD_A, ks[-1]),
                                                                              ('post_ssrn_2017', 201701, ks[-1]))}
     return D, res, dg, holm
+
+
+# ───────────────────────── 事後の診断（格付けしない） ─────────────────────────
+PLACEBO_KEYS = [('P1_cos', 'Q5_cos', 'MKT'), ('P3_cos', 'Q5_cos_ind', 'MKT'), ('R_P1_cos', 'Q5_cos', 'U_cos'), ('R_P3_cos', 'Q5_cos_ind', 'U_cos_ind'),
+                ('X1_avoid_Q1', 'X1_avoid_Q1', 'MKT'), ('R_X1_avoid_Q1', 'X1_avoid_Q1', 'U_cos'), ('P1_cos_top2', 'Q45_cos', 'MKT'),
+                ('Z1_top100_avoid_Q1', 'Z1_top100_avoid_Q1', 'MKT'), ('X7_top100_Q5', 'X7_top100_Q5', 'MKT')]
+
+
+def _pstats(D):
+    books, mkt = D['books'], D['mkt']
+    out = {}
+    for nm, sr, bm in PLACEBO_KEYS:
+        out[nm] = {}
+        for b in ('S', 'L', 'M', 'I'):
+            s_ = books[sr].r[b]; bb = mkt if bm == 'MKT' else books[bm].r[b]
+            ks = sorted(s_)
+            out[nm][b] = {k: ((M.excess_stats(s_, bb, lo, hi) or {}).get('ex_ann')) for k, lo, hi in
+                          (('full', ks[0], ks[-1]), ('train', ks[0], TRAIN_Z), ('hold', HOLD_A, ks[-1]), ('post_ssrn_2017', 201701, ks[-1]))}
+    return out
+
+
+def _placebo_one(seed):
+    return seed, _pstats(cmd_run(placebo=seed, quiet=True))
+
+
+def placebo(n=100, nproc=4):
+    """【事後の偽薬】余弦の代わりに提出ごとの一様乱数（同じ提出は12か月同じ値＝回転の形は本物と同じ）で五分位を作る。
+    (1) L の下の端が『回転する部分集合』にかける構造的な罰の大きさ (2) 本物の戦略が偽薬の分布のどこにいるか（S・M・I）"""
+    from multiprocessing import Pool
+    res = {}
+    with Pool(nproc) as p:
+        for seed, st_ in p.imap_unordered(_placebo_one, range(n)):
+            res[seed] = st_
+    return res
+
+
+def placebo_summary(res, real):
+    out = {}
+    for nm, _, _ in PLACEBO_KEYS:
+        out[nm] = {}
+        for b in ('S', 'L', 'M', 'I'):
+            out[nm][b] = {}
+            for k in ('full', 'train', 'hold', 'post_ssrn_2017'):
+                xs = sorted(v[nm][b][k] for v in res.values() if v[nm][b][k] is not None)
+                rv = real[nm][b][k]
+                if not xs or rv is None:
+                    continue
+                out[nm][b][k] = {'real': rv, 'placebo_mean': round(sum(xs) / len(xs), 2), 'placebo_p05': xs[int(0.05 * len(xs))],
+                                 'placebo_p50': xs[len(xs) // 2], 'placebo_p95': xs[min(len(xs) - 1, int(0.95 * len(xs)))],
+                                 'share_placebo_ge_real': round(sum(1 for x in xs if x >= rv) / len(xs), 3), 'n': len(xs)}
+    return out
 
 
 def git_sha(path):
@@ -1528,6 +1670,45 @@ def cmd_write():
         'quality_sets_P2': {str(k): v for k, v in sorted(D['qinfo'].items())},
         'runtime_s': round(time.time() - D['t0']),
     }
+    # ───── 事後の診断（格付けしない・結果を見た後に足した） ─────
+    ph = {'label': '事後（2026-09-29・主の結果を見た後に足した診断。格付けには使わない）'}
+    # (a) 浮動株時価の読み直し
+    if os.path.exists(FL2):
+        D2 = cmd_run(float_key='float2')
+        _, res2, _, _ = cmd_result(D2)
+        fl2 = json.load(open(FL2))
+        ph['float2'] = {
+            'why': '事前登録の表紙の式は最初の $ の数を採るので、1株の値段・額面を拾って毎年約1割（XOM・MSFT 2024・MA・MRK・CRM 等の超大型株を含む）が読めず、その月の対象の中央値の重みになっていた。読めなかった・範囲外の提出だけ本体を取り直して cover_float2 で読み直した系列で同じ戦略を作り直した',
+            'refetched': len(fl2), 'reparsed_ok': sum(1 for v in fl2.values() if v),
+            'cap_filled_with_median_member_months': sum(D2['fill_med'].values()),
+            'U_cos_S_vs_mkt': M.excess_stats(D2['books']['U_cos'].r['S'], mkt, FIRST_M, END_M),
+            'strategies': {nm: {'grade_official_rule': r['grade'], 'grade_by_bound': {b: r['grade_by_bound'][b]['grade'] for b in ('S', 'L')},
+                                'grade_reference_M_I': {b: r['grade_posthoc_reference_M_I'][b]['grade'] for b in ('M', 'I')},
+                                'bounds': {b: {k: r['bounds'][b].get(k) for k in ('full', 'train', 'hold', 'recent_2013_07', 'post_sample_2015', 'post_ssrn_2017', 'post_jf_2021', 'cost_hold')}
+                                           | {'roll20': r['bounds'][b].get('roll20'), 'dca20': r['bounds'][b].get('dca20')} for b in ('S', 'L', 'M', 'I')}}
+                           for nm, r in res2.items()}}
+    # (b) 偽薬
+    real = _pstats(D)
+    NPL = int(os.environ.get('LP_PLACEBO_N', '100'))
+    pres = placebo(NPL)
+    ph['placebo'] = {'why': '余弦の代わりに提出ごとの一様乱数（同じ提出は12か月同じ値）で五分位を作った偽薬を %d 回。L の下の端が回転する部分集合にかける構造的な罰と、本物の戦略が偽薬の分布のどこにいるか' % NPL,
+                     'n': NPL, 'summary': placebo_summary(pres, real)}
+    obj['posthoc'] = ph
+    # 試したものの数（事後の診断も数える・格は付けない）
+    if 'float2' in ph:
+        obj['tested'] += [{'name': f'{nm}__float2', 'family': 'posthoc_float2', 'grade': None, 'graded': False} for nm in ph['float2']['strategies']]
+    obj['tested'].append({'name': f'placebo_random_quintiles_x{NPL}', 'family': 'posthoc_placebo', 'grade': None, 'graded': False})
+    obj['n_tested'] = len(obj['tested'])
+    obj['deviations'] = [
+        '【事前登録3・リターンを見る前】インライン XBRL の <ix:header>（表示されない XBRL の文脈・隠れた値）を本文から除いた。除かないとインライン XBRL を始めた年の 10-K が機械的に『大きく書き換えた』ことになり、2020年の提出の余弦の中央値が 0.903（他の年 0.97〜0.99）だった。直した後は 0.988。2017年以降の提出 5,250件を取り直した。表紙の浮動株時価の読み取り率も 83% → 96〜99% に上がった',
+        '【リターンを見る前】診断 M（観測できない社・月に French Mkt を置く）が、L で消えた社を M で 0 のリターンにしていた（0 埋め＝絶対のルール7 違反）。M を L の判定の前に足すように直した（格付けは S と L だけなので格には影響しない）',
+        '【事後・格付けしない】表紙の浮動株時価の事前登録の式（最初の $ の数）は1株の値段・額面を拾い、毎年約1割の社（XOM・MSFT 2024・MA・MRK・CRM・ADBE 等の超大型株を含む）が中央値の重みになっていた（16,743 社・月）。読めなかった 1,874 件だけ本体を取り直して読み直し（1,483 件が読めた・中央値の重みは 2,069 社・月へ）、同じ戦略を作り直した（posthoc.float2）。公式の格は事前登録の式のまま',
+        '【事後・格付けしない】I（観測できない社・月に、その社の French 49業種〔CRSP の全上場〕のリターンを置く）と、偽薬（余弦の代わりに提出ごとの乱数で五分位を作る・100回）を足した',
+        '【構造の指摘】事前登録の L（Yahoo に系列の無い社を最初の月に −100%）は、上場廃止ではなく『Yahoo に無い』社（1997年の名簿の 58%・2007年 39%）をすべて −100% と読むうえ、五分位のように銘柄が入れ替わる部分集合では同じ社を何度も新しく罰する。偽薬（無作為の五分位）でも L の訓練期間の超過は平均 −28〜−31%/年。したがって課題文の規則（S と L の符号がそろうときだけ格付け）は、この母集団の 2006年以前には満たしようがなく、すべての戦略が判定不能＝C になった。規則は変えていない',
+        '前の担当はセッションの上限で本文の取得の途中（約 12,200/17,087 件）で止まっていた。事前登録（72b0978・dd0b410・18e0c9b）は書き換えず、その道具とキャッシュを引き継いで残りを取得した（戦略の成績は前の担当のどの段でも計算されていない）',
+        'mw_common に誤りは見つからなかった（French Mkt の CAGR 1926〜 10.38%・2007〜 11.13% を再現）',
+    ]
+    obj['conclusion_ja'] = LP_CONCLUSION
     p = M.save(RESULT, obj)
     print('書いた', p)
     for nm, r in res.items():
@@ -1535,6 +1716,16 @@ def cmd_write():
         print(f"{nm:14s} {r['grade']}  S: 訓練 {fmt(b['S']['train'])} 保有 {fmt(b['S']['hold'])}  L: 訓練 {fmt(b['L']['train'])} 保有 {fmt(b['L']['hold'])}  {r['grade_note'][:40]}")
     for nm, d in dg.items():
         print(f"  診断 {nm:18s} S 全 {fmt(d['S']['full'])} 訓練 {fmt(d['S']['train'])} 保有 {fmt(d['S']['hold'])} 2017〜 {fmt(d['S']['post_ssrn_2017'])}")
+
+
+LP_CONCLUSION = [
+    '10-K の本文を前年からほとんど書き換えなかった S&P500 の会社（Lazy Prices）を 22 本の戦略で事前登録どおり測った。公式の格はすべて C（市場に勝った証拠は無い）',
+    '最有力は P3（49業種の中で最も書き換えの少ない1/5・時価加重）: 生き残りだけ（S）で訓練 1997〜2006 +7.4%/年 t2.8、保有 2007〜 +1.7%/年 t1.7、費用後 +1.6%/年、2017〜 +2.0%/年。S だけなら B（多重検定 C7 に届かず）',
+    'だが無作為の1/5（偽薬100回）と比べると、訓練は上位2%（本物の差）なのに保有は上位23%で無作為と見分けられない。表紙の時価の読み違いを直すと保有は +1.0%/年 t0.9 に下がる',
+    '論文そのものの形（最も似ている1/5・P1）は保有 +0.5%/年 t0.3・2017〜 −1.2%/年。書き換えの大きい社を避ける旗（X1・Z1）は無作為と同じ。Item 1A の Q1 を避ける X6 は保有 +0.9%/年 t1.5（訓練が無い）',
+    '下の端 L（Yahoo に無い社を −100%）は無作為の五分位でも訓練 −28〜−31%/年になる構造の罰で、2006年以前の格付けは原理的にできなかった',
+    '結論: 論文の標本期間と重なる 1997〜2006 には効いた形跡があるが、2007年以降の S&P500 で市場を安定して超える力は見えない。城の『避ける旗』として使う根拠も出なかった',
+]
 
 
 def fmt(x):
@@ -1555,5 +1746,7 @@ if __name__ == '__main__':
         cmd_prices()
     elif cmd == 'run':
         cmd_write()
+    elif cmd == 'refloat':
+        cmd_refloat()
     else:
         print(__doc__)
