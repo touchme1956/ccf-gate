@@ -1,0 +1,95 @@
+{
+ "angle": "macro_timing",
+ "title": "景気・金利・信用の指標（Goyal-Welch の予言変数）を組み合わせた予測で株の割合を毎月変える規則、と『成長×トレンド』のタイミング（10か月線の下 かつ 失業率が上向きの時だけ現金）は、市場を買って持つだけに勝つか",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "measured_before_registration": "データの有無と単位の確認だけ: Goyal-Welch 2025年版 goyal_predictors_2025.xlsx の月次（price・d12・e12・d/p・e/p・svar は 1871-01/1885-02〜、AAA・BAA・lty・dfy は 1919-01〜、tbl・tms は 1920-01〜、infl は 1913-02〜、dfr・ltr・corpr は 1926-01〜、ntis は 1926-12〜、csp は 1937-05〜2002-12、Rfree は 1871-02〜、いずれも〜2025-12）と四半期の i/k（1947Q1〜2025Q4）。GW の price は 1926 年より前は Shiller の月中平均の株価と一致（1925-12 = 12.46）。JST R6（jst_R6.xlsx）の列 eq_tr・eq_dp・bill_rate（小数）・ltrate（百分率）・cpi の国別の年の範囲（株のリターンがあるのは米国以外で AUS BEL CHE DEU DNK ESP FIN FRA GBR ITA JPN NLD NOR PRT SWE の15か国。CAN・IRL は eq_tr が無い）と、年の物価上昇率が 100% 以上の年（DEU 1920・1922・1923・1924、FIN 1918、ITA 1944、JPN 1945・1947）。FRED UNRATE（1948-01〜2026-08）・INDPRO（1919-01〜2026-08）、OECD の失業率 LRHUTTTT{国}M156S は GB AT AU BE CA DK FI FR DE IE IT JP NL NO ES SE の16か国にあり（NZ・CH は無い）、OECD の生産指数 PRINTO01{国}M661S は FRED で取れない。戦略と市場を比べた数字・予測の当たり外れ（R²など）は一つも出していない",
+ "global_prereg": "out/mw_prereg.json（線 C1〜C8・格付け S/A/B/C。この角度では一切動かさない）",
+ "tool": "night/mw_macro_timing.py → out/mw_macro_timing.json",
+ "question": "(1) 株の割安さ以外の古典的な予言変数（信用スプレッド dfy・信用リターン差 dfr・期間スプレッド tms・短期金利 tbl・長期金利 lty・株式の純発行 ntis・物価上昇率 infl・株の分散 svar・投資÷資本 i/k・横断プレミアム csp、比較のため配当利回り dp・益回り ep）を、その時点までのデータだけで毎月回帰し直して1か月先の株の上乗せを予測し（再帰的な out-of-sample）、等しく平均した予測（Rapach-Strauss-Zhou 2010）に Campbell-Thompson 2008 の符号の制約を掛けて株の割合 w = 予測 ÷ (3×直近60か月の分散) を 0〜1.5 に収める規則は、上限なしの時価加重の米国市場（French Mkt）を買って持つだけに、訓練期間（〜2006）でも保有期間（2007〜）でも費用後に勝ち、シャープレシオでも上回るか。(2) 10か月線の下 かつ 失業率が12か月平均より上 の月だけ短期国債へ逃げる『成長×トレンド』は勝つか。(3) 同じ規則は 1891〜1925年（文献の知識が入らない時代）と、米国以外15か国（JST・年次）でも効くか。",
+ "stance_before_results": "文献の答えは『ほぼ何も過去の平均に勝てない』（Goyal-Welch 2008・Goyal-Welch-Zafirov 2024）。組み合わせと符号の制約は小さな改善を示した（RSZ 2010・CT 2008）が、改善は R² で 0.5% 前後＝月の予測はほとんど当たらない。株の割合は平均で 1 を下回りやすく（上乗せ 0.5%/月 ÷ (3×分散 0.002) ≈ 0.8）、買って持つだけの算術平均に負けやすい。勝つとすればシャープレシオ側だが、それが予測の力なのか、分散で割っていること（ぶれの管理）の効果なのかを R1（予測を過去の平均に替えた版）で分ける。予想: ほとんど C。表を全部出して、この族を証拠つきで閉じることが価値。勝ちを作るために線や規則は動かさない。",
+ "data": {
+  "us_stock": "1926-07〜: French F-F_Research_Data_Factors 月次 Mkt = Mkt-RF + RF（上限なしの時価加重・CRSP 全上場）。1926-06 以前（報告のみの時代と推定用）: Shiller 型の総リターン r_m = (price_m + d12_m/12) ÷ price_{m−1} − 1（GW の price・d12＝Shiller の月中平均の株価）",
+  "us_cash": "1926-07〜 French RF、それより前は GW Rfree",
+  "predictors": "Goyal-Welch 2025年版（月次）。dp = log(d12 ÷ price)、ep = log(e12_{3か月前} ÷ price)（利益は発表の遅れを見込み3か月遅れ）、dfy = BAA − AAA、dfr = corpr − ltr、tms = lty − tbl、tbl、lty、ntis、svar、csp、infl（物価の公表の遅れを見込み1か月余分に遅らせる）、ik = 四半期の i/k（四半期末から3か月たった月の末から使う）",
+  "growth": "FRED UNRATE（1948-01〜・1か月遅れで使う＝月末 t に分かるのは t−1 月の値）、FRED INDPRO（1919-01〜・1か月遅れ）、GW e12（3か月遅れ）。いずれも今日の改定後の値（当時の速報値ではない）＝既知の限界",
+  "jst": "Jordà-Schularick-Taylor Macrohistory R6（jst_R6.xlsx・年次 1870〜2020）: eq_tr（株の総リターン・現地通貨）・eq_dp・bill_rate・ltrate・cpi。米国以外の15か国 AUS BEL CHE DEU DNK ESP FIN FRA GBR ITA JPN NLD NOR PRT SWE",
+  "intl_monthly": "French F-F_International_Countries の Local（現地通貨の総リターン・1975〜2025-12）18か国、現金 = OECD 3か月金利 IR3TIB01（無い月は翌日物 IRSTCI01）の前月値 ÷ 12、失業率 = OECD LRHUTTTT{国}M156S（16か国）",
+  "cache": "out/_mw_cache/（gitignore）"
+ },
+ "timing_rules_common": {
+  "decision_time": "リターンの月 m に対して、判断の時点 d(m) = m−1 の月末（1926-07 以降・月末の株価）。1926-06 以前は株価が月中平均なので、月 m のリターン（平均 m−1 → 平均 m）が始まる前に決める必要があり d(m) = m−2 の月末（1か月余分に遅らせる＝後から分かる情報を使わない）",
+  "value_known_at_d": "各変数は d の月末に分かる値（上の遅れを適用）。欠測は 0 で埋めず、その変数はその月の予測に参加しない",
+  "recursive_ols": "変数 i ごとに、ペア（z_i,m', er_m'）で er = a + b·z を最小二乗で推定。z_i,m' は月 m' の判断時点 d(m') に分かっていた値、er_m' = 株の総リターン − 現金（単純リターン・月次）。使うペアは m' ≤ d(m)（その時点で結果が分かっている月だけ）＝拡大窓。ペアが 240 未満（20年の助走）の変数は参加しない",
+  "ct_restriction": "Campbell-Thompson 2008: (i) 傾き b の符号が理論の向きと逆なら、その変数の予測 = 同じ窓の er の過去平均（prevailing mean）。(ii) 予測が負なら 0。理論の向き: dp +・ep +・dfy +・dfr +・tms +・tbl −・lty −・ntis −・infl −・svar +（Merton のリスクとリターン）・ik −（Cochrane 1991）・csp +（Polk-Thompson-Vuolteenaho 2006）",
+  "combination": "その月に参加できる変数の予測の等しい平均（RSZ 2010 の mean）。P3 は中央値。参加できる変数が0の月は戦略を作らない（評価から外す）",
+  "weight": "w_m = clip( f_m ÷ (γ·σ²_m), 下限0, 上限1.5 )、γ = 3、σ²_m = d(m) までに分かっている直近60か月の er の標本分散（CT 2008・RSZ 2010 の既定）",
+  "portfolio_return": "R_m = 現金_m + w_m × er_m − max(w_m − 1, 0) × 0.015/12（1を超える分は 現金＋1.5%/年 で借入）",
+  "cost": "片道売買 100% あたり 0.10%。毎月の売買量 = |w_m − 前月末に値動きで変わった割合|（前月末の割合 = w_{m−1}(1+r_{m−1}) ÷ (1+R_{m−1})）。費用前（借入の上乗せ金利は引いた後）を gross、費用後を net とする",
+  "strategy_months": "US の格付けの窓は 1926-07〜2026-01（予言変数の最後 2025-12 で決めた 2026-01 まで）。相手と重なる月だけで比べる"
+ },
+ "families": {
+  "P_primary": {
+   "role": "主の族（格付け・Holm はこの4本の中で）。全部タイミング型 → C8 必須。C5 は JST の15か国（下の jst_replication）",
+   "strategies": {
+    "P1_RSZ_mean_CT": "全12変数（dfy dfr tms tbl lty ntis infl svar ik csp dp ep）の CT 制約つき予測の等しい平均、w ∈ [0, 1.5]（主の見出し）",
+    "P2_RSZ_mean_raw": "同じ12変数、符号の制約なしの予測の等しい平均（RSZ 2010 の原型）、w ∈ [0, 1.5]",
+    "P3_RSZ_median_CT": "CT 制約つき予測の中央値、w ∈ [0, 1.5]",
+    "P4_RSZ_mean_CT_unlev": "P1 と同じ予測で借入なし w ∈ [0, 1]（個人が借りずにできる版）"
+   }
+  },
+  "I_single": {
+   "role": "第二の族（格付け・Holm はこの12本の中で）。1変数ずつ CT 制約つき・w ∈ [0, 1.5]。C5 は JST にある dp・tbl・lty・tms・infl だけ、ほかは N/A",
+   "strategies": ["I_dfy", "I_dfr", "I_tms", "I_tbl", "I_lty", "I_ntis", "I_infl", "I_svar", "I_ik", "I_csp", "I_dp", "I_ep"],
+   "note": "csp は 2002-12 で終わる＝保有期間が無い（C2・C3・C6 は不合格側に倒れる）。記録には残す"
+  },
+  "G_growth_trend": {
+   "role": "第三の族（格付け・Holm はこの3本の中で）。タイミング型 → C8 必須。株 100% か 短期国債 100% の二択・借入なし",
+   "price_trend": "TRI_t = French Mkt の総リターンを積み上げた月末の指数（1926-06 以前は Shiller 型）。下向き = TRI_t < 直近10か月（t を含む）の TRI の平均",
+   "strategies": {
+    "G1_GT_UNRATE": "d の月末に 下向き かつ UNRATE_{d−1} > 平均(UNRATE_{d−12..d−1}) なら現金、それ以外は株 100%（Philosophical Economics 2016 の Growth-Trend Timing）。1949-01〜",
+    "G2_GT_INDPRO": "下向き かつ INDPRO_{d−1} ÷ INDPRO_{d−13} − 1 < 0 なら現金。1926-07〜",
+    "G3_GT_EARN": "下向き かつ e12_{d−3} ÷ e12_{d−15} − 1 < 0（12か月利益が前年を下回る）なら現金。1871〜のデータで 1891〜1925 の時代も報告"
+   },
+   "c5": "G1 は French の国別（現地通貨・1975〜2025）＋ OECD 失業率（国は公表が遅いので2か月遅れ: u_{t−2} > 平均(u_{t−13..t−2})）の16か国。G2・G3 は国の月次データが無いので N/A"
+  },
+  "R_reference": {
+   "role": "参照の族（格付け・Holm はこの2本の中で）。予測の力と『ぶれの管理』を分けるため",
+   "strategies": {
+    "R1_PM_vol": "予測 = er の過去平均（prevailing mean・変数なし）で同じ w = f ÷ (3σ²) ∈ [0, 1.5]。P1 との差が変数の予測の力",
+    "R2_SMA10": "10か月線の下なら短期国債 100%、上なら株 100%（Faber 2007。mw_trend で別に測られている規則の再掲・二重に数える）"
+   },
+   "c5": "R1 は JST 15か国（変数なし・同じ作り方の年次版）、R2 は French の国別18か国"
+  }
+ },
+ "jst_replication": {
+  "rule": "年次で同じ作り方: 年 Y のリターンを Y−1 年末に分かる値で予測。dp = log(eq_dp_{Y−1})、tbl = bill_rate_{Y−1}、lty = ltrate_{Y−1}/100、tms = lty − tbl、infl = cpi_{Y−2} ÷ cpi_{Y−3} − 1（年平均の物価の公表の遅れを避けて1年余分に遅らせる）。er_Y = eq_tr_Y − bill_rate_Y。再帰的 OLS・助走 20ペア・CT 制約・等しい平均（P3 は中央値・P2 は制約なし・P4 は借入なし）。w = clip(f ÷ (3σ²), 0, 1.5)、σ² = 直近10年の年次 er の標本分散（年次では60個の観測が取れないため10年）。借入 = bill_rate + 1.5%。費用 = 0.10% × |w − 値動き後の前年の割合|",
+  "hyperinflation": "年の物価上昇率（cpi_Y ÷ cpi_{Y−1} − 1）が 100% 以上の年は、名目リターンが通貨の崩壊に支配されるので、推定のペアにも分散にも評価にも使わない（戦略と相手の両方から外す）。該当: DEU 1920・1922・1923・1924、FIN 1918、ITA 1944、JPN 1945・1947",
+  "positive": "その国の out-of-sample の全期間（最初の予測の年〜2020）で、費用後の超過の算術平均 > 0 かつ 幾何の年率差 > 0 （相手 = その国の株を買って持つだけ）。評価できる年が30年未満の国は数えない",
+  "c5": "正の国 ÷ 数えた国 ≥ 2/3。米国（JST）も計算するが数えない（独立でない）",
+  "applies_to": "P1〜P4（5変数 dp tbl lty tms infl の組み合わせ）、I_dp・I_tbl・I_lty・I_tms・I_infl、R1"
+ },
+ "grading": {
+  "windows": "full = 1926-07〜2026-01（G1 は 1949-01〜）、train = 〜2006-12、hold = 2007-01〜2026-01、recent = 2013-07〜（報告）。full/train/hold の excess_stats は費用前（gross）、C6 は費用後（net）の hold。転がる20年窓（mw_common.rolling）と20年積立（mw_common.dca）は費用後で full の窓",
+  "C7": "族の中の Holm（保有期間の両側 p）",
+  "C8": "費用後のシャープレシオ（現金を引いた月次から年率）が訓練と保有の両方で相手を上回る（mw_common.grade）。追加の報告: Jobson-Korkie（Memmel 補正）の z と片側 p、移動ブロック・ブートストラップ（ブロック12か月・2000回・乱数の種 20260928）で差 ≤ 0 の割合。格付けは mw_common.grade のまま（報告の検定で線は変えない）",
+  "c5": "上の jst_replication と G の国別"
+ },
+ "reports_not_graded": {
+  "leak_free_era": "1891〜1925（1926-06 まで）: 文献の知識が入らない時代。P1〜P4（使えるのは dp・ep・svar だけ）・I_dp・I_ep・I_svar・R1・R2・G3 を Shiller 型の総リターンを買って持つだけと比べる。株価が月中平均なので月次のぶれは小さく出る（分散が小さい＝w が大きく出やすい）",
+  "post_publication": "GW 2008・CT 2008 → 2009-01〜、RSZ 2010 → 2011-01〜、Faber 2007 → 2008-01〜、Growth-Trend（2016）→ 2017-01〜",
+  "oos_r2": "予測の当たり外れ: Campbell-Thompson の R²_OS（過去平均に対する二乗誤差の減り方）と Clark-West の t（訓練・保有）",
+  "japan_tax": "日本の課税口座（20.315%）の近似: 売った分の利益に年ごとに課税（年内で損益通算・損失は3年繰越）、配当（GW の d12÷price の月割り×株の割合）と現金の利子は毎月課税、最後に全部売って課税。米ドルのまま（為替は入れない）。相手は同じ扱いの買って持つだけ。報告のみ",
+  "decomposition": "P1 と R1 の差＝変数の予測の力、R1 と市場の差＝ぶれの管理の効果"
+ },
+ "known_limits_before_results": [
+  "予言変数は今日の値（改定後）。失業率・生産・物価・i/k は当時の速報値と違う＝後から分かる情報が少し混ざる（遅れを入れて軽くしただけ）",
+  "GW の変数の多くは 1919〜1947 から始まるので、1930年代までの組み合わせは dp・ep・svar（と 1939年以降の dfy など）だけで作られる",
+  "1926 年より前の株価は月中平均＝リターンがなめらかで、1か月余分に遅らせても自己相関が残る",
+  "Goyal-Welch と RSZ・CT の論文を私たちは知っている（どの変数が効いたか）。保有期間（2007〜）・1891〜1925・米国以外の15か国を独立の答え合わせにする",
+  "w は 0〜1.5 で、平均が 1 未満なら買って持つだけの平均リターンに負けやすい（線は動かさない）",
+  "借入の金利（現金＋1.5%）・費用 0.10% は概算。税は報告のみ",
+  "JST は年次で、年に1回しか割合を変えない（月次の規則とは別物）。C5 は同じ考え方の年次版での再現を見る"
+ ],
+ "multiple_testing": "格付けする本数: P 4・I 12・G 3・R 2 = 21本。探索の族を足すときは out/mw_macro_timing_prereg2.json 以降に測る前に登録し、探索と明記する"
+}

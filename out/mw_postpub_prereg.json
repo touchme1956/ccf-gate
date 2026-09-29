@@ -1,0 +1,99 @@
+{
+ "angle": "postpub",
+ "title": "公表された特徴を『公表の翌年から』順に採用していく買いだけの投資家（実時間の採用者）は、純粋な時価加重の米国市場（French Mkt）に勝てたか。公表後にどれだけ薄まったか",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "note_before_measuring": "この時点で見たのは、データの有無・期間・列名・銘柄数、出典の表の解析結果（公表年・標本期間・t値・群）、三分位の番号の確かめ（符号つき因子と 向き×(第3−第1) の相関＝153/153 で 1.0・表の向きと因子ファイルの向きが153/153一致）、JKP の 'developed' 地域が米国を含まないこと（市場どうしの相関 米国0.72・world_ex_us 0.94）だけ。戦略と市場を比べた数字は一つも計算していない。全体の線（C1〜C8・格付け）は out/mw_prereg.json のまま",
+ "question": "論文が公表された特徴の『公表された良い側』の三分位（上限なしの時価加重）を、公表年の翌年1月から持ち始める投資家は、米国の純粋な時価加重市場に、訓練期間（〜2006）でも保有期間（2007〜）でも勝ったか。米国の公表日を使うので、米国外の地域は公表後の独立な答え合わせになる",
+ "theory": {
+  "McLean_Pontiff_2016": "97の特徴のロング・ショートの利益は、標本外（標本の後〜公表）で約26%、公表後で約58%小さくなる（学術の公表が裁定を呼ぶ）。予言: 公表後の良い側の超過は、標本内より小さいが0ではない",
+  "Jacobs_Muller_2020": "公表後の減衰は米国だけで、米国外では目立たない。予言: 米国外の地域では実時間の採用者の超過が米国より残る",
+  "Chen_Zimmermann_2022_JKP_2023": "公表された特徴の多くは再現する（JKP 2023: 米国で約82%が再現）。ただし買いだけ・時価加重・市場比では売りの側と小型株の寄与が抜ける",
+  "arbitrage_lag": "公表直後は資金が流れ込んで値が上がり（採用の直後に一時的な上乗せ・その後に減衰）、数年後に落ち着く。公表の3年後から持つ規則はその『流れ込みの山』を避ける"
+ },
+ "data": {
+  "portfolios": "JKP（jkpfactors.com）米国 all_factors の三分位ポートフォリオ・'vw'＝上限なしの時価加重・月次・無リスク金利（米国T-bill）を引いた超過・1926-01〜2025-12。三分位の境目は JKP の作り方（非マイクロ株の分位）",
+  "details": "JKP Factor Details.xlsx（https://raw.githubusercontent.com/bkelly-lab/ReplicationCrisis/master/GlobalFactors/Factor%20Details.xlsx）の abr_jkp・cite・in-sample period・t-stat・group・direction・significance",
+  "benchmark": "French F-F_Research_Data_Factors の Mkt-RF と RF。JKP の三分位（超過）と Mkt-RF（超過）にそれぞれ French の RF を足して総リターンにしてから比べる（算術の差は同じ・幾何の差を正しく出すため）",
+  "regions": "JKP 'world_ex_us'・'developed'（米国を含まない先進国）・'jpn'・'emerging' の同じ三分位（'vw'）と、その地域の 'vw' 市場（どちらも米ドル建て・米国T-bill を引いた超過）。French の RF を両方に足す",
+  "cross_check": "Open Source Asset Pricing の SignalDoc.csv（公表年の照合・参考のみ）"
+ },
+ "rules_common": {
+  "good_side": "表の direction が 1 なら第3三分位（特徴が最も大きい）、−1 なら第1三分位。データを見て選ばない（後知恵なし）。番号は確認済み（相関1.0）",
+  "publication_year": "cite の括弧の中の4桁（例 'Novy-Marx (2013)' → 2013）。雑誌の掲載年＝ワーキングペーパーより遅い（採用は控えめに遅い側）。cite の無い11特徴（niq_be_chg1, niq_at_chg1, gp_atl1, ope_bel1, op_at, cop_at, saleq_gr1, ivol_capm_21d, ivol_hxz4_21d, iskew_capm_21d, iskew_hxz4_21d）は公表年が分からないので実時間の戦略から除く（142特徴を使う）",
+  "adoption": "公表年 P の特徴は P+1 年の1月から持つ（その年の間に公表を知れたはず）。遅らせ版は P+4 年の1月から",
+  "in_sample_t": "表の t-stat の絶対値。数字が複数（'min: 2.83, max: 8.39' など）なら絶対値の最小（控えめ）。'N/A'・空欄は不明＝|t|≥3 の版から除く。|t|≥3 は67特徴・t が分かるのは98特徴",
+  "holding": "毎月、採用済みで当月に値のある特徴の良い側の三分位を等分に持つ（毎月組み直し）。三分位の銘柄数が20未満の月・値の無い月はその特徴を欠測として外し、残りで等分（0 と読まない）",
+  "start": "採用済みで値のある特徴が3つ以上になった最初の月から評価（それ以前は戦略が定義されない）。全体の採用者は1980-01（1973・1979・1979年の3本）",
+  "months": "当月末までに分かる値で翌月を持つのは JKP のポートフォリオの作り方が守っている（ポートフォリオは月初に組まれ、特徴は前月末までの値）"
+ },
+ "families": {
+  "primary": {
+   "holm": "この10本で Holm（保有期間の両側 p＝NW t から）",
+   "strategies": {
+    "P1_RT_all": "公表年の分かる142特徴の実時間の採用者（等分）",
+    "P2_RT_t3": "論文の標本内 |t|≥3 の特徴だけ（公表時に分かる情報）の実時間の採用者",
+    "P3_RT_lag3": "142特徴・公表の3年後（P+4年の1月）から持つ（裁定を意識した採用者）",
+    "P4_RT_balanced": "142特徴・7つの群（Momentum/VALUE/INVESTMENT/Profitability/INTANGIBLES/TRADING FRICTIONS/NEW）ごとに等分し、群の中で等分",
+    "T_Momentum": "群 Momentum の特徴だけの実時間の採用者（3本そろうのは1994年〜）",
+    "T_VALUE": "群 VALUE だけ（1986年〜）",
+    "T_INVESTMENT": "群 INVESTMENT だけ（2003年〜・訓練期間は4年しかない）",
+    "T_Profitability": "群 Profitability だけ（1999年〜）",
+    "T_INTANGIBLES": "群 INTANGIBLES だけ（1999年〜）",
+    "T_TRADING_FRICTIONS": "群 TRADING FRICTIONS だけ（1982年〜）"
+   },
+   "note": "群 NEW は JKP が足した雑多な特徴の集まりで『テーマ』ではないので単独の戦略にしない（P1・P4 には入る）"
+  },
+  "census": {
+   "exploratory": true,
+   "desc": "特徴ごと（153すべて）の良い側の三分位を、データの始まりから持った場合。後知恵（公表前の期間を含む）があるので主の族とは別。Holm は153本で。勝ちとして数えるのは公表年が2006年以前（保有期間がまるごと公表後）の特徴だけ（83本）。公表が2007年以降の特徴は保有期間に論文の標本が重なるので『勝ち』に数えない（格付けは記録する）",
+   "post_pub": "特徴ごとに、公表年の翌年1月からの超過も報告（判定には使わない）"
+  },
+  "decay_report": {
+   "graded": false,
+   "desc": "McLean-Pontiff 型: 特徴ごとの良い側の超過（対 Mkt-RF）を 標本前・標本内・標本後〜公表・公表後 に分け、(a) 月ごとにその状態の特徴を等分に束ねた系列の平均と NW t、(b) 特徴ごとの平均の横断平均・素朴な横断 t・正の数、(c) 減衰率＝1−公表後÷標本内。公表後を〜2006 と 2007〜 に分けても報告"
+  }
+ },
+ "benchmark_and_periods": {
+  "US": "French Mkt（Mkt-RF + RF）。共通の終わりは2025-12（JKP の終わり）",
+  "full": "各戦略の始まり〜2025-12",
+  "train": "各戦略の始まり〜2006-12（群によっては15年に満たない＝全体の決まりどおり始まり〜2006-12）",
+  "hold": "2007-01〜2025-12",
+  "recent": "2013-07〜2025-12（報告のみ）",
+  "regions_C5": "4地域（world_ex_us・developed・jpn・emerging）で同じ規則（同じ米国の公表日）を 1990-01〜2025-12 に当て、地域の 'vw' 市場に対する算術平均の超過が正の地域の数。2/3 以上＝4地域中3つ以上で合格。world_ex_us は developed・jpn・emerging と重なる（独立ではない）ことを承知で使う。保有期間の地域の数字も報告"
+ },
+ "costs": {
+  "unit": "片道売買100%あたり 0.30%（中小型の既定・大型だけより保守的）",
+  "turnover_assumed_per_year_oneway": {
+   "seas（季節性10本）": 6.0,
+   "ret21（21日のリターン系: ret_1_0, rmax1_21d, rmax5_21d, rskew_21d, iskew_*_21d, coskew_21d）": 6.0,
+   "vol21（21日の変動・流動性: rvol_21d, ivol_*_21d, beta_dimson_21d, bidaskhl_21d, zero_trades_21d, rmax5_rvol_21d）": 2.0,
+   "mom3（ret_3_1）": 2.5,
+   "mom（ret_6_1, ret_9_1, ret_12_1, ret_12_7, resff3_6_1, resff3_12_1, prc_highprc_252d）": 1.5,
+   "surprise（niq_su, saleq_su, ni_inc8q）": 1.5,
+   "qacct（niq_be, niq_at, niq_be_chg1, niq_at_chg1, saleq_gr1, ocfq_saleq_std）": 0.8,
+   "trade（turnover_126d, turnover_var_126d, dolvol_126d, dolvol_var_126d, ami_126d, zero_trades_126d, zero_trades_252d, ivol_capm_252d, betadown_252d）": 0.6,
+   "long（ret_60_12, beta_60m, betabab_1260d, corr_1260d, market_equity, prc, age）": 0.3,
+   "composite（qmj*, mispricing_*, f_score, o_score, z_score, kz_index）": 0.6,
+   "annual（上のどれでもない年次の会計値・割安の比率＝84本）": 0.4
+  },
+  "adopter": "採用者の回転率＝その月に持つ特徴の回転率の重みつき平均（特徴どうしの売買の相殺を数えない＝保守的）。保有期間の月の平均回転率を mw_common.apply_cost に渡して一定の費用を月割りで引く。採用の入れ替え（新しい特徴を足す売買）は小さいとして入れない",
+  "note": "回転率は測った値ではなく仮定（三分位は分位の境目の近くの銘柄が出入りするので、同じ特徴の十分位よりずっと小さい）"
+ },
+ "grading": "mw_common.grade（C1〜C7。タイミング・レバレッジではないので C8 は該当なし）。C7 の Holm は族ごと（主=10本・census=153本）の保有期間の両側 p。C4 は各戦略の始まりからの転がる20年窓（7月起点・一括）",
+ "predictions_before_measuring": {
+  "P1_RT_all": "訓練期間では市場に年+1〜2%で勝ち、保有期間（2007〜）では0前後か負（割安と小型の負け・巨大テックの勝ち・公表後の減衰）。C1 は合格しうるが C2 は五分五分",
+  "decay": "標本内の超過が最も大きく、公表後は半分前後（McLean-Pontiff の −58% はロング・ショートの話で、買いだけの三分位ではもっと小さい絶対値の中の比）",
+  "regions": "米国外では公表後も超過が残りやすい（Jacobs-Müller）",
+  "census": "公表が2006年以前の特徴で、保有期間でも t≥1.65 で市場に勝つものはあっても数本。収益性・質の側が候補"
+ },
+ "known_limits": [
+  "向き（direction）は JKP が決めた。一部は原論文と食い違いうる（例 beta_60m は Fama-MacBeth 1973 の引用だが向きは −1＝低ベータ。Black-Jensen-Scholes 1972 の平らな証券市場線なら当時も知れた）",
+  "特徴の一覧そのものは2020年前後の研究者（Hou-Xue-Zhang・JKP）が選んだ。『後で再現した特徴』に偏っているかもしれない（ただし JKP は再現しない特徴も入れている）",
+  "公表年は雑誌の掲載年。実際にはワーキングペーパーで数年早く知れた（本検証の採用は遅い側＝公表直後の山を一部取り逃がす）",
+  "三分位（数百〜千数百社）を100本以上等分に持つ姿は、実際には市場に近い広い分散で、個人がそのまま作るのは難しい（銘柄ごとの重みに直せば作れるが売買は増える）",
+  "費用は仮定の回転率 × 0.30%。税は入れていない",
+  "C5 の4地域は重なっている（world_ex_us ⊃ developed・jpn・emerging の一部）。米国の公表日を使うので地域は公表後の答え合わせになるが、地域の研究者が同じ特徴を知っていた可能性はある",
+  "私たちは2007年以降の歴史を知っている（巨大テックの勝ち・割安の負け）。規則はそれを見る前に表から機械的に決まる形にした"
+ ]
+}

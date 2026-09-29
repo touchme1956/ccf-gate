@@ -1,0 +1,409 @@
+{
+ "angle": "activist_13d",
+ "title": "S&P500 の会社にアクティビスト（投資組合・運用会社）の Schedule 13D が出た翌月に買って 12/24 か月持つと、純粋な時価加重の米国株に勝つか",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "asked_by": "ユーザー（2026-09-28）「市場に勝てる歴史検証が出るまでいろんな角度から調べて勝てる結果を出して。限界までやって…探し続ける努力をしてほしい」→ 角度 activist_13d を担当（批評役の提案 out/_mw_cache/r8_critics.json の activist_13d・優先度5）",
+ "global_criteria": "out/mw_prereg.json（C1〜C8・格付け S/A/B/C）をそのまま使う。判定は night/mw_common.grade()。線は動かさない",
+ "tool": "night/mw_activist_13d.py → out/mw_activist_13d.json",
+ "what_was_looked_at_before_registering": [
+  "データの有無・期間・件数だけ。戦略と市場を比べた数字（超過・t 値・勝率）は一つも計算していない。リターンの系列も見ていない",
+  "EDGAR form.idx 1994Q1〜2026Q3 の 13D 系の行 413,689（SC 13D 121,101・SC 13D/A 272,798・SCHEDULE 13D 4,050・SCHEDULE 13D/A 15,740）・受付番号 209,137。最初の 13D（修正でない）は 1996 年 2,308・2001 年 2,866・2010 年 1,974・2020 年 1,148・2025 年 1,115",
+  "S&P500 の名簿の記号の期間 → CIK の割り当ての被覆（名簿の日×銘柄）: 1996 48%・2000 65%・2003 70%・2006 87%・2010 94%・2015 99%・2020〜 100%（Wikipedia の版が 2007 年から・CIK 列は 2014 年から・上場廃止した社の名前は 2006 年以前ほぼ取れない＝訓練期間ほど割り当てが欠ける）。初版では ex27 の本文の記号をそのまま使い T を THQ・TR Financial 等に当てる誤りが出たので、(1) 浮動株 10 億ドル以上 (2) 同じ記号を別の大型社が名乗らない (3) 今その記号を使う別の会社が当時も生きていない、に絞った（件数を見て直しただけで、リターンは見ていない）",
+  "当事者（対象か提出者）の CIK が提出日に名簿にいる最初の 13D は 1,976 件。本文を全部取得（404 は 1 件）。ヘッダの SUBJECT COMPANY で対象会社を決めると、対象が名簿にいるのは 574 件（残りは S&P500 の会社が他社の株を 5% 超持った届け出）",
+  "Item 4 が切り出せないのは 574 件中 22 件。発行済株式数（時価加重の重み用）は 508/574 件で読めた（Item 5 の『X shares outstanding』297・表紙の保有株数÷保有比率 211）",
+  "★事前の点検で Item 4 の切り出しと提出者の判定を2回直した（(1) Item 4 が『See Item 6』のように短い場合を捨てていた → 5 字超なら採る (2) ヘッダの FILED BY がグループの代表の自然人だけのとき〔例 ICAHN CARL C ET AL〕、表紙の『NAME OF REPORTING PERSON』の全員も提出者に数える＝ブリーフの『提出者が投資組合・運用会社』に忠実にした）。どちらも件数と本文を見て直しただけ",
+  "★記号の選び方を直した: CIK の今の記号の先頭が優先株（例 Santander Holdings USA の SNUS-PI）になる社があったので、優先株・ワラント・ユニット・権利の記号を除く。CIK に今の記号が無いときは、名簿の記号を今使う別の CIK の社名の最初の語が同じなら使う（持株会社への組み替え＝例 Xerox）",
+  "年ごとの件数（F1＝ブリーフのアクティビスト）: 1996 1・1997 3・1998 4・1999 3・2000 5・2001 0・2002 0・2003 0・2004 4・2005 7・2006 6（訓練期間 平均 3.0 件/年・最小 0）／2007 17・2008 20・2009 7・2010 9・2011 11・2012 11・2013 9・2014 17・2015 21・2016 12・2017 12・2018 11・2019 5・2020 7・2021 3・2022 2・2023 1・2024 6・2025 4",
+  "区間（同じ会社の重なる区間をつないだ後）と入る月に Yahoo で観測できる数: F1 H12 は 188 区間（訓練 28・うち観測 8／保有 160・うち観測 97）。時価が取れた区間 102。X0（全 13D）は訓練 154 区間・観測 77",
+  "観測できない区間の多くは買収された会社（Anheuser-Busch・Tiffany・Whole Foods・Allergan・Family Dollar・PetSmart・Safeway・BMC・Dell・Citrix・Electronic Arts など）＝アクティビストの狙いが実った可能性が高い側。一部は破綻（Washington Mutual・Countrywide）",
+  "F1 の出来事の顔ぶれ（名前の一覧）を見た: Icahn・Trian・Pershing Square・Jana・Elliott・Starboard・Relational などの本物のキャンペーンに加え、PE の出資（KKR の Zimmer・SoftBank の T-Mobile・PIF の EA・Adenza の Nasdaq など、取引の対価として株を受け取った届け出）も F1 に入る＝ブリーフの定義どおり。名の知れたアクティビストだけの版は探索 X2",
+  "French Mkt の CAGR（mw_common の自己テストの値）以外の市場の数字は見ていない"
+ ],
+ "question": "S&P500 の構成銘柄にアクティビストの Schedule 13D（5% 超の保有と、経営に働きかける意図の開示）が出たとき、その翌月に買って 12 か月または 24 か月持つ規則は、純粋な時価加重の米国株（French Mkt ≒ S&P500）に、訓練期間（1996-07〜2006-12）でも保有期間（2007-01〜）でも費用後に勝つか。大型株なので個人の城の規模でも持てる",
+ "sources": {
+  "discovery": "Brav, Jiang, Partnoy & Thomas (2008) 'Hedge Fund Activism, Corporate Governance, and Firm Performance', Journal of Finance 63(4)（2001〜2006 の 13D。発表時の超過 約+7%・その後の1年で戻らない）。公表 2008 → 『公表後の新しい窓』は 2009-01〜（報告のみ）",
+  "prior_for_large_caps": "deHaan, Larcker & McClure (2019) 'Long-term economic consequences of hedge fund activist interventions', Review of Accounting Studies（長期の上乗せは小型の対象に集中し、大型では見えない）＝本角度の事前の見込みは弱い（ブリーフの優先度も5）",
+  "note": "論文の数字は原本を今回確かめていない（引用の要旨のみ）。判定は私たちのデータだけで行う"
+ },
+ "data": {
+  "filings": "EDGAR full-index form.idx（1994Q1〜2026Q3・131四半期）の SC 13D / SC 13D/A / SCHEDULE 13D / SCHEDULE 13D/A（2024-12 以降の XML 様式）の行。同じ受付番号の行を組にすると、対象会社と提出者の2つの CIK が並ぶ（2 CIK が 204,552 件・1 CIK が 4,585 件）。1994〜2002 は ex27 のキャッシュ、2003〜2012 の一部は moat_text のキャッシュ（どちらも読むだけ）、残りは SEC の form.gz（4 req/s 以下）",
+  "documents": "対象会社か提出者のどちらかが S&P500 の名簿にいる最初の 13D（修正でない）の本文 .txt（1,976 件）。SEC ヘッダの SUBJECT COMPANY で対象会社を決め、FILED BY を提出者とする。Item 4『Purpose of Transaction』の文を Item 5 の前まで切り出す（XML 様式は <item4>）",
+  "membership": "S&P500 の日次の名簿（out/_mw_cache/ie_sp500_components.csv＝github.com/fja05680/sp500・1996-01-02〜2026-08-18・のべ 1,209 記号。index_events が取ったものを読むだけ）。記号の期間 → CIK は証拠の近さで割り当てる: (1) Wikipedia『List of S&P 500 companies』の半年ごとの版（2007-07〜2026-07・2014 以降は CIK 列あり、それ以前は社名 → 10-K 提出者名の一致） (2) 同じ記事の変更表（社名） (3) SEC の今の記号一覧（company_tickers.json・その記号の期間に 10-K を出していた CIK だけ） (4) ex27 が 1995〜2002 の 10-K 本文から拾った記号（表紙の浮動株時価 10 億ドル以上・同じ記号を別の大型社が名乗らない・今その記号を使う別の会社が当時も生きていない、のすべてを満たすものだけ）。どの CIK もその会社の 10-K が出ている期間の外には当てない。証拠から 3 年を超えて伸ばすのは、その CIK が今も同じ記号を使っているときだけ",
+  "prices": "Yahoo 月次の調整後終値（配当込みの総リターン）。対象会社の CIK の『今の記号』（SEC company_tickers.json・名簿の記号が今の記号の中にあればそれ、無ければ一覧の最初）で引く。index_events の ie_yh キャッシュを読むだけで使い、無い記号だけ activist_13d/yh/ へ取る。上場廃止した会社は今の記号一覧に無い＝未観測（生き残りの偏り）",
+  "industry": "13D の SEC ヘッダの対象会社の SIC → French の Siccodes49 → French 49 業種の時価加重の月次総リターン（F3 の相手）",
+  "benchmark": "French Mkt（Mkt-RF + RF）＝総リターン。Yahoo の総リターンと総リターンどうしで比べる"
+ },
+ "event_definition": {
+  "base": "最初の Schedule 13D（SC 13D か SCHEDULE 13D・修正 /A は出来事にしない）で、SEC ヘッダの対象会社の CIK が、提出日にS&P500 の名簿にいる（上の割り当てで）こと",
+  "activist_F1": "提出者（ヘッダの FILED BY と、索引で同じ受付番号に並ぶ対象会社以外の CIK）のうち少なくとも1つが投資組合・運用会社の語（PARTNERS / PARTNERSHIP / L.P. / LP / CAPITAL / MANAGEMENT / MGMT / ADVISOR(S) / ADVISER(S) / ADVISORY / FUND(S) / INVESTMENT(S) / INVESTORS / ASSET / OPPORTUNITY / OPPORTUNITIES / MASTER / OFFSHORE / GP）を名前に持ち、対象会社自身でない（この語を持つ名前は自然人ではない）。かつ Item 4 の文に次のどれかを含む（大小無視）: board / director nominat* / strategic alternative* / sale of the company / maximize shareholder(stockholder) value / proxy / spin-off / buyback。Item 4 が切り出せない本文は旗を立てない（数を報告）",
+  "first_time_F2": "F1 のうち、同じ対象会社と同じ提出者（上の提出者の CIK のどれか）の組の 13D か 13D/A が、提出日より前の 36 か月（1,096 日）に索引に1件も無いもの（初回の働きかけ）",
+  "known_note": "Item 4 の定型文（Schedule 13D の (a)〜(j) の列挙）に『any change in the present board of directors』が入るので、『board』はほぼ全ての 13D に当たる＝F1 は実質『投資組合・運用会社の 13D』。これはブリーフどおりの定義で、結果を見る前に承知している。より厳しい語だけの版は探索 X1"
+ },
+ "timing_rule": "月次。提出日が月 m に入れば、月 m の末に買い（提出は当日に公開＝後知恵なし）、月 m+1 から H か月（m+1〜m+H）持つ。同じ会社の区間が重なる（または接する）ときは一続きにつなぐ（1社は1回だけ数える）。持つ社が0の月は French Mkt を持つ（その月の超過は0）",
+ "weights": {
+  "EW": "毎月、持っている全社を等加重（暦月のポートフォリオ・毎月戻す）",
+  "VW": "入った月の時価（13D の本文の『X shares outstanding』か表紙の保有株数÷保有比率の中央値 × Yahoo の提出月末の分割調整前の終値）で重みを付け、その後は値動きで流す（買って持つ時価加重）。時価が取れない社（株数が読めない・未観測）はその年に入った社の時価の中央値を使う（件数を報告）。時価が 3 億〜6 兆ドルの外なら取れないとみなす"
+ },
+ "families": {
+  "primary": {
+   "F1_activist": "F1 の出来事 × {EW, VW} × {H=12, H=24}（4本）。相手 French Mkt",
+   "F2_first_time": "F2 の出来事 × {EW, VW} × {H=12, H=24}（4本）。相手 French Mkt",
+   "F3_industry_matched": "F1 の出来事 × {EW, VW} × {H=12, H=24}（4本）。相手は同じ重みで各社の French 49 業種（時価加重）のリターンを持つポートフォリオ（持つ社が0の月は両方 Mkt）＝業種を揃えた超過",
+   "count": 12,
+   "holm": "主の族12本の保有期間の p（S と L の大きい方）に Holm をかける"
+  },
+  "exploratory": {
+   "X0_all13D": "対象が S&P500 の全ての最初の 13D（提出者の種類も Item 4 も問わない）× EW × {12, 24}＝旗の効き目を見る基準線",
+   "X1_strong": "提出者は F1 と同じ。Item 4 に定型文に無い強い語（director nominat* / nominat…director・candidate / strategic alternative* / sale of the company / maximize shareholder value / proxy contest・fight・solicitation / solicit…prox / spin-off / buyback / share repurchase / representation on the board / board representation / seat(s) on the board）のどれかを含む × {EW, VW} × {12, 24}",
+   "X2_known_activists": "提出者の名前が名の知れたアクティビストの一覧（Icahn・Elliott・Pershing Square・Trian・ValueAct・Third Point・Starboard/Ramius・Jana・Relational・Corvex・Sandell・Greenlight・Barington・Steel Partners・Harbinger・Mantle Ridge・Engaged・Land & Buildings・Sachem Head・Marcato・Blue Harbour・GAMCO/Gabelli・Legion・Cevian・Ancora・Irenic・Engine No. 1・Clinton Group・Breeden・Glenview・Tracinda・Atlantic Investment Management・Wynnefield・FrontFour・Bulldog・Scopia・Knight Vinke）に当たり、Item 4 に F1 の語 × EW × {12, 24}。★この一覧は今日の知識で作った＝『有名になった＝成功した』後知恵が入る。判定は付けるが探索と明記",
+   "X3_long_hold": "F1 × {EW, VW} × H=36",
+   "count": 10,
+   "note": "探索は判定を付けるが、主の族の Holm には入れない（family_holm_p は None）。C7 は全期間 t≥3.0 でしか満たせない"
+  }
+ },
+ "bounds": {
+  "S_observed_only": "未観測の社（入る月に Yahoo の値が無い＝今の記号一覧に無い・系列が始まっていない）を持たない。途中で系列が切れた社は最後の値で売り、残りへ按分＝生き残りの偏りで上に出やすい側",
+  "M_frozen": "未観測の社を持つはずだった重みで持ち、観測できない月は 0%（最後の値のまま据え置く＝買収なら現金で受け取ったのと同じ近似）。報告のみ（ブリーフの『最後の観測値』の中間）",
+  "L_loss": "未観測の社を、観測できない最初の月に −100%＝下に出る最悪側",
+  "N_neutral": "未観測の月はその区間の相手（F1・F2 は French Mkt、F3 はその社の49業種）と同じリターン＝超過0を置く（持ち続ける）。報告のみ（観測できる区間の効き目を薄めた形で見る）",
+  "grading": "S と L の両方で mw_common.grade() を当てる。保有期間の超過の符号と訓練期間の超過の符号が S と L で一致したときだけ格を付け、格は悪い方を採る。割れたら『判定不能』（合格扱いにしない）。Holm の p は S と L の大きい方。月 +300% 超の値はデータの誤りとみなし、その社をその前の月の値で打ち切る（両方で最後の値で売る）",
+  "note": "index_events の上下限と同じ作法",
+  "wipeout": "L で持っている社が全部その月に −100% になると累積で全損＝対数が取れないので −99.99% で止めて計算し、その月を記録する（index_events と同じ）"
+ },
+ "periods": {
+  "full": "1996-07〜2026-08（ブリーフの訓練の始まり〜French の終わり。最初の出来事より前の月と持つ社が0の月は French Mkt＝超過0）",
+  "train": "1996-07〜2006-12（約10.5年。mw_prereg の注記『始まりが1990年代のデータは始まり〜2006-12』に従う）",
+  "hold": "2007-01〜2026-08",
+  "recent": "2013-07〜（報告のみ）",
+  "fresh_post_publication": "2009-01〜（Brav-Jiang-Partnoy-Thomas 2008 の公表後・報告のみ）"
+ },
+ "turnover_and_cost": {
+  "cost": "片道売買 100% あたり 0.10%（大型株・ブリーフどおり）",
+  "turnover_oneway_per_year": {
+   "EW_H12": 1.5,
+   "EW_H24": 1.0,
+   "EW_H36": 0.8,
+   "VW_H12": 1.0,
+   "VW_H24": 0.5,
+   "VW_H36": 0.35
+  },
+  "why": "EW は区間の出入り（12 か月なら年 100%）＋毎月の等加重の戻し（年 約 50%）。VW は出入りだけ。French Mkt に置いている月の出入りは数えない（小さい）"
+ },
+ "metrics": [
+  "mw_common.excess_stats を full / train / hold / recent / fresh2009（相手は French Mkt。F3 は業種を揃えた相手）",
+  "費用控除後の hold（mw_common.apply_cost・上の回転率）",
+  "rolling(s, 相手, 20)（毎年7月起点・一括）と dca(s, 相手, 20)",
+  "C5（他の地域での再現）: 米国外の 13D に当たる無料の索引が無い＝N/A",
+  "報告のみ: 同じ観測の規則（名簿の CIK の今の記号の Yahoo）で作った『観測できる S&P500 の等加重』を相手にした EW の超過（生き残りの偏りを両側に同じだけ入れた比較）。被覆（観測できた社の割合・区間の数・時価が取れた数・平均の保有社数・持つ社が0の月）"
+ ],
+ "sanity_checks": [
+  "French Mkt の CAGR 1926-07〜2026-08 ≈ 10.4%・2007〜 ≈ 11.1%（mw_common の自己テストと一致）",
+  "総リターンどうし: Yahoo の adjclose（配当込み）と French Mkt（Mkt-RF+RF）。超過と総リターンを混ぜない",
+  "後知恵なし: 出来事の月 m の翌月 m+1 から持つ。名簿の判定は提出日の名簿、13D の本文は提出時のもの",
+  "欠測を 0 と読まない: Yahoo の欠けた月をまたぐ変化はリターンにしない・未観測は S では持たない／L では −100%（0 にしない）",
+  "件数の検算: 年ごとの出来事の数をリターンを見る前に数え、この事前登録に書く"
+ ],
+ "event_counts_before_returns": {
+  "1996": {
+   "S&P500_13D": 30,
+   "F1_activist": 1,
+   "F2_first": 1,
+   "X1_strong": 0,
+   "X2_known": 0,
+   "F1_observed_at_entry": 1,
+   "item4_found": 28
+  },
+  "1997": {
+   "S&P500_13D": 30,
+   "F1_activist": 3,
+   "F2_first": 3,
+   "X1_strong": 1,
+   "X2_known": 0,
+   "F1_observed_at_entry": 0,
+   "item4_found": 26
+  },
+  "1998": {
+   "S&P500_13D": 40,
+   "F1_activist": 4,
+   "F2_first": 4,
+   "X1_strong": 1,
+   "X2_known": 0,
+   "F1_observed_at_entry": 2,
+   "item4_found": 39
+  },
+  "1999": {
+   "S&P500_13D": 30,
+   "F1_activist": 3,
+   "F2_first": 2,
+   "X1_strong": 2,
+   "X2_known": 1,
+   "F1_observed_at_entry": 1,
+   "item4_found": 26
+  },
+  "2000": {
+   "S&P500_13D": 22,
+   "F1_activist": 5,
+   "F2_first": 5,
+   "X1_strong": 0,
+   "X2_known": 2,
+   "F1_observed_at_entry": 1,
+   "item4_found": 20
+  },
+  "2001": {
+   "S&P500_13D": 16,
+   "F1_activist": 0,
+   "F2_first": 0,
+   "X1_strong": 0,
+   "X2_known": 0,
+   "F1_observed_at_entry": 0,
+   "item4_found": 13
+  },
+  "2002": {
+   "S&P500_13D": 9,
+   "F1_activist": 0,
+   "F2_first": 0,
+   "X1_strong": 0,
+   "X2_known": 0,
+   "F1_observed_at_entry": 0,
+   "item4_found": 7
+  },
+  "2003": {
+   "S&P500_13D": 12,
+   "F1_activist": 0,
+   "F2_first": 0,
+   "X1_strong": 0,
+   "X2_known": 0,
+   "F1_observed_at_entry": 0,
+   "item4_found": 10
+  },
+  "2004": {
+   "S&P500_13D": 11,
+   "F1_activist": 4,
+   "F2_first": 4,
+   "X1_strong": 2,
+   "X2_known": 1,
+   "F1_observed_at_entry": 2,
+   "item4_found": 11
+  },
+  "2005": {
+   "S&P500_13D": 20,
+   "F1_activist": 7,
+   "F2_first": 7,
+   "X1_strong": 4,
+   "X2_known": 3,
+   "F1_observed_at_entry": 1,
+   "item4_found": 20
+  },
+  "2006": {
+   "S&P500_13D": 22,
+   "F1_activist": 6,
+   "F2_first": 5,
+   "X1_strong": 1,
+   "X2_known": 1,
+   "F1_observed_at_entry": 1,
+   "item4_found": 22
+  },
+  "2007": {
+   "S&P500_13D": 24,
+   "F1_activist": 17,
+   "F2_first": 15,
+   "X1_strong": 8,
+   "X2_known": 4,
+   "F1_observed_at_entry": 6,
+   "item4_found": 24
+  },
+  "2008": {
+   "S&P500_13D": 29,
+   "F1_activist": 20,
+   "F2_first": 17,
+   "X1_strong": 8,
+   "X2_known": 10,
+   "F1_observed_at_entry": 11,
+   "item4_found": 29
+  },
+  "2009": {
+   "S&P500_13D": 15,
+   "F1_activist": 7,
+   "F2_first": 6,
+   "X1_strong": 4,
+   "X2_known": 3,
+   "F1_observed_at_entry": 3,
+   "item4_found": 14
+  },
+  "2010": {
+   "S&P500_13D": 18,
+   "F1_activist": 9,
+   "F2_first": 9,
+   "X1_strong": 0,
+   "X2_known": 4,
+   "F1_observed_at_entry": 3,
+   "item4_found": 17
+  },
+  "2011": {
+   "S&P500_13D": 24,
+   "F1_activist": 11,
+   "F2_first": 9,
+   "X1_strong": 6,
+   "X2_known": 7,
+   "F1_observed_at_entry": 7,
+   "item4_found": 24
+  },
+  "2012": {
+   "S&P500_13D": 19,
+   "F1_activist": 11,
+   "F2_first": 10,
+   "X1_strong": 5,
+   "X2_known": 8,
+   "F1_observed_at_entry": 6,
+   "item4_found": 19
+  },
+  "2013": {
+   "S&P500_13D": 18,
+   "F1_activist": 9,
+   "F2_first": 9,
+   "X1_strong": 5,
+   "X2_known": 5,
+   "F1_observed_at_entry": 3,
+   "item4_found": 18
+  },
+  "2014": {
+   "S&P500_13D": 24,
+   "F1_activist": 17,
+   "F2_first": 16,
+   "X1_strong": 9,
+   "X2_known": 13,
+   "F1_observed_at_entry": 5,
+   "item4_found": 24
+  },
+  "2015": {
+   "S&P500_13D": 30,
+   "F1_activist": 21,
+   "F2_first": 21,
+   "X1_strong": 9,
+   "X2_known": 11,
+   "F1_observed_at_entry": 19,
+   "item4_found": 30
+  },
+  "2016": {
+   "S&P500_13D": 19,
+   "F1_activist": 12,
+   "F2_first": 11,
+   "X1_strong": 7,
+   "X2_known": 3,
+   "F1_observed_at_entry": 10,
+   "item4_found": 19
+  },
+  "2017": {
+   "S&P500_13D": 24,
+   "F1_activist": 12,
+   "F2_first": 12,
+   "X1_strong": 8,
+   "X2_known": 7,
+   "F1_observed_at_entry": 10,
+   "item4_found": 24
+  },
+  "2018": {
+   "S&P500_13D": 18,
+   "F1_activist": 11,
+   "F2_first": 9,
+   "X1_strong": 8,
+   "X2_known": 5,
+   "F1_observed_at_entry": 9,
+   "item4_found": 18
+  },
+  "2019": {
+   "S&P500_13D": 8,
+   "F1_activist": 5,
+   "F2_first": 5,
+   "X1_strong": 0,
+   "X2_known": 1,
+   "F1_observed_at_entry": 5,
+   "item4_found": 8
+  },
+  "2020": {
+   "S&P500_13D": 12,
+   "F1_activist": 7,
+   "F2_first": 5,
+   "X1_strong": 2,
+   "X2_known": 3,
+   "F1_observed_at_entry": 7,
+   "item4_found": 12
+  },
+  "2021": {
+   "S&P500_13D": 5,
+   "F1_activist": 3,
+   "F2_first": 3,
+   "X1_strong": 1,
+   "X2_known": 1,
+   "F1_observed_at_entry": 3,
+   "item4_found": 5
+  },
+  "2022": {
+   "S&P500_13D": 7,
+   "F1_activist": 2,
+   "F2_first": 1,
+   "X1_strong": 2,
+   "X2_known": 1,
+   "F1_observed_at_entry": 1,
+   "item4_found": 7
+  },
+  "2023": {
+   "S&P500_13D": 2,
+   "F1_activist": 1,
+   "F2_first": 1,
+   "X1_strong": 0,
+   "X2_known": 0,
+   "F1_observed_at_entry": 1,
+   "item4_found": 2
+  },
+  "2024": {
+   "S&P500_13D": 13,
+   "F1_activist": 6,
+   "F2_first": 6,
+   "X1_strong": 5,
+   "X2_known": 3,
+   "F1_observed_at_entry": 5,
+   "item4_found": 13
+  },
+  "2025": {
+   "S&P500_13D": 16,
+   "F1_activist": 4,
+   "F2_first": 4,
+   "X1_strong": 1,
+   "X2_known": 0,
+   "F1_observed_at_entry": 3,
+   "item4_found": 16
+  },
+  "2026": {
+   "S&P500_13D": 7,
+   "F1_activist": 0,
+   "F2_first": 0,
+   "X1_strong": 0,
+   "X2_known": 0,
+   "F1_observed_at_entry": 0,
+   "item4_found": 7
+  }
+ },
+ "expected_power": [
+  "ブリーフは『訓練期間に年5件以上』を要求したが、F1 は平均 3.0 件/年（2001〜2003 は 0 件）＝この要求を満たさない。事前にそう記録する",
+  "訓練期間の F1 の区間は 28、そのうち入る月に観測できるのは 8（S の上下限では訓練期間の大半の月が French Mkt そのもの＝超過 0）。C1（訓練 t≥2）はほぼ満たせない＝主の族の格は C か『判定不能』になる見込みが高い（結果を見る前の予想）",
+  "保有期間は観測できる区間が約 90〜100（H12 で平均 5 社前後を持つ）。5 社前後の集中の追従のぶれは年 15〜20% 程度と見込み、20 年で t≥1.65 に要る超過は年 6〜7% 程度＝大型株では文献の見込み（deHaan ら 2019）より大きい＝検出力は低い",
+  "上下限の幅: 観測できない区間が保有期間でも 4 割ある。L（−100%）は買収で退場した社（勝ち側の可能性が高い）まで全損に数えるので大きく下に出る。S と L の符号が割れて『判定不能』になる見込みが高い"
+ ],
+ "known_limits_before_results": [
+  "★S は『上』の側とは限らない: index_events では未観測の社は倒産・縮小側が多いので S が上に出るとしたが、アクティビストの対象では未観測の多くが買収（プレミアム付き）で退場した社＝本当の成績は S より上の可能性もある。S も L も下に偏りうる（M・N も報告するが判定には使わない）",
+  "名簿の割り当ては訓練期間ほど欠ける（1996 年 48%・2003 年 70%）＝訓練期間の出来事は取りこぼしがある（主に後に上場廃止した社）",
+  "Item 4 の『board』は定型文の (d) に必ず出るので、F1 は実質『投資組合・運用会社の 13D』＝PE の出資や取引の対価の株も入る。より厳しい版は探索 X1・X2",
+  "13D は 5% 超の保有で出る＝S&P500 の大企業では 5% に届かない働きかけ（Trian の P&G・Pershing の Canadian Pacific 以外の多く）は出来事にならない。大型株のアクティビズムの一部しか見ていない",
+  "VW の時価は 13D の本文の発行済株式数 × Yahoo の分割調整前の終値（分割の倍率を掛け戻す）。種類株の片方だけの株数のときは過小",
+  "Yahoo は配当込みの調整後終値だが、スピンオフは分割の扱い＝分離した株を親に再投資した近似",
+  "独立の試行は少ない（区間が重なり、同じ年に集まる）。Newey-West（ラグ12）でも t は楽観側に出うる",
+  "C5（米国外での再現）は無料の索引が無く N/A",
+  "Brav ら (2008) の結果（発表時の +7%）は提出月の中で起きる＝本規則は翌月から持つので発表時の上乗せは取らない（個人が実際に取れる部分だけを測る）"
+ ],
+ "diagnostics_report_only": {
+  "control": "同じ観測の規則（名簿の各 CIK の今の記号 → Yahoo）で作った『観測できる S&P500 の等加重』（毎月の名簿の日の直前の名簿）。EW の S を相手にしたときの超過を full / train / hold / fresh2009 で報告（生き残りの偏りを両側に入れた比較）。判定には使わない",
+  "control_vs_mkt": "その対照そのものの French Mkt に対する超過（生き残りの偏りの大きさの物差し）"
+ }
+}

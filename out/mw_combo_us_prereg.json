@@ -1,0 +1,224 @@
+{
+ "angle": "combo_us",
+ "title": "米国・買いだけの『複数の特徴を組み合わせた』ポートフォリオは純粋な時価加重の市場（French Mkt）に勝てるか",
+ "registered": "2026-09-28",
+ "registered_before_measuring": true,
+ "note_before_measuring": "この時点で見たのはデータの有無・期間・列名・銘柄数だけ。戦略と市場を比べた数字は一つも計算していない。全体の線（C1〜C8・格付け）は out/mw_prereg.json のまま（ここでは動かさない）",
+ "question": "収益性・割安・投資の控えめ・勢いなど、理論が『良い』とする側を2つ以上そろえた買いだけのポートフォリオは、上場廃止も含む米国の時価加重市場に、訓練期間（〜2006）でも保有期間（2007〜）でも勝ったか",
+ "theory": {
+  "FF5": "Fama-French (2015) の5因子モデル: 期待リターンは 簿価時価比(BM)↑・営業利益率(OP)↑・投資(INV=総資産の伸び)↓ で高い。3つの特徴は独立の情報を持つので、良い側どうしの角が最も高いはず",
+  "Novy-Marx2013": "収益性(粗利/総資産)と割安は負に相関するため、組み合わせると互いの負けを打ち消し合う（profitable value）。収益性の高い成長株（quality growth）も収益性の低い成長株より良い",
+  "AMP2013": "Asness-Moskowitz-Pedersen (2013): 割安と勢いは負に相関し、混ぜると安定する",
+  "QMJ": "Asness-Frazzini-Pedersen (2019): 質（収益性・成長・安全・配当性向）",
+  "issuance_accruals": "株数を増やす会社（Pontiff-Woodgate 2008）・発生主義の利益が大きい会社（Sloan 1996）は将来のリターンが低い"
+ },
+ "benchmark": "Ken French の Mkt（Mkt-RF + RF・F-F_Research_Data_Factors 月次）＝上限なしの時価加重。French のポートフォリオ（総リターン）は Mkt（総リターン）と比べる。JKP（米国T-bill を引いた超過）は French の RF を足して総リターンにしてから Mkt と比べる（算術の差は同じ・幾何の差を正しく出すため）。JKP の vw 市場との比較は参考として併記（判定には使わない）",
+ "periods": {
+  "train": "各戦略のデータの始まり〜2006-12（French 2x4x4・5x5・ME×OP/INV は 1963-07〜、ME×BM は 1926-07〜、ME×Prior は 1927-01〜、JKP の混合は 1963-07〜）",
+  "hold": "2007-01〜データの終わり（French 2026-08、JKP 2025-12）",
+  "recent": "2013-07〜（報告のみ）",
+  "post_publication": "出典の公表年の翌年〜（報告のみ）"
+ },
+ "families": {
+  "A_triple": {
+   "desc": "French 2x4x4 の三重ソート（大型＝NYSE 中央値より上）の角。時価加重・毎年6月に組み替え。1963-07〜",
+   "primary": true,
+   "strategies": {
+    "A1_BIG_HiOP_LoINV": {
+     "rule": "32_Portfolios_ME_OP_INV_2x4x4 の BIG HiOP LoINV（大型・営業利益率が最上位4分位・投資が最下位4分位）",
+     "theory": "FF5: 収益性+ 投資の控えめ+ → 市場に勝つ側",
+     "expected_sign": "+"
+    },
+    "A2_BIG_HiBM_HiOP": {
+     "rule": "32_Portfolios_ME_BEME_OP_2x4x4 の BIG HiBM HiOP（大型・割安の最上位・営業利益率の最上位）",
+     "theory": "Novy-Marx 2013 の profitable value・FF5",
+     "expected_sign": "+"
+    },
+    "A3_BIG_LoBM_HiOP": {
+     "rule": "32_Portfolios_ME_BEME_OP_2x4x4 の BIG LoBM HiOP（大型・割高の最上位＝成長・営業利益率の最上位）",
+     "theory": "quality growth。FF5 では BM が低い分は−・OP が高い分は＋で、市場との差の符号は理論上あいまい（対照として登録）",
+     "expected_sign": "?"
+    },
+    "A4_BIG_HiBM_LoINV": {
+     "rule": "32_Portfolios_ME_BEME_INV_2x4x4 の BIG HiBM LoINV",
+     "theory": "FF5: 割安+ 投資の控えめ+",
+     "expected_sign": "+"
+    },
+    "A5_MIX_A1A2A4": {
+     "rule": "A1・A2・A4 を 1/3 ずつ・毎月組み直し（同じ月に3つとも値がある月だけ）",
+     "theory": "良い角を3つ混ぜる（特徴どうしの負の相関で安定）",
+     "expected_sign": "+"
+    },
+    "A6_BIG_OPtop2_INVbot2": {
+     "rule": "32_Portfolios_ME_OP_INV_2x4x4 の大型のうち OP 上位2分位 × INV 下位2分位 の4つを時価加重で合成（重み＝前月の『社数×平均時価総額』・当月の値は使わない）",
+     "theory": "A1 を広く（大型の約1/4）した実行しやすい版",
+     "expected_sign": "+"
+    },
+    "A7_BIG_BMtop2_OPtop2": {
+     "rule": "32_Portfolios_ME_BEME_OP_2x4x4 の大型のうち BM 上位2 × OP 上位2 の4つを同じ方法で時価加重合成",
+     "theory": "A2 の広い版",
+     "expected_sign": "+"
+    },
+    "A8_BIG_BMtop2_INVbot2": {
+     "rule": "32_Portfolios_ME_BEME_INV_2x4x4 の大型のうち BM 上位2 × INV 下位2 の4つを同じ方法で時価加重合成",
+     "theory": "A4 の広い版",
+     "expected_sign": "+"
+    }
+   }
+  },
+  "B_double": {
+   "desc": "French 5x5 の二重ソートの角（全規模・時価加重）と、規模5分位の最上位（ME5＝BIG）の行",
+   "primary": true,
+   "strategies": {
+    "B1_HiBM_HiOP": {
+     "rule": "25_Portfolios_BEME_OP_5x5 の HiBM HiOP（全規模・時価加重）1963-07〜",
+     "expected_sign": "+"
+    },
+    "B2_HiOP_LoINV": {
+     "rule": "25_Portfolios_OP_INV_5x5 の HiOP LoINV 1963-07〜",
+     "expected_sign": "+"
+    },
+    "B3_HiBM_LoINV": {
+     "rule": "25_Portfolios_BEME_INV_5x5 の HiBM LoINV 1963-07〜",
+     "expected_sign": "+"
+    },
+    "B4_LoBM_HiOP": {
+     "rule": "25_Portfolios_BEME_OP_5x5 の LoBM HiOP 1963-07〜（quality growth・理論上あいまいな対照）",
+     "expected_sign": "?"
+    },
+    "B5_BIG_HiOP": {
+     "rule": "25_Portfolios_ME_OP_5x5 の BIG HiOP（規模の最上位5分位×OP の最上位5分位）1963-07〜",
+     "expected_sign": "+"
+    },
+    "B6_BIG_LoINV": {
+     "rule": "25_Portfolios_ME_INV_5x5 の BIG LoINV 1963-07〜",
+     "expected_sign": "+"
+    },
+    "B7_BIG_HiBM": {
+     "rule": "25_Portfolios_5x5（ME×BM）の BIG HiBM 1926-07〜",
+     "expected_sign": "+"
+    },
+    "B8_BIG_HiPRIOR": {
+     "rule": "25_Portfolios_ME_Prior_12_2 の BIG HiPRIOR（過去12か月〔直近1か月を除く〕の上位5分位・毎月組み替え）1927-01〜",
+     "expected_sign": "+"
+    },
+    "B9_MIX_BIG_VAL_MOM": {
+     "rule": "B7 と B8 を 1/2 ずつ・毎月組み直し 1927-01〜",
+     "theory": "AMP 2013 の割安+勢いを大型株で",
+     "expected_sign": "+"
+    },
+    "B10_MIX_BIG_OP_MOM": {
+     "rule": "B5 と B8 を 1/2 ずつ・毎月組み直し 1963-07〜",
+     "expected_sign": "+"
+    },
+    "B11_MIX_BIG_4SIG": {
+     "rule": "B5・B6・B7・B8 を 1/4 ずつ・毎月組み直し 1963-07〜",
+     "expected_sign": "+"
+    }
+   }
+  },
+  "C_jkp": {
+   "desc": "JKP（Jensen-Kelly-Pedersen）米国の三分位ポートフォリオ（weighting='vw'＝上限なしの時価加重・毎月組み替え）の『良い側』を等分に混ぜる（袖の混合であって、銘柄単位の交わりではない）。良い側は mw_common.jkp_good_side('usa', key, 'vw', upto=200612)＝2006-12 までのデータだけで機械的に決める。期間 1963-07〜2025-12（1950年代の Compustat は銘柄が少なく遡及の偏りがあるため除く）",
+   "primary": true,
+   "strategies": {
+    "C1_VAL_MOM": {
+     "keys": [
+      "be_me",
+      "ret_12_1"
+     ],
+     "theory": "AMP 2013",
+     "expected_sign": "+"
+    },
+    "C2_QMJ_MOM": {
+     "keys": [
+      "qmj",
+      "ret_12_1"
+     ],
+     "expected_sign": "+"
+    },
+    "C3_GP_MOM": {
+     "keys": [
+      "gp_at",
+      "ret_12_1"
+     ],
+     "expected_sign": "+"
+    },
+    "C4_GP_VAL": {
+     "keys": [
+      "gp_at",
+      "be_me"
+     ],
+     "theory": "Novy-Marx 2013",
+     "expected_sign": "+"
+    },
+    "C5_QMJ_ISS_MOM": {
+     "keys": [
+      "qmj",
+      "chcsho_12m",
+      "ret_12_1"
+     ],
+     "expected_sign": "+"
+    },
+    "C6_QUAL5": {
+     "keys": [
+      "ope_be",
+      "gp_at",
+      "qmj",
+      "chcsho_12m",
+      "oaccruals_at"
+     ],
+     "theory": "質の5信号（2026-09-26 の longonly と同じ顔ぶれ・ただし今回は上限なし vw と純粋な市場）",
+     "expected_sign": "+"
+    },
+    "C7_VAL_MOM_QMJ": {
+     "keys": [
+      "be_me",
+      "ret_12_1",
+      "qmj"
+     ],
+     "theory": "割安+勢い+質（AQR の style premia 型）",
+     "expected_sign": "+"
+    }
+   },
+   "mix_rule": "各月、全部の袖に値がある月だけ等分の平均（欠けた月を0で埋めない）"
+  }
+ },
+ "replication_C5": {
+  "rule": "同じ規則を米国外の独立の地域に当て、その地域の時価加重市場との算術平均の差（全期間・USD）が正の地域の割合。2/3 以上で合格",
+  "A_triple": "A2・A3・A7 は Europe / Japan / Asia_Pacific_ex_Japan の 32_Portfolios_ME_BE-ME_OP_2x4x4（同じ位置の列）vs 各地域の <地域>_3_Factors の Mkt（1990-07〜）。A1・A4・A5・A6・A8 は投資(INV)を含む三重ソートが米国外に無いので N/A（代理＝25_ME_OP の BIG HiOP と 25_ME_INV の BIG LoINV 等の半々を参考に出すが判定には使わない）",
+  "B_double": "B5・B6・B7・B8 と その混合 B9・B10・B11 は Europe / Japan / Asia_Pacific_ex_Japan の 25_Portfolios_ME_OP / ME_INV / ME_BE-ME / ME_Prior_12_2 の同じ角（1990〜）。B1〜B4（全規模の5x5）は米国外に同じ表が無いので N/A（Emerging_Markets_4_Portfolios の 2x2 を参考に出す）",
+  "C_jkp": "JKP の国別: jpn・gbr・fra・deu・che・can・aus の7か国。良い側は米国で決めたものをそのまま使う。各袖が10社以上そろった月だけを使い（株数を減らす会社＝chcsho_12m の良い側は欧州で薄く、30社の線では独・仏・スイスがほぼ消えるため＝データの有無だけを見て決めた）、その国で120か月以上そろった場合に数える。相手はその国の JKP vw 市場（超過どうし）。数えた国の2/3以上が正で合格",
+  "reference_only": "Developed_ex_US（French）・Emerging（French の 6/4 ポートフォリオ・JKP emerging）・JKP world_ex_us は参考（数えない）",
+  "min_months": "French の地域は mw_common.excess_stats の最低24か月、JKP の国は120か月"
+ },
+ "multiple_testing": "C7 の族は A_triple（8本）・B_double（11本）・C_jkp（7本）の3族。族ごとに保有期間の p（mw_common.excess_stats の両側 p）を Holm で補正。探索（prereg2 以降）は別の族として同じく数える",
+ "turnover_cost": {
+  "unit_cost": "片道売買100%あたり: 大型だけ（2x4x4 の BIG・ME5）0.10%、全規模の時価加重（5x5・JKP の三分位）0.20%",
+  "annual_oneway_turnover_assumed": {
+   "2x4x4 の BIG の角（A1〜A4）": "80%/年（2つの特徴の両端に同時に居る会社は毎年入れ替わりやすい）",
+   "2x4x4 の広い版（A6〜A8）": "50%/年",
+   "5x5 の角（B1〜B4）": "80%/年",
+   "ME5 × 1特徴（B5〜B7）": "50%/年",
+   "ME5 × 勢い（B8・毎月）": "400%/年（Novy-Marx & Velikov 2016 の勢いの月次売買 約35% を参考に、大型・5分位で少なめに見積もり）",
+   "JKP 三分位（毎月）": "be_me 60%・gp_at 40%・qmj 60%・ope_be 50%・chcsho_12m 100%・oaccruals_at 120%・ret_12_1 250%（/年）",
+   "混合": "袖の売買の平均 + 袖どうしの組み直し 10%/年"
+  },
+  "stress": "費用3倍も参考に出す（判定は既定の費用）"
+ },
+ "grading": "mw_common.grade（out/mw_prereg.json の C1〜C8・S/A/B/C）をそのまま使う。leveraged_or_timing=False（全部 買いだけ・レバレッジもタイミングも無し）",
+ "sanity_checks": [
+  "French Mkt の CAGR（1926〜 ≈10.4%・2007〜 ≈11.1%）",
+  "2x4x4 の全32ポートフォリオを前月の社数×平均時価総額で合成したものが Mkt に近いこと（合成の計算の検算）",
+  "JKP vw 市場（+RF）と French Mkt の差",
+  "総リターンどうし・超過どうしで比べていること",
+  "欠測を0で埋めていないこと（混合は全部の袖がある月だけ）"
+ ],
+ "known_limits": [
+  "French/JKP のポートフォリオは数百〜数千社の分散した集合。門の4〜5社の集中とは別物で、個人が同じものを持つには ETF（QUAL・MOAT・VLUE・MTUM 等）か多数の銘柄が要る",
+  "費用は仮定の回転率×単価の概算。税は入っていない",
+  "訓練期間の角の良さは 1990年代以降の論文で広く知られた（公表後の効果の縮みがありうる）",
+  "私たちは 2007年以降に割安が負け、巨大テック（低BM・高OP）が勝ったことを知っている。A3/B4（quality growth）は理論上あいまいな対照として登録したが、この知識の漏れは消せない。だから米国外の地域と公表後の期間で答え合わせする",
+  "JKP の米国の銘柄集合は CRSP の French と少し違い、JKP vw 市場は French Mkt に 2007〜 年0.4% 負けている（mw_common の注記）。JKP の混合を French Mkt で裁くのはその分だけ厳しい側",
+  "転がる20年窓は重なっている（独立の試行ではない）"
+ ]
+}
